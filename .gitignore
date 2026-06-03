@@ -16,3 +16,6 @@ next-env.d.ts
 /_src_jrerp
 /_tmp_jrerp
 /.claude/settings.local.json
+
+# เอาต์พุตทดสอบ (สร้างใหม่ได้จาก scripts/gen-quotes.mjs)
+/ใบเสนอราคาทดสอบ/

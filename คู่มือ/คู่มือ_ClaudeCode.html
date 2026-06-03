@@ -1,0 +1,88 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><style>
+@page{size:A4;margin:10mm 11mm;}
+*{box-sizing:border-box;font-family:"Sarabun","Leelawadee UI","Noto Sans Thai","Segoe UI",Tahoma,sans-serif;margin:0;}
+body{color:#1F2937;font-size:11px;line-height:1.42;}
+h1{color:#B3151D;font-size:19px;margin-bottom:1px;}
+.sub{color:#6B7280;font-size:10.5px;margin-bottom:8px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.card{border:1px solid #E5E7EB;border-left:3px solid #B3151D;border-radius:7px;padding:7px 9px;}
+.card h2{color:#B3151D;font-size:12.5px;margin-bottom:3px;}
+.full{grid-column:1/-1;}
+code{background:#FDECEC;color:#B3151D;border-radius:4px;padding:0 4px;font-weight:600;font-family:"Consolas",monospace;font-size:10.5px;}
+ul{margin:2px 0 0;padding-left:16px;} li{margin-bottom:1.5px;}
+table{width:100%;border-collapse:collapse;margin-top:3px;}
+td{padding:2px 4px;border-bottom:1px solid #F0F0F0;vertical-align:top;}
+td.k{white-space:nowrap;width:34%;}
+.tip{background:#FFF8E1;border-left:3px solid #F59E0B;border-radius:6px;padding:6px 9px;font-size:10.5px;}
+.foot{color:#9CA3AF;font-size:9px;text-align:center;margin-top:7px;}
+b.r{color:#B3151D;}
+</style></head><body>
+<h1>คู่มือใช้ Claude Code ให้งานเร็ว+ดี — JR (1 หน้า)</h1>
+<div class="sub">สรุปคำสั่ง/เทคนิคที่ใช้ได้จริง · เรียงตามที่พี่นัทใช้บ่อย</div>
+
+<div class="grid">
+  <div class="card full">
+    <h2>⭐ /goal — คำสั่งที่พี่นัทชอบ (ตั้งเป้า ทำจนจบ)</h2>
+    <table>
+      <tr><td class="k"><code>/goal &lt;เป้าหมาย&gt;</code></td><td>ตั้งเป้า → Claude ทำจนสำเร็จเอง ไม่หยุดกลางคัน (มี Stop hook กันหยุดจนกว่าจะเสร็จ) · เคลียร์เองเมื่อจบ</td></tr>
+      <tr><td class="k"><code>/goal clear</code></td><td>ยกเลิกเป้าก่อนกำหนด (ปกติไม่ต้องใช้ มันเคลียร์เองตอนสำเร็จ)</td></tr>
+    </table>
+    <b>เคล็ดเขียนเป้าให้ดี:</b> บอก "ทำอะไร + เสร็จแบบไหนถึงเรียกว่าจบ + ห้ามอะไร" เช่น "รวม 2 repo, build ผ่าน, push ขึ้น repo X, ห้ามแก้ DB" — ยิ่งระบุเงื่อนไขจบชัด ยิ่งทำได้ตรง
+  </div>
+
+  <div class="card">
+    <h2>🧠 วางแผนก่อนลงมือ (Plan Mode)</h2>
+    <ul>
+      <li>กด <b>Shift+Tab</b> หรือพิมพ์ "วางแผนก่อน อย่าเพิ่งแก้"</li>
+      <li>Claude อ่านโค้ด+เสนอแผน ให้พี่นัทอนุมัติก่อนทำจริง</li>
+      <li>เหมาะกับงานใหญ่/เสี่ยง — กันทำผิดทาง</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>👥 Subagent — แตกทีมช่วยกัน</h2>
+    <ul>
+      <li>พิมพ์ "spawn subagent 5 ตัวมาช่วยเทส..." → ทำงานขนานกัน เร็วขึ้นมาก</li>
+      <li>เหมาะกับ: เทสหลายส่วน, ค้นหาหลายที่, ตรวจหลายมุมพร้อมกัน</li>
+      <li>เก็บทีมไว้ในโปรเจกต์ได้ที่ <code>.claude/agents/</code> (เช่น accountant, qa-tester)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>✅ "Crosscheck" = เทคนิค (ไม่ใช่คำสั่ง)</h2>
+    <ul>
+      <li>ให้ <b>ข้อมูลจริง</b> (เช่น ใบเสนอราคาจริง) แล้วสั่ง "เทียบผลคำนวณกับใบนี้ทีละเคส"</li>
+      <li>Claude คำนวณอิสระแล้วเทียบ → จับเลขผิดได้แม่น</li>
+      <li>คำที่ช่วย: "verify", "เทียบกับของจริง", "ตรวจซ้ำก่อนสรุป"</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>🔁 คำสั่ง/skill อื่นที่ควรรู้</h2>
+    <table>
+      <tr><td class="k"><code>/loop &lt;งาน&gt;</code></td><td>ทำงานซ้ำเป็นรอบ (เช็คสถานะทุก X นาที)</td></tr>
+      <tr><td class="k"><code>/verify</code></td><td>รันแอพจริง ดูว่าฟีเจอร์ทำงานไหม</td></tr>
+      <tr><td class="k"><code>/code-review</code></td><td>ตรวจโค้ดที่เพิ่งแก้ หาบั๊ก/จุดปรับ</td></tr>
+      <tr><td class="k"><code>/security-review</code></td><td>ตรวจช่องโหว่ความปลอดภัย</td></tr>
+      <tr><td class="k"><code>/schedule</code></td><td>ตั้งงานอัตโนมัติตามเวลา (cron)</td></tr>
+    </table>
+  </div>
+
+  <div class="card full">
+    <h2>🚀 6 เคล็ดให้งานออกมาเร็ว+ดีแบบที่ผ่านมา</h2>
+    <table>
+      <tr><td class="k">1. เป้าชัด + เงื่อนไขจบ</td><td>ใช้ <code>/goal</code> บอกให้รู้ว่า "เสร็จ" หน้าตาเป็นไง (build ผ่าน / push แล้ว / เทสเขียว)</td></tr>
+      <tr><td class="k">2. ให้ของจริงเทียบ</td><td>แนบใบจริง/ตัวอย่าง/รูป → ได้ crosscheck แม่น (เหมือนรูป VAT ที่พี่นัทส่ง)</td></tr>
+      <tr><td class="k">3. สั่งให้ verify เอง</td><td>"รันเทส/build/ดูผลก่อนบอกว่าเสร็จ" — กันงานหลอกว่าเสร็จ</td></tr>
+      <tr><td class="k">4. แตก subagent</td><td>งานใหญ่หลายส่วน → ขนานกัน เร็วกว่าทำทีละอย่าง</td></tr>
+      <tr><td class="k">5. ทำทีละเฟส + commit</td><td>"ทำเสร็จแต่ละส่วนแล้ว commit" — ย้อนกลับง่าย เห็นความคืบหน้า</td></tr>
+      <tr><td class="k">6. ถามเมื่อไม่ชัวร์</td><td>เรื่องเงิน/ธุรกิจ Claude จะถามก่อน ไม่เดา — ตอบสั้นๆ พอ</td></tr>
+    </table>
+  </div>
+
+  <div class="card full tip">
+    <b class="r">เกร็ด:</b> แยกชื่อคนเวลา commit ได้ด้วย <code>git as-nut</code> / <code>git as-manao</code> (ตั้งไว้แล้วในโปรเจกต์ jr-beta) ·
+    Claude จำเรื่องโปรเจกต์ข้ามรอบได้ผ่าน <code>CLAUDE.md</code> + memory — บอก "จำไว้ว่า..." ได้เลย
+  </div>
+</div>
+
+<div class="foot">JR Aluminium &amp; Glass · คู่มือใช้ Claude Code · อัปเดต 4 มิ.ย. 2569</div>
+</body></html>
