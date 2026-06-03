@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JR เครื่องคิดราคาม่านซิป</title>
+<style>
+  :root{
+    --red:#E61E28; --red-dark:#B3151D; --bg:#F7F8FA; --card:#fff;
+    --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937;
+    --redbg:#FDECEC; --ok:#1E7E45;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:"Sarabun","Prompt","Noto Sans Thai","Segoe UI",Tahoma,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;}
+  .wrap{max-width:760px;margin:0 auto;padding:14px 14px 60px;}
+  header{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:14px 18px;margin-bottom:14px;}
+  .logo-text{font-size:30px;font-weight:800;color:var(--red);font-style:italic;letter-spacing:-1px;line-height:1;}
+  header .ht{border-left:3px solid var(--red);padding-left:12px;}
+  header h1{font-size:16px;margin:0;font-weight:700;}
+  header p{font-size:12px;margin:2px 0 0;color:var(--muted);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
+  .card h2{font-size:14px;margin:0 0 10px;color:var(--red-dark);font-weight:700;}
+  label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
+  input,select{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
+  input:focus,select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(230,30,40,.13);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .seg button{height:44px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--muted);
+    font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
+  .seg button.on{background:var(--red);border-color:var(--red);color:#fff;}
+  .ch{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff;}
+  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .ch .top input{height:36px;}
+  .del{flex:0 0 auto;width:36px;height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    color:var(--red);font-size:20px;cursor:pointer;line-height:1;}
+  .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .chgrid .full{grid-column:1 / -1;}
+  .chfoot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);
+    padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
+  .chfoot .price{font-weight:800;font-size:17px;color:var(--red-dark);}
+  .chwarn{font-size:12px;color:var(--red-dark);background:var(--redbg);border-radius:6px;padding:6px 8px;margin-top:8px;}
+  .chinfo{font-size:12px;color:var(--ok);margin-top:6px;}
+  .addbtn{width:100%;height:44px;border:1.5px dashed var(--red);border-radius:10px;background:#fff;
+    color:var(--red-dark);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .chk{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;}
+  .chk input{width:20px;height:20px;}
+  .sum{background:var(--red);color:#fff;border-radius:12px;padding:16px;}
+  .sum .line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
+  .sum .disc{color:#FFE0E0;}
+  .sum .grand{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(255,255,255,.3);
+    margin-top:8px;padding-top:10px;}
+  .sum .grand b{font-size:13px;font-weight:600;}
+  .sum .grand .big{font-size:28px;font-weight:800;}
+  .sum .tag{font-size:12px;background:rgba(255,255,255,.18);border-radius:6px;padding:2px 8px;display:inline-block;margin-top:6px;}
+  .owner{background:#fff;border:1px dashed var(--red);border-radius:10px;padding:12px;margin-top:12px;display:none;}
+  .owner h3{font-size:13px;margin:0 0 8px;color:var(--red-dark);}
+  .owner .line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .actions button{height:48px;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .btn-prim{background:var(--red);color:#fff;border:1px solid var(--red);}
+  .btn-sec{background:#fff;color:var(--red-dark);border:1px solid var(--red);}
+  .note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;}
+  #quoteBox{display:none;position:fixed;inset:0;background:rgba(20,20,25,.6);z-index:50;overflow:auto;padding:20px;}
+  .quote{max-width:720px;margin:0 auto;background:#fff;border-radius:10px;padding:28px;}
+  .qhead{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--red);padding-bottom:14px;}
+  .qhead .qt{text-align:right;}
+  .qhead h3{margin:0;color:var(--red-dark);font-size:20px;}
+  .qhead .sub{font-size:12px;color:var(--muted);}
+  .qmeta{display:flex;justify-content:space-between;font-size:13px;margin:14px 0;}
+  table.qt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  table.qt th{background:var(--red);color:#fff;padding:8px 6px;text-align:left;font-weight:600;}
+  table.qt td{padding:7px 6px;border-bottom:1px solid var(--line);}
+  table.qt td.r,table.qt th.r{text-align:right;}
+  .qtot{margin-top:12px;margin-left:auto;width:300px;font-size:14px;}
+  .qtot .l{display:flex;justify-content:space-between;padding:4px 0;}
+  .qtot .l.disc{color:var(--red-dark);}
+  .qtot .g{display:flex;justify-content:space-between;border-top:2px solid var(--red);margin-top:6px;
+    padding-top:8px;font-weight:800;font-size:17px;color:var(--red-dark);}
+  .qnote{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.7;border-top:1px solid var(--line);padding-top:12px;}
+  .qbtns{max-width:720px;margin:14px auto 0;display:flex;gap:10px;}
+  .qbtns button{flex:1;height:46px;border-radius:9px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  @media print{
+    body *{visibility:hidden;}
+    #quoteBox,#quoteBox *{visibility:visible;}
+    #quoteBox{position:absolute;inset:0;background:#fff;padding:0;}
+    .qbtns{display:none;}
+    .quote{box-shadow:none;border-radius:0;max-width:100%;}
+  }
+  @media(max-width:520px){ .qmeta{flex-direction:column;gap:6px;} .qtot{width:100%;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="JR_logo_transparent.png" alt="JR" style="height:21px;width:auto;">
+    <div class="ht">
+      <h1>เครื่องคิดราคาม่านซิป</h1>
+      <p>JR Aluminium &amp; Glass · ม่านม้วนกันลม</p>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>ข้อมูลลูกค้า</h2>
+    <div class="row2">
+      <div><label>ชื่อลูกค้า / งาน</label><input id="custName" placeholder="เช่น คุณสมชาย / บ้านทรายทอง"></div>
+      <div><label>วันที่</label><input id="qdate" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>กลุ่มลูกค้า</h2>
+    <div class="seg" id="grp">
+      <button type="button" data-g="retail" class="on">ปลีก</button>
+      <button type="button" data-g="project">โครงการ</button>
+    </div>
+    <div class="note" id="grpNote">ปลีก: ยิ่งพื้นที่เยอะยิ่งลด (เริ่มที่ 15 ตร.ม.)</div>
+  </div>
+
+  <div class="card">
+    <h2>รายการช่องม่าน</h2>
+    <div id="channels"></div>
+    <button type="button" class="addbtn" id="addCh">+ เพิ่มช่อง</button>
+  </div>
+
+  <div class="card">
+    <label class="chk"><input type="checkbox" id="noInstall"> ไม่รวมค่าติดตั้ง (ลูกค้าติดตั้งเอง)</label>
+    <div style="margin-top:12px;">
+      <label>ค่านั่งร้าน (ถ้ามี, บาท)</label>
+      <input id="scaffold" type="number" min="0" step="500" value="0" placeholder="0">
+      <div class="note">งานสูงกว่า 3 ม. หรือชั้น 2 — กรอกตามจริง</div>
+    </div>
+  </div>
+
+  <div id="warnAll"></div>
+
+  <div class="sum">
+    <div class="line"><span>ราคารวมก่อนลด</span><span id="sBefore">฿0</span></div>
+    <div class="line disc" id="sDiscLine" style="display:none;"><span id="sDiscLabel">ส่วนลด</span><span id="sDisc">฿0</span></div>
+    <div class="grand"><b>ราคาเสนอลูกค้า (ยังไม่รวม VAT)</b><span class="big" id="sTotal">฿0</span></div>
+    <span class="tag" id="sTag">รวมค่าติดตั้งแล้ว</span>
+  </div>
+
+  <label class="chk" style="margin-top:14px;"><input type="checkbox" id="ownerMode"> โหมดเจ้าของ (ดูต้นทุน/กำไร)</label>
+  <div class="owner" id="ownerPanel">
+    <h3>เฉพาะเจ้าของ — ห้ามโชว์ลูกค้า</h3>
+    <div class="line"><span>ทุนของถึงไทย</span><span id="oCost">฿0</span></div>
+    <div class="line"><span>กำไรของ (หลังลด)</span><span id="oProfit" style="font-weight:800;color:var(--red-dark);">฿0</span></div>
+    <div class="line"><span>กำไร %</span><span id="oMargin">0%</span></div>
+    <div class="line"><span>ค่าติดตั้งที่เก็บ</span><span id="oInstall">฿0</span></div>
+    <div class="note">กำไรนี้คิดจาก "ของ" อย่างเดียว ค่าติดตั้งยังไม่หักค่าแรงจริง</div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-sec" id="btnReset">ล้างทั้งหมด</button>
+    <button type="button" class="btn-prim" id="btnQuote">สร้างใบเสนอราคา</button>
+  </div>
+
+  <div class="note">
+    ราคาล็อกตามมาตรฐาน JR — ส่วนลดต่อรองเพิ่มทำนอกระบบ<br>
+    เครื่องคิดทำงานในเครื่อง ไม่ต่อเน็ต ไม่เสียเครดิต ใช้ได้ไม่จำกัด
+  </div>
+</div>
+
+<div id="quoteBox">
+  <div class="quote" id="quoteContent"></div>
+  <div class="qbtns">
+    <button type="button" class="btn-sec" id="qClose">ปิด</button>
+    <button type="button" class="btn-prim" id="qPrint">พิมพ์ / เซฟ PDF</button>
+  </div>
+</div>
+
+<script>
+var FAB={
+  Z100:{"0":1220,"1":1160,"3":1220,"5":1090,"10":1090,"30":1090,"PET":1290},
+  Z120:{"0":1330,"1":1270,"3":1330,"5":1200,"10":1200,"30":1200,"PET":1400},
+  Z145D:{"0":2390,"1":2390,"3":2390,"5":2390,"10":2390,"30":2390,"PET":2390},
+  Z120W:{"0":2340,"1":2280,"3":2340,"5":2210,"10":2210,"30":2210,"PET":null}
+};
+var CTRL={manual:810,aok220:2340,dooya:2210,aok50n:2730};
+var CTRL_LABEL={manual:"มือดึง",aok220:"มอเตอร์ AOK 220V",dooya:"มอเตอร์ DOOYA",aok50n:"มอเตอร์ AOK 50N"};
+var MODEL_LABEL={Z100:"JR-Z100",Z120:"JR-Z120",Z145D:"JR-Z145D (2 ชั้น)",Z120W:"JR-Z120W (ใหญ่พิเศษ)"};
+var FAB_LABEL={"0":"0%","1":"1-2%","3":"3%","5":"5%","10":"10%","30":"30%","PET":"PET ใส"};
+var MIN={Z100:3,Z120:3,Z145D:3,Z120W:6};
+var MAXW={Z100:5,Z120:5,Z145D:4,Z120W:30};
+var MAXH={Z100:3,Z120:4,Z145D:3,Z120W:3};
+var MARK={retail:2.0,project:1.75};
+var GRP_LABEL={retail:"ปลีก",project:"โครงการ"};
+var INST_BASE=5000, INST_RATE=600;
+var grp="retail", chId=0;
+
+function fmt(n){return "฿"+Math.round(n).toLocaleString();}
+var THMONTH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+function thaiDate(s){ if(!s) return "-"; var p=s.split("-"); return parseInt(p[2],10)+" "+THMONTH[parseInt(p[1],10)-1]+" พ.ศ. "+(parseInt(p[0],10)+543); }
+function discountRate(g,a){
+  if(g==="retail"){ if(a>30)return 0.05; if(a>=15)return 0.03; return 0; }
+  if(a>1000)return 0.15; if(a>500)return 0.12; if(a>=200)return 0.08; return 0;
+}
+function pickModel(w,h){ if(w>5)return "Z120W"; if(h>3)return "Z120"; return "Z100"; }
+
+function addChannel(){
+  chId++;
+  var d=document.createElement("div");
+  d.className="ch";
+  d.innerHTML=
+   '<div class="top"><input class="cName" placeholder="จุดที่ '+chId+' (เช่น ระเบียงหน้า)"><button type="button" class="del">&times;</button></div>'+
+   '<div class="chgrid">'+
+     '<div><label>กว้าง (ม.)</label><input class="cW" type="number" min="0.5" max="30" step="0.1" value="3"></div>'+
+     '<div><label>สูง (ม.)</label><input class="cH" type="number" min="0.5" max="4" step="0.1" value="3"></div>'+
+     '<div class="full"><label>รุ่น</label><select class="cModel">'+
+       '<option value="auto" selected>อัตโนมัติ (เลือกตามขนาด)</option>'+
+       '<option value="Z100">JR-Z100 (กว้าง&le;5 สูง&le;3)</option>'+
+       '<option value="Z120">JR-Z120 (สูงได้ถึง 4 ม.)</option>'+
+       '<option value="Z145D">JR-Z145D (2 ชั้น)</option>'+
+       '<option value="Z120W">JR-Z120W (กว้างถึง 30 ม.)</option>'+
+     '</select></div>'+
+     '<div><label>ผ้า (ความโปร่ง)</label><select class="cFab">'+
+       '<option value="0">0% ทึบแสง</option><option value="1">1-2% โปร่งน้อย</option>'+
+       '<option value="3">3% โปร่งน้อย</option><option value="5" selected>5% โปร่งกลาง</option>'+
+       '<option value="10">10% โปร่งกลาง</option><option value="30">30% โปร่งมาก</option>'+
+       '<option value="PET">PET ใส</option></select></div>'+
+     '<div><label>ระบบควบคุม</label><select class="cCtrl">'+
+       '<option value="manual">มือดึง</option><option value="aok220" selected>มอเตอร์ AOK 220V</option>'+
+       '<option value="dooya">มอเตอร์ DOOYA</option><option value="aok50n">มอเตอร์ AOK 50N</option></select></div>'+
+   '</div>'+
+   '<div class="chfoot"><span class="cArea">&mdash;</span><span class="price cPrice">฿0</span></div>'+
+   '<div class="cMsg"></div>';
+  document.getElementById("channels").appendChild(d);
+  d.querySelector(".del").addEventListener("click",function(){ d.remove(); calcAll(); });
+  var els=d.querySelectorAll("input,select");
+  for(var i=0;i<els.length;i++){ els[i].addEventListener("input",calcAll); }
+  calcAll();
+}
+
+function chData(div){
+  var sel=div.querySelector(".cModel").value;
+  var fb=div.querySelector(".cFab").value;
+  var ck=div.querySelector(".cCtrl").value;
+  var w=parseFloat(div.querySelector(".cW").value)||0;
+  var h=parseFloat(div.querySelector(".cH").value)||0;
+  var m=(sel==="auto")?pickModel(w,h):sel;
+  var msgs=[],infos=[];
+  if(sel==="auto") infos.push("เลือกรุ่นให้: "+MODEL_LABEL[m]);
+  var rate=FAB[m][fb];
+  if(rate===null){ msgs.push("รุ่นนี้ไม่มีผ้า PET — เลือกความโปร่งอื่น"); rate=FAB[m]["5"]; }
+  if(w>MAXW[m]) msgs.push("กว้างเกินรุ่น (สูงสุด "+MAXW[m]+" ม.)");
+  if(h>MAXH[m]) msgs.push("สูงเกินรุ่น (สูงสุด "+MAXH[m]+" ม.)");
+  if(m==="Z120W"&&ck!=="aok50n") infos.push("รุ่นใหญ่พิเศษ แนะนำมอเตอร์ AOK 50N");
+  var mul=(m==="Z145D")?2:1;
+  if(m==="Z145D") infos.push("ระบบ ×2 อัตโนมัติ (2 ชั้น)");
+  var raw=w*h, area=Math.max(raw,MIN[m]);
+  if(raw>0&&raw<MIN[m]) infos.push("คิดพื้นที่ขั้นต่ำ "+MIN[m]+" ตร.ม.");
+  var landed=area*rate+CTRL[ck]*mul;
+  var goods=landed*MARK[grp];
+  return {m:m,fb:fb,ck:ck,w:w,h:h,area:area,landed:landed,goods:goods,msgs:msgs,infos:infos};
+}
+
+function calcAll(){
+  var divs=document.querySelectorAll(".ch");
+  var totGoods=0,totArea=0,totLanded=0,warns=[],data=[];
+  for(var i=0;i<divs.length;i++){
+    var c=chData(divs[i]); data.push({div:divs[i],c:c});
+    totGoods+=c.goods; totArea+=c.area; totLanded+=c.landed;
+  }
+  var disc=discountRate(grp,totArea);
+  var noInst=document.getElementById("noInstall").checked;
+  var inst=(noInst||!divs.length)?0:(INST_BASE+INST_RATE*totArea);
+  for(var j=0;j<data.length;j++){
+    var o=data[j], cc=o.c, share=(totArea>0)?inst*(cc.area/totArea):0;
+    o.div.querySelector(".cArea").textContent="รุ่น "+MODEL_LABEL[cc.m]+" · "+cc.area.toFixed(2)+" ตร.ม.";
+    o.div.querySelector(".cPrice").textContent=fmt(cc.goods+share);
+    var mh="";
+    if(cc.msgs.length) mh+='<div class="chwarn">'+cc.msgs.join("<br>")+'</div>';
+    if(cc.infos.length) mh+='<div class="chinfo">'+cc.infos.join(" · ")+'</div>';
+    o.div.querySelector(".cMsg").innerHTML=mh;
+    if(cc.msgs.length) warns=warns.concat(cc.msgs);
+  }
+  var before=totGoods+inst, discAmt=totGoods*disc;
+  var total=Math.round((totGoods-discAmt+inst)/100)*100;
+  document.getElementById("sBefore").textContent=fmt(before);
+  var dl=document.getElementById("sDiscLine");
+  if(disc>0){ dl.style.display="flex";
+    document.getElementById("sDiscLabel").textContent="ส่วนลดปริมาณ "+(disc*100)+"%";
+    document.getElementById("sDisc").textContent="- "+fmt(discAmt);
+  } else { dl.style.display="none"; }
+  document.getElementById("sTotal").textContent=fmt(total);
+  document.getElementById("sTag").textContent=noInst?"ไม่รวมค่าติดตั้ง (ลูกค้าติดเอง)":"รวมค่าติดตั้งแล้ว";
+  var rev=totGoods-discAmt, profit=rev-totLanded;
+  document.getElementById("oCost").textContent=fmt(totLanded);
+  document.getElementById("oProfit").textContent=fmt(profit);
+  document.getElementById("oMargin").textContent=(rev>0?Math.round(profit/rev*100):0)+"%";
+  document.getElementById("oInstall").textContent=fmt(inst);
+  document.getElementById("warnAll").innerHTML=warns.length?'<div class="card" style="border-color:var(--red);background:var(--redbg);color:var(--red-dark);font-size:13px;"><b>⚠ ตรวจสอบ:</b><br>'+warns.join("<br>")+'</div>':"";
+}
+
+function genQuote(){
+  var divs=document.querySelectorAll(".ch");
+  if(!divs.length){ alert("ยังไม่มีรายการ"); return; }
+  var totGoods=0,totArea=0,list=[];
+  for(var i=0;i<divs.length;i++){
+    var c=chData(divs[i]); totGoods+=c.goods; totArea+=c.area;
+    list.push({c:c,name:divs[i].querySelector(".cName").value||("จุดที่ "+(i+1)),i:i+1});
+  }
+  var disc=discountRate(grp,totArea);
+  var noInst=document.getElementById("noInstall").checked;
+  var inst=noInst?0:(INST_BASE+INST_RATE*totArea);
+  var rows="";
+  for(var j=0;j<list.length;j++){
+    var o=list[j], cc=o.c, share=(totArea>0)?inst*(cc.area/totArea):0;
+    rows+="<tr><td>"+o.i+"</td><td>"+o.name+"</td><td>"+MODEL_LABEL[cc.m]+"</td><td>"+cc.w+"×"+cc.h+" ม.</td>"+
+      "<td>"+FAB_LABEL[cc.fb]+"</td><td>"+CTRL_LABEL[cc.ck]+(cc.m==="Z145D"?" ×2":"")+"</td>"+
+      '<td class="r">'+cc.area.toFixed(2)+'</td><td class="r">'+fmt(cc.goods+share)+"</td></tr>";
+  }
+  var before=totGoods+inst, discAmt=totGoods*disc;
+  var total=Math.round((totGoods-discAmt+inst)/100)*100;
+  var vat=Math.round(total*0.07), withVat=total+vat;
+  var cust=document.getElementById("custName").value||"-";
+  var date=document.getElementById("qdate").value||new Date().toISOString().slice(0,10);
+  var _p=date.split("-"); var _bey=parseInt(_p[0],10)+543;
+  var qno="JR"+_p[2]+"-"+_p[1]+"-"+("0"+(_bey%100)).slice(-2)+"-"+(Math.floor(Math.random()*900)+100);
+  document.title=qno;
+  document.getElementById("quoteContent").innerHTML=
+   '<div class="qhead"><img src="JR_logo_transparent.png" alt="JR" style="height:23px;width:auto;"><div class="qt"><h3>ใบเสนอราคา</h3>'+
+     '<div class="sub">JR Aluminium &amp; Glass · ม่านซิป</div><div class="sub">เลขที่ '+qno+'</div></div></div>'+
+   '<div class="qmeta"><div><b>ลูกค้า:</b> '+cust+'<br><b>ประเภท:</b> '+GRP_LABEL[grp]+'</div>'+
+     '<div style="text-align:right;"><b>วันที่:</b> '+thaiDate(date)+'</div></div>'+
+   '<table class="qt"><tr><th>#</th><th>จุด</th><th>รุ่น</th><th>ขนาด</th><th>ผ้า</th><th>ระบบ</th><th class="r">ตร.ม.</th><th class="r">ราคา</th></tr>'+rows+'</table>'+
+   '<div class="qtot">'+
+     '<div class="l"><span>รวมก่อนลด</span><span>'+fmt(before)+'</span></div>'+
+     (disc>0?'<div class="l disc"><span>ส่วนลดปริมาณ '+(disc*100)+'%</span><span>- '+fmt(discAmt)+'</span></div>':"")+
+     '<div class="l"><span>ราคาสุทธิ</span><span>'+fmt(total)+'</span></div>'+
+     '<div class="l"><span>VAT 7%</span><span>'+fmt(vat)+'</span></div>'+
+     '<div class="g"><span>รวมทั้งสิ้น</span><span>'+fmt(withVat)+'</span></div></div>'+
+   '<div class="qnote">• '+(noInst?"ราคานี้ไม่รวมค่าติดตั้ง (ลูกค้าติดตั้งเอง)":"ราคานี้รวมค่าติดตั้งแล้ว")+
+     '<br>• ราคายืน 15 วันนับจากวันที่เสนอ<br>• ผลิตประมาณ 30 วันหลังยืนยันแบบและมัดจำ<br>'+
+     '• ค่านั่งร้าน/อุปกรณ์พิเศษคิดตามหน้างานจริง</div>';
+  document.getElementById("quoteBox").style.display="block"; window.scrollTo(0,0);
+}
+
+var gb=document.querySelectorAll("#grp button");
+for(var i=0;i<gb.length;i++){
+  gb[i].addEventListener("click",function(){
+    for(var k=0;k<gb.length;k++){ gb[k].classList.remove("on"); }
+    this.classList.add("on"); grp=this.getAttribute("data-g");
+    document.getElementById("grpNote").textContent=(grp==="retail")?"ปลีก: ยิ่งพื้นที่เยอะยิ่งลด (เริ่มที่ 15 ตร.ม.)":"โครงการ: ราคาพิเศษ + ลดเพิ่มตามพื้นที่ (เริ่ม 200 ตร.ม.)";
+    calcAll();
+  });
+}
+document.getElementById("addCh").addEventListener("click",addChannel);
+document.getElementById("scaffold").addEventListener("input",calcAll);
+document.getElementById("noInstall").addEventListener("change",calcAll);
+document.getElementById("ownerMode").addEventListener("change",function(){
+  document.getElementById("ownerPanel").style.display=this.checked?"block":"none";
+});
+document.getElementById("btnReset").addEventListener("click",function(){
+  if(!confirm("ล้างรายการทั้งหมด?"))return;
+  document.getElementById("channels").innerHTML=""; chId=0;
+  document.getElementById("custName").value=""; document.getElementById("scaffold").value=0;
+  document.getElementById("noInstall").checked=false; addChannel();
+});
+document.getElementById("btnQuote").addEventListener("click",genQuote);
+document.getElementById("qClose").addEventListener("click",function(){document.getElementById("quoteBox").style.display="none";document.title="JR เครื่องคิดราคาม่านซิป";});
+document.getElementById("qPrint").addEventListener("click",function(){window.print();});
+document.getElementById("qdate").value=new Date().toISOString().slice(0,10);
+addChannel();
+</script>
+</body>
+</html>

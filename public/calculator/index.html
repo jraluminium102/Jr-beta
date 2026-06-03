@@ -543,6 +543,8 @@ const PRODUCTS=[
  {id:'awning_brace',g:1,cat:'เสริม',name:'เสริมแขนค้ำ (เฉพาะบานกระทุ้งเปิดล่าง) — +500/ชุด',unit:'piece',rate:500,cost:null},
  // R3.2 2026-05-30: Glasshouse — กั้นห้องกระจกพร้อมหลังคา (8 ด้าน + OPTION + รายละเอียดงาน)
  {id:'glasshouse',cat:'กั้นห้องกระจก',name:'กั้นห้องกระจก พร้อมหลังคา (8 ด้าน A-H)',glasshouse:1,cost:null,custom_price:1},
+ // R4.0 2026-06-04: ม่านซิป (zipscreen) — รวมจากเครื่องคิดราคาม่านซิปแยก · กลุ่มงานที่ 7
+ {id:'zipscreen',cat:'ม่านซิป',name:'ม่านซิป (zipscreen) ม่านม้วนกันลม',zipscreen:1,cost:null},
  {id:'imp1',cat:'ราวบันได',name:'ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)',method:'per_length_tier',rates:'IMP1',handrail:1,cost:null},
  {id:'imp2',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง U/เสาอลู',method:'per_length_tier',rates:'IMP2',handrail:1,cost:null},
  {id:'imp3',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง เสาอลู',method:'per_length_tier',rates:'IMP3',handrail:1,cost:null},
@@ -677,6 +679,24 @@ const PRODUCTS=[
  {id:'rn92',cat:'ลูกฟูก+คอมโพสิททึบ',name:"คอมโพสิต 4 มม.",method:'per_sqm',rate:4000,min:0,ranae:1,prod:4000,cost:null}
 ];
 const PBYID={}; PRODUCTS.forEach(p=>PBYID[p.id]=p);
+// === R4.0 ม่านซิป (zipscreen) — ค่าคงที่ราคา (ยกมาจากเครื่องคิดราคาม่านซิปแยก ตรงทุกค่า) ===
+const ZIP={
+  FAB:{
+    Z100:{"0":1220,"1":1160,"3":1220,"5":1090,"10":1090,"30":1090,"PET":1290},
+    Z120:{"0":1330,"1":1270,"3":1330,"5":1200,"10":1200,"30":1200,"PET":1400},
+    Z145D:{"0":2390,"1":2390,"3":2390,"5":2390,"10":2390,"30":2390,"PET":2390},
+    Z120W:{"0":2340,"1":2280,"3":2340,"5":2210,"10":2210,"30":2210,"PET":null}
+  },
+  CTRL:{manual:810,aok220:2340,dooya:2210,aok50n:2730},
+  CTRL_LABEL:{manual:"มือดึง",aok220:"มอเตอร์ AOK 220V",dooya:"มอเตอร์ DOOYA",aok50n:"มอเตอร์ AOK 50N"},
+  MODEL_LABEL:{Z100:"JR-Z100",Z120:"JR-Z120",Z145D:"JR-Z145D (2 ชั้น)",Z120W:"JR-Z120W (ใหญ่พิเศษ)"},
+  FAB_LABEL:{"0":"0% ทึบ","1":"1-2%","3":"3%","5":"5%","10":"10%","30":"30%","PET":"PET ใส"},
+  MIN:{Z100:3,Z120:3,Z145D:3,Z120W:6},
+  MAXW:{Z100:5,Z120:5,Z145D:4,Z120W:30},
+  MAXH:{Z100:3,Z120:4,Z145D:3,Z120W:3},
+  MARK:{retail:2.0,project:1.75},
+  pickModel:function(w,h){ if(w>5)return "Z120W"; if(h>3)return "Z120"; return "Z100"; }
+};
 // === มุ้ง catalog สำหรับเป็น option ในบาน ===
 // itype: 'door' = เฉพาะประตู, 'both' = ใส่ได้ทั้งประตู+หน้าต่าง
 // overhang: true = ติดล้นนอกวงกบ (แจ้งในใบราคา)
@@ -705,7 +725,7 @@ const OPENING_PATTERNS = [
   {id:'p_custom',label:'กรอกเอง...',total:0,open:0,desc:''}
 ];
 
-const CATS=['กั้นห้องกระจก','บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','หลังคา','ฝ้า-ผนัง','เลื่อนภายใน','เส้นคาด','ลูกฟูก+คอมโพสิททึบ','มุ้ง','PC Door','บานเปลือย','shower','ฝาตู้','ตู้อลู','บานยก','YKK','บานหมุน','ดัดโค้ง','เสริม','ประตูรั้ว','ระแนง','ราวบันได','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด'];
+const CATS=['กั้นห้องกระจก','บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','หลังคา','ฝ้า-ผนัง','เลื่อนภายใน','เส้นคาด','ลูกฟูก+คอมโพสิททึบ','มุ้ง','PC Door','บานเปลือย','shower','ฝาตู้','ตู้อลู','บานยก','YKK','บานหมุน','ดัดโค้ง','เสริม','ประตูรั้ว','ระแนง','ราวบันได','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ม่านซิป'];
 // R3.2: Glasshouse OPTION dropdown — default จากใบเก่า · เซลล์แก้ได้
 const GH_OPTIONS=[
  {label:'เปลี่ยนเป็นอลูมิเนียม สีเทาซาฮาร่า (ทั้งหมด)', delta:-30000},
@@ -735,7 +755,7 @@ function prodOptionsG(g){
   return cs.map(c=>{ const it=PRODUCTS.filter(p=>p.cat===c); if(!it.length)return ''; return `<optgroup label="${c}">`+it.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')+`</optgroup>`; }).join('');
 }
 function prodOptionsG6(g){
-  const _GM={'1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],'2':['ประตูรั้ว','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได'],'3':['หลังคา','ฝ้า-ผนัง'],'4':['ตู้อลู','ฝาตู้'],'5':['มุ้ง'],'6':['กั้นห้องกระจก']};
+  const _GM={'1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],'2':['ประตูรั้ว','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได'],'3':['หลังคา','ฝ้า-ผนัง'],'4':['ตู้อลู','ฝาตู้'],'5':['มุ้ง'],'6':['กั้นห้องกระจก'],'7':['ม่านซิป']};
   const cats=_GM[g]||_GM['1']; const gi=parseInt(g);
   const inG=p=>(p.cat!=='เสริม'&&cats.includes(p.cat))||p.g===gi;
   const byCat={}; PRODUCTS.forEach(p=>{ if(inG(p)){ (byCat[p.cat]=byCat[p.cat]||[]).push(p); } });
@@ -1168,6 +1188,29 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       if(!(optSel && optSel.ghroof && optSel.ghroof.trim())) msgsGh.push('⚠ ยังไม่กรอกหลังคา');
       return {a:0, sell:sell, cost:null, addonLabel:'', msgs:msgsGh, ghPrice:ghPrice, ghOptDelta:optDelta};
     }
+    // R4.0: ม่านซิป (zipscreen) engine — สูตร/ค่าตรงกับเครื่องคิดราคาม่านซิปแยกทุกค่า
+    if(p.zipscreen){
+      const W=parseFloat(w)||0, H=parseFloat(h)||0;
+      const grp=(optSel&&optSel.zgrp)||'retail';
+      const selM=(optSel&&optSel.zmodel)||'auto';
+      const fb=(optSel&&optSel.zfab)||'5';
+      const ck=(optSel&&optSel.zctrl)||'aok220';
+      const m=(selM==='auto')?ZIP.pickModel(W,H):selM;
+      const msgsZ=[];
+      let rate=ZIP.FAB[m][fb];
+      if(rate===null||rate===undefined){ msgsZ.push('⚠ รุ่นนี้ไม่มีผ้านี้ — ใช้ 5% แทน'); rate=ZIP.FAB[m]['5']; }
+      if(W>ZIP.MAXW[m]) msgsZ.push('⚠ กว้างเกินรุ่น (สูงสุด '+ZIP.MAXW[m]+' ม.)');
+      if(H>ZIP.MAXH[m]) msgsZ.push('⚠ สูงเกินรุ่น (สูงสุด '+ZIP.MAXH[m]+' ม.)');
+      const mul=(m==='Z145D')?2:1;
+      const raw=W*H, area=Math.max(raw, ZIP.MIN[m]);
+      if(raw>0&&raw<ZIP.MIN[m]) msgsZ.push('คิดพื้นที่ขั้นต่ำ '+ZIP.MIN[m]+' ตร.ม.');
+      const landed=area*rate + ZIP.CTRL[ck]*mul;
+      const goods=landed*ZIP.MARK[grp];
+      const sell=Math.round(goods/100)*100;
+      msgsZ.unshift('ม่านซิป '+ZIP.MODEL_LABEL[m]+(selM==='auto'?' (auto)':'')+' · ผ้า '+ZIP.FAB_LABEL[fb]+' · '+ZIP.CTRL_LABEL[ck]+(mul>1?' ×2 (2ชั้น)':'')+' · '+area.toFixed(2)+' ตร.ม. ('+(grp==='retail'?'ปลีก ×2.0':'โครงการ ×1.75')+')');
+      msgsZ.push('ℹ ค่าติดตั้ง (5,000+600/ตร.ม.) + ส่วนลดปริมาณ คิดที่ระดับใบเสนอราคา');
+      return {a:area, sell:sell, cost:null, addonLabel:'', msgs:msgsZ};
+    }
     if(p.glass_replace){
     const W=parseFloat(w)||0, H=parseFloat(h)||0;
     const A = W*H;
@@ -1460,7 +1503,7 @@ function addItem(container){
   d.innerHTML=
    `<div class="top"><span style="flex:1;color:#888;font-size:13px;">ส่วนที่ ${id}</span><button type="button" class="del" title="ลบส่วนนี้">&times;</button></div>`+
    `<div class="chgrid">`+
-     `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option></select></div>`+
+     `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div>`+
      `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
      `<div class="full"><label>ประเภท</label><select class="i-type"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
@@ -1525,6 +1568,15 @@ function buildItemOpts(d){
     h+='<label class="gh-row">หมายเหตุ "รวม" <textarea class="o-ghnote-inc" rows="2" placeholder="เช่น รวมงานรื้อหลังคาเดิม / ทำสีปิด / ตัดท่อแอร์ 1 จุด"></textarea></label>';
     h+='<label class="gh-row">หมายเหตุ "ไม่รวม" <textarea class="o-ghnote-exc" rows="2" placeholder="เช่น ไม่รวม รื้อพื้น/ลงเข็ม/ทำคาน/ปูกระเบื้อง/เดินไฟ"></textarea></label>';
     h+='<label class="gh-row">OPTION (เลือกได้หลายข้อ) <select multiple class="o-ghoption" size="6">'+GH_OPTIONS.map(function(o,i){return '<option value="'+i+'">'+o.label+' ('+(o.delta>0?'+':'')+fmt(o.delta)+')</option>';}).join('')+'</select></label>';
+    h+='</div>';
+  }
+  // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
+  if(p.zipscreen){
+    h+='<div class="gh-box"><b style="color:#B3151D;">🪟 ม่านซิป — กรอกขนาดในช่อง กว้าง/สูง ด้านบน</b><div style="font-size:12px;color:#666;margin-bottom:6px;">เลือกรุ่น/ผ้า/ระบบ/กลุ่มลูกค้า แล้วราคาคิดอัตโนมัติ</div>';
+    h+='<label class="gh-row">กลุ่มลูกค้า <select class="o-zgrp"><option value="retail" selected>ปลีก (×2.0)</option><option value="project">โครงการ (×1.75)</option></select></label>';
+    h+='<label class="gh-row">รุ่น <select class="o-zmodel"><option value="auto" selected>อัตโนมัติ (ตามขนาด)</option><option value="Z100">JR-Z100 (กว้าง≤5 สูง≤3)</option><option value="Z120">JR-Z120 (สูงถึง 4 ม.)</option><option value="Z145D">JR-Z145D (2 ชั้น)</option><option value="Z120W">JR-Z120W (กว้างถึง 30 ม.)</option></select></label>';
+    h+='<label class="gh-row">ผ้า (ความโปร่ง) <select class="o-zfab"><option value="0">0% ทึบ</option><option value="1">1-2%</option><option value="3">3%</option><option value="5" selected>5%</option><option value="10">10%</option><option value="30">30%</option><option value="PET">PET ใส</option></select></label>';
+    h+='<label class="gh-row">ระบบควบคุม <select class="o-zctrl"><option value="manual">มือดึง</option><option value="aok220" selected>มอเตอร์ AOK 220V</option><option value="dooya">มอเตอร์ DOOYA</option><option value="aok50n">มอเตอร์ AOK 50N</option></select></label>';
     h+='</div>';
   }
   if(p.opts){ p.opts.forEach(o=>{ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }); }
@@ -1701,6 +1753,13 @@ function readItem(d){
     optSel.ghnoteExc = (d.querySelector('.o-ghnote-exc')||{}).value || '';
     const ghOpt = d.querySelector('.o-ghoption');
     optSel.ghoption = ghOpt ? Array.from(ghOpt.selectedOptions).map(function(o){return o.value;}) : [];
+  }
+  // R4.0: ม่านซิป — เก็บ รุ่น/ผ้า/ระบบ/กลุ่มลูกค้า
+  if(p.zipscreen){
+    optSel.zgrp   = (d.querySelector('.o-zgrp')   ||{}).value || 'retail';
+    optSel.zmodel = (d.querySelector('.o-zmodel') ||{}).value || 'auto';
+    optSel.zfab   = (d.querySelector('.o-zfab')   ||{}).value || '5';
+    optSel.zctrl  = (d.querySelector('.o-zctrl')  ||{}).value || 'aok220';
   }
   if(p.custom_item){
     const _cn=d.querySelector('.o-customname'); optSel.customName=_cn?_cn.value:'';
