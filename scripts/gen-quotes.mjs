@@ -149,6 +149,10 @@ JOBS.forEach((job, i) => {
   clearItems();
   setF2("custName", job.cust);
   setF2("qdate", job.date);
+  setF2("sellerName", "Sales Admin (ทดสอบ)");
+  setF2("custContact", job.cust + " (Line)");
+  setF2("custPhone", job.tel || "08X-XXX-XXXX");
+  setF2("custAddress", job.addr || "เลขที่ — หมู่ — ต.— อ.— จ.— 00000 (ที่อยู่ทดสอบระบบ)");
   job.items.forEach(addItem);
   w.calcQuote();
   w.genQuote();
@@ -156,7 +160,7 @@ JOBS.forEach((job, i) => {
   const out = `<!doctype html><html lang="th"><head><meta charset="utf-8"><style>
 ${STYLE}
 /* ===== override: ใช้แสดงใบเดี่ยวๆ + กัน print CSS เดิมซ่อนเนื้อหา ===== */
-@page{size:A4;margin:8mm;}
+@page{size:A4;margin:9mm 9mm 18mm 9mm;}
 html,body{background:#fff !important;}
 #sheet{max-width:800px;margin:0 auto;background:#fff;}
 .quote{box-shadow:none !important;border-radius:0 !important;background:#fff !important;color:#1f2937 !important;max-width:100% !important;}
