@@ -14,6 +14,7 @@ type NavItem = { href: string; icon: string; label: string };
 // กลุ่มเอกสาร/บัญชี (ฝั่ง Quotation) — เห็นได้ทุก role ที่ล็อกอิน
 const DOC_NAV: NavItem[] = [
   { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+  { href: "/queue", icon: "calendar", label: "คิวงาน" },
   { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
   { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
