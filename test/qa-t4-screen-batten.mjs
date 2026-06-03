@@ -91,21 +91,21 @@ const TCS = [
   {
     tc: "TC3", name: "ราวกันตก 47.4 บันไดตรง เสาอลู (imp6) ยาว 6.0 ม. (พยายามใส่ราวจับ ยู 5 หุน)",
     build() { const ch = addItem(doc.getElementById("items")); setItem(ch, { group: 2, prod: "imp6", w: 6.0, h: 1.0, qty: 1, opts: { ".o-handrail": "u5" } }); },
-    // imp6: len=6 → tier [5,10]=8000. sell=roundUp(6*8000)=48000. (ราวจับ option UI ไม่ render → ไม่ถูกบวก = BUG)
+    // imp6: len=6 → tier [5,10]=8000. + ราวจับ ยู 5 หุน 500/ม. → roundUp(6*8000 + 500*6)=51000
     expect(it) {
-      const len = it.r.a, rate = 8000, byLen = len * rate;
-      const sell = roundUp(byLen);
-      return { sell, note: `ยาว ${len} × ${fmt(rate)} = ${fmt(byLen)} → roundUp (เครื่องไม่บวกราวจับ — option ไม่ render, ดู FINDING)` };
+      const len = it.r.a, rate = 8000, byLen = len * rate, handrail = 500 * len; // ยู 5 หุน +500/ม.
+      const sell = roundUp(byLen + handrail);
+      return { sell, note: `ยาว ${len} × ${fmt(rate)} = ${fmt(byLen)} + ราวจับ ยู 5 หุน ${fmt(handrail)} → roundUp` };
     },
   },
   {
     tc: "TC4", name: "ราวกันตก 47.2 บันไดเฉียง เสาอลู (imp3) ยาว 4.0 ม. (พยายามใส่ราวจับ กล่อง)",
     build() { const ch = addItem(doc.getElementById("items")); setItem(ch, { group: 2, prod: "imp3", w: 4.0, h: 1.0, qty: 1, opts: { ".o-handrail": "box" } }); },
-    // imp3: len=4 → tier [0,5]=9700. sell=roundUp(4*9700)=38800→39000. (ราวจับ option UI ไม่ render → ไม่ถูกบวก = BUG)
+    // imp3: len=4 → tier [0,5]=9700. + ราวจับ กล่อง 600/ม. → roundUp(4*9700 + 600*4)=42000
     expect(it) {
-      const len = it.r.a, rate = 9700, byLen = len * rate;
-      const sell = roundUp(byLen);
-      return { sell, note: `ยาว ${len} × ${fmt(rate)} = ${fmt(byLen)} → roundUp (เครื่องไม่บวกราวจับ — option ไม่ render, ดู FINDING)` };
+      const len = it.r.a, rate = 9700, byLen = len * rate, handrail = 600 * len; // กล่อง 1"x2" +600/ม.
+      const sell = roundUp(byLen + handrail);
+      return { sell, note: `ยาว ${len} × ${fmt(rate)} = ${fmt(byLen)} + ราวจับ กล่อง ${fmt(handrail)} → roundUp` };
     },
   },
 ];

@@ -14,4 +14,5 @@ next-env.d.ts
 # ไฟล์ชั่วคราว/ที่มาของการรวม (ไม่ต้อง commit)
 /_src_quotation
 /_src_jrerp
-/.claude
+/_tmp_jrerp
+/.claude/settings.local.json
