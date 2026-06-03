@@ -12,6 +12,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   const [sel, setSel] = useState<Customer | null>(initial[0] ?? null);
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -20,18 +21,32 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
     [c.name, c.job, c.phone, c.line_id].join(" ").toLowerCase().includes(q.toLowerCase())
   );
 
+  function startAdd() { setForm(EMPTY); setEditId(null); setAdding(true); setSel(null); setErr(""); }
+  function startEdit(c: Customer) {
+    setForm({ name: c.name, job: c.job, address: c.address, tax_id: c.tax_id, line_id: c.line_id, phone: c.phone, contact_person: c.contact_person });
+    setEditId(c.id); setAdding(true); setErr("");
+  }
+  function cancelForm() { setAdding(false); setEditId(null); setErr(""); }
+
   async function save() {
     if (!form.name.trim()) { setErr("ต้องระบุชื่อลูกค้า"); return; }
     setBusy(true); setErr("");
-    const res = await fetch("/api/customers", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
+    const editing = editId != null;
+    const res = await fetch(editing ? `/api/customers/${editId}` : "/api/customers", {
+      method: editing ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
     });
     const json = await res.json();
     setBusy(false);
     if (!res.ok) { setErr(json.error ?? "บันทึกไม่สำเร็จ"); return; }
-    setList([json.data, ...list]);
-    setSel(json.data);
-    setAdding(false); setForm(EMPTY);
+    if (editing) {
+      setList(list.map((c) => (c.id === editId ? json.data : c)));
+      setSel(json.data);
+    } else {
+      setList([json.data, ...list]);
+      setSel(json.data);
+    }
+    setAdding(false); setEditId(null); setForm(EMPTY);
   }
 
   return (
@@ -44,7 +59,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
           ทะเบียนลูกค้า
         </h1>
         {canWrite && (
-          <button onClick={() => { setAdding(true); setSel(null); }} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+          <button onClick={startAdd} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
             <Icon name="plus" size={16} /> เพิ่มลูกค้าใหม่
           </button>
         )}
@@ -72,7 +87,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
         <Card className="p-6 lg:col-span-2">
           {adding ? (
             <div>
-              <h3 className="text-lg font-bold text-brand-dark mb-4">เพิ่มลูกค้าใหม่</h3>
+              <h3 className="text-lg font-bold text-brand-dark mb-4">{editId != null ? "แก้ไขข้อมูลลูกค้า" : "เพิ่มลูกค้าใหม่"}</h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <FormField label="ชื่อลูกค้า/งาน *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} wide />
                 <FormField label="ชื่องาน/โปรเจกต์" value={form.job} onChange={(v) => setForm({ ...form, job: v })} wide />
@@ -87,7 +102,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 <button onClick={save} disabled={busy} className="press rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
                   {busy ? "กำลังบันทึก…" : "บันทึก"}
                 </button>
-                <button onClick={() => { setAdding(false); setErr(""); }} className="press glass-soft rounded-xl px-5 py-2.5 text-sm text-ink-2">ยกเลิก</button>
+                <button onClick={cancelForm} className="press glass-soft rounded-xl px-5 py-2.5 text-sm text-ink-2">ยกเลิก</button>
               </div>
             </div>
           ) : sel ? (
@@ -97,7 +112,14 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                   <h3 className="text-lg font-bold text-brand-dark">{sel.name}</h3>
                   <p className="text-sm text-ink-3">{sel.job || "—"}</p>
                 </div>
-                <Badge tone="violet">ลูกค้า #{String(sel.id).padStart(4, "0")}</Badge>
+                <div className="flex items-center gap-2">
+                  {canWrite && (
+                    <button onClick={() => startEdit(sel)} className="press inline-flex items-center gap-1.5 glass-soft rounded-lg px-3 py-1.5 text-sm text-brand-dark font-semibold">
+                      <Icon name="file" size={14} /> แก้ไข
+                    </button>
+                  )}
+                  <Badge tone="violet">ลูกค้า #{String(sel.id).padStart(4, "0")}</Badge>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-5 text-sm">
                 <Detail label="ที่อยู่ออกบิล" val={sel.address} wide />

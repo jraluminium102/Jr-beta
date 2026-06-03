@@ -17,13 +17,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const supabase = createClient();
 
-  // 1) update งวดที่รับชำระ (ต้องอยู่ในใบวางบิลนี้)
+  // 1) ดึงงวด (ยืนยันว่าอยู่ในใบวางบิลนี้จริง) เพื่อคำนวณสถานะงวดจากยอดที่จ่าย
+  const { data: inst, error: iErr } = await supabase
+    .from("billing_installments")
+    .select("amount")
+    .eq("id", body.installment_id)
+    .eq("billing_note_id", params.id)
+    .single<{ amount: number }>();
+  if (iErr || !inst) return fail("ไม่พบงวดในใบวางบิลนี้", 404);
+
+  // installment_status enum = ('pending','paid') เท่านั้น → จ่ายครบ=paid, จ่ายบางส่วน=pending
+  // (สถานะ "partial" อยู่ที่ระดับใบวางบิล billing_status ไม่ใช่ระดับงวด)
+  const instStatus = paid_amount >= (Number(inst.amount) || 0) ? "paid" : "pending";
+
+  // 2) update งวดที่รับชำระ
   const { error: uErr } = await supabase
     .from("billing_installments")
     .update({
       paid_amount,
       paid_date: body.paid_date || new Date().toISOString().slice(0, 10),
-      status: "paid",
+      status: instStatus,
     })
     .eq("id", body.installment_id)
     .eq("billing_note_id", params.id);

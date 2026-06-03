@@ -3,20 +3,29 @@ import { createClient } from "./supabase/server";
 import type { Profile, UserRole } from "./types";
 
 export async function getProfile(): Promise<Profile | null> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // กัน 500 ทั้งเว็บเมื่อ env Supabase ยังไม่ถูกตั้ง — ให้ layout redirect ไป /login แทน
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return null;
+  }
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .eq("id", user.id)
-    .single();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, role")
+      .eq("id", user.id)
+      .single();
 
-  if (!data) return { id: user.id, full_name: "", role: "VIEWER" };
-  return data as Profile;
+    if (!data) return { id: user.id, full_name: "", role: "VIEWER" };
+    return data as Profile;
+  } catch {
+    // Supabase ไม่พร้อม/เครือข่ายมีปัญหา → ถือว่ายังไม่ login (ไม่ทำให้ 500)
+    return null;
+  }
 }
 
 // แอพรวม: เขียนเอกสารบัญชีได้ = ADMIN / SALES / ACCOUNTING (map จาก sales/admin/owner เดิม)

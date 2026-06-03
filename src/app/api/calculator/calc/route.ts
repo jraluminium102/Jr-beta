@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
     },
   };
 
-  // cost และ profit เฉพาะ owner
-  if (profile.role === "owner") {
+  // cost และ profit เฉพาะเจ้าของ/แอดมิน (role_t: ADMIN — เดิมเขียน "owner" ซึ่งไม่มีใน role_t)
+  if (profile.role === "ADMIN") {
     response.cost = result.cost;
     response.profit = result.cost !== null && result.sell > 0
       ? Math.round(((result.sell - result.cost) / result.sell) * 100)

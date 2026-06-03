@@ -63,17 +63,21 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
     [installments, installmentId]
   );
 
-  // เมื่อเปลี่ยนใบวางบิล → reset งวด + ตั้งยอด default = ยอดบิล
+  // ยอดงวด/ยอดบิลมาจาก quotation.net ซึ่ง "รวม VAT แล้ว" → ถอด VAT ออกเพื่อให้ได้ "ยอดก่อน VAT"
+  // (กัน VAT ซ้อน: ถ้า default เป็นยอดรวม VAT แล้วบวก 7% อีกจะผิด) · ยอดสุทธิใบเสร็จจะ ≈ ยอดงวด
+  const preVat = (incl: number) => (vatRate ? round2(incl / (1 + vatRate / 100)) : incl);
+
+  // เมื่อเปลี่ยนใบวางบิล → reset งวด + ตั้งยอด default = ถอด VAT จากยอดบิล
   useEffect(() => {
     setInstallmentId("");
-    if (selected) setAmount(String(selected.total));
+    if (selected) setAmount(String(preVat(selected.total)));
   }, [selected]);
 
-  // เมื่อเลือกงวด → ตั้งยอด default = ยอดงวด
+  // เมื่อเลือกงวด/เปลี่ยน VAT → ตั้งยอด default = ถอด VAT จากยอดงวด
   useEffect(() => {
-    if (selectedInstallment) setAmount(String(selectedInstallment.amount));
-    else if (selected) setAmount(String(selected.total));
-  }, [selectedInstallment, selected]);
+    if (selectedInstallment) setAmount(String(preVat(selectedInstallment.amount)));
+    else if (selected) setAmount(String(preVat(selected.total)));
+  }, [selectedInstallment, selected, vatRate]);
 
   const amountNum = Number(amount) || 0;
   const vatAmt = round2((amountNum * vatRate) / 100);
