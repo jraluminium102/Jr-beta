@@ -1,0 +1,17 @@
+/node_modules
+/.next
+/out
+/build
+.DS_Store
+*.pem
+npm-debug.log*
+.env
+.env*.local
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# ไฟล์ชั่วคราว/ที่มาของการรวม (ไม่ต้อง commit)
+/_src_quotation
+/_src_jrerp
+/.claude
