@@ -5,6 +5,8 @@
 import type { QuotationItem } from "./types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+// VAT/หัก ณ ที่จ่าย ปัดเป็น "บาทเต็ม" ให้ตรงกับเอกสารจริง (ทุกใบโชว์บาทเต็ม)
+const roundBaht = (n: number) => Math.round(n + Number.EPSILON);
 
 export interface MoneyInput {
   items: Pick<QuotationItem, "qty" | "unit_price">[];
@@ -29,9 +31,9 @@ export function computeTotals(input: MoneyInput): MoneyResult {
   );
   const discount_amt = round2((subtotal * (Number(input.discount_pct) || 0)) / 100);
   const after_discount = round2(subtotal - discount_amt);
-  const vat_amt = round2((after_discount * (Number(input.vat_rate) || 0)) / 100);
+  const vat_amt = roundBaht((after_discount * (Number(input.vat_rate) || 0)) / 100);
   const total = round2(after_discount + vat_amt);
-  const wht_amt = round2((after_discount * (Number(input.wht_rate) || 0)) / 100);
+  const wht_amt = roundBaht((after_discount * (Number(input.wht_rate) || 0)) / 100);
   const net = round2(total - wht_amt);
   return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net };
 }

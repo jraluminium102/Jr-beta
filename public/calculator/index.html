@@ -1900,7 +1900,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
   const svcAmt=svc?svc.amt:0;
   const svcLines=(svc&&svc.lines?svc.lines.filter(l=>l[1]>0):[]);
   const vatPctEl=document.getElementById('vat-pct'); const vatPct=vatPctEl?(parseFloat(vatPctEl.value)||0):7;
-  const vat=(net+svcAmt)*vatPct/100, withVat=net+svcAmt+vat;
+  const vat=Math.round((net+svcAmt)*vatPct/100), withVat=net+svcAmt+vat;
   const _d=(date||'').split('-'); const _dd=(_d[0]||'01'), _mm=(_d[1]||'01'), _yy=(_d[2]||'00');
   const _thDate=_dd+'-'+_mm+'-'+_yy;
   let qno;
@@ -2251,7 +2251,7 @@ function exportQuoteExcel(){
   const discAmt=subtotal*discPct/100, net=subtotal-discAmt-discFlat;
   const totalArea=list.reduce((x,it)=>x+it.r.a*it.qty,0);
   const svc=jobServices(net, totalArea);
-  const vat=(net+svc.amt)*0.07, total=net+svc.amt+vat;
+  const vat=Math.round((net+svc.amt)*0.07), total=net+svc.amt+vat;
   data.push([]);
   data.push(['','','','','','','ราคารวม', subtotal]);
   if(discPct>0) data.push(['','','','','','','ส่วนลดพิเศษ '+discPct+'%', -discAmt]);
