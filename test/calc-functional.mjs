@@ -50,14 +50,14 @@ function visibleText(el) {
 function readGrandTotal() {
   const g = doc.querySelector("#quoteContent .qtot .g");
   if (!g) return NaN;
-  const m = (g.textContent || "").replace(/[^\d]/g, "");
+  const m = (g.textContent || "").replace(/\.\d+/g, "").replace(/[^\d]/g, ""); // ตัดทศนิยม .00 ก่อน
   return m ? parseInt(m, 10) : NaN;
 }
 // อ่านค่า "ราคารวม" (subtotal บรรทัดแรกใน .qtot)
 function readSubtotal() {
   const l = doc.querySelector("#quoteContent .qtot .l");
   if (!l) return NaN;
-  const m = (l.textContent || "").replace(/[^\d]/g, "");
+  const m = (l.textContent || "").replace(/\.\d+/g, "").replace(/[^\d]/g, "");
   return m ? parseInt(m, 10) : NaN;
 }
 
@@ -175,7 +175,7 @@ const html4 = doc.getElementById("quoteContent").innerHTML;
 want("T4.1 ชื่อบริษัท 'เจอาร์'", text4.includes("เจอาร์") || html4.includes("เจอาร์"));
 want("T4.2 หัวข้อ 'ใบเสนอราคา'", html4.includes("ใบเสนอราคา"));
 // หัวตาราง
-const headers = ["รายละเอียด", "จำนวน", "ราคา/หน่วย", "ยอดรวม"];
+const headers = ["รายละเอียด", "จำนวน", "ราคาต่อหน่วย", "ยอดรวม"];
 headers.forEach((h) => want("T4.3 หัวตาราง '" + h + "'", html4.includes(h)));
 want("T4.4 'รวมทั้งสิ้น'", text4.includes("รวมทั้งสิ้น"));
 // จำนวนเงินตัวอักษร (วงเล็บ + บาท)

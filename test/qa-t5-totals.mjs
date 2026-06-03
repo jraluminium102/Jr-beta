@@ -26,7 +26,7 @@ const setField = (root, sel, value) => {
 };
 const setId = (id, value) => setField(doc, "#" + id, value);
 const txt = (el) => (el ? (el.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim() : "");
-const numOf = (sel) => { const el = doc.querySelector(sel); if (!el) return NaN; const m = (el.textContent || "").replace(/[^\d]/g, ""); return m ? parseInt(m, 10) : NaN; };
+const numOf = (sel) => { const el = doc.querySelector(sel); if (!el) return NaN; const m = (el.textContent || "").replace(/\.\d+/g, "").replace(/[^\d]/g, ""); return m ? parseInt(m, 10) : NaN; };
 const readSubtotal = () => numOf("#quoteContent .qtot .l");
 const readGrand = () => numOf("#quoteContent .qtot .g");
 const closeSvc = () => {

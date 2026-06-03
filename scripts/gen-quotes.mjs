@@ -18,6 +18,8 @@ const dom = new JSDOM(calcHtml, { runScripts: "dangerously", pretendToBeVisual: 
 await new Promise((r) => { dom.window.addEventListener("load", r); setTimeout(r, 1500); });
 const w = dom.window, doc = w.document;
 const fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
+// ใบจริงไม่บวก Protection อัตโนมัติ → ปิด checkbox svc-protect
+{ const sp = doc.getElementById("svc-protect"); if (sp && sp.checked) { sp.checked = false; fire(sp, "change"); } }
 function setF(ch, sel, v) { const el = ch.querySelector(sel); if (el) { el.value = String(v); fire(el, "input"); fire(el, "change"); } }
 function clearItems() { doc.getElementById("items").innerHTML = ""; }
 
