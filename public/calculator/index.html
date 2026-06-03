@@ -1527,6 +1527,7 @@ function addItem(container){
      `<div class="i-panels-wrap"><label>จำนวนบาน</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
      `<div><label>จำนวนชุด</label><input class="i-qty" type="number" step="1" min="1" value="1"></div>`+
      `<div class="full"><label>ราคากำหนดเอง (บาท · เว้น=คิดออโต้)</label><input class="i-override" type="number" min="0" step="100" placeholder="ปล่อยว่าง = คิดอัตโนมัติ"></div>`+
+     `<div class="full"><label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label><textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea></div>`+
    `</div>`+
    `<details class="optbox"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
@@ -1818,6 +1819,7 @@ function readItem(d){
     groupOptText:(_sb&&_sb.querySelector('.set-opttext'))?_sb.querySelector('.set-opttext').value.trim():'',
     groupOptDelta:(_sb&&_sb.querySelector('.set-optdelta'))?(parseFloat(_sb.querySelector('.set-optdelta').value)||0):0,
     position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
+    note:(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'',
     div:d};
 }
 function svcNum(id){ const e=document.getElementById(id); return e?(parseFloat(e.value)||0):0; }
@@ -1891,11 +1893,15 @@ function resetQuote(){
 
 /* ---- QUOTE doc (ใช้ร่วมทั้งใบเสนอราคา + คิดเร็ว) ---- */
 function today(){ const t=new Date(); return String(t.getDate()).padStart(2,'0')+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String((t.getFullYear()+543)%100).padStart(2,'0'); }
-function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta){
+function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note){
   // PDF-like format: # | รายละเอียด (multi-line) | จำนวน | ราคา/หน่วย | ยอดรวม
   let content = `<div style="font-weight:700;color:#1F2937;">${name}</div>`;
   if (prod) content += `<div style="margin:4px 0 0 8px;color:#1F2937;">- ${prod}</div>`;
   /* ใบจริงไม่โชว์ขนาดในใบเสนอราคา — ตัดบรรทัด "ขนาด:" ออก (R4.1) */
+  // R4.2: หมายเหตุ/OPTION ที่เซลล์พิมพ์เอง (ขึ้นก่อน "รายละเอียดงาน") — OPTION=แดง, อื่น=เทา
+  if (note) { String(note).split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(!ln) return;
+    const isOpt = ln.indexOf('OPTION')===0;
+    content += `<div style="margin:4px 0 0 8px;font-size:13px;color:${isOpt?'#B3151D':'#6B7280'};">${ln}</div>`; }); }
   if (addons && addons.length){ if(window.qSplit){ addons.forEach(a => { content += `<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;color:#1F2937;font-size:13px;"><span>+ ${a.n}</span><span style="font-weight:600;">${fmt(a.p)}</span></div>`; }); } else { content += `<div style="margin:2px 0 0 8px;color:#1F2937;font-size:13px;">(มี ${addons.map(a=>a.n).join(', ')})</div>`; } }
   // รายละเอียดงาน
   if (glass && glass !== '-') {
@@ -2165,7 +2171,7 @@ function genQuote(keepNo){
     rowIdx++;
     const line=it.r.sell*it.qty; subtotal+=line;
     const d = itemDetail(it);
-    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), it.w+'×'+it.h+' ม.', d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta);
+    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), it.w+'×'+it.h+' ม.', d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;

@@ -46,6 +46,8 @@ function addItem(it) {
   if (it.glass) { const g = ch.querySelector(".i-glass"); if (g) { g.value = String(it.glass); fire(g, "change"); } }
   // ตำแหน่ง/ด้าน
   if (it.pos) setF(ch, ".i-position", it.pos);
+  // หมายเหตุ/OPTION ต่อรายการ (ขึ้นในใบ)
+  if (it.note) setF(ch, ".i-note", it.note);
   // option เฉพาะรายการ (.o-*)
   for (const [s, v] of Object.entries(it.opts || {})) setF(ch, s, v);
   return ch;
@@ -69,7 +71,7 @@ const ZIP = (grp, model, fab, ctrl) => ({ ".o-zgrp": grp, ".o-zmodel": model, ".
 
 const JOBS = [
   { cust:"คุณทดสอบ มานะ ใจดี (บ้านเดี่ยว 2 ชั้น)", date:"04-06-69", items:[
-    {g:1,prod:"sliding_euro",pos:"โถงหน้าบ้าน",w:3.6,h:2.4,panels:4,qty:1,glassProduct:1,glass:1},
+    {g:1,prod:"sliding_euro",pos:"โถงหน้าบ้าน",w:3.6,h:2.4,panels:4,qty:1,glassProduct:1,glass:1,note:"OPTION : หากลูกค้าต้องการเปลี่ยนเป็น กระจกเทมเปอร์ใส 6 มม. ราคาเพิ่ม 6,000 บาท\nหมายเหตุ : ราคารวมงานรื้อบานเดิม (ไม่รวมวัสดุ)"},
     {g:1,prod:"casement_euro",pos:"ห้องนอนใหญ่",w:1.6,h:2.2,panels:2,qty:2,glassProduct:1,glass:1},
     {g:1,prod:"fixed_glass",pos:"โถงบันได",w:2.0,h:3.0,qty:1,glassProduct:1,glass:1},
     {g:1,prod:"awning_euro",pos:"ห้องน้ำ",w:0.8,h:1.0,qty:4,glassProduct:1},
