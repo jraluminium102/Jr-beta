@@ -17,10 +17,13 @@ const TYPES: { v: IssueType; th: string }[] = [
   { v: "PRODUCTION_DELAY", th: "ผลิตเลท" }, { v: "INSTALLATION_DELAY", th: "ติดตั้งช้า" }, { v: "OTHER", th: "อื่นๆ" },
 ];
 
-export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [jobId, setJobId] = useState("");
+export function CreateIssueModal({ onClose, onSaved, presetJobId, presetJobLabel, presetPhase }: {
+  onClose: () => void; onSaved: () => void;
+  presetJobId?: string; presetJobLabel?: string; presetPhase?: IssuePhase;
+}) {
+  const [jobId, setJobId] = useState(presetJobId ?? "");
   const [q, setQ] = useState("");
-  const [phase, setPhase] = useState<IssuePhase>("INSTALLATION");
+  const [phase, setPhase] = useState<IssuePhase>(presetPhase ?? "INSTALLATION");
   const [type, setType] = useState<IssueType>("CUSTOMER_COMPLAINT");
   const [severity, setSeverity] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [detail, setDetail] = useState("");
@@ -34,7 +37,7 @@ export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; on
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
-  const { data: jobs } = useQuery({ queryKey: ["jobs", "issue-picker"], queryFn: () => api.get<JobOpt[]>("/jobs?limit=100").then((r) => r.data) });
+  const { data: jobs } = useQuery({ queryKey: ["jobs", "issue-picker"], queryFn: () => api.get<JobOpt[]>("/jobs?limit=100").then((r) => r.data), enabled: !presetJobId });
   const filtered = useMemo(() => {
     const list = jobs ?? [];
     if (!q) return list;
@@ -70,7 +73,9 @@ export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; on
         {/* job picker */}
         <div className="mb-3">
           <label className={lbl} style={{ color: "var(--t-low)" }}>เลือกงาน <span className="text-rose-300">*</span></label>
-          {jobId && selected ? (
+          {presetJobId ? (
+            <div className="glass-card rounded-xl px-3.5 py-2.5"><span className="text-white text-sm font-medium tnum">{presetJobLabel ?? "งานที่เลือก"}</span></div>
+          ) : jobId && selected ? (
             <div className="flex items-center justify-between glass-card rounded-xl px-3.5 py-2.5">
               <span className="text-white text-sm font-medium tnum">{selected.job_code} · {selected.customer_name}</span>
               <button type="button" onClick={() => setJobId("")} className="focusable text-[12px] text-sky-200 hover:underline">เปลี่ยน</button>

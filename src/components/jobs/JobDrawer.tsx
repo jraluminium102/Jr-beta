@@ -6,8 +6,11 @@ import { PROD_STATUS, INST_STATUS, JOB_STATUS } from "@/lib/constants";
 import { baht, thDate } from "@/lib/format";
 import { calcFinancials } from "@/lib/finance";
 import { Chip, Tag, Spinner } from "@/components/ui/primitives";
-import { X, ShieldCheck } from "@/components/ui/icons";
-import type { Job, Production, Installation, FinanceEntry, Issue } from "@/lib/database.types";
+import { X, ShieldCheck, TriangleAlert } from "@/components/ui/icons";
+import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
+import type { Job, Production, Installation, FinanceEntry, Issue, IssuePhase } from "@/lib/database.types";
+
+const SEV_TAG: Record<string, string> = { HIGH: "bg-rose-500/30 text-rose-100 border-rose-300/30", MEDIUM: "bg-amber-500/25 text-amber-100 border-amber-300/30", LOW: "bg-white/12 text-white/80 border-white/15" };
 
 type Detail = Job & {
   estimator: { full_name: string | null } | null;
@@ -19,6 +22,8 @@ type Detail = Job & {
 export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: string; canFinance: boolean; onClose: () => void; onChanged: () => void }) {
   const [tab, setTab] = useState<"overview" | "production" | "installation" | "finance">("overview");
   const [depOpen, setDepOpen] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false);
+  const issuePhase: IssuePhase = tab === "production" ? "PRODUCTION" : tab === "installation" ? "INSTALLATION" : "SALES";
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -58,7 +63,10 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                 <div className="text-white font-bold text-lg tnum">{job.job_code}</div>
                 <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>{job.customer_name} · {job.customer_area ?? "—"}</div>
               </div>
-              <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-11 h-11 inline-flex items-center justify-center rounded-xl text-white/70 hover:bg-white/10"><X size={20} /></button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => setIssueOpen(true)} className="focusable pressable inline-flex items-center gap-1.5 rounded-xl px-3 h-11 text-[13px] font-medium bg-rose-500/20 border border-rose-300/30 text-rose-100 hover:bg-rose-500/30"><TriangleAlert size={16} /> แจ้งปัญหา</button>
+                <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-11 h-11 inline-flex items-center justify-center rounded-xl text-white/70 hover:bg-white/10"><X size={20} /></button>
+              </div>
             </div>
 
             <div className="px-5 sm:px-6 pt-4 flex gap-1.5 flex-wrap" role="tablist">
@@ -95,6 +103,19 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                       <Row l="มัดจำ" v={job.deposit_amount ? `${baht(job.deposit_amount)} ฿` : "—"} num />
                     </>}
                   </div>
+                  {job.issues?.some((i) => i.status !== "CLOSED") && (
+                    <div className="mt-4">
+                      <div className="text-[12px] mb-1.5" style={{ color: "var(--t-low)" }}>ปัญหาที่ยังเปิด</div>
+                      <div className="space-y-1.5">
+                        {job.issues.filter((i) => i.status !== "CLOSED").map((i) => (
+                          <div key={i.id} className="flex items-start gap-2 bg-white/8 border border-white/10 rounded-xl px-3 py-2">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${SEV_TAG[i.severity] ?? SEV_TAG.LOW}`}>{i.severity}</span>
+                            <span className="text-[13px] text-white/90 flex-1">{i.detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {depOpen && <DepositForm jobId={jobId} onDone={() => { setDepOpen(false); refetch(); onChanged(); }} onCancel={() => setDepOpen(false)} />}
                 </div>
               )}
@@ -147,6 +168,12 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                 </div>
               )}
             </div>
+            {issueOpen && (
+              <CreateIssueModal
+                presetJobId={job.id} presetJobLabel={`${job.job_code ?? ""} · ${job.customer_name}`} presetPhase={issuePhase}
+                onClose={() => setIssueOpen(false)}
+                onSaved={() => { setIssueOpen(false); refetch(); onChanged(); }} />
+            )}
           </>
         )}
       </div>
