@@ -58,6 +58,8 @@ const fieldsSchema = z.object({
   design_start:   z.string().optional(),
   design_end:     z.string().optional(),
   remark:         z.string().optional(),
+  on_hold:        z.boolean().optional(),
+  on_hold_reason: z.string().nullish(),
 });
 
 // PATCH /api/jobs/:id

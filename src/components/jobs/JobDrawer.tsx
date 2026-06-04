@@ -86,6 +86,20 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                     ) : null}
                   </div>
 
+                  {/* พักงาน (ON_HOLD) */}
+                  <div className="mt-2">
+                    {job.on_hold ? (
+                      <div className="flex items-center justify-between gap-2 bg-amber-500/15 border border-amber-300/25 rounded-xl px-3 py-2">
+                        <span className="text-[13px] text-amber-100">⏸ พักงานอยู่{job.on_hold_reason ? `: ${job.on_hold_reason}` : ""}</span>
+                        <button onClick={async () => { await api.patch(`/jobs/${jobId}`, { on_hold: false, on_hold_reason: null }); refetch(); onChanged(); }}
+                          className="focusable pressable text-[12px] bg-white/15 text-white rounded-lg px-3 py-1.5 min-h-[36px] shrink-0">กลับมาทำ</button>
+                      </div>
+                    ) : (
+                      <button onClick={async () => { const r = prompt("เหตุผลที่พักงาน (ไม่บังคับ)"); if (r === null) return; await api.patch(`/jobs/${jobId}`, { on_hold: true, on_hold_reason: r || null }); refetch(); onChanged(); }}
+                        className="focusable pressable text-[12px] text-white/70 hover:text-white border border-white/15 rounded-lg px-3 py-1.5 min-h-[36px]">⏸ พักงานนี้</button>
+                    )}
+                  </div>
+
                   {canFinance && ["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"].includes(job.status) && (
                     <QuoteEditor job={job} onChanged={() => { refetch(); onChanged(); }} />
                   )}

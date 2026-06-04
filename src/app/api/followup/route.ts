@@ -19,7 +19,7 @@ export const GET = withRoute(async (req: Request) => {
 
   const sb = ctx.supabase as unknown as Sb;
   let query = sb.from("jobs")
-    .select("id,job_code,customer_name,customer_tel,customer_area,status,updated_at,created_at," +
+    .select("id,job_code,customer_name,customer_tel,customer_area,status,on_hold,updated_at,created_at," +
       "estimator:estimator_id(full_name)," +
       "productions(status,status_updated_at,planned_install_date)," +
       "installations(status,updated_at),issues(status,severity)")
@@ -39,8 +39,8 @@ export const GET = withRoute(async (req: Request) => {
     return {
       id: j.id, job_code: j.job_code, customer_name: j.customer_name,
       customer_tel: j.customer_tel, customer_area: j.customer_area, status: j.status,
-      estimator: j.estimator?.full_name ?? null,
-      phase, days_in_phase: days, overdue: days > overdueDays(phase),
+      estimator: j.estimator?.full_name ?? null, on_hold: !!j.on_hold,
+      phase, days_in_phase: days, overdue: !j.on_hold && days > overdueDays(phase),
       open_issues: open.length, high_issue: open.some((i) => i.severity === "HIGH"),
       planned_install_date: prod?.planned_install_date ?? null,
     };

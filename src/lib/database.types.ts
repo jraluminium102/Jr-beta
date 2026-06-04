@@ -31,6 +31,7 @@ export interface Job {
   status: JobStatus; deposit_amount: number | null; deposit_date: string | null;
   cancel_reason: string | null; remark: string | null; created_at: string; updated_at: string;
   customer_id: number | null; queue_entry_id: string | null;   // journey backbone (0012)
+  on_hold: boolean; on_hold_reason: string | null;             // พักงาน (0013)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;

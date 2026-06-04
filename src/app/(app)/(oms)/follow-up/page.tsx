@@ -11,7 +11,7 @@ import { JobDrawer } from "@/components/jobs/JobDrawer";
 type Row = {
   id: string; job_code: string; customer_name: string; customer_tel: string | null;
   customer_area: string | null; status: string; estimator: string | null;
-  phase: PhaseKey; days_in_phase: number; overdue: boolean;
+  phase: PhaseKey; days_in_phase: number; overdue: boolean; on_hold: boolean;
   open_issues: number; high_issue: boolean; planned_install_date: string | null;
 };
 
@@ -108,7 +108,7 @@ export default function FollowUpPage() {
                         <div className="text-white/90">{r.customer_name}</div>
                         <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{r.customer_area ?? r.customer_tel ?? ""}</div>
                       </td>
-                      <td className="px-4 py-3"><PhaseChip phase={r.phase} /></td>
+                      <td className="px-4 py-3"><PhaseChip phase={r.phase} />{r.on_hold && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-white/15 text-white/80">⏸ พัก</span>}</td>
                       <td className="px-4 py-3">
                         <span className={cn("tnum", r.overdue ? "text-amber-300 font-semibold" : "text-white/80")}>{r.days_in_phase} วัน</span>
                         {r.overdue && <span className="ml-1 text-[11px] text-amber-300">⚠ เกิน</span>}
