@@ -133,6 +133,16 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+// โซนใต้ (13 จังหวัด) → ทีมภูเก็ต (เซลล์บาส) · นอกนั้น = ทีม กทม.
+export const SOUTH_PROVINCES = [
+  "กระบี่", "ชุมพร", "ตรัง", "นครศรีธรรมราช", "นราธิวาส", "ปัตตานี", "พังงา",
+  "พัทลุง", "ภูเก็ต", "ยะลา", "ระนอง", "สงขลา", "สตูล",
+];
+export function detectTeam(address?: string | null): QueueTeam {
+  if (!address) return "BKK";
+  return SOUTH_PROVINCES.some((p) => address.includes(p)) ? "PHUKET" : "BKK";
+}
+
 // แปลงระยะเส้นตรง -> นาทีเดินทางโดยประมาณ (ปรับ avgSpeed/detour ได้จาก queue_settings)
 export function estimateMinutes(
   a: { lat: number; lng: number }, b: { lat: number; lng: number },

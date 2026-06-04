@@ -68,6 +68,19 @@ export function QueueModal({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
 
   const coords = parseLatLng(f.location_url);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestMsg, setSuggestMsg] = useState("");
+
+  async function suggestAuto() {
+    setSuggesting(true); setSuggestMsg("");
+    try {
+      const r = await api.post<{ queue_date: string; queue_time: string; sales_id: string; sales_name: string; reason: string }>(
+        "/queue/suggest", { sales_id: f.sales_id || null, job_size: f.job_size || null, address: f.address || null });
+      setF((s) => ({ ...s, queue_date: r.data.queue_date, queue_time: r.data.queue_time, sales_id: s.sales_id || r.data.sales_id }));
+      setSuggestMsg("✓ " + r.data.reason);
+    } catch (e) { setSuggestMsg(e instanceof Error ? e.message : "เสนอคิวไม่สำเร็จ"); }
+    finally { setSuggesting(false); }
+  }
 
   async function save() {
     if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
@@ -144,6 +157,16 @@ export function QueueModal({
               <option value="โชว์รูม">โชว์รูม</option>
             </select>
           </Field>
+
+          {!readOnly && (
+            <Field label="จัดวันอัตโนมัติ (เสนอวันว่างเร็วสุดตามกฎ)" wide>
+              <button type="button" onClick={suggestAuto} disabled={suggesting}
+                className="press inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "#1F4E78" }}>
+                <Icon name="calendar" size={15} /> {suggesting ? "กำลังหา…" : "🪄 เสนอวัน-เวลา-เซลล์ ที่ว่างเร็วสุด"}
+              </button>
+              {suggestMsg && <p className="text-[11px] mt-1.5 text-ink-2">{suggestMsg}</p>}
+            </Field>
+          )}
 
           <Field label="วันที่นัด">
             <input type="date" value={f.queue_date} onChange={(e) => set("queue_date", e.target.value)} className={inp} />
