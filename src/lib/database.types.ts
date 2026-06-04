@@ -12,6 +12,7 @@ export type QcResult = "PASSED" | "FAILED";
 export type IssueStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
 export type IssuePhase = "SALES" | "MEASUREMENT" | "PRODUCTION" | "INSTALLATION" | "POST_SALE";
 export type IssueType = "WRONG_DESIGN" | "CUSTOMER_CHANGES" | "MATERIAL_SHORTAGE" | "PRODUCTION_DELAY" | "INSTALLATION_DELAY" | "CUSTOMER_COMPLAINT" | "OTHER";
+export type IssueSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type PaymentType = "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" | "FINAL";
 export type PaymentChannel = "TRANSFER" | "CASH" | "CHEQUE";
 
@@ -29,6 +30,7 @@ export interface Job {
   discount_amount: number | null; net_amount: number | null; vat_amount: number | null; total_amount: number | null;
   status: JobStatus; deposit_amount: number | null; deposit_date: string | null;
   cancel_reason: string | null; remark: string | null; created_at: string; updated_at: string;
+  customer_id: number | null; queue_entry_id: string | null;   // journey backbone (0012)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;
@@ -53,7 +55,7 @@ export interface Issue {
   id: string; issue_code: string | null; job_id: string; phase: IssuePhase; type: IssueType;
   detail: string; is_auto_created: boolean; reporter_id: string | null; reported_at: string;
   owner_id: string | null; owner_name: string | null; resolved_at: string | null; resolution: string | null;
-  status: IssueStatus; created_at: string; updated_at: string;
+  status: IssueStatus; severity: IssueSeverity; created_at: string; updated_at: string;
 }
 export interface FinanceEntry {
   id: string; job_id: string; payment_date: string; amount: number; type: PaymentType;

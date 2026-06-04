@@ -37,7 +37,7 @@ export function overdueDays(phase: PhaseKey): number {
 }
 
 type ProdRow = { status?: string; status_updated_at?: string | null; planned_install_date?: string | null };
-type InstRow = { status?: string };
+type InstRow = { status?: string; updated_at?: string | null };
 type JobLike = {
   status: string;
   updated_at?: string | null;
@@ -87,8 +87,10 @@ export function derivePhase(job: JobLike): PhaseKey {
   }
 }
 
-// วันที่อ้างอิงล่าสุดของเฟส (ไว้คำนวณวันค้าง)
+// วันที่อ้างอิงล่าสุดของเฟส (ไว้คำนวณวันค้าง) — ถ้าถึงเฟสติดตั้งใช้ของ installation ก่อน
 export function phaseSince(job: JobLike): string | null {
+  const inst = arr(job.installations);
+  if (inst.length) return inst[0].updated_at || job.updated_at || job.created_at || null;
   const prod = arr(job.productions);
   return prod[0]?.status_updated_at || job.updated_at || job.created_at || null;
 }

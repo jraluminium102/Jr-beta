@@ -52,7 +52,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     const { data: jobId, error: pErr } = await (ctx.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null; error: { message: string } | null }>;
     }).rpc("promote_queue_to_job", { p_queue_id: params.id });
-    if (pErr) return ok(data, { promote_error: pErr.message });
+    if (pErr) throw dbError(pErr);   // ให้รู้ทันทีว่า carry-forward ไม่สำเร็จ (idempotent ลองใหม่ได้)
     return ok(data, { job_id: jobId });
   }
   return ok(data);

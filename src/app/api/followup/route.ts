@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { dbError } from "@/lib/bff/db-error";
 import { derivePhase, phaseSince, daysSince, overdueDays, type PhaseKey } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +22,13 @@ export const GET = withRoute(async (req: Request) => {
     .select("id,job_code,customer_name,customer_tel,customer_area,status,updated_at,created_at," +
       "estimator:estimator_id(full_name)," +
       "productions(status,status_updated_at,planned_install_date)," +
-      "installations(status),issues(status,severity)")
+      "installations(status,updated_at),issues(status,severity)")
     .order("updated_at", { ascending: false });
   if (q) query = query.or(`customer_name.ilike.%${q}%,job_code.ilike.%${q}%`);
+  if (url.searchParams.get("my") === "1") query = query.eq("estimator_id", ctx.user.id); // เฉพาะงานของฉัน
 
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
 
   let rows = (data ?? []).map((j: any) => {
     const phase = derivePhase(j) as PhaseKey;

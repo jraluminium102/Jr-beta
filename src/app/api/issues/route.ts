@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
+import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 
 // GET /api/issues — list (filter status, phase)
@@ -21,7 +22,7 @@ export const GET = withRoute(async (req: Request) => {
   if (severity) query = query.eq("severity", severity);
 
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
   return ok(data ?? [], { can_write: can(ctx.role, "issues", "write") });
 });
 
@@ -43,7 +44,8 @@ export const POST = withRoute(async (req: Request) => {
     .insert({ ...body, reporter_id: ctx.user.id, is_auto_created: false, status: "OPEN" })
     .select()
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Insert failed");
+  if (error) throw dbError(error);
+  if (!data) throw dbError({ message: "Insert failed" });
   await audit({ jobId: body.job_id, userId: ctx.user.id, action: "ISSUE_CREATED", table: "issues", recordId: data.id });
   return created(data);
 });
