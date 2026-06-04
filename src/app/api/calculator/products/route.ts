@@ -1,16 +1,15 @@
-import { NextResponse } from "next/server";
 import { getProducts, getGlassOptions, getColorOptions } from "@/lib/calculator/engine";
-import { getProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok } from "@/lib/bff/response";
 
-export async function GET() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+// GET /api/calculator/products — ดึงรายการสินค้า/กระจก/สี สำหรับเครื่องคิดราคา
+export const GET = withRoute(async () => {
+  await requirePermission("calculator", "read");
 
-  return NextResponse.json({
+  return ok({
     products: getProducts(),
     glass: getGlassOptions(),
     colors: getColorOptions(),
   });
-}
+});

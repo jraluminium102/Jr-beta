@@ -14,8 +14,14 @@ export type IssuePhase = "SALES" | "MEASUREMENT" | "PRODUCTION" | "INSTALLATION"
 export type IssueType = "WRONG_DESIGN" | "CUSTOMER_CHANGES" | "MATERIAL_SHORTAGE" | "PRODUCTION_DELAY" | "INSTALLATION_DELAY" | "CUSTOMER_COMPLAINT" | "OTHER";
 export type PaymentType = "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" | "FINAL";
 export type PaymentChannel = "TRANSFER" | "CASH" | "CHEQUE";
+// Acct enums
+export type QuotationStatus = "draft" | "sent" | "approved" | "cancelled";
+export type BillingStatus = "unpaid" | "partial" | "paid" | "cancelled";
+export type InstallmentStatus = "pending" | "paid";
+export type ProductionOrderStatus = "queued" | "measuring" | "manufacturing" | "qc" | "ready" | "installed" | "done" | "cancelled";
+export type StockMoveType = "in" | "out" | "adjust";
 
-// ─── Row types ────────────────────────────────────────────────────────────────
+// ─── Row types — OMS ──────────────────────────────────────────────────────────
 export interface Profile {
   id: string; email: string | null; full_name: string | null; avatar_url: string | null;
   role: Role; is_active: boolean; created_at: string; updated_at: string;
@@ -66,8 +72,63 @@ interface AuditLog {
   table_name: string; record_id: string | null; old_value: unknown; new_value: unknown; created_at: string;
 }
 
-// ─── Supabase Database type (must include Relationships/Views/CompositeTypes) ─
-// @supabase/supabase-js v2 GenericTable requires Relationships field.
+// ─── Row types — Acct/Doc ─────────────────────────────────────────────────────
+export interface Customer {
+  id: number; name: string; job: string; address: string; tax_id: string;
+  line_id: string; phone: string; contact_person: string; is_active: boolean;
+  created_by: string | null; created_at: string; updated_at: string;
+}
+export interface Quotation {
+  id: number; code: string; customer_id: number | null; customer_snapshot: Record<string, unknown>;
+  issue_date: string; status: QuotationStatus;
+  vat_rate: number; discount_pct: number; wht_rate: number;
+  subtotal: number; discount_amt: number; vat_amt: number; total: number; wht_amt: number; net: number;
+  note: string; created_by: string | null; created_at: string; updated_at: string;
+}
+export interface QuotationItem {
+  id: number; quotation_id: number; name: string; detail: string;
+  qty: number; unit_price: number; line_total: number; sort_order: number;
+}
+export interface BillingNote {
+  id: number; code: string; quotation_id: number | null; customer_snapshot: Record<string, unknown>;
+  issue_date: string; total: number; status: BillingStatus; note: string;
+  created_by: string | null; created_at: string; updated_at: string;
+}
+export interface BillingInstallment {
+  id: number; billing_note_id: number; seq: number; label: string; amount: number;
+  due_date: string | null; status: InstallmentStatus; paid_amount: number;
+  paid_date: string | null; sort_order: number;
+}
+export interface Receipt {
+  id: number; code: string; billing_note_id: number | null; installment_id: number | null;
+  customer_snapshot: Record<string, unknown>; issue_date: string;
+  amount: number; vat_rate: number; vat_amt: number; net: number;
+  payment_method: string; note: string; created_by: string | null; created_at: string;
+}
+export interface ProductionOrder {
+  id: number; code: string; quotation_id: number | null; customer_snapshot: Record<string, unknown>;
+  items: unknown[]; status: ProductionOrderStatus; measure_date: string | null;
+  due_date: string | null; note: string; created_by: string | null; created_at: string; updated_at: string;
+}
+export interface Warranty {
+  id: number; code: string; quotation_id: number | null; customer_snapshot: Record<string, unknown>;
+  items: unknown[]; issue_date: string; warranty_months: number; expires_date: string | null;
+  coverage: string; note: string; created_by: string | null; created_at: string;
+}
+export interface StockItem {
+  id: number; sku: string; name: string; category: string; unit: string;
+  qty_on_hand: number; min_qty: number; note: string; is_active: boolean;
+  created_at: string; updated_at: string;
+}
+export interface StockMove {
+  id: number; stock_item_id: number; type: StockMoveType; qty: number;
+  ref: string; note: string; created_by: string | null; created_at: string;
+}
+export interface DocumentSequence {
+  doc_type: string; last_seq: number; last_ym: string;
+}
+
+// ─── Supabase Database type ────────────────────────────────────────────────────
 type Tbl<R, I = Partial<R>, U = Partial<R>> = {
   Row: R;
   Insert: I;
@@ -84,25 +145,48 @@ type Tbl<R, I = Partial<R>, U = Partial<R>> = {
 export interface Database {
   public: {
     Tables: {
-      profiles:        Tbl<Profile>;
-      jobs:            Tbl<Job>;
-      productions:     Tbl<Production>;
-      installations:   Tbl<Installation>;
-      issues:          Tbl<Issue>;
-      finance_entries: Tbl<FinanceEntry>;
-      audit_logs:      Tbl<AuditLog>;
-      job_sequence:    Tbl<{ year: number; last_seq: number }>;
+      // OMS tables
+      profiles:           Tbl<Profile>;
+      jobs:               Tbl<Job>;
+      productions:        Tbl<Production>;
+      installations:      Tbl<Installation>;
+      issues:             Tbl<Issue>;
+      finance_entries:    Tbl<FinanceEntry>;
+      audit_logs:         Tbl<AuditLog>;
+      job_sequence:       Tbl<{ year: number; last_seq: number }>;
+      // Acct/Doc tables
+      customers:              Tbl<Customer>;
+      quotations:             Tbl<Quotation>;
+      quotation_items:        Tbl<QuotationItem>;
+      billing_notes:          Tbl<BillingNote>;
+      billing_installments:   Tbl<BillingInstallment>;
+      receipts:               Tbl<Receipt>;
+      production_orders:      Tbl<ProductionOrder>;
+      warranties:             Tbl<Warranty>;
+      stock_items:            Tbl<StockItem>;
+      stock_moves:            Tbl<StockMove>;
+      document_sequences:     Tbl<DocumentSequence>;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      next_document_code: {
+        Args: { p_doc_type: string };
+        Returns: string;
+      };
+    };
     Enums: {
-      role_t:         Role;
-      channel_t:      Channel;
-      job_status_t:   JobStatus;
-      prod_status_t:  ProdStatus;
-      inst_status_t:  InstStatus;
-      issue_status_t: IssueStatus;
-      payment_type_t: PaymentType;
+      role_t:             Role;
+      channel_t:          Channel;
+      job_status_t:       JobStatus;
+      prod_status_t:      ProdStatus;
+      inst_status_t:      InstStatus;
+      issue_status_t:     IssueStatus;
+      payment_type_t:     PaymentType;
+      quotation_status:   QuotationStatus;
+      billing_status:     BillingStatus;
+      installment_status: InstallmentStatus;
+      production_status:  ProductionOrderStatus;
+      stock_move_type:    StockMoveType;
     };
     CompositeTypes: Record<string, never>;
   };

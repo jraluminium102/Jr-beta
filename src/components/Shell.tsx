@@ -6,24 +6,24 @@ import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 import { signOut } from "@/app/login/actions";
 import { ROLE_LABEL, type Profile } from "@/lib/types";
-import { menusFor } from "@/lib/rbac";
+import { menusFor, docMenusFor } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
 
 type NavItem = { href: string; icon: string; label: string };
 
-// กลุ่มเอกสาร/บัญชี (ฝั่ง Quotation) — เห็นได้ทุก role ที่ล็อกอิน
-const DOC_NAV: NavItem[] = [
-  { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
-  { href: "/queue", icon: "calendar", label: "คิวงาน" },
-  { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
-  { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
-  { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
-  { href: "/billing-notes", icon: "banknote", label: "ใบวางบิล" },
-  { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
-  { href: "/production-orders", icon: "factory", label: "ใบสั่งผลิต" },
-  { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
-  { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
-];
+// กลุ่มเอกสาร/บัญชี — keyed โดย key เดียวกับที่ docMenusFor() คืน
+const DOC_NAV_MAP: Record<string, NavItem> = {
+  dashboard:         { href: "/dashboard",         icon: "dashboard",   label: "Dashboard" },
+  queue:             { href: "/queue",              icon: "calendar",    label: "คิวงาน" },
+  customers:         { href: "/customers",          icon: "users",       label: "ทะเบียนลูกค้า" },
+  quotations:        { href: "/quotations",         icon: "file",        label: "ใบเสนอราคา" },
+  calculator:        { href: "/calculator",         icon: "calculator",  label: "เครื่องคิดราคา" },
+  billing:           { href: "/billing-notes",      icon: "banknote",    label: "ใบวางบิล" },
+  receipts:          { href: "/receipts",           icon: "receipt",     label: "ใบเสร็จ/กำกับภาษี" },
+  production_orders: { href: "/production-orders",  icon: "factory",     label: "ใบสั่งผลิต" },
+  warranties:        { href: "/warranties",         icon: "shield",      label: "ใบรับประกัน" },
+  stock:             { href: "/stock",              icon: "boxes",       label: "เช็คสต๊อก" },
+};
 
 // กลุ่มปฏิบัติงาน (ฝั่ง OMS) — กรองตาม role ผ่าน menusFor()
 const OMS_NAV: Record<string, NavItem> = {
@@ -55,7 +55,13 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const [open, setOpen] = useState(false);
   const active = (href: string) => path === href || path.startsWith(href + "/");
 
-  const omsKeys = menusFor(profile.role as Role);
+  const role = profile.role as Role;
+
+  // กรองเมนูทั้งสองกลุ่มตาม role
+  const docKeys = docMenusFor(role);
+  const docItems = docKeys.map((k) => DOC_NAV_MAP[k]).filter(Boolean);
+
+  const omsKeys = menusFor(role);
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
   const Sidebar = ({ onNav }: { onNav?: () => void }) => (
@@ -65,8 +71,10 @@ export default function Shell({ profile, children }: { profile: Profile; childre
         <div className="text-xs text-red-100/80">Aluminium &amp; Glass · ระบบรวม</div>
       </div>
       <nav className="space-y-1 flex-1 overflow-y-auto" aria-label="เมนูหลัก">
-        <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-1 pb-1.5">เอกสาร / บัญชี</div>
-        {DOC_NAV.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
+        {docItems.length > 0 && (
+          <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-1 pb-1.5">เอกสาร / บัญชี</div>
+        )}
+        {docItems.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
         {omsItems.length > 0 && (
           <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-3 pb-1.5">ปฏิบัติงาน</div>
         )}

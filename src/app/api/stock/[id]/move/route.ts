@@ -1,32 +1,34 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import type { StockMoveType } from "@/lib/types";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err } from "@/lib/bff/response";
+import { z } from "zod";
 
-const TYPES: StockMoveType[] = ["in", "out", "adjust"];
+const MoveSchema = z.object({
+  type: z.enum(["in", "out", "adjust"]),
+  qty:  z.number().refine((n) => Number.isFinite(n) && n !== 0, { message: "ต้องระบุจำนวน" }),
+  ref:  z.string().optional().default(""),
+  note: z.string().optional().default(""),
+});
 
 // POST /api/stock/[id]/move  → บันทึกความเคลื่อนไหว
 // หมายเหตุ: trigger ฝั่ง DB จะปรับ qty_on_hand ให้เอง — ที่นี่ insert move เท่านั้น
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+export const POST = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("stock", "write");
 
   const body = await req.json().catch(() => null);
-  const type = body?.type as StockMoveType;
-  if (!TYPES.includes(type)) return fail("ประเภทไม่ถูกต้อง (in/out/adjust)");
-  const qty = Number(body?.qty);
-  if (!Number.isFinite(qty) || qty === 0) return fail("ต้องระบุจำนวน");
+  const parsed = MoveSchema.safeParse(body);
+  if (!parsed.success) return err("ข้อมูลไม่ถูกต้อง", 422, parsed.error.flatten());
 
-  const supabase = createClient();
-  const { error } = await supabase.from("stock_moves").insert({
+  const { type, qty, ref, note } = parsed.data;
+
+  const { error } = await ctx.supabase.from("stock_moves").insert({
     stock_item_id: Number(params.id),
     type,
     qty,
-    ref: body.ref ?? "",
-    note: body.note ?? "",
-    created_by: profile.id,
+    ref,
+    note,
+    created_by: ctx.user.id,
   });
-  if (error) return fail(error.message, 500);
-  return ok({ ok: true }, 201);
-}
+  if (error) return err(error.message, 500);
+  return ok({ ok: true }, undefined, 201);
+});

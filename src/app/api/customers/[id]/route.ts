@@ -1,30 +1,41 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err, notFound } from "@/lib/bff/response";
+import { z } from "zod";
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+const CustomerPatchSchema = z.object({
+  name:           z.string().min(1).optional(),
+  job:            z.string().optional(),
+  address:        z.string().optional(),
+  tax_id:         z.string().optional(),
+  line_id:        z.string().optional(),
+  phone:          z.string().optional(),
+  contact_person: z.string().optional(),
+  is_active:      z.boolean().optional(),
+}).strict();
 
-  const supabase = createClient();
-  const { data, error } = await supabase.from("customers").select("*").eq("id", params.id).single();
-  if (error) return fail(error.message, 404);
+export const GET = withRoute(async (_req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("customers", "read");
+
+  const { data, error } = await ctx.supabase.from("customers").select("*").eq("id", params.id).single();
+  if (error) return notFound("ไม่พบลูกค้า");
   return ok(data);
-}
+});
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("customers", "write");
 
   const body = await req.json().catch(() => ({}));
-  const allowed = ["name", "job", "address", "tax_id", "line_id", "phone", "contact_person", "is_active"];
-  const patch: Record<string, unknown> = {};
-  for (const k of allowed) if (k in body) patch[k] = body[k];
-  if (Object.keys(patch).length === 0) return fail("ไม่มีข้อมูลให้แก้ไข");
+  const parsed = CustomerPatchSchema.safeParse(body);
+  if (!parsed.success) return err("ข้อมูลไม่ถูกต้อง", 422, parsed.error.flatten());
+  if (Object.keys(parsed.data).length === 0) return err("ไม่มีข้อมูลให้แก้ไข");
 
-  const supabase = createClient();
-  const { data, error } = await supabase.from("customers").update(patch).eq("id", params.id).select("*").single();
-  if (error) return fail(error.message, 500);
+  const { data, error } = await ctx.supabase
+    .from("customers")
+    .update(parsed.data)
+    .eq("id", params.id)
+    .select("*")
+    .single();
+  if (error) return err(error.message, 500);
   return ok(data);
-}
+});

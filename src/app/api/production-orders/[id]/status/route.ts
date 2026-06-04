@@ -1,29 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import type { ProductionStatus } from "@/lib/types";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err } from "@/lib/bff/response";
+import { z } from "zod";
 
-const VALID: ProductionStatus[] = [
-  "queued", "measuring", "manufacturing", "qc", "ready", "installed", "done", "cancelled",
-];
+const StatusSchema = z.object({
+  status: z.enum(["queued", "measuring", "manufacturing", "qc", "ready", "installed", "done", "cancelled"]),
+});
 
 // PATCH /api/production-orders/[id]/status  { status }
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("production_orders", "write");
 
   const body = await req.json().catch(() => ({}));
-  const status = body.status as ProductionStatus;
-  if (!VALID.includes(status)) return fail("สถานะไม่ถูกต้อง");
+  const parsed = StatusSchema.safeParse(body);
+  if (!parsed.success) return err("สถานะไม่ถูกต้อง", 422, parsed.error.flatten());
 
-  const supabase = createClient();
-  const { data, error } = await supabase
+  const { data, error } = await ctx.supabase
     .from("production_orders")
-    .update({ status })
+    .update({ status: parsed.data.status })
     .eq("id", params.id)
     .select("id, status")
     .single();
-  if (error) return fail(error.message, 500);
+  if (error) return err(error.message, 500);
   return ok(data);
-}
+});

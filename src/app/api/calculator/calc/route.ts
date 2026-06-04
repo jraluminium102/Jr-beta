@@ -1,41 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
 import { calcItem, getProducts } from "@/lib/calculator/engine";
-import { getProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err } from "@/lib/bff/response";
+import { z } from "zod";
 
-export async function POST(req: NextRequest) {
-  // auth
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+const CalcSchema = z.object({
+  productId: z.string().min(1),
+  width:     z.number(),
+  height:    z.number(),
+  panels:    z.number().int().positive().optional().default(1),
+  options:   z.object({
+    glassIndex: z.number().optional(),
+    colorIndex: z.number().optional(),
+    tiltTurn:   z.boolean().optional(),
+    beam:       z.boolean().optional(),
+    motor:      z.enum(["80", "300"]).optional(),
+    closer:     z.number().optional(),
+  }).optional().default({}),
+});
 
-  let body: {
-    productId: string;
-    width: number;
-    height: number;
-    panels?: number;
-    options?: {
-      glassIndex?: number;
-      colorIndex?: number;
-      tiltTurn?: boolean;
-      beam?: boolean;
-      motor?: "80" | "300";
-      closer?: number;
-    };
-  };
+export const POST = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("calculator", "write");
 
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const body = await req.json().catch(() => null);
+  const parsed = CalcSchema.safeParse(body);
+  if (!parsed.success) return err("ข้อมูลไม่ถูกต้อง", 422, parsed.error.flatten());
 
-  const { productId, width, height, panels = 1, options = {} } = body;
-
-  if (!productId || typeof width !== "number" || typeof height !== "number") {
-    return NextResponse.json({ error: "productId, width, height required" }, { status: 400 });
-  }
-
+  const { productId, width, height, panels, options } = parsed.data;
   const result = calcItem(productId, width, height, panels, options);
 
   // หา product name สำหรับ lineItem
@@ -65,13 +56,13 @@ export async function POST(req: NextRequest) {
     },
   };
 
-  // cost และ profit เฉพาะเจ้าของ/แอดมิน (role_t: ADMIN — เดิมเขียน "owner" ซึ่งไม่มีใน role_t)
-  if (profile.role === "ADMIN") {
+  // cost และ profit เฉพาะ ADMIN เท่านั้น (ราคาทุน/กำไรต้องกัน)
+  if (ctx.role === "ADMIN") {
     response.cost = result.cost;
     response.profit = result.cost !== null && result.sell > 0
       ? Math.round(((result.sell - result.cost) / result.sell) * 100)
       : null;
   }
 
-  return NextResponse.json(response);
-}
+  return ok(response);
+});

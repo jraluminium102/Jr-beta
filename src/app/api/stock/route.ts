@@ -1,15 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err, notFound } from "@/lib/bff/response";
+import { z } from "zod";
+
+const StockInsertSchema = z.object({
+  name:        z.string().min(1, "ต้องระบุชื่อวัสดุ"),
+  sku:         z.string().optional().default(""),
+  category:    z.string().optional().default(""),
+  unit:        z.string().optional().default(""),
+  min_qty:     z.number().nonnegative().optional().default(0),
+  qty_on_hand: z.number().nonnegative().optional().default(0),
+  note:        z.string().optional().default(""),
+});
 
 // GET /api/stock?q=คำค้น  → รายการวัสดุ (is_active=true)
-export async function GET(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("stock", "read");
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
-  const supabase = createClient();
-  let query = supabase
+  let query = ctx.supabase
     .from("stock_items")
     .select("*")
     .eq("is_active", true)
@@ -18,51 +27,43 @@ export async function GET(req: Request) {
   if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,category.ilike.%${q}%`);
 
   const { data, error } = await query;
-  if (error) return fail(error.message, 500);
-  return ok(data);
-}
+  if (error) return err(error.message, 500);
+  return ok(data ?? []);
+});
 
 // POST /api/stock  → เพิ่มวัสดุ
-export async function POST(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+export const POST = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("stock", "write");
 
   const body = await req.json().catch(() => null);
-  if (!body?.name?.trim()) return fail("ต้องระบุชื่อวัสดุ");
+  const parsed = StockInsertSchema.safeParse(body);
+  if (!parsed.success) return err("ข้อมูลไม่ถูกต้อง", 422, parsed.error.flatten());
 
-  const supabase = createClient();
+  const { name, sku, category, unit, min_qty, qty_on_hand: opening, note } = parsed.data;
+
   // เริ่มที่ qty_on_hand=0 เสมอ — ถ้ามียอดยกมา ปล่อยให้ trigger บวกผ่าน stock_moves (มี log)
-  const { data: item, error } = await supabase
+  const { data: item, error } = await ctx.supabase
     .from("stock_items")
-    .insert({
-      sku: body.sku ?? "",
-      name: body.name.trim(),
-      category: body.category ?? "",
-      unit: body.unit ?? "",
-      min_qty: Number(body.min_qty) || 0,
-      qty_on_hand: 0,
-      note: body.note ?? "",
-    })
+    .insert({ sku, name: name.trim(), category, unit, min_qty, qty_on_hand: 0, note })
     .select("*")
     .single();
 
-  if (error) return fail(error.message, 500);
+  if (error) return err(error.message, 500);
+  if (!item) return notFound("บันทึกไม่สำเร็จ");
 
   // ยอดยกมา > 0 → บันทึกเป็น movement type 'in' (trigger ปรับ qty_on_hand ให้)
-  const opening = Number(body.qty_on_hand) || 0;
   if (opening > 0) {
-    const { error: moveErr } = await supabase.from("stock_moves").insert({
+    const { error: moveErr } = await ctx.supabase.from("stock_moves").insert({
       stock_item_id: item.id,
       type: "in",
       qty: opening,
       ref: "ยอดยกมา",
       note: "",
-      created_by: profile.id,
+      created_by: ctx.user.id,
     });
-    if (moveErr) return fail(moveErr.message, 500);
+    if (moveErr) return err(moveErr.message, 500);
     item.qty_on_hand = opening;
   }
 
-  return ok(item, 201);
-}
+  return ok(item, undefined, 201);
+});

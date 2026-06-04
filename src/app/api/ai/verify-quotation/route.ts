@@ -12,8 +12,9 @@
  * }
  */
 
-import { getProfile } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
+import { ok, fail } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
 import {
   dataValidatorAgent,
   businessRulesAgent,
@@ -21,9 +22,8 @@ import {
   type QuotationInput,
 } from "@/lib/ai/quotation-agents";
 
-export async function POST(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+export const POST = withRoute(async (req: Request) => {
+  await requirePermission("quotations", "read");
 
   const body: QuotationInput = await req.json().catch(() => null);
   if (!body) return fail("payload ไม่ถูกต้อง");
@@ -40,4 +40,4 @@ export async function POST(req: Request) {
     verdict: step3.verdict,
     canSubmit: step3.verdict === "APPROVE",
   });
-}
+});

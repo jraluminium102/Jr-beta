@@ -1,15 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, err } from "@/lib/bff/response";
+import { z } from "zod";
+
+const CustomerInsertSchema = z.object({
+  name:           z.string().min(1, "ต้องระบุชื่อลูกค้า"),
+  job:            z.string().optional().default(""),
+  address:        z.string().optional().default(""),
+  tax_id:         z.string().optional().default(""),
+  line_id:        z.string().optional().default(""),
+  phone:          z.string().optional().default(""),
+  contact_person: z.string().optional().default(""),
+});
 
 // GET /api/customers?q=คำค้น  → รายชื่อลูกค้า
-export async function GET(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("customers", "read");
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
-  const supabase = createClient();
-  let query = supabase
+  let query = ctx.supabase
     .from("customers")
     .select("*")
     .eq("is_active", true)
@@ -18,35 +27,24 @@ export async function GET(req: Request) {
   if (q) query = query.or(`name.ilike.%${q}%,job.ilike.%${q}%,phone.ilike.%${q}%,line_id.ilike.%${q}%`);
 
   const { data, error } = await query;
-  if (error) return fail(error.message, 500);
-  return ok(data);
-}
+  if (error) return err(error.message, 500);
+  return ok(data ?? []);
+});
 
 // POST /api/customers  → เพิ่มลูกค้า
-export async function POST(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+export const POST = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("customers", "write");
 
   const body = await req.json().catch(() => null);
-  if (!body?.name?.trim()) return fail("ต้องระบุชื่อลูกค้า");
+  const parsed = CustomerInsertSchema.safeParse(body);
+  if (!parsed.success) return err("ข้อมูลไม่ถูกต้อง", 422, parsed.error.flatten());
 
-  const supabase = createClient();
-  const { data, error } = await supabase
+  const { data, error } = await ctx.supabase
     .from("customers")
-    .insert({
-      name: body.name.trim(),
-      job: body.job ?? "",
-      address: body.address ?? "",
-      tax_id: body.tax_id ?? "",
-      line_id: body.line_id ?? "",
-      phone: body.phone ?? "",
-      contact_person: body.contact_person ?? "",
-      created_by: profile.id,
-    })
+    .insert({ ...parsed.data, name: parsed.data.name.trim(), created_by: ctx.user.id })
     .select("*")
     .single();
 
-  if (error) return fail(error.message, 500);
-  return ok(data, 201);
-}
+  if (error) return err(error.message, 500);
+  return ok(data, undefined, 201);
+});

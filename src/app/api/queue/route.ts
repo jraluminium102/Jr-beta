@@ -1,4 +1,4 @@
-import { getContext, Http, HttpError } from "@/lib/bff/context";
+import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 
@@ -66,8 +66,7 @@ async function fetchTab(gid: string): Promise<Sheet> {
 
 // GET /api/queue — คืนคิวลูกค้า + วันหยุด/ลา + โควตาเซลล์
 export const GET = withRoute(async () => {
-  const ctx = await getContext();
-  if (!ctx) throw Http.unauthorized();
+  const ctx = await requirePermission("queue", "read");
 
   // คิวลูกค้าคือหัวใจ — ถ้าดึงไม่ได้ ให้ error; ส่วนวันหยุด/โควตา ถ้าพลาดให้ว่าง (ไม่ทำให้หน้าพัง)
   const queue = await fetchTab(GID_QUEUE);

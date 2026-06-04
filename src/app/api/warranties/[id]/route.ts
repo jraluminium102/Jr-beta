@@ -1,18 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok, notFound } from "@/lib/bff/response";
 
 // GET /api/warranties/[id]  → ใบรับประกันเดี่ยว
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+export const GET = withRoute(async (_req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("warranties", "read");
 
-  const supabase = createClient();
-  const { data, error } = await supabase
+  const { data, error } = await ctx.supabase
     .from("warranties")
     .select("*")
     .eq("id", params.id)
     .single();
-  if (error) return fail(error.message, 404);
+  if (error) return notFound("ไม่พบใบรับประกัน");
   return ok(data);
-}
+});
