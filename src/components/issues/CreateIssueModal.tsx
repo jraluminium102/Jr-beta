@@ -22,6 +22,7 @@ export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; on
   const [q, setQ] = useState("");
   const [phase, setPhase] = useState<IssuePhase>("INSTALLATION");
   const [type, setType] = useState<IssueType>("CUSTOMER_COMPLAINT");
+  const [severity, setSeverity] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [detail, setDetail] = useState("");
   const [owner, setOwner] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; on
     if (!detail.trim()) { setErr("กรุณาระบุรายละเอียดปัญหา"); return; }
     setSaving(true);
     try {
-      await api.post("/issues", { job_id: jobId, phase, type, detail, owner_name: owner || undefined });
+      await api.post("/issues", { job_id: jobId, phase, type, severity, detail, owner_name: owner || undefined });
       onSaved();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); }
     finally { setSaving(false); }
@@ -105,6 +106,16 @@ export function CreateIssueModal({ onClose, onSaved }: { onClose: () => void; on
             <select id="ty" value={type} onChange={(e) => setType(e.target.value as IssueType)} className={field}>
               {TYPES.map((t) => <option key={t.v} value={t.v}>{t.th}</option>)}
             </select>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <label className={lbl} style={{ color: "var(--t-low)" }}>ความรุนแรง</label>
+          <div className="flex gap-2">
+            {([["HIGH", "สูง", "bg-rose-400 text-rose-950 border-rose-300"], ["MEDIUM", "กลาง", "bg-amber-400 text-amber-950 border-amber-300"], ["LOW", "ต่ำ", "bg-white/15 text-white border-white/20"]] as const).map(([v, th, on]) => (
+              <button type="button" key={v} onClick={() => setSeverity(v)}
+                className={`focusable pressable flex-1 rounded-xl px-3 py-2 text-sm font-medium border min-h-[40px] ${severity === v ? on : "glass-card text-white/80 border-white/15"}`}>{th}</button>
+            ))}
           </div>
         </div>
 
