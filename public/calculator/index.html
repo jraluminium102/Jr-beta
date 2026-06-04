@@ -1930,10 +1930,16 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
   const vatPctEl=document.getElementById('vat-pct'); const vatPct=vatPctEl?(parseFloat(vatPctEl.value)||0):7;
   // R4.2: ฟิลด์หัวบิลเพิ่มเติม (ผู้ขาย/ผู้ติดต่อ/เบอร์โทร/ที่อยู่ลูกค้า)
   const _gv=(id)=>{const e=document.getElementById(id);return e?(e.value||'').trim():'';};
-  // ผู้ขาย: เลือกจาก dropdown (หรือ "อื่นๆ" พิมพ์เอง) + เบอร์ต่อคน (เติมทีหลังใน SELLER_PHONE)
-  const SELLER_PHONE={'เซลล์ไล้':'','เซลล์แม็ค':'','เซลล์บาส':'','เซลล์แอม':'','ออฟฟิศ':''}; // TODO: เติมเบอร์เมื่อพี่นัทส่ง
-  let _seller=_gv('sellerName'); if(_seller==='__other') _seller=_gv('sellerOther');
-  const _sph=SELLER_PHONE[_seller]||''; if(_seller && _sph) _seller+=' · โทร. '+_sph; if(!_seller) _seller='-';
+  // ผู้ขาย: dropdown + เบอร์เซลล์ · เบอร์กลาง (098-090-9292) ต่อท้ายทุกคน · แอม=เซลล์ใหม่ยังไม่มีเบอร์ ใช้กลางไปก่อน · ออฟฟิศ=เบอร์กลางทั้งคู่
+  const CENTRAL_PHONE='098-090-9292';
+  const SELLER_PHONE={'เซลล์ไล้':'094-802-7223','เซลล์แม็ค':'093-142-5399','เซลล์บาส':'098-747-4592','เซลล์แอม':'','ออฟฟิศ':'098-090-9292 , 092-254-4765'};
+  let _seller=_gv('sellerName'); const _isOther=(_seller==='__other'); if(_isOther) _seller=_gv('sellerOther');
+  let _ph2='';
+  if(!_isOther && _seller){
+    if(_seller==='ออฟฟิศ') _ph2=SELLER_PHONE['ออฟฟิศ'];
+    else { const _own=SELLER_PHONE[_seller]||''; _ph2 = _own ? (_own+' , '+CENTRAL_PHONE) : CENTRAL_PHONE; }
+  }
+  if(_seller && _ph2) _seller+=' · โทร. '+_ph2; if(!_seller) _seller='-';
   const _contact=_gv('custContact')||'-', _phone=_gv('custPhone')||'-', _address=_gv('custAddress');
   const vat=Math.round((net+svcAmt)*vatPct/100), withVat=net+svcAmt+vat;
   const _d=(date||'').split('-'); const _dd=(_d[0]||'01'), _mm=(_d[1]||'01'), _yy=(_d[2]||'00');
