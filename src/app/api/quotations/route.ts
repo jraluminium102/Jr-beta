@@ -4,12 +4,15 @@ import { ok, err, notFound } from "@/lib/bff/response";
 import { computeTotals, lineTotal } from "@/lib/money";
 import { z } from "zod";
 import type { Customer } from "@/lib/types";
+import type { QuotationItem } from "@/lib/database.types";
 
 const QuotationItemSchema = z.object({
-  name:       z.string().default(""),
-  detail:     z.string().default(""),
-  qty:        z.coerce.number().default(0),
-  unit_price: z.coerce.number().default(0),
+  name:        z.string().default(""),
+  detail:      z.string().default(""),
+  qty:         z.coerce.number().default(0),
+  unit_price:  z.coerce.number().default(0),
+  // เฟส 2: gallery ids ที่แนบกับรายการนี้ (optional)
+  gallery_ids: z.array(z.number().int().positive()).optional().default([]),
 });
 
 const QuotationInsertSchema = z.object({
@@ -92,10 +95,36 @@ export const POST = withRoute(async (req: Request) => {
     line_total: lineTotal(Number(it.qty) || 0, Number(it.unit_price) || 0),
     sort_order: i,
   }));
-  const { error: iErr } = await ctx.supabase.from("quotation_items").insert(rows);
-  if (iErr) {
-    await ctx.supabase.from("quotations").delete().eq("id", q.id);
-    return err("บันทึกรายการไม่สำเร็จ: " + iErr.message, 500);
+  const { data: rawInserted, error: iErr } = await ctx.supabase
+    .from("quotation_items")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(rows as any).select("id, sort_order");
+  // cast ผ่าน unknown — Supabase >=2.45 generic infer เป็น never กับ hand-maintained types
+  const insertedItems = rawInserted as unknown as Pick<QuotationItem, "id" | "sort_order">[] | null;
+  if (iErr || !insertedItems) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (ctx.supabase.from("quotations").delete().eq("id", (q as any).id) as unknown as Promise<unknown>);
+    return err("บันทึกรายการไม่สำเร็จ: " + (iErr?.message ?? ""), 500);
+  }
+
+  // 6) insert quotation_item_images (ถ้ามี gallery ที่เลือก)
+  const imageLinks: { quotation_item_id: number; gallery_id: number; sort_order: number }[] = [];
+  for (const item of insertedItems) {
+    const orig = items[item.sort_order];
+    if (!orig?.gallery_ids?.length) continue;
+    orig.gallery_ids.forEach((gid, idx) => {
+      imageLinks.push({ quotation_item_id: item.id, gallery_id: gid, sort_order: idx });
+    });
+  }
+  if (imageLinks.length > 0) {
+    const { error: imgErr } = await ctx.supabase
+      .from("quotation_item_images")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .insert(imageLinks as any);
+    if (imgErr) {
+      // best-effort: ไม่ block เพราะรูปเป็น optional — log เฉพาะ
+      console.error("[quotations POST] quotation_item_images insert failed:", imgErr.message);
+    }
   }
 
   return ok({ id: q.id, code: q.code }, undefined, 201);

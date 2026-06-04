@@ -127,6 +127,15 @@ export interface StockMove {
 export interface DocumentSequence {
   doc_type: string; last_seq: number; last_ym: string;
 }
+// ─── Row types — เฟส 2: Product Gallery ──────────────────────────────────────
+export interface ProductGallery {
+  id: number; product_key: string; title: string; storage_path: string;
+  sort_order: number; is_active: boolean;
+  created_by: string | null; created_at: string; updated_at: string;
+}
+export interface QuotationItemImage {
+  id: number; quotation_item_id: number; gallery_id: number; sort_order: number;
+}
 
 // ─── Supabase Database type ────────────────────────────────────────────────────
 type Tbl<R, I = Partial<R>, U = Partial<R>> = {
@@ -166,6 +175,9 @@ export interface Database {
       stock_items:            Tbl<StockItem>;
       stock_moves:            Tbl<StockMove>;
       document_sequences:     Tbl<DocumentSequence>;
+      // เฟส 2
+      product_gallery:        Tbl<ProductGallery>;
+      quotation_item_images:  Tbl<QuotationItemImage>;
     };
     Views: Record<string, never>;
     Functions: {

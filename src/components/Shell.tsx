@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 import { signOut } from "@/app/login/actions";
 import { ROLE_LABEL, type Profile } from "@/lib/types";
-import { menusFor, docMenusFor } from "@/lib/rbac";
+import { menusFor, docMenusFor, can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
 
 type NavItem = { href: string; icon: string; label: string };
@@ -64,6 +64,10 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const omsKeys = menusFor(role);
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
+  // เพิ่มเมนู "คลังภาพ" เฉพาะ role ที่มีสิทธิ์เขียน product_gallery (ADMIN/SALES)
+  const canManageGallery = can(role, "product_gallery", "write");
+  const galleryNav: NavItem = { href: "/settings/gallery", icon: "image", label: "คลังภาพสินค้า" };
+
   const Sidebar = ({ onNav }: { onNav?: () => void }) => (
     <div className="glass-dark rounded-2xl h-full p-4 flex flex-col text-white">
       <div className="px-2 py-3 border-b border-white/15 mb-3">
@@ -79,6 +83,9 @@ export default function Shell({ profile, children }: { profile: Profile; childre
           <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-3 pb-1.5">ปฏิบัติงาน</div>
         )}
         {omsItems.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
+        {canManageGallery && (
+          <NavLink n={galleryNav} active={active(galleryNav.href)} onNav={onNav} />
+        )}
       </nav>
       <div className="border-t border-white/15 pt-3 mt-2">
         <div className="text-sm font-semibold truncate">{profile.full_name || "ผู้ใช้"}</div>

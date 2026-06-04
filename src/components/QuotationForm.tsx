@@ -6,9 +6,37 @@ import { Card } from "./ui";
 import Icon from "./Icon";
 import { computeTotals, baht } from "@/lib/money";
 import type { Customer } from "@/lib/types";
+import GalleryPicker from "./GalleryPicker";
+import { PRODUCTS } from "@/lib/calculator/engine";
 
-type Item = { name: string; detail: string; qty: number; unit_price: number };
-const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0 });
+// lookup ชื่อสินค้า → product_key (fuzzy: lower + includes)
+const PRODUCT_NAME_MAP = Object.fromEntries(
+  PRODUCTS.map((p) => [p.name.toLowerCase(), p.id])
+);
+function guessProductKey(name: string): string {
+  if (!name) return "";
+  const lower = name.toLowerCase();
+  // ตรงเปะ
+  if (PRODUCT_NAME_MAP[lower]) return PRODUCT_NAME_MAP[lower];
+  // หา partial match — กัน false-positive: คำแรกต้องยาว ≥2 ตัว (split("")[0]="" จะ match ทุกตัว)
+  const split0 = lower.split(" ")[0] ?? "";
+  const found = PRODUCTS.find((p) =>
+    lower.includes(p.name.toLowerCase()) ||
+    (split0.length >= 2 && p.name.toLowerCase().includes(split0))
+  );
+  return found?.id ?? "";
+}
+
+type Item = {
+  name: string;
+  detail: string;
+  qty: number;
+  unit_price: number;
+  // เฟส 2 — ภาพสินค้า (optional)
+  product_key?: string;
+  gallery_ids?: number[];
+};
+const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, product_key: "", gallery_ids: [] });
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
   const router = useRouter();
@@ -64,8 +92,14 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: disc, wht_rate: wht }), [items, vat, disc, wht]);
 
-  const setItem = (i: number, k: keyof Item, v: string | number) =>
+  const setItem = (i: number, k: keyof Item, v: string | number | number[]) =>
     setItems(items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
+
+  // เมื่อแก้ชื่อรายการ → auto-guess product_key (สำหรับ GalleryPicker)
+  const setItemName = (i: number, name: string) => {
+    const guessed = guessProductKey(name);
+    setItems(items.map((it, idx) => idx === i ? { ...it, name, product_key: guessed || it.product_key } : it));
+  };
 
   async function aiVerify() {
     setAiErr(""); setAiResult(null);
@@ -91,7 +125,12 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   async function submit() {
     setErr("");
     if (!customerId) { setErr("ต้องเลือกลูกค้า"); return; }
-    const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
+    const valid = items
+      .filter((i) => i.name.trim() && Number(i.qty) > 0)
+      .map(({ name, detail, qty, unit_price, gallery_ids }) => ({
+        name, detail, qty, unit_price,
+        gallery_ids: gallery_ids ?? [],
+      }));
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
     const res = await fetch("/api/quotations", {
@@ -148,7 +187,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
               {items.map((it, i) => (
                 <div key={i} className="glass-soft rounded-xl p-3.5">
                   <div className="flex gap-2">
-                    <input value={it.name} onChange={(e) => setItem(i, "name", e.target.value)} placeholder="ชื่อรายการ เช่น ประตูบานเปิดคู่"
+                    <input value={it.name} onChange={(e) => setItemName(i, e.target.value)} placeholder="ชื่อรายการ เช่น ประตูบานเปิดคู่"
                       className="flex-1 glass rounded-md px-3 py-2 text-sm font-medium outline-none" />
                     {items.length > 1 && (
                       <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label="ลบรายการ"
@@ -167,6 +206,27 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       <input type="number" min={0} value={it.unit_price} onChange={(e) => setItem(i, "unit_price", Number(e.target.value))} className="w-28 ml-1.5 glass rounded-md px-2 py-1 text-right outline-none" />
                     </label>
                     <span className="ml-auto font-bold text-brand-dark">฿{baht((Number(it.qty) || 0) * (Number(it.unit_price) || 0))}</span>
+                  </div>
+                  {/* เฟส 2: เลือกสินค้า → โชว์รูป */}
+                  <div className="mt-2 pt-2 border-t border-black/5">
+                    <label className="flex items-center gap-2 text-[11px] text-ink-3">
+                      <span>รูปประกอบ (สินค้า):</span>
+                      <select
+                        value={it.product_key ?? ""}
+                        onChange={(e) => setItem(i, "product_key", e.target.value)}
+                        className="flex-1 glass rounded-md px-2 py-1 text-[11px] outline-none max-w-[220px]"
+                      >
+                        <option value="">— ไม่ระบุ —</option>
+                        {PRODUCTS.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <GalleryPicker
+                      productKey={it.product_key ?? ""}
+                      selected={it.gallery_ids ?? []}
+                      onChange={(ids) => setItem(i, "gallery_ids", ids)}
+                    />
                   </div>
                 </div>
               ))}

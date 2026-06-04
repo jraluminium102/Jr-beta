@@ -6,7 +6,9 @@ export type Resource =
   | "issues" | "finance" | "dashboard" | "settings" | "users"
   // DOC/บัญชี (ฝั่งเอกสาร)
   | "quotations" | "customers" | "stock" | "billing" | "receipts"
-  | "production_orders" | "warranties" | "calculator" | "queue";
+  | "production_orders" | "warranties" | "calculator" | "queue"
+  // เฟส 2 — ภาพสินค้า
+  | "product_gallery";
 
 export type Action = "read" | "write" | "void";
 
@@ -24,6 +26,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     billing: ["read", "write"], receipts: ["read", "write"],
     production_orders: ["read", "write"], warranties: ["read", "write"],
     stock: ["read", "write"], calculator: ["read", "write"], queue: ["read", "write"],
+    // เฟส 2
+    product_gallery: ["read", "write"],
   },
   SALES: {
     // OMS
@@ -34,6 +38,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     billing: ["read", "write"], receipts: ["read", "write"],
     production_orders: ["read", "write"], warranties: ["read", "write"],
     stock: ["read"], calculator: ["read", "write"], queue: ["read", "write"],
+    // เฟส 2
+    product_gallery: ["read", "write"],
   },
   DESIGNER: {
     // OMS
@@ -41,6 +47,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     // DOC
     quotations: ["read"], customers: ["read"],
     calculator: ["read", "write"], queue: ["read"],
+    // เฟส 2
+    product_gallery: ["read"],
   },
   PRODUCTION: {
     // OMS
@@ -48,6 +56,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     // DOC — สต๊อก R/W ตามมติ (role PRODUCTION ทำสต๊อก)
     production_orders: ["read", "write"],
     stock: ["read", "write"], queue: ["read"],
+    // เฟส 2
+    product_gallery: ["read"],
   },
   INSTALLER: {
     // OMS
@@ -56,6 +66,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     // DOC — ดูใบสั่งผลิตได้ (R) เพื่อเช็คสินค้าก่อนติดตั้ง
     production_orders: ["read"],
     warranties: ["read"], queue: ["read"],
+    // เฟส 2
+    product_gallery: ["read"],
   },
   ACCOUNTING: {
     // OMS
@@ -65,10 +77,14 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     quotations: ["read"], customers: ["read", "write"],
     billing: ["read", "write"], receipts: ["read", "write"],
     stock: ["read"],
+    // เฟส 2
+    product_gallery: ["read"],
   },
   VIEWER: {
     jobs: ["read"], dashboard: ["read"],
     quotations: ["read"], queue: ["read"],
+    // เฟส 2
+    product_gallery: ["read"],
   },
 };
 
