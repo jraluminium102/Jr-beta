@@ -211,7 +211,18 @@
         <div><label>ผู้ติดต่อ</label><input id="custContact" placeholder="เช่น คุณสมชาย (Line)"></div>
         <div><label>เบอร์โทรลูกค้า</label><input id="custPhone" placeholder="08x-xxx-xxxx"></div>
       </div>
-      <div class="mt"><label>ผู้ขาย / Sales</label><input id="sellerName" placeholder="เช่น Sales Admin053"></div>
+      <div class="mt"><label>ผู้ขาย / Sales</label>
+        <select id="sellerName" onchange="document.getElementById('sellerOtherWrap').style.display=(this.value==='__other')?'block':'none';">
+          <option value="">— เลือกเซลล์ —</option>
+          <option value="เซลล์ไล้">เซลล์ไล้</option>
+          <option value="เซลล์แม็ค">เซลล์แม็ค</option>
+          <option value="เซลล์บาส">เซลล์บาส</option>
+          <option value="เซลล์แอม">เซลล์แอม</option>
+          <option value="ออฟฟิศ">ออฟฟิศ (เบอร์กลาง)</option>
+          <option value="__other">อื่นๆ (กรอกชื่อเอง)…</option>
+        </select>
+        <div id="sellerOtherWrap" style="display:none;margin-top:6px;"><input id="sellerOther" placeholder="พิมพ์ชื่อเซลล์ (เผื่อเพิ่มมือ)"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -1896,8 +1907,8 @@ function today(){ const t=new Date(); return String(t.getDate()).padStart(2,'0')
 function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note){
   // PDF-like format: # | รายละเอียด (multi-line) | จำนวน | ราคา/หน่วย | ยอดรวม
   let content = `<div style="font-weight:700;color:#1F2937;">${name}</div>`;
-  if (prod) content += `<div style="margin:4px 0 0 8px;color:#1F2937;">- ${prod}</div>`;
-  /* ใบจริงไม่โชว์ขนาดในใบเสนอราคา — ตัดบรรทัด "ขนาด:" ออก (R4.1) */
+  // R4.3: แนบขนาดท้ายชื่อสินค้า (size = "(กว้าง × สูง ม.)" หรือ "" ถ้าไม่มี เช่น กั้นห้องกระจก)
+  if (prod) content += `<div style="margin:4px 0 0 8px;color:#1F2937;">- ${prod}${size?(' '+size):''}</div>`;
   // R4.2: หมายเหตุ/OPTION ที่เซลล์พิมพ์เอง (ขึ้นก่อน "รายละเอียดงาน") — OPTION=แดง, อื่น=เทา
   if (note) { String(note).split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(!ln) return;
     const isOpt = ln.indexOf('OPTION')===0;
@@ -1919,7 +1930,11 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
   const vatPctEl=document.getElementById('vat-pct'); const vatPct=vatPctEl?(parseFloat(vatPctEl.value)||0):7;
   // R4.2: ฟิลด์หัวบิลเพิ่มเติม (ผู้ขาย/ผู้ติดต่อ/เบอร์โทร/ที่อยู่ลูกค้า)
   const _gv=(id)=>{const e=document.getElementById(id);return e?(e.value||'').trim():'';};
-  const _seller=_gv('sellerName')||'-', _contact=_gv('custContact')||'-', _phone=_gv('custPhone')||'-', _address=_gv('custAddress');
+  // ผู้ขาย: เลือกจาก dropdown (หรือ "อื่นๆ" พิมพ์เอง) + เบอร์ต่อคน (เติมทีหลังใน SELLER_PHONE)
+  const SELLER_PHONE={'เซลล์ไล้':'','เซลล์แม็ค':'','เซลล์บาส':'','เซลล์แอม':'','ออฟฟิศ':''}; // TODO: เติมเบอร์เมื่อพี่นัทส่ง
+  let _seller=_gv('sellerName'); if(_seller==='__other') _seller=_gv('sellerOther');
+  const _sph=SELLER_PHONE[_seller]||''; if(_seller && _sph) _seller+=' · โทร. '+_sph; if(!_seller) _seller='-';
+  const _contact=_gv('custContact')||'-', _phone=_gv('custPhone')||'-', _address=_gv('custAddress');
   const vat=Math.round((net+svcAmt)*vatPct/100), withVat=net+svcAmt+vat;
   const _d=(date||'').split('-'); const _dd=(_d[0]||'01'), _mm=(_d[1]||'01'), _yy=(_d[2]||'00');
   const _thDate=_dd+'-'+_mm+'-'+_yy;
@@ -2090,7 +2105,8 @@ function genQuote(keepNo){
     }
     const naType = ITYPE_NA.indexOf(it.p.cat)>=0;
     const prefix = naType ? '' : ((it.itype==='window')?'หน้าต่าง':'ประตู');
-    const prodName = prefix ? (prefix + it.p.name) : it.p.name;
+    // R4.4: กันชื่อซ้ำ "ประตูประตู" — ถ้าชื่อสินค้าขึ้นต้นด้วย ประตู/หน้าต่าง อยู่แล้ว ไม่เติม prefix
+    const prodName = (prefix && !/^(ประตู|หน้าต่าง)/.test(it.p.name)) ? (prefix + it.p.name) : it.p.name;
     const _parts=[];
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
@@ -2146,7 +2162,8 @@ function genQuote(keepNo){
     let content = '<div style="font-weight:700;color:#1F2937;">'+_gl+'<button type="button" class="qtoggle-set" onclick="toggleGroupSplit('+gIdx+')" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #B3151D;color:#B3151D;background:#fff;border-radius:6px;cursor:pointer;">'+(isSplit?'รวมราคา':'แยกราคา')+'</button></div>';
     if(isSplit){
       items.forEach(it => { const d=itemDetail(it); const pos=it.position?(' ('+it.position+')'):''; const ov=it.r.overridden?' ✎':'';
-        content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+d.prodName+pos+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
+        const _w=parseFloat(it.w)||0,_h=parseFloat(it.h)||0; const _sz=(_w>0&&_h>0)?(' ('+it.w+' × '+it.h+' ม.)'):'';  // R4.3: โชว์ขนาดเมื่อแยกราคา
+        content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+d.prodName+pos+_sz+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
         (it.r.addonLines||[]).forEach(function(a){ content += '<div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>· '+a.n+'</span><span>'+fmt(a.p)+'</span></div>'; }); });
       if(isGH) content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>↳ ค่าทำชุด กั้นห้องกระจก</span><span>5,000</span></div>';
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
@@ -2171,7 +2188,9 @@ function genQuote(keepNo){
     rowIdx++;
     const line=it.r.sell*it.qty; subtotal+=line;
     const d = itemDetail(it);
-    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), it.w+'×'+it.h+' ม.', d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
+    const _w=parseFloat(it.w)||0, _h=parseFloat(it.h)||0;
+    const _sz = it.p.glasshouse ? '' : (_w>0&&_h>0 ? `(${it.w} × ${it.h} ม.)` : (_w>0 ? `(ยาว ${it.w} ม.)` : ''));
+    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
@@ -2267,7 +2286,7 @@ function exportQuoteExcel(){
       glass = parts.join(' | ');
     } else {
       const prefix = naType ? '' : ((it.itype==='window')?'หน้าต่าง':'ประตู');
-      prodName = prefix ? (prefix + it.p.name) : it.p.name;
+      prodName = (prefix && !/^(ประตู|หน้าต่าง)/.test(it.p.name)) ? (prefix + it.p.name) : it.p.name;
       glass=''; if(it.p.fin){ glass=it.finLabel||'ไม่อบสี'; }
       else if(!AREA_CATS.includes(it.p.cat)){
         glass = (GLASS[it.gi]?GLASS[it.gi].n:'') + (it.ci>0?(' · '+COLORS[it.ci].n):'');
