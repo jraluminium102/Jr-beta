@@ -9,6 +9,7 @@ import { Chip, Tag, Spinner } from "@/components/ui/primitives";
 import { X, ShieldCheck, TriangleAlert } from "@/components/ui/icons";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
+import { QcPanel } from "@/components/jobs/QcPanel";
 import type { Job, Production, Installation, FinanceEntry, Issue, IssuePhase } from "@/lib/database.types";
 
 const SEV_TAG: Record<string, string> = { HIGH: "bg-rose-500/30 text-rose-100 border-rose-300/30", MEDIUM: "bg-amber-500/25 text-amber-100 border-amber-300/30", LOW: "bg-white/12 text-white/80 border-white/15" };
@@ -146,6 +147,7 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                   </div>
                   <StatusSelect label="เปลี่ยนสถานะ Production" value={prod.status} options={PROD_STATUS}
                     onSave={async (v) => { await api.patch(`/production/${prod.id}`, { status: v }); refetch(); onChanged(); }} />
+                  <QcPanel jobId={jobId} />
                 </div>
               ) : <Empty title="ยังไม่เข้า Production" sub="เริ่มเมื่อมัดจำแล้ว" />)}
 
@@ -163,6 +165,7 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                   {inst.warranty_until && <div className="mt-3 flex items-center gap-2 text-emerald-200 text-[12px] bg-emerald-500/15 border border-emerald-300/25 rounded-xl px-3 py-2.5"><ShieldCheck size={15} /> รับประกัน auto = วันจบงาน + 12 เดือน</div>}
                   <StatusSelect label="เปลี่ยนสถานะติดตั้ง" value={inst.status} options={INST_STATUS}
                     onSave={async (v) => { await api.patch(`/installation/${inst.id}`, { status: v }); refetch(); onChanged(); }} />
+                  <HandoverForm inst={inst} onSaved={() => { refetch(); onChanged(); }} />
                 </div>
               ) : <Empty title="ยังไม่เข้าติดตั้ง" sub="เริ่มเมื่อ Production = พร้อมติดตั้ง" />)}
 
@@ -321,4 +324,30 @@ function QuoteEditor({ job, onChanged }: { job: Detail; onChanged: () => void })
 
 function Empty({ title, sub }: { title: string; sub: string }) {
   return <div className="text-center py-10"><div className="text-sm" style={{ color: "var(--t-mid)" }}>{title}</div><div className="text-[12px] mt-1" style={{ color: "var(--t-low)" }}>{sub}</div></div>;
+}
+
+// หลักฐานรับงาน (handover)
+function HandoverForm({ inst, onSaved }: { inst: Installation; onSaved: () => void }) {
+  const [date, setDate] = useState(inst.handover_date ?? "");
+  const [signoff, setSignoff] = useState(inst.handover_signoff_url ?? "");
+  const [photo, setPhoto] = useState(inst.handover_photo_url ?? "");
+  const [saving, setSaving] = useState(false);
+  const fld = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40 [&::-webkit-calendar-picker-indicator]:invert";
+  const save = async () => {
+    setSaving(true);
+    try { await api.patch(`/installation/${inst.id}`, { handover_date: date || null, handover_signoff_url: signoff || null, handover_photo_url: photo || null }); onSaved(); }
+    finally { setSaving(false); }
+  };
+  return (
+    <div className="mt-4 glass-card rounded-xl p-3.5">
+      <div className="text-[12px] mb-2" style={{ color: "var(--t-low)" }}>หลักฐานรับงาน (ส่งงาน)</div>
+      <div className="space-y-2">
+        <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>วันรับงาน</span>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fld} /></label>
+        <input value={signoff} onChange={(e) => setSignoff(e.target.value)} placeholder="ลิงก์ใบรับงาน/ลายเซ็นลูกค้า" className={fld.replace(" [&::-webkit-calendar-picker-indicator]:invert", "")} />
+        <input value={photo} onChange={(e) => setPhoto(e.target.value)} placeholder="ลิงก์รูปหลังติดตั้ง" className={fld.replace(" [&::-webkit-calendar-picker-indicator]:invert", "")} />
+        <button onClick={save} disabled={saving} className="focusable pressable w-full bg-white text-[#1F4E78] rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px]">{saving ? "กำลังบันทึก…" : "บันทึกหลักฐานรับงาน"}</button>
+      </div>
+    </div>
+  );
 }

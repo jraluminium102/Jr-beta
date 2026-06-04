@@ -51,6 +51,7 @@ export interface Installation {
   problem1: string | null; responsible1: string | null; problem2: string | null; responsible2: string | null;
   problem3: string | null; responsible3: string | null; problem4: string | null; responsible4: string | null;
   remark: string | null; created_at: string; updated_at: string;
+  handover_date: string | null; handover_signoff_url: string | null; handover_photo_url: string | null;  // (0013)
 }
 export interface Issue {
   id: string; issue_code: string | null; job_id: string; phase: IssuePhase; type: IssueType;

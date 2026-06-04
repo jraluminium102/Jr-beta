@@ -20,6 +20,9 @@ const schema = z.object({
   problem3: z.string().nullish(), responsible3: z.string().nullish(),
   problem4: z.string().nullish(), responsible4: z.string().nullish(),
   remark:   z.string().nullish(),
+  handover_date:        z.string().nullish(),
+  handover_signoff_url: z.string().nullish(),
+  handover_photo_url:   z.string().nullish(),
 });
 
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
