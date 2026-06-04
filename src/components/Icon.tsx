@@ -37,6 +37,8 @@ const PATHS: Record<string, string> = {
   wrench:
     '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  track: '<path d="M3 6h13"/><path d="M3 12h18"/><path d="M3 18h10"/><circle cx="19" cy="6" r="2"/><circle cx="16" cy="18" r="2"/>',
+  chart: '<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="12" y="7" width="3" height="10" rx="1"/><rect x="17" y="13" width="3" height="4" rx="1"/>',
   calendar:
     '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
   refresh:

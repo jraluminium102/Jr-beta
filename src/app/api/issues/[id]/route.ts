@@ -8,6 +8,7 @@ type Params = { params: { id: string } };
 const schema = z.object({
   status:     z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]).optional(),
   type:       z.enum(["WRONG_DESIGN","CUSTOMER_CHANGES","MATERIAL_SHORTAGE","PRODUCTION_DELAY","INSTALLATION_DELAY","CUSTOMER_COMPLAINT","OTHER"]).optional(),
+  severity:   z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   owner_id:   z.string().uuid().nullish(),
   resolution: z.string().nullish(),
 });

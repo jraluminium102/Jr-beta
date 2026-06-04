@@ -28,6 +28,7 @@ const DOC_NAV: NavItem[] = [
 // กลุ่มปฏิบัติงาน (ฝั่ง OMS) — กรองตาม role ผ่าน menusFor()
 const OMS_NAV: Record<string, NavItem> = {
   dashboard:    { href: "/operations", icon: "dashboard", label: "ภาพรวมงาน" },
+  followup:     { href: "/follow-up", icon: "track", label: "ติดตามงาน" },
   jobs:         { href: "/jobs", icon: "briefcase", label: "งานทั้งหมด" },
   production:   { href: "/production", icon: "factory", label: "ผลิต" },
   installation: { href: "/installation", icon: "wrench", label: "ติดตั้ง" },

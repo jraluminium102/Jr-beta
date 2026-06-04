@@ -10,6 +10,7 @@ export const GET = withRoute(async (req: Request) => {
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
   const phase = url.searchParams.get("phase");
+  const severity = url.searchParams.get("severity");
 
   let query = ctx.supabase
     .from("issues")
@@ -17,6 +18,7 @@ export const GET = withRoute(async (req: Request) => {
     .order("created_at", { ascending: false });
   if (status) query = query.eq("status", status);
   if (phase) query = query.eq("phase", phase);
+  if (severity) query = query.eq("severity", severity);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -27,6 +29,7 @@ const createSchema = z.object({
   job_id: z.string().uuid(),
   phase: z.enum(["SALES", "MEASUREMENT", "PRODUCTION", "INSTALLATION", "POST_SALE"]),
   type: z.enum(["WRONG_DESIGN", "CUSTOMER_CHANGES", "MATERIAL_SHORTAGE", "PRODUCTION_DELAY", "INSTALLATION_DELAY", "CUSTOMER_COMPLAINT", "OTHER"]).default("OTHER"),
+  severity: z.enum(["LOW", "MEDIUM", "HIGH"]).default("MEDIUM"),
   detail: z.string().min(1, "กรุณาระบุรายละเอียดปัญหา"),
   owner_name: z.string().optional(),
 });
