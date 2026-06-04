@@ -14,6 +14,7 @@ type NavItem = { href: string; icon: string; label: string };
 // กลุ่มเอกสาร/บัญชี (ฝั่ง Quotation) — เห็นได้ทุก role ที่ล็อกอิน
 const DOC_NAV: NavItem[] = [
   { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+  { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
   { href: "/queue", icon: "calendar", label: "คิวงาน" },
   { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
   { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
@@ -59,8 +60,13 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const omsKeys = menusFor(profile.role as Role);
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
-  // /queue เห็นเฉพาะ role ที่มีสิทธิ์อ่าน (ADMIN/SALES) — ที่เหลือซ่อนเมนู
-  const docItems = DOC_NAV.filter((n) => n.href !== "/queue" || can(profile.role as Role, "queue", "read"));
+  // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
+  const role = profile.role as Role;
+  const docItems = DOC_NAV.filter((n) => {
+    if (n.href === "/queue") return can(role, "queue", "read");
+    if (n.href === "/stats") return can(role, "finance", "read");
+    return true;
+  });
 
   const Sidebar = ({ onNav }: { onNav?: () => void }) => (
     <div className="glass-dark rounded-2xl h-full p-4 flex flex-col text-white">

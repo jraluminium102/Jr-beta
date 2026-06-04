@@ -1,0 +1,105 @@
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok } from "@/lib/bff/response";
+import { derivePhase, PHASE_ORDER } from "@/lib/followup";
+
+export const dynamic = "force-dynamic";
+
+type Sb = { from: (t: string) => any };
+const num = (v: unknown) => Number(v ?? 0) || 0;
+
+// GET /api/stats?from=YYYY-MM-DD&to=YYYY-MM-DD — สถิติช่วงเวลา (default = ปีนี้)
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("dashboard", "read");
+  const sb = ctx.supabase as unknown as Sb;
+  const url = new URL(req.url);
+
+  const now = new Date();
+  const from = url.searchParams.get("from") || `${now.getFullYear()}-01-01`;
+  const to = url.searchParams.get("to") || now.toISOString().slice(0, 10);
+  const fromT = new Date(from + "T00:00:00").getTime();
+  const toT = new Date(to + "T23:59:59").getTime();
+  const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
+
+  const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }] = await Promise.all([
+    sb.from("jobs").select("status, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
+    sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
+    sb.from("issues").select("phase, severity, status, created_at"),
+    sb.from("quotation_items").select("name, qty, quotation:quotation_id(issue_date)"),
+  ]);
+
+  const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [];
+  const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
+
+  // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก
+  const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
+  const wonJobs = J.filter((j: any) => WON.includes(j.status) && inRange(j.deposit_date));
+
+  const summary = {
+    jobs: inJobs.length,
+    won: wonJobs.length,
+    close_rate: inJobs.length ? Math.round((inJobs.filter((j: any) => WON.includes(j.status)).length / inJobs.length) * 100) : 0,
+    revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    collected: F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0),
+  };
+
+  // รายเดือน (ในช่วง — ตามเดือนของ assess/deposit/payment)
+  const monthKeys: string[] = [];
+  { const d = new Date(fromT); d.setDate(1); while (d.getTime() <= toT && monthKeys.length < 36) { monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); d.setMonth(d.getMonth() + 1); } }
+  const mk = (s?: string | null) => (s ? s.slice(0, 7) : "");
+  const byMonth = monthKeys.map((m) => ({
+    month: m,
+    quoted: J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    closed: J.filter((j: any) => mk(j.deposit_date) === m).reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    collected: F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0),
+  }));
+
+  // ปิดการขายต่อเซลล์ (estimator)
+  const salesMap: Record<string, { name: string; jobs: number; won: number; revenue: number }> = {};
+  inJobs.forEach((j: any) => {
+    const key = j.estimator_id ?? "none";
+    const name = j.estimator?.full_name ?? "ไม่ระบุ";
+    salesMap[key] ??= { name, jobs: 0, won: 0, revenue: 0 };
+    salesMap[key].jobs++;
+    if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.total_amount); }
+  });
+  const bySales = Object.values(salesMap).map((s) => ({ ...s, close_rate: s.jobs ? Math.round((s.won / s.jobs) * 100) : 0 }))
+    .sort((a, b) => b.revenue - a.revenue);
+
+  // funnel ตามเฟส (ภาพรวมปัจจุบัน ไม่ยกเลิก)
+  const phaseCount: Record<string, number> = {};
+  J.filter((j: any) => j.status !== "CANCELLED").forEach((j: any) => { const p = derivePhase(j); phaseCount[p] = (phaseCount[p] ?? 0) + 1; });
+  const funnel = PHASE_ORDER.map((p) => ({ phase: p, count: phaseCount[p] ?? 0 }));
+
+  // ช่องทางลูกค้า
+  const chMap: Record<string, number> = {};
+  inJobs.forEach((j: any) => { chMap[j.channel ?? "OTHER"] = (chMap[j.channel ?? "OTHER"] ?? 0) + 1; });
+  const byChannel = Object.entries(chMap).map(([channel, count]) => ({ channel, count })).sort((a, b) => b.count - a.count);
+
+  // ประเภทงานนิยม (จากรายการในใบเสนอราคา ในช่วง) top 10
+  const itemMap: Record<string, number> = {};
+  QI.filter((it: any) => inRange(it.quotation?.issue_date)).forEach((it: any) => {
+    const name = (it.name ?? "").trim(); if (!name) return;
+    itemMap[name] = (itemMap[name] ?? 0) + num(it.qty);
+  });
+  const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 10);
+
+  // ปัญหา แยกเฟส/ความรุนแรง (ในช่วง)
+  const inIssues = I.filter((i: any) => inRange(i.created_at));
+  const issuesByPhase: Record<string, number> = {};
+  const issuesBySeverity: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0 };
+  inIssues.forEach((i: any) => {
+    issuesByPhase[i.phase] = (issuesByPhase[i.phase] ?? 0) + 1;
+    if (i.severity in issuesBySeverity) issuesBySeverity[i.severity]++;
+  });
+
+  return ok({
+    range: { from, to },
+    summary, byMonth, bySales, funnel, byChannel, topItems,
+    issues: {
+      total: inIssues.length,
+      open: inIssues.filter((i: any) => i.status !== "CLOSED").length,
+      byPhase: issuesByPhase, bySeverity: issuesBySeverity,
+    },
+  });
+});
