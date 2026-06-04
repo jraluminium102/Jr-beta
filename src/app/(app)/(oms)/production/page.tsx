@@ -18,7 +18,9 @@ const today = new Date().toISOString().slice(0, 10);
 // กลุ่มสรุปสำหรับ dashboard ช่าง
 const GROUPS: { key: string; label: string; statuses: ProdStatus[]; tone: string }[] = [
   { key: "measure", label: "รอวัดจริง", statuses: ["PENDING_MEASURE"], tone: "text-sky-300" },
-  { key: "doing", label: "กำลังทำ/ผลิต", statuses: ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "MANUFACTURING"], tone: "text-amber-300" },
+  { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", statuses: ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"], tone: "text-cyan-300" },
+  { key: "queue", label: "รอลงผลิต", statuses: ["QUEUED"], tone: "text-amber-300" },
+  { key: "producing", label: "กำลังผลิต", statuses: ["MANUFACTURING"], tone: "text-orange-300" },
   { key: "qc", label: "รอ QC", statuses: ["QC"], tone: "text-violet-300" },
   { key: "ready", label: "พร้อมติดตั้ง", statuses: ["READY"], tone: "text-emerald-300" },
   { key: "issue", label: "มีปัญหา", statuses: ["ISSUE"], tone: "text-rose-300" },
@@ -69,7 +71,7 @@ export default function ProductionPage() {
       <p className="text-sm mb-4" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
 
       {/* ── Dashboard ช่าง: นับแต่ละสถานะ ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mb-3">
         {GROUPS.map((g) => (
           <button key={g.key} onClick={() => setFilterKey(filterKey === g.key ? null : g.key)}
             className={`focusable pressable glass-card rounded-2xl p-3 text-left border-2 ${filterKey === g.key ? "border-white/60" : "border-transparent"}`}>
