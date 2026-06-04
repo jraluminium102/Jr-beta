@@ -1,21 +1,23 @@
 import { z } from "zod";
-import { requirePermission } from "@/lib/bff/context";
+import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { dbError } from "@/lib/bff/db-error";
 
 export const dynamic = "force-dynamic";
 
 type Sb = { from: (t: string) => any };
 const SELECT = "*, sales:sales_id(id,name,code,team)";
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 function clean(o: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v === "" ? null : v]));
 }
 
 const patchSchema = z.object({
-  status: z.enum(["PENDING", "PROPOSED", "CONFIRMED", "DONE", "CANCELLED"]).optional(),
+  status: z.enum(["PENDING", "PROPOSED", "CONFIRMED", "DONE", "CANCELLED"]).nullish(),
   queue_date: z.string().nullish(),
-  queue_time: z.string().nullish(),
+  queue_time: z.string().regex(TIME_RE, "รูปแบบเวลาต้องเป็น HH:MM").nullish(),
   job_type: z.string().nullish(),
   sales_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
@@ -34,25 +36,26 @@ const patchSchema = z.object({
   note_ai: z.string().nullish(),
 });
 
-// PATCH /api/queue/[id] — แก้ไขคิว (ADMIN)
+// PATCH /api/queue/[id] — แก้ไขคิว (ADMIN) · updated_at อัปเดตอัตโนมัติด้วย trigger
 export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("queue", "write");
   const body = patchSchema.parse(clean(await req.json()));
   const sb = ctx.supabase as unknown as Sb;
 
   const { data, error } = await sb.from("queue_entries")
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq("id", params.id).select(SELECT).single();
-  if (error || !data) throw new Error(error?.message ?? "แก้ไขคิวไม่สำเร็จ");
+    .update(body).eq("id", params.id).select(SELECT).maybeSingle();
+  if (error) throw dbError(error);
+  if (!data) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");
   return ok(data);
 });
 
-// DELETE /api/queue/[id] — ลบคิว (ADMIN)
+// DELETE /api/queue/[id] — ลบคิว (ADMIN) · เช็คว่ามีแถวจริงก่อนคืน success
 export const DELETE = withRoute(async (_req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("queue", "write");
   const sb = ctx.supabase as unknown as Sb;
 
-  const { error } = await sb.from("queue_entries").delete().eq("id", params.id);
-  if (error) throw new Error(error.message);
+  const { data, error } = await sb.from("queue_entries").delete().eq("id", params.id).select("id");
+  if (error) throw dbError(error);
+  if (!data || data.length === 0) throw new HttpError(404, "ไม่พบคิวที่จะลบ");
   return ok({ id: params.id });
 });

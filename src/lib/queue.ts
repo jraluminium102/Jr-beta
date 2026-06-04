@@ -12,6 +12,7 @@ export type QueueSales = {
   start_label: string | null;
   start_lat: number | null;
   start_lng: number | null;
+  profile_id: string | null;
   active: boolean;
 };
 
@@ -108,12 +109,16 @@ export function thaiDate(isoDate: string | null): string {
 export function parseLatLng(input: string): { lat: number; lng: number } | null {
   if (!input) return null;
   const s = input.trim();
+  const valid = (lat: number, lng: number) =>
+    Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+      ? { lat, lng } : null;
+
   const plain = s.match(/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/);
-  if (plain) return { lat: Number(plain[1]), lng: Number(plain[2]) };
+  if (plain) return valid(Number(plain[1]), Number(plain[2]));
   const at = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
-  if (at) return { lat: Number(at[1]), lng: Number(at[2]) };
+  if (at) return valid(Number(at[1]), Number(at[2]));
   const q = s.match(/[?&](?:q|query|ll|center)=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
-  if (q) return { lat: Number(q[1]), lng: Number(q[2]) };
+  if (q) return valid(Number(q[1]), Number(q[2]));
   return null;
 }
 

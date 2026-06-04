@@ -68,6 +68,11 @@ create index if not exists queue_entries_date_idx   on public.queue_entries (que
 create index if not exists queue_entries_status_idx on public.queue_entries (status);
 create index if not exists queue_entries_sales_idx  on public.queue_entries (sales_id);
 
+-- auto-stamp updated_at (ใช้ฟังก์ชันเดิมจาก 0002)
+drop trigger if exists touch_queue_entries on public.queue_entries;
+create trigger touch_queue_entries before update on public.queue_entries
+  for each row execute function public.tg_touch_updated_at();
+
 -- ---------- ตารางว่าง/ลา/วันอยู่ออฟฟิศ (แอดมินลงเอง) ----------
 create table if not exists public.sales_availability (
   id        uuid primary key default gen_random_uuid(),
@@ -105,7 +110,12 @@ create policy queue_sales_write on public.queue_sales  for all    using (public.
 
 drop policy if exists queue_entries_read  on public.queue_entries;
 drop policy if exists queue_entries_write on public.queue_entries;
-create policy queue_entries_read  on public.queue_entries for select using (public.is_active());
+-- ADMIN เห็นทุกคิว · เซลล์เห็นเฉพาะคิวที่ผูก sales_id กับบัญชีตัวเอง (กัน 2 ชั้น ไม่พึ่ง BFF อย่างเดียว)
+create policy queue_entries_read on public.queue_entries for select using (
+  public.has_role('ADMIN') or exists (
+    select 1 from public.queue_sales s where s.id = queue_entries.sales_id and s.profile_id = auth.uid()
+  )
+);
 create policy queue_entries_write on public.queue_entries for all   using (public.has_role('ADMIN')) with check (public.has_role('ADMIN'));
 
 drop policy if exists sales_avail_read  on public.sales_availability;
@@ -130,3 +140,15 @@ insert into public.queue_sales (code, name, team, start_label, start_lat, start_
 on conflict (code) do nothing;
 
 insert into public.queue_settings (id) values (1) on conflict (id) do nothing;
+
+-- ============================================================
+-- GRANTS — ให้ PostgREST (role authenticated/anon) แตะตารางได้ (RLS ยังบังคับสิทธิ์อยู่)
+-- จำเป็นเพราะ migration นี้รันแยกจาก setup-all.sql (ซึ่ง grant ก่อนสร้างตารางนี้)
+-- ============================================================
+grant all on public.queue_sales, public.queue_entries, public.sales_availability, public.queue_settings
+  to anon, authenticated, service_role;
+
+-- ผูกบัญชี login ของเซลล์เพื่อให้เซลล์เห็นคิวของตัวเอง (แก้อีเมลให้ตรงจริงแล้วรัน)
+-- update public.queue_sales set profile_id=(select id from public.profiles where email='lai@jr.com')  where code='lai';
+-- update public.queue_sales set profile_id=(select id from public.profiles where email='mac@jr.com')  where code='mac';
+-- update public.queue_sales set profile_id=(select id from public.profiles where email='bas@jr.com')  where code='bas';

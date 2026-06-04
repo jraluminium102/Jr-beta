@@ -21,21 +21,19 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
   },
   DESIGNER: {
     jobs: ["read", "write"], production: ["read"], issues: ["read"], dashboard: ["read"],
-    queue: ["read"],
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
-    queue: ["read"],
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
-    issues: ["read", "write"], dashboard: ["read"], queue: ["read"],
+    issues: ["read", "write"], dashboard: ["read"],
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
-    finance: ["read", "write", "void"], dashboard: ["read"], queue: ["read"],
+    finance: ["read", "write", "void"], dashboard: ["read"],
   },
-  VIEWER: { jobs: ["read"], dashboard: ["read"], queue: ["read"] },
+  VIEWER: { jobs: ["read"], dashboard: ["read"] },
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {

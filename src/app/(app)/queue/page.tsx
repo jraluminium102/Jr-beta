@@ -59,8 +59,12 @@ export default function QueuePage() {
 
   async function toggleReceipt(e: QueueEntry, checked: boolean) {
     setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, receipt_done: checked } : r))); // optimistic
-    try { await api.patch(`/queue/${e.id}`, { receipt_done: checked }); }
-    catch { load(); }
+    try {
+      await api.patch(`/queue/${e.id}`, { receipt_done: checked });
+    } catch (err) {
+      setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, receipt_done: !checked } : r))); // revert
+      alert(err instanceof Error ? err.message : "อัปเดตใบเสร็จไม่สำเร็จ");
+    }
   }
 
   const StatusBadge = ({ e }: { e: QueueEntry }) => <Badge tone={STATUS_META[e.status].tone} dot>{STATUS_META[e.status].th}</Badge>;
@@ -155,8 +159,8 @@ export default function QueuePage() {
                   {list.map((e) => {
                     const c = dayColor(e.queue_date);
                     return (
-                      <tr key={e.id} onClick={() => canWrite && setModal({ entry: e })}
-                        className={`border-b border-gray-200/50 ${c?.row ?? ""} ${canWrite ? "cursor-pointer hover:brightness-95" : ""} align-top`}>
+                      <tr key={e.id} onClick={() => setModal({ entry: e })}
+                        className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
                         <td className="px-2 py-2.5"><StatusBadge e={e} /></td>
                         <td className="px-2 py-2.5 whitespace-nowrap text-ink-2">{thaiDate(e.queue_date) || "—"}</td>
                         <td className="px-2 py-2.5 whitespace-nowrap">
@@ -168,16 +172,16 @@ export default function QueuePage() {
                         <td className="px-2 py-2.5 text-ink-2">{e.line_contact || "—"}</td>
                         <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
                         <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
-                        <td className="px-2 py-2.5 text-ink-2 max-w-[220px]">{e.address || "—"}</td>
+                        <td className="px-2 py-2.5 text-ink-2 max-w-[220px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
                         <td className="px-2 py-2.5"><MapLink url={e.location_url} /></td>
                         <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
                         <td className="px-2 py-2.5 text-right tabular-nums text-ink-2">{fmtBaht(e.assess_fee) || "—"}</td>
                         <td className="px-2 py-2.5 text-ink-2">{e.payment || "—"}</td>
                         <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
                           <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
-                            onChange={(ev) => toggleReceipt(e, ev.target.checked)} className="w-4 h-4 accent-[#B3151D]" />
+                            onChange={(ev) => toggleReceipt(e, ev.target.checked)} className="w-4 h-4 accent-brand" />
                         </td>
-                        <td className="px-2 py-2.5 text-ink-2 max-w-[160px]">{e.note_admin || "—"}</td>
+                        <td className="px-2 py-2.5 text-ink-2 max-w-[160px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
                       </tr>
                     );
                   })}
@@ -190,8 +194,8 @@ export default function QueuePage() {
               {list.map((e) => {
                 const c = dayColor(e.queue_date);
                 return (
-                  <div key={e.id} onClick={() => canWrite && setModal({ entry: e })}
-                    className={`rounded-xl p-3.5 border border-gray-200/60 ${c?.row ?? "bg-white/50"} ${canWrite ? "cursor-pointer" : ""}`}>
+                  <div key={e.id} onClick={() => setModal({ entry: e })}
+                    className={`rounded-xl p-3.5 border border-gray-200/60 ${c?.row ?? "bg-white/50"} cursor-pointer`}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold text-ink">{e.customer_name}</span>
                       <StatusBadge e={e} />
@@ -209,7 +213,7 @@ export default function QueuePage() {
                       <MapLink url={e.location_url} />
                       <label className="flex items-center gap-1.5 text-xs text-ink-2" onClick={(ev) => ev.stopPropagation()}>
                         <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
-                          onChange={(ev) => toggleReceipt(e, ev.target.checked)} className="w-4 h-4 accent-[#B3151D]" /> ใบเสร็จ
+                          onChange={(ev) => toggleReceipt(e, ev.target.checked)} className="w-4 h-4 accent-brand" /> ใบเสร็จ
                       </label>
                     </div>
                   </div>
@@ -221,7 +225,7 @@ export default function QueuePage() {
       </Card>
 
       {modal && (
-        <QueueModal entry={modal.entry} salesList={sales}
+        <QueueModal entry={modal.entry} salesList={sales} readOnly={!canWrite}
           onClose={() => setModal(null)}
           onSaved={() => { setModal(null); load(); }} />
       )}

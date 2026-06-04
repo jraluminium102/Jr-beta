@@ -53,12 +53,13 @@ function initForm(e?: QueueEntry | null): FormState {
 }
 
 export function QueueModal({
-  entry, salesList, onClose, onSaved,
+  entry, salesList, onClose, onSaved, readOnly = false,
 }: {
   entry?: QueueEntry | null;
   salesList: QueueSales[];
   onClose: () => void;
   onSaved: () => void;
+  readOnly?: boolean;
 }) {
   const editing = !!entry;
   const [f, setF] = useState<FormState>(() => initForm(entry));
@@ -86,7 +87,7 @@ export function QueueModal({
       lng: coords?.lng ?? null,
       job_size: f.job_size || null,
       job_count: f.job_count ? Number(f.job_count) : null,
-      assess_fee: f.assess_fee ? Number(f.assess_fee) : null,
+      assess_fee: f.assess_fee && Number.isFinite(Number(f.assess_fee)) ? Number(f.assess_fee) : null,
       payment: f.payment || null,
       receipt_done: f.receipt_done,
       note_admin: f.note_admin || null,
@@ -119,14 +120,14 @@ export function QueueModal({
       <div className="relative w-full max-w-2xl max-h-[92dvh] overflow-y-auto glass rounded-2xl p-5 sm:p-6 fade-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
-            <Icon name="calendar" size={18} /> {editing ? "แก้ไขคิว" : "เพิ่มคิวงาน"}
+            <Icon name="calendar" size={18} /> {readOnly ? "รายละเอียดคิว" : editing ? "แก้ไขคิว" : "เพิ่มคิวงาน"}
           </h2>
           <button onClick={onClose} aria-label="ปิด" className="press text-ink-3 hover:text-ink rounded-lg p-1">
-            <Icon name="logout" size={18} />
+            <Icon name="close" size={18} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <fieldset disabled={readOnly} className="grid grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
           <Field label="ชื่อลูกค้า *" wide>
             <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)} placeholder="คุณ…" className={inp} />
           </Field>
@@ -211,7 +212,7 @@ export function QueueModal({
           </Field>
           <Field label="ใบเสร็จ">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
-              <input type="checkbox" checked={f.receipt_done} onChange={(e) => set("receipt_done", e.target.checked)} className="w-4 h-4 accent-[#B3151D]" />
+              <input type="checkbox" checked={f.receipt_done} onChange={(e) => set("receipt_done", e.target.checked)} className="w-4 h-4 accent-brand" />
               <span className="text-ink-2">ส่งใบเสร็จให้ลูกค้าแล้ว</span>
             </label>
           </Field>
@@ -219,23 +220,25 @@ export function QueueModal({
           <Field label="หมายเหตุแอดมิน" wide>
             <input value={f.note_admin} onChange={(e) => set("note_admin", e.target.value)} className={inp} />
           </Field>
-        </div>
+        </fieldset>
 
         {err && <p role="alert" className="mt-3 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
 
         <div className="flex items-center gap-2 mt-5">
-          <button onClick={save} disabled={busy}
-            className="press inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
-            <Icon name="check" size={16} /> {busy ? "กำลังบันทึก…" : editing ? "บันทึกการแก้ไข" : "เพิ่มคิว"}
-          </button>
+          {!readOnly && (
+            <button onClick={save} disabled={busy}
+              className="press inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
+              <Icon name="check" size={16} /> {busy ? "กำลังบันทึก…" : editing ? "บันทึกการแก้ไข" : "เพิ่มคิว"}
+            </button>
+          )}
           <Badge tone={STATUS_META[f.status].tone}>{STATUS_META[f.status].th}</Badge>
-          {editing && (
+          {!readOnly && editing && (
             <button onClick={remove} disabled={busy}
               className="press inline-flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60">
               <Icon name="trash" size={16} /> ลบ
             </button>
           )}
-          <button onClick={onClose} className="press rounded-xl px-4 py-2.5 text-sm text-ink-2 ml-auto">ยกเลิก</button>
+          <button onClick={onClose} className="press rounded-xl px-4 py-2.5 text-sm text-ink-2 ml-auto">{readOnly ? "ปิด" : "ยกเลิก"}</button>
         </div>
       </div>
     </div>

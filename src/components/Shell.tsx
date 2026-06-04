@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 import { signOut } from "@/app/login/actions";
 import { ROLE_LABEL, type Profile } from "@/lib/types";
-import { menusFor } from "@/lib/rbac";
+import { menusFor, can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
 
 type NavItem = { href: string; icon: string; label: string };
@@ -58,6 +58,9 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const omsKeys = menusFor(profile.role as Role);
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
+  // /queue เห็นเฉพาะ role ที่มีสิทธิ์อ่าน (ADMIN/SALES) — ที่เหลือซ่อนเมนู
+  const docItems = DOC_NAV.filter((n) => n.href !== "/queue" || can(profile.role as Role, "queue", "read"));
+
   const Sidebar = ({ onNav }: { onNav?: () => void }) => (
     <div className="glass-dark rounded-2xl h-full p-4 flex flex-col text-white">
       <div className="px-2 py-3 border-b border-white/15 mb-3">
@@ -66,7 +69,7 @@ export default function Shell({ profile, children }: { profile: Profile; childre
       </div>
       <nav className="space-y-1 flex-1 overflow-y-auto" aria-label="เมนูหลัก">
         <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-1 pb-1.5">เอกสาร / บัญชี</div>
-        {DOC_NAV.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
+        {docItems.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
         {omsItems.length > 0 && (
           <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-3 pb-1.5">ปฏิบัติงาน</div>
         )}
