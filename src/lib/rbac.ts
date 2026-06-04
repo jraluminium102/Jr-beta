@@ -2,7 +2,7 @@ import type { Role } from "@/lib/database.types";
 
 export type Resource =
   | "jobs" | "jobs:finance_fields" | "production" | "installation"
-  | "issues" | "finance" | "dashboard" | "settings" | "users";
+  | "issues" | "finance" | "dashboard" | "settings" | "users" | "queue";
 export type Action = "read" | "write" | "void";
 
 // ตรงกับ PRD REQ-06 + RLS policies ใน 0003_rls.sql
@@ -12,26 +12,30 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     production: ["read", "write"], installation: ["read", "write"],
     issues: ["read", "write"], finance: ["read", "write", "void"],
     dashboard: ["read"], settings: ["read", "write"], users: ["read", "write"],
+    queue: ["read", "write"],
   },
   SALES: {
     jobs: ["read", "write"], "jobs:finance_fields": ["read", "write"],
     production: ["read"], issues: ["read", "write"], finance: ["read"], dashboard: ["read"],
+    queue: ["read"],
   },
   DESIGNER: {
     jobs: ["read", "write"], production: ["read"], issues: ["read"], dashboard: ["read"],
+    queue: ["read"],
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
+    queue: ["read"],
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
-    issues: ["read", "write"], dashboard: ["read"],
+    issues: ["read", "write"], dashboard: ["read"], queue: ["read"],
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
-    finance: ["read", "write", "void"], dashboard: ["read"],
+    finance: ["read", "write", "void"], dashboard: ["read"], queue: ["read"],
   },
-  VIEWER: { jobs: ["read"], dashboard: ["read"] },
+  VIEWER: { jobs: ["read"], dashboard: ["read"], queue: ["read"] },
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {

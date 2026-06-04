@@ -1,163 +1,140 @@
-// ตรรกะคิวงาน — parse 3 tab ของ Google Sheet + กฎการจัดคิว (ดึงมาจากที่เขียนไว้ในชีต)
-//  - Tab คิวลูกค้า : คิวจริง
-//  - Tab วันหยุด/ลา : เซลล์คนไหนลา/วันหยุด วันไหน
-//  - Tab โควตา : โควตาประเมิน/เดือน + สถานะ R2/R3 ("Workflow อ่าน Tab นี้ตรวจ R2/R3 ก่อนจัดคิว")
+// คิวงาน — types + helper (Supabase เป็น source of truth, ไม่มี Google Sheet แล้ว)
 
-export type Sheet = { headers: string[]; rows: string[][] };
-export type QueueData = { queue: Sheet; leave: Sheet; quota: Sheet };
+export type QueueStatus = "PENDING" | "PROPOSED" | "CONFIRMED" | "DONE" | "CANCELLED";
+export type QueueTeam = "BKK" | "PHUKET";
+export type JobSize = "SINGLE" | "MULTI" | "FULLDAY";
 
-export type LeaveEntry = { date: string; sales: string; span: string; type: string; note: string };
-export type QuotaEntry = { sales: string; assessed: number; showroom: number; remaining: number; r2: string; r3: string };
+export type QueueSales = {
+  id: string;
+  code: string;
+  name: string;
+  team: QueueTeam;
+  start_label: string | null;
+  start_lat: number | null;
+  start_lng: number | null;
+  active: boolean;
+};
 
-const DOW_TH = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์"];
+export type QueueEntry = {
+  id: string;
+  status: QueueStatus;
+  queue_date: string | null;
+  queue_time: string | null;
+  job_type: string | null;
+  sales_id: string | null;
+  sales?: { id: string; name: string; code: string; team: QueueTeam } | null;
+  line_contact: string | null;
+  customer_name: string;
+  tel: string | null;
+  address: string | null;
+  location_url: string | null;
+  lat: number | null;
+  lng: number | null;
+  job_size: JobSize | null;
+  job_count: number | null;
+  assess_fee: number | null;
+  payment: string | null;
+  receipt_done: boolean;
+  note_admin: string | null;
+  note_ai: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
-const strip = (s: string) => (s ?? "").replace(/\s+/g, "");
+// ---------- สถานะ ----------
+export const STATUS_META: Record<QueueStatus, { th: string; tone: "gray" | "amber" | "sky" | "emerald" | "red" }> = {
+  PENDING:   { th: "รอจัด", tone: "gray" },
+  PROPOSED:  { th: "เสนอคิว (รอลูกค้ายืนยัน)", tone: "amber" },
+  CONFIRMED: { th: "ยืนยันแล้ว", tone: "emerald" },
+  DONE:      { th: "เสร็จ", tone: "emerald" },
+  CANCELLED: { th: "ยกเลิก", tone: "red" },
+};
+export const STATUS_ORDER: QueueStatus[] = ["PENDING", "PROPOSED", "CONFIRMED", "DONE", "CANCELLED"];
 
-// หา index คอลัมน์จากชื่อหัว (จับแบบ contains หลังตัดช่องว่าง)
-export function colIndex(headers: string[], ...names: string[]): number {
-  return headers.findIndex((h) => names.some((n) => strip(h).includes(strip(n))));
+// ---------- ขนาดงาน ----------
+export const JOB_SIZE_META: Record<JobSize, string> = {
+  SINGLE: "จุดเดียว",
+  MULTI: "หลายจุด",
+  FULLDAY: "เต็มวัน",
+};
+
+// ---------- ค่าประเมิน (dropdown + พิมพ์เอง) ----------
+export const FEE_OPTIONS = [1000, 2000, 2500, 3000, 3500];
+
+// ---------- วันในสัปดาห์ + สีประจำวัน (ไทย) ----------
+// index: 0=อาทิตย์ … 6=เสาร์ (ตรงกับ Date.getDay())
+const DOW_TH = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+export type DayColor = { name: string; row: string; chip: string; dot: string };
+const DAY_COLORS: DayColor[] = [
+  { name: "อาทิตย์", row: "bg-red-50",     chip: "bg-red-100 text-red-800",        dot: "#dc2626" },
+  { name: "จันทร์",  row: "bg-yellow-50",  chip: "bg-yellow-100 text-yellow-800",  dot: "#ca8a04" },
+  { name: "อังคาร",  row: "bg-pink-50",    chip: "bg-pink-100 text-pink-800",      dot: "#db2777" },
+  { name: "พุธ",     row: "bg-green-50",   chip: "bg-green-100 text-green-800",     dot: "#16a34a" },
+  { name: "พฤหัสบดี", row: "bg-orange-50", chip: "bg-orange-100 text-orange-800",   dot: "#ea580c" },
+  { name: "ศุกร์",   row: "bg-sky-50",     chip: "bg-sky-100 text-sky-800",         dot: "#0284c7" },
+  { name: "เสาร์",   row: "bg-purple-50",  chip: "bg-purple-100 text-purple-800",   dot: "#9333ea" },
+];
+
+// "2026-06-01" -> index วัน (0–6) หรือ null
+function dowIndex(isoDate: string | null): number | null {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d).getDay();
 }
 
-// "2026-06-01" -> { thai: "1/6/2569", dow: "จันทร์" } (ปี พ.ศ., ไม่มีเลขศูนย์นำหน้า)
-export function isoToSheetDate(iso: string): { thai: string; dow: string } {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return { thai: "", dow: "" };
-  const dt = new Date(y, m - 1, d);
-  return { thai: `${d}/${m}/${y + 543}`, dow: DOW_TH[dt.getDay()] };
+export function dayLabel(isoDate: string | null): string {
+  const i = dowIndex(isoDate);
+  return i === null ? "" : DOW_TH[i];
 }
 
-// normalize วันที่ไทยให้เทียบกันได้ "01/6/2569" == "1/6/2569" -> "1/6/2569"
-export function normThaiDate(s: string): string {
-  const parts = (s ?? "").trim().split(/[/.-]/).map((p) => p.trim());
-  if (parts.length < 3) return (s ?? "").trim();
-  const [d, m, y] = parts;
-  return `${Number(d)}/${Number(m)}/${Number(y)}`;
+export function dayColor(isoDate: string | null): DayColor | null {
+  const i = dowIndex(isoDate);
+  return i === null ? null : DAY_COLORS[i];
 }
 
-export function parseLeave(sheet: Sheet): LeaveEntry[] {
-  const h = sheet.headers;
-  const di = colIndex(h, "วันที่");
-  const si = colIndex(h, "เซลล์");
-  const ci = colIndex(h, "ช่วง");
-  const ti = colIndex(h, "ประเภท");
-  const ni = colIndex(h, "หมายเหตุ");
-  if (di < 0) return [];
-  return sheet.rows
-    .filter((r) => (r[di] ?? "").trim() !== "")
-    .map((r) => ({
-      date: normThaiDate(r[di] ?? ""),
-      sales: (r[si] ?? "").trim(),
-      span: (r[ci] ?? "").trim(),
-      type: (r[ti] ?? "").trim(),
-      note: (r[ni] ?? "").trim(),
-    }));
+// แปลง ISO -> วันที่ไทยอ่านง่าย (1 มิ.ย. 69)
+const TH_MON = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+export function thaiDate(isoDate: string | null): string {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  return `${d} ${TH_MON[m]} ${String((y + 543) % 100).padStart(2, "0")}`;
 }
 
-// Tab โควตามี title row ด้านบน — สแกนหาแถวหัวที่ช่องแรก = "เซลล์"
-export function parseQuota(sheet: Sheet): QuotaEntry[] {
-  const all = [sheet.headers, ...sheet.rows];
-  const hi = all.findIndex((r) => strip(r[0] ?? "") === "เซลล์");
-  if (hi < 0) return [];
-  const head = all[hi];
-  const ai = colIndex(head, "ประเมินเดือน");
-  const si = colIndex(head, "โชว์รูมเดือน");
-  const ri = colIndex(head, "โควตาคงเหลือ", "คงเหลือ");
-  const r2i = colIndex(head, "R2");
-  const r3i = colIndex(head, "R3");
-  const out: QuotaEntry[] = [];
-  for (let i = hi + 1; i < all.length; i++) {
-    const r = all[i];
-    const name = (r[0] ?? "").trim();
-    if (name === "" || name.startsWith("📌")) break; // จบบล็อกข้อมูล
-    out.push({
-      sales: name,
-      assessed: Number(r[ai]) || 0,
-      showroom: Number(r[si]) || 0,
-      remaining: Number(r[ri]) || 0,
-      r2: (r[r2i] ?? "").trim(),
-      r3: (r[r3i] ?? "").trim(),
-    });
-  }
-  return out;
+// ---------- พิกัด: ดึง lat,lng จากข้อความ/ลิงก์ Google Maps (ฝั่ง client) ----------
+// รองรับ: "13.7,100.5" · ".../@13.7,100.5,17z" · "?q=13.7,100.5" · "query=13.7,100.5"
+// ลิงก์ย่อ maps.app.goo.gl ดึงไม่ได้ฝั่ง client → ให้วางพิกัดตรง ๆ แทน
+export function parseLatLng(input: string): { lat: number; lng: number } | null {
+  if (!input) return null;
+  const s = input.trim();
+  const plain = s.match(/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/);
+  if (plain) return { lat: Number(plain[1]), lng: Number(plain[2]) };
+  const at = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (at) return { lat: Number(at[1]), lng: Number(at[2]) };
+  const q = s.match(/[?&](?:q|query|ll|center)=(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if (q) return { lat: Number(q[1]), lng: Number(q[2]) };
+  return null;
 }
 
-// รายชื่อเซลล์ (จาก quota ก่อน ไม่งั้น derive จากคิว)
-export function salesList(quota: QuotaEntry[], queue: Sheet): string[] {
-  if (quota.length) return quota.map((q) => q.sales);
-  const si = colIndex(queue.headers, "เซลล์");
-  if (si < 0) return [];
-  return Array.from(new Set(queue.rows.map((r) => (r[si] ?? "").trim()).filter(Boolean)));
+// ---------- ระยะทาง/เวลา (ใช้เต็มที่ตอนเฟส 2 — ระยะเส้นตรงโดยประมาณ) ----------
+export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-export type BookingInput = { sales: string; dateThai: string; time: string };
-
-// กฎการจัดคิว — errors = ห้ามจัด, warnings = จัดได้แต่ควรรู้
-export function validateBooking(
-  input: BookingInput,
-  parsed: { leave: LeaveEntry[]; quota: QuotaEntry[]; queue: Sheet }
-): { errors: string[]; warnings: string[] } {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const date = normThaiDate(input.dateThai);
-  const sales = input.sales.trim();
-  const time = input.time.trim();
-
-  // 1) เซลล์ลา / วันหยุด
-  parsed.leave
-    .filter((l) => l.date === date && (l.sales === sales || l.sales === "ทุกคน"))
-    .forEach((l) => {
-      const who = l.sales === "ทุกคน" ? "วันหยุด" : `${sales} ลา`;
-      errors.push(`${who} (${l.type || l.span || "ทั้งวัน"}) วันที่ ${l.date} — จัดคิวไม่ได้`);
-    });
-
-  // 2) ช่วงเวลาชนกัน (เซลล์เดิม วันเดิม เวลาเดิม)
-  const h = parsed.queue.headers;
-  const di = colIndex(h, "วันที่"), ti = colIndex(h, "เวลา"), si = colIndex(h, "เซลล์"), ni = colIndex(h, "ชื่อลูกค้า");
-  if (di >= 0 && ti >= 0 && si >= 0 && time) {
-    const clash = parsed.queue.rows.find(
-      (r) => normThaiDate(r[di] ?? "") === date && (r[ti] ?? "").trim() === time && (r[si] ?? "").trim() === sales
-    );
-    if (clash) errors.push(`${sales} มีคิวเวลา ${time} วันที่ ${date} อยู่แล้ว (${ni >= 0 ? clash[ni] : "—"})`);
-  }
-
-  // 3) โควตา + สถานะ R2/R3 (เตือน ไม่บล็อก)
-  const q = parsed.quota.find((x) => x.sales === sales);
-  if (q) {
-    if (q.remaining <= 0) warnings.push(`โควตาประเมินเดือนนี้ของ ${sales} เต็มแล้ว (เหลือ ${q.remaining})`);
-    if (q.r2.includes("⚠️")) warnings.push(`สถานะ R2 ของ ${sales}: ${q.r2}`);
-    if (q.r3.includes("⚠️")) warnings.push(`สถานะ R3 ของ ${sales}: ${q.r3}`);
-  }
-
-  return { errors, warnings };
-}
-
-// สร้างแถวตามลำดับคอลัมน์จริงของ Tab คิวลูกค้า (ค่าที่ไม่รู้ = ว่าง)
-export function buildQueueRow(headers: string[], fields: Record<string, string>): string[] {
-  // map ชื่อหัวคอลัมน์ -> key ใน fields
-  const MAP: { keys: string[]; field: string }[] = [
-    { keys: ["สถานะ"], field: "status" },
-    { keys: ["วัน"], field: "dow" },
-    { keys: ["วันที่"], field: "dateThai" },
-    { keys: ["เวลา"], field: "time" },
-    { keys: ["ประเภท"], field: "jobType" },
-    { keys: ["เซลล์"], field: "sales" },
-    { keys: ["Line", "FB", "IG", "ช่องทาง"], field: "channel" },
-    { keys: ["ชื่อลูกค้า"], field: "customer" },
-    { keys: ["เบอร์"], field: "tel" },
-    { keys: ["ที่อยู่"], field: "address" },
-    { keys: ["โลเคชั่น", "แผนที่", "พิกัด"], field: "location" },
-    { keys: ["ขนาด"], field: "size" },
-    { keys: ["ค่าประเมิน"], field: "fee" },
-    { keys: ["การชำระ"], field: "payment" },
-    { keys: ["ใบเสร็จ"], field: "receipt" },
-    { keys: ["หมายเหตุ admin", "หมายเหตุadmin"], field: "noteAdmin" },
-    { keys: ["หมายเหตุ AI", "หมายเหตุai"], field: "noteAI" },
-  ];
-  return headers.map((hd) => {
-    // เลือก mapping ที่ "วันที่" ต้องไม่โดน "วัน" แย่ง — เช็คตัวที่จับยาวสุดก่อน
-    const exact =
-      MAP.find((m) => m.keys.some((k) => strip(hd) === strip(k))) ??
-      MAP.find((m) => m.keys.some((k) => strip(hd).includes(strip(k))));
-    return exact ? fields[exact.field] ?? "" : "";
-  });
+// แปลงระยะเส้นตรง -> นาทีเดินทางโดยประมาณ (ปรับ avgSpeed/detour ได้จาก queue_settings)
+export function estimateMinutes(
+  a: { lat: number; lng: number }, b: { lat: number; lng: number },
+  opts: { avgSpeedKmh?: number; detourFactor?: number } = {}
+): number {
+  const avg = opts.avgSpeedKmh ?? 40;
+  const detour = opts.detourFactor ?? 1.3;
+  const km = haversineKm(a, b) * detour;
+  return Math.round((km / avg) * 60);
 }
