@@ -332,7 +332,8 @@ function HandoverForm({ inst, onSaved }: { inst: Installation; onSaved: () => vo
   const [signoff, setSignoff] = useState(inst.handover_signoff_url ?? "");
   const [photo, setPhoto] = useState(inst.handover_photo_url ?? "");
   const [saving, setSaving] = useState(false);
-  const fld = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40 [&::-webkit-calendar-picker-indicator]:invert";
+  const fldBase = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40";
+  const fldDate = `${fldBase} [&::-webkit-calendar-picker-indicator]:invert`;
   const save = async () => {
     setSaving(true);
     try { await api.patch(`/installation/${inst.id}`, { handover_date: date || null, handover_signoff_url: signoff || null, handover_photo_url: photo || null }); onSaved(); }
@@ -343,9 +344,9 @@ function HandoverForm({ inst, onSaved }: { inst: Installation; onSaved: () => vo
       <div className="text-[12px] mb-2" style={{ color: "var(--t-low)" }}>หลักฐานรับงาน (ส่งงาน)</div>
       <div className="space-y-2">
         <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>วันรับงาน</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fld} /></label>
-        <input value={signoff} onChange={(e) => setSignoff(e.target.value)} placeholder="ลิงก์ใบรับงาน/ลายเซ็นลูกค้า" className={fld.replace(" [&::-webkit-calendar-picker-indicator]:invert", "")} />
-        <input value={photo} onChange={(e) => setPhoto(e.target.value)} placeholder="ลิงก์รูปหลังติดตั้ง" className={fld.replace(" [&::-webkit-calendar-picker-indicator]:invert", "")} />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fldDate} /></label>
+        <input value={signoff} onChange={(e) => setSignoff(e.target.value)} placeholder="ลิงก์ใบรับงาน/ลายเซ็นลูกค้า" className={fldBase} />
+        <input value={photo} onChange={(e) => setPhoto(e.target.value)} placeholder="ลิงก์รูปหลังติดตั้ง" className={fldBase} />
         <button onClick={save} disabled={saving} className="focusable pressable w-full bg-white text-[#1F4E78] rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px]">{saving ? "กำลังบันทึก…" : "บันทึกหลักฐานรับงาน"}</button>
       </div>
     </div>

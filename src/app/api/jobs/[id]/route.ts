@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, notFound, err } from "@/lib/bff/response";
+import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 import { toArray } from "@/lib/bff/normalize";
 
@@ -80,7 +81,8 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
 
     const { data, error } = await ctx.supabase
       .from("jobs").update(payload as Record<string, unknown>).eq("id", params.id).select().single();
-    if (error || !data) throw new Error(error?.message ?? "Update failed");
+    if (error) throw dbError(error);
+  if (!data) throw dbError({ message: "Update failed" });
     await audit({
       jobId: params.id, userId: ctx.user.id, action: "STATUS_CHANGED",
       table: "jobs", recordId: params.id, newValue: { status: payload.status },
@@ -91,6 +93,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const fields = fieldsSchema.parse(body);
   const { data, error } = await ctx.supabase
     .from("jobs").update(fields).eq("id", params.id).select().single();
-  if (error || !data) throw new Error(error?.message ?? "Update failed");
+  if (error) throw dbError(error);
+  if (!data) throw dbError({ message: "Update failed" });
   return ok(data);
 });

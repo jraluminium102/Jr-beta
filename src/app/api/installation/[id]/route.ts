@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { dbError } from "@/lib/bff/db-error";
 
 type Params = { params: { id: string } };
 
@@ -31,7 +32,8 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
 
   const { data, error } = await ctx.supabase
     .from("installations").update(body).eq("id", params.id).select().single();
-  if (error || !data) throw new Error(error?.message ?? "Update failed");
+  if (error) throw dbError(error);
+  if (!data) throw dbError({ message: "Update failed" });
 
   if (body.status) {
     await audit({
