@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JR OMS — วิธีการทำงานของระบบ</title>
+<style>
+  :root{
+    --red:#B3151D; --red-dark:#7d0f15; --red-soft:#fde8e9;
+    --ink:#1a1a1a; --ink-2:#444; --ink-3:#777; --line:#e7e7e7;
+    --bg:#f6f5f4; --card:#ffffff; --gold:#b8860b;
+    --blue:#1F4E78; --green:#0f7a38; --amber:#b45309;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Segoe UI",-apple-system,"Sarabun","Noto Sans Thai",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.65; font-size:15px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+
+  /* ===== HERO ===== */
+  .hero{
+    background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);
+    color:#fff;padding:54px 0 60px;position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;right:-80px;top:-80px;width:320px;height:320px;
+    background:rgba(255,255,255,.07);border-radius:50%}
+  .hero h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;position:relative}
+  .hero p{font-size:17px;opacity:.92;max-width:680px;position:relative}
+  .hero .tag{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+    padding:4px 14px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:18px;position:relative}
+
+  /* ===== LAYOUT ===== */
+  .layout{display:flex;gap:32px;align-items:flex-start;padding:34px 0 80px}
+  nav.toc{
+    position:sticky;top:20px;flex:0 0 220px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:16px;font-size:13.5px;box-shadow:0 2px 14px rgba(0,0,0,.04);
+  }
+  nav.toc b{display:block;color:var(--ink-3);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+  nav.toc a{display:block;color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:8px;margin-bottom:2px;transition:.15s}
+  nav.toc a:hover{background:var(--red-soft);color:var(--red-dark)}
+  main{flex:1;min-width:0}
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 30px;margin-bottom:22px;
+    box-shadow:0 2px 14px rgba(0,0,0,.03)}
+  section h2{font-size:22px;font-weight:800;color:var(--red-dark);margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  section h2 .n{background:var(--red);color:#fff;width:32px;height:32px;border-radius:10px;display:inline-flex;
+    align-items:center;justify-content:center;font-size:15px;flex:0 0 auto}
+  section .sub{color:var(--ink-3);margin-bottom:18px;font-size:14px}
+  h3{font-size:16px;font-weight:700;color:var(--ink);margin:20px 0 10px}
+
+  p{margin-bottom:10px;color:var(--ink-2)}
+  ul{margin:0 0 12px 4px;padding-left:18px}
+  li{margin-bottom:5px;color:var(--ink-2)}
+  code{background:#f0eeec;color:var(--red-dark);padding:1px 7px;border-radius:6px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  strong{color:var(--ink)}
+
+  /* ===== CARDS GRID ===== */
+  .grid{display:grid;gap:14px;margin:14px 0}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .tile{background:#fbfafa;border:1px solid var(--line);border-radius:14px;padding:16px}
+  .tile h4{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .tile p{font-size:13px;color:var(--ink-3);margin:0}
+  .ico{width:30px;height:30px;border-radius:9px;background:var(--red-soft);color:var(--red);
+    display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+
+  /* ===== PILLS ===== */
+  .pill{display:inline-block;padding:2px 11px;border-radius:999px;font-size:12px;font-weight:600;margin:2px 3px 2px 0}
+  .p-red{background:var(--red-soft);color:var(--red-dark)}
+  .p-blue{background:#e6effa;color:var(--blue)}
+  .p-green{background:#e3f5ea;color:var(--green)}
+  .p-amber{background:#fef0db;color:var(--amber)}
+  .p-gray{background:#eee;color:#555}
+
+  /* ===== FLOW STEPS ===== */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:16px 0}
+  .step{flex:1;min-width:150px;background:#fbfafa;border:1.5px solid var(--line);border-radius:14px;padding:14px;
+    position:relative;text-align:center}
+  .step .badge{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:700;
+    padding:2px 9px;border-radius:999px;margin-bottom:6px}
+  .step b{display:block;font-size:14px;margin-bottom:3px}
+  .step span{font-size:12px;color:var(--ink-3)}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--red);font-size:22px;font-weight:700;padding:0 6px}
+
+  /* ===== STAGE TRACK ===== */
+  .track{margin:16px 0}
+  .phase{border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+  .phase-head{padding:10px 16px;font-weight:700;font-size:14px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .phase-body{padding:12px 16px;display:flex;flex-wrap:wrap;gap:7px}
+  .stg{background:#fff;border:1px solid var(--line);border-radius:9px;padding:5px 11px;font-size:12.5px;color:var(--ink-2)}
+  .stg b{color:var(--red-dark)}
+
+  /* ===== TABLE ===== */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+  th{background:#faf7f7;text-align:left;padding:9px 12px;font-weight:700;color:var(--ink-2);border-bottom:2px solid var(--line)}
+  td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+  tr:hover td{background:#fcfbfb}
+
+  /* ===== CALLOUT ===== */
+  .note{border-left:4px solid var(--red);background:var(--red-soft);border-radius:0 12px 12px 0;
+    padding:13px 18px;margin:14px 0;font-size:14px}
+  .note.blue{border-color:var(--blue);background:#e6effa}
+  .note.green{border-color:var(--green);background:#e3f5ea}
+  .note.amber{border-color:var(--amber);background:#fef0db}
+  .note b{color:var(--ink)}
+
+  .brief{background:linear-gradient(135deg,#2b2b2b,#1a1a1a);color:#eee;border-radius:16px;padding:22px 26px;margin-top:8px}
+  .brief h3{color:#fff;margin-top:0}
+  .brief code{background:rgba(255,255,255,.12);color:#ffd9db}
+  .brief .ex{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+    padding:12px 16px;margin-top:10px;font-size:13.5px;line-height:1.7}
+
+  footer{text-align:center;color:var(--ink-3);font-size:13px;padding:30px 0 50px}
+
+  @media(max-width:860px){
+    .layout{flex-direction:column}
+    nav.toc{position:static;width:100%;flex:none;display:flex;flex-wrap:wrap;gap:4px}
+    nav.toc b{width:100%}
+    .g2,.g3{grid-template-columns:1fr}
+    .arrow{transform:rotate(90deg)}
+    .hero h1{font-size:27px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">JR Aluminium &amp; Glass · ระบบจัดการงาน (OMS/ERP)</span>
+    <h1>วิธีการทำงานของระบบ JR</h1>
+    <p>เอกสารอธิบายภาพรวมว่าเว็บนี้ทำงานอย่างไร — ตั้งแต่รับลูกค้า คิดราคา ออกเอกสาร ผลิต ติดตั้ง จนส่งงาน — เพื่อใช้อ้างอิงเวลาจะเพิ่มฟีเจอร์ใหม่</p>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="layout">
+
+  <nav class="toc">
+    <b>สารบัญ</b>
+    <a href="#overview">1 · ภาพรวมระบบ</a>
+    <a href="#tech">2 · โครงสร้างเทคนิค</a>
+    <a href="#menu">3 · เมนู / หน้าใช้งาน</a>
+    <a href="#roles">4 · บทบาทผู้ใช้</a>
+    <a href="#journey">5 · เส้นทางลูกค้า 24 ขั้น</a>
+    <a href="#finance">6 · สายเอกสารการเงิน</a>
+    <a href="#queue">7 · ระบบคิวงาน</a>
+    <a href="#rules">8 · กฎธุรกิจสำคัญ</a>
+    <a href="#data">9 · หลักการข้อมูล</a>
+    <a href="#brief">10 · วิธีสั่งเพิ่มฟีเจอร์</a>
+  </nav>
+
+  <main>
+
+  <!-- 1 OVERVIEW -->
+  <section id="overview">
+    <h2><span class="n">1</span> ภาพรวมระบบ</h2>
+    <p class="sub">ระบบเดียวร้อยทุกขั้นตอนของงานอลูมิเนียม/กระจก ตั้งแต่ลูกค้าติดต่อจนส่งมอบงาน</p>
+    <p>หัวใจของระบบคือ <strong>“ลูกค้า 1 ราย = งาน 1 ก้อน”</strong> ที่ไหลผ่านทุกแผนกโดย<strong>ไม่ต้องกรอกข้อมูลซ้ำ</strong> ข้อมูลลูกค้า/ราคา/รายการ จะถูกส่งต่อ (carry-forward) จากขั้นหนึ่งไปอีกขั้นโดยอัตโนมัติ</p>
+    <div class="grid g3">
+      <div class="tile"><h4><span class="ico">📋</span>รับงาน</h4><p>คิวหน้างาน · ประเมิน · ทะเบียนลูกค้า</p></div>
+      <div class="tile"><h4><span class="ico">🧮</span>เสนอราคา</h4><p>คิดราคา → ใบเสนอ → อนุมัติ</p></div>
+      <div class="tile"><h4><span class="ico">💰</span>การเงิน</h4><p>มัดจำ · ใบวางบิล · แบ่งงวด · ใบเสร็จ</p></div>
+      <div class="tile"><h4><span class="ico">🏭</span>ผลิต</h4><p>วัดจริง · ทำแบบ · ผลิต · QC</p></div>
+      <div class="tile"><h4><span class="ico">🔧</span>ติดตั้ง</h4><p>นัดติดตั้ง · ตรวจรับ · แก้งาน</p></div>
+      <div class="tile"><h4><span class="ico">📊</span>ติดตาม</h4><p>สถานะงาน · ปัญหา · สถิติ · รับประกัน</p></div>
+    </div>
+  </section>
+
+  <!-- 2 TECH -->
+  <section id="tech">
+    <h2><span class="n">2</span> โครงสร้างเทคนิค (แบบเข้าใจง่าย)</h2>
+    <p class="sub">เว็บแอปสมัยใหม่ ทำงานบนคลาวด์ เปิดผ่านเบราว์เซอร์ได้ทุกที่</p>
+    <div class="grid g2">
+      <div class="tile"><h4><span class="ico">🖥️</span>หน้าบ้าน (Frontend)</h4><p><strong>Next.js 14</strong> — หน้าเว็บที่ผู้ใช้เห็น ภาษาไทย ธีมแดง JR · เปิดบนมือถือ/คอมได้</p></div>
+      <div class="tile"><h4><span class="ico">🗄️</span>ฐานข้อมูล</h4><p><strong>Supabase (Postgres)</strong> — เก็บลูกค้า งาน เอกสาร เงิน ทั้งหมด · มีระบบสิทธิ์ในตัว</p></div>
+      <div class="tile"><h4><span class="ico">🔌</span>ตัวกลาง (BFF)</h4><p>หน้าเว็บไม่ต่อฐานข้อมูลตรง ๆ — คุยผ่าน <code>/api/*</code> เสมอ เพื่อความปลอดภัย + ตรวจสิทธิ์</p></div>
+      <div class="tile"><h4><span class="ico">☁️</span>ที่อยู่จริง</h4><p>โค้ดอยู่บน <strong>GitHub</strong> · เว็บ deploy อัตโนมัติบน <strong>Vercel</strong> · แก้โค้ด → ขึ้นเว็บเองใน 1–2 นาที</p></div>
+    </div>
+    <div class="note blue"><b>เครื่องคิดราคา</b> เป็นไฟล์แยก (R3.9) ฝังแบบ iframe — มีสูตรราคาของตัวเองที่ผ่านการใช้งานจริง <strong>จึงไม่แก้สูตรนี้</strong> เวลาเพิ่มฟีเจอร์</div>
+  </section>
+
+  <!-- 3 MENU -->
+  <section id="menu">
+    <h2><span class="n">3</span> เมนู / หน้าใช้งาน</h2>
+    <p class="sub">แต่ละหน้าทำหน้าที่เดียวชัดเจน เชื่อมกันเป็นสายงาน</p>
+    <table>
+      <tr><th>หน้า</th><th>หน้าที่</th><th>ลิงก์</th></tr>
+      <tr><td><strong>คิวงาน</strong></td><td>คิวหน้างาน/นัดหมาย จัดคิวอัตโนมัติตามระยะทาง+จำนวนงาน</td><td><code>/queue</code></td></tr>
+      <tr><td><strong>ทะเบียนลูกค้า</strong></td><td>ข้อมูลลูกค้ากลาง — ทุกเอกสารดึงจากที่นี่</td><td><code>/customers</code></td></tr>
+      <tr><td><strong>เครื่องคิดราคา</strong></td><td>เลือกลูกค้า + คิดราคา → กดออกใบเสนอราคา (จุดเริ่มของใบเสนอ)</td><td><code>/calculator</code></td></tr>
+      <tr><td><strong>ใบเสนอราคา</strong></td><td>รายการใบเสนอทั้งหมด (list) · อนุมัติ → สร้างใบวางบิล</td><td><code>/quotations</code></td></tr>
+      <tr><td><strong>ใบวางบิล</strong></td><td>ดึงใบเสนอที่อนุมัติ + แบ่งงวดอัตโนมัติ</td><td><code>/billing-notes</code></td></tr>
+      <tr><td><strong>ใบเสร็จ/กำกับภาษี</strong></td><td>ออกใบเสร็จต่องวด → ปิดงวด + อัปเดตยอดค้าง</td><td><code>/receipts</code></td></tr>
+      <tr><td><strong>งาน (ติดตาม)</strong></td><td>ภาพรวมงานทุกใบ + ขั้นปัจจุบัน + ปุ่มเลื่อนขั้น</td><td><code>/jobs</code></td></tr>
+      <tr><td><strong>ผลิต</strong></td><td>กระดานงานผลิตสำหรับช่าง (วัด→ผลิต→QC→พร้อมติดตั้ง)</td><td><code>/production</code></td></tr>
+      <tr><td><strong>ใบสั่งผลิต</strong></td><td>เอกสารสั่งผลิต/พิมพ์</td><td><code>/production-orders</code></td></tr>
+      <tr><td><strong>ใบรับประกัน</strong></td><td>ออก/พิมพ์ใบรับประกัน 12 เดือน</td><td><code>/warranties</code></td></tr>
+      <tr><td><strong>สต๊อก</strong></td><td>วัสดุ/อุปกรณ์</td><td><code>/stock</code></td></tr>
+      <tr><td><strong>สถิติ</strong></td><td>ยอดปิดการขาย ประเภทงานยอดนิยม รายเดือน/ปี</td><td><code>/stats</code></td></tr>
+      <tr><td><strong>ตั้งค่า/ผู้ใช้</strong></td><td>จัดการผู้ใช้และสิทธิ์</td><td><code>/settings</code></td></tr>
+    </table>
+  </section>
+
+  <!-- 4 ROLES -->
+  <section id="roles">
+    <h2><span class="n">4</span> บทบาทผู้ใช้ (สิทธิ์การเข้าถึง)</h2>
+    <p class="sub">ระบบมี 7 บทบาท — แต่ละคนเห็น/แก้ได้เฉพาะส่วนของตัวเอง (ควบคุมที่ฐานข้อมูลโดยตรง)</p>
+    <p>
+      <span class="pill p-red">ADMIN · ดูแลทั้งระบบ</span>
+      <span class="pill p-blue">SALES · เซลล์/เสนอราคา</span>
+      <span class="pill p-blue">DESIGNER · ออกแบบ</span>
+      <span class="pill p-amber">PRODUCTION · ผลิต</span>
+      <span class="pill p-amber">INSTALLER · ติดตั้ง</span>
+      <span class="pill p-green">ACCOUNTING · บัญชี/การเงิน</span>
+      <span class="pill p-gray">VIEWER · ดูอย่างเดียว</span>
+    </p>
+    <div class="note">สิทธิ์ถูกบังคับ 2 ชั้น: ที่เว็บ (ซ่อนปุ่ม) <strong>และ</strong> ที่ฐานข้อมูล (RLS) — ต่อให้เรียกตรงก็เขียนไม่ได้ถ้าไม่มีสิทธิ์</div>
+  </section>
+
+  <!-- 5 JOURNEY -->
+  <section id="journey">
+    <h2><span class="n">5</span> เส้นทางลูกค้า 24 ขั้น (หัวใจของระบบ)</h2>
+    <p class="sub">งานทุกใบมี “ขั้นปัจจุบัน” (1–24) ที่เลื่อนไปข้างหน้าทีละขั้น — เห็นได้ทันทีว่าลูกค้าอยู่ตรงไหน ติดอะไร</p>
+
+    <div class="track">
+      <div class="phase">
+        <div class="phase-head" style="background:var(--blue)">🛎️ รับงาน &amp; เสนอราคา <span>ขั้น 1–7</span></div>
+        <div class="phase-body">
+          <span class="stg"><b>1</b> นัด/ประเมิน</span>
+          <span class="stg"><b>2</b> เข้าทะเบียน</span>
+          <span class="stg"><b>3</b> วาดแบบ</span>
+          <span class="stg"><b>4</b> ตรวจแบบ ↺</span>
+          <span class="stg"><b>5</b> ทำใบเสนอ</span>
+          <span class="stg"><b>6</b> เจรจา ↺</span>
+          <span class="stg"><b>7</b> ส่งใบเสนอ</span>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-head" style="background:var(--green)">💰 ปิดการขาย &amp; การเงิน <span>ขั้น 8–9</span></div>
+        <div class="phase-body">
+          <span class="stg"><b>8</b> รับมัดจำ</span>
+          <span class="stg"><b>9</b> รอวัดจริง</span>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-head" style="background:var(--amber)">🏭 ผลิต <span>ขั้น 10–20</span></div>
+        <div class="phase-body">
+          <span class="stg"><b>10</b> วัดหน้างาน</span>
+          <span class="stg"><b>11</b> ประชุมแบบ</span>
+          <span class="stg"><b>12</b> แก้แบบ ↺</span>
+          <span class="stg"><b>13</b> คอนเฟิร์มแบบ</span>
+          <span class="stg"><b>14–18</b> เอกสาร/สั่งของ/ผลิต</span>
+          <span class="stg"><b>19</b> QC</span>
+          <span class="stg"><b>20</b> พร้อมติดตั้ง</span>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-head" style="background:var(--red)">🔧 ติดตั้ง &amp; ส่งมอบ <span>ขั้น 21–24</span></div>
+        <div class="phase-body">
+          <span class="stg"><b>21</b> ติดตั้ง</span>
+          <span class="stg"><b>22</b> ตรวจรับ</span>
+          <span class="stg"><b>23</b> แก้งาน ↺</span>
+          <span class="stg"><b>24</b> ส่งมอบ + รับประกัน</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note green"><b>เลื่อนขั้นอัตโนมัติ:</b> บางขั้นเลื่อนเองเมื่อทำงานจริง — <strong>รับมัดจำ</strong> → เลื่อนไปขั้น 9 + เปิดงานผลิต · <strong>ผลิตพร้อม</strong> → เลื่อนขั้น 20 + เปิดงานติดตั้ง · <strong>ติดตั้งจบ</strong> → ขั้น 24 + ออกใบรับประกัน 12 เดือน</div>
+    <p><span class="pill p-gray">↺ = ขั้นที่วนแก้ได้</span> (เช่น ตรวจแบบไม่ผ่าน → กลับไปวาดแบบ) ระบบกันการข้ามขั้น/ย้อนผิด</p>
+  </section>
+
+  <!-- 6 FINANCE -->
+  <section id="finance">
+    <h2><span class="n">6</span> สายเอกสารการเงิน</h2>
+    <p class="sub">ไหลเป็นลูกโซ่ — แต่ละใบดึงข้อมูลจากใบก่อนหน้าอัตโนมัติ ไม่กรอกซ้ำ</p>
+
+    <div class="flow">
+      <div class="step"><span class="badge">เริ่ม</span><b>ทะเบียนลูกค้า</b><span>ข้อมูลกลาง</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="badge">คิดราคา</span><b>เครื่องคิดราคา</b><span>เลือกลูกค้า + คิดราคา → สร้าง QT</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="badge">QT</span><b>ใบเสนอราคา</b><span>อนุมัติ → สร้างใบวางบิล</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="badge">BL</span><b>ใบวางบิล</b><span>แบ่งงวดอัตโนมัติ</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="badge">INV</span><b>ใบเสร็จ/กำกับ</b><span>ปิดงวด + ตัดยอดค้าง</span></div>
+    </div>
+
+    <div class="note"><b>จุดสำคัญที่ถูกต้องแล้ว:</b> การ “สร้างใบเสนอราคา” เริ่มที่ <strong>หน้าคิดราคา</strong> (เลือกลูกค้าจากทะเบียน + คิดราคา) ส่วน <strong>หน้าใบเสนอราคา = รายการ (list)</strong> เอาไว้ดู/อนุมัติเท่านั้น</div>
+    <table>
+      <tr><th>เอกสาร</th><th>รหัสอัตโนมัติ</th><th>ดึงอะไรมาเอง</th></tr>
+      <tr><td>ใบเสนอราคา</td><td><code>QT</code>+ปีเดือน+running</td><td>ลูกค้า + รายการ + ราคา (จากเครื่องคิดราคา)</td></tr>
+      <tr><td>ใบวางบิล</td><td><code>BL</code>+ปีเดือน+running</td><td>ลูกค้า + ยอด (จากใบเสนอที่อนุมัติ) + แบ่งงวด</td></tr>
+      <tr><td>ใบเสร็จ/กำกับ</td><td><code>INV</code>+ปีเดือน+running</td><td>ลูกค้า + งวด (จากใบวางบิล)</td></tr>
+    </table>
+  </section>
+
+  <!-- 7 QUEUE -->
+  <section id="queue">
+    <h2><span class="n">7</span> ระบบคิวงาน (จัดคิวอัตโนมัติ)</h2>
+    <p class="sub">กรอกงานเข้าคิว ระบบเสนอวัน/เซลล์ให้เอง ตามกฎที่ตั้งไว้</p>
+    <ul>
+      <li>เลือก<strong>ช่วงเวลาว่างที่เร็วที่สุด</strong> (รอบ 10:00 / 14:00) ข้ามวันอาทิตย์ + วันลา</li>
+      <li>แบ่งโซน — งานภาคใต้/พื้นที่ไกล จัดให้เซลล์ที่รับผิดชอบโซนนั้น</li>
+      <li>พิจารณา<strong>ระยะทาง + จำนวนงานที่ค้าง</strong>ของแต่ละเซลล์</li>
+      <li>เป็นแบบ <strong>เสนอ–ยืนยัน</strong> (แอดมินเห็นข้อเสนอก่อนกดยืนยัน)</li>
+      <li>คิวที่ทำเสร็จ (DONE) → <strong>เข้าทะเบียนลูกค้า + เปิดงานใหม่ที่ขั้น 2 ให้อัตโนมัติ</strong></li>
+    </ul>
+  </section>
+
+  <!-- 8 RULES -->
+  <section id="rules">
+    <h2><span class="n">8</span> กฎธุรกิจสำคัญ (ตั้งไว้ในระบบ)</h2>
+    <p class="sub">กฎเหล่านี้คำนวณอัตโนมัติ ใช้ทุกเอกสาร</p>
+
+    <h3>📐 การแบ่งงวดชำระ (ตามยอดสุทธิ)</h3>
+    <table>
+      <tr><th>ยอดงาน</th><th>จำนวนงวด</th><th>สัดส่วน</th></tr>
+      <tr><td>≤ 100,000</td><td>2 งวด</td><td>70% · 30%</td></tr>
+      <tr><td>100,000–300,000</td><td>3 งวด</td><td>40% · 50% · 10%</td></tr>
+      <tr><td>300,000–700,000</td><td>4 งวด</td><td>35% · 30% · ส่วนที่เหลือ · <strong>40,000 (ประกัน)</strong></td></tr>
+      <tr><td>700,000+</td><td>5 งวด</td><td>25% · 25% · 25% · ส่วนที่เหลือ · <strong>40,000 (ประกัน)</strong></td></tr>
+    </table>
+    <p style="font-size:13px;color:var(--ink-3)">ผลรวมทุกงวด = ยอดเต็มเสมอ · งวดสุดท้ายของงานใหญ่กันเงินประกันผลงาน 40,000</p>
+
+    <h3>🧾 ภาษี / ส่วนลด</h3>
+    <p>
+      <span class="pill p-blue">VAT 7%</span>
+      <span class="pill p-gray">ไม่มี VAT</span>
+      <span class="pill p-amber">หัก ณ ที่จ่าย 3%</span>
+      <span class="pill p-green">ส่วนลด %</span>
+    </p>
+    <p style="font-size:13px;color:var(--ink-3)">ลำดับคำนวณ: ยอดรวม − ส่วนลด → บวก VAT → หัก ณ ที่จ่าย = ยอดรับสุทธิ</p>
+
+    <h3>🔢 เลขที่เอกสาร</h3>
+    <p>ออกอัตโนมัติแบบ <code>ตัวอักษร + ปีเดือน + เลขรัน 4 หลัก</code> เริ่มนับ 0001 ใหม่ทุกเดือน — กันเลขซ้ำ/กระโดด (ปลอดภัยแม้หลายคนกดพร้อมกัน)</p>
+  </section>
+
+  <!-- 9 DATA -->
+  <section id="data">
+    <h2><span class="n">9</span> หลักการข้อมูล (เบื้องหลัง)</h2>
+    <p class="sub">สิ่งที่ทำให้ข้อมูลไม่ซ้ำซ้อนและเชื่อถือได้</p>
+    <div class="grid g2">
+      <div class="tile"><h4><span class="ico">🧵</span>งาน = แกนกลาง</h4><p>ตาราง <code>jobs</code> ร้อยทุกเฟส (คิว→เสนอ→มัดจำ→ผลิต→ติดตั้ง) ผ่าน <code>current_stage</code></p></div>
+      <div class="tile"><h4><span class="ico">📸</span>Snapshot ลูกค้า</h4><p>ตอนออกเอกสาร จะ “ถ่ายภาพ” ข้อมูลลูกค้า ณ ตอนนั้นติดไปกับเอกสาร — แก้ทะเบียนทีหลังเอกสารเก่าไม่เพี้ยน</p></div>
+      <div class="tile"><h4><span class="ico">⚙️</span>Trigger อัตโนมัติ</h4><p>เหตุการณ์สำคัญ (มัดจำ/ผลิตเสร็จ/ติดตั้งจบ) ระบบทำงานต่อให้เองที่ฐานข้อมูล</p></div>
+      <div class="tile"><h4><span class="ico">🔒</span>ความปลอดภัย</h4><p>ทุกการเขียนผ่าน <code>/api/*</code> + ตรวจสิทธิ์ที่ฐานข้อมูล (RLS) ทุกตาราง</p></div>
+    </div>
+    <div class="note amber"><b>หลักที่ยึดไว้:</b> ไม่กรอกข้อมูลซ้ำ · ไม่แก้สูตรคิดราคาเดิม · ไม่แตะ Google Sheets เดิม (เป็นคนละระบบ) · ยอดเงินต้องตรงเสมอ</div>
+  </section>
+
+  <!-- 10 BRIEF -->
+  <section id="brief">
+    <h2><span class="n">10</span> วิธีสั่งให้เพิ่มฟีเจอร์ (ให้ได้งานเร็ว ตรงใจ)</h2>
+    <p class="sub">ยิ่งบอกครบตามนี้ ยิ่งได้งานตรง ไม่ต้องแก้หลายรอบ</p>
+    <ul>
+      <li><strong>อยู่หน้าไหน</strong> — เช่น “หน้าใบวางบิล” หรือ “เครื่องคิดราคา”</li>
+      <li><strong>ใครใช้</strong> — เซลล์ / บัญชี / ช่าง / แอดมิน</li>
+      <li><strong>อยากได้อะไร + เพราะอะไร</strong> — ปัญหาที่เจอจริง</li>
+      <li><strong>ตัวอย่างเคส</strong> — “เช่น คุณเอ ทำ X แล้วอยากให้ Y”</li>
+      <li><strong>ห้ามแตะอะไร</strong> — ถ้ามีของที่ห้ามยุ่ง (เช่น สูตรราคา)</li>
+    </ul>
+    <div class="brief">
+      <h3>✍️ เทมเพลตบอกฟีเจอร์</h3>
+      <div class="ex">
+        <strong>หน้า:</strong> ใบเสนอราคา<br>
+        <strong>ผู้ใช้:</strong> เซลล์<br>
+        <strong>อยากได้:</strong> ปุ่ม “แก้ไขใบเสนอ” ตอนยังเป็นร่าง เพราะลูกค้าขอเปลี่ยนรายการบ่อย<br>
+        <strong>ตอนนี้ติด:</strong> ต้องยกเลิกแล้วสร้างใหม่ รหัสกระโดด<br>
+        <strong>ห้าม:</strong> แตะสูตรคิดราคา / เปลี่ยนเลขเอกสารเดิม
+      </div>
+    </div>
+    <div class="note green" style="margin-top:16px"><b>เคล็ดลับ:</b> บอกเป็น “ปัญหา” ดีกว่าบอกเป็น “วิธีแก้” — เช่น “ลูกค้าซ้ำชื่อเลือกผิดบ่อย” ดีกว่า “เพิ่มช่องค้นหา” เพราะระบบอาจมีวิธีที่ดีกว่าให้</div>
+  </section>
+
+  </main>
+</div>
+</div>
+
+<footer>
+  JR Aluminium &amp; Glass · ระบบจัดการงาน (OMS) — เอกสารวิธีการทำงานของระบบ<br>
+  เปิดไฟล์นี้ได้ที่ <code>/how-it-works.html</code> · อัปเดตเมื่อมีฟีเจอร์ใหม่
+</footer>
+
+</body>
+</html>
