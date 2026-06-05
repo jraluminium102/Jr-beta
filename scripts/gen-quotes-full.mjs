@@ -62,26 +62,46 @@ const GH = (room, price) => ({ ".o-ghroom": room, ".o-ghcolor": "sahara", ".o-gh
   ".o-ghprice": String(price), ".o-ghnote-inc": "รื้อหลังคาเดิม / ทำสีปิด / ตัดท่อแอร์ 1 จุด", ".o-ghnote-exc": "รื้อพื้น / ลงเข็ม / ทำคาน / ปูกระเบื้อง / เดินไฟ" });
 const ZIP = (grp, model, fab, ctrl) => ({ ".o-zgrp": grp, ".o-zmodel": model, ".o-zfab": fab, ".o-zctrl": ctrl });
 
-// ===== ใบ A: งานบาน/กระจกทุกตัว (G1) + ช่องแสง =====
-const jobA = { cust: "คุณทดสอบ ครบทุกบาน (เทสสินค้า G1)", date: "04-06-69",
-  discFlat: 3000, // ทดสอบ pattern ส่วนลด (ส่วนลดค่าประเมินหน้างาน) → โชว์บล็อกยอด 5 บรรทัด
-  items: G1.filter(p => !SKIP.has(p.id)).map((p) => ({
-    g: 1, prod: p.id, pos: p.name, w: 1.8, h: 2.0, panels: 2, qty: 1,
-  })) };
-// ช่องแสง 2 จุด
-jobA.items.push({ g: 1, prod: "fixed_glass", pos: "ช่องแสงเหนือประตูหน้าบ้าน (ติดตาย)", w: 1.8, h: 0.5, qty: 2 });
-jobA.items.push({ g: 1, prod: "fixed_glass", pos: "ช่องแสงข้างบันได (ติดตาย)", w: 0.6, h: 2.4, qty: 1,
-  note: "OPTION : เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง\nหมายเหตุ : ช่องแสงคู่กับประตูบานเปิดหน้าบ้าน" });
+// ===== ใบ A: เหมือนงานจริง (สินค้าผสมแบบลูกค้าจริง ~8 รายการ) =====
+const jobA = { cust: "คุณปิยะ มงคล (บ้านเดี่ยว 2 ชั้น)", date: "04-06-69",
+  discFlat: 3000, // ทดสอบ pattern ส่วนลด → โชว์บล็อกยอด 5 บรรทัด
+  items: [
+    { g: 1, prod: "sliding_euro", pos: "ประตู โถงหน้าบ้าน", w: 3.6, h: 2.4, panels: 4, qty: 1 },
+    { g: 1, prod: "casement_euro", pos: "หน้าต่าง ห้องนอนใหญ่", w: 1.6, h: 2.2, panels: 2, qty: 2 },
+    { g: 1, prod: "awning_euro", pos: "หน้าต่าง ห้องน้ำ", w: 0.8, h: 1.0, qty: 3 },
+    { g: 1, prod: "folding", pos: "ประตู เชื่อมระเบียงหลัง", w: 4.0, h: 2.4, panels: 4, qty: 1 },
+    { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ระเบียงหลังบ้าน", auto: false, opts: GH("ระเบียงหลังบ้าน + ซักล้าง", 318000) },
+    { g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียงชั้น 2", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") },
+    { g: 5, prod: "imp23", pos: "มุ้งเฟรมใหญ่ ประตูระเบียง", w: 1.8, h: 2.1, qty: 1 },
+    { g: 1, prod: "fixed_glass", pos: "ช่องแสง เหนือประตูหน้าบ้าน", w: 3.6, h: 0.5, qty: 1,
+      note: "OPTION : เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง\nหมายเหตุ : ช่องแสงคู่กับประตูหน้าบ้าน" },
+  ] };
 
-// ===== ใบ B: ทุกหมวด G2-G7 + กั้นห้องกระจก×3 + ช่องแสง =====
-const jobB = { cust: "คุณทดสอบ ครบทุกหมวด + กั้นห้อง×3", date: "04-06-69", items: [
-  // กั้นห้องกระจก 3 ชุด (เน้น)
+// ===== ใบ B: ครบทุกสินค้า ทุกฟังก์ชัน (G1-G7) + เปลี่ยนขนาดวน + ออปชั่นครบ =====
+const B_SIZES = [[1.2, 1.2], [1.8, 2.0], [2.4, 2.2], [3.6, 2.4], [0.9, 2.1], [2.0, 1.5]];
+const B_SKIP = new Set([...SKIP, "shower", "frameless_door", "fixed_glass"]); // เพิ่มเองด้านล่างพร้อม config
+const jobB = { cust: "คุณทดสอบ ครบทุกสินค้า (เทสเต็มระบบ)", date: "04-06-69", discFlat: 2000, items: [
+  // G1 ทุกตัว — เปลี่ยนขนาดวน + panels/qty หลากหลาย + ออปชั่นครบ (auto)
+  // pos = ชื่อสินค้า ตัดคำรุ่นซ้ำ (เซมิยูโร/ยูโร/สลิม/SMS) เพราะ tag รุ่นจะต่อท้ายในรายละเอียดอยู่แล้ว
+  ...G1.filter(p => !B_SKIP.has(p.id)).map((p, i) => {
+    const [w, h] = B_SIZES[i % B_SIZES.length];
+    const pos = p.name.replace(/\s*(เซมิยูโร|ยูโร|สลิม|SMS)\s*/g, " ").replace(/\s+/g, " ").trim();
+    return { g: 1, prod: p.id, pos, w, h, panels: (i % 3) + 1, qty: (i % 2) + 1 };
+  }),
+  // shower 2 config
+  { g: 1, prod: "shower", pos: "shower ห้องน้ำ (ประตู+ติดตาย)", w: 1.2, h: 2.0, qty: 1, auto: false, opts: { ".o-shtype": "door_fixed", ".o-shdoortype": "swing" } },
+  { g: 1, prod: "shower", pos: "shower ห้องน้ำ (ติดตายเดี่ยว)", w: 0.9, h: 2.0, qty: 1, auto: false, opts: { ".o-shtype": "fixed_only" } },
+  // frameless สวิง + เลื่อน
+  { g: 1, prod: "frameless_door", pos: "ประตูบานเปลือยสวิง (สีดำ)", w: 0.9, h: 2.1, qty: 1, auto: false, opts: { ".o-frametype": "swing", ".o-framecolor": "ดำ" } },
+  { g: 1, prod: "frameless_door", pos: "ประตูบานเปลือยเลื่อน (สีขาว)", w: 1.6, h: 2.1, qty: 1, auto: false, opts: { ".o-frametype": "sliding", ".o-framecolor": "ขาว" } },
+  // กั้นห้องกระจก ×3
   { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ชั้น 1 (ห้องนั่งเล่น)", auto: false, opts: GH("ห้องนั่งเล่น ชั้น 1", 420000) },
   { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ชั้น 2 (ห้องอเนกประสงค์)", auto: false, opts: GH("ห้องอเนกประสงค์ ชั้น 2", 506000) },
   { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ระเบียงหลังบ้าน", auto: false, opts: GH("ระเบียงหลังบ้าน + ซักล้าง", 318000) },
-  // G7 ม่านซิป
-  { g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียงกั้นห้อง", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") },
-  // G2 ตัวแทน (รั้ว/บาร์/ราว/ระแนง)
+  // G7 ม่านซิป หลายผ้า
+  { g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียงกั้นห้อง (5%)", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") },
+  { g: 7, prod: "zipscreen", pos: "ม่านซิป หน้าต่าง (ทึบ 0%)", w: 2.0, h: 2.4, qty: 1, auto: false, opts: ZIP("retail", "Z100", "0", "manual") },
+  // G2 รั้ว/ระแนง/ราว
   { g: 2, prod: "fence_gate", pos: "ประตูรั้วอลูมิเนียม", w: 4.0, h: 1.8, qty: 1 },
   { g: 2, prod: "bar_grid_z", pos: "ระแนงบังตา หน้าบ้าน", w: 3.0, h: 2.4, qty: 1 },
   { g: 2, prod: "imp3", pos: "ราวกันตก บันไดเฉียง เสาอลู", w: 6.0, qty: 1 },
@@ -95,7 +115,7 @@ const jobB = { cust: "คุณทดสอบ ครบทุกหมวด + 
   { g: 3, prod: "isowall", pos: "ผนัง Isowall กั้นห้อง", w: 3.0, h: 2.6, qty: 1 },
   // G4 ตู้
   { g: 4, prod: "cabinet_alu", pos: "ตู้อลูมิเนียม (เก็บของ)", w: 1.2, h: 2.0, qty: 1 },
-  // G5 มุ้ง ตัวแทน
+  // G5 มุ้ง หลายแบบ
   { g: 5, prod: "imp23", pos: "มุ้งเฟรมใหญ่ ประตูระเบียง", w: 1.8, h: 2.1, qty: 1 },
   { g: 5, prod: "imp28", pos: "มุ้งจีบ ตีนตะขาบ หน้าต่าง", w: 1.2, h: 1.2, qty: 1 },
   // ช่องแสง

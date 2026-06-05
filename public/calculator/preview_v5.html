@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Preview v5 — รายละเอียดงานแบบใหม่</title>
+<style>
+body{font-family:"Sarabun","Prompt",sans-serif;background:#f5f5f5;padding:20px;font-size:14px;}
+.wrap{max-width:800px;margin:0 auto;}
+h2{color:#B3151D;border-bottom:2px solid #B3151D;padding-bottom:6px;}
+h3{color:#555;font-size:13px;margin:4px 0;}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.box{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;}
+.box.old{border-top:3px solid #ef4444;}
+.box.new{border-top:3px solid #16a34a;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;margin-bottom:8px;}
+.tag.old{background:#fde8e8;color:#B3151D;}
+.tag.new{background:#dcfce7;color:#16a34a;}
+.item-head{font-weight:700;color:#1F2937;margin-bottom:6px;}
+.det-block{background:#f9fafb;border-radius:6px;padding:8px 10px;font-size:13px;}
+.det-label{font-weight:600;color:#1F2937;margin:6px 0 2px;}
+.det-line{color:#1F2937;margin:1px 0 1px 8px;}
+.note{background:#fffbeb;border:1px solid #f0c040;border-radius:6px;padding:10px;margin-bottom:20px;font-size:13px;}
+.tick{color:#16a34a;font-weight:700;}
+.cross{color:#B3151D;font-weight:700;}
+table.qt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+table.qt th{background:#B3151D;color:#fff;padding:8px 6px;text-align:left;}
+table.qt td{padding:6px;border-bottom:1px solid #e5e7eb;vertical-align:top;}
+table.qt .r{text-align:right;}
+.changes{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;}
+.changes h3{color:#B3151D;margin:0 0 10px;}
+.change-row{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:13px;}
+.change-row:last-child{border-bottom:none;}
+.ch-label{width:180px;flex-shrink:0;font-weight:600;color:#555;}
+.ch-before{flex:1;color:#ef4444;text-decoration:line-through;}
+.ch-after{flex:1;color:#16a34a;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2>Preview v5 — รายละเอียดงานแบบใหม่ (เบื้องต้น)</h2>
+
+<div class="note">
+  <b>หมายเหตุ:</b> นี่คือตัวอย่างเปรียบเทียบ "ก่อน" vs "หลัง" ที่แก้โค้ด — ยังไม่ได้ commit<br>
+  เปิด <code>index.html</code> ตัวจริงแล้วลอง gen ใบได้เลยเพื่อดูผลจริง
+</div>
+
+<!-- SECTION: สรุปการเปลี่ยนแปลง -->
+<div class="changes">
+<h3>สรุปการเปลี่ยนแปลงหลัก (v5)</h3>
+<div class="change-row"><span class="ch-label">รายละเอียดงาน</span><span class="ch-before">กระจกเขียว 6 มม. · อลูมิเนียม สีดำ (บรรทัดเดียว)</span><span class="ch-after">แยก 3 บรรทัด: อลูมิเนียม / กระจก หนา X มม. / มุ้ง ผ้าสี</span></div>
+<div class="change-row"><span class="ch-label">ชื่อกระจก</span><span class="ch-before">กระจกเขียว 6 มม.</span><span class="ch-after">กระจกเขียว/ใส หนา 6 มม. (เพิ่มคำว่า "หนา")</span></div>
+<div class="change-row"><span class="ch-label">series tag</span><span class="ch-before">ไม่มี</span><span class="ch-after">บานเลื่อน เซมิยูโร (รุ่นM เซมิยูโร)</span></div>
+<div class="change-row"><span class="ch-label">มุ้งในรายละเอียด</span><span class="ch-before">ไม่มีบรรทัดมุ้ง</span><span class="ch-after">- มุ้งเฟรมใหญ่ ผ้าไฟเบอร์ดำ (ดึงจาก mosq addon)</span></div>
+<div class="change-row"><span class="ch-label">สีผ้ามุ้ง</span><span class="ch-before">ไม่มี field กรอก</span><span class="ch-after">เพิ่ม dropdown สีผ้า (ดำ/เทา/ขาว) ใน screen_addon</span></div>
+<div class="change-row"><span class="ch-label">ขนาดบาน</span><span class="ch-before">โชว์ (1.80 × 2.00 ม.) ทุก item</span><span class="ch-after">ตัดออก (ตามใบจริง) เหลือเฉพาะราวบันได</span></div>
+<div class="change-row"><span class="ch-label">imp29 ชื่อ</span><span class="ch-before">มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก) — R3.2</span><span class="ch-after">มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก)</span></div>
+<div class="change-row"><span class="ch-label">folding_euro</span><span class="ch-before">ไม่มีในระบบ</span><span class="ch-after">เพิ่มแล้ว: บานเฟี้ยม ยูโร (series L)</span></div>
+<div class="change-row"><span class="ch-label">ยกเลิกขาย</span><span class="ch-before">ชื่อธรรมดา</span><span class="ch-after">D-series / aluinch / E-series → เพิ่ม (ยกเลิกขาย)</span></div>
+<div class="change-row"><span class="ch-label">X-series / SlimLux</span><span class="ch-before">ไม่มีข้อความ</span><span class="ch-after">เพิ่ม "(ใช้ภายใน ไม่กันน้ำ)" + series S</span></div>
+</div>
+
+<!-- SECTION: ตัวอย่างรายการ -->
+<h2>ตัวอย่างรายการ — ก่อน vs หลัง</h2>
+
+<!-- ตัวอย่าง 1: บานเลื่อน ยูโร + มุ้งเฟรมใหญ่ -->
+<div class="cmp">
+  <div class="box old">
+    <span class="tag old">ก่อน (R4.x)</span>
+    <div class="item-head">1 หน้าต่างชั้น 1 (หน้าบ้าน)</div>
+    <div style="margin:4px 0 0 8px;font-size:13px;">- หน้าต่างบานเลื่อนสลับ (มีมุ้งเฟรมใหญ่)</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- กระจกอินซูเลทใส 5 + air gap 8 + ใส 5 มม. · อลูมิเนียม สีดำ</div>
+      <div style="font-size:12px;color:#999;margin-top:4px;">(บรรทัดเดียว + ไม่มีมุ้ง)</div>
+    </div>
+  </div>
+  <div class="box new">
+    <span class="tag new">หลัง (v5)</span>
+    <div class="item-head">1 หน้าต่างชั้น 1 (หน้าบ้าน)</div>
+    <div style="margin:4px 0 0 8px;font-size:13px;">- หน้าต่างบานเลื่อน ยูโร (รุ่นL ยูโร) บานเลื่อนสลับ (มีมุ้งเฟรมใหญ่)</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- อลูมิเนียม สีดำ</div>
+      <div class="det-line">- กระจกอินซูเลทใส หนา 5 + air gap 8 + ใส 5 มม.</div>
+      <div class="det-line">- มุ้งเฟรมใหญ่ ผ้าไฟเบอร์ดำ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ตัวอย่าง 2: ประตูบานเปิด ยูโร -->
+<div class="cmp">
+  <div class="box old">
+    <span class="tag old">ก่อน (R4.x)</span>
+    <div class="item-head">3 ประตูชั้น 1 (หลังบ้าน) (150×210 ม.)</div>
+    <div style="margin:4px 0 0 8px;font-size:13px;">- ประตูบานเปิด ยูโร บานเลื่อนเปิดคู่กลาง รางล่าง</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- กระจกอินซูเลทใส 5 + air gap 8 + ใส 5 มม. · อลูมิเนียม สีดำ</div>
+    </div>
+  </div>
+  <div class="box new">
+    <span class="tag new">หลัง (v5)</span>
+    <div class="item-head">3 ประตูชั้น 1 (หลังบ้าน)</div>
+    <div style="margin:4px 0 0 8px;font-size:13px;">- ประตูบานเปิด ยูโร (รุ่นL ยูโร) บานเลื่อนเปิดคู่กลาง รางล่าง (มีมุ้งเฟรมใหญ่)</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- อลูมิเนียม สีดำ</div>
+      <div class="det-line">- กระจกอินซูเลทใส หนา 5 + air gap 8 + ใส 5 มม.</div>
+      <div class="det-line">- มุ้งเฟรมใหญ่ ผ้าไฟเบอร์ดำ</div>
+    </div>
+    <div style="font-size:12px;color:#16a34a;margin-top:4px;">✓ ขนาดบานหายไปแล้ว (ตามใบจริง)</div>
+  </div>
+</div>
+
+<!-- ตัวอย่าง 3: มุ้งเฟรมเล็ก (screen addon item) -->
+<div class="cmp">
+  <div class="box old">
+    <span class="tag old">ก่อน</span>
+    <div class="item-head">5 มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- กระจกเขียว 6 มม. (ผิด — มุ้งไม่มีกระจก)</div>
+    </div>
+  </div>
+  <div class="box new">
+    <span class="tag new">หลัง (v5)</span>
+    <div class="item-head">5 มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์</div>
+    <div class="det-block" style="margin-top:6px;">
+      <div class="det-label">รายละเอียดงาน</div>
+      <div class="det-line">- ผ้าไฟเบอร์ดำ</div>
+    </div>
+    <div style="font-size:12px;color:#16a34a;margin-top:4px;">✓ ไม่มีกระจก/อลูมิเนียม (ถูกต้อง)</div>
+  </div>
+</div>
+
+<!-- SECTION: สิ่งที่ยังต้องถาม/ตัดสิน -->
+<div class="changes" style="border-top:3px solid #f59e0b;">
+<h3 style="color:#b45309;">สิ่งที่ยังต้อง flag — รอพี่นัทตัดสิน</h3>
+<div class="change-row"><span class="ch-label">1. series tag ตำแหน่ง</span><span class="ch-after">ตอนนี้ใส่ท้ายชื่อสินค้า เช่น "บานเลื่อน เซมิยูโร (รุ่นM เซมิยูโร)" — อยากให้อยู่ในวงเล็บหัวรายการแทนไหม เช่น "หน้าต่างชั้น 1 (รุ่นM เซมิยูโร)"?</span></div>
+<div class="change-row"><span class="ch-label">2. series tag หัวรายการ</span><span class="ch-after">ใบจริงปีเตอร์ใช้ "(ชุดยูโร)" — ตอนนี้ agent ใส่ "(รุ่นL ยูโร)" ตาม spec พี่นัท — ยืนยันใช้รูปแบบนี้ได้เลย?</span></div>
+<div class="change-row"><span class="ch-label">3. ราคา folding_euro</span><span class="ch-after">ตั้ง unit_rate=9000 เท่า folding เซมิยูโร ตาม spec "ราคาเท่า M" — ยืนยันถูกต้อง?</span></div>
+<div class="change-row"><span class="ch-label">4. สีอลูมิเนียม default</span><span class="ch-after">ถ้าผู้ใช้ไม่เลือกสี (index 0 = สีอบขาว) จะโชว์ "อลูมิเนียม สีอบขาว" — ถ้าต้องการ default เป็นสีดำ ต้องปรับ default index</span></div>
+<div class="change-row"><span class="ch-label">5. awning_aluinch</span><span class="ch-after">ยังไม่ได้ใส่ (ยกเลิกขาย) — รอยืนยันว่า aluinch กระทุ้งยกเลิกด้วยหรือเปล่า (pivot_aluinch + sliding_eseries + lift_aluinch ใส่แล้ว)</span></div>
+<div class="change-row"><span class="ch-label">6. หมายเหตุท้ายใบ M/L</span><span class="ch-after">spec ข้อ 10 ให้เพิ่มข้อความ "เฟรมเซมิยูโร (M) และ ยูโร (L) แข็งแรงเทียบเท่า..." — ยืนยันตำแหน่ง (ก่อนลายเซ็น? หลังตาราง?)</span></div>
+</div>
+
+</div>
+</body>
+</html>

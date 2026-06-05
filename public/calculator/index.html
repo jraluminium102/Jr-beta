@@ -472,24 +472,26 @@ const GLASS=[
 const PRODUCTS=[
  {id:'sliding_sms',cat:'บานเลื่อน',name:'บานเลื่อน เซมิยูโร',method:'bucket',min:6500,rates:'SMS',cost:'sliding_sms',digihandle:1,series:'M',mosquito:1},
  {id:'sliding_euro',cat:'บานเลื่อน',name:'บานเลื่อน ยูโร',method:'bucket',min:7500,rates:'EURO',cost:'sliding_euro',digihandle:1,series:'L',mosquito:1},
- {id:'sliding_eseries',cat:'บานเลื่อน',name:'บานเลื่อน E-series (aluinch)',method:'bucket',min:12000,rates:'ESERIES',cost:null,mosquito:1},
+ {id:'sliding_eseries',cat:'บานเลื่อน',name:'บานเลื่อน E-series aluinch (ยกเลิกขาย)',method:'bucket',min:12000,rates:'ESERIES',cost:null,mosquito:1},
  {id:'fixed_glass',cat:'ติดตาย',name:'กระจกติดตาย',method:'bucket',min:5000,rates:'FIX',cost:null},
  {id:'awning_euro',cat:'บานกระทุ้ง',name:'บานกระทุ้ง ยูโร',method:'bucket',min:10000,rates:'AWN',cost:'awning_euro',addon:{kind:'window',extra:2900},series:'L',mosquito:1,opts:[{id:'awn_mode',label:'แบบเปิด',type:'select',options:['เปิดล่าง (Std)','เปิดข้าง (Std)','tilt & turn (+5,000/บาน)'],defaults:0},{id:'tilt_turn',label:'tilt&turn บวกเพิ่ม',price:5000,perPanel:true,depends:'awn_mode=2',warning:'tilt&turn ต้องเปิดออกนอกบ้านเท่านั้น เปิดเข้า=เสี่ยงน้ำเข้า'}]},
- {id:'awning_aluinch',cat:'บานกระทุ้ง',name:'บานกระทุ้ง aluinch',method:'same_as',ref:'awning_euro',cost:null,mosquito:1},
+ {id:'awning_aluinch',cat:'บานกระทุ้ง',name:'บานกระทุ้ง aluinch (ยกเลิกขาย)',method:'same_as',ref:'awning_euro',cost:null,mosquito:1},
  {id:'casement_euro',cat:'บานเปิด',name:'บานเปิด ยูโร',method:'bucket',min:18000,rates:'OPEN',cost:'casement_euro',addon:{kind:'door',extra:14000},closer:1,digihandle:1,series:'L',mosquito:1},
- {id:'casement_dseries',cat:'บานเปิด',name:'บานเปิด D-series',method:'bucket',min:24000,rates:'DSERIES',cost:null,addon:{kind:'door',extra:19000},mosquito:1},
- {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},opts:[{id:'closer',label:'โช้ค',price:5000,mosquito:1}]},
- {id:'casement_velora',cat:'บานเปิด',name:'บานเปิด Velora (รวมเทมเปอร์6มม.)',method:'bucket',min:19000,rates:'VELORA',cost:null,addon:{kind:'door',extra:15000},mosquito:1},
+ {id:'casement_dseries',cat:'บานเปิด',name:'บานเปิด D-series (ยกเลิกขาย)',method:'bucket',min:24000,rates:'DSERIES',cost:null,addon:{kind:'door',extra:19000},mosquito:1},
+ {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',opts:[{id:'closer',label:'โช้ค',price:5000,mosquito:1}]},
+ {id:'casement_velora',cat:'บานเปิด',name:'บานเปิด Velora (รวมเทมเปอร์6มม.)',method:'bucket',min:19000,rates:'VELORA',cost:null,addon:{kind:'door',extra:15000},series:'S',mosquito:1},
  // R3 2026-05-30: เพิ่ม 2 รุ่นประตูบานเปิด ลูกฟูกทึบ — ราคากรอกเอง
  {id:'casement_flush_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
  {id:'casement_inset_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด วัน (ลูกฟูกกลางบาน)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
  {id:'pivot',cat:'บานหมุน',name:'บานหมุนเมืองทอง',method:'bucket',min:26000,rates:'PIVOT',cost:null,addon:{kind:'window',extra:5000}},
- {id:'pivot_aluinch',cat:'บานหมุน',name:'บานหมุน aluinch',method:'same_as',ref:'pivot',cost:null},
+ {id:'pivot_aluinch',cat:'บานหมุน',name:'บานหมุน aluinch (ยกเลิกขาย)',method:'same_as',ref:'pivot',cost:null},
  {id:'folding',cat:'บานเฟี้ยม',name:'บานเฟี้ยม เซมิยูโร',method:'fold',unit_rate:9000,per_panel_min:15000,cost:null,optBeam:true,series:'M',mosquito:1},
- {id:'folding_xseries',cat:'บานเฟี้ยม',name:'บานเฟี้ยม X-series',method:'fold_flat',min:36000,unit_rate:12000,cost:null,optBeam:true,mosquito:1},
+ // v5: เพิ่มใหม่ — บานเฟี้ยม ยูโร (L) ราคาเท่า M + สีเต็ม COLORS (R3.9 ข้อ 5.2)
+ {id:'folding_euro',cat:'บานเฟี้ยม',name:'บานเฟี้ยม ยูโร',method:'fold',unit_rate:9000,per_panel_min:15000,cost:null,optBeam:true,series:'L',mosquito:1},
+ {id:'folding_xseries',cat:'บานเฟี้ยม',name:'บานเฟี้ยม X-series (ใช้ภายใน ไม่กันน้ำ)',method:'fold_flat',min:36000,unit_rate:12000,cost:null,optBeam:true,series:'S',mosquito:1},
  {id:'inner_top_stack',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน (ซ้อน)',method:'area_rate_addon',rates:'INTOP',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:16000,4:22000}}},
- {id:'inner_top_slimlux',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน SlimLux (รวม soft close+สลิง+เทมเปอร์6มม.)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
- {id:'inner_top_xseries',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน X-series (เลื่อนซ้อน)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
+ {id:'inner_top_slimlux',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน SlimLux (รวม soft close+สลิง+เทมเปอร์6มม.) (ใช้ภายใน ไม่กันน้ำ)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,series:'S',addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
+ {id:'inner_top_xseries',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน X-series (เลื่อนซ้อน) (ใช้ภายใน ไม่กันน้ำ)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,series:'S',addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
  {id:'cabinet_alu',cat:'ตู้อลู',name:'ตู้อลูมิเนียม',cabinet:1,cost:null},
  {id:'future_tech',cat:'ฝาตู้',name:'ฝาตู้ Future Tech (/บาน, max 3 บาน/ชุด)',future_tech:1,cost:null},
  {id:'bar_grid_z',cat:'ระแนง',name:'ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (ข้อ 38.1)',bar_grid:1,cost:null},
@@ -521,8 +523,8 @@ const PRODUCTS=[
  {id:'wall_ext',cat:'ฝ้า-ผนัง',name:'ผนังเบาภายนอก',method:'bucket',min:13500,rates:'WALL_EXT',cost:null},
  {id:'wall_int',cat:'ฝ้า-ผนัง',name:'ผนังเบาภายใน',method:'bucket',min:13500,rates:'WALL_INT',cost:null},
  {id:'steel_mesh',g:2,cat:'เสริม',name:'ตะแกรงเหล็กสาน',method:'per_sqm',rate:2500,cost:null},
- {id:'ykk_vent',cat:'YKK',name:'ประตู Ventilation YKK (กว้าง 0.6-0.9 · สูง 2.0-2.2 ม.)',method:'per_sqm',rate:17500,min:30000,cost:null,sizeCheck:'vent',closer:1},
- {id:'ykk_exhido',cat:'YKK',name:'ประตู Exhido YKK (ช่องเปิดเต็ม · ต่อบาน 0.4-1.1 · H 1.8-3.0 ม.)',method:'bucket',min:50000,rates:'EXHIDO',cost:null,sizeCheck:'exhido',closer:1},
+ {id:'ykk_vent',cat:'YKK',name:'ประตู Ventilation YKK',method:'per_sqm',rate:17500,min:30000,cost:null,sizeCheck:'vent',closer:1},
+ {id:'ykk_exhido',cat:'YKK',name:'ประตู Exhido YKK (ช่องเปิดเต็ม)',method:'bucket',min:50000,rates:'EXHIDO',cost:null,sizeCheck:'exhido',closer:1},
  {id:'tostem_a01',cat:'YKK',name:'Tostem Airflow A01 (ลายไม้ หน้าบ้าน)',method:'per_sqm',rate:17500,min:34000,cost:null,closer:1},
  {id:'fw_door_basic',cat:'เสริม',name:'ครอบวงกบ ประตู (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'door',rate:700,cost:null},
  {id:'fw_door_stock',cat:'เสริม',name:'ครอบวงกบ ประตู (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'door',rate:800,cost:null},
@@ -589,10 +591,10 @@ const PRODUCTS=[
  {id:'imp22',cat:'มุ้ง',name:"มุ้งเฟรมเล็กติดตาย ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP22',cost:null,min_door:1500,min_window:800,screen_addon:1,mscolor:true},
  {id:'imp23',cat:'มุ้ง',name:"มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก · ตัด PC) — R3.2",method:'bucket',min:0,rates:'IMP23',cost:null,min_door:7200,min_window:4800,screen_addon:1,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
  {id:'imp28',cat:'มุ้ง',name:"มุ้งจีบ ตีนตะขาบ รุ่งรางเตี้ยแบบพิเศษ ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP28',cost:null,mscolor:true},
- {id:'imp29',cat:'มุ้ง',name:"มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก) — R3.2",method:'bucket',min:0,rates:'IMP29',cost:null,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
+ {id:'imp29',cat:'มุ้ง',name:"มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก)",method:'bucket',min:0,rates:'IMP29',cost:null,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
  {id:'imp30',cat:'มุ้ง',name:"มุ้งแม่เหล็ก พับเปิดได้",method:'bucket',min:0,rates:'IMP30',cost:null},
- {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. — R3.2 (เลื่อน/เปิด/กระทุ้ง/ยก/PC/YKK)",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
- {id:'imp32',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ — R3.2",method:'bucket',min:0,rates:'IMP32',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
+ {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
+ {id:'imp32',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ",method:'bucket',min:0,rates:'IMP32',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp33',cat:'มุ้ง',name:"มุ้งกันแมว หมา",method:'bucket',min:0,rates:'IMP33',cost:null},
  {id:'imp34',g:2,cat:'เสริม',name:"ตะแกรงเหล็กสาน",method:'bucket',min:0,rates:'IMP34',cost:null},
  {id:'imp35',cat:'มุ้ง',name:"มุ้งสแตนเลส 0.3มม. กันหนู",method:'bucket',min:0,rates:'IMP35',cost:null},
@@ -823,7 +825,7 @@ function colorPrice(ci,a,series){
   if(!rates) return min;
   return Math.max(min, a*rateOf(a,rates));
 }
-const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ตู้อลู'];
+const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ตู้อลู','ม่านซิป'];
 const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',price:5000,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',price:5000,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'u_track',label:'รางยู',price:5000,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']}];
 const DIGI=[{n:'S1 ก้านโยก',p:10000},{n:'S1 ลูกบิด',p:10000},{n:'S3',p:18000,nc:1},{n:'S4',p:18000,nc:1},{n:'L600',p:24000,nc:1},{n:'A300',p:10000},{n:'L900',p:13000},{n:'C300',p:11000},{n:'X1',p:13000},{n:'X2',p:20000,nc:1},{n:'JR Prime',p:24900,nc:1,jr:1}];
 // มือจับสแตนเลสอร่าม 6 ขนาด (พี่นัทยืนยัน 2026-05-26)
@@ -1603,6 +1605,16 @@ function buildItemOpts(d){
     h+='</div>';
   }
   if(p.opts){ p.opts.forEach(o=>{ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }); }
+  // shower — เลือก config ประตู+ติดตาย / ติดตายเดี่ยว / ประตูเดี่ยว + ถ้ามีประตูเลือกบานเปิด/เลื่อน
+  if(p.id==='shower'){
+    h+='<label class="opt">รูปแบบ shower <select class="o-shtype" style="width:auto;height:32px;"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select></label>';
+    h+='<label class="opt">ประเภทประตู (ถ้ามี) <select class="o-shdoortype" style="width:auto;height:32px;"><option value="swing" selected>บานเปิด (swing)</option><option value="sliding">บานเลื่อน</option></select></label>';
+  }
+  // frameless_door — เลือกสีเฟรม + สวิง/เลื่อน
+  if(p.id==='frameless_door'){
+    h+='<label class="opt">ประเภทประตูบานเปลือย <select class="o-frametype" style="width:auto;height:32px;"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select></label>';
+    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮารา">เทาซาฮารา</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
+  }
   if(p.closer){ h+='<label class="opt">[Up3] โช๊ค (combo สแตน) <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช๊คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช๊ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช๊ค">บานพับ +5,000</option></select></label>'; }
   if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
   // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
@@ -1692,12 +1704,15 @@ function buildItemOpts(d){
     h+='<label class="opt">ผ้ามุ้ง <select class="o-screenfabric" style="width:auto;height:32px;max-width:280px;"><option value="fiber">ไฟเบอร์ เทา/ดำ (default)</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>';
     if(p.rates==='IMP23') h+='<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>';
     h+='</select></label>';
+    // v5: เพิ่ม dropdown สีผ้าไฟเบอร์ (ใช้ในรายละเอียดงาน)
+    h+='<label class="opt">สีผ้า <select class="o-screenfabriccolor" style="width:auto;height:32px;"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option></select></label>';
     h+='<span class="opt" style="color:#666;font-size:12px;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
   if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   h+='<label class="opt" style="flex:1 1 100%;border-top:1px dashed #ccc;padding-top:6px;margin-top:4px;">หมายเหตุเพิ่มเติม (เฉพาะบานนี้) <input type="text" class="o-extradesc" placeholder="เช่น สเปกพิเศษ / รายละเอียด..." style="width:300px;height:30px;"></label>';
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
-  if(gw)gw.style.display=areaOnly?'none':'';
+  // ม่านซิปไม่มีกระจก (ราคาคำนวณจาก area แต่ไม่ใช้ glass spec)
+  if(gw)gw.style.display=(areaOnly||p.zipscreen)?'none':'';
   if(cw)cw.style.display=(areaOnly||NO_COLOR_CATS.includes(p.cat))?'none':'';
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
@@ -1728,6 +1743,16 @@ function readItem(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
   const optSel={};
   if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); optSel[o.id]=c&&c.checked; });
+  // shower config
+  if(p.id==='shower'){
+    const _st=d.querySelector('.o-shtype'); optSel.shtype=_st?_st.value:'door_fixed';
+    const _sdt=d.querySelector('.o-shdoortype'); optSel.shdoortype=_sdt?_sdt.value:'swing';
+  }
+  // frameless_door config
+  if(p.id==='frameless_door'){
+    const _ft=d.querySelector('.o-frametype'); optSel.frametype=_ft?_ft.value:'swing';
+    const _fc=d.querySelector('.o-framecolor'); optSel.framecolor=_fc?_fc.value:'ขาว';
+  }
   if(p.closer){ const _c=d.querySelector('.o-closer'); if(_c){ optSel.closer=parseFloat(_c.value)||0; if(_c.value!=='0'&&_c.selectedIndex>=0)optSel.closerLabel=_c.options[_c.selectedIndex].getAttribute('data-n'); } }
   if(p.digihandle){ const _dg=d.querySelector('.o-digi'); optSel.digi=_dg?_dg.value:''; }
   if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
@@ -2110,13 +2135,61 @@ function genQuote(keepNo){
       return {prodName, det};
     }
     const naType = ITYPE_NA.indexOf(it.p.cat)>=0;
-    const prefix = naType ? '' : ((it.itype==='window')?'หน้าต่าง':'ประตู');
+    // หมวดที่ไม่ใส่ prefix: หลัก ITYPE_NA + shower/ม่านซิป/กั้นห้องกระจก/บานเปลือย (ชื่อสื่อตัวเอง)
+    const noPrefix = naType || ['shower','ม่านซิป','กั้นห้องกระจก','บานเปลือย'].indexOf(it.p.cat)>=0;
+    const prefix = noPrefix ? '' : ((it.itype==='window')?'หน้าต่าง':'ประตู');
     // R4.4: กันชื่อซ้ำ "ประตูประตู" — ถ้าชื่อสินค้าขึ้นต้นด้วย ประตู/หน้าต่าง อยู่แล้ว ไม่เติม prefix
-    const prodName = (prefix && !/^(ประตู|หน้าต่าง)/.test(it.p.name)) ? (prefix + it.p.name) : it.p.name;
+    // v5: ตัด tag "— Rx.x" ออกจากชื่อสินค้า, แก้สะกดผิด
+    let rawName = it.p.name
+      .replace(/\s*—\s*R\d+[\.\d]*\s*/g,'')  // ตัด "— R3", "— R3.2", "— R3.9" ฯลฯ
+      .replace(/บานเฟียม/g,'บานเฟี้ยม')
+      .replace(/สวงิ/g,'สวิง')
+      .replace(/เลอืน/g,'เลื่อน')
+      .replace(/บานเปลอืย/g,'บานเปลือย')
+      .replace(/มานซิป/g,'ม่านซิป')
+      .replace(/กนัหอ้ง/g,'กั้นห้อง')
+      .replace(/อาบนํา/g,'อาบน้ำ')
+      .replace(/^shower\s+/,'')   // ตัด "shower " ออกจากต้นชื่อ — ใบลูกค้าใช้ภาษาไทย
+      .replace(/\s+\(ยกเลิกขาย\)/g,'')  // ตัด "(ยกเลิกขาย)" ออกจากชื่อที่แสดงในใบ — ใส่ท้ายแยก
+      .replace(/\s+\(ใช้ภายใน\s*ไม่กันน้ำ\)/g,'')  // ตัดวงเล็บออกจากหัวชื่อ — ระบุในรายละเอียดแทน
+      .replace(/\s+\(รวม[^)]+\)/g,'')  // ตัด "(รวม soft close+สลิง+เทมเปอร์6มม.)" ออก — ระบุในรายละเอียดแทน
+      .replace(/\s+\(เลื่อนซ้อน\)/g,'')  // ตัดวงเล็บ "(เลื่อนซ้อน)" ออก — เทคนิค ไม่ใช่ชื่อ
+      .replace(/\s+\(zipscreen\)\s*/g,' ')  // ตัด "(zipscreen)" ออกจากชื่อ — ใช้ภาษาไทย
+      .replace(/\s+ม่านม้วนกันลม\s*$/,'')   // ตัด "ม่านม้วนกันลม" ออก — ชื่อสื่อตัวเองแล้ว
+      .replace(/\s*\([^)]*·\s*ตัด PC[^)]*\)/g,'')  // ตัดวงเล็บ technical เช่น "(เลื่อน/เปิด · ตัด PC)"
+      .replace(/\s*\(เลื่อน\/[^)]+\)/g,'')  // ตัด "(เลื่อน/...)" ทุกรูปแบบ — technical ไม่ต้องการในใบ
+      .replace(/\s*\(บาน[^)]+\)/g,'')  // ตัด "(บานเปิด/เลื่อน/...)" technical ออก
+      .replace(/\s+ห้าม\s+PC\s*$/,'')  // ตัด "ห้าม PC" ท้ายชื่อ — เป็น note สำหรับเซลล์ ไม่ใช่ชื่อลูกค้า
+      .replace(/\s*(ผ้ามุ้งไฟเบอร์)\s*$/,'')  // ตัด "ผ้ามุ้งไฟเบอร์" ออกจากท้ายชื่อ — ระบุใน det
+      .replace(/\s+\(สีขาว\/ดำ\)/g,'')  // ตัด "(สีขาว/ดำ)" จากมุ้งจีบ SD พื้นฐาน
+      .replace(/\s+\(สีขาว\/ดำ\/เทา\s*·[^)]*\)/g,'')  // ตัดวงเล็บสีจากมุ้งจีบนิรภัย
+      .replace(/\s+\(กว้าง[^)]+\)/g,'')  // ตัดวงเล็บขนาด "กว้าง≤150/แยกกลาง≤300" ออก
+      .replace(/\s+\(กว้าง\s*\d[^)]+\)/g,'')
+      .trim();
+    // ถ้าเป็นสินค้า ยกเลิกขาย — ต่อท้ายชื่อ (ยกเลิกขาย)
+    const isDiscontinued = it.p.name.includes('(ยกเลิกขาย)') || it.p.name.includes('ยกเลิกขาย');
+    const discontinuedSuffix = isDiscontinued ? ' (ยกเลิกขาย)' : '';
+    // เพิ่ม series tag ท้ายชื่อ (M/L/S) ตาม spec: "(รุ่น M เซมิยูโร)" "(รุ่น L ยูโร)" "(รุ่น S สลิม)"
+    // ตัดคำซ้ำในชื่อก่อนใส่ tag: เซมิยูโร/SMS → ตัดออก, ยูโร → ตัดออก, สลิม → ตัดออก
+    // โมเดล (X-series/Velora/SlimLux) คงไว้
+    const SERIES_LABEL = {M:'รุ่น M เซมิยูโร', L:'รุ่น L ยูโร', S:'รุ่น S สลิม'};
+    if(it.p.series === 'M'){
+      rawName = rawName.replace(/\s*(เซมิยูโร|SMS)\s*/g,' ').replace(/\s+/g,' ').trim();
+    } else if(it.p.series === 'L'){
+      // ตัด "ยูโร" ออก — ใช้ lookahead หรือ ท้ายสตริง (Thai \b ไม่ทำงาน)
+      rawName = rawName.replace(/\s+ยูโร(\s|$)/g,'$1').replace(/\s+/g,' ').trim();
+    } else if(it.p.series === 'S'){
+      // ตัด "สลิม" เฉพาะกรณีไม่ใช่ชื่อโมเดล (X-series/Velora/SlimLux คงไว้)
+      if(!/X-series|Velora|SlimLux/.test(rawName)){
+        rawName = rawName.replace(/\s+สลิม(\s|$)/g,'$1').replace(/\s+/g,' ').trim();
+      }
+    }
+    const seriesTag = it.p.series ? (' ('+SERIES_LABEL[it.p.series]+')') : '';
+    const prodName = ((prefix && !/^(ประตู|หน้าต่าง)/.test(rawName)) ? (prefix + rawName) : rawName) + seriesTag + discontinuedSuffix;
     const _parts=[];
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
-      _parts.push('🔧 ติดบานเดิม');
+      _parts.push('ติดบานเดิม');
       const sx = parseFloat(it.optSel.screen_extra)||0;
       if(sx > 0) _parts.push('+ค่าเสริมกล่อง/ราง '+fmt(sx)+' บาท');
     }
@@ -2126,24 +2199,104 @@ function genQuote(keepNo){
     let det = '';
     if(it.p.fin){ det = (it.finLabel||'ไม่อบสี'); }
     else if(AREA_CATS.indexOf(it.p.cat)>=0){ det = '-'; }
+    else if(it.p.zipscreen){
+      // ม่านซิป — ไม่มีกระจก ไม่มีอลู มีแค่สีผ้า
+      const ZIP_FAB_LABEL = {'0':'ผ้าทึบ 0%','1':'ผ้าโปร่ง 1-2%','3':'ผ้าโปร่ง 3%','5':'ผ้าโปร่ง 5%','10':'ผ้าโปร่ง 10%','30':'ผ้าโปร่ง 30%','PET':'ผ้า PET ใส'};
+      const zfab = (it.optSel&&it.optSel.zfab)||'5';
+      det = 'ผ้า '+( ZIP_FAB_LABEL[zfab]||('ผ้าโปร่ง '+zfab+'%') );
+    }
+    else if(it.p.cat==='มุ้ง'){
+      // v5: มุ้ง — โชว์เฉพาะชื่อมุ้ง + สีผ้า ไม่มีกระจก/อลู
+      const fabricMap = {fiber:'ผ้าไฟเบอร์',fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',cat:'ผ้ากันแมว/หมา',rat:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
+      const sf = (it.optSel&&it.optSel.screenFabric)||'fiber';
+      const mf = (it.optSel&&it.optSel.mosqFabric)||'fiber_gray';
+      const fabricLabel = fabricMap[sf]||fabricMap[mf]||'ผ้าไฟเบอร์';
+      // สีผ้า: ดึงจาก o-screenfabriccolor หรือ default
+      const sfcEl = it.div ? it.div.querySelector('.o-screenfabriccolor') : null;
+      const sfcColor = sfcEl ? sfcEl.value : 'ดำ';
+      const fabricFull = sf==='fiber' ? ('ผ้าไฟเบอร์'+sfcColor) : fabricLabel;
+      det = fabricFull;
+    }
+    else if(it.p.id==='shower'){
+      // shower — โชว์ config ประตู/กระจกติดตาย + ประเภทประตู
+      const shtype = (it.optSel&&it.optSel.shtype)||'door_fixed';
+      const shdoortype = (it.optSel&&it.optSel.shdoortype)||'swing';
+      const shtypeLabel = {door_fixed:'ประตู + กระจกติดตาย', fixed_only:'กระจกติดตายอย่างเดียว', door_only:'ประตูอย่างเดียว'}[shtype]||shtype;
+      const shdoortypeLabel = {swing:'บานเปิด (swing)', sliding:'บานเลื่อน'}[shdoortype]||shdoortype;
+      const shLines = [shtypeLabel];
+      if(shtype!=='fixed_only') shLines.push('ประตู'+shdoortypeLabel);
+      // สีอลูจาก glass selector (shower มีสีอลูเลือกได้)
+      const ci0s = it.ci || 0;
+      const cs = COLORS[ci0s];
+      if(cs) shLines.push('อลูมิเนียม '+(cs.quoteName||cs.n).replace(/[★⚠]/g,'').trim());
+      det = shLines.join('\n');
+    }
+    else if(it.p.id==='frameless_door'){
+      // บานเปลือย — โชว์ประเภท สวิง/เลื่อน + สีเฟรม
+      const ft = (it.optSel&&it.optSel.frametype)||'swing';
+      const fc = (it.optSel&&it.optSel.framecolor)||'ขาว';
+      const ftLabel = ft==='swing' ? 'สวิง (บานเปิด)' : 'เลื่อน';
+      det = 'ประตูบานเปลือย'+ftLabel+'\nเฟรมอลูมิเนียม สี'+fc;
+    }
     else {
-      const glassName = GLASS[it.gi] ? GLASS[it.gi].n : '';
-      let colorTag = '';
-      if(it.ci && it.ci>0 && COLORS[it.ci]){
-        const c = COLORS[it.ci];
-        let colorName = c.quoteName || c.n.replace(/\s*\(Stock\)\s*/,'').replace(/\s*— เช็ค[^)]*\)\s*⚠?/,'').replace(/\s*★/,'');
-        const codeEl = it.div.querySelector('.i-colorcode');
+      // v5: แยกบรรทัดตามใบจริง: อลูมิเนียม / กระจก / มุ้ง (ถ้ามี addon)
+      const lines = [];
+      // บรรทัด 1: อลูมิเนียม สี...
+      const ci0 = it.ci || 0;
+      if(ci0 > 0 && COLORS[ci0]){
+        const c = COLORS[ci0];
+        let colorName = c.quoteName || c.n.replace(/\s*\(Stock\)\s*/,'').replace(/\s*—\s*เช็ค[^)]*\)\s*⚠?/,'').replace(/\s*[★⚠]/g,'').trim();
+        const codeEl = it.div ? it.div.querySelector('.i-colorcode') : null;
         const code = (codeEl && c.hasCode) ? (codeEl.value||'').trim() : '';
-        colorTag = ' · อลูมิเนียม ' + colorName + (code ? (' ['+code+']') : '');
+        let aluLine = 'อลูมิเนียม ' + colorName + (code ? (' ['+code+']') : '');
         if(c.sampleConfirm){
-          const sc = it.div.querySelector('.i-sampleconfirm');
-          if(sc && sc.checked) colorTag += ' · ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว';
-          else colorTag += ' · ⚠ ยังไม่ยืนยันตัวอย่าง';
+          const sc = it.div ? it.div.querySelector('.i-sampleconfirm') : null;
+          if(sc && sc.checked) aluLine += ' (ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว)';
+          else aluLine += ' (⚠ ยังไม่ยืนยันตัวอย่าง)';
+        }
+        lines.push(aluLine);
+      } else {
+        // สีขาว/ดำ (default index 0-1) — โชว์สีปัจจุบัน
+        const c0 = COLORS[ci0];
+        if(c0) lines.push('อลูมิเนียม '+(c0.quoteName||c0.n).replace(/[★⚠]/g,'').trim());
+      }
+      // บรรทัด 2: กระจก{ชนิด} หนา {x} มม.
+      // Velora/SlimLux รวมเทมเปอร์ 6 มม. ในราคา — ไม่ใช้ glass selector ของผู้ใช้
+      if(it.p.id==='casement_velora' || it.p.id==='inner_top_slimlux'){
+        lines.push('กระจกเทมเปอร์ใส หนา 6 มม. (รวมในราคา)');
+      } else {
+        const glassObj = GLASS[it.gi];
+        if(glassObj){
+          // แปลงชื่อกระจกให้อยู่ในรูป "กระจก{ชนิด} หนา X มม."
+          let gn = glassObj.n;
+          // ตัด prefix พิเศษ (★) ออกก่อน
+          gn = gn.replace(/^[★⚠\s]+/, '').trim();
+          // เพิ่มคำว่า "หนา" ก่อนตัวเลขแรก เช่น "กระจกเขียว 6 มม." → "กระจกเขียว หนา 6 มม."
+          if(gn.indexOf('หนา')<0) gn = gn.replace(/(\s)(\d)/, '$1หนา $2');
+          // ถ้าชื่อยังไม่ขึ้นต้นด้วย "กระจก" ให้เติม (เช่น เทมเปอร์, ลามิเนต, อินซูเลท)
+          if(!gn.startsWith('กระจก')) gn = 'กระจก' + gn;
+          lines.push(gn);
         }
       }
-      det = glassName + colorTag;
+      // บรรทัด 3: มุ้ง (ถ้า product มี mosquito addon ที่เลือกไว้)
+      if(it.p.mosquito && it.optSel && it.optSel.mosqId){
+        const mscreen = MOSQUITO_SCREENS.find(m=>m.id===it.optSel.mosqId);
+        if(mscreen){
+          const fabricMapM={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
+          const mf = (it.optSel.mosqFabric)||'fiber_gray';
+          const mfLabel = fabricMapM[mf]||'ผ้าไฟเบอร์ดำ';
+          lines.push(mscreen.name+' '+mfLabel);
+        }
+      }
+      // บรรทัด 4: ใช้ภายใน ไม่กันน้ำ — ทุกตัว cat 'เลื่อนภายใน' + X-series (บานเปิด/บานเฟี้ยม)
+      const INDOOR_ONLY_IDS = ['casement_xseries','folding_xseries'];
+      if(it.p.cat==='เลื่อนภายใน' || INDOOR_ONLY_IDS.indexOf(it.p.id)>=0){
+        lines.push('ใช้ภายใน ไม่กันน้ำ (เฟรมล่างเรียบ ไม่มีรางน้ำ)');
+      }
+      det = lines.join('\n');
+      if(!det.trim()) det = '-';
     }
-    if(_parts.length) det += ' · ' + _parts.join(' · ');
+    if(_parts.length) det += '\n' + _parts.join('\n');
     return {prodName, det};
   }
   // Render grouped (ชุดหลายส่วน) — default ประโยคเดียว / qSplit แยกราคา
@@ -2194,8 +2347,10 @@ function genQuote(keepNo){
     rowIdx++;
     const line=it.r.sell*it.qty; subtotal+=line;
     const d = itemDetail(it);
-    const _w=parseFloat(it.w)||0, _h=parseFloat(it.h)||0;
-    const _sz = it.p.glasshouse ? '' : (_w>0&&_h>0 ? `(${it.w} × ${it.h} ม.)` : (_w>0 ? `(ยาว ${it.w} ม.)` : ''));
+    // v5: ตามใบจริง — ขนาดบานไม่ลงในใบ (อยู่ใน drawing) → _sz = '' เสมอ ยกเว้นราวบันได (ใช้ความยาว)
+    const _w=parseFloat(it.w)||0;
+    const _isLength = it.p.method==='per_length_tier' || it.p.unit==='meter';
+    const _sz = _isLength && _w>0 ? `(ยาว ${it.w} ม.)` : '';
     rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
