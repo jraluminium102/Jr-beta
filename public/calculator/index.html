@@ -2136,7 +2136,7 @@ function genQuote(keepNo){
     }
     const naType = ITYPE_NA.indexOf(it.p.cat)>=0;
     // หมวดที่ไม่ใส่ prefix: หลัก ITYPE_NA + shower/ม่านซิป/กั้นห้องกระจก/บานเปลือย (ชื่อสื่อตัวเอง)
-    const noPrefix = naType || ['shower','ม่านซิป','กั้นห้องกระจก','บานเปลือย'].indexOf(it.p.cat)>=0;
+    const noPrefix = naType || ['shower','ม่านซิป','กั้นห้องกระจก','บานเปลือย','ติดตาย'].indexOf(it.p.cat)>=0;
     const prefix = noPrefix ? '' : ((it.itype==='window')?'หน้าต่าง':'ประตู');
     // R4.4: กันชื่อซ้ำ "ประตูประตู" — ถ้าชื่อสินค้าขึ้นต้นด้วย ประตู/หน้าต่าง อยู่แล้ว ไม่เติม prefix
     // v5: ตัด tag "— Rx.x" ออกจากชื่อสินค้า, แก้สะกดผิด
@@ -2203,7 +2203,7 @@ function genQuote(keepNo){
       // ม่านซิป — ไม่มีกระจก ไม่มีอลู มีแค่สีผ้า
       const ZIP_FAB_LABEL = {'0':'ผ้าทึบ 0%','1':'ผ้าโปร่ง 1-2%','3':'ผ้าโปร่ง 3%','5':'ผ้าโปร่ง 5%','10':'ผ้าโปร่ง 10%','30':'ผ้าโปร่ง 30%','PET':'ผ้า PET ใส'};
       const zfab = (it.optSel&&it.optSel.zfab)||'5';
-      det = 'ผ้า '+( ZIP_FAB_LABEL[zfab]||('ผ้าโปร่ง '+zfab+'%') );
+      det = ( ZIP_FAB_LABEL[zfab]||('ผ้าโปร่ง '+zfab+'%') );
     }
     else if(it.p.cat==='มุ้ง'){
       // v5: มุ้ง — โชว์เฉพาะชื่อมุ้ง + สีผ้า ไม่มีกระจก/อลู

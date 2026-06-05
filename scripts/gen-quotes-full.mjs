@@ -67,6 +67,7 @@ function addItem(it) {
   if (it.panels != null) setF(ch, ".i-panels", it.panels);
   if (it.qty != null) setF(ch, ".i-qty", it.qty);
   if (it.pos) setF(ch, ".i-position", it.pos);
+  if (it.itype) setF(ch, ".i-type", it.itype); // ประตู(door)/หน้าต่าง(window)
   if (it.override != null) setF(ch, ".i-override", it.override);
   if (it.auto !== false) enableAllOpts(ch);
   for (const [s, v] of Object.entries(it.opts || {})) setF(ch, s, v);
@@ -86,8 +87,8 @@ const jobA = { cust: "คุณปิยะ มงคล (บ้านเดี�
   discFlat: 3000, // ทดสอบ pattern ส่วนลด → โชว์บล็อกยอด 5 บรรทัด
   items: [
     { g: 1, prod: "sliding_euro", pos: "ประตู โถงหน้าบ้าน", w: 3.6, h: 2.4, panels: 4, qty: 1 },
-    { g: 1, prod: "casement_euro", pos: "หน้าต่าง ห้องนอนใหญ่", w: 1.6, h: 2.2, panels: 2, qty: 2 },
-    { g: 1, prod: "awning_euro", pos: "หน้าต่าง ห้องน้ำ", w: 0.8, h: 1.0, qty: 3 },
+    { g: 1, prod: "casement_euro", pos: "หน้าต่าง ห้องนอนใหญ่", itype: "window", w: 1.6, h: 2.2, panels: 2, qty: 2 },
+    { g: 1, prod: "awning_euro", pos: "หน้าต่าง ห้องน้ำ", itype: "window", w: 0.8, h: 1.0, qty: 3 },
     { g: 1, prod: "folding", pos: "ประตู เชื่อมระเบียงหลัง", w: 4.0, h: 2.4, panels: 4, qty: 1 },
     { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ระเบียงหลังบ้าน", auto: false, opts: GH("ระเบียงหลังบ้าน + ซักล้าง", 318000) },
     { g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียงชั้น 2", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") },
