@@ -11,4 +11,7 @@
 | D5 | 24 stage detail | stage 15–19 (ผลิต) / 20–24 (ติดตั้ง) ที่ handoff ย่อไว้ → ขยายตาม productions/installations status เดิม | reuse สถานะที่มี ไม่สร้างใหม่ |
 | D6 | re-use logic เดิม | promote_queue_to_job (carry-forward), tg_on_deposit (มัดจำ→production), tg_production_changes | กัน duplicate + ตาม scope "เพิ่มน้อยสุด" |
 
+| D7 | stage 8(มัดจำ)/20(READY) sync | ไม่ให้ StageAdvanceButton advance ตรง — ใช้ฟอร์มเดิม (DepositForm/Production READY) แล้ว **trigger เลื่อน current_stage ให้อัตโนมัติ** (0015) | กันมัดจำไม่มียอด + กัน production/installation ไม่ถูกสร้าง (ผล E2E HIGH-2/3) |
+| D8 | promote เริ่ม stage | job ใหม่จากคิว = current_stage 2 (เข้าทะเบียนแล้ว) ไม่ใช่ 1 | ผ่านการนัด+ประเมินมาแล้ว (E2E BLOCKER-1) |
+
 (เพิ่มรายการระหว่างทำ)

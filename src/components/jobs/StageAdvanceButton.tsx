@@ -12,6 +12,10 @@ export function StageAdvanceButton({ jobId, currentStage, onAdvanced }: {
   const [err, setErr] = useState("");
   const next = nextStage(currentStage);
   const loop = loopTarget(currentStage);
+  // ขั้นที่ต้องทำผ่านฟอร์มเฉพาะ (ระบบเลื่อน stage ให้อัตโนมัติด้วย trigger) — ห้าม advance ตรง
+  const nextForm = next === 8 ? "บันทึกมัดจำในหน้านี้ (กรอกยอด+วันมัดจำ) — ระบบจะเลื่อนไป “รอวัดจริง” ให้อัตโนมัติ"
+    : next === 20 ? "ตั้งสถานะ Production เป็น “พร้อมติดตั้ง” ในแท็บ Production — ระบบจะเปิดงานติดตั้ง + เลื่อนขั้นให้"
+    : null;
 
   async function go(to: number) {
     setBusy(true); setErr("");
@@ -31,7 +35,13 @@ export function StageAdvanceButton({ jobId, currentStage, onAdvanced }: {
         {isDone(currentStage) && <span className="text-[12px] px-2 py-1 rounded-full bg-emerald-500/25 text-emerald-100 border border-emerald-300/30">จบงานแล้ว</span>}
       </div>
 
-      {!isDone(currentStage) && (
+      {!isDone(currentStage) && nextForm && (
+        <div className="text-[12px] rounded-lg bg-sky-500/15 border border-sky-300/25 text-sky-100 px-3 py-2">
+          ➜ ขั้นต่อไป ({STAGE_NAMES[next!]}): {nextForm}
+        </div>
+      )}
+
+      {!isDone(currentStage) && !nextForm && (
         <div className="flex flex-wrap gap-2">
           {next && (
             <button onClick={() => go(next)} disabled={busy}
