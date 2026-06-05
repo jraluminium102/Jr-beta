@@ -7,7 +7,7 @@ import { dbError } from "@/lib/bff/db-error";
 export const dynamic = "force-dynamic";
 
 type Sb = { from: (t: string) => any };
-const SELECT = "*, sales:sales_id(id,name,code,team)";
+const SELECT = "*, sales:sales_id(id,name,code,team), assistant:assistant_id(id,name,code)";
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 function clean(o: Record<string, unknown>): Record<string, unknown> {
@@ -20,6 +20,7 @@ const patchSchema = z.object({
   queue_time: z.string().regex(TIME_RE, "รูปแบบเวลาต้องเป็น HH:MM").nullish(),
   job_type: z.string().nullish(),
   sales_id: z.string().uuid().nullish(),
+  assistant_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
   customer_name: z.string().min(1).optional(),
   tel: z.string().nullish(),

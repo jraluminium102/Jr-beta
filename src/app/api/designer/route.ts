@@ -6,19 +6,23 @@ import type { DesignState } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
-// แถวงานเขียนแบบที่ board ใช้ (เลือกเฉพาะ field ที่จำเป็น)
+// How many days after design_end to still show DONE cards on the board
+const DONE_WINDOW_DAYS = 14;
+
+// Row shape returned from DB (select includes designer_ref join)
 type DesignerRow = {
   id: string;
   job_code: string | null;
   customer_name: string;
   designer_id: string | null;
+  designer_ref: number | null;
   design_state: DesignState;
   design_due_date: string | null;
   design_start: string | null;
   design_end: string | null;
   design_revise_count: number;
   current_stage: number;
-  designer: { full_name: string | null } | null;
+  designer_lookup: { name: string } | null; // join on designer_ref → designers(name)
 };
 
 // GET /api/designer — list งานเขียนแบบ + KPI aggregate (filter ?designer= & ?state=)
@@ -28,21 +32,23 @@ export async function GET(req: Request) {
   if (!can(profile.role, "designer", "read")) return FORBIDDEN();
 
   const url = new URL(req.url);
-  const designer = url.searchParams.get("designer");
+  // filter by designer_ref (numeric id from designers table)
+  const designerRef = url.searchParams.get("designer");
   const state = url.searchParams.get("state");
 
   const supabase = createClient();
-  // ดึงเฉพาะงานที่ยัง "อยู่ช่วงงานแบบ" — design_state <> DONE (งานที่ปิดแบบแล้วซ่อนจาก board)
+
+  // Fetch all non-CANCELLED jobs — we filter DONE by window in JS after fetch
+  // (removing .neq("design_state","DONE") so the DONE column is no longer empty)
   let query = supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, designer_id, design_state, design_due_date, design_start, design_end, design_revise_count, current_stage, designer:designer_id(full_name)"
+      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_start, design_end, design_revise_count, current_stage, designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
-    .neq("design_state", "DONE")
     .order("design_due_date", { ascending: true, nullsFirst: false });
 
-  if (designer) query = query.eq("designer_id", designer);
+  if (designerRef) query = query.eq("designer_ref", designerRef);
   if (state) query = query.eq("design_state", state);
 
   const { data, error } = await query;
@@ -51,54 +57,79 @@ export async function GET(req: Request) {
   const rows = (data ?? []) as unknown as DesignerRow[];
   const today = new Date().toISOString().slice(0, 10);
 
-  // ─── KPI aggregate ────────────────────────────────────────────────
-  // นับงานต่อ designer + จำนวนเลยกำหนด (due < today & state <> DONE)
-  const perDesigner: Record<string, { designer_id: string | null; name: string; count: number; overdue: number }> = {};
-  let overdueTotal = 0;
-  // รอบแก้เฉลี่ย (เฉพาะงานที่กำลังทำอยู่)
-  let reviseSum = 0;
+  // DONE window cutoff: today minus DONE_WINDOW_DAYS (ISO date string comparison)
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - DONE_WINDOW_DAYS);
+  const cutoff = cutoffDate.toISOString().slice(0, 10);
 
-  for (const r of rows) {
-    const key = r.designer_id ?? "__none__";
+  // Filter: hide DONE if design_end is older than 14-day window (or null and state=DONE)
+  const visibleRows = rows.filter((r) => {
+    if (r.design_state !== "DONE") return true;
+    // Show DONE only when design_end is within the last 14 days
+    if (!r.design_end) return false;
+    return r.design_end >= cutoff;
+  });
+
+  // ─── KPI aggregate ────────────────────────────────────────────────
+  // total/overdue/avg_revise counts active (non-DONE) jobs only
+  // done_count is a separate per-designer counter
+  const perDesigner: Record<
+    string,
+    { designer_ref: number | null; name: string; count: number; overdue: number; done: number }
+  > = {};
+  let overdueTotal = 0;
+  let reviseSum = 0;
+  let activeCount = 0;
+
+  for (const r of visibleRows) {
+    const key = r.designer_ref != null ? String(r.designer_ref) : "__none__";
     if (!perDesigner[key]) {
       perDesigner[key] = {
-        designer_id: r.designer_id,
-        name: r.designer?.full_name ?? "ยังไม่มอบหมาย",
+        designer_ref: r.designer_ref,
+        name: (r.designer_lookup as { name: string } | null)?.name ?? "ยังไม่มอบหมาย",
         count: 0,
         overdue: 0,
+        done: 0,
       };
     }
-    perDesigner[key].count += 1;
-    reviseSum += r.design_revise_count ?? 0;
 
-    const isOverdue = !!r.design_due_date && r.design_due_date < today && r.design_state !== "DONE";
-    if (isOverdue) {
-      perDesigner[key].overdue += 1;
-      overdueTotal += 1;
+    if (r.design_state === "DONE") {
+      perDesigner[key].done += 1;
+    } else {
+      perDesigner[key].count += 1;
+      activeCount += 1;
+      reviseSum += r.design_revise_count ?? 0;
+
+      const isOverdue = !!r.design_due_date && r.design_due_date < today;
+      if (isOverdue) {
+        perDesigner[key].overdue += 1;
+        overdueTotal += 1;
+      }
     }
   }
 
   const kpi = {
-    total: rows.length,
+    total: activeCount,
     overdue: overdueTotal,
-    avg_revise: rows.length ? Math.round((reviseSum / rows.length) * 10) / 10 : 0,
+    avg_revise: activeCount ? Math.round((reviseSum / activeCount) * 10) / 10 : 0,
     per_designer: Object.values(perDesigner).sort((a, b) => b.count - a.count),
   };
 
-  // เติม flag overdue ให้แต่ละการ์ด (frontend ใช้ทำสีแดง)
-  const items = rows.map((r) => ({
+  // Build card items — add overdue flag for the frontend
+  const items = visibleRows.map((r) => ({
     id: r.id,
     job_code: r.job_code,
     customer_name: r.customer_name,
     designer_id: r.designer_id,
-    designer_name: r.designer?.full_name ?? null,
+    designer_ref: r.designer_ref,
+    designer_name: (r.designer_lookup as { name: string } | null)?.name ?? null,
     design_state: r.design_state,
     design_due_date: r.design_due_date,
     design_start: r.design_start,
     design_end: r.design_end,
     design_revise_count: r.design_revise_count,
     current_stage: r.current_stage,
-    overdue: !!r.design_due_date && r.design_due_date < today && r.design_state !== "DONE",
+    overdue: r.design_state !== "DONE" && !!r.design_due_date && r.design_due_date < today,
   }));
 
   return ok({ items, kpi, can_write: can(profile.role, "designer", "write") });

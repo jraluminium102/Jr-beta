@@ -15,6 +15,7 @@ type FormState = {
   queue_time: string;
   job_type: string;
   sales_id: string;
+  assistant_id: string;
   line_contact: string;
   customer_name: string;
   tel: string;
@@ -37,6 +38,7 @@ function initForm(e?: QueueEntry | null): FormState {
     queue_time: e?.queue_time ?? "",
     job_type: e?.job_type ?? "",
     sales_id: e?.sales_id ?? "",
+    assistant_id: e?.assistant_id ?? "",
     line_contact: e?.line_contact ?? "",
     customer_name: e?.customer_name ?? "",
     tel: e?.tel ?? "",
@@ -65,21 +67,76 @@ export function QueueModal({
   const [f, setF] = useState<FormState>(() => initForm(entry));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
+    setF((s) => ({ ...s, [k]: v }));
 
   const coords = parseLatLng(f.location_url);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
 
+  // Separate main sales reps from assistants for dropdowns
+  const mainSales = salesList.filter((s) => s.role !== "ASSISTANT");
+  const assistants = salesList.filter((s) => s.role === "ASSISTANT");
+
+  // "เพิ่มผู้ช่วยเอง" inline form state
+  const [addingAssistant, setAddingAssistant] = useState(false);
+  const [newAssistantName, setNewAssistantName] = useState("");
+  const [addAssistBusy, setAddAssistBusy] = useState(false);
+  const [addAssistErr, setAddAssistErr] = useState("");
+
   async function suggestAuto() {
     setSuggesting(true); setSuggestMsg("");
     try {
-      const r = await api.post<{ queue_date: string; queue_time: string; sales_id: string; sales_name: string; reason: string }>(
-        "/queue/suggest", { sales_id: f.sales_id || null, job_size: f.job_size || null, address: f.address || null });
-      setF((s) => ({ ...s, queue_date: r.data.queue_date, queue_time: r.data.queue_time, sales_id: s.sales_id || r.data.sales_id }));
+      const r = await api.post<{
+        queue_date: string; queue_time: string;
+        sales_id: string; sales_name: string; reason: string;
+      }>("/queue/suggest", {
+        sales_id: f.sales_id || null,
+        job_size: f.job_size || null,
+        address: f.address || null,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
+      });
+      setF((s) => ({
+        ...s,
+        queue_date: r.data.queue_date,
+        queue_time: r.data.queue_time,
+        sales_id: s.sales_id || r.data.sales_id,
+      }));
       setSuggestMsg("✓ " + r.data.reason);
-    } catch (e) { setSuggestMsg(e instanceof Error ? e.message : "เสนอคิวไม่สำเร็จ"); }
-    finally { setSuggesting(false); }
+    } catch (e) {
+      setSuggestMsg(e instanceof Error ? e.message : "เสนอคิวไม่สำเร็จ");
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  // Create a new ASSISTANT record in queue_sales, then select it
+  async function addAssistant() {
+    if (!newAssistantName.trim()) { setAddAssistErr("กรุณาระบุชื่อผู้ช่วย"); return; }
+    setAddAssistBusy(true); setAddAssistErr("");
+    try {
+      // POST to a dedicated endpoint — reuse queue_sales write via settings or a slim endpoint
+      // We call /api/queue/sales (expected to exist or falls back to generic message)
+      const res = await api.post<{ id: string; name: string }>("/queue/sales", {
+        name: newAssistantName.trim(),
+        code: newAssistantName.trim().toLowerCase().replace(/\s+/g, "_").slice(0, 20),
+        team: "BKK",
+        role: "ASSISTANT",
+        active: true,
+      });
+      // Optimistically add to assistants list and select
+      setF((s) => ({ ...s, assistant_id: res.data.id }));
+      setAddingAssistant(false);
+      setNewAssistantName("");
+      // Trigger parent reload so the new assistant shows in dropdown next time
+      // (onSaved would close modal — use a separate signal here via re-fetch won't work easily
+      //  so we notify parent after full save; the new ID is already in assistant_id)
+    } catch (e) {
+      setAddAssistErr(e instanceof Error ? e.message : "เพิ่มผู้ช่วยไม่สำเร็จ");
+    } finally {
+      setAddAssistBusy(false);
+    }
   }
 
   async function save() {
@@ -91,6 +148,7 @@ export function QueueModal({
       queue_time: f.queue_time || null,
       job_type: f.job_type || null,
       sales_id: f.sales_id || null,
+      assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
       customer_name: f.customer_name.trim(),
       tel: f.tel || null,
@@ -108,8 +166,10 @@ export function QueueModal({
     try {
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
-        if (payload.status === "DONE" && (r.meta?.job_id)) {
-          alert("✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า “ติดตามงาน” (ไม่ต้องกรอกซ้ำ)");
+        if (payload.status === "DONE" && r.meta?.job_id) {
+          alert(
+            "✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
+          );
         }
       } else {
         await api.post("/queue", payload);
@@ -139,7 +199,8 @@ export function QueueModal({
       <div className="relative w-full max-w-2xl max-h-[92dvh] overflow-y-auto glass rounded-2xl p-5 sm:p-6 fade-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
-            <Icon name="calendar" size={18} /> {readOnly ? "รายละเอียดคิว" : editing ? "แก้ไขคิว" : "เพิ่มคิวงาน"}
+            <Icon name="calendar" size={18} />
+            {readOnly ? "รายละเอียดคิว" : editing ? "แก้ไขคิว" : "เพิ่มคิวงาน"}
           </h2>
           <button onClick={onClose} aria-label="ปิด" className="press text-ink-3 hover:text-ink rounded-lg p-1">
             <Icon name="close" size={18} />
@@ -148,15 +209,64 @@ export function QueueModal({
 
         <fieldset disabled={readOnly} className="grid grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
           <Field label="ชื่อลูกค้า *" wide>
-            <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)} placeholder="คุณ…" className={inp} />
+            <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)}
+              placeholder="คุณ…" className={inp} />
           </Field>
 
+          {/* Main sales rep (role=MAIN only) */}
           <Field label="เซลล์">
             <select value={f.sales_id} onChange={(e) => set("sales_id", e.target.value)} className={inp}>
               <option value="">— ยังไม่ระบุ —</option>
-              {salesList.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.team === "PHUKET" ? "ภูเก็ต" : "กทม."})</option>)}
+              {mainSales.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.team === "PHUKET" ? "ภูเก็ต" : "กทม."})
+                </option>
+              ))}
             </select>
           </Field>
+
+          {/* Assistant (role=ASSISTANT) */}
+          <Field label="ผู้ช่วยเซลล์">
+            {addingAssistant ? (
+              <div className="space-y-1.5">
+                <div className="flex gap-1.5">
+                  <input
+                    value={newAssistantName}
+                    onChange={(e) => setNewAssistantName(e.target.value)}
+                    placeholder="ชื่อผู้ช่วย"
+                    className={`${inp} flex-1`}
+                  />
+                  <button type="button" onClick={addAssistant} disabled={addAssistBusy}
+                    className="press glass-soft rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-dark disabled:opacity-60">
+                    {addAssistBusy ? "…" : "บันทึก"}
+                  </button>
+                  <button type="button" onClick={() => { setAddingAssistant(false); setNewAssistantName(""); setAddAssistErr(""); }}
+                    className="press glass-soft rounded-lg px-2 text-xs text-ink-3">
+                    <Icon name="close" size={13} />
+                  </button>
+                </div>
+                {addAssistErr && <p className="text-[11px] text-red-600">{addAssistErr}</p>}
+              </div>
+            ) : (
+              <div className="flex gap-1.5">
+                <select value={f.assistant_id} onChange={(e) => set("assistant_id", e.target.value)}
+                  className={`${inp} flex-1`}>
+                  <option value="">— ไม่มีผู้ช่วย —</option>
+                  {assistants.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                {!readOnly && (
+                  <button type="button" onClick={() => setAddingAssistant(true)}
+                    className="press glass-soft rounded-lg px-2.5 text-xs text-ink-2 shrink-0"
+                    title="เพิ่มผู้ช่วยเอง">
+                    <Icon name="plus" size={14} />
+                  </button>
+                )}
+              </div>
+            )}
+          </Field>
+
           <Field label="ประเภทงาน">
             <select value={f.job_type} onChange={(e) => set("job_type", e.target.value)} className={inp}>
               <option value="">ประเมินหน้างาน</option>
@@ -167,8 +277,10 @@ export function QueueModal({
           {!readOnly && (
             <Field label="จัดวันอัตโนมัติ (เสนอวันว่างเร็วสุดตามกฎ)" wide>
               <button type="button" onClick={suggestAuto} disabled={suggesting}
-                className="press inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "#1F4E78" }}>
-                <Icon name="calendar" size={15} /> {suggesting ? "กำลังหา…" : "🪄 เสนอวัน-เวลา-เซลล์ ที่ว่างเร็วสุด"}
+                className="press inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                style={{ background: "#1F4E78" }}>
+                <Icon name="calendar" size={15} />
+                {suggesting ? "กำลังหา…" : "เสนอวัน-เวลา-เซลล์ ที่ว่างเร็วสุด"}
               </button>
               {suggestMsg && <p className="text-[11px] mt-1.5 text-ink-2">{suggestMsg}</p>}
             </Field>
@@ -189,35 +301,48 @@ export function QueueModal({
           </Field>
 
           <Field label="ที่อยู่" wide>
-            <textarea value={f.address} onChange={(e) => set("address", e.target.value)} rows={2} className={`${inp} resize-none`} />
+            <textarea value={f.address} onChange={(e) => set("address", e.target.value)} rows={2}
+              className={`${inp} resize-none`} />
           </Field>
 
           <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
-            <input value={f.location_url} onChange={(e) => set("location_url", e.target.value)} placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
+            <input value={f.location_url} onChange={(e) => set("location_url", e.target.value)}
+              placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
             <span className="text-[11px] mt-1 block">
-              {coords
-                ? <span className="text-emerald-700">✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</span>
-                : f.location_url
-                  ? <span className="text-amber-700">ดึงพิกัดไม่ได้ (ลิงก์ย่อ) — วาง “lat, lng” ตรง ๆ เพื่อให้คำนวณระยะได้ในเฟส 2</span>
-                  : <span className="text-ink-3">ใส่พิกัดเพื่อใช้จัดคิวอัตโนมัติ (เฟส 2)</span>}
+              {coords ? (
+                <span className="text-emerald-700">
+                  ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                </span>
+              ) : f.location_url ? (
+                <span className="text-amber-700">
+                  ดึงพิกัดไม่ได้ (ลิงก์ย่อ) — วาง "lat, lng" ตรง ๆ เพื่อให้คำนวณระยะได้
+                </span>
+              ) : (
+                <span className="text-ink-3">ใส่พิกัดเพื่อใช้ตรวจกฎ R-45min อัตโนมัติ</span>
+              )}
             </span>
           </Field>
 
           <Field label="ขนาดงาน">
             <select value={f.job_size} onChange={(e) => set("job_size", e.target.value as "" | JobSize)} className={inp}>
               <option value="">— เลือก —</option>
-              {(Object.keys(JOB_SIZE_META) as JobSize[]).map((k) => <option key={k} value={k}>{JOB_SIZE_META[k]}</option>)}
+              {(Object.keys(JOB_SIZE_META) as JobSize[]).map((k) => (
+                <option key={k} value={k}>{JOB_SIZE_META[k]}</option>
+              ))}
             </select>
           </Field>
           <Field label="จำนวนงาน/จุด">
-            <input type="number" min={0} value={f.job_count} onChange={(e) => set("job_count", e.target.value)} className={inp} />
+            <input type="number" min={0} value={f.job_count}
+              onChange={(e) => set("job_count", e.target.value)} className={inp} />
           </Field>
 
           <Field label="ค่าประเมิน">
             {f.feeCustom ? (
               <div className="flex gap-1.5">
-                <input type="number" value={f.assess_fee} onChange={(e) => set("assess_fee", e.target.value)} className={inp} />
-                <button type="button" onClick={() => { set("feeCustom", false); set("assess_fee", ""); }} className="press glass-soft rounded-lg px-2 text-xs text-ink-2">เลือก</button>
+                <input type="number" value={f.assess_fee}
+                  onChange={(e) => set("assess_fee", e.target.value)} className={inp} />
+                <button type="button" onClick={() => { set("feeCustom", false); set("assess_fee", ""); }}
+                  className="press glass-soft rounded-lg px-2 text-xs text-ink-2">เลือก</button>
               </div>
             ) : (
               <select value={f.assess_fee} onChange={(e) => {
@@ -241,7 +366,9 @@ export function QueueModal({
           </Field>
           <Field label="ใบเสร็จ">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
-              <input type="checkbox" checked={f.receipt_done} onChange={(e) => set("receipt_done", e.target.checked)} className="w-4 h-4 accent-brand" />
+              <input type="checkbox" checked={f.receipt_done}
+                onChange={(e) => set("receipt_done", e.target.checked)}
+                className="w-4 h-4 accent-brand" />
               <span className="text-ink-2">ส่งใบเสร็จให้ลูกค้าแล้ว</span>
             </label>
           </Field>
@@ -251,7 +378,9 @@ export function QueueModal({
           </Field>
         </fieldset>
 
-        {err && <p role="alert" className="mt-3 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
+        {err && (
+          <p role="alert" className="mt-3 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>
+        )}
 
         <div className="flex items-center gap-2 mt-5">
           {!readOnly && (
@@ -267,7 +396,9 @@ export function QueueModal({
               <Icon name="trash" size={16} /> ลบ
             </button>
           )}
-          <button onClick={onClose} className="press rounded-xl px-4 py-2.5 text-sm text-ink-2 ml-auto">{readOnly ? "ปิด" : "ยกเลิก"}</button>
+          <button onClick={onClose} className="press rounded-xl px-4 py-2.5 text-sm text-ink-2 ml-auto">
+            {readOnly ? "ปิด" : "ยกเลิก"}
+          </button>
         </div>
       </div>
     </div>

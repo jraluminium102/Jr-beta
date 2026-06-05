@@ -55,7 +55,7 @@ export const GET = withRoute(async (req: Request) => {
     return out;
   });
 
-  return ok(rows, { total: count ?? 0, page, limit, can_finance: showFinance });
+  return ok(rows, { total: count ?? 0, page, limit, can_finance: showFinance, can_prod: can(ctx.role, "production", "write") });
 });
 
 const createSchema = z.object({

@@ -6,7 +6,8 @@ import DesignerBoard from "@/components/designer/DesignerBoard";
 
 export const dynamic = "force-dynamic";
 
-export type DesignerOption = { id: string; full_name: string };
+// Designer option sourced from designers lookup table (not profiles)
+export type DesignerOption = { id: number; name: string };
 
 export default async function DesignerPage() {
   const profile = await getProfile();
@@ -14,19 +15,14 @@ export default async function DesignerPage() {
   if (!can(profile.role, "designer", "read")) redirect("/dashboard");
 
   const supabase = createClient();
-  // รายชื่อผู้ออกแบบ (ใช้ทำ filter dropdown บน board)
+  // Pull from designers lookup table (not profiles — designer_id is empty on most rows)
   const { data } = await supabase
-    .from("profiles")
-    .select("id, full_name")
-    .eq("role", "DESIGNER")
-    .eq("is_active", true)
-    .order("full_name", { ascending: true });
+    .from("designers")
+    .select("id, name")
+    .eq("active", true)
+    .order("name", { ascending: true });
 
-  const rows = (data ?? []) as { id: string; full_name: string | null }[];
-  const designers: DesignerOption[] = rows.map((d) => ({
-    id: d.id,
-    full_name: d.full_name ?? "(ไม่มีชื่อ)",
-  }));
+  const designers: DesignerOption[] = (data ?? []) as DesignerOption[];
 
   return <DesignerBoard designers={designers} canWrite={canWrite(profile.role) && can(profile.role, "designer", "write")} />;
 }

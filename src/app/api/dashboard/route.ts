@@ -1,63 +1,150 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
-import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { STAGE_GROUP } from "@/lib/stages";
+
+// Ops dashboard — work-tracking only (no revenue / finance_entries).
+// All monetary stats are intentionally omitted; see stats page for those.
 
 export const GET = withRoute(async () => {
   const ctx = await requirePermission("dashboard", "read");
   const sb = ctx.supabase;
   const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const sevenAgo = new Date(now.getTime() - 7 * 86_400_000);
 
-  const [{ data: jobs }, { data: fin }, { data: issues }, { data: prods }] = await Promise.all([
-    sb.from("jobs").select("status, total_amount, deposit_date, assess_date, job_code, customer_name"),
-    sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
-    sb.from("issues").select("status"),
-    sb.from("productions").select("status, status_updated_at, created_at, job:job_id(job_code, customer_name, status)"),
+  const [{ data: jobs }, { data: prods }, { data: issues }] = await Promise.all([
+    sb.from("jobs").select(
+      "id, job_code, customer_name, status, current_stage, updated_at, on_hold, design_due_date, design_state"
+    ),
+    sb.from("productions").select(
+      "job_id, planned_install_date, status, status_updated_at, created_at, job:job_id(job_code, customer_name, status)"
+    ),
+    sb.from("issues").select("id, status, severity, phase, detail, due_date, reported_at, job_id"),
   ]);
 
-  const J = jobs ?? []; const F = fin ?? []; const I = issues ?? []; const P = prods ?? [];
+  const J = jobs ?? [];
+  const P = prods ?? [];
+  const I = issues ?? [];
 
+  // ── 1. Jobs by status ──────────────────────────────────────────────────────
   const jobsByStatus: Record<string, number> = {};
-  J.forEach((j: any) => { jobsByStatus[j.status] = (jobsByStatus[j.status] ?? 0) + 1; });
-
-  const totalClosed = J.filter((j: any) => ["DEPOSITED", "COMPLETED"].includes(j.status))
-    .reduce((s: number, j: any) => s + Number(j.total_amount ?? 0), 0);
-  const collected = F.reduce((s: number, f: any) => s + Number(f.amount), 0);
-
-  // monthly 6 เดือน
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const d = subMonths(now, 5 - i);
-    return { start: startOfMonth(d), end: endOfMonth(d), label: format(d, "yyyy-MM") };
-  });
-  const monthlyRevenue = months.map(({ start, end, label }) => {
-    const inRange = (s?: string) => s && new Date(s) >= start && new Date(s) <= end;
-    const quoted = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED").reduce((s: number, j: any) => s + Number(j.total_amount ?? 0), 0);
-    const closed = J.filter((j: any) => inRange(j.deposit_date)).reduce((s: number, j: any) => s + Number(j.total_amount ?? 0), 0);
-    const got = F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + Number(f.amount), 0);
-    return { month: label, quoted, closed, collected: got, outstanding: closed - got };
+  J.forEach((j: any) => {
+    jobsByStatus[j.status] = (jobsByStatus[j.status] ?? 0) + 1;
   });
 
-  const active = J.filter((j: any) => j.status !== "CANCELLED").length;
-  const won = J.filter((j: any) => ["DEPOSITED", "COMPLETED"].includes(j.status)).length;
-  const closeRate = active ? Math.round((won / active) * 100) : 0;
+  // ── 2. Jobs by stage group (ขาย / มัดจำ / ผลิต / ติดตั้ง) ────────────────
+  // Exclude CANCELLED / COMPLETED from operational view
+  const activeJobs = J.filter((j: any) => !["CANCELLED", "COMPLETED"].includes(j.status));
+  const jobsByStageGroup: Record<string, number> = {};
+  activeJobs.forEach((j: any) => {
+    const grp = STAGE_GROUP[j.current_stage as number] ?? "อื่นๆ";
+    jobsByStageGroup[grp] = (jobsByStageGroup[grp] ?? 0) + 1;
+  });
 
-  // overdue: production ไม่อัพเดท > 7 วัน (ไม่ READY/COMPLETED/CANCELLED)
-  const sevenAgo = new Date(now.getTime() - 7 * 864e5);
-  const overdueAll = P.filter((p: any) => {
-    const last = p.status_updated_at ? new Date(p.status_updated_at) : new Date(p.created_at);
-    const jobStatus = p.job?.status;
-    return p.status !== "READY" && !["COMPLETED", "CANCELLED"].includes(jobStatus) && last < sevenAgo;
-  }).map((p: any) => {
-    const last = p.status_updated_at ? new Date(p.status_updated_at) : new Date(p.created_at);
-    return { jobCode: p.job?.job_code, customerName: p.job?.customer_name, days: Math.floor((now.getTime() - last.getTime()) / 864e5) };
-  }).sort((a: any, b: any) => b.days - a.days);
+  // ── 3. งานค้างเกิน 7 วัน ─────────────────────────────────────────────────
+  // Definition: jobs that are active (not CANCELLED/COMPLETED/on_hold)
+  // and have not been updated for > 7 days
+  const staleJobs = activeJobs
+    .filter((j: any) => {
+      if (j.on_hold) return false;
+      const last = j.updated_at ? new Date(j.updated_at) : null;
+      return last && last < sevenAgo;
+    })
+    .map((j: any) => ({
+      jobCode: j.job_code as string,
+      customerName: j.customer_name as string,
+      status: j.status as string,
+      days: Math.floor((now.getTime() - new Date(j.updated_at).getTime()) / 86_400_000),
+    }))
+    .sort((a: any, b: any) => b.days - a.days);
+
+  // ── 4. เลยกำหนด ───────────────────────────────────────────────────────────
+  // 4a. Design overdue: design_due_date < today AND design_state != DONE AND active
+  const designOverdue = activeJobs.filter((j: any) =>
+    j.design_due_date && j.design_due_date < today && j.design_state !== "DONE"
+  ).map((j: any) => ({
+    jobCode: j.job_code as string,
+    customerName: j.customer_name as string,
+    type: "design" as const,
+    dueDate: j.design_due_date as string,
+    days: Math.floor((now.getTime() - new Date(j.design_due_date).getTime()) / 86_400_000),
+  }));
+
+  // 4b. Install overdue: planned_install_date < today AND production status != READY
+  const installOverdue = P.filter((p: any) => {
+    const jobStatus = (p.job as any)?.status;
+    if (["CANCELLED", "COMPLETED"].includes(jobStatus)) return false;
+    if (p.status === "READY") return false;
+    return p.planned_install_date && p.planned_install_date < today;
+  }).map((p: any) => ({
+    jobCode: (p.job as any)?.job_code as string,
+    customerName: (p.job as any)?.customer_name as string,
+    type: "install" as const,
+    dueDate: p.planned_install_date as string,
+    days: Math.floor((now.getTime() - new Date(p.planned_install_date).getTime()) / 86_400_000),
+  }));
+
+  // Merge + deduplicate by jobCode (prefer design if duplicate)
+  const overdueMap = new Map<string, typeof designOverdue[number] | typeof installOverdue[number]>();
+  [...installOverdue, ...designOverdue].forEach((o) => {
+    if (!overdueMap.has(o.jobCode) || o.type === "design") overdueMap.set(o.jobCode, o);
+  });
+  const overdueJobs = [...overdueMap.values()].sort((a, b) => b.days - a.days);
+
+  // ── 5. Issues ─────────────────────────────────────────────────────────────
+  const openIssues = I.filter((i: any) => i.status !== "CLOSED");
+  const closedIssues = I.filter((i: any) => i.status === "CLOSED");
+
+  // Count by severity (open only)
+  const issuesBySeverity: Record<string, number> = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+  openIssues.forEach((i: any) => {
+    issuesBySeverity[i.severity] = (issuesBySeverity[i.severity] ?? 0) + 1;
+  });
+
+  // Issues overdue (due_date < today and not CLOSED)
+  const issuesOverdue = openIssues.filter(
+    (i: any) => i.due_date && i.due_date < today
+  ).length;
+
+  // Top open issues (by severity then reported_at oldest first), capped at 8
+  const SEV_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const topIssues = [...openIssues]
+    .sort((a: any, b: any) =>
+      (SEV_ORDER[a.severity] ?? 3) - (SEV_ORDER[b.severity] ?? 3) ||
+      new Date(a.reported_at).getTime() - new Date(b.reported_at).getTime()
+    )
+    .slice(0, 8)
+    .map((i: any) => ({
+      id: i.id as string,
+      phase: i.phase as string,
+      severity: i.severity as string,
+      detail: (i.detail as string).slice(0, 60),
+      dueDate: i.due_date as string | null,
+      overdue: !!(i.due_date && i.due_date < today),
+    }));
+
+  // ── Summary totals ────────────────────────────────────────────────────────
+  const totalActive = activeJobs.length;
+  const onHoldCount = activeJobs.filter((j: any) => j.on_hold).length;
 
   return ok({
-    jobsByStatus, totalClosed, collected, outstanding: totalClosed - collected, closeRate,
-    monthlyRevenue,
-    openIssues: I.filter((i: any) => i.status !== "CLOSED").length,
-    closedIssues: I.filter((i: any) => i.status === "CLOSED").length,
-    overdueJobs: overdueAll.slice(0, 10),
-    overdueTotal: overdueAll.length,
+    // operational counts
+    totalActive,
+    onHoldCount,
+    jobsByStatus,
+    jobsByStageGroup,
+    // stale work
+    staleJobs: staleJobs.slice(0, 10),
+    staleTotal: staleJobs.length,
+    // overdue deadlines
+    overdueJobs: overdueJobs.slice(0, 10),
+    overdueTotal: overdueJobs.length,
+    // issues
+    openIssuesCount: openIssues.length,
+    closedIssuesCount: closedIssues.length,
+    issuesBySeverity,
+    issuesOverdue,
+    topIssues,
   });
 });

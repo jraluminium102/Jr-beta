@@ -17,6 +17,7 @@ export type PaymentType = "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" | "FINAL
 export type PaymentChannel = "TRANSFER" | "CASH" | "CHEQUE";
 export type DesignState = "NOT_STARTED" | "DRAWING" | "PENDING_CUSTOMER" | "REVISING" | "DONE"; // (0016)
 export type BoqStatus = "draft" | "confirmed" | "ordered";                                      // (0017)
+export type QueueSalesRole = "MAIN" | "ASSISTANT";                                               // (0019)
 
 // ─── Row types ────────────────────────────────────────────────────────────────
 export interface Profile {
@@ -36,6 +37,7 @@ export interface Job {
   on_hold: boolean; on_hold_reason: string | null;             // พักงาน (0013)
   current_stage: number; stage_history: unknown[];             // state machine 24 stage (0014)
   design_due_date: string | null; design_state: DesignState; design_revise_count: number; // designer board (0016)
+  designer_ref: number | null; designer_note?: string | null;  // designers lookup (0019)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;
@@ -46,6 +48,7 @@ export interface Production {
   qc_result: QcResult | null; qc_date: string | null; qc_note: string | null;
   notes: string | null; status_updated_at: string | null; remark: string | null;
   created_at: string; updated_at: string;
+  production_due_date: string | null; production_actual: string | null;  // production dates (0019)
 }
 export interface Installation {
   id: string; job_id: string; status: InstStatus;
@@ -87,6 +90,9 @@ export interface IssueUpdate {
   id: number; issue_id: string; note: string; new_status: IssueStatus | null;
   author_id: string | null; created_at: string;
 }
+export interface Designer {  // lookup ไม่ผูก auth (0019)
+  id: number; name: string; active: boolean; created_at: string;
+}
 
 // ─── Supabase Database type (must include Relationships/Views/CompositeTypes) ─
 // @supabase/supabase-js v2 GenericTable requires Relationships field.
@@ -117,6 +123,7 @@ export interface Database {
       boqs:            Tbl<Boq>;
       boq_items:       Tbl<BoqItem>;
       issue_updates:   Tbl<IssueUpdate>;
+      designers:       Tbl<Designer>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -130,6 +137,7 @@ export interface Database {
       payment_type_t: PaymentType;
       design_state_t: DesignState;
       boq_status_t:   BoqStatus;
+      queue_sales_role_t: QueueSalesRole;
     };
     CompositeTypes: Record<string, never>;
   };

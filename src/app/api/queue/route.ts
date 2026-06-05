@@ -7,15 +7,17 @@ import { can } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
-// Supabase generics ซับซ้อนเกินไปสำหรับ chaining แบบมีเงื่อนไข — ใช้ as any เหมือน /api/jobs
+// Supabase generics are too complex for conditional chaining — use as any, same as /api/jobs
 type Sb = { from: (t: string) => any };
 
-const SELECT = "*, sales:sales_id(id,name,code,team)";
+const SELECT = "*, sales:sales_id(id,name,code,team), assistant:assistant_id(id,name,code)";
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
-// "" -> null (กัน date/uuid/number ว่างทำ DB พัง) ก่อนเข้า zod
+// "" -> null (prevent date/uuid/number blanks from breaking DB)
 function clean(o: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v === "" ? null : v]));
+  return Object.fromEntries(
+    Object.entries(o).map(([k, v]) => [k, v === "" ? null : v])
+  );
 }
 
 const entrySchema = z.object({
@@ -24,6 +26,7 @@ const entrySchema = z.object({
   queue_time: z.string().regex(TIME_RE, "รูปแบบเวลาต้องเป็น HH:MM").nullish(),
   job_type: z.string().nullish(),
   sales_id: z.string().uuid().nullish(),
+  assistant_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
   customer_name: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
   tel: z.string().nullish(),
@@ -40,42 +43,127 @@ const entrySchema = z.object({
   note_ai: z.string().nullish(),
 });
 
-// GET /api/queue — รายการคิว + รายชื่อเซลล์ (สำหรับ dropdown)
-export const GET = withRoute(async () => {
+// GET /api/queue — list entries + sales dropdown
+// Supports query params:
+//   ?month=YYYY-MM   filter by calendar month  (default: current month)
+//   ?week=YYYY-Www   filter by ISO week        (overrides month if both given)
+//   ?sales=<uuid>    filter by sales_id        (ADMIN only, ignored for SALES role)
+export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "read");
   const sb = ctx.supabase as unknown as Sb;
   const canWrite = can(ctx.role, "queue", "write");
 
-  const { data: salesRows } = await sb.from("queue_sales").select("*").eq("active", true).order("team").order("name");
+  const url = new URL(req.url);
+  const monthParam = url.searchParams.get("month"); // "YYYY-MM"
+  const weekParam  = url.searchParams.get("week");  // "YYYY-Www"
+  const salesParam = url.searchParams.get("sales"); // uuid
 
-  let query = sb.from("queue_entries").select(SELECT)
+  const { data: salesRows } = await sb
+    .from("queue_sales")
+    .select("*")
+    .eq("active", true)
+    .order("team")
+    .order("name");
+
+  let query = sb
+    .from("queue_entries")
+    .select(SELECT)
     .order("queue_date", { ascending: true, nullsFirst: true })
     .order("queue_time", { ascending: true, nullsFirst: true })
     .order("created_at", { ascending: false });
 
-  // เซลล์เห็นเฉพาะคิวของตัวเอง (ผูกผ่าน queue_sales.profile_id) — RLS กันชั้น DB ด้วย
+  // Compute date range filter (default = current month)
+  let dateFrom: string | null = null;
+  let dateTo: string | null = null;
+
+  if (weekParam) {
+    // Parse ISO week "YYYY-Www" → Monday and Sunday of that week
+    const m = weekParam.match(/^(\d{4})-W(\d{2})$/);
+    if (m) {
+      const [, yr, wk] = m;
+      const [wFrom, wTo] = isoWeekRange(Number(yr), Number(wk));
+      dateFrom = wFrom;
+      dateTo = wTo;
+    }
+  } else {
+    // Default or explicit month filter
+    const monthStr = monthParam ?? currentMonth();
+    const mMatch = monthStr.match(/^(\d{4})-(\d{2})$/);
+    if (mMatch) {
+      const [, yr, mo] = mMatch;
+      dateFrom = `${yr}-${mo}-01`;
+      dateTo = lastDayOfMonth(Number(yr), Number(mo));
+    }
+  }
+
+  if (dateFrom && dateTo) {
+    // Include entries with null queue_date (unscheduled "รอจัด") always
+    query = query.or(`queue_date.is.null,and(queue_date.gte.${dateFrom},queue_date.lte.${dateTo})`);
+  }
+
+  // SALES role: show only their own queue entries (RLS also guards at DB level)
   let unlinked = false;
   if (!canWrite && ctx.role === "SALES") {
-    const mine = (salesRows ?? []).find((s: any) => s.profile_id === ctx.user.id);
-    if (mine) query = query.eq("sales_id", mine.id);
-    else unlinked = true;
+    const mine = (salesRows ?? []).find(
+      (s: any) => s.profile_id === ctx.user.id
+    );
+    if (mine) {
+      query = query.eq("sales_id", mine.id);
+    } else {
+      unlinked = true;
+    }
+  } else if (canWrite && salesParam) {
+    // ADMIN can filter by sales_id via ?sales=
+    query = query.eq("sales_id", salesParam);
   }
 
   const rows = unlinked ? [] : (await query).data ?? [];
 
-  return ok(rows, { can_write: canWrite, role: ctx.role, unlinked, sales: salesRows ?? [] });
+  return ok(rows, {
+    can_write: canWrite,
+    role: ctx.role,
+    unlinked,
+    sales: salesRows ?? [],
+    filter: { date_from: dateFrom, date_to: dateTo, sales_id: salesParam ?? null },
+  });
 });
 
-// POST /api/queue — สร้างคิวใหม่ (ADMIN)
+// POST /api/queue — create new queue entry (ADMIN)
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "write");
   const body = entrySchema.parse(clean(await req.json()));
   const sb = ctx.supabase as unknown as Sb;
 
-  const { data, error } = await sb.from("queue_entries")
+  const { data, error } = await sb
+    .from("queue_entries")
     .insert({ ...body, status: body.status ?? "PENDING", created_by: ctx.user.id })
-    .select(SELECT).single();
+    .select(SELECT)
+    .single();
   if (error) throw dbError(error);
   if (!data) throw new HttpError(400, "สร้างคิวไม่สำเร็จ");
   return created(data);
 });
+
+// ── helpers ────────────────────────────────────────────────────────────────────
+
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function lastDayOfMonth(year: number, month: number): string {
+  const last = new Date(Date.UTC(year, month, 0)); // day=0 = last day of prev month
+  return `${last.getUTCFullYear()}-${String(last.getUTCMonth() + 1).padStart(2, "0")}-${String(last.getUTCDate()).padStart(2, "0")}`;
+}
+
+// Returns [monday, sunday] ISO strings for ISO week wk of year yr
+function isoWeekRange(yr: number, wk: number): [string, string] {
+  // Jan 4 is always in week 1 (ISO 8601)
+  const jan4 = new Date(Date.UTC(yr, 0, 4));
+  const jan4Dow = jan4.getUTCDay() || 7; // 1=Mon…7=Sun
+  const monday = new Date(jan4.getTime() - (jan4Dow - 1) * 86400000 + (wk - 1) * 7 * 86400000);
+  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const fmt = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+  return [fmt(monday), fmt(sunday)];
+}

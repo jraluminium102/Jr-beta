@@ -56,6 +56,8 @@ const fieldsSchema = z.object({
   net_amount:     z.number().positive().optional(),
   discount_amount: z.number().min(0).optional(),
   designer_id:    z.string().uuid().nullish(),
+  designer_ref:   z.number().int().nullable().optional(),
+  design_due_date: z.string().nullable().optional(),
   design_start:   z.string().optional(),
   design_end:     z.string().optional(),
   remark:         z.string().optional(),
@@ -91,8 +93,25 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   }
 
   const fields = fieldsSchema.parse(body);
+
+  // Auto-deadline: when assigning designer_ref for the first time and no due date is provided,
+  // set design_due_date = assess_date + 2 days (only if currently null in DB)
+  const update: Record<string, unknown> = { ...fields };
+  if (fields.designer_ref != null && fields.design_due_date === undefined) {
+    const { data: cur } = await ctx.supabase
+      .from("jobs")
+      .select("designer_ref, design_due_date, assess_date")
+      .eq("id", params.id)
+      .single();
+    if (cur && cur.designer_ref == null && !cur.design_due_date && cur.assess_date) {
+      const due = new Date(cur.assess_date);
+      due.setDate(due.getDate() + 2);
+      update.design_due_date = due.toISOString().slice(0, 10);
+    }
+  }
+
   const { data, error } = await ctx.supabase
-    .from("jobs").update(fields).eq("id", params.id).select().single();
+    .from("jobs").update(update).eq("id", params.id).select().single();
   if (error) throw dbError(error);
   if (!data) throw dbError({ message: "Update failed" });
   return ok(data);

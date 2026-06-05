@@ -1,5 +1,5 @@
 // ตรรกะ "ติดตามงานลูกค้า" — หาว่าลูกค้าอยู่เฟสไหนในเส้นทาง 13 เฟส
-// อ่านจาก jobs.status (macro) + productions/installations (micro) ที่ join มา
+// อ่านจาก jobs.current_stage (authoritative) → fallback status (macro) + productions/installations (micro)
 
 export type PhaseKey =
   | "LEAD" | "QUOTE" | "NEGOTIATE" | "DEPOSIT" | "MEASURE" | "MEETING"
@@ -40,6 +40,8 @@ type ProdRow = { status?: string; status_updated_at?: string | null; planned_ins
 type InstRow = { status?: string; updated_at?: string | null };
 type JobLike = {
   status: string;
+  current_stage?: number | null;   // authoritative 24-stage index (0014)
+  design_state?: string | null;    // designer board state (0016)
   updated_at?: string | null;
   created_at?: string | null;
   productions?: ProdRow[] | ProdRow | null;
@@ -47,6 +49,39 @@ type JobLike = {
 };
 
 const arr = <T,>(v: T[] | T | null | undefined): T[] => (Array.isArray(v) ? v : v ? [v] : []);
+
+// Map jobs.current_stage (1-24) → PhaseKey
+// Stages 3-4 split by design_state: if APPROVED/REJECTED we've moved past design → QUOTE; otherwise DESIGNING
+export function phaseFromStage(stage: number, design_state?: string | null): PhaseKey {
+  if (stage <= 2)  return "LEAD";
+  if (stage === 3) {
+    // stage 3 = designer drawing; if design approved/sent treat as QUOTE-ready
+    if (design_state === "APPROVED" || design_state === "SENT") return "QUOTE";
+    return "QUOTE"; // still map to QUOTE group (design is pre-quote work)
+  }
+  if (stage === 4)  return "QUOTE";       // เซลล์ตรวจแบบ
+  if (stage === 5)  return "QUOTE";       // ทำใบเสนอราคา
+  if (stage === 6)  return "NEGOTIATE";   // เจรจาราคา
+  if (stage === 7)  return "NEGOTIATE";   // ส่งใบเสนอให้ลูกค้า
+  if (stage === 8)  return "DEPOSIT";     // ลูกค้ามัดจำ
+  if (stage === 9)  return "MEASURE";     // รอวัดจริง
+  if (stage === 10) return "MEASURE";     // หัวหน้าช่างเข้าวัด
+  if (stage === 11) return "MEETING";     // ประชุมหลังวัด
+  if (stage === 12) return "MEETING";     // แก้แบบ + ใบเสนอ
+  if (stage === 13) return "MEETING";     // คอนเฟิร์มลูกค้า
+  if (stage === 14) return "MATERIAL";    // ทำเอกสารลูกค้า
+  if (stage === 15) return "PROD_QUEUE";  // ลงคิวผลิต
+  if (stage === 16) return "PRODUCING";   // สั่งอลูมิเนียม
+  if (stage === 17) return "PRODUCING";   // สั่งกระจก
+  if (stage === 18) return "PRODUCING";   // ผลิตงาน
+  if (stage === 19) return "QC";          // QC โรงงาน
+  if (stage === 20) return "INSTALL";     // ผลิตเสร็จ/รอติดตั้ง
+  if (stage === 21) return "INSTALL";     // เข้าติดตั้ง
+  if (stage === 22) return "INSTALL";     // รอลูกค้าตรวจรับ
+  if (stage === 23) return "INSTALL";     // แก้งาน
+  if (stage >= 24)  return "HANDOVER";    // ส่งงาน + รับประกัน
+  return "LEAD";
+}
 
 // แมป production.status → เฟส
 function prodPhase(s: string): PhaseKey {
@@ -65,15 +100,25 @@ function prodPhase(s: string): PhaseKey {
   }
 }
 
-// หาเฟสปัจจุบันของงาน (เลือกเฟสที่ก้าวหน้าสุด)
+// หาเฟสปัจจุบันของงาน
+// Priority: CANCELLED → current_stage (authoritative 24-stage) → productions/installations (micro) → status (macro fallback)
 export function derivePhase(job: JobLike): PhaseKey {
   if (job.status === "CANCELLED") return "CANCELLED";
+
+  // Use current_stage when available (> 0); this is the authoritative source of truth
+  if (job.current_stage && job.current_stage > 0) {
+    return phaseFromStage(job.current_stage, job.design_state);
+  }
+
+  // Legacy fallback: read from productions/installations join rows
   const inst = arr(job.installations);
   if (inst.length) {
     return inst.some((i) => i.status === "COMPLETED") ? "HANDOVER" : "INSTALL";
   }
   const prod = arr(job.productions);
   if (prod.length) return prodPhase(prod[0].status ?? "");
+
+  // Last resort: macro status enum
   switch (job.status) {
     case "LEAD":             return "LEAD";
     case "PENDING_QUOTE":    return "QUOTE";

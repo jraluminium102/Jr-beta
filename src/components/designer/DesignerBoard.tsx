@@ -1,25 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Card } from "@/components/ui";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 
-// ─── คอลัมน์บอร์ด + ภาษาไทย/สี ─────────────────────────────────────────────
+// ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
-  { state: "NOT_STARTED", th: "ยังไม่เริ่ม", dot: "#94a3b8" },
-  { state: "DRAWING", th: "กำลังเขียนแบบ", dot: "#2563eb" },
-  { state: "PENDING_CUSTOMER", th: "รอลูกค้า", dot: "#d97706" },
-  { state: "REVISING", th: "กำลังแก้ไข", dot: "#B3151D" },
-  { state: "DONE", th: "เสร็จแล้ว", dot: "#059669" },
+  { state: "NOT_STARTED",      th: "ยังไม่เริ่ม",       dot: "#94a3b8" },
+  { state: "DRAWING",          th: "กำลังเขียนแบบ",     dot: "#2563eb" },
+  { state: "PENDING_CUSTOMER", th: "รอลูกค้า",          dot: "#d97706" },
+  { state: "REVISING",         th: "กำลังแก้ไข",        dot: "#B3151D" },
+  { state: "DONE",             th: "เสร็จแล้ว",         dot: "#059669" },
 ];
 const STATE_TH: Record<DesignState, string> = {
-  NOT_STARTED: "ยังไม่เริ่ม",
-  DRAWING: "กำลังเขียนแบบ",
+  NOT_STARTED:      "ยังไม่เริ่ม",
+  DRAWING:          "กำลังเขียนแบบ",
   PENDING_CUSTOMER: "รอลูกค้า",
-  REVISING: "กำลังแก้ไข",
-  DONE: "เสร็จแล้ว",
+  REVISING:         "กำลังแก้ไข",
+  DONE:             "เสร็จแล้ว",
 };
 
 type Job = {
@@ -27,6 +27,7 @@ type Job = {
   job_code: string | null;
   customer_name: string;
   designer_id: string | null;
+  designer_ref: number | null;
   designer_name: string | null;
   design_state: DesignState;
   design_due_date: string | null;
@@ -40,7 +41,13 @@ type Kpi = {
   total: number;
   overdue: number;
   avg_revise: number;
-  per_designer: { designer_id: string | null; name: string; count: number; overdue: number }[];
+  per_designer: {
+    designer_ref: number | null;
+    name: string;
+    count: number;
+    overdue: number;
+    done: number;
+  }[];
 };
 type TimelineItem = {
   id: string;
@@ -61,10 +68,17 @@ function thDate(d: string | null) {
   return `${day}/${m}/${(Number(y) + 543) % 100}`;
 }
 
-export default function DesignerBoard({ designers, canWrite }: { designers: DesignerOption[]; canWrite: boolean }) {
+export default function DesignerBoard({
+  designers: initialDesigners,
+  canWrite,
+}: {
+  designers: DesignerOption[];
+  canWrite: boolean;
+}) {
   const [tab, setTab] = useState<"board" | "timeline">("board");
   const [designerFilter, setDesignerFilter] = useState("");
 
+  const [designers, setDesigners] = useState<DesignerOption[]>(initialDesigners);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [kpi, setKpi] = useState<Kpi | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,20 +103,29 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
     }
   }, [designerFilter]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Reload designers list (after adding new one)
+  const reloadDesigners = useCallback(async () => {
+    try {
+      const res = await fetch("/api/designers");
+      const json = await res.json();
+      if (res.ok) setDesigners(json.data.designers as DesignerOption[]);
+    } catch {
+      // non-critical: keep current list
+    }
+  }, []);
 
-  // มอบหมายผู้ออกแบบ (PATCH /api/jobs/[id]) — designer_id หรือ null ปลด
-  async function assignDesigner(job: Job, designerId: string | null) {
-    if (designerId === (job.designer_id ?? null)) return;
+  useEffect(() => { load(); }, [load]);
+
+  // Assign designer_ref — also triggers auto-deadline on first assignment
+  async function assignDesigner(job: Job, designerRef: number | null) {
+    if (designerRef === (job.designer_ref ?? null)) return;
     setAssigning(job.id);
     setErr("");
     try {
       const res = await fetch(`/api/jobs/${job.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ designer_id: designerId }),
+        body: JSON.stringify({ designer_ref: designerRef }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "มอบหมายงานไม่สำเร็จ");
@@ -114,7 +137,28 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
     }
   }
 
-  // ย้ายสถานะการ์ด (PATCH /api/designer/[id]) — optimistic ออกจากคอลัมน์เดิม
+  // Update design_due_date directly from the card's date input
+  async function updateDueDate(job: Job, date: string) {
+    if (date === (job.design_due_date ?? "")) return;
+    setAssigning(job.id); // reuse assigning flag to show busy
+    setErr("");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ design_due_date: date || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "แก้ไขกำหนดส่งไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "แก้ไขกำหนดส่งไม่สำเร็จ");
+    } finally {
+      setAssigning(null);
+    }
+  }
+
+  // Move design_state (PATCH /api/designer/[id])
   async function moveTo(job: Job, state: DesignState) {
     if (state === job.design_state) return;
     setMoving(job.id);
@@ -147,9 +191,12 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
     return map;
   }, [jobs]);
 
+  // Total DONE count across all visible cards
+  const doneCount = byColumn["DONE"].length;
+
   return (
     <div className="space-y-5">
-      {/* ── หัวเรื่อง ── */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
@@ -158,7 +205,7 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
           จัดการงานเขียนแบบ
         </h1>
 
-        {/* ── สลับแท็บ บอร์ด | ไทม์ไลน์ ── */}
+        {/* ── Tab switch ── */}
         <div className="glass-soft rounded-xl p-1 inline-flex text-sm">
           <button
             onClick={() => setTab("board")}
@@ -181,11 +228,11 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
           <KpiTile label="งานในมือ" value={kpi.total} />
           <KpiTile label="เลยกำหนด" value={kpi.overdue} accent={kpi.overdue > 0 ? "text-brand" : undefined} />
           <KpiTile label="รอบแก้เฉลี่ย" value={kpi.avg_revise} />
-          <KpiTile label="ผู้ออกแบบที่มีงาน" value={kpi.per_designer.filter((d) => d.designer_id).length} />
+          <KpiTile label="เสร็จแล้ว (14 วัน)" value={doneCount} accent="text-emerald-600" />
         </div>
       )}
 
-      {/* ── filter designer ── */}
+      {/* ── Designer filter ── */}
       <div className="flex items-center gap-2 text-sm flex-wrap">
         <span className="text-ink-3">ผู้ออกแบบ:</span>
         <select
@@ -195,14 +242,18 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
         >
           <option value="">— ทุกคน —</option>
           {designers.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.full_name}
+            <option key={d.id} value={String(d.id)}>
+              {d.name}
             </option>
           ))}
         </select>
       </div>
 
-      {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
+      {err && (
+        <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
+          {err}
+        </p>
+      )}
 
       {loading ? (
         <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>
@@ -215,6 +266,8 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
           designers={designers}
           onMove={moveTo}
           onAssign={assignDesigner}
+          onDueDate={updateDueDate}
+          onDesignerAdded={reloadDesigners}
         />
       ) : (
         <TimelineView />
@@ -232,7 +285,7 @@ function KpiTile({ label, value, accent }: { label: string; value: number; accen
   );
 }
 
-// ─── Board ────────────────────────────────────────────────────────────────
+// ─── Board ────────────────────────────────────────────────────────────────────
 function BoardView({
   byColumn,
   canWrite,
@@ -241,6 +294,8 @@ function BoardView({
   designers,
   onMove,
   onAssign,
+  onDueDate,
+  onDesignerAdded,
 }: {
   byColumn: Record<DesignState, Job[]>;
   canWrite: boolean;
@@ -248,7 +303,9 @@ function BoardView({
   assigning: string | null;
   designers: DesignerOption[];
   onMove: (job: Job, state: DesignState) => void;
-  onAssign: (job: Job, designerId: string | null) => void;
+  onAssign: (job: Job, designerRef: number | null) => void;
+  onDueDate: (job: Job, date: string) => void;
+  onDesignerAdded: () => Promise<void>;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
@@ -277,6 +334,8 @@ function BoardView({
                     designers={designers}
                     onMove={onMove}
                     onAssign={onAssign}
+                    onDueDate={onDueDate}
+                    onDesignerAdded={onDesignerAdded}
                   />
                 ))
               )}
@@ -288,6 +347,7 @@ function BoardView({
   );
 }
 
+// ─── Job Card ─────────────────────────────────────────────────────────────────
 function JobCard({
   job,
   canWrite,
@@ -296,6 +356,8 @@ function JobCard({
   designers,
   onMove,
   onAssign,
+  onDueDate,
+  onDesignerAdded,
 }: {
   job: Job;
   canWrite: boolean;
@@ -303,7 +365,9 @@ function JobCard({
   assigning: boolean;
   designers: DesignerOption[];
   onMove: (job: Job, state: DesignState) => void;
-  onAssign: (job: Job, designerId: string | null) => void;
+  onAssign: (job: Job, designerRef: number | null) => void;
+  onDueDate: (job: Job, date: string) => void;
+  onDesignerAdded: () => Promise<void>;
 }) {
   return (
     <div className="glass-soft rounded-xl p-3 text-sm">
@@ -315,30 +379,40 @@ function JobCard({
           </span>
         )}
       </div>
-      <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>{job.customer_name}</div>
-      <div className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}>
-        กำหนด: {thDate(job.design_due_date)}
-        {job.overdue && " · เลยกำหนด"}
+      <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
+        {job.customer_name}
       </div>
 
       {canWrite ? (
         <div className="mt-2 space-y-1.5">
-          {/* มอบหมายผู้ออกแบบ */}
-          <select
-            value={job.designer_id ?? ""}
-            disabled={assigning}
-            onChange={(e) => onAssign(job, e.target.value || null)}
-            aria-label="มอบหมายผู้ออกแบบ"
-            className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
-          >
-            <option value="">— ยังไม่มอบหมาย —</option>
-            {designers.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.full_name}
-              </option>
-            ))}
-          </select>
-          {/* ย้ายขั้นตอนเขียนแบบ */}
+          {/* Assign designer from designers lookup table */}
+          <DesignerSelect
+            job={job}
+            designers={designers}
+            assigning={assigning}
+            onAssign={onAssign}
+            onDesignerAdded={onDesignerAdded}
+          />
+
+          {/* design_due_date date input — editable */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
+            <input
+              type="date"
+              defaultValue={job.design_due_date ?? ""}
+              disabled={assigning}
+              onBlur={(e) => onDueDate(job, e.target.value)}
+              aria-label="กำหนดส่งแบบ"
+              className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum ${
+                job.overdue ? "text-brand font-semibold" : "text-ink-2"
+              }`}
+            />
+            {job.overdue && (
+              <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
+            )}
+          </div>
+
+          {/* Move design_state */}
           <select
             value={job.design_state}
             disabled={moving}
@@ -354,15 +428,137 @@ function JobCard({
           </select>
         </div>
       ) : (
-        <div className="text-[12px] text-ink-3 mt-1 truncate" title={job.designer_name ?? "ยังไม่มอบหมาย"}>
-          ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
-        </div>
+        <>
+          <div
+            className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}
+          >
+            กำหนด: {thDate(job.design_due_date)}
+            {job.overdue && " · เลยกำหนด"}
+          </div>
+          <div
+            className="text-[12px] text-ink-3 mt-0.5 truncate"
+            title={job.designer_name ?? "ยังไม่มอบหมาย"}
+          >
+            ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-// ─── Timeline (Gantt CSS อ่านอย่างเดียว) ───────────────────────────────────
+// ─── Designer dropdown with "add new" option ─────────────────────────────────
+const ADD_NEW_VALUE = "__add_new__";
+
+function DesignerSelect({
+  job,
+  designers,
+  assigning,
+  onAssign,
+  onDesignerAdded,
+}: {
+  job: Job;
+  designers: DesignerOption[];
+  assigning: boolean;
+  onAssign: (job: Job, designerRef: number | null) => void;
+  onDesignerAdded: () => Promise<void>;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [addErr, setAddErr] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (adding) inputRef.current?.focus();
+  }, [adding]);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setAddErr("");
+    try {
+      const res = await fetch("/api/designers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "เพิ่มชื่อไม่สำเร็จ");
+      // Reload designers list then assign the newly created designer
+      await onDesignerAdded();
+      const newId = (json.data?.designer?.id ?? null) as number | null;
+      if (newId != null) onAssign(job, newId);
+      setNewName("");
+      setAdding(false);
+    } catch (e) {
+      setAddErr(e instanceof Error ? e.message : "เพิ่มชื่อไม่สำเร็จ");
+    }
+  }
+
+  function handleSelectChange(val: string) {
+    if (val === ADD_NEW_VALUE) {
+      setAdding(true);
+      return;
+    }
+    onAssign(job, val ? Number(val) : null);
+  }
+
+  if (adding) {
+    return (
+      <div className="space-y-1">
+        <form onSubmit={handleAdd} className="flex gap-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="ชื่อผู้ออกแบบ"
+            className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 min-w-0"
+            maxLength={80}
+          />
+          <button
+            type="submit"
+            disabled={!newName.trim()}
+            className="press rounded-lg px-2 py-1 bg-brand text-white text-[12px] font-medium disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="บันทึกชื่อใหม่"
+          >
+            <Icon name="check" size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setAdding(false); setAddErr(""); setNewName(""); }}
+            className="press rounded-lg px-2 py-1 glass-soft text-[12px] text-ink-3 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="ยกเลิก"
+          >
+            <Icon name="close" size={14} />
+          </button>
+        </form>
+        {addErr && <p className="text-[11px] text-red-600">{addErr}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <select
+      value={job.designer_ref != null ? String(job.designer_ref) : ""}
+      disabled={assigning}
+      onChange={(e) => handleSelectChange(e.target.value)}
+      aria-label="มอบหมายผู้ออกแบบ"
+      className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
+    >
+      <option value="">— ยังไม่มอบหมาย —</option>
+      {designers.map((d) => (
+        <option key={d.id} value={String(d.id)}>
+          {d.name}
+        </option>
+      ))}
+      <option value={ADD_NEW_VALUE}>+ เพิ่มชื่อใหม่</option>
+    </select>
+  );
+}
+
+// ─── Timeline (CSS Gantt, read-only) ─────────────────────────────────────────
 function TimelineView() {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -383,7 +579,6 @@ function TimelineView() {
     })();
   }, []);
 
-  // กรอบเวลา: ครอบทุกช่วง start→(end|due|today) + เผื่อขอบ
   const range = useMemo(() => {
     const dates: number[] = [Date.parse(TODAY)];
     for (const it of items) {
@@ -406,14 +601,15 @@ function TimelineView() {
 
   if (loading) return <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>;
   if (err) return <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>;
-  if (items.length === 0) return <Card className="p-10 text-center text-ink-3">ยังไม่มีงานที่เริ่มเขียนแบบ</Card>;
+  if (items.length === 0)
+    return <Card className="p-10 text-center text-ink-3">ยังไม่มีงานที่เริ่มเขียนแบบ</Card>;
 
   const todayLeft = pct(Date.parse(TODAY));
 
   return (
     <Card className="p-4 overflow-x-auto">
       <div className="min-w-[640px] relative">
-        {/* เส้นวันนี้ */}
+        {/* Today marker */}
         <div
           className="absolute top-0 bottom-0 w-px bg-brand/70 z-10"
           style={{ left: `calc(28% + ${todayLeft}% * 0.72)` }}
@@ -434,12 +630,10 @@ function TimelineView() {
             const overdue = !it.design_end && it.design_due_date && it.design_due_date < TODAY;
             return (
               <div key={it.id} className="flex items-center gap-2 text-[12px]">
-                {/* ป้ายซ้าย */}
                 <div className="w-[28%] shrink-0 truncate pr-2">
                   <span className="font-semibold text-brand-dark">{it.job_code ?? "—"}</span>
                   <span className="text-ink-3"> · {it.designer_name}</span>
                 </div>
-                {/* แทร็ก */}
                 <div className="relative h-6 grow rounded-md bg-black/5">
                   <div
                     className={`absolute top-1 h-4 rounded-md ${overdue ? "bg-brand" : "bg-brand/60"}`}

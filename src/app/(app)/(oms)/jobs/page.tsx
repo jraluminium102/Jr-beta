@@ -125,7 +125,7 @@ export default function JobsPage() {
       )}
 
       {creating && <CreateJobModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); refetch(); }} />}
-      {openId && <JobDrawer jobId={openId} canFinance={canFinance} onClose={() => setOpenId(null)} onChanged={refetch} />}
+      {openId && <JobDrawer jobId={openId} canFinance={canFinance} canWriteProd={(data?.meta?.can_prod as boolean) ?? false} onClose={() => setOpenId(null)} onChanged={refetch} />}
     </div>
   );
 }

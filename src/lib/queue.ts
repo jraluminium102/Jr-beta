@@ -3,6 +3,7 @@
 export type QueueStatus = "PENDING" | "PROPOSED" | "CONFIRMED" | "DONE" | "CANCELLED";
 export type QueueTeam = "BKK" | "PHUKET";
 export type JobSize = "SINGLE" | "MULTI" | "FULLDAY";
+export type QueueSalesRole = "MAIN" | "ASSISTANT";  // (0019)
 
 export type QueueSales = {
   id: string;
@@ -14,6 +15,8 @@ export type QueueSales = {
   start_lng: number | null;
   profile_id: string | null;
   active: boolean;
+  role: QueueSalesRole;             // (0019) ผู้ช่วยเซลล์
+  parent_sales_id: string | null;   // (0019) สังกัดเซลล์หลัก
 };
 
 export type QueueEntry = {
@@ -24,6 +27,8 @@ export type QueueEntry = {
   job_type: string | null;
   sales_id: string | null;
   sales?: { id: string; name: string; code: string; team: QueueTeam } | null;
+  assistant_id: string | null;  // (0019) ผู้ช่วยเซลล์ที่ไปด้วย
+  assistant?: { id: string; name: string; code: string } | null;
   line_contact: string | null;
   customer_name: string;
   tel: string | null;

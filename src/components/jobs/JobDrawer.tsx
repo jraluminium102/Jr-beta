@@ -22,7 +22,7 @@ type Detail = Job & {
   finance_entries?: FinanceEntry[]; issues: Issue[];
 };
 
-export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: string; canFinance: boolean; onClose: () => void; onChanged: () => void }) {
+export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, onChanged }: { jobId: string; canFinance: boolean; canWriteProd?: boolean; onClose: () => void; onChanged: () => void }) {
   const [tab, setTab] = useState<"overview" | "production" | "materials" | "installation" | "finance">("overview");
   const [depOpen, setDepOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
@@ -143,11 +143,20 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                   <Chip>{PROD_STATUS[prod.status]}</Chip>
                   <div className="mt-2 text-[12px]" style={{ color: "var(--t-low)" }}>อัปเดตสถานะผลิตที่หน้า "ผลิต" → คลิกการ์ดงาน</div>
                   <div className="mt-3">
+                    <Row l="วันวัดกำหนด" v={thDate(prod.measure_scheduled)} />
+                    <Row l="วันผลิตกำหนด" v={thDate(prod.production_due_date)} />
                     <Row l="วันติดตั้งกำหนด" v={thDate(prod.planned_install_date)} />
                     <Row l="วันวัดจริง" v={thDate(prod.measure_actual)} />
                     <Row l="วันลงคิวผลิต" v={thDate(prod.production_queued)} />
                     <Row l="ผล QC" v={prod.qc_result === "PASSED" ? "ผ่าน" : prod.qc_result === "FAILED" ? "ไม่ผ่าน" : null} />
                   </div>
+                  {canWriteProd && (
+                    <ProductionDatesForm
+                      jobId={jobId}
+                      prod={prod}
+                      onSaved={() => { refetch(); onChanged(); }}
+                    />
+                  )}
                   <QcPanel jobId={jobId} />
                 </div>
               ) : <Empty title="ยังไม่เข้า Production" sub="เริ่มเมื่อมัดจำแล้ว" />)}
@@ -273,6 +282,63 @@ function QuoteEditor({ job, onChanged }: { job: Detail; onChanged: () => void })
 
       {err && <p role="alert" className="mt-2.5 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{err}</p>}
       <p className="mt-2.5 text-[11px]" style={{ color: "var(--t-low)" }}>กรอกยอด → บันทึก → เลื่อนสถานะใบเสนอด้วยปุ่ม “ไปขั้นต่อไป” ด้านบน (ส่งใบเสนอ → ลูกค้ามัดจำ)</p>
+    </div>
+  );
+}
+
+// Edit scheduled dates for measure / production-due / planned-install
+function ProductionDatesForm({ jobId, prod, onSaved }: { jobId: string; prod: Production; onSaved: () => void }) {
+  const [measure, setMeasure] = useState(prod.measure_scheduled ?? "");
+  const [prodDue, setProdDue] = useState(prod.production_due_date ?? "");
+  const [install, setInstall] = useState(prod.planned_install_date ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const fldDate = "focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] [&::-webkit-calendar-picker-indicator]:invert";
+
+  const save = async () => {
+    setErr(null); setSaving(true);
+    try {
+      await api.patch("/productions/dates", {
+        job_id: jobId,
+        measure_scheduled:    measure    || null,
+        production_due_date:  prodDue    || null,
+        planned_install_date: install    || null,
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 glass-card rounded-xl p-4">
+      <div className="text-sm font-semibold text-white mb-3">ตั้งวันกำหนด</div>
+      <div className="space-y-3">
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันวัดกำหนด</label>
+          <input type="date" value={measure} onChange={(e) => setMeasure(e.target.value)} className={fldDate} />
+        </div>
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันผลิตกำหนด</label>
+          <input type="date" value={prodDue} onChange={(e) => setProdDue(e.target.value)} className={fldDate} />
+        </div>
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันติดตั้งกำหนด</label>
+          <input type="date" value={install} onChange={(e) => setInstall(e.target.value)} className={fldDate} />
+        </div>
+      </div>
+      {err && <p role="alert" className="mt-2 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{err}</p>}
+      <button
+        onClick={save}
+        disabled={saving}
+        className="focusable pressable mt-3 w-full bg-white text-[#1F4E78] rounded-lg px-3 py-2.5 text-sm font-semibold disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2"
+      >
+        {saving && <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
+        บันทึกวันกำหนด
+      </button>
     </div>
   );
 }

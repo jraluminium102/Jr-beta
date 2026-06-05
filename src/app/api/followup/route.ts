@@ -19,7 +19,7 @@ export const GET = withRoute(async (req: Request) => {
 
   const sb = ctx.supabase as unknown as Sb;
   let query = sb.from("jobs")
-    .select("id,job_code,customer_name,customer_tel,customer_area,status,on_hold,updated_at,created_at," +
+    .select("id,job_code,customer_name,customer_tel,customer_area,status,current_stage,design_state,on_hold,updated_at,created_at," +
       "estimator:estimator_id(full_name)," +
       "productions(status,status_updated_at,planned_install_date)," +
       "installations(status,updated_at),issues(status,severity)")
