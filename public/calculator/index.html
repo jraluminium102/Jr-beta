@@ -1938,7 +1938,8 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note)
   if (note) { String(note).split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(!ln) return;
     const isOpt = ln.indexOf('OPTION')===0;
     content += `<div style="margin:4px 0 0 8px;font-size:13px;color:${isOpt?'#B3151D':'#6B7280'};">${ln}</div>`; }); }
-  if (addons && addons.length){ if(window.qSplit){ addons.forEach(a => { content += `<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;color:#1F2937;font-size:13px;"><span>+ ${a.n}</span><span style="font-weight:600;">${fmt(a.p)}</span></div>`; }); } else { content += `<div style="margin:2px 0 0 8px;color:#1F2937;font-size:13px;">(มี ${addons.map(a=>a.n).join(', ')})</div>`; } }
+  if (addons && addons.length && window.qSplit){ addons.forEach(a => { content += `<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;color:#1F2937;font-size:13px;"><span>+ ${a.n}</span><span style="font-weight:600;">${fmt(a.p)}</span></div>`; }); }
+  // มุ้งโชว์ใน "รายละเอียดงาน" แล้ว — ตัดบรรทัด "(มี มุ้ง...)" ออก กันซ้ำซ้อน (พี่นัท 2026-06-05)
   // รายละเอียดงาน
   if (glass && glass !== '-') {
     content += `<div style="margin-top:8px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>`;
