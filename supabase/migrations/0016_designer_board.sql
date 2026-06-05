@@ -19,10 +19,10 @@ create index if not exists jobs_designer_idx     on public.jobs(designer_id);
 
 -- ---------- backfill: เดา design_state จาก current_stage (เฉพาะ row ที่ยัง NOT_STARTED) ----------
 update public.jobs
-  set design_state = case
+  set design_state = (case
       when current_stage >= 8            then 'DONE'
       when current_stage between 3 and 7 then 'DRAWING'
-      else 'NOT_STARTED' end
+      else 'NOT_STARTED' end)::design_state_t
   where design_state = 'NOT_STARTED' and status <> 'CANCELLED';
 
 -- ---------- RPC set_design_state: เปลี่ยนสถานะ + นับรอบแก้ + ปิด design_end ----------
