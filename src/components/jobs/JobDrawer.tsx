@@ -10,6 +10,7 @@ import { X, ShieldCheck, TriangleAlert } from "@/components/ui/icons";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
 import { QcPanel } from "@/components/jobs/QcPanel";
+import { StageAdvanceButton } from "@/components/jobs/StageAdvanceButton";
 import type { Job, Production, Installation, FinanceEntry, Issue, IssuePhase } from "@/lib/database.types";
 
 const SEV_TAG: Record<string, string> = { HIGH: "bg-rose-500/30 text-rose-100 border-rose-300/30", MEDIUM: "bg-amber-500/25 text-amber-100 border-amber-300/30", LOW: "bg-white/12 text-white/80 border-white/15" };
@@ -81,7 +82,8 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
             <div className="p-5 sm:p-6">
               {tab === "overview" && (
                 <div>
-                  <div className="flex items-center justify-between">
+                  <StageAdvanceButton jobId={jobId} currentStage={job.current_stage} onAdvanced={() => { refetch(); onChanged(); }} />
+                  <div className="flex items-center justify-between mt-3">
                     <Chip status={job.status} />
                     {canFinance && (job.status === "QUOTE_SENT" || job.status === "PENDING_DECISION") ? (
                       <button onClick={() => setDepOpen(true)} className="focusable pressable text-[12px] bg-emerald-500/25 border border-emerald-300/30 text-emerald-100 rounded-lg px-3 py-1.5 min-h-[36px]">บันทึกมัดจำ</button>

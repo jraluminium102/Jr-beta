@@ -4,7 +4,7 @@
 // ─── Domain Enums ─────────────────────────────────────────────────────────────
 export type Role = "ADMIN" | "SALES" | "DESIGNER" | "PRODUCTION" | "INSTALLER" | "ACCOUNTING" | "VIEWER";
 export type Channel = "LINE" | "FACEBOOK" | "INSTAGRAM" | "OTHER";
-export type JobStatus = "PENDING_QUOTE" | "QUOTE_SENT" | "PENDING_DECISION" | "DEPOSITED" | "CANCELLED" | "COMPLETED";
+export type JobStatus = "LEAD" | "PENDING_QUOTE" | "QUOTE_SENT" | "PENDING_DECISION" | "DEPOSITED" | "IN_PRODUCTION" | "INSTALLING" | "CANCELLED" | "COMPLETED";
 export type ProdStatus = "PENDING_MEASURE" | "MEASURED" | "PENDING_MEETING" | "REVISING" | "PENDING_CONFIRM" | "QUEUED" | "MANUFACTURING" | "QC" | "READY" | "ISSUE";
 export type InstStatus = "PENDING" | "INSTALLING" | "PENDING_INSPECT" | "REVISING" | "COMPLETED" | "ISSUE";
 export type InspectResult = "PASSED" | "MINOR_FIX" | "REJECTED";
@@ -32,6 +32,7 @@ export interface Job {
   cancel_reason: string | null; remark: string | null; created_at: string; updated_at: string;
   customer_id: number | null; queue_entry_id: string | null;   // journey backbone (0012)
   on_hold: boolean; on_hold_reason: string | null;             // พักงาน (0013)
+  current_stage: number; stage_history: unknown[];             // state machine 24 stage (0014)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;

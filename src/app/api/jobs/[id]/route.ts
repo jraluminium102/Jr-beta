@@ -46,7 +46,7 @@ const statusSchema = z.discriminatedUnion("status", [
     status: z.literal("CANCELLED"),
     cancel_reason: z.string().min(1, "ระบุเหตุผลยกเลิก"),
   }),
-  z.object({ status: z.enum(["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"]) }),
+  z.object({ status: z.enum(["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION", "IN_PRODUCTION", "INSTALLING"]) }),
 ]);
 
 const fieldsSchema = z.object({

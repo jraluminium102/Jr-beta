@@ -106,8 +106,14 @@ export function QueueModal({
       note_admin: f.note_admin || null,
     };
     try {
-      if (editing) await api.patch(`/queue/${entry!.id}`, payload);
-      else await api.post("/queue", payload);
+      if (editing) {
+        const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
+        if (payload.status === "DONE" && (r.meta?.job_id)) {
+          alert("✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า “ติดตามงาน” (ไม่ต้องกรอกซ้ำ)");
+        }
+      } else {
+        await api.post("/queue", payload);
+      }
       onSaved();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
