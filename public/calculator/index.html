@@ -1386,7 +1386,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       const fabricExtra = (fabric==='anti_pet'?800:(fabric==='stainless'?1200:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
       const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
       opt += mosqBase + fabricExtra;
-      addonLines.push({n:'มุ้ง '+mscreen.name+(fabricExtra>0?(' + '+fabricLabel):' · '+fabricLabel), p:mosqBase+fabricExtra});
+      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel, p:mosqBase+fabricExtra});
       // skip rest of existing logic (mosqA calc not used for now)
     }
     if(false){
@@ -1942,7 +1942,7 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note)
   // รายละเอียดงาน
   if (glass && glass !== '-') {
     content += `<div style="margin-top:8px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>`;
-    glass.split(/\n|\s·\s/).filter(g=>g.trim()).forEach(g => { content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ')?'':'- '}${g.replace(/^- /,'')}</div>`; });
+    glass.split(/\n|\s·\s/).filter(g=>g.trim()).forEach(g => { g=g.trim(); const keep=g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ'); content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${keep?g:'- '+g}</div>`; });
   }
   if(optText){ content += `<div style="margin-top:6px;color:#B3151D;font-size:13px;">OPTION : ${optText}${optDelta?(' (ราคา'+(optDelta>0?'+':'-')+fmt(Math.abs(optDelta))+' บาท)'):''}</div>`; }
   return `<tr><td style="vertical-align:top;text-align:center;">${n}</td><td style="vertical-align:top;text-align:left;padding:8px;">${content}</td>`+
