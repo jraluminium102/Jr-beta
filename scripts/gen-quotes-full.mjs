@@ -72,13 +72,27 @@ function addItem(it) {
   if (it.auto !== false) enableAllOpts(ch);
   for (const [s, v] of Object.entries(it.opts || {})) setF(ch, s, v);
   if (it.note) setF(ch, ".i-note", it.note);
+  // #2: inject sub-items (บานย่อย) ผ่าน addSubItem
+  if (it.subItems && it.subItems.length) {
+    it.subItems.forEach((sub) => {
+      w.addSubItem(ch.querySelector(".sub-addbtn"));
+      const rows = ch.querySelectorAll(".subitem-list .subitem-row");
+      const row = rows[rows.length - 1];
+      if (row) {
+        const st = row.querySelector(".s-type"); if (st) { st.value = sub.type; fire(st, "change"); }
+        const sw = row.querySelector(".s-w"); if (sw) { sw.value = String(sub.w||1); fire(sw, "input"); }
+        const sh = row.querySelector(".s-h"); if (sh) { sh.value = String(sub.h||0.5); fire(sh, "input"); }
+      }
+    });
+  }
   return ch;
 }
 
+// #1: ค่า .o-ghside-* ต้องตรงกับ option value ของ dropdown ที่แก้แล้ว
 const GH = (room, price) => ({ ".o-ghroom": room, ".o-ghcolor": "sahara", ".o-ghglass": "กระจกเขียว/ใส หนา 6 มม.",
   ".o-ghgutter": "รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้", ".o-ghmosq": "มุ้งเฟรมเล็ก (ด้าน B, E)", ".o-ghlock": "ชุดล็อคพร้อมกุญแจ (ประตูด้าน C)",
-  ".o-ghside-A": "ติดตายเต็มผนัง", ".o-ghside-B": "ประตูบานเปิดคู่ + ติดตายข้าง", ".o-ghside-C": "บานเลื่อน 2 ราง",
-  ".o-ghside-D": "ติดตาย + ช่องแสงบน", ".o-ghside-E": "ประตูบานเปิดเดี่ยว", ".o-ghroof": "หลังคาไวนิล (แปคู่) โครงอลูมิเนียม + รางน้ำอลู + ตะแกรงกันใบไม้",
+  ".o-ghside-A": "ติดตายเต็มผนัง", ".o-ghside-B": "ประตูบานเปิดคู่", ".o-ghside-C": "ประตูบานเลื่อน 2 ราง",
+  ".o-ghside-D": "ติดตาย+ช่องแสงบน", ".o-ghside-E": "ประตูบานเปิดเดี่ยว", ".o-ghroof": "หลังคาไวนิล (แปคู่) โครงอลูมิเนียม + รางน้ำอลู + ตะแกรงกันใบไม้",
   ".o-ghprice": String(price), ".o-ghnote-inc": "รื้อหลังคาเดิม / ทำสีปิด / ตัดท่อแอร์ 1 จุด", ".o-ghnote-exc": "รื้อพื้น / ลงเข็ม / ทำคาน / ปูกระเบื้อง / เดินไฟ" });
 const ZIP = (grp, model, fab, ctrl) => ({ ".o-zgrp": grp, ".o-zmodel": model, ".o-zfab": fab, ".o-zctrl": ctrl });
 
@@ -86,7 +100,9 @@ const ZIP = (grp, model, fab, ctrl) => ({ ".o-zgrp": grp, ".o-zmodel": model, ".
 const jobA = { cust: "คุณปิยะ มงคล (บ้านเดี่ยว 2 ชั้น)", date: "04-06-69",
   discFlat: 3000, // ทดสอบ pattern ส่วนลด → โชว์บล็อกยอด 5 บรรทัด
   items: [
-    { g: 1, prod: "sliding_euro", pos: "ประตู โถงหน้าบ้าน", w: 3.6, h: 2.4, panels: 4, qty: 1 },
+    // #2: ทดสอบบานย่อย — ประตูโถงหน้าบ้าน มีช่องแสงติดตายบนเป็นบานย่อย
+    { g: 1, prod: "sliding_euro", pos: "ประตู โถงหน้าบ้าน", w: 3.6, h: 2.4, panels: 4, qty: 1,
+      subItems: [{type:'ช่องแสงติดตาย', w:3.6, h:0.5}] },
     { g: 1, prod: "casement_euro", pos: "หน้าต่าง ห้องนอนใหญ่", itype: "window", w: 1.6, h: 2.2, panels: 2, qty: 2 },
     { g: 1, prod: "awning_euro", pos: "หน้าต่าง ห้องน้ำ", itype: "window", w: 0.8, h: 1.0, qty: 3 },
     { g: 1, prod: "folding", pos: "ประตู เชื่อมระเบียงหลัง", w: 4.0, h: 2.4, panels: 4, qty: 1 },
