@@ -15,6 +15,8 @@ export type IssueType = "WRONG_DESIGN" | "CUSTOMER_CHANGES" | "MATERIAL_SHORTAGE
 export type IssueSeverity = "LOW" | "MEDIUM" | "HIGH";
 export type PaymentType = "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" | "FINAL";
 export type PaymentChannel = "TRANSFER" | "CASH" | "CHEQUE";
+export type DesignState = "NOT_STARTED" | "DRAWING" | "PENDING_CUSTOMER" | "REVISING" | "DONE"; // (0016)
+export type BoqStatus = "draft" | "confirmed" | "ordered";                                      // (0017)
 
 // ─── Row types ────────────────────────────────────────────────────────────────
 export interface Profile {
@@ -33,6 +35,7 @@ export interface Job {
   customer_id: number | null; queue_entry_id: string | null;   // journey backbone (0012)
   on_hold: boolean; on_hold_reason: string | null;             // พักงาน (0013)
   current_stage: number; stage_history: unknown[];             // state machine 24 stage (0014)
+  design_due_date: string | null; design_state: DesignState; design_revise_count: number; // designer board (0016)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;
@@ -59,6 +62,7 @@ export interface Issue {
   detail: string; is_auto_created: boolean; reporter_id: string | null; reported_at: string;
   owner_id: string | null; owner_name: string | null; resolved_at: string | null; resolution: string | null;
   status: IssueStatus; severity: IssueSeverity; created_at: string; updated_at: string;
+  due_date: string | null; priority: number;  // issue tracking (0018)
 }
 export interface FinanceEntry {
   id: string; job_id: string; payment_date: string; amount: number; type: PaymentType;
@@ -69,6 +73,19 @@ export interface FinanceEntry {
 interface AuditLog {
   id: number; job_id: string | null; user_id: string | null; action: string;
   table_name: string; record_id: string | null; old_value: unknown; new_value: unknown; created_at: string;
+}
+export interface Boq {
+  id: number; code: string | null; job_id: string | null; quotation_id: number | null;
+  customer_snapshot: Record<string, unknown>; status: BoqStatus; note: string;
+  created_by: string | null; created_at: string; updated_at: string;
+}
+export interface BoqItem {
+  id: number; boq_id: number; category: string; name: string; spec: string;
+  qty: number; unit: string; stock_item_id: number | null; sort_order: number;
+}
+export interface IssueUpdate {
+  id: number; issue_id: string; note: string; new_status: IssueStatus | null;
+  author_id: string | null; created_at: string;
 }
 
 // ─── Supabase Database type (must include Relationships/Views/CompositeTypes) ─
@@ -97,6 +114,9 @@ export interface Database {
       finance_entries: Tbl<FinanceEntry>;
       audit_logs:      Tbl<AuditLog>;
       job_sequence:    Tbl<{ year: number; last_seq: number }>;
+      boqs:            Tbl<Boq>;
+      boq_items:       Tbl<BoqItem>;
+      issue_updates:   Tbl<IssueUpdate>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -108,6 +128,8 @@ export interface Database {
       inst_status_t:  InstStatus;
       issue_status_t: IssueStatus;
       payment_type_t: PaymentType;
+      design_state_t: DesignState;
+      boq_status_t:   BoqStatus;
     };
     CompositeTypes: Record<string, never>;
   };

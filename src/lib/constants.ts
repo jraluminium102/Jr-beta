@@ -29,5 +29,6 @@ export const CHANNEL: Record<Channel, string> = {
 
 export const MENU_LABEL: Record<string, string> = {
   dashboard: "Dashboard", jobs: "งานทั้งหมด", production: "Production",
+  designer: "งานเขียนแบบ", boq: "BOQ ตัดอลู",
   installation: "ติดตั้ง", issues: "Issues", finance: "บัญชี", users: "Users", settings: "ตั้งค่า",
 };

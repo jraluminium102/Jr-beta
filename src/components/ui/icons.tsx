@@ -2,11 +2,13 @@ import {
   LayoutDashboard, Briefcase, Factory, Wrench, TriangleAlert,
   Wallet, Users, Settings, Search, Plus, X, LogOut, Bell, Menu,
   Lock, Download, ChevronRight, Clock, Check, ShieldCheck,
+  PencilRuler, ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
 export const NavIcons: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard, jobs: Briefcase, production: Factory,
+  designer: PencilRuler, boq: ClipboardList,
   installation: Wrench, issues: TriangleAlert, finance: Wallet,
   users: Users, settings: Settings,
 };

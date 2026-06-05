@@ -10,6 +10,7 @@ import { cn } from "@/lib/format";
 const HREF: Record<string, string> = {
   dashboard: "/", jobs: "/jobs", production: "/production", installation: "/installation",
   issues: "/issues", finance: "/finance", users: "/settings/users", settings: "/settings",
+  designer: "/designer", boq: "/boq",
 };
 
 function NavList({ menus, pathname, onNav }: { menus: string[]; pathname: string; onNav?: () => void }) {
