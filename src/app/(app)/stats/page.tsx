@@ -106,24 +106,23 @@ export default function StatsPage() {
               </div>
             </Card>
 
-            {/* Funnel */}
+            {/* Top items — ยอดนิยมบน */}
             <Card className="p-5">
-              <h3 className="font-bold text-brand-dark mb-3">Funnel ตามเฟส (งานปัจจุบัน)</h3>
+              <h3 className="font-bold text-brand-dark mb-3">ประเภทงานนิยม (จากใบเสนอราคา)</h3>
               <div className="space-y-1.5">
-                {data.funnel.map((f) => (
-                  <div key={f.phase} className="flex items-center gap-2 text-xs">
-                    <span className="w-24 shrink-0 text-ink-2">{PHASE_META[f.phase].th}</span>
-                    <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
-                      <div className="h-full rounded" style={{ width: `${(f.count / funnelMax) * 100}%`, background: PHASE_META[f.phase].dot }} />
-                    </div>
-                    <span className="w-8 text-right tabular-nums text-ink-2">{f.count}</span>
+                {data.topItems.map((it) => (
+                  <div key={it.name} className="flex items-center gap-2 text-xs">
+                    <span className="w-32 truncate text-ink-3" title={it.name}>{it.name}</span>
+                    <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: `${(it.qty / itemMax) * 100}%` }} /></div>
+                    <span className="w-10 text-right tabular-nums text-ink-2">{baht(it.qty)}</span>
                   </div>
                 ))}
+                {data.topItems.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
               </div>
             </Card>
 
             {/* Sales close-rate */}
-            <Card className="p-5">
+            <Card className="p-5 lg:col-span-2">
               <h3 className="font-bold text-brand-dark mb-3">ปิดการขายต่อเซลล์</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -148,7 +147,23 @@ export default function StatsPage() {
               </div>
             </Card>
 
-            {/* Issues + channel + top items */}
+            {/* Funnel */}
+            <Card className="p-5">
+              <h3 className="font-bold text-brand-dark mb-3">Funnel ตามเฟส (งานปัจจุบัน)</h3>
+              <div className="space-y-1.5">
+                {data.funnel.map((f) => (
+                  <div key={f.phase} className="flex items-center gap-2 text-xs">
+                    <span className="w-24 shrink-0 text-ink-2">{PHASE_META[f.phase].th}</span>
+                    <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded" style={{ width: `${(f.count / funnelMax) * 100}%`, background: PHASE_META[f.phase].dot }} />
+                    </div>
+                    <span className="w-8 text-right tabular-nums text-ink-2">{f.count}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Issues + channel — สถานะออฟฟิศ ท้ายสุด */}
             <Card className="p-5 space-y-4">
               <div>
                 <h3 className="font-bold text-brand-dark mb-2">ปัญหาที่บันทึก ({data.issues.total} · ค้าง {data.issues.open})</h3>
@@ -167,17 +182,6 @@ export default function StatsPage() {
                     <span className="w-6 text-right tabular-nums text-ink-2">{c.count}</span>
                   </div>
                 ))}
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-ink-2 mb-1.5">ประเภทงานนิยม (จากใบเสนอราคา)</h4>
-                {data.topItems.map((it) => (
-                  <div key={it.name} className="flex items-center gap-2 text-xs mb-1">
-                    <span className="w-32 truncate text-ink-3" title={it.name}>{it.name}</span>
-                    <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: `${(it.qty / itemMax) * 100}%` }} /></div>
-                    <span className="w-10 text-right tabular-nums text-ink-2">{baht(it.qty)}</span>
-                  </div>
-                ))}
-                {data.topItems.length === 0 && <p className="text-ink-3 text-xs">ไม่มีข้อมูล</p>}
               </div>
             </Card>
           </div>

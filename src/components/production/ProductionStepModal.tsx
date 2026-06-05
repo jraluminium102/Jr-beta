@@ -27,7 +27,6 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 }) {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [more, setMore] = useState(false);
   const [problemOpen, setProblemOpen] = useState(false);
   const [problem, setProblem] = useState("");
 
@@ -53,13 +52,6 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
     if (!next) return;
     const body: Record<string, unknown> = { status: next };
     if (nextDate) body[nextDate.field] = date;
-    patch(body);
-  };
-
-  const jumpTo = (s: ProdStatus) => {
-    const body: Record<string, unknown> = { status: s };
-    const d = DATE_FOR[s];
-    if (d) body[d.field] = today();
     patch(body);
   };
 
@@ -130,21 +122,6 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
                   <button onClick={() => setProblemOpen(false)} className="focusable pressable flex-1 glass-card text-white rounded-xl py-2.5 text-sm min-h-[44px]">ยกเลิก</button>
                   <button onClick={reportProblem} disabled={saving} className="focusable pressable flex-1 bg-amber-500 hover:bg-amber-400 text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px] disabled:opacity-60">ส่งแจ้งปัญหา</button>
                 </div>
-              </div>
-            )}
-
-            {/* เลือกสถานะเอง (ซ่อนไว้ ไม่รก) */}
-            <button onClick={() => setMore(!more)} className="focusable w-full mt-3 text-[13px] text-white/60 hover:text-white py-2">
-              {more ? "ซ่อน" : "เลือกขั้นเอง / ข้ามขั้น"}
-            </button>
-            {more && (
-              <div className="grid grid-cols-2 gap-2">
-                {FLOW.map((s) => (
-                  <button key={s} disabled={saving || s === prod.status} onClick={() => jumpTo(s)}
-                    className={`focusable pressable rounded-xl px-2 py-2.5 text-[13px] font-medium min-h-[44px] border ${s === prod.status ? "bg-white text-[#1F4E78] border-white" : "bg-white/8 text-white/75 border-white/12 hover:bg-white/15"}`}>
-                    {PROD_STATUS[s]}
-                  </button>
-                ))}
               </div>
             )}
 

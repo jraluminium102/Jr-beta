@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
-import { PROD_STATUS, INST_STATUS, JOB_STATUS } from "@/lib/constants";
+import { PROD_STATUS, INST_STATUS } from "@/lib/constants";
 import { baht, thDate } from "@/lib/format";
 import { calcFinancials } from "@/lib/finance";
 import { Chip, Tag, Spinner } from "@/components/ui/primitives";
@@ -141,14 +141,13 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
               {tab === "production" && (prod ? (
                 <div>
                   <Chip>{PROD_STATUS[prod.status]}</Chip>
+                  <div className="mt-2 text-[12px]" style={{ color: "var(--t-low)" }}>อัปเดตสถานะผลิตที่หน้า "ผลิต" → คลิกการ์ดงาน</div>
                   <div className="mt-3">
                     <Row l="วันติดตั้งกำหนด" v={thDate(prod.planned_install_date)} />
                     <Row l="วันวัดจริง" v={thDate(prod.measure_actual)} />
                     <Row l="วันลงคิวผลิต" v={thDate(prod.production_queued)} />
                     <Row l="ผล QC" v={prod.qc_result === "PASSED" ? "ผ่าน" : prod.qc_result === "FAILED" ? "ไม่ผ่าน" : null} />
                   </div>
-                  <StatusSelect label="เปลี่ยนสถานะ Production" value={prod.status} options={PROD_STATUS}
-                    onSave={async (v) => { await api.patch(`/production/${prod.id}`, { status: v }); refetch(); onChanged(); }} />
                   <QcPanel jobId={jobId} />
                 </div>
               ) : <Empty title="ยังไม่เข้า Production" sub="เริ่มเมื่อมัดจำแล้ว" />)}
@@ -158,6 +157,7 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
               {tab === "installation" && (inst ? (
                 <div>
                   <Chip>{INST_STATUS[inst.status]}</Chip>
+                  <div className="mt-2 text-[12px]" style={{ color: "var(--t-low)" }}>อัปเดตสถานะที่หน้า "ติดตั้ง" → คลิกการ์ดงาน</div>
                   <div className="mt-3">
                     <Row l="วันนัดติดตั้ง" v={thDate(inst.install_scheduled)} />
                     <Row l="วันติดตั้งจริง" v={thDate(inst.install_actual)} />
@@ -165,8 +165,6 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
                     <Row l="รับประกันถึง" v={thDate(inst.warranty_until)} />
                   </div>
                   {inst.warranty_until && <div className="mt-3 flex items-center gap-2 text-emerald-200 text-[12px] bg-emerald-500/15 border border-emerald-300/25 rounded-xl px-3 py-2.5"><ShieldCheck size={15} /> รับประกัน auto = วันจบงาน + 12 เดือน</div>}
-                  <StatusSelect label="เปลี่ยนสถานะติดตั้ง" value={inst.status} options={INST_STATUS}
-                    onSave={async (v) => { await api.patch(`/installation/${inst.id}`, { status: v }); refetch(); onChanged(); }} />
                   <HandoverForm inst={inst} onSaved={() => { refetch(); onChanged(); }} />
                 </div>
               ) : <Empty title="ยังไม่เข้าติดตั้ง" sub="เริ่มเมื่อ Production = พร้อมติดตั้ง" />)}
@@ -203,24 +201,6 @@ export function JobDrawer({ jobId, canFinance, onClose, onChanged }: { jobId: st
   );
 }
 
-function StatusSelect({ label, value, options, onSave }: { label: string; value: string; options: Record<string, string>; onSave: (v: string) => Promise<void> }) {
-  const [val, setVal] = useState(value);
-  const [saving, setSaving] = useState(false);
-  return (
-    <div className="mt-4 glass-card rounded-xl p-3.5">
-      <label className="text-[12px] block mb-2" style={{ color: "var(--t-low)" }}>{label}</label>
-      <div className="flex gap-2">
-        <select value={val} onChange={(e) => setVal(e.target.value)} aria-label={label}
-          className="focusable flex-1 glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none min-h-[44px] [&>option]:text-gray-800">
-          {Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-        <button disabled={saving || val === value} onClick={async () => { setSaving(true); try { await onSave(val); } finally { setSaving(false); } }}
-          className="focusable pressable bg-white text-[#1F4E78] rounded-lg px-4 text-sm font-semibold disabled:opacity-50 min-h-[44px]">บันทึก</button>
-      </div>
-    </div>
-  );
-}
-
 function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () => void; onCancel: () => void }) {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -249,11 +229,11 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
   );
 }
 
-// ── P0 #1: ฟอร์มทำใบเสนอราคา ──
+// ── ฟอร์มทำใบเสนอราคา — กรอก/บันทึก "ยอด" เท่านั้น ──
+// สถานะใบเสนอ (รอใบเสนอ→ส่งใบเสนอ→เจรจา) คุมที่ปุ่ม "ไปขั้นต่อไป" (advance_stage) ที่เดียว
 function QuoteEditor({ job, onChanged }: { job: Detail; onChanged: () => void }) {
   const [net, setNet] = useState(job.net_amount ? String(job.net_amount) : "");
   const [saving, setSaving] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const n = Number(net) || 0;
@@ -266,20 +246,6 @@ function QuoteEditor({ job, onChanged }: { job: Detail; onChanged: () => void })
     catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); }
     finally { setSaving(false); }
   };
-
-  const setStatus = async (s: string) => {
-    setErr(null); setBusy(true);
-    try {
-      if (s === "QUOTE_SENT" && !job.quote_sent_date) {
-        await api.patch(`/jobs/${job.id}`, { quote_sent_date: new Date().toISOString().slice(0, 10) });
-      }
-      await api.patch(`/jobs/${job.id}`, { status: s });
-      onChanged();
-    } catch (e) { setErr(e instanceof ApiError ? e.message : "เปลี่ยนสถานะไม่สำเร็จ"); }
-    finally { setBusy(false); }
-  };
-
-  const STAGES = ["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"] as const;
 
   return (
     <div className="mt-4 glass-card rounded-xl p-4">
@@ -305,21 +271,8 @@ function QuoteEditor({ job, onChanged }: { job: Detail; onChanged: () => void })
         ))}
       </div>
 
-      {/* เลื่อนสถานะใบเสนอ */}
-      <div className="mt-3.5">
-        <div className="text-[12px] mb-1.5" style={{ color: "var(--t-low)" }}>สถานะใบเสนอราคา</div>
-        <div className="flex gap-1.5" role="radiogroup" aria-label="สถานะใบเสนอราคา">
-          {STAGES.map((s) => (
-            <button key={s} role="radio" aria-checked={job.status === s} disabled={busy || job.status === s} onClick={() => setStatus(s)}
-              className={`focusable pressable flex-1 rounded-lg px-2 py-2 text-[12px] font-medium border min-h-[40px] transition disabled:opacity-100 ${job.status === s ? "bg-white text-[#1F4E78] border-white" : "bg-white/8 text-white/70 border-white/12 hover:bg-white/15"}`}>
-              {JOB_STATUS[s].th}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {err && <p role="alert" className="mt-2.5 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{err}</p>}
-      <p className="mt-2.5 text-[11px]" style={{ color: "var(--t-low)" }}>กรอกยอด → บันทึก → กด “ส่งลูกค้าแล้ว” → จากนั้นปุ่ม “บันทึกมัดจำ” จะใช้งานได้</p>
+      <p className="mt-2.5 text-[11px]" style={{ color: "var(--t-low)" }}>กรอกยอด → บันทึก → เลื่อนสถานะใบเสนอด้วยปุ่ม “ไปขั้นต่อไป” ด้านบน (ส่งใบเสนอ → ลูกค้ามัดจำ)</p>
     </div>
   );
 }

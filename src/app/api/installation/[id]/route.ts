@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
-import { ok } from "@/lib/bff/response";
+import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 
 type Params = { params: { id: string } };
@@ -29,6 +29,15 @@ const schema = z.object({
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requirePermission("installation", "write");
   const body = schema.parse(await req.json());
+
+  // Guard: ห้าม rollback จาก COMPLETED
+  if (body.status && body.status !== "ISSUE") {
+    const { data: current } = await ctx.supabase
+      .from("installations").select("status").eq("id", params.id).single();
+    if (current?.status === "COMPLETED" && body.status !== "COMPLETED") {
+      return err("งานจบแล้ว ไม่สามารถเปลี่ยนสถานะกลับได้", 409);
+    }
+  }
 
   const { data, error } = await ctx.supabase
     .from("installations").update(body).eq("id", params.id).select().single();

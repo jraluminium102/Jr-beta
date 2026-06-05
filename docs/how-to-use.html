@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วิธีใช้เว็บ JR — แบบง่ายสุดๆ</title>
+<style>
+  :root{
+    --red:#B3151D; --red-dark:#7d0f15; --red-soft:#fdecec;
+    --ink:#1f1f1f; --ink-2:#555; --bg:#fbf8f6; --card:#fff; --line:#eee;
+    --blue:#1F6FB2; --green:#2e9e4f; --amber:#e08c1a; --purple:#7b4fb2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:"Sarabun","Segoe UI","Noto Sans Thai",sans-serif;background:var(--bg);color:var(--ink);
+    line-height:1.7;font-size:18px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;text-align:center;padding:48px 18px 56px}
+  .hero h1{font-size:34px;font-weight:800;margin-bottom:10px}
+  .hero p{font-size:19px;opacity:.95}
+  .hero .big{font-size:46px;margin-bottom:6px}
+
+  /* INTRO BIG IDEA */
+  .idea{background:#fff;border:3px solid var(--red-soft);border-radius:22px;padding:26px;margin:30px 0;text-align:center}
+  .idea .em{font-size:40px}
+  .idea h2{font-size:23px;color:var(--red-dark);margin:6px 0 8px}
+  .idea p{font-size:18px;color:var(--ink-2)}
+
+  /* JOURNEY STRIP */
+  .journey{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;align-items:center;margin:18px 0 6px}
+  .jstep{background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px 14px;text-align:center;min-width:96px}
+  .jstep .e{font-size:26px;display:block}
+  .jstep b{font-size:14px}
+  .jarrow{font-size:24px;color:var(--red);font-weight:800}
+
+  /* SECTION TITLE */
+  h2.sec{font-size:25px;font-weight:800;color:var(--red-dark);margin:38px 0 6px;display:flex;align-items:center;gap:10px}
+  .sec-note{color:var(--ink-2);font-size:17px;margin-bottom:14px}
+
+  /* GOLDEN RULE */
+  .rule{background:#fff7e6;border:3px solid #ffd97a;border-radius:22px;padding:24px;margin:22px 0}
+  .rule .h{font-size:21px;font-weight:800;color:#a9700b;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .rule .flow3{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center;margin-top:8px}
+  .rule .b{background:#fff;border:2px solid #ffd97a;border-radius:14px;padding:12px 16px;font-size:17px;font-weight:700;text-align:center;flex:1;min-width:150px}
+  .rule .b small{display:block;font-weight:400;color:var(--ink-2);font-size:14px}
+  .rule .ar{font-size:26px;color:#e0a91a;font-weight:800}
+
+  /* STEP CARD */
+  .step{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:0;margin:16px 0;overflow:hidden;
+    box-shadow:0 3px 14px rgba(0,0,0,.05)}
+  .step .top{display:flex;align-items:center;gap:14px;padding:18px 22px;color:#fff}
+  .step .num{background:rgba(255,255,255,.25);width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:24px;font-weight:800;flex:0 0 auto}
+  .step .top .t{font-size:21px;font-weight:800}
+  .step .top .e{font-size:30px;margin-left:auto}
+  .step .body{padding:18px 22px}
+  .row{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:18px}
+  .row:last-child{margin-bottom:0}
+  .row .ic{font-size:24px;flex:0 0 auto;width:30px;text-align:center}
+  .row .lab{font-weight:700;min-width:78px;flex:0 0 auto}
+  .row .val{color:var(--ink-2)}
+  .tap{display:inline-block;background:var(--red);color:#fff;padding:3px 12px;border-radius:10px;font-weight:700;font-size:16px;
+    margin:2px 0}
+  .pagebtn{display:inline-block;background:#eef4fb;color:var(--blue);border:1.5px solid #cfe1f2;padding:3px 12px;
+    border-radius:10px;font-weight:700;font-size:16px}
+  .auto{background:#e7f6ec;border:2px solid #b7e5c6;border-radius:12px;padding:8px 14px;font-size:16px;color:#1f7a3d;margin-top:4px}
+
+  /* color variants */
+  .c-blue .top{background:var(--blue)} .c-green .top{background:var(--green)}
+  .c-amber .top{background:var(--amber)} .c-red .top{background:var(--red)}
+  .c-purple .top{background:var(--purple)}
+
+  /* SPECIAL NOTE */
+  .special{background:#fdecec;border:3px solid #f6b8b8;border-radius:22px;padding:22px;margin:24px 0}
+  .special .h{font-size:21px;font-weight:800;color:var(--red-dark);margin-bottom:10px}
+  .special ul{list-style:none;padding:0}
+  .special li{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:8px;font-size:17px}
+  .special li b{color:var(--red-dark)}
+
+  /* FAQ */
+  .faq{background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px 22px;margin:16px 0}
+  .faq details{padding:14px 0;border-bottom:1px solid var(--line)}
+  .faq details:last-child{border-bottom:none}
+  .faq summary{font-size:18px;font-weight:700;cursor:pointer;color:var(--red-dark)}
+  .faq p{font-size:17px;color:var(--ink-2);margin-top:8px}
+
+  footer{text-align:center;color:#999;font-size:15px;padding:30px 18px 50px}
+  @media(max-width:560px){
+    .hero h1{font-size:27px} body{font-size:17px}
+    .row{flex-wrap:wrap} .row .lab{min-width:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="big">👋</div>
+  <h1>วิธีใช้เว็บ JR</h1>
+  <p>คู่มือแบบง่ายสุดๆ — อ่านแล้วใช้เป็นเลย</p>
+</div>
+
+<div class="wrap">
+
+  <!-- BIG IDEA -->
+  <div class="idea">
+    <div class="em">🧩</div>
+    <h2>เว็บนี้ทำงานยังไง?</h2>
+    <p>ลูกค้า 1 คน = งาน 1 ใบ ที่<b>เดินหน้าทีละขั้น</b> จากรับงาน → เสนอราคา → มัดจำ → ผลิต → ติดตั้ง → ส่งมอบ<br>
+    หน้าที่เราคือ <b>"ดันงานให้เดินไปข้างหน้า"</b> เมื่อทำเสร็จแต่ละขั้น</p>
+  </div>
+
+  <!-- JOURNEY -->
+  <div class="journey">
+    <div class="jstep"><span class="e">📞</span><b>รับงาน</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">📐</span><b>เขียนแบบ</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">📄</span><b>เสนอราคา</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">💰</span><b>มัดจำ</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">🏭</span><b>ผลิต</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">🔧</span><b>ติดตั้ง</b></div>
+    <span class="jarrow">→</span>
+    <div class="jstep"><span class="e">✅</span><b>ส่งมอบ</b></div>
+  </div>
+
+  <!-- GOLDEN RULE -->
+  <div class="rule">
+    <div class="h">⭐ กฎทองง่ายๆ จำแค่นี้ก็ใช้เป็น</div>
+    <p style="font-size:18px;margin-bottom:6px">งานเกือบทั้งหมด ทำแค่ 3 สเต็ปนี้:</p>
+    <div class="flow3">
+      <div class="b">1. เปิดเมนู<br><small>"งานทั้งหมด"</small></div>
+      <span class="ar">→</span>
+      <div class="b">2. คลิกชื่อ<br><small>งานลูกค้าที่จะอัปเดต</small></div>
+      <span class="ar">→</span>
+      <div class="b">3. กดปุ่ม<br><small>"ไปขั้นต่อไป →"</small></div>
+    </div>
+    <p style="text-align:center;margin-top:14px;font-size:17px;color:#a9700b">
+      ✨ ระบบจะเลื่อนงานไปขั้นถัดไปให้เอง และกันไม่ให้กดข้าม/กดผิดด้วย</p>
+  </div>
+
+  <!-- DETAIL PER PHASE -->
+  <h2 class="sec">📍 แต่ละขั้นตอน กดตรงไหน?</h2>
+  <p class="sec-note">ไล่ตามนี้ได้เลย — บอกชัดว่าอยู่เมนูไหน กดอะไร แล้วเกิดอะไร</p>
+
+  <!-- 1 รับงาน -->
+  <div class="step c-blue">
+    <div class="top"><div class="num">1</div><div class="t">รับงาน / นัดลูกค้า</div><div class="e">📞</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">คิวงาน</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">เปลี่ยนสถานะคิวเป็น <span class="tap">เสร็จ (DONE)</span></span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val"><div class="auto">ระบบสร้างงานลูกค้าใหม่ + เก็บเข้าทะเบียนให้อัตโนมัติ</div></span></div>
+    </div>
+  </div>
+
+  <!-- 2 เขียนแบบ -->
+  <div class="step c-purple">
+    <div class="top"><div class="num">2</div><div class="t">เขียนแบบ</div><div class="e">📐</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">งานเขียนแบบ</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">เลื่อนการ์ดงานไปคอลัมน์ถัดไป<br>(รอเริ่ม → กำลังเขียน → รอลูกค้าคอนเฟิร์ม → แก้แบบ → เสร็จ)</span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val">เห็นชัดว่าใครงานเยอะ งานไหนใกล้เลยกำหนด</span></div>
+    </div>
+  </div>
+
+  <!-- 3 เสนอราคา -->
+  <div class="step c-blue">
+    <div class="top"><div class="num">3</div><div class="t">คิดราคา + เสนอราคา</div><div class="e">📄</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">เครื่องคิดราคา</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">เลือกลูกค้า → คิดราคา → กดปุ่มแดง <span class="tap">📤 ส่งเข้าระบบ JR</span></span></div>
+      <div class="row"><span class="ic">✓</span><span class="lab">จากนั้น:</span><span class="val">ไปเมนู <span class="pagebtn">ใบเสนอราคา</span> → เปิดใบ → กด <span class="tap">อนุมัติ</span></span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val"><div class="auto">อนุมัติแล้ว สร้างใบวางบิลต่อได้เลย</div></span></div>
+    </div>
+  </div>
+
+  <!-- 4 มัดจำ -->
+  <div class="step c-green">
+    <div class="top"><div class="num">4</div><div class="t">รับมัดจำ</div><div class="e">💰</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">งานทั้งหมด</span> → คลิกงานลูกค้า</span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">กรอก <span class="tap">ยอดมัดจำ + วันที่</span> ในแผงงาน แล้วบันทึก</span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val"><div class="auto">ระบบเลื่อนงานไปขั้นถัดไป + เปิดงานผลิตให้เอง</div></span></div>
+      <div class="row"><span class="ic">⚠️</span><span class="lab"></span><span class="val" style="color:var(--red-dark)">ขั้นนี้ <b>ไม่ต้อง</b>กดปุ่ม "ไปขั้นต่อไป" — ใช้ฟอร์มมัดจำแทน</span></div>
+    </div>
+  </div>
+
+  <!-- 5 ผลิต -->
+  <div class="step c-amber">
+    <div class="top"><div class="num">5</div><div class="t">ผลิต</div><div class="e">🏭</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">ผลิต</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">คลิกงาน → เปลี่ยนสถานะไปเรื่อยๆ<br>(วัดหน้างาน → ผลิต → ตรวจ QC → <b>พร้อมติดตั้ง</b>)</span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val"><div class="auto">พอตั้ง "พร้อมติดตั้ง" ระบบเปิดงานติดตั้งให้เอง</div></span></div>
+    </div>
+  </div>
+
+  <!-- 6 ติดตั้ง -->
+  <div class="step c-red">
+    <div class="top"><div class="num">6</div><div class="t">ติดตั้ง + ส่งมอบ</div><div class="e">🔧</div></div>
+    <div class="body">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">ติดตั้ง</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ให้กด:</span><span class="val">เปลี่ยนสถานะ → ตรวจรับ → ตั้ง <span class="tap">เสร็จสมบูรณ์</span></span></div>
+      <div class="row"><span class="ic">✨</span><span class="lab">ผลที่ได้:</span><span class="val"><div class="auto">ปิดงาน + ออกใบรับประกัน 12 เดือนให้อัตโนมัติ 🎉</div></span></div>
+    </div>
+  </div>
+
+  <!-- SPECIAL -->
+  <div class="special">
+    <div class="h">📌 จำง่ายๆ: 3 ขั้นนี้ทำผ่าน "หน้าเฉพาะ" (ไม่ใช่ปุ่มไปขั้นต่อไป)</div>
+    <ul>
+      <li>💰 <b>มัดจำ</b> → กรอกในแผงงาน (เมนูงานทั้งหมด)</li>
+      <li>🏭 <b>ผลิต</b> → ทำที่เมนู "ผลิต"</li>
+      <li>🔧 <b>ติดตั้ง</b> → ทำที่เมนู "ติดตั้ง"</li>
+    </ul>
+    <p style="font-size:16px;color:var(--ink-2);margin-top:4px">นอกนั้นทุกขั้น = เปิดงาน แล้วกด "ไปขั้นต่อไป" พอ</p>
+  </div>
+
+  <!-- ISSUES -->
+  <h2 class="sec">🚩 ลูกค้ามีปัญหา? บันทึกตรงไหน</h2>
+  <div class="step c-red">
+    <div class="body" style="padding-top:18px">
+      <div class="row"><span class="ic">📂</span><span class="lab">อยู่เมนู:</span><span class="val"><span class="pagebtn">ปัญหางาน</span></span></div>
+      <div class="row"><span class="ic">👆</span><span class="lab">ทำได้:</span><span class="val">ดูว่าลูกค้าคนไหนมีปัญหารอแก้ · กำหนดคนรับผิดชอบ + วันแก้ · บันทึกความคืบหน้า · กดปิดเมื่อแก้เสร็จ</span></div>
+      <div class="row"><span class="ic">🎨</span><span class="lab">สีบอก:</span><span class="val"><b style="color:var(--green)">เขียว</b> = ยังมีเวลา · <b style="color:var(--amber)">เหลือง</b> = ใกล้ครบ · <b style="color:var(--red)">แดง</b> = เลยกำหนดแล้ว</span></div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <h2 class="sec">❓ คำถามที่เจอบ่อย</h2>
+  <div class="faq">
+    <details open>
+      <summary>กดปุ่ม "ไปขั้นต่อไป" ไม่เจอ?</summary>
+      <p>ต้อง <b>คลิกที่ชื่องานลูกค้า</b> ก่อน แผงงานจะเด้งขึ้นมา ปุ่มจะอยู่ <b>บนสุด</b>ของแผง (กล่องที่เขียน "ขั้นปัจจุบัน X/24")</p>
+    </details>
+    <details>
+      <summary>กดผิดขั้นจะพังไหม?</summary>
+      <p>ไม่พังครับ ระบบกันไม่ให้กดข้ามขั้นหรือย้อนผิดอยู่แล้ว ถ้ากดไม่ได้แปลว่ายังไม่ถึงเวลาทำขั้นนั้น</p>
+    </details>
+    <details>
+      <summary>อยากดูว่างานลูกค้าอยู่ขั้นไหน?</summary>
+      <p>เมนู <b>"ติดตามงาน"</b> หรือ <b>"งานทั้งหมด"</b> จะเห็นทุกงานพร้อมขั้นปัจจุบัน (X/24)</p>
+    </details>
+    <details>
+      <summary>ทำไมบางขั้นกดปุ่มไม่ได้ ต้องไปหน้าอื่น?</summary>
+      <p>เพราะ 3 ขั้น (มัดจำ / ผลิต / ติดตั้ง) ต้องกรอกข้อมูลจริง ระบบเลยให้ทำผ่านหน้าเฉพาะ แล้วมันจะเลื่อนขั้นให้เองอัตโนมัติ</p>
+    </details>
+  </div>
+
+</div>
+
+<footer>
+  JR Aluminium &amp; Glass — คู่มือใช้งานเว็บ (เปิดอ่านในเครื่องได้เลย)<br>
+  ถ้ายังงงตรงไหน ถามได้เสมอ 🙂
+</footer>
+
+</body>
+</html>

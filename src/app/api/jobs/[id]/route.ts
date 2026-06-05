@@ -55,7 +55,7 @@ const fieldsSchema = z.object({
   quote_sent_date: z.string().optional(),
   net_amount:     z.number().positive().optional(),
   discount_amount: z.number().min(0).optional(),
-  designer_id:    z.string().uuid().optional(),
+  designer_id:    z.string().uuid().nullish(),
   design_start:   z.string().optional(),
   design_end:     z.string().optional(),
   remark:         z.string().optional(),

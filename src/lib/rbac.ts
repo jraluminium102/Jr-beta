@@ -47,11 +47,11 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 }
 
 export function menusFor(role: Role): string[] {
-  const all = ["dashboard", "followup", "jobs", "production", "designer", "installation", "issues", "boq", "finance", "users", "settings"];
+  const all = ["dashboard", "followup", "jobs", "production", "designer", "installation", "issues", "boq", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", jobs: "jobs", production: "production",
     designer: "designer", installation: "installation", issues: "issues", boq: "boq",
-    finance: "finance", users: "users", settings: "settings",
+    finance: "finance", settings: "settings",
   };
   return all.filter((m) => can(role, map[m], "read"));
 }

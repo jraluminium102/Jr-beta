@@ -70,6 +70,7 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [moving, setMoving] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,6 +92,27 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
   useEffect(() => {
     load();
   }, [load]);
+
+  // มอบหมายผู้ออกแบบ (PATCH /api/jobs/[id]) — designer_id หรือ null ปลด
+  async function assignDesigner(job: Job, designerId: string | null) {
+    if (designerId === (job.designer_id ?? null)) return;
+    setAssigning(job.id);
+    setErr("");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ designer_id: designerId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "มอบหมายงานไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "มอบหมายงานไม่สำเร็จ");
+    } finally {
+      setAssigning(null);
+    }
+  }
 
   // ย้ายสถานะการ์ด (PATCH /api/designer/[id]) — optimistic ออกจากคอลัมน์เดิม
   async function moveTo(job: Job, state: DesignState) {
@@ -185,7 +207,15 @@ export default function DesignerBoard({ designers, canWrite }: { designers: Desi
       {loading ? (
         <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>
       ) : tab === "board" ? (
-        <BoardView byColumn={byColumn} canWrite={canWrite} moving={moving} onMove={moveTo} />
+        <BoardView
+          byColumn={byColumn}
+          canWrite={canWrite}
+          moving={moving}
+          assigning={assigning}
+          designers={designers}
+          onMove={moveTo}
+          onAssign={assignDesigner}
+        />
       ) : (
         <TimelineView />
       )}
@@ -207,12 +237,18 @@ function BoardView({
   byColumn,
   canWrite,
   moving,
+  assigning,
+  designers,
   onMove,
+  onAssign,
 }: {
   byColumn: Record<DesignState, Job[]>;
   canWrite: boolean;
   moving: string | null;
+  assigning: string | null;
+  designers: DesignerOption[];
   onMove: (job: Job, state: DesignState) => void;
+  onAssign: (job: Job, designerId: string | null) => void;
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
@@ -232,7 +268,16 @@ function BoardView({
                 <p className="text-[12px] text-ink-3 px-1 py-3 text-center">— ไม่มีงาน —</p>
               ) : (
                 items.map((j) => (
-                  <JobCard key={j.id} job={j} canWrite={canWrite} moving={moving === j.id} onMove={onMove} />
+                  <JobCard
+                    key={j.id}
+                    job={j}
+                    canWrite={canWrite}
+                    moving={moving === j.id}
+                    assigning={assigning === j.id}
+                    designers={designers}
+                    onMove={onMove}
+                    onAssign={onAssign}
+                  />
                 ))
               )}
             </div>
@@ -247,12 +292,18 @@ function JobCard({
   job,
   canWrite,
   moving,
+  assigning,
+  designers,
   onMove,
+  onAssign,
 }: {
   job: Job;
   canWrite: boolean;
   moving: boolean;
+  assigning: boolean;
+  designers: DesignerOption[];
   onMove: (job: Job, state: DesignState) => void;
+  onAssign: (job: Job, designerId: string | null) => void;
 }) {
   return (
     <div className="glass-soft rounded-xl p-3 text-sm">
@@ -264,22 +315,36 @@ function JobCard({
           </span>
         )}
       </div>
-      <div className="text-ink-2 mt-0.5 truncate">{job.customer_name}</div>
-      <div className="text-[12px] text-ink-3 mt-0.5 truncate">
-        ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
-      </div>
+      <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>{job.customer_name}</div>
       <div className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}>
         กำหนด: {thDate(job.design_due_date)}
         {job.overdue && " · เลยกำหนด"}
       </div>
 
-      {canWrite && (
-        <div className="mt-2">
+      {canWrite ? (
+        <div className="mt-2 space-y-1.5">
+          {/* มอบหมายผู้ออกแบบ */}
+          <select
+            value={job.designer_id ?? ""}
+            disabled={assigning}
+            onChange={(e) => onAssign(job, e.target.value || null)}
+            aria-label="มอบหมายผู้ออกแบบ"
+            className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
+          >
+            <option value="">— ยังไม่มอบหมาย —</option>
+            {designers.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.full_name}
+              </option>
+            ))}
+          </select>
+          {/* ย้ายขั้นตอนเขียนแบบ */}
           <select
             value={job.design_state}
             disabled={moving}
             onChange={(e) => onMove(job, e.target.value as DesignState)}
-            className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none disabled:opacity-60"
+            aria-label="ขั้นตอนเขียนแบบ"
+            className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
           >
             {COLUMNS.map((c) => (
               <option key={c.state} value={c.state}>
@@ -287,6 +352,10 @@ function JobCard({
               </option>
             ))}
           </select>
+        </div>
+      ) : (
+        <div className="text-[12px] text-ink-3 mt-1 truncate" title={job.designer_name ?? "ยังไม่มอบหมาย"}>
+          ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
         </div>
       )}
     </div>

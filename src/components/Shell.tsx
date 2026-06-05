@@ -13,8 +13,6 @@ type NavItem = { href: string; icon: string; label: string };
 
 // กลุ่มเอกสาร/บัญชี (ฝั่ง Quotation) — เห็นได้ทุก role ที่ล็อกอิน
 const DOC_NAV: NavItem[] = [
-  { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
-  { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
   { href: "/queue", icon: "calendar", label: "คิวงาน" },
   { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
   { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
@@ -24,6 +22,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/production-orders", icon: "factory", label: "ใบสั่งผลิต" },
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
+  { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
 ];
 
 // กลุ่มปฏิบัติงาน (ฝั่ง OMS) — กรองตาม role ผ่าน menusFor()
@@ -37,7 +36,6 @@ const OMS_NAV: Record<string, NavItem> = {
   issues:       { href: "/issues", icon: "warn", label: "ปัญหางาน (Track)" },
   boq:          { href: "/boq", icon: "clipboard", label: "BOQ ตัดอลู" },
   finance:      { href: "/finance", icon: "banknote", label: "การเงิน" },
-  users:        { href: "/settings/users", icon: "users", label: "ผู้ใช้" },
   settings:     { href: "/settings", icon: "gear", label: "ตั้งค่า" },
 };
 
@@ -65,8 +63,8 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
   const role = profile.role as Role;
   const docItems = DOC_NAV.filter((n) => {
-    if (n.href === "/queue") return can(role, "queue", "read");
-    if (n.href === "/stats") return can(role, "finance", "read");
+    if (n.href === "/queue")  return can(role, "queue",   "read");
+    if (n.href === "/stats")  return can(role, "finance", "read");
     return true;
   });
 
