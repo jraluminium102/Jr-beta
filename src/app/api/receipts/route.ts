@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { applyInstallmentPayment } from "@/lib/billing";
 import type { BillingNote } from "@/lib/types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -73,6 +74,17 @@ export async function POST(req: Request) {
     .select("id, code")
     .single();
   if (rcErr || !rc) return fail("บันทึกใบเสร็จไม่สำเร็จ: " + (rcErr?.message ?? ""), 500);
+
+  // 5) ถ้าออกใบเสร็จต่องวด → ปิดงวดนั้น + recompute สถานะใบวางบิล (A1, helper ร่วมกับ /pay)
+  if (body.installment_id) {
+    const { error: payErr } = await applyInstallmentPayment(supabase, {
+      installmentId: Number(body.installment_id),
+      billingNoteId: bn.id,
+      paidDate: body.issue_date, // ไม่ส่ง paidAmount = ปิดงวดเต็มจำนวน
+    });
+    // ใบเสร็จออกสำเร็จแล้ว — ถ้า sync งวดพลาด ไม่ rollback แต่แจ้งเตือน (กันใบเสร็จหาย)
+    if (payErr) return ok({ id: rc.id, code: rc.code, warn: "ออกใบเสร็จสำเร็จ แต่ปิดงวดไม่สำเร็จ: " + payErr }, 201);
+  }
 
   return ok({ id: rc.id, code: rc.code }, 201);
 }

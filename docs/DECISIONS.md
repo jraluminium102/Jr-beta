@@ -15,3 +15,17 @@
 | D8 | promote เริ่ม stage | job ใหม่จากคิว = current_stage 2 (เข้าทะเบียนแล้ว) ไม่ใช่ 1 | ผ่านการนัด+ประเมินมาแล้ว (E2E BLOCKER-1) |
 
 (เพิ่มรายการระหว่างทำ)
+
+---
+
+## รอบ refactor เอกสารการเงิน (autonomous)
+
+| # | ประเด็น | ตัดสินใจ | เหตุผล |
+|---|--------|---------|--------|
+| **DF1** | ⚠️ premise ของ goal ขัดกับโค้ดจริง — goal บอก "web team สร้าง quote ผิดหน้า (ที่ใบเสนอ) ต้องย้ายไปหน้าคิดราคา" | **ไม่ย้าย** — ทีม agent ยืนยันว่า `quotations/page.tsx` เป็น **list view อยู่แล้ว**, create อยู่ที่ `quotations/new` ซึ่ง**ดึงราคาจากหน้าคิดราคา** (`/calculator`) ผ่าน sessionStorage อยู่แล้ว. โครงถูกตาม flow ที่ต้องการแล้ว → โฟกัส bug จริง (A1) + ช่องว่าง wiring (A4) แทนการรื้อที่ถูกอยู่แล้ว | "เจอข้อขัดแย้ง → log + continue"; การย้ายที่ถูกอยู่แล้วจะ rewrite UI (ผิด scope) + เสี่ยงพังของที่ทำงาน |
+| **DF2** | กฎแบ่งงวด 4 tier ที่สั่งใหม่ | **ไม่ต้องเขียนใหม่** — `money.ts:suggestInstallments` มีสูตรตรงเป๊ะอยู่แล้ว (70/30 · 40/50/10 · 35/30/res/40k · 25×3/res/40k, RETENTION=40000) | ตรวจ node แล้ว sum=total ทุก tier; เขียนซ้ำ = A3 duplication |
+| **DF3** | tax (VAT/WHT/discount) | ใช้ `money.ts:computeTotals` (canonical) — **ลบ** `tax.ts`/`installments.ts` ที่เผลอสร้างรอบนี้ | computeTotals รองรับครบ + ถูกตามภาษีไทย; กัน source ซ้อน |
+| **DF4** | A1 (P0) แก้ที่ไหน | helper เดียว `lib/billing.ts:applyInstallmentPayment` ใช้ร่วมทั้ง `/pay` + `/receipts` | กัน logic แตกสองทาง (root cause เดิมคือ logic อยู่แค่ฝั่ง pay) |
+| **DF5** | A1 ใบเสร็จ sync งวดพลาด | ใบเสร็จออกสำเร็จแล้ว **ไม่ rollback** ถ้าปิดงวดพลาด — คืน `warn` แทน | กันใบเสร็จ (เอกสารภาษี) หายเพราะ side-effect รอง |
+| **DF6** | A2 (P0 VAT meaning) | **เลื่อนทำรอบถัดไป** + documented | fix แตะ chain หลายจุด (QT→BL→INV) กระทบยอดเงิน → ต้องมี regression test ยอดก่อนทำ กันออกใบกำกับผิด |
+| **DF7** | numbering | **ไม่แตะ** RPC `next_document_code` (atomic, reset เดือน ถูกแล้ว) | scope = connect ไม่ใช่ rewrite; client ห้าม gen running เอง (race) |
