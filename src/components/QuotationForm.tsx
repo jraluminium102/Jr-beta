@@ -40,7 +40,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number }>; customer?: string };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number }>; customer?: string; customer_id?: number | null };
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -50,10 +50,19 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           unit_price: Number(it.unit_price) || 0,
         }));
       if (bridged.length) setItems(bridged);
-      if (payload.customer) {
+      // ลูกค้าจากเครื่องคิดราคา: ใช้ customer_id (เลือกจากทะเบียนแล้ว) ก่อน — แม่นยำสุด
+      const cidFromCalc =
+        payload.customer_id != null && customers.some((c) => c.id === Number(payload.customer_id))
+          ? Number(payload.customer_id)
+          : null;
+      if (cidFromCalc != null) {
+        setCustomerId(cidFromCalc);
+        setCalcMatched(true);
+        setCalcCustomer(customers.find((c) => c.id === cidFromCalc)?.name ?? String(payload.customer ?? ""));
+      } else if (payload.customer) {
+        // fallback (A4): ไม่ได้เลือกจากทะเบียนในหน้าคิดราคา → fuzzy-match จากชื่อ
         const name = String(payload.customer);
         setCalcCustomer(name);
-        // A4: fuzzy-match ชื่อจากเครื่องคิดราคากับทะเบียนลูกค้า → preselect dropdown
         const norm = (s: string) => s.toLowerCase().replace(/\s+/g, "");
         const target = norm(name);
         const hit = target
@@ -128,8 +137,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
           <Icon name="file" size={18} />
         </span>
-        สร้างใบเสนอราคา
-        <span className="text-xs font-normal text-ink-3">(รหัสจะออกอัตโนมัติเมื่อบันทึก)</span>
+        สร้างใบเสนอราคา (จากเครื่องคิดราคา)
+        <span className="text-xs font-normal text-ink-3">(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)</span>
       </h1>
 
       <div className="grid lg:grid-cols-3 gap-4">

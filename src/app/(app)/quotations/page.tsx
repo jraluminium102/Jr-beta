@@ -31,8 +31,8 @@ export default async function QuotationsPage() {
           ใบเสนอราคา
         </h1>
         {canWrite(profile?.role) && (
-          <Link href="/quotations/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
-            <Icon name="plus" size={16} /> สร้างใบเสนอราคา
+          <Link href="/calculator" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+            <Icon name="calculator" size={16} /> คิดราคา + สร้างใบเสนอ
           </Link>
         )}
       </div>
@@ -41,7 +41,7 @@ export default async function QuotationsPage() {
         {rows.length === 0 ? (
           <div className="text-center py-12 text-ink-3">
             <p>ยังไม่มีใบเสนอราคา</p>
-            <Link href="/quotations/new" className="text-brand font-semibold text-sm">+ สร้างใบแรก</Link>
+            <Link href="/calculator" className="text-brand font-semibold text-sm">+ คิดราคา + สร้างใบแรก</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
