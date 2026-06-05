@@ -29,6 +29,7 @@ export default async function QuotationsPage() {
             <Icon name="file" size={18} />
           </span>
           ใบเสนอราคา
+          <span className="text-xs font-normal text-ink-3">(เริ่มจากการคิดราคาเสมอ)</span>
         </h1>
         {canWrite(profile?.role) && (
           <Link href="/calculator" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">

@@ -19,6 +19,13 @@ export default function CalculatorClient({
   useEffect(() => {
     function handler(event: MessageEvent) {
       if (event.data?.type === "JR_QUOTE_ITEMS") {
+        // เตือนถ้ายังไม่ผูกลูกค้าจากทะเบียน (กันออกใบเสนอลอย/ผูกผิดคน)
+        if (!customerId) {
+          const go = window.confirm(
+            "ยังไม่ได้เลือกลูกค้าจากทะเบียน (ช่อง ① ด้านบน)\n\nกด “ตกลง” เพื่อไปต่อโดยให้เลือก/ยืนยันลูกค้าในหน้าใบเสนอ\nหรือ “ยกเลิก” เพื่อกลับมาเลือกลูกค้าก่อน",
+          );
+          if (!go) return;
+        }
         try {
           const picked = customers.find((c) => c.id === customerId);
           // แนบ customer_id (จากทะเบียน) ไปกับรายการ+ราคาจากเครื่องคิดราคา
@@ -52,9 +59,10 @@ export default function CalculatorClient({
           href="/calculator/index.html"
           target="_blank"
           rel="noopener noreferrer"
+          title="โหมดเต็มจอจะไม่ผูกลูกค้าจากทะเบียนอัตโนมัติ — ถ้าจะออกใบเสนอ แนะนำคิดในหน้านี้"
           className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2 text-sm font-semibold text-brand-dark"
         >
-          <Icon name="external" size={15} /> เปิดเต็มจอ (แท็บใหม่)
+          <Icon name="external" size={15} /> เปิดเต็มจอ (ดูอย่างเดียว)
         </a>
       </div>
 
@@ -83,8 +91,12 @@ export default function CalculatorClient({
           </p>
         )}
         <p className="text-[11px] text-ink-3 mt-2">
-          ② คิดราคาด้านล่าง แล้วกดปุ่ม “ออกใบเสนอราคา” ในเครื่องคิดราคา → ระบบจะพาไปสร้างใบเสนอ
-          พร้อมลูกค้า + รายการ + ราคาที่คิดไว้ให้อัตโนมัติ
+          ② คิดราคาด้านล่าง แล้วกดปุ่มแดง <strong>“ส่งเข้าระบบ JR → ออกใบเสนอราคา”</strong> ในเครื่องคิดราคา
+          → ระบบจะพาไปสร้างใบเสนอพร้อมลูกค้า + รายการ + ราคาที่คิดไว้ให้อัตโนมัติ
+        </p>
+        <p className="text-[11px] text-amber-700 mt-1">
+          หมายเหตุ: <strong>ผูกลูกค้าเข้าระบบใช้ดรอปดาวน์ ① ด้านบนนี้</strong> — ส่วนช่อง “ชื่อลูกค้า/งาน”
+          ในเครื่องคิดราคาด้านล่าง ใช้สำหรับพิมพ์หัวกระดาษ PDF เท่านั้น
         </p>
       </div>
 

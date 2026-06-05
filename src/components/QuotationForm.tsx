@@ -12,7 +12,8 @@ const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0 });
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
   const router = useRouter();
-  const [customerId, setCustomerId] = useState<number | "">(customers[0]?.id ?? "");
+  // ไม่ default เป็นลูกค้าคนแรก — กันผูกผิดคนเงียบ ๆ (ต้องเลือก/ดึงจากเครื่องคิดราคาเสมอ)
+  const [customerId, setCustomerId] = useState<number | "">("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<Item[]>([blank()]);
   const [vat, setVat] = useState(7);
@@ -22,7 +23,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [calcCustomer, setCalcCustomer] = useState("");
-  const [calcMatched, setCalcMatched] = useState(false); // A4: ชื่อจาก calc ตรงทะเบียนแล้ว preselect
+  const [calcMatched, setCalcMatched] = useState(false); // preselect ให้แล้ว (จาก calc)
+  const [calcExact, setCalcExact] = useState(false); // มั่นใจ (customer_id ตรง/ชื่อตรงเป๊ะรายเดียว) → เขียว; เดา → เหลือง
 
   type AgentResult = { agentName: string; passed: boolean; issues: string[]; suggestions: string[]; rawOutput: string };
   type AiReview = { agents: AgentResult[]; verdict: "APPROVE" | "NEEDS_REVISION" | "REJECT" };
@@ -56,24 +58,36 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           ? Number(payload.customer_id)
           : null;
       if (cidFromCalc != null) {
+        // เลือกจากทะเบียนในหน้าคิดราคาแล้ว → มั่นใจ (เขียว)
         setCustomerId(cidFromCalc);
         setCalcMatched(true);
+        setCalcExact(true);
         setCalcCustomer(customers.find((c) => c.id === cidFromCalc)?.name ?? String(payload.customer ?? ""));
       } else if (payload.customer) {
-        // fallback (A4): ไม่ได้เลือกจากทะเบียนในหน้าคิดราคา → fuzzy-match จากชื่อ
+        // ไม่ได้เลือกจากทะเบียน → จับคู่จากชื่อ (แยกระดับความมั่นใจ กัน match ผิดเงียบ)
         const name = String(payload.customer);
         setCalcCustomer(name);
         const norm = (s: string) => s.toLowerCase().replace(/\s+/g, "");
         const target = norm(name);
-        const hit = target
-          ? customers.find((c) => {
+        if (target) {
+          const exact = customers.filter((c) => norm(c.name) === target);
+          if (exact.length === 1) {
+            setCustomerId(exact[0].id); // ชื่อตรงเป๊ะรายเดียว → มั่นใจ (เขียว)
+            setCalcMatched(true);
+            setCalcExact(true);
+          } else if (exact.length === 0) {
+            const fuzzy = customers.filter((c) => {
               const cn = norm(c.name);
-              return cn === target || cn.includes(target) || target.includes(cn);
-            })
-          : undefined;
-        if (hit) {
-          setCustomerId(hit.id);
-          setCalcMatched(true);
+              return cn.includes(target) || target.includes(cn);
+            });
+            if (fuzzy.length === 1) {
+              setCustomerId(fuzzy[0].id); // เดาให้รายเดียว → เหลือง (ต้องยืนยัน)
+              setCalcMatched(true);
+              setCalcExact(false);
+            }
+            // fuzzy 0 หรือ >1 ราย → ไม่ preselect (ปล่อยว่าง ให้เลือกเอง)
+          }
+          // exact >1 (ชื่อซ้ำเป๊ะหลายราย) → ไม่ preselect ให้เลือกเอง
         }
       }
     } catch {
@@ -161,14 +175,19 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             {customers.length === 0 && (
               <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู “ทะเบียนลูกค้า” ก่อน</p>
             )}
-            {calcCustomer && calcMatched && (
+            {calcCustomer && calcMatched && calcExact && (
               <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">
-                ✓ ดึงลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> — เลือกตรงทะเบียนให้แล้ว (ตรวจสอบความถูกต้องก่อนบันทึก)
+                ✓ ผูกลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> (ตรงทะเบียน)
+              </p>
+            )}
+            {calcCustomer && calcMatched && !calcExact && (
+              <p className="text-xs text-amber-800 bg-amber-100 rounded-lg px-3 py-2 mt-2 border border-amber-300">
+                ⚠️ เดาลูกค้าให้จากชื่อ “<strong>{calcCustomer}</strong>” — <strong>โปรดยืนยัน</strong>ในช่องด้านบนว่าตรงคนก่อนบันทึก
               </p>
             )}
             {calcCustomer && !calcMatched && (
-              <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-2">
-                ลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> — ไม่พบในทะเบียน เลือกให้ตรงเอง (หรือเพิ่มที่เมนูทะเบียนลูกค้า)
+              <p className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2 mt-2 border border-rose-200">
+                ไม่พบ/มีชื่อคล้ายหลายคนกับ “<strong>{calcCustomer}</strong>” ในทะเบียน — เลือกลูกค้าให้ตรงเอง (หรือเพิ่มที่เมนูทะเบียนลูกค้า)
               </p>
             )}
           </Card>

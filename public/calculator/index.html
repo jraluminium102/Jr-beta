@@ -194,8 +194,8 @@
     <div class="sum">
       <div class="grand"><b>ราคารวมทั้งหมด</b><span class="big" id="q-total">฿0</span></div>
     </div>
-    <button type="button" class="btn-prim" style="width:100%;height:48px;margin-top:14px;" onclick="genQuoteQuick()">สร้างใบเสนอราคา</button>
-    <div class="hint">จำนวนบาน มีผลเฉพาะ บานเปิด (บานคู่) / บานกระทุ้ง (บานที่ 2+) · ต้องการกระจกอัปเกรด/ออปชั่น ใช้แท็บใบเสนอราคา</div>
+    <button type="button" class="btn-sec" style="width:100%;height:48px;margin-top:14px;" onclick="genQuoteQuick()">👁 พรีวิวราคา (คิดเร็ว)</button>
+    <div class="hint">ปุ่มนี้แค่ดูราคาในเครื่อง · จะ<b>ออกใบเสนอราคาจริง</b>ให้ไปแท็บ “ใบเสนอราคา” แล้วกดปุ่มแดง “ส่งเข้าระบบ JR” · จำนวนบาน มีผลเฉพาะบานเปิด(คู่)/บานกระทุ้ง(บานที่ 2+) · ต้องการกระจกอัปเกรด/ออปชั่น ใช้แท็บใบเสนอราคา</div>
   </section>
 
   <!-- ===== QUOTE BUILDER ===== -->
@@ -280,11 +280,13 @@
     <div id="warnAll"></div>
 
     <div class="actions">
-      <button type="button" class="btn-sec" onclick="resetQuote()">ล้างทั้งหมด</button>
-      <button type="button" class="btn-prim" onclick="genQuote()">สร้างใบเสนอราคา</button>
-      <button type="button" class="btn-prim" style="background:#B3151D;" onclick="sendToQuotation()">📤 ส่งไปสร้างใบเสนอราคา</button>
+      <button type="button" class="btn-prim" style="background:#B3151D;width:100%;height:50px;font-weight:700;font-size:16px;" onclick="sendToQuotation()">📤 ส่งเข้าระบบ JR → ออกใบเสนอราคา</button>
     </div>
-    <div class="note">ราคาเป็นการประเมิน ตรวจหน้างานก่อนเสนอจริง · เครื่องคิดทำงานในเครื่อง ไม่ต่อเน็ต</div>
+    <div class="actions" style="margin-top:8px;">
+      <button type="button" class="btn-sec" onclick="genQuote()">👁 พรีวิว/พิมพ์ในเครื่อง</button>
+      <button type="button" class="btn-sec" onclick="resetQuote()">ล้างทั้งหมด</button>
+    </div>
+    <div class="note" style="color:#B3151D;font-weight:600;">ออกใบเสนอราคาจริง = กดปุ่มแดง “ส่งเข้าระบบ JR” ด้านบน · ปุ่มพรีวิวแค่ดู/พิมพ์ในเครื่อง ไม่บันทึกเข้าระบบ</div>
   </section>
 
   <!-- ===== COMPARE ===== -->
