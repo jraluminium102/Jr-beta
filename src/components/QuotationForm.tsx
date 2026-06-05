@@ -22,6 +22,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [calcCustomer, setCalcCustomer] = useState("");
+  const [calcMatched, setCalcMatched] = useState(false); // A4: ชื่อจาก calc ตรงทะเบียนแล้ว preselect
 
   type AgentResult = { agentName: string; passed: boolean; issues: string[]; suggestions: string[]; rawOutput: string };
   type AiReview = { agents: AgentResult[]; verdict: "APPROVE" | "NEEDS_REVISION" | "REJECT" };
@@ -49,7 +50,23 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           unit_price: Number(it.unit_price) || 0,
         }));
       if (bridged.length) setItems(bridged);
-      if (payload.customer) setCalcCustomer(String(payload.customer));
+      if (payload.customer) {
+        const name = String(payload.customer);
+        setCalcCustomer(name);
+        // A4: fuzzy-match ชื่อจากเครื่องคิดราคากับทะเบียนลูกค้า → preselect dropdown
+        const norm = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+        const target = norm(name);
+        const hit = target
+          ? customers.find((c) => {
+              const cn = norm(c.name);
+              return cn === target || cn.includes(target) || target.includes(cn);
+            })
+          : undefined;
+        if (hit) {
+          setCustomerId(hit.id);
+          setCalcMatched(true);
+        }
+      }
     } catch {
       /* ignore malformed payload */
     } finally {
@@ -135,9 +152,14 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             {customers.length === 0 && (
               <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู “ทะเบียนลูกค้า” ก่อน</p>
             )}
-            {calcCustomer && (
+            {calcCustomer && calcMatched && (
+              <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">
+                ✓ ดึงลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> — เลือกตรงทะเบียนให้แล้ว (ตรวจสอบความถูกต้องก่อนบันทึก)
+              </p>
+            )}
+            {calcCustomer && !calcMatched && (
               <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-2">
-                ลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> — เลือกให้ตรงทะเบียนลูกค้า
+                ลูกค้าจากเครื่องคิดราคา: <strong>{calcCustomer}</strong> — ไม่พบในทะเบียน เลือกให้ตรงเอง (หรือเพิ่มที่เมนูทะเบียนลูกค้า)
               </p>
             )}
           </Card>

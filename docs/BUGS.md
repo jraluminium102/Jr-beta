@@ -30,7 +30,7 @@
 | A1 | 🔴 CRITICAL | ออกใบเสร็จต่องวด → งวดไม่ถูกปิด + ใบวางบิลไม่ recompute → บิลโผล่ dropdown ซ้ำ, ยอดค้างผิด | `POST /receipts` เก็บ `installment_id` แต่ไม่อัปเดต `billing_installments`/`billing_notes` (logic ถูกมีแต่ใน `/pay`) | helper เดียว `lib/billing.ts:applyInstallmentPayment` → ใช้ทั้ง `/pay` + `/receipts` | ✅ แก้แล้ว |
 | A2 | 🔴 CRITICAL | ใบเสร็จถอด VAT ย้อนกลับจาก `net` (หัก WHT แล้ว) → ยอดก่อน VAT ในใบกำกับไม่ตรง subtotal QT | `billing_notes.total=q.net` แต่ receipts คิด vat จากยอดนั้น | (planned) carry subtotal/vat_rate QT→BL ผ่าน join `quotation_id`, ใบเสร็จ default = QT.subtotal | 📋 documented |
 | A3 | 🟠 MED | logic VAT/แบ่งงวดเสี่ยงซ้ำซ้อน | `finance.ts:calcFinancials` + ไฟล์ `installments/tax` ที่เพิ่งสร้างซ้ำ money.ts | ลบ `installments.ts`/`tax.ts` (ไม่มีใคร import) ใช้ money.ts source เดียว · calcFinancials deferred | ◑ partial |
-| A4 | 🟠 MED | calc→ใบเสนอ ได้ลูกค้าแค่ชื่อ ไม่มี `customer_id` → เลือก dropdown ซ้ำ | sessionStorage bridge ส่งแค่ชื่อ | (planned) fuzzy-match → preselect dropdown | 📋 documented |
+| A4 | 🟠 MED | calc→ใบเสนอ ได้ลูกค้าแค่ชื่อ ไม่มี `customer_id` → เลือก dropdown ซ้ำ | sessionStorage bridge ส่งแค่ชื่อ | fuzzy-match ชื่อกับทะเบียน (`QuotationForm`) → preselect dropdown + hint ✓/⚠️ | ✅ แก้แล้ว |
 | A5/A6 | 🟡 LOW | create logic inline · ไม่มี automated test | — | service extraction · vitest | deferred (มี node verify) |
 
 > หมายเหตุ: A2 fix แตะ chain หลายจุด (กระทบยอดเงิน) → แยกทำรอบถัดไป กัน regression · ไม่แตะ `computeTotals`/`suggestInstallments`/`next_document_code`
