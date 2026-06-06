@@ -2211,7 +2211,7 @@ function genQuote(keepNo){
       if(os.ghnoteExc && os.ghnoteExc.trim()) prodName += '\nหมายเหตุ — ไม่รวม: '+os.ghnoteExc.trim();
       // #2: บานย่อย glasshouse (ถ้ามี)
       if(it.subItems && it.subItems.length){
-        var ghSubLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');
+        var ghSubLines = it.subItems.map(function(s){ return '- '+s.type; }).join('\n');  // ราคารวมในชุด → ไม่โชว์ขนาด (โชว์เฉพาะตอนแยกราคา)
         prodName += '\n' + ghSubLines;
       }
       // "รายละเอียดงาน" = วัสดุอย่างเดียว
@@ -2395,7 +2395,7 @@ function genQuote(keepNo){
     // #2 2026-06-05: บานย่อย — เพิ่มบรรทัด "- {ชื่อบานย่อย}" ใต้บานหลัก (เหนือ "รายละเอียดงาน")
     // ใช้ multiline prodName เดียวกับ glasshouse (qrow แยก \n ได้แล้ว)
     if(it.subItems && it.subItems.length){
-      var subLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');
+      var subLines = it.subItems.map(function(s){ return '- '+s.type; }).join('\n');  // ราคารวมในชุด → ไม่โชว์ขนาด (โชว์เฉพาะตอนแยกราคา)
       prodName += '\n' + subLines;
     }
     return {prodName, det};
