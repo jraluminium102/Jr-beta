@@ -1525,7 +1525,7 @@ function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div><div class="set-parts"></div><div class="set-btns set-btns-bot"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div>';
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div><div class="set-parts"></div><div class="set-btns set-btns-bot"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div>';
   document.getElementById('items').appendChild(box);
   box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){ addItem(box.querySelector('.set-parts')); refreshSet(box); calcQuote(); }); });
@@ -1573,6 +1573,40 @@ function addOptPreset(sel){
   if(sel.value==='__note') ta.focus();
   sel.value='';
   calcQuote();
+}
+// OPTION สำเร็จรูป ระดับชุด — กดแล้วเติมข้อความ + คิดราคาส่วนต่างให้ (กระจก=ตามพื้นที่ · อื่น=ระบุเอง)
+// rate กระจก = ราคาส่วนต่าง/ตร.ม. จากตาราง GLASS (.s) ตัวเลขจริงในระบบ — ไม่เดา
+const SET_OPT_PRESETS=[
+  {t:'เปลี่ยนเป็นกระจกเทมเปอร์เขียว/ใส 6มม.', m:'sqm', r:600},
+  {t:'เปลี่ยนเป็นกระจกเทมเปอร์ใสพิเศษ 6มม.', m:'sqm', r:2500},
+  {t:'เปลี่ยนเป็นกระจกลามิเนต 4+4มม. (เขียว/ใส)', m:'sqm', r:2200},
+  {t:'เปลี่ยนเป็นกระจกลามิเนตกันร้อน 4+4มม. (Solar Max)', m:'sqm', r:4300},
+  {t:'เปลี่ยนเป็นกระจกอินซูเลท 6+6+6มม.', m:'sqm', r:4000},
+  {t:'เพิ่มมุ้งจีบนิรภัย', m:'ask'},
+  {t:'เปลี่ยนสีอลูมิเนียมเป็นสีพิเศษ', m:'ask'}
+];
+function setOptPresetOptions(){
+  return '<option value="">+ OPTION สำเร็จรูป (คิดราคาให้)…</option>'
+    + SET_OPT_PRESETS.map(function(p,i){ var h=p.m==='sqm'?(' · '+fmt(p.r)+'/ตร.ม.'):' · ระบุราคาเอง'; return '<option value="'+i+'">'+p.t+h+'</option>'; }).join('');
+}
+function addSetOptPreset(sel){
+  if(sel.value===''){ return; }
+  const p=SET_OPT_PRESETS[parseInt(sel.value)]; const box=sel.closest('.setbox');
+  if(!p||!box){ sel.value=''; return; }
+  const ot=box.querySelector('.set-opttext'), od=box.querySelector('.set-optdelta');
+  let text=p.t, delta=0;
+  if(p.m==='sqm'){
+    let area=0;
+    box.querySelectorAll('.set-parts .ch').forEach(function(ch){
+      const w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, q=parseInt((ch.querySelector('.i-qty')||{}).value)||1;
+      area+=w*h*q;
+    });
+    delta=Math.round(p.r*area);
+    text=p.t+(area>0?(' (กระจกทั้งชุด ~'+area.toFixed(1)+' ตร.ม.)'):'');
+  } else { text=p.t+' (ราคาเพิ่มตามจริง)'; delta=0; }
+  ot.value=text; ot.dispatchEvent(new Event('input',{bubbles:true}));
+  od.value=delta||''; od.dispatchEvent(new Event('input',{bubbles:true}));
+  sel.value=''; calcQuote();
 }
 function addItem(container){
   itemSeq++;
