@@ -2440,7 +2440,8 @@ function genQuote(keepNo){
     if(items[0]&&items[0].groupOptText){ const _ot=items[0].groupOptText, _od=items[0].groupOptDelta; content += '<div style="margin-top:6px;margin-left:8px;color:#B3151D;font-size:13px;">OPTION : '+_ot+(_od?(' (ราคา'+(_od>0?'+':'-')+fmt(Math.abs(_od))+' บาท)'):'')+'</div>'; }
     rowIdx++; subtotal += gTotal;
     // ⚠ ยังบวก gTotal เข้า subtotal เหมือนเดิม — แก้เฉพาะการแสดงผลในเซลล์ยอดรวม
-    const gTotalCell = isSplit ? '—' : q2(gTotal);
+    // โชว์ยอดรวมชุดเสมอ (ทั้งรวมราคา/แยกราคา) — แยกราคาก็ยังเห็นยอดรวมขวาสุด
+    const gTotalCell = q2(gTotal);
     rows += '<tr><td style="vertical-align:top;text-align:center;">'+rowIdx+'</td><td style="vertical-align:top;text-align:left;padding:8px;">'+content+'</td><td class="r" style="vertical-align:top;">1 ชุด</td><td class="r" style="vertical-align:top;">—</td><td class="r" style="vertical-align:top;">'+gTotalCell+'</td></tr>';
   });
   // Render ungrouped
