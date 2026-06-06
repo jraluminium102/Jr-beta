@@ -171,7 +171,11 @@
   .set-name{flex:1;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;}
   .set-del{height:34px;border:1px solid #ddd;border-radius:8px;background:#fff;color:var(--red);cursor:pointer;padding:0 12px;font-size:13px;white-space:nowrap;}
   .set-parts{display:flex;flex-direction:column;gap:8px;}
-  .set-addpart{margin-top:8px;width:100%;height:38px;border:1.5px dashed var(--red);border-radius:8px;background:#fff;color:var(--red);cursor:pointer;font-size:14px;}
+  .set-btns{display:flex;gap:8px;}
+  .set-btns-top{margin:0 0 8px;}
+  .set-btns-bot{margin-top:8px;}
+  .set-addpart,.set-addfixed{flex:1;height:38px;border-radius:8px;cursor:pointer;font-size:14px;border:1.5px dashed var(--red);background:#fff;color:var(--red);}
+  .set-addfixed{border-style:solid;background:var(--red);color:#fff;}
 </style>
 </head>
 <body>
@@ -1521,14 +1525,54 @@ function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div><div class="set-parts"></div><button type="button" class="set-addpart">+ เพิ่มส่วนในชุดนี้</button>';
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div><div class="set-parts"></div><div class="set-btns set-btns-bot"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div>';
   document.getElementById('items').appendChild(box);
   box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
-  box.querySelector('.set-addpart').addEventListener('click',function(){ addItem(box.querySelector('.set-parts')); refreshSet(box); calcQuote(); });
+  box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){ addItem(box.querySelector('.set-parts')); refreshSet(box); calcQuote(); }); });
+  box.querySelectorAll('.set-addfixed').forEach(function(b){ b.addEventListener('click',function(){ addFixedToSet(box); }); });
   box.querySelector('.set-name').addEventListener('input',calcQuote);
   addItem(box.querySelector('.set-parts'));
   refreshSet(box);
   return box;
+}
+// เพิ่มช่องแสงติดตาย (fixed_glass) ในชุด — preset prod + sync แค่สี/กระจก จากบานแรก
+// ขนาด (กว้าง×สูง) ปล่อยให้กรอกเอง: บางทีช่องแสงอยู่บนบานประตู สูง/กว้างไม่เท่าบานหลัก
+function addFixedToSet(box){
+  const parts=box.querySelector('.set-parts');
+  addItem(parts);
+  const chs=parts.querySelectorAll('.ch'); const ch=chs[chs.length-1];
+  const fireE=(el,t)=>el.dispatchEvent(new Event(t,{bubbles:true}));
+  const ps=ch.querySelector('.i-prod');
+  if(ps && ps.querySelector('option[value="fixed_glass"]')){ ps.value='fixed_glass'; fireE(ps,'change'); }
+  const first=parts.querySelector('.ch');
+  if(first && first!==ch){
+    ['.i-color','.i-glass'].forEach(function(sel){ const f=first.querySelector(sel),n=ch.querySelector(sel); if(f&&n){ n.value=f.value; if(n.value===f.value) fireE(n,'change'); } });
+  }
+  refreshSet(box); calcQuote();
+}
+// C4: OPTION สำเร็จรูป — กดเลือกแล้วเติมข้อความลงช่องหมายเหตุ (แก้ต่อได้) ข้อความไม่ต้องตรงใบจริงเป๊ะ
+const OPT_PRESETS=[
+  'เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง',
+  'เปลี่ยนเป็นกระจกเทมเปอร์ 6 มม. ราคาเพิ่มตามจริง',
+  'เปลี่ยนเป็นกระจกเขียวตัดแสง ราคาเพิ่มตามจริง',
+  'เพิ่มมุ้งจีบ ราคาเพิ่มตามจริง',
+  'เพิ่มเหล็กดัด/กันขโมย ราคาเพิ่มตามจริง',
+  'เปลี่ยนสีอลูมิเนียม (สีพิเศษ) ราคาเพิ่มตามจริง'
+];
+function optPresetOptions(){
+  return '<option value="">+ เพิ่ม OPTION สำเร็จรูป…</option>'
+    + OPT_PRESETS.map(function(t){ return '<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>'; }).join('')
+    + '<option value="__note">+ หมายเหตุ (พิมพ์เอง)</option>';
+}
+function addOptPreset(sel){
+  if(!sel.value) return;
+  const ta=sel.closest('.full').querySelector('.i-note'); if(!ta){ sel.value=''; return; }
+  const prefix = sel.value==='__note' ? 'หมายเหตุ : ' : ('OPTION : '+sel.value);
+  ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/,'')+'\n' : '') + prefix;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+  if(sel.value==='__note') ta.focus();
+  sel.value='';
+  calcQuote();
 }
 function addItem(container){
   itemSeq++;
@@ -1550,7 +1594,7 @@ function addItem(container){
      `<div class="i-panels-wrap"><label>จำนวนบาน</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
      `<div><label>จำนวนชุด</label><input class="i-qty" type="number" step="1" min="1" value="1"></div>`+
      `<div class="full"><label>ราคากำหนดเอง (บาท · เว้น=คิดออโต้)</label><input class="i-override" type="number" min="0" step="100" placeholder="ปล่อยว่าง = คิดอัตโนมัติ"></div>`+
-     `<div class="full"><label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label><textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea></div>`+
+     `<div class="full"><label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label><select class="i-optpreset" onchange="addOptPreset(this)" style="height:34px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">${optPresetOptions()}</select><textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea></div>`+
    `</div>`+
    `<details class="optbox"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
@@ -1638,7 +1682,7 @@ function buildItemOpts(d){
     h+='<div class="gh-box"><b style="color:#B3151D;">🏠 กั้นห้องกระจก — กรอกข้อมูลทีละด้าน</b><div style="font-size:12px;color:#666;margin-bottom:6px;">กรอกแต่ละด้าน A-H + เลือก OPTION + ราคารวม (ไม่บวก overhead)</div>';
     h+='<label class="gh-row">ชื่อพื้นที่/ห้อง <input type="text" class="o-ghroom" placeholder="เช่น ห้องอเนกประสงค์+ซักล้าง"></label>';
     h+='<label class="gh-row">สีอลู (default เทาซาฮาร่า) <select class="o-ghcolor"><option value="sahara" selected>สีเทาซาฮารา (default)</option><option value="black">สีดำ</option><option value="white">สีอบขาว</option><option value="bronze">สีบรอนซ์</option><option value="champagne">สีแชมเปญ</option><option value="aztec">สี Aztec gray</option><option value="fuji">สีลายไม้อบพิเศษ (Fuji)</option><option value="kl">สีอบพิเศษ (KL)</option><option value="kl_wood">สีลายไม้อบพิเศษ (KL)</option><option value="anodized">สีชุบ</option><option value="other">อื่นๆ (กรอกเอง)</option></select></label>';
-    h+='<label class="gh-row">กระจก default <select class="o-ghglass"><option value="กระจกเขียว/ใส หนา 6 มม." selected>กระจกเขียว/ใส 6 มม.</option><option value="กระจกใส หนา 6 มม.">กระจกใส 6 มม.</option><option value="กระจกเขียว หนา 6 มม.">กระจกเขียว 6 มม.</option><option value="กระจกเทมเปอร์เขียว/ใส 6 มม.">เทมเปอร์เขียว/ใส 6 มม.</option><option value="กระจกเทมเปอร์ใส 10 มม.">เทมเปอร์ใส 10 มม.</option><option value="กระจกลามิเนตใส 4+4 มม. ฟิล์มเขียว">ลามิเนตใส 4+4 ฟิล์มเขียว</option><option value="กระจกลามิเนตใส 4+4 มม. ฟิล์มกันร้อน">ลามิเนตใส 4+4 กันร้อน</option></select></label>';
+    h+='<label class="gh-row">กระจก (ต้องเลือก) <select class="o-ghglass"><option value="" selected>— เลือกชนิดกระจก —</option><option value="กระจกใส หนา 6 มม.">กระจกใส 6 มม.</option><option value="กระจกเขียว หนา 6 มม.">กระจกเขียว 6 มม.</option><option value="กระจกเทมเปอร์ใส หนา 6 มม.">เทมเปอร์ใส 6 มม.</option><option value="กระจกเทมเปอร์เขียว หนา 6 มม.">เทมเปอร์เขียว 6 มม.</option><option value="กระจกเทมเปอร์ใส หนา 10 มม.">เทมเปอร์ใส 10 มม.</option><option value="กระจกลามิเนตใส 4+4 มม. ฟิล์มเขียว">ลามิเนตใส 4+4 ฟิล์มเขียว</option><option value="กระจกลามิเนตใส 4+4 มม. ฟิล์มกันร้อน">ลามิเนตใส 4+4 กันร้อน</option></select></label>';
     h+='<label class="gh-row">รางน้ำ <select class="o-ghgutter"><option value="" selected>(ตามที่กรอกในหลังคา)</option><option value="รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้">อลู + ตะแกรง</option><option value="รางน้ำสแตนเลส สีเงิน">สแตน เงิน</option><option value="ไม่มีรางน้ำ ปล่อยปลาย">ไม่มี ปล่อยปลาย</option></select></label>';
     h+='<label class="gh-row">มุ้ง (auto ระบุด้าน) <input type="text" class="o-ghmosq" placeholder="เช่น มุ้งเฟรมเล็ก (ด้าน B, E, G)"></label>';
     h+='<label class="gh-row">ชุดล็อค/กุญแจ <input type="text" class="o-ghlock" placeholder="เช่น ชุดล็อคพร้อมกุญแจ (ด้าน C) · ชุดล็อคไม่มีกุญแจ (ประตูด้าน E)"></label>';
@@ -1854,7 +1898,7 @@ function readItem(d){
   if(p.glasshouse){
     optSel.ghroom = (d.querySelector('.o-ghroom')||{}).value || '';
     optSel.ghcolor = (d.querySelector('.o-ghcolor')||{}).value || 'sahara';
-    optSel.ghglass = (d.querySelector('.o-ghglass')||{}).value || 'กระจกเขียว/ใส หนา 6 มม.';
+    optSel.ghglass = (d.querySelector('.o-ghglass')||{}).value || '';  // C2: ต้องเลือกเอง (ไม่ default เขียว/ใส)
     optSel.ghgutter = (d.querySelector('.o-ghgutter')||{}).value || '';
     optSel.ghmosq = (d.querySelector('.o-ghmosq')||{}).value || '';
     optSel.ghlock = (d.querySelector('.o-ghlock')||{}).value || '';
@@ -2216,7 +2260,7 @@ function genQuote(keepNo){
       }
       // "รายละเอียดงาน" = วัสดุอย่างเดียว
       let det = '- อลูมิเนียม สี'+colorTh;
-      if(os.ghglass) det += '\n- '+os.ghglass;
+      det += '\n- '+(os.ghglass || '⚠ กระจก (ยังไม่เลือกชนิด)');  // C2: บังคับเลือก — ถ้าว่างโชว์เตือน
       if(os.ghmosq) det += '\n- '+os.ghmosq;
       if(os.ghlock) det += '\n- '+os.ghlock;
       if(os.ghgutter) det += '\n- '+os.ghgutter;
@@ -2281,6 +2325,8 @@ function genQuote(keepNo){
     const seriesTag = it.p.series ? (' ('+SERIES_LABEL[it.p.series]+')') : '';
     // #2: ใช้ let เพราะต้องต่อ subItems ที่หลัง
     let prodName = ((prefix && !/^(ประตู|หน้าต่าง)/.test(rawName)) ? (prefix + rawName) : rawName) + seriesTag + discontinuedSuffix;
+    // C1: มีมุ้งจีบ (addon) → ต่อท้ายชื่อ "พร้อมมุ้งจีบ" (สั้น ไม่ใส่รุ่น/ผ้า — รายละเอียดอยู่ใน "รายละเอียดงาน")
+    if(it.p.mosquito && it.optSel && it.optSel.mosqId){ prodName += ' พร้อมมุ้งจีบ'; }
     const _parts=[];
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
@@ -2380,7 +2426,9 @@ function genQuote(keepNo){
           const fabricMapM={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
           const mf = (it.optSel.mosqFabric)||'fiber_gray';
           const mfLabel = fabricMapM[mf]||'ผ้าไฟเบอร์ดำ';
-          lines.push(mscreen.name+' '+mfLabel);
+          // C1: ตัด "SD พื้นฐาน" ทิ้ง → รายละเอียดเหลือ "มุ้งจีบ {ผ้า}" (ชนิดอื่นเช่นตีนตะขาบยังคงไว้)
+          const msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s+/g,' ').trim();
+          lines.push(msName+' '+mfLabel);
         }
       }
       // บรรทัด 4: ใช้ภายใน ไม่กันน้ำ — ทุกตัว cat 'เลื่อนภายใน' + X-series (บานเปิด/บานเฟี้ยม)
@@ -2449,10 +2497,14 @@ function genQuote(keepNo){
     rowIdx++;
     const line=it.r.sell*it.qty; subtotal+=line;
     const d = itemDetail(it);
-    // v5: ตามใบจริง — ขนาดบานไม่ลงในใบ (อยู่ใน drawing) → _sz = '' เสมอ ยกเว้นราวบันได (ใช้ความยาว)
-    const _w=parseFloat(it.w)||0;
+    // C3: บานเดี่ยว (ไม่มีบานย่อยผสม · ไม่ใช่กั้นห้อง) → โชว์ขนาด (กว้าง×สูง) · ราวบันได=ยาว · กั้นห้อง=ไม่โชว์
+    const _w=parseFloat(it.w)||0, _h=parseFloat(it.h)||0;
     const _isLength = it.p.method==='per_length_tier' || it.p.unit==='meter';
-    const _sz = _isLength && _w>0 ? `(ยาว ${it.w} ม.)` : '';
+    const _isGH = it.p.id==='glasshouse' || it.p.cat==='กั้นห้องกระจก';
+    const _hasSub = !!(it.subItems && it.subItems.length);
+    let _sz='';
+    if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
+    else if(!_isGH && !_hasSub && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
     rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
