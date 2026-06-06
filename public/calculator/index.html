@@ -336,6 +336,7 @@
     <button type="button" class="btn-prim" onclick="window.print()">พิมพ์ / เซฟ PDF</button>
     <button type="button" class="btn-prim" onclick="exportQuoteExcel()" style="background:#10803a;">Export Excel</button>
     <button type="button" class="btn-sec" onclick="toggleSplit()" id="splitBtn">แยกราคาแต่ละส่วน</button>
+    <button type="button" class="btn-sec" onclick="toggleQuoteEdit()" id="editBtn">✎ แก้ราคา/ข้อความ</button>
     <button type="button" class="btn-sec" onclick="toggleWatermark()" id="wmBtn">+ ฉบับร่าง</button>
     <button type="button" class="btn-sec" onclick="aiReviewQuote()" id="aiReviewBtn" style="background:#1f2937;color:#fff;">🤖 AI ตรวจใบเสนอ</button>
   </div>
@@ -2082,8 +2083,9 @@ function resetQuote(){
 
 /* ---- QUOTE doc (ใช้ร่วมทั้งใบเสนอราคา + คิดเร็ว) ---- */
 function today(){ const t=new Date(); return String(t.getDate()).padStart(2,'0')+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String((t.getFullYear()+543)%100).padStart(2,'0'); }
-function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note){
+function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,itemId){
   // PDF-like format: # | รายละเอียด (multi-line) | จำนวน | ราคา/หน่วย | ยอดรวม
+  const _ed = window.qEdit && itemId;  // งาน4: โหมดแก้ในใบ
   let content = `<div style="font-weight:700;color:#1F2937;">${name}</div>`;
   // R4.3: แนบขนาดท้ายชื่อสินค้า (size = "(กว้าง × สูง ม.)" หรือ "" ถ้าไม่มี เช่น กั้นห้องกระจก)
   // #4 2026-06-05: prod รองรับ multiline (\n) — บรรทัดแรกผูก size, บรรทัดถัดไปเป็นบรรยายด้าน A-H/หลังคา
@@ -2093,7 +2095,12 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note)
       pl = pl.trim(); if(!pl) return;
       const suf = (pi===0 && size) ? (' '+size) : '';
       const keep = pl.startsWith('-');
-      content += `<div style="margin:${pi===0?'4px':'1px'} 0 0 8px;color:#1F2937;">${keep?pl:'- '+pl}${suf}</div>`;
+      const txt = keep?pl:'- '+pl;
+      if(_ed && pi===0){
+        content += `<div style="margin:4px 0 0 8px;color:#1F2937;"><span contenteditable="true" onblur="setRowName('${itemId}',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">${txt}</span>${suf}</div>`;
+      } else {
+        content += `<div style="margin:${pi===0?'4px':'1px'} 0 0 8px;color:#1F2937;">${txt}${suf}</div>`;
+      }
     });
   }
   // R4.2: หมายเหตุ/OPTION ที่เซลล์พิมพ์เอง (ขึ้นก่อน "รายละเอียดงาน") — OPTION=แดง, อื่น=เทา
@@ -2108,9 +2115,15 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note)
     glass.split(/\n|\s·\s/).filter(g=>g.trim()).forEach(g => { g=g.trim(); const keep=g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ'); content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${keep?g:'- '+g}</div>`; });
   }
   if(optText){ content += `<div style="margin-top:6px;color:#B3151D;font-size:13px;">OPTION : ${optText}${optDelta?(' (ราคา'+(optDelta>0?'+':'-')+fmt(Math.abs(optDelta))+' บาท)'):''}</div>`; }
+  const unitCell = _ed ? `<span contenteditable="true" onblur="setRowPrice('${itemId}',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">${q2(unit)}</span>` : q2(unit);
   return `<tr><td style="vertical-align:top;text-align:center;">${n}</td><td style="vertical-align:top;text-align:left;padding:8px;">${content}</td>`+
-    `<td class="r" style="vertical-align:top;">${qty} ชุด</td><td class="r" style="vertical-align:top;">${q2(unit)}</td><td class="r" style="vertical-align:top;">${q2(line)}</td></tr>`;
+    `<td class="r" style="vertical-align:top;">${qty} ชุด</td><td class="r" style="vertical-align:top;">${unitCell}</td><td class="r" style="vertical-align:top;">${q2(line)}</td></tr>`;
 }
+// งาน4: โหมดแก้ราคา/ข้อความในใบ
+window.qEdit=false; window._nameOv=window._nameOv||{};
+function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElementById('editBtn'); if(b){ b.textContent=window.qEdit?'✓ เสร็จการแก้':'✎ แก้ราคา/ข้อความ'; b.style.background=window.qEdit?'#B3151D':''; b.style.color=window.qEdit?'#fff':''; } genQuote(true); }
+function setRowName(id,el){ var t=(el.innerText||'').replace(/^-\s*/,'').trim(); if(t) window._nameOv[id]=t; else delete window._nameOv[id]; genQuote(true); }
+function setRowPrice(id,el){ var v=parseFloat((el.innerText||'').replace(/[^0-9.]/g,'')); var ch=document.querySelector('#items .ch[data-id="'+id+'"]'); if(ch){ var ov=ch.querySelector('.i-override'); if(ov){ ov.value=(isNaN(v)?'':v); ov.dispatchEvent(new Event('input',{bubbles:true})); } calcQuote(); genQuote(true); } }
 function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepNo){
   const discAmt=subtotal*discPct/100; discFlat=parseFloat(discFlat)||0; const net=subtotal-discAmt-discFlat;
   const svcAmt=svc?svc.amt:0;
@@ -2490,6 +2503,11 @@ function genQuote(keepNo){
       var subLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');  // โชว์ขนาดบานย่อยด้วย (ตามที่พี่นัทขอ ให้ขนาดครบทุกบรรทัด)
       prodName += '\n' + subLines;
     }
+    // งาน4: แก้ข้อความ inline → แทนบรรทัดแรก (ชื่อสินค้า) ด้วยข้อความที่เซลล์พิมพ์ในใบ
+    if(window._nameOv && it.div && window._nameOv[it.div.dataset.id]){
+      var _rest=prodName.split('\n').slice(1);
+      prodName=[window._nameOv[it.div.dataset.id]].concat(_rest).join('\n');
+    }
     return {prodName, det};
   }
   // Render grouped (ชุดหลายส่วน) — default ประโยคเดียว / qSplit แยกราคา
@@ -2548,7 +2566,7 @@ function genQuote(keepNo){
     let _sz='';
     if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
     else if(!_isGH && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
-    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
+    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note, (it.div?it.div.dataset.id:''));
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
