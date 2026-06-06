@@ -2289,7 +2289,7 @@ function genQuote(keepNo){
       if(os.ghnoteExc && os.ghnoteExc.trim()) prodName += '\nหมายเหตุ — ไม่รวม: '+os.ghnoteExc.trim();
       // #2: บานย่อย glasshouse (ถ้ามี)
       if(it.subItems && it.subItems.length){
-        var ghSubLines = it.subItems.map(function(s){ return '- '+s.type; }).join('\n');  // ราคารวมในชุด → ไม่โชว์ขนาด (โชว์เฉพาะตอนแยกราคา)
+        var ghSubLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');  // โชว์ขนาดบานย่อยด้วย (ตามที่พี่นัทขอ ให้ขนาดครบทุกบรรทัด)
         prodName += '\n' + ghSubLines;
       }
       // "รายละเอียดงาน" = วัสดุอย่างเดียว
@@ -2487,7 +2487,7 @@ function genQuote(keepNo){
     // #2 2026-06-05: บานย่อย — เพิ่มบรรทัด "- {ชื่อบานย่อย}" ใต้บานหลัก (เหนือ "รายละเอียดงาน")
     // ใช้ multiline prodName เดียวกับ glasshouse (qrow แยก \n ได้แล้ว)
     if(it.subItems && it.subItems.length){
-      var subLines = it.subItems.map(function(s){ return '- '+s.type; }).join('\n');  // ราคารวมในชุด → ไม่โชว์ขนาด (โชว์เฉพาะตอนแยกราคา)
+      var subLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');  // โชว์ขนาดบานย่อยด้วย (ตามที่พี่นัทขอ ให้ขนาดครบทุกบรรทัด)
       prodName += '\n' + subLines;
     }
     return {prodName, det};
@@ -2541,14 +2541,13 @@ function genQuote(keepNo){
     rowIdx++;
     const line=it.r.sell*it.qty; subtotal+=line;
     const d = itemDetail(it);
-    // C3: บานเดี่ยว (ไม่มีบานย่อยผสม · ไม่ใช่กั้นห้อง) → โชว์ขนาด (กว้าง×สูง) · ราวบันได=ยาว · กั้นห้อง=ไม่โชว์
+    // C3+: โชว์ขนาดทุกรายการ (กว้าง×สูง = ขนาดช่องงาน/บาน · มุ้งทำตามช่อง) · ราวบันได=ยาว · กั้นห้อง=ไม่โชว์ (หลายด้าน)
     const _w=parseFloat(it.w)||0, _h=parseFloat(it.h)||0;
     const _isLength = it.p.method==='per_length_tier' || it.p.unit==='meter';
     const _isGH = it.p.id==='glasshouse' || it.p.cat==='กั้นห้องกระจก';
-    const _hasSub = !!(it.subItems && it.subItems.length);
     let _sz='';
     if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
-    else if(!_isGH && !_hasSub && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
+    else if(!_isGH && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
     rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
