@@ -504,7 +504,7 @@ const PRODUCTS=[
  {id:'folding_euro',cat:'บานเฟี้ยม',name:'บานเฟี้ยม ยูโร',method:'fold',unit_rate:9000,per_panel_min:15000,cost:null,optBeam:true,series:'L',mosquito:1},
  {id:'folding_xseries',cat:'บานเฟี้ยม',name:'บานเฟี้ยม X-series (ใช้ภายใน ไม่กันน้ำ)',method:'fold_flat',min:36000,unit_rate:12000,cost:null,optBeam:true,series:'S',mosquito:1},
  {id:'inner_top_stack',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน (ซ้อน)',method:'area_rate_addon',rates:'INTOP',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:16000,4:22000}}},
- {id:'inner_top_slimlux',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน SlimLux (รวม soft close+สลิง+เทมเปอร์6มม.) (ใช้ภายใน ไม่กันน้ำ)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,series:'S',addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
+ {id:'inner_top_slimlux',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน SlimLux (รวม soft close+สลิงลากเปิดพร้อมกัน+เทมเปอร์6มม.) (ใช้ภายใน ไม่กันน้ำ)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,series:'S',addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
  {id:'inner_top_xseries',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางบน X-series (เลื่อนซ้อน) (ใช้ภายใน ไม่กันน้ำ)',method:'area_rate_addon',rates:'SLIMLUX',cost:null,series:'S',addon:{kind:'sliding',amounts:{1:4000,2:10000,3:20000,4:28000}}},
  {id:'cabinet_alu',cat:'ตู้อลู',name:'ตู้อลูมิเนียม',cabinet:1,cost:null},
  {id:'future_tech',cat:'ฝาตู้',name:'ฝาตู้ Future Tech (/บาน, max 3 บาน/ชุด)',future_tech:1,cost:null},
@@ -2290,7 +2290,9 @@ function genQuote(keepNo){
       .replace(/^shower\s+/,'')   // ตัด "shower " ออกจากต้นชื่อ — ใบลูกค้าใช้ภาษาไทย
       .replace(/\s+\(ยกเลิกขาย\)/g,'')  // ตัด "(ยกเลิกขาย)" ออกจากชื่อที่แสดงในใบ — ใส่ท้ายแยก
       .replace(/\s+\(ใช้ภายใน\s*ไม่กันน้ำ\)/g,'')  // ตัดวงเล็บออกจากหัวชื่อ — ระบุในรายละเอียดแทน
-      .replace(/\s+\(รวม[^)]+\)/g,'')  // ตัด "(รวม soft close+สลิง+เทมเปอร์6มม.)" ออก — ระบุในรายละเอียดแทน
+      .replace(/\s+\(รวม[^)]+\)/g,'')  // ตัด "(รวม soft close+สลิง+เทมเปอร์6มม.)" ออกจากหัวข้อ — ย้ายเป็นคำบรรยายใต้หัวข้อแทน
+      .replace(/\s*·\s*แข็งแรงกว่า/g,'')  // ข้อ10: ตัด "· แข็งแรงกว่า" — คงไว้แค่ "(ลูกฟูกเสมอกรอบ)"
+      .replace(/\s*·\s*ข้อ\s*[\d.]+/g,'')  // ตัด "· ข้อ 38.2" อ้างอิงเอกสารภายใน ออกจากใบลูกค้า (คงคำบรรยายเทคนิคไว้)
       .replace(/\s+\(เลื่อนซ้อน\)/g,'')  // ตัดวงเล็บ "(เลื่อนซ้อน)" ออก — เทคนิค ไม่ใช่ชื่อ
       .replace(/\s+\(zipscreen\)\s*/g,' ')  // ตัด "(zipscreen)" ออกจากชื่อ — ใช้ภาษาไทย
       .replace(/\s+ม่านม้วนกันลม\s*$/,'')   // ตัด "ม่านม้วนกันลม" ออก — ชื่อสื่อตัวเองแล้ว
@@ -2327,6 +2329,12 @@ function genQuote(keepNo){
     let prodName = ((prefix && !/^(ประตู|หน้าต่าง)/.test(rawName)) ? (prefix + rawName) : rawName) + seriesTag + discontinuedSuffix;
     // C1: มีมุ้งจีบ (addon) → ต่อท้ายชื่อ "พร้อมมุ้งจีบ" (สั้น ไม่ใส่รุ่น/ผ้า — รายละเอียดอยู่ใน "รายละเอียดงาน")
     if(it.p.mosquito && it.optSel && it.optSel.mosqId){ prodName += ' พร้อมมุ้งจีบ'; }
+    // ข้อ18: ย้ายคำบรรยาย "(รวม ...)" จากชื่อ → บรรทัดใต้หัวข้อ (ตัดส่วน "เทมเปอร์..." ออก ไม่เขียนต่อ)
+    var _incl = (it.p.name.match(/\(รวม([^)]+)\)/)||[])[1];
+    if(_incl){
+      var _fts = _incl.split('+').map(function(s){return s.trim();}).filter(function(s){return s && !/เทมเปอร์/.test(s);});
+      if(_fts.length) prodName += '\n(รวม '+_fts.join(' + ')+')';
+    }
     const _parts=[];
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
@@ -2339,7 +2347,7 @@ function genQuote(keepNo){
     if(it.optSel && (it.optSel.extraDesc||'').trim()) _parts.push((it.optSel.extraDesc||'').trim());
     let det = '';
     if(it.p.fin){ det = (it.finLabel||'ไม่อบสี'); }
-    else if(AREA_CATS.indexOf(it.p.cat)>=0){ det = '-'; }
+    else if(AREA_CATS.indexOf(it.p.cat)>=0 && it.p.cat!=='หลังคา'){ det = '-'; }  // ข้อ40: หลังคาไม่ใช้ '-' — ไปเข้า branch หลังคา (โครงอลู)
     else if(it.p.zipscreen){
       // ม่านซิป — ไม่มีกระจก ไม่มีอลู มีแค่สีผ้า
       const ZIP_FAB_LABEL = {'0':'ผ้าทึบ 0%','1':'ผ้าโปร่ง 1-2%','3':'ผ้าโปร่ง 3%','5':'ผ้าโปร่ง 5%','10':'ผ้าโปร่ง 10%','30':'ผ้าโปร่ง 30%','PET':'ผ้า PET ใส'};
@@ -2379,6 +2387,12 @@ function genQuote(keepNo){
       const ftLabel = ft==='swing' ? 'สวิง (บานเปิด)' : 'เลื่อน';
       det = 'ประตูบานเปลือย'+ftLabel+'\nเฟรมอลูมิเนียม สี'+fc;
     }
+    else if(it.p.cat==='หลังคา'){
+      // ข้อ40: หลังคา — โครงเป็นอลูมิเนียมเสมอ + รางน้ำ (วัสดุมุงอยู่ในชื่อหัวข้อแล้ว) · ออปชั่นที่เลือกต่อท้าย (_parts)
+      const _rc = COLORS[it.ci||0];
+      const _rcName = _rc ? (' '+(_rc.quoteName||_rc.n).replace(/[★⚠]/g,'').trim()) : '';
+      det = 'โครงอลูมิเนียม'+_rcName+'\nรางน้ำอลูมิเนียม + ตะแกรงกันใบไม้';
+    }
     else {
       // v5: แยกบรรทัดตามใบจริง: อลูมิเนียม / กระจก / มุ้ง (ถ้ามี addon)
       const lines = [];
@@ -2404,7 +2418,7 @@ function genQuote(keepNo){
       // บรรทัด 2: กระจก{ชนิด} หนา {x} มม.
       // Velora/SlimLux รวมเทมเปอร์ 6 มม. ในราคา — ไม่ใช้ glass selector ของผู้ใช้
       if(it.p.id==='casement_velora' || it.p.id==='inner_top_slimlux'){
-        lines.push('กระจกเทมเปอร์ใส หนา 6 มม. (รวมในราคา)');
+        lines.push('กระจกเทมเปอร์ใส หนา 6 มม.');  // ข้อ9/18: ตัด "(รวมในราคา)" ออก
       } else {
         const glassObj = GLASS[it.gi];
         if(glassObj){
@@ -2431,11 +2445,7 @@ function genQuote(keepNo){
           lines.push(msName+' '+mfLabel);
         }
       }
-      // บรรทัด 4: ใช้ภายใน ไม่กันน้ำ — ทุกตัว cat 'เลื่อนภายใน' + X-series (บานเปิด/บานเฟี้ยม)
-      const INDOOR_ONLY_IDS = ['casement_xseries','folding_xseries'];
-      if(it.p.cat==='เลื่อนภายใน' || INDOOR_ONLY_IDS.indexOf(it.p.id)>=0){
-        lines.push('ใช้ภายใน ไม่กันน้ำ (เฟรมล่างเรียบ ไม่มีรางน้ำ)');
-      }
+      // ข้อ8/18: "ใช้ภายใน ไม่กันน้ำ" เป็นคำเตือนเซลล์เท่านั้น (มีในชื่อสินค้าตอนเลือกแล้ว) — ไม่ลงรายละเอียดในใบลูกค้า
       det = lines.join('\n');
       if(!det.trim()) det = '-';
     }

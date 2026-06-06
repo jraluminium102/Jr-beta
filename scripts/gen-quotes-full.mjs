@@ -153,6 +153,7 @@ function buildJobBItems() {
     // ตัดคำรุ่นซ้ำในชื่อ pos
     const pos = p.name
       .replace(/\s*(เซมิยูโร|ยูโร|สลิม|SMS|aluinch|E-series|D-series|X-series|Velora)\s*/g, " ")
+      .replace(/\s*\([^)]*\)/g, " ")  // ตัดวงเล็บทั้งหมดออกจากหัวข้อ test ให้สะอาด (งานจริงเซลล์พิมพ์ตำแหน่งเอง)
       .replace(/\s+/g, " ").trim()
       .slice(0, 60);
 
