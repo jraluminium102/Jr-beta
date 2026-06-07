@@ -278,11 +278,14 @@
       </div>
       <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม</label>
       <div id="svc-demo-box" class="hide mt" style="padding-left:16px;">
-        <label class="chk"><input type="checkbox" id="svc-demo-roof" onchange="calcQuote()"> รื้อหลังคาเดิม</label>
-        <label class="chk mt"><input type="checkbox" id="svc-demo-rail" onchange="calcQuote()"> รื้อราวเดิม</label>
-        <label class="chk mt"><input type="checkbox" id="svc-demo-floor" onchange="calcQuote()"> กรีดพื้น</label>
-        <label class="chk mt"><input type="checkbox" id="svc-demo-door" onchange="calcQuote()"> รื้อประตู-หน้าต่างเดิม</label>
-        <div class="mt"><label>ค่ารื้อเหมา (บาท)</label><input type="number" id="svc-demo-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
+        <label class="chk"><input type="checkbox" id="svc-demo-roof" onchange="calcQuote()"> รื้อหลังคาเดิม (5,000/ชุด)</label>
+        <div id="svc-demo-roof-box" class="hide mt"><label>จำนวนชุด</label><input type="number" id="svc-demo-roof-qty" min="1" step="1" value="1" oninput="calcQuote()" style="max-width:120px;"></div>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-floor" onchange="calcQuote()"> กรีดพื้นฝังรางยู (5,000/ราง)</label>
+        <div id="svc-demo-floor-box" class="hide mt"><label>จำนวนราง</label><input type="number" id="svc-demo-floor-qty" min="1" step="1" value="1" oninput="calcQuote()" style="max-width:120px;"></div>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-rail" onchange="calcQuote()"> รื้อราวกันตก (3,000+700/ม.)</label>
+        <div id="svc-demo-rail-box" class="hide mt"><label>ความยาว (ม.)</label><input type="number" id="svc-demo-rail-len" min="0" step="0.5" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-door" onchange="calcQuote()"> รื้อประตู-หน้าต่างเดิม (เหมา)</label>
+        <div id="svc-demo-door-box" class="hide mt"><label>ค่าเหมา (บาท)</label><input type="number" id="svc-demo-door-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
       </div>
       <div class="hint">นั่งร้าน 5,000/ชั้น (ชั้น 2+) · ความเสี่ยง (10k+...) × จำนวนชุดเสี่ยง (ชั้น 3+) · เดินทาง: ที่พัก tier (≤70k=1วัน, 70-100k=2วัน) + 5,000/100km</div>
     </div>
@@ -1383,6 +1386,11 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // แปคู่ — ไม่คิดเพิ่ม
     // รางน้ำใหม่ (chain D) — cosmetic ไม่คิดเงิน
   }
+  // Pass2-A: ธรณีหลังเต่า + Drop Seal บานเปิด +1,000
+  if(p.cat==='บานเปิด' && optSel && optSel.thresh==='turtle'){
+    opt += 1000;
+    msgs.push('ธรณีหลังเต่า + Drop Seal +1,000');
+  }
   // คาดตาราง generic (ทุก cat ยกเว้น p.grid ซึ่งเป็น grid_bars)
   if(!p.grid && optSel && optSel.gridmark){
     const _gnh=parseInt(optSel.gmNh)||0, _gnv=parseInt(optSel.gmNv)||0;
@@ -1762,6 +1770,12 @@ function buildItemOpts(d){
        +'<b>Up2</b>=ดิจิตอล 11 รุ่น (ดู dropdown ดิจิตอล + JR Prime ใส่ได้เฉพาะยูโร/Flush/Inset) · '
        +'<b>Up3</b>=สแตน + โช๊ค (ดู dropdown สแตนอร่าม + dropdown โช๊ค)'
        +'</div>';
+    // Pass2-A: ธรณี บานเปิด
+    h+='<label class="opt">ธรณี <select class="o-thresh" style="width:auto;height:32px;"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select></label>';
+  }
+  // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
+  if(p.cat==='บานเฟี้ยม'){
+    h+='<label class="opt">ธรณี <select class="o-threshf" style="width:auto;height:32px;"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select></label>';
   }
   // R3.2: Glasshouse UI — 8 ด้าน + OPTION dropdown + หมายเหตุ
   if(p.glasshouse){
@@ -1871,6 +1885,13 @@ function buildItemOpts(d){
   if(p.optInsul){ h+=`<label class="opt"><input type="checkbox" class="o-insul"> ฉนวนกันความร้อน +600/ตร.ม.</label>`; }
   if(p.optSlide){ h+=`<label class="opt"><input type="checkbox" class="o-slide"> ทำเลื่อน (ค่าทำ/ตร.ม.)</label>`+`<label class="opt">จำนวนบานเลื่อน <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:55px;height:30px"></label>`+`<label class="opt">รางน้ำ(ม.) <input type="number" class="o-sgut" step="0.1" min="0" value="0" style="width:55px;height:30px"></label>`; }
   if(p.cat==='หลังคา'){
+    // Pass2-D: สีวัสดุมุงหลังคา (cosmetic ไม่คิดเงิน) — ดีไลท์ 2สี / โพลีตัน 6สี
+    // TODO: เติมชื่อสีจริงเมื่อพี่นัทยืนยัน (spec ระบุ "ดีไลท์ 2สี · โพลีตัน 6สี" แต่ไม่ระบุชื่อสีจริง)
+    if(p.id==='roof_delight'){
+      h+='<label class="opt">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="สี1-ดีไลท์">สีที่ 1 (TODO: ชื่อสีจริง)</option><option value="สี2-ดีไลท์">สีที่ 2 (TODO: ชื่อสีจริง)</option></select></label>';
+    } else if(p.id==='roof_polyton'){
+      h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="สี1-โพลีตัน">สีที่ 1 (TODO: ชื่อสีจริง)</option><option value="สี2-โพลีตัน">สีที่ 2 (TODO: ชื่อสีจริง)</option><option value="สี3-โพลีตัน">สีที่ 3 (TODO: ชื่อสีจริง)</option><option value="สี4-โพลีตัน">สีที่ 4 (TODO: ชื่อสีจริง)</option><option value="สี5-โพลีตัน">สีที่ 5 (TODO: ชื่อสีจริง)</option><option value="สี6-โพลีตัน">สีที่ 6 (TODO: ชื่อสีจริง)</option></select></label>';
+    }
     // A: แป
     h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว (default)</option><option value="แปคู่">แปคู่</option></select></label>';
     // B: โครงสร้าง
@@ -1986,6 +2007,10 @@ function readItem(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
   const optSel={};
   if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); optSel[o.id]=c&&c.checked; });
+  // Pass2-A: ธรณี บานเปิด
+  if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
+  // Pass2-A: ธรณี บานเฟี้ยม
+  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; }
   // shower config
   if(p.id==='shower'){
     const _st=d.querySelector('.o-shtype'); optSel.shtype=_st?_st.value:'door_fixed';
@@ -2037,6 +2062,8 @@ function readItem(d){
     const _rgpc=d.querySelector('.o-gutter-pipecolor'); optSel.rfgutpipecolor=_rgpc?_rgpc.value:'ขาว';
     const _rgcp=d.querySelector('.o-gutter-chainpat'); optSel.rfgutchainpat=_rgcp?_rgcp.value:'ทิวลิป';
     const _rgcc=d.querySelector('.o-gutter-chaincolor'); optSel.rfgutchaincolor=_rgcc?_rgcc.value:'ขาว';
+    // Pass2-D: สีวัสดุมุงหลังคา (cosmetic)
+    const _rfc=d.querySelector('.o-roofcolor'); optSel.rfcolor=_rfc?_rfc.value:'';
   }
   COMMON_OPTS.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(c)optSel[o.id]=c.checked; });
   { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value; }
@@ -2161,11 +2188,12 @@ function jobServices(net, totalArea){
   // Q15 งานรื้อของเดิม
   const notes=[];
   if(svcChk('svc-demo')){
-    if(svcChk('svc-demo-roof')) notes.push('รวมงานรื้อหลังคาเดิม');
-    if(svcChk('svc-demo-rail')) notes.push('รวมงานรื้อราวเดิม');
-    if(svcChk('svc-demo-floor')) notes.push('รวมงานกรีดพื้น');
-    if(svcChk('svc-demo-door')) notes.push('รวมงานรื้อประตู-หน้าต่างเดิม');
-    const _d=Math.max(0,svcNum('svc-demo-amt')||0); if(_d>0) lines.push(['งานรื้อ (เหมา)', _d]);
+    let _demoTotal=0;
+    if(svcChk('svc-demo-roof')){ const qty=Math.max(1,Math.round(svcNum('svc-demo-roof-qty'))||1); _demoTotal+=5000*qty; notes.push('รวมงานรื้อหลังคาเดิม'); }
+    if(svcChk('svc-demo-floor')){ const qty=Math.max(1,Math.round(svcNum('svc-demo-floor-qty'))||1); _demoTotal+=5000*qty; notes.push('รวมงานกรีดพื้น'); }
+    if(svcChk('svc-demo-rail')){ const len=Math.max(0,svcNum('svc-demo-rail-len')||0); _demoTotal+=3000+700*len; notes.push('รวมงานรื้อราวเดิม'); }
+    if(svcChk('svc-demo-door')){ const amt=Math.max(0,svcNum('svc-demo-door-amt')||0); _demoTotal+=amt; notes.push('รวมงานรื้อประตู-หน้าต่างเดิม'); }
+    if(_demoTotal>0) lines.push(['งานรื้อของเดิม', _demoTotal]);
   }
   return {amt:lines.reduce((x,l)=>x+l[1],0), lines, notes};
 }
@@ -2199,6 +2227,7 @@ function calcQuote(){
   const sl=document.getElementById('sSvcLine');
   if(svc.amt>0){ sl.style.display='flex'; document.getElementById('sSvc').textContent=bht(svc.amt); } else sl.style.display='none';
   ['lift','travel','ship','elec','demo'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
+  ['roof','floor','rail','door'].forEach(k=>{ const b=document.getElementById('svc-demo-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-demo-'+k)); });
   document.getElementById('sTotal').textContent=bht(preVat);
   // owner
   const profit=net-totCost;
@@ -2568,6 +2597,15 @@ function genQuote(keepNo){
       if(_fts.length) prodName += '\n(รวม '+_fts.join(' + ')+')';
     }
     const _parts=[];
+    // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
+    if(it.p.cat==='บานเปิด' && it.optSel && it.optSel.thresh==='turtle'){
+      _parts.push('ธรณีหลังเต่า + Drop Seal');
+    }
+    // Pass2-A: ธรณี บานเฟี้ยม — แสดงชนิดธรณีที่เลือก (ทั้งคู่ +0)
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel){
+      const _thfLabel = it.optSel.threshf==='inner' ? 'ธรณีหลังเต่าภายใน' : 'ธรณีกันน้ำภายนอก';
+      _parts.push(_thfLabel);
+    }
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
       _parts.push('ติดบานเดิม');
@@ -2599,13 +2637,19 @@ function genQuote(keepNo){
       det = fabricFull;
     }
     else if(it.p.id==='shower'){
-      // shower — โชว์ config ประตู/กระจกติดตาย + ประเภทประตู
+      // Pass2-C: shower — ประกอบข้อความจากชนิดบาน + ประเภทประตู → "กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส"
       const shtype = (it.optSel&&it.optSel.shtype)||'door_fixed';
       const shdoortype = (it.optSel&&it.optSel.shdoortype)||'swing';
-      const shtypeLabel = {door_fixed:'ประตู + กระจกติดตาย', fixed_only:'กระจกติดตายอย่างเดียว', door_only:'ประตูอย่างเดียว'}[shtype]||shtype;
-      const shdoortypeLabel = {swing:'บานเปิด (swing)', sliding:'บานเลื่อน'}[shdoortype]||shdoortype;
-      const shLines = [shtypeLabel];
-      if(shtype!=='fixed_only') shLines.push('ประตู'+shdoortypeLabel);
+      // ประกอบชื่อบาน
+      let shConfigLabel;
+      if(shtype==='fixed_only'){
+        shConfigLabel = 'บานติดตาย';
+      } else if(shtype==='door_only'){
+        shConfigLabel = shdoortype==='sliding' ? 'บานเลื่อน' : 'บานเปิด';
+      } else { // door_fixed
+        shConfigLabel = shdoortype==='sliding' ? 'บานติดตายพร้อมบานเลื่อน' : 'บานติดตายพร้อมบานเปิด';
+      }
+      const shLines = [shConfigLabel, 'กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส'];
       // สีอลูจาก glass selector (shower มีสีอลูเลือกได้)
       const ci0s = it.ci || 0;
       const cs = COLORS[ci0s];
@@ -2646,7 +2690,10 @@ function genQuote(keepNo){
           _gutterLine = 'รางน้ำ (ท่อ สี'+_col+')';
         }
       }
-      det = _frameTxt+_battenSuffix+'\n'+_gutterLine;
+      // Pass2-D: สีวัสดุมุง (ถ้าเลือก)
+      const _rfColor = _os.rfcolor || '';
+      const _colorSuffix = _rfColor ? ('\nสีวัสดุมุง: '+_rfColor) : '';
+      det = _frameTxt+_battenSuffix+'\n'+_gutterLine+_colorSuffix;
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ

@@ -45,6 +45,8 @@ const MANUAL_IDS = new Set(["shower", "frameless_door", "glasshouse", "zipscreen
 function enableAllOpts(ch) {
   // เลือก option ทุก dropdown .o-* (ตัวที่ 2) + ติ๊ก checkbox .o-* ตัวแรกๆ — "ใส่ออฟชั่นครบ"
   ch.querySelectorAll(".i-opts select").forEach((sel) => {
+    // ธรณี (.o-thresh) option[1]=หลังเต่า+DropSeal เป็น upgrade คิดเงิน +1,000 — test คงค่ามาตรฐาน (std) เพื่อรักษา anchor
+    if (sel.classList.contains("o-thresh")) return;
     if (sel.options && sel.options.length > 1 && !sel.multiple) {
       sel.value = sel.options[1].value; fire(sel, "change");
     }
