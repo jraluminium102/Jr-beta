@@ -271,8 +271,19 @@
       <label class="chk mt"><input type="checkbox" id="svc-ship" onchange="calcQuote()"> ค่าขนส่ง ตจว. (เฉพาะผลิต)</label>
       <div id="svc-ship-box" class="hide mt row2"><div><label>ระยะทาง (กม.) ขาเดียว</label><input type="number" id="svc-ship-km" min="0" step="1" value="0" oninput="calcQuote()"></div><div><label>จำนวนรถ</label><input type="number" id="svc-ship-trucks" min="1" step="1" value="1" oninput="calcQuote()"></div></div>
       <label class="chk" style="margin-top:8px;display:block;"><input type="checkbox" id="svc-bkk" onchange="calcQuote()"> ในกทม.+ปริมณฑล (ฟรีถ้ายอด>20,000)</label>
-      <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม (เหมา)</label>
-      <div id="svc-demo-box" class="hide mt"><label>ราคาเหมา (บาท)</label><input type="number" id="svc-demo-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
+      <label class="chk mt"><input type="checkbox" id="svc-elec" onchange="calcQuote()"> งานไฟ</label>
+      <div id="svc-elec-box" class="hide mt" style="padding-left:16px;">
+        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟ 2 ดวง (+3,000)</label>
+        <div class="mt"><label>สวิตซ์ใหม่ (จุด) +1,000/จุด</label><input type="number" id="svc-elec-sw" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
+      </div>
+      <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม</label>
+      <div id="svc-demo-box" class="hide mt" style="padding-left:16px;">
+        <label class="chk"><input type="checkbox" id="svc-demo-roof" onchange="calcQuote()"> รื้อหลังคาเดิม</label>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-rail" onchange="calcQuote()"> รื้อราวเดิม</label>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-floor" onchange="calcQuote()"> กรีดพื้น</label>
+        <label class="chk mt"><input type="checkbox" id="svc-demo-door" onchange="calcQuote()"> รื้อประตู-หน้าต่างเดิม</label>
+        <div class="mt"><label>ค่ารื้อเหมา (บาท)</label><input type="number" id="svc-demo-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
+      </div>
       <div class="hint">นั่งร้าน 5,000/ชั้น (ชั้น 2+) · ความเสี่ยง (10k+...) × จำนวนชุดเสี่ยง (ชั้น 3+) · เดินทาง: ที่พัก tier (≤70k=1วัน, 70-100k=2วัน) + 5,000/100km</div>
     </div>
 
@@ -2142,9 +2153,21 @@ function jobServices(net, totalArea){
   if(svcChk('svc-travel')){ const km=Math.max(0,svcNum('svc-travel-km')); let days; if(net<=70000)days=1; else if(net<=100000)days=2; else days=2+Math.ceil((net-100000)/100000); lines.push(['ค่าเดินทาง ตจว.', 3000*days+5000*Math.ceil(km/100)]); }
   // 45.2 ค่าขนส่ง ตจว.: ระยะ×เรต (≤100=23, ≤200=18, >200=16); ฟรี กทม.+ปริมณฑล ถ้ายอด>20k
   if(svcChk('svc-ship')){ const km=Math.max(0,svcNum('svc-ship-km')); const trucks=Math.max(1,Math.round(svcNum('svc-ship-trucks'))||1); const bkk=svcChk('svc-bkk'); let v=0; if(km>0&&!(bkk&&net>20000)){ const rate=km<=100?23:(km<=200?18:16); v=Math.round(km*rate*trucks); } lines.push(['ค่าขนส่ง ตจว. × '+trucks+' คัน', v]); }
-  // งานรื้อของเดิม (เหมา)
-  if(svcChk('svc-demo')){ const _d=Math.max(0,svcNum('svc-demo-amt')||0); if(_d>0) lines.push(['งานรื้อของเดิม', _d]); }
-  return {amt:lines.reduce((x,l)=>x+l[1],0), lines};
+  // Q14 งานไฟ
+  if(svcChk('svc-elec')){
+    if(svcChk('svc-elec-run')) lines.push(['งานไฟ — เดินไฟ 2 ดวง', 3000]);
+    const sw=Math.max(0,Math.round(svcNum('svc-elec-sw'))||0); if(sw>0) lines.push(['งานไฟ — สวิตซ์ใหม่ '+sw+' จุด', sw*1000]);
+  }
+  // Q15 งานรื้อของเดิม
+  const notes=[];
+  if(svcChk('svc-demo')){
+    if(svcChk('svc-demo-roof')) notes.push('รวมงานรื้อหลังคาเดิม');
+    if(svcChk('svc-demo-rail')) notes.push('รวมงานรื้อราวเดิม');
+    if(svcChk('svc-demo-floor')) notes.push('รวมงานกรีดพื้น');
+    if(svcChk('svc-demo-door')) notes.push('รวมงานรื้อประตู-หน้าต่างเดิม');
+    const _d=Math.max(0,svcNum('svc-demo-amt')||0); if(_d>0) lines.push(['งานรื้อ (เหมา)', _d]);
+  }
+  return {amt:lines.reduce((x,l)=>x+l[1],0), lines, notes};
 }
 function calcQuote(){
   const divs=[...document.querySelectorAll('#items .ch')];
@@ -2175,7 +2198,7 @@ function calcQuote(){
   const preVat=net+svc.amt;
   const sl=document.getElementById('sSvcLine');
   if(svc.amt>0){ sl.style.display='flex'; document.getElementById('sSvc').textContent=bht(svc.amt); } else sl.style.display='none';
-  ['lift','travel','ship','demo'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
+  ['lift','travel','ship','elec','demo'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
   document.getElementById('sTotal').textContent=bht(preVat);
   // owner
   const profit=net-totCost;
@@ -2240,6 +2263,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
   const discAmt=subtotal*discPct/100; discFlat=parseFloat(discFlat)||0; const net=subtotal-discAmt-discFlat;
   const svcAmt=svc?svc.amt:0;
   const svcLines=(svc&&svc.lines?svc.lines.filter(l=>l[1]>0):[]);
+  const svcNotes=(svc&&svc.notes&&svc.notes.length?svc.notes:[]);
   const vatPctEl=document.getElementById('vat-pct'); const vatPct=vatPctEl?(parseFloat(vatPctEl.value)||0):7;
   // R4.2: ฟิลด์หัวบิลเพิ่มเติม (ผู้ขาย/ผู้ติดต่อ/เบอร์โทร/ที่อยู่ลูกค้า)
   const _gv=(id)=>{const e=document.getElementById(id);return e?(e.value||'').trim():'';};
@@ -2281,6 +2305,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
      svcLines.map(l=>`<div class="l"><span>${l[0]}</span><span>${q2(l[1])} บาท</span></div>`).join('')+
      `<div class="l"><span>ภาษีมูลค่าเพิ่ม ${vatPct}%</span><span>${q2(vat)} บาท</span></div>`+
      `<div class="g"><span>จำนวนเงินรวมทั้งสิ้น</span><span>${q2(withVat)} บาท</span></div></div>`+
+   (svcNotes.length?`<div class="svc-notes" style="margin-top:8px;padding:6px 10px;font-size:12px;color:#4B5563;border-left:3px solid var(--line,#e5e7eb);">หมายเหตุ: ${svcNotes.join(' · ')}</div>`:'')+
    `<div class="qsign" style="margin-top:20px;display:flex;gap:20px;justify-content:space-between;padding:15px;border:1px solid var(--line);border-radius:8px;">
       <div style="flex:1;text-align:center;font-size:13px;">
         <div style="font-weight:600;margin-bottom:30px;">ในนาม ${cust}</div>
