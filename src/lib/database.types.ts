@@ -137,6 +137,53 @@ export interface QuotationItemImage {
   id: number; quotation_item_id: number; gallery_id: number; sort_order: number;
 }
 
+// ─── Row types — เฟส 3: Checklist ────────────────────────────────────────────
+export interface ChecklistTemplate {
+  id: number;
+  name: string;
+  target_role: Role[];
+  product_keys: string[];
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChecklistItem {
+  id: number;
+  template_id: number;
+  seq: number;
+  text: string;
+  requires_sign: boolean;
+  created_at: string;
+}
+
+// items_state jsonb: { [item_id: string]: { checked: boolean; note?: string } }
+export type ChecklistItemState = { checked: boolean; note?: string };
+export type ChecklistItemsState = Record<string, ChecklistItemState>;
+
+export interface JobChecklist {
+  id: number;
+  production_order_id: number;
+  template_id: number;
+  checked_by: string;
+  checked_at: string;
+  items_state: ChecklistItemsState;
+}
+
+// ─── Row types — เฟส 3: Cover Sheet Notes ────────────────────────────────────
+export interface CoverSheetNotes {
+  id: number;
+  production_order_id: number;
+  installer_notes: string;
+  customer_notes: string;
+  warning_left: string;
+  warning_right: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── Supabase Database type ────────────────────────────────────────────────────
 type Tbl<R, I = Partial<R>, U = Partial<R>> = {
   Row: R;
@@ -178,6 +225,10 @@ export interface Database {
       // เฟส 2
       product_gallery:        Tbl<ProductGallery>;
       quotation_item_images:  Tbl<QuotationItemImage>;
+      // เฟส 3
+      checklist_templates:    Tbl<ChecklistTemplate>;
+      checklist_items:        Tbl<ChecklistItem>;
+      job_checklists:         Tbl<JobChecklist>;
     };
     Views: Record<string, never>;
     Functions: {

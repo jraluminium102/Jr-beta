@@ -8,7 +8,9 @@ export type Resource =
   | "quotations" | "customers" | "stock" | "billing" | "receipts"
   | "production_orders" | "warranties" | "calculator" | "queue"
   // เฟส 2 — ภาพสินค้า
-  | "product_gallery";
+  | "product_gallery"
+  // เฟส 3 — เช็คลิสต์
+  | "checklists";
 
 export type Action = "read" | "write" | "void";
 
@@ -28,6 +30,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"], calculator: ["read", "write"], queue: ["read", "write"],
     // เฟส 2
     product_gallery: ["read", "write"],
+    // เฟส 3
+    checklists: ["read", "write"],
   },
   SALES: {
     // OMS
@@ -40,6 +44,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read"], calculator: ["read", "write"], queue: ["read", "write"],
     // เฟส 2
     product_gallery: ["read", "write"],
+    // เฟส 3 — เซลล์ติ๊กเช็คลิสต์ของตัวเองได้ (write จริงคุมเพิ่มที่ target_role)
+    checklists: ["read", "write"],
   },
   DESIGNER: {
     // OMS
@@ -49,6 +55,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     calculator: ["read", "write"], queue: ["read"],
     // เฟส 2
     product_gallery: ["read"],
+    // เฟส 3
+    checklists: ["read"],
   },
   PRODUCTION: {
     // OMS
@@ -58,6 +66,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"], queue: ["read"],
     // เฟส 2
     product_gallery: ["read"],
+    // เฟส 3 — PRODUCTION ติ๊กเช็คลิสต์ฝ่ายผลิตได้
+    checklists: ["read", "write"],
   },
   INSTALLER: {
     // OMS
@@ -68,6 +78,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     warranties: ["read"], queue: ["read"],
     // เฟส 2
     product_gallery: ["read"],
+    // เฟส 3 — INSTALLER ติ๊กเช็คลิสต์ช่างวัดหน้างานได้
+    checklists: ["read", "write"],
   },
   ACCOUNTING: {
     // OMS
@@ -79,12 +91,16 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read"],
     // เฟส 2
     product_gallery: ["read"],
+    // เฟส 3 — ACCOUNTING ดูเช็คลิสต์ได้ ไม่ติ๊ก
+    checklists: ["read"],
   },
   VIEWER: {
     jobs: ["read"], dashboard: ["read"],
     quotations: ["read"], queue: ["read"],
     // เฟส 2
     product_gallery: ["read"],
+    // เฟส 3
+    checklists: ["read"],
   },
 };
 

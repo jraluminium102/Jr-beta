@@ -68,6 +68,10 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const canManageGallery = can(role, "product_gallery", "write");
   const galleryNav: NavItem = { href: "/settings/gallery", icon: "image", label: "คลังภาพสินค้า" };
 
+  // เฟส 3 — เมนูเช็คลิสต์ (ADMIN จัดการ template; role อื่นไม่แสดงในเมนู DOC ซ้ายมือ — เข้าผ่านหน้า production-orders แทน)
+  const canManageChecklists = can(role, "checklists", "write") && role === "ADMIN";
+  const checklistNav: NavItem = { href: "/settings/checklists", icon: "checklist", label: "จัดการเช็คลิสต์" };
+
   const Sidebar = ({ onNav }: { onNav?: () => void }) => (
     <div className="glass-dark rounded-2xl h-full p-4 flex flex-col text-white">
       <div className="px-2 py-3 border-b border-white/15 mb-3">
@@ -85,6 +89,9 @@ export default function Shell({ profile, children }: { profile: Profile; childre
         {omsItems.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
         {canManageGallery && (
           <NavLink n={galleryNav} active={active(galleryNav.href)} onNav={onNav} />
+        )}
+        {canManageChecklists && (
+          <NavLink n={checklistNav} active={active(checklistNav.href)} onNav={onNav} />
         )}
       </nav>
       <div className="border-t border-white/15 pt-3 mt-2">

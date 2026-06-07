@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import ProductionActions from "./ProductionActions";
 import { PRODUCTION_STATUS_LABEL, type ProductionOrder, type ProductionStatus } from "@/lib/types";
+import type { Role } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,7 @@ const TONE: Record<ProductionStatus, "gray" | "sky" | "amber" | "violet" | "emer
 
 export default async function ProductionOrderDetail({ params }: { params: { id: string } }) {
   const profile = await getProfile();
+  const canViewChecklist = profile ? can(profile.role as Role, "checklists", "read") : false;
   const supabase = createClient();
   const { data } = await supabase
     .from("production_orders")
@@ -45,6 +48,14 @@ export default async function ProductionOrderDetail({ params }: { params: { id: 
           <Badge tone={TONE[po.status]} dot>{PRODUCTION_STATUS_LABEL[po.status]}</Badge>
         </div>
         <div className="flex gap-2">
+          {canViewChecklist && (
+            <Link href={`/production-orders/${po.id}/checklist`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
+              <Icon name="checklist" size={16} /> เช็คลิสต์
+            </Link>
+          )}
+          <Link href={`/production-orders/${po.id}/cover`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
+            <Icon name="file" size={16} /> ใบปะหน้า
+          </Link>
           <Link href={`/production-orders/${po.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
