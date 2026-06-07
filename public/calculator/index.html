@@ -271,6 +271,8 @@
       <label class="chk mt"><input type="checkbox" id="svc-ship" onchange="calcQuote()"> ค่าขนส่ง ตจว. (เฉพาะผลิต)</label>
       <div id="svc-ship-box" class="hide mt row2"><div><label>ระยะทาง (กม.) ขาเดียว</label><input type="number" id="svc-ship-km" min="0" step="1" value="0" oninput="calcQuote()"></div><div><label>จำนวนรถ</label><input type="number" id="svc-ship-trucks" min="1" step="1" value="1" oninput="calcQuote()"></div></div>
       <label class="chk" style="margin-top:8px;display:block;"><input type="checkbox" id="svc-bkk" onchange="calcQuote()"> ในกทม.+ปริมณฑล (ฟรีถ้ายอด>20,000)</label>
+      <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม (เหมา)</label>
+      <div id="svc-demo-box" class="hide mt"><label>ราคาเหมา (บาท)</label><input type="number" id="svc-demo-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
       <div class="hint">นั่งร้าน 5,000/ชั้น (ชั้น 2+) · ความเสี่ยง (10k+...) × จำนวนชุดเสี่ยง (ชั้น 3+) · เดินทาง: ที่พัก tier (≤70k=1วัน, 70-100k=2วัน) + 5,000/100km</div>
     </div>
 
@@ -1370,6 +1372,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // แปคู่ — ไม่คิดเพิ่ม
     // รางน้ำใหม่ (chain D) — cosmetic ไม่คิดเงิน
   }
+  // คาดตาราง generic (ทุก cat ยกเว้น p.grid ซึ่งเป็น grid_bars)
+  if(!p.grid && optSel && optSel.gridmark){
+    const _gnh=parseInt(optSel.gmNh)||0, _gnv=parseInt(optSel.gmNv)||0;
+    const _grate=parseFloat(optSel.gmRate)||200, _gcv=parseInt(optSel.gmCurve)||0;
+    const _glen=_gnh*(parseFloat(w)||0)+_gnv*(parseFloat(h)||0);
+    const _gcost=_glen*_grate + _gcv*3000;
+    if(_gcost>0){ opt+=_gcost; msgs.push('คาดตาราง '+_gnh+'นอน+'+_gnv+'ตั้ง '+_glen.toFixed(1)+'ม.×'+_grate+(_gcv>0?(' +โค้ง '+_gcv+'×3,000'):'')+' = '+fmt(_gcost)); }
+  }
   let floor=0; const pn=Math.max(1,panels);
   if(pn>1 && usesPanels(p)){ const q2=p.method==='same_as'?PBYID[p.ref]:p; if(q2.rates){ const per=monoRate(a/pn, RATES[q2.rates]); floor=per*(1+0.67*(pn-1)); } }
   if(p.id==='inner_top_stack'||p.id==='inner_top_slimlux'||p.id==='inner_top_xseries'){ floor=Math.max(floor, 14000*(1+0.67*(pn-1))); }
@@ -1833,8 +1843,17 @@ function buildItemOpts(d){
     if(_itypeNow === 'door'){
       h+='<label class="opt">ชุดล็อค <select class="o-slidelock" style="width:auto;height:32px;"><option value="">— ไม่ระบุ —</option><option value="มีกุญแจ">มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
     }
-    // คาดตาราง
-    h+='<label class="opt"><input type="checkbox" class="o-gridmark"> มีคาดตาราง (บรรยาย · ยังไม่คิดเงิน)</label>';
+    // คาดตาราง (sliding-specific block ยังคงมี — เพื่อรักษา readItem branch เดิม)
+  }
+  // คาดตาราง (generic — ทุก cat ยกเว้น p.grid ซึ่งเป็น grid_bars เอง)
+  if(!p.grid){
+    h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\');"> มีคาดตาราง (คิดตามสูตร)</label>';
+    h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
+    h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='<label class="opt">เส้นตั้ง <input type="number" class="o-gm-nv" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
+    h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='</span>';
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   if(p.cat === 'PC Door'){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
@@ -1986,8 +2005,15 @@ function readItem(d){
     const _ot=d.querySelector('.o-opentype'); optSel.opentype=_ot?_ot.value:'บานเลื่อน';
     const _tr=d.querySelector('.o-track'); optSel.track=_tr?_tr.value:'โชว์ราง';
     const _sl=d.querySelector('.o-slidelock'); optSel.slidelock=_sl?_sl.value:'';
-    const _gm=d.querySelector('.o-gridmark'); optSel.gridmark=_gm?_gm.checked:false;
     const _fx=d.querySelector('.o-fixed'); optSel.fixedPanes=_fx?(parseInt(_fx.value)||0):0;
+  }
+  // คาดตาราง generic (ทุก cat ยกเว้น p.grid)
+  if(!p.grid){
+    const _gm=d.querySelector('.o-gridmark'); optSel.gridmark=_gm?_gm.checked:false;
+    const _gmnh=d.querySelector('.o-gm-nh'); optSel.gmNh=_gmnh?_gmnh.value:'0';
+    const _gmnv=d.querySelector('.o-gm-nv'); optSel.gmNv=_gmnv?_gmnv.value:'0';
+    const _gmr=d.querySelector('.o-gm-rate'); optSel.gmRate=_gmr?_gmr.value:'200';
+    const _gmc=d.querySelector('.o-gm-curve'); optSel.gmCurve=_gmc?_gmc.value:'0';
   }
   if(p.optInsul){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
   if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2; const sg=d.querySelector('.o-sgut'); optSel.sgut=sg?sg.value:0; }
@@ -2116,6 +2142,8 @@ function jobServices(net, totalArea){
   if(svcChk('svc-travel')){ const km=Math.max(0,svcNum('svc-travel-km')); let days; if(net<=70000)days=1; else if(net<=100000)days=2; else days=2+Math.ceil((net-100000)/100000); lines.push(['ค่าเดินทาง ตจว.', 3000*days+5000*Math.ceil(km/100)]); }
   // 45.2 ค่าขนส่ง ตจว.: ระยะ×เรต (≤100=23, ≤200=18, >200=16); ฟรี กทม.+ปริมณฑล ถ้ายอด>20k
   if(svcChk('svc-ship')){ const km=Math.max(0,svcNum('svc-ship-km')); const trucks=Math.max(1,Math.round(svcNum('svc-ship-trucks'))||1); const bkk=svcChk('svc-bkk'); let v=0; if(km>0&&!(bkk&&net>20000)){ const rate=km<=100?23:(km<=200?18:16); v=Math.round(km*rate*trucks); } lines.push(['ค่าขนส่ง ตจว. × '+trucks+' คัน', v]); }
+  // งานรื้อของเดิม (เหมา)
+  if(svcChk('svc-demo')){ const _d=Math.max(0,svcNum('svc-demo-amt')||0); if(_d>0) lines.push(['งานรื้อของเดิม', _d]); }
   return {amt:lines.reduce((x,l)=>x+l[1],0), lines};
 }
 function calcQuote(){
@@ -2147,7 +2175,7 @@ function calcQuote(){
   const preVat=net+svc.amt;
   const sl=document.getElementById('sSvcLine');
   if(svc.amt>0){ sl.style.display='flex'; document.getElementById('sSvc').textContent=bht(svc.amt); } else sl.style.display='none';
-  ['lift','travel','ship'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
+  ['lift','travel','ship','demo'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
   document.getElementById('sTotal').textContent=bht(preVat);
   // owner
   const profit=net-totCost;
@@ -2495,14 +2523,19 @@ function genQuote(keepNo){
       _slideName += _beamStr;
       _slideName += _mosqStr;
       // กระจกติดตาย (บานย่อย — ระบุใน subItems แต่เพิ่มจากข้อความที่กรอก .i-position ไม่ได้ระบุ)
-      // คาดตาราง
-      if(_os.gridmark) _slideName += ' (มีคาดตาราง)';
+      // คาดตาราง (sliding) — handled by generic block below
       _slideName += seriesTag + discontinuedSuffix;
       prodName = _slideName;
     }
     // C1: มีมุ้งจีบ (addon) → ต่อท้ายชื่อ "พร้อมมุ้งจีบ" (สั้น ไม่ใส่รุ่น/ผ้า — รายละเอียดอยู่ใน "รายละเอียดงาน")
     // บานเลื่อน: มุ้งถูก include ใน _slideName แล้ว ไม่ต้องต่ออีก
     if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){ prodName += ' พร้อมมุ้งจีบ'; }
+    // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
+    if(!it.p.grid && it.optSel && it.optSel.gridmark){
+      const _dnh=parseInt(it.optSel.gmNh)||0, _dnv=parseInt(it.optSel.gmNv)||0;
+      if(_dnh>0 || _dnv>0){ prodName += ' (คาดตาราง '+_dnh+'นอน+'+_dnv+'ตั้ง)'; }
+      else { prodName += ' (มีคาดตาราง)'; }
+    }
     // ข้อ18: ย้ายคำบรรยาย "(รวม ...)" จากชื่อ → บรรทัดใต้หัวข้อ (ตัดส่วน "เทมเปอร์..." ออก ไม่เขียนต่อ)
     var _incl = (it.p.name.match(/\(รวม([^)]+)\)/)||[])[1];
     if(_incl){
