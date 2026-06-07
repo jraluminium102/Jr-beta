@@ -1885,12 +1885,14 @@ function buildItemOpts(d){
   if(p.optInsul){ h+=`<label class="opt"><input type="checkbox" class="o-insul"> ฉนวนกันความร้อน +600/ตร.ม.</label>`; }
   if(p.optSlide){ h+=`<label class="opt"><input type="checkbox" class="o-slide"> ทำเลื่อน (ค่าทำ/ตร.ม.)</label>`+`<label class="opt">จำนวนบานเลื่อน <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:55px;height:30px"></label>`+`<label class="opt">รางน้ำ(ม.) <input type="number" class="o-sgut" step="0.1" min="0" value="0" style="width:55px;height:30px"></label>`; }
   if(p.cat==='หลังคา'){
-    // Pass2-D: สีวัสดุมุงหลังคา (cosmetic ไม่คิดเงิน) — ดีไลท์ 2สี / โพลีตัน 6สี
-    // TODO: เติมชื่อสีจริงเมื่อพี่นัทยืนยัน (spec ระบุ "ดีไลท์ 2สี · โพลีตัน 6สี" แต่ไม่ระบุชื่อสีจริง)
-    if(p.id==='roof_delight'){
-      h+='<label class="opt">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="สี1-ดีไลท์">สีที่ 1 (TODO: ชื่อสีจริง)</option><option value="สี2-ดีไลท์">สีที่ 2 (TODO: ชื่อสีจริง)</option></select></label>';
+    // Pass2-D: สีวัสดุมุงหลังคา (cosmetic ไม่คิดเงิน · ทุกสีราคาเท่ากัน)
+    // ไวนิล 3 สี (VG Snow Roof Pro) · ดีไลท์ 2 สี (D-LITE) · โพลีตัน 11 สี (TN — รอพี่นัทคัดเหลือเท่าที่ขาย)
+    if(p.id==='roof_vinyl'){
+      h+='<label class="opt">สีวัสดุมุง (ไวนิล) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="สีเทา">สีเทา</option><option value="สีขาว">สีขาว</option><option value="สีน้ำตาล">สีน้ำตาล</option></select></label>';
+    } else if(p.id==='roof_delight'){
+      h+='<label class="opt">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="DG-2 สีฟ้าคราม">DG-2 สีฟ้าคราม</option><option value="DG-4 สีเทาโซล่าร์">DG-4 สีเทาโซล่าร์</option></select></label>';
     } else if(p.id==='roof_polyton'){
-      h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="สี1-โพลีตัน">สีที่ 1 (TODO: ชื่อสีจริง)</option><option value="สี2-โพลีตัน">สีที่ 2 (TODO: ชื่อสีจริง)</option><option value="สี3-โพลีตัน">สีที่ 3 (TODO: ชื่อสีจริง)</option><option value="สี4-โพลีตัน">สีที่ 4 (TODO: ชื่อสีจริง)</option><option value="สี5-โพลีตัน">สีที่ 5 (TODO: ชื่อสีจริง)</option><option value="สี6-โพลีตัน">สีที่ 6 (TODO: ชื่อสีจริง)</option></select></label>';
+      h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="Clear 101 สีใส">Clear 101 สีใส</option><option value="Opal 103 สีขาวขุ่น">Opal 103 สีขาวขุ่น</option><option value="Light Blue 105 สีฟ้าใส">Light Blue 105 สีฟ้าใส</option><option value="Greenish Blue 106 สีฟ้าน้ำทะเล">Greenish Blue 106 สีฟ้าน้ำทะเล</option><option value="Bronze 107 สีชาใส">Bronze 107 สีชาใส</option><option value="Green 109 สีเขียวใส">Green 109 สีเขียวใส</option><option value="Australian Grey 108 สีเทาออส">Australian Grey 108 สีเทาออส</option><option value="Silver 501 สีซิลเวอร์">Silver 501 สีซิลเวอร์</option><option value="Blue Metallic 502 สีน้ำเงินเมทัลลิค">Blue Metallic 502 สีน้ำเงินเมทัลลิค</option><option value="Bronze Metallic 503 สีชาเมทัลลิค">Bronze Metallic 503 สีชาเมทัลลิค</option><option value="Green Metallic 504 สีเขียวเมทัลลิค">Green Metallic 504 สีเขียวเมทัลลิค</option></select></label>';
     }
     // A: แป
     h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว (default)</option><option value="แปคู่">แปคู่</option></select></label>';
