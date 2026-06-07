@@ -1405,11 +1405,10 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(p.mosquito && optSel && optSel.mosqId){
     const mscreen = MOSQUITO_SCREENS.find(m => m.id===optSel.mosqId);
     if(mscreen){
-      // คิดตามช่องเปิด: บานเลื่อน/เลื่อนภายใน — สลับ/คู่กลาง=เต็มช่อง · ธรรมดา/ลากจูง=ครึ่งช่อง
+      // มุ้งคิดตามชนิดมุ้ง (พี่นัท): มุ้งจีบ=พับเก็บได้ ใส่เต็มช่องวงกบ · มุ้งเฟรมใหญ่(บานเลื่อน)=เลื่อนเท่าช่องเปิด (~ครึ่ง)
       let openRatio = 1;
       if(p.cat==='บานเลื่อน' || p.cat==='เลื่อนภายใน'){
-        const ot=(optSel.opentype)||'บานเลื่อน';
-        openRatio = (ot==='บานเลื่อนสลับ'||ot==='บานเลื่อนเปิดคู่กลาง') ? 1 : 0.5;
+        openRatio = /เฟรมใหญ่/.test(mscreen.name||'') ? 0.5 : 1;  // เฟรมใหญ่=ครึ่งช่อง · จีบ/อื่นๆ=เต็มช่อง
       }
       const mosqArea = a * openRatio;
       const mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
