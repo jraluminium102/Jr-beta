@@ -1405,10 +1405,18 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(p.mosquito && optSel && optSel.mosqId){
     const mscreen = MOSQUITO_SCREENS.find(m => m.id===optSel.mosqId);
     if(mscreen){
-      // มุ้งคิดตามชนิดมุ้ง (พี่นัท): มุ้งจีบ=พับเก็บได้ ใส่เต็มช่องวงกบ · มุ้งเฟรมใหญ่(บานเลื่อน)=เลื่อนเท่าช่องเปิด (~ครึ่ง)
+      // มุ้งคิดตามช่องเปิดได้ (พี่นัท): ช่องเปิด = บานทั้งหมด − บานติดตาย
+      //   มุ้งจีบ = เต็มช่องเปิด · มุ้งบานเลื่อน = เท่าช่องเปิด · ยกเว้นบานสลับ+มุ้งเลื่อน = ครึ่งช่องเปิด
       let openRatio = 1;
       if(p.cat==='บานเลื่อน' || p.cat==='เลื่อนภายใน'){
-        openRatio = /เฟรมใหญ่/.test(mscreen.name||'') ? 0.5 : 1;  // เฟรมใหญ่=ครึ่งช่อง · จีบ/อื่นๆ=เต็มช่อง
+        const _total=Math.max(1,parseInt(panels)||1);
+        const _fixed=Math.max(0,parseInt(optSel.fixedPanes)||0);
+        const _openable=Math.max(1,_total-_fixed);
+        let _r=_openable/_total;                        // จีบ = เต็มช่องเปิด
+        const _isPleated=/จีบ/.test(mscreen.name||'');
+        const _isSwap=(optSel.opentype==='บานเลื่อนสลับ');
+        if(!_isPleated && _isSwap) _r=_r/2;             // มุ้งเลื่อน + สลับ = ครึ่งช่องเปิด
+        openRatio=_r;
       }
       const mosqArea = a * openRatio;
       const mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
@@ -1804,8 +1812,9 @@ function buildItemOpts(d){
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
     const _sr = SLIDING_RAIL[p.id];
     const _isTop = _sr.rail === 'top';
-    // ชนิดการเปิด
-    h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;"><option value="บานเลื่อน">บานเลื่อน (ธรรมดา)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
+    // ชนิดการเปิด (เลือกแล้ว auto-set ติดตาย: สลับ/ลากจูง=0 · เปิดคู่กลาง=2) — เลิกใช้คำ "ธรรมดา" ใช้ระบุติดตายเอง
+    h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
+    h+='<label class="opt">ติดตายกี่บาน <input type="number" class="o-fixed" min="0" value="0" style="width:55px;height:30px;"> บาน (มุ้งคิดจากบานที่เลื่อนได้)</label>';
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
       h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-beamm-wrap\'); if(w) w.style.display=(this.value===\'ซ่อนราง\'?\'inline-block\':\'none\');"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
@@ -1956,6 +1965,7 @@ function readItem(d){
     const _tr=d.querySelector('.o-track'); optSel.track=_tr?_tr.value:'โชว์ราง';
     const _sl=d.querySelector('.o-slidelock'); optSel.slidelock=_sl?_sl.value:'';
     const _gm=d.querySelector('.o-gridmark'); optSel.gridmark=_gm?_gm.checked:false;
+    const _fx=d.querySelector('.o-fixed'); optSel.fixedPanes=_fx?(parseInt(_fx.value)||0):0;
   }
   if(p.optInsul){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
   if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2; const sg=d.querySelector('.o-sgut'); optSel.sgut=sg?sg.value:0; }
@@ -2448,6 +2458,9 @@ function genQuote(keepNo){
       const _pfx = prefix || (it.itype==='window' ? 'หน้าต่าง' : 'ประตู');  // ข้อ1: เลื่อนภายในให้มี "ประตู/หน้าต่าง" นำ
       let _slideName = _pfx + (_otSuffix ? _otSuffix : 'บานเลื่อน') + _railTxt;
       if(_panels > 1) _slideName += ' แบ่ง ' + _panels + ' บาน';
+      // ติดตายกี่บาน (เลื่อน = แบ่ง − ติดตาย) — เลิกใช้คำ "ธรรมดา"
+      const _fixedN = parseInt(_os.fixedPanes)||0;
+      if(_fixedN > 0){ const _slideN = Math.max(0,(_panels||0)-_fixedN); _slideName += ' (เลื่อน '+_slideN+' บาน ติดตาย '+_fixedN+' บาน)'; }
       _slideName += _beamStr;
       _slideName += _mosqStr;
       // กระจกติดตาย (บานย่อย — ระบุใน subItems แต่เพิ่มจากข้อความที่กรอก .i-position ไม่ได้ระบุ)
