@@ -1,0 +1,229 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ร่าง option บานเลื่อน — JR</title>
+<style>
+:root{--red:#B3151D;--line:#e3e3e3;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#f4f4f5;color:#1f2937;padding:14px;}
+.wrap{max-width:780px;margin:0 auto;}
+h1{font-size:18px;color:var(--red);margin:4px 0 2px;}
+.sub{font-size:12px;color:#666;margin:0 0 14px;}
+.card{background:#fff;border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:14px;margin-bottom:14px;}
+.badge{background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;}
+label.f{display:block;font-size:13px;color:#444;margin:11px 0 4px;font-weight:600;}
+select,input[type=number],input[type=text]{width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;background:#fff;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}.row>div{flex:1;min-width:140px;}
+.seg{display:flex;gap:8px;}
+.seg button{flex:1;height:42px;border:1.5px solid var(--red);border-radius:8px;background:#fff;color:var(--red);font-size:15px;font-weight:700;cursor:pointer;}
+.seg button.on{background:var(--red);color:#fff;}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;}
+.pill{border:1.5px solid var(--line);border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;background:#fff;user-select:none;}
+.pill.on{border-color:var(--red);background:#fff1f2;color:var(--red);font-weight:600;}
+.optbox{background:#fff9f9;border:1px dashed var(--red);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.optbox b{font-size:12px;color:var(--red);}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;margin:6px 16px 6px 0;cursor:pointer;}
+.chk input{width:18px;height:18px;}
+.cond{margin-top:8px;padding-left:12px;border-left:3px solid var(--red);}
+.preview{background:#1f2937;color:#f4f4f5;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.75;}
+.preview .lbl{color:#9ca3af;font-size:12px;margin-top:8px;}
+.preview .head{font-weight:700;}
+.preview .det{color:#cbd5e1;font-size:13px;margin-left:8px;}
+.note{font-size:11px;color:#999;margin-top:6px;}
+.hide{display:none;}
+</style></head><body><div class="wrap">
+<h1>🚪 ร่าง option "บานเลื่อน" (เฟส: เจาะหมวด 1)</h1>
+<p class="sub">เลือกราง → รุ่น → ติ๊กออปชั่น · ข้อความออกในใบอัปเดตด้านล่าง · mockup ยังไม่ผูกราคาจริง</p>
+
+<div class="card">
+  <div style="margin-bottom:8px;"><span class="badge">รายการ — บานเลื่อน</span></div>
+
+  <label class="f">ตำแหน่ง/ห้อง</label>
+  <input type="text" id="pos" value="ประตู ห้องนั่งเล่น" oninput="render()">
+
+  <label class="f">① ระบบราง <span style="color:var(--red);">(เลือกก่อน)</span></label>
+  <div class="seg">
+    <button id="rl" class="on" onclick="setRail('low')">รางล่าง</button>
+    <button id="rt" onclick="setRail('top')">รางบน (แขวน)</button>
+  </div>
+
+  <label class="f">② รุ่น</label>
+  <select id="model" onchange="render()"></select>
+
+  <div class="row">
+    <div><label class="f">③ ชนิดการเปิด</label>
+      <select id="openType" onchange="render()">
+        <option value="บานเลื่อน">บานเลื่อน (ธรรมดา)</option>
+        <option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option>
+        <option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option>
+        <option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option>
+      </select>
+    </div>
+    <div><label class="f">แบ่งกี่บาน</label><input type="number" id="panels" value="3" min="1" oninput="render()"></div>
+  </div>
+
+  <!-- รางบนเท่านั้น -->
+  <div id="topOnly" class="optbox hide">
+    <b>ออปชั่นรางบน</b>
+    <div style="margin-top:6px;">
+      <span style="font-size:13px;color:#444;">ราง:</span>
+      <span class="pills" style="display:inline-flex;margin-left:6px;">
+        <span class="pill on" id="trkShow" onclick="pickTrack('show')">โชว์ราง</span>
+        <span class="pill" id="trkHide" onclick="pickTrack('hide')">ซ่อนราง</span>
+      </span>
+    </div>
+    <div id="beamCond" class="cond hide">
+      <span style="font-size:13px;color:#444;">เสริมคานซัพพอร์ต (เพราะซ่อนราง):</span>
+      <span class="pills" style="display:inline-flex;margin-left:6px;">
+        <span class="pill on" id="bmNo" onclick="pickBeam('')">ไม่มี</span>
+        <span class="pill" id="bmShow" onclick="pickBeam('โชว์คาน')">โชว์คาน</span>
+        <span class="pill" id="bmHide" onclick="pickBeam('ซ่อนคาน')">ซ่อนคาน</span>
+      </span>
+    </div>
+    <div style="margin-top:8px;">
+      <label class="chk" id="scWrap"><input type="checkbox" id="softclose" onchange="render()"> soft close</label>
+      <label class="chk" id="slWrap"><input type="checkbox" id="sling" onchange="render()"> สลิงลากเปิดพร้อมกัน</label>
+      <label class="chk"><input type="checkbox" id="utrack" onchange="render()"> ฝังรางยูกันบานแกว่ง</label>
+    </div>
+    <div class="note" id="slimNote"></div>
+  </div>
+
+  <!-- รางล่างเท่านั้น: มือจับ -->
+  <div id="lowOnly" class="optbox">
+    <b>ออปชั่นรางล่าง</b>
+    <div style="margin-top:6px;">
+      <span style="font-size:13px;color:#444;">มือจับ:</span>
+      <span class="pills" style="display:inline-flex;margin-left:6px;">
+        <span class="pill on" id="hNo" onclick="pickHandle('')">มาตรฐาน</span>
+        <span class="pill" id="hDigi" onclick="pickHandle('Digital Door Lock')">Digital</span>
+        <span class="pill" id="hCmech" onclick="pickHandle('Cmech ก้านโยก')">Cmech</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div><label class="f">ชุดล็อค (ประตู)</label>
+      <select id="lock" onchange="render()"><option value="">— ไม่ระบุ —</option><option value="มีกุญแจ">มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></div>
+    <div><label class="f">กระจกติดตาย</label>
+      <select id="fixed" onchange="render()"><option value="">— ไม่มี —</option><option value="ด้านข้าง">ด้านข้าง</option><option value="ด้านบน">ด้านบน</option><option value="ด้านข้างและด้านบน">ข้าง+บน</option></select></div>
+  </div>
+
+  <div style="margin-top:10px;">
+    <label class="chk"><input type="checkbox" id="grid" onchange="render()"> มีคาดตาราง</label>
+    <label class="chk"><input type="checkbox" id="mosq" onchange="render()"> มีมุ้ง</label>
+  </div>
+  <div id="mosqBox" class="optbox hide">
+    <div class="row">
+      <div><label class="f" style="margin-top:2px;">ชนิดมุ้ง</label>
+        <select id="mosqType" onchange="render()"><option>มุ้งเฟรมเล็ก</option><option>มุ้งจีบ</option><option>มุ้งเฟรมใหญ่</option><option>มุ้งนิรภัย</option><option>มุ้งม้วน</option></select></div>
+      <div><label class="f" style="margin-top:2px;">สีผ้า</label>
+        <select id="mosqFab" onchange="render()"><option>ผ้าไฟเบอร์ดำ</option><option>ผ้าไฟเบอร์เทา</option></select></div>
+    </div>
+    <div class="note" id="mosqSize"></div>
+  </div>
+</div>
+
+<div style="font-size:12px;color:#666;margin:4px 0;">⬇️ ข้อความที่จะพิมพ์ในใบ</div>
+<div class="preview">
+  <div class="lbl"># รายละเอียด</div>
+  <div class="head" id="pvHead"></div>
+  <div id="pvDesc"></div>
+  <div class="lbl">รายละเอียดงาน</div>
+  <div class="det" id="pvDet"></div>
+</div>
+<p class="note">* มุ้งคิดขนาดตามช่องเปิด: บานเลื่อนสลับ/เปิดคู่กลาง=เต็มช่อง · ธรรมดา/ลากจูง=ครึ่งช่อง</p>
+
+<script>
+var RAIL='low', TRACK='show', BEAM='', HANDLE='';
+var MODELS={
+  low:[
+    {v:'sms_water', t:'บานเลื่อนกันน้ำ เซมิยูโร (M)', rail:'รางล่าง (รุ่นกันน้ำ)', handle:true},
+    {v:'euro_water',t:'บานเลื่อนกันน้ำ ยูโร (L)', rail:'รางล่าง (รุ่นกันน้ำ)', handle:true},
+    {v:'sms_low',  t:'บานเลื่อนรางเตี้ย 7มม. เซมิยูโร (ภายใน)', rail:'รางล่าง (รุ่นรางเตี้ย 7 มม.)', handle:false},
+    {v:'euro_low', t:'บานเลื่อนรางเตี้ย 7มม. ยูโร (ภายใน)', rail:'รางล่าง (รุ่นรางเตี้ย 7 มม.)', handle:false}
+  ],
+  top:[
+    {v:'stack',  t:'เลื่อนรางบน ซ้อน (SMS/ยูโร)', slim:false},
+    {v:'slimlux',t:'เลื่อนรางบน SlimLux (S)', slim:true},
+    {v:'xseries',t:'เลื่อนรางบน X-series (S)', slim:false}
+  ]
+};
+function cur(){ return MODELS[RAIL].find(function(m){return m.v===document.getElementById('model').value;})||MODELS[RAIL][0]; }
+function setRail(r){
+  RAIL=r;
+  document.getElementById('rl').className=r==='low'?'on':'';
+  document.getElementById('rt').className=r==='top'?'on':'';
+  document.getElementById('model').innerHTML=MODELS[r].map(function(m){return '<option value="'+m.v+'">'+m.t+'</option>';}).join('');
+  document.getElementById('topOnly').className='optbox'+(r==='top'?'':' hide');
+  document.getElementById('lowOnly').className='optbox'+(r==='low'?'':' hide');
+  render();
+}
+function pickTrack(t){ TRACK=t;
+  document.getElementById('trkShow').className='pill'+(t==='show'?' on':'');
+  document.getElementById('trkHide').className='pill'+(t==='hide'?' on':'');
+  document.getElementById('beamCond').className='cond'+(t==='hide'?'':' hide'); // เสริมคาน เฉพาะซ่อนราง
+  if(t==='show'){ BEAM=''; pickBeam(''); }
+  render();
+}
+function pickBeam(b){ BEAM=b;
+  document.getElementById('bmNo').className='pill'+(b===''?' on':'');
+  document.getElementById('bmShow').className='pill'+(b==='โชว์คาน'?' on':'');
+  document.getElementById('bmHide').className='pill'+(b==='ซ่อนคาน'?' on':'');
+  render();
+}
+function pickHandle(h){ HANDLE=h;
+  document.getElementById('hNo').className='pill'+(h===''?' on':'');
+  document.getElementById('hDigi').className='pill'+(h==='Digital Door Lock'?' on':'');
+  document.getElementById('hCmech').className='pill'+(h==='Cmech ก้านโยก'?' on':'');
+  render();
+}
+function render(){
+  var m=cur();
+  var ot=document.getElementById('openType').value;
+  var panels=parseInt(document.getElementById('panels').value)||1;
+  var lock=document.getElementById('lock').value;
+  var fixed=document.getElementById('fixed').value;
+  var grid=document.getElementById('grid').checked;
+  var mosq=document.getElementById('mosq').checked;
+  document.getElementById('mosqBox').className='optbox'+(mosq?'':' hide');
+
+  // SlimLux: soft close+สลิง รวมในราคา → ปิด checkbox ให้ความรู้สึกว่ารวมแล้ว
+  var isSlim = (RAIL==='top' && m.slim);
+  document.getElementById('scWrap').style.opacity=isSlim?0.4:1;
+  document.getElementById('slWrap').style.opacity=isSlim?0.4:1;
+  document.getElementById('slimNote').textContent=isSlim?'SlimLux รวม soft close + สลิงลากเปิดพร้อมกัน + เทมเปอร์ 6มม. ในราคาแล้ว':'';
+
+  // ราง part
+  var railTxt='';
+  if(RAIL==='low'){ railTxt=m.rail; }
+  else { railTxt='รางบน (รุ่น'+(TRACK==='hide'?'ซ่อนราง':'โชว์ราง')+')'; }
+
+  // desc
+  var prefix='ประตู';
+  var s='- '+prefix+ot+railTxt;
+  if(panels>1) s+=' แบ่ง '+panels+' บาน';
+  if(RAIL==='top' && BEAM) s+=' (เสริมคานซัพพอร์ทรุ่น'+BEAM+')';
+  var sc=document.getElementById('softclose').checked, sl=document.getElementById('sling').checked, ut=document.getElementById('utrack').checked;
+  var feats=[];
+  if(RAIL==='top'){ if(isSlim){feats.push('soft close');feats.push('สลิงลากเปิดพร้อมกัน');} else { if(sc)feats.push('soft close'); if(sl)feats.push('สลิงลากเปิดพร้อมกัน'); } if(ut)feats.push('ฝังรางยูกันบานแกว่ง'); }
+  if(feats.length) s+=' (มี'+feats.join(' + ')+')';
+  if(mosq){ s+=' (มี'+document.getElementById('mosqType').value+')'; }
+  if(fixed) s+=' พร้อมกระจกติดตาย'+fixed;
+  if(grid) s+=' (มีคาดตาราง)';
+
+  document.getElementById('pvHead').textContent=document.getElementById('pos').value||'(ตำแหน่ง)';
+  document.getElementById('pvDesc').textContent=s;
+
+  // det
+  var det=['อลูมิเนียม สีเทาซาฮาร่า','กระจกใส หนา 6 มม.'];
+  if(mosq){
+    var full=(ot==='บานเลื่อนสลับ'||ot==='บานเลื่อนเปิดคู่กลาง');
+    var sizeTxt=full?'เต็มช่อง':'ครึ่งช่อง (~50%)';
+    det.push(document.getElementById('mosqType').value+' '+document.getElementById('mosqFab').value+' — ขนาด'+sizeTxt);
+    document.getElementById('mosqSize').textContent='มุ้งคิดขนาด '+sizeTxt+' (ชนิดเปิด: '+ot+')';
+  }
+  if(HANDLE && RAIL==='low' && HANDLE!=='') det.push('มือจับ '+HANDLE);
+  if(lock) det.push('ชุดล็อค ('+lock+')');
+  document.getElementById('pvDet').innerHTML=det.map(function(d){return '- '+d;}).join('<br>');
+}
+setRail('low');
+</script>
+</div></body></html>
