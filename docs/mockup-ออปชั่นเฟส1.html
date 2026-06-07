@@ -1,0 +1,170 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ร่างหน้าตา ออปชั่น เฟส 1 — JR</title>
+<style>
+:root{--red:#B3151D;--line:#e3e3e3;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#f4f4f5;color:#1f2937;padding:16px;}
+.wrap{max-width:760px;margin:0 auto;}
+h1{font-size:19px;color:var(--red);margin:6px 0 2px;}
+.sub{font-size:13px;color:#666;margin:0 0 16px;}
+.card{background:#fff;border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:14px;margin-bottom:16px;}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.badge{background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;}
+label.f{display:block;font-size:13px;color:#444;margin:9px 0 3px;font-weight:600;}
+select,input[type=number],input[type=text]{width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;background:#fff;}
+.row{display:flex;gap:10px;}.row>div{flex:1;}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;margin:8px 14px 2px 0;cursor:pointer;}
+.chk input{width:18px;height:18px;}
+.new{border-left:3px solid var(--red);padding-left:9px;background:#fff9f9;border-radius:0 8px 8px 0;}
+.tag-new{font-size:10px;background:#fde8ea;color:var(--red);font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.tag-old{font-size:10px;background:#eef;color:#3355cc;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.preview{background:#1f2937;color:#f4f4f5;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.7;margin-top:6px;}
+.preview .lbl{color:#9ca3af;font-size:12px;}
+.preview .line{color:#fff;}
+.preview .det{color:#cbd5e1;font-size:13px;margin-left:10px;}
+.switch{display:flex;gap:8px;margin-bottom:14px;}
+.switch button{flex:1;height:42px;border:1.5px solid var(--red);border-radius:8px;background:#fff;color:var(--red);font-size:15px;font-weight:600;cursor:pointer;}
+.switch button.on{background:var(--red);color:#fff;}
+.note{font-size:12px;color:#888;margin-top:4px;}
+.legend{font-size:12px;color:#666;margin:10px 0;}
+</style></head><body><div class="wrap">
+<h1>🎛️ ร่างหน้าตา "ออปชั่นต่อรายการ" — เฟส 1</h1>
+<p class="sub">กดเลือกแล้วดูข้อความที่จะออกในใบด้านล่าง · <span class="tag-new">ใหม่</span>=เพิ่มในเฟส 1 · <span class="tag-old">มีแล้ว</span>=ของเดิม</p>
+
+<div class="switch">
+  <button id="bL" class="on" onclick="setKind('slide')">ประตู/หน้าต่างบานเลื่อน</button>
+  <button id="bO" onclick="setKind('open')">ประตูบานเปิด</button>
+</div>
+
+<div class="card">
+  <div class="card-h"><span class="badge">รายการ</span><b id="kindTitle">บานเลื่อน</b></div>
+
+  <label class="f">ตำแหน่ง/ห้อง <span class="tag-old">มีแล้ว</span></label>
+  <input type="text" id="pos" value="ประตู ห้องนั่งเล่น" oninput="render()">
+
+  <div class="new">
+  <label class="f">ชนิดการเปิด <span class="tag-new">ใหม่</span></label>
+  <select id="openType" onchange="render()"></select>
+  </div>
+
+  <div class="row">
+    <div class="new">
+      <label class="f">ระบบราง <span class="tag-new">ใหม่</span></label>
+      <select id="rail" onchange="render()"></select>
+    </div>
+    <div>
+      <label class="f">แบ่งกี่บาน <span class="tag-old">มีแล้ว</span></label>
+      <input type="number" id="panels" value="3" min="1" oninput="render()">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="new">
+      <label class="f">เสริมคานซัพพอร์ต <span class="tag-new">ใหม่</span></label>
+      <select id="beam" onchange="render()">
+        <option value="">— ไม่มี —</option>
+        <option value="โชว์คาน">รุ่นโชว์คาน</option>
+        <option value="ซ่อนคาน">รุ่นซ่อนคาน</option>
+      </select>
+    </div>
+    <div class="new" id="lockWrap">
+      <label class="f">ชุดล็อค <span class="tag-new">ใหม่</span></label>
+      <select id="lock" onchange="render()">
+        <option value="">— ไม่ระบุ —</option>
+        <option value="มีกุญแจ">มีกุญแจ</option>
+        <option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="new" id="thWrap" style="display:none;">
+    <label class="f">ธรณี <span class="tag-new">ใหม่</span></label>
+    <select id="threshold" onchange="render()">
+      <option value="มีธรณีกันน้ำ">มีธรณีกันน้ำ</option>
+      <option value="ไม่มีธรณี">ไม่มีธรณี</option>
+      <option value="มีธรณีหลังเต่า และ Door Drop Seal">มีธรณีหลังเต่า + Drop Seal</option>
+    </select>
+  </div>
+
+  <label class="f">กระจกติดตาย <span class="tag-old">มีแล้ว(บานย่อย)</span></label>
+  <select id="fixed" onchange="render()">
+    <option value="">— ไม่มี —</option>
+    <option value="ด้านข้าง">พร้อมกระจกติดตายด้านข้าง</option>
+    <option value="ด้านบน">พร้อมกระจกติดตายด้านบน</option>
+    <option value="ด้านข้างและด้านบน">พร้อมกระจกติดตายด้านข้างและด้านบน</option>
+  </select>
+
+  <div style="margin-top:10px;">
+    <label class="chk new" style="display:inline-flex;"><input type="checkbox" id="grid" onchange="render()"> มีคาดตาราง <span class="tag-new">ใหม่</span></label>
+    <label class="chk"><input type="checkbox" id="mosq" onchange="render()"> มีมุ้ง <span class="tag-old">มีแล้ว</span></label>
+  </div>
+  <div id="mosqWrap" style="display:none;">
+    <div class="row">
+      <div><label class="f">ชนิดมุ้ง</label><select id="mosqType" onchange="render()">
+        <option>มุ้งเฟรมเล็ก</option><option>มุ้งเฟรมใหญ่</option><option>มุ้งจีบ</option><option>มุ้งนิรภัย</option></select></div>
+      <div><label class="f">สีผ้า</label><select id="mosqFab" onchange="render()">
+        <option>ผ้าไฟเบอร์ดำ</option><option>ผ้าไฟเบอร์เทา</option></select></div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">⬇️ ข้อความที่จะพิมพ์ในใบเสนอราคา (อัปเดตตามที่เลือก)</div>
+<div class="preview">
+  <div class="lbl"># รายละเอียด</div>
+  <div class="line" id="pvHead"></div>
+  <div class="line" id="pvDesc"></div>
+  <div class="lbl" style="margin-top:8px;">รายละเอียดงาน</div>
+  <div class="det" id="pvDet"></div>
+</div>
+<p class="note">* mockup เฉยๆ ยังไม่ผูกราคา/ยังไม่แตะตัวคำนวณจริง · ราคารางล่าง(กันน้ำ/รางเตี้ย) คิดที่เรต/ตร.ม. ใน engine เดิม</p>
+
+<script>
+var KIND='slide';
+var OPEN_SLIDE=['บานเลื่อน','บานเลื่อนสลับ','บานเลื่อนเปิดคู่กลาง','บานเลื่อนลากจูง','บานเลื่อนเดี่ยว','บานเลื่อนไร้ราง'];
+var RAIL_SLIDE=['รางล่าง (รุ่นกันน้ำ)','รางล่าง (รุ่นรางเตี้ย 7 มม.)','รางบน (รุ่นโชว์ราง)'];
+function fill(id,arr){var s=document.getElementById(id);s.innerHTML=arr.map(function(v){return '<option>'+v+'</option>';}).join('');}
+function setKind(k){
+  KIND=k;
+  document.getElementById('bL').className=k==='slide'?'on':'';
+  document.getElementById('bO').className=k==='open'?'on':'';
+  document.getElementById('kindTitle').textContent=k==='slide'?'บานเลื่อน':'บานเปิด';
+  document.getElementById('thWrap').style.display=k==='open'?'':'none';
+  document.getElementById('lockWrap').style.display='';
+  if(k==='slide'){ fill('openType',OPEN_SLIDE); fill('rail',RAIL_SLIDE); }
+  else { fill('openType',['บานเปิดเดี่ยว','บานเปิดคู่']); fill('rail',['—']); document.getElementById('rail').parentElement.style.display='none'; }
+  if(k==='slide') document.getElementById('rail').parentElement.style.display='';
+  render();
+}
+function render(){
+  var pos=document.getElementById('pos').value.trim();
+  var ot=document.getElementById('openType').value;
+  var rail=document.getElementById('rail').value;
+  var panels=document.getElementById('panels').value;
+  var beam=document.getElementById('beam').value;
+  var lock=document.getElementById('lock').value;
+  var th=document.getElementById('threshold').value;
+  var fixed=document.getElementById('fixed').value;
+  var grid=document.getElementById('grid').checked;
+  var mosq=document.getElementById('mosq').checked;
+  document.getElementById('mosqWrap').style.display=mosq?'':'none';
+
+  var head='ประตู' ; // (ตามประเภทที่เลือกในฟอร์มจริง)
+  var s='- '+ot;
+  if(KIND==='slide' && rail && rail!=='—') s+=rail.indexOf('ราง')===0?(' '+rail):(' '+rail);
+  if(KIND==='open' && th) s+=' ('+th+')';
+  if(panels && parseInt(panels)>1) s+=' แบ่ง '+panels+' บาน';
+  if(beam) s+=' (เสริมคานซัพพอร์ทรุ่น'+beam+')';
+  if(mosq){ var mt=document.getElementById('mosqType').value; s+=' (มี'+mt+')'; }
+  if(fixed) s+=' พร้อมกระจกติดตาย'+fixed;
+  if(grid) s+=' (มีคาดตาราง)';
+  if(lock) s+=' · ชุดล็อค ('+lock+')';
+
+  document.getElementById('pvHead').textContent=pos||'(ตำแหน่ง)';
+  document.getElementById('pvDesc').textContent=s;
+  var det='- อลูมิเนียม สีเทาซาฮาร่า\n- กระจกใส หนา 6 มม.';
+  if(mosq){ det+='\n- '+document.getElementById('mosqType').value+' '+document.getElementById('mosqFab').value; }
+  document.getElementById('pvDet').innerHTML=det.split('\n').join('<br>');
+}
+setKind('slide');
+</script>
+</div></body></html>
