@@ -1808,9 +1808,9 @@ function buildItemOpts(d){
     h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;"><option value="บานเลื่อน">บานเลื่อน (ธรรมดา)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
-      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
-      // เสริมคาน — รางบนเท่านั้น (dynamic: โชว์เสมอ แต่ engine อ่านค่าเฉพาะตอน track=ซ่อนราง)
-      h+='<label class="opt" class="o-beamm-wrap">เสริมคาน (เฉพาะซ่อนราง) <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
+      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-beamm-wrap\'); if(w) w.style.display=(this.value===\'ซ่อนราง\'?\'inline-block\':\'none\');"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
+      // ข้อ2: เสริมคาน โผล่เฉพาะตอนซ่อนราง (default โชว์ราง = ซ่อน wrap)
+      h+='<span class="o-beamm-wrap" style="display:none;"><label class="opt">เสริมคาน (เฉพาะซ่อนราง) <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
     }
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
@@ -2445,7 +2445,8 @@ function genQuote(keepNo){
       // ประกอบชื่อหลัก: "{itype prefix}{ชนิดการเปิด}{railTxt} แบ่ง N บาน{เสริมคาน}{มุ้ง}"
       // prefix ถูกกำหนดไว้แล้ว (ประตู/หน้าต่าง) แต่ rawName ยังมีชื่อรุ่น ต้องสร้างใหม่
       // ใช้ prefix + _otSuffix + railTxt (ตัดชื่อรุ่นเดิมออก แต่คง seriesTag)
-      let _slideName = prefix + (_otSuffix ? _otSuffix : 'บานเลื่อน') + _railTxt;
+      const _pfx = prefix || (it.itype==='window' ? 'หน้าต่าง' : 'ประตู');  // ข้อ1: เลื่อนภายในให้มี "ประตู/หน้าต่าง" นำ
+      let _slideName = _pfx + (_otSuffix ? _otSuffix : 'บานเลื่อน') + _railTxt;
       if(_panels > 1) _slideName += ' แบ่ง ' + _panels + ' บาน';
       _slideName += _beamStr;
       _slideName += _mosqStr;
