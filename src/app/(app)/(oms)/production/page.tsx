@@ -7,11 +7,13 @@ import { thDate } from "@/lib/format";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { TriangleAlert, Clock, ChevronRight } from "@/components/ui/icons";
 import { ProductionStepModal, type ProdRow } from "@/components/production/ProductionStepModal";
+import { ProductionQueueTable } from "@/components/production/ProductionQueueTable";
 import type { ProdStatus } from "@/lib/database.types";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
   measure_scheduled: string | null; planned_install_date: string | null;
+  producer_note: string | null;
 };
 
 const today = new Date().toISOString().slice(0, 10);
@@ -34,7 +36,7 @@ function daysSince(d: string | null, created: string) {
 }
 
 export default function ProductionPage() {
-  const [view, setView] = useState<"table" | "board">("table");
+  const [view, setView] = useState<"table" | "queue" | "board">("table");
   const [filterKey, setFilterKey] = useState<string | null>(null);
   const [open, setOpen] = useState<Row | null>(null);
 
@@ -62,8 +64,8 @@ export default function ProductionPage() {
       <div className="flex items-center justify-between gap-3 mb-1">
         <h1 className="text-xl sm:text-2xl font-bold text-white">งานผลิต</h1>
         <div className="flex gap-1.5 glass-card rounded-xl p-1">
-          {[["table", "ตาราง"], ["board", "บอร์ด"]].map(([v, l]) => (
-            <button key={v} onClick={() => setView(v as "table" | "board")}
+          {[["table", "ตาราง"], ["queue", "คิวผลิต"], ["board", "บอร์ด"]].map(([v, l]) => (
+            <button key={v} onClick={() => setView(v as "table" | "queue" | "board")}
               className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-medium min-h-[36px] ${view === v ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
           ))}
         </div>
@@ -124,6 +126,9 @@ export default function ProductionPage() {
           })}
           {filtered.length === 0 && <EmptyState title="ไม่มีงานในกลุ่มนี้" />}
         </div>
+      ) : view === "queue" ? (
+        /* ── ตารางคิวผลิต (สำหรับช่าง) ── */
+        <ProductionQueueTable rows={rows} canWrite={canWrite} onChanged={refetch} />
       ) : (
         /* ── บอร์ด kanban ── */
         <div className="flex gap-3 overflow-x-auto pb-4 snap-x">

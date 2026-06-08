@@ -26,6 +26,7 @@ const schema = z.object({
   qc_result:  z.enum(["PASSED","FAILED"]).nullish(),
   qc_date:    z.string().nullish(),
   qc_note:    z.string().nullish(),
+  producer_note: z.string().nullish(),
   notes:      z.string().nullish(),
   remark:     z.string().nullish(),
 });

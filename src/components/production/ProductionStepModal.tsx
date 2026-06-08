@@ -12,6 +12,7 @@ export type ProdRow = {
   measure_scheduled: string | null; measure_actual: string | null; planned_install_date: string | null;
   production_queued: string | null; production_done: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
+  producer_note?: string | null;
   job: { job_code: string; customer_name: string; customer_area: string | null } | null;
 };
 

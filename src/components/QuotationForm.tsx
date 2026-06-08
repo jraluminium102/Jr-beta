@@ -130,19 +130,26 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   async function submit() {
     setErr("");
-    if (!customerId) { setErr("ต้องเลือกลูกค้า"); return; }
+    if (!customerId) { setErr("ต้องเลือกลูกค้าก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
-    const res = await fetch("/api/quotations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customer_id: customerId, issue_date: issueDate, items: valid, vat_rate: vat, discount_pct: disc, wht_rate: wht, note }),
-    });
-    const json = await res.json();
-    setBusy(false);
-    if (!res.ok) { setErr(json.error ?? "บันทึกไม่สำเร็จ"); return; }
-    router.push(`/quotations/${json.data.id}`);
+    try {
+      const res = await fetch("/api/quotations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: customerId, issue_date: issueDate, items: valid, vat_rate: vat, discount_pct: disc, wht_rate: wht, note }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
+      if (!json?.data?.id) { setErr("บันทึกแล้วแต่ไม่ได้รหัสกลับ — เปิดหน้าใบเสนอราคาเพื่อตรวจสอบ"); return; }
+      router.push(`/quotations/${json.data.id}`);
+    } catch {
+      // เน็ตสะดุด/หลุด → ไม่ปล่อยปุ่มค้าง ต้องแจ้งให้กดใหม่ได้
+      setErr("เชื่อมต่อไม่สำเร็จ (เน็ตสะดุด?) — ตรวจอินเทอร์เน็ตแล้วกดบันทึกอีกครั้ง");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
