@@ -94,6 +94,7 @@ export function QueueModal({
         sales_id: f.sales_id || null,
         job_size: f.job_size || null,
         address: f.address || null,
+        location_url: f.location_url || null, // ให้ server resolve ลิงก์ย่อ → พิกัด (กฎ 45 นาที)
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
       });

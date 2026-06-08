@@ -4,6 +4,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
+import { resolveMapLink } from "@/lib/queue-geo";
 
 export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
@@ -16,6 +17,7 @@ const schema = z.object({
   sales_id: z.string().uuid().nullish(),
   job_size: z.enum(["SINGLE", "MULTI", "FULLDAY"]).nullish(),
   address: z.string().nullish(),
+  location_url: z.string().nullish(),
   lat: z.number().nullish(),
   lng: z.number().nullish(),
 });
@@ -36,6 +38,12 @@ export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "write");
   const body = schema.parse(await req.json());
   const sb = ctx.supabase as unknown as Sb;
+
+  // resolve พิกัดงานใหม่จากลิงก์ (รองรับลิงก์ย่อ) ถ้าไม่ได้ส่ง lat/lng มา — เพื่อให้กฎ 45 นาทีทำงานจริง
+  if ((body.lat == null || body.lng == null) && body.location_url) {
+    const co = await resolveMapLink(body.location_url);
+    if (co) { body.lat = co.lat; body.lng = co.lng; }
+  }
 
   // Load queue_settings for max_pair_min / avg_speed_kmh / detour_factor
   const { data: settingsRaw } = await sb

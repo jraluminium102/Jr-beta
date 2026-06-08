@@ -3,6 +3,7 @@ import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { resolveMapLink } from "@/lib/queue-geo";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,12 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   const ctx = await requirePermission("queue", "write");
   const body = patchSchema.parse(clean(await req.json()));
   const sb = ctx.supabase as unknown as Sb;
+
+  // resolve พิกัดเมื่อแก้ลิงก์โลเคชั่นแต่ไม่ได้ส่ง lat/lng มาเอง
+  if (body.location_url && (body.lat == null || body.lng == null)) {
+    const co = await resolveMapLink(body.location_url);
+    if (co) { body.lat = co.lat; body.lng = co.lng; }
+  }
 
   const { data, error } = await sb.from("queue_entries")
     .update(body).eq("id", params.id).select(SELECT).maybeSingle();

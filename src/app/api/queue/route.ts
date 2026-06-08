@@ -4,6 +4,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
+import { resolveMapLink } from "@/lib/queue-geo";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,12 @@ export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "write");
   const body = entrySchema.parse(clean(await req.json()));
   const sb = ctx.supabase as unknown as Sb;
+
+  // resolve พิกัดจากลิงก์โลเคชั่น (รองรับลิงก์ย่อ goo.gl) ถ้ายังไม่มี lat/lng
+  if (body.location_url && (body.lat == null || body.lng == null)) {
+    const co = await resolveMapLink(body.location_url);
+    if (co) { body.lat = co.lat; body.lng = co.lng; }
+  }
 
   const { data, error } = await sb
     .from("queue_entries")
