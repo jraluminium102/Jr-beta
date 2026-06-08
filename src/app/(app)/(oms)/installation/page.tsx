@@ -8,7 +8,13 @@ import { ShieldCheck } from "@/components/ui/icons";
 import { JobDrawer } from "@/components/jobs/JobDrawer";
 import type { InstStatus } from "@/lib/database.types";
 
-type Row = { id: string; job_code: string; customer_name: string; installations: { status: InstStatus }[] };
+type Row = { id: string; job_code: string; customer_name: string; installations: { status: InstStatus; install_scheduled: string | null }[] };
+// ISO → วัน/เดือน/ปี(พ.ศ. 2 หลัก) เช่น 28/06/69
+const thInstDate = (d: string | null) => {
+  if (!d) return null;
+  const [y, m, day] = d.split("-");
+  return `${day}/${m}/${(Number(y) + 543) % 100}`;
+};
 // ครบทุกสถานะ — กันงานที่ถูกตีกลับ/มีปัญหาหายจากบอร์ด
 const COLS: InstStatus[] = ["PENDING", "INSTALLING", "PENDING_INSPECT", "REVISING", "COMPLETED", "ISSUE"];
 
@@ -38,6 +44,9 @@ export default function InstallationPage() {
                       className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
                       <div className="text-white text-sm font-medium tnum">{j.job_code}</div>
                       <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{j.customer_name}</div>
+                      {j.installations[0]?.install_scheduled && (
+                        <div className="text-[11px] text-sky-200 mt-1.5 tnum">📅 นัดติดตั้ง: {thInstDate(j.installations[0].install_scheduled)}</div>
+                      )}
                       {col === "COMPLETED" && <div className="flex items-center gap-1 text-emerald-200 text-[11px] mt-1.5"><ShieldCheck size={12} /> อยู่ในประกัน</div>}
                     </button>
                   ))}

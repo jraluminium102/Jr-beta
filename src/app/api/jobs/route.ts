@@ -29,7 +29,7 @@ export const GET = withRoute(async (req: Request) => {
   let query = sb
     .from("jobs")
     .select(
-      "*, estimator:estimator_id(full_name), designer:designer_id(full_name), productions(status,status_updated_at), installations(status), issues(id,status)",
+      "*, estimator:estimator_id(full_name), designer:designer_id(full_name), productions(status,status_updated_at,planned_install_date), installations(status,install_scheduled), issues(id,status)",
       { count: "exact" }
     )
     .order("year", { ascending: false })
