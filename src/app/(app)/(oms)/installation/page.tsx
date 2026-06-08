@@ -8,7 +8,7 @@ import { ShieldCheck } from "@/components/ui/icons";
 import { JobDrawer } from "@/components/jobs/JobDrawer";
 import type { InstStatus } from "@/lib/database.types";
 
-type Row = { id: string; job_code: string; customer_name: string; installations: { status: InstStatus; install_scheduled: string | null }[] };
+type Row = { id: string; job_code: string; customer_name: string; status: string; installations: { status: InstStatus; install_scheduled: string | null }[] };
 // ISO → วัน/เดือน/ปี(พ.ศ. 2 หลัก) เช่น 28/06/69
 const thInstDate = (d: string | null) => {
   if (!d) return null;
@@ -21,7 +21,7 @@ const COLS: InstStatus[] = ["PENDING", "INSTALLING", "PENDING_INSPECT", "REVISIN
 export default function InstallationPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const { data, isLoading, refetch } = useQuery({ queryKey: ["jobs", "inst"], queryFn: () => api.get<Row[]>("/jobs?limit=100") });
-  const jobs = (data?.data ?? []).filter((j) => j.installations?.length);
+  const jobs = (data?.data ?? []).filter((j) => j.installations?.length && j.status !== "CANCELLED");
   const canFinance = (data?.meta?.can_finance as boolean) ?? false;
 
   return (
