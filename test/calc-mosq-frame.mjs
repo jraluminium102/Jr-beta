@@ -20,8 +20,8 @@ const fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
 const roundUp = (x) => Math.ceil(x / 1000) * 1000;
 
 // delta ของ sell เมื่อใส่มุ้ง vs ไม่ใส่ (itype เดียวกัน → แยกเฉพาะค่ามุ้ง)
-function mosqDelta(prodId, wd, ht, panels, itype, mosqId, fabric) {
-  const base = { mosqFabric: fabric || "fiber_gray", itype };
+function mosqDelta(prodId, wd, ht, panels, itype, mosqId, fabric, extra) {
+  const base = { mosqFabric: fabric || "fiber_gray", itype, ...(extra || {}) };
   const rNo = w.calcUnit(PBYID[prodId], String(wd), String(ht), 0, 0, panels, { ...base, mosqId: "" }, false);
   const rYes = w.calcUnit(PBYID[prodId], String(wd), String(ht), 0, 0, panels, { ...base, mosqId }, false);
   return { delta: rYes.sell - rNo.sell, no: rNo.sell, yes: rYes.sell };
@@ -40,6 +40,15 @@ want("M4 imp22 min_window มีผล → +1000", mosqDelta("casement_euro",0.5
 want("M5 imp21 min×จำนวนบาน → +3000", mosqDelta("casement_euro",1.0,1.0,2,"window","imp21").delta===3000, "delta="+mosqDelta("casement_euro",1.0,1.0,2,"window","imp21").delta);
 // ผ้ากันแมว/หมา flat +800: imp21 ประตู 2.2 → 3740+800=4540 → roundUp 5000
 want("M6 ผ้ากันแมว/หมา +800 → +5000", mosqDelta("casement_euro",1.0,2.2,1,"door","imp21","anti_pet").delta===5000, "delta="+mosqDelta("casement_euro",1.0,2.2,1,"door","imp21","anti_pet").delta);
+
+// ---------- เฟรมบนบานเลื่อน: คิดตามช่องเปิด (ไม่นับบานติดตาย) — พี่นัท 2026-06-08 ----------
+// sliding_euro 3.0×2.4 (a=7.2) 4 บาน ติดตาย 2 → ช่องเปิด 2/4 · มุ้งพื้นที่ 3.6 ตร.ม.
+//   imp23: tier[3.0,∞]=3500 ×3.6=12600 · min_door 7200×2(บานเปิด)=14400 → ใช้ min → roundUp 15000
+want("S1 เฟรมบานเลื่อน คิดตามช่องเปิด → +15000", mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:2}).delta===15000, "delta="+mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:2}).delta);
+// บานสลับไม่หารครึ่งสำหรับเฟรม (ต่างจากมุ้งเลื่อน) → ได้เท่า S1
+want("S2 เฟรม+บานสลับ ไม่หารครึ่ง = เท่า S1", mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:2,opentype:"บานเลื่อนสลับ"}).delta===15000, "delta="+mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:2,opentype:"บานเลื่อนสลับ"}).delta);
+// ไม่มีบานติดตาย (4 เปิดหมด) → เต็มพื้นที่ 7.2 · 3500×7.2=25200 · min 7200×4=28800 → roundUp 29000
+want("S3 เลื่อนเปิดหมด = เต็มพื้นที่ → +29000", mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:0}).delta===29000, "delta="+mosqDelta("sliding_euro",3.0,2.4,4,"door","imp23","fiber_gray",{fixedPanes:0}).delta);
 
 // ---------- regression: มุ้งจีบเดิม (mj_sd_basic) ต้องบิล ----------
 // rate 2500/ตร.ม. min 3500 · ประตู 1.5×2.2 A=3.3 ×2500=8250 → roundUp 9000

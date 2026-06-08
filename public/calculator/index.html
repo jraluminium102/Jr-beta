@@ -1456,21 +1456,24 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         const _total=Math.max(1,parseInt(panels)||1);
         const _fixed=Math.max(0,parseInt(optSel.fixedPanes)||0);
         const _openable=Math.max(1,_total-_fixed);
-        let _r=_openable/_total;                        // จีบ = เต็มช่องเปิด
-        const _isPleated=/จีบ/.test(mscreen.name||'');
+        let _r=_openable/_total;                        // จีบ/เฟรม = เต็มช่องเปิด
+        const _isPleated=/จีบ/.test(mscreen.name||'') || mscreen.frame;  // เฟรม = เต็มช่องเปิด (ไม่หารครึ่งแบบมุ้งเลื่อนสลับ)
         const _isSwap=(optSel.opentype==='บานเลื่อนสลับ');
         if(!_isPleated && _isSwap) _r=_r/2;             // มุ้งเลื่อน + สลับ = ครึ่งช่องเปิด
         openRatio=_r;
       }
       let mosqArea, mosqBase;
       if(mscreen.frame){
-        // P1-2: เฟรมมุ้ง (imp21/22/23) = เต็มช่องบาน · rate tier ตามพื้นที่ · min ตาม ประตู/หน้าต่าง × จำนวนบาน (เท่า product)
-        mosqArea = a;
-        const _fr = rateOf(a, RATES[mscreen.rates]);
+        // P1-2: เฟรมมุ้ง (imp21/22/23) · บานเลื่อน = คิดตามช่องเปิด (เท่าจีบ · พี่นัท 2026-06-08) · บานอื่น = เต็มบาน
+        //   rate tier ตามพื้นที่มุ้งจริง · min ตาม ประตู/หน้าต่าง × จำนวนบานที่เปิด (ไม่นับบานติดตาย)
+        mosqArea = a * openRatio;
+        const _pnTotal = Math.max(1, parseInt(panels)||1);
+        const _pnFixed = (p.cat==='บานเลื่อน'||p.cat==='เลื่อนภายใน') ? Math.max(0,parseInt(optSel.fixedPanes)||0) : 0;
+        const _pnOpen = Math.max(1, _pnTotal - _pnFixed);
+        const _fr = rateOf(mosqArea, RATES[mscreen.rates]);
         const _it = (optSel.itype==='window') ? 'window' : 'door';
         const _minPP = (_it==='window') ? (mscreen.min_window||0) : (mscreen.min_door||0);
-        const _pn = Math.max(1, parseInt(panels)||1);
-        mosqBase = Math.max(_minPP*_pn, a*_fr);
+        mosqBase = Math.max(_minPP*_pnOpen, mosqArea*_fr);
       } else {
         mosqArea = a * openRatio;
         mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
