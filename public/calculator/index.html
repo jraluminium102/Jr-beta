@@ -1956,6 +1956,40 @@ function addSetOptPreset(sel){
   od.value=delta||''; od.dispatchEvent(new Event('input',{bubbles:true}));
   sel.value=''; calcQuote();
 }
+// ===== F2: OPTION ทางเลือกลูกค้า ต่อบาน (cascade หมวด→รายการ · auto-price · หลาย OPTION) =====
+const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mosq',label:'เปลี่ยนผ้ามุ้ง'},{id:'color',label:'เปลี่ยนสีอลู'},{id:'handle',label:'เปลี่ยนมือจับ'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
+// มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
+const OC_HANDLES=[{n:'Cmech ฝัง ประตู ธรรมดา',p:1050},{n:'Cmech ฝัง ประตู พิเศษชุบ',p:1470},{n:'Cmech ฝัง หน้าต่าง ธรรมดา',p:350},{n:'Cmech ฝัง หน้าต่าง พิเศษชุบ',p:490},{n:'Cmech เมโทร ประตู ธรรมดา',p:1000},{n:'Cmech เมโทร ประตู พิเศษชุบ',p:1400},{n:'Cmech เมโทร หน้าต่าง ธรรมดา',p:600},{n:'Cmech เมโทร หน้าต่าง พิเศษชุบ',p:840}];
+function ocCatOptions(){ return '<option value="">— เลือกหมวด —</option>'+OC_CATS.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join(''); }
+function ocItemOptions(cat){
+  if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
+    GLASS.forEach(function(g,i){ var k=/อินซูเลท/.test(g.n)?'อินซูเลท':(/เทมเปอร์/.test(g.n)?'เทมเปอร์':(/ลามิเนต/.test(g.n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(g.n)?'กระจกใส/สี':'อื่นๆ'))); grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
+    return Object.keys(grp).filter(function(k){return grp[k].length;}).map(function(k){return '<optgroup label="'+k+'">'+grp[k].join('')+'</optgroup>';}).join(''); }
+  if(cat==='mosq'){ return MOSQUITO_SCREENS.filter(function(m){return !m.frame;}).map(function(m){return '<option value="'+m.id+'" data-r="'+(m.rate||0)+'">'+m.name+'</option>';}).join(''); }
+  if(cat==='color'){ return COLORS.map(function(c,i){return i>=1?('<option value="'+i+'" data-color="1">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join(''); }
+  if(cat==='handle'){ return OC_HANDLES.map(function(h,i){return '<option value="'+i+'" data-r="'+h.p+'" data-flat="1">'+h.n+' (+'+fmt(h.p)+')</option>';}).join(''); }
+  if(cat==='roof'){ return PRODUCTS.filter(function(p){return p.cat==='หลังคา';}).map(function(p){return '<option value="'+p.id+'" data-roof="1">'+p.name+'</option>';}).join(''); }
+  return '';
+}
+function ocCat(sel){ var row=sel.closest('.oc-row'); if(!row)return; var cat=sel.value; var it=row.querySelector('.oc-item'); var tx=row.querySelector('.oc-text');
+  if(cat==='other'||cat===''){ it.style.display='none'; it.innerHTML=''; } else { it.style.display=''; it.innerHTML='<option value="">— เลือกรายการ —</option>'+ocItemOptions(cat); }
+  tx.value=''; row.querySelector('.oc-delta').value=''; calcQuote(); }
+function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(!row||!ch)return;
+  var cat=row.querySelector('.oc-cat').value; var opt=sel.options[sel.selectedIndex];
+  var tx=row.querySelector('.oc-text'), dl=row.querySelector('.oc-delta');
+  if(sel.value===''){ tx.value=''; dl.value=''; calcQuote(); return; }
+  var name=opt.textContent.replace(/\s*\(\+[\d,]+\)\s*$/,'').trim();
+  var w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, area=w*h;
+  var delta=0;
+  if(opt.getAttribute('data-flat')==='1'){ delta=parseFloat(opt.getAttribute('data-r'))||0; }
+  else if(cat==='glass'){ var cg=parseInt((ch.querySelector('.i-glass')||{}).value)||0; var oR=(GLASS[cg]&&GLASS[cg].s)||0; delta=Math.round(((parseFloat(opt.getAttribute('data-r'))||0)-oR)*area); }
+  else if(cat==='color'){ var cc=parseInt((ch.querySelector('.i-color')||{}).value)||0; delta=Math.round(colorPrice(parseInt(sel.value),area,'')-colorPrice(cc,area,'')); }
+  else if(cat==='mosq'){ delta=Math.round((parseFloat(opt.getAttribute('data-r'))||0)*area); }
+  else if(cat==='roof'){ var rp=PBYID[sel.value]; var nr=(rp&&rp.rates)?rateOf(area,RATES[rp.rates]):0; delta=Math.round(nr*area); }
+  tx.value='เปลี่ยนเป็น'+name; dl.value=delta||''; calcQuote(); }
+function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
+  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions()+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
+  box.appendChild(row); }
 function addItem(container){
   itemSeq++;
   const id=itemSeq;
@@ -1979,8 +2013,8 @@ function addItem(container){
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
      `<div class="full note-opt-group">`+
        `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
-       `<select class="i-optpreset" onchange="addOptPreset(this)" style="height:34px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">${optPresetOptions()}</select>`+
-       `<textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม · สเปกพิเศษ / รายละเอียดเพิ่มเติมใส่ที่นี่"></textarea>`+
+       `<details class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;"><summary style="cursor:pointer;font-size:13px;color:var(--red);font-weight:600;">＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)</summary><div class="oc-list" style="margin-top:6px;"></div><button type="button" class="oc-add" onclick="ocAddRow(this)" style="font-size:12px;padding:3px 10px;border:1px dashed var(--red);color:var(--red);background:#fff;border-radius:6px;cursor:pointer;">＋ เพิ่ม OPTION</button></details>`+
+       `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
        `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
        `<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">`+
          `<div style="flex:1;min-width:140px;"><label style="font-size:12px;color:var(--muted);">OPTION ราคา (&#177;บาท · 0=ไม่บวก)</label><input class="o-optdelta" type="number" step="100" value="0" placeholder="เช่น +5000 หรือ -3000" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div>`+
@@ -2502,6 +2536,12 @@ function readItem(d){
   // งาน5: optDelta ±บาท (ต่อรายการ)
   { const _od=d.querySelector('.o-optdelta'); const _odv=parseFloat((_od&&_od.value)||'0')||0;
     if(_odv!==0&&r){ r.sell=(r.sell||0)+_odv; r.optDelta=_odv; r.msgs=r.msgs||[]; r.msgs.push('OPTION '+(_odv>=0?'+':'')+Math.round(_odv).toLocaleString('en-US')+' บาท'); } }
+  // F2: OPTION ทางเลือกลูกค้า (cascade) — รวม ±บาท เข้า sell + เก็บข้อความไว้ขึ้นใบ
+  { var _ocTxt=[]; var _ocSum=0;
+    d.querySelectorAll('.oc-row').forEach(function(row){ var t=(row.querySelector('.oc-text')&&row.querySelector('.oc-text').value||'').trim(); var dv=parseFloat(row.querySelector('.oc-delta')&&row.querySelector('.oc-delta').value)||0;
+      if(t||dv){ _ocSum+=dv; _ocTxt.push('OPTION : '+(t||'ทางเลือกลูกค้า')+(dv?(' (ราคา'+(dv>0?'+':'-')+Math.round(Math.abs(dv)).toLocaleString('en-US')+' บาท)'):'')); } });
+    if(r&&_ocSum!==0){ r.sell=(r.sell||0)+_ocSum; }
+    if(r) r.optChoicesNote=_ocTxt.join('\n'); }
   // #2: อ่าน sub-items + คิดราคาบวกเข้า r.sell
   const subItems=readSubItems(d);
   if(subItems.length && r){
@@ -2523,7 +2563,7 @@ function readItem(d){
     groupOptDelta:(_sb&&_sb.querySelector('.set-optdelta'))?(parseFloat(_sb.querySelector('.set-optdelta').value)||0):0,
     itemOptDelta:_itemOptDelta, lumpsum:_isLumpsum,
     position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
-    note:(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'',
+    note:[(r&&r.optChoicesNote)||'', (d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||''].filter(Boolean).join('\n'),
     div:d};
 }
 function svcNum(id){ const e=document.getElementById(id); return e?(parseFloat(e.value)||0):0; }
@@ -3205,7 +3245,10 @@ function genQuote(keepNo){
         if(t.startsWith('OPTION')||t.startsWith('หมายเหตุ')){ specialLines.push(t); }
         else if(!matSeen.has(t)){ matSeen.add(t); matLines.push(t); }
       });
-    }});
+    }
+      // F2: OPTION ทางเลือกลูกค้า ต่อด้าน (อยู่ใน it.note) — ดันเข้า specialLines ของชุดด้วย
+      if(it.note){ it.note.split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(ln.startsWith('OPTION')||ln.startsWith('หมายเหตุ')) specialLines.push(ln); }); }
+    });
     let content = '<div style="font-weight:700;color:#1F2937;">'+_gl+'<button type="button" class="qtoggle-set" onclick="toggleGroupSplit('+gIdx+')" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #B3151D;color:#B3151D;background:#fff;border-radius:6px;cursor:pointer;">'+(isSplit?'รวมราคา':'แยกราคา')+'</button></div>';
     if(isSplit){
       items.forEach(it => { const d=itemDetail(it); const pos=it.position?(' ('+it.position+')'):''; const ov=it.r.overridden?' ✎':'';
