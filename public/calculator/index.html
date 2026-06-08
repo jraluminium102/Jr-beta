@@ -2126,6 +2126,10 @@ function buildItemOpts(d){
   if(['บานเลื่อน','บานเปิด','บานกระทุ้ง'].includes(p.cat)){
     h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="normal">สีธรรมดา (ดำ/ขาว)</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
   }
+  // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
+  if(/xseries|slimlux/.test(p.id)){
+    h+='<label class="opt">มือจับ X-series (ฟรี) <select class="o-xhandle" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></label>';
+  }
   // R3.2: ตารางเต็มบาน 5,000 (เฉพาะ โซลิด วัน/ทู)
   if(p.full_grid){
     h+='<label class="opt"><input type="checkbox" class="o-fullgrid"> ตารางเต็มบาน +5,000 (กว้าง≤1.2 / สูง≤3)</label>';
@@ -2365,6 +2369,7 @@ function readItem(d){
   { const _cm=d.querySelector('.o-cmech'); if(_cm) optSel.cmech=_cm.value;
     const _cmc=d.querySelector('.o-cmechcolor'); if(_cmc) optSel.cmechcolor=_cmc.value;
     const _cmit=d.querySelector('.i-type'); optSel.itype=(_cmit&&_cmit.value)||'door'; // ข้อ4A: ประตู2ฝั่ง/หน้าต่าง1ฝั่ง
+    const _xh=d.querySelector('.o-xhandle'); if(_xh) optSel.xhandle=_xh.value; // ข้อ4C: มือจับ X-series ฟรี
     const _fg=d.querySelector('.o-fullgrid'); if(_fg) optSel.fullgrid=_fg.checked;
     const _ci=d.querySelector('.o-combo_awn_inside'); if(_ci) optSel.combo_awn=_ci.checked;
     const _cip=d.querySelector('.o-combo_price'); if(_cip) optSel.combo_price=_cip.value;
@@ -2926,6 +2931,8 @@ function genQuote(keepNo){
       if(sx > 0) _parts.push('+ค่าเสริมกล่อง/ราง '+fmt(sx)+' บาท');
     }
     // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
+    // ข้อ4C: มือจับ X-series ฟรี — โชว์ชื่อรุ่น (ไม่บวกเงิน)
+    if(it.optSel && it.optSel.xhandle){ _parts.push('มือจับ '+it.optSel.xhandle); }
     if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
     if(it.optSel && it.optSel.extrawork){ _parts.push(it.optSel.extrawork); }
     if(it.optSel && it.optSel.removeold){ _parts.push('รวมรื้อของเดิม'); }
