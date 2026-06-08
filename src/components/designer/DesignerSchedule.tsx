@@ -1,27 +1,29 @@
 "use client";
 
 /**
- * DesignerSchedule v3 — Kanban-by-day planner with HTML5 drag & drop.
+ * DesignerSchedule v4 — Gantt timeline (Google Calendar style)
  *
- * Layout (7 columns, horizontal scroll):
- *   [ยังไม่กำหนด/แก้แทรก] | จันทร์ | อังคาร | พุธ | พฤหัส | ศุกร์ | เสาร์
+ * Layout (top → bottom):
+ *   1. WorkloadBar  — สรุปงานในมือรายคน (คงเดิม)
+ *   2. WeekNavigator — เลื่อน ±สัปดาห์ + "วันนี้"
+ *   3. Gantt grid   — lane รายช่าง × แกน X = วัน (21 วัน, scroll แนวนอน)
+ *      - แถบงาน = ช่วง [start..end], ซ้อนทับ → sub-row (greedy)
+ *      - ลาก Pointer Events: เลื่อนทั้งงาน | resize ขอบซ้าย/ขวา
+ *      - mobile fallback: คลิกแถบ → popover date picker
+ *   4. Legend
  *
- * Features:
- *   - WorkloadBar + WeekNavigator (reused from v2)
- *   - HTML5 drag: drag card → drop on day column → PATCH design_due_date
- *   - Drop on "ยังไม่กำหนด" column → design_due_date: null
- *   - Mobile fallback: date-input on each card ("ย้ายวัน")
- *   - Show ALL cards per column (no +N collapse), max-h + overflow-y-auto
- *   - Light theme only: text-ink / text-ink-2 / text-ink-3 / text-brand-dark
- *     NO text-white on light background.
- * NOTE: /designer renders on LIGHT background — never use text-white on cards.
+ * Light theme: text-ink / text-ink-2 / text-ink-3 / text-brand-dark
+ * NO text-white on light backgrounds (only on bg-brand elements like badges).
  */
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import {
+  useMemo, useState, useRef, useCallback,
+} from "react";
 import Icon from "@/components/Icon";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import type { DesignState } from "@/lib/database.types";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type Job = {
   id: string;
   job_code: string | null;
@@ -30,6 +32,7 @@ type Job = {
   designer_name: string | null;
   design_state: DesignState;
   design_due_date: string | null;
+  design_start: string | null;
   design_revise_count: number;
   overdue: boolean;
 };
@@ -42,13 +45,22 @@ interface Props {
   onRefresh: () => Promise<void>;
 }
 
-// ─── State colours (LIGHT theme: tinted bg + dark text, NO white text) ───────
-const STATE_COLOR: Record<DesignState, { bg: string; text: string; dot: string; border: string }> = {
-  NOT_STARTED:      { bg: "bg-slate-50",   text: "text-slate-700",   dot: "#94a3b8", border: "border-slate-200" },
-  DRAWING:          { bg: "bg-blue-50",    text: "text-blue-700",    dot: "#2563eb", border: "border-blue-200"  },
-  PENDING_CUSTOMER: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "#d97706", border: "border-amber-200" },
-  REVISING:         { bg: "bg-red-50",     text: "text-red-700",     dot: "#B3151D", border: "border-red-200"   },
-  DONE:             { bg: "bg-emerald-50", text: "text-emerald-700", dot: "#059669", border: "border-emerald-200"},
+// ─── Constants ────────────────────────────────────────────────────────────────
+const DAY_WIDTH = 44;       // px per day column
+const LANE_NAME_WIDTH = 140; // px for sticky designer name column
+const BAR_HEIGHT = 28;      // px per bar
+const ROW_PAD = 6;          // px padding top+bottom per sub-row
+const TOTAL_DAYS = 21;      // days shown
+
+// ─── State colours (LIGHT theme: tinted bg + dark text, NO white text) ────────
+const STATE_COLOR: Record<DesignState, {
+  bg: string; text: string; dot: string; border: string; barBg: string;
+}> = {
+  NOT_STARTED:      { bg: "bg-slate-50",   text: "text-slate-700",   dot: "#94a3b8", border: "border-slate-300",  barBg: "bg-slate-100"  },
+  DRAWING:          { bg: "bg-blue-50",    text: "text-blue-700",    dot: "#2563eb", border: "border-blue-300",   barBg: "bg-blue-100"   },
+  PENDING_CUSTOMER: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "#d97706", border: "border-amber-300",  barBg: "bg-amber-100"  },
+  REVISING:         { bg: "bg-red-50",     text: "text-red-700",     dot: "#B3151D", border: "border-red-300",    barBg: "bg-red-100"    },
+  DONE:             { bg: "bg-emerald-50", text: "text-emerald-700", dot: "#059669", border: "border-emerald-300", barBg: "bg-emerald-100" },
 };
 const STATE_TH: Record<DesignState, string> = {
   NOT_STARTED: "ยังไม่เริ่ม",
@@ -58,7 +70,7 @@ const STATE_TH: Record<DesignState, string> = {
   DONE: "เสร็จแล้ว",
 };
 
-// ─── Date helpers (reused from v2) ────────────────────────────────────────────
+// ─── Date helpers ─────────────────────────────────────────────────────────────
 function isoToday(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -71,7 +83,6 @@ function addDays(iso: string, n: number): string {
   d.setDate(d.getDate() + n);
   return toIso(d);
 }
-/** จันทร์ของสัปดาห์ที่ iso อยู่ (อาทิตย์ = ปลายสัปดาห์ก่อนหน้า) */
 function mondayOf(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   const dow = d.getDay();
@@ -79,11 +90,11 @@ function mondayOf(iso: string): string {
   d.setDate(d.getDate() + diff);
   return toIso(d);
 }
-/** 6 วันทำงาน จ–ส */
-function weekDays(mondayIso: string): string[] {
-  const days: string[] = [];
-  for (let i = 0; i < 6; i++) days.push(addDays(mondayIso, i));
-  return days;
+/** diff in whole days (b − a). Positive = b is after a. */
+function dayDiff(a: string, b: string): number {
+  const da = new Date(a + "T00:00:00");
+  const db = new Date(b + "T00:00:00");
+  return Math.round((db.getTime() - da.getTime()) / 86400000);
 }
 
 const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
@@ -91,22 +102,22 @@ function thShortDate(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${Number(d)} ${MONTH_SHORT[Number(m) - 1]}`;
 }
-const DOW_FULL_TH = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
-function thDow(iso: string): string {
-  return DOW_FULL_TH[new Date(iso + "T00:00:00").getDay()];
-}
-function weekRangeLabel(mondayIso: string): string {
-  const end = addDays(mondayIso, 5);
-  const [, sm, sd] = mondayIso.split("-");
+function weekRangeLabel(startIso: string): string {
+  const end = addDays(startIso, TOTAL_DAYS - 1);
+  const [, sm, sd] = startIso.split("-");
   const [, em, ed] = end.split("-");
   const startLabel = sm === em ? `${Number(sd)}` : `${Number(sd)} ${MONTH_SHORT[Number(sm) - 1]}`;
   return `${startLabel} – ${Number(ed)} ${MONTH_SHORT[Number(em) - 1]}`;
+}
+function isWeekend(iso: string): boolean {
+  const dow = new Date(iso + "T00:00:00").getDay();
+  return dow === 0 || dow === 6;
 }
 
 function loadBarColor(f: number): string { return f >= 0.75 ? "bg-brand" : f >= 0.4 ? "bg-amber-400" : "bg-emerald-500"; }
 function loadTextColor(f: number): string { return f >= 0.75 ? "text-brand" : f >= 0.4 ? "text-amber-600" : "text-emerald-600"; }
 
-// ─── WorkloadBar (reused) ─────────────────────────────────────────────────────
+// ─── WorkloadBar (reused from v3) ─────────────────────────────────────────────
 function WorkloadBar({
   designers, jobs, designerFilter, today,
 }: {
@@ -167,7 +178,7 @@ function WorkloadBar({
   );
 }
 
-// ─── WeekNavigator (reused) ───────────────────────────────────────────────────
+// ─── WeekNavigator (reused from v3) ───────────────────────────────────────────
 function WeekNavigator({
   weekStart, today, onPrev, onNext, onToday,
 }: {
@@ -177,23 +188,23 @@ function WeekNavigator({
   onNext: () => void;
   onToday: () => void;
 }) {
-  const isCurrentWeek = weekStart === mondayOf(today);
+  const isCurrentRange = weekStart === mondayOf(today);
   const label = weekRangeLabel(weekStart);
   return (
     <div className="glass-soft rounded-xl px-3 py-2 flex items-center justify-between gap-2">
       <button
         onClick={onPrev}
         className="press inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-brand rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] justify-center"
-        aria-label="สัปดาห์ก่อนหน้า"
+        aria-label="ช่วงก่อนหน้า"
       >
         <Icon name="arrowLeft" size={16} />
         <span className="hidden sm:inline text-[13px]">ก่อนหน้า</span>
       </button>
       <div className="flex items-center gap-2 flex-1 justify-center">
         <span className="text-sm font-semibold text-brand-dark tnum">{label}</span>
-        {isCurrentWeek ? (
+        {isCurrentRange ? (
           <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand/10 text-brand">
-            สัปดาห์นี้
+            ช่วงนี้
           </span>
         ) : (
           <button
@@ -207,7 +218,7 @@ function WeekNavigator({
       <button
         onClick={onNext}
         className="press inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-brand rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] justify-center"
-        aria-label="สัปดาห์ถัดไป"
+        aria-label="ช่วงถัดไป"
       >
         <span className="hidden sm:inline text-[13px]">ถัดไป</span>
         <Icon name="arrowLeft" size={16} className="rotate-180" />
@@ -216,258 +227,534 @@ function WeekNavigator({
   );
 }
 
-// ─── JobCard (draggable planner card) ────────────────────────────────────────
-/**
- * Draggable card used inside day columns.
- * Light theme: card bg = state tinted bg, all text uses dark tokens.
- * "แก้ N" badge: bg-red-100 text-red-700 (NOT text-white on light surface).
- * Mobile fallback: date input visible on small screens.
- */
-function JobCard({
-  job,
-  canWrite,
-  showDesigner,
-  draggingId,
-  onDragStart,
-  onDragEnd,
-  onReschedule,
-}: {
+// ─── Bar placement (overlap → sub-row via greedy algorithm) ───────────────────
+type PlacedBar = {
   job: Job;
-  canWrite: boolean;
-  showDesigner: boolean;
-  draggingId: string | null;
-  onDragStart: (jobId: string) => void;
-  onDragEnd: () => void;
-  onReschedule: (job: Job, isoDate: string | null) => Promise<void>;
-}) {
-  const [dateBusy, setDateBusy] = useState(false);
-  const [showDateInput, setShowDateInput] = useState(false);
-  const c = STATE_COLOR[job.design_state];
-  const isDragging = draggingId === job.id;
+  startOffset: number; // days from rangeStart (can be < 0 if bar starts before view)
+  endOffset: number;   // days from rangeStart (inclusive), can exceed TOTAL_DAYS
+  subRow: number;
+};
 
-  async function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value || null;
-    setDateBusy(true);
-    await onReschedule(job, val);
-    setDateBusy(false);
-    setShowDateInput(false);
+function placeJobs(jobs: Job[], rangeStart: string, today: string): PlacedBar[] {
+  const placed: PlacedBar[] = [];
+  // Track end-offset per sub-row to detect overlap
+  const subRowEnd: number[] = [];
+
+  for (const job of jobs) {
+    // Determine bar start & end ISO dates
+    const rawStart = job.design_start ?? job.design_due_date ?? today;
+    const rawEnd = job.design_due_date ?? job.design_start ?? today;
+    const startIso = rawStart;
+    const endIso = rawEnd < rawStart ? rawStart : rawEnd;
+
+    const startOffset = dayDiff(rangeStart, startIso);
+    const endOffset = dayDiff(rangeStart, endIso);
+
+    // Only show if bar overlaps with [0, TOTAL_DAYS-1]
+    if (endOffset < 0 || startOffset >= TOTAL_DAYS) continue;
+
+    // Greedy sub-row assignment
+    let subRow = 0;
+    while (subRowEnd[subRow] !== undefined && subRowEnd[subRow] >= startOffset) {
+      subRow++;
+    }
+    subRowEnd[subRow] = endOffset;
+
+    placed.push({ job, startOffset, endOffset, subRow });
   }
+  return placed;
+}
+
+// ─── DragBar — single Gantt bar with pointer-event drag/resize ─────────────
+type DragMode = "move" | "resize-start" | "resize-end" | null;
+
+interface DragBarProps {
+  bar: PlacedBar;
+  rangeStart: string;
+  today: string;
+  canWrite: boolean;
+  onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
+  onClickBar: (bar: PlacedBar) => void;
+}
+
+function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragBarProps) {
+  const { job, startOffset, endOffset, subRow } = bar;
+  const c = STATE_COLOR[job.design_state];
+
+  // Local drag state
+  const [dragDelta, setDragDelta] = useState(0);
+  const [resizeDelta, setResizeDelta] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragMode = useRef<DragMode>(null);
+  const startX = useRef(0);
+  const hasMoved = useRef(false);
+
+  // Clamp offsets to visible range for display
+  const visStart = Math.max(startOffset, 0);
+  const visEnd = Math.min(endOffset, TOTAL_DAYS - 1);
+  const barDays = endOffset - startOffset + 1;
+
+  // Preview during drag
+  let previewLeft = visStart;
+  let previewWidth = visEnd - visStart + 1;
+
+  if (isDragging) {
+    if (dragMode.current === "move") {
+      const newStart = startOffset + dragDelta;
+      const newEnd = endOffset + dragDelta;
+      previewLeft = Math.max(newStart, 0);
+      previewWidth = Math.min(newEnd, TOTAL_DAYS - 1) - previewLeft + 1;
+    } else if (dragMode.current === "resize-end") {
+      const newEnd = endOffset + resizeDelta;
+      const clampedEnd = Math.min(Math.max(newEnd, startOffset), TOTAL_DAYS - 1);
+      previewLeft = visStart;
+      previewWidth = clampedEnd - previewLeft + 1;
+    } else if (dragMode.current === "resize-start") {
+      const newStart = startOffset + resizeDelta;
+      const clampedStart = Math.max(Math.min(newStart, endOffset), 0);
+      previewLeft = clampedStart;
+      previewWidth = Math.min(visEnd, TOTAL_DAYS - 1) - previewLeft + 1;
+    }
+  }
+
+  const top = subRow * (BAR_HEIGHT + ROW_PAD) + ROW_PAD;
+  const left = previewLeft * DAY_WIDTH;
+  const width = Math.max(previewWidth, 1) * DAY_WIDTH - 2; // -2 px gap
+
+  const isOverdue = job.overdue;
+  const barBgClass = isDragging ? "opacity-80 shadow-lg ring-2 ring-brand/40" : "";
+
+  // ── Pointer handlers ──────────────────────────────────────────────────────
+  function onPointerDownBar(e: React.PointerEvent) {
+    if (!canWrite) {
+      // Non-write: treat as click → mobile popover
+      return;
+    }
+    e.stopPropagation();
+    dragMode.current = "move";
+    startX.current = e.clientX;
+    hasMoved.current = false;
+    setDragDelta(0);
+    setIsDragging(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerDownResizeEnd(e: React.PointerEvent) {
+    e.stopPropagation();
+    dragMode.current = "resize-end";
+    startX.current = e.clientX;
+    hasMoved.current = false;
+    setResizeDelta(0);
+    setIsDragging(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerDownResizeStart(e: React.PointerEvent) {
+    e.stopPropagation();
+    dragMode.current = "resize-start";
+    startX.current = e.clientX;
+    hasMoved.current = false;
+    setResizeDelta(0);
+    setIsDragging(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!isDragging) return;
+    const rawDelta = Math.round((e.clientX - startX.current) / DAY_WIDTH);
+    if (rawDelta !== 0) hasMoved.current = true;
+    if (dragMode.current === "move") {
+      setDragDelta(rawDelta);
+    } else {
+      setResizeDelta(rawDelta);
+    }
+  }
+
+  async function onPointerUp(e: React.PointerEvent) {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const mode = dragMode.current;
+    dragMode.current = null;
+
+    const moved = hasMoved.current;
+    hasMoved.current = false;
+
+    if (!moved) {
+      // Treat as click
+      setDragDelta(0);
+      setResizeDelta(0);
+      onClickBar(bar);
+      return;
+    }
+
+    // Compute new ISO dates
+    let newStartIso = job.design_start ?? job.design_due_date ?? today;
+    let newEndIso = job.design_due_date ?? job.design_start ?? today;
+    if (newEndIso < newStartIso) newEndIso = newStartIso;
+
+    if (mode === "move") {
+      const delta = Math.round((e.clientX - startX.current) / DAY_WIDTH);
+      newStartIso = addDays(newStartIso, delta);
+      newEndIso = addDays(newEndIso, delta);
+      setDragDelta(0);
+    } else if (mode === "resize-end") {
+      const delta = Math.round((e.clientX - startX.current) / DAY_WIDTH);
+      newEndIso = addDays(newEndIso, delta);
+      if (newEndIso < newStartIso) newEndIso = newStartIso;
+      setResizeDelta(0);
+    } else if (mode === "resize-start") {
+      const delta = Math.round((e.clientX - startX.current) / DAY_WIDTH);
+      newStartIso = addDays(newStartIso, delta);
+      if (newStartIso > newEndIso) newStartIso = newEndIso;
+      setResizeDelta(0);
+    }
+
+    await onSave(job.id, newStartIso, newEndIso);
+  }
+
+  // Tooltip text
+  const startLabel = thShortDate(job.design_start ?? job.design_due_date ?? today);
+  const endLabel = thShortDate(job.design_due_date ?? job.design_start ?? today);
+  const tooltip = `${job.job_code ?? "—"}  |  ${startLabel} – ${endLabel}`;
 
   return (
     <div
-      draggable={canWrite}
-      onDragStart={(e) => {
-        e.dataTransfer.setData("jobId", job.id);
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart(job.id);
-      }}
-      onDragEnd={onDragEnd}
       className={[
-        "rounded-xl border p-2.5 select-none transition-opacity",
-        c.bg, c.border,
-        canWrite ? "cursor-grab active:cursor-grabbing" : "",
-        isDragging ? "opacity-40" : "opacity-100",
+        "absolute rounded-md border select-none transition-shadow",
+        c.barBg, c.border,
+        canWrite ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        barBgClass,
       ].join(" ")}
-      aria-label={`งาน ${job.job_code ?? ""} ${job.customer_name}`}
+      style={{
+        top,
+        left,
+        width,
+        height: BAR_HEIGHT,
+        zIndex: isDragging ? 30 : 10,
+      }}
+      title={tooltip}
+      onPointerDown={onPointerDownBar}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      aria-label={`งาน ${job.job_code ?? ""} ${job.customer_name} (${tooltip})`}
     >
-      {/* Row 1: customer name (prominent) */}
-      <div className="font-semibold text-[13px] text-ink truncate" title={job.customer_name}>
-        {job.customer_name}
-      </div>
+      {/* Resize handle — left edge */}
+      {canWrite && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-l-md"
+          onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeStart(e); }}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Row 2: job_code + revise badge */}
-      <div className="flex items-center justify-between gap-1 mt-0.5 min-w-0">
-        <span className="text-[11px] text-ink-3 font-medium tnum truncate">
-          {job.job_code ?? "—"}
+      {/* Bar content */}
+      <div className="flex items-center gap-1 px-2 h-full overflow-hidden pointer-events-none">
+        {isOverdue && (
+          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-brand" />
+        )}
+        <span className={`text-[11px] font-semibold truncate ${c.text}`}>
+          {job.customer_name}
         </span>
         {job.design_revise_count > 0 && (
-          /* bg-red-100 text-red-700: safe on light surface */
-          <span className="shrink-0 text-[10px] font-bold bg-red-100 text-red-700 rounded-full px-1.5 py-0.5 leading-none">
-            แก้ {job.design_revise_count}
+          /* bg-red-100 text-red-800: safe light surface */
+          <span className="shrink-0 text-[9px] font-bold bg-red-100 text-red-800 rounded-full px-1 py-0 leading-4 ml-auto">
+            แก้{job.design_revise_count}
+          </span>
+        )}
+        {/* Show span only if bar is wide enough */}
+        {barDays >= 3 && (
+          <span className={`shrink-0 text-[10px] ${c.text} opacity-70 ml-auto`}>
+            {barDays}ว
           </span>
         )}
       </div>
 
-      {/* Row 3: state dot + label */}
-      <div className="flex items-center gap-1 mt-1.5">
-        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.dot }} />
-        <span className={`text-[11px] font-medium ${c.text}`}>{STATE_TH[job.design_state]}</span>
-      </div>
-
-      {/* Row 4: designer badge (only in "ทุกคน" mode) */}
-      {showDesigner && job.designer_name && (
-        <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 border border-gray-200">
-          <span className="text-[10px] text-ink-2 font-medium truncate max-w-[90px]">
-            {job.designer_name}
-          </span>
-        </div>
-      )}
-
-      {/* Row 5: mobile "ย้ายวัน" fallback (canWrite only) */}
+      {/* Resize handle — right edge */}
       {canWrite && (
-        <div className="mt-2">
-          {showDateInput ? (
-            <input
-              type="date"
-              defaultValue={job.design_due_date ?? ""}
-              disabled={dateBusy}
-              autoFocus
-              onChange={handleDateChange}
-              onBlur={() => setShowDateInput(false)}
-              className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-[11px] text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum"
-              aria-label="เลือกวันที่ส่งแบบ"
-            />
-          ) : (
-            <button
-              onClick={() => setShowDateInput(true)}
-              disabled={dateBusy}
-              className="press inline-flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand rounded-lg px-1.5 py-1 min-h-[28px] border border-transparent hover:border-gray-200 hover:bg-white/60 transition-colors"
-              aria-label="ย้ายวัน"
-            >
-              <Icon name="calendar" size={10} />
-              ย้ายวัน
-            </button>
-          )}
-        </div>
+        <div
+          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-r-md"
+          onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeEnd(e); }}
+          aria-hidden="true"
+        />
       )}
     </div>
   );
 }
 
-// ─── DayColumn ────────────────────────────────────────────────────────────────
-/**
- * A droppable column for a specific day (or the "ยังไม่กำหนด" overflow column).
- * Highlights when a drag is hovering over it.
- */
-function DayColumn({
-  colId,
-  headerLabel,
-  headerSub,
-  isToday,
-  isOverflow,
-  jobs,
-  canWrite,
-  showDesigner,
-  draggingId,
-  onDragStart,
-  onDragEnd,
-  onDrop,
-  onReschedule,
+// ─── BarPopover — mobile/click fallback: edit dates ──────────────────────────
+function BarPopover({
+  bar,
+  today,
+  onClose,
+  onSave,
 }: {
-  colId: string; // ISO date string or "__overflow__"
-  headerLabel: string;
-  headerSub?: string;
-  isToday: boolean;
-  isOverflow: boolean;
-  jobs: Job[];
-  canWrite: boolean;
-  showDesigner: boolean;
-  draggingId: string | null;
-  onDragStart: (jobId: string) => void;
-  onDragEnd: () => void;
-  onDrop: (jobId: string, targetColId: string) => Promise<void>;
-  onReschedule: (job: Job, isoDate: string | null) => Promise<void>;
+  bar: PlacedBar;
+  today: string;
+  onClose: () => void;
+  onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
 }) {
-  const [over, setOver] = useState(false);
-  const dragCounter = useRef(0); // track enter/leave for nested children
+  const { job } = bar;
+  const c = STATE_COLOR[job.design_state];
+  const [startVal, setStartVal] = useState(
+    job.design_start ?? job.design_due_date ?? today
+  );
+  const [endVal, setEndVal] = useState(
+    job.design_due_date ?? job.design_start ?? today
+  );
+  const [busy, setBusy] = useState(false);
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+  async function handleSave() {
+    setBusy(true);
+    const s = startVal;
+    const e = endVal < startVal ? startVal : endVal;
+    await onSave(job.id, s, e);
+    setBusy(false);
+    onClose();
   }
-  function handleDragEnter(e: React.DragEvent) {
-    e.preventDefault();
-    dragCounter.current += 1;
-    setOver(true);
-  }
-  function handleDragLeave() {
-    dragCounter.current -= 1;
-    if (dragCounter.current <= 0) {
-      dragCounter.current = 0;
-      setOver(false);
-    }
-  }
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    dragCounter.current = 0;
-    setOver(false);
-    const jobId = e.dataTransfer.getData("jobId");
-    if (jobId) onDrop(jobId, colId);
-  }
-
-  // Column header colours
-  const headerBg = isToday
-    ? "bg-brand/10 border-brand/30"
-    : isOverflow
-    ? "bg-red-50 border-red-200/60"
-    : "bg-gray-50 border-gray-200/60";
-  const headerText = isToday ? "text-brand-dark" : isOverflow ? "text-red-700" : "text-ink-2";
-  const badgeBg = isToday
-    ? "bg-brand/20 text-brand-dark"
-    : isOverflow
-    ? "bg-red-100 text-red-700"
-    : "bg-gray-200 text-ink-3";
-
-  // Drop zone highlight
-  const dropBg = over
-    ? "bg-brand/5 border-brand/40 ring-2 ring-brand/20"
-    : "bg-white/60 border-gray-200/70";
 
   return (
     <div
-      className="flex flex-col min-w-[200px] w-[220px] shrink-0"
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
     >
-      {/* Column header */}
-      <div className={`rounded-t-xl border px-3 py-2 ${headerBg}`}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className={`text-[12px] font-bold truncate ${headerText}`}>{headerLabel}</div>
-            {headerSub && (
-              <div className={`text-[11px] font-medium tnum ${isToday ? "text-brand" : "text-ink-3"}`}>
-                {headerSub}
-                {isToday && <span className="ml-1 text-[10px] font-bold text-brand">(วันนี้)</span>}
-              </div>
-            )}
+      {/* Scrim */}
+      <div className="absolute inset-0 bg-black/20" />
+
+      {/* Sheet */}
+      <div
+        className="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-5 w-full max-w-sm mx-3 mb-4 sm:mb-0 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="font-semibold text-ink text-sm">{job.customer_name}</div>
+            <div className="text-[11px] text-ink-3 mt-0.5">{job.job_code ?? "—"}</div>
           </div>
-          <span className={`shrink-0 text-[11px] font-bold tnum rounded-full px-1.5 py-0.5 ${badgeBg}`}>
-            {jobs.length}
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
+            {STATE_TH[job.design_state]}
           </span>
+        </div>
+
+        {/* Date inputs */}
+        <div className="space-y-2">
+          <label className="block">
+            <span className="text-[12px] text-ink-2 font-medium">วันเริ่ม</span>
+            <input
+              type="date"
+              value={startVal}
+              onChange={(e) => setStartVal(e.target.value)}
+              disabled={busy}
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[12px] text-ink-2 font-medium">วันกำหนดส่ง</span>
+            <input
+              type="date"
+              value={endVal}
+              onChange={(e) => setEndVal(e.target.value)}
+              disabled={busy}
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+            />
+          </label>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className="press flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-ink-2 font-medium min-h-[44px] hover:bg-gray-50 disabled:opacity-60"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={busy || !startVal}
+            className="press flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white min-h-[44px] hover:bg-brand/90 disabled:opacity-60 shadow-sm"
+          >
+            {busy ? "กำลังบันทึก…" : "บันทึก"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GanttLane — one designer row ─────────────────────────────────────────────
+interface GanttLaneProps {
+  designer: DesignerOption;
+  jobs: Job[];
+  rangeStart: string;
+  today: string;
+  days: string[];
+  canWrite: boolean;
+  onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
+}
+
+function GanttLane({
+  designer, jobs, rangeStart, today, days, canWrite, onSave,
+}: GanttLaneProps) {
+  const [popoverBar, setPopoverBar] = useState<PlacedBar | null>(null);
+
+  const placed = useMemo(
+    () => placeJobs(jobs, rangeStart, today),
+    [jobs, rangeStart, today]
+  );
+
+  const numSubRows = placed.length === 0
+    ? 1
+    : Math.max(...placed.map((b) => b.subRow)) + 1;
+
+  const laneHeight = numSubRows * (BAR_HEIGHT + ROW_PAD) + ROW_PAD;
+
+  const totalWidth = days.length * DAY_WIDTH;
+
+  return (
+    <>
+      <div className="flex border-b border-gray-200" style={{ minHeight: laneHeight }}>
+        {/* Sticky name column */}
+        <div
+          className="sticky left-0 z-20 bg-white border-r border-gray-200 flex flex-col justify-center px-3 shrink-0"
+          style={{ width: LANE_NAME_WIDTH }}
+        >
+          <div className="font-semibold text-[12px] text-brand-dark truncate">{designer.name}</div>
+          <div className="text-[10px] text-ink-3 mt-0.5 tnum">
+            {jobs.length} งาน
+          </div>
+        </div>
+
+        {/* Timeline area */}
+        <div
+          className="relative flex-1 shrink-0"
+          style={{ width: totalWidth, minWidth: totalWidth }}
+        >
+          {/* Day column backgrounds */}
+          {days.map((day, i) => (
+            <div
+              key={day}
+              className={[
+                "absolute top-0 bottom-0 border-r border-gray-100",
+                isWeekend(day) ? "bg-gray-50/70" : "",
+                day === today ? "bg-brand/5" : "",
+              ].join(" ")}
+              style={{ left: i * DAY_WIDTH, width: DAY_WIDTH }}
+            />
+          ))}
+
+          {/* Today line */}
+          {days.includes(today) && (() => {
+            const todayIdx = days.indexOf(today);
+            return (
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-brand/40 z-10 pointer-events-none"
+                style={{ left: todayIdx * DAY_WIDTH + DAY_WIDTH / 2 }}
+              />
+            );
+          })()}
+
+          {/* Bars */}
+          {placed.map((b) => (
+            <DragBar
+              key={b.job.id}
+              bar={b}
+              rangeStart={rangeStart}
+              today={today}
+              canWrite={canWrite}
+              onSave={onSave}
+              onClickBar={setPopoverBar}
+            />
+          ))}
+
+          {/* Empty lane hint */}
+          {placed.length === 0 && (
+            <div className="absolute inset-0 flex items-center px-3 pointer-events-none select-none">
+              <span className="text-[11px] text-gray-300">— ไม่มีงานในช่วงนี้ —</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Cards area (scrollable) */}
+      {/* Popover (mobile/click fallback) */}
+      {popoverBar && (
+        <BarPopover
+          bar={popoverBar}
+          today={today}
+          onClose={() => setPopoverBar(null)}
+          onSave={onSave}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── GanttHeader — fixed day header row ───────────────────────────────────────
+function GanttHeader({ days, today }: { days: string[]; today: string }) {
+  // Group consecutive days by month for compact month label
+  const monthGroups: { label: string; startIdx: number; count: number }[] = [];
+  let curMonth = "";
+  let curStart = 0;
+  for (let i = 0; i < days.length; i++) {
+    const [, m] = days[i].split("-");
+    const monthLabel = MONTH_SHORT[Number(m) - 1];
+    if (monthLabel !== curMonth) {
+      if (i > 0) monthGroups.push({ label: curMonth, startIdx: curStart, count: i - curStart });
+      curMonth = monthLabel;
+      curStart = i;
+    }
+  }
+  monthGroups.push({ label: curMonth, startIdx: curStart, count: days.length - curStart });
+
+  return (
+    <div className="sticky top-0 z-30 bg-white border-b border-gray-200 flex shadow-sm">
+      {/* Corner cell */}
       <div
-        className={[
-          "flex-1 rounded-b-xl border-x border-b p-2 max-h-[60vh] overflow-y-auto space-y-2 transition-colors",
-          dropBg,
-        ].join(" ")}
+        className="sticky left-0 z-40 bg-white border-r border-gray-200 shrink-0 flex items-center px-3"
+        style={{ width: LANE_NAME_WIDTH }}
       >
-        {jobs.length === 0 ? (
-          /* Empty hint — visible but muted */
-          <div className="flex flex-col items-center justify-center py-8 gap-1.5 pointer-events-none select-none">
-            <Icon name="calendar" size={18} className="text-gray-300" />
-            <span className="text-[11px] text-gray-300 text-center leading-tight">
-              ลากงานมาวางที่นี่
-            </span>
-          </div>
-        ) : (
-          jobs.map((j) => (
-            <JobCard
-              key={j.id}
-              job={j}
-              canWrite={canWrite}
-              showDesigner={showDesigner}
-              draggingId={draggingId}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onReschedule={onReschedule}
-            />
-          ))
-        )}
+        <span className="text-[11px] font-semibold text-ink-3">ช่างเขียนแบบ</span>
+      </div>
+
+      {/* Day headers */}
+      <div className="relative" style={{ width: days.length * DAY_WIDTH, minWidth: days.length * DAY_WIDTH }}>
+        {/* Month label row */}
+        <div className="flex h-5 border-b border-gray-100">
+          {monthGroups.map((g) => (
+            <div
+              key={g.label + g.startIdx}
+              className="flex items-center px-1.5 shrink-0 overflow-hidden"
+              style={{ width: g.count * DAY_WIDTH }}
+            >
+              <span className="text-[10px] font-semibold text-ink-3 truncate">{g.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Day number row */}
+        <div className="flex h-7">
+          {days.map((day, i) => {
+            const [,, d] = day.split("-");
+            const isToday = day === today;
+            const weekend = isWeekend(day);
+            return (
+              <div
+                key={day}
+                className={[
+                  "flex items-center justify-center shrink-0 text-[11px] tnum font-medium border-r border-gray-100",
+                  isToday
+                    ? "bg-brand text-white font-bold rounded-t-sm"
+                    : weekend
+                    ? "text-gray-400"
+                    : "text-ink-2",
+                ].join(" ")}
+                style={{ width: DAY_WIDTH }}
+              >
+                {Number(d)}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -478,82 +765,80 @@ export default function DesignerSchedule({
   jobs, designers, canWrite, designerFilter, onRefresh,
 }: Props) {
   const today = isoToday();
-  const [weekStart, setWeekStart] = useState<string>(() => mondayOf(today));
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [rangeStart, setRangeStart] = useState<string>(() => mondayOf(today));
 
-  // 6 working days of the current week (Mon–Sat)
-  const days = useMemo(() => weekDays(weekStart), [weekStart]);
+  // 21 days from rangeStart
+  const days = useMemo<string[]>(() => {
+    const arr: string[] = [];
+    for (let i = 0; i < TOTAL_DAYS; i++) arr.push(addDays(rangeStart, i));
+    return arr;
+  }, [rangeStart]);
 
-  // Filter by designer when designerFilter is set
-  const activeJobs = useMemo(() => {
-    const base = jobs.filter((j) => j.design_state !== "DONE");
-    if (!designerFilter) return base;
-    return base.filter((j) => String(j.designer_ref) === designerFilter);
-  }, [jobs, designerFilter]);
+  // Active jobs only (exclude DONE)
+  const activeJobs = useMemo(
+    () => jobs.filter((j) => j.design_state !== "DONE"),
+    [jobs]
+  );
 
-  // Show designer badge only in "all designers" mode
-  const showDesigner = !designerFilter;
+  // Filter by designer if set
+  const filteredJobs = useMemo(() => {
+    if (!designerFilter) return activeJobs;
+    return activeJobs.filter((j) => String(j.designer_ref) === designerFilter);
+  }, [activeJobs, designerFilter]);
 
-  /**
-   * Group jobs into columns:
-   *   "__overflow__" = no due date OR due date in the past (relative to today)
-   *   YYYY-MM-DD    = future/today due dates
-   */
-  const byCol = useMemo(() => {
-    const map: Record<string, Job[]> = { __overflow__: [] };
-    for (const d of days) map[d] = [];
-    for (const j of activeJobs) {
-      const due = j.design_due_date;
-      if (!due || due < today) {
-        map["__overflow__"].push(j);
-      } else if (due in map) {
-        map[due].push(j);
-      } else {
-        // due date exists but is NOT in this week → overflow
-        map["__overflow__"].push(j);
-      }
+  // Visible designers (respecting filter)
+  const visibleDesigners = useMemo(() => {
+    if (designerFilter) return designers.filter((d) => String(d.id) === designerFilter);
+    return designers;
+  }, [designers, designerFilter]);
+
+  // Jobs per designer (keyed by designer id string)
+  const jobsByDesigner = useMemo(() => {
+    const map: Record<string, Job[]> = {};
+    for (const d of visibleDesigners) map[String(d.id)] = [];
+    for (const j of filteredJobs) {
+      const key = j.designer_ref != null ? String(j.designer_ref) : null;
+      if (key && map[key]) map[key].push(j);
     }
     return map;
-  }, [activeJobs, days, today]);
+  }, [filteredJobs, visibleDesigners]);
 
-  // PATCH design_due_date via BFF (null = clear date)
-  const reschedule = useCallback(async (job: Job, isoDate: string | null) => {
+  // PATCH design_start + design_due_date
+  const handleSave = useCallback(async (
+    jobId: string,
+    newStart: string,
+    newEnd: string,
+  ) => {
     try {
-      const res = await fetch(`/api/jobs/${job.id}`, {
+      const res = await fetch(`/api/jobs/${jobId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ design_due_date: isoDate }),
+        body: JSON.stringify({
+          design_start: newStart,
+          design_due_date: newEnd,
+        }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        console.error("reschedule failed:", json.error);
+        const json = await res.json().catch(() => ({})) as { error?: string };
+        console.error("gantt save failed:", json.error);
       }
       await onRefresh();
     } catch (e) {
-      console.error("reschedule error:", e);
+      console.error("gantt save error:", e);
     }
   }, [onRefresh]);
 
-  // Called when a card is dropped onto a column
-  const handleDrop = useCallback(async (jobId: string, targetColId: string) => {
-    const job = activeJobs.find((j) => j.id === jobId);
-    if (!job) return;
-    const newDate = targetColId === "__overflow__" ? null : targetColId;
-    // Skip if no change
-    if (newDate === (job.design_due_date ?? null)) return;
-    await reschedule(job, newDate);
-  }, [activeJobs, reschedule]);
-
-  if (designers.length === 0)
+  if (designers.length === 0) {
     return (
       <div className="glass-card rounded-2xl p-10 text-center text-ink-3 text-sm">
         ยังไม่มีช่างเขียนแบบในระบบ
       </div>
     );
+  }
 
   return (
     <div className="space-y-5">
-      {/* 1. Workload summary per designer */}
+      {/* 1. Workload summary */}
       <WorkloadBar
         designers={designers}
         jobs={activeJobs}
@@ -561,53 +846,42 @@ export default function DesignerSchedule({
         today={today}
       />
 
-      {/* 2. Week navigator */}
+      {/* 2. Range navigator */}
       <WeekNavigator
-        weekStart={weekStart}
+        weekStart={rangeStart}
         today={today}
-        onPrev={() => setWeekStart((ws) => addDays(ws, -7))}
-        onNext={() => setWeekStart((ws) => addDays(ws, 7))}
-        onToday={() => setWeekStart(mondayOf(today))}
+        onPrev={() => setRangeStart((s) => addDays(s, -7))}
+        onNext={() => setRangeStart((s) => addDays(s, 7))}
+        onToday={() => setRangeStart(mondayOf(today))}
       />
 
-      {/* 3. Kanban board — horizontal scroll, 7 columns */}
-      <div className="overflow-x-auto pb-3">
-        <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-          {/* Column 0: ยังไม่กำหนด / แก้แทรก (overflow) */}
-          <DayColumn
-            colId="__overflow__"
-            headerLabel="ยังไม่กำหนด / แก้แทรก"
-            isToday={false}
-            isOverflow={true}
-            jobs={byCol["__overflow__"] ?? []}
-            canWrite={canWrite}
-            showDesigner={showDesigner}
-            draggingId={draggingId}
-            onDragStart={setDraggingId}
-            onDragEnd={() => setDraggingId(null)}
-            onDrop={handleDrop}
-            onReschedule={reschedule}
-          />
+      {/* 3. Gantt timeline */}
+      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <div style={{ minWidth: LANE_NAME_WIDTH + TOTAL_DAYS * DAY_WIDTH }}>
+            {/* Header */}
+            <GanttHeader days={days} today={today} />
 
-          {/* Columns 1–6: Mon–Sat of current week */}
-          {days.map((day) => (
-            <DayColumn
-              key={day}
-              colId={day}
-              headerLabel={thDow(day)}
-              headerSub={thShortDate(day)}
-              isToday={day === today}
-              isOverflow={false}
-              jobs={byCol[day] ?? []}
-              canWrite={canWrite}
-              showDesigner={showDesigner}
-              draggingId={draggingId}
-              onDragStart={setDraggingId}
-              onDragEnd={() => setDraggingId(null)}
-              onDrop={handleDrop}
-              onReschedule={reschedule}
-            />
-          ))}
+            {/* Lanes */}
+            {visibleDesigners.length === 0 ? (
+              <div className="py-10 text-center text-ink-3 text-sm">
+                ไม่มีช่างเขียนแบบที่ตรงกับตัวกรอง
+              </div>
+            ) : (
+              visibleDesigners.map((d) => (
+                <GanttLane
+                  key={d.id}
+                  designer={d}
+                  jobs={jobsByDesigner[String(d.id)] ?? []}
+                  rangeStart={rangeStart}
+                  today={today}
+                  days={days}
+                  canWrite={canWrite}
+                  onSave={handleSave}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -622,13 +896,16 @@ export default function DesignerSchedule({
           ] as [DesignState, string][]
         ).map(([st, label]) => (
           <span key={st} className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: STATE_COLOR[st].dot }} />
+            <span
+              className="w-3 h-3 rounded-sm border"
+              style={{ background: STATE_COLOR[st].dot + "33", borderColor: STATE_COLOR[st].dot + "66" }}
+            />
             {label}
           </span>
         ))}
         {canWrite && (
           <span className="text-ink-3/70">
-            · ลากการ์ดไปวางคอลัมน์วันที่ต้องการ · กดปุ่ม "ย้ายวัน" บนการ์ดเพื่อระบุวัน (มือถือ)
+            · ลากแถบเพื่อเลื่อนงาน · ลากขอบซ้าย/ขวาเพื่อขยายช่วงเวลา · คลิกแถบเพื่อแก้วันบนมือถือ
           </span>
         )}
       </div>
