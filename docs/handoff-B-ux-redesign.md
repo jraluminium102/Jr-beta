@@ -33,7 +33,7 @@
 - ลบ temp ทุกครั้ง · commit ไทยใช้ git commit -F · ปิดท้าย Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 
 ## INVARIANT (เช็คซ้ำเองหลังแก้ทุกครั้ง — ห้ามพัง)
-1. node scripts/gen-quotes-full.mjs → FullA grand "753,280" · FullB grand "8,223,271"
+1. node scripts/gen-quotes-full.mjs → FullA grand "753,280" · FullB grand "8,224,341"
    (เดิม 679,450 / 8,057,421 — re-baseline 2026-06-08: มุ้งต่อบาน [[mosquito-addon-not-billed]] → 760,770;
     ข้อ4A Cmech ตาราง → 755,420; จำกัด Cmech เฉพาะบานเลื่อน (ปิด gap คิดเงินไม่โชว์) → 753,280/8,223,271)
 2. node test/option-coverage.mjs → 13/13 · node test/quote-fidelity.mjs → 14/14 · node test/calc-glasshouse.mjs → 19/19 · node test/calc-mosq-frame.mjs → 15/15

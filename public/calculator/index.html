@@ -1348,6 +1348,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _cnm=(_csp==='special')?(CMECH_SPECIAL[optSel.cmechcolor]||'ชุบ'):'ดำ/ขาว';
     msgs.push('มือจับ Cmech '+(optSel.cmech==='embed'?'ฝัง':'เมโทร')+' '+_cnm+' ('+(_cit==='window'?'หน้าต่าง 1 ฝั่ง':'ประตู 2 ฝั่ง')+') +'+fmt(_ccp));
   }
+  // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 (ราคาสุดท้าย รวม Fork Drive)
+  if(optSel && optSel.cmechawn){
+    const _caw=(optSel.cmechawn==='normal')?600:840;
+    opt += _caw;
+    const _cawnm=(optSel.cmechawn==='normal')?'ดำ/ขาว':(CMECH_SPECIAL[optSel.cmechawn]||'ชุบ');
+    msgs.push('มือจับ Cmech หลบมุ้ง '+_cawnm+' +'+fmt(_caw));
+  }
   // R3.2: ตารางเต็มบาน 5,000 (โซลิด วัน/ทู)
   if(optSel && optSel.fullgrid && p.full_grid){
     opt += 5000;
@@ -2128,6 +2135,10 @@ function buildItemOpts(d){
   if(p.cat==='บานเลื่อน'){
     h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="normal">สีธรรมดา (ดำ/ขาว)</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
   }
+  // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 ราคาสุดท้าย (รวม Fork Drive แล้ว · เคาะ 2026-06-08)
+  if(p.cat==='บานกระทุ้ง'){
+    h+='<label class="opt">มือจับ Cmech หลบมุ้ง <select class="o-cmechawn" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="normal">สีธรรมดา (ดำ/ขาว) +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></label>';
+  }
   // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
   if(/xseries|slimlux/.test(p.id)){
     h+='<label class="opt">มือจับ X-series (ฟรี) <select class="o-xhandle" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></label>';
@@ -2372,6 +2383,7 @@ function readItem(d){
     const _cmc=d.querySelector('.o-cmechcolor'); if(_cmc) optSel.cmechcolor=_cmc.value;
     const _cmit=d.querySelector('.i-type'); optSel.itype=(_cmit&&_cmit.value)||'door'; // ข้อ4A: ประตู2ฝั่ง/หน้าต่าง1ฝั่ง
     const _xh=d.querySelector('.o-xhandle'); if(_xh) optSel.xhandle=_xh.value; // ข้อ4C: มือจับ X-series ฟรี
+    const _caw=d.querySelector('.o-cmechawn'); if(_caw) optSel.cmechawn=_caw.value; // ข้อ4B: Cmech หลบมุ้ง บานกระทุ้ง
     const _fg=d.querySelector('.o-fullgrid'); if(_fg) optSel.fullgrid=_fg.checked;
     const _ci=d.querySelector('.o-combo_awn_inside'); if(_ci) optSel.combo_awn=_ci.checked;
     const _cip=d.querySelector('.o-combo_price'); if(_cip) optSel.combo_price=_cip.value;
@@ -2936,6 +2948,8 @@ function genQuote(keepNo){
     // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
     // ข้อ4C: มือจับ X-series ฟรี — โชว์ชื่อรุ่น (ไม่บวกเงิน)
     if(it.optSel && it.optSel.xhandle){ _parts.push('มือจับ '+it.optSel.xhandle); }
+    // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง)
+    if(it.optSel && it.optSel.cmechawn){ _parts.push('มือจับ Cmech หลบมุ้ง '+(it.optSel.cmechawn==='normal'?'ดำ/ขาว':(CMECH_SPECIAL[it.optSel.cmechawn]||'ชุบ'))); }
     // ข้อ5: ครอบวงกบอลู 3/4 ด้าน
     if(it.optSel && (it.optSel.fcsides==='3'||it.optSel.fcsides==='4')){ _parts.push('ครอบวงกบอลู '+it.optSel.fcsides+' ด้าน'); }
     if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
