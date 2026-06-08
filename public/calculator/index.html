@@ -256,6 +256,18 @@
     <div class="card">
       <h2>รายการ</h2>
       <datalist id="posPreset"><option value="ด้านบน"><option value="ด้านล่าง"><option value="ด้านซ้าย"><option value="ด้านขวา"><option value="ด้านข้าง"><option value="โดยรอบ"></datalist>
+      <!-- global color/glass — ใช้ทั้งใบ · แก้รายบานได้ในออปชั่น -->
+      <div id="global-color-row" style="display:flex;gap:10px;flex-wrap:wrap;background:#F0F4FF;border:1px solid #C7D7F0;border-radius:10px;padding:10px 12px;margin-bottom:10px;align-items:flex-end;">
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;color:#3B5EA6;font-weight:700;display:block;margin-bottom:4px;">สีอลูมิเนียม (ทั้งใบ)</label>
+          <select id="global-color" style="width:100%;height:40px;border:1px solid #C7D7F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;color:#3B5EA6;font-weight:700;display:block;margin-bottom:4px;">กระจก (ทั้งใบ)</label>
+          <select id="global-glass" style="width:100%;height:40px;border:1px solid #C7D7F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+        </div>
+        <div style="flex:0 0 auto;font-size:11px;color:#3B5EA6;line-height:1.4;padding-bottom:2px;">เปลี่ยนที่นี่ = sync ทุกรายการ<br>แก้รายบาน = เปิดออปชั่นรายการ</div>
+      </div>
       <div id="items"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button type="button" class="addbtn" onclick="addSet()" style="flex:1;">+ เพิ่มชุด</button>
@@ -1510,9 +1522,33 @@ function setMode(m){
 }
 function toggleOwner(){ document.getElementById('ownerPanel').style.display=document.getElementById('ownerMode').checked?'block':'none'; }
 
+function syncGlobalColorGlass(){
+  var gcSel=document.getElementById('global-color');
+  var ggSel=document.getElementById('global-glass');
+  if(!gcSel||!ggSel) return;
+  var colorVal=gcSel.value, glassVal=ggSel.value;
+  document.querySelectorAll('#items .ch').forEach(function(ch){
+    // GH master (group6 ใน setbox ที่มี .gh-set-color-row) → ให้ GH master win ไม่แตะ
+    var grp=(ch.querySelector('.i-group')||{}).value;
+    var sb=ch.closest('.setbox');
+    if(grp==='6' && sb && sb.querySelector('.gh-set-color-row')) return;
+    var ci=ch.querySelector('.i-color');
+    var gi=ch.querySelector('.i-glass');
+    if(ci){ ci.value=colorVal; ci.dispatchEvent(new Event('change',{bubbles:true})); }
+    if(gi){ gi.value=glassVal; gi.dispatchEvent(new Event('change',{bubbles:true})); }
+  });
+  calcQuote();
+}
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('c-cat').innerHTML='<option value="*">ทั้งหมด</option>'+CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
   document.getElementById('qdate').value=today();
+  // init global color/glass selects
+  var _gc=document.getElementById('global-color');
+  var _gg=document.getElementById('global-glass');
+  if(_gc) _gc.innerHTML=colorOpts();
+  if(_gg) _gg.innerHTML=glassOpts();
+  if(_gc) _gc.addEventListener('change',syncGlobalColorGlass);
+  if(_gg) _gg.addEventListener('change',syncGlobalColorGlass);
   addQuickItem();
   addSet();
   calcCompare();
@@ -1883,8 +1919,8 @@ function addItem(container){
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
      `<div><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
      `<div><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
-     `<div class="full i-color-wrap"><label>สีอลูมิเนียม</label><select class="i-color">${colorOpts()}</select></div>`+
-     `<div class="full i-glass-wrap"><label>กระจก</label><select class="i-glass">${glassOpts()}</select></div>`+
+     `<div class="full i-color-wrap" style="display:none;"><label>สีอลูมิเนียม (รายการนี้)</label><select class="i-color">${colorOpts()}</select></div>`+
+     `<div class="full i-glass-wrap" style="display:none;"><label>กระจก (รายการนี้)</label><select class="i-glass">${glassOpts()}</select></div>`+
      `<div class="full i-colorcode-wrap" style="display:none;"><label>รหัสสี/ชื่อสี (อบพิเศษ)</label><input class="i-colorcode" type="text" placeholder="เช่น KL10232A · RAL7022 · Fuji"></div>`+
      `<div class="full i-sampleconfirm-wrap" style="display:none;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="i-sampleconfirm" style="width:18px;height:18px;"> <b>ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</b> (สำหรับสีชุบ)</label></div>`+
      `<div class="i-panels-wrap"><label>จำนวนบานทั้งหมด</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
@@ -1903,6 +1939,10 @@ function addItem(container){
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
    `<div class="chmsg i-msg"></div>`;
   (container||document.getElementById('items')).appendChild(d);
+  // apply global defaults ถ้ามี (ไม่ fire change เพื่อไม่ trigger colorcode-wrap ก่อนที่ buildItemOpts จะรัน)
+  { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
+    if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
+    if(_gg && _gg.value!==''){ var _gi=d.querySelector('.i-glass'); if(_gi) _gi.value=_gg.value; } }
   d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d); calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
   d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value); buildItemOpts(d); refreshItype(d);
     // กั้นห้องกระจก: เลือกกลุ่มงาน 6 → โชว์ช่องด้านทันที + เติม "ด้าน A" ให้ถ้ายังว่าง
@@ -2170,9 +2210,6 @@ function buildItemOpts(d){
   }
   if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
-  // ม่านซิปไม่มีกระจก (ราคาคำนวณจาก area แต่ไม่ใช้ glass spec)
-  if(gw)gw.style.display=(areaOnly||p.zipscreen)?'none':'';
-  if(cw)cw.style.display=(areaOnly||NO_COLOR_CATS.includes(p.cat))?'none':'';
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
   const pn=d.querySelector('.i-panels');
@@ -2180,10 +2217,27 @@ function buildItemOpts(d){
   else if(q.method==='lift'){ pn.max=2; }
   else if(q.addon&&q.addon.kind==='sliding'){ pn.max=4; }
   else { pn.removeAttribute('max'); }
+  // บันทึกค่าสี/กระจกปัจจุบันก่อน innerHTML= (กัน node หาย เมื่อ cw/gw อยู่ใน box อยู่แล้ว)
+  var _savedColorVal=(cw&&cw.querySelector('.i-color'))?cw.querySelector('.i-color').value:'0';
+  var _savedGlassVal=(gw&&gw.querySelector('.i-glass'))?gw.querySelector('.i-glass').value:'0';
+  var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
+  var _showGw=!!(gw&&!(areaOnly||p.zipscreen));
   box.innerHTML=h;
+  // ย้าย cw/gw เข้า opts box เสมอ (hidden หรือไม่ก็ตาม) — แถวหลักโล่ง · d.querySelector ยังหาเจอ
+  if(cw){
+    cw.style.display=_showCw?'':'none';
+    box.insertBefore(cw,box.firstChild);
+    var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; }
+  }
+  if(gw){
+    gw.style.display=_showGw?'':'none';
+    var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild;
+    box.insertBefore(gw,_ref2);
+    var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; }
+  }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
-  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=h?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
