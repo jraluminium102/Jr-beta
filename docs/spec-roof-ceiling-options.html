@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:14mm 13mm;}
+*{font-family:"Leelawadee UI","Tahoma","TH Sarabun New",sans-serif;}
+body{color:#1f2937;font-size:13px;line-height:1.55;}
+h1{color:#B3151D;font-size:20px;border-bottom:3px solid #B3151D;padding-bottom:6px;margin:0 0 4px;}
+.sub{color:#6b7280;font-size:12px;margin:0 0 14px;}
+h2{color:#B3151D;font-size:15px;margin:18px 0 6px;border-left:5px solid #B3151D;padding-left:8px;}
+h3{font-size:13.5px;margin:12px 0 4px;color:#111;}
+table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:11.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 4px;border-radius:3px;font-family:Consolas,monospace;font-size:11px;}
+.bad{color:#B3151D;font-weight:700;}
+.ok{color:#15803d;font-weight:700;}
+.box{background:#fff8f8;border:1px solid #f0c0c4;border-radius:8px;padding:8px 12px;margin:8px 0;}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:12px;}
+ul{margin:4px 0 8px;padding-left:20px;}
+li{margin:2px 0;}
+</style></head>
+<body>
+
+<h1>สเปกแก้ออปชั่น — หมวดหลังคา / ฝ้า-ผนัง (กลุ่มงาน 3)</h1>
+<p class="sub">สำหรับแชทแก้ HTML · ไฟล์: <code>public/calculator/index.html</code> · เลขบรรทัดอิงผลสำรวจ buildItemOpts (~2124-2381) · สร้าง 2026-06-08 จากแชทตรวจออปชั่น (READ-ONLY)</p>
+
+<div class="box">
+<b>หลักการ:</b> ออปชั่นต้อง "ตรงลักษณะสินค้า" — <b>หลังคา/ฝ้า/ผนัง ไม่ใช่บาน</b> จึงต้อง<b>ไม่มี</b>
+คาดตาราง · จำนวนบาน · มือจับ · ฝังรางยู <b>ยกเว้นกรณีเดียว = "หลังคาเลื่อน"</b> (ติ๊ก "ทำเลื่อน")
+</div>
+
+<h2>1. ต้องตัดออก (ออปชั่นผิด — โผล่ทั้งที่ไม่ควร)</h2>
+<table>
+<tr><th>ออปชั่น</th><th>class</th><th>บรรทัด</th><th>ปัญหา</th><th>แก้เป็น</th></tr>
+<tr><td class="bad">คาดตาราง (มีคาดตาราง)</td><td><code>.o-gridmark</code> + <code>.o-gm-*</code></td><td>2217-2225</td><td>gate <code>if(!p.grid)</code> → โผล่<b>ทุกหลังคา + ทุกฝ้า/ผนัง</b> (คาดตารางไม่มีในงานหลังคา/ฝ้า)</td><td>เพิ่มเงื่อนไขตัด <code>หลังคา</code> + <code>ฝ้า-ผนัง</code> (เช่น เช็ค AREA_CATS) → ให้เหลือเฉพาะ "หลังคาเลื่อน" (ดูข้อ 3)</td></tr>
+<tr><td class="bad">ฝังรางยู</td><td><code>.o-uchannel</code></td><td>2324 (ไม่ gate)</td><td>เพิ่มให้ทุก product → เป็นงานพื้นของบาน <b>ไม่เกี่ยวหลังคา/ฝ้า</b></td><td>ตัดออกสำหรับ หลังคา + ฝ้า-ผนัง</td></tr>
+<tr><td>งานเสริม / รื้อของเดิม</td><td><code>.o-extrawork</code> · <code>.o-removeold</code></td><td>2325-2326 (ไม่ gate)</td><td>โผล่ทุก product (ข้อความเฉยๆ ไม่คิดเงิน)</td><td>เก็บได้ แต่ควรจัดเข้ากลุ่ม "หมายเหตุ/งานเสริม" ให้ชัด (ไม่ใช่ออปชั่นหลัก)</td></tr>
+<tr><td class="bad">ทำเลื่อน + จำนวนบานเลื่อน</td><td><code>.o-slide</code> · <code>.o-spanels</code> · <code>.o-sgut</code></td><td>2229 (<code>if(p.optSlide)</code>)</td><td><code>optSlide:true</code> อยู่บน<b>หลังคาทุกตัว</b> (ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต) → "จำนวนบานเลื่อน" โผล่ตลอดแม้ขายหลังคาติดตาย</td><td>ดูข้อ 3 — ให้ จำนวนบาน/มือจับ/คาดตาราง โผล่<b>เฉพาะเมื่อติ๊ก "ทำเลื่อน"</b></td></tr>
+</table>
+
+<h2>2. ออปชั่นที่ถูกต้องของ "หลังคา (ติดตาย/ทั่วไป)"</h2>
+<p>บล็อก <code>if(p.cat==='หลังคา')</code> บรรทัด 2230-2267 — ของพวกนี้ <span class="ok">ถูกแล้ว เก็บไว้</span>:</p>
+<ul>
+<li><b>ชนิดหลังคา</b> (เลือกจาก product): ไวนิล / ดีไลท์ / โพลีตัน / กระจกลามิเนต / เมทัลชีท / ชินโคไลท์</li>
+<li><b>สีวัสดุมุง</b> <code>.o-roofcolor</code> (เฉพาะ ไวนิล/ดีไลท์/โพลีตัน · เมทัล/ชินโคไม่มี)</li>
+<li><b>กว้าง × สูง</b> (พื้นที่)</li>
+<li><b>แป</b> <code>.o-roofbatten</code> — <b>default = แปคู่</b> (ดู F5 ใน handoff หลัก)</li>
+<li><b>โครงสร้าง</b> <code>.o-roofframe</code> — อลู (default) / เหล็กชุบ</li>
+<li><b>ปลายหลังคา</b> <code>.o-roofend</code> — <b>ปล่อย (default, ไม่มีรางน้ำ)</b> / รางน้ำ / ปิดปลาย
+  <br>↳ ถ้ารางน้ำ → ระบบรางน้ำ <code>.o-guttersys</code>: ท่อ (สี ขาว/ดำ) / โซ่ (ลาย<b>ทิวลิป</b> default + สี)</li>
+<li><b>ของเสริมหลังคา:</b> รางน้ำ อลู/สแตน + ยาว · คานเหล็กถัก · เสาแผง/เสา 4"x8" · โซ่รางน้ำ (3,000/เส้น) · ปิดปลายกันน้ำ · ครอบท่อ PVC · ปิดซ่อนราง · ครอบคาน</li>
+<li><b>เสริมเพลทเหล็กล่าง</b> <code>.o-rfplate</code> + <b>เหล็กดึงด้านบน</b> <code>.o-rfpull</code> (ฟรี ติ๊ก)</li>
+<li><b>ซ่อนสโลป</b> <code>.o-rfhs</code> — คอมโพสิต 3มม. (3,500/ตร.ม.) / สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.) + สูง/ยาว/ด้าน</li>
+</ul>
+<div class="note"><b>เทียบใบจริง ✓</b> ออปชั่นชุดนี้ตรงกับที่พบในใบจริง (ธนบัตร/นก/หญิง/ใบเฟริล/สุจินต์): แป · ปลายหลังคาปล่อย/ราง · ท่อ PVC สี · โซ่ลายทิวลิป · เสริมเพลท/เหล็กดึง · ซ่อนสโลปคอมโพสิต · เสาแผง</div>
+
+<h2>3. "หลังคาเลื่อน" — จำนวนบาน/มือจับ/คาดตาราง โผล่เฉพาะตรงนี้</h2>
+<div class="box">
+ปัจจุบัน "ทำเลื่อน" <code>.o-slide</code> (บรรทัด 2229) แสดงตลอดเพราะหลังคาทุกตัว <code>optSlide:true</code> และ
+"จำนวนบานเลื่อน" <code>.o-spanels</code> ก็โผล่ตามไปด้วย<br><br>
+<b>แก้เป็น chain:</b> ฟิลด์ 3 ตัวนี้ <b>ซ่อนไว้ก่อน</b> · โผล่<b>ก็ต่อเมื่อติ๊ก "ทำเลื่อน" (<code>.o-slide</code>) เท่านั้น</b>:
+</div>
+<ul>
+<li><b>จำนวนบานเลื่อน</b> <code>.o-spanels</code> (default 2)</li>
+<li><b>มือจับ</b> (สำหรับบานเลื่อนของหลังคา) — เพิ่มใหม่ ผูกใต้ "ทำเลื่อน"</li>
+<li><b>คาดตาราง</b> <code>.o-gridmark</code> — ย้ายมาให้โผล่เฉพาะหลังคาเลื่อน (หลังคากระจกที่ซอยช่อง)</li>
+<li>รางน้ำบานเลื่อน <code>.o-sgut</code> (มีอยู่แล้ว)</li>
+</ul>
+<p>กล่าวคือ: <b>ไม่ติ๊กทำเลื่อน = หลังคาติดตาย</b> → ไม่มีจำนวนบาน/มือจับ/คาดตาราง · <b>ติ๊กทำเลื่อน</b> → โผล่ทั้ง 3</p>
+
+<h2>4. "ฝ้า / ผนัง" — ออปชั่นน้อยสุด</h2>
+<p>สินค้า cat <code>ฝ้า-ผนัง</code>: <code>ceil_cshape</code> · <code>ceil_bsc</code> · <code>ceiling_smooth</code> (ฝ้าฉาบเรียบ) · <code>isowall</code> · <code>wall_ext</code> · <code>wall_int</code></p>
+<table>
+<tr><th>เก็บไว้ (ถูก)</th><th>ตัดออก (ผิด)</th></tr>
+<tr><td>
+<ul><li>ชนิด (เลือกจาก product)</li>
+<li>สี/ลาย <code>.o-ckolor</code> (เฉพาะ ceil_cshape/ceil_bsc)</li>
+<li>กว้าง × สูง</li>
+<li>ฉนวนกันความร้อน <code>.o-insul</code> (เฉพาะ ฝ้าฉาบเรียบ)</li></ul>
+</td><td>
+<ul><li class="bad">คาดตาราง <code>.o-gridmark</code></li>
+<li class="bad">ฝังรางยู <code>.o-uchannel</code></li>
+<li>ทุกอย่างของหลังคา/บาน (สี/กระจก/มือจับ/มุ้ง — ตอนนี้ซ่อนถูกแล้ว)</li></ul>
+</td></tr>
+</table>
+
+<h2>5. สิ่งที่ "ถูกอยู่แล้ว" — ไม่ต้องแก้</h2>
+<p>(จาก subagent ตรวจ gate แล้ว — ยืนยันว่าหมวด 3 ไม่ leak)</p>
+<ul>
+<li><b>จำนวนบาน</b> <code>.i-panels-wrap</code> — ซ่อนถูกแล้ว (<code>usesPanels()</code>=false สำหรับหลังคา/ฝ้า · บรรทัด 2334-2335)</li>
+<li><b>สีอลู / กระจก</b> (<code>.i-color</code>/<code>.i-glass</code>) — ซ่อนถูกแล้วด้วย <code>areaOnly</code> (บรรทัด 2345-2346)</li>
+<li><b>มือจับ / Cmech / มุ้ง / มอเตอร์ / ครอบวงกบ / แผ่นทึบล่าง / ธรณี</b> — gate ตาม cat/flag แล้ว ไม่โผล่ในหมวด 3</li>
+<li><b>COMMON_OPTS (soft close ฯลฯ)</b> — ไม่มี id หมวด 3 ในลิสต์ ไม่ leak</li>
+</ul>
+
+<h2>6. สรุปงานที่ต้องแก้ (เช็คลิสต์แชท B)</h2>
+<ol>
+<li>คาดตาราง <code>.o-gridmark</code> (2217): ตัดออกจาก หลังคา(ติดตาย) + ฝ้า-ผนัง → ย้ายไปโผล่เฉพาะ "หลังคาเลื่อน"</li>
+<li>ฝังรางยู <code>.o-uchannel</code> (2324): ตัดออกจาก หลังคา + ฝ้า-ผนัง</li>
+<li>ทำเลื่อน chain (2229): ซ่อน <code>.o-spanels</code> + (มือจับใหม่) + <code>.o-gridmark</code> จนกว่าจะติ๊ก <code>.o-slide</code></li>
+<li>เพิ่ม dropdown "มือจับ" ใต้ "ทำเลื่อน" (เฉพาะหลังคาเลื่อน)</li>
+<li>extrawork/removeold (2325-2326): จัดเข้ากลุ่ม "หมายเหตุ/งานเสริม" (optional)</li>
+<li>ทดสอบ: render หลังคาไวนิลธรรมดา → ต้องไม่เห็น คาดตาราง/จำนวนบาน/มือจับ/ฝังรางยู · ติ๊กทำเลื่อน → เห็นครบ 3</li>
+</ol>
+
+<p class="sub" style="margin-top:18px;">เอกสารนี้ทำเป็นข้อมูล READ-ONLY ไม่แตะ index.html · ส่งแชท B ดำเนินการรวมทีเดียว</p>
+
+</body></html>
