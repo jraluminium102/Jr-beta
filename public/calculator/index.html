@@ -640,12 +640,12 @@ const PRODUCTS=[
  {id:'awning_brace',g:1,cat:'เสริม',name:'เสริมแขนค้ำ (เฉพาะบานกระทุ้งเปิดล่าง) — +500/ชุด',unit:'piece',rate:500,cost:null},
  // R4.0 2026-06-04: ม่านซิป (zipscreen) — รวมจากเครื่องคิดราคาม่านซิปแยก · กลุ่มงานที่ 7
  {id:'zipscreen',cat:'ม่านซิป',name:'ม่านซิป (zipscreen) ม่านม้วนกันลม',zipscreen:1,cost:null},
- {id:'imp1',cat:'ราวบันได',name:'ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)',method:'per_length_tier',rates:'IMP1',handrail:1,cost:null},
- {id:'imp2',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง U/เสาอลู',method:'per_length_tier',rates:'IMP2',handrail:1,cost:null},
- {id:'imp3',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง เสาอลู',method:'per_length_tier',rates:'IMP3',handrail:1,cost:null},
- {id:'imp4',cat:'ราวบันได',name:'ราวกันตก 47.3 บันไดตรง หมุดแปะปูน',method:'per_length_tier',rates:'IMP4',handrail:1,cost:null},
- {id:'imp5',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง U/เสาอลู',method:'per_length_tier',rates:'IMP5',handrail:1,cost:null},
- {id:'imp6',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง เสาอลู',method:'per_length_tier',rates:'IMP6',handrail:1,cost:null},
+ {id:'imp1',cat:'ราวบันได',name:'ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)',method:'per_length_tier',rates:'IMP1',handrail:1,cost:null,glassDef:14},
+ {id:'imp2',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง U/เสาอลู',method:'per_length_tier',rates:'IMP2',handrail:1,cost:null,glassDef:14},
+ {id:'imp3',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง เสาอลู',method:'per_length_tier',rates:'IMP3',handrail:1,cost:null,glassDef:14},
+ {id:'imp4',cat:'ราวบันได',name:'ราวกันตก 47.3 บันไดตรง หมุดแปะปูน',method:'per_length_tier',rates:'IMP4',handrail:1,cost:null,glassDef:14},
+ {id:'imp5',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง U/เสาอลู',method:'per_length_tier',rates:'IMP5',handrail:1,cost:null,glassDef:14},
+ {id:'imp6',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง เสาอลู',method:'per_length_tier',rates:'IMP6',handrail:1,cost:null,glassDef:14},
  {id:'imp7',cat:'หลังคา',name:"เมทัลชีท 1 นิ้ว ท้องPVC EPS",method:'bucket',min:0,rates:'IMP7',cost:null},
  {id:'imp8',cat:'หลังคา',name:"เมทัลชีท 2 นิ้ว ท้องPVC EPS",method:'bucket',min:0,rates:'IMP8',cost:null},
  {id:'imp9',cat:'หลังคา',name:"เมทัลชีท 1 นิ้ว ท้องเหล็ก EPS",method:'bucket',min:0,rates:'IMP9',cost:null},
@@ -1974,7 +1974,10 @@ function addItem(container){
   { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
     if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
     if(_gg && _gg.value!==''){ var _gi=d.querySelector('.i-glass'); if(_gi) _gi.value=_gg.value; } }
-  d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d); calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
+  d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d);
+    // ข้อ2: ราวกันตก default กระจกเทมเปอร์ใส 10 มม. (glassDef) — เลือก 12 มม.ได้จาก dropdown · ราคาไม่ขึ้นกับกระจก
+    { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
+    calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
   d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value); buildItemOpts(d); refreshItype(d);
     // กั้นห้องกระจก: เลือกกลุ่มงาน 6 → โชว์ช่องด้านทันที + เติม "ด้าน A" ให้ถ้ายังว่าง
     if(d.querySelector('.i-group').value==='6'){
