@@ -13,9 +13,9 @@ export const JOB_STATUS: Record<JobStatus, { th: string; dot: string; chip: stri
 };
 
 export const PROD_STATUS: Record<ProdStatus, string> = {
-  PENDING_MEASURE: "รอวัดจริง", MEASURED: "วัดแล้ว", PENDING_MEETING: "รอประชุม",
-  REVISING: "แก้แบบ", PENDING_CONFIRM: "รอคอนเฟิร์ม", QUEUED: "ลงคิวผลิต",
-  MANUFACTURING: "กำลังผลิต", QC: "QC", READY: "พร้อมติดตั้ง", ISSUE: "มีปัญหา",
+  PENDING_MEASURE: "รอวัดหน้างาน", MEASURED: "วัดแล้ว", PENDING_MEETING: "รอประชุมแบบ",
+  REVISING: "แก้แบบหลังวัด", PENDING_CONFIRM: "รอลูกค้าคอนเฟิร์ม", QUEUED: "ลงคิวผลิต",
+  MANUFACTURING: "กำลังผลิต", QC: "ตรวจ QC", READY: "พร้อมติดตั้ง", ISSUE: "มีปัญหา",
 };
 
 export const INST_STATUS: Record<InstStatus, string> = {

@@ -68,6 +68,16 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     .from("productions").update(body).eq("id", params.id).select().single();
   if (error || !data) throw new Error(error?.message ?? "Update failed");
 
+  // แก้แบบหลังวัด → เด้งงานกลับหน้าเขียนแบบ (ตั้ง design_state=REVISING + นับรอบแก้)
+  if (body.status === "REVISING" && data.job_id) {
+    const { data: jobRow } = await ctx.supabase
+      .from("jobs").select("design_revise_count").eq("id", data.job_id).single();
+    await ctx.supabase.from("jobs").update({
+      design_state: "REVISING",
+      design_revise_count: (jobRow?.design_revise_count ?? 0) + 1,
+    }).eq("id", data.job_id);
+  }
+
   if (body.status) {
     await audit({
       jobId: data.job_id, userId: ctx.user.id, action: "PRODUCTION_STATUS",
