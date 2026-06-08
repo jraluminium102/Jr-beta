@@ -1,16 +1,23 @@
 "use client";
 
 /**
- * DesignerSchedule v2 — per-person schedule view (light theme, matches the board).
- *   1. Workload summary — jobs-in-hand + overdue + load bar per designer.
- *   2. Week navigator — เลื่อนทีละสัปดาห์ (จ–ส) แทนการรันยาว 15 วัน.
- *   3. Schedule grid — sticky thead + count badge; columns = designers, rows = work-days.
- *   4. CellStack — แสดงสูงสุด 3 การ์ด/ช่อง; "+N งานอื่น" เปิด popover.
- *   5. JobPill — คลิกเปลี่ยนวัน (PATCH /api/jobs/[id] { design_due_date }).
- * NOTE: /designer renders on a LIGHT background → use dark text (text-ink*), NOT text-white.
+ * DesignerSchedule v3 — Kanban-by-day planner with HTML5 drag & drop.
+ *
+ * Layout (7 columns, horizontal scroll):
+ *   [ยังไม่กำหนด/แก้แทรก] | จันทร์ | อังคาร | พุธ | พฤหัส | ศุกร์ | เสาร์
+ *
+ * Features:
+ *   - WorkloadBar + WeekNavigator (reused from v2)
+ *   - HTML5 drag: drag card → drop on day column → PATCH design_due_date
+ *   - Drop on "ยังไม่กำหนด" column → design_due_date: null
+ *   - Mobile fallback: date-input on each card ("ย้ายวัน")
+ *   - Show ALL cards per column (no +N collapse), max-h + overflow-y-auto
+ *   - Light theme only: text-ink / text-ink-2 / text-ink-3 / text-brand-dark
+ *     NO text-white on light background.
+ * NOTE: /designer renders on LIGHT background — never use text-white on cards.
  */
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import Icon from "@/components/Icon";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import type { DesignState } from "@/lib/database.types";
@@ -35,20 +42,23 @@ interface Props {
   onRefresh: () => Promise<void>;
 }
 
-// ─── State colours (LIGHT theme: tinted bg + dark text) ─────────────────────
-const STATE_COLOR: Record<DesignState, { bg: string; text: string; dot: string }> = {
-  NOT_STARTED:      { bg: "bg-slate-100",  text: "text-slate-600",   dot: "#94a3b8" },
-  DRAWING:          { bg: "bg-blue-50",    text: "text-blue-700",    dot: "#2563eb" },
-  PENDING_CUSTOMER: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "#d97706" },
-  REVISING:         { bg: "bg-red-50",     text: "text-red-700",     dot: "#B3151D" },
-  DONE:             { bg: "bg-emerald-50", text: "text-emerald-700", dot: "#059669" },
+// ─── State colours (LIGHT theme: tinted bg + dark text, NO white text) ───────
+const STATE_COLOR: Record<DesignState, { bg: string; text: string; dot: string; border: string }> = {
+  NOT_STARTED:      { bg: "bg-slate-50",   text: "text-slate-700",   dot: "#94a3b8", border: "border-slate-200" },
+  DRAWING:          { bg: "bg-blue-50",    text: "text-blue-700",    dot: "#2563eb", border: "border-blue-200"  },
+  PENDING_CUSTOMER: { bg: "bg-amber-50",   text: "text-amber-700",   dot: "#d97706", border: "border-amber-200" },
+  REVISING:         { bg: "bg-red-50",     text: "text-red-700",     dot: "#B3151D", border: "border-red-200"   },
+  DONE:             { bg: "bg-emerald-50", text: "text-emerald-700", dot: "#059669", border: "border-emerald-200"},
 };
 const STATE_TH: Record<DesignState, string> = {
-  NOT_STARTED: "ยังไม่เริ่ม", DRAWING: "กำลังเขียนแบบ",
-  PENDING_CUSTOMER: "รอลูกค้า", REVISING: "กำลังแก้ไข", DONE: "เสร็จแล้ว",
+  NOT_STARTED: "ยังไม่เริ่ม",
+  DRAWING: "กำลังเขียนแบบ",
+  PENDING_CUSTOMER: "รอลูกค้า",
+  REVISING: "กำลังแก้ไข",
+  DONE: "เสร็จแล้ว",
 };
 
-// ─── Date helpers ────────────────────────────────────────────────────────────
+// ─── Date helpers (reused from v2) ────────────────────────────────────────────
 function isoToday(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -61,20 +71,18 @@ function addDays(iso: string, n: number): string {
   d.setDate(d.getDate() + n);
   return toIso(d);
 }
-/** จันทร์ของสัปดาห์ที่ iso อยู่ (อาทิตย์นับเป็นปลายสัปดาห์ก่อนหน้า) */
+/** จันทร์ของสัปดาห์ที่ iso อยู่ (อาทิตย์ = ปลายสัปดาห์ก่อนหน้า) */
 function mondayOf(iso: string): string {
   const d = new Date(iso + "T00:00:00");
-  const dow = d.getDay(); // 0=อา..6=ส
+  const dow = d.getDay();
   const diff = dow === 0 ? -6 : 1 - dow;
   d.setDate(d.getDate() + diff);
   return toIso(d);
 }
-/** 6 วันทำงาน จ–ส จากวันจันทร์ที่กำหนด */
+/** 6 วันทำงาน จ–ส */
 function weekDays(mondayIso: string): string[] {
   const days: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    days.push(addDays(mondayIso, i));
-  }
+  for (let i = 0; i < 6; i++) days.push(addDays(mondayIso, i));
   return days;
 }
 
@@ -83,186 +91,22 @@ function thShortDate(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${Number(d)} ${MONTH_SHORT[Number(m) - 1]}`;
 }
-const DOW_TH = ["อา","จ","อ","พ","พฤ","ศ","ส"];
-function thDow(iso: string): string { return DOW_TH[new Date(iso + "T00:00:00").getDay()]; }
-
-/** label ช่วงสัปดาห์: "10 – 15 มิ.ย." หรือ "29 พ.ค. – 3 มิ.ย." ถ้าข้ามเดือน */
+const DOW_FULL_TH = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+function thDow(iso: string): string {
+  return DOW_FULL_TH[new Date(iso + "T00:00:00").getDay()];
+}
 function weekRangeLabel(mondayIso: string): string {
-  const start = mondayIso;
   const end = addDays(mondayIso, 5);
-  const [, sm, sd] = start.split("-");
+  const [, sm, sd] = mondayIso.split("-");
   const [, em, ed] = end.split("-");
-  const startLabel = sm === em
-    ? `${Number(sd)}`
-    : `${Number(sd)} ${MONTH_SHORT[Number(sm) - 1]}`;
+  const startLabel = sm === em ? `${Number(sd)}` : `${Number(sd)} ${MONTH_SHORT[Number(sm) - 1]}`;
   return `${startLabel} – ${Number(ed)} ${MONTH_SHORT[Number(em) - 1]}`;
 }
 
 function loadBarColor(f: number): string { return f >= 0.75 ? "bg-brand" : f >= 0.4 ? "bg-amber-400" : "bg-emerald-500"; }
 function loadTextColor(f: number): string { return f >= 0.75 ? "text-brand" : f >= 0.4 ? "text-amber-600" : "text-emerald-600"; }
 
-// ─── Job Pill ────────────────────────────────────────────────────────────────
-function JobPill({
-  job, canWrite, onReschedule,
-}: {
-  job: Job;
-  canWrite: boolean;
-  onReschedule: (job: Job, d: string) => Promise<void>;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const c = STATE_COLOR[job.design_state];
-
-  async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.value) return;
-    setBusy(true);
-    await onReschedule(job, e.target.value);
-    setBusy(false);
-    setEditing(false);
-  }
-
-  return (
-    <div className={`rounded-lg px-2 py-1.5 text-[12px] border border-gray-200/80 ${c.bg} ${c.text} ${busy ? "opacity-50" : ""}`}>
-      <div className="flex items-center justify-between gap-1 min-w-0">
-        <span className="font-semibold truncate" title={job.job_code ?? ""}>{job.job_code ?? "—"}</span>
-        {job.design_revise_count > 0 && (
-          <span className="shrink-0 text-[10px] font-bold bg-brand text-white rounded-full px-1.5 py-0.5 leading-none">
-            แก้ {job.design_revise_count}
-          </span>
-        )}
-      </div>
-      <div className="truncate mt-0.5" title={job.customer_name}>{job.customer_name}</div>
-      <div className="flex items-center gap-1 mt-1 opacity-80">
-        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.dot }} />
-        <span className="text-[10px]">{STATE_TH[job.design_state]}</span>
-      </div>
-      {canWrite && (
-        <div className="mt-1.5">
-          {editing ? (
-            <input
-              type="date"
-              defaultValue={job.design_due_date ?? ""}
-              disabled={busy}
-              autoFocus
-              onChange={onChange}
-              onBlur={() => setEditing(false)}
-              className="w-full bg-white border border-gray-300 rounded px-1.5 py-0.5 text-[11px] text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum"
-              aria-label="เปลี่ยนวันกำหนดส่งแบบ"
-            />
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="press inline-flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand rounded px-1 py-0.5 min-h-[26px]"
-              aria-label="แก้ไขวันกำหนด"
-            >
-              <Icon name="calendar" size={10} /> เปลี่ยนวัน
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Popover ─────────────────────────────────────────────────────────────────
-function Popover({
-  jobs, canWrite, onReschedule, onClose,
-}: {
-  jobs: Job[];
-  canWrite: boolean;
-  onReschedule: (job: Job, d: string) => Promise<void>;
-  onClose: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [onClose]);
-
-  return (
-    <>
-      {/* overlay โปร่งกัน click-through ก่อนถึง ref */}
-      <div className="fixed inset-0 z-30" aria-hidden="true" onClick={onClose} />
-      <div
-        ref={ref}
-        className="absolute left-0 top-full mt-1 z-40 bg-white border border-gray-200 rounded-xl shadow-lg p-2 max-h-[55vh] overflow-y-auto min-w-[220px] w-full"
-        role="dialog"
-        aria-label="งานทั้งหมดในช่องนี้"
-      >
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[11px] font-semibold text-ink-2">ทั้งหมด {jobs.length} งาน</span>
-          <button
-            onClick={onClose}
-            className="press p-1 rounded-lg text-ink-3 hover:text-brand min-h-[28px] min-w-[28px] flex items-center justify-center"
-            aria-label="ปิด"
-          >
-            <Icon name="close" size={14} />
-          </button>
-        </div>
-        <div className="space-y-1.5">
-          {jobs.map((j) => (
-            <JobPill key={j.id} job={j} canWrite={canWrite} onReschedule={onReschedule} />
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── CellStack ───────────────────────────────────────────────────────────────
-const MAX_VISIBLE = 3;
-
-function CellStack({
-  jobs, canWrite, onReschedule,
-}: {
-  jobs: Job[];
-  canWrite: boolean;
-  onReschedule: (job: Job, d: string) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-
-  if (jobs.length === 0) return <div className="h-6" />;
-
-  const head = jobs.slice(0, MAX_VISIBLE);
-  const rest = jobs.length - MAX_VISIBLE;
-
-  return (
-    <div className="space-y-1.5 relative">
-      {head.map((j) => (
-        <JobPill key={j.id} job={j} canWrite={canWrite} onReschedule={onReschedule} />
-      ))}
-      {rest > 0 && (
-        <button
-          onClick={() => setOpen(true)}
-          className="press w-full text-[11px] font-medium text-brand hover:bg-brand/5 rounded-lg py-1 min-h-[28px] border border-brand/20"
-        >
-          +{rest} งานอื่น
-        </button>
-      )}
-      {open && (
-        <Popover
-          jobs={jobs}
-          canWrite={canWrite}
-          onReschedule={onReschedule}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-// ─── WorkloadBar ─────────────────────────────────────────────────────────────
+// ─── WorkloadBar (reused) ─────────────────────────────────────────────────────
 function WorkloadBar({
   designers, jobs, designerFilter, today,
 }: {
@@ -323,7 +167,7 @@ function WorkloadBar({
   );
 }
 
-// ─── WeekNavigator ───────────────────────────────────────────────────────────
+// ─── WeekNavigator (reused) ───────────────────────────────────────────────────
 function WeekNavigator({
   weekStart, today, onPrev, onNext, onToday,
 }: {
@@ -335,10 +179,8 @@ function WeekNavigator({
 }) {
   const isCurrentWeek = weekStart === mondayOf(today);
   const label = weekRangeLabel(weekStart);
-
   return (
     <div className="glass-soft rounded-xl px-3 py-2 flex items-center justify-between gap-2">
-      {/* ซ้าย: ปุ่มก่อนหน้า */}
       <button
         onClick={onPrev}
         className="press inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-brand rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] justify-center"
@@ -347,16 +189,13 @@ function WeekNavigator({
         <Icon name="arrowLeft" size={16} />
         <span className="hidden sm:inline text-[13px]">ก่อนหน้า</span>
       </button>
-
-      {/* กลาง: ช่วงสัปดาห์ */}
       <div className="flex items-center gap-2 flex-1 justify-center">
         <span className="text-sm font-semibold text-brand-dark tnum">{label}</span>
-        {isCurrentWeek && (
+        {isCurrentWeek ? (
           <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand/10 text-brand">
             สัปดาห์นี้
           </span>
-        )}
-        {!isCurrentWeek && (
+        ) : (
           <button
             onClick={onToday}
             className="press text-[12px] font-medium text-brand hover:bg-brand/5 rounded-lg px-2 py-1 min-h-[32px]"
@@ -365,8 +204,6 @@ function WeekNavigator({
           </button>
         )}
       </div>
-
-      {/* ขวา: ปุ่มถัดไป */}
       <button
         onClick={onNext}
         className="press inline-flex items-center gap-1.5 text-sm text-ink-2 hover:text-brand rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] justify-center"
@@ -379,90 +216,346 @@ function WeekNavigator({
   );
 }
 
-// ─── Main ────────────────────────────────────────────────────────────────────
+// ─── JobCard (draggable planner card) ────────────────────────────────────────
+/**
+ * Draggable card used inside day columns.
+ * Light theme: card bg = state tinted bg, all text uses dark tokens.
+ * "แก้ N" badge: bg-red-100 text-red-700 (NOT text-white on light surface).
+ * Mobile fallback: date input visible on small screens.
+ */
+function JobCard({
+  job,
+  canWrite,
+  showDesigner,
+  draggingId,
+  onDragStart,
+  onDragEnd,
+  onReschedule,
+}: {
+  job: Job;
+  canWrite: boolean;
+  showDesigner: boolean;
+  draggingId: string | null;
+  onDragStart: (jobId: string) => void;
+  onDragEnd: () => void;
+  onReschedule: (job: Job, isoDate: string | null) => Promise<void>;
+}) {
+  const [dateBusy, setDateBusy] = useState(false);
+  const [showDateInput, setShowDateInput] = useState(false);
+  const c = STATE_COLOR[job.design_state];
+  const isDragging = draggingId === job.id;
+
+  async function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value || null;
+    setDateBusy(true);
+    await onReschedule(job, val);
+    setDateBusy(false);
+    setShowDateInput(false);
+  }
+
+  return (
+    <div
+      draggable={canWrite}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("jobId", job.id);
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart(job.id);
+      }}
+      onDragEnd={onDragEnd}
+      className={[
+        "rounded-xl border p-2.5 select-none transition-opacity",
+        c.bg, c.border,
+        canWrite ? "cursor-grab active:cursor-grabbing" : "",
+        isDragging ? "opacity-40" : "opacity-100",
+      ].join(" ")}
+      aria-label={`งาน ${job.job_code ?? ""} ${job.customer_name}`}
+    >
+      {/* Row 1: customer name (prominent) */}
+      <div className="font-semibold text-[13px] text-ink truncate" title={job.customer_name}>
+        {job.customer_name}
+      </div>
+
+      {/* Row 2: job_code + revise badge */}
+      <div className="flex items-center justify-between gap-1 mt-0.5 min-w-0">
+        <span className="text-[11px] text-ink-3 font-medium tnum truncate">
+          {job.job_code ?? "—"}
+        </span>
+        {job.design_revise_count > 0 && (
+          /* bg-red-100 text-red-700: safe on light surface */
+          <span className="shrink-0 text-[10px] font-bold bg-red-100 text-red-700 rounded-full px-1.5 py-0.5 leading-none">
+            แก้ {job.design_revise_count}
+          </span>
+        )}
+      </div>
+
+      {/* Row 3: state dot + label */}
+      <div className="flex items-center gap-1 mt-1.5">
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.dot }} />
+        <span className={`text-[11px] font-medium ${c.text}`}>{STATE_TH[job.design_state]}</span>
+      </div>
+
+      {/* Row 4: designer badge (only in "ทุกคน" mode) */}
+      {showDesigner && job.designer_name && (
+        <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-100 border border-gray-200">
+          <span className="text-[10px] text-ink-2 font-medium truncate max-w-[90px]">
+            {job.designer_name}
+          </span>
+        </div>
+      )}
+
+      {/* Row 5: mobile "ย้ายวัน" fallback (canWrite only) */}
+      {canWrite && (
+        <div className="mt-2">
+          {showDateInput ? (
+            <input
+              type="date"
+              defaultValue={job.design_due_date ?? ""}
+              disabled={dateBusy}
+              autoFocus
+              onChange={handleDateChange}
+              onBlur={() => setShowDateInput(false)}
+              className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-[11px] text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum"
+              aria-label="เลือกวันที่ส่งแบบ"
+            />
+          ) : (
+            <button
+              onClick={() => setShowDateInput(true)}
+              disabled={dateBusy}
+              className="press inline-flex items-center gap-1 text-[10px] text-ink-3 hover:text-brand rounded-lg px-1.5 py-1 min-h-[28px] border border-transparent hover:border-gray-200 hover:bg-white/60 transition-colors"
+              aria-label="ย้ายวัน"
+            >
+              <Icon name="calendar" size={10} />
+              ย้ายวัน
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── DayColumn ────────────────────────────────────────────────────────────────
+/**
+ * A droppable column for a specific day (or the "ยังไม่กำหนด" overflow column).
+ * Highlights when a drag is hovering over it.
+ */
+function DayColumn({
+  colId,
+  headerLabel,
+  headerSub,
+  isToday,
+  isOverflow,
+  jobs,
+  canWrite,
+  showDesigner,
+  draggingId,
+  onDragStart,
+  onDragEnd,
+  onDrop,
+  onReschedule,
+}: {
+  colId: string; // ISO date string or "__overflow__"
+  headerLabel: string;
+  headerSub?: string;
+  isToday: boolean;
+  isOverflow: boolean;
+  jobs: Job[];
+  canWrite: boolean;
+  showDesigner: boolean;
+  draggingId: string | null;
+  onDragStart: (jobId: string) => void;
+  onDragEnd: () => void;
+  onDrop: (jobId: string, targetColId: string) => Promise<void>;
+  onReschedule: (job: Job, isoDate: string | null) => Promise<void>;
+}) {
+  const [over, setOver] = useState(false);
+  const dragCounter = useRef(0); // track enter/leave for nested children
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current += 1;
+    setOver(true);
+  }
+  function handleDragLeave() {
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setOver(false);
+    }
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setOver(false);
+    const jobId = e.dataTransfer.getData("jobId");
+    if (jobId) onDrop(jobId, colId);
+  }
+
+  // Column header colours
+  const headerBg = isToday
+    ? "bg-brand/10 border-brand/30"
+    : isOverflow
+    ? "bg-red-50 border-red-200/60"
+    : "bg-gray-50 border-gray-200/60";
+  const headerText = isToday ? "text-brand-dark" : isOverflow ? "text-red-700" : "text-ink-2";
+  const badgeBg = isToday
+    ? "bg-brand/20 text-brand-dark"
+    : isOverflow
+    ? "bg-red-100 text-red-700"
+    : "bg-gray-200 text-ink-3";
+
+  // Drop zone highlight
+  const dropBg = over
+    ? "bg-brand/5 border-brand/40 ring-2 ring-brand/20"
+    : "bg-white/60 border-gray-200/70";
+
+  return (
+    <div
+      className="flex flex-col min-w-[200px] w-[220px] shrink-0"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Column header */}
+      <div className={`rounded-t-xl border px-3 py-2 ${headerBg}`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className={`text-[12px] font-bold truncate ${headerText}`}>{headerLabel}</div>
+            {headerSub && (
+              <div className={`text-[11px] font-medium tnum ${isToday ? "text-brand" : "text-ink-3"}`}>
+                {headerSub}
+                {isToday && <span className="ml-1 text-[10px] font-bold text-brand">(วันนี้)</span>}
+              </div>
+            )}
+          </div>
+          <span className={`shrink-0 text-[11px] font-bold tnum rounded-full px-1.5 py-0.5 ${badgeBg}`}>
+            {jobs.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Cards area (scrollable) */}
+      <div
+        className={[
+          "flex-1 rounded-b-xl border-x border-b p-2 max-h-[60vh] overflow-y-auto space-y-2 transition-colors",
+          dropBg,
+        ].join(" ")}
+      >
+        {jobs.length === 0 ? (
+          /* Empty hint — visible but muted */
+          <div className="flex flex-col items-center justify-center py-8 gap-1.5 pointer-events-none select-none">
+            <Icon name="calendar" size={18} className="text-gray-300" />
+            <span className="text-[11px] text-gray-300 text-center leading-tight">
+              ลากงานมาวางที่นี่
+            </span>
+          </div>
+        ) : (
+          jobs.map((j) => (
+            <JobCard
+              key={j.id}
+              job={j}
+              canWrite={canWrite}
+              showDesigner={showDesigner}
+              draggingId={draggingId}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onReschedule={onReschedule}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function DesignerSchedule({
   jobs, designers, canWrite, designerFilter, onRefresh,
 }: Props) {
   const today = isoToday();
   const [weekStart, setWeekStart] = useState<string>(() => mondayOf(today));
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const visibleDesigners = useMemo(
-    () => designerFilter ? designers.filter((d) => String(d.id) === designerFilter) : designers,
-    [designers, designerFilter],
-  );
-
-  // วัน 6 วันของสัปดาห์ที่กำลังดู (จ–ส)
+  // 6 working days of the current week (Mon–Sat)
   const days = useMemo(() => weekDays(weekStart), [weekStart]);
 
-  const activeJobs = useMemo(
-    () => jobs.filter((j) => j.design_state !== "DONE"),
-    [jobs],
-  );
+  // Filter by designer when designerFilter is set
+  const activeJobs = useMemo(() => {
+    const base = jobs.filter((j) => j.design_state !== "DONE");
+    if (!designerFilter) return base;
+    return base.filter((j) => String(j.designer_ref) === designerFilter);
+  }, [jobs, designerFilter]);
 
-  // นับงานในมือต่อคน (ทุกสัปดาห์ — ตรงกับ WorkloadBar)
-  const activeCountByDesigner = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const d of visibleDesigners) counts[String(d.id)] = 0;
-    for (const j of activeJobs) {
-      const key = j.designer_ref != null ? String(j.designer_ref) : null;
-      if (!key || !(key in counts)) continue;
-      counts[key] += 1;
-    }
-    return counts;
-  }, [activeJobs, visibleDesigners]);
+  // Show designer badge only in "all designers" mode
+  const showDesigner = !designerFilter;
 
-  // จัดกลุ่ม: byDesignerDate[designerId][isoDate | "__overflow__"] = Job[]
-  // __overflow__ = เลยกำหนด (due < today) หรือยังไม่กำหนด
-  const byDesignerDate = useMemo(() => {
-    const map: Record<string, Record<string, Job[]>> = {};
-    for (const d of visibleDesigners) map[String(d.id)] = { __overflow__: [] };
+  /**
+   * Group jobs into columns:
+   *   "__overflow__" = no due date OR due date in the past (relative to today)
+   *   YYYY-MM-DD    = future/today due dates
+   */
+  const byCol = useMemo(() => {
+    const map: Record<string, Job[]> = { __overflow__: [] };
+    for (const d of days) map[d] = [];
     for (const j of activeJobs) {
-      const key = j.designer_ref != null ? String(j.designer_ref) : null;
-      if (!key || !map[key]) continue;
       const due = j.design_due_date;
       if (!due || due < today) {
-        map[key]["__overflow__"].push(j);
+        map["__overflow__"].push(j);
+      } else if (due in map) {
+        map[due].push(j);
       } else {
-        (map[key][due] ??= []).push(j);
+        // due date exists but is NOT in this week → overflow
+        map["__overflow__"].push(j);
       }
     }
     return map;
-  }, [activeJobs, visibleDesigners, today]);
+  }, [activeJobs, days, today]);
 
-  async function reschedule(job: Job, newDate: string) {
+  // PATCH design_due_date via BFF (null = clear date)
+  const reschedule = useCallback(async (job: Job, isoDate: string | null) => {
     try {
       const res = await fetch(`/api/jobs/${job.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ design_due_date: newDate }),
+        body: JSON.stringify({ design_due_date: isoDate }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        console.error("reschedule failed:", j.error);
+        const json = await res.json().catch(() => ({}));
+        console.error("reschedule failed:", json.error);
       }
       await onRefresh();
     } catch (e) {
       console.error("reschedule error:", e);
     }
-  }
+  }, [onRefresh]);
 
-  if (visibleDesigners.length === 0)
+  // Called when a card is dropped onto a column
+  const handleDrop = useCallback(async (jobId: string, targetColId: string) => {
+    const job = activeJobs.find((j) => j.id === jobId);
+    if (!job) return;
+    const newDate = targetColId === "__overflow__" ? null : targetColId;
+    // Skip if no change
+    if (newDate === (job.design_due_date ?? null)) return;
+    await reschedule(job, newDate);
+  }, [activeJobs, reschedule]);
+
+  if (designers.length === 0)
     return (
       <div className="glass-card rounded-2xl p-10 text-center text-ink-3 text-sm">
         ยังไม่มีช่างเขียนแบบในระบบ
       </div>
     );
 
-  const totalActive = activeJobs.filter((j) => j.designer_ref != null).length;
-  const hasOverflow = visibleDesigners.some(
-    (d) => (byDesignerDate[String(d.id)]?.["__overflow__"] ?? []).length > 0,
-  );
-
   return (
     <div className="space-y-5">
-      {/* 1. Workload bar — เดิม ไม่แก้ */}
+      {/* 1. Workload summary per designer */}
       <WorkloadBar
-        designers={visibleDesigners}
+        designers={designers}
         jobs={activeJobs}
         designerFilter={designerFilter}
         today={today}
@@ -477,110 +570,45 @@ export default function DesignerSchedule({
         onToday={() => setWeekStart(mondayOf(today))}
       />
 
-      {/* 3. Schedule table */}
-      <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table
-            className="border-collapse text-[13px] w-full"
-            style={{ minWidth: `${120 + visibleDesigners.length * 180}px` }}
-          >
-            <colgroup>
-              <col style={{ width: "100px" }} />
-              {visibleDesigners.map((d) => <col key={d.id} style={{ width: "180px" }} />)}
-            </colgroup>
+      {/* 3. Kanban board — horizontal scroll, 7 columns */}
+      <div className="overflow-x-auto pb-3">
+        <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+          {/* Column 0: ยังไม่กำหนด / แก้แทรก (overflow) */}
+          <DayColumn
+            colId="__overflow__"
+            headerLabel="ยังไม่กำหนด / แก้แทรก"
+            isToday={false}
+            isOverflow={true}
+            jobs={byCol["__overflow__"] ?? []}
+            canWrite={canWrite}
+            showDesigner={showDesigner}
+            draggingId={draggingId}
+            onDragStart={setDraggingId}
+            onDragEnd={() => setDraggingId(null)}
+            onDrop={handleDrop}
+            onReschedule={reschedule}
+          />
 
-            {/* sticky thead */}
-            <thead className="sticky top-0 z-20">
-              <tr className="border-b border-gray-200">
-                {/* มุมซ้ายบน — sticky ทั้ง x และ y (z สูงสุด) */}
-                <th className="px-3 py-3 text-left text-[11px] font-medium text-ink-3 sticky left-0 z-30 bg-white/95 backdrop-blur border-b border-gray-200">
-                  วันกำหนดส่ง
-                </th>
-                {visibleDesigners.map((d) => (
-                  <th
-                    key={d.id}
-                    className="px-3 py-3 text-left border-l border-gray-200 bg-white/95 backdrop-blur"
-                  >
-                    <div className="flex items-center justify-between gap-1.5">
-                      <span className="text-sm font-semibold text-brand-dark truncate">{d.name}</span>
-                      <span className="shrink-0 text-[11px] font-bold tnum rounded-full px-1.5 py-0.5 bg-brand/10 text-brand">
-                        {activeCountByDesigner[String(d.id)] ?? 0}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {/* overflow row — แสดงทุกสัปดาห์ ไม่ผูกกับ weekStart */}
-              {hasOverflow && (
-                <tr className="border-t border-brand/30 bg-red-50/60">
-                  <td className="px-3 py-2 align-top sticky left-0 z-10 bg-red-50 backdrop-blur">
-                    <div className="inline-flex items-start gap-1.5">
-                      <Icon name="warn" size={12} className="text-brand mt-0.5 shrink-0" />
-                      <span className="text-[11px] font-semibold text-brand leading-tight">
-                        เลยกำหนด<br />/ ยังไม่กำหนด
-                      </span>
-                    </div>
-                  </td>
-                  {visibleDesigners.map((d) => {
-                    const ov = byDesignerDate[String(d.id)]?.["__overflow__"] ?? [];
-                    return (
-                      <td key={d.id} className="px-2 py-2 align-top border-l border-gray-200">
-                        {ov.length === 0 ? (
-                          <span className="text-[10px] text-ink-3/50">—</span>
-                        ) : (
-                          <CellStack jobs={ov} canWrite={canWrite} onReschedule={reschedule} />
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              )}
-
-              {/* day rows — 6 วัน จ–ส ของสัปดาห์ที่กำลังดู */}
-              {days.map((day) => {
-                const isToday = day === today;
-                return (
-                  <tr
-                    key={day}
-                    className={`border-t border-gray-200/70 ${isToday ? "bg-brand/5" : "hover:bg-gray-50/60"}`}
-                  >
-                    {/* เซลซ้าย sticky */}
-                    <td
-                      className={`px-3 py-2 align-top sticky left-0 z-10 backdrop-blur ${isToday ? "bg-brand/15" : "bg-white/80"}`}
-                    >
-                      <div className={`text-[11px] font-medium ${isToday ? "text-brand" : "text-ink-3"}`}>
-                        {thDow(day)}
-                      </div>
-                      <div className={`font-semibold tnum ${isToday ? "text-brand-dark" : "text-ink-2"}`}>
-                        {thShortDate(day)}
-                      </div>
-                      {isToday && (
-                        <div className="text-[9px] text-brand font-bold mt-0.5">วันนี้</div>
-                      )}
-                    </td>
-
-                    {/* เซลแต่ละช่าง */}
-                    {visibleDesigners.map((d) => {
-                      const cellJobs = byDesignerDate[String(d.id)]?.[day] ?? [];
-                      return (
-                        <td key={d.id} className="px-2 py-2 align-top border-l border-gray-200/70">
-                          <CellStack jobs={cellJobs} canWrite={canWrite} onReschedule={reschedule} />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          {/* Columns 1–6: Mon–Sat of current week */}
+          {days.map((day) => (
+            <DayColumn
+              key={day}
+              colId={day}
+              headerLabel={thDow(day)}
+              headerSub={thShortDate(day)}
+              isToday={day === today}
+              isOverflow={false}
+              jobs={byCol[day] ?? []}
+              canWrite={canWrite}
+              showDesigner={showDesigner}
+              draggingId={draggingId}
+              onDragStart={setDraggingId}
+              onDragEnd={() => setDraggingId(null)}
+              onDrop={handleDrop}
+              onReschedule={reschedule}
+            />
+          ))}
         </div>
-
-        {totalActive === 0 && (
-          <div className="py-12 text-center text-ink-3 text-sm">ยังไม่มีงานในมือ — ทุกคนว่าง</div>
-        )}
       </div>
 
       {/* 4. Legend */}
@@ -598,9 +626,11 @@ export default function DesignerSchedule({
             {label}
           </span>
         ))}
-        <span className="text-ink-3/70">
-          · ใช้ ← → เลื่อนสัปดาห์ · คลิก "เปลี่ยนวัน" บนการ์ดเพื่อจัดตารางเอง · "+N งานอื่น" เปิดรายการเต็ม
-        </span>
+        {canWrite && (
+          <span className="text-ink-3/70">
+            · ลากการ์ดไปวางคอลัมน์วันที่ต้องการ · กดปุ่ม "ย้ายวัน" บนการ์ดเพื่อระบุวัน (มือถือ)
+          </span>
+        )}
       </div>
     </div>
   );
