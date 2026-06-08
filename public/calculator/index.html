@@ -1388,6 +1388,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(p.optInsul&&optSel&&optSel.insul){ opt+=600*a; }
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]) opt+=o.price*(o.perPanel?Math.max(1,panels):1); }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
+  // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
+  if(optSel){ const _fcs=parseInt(optSel.fcsides)||0; if(_fcs===3||_fcs===4){ const _fW=parseFloat(w)||0,_fH=parseFloat(h)||0; const _flen=_fcs===3?(_fW+2*_fH):2*(_fW+_fH); if(_flen>0){ const _ffr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_ffr*_flen; msgs.push('ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×'+_ffr+' = '+fmt(_ffr*_flen)); } } }
   if(p.fin&&optSel&&optSel.finish){ opt+=(parseFloat(optSel.finish)||0)*a; }
   if(p.optSlide&&optSel&&optSel.slide){ const _N=Math.max(2,parseInt(optSel.spanels)||2); const _tier=a<=10?4500:a<=20?6750:a<=30?9000:11250; const _marea=a*_N/(_N+1); const _motor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000; opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_motor+(parseFloat(optSel.sgut)||0)*3000; }
   if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); }
@@ -2286,7 +2288,7 @@ function buildItemOpts(d){
   }
   h+='<label class="opt"><input type="checkbox" class="o-flooring" onchange="var _fw=this.closest(\'.ch\').querySelector(\'.o-flooring-wrap\'); if(_fw)_fw.style.display=this.checked?\'inline\':\'none\'; calcQuote();"> งานพื้น (สมาร์ทบอร์ด/ไม้เทียม) — กรอกราคาที่ช่อง OPTION ด้านล่าง (ถ้าไม่กรอก จะไม่ขึ้นในใบ)</label>';
   h+='<span class="o-flooring-wrap" style="display:none;"><label class="opt">ชนิดพื้น <input type="text" class="o-flooring-type" placeholder="เช่น สมาร์ทบอร์ด / ไม้เทียม" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label></span>';
-  if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
+  if(!areaOnly){ h+=`<label class="opt">ครอบวงกบอลู <select class="o-fcsides" style="width:auto;height:32px;" onchange="calcQuote();"><option value="0">ไม่มี</option><option value="3">3 ด้าน</option><option value="4">4 ด้าน</option></select> หรือระบุ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
@@ -2412,7 +2414,8 @@ function readItem(d){
     const _rfpu=d.querySelector('.o-rfpull'); optSel.rfpull=_rfpu?_rfpu.checked:false;
   }
   COMMON_OPTS.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(c)optSel[o.id]=c.checked; });
-  { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value; }
+  { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value;
+    const fcs=d.querySelector('.o-fcsides'); if(fcs)optSel.fcsides=fcs.value; }
   // o-extradesc ถูกลบแล้ว (รวมเข้า i-note) — ไม่ต้อง read อีก
   let finLabel='';
   if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
@@ -2933,6 +2936,8 @@ function genQuote(keepNo){
     // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
     // ข้อ4C: มือจับ X-series ฟรี — โชว์ชื่อรุ่น (ไม่บวกเงิน)
     if(it.optSel && it.optSel.xhandle){ _parts.push('มือจับ '+it.optSel.xhandle); }
+    // ข้อ5: ครอบวงกบอลู 3/4 ด้าน
+    if(it.optSel && (it.optSel.fcsides==='3'||it.optSel.fcsides==='4')){ _parts.push('ครอบวงกบอลู '+it.optSel.fcsides+' ด้าน'); }
     if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
     if(it.optSel && it.optSel.extrawork){ _parts.push(it.optSel.extrawork); }
     if(it.optSel && it.optSel.removeold){ _parts.push('รวมรื้อของเดิม'); }

@@ -47,6 +47,8 @@ function enableAllOpts(ch) {
   ch.querySelectorAll(".i-opts select").forEach((sel) => {
     // ธรณี (.o-thresh) option[1]=หลังเต่า+DropSeal เป็น upgrade คิดเงิน +1,000 — test คงค่ามาตรฐาน (std) เพื่อรักษา anchor
     if (sel.classList.contains("o-thresh")) return;
+    // ข้อ5: ครอบวงกบอลู 3/4 ด้าน = upcharge ก้อนใหญ่ ไม่ควรติดทุกบานใน fixture (รักษา anchor เหมือน o-thresh)
+    if (sel.classList.contains("o-fcsides")) return;
     if (sel.options && sel.options.length > 1 && !sel.multiple) {
       sel.value = sel.options[1].value; fire(sel, "change");
     }
