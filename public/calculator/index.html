@@ -3030,15 +3030,15 @@ function genQuote(keepNo){
       const _rcName = _rc ? (' '+(_rc.quoteName||_rc.n).replace(/[★⚠]/g,'').trim()) : '';
       const _os = it.optSel || {};
       const _rfframe = _os.rfframe || 'โครงอลูมิเนียม';
-      const _rfbatten = _os.rfbatten || 'แปเดี่ยว';
+      const _rfbatten = _os.rfbatten || 'แปคู่'; // F5: ชุดหลังคา fallback แปคู่ (ตรงกับ default standalone)
       const _rfend = _os.rfend || 'ปล่อย';
       const _rfgutsys = _os.rfgutsys || 'ท่อ';
       // ชื่อโครง (อลู=เดิม / เหล็กชุบ=เปลี่ยน)
       const _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? 'โครงเหล็กชุบซิงค์' : ('โครงอลูมิเนียม'+_rcName);
       // แปคู่ต่อท้าย
       const _battenSuffix = _rfbatten === 'แปคู่' ? ' (แปคู่)' : '';
-      // รางน้ำ line (ปล่อย=ไม่เขียน / ปิดปลาย=ปิดปลาย / รางน้ำ=ระบุระบบ)
-      let _gutterLine = 'รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้';
+      // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / ปิดปลาย=ปิดปลาย / รางน้ำ=ระบุระบบ)
+      let _gutterLine = '';
       if(_rfend === 'ปิดปลาย'){
         _gutterLine = 'รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้ + ปิดปลายหลังคา';
       } else if(_rfend === 'รางน้ำ'){
@@ -3051,14 +3051,16 @@ function genQuote(keepNo){
           _gutterLine = 'รางน้ำ (ท่อ สี'+_col+')';
         }
       }
-      // Pass2-D: สีวัสดุมุง (ถ้าเลือก)
+      // F6: หัวรายละเอียด = ชนิดหลังคา + สีวัสดุมุง (เช่น "หลังคาไวนิล สีขาว") — ใบจริงระบุชนิดในรายละเอียดงานด้วย
       const _rfColor = _os.rfcolor || '';
-      const _colorSuffix = _rfColor ? ('\nสีวัสดุมุง: '+_rfColor) : '';
+      const _roofType = (it.p.name||'หลังคา').replace(/^หลังคา\s*/,'');
+      const _roofHead = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'');
       // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
       let _rfExtra = '';
       if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
       if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
-      det = _frameTxt+_battenSuffix+'\n'+_gutterLine+_colorSuffix+_rfExtra;
+      // F3: ถ้า _gutterLine ว่าง (ปล่อย) ไม่ใส่บรรทัดเปล่า
+      det = _roofHead+'\n'+_frameTxt+_battenSuffix+(_gutterLine?('\n'+_gutterLine):'')+_rfExtra;
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ

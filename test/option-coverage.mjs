@@ -271,13 +271,14 @@ function check(optName, setup, expected, detail) {
 
   const qt = getQuoteText();
   const hasSeeThru = qt.includes("แสงผ่าน");
-  const hasColorLine = qt.includes("สีวัสดุมุง");
+  // F6: สีวัสดุมุงรวมในหัว "หลังคาโพลีตัน <สี>" แทนบรรทัด "สีวัสดุมุง:" แยก
+  const hasColorLine = qt.includes("หลังคาโพลีตัน");
 
   const ok = delta === 0 && hasSeeThru && hasColorLine;
   const entry = check(
     "สีวัสดุมุง โพลีตัน (แสงผ่าน)",
     `roof_polyton 4×3, .o-roofcolor='${chosenColor.slice(0,20)}...'`,
-    "delta=0, ใบมี 'สีวัสดุมุง' + 'แสงผ่าน'",
+    "delta=0, ใบมี 'หลังคาโพลีตัน' + 'แสงผ่าน'",
     `delta=${delta} | hasColorLine=${hasColorLine} | hasSeeThru=${hasSeeThru} | chosen='${chosenColor.slice(0,30)}'`
   );
   entry.ok = ok;
