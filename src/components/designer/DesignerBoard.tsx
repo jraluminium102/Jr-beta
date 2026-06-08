@@ -53,6 +53,14 @@ type Kpi = {
 };
 const TODAY = new Date().toISOString().slice(0, 10);
 
+// Board DONE column: show only jobs completed within the last N days (client-side)
+const DONE_BOARD_DAYS = 45;
+function doneCutoff(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - DONE_BOARD_DAYS);
+  return d.toISOString().slice(0, 10);
+}
+
 function thDate(d: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("-");
@@ -191,7 +199,14 @@ export default function DesignerBoard({
             (j.job_code ?? "").toLowerCase().includes(q)
         )
       : jobs;
-    for (const j of filtered) map[j.design_state]?.push(j);
+    const cutoff = doneCutoff();
+    for (const j of filtered) {
+      if (j.design_state === "DONE") {
+        // Board DONE column: show only recent completions (design_end within last 45 days)
+        if (!j.design_end || j.design_end < cutoff) continue;
+      }
+      map[j.design_state]?.push(j);
+    }
     return map;
   }, [jobs, cardSearch]);
 
@@ -246,7 +261,7 @@ export default function DesignerBoard({
           <KpiTile label="งานในมือ" value={kpi.total} />
           <KpiTile label="เลยกำหนด" value={kpi.overdue} accent={kpi.overdue > 0 ? "text-brand" : undefined} />
           <KpiTile label="รอบแก้เฉลี่ย" value={kpi.avg_revise} />
-          <KpiTile label="เสร็จแล้ว (90 วัน)" value={doneCount} accent="text-emerald-600" />
+          <KpiTile label="เสร็จแล้ว (ล่าสุด)" value={doneCount} accent="text-emerald-600" />
         </div>
       )}
 

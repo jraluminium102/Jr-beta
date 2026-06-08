@@ -24,3 +24,4 @@ next-env.d.ts
 /07_ต้นฉบับทุน_อ้างอิง/
 scripts/seed_queue.sql
 scripts/seedgen.mjs
+.claude/

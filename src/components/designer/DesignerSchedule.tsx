@@ -33,6 +33,7 @@ type Job = {
   design_state: DesignState;
   design_due_date: string | null;
   design_start: string | null;
+  design_end: string | null;
   design_revise_count: number;
   overdue: boolean;
 };
@@ -330,7 +331,9 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
   // ── Pointer handlers ──────────────────────────────────────────────────────
   function onPointerDownBar(e: React.PointerEvent) {
     if (!editable) {
-      // อ่านอย่างเดียว/งานเสร็จแล้ว — ลากไม่ได้
+      // DONE/read-only bar — no drag, but click opens popover (history view)
+      e.stopPropagation();
+      onClickBar(bar);
       return;
     }
     e.stopPropagation();
@@ -425,8 +428,8 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       className={[
         "absolute rounded-md border select-none transition-shadow",
         c.barBg, c.border,
-        editable ? "cursor-grab active:cursor-grabbing" : "cursor-default",
-        job.design_state === "DONE" ? "opacity-60" : "",
+        editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        job.design_state === "DONE" ? "opacity-60 hover:opacity-80 transition-opacity" : "",
         barBgClass,
       ].join(" ")}
       style={{
@@ -485,15 +488,17 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
   );
 }
 
-// ─── BarPopover — mobile/click fallback: edit dates ──────────────────────────
+// ─── BarPopover — mobile/click fallback: edit dates (or read-only history for DONE) ────
 function BarPopover({
   bar,
   today,
+  readOnly,
   onClose,
   onSave,
 }: {
   bar: PlacedBar;
   today: string;
+  readOnly: boolean;
   onClose: () => void;
   onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
 }) {
@@ -516,6 +521,10 @@ function BarPopover({
     onClose();
   }
 
+  // Read-only date labels (for DONE history view)
+  const startLabel = job.design_start ? thShortDate(job.design_start) : "—";
+  const endLabel = job.design_end ? thShortDate(job.design_end) : (job.design_due_date ? thShortDate(job.design_due_date) : "—");
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
@@ -531,57 +540,97 @@ function BarPopover({
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="font-semibold text-ink text-sm">{job.customer_name}</div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-ink text-sm leading-tight">{job.customer_name}</div>
             <div className="text-[11px] text-ink-3 mt-0.5">{job.job_code ?? "—"}</div>
           </div>
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
-            {STATE_TH[job.design_state]}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
+              {STATE_TH[job.design_state]}
+            </span>
+            <button
+              onClick={onClose}
+              className="press rounded-full w-7 h-7 flex items-center justify-center text-ink-3 hover:bg-gray-100 focus:ring-2 focus:ring-brand/40"
+              aria-label="ปิด"
+            >
+              <Icon name="close" size={14} />
+            </button>
+          </div>
         </div>
 
-        {/* Date inputs */}
-        <div className="space-y-2">
-          <label className="block">
-            <span className="text-[12px] text-ink-2 font-medium">วันเริ่ม</span>
-            <input
-              type="date"
-              value={startVal}
-              onChange={(e) => setStartVal(e.target.value)}
-              disabled={busy}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[12px] text-ink-2 font-medium">วันกำหนดส่ง</span>
-            <input
-              type="date"
-              value={endVal}
-              onChange={(e) => setEndVal(e.target.value)}
-              disabled={busy}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
-            />
-          </label>
-        </div>
+        {readOnly ? (
+          /* ── Read-only history view (DONE jobs) ── */
+          <div className="space-y-2.5">
+            <InfoRow label="ผู้ออกแบบ" value={job.designer_name ?? "—"} />
+            <InfoRow label="วันเริ่มออกแบบ" value={startLabel} mono />
+            <InfoRow label="วันเสร็จจริง" value={endLabel} mono />
+            {job.design_revise_count > 0 && (
+              <InfoRow label="รอบแก้ไข" value={`${job.design_revise_count} ครั้ง`} mono />
+            )}
+          </div>
+        ) : (
+          /* ── Editable date inputs ── */
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-[12px] text-ink-2 font-medium">วันเริ่ม</span>
+              <input
+                type="date"
+                value={startVal}
+                onChange={(e) => setStartVal(e.target.value)}
+                disabled={busy}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+              />
+            </label>
+            <label className="block">
+              <span className="text-[12px] text-ink-2 font-medium">วันกำหนดส่ง</span>
+              <input
+                type="date"
+                value={endVal}
+                onChange={(e) => setEndVal(e.target.value)}
+                disabled={busy}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+              />
+            </label>
+          </div>
+        )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-1">
+        {readOnly ? (
           <button
             onClick={onClose}
-            disabled={busy}
-            className="press flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-ink-2 font-medium min-h-[44px] hover:bg-gray-50 disabled:opacity-60"
+            className="press w-full rounded-xl border border-gray-300 py-2.5 text-sm text-ink-2 font-medium min-h-[44px] hover:bg-gray-50"
           >
-            ยกเลิก
+            ปิด
           </button>
-          <button
-            onClick={handleSave}
-            disabled={busy || !startVal}
-            className="press flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white min-h-[44px] hover:bg-brand/90 disabled:opacity-60 shadow-sm"
-          >
-            {busy ? "กำลังบันทึก…" : "บันทึก"}
-          </button>
-        </div>
+        ) : (
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onClose}
+              disabled={busy}
+              className="press flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-ink-2 font-medium min-h-[44px] hover:bg-gray-50 disabled:opacity-60"
+            >
+              ยกเลิก
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={busy || !startVal}
+              className="press flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white min-h-[44px] hover:bg-brand/90 disabled:opacity-60 shadow-sm"
+            >
+              {busy ? "กำลังบันทึก…" : "บันทึก"}
+            </button>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+// ─── InfoRow — read-only label+value pair used in BarPopover readOnly mode ────
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[12px] text-ink-3 shrink-0">{label}</span>
+      <span className={`text-[12px] font-medium text-ink text-right ${mono ? "tnum" : ""}`}>{value}</span>
     </div>
   );
 }
@@ -680,11 +729,12 @@ function GanttLane({
         </div>
       </div>
 
-      {/* Popover (mobile/click fallback) */}
+      {/* Popover (mobile/click fallback, or read-only history for DONE bars) */}
       {popoverBar && (
         <BarPopover
           bar={popoverBar}
           today={today}
+          readOnly={popoverBar.job.design_state === "DONE" || !canWrite}
           onClose={() => setPopoverBar(null)}
           onSave={onSave}
         />
@@ -907,6 +957,9 @@ export default function DesignerSchedule({
             {label}
           </span>
         ))}
+        <span className="text-ink-3/70">
+          · คลิกแถบเสร็จแล้วเพื่อดูประวัติ
+        </span>
         {canWrite && (
           <span className="text-ink-3/70">
             · ลากแถบเพื่อเลื่อนงาน · ลากขอบซ้าย/ขวาเพื่อขยายช่วงเวลา · คลิกแถบเพื่อแก้วันบนมือถือ

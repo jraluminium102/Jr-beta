@@ -6,9 +6,6 @@ import type { DesignState } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
-// How many days after design_end to still show DONE jobs (ประวัติบนไทม์ไลน์ + คอลัมน์เสร็จ)
-const DONE_WINDOW_DAYS = 90;
-
 // Row shape returned from DB (select includes designer_ref join)
 type DesignerRow = {
   id: string;
@@ -57,18 +54,9 @@ export async function GET(req: Request) {
   const rows = (data ?? []) as unknown as DesignerRow[];
   const today = new Date().toISOString().slice(0, 10);
 
-  // DONE window cutoff: today minus DONE_WINDOW_DAYS (ISO date string comparison)
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - DONE_WINDOW_DAYS);
-  const cutoff = cutoffDate.toISOString().slice(0, 10);
-
-  // Filter: hide DONE if design_end is older than 14-day window (or null and state=DONE)
-  const visibleRows = rows.filter((r) => {
-    if (r.design_state !== "DONE") return true;
-    // Show DONE only when design_end is within the last 14 days
-    if (!r.design_end) return false;
-    return r.design_end >= cutoff;
-  });
+  // Return all non-CANCELLED jobs — no DONE window filter.
+  // Board limits DONE column client-side; Gantt uses full history.
+  const visibleRows = rows;
 
   // ─── KPI aggregate ────────────────────────────────────────────────
   // total/overdue/avg_revise counts active (non-DONE) jobs only

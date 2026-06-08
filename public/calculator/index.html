@@ -2553,6 +2553,24 @@ function sendToQuotation(){
   }
 }
 
+// Listen for JR_FILL_CUSTOMER from parent React frame — autofill customer fields
+// so the user does not have to retype data they already selected in the registry.
+// Does NOT touch pricing formulas (calcUnit / calcQuote).
+window.addEventListener('message', function(ev){
+  if(!ev.data || ev.data.type !== 'JR_FILL_CUSTOMER') return;
+  var d = ev.data;
+  var fName    = document.getElementById('custName');
+  var fAddress = document.getElementById('custAddress');
+  var fPhone   = document.getElementById('custPhone');
+  var fContact = document.getElementById('custContact');
+  var fQCust   = document.getElementById('q-cust');
+  if(fName    && d.name    != null) fName.value    = d.name;
+  if(fAddress && d.address != null) fAddress.value = d.address;
+  if(fPhone   && d.phone   != null) fPhone.value   = d.phone;
+  if(fContact && d.contact != null) fContact.value = d.contact;
+  if(fQCust   && d.name    != null) fQCust.value   = d.name;
+});
+
 function genQuote(keepNo){
   const list=[...document.querySelectorAll('#items .ch')].map(readItem).filter(it=>it&&(it.r.a>0||it.r.sell>0));
   if(!list.length){ alert('ยังไม่มีรายการที่กรอกขนาด'); return; }
