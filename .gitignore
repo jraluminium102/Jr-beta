@@ -22,3 +22,5 @@ next-env.d.ts
 
 # วัสดุอ้างอิงของจริง (ใหญ่ ไม่ commit)
 /07_ต้นฉบับทุน_อ้างอิง/
+scripts/seed_queue.sql
+scripts/seedgen.mjs

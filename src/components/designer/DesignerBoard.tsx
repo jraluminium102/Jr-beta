@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import { Card } from "@/components/ui";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
+import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
 
 // ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
@@ -77,6 +78,10 @@ export default function DesignerBoard({
 }) {
   const [tab, setTab] = useState<"board" | "timeline">("board");
   const [designerFilter, setDesignerFilter] = useState("");
+  // Client-side card search (by customer name / job code)
+  const [cardSearch, setCardSearch] = useState("");
+  // Add-work modal visibility
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const [designers, setDesigners] = useState<DesignerOption[]>(initialDesigners);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -187,9 +192,18 @@ export default function DesignerBoard({
       REVISING: [],
       DONE: [],
     };
-    for (const j of jobs) map[j.design_state]?.push(j);
+    // Apply client-side text filter (job_code or customer_name)
+    const q = cardSearch.trim().toLowerCase();
+    const filtered = q
+      ? jobs.filter(
+          (j) =>
+            j.customer_name.toLowerCase().includes(q) ||
+            (j.job_code ?? "").toLowerCase().includes(q)
+        )
+      : jobs;
+    for (const j of filtered) map[j.design_state]?.push(j);
     return map;
-  }, [jobs]);
+  }, [jobs, cardSearch]);
 
   // Total DONE count across all visible cards
   const doneCount = byColumn["DONE"].length;
@@ -205,20 +219,34 @@ export default function DesignerBoard({
           จัดการงานเขียนแบบ
         </h1>
 
-        {/* ── Tab switch ── */}
-        <div className="glass-soft rounded-xl p-1 inline-flex text-sm">
-          <button
-            onClick={() => setTab("board")}
-            className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "board" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
-          >
-            บอร์ด
-          </button>
-          <button
-            onClick={() => setTab("timeline")}
-            className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "timeline" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
-          >
-            ไทม์ไลน์
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* ── Add work button (canWrite only) ── */}
+          {canWrite && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold bg-brand text-white shadow-brand min-h-[44px] hover:bg-brand/90"
+              aria-label="เพิ่มงานเขียนแบบ"
+            >
+              <Icon name="plus" size={16} />
+              เพิ่มงานเขียนแบบ
+            </button>
+          )}
+
+          {/* ── Tab switch ── */}
+          <div className="glass-soft rounded-xl p-1 inline-flex text-sm">
+            <button
+              onClick={() => setTab("board")}
+              className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "board" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
+            >
+              บอร์ด
+            </button>
+            <button
+              onClick={() => setTab("timeline")}
+              className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "timeline" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
+            >
+              ไทม์ไลน์
+            </button>
+          </div>
         </div>
       </div>
 
@@ -232,9 +260,9 @@ export default function DesignerBoard({
         </div>
       )}
 
-      {/* ── Designer filter ── */}
+      {/* ── Filters row: designer + card search ── */}
       <div className="flex items-center gap-2 text-sm flex-wrap">
-        <span className="text-ink-3">ผู้ออกแบบ:</span>
+        <span className="text-ink-3 shrink-0">ผู้ออกแบบ:</span>
         <select
           value={designerFilter}
           onChange={(e) => setDesignerFilter(e.target.value)}
@@ -247,6 +275,21 @@ export default function DesignerBoard({
             </option>
           ))}
         </select>
+
+        {/* Client-side card search — filters visible cards by customer name / job code */}
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none">
+            <Icon name="search" size={14} />
+          </span>
+          <input
+            type="search"
+            value={cardSearch}
+            onChange={(e) => setCardSearch(e.target.value)}
+            placeholder="ค้นหาชื่อ / Job code…"
+            aria-label="ค้นหาการ์ดบนบอร์ด"
+            className="w-full glass-soft rounded-lg pl-8 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/40"
+          />
+        </div>
       </div>
 
       {err && (
@@ -271,6 +314,15 @@ export default function DesignerBoard({
         />
       ) : (
         <TimelineView />
+      )}
+
+      {/* ── Add-work modal (rendered at root level to avoid stacking context issues) ── */}
+      {showAddModal && (
+        <AddDesignWorkModal
+          designers={designers}
+          onClose={() => setShowAddModal(false)}
+          onAdded={async () => { await load(); }}
+        />
       )}
     </div>
   );
