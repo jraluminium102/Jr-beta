@@ -1,7 +1,7 @@
 // ทดสอบชุดกั้นห้องกระจก (ระบบชุดใหม่ R5.0):
-//   addGlasshouseSet() → เพิ่มด้าน B/C + หลังคา → genQuote → ใบ 1 ข้อ group + ค่าทำชุด 5,000
+//   addGlasshouseSet() → เพิ่มด้าน B/C + หลังคา → genQuote → ใบ 1 ข้อ group (ไม่มีค่าทำชุด)
 // ชุดทดสอบ: 2 ด้าน (sliding_euro + fixed_glass) + หลังคา (roof_std)
-// ราคาที่คาดหวัง = ผลรวมราคาทุกส่วน + 5,000 ค่าทำชุด
+// ราคาที่คาดหวัง = ผลรวมราคาทุกส่วน (ไม่มี +5,000 — ยกเลิกค่าทำชุด 2026-06-08)
 import { JSDOM, VirtualConsole } from "jsdom";
 import { readFileSync } from "node:fs";
 
@@ -102,17 +102,17 @@ want("G6 ใบเสนอ 'ออก' (ไม่ว่าง)", t.length > 50,
 want("G7 มีคำว่า 'กั้นห้องกระจก' ในใบ", t.includes("กั้นห้องกระจก"), t.slice(0, 120));
 want("G8 มี 'ด้าน A' ในใบ", t.includes("ด้าน A"), "ไม่พบ 'ด้าน A'");
 want("G9 มี 'ด้าน B' ในใบ", t.includes("ด้าน B"), "ไม่พบ 'ด้าน B'");
-want("G10 มี 'ค่าทำชุด' ในใบ", t.includes("ค่าทำชุด"), "ไม่พบ 'ค่าทำชุด'");
+want("G10 ไม่มี 'ค่าทำชุด' ในใบ (ยกเลิกแล้ว)", !t.includes("ค่าทำชุด"), "ยังพบ 'ค่าทำชุด' ในใบ — ควรถูกลบแล้ว");
 
-// ยอดรวมชุด (subtotal ก่อน VAT) = sumParts + 5000
+// ยอดรวมชุด (subtotal ก่อน VAT) = sumParts เท่านั้น (ไม่มี +5000 — ยกเลิกค่าทำชุด)
 // ใช้ ".qtot .l" (บรรทัดแรก = "รวมเป็นเงิน") แทน ".qtot .g" (withVat) เพื่อหลีกเลี่ยง VAT diff
 const subtotalEl = doc.querySelector("#quoteContent .qtot .l");
 const subtotal = subtotalEl ? parseInt((subtotalEl.textContent || "").replace(/\.\d+/g, "").replace(/[^\d]/g, ""), 10) : NaN;
-const expectedSub = sumParts + 5000;
-want("G11 subtotal (ก่อน VAT) = ผลรวมส่วน + 5,000 ค่าทำชุด", subtotal === expectedSub, `subtotal=${subtotal} expected=${expectedSub} (sumParts=${sumParts}+5000)`);
+const expectedSub = sumParts;
+want("G11 subtotal (ก่อน VAT) = ผลรวมส่วน (ไม่มีค่าทำชุด)", subtotal === expectedSub, `subtotal=${subtotal} expected=${expectedSub} (sumParts=${sumParts})`);
 const gEl = doc.querySelector("#quoteContent .qtot .g");
 const grand = gEl ? parseInt((gEl.textContent || "").replace(/\.\d+/g, "").replace(/[^\d]/g, ""), 10) : NaN;
-want("G12 รวมทั้งสิ้น > subtotal (มี VAT)", !isNaN(grand) && grand > expectedSub, `grand=${grand} expectedSub=${expectedSub}`);
+want("G12 รวมทั้งสิ้น > subtotal (มี VAT)", !isNaN(grand) && grand > expectedSub, `grand=${grand} expectedSub=${expectedSub} (sumParts=${sumParts})`);
 
 // ตรวจใบออก 1 ข้อ (grouped)
 const rows = doc.querySelectorAll("#quoteContent tr[data-row], #quoteContent tbody tr");
@@ -125,7 +125,7 @@ want("G14 ไม่มี JS error", jsErrs.length === 0, jsErrs.join("; "));
 let pass = 0;
 console.log("=== TEST ชุดกั้นห้องกระจก (flow ใหม่ R5.0) ===");
 for (const c of checks) { console.log((c.ok ? "✅" : "❌") + " " + c.name + (c.ok ? "" : "  → " + c.detail)); if (c.ok) pass++; }
-console.log(`\nราคาแต่ละส่วน: ${partPrices.join(" + ")} = ${sumParts} + ค่าทำชุด 5,000 = ${sumParts + 5000}`);
+console.log(`\nราคาแต่ละส่วน: ${partPrices.join(" + ")} = ${sumParts} (ไม่มีค่าทำชุด)`);
 console.log(`subtotal (ก่อน VAT): ${subtotal}  ·  รวมทั้งสิ้น (withVAT): ${grand}`);
 console.log(`\nผ่าน ${pass}/${checks.length}`);
 process.exit(pass === checks.length ? 0 : 1);

@@ -493,7 +493,7 @@ function check(optName, setup, expected, detail) {
 }
 
 // ===== TEST 12: กั้นห้องกระจก (2 ด้าน + หลังคา) =====
-// ใบมี "ด้าน A"/"ด้าน B"/"ค่าทำชุด" · subtotal = sumParts + 5,000
+// ใบมี "ด้าน A"/"ด้าน B" · ไม่มี "ค่าทำชุด" · subtotal = sumParts (ยกเลิก 5,000 แล้ว)
 {
   clearAll();
 
@@ -559,22 +559,22 @@ function check(optName, setup, expected, detail) {
   const hasSetName = qt.includes("กั้นห้องกระจก");
   const hasSideA = qt.includes("ด้าน A");
   const hasSideB = qt.includes("ด้าน B");
-  const hasSetFee = qt.includes("ค่าทำชุด");
+  const noSetFee = !qt.includes("ค่าทำชุด"); // ยกเลิกค่าทำชุด 5,000 แล้ว — ไม่ควรปรากฏในใบ
 
-  // อ่าน subtotal จาก .qtot .l แรก — text: "รวมเป็นเงิน 66,000.00 บาท"
+  // อ่าน subtotal จาก .qtot .l แรก — text: "รวมเป็นเงิน 61,000.00 บาท"
   // ต้องตัด decimal (.00) ก่อน แล้วถึงเอาตัวเลข
   const subEl = doc.querySelector("#quoteContent .qtot .l");
   const subText = subEl ? subEl.textContent : "";
   const subtotal = parseQ2(subText);
-  const expectedSub = sumParts + 5000;
+  const expectedSub = sumParts; // ไม่มี +5000 แล้ว
   const subOk = subtotal === expectedSub;
 
-  const ok = hasSetName && hasSideA && hasSideB && hasSetFee && subOk;
+  const ok = hasSetName && hasSideA && hasSideB && noSetFee && subOk;
   const entry = check(
     "กั้นห้องกระจก (2 ด้าน + หลังคา)",
     "addGlasshouseSet, ด้าน A=sliding_euro 3×2.4, ด้าน B=fixed_glass 2×2.4, หลังคา=roof_std 6×2.5",
-    "ใบมี 'ด้าน A'/'ด้าน B'/'ค่าทำชุด' + subtotal = sumParts+5,000",
-    `hasSetName=${hasSetName} | hasSideA=${hasSideA} | hasSideB=${hasSideB} | hasSetFee=${hasSetFee} | subtotal=${subtotal} expected=${expectedSub} (sumParts=${sumParts}+5000) | subOk=${subOk} | subText='${subText.slice(0,50)}'`
+    "ใบมี 'ด้าน A'/'ด้าน B' + ไม่มี 'ค่าทำชุด' + subtotal = sumParts",
+    `hasSetName=${hasSetName} | hasSideA=${hasSideA} | hasSideB=${hasSideB} | noSetFee=${noSetFee} | subtotal=${subtotal} expected=${expectedSub} (sumParts=${sumParts}) | subOk=${subOk} | subText='${subText.slice(0,50)}'`
   );
   entry.ok = ok;
 }

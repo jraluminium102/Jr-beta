@@ -40,7 +40,7 @@ const clearItems = () => { doc.getElementById("items").innerHTML = ""; };
 // ============================================================
 // A) ชุดกั้นห้องกระจก (ระบบชุดใหม่ R5.0) — TC1
 //    สร้างชุด 2 ด้าน (sliding_euro 3.0×2.4 + fixed_glass 2.0×2.4) ไม่มีหลังคา
-//    ราคา = ผลรวม 2 ด้านที่คำนวณจริง + ค่าทำชุด 5,000
+//    ราคา = ผลรวม 2 ด้านที่คำนวณจริง (ไม่มีค่าทำชุด 5,000 — ยกเลิก 2026-06-08)
 // ============================================================
 {
   clearItems();
@@ -75,7 +75,7 @@ const clearItems = () => { doc.getElementById("items").innerHTML = ""; };
   const chArr = [...parts.querySelectorAll(".ch")];
   const partSells = chArr.map(ch => { const ri = w.readItem && w.readItem(ch); return ri ? (ri.r ? ri.r.sell : 0) : 0; });
   const sumPartsTC1 = partSells.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
-  const expectedSubTC1 = sumPartsTC1 + 5000; // ผลรวม + ค่าทำชุด
+  const expectedSubTC1 = sumPartsTC1; // ไม่มี +5000 แล้ว (ยกเลิกค่าทำชุด 2026-06-08)
   rec("TC1a", "ชุดกั้นห้องกระจก readItem ราคาส่วน > 0", "group=6, 2ด้าน",
     "sumParts > 0", "sumParts=" + sumPartsTC1, sumPartsTC1 > 0);
 
@@ -91,7 +91,7 @@ const clearItems = () => { doc.getElementById("items").innerHTML = ""; };
     (t.includes("ด้าน A") && t.includes("ด้าน B")) ? "พบ" : "ไม่พบ",
     t.includes("ด้าน A") && t.includes("ด้าน B"));
   const sub = readSubtotal(), grand = readGrand();
-  rec("TC1e", "subtotal = ผลรวมส่วน + 5,000 ค่าทำชุด", "VAT=0",
+  rec("TC1e", "subtotal = ผลรวมส่วน (ไม่มีค่าทำชุด)", "VAT=0",
     String(expectedSubTC1), sub, sub === expectedSubTC1);
   rec("TC1f", "VAT0 → รวมทั้งสิ้น = subtotal (ไม่มีภาษี)", "vat=0",
     String(expectedSubTC1), grand, grand === expectedSubTC1);

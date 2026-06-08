@@ -353,7 +353,7 @@ const formats = [
   {
     id: "format-9", title: "ชุดกั้นห้องกระจก (ระบบชุด R5.0) — บานเลื่อน + ติดตาย + หลังคาไวนิล",
     cust: "คุณศิริพร / ต่อเติมหลังบ้าน",
-    fill: "กั้นห้องกระจกพร้อมหลังคา · 3 ด้าน + หลังคาไวนิล · คิดราคา auto ตามสูตรจริง + ค่าทำชุด 5,000",
+    fill: "กั้นห้องกระจกพร้อมหลังคา · 3 ด้าน + หลังคาไวนิล · คิดราคา auto ตามสูตรจริง (ไม่มีค่าทำชุดแล้ว 2026-06-08)",
     build() {
       // ระบบชุดใหม่: addGlasshouseSet + เพิ่มด้าน B + หลังคา
       const sb = w.addGlasshouseSet();
@@ -393,16 +393,16 @@ const formats = [
       // items[] จาก readItem ของ ch ทุกตัวในชุด
       const partPrices = items.filter(it => it && it.r && it.r.sell > 0).map(it => it.r.sell);
       const sumParts = partPrices.reduce((a, b) => a + b, 0);
-      const total = sumParts + 5000; // +ค่าทำชุด
+      // ไม่มีค่าทำชุด 5,000 แล้ว (ยกเลิก 2026-06-08)
       return {
         product: "ชุดกั้นห้องกระจก (ระบบชุด R5.0)",
-        fillNote: "3 ด้าน (บานเลื่อน 3.6×2.4 + ติดตาย 2.4×2.4 + หลังคาไวนิล 9.0×3.5) · ค่าทำชุด 5,000",
-        formula: `สูตรชุดกั้นห้องกระจก: ผลรวมราคาทุกด้าน (คิดตามสูตรจริงแต่ละ product) + ค่าทำชุด 5,000`,
+        fillNote: "3 ด้าน (บานเลื่อน 3.6×2.4 + ติดตาย 2.4×2.4 + หลังคาไวนิล 9.0×3.5)",
+        formula: `สูตรชุดกั้นห้องกระจก: ผลรวมราคาทุกด้าน (คิดตามสูตรจริงแต่ละ product)`,
         steps: partPrices.map((p, i) => `ส่วนที่ ${i+1}: ${fmt(p)}`).concat([
-          `ผลรวม ${fmt(sumParts)} + ค่าทำชุด 5,000 = ${fmt(total)}`,
+          `ผลรวม ${fmt(sumParts)}`,
         ]),
         engineMsgs: items[0] ? (items[0].r.msgs || []) : [],
-        unit: total, qty: 1,
+        unit: sumParts, qty: 1,
       };
     },
   },
