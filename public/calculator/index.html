@@ -1565,22 +1565,55 @@ function calcQuickAll(){
 /* ---- QUOTE: line items ---- */
 let itemSeq=0;
 let setSeq=0;
-// R5.0: จัดหมวด option ในกั้นห้อง (post-process .i-opts flat → ใส่หัวข้อหมวด) — keyword-based, idempotent
+// R5.1: จัดหมวด option ทุกรายการ (post-process .i-opts flat → ใส่หัวข้อหมวด) — keyword-based, idempotent
+// กลุ่มกว้างขึ้น ครอบทุก product ไม่ใช่แค่ GH
 function groupGHOpts(ch){
   var box=ch&&ch.querySelector('.i-opts'); if(!box || !box.children.length) return;
   if(box.querySelector('.gh-opt-cat-det')) return;
   var CATS=[
-    {key:'🚪 ชนิด / การเปิด', kw:['ชนิดการเปิด','combo บาน']},
-    {key:'🔧 มือจับ / ล็อค', kw:['มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ']},
-    {key:'🪟 มุ้ง', kw:['มุ้ง','🪟','ผ้ามุ้ง']},
-    {key:'📐 คาดตาราง', kw:['คาดตาราง']},
-    {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', kw:[]}
+    {key:'🚪 ชนิด / การเปิด', open:true, kw:[
+      'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
+      'แป ','รูปแบบ shower','ประเภทประตู','ราง ','ทิศระแนง',
+      'ลายระแนง','ชนิดราง','ของเสริมหลังคา','สีวัสดุมุง',
+      'ความสูง','ทำเป็นประตู','ซ่อนสโลป','มอเตอร์','ค่าประตู',
+      'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน',
+      'ประเภท','ชนิดชั้น','ราวจับ'
+    ]},
+    {key:'🔧 มือจับ / ล็อค', open:false, kw:[
+      'มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
+      'ติดตายกี่บาน','เสริมคาน'
+    ]},
+    {key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},
+    {key:'📐 คาดตาราง', open:false, kw:[
+      'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง',
+      'เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง'
+    ]},
+    {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', open:false, kw:[]}
   ];
   var kids=[].slice.call(box.children);
   var buckets=CATS.map(function(){return [];});
-  kids.forEach(function(k){ var t=k.textContent||''; var ci=CATS.length-1; for(var i=0;i<CATS.length-1;i++){ if(CATS[i].kw.some(function(w){return t.indexOf(w)>=0;})){ ci=i; break; } } buckets[ci].push(k); });
+  kids.forEach(function(k){
+    var t=(k.textContent||'')+(k.className||'');
+    var ci=CATS.length-1;
+    for(var i=0;i<CATS.length-1;i++){
+      if(CATS[i].kw.some(function(w){return t.indexOf(w)>=0;})){ ci=i; break; }
+    }
+    buckets[ci].push(k);
+  });
   box.innerHTML='';
-  CATS.forEach(function(c,i){ if(!buckets[i].length) return; var det=document.createElement('details'); det.className='gh-opt-cat-det'; det.style.cssText='margin:5px 0;border:1px solid #eedede;border-radius:6px;padding:0 8px;background:#fffafa;'; var sm=document.createElement('summary'); sm.style.cssText='font-weight:700;color:#B3151D;font-size:12px;cursor:pointer;padding:6px 2px;'; sm.textContent=c.key+' ('+buckets[i].length+')'; det.appendChild(sm); buckets[i].forEach(function(k){ det.appendChild(k); }); box.appendChild(det); });
+  CATS.forEach(function(c,i){
+    if(!buckets[i].length) return;
+    var det=document.createElement('details');
+    det.className='gh-opt-cat-det';
+    det.style.cssText='margin:5px 0;border:1px solid #eedede;border-radius:6px;padding:0 8px;background:#fffafa;';
+    if(c.open) det.open=true;
+    var sm=document.createElement('summary');
+    sm.style.cssText='font-weight:700;color:#B3151D;font-size:12px;cursor:pointer;padding:6px 2px;min-height:44px;display:flex;align-items:center;';
+    sm.textContent=c.key+' ('+buckets[i].length+')';
+    det.appendChild(sm);
+    buckets[i].forEach(function(k){ det.appendChild(k); });
+    box.appendChild(det);
+  });
 }
 function refreshSet(box){
   if(!box) return;
@@ -2149,6 +2182,8 @@ function buildItemOpts(d){
   else if(q.addon&&q.addon.kind==='sliding'){ pn.max=4; }
   else { pn.removeAttribute('max'); }
   box.innerHTML=h;
+  // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
+  groupGHOpts(d);
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=h?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
