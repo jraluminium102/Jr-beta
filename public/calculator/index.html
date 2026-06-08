@@ -627,8 +627,7 @@ const PRODUCTS=[
  {id:'roof_gutter_cover',cat:'เสริม',name:'เพิ่ม ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง · ลด 50%) — กรอกขนาดรางและความยาว',gutter_cover:1,cost:null},
  {id:'roof_pole_panel',cat:'เสริม',name:'เพิ่ม เสาแผงหลังคา — 4,000/ต้น',unit:'piece',rate:4000,cost:null},
  {id:'roof_pole_4x8',cat:'เสริม',name:'เพิ่ม เสา 4"x8" — 2,000/ต้น',unit:'piece',rate:2000,cost:null},
- {id:'roof_hide_composite',cat:'เสริม',name:'เพิ่ม ซ่อนสโลป คอมโพสิต 3 มม. (รูปตัว U) — กรอก สูง/ด้าน/ยาว',hide_slope:'composite',rate:3500,cost:null},
- {id:'roof_hide_smartboard',cat:'เสริม',name:'เพิ่ม ซ่อนสโลป สมาร์ทบอร์ด 6 มม. (แผ่นเรียบ) — กรอก สูง/ด้าน/ยาว',hide_slope:'smartboard',rate:4000,cost:null},
+ // จุด3: ลบ product ซ่อนสโลปซ้ำ (roof_hide_composite/smartboard) — ใช้ option .o-rfhs ในชุดหลังคาแทน (ราคาเท่ากัน comp 3,500/smart 4,000)
  {id:'roof_chain',cat:'เสริม',name:'เพิ่ม โซ่รางน้ำ ลายดอกทิวลิป — 3,000/เส้น',unit:'piece',rate:3000,cost:null},
  {id:'roof_pvc_cover',cat:'เสริม',name:'เพิ่ม ครอบท่อ PVC — 1,500 บ./1.5 ม. (ปัดขึ้น)',pvc_cover:1,rate:1500,cost:null},
  // R3 2026-05-30: คานเหล็กถัก 3 รุ่น + แผ่นปิดครอบ (จากไฟล์ในโฟลเดอร์ "เหล็กถัก")
