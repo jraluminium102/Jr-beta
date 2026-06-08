@@ -1971,6 +1971,13 @@ function addItem(container){
   d.querySelector('.i-type').addEventListener('change',()=>{ refreshItype(d); calcQuote(); });
   d.querySelector('.del').addEventListener('click',()=>{ const _pb=d.closest('.setbox'); d.remove(); if(_pb)refreshSet(_pb); calcQuote(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
+  // งาน7: sync i-panels-mirror + o-opencount เมื่อ i-panels เปลี่ยน
+  d.querySelector('.i-panels').addEventListener('input', function(){
+    var pm=d.querySelector('.i-panels-mirror'); if(pm) pm.value=this.value;
+    var p=parseInt(this.value)||0;
+    var fEl=d.querySelector('.o-fixed'); var f=fEl?parseInt(fEl.value)||0:0;
+    var ow=d.querySelector('.o-opencount'); if(ow) ow.textContent=Math.max(0,p-f);
+  });
   // โชว์ช่องรหัสสีเมื่อเลือกสีที่มี hasCode (อบพิเศษ/ลายไม้อบพิเศษ/สีชุบ)
   d.querySelector('.i-color').addEventListener('change',function(){
     var v=parseInt(this.value)||0;
@@ -2097,12 +2104,13 @@ function buildItemOpts(d){
     const _isTop = _sr.rail === 'top';
     // ชนิดการเปิด (เลือกแล้ว auto-set ติดตาย: สลับ/ลากจูง=0 · เปิดคู่กลาง=2) — เลิกใช้คำ "ธรรมดา" ใช้ระบุติดตายเอง
     h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
-    h+='<label class="opt">ติดตายกี่บาน <input type="number" class="o-fixed" min="0" value="0" style="width:55px;height:30px;"> บาน (มุ้งคิดจากบานที่เลื่อนได้)</label>';
+    // งาน7: จัดกลุ่ม มี/เปิด/ติดตาย ให้เห็น 3 ค่าในที่เดียว — คง .o-fixed / .i-panels เป๊ะ
+    h+='<label class="opt">บาน: มี <input type="number" class="i-panels-mirror" readonly tabindex="-1" style="width:45px;height:30px;background:#f3f4f6;color:#6B7280;pointer-events:none;"> · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> · ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน</label>';
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
-      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-beamm-wrap\'); if(w) w.style.display=(this.value===\'ซ่อนราง\'?\'inline-block\':\'none\');"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
-      // ข้อ2: เสริมคาน โผล่เฉพาะตอนซ่อนราง (default โชว์ราง = ซ่อน wrap)
-      h+='<span class="o-beamm-wrap" style="display:none;"><label class="opt">เสริมคาน (เฉพาะซ่อนราง) <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
+      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
+      // งาน4: เสริมคาน โผล่ทุกแบบราง (โชว์ราง/ซ่อนราง) — รางบนมีเสริมคานได้เสมอ
+      h+='<span class="o-beamm-wrap" style="display:inline-block;"><label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
     }
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
@@ -2215,6 +2223,10 @@ function buildItemOpts(d){
     h+='<label class="opt">สีผ้า <select class="o-screenfabriccolor" style="width:auto;height:32px;"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option></select></label>';
     h+='<span class="opt" style="color:#666;font-size:12px;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
+  // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความเท่านั้น ไม่บวกราคา (ทุกรายการบาน)
+  h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="calcQuote();"> ฝังรางยู (ในพื้น)</label>';
+  h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
+  h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
   if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
   if(pw)pw.style.display=usesPanels(p)?'':'none';
@@ -2244,6 +2256,14 @@ function buildItemOpts(d){
   }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
+  // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
+  { var _pm=d.querySelector('.i-panels-mirror'); var _pv=d.querySelector('.i-panels');
+    if(_pm && _pv){ _pm.value=_pv.value; }
+    var _oc=d.querySelector('.o-opencount'); if(_oc && _pv){
+      var _fx2=d.querySelector('.o-fixed'); var _f2=_fx2?parseInt(_fx2.value)||0:0;
+      _oc.textContent=Math.max(0,(parseInt(_pv.value)||0)-_f2);
+    }
+  }
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
@@ -2376,6 +2396,10 @@ function readItem(d){
     const _bf=d.querySelector('.o-bocfinish'); optSel.bocFinish=_bf?_bf.value:'0';
   }
   if(p.ceiling){ const _ck=d.querySelector('.o-ckolor'); optSel.ckolor=_ck?_ck.value:''; }
+  // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม (ข้อความ, ไม่บวกราคา)
+  { const _uc=d.querySelector('.o-uchannel'); optSel.uchannel=_uc?_uc.checked:false;
+    const _ew=d.querySelector('.o-extrawork'); optSel.extrawork=(_ew?_ew.value:'').trim();
+    const _ro=d.querySelector('.o-removeold'); optSel.removeold=_ro?_ro.checked:false; }
   let gi=parseInt(d.querySelector('.i-glass').value||0); if(AREA_CATS.includes(p.cat))gi=0;
   let ci=parseInt(d.querySelector('.i-color').value||0); if(AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat))ci=0;
   const r=calcUnit(p, d.querySelector('.i-w').value, d.querySelector('.i-h').value,
@@ -2763,7 +2787,8 @@ function genQuote(keepNo){
       // เสริมคาน (เฉพาะรางบน + ซ่อนราง)
       const _beamRate = parseFloat(_os.beamM)||0;
       const _beamLen = parseFloat(_os.beamMlen)||0;
-      const _beamStr = (_sr.rail==='top' && _track==='ซ่อนราง' && _beamRate>0 && _beamLen>0)
+      // งาน4: เสริมคาน โผล่ทุกแบบราง (ไม่ผูกกับ _track=ซ่อนราง)
+      const _beamStr = (_sr.rail==='top' && _beamRate>0 && _beamLen>0)
         ? (' (เสริมคานซัพพอร์ทรุ่น' + (_beamRate===2400?'1':_beamRate===3600?'2':'3') + ' ยาว '+_beamLen+' ม.)')
         : '';
       // มุ้ง — ดึงจาก addonLines (ที่บันทึก mosqArea ไว้)
@@ -2818,6 +2843,10 @@ function genQuote(keepNo){
       const sx = parseFloat(it.optSel.screen_extra)||0;
       if(sx > 0) _parts.push('+ค่าเสริมกล่อง/ราง '+fmt(sx)+' บาท');
     }
+    // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
+    if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
+    if(it.optSel && it.optSel.extrawork){ _parts.push(it.optSel.extrawork); }
+    if(it.optSel && it.optSel.removeold){ _parts.push('รวมรื้อของเดิม'); }
     /* R4.1: ไม่ดึง addonLabel/msgs (เป็นรายละเอียดการคิดราคา มีตัวเลขราคา) เข้าใบเสนอราคา
        ใบจริงโชว์เฉพาะวัสดุ (กระจก/สีอลู) ใต้ "รายละเอียดงาน" ไม่โชว์ราคาย่อย */
     // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
