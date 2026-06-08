@@ -2173,7 +2173,7 @@ function buildItemOpts(d){
       h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="Clear 101 สีใส (แสงผ่าน 83%)">Clear 101 สีใส (แสงผ่าน 83%)</option><option value="Opal 103 สีขาวขุ่น (แสงผ่าน 20%)">Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option><option value="Bronze 107 สีชาใส (แสงผ่าน 30%)">Bronze 107 สีชาใส (แสงผ่าน 30%)</option><option value="Green 109 สีเขียวใส (แสงผ่าน 45%)">Green 109 สีเขียวใส (แสงผ่าน 45%)</option><option value="Australian Grey 108 สีเทาออส (แสงผ่าน 40%)">Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option><option value="Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)">Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option><option value="Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)">Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option><option value="Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)">Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option></select></label>';
     }
     // A: แป
-    h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว (default)</option><option value="แปคู่">แปคู่</option></select></label>';
+    h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่ (default)</option></select></label>';
     // B: โครงสร้าง
     h+='<label class="opt">โครงสร้าง <select class="o-roofframe" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม">โครงอลูมิเนียม (default)</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select> <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // C: ปลายหลังคา + chain D — option[1]=รางน้ำ (no-op) เพื่อให้ enableAllOpts ไม่คิดเงิน
@@ -2193,6 +2193,9 @@ function buildItemOpts(d){
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">โซ่รางน้ำ (3,000/เส้น) <input type="number" class="o-rfchain" min="0" step="1" value="0" style="width:55px;height:30px;"> · ปิดปลายกันน้ำ (1,000/ม.) ยาว <input type="number" class="o-rfeave" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว(ม.) <input type="number" class="o-rfpvc" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
+    // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความเฉยๆ ไม่บวกเงิน)
+    h+='<label class="opt"><input type="checkbox" class="o-rfplate"> เสริมเพลทเหล็กล่าง (รับล่าง)</label>';
+    h+='<label class="opt"><input type="checkbox" class="o-rfpull"> เหล็กดึงด้านบน</label>';
     h+='<label class="opt">ซ่อนสโลป <select class="o-rfhs" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="comp">คอมโพสิต 3มม. (3,500/ตร.ม.)</option><option value="smart">สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.)</option></select> สูง <input type="number" class="o-rfhsh" min="0" step="0.05" value="0" style="width:50px;height:30px;"> ยาว/ด้าน <input type="number" class="o-rfhsl" min="0" step="0.1" value="0" style="width:55px;height:30px;"> ด้าน <input type="number" class="o-rfhsn" min="1" step="1" value="1" style="width:45px;height:30px;"></label>';
     h+='<label class="opt">ปิดซ่อนราง: กว้างราง(ซม.) <input type="number" class="o-rfgcw" min="0" step="1" value="0" style="width:55px;height:30px;"> สูง(ซม.) <input type="number" class="o-rfgch" min="0" step="1" value="10" style="width:50px;height:30px;"> ยาวรวม(ม.) <input type="number" class="o-rfgcl" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม.) <input type="number" class="o-rfbcw" min="0" step="0.05" value="0" style="width:55px;height:30px;"> ยาวคาน(ม.) <input type="number" class="o-rfbcl" min="0" step="0.1" value="0" style="width:55px;height:30px;"></label>';
@@ -2383,6 +2386,9 @@ function readItem(d){
     const _rgcc=d.querySelector('.o-gutter-chaincolor'); optSel.rfgutchaincolor=_rgcc?_rgcc.value:'ขาว';
     // Pass2-D: สีวัสดุมุงหลังคา (cosmetic)
     const _rfc=d.querySelector('.o-roofcolor'); optSel.rfcolor=_rfc?_rfc.value:'';
+    // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความ)
+    const _rfpl=d.querySelector('.o-rfplate'); optSel.rfplate=_rfpl?_rfpl.checked:false;
+    const _rfpu=d.querySelector('.o-rfpull'); optSel.rfpull=_rfpu?_rfpu.checked:false;
   }
   COMMON_OPTS.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(c)optSel[o.id]=c.checked; });
   { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value; }
@@ -3001,7 +3007,11 @@ function genQuote(keepNo){
       // Pass2-D: สีวัสดุมุง (ถ้าเลือก)
       const _rfColor = _os.rfcolor || '';
       const _colorSuffix = _rfColor ? ('\nสีวัสดุมุง: '+_rfColor) : '';
-      det = _frameTxt+_battenSuffix+'\n'+_gutterLine+_colorSuffix;
+      // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
+      let _rfExtra = '';
+      if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
+      if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
+      det = _frameTxt+_battenSuffix+'\n'+_gutterLine+_colorSuffix+_rfExtra;
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ
