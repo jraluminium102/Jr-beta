@@ -601,20 +601,20 @@ const PRODUCTS=[
  {id:'ykk_vent',cat:'YKK',name:'ประตู Ventilation YKK',method:'per_sqm',rate:17500,min:30000,cost:null,sizeCheck:'vent',closer:1},
  {id:'ykk_exhido',cat:'YKK',name:'ประตู Exhido YKK (ช่องเปิดเต็ม)',method:'bucket',min:50000,rates:'EXHIDO',cost:null,sizeCheck:'exhido',closer:1},
  {id:'tostem_a01',cat:'YKK',name:'Tostem Airflow A01 (ลายไม้ หน้าบ้าน)',method:'per_sqm',rate:17500,min:34000,cost:null,closer:1},
- {id:'fw_door_basic',cat:'เสริม',name:'ครอบวงกบ ประตู (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'door',rate:700,cost:null},
+ {id:'fw_door_basic',cat:'เสริม',name:'ครอบวงกบ ประตู (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'door',rate:700,cost:null},
  {id:'fw_door_stock',cat:'เสริม',name:'ครอบวงกบ ประตู (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'door',rate:800,cost:null},
  {id:'fw_door_special',cat:'เสริม',name:'ครอบวงกบ ประตู (สีอบพิเศษ 1,200/ม.)',frame_wrap:'door',rate:1200,cost:null},
  {id:'fw_door_wood',cat:'เสริม',name:'ครอบวงกบ ประตู (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'door',rate:1300,cost:null},
- {id:'fw_win_basic',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'window',rate:700,cost:null},
+ {id:'fw_win_basic',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'window',rate:700,cost:null},
  {id:'fw_win_stock',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'window',rate:800,cost:null},
  {id:'fw_win_special',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีอบพิเศษ 1,200/ม.)',frame_wrap:'window',rate:1200,cost:null},
  {id:'fw_win_wood',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'window',rate:1300,cost:null},
  // R3.3 2026-05-30: ครอบวงกบ ระแนง + ตู้
- {id:'fw_ranae_basic',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'ranae',rate:700,cost:null},
+ {id:'fw_ranae_basic',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'ranae',rate:700,cost:null},
  {id:'fw_ranae_stock',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'ranae',rate:800,cost:null},
  {id:'fw_ranae_special',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีอบพิเศษ 1,200/ม.)',frame_wrap:'ranae',rate:1200,cost:null},
  {id:'fw_ranae_wood',cat:'เสริม',name:'ครอบวงกบ ระแนง (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'ranae',rate:1300,cost:null},
- {id:'fw_cabinet_basic',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'cabinet',rate:700,cost:null},
+ {id:'fw_cabinet_basic',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'cabinet',rate:700,cost:null},
  {id:'fw_cabinet_stock',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'cabinet',rate:800,cost:null},
  {id:'fw_cabinet_special',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีอบพิเศษ 1,200/ม.)',frame_wrap:'cabinet',rate:1200,cost:null},
  {id:'fw_cabinet_wood',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'cabinet',rate:1300,cost:null},
@@ -852,7 +852,7 @@ const COLORS=[
  {n:'สีอบขาว',min:0,rates:null,series:'MLS'},
  // 1 สีดำ
  {n:'สีดำ',min:0,rates:null,series:'MLS'},
- // 2 สีเทาซาฮารา
+ // 2 สีเทาซาฮาร่า
  {n:'สีเทาซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
  // 3 สีดำซาฮาร่า
  {n:'สีดำซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
@@ -1223,7 +1223,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
     h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" style="width:80px;height:32px;"></label>';
     h+='<label class="opt">สูงราง (ซม.) <input type="number" class="o-gcheight" min="0" step="1" value="10" style="width:80px;height:32px;"></label>';
-    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮารา +700/ตร.ม.</option><option value="700">สีดำซาฮารา +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮาร่า +700/ตร.ม.</option><option value="700">สีดำซาฮาร่า +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
   }
     if(p.hide_slope){
     // ซ่อนสโลปหลังคา · กรอกความสูง (W) + ความยาวต่อด้าน (H) + จำนวนด้าน (option)
@@ -1523,7 +1523,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       let colorLabel = '';
       if(mscreen.mscolor && optSel.mosqColor){
         const mc = optSel.mosqColor;
-        if(mc==='sahara'){ const ca = colorPrice(2, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เทาซาฮารา '+fmt(Math.round(ca)); }
+        if(mc==='sahara'){ const ca = colorPrice(2, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เทาซาฮาร่า '+fmt(Math.round(ca)); }
         else if(mc==='kl_special'){ const ca = colorPrice(10, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลอบพิเศษ '+fmt(Math.round(ca)); }
         else if(mc==='kl_wood'){ const ca = colorPrice(11, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลลายไม้ '+fmt(Math.round(ca)); }
       }
@@ -2118,14 +2118,15 @@ function buildItemOpts(d){
   // frameless_door — เลือกสีเฟรม + สวิง/เลื่อน
   if(p.id==='frameless_door'){
     h+='<label class="opt">ประเภทประตูบานเปลือย <select class="o-frametype" style="width:auto;height:32px;"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select></label>';
-    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮารา">เทาซาฮารา</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
+    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
   }
   if(p.closer){ h+='<label class="opt">[Up3] โช๊ค (combo สแตน) <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช๊คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช๊ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช๊ค">บานพับ +5,000</option></select></label>'; }
   if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
   // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
   if(p.digihandle){ h+='<label class="opt">[Up3] มือจับสแตนอร่าม <select class="o-stainless" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></label>'; }
-  // ข้อ4A: มือจับ Cmech (เลื่อน/เปิด/กระทุ้ง) — แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
-  if(['บานเลื่อน','บานเปิด','บานกระทุ้ง'].includes(p.cat)){
+  // ข้อ4A: มือจับ Cmech — เฉพาะ "ชุดบานเลื่อน" (handoff) · แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
+  //   เดิมเปิดให้ เปิด/กระทุ้ง ด้วย แต่ใบโชว์เฉพาะสาขาบานเลื่อน → คิดเงินไม่โชว์ · จำกัดเป็นบานเลื่อนปิด gap
+  if(p.cat==='บานเลื่อน'){
     h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="normal">สีธรรมดา (ดำ/ขาว)</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
   }
   // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
@@ -2243,7 +2244,7 @@ function buildItemOpts(d){
     h+='<label class="opt">กำไร % (มือ) <input type="number" class="o-glassprofit" min="0" step="1" value="100" style="width:70px;height:32px;"></label>';
     h+='<div class="opt" style="font-size:11px;color:#666;width:100%">Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-4000=+70% / >4001=+30% · ขั้น2 พื้นที่รวม >30=ลด10% / >80=ลด15% / >130=ลด20%</div>';
   }
-    if(p.gate){ h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮารา">สีเทาซาฮารา</option><option value="สีดำซาฮารา">สีดำซาฮารา</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></label>'; }
+    if(p.gate){ h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></label>'; }
   if(p.bar_grid){ h+='<label class="opt">ทิศระแนง <select class="o-bgdir" style="width:auto;height:32px;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select></label>'; }
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
   if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
@@ -2252,12 +2253,12 @@ function buildItemOpts(d){
       .filter(id => PBYID[id])
       .map(id => '<option value="'+id+'">'+PBYID[id].name+'</option>').join('');
     h+='<label class="opt">ค่าประตู (เลือกรุ่น) <select class="o-bsdoor" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่มี (ระแนงเปล่า)</option>'+doorOpts+'</select></label>';
-    h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮารา +400/ตร.ม.</option><option value="400">สีดำซาฮารา +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮาร่า +400/ตร.ม.</option><option value="400">สีดำซาฮาร่า +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>';
   }
   if(p.bar_openclose){
     h+='<label class="opt">ทิศระแนง <select class="o-bocdir" style="width:auto;height:32px;"><option value="v">แนวตั้ง (default)</option><option value="h">แนวนอน</option></select></label>';
     h+='<label class="opt"><input type="checkbox" class="o-bocmotor"> เอามอเตอร์ (ถ้าไม่ติ๊ก = เปิด-ปิดด้วยมือ)</label>';
-    h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮารา +500/ตร.ม.</option><option value="500">สีดำซาฮารา +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮาร่า +500/ตร.ม.</option><option value="500">สีดำซาฮาร่า +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>';
   }
   if(p.grid){ h+='<label class="opt">เส้นแนวนอน <input type="number" class="o-nh" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">เส้นแนวตั้ง <input type="number" class="o-nv" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">สีเส้น <select class="o-gridcolor" style="width:auto;height:32px;"><option value="200">อบขาว/ดำ/ซาฮาร่า (200/ม.)</option><option value="250">ลายไม้สต็อก (250/ม.)</option><option value="300">อบสีพิเศษ/Fuji (300/ม.)</option><option value="350">ลายไม้อบพิเศษ (350/ม.)</option></select></label>'+'<label class="opt">เส้นโค้ง (เส้น·3,000) <input type="number" class="o-nc" step="1" min="0" value="0" style="width:55px;height:30px"></label>'; }
   if(p.ceiling){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; }
