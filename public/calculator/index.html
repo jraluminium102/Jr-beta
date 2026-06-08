@@ -904,6 +904,9 @@ const DIGI=[{n:'S1 ก้านโยก',p:10000},{n:'S1 ลูกบิด',p:
 const HANDLE_STAINLESS=[{n:'30.5 ซม.',p:1500},{n:'45 ซม.',p:2000},{n:'60 ซม.',p:2000},{n:'80 ซม.',p:2500},{n:'100 ซม.',p:3000},{n:'120 ซม.',p:3200}];
 // Cmech 6 สี (R3 2026-05-30) — มือจับ Cmech ใช้กับ บานเลื่อน/เปิด/กระทุ้ง · ราคากรอกเอง
 const CMECH_COLORS=[{n:'White',p:0},{n:'Black',p:0},{n:'Silver',p:0},{n:'Champagne',p:0},{n:'Gold',p:0},{n:'Bronze',p:0}];
+// ข้อ4A: ราคาขายเพิ่ม/ชุด มือจับ Cmech [แบบ][ประตู2ฝั่ง/หน้าต่าง1ฝั่ง][ธรรมดา/พิเศษชุบ]
+const CMECH_PRICE={embed:{door:{normal:1050,special:1470},window:{normal:350,special:490}},metro:{door:{normal:1000,special:1400},window:{normal:600,special:840}}};
+const CMECH_SPECIAL={silver:'Silver',champagne:'Champagne',gold:'Gold',bronze:'Bronze',copper:'Copper'};
 function usesPanels(p){ const q=p.method==='same_as'?PBYID[p.ref]:p; return !!(q.addon&&['door','window','sliding'].includes(q.addon.kind))||q.method==='fold'||q.method==='ref_plus_panel'||['sliding_sms','sliding_euro','sliding_eseries'].includes(p.id)||!!p.future_tech; }
 
 /* ============ ENGINE ============ */
@@ -1337,13 +1340,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         msgs.push(_dn);
       }
   } }
-  // R3.2: Cmech 6 สี — ราคากรอกเอง
-  if(optSel && optSel.cmech!=='' && optSel.cmech!=null && CMECH_COLORS[parseInt(optSel.cmech)]){
-    const cm = CMECH_COLORS[parseInt(optSel.cmech)];
-    const cp = parseFloat(optSel.cmechprice)||0;
-    opt += cp;
-    if(cp <= 0) msgs.push('⚠ Cmech '+cm.n+' · ยังไม่ใส่ราคา (ปกติ 1,000-1,500)');
-    else msgs.push('Cmech '+cm.n+' +'+fmt(cp));
+  // ข้อ4A: มือจับ Cmech — ราคาตามตาราง [แบบ ฝัง/เมโทร][ประตู2ฝั่ง/หน้าต่าง1ฝั่ง][ธรรมดา/พิเศษชุบ]
+  if(optSel && (optSel.cmech==='embed'||optSel.cmech==='metro') && CMECH_PRICE[optSel.cmech]){
+    const _cit=(optSel.itype==='window')?'window':'door';
+    const _csp=(optSel.cmechcolor && optSel.cmechcolor!=='normal')?'special':'normal';
+    const _ccp=CMECH_PRICE[optSel.cmech][_cit][_csp];
+    opt += _ccp;
+    const _cnm=(_csp==='special')?(CMECH_SPECIAL[optSel.cmechcolor]||'ชุบ'):'ดำ/ขาว';
+    msgs.push('มือจับ Cmech '+(optSel.cmech==='embed'?'ฝัง':'เมโทร')+' '+_cnm+' ('+(_cit==='window'?'หน้าต่าง 1 ฝั่ง':'ประตู 2 ฝั่ง')+') +'+fmt(_ccp));
   }
   // R3.2: ตารางเต็มบาน 5,000 (โซลิด วัน/ทู)
   if(optSel && optSel.fullgrid && p.full_grid){
@@ -2118,10 +2122,9 @@ function buildItemOpts(d){
   if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
   // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
   if(p.digihandle){ h+='<label class="opt">[Up3] มือจับสแตนอร่าม <select class="o-stainless" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></label>'; }
-  // R3.2: Cmech 6 สี (เลื่อน/เปิด/กระทุ้ง) — ราคากรอกเอง default 1,000-1,500
+  // ข้อ4A: มือจับ Cmech (เลื่อน/เปิด/กระทุ้ง) — แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
   if(['บานเลื่อน','บานเปิด','บานกระทุ้ง'].includes(p.cat)){
-    h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+CMECH_COLORS.map(function(c,i){return '<option value="'+i+'">'+c.n+'</option>';}).join('')+'</select></label>';
-    h+='<label class="opt">Cmech ราคา (บาท · 1,000-1,500) <input type="number" class="o-cmechprice" min="0" step="100" value="1200" placeholder="1200" style="width:80px;height:30px;"></label>';
+    h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="normal">สีธรรมดา (ดำ/ขาว)</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
   }
   // R3.2: ตารางเต็มบาน 5,000 (เฉพาะ โซลิด วัน/ทู)
   if(p.full_grid){
@@ -2360,7 +2363,8 @@ function readItem(d){
   if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
   // R3.2: read Cmech + ตารางเต็มบาน + combo กระทุ้งเข้าใน + มอเตอร์ระแนง 38.1
   { const _cm=d.querySelector('.o-cmech'); if(_cm) optSel.cmech=_cm.value;
-    const _cmp=d.querySelector('.o-cmechprice'); if(_cmp) optSel.cmechprice=_cmp.value;
+    const _cmc=d.querySelector('.o-cmechcolor'); if(_cmc) optSel.cmechcolor=_cmc.value;
+    const _cmit=d.querySelector('.i-type'); optSel.itype=(_cmit&&_cmit.value)||'door'; // ข้อ4A: ประตู2ฝั่ง/หน้าต่าง1ฝั่ง
     const _fg=d.querySelector('.o-fullgrid'); if(_fg) optSel.fullgrid=_fg.checked;
     const _ci=d.querySelector('.o-combo_awn_inside'); if(_ci) optSel.combo_awn=_ci.checked;
     const _cip=d.querySelector('.o-combo_price'); if(_cip) optSel.combo_price=_cip.value;
@@ -3076,9 +3080,10 @@ function genQuote(keepNo){
         } else if(_stSl !== '' && _stSl !== undefined && _stSl !== null){
           const _stObj = HANDLE_STAINLESS[parseInt(_stSl)];
           if(_stObj) _slLines.push('มือจับสแตนเลสอร่าม '+_stObj.n);
-        } else if(_cmSl !== '' && _cmSl !== undefined){
-          const _cmObj = CMECH_COLORS[parseInt(_cmSl)];
-          if(_cmObj) _slLines.push('มือจับ Cmech '+_cmObj.n);
+        } else if(_cmSl==='embed' || _cmSl==='metro'){
+          const _cmc=it.optSel.cmechcolor;
+          const _cmNm=(_cmc && _cmc!=='normal')?(CMECH_SPECIAL[_cmc]||'ชุบ'):'ดำ/ขาว';
+          _slLines.push('มือจับ Cmech '+(_cmSl==='embed'?'ฝัง':'เมโทร')+' '+_cmNm);
         }
       }
       det = _slLines.join('\n');
