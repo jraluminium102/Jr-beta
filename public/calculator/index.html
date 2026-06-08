@@ -2842,9 +2842,12 @@ function genQuote(keepNo){
       _slideName += seriesTag + discontinuedSuffix;
       prodName = _slideName;
     }
-    // C1: มีมุ้งจีบ (addon) → ต่อท้ายชื่อ "พร้อมมุ้งจีบ" (สั้น ไม่ใส่รุ่น/ผ้า — รายละเอียดอยู่ใน "รายละเอียดงาน")
+    // C1/P2-1: มีมุ้ง (addon) → ต่อท้ายชื่อชนิดมุ้งจริงตาม mosqId (id-based ไม่ใช่ keyword)
     // บานเลื่อน: มุ้งถูก include ใน _slideName แล้ว ไม่ต้องต่ออีก
-    if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){ prodName += ' พร้อมมุ้งจีบ'; }
+    if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){
+      var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย'};
+      prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ');
+    }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
       const _dnh=parseInt(it.optSel.gmNh)||0, _dnv=parseInt(it.optSel.gmNv)||0;
