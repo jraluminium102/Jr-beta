@@ -3246,7 +3246,10 @@ function genQuote(keepNo){
     // ⚠ ยังบวก gTotal เข้า subtotal เหมือนเดิม — แก้เฉพาะการแสดงผลในเซลล์ยอดรวม
     // โชว์ยอดรวมชุดเสมอ (ทั้งรวมราคา/แยกราคา) — แยกราคาก็ยังเห็นยอดรวมขวาสุด
     const gTotalCell = q2(gTotal);
-    rows += '<tr><td style="vertical-align:top;text-align:center;">'+rowIdx+'</td><td style="vertical-align:top;text-align:left;padding:8px;">'+content+'</td><td class="r" style="vertical-align:top;">1 ชุด</td><td class="r" style="vertical-align:top;">—</td><td class="r" style="vertical-align:top;">'+gTotalCell+'</td></tr>';
+    // F4: ราคาต่อหน่วยของชุด = ยอดรวมชุด ÷ จำนวนชุด (ชุดละ 1 → ต่อหน่วย = ยอดรวม) · เลิกขีด "—"
+    const _setQty = 1;
+    const _unitCell = q2(gTotal/_setQty);
+    rows += '<tr><td style="vertical-align:top;text-align:center;">'+rowIdx+'</td><td style="vertical-align:top;text-align:left;padding:8px;">'+content+'</td><td class="r" style="vertical-align:top;">'+_setQty+' ชุด</td><td class="r" style="vertical-align:top;">'+_unitCell+'</td><td class="r" style="vertical-align:top;">'+gTotalCell+'</td></tr>';
   });
   // Render ungrouped
   ungrouped.forEach(it => {
