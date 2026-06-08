@@ -177,6 +177,13 @@
   .note-opt-group{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
   .note-opt-group label{color:var(--ink);}
   .note-opt-group .optbox{background:#fff;margin-top:6px;margin-bottom:2px;}
+  /* A: ข้อมูลลูกค้า card-details */
+  .card-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0;}
+  .card-details>summary::-webkit-details-marker{display:none;}
+  .card-details>summary::before{content:"\25B6";font-size:11px;color:var(--red);transition:transform .2s;}
+  .card-details[open]>summary::before{transform:rotate(90deg);}
+  .card-details>summary .sum-title{font-size:14px;font-weight:700;color:var(--red-dark);}
+  .card-details>summary .sum-hint{font-size:12px;color:var(--muted);margin-left:4px;}
   /* B1: hint แก้ราคา */
   .i-override-hint{background:#FFF7E6;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:5px 10px;margin-top:2px;}
   .setbox{border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:10px;margin-bottom:14px;background:#FFF9F9;}
@@ -228,9 +235,9 @@
 
   <!-- ===== QUOTE BUILDER ===== -->
   <section id="m-quote" class="hide">
-    <div class="card">
-      <h2>ข้อมูลลูกค้า</h2>
-      <div class="row2">
+    <details class="card card-details">
+      <summary><span class="sum-title">ข้อมูลลูกค้า</span><span class="sum-hint">(กดเพื่อกรอก)</span></summary>
+      <div class="row2" style="margin-top:10px;">
         <div><label>ชื่อลูกค้า / งาน</label><input id="custName" placeholder="เช่น คุณสมชาย / บ้านทรายทอง"></div>
         <div><label>วันที่ (วว-ดด-ปป)</label><input id="qdate" type="text" placeholder="29-05-69" maxlength="8" style="text-align:center;"></div>
       </div>
@@ -251,7 +258,7 @@
         </select>
         <div id="sellerOtherWrap" style="display:none;margin-top:6px;"><input id="sellerOther" placeholder="พิมพ์ชื่อเซลล์ (เผื่อเพิ่มมือ)"></div>
       </div>
-    </div>
+    </details>
 
     <div class="card">
       <h2>รายการ</h2>
@@ -1609,7 +1616,7 @@ function groupGHOpts(ch){
   var CATS=[
     {key:'🚪 ชนิด / การเปิด', open:true, kw:[
       'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
-      'แป ','รูปแบบ shower','ประเภทประตู','ราง ','ทิศระแนง',
+      'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง','ซ่อนราง','ทิศระแนง',
       'ลายระแนง','ชนิดราง','ของเสริมหลังคา','สีวัสดุมุง',
       'ความสูง','ทำเป็นประตู','ซ่อนสโลป','มอเตอร์','ค่าประตู',
       'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน',
@@ -2786,7 +2793,7 @@ function genQuote(keepNo){
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
       const _dnh=parseInt(it.optSel.gmNh)||0, _dnv=parseInt(it.optSel.gmNv)||0;
-      if(_dnh>0 || _dnv>0){ prodName += ' (คาดตาราง '+_dnh+'นอน+'+_dnv+'ตั้ง)'; }
+      if(_dnh>0 || _dnv>0){ prodName += ' (คาดตาราง แนวนอน '+_dnh+' เส้น แนวตั้ง '+_dnv+' เส้น)'; }
       else { prodName += ' (มีคาดตาราง)'; }
     }
     // ข้อ18: ย้ายคำบรรยาย "(รวม ...)" จากชื่อ → บรรทัดใต้หัวข้อ (ตัดส่วน "เทมเปอร์..." ออก ไม่เขียนต่อ)
