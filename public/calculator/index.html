@@ -165,6 +165,20 @@
   .cmpcat>summary{cursor:pointer;padding:9px 0;font-weight:600;font-size:13px;color:var(--red-dark);}
   .optbox{margin:6px 0;border:1px solid var(--line);border-radius:8px;padding:0 10px;}
   .optbox>summary{cursor:pointer;padding:8px 0;font-size:13px;color:var(--red-dark);font-weight:600;}
+  /* C2: ปุ่มส่งเข้าระบบ JR — เด่นสุด */
+  .btn-send-jr{width:100%;height:54px;background:#B3151D;color:#fff;border:none;border-radius:12px;
+    font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;
+    box-shadow:0 3px 10px rgba(179,21,29,.35);transition:background .15s,box-shadow .15s;}
+  .btn-send-jr:hover{background:#8f1017;box-shadow:0 4px 14px rgba(179,21,29,.45);}
+  .btn-send-jr:active{background:#700c12;}
+  /* C1: ลด rk .ch header */
+  .ch .top{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+  /* B3: หมายเหตุ/OPTION + อุปกรณ์เสริม รวมกลุ่มเดียว */
+  .note-opt-group{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .note-opt-group label{color:var(--ink);}
+  .note-opt-group .optbox{background:#fff;margin-top:6px;margin-bottom:2px;}
+  /* B1: hint แก้ราคา */
+  .i-override-hint{background:#FFF7E6;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:5px 10px;margin-top:2px;}
   .setbox{border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:10px;margin-bottom:14px;background:#FFF9F9;}
   .set-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
   .set-badge{background:var(--red);color:#fff;border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap;}
@@ -312,14 +326,20 @@
 
     <div id="warnAll"></div>
 
-    <div class="actions">
-      <button type="button" class="btn-prim" style="background:#B3151D;width:100%;height:50px;font-weight:700;font-size:16px;" onclick="sendToQuotation()">📤 ส่งเข้าระบบ JR → ออกใบเสนอราคา</button>
+    <div style=”margin-top:14px;”>
+      <button type=”button” class=”btn-prim btn-send-jr” onclick=”sendToQuotation()”>
+        <svg xmlns=”http://www.w3.org/2000/svg” width=”18” height=”18” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2.5” stroke-linecap=”round” stroke-linejoin=”round” style=”vertical-align:-3px;margin-right:6px;”><path d=”M22 2L11 13”/><path d=”M22 2L15 22 11 13 2 9l20-7z”/></svg>ส่งเข้าระบบ JR — ออกใบเสนอราคา
+      </button>
     </div>
-    <div class="actions" style="margin-top:8px;">
-      <button type="button" class="btn-sec" onclick="genQuote()">👁 พรีวิว/พิมพ์ในเครื่อง</button>
-      <button type="button" class="btn-sec" onclick="resetQuote()">ล้างทั้งหมด</button>
+    <div style=”display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;”>
+      <button type=”button” class=”btn-sec” style=”height:44px;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;” onclick=”genQuote()”>
+        <svg xmlns=”http://www.w3.org/2000/svg” width=”15” height=”15” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2” stroke-linecap=”round” stroke-linejoin=”round” style=”vertical-align:-2px;margin-right:4px;”><path d=”M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z”/><circle cx=”12” cy=”12” r=”3”/></svg>พรีวิว/พิมพ์ในเครื่อง
+      </button>
+      <button type=”button” class=”btn-sec” style=”height:44px;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;” onclick=”resetQuote()”>
+        <svg xmlns=”http://www.w3.org/2000/svg” width=”15” height=”15” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2” stroke-linecap=”round” stroke-linejoin=”round” style=”vertical-align:-2px;margin-right:4px;”><polyline points=”1 4 1 10 7 10”/><path d=”M3.51 15a9 9 0 1 0 .49-4.95”/></svg>ล้างทั้งหมด
+      </button>
     </div>
-    <div class="note" style="color:#B3151D;font-weight:600;">ออกใบเสนอราคาจริง = กดปุ่มแดง “ส่งเข้าระบบ JR” ด้านบน · ปุ่มพรีวิวแค่ดู/พิมพ์ในเครื่อง ไม่บันทึกเข้าระบบ</div>
+    <div class=”note” style=”color:#B3151D;font-weight:600;margin-top:8px;”>ออกใบเสนอราคาจริง = กดปุ่มแดงด้านบน “ส่งเข้าระบบ JR” · ปุ่มพรีวิวแค่ดู/พิมพ์ในเครื่อง ไม่บันทึกเข้าระบบ</div>
   </section>
 
   <!-- ===== COMPARE ===== -->
@@ -1654,6 +1674,7 @@ function refreshSet(box){
       }
       // ลดความรก: ซ่อน field พื้นฐานที่ไม่ใช้ในกั้นห้อง + ยุบ option เข้าพับ (ทุกบาน/หลังคาในชุด)
       ['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=el.closest('.full')||el.parentElement; if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
+      var _ohint=c.querySelector('.i-override-hint'); if(_ohint){ _ohint.dataset.ghH2='1'; _ohint.style.display='none'; }
       var _ship=c.querySelector('.i-ship'); if(_ship){ var _sl=_ship.closest('label'); if(_sl){ _sl.dataset.ghH2='1'; _sl.style.display='none'; } }
       var _oe=c.querySelector('.i-opts'); var _det=_oe?_oe.closest('details'):null;
       if(_det){ _det.open=false; var _sm=_det.querySelector('summary'); if(_sm && !_sm.dataset.ghSm){ _sm.dataset.ghSm='1'; _sm.textContent='⚙ ตัวเลือกเพิ่มเติม (มือจับ/ล็อค/มุ้ง/ครอบวงกบ — กดถ้าต้องใช้)'; } }
@@ -1833,12 +1854,17 @@ function addItem(container){
      `<div class="full i-glass-wrap"><label>กระจก</label><select class="i-glass">${glassOpts()}</select></div>`+
      `<div class="full i-colorcode-wrap" style="display:none;"><label>รหัสสี/ชื่อสี (อบพิเศษ)</label><input class="i-colorcode" type="text" placeholder="เช่น KL10232A · RAL7022 · Fuji"></div>`+
      `<div class="full i-sampleconfirm-wrap" style="display:none;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="i-sampleconfirm" style="width:18px;height:18px;"> <b>ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</b> (สำหรับสีชุบ)</label></div>`+
-     `<div class="i-panels-wrap"><label>จำนวนบาน</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
+     `<div class="i-panels-wrap"><label>จำนวนบานทั้งหมด</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
      `<div><label>จำนวนชุด</label><input class="i-qty" type="number" step="1" min="1" value="1"></div>`+
-     `<div class="full"><label>ราคากำหนดเอง (บาท · เว้น=คิดออโต้)</label><input class="i-override" type="number" min="0" step="100" placeholder="ปล่อยว่าง = คิดอัตโนมัติ"></div>`+
-     `<div class="full"><label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label><select class="i-optpreset" onchange="addOptPreset(this)" style="height:34px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">${optPresetOptions()}</select><textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea></div>`+
+     `<div class="full i-override-wrap" style="display:none;"><label>ราคากำหนดเอง (บาท · ใช้เฉพาะสินค้าที่กรอกราคาเอง)</label><input class="i-override" type="number" min="0" step="100" placeholder="ราคาต่อชุด (บาท)"></div>`+
+     `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
+     `<div class="full note-opt-group">`+
+       `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
+       `<select class="i-optpreset" onchange="addOptPreset(this)" style="height:34px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">${optPresetOptions()}</select>`+
+       `<textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea>`+
+       `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
+     `</div>`+
    `</div>`+
-   `<details class="optbox"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
    `<div class="subitem-wrap"><div class="subitem-list"></div><button type="button" class="sub-addbtn" onclick="addSubItem(this)">＋ เพิ่มบานย่อยในชุดนี้</button></div>`+
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
@@ -2018,7 +2044,7 @@ function buildItemOpts(d){
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   if(p.cat === 'PC Door'){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
   if(p.optInsul){ h+=`<label class="opt"><input type="checkbox" class="o-insul"> ฉนวนกันความร้อน +600/ตร.ม.</label>`; }
-  if(p.optSlide){ h+=`<label class="opt"><input type="checkbox" class="o-slide"> ทำเลื่อน (ค่าทำ/ตร.ม.)</label>`+`<label class="opt">จำนวนบานเลื่อน <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:55px;height:30px"></label>`+`<label class="opt">รางน้ำ(ม.) <input type="number" class="o-sgut" step="0.1" min="0" value="0" style="width:55px;height:30px"></label>`; }
+  if(p.optSlide){ h+=`<label class="opt"><input type="checkbox" class="o-slide"> ทำเลื่อน (ค่าทำ/ตร.ม.)</label>`+`<label class="opt">จำนวนบานเลื่อน (บานที่เปิดได้) <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:55px;height:30px"></label>`+`<label class="opt">รางน้ำ(ม.) <input type="number" class="o-sgut" step="0.1" min="0" value="0" style="width:55px;height:30px"></label>`; }
   if(p.cat==='หลังคา'){
     // Pass2-D: สีวัสดุมุงหลังคา (cosmetic ไม่คิดเงิน · ทุกสีราคาเท่ากัน)
     // ไวนิล 3 สี (VG Snow Roof Pro) · ดีไลท์ 2 สี (D-LITE) · โพลีตัน 11 สี (TN — รอพี่นัทคัดเหลือเท่าที่ขาย)
@@ -2124,6 +2150,10 @@ function buildItemOpts(d){
   else { pn.removeAttribute('max'); }
   box.innerHTML=h;
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=h?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
+  { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
+    if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
+    if(_oh){ _oh.style.display=(!p.custom_price&&!p.custom_item)?'block':'none'; } }
   box.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
