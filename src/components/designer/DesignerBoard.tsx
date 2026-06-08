@@ -6,6 +6,7 @@ import { Card } from "@/components/ui";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
+import DesignerSchedule from "@/components/designer/DesignerSchedule";
 
 // ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
@@ -50,17 +51,6 @@ type Kpi = {
     done: number;
   }[];
 };
-type TimelineItem = {
-  id: string;
-  job_code: string | null;
-  customer_name: string;
-  designer_name: string;
-  design_start: string | null;
-  design_end: string | null;
-  design_due_date: string | null;
-  design_state: DesignState;
-};
-
 const TODAY = new Date().toISOString().slice(0, 10);
 
 function thDate(d: string | null) {
@@ -76,7 +66,7 @@ export default function DesignerBoard({
   designers: DesignerOption[];
   canWrite: boolean;
 }) {
-  const [tab, setTab] = useState<"board" | "timeline">("board");
+  const [tab, setTab] = useState<"board" | "schedule">("board");
   const [designerFilter, setDesignerFilter] = useState("");
   // Client-side card search (by customer name / job code)
   const [cardSearch, setCardSearch] = useState("");
@@ -241,10 +231,10 @@ export default function DesignerBoard({
               บอร์ด
             </button>
             <button
-              onClick={() => setTab("timeline")}
-              className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "timeline" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
+              onClick={() => setTab("schedule")}
+              className={`press rounded-lg px-3.5 py-1.5 font-medium ${tab === "schedule" ? "bg-brand text-white shadow-brand" : "text-ink-2"}`}
             >
-              ไทม์ไลน์
+              ตารางเวลา
             </button>
           </div>
         </div>
@@ -313,7 +303,13 @@ export default function DesignerBoard({
           onDesignerAdded={reloadDesigners}
         />
       ) : (
-        <TimelineView />
+        <DesignerSchedule
+          jobs={jobs}
+          designers={designers}
+          canWrite={canWrite}
+          designerFilter={designerFilter}
+          onRefresh={load}
+        />
       )}
 
       {/* ── Add-work modal (rendered at root level to avoid stacking context issues) ── */}
@@ -610,106 +606,3 @@ function DesignerSelect({
   );
 }
 
-// ─── Timeline (CSS Gantt, read-only) ─────────────────────────────────────────
-function TimelineView() {
-  const [items, setItems] = useState<TimelineItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/designer/timeline");
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "โหลดไทม์ไลน์ไม่สำเร็จ");
-        setItems(json.data.items as TimelineItem[]);
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : "โหลดไทม์ไลน์ไม่สำเร็จ");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const range = useMemo(() => {
-    const dates: number[] = [Date.parse(TODAY)];
-    for (const it of items) {
-      if (it.design_start) dates.push(Date.parse(it.design_start));
-      const right = it.design_end ?? it.design_due_date ?? TODAY;
-      dates.push(Date.parse(right));
-    }
-    let min = Math.min(...dates);
-    let max = Math.max(...dates);
-    const DAY = 86400000;
-    min -= 2 * DAY;
-    max += 2 * DAY;
-    const span = Math.max(max - min, DAY);
-    return { min, span, DAY };
-  }, [items]);
-
-  function pct(dateMs: number) {
-    return ((dateMs - range.min) / range.span) * 100;
-  }
-
-  if (loading) return <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>;
-  if (err) return <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>;
-  if (items.length === 0)
-    return <Card className="p-10 text-center text-ink-3">ยังไม่มีงานที่เริ่มเขียนแบบ</Card>;
-
-  const todayLeft = pct(Date.parse(TODAY));
-
-  return (
-    <Card className="p-4 overflow-x-auto">
-      <div className="min-w-[640px] relative">
-        {/* Today marker */}
-        <div
-          className="absolute top-0 bottom-0 w-px bg-brand/70 z-10"
-          style={{ left: `calc(28% + ${todayLeft}% * 0.72)` }}
-          title={`วันนี้ ${thDate(TODAY)}`}
-        >
-          <span className="absolute -top-1 -translate-x-1/2 text-[10px] text-brand font-semibold whitespace-nowrap">
-            วันนี้
-          </span>
-        </div>
-
-        <div className="space-y-1.5 pt-3">
-          {items.map((it) => {
-            const startMs = it.design_start ? Date.parse(it.design_start) : range.min;
-            const endRaw = it.design_end ?? it.design_due_date ?? TODAY;
-            const endMs = Math.max(Date.parse(endRaw), startMs + range.DAY);
-            const left = pct(startMs);
-            const width = Math.max(pct(endMs) - left, 1.5);
-            const overdue = !it.design_end && it.design_due_date && it.design_due_date < TODAY;
-            return (
-              <div key={it.id} className="flex items-center gap-2 text-[12px]">
-                <div className="w-[28%] shrink-0 truncate pr-2">
-                  <span className="font-semibold text-brand-dark">{it.job_code ?? "—"}</span>
-                  <span className="text-ink-3"> · {it.designer_name}</span>
-                </div>
-                <div className="relative h-6 grow rounded-md bg-black/5">
-                  <div
-                    className={`absolute top-1 h-4 rounded-md ${overdue ? "bg-brand" : "bg-brand/60"}`}
-                    style={{ left: `${left}%`, width: `${width}%` }}
-                    title={`${it.customer_name} · ${thDate(it.design_start)} → ${thDate(endRaw)} (${STATE_TH[it.design_state]})`}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-black/5 text-[11px] text-ink-3">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-3 h-2 rounded-sm bg-brand/60" /> ช่วงเขียนแบบ
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-3 h-2 rounded-sm bg-brand" /> เลยกำหนด
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-px h-3 bg-brand/70" /> เส้นวันนี้
-          </span>
-        </div>
-      </div>
-    </Card>
-  );
-}
