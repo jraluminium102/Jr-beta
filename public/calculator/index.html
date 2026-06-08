@@ -2233,6 +2233,14 @@ function buildItemOpts(d){
   h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="calcQuote();"> ฝังรางยู (ในพื้น)</label>';
   h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
   h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
+  // งาน10: วัสดุเพิ่มเติม (ราคารอแจ้ง — default ปิด = no-op ไม่บวกราคา ไม่ขึ้นข้อความ)
+  var _isPaneCat=['บานเลื่อน','เลื่อนภายใน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','PC Door'].includes(p.cat);
+  if(_isPaneCat){
+    h+='<label class="opt"><input type="checkbox" class="o-insulglass" onchange="calcQuote();"> กระจกอินซูเลท 2 ชั้น (5+อากาศ+5) — ราคาใช้ช่อง OPTION ด้านล่าง</label>';
+    h+='<label class="opt">แผ่นทึบล่าง <select class="o-solidlower" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก (รอราคา R3.9)</option><option value="composite">คอมโพสิท (รอราคา R3.9)</option></select></label>';
+  }
+  h+='<label class="opt"><input type="checkbox" class="o-flooring" onchange="var _fw=this.closest(\'.ch\').querySelector(\'.o-flooring-wrap\'); if(_fw)_fw.style.display=this.checked?\'inline\':\'none\'; calcQuote();"> งานพื้น (สมาร์ทบอร์ด/ไม้เทียม) — ราคาใช้ช่อง OPTION ด้านล่าง</label>';
+  h+='<span class="o-flooring-wrap" style="display:none;"><label class="opt">ชนิดพื้น <input type="text" class="o-flooring-type" placeholder="เช่น สมาร์ทบอร์ด / ไม้เทียม" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label></span>';
   if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
   if(pw)pw.style.display=usesPanels(p)?'':'none';
@@ -2406,6 +2414,11 @@ function readItem(d){
   { const _uc=d.querySelector('.o-uchannel'); optSel.uchannel=_uc?_uc.checked:false;
     const _ew=d.querySelector('.o-extrawork'); optSel.extrawork=(_ew?_ew.value:'').trim();
     const _ro=d.querySelector('.o-removeold'); optSel.removeold=_ro?_ro.checked:false; }
+  // งาน10: วัสดุเพิ่มเติม — ข้อความเท่านั้น ไม่บวกราคา (default ปิด)
+  { const _ig=d.querySelector('.o-insulglass'); optSel.insulglass=_ig?_ig.checked:false;
+    const _sl=d.querySelector('.o-solidlower'); optSel.solidlower=_sl?_sl.value:'';
+    const _fl=d.querySelector('.o-flooring'); optSel.flooring=_fl?_fl.checked:false;
+    const _ft=d.querySelector('.o-flooring-type'); optSel.flooringType=(_ft?_ft.value:'').trim(); }
   let gi=parseInt(d.querySelector('.i-glass').value||0); if(AREA_CATS.includes(p.cat))gi=0;
   let ci=parseInt(d.querySelector('.i-color').value||0); if(AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat))ci=0;
   // งาน9: อ่านโหมดเหมา
@@ -2864,6 +2877,20 @@ function genQuote(keepNo){
     if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
     if(it.optSel && it.optSel.extrawork){ _parts.push(it.optSel.extrawork); }
     if(it.optSel && it.optSel.removeold){ _parts.push('รวมรื้อของเดิม'); }
+    // งาน10: วัสดุเพิ่มเติม — ข้อความในใบ (ไม่บวกราคา · default ปิด = ไม่ขึ้น)
+    if(it.optSel && it.optSel.insulglass){
+      var _odv=it.itemOptDelta||0;
+      _parts.push('กระจกอินซูเลท 2 ชั้น (5+อากาศ+5)'+(_odv===0?' (รอราคา)':''));
+    }
+    if(it.optSel && it.optSel.solidlower){
+      var _slMap={corrugated:'แผ่นลูกฟูกล่าง (อลู) (รอราคา R3.9)',composite:'แผ่นคอมโพสิทล่าง (รอราคา R3.9)'};
+      var _slTxt=_slMap[it.optSel.solidlower];
+      if(_slTxt) _parts.push(_slTxt);
+    }
+    if(it.optSel && it.optSel.flooring){
+      var _ftype=(it.optSel.flooringType||'').trim();
+      _parts.push('งานพื้น'+(_ftype?': '+_ftype:'')+((it.itemOptDelta||0)===0?' (รอราคา)':''));
+    }
     /* R4.1: ไม่ดึง addonLabel/msgs (เป็นรายละเอียดการคิดราคา มีตัวเลขราคา) เข้าใบเสนอราคา
        ใบจริงโชว์เฉพาะวัสดุ (กระจก/สีอลู) ใต้ "รายละเอียดงาน" ไม่โชว์ราคาย่อย */
     // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
