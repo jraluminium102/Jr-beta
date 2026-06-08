@@ -69,7 +69,7 @@ export default function CalculatorClient({
           phone: c.phone ?? "",
           contact: c.contact_person ?? "",
         },
-        "*",
+        window.location.origin, // iframe เป็น same-origin (/calculator) — ระบุ origin ตรง กัน postMessage รั่ว
       );
     }
   }

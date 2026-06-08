@@ -43,7 +43,10 @@ export async function GET(req: Request) {
       "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_start, design_end, design_revise_count, current_stage, designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
-    .order("design_due_date", { ascending: true, nullsFirst: false });
+    // safety cap: เก็บงานล่าสุดสุด 3000 รายการ (กัน payload บานปลายเมื่อสะสมหลายปี)
+    // เรียง created_at desc เพื่อให้ limit ตัด "งานเก่าสุด" ไม่ใช่งานปัจจุบัน
+    .order("created_at", { ascending: false })
+    .limit(3000);
 
   if (designerRef) query = query.eq("designer_ref", designerRef);
   if (state) query = query.eq("design_state", state);
