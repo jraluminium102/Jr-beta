@@ -22,7 +22,8 @@ export const GET = withRoute(async (req: Request) => {
     .select("id,job_code,customer_name,customer_tel,customer_area,status,current_stage,design_state,on_hold,updated_at,created_at," +
       "estimator:estimator_id(full_name)," +
       "productions(status,status_updated_at,planned_install_date)," +
-      "installations(status,updated_at),issues(status,severity)")
+      "installations(status,updated_at),issues(status,severity)," +
+      "quotations!quotations_job_id_fkey(billing_notes(id))")
     .order("updated_at", { ascending: false });
   if (q) query = query.or(`customer_name.ilike.%${q}%,job_code.ilike.%${q}%`);
   if (url.searchParams.get("my") === "1") query = query.eq("estimator_id", ctx.user.id); // เฉพาะงานของฉัน
@@ -36,6 +37,11 @@ export const GET = withRoute(async (req: Request) => {
     const issues = (j.issues ?? []) as { status: string; severity: string }[];
     const open = issues.filter((i) => i.status !== "CLOSED");
     const prod = Array.isArray(j.productions) ? j.productions[0] : j.productions;
+    const quos: any[] = Array.isArray(j.quotations) ? j.quotations : (j.quotations ? [j.quotations] : []);
+    const has_billed = quos.some((qq: any) => {
+      const bn = qq?.billing_notes;
+      return Array.isArray(bn) ? bn.length > 0 : !!bn;
+    });
     return {
       id: j.id, job_code: j.job_code, customer_name: j.customer_name,
       customer_tel: j.customer_tel, customer_area: j.customer_area, status: j.status,
@@ -43,6 +49,7 @@ export const GET = withRoute(async (req: Request) => {
       phase, days_in_phase: days, overdue: !j.on_hold && days > overdueDays(phase),
       open_issues: open.length, high_issue: open.some((i) => i.severity === "HIGH"),
       planned_install_date: prod?.planned_install_date ?? null,
+      has_billed,
     };
   });
 

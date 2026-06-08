@@ -13,6 +13,7 @@ type Row = {
   customer_area: string | null; status: string; estimator: string | null;
   phase: PhaseKey; days_in_phase: number; overdue: boolean; on_hold: boolean;
   open_issues: number; high_issue: boolean; planned_install_date: string | null;
+  has_billed: boolean;
 };
 
 function PhaseChip({ phase }: { phase: PhaseKey }) {
@@ -108,7 +109,11 @@ export default function FollowUpPage() {
                         <div className="text-white/90">{r.customer_name}</div>
                         <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{r.customer_area ?? r.customer_tel ?? ""}</div>
                       </td>
-                      <td className="px-4 py-3"><PhaseChip phase={r.phase} />{r.on_hold && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-white/15 text-white/80">⏸ พัก</span>}</td>
+                      <td className="px-4 py-3">
+                        <PhaseChip phase={r.phase} />
+                        {r.on_hold && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-white/15 text-white/80">⏸ พัก</span>}
+                        {r.has_billed && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-100 border border-emerald-300/30">วางบิลแล้ว</span>}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={cn("tnum", r.overdue ? "text-amber-300 font-semibold" : "text-white/80")}>{r.days_in_phase} วัน</span>
                         {r.overdue && <span className="ml-1 text-[11px] text-amber-300">⚠ เกิน</span>}
@@ -141,6 +146,7 @@ export default function FollowUpPage() {
                 <div className="flex items-center gap-3 mt-2 text-[12px]">
                   <span className={cn("tnum", r.overdue ? "text-amber-300 font-semibold" : "text-white/70")}>ค้าง {r.days_in_phase} วัน{r.overdue ? " ⚠" : ""}</span>
                   {r.open_issues > 0 && <span className={cn(r.high_issue ? "text-rose-300" : "text-amber-300")}>● {r.open_issues} ปัญหา</span>}
+                  {r.has_billed && <span className="text-emerald-300">· วางบิลแล้ว</span>}
                   {r.estimator && <span style={{ color: "var(--t-mid)" }}>· {r.estimator}</span>}
                 </div>
               </button>

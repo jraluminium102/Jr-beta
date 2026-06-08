@@ -9,17 +9,27 @@ import type { ProdStatus } from "@/lib/database.types";
 
 export type ProdRow = {
   id: string; status: ProdStatus;
-  measure_actual: string | null; production_queued: string | null; production_done: string | null;
+  measure_actual: string | null; planned_install_date: string | null;
+  production_queued: string | null; production_done: string | null;
+  qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   job: { job_code: string; customer_name: string; customer_area: string | null } | null;
 };
 
 // ลำดับขั้นงานผลิต (happy path)
 const FLOW: ProdStatus[] = ["PENDING_MEASURE", "MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "MANUFACTURING", "QC", "READY"];
-// ขั้นที่ต้องลงวันที่ (ตามที่ตกลง: ลงคิวผลิต + ผลิตเสร็จ)
-const DATE_FOR: Partial<Record<ProdStatus, { field: string; label: string }>> = {
-  QUEUED: { field: "production_queued", label: "วันลงคิวผลิต" },
-  QC: { field: "production_done", label: "วันผลิตเสร็จ" },
+
+type StepField = { field: string; label: string; type?: "date" | "qc" | "note" };
+const DATE_FOR: Partial<Record<ProdStatus, StepField[]>> = {
+  MEASURED: [{ field: "measure_actual", label: "วันวัดจริง" }],
+  QUEUED:   [{ field: "production_queued", label: "วันลงคิวผลิต" }],
+  QC:       [{ field: "production_done", label: "วันผลิตเสร็จ" }],
+  READY: [
+    { field: "qc_result", label: "ผลตรวจ QC", type: "qc" },
+    { field: "qc_date",   label: "วันตรวจ QC" },
+    { field: "qc_note",   label: "หมายเหตุ QC (ไม่บังคับ)", type: "note" },
+  ],
 };
+
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
@@ -32,8 +42,19 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 
   const idx = FLOW.indexOf(prod.status);
   const next = idx >= 0 && idx < FLOW.length - 1 ? FLOW[idx + 1] : null;
-  const nextDate = next ? DATE_FOR[next] : undefined;
-  const [date, setDate] = useState(today());
+  const nextFields = next ? (DATE_FOR[next] ?? []) : [];
+
+  const [vals, setVals] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const init: Record<string, string> = {};
+    nextFields.forEach(f => {
+      if (!f.type || f.type === "date") init[f.field] = today();
+    });
+    setVals(init);
+    setErr(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [next]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -50,8 +71,12 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 
   const goNext = () => {
     if (!next) return;
-    const body: Record<string, unknown> = { status: next };
-    if (nextDate) body[nextDate.field] = date;
+    if (next === "READY" && !vals.qc_result) {
+      setErr("กรุณาเลือกผลตรวจ QC"); return;
+    }
+    const body: Record<string, unknown> = { status: next, ...vals };
+    // กรอง field ว่างออก (note ไม่บังคับ)
+    Object.keys(body).forEach(k => { if (body[k] === "") delete body[k]; });
     patch(body);
   };
 
@@ -88,13 +113,61 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
             {/* ปุ่มใหญ่: ทำขั้นต่อไป */}
             {next ? (
               <div className="mt-4 glass-card rounded-2xl p-4">
-                {nextDate && (
-                  <div className="mb-3">
-                    <label className="block text-[13px] mb-1.5 font-medium text-white">📅 {nextDate.label}</label>
-                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label={nextDate.label}
-                      className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                {nextFields.map(f => (
+                  <div key={f.field} className="mb-3">
+                    <label className="block text-[13px] mb-1.5 font-medium text-white">{f.label}</label>
+
+                    {/* QC toggle */}
+                    {f.type === "qc" && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setVals(v => ({ ...v, [f.field]: "PASSED" }))}
+                          className={`focusable pressable flex-1 min-h-[48px] rounded-xl text-sm font-semibold border transition-colors
+                            ${vals[f.field] === "PASSED"
+                              ? "bg-emerald-500 border-emerald-400 text-white"
+                              : "glass-card border-white/10 text-white/70 hover:border-emerald-400/50"}`}
+                        >
+                          ผ่าน
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVals(v => ({ ...v, [f.field]: "FAILED" }))}
+                          className={`focusable pressable flex-1 min-h-[48px] rounded-xl text-sm font-semibold border transition-colors
+                            ${vals[f.field] === "FAILED"
+                              ? "bg-rose-500 border-rose-400 text-white"
+                              : "glass-card border-white/10 text-white/70 hover:border-rose-400/50"}`}
+                        >
+                          ไม่ผ่าน
+                        </button>
+                      </div>
+                    )}
+
+                    {/* textarea note */}
+                    {f.type === "note" && (
+                      <textarea
+                        value={vals[f.field] ?? ""}
+                        onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))}
+                        rows={2}
+                        placeholder="ระบุหมายเหตุ (ถ้ามี)"
+                        aria-label={f.label}
+                        className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none resize-none placeholder-white/40"
+                      />
+                    )}
+
+                    {/* date input (type=date หรือ undefined = date) */}
+                    {(!f.type || f.type === "date") && (
+                      <input
+                        type="date"
+                        value={vals[f.field] ?? ""}
+                        onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))}
+                        aria-label={f.label}
+                        className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert"
+                      />
+                    )}
                   </div>
-                )}
+                ))}
+
                 <button onClick={goNext} disabled={saving}
                   className={`focusable pressable w-full ${big} bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg disabled:opacity-60 flex items-center justify-center gap-2`}>
                   {saving ? <span className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <Check size={22} />}
@@ -103,7 +176,7 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
               </div>
             ) : (
               <div className="mt-4 bg-emerald-500/15 border border-emerald-300/30 rounded-2xl p-4 text-center">
-                <div className="text-emerald-200 font-semibold">✓ พร้อมติดตั้งแล้ว</div>
+                <div className="text-emerald-200 font-semibold">พร้อมติดตั้งแล้ว</div>
                 <div className="text-[12px] mt-1" style={{ color: "var(--t-mid)" }}>งานนี้ส่งเข้าทีมติดตั้งอัตโนมัติแล้ว</div>
               </div>
             )}
@@ -125,11 +198,22 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
               </div>
             )}
 
-            {/* วันที่บันทึกไว้ */}
-            {(prod.production_queued || prod.production_done) && (
+            {/* ประวัติการทำงาน */}
+            {(prod.measure_actual || prod.production_queued || prod.production_done || prod.qc_result) && (
               <div className="mt-4 text-[12px] space-y-1" style={{ color: "var(--t-low)" }}>
+                {prod.measure_actual   && <div>วัดจริง: <span className="tnum text-white/80">{thDate(prod.measure_actual)}</span></div>}
                 {prod.production_queued && <div>ลงคิวผลิต: <span className="tnum text-white/80">{thDate(prod.production_queued)}</span></div>}
-                {prod.production_done && <div>ผลิตเสร็จ: <span className="tnum text-white/80">{thDate(prod.production_done)}</span></div>}
+                {prod.production_done  && <div>ผลิตเสร็จ: <span className="tnum text-white/80">{thDate(prod.production_done)}</span></div>}
+                {prod.qc_result && (
+                  <div>
+                    QC:{" "}
+                    <span className={prod.qc_result === "PASSED" ? "text-emerald-300" : "text-rose-300"}>
+                      {prod.qc_result === "PASSED" ? "ผ่าน" : "ไม่ผ่าน"}
+                    </span>
+                    {prod.qc_date && <span className="tnum text-white/70"> · {thDate(prod.qc_date)}</span>}
+                  </div>
+                )}
+                {prod.qc_note && <div className="text-white/60">หมายเหตุ: {prod.qc_note}</div>}
               </div>
             )}
 

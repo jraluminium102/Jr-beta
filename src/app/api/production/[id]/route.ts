@@ -52,6 +52,18 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     }
   }
 
+  // Guard: บังคับกรอกข้อมูลที่สำคัญเมื่อเปลี่ยนสถานะ
+  if (body.status === "MEASURED" && !body.measure_actual) {
+    return err("กรุณาบันทึกวันวัดจริง", 400);
+  }
+  if (body.status === "QC" && !body.production_done) {
+    return err("กรุณาบันทึกวันผลิตเสร็จ", 400);
+  }
+  if (body.status === "READY") {
+    if (!body.qc_result) return err("กรุณาเลือกผลตรวจ QC ก่อนส่งติดตั้ง", 400);
+    if (!body.qc_date)   return err("กรุณาบันทึกวันตรวจ QC", 400);
+  }
+
   const { data, error } = await ctx.supabase
     .from("productions").update(body).eq("id", params.id).select().single();
   if (error || !data) throw new Error(error?.message ?? "Update failed");

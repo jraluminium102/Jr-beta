@@ -30,8 +30,8 @@ type Dash = {
 };
 
 // Stage-group display order + colors
-const STAGE_GROUPS: { key: string; label: string; color: string; bar: string }[] = [
-  { key: "ขาย",     label: "ฝ่ายขาย",  color: "text-sky-300",     bar: "bg-sky-400" },
+const STAGE_GROUPS: { key: string; label: string; color: string; bar: string; sub?: string }[] = [
+  { key: "ขาย",     label: "ฝ่ายขาย",  color: "text-sky-300",     bar: "bg-sky-400",      sub: "รวมลูกค้าที่ยังไม่เข้าประเมิน" },
   { key: "มัดจำ",   label: "มัดจำ",    color: "text-emerald-300", bar: "bg-emerald-400" },
   { key: "ผลิต",    label: "ผลิต",     color: "text-orange-300",  bar: "bg-orange-400" },
   { key: "ติดตั้ง", label: "ติดตั้ง",  color: "text-violet-300",  bar: "bg-violet-400" },
@@ -98,13 +98,16 @@ export default function OperationsPage() {
         <div className="glass-card rounded-2xl p-5">
           <div className="text-white font-semibold mb-4">งานตามกลุ่มขั้นตอน</div>
           <div className="space-y-3">
-            {STAGE_GROUPS.map(({ key, label, color, bar }) => {
+            {STAGE_GROUPS.map(({ key, label, color, bar, sub }) => {
               const count = data.jobsByStageGroup[key] ?? 0;
               const pct = data.totalActive ? Math.round((count / data.totalActive) * 100) : 0;
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className={cn("text-sm font-medium", color)}>{label}</span>
+                    <div className="flex flex-col">
+                      <span className={cn("text-sm font-medium", color)}>{label}</span>
+                      {sub && <span className="text-[11px]" style={{ color: "var(--t-low)" }}>{sub}</span>}
+                    </div>
                     <span className="text-white font-semibold text-sm tnum">{count}</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
