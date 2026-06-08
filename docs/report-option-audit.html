@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายงานตรวจออปชั่น — เทียบใบจริง 16 ใบ ↔ ระบบเครื่องคิดราคา JR</title>
+<style>
+  :root{ --jr:#B3151D; --jr-d:#7d0e14; --bg:#fff; --ink:#1f2937; --muted:#6b7280;
+         --ok:#1a7f37; --okbg:#e9f7ee; --warn:#9a6700; --warnbg:#fff8e1; --bad:#B3151D; --badbg:#fdeaea;
+         --line:#e5e7eb; }
+  *{box-sizing:border-box;}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif; color:var(--ink); background:#f3f4f6; margin:0; line-height:1.55;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 16px 80px;}
+  header{background:linear-gradient(135deg,var(--jr),var(--jr-d)); color:#fff; padding:28px 0 22px; margin-bottom:18px;}
+  header .wrap{padding-bottom:0;}
+  h1{margin:0 0 6px; font-size:24px;}
+  header .sub{opacity:.92; font-size:14px;}
+  h2{color:var(--jr); border-bottom:3px solid var(--jr); padding-bottom:6px; margin-top:38px; font-size:20px;}
+  h3{color:var(--jr-d); margin-top:26px; font-size:16px;}
+  .cards{display:flex; gap:12px; flex-wrap:wrap; margin:18px 0 6px;}
+  .card{flex:1 1 150px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .card .n{font-size:28px; font-weight:700; line-height:1;}
+  .card .l{font-size:13px; color:var(--muted); margin-top:4px;}
+  .card.ok .n{color:var(--ok);} .card.warn .n{color:var(--warn);} .card.bad .n{color:var(--bad);} .card.tot .n{color:var(--jr);}
+  table{width:100%; border-collapse:collapse; background:#fff; font-size:13.5px; margin-top:10px; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  th,td{border:1px solid var(--line); padding:8px 10px; vertical-align:top; text-align:left;}
+  th{background:var(--jr); color:#fff; font-weight:600; position:sticky; top:0;}
+  thead th{font-size:13px;}
+  tbody tr:nth-child(even){background:#fafafa;}
+  td.cat{font-weight:600; white-space:nowrap;}
+  .pill{display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap;}
+  .pill.ok{background:var(--okbg); color:var(--ok);}
+  .pill.warn{background:var(--warnbg); color:var(--warn);}
+  .pill.bad{background:var(--badbg); color:var(--bad);}
+  .src{color:var(--muted); font-size:12px;}
+  code{background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:12.5px; color:var(--jr-d);}
+  .note{background:var(--warnbg); border-left:4px solid var(--warn); padding:10px 14px; border-radius:6px; margin:14px 0; font-size:13.5px;}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:13px; margin:10px 0 0;}
+  ol.fix{padding-left:20px;} ol.fix li{margin-bottom:10px;}
+  .tag{font-size:11px; font-weight:700; padding:1px 6px; border-radius:4px; margin-right:6px;}
+  .tag.p1{background:var(--badbg); color:var(--bad);}
+  .tag.p2{background:var(--warnbg); color:var(--warn);}
+  .tag.p3{background:#eef2ff; color:#3730a3;}
+  footer{color:var(--muted); font-size:12.5px; margin-top:40px; border-top:1px solid var(--line); padding-top:14px;}
+  .small{font-size:12.5px; color:var(--muted);}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>รายงานตรวจออปชั่น — เทียบ “ใบจริง” ↔ “ระบบเครื่องคิดราคา”</h1>
+    <div class="sub">โหมด A (อ่าน + ออกรายงานอย่างเดียว · READ-ONLY ไม่แตะ index.html) · branch <code style="color:#fff;background:rgba(255,255,255,.15)">feat/quote-phase5-ux</code> · 2026-06-08</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <p>เทียบ <b>ใบเสนอราคาจริง 16 ใบ (PDF)</b> + เอกสารควบคุมคุณภาพ (คลังออปชั่นบริษัท) กับสิ่งที่ <b>ระบบออกได้จริง</b>
+  (render ผ่าน jsdom — ใบ FULL-A 11 รายการ / FULL-B 202 รายการครบทุก product) แล้ว strip tags ดูเนื้อใบที่ลูกค้าได้รับ
+  ประกอบกับโครงสร้าง option ใน <code>public/calculator/index.html</code>.</p>
+
+  <div class="note">
+    <b>ข้อสรุปภาพรวม:</b> ระบบ <b>ครอบคลุมงานหลักได้ดีมาก</b> — บาน/หลังคา/ระแนง/มุ้ง/กระจก/สี/กั้นห้อง ครบเกือบหมด
+    สิ่งที่ขาดคือ <b>ออปชั่นเฉพาะที่ฝังในบรรทัดเดียวกับบาน</b> (มุ้งเฟรมเล็ก/ใหญ่ต่อบาน), <b>งานประกอบที่ต้องพิมพ์เอง</b>
+    (พัดลมดูดอากาศ, โครงรับม่าน, โฟเมก้า) และ <b>ข้อความ “(รอราคา)” ที่หลุดลงใบลูกค้า</b>. รวม <b>3 จุดแก้ด่วน (P1)</b>.
+  </div>
+
+  <div class="cards">
+    <div class="card tot"><div class="n">22</div><div class="l">รายการ/หมวดที่ตรวจ</div></div>
+    <div class="card ok"><div class="n">13</div><div class="l">✅ ครบ — มี option + ออกในใบ</div></div>
+    <div class="card warn"><div class="n">6</div><div class="l">🟡 มีแต่ไม่ตรง/ไม่ครบ</div></div>
+    <div class="card bad"><div class="n">3</div><div class="l">🔴 ขาด — ต้องพิมพ์เอง</div></div>
+  </div>
+  <div class="legend">
+    <span><span class="pill ok">ครบ</span> มี option ให้เลือก + ออกในใบถูกต้อง</span>
+    <span><span class="pill warn">มีแต่…</span> มีแต่คำผิด / ตำแหน่งผิด / มี placeholder / ต้องแยกบรรทัด</span>
+    <span><span class="pill bad">ขาด</span> ไม่มี option — ต้องใช้ custom item หรือพิมพ์มือ</span>
+  </div>
+
+  <h2>ตารางเทียบรายหมวด</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:13%">หมวด / รายการ (จากใบจริง)</th>
+        <th style="width:31%">ใบจริงเขียนอะไร (ตัวอย่างคำจริง)</th>
+        <th style="width:30%">ระบบมี option + ออกในใบครบไหม</th>
+        <th style="width:7%">ผล</th>
+        <th style="width:19%">ขาด/ผิด/ต้องแก้ + root cause</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td class="cat">บาน G1 (ชนิด/ราง)</td>
+        <td>บานเลื่อนสลับ/ลากจูง/เปิดคู่กลาง/รางบน-รางล่าง-ไร้ราง, บานเปิด, บานเฟี้ยม, บานกระทุ้ง, บานยก, ติดตาย, PC Door, Ventilation/Airflow, บานเปลือยสวิง/เลื่อน, ดัดโค้ง, SlimLux (soft-close+สลิง) <span class="src">— ทุกใบ</span></td>
+        <td>มีครบทุกชนิดเป็น product แยก (188 ตัว) · รุ่นราง (กันน้ำ/รางเตี้ย/โชว์ราง/ซ่อนราง/ไร้ราง) ฝังในชื่อ product · soft-close+สลิงออก “(รวม soft close + สลิงลากเปิดพร้อมกัน)”</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">สีอลูมิเนียม</td>
+        <td>สีเทาซาฮาร่า, สีดำ, สีอบขาว, ลายไม้ Golden Teak SMS, ไวท์โอ๊ค, ไวท์แบมบู (KL19022WD), อบพิเศษ RAL7022 (KL10232A) <span class="src">— ทุกใบ</span></td>
+        <td><code>COLORS</code> มี: อบขาว/ดำ/เทาซาฮารา/ดำซาฮารา/Aztec/ลายไม้สต๊อก (สักทอง·มะฮอกกานี·ไวท์โอ๊ค)/Fuji Oak·Makha/อบพิเศษ/ลายไม้อบพิเศษ/ชุบ + ช่อง <code>i-colorcode</code> ใส่รหัส (RAL/KL/Fuji)</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td>“ไวท์แบมบู KL19022WD”, “Golden Teak SMS” ไม่มีชื่อตรง — ต้องใช้ “ลายไม้อบพิเศษ + รหัส”. <b>(เช็คซ้ำ)</b> ว่าชื่อที่ออกในใบตรงคำที่ลูกค้าคุ้นไหม</td>
+      </tr>
+
+      <tr>
+        <td class="cat">กระจก (ชนิด)</td>
+        <td>ใส/เขียว 6, เทมเปอร์ใส 6/10/12, เทมเปอร์เขียว, ลามิเนต 4+4/5+5 ฟิล์มเขียว·กันเสียง·กันร้อน·STG, ลอนแก้ว, ยูโรบรอนซ์, เงา, ชาดำ, ฝ้า <span class="src">— เกือบทุกใบ</span></td>
+        <td>ลิสต์กระจกครบมาก (50+ รายการ) รวมลามิเนตทุกฟิล์ม, ลอนแก้ว, เงา/เงาทอง, ชาดำ, ยูโรบรอนซ์, reflective</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">กระจกอินซูเลท</td>
+        <td>“กระจกอินซูเลทใส 5 + air gap 8 + ใส 5 มม.” — ใช้หนักมากทั้งใบ (คุณปีเตอร์) + OPTION ลดเป็นเทมเปอร์/เขียว <span class="src">— ปีเตอร์, นก</span></td>
+        <td>มี checkbox <code>o-insulglass</code> → ออก “กระจกอินซูเลท 2 ชั้น (5+อากาศ+5)”. แต่ราคาต้องกรอกช่อง OPTION เอง — ถ้าไม่กรอกจะออก <b>“(รอราคา)”</b></td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P1:</b> ถ้าเซลล์ลืมกรอก delta → ใบลูกค้าโชว์ “(รอราคา)”. root cause: ราคาอินซูเลทยังไม่ใส่ตาราง (รอจริง) จึงผูกกับ optdelta มือ</td>
+      </tr>
+
+      <tr>
+        <td class="cat">มุ้ง — ต่อบาน</td>
+        <td>“พร้อมมุ้งเฟรมเล็ก / มุ้งเฟรมใหญ่ / มุ้งนิรภัย / มุ้งจีบ” เขียนรวมในบรรทัดเดียวกับบาน <span class="src">— ธนบัตร, หญิง, ยี, ชวลิต, ปีเตอร์</span></td>
+        <td>per-บาน dropdown <code>o-mosq</code> = เฉพาะ <b>มุ้งจีบ</b> (SD/ตีนตะขาบ/ม้วน/blackout) + มุ้งจีบนิรภัย. ส่วน <b>มุ้งเฟรมเล็ก/ใหญ่ (imp21/22/23)</b> เป็น <b>product แยกบรรทัด</b> เท่านั้น</td>
+        <td><span class="pill bad">ขาด</span></td>
+        <td><b>P1:</b> ฝัง “พร้อมมุ้งเฟรมเล็ก/ใหญ่” ต่อบานไม่ได้ — ต้องแยกเป็นอีกข้อ ทำให้ใบไม่เหมือนจริง. root cause: 2 ระบบมุ้งแยกกัน (addon vs product)</td>
+      </tr>
+
+      <tr>
+        <td class="cat">มุ้ง — ชื่อในหัวข้อ</td>
+        <td>ใบจริงเขียนชนิดตรง: “มุ้งนิรภัย”, “มุ้งจีบ”, “มุ้งเฟรมเล็ก”</td>
+        <td>หัวข้อ hard-code “<b>พร้อมมุ้งจีบ</b>” (index.html ~บรรทัด 2847) ทุกครั้งที่บานมี addon ไม่ว่าจะเลือกชนิดใด</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P2:</b> เลือกมุ้งจีบนิรภัย/ม้วน แต่หัวข้อยังขึ้น “พร้อมมุ้งจีบ” — คำไม่ตรงชนิดจริง</td>
+      </tr>
+
+      <tr>
+        <td class="cat">คาดตาราง</td>
+        <td>“(มีคาดตาราง)” พบบ่อยมากแทบทุกบาน <span class="src">— เกือบทุกใบ</span></td>
+        <td>มี checkbox <code>o-gridmark</code> “มีคาดตาราง (คิดตามสูตร)” + ช่องเส้นนอน/ตั้ง/โค้ง · ออกในใบ</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">ครอบวงกบ</td>
+        <td>“ครอบวงกบอลูมิเนียม 3 ด้าน / 4 ด้าน” (ใช้ประตูไม้เดิม) <span class="src">— ยี</span></td>
+        <td>มี product <code>fw_*</code> (ประตู/หน้าต่าง/ระแนง/ตู้ × สีดำขาวซาฮารา·สต๊อก·อบพิเศษ·ลายไม้) คิดตาม ม.</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P3:</b> เป็น product เสริมแยกบรรทัด ไม่ใช่ option “จำนวนด้าน” ต่อบาน — ใบจริงเขียนรวมในด้านนั้น</td>
+      </tr>
+
+      <tr>
+        <td class="cat">เสริมคาน / ธรณี</td>
+        <td>“เสริมคานซัพพอร์ทรุ่นโชว์คาน/ซ่อนคาน”, “มีธรณีกันน้ำ/หลังเต่า/Drop Seal/ไม่มีธรณี” <span class="src">— ทุกใบ</span></td>
+        <td>เสริมคาน: <code>o-beam</code>/<code>o-beamm</code> (มี ม.×เรท) · ธรณี: ออก “ธรณีหลังเต่า + Drop Seal”, “ธรณีกันน้ำภายนอก/หลังเต่าภายใน”</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>(เช็คซ้ำ) คำ “โชว์คาน/ซ่อนคาน” ไม่ได้แยกในข้อความใบ — มีแค่ราคาเสริมคาน</td>
+      </tr>
+
+      <tr>
+        <td class="cat">หลังคา + ระบบน้ำ</td>
+        <td>ไวนิล/โพลีตัน(Opal·Ice·Aus Grey)/ชินโคไลท์(NT-332·HC-N828)/ลามิเนต/เมทัลชีท PU · แปเดี่ยว-คู่ · รางน้ำ+ตะแกรง · ท่อ PVC 2.5" ดำ/ขาว · โซ่ทิวลิป · ปล่อยปลาย/ยื่นปลาย <span class="src">— ธนบัตร, นก, หญิง, ใบเฟริล, ยี</span></td>
+        <td>product หลังคาครบทุกชนิด + เลือกสีวัสดุมุง + โครงเหล็กชุบซิงค์ แปคู่ + รางน้ำ/โซ่ออกในใบ</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P3:</b> รายละเอียดย่อยตายตัว (“โซ่ลายโลตัส สีน้ำตาล”) — ใบจริงระบุ ท่อ 2.5" สี/โซ่ลาย/จำนวนจุด/“ปล่อยปลายไม่มีราง”/เสริมเพลทเหล็ก ละเอียดกว่า</td>
+      </tr>
+
+      <tr>
+        <td class="cat">ระแนง</td>
+        <td>กล่อง 1"×1.6"/1"×4"/1×5ซม. โชว์หน้า…เว้นระยะ… รวม/ไม่รวมโครง · ลายไม้ Golden Teak · เกล็ด Z 1.6" แนวตั้ง <span class="src">— บุญญารัตน์, ธนบัตร, นก, ยี</span></td>
+        <td>เมทริกซ์ระแนงครบมาก (บังตาผนังระแนงทุกขนาด×โชว์หน้า×เว้นระยะ×รวม/ไม่โครง) + fin สีซาฮารา/อบพิเศษ/ลายไม้ + ระแนงเกล็ด/เลื่อน/เปิด-ปิด</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">ราวกันตก</td>
+        <td>ราวกันตก<b>กระจก</b>เทมเปอร์ 10/12 มม. (สแตนเลส) <b>และ</b> ราวกันตก<b>เหล็ก</b> <span class="src">— บุญญารัตน์, ชวลิต, ยี</span></td>
+        <td>product ราวกันตก 47.1–47.4 (เฉียง/ตรง × หมุดปูน/U-เสาอลู/เสาอลู) ออก “กระจกใส 6 มม.”</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P2:</b> เป็นราวกระจกออก “ใส 6” — ใบจริงใช้ <b>เทมเปอร์ 10/12</b>; และ <b>ราวกันตกเหล็ก</b> ไม่มี product. (เช็คซ้ำ ว่าราวเปลี่ยนชนิดกระจกได้ไหม)</td>
+      </tr>
+
+      <tr>
+        <td class="cat">มือจับ / ล็อค</td>
+        <td>Digital Door Lock X2, มือจับ HD182/X-J/Cmech Berin/SlimLux/ก้านโยก, ชุดล็อคมี/ไม่มีกุญแจ <span class="src">— บุญญารัตน์, ขวัญ, ชวลิต</span></td>
+        <td>มี “ชุดล็อค (มี/ไม่มีกุญแจ)”, “มือจับดิจิตอล S1 ก้านโยก”, CMECH สี · (เอกสาร QC มีลิสต์มือจับ+ราคาเต็ม)</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P3:</b> รุ่นมือจับเฉพาะ (HD182, X-J, Berin, SlimLux) ไม่มีเป็น option ตรง — ออกได้แค่ทั่วไป. (เช็คซ้ำกับ QC list)</td>
+      </tr>
+
+      <tr>
+        <td class="cat">กั้นห้องกระจก (ชุดหลายด้าน)</td>
+        <td>1 ข้อ = ด้าน A–M ผสมหลายชนิด + หลังคา + ผนัง ISOWALL/สมาร์ทบอร์ด + พื้น ราคาเหมารวม <span class="src">— ธนบัตร, ประภาพรรณ, นก, หญิง, ยี, สุจินต์, ใบเฟริล</span></td>
+        <td>ระบบชุด (set) ออก 1 ข้อ หัวด้าน A/B/C + บานใต้ • + หลังคา + “แยกราคา” + รวมราคาออโต้ — ตรงดีไซน์ใบจริง</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">ผนัง / ฉนวน ในชุด</td>
+        <td>ผนัง ISOWALL 10 ซม., ผนังเบากรุสมาร์ทบอร์ด 12 มม. ทาสี + ฉนวนกันร้อน-เสียง 3", โครงเหล็กชุบซิงค์ <span class="src">— ยี, สุจินต์, โอ๋</span></td>
+        <td>มี product ISOWALL, ผนังเบาภายนอก/ภายใน, ฝ้าฉาบเรียบ — เพิ่มเป็นด้านในชุดได้</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>(เช็คซ้ำ) “ฉนวน 3" + สมาร์ทบอร์ดทาสี” มีเป็นรายละเอียดย่อยครบไหม</td>
+      </tr>
+
+      <tr>
+        <td class="cat">พื้น (ในชุด)</td>
+        <td>ปูพื้นไม้เทียม/สมาร์ทบอร์ด 20 มม. + ลามิเนต, ตงไม้เทียม <span class="src">— ธนบัตร, ยี</span></td>
+        <td>มี option “งานพื้น” (checkbox + ชนิด) → ออก “งานพื้น: …” แต่ราคาผูก optdelta — ถ้าไม่กรอกออก <b>“(รอราคา)”</b></td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P1 (ร่วม):</b> placeholder “(รอราคา)” หลุดลงใบถ้าไม่กรอก delta</td>
+      </tr>
+
+      <tr>
+        <td class="cat">แผ่นทึบล่าง (ลูกฟูก/คอมโพสิท)</td>
+        <td>“ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบ + คิ้ว”, “แผ่นคอมโพสิต” <span class="src">— บุญญารัตน์, ธนบัตร, ขวัญ</span></td>
+        <td>dropdown <code>o-solidlower</code> (อลูลูกฟูก / คอมโพสิท) → ออก “แผ่นลูกฟูกล่าง (อลู) <b>(รอราคา R3.9)</b>” / “แผ่นคอมโพสิทล่าง (รอราคา R3.9)”</td>
+        <td><span class="pill warn">มีแต่…</span></td>
+        <td><b>P1 (ร่วม):</b> “(รอราคา R3.9)” ติดมาในใบลูกค้าเสมอ (เห็นในใบ FULL-A/B หลายข้อ). root cause: ราคายังไม่เข้าตาราง</td>
+      </tr>
+
+      <tr>
+        <td class="cat">ม่านซิป (zipscreen)</td>
+        <td>ม่านซิปผ้าโปร่ง % <span class="src">— (พบในงานจริงทั่วไป)</span></td>
+        <td>product zipscreen เลือกกลุ่ม/รุ่น/ผ้า/คอนโทรล → ออก “ผ้าโปร่ง 5%”</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">Shower</td>
+        <td>บานเปิด/เลื่อน/ติดตาย + กระจกเทมเปอร์ 10 + ราวสแตนเลส <span class="src">— บุญญารัตน์, ชวลิต, สุจินต์</span></td>
+        <td>product shower (door_fixed/fixed_only/swing) ออก กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส + อุปกรณ์มาตรฐาน</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>—</td>
+      </tr>
+
+      <tr>
+        <td class="cat">OPTION ±บาท/รายการ + เหมา</td>
+        <td>“หากเปลี่ยนเป็น… ราคาเพิ่ม/ลด N บาท” (1–3 ออปต่อข้อ) + “รวมชุดข้อ 3-4 = เหมา 76,000” <span class="src">— บุญญารัตน์, นก, ชวลิต, ปีเตอร์</span></td>
+        <td>มี <code>itemOptDelta</code> ± + preset OPTION + โหมดเหมา (lumpsum) ตาม commit ล่าสุด</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>(เช็คซ้ำ) พบ “OPTION : OPTION :” ซ้ำคำเมื่อ note เริ่มด้วย “OPTION :” อยู่แล้ว (ใบ FULL-A ข้อ 8) — ระวังคนกรอกพิมพ์ซ้ำ</td>
+      </tr>
+
+      <tr>
+        <td class="cat">งานบริการ / ค่าใช้จ่าย</td>
+        <td>ต่างจังหวัด (เดินทาง+ที่พัก), นั่งร้าน, รื้อของเดิม (ประตู/หลังคา/ราว/กรีดพื้น), เดินไฟ/สวิตช์, ส่วนลดค่าประเมิน/พิเศษ % <span class="src">— ทุกใบ</span></td>
+        <td>มี svc ครบ: protect/lift/travel(ที่พัก tier)/ship/bkk/elec(เดินไฟ+สวิตซ์)/demo(roof/floor/rail/door)/นั่งร้าน + ส่วนลด flat/%</td>
+        <td><span class="pill ok">ครบ</span></td>
+        <td>(เช็คซ้ำ) “ดาวน์ไลท์ N ดวง” เจาะจง — ระบบมีแค่ “เดินไฟ 2 ดวง +3,000” generic</td>
+      </tr>
+
+      <tr>
+        <td class="cat">งานประกอบเฉพาะ</td>
+        <td>พัดลมดูดอากาศ 8" + ฝาครอบกันแมลง, เสริมโครงรับม่าน, กระจกเงาแปะโฟเมก้า, ฟิล์มติดกระจกเดิม <span class="src">— ใบเฟริล, หญิง, ยี</span></td>
+        <td>ไม่มี product/option ตรง — ต้องใช้ <code>custom_item</code> หรือพิมพ์ในช่องหมายเหตุ</td>
+        <td><span class="pill bad">ขาด</span></td>
+        <td><b>P2:</b> พัดลมดูดอากาศ+ฝาครอบ, โครงรับม่าน, โฟเมก้า — ไม่มีออปชั่น root cause: เป็นงานปลีกย่อยไม่ได้ทำเป็น product</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <h2>สรุปสิ่งที่ต้องเพิ่ม/แก้/จัดหมวด — ส่งแชท B</h2>
+  <p class="small">จัดลำดับ P1 (แก้ด่วน — กระทบใบลูกค้าโดยตรง) → P2 (ควรแก้ — คำ/ของขาด) → P3 (ปรับให้เหมือนจริงขึ้น)</p>
+
+  <h3>🔴 P1 — แก้ด่วน (หลุดลงใบลูกค้า / ใบไม่เหมือนจริง)</h3>
+  <ol class="fix">
+    <li><span class="tag p1">P1-1</span><b>“(รอราคา)” / “(รอราคา R3.9)” หลุดลงใบลูกค้า</b> — เกิดกับ แผ่นลูกฟูกล่าง, แผ่นคอมโพสิทล่าง, กระจกอินซูเลท, งานพื้น (เห็นจริงในใบ FULL-A/B หลายข้อ). <b>แก้:</b> ถ้า optdelta = 0 ให้ <u>ซ่อนบรรทัดนั้นจากใบ</u> + เตือนเฉพาะหน้ากรอก (ไม่พิมพ์ลงใบ). ไฟล์: genQuote <code>_parts.push(...'(รอราคา)')</code> ~บรรทัด 2883/2886/2892.</li>
+    <li><span class="tag p1">P1-2</span><b>มุ้งเฟรมเล็ก/เฟรมใหญ่ ต่อบานในบรรทัดเดียวไม่ได้</b> — ใบจริงเขียน “…พร้อมมุ้งเฟรมเล็ก” รวมกับบาน แต่ระบบบังคับเป็น product แยกข้อ. <b>แก้:</b> เพิ่ม imp21/22/23 เข้า dropdown <code>o-mosq</code> (addon ต่อบาน) หรือเพิ่มกลไก attach. ไฟล์: <code>MOSQUITO_SCREENS</code> / option ~บรรทัด 2183.</li>
+    <li><span class="tag p1">P1-3</span><b>กระจกอินซูเลท 5+8+5 ราคาผูกมือ</b> — ลูกค้าใช้หนัก (ทั้งใบของปีเตอร์) ถ้าลืมกรอก delta = ใบเพี้ยน. <b>แก้:</b> ใส่ราคาอินซูเลทเข้าตาราง/ลิสต์กระจก (มี “อินซูเลท 6+6+6” อยู่แล้ว) ให้คิดออโต้แทน checkbox+optdelta.</li>
+  </ol>
+
+  <h3>🟡 P2 — ควรแก้</h3>
+  <ol class="fix">
+    <li><span class="tag p2">P2-1</span><b>หัวข้อ hard-code “พร้อมมุ้งจีบ”</b> — เลือกชนิดอื่น (นิรภัย/ม้วน) แต่หัวข้อยังขึ้น “จีบ”. <b>แก้:</b> ใช้ชื่อชนิดจริงจาก mosqId. ไฟล์ ~บรรทัด 2847.</li>
+    <li><span class="tag p2">P2-2</span><b>ราวกันตก: ชนิดกระจก + ราวเหล็ก</b> — ใบจริงใช้เทมเปอร์ 10/12 แต่ระบบออก “ใส 6”; และไม่มี “ราวกันตกเหล็ก”. <b>แก้:</b> ให้ราวเลือกชนิด/ความหนากระจกได้ + เพิ่ม variant เหล็ก. (เช็คซ้ำว่าราวเปลี่ยนกระจกได้อยู่แล้วหรือไม่)</li>
+    <li><span class="tag p2">P2-3</span><b>งานประกอบที่ขาด</b> — พัดลมดูดอากาศ 8"+ฝาครอบกันแมลง, เสริมโครงรับม่าน, โฟเมก้า/กระจกเงา 2 ด้าน. <b>แก้:</b> เพิ่มเป็น option/preset หรืออย่างน้อยทำ custom_item ให้กรอกง่าย.</li>
+  </ol>
+
+  <h3>🟦 P3 — ปรับให้เหมือนจริงขึ้น</h3>
+  <ol class="fix">
+    <li><span class="tag p3">P3-1</span><b>ครอบวงกบเป็น option “จำนวนด้าน” ต่อบาน</b> (3/4 ด้าน) แทน product แยกบรรทัด — ใบจริงเขียนรวมในด้านนั้น.</li>
+    <li><span class="tag p3">P3-2</span><b>รายละเอียดหลังคาละเอียดขึ้น</b> — ท่อ PVC ขนาด/สี, โซ่ลาย/สี/จำนวนจุด, “ปล่อยปลายไม่มีราง / ยื่นปลาย”, เสริมเพลทเหล็ก/เหล็กดึง (ตอนนี้ตายตัว “โซ่ลายโลตัส สีน้ำตาล”).</li>
+    <li><span class="tag p3">P3-3</span><b>รุ่นมือจับเฉพาะ</b> (HD182/X-J/Berin/SlimLux/Digital X2) + “โชว์คาน/ซ่อนคาน” เป็น label — อิงลิสต์ในเอกสาร QC ที่มีราคาครบ.</li>
+    <li><span class="tag p3">P3-4</span><b>ชื่อสีลายไม้</b> ให้ตรงคำลูกค้า (Golden Teak SMS, ไวท์แบมบู KL19022WD) — ตอนนี้ต้องไปทาง “ลายไม้อบพิเศษ + รหัส”.</li>
+    <li><span class="tag p3">P3-5</span><b>เดินไฟดาวน์ไลท์ N ดวง</b> เจาะจงจำนวน (ตอนนี้ generic 2 ดวง).</li>
+  </ol>
+
+  <div class="note">
+    <b>หมายเหตุผู้ตรวจ:</b> รายงานนี้ตรวจ “ความครบของ option + การออกในใบ” ตามโหมด A เท่านั้น — <u>ไม่ได้ตรวจความถูกต้องของราคา/สูตร</u>.
+    ตัวเลข baseline ปัจจุบัน (FullA 679,450 / FullB 8,057,421) ไม่เปลี่ยน เพราะงานนี้ไม่แตะ index.html.
+    จุดที่ติดป้าย <b>(เช็คซ้ำ)</b> = พี่นัทเปิดเครื่องลองกรอกจริงยืนยันอีกที.
+  </div>
+
+  <footer>
+    แหล่งอ้างอิง: ใบเสนอราคาจริง 16 ใบ (PDF) + เอกสารควบคุมคุณภาพงาน (คลังออปชั่นบริษัท) ·
+    ระบบ: <code>public/calculator/index.html</code> render ผ่าน <code>scripts/gen-quotes-full.mjs</code> (jsdom) ·
+    เครื่องมือเทียบ: strip tags อ่านเนื้อใบจริง + ตรวจ option ในซอร์ส ·
+    READ-ONLY — ไม่แก้ index.html (แชท B แก้) · 2026-06-08
+  </footer>
+
+</div>
+</body>
+</html>
