@@ -40,7 +40,7 @@ const CAT_TO_GROUP = {
 // product ids ที่ต้อง skip (config พิเศษหรือ free-form)
 const SKIP = new Set(["glass_replace", "custom_item"]);
 // product ids ที่แยกใส่ manual config ใน jobB ด้านล่าง
-const MANUAL_IDS = new Set(["shower", "frameless_door", "glasshouse", "zipscreen", "fixed_glass"]);
+const MANUAL_IDS = new Set(["shower", "frameless_door", "zipscreen", "fixed_glass"]);
 
 function enableAllOpts(ch) {
   // เลือก option ทุก dropdown .o-* (ตัวที่ 2) + ติ๊ก checkbox .o-* ตัวแรกๆ — "ใส่ออฟชั่นครบ"
@@ -90,15 +90,77 @@ function addItem(it) {
   return ch;
 }
 
-// #1: ค่า .o-ghside-* ต้องตรงกับ option value ของ dropdown ที่แก้แล้ว
-const GH = (room, price) => ({ ".o-ghroom": room, ".o-ghcolor": "sahara", ".o-ghglass": "กระจกใส หนา 6 มม.",
-  ".o-ghgutter": "รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้", ".o-ghmosq": "มุ้งเฟรมเล็ก (ด้าน B, E)", ".o-ghlock": "ชุดล็อคพร้อมกุญแจ (ประตูด้าน C)",
-  ".o-ghside-A": "ติดตายเต็มผนัง", ".o-ghside-B": "ประตูบานเปิดคู่", ".o-ghside-C": "ประตูบานเลื่อน 2 ราง",
-  ".o-ghside-D": "ติดตาย+ช่องแสงบน", ".o-ghside-E": "ประตูบานเปิดเดี่ยว", ".o-ghroof": "หลังคาไวนิล (แปคู่) โครงอลูมิเนียม + รางน้ำอลู + ตะแกรงกันใบไม้",
-  ".o-ghprice": String(price), ".o-ghnote-inc": "รื้อหลังคาเดิม / ทำสีปิด / ตัดท่อแอร์ 1 จุด", ".o-ghnote-exc": "รื้อพื้น / ลงเข็ม / ทำคาน / ปูกระเบื้อง / เดินไฟ" });
 const ZIP = (grp, model, fab, ctrl) => ({ ".o-zgrp": grp, ".o-zmodel": model, ".o-zfab": fab, ".o-zctrl": ctrl });
 
+// ===== addGlasshouseSet2 — สร้างชุดกั้นห้องกระจกด้วย flow ใหม่ (ระบบชุด) =====
+// cfg = { name, sides:[{prod,w,h,pos},...], roof:{prod,w,h} }
+// ใช้ addGlasshouseSet() + .set-addpart + .set-addroof ตาม flow จริง
+function addGlasshouseSet2(cfg) {
+  const sb = w.addGlasshouseSet(); // สร้าง setbox + ch แรก group6 pos "ด้าน A"
+  // ตั้งชื่อชุด
+  const sn = sb.querySelector(".set-name");
+  if (sn) { sn.value = cfg.name || "กั้นห้องกระจก"; fire(sn, "input"); fire(sn, "change"); }
+
+  // กำหนด ด้าน A (ch แรกที่มีอยู่แล้ว)
+  const parts = sb.querySelector(".set-parts");
+  let chs = parts.querySelectorAll(".ch");
+  const sides = cfg.sides || [];
+  if (sides.length > 0) {
+    const s0 = sides[0];
+    const ch0 = chs[0];
+    if (s0.prod) {
+      const ps = ch0.querySelector(".i-prod");
+      if (ps && !ps.querySelector('option[value="' + s0.prod + '"]')) ps.innerHTML = w.prodOptionsG6("6");
+      if (ps) { ps.value = s0.prod; fire(ps, "change"); }
+    }
+    if (s0.w != null) setF(ch0, ".i-w", s0.w);
+    if (s0.h != null) setF(ch0, ".i-h", s0.h);
+    const pA = ch0.querySelector(".i-position");
+    if (pA) { pA.value = s0.pos || "ด้าน A"; fire(pA, "input"); fire(pA, "change"); }
+  }
+
+  // เพิ่มด้านที่เหลือ (sides[1..]) ด้วยการคลิก .set-addpart (top btn)
+  for (let i = 1; i < sides.length; i++) {
+    const addBtn = sb.querySelector(".set-addpart");
+    if (addBtn) fire(addBtn, "click");
+    chs = parts.querySelectorAll(".ch");
+    const chN = chs[chs.length - 1];
+    const sN = sides[i];
+    if (sN.prod) {
+      const ps = chN.querySelector(".i-prod");
+      if (ps && !ps.querySelector('option[value="' + sN.prod + '"]')) ps.innerHTML = w.prodOptionsG6("6");
+      if (ps) { ps.value = sN.prod; fire(ps, "change"); }
+    }
+    if (sN.w != null) setF(chN, ".i-w", sN.w);
+    if (sN.h != null) setF(chN, ".i-h", sN.h);
+    const pN = chN.querySelector(".i-position");
+    if (pN) { pN.value = sN.pos || ("ด้าน " + String.fromCharCode(64 + i + 1)); fire(pN, "input"); fire(pN, "change"); }
+  }
+
+  // เพิ่มหลังคา ด้วยการคลิก .set-addroof
+  // หลังคลิก: group=3 ถูก set แล้วโดย click handler → prod options สำหรับ group3 พร้อมแล้ว
+  if (cfg.roof) {
+    const roofBtn = sb.querySelector(".set-addroof");
+    if (roofBtn) fire(roofBtn, "click");
+    chs = parts.querySelectorAll(".ch");
+    const roofCh = chs[chs.length - 1];
+    const r = cfg.roof;
+    if (r.prod) {
+      const ps = roofCh.querySelector(".i-prod");
+      // options ถูก inject โดย group=3 change event แล้ว → set value ตรงได้
+      if (ps) { ps.value = r.prod; fire(ps, "change"); }
+    }
+    if (r.w != null) setF(roofCh, ".i-w", r.w);
+    if (r.h != null) setF(roofCh, ".i-h", r.h);
+    const rPos = roofCh.querySelector(".i-position");
+    if (rPos && !rPos.value.trim()) { rPos.value = "หลังคา"; fire(rPos, "input"); }
+  }
+
+  return sb;
+}
+
 // ===== ใบ A: เหมือนงานจริง (สินค้าผสมแบบลูกค้าจริง ~8 รายการ) =====
+// glasshouse เป็น set → ใช้ sets[] แยกจาก items[] ปกติ
 const jobA = { cust: "คุณปิยะ มงคล (บ้านเดี่ยว 2 ชั้น)", date: "04-06-69",
   discFlat: 3000, // ทดสอบ pattern ส่วนลด → โชว์บล็อกยอด 5 บรรทัด
   items: [
@@ -108,12 +170,25 @@ const jobA = { cust: "คุณปิยะ มงคล (บ้านเดี�
     { g: 1, prod: "casement_euro", pos: "หน้าต่าง ห้องนอนใหญ่", itype: "window", w: 1.6, h: 2.2, panels: 2, qty: 2 },
     { g: 1, prod: "awning_euro", pos: "หน้าต่าง ห้องน้ำ", itype: "window", w: 0.8, h: 1.0, qty: 3 },
     { g: 1, prod: "folding", pos: "ประตู เชื่อมระเบียงหลัง", w: 4.0, h: 2.4, panels: 4, qty: 1 },
-    { g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ระเบียงหลังบ้าน", auto: false, opts: GH("ระเบียงหลังบ้าน + ซักล้าง", 318000) },
+    // กั้นห้องกระจก → แทรกด้วย sets[] ด้านล่าง (ลำดับใบ: 4 items ก่อน → set → 3 items หลัง)
     { g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียงชั้น 2", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") },
     { g: 5, prod: "imp23", pos: "มุ้งเฟรมใหญ่ ประตูระเบียง", w: 1.8, h: 2.1, qty: 1 },
     { g: 1, prod: "fixed_glass", pos: "ช่องแสง เหนือประตูหน้าบ้าน", w: 3.6, h: 0.5, qty: 1,
       note: "OPTION : เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง\nหมายเหตุ : ช่องแสงคู่กับประตูหน้าบ้าน" },
-  ] };
+  ],
+  // sets ถูก inject ระหว่าง render (หลัง items[3] = folding)
+  sets: [
+    { afterItemIdx: 3, cfg: {
+      name: "กั้นห้องกระจก ระเบียงหลังบ้าน",
+      sides: [
+        { prod: "sliding_euro", w: 3.6, h: 2.4, pos: "ด้าน A" },
+        { prod: "fixed_glass",  w: 2.4, h: 2.4, pos: "ด้าน B" },
+        { prod: "casement_euro", w: 1.8, h: 2.4, pos: "ด้าน C" },
+      ],
+      roof: { prod: "roof_vinyl", w: 9.0, h: 3.5 },
+    }},
+  ],
+};
 
 // ===== ใบ B: ครบทุก product id ใน PRODUCTS =====
 // กำหนดขนาดวนตาม index เพื่อเทสหลายขนาด
@@ -182,10 +257,6 @@ function buildJobBItems() {
   // frameless สวิง + เลื่อน
   items.push({ g: 1, prod: "frameless_door", pos: "ประตูบานเปลือยสวิง (สีดำ)", w: 0.9, h: 2.1, qty: 1, auto: false, opts: { ".o-frametype": "swing", ".o-framecolor": "ดำ" } });
   items.push({ g: 1, prod: "frameless_door", pos: "ประตูบานเปลือยเลื่อน (สีขาว)", w: 1.6, h: 2.1, qty: 1, auto: false, opts: { ".o-frametype": "sliding", ".o-framecolor": "ขาว" } });
-  // กั้นห้องกระจก ×3
-  items.push({ g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ชั้น 1 (ห้องนั่งเล่น)", auto: false, opts: GH("ห้องนั่งเล่น ชั้น 1", 420000) });
-  items.push({ g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ชั้น 2 (ห้องอเนกประสงค์)", auto: false, opts: GH("ห้องอเนกประสงค์ ชั้น 2", 506000) });
-  items.push({ g: 6, prod: "glasshouse", pos: "กั้นห้องกระจก ระเบียงหลังบ้าน", auto: false, opts: GH("ระเบียงหลังบ้าน + ซักล้าง", 318000) });
   // G7 ม่านซิป หลายผ้า
   items.push({ g: 7, prod: "zipscreen", pos: "ม่านซิป ระเบียง (5%)", w: 3.0, h: 2.8, qty: 1, auto: false, opts: ZIP("retail", "auto", "5", "aok220") });
   items.push({ g: 7, prod: "zipscreen", pos: "ม่านซิป หน้าต่าง (ทึบ 0%)", w: 2.0, h: 2.4, qty: 1, auto: false, opts: ZIP("retail", "Z100", "0", "manual") });
@@ -195,11 +266,42 @@ function buildJobBItems() {
   return items;
 }
 
+// กั้นห้องกระจก ×3 ชุด — สร้างด้วย addGlasshouseSet2 หลัง items ปกติ
+// เก็บเป็น array แยก เพราะ render ต้องเรียกหลัง items ทั้งหมด (set อยู่ท้ายใบ B)
+const JOB_B_GH_SETS = [
+  { name: "กั้นห้องกระจก ชั้น 1 (ห้องนั่งเล่น)",
+    sides: [
+      { prod: "sliding_euro", w: 4.2, h: 2.4, pos: "ด้าน A (ประตูเลื่อน)" },
+      { prod: "fixed_glass",  w: 3.0, h: 2.4, pos: "ด้าน B (ติดตาย)" },
+      { prod: "casement_euro", w: 1.8, h: 2.4, pos: "ด้าน C (ประตูบานเปิด)" },
+      { prod: "fixed_glass",  w: 3.0, h: 2.4, pos: "ด้าน D (ติดตาย)" },
+    ],
+    roof: { prod: "roof_std", w: 12.6, h: 4.0 },
+  },
+  { name: "กั้นห้องกระจก ชั้น 2 (ห้องอเนกประสงค์)",
+    sides: [
+      { prod: "folding", w: 3.6, h: 2.4, pos: "ด้าน A (บานเฟี้ยม)" },
+      { prod: "awning_euro", w: 2.4, h: 1.2, pos: "ด้าน B (บานกระทุ้ง)" },
+      { prod: "fixed_glass", w: 2.4, h: 2.4, pos: "ด้าน C (ติดตาย)" },
+    ],
+    roof: { prod: "roof_delight", w: 8.4, h: 3.0 },
+  },
+  { name: "กั้นห้องกระจก ระเบียงหลังบ้าน",
+    sides: [
+      { prod: "sliding_euro", w: 3.0, h: 2.2, pos: "ด้าน A" },
+      { prod: "fixed_glass",  w: 2.0, h: 2.2, pos: "ด้าน B" },
+    ],
+    roof: { prod: "roof_std", w: 6.0, h: 3.0 },
+  },
+];
+
 const jobB = {
   cust: "คุณทดสอบ ครบทุกสินค้า (เทสเต็มระบบ)",
   date: "04-06-69",
   discFlat: 2000,
   items: buildJobBItems(),
+  // กั้นห้องกระจก ×3 ชุด ต่อท้ายรายการปกติ
+  ghSets: JOB_B_GH_SETS,
 };
 
 function render(job, code) {
@@ -209,9 +311,26 @@ function render(job, code) {
   setF2("sellerName", "เซลล์ไล้"); setF2("custContact", job.cust + " (Line)");
   setF2("custPhone", "08X-XXX-XXXX"); setF2("custAddress", "เลขที่ — หมู่ — ต.— อ.— จ.— 00000 (ที่อยู่ทดสอบระบบ)");
   // ปิด calcQuote ชั่วคราวระหว่าง add items เพื่อประสิทธิภาพ (200+ items)
-  const _origCalc = w.calcQuote;
   w.eval("window._calcQuoteOrig = calcQuote; calcQuote = function(){};");
-  job.items.forEach(addItem);
+
+  // jobA: sets[] ถูก inject ตาม afterItemIdx — render items + sets ตามลำดับ
+  if (job.sets && job.sets.length) {
+    // แปลง sets → set indexed by afterItemIdx
+    const setsByAfter = {};
+    for (const s of job.sets) setsByAfter[s.afterItemIdx] = s.cfg;
+    job.items.forEach((it, idx) => {
+      addItem(it);
+      if (setsByAfter[idx] != null) addGlasshouseSet2(setsByAfter[idx]);
+    });
+  } else {
+    job.items.forEach(addItem);
+  }
+
+  // ghSets: กั้นห้องกระจกชุดท้ายใบ B
+  if (job.ghSets && job.ghSets.length) {
+    for (const cfg of job.ghSets) addGlasshouseSet2(cfg);
+  }
+
   w.eval("calcQuote = window._calcQuoteOrig;");
   w.calcQuote(); w.genQuote();
   const inner = doc.getElementById("quoteContent").innerHTML;
@@ -224,7 +343,9 @@ html,body{background:#fff !important;}
 @media print{ body *{visibility:visible !important;} #sheet,#sheet *{visibility:visible !important;} }
 </style></head><body><div id="sheet"><div class="quote">${inner}</div></div></body></html>`;
   writeFileSync(join(OUT, code + ".html"), out, "utf8");
-  return job.items.length;
+  // นับรายการ: items ปกติ + จำนวน ch ในทุก setbox
+  const totalChs = [...doc.querySelectorAll("#items .ch")].length;
+  return totalChs;
 }
 const nA = render(jobA, "quote-FULL-A");
 const nB = render(jobB, "quote-FULL-B");
@@ -236,12 +357,16 @@ const allNonSkip = ALL_PRODUCTS.filter(p =>
   !(p.cat === 'เสริม' && p.g !== 2)
 );
 const jobBIds = new Set(jobB.items.map(it => it.prod));
+// ชุดกั้นห้องกระจก (group6+group3) ไม่ใช่ product แล้ว → นับแยก (+1) ถ้าใบ B มีชุดกั้นห้อง
+const hasGHSet = (jobB.ghSets && jobB.ghSets.length > 0) ? 1 : 0;
 const missing = allNonSkip.filter(p => !jobBIds.has(p.id));
-console.log(`\nPRODUCTS ทั้งหมด (ไม่นับ SKIP/เสริม): ${allNonSkip.length} ตัว`);
-console.log(`ใบ B ครอบคลุม: ${allNonSkip.filter(p => jobBIds.has(p.id)).length} ตัว`);
+const coveredCount = allNonSkip.filter(p => jobBIds.has(p.id)).length + hasGHSet;
+const totalCount = allNonSkip.length + hasGHSet; // +1 virtual "ชุดกั้นห้องกระจก"
+console.log(`\nPRODUCTS ทั้งหมด (ไม่นับ SKIP/เสริม): ${totalCount} ตัว (รวม 1 virtual ชุดกั้นห้องกระจก)`);
+console.log(`ใบ B ครอบคลุม: ${coveredCount} ตัว`);
 if (missing.length > 0) {
   console.log(`ขาด (${missing.length} ตัว): ${missing.map(p => p.id).join(', ')}`);
 } else {
-  console.log("ครอบคลุมทุกตัวแล้ว");
+  console.log(`ครอบคลุมทุกตัวแล้ว (coverage=${coveredCount}/${totalCount})`);
 }
 process.exit(0); // ปิด process ทันที กัน jsdom ค้าง event loop (zombie task)
