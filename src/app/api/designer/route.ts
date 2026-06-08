@@ -6,8 +6,8 @@ import type { DesignState } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
-// How many days after design_end to still show DONE cards on the board
-const DONE_WINDOW_DAYS = 14;
+// How many days after design_end to still show DONE jobs (ประวัติบนไทม์ไลน์ + คอลัมน์เสร็จ)
+const DONE_WINDOW_DAYS = 90;
 
 // Row shape returned from DB (select includes designer_ref join)
 type DesignerRow = {

@@ -246,7 +246,7 @@ export default function DesignerBoard({
           <KpiTile label="งานในมือ" value={kpi.total} />
           <KpiTile label="เลยกำหนด" value={kpi.overdue} accent={kpi.overdue > 0 ? "text-brand" : undefined} />
           <KpiTile label="รอบแก้เฉลี่ย" value={kpi.avg_revise} />
-          <KpiTile label="เสร็จแล้ว (14 วัน)" value={doneCount} accent="text-emerald-600" />
+          <KpiTile label="เสร็จแล้ว (90 วัน)" value={doneCount} accent="text-emerald-600" />
         </div>
       )}
 

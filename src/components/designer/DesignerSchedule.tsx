@@ -242,8 +242,9 @@ function placeJobs(jobs: Job[], rangeStart: string, today: string): PlacedBar[] 
 
   for (const job of jobs) {
     // Determine bar start & end ISO dates
-    const rawStart = job.design_start ?? job.design_due_date ?? today;
-    const rawEnd = job.design_due_date ?? job.design_start ?? today;
+    // DONE ใช้ design_end เป็นวันสิ้นสุดจริง (ช่วงเวลาที่ทำจริง) — เก็บเป็นประวัติ
+    const rawStart = job.design_start ?? job.design_due_date ?? job.design_end ?? today;
+    const rawEnd = (job.design_state === "DONE" ? (job.design_end ?? job.design_due_date) : job.design_due_date) ?? job.design_start ?? today;
     const startIso = rawStart;
     const endIso = rawEnd < rawStart ? rawStart : rawEnd;
 
@@ -280,6 +281,8 @@ interface DragBarProps {
 function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragBarProps) {
   const { job, startOffset, endOffset, subRow } = bar;
   const c = STATE_COLOR[job.design_state];
+  // งานเสร็จ (DONE) = ประวัติ: แสดงบนไทม์ไลน์แต่ลาก/ขยายไม่ได้
+  const editable = canWrite && job.design_state !== "DONE";
 
   // Local drag state
   const [dragDelta, setDragDelta] = useState(0);
@@ -326,8 +329,8 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
 
   // ── Pointer handlers ──────────────────────────────────────────────────────
   function onPointerDownBar(e: React.PointerEvent) {
-    if (!canWrite) {
-      // Non-write: treat as click → mobile popover
+    if (!editable) {
+      // อ่านอย่างเดียว/งานเสร็จแล้ว — ลากไม่ได้
       return;
     }
     e.stopPropagation();
@@ -413,8 +416,8 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
   }
 
   // Tooltip text
-  const startLabel = thShortDate(job.design_start ?? job.design_due_date ?? today);
-  const endLabel = thShortDate(job.design_due_date ?? job.design_start ?? today);
+  const startLabel = thShortDate(job.design_start ?? job.design_due_date ?? job.design_end ?? today);
+  const endLabel = thShortDate((job.design_state === "DONE" ? (job.design_end ?? job.design_due_date) : job.design_due_date) ?? job.design_start ?? today);
   const tooltip = `${job.job_code ?? "—"}  |  ${startLabel} – ${endLabel}`;
 
   return (
@@ -422,7 +425,8 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       className={[
         "absolute rounded-md border select-none transition-shadow",
         c.barBg, c.border,
-        canWrite ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        editable ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+        job.design_state === "DONE" ? "opacity-60" : "",
         barBgClass,
       ].join(" ")}
       style={{
@@ -439,7 +443,7 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       aria-label={`งาน ${job.job_code ?? ""} ${job.customer_name} (${tooltip})`}
     >
       {/* Resize handle — left edge */}
-      {canWrite && (
+      {editable && (
         <div
           className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-l-md"
           onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeStart(e); }}
@@ -470,7 +474,7 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       </div>
 
       {/* Resize handle — right edge */}
-      {canWrite && (
+      {editable && (
         <div
           className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-r-md"
           onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeEnd(e); }}
@@ -780,11 +784,11 @@ export default function DesignerSchedule({
     [jobs]
   );
 
-  // Filter by designer if set
+  // Lanes แสดงงานทั้งหมดรวม DONE (เก็บเป็นประวัติบนไทม์ไลน์) — กรองตามช่าง
   const filteredJobs = useMemo(() => {
-    if (!designerFilter) return activeJobs;
-    return activeJobs.filter((j) => String(j.designer_ref) === designerFilter);
-  }, [activeJobs, designerFilter]);
+    if (!designerFilter) return jobs;
+    return jobs.filter((j) => String(j.designer_ref) === designerFilter);
+  }, [jobs, designerFilter]);
 
   // Visible designers (respecting filter)
   const visibleDesigners = useMemo(() => {
