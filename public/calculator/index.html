@@ -804,7 +804,11 @@ const MOSQUITO_SCREENS = [
   {id:'mj_kick_150',name:'ม้วนเตะได้ 150 (ติดล้นนอกวงกบ)',rate:7500,min:15000,itype:'both',overhang:true,maxWidth:1.5,mscolor:true},
   {id:'mj_kick_300',name:'ม้วนเตะได้ 300 (ติดล้นนอกวงกบ)',rate:7500,min:37500,itype:'both',overhang:true,maxWidth:3.0,mscolor:true},
   {id:'mj_kick_600',name:'ม้วนเตะได้ 600 (ติดล้นนอกวงกบ)',rate:7500,min:67500,itype:'both',overhang:true,maxWidth:6.0,mscolor:true},
-  {id:'mj_screen_safety',name:'มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)',rate:5000,min:5000,itype:'both',overhang:true}
+  {id:'mj_screen_safety',name:'มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)',rate:5000,min:5000,itype:'both',overhang:true},
+  // P1-2: มุ้งเฟรม (imp21/22/23) ในรูปแบบ addon ต่อบาน — ราคา tier ตามพื้นที่ + min ตาม ประตู/หน้าต่าง × จำนวนบาน (เท่า product เดิม)
+  {id:'imp21',name:'มุ้งเฟรมเล็ก (เปิด/เลื่อน/กระทุ้ง/ยก)',frame:true,rates:'IMP21',min_door:2400,min_window:1200,itype:'both',mscolor:true},
+  {id:'imp22',name:'มุ้งเฟรมเล็กติดตาย',frame:true,rates:'IMP22',min_door:1500,min_window:800,itype:'both',mscolor:true},
+  {id:'imp23',name:'มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก)',frame:true,rates:'IMP23',min_door:7200,min_window:4800,itype:'both',mscolor:true}
 ];
 
 // === Opening patterns presets ===
@@ -1458,14 +1462,27 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         if(!_isPleated && _isSwap) _r=_r/2;             // มุ้งเลื่อน + สลับ = ครึ่งช่องเปิด
         openRatio=_r;
       }
-      const mosqArea = a * openRatio;
-      const mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
+      let mosqArea, mosqBase;
+      if(mscreen.frame){
+        // P1-2: เฟรมมุ้ง (imp21/22/23) = เต็มช่องบาน · rate tier ตามพื้นที่ · min ตาม ประตู/หน้าต่าง × จำนวนบาน (เท่า product)
+        mosqArea = a;
+        const _fr = rateOf(a, RATES[mscreen.rates]);
+        const _it = (optSel.itype==='window') ? 'window' : 'door';
+        const _minPP = (_it==='window') ? (mscreen.min_window||0) : (mscreen.min_door||0);
+        const _pn = Math.max(1, parseInt(panels)||1);
+        mosqBase = Math.max(_minPP*_pn, a*_fr);
+      } else {
+        mosqArea = a * openRatio;
+        mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
+      }
       const fabric = (optSel.mosqFabric)||'fiber_gray';
       const fabricExtra = (fabric==='anti_pet'?800:(fabric==='stainless'?1200:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
       const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
-      opt += mosqBase + fabricExtra;
-      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel, p:mosqBase+fabricExtra, mosqArea:mosqArea});
-      // skip rest of existing logic (mosqA calc not used for now)
+      // FIX: บวกราคามุ้งเข้า sell จริง (เดิม opt+= อยู่หลัง sell finalize → ตกหล่น ไม่เก็บเงิน)
+      // ราคามุ้ง roundUp ทีละชิ้น (ตรงเจตนาโค้ดเดิมที่ค้างใน if(false) ด้านล่าง)
+      const _mosqPrice = roundUp(mosqBase + fabricExtra);
+      sell += _mosqPrice;
+      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel, p:_mosqPrice, mosqArea:mosqArea});
     }
     if(false){
       const pat = OPENING_PATTERNS.find(p2 => p2.id===optSel.mosqPat) || OPENING_PATTERNS[0];
@@ -2180,7 +2197,7 @@ function buildItemOpts(d){
   if(p.mosquito){
     const _itypeMosq = (d.querySelector('.i-type')||{}).value || 'door';
     h+='<label class="opt" style="background:#E3F2FD;border-left:3px solid #1976D2;padding:5px 10px;font-size:12px;width:100%;display:block;">🪟 <b>เพิ่มมุ้งในบานนี้</b> (ราคาคิดตามพื้นที่บาน)</label>';
-    h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){return '<option value="'+m.id+'">'+m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')</option>';}).join('')+'</select></label>';
+    h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select></label>';
     h+='<label class="opt">ผ้ามุ้ง <select class="o-mosqfabric" style="width:auto;height:32px;"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
@@ -2394,6 +2411,7 @@ function readItem(d){
     const _mo=d.querySelector('.o-mosqopen'); optSel.mosqOpen=_mo?_mo.value:'1';
     const _mc=d.querySelector('.o-mosqcolor'); optSel.mosqColor=_mc?_mc.value:'';
     const _mf=d.querySelector('.o-mosqfabric'); optSel.mosqFabric=_mf?_mf.value:'fiber_gray';
+    const _mit=d.querySelector('.i-type'); optSel.itype=(_mit&&_mit.value)||'door'; // P1-2: เฟรมมุ้ง min ตาม ประตู/หน้าต่าง
   }
   if(p.mscolor){ const _msc=d.querySelector('.o-mscolor'); optSel.mscolor=_msc?_msc.value:''; }
   if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; }
@@ -2845,7 +2863,7 @@ function genQuote(keepNo){
     // C1/P2-1: มีมุ้ง (addon) → ต่อท้ายชื่อชนิดมุ้งจริงตาม mosqId (id-based ไม่ใช่ keyword)
     // บานเลื่อน: มุ้งถูก include ใน _slideName แล้ว ไม่ต้องต่ออีก
     if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){
-      var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย'};
+      var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย',imp21:'พร้อมมุ้งเฟรมเล็ก',imp22:'พร้อมมุ้งเฟรมเล็ก',imp23:'พร้อมมุ้งเฟรมใหญ่'};
       prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ');
     }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
