@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
@@ -206,7 +207,16 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
   const inp = "w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none placeholder-white/40 min-h-[48px]";
   const dinp = `${inp} tnum [&::-webkit-calendar-picker-indicator]:invert`;
 
-  return (
+  // ปิด modal ด้วยปุ่ม Esc
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+  // Portal ไป body → หลุดจาก ancestor ที่มี transform/backdrop-filter (กัน fixed เพี้ยน/ล้นจอ)
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
       {/* flex-col + header/footer ติดขอบ → ปิด/บันทึกเห็นเสมอแม้เนื้อหายาว */}
@@ -271,6 +281,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
