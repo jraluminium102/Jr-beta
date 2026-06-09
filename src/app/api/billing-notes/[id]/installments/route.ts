@@ -71,26 +71,16 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
     }
   }
 
-  // 4) replace งวดทั้งชุด (ปลอดภัย เพราะยืนยันแล้วว่าไม่มี FK อ้างอิง)
-  // constraint trigger เป็น deferrable → ผลรวมจะถูกเช็คตอน commit
-  if (existingIds.length > 0) {
-    const { error: delErr } = await ctx.supabase
-      .from("billing_installments").delete().in("id", existingIds);
-    if (delErr) throw new Error("ลบงวดเดิมไม่สำเร็จ: " + delErr.message);
-  }
-
-  const toInsert = newInst.map((n) => ({
-    billing_note_id: Number(bnId),
-    seq: n.seq,
-    label: n.label,
-    amount: n.amount,
-    due_date: n.due_date ?? null,
-    sort_order: n.seq - 1,
-    status: "pending" as const,
-  }));
-  const { error: insErr } = await ctx.supabase
-    .from("billing_installments").insert(toInsert);
-  if (insErr) throw new Error("บันทึกงวดใหม่ไม่สำเร็จ: " + insErr.message);
+  // 4) replace งวดทั้งชุดผ่าน RPC (1 transaction) — ให้ deferred constraint (sum=total)
+  // เช็คตอน commit ได้ (PostgREST แยก delete/insert เป็นคนละ txn → trigger ปัดกลางทาง)
+  const sb = ctx.supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+  };
+  const { error: rpcErr } = await sb.rpc("replace_billing_installments", {
+    p_bn_id: Number(bnId),
+    p_items: newInst.map((n) => ({ seq: n.seq, label: n.label, amount: n.amount, due_date: n.due_date ?? null })),
+  });
+  if (rpcErr) return err("แก้งวดไม่สำเร็จ: " + rpcErr.message, 400);
 
   // audit
   await audit({
