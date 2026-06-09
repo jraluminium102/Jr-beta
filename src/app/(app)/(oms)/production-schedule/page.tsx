@@ -11,6 +11,7 @@ type SchedRow = {
   kind: "job" | "adhoc";
   id: string;
   title: string;
+  subtitle: string | null;
   job_code: string | null;
   customer_area: string | null;
   customer_name?: string | null;
@@ -117,8 +118,8 @@ export default function ProductionSchedulePage() {
                           <span className="text-[10px] bg-amber-500/20 text-amber-200 rounded px-1.5 py-0.5">จดเอง</span>
                         )}
                       </div>
-                      {(r.customer_area || r.kind === "job") && (
-                        <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>{r.customer_area ?? "—"}</div>
+                      {r.subtitle && (
+                        <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>{r.subtitle}</div>
                       )}
                     </div>
 
@@ -192,8 +193,8 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
     setErr(null); setSaving(true);
     try {
       if (tab === "adhoc") {
-        if (!title.trim()) { setErr("กรุณาระบุชื่องาน"); setSaving(false); return; }
-        await api.post("/production-schedule", { title, customer_name: cust, produce_date: pdate, install_date: idate, producer_note: producer });
+        if (!cust.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); setSaving(false); return; }
+        await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
         await api.patch(`/production/${pickId}`, { status: "QUEUED", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
@@ -208,58 +209,67 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      {/* flex-col + header/footer ติดขอบ → ปิด/บันทึกเห็นเสมอแม้เนื้อหายาว */}
+      <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl fade-in flex flex-col max-h-[88dvh]">
+        {/* header (ปิดได้เสมอ) */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-white/10">
           <h2 className="text-white font-bold text-lg">เพิ่มงานผลิต</h2>
           <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-10 h-10 inline-flex items-center justify-center rounded-xl text-white/75 hover:bg-white/10"><X size={20} /></button>
         </div>
 
-        {/* tabs */}
-        <div className="flex gap-1.5 glass-card rounded-xl p-1 mb-4">
-          {[["adhoc", "จดเอง"], ["job", "เลือกจากงานในระบบ"]].map(([t, l]) => (
-            <button key={t} onClick={() => { setTab(t as "adhoc" | "job"); setErr(null); }}
-              className={`focusable pressable flex-1 px-3 py-2 rounded-lg text-[13px] font-medium min-h-[40px] ${tab === t ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
-          ))}
+        {/* body (scroll) */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {/* tabs */}
+          <div className="flex gap-1.5 glass-card rounded-xl p-1 mb-4">
+            {[["adhoc", "จดเอง"], ["job", "เลือกจากงานในระบบ"]].map(([t, l]) => (
+              <button key={t} onClick={() => { setTab(t as "adhoc" | "job"); setErr(null); }}
+                className={`focusable pressable flex-1 px-3 py-2 rounded-lg text-[13px] font-medium min-h-[40px] ${tab === t ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
+            ))}
+          </div>
+
+          {tab === "adhoc" ? (
+            <div className="space-y-3">
+              <div><label className="block text-[13px] mb-1 text-white">ชื่อลูกค้า *</label>
+                <input value={cust} onChange={(e) => setCust(e.target.value)} placeholder="เช่น คุณสมชาย / บ้านทรายทอง" className={inp} autoFocus /></div>
+              <div><label className="block text-[13px] mb-1 text-white">ชื่อ/รายละเอียดงาน (ไม่บังคับ)</label>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="เช่น ซ่อมบานเลื่อน / งานด่วน" className={inp} /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
+                  <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
+                <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง/ส่ง</label>
+                  <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
+              </div>
+              <div><label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
+                <input value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="ชื่อช่าง" className={inp} /></div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div><label className="block text-[13px] mb-1 text-white">เลือกงานในระบบ (ยังไม่ลงคิว) *</label>
+                <select value={pickId} onChange={(e) => setPickId(e.target.value)} className={`${inp} appearance-none`}>
+                  <option value="">— เลือกงาน —</option>
+                  {candidates.map((c) => <option key={c.id} value={c.id}>{c.job?.job_code} · {c.job?.customer_name} ({PROD_STATUS[c.status]})</option>)}
+                </select>
+                {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่ยังไม่ลงคิว — งานที่ลงคิวแล้วอยู่ในตารางด้านนอก</p>}</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
+                  <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
+                <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง</label>
+                  <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
+              </div>
+              <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ “ลงคิวผลิต” + ใส่วันให้</p>
+            </div>
+          )}
+
+          {err && <p role="alert" className="mt-3 text-[13px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{err}</p>}
         </div>
 
-        {tab === "adhoc" ? (
-          <div className="space-y-3">
-            <div><label className="block text-[13px] mb-1 text-white">ชื่องาน *</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="เช่น ซ่อมบานเลื่อน / งานด่วน" className={inp} /></div>
-            <div><label className="block text-[13px] mb-1 text-white">ลูกค้า (ไม่บังคับ)</label>
-              <input value={cust} onChange={(e) => setCust(e.target.value)} placeholder="ชื่อลูกค้า/พื้นที่" className={inp} /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
-                <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
-              <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง/ส่ง</label>
-                <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
-            </div>
-            <div><label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
-              <input value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="ชื่อช่าง" className={inp} /></div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div><label className="block text-[13px] mb-1 text-white">เลือกงานในระบบ (ยังไม่ลงคิว) *</label>
-              <select value={pickId} onChange={(e) => setPickId(e.target.value)} className={`${inp} appearance-none`}>
-                <option value="">— เลือกงาน —</option>
-                {candidates.map((c) => <option key={c.id} value={c.id}>{c.job?.job_code} · {c.job?.customer_name} ({PROD_STATUS[c.status]})</option>)}
-              </select>
-              {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่ยังไม่ลงคิว — งานที่ลงคิวแล้วอยู่ในตารางด้านนอก</p>}</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
-                <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
-              <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง</label>
-                <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
-            </div>
-            <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ “ลงคิวผลิต” + ใส่วันให้</p>
-          </div>
-        )}
-
-        {err && <p role="alert" className="mt-3 text-[13px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{err}</p>}
-
-        <button onClick={submit} disabled={saving} className="focusable pressable w-full mt-4 min-h-[52px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg disabled:opacity-60 flex items-center justify-center gap-2">
-          {saving ? <span className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <Check size={20} />} บันทึก
-        </button>
+        {/* footer (ปุ่มเห็นเสมอ) */}
+        <div className="flex gap-2 px-5 py-4 shrink-0 border-t border-white/10">
+          <button onClick={onClose} className="focusable pressable glass-card text-white rounded-2xl px-5 min-h-[52px] font-medium">ปิด</button>
+          <button onClick={submit} disabled={saving} className="focusable pressable flex-1 min-h-[52px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg disabled:opacity-60 flex items-center justify-center gap-2">
+            {saving ? <span className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <Check size={20} />} บันทึก
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -32,6 +32,7 @@ export const GET = withRoute(async () => {
         kind: "job" as const,
         id: p.id as string,
         title: job?.customer_name ?? "—",
+        subtitle: job?.customer_area ?? null,
         job_code: job?.job_code ?? null,
         customer_area: job?.customer_area ?? null,
         produce_date: (p.production_queued as string | null) ?? null,
@@ -44,7 +45,10 @@ export const GET = withRoute(async () => {
   const adhocRows = (adhoc ?? []).map((a: Record<string, unknown>) => ({
     kind: "adhoc" as const,
     id: a.id as string,
-    title: (a.title as string) ?? "—",
+    // ลูกค้าเป็นชื่อหลัก (bold), ชื่อ/รายละเอียดงานเป็นบรรทัดรอง
+    title: (a.customer_name as string) || (a.title as string) || "—",
+    // โชว์ชื่องานเป็นบรรทัดรอง เฉพาะเมื่อต่างจากชื่อลูกค้า (กันซ้ำเมื่อ fallback)
+    subtitle: (a.title && a.title !== a.customer_name) ? (a.title as string) : null,
     job_code: null,
     customer_area: null,
     produce_date: (a.produce_date as string | null) ?? null,
@@ -62,8 +66,8 @@ export const GET = withRoute(async () => {
 });
 
 const createSchema = z.object({
-  title: z.string().min(1, "กรุณาระบุชื่องาน"),
-  customer_name: z.string().nullish(),
+  customer_name: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
+  title: z.string().nullish(),   // ชื่อ/รายละเอียดงาน (ไม่บังคับ)
   produce_date: z.string().nullish(),
   install_date: z.string().nullish(),
   producer_note: z.string().nullish(),
@@ -78,8 +82,8 @@ export const POST = withRoute(async (req: Request) => {
   const { data, error } = await sb
     .from("adhoc_production_tasks")
     .insert({
-      title: b.title,
-      customer_name: b.customer_name || null,
+      title: b.title || b.customer_name,   // ถ้าไม่กรอกชื่องาน ใช้ชื่อลูกค้าแทน (กัน NOT NULL)
+      customer_name: b.customer_name,
       produce_date: b.produce_date || null,
       install_date: b.install_date || null,
       producer_note: b.producer_note || null,
