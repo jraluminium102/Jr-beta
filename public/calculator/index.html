@@ -1619,11 +1619,11 @@ function addQuickItem(){
      `<div><label>จำนวนชุด</label><input class="qi-qty" type="number" step="1" min="1" value="1"></div>`+
    `</div>`+
    `<div class="chfoot"><span class="qi-area">—</span><span class="price qi-price">฿0</span></div>`;
-  document.getElementById('q-items').appendChild(d);
+  document.getElementById('q-items').appendChild(d); renumberItems();
   function syncPanels(){ const p=PBYID[d.querySelector('.qi-prod').value], pw=d.querySelector('.qi-panels-wrap'); if(pw)pw.style.display=(p&&usesPanels(p))?'':'none'; }
   d.querySelector('.qi-prod').addEventListener('change',()=>{ syncPanels(); calcQuickAll(); });
   d.querySelector('.qi-group').addEventListener('change',()=>{ d.querySelector('.qi-prod').innerHTML=prodOptionsG(d.querySelector('.qi-group').value); syncPanels(); calcQuickAll(); });
-  d.querySelector('.del').addEventListener('click',()=>{ d.remove(); calcQuickAll(); });
+  d.querySelector('.del').addEventListener('click',()=>{ d.remove(); renumberItems(); calcQuickAll(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuickAll));
   syncPanels();
   calcQuickAll();
@@ -1990,6 +1990,11 @@ function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(
 function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
   row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions()+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
   box.appendChild(row); }
+// UX: ไล่เลขรายการใหม่ตามลำดับจริง (ลบแล้วเพิ่มไม่ข้ามเลข) — quote=ส่วนที่ · quick=ชุดที่
+function renumberItems(){
+  ['items','q-items'].forEach(function(cid){ var c=document.getElementById(cid); if(!c)return; var n=0;
+    Array.from(c.children).forEach(function(el){ if(el.classList && el.classList.contains('ch')){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent=(cid==='items'?'ส่วนที่ ':'ชุดที่ ')+n; } }); });
+}
 function addItem(container){
   itemSeq++;
   const id=itemSeq;
@@ -2027,6 +2032,7 @@ function addItem(container){
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
    `<div class="chmsg i-msg"></div>`;
   (container||document.getElementById('items')).appendChild(d);
+  renumberItems();
   // apply global defaults ถ้ามี (ไม่ fire change เพื่อไม่ trigger colorcode-wrap ก่อนที่ buildItemOpts จะรัน)
   { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
     if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
@@ -2053,7 +2059,7 @@ function addItem(container){
     }
     calcQuote(); });
   d.querySelector('.i-type').addEventListener('change',()=>{ refreshItype(d); calcQuote(); });
-  d.querySelector('.del').addEventListener('click',()=>{ const _pb=d.closest('.setbox'); d.remove(); if(_pb)refreshSet(_pb); calcQuote(); });
+  d.querySelector('.del').addEventListener('click',()=>{ const _pb=d.closest('.setbox'); d.remove(); if(_pb)refreshSet(_pb); renumberItems(); calcQuote(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
   // งาน7: sync i-panels-mirror + o-opencount เมื่อ i-panels เปลี่ยน
   d.querySelector('.i-panels').addEventListener('input', function(){
@@ -3235,7 +3241,12 @@ function genQuote(keepNo){
     const isSplit = window.qSplit || !!window.qSplitGroups[gn];
     const items = groups[gn];
     let gTotal=0;
-    const _gl=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':(items[0]?itemDetail(items[0]).prodName:'ชุด'));
+    // หัวข้อชุด: ใช้ชื่อชุดที่ตั้ง > "กั้นห้องกระจก"(ถ้ามีตำแหน่ง) > หัวข้อสั้นตาม cat (เลิกใช้ชื่อสินค้าเต็ม กันซ้ำกับบรรทัดล่าง · พี่นัท)
+    function _shortGl(it){ if(!it)return 'ชุด'; var p=it.p, ty=(it.itype==='window')?'หน้าต่าง':'ประตู';
+      if(p.cat==='ติดตาย') return 'บานกระจกติดตาย';
+      if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','บานเฟี้ยม','บานกระทุ้ง','PC Door','บานยก','บานหมุน','ดัดโค้ง','บานเปลือย'].includes(p.cat)) return ty+p.cat;
+      return p.name||p.cat||'ชุด'; }
+    const _gl=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':_shortGl(items[0]));
     items.forEach(it => { gTotal += it.r.sell*it.qty; });
     const isGH = /กั้น|กั้นห้องกระจก|GH/i.test(_gl);
     // ยกเลิกค่าทำชุดกั้นห้องกระจก 5,000 — พี่นัทยกเลิก (2026-06-08)
