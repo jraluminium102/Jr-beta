@@ -25,12 +25,23 @@
 - ✅ มือจับรุ่นอื่น: ช่อง `o-handlename`+`o-handleprice` กรอกชื่อ+ราคาเอง (HD182/Berin) · X2/X-J/XO/XT มีอยู่แล้ว
 - ⚠️ เรตที่ derive รอพี่นัทยืนยัน: ดาวน์ไลท์ 1,500/ดวง (แก้เลขเดียวที่ calc) · มือจับ = กรอกเอง (ยังไม่ฝังราคาตายตัว)
 
+### อัปเดต 2026-06-09 (รอบที่ 3) — รวมงาน 3 แชท → push ขึ้น GitHub
+**แชท B (หลังคา/UX) — `spec-roof-bug-ux.pdf`:**
+- ✅ BUG กล่องฟ้า `.sliding-main-block` ค้างตอนสลับ product → กู้ `.i-panels-wrap` + ลบ orphan ต้น buildItemOpts
+- ✅ P1 ของเสริมหลังคา → `<details>` พับ · P2 จำนวนบานเลื่อน → ชิป[2][3][4][6]+stepper · P3 ปุ่ม/ช่อง 44px มือถือ · P4 พื้นที่ placeholder auto + มอเตอร์ helper read-only
+
+**แชท 1 (ออปชั่นภาพรวม) — `HANDOFF-calculator-fixes-FINAL.pdf` ข้อ 3-13:**
+- ✅ 3 X-series มุ้ง · 4 VAT Excel อ่าน vat-pct · 5 **OPTION ชุดบวกยอดจริง (บั๊กการเงิน)** · 6 มุ้งม้วนเตะ maxWidth เตือน · 7 ป้ายด้าน A/B/C/D auto · 8 ปิดปลายหลังคาตัด auto กันคิดซ้ำ · 9 ลบ roof_gutter ซ้ำ 3 ตัว · 10 สีกรอบมุ้ง addon · 11 shower hw select เดียว · 12 ราวบันได (ก)/(ข)+IMP6=IMP5 · 13 discFlat clamp
+- ข้าม cosmetic (optgroup/ป้าย) · กระจกเงา-โฟเมก้า/ชื่อสีลายไม้ = ตัดทิ้ง (มติเดิม)
+
+**เทส:** 8 ไฟล์เขียวครบ — เพิ่ม `calc-consolidated.mjs` 14/14 · `calc-roof-tilt.mjs` 26/26 · อัปเดต option-coverage (ปิดปลาย→o-rfeave)
+**baseline:** FullA 753,280 คงที่ (fidelity 14/14) · FullB anchor ขยับจากข้อ 9/11/12 (ไม่มีเทสบังคับยอด FullB)
+
 ## INVARIANT (เช็คทุกครั้งหลังแก้)
-1. `node scripts/gen-quotes-full.mjs` → FullA "753,280" · FullB "8,377,351" (ถ้าเพิ่ม option คิดเงิน → re-baseline + อธิบาย)
-2. `node test/quote-fidelity.mjs` 14/14 · `test/calc-glasshouse.mjs` 19/19 · `test/option-coverage.mjs` 13/13
-   · `test/calc-mosq-frame.mjs` 18/18 · `test/calc-option-cascade.mjs` 9/9 · `test/calc-roof-tilt.mjs` **16/16**
+1. `node scripts/gen-quotes-full.mjs` → FullA "753,280" คงที่ · coverage 187/187 (FullB anchor ขยับหลังรอบ3 ข้อ9/11/12 — ไม่มีเทสบังคับยอดนี้)
+2. 8 ไฟล์เทสต้องผ่านครบ: `quote-fidelity` 14/14 · `calc-glasshouse` 19/19 · `option-coverage` 13/13
+   · `calc-mosq-frame` 18/18 · `calc-option-cascade` 9/9 · `calc-functional` **21/21** · `calc-roof-tilt` **26/26** · `calc-consolidated` **14/14**
 3. `grep '=”'` = 0 (ห้าม curly quote ใน attribute) · ไม่มี NaN · jsdom 0 error
-4. `test/calc-functional.mjs` = **21/21** (T1.1 แก้แล้ว 2026-06-09)
 
 ---
 
