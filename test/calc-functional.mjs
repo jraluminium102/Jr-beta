@@ -89,7 +89,9 @@ want("สร้างได้ 3 บานในชุดเดียว", items
 
 const OVERRIDES = [21000, 18000, 28000];
 const EXPECT_SUBTOTAL = OVERRIDES.reduce((a, b) => a + b, 0); // 67000
-const GLASS_NAME = "กระจกเขียว 6 มม."; // GLASS[0] = default
+// GLASS[0] = "กระจกเขียว 6 มม." แต่ใบเสนอราคา render เติมคำ "หนา" (ฟีเจอร์ v5, index.html ~บรรทัด 3277)
+// → ใบจริงโชว์ "กระจกเขียว หนา 6 มม." · เทสนี้พิสูจน์ dedup (3 บานเหมือนกัน → โชว์ครั้งเดียว)
+const GLASS_NAME = "กระจกเขียว หนา 6 มม.";
 
 items.forEach((ch, i) => {
   setField(ch, ".i-group", "1");      // บานกระจก
