@@ -1,27 +1,61 @@
-import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
-import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute, audit } from "@/lib/bff/handler";
+import { ok, err, notFound } from "@/lib/bff/response";
 import type { QuotationStatus } from "@/lib/types";
 
 const VALID: QuotationStatus[] = ["draft", "sent", "approved", "cancelled"];
 
 // PATCH /api/quotations/[id]/status  { status }
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+// ถอยสถานะ approved→sent/draft → บล็อกถ้ามี billing_note active
+export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
+  const ctx = await requirePermission("jobs", "write");
 
   const body = await req.json().catch(() => ({}));
   const status = body.status as QuotationStatus;
-  if (!VALID.includes(status)) return fail("สถานะไม่ถูกต้อง");
+  if (!VALID.includes(status)) return err("สถานะไม่ถูกต้อง", 400);
 
-  const supabase = createClient();
-  const { data, error } = await supabase
+  const qId = params.id;
+
+  // ดึงสถานะปัจจุบัน
+  const { data: q, error: qErr } = await ctx.supabase
+    .from("quotations")
+    .select("id, status")
+    .eq("id", qId)
+    .single<{ id: number; status: QuotationStatus }>();
+  if (qErr || !q) return notFound("ไม่พบใบเสนอราคา");
+
+  // บล็อกการถอย approved → (sent/draft) ถ้ามีบิล active
+  const isRollback = q.status === "approved" && (status === "sent" || status === "draft");
+  if (isRollback) {
+    const { data: activeBn } = await ctx.supabase
+      .from("billing_notes")
+      .select("id, code")
+      .eq("quotation_id", qId)
+      .neq("status", "cancelled")
+      .limit(1);
+
+    if ((activeBn ?? []).length > 0) {
+      const code = (activeBn as { id: number; code: string }[])[0].code;
+      return err(`มีใบวางบิล ${code} ที่ยังใช้งานอยู่ — ต้องยกเลิกใบวางบิลก่อนถอยสถานะ`, 409);
+    }
+  }
+
+  const { data, error } = await ctx.supabase
     .from("quotations")
     .update({ status })
-    .eq("id", params.id)
+    .eq("id", qId)
     .select("id, status")
     .single();
-  if (error) return fail(error.message, 500);
+  if (error) throw new Error(error.message);
+
+  await audit({
+    userId: ctx.user.id,
+    action: "STATUS_QUOTATION",
+    table: "quotations",
+    recordId: qId,
+    oldValue: { status: q.status },
+    newValue: { status },
+  });
+
   return ok(data);
-}
+});

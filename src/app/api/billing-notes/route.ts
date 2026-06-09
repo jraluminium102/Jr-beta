@@ -33,9 +33,9 @@ export async function POST(req: Request) {
   // 1) ดึงใบเสนอราคา — ต้องอนุมัติแล้วเท่านั้น
   const { data: q, error: qErr } = await supabase
     .from("quotations")
-    .select("id, status, net, customer_snapshot")
+    .select("id, status, net, customer_snapshot, job_id")
     .eq("id", body.quotation_id)
-    .single<Pick<Quotation, "id" | "status" | "net" | "customer_snapshot">>();
+    .single<Pick<Quotation, "id" | "status" | "net" | "customer_snapshot"> & { job_id: string | null }>();
   if (qErr || !q) return fail("ไม่พบใบเสนอราคา", 404);
   if (q.status !== "approved") return fail("ใบเสนอต้องอนุมัติก่อน");
 
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     .insert({
       code,
       quotation_id: q.id,
+      job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
       customer_snapshot: q.customer_snapshot,
       issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
       total: net,

@@ -6,6 +6,7 @@ import { Card, StatusBadge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import QuotationActions from "./QuotationActions";
+import QuotationEditButton from "./QuotationEditButton";
 import type { Quotation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,17 @@ export default async function QuotationDetail({ params }: { params: { id: string
   const q = data as Quotation;
   const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = q.customer_snapshot;
+  const writable = canWrite(profile?.role);
+
+  // ตรวจ billing_note active (status != cancelled)
+  const { data: activeBnRows } = await supabase
+    .from("billing_notes")
+    .select("id, code")
+    .eq("quotation_id", q.id)
+    .neq("status", "cancelled")
+    .limit(1);
+  const hasActiveBilling = (activeBnRows ?? []).length > 0;
+  const activeBillingCode = hasActiveBilling ? (activeBnRows as { id: number; code: string }[])[0].code : null;
 
   return (
     <div className="space-y-5">
@@ -34,18 +46,38 @@ export default async function QuotationDetail({ params }: { params: { id: string
           <h1 className="text-xl font-bold text-brand-dark font-mono">{q.code}</h1>
           <StatusBadge status={q.status} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link href={`/quotations/${q.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
-          {q.status === "approved" && canWrite(profile?.role) && (
+          {q.status === "approved" && writable && !hasActiveBilling && (
             <Link href={`/billing-notes/new?quotation=${q.id}`} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="banknote" size={16} /> สร้างใบวางบิล
             </Link>
           )}
-          {canWrite(profile?.role) && <QuotationActions id={q.id} status={q.status} />}
+          {/* ปุ่มแก้ไขใบเสนอ — โชว์เฉพาะเมื่อไม่มีบิล active */}
+          {writable && !hasActiveBilling && q.status !== "cancelled" && (
+            <QuotationEditButton
+              quotationId={q.id}
+              vatRate={q.vat_rate}
+              discountPct={q.discount_pct}
+              whtRate={q.wht_rate}
+              note={q.note}
+              items={items}
+            />
+          )}
+          {writable && (
+            <QuotationActions id={q.id} status={q.status} hasActiveBilling={hasActiveBilling} />
+          )}
         </div>
       </div>
+
+      {hasActiveBilling && activeBillingCode && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-sm text-amber-800">
+          มีใบวางบิล <b className="font-mono">{activeBillingCode}</b> ที่ใช้งานอยู่ —
+          ต้องยกเลิกใบวางบิลก่อนจึงจะแก้ไขหรือถอยสถานะใบเสนอได้
+        </div>
+      )}
 
       <Card className="p-6">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
@@ -82,9 +114,9 @@ export default async function QuotationDetail({ params }: { params: { id: string
                     <div className="font-medium">{it.name}</div>
                     {it.detail && <div className="text-xs text-ink-3">{it.detail}</div>}
                   </td>
-                  <td className="text-center">{baht(it.qty)}</td>
-                  <td className="text-right">{baht(it.unit_price)}</td>
-                  <td className="text-right p-2">{baht(it.line_total)}</td>
+                  <td className="text-center tabular-nums">{baht(it.qty)}</td>
+                  <td className="text-right tabular-nums">{baht(it.unit_price)}</td>
+                  <td className="text-right p-2 tabular-nums">{baht(it.line_total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -94,13 +126,13 @@ export default async function QuotationDetail({ params }: { params: { id: string
         <div className="flex justify-end mt-4">
           <table className="text-sm">
             <tbody>
-              <tr><td className="pr-8 py-0.5 text-ink-3">ยอดรวมก่อนภาษี</td><td className="text-right">{baht(q.subtotal)}</td></tr>
-              {q.discount_amt > 0 && <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด {q.discount_pct}%</td><td className="text-right text-brand">-{baht(q.discount_amt)}</td></tr>}
-              <tr><td className="pr-8 py-0.5 text-ink-3">VAT {q.vat_rate}%</td><td className="text-right">{baht(q.vat_amt)}</td></tr>
-              <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t">฿{baht(q.total)}</td></tr>
+              <tr><td className="pr-8 py-0.5 text-ink-3">ยอดรวมก่อนภาษี</td><td className="text-right tabular-nums">{baht(q.subtotal)}</td></tr>
+              {q.discount_amt > 0 && <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด {q.discount_pct}%</td><td className="text-right tabular-nums text-brand">-{baht(q.discount_amt)}</td></tr>}
+              <tr><td className="pr-8 py-0.5 text-ink-3">VAT {q.vat_rate}%</td><td className="text-right tabular-nums">{baht(q.vat_amt)}</td></tr>
+              <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(q.total)}</td></tr>
               {q.wht_amt > 0 && (<>
-                <tr><td className="pr-8 py-0.5 text-ink-3">หัก ณ ที่จ่าย {q.wht_rate}%</td><td className="text-right text-brand">-{baht(q.wht_amt)}</td></tr>
-                <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1">ยอดรับสุทธิ</td><td className="text-right">฿{baht(q.net)}</td></tr>
+                <tr><td className="pr-8 py-0.5 text-ink-3">หัก ณ ที่จ่าย {q.wht_rate}%</td><td className="text-right tabular-nums text-brand">-{baht(q.wht_amt)}</td></tr>
+                <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1">ยอดรับสุทธิ</td><td className="text-right tabular-nums">฿{baht(q.net)}</td></tr>
               </>)}
             </tbody>
           </table>

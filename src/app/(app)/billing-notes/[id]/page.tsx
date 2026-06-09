@@ -6,7 +6,10 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
+import { VoidBillingNoteButton, InstallmentEditor } from "./BillingFinanceActions";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
+import { can } from "@/lib/rbac";
+import type { Role } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +31,8 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   const installments = (bn.billing_installments ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = bn.customer_snapshot;
   const writable = canWrite(profile?.role);
+  const canVoid = can((profile?.role ?? "VIEWER") as Role, "finance", "void");
+  const isCancelled = bn.status === "cancelled";
 
   // ดึงรหัสใบเสนออ้างอิง (ถ้ามี)
   let refCode: string | null = null;
@@ -46,12 +51,28 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           <h1 className="text-xl font-bold text-brand-dark font-mono">{bn.code}</h1>
           <Badge tone={STATUS_TONE[bn.status]} dot>{BILLING_STATUS_LABEL[bn.status]}</Badge>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link href={`/billing-notes/${bn.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
+          {writable && !isCancelled && (
+            <InstallmentEditor
+              billingNoteId={bn.id}
+              total={bn.total}
+              initialInstallments={installments}
+            />
+          )}
+          {canVoid && !isCancelled && (
+            <VoidBillingNoteButton billingNoteId={bn.id} />
+          )}
         </div>
       </div>
+
+      {isCancelled && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-3 text-sm text-red-800">
+          <b>ใบวางบิลนี้ถูกยกเลิกแล้ว</b> — ออกใบวางบิลใหม่จากใบเสนอราคาได้หากต้องการ
+        </div>
+      )}
 
       <Card className="p-6">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
@@ -79,7 +100,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                 <th className="text-right">ยอด</th>
                 <th className="text-center">กำหนดชำระ</th>
                 <th className="text-center">สถานะ</th>
-                {writable && <th className="text-right p-2 rounded-r-lg">รับชำระ</th>}
+                {writable && !isCancelled && <th className="text-right p-2 rounded-r-lg">รับชำระ</th>}
               </tr>
             </thead>
             <tbody>
@@ -92,14 +113,14 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                       <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {it.paid_date}</div>
                     )}
                   </td>
-                  <td className="text-right font-semibold">฿{baht(it.amount)}</td>
+                  <td className="text-right font-semibold tabular-nums">฿{baht(it.amount)}</td>
                   <td className="text-center text-ink-2">{it.due_date || "—"}</td>
                   <td className="text-center">
                     <Badge tone={it.status === "paid" ? "emerald" : "gray"} dot>
                       {it.status === "paid" ? "ชำระแล้ว" : "รอชำระ"}
                     </Badge>
                   </td>
-                  {writable && (
+                  {writable && !isCancelled && (
                     <td className="text-right p-2">
                       {it.status === "paid" ? (
                         <span className="text-xs text-ink-3">—</span>

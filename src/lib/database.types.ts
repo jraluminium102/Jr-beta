@@ -71,6 +71,10 @@ export interface FinanceEntry {
   id: string; job_id: string; payment_date: string; amount: number; type: PaymentType;
   channel: PaymentChannel; note: string | null; is_auto_created: boolean;
   is_voided: boolean; void_reason: string | null; voided_at: string | null; voided_by: string | null;
+  // 0026: fields เชื่อมเส้น A-B
+  source: string | null;
+  billing_installment_id: number | null;
+  receipt_id: number | null;
   created_at: string; updated_at: string;
 }
 interface AuditLog {
