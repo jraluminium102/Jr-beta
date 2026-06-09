@@ -40,34 +40,50 @@ export const POST = withRoute(async (req: Request, { params }: { params: { id: s
     .eq("id", receiptId);
   if (vErr) throw new Error(vErr.message);
 
-  // 3) ถ้ามี installment_id → คืนงวดกลับเป็น pending
+  // 3) ถ้ามี installment_id → คืนงวดกลับเป็น pending เฉพาะกรณี is_auto_created=false
+  // ถ้างวดนี้ผูกกับ finance_entry มัดจำ (is_auto_created=true) → ห้ามคืน pending
+  // เพราะเงินมัดจำรับจริงแล้ว การ void "เอกสารใบเสร็จ" ไม่ควรทำให้งวดมัดจำกลับมาค้าง
   if (rc.installment_id) {
-    const { error: iErr } = await ctx.supabase
-      .from("billing_installments")
-      .update({ paid_amount: 0, paid_date: null, status: "pending" })
-      .eq("id", rc.installment_id);
-    if (iErr) throw new Error("คืนงวดไม่สำเร็จ: " + iErr.message);
+    const { data: depositEntry } = await ctx.supabase
+      .from("finance_entries")
+      .select("id, is_auto_created")
+      .eq("billing_installment_id", rc.installment_id)
+      .eq("is_auto_created", true)
+      .eq("is_voided", false)
+      .maybeSingle<{ id: string; is_auto_created: boolean }>();
 
-    // 3a) recompute สถานะใบวางบิล
-    if (rc.billing_note_id) {
-      const { data: bn } = await ctx.supabase
-        .from("billing_notes")
-        .select("total, billing_installments(paid_amount)")
-        .eq("id", rc.billing_note_id)
-        .single<{ total: number; billing_installments: { paid_amount: number }[] }>();
+    const isDepositInstallment = !!depositEntry;
 
-      if (bn) {
-        const totalPaid = (bn.billing_installments ?? []).reduce(
-          (a, i) => a + (Number(i.paid_amount) || 0), 0,
-        );
-        const total = Number(bn.total) || 0;
-        const blStatus = totalPaid <= 0 ? "unpaid" : totalPaid >= total ? "paid" : "partial";
-        await ctx.supabase
+    if (!isDepositInstallment) {
+      // งวดชำระปกติ (ไม่ใช่มัดจำ) → คืน pending ตามปกติ
+      const { error: iErr } = await ctx.supabase
+        .from("billing_installments")
+        .update({ paid_amount: 0, paid_date: null, status: "pending" })
+        .eq("id", rc.installment_id);
+      if (iErr) throw new Error("คืนงวดไม่สำเร็จ: " + iErr.message);
+
+      // 3a) recompute สถานะใบวางบิล
+      if (rc.billing_note_id) {
+        const { data: bn } = await ctx.supabase
           .from("billing_notes")
-          .update({ status: blStatus })
-          .eq("id", rc.billing_note_id);
+          .select("total, billing_installments(paid_amount)")
+          .eq("id", rc.billing_note_id)
+          .single<{ total: number; billing_installments: { paid_amount: number }[] }>();
+
+        if (bn) {
+          const totalPaid = (bn.billing_installments ?? []).reduce(
+            (a, i) => a + (Number(i.paid_amount) || 0), 0,
+          );
+          const total = Number(bn.total) || 0;
+          const blStatus = totalPaid <= 0 ? "unpaid" : totalPaid >= total ? "paid" : "partial";
+          await ctx.supabase
+            .from("billing_notes")
+            .update({ status: blStatus })
+            .eq("id", rc.billing_note_id);
+        }
       }
     }
+    // isDepositInstallment=true → ไม่ทำอะไรกับงวด (คง paid ไว้) เงินมัดจำยังนับอยู่ในยอดบิล
   }
 
   // 4) void/unlink finance_entries ที่ผูกกับ receipt นี้

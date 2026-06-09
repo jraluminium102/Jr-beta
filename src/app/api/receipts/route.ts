@@ -94,8 +94,20 @@ export async function POST(req: Request) {
     // ใบเสร็จออกสำเร็จแล้ว — ถ้า sync งวดพลาด ไม่ rollback แต่แจ้งเตือน (กันใบเสร็จหาย)
     if (payErr) return ok({ id: rc.id, code: rc.code, warn: "ออกใบเสร็จสำเร็จ แต่ปิดงวดไม่สำเร็จ: " + payErr }, 201);
   } else if (bn.job_id) {
-    // [HIGH-3] ไม่มี installment แต่มี job_id → สร้าง finance_entry จากใบเสร็จตรงๆ
-    // (เช่น ใบเสร็จจ่ายตรงโดยไม่ผ่านงวด) เพื่อให้เงินรับเข้าเส้น B
+    // [HIGH-3] ไม่มี installment_id → ตรวจก่อนว่าบิลนี้มีงวดหรือไม่
+    // ถ้ามีงวด (≥1) แต่ไม่ระบุ installment_id → reject 400 (กัน finance_entry ลอย)
+    const { count: instCount } = await supabase
+      .from("billing_installments")
+      .select("id", { count: "exact", head: true })
+      .eq("billing_note_id", bn.id);
+
+    if ((instCount ?? 0) >= 1) {
+      // ลบใบเสร็จที่เพิ่งสร้างออก (rollback best-effort) แล้ว reject
+      await supabase.from("receipts").delete().eq("id", receiptId);
+      return fail("ใบวางบิลนี้มีงวด กรุณาเลือกงวดที่จะออกใบเสร็จ", 400);
+    }
+
+    // บิลไม่มีงวดเลย → สร้าง finance_entry ตรงได้ตามปกติ
     const issueDate = body.issue_date || new Date().toISOString().slice(0, 10);
     await supabase.from("finance_entries").insert({
       job_id: bn.job_id,

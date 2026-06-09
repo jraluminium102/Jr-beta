@@ -83,9 +83,13 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
   const vatAmt = round2((amountNum * vatRate) / 100);
   const net = round2(amountNum + vatAmt);
 
+  // บิลที่มีงวด (pending อยู่) บังคับเลือกงวด
+  const hasInstallments = installments.length > 0;
+
   async function submit() {
     setErr("");
     if (!billingNoteId) { setErr("ต้องเลือกใบวางบิล"); return; }
+    if (hasInstallments && !installmentId) { setErr("ใบวางบิลนี้มีงวด กรุณาเลือกงวดที่จะออกใบเสร็จ"); return; }
     if (amountNum <= 0) { setErr("จำนวนเงินต้องมากกว่า 0"); return; }
     setBusy(true);
     const res = await fetch("/api/receipts", {
@@ -138,11 +142,16 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
               </label>
 
               <label className="block text-sm">
-                <span className="text-xs font-medium text-ink-3">งวดชำระ (ถ้ามี)</span>
-                <select value={installmentId} onChange={(e) => setInstallmentId(e.target.value ? Number(e.target.value) : "")}
+                <span className="text-xs font-medium text-ink-3">
+                  งวดชำระ{hasInstallments ? " *" : " (ถ้ามี)"}
+                </span>
+                <select
+                  value={installmentId}
+                  onChange={(e) => setInstallmentId(e.target.value ? Number(e.target.value) : "")}
                   disabled={installments.length === 0}
-                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none disabled:opacity-60">
-                  <option value="">— ทั้งใบ / ไม่ระบุงวด —</option>
+                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none disabled:opacity-60"
+                >
+                  <option value="">— {hasInstallments ? "เลือกงวด *" : "ทั้งใบ / ไม่ระบุงวด"} —</option>
                   {installments.map((it) => (
                     <option key={it.id} value={it.id}>
                       งวด {it.seq} · {it.label} · ฿{baht(it.amount)}
