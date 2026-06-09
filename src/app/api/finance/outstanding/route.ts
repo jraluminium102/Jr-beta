@@ -26,8 +26,9 @@ export const GET = withRoute(async () => {
       ),
       finance_entries(amount, is_voided, billing_installment_id)
     `)
-    .in("status", ["DEPOSITED", "COMPLETED"])
-    .not("total_amount", "is", null);
+    .in("status", ["DEPOSITED", "COMPLETED"]);
+  // หมายเหตุ: ไม่กรอง total_amount null — งานที่ยอดอยู่บนใบวางบิล (job.total_amount ว่าง)
+  // ต้องนับด้วย โดยใช้ billingTotal เป็นฐาน (ดู logic ด้านล่าง)
   if (error) throw new Error(error.message);
 
   type InstRow = {
