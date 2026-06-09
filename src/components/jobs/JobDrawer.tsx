@@ -176,7 +176,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
               {tab === "installation" && (inst ? (
                 <div>
                   <Chip>{INST_STATUS[inst.status]}</Chip>
-                  <div className="mt-2 text-[12px]" style={{ color: "var(--t-low)" }}>อัปเดตสถานะที่หน้า "ติดตั้ง" → คลิกการ์ดงาน</div>
+                  <div className="mt-2 text-[12px]" style={{ color: "var(--t-low)" }}>อัปเดตสถานะได้ที่หน้า "ติดตั้ง"</div>
                   <div className="mt-3">
                     <Row l="วันนัดติดตั้ง" v={thDate(inst.install_scheduled)} />
                     <Row l="วันติดตั้งจริง" v={thDate(inst.install_actual)} />

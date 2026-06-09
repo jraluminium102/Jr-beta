@@ -186,7 +186,8 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
 
   // เลือกจากระบบ
   const { data: prodData } = useQuery({ queryKey: ["production", "candidates"], queryFn: () => api.get<Candidate[]>("/production") });
-  const NOT_QUEUED: ProdStatus[] = ["PENDING_MEASURE", "MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"];
+  // เฉพาะงานที่วัดแล้ว (PENDING_MEASURE ยังวัดไม่เสร็จ → ยังลงคิวผลิตไม่ได้)
+  const NOT_QUEUED: ProdStatus[] = ["MEASURED", "PENDING_MEETING", "PENDING_CONFIRM", "REVISING"];
   const candidates = (prodData?.data ?? []).filter((p) => NOT_QUEUED.includes(p.status));
   const [pickId, setPickId] = useState("");
 
@@ -259,7 +260,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
                   <option value="">— เลือกงาน —</option>
                   {candidates.map((c) => <option key={c.id} value={c.id}>{c.job?.job_code} · {c.job?.customer_name} ({PROD_STATUS[c.status]})</option>)}
                 </select>
-                {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่ยังไม่ลงคิว — งานที่ลงคิวแล้วอยู่ในตารางด้านนอก</p>}</div>
+                {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่วัดแล้วและยังไม่ลงคิว — งานที่ยังรอวัด (PENDING_MEASURE) ต้องวัดหน้างานก่อน</p>}</div>
               <div className="grid grid-cols-2 gap-2">
                 <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
                   <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>

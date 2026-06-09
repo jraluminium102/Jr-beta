@@ -29,7 +29,7 @@ export const GET = withRoute(async (req: Request) => {
   let query = sb
     .from("jobs")
     .select(
-      "*, estimator:estimator_id(full_name), designer:designer_id(full_name), productions(status,status_updated_at,planned_install_date), installations(status,install_scheduled), issues(id,status)",
+      "*, estimator:estimator_id(full_name), designer:designer_id(full_name), productions(status,status_updated_at,planned_install_date), installations(id,status,install_scheduled,install_actual,completed_date,warranty_until), issues(id,status)",
       { count: "exact" }
     )
     .order("year", { ascending: false })
@@ -55,7 +55,7 @@ export const GET = withRoute(async (req: Request) => {
     return out;
   });
 
-  return ok(rows, { total: count ?? 0, page, limit, can_finance: showFinance, can_prod: can(ctx.role, "production", "write") });
+  return ok(rows, { total: count ?? 0, page, limit, can_finance: showFinance, can_prod: can(ctx.role, "production", "write"), can_install: can(ctx.role, "installation", "write") });
 });
 
 const createSchema = z.object({

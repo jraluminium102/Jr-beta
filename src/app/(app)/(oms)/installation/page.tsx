@@ -5,10 +5,27 @@ import { api } from "@/lib/api";
 import { INST_STATUS } from "@/lib/constants";
 import { Spinner } from "@/components/ui/primitives";
 import { ShieldCheck } from "@/components/ui/icons";
-import { JobDrawer } from "@/components/jobs/JobDrawer";
+import { InstallationStepModal } from "@/components/installation/InstallationStepModal";
 import type { InstStatus } from "@/lib/database.types";
+import type { InstRow } from "@/components/installation/InstallationStepModal";
 
-type Row = { id: string; job_code: string; customer_name: string; status: string; installations: { status: InstStatus; install_scheduled: string | null }[] };
+type InstallationField = {
+  id: string;
+  status: InstStatus;
+  install_scheduled: string | null;
+  install_actual: string | null;
+  completed_date: string | null;
+  warranty_until: string | null;
+};
+type Row = {
+  id: string;
+  job_code: string;
+  customer_name: string;
+  customer_area: string | null;
+  status: string;
+  installations: InstallationField[];
+};
+
 // ISO → วัน/เดือน/ปี(พ.ศ. 2 หลัก) เช่น 28/06/69
 const thInstDate = (d: string | null) => {
   if (!d) return null;
@@ -19,10 +36,24 @@ const thInstDate = (d: string | null) => {
 const COLS: InstStatus[] = ["PENDING", "INSTALLING", "PENDING_INSPECT", "REVISING", "COMPLETED", "ISSUE"];
 
 export default function InstallationPage() {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openInst, setOpenInst] = useState<InstRow | null>(null);
   const { data, isLoading, refetch } = useQuery({ queryKey: ["jobs", "inst"], queryFn: () => api.get<Row[]>("/jobs?limit=100") });
   const jobs = (data?.data ?? []).filter((j) => j.installations?.length && j.status !== "CANCELLED");
-  const canFinance = (data?.meta?.can_finance as boolean) ?? false;
+  const canInstall = (data?.meta?.can_install as boolean) ?? false;
+
+  const openModal = (j: Row) => {
+    const inst = j.installations[0];
+    if (!inst) return;
+    setOpenInst({
+      id: inst.id,
+      status: inst.status,
+      install_scheduled: inst.install_scheduled,
+      install_actual: inst.install_actual,
+      completed_date: inst.completed_date,
+      warranty_until: inst.warranty_until,
+      job: { job_code: j.job_code, customer_name: j.customer_name, customer_area: j.customer_area },
+    });
+  };
 
   return (
     <div className="p-4 sm:p-6 fade-in">
@@ -40,12 +71,12 @@ export default function InstallationPage() {
                 </div>
                 <div className="space-y-2">
                   {items.map((j) => (
-                    <button key={j.id} onClick={() => setOpenId(j.id)} aria-label={`เปิด ${j.job_code}`}
+                    <button key={j.id} onClick={() => openModal(j)} aria-label={`อัปเดตสถานะ ${j.job_code}`}
                       className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
                       <div className="text-white text-sm font-medium tnum">{j.job_code}</div>
                       <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{j.customer_name}</div>
                       {j.installations[0]?.install_scheduled && (
-                        <div className="text-[11px] text-sky-200 mt-1.5 tnum">📅 นัดติดตั้ง: {thInstDate(j.installations[0].install_scheduled)}</div>
+                        <div className="text-[11px] text-sky-200 mt-1.5 tnum">นัดติดตั้ง: {thInstDate(j.installations[0].install_scheduled)}</div>
                       )}
                       {col === "COMPLETED" && <div className="flex items-center gap-1 text-emerald-200 text-[11px] mt-1.5"><ShieldCheck size={12} /> อยู่ในประกัน</div>}
                     </button>
@@ -57,7 +88,14 @@ export default function InstallationPage() {
           })}
         </div>
       )}
-      {openId && <JobDrawer jobId={openId} canFinance={canFinance} onClose={() => setOpenId(null)} onChanged={refetch} />}
+      {openInst && (
+        <InstallationStepModal
+          inst={openInst}
+          canWrite={canInstall}
+          onClose={() => setOpenInst(null)}
+          onSaved={() => { setOpenInst(null); refetch(); }}
+        />
+      )}
     </div>
   );
 }
