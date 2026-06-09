@@ -22,7 +22,7 @@ type Detail = Job & {
   finance_entries?: FinanceEntry[]; issues: Issue[];
 };
 
-export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, onChanged }: { jobId: string; canFinance: boolean; canWriteProd?: boolean; onClose: () => void; onChanged: () => void }) {
+export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = false, onClose, onChanged }: { jobId: string; canFinance: boolean; canWriteProd?: boolean; readOnly?: boolean; onClose: () => void; onChanged: () => void }) {
   const [tab, setTab] = useState<"overview" | "production" | "materials" | "installation" | "finance">("overview");
   const [depOpen, setDepOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
@@ -82,7 +82,17 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, on
             <div className="p-5 sm:p-6">
               {tab === "overview" && (
                 <div>
-                  <StageAdvanceButton jobId={jobId} currentStage={job.current_stage} onAdvanced={() => { refetch(); onChanged(); }} />
+                  {readOnly ? (
+                    <div className="glass-card rounded-xl p-3.5 flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ขั้นตอนปัจจุบัน · ดูอย่างเดียว</div>
+                        <div className="text-white font-semibold text-sm"><span className="tnum">{job.current_stage}/24</span></div>
+                      </div>
+                      <span className="text-[11px] px-2 py-1 rounded-full bg-white/10 text-white/70 border border-white/15">เปลี่ยนสถานะที่หน้างานที่รับผิดชอบ</span>
+                    </div>
+                  ) : (
+                    <StageAdvanceButton jobId={jobId} currentStage={job.current_stage} onAdvanced={() => { refetch(); onChanged(); }} />
+                  )}
                   <div className="flex items-center justify-between mt-3">
                     <Chip status={job.status} />
                     {canFinance && (job.status === "QUOTE_SENT" || job.status === "PENDING_DECISION") ? (
@@ -91,7 +101,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, on
                   </div>
 
                   {/* พักงาน (ON_HOLD) */}
-                  <div className="mt-2">
+                  {!readOnly && <div className="mt-2">
                     {job.on_hold ? (
                       <div className="flex items-center justify-between gap-2 bg-amber-500/15 border border-amber-300/25 rounded-xl px-3 py-2">
                         <span className="text-[13px] text-amber-100">⏸ พักงานอยู่{job.on_hold_reason ? `: ${job.on_hold_reason}` : ""}</span>
@@ -102,7 +112,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, on
                       <button onClick={async () => { const r = prompt("เหตุผลที่พักงาน (ไม่บังคับ)"); if (r === null) return; await api.patch(`/jobs/${jobId}`, { on_hold: true, on_hold_reason: r || null }); refetch(); onChanged(); }}
                         className="focusable pressable text-[12px] text-white/70 hover:text-white border border-white/15 rounded-lg px-3 py-1.5 min-h-[36px]">⏸ พักงานนี้</button>
                     )}
-                  </div>
+                  </div>}
 
                   {canFinance && ["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"].includes(job.status) && (
                     <QuoteEditor job={job} onChanged={() => { refetch(); onChanged(); }} />
@@ -157,7 +167,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, on
                       onSaved={() => { refetch(); onChanged(); }}
                     />
                   )}
-                  <QcPanel jobId={jobId} />
+                  {!readOnly && <QcPanel jobId={jobId} />}
                 </div>
               ) : <Empty title="ยังไม่เข้า Production" sub="เริ่มเมื่อมัดจำแล้ว" />)}
 
@@ -174,7 +184,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, onClose, on
                     <Row l="รับประกันถึง" v={thDate(inst.warranty_until)} />
                   </div>
                   {inst.warranty_until && <div className="mt-3 flex items-center gap-2 text-emerald-200 text-[12px] bg-emerald-500/15 border border-emerald-300/25 rounded-xl px-3 py-2.5"><ShieldCheck size={15} /> รับประกัน auto = วันจบงาน + 12 เดือน</div>}
-                  <HandoverForm inst={inst} onSaved={() => { refetch(); onChanged(); }} />
+                  {!readOnly && <HandoverForm inst={inst} onSaved={() => { refetch(); onChanged(); }} />}
                 </div>
               ) : <Empty title="ยังไม่เข้าติดตั้ง" sub="เริ่มเมื่อ Production = พร้อมติดตั้ง" />)}
 

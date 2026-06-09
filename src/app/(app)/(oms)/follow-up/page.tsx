@@ -155,7 +155,7 @@ export default function FollowUpPage() {
         </>
       )}
 
-      {openId && <JobDrawer jobId={openId} canFinance={false} onClose={() => setOpenId(null)} onChanged={refetch} />}
+      {openId && <JobDrawer jobId={openId} canFinance={false} readOnly onClose={() => setOpenId(null)} onChanged={refetch} />}
     </div>
   );
 }

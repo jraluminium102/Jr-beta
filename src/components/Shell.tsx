@@ -29,7 +29,6 @@ const DOC_NAV: NavItem[] = [
 const OMS_NAV: Record<string, NavItem> = {
   dashboard:    { href: "/operations", icon: "dashboard", label: "ภาพรวมงาน" },
   followup:     { href: "/follow-up", icon: "track", label: "ติดตามงาน" },
-  jobs:         { href: "/jobs", icon: "briefcase", label: "งานทั้งหมด" },
   production:   { href: "/production", icon: "factory", label: "ผลิต" },
   prodqueue:    { href: "/production-schedule", icon: "calendar", label: "ตารางผลิต (ช่าง)" },
   designer:     { href: "/designer", icon: "ruler", label: "งานเขียนแบบ" },
