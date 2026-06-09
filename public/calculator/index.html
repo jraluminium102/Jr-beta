@@ -2200,9 +2200,14 @@ function buildItemOpts(d){
     // UX: ห่อบล็อกบานเลื่อน (ชนิดเปิด + เปิด/ติดตาย) ด้วย .sliding-main-block → ย้ายขึ้นฟอร์มหลักหลัง build
     h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
     h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 บานเลื่อน:</span>';
+    h+='<span class="smb-panels-slot"></span>'; // ตำแหน่งเสียบ "จำนวนบานทั้งหมด" (ย้ายเข้ามาหลัง build)
     h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
-    // งาน7: จัดกลุ่ม มี/เปิด/ติดตาย ให้เห็น 3 ค่าในที่เดียว — คง .o-fixed / .i-panels เป๊ะ
-    h+='<label class="opt">บาน: มี <input type="number" class="i-panels-mirror" readonly tabindex="-1" style="width:45px;height:30px;background:#f3f4f6;color:#6B7280;pointer-events:none;"> · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> · ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน</label>';
+    // เปิด/ติดตาย (จำนวนบานทั้งหมดอยู่ใน slot ด้านบนแล้ว — ตัด mirror ออก)
+    h+='<label class="opt">ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> บาน</label>';
+    // ราง (ล่าง): กันน้ำ / เตี้ย 7มม — ใบจริงทุกบานเลื่อนรางล่างระบุ (พี่นัท) · เฉพาะรางล่าง
+    if(!_isTop){ var _brDef=(_sr.txt&&/เตี้ย/.test(_sr.txt))?'เตี้ย':'กันน้ำ';
+      h+='<label class="opt">ราง <select class="o-bottomrail" style="width:auto;height:32px;" onchange="calcQuote();"><option value="กันน้ำ"'+(_brDef==='กันน้ำ'?' selected':'')+'>รางล่าง (รุ่นกันน้ำ)</option><option value="เตี้ย"'+(_brDef==='เตี้ย'?' selected':'')+'>รางล่าง (รุ่นรางเตี้ย 7 มม.)</option></select></label>';
+    }
     h+='</div>'; // ปิด .sliding-main-block
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
@@ -2216,6 +2221,13 @@ function buildItemOpts(d){
       h+='<label class="opt">ชุดล็อค <select class="o-slidelock" style="width:auto;height:32px;"><option value="">— ไม่ระบุ —</option><option value="มีกุญแจ">มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
     }
     // คาดตาราง (sliding-specific block ยังคงมี — เพื่อรักษา readItem branch เดิม)
+  }
+  // UX (พี่นัท): กล่องฟ้า "จำนวนบาน" สำหรับ บานเปิด/ติดตาย ด้วย — relocation logic ย้ายขึ้นฟอร์มหลัก + ดึง panels เข้ากล่อง
+  if(['บานเปิด','ติดตาย'].includes(p.cat)){
+    h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
+    h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 '+p.cat+':</span>';
+    h+='<span class="smb-panels-slot"></span>';
+    h+='</div>';
   }
   // คาดตาราง (generic — ทุก cat ยกเว้น p.grid ซึ่งเป็น grid_bars เอง)
   if(!p.grid){
@@ -2349,12 +2361,18 @@ function buildItemOpts(d){
   var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
   var _showGw=!!(gw&&!(areaOnly||p.zipscreen));
   box.innerHTML=h;
-  // UX: คงกระจก/สี ไว้ในฟอร์มหลัก (เลิกย้ายเข้า ⚙) — ผู้ใช้เห็นช่องพื้นฐานทันที ไม่ต้องเปิด ⚙
-  if(cw){ cw.style.display=_showCw?'':'none'; var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
-  if(gw){ gw.style.display=_showGw?'':'none'; var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
-  // UX: ย้ายบล็อกบานเลื่อน (ชนิดเปิด + เปิด/ติดตาย) ขึ้นฟอร์มหลัก ใต้ "จำนวนบานทั้งหมด" — เห็นทันทีไม่ต้องเปิด ⚙
+  // UX (พี่นัท): กระจก/สี ย้ายเข้า ⚙ อุปกรณ์เสริม (บนสุด) — แถวหลักโล่ง
+  if(cw){ cw.style.display=_showCw?'':'none'; box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
+  if(gw){ gw.style.display=_showGw?'':'none'; var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+  // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
   { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
-    if(_smb && _pw && _pw.parentNode){ _pw.parentNode.insertBefore(_smb, _pw.nextSibling); } }
+    if(_smb && _pw && _pw.parentNode){
+      _pw.parentNode.insertBefore(_smb, _pw.nextSibling);            // วางกล่องฟ้าหลังตำแหน่งเดิมของ panels
+      var _anchor=_smb.querySelector('.smb-panels-slot')||_smb.firstChild;
+      _smb.insertBefore(_pw, _anchor && _anchor.nextSibling ? _anchor.nextSibling : null);  // ย้าย panels เข้ากล่องฟ้า
+      _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
+    }
+  }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
@@ -2426,6 +2444,7 @@ function readItem(d){
   // บานเลื่อน/เลื่อนภายใน — options ใหม่
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
     const _ot=d.querySelector('.o-opentype'); optSel.opentype=_ot?_ot.value:'บานเลื่อน';
+    const _br=d.querySelector('.o-bottomrail'); if(_br) optSel.bottomrail=_br.value; // ราง: กันน้ำ/เตี้ย
     const _tr=d.querySelector('.o-track'); optSel.track=_tr?_tr.value:'โชว์ราง';
     const _sl=d.querySelector('.o-slidelock'); optSel.slidelock=_sl?_sl.value:'';
     const _fx=d.querySelector('.o-fixed'); optSel.fixedPanes=_fx?(parseInt(_fx.value)||0):0;
@@ -2911,7 +2930,7 @@ function genQuote(keepNo){
       // railTxt: รางบน → "รางบน (รุ่นโชว์ราง/ซ่อนราง)" · รางล่าง → txt จาก SLIDING_RAIL
       const _railTxt = _sr.rail==='top'
         ? ('รางบน (รุ่น'+_track+')')
-        : _sr.txt;
+        : (_os.bottomrail==='เตี้ย' ? 'รางล่าง (รุ่นรางเตี้ย 7 มม.)' : (_os.bottomrail==='กันน้ำ' ? 'รางล่าง (รุ่นกันน้ำ)' : _sr.txt));
       // ชนิดการเปิด: ถ้าเป็น "บานเลื่อน" ธรรมดา ไม่ต้องใส่ ชื่ออยู่ใน rawName แล้ว
       const _otSuffix = (_ot !== 'บานเลื่อน') ? _ot : '';
       // นับบาน
