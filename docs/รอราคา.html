@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายการราคาที่รอเติม — เครื่องคิดราคา JR</title>
+<style>
+:root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--bg:#f4f5f7;--line:#e5e7eb;--amber:#b45309}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;line-height:1.55}
+.wrap{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+header{background:linear-gradient(135deg,var(--red),#8f1018);color:#fff;border-radius:16px;padding:24px}
+header h1{margin:0 0 4px;font-size:21px}header .sub{opacity:.9;font-size:13px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:13.5px;margin-top:18px}
+th{background:var(--red);color:#fff;text-align:left;padding:10px;font-weight:600}
+td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.fill{background:#fffbeb;border:1px dashed var(--amber);min-width:120px;color:var(--amber);font-weight:700;text-align:center}
+.in{background:#ecfdf5;color:#065f46;font-weight:700}
+.note{font-size:12.5px;color:var(--mut);margin-top:14px}
+code{font-family:Consolas,monospace;background:#f3f4f6;border-radius:5px;padding:1px 6px;font-size:12px;color:var(--red)}
+.tag{display:inline-block;border-radius:5px;padding:0 7px;font-size:11px;font-weight:700;color:#fff}
+.t-ready{background:#16a34a}.t-wait{background:#b45309}
+</style></head><body><div class="wrap">
+<header>
+<h1>💰 รายการราคาที่รอเติม</h1>
+<div class="sub">ตัวเลือกที่ "ใส่ในระบบแล้ว ใช้งานได้" แต่ราคายังรอพี่นัทแจ้ง · เติมในช่องสีเหลือง → แจ้ง Claude ใส่ลงระบบ</div>
+</header>
+
+<table>
+<thead><tr><th>#</th><th>รายการ</th><th>ใช้กับหมวด</th><th>สถานะระบบ</th><th>ราคาที่ต้องเติม</th><th>หมายเหตุ</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><b>แผ่นลูกฟูกล่าง (อลู)</b></td><td>ทุกหมวดบาน (เลื่อน/เปิด/เฟี้ยม/กระทุ้ง)</td><td><span class="tag t-ready">มี option แล้ว</span></td><td class="fill">ราคามีใน R3.9 → ดึงมา</td><td>พี่นัทบอกราคาอยู่ในสูตรไฟล์เวิร์ด R3.9 แล้ว — แชทถัดไปดึงมาใส่</td></tr>
+<tr><td>2</td><td><b>แผ่นคอมโพสิทล่าง</b></td><td>ทุกหมวดบาน</td><td><span class="tag t-ready">มี option แล้ว</span></td><td class="fill">ราคา R3.9 → ดึงมา</td><td>เหมือนข้อ 1</td></tr>
+<tr><td>3</td><td><b>กระจกอินซูเลท 2 ชั้น</b> (5+อากาศ+5)</td><td>หน้าต่าง/ประตู (บานเลื่อน/เปิด/ติดตาย/เฟี้ยม/กระทุ้ง)</td><td><span class="tag t-ready">มี option แล้ว</span></td><td class="fill">฿_____ /ตร.ม.</td><td>รอราคาจากนิด · ตอนนี้กรอกผ่าน OPTION± ได้</td></tr>
+<tr><td>4</td><td><b>งานพื้น</b> (สมาร์ทบอร์ด / ไม้เทียม decking)</td><td>ทุกหมวด (เลือกได้)</td><td><span class="tag t-ready">มี option แล้ว</span></td><td class="fill">฿_____ (ต่อรุ่น/ตร.ม.)</td><td>รอรุ่น + ราคา · ตอนนี้พิมพ์ชนิด + กรอกราคาเองได้</td></tr>
+<tr><td>5</td><td><b>กระจกเงา 2 ด้าน</b></td><td>บาน (เลื่อน/เปิด)</td><td><span class="tag t-wait">ยังไม่มี (กรอกเอง)</span></td><td class="fill">฿_____ /ตร.ม.</td><td>"ไว้ทีหลัง" · ตอนนี้พิมพ์ในหมายเหตุ + OPTION±</td></tr>
+<tr><td>6</td><td><b>กระจกลอนแก้ว</b></td><td>บาน/ติดตาย</td><td><span class="tag t-wait">ยังไม่มี (กรอกเอง)</span></td><td class="fill">฿_____ /ตร.ม.</td><td>"ไว้ทีหลัง"</td></tr>
+<tr><td>7</td><td><b>สีอลูชุบทอง / อโนไดซ์</b></td><td>ทุกหมวด</td><td><span class="tag t-wait">กรอกเอง (ไม่มีรหัส)</span></td><td class="in">กรอกเอง — OK</td><td>พี่นัทบอก "ปล่อยไป กรอกเอง" — ไม่ต้องเติมในระบบ</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+<b>วิธีใช้:</b> ราคาที่รอ → ตอนนี้เซลล์กรอกผ่านช่อง <code>OPTION ±บาท</code> หรือ <code>ราคาเหมา</code> ในแต่ละรายการได้เลย (ใช้งานได้ทันที) ·
+เมื่อพี่นัทแจ้งราคาทางการ → Claude ใส่เป็นราคาในสูตร (auto-calc) แทนการกรอกมือ<br>
+<b>เพิ่มรายการใหม่:</b> พี่นัทแจ้งมาเรื่อยๆ → Claude เพิ่มลงตารางนี้ + ใส่ option ในระบบ
+</div>
+<footer style="text-align:center;color:var(--mut);font-size:12px;margin-top:24px">เครื่องคิดราคา JR · branch feat/quote-phase5-ux · อัปเดต 2026-06-08</footer>
+</div></body></html>

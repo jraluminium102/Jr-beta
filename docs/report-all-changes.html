@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สรุปงานแก้ไขทั้งหมด — เครื่องคิดราคา JR (2 รอบ goal + รอบล่าสุด)</title>
+<style>
+:root{--red:#B3151D;--red2:#8f1018;--ink:#1f2937;--mut:#6b7280;--bg:#f4f5f7;--line:#e5e7eb;--green:#16a34a;--amber:#b45309;--blue:#1d4ed8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+header{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-radius:16px;padding:26px;box-shadow:0 8px 24px rgba(179,21,29,.25)}
+header h1{margin:0 0 6px;font-size:23px}header .sub{opacity:.92;font-size:14px}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:12px;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.stat .n{font-size:21px;font-weight:800;color:var(--red)}.stat .l{font-size:12px;color:var(--mut)}
+h2{font-size:18px;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--red)}
+.round{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 18px 14px;margin-bottom:14px}
+.round h3{font-size:15px;color:var(--red);margin:14px 0 6px}
+.round ul{margin:4px 0 0;padding-left:20px}.round li{margin:3px 0;font-size:13.5px}
+.tag{display:inline-block;border-radius:6px;padding:0 7px;font-size:11px;font-weight:700;color:#fff;margin-right:6px}
+.t-feat{background:#16a34a}.t-fix{background:#B3151D}.t-test{background:#1d4ed8}.t-doc{background:#6b7280}
+.commit{font-family:Consolas,monospace;font-size:11px;color:var(--mut)}
+.openbox{background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:6px 20px 16px}
+.openbox h3{color:var(--amber)}
+.oitem{border-left:4px solid var(--amber);background:#fff;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13.5px}
+.oitem.data{border-left-color:var(--blue)}.oitem.big{border-left-color:var(--red)}
+.k{display:inline-block;border-radius:5px;padding:0 7px;font-size:11px;font-weight:700;margin-right:6px}
+.k-data{background:#eff6ff;color:#1d4ed8}.k-ux{background:#fef3c7;color:#92400e}.k-big{background:#fee2e2;color:#991b1b}
+.link{display:block;background:#fff;border:2px dashed var(--red);border-radius:12px;padding:12px;margin-top:8px;word-break:break-all;font-family:Consolas,monospace;font-size:13px;color:var(--red);font-weight:600}
+.note{font-size:12px;color:var(--mut);margin-top:6px}code{font-family:Consolas,monospace;background:#f3f4f6;border-radius:5px;padding:1px 6px;font-size:12px;color:var(--red)}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.files a,.files span{background:#f3f4f6;border-radius:6px;padding:3px 9px;font-size:12px;color:var(--ink);font-family:Consolas,monospace}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:26px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><div class="wrap">
+
+<header>
+<h1>📋 สรุปงานแก้ไขทั้งหมด — เครื่องคิดราคา JR</h1>
+<div class="sub">รวม 2 รอบ goal + รอบล่าสุด · branch <b>feat/quote-phase5-ux</b> (ยังไม่ merge main) · 13 commits</div>
+<span class="badge">baseline ปัจจุบัน: FullA 679,450 · FullB 8,057,421</span>
+</header>
+
+<div class="stats">
+<div class="stat"><div class="n">13</div><div class="l">commits</div></div>
+<div class="stat"><div class="n">13/13</div><div class="l">option test</div></div>
+<div class="stat"><div class="n">14/14</div><div class="l">fidelity test</div></div>
+<div class="stat"><div class="n">2</div><div class="l">บั๊กร้ายที่แก้</div></div>
+</div>
+
+<h2>🔄 รอบที่ 1 — เทสออปชัน + ซ่อมระบบกั้นห้อง + ปรับฟอร์ม</h2>
+<div class="round">
+<h3>เทส / fixture</h3>
+<ul>
+<li><span class="tag t-test">test</span>เขียน glasshouse fixture ใหม่เป็นระบบชุด + ตั้ง baseline ใหม่ <span class="commit">f5b1b47</span></li>
+<li><span class="tag t-test">test</span>เทสครบ 13 ออปชัน "ทำงานจริง" + ตารางสรุปอ่านง่าย (<code>test/option-coverage.mjs</code>, <code>docs/test-summary.md</code>) <span class="commit">c2c0e72</span></li>
+<li><span class="tag t-test">test</span>เทส quote-fidelity 14 หมวด (ใบออกข้อมูลครบ) <span class="commit">22d16ca</span></li>
+</ul>
+<h3>UX / บั๊ก</h3>
+<ul>
+<li><span class="tag t-feat">UX</span>ซ่อนช่อง "ราคากำหนดเอง" สินค้าปกติ + รวมกล่อง option · label จำนวนบานชัดขึ้น · ปุ่ม "ส่งเข้าระบบ JR" เด่น <span class="commit">1dc0a4d</span></li>
+<li><span class="tag t-feat">UX</span>ตัดปุ่มชุดซ้ำ (บน+ล่าง → แถวเดียว) <span class="commit">9980463</span></li>
+<li><span class="tag t-fix">บั๊ก</span><b>ปุ่มหลัก "ส่งเข้าระบบ JR"/พรีวิว/ล้าง คลิกไม่ได้</b> (เขียน curly quotes) → แก้แล้ว <span class="commit">6ff0378</span></li>
+</ul>
+</div>
+
+<h2>🔄 รอบที่ 2 — จัด option เป็น dropdown + เทสผสม/เทียบใบจริง</h2>
+<div class="round">
+<ul>
+<li><span class="tag t-feat">UX</span>จัด option เป็น <b>dropdown แยกประเภท 5 กลุ่ม</b> (ชนิด/การเปิด · มือจับ-ล็อค · มุ้ง · คาดตาราง · อื่นๆ) — กล่องไม่รก <span class="commit">11a0b4e</span></li>
+<li><span class="tag t-test">test</span>FullC (20 รายการผสมออปชันซับซ้อน) + FullD (20 รายการเลียนใบจริง + cross-check ใบจริง 6 ใบ) <span class="commit">12822af</span></li>
+<li><span class="tag t-doc">รายงาน</span>cross-check: ทำได้ครบ 10 / บางส่วน 10 / ไม่ได้ 0 + แนวแก้ (<code>docs/report-fullcd.html</code>) <span class="commit">448029c</span></li>
+</ul>
+</div>
+
+<h2>🔄 รอบล่าสุด — รวม note + ลบค่าทำชุด + สีอลู/กระจกทั้งใบ</h2>
+<div class="round">
+<ul>
+<li><span class="tag t-feat">A</span>รวมช่องหมายเหตุที่ซ้ำ (ลบ "หมายเหตุเพิ่มเติม เฉพาะบานนี้" รวมเข้า "หมายเหตุ/OPTION" เหลือช่องเดียว) <span class="commit">d3b5053</span></li>
+<li><span class="tag t-feat">C</span><b>ยกเลิก "ค่าทำชุด กั้นห้องกระจก 5,000"</b> ออกหมด → baseline ลด (FullA 684,800→679,450) <span class="commit">d3b5053</span></li>
+<li><span class="tag t-feat">B</span><b>สีอลู/กระจก เลือกทีเดียวใช้ทั้งใบ</b> (global) + ย้ายแก้รายบานเข้าออปชั่น → แถวหลักโล่ง · GH master ไม่พัง <span class="commit">4868bf4</span></li>
+<li><span class="tag t-doc">D</span>ใบคิดราคาแยกย่อย + breakdown รายข้อ (ฐาน+ออปชัน) + ชุดกั้นห้อง split (<code>docs/breakdown-sample.html</code>)</li>
+</ul>
+</div>
+
+<h2>🟡 F — สิ่งที่พี่นัท "ยังไม่ได้ตอบ/ตัดสิน" (ต้องเคาะก่อนทำต่อ)</h2>
+<div class="openbox">
+<h3>① ข้อมูล/แคตตาล็อก — รอ "ราคา" (ผมเพิ่มเองไม่ได้ ไม่รู้ราคา + กระทบ baseline)</h3>
+<div class="oitem data"><span class="k k-data">กระจก</span>กระจกเงา 2 ด้าน · อินซูเลท (5+air+5) · ลอนแก้ว — ใบจริงมี แต่ระบบยังไม่มีในแคตตาล็อก</div>
+<div class="oitem data"><span class="k k-data">สี</span>สีชุบทอง/อโนไดซ์ · ลายไม้รหัสรุ่น (เช่น KL19022WD) — ยังไม่มีใน COLORS</div>
+<div class="oitem data"><span class="k k-data">วัสดุ</span>ลูกฟูกสำหรับ "บานเลื่อน" (มีแค่บานเปิด) · ฉนวน/อินซูเลทสำหรับหน้าต่าง-ประตู (มีแค่หลังคา) · พื้น (สมาร์ทบอร์ด/ไม้เทียม)</div>
+
+<h3>② UX — ปรับได้ แต่อยากให้พี่นัทเคาะแนวทาง</h3>
+<div class="oitem"><span class="k k-ux">UX</span><b>เสริมคาน</b> ตอนนี้โผล่เฉพาะตอนเลือก "ซ่อนราง" → เปิดให้กรอกได้ทุกแบบราง ไหม? (ใบจริงมีเสริมคานแบบโชว์ราง)</div>
+<div class="oitem"><span class="k k-ux">UX</span><b>OPTION +/−</b> ตอนนี้พิมพ์ข้อความเอง ระบบไม่คิดราคาให้ → ทำเป็น "บรรทัด OPTION + ช่องราคา ±" คิดอัตโนมัติไหม?</div>
+<div class="oitem"><span class="k k-ux">UX</span><b>ฝังรางยู / งานเสริมวิศวกรรม / รื้อของเดิม</b> ต่อรายการ — เพิ่มเป็น checkbox/ช่องไหม?</div>
+<div class="oitem"><span class="k k-ux">UX</span><b>รวมจำนวนบาน</b> (มี/เปิด/ติดตาย) — รอบก่อนทำแค่ปรับ label (conservative) ยังไม่รวม field เต็ม — เอาเต็มไหม?</div>
+
+<h3>③ โครงสร้างใหญ่ — ต้องตัดสินใจก่อนลงมือ (งานใหญ่)</h3>
+<div class="oitem big"><span class="k k-big">ใหญ่</span><b>ชุด multi-side ผนัง/โรงงาน</b> (ISOWALL+เมทัลชีท ด้าน A-M) — ทำแบบเดียวกับ "ชุดกั้นห้องกระจก" + รวมระแนง(g2) เข้าชุดได้</div>
+<div class="oitem big"><span class="k k-big">ใหญ่</span><b>โหมดกรอกราคาเหมา (lump-sum)</b> สำหรับรายการที่ใบจริงไม่ระบุขนาด/คิดเหมา (ไม่บังคับ ก×ส)</div>
+</div>
+
+<h2>🛡️ คุณภาพ (เช็คซ้ำทุก commit)</h2>
+<div class="round"><ul>
+<li>ราคาไม่เพี้ยน: FullA 679,450 / FullB 8,057,421 (หลังลบค่าทำชุด)</li>
+<li>option-coverage 13/13 · quote-fidelity 14/14 · calc-glasshouse 19/19 · gen-formats 10/10 · qa-t5 18/18</li>
+<li>ไม่มี NaN · ไม่มี curly quotes (=") · jsdom 0 error · ไม่แตะ engine/สูตรราคา</li>
+</ul></div>
+
+<h2>📎 ไฟล์รายงาน/ตัวอย่าง (เปิดดูได้)</h2>
+<div class="files">
+<span>docs/report-all-changes.html (อันนี้)</span><span>docs/breakdown-sample.html</span><span>docs/report-fullcd.html</span>
+<span>docs/report-quote-fidelity.html</span><span>docs/test-summary.md</span>
+<span>ใบเสนอราคาทดสอบ/quote-FULL-A…D.html</span>
+</div>
+
+<h2>🔗 Preview</h2>
+<span class="link">jr-beta-git-feat-quote-phase5-ux-jraluminium103.vercel.app/calculator/index.html</span>
+<div class="note">ของใหม่: option เป็นกลุ่มพับได้ · สีอลู/กระจกเลือกทีเดียวทั้งใบ · ไม่มีค่าทำชุดกั้นห้อง · ปุ่มหลักกดได้</div>
+
+<footer>สร้างโดย Claude · เครื่องคิดราคา JR · branch feat/quote-phase5-ux · 2026-06-08</footer>
+</div></body></html>

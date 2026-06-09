@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:14mm 13mm;}
+*{font-family:"Leelawadee UI","Tahoma","TH Sarabun New",sans-serif;}
+body{color:#1f2937;font-size:13px;line-height:1.55;}
+h1{color:#B3151D;font-size:19px;border-bottom:3px solid #B3151D;padding-bottom:6px;margin:0 0 4px;}
+.sub{color:#6b7280;font-size:12px;margin:0 0 12px;}
+h2{color:#B3151D;font-size:15px;margin:16px 0 6px;border-left:5px solid #B3151D;padding-left:8px;}
+table{border-collapse:collapse;width:100%;margin:6px 0 10px;font-size:11.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 4px;border-radius:3px;font-family:Consolas,monospace;font-size:11px;}
+.bad{color:#B3151D;font-weight:700;} .ok{color:#15803d;font-weight:700;}
+.box{background:#fff8f8;border:1px solid #f0c0c4;border-radius:8px;padding:8px 12px;margin:8px 0;}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:12px;}
+ul,ol{margin:4px 0 8px;padding-left:20px;} li{margin:2px 0;}
+.pri{display:inline-block;border-radius:5px;padding:0 7px;font-size:11px;font-weight:700;color:#fff;}
+.p0{background:#B3151D;} .p1{background:#dc2626;} .p2{background:#ea580c;} .p3{background:#ca8a04;}
+</style></head>
+<body>
+
+<h1>สเปก: บั๊กกล่องบานเลื่อนค้าง + UX หลังคา/หลังคาเลื่อน "กรอกง่าย"</h1>
+<p class="sub">ส่งแชทแก้ HTML · ไฟล์ <code>public/calculator/index.html</code> · เลขบรรทัดอิง HEAD c5d3d0f · ดราฟดูได้: jraluminium102.github.io/sharepicjr/JR-UX-roof-draft.html · READ-ONLY ไม่แตะ index.html</p>
+
+<h2><span class="pri p0">BUG</span> กล่องฟ้า "บานเลื่อน:" ค้างเมื่อสลับ product</h2>
+<div class="box">
+<b>อาการ:</b> เลือกบานเลื่อน/บานเปิด/ติดตาย แล้วเปลี่ยนเป็น <b>หลังคา/ฝ้า/มุ้ง</b> → กล่องฟ้า "🔢 บานเลื่อน: ชนิดการเปิด / ติดตาย-เปิด / ราง รางล่าง(รุ่นกันน้ำ)" <b>ค้างอยู่</b> ทั้งที่ไม่ควรมี (พี่นัทเจอตอนเล่นหลังคาเลื่อน)<br>
+<b>ยืนยันจากแอปจริง:</b> roof_vinyl มี <code>.sliding-main-block</code> ค้างใน <code>.chgrid</code> (นอก .i-opts)
+</div>
+<p><b>Root cause:</b> relocation บรรทัด <b>2422-2430</b> ย้าย <code>.sliding-main-block</code> ออกจาก <code>.i-opts</code> ขึ้นไปไว้ฟอร์มหลัก <code>.chgrid</code> · พอเปลี่ยน product → <code>buildItemOpts</code> สร้าง <code>.i-opts</code> ใหม่ (หลังคาไม่มีกล่องนี้) <b>แต่กล่องที่ย้ายไป .chgrid แล้วไม่ถูกลบ</b> (โค้ดหา <code>.sliding-main-block</code> แค่ใน <code>box</code>=.i-opts เลยไม่เจอ orphan)</p>
+<p><b>วิธีแก้:</b> ตอนต้น <code>buildItemOpts</code> ก่อน rebuild:</p>
+<ol>
+<li>หา <code>.sliding-main-block</code> เก่าใน <code>d</code> (ทั้งรายการ ไม่ใช่แค่ box)</li>
+<li>ย้าย <code>.i-panels-wrap</code> (ที่ถูกดูดเข้าไปในกล่องฟ้า บรรทัด 2427) ออกมาเก็บก่อน</li>
+<li>ลบ <code>.sliding-main-block</code> orphan ทุกตัวทิ้ง</li>
+<li>ค่อยสร้าง+relocate ใหม่ เฉพาะ cat ที่ควรมี (บานเลื่อน/เลื่อนภายใน/บานเปิด/ติดตาย)</li>
+</ol>
+<p><b>ทดสอบ:</b> เพิ่มรายการบานเลื่อน → เปลี่ยนเป็นหลังคา → ต้องไม่เหลือกล่อง "บานเลื่อน: ชนิดการเปิด/ราง" · เปลี่ยนกลับเป็นบานเลื่อน → กล่องกลับมาปกติ + จำนวนบานไม่หาย</p>
+
+<h2>UX — กรอกง่ายขึ้น (ตรวจโดย subagent)</h2>
+
+<h3><span class="pri p1">P1</span> ยุบ "ของเสริมหลังคา" เป็น dropdown พับ (default ปิด)</h3>
+<p>บล็อกหลังคามี ~17 ช่อง · ช่อง "ของเสริม" 10+ ตัว (รางน้ำ/คาน/เสา/โซ่/ครอบท่อ/ซ่อนสโลป/ปิดซ่อนราง/ครอบคาน) เคสปกติว่าง</p>
+<ul>
+<li><b>ที่:</b> label "ของเสริมหลังคา" บรรทัด ~2316 ครอบ 2317-2327</li>
+<li><b>แก้:</b> เปลี่ยนเป็น <code>&lt;details class="optbox"&gt;</code> (มี style พับใน codebase แล้ว 169-172) · summary = "+ ของเสริมหลังคา (รางน้ำ/เสา/คาน/ซ่อนสโลป...)" · <b>ปิด default</b> · เหลือ 4 ช่องหลัก (สี/แป/โครงสร้าง/ปลายหลังคา) โชว์</li>
+<li>ผล: เคสปกติเห็น ~4 ช่องแทน 17</li>
+</ul>
+
+<h3><span class="pri p1">P2</span> จำนวนบานเลื่อน = ชิป + stepper (เลิกพิมพ์)</h3>
+<ul>
+<li><b>ที่:</b> <code>.o-spanels</code> บรรทัด ~2286 (<code>&lt;input type="number"&gt;</code> 50px)</li>
+<li><b>แก้:</b> ชิปกดเลือก <b>[2] [3] [4] [6]</b> (แต่ละชิป ≥44px) + stepper <b>[−] N [+]</b> สำหรับเลขแปลก · กดชิป = set ค่า + เรียก <code>rfSlideMotorFill</code> + <code>calcQuote</code> (handler เดิม) · เก็บ input number เป็น source of truth (readItem เดิมไม่ต้องแก้)</li>
+<li>ดูตัวอย่างในดราฟ (chips ทำงานแล้ว)</li>
+</ul>
+
+<h3><span class="pri p2">P3</span> ปุ่ม/ช่องแตะง่าย 44px (มือถือ)</h3>
+<ul>
+<li>ช่อง number ทุกตัวสูง 30px · checkbox เล็ก (<code>.opt input{width:auto;height:auto}</code> บรรทัด 62)</li>
+<li><b>แก้ (CSS, media มือถือ ~163):</b> <code>.ch .opt input[type=number], .ch .opt select { min-height:44px }</code> + <code>.opt input[type=checkbox]{width:22px;height:22px}</code> + padding label ให้กดทั้งแถบ · เดสก์ท็อปคงคอมแพกต์</li>
+</ul>
+
+<h3><span class="pri p3">P4</span> หลังคาเลื่อน: มอเตอร์ auto ชัด + พื้นที่ placeholder</h3>
+<ul>
+<li><b>พื้นที่เลื่อน:</b> เปลี่ยน <code>value="0"</code> → <code>placeholder="auto"</code> ค่าว่าง (logic ราคา <code>sa&gt;0?sa:auto</code> รองรับว่างแล้ว) — เลิกสับสน "0 คือ auto หรือ 0 จริง"</li>
+<li><b>มอเตอร์:</b> โชว์ค่า auto เป็น <b>ข้อความ helper อ่านอย่างเดียว</b> "มอเตอร์ 1 ตัว · auto ฿28,000 [แก้ราคา]" · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์ (มี <code>dataset.edited</code> รองรับแล้ว) → เคสปกติ 0 การพิมพ์</li>
+<li>เรียง: จำนวนบาน → พื้นที่ → มอเตอร์ (มือถือแยกบรรทัด)</li>
+</ul>
+
+<h3><span class="pri" style="background:#16a34a">P6</span> ฝ้า/ผนัง — โอเคแล้ว</h3>
+<p>โชว์ 2-3 ช่องต่อวัสดุ (บรรทัด 2371-2383) ลีนพอ ไม่ต้องยุบ · ได้ P3 (ปุ่มใหญ่) ก็พอ</p>
+
+<h2>เช็คลิสต์แชท B</h2>
+<ol>
+<li><b>BUG</b> (2422-2430): ลบ <code>.sliding-main-block</code> orphan ก่อน rebuild + กู้ <code>.i-panels-wrap</code></li>
+<li>P1 (2316): ของเสริมหลังคา → <code>&lt;details&gt;</code> ปิด default</li>
+<li>P2 (2286): จำนวนบานเลื่อน → ชิป + stepper</li>
+<li>P3 (CSS 56-62/163): ปุ่ม/ช่อง 44px มือถือ</li>
+<li>P4 (2285-2289): พื้นที่ placeholder auto + มอเตอร์ helper read-only + แก้ราคา</li>
+<li>ทดสอบ: สลับ product ไม่ค้างกล่อง · มือถือกรอกหลังคาเลื่อนจบใน ~3 แตะ</li>
+</ol>
+
+<p class="sub" style="margin-top:14px;">ดราฟ interactive: <b>jraluminium102.github.io/sharepicjr/JR-UX-roof-draft.html</b> · READ-ONLY ส่งแชท B แก้รวมทีเดียว</p>
+</body></html>

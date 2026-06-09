@@ -41,8 +41,13 @@
   /* ม้าลาย — สลับสีกล่องกรอกข้อมูลแต่ละจุด */
   #items .ch:nth-of-type(odd),#q-items .ch:nth-of-type(odd){background:#FAFBFD;}
   #items .ch:nth-of-type(even),#q-items .ch:nth-of-type(even){background:#EAF0F7;}
-  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;cursor:pointer;user-select:none;}
   .ch .top input{height:36px;}
+  .ch.collapsed{padding:7px 12px;margin-bottom:6px;background:#FAFBFD;}
+  .ch.collapsed > *:not(.top){display:none !important;}
+  .ch.collapsed .top{margin-bottom:0;border-bottom:none;}
+  .ch-summary{flex:1;color:#1E5AA8;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ch .top .ch-caret{flex:none;color:#9DBCE0;font-size:11px;}
   .del{flex:0 0 auto;width:36px;height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;
     color:var(--red);font-size:20px;cursor:pointer;line-height:1;}
   .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
@@ -55,6 +60,7 @@
   .gh-row textarea{height:60px;}
   .gh-row select[multiple]{height:130px;}
   .opt input{width:auto;height:auto;}
+  .spanel-chip.on{background:#1976D2;color:#fff;border-color:#1976D2;font-weight:700;}
   .chfoot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);
     padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
   .chfoot .price{font-weight:800;font-size:17px;color:var(--red-dark);}
@@ -156,6 +162,10 @@
     .qbtns button{height:42px;}
     .opts{flex-direction:column;align-items:flex-start;gap:4px;}
     .opt{font-size:13px;}
+    /* P3 (แชท B): ปุ่ม/ช่องแตะง่าย 44px บนมือถือ — เดสก์ท็อปคงคอมแพกต์ */
+    .ch .opt input[type=number], .ch .opt select{min-height:44px;}
+    .ch .opt input[type=checkbox]{width:22px;height:22px;}
+    .ch .opt{padding:2px 0;}
     /* R3.7.3: Mobile กั้นห้องกระจก — แค่ปรับ font size */
     .gh-row{font-size:13px;}
     input,select{font-size:16px;}
@@ -165,6 +175,27 @@
   .cmpcat>summary{cursor:pointer;padding:9px 0;font-weight:600;font-size:13px;color:var(--red-dark);}
   .optbox{margin:6px 0;border:1px solid var(--line);border-radius:8px;padding:0 10px;}
   .optbox>summary{cursor:pointer;padding:8px 0;font-size:13px;color:var(--red-dark);font-weight:600;}
+  /* C2: ปุ่มส่งเข้าระบบ JR — เด่นสุด */
+  .btn-send-jr{width:100%;height:54px;background:#B3151D;color:#fff;border:none;border-radius:12px;
+    font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;
+    box-shadow:0 3px 10px rgba(179,21,29,.35);transition:background .15s,box-shadow .15s;}
+  .btn-send-jr:hover{background:#8f1017;box-shadow:0 4px 14px rgba(179,21,29,.45);}
+  .btn-send-jr:active{background:#700c12;}
+  /* C1: ลด rk .ch header */
+  .ch .top{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+  /* B3: หมายเหตุ/OPTION + อุปกรณ์เสริม รวมกลุ่มเดียว */
+  .note-opt-group{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .note-opt-group label{color:var(--ink);}
+  .note-opt-group .optbox{background:#fff;margin-top:6px;margin-bottom:2px;}
+  /* A: ข้อมูลลูกค้า card-details */
+  .card-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0;}
+  .card-details>summary::-webkit-details-marker{display:none;}
+  .card-details>summary::before{content:"\25B6";font-size:11px;color:var(--red);transition:transform .2s;}
+  .card-details[open]>summary::before{transform:rotate(90deg);}
+  .card-details>summary .sum-title{font-size:14px;font-weight:700;color:var(--red-dark);}
+  .card-details>summary .sum-hint{font-size:12px;color:var(--muted);margin-left:4px;}
+  /* B1: hint แก้ราคา */
+  .i-override-hint{background:#FFF7E6;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:5px 10px;margin-top:2px;}
   .setbox{border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:10px;margin-bottom:14px;background:#FFF9F9;}
   .set-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
   .set-badge{background:var(--red);color:#fff;border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap;}
@@ -214,9 +245,9 @@
 
   <!-- ===== QUOTE BUILDER ===== -->
   <section id="m-quote" class="hide">
-    <div class="card">
-      <h2>ข้อมูลลูกค้า</h2>
-      <div class="row2">
+    <details class="card card-details">
+      <summary><span class="sum-title">ข้อมูลลูกค้า</span><span class="sum-hint">(กดเพื่อกรอก)</span></summary>
+      <div class="row2" style="margin-top:10px;">
         <div><label>ชื่อลูกค้า / งาน</label><input id="custName" placeholder="เช่น คุณสมชาย / บ้านทรายทอง"></div>
         <div><label>วันที่ (วว-ดด-ปป)</label><input id="qdate" type="text" placeholder="29-05-69" maxlength="8" style="text-align:center;"></div>
       </div>
@@ -237,11 +268,23 @@
         </select>
         <div id="sellerOtherWrap" style="display:none;margin-top:6px;"><input id="sellerOther" placeholder="พิมพ์ชื่อเซลล์ (เผื่อเพิ่มมือ)"></div>
       </div>
-    </div>
+    </details>
 
     <div class="card">
       <h2>รายการ</h2>
       <datalist id="posPreset"><option value="ด้านบน"><option value="ด้านล่าง"><option value="ด้านซ้าย"><option value="ด้านขวา"><option value="ด้านข้าง"><option value="โดยรอบ"></datalist>
+      <!-- global color/glass — ใช้ทั้งใบ · แก้รายบานได้ในออปชั่น -->
+      <div id="global-color-row" style="display:flex;gap:10px;flex-wrap:wrap;background:#F0F4FF;border:1px solid #C7D7F0;border-radius:10px;padding:10px 12px;margin-bottom:10px;align-items:flex-end;">
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;color:#3B5EA6;font-weight:700;display:block;margin-bottom:4px;">สีอลูมิเนียม (ทั้งใบ)</label>
+          <select id="global-color" style="width:100%;height:40px;border:1px solid #C7D7F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;color:#3B5EA6;font-weight:700;display:block;margin-bottom:4px;">กระจก (ทั้งใบ)</label>
+          <select id="global-glass" style="width:100%;height:40px;border:1px solid #C7D7F0;border-radius:8px;font-size:14px;background:#fff;"></select>
+        </div>
+        <div style="flex:0 0 auto;font-size:11px;color:#3B5EA6;line-height:1.4;padding-bottom:2px;">เปลี่ยนที่นี่ = sync ทุกรายการ<br>แก้รายบาน = เปิดออปชั่นรายการ</div>
+      </div>
       <div id="items"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button type="button" class="addbtn" onclick="addSet()" style="flex:1;">+ เพิ่มชุด</button>
@@ -251,16 +294,16 @@
 
     <div class="card">
       <div class="row2">
-        <div><label>ค่าติดตั้ง (บาท/ตร.ม.) — สำหรับ "ผลิตส่ง"</label><input type="number" id="installRate" min="0" step="10" value="0" oninput="calcQuote()"></div>
+        <div><label>หักค่าติดตั้งออก (บาท/ตร.ม.) — เฉพาะรายการที่ติ๊ก "ผลิตส่ง ไม่ติดตั้ง"</label><input type="number" id="installRate" min="0" step="10" value="0" oninput="calcQuote()"></div>
         <div><label>ส่วนลด (% · สูงสุด 2% เมื่อยอด ≥ 50,000)</label><input type="number" id="discPct" min="0" max="2" step="0.5" value="0" oninput="calcQuote()"></div>
         <div><label>ส่วนลดค่าประเมินหน้างาน (บาท)</label><input type="number" id="discFlat" min="0" step="500" value="0" oninput="calcQuote()"></div>
       </div>
-      <div class="hint">ราคามาตรฐาน = รวมติดตั้งแล้ว · ติ๊ก "ผลิตส่ง" ในรายการ = หักค่าติดตั้งออก (ตอนนี้ตั้ง 0 ยังไม่มีผล)</div>
+      <div class="hint">ปกติราคา = รวมติดตั้งแล้ว · ช่องนี้ = อัตราค่าติดตั้งต่อ ตร.ม. ที่จะ "หักออก" เฉพาะรายการที่ติ๊ก "ผลิตส่ง (ไม่ติดตั้ง)" · ใส่ 0 = ไม่หัก (ผลิตส่งราคาเท่าติดตั้ง) · ถ้าอยากให้ผลิตส่งถูกลง ใส่ค่าติดตั้ง/ตร.ม. ที่นี่</div>
     </div>
 
-    <div class="card">
-      <h2>ค่าบริการเพิ่มเติม (ทั้งใบ)</h2>
-      <div class="row2">
+    <details class="card">
+      <summary style="cursor:pointer;font-weight:700;font-size:18px;color:var(--red);">ค่าบริการเพิ่มเติม (ทั้งใบ) <span style="font-size:12px;color:#888;font-weight:400;">— กดเปิด · นั่งร้าน/เดินทาง/ขนส่ง/งานไฟ/รื้อ/VAT (ค่า default ใช้ได้เลย)</span></summary>
+      <div class="row2" style="margin-top:8px;">
         <div><label>จำนวนชั้นอาคาร</label><input type="number" id="svc-floors" min="1" step="1" value="1" oninput="calcQuote()"></div>
         <div><label>จำนวนชุดเสี่ยง (ติดตั้งภายนอก ชั้น≥3)</label><input type="number" id="svc-risky" min="1" step="1" value="1" oninput="calcQuote()"></div>
       </div>
@@ -276,7 +319,8 @@
       <label class="chk" style="margin-top:8px;display:block;"><input type="checkbox" id="svc-bkk" onchange="calcQuote()"> ในกทม.+ปริมณฑล (ฟรีถ้ายอด>20,000)</label>
       <label class="chk mt"><input type="checkbox" id="svc-elec" onchange="calcQuote()"> งานไฟ</label>
       <div id="svc-elec-box" class="hide mt" style="padding-left:16px;">
-        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟ 2 ดวง (+3,000)</label>
+        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟดาวน์ไลท์ (+1,500/ดวง)</label>
+        <div class="mt"><label>จำนวนดาวน์ไลท์ (ดวง)</label><input type="number" id="svc-elec-run-qty" min="1" step="1" value="2" oninput="calcQuote()" style="max-width:120px;"></div>
         <div class="mt"><label>สวิตซ์ใหม่ (จุด) +1,000/จุด</label><input type="number" id="svc-elec-sw" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
       </div>
       <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม</label>
@@ -291,7 +335,7 @@
         <div id="svc-demo-door-box" class="hide mt"><label>ค่าเหมา (บาท)</label><input type="number" id="svc-demo-door-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
       </div>
       <div class="hint">นั่งร้าน 5,000/ชั้น (ชั้น 2+) · ความเสี่ยง (10k+...) × จำนวนชุดเสี่ยง (ชั้น 3+) · เดินทาง: ที่พัก tier (≤70k=1วัน, 70-100k=2วัน) + 5,000/100km</div>
-    </div>
+    </details>
 
     <div class="sum">
       <div class="line"><span>ราคารวม</span><span id="sBefore">฿0</span></div>
@@ -312,14 +356,20 @@
 
     <div id="warnAll"></div>
 
-    <div class="actions">
-      <button type="button" class="btn-prim" style="background:#B3151D;width:100%;height:50px;font-weight:700;font-size:16px;" onclick="sendToQuotation()">📤 ส่งเข้าระบบ JR → ออกใบเสนอราคา</button>
+    <div style="margin-top:14px;">
+      <button type="button" class="btn-prim btn-send-jr" onclick="sendToQuotation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>ส่งเข้าระบบ JR — ออกใบเสนอราคา
+      </button>
     </div>
-    <div class="actions" style="margin-top:8px;">
-      <button type="button" class="btn-sec" onclick="genQuote()">👁 พรีวิว/พิมพ์ในเครื่อง</button>
-      <button type="button" class="btn-sec" onclick="resetQuote()">ล้างทั้งหมด</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+      <button type="button" class="btn-sec" style="height:44px;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;" onclick="genQuote()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>พรีวิว/พิมพ์ในเครื่อง
+      </button>
+      <button type="button" class="btn-sec" style="height:44px;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;" onclick="resetQuote()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>ล้างทั้งหมด
+      </button>
     </div>
-    <div class="note" style="color:#B3151D;font-weight:600;">ออกใบเสนอราคาจริง = กดปุ่มแดง “ส่งเข้าระบบ JR” ด้านบน · ปุ่มพรีวิวแค่ดู/พิมพ์ในเครื่อง ไม่บันทึกเข้าระบบ</div>
+    <div class="note" style="color:#B3151D;font-weight:600;margin-top:8px;">ออกใบเสนอราคาจริง = กดปุ่มแดงด้านบน "ส่งเข้าระบบ JR" · ปุ่มพรีวิวแค่ดู/พิมพ์ในเครื่อง ไม่บันทึกเข้าระบบ</div>
   </section>
 
   <!-- ===== COMPARE ===== -->
@@ -404,7 +454,7 @@ const RATES={
  IMP3:[[0.0,5.0,9700],[5.0,10.0,9000],[10.0,15.0,8700],[15.0,9999,8400]],
  IMP4:[[0.0,5.0,9700],[5.0,10.0,9000],[10.0,15.0,8700],[15.0,9999,8400]],
  IMP5:[[0.0,5.0,7900],[5.0,10.0,7200],[10.0,15.0,7000],[15.0,9999,6700]],
- IMP6:[[0.0,5.0,8700],[5.0,10.0,8000],[10.0,15.0,7700],[15.0,9999,7400]],
+ IMP6:[[0.0,5.0,7900],[5.0,10.0,7200],[10.0,15.0,7000],[15.0,9999,6700]], // ข้อ12: ตั้ง = IMP5 (มติพี่นัท · 47.4 ควรเรตเดียวกับ U/เสาอลู)
  IMP7:[[0.0,10.0,6300],[10.0,15.0,5800],[15.0,30.0,5300],[30.0,9999,4800]],
  IMP8:[[0.0,10.0,6400],[10.0,15.0,5900],[15.0,30.0,5400],[30.0,9999,4900]],
  IMP9:[[0.0,10.0,6600],[10.0,15.0,6100],[15.0,30.0,5600],[30.0,9999,5100]],
@@ -514,7 +564,7 @@ const PRODUCTS=[
  {id:'awning_aluinch',cat:'บานกระทุ้ง',name:'บานกระทุ้ง aluinch (ยกเลิกขาย)',method:'same_as',ref:'awning_euro',cost:null,mosquito:1},
  {id:'casement_euro',cat:'บานเปิด',name:'บานเปิด ยูโร',method:'bucket',min:18000,rates:'OPEN',cost:'casement_euro',addon:{kind:'door',extra:14000},closer:1,digihandle:1,series:'L',mosquito:1},
  {id:'casement_dseries',cat:'บานเปิด',name:'บานเปิด D-series (ยกเลิกขาย)',method:'bucket',min:24000,rates:'DSERIES',cost:null,addon:{kind:'door',extra:19000},mosquito:1},
- {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',opts:[{id:'closer',label:'โช้ค',price:5000,mosquito:1}]},
+ {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',mosquito:1,opts:[{id:'closer',label:'โช้ค',price:5000}]},
  {id:'casement_velora',cat:'บานเปิด',name:'บานเปิด Velora (รวมเทมเปอร์6มม.)',method:'bucket',min:19000,rates:'VELORA',cost:null,addon:{kind:'door',extra:15000},series:'S',mosquito:1},
  // R3 2026-05-30: เพิ่ม 2 รุ่นประตูบานเปิด ลูกฟูกทึบ — ราคากรอกเอง
  {id:'casement_flush_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
@@ -541,7 +591,7 @@ const PRODUCTS=[
  {id:'inner_bottom_euro',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง ยูโร',method:'area_rate_addon',rates:'INBOT_EURO',cost:null,addon:{kind:'sliding',amounts:{1:4400,2:11000,3:17600,4:24200}}},
  {id:'lift_sms',cat:'บานยก',name:'บานยก SMS',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1},
  {id:'lift_aluinch',cat:'บานยก',name:'บานยก aluinch',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
- {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'blackhw',label:'อุปกรณ์ดำ',price:4000},{id:'goldhw',label:'อุปกรณ์ทอง',price:6000}]},
+ {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000)
  {id:'frameless_fixed',cat:'บานเปลือย',name:'บานเปลือยติดตาย',method:'bucket',min:7000,rates:'FRAMELESS',cost:null},
  {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,cost:null},
  {id:'curved_double',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานคู่',method:'bucket',min:47000,rates:'CURVE_DBL',cost:null,digihandle:1},
@@ -562,34 +612,31 @@ const PRODUCTS=[
  {id:'ykk_vent',cat:'YKK',name:'ประตู Ventilation YKK',method:'per_sqm',rate:17500,min:30000,cost:null,sizeCheck:'vent',closer:1},
  {id:'ykk_exhido',cat:'YKK',name:'ประตู Exhido YKK (ช่องเปิดเต็ม)',method:'bucket',min:50000,rates:'EXHIDO',cost:null,sizeCheck:'exhido',closer:1},
  {id:'tostem_a01',cat:'YKK',name:'Tostem Airflow A01 (ลายไม้ หน้าบ้าน)',method:'per_sqm',rate:17500,min:34000,cost:null,closer:1},
- {id:'fw_door_basic',cat:'เสริม',name:'ครอบวงกบ ประตู (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'door',rate:700,cost:null},
+ {id:'fw_door_basic',cat:'เสริม',name:'ครอบวงกบ ประตู (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'door',rate:700,cost:null},
  {id:'fw_door_stock',cat:'เสริม',name:'ครอบวงกบ ประตู (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'door',rate:800,cost:null},
  {id:'fw_door_special',cat:'เสริม',name:'ครอบวงกบ ประตู (สีอบพิเศษ 1,200/ม.)',frame_wrap:'door',rate:1200,cost:null},
  {id:'fw_door_wood',cat:'เสริม',name:'ครอบวงกบ ประตู (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'door',rate:1300,cost:null},
- {id:'fw_win_basic',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'window',rate:700,cost:null},
+ {id:'fw_win_basic',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'window',rate:700,cost:null},
  {id:'fw_win_stock',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'window',rate:800,cost:null},
  {id:'fw_win_special',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (สีอบพิเศษ 1,200/ม.)',frame_wrap:'window',rate:1200,cost:null},
  {id:'fw_win_wood',cat:'เสริม',name:'ครอบวงกบ หน้าต่าง (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'window',rate:1300,cost:null},
  // R3.3 2026-05-30: ครอบวงกบ ระแนง + ตู้
- {id:'fw_ranae_basic',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'ranae',rate:700,cost:null},
+ {id:'fw_ranae_basic',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'ranae',rate:700,cost:null},
  {id:'fw_ranae_stock',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'ranae',rate:800,cost:null},
  {id:'fw_ranae_special',cat:'เสริม',name:'ครอบวงกบ ระแนง (สีอบพิเศษ 1,200/ม.)',frame_wrap:'ranae',rate:1200,cost:null},
  {id:'fw_ranae_wood',cat:'เสริม',name:'ครอบวงกบ ระแนง (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'ranae',rate:1300,cost:null},
- {id:'fw_cabinet_basic',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีดำ/ขาว/ซาฮารา 700/ม.)',frame_wrap:'cabinet',rate:700,cost:null},
+ {id:'fw_cabinet_basic',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีดำ/ขาว/ซาฮาร่า 700/ม.)',frame_wrap:'cabinet',rate:700,cost:null},
  {id:'fw_cabinet_stock',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีอื่นๆ สต๊อก 800/ม.)',frame_wrap:'cabinet',rate:800,cost:null},
  {id:'fw_cabinet_special',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (สีอบพิเศษ 1,200/ม.)',frame_wrap:'cabinet',rate:1200,cost:null},
  {id:'fw_cabinet_wood',cat:'เสริม',name:'ครอบวงกบ ตู้อลู (ลายไม้อบพิเศษ 1,300/ม.)',frame_wrap:'cabinet',rate:1300,cost:null},
  {id:'custom_item',g:2,cat:'เสริม',name:'➕ รายการกรอกเอง (free-form)',custom_item:1,cost:null},
  {id:'glass_replace',g:1,cat:'เสริม',name:'คำนวณกระจกใหม่ (ที่ไม่มีในตาราง) — กรอกทุน + กำไร%',glass_replace:1,cost:null},
- {id:'roof_gutter_s',cat:'เสริม',name:'เพิ่ม รางน้ำอลู ไซต์ S (10×10ซม.) — 1,000/ม.',unit:'meter',rate:1000,cost:null},
  {id:'roof_eave_cover',cat:'เสริม',name:'เพิ่ม โครงปิดปลาย กันน้ำกระเด็น — 1,000/ม.',unit:'meter',rate:1000,cost:null},
- {id:'roof_gutter_ss_m',cat:'เสริม',name:'เพิ่ม รางน้ำสแตน สีเงิน ไซต์ M (15×10ซม.) — 2,000/ม. (ไม่รวมปิดราง)',unit:'meter',rate:2000,cost:null,gutter_dim:[0.15,0.10]},
- {id:'roof_gutter_ss_l',cat:'เสริม',name:'เพิ่ม รางน้ำสแตน สีเงิน ไซต์ L (30×10ซม.) — 3,000/ม. (ไม่รวมปิดราง)',unit:'meter',rate:3000,cost:null,gutter_dim:[0.30,0.10]},
+ // ข้อ9: ลบ roof_gutter_s/ss_m/ss_l (ราคาตรงกับตัวเลือก o-rfgut ในชุดหลังคาเป๊ะ — ซ้ำซ้อน) · เก็บ o-rfgut + ปิดซ่อนราง(cover)
  {id:'roof_gutter_cover',cat:'เสริม',name:'เพิ่ม ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง · ลด 50%) — กรอกขนาดรางและความยาว',gutter_cover:1,cost:null},
  {id:'roof_pole_panel',cat:'เสริม',name:'เพิ่ม เสาแผงหลังคา — 4,000/ต้น',unit:'piece',rate:4000,cost:null},
  {id:'roof_pole_4x8',cat:'เสริม',name:'เพิ่ม เสา 4"x8" — 2,000/ต้น',unit:'piece',rate:2000,cost:null},
- {id:'roof_hide_composite',cat:'เสริม',name:'เพิ่ม ซ่อนสโลป คอมโพสิต 3 มม. (รูปตัว U) — กรอก สูง/ด้าน/ยาว',hide_slope:'composite',rate:3500,cost:null},
- {id:'roof_hide_smartboard',cat:'เสริม',name:'เพิ่ม ซ่อนสโลป สมาร์ทบอร์ด 6 มม. (แผ่นเรียบ) — กรอก สูง/ด้าน/ยาว',hide_slope:'smartboard',rate:4000,cost:null},
+ // จุด3: ลบ product ซ่อนสโลปซ้ำ (roof_hide_composite/smartboard) — ใช้ option .o-rfhs ในชุดหลังคาแทน (ราคาเท่ากัน comp 3,500/smart 4,000)
  {id:'roof_chain',cat:'เสริม',name:'เพิ่ม โซ่รางน้ำ ลายดอกทิวลิป — 3,000/เส้น',unit:'piece',rate:3000,cost:null},
  {id:'roof_pvc_cover',cat:'เสริม',name:'เพิ่ม ครอบท่อ PVC — 1,500 บ./1.5 ม. (ปัดขึ้น)',pvc_cover:1,rate:1500,cost:null},
  // R3 2026-05-30: คานเหล็กถัก 3 รุ่น + แผ่นปิดครอบ (จากไฟล์ในโฟลเดอร์ "เหล็กถัก")
@@ -601,12 +648,12 @@ const PRODUCTS=[
  {id:'awning_brace',g:1,cat:'เสริม',name:'เสริมแขนค้ำ (เฉพาะบานกระทุ้งเปิดล่าง) — +500/ชุด',unit:'piece',rate:500,cost:null},
  // R4.0 2026-06-04: ม่านซิป (zipscreen) — รวมจากเครื่องคิดราคาม่านซิปแยก · กลุ่มงานที่ 7
  {id:'zipscreen',cat:'ม่านซิป',name:'ม่านซิป (zipscreen) ม่านม้วนกันลม',zipscreen:1,cost:null},
- {id:'imp1',cat:'ราวบันได',name:'ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)',method:'per_length_tier',rates:'IMP1',handrail:1,cost:null},
- {id:'imp2',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง U/เสาอลู',method:'per_length_tier',rates:'IMP2',handrail:1,cost:null},
- {id:'imp3',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง เสาอลู',method:'per_length_tier',rates:'IMP3',handrail:1,cost:null},
- {id:'imp4',cat:'ราวบันได',name:'ราวกันตก 47.3 บันไดตรง หมุดแปะปูน',method:'per_length_tier',rates:'IMP4',handrail:1,cost:null},
- {id:'imp5',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง U/เสาอลู',method:'per_length_tier',rates:'IMP5',handrail:1,cost:null},
- {id:'imp6',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง เสาอลู',method:'per_length_tier',rates:'IMP6',handrail:1,cost:null},
+ {id:'imp1',cat:'ราวบันได',name:'ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)',method:'per_length_tier',rates:'IMP1',handrail:1,cost:null,glassDef:14},
+ {id:'imp2',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง (ก) U+เสาอลู',method:'per_length_tier',rates:'IMP2',handrail:1,cost:null,glassDef:14},
+ {id:'imp3',cat:'ราวบันได',name:'ราวกันตก 47.2 บันไดเฉียง (ข) เสาอลู',method:'per_length_tier',rates:'IMP3',handrail:1,cost:null,glassDef:14},
+ {id:'imp4',cat:'ราวบันได',name:'ราวกันตก 47.3 บันไดตรง หมุดแปะปูน',method:'per_length_tier',rates:'IMP4',handrail:1,cost:null,glassDef:14},
+ {id:'imp5',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง (ก) U+เสาอลู',method:'per_length_tier',rates:'IMP5',handrail:1,cost:null,glassDef:14},
+ {id:'imp6',cat:'ราวบันได',name:'ราวกันตก 47.4 บันไดตรง (ข) เสาอลู',method:'per_length_tier',rates:'IMP6',handrail:1,cost:null,glassDef:14},
  {id:'imp7',cat:'หลังคา',name:"เมทัลชีท 1 นิ้ว ท้องPVC EPS",method:'bucket',min:0,rates:'IMP7',cost:null},
  {id:'imp8',cat:'หลังคา',name:"เมทัลชีท 2 นิ้ว ท้องPVC EPS",method:'bucket',min:0,rates:'IMP8',cost:null},
  {id:'imp9',cat:'หลังคา',name:"เมทัลชีท 1 นิ้ว ท้องเหล็ก EPS",method:'bucket',min:0,rates:'IMP9',cost:null},
@@ -630,7 +677,7 @@ const PRODUCTS=[
  {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp32',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ",method:'bucket',min:0,rates:'IMP32',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp33',cat:'มุ้ง',name:"มุ้งกันแมว หมา",method:'bucket',min:0,rates:'IMP33',cost:null},
- {id:'imp34',g:2,cat:'เสริม',name:"ตะแกรงเหล็กสาน",method:'bucket',min:0,rates:'IMP34',cost:null},
+ // R3.9: ลบ imp34 "ตะแกรงเหล็กสาน" (ซ้ำกับ steel_mesh) — ทั้งคู่ราคา 2,500/ตร.ม. เท่ากัน
  {id:'imp35',cat:'มุ้ง',name:"มุ้งสแตนเลส 0.3มม. กันหนู",method:'bucket',min:0,rates:'IMP35',cost:null},
  {id:'mj_blackout',cat:'มุ้ง',name:"มุ้งจีบ Blackout รังผึ้งทึบแสง",method:'bucket',min:3500,rates:'MJ_BLACKOUT',cost:null,mscolor:true},
  {id:'mj_sd_twoway',cat:'มุ้ง',name:"มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง",method:'bucket',min:4000,rates:'MJ_SD_TWOWAY',cost:null,mscolor:true},
@@ -765,7 +812,11 @@ const MOSQUITO_SCREENS = [
   {id:'mj_kick_150',name:'ม้วนเตะได้ 150 (ติดล้นนอกวงกบ)',rate:7500,min:15000,itype:'both',overhang:true,maxWidth:1.5,mscolor:true},
   {id:'mj_kick_300',name:'ม้วนเตะได้ 300 (ติดล้นนอกวงกบ)',rate:7500,min:37500,itype:'both',overhang:true,maxWidth:3.0,mscolor:true},
   {id:'mj_kick_600',name:'ม้วนเตะได้ 600 (ติดล้นนอกวงกบ)',rate:7500,min:67500,itype:'both',overhang:true,maxWidth:6.0,mscolor:true},
-  {id:'mj_screen_safety',name:'มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)',rate:5000,min:5000,itype:'both',overhang:true}
+  {id:'mj_screen_safety',name:'มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)',rate:5000,min:5000,itype:'both',overhang:true},
+  // P1-2: มุ้งเฟรม (imp21/22/23) ในรูปแบบ addon ต่อบาน — ราคา tier ตามพื้นที่ + min ตาม ประตู/หน้าต่าง × จำนวนบาน (เท่า product เดิม)
+  {id:'imp21',name:'มุ้งเฟรมเล็ก (เปิด/เลื่อน/กระทุ้ง/ยก)',frame:true,rates:'IMP21',min_door:2400,min_window:1200,itype:'both',mscolor:true},
+  {id:'imp22',name:'มุ้งเฟรมเล็กติดตาย',frame:true,rates:'IMP22',min_door:1500,min_window:800,itype:'both',mscolor:true},
+  {id:'imp23',name:'มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก)',frame:true,rates:'IMP23',min_door:7200,min_window:4800,itype:'both',mscolor:true}
 ];
 
 // === Opening patterns presets ===
@@ -809,10 +860,10 @@ const COLORS=[
  {n:'สีอบขาว',min:0,rates:null,series:'MLS'},
  // 1 สีดำ
  {n:'สีดำ',min:0,rates:null,series:'MLS'},
- // 2 สีเทาซาฮารา
- {n:'สีเทาซาฮารา',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
- // 3 สีดำซาฮารา
- {n:'สีดำซาฮารา',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
+ // 2 สีเทาซาฮาร่า
+ {n:'สีเทาซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
+ // 3 สีดำซาฮาร่า
+ {n:'สีดำซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],series:'MLS'},
  // 4 สี Aztec gray: L=stock tier · M/S=อบพิเศษ
  {n:'สี Aztec gray',min:4000,rates:[[7,10,700],[10,20,650],[20,9999,600]],series:'L',altFor:'MS',altRates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]],altMin:10000,note:'L=stock · M/S=อบพิเศษ'},
  // 5 สีลายไม้สต๊อก (สักทอง) — ยืนยันมี
@@ -861,6 +912,9 @@ const DIGI=[{n:'S1 ก้านโยก',p:10000},{n:'S1 ลูกบิด',p:
 const HANDLE_STAINLESS=[{n:'30.5 ซม.',p:1500},{n:'45 ซม.',p:2000},{n:'60 ซม.',p:2000},{n:'80 ซม.',p:2500},{n:'100 ซม.',p:3000},{n:'120 ซม.',p:3200}];
 // Cmech 6 สี (R3 2026-05-30) — มือจับ Cmech ใช้กับ บานเลื่อน/เปิด/กระทุ้ง · ราคากรอกเอง
 const CMECH_COLORS=[{n:'White',p:0},{n:'Black',p:0},{n:'Silver',p:0},{n:'Champagne',p:0},{n:'Gold',p:0},{n:'Bronze',p:0}];
+// ข้อ4A: ราคาขายเพิ่ม/ชุด มือจับ Cmech [แบบ][ประตู2ฝั่ง/หน้าต่าง1ฝั่ง][ธรรมดา/พิเศษชุบ]
+const CMECH_PRICE={embed:{door:{normal:1050,special:1470},window:{normal:350,special:490}},metro:{door:{normal:1000,special:1400},window:{normal:600,special:840}}};
+const CMECH_SPECIAL={silver:'Silver',champagne:'Champagne',gold:'Gold',bronze:'Bronze',copper:'Copper'};
 function usesPanels(p){ const q=p.method==='same_as'?PBYID[p.ref]:p; return !!(q.addon&&['door','window','sliding'].includes(q.addon.kind))||q.method==='fold'||q.method==='ref_plus_panel'||['sliding_sms','sliding_euro','sliding_eseries'].includes(p.id)||!!p.future_tech; }
 
 /* ============ ENGINE ============ */
@@ -1177,30 +1231,9 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
     h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" style="width:80px;height:32px;"></label>';
     h+='<label class="opt">สูงราง (ซม.) <input type="number" class="o-gcheight" min="0" step="1" value="10" style="width:80px;height:32px;"></label>';
-    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮารา +700/ตร.ม.</option><option value="700">สีดำซาฮารา +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮาร่า +700/ตร.ม.</option><option value="700">สีดำซาฮาร่า +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
   }
-    if(p.hide_slope){
-    // ซ่อนสโลปหลังคา · กรอกความสูง (W) + ความยาวต่อด้าน (H) + จำนวนด้าน (option)
-    const slopeH = parseFloat(w)||0; // ความสูง (ม.)
-    const lenPerSide = parseFloat(h)||0; // ความยาวต่อด้าน (ม.)
-    const nSides = (optSel && parseInt(optSel.hsSides)) || 1;
-    if(slopeH<=0 || lenPerSide<=0){
-      return {a:0, sell:0, cost:null, msgs:['กรอกความสูง (กว้าง) + ความยาว (สูง)'], addonLabel:''};
-    }
-    let A;
-    if(p.hide_slope==='composite'){
-      // ตัว U = (สูง + 0.1 + สูง) = 2×สูง + 0.1
-      A = (2*slopeH + 0.1) * nSides * lenPerSide;
-    } else {
-      // smartboard แผ่นเรียบ = สูง × ด้าน × ยาว
-      A = slopeH * nSides * lenPerSide;
-    }
-    const sell = A * p.rate;
-    const lbl = p.hide_slope==='composite' 
-      ? `(${(2*slopeH+0.1).toFixed(2)} ม. × ${nSides} ด้าน × ${lenPerSide} ม.) = ${A.toFixed(2)} ตร.ม.`
-      : `(${slopeH} × ${nSides} ด้าน × ${lenPerSide} ม.) = ${A.toFixed(2)} ตร.ม.`;
-    return {a:A, sell:roundUp(sell), cost:null, addonLabel:'', msgs:[lbl + ' × ' + fmt(p.rate)]};
-  }
+    // dead code ลบแล้ว (2026-06-09): p.hide_slope calc block — ไม่มี product นิยาม property นี้
     if(p.custom_item){
     // กรอกเอง — ชื่อ + ราคา/ตร.ม. (หรือ /หน่วย) + รายละเอียด
     const customRate = (optSel && parseFloat(optSel.customRate)) || 0;
@@ -1215,10 +1248,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     h+='<label class="opt">ราคา/หน่วย (บาท × พื้นที่) <input type="number" class="o-customrate" min="0" step="100" value="0" style="width:120px;height:32px;"></label>';
     h+='<label class="opt" style="flex:1 1 100%;">รายละเอียดงาน <input type="text" class="o-customdesc" placeholder="ขนาด/สี/วัสดุ..." style="width:300px;height:32px;"></label>';
   }
-    if(p.hide_slope){
-    h+='<label class="opt">จำนวนด้านที่ซ่อน <input type="number" class="o-hssides" min="1" step="1" value="1" style="width:70px;height:32px;"></label>';
-    h+='<span class="opt" style="color:#666;font-size:12px;">หมายเหตุ: ใส่ความสูงสโลปในช่อง "กว้าง" · ความยาวต่อด้านในช่อง "สูง"</span>';
-  }
+    // dead code ลบแล้ว (2026-06-09): p.hide_slope UI block — ไม่มี product นิยาม property นี้
     // R4.0: ม่านซิป (zipscreen) engine — สูตร/ค่าตรงกับเครื่องคิดราคาม่านซิปแยกทุกค่า
     if(p.zipscreen){
       const W=parseFloat(w)||0, H=parseFloat(h)||0;
@@ -1281,7 +1311,11 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   const glassUp=GLASS[gi].s*a;
   const colorUp=colorPrice(ci,a,p.series||'');
   let opt=0;
-  if(p.opts&&optSel){ p.opts.forEach(o=>{ if(optSel[o.id]) opt+=o.price; }); }
+  if(p.opts&&optSel){ p.opts.forEach(o=>{ if(o.type==='select'||o.depends) return; if(optSel[o.id]) opt+=(o.price||0); }); }
+  // ข้อ11: อุปกรณ์ shower (select เดียว) — เงิน(0)/ดำ(+4,000)/ทอง(+6,000) · กันติ๊กซ้อน 2 อัน
+  if(p.id==='shower'&&optSel&&optSel.showerhw){ const _hw=parseInt(optSel.showerhw)||0; const _hwp=[0,4000,6000][_hw]||0; if(_hwp>0){ opt+=_hwp; msgs.push('อุปกรณ์'+(['','ดำ','ทอง'][_hw]||'')+' +'+fmt(_hwp)); } }
+  // R3.9: บานกระทุ้ง tilt&turn (awn_mode=2) +5,000/บาน — ขับด้วย select แบบเปิด ไม่ใช่ checkbox
+  if(p.cat==='บานกระทุ้ง'&&optSel&&optSel.awn_mode==='2'){ const _tt=5000*Math.max(1,panels); opt+=_tt; msgs.push('tilt & turn +5,000/บาน × '+Math.max(1,panels)+' = '+fmt(_tt)); }
   if(p.closer&&optSel&&optSel.closer){ opt+=parseFloat(optSel.closer)||0; }
   if(p.digihandle&&optSel&&optSel.digi!==''&&optSel.digi!=null){ const di=DIGI[parseInt(optSel.digi)]; if(di){
       // R3.2: JR Prime ใช้กับยูโร + โซลิด วัน/ทู เท่านั้น (R3.8.2 renamed)
@@ -1294,13 +1328,21 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         msgs.push(_dn);
       }
   } }
-  // R3.2: Cmech 6 สี — ราคากรอกเอง
-  if(optSel && optSel.cmech!=='' && optSel.cmech!=null && CMECH_COLORS[parseInt(optSel.cmech)]){
-    const cm = CMECH_COLORS[parseInt(optSel.cmech)];
-    const cp = parseFloat(optSel.cmechprice)||0;
-    opt += cp;
-    if(cp <= 0) msgs.push('⚠ Cmech '+cm.n+' · ยังไม่ใส่ราคา (ปกติ 1,000-1,500)');
-    else msgs.push('Cmech '+cm.n+' +'+fmt(cp));
+  // ข้อ4A: มือจับ Cmech — ราคาตามตาราง [แบบ ฝัง/เมโทร][ประตู2ฝั่ง/หน้าต่าง1ฝั่ง][ธรรมดา/พิเศษชุบ]
+  if(optSel && (optSel.cmech==='embed'||optSel.cmech==='metro') && CMECH_PRICE[optSel.cmech]){
+    const _cit=(optSel.itype==='window')?'window':'door';
+    const _csp=(optSel.cmechcolor && optSel.cmechcolor!=='normal')?'special':'normal';
+    const _ccp=CMECH_PRICE[optSel.cmech][_cit][_csp];
+    opt += _ccp;
+    const _cnm=(_csp==='special')?(CMECH_SPECIAL[optSel.cmechcolor]||'ชุบ'):'ดำ/ขาว';
+    msgs.push('มือจับ Cmech '+(optSel.cmech==='embed'?'ฝัง':'เมโทร')+' '+_cnm+' ('+(_cit==='window'?'หน้าต่าง 1 ฝั่ง':'ประตู 2 ฝั่ง')+') +'+fmt(_ccp));
+  }
+  // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 (ราคาสุดท้าย รวม Fork Drive)
+  if(optSel && optSel.cmechawn){
+    const _caw=(optSel.cmechawn==='normal')?600:840;
+    opt += _caw;
+    const _cawnm=(optSel.cmechawn==='normal')?'ดำ/ขาว':(CMECH_SPECIAL[optSel.cmechawn]||'ชุบ');
+    msgs.push('มือจับ Cmech หลบมุ้ง '+_cawnm+' +'+fmt(_caw));
   }
   // R3.2: ตารางเต็มบาน 5,000 (โซลิด วัน/ทู)
   if(optSel && optSel.fullgrid && p.full_grid){
@@ -1334,19 +1376,29 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     }
   }
   if(p.digihandle&&optSel&&optSel.stainless!==''&&optSel.stainless!=null){ const st=HANDLE_STAINLESS[parseInt(optSel.stainless)]; if(st){ opt+=st.p; msgs.push('มือจับสแตนอร่าม '+st.n); } }
+  // P3-3: มือจับรุ่นอื่น — เซลล์กรอกชื่อ+ราคาเอง (เช่น HD182/Berin ที่ยังไม่มีในลิสต์)
+  if(p.digihandle&&optSel){ const _hp=parseFloat(optSel.handleprice)||0; if(_hp>0){ opt+=_hp; msgs.push('มือจับ '+((optSel.handlename||'').trim()||'รุ่นอื่น')+' +'+fmt(_hp)); } }
   if(p.motor&&optSel){ if(optSel.motor==='80'){ if(a<=3.5)opt+=18000; else msgs.push('มอเตอร์80กก. ใช้ได้ ≤3.5 ตร.ม.'); }
     if(optSel.motor==='300')opt+=28000; }
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
   if(['บานเลื่อน','เลื่อนภายใน','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
-  if(p.optInsul&&optSel&&optSel.insul){ opt+=600*a; }
+  if((p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]) opt+=o.price*(o.perPanel?Math.max(1,panels):1); }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
+  // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
+  if(optSel){ const _fcs=parseInt(optSel.fcsides)||0; if(_fcs===3||_fcs===4){ const _fW=parseFloat(w)||0,_fH=parseFloat(h)||0; const _flen=_fcs===3?(_fW+2*_fH):2*(_fW+_fH); if(_flen>0){ const _ffr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_ffr*_flen; msgs.push('ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×'+_ffr+' = '+fmt(_ffr*_flen)); } } }
   if(p.fin&&optSel&&optSel.finish){ opt+=(parseFloat(optSel.finish)||0)*a; }
-  if(p.optSlide&&optSel&&optSel.slide){ const _N=Math.max(2,parseInt(optSel.spanels)||2); const _tier=a<=10?4500:a<=20?6750:a<=30?9000:11250; const _marea=a*_N/(_N+1); const _motor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000; opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_motor+(parseFloat(optSel.sgut)||0)*3000; }
+  if(p.optSlide&&optSel&&optSel.slide){ const _N=Math.max(2,parseInt(optSel.spanels)||2); const _tier=a<=10?4500:a<=20?6750:a<=30?9000:11250;
+    const _sa=parseFloat(optSel.sarea)||0; const _marea=_sa>0?_sa:(a*_N/(_N+1));
+    const _autoMotor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000;
+    const _mPrice=(parseFloat(optSel.smotorprice)>0)?parseFloat(optSel.smotorprice):_autoMotor;
+    const _mQty=Math.max(1,parseInt(optSel.smotorqty)||1);
+    opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_mPrice*_mQty;
+    msgs.push('หลังคาเลื่อน '+_N+' บาน · มอเตอร์ '+_mQty+'×'+fmt(_mPrice)); }
   if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); }
     // options ใหม่: แป / โครงสร้าง / ปลายหลังคา / ระบบรางน้ำ
     const _rfend = optSel.rfend || 'ปล่อย';
-    if(_rfend === 'ปิดปลาย'){ const _ew = parseFloat(w)||0; const _eprice = 1000*_ew; if(_ew>0){ opt+=_eprice; msgs.push('ปิดปลายหลังคา '+fmt(_eprice)); } }
+    // ข้อ8: ลบ calc "ปิดปลาย" (auto กว้าง) — ใช้ "ปิดปลายกันน้ำ" o-rfeave (กรอกยาวเอง) ที่คิดใน radd แทน กันคิดซ้ำ
     // โครงเหล็กชุบซิงค์ — ราคาเท่าโครงอลู (0 เพิ่ม) รอเช็คราคาจริง
     // แปคู่ — ไม่คิดเพิ่ม
     // รางน้ำใหม่ (chain D) — cosmetic ไม่คิดเงิน
@@ -1363,6 +1415,17 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _glen=_gnh*(parseFloat(w)||0)+_gnv*(parseFloat(h)||0);
     const _gcost=_glen*_grate + _gcv*3000;
     if(_gcost>0){ opt+=_gcost; msgs.push('คาดตาราง '+_gnh+'นอน+'+_gnv+'ตั้ง '+_glen.toFixed(1)+'ม.×'+_grate+(_gcv>0?(' +โค้ง '+_gcv+'×3,000'):'')+' = '+fmt(_gcost)); }
+  }
+  // ข้อ6: แผ่นทึบล่าง ลูกฟูก(3,500)/คอมโพสิท(3,300) = พื้นที่(กว้าง×สูงของชุด)×เรต + สี×พื้นที่ (สีเฉพาะลูกฟูก)
+  if(optSel && optSel.solidlower){
+    const _slA=(parseFloat(optSel.solidlowerW)||0)*(parseFloat(optSel.solidlowerH)||0);
+    if(_slA>0){
+      const _slRate=optSel.solidlower==='composite'?3300:3500;
+      const _slColor=optSel.solidlower==='corrugated'?(parseFloat(optSel.solidlowerColor)||0):0;
+      const _slCost=_slA*_slRate + _slColor*_slA;
+      opt+=_slCost;
+      msgs.push((optSel.solidlower==='composite'?'แผ่นคอมโพสิทล่าง':'แผ่นลูกฟูกล่าง')+' '+_slA.toFixed(2)+' ตร.ม.×'+fmt(_slRate)+(_slColor>0?(' +สี '+fmt(_slColor)):'')+' = '+fmt(_slCost));
+    }
   }
   let floor=0; const pn=Math.max(1,panels);
   if(pn>1 && usesPanels(p)){ const q2=p.method==='same_as'?PBYID[p.ref]:p; if(q2.rates){ const per=monoRate(a/pn, RATES[q2.rates]); floor=per*(1+0.67*(pn-1)); } }
@@ -1403,6 +1466,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     else msgs.push('💡 ช่องเปิด '+W.toFixed(2)+' ม. → รุ่น Single (1 บาน)');
   }
   // ===== มุ้ง option =====
+  // ข้อ6: มุ้งม้วนเตะ — กว้างเกิน maxWidth ของรุ่น → เตือน + ไม่คิดราคา (กันเก็บเงินขาด · เปลี่ยนรุ่นก่อน)
+  if(p.mosquito && optSel && optSel.mosqId){
+    const _msChk=MOSQUITO_SCREENS.find(m=>m.id===optSel.mosqId);
+    if(_msChk && _msChk.maxWidth && (parseFloat(w)||0) > _msChk.maxWidth){
+      msgs.push('⚠ มุ้ง'+_msChk.name+' รับกว้าง ≤ '+_msChk.maxWidth+' ม. · บานนี้ '+(parseFloat(w)||0)+' ม. — เปลี่ยนรุ่นมุ้งใหญ่กว่า (ยังไม่คิดราคามุ้ง)');
+      optSel=Object.assign({},optSel,{mosqId:''});  // ข้ามคิดราคามุ้งในบล็อกถัดไป (ไม่ mutate caller)
+    }
+  }
   if(p.mosquito && optSel && optSel.mosqId){
     const mscreen = MOSQUITO_SCREENS.find(m => m.id===optSel.mosqId);
     if(mscreen){
@@ -1413,20 +1484,43 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         const _total=Math.max(1,parseInt(panels)||1);
         const _fixed=Math.max(0,parseInt(optSel.fixedPanes)||0);
         const _openable=Math.max(1,_total-_fixed);
-        let _r=_openable/_total;                        // จีบ = เต็มช่องเปิด
-        const _isPleated=/จีบ/.test(mscreen.name||'');
+        let _r=_openable/_total;                        // จีบ/เฟรม = เต็มช่องเปิด
+        const _isPleated=/จีบ/.test(mscreen.name||'') || mscreen.frame;  // เฟรม = เต็มช่องเปิด (ไม่หารครึ่งแบบมุ้งเลื่อนสลับ)
         const _isSwap=(optSel.opentype==='บานเลื่อนสลับ');
         if(!_isPleated && _isSwap) _r=_r/2;             // มุ้งเลื่อน + สลับ = ครึ่งช่องเปิด
         openRatio=_r;
       }
-      const mosqArea = a * openRatio;
-      const mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
+      let mosqArea, mosqBase;
+      if(mscreen.frame){
+        // P1-2: เฟรมมุ้ง (imp21/22/23) · บานเลื่อน = คิดตามช่องเปิด (เท่าจีบ · พี่นัท 2026-06-08) · บานอื่น = เต็มบาน
+        //   rate tier ตามพื้นที่มุ้งจริง · min ตาม ประตู/หน้าต่าง × จำนวนบานที่เปิด (ไม่นับบานติดตาย)
+        mosqArea = a * openRatio;
+        const _pnTotal = Math.max(1, parseInt(panels)||1);
+        const _pnFixed = (p.cat==='บานเลื่อน'||p.cat==='เลื่อนภายใน') ? Math.max(0,parseInt(optSel.fixedPanes)||0) : 0;
+        const _pnOpen = Math.max(1, _pnTotal - _pnFixed);
+        const _fr = rateOf(mosqArea, RATES[mscreen.rates]);
+        const _it = (optSel.itype==='window') ? 'window' : 'door';
+        const _minPP = (_it==='window') ? (mscreen.min_window||0) : (mscreen.min_door||0);
+        mosqBase = Math.max(_minPP*_pnOpen, mosqArea*_fr);
+      } else {
+        mosqArea = a * openRatio;
+        mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);
+      }
       const fabric = (optSel.mosqFabric)||'fiber_gray';
       const fabricExtra = (fabric==='anti_pet'?800:(fabric==='stainless'?1200:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
       const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
-      opt += mosqBase + fabricExtra;
-      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel, p:mosqBase+fabricExtra, mosqArea:mosqArea});
-      // skip rest of existing logic (mosqA calc not used for now)
+      // ข้อ10: ค่าทำสีกรอบมุ้ง addon (×0.5) — เดิมอยู่ใน if(false) ดับ → ย้ายมา block ที่ใช้จริง
+      let _mosqColorUp=0, _mosqColorLbl='';
+      if(mscreen.mscolor && optSel.mosqColor){
+        const _mc=optSel.mosqColor;
+        if(_mc==='sahara'){ _mosqColorUp=colorPrice(2,mosqArea,'')*0.5; _mosqColorLbl=' + เทาซาฮาร่า'; }
+        else if(_mc==='kl_special'){ _mosqColorUp=colorPrice(10,mosqArea,'')*0.5; _mosqColorLbl=' + เคแอลอบพิเศษ'; }
+        else if(_mc==='kl_wood'){ _mosqColorUp=colorPrice(11,mosqArea,'')*0.5; _mosqColorLbl=' + เคแอลลายไม้'; }
+      }
+      // FIX: บวกราคามุ้งเข้า sell จริง (เดิม opt+= อยู่หลัง sell finalize → ตกหล่น ไม่เก็บเงิน)
+      const _mosqPrice = roundUp(mosqBase + fabricExtra + _mosqColorUp);
+      sell += _mosqPrice;
+      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel+_mosqColorLbl, p:_mosqPrice, mosqArea:mosqArea});
     }
     if(false){
       const pat = OPENING_PATTERNS.find(p2 => p2.id===optSel.mosqPat) || OPENING_PATTERNS[0];
@@ -1447,7 +1541,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       let colorLabel = '';
       if(mscreen.mscolor && optSel.mosqColor){
         const mc = optSel.mosqColor;
-        if(mc==='sahara'){ const ca = colorPrice(2, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เทาซาฮารา '+fmt(Math.round(ca)); }
+        if(mc==='sahara'){ const ca = colorPrice(2, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เทาซาฮาร่า '+fmt(Math.round(ca)); }
         else if(mc==='kl_special'){ const ca = colorPrice(10, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลอบพิเศษ '+fmt(Math.round(ca)); }
         else if(mc==='kl_wood'){ const ca = colorPrice(11, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลลายไม้ '+fmt(Math.round(ca)); }
       }
@@ -1490,9 +1584,33 @@ function setMode(m){
 }
 function toggleOwner(){ document.getElementById('ownerPanel').style.display=document.getElementById('ownerMode').checked?'block':'none'; }
 
+function syncGlobalColorGlass(){
+  var gcSel=document.getElementById('global-color');
+  var ggSel=document.getElementById('global-glass');
+  if(!gcSel||!ggSel) return;
+  var colorVal=gcSel.value, glassVal=ggSel.value;
+  document.querySelectorAll('#items .ch').forEach(function(ch){
+    // GH master (group6 ใน setbox ที่มี .gh-set-color-row) → ให้ GH master win ไม่แตะ
+    var grp=(ch.querySelector('.i-group')||{}).value;
+    var sb=ch.closest('.setbox');
+    if(grp==='6' && sb && sb.querySelector('.gh-set-color-row')) return;
+    var ci=ch.querySelector('.i-color');
+    var gi=ch.querySelector('.i-glass');
+    if(ci){ ci.value=colorVal; ci.dispatchEvent(new Event('change',{bubbles:true})); }
+    if(gi){ gi.value=glassVal; gi.dispatchEvent(new Event('change',{bubbles:true})); }
+  });
+  calcQuote();
+}
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('c-cat').innerHTML='<option value="*">ทั้งหมด</option>'+CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
   document.getElementById('qdate').value=today();
+  // init global color/glass selects
+  var _gc=document.getElementById('global-color');
+  var _gg=document.getElementById('global-glass');
+  if(_gc) _gc.innerHTML=colorOpts();
+  if(_gg) _gg.innerHTML=glassOpts();
+  if(_gc) _gc.addEventListener('change',syncGlobalColorGlass);
+  if(_gg) _gg.addEventListener('change',syncGlobalColorGlass);
   addQuickItem();
   addSet();
   calcCompare();
@@ -1513,11 +1631,11 @@ function addQuickItem(){
      `<div><label>จำนวนชุด</label><input class="qi-qty" type="number" step="1" min="1" value="1"></div>`+
    `</div>`+
    `<div class="chfoot"><span class="qi-area">—</span><span class="price qi-price">฿0</span></div>`;
-  document.getElementById('q-items').appendChild(d);
+  document.getElementById('q-items').appendChild(d); renumberItems();
   function syncPanels(){ const p=PBYID[d.querySelector('.qi-prod').value], pw=d.querySelector('.qi-panels-wrap'); if(pw)pw.style.display=(p&&usesPanels(p))?'':'none'; }
   d.querySelector('.qi-prod').addEventListener('change',()=>{ syncPanels(); calcQuickAll(); });
   d.querySelector('.qi-group').addEventListener('change',()=>{ d.querySelector('.qi-prod').innerHTML=prodOptionsG(d.querySelector('.qi-group').value); syncPanels(); calcQuickAll(); });
-  d.querySelector('.del').addEventListener('click',()=>{ d.remove(); calcQuickAll(); });
+  d.querySelector('.del').addEventListener('click',()=>{ d.remove(); renumberItems(); calcQuickAll(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuickAll));
   syncPanels();
   calcQuickAll();
@@ -1545,22 +1663,55 @@ function calcQuickAll(){
 /* ---- QUOTE: line items ---- */
 let itemSeq=0;
 let setSeq=0;
-// R5.0: จัดหมวด option ในกั้นห้อง (post-process .i-opts flat → ใส่หัวข้อหมวด) — keyword-based, idempotent
+// R5.1: จัดหมวด option ทุกรายการ (post-process .i-opts flat → ใส่หัวข้อหมวด) — keyword-based, idempotent
+// กลุ่มกว้างขึ้น ครอบทุก product ไม่ใช่แค่ GH
 function groupGHOpts(ch){
   var box=ch&&ch.querySelector('.i-opts'); if(!box || !box.children.length) return;
   if(box.querySelector('.gh-opt-cat-det')) return;
   var CATS=[
-    {key:'🚪 ชนิด / การเปิด', kw:['ชนิดการเปิด','combo บาน']},
-    {key:'🔧 มือจับ / ล็อค', kw:['มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ']},
-    {key:'🪟 มุ้ง', kw:['มุ้ง','🪟','ผ้ามุ้ง']},
-    {key:'📐 คาดตาราง', kw:['คาดตาราง']},
-    {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', kw:[]}
+    {key:'🚪 ชนิด / การเปิด', open:true, kw:[
+      'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
+      'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง','ซ่อนราง','ทิศระแนง',
+      'ลายระแนง','ชนิดราง','ของเสริมหลังคา','สีวัสดุมุง',
+      'ความสูง','ทำเป็นประตู','ซ่อนสโลป','มอเตอร์','ค่าประตู',
+      'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน',
+      'ประเภท','ชนิดชั้น','ราวจับ'
+    ]},
+    {key:'🔧 มือจับ / ล็อค', open:false, kw:[
+      'มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
+      'ติดตายกี่บาน','เสริมคาน'
+    ]},
+    {key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},
+    {key:'📐 คาดตาราง', open:false, kw:[
+      'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง',
+      'เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง'
+    ]},
+    {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', open:false, kw:[]}
   ];
   var kids=[].slice.call(box.children);
   var buckets=CATS.map(function(){return [];});
-  kids.forEach(function(k){ var t=k.textContent||''; var ci=CATS.length-1; for(var i=0;i<CATS.length-1;i++){ if(CATS[i].kw.some(function(w){return t.indexOf(w)>=0;})){ ci=i; break; } } buckets[ci].push(k); });
+  kids.forEach(function(k){
+    var t=(k.textContent||'')+(k.className||'');
+    var ci=CATS.length-1;
+    for(var i=0;i<CATS.length-1;i++){
+      if(CATS[i].kw.some(function(w){return t.indexOf(w)>=0;})){ ci=i; break; }
+    }
+    buckets[ci].push(k);
+  });
   box.innerHTML='';
-  CATS.forEach(function(c,i){ if(!buckets[i].length) return; var det=document.createElement('details'); det.className='gh-opt-cat-det'; det.style.cssText='margin:5px 0;border:1px solid #eedede;border-radius:6px;padding:0 8px;background:#fffafa;'; var sm=document.createElement('summary'); sm.style.cssText='font-weight:700;color:#B3151D;font-size:12px;cursor:pointer;padding:6px 2px;'; sm.textContent=c.key+' ('+buckets[i].length+')'; det.appendChild(sm); buckets[i].forEach(function(k){ det.appendChild(k); }); box.appendChild(det); });
+  CATS.forEach(function(c,i){
+    if(!buckets[i].length) return;
+    var det=document.createElement('details');
+    det.className='gh-opt-cat-det';
+    det.style.cssText='margin:5px 0;border:1px solid #eedede;border-radius:6px;padding:0 8px;background:#fffafa;';
+    if(c.open) det.open=true;
+    var sm=document.createElement('summary');
+    sm.style.cssText='font-weight:700;color:#B3151D;font-size:12px;cursor:pointer;padding:6px 2px;min-height:44px;display:flex;align-items:center;';
+    sm.textContent=c.key+' ('+buckets[i].length+')';
+    det.appendChild(sm);
+    buckets[i].forEach(function(k){ det.appendChild(k); });
+    box.appendChild(det);
+  });
 }
 function refreshSet(box){
   if(!box) return;
@@ -1654,6 +1805,7 @@ function refreshSet(box){
       }
       // ลดความรก: ซ่อน field พื้นฐานที่ไม่ใช้ในกั้นห้อง + ยุบ option เข้าพับ (ทุกบาน/หลังคาในชุด)
       ['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=el.closest('.full')||el.parentElement; if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
+      var _ohint=c.querySelector('.i-override-hint'); if(_ohint){ _ohint.dataset.ghH2='1'; _ohint.style.display='none'; }
       var _ship=c.querySelector('.i-ship'); if(_ship){ var _sl=_ship.closest('label'); if(_sl){ _sl.dataset.ghH2='1'; _sl.style.display='none'; } }
       var _oe=c.querySelector('.i-opts'); var _det=_oe?_oe.closest('details'):null;
       if(_det){ _det.open=false; var _sm=_det.querySelector('summary'); if(_sm && !_sm.dataset.ghSm){ _sm.dataset.ghSm='1'; _sm.textContent='⚙ ตัวเลือกเพิ่มเติม (มือจับ/ล็อค/มุ้ง/ครอบวงกบ — กดถ้าต้องใช้)'; } }
@@ -1693,7 +1845,8 @@ function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div><div class="set-parts"></div><div class="set-btns set-btns-bot"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div>';
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button></div><div class="set-parts"></div>';
+  // E: ตัดปุ่ม "+ ช่องแสงติดตาย" (ซ้ำ) — ใช้ "+ เพิ่มบานย่อย" ในแต่ละบานแทน (มีชนิดติดตายครบใน SUBITEM_TYPES)
   document.getElementById('items').appendChild(box);
   box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){
@@ -1707,7 +1860,7 @@ function addSet(){
         const grp = newCh.querySelector('.i-group');
         if(grp && grp.value !== '6'){ grp.value='6'; grp.dispatchEvent(new Event('change',{bubbles:true})); }
         const pos = newCh.querySelector('.i-position');
-        if(pos && !pos.value.trim()){ pos.value='ด้าน A'; pos.dispatchEvent(new Event('input',{bubbles:true})); }
+        if(pos && !pos.value.trim()){ pos.value=ghSideLabel(newCh); pos.dispatchEvent(new Event('input',{bubbles:true})); }
         const ghColorRow = box.querySelector('.gh-set-color-row');
         if(ghColorRow){
           const ci = newCh.querySelector('.i-color'); if(ci){ ci.value=ghColorRow.querySelector('.gh-color-sel').value; ci.dispatchEvent(new Event('change',{bubbles:true})); }
@@ -1717,11 +1870,18 @@ function addSet(){
     }
     refreshSet(box); calcQuote();
   }); });
-  box.querySelectorAll('.set-addfixed').forEach(function(b){ b.addEventListener('click',function(){ addFixedToSet(box); }); });
+  // ตัดปุ่ม set-addfixed แล้ว (E) — ช่องแสงติดตายเพิ่มผ่าน "+ เพิ่มส่วน" ปกติ
   box.querySelector('.set-name').addEventListener('input',calcQuote);
   addItem(box.querySelector('.set-parts'));
   refreshSet(box);
   return box;
+}
+// ข้อ7: ป้ายด้าน auto A/B/C/D — คืน 'ด้าน X' ตามลำดับ ch กลุ่ม 6 ในชุดเดียวกัน (เลิก hardcode "ด้าน A" ทุกบาน)
+function ghSideLabel(ch){
+  var sb=ch&&ch.closest('.setbox'); if(!sb) return 'ด้าน A';
+  var gh=[].slice.call(sb.querySelectorAll('.ch')).filter(function(c){ return (c.querySelector('.i-group')||{}).value==='6'; });
+  var idx=gh.indexOf(ch); if(idx<0) idx=gh.length;
+  return 'ด้าน '+String.fromCharCode(65+idx);
 }
 // R5.0: addGlasshouseSet — สร้างชุด "กั้นห้องกระจก" พร้อม preset:
 //   - ชื่อชุด default "กั้นห้องกระจก (ห้อง...)"
@@ -1737,51 +1897,14 @@ function addGlasshouseSet(){
     const grp = firstPart.querySelector('.i-group');
     if(grp && grp.value !== '6'){ grp.value='6'; grp.dispatchEvent(new Event('change',{bubbles:true})); }
     const pos = firstPart.querySelector('.i-position');
-    if(pos && !pos.value.trim()){ pos.value='ด้าน A'; pos.dispatchEvent(new Event('input',{bubbles:true})); }
+    if(pos && !pos.value.trim()){ pos.value=ghSideLabel(firstPart); pos.dispatchEvent(new Event('input',{bubbles:true})); }
   }
   // ปุ่ม "+ เพิ่มบาน" + "+ เพิ่มหลังคา" จัดการโดย refreshSet (โผล่ทุกชุดกั้นห้อง ไม่ว่าสร้างทางไหน)
   refreshSet(box); calcQuote();
   return box;
 }
-// เพิ่มช่องแสงติดตาย (fixed_glass) ในชุด — preset prod + sync แค่สี/กระจก จากบานแรก
-// ขนาด (กว้าง×สูง) ปล่อยให้กรอกเอง: บางทีช่องแสงอยู่บนบานประตู สูง/กว้างไม่เท่าบานหลัก
-function addFixedToSet(box){
-  const parts=box.querySelector('.set-parts');
-  addItem(parts);
-  const chs=parts.querySelectorAll('.ch'); const ch=chs[chs.length-1];
-  const fireE=(el,t)=>el.dispatchEvent(new Event(t,{bubbles:true}));
-  const ps=ch.querySelector('.i-prod');
-  if(ps && ps.querySelector('option[value="fixed_glass"]')){ ps.value='fixed_glass'; fireE(ps,'change'); }
-  const first=parts.querySelector('.ch');
-  if(first && first!==ch){
-    ['.i-color','.i-glass'].forEach(function(sel){ const f=first.querySelector(sel),n=ch.querySelector(sel); if(f&&n){ n.value=f.value; if(n.value===f.value) fireE(n,'change'); } });
-  }
-  refreshSet(box); calcQuote();
-}
-// C4: OPTION สำเร็จรูป — กดเลือกแล้วเติมข้อความลงช่องหมายเหตุ (แก้ต่อได้) ข้อความไม่ต้องตรงใบจริงเป๊ะ
-const OPT_PRESETS=[
-  'เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง',
-  'เปลี่ยนเป็นกระจกเทมเปอร์ 6 มม. ราคาเพิ่มตามจริง',
-  'เปลี่ยนเป็นกระจกเขียวตัดแสง ราคาเพิ่มตามจริง',
-  'เพิ่มมุ้งจีบ ราคาเพิ่มตามจริง',
-  'เพิ่มเหล็กดัด/กันขโมย ราคาเพิ่มตามจริง',
-  'เปลี่ยนสีอลูมิเนียม (สีพิเศษ) ราคาเพิ่มตามจริง'
-];
-function optPresetOptions(){
-  return '<option value="">+ เพิ่ม OPTION สำเร็จรูป…</option>'
-    + OPT_PRESETS.map(function(t){ return '<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>'; }).join('')
-    + '<option value="__note">+ หมายเหตุ (พิมพ์เอง)</option>';
-}
-function addOptPreset(sel){
-  if(!sel.value) return;
-  const ta=sel.closest('.full').querySelector('.i-note'); if(!ta){ sel.value=''; return; }
-  const prefix = sel.value==='__note' ? 'หมายเหตุ : ' : ('OPTION : '+sel.value);
-  ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/,'')+'\n' : '') + prefix;
-  ta.dispatchEvent(new Event('input',{bubbles:true}));
-  if(sel.value==='__note') ta.focus();
-  sel.value='';
-  calcQuote();
-}
+// dead code ลบแล้ว (2026-06-09): addFixedToSet (ปุ่มถูกตัด) · OPT_PRESETS/optPresetOptions/addOptPreset
+// (dropdown OPTION สำเร็จรูประดับบานถูกตัด) — SET_OPT_PRESETS ด้านล่างยังใช้อยู่
 // OPTION สำเร็จรูป ระดับชุด — กดแล้วเติมข้อความ + คิดราคาส่วนต่างให้ (กระจก=ตามพื้นที่ · อื่น=ระบุเอง)
 // rate กระจก = ราคาส่วนต่าง/ตร.ม. จากตาราง GLASS (.s) ตัวเลขจริงในระบบ — ไม่เดา
 const SET_OPT_PRESETS=[
@@ -1816,12 +1939,72 @@ function addSetOptPreset(sel){
   od.value=delta||''; od.dispatchEvent(new Event('input',{bubbles:true}));
   sel.value=''; calcQuote();
 }
+// ===== F2: OPTION ทางเลือกลูกค้า ต่อบาน (cascade หมวด→รายการ · auto-price · หลาย OPTION) =====
+const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mosq',label:'เปลี่ยนผ้ามุ้ง'},{id:'color',label:'เปลี่ยนสีอลู'},{id:'handle',label:'เปลี่ยนมือจับ'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
+// มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
+const OC_HANDLES=[{n:'Cmech ฝัง ประตู ธรรมดา',p:1050},{n:'Cmech ฝัง ประตู พิเศษชุบ',p:1470},{n:'Cmech ฝัง หน้าต่าง ธรรมดา',p:350},{n:'Cmech ฝัง หน้าต่าง พิเศษชุบ',p:490},{n:'Cmech เมโทร ประตู ธรรมดา',p:1000},{n:'Cmech เมโทร ประตู พิเศษชุบ',p:1400},{n:'Cmech เมโทร หน้าต่าง ธรรมดา',p:600},{n:'Cmech เมโทร หน้าต่าง พิเศษชุบ',p:840}];
+function ocCatOptions(){ return '<option value="">— เลือกหมวด —</option>'+OC_CATS.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join(''); }
+function ocItemOptions(cat){
+  if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
+    GLASS.forEach(function(g,i){ var k=/อินซูเลท/.test(g.n)?'อินซูเลท':(/เทมเปอร์/.test(g.n)?'เทมเปอร์':(/ลามิเนต/.test(g.n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(g.n)?'กระจกใส/สี':'อื่นๆ'))); grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
+    return Object.keys(grp).filter(function(k){return grp[k].length;}).map(function(k){return '<optgroup label="'+k+'">'+grp[k].join('')+'</optgroup>';}).join(''); }
+  if(cat==='mosq'){ return MOSQUITO_SCREENS.filter(function(m){return !m.frame;}).map(function(m){return '<option value="'+m.id+'" data-r="'+(m.rate||0)+'">'+m.name+'</option>';}).join(''); }
+  if(cat==='color'){ return COLORS.map(function(c,i){return i>=1?('<option value="'+i+'" data-color="1">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join(''); }
+  if(cat==='handle'){ return OC_HANDLES.map(function(h,i){return '<option value="'+i+'" data-r="'+h.p+'" data-flat="1">'+h.n+' (+'+fmt(h.p)+')</option>';}).join(''); }
+  if(cat==='roof'){ return PRODUCTS.filter(function(p){return p.cat==='หลังคา';}).map(function(p){return '<option value="'+p.id+'" data-roof="1">'+p.name+'</option>';}).join(''); }
+  return '';
+}
+function ocCat(sel){ var row=sel.closest('.oc-row'); if(!row)return; var cat=sel.value; var it=row.querySelector('.oc-item'); var tx=row.querySelector('.oc-text');
+  if(cat==='other'||cat===''){ it.style.display='none'; it.innerHTML=''; } else { it.style.display=''; it.innerHTML='<option value="">— เลือกรายการ —</option>'+ocItemOptions(cat); }
+  tx.value=''; row.querySelector('.oc-delta').value=''; calcQuote(); }
+function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(!row||!ch)return;
+  var cat=row.querySelector('.oc-cat').value; var opt=sel.options[sel.selectedIndex];
+  var tx=row.querySelector('.oc-text'), dl=row.querySelector('.oc-delta');
+  if(sel.value===''){ tx.value=''; dl.value=''; calcQuote(); return; }
+  var name=opt.textContent.replace(/\s*\(\+[\d,]+\)\s*$/,'').trim();
+  var w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, area=w*h;
+  var delta=0;
+  if(opt.getAttribute('data-flat')==='1'){ delta=parseFloat(opt.getAttribute('data-r'))||0; }
+  else if(cat==='glass'){ var cg=parseInt((ch.querySelector('.i-glass')||{}).value)||0; var oR=(GLASS[cg]&&GLASS[cg].s)||0; delta=Math.round(((parseFloat(opt.getAttribute('data-r'))||0)-oR)*area); }
+  else if(cat==='color'){ var cc=parseInt((ch.querySelector('.i-color')||{}).value)||0; delta=Math.round(colorPrice(parseInt(sel.value),area,'')-colorPrice(cc,area,'')); }
+  else if(cat==='mosq'){ delta=Math.round((parseFloat(opt.getAttribute('data-r'))||0)*area); }
+  else if(cat==='roof'){ var rp=PBYID[sel.value]; var nr=(rp&&rp.rates)?rateOf(area,RATES[rp.rates]):0; delta=Math.round(nr*area); }
+  tx.value='เปลี่ยนเป็น'+name; dl.value=delta||''; calcQuote(); }
+function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
+  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions()+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
+  box.appendChild(row); }
+// หลังคาเลื่อน: auto-fill ราคามอเตอร์ตามพื้นที่ (18,000/28,000/36,000/72,000) ลงช่อง · ผู้ใช้แก้ทับได้ (data-edited)
+function rfSlideMotorFill(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p||!p.optSlide)return;
+  var w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, a=w*h;
+  var N=Math.max(2,parseInt((ch.querySelector('.o-spanels')||{}).value)||2);
+  var sa=parseFloat((ch.querySelector('.o-sarea')||{}).value)||0;
+  var marea=sa>0?sa:(a*N/(N+1));
+  var auto=marea<=3.5?18000:marea<=14?28000:marea<=40?36000:72000;
+  var pe=ch.querySelector('.o-smotorprice'); if(pe && !pe.dataset.edited){ pe.value=auto; }
+  // P4: helper text มอเตอร์ auto (อ่านอย่างเดียว) · P2: ไฮไลต์ชิปจำนวนบานที่เลือก
+  var mq=Math.max(1,parseInt((ch.querySelector('.o-smotorqty')||{}).value)||1);
+  var he=ch.querySelector('.o-smotor-auto'); if(he){ he.textContent='· auto ฿'+fmt(auto)+(mq>1?(' × '+mq):''); }
+  ch.querySelectorAll('.spanel-chip').forEach(function(c){ c.classList.toggle('on', parseInt(c.dataset.n)===N); });
+}catch(e){} }
+// P2: ชิป/stepper จำนวนบานเลื่อน — set .o-spanels (source of truth) แล้วเรียก fill+calc (readItem เดิมไม่ต้องแก้)
+function rfSetSpanels(el,n){ var ch=el.closest('.ch'); var inp=ch?ch.querySelector('.o-spanels'):null; if(!inp)return; inp.value=Math.max(2,parseInt(n)||2); rfSlideMotorFill(ch); calcQuote(); }
+function rfStepSpanels(el,d){ var ch=el.closest('.ch'); var inp=ch?ch.querySelector('.o-spanels'):null; if(!inp)return; rfSetSpanels(el,(parseInt(inp.value)||2)+d); }
+// UX (C): พับเก็บรายการ (accordion) — ลดความยาวฟอร์ม · พับแล้วโชว์แค่ ส่วนที่ N + ชนิดบาน+ขนาด
+function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w')||{}).value, h=(ch.querySelector('.i-h')||{}).value; var ty=(ch.querySelector('.i-type')||{}).value==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
+function setChCollapsed(ch, on){ if(!ch)return; ch.classList.toggle('collapsed', !!on); var sum=ch.querySelector('.ch-summary'); if(sum) sum.textContent = on ? ('· '+(chSummary(ch)||'รายการ')) : ''; }
+function toggleCh(ch){ setChCollapsed(ch, !ch.classList.contains('collapsed')); }
+function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach(function(ch){ if(ch!==active) setChCollapsed(ch, true); }); setChCollapsed(active, false); }
+// UX: ไล่เลขรายการใหม่ตามลำดับจริง (ลบแล้วเพิ่มไม่ข้ามเลข) — quote=ส่วนที่ · quick=ชุดที่
+function renumberItems(){
+  ['items','q-items'].forEach(function(cid){ var c=document.getElementById(cid); if(!c)return; var n=0;
+    Array.from(c.children).forEach(function(el){ if(el.classList && el.classList.contains('ch')){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent=(cid==='items'?'ส่วนที่ ':'ชุดที่ ')+n; } }); });
+}
 function addItem(container){
   itemSeq++;
   const id=itemSeq;
   const d=document.createElement('div'); d.className='ch'; d.dataset.id=id;
   d.innerHTML=
-   `<div class="top"><span style="flex:1;color:#888;font-size:13px;">ส่วนที่ ${id}</span><button type="button" class="del" title="ลบส่วนนี้">&times;</button></div>`+
+   `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
      `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div>`+
      `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
@@ -1829,29 +2012,45 @@ function addItem(container){
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
      `<div><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
      `<div><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
-     `<div class="full i-color-wrap"><label>สีอลูมิเนียม</label><select class="i-color">${colorOpts()}</select></div>`+
-     `<div class="full i-glass-wrap"><label>กระจก</label><select class="i-glass">${glassOpts()}</select></div>`+
+     `<div class="full i-color-wrap" style="display:none;"><label>สีอลูมิเนียม (รายการนี้)</label><select class="i-color">${colorOpts()}</select></div>`+
+     `<div class="full i-glass-wrap" style="display:none;"><label>กระจก (รายการนี้)</label><select class="i-glass">${glassOpts()}</select></div>`+
      `<div class="full i-colorcode-wrap" style="display:none;"><label>รหัสสี/ชื่อสี (อบพิเศษ)</label><input class="i-colorcode" type="text" placeholder="เช่น KL10232A · RAL7022 · Fuji"></div>`+
      `<div class="full i-sampleconfirm-wrap" style="display:none;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="i-sampleconfirm" style="width:18px;height:18px;"> <b>ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</b> (สำหรับสีชุบ)</label></div>`+
-     `<div class="i-panels-wrap"><label>จำนวนบาน</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
+     `<div class="i-panels-wrap"><label>จำนวนบานทั้งหมด</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
      `<div><label>จำนวนชุด</label><input class="i-qty" type="number" step="1" min="1" value="1"></div>`+
-     `<div class="full"><label>ราคากำหนดเอง (บาท · เว้น=คิดออโต้)</label><input class="i-override" type="number" min="0" step="100" placeholder="ปล่อยว่าง = คิดอัตโนมัติ"></div>`+
-     `<div class="full"><label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label><select class="i-optpreset" onchange="addOptPreset(this)" style="height:34px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">${optPresetOptions()}</select><textarea class="i-note" rows="2" placeholder="เช่น&#10;OPTION : เปลี่ยนเป็นกระจกเทมเปอร์เขียว ราคาลด 7,000 บาท&#10;หมายเหตุ : รวมงานรื้อบานเดิม"></textarea></div>`+
+     `<div class="full i-override-wrap" style="display:none;"><label>ราคากำหนดเอง (บาท · ใช้เฉพาะสินค้าที่กรอกราคาเอง)</label><input class="i-override" type="number" min="0" step="100" placeholder="ราคาต่อชุด (บาท)"></div>`+
+     `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
+     `<div class="full note-opt-group">`+
+       `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
+       `<details class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;"><summary style="cursor:pointer;font-size:13px;color:var(--red);font-weight:600;">＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)</summary><div class="oc-list" style="margin-top:6px;"></div><button type="button" class="oc-add" onclick="ocAddRow(this)" style="font-size:12px;padding:3px 10px;border:1px dashed var(--red);color:var(--red);background:#fff;border-radius:6px;cursor:pointer;">＋ เพิ่ม OPTION</button></details>`+
+       `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
+       `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
+       `<input type="hidden" class="o-optdelta" value="0">`+
+       `<div style="margin-top:6px;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="o-lumpsum" style="width:18px;height:18px;"> คิดราคาเหมา — กรอกราคารวมต่อชุดเอง ไม่คิดจากขนาด (สำหรับงานพิเศษคิดเหมา)</label><div class="o-lumpsum-wrap" style="display:none;margin-top:4px;"><label style="font-size:12px;color:var(--muted);">ราคาเหมาต่อชุด (บาท)</label><input class="o-lumpsumprice" type="number" min="0" step="100" placeholder="กรอกราคารวมต่อชุด" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div></div>`+
+     `</div>`+
    `</div>`+
-   `<details class="optbox"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
    `<div class="subitem-wrap"><div class="subitem-list"></div><button type="button" class="sub-addbtn" onclick="addSubItem(this)">＋ เพิ่มบานย่อยในชุดนี้</button></div>`+
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
    `<div class="chmsg i-msg"></div>`;
   (container||document.getElementById('items')).appendChild(d);
-  d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d); calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
+  renumberItems();
+  try{ collapseOthers(d); }catch(e){}  // C: เพิ่มรายการใหม่ → พับรายการอื่นเก็บ โชว์แค่ตัวใหม่
+  // apply global defaults ถ้ามี (ไม่ fire change เพื่อไม่ trigger colorcode-wrap ก่อนที่ buildItemOpts จะรัน)
+  { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
+    if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
+    if(_gg && _gg.value!==''){ var _gi=d.querySelector('.i-glass'); if(_gi) _gi.value=_gg.value; } }
+  d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d);
+    // ข้อ2: ราวกันตก default กระจกเทมเปอร์ใส 10 มม. (glassDef) — เลือก 12 มม.ได้จาก dropdown · ราคาไม่ขึ้นกับกระจก
+    { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
+    calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
   d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value); buildItemOpts(d); refreshItype(d);
     // กั้นห้องกระจก: เลือกกลุ่มงาน 6 → โชว์ช่องด้านทันที + เติม "ด้าน A" ให้ถ้ายังว่าง
     if(d.querySelector('.i-group').value==='6'){
       const pos=d.querySelector('.i-position');
       if(pos){
         const sb=d.closest('.setbox'); const chs=sb?[...sb.querySelectorAll('.ch')]:[d];
-        if(!pos.value.trim()){ pos.value='ด้าน A'; pos.dispatchEvent(new Event('input',{bubbles:true})); }
+        if(!pos.value.trim()){ pos.value=ghSideLabel(d); pos.dispatchEvent(new Event('input',{bubbles:true})); }
         const lblWrap=pos.closest('.full'); const lbl=lblWrap?lblWrap.querySelector('label'):null;
         if(lbl) lbl.innerHTML='<b style="color:#B3151D;">ด้านของห้องนี้</b> (ด้าน A, B, C... แก้/พิมพ์เองได้)';
         if(sb) refreshSet(sb);
@@ -1863,8 +2062,15 @@ function addItem(container){
     }
     calcQuote(); });
   d.querySelector('.i-type').addEventListener('change',()=>{ refreshItype(d); calcQuote(); });
-  d.querySelector('.del').addEventListener('click',()=>{ const _pb=d.closest('.setbox'); d.remove(); if(_pb)refreshSet(_pb); calcQuote(); });
+  d.querySelector('.del').addEventListener('click',()=>{ const _pb=d.closest('.setbox'); d.remove(); if(_pb)refreshSet(_pb); renumberItems(); calcQuote(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
+  // งาน7: sync i-panels-mirror + o-opencount เมื่อ i-panels เปลี่ยน
+  d.querySelector('.i-panels').addEventListener('input', function(){
+    var pm=d.querySelector('.i-panels-mirror'); if(pm) pm.value=this.value;
+    var p=parseInt(this.value)||0;
+    var fEl=d.querySelector('.o-fixed'); var f=fEl?parseInt(fEl.value)||0:0;
+    var ow=d.querySelector('.o-opencount'); if(ow) ow.textContent=Math.max(0,p-f);
+  });
   // โชว์ช่องรหัสสีเมื่อเลือกสีที่มี hasCode (อบพิเศษ/ลายไม้อบพิเศษ/สีชุบ)
   d.querySelector('.i-color').addEventListener('change',function(){
     var v=parseInt(this.value)||0;
@@ -1872,6 +2078,8 @@ function addItem(container){
     d.querySelector('.i-colorcode-wrap').style.display=(c&&c.hasCode)?'block':'none';
     var sc=d.querySelector('.i-sampleconfirm-wrap'); if(sc) sc.style.display=(c&&c.sampleConfirm)?'block':'none';
   });
+  // งาน9: โหมดเหมา — toggle wrap
+  { var _ls=d.querySelector('.o-lumpsum'); if(_ls){ _ls.addEventListener('change',function(){ var _w=d.querySelector('.o-lumpsum-wrap'); if(_w)_w.style.display=this.checked?'block':'none'; calcQuote(); }); } }
   buildItemOpts(d);
   refreshItype(d);
   calcQuote();
@@ -1926,6 +2134,14 @@ function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
   const box=d.querySelector('.i-opts');
   let h='';
+  // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
+  // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
+  d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
+    var _pwIn=_smbOld.querySelector('.i-panels-wrap');
+    if(_pwIn){ var _qtyEl=d.querySelector('.i-qty'); var _qtyWrap=_qtyEl?_qtyEl.parentNode:null;
+      if(_qtyWrap&&_qtyWrap.parentNode){ _qtyWrap.parentNode.insertBefore(_pwIn,_qtyWrap); } }
+    _smbOld.remove();
+  });
   // R3.3: ประตูบานเปิด — banner Std/Up1/Up2/Up3 (เลือก 1 ใน 4)
   if(p.cat==='บานเปิด'){
     h+='<div class="opt" style="width:100%;background:#E2EFDA;border-left:4px solid #70AD47;padding:8px 12px;margin-bottom:6px;font-size:12px;line-height:1.5;"><b style="color:#385723;">ประตูบานเปิด — เลือกมือจับ 1 ใน 4:</b><br>'
@@ -1950,7 +2166,11 @@ function buildItemOpts(d){
     h+='<label class="gh-row">ระบบควบคุม <select class="o-zctrl"><option value="manual">มือดึง</option><option value="aok220" selected>มอเตอร์ AOK 220V</option><option value="dooya">มอเตอร์ DOOYA</option><option value="aok50n">มอเตอร์ AOK 50N</option></select></label>';
     h+='</div>';
   }
-  if(p.opts){ p.opts.forEach(o=>{ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }); }
+  if(p.opts){ p.opts.forEach(o=>{
+    if(o.type==='select'){ h+=`<label class="opt">${o.label} <select class="o-${o.id}" onchange="calcQuote()" style="width:auto;height:32px;">`+(o.options||[]).map((t,i)=>`<option value="${i}"${i===(o.defaults||0)?' selected':''}>${t}</option>`).join('')+`</select></label>`; }
+    else if(o.depends){ /* ขับด้วย select อื่น (เช่น tilt&turn ตาม awn_mode) — ไม่วาดเป็น checkbox */ }
+    else { h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }
+  }); }
   // shower — เลือก config ประตู+ติดตาย / ติดตายเดี่ยว / ประตูเดี่ยว + ถ้ามีประตูเลือกบานเปิด/เลื่อน
   if(p.id==='shower'){
     h+='<label class="opt">รูปแบบ shower <select class="o-shtype" style="width:auto;height:32px;"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select></label>';
@@ -1959,16 +2179,26 @@ function buildItemOpts(d){
   // frameless_door — เลือกสีเฟรม + สวิง/เลื่อน
   if(p.id==='frameless_door'){
     h+='<label class="opt">ประเภทประตูบานเปลือย <select class="o-frametype" style="width:auto;height:32px;"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select></label>';
-    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮารา">เทาซาฮารา</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
+    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
   }
   if(p.closer){ h+='<label class="opt">[Up3] โช๊ค (combo สแตน) <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช๊คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช๊ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช๊ค">บานพับ +5,000</option></select></label>'; }
   if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
   // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
   if(p.digihandle){ h+='<label class="opt">[Up3] มือจับสแตนอร่าม <select class="o-stainless" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></label>'; }
-  // R3.2: Cmech 6 สี (เลื่อน/เปิด/กระทุ้ง) — ราคากรอกเอง default 1,000-1,500
-  if(['บานเลื่อน','บานเปิด','บานกระทุ้ง'].includes(p.cat)){
-    h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+CMECH_COLORS.map(function(c,i){return '<option value="'+i+'">'+c.n+'</option>';}).join('')+'</select></label>';
-    h+='<label class="opt">Cmech ราคา (บาท · 1,000-1,500) <input type="number" class="o-cmechprice" min="0" step="100" value="1200" placeholder="1200" style="width:80px;height:30px;"></label>';
+  // P3-3: มือจับรุ่นอื่น — กรอกชื่อรุ่น + ราคาเอง (HD182/Berin/ฯลฯ ที่ยังไม่มีในลิสต์)
+  if(p.digihandle){ h+='<label class="opt">มือจับรุ่นอื่น (กรอกเอง) <input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="width:180px;height:32px;" oninput="calcQuote()"> + <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:90px;height:32px;" oninput="calcQuote()"> บาท</label>'; }
+  // ข้อ4A: มือจับ Cmech — เฉพาะ "ชุดบานเลื่อน" (handoff) · แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
+  //   เดิมเปิดให้ เปิด/กระทุ้ง ด้วย แต่ใบโชว์เฉพาะสาขาบานเลื่อน → คิดเงินไม่โชว์ · จำกัดเป็นบานเลื่อนปิด gap
+  if(p.cat==='บานเลื่อน'){
+    h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="normal">สีธรรมดา (ดำ/ขาว)</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
+  }
+  // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 ราคาสุดท้าย (รวม Fork Drive แล้ว · เคาะ 2026-06-08)
+  if(p.cat==='บานกระทุ้ง'){
+    h+='<label class="opt">มือจับ Cmech หลบมุ้ง <select class="o-cmechawn" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="normal">สีธรรมดา (ดำ/ขาว) +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></label>';
+  }
+  // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
+  if(/xseries|slimlux/.test(p.id)){
+    h+='<label class="opt">มือจับ X-series (ฟรี) <select class="o-xhandle" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></label>';
   }
   // R3.2: ตารางเต็มบาน 5,000 (เฉพาะ โซลิด วัน/ทู)
   if(p.full_grid){
@@ -1990,13 +2220,23 @@ function buildItemOpts(d){
     const _sr = SLIDING_RAIL[p.id];
     const _isTop = _sr.rail === 'top';
     // ชนิดการเปิด (เลือกแล้ว auto-set ติดตาย: สลับ/ลากจูง=0 · เปิดคู่กลาง=2) — เลิกใช้คำ "ธรรมดา" ใช้ระบุติดตายเอง
+    // UX: ห่อบล็อกบานเลื่อน (ชนิดเปิด + เปิด/ติดตาย) ด้วย .sliding-main-block → ย้ายขึ้นฟอร์มหลักหลัง build
+    h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
+    h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 บานเลื่อน:</span>';
+    h+='<span class="smb-panels-slot"></span>'; // ตำแหน่งเสียบ "จำนวนบานทั้งหมด" (ย้ายเข้ามาหลัง build)
     h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
-    h+='<label class="opt">ติดตายกี่บาน <input type="number" class="o-fixed" min="0" value="0" style="width:55px;height:30px;"> บาน (มุ้งคิดจากบานที่เลื่อนได้)</label>';
+    // เปิด/ติดตาย (จำนวนบานทั้งหมดอยู่ใน slot ด้านบนแล้ว — ตัด mirror ออก)
+    h+='<label class="opt">ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> บาน</label>';
+    // ราง (ล่าง): กันน้ำ / เตี้ย 7มม — ใบจริงทุกบานเลื่อนรางล่างระบุ (พี่นัท) · เฉพาะรางล่าง
+    if(!_isTop){ var _brDef=(_sr.txt&&/เตี้ย/.test(_sr.txt))?'เตี้ย':'กันน้ำ';
+      h+='<label class="opt">ราง <select class="o-bottomrail" style="width:auto;height:32px;" onchange="calcQuote();"><option value="กันน้ำ"'+(_brDef==='กันน้ำ'?' selected':'')+'>รางล่าง (รุ่นกันน้ำ)</option><option value="เตี้ย"'+(_brDef==='เตี้ย'?' selected':'')+'>รางล่าง (รุ่นรางเตี้ย 7 มม.)</option></select></label>';
+    }
+    h+='</div>'; // ปิด .sliding-main-block
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
-      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-beamm-wrap\'); if(w) w.style.display=(this.value===\'ซ่อนราง\'?\'inline-block\':\'none\');"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
-      // ข้อ2: เสริมคาน โผล่เฉพาะตอนซ่อนราง (default โชว์ราง = ซ่อน wrap)
-      h+='<span class="o-beamm-wrap" style="display:none;"><label class="opt">เสริมคาน (เฉพาะซ่อนราง) <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
+      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
+      // งาน4: เสริมคาน โผล่ทุกแบบราง (โชว์ราง/ซ่อนราง) — รางบนมีเสริมคานได้เสมอ
+      h+='<span class="o-beamm-wrap" style="display:inline-block;"><label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
     }
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
@@ -2005,8 +2245,15 @@ function buildItemOpts(d){
     }
     // คาดตาราง (sliding-specific block ยังคงมี — เพื่อรักษา readItem branch เดิม)
   }
-  // คาดตาราง (generic — ทุก cat ยกเว้น p.grid ซึ่งเป็น grid_bars เอง)
-  if(!p.grid){
+  // UX (พี่นัท): กล่องฟ้า "จำนวนบาน" สำหรับ บานเปิด/ติดตาย ด้วย — relocation logic ย้ายขึ้นฟอร์มหลัก + ดึง panels เข้ากล่อง
+  if(['บานเปิด','ติดตาย'].includes(p.cat)){
+    h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
+    h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 '+p.cat+':</span>';
+    h+='<span class="smb-panels-slot"></span>';
+    h+='</div>';
+  }
+  // คาดตาราง (generic) · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2 — ไม่ใช่งานบาน
+  if(!p.grid && !['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){
     h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\');"> มีคาดตาราง (คิดตามสูตร)</label>';
     h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
     h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
@@ -2017,8 +2264,30 @@ function buildItemOpts(d){
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   if(p.cat === 'PC Door'){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
-  if(p.optInsul){ h+=`<label class="opt"><input type="checkbox" class="o-insul"> ฉนวนกันความร้อน +600/ตร.ม.</label>`; }
-  if(p.optSlide){ h+=`<label class="opt"><input type="checkbox" class="o-slide"> ทำเลื่อน (ค่าทำ/ตร.ม.)</label>`+`<label class="opt">จำนวนบานเลื่อน <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:55px;height:30px"></label>`+`<label class="opt">รางน้ำ(ม.) <input type="number" class="o-sgut" step="0.1" min="0" value="0" style="width:55px;height:30px"></label>`; }
+  if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
+  // หลังคาเลื่อน — ทำเลื่อน → 3 ช่อง: จำนวนบาน / พื้นที่เลื่อน(auto) / มอเตอร์(จำนวน×ราคา auto แก้ได้) · รางน้ำย้ายไปของเสริม
+  if(p.optSlide){
+    h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
+    h+='<span class="o-slide-wrap" style="display:none;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:6px 10px;">';
+    // P2: จำนวนบานเลื่อน = ชิป [2][3][4][6] + stepper (input number ยังเป็น source of truth · readItem เดิมไม่ต้องแก้)
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">จำนวนบานเลื่อน '
+      +'<span style="display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;">'
+      +[2,3,4,6].map(function(n){return '<button type="button" class="spanel-chip" data-n="'+n+'" onclick="rfSetSpanels(this,'+n+')" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:15px;">'+n+'</button>';}).join('')
+      +'</span>'
+      +'<span style="display:inline-flex;gap:4px;align-items:center;vertical-align:middle;margin-left:10px;">'
+      +'<button type="button" onclick="rfStepSpanels(this,-1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">−</button>'
+      +'<input type="number" class="o-spanels" step="1" min="2" value="2" style="width:52px;height:44px;text-align:center;" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();">'
+      +'<button type="button" onclick="rfStepSpanels(this,1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">+</button>'
+      +'</span></label>';
+    // P4: พื้นที่เลื่อน placeholder "auto" (ว่าง=auto · logic sa>0?sa:auto รองรับว่างแล้ว) — เลิกสับสน "0 คือ auto หรือ 0 จริง"
+    h+='<label class="opt">พื้นที่เลื่อน(ตร.ม.) <input type="number" class="o-sarea" step="0.1" min="0" placeholder="auto" style="width:70px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> <span style="font-size:11px;color:#666;">เว้นว่าง=auto</span></label>';
+    // P4: มอเตอร์ — โชว์ราคา auto เป็น helper อ่านอย่างเดียว · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์ (เคสปกติ 0 การพิมพ์)
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:52px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ตัว '
+      +'<span class="o-smotor-auto" style="font-size:12px;color:#2E7D32;font-weight:600;"></span> '
+      +'<a class="o-smotor-edit" onclick="var w=this.closest(\'label\').querySelector(\'.o-smotorprice-wrap\'); if(w){w.style.display=\'inline\';} this.style.display=\'none\';" style="font-size:12px;color:#1976D2;text-decoration:underline;cursor:pointer;">แก้ราคา</a>'
+      +'<span class="o-smotorprice-wrap" style="display:none;"> × <input type="number" class="o-smotorprice" step="1000" min="0" value="0" style="width:84px;height:44px" oninput="this.dataset.edited=1;calcQuote();"> บาท/ตัว</span></label>';
+    h+='</span>';
+  }
   if(p.cat==='หลังคา'){
     // Pass2-D: สีวัสดุมุงหลังคา (cosmetic ไม่คิดเงิน · ทุกสีราคาเท่ากัน)
     // ไวนิล 3 สี (VG Snow Roof Pro) · ดีไลท์ 2 สี (D-LITE) · โพลีตัน 11 สี (TN — รอพี่นัทคัดเหลือเท่าที่ขาย)
@@ -2030,11 +2299,12 @@ function buildItemOpts(d){
       h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="" selected>— ไม่ระบุ —</option><option value="Clear 101 สีใส (แสงผ่าน 83%)">Clear 101 สีใส (แสงผ่าน 83%)</option><option value="Opal 103 สีขาวขุ่น (แสงผ่าน 20%)">Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option><option value="Bronze 107 สีชาใส (แสงผ่าน 30%)">Bronze 107 สีชาใส (แสงผ่าน 30%)</option><option value="Green 109 สีเขียวใส (แสงผ่าน 45%)">Green 109 สีเขียวใส (แสงผ่าน 45%)</option><option value="Australian Grey 108 สีเทาออส (แสงผ่าน 40%)">Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option><option value="Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)">Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option><option value="Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)">Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option><option value="Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)">Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option></select></label>';
     }
     // A: แป
-    h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว (default)</option><option value="แปคู่">แปคู่</option></select></label>';
+    h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่ (default)</option></select></label>';
     // B: โครงสร้าง
     h+='<label class="opt">โครงสร้าง <select class="o-roofframe" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม">โครงอลูมิเนียม (default)</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select> <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // C: ปลายหลังคา + chain D — option[1]=รางน้ำ (no-op) เพื่อให้ enableAllOpts ไม่คิดเงิน
-    h+='<label class="opt">ปลายหลังคา <select class="o-roofend" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-guttersys-wrap\'); if(w) w.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\');"><option value="ปล่อย">ปล่อย (default)</option><option value="รางน้ำ">รางน้ำ (รวมในราคาหลังคา)</option><option value="ปิดปลาย">ปิดปลาย (+1,000/ม.กว้าง)</option></select></label>';
+    // ข้อ8: ตัดตัวเลือก "ปิดปลาย" (auto กว้าง) ออก — กันคิดซ้ำกับ "ปิดปลายกันน้ำ" (o-rfeave กรอกยาวเอง) ในของเสริม
+    h+='<label class="opt">ปลายหลังคา <select class="o-roofend" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-guttersys-wrap\'); if(w) w.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\');"><option value="ปล่อย">ปล่อย (default)</option><option value="รางน้ำ">รางน้ำ (รวมในราคาหลังคา)</option></select> <span style="font-size:11px;color:#666;">(ปิดปลายกันน้ำ = กรอกยาวในของเสริม)</span></label>';
     // D: ระบบรางน้ำ (โชว์เมื่อ C=รางน้ำ) — chain show/hide เหมือน .o-beamm-wrap
     h+='<div class="o-guttersys-wrap" style="display:none;">';
     h+='<label class="opt">ระบบรางน้ำ <select class="o-guttersys" style="width:auto;height:32px;" onchange="var d=this.closest(\'.ch\'); d.querySelector(\'.o-gutter-pipe-wrap\').style.display=(this.value===\'ท่อ\'?\'inline\':\'none\'); d.querySelector(\'.o-gutter-chain-wrap\').style.display=(this.value===\'โซ่\'?\'inline\':\'none\');"><option value="ท่อ">ท่อ (default)</option><option value="โซ่">โซ่</option></select> ';
@@ -2044,15 +2314,20 @@ function buildItemOpts(d){
     h+='<span class="o-gutter-chain-wrap" style="display:none;">ลาย <select class="o-gutter-chainpat" style="width:auto;height:32px;"><option value="ทิวลิป">ทิวลิป (default)</option><option value="โลตัส">โลตัส</option></select> สี <select class="o-gutter-chaincolor" style="width:auto;height:32px;"><option value="ขาว">ขาว (default)</option><option value="น้ำตาล">น้ำตาล</option></select></span>';
     h+='</label>';
     h+='</div>';
-    h+='<label class="opt" style="width:100%;background:#E8F5E9;border-left:3px solid #2E7D32;padding:4px 8px;font-size:12px;"><b>ของเสริมหลังคา</b> (รวมในชุดหลังคานี้)</label>';
+    // P1 (แชท B): ยุบ "ของเสริมหลังคา" เป็น <details> พับ default — เคสปกติเห็น ~4 ช่องหลัก (สี/แป/โครงสร้าง/ปลายหลังคา)
+    h+='<details class="optbox" style="width:100%;"><summary style="cursor:pointer;font-size:13px;color:#2E7D32;font-weight:600;padding:6px 0;">＋ ของเสริมหลังคา (รางน้ำ/เสา/คาน/ซ่อนสโลป/ครอบ...)</summary>';
     h+='<label class="opt">รางน้ำ <select class="o-rfgut" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="1000">อลู S 1,000/ม.</option><option value="2000">สแตน M 2,000/ม.</option><option value="3000">สแตน L 3,000/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfgutlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">คานเหล็กถัก <select class="o-rfbeam" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfbeamlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">โซ่รางน้ำ (3,000/เส้น) <input type="number" class="o-rfchain" min="0" step="1" value="0" style="width:55px;height:30px;"> · ปิดปลายกันน้ำ (1,000/ม.) ยาว <input type="number" class="o-rfeave" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว(ม.) <input type="number" class="o-rfpvc" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
+    // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความเฉยๆ ไม่บวกเงิน)
+    h+='<label class="opt"><input type="checkbox" class="o-rfplate"> เสริมเพลทเหล็กล่าง (รับล่าง)</label>';
+    h+='<label class="opt"><input type="checkbox" class="o-rfpull"> เหล็กดึงด้านบน</label>';
     h+='<label class="opt">ซ่อนสโลป <select class="o-rfhs" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="comp">คอมโพสิต 3มม. (3,500/ตร.ม.)</option><option value="smart">สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.)</option></select> สูง <input type="number" class="o-rfhsh" min="0" step="0.05" value="0" style="width:50px;height:30px;"> ยาว/ด้าน <input type="number" class="o-rfhsl" min="0" step="0.1" value="0" style="width:55px;height:30px;"> ด้าน <input type="number" class="o-rfhsn" min="1" step="1" value="1" style="width:45px;height:30px;"></label>';
     h+='<label class="opt">ปิดซ่อนราง: กว้างราง(ซม.) <input type="number" class="o-rfgcw" min="0" step="1" value="0" style="width:55px;height:30px;"> สูง(ซม.) <input type="number" class="o-rfgch" min="0" step="1" value="10" style="width:50px;height:30px;"> ยาวรวม(ม.) <input type="number" class="o-rfgcl" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม.) <input type="number" class="o-rfbcw" min="0" step="0.05" value="0" style="width:55px;height:30px;"> ยาวคาน(ม.) <input type="number" class="o-rfbcl" min="0" step="0.1" value="0" style="width:55px;height:30px;"></label>';
+    h+='</details>'; // P1: ปิด <details> ของเสริมหลังคา
   }
   const areaOnly=AREA_CATS.includes(p.cat);
   COMMON_OPTS.forEach(o=>{ if(o.ids&&o.ids.includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; } });
@@ -2060,8 +2335,10 @@ function buildItemOpts(d){
   if(p.mosquito){
     const _itypeMosq = (d.querySelector('.i-type')||{}).value || 'door';
     h+='<label class="opt" style="background:#E3F2FD;border-left:3px solid #1976D2;padding:5px 10px;font-size:12px;width:100%;display:block;">🪟 <b>เพิ่มมุ้งในบานนี้</b> (ราคาคิดตามพื้นที่บาน)</label>';
-    h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){return '<option value="'+m.id+'">'+m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')</option>';}).join('')+'</select></label>';
+    h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select></label>';
     h+='<label class="opt">ผ้ามุ้ง <select class="o-mosqfabric" style="width:auto;height:32px;"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
+    // ข้อ10: สีกรอบมุ้ง addon (เดิมไม่มีช่อง → เลือกสีไม่ได้) · value ตรงกับที่ calc คิด (sahara/kl_special/kl_wood · ค่าทำสี×0.5)
+    h+='<label class="opt">สีกรอบมุ้ง <select class="o-mosqcolor" style="width:auto;height:32px;"><option value="">ขาว/ดำ (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
@@ -2077,7 +2354,7 @@ function buildItemOpts(d){
     h+='<label class="opt">กำไร % (มือ) <input type="number" class="o-glassprofit" min="0" step="1" value="100" style="width:70px;height:32px;"></label>';
     h+='<div class="opt" style="font-size:11px;color:#666;width:100%">Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-4000=+70% / >4001=+30% · ขั้น2 พื้นที่รวม >30=ลด10% / >80=ลด15% / >130=ลด20%</div>';
   }
-    if(p.gate){ h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮารา">สีเทาซาฮารา</option><option value="สีดำซาฮารา">สีดำซาฮารา</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></label>'; }
+    if(p.gate){ h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></label>'; }
   if(p.bar_grid){ h+='<label class="opt">ทิศระแนง <select class="o-bgdir" style="width:auto;height:32px;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select></label>'; }
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
   if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
@@ -2086,15 +2363,29 @@ function buildItemOpts(d){
       .filter(id => PBYID[id])
       .map(id => '<option value="'+id+'">'+PBYID[id].name+'</option>').join('');
     h+='<label class="opt">ค่าประตู (เลือกรุ่น) <select class="o-bsdoor" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่มี (ระแนงเปล่า)</option>'+doorOpts+'</select></label>';
-    h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮารา +400/ตร.ม.</option><option value="400">สีดำซาฮารา +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮาร่า +400/ตร.ม.</option><option value="400">สีดำซาฮาร่า +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>';
   }
   if(p.bar_openclose){
     h+='<label class="opt">ทิศระแนง <select class="o-bocdir" style="width:auto;height:32px;"><option value="v">แนวตั้ง (default)</option><option value="h">แนวนอน</option></select></label>';
     h+='<label class="opt"><input type="checkbox" class="o-bocmotor"> เอามอเตอร์ (ถ้าไม่ติ๊ก = เปิด-ปิดด้วยมือ)</label>';
-    h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮารา +500/ตร.ม.</option><option value="500">สีดำซาฮารา +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>';
+    h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮาร่า +500/ตร.ม.</option><option value="500">สีดำซาฮาร่า +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>';
   }
   if(p.grid){ h+='<label class="opt">เส้นแนวนอน <input type="number" class="o-nh" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">เส้นแนวตั้ง <input type="number" class="o-nv" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">สีเส้น <select class="o-gridcolor" style="width:auto;height:32px;"><option value="200">อบขาว/ดำ/ซาฮาร่า (200/ม.)</option><option value="250">ลายไม้สต็อก (250/ม.)</option><option value="300">อบสีพิเศษ/Fuji (300/ม.)</option><option value="350">ลายไม้อบพิเศษ (350/ม.)</option></select></label>'+'<label class="opt">เส้นโค้ง (เส้น·3,000) <input type="number" class="o-nc" step="1" min="0" value="0" style="width:55px;height:30px"></label>'; }
   if(p.ceiling){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; }
+  // สเปก rev2: ฝ้า-ผนัง — ฟิลด์รายละเอียดวัสดุ (โครง/สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ)
+  if(p.cat==='ฝ้า-ผนัง'){
+    h+='<label class="opt">โครง <select class="o-wallframe" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ">โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select></label>';
+    if(p.id==='isowall'){
+      h+='<label class="opt">ความหนา ISOWALL <select class="o-isothick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select></label>';
+      h+='<label class="opt">สี <input type="text" class="o-isocolor" placeholder="เช่น ขาว" style="width:auto;min-width:90px;height:32px;" oninput="calcQuote();"></label>';
+    } else if(p.id==='ceiling_smooth'){
+      h+='<label class="opt">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select></label>';
+      h+='<label class="opt"><input type="checkbox" class="o-ceilslope" onchange="calcQuote();"> ฝ้าเฉียงตามแนวหลังคา</label>';
+    } else if(!p.ceiling){
+      h+='<label class="opt">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select></label>';
+      h+='<label class="opt">ทาสี <select class="o-wallpaint" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select></label>';
+    }
+  }
   if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>'; }
   if(p.future_tech){ h+='<label class="opt" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="width:auto;height:32px;max-width:240px;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select> <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
   if(p.handrail){
@@ -2109,12 +2400,20 @@ function buildItemOpts(d){
     h+='<label class="opt">สีผ้า <select class="o-screenfabriccolor" style="width:auto;height:32px;"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option></select></label>';
     h+='<span class="opt" style="color:#666;font-size:12px;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
-  if(!areaOnly){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
-  h+='<label class="opt" style="flex:1 1 100%;border-top:1px dashed #ccc;padding-top:6px;margin-top:4px;">หมายเหตุเพิ่มเติม (เฉพาะบานนี้) <input type="text" class="o-extradesc" placeholder="เช่น สเปกพิเศษ / รายละเอียด..." style="width:300px;height:30px;"></label>';
+  // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
+  if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){
+    h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="calcQuote();"> ฝังรางยู (ในพื้น)</label>';
+  }
+  h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
+  h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
+  // งาน10: วัสดุเพิ่มเติม (ราคารอแจ้ง — default ปิด = no-op ไม่บวกราคา ไม่ขึ้นข้อความ)
+  var _isPaneCat=['บานเลื่อน','เลื่อนภายใน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','PC Door'].includes(p.cat);
+  if(_isPaneCat){
+    h+='<label class="opt">แผ่นทึบล่าง <select class="o-solidlower" style="width:auto;height:32px;" onchange="var c=this.closest(\'.ch\'); c.querySelector(\'.o-solidlower-wrap\').style.display=this.value?\'inline\':\'none\'; c.querySelector(\'.o-sl-colorwrap\').style.display=(this.value===\'corrugated\')?\'inline\':\'none\'; calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก (3,500/ตร.ม.)</option><option value="composite">คอมโพสิท (3,300/ตร.ม.)</option></select></label>';
+    h+='<span class="o-solidlower-wrap" style="display:none;"><label class="opt">กว้าง(ม.) <input type="number" class="o-sl-w" min="0" step="0.1" value="0" style="width:58px;height:30px;" oninput="calcQuote();"> สูง(ม.) <input type="number" class="o-sl-h" min="0" step="0.1" value="0" style="width:58px;height:30px;" oninput="calcQuote();"></label><span class="o-sl-colorwrap" style="display:none;"><label class="opt">สีลูกฟูก <select class="o-sl-color" style="width:auto;height:32px;" onchange="calcQuote();"><option value="0">ดำ/ขาว/ซาฮาร่าธรรมดา (+0)</option><option value="400">ซาฮาร่า +400</option><option value="1500">ลายไม้สต๊อก +1,500</option><option value="1600">อบพิเศษ +1,600</option><option value="2200">ลายไม้อบพิเศษ +2,200</option></select></label></span></span>';
+  }
+  if(!areaOnly){ h+=`<label class="opt">ครอบวงกบอลู <select class="o-fcsides" style="width:auto;height:32px;" onchange="calcQuote();"><option value="0">ไม่มี</option><option value="3">3 ด้าน</option><option value="4">4 ด้าน</option></select> หรือระบุ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`+`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
-  // ม่านซิปไม่มีกระจก (ราคาคำนวณจาก area แต่ไม่ใช้ glass spec)
-  if(gw)gw.style.display=(areaOnly||p.zipscreen)?'none':'';
-  if(cw)cw.style.display=(areaOnly||NO_COLOR_CATS.includes(p.cat))?'none':'';
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
   const pn=d.querySelector('.i-panels');
@@ -2122,8 +2421,40 @@ function buildItemOpts(d){
   else if(q.method==='lift'){ pn.max=2; }
   else if(q.addon&&q.addon.kind==='sliding'){ pn.max=4; }
   else { pn.removeAttribute('max'); }
+  // บันทึกค่าสี/กระจกปัจจุบันก่อน innerHTML= (กัน node หาย เมื่อ cw/gw อยู่ใน box อยู่แล้ว)
+  var _savedColorVal=(cw&&cw.querySelector('.i-color'))?cw.querySelector('.i-color').value:'0';
+  var _savedGlassVal=(gw&&gw.querySelector('.i-glass'))?gw.querySelector('.i-glass').value:'0';
+  var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
+  var _showGw=!!(gw&&!(areaOnly||p.zipscreen));
   box.innerHTML=h;
-  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=h?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  // UX (พี่นัท): กระจก/สี ย้ายเข้า ⚙ อุปกรณ์เสริม (บนสุด) — แถวหลักโล่ง
+  if(cw){ cw.style.display=_showCw?'':'none'; box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
+  if(gw){ gw.style.display=_showGw?'':'none'; var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+  // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
+  { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
+    if(_smb && _pw && _pw.parentNode){
+      _pw.parentNode.insertBefore(_smb, _pw.nextSibling);            // วางกล่องฟ้าหลังตำแหน่งเดิมของ panels
+      var _anchor=_smb.querySelector('.smb-panels-slot')||_smb.firstChild;
+      _smb.insertBefore(_pw, _anchor && _anchor.nextSibling ? _anchor.nextSibling : null);  // ย้าย panels เข้ากล่องฟ้า
+      _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
+    }
+  }
+  // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
+  groupGHOpts(d);
+  // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
+  { var _pm=d.querySelector('.i-panels-mirror'); var _pv=d.querySelector('.i-panels');
+    if(_pm && _pv){ _pm.value=_pv.value; }
+    var _oc=d.querySelector('.o-opencount'); if(_oc && _pv){
+      var _fx2=d.querySelector('.o-fixed'); var _f2=_fx2?parseInt(_fx2.value)||0:0;
+      _oc.textContent=Math.max(0,(parseInt(_pv.value)||0)-_f2);
+    }
+  }
+  // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
+  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
+  { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
+    if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
+    if(_oh){ _oh.style.display=(!p.custom_price&&!p.custom_item)?'block':'none'; } }
   box.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
@@ -2143,7 +2474,7 @@ function buildItemOpts(d){
 function readItem(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
   const optSel={};
-  if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); optSel[o.id]=c&&c.checked; });
+  if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(!c){ optSel[o.id]=(o.type==='select')?String(o.defaults||0):false; return; } optSel[o.id]=(o.type==='select')?c.value:c.checked; });
   // Pass2-A: ธรณี บานเปิด
   if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
   // Pass2-A: ธรณี บานเฟี้ยม
@@ -2161,9 +2492,13 @@ function readItem(d){
   if(p.closer){ const _c=d.querySelector('.o-closer'); if(_c){ optSel.closer=parseFloat(_c.value)||0; if(_c.value!=='0'&&_c.selectedIndex>=0)optSel.closerLabel=_c.options[_c.selectedIndex].getAttribute('data-n'); } }
   if(p.digihandle){ const _dg=d.querySelector('.o-digi'); optSel.digi=_dg?_dg.value:''; }
   if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
+  if(p.digihandle){ const _hn=d.querySelector('.o-handlename'); optSel.handlename=_hn?_hn.value:''; const _hpp=d.querySelector('.o-handleprice'); optSel.handleprice=_hpp?_hpp.value:0; }
   // R3.2: read Cmech + ตารางเต็มบาน + combo กระทุ้งเข้าใน + มอเตอร์ระแนง 38.1
   { const _cm=d.querySelector('.o-cmech'); if(_cm) optSel.cmech=_cm.value;
-    const _cmp=d.querySelector('.o-cmechprice'); if(_cmp) optSel.cmechprice=_cmp.value;
+    const _cmc=d.querySelector('.o-cmechcolor'); if(_cmc) optSel.cmechcolor=_cmc.value;
+    const _cmit=d.querySelector('.i-type'); optSel.itype=(_cmit&&_cmit.value)||'door'; // ข้อ4A: ประตู2ฝั่ง/หน้าต่าง1ฝั่ง
+    const _xh=d.querySelector('.o-xhandle'); if(_xh) optSel.xhandle=_xh.value; // ข้อ4C: มือจับ X-series ฟรี
+    const _caw=d.querySelector('.o-cmechawn'); if(_caw) optSel.cmechawn=_caw.value; // ข้อ4B: Cmech หลบมุ้ง บานกระทุ้ง
     const _fg=d.querySelector('.o-fullgrid'); if(_fg) optSel.fullgrid=_fg.checked;
     const _ci=d.querySelector('.o-combo_awn_inside'); if(_ci) optSel.combo_awn=_ci.checked;
     const _cip=d.querySelector('.o-combo_price'); if(_cip) optSel.combo_price=_cip.value;
@@ -2176,6 +2511,7 @@ function readItem(d){
   // บานเลื่อน/เลื่อนภายใน — options ใหม่
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
     const _ot=d.querySelector('.o-opentype'); optSel.opentype=_ot?_ot.value:'บานเลื่อน';
+    const _br=d.querySelector('.o-bottomrail'); if(_br) optSel.bottomrail=_br.value; // ราง: กันน้ำ/เตี้ย
     const _tr=d.querySelector('.o-track'); optSel.track=_tr?_tr.value:'โชว์ราง';
     const _sl=d.querySelector('.o-slidelock'); optSel.slidelock=_sl?_sl.value:'';
     const _fx=d.querySelector('.o-fixed'); optSel.fixedPanes=_fx?(parseInt(_fx.value)||0):0;
@@ -2188,8 +2524,17 @@ function readItem(d){
     const _gmr=d.querySelector('.o-gm-rate'); optSel.gmRate=_gmr?_gmr.value:'200';
     const _gmc=d.querySelector('.o-gm-curve'); optSel.gmCurve=_gmc?_gmc.value:'0';
   }
-  if(p.optInsul){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
-  if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2; const sg=d.querySelector('.o-sgut'); optSel.sgut=sg?sg.value:0; }
+  if(p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id)){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
+  // สเปก rev2: ฝ้า-ผนัง ฟิลด์รายละเอียด
+  if(p.cat==='ฝ้า-ผนัง'){ const _wf=d.querySelector('.o-wallframe'); optSel.wallframe=_wf?_wf.value:'';
+    const _it=d.querySelector('.o-isothick'); if(_it)optSel.isothick=_it.value; const _ic=d.querySelector('.o-isocolor'); if(_ic)optSel.isocolor=(_ic.value||'').trim();
+    const _cf=d.querySelector('.o-ceilfinish'); if(_cf)optSel.ceilfinish=_cf.value; const _cs=d.querySelector('.o-ceilslope'); if(_cs)optSel.ceilslope=_cs.checked;
+    const _smt=d.querySelector('.o-smartthick'); if(_smt)optSel.smartthick=_smt.value; const _wp=d.querySelector('.o-wallpaint'); if(_wp)optSel.wallpaint=_wp.value;
+    const _ck=d.querySelector('.o-ckolor'); if(_ck)optSel.ckolor=_ck.value; }
+  if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2;
+    const sa=d.querySelector('.o-sarea'); optSel.sarea=sa?sa.value:0;
+    const mq=d.querySelector('.o-smotorqty'); optSel.smotorqty=mq?mq.value:1;
+    const mp=d.querySelector('.o-smotorprice'); optSel.smotorprice=mp?mp.value:0; }
   if(p.cat==='หลังคา'){ const _g=d.querySelector('.o-rfgut'),_gl2=d.querySelector('.o-rfgutlen'),_b=d.querySelector('.o-rfbeam'),_bl=d.querySelector('.o-rfbeamlen'),_pp=d.querySelector('.o-rfpolep'),_p4=d.querySelector('.o-rfpole4'); optSel.rfgut=_g?_g.value:'0'; optSel.rfgutlen=_gl2?_gl2.value:'0'; optSel.rfbeam=_b?_b.value:'0'; optSel.rfbeamlen=_bl?_bl.value:'0'; optSel.rfpolep=_pp?_pp.value:'0'; optSel.rfpole4=_p4?_p4.value:'0'; const _ch=d.querySelector('.o-rfchain'),_ev=d.querySelector('.o-rfeave'),_pv=d.querySelector('.o-rfpvc'); optSel.rfchain=_ch?_ch.value:'0'; optSel.rfeave=_ev?_ev.value:'0'; optSel.rfpvc=_pv?_pv.value:'0'; const _hs=d.querySelector('.o-rfhs'),_hsh=d.querySelector('.o-rfhsh'),_hsl=d.querySelector('.o-rfhsl'),_hsn=d.querySelector('.o-rfhsn'),_gcw=d.querySelector('.o-rfgcw'),_gch=d.querySelector('.o-rfgch'),_gcl=d.querySelector('.o-rfgcl'); optSel.rfhs=_hs?_hs.value:'0'; optSel.rfhsh=_hsh?_hsh.value:'0'; optSel.rfhsl=_hsl?_hsl.value:'0'; optSel.rfhsn=_hsn?_hsn.value:'1'; optSel.rfgcw=_gcw?_gcw.value:'0'; optSel.rfgch=_gch?_gch.value:'0'; optSel.rfgcl=_gcl?_gcl.value:'0'; const _bcw=d.querySelector('.o-rfbcw'),_bcl=d.querySelector('.o-rfbcl'); optSel.rfbcw=_bcw?_bcw.value:'0'; optSel.rfbcl=_bcl?_bcl.value:'0';
     // options ใหม่: แป / โครง / ปลายหลังคา / ระบบรางน้ำ
     const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปเดี่ยว';
@@ -2201,10 +2546,14 @@ function readItem(d){
     const _rgcc=d.querySelector('.o-gutter-chaincolor'); optSel.rfgutchaincolor=_rgcc?_rgcc.value:'ขาว';
     // Pass2-D: สีวัสดุมุงหลังคา (cosmetic)
     const _rfc=d.querySelector('.o-roofcolor'); optSel.rfcolor=_rfc?_rfc.value:'';
+    // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความ)
+    const _rfpl=d.querySelector('.o-rfplate'); optSel.rfplate=_rfpl?_rfpl.checked:false;
+    const _rfpu=d.querySelector('.o-rfpull'); optSel.rfpull=_rfpu?_rfpu.checked:false;
   }
   COMMON_OPTS.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(c)optSel[o.id]=c.checked; });
-  { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value; }
-  { const ed=d.querySelector('.o-extradesc'); if(ed)optSel.extraDesc=ed.value; }
+  { const fc=d.querySelector('.o-fcm'); if(fc)optSel.fcm=fc.value; const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value;
+    const fcs=d.querySelector('.o-fcsides'); if(fcs)optSel.fcsides=fcs.value; }
+  // o-extradesc ถูกลบแล้ว (รวมเข้า i-note) — ไม่ต้อง read อีก
   let finLabel='';
   if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; }
@@ -2235,6 +2584,7 @@ function readItem(d){
     const _mo=d.querySelector('.o-mosqopen'); optSel.mosqOpen=_mo?_mo.value:'1';
     const _mc=d.querySelector('.o-mosqcolor'); optSel.mosqColor=_mc?_mc.value:'';
     const _mf=d.querySelector('.o-mosqfabric'); optSel.mosqFabric=_mf?_mf.value:'fiber_gray';
+    const _mit=d.querySelector('.i-type'); optSel.itype=(_mit&&_mit.value)||'door'; // P1-2: เฟรมมุ้ง min ตาม ประตู/หน้าต่าง
   }
   if(p.mscolor){ const _msc=d.querySelector('.o-mscolor'); optSel.mscolor=_msc?_msc.value:''; }
   if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; }
@@ -2251,12 +2601,35 @@ function readItem(d){
     const _bf=d.querySelector('.o-bocfinish'); optSel.bocFinish=_bf?_bf.value:'0';
   }
   if(p.ceiling){ const _ck=d.querySelector('.o-ckolor'); optSel.ckolor=_ck?_ck.value:''; }
+  // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม (ข้อความ, ไม่บวกราคา)
+  { const _uc=d.querySelector('.o-uchannel'); optSel.uchannel=_uc?_uc.checked:false;
+    const _ew=d.querySelector('.o-extrawork'); optSel.extrawork=(_ew?_ew.value:'').trim();
+    const _ro=d.querySelector('.o-removeold'); optSel.removeold=_ro?_ro.checked:false; }
+  // แผ่นทึบล่าง (ลูกฟูก/คอมโพสิท) — คิดราคาจริง (insulglass/flooring ลบทิ้งแล้ว ใช้ OPTION ทางเลือกลูกค้าแทน)
+  { const _sl=d.querySelector('.o-solidlower'); optSel.solidlower=_sl?_sl.value:'';
+    const _slw=d.querySelector('.o-sl-w'); optSel.solidlowerW=_slw?(parseFloat(_slw.value)||0):0;
+    const _slh=d.querySelector('.o-sl-h'); optSel.solidlowerH=_slh?(parseFloat(_slh.value)||0):0;
+    const _slc=d.querySelector('.o-sl-color'); optSel.solidlowerColor=_slc?(parseFloat(_slc.value)||0):0; }
   let gi=parseInt(d.querySelector('.i-glass').value||0); if(AREA_CATS.includes(p.cat))gi=0;
   let ci=parseInt(d.querySelector('.i-color').value||0); if(AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat))ci=0;
+  // งาน9: อ่านโหมดเหมา
+  const _lsChk=d.querySelector('.o-lumpsum'); const _lsOn=_lsChk&&_lsChk.checked;
+  const _lsPrice=parseFloat((d.querySelector('.o-lumpsumprice')||{}).value)||0;
   const r=calcUnit(p, d.querySelector('.i-w').value, d.querySelector('.i-h').value,
     gi, ci, parseInt(d.querySelector('.i-panels').value||1), optSel, d.querySelector('.i-ship').checked);
   let qty=parseInt(d.querySelector('.i-qty').value||1); if(qty<1)qty=1;
   const _ov=parseFloat((d.querySelector('.i-override')||{}).value)||0; if(_ov>0&&r){ r.sell=_ov; r.overridden=true; }
+  // งาน9: โหมดเหมา override ราคา (ความสำคัญสูงกว่า i-override ปกติ)
+  if(_lsOn&&_lsPrice>0&&r){ r.sell=_lsPrice; r.overridden=true; r.lumpsum=true; }
+  // งาน5: optDelta ±บาท (ต่อรายการ)
+  { const _od=d.querySelector('.o-optdelta'); const _odv=parseFloat((_od&&_od.value)||'0')||0;
+    if(_odv!==0&&r){ r.sell=(r.sell||0)+_odv; r.optDelta=_odv; r.msgs=r.msgs||[]; r.msgs.push('OPTION '+(_odv>=0?'+':'')+Math.round(_odv).toLocaleString('en-US')+' บาท'); } }
+  // F2: OPTION ทางเลือกลูกค้า (cascade) — รวม ±บาท เข้า sell + เก็บข้อความไว้ขึ้นใบ
+  { var _ocTxt=[]; var _ocSum=0;
+    d.querySelectorAll('.oc-row').forEach(function(row){ var t=(row.querySelector('.oc-text')&&row.querySelector('.oc-text').value||'').trim(); var dv=parseFloat(row.querySelector('.oc-delta')&&row.querySelector('.oc-delta').value)||0;
+      if(t||dv){ _ocSum+=dv; _ocTxt.push('OPTION : '+(t||'ทางเลือกลูกค้า')+(dv?(' (ราคา'+(dv>0?'+':'-')+Math.round(Math.abs(dv)).toLocaleString('en-US')+' บาท)'):'')); } });
+    if(r&&_ocSum!==0){ r.sell=(r.sell||0)+_ocSum; }
+    if(r) r.optChoicesNote=_ocTxt.join('\n'); }
   // #2: อ่าน sub-items + คิดราคาบวกเข้า r.sell
   const subItems=readSubItems(d);
   if(subItems.length && r){
@@ -2266,6 +2639,8 @@ function readItem(d){
     r.subItemsTotal=subTotal;
   }
   const _sb=d.closest('.setbox'); const _multi=_sb?(_sb.querySelectorAll('.ch').length>1):false;
+  const _odEl=d.querySelector('.o-optdelta'); const _itemOptDelta=parseFloat((_odEl&&_odEl.value)||'0')||0;
+  const _lsEl=d.querySelector('.o-lumpsum'); const _isLumpsum=!!(_lsEl&&_lsEl.checked);
   return {p, r, qty, gi, ci, finLabel, optSel, subItems,
     w:d.querySelector('.i-w').value, h:d.querySelector('.i-h').value,
     name:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'', ship:d.querySelector('.i-ship').checked,
@@ -2274,8 +2649,9 @@ function readItem(d){
     groupLabel:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'',
     groupOptText:(_sb&&_sb.querySelector('.set-opttext'))?_sb.querySelector('.set-opttext').value.trim():'',
     groupOptDelta:(_sb&&_sb.querySelector('.set-optdelta'))?(parseFloat(_sb.querySelector('.set-optdelta').value)||0):0,
+    itemOptDelta:_itemOptDelta, lumpsum:_isLumpsum,
     position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
-    note:(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'',
+    note:[(r&&r.optChoicesNote)||'', (d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||''].filter(Boolean).join('\n'),
     div:d};
 }
 function svcNum(id){ const e=document.getElementById(id); return e?(parseFloat(e.value)||0):0; }
@@ -2300,7 +2676,7 @@ function jobServices(net, totalArea){
   if(svcChk('svc-ship')){ const km=Math.max(0,svcNum('svc-ship-km')); const trucks=Math.max(1,Math.round(svcNum('svc-ship-trucks'))||1); const bkk=svcChk('svc-bkk'); let v=0; if(km>0&&!(bkk&&net>20000)){ const rate=km<=100?23:(km<=200?18:16); v=Math.round(km*rate*trucks); } lines.push(['ค่าขนส่ง ตจว. × '+trucks+' คัน', v]); }
   // Q14 งานไฟ
   if(svcChk('svc-elec')){
-    if(svcChk('svc-elec-run')) lines.push(['งานไฟ — เดินไฟ 2 ดวง', 3000]);
+    if(svcChk('svc-elec-run')){ const _dl=Math.max(1,Math.round(svcNum('svc-elec-run-qty'))||2); lines.push(['งานไฟ — เดินไฟดาวน์ไลท์ '+_dl+' ดวง', _dl*1500]); }
     const sw=Math.max(0,Math.round(svcNum('svc-elec-sw'))||0); if(sw>0) lines.push(['งานไฟ — สวิตซ์ใหม่ '+sw+' จุด', sw*1000]);
   }
   // Q15 งานรื้อของเดิม
@@ -2335,7 +2711,7 @@ function calcQuote(){
   if(_rawDisc>discPct) warns.push('ส่วนลด '+_rawDisc+'% เกินเพดาน'+(subtotal>=50000?' (สูงสุด 2%)':' (ยอด<50,000 ลดไม่ได้)')+' → ใช้ '+discPct+'%');
   const discAmt=subtotal*discPct/100;
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
-  const net=subtotal-discAmt-discFlat;
+  const net=Math.max(0,subtotal-discAmt-discFlat); // ข้อ13: กันยอดติดลบเมื่อส่วนลดเกินยอด
   document.getElementById('sBefore').textContent=bht(subtotal);
   const dl=document.getElementById('sDiscLine');
   if(discPct>0){ dl.style.display='flex'; document.getElementById('sDiscLabel').textContent='ส่วนลด '+discPct+'%'; document.getElementById('sDisc').textContent='- '+bht(discAmt); }
@@ -2407,7 +2783,7 @@ function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElemen
 function setRowName(id,el){ var t=(el.innerText||'').replace(/^-\s*/,'').trim(); if(t) window._nameOv[id]=t; else delete window._nameOv[id]; genQuote(true); }
 function setRowPrice(id,el){ var v=parseFloat((el.innerText||'').replace(/[^0-9.]/g,'')); var ch=document.querySelector('#items .ch[data-id="'+id+'"]'); if(ch){ var ov=ch.querySelector('.i-override'); if(ov){ ov.value=(isNaN(v)?'':v); ov.dispatchEvent(new Event('input',{bubbles:true})); } calcQuote(); genQuote(true); } }
 function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepNo){
-  const discAmt=subtotal*discPct/100; discFlat=parseFloat(discFlat)||0; const net=subtotal-discAmt-discFlat;
+  const discAmt=subtotal*discPct/100; discFlat=parseFloat(discFlat)||0; const net=Math.max(0,subtotal-discAmt-discFlat); // ข้อ13: กันยอดติดลบ
   const svcAmt=svc?svc.amt:0;
   const svcLines=(svc&&svc.lines?svc.lines.filter(l=>l[1]>0):[]);
   const svcNotes=(svc&&svc.notes&&svc.notes.length?svc.notes:[]);
@@ -2648,7 +3024,7 @@ function genQuote(keepNo){
       // railTxt: รางบน → "รางบน (รุ่นโชว์ราง/ซ่อนราง)" · รางล่าง → txt จาก SLIDING_RAIL
       const _railTxt = _sr.rail==='top'
         ? ('รางบน (รุ่น'+_track+')')
-        : _sr.txt;
+        : (_os.bottomrail==='เตี้ย' ? 'รางล่าง (รุ่นรางเตี้ย 7 มม.)' : (_os.bottomrail==='กันน้ำ' ? 'รางล่าง (รุ่นกันน้ำ)' : _sr.txt));
       // ชนิดการเปิด: ถ้าเป็น "บานเลื่อน" ธรรมดา ไม่ต้องใส่ ชื่ออยู่ใน rawName แล้ว
       const _otSuffix = (_ot !== 'บานเลื่อน') ? _ot : '';
       // นับบาน
@@ -2656,7 +3032,8 @@ function genQuote(keepNo){
       // เสริมคาน (เฉพาะรางบน + ซ่อนราง)
       const _beamRate = parseFloat(_os.beamM)||0;
       const _beamLen = parseFloat(_os.beamMlen)||0;
-      const _beamStr = (_sr.rail==='top' && _track==='ซ่อนราง' && _beamRate>0 && _beamLen>0)
+      // งาน4: เสริมคาน โผล่ทุกแบบราง (ไม่ผูกกับ _track=ซ่อนราง)
+      const _beamStr = (_sr.rail==='top' && _beamRate>0 && _beamLen>0)
         ? (' (เสริมคานซัพพอร์ทรุ่น' + (_beamRate===2400?'1':_beamRate===3600?'2':'3') + ' ยาว '+_beamLen+' ม.)')
         : '';
       // มุ้ง — ดึงจาก addonLines (ที่บันทึก mosqArea ไว้)
@@ -2680,13 +3057,16 @@ function genQuote(keepNo){
       _slideName += seriesTag + discontinuedSuffix;
       prodName = _slideName;
     }
-    // C1: มีมุ้งจีบ (addon) → ต่อท้ายชื่อ "พร้อมมุ้งจีบ" (สั้น ไม่ใส่รุ่น/ผ้า — รายละเอียดอยู่ใน "รายละเอียดงาน")
+    // C1/P2-1: มีมุ้ง (addon) → ต่อท้ายชื่อชนิดมุ้งจริงตาม mosqId (id-based ไม่ใช่ keyword)
     // บานเลื่อน: มุ้งถูก include ใน _slideName แล้ว ไม่ต้องต่ออีก
-    if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){ prodName += ' พร้อมมุ้งจีบ'; }
+    if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){
+      var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย',imp21:'พร้อมมุ้งเฟรมเล็ก',imp22:'พร้อมมุ้งเฟรมเล็ก',imp23:'พร้อมมุ้งเฟรมใหญ่'};
+      prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ');
+    }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
       const _dnh=parseInt(it.optSel.gmNh)||0, _dnv=parseInt(it.optSel.gmNv)||0;
-      if(_dnh>0 || _dnv>0){ prodName += ' (คาดตาราง '+_dnh+'นอน+'+_dnv+'ตั้ง)'; }
+      if(_dnh>0 || _dnv>0){ prodName += ' (คาดตาราง แนวนอน '+_dnh+' เส้น แนวตั้ง '+_dnv+' เส้น)'; }
       else { prodName += ' (มีคาดตาราง)'; }
     }
     // ข้อ18: ย้ายคำบรรยาย "(รวม ...)" จากชื่อ → บรรทัดใต้หัวข้อ (ตัดส่วน "เทมเปอร์..." ออก ไม่เขียนต่อ)
@@ -2711,11 +3091,42 @@ function genQuote(keepNo){
       const sx = parseFloat(it.optSel.screen_extra)||0;
       if(sx > 0) _parts.push('+ค่าเสริมกล่อง/ราง '+fmt(sx)+' บาท');
     }
+    // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
+    // ข้อ4C: มือจับ X-series ฟรี — โชว์ชื่อรุ่น (ไม่บวกเงิน)
+    if(it.optSel && it.optSel.xhandle){ _parts.push('มือจับ '+it.optSel.xhandle); }
+    // P3-3: มือจับรุ่นอื่น (กรอกเอง) — โชว์ชื่อรุ่นในรายละเอียดงาน
+    if(it.optSel && (parseFloat(it.optSel.handleprice)||0)>0){ _parts.push('มือจับ '+((it.optSel.handlename||'').trim()||'รุ่นอื่น')); }
+    // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง)
+    if(it.optSel && it.optSel.cmechawn){ _parts.push('มือจับ Cmech หลบมุ้ง '+(it.optSel.cmechawn==='normal'?'ดำ/ขาว':(CMECH_SPECIAL[it.optSel.cmechawn]||'ชุบ'))); }
+    // ข้อ5: ครอบวงกบอลู 3/4 ด้าน
+    if(it.optSel && (it.optSel.fcsides==='3'||it.optSel.fcsides==='4')){ _parts.push('ครอบวงกบอลู '+it.optSel.fcsides+' ด้าน'); }
+    if(it.optSel && it.optSel.uchannel){ _parts.push('ฝังรางยู'); }
+    if(it.optSel && it.optSel.extrawork){ _parts.push(it.optSel.extrawork); }
+    if(it.optSel && it.optSel.removeold){ _parts.push('รวมรื้อของเดิม'); }
+    // ข้อ6: แผ่นทึบล่าง มีราคาจริง (พื้นที่×เรต) — โชว์เมื่อกรอกขนาด (area>0)
+    // (กระจกอินซูเลท + งานพื้น ลบทิ้งแล้ว — ใช้ OPTION ทางเลือกลูกค้าแทน)
+    if(it.optSel && it.optSel.solidlower){
+      var _slMap={corrugated:'แผ่นลูกฟูกล่าง (อลู)',composite:'แผ่นคอมโพสิทล่าง'};
+      var _slTxt=_slMap[it.optSel.solidlower];
+      var _slW=it.optSel.solidlowerW||0, _slH=it.optSel.solidlowerH||0;
+      if(_slTxt && _slW>0 && _slH>0) _parts.push(_slTxt+' ('+_slW+'×'+_slH+' ม.)');
+    }
     /* R4.1: ไม่ดึง addonLabel/msgs (เป็นรายละเอียดการคิดราคา มีตัวเลขราคา) เข้าใบเสนอราคา
        ใบจริงโชว์เฉพาะวัสดุ (กระจก/สีอลู) ใต้ "รายละเอียดงาน" ไม่โชว์ราคาย่อย */
-    if(it.optSel && (it.optSel.extraDesc||'').trim()) _parts.push((it.optSel.extraDesc||'').trim());
+    // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
     let det = '';
     if(it.p.fin){ det = (it.finLabel||'ไม่อบสี'); }
+    else if(it.p.cat==='ฝ้า-ผนัง'){
+      // สเปก rev2: ฝ้า/ผนัง ออกรายละเอียดวัสดุ (เดิม render แต่หัวข้อ) — สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ + ฉนวน + โครง
+      var _os=it.optSel||{}; var _wl=[];
+      var _frame = _os.wallframe==='เหล็กชุบ' ? 'โครงเหล็กชุบซิงค์ (ไร้สนิม)' : 'โครงอลูมิเนียม';
+      if(it.p.id==='isowall'){ _wl.push('แผ่น ISOWALL หนา '+(_os.isothick||'10')+' ซม.'+(_os.isocolor?(' สี'+_os.isocolor):'')); _wl.push(_frame); }
+      else if(it.p.id==='ceiling_smooth'){ _wl.push('ฝ้าฉาบเรียบ'+(_os.ceilfinish?(' พร้อม'+_os.ceilfinish):'')); if(_os.ceilslope) _wl.push('ฝ้าเฉียงตามแนวหลังคา'); }
+      else if(it.p.ceiling){ _wl.push(it.p.name.replace(/\s*\([^)]*\)/g,'').trim()+(_os.ckolor?(' สี'+_os.ckolor):'')); }
+      else { _wl.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _wl.push(_frame); }
+      if(_os.insul) _wl.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');
+      det = _wl.join('\n') || '-';
+    }
     else if(AREA_CATS.indexOf(it.p.cat)>=0 && it.p.cat!=='หลังคา'){ det = '-'; }  // ข้อ40: หลังคาไม่ใช้ '-' — ไปเข้า branch หลังคา (โครงอลู)
     else if(it.p.zipscreen){
       // ม่านซิป — ไม่มีกระจก ไม่มีอลู มีแค่สีผ้า
@@ -2768,15 +3179,15 @@ function genQuote(keepNo){
       const _rcName = _rc ? (' '+(_rc.quoteName||_rc.n).replace(/[★⚠]/g,'').trim()) : '';
       const _os = it.optSel || {};
       const _rfframe = _os.rfframe || 'โครงอลูมิเนียม';
-      const _rfbatten = _os.rfbatten || 'แปเดี่ยว';
+      const _rfbatten = _os.rfbatten || 'แปคู่'; // F5: ชุดหลังคา fallback แปคู่ (ตรงกับ default standalone)
       const _rfend = _os.rfend || 'ปล่อย';
       const _rfgutsys = _os.rfgutsys || 'ท่อ';
       // ชื่อโครง (อลู=เดิม / เหล็กชุบ=เปลี่ยน)
       const _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? 'โครงเหล็กชุบซิงค์' : ('โครงอลูมิเนียม'+_rcName);
       // แปคู่ต่อท้าย
       const _battenSuffix = _rfbatten === 'แปคู่' ? ' (แปคู่)' : '';
-      // รางน้ำ line (ปล่อย=ไม่เขียน / ปิดปลาย=ปิดปลาย / รางน้ำ=ระบุระบบ)
-      let _gutterLine = 'รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้';
+      // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / ปิดปลาย=ปิดปลาย / รางน้ำ=ระบุระบบ)
+      let _gutterLine = '';
       if(_rfend === 'ปิดปลาย'){
         _gutterLine = 'รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้ + ปิดปลายหลังคา';
       } else if(_rfend === 'รางน้ำ'){
@@ -2789,10 +3200,16 @@ function genQuote(keepNo){
           _gutterLine = 'รางน้ำ (ท่อ สี'+_col+')';
         }
       }
-      // Pass2-D: สีวัสดุมุง (ถ้าเลือก)
+      // F6: หัวรายละเอียด = ชนิดหลังคา + สีวัสดุมุง (เช่น "หลังคาไวนิล สีขาว") — ใบจริงระบุชนิดในรายละเอียดงานด้วย
       const _rfColor = _os.rfcolor || '';
-      const _colorSuffix = _rfColor ? ('\nสีวัสดุมุง: '+_rfColor) : '';
-      det = _frameTxt+_battenSuffix+'\n'+_gutterLine+_colorSuffix;
+      const _roofType = (it.p.name||'หลังคา').replace(/^หลังคา\s*/,'');
+      const _roofHead = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'');
+      // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
+      let _rfExtra = '';
+      if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
+      if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
+      // F3: ถ้า _gutterLine ว่าง (ปล่อย) ไม่ใส่บรรทัดเปล่า
+      det = _roofHead+'\n'+_frameTxt+_battenSuffix+(_gutterLine?('\n'+_gutterLine):'')+_rfExtra;
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ
@@ -2840,9 +3257,10 @@ function genQuote(keepNo){
         } else if(_stSl !== '' && _stSl !== undefined && _stSl !== null){
           const _stObj = HANDLE_STAINLESS[parseInt(_stSl)];
           if(_stObj) _slLines.push('มือจับสแตนเลสอร่าม '+_stObj.n);
-        } else if(_cmSl !== '' && _cmSl !== undefined){
-          const _cmObj = CMECH_COLORS[parseInt(_cmSl)];
-          if(_cmObj) _slLines.push('มือจับ Cmech '+_cmObj.n);
+        } else if(_cmSl==='embed' || _cmSl==='metro'){
+          const _cmc=it.optSel.cmechcolor;
+          const _cmNm=(_cmc && _cmc!=='normal')?(CMECH_SPECIAL[_cmc]||'ชุบ'):'ดำ/ขาว';
+          _slLines.push('มือจับ Cmech '+(_cmSl==='embed'?'ฝัง':'เมโทร')+' '+_cmNm);
         }
       }
       det = _slLines.join('\n');
@@ -2924,10 +3342,17 @@ function genQuote(keepNo){
     const isSplit = window.qSplit || !!window.qSplitGroups[gn];
     const items = groups[gn];
     let gTotal=0;
-    const _gl=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':(items[0]?itemDetail(items[0]).prodName:'ชุด'));
+    // หัวข้อชุด: ใช้ชื่อชุดที่ตั้ง > "กั้นห้องกระจก"(ถ้ามีตำแหน่ง) > หัวข้อสั้นตาม cat (เลิกใช้ชื่อสินค้าเต็ม กันซ้ำกับบรรทัดล่าง · พี่นัท)
+    function _shortGl(it){ if(!it)return 'ชุด'; var p=it.p, ty=(it.itype==='window')?'หน้าต่าง':'ประตู';
+      if(p.cat==='ติดตาย') return 'บานกระจกติดตาย';
+      if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','บานเฟี้ยม','บานกระทุ้ง','PC Door','บานยก','บานหมุน','ดัดโค้ง','บานเปลือย'].includes(p.cat)) return ty+p.cat;
+      return p.name||p.cat||'ชุด'; }
+    const _gl=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':_shortGl(items[0]));
     items.forEach(it => { gTotal += it.r.sell*it.qty; });
+    // ข้อ5: OPTION ระดับชุด (set-optdelta) — บวกเข้ายอดจริง ครั้งเดียว/ชุด (เดิมโชว์ "+N บาท" แต่ไม่บวก = ขายขาดทุน)
+    const _gOptDelta=(items[0]&&items[0].groupOptDelta)||0; gTotal += _gOptDelta;
     const isGH = /กั้น|กั้นห้องกระจก|GH/i.test(_gl);
-    if(isGH){ gTotal += 5000; }
+    // ยกเลิกค่าทำชุดกั้นห้องกระจก 5,000 — พี่นัทยกเลิก (2026-06-08)
     // รวบรวมบรรทัดรายละเอียด (det) ของทุกบาน แล้วตัดซ้ำ (dedupe) คงลำดับเดิม
     // — บรรทัด OPTION / หมายเหตุ ห้าม dedupe/ห้ามรวม ให้คงไว้ตามเดิม
     const matLines=[]; const matSeen=new Set(); const specialLines=[];
@@ -2936,14 +3361,17 @@ function genQuote(keepNo){
         if(t.startsWith('OPTION')||t.startsWith('หมายเหตุ')){ specialLines.push(t); }
         else if(!matSeen.has(t)){ matSeen.add(t); matLines.push(t); }
       });
-    }});
+    }
+      // F2: OPTION ทางเลือกลูกค้า ต่อด้าน (อยู่ใน it.note) — ดันเข้า specialLines ของชุดด้วย
+      if(it.note){ it.note.split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(ln.startsWith('OPTION')||ln.startsWith('หมายเหตุ')) specialLines.push(ln); }); }
+    });
     let content = '<div style="font-weight:700;color:#1F2937;">'+_gl+'<button type="button" class="qtoggle-set" onclick="toggleGroupSplit('+gIdx+')" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #B3151D;color:#B3151D;background:#fff;border-radius:6px;cursor:pointer;">'+(isSplit?'รวมราคา':'แยกราคา')+'</button></div>';
     if(isSplit){
       items.forEach(it => { const d=itemDetail(it); const pos=it.position?(' ('+it.position+')'):''; const ov=it.r.overridden?' ✎':'';
         const _w=parseFloat(it.w)||0,_h=parseFloat(it.h)||0; const _sz=(_w>0&&_h>0)?(' ('+it.w+' × '+it.h+' ม.)'):'';  // R4.3: โชว์ขนาดเมื่อแยกราคา
         content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+d.prodName+pos+_sz+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
         (it.r.addonLines||[]).forEach(function(a){ content += '<div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>· '+a.n+'</span><span>'+fmt(a.p)+'</span></div>'; }); });
-      if(isGH) content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>↳ ค่าทำชุด กั้นห้องกระจก</span><span>5,000</span></div>';
+      // ลบบรรทัดค่าทำชุดกั้นห้อง 5,000 — พี่นัทยกเลิกแล้ว
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
         matLines.forEach(t => { content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">- '+t+'</div>'; }); }
     } else {
@@ -2968,7 +3396,7 @@ function genQuote(keepNo){
       }
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
         matLines.forEach(t => { content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">- '+t+'</div>'; }); }
-      if(isGH) content += '<div style="margin:6px 0 0 8px;color:#666;font-size:12px;">+ ค่าทำชุด กั้นห้องกระจก 5,000 (วาดแบบ+ติดตั้ง)</div>';
+      // ลบบรรทัดค่าทำชุดกั้นห้อง 5,000 — พี่นัทยกเลิกแล้ว
     }
     // OPTION / หมายเหตุ เฉพาะของแต่ละบาน (คงไว้ตามเดิม ไม่ dedupe)
     specialLines.forEach(t => { content += '<div style="margin-top:4px;margin-left:8px;color:'+(t.startsWith('OPTION')?'#B3151D':'#6B7280')+';font-size:13px;">'+t+'</div>'; });
@@ -2977,7 +3405,10 @@ function genQuote(keepNo){
     // ⚠ ยังบวก gTotal เข้า subtotal เหมือนเดิม — แก้เฉพาะการแสดงผลในเซลล์ยอดรวม
     // โชว์ยอดรวมชุดเสมอ (ทั้งรวมราคา/แยกราคา) — แยกราคาก็ยังเห็นยอดรวมขวาสุด
     const gTotalCell = q2(gTotal);
-    rows += '<tr><td style="vertical-align:top;text-align:center;">'+rowIdx+'</td><td style="vertical-align:top;text-align:left;padding:8px;">'+content+'</td><td class="r" style="vertical-align:top;">1 ชุด</td><td class="r" style="vertical-align:top;">—</td><td class="r" style="vertical-align:top;">'+gTotalCell+'</td></tr>';
+    // F4: ราคาต่อหน่วยของชุด = ยอดรวมชุด ÷ จำนวนชุด (ชุดละ 1 → ต่อหน่วย = ยอดรวม) · เลิกขีด "—"
+    const _setQty = 1;
+    const _unitCell = q2(gTotal/_setQty);
+    rows += '<tr><td style="vertical-align:top;text-align:center;">'+rowIdx+'</td><td style="vertical-align:top;text-align:left;padding:8px;">'+content+'</td><td class="r" style="vertical-align:top;">'+_setQty+' ชุด</td><td class="r" style="vertical-align:top;">'+_unitCell+'</td><td class="r" style="vertical-align:top;">'+gTotalCell+'</td></tr>';
   });
   // Render ungrouped
   ungrouped.forEach(it => {
@@ -2988,10 +3419,13 @@ function genQuote(keepNo){
     const _w=parseFloat(it.w)||0, _h=parseFloat(it.h)||0;
     const _isLength = it.p.method==='per_length_tier' || it.p.unit==='meter';
     const _isGH = it.p.id==='glasshouse' || it.p.cat==='กั้นห้องกระจก';
+    // งาน9: โหมดเหมา — ไม่แสดงขนาด
     let _sz='';
-    if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
+    if(it.lumpsum) _sz='(เหมา)';
+    else if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
     else if(!_isGH && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
-    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.groupOptText, it.groupOptDelta, it.note, (it.div?it.div.dataset.id:''));
+    // งาน5: item-level optDelta ส่งเป็น optDelta ใน qrow · note ส่งเป็น optText (ข้อความ)
+    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, it.note, it.itemOptDelta||0, '', (it.div?it.div.dataset.id:''));
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
@@ -3082,16 +3516,19 @@ function exportQuoteExcel(){
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
-  const discAmt=subtotal*discPct/100, net=subtotal-discAmt-discFlat;
+  const discAmt=subtotal*discPct/100, net=Math.max(0,subtotal-discAmt-discFlat); // ข้อ13: กันยอดติดลบ
   const totalArea=list.reduce((x,it)=>x+it.r.a*it.qty,0);
   const svc=jobServices(net, totalArea);
-  const vat=Math.round((net+svc.amt)*0.07), total=net+svc.amt+vat;
+  // ข้อ4: อ่าน VAT % จาก #vat-pct (เดิม hardcode 0.07 → เลือก 0% แต่ Excel ยังคิด 7%)
+  const _vpEl=document.getElementById('vat-pct'); const vatPct=_vpEl?(parseFloat(_vpEl.value)||0):7;
+  const vat=Math.round((net+svc.amt)*vatPct/100), total=net+svc.amt+vat;
   data.push([]);
   data.push(['','','','','','','ราคารวม', subtotal]);
   if(discPct>0) data.push(['','','','','','','ส่วนลดพิเศษ '+discPct+'%', -discAmt]);
   if(discFlat>0) data.push(['','','','','','','ส่วนลดค่าประเมินหน้างาน', -discFlat]);
   data.push(['','','','','','','สุทธิ', net]);
   if(svc.lines) svc.lines.forEach(l=>{ if(l[1]>0) data.push(['','','','','','',l[0], l[1]]); });
+  if(vat>0) data.push(['','','','','','','VAT '+vatPct+'%', vat]);
   data.push(['','','','','','','รวมทั้งสิ้น', total]);
   const ws=XLSX.utils.aoa_to_sheet(data);
   ws['!cols']=[{wch:5},{wch:18},{wch:32},{wch:14},{wch:40},{wch:8},{wch:12},{wch:12}];

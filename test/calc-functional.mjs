@@ -89,7 +89,9 @@ want("สร้างได้ 3 บานในชุดเดียว", items
 
 const OVERRIDES = [21000, 18000, 28000];
 const EXPECT_SUBTOTAL = OVERRIDES.reduce((a, b) => a + b, 0); // 67000
-const GLASS_NAME = "กระจกเขียว 6 มม."; // GLASS[0] = default
+// GLASS[0] = "กระจกเขียว 6 มม." แต่ใบเสนอราคา render เติมคำ "หนา" (ฟีเจอร์ v5, index.html ~บรรทัด 3277)
+// → ใบจริงโชว์ "กระจกเขียว หนา 6 มม." · เทสนี้พิสูจน์ dedup (3 บานเหมือนกัน → โชว์ครั้งเดียว)
+const GLASS_NAME = "กระจกเขียว หนา 6 มม.";
 
 items.forEach((ch, i) => {
   setField(ch, ".i-group", "1");      // บานกระจก
@@ -154,8 +156,8 @@ OVERRIDES.forEach((v) => {
 });
 want("T3.1 โชว์ราคารายบาน 21,000 / 18,000 / 28,000", perItemOk, missing.length ? ("ขาด " + missing.join(",")) : "");
 
-// เซลล์ยอดรวมของแถวชุด = '—' (ซ่อน) — ตรวจว่ามี em-dash ในตาราง
-want("T3.2 เซลล์ยอดรวมชุด = '—' (ซ่อน)", text3.includes("—"));
+// F4: เซลล์ราคา/หน่วยของชุด = เลขจริง (ยอดรวม ÷ จำนวนชุด) แล้ว — เลิกขีด '—' (พี่นัทสั่ง)
+want("T3.2 เซลล์ราคา/หน่วยของชุด = เลข (F4)", text3.includes("67,000"));
 
 // ยอดท้ายใบไม่เปลี่ยน
 const subtotalAfter = readSubtotal();

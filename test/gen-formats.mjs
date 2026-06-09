@@ -116,7 +116,8 @@ function clearItems() {
   doc.getElementById("items").innerHTML = "";
   w.qSplit = false; w.qSplitGroups = {};
 }
-function num(s) { const m = String(s || "").replace(/[^\d]/g, ""); return m ? parseInt(m, 10) : NaN; }
+// strip decimal (.00, .50 ฯลฯ) ก่อน แล้วค่อย strip non-digits → ป้องกัน "242,000.00" → 24200000
+function num(s) { const m = String(s || "").replace(/\.\d+/g, "").replace(/[^\d]/g, ""); return m ? parseInt(m, 10) : NaN; }
 function readSubtotal() { const l = doc.querySelector("#quoteContent .qtot .l"); return l ? num(l.textContent) : NaN; }
 function readGrand() { const g = doc.querySelector("#quoteContent .qtot .g"); return g ? num(g.textContent) : NaN; }
 function readVatAmt() {
@@ -350,37 +351,58 @@ const formats = [
     },
   },
   {
-    id: "format-9", title: "กั้นห้องกระจก (glasshouse) — ราคารวมเหมา",
+    id: "format-9", title: "ชุดกั้นห้องกระจก (ระบบชุด R5.0) — บานเลื่อน + ติดตาย + หลังคาไวนิล",
     cust: "คุณศิริพร / ต่อเติมหลังบ้าน",
-    fill: "กั้นห้องกระจกพร้อมหลังคา · 4 ด้าน + หลังคา · ราคารวม 506,000 + OPTION เทมเปอร์ +5,000",
+    fill: "กั้นห้องกระจกพร้อมหลังคา · 3 ด้าน + หลังคาไวนิล · คิดราคา auto ตามสูตรจริง (ไม่มีค่าทำชุดแล้ว 2026-06-08)",
     build() {
-      const ch = addItem(doc.getElementById("items"));
-      setItem(ch, { group: 6, prod: "glasshouse", qty: 1, opts: {
-        ".o-ghroom": "ห้องอเนกประสงค์ + ซักล้าง",
-        ".o-ghglass": "กระจกเขียว/ใส หนา 6 มม.",
-        ".o-ghside-A": "ประตูบานเลื่อนสลับ 4 บาน + ติดตายข้าง",
-        ".o-ghside-B": "กระจกติดตายเต็มผนัง",
-        ".o-ghside-C": "ประตูบานเปิดคู่ + ติดตายข้าง (ชุดล็อคพร้อมกุญแจ)",
-        ".o-ghside-D": "บานกระทุ้ง 3 ช่อง + ติดตายบน",
-        ".o-ghroof": "หลังคาไวนิล (แปคู่) + รางน้ำอลู + ตะแกรงกันใบไม้",
-        ".o-ghprice": "506000",
-        ".o-ghoption": ["4"], // index 4 = เปลี่ยนกระจกเป็นเทมเปอร์เขียว/ใส 6 มม. (+5,000)
-      }});
+      // ระบบชุดใหม่: addGlasshouseSet + เพิ่มด้าน B + หลังคา
+      const sb = w.addGlasshouseSet();
+      const sn = sb.querySelector(".set-name");
+      if (sn) { sn.value = "กั้นห้องกระจก (ห้องอเนกประสงค์)"; fire(sn, "input"); fire(sn, "change"); }
+      const parts = sb.querySelector(".set-parts");
+      // ด้าน A: sliding_euro 3.6×2.4
+      let chs = parts.querySelectorAll(".ch");
+      const ch0 = chs[0];
+      const ps0 = ch0.querySelector(".i-prod");
+      if (ps0 && !ps0.querySelector('option[value="sliding_euro"]')) ps0.innerHTML = w.prodOptionsG6("6");
+      if (ps0) { ps0.value = "sliding_euro"; fire(ps0, "change"); }
+      setField(ch0, ".i-w", 3.6); setField(ch0, ".i-h", 2.4);
+      const pA = ch0.querySelector(".i-position");
+      if (pA) { pA.value = "ด้าน A"; fire(pA, "input"); fire(pA, "change"); }
+      // ด้าน B: fixed_glass 2.4×2.4
+      const addBtn = sb.querySelector(".set-addpart");
+      if (addBtn) fire(addBtn, "click");
+      chs = parts.querySelectorAll(".ch");
+      const ch1 = chs[chs.length - 1];
+      const ps1 = ch1.querySelector(".i-prod");
+      if (ps1 && !ps1.querySelector('option[value="fixed_glass"]')) ps1.innerHTML = w.prodOptionsG6("6");
+      if (ps1) { ps1.value = "fixed_glass"; fire(ps1, "change"); }
+      setField(ch1, ".i-w", 2.4); setField(ch1, ".i-h", 2.4);
+      const pB = ch1.querySelector(".i-position");
+      if (pB) { pB.value = "ด้าน B"; fire(pB, "input"); fire(pB, "change"); }
+      // หลังคาไวนิล 9×3.5
+      const roofBtn = sb.querySelector(".set-addroof");
+      if (roofBtn) fire(roofBtn, "click");
+      chs = parts.querySelectorAll(".ch");
+      const roofCh = chs[chs.length - 1];
+      const psr = roofCh.querySelector(".i-prod");
+      if (psr) { psr.value = "roof_vinyl"; fire(psr, "change"); }
+      setField(roofCh, ".i-w", 9.0); setField(roofCh, ".i-h", 3.5);
     },
     explain(items) {
-      const it = items[0];
-      const ghPrice = parseFloat(it.optSel?.ghprice) || 506000;
+      // items[] จาก readItem ของ ch ทุกตัวในชุด
+      const partPrices = items.filter(it => it && it.r && it.r.sell > 0).map(it => it.r.sell);
+      const sumParts = partPrices.reduce((a, b) => a + b, 0);
+      // ไม่มีค่าทำชุด 5,000 แล้ว (ยกเลิก 2026-06-08)
       return {
-        product: "กั้นห้องกระจก พร้อมหลังคา (glasshouse)",
-        fillNote: "พื้นที่: ห้องอเนกประสงค์+ซักล้าง · ด้าน A-D (4 ด้าน) + หลังคาไวนิล · กระจกเขียว/ใส 6 มม. · ราคารวมเหมา 506,000 · OPTION เปลี่ยนเป็นเทมเปอร์เขียว/ใส 6 มม. (+5,000)",
-        formula: `สูตร glasshouse: ราคารวมที่ตีเหมา + ผลรวม OPTION delta (ไม่บวก overhead รายตัว)`,
-        steps: [
-          `ราคารวมเหมาทั้งชุด (กรอกตามถอดแบบจริง) = ${fmt(ghPrice)}`,
-          `OPTION: เปลี่ยนกระจกเป็นเทมเปอร์เขียว/ใส 6 มม. = +5,000`,
-          `ราคา/ชุด = ${fmt(ghPrice)} + 5,000 = ${fmt(it.r.sell)}`,
-        ],
-        engineMsgs: it.r.msgs,
-        unit: it.r.sell, qty: it.qty,
+        product: "ชุดกั้นห้องกระจก (ระบบชุด R5.0)",
+        fillNote: "3 ด้าน (บานเลื่อน 3.6×2.4 + ติดตาย 2.4×2.4 + หลังคาไวนิล 9.0×3.5)",
+        formula: `สูตรชุดกั้นห้องกระจก: ผลรวมราคาทุกด้าน (คิดตามสูตรจริงแต่ละ product)`,
+        steps: partPrices.map((p, i) => `ส่วนที่ ${i+1}: ${fmt(p)}`).concat([
+          `ผลรวม ${fmt(sumParts)}`,
+        ]),
+        engineMsgs: items[0] ? (items[0].r.msgs || []) : [],
+        unit: sumParts, qty: 1,
       };
     },
   },

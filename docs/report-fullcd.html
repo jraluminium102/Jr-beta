@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายงาน FullC/FullD — เทียบใบจริง + จัด UX</title>
+<style>
+:root{--red:#B3151D;--red2:#8f1018;--ink:#1f2937;--mut:#6b7280;--bg:#f4f5f7;--line:#e5e7eb;--green:#16a34a;--amber:#b45309}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+header{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-radius:16px;padding:26px;box-shadow:0 8px 24px rgba(179,21,29,.25)}
+header h1{margin:0 0 6px;font-size:22px}header .sub{opacity:.92;font-size:14px}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:12px;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.stat .n{font-size:22px;font-weight:800;color:var(--red)}.stat .l{font-size:12px;color:var(--mut)}
+h2{font-size:18px;margin:28px 0 12px;padding-left:12px;border-left:5px solid var(--red)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid var(--line);font-size:13px}
+th{background:var(--red);color:#fff;text-align:left;padding:9px 10px;font-weight:600}
+td{padding:7px 10px;border-top:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.full{color:var(--green);font-weight:700}.part{color:var(--amber);font-weight:700}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:15px}
+.g1{border-left:4px solid var(--green)}.g2{border-left:4px solid var(--amber)}.g3{border-left:4px solid var(--red)}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700;margin-right:6px}
+.t-data{background:#eff6ff;color:#1d4ed8}.t-ux{background:#fef3c7;color:#92400e}.t-big{background:#fee2e2;color:#991b1b}
+.link{display:block;background:#fff;border:2px dashed var(--red);border-radius:12px;padding:12px;margin-top:8px;word-break:break-all;font-family:Consolas,monospace;font-size:13px;color:var(--red);font-weight:600}
+.note{font-size:12px;color:var(--mut);margin-top:6px}code{font-family:Consolas,monospace;background:#f3f4f6;border-radius:5px;padding:1px 6px;font-size:12px;color:var(--red)}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:26px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><div class="wrap">
+
+<header>
+<h1>📋 รายงาน FullC / FullD — เทียบใบจริง + จัด UX option</h1>
+<div class="sub">ทดสอบ 40 รายการ (ผสมซับซ้อน 20 + เลียนใบจริง 20) · cross-check กับใบเสนอราคาจริง 6 ใบ</div>
+<span class="badge">branch feat/quote-phase5-ux · ยังไม่ merge main</span>
+</header>
+
+<div class="stats">
+<div class="stat"><div class="n">10/20</div><div class="l">FullD ทำได้ครบ</div></div>
+<div class="stat"><div class="n">10/20</div><div class="l">ทำได้บางส่วน</div></div>
+<div class="stat"><div class="n">0</div><div class="l">ทำไม่ได้เลย</div></div>
+<div class="stat"><div class="n">5</div><div class="l">กลุ่ม option (UX ใหม่)</div></div>
+</div>
+
+<h2>✅ งาน UX — จัด option เป็น dropdown แยกประเภท</h2>
+<div class="card g1">
+กล่อง "อุปกรณ์เสริม/ออปชั่น" เดิมเป็นลิสต์แบนยาว (รก) → จัดเป็น <b>5 กลุ่ม collapsible</b> ทุกรายการ:
+<b>ชนิด/การเปิด</b> (เปิด default) · มือจับ/ล็อค · มุ้ง · คาดตาราง · อื่นๆ (พับ)<br>
+<span class="note">+ ตัดปุ่มชุดซ้ำ (บน/ล่าง→เดียว) + แก้บั๊กปุ่มหลัก curly quotes (คลิกไม่ได้)→แก้แล้ว · invariant ผ่านครบ</span>
+</div>
+
+<h2>🧪 FullC — 20 รายการผสมออปชันซับซ้อน</h2>
+<div class="card g1">ทดสอบใส่ออปชันหลายตัวพร้อมกันต่อรายการ (คาดตาราง+มุ้ง+ธรณี+ล็อค+มือจับ / หลังคากันสาด chain เต็ม / ประตูรั้ว / กั้นห้อง) → <b>ออกใบได้ ไม่มี NaN</b> · ออปชันผสมไม่ขัดกัน · <code>scripts/gen-quotes-c.mjs</code></div>
+
+<h2>📊 FullD — เทียบใบจริง 20 รายการ (cross-check)</h2>
+<table><thead><tr><th>#</th><th>รายการ (เลียนใบจริง)</th><th>ระบบทำได้?</th><th>ขาดอะไร / ต้องแก้</th></tr></thead><tbody>
+<tr><td>1</td><td>ประตูบานเปิดคู่ลูกฟูก+ติดตาย ธรณีกันน้ำ</td><td class="part">บางส่วน</td><td>โซลิด/ลูกฟูกต้อง override ราคาเอง</td></tr>
+<tr><td>2</td><td>บานเลื่อนรางบนโชว์ราง+เสริมคาน+ติดตาย</td><td class="full">ครบ</td><td>(เสริมคานต้องเลือกซ่อนราง field ถึงโผล่)</td></tr>
+<tr><td>3</td><td>บานเลื่อนไร้ราง กระจกเงา 2 ด้าน</td><td class="part">บางส่วน</td><td>กระจกเงา 2 ด้าน ไม่มีในแคตตาล็อก</td></tr>
+<tr><td>4</td><td>บานเลื่อนลากจูง 2 บาน</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>5</td><td>บานเลื่อน SlimLux สลิง+softclose</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>6</td><td>หน้าต่างเลื่อนสลับ ลูกฟูก</td><td class="part">บางส่วน</td><td>บานเลื่อนไม่มี "ลูกฟูก" (มีแค่บานเปิด)</td></tr>
+<tr><td>7</td><td>ประตูบานเปิดแบ่ง 4 บาน</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>8</td><td>หน้าต่างยูโร+อินซูเลท+มุ้ง+OPTION</td><td class="part">บางส่วน</td><td>ฉนวน/อินซูเลทมีแค่หลังคา · OPTION ไม่คิดราคาให้</td></tr>
+<tr><td>9</td><td>บานกระทุ้งยูโร+มุ้ง+ติดตาย</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>10</td><td>บานเลื่อนรางล่าง+มุ้ง</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>11</td><td>ประตู+หน้าต่างบานเปิด กระจกอินซูเลท</td><td class="part">บางส่วน</td><td>กระจกอินซูเลท (5+9A+5) ไม่มีในแคตตาล็อก</td></tr>
+<tr><td>12</td><td>บานเฟี้ยม 3+3 ชุบสีทอง+ฝังรางยู</td><td class="part">บางส่วน</td><td>สีชุบทอง ไม่มีในสี · ฝังรางยู ไม่มี option</td></tr>
+<tr><td>13</td><td>กั้นห้องหลายด้าน A-E+ระแนงบังตา+หลังคา</td><td class="part">บางส่วน</td><td>ระแนง(g2) รวมในชุดกั้นห้องไม่ได้ (รับแค่บาน+หลังคา)</td></tr>
+<tr><td>14</td><td>หลังคากันสาดโพลีตัน+โซ่รางน้ำ+OPTION ยื่น</td><td class="part">บางส่วน</td><td>OPTION ยื่น/ต่อเติม ไม่มี option</td></tr>
+<tr><td>15</td><td>หลังคา+รั้วระแนง+คอมโพสิทซ่อนสโลป</td><td class="full">ครบ</td><td>(กรอก 3 รายการแยก)</td></tr>
+<tr><td>16</td><td>ราวกันตกกระจก+หลังคากระจกลามิเนต</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>17</td><td>Shower เทมเปอร์10+ราวสแตนเลส</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>18</td><td>กลาสเฮ้าส์หลายด้าน+หลังคากระจก</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>19</td><td>Skylight ลามิเนต</td><td class="full">ครบ</td><td>—</td></tr>
+<tr><td>20</td><td>กั้นห้อง ISOWALL+เมทัลชีท ด้าน A-M</td><td class="part">บางส่วน</td><td>ไม่มีชุด multi-side สำหรับผนัง/โรงงาน (กรอกทีละรายการ)</td></tr>
+</tbody></table>
+<div class="note">ทุกรายการออกใบได้ ไม่มี NaN · <code>scripts/gen-quotes-d.mjs</code> → quote-FULL-D.html · FullA/B ไม่พัง</div>
+
+<h2>🔧 จุดที่ทำไม่เหมือนใบจริง + แนวแก้ (จัดกลุ่มตามความเสี่ยง)</h2>
+
+<div class="card g2">
+<h3><span class="tag t-data">ข้อมูล</span> เพิ่มแคตตาล็อก — รอพี่นัทเคาะ "ราคา"</h3>
+<ul>
+<li><b>กระจก:</b> เงา 2 ด้าน · อินซูเลท (5+air+5) · ลอนแก้ว — เพิ่มใน GLASS (ต้องมีราคา)</li>
+<li><b>สี:</b> ชุบทอง/อโนไดซ์ · ลายไม้รหัสรุ่น (KL19022WD) — เพิ่มใน COLORS</li>
+<li><b>วัสดุ:</b> ลูกฟูกสำหรับ"บานเลื่อน" (มีแค่บานเปิด) · ฉนวน/อินซูเลทสำหรับ window/door (มีแค่หลังคา) · พื้น(สมาร์ทบอร์ด/ไม้เทียม)</li>
+</ul>
+<span class="note">⚠️ การเพิ่มลง array GLASS/COLORS อาจกระทบ baseline (fixture เลือก option ตามลำดับ) — ต้องแก้พร้อม verify · ผมไม่เพิ่มเองเพราะไม่รู้ราคา</span>
+</div>
+
+<div class="card g2">
+<h3><span class="tag t-ux">UX</span> ปรับการกรอก — ทำได้ ต้องระวัง logic</h3>
+<ul>
+<li><b>เสริมคาน (o-beamm)</b> โผล่เฉพาะตอนเลือก "ซ่อนราง" → ควรเปิดให้กรอกได้ทุกแบบราง (ใบจริงมีเสริมคานแบบโชว์ราง)</li>
+<li><b>OPTION +/-</b> ตอนนี้พิมพ์ข้อความเอง ระบบไม่คิดราคาให้ → เพิ่ม "บรรทัด OPTION + ช่องราคา ±" คิดให้อัตโนมัติ</li>
+<li><b>ฝังรางยู / งานเสริมวิศวกรรม</b> → เพิ่ม checkbox/free-text "งานเสริม" ต่อรายการ</li>
+<li><b>รื้อของเดิม / ใช้ของเดิม</b> → เพิ่ม checkbox addon (มีบรรทัดงานรื้อท้ายใบแล้ว แต่ไม่มีต่อรายการ)</li>
+</ul>
+</div>
+
+<div class="card g3">
+<h3><span class="tag t-big">โครงสร้างใหญ่</span> ต้องออกแบบ — ตัดสินใจก่อนทำ</h3>
+<ul>
+<li><b>ชุด multi-side สำหรับผนัง/โรงงาน</b> (ISOWALL+เมทัลชีท ด้าน A-M) — ทำแบบเดียวกับ "ชุดกั้นห้องกระจก" แต่รองรับผนัง/หลังคาโรงงาน + รวมระแนง(g2) เข้าชุดได้</li>
+<li><b>โหมดกรอกราคาตรง (lump-sum)</b> สำหรับรายการที่ใบจริงไม่ระบุขนาด/คิดเหมา — ไม่ต้องบังคับ ก×ส</li>
+</ul>
+</div>
+
+<h2>🔗 เปิด Preview (UX ใหม่ — option เป็น dropdown แล้ว)</h2>
+<span class="link">jr-beta-git-feat-quote-phase5-ux-jraluminium103.vercel.app/calculator/index.html</span>
+<div class="note">ลองเพิ่มรายการ → กล่อง "อุปกรณ์เสริม" เป็นกลุ่มพับได้ · ใบทดสอบ quote-FULL-C.html / quote-FULL-D.html อยู่ใน <code>ใบเสนอราคาทดสอบ/</code></div>
+
+<h2>📌 สรุป — ทำให้เหมือนใบจริงต่อยังไง</h2>
+<div class="card">
+<b>ระบบทำงานหลักได้ดี</b> (ออกใบครบ ไม่ NaN ทุกหมวด · กั้นห้อง/กลาสเฮ้าส์/หลังคา/มุ้ง/shower เลียนใบจริงได้) · ที่ "ขาด" ส่วนใหญ่คือ <b>แคตตาล็อกยังไม่ครบ</b> (กระจก/สี/วัสดุพิเศษบางตัว) + <b>งานหลายด้านแบบผนัง/โรงงาน</b> ที่ยังไม่มีชุด<br><br>
+<b>ลำดับที่แนะนำ:</b> 1) พี่นัทเคาะราคากระจก/สี/วัสดุที่ขาด → ผมเพิ่มลงแคตตาล็อก+verify · 2) ปรับ UX 4 จุด (เสริมคาน/OPTION ±/งานเสริม/ของเดิม) · 3) ตัดสินใจเรื่องชุด multi-side ผนัง (งานใหญ่)
+</div>
+
+<footer>สร้างโดย Claude (autonomous goal) · เครื่องคิดราคา JR · 2026-06-08</footer>
+</div></body></html>

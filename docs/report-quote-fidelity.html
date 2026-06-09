@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายงาน: ใบเสนอราคาครบเหมือนใบจริง + จัดฟอร์ม</title>
+<style>
+  :root{--red:#B3151D;--red2:#8f1018;--ink:#1f2937;--mut:#6b7280;--bg:#f4f5f7;--line:#e5e7eb;--green:#16a34a;--amber:#b45309}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;line-height:1.6}
+  .wrap{max-width:940px;margin:0 auto;padding:24px 16px 60px}
+  header{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-radius:16px;padding:26px;box-shadow:0 8px 24px rgba(179,21,29,.25)}
+  header h1{margin:0 0 6px;font-size:23px}
+  header .sub{opacity:.92;font-size:14px}
+  .badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:12px;margin-top:10px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+  .stat .n{font-size:24px;font-weight:800;color:var(--red)}
+  .stat .l{font-size:12px;color:var(--mut)}
+  h2{font-size:18px;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--red)}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:13.5px}
+  th{background:var(--red);color:#fff;text-align:left;padding:10px 12px;font-weight:600}
+  td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:#fafafa}
+  .ok{color:var(--green);font-weight:700;white-space:nowrap}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:12px}
+  .card h3{margin:0 0 6px;font-size:15px;color:var(--red)}
+  .fix{border-left:4px solid var(--green)}
+  .review{background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 20px}
+  .review h3{color:var(--amber);margin:0 0 8px}
+  .link{display:block;background:#fff;border:2px dashed var(--red);border-radius:12px;padding:14px;margin-top:10px;word-break:break-all;font-family:Consolas,monospace;font-size:14px;color:var(--red);font-weight:600}
+  .note{font-size:12.5px;color:var(--mut);margin-top:6px}
+  code{font-family:Consolas,monospace;background:#f3f4f6;border-radius:5px;padding:1px 6px;font-size:12px;color:var(--red)}
+  .big-ok{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:16px 20px;color:#065f46;font-weight:600}
+  footer{text-align:center;color:var(--mut);font-size:12px;margin-top:30px}
+  @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📋 รายงาน: ใบเสนอราคาครบเหมือนใบจริง + จัดฟอร์มไม่รก</h1>
+    <div class="sub">เทสด้วยการ render ใบจริง (ไม่ใช่อ่านโค้ดเดา) · ไล่หาจุดรก/บั๊กเอง</div>
+    <span class="badge">branch: feat/quote-phase5-ux · ยังไม่ merge เข้า main</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">14/14</div><div class="l">หมวดข้อมูลครบ</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">บั๊ก/จุดรก แก้แล้ว</div></div>
+    <div class="stat"><div class="n">13/13</div><div class="l">option-coverage</div></div>
+    <div class="stat"><div class="n">684,800</div><div class="l">baseline (ไม่เพี้ยน)</div></div>
+  </div>
+
+  <div class="big-ok">✅ ข่าวดี: ใบที่ระบบออก <b>ข้อมูลครบทุกหมวด</b> — ทั้งช่อง "รายการ" และ "รายละเอียดงาน" ไม่มีหมวดไหนข้อมูลขาด (เทสด้วยการ gen ใบจริงแล้วอ่านเนื้อ ไม่ใช่อ่านโค้ด)</div>
+
+  <h2>🧪 งาน 2 — ใบออกครบเหมือนใบจริงไหม (render จริง 14 หมวด)</h2>
+  <table>
+    <thead><tr><th>หมวด</th><th>ช่องรายการ</th><th>ช่องรายละเอียดงาน</th><th>ผล</th></tr></thead>
+    <tbody>
+      <tr><td>บานเลื่อน</td><td>ชื่อ+ขนาด+แบ่งบาน</td><td>อลู สี · กระจก มม. · มุ้ง · ชุดล็อค</td><td class="ok">✅</td></tr>
+      <tr><td>บานเปิด</td><td>ชื่อ+ขนาด</td><td>อลู สี · กระจก มม. (+ธรณีถ้าเลือก)</td><td class="ok">✅</td></tr>
+      <tr><td>บานติดตาย</td><td>ชื่อ+ขนาด</td><td>อลู สี · กระจก มม.</td><td class="ok">✅</td></tr>
+      <tr><td>บานเฟี้ยม</td><td>ชื่อ+ขนาด</td><td>อลู สี · กระจก มม. (+ธรณี)</td><td class="ok">✅</td></tr>
+      <tr><td>บานกระทุ้ง</td><td>ชื่อ+ขนาด</td><td>อลู สี · กระจก มม. · มุ้ง</td><td class="ok">✅</td></tr>
+      <tr><td>หลังคา</td><td>ชื่อ+ขนาด</td><td>โครงสร้าง · แป · รางน้ำ · สีวัสดุมุง</td><td class="ok">✅</td></tr>
+      <tr><td>มุ้ง</td><td>ชื่อ+ขนาด</td><td>ชื่อมุ้ง+สีผ้า (ไม่มีอลู/กระจก ถูกต้อง)</td><td class="ok">✅</td></tr>
+      <tr><td>ม่านซิป</td><td>ชื่อ+ขนาด</td><td>ผ้า/ความโปร่ง (ไม่มีกระจก ถูกต้อง)</td><td class="ok">✅</td></tr>
+      <tr><td>Shower</td><td>ชื่อ+ขนาด</td><td>ชนิดบานผสม · กระจกเทมเปอร์ใส 10มม. · ราวสแตนเลส</td><td class="ok">✅</td></tr>
+      <tr><td>บานเปลือย</td><td>ชื่อ+ขนาด</td><td>ประเภท สวิง/เลื่อน · เฟรมอลู สี</td><td class="ok">✅</td></tr>
+      <tr><td>ระแนง</td><td>ชื่อ+ขนาด</td><td>รายละเอียดงาน</td><td class="ok">✅</td></tr>
+      <tr><td>ราวบันได</td><td>ชื่อ+ขนาด</td><td>รายละเอียดงาน</td><td class="ok">✅</td></tr>
+      <tr><td>กั้นห้องกระจก</td><td>ชุด group ด้าน A/B</td><td>อลู/กระจก รวม · ค่าทำชุด 5,000</td><td class="ok">✅</td></tr>
+    </tbody>
+  </table>
+  <div class="note">เทสถาวร <code>test/quote-fidelity.mjs</code> (clear items ก่อนทุกหมวด → ไม่ false-positive) · ราคาต่อชิ้นปกติ (เช่น บานเลื่อน 3.6×2.4 = 47,000)</div>
+
+  <h2>🔧 งาน 1 — ไล่หาจุดรก/บั๊กเอง (พบ 2 จุด แก้แล้ว)</h2>
+
+  <div class="card fix">
+    <h3>① ปุ่มชุดซ้ำ บน+ล่าง → เหลือแถวเดียว</h3>
+    ทุกชุดเดิมมีปุ่ม "+ เพิ่มส่วน" + "+ ช่องแสงติดตาย" <b>ซ้ำ 2 ที่</b> (บนและล่าง) = รก<br>
+    แก้: ลบแถวล่าง <code>.set-btns-bot</code> เหลือแถวบนแถวเดียว (ยืนยัน DOM: ปุ่มจาก 2 → 1)
+  </div>
+
+  <div class="card fix">
+    <h3>② 🔴 บั๊กร้าย: ปุ่มหลักคลิกไม่ได้ (curly quotes)</h3>
+    ปุ่ม "ส่งเข้าระบบ JR" + พรีวิว + ล้างทั้งหมด เขียนด้วย <b>curly quotes</b> (<code>onclick=”...”</code> แทน <code>onclick="..."</code>)
+    → onclick/style พังหมด <b>คลิกไม่ทำงานในเบราว์เซอร์</b> (มาจากตอน restyle ปุ่ม)<br>
+    แก้: curly → straight quotes ทั้ง 9 จุด · ยืนยันปุ่มทำงาน
+    <div class="note">⚠️ บทเรียน: เทส jsdom เดิม "ไม่จับ" เพราะเรียกฟังก์ชันตรง ไม่ได้คลิกปุ่ม → ตรงกับที่พี่นัทบอก "UX ผิดตั้งแต่ต้น"</div>
+  </div>
+
+  <h2>👀 จุดที่อยากให้พี่นัทรีวิว</h2>
+  <div class="review">
+    <ul>
+      <li><b>หน้าตา UI</b> — เปิด preview ดูด้วยตา ว่าปุ่ม/เลย์เอาต์สวย/กดง่ายจริงไหม (โดยเฉพาะปุ่มที่เพิ่งแก้บั๊ก)</li>
+      <li><b>การกรอกฟอร์ม</b> — ลองกรอกจริงดูว่ายัง "รก/งง" ตรงไหนอีก ชี้จุดมาได้ ผมจัดต่อ (ตอนนี้ตัดปุ่มซ้ำ + ซ่อนช่องราคาเอง + รวมกล่อง option แล้ว)</li>
+      <li><b>ผลสรุปงาน 2</b> — ใบออกข้อมูลครบทุกหมวด <u>ไม่พบหมวดที่ขาด</u> · ถ้าพี่นัทเทียบใบจริงแล้วเห็นว่ายังขาด field ไหน บอกตำแหน่งมา ผมเติมให้</li>
+    </ul>
+  </div>
+
+  <h2>🔗 เปิด Preview (รอ build ~1-2 นาที)</h2>
+  <span class="link">jr-beta-git-feat-quote-phase5-ux-jraluminium103.vercel.app/calculator/index.html</span>
+  <div class="note">เช็คของใหม่: ปุ่ม "ส่งเข้าระบบ JR" แดงใหญ่ <b>กดได้</b> · ชุดมีปุ่มแถวเดียว · กั้นห้องเป็นปุ่ม "+ กั้นห้องกระจก"</div>
+
+  <footer>สร้างโดย Claude (autonomous goal) · เครื่องคิดราคา JR · 2026-06-08</footer>
+</div>
+</body>
+</html>

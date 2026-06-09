@@ -38,39 +38,63 @@ const closeSvc = () => {
 const clearItems = () => { doc.getElementById("items").innerHTML = ""; };
 
 // ============================================================
-// A) กั้นห้องกระจก (glasshouse) — TC1
+// A) ชุดกั้นห้องกระจก (ระบบชุดใหม่ R5.0) — TC1
+//    สร้างชุด 2 ด้าน (sliding_euro 3.0×2.4 + fixed_glass 2.0×2.4) ไม่มีหลังคา
+//    ราคา = ผลรวม 2 ด้านที่คำนวณจริง (ไม่มีค่าทำชุด 5,000 — ยกเลิก 2026-06-08)
 // ============================================================
 {
   clearItems();
-  w.addItem(doc.getElementById("items"));
-  const ch = doc.querySelector("#items .ch");
-  setField(ch, ".i-group", "6");
-  setField(ch, ".i-prod", "glasshouse");
-  const priceEl = ch.querySelector(".o-ghprice");
-  const PRICE = 506000;
-  if (priceEl) setField(ch, ".o-ghprice", PRICE);
-  const roomEl = ch.querySelector(".o-ghroom"); if (roomEl) setField(ch, ".o-ghroom", "ห้องอเนกประสงค์");
-  const sideA = ch.querySelector(".o-ghside-A"); if (sideA) setField(ch, ".o-ghside-A", "ประตูบานเปิดคู่ + ติดตายข้าง");
+  const _fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
+  const sb = w.addGlasshouseSet();
+  const sn = sb.querySelector(".set-name");
+  if (sn) { sn.value = "กั้นห้องกระจก (ห้องอเนกประสงค์)"; _fire(sn, "input"); _fire(sn, "change"); }
+  const parts = sb.querySelector(".set-parts");
+  // ด้าน A: sliding_euro 3.0×2.4
+  let chs = parts.querySelectorAll(".ch");
+  const ch0 = chs[0];
+  const ps0 = ch0.querySelector(".i-prod");
+  if (ps0 && !ps0.querySelector('option[value="sliding_euro"]')) ps0.innerHTML = w.prodOptionsG6("6");
+  if (ps0) { ps0.value = "sliding_euro"; _fire(ps0, "change"); }
+  setField(ch0, ".i-w", "3.0"); setField(ch0, ".i-h", "2.4");
+  const pA = ch0.querySelector(".i-position");
+  if (pA) { pA.value = "ด้าน A"; _fire(pA, "input"); _fire(pA, "change"); }
+  // ด้าน B: fixed_glass 2.0×2.4
+  const addBtn = sb.querySelector(".set-addpart");
+  if (addBtn) _fire(addBtn, "click");
+  chs = parts.querySelectorAll(".ch");
+  const ch1 = chs[chs.length - 1];
+  const ps1 = ch1.querySelector(".i-prod");
+  if (ps1 && !ps1.querySelector('option[value="fixed_glass"]')) ps1.innerHTML = w.prodOptionsG6("6");
+  if (ps1) { ps1.value = "fixed_glass"; _fire(ps1, "change"); }
+  setField(ch1, ".i-w", "2.0"); setField(ch1, ".i-h", "2.4");
+  const pB = ch1.querySelector(".i-position");
+  if (pB) { pB.value = "ด้าน B"; _fire(pB, "input"); _fire(pB, "change"); }
 
-  // อ่านราคาจาก readItem
-  const it = w.readItem(ch);
-  const sell = it && it.r ? it.r.sell : NaN;
-  rec("TC1a", "glasshouse readItem ราคาเหมา", "group=6,prod=glasshouse,ghprice=506000",
-    "it.r.sell = 506,000", sell, sell === PRICE);
+  // อ่านราคาแต่ละส่วนจาก readItem
+  w.calcQuote();
+  const chArr = [...parts.querySelectorAll(".ch")];
+  const partSells = chArr.map(ch => { const ri = w.readItem && w.readItem(ch); return ri ? (ri.r ? ri.r.sell : 0) : 0; });
+  const sumPartsTC1 = partSells.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+  const expectedSubTC1 = sumPartsTC1; // ไม่มี +5000 แล้ว (ยกเลิกค่าทำชุด 2026-06-08)
+  rec("TC1a", "ชุดกั้นห้องกระจก readItem ราคาส่วน > 0", "group=6, 2ด้าน",
+    "sumParts > 0", "sumParts=" + sumPartsTC1, sumPartsTC1 > 0);
 
-  // ตั้ง VAT 0 เพื่อตรวจราคาเหมาตรงในใบ (ไม่ปนภาษี) + ปิดบริการ
+  // ตั้ง VAT 0 เพื่อตรวจ subtotal ตรง + ปิดบริการ
   setId("vat-pct", "0"); setId("discPct", "0"); closeSvc();
   w.calcQuote(); w.genQuote();
   const qc = doc.getElementById("quoteContent"); const t = txt(qc);
-  rec("TC1b", "glasshouse ใบ 'ออก' ไม่ถูกกรอง", "genQuote()", "ใบยาว > 50 + ไม่ว่าง",
+  rec("TC1b", "ชุดกั้นห้องกระจก ใบ 'ออก' ไม่ถูกกรอง", "genQuote()", "ใบยาว > 50 + ไม่ว่าง",
     "len=" + t.length, t.length > 50);
   rec("TC1c", "ใบมีคำว่า 'กั้นห้องกระจก'", "—", "พบ 'กั้นห้องกระจก'",
     t.includes("กั้นห้องกระจก") ? "พบ" : "ไม่พบ", t.includes("กั้นห้องกระจก"));
-  rec("TC1d", "ใบมีราคา 506,000", "—", "พบ '506,000'",
-    t.includes("506,000") ? "พบ" : "ไม่พบ", t.includes("506,000"));
+  rec("TC1d", "ใบมี 'ด้าน A' + 'ด้าน B'", "—", "พบทั้งคู่",
+    (t.includes("ด้าน A") && t.includes("ด้าน B")) ? "พบ" : "ไม่พบ",
+    t.includes("ด้าน A") && t.includes("ด้าน B"));
   const sub = readSubtotal(), grand = readGrand();
-  rec("TC1e", "subtotal = 506,000 (เหมา)", "ghprice=506000", "506,000", sub, sub === PRICE);
-  rec("TC1f", "VAT0 → รวมทั้งสิ้น = subtotal", "vat=0", "506,000", grand, grand === PRICE);
+  rec("TC1e", "subtotal = ผลรวมส่วน (ไม่มีค่าทำชุด)", "VAT=0",
+    String(expectedSubTC1), sub, sub === expectedSubTC1);
+  rec("TC1f", "VAT0 → รวมทั้งสิ้น = subtotal (ไม่มีภาษี)", "vat=0",
+    String(expectedSubTC1), grand, grand === expectedSubTC1);
 }
 
 // ============================================================
