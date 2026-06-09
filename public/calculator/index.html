@@ -1229,28 +1229,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     h+='<label class="opt">สูงราง (ซม.) <input type="number" class="o-gcheight" min="0" step="1" value="10" style="width:80px;height:32px;"></label>';
     h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮาร่า +700/ตร.ม.</option><option value="700">สีดำซาฮาร่า +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
   }
-    if(p.hide_slope){
-    // ซ่อนสโลปหลังคา · กรอกความสูง (W) + ความยาวต่อด้าน (H) + จำนวนด้าน (option)
-    const slopeH = parseFloat(w)||0; // ความสูง (ม.)
-    const lenPerSide = parseFloat(h)||0; // ความยาวต่อด้าน (ม.)
-    const nSides = (optSel && parseInt(optSel.hsSides)) || 1;
-    if(slopeH<=0 || lenPerSide<=0){
-      return {a:0, sell:0, cost:null, msgs:['กรอกความสูง (กว้าง) + ความยาว (สูง)'], addonLabel:''};
-    }
-    let A;
-    if(p.hide_slope==='composite'){
-      // ตัว U = (สูง + 0.1 + สูง) = 2×สูง + 0.1
-      A = (2*slopeH + 0.1) * nSides * lenPerSide;
-    } else {
-      // smartboard แผ่นเรียบ = สูง × ด้าน × ยาว
-      A = slopeH * nSides * lenPerSide;
-    }
-    const sell = A * p.rate;
-    const lbl = p.hide_slope==='composite' 
-      ? `(${(2*slopeH+0.1).toFixed(2)} ม. × ${nSides} ด้าน × ${lenPerSide} ม.) = ${A.toFixed(2)} ตร.ม.`
-      : `(${slopeH} × ${nSides} ด้าน × ${lenPerSide} ม.) = ${A.toFixed(2)} ตร.ม.`;
-    return {a:A, sell:roundUp(sell), cost:null, addonLabel:'', msgs:[lbl + ' × ' + fmt(p.rate)]};
-  }
+    // dead code ลบแล้ว (2026-06-09): p.hide_slope calc block — ไม่มี product นิยาม property นี้
     if(p.custom_item){
     // กรอกเอง — ชื่อ + ราคา/ตร.ม. (หรือ /หน่วย) + รายละเอียด
     const customRate = (optSel && parseFloat(optSel.customRate)) || 0;
@@ -1265,10 +1244,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     h+='<label class="opt">ราคา/หน่วย (บาท × พื้นที่) <input type="number" class="o-customrate" min="0" step="100" value="0" style="width:120px;height:32px;"></label>';
     h+='<label class="opt" style="flex:1 1 100%;">รายละเอียดงาน <input type="text" class="o-customdesc" placeholder="ขนาด/สี/วัสดุ..." style="width:300px;height:32px;"></label>';
   }
-    if(p.hide_slope){
-    h+='<label class="opt">จำนวนด้านที่ซ่อน <input type="number" class="o-hssides" min="1" step="1" value="1" style="width:70px;height:32px;"></label>';
-    h+='<span class="opt" style="color:#666;font-size:12px;">หมายเหตุ: ใส่ความสูงสโลปในช่อง "กว้าง" · ความยาวต่อด้านในช่อง "สูง"</span>';
-  }
+    // dead code ลบแล้ว (2026-06-09): p.hide_slope UI block — ไม่มี product นิยาม property นี้
     // R4.0: ม่านซิป (zipscreen) engine — สูตร/ค่าตรงกับเครื่องคิดราคาม่านซิปแยกทุกค่า
     if(p.zipscreen){
       const W=parseFloat(w)||0, H=parseFloat(h)||0;
@@ -1871,7 +1847,7 @@ function addSet(){
     }
     refreshSet(box); calcQuote();
   }); });
-  // ตัดปุ่ม set-addfixed แล้ว (E) — addFixedToSet เหลือ dead code (ไม่ลบ กันเสี่ยง)
+  // ตัดปุ่ม set-addfixed แล้ว (E) — ช่องแสงติดตายเพิ่มผ่าน "+ เพิ่มส่วน" ปกติ
   box.querySelector('.set-name').addEventListener('input',calcQuote);
   addItem(box.querySelector('.set-parts'));
   refreshSet(box);
@@ -1897,45 +1873,8 @@ function addGlasshouseSet(){
   refreshSet(box); calcQuote();
   return box;
 }
-// เพิ่มช่องแสงติดตาย (fixed_glass) ในชุด — preset prod + sync แค่สี/กระจก จากบานแรก
-// ขนาด (กว้าง×สูง) ปล่อยให้กรอกเอง: บางทีช่องแสงอยู่บนบานประตู สูง/กว้างไม่เท่าบานหลัก
-function addFixedToSet(box){
-  const parts=box.querySelector('.set-parts');
-  addItem(parts);
-  const chs=parts.querySelectorAll('.ch'); const ch=chs[chs.length-1];
-  const fireE=(el,t)=>el.dispatchEvent(new Event(t,{bubbles:true}));
-  const ps=ch.querySelector('.i-prod');
-  if(ps && ps.querySelector('option[value="fixed_glass"]')){ ps.value='fixed_glass'; fireE(ps,'change'); }
-  const first=parts.querySelector('.ch');
-  if(first && first!==ch){
-    ['.i-color','.i-glass'].forEach(function(sel){ const f=first.querySelector(sel),n=ch.querySelector(sel); if(f&&n){ n.value=f.value; if(n.value===f.value) fireE(n,'change'); } });
-  }
-  refreshSet(box); calcQuote();
-}
-// C4: OPTION สำเร็จรูป — กดเลือกแล้วเติมข้อความลงช่องหมายเหตุ (แก้ต่อได้) ข้อความไม่ต้องตรงใบจริงเป๊ะ
-const OPT_PRESETS=[
-  'เปลี่ยนเป็นกระจกลามิเนต 4+4 มม. ราคาเพิ่มตามจริง',
-  'เปลี่ยนเป็นกระจกเทมเปอร์ 6 มม. ราคาเพิ่มตามจริง',
-  'เปลี่ยนเป็นกระจกเขียวตัดแสง ราคาเพิ่มตามจริง',
-  'เพิ่มมุ้งจีบ ราคาเพิ่มตามจริง',
-  'เพิ่มเหล็กดัด/กันขโมย ราคาเพิ่มตามจริง',
-  'เปลี่ยนสีอลูมิเนียม (สีพิเศษ) ราคาเพิ่มตามจริง'
-];
-function optPresetOptions(){
-  return '<option value="">+ เพิ่ม OPTION สำเร็จรูป…</option>'
-    + OPT_PRESETS.map(function(t){ return '<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>'; }).join('')
-    + '<option value="__note">+ หมายเหตุ (พิมพ์เอง)</option>';
-}
-function addOptPreset(sel){
-  if(!sel.value) return;
-  const ta=sel.closest('.full').querySelector('.i-note'); if(!ta){ sel.value=''; return; }
-  const prefix = sel.value==='__note' ? 'หมายเหตุ : ' : ('OPTION : '+sel.value);
-  ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/,'')+'\n' : '') + prefix;
-  ta.dispatchEvent(new Event('input',{bubbles:true}));
-  if(sel.value==='__note') ta.focus();
-  sel.value='';
-  calcQuote();
-}
+// dead code ลบแล้ว (2026-06-09): addFixedToSet (ปุ่มถูกตัด) · OPT_PRESETS/optPresetOptions/addOptPreset
+// (dropdown OPTION สำเร็จรูประดับบานถูกตัด) — SET_OPT_PRESETS ด้านล่างยังใช้อยู่
 // OPTION สำเร็จรูป ระดับชุด — กดแล้วเติมข้อความ + คิดราคาส่วนต่างให้ (กระจก=ตามพื้นที่ · อื่น=ระบุเอง)
 // rate กระจก = ราคาส่วนต่าง/ตร.ม. จากตาราง GLASS (.s) ตัวเลขจริงในระบบ — ไม่เดา
 const SET_OPT_PRESETS=[
