@@ -238,6 +238,7 @@
     </div>
     <div class="sum">
       <div class="grand"><b>ราคารวมทั้งหมด</b><span class="big" id="q-total">฿0</span></div>
+      <div class="hint" style="margin-top:4px;color:#B3151D;">ⓘ ราคานี้ใช้ <b>กระจกเขียว/ใส 6 มม. + สีมาตรฐาน (ขาว/ดำ)</b> · ต้องการกระจก/สีพิเศษ ใช้แท็บใบเสนอราคา</div>
     </div>
     <button type="button" class="btn-sec" style="width:100%;height:48px;margin-top:14px;" onclick="genQuoteQuick()">👁 พรีวิวราคา (คิดเร็ว)</button>
     <div class="hint">ปุ่มนี้แค่ดูราคาในเครื่อง · จะ<b>ออกใบเสนอราคาจริง</b>ให้ไปแท็บ “ใบเสนอราคา” แล้วกดปุ่มแดง “ส่งเข้าระบบ JR” · จำนวนบาน มีผลเฉพาะบานเปิด(คู่)/บานกระทุ้ง(บานที่ 2+) · ต้องการกระจกอัปเกรด/ออปชั่น ใช้แท็บใบเสนอราคา</div>
@@ -342,6 +343,8 @@
       <div class="line disc" id="sDiscLine" style="display:none;"><span id="sDiscLabel">ส่วนลด</span><span id="sDisc">฿0</span></div>
       <div class="line" id="sSvcLine" style="display:none;"><span>ค่าบริการเพิ่มเติม</span><span id="sSvc">฿0</span></div>
       <div class="grand"><b>ราคาเสนอลูกค้า (ก่อน VAT)</b><span class="big" id="sTotal">฿0</span></div>
+      <div class="line" id="sVatLine" style="display:none;"><span id="sVatLabel">VAT 7%</span><span id="sVat">฿0</span></div>
+      <div class="grand" id="sGrandLine" style="display:none;"><b>รวมทั้งสิ้น (รวม VAT)</b><span class="big" id="sGrand">฿0</span></div>
     </div>
 
     <label class="chk" style="margin-top:14px;"><input type="checkbox" id="ownerMode" onchange="toggleOwner()"> โหมดเจ้าของ (ดูทุน/กำไร)</label>
@@ -564,7 +567,7 @@ const PRODUCTS=[
  {id:'awning_aluinch',cat:'บานกระทุ้ง',name:'บานกระทุ้ง aluinch (ยกเลิกขาย)',method:'same_as',ref:'awning_euro',cost:null,mosquito:1},
  {id:'casement_euro',cat:'บานเปิด',name:'บานเปิด ยูโร',method:'bucket',min:18000,rates:'OPEN',cost:'casement_euro',addon:{kind:'door',extra:14000},closer:1,digihandle:1,series:'L',mosquito:1},
  {id:'casement_dseries',cat:'บานเปิด',name:'บานเปิด D-series (ยกเลิกขาย)',method:'bucket',min:24000,rates:'DSERIES',cost:null,addon:{kind:'door',extra:19000},mosquito:1},
- {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',mosquito:1,opts:[{id:'closer',label:'โช้ค',price:5000}]},
+ {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',mosquito:1,closer:1}, // ข้อ5: ใช้ closer:1 (dropdown .o-closer) เหมือนยูโร — เดิมเป็น checkbox opts ไม่ตรงกัน
  {id:'casement_velora',cat:'บานเปิด',name:'บานเปิด Velora (รวมเทมเปอร์6มม.)',method:'bucket',min:19000,rates:'VELORA',cost:null,addon:{kind:'door',extra:15000},series:'S',mosquito:1},
  // R3 2026-05-30: เพิ่ม 2 รุ่นประตูบานเปิด ลูกฟูกทึบ — ราคากรอกเอง
  {id:'casement_flush_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
@@ -2142,6 +2145,15 @@ function buildItemOpts(d){
       if(_qtyWrap&&_qtyWrap.parentNode){ _qtyWrap.parentNode.insertBefore(_pwIn,_qtyWrap); } }
     _smbOld.remove();
   });
+  // ข้อ3+4: สินค้าที่อ่าน "ความยาว" จากช่องกว้าง (ราวบันได per_length_tier · ครอบ PVC · ปิดซ่อนราง)
+  //         → เปลี่ยน label ช่องกว้างเป็น "ความยาว/ยาวรวม (ม.)" + ซ่อนช่อง "สูง" ที่ไม่มีผล (กันกรอกผิด/งง)
+  { var _isLen=(p.method==='per_length_tier' || p.pvc_cover || p.gutter_cover);
+    var _lenLbl=p.gutter_cover?'ยาวรวม (ม.)':'ความยาว (ม.)';
+    var _wEl=d.querySelector('.i-w'), _hEl=d.querySelector('.i-h');
+    var _wWrap=_wEl?_wEl.closest('div'):null, _hWrap=_hEl?_hEl.closest('div'):null;
+    if(_wWrap){ var _wl=_wWrap.querySelector('label'); if(_wl) _wl.textContent=_isLen?_lenLbl:'กว้าง (ม.)'; }
+    if(_hWrap){ _hWrap.style.display=_isLen?'none':''; }
+  }
   // R3.3: ประตูบานเปิด — banner Std/Up1/Up2/Up3 (เลือก 1 ใน 4)
   if(p.cat==='บานเปิด'){
     h+='<div class="opt" style="width:100%;background:#E2EFDA;border-left:4px solid #70AD47;padding:8px 12px;margin-bottom:6px;font-size:12px;line-height:1.5;"><b style="color:#385723;">ประตูบานเปิด — เลือกมือจับ 1 ใน 4:</b><br>'
@@ -2338,7 +2350,7 @@ function buildItemOpts(d){
     h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select></label>';
     h+='<label class="opt">ผ้ามุ้ง <select class="o-mosqfabric" style="width:auto;height:32px;"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
     // ข้อ10: สีกรอบมุ้ง addon (เดิมไม่มีช่อง → เลือกสีไม่ได้) · value ตรงกับที่ calc คิด (sahara/kl_special/kl_wood · ค่าทำสี×0.5)
-    h+='<label class="opt">สีกรอบมุ้ง <select class="o-mosqcolor" style="width:auto;height:32px;"><option value="">ขาว/ดำ (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
+    h+='<label class="opt">สีกรอบมุ้ง <select class="o-mosqcolor" onchange="calcQuote()" style="width:auto;height:32px;"><option value="">ขาว/ดำ (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
@@ -2723,6 +2735,15 @@ function calcQuote(){
   ['lift','travel','ship','elec','demo'].forEach(k=>{ const b=document.getElementById('svc-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-'+k)); });
   ['roof','floor','rail','door'].forEach(k=>{ const b=document.getElementById('svc-demo-'+k+'-box'); if(b)b.classList.toggle('hide', !svcChk('svc-demo-'+k)); });
   document.getElementById('sTotal').textContent=bht(preVat);
+  // ข้อ6: โชว์ VAT + รวมทั้งสิ้น ในกล่องสรุป เมื่อ vatPct>0 (เห็นยอดคุยลูกค้าโดยไม่ต้อง preview)
+  { const _vp=document.getElementById('vat-pct'); const _vatPct=_vp?(parseFloat(_vp.value)||0):0;
+    const _vl=document.getElementById('sVatLine'), _gl=document.getElementById('sGrandLine');
+    if(_vatPct>0){ const _vatAmt=Math.round(preVat*_vatPct/100);
+      document.getElementById('sVatLabel').textContent='VAT '+_vatPct+'%';
+      document.getElementById('sVat').textContent=bht(_vatAmt);
+      document.getElementById('sGrand').textContent=bht(preVat+_vatAmt);
+      _vl.style.display='flex'; _gl.style.display=''; }
+    else { _vl.style.display='none'; _gl.style.display='none'; } }
   // owner
   const profit=net-totCost;
   document.getElementById('oCost').textContent=bht(totCost);
@@ -3186,11 +3207,9 @@ function genQuote(keepNo){
       const _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? 'โครงเหล็กชุบซิงค์' : ('โครงอลูมิเนียม'+_rcName);
       // แปคู่ต่อท้าย
       const _battenSuffix = _rfbatten === 'แปคู่' ? ' (แปคู่)' : '';
-      // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / ปิดปลาย=ปิดปลาย / รางน้ำ=ระบุระบบ)
+      // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / รางน้ำ=ระบุระบบ) · ข้อ2: ลบ branch 'ปิดปลาย' (auto) ที่ตัดออกแล้ว
       let _gutterLine = '';
-      if(_rfend === 'ปิดปลาย'){
-        _gutterLine = 'รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้ + ปิดปลายหลังคา';
-      } else if(_rfend === 'รางน้ำ'){
+      if(_rfend === 'รางน้ำ'){
         if(_rfgutsys === 'โซ่'){
           const _pat = _os.rfgutchainpat || 'ทิวลิป';
           const _col = _os.rfgutchaincolor || 'ขาว';
