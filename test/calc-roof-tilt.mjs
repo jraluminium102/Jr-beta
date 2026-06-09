@@ -90,6 +90,22 @@ function mkProd(group, prodId, W, H){
   want("RS6 ใบโชว์ 'หลังคาไวนิล'", /หลังคาไวนิล/.test(inv), "");
 }
 
+// ============ มือจับรุ่นอื่น (กรอกชื่อ+ราคาเอง) ============
+// casement_euro (digihandle) · ใช้ราคา 3,000 (พันเต็ม → roundUp ไม่กวน delta)
+{
+  const ch = mkProd("1", "casement_euro", 2, 2);
+  const hn = ch.querySelector(".o-handlename"), hp = ch.querySelector(".o-handleprice");
+  want("HN0 มีช่องมือจับรุ่นอื่น (ชื่อ+ราคา)", !!hn && !!hp, "");
+  const base = subtotal();
+  hn.value = "HD182"; fire(hn, "input"); hp.value = "3000"; fire(hp, "input");
+  const after = subtotal();
+  want("HN1 กรอกราคามือจับเอง 3,000 = +3,000", after - base === 3000, "Δ="+(after-base));
+  const inv = doc.getElementById("quoteContent").textContent.replace(/ /g, " ");
+  want("HN2 ใบโชว์ 'มือจับ HD182'", inv.includes("มือจับ HD182"), "");
+  hp.value = "0"; fire(hp, "input");
+  want("HN3 ราคา 0 → ไม่บวก", subtotal() === base, "Δ="+(subtotal()-base));
+}
+
 want("Z jsdom ไม่มี error", errors.length === 0, errors.join(" | "));
 
 let pass = 0;

@@ -1371,6 +1371,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     }
   }
   if(p.digihandle&&optSel&&optSel.stainless!==''&&optSel.stainless!=null){ const st=HANDLE_STAINLESS[parseInt(optSel.stainless)]; if(st){ opt+=st.p; msgs.push('มือจับสแตนอร่าม '+st.n); } }
+  // P3-3: มือจับรุ่นอื่น — เซลล์กรอกชื่อ+ราคาเอง (เช่น HD182/Berin ที่ยังไม่มีในลิสต์)
+  if(p.digihandle&&optSel){ const _hp=parseFloat(optSel.handleprice)||0; if(_hp>0){ opt+=_hp; msgs.push('มือจับ '+((optSel.handlename||'').trim()||'รุ่นอื่น')+' +'+fmt(_hp)); } }
   if(p.motor&&optSel){ if(optSel.motor==='80'){ if(a<=3.5)opt+=18000; else msgs.push('มอเตอร์80กก. ใช้ได้ ≤3.5 ตร.ม.'); }
     if(optSel.motor==='300')opt+=28000; }
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
@@ -2141,6 +2143,8 @@ function buildItemOpts(d){
   if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
   // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
   if(p.digihandle){ h+='<label class="opt">[Up3] มือจับสแตนอร่าม <select class="o-stainless" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></label>'; }
+  // P3-3: มือจับรุ่นอื่น — กรอกชื่อรุ่น + ราคาเอง (HD182/Berin/ฯลฯ ที่ยังไม่มีในลิสต์)
+  if(p.digihandle){ h+='<label class="opt">มือจับรุ่นอื่น (กรอกเอง) <input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="width:180px;height:32px;" oninput="calcQuote()"> + <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:90px;height:32px;" oninput="calcQuote()"> บาท</label>'; }
   // ข้อ4A: มือจับ Cmech — เฉพาะ "ชุดบานเลื่อน" (handoff) · แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
   //   เดิมเปิดให้ เปิด/กระทุ้ง ด้วย แต่ใบโชว์เฉพาะสาขาบานเลื่อน → คิดเงินไม่โชว์ · จำกัดเป็นบานเลื่อนปิด gap
   if(p.cat==='บานเลื่อน'){
@@ -2427,6 +2431,7 @@ function readItem(d){
   if(p.closer){ const _c=d.querySelector('.o-closer'); if(_c){ optSel.closer=parseFloat(_c.value)||0; if(_c.value!=='0'&&_c.selectedIndex>=0)optSel.closerLabel=_c.options[_c.selectedIndex].getAttribute('data-n'); } }
   if(p.digihandle){ const _dg=d.querySelector('.o-digi'); optSel.digi=_dg?_dg.value:''; }
   if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
+  if(p.digihandle){ const _hn=d.querySelector('.o-handlename'); optSel.handlename=_hn?_hn.value:''; const _hpp=d.querySelector('.o-handleprice'); optSel.handleprice=_hpp?_hpp.value:0; }
   // R3.2: read Cmech + ตารางเต็มบาน + combo กระทุ้งเข้าใน + มอเตอร์ระแนง 38.1
   { const _cm=d.querySelector('.o-cmech'); if(_cm) optSel.cmech=_cm.value;
     const _cmc=d.querySelector('.o-cmechcolor'); if(_cmc) optSel.cmechcolor=_cmc.value;
@@ -3010,6 +3015,8 @@ function genQuote(keepNo){
     // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม — ข้อความในใบ (ไม่บวกราคา)
     // ข้อ4C: มือจับ X-series ฟรี — โชว์ชื่อรุ่น (ไม่บวกเงิน)
     if(it.optSel && it.optSel.xhandle){ _parts.push('มือจับ '+it.optSel.xhandle); }
+    // P3-3: มือจับรุ่นอื่น (กรอกเอง) — โชว์ชื่อรุ่นในรายละเอียดงาน
+    if(it.optSel && (parseFloat(it.optSel.handleprice)||0)>0){ _parts.push('มือจับ '+((it.optSel.handlename||'').trim()||'รุ่นอื่น')); }
     // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง)
     if(it.optSel && it.optSel.cmechawn){ _parts.push('มือจับ Cmech หลบมุ้ง '+(it.optSel.cmechawn==='normal'?'ดำ/ขาว':(CMECH_SPECIAL[it.optSel.cmechawn]||'ชุบ'))); }
     // ข้อ5: ครอบวงกบอลู 3/4 ด้าน
