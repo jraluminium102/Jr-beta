@@ -1833,7 +1833,8 @@ function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button><button type="button" class="set-addfixed">+ ช่องแสงติดตาย</button></div><div class="set-parts"></div>';
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button></div><div class="set-parts"></div>';
+  // E: ตัดปุ่ม "+ ช่องแสงติดตาย" (ซ้ำ) — ใช้ "+ เพิ่มบานย่อย" ในแต่ละบานแทน (มีชนิดติดตายครบใน SUBITEM_TYPES)
   document.getElementById('items').appendChild(box);
   box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){
@@ -1857,7 +1858,7 @@ function addSet(){
     }
     refreshSet(box); calcQuote();
   }); });
-  box.querySelectorAll('.set-addfixed').forEach(function(b){ b.addEventListener('click',function(){ addFixedToSet(box); }); });
+  // ตัดปุ่ม set-addfixed แล้ว (E) — addFixedToSet เหลือ dead code (ไม่ลบ กันเสี่ยง)
   box.querySelector('.set-name').addEventListener('input',calcQuote);
   addItem(box.querySelector('.set-parts'));
   refreshSet(box);
@@ -2021,10 +2022,8 @@ function addItem(container){
        `<details class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;"><summary style="cursor:pointer;font-size:13px;color:var(--red);font-weight:600;">＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)</summary><div class="oc-list" style="margin-top:6px;"></div><button type="button" class="oc-add" onclick="ocAddRow(this)" style="font-size:12px;padding:3px 10px;border:1px dashed var(--red);color:var(--red);background:#fff;border-radius:6px;cursor:pointer;">＋ เพิ่ม OPTION</button></details>`+
        `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
        `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
-       `<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">`+
-         `<div style="flex:1;min-width:140px;"><label style="font-size:12px;color:var(--muted);">OPTION ราคา (&#177;บาท · 0=ไม่บวก)</label><input class="o-optdelta" type="number" step="100" value="0" placeholder="เช่น +5000 หรือ -3000" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div>`+
-       `</div>`+
-       `<div style="margin-top:6px;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="o-lumpsum" style="width:18px;height:18px;"> คิดราคาเหมา (กรอกราคาเอง ไม่คิดจากขนาด)</label><div class="o-lumpsum-wrap" style="display:none;margin-top:4px;"><label style="font-size:12px;color:var(--muted);">ราคาเหมาต่อชุด (บาท)</label><input class="o-lumpsumprice" type="number" min="0" step="100" placeholder="กรอกราคารวมต่อชุด" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div></div>`+
+       `<input type="hidden" class="o-optdelta" value="0">`+
+       `<div style="margin-top:6px;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="o-lumpsum" style="width:18px;height:18px;"> คิดราคาเหมา — กรอกราคารวมต่อชุดเอง ไม่คิดจากขนาด (สำหรับงานพิเศษคิดเหมา)</label><div class="o-lumpsum-wrap" style="display:none;margin-top:4px;"><label style="font-size:12px;color:var(--muted);">ราคาเหมาต่อชุด (บาท)</label><input class="o-lumpsumprice" type="number" min="0" step="100" placeholder="กรอกราคารวมต่อชุด" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div></div>`+
      `</div>`+
    `</div>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
