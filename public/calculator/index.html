@@ -284,16 +284,16 @@
 
     <div class="card">
       <div class="row2">
-        <div><label>ค่าติดตั้ง (บาท/ตร.ม.) — สำหรับ "ผลิตส่ง"</label><input type="number" id="installRate" min="0" step="10" value="0" oninput="calcQuote()"></div>
+        <div><label>หักค่าติดตั้งออก (บาท/ตร.ม.) — เฉพาะรายการที่ติ๊ก "ผลิตส่ง ไม่ติดตั้ง"</label><input type="number" id="installRate" min="0" step="10" value="0" oninput="calcQuote()"></div>
         <div><label>ส่วนลด (% · สูงสุด 2% เมื่อยอด ≥ 50,000)</label><input type="number" id="discPct" min="0" max="2" step="0.5" value="0" oninput="calcQuote()"></div>
         <div><label>ส่วนลดค่าประเมินหน้างาน (บาท)</label><input type="number" id="discFlat" min="0" step="500" value="0" oninput="calcQuote()"></div>
       </div>
-      <div class="hint">ราคามาตรฐาน = รวมติดตั้งแล้ว · ติ๊ก "ผลิตส่ง" ในรายการ = หักค่าติดตั้งออก (ตอนนี้ตั้ง 0 ยังไม่มีผล)</div>
+      <div class="hint">ปกติราคา = รวมติดตั้งแล้ว · ช่องนี้ = อัตราค่าติดตั้งต่อ ตร.ม. ที่จะ "หักออก" เฉพาะรายการที่ติ๊ก "ผลิตส่ง (ไม่ติดตั้ง)" · ใส่ 0 = ไม่หัก (ผลิตส่งราคาเท่าติดตั้ง) · ถ้าอยากให้ผลิตส่งถูกลง ใส่ค่าติดตั้ง/ตร.ม. ที่นี่</div>
     </div>
 
-    <div class="card">
-      <h2>ค่าบริการเพิ่มเติม (ทั้งใบ)</h2>
-      <div class="row2">
+    <details class="card">
+      <summary style="cursor:pointer;font-weight:700;font-size:18px;color:var(--red);">ค่าบริการเพิ่มเติม (ทั้งใบ) <span style="font-size:12px;color:#888;font-weight:400;">— กดเปิด · นั่งร้าน/เดินทาง/ขนส่ง/งานไฟ/รื้อ/VAT (ค่า default ใช้ได้เลย)</span></summary>
+      <div class="row2" style="margin-top:8px;">
         <div><label>จำนวนชั้นอาคาร</label><input type="number" id="svc-floors" min="1" step="1" value="1" oninput="calcQuote()"></div>
         <div><label>จำนวนชุดเสี่ยง (ติดตั้งภายนอก ชั้น≥3)</label><input type="number" id="svc-risky" min="1" step="1" value="1" oninput="calcQuote()"></div>
       </div>
@@ -324,7 +324,7 @@
         <div id="svc-demo-door-box" class="hide mt"><label>ค่าเหมา (บาท)</label><input type="number" id="svc-demo-door-amt" min="0" step="500" value="0" oninput="calcQuote()" style="max-width:160px;"></div>
       </div>
       <div class="hint">นั่งร้าน 5,000/ชั้น (ชั้น 2+) · ความเสี่ยง (10k+...) × จำนวนชุดเสี่ยง (ชั้น 3+) · เดินทาง: ที่พัก tier (≤70k=1วัน, 70-100k=2วัน) + 5,000/100km</div>
-    </div>
+    </details>
 
     <div class="sum">
       <div class="line"><span>ราคารวม</span><span id="sBefore">฿0</span></div>
@@ -2197,9 +2197,13 @@ function buildItemOpts(d){
     const _sr = SLIDING_RAIL[p.id];
     const _isTop = _sr.rail === 'top';
     // ชนิดการเปิด (เลือกแล้ว auto-set ติดตาย: สลับ/ลากจูง=0 · เปิดคู่กลาง=2) — เลิกใช้คำ "ธรรมดา" ใช้ระบุติดตายเอง
+    // UX: ห่อบล็อกบานเลื่อน (ชนิดเปิด + เปิด/ติดตาย) ด้วย .sliding-main-block → ย้ายขึ้นฟอร์มหลักหลัง build
+    h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
+    h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 บานเลื่อน:</span>';
     h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
     // งาน7: จัดกลุ่ม มี/เปิด/ติดตาย ให้เห็น 3 ค่าในที่เดียว — คง .o-fixed / .i-panels เป๊ะ
     h+='<label class="opt">บาน: มี <input type="number" class="i-panels-mirror" readonly tabindex="-1" style="width:45px;height:30px;background:#f3f4f6;color:#6B7280;pointer-events:none;"> · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> · ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน</label>';
+    h+='</div>'; // ปิด .sliding-main-block
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
       h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
@@ -2345,18 +2349,12 @@ function buildItemOpts(d){
   var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
   var _showGw=!!(gw&&!(areaOnly||p.zipscreen));
   box.innerHTML=h;
-  // ย้าย cw/gw เข้า opts box เสมอ (hidden หรือไม่ก็ตาม) — แถวหลักโล่ง · d.querySelector ยังหาเจอ
-  if(cw){
-    cw.style.display=_showCw?'':'none';
-    box.insertBefore(cw,box.firstChild);
-    var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; }
-  }
-  if(gw){
-    gw.style.display=_showGw?'':'none';
-    var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild;
-    box.insertBefore(gw,_ref2);
-    var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; }
-  }
+  // UX: คงกระจก/สี ไว้ในฟอร์มหลัก (เลิกย้ายเข้า ⚙) — ผู้ใช้เห็นช่องพื้นฐานทันที ไม่ต้องเปิด ⚙
+  if(cw){ cw.style.display=_showCw?'':'none'; var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
+  if(gw){ gw.style.display=_showGw?'':'none'; var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+  // UX: ย้ายบล็อกบานเลื่อน (ชนิดเปิด + เปิด/ติดตาย) ขึ้นฟอร์มหลัก ใต้ "จำนวนบานทั้งหมด" — เห็นทันทีไม่ต้องเปิด ⚙
+  { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
+    if(_smb && _pw && _pw.parentNode){ _pw.parentNode.insertBefore(_smb, _pw.nextSibling); } }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
@@ -2367,7 +2365,8 @@ function buildItemOpts(d){
       _oc.textContent=Math.max(0,(parseInt(_pv.value)||0)-_f2);
     }
   }
-  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||usesPanels(p)||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
+  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
