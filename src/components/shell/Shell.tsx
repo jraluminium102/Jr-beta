@@ -8,7 +8,8 @@ import type { Role } from "@/lib/database.types";
 import { cn } from "@/lib/format";
 
 const HREF: Record<string, string> = {
-  dashboard: "/", jobs: "/jobs", production: "/production", installation: "/installation",
+  dashboard: "/", jobs: "/jobs", production: "/production", prodqueue: "/production-schedule",
+  installation: "/installation",
   issues: "/issues", finance: "/finance", users: "/settings/users", settings: "/settings",
   designer: "/designer", boq: "/boq",
 };
