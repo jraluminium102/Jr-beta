@@ -133,18 +133,15 @@ async function voidOrUnlinkByReceiptId(
   const now = new Date().toISOString();
   for (const entry of entries as { id: string; is_auto_created: boolean }[]) {
     if (entry.is_auto_created) {
-      // unlink: คง amount + is_voided=false, ล้าง billing link
-      await supabase
-        .from("finance_entries")
-        .update({ billing_installment_id: null, receipt_id: null, source: null })
-        .eq("id", entry.id);
-    } else {
-      // void ตามปกติ
-      await supabase
-        .from("finance_entries")
-        .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
-        .eq("id", entry.id);
+      // มัดจำที่รับจริง: void เฉพาะ "เอกสารใบเสร็จ" — คง finance_entry + link + paid เดิมไว้
+      // (งวดยัง paid, เงินยังนับใน outstanding ถูกต้อง) → ไม่แตะ entry มัดจำ
+      continue;
     }
+    // void ตามปกติ (งวดชำระที่ไม่ใช่มัดจำ)
+    await supabase
+      .from("finance_entries")
+      .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
+      .eq("id", entry.id);
   }
 }
 
@@ -170,15 +167,12 @@ async function voidOrUnlinkByInstallmentId(
   const now = new Date().toISOString();
   for (const entry of entries as { id: string; is_auto_created: boolean }[]) {
     if (entry.is_auto_created) {
-      await supabase
-        .from("finance_entries")
-        .update({ billing_installment_id: null, receipt_id: null, source: null })
-        .eq("id", entry.id);
-    } else {
-      await supabase
-        .from("finance_entries")
-        .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
-        .eq("id", entry.id);
+      // มัดจำที่รับจริง → คงไว้ทั้งหมด (void แค่เอกสารใบเสร็จ)
+      continue;
     }
+    await supabase
+      .from("finance_entries")
+      .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
+      .eq("id", entry.id);
   }
 }
