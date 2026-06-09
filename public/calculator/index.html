@@ -41,8 +41,13 @@
   /* ม้าลาย — สลับสีกล่องกรอกข้อมูลแต่ละจุด */
   #items .ch:nth-of-type(odd),#q-items .ch:nth-of-type(odd){background:#FAFBFD;}
   #items .ch:nth-of-type(even),#q-items .ch:nth-of-type(even){background:#EAF0F7;}
-  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;cursor:pointer;user-select:none;}
   .ch .top input{height:36px;}
+  .ch.collapsed{padding:7px 12px;margin-bottom:6px;background:#FAFBFD;}
+  .ch.collapsed > *:not(.top){display:none !important;}
+  .ch.collapsed .top{margin-bottom:0;border-bottom:none;}
+  .ch-summary{flex:1;color:#1E5AA8;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ch .top .ch-caret{flex:none;color:#9DBCE0;font-size:11px;}
   .del{flex:0 0 auto;width:36px;height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;
     color:var(--red);font-size:20px;cursor:pointer;line-height:1;}
   .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
@@ -668,7 +673,7 @@ const PRODUCTS=[
  {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp32',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ",method:'bucket',min:0,rates:'IMP32',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp33',cat:'มุ้ง',name:"มุ้งกันแมว หมา",method:'bucket',min:0,rates:'IMP33',cost:null},
- {id:'imp34',g:2,cat:'เสริม',name:"ตะแกรงเหล็กสาน",method:'bucket',min:0,rates:'IMP34',cost:null},
+ // R3.9: ลบ imp34 "ตะแกรงเหล็กสาน" (ซ้ำกับ steel_mesh) — ทั้งคู่ราคา 2,500/ตร.ม. เท่ากัน
  {id:'imp35',cat:'มุ้ง',name:"มุ้งสแตนเลส 0.3มม. กันหนู",method:'bucket',min:0,rates:'IMP35',cost:null},
  {id:'mj_blackout',cat:'มุ้ง',name:"มุ้งจีบ Blackout รังผึ้งทึบแสง",method:'bucket',min:3500,rates:'MJ_BLACKOUT',cost:null,mscolor:true},
  {id:'mj_sd_twoway',cat:'มุ้ง',name:"มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง",method:'bucket',min:4000,rates:'MJ_SD_TWOWAY',cost:null,mscolor:true},
@@ -1991,6 +1996,11 @@ function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(
 function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
   row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions()+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
   box.appendChild(row); }
+// UX (C): พับเก็บรายการ (accordion) — ลดความยาวฟอร์ม · พับแล้วโชว์แค่ ส่วนที่ N + ชนิดบาน+ขนาด
+function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w')||{}).value, h=(ch.querySelector('.i-h')||{}).value; var ty=(ch.querySelector('.i-type')||{}).value==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
+function setChCollapsed(ch, on){ if(!ch)return; ch.classList.toggle('collapsed', !!on); var sum=ch.querySelector('.ch-summary'); if(sum) sum.textContent = on ? ('· '+(chSummary(ch)||'รายการ')) : ''; }
+function toggleCh(ch){ setChCollapsed(ch, !ch.classList.contains('collapsed')); }
+function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach(function(ch){ if(ch!==active) setChCollapsed(ch, true); }); setChCollapsed(active, false); }
 // UX: ไล่เลขรายการใหม่ตามลำดับจริง (ลบแล้วเพิ่มไม่ข้ามเลข) — quote=ส่วนที่ · quick=ชุดที่
 function renumberItems(){
   ['items','q-items'].forEach(function(cid){ var c=document.getElementById(cid); if(!c)return; var n=0;
@@ -2001,7 +2011,7 @@ function addItem(container){
   const id=itemSeq;
   const d=document.createElement('div'); d.className='ch'; d.dataset.id=id;
   d.innerHTML=
-   `<div class="top"><span style="flex:1;color:#888;font-size:13px;">ส่วนที่ ${id}</span><button type="button" class="del" title="ลบส่วนนี้">&times;</button></div>`+
+   `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
      `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div>`+
      `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
@@ -2032,6 +2042,7 @@ function addItem(container){
    `<div class="chmsg i-msg"></div>`;
   (container||document.getElementById('items')).appendChild(d);
   renumberItems();
+  try{ collapseOthers(d); }catch(e){}  // C: เพิ่มรายการใหม่ → พับรายการอื่นเก็บ โชว์แค่ตัวใหม่
   // apply global defaults ถ้ามี (ไม่ fire change เพื่อไม่ trigger colorcode-wrap ก่อนที่ buildItemOpts จะรัน)
   { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
     if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
