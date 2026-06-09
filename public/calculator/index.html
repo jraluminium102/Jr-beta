@@ -60,6 +60,7 @@
   .gh-row textarea{height:60px;}
   .gh-row select[multiple]{height:130px;}
   .opt input{width:auto;height:auto;}
+  .spanel-chip.on{background:#1976D2;color:#fff;border-color:#1976D2;font-weight:700;}
   .chfoot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);
     padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
   .chfoot .price{font-weight:800;font-size:17px;color:var(--red-dark);}
@@ -161,6 +162,10 @@
     .qbtns button{height:42px;}
     .opts{flex-direction:column;align-items:flex-start;gap:4px;}
     .opt{font-size:13px;}
+    /* P3 (แชท B): ปุ่ม/ช่องแตะง่าย 44px บนมือถือ — เดสก์ท็อปคงคอมแพกต์ */
+    .ch .opt input[type=number], .ch .opt select{min-height:44px;}
+    .ch .opt input[type=checkbox]{width:22px;height:22px;}
+    .ch .opt{padding:2px 0;}
     /* R3.7.3: Mobile กั้นห้องกระจก — แค่ปรับ font size */
     .gh-row{font-size:13px;}
     input,select{font-size:16px;}
@@ -1954,7 +1959,14 @@ function rfSlideMotorFill(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps
   var marea=sa>0?sa:(a*N/(N+1));
   var auto=marea<=3.5?18000:marea<=14?28000:marea<=40?36000:72000;
   var pe=ch.querySelector('.o-smotorprice'); if(pe && !pe.dataset.edited){ pe.value=auto; }
+  // P4: helper text มอเตอร์ auto (อ่านอย่างเดียว) · P2: ไฮไลต์ชิปจำนวนบานที่เลือก
+  var mq=Math.max(1,parseInt((ch.querySelector('.o-smotorqty')||{}).value)||1);
+  var he=ch.querySelector('.o-smotor-auto'); if(he){ he.textContent='· auto ฿'+fmt(auto)+(mq>1?(' × '+mq):''); }
+  ch.querySelectorAll('.spanel-chip').forEach(function(c){ c.classList.toggle('on', parseInt(c.dataset.n)===N); });
 }catch(e){} }
+// P2: ชิป/stepper จำนวนบานเลื่อน — set .o-spanels (source of truth) แล้วเรียก fill+calc (readItem เดิมไม่ต้องแก้)
+function rfSetSpanels(el,n){ var ch=el.closest('.ch'); var inp=ch?ch.querySelector('.o-spanels'):null; if(!inp)return; inp.value=Math.max(2,parseInt(n)||2); rfSlideMotorFill(ch); calcQuote(); }
+function rfStepSpanels(el,d){ var ch=el.closest('.ch'); var inp=ch?ch.querySelector('.o-spanels'):null; if(!inp)return; rfSetSpanels(el,(parseInt(inp.value)||2)+d); }
 // UX (C): พับเก็บรายการ (accordion) — ลดความยาวฟอร์ม · พับแล้วโชว์แค่ ส่วนที่ N + ชนิดบาน+ขนาด
 function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w')||{}).value, h=(ch.querySelector('.i-h')||{}).value; var ty=(ch.querySelector('.i-type')||{}).value==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
 function setChCollapsed(ch, on){ if(!ch)return; ch.classList.toggle('collapsed', !!on); var sum=ch.querySelector('.ch-summary'); if(sum) sum.textContent = on ? ('· '+(chSummary(ch)||'รายการ')) : ''; }
@@ -2235,9 +2247,23 @@ function buildItemOpts(d){
   if(p.optSlide){
     h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
     h+='<span class="o-slide-wrap" style="display:none;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:6px 10px;">';
-    h+='<label class="opt">จำนวนบานเลื่อน <input type="number" class="o-spanels" step="1" min="2" value="2" style="width:50px;height:30px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"></label>';
-    h+='<label class="opt">พื้นที่เลื่อน(ตร.ม. · ว่าง=auto) <input type="number" class="o-sarea" step="0.1" min="0" value="0" style="width:58px;height:30px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"></label>';
-    h+='<label class="opt">มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:44px;height:30px" oninput="calcQuote();"> ตัว × <input type="number" class="o-smotorprice" step="1000" min="0" value="0" style="width:72px;height:30px" oninput="this.dataset.edited=1;calcQuote();"> บาท/ตัว (auto ตามพื้นที่)</label>';
+    // P2: จำนวนบานเลื่อน = ชิป [2][3][4][6] + stepper (input number ยังเป็น source of truth · readItem เดิมไม่ต้องแก้)
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">จำนวนบานเลื่อน '
+      +'<span style="display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;">'
+      +[2,3,4,6].map(function(n){return '<button type="button" class="spanel-chip" data-n="'+n+'" onclick="rfSetSpanels(this,'+n+')" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:15px;">'+n+'</button>';}).join('')
+      +'</span>'
+      +'<span style="display:inline-flex;gap:4px;align-items:center;vertical-align:middle;margin-left:10px;">'
+      +'<button type="button" onclick="rfStepSpanels(this,-1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">−</button>'
+      +'<input type="number" class="o-spanels" step="1" min="2" value="2" style="width:52px;height:44px;text-align:center;" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();">'
+      +'<button type="button" onclick="rfStepSpanels(this,1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">+</button>'
+      +'</span></label>';
+    // P4: พื้นที่เลื่อน placeholder "auto" (ว่าง=auto · logic sa>0?sa:auto รองรับว่างแล้ว) — เลิกสับสน "0 คือ auto หรือ 0 จริง"
+    h+='<label class="opt">พื้นที่เลื่อน(ตร.ม.) <input type="number" class="o-sarea" step="0.1" min="0" placeholder="auto" style="width:70px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> <span style="font-size:11px;color:#666;">เว้นว่าง=auto</span></label>';
+    // P4: มอเตอร์ — โชว์ราคา auto เป็น helper อ่านอย่างเดียว · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์ (เคสปกติ 0 การพิมพ์)
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:52px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ตัว '
+      +'<span class="o-smotor-auto" style="font-size:12px;color:#2E7D32;font-weight:600;"></span> '
+      +'<a class="o-smotor-edit" onclick="var w=this.closest(\'label\').querySelector(\'.o-smotorprice-wrap\'); if(w){w.style.display=\'inline\';} this.style.display=\'none\';" style="font-size:12px;color:#1976D2;text-decoration:underline;cursor:pointer;">แก้ราคา</a>'
+      +'<span class="o-smotorprice-wrap" style="display:none;"> × <input type="number" class="o-smotorprice" step="1000" min="0" value="0" style="width:84px;height:44px" oninput="this.dataset.edited=1;calcQuote();"> บาท/ตัว</span></label>';
     h+='</span>';
   }
   if(p.cat==='หลังคา'){
@@ -2265,7 +2291,8 @@ function buildItemOpts(d){
     h+='<span class="o-gutter-chain-wrap" style="display:none;">ลาย <select class="o-gutter-chainpat" style="width:auto;height:32px;"><option value="ทิวลิป">ทิวลิป (default)</option><option value="โลตัส">โลตัส</option></select> สี <select class="o-gutter-chaincolor" style="width:auto;height:32px;"><option value="ขาว">ขาว (default)</option><option value="น้ำตาล">น้ำตาล</option></select></span>';
     h+='</label>';
     h+='</div>';
-    h+='<label class="opt" style="width:100%;background:#E8F5E9;border-left:3px solid #2E7D32;padding:4px 8px;font-size:12px;"><b>ของเสริมหลังคา</b> (รวมในชุดหลังคานี้)</label>';
+    // P1 (แชท B): ยุบ "ของเสริมหลังคา" เป็น <details> พับ default — เคสปกติเห็น ~4 ช่องหลัก (สี/แป/โครงสร้าง/ปลายหลังคา)
+    h+='<details class="optbox" style="width:100%;"><summary style="cursor:pointer;font-size:13px;color:#2E7D32;font-weight:600;padding:6px 0;">＋ ของเสริมหลังคา (รางน้ำ/เสา/คาน/ซ่อนสโลป/ครอบ...)</summary>';
     h+='<label class="opt">รางน้ำ <select class="o-rfgut" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="1000">อลู S 1,000/ม.</option><option value="2000">สแตน M 2,000/ม.</option><option value="3000">สแตน L 3,000/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfgutlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">คานเหล็กถัก <select class="o-rfbeam" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfbeamlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
@@ -2277,6 +2304,7 @@ function buildItemOpts(d){
     h+='<label class="opt">ซ่อนสโลป <select class="o-rfhs" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="comp">คอมโพสิต 3มม. (3,500/ตร.ม.)</option><option value="smart">สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.)</option></select> สูง <input type="number" class="o-rfhsh" min="0" step="0.05" value="0" style="width:50px;height:30px;"> ยาว/ด้าน <input type="number" class="o-rfhsl" min="0" step="0.1" value="0" style="width:55px;height:30px;"> ด้าน <input type="number" class="o-rfhsn" min="1" step="1" value="1" style="width:45px;height:30px;"></label>';
     h+='<label class="opt">ปิดซ่อนราง: กว้างราง(ซม.) <input type="number" class="o-rfgcw" min="0" step="1" value="0" style="width:55px;height:30px;"> สูง(ซม.) <input type="number" class="o-rfgch" min="0" step="1" value="10" style="width:50px;height:30px;"> ยาวรวม(ม.) <input type="number" class="o-rfgcl" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม.) <input type="number" class="o-rfbcw" min="0" step="0.05" value="0" style="width:55px;height:30px;"> ยาวคาน(ม.) <input type="number" class="o-rfbcl" min="0" step="0.1" value="0" style="width:55px;height:30px;"></label>';
+    h+='</details>'; // P1: ปิด <details> ของเสริมหลังคา
   }
   const areaOnly=AREA_CATS.includes(p.cat);
   COMMON_OPTS.forEach(o=>{ if(o.ids&&o.ids.includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; } });

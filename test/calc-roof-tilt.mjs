@@ -106,6 +106,31 @@ function mkProd(group, prodId, W, H){
   want("HN3 ราคา 0 → ไม่บวก", subtotal() === base, "Δ="+(subtotal()-base));
 }
 
+// ============ UX หลังคา P1-P4 + BUG กล่องค้าง (แชท B) ============
+{
+  const ch = mkProd("3", "roof_vinyl", 4, 3);
+  // P1: ของเสริม → details พับ (ตัวใน open=false) · ช่องหลักนอก details
+  const inner = [...ch.querySelectorAll("details")].find(d => { const s = d.querySelector(":scope > summary"); return s && /ของเสริมหลังคา/.test(s.textContent); });
+  want("P1 ของเสริมหลังคา = details พับ (open=false)", !!inner && inner.open === false, inner ? ("open=" + inner.open) : "ไม่เจอ details");
+  want("P1 ช่องหลัก (แป/โครงสร้าง/ปลายหลังคา) ยังอยู่", !!ch.querySelector(".o-roofbatten") && !!ch.querySelector(".o-roofframe") && !!ch.querySelector(".o-roofend"), "");
+  want("P1 ของเสริม (รางน้ำ/ซ่อนสโลป) อยู่ใน details", !!inner && !!inner.querySelector(".o-rfgut") && !!inner.querySelector(".o-rfhs"), "");
+  // P2/P4: เปิดหลังคาเลื่อน
+  const slide = ch.querySelector(".o-slide"); slide.checked = true; fire(slide, "change");
+  want("P2 ชิปจำนวนบาน 4 ตัว [2][3][4][6]", ch.querySelectorAll(".spanel-chip").length === 4, "ได้ " + ch.querySelectorAll(".spanel-chip").length);
+  want("P4 พื้นที่เลื่อน placeholder=auto", ch.querySelector(".o-sarea").getAttribute("placeholder") === "auto", "");
+  want("P4 มอเตอร์ helper auto โชว์", /auto/.test(ch.querySelector(".o-smotor-auto").textContent), JSON.stringify(ch.querySelector(".o-smotor-auto").textContent));
+  want("P4 ช่องราคามอเตอร์ซ่อน default", ch.querySelector(".o-smotorprice-wrap").style.display === "none", "");
+  // P2: กดชิป → set spanels + active
+  w.rfSetSpanels(ch.querySelector('.spanel-chip[data-n="4"]'), 4);
+  want("P2 กดชิป4 → o-spanels=4 + active", ch.querySelector(".o-spanels").value === "4" && ch.querySelector('.spanel-chip[data-n="4"]').classList.contains("on"), "");
+  // BUG: สลับเป็นบานเลื่อนแล้วกลับ → ไม่มีกล่องค้าง
+  const g = ch.querySelector(".i-group"); g.value = "1"; fire(g, "change");
+  const ps = ch.querySelector(".i-prod"); ps.value = "sliding_euro"; fire(ps, "change");
+  g.value = "3"; fire(g, "change"); ps.value = "roof_vinyl"; fire(ps, "change");
+  want("BUG สลับ product ไม่เหลือ .sliding-main-block ค้าง", ch.querySelectorAll(".sliding-main-block").length === 0, "เหลือ " + ch.querySelectorAll(".sliding-main-block").length);
+  want("BUG .i-panels-wrap ไม่หาย (เหลือ 1)", ch.querySelectorAll(".i-panels-wrap").length === 1, "เหลือ " + ch.querySelectorAll(".i-panels-wrap").length);
+}
+
 want("Z jsdom ไม่มี error", errors.length === 0, errors.join(" | "));
 
 let pass = 0;
