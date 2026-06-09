@@ -101,6 +101,47 @@ function mk(group, prodId, W, H){ doc.getElementById("items").innerHTML=""; w.ad
   want("ข้อ7 ป้ายด้าน auto = A, B, C (ไม่ซ้ำ A ทุกบาน)", sides[0]==="ด้าน A" && sides[1]==="ด้าน B" && sides[2]==="ด้าน C", "ได้ "+JSON.stringify(sides));
 }
 
+// ===== UX checklist รอบ 2 (P1-P3) =====
+// ข้อ1: o-mosqcolor มี onchange (รีเฟรชราคาทันที)
+{
+  const ch = mk("1","casement_euro",1,2);
+  const mq = ch.querySelector(".o-mosq"); mq.value="mj_sd_basic"; fire(mq,"change");
+  const mc = ch.querySelector(".o-mosqcolor");
+  want("ข้อ1 o-mosqcolor มี onchange=calcQuote", !!mc && /calcQuote/.test(mc.getAttribute("onchange")||""), "");
+}
+// ข้อ3: ราวบันได per_length_tier → label "ความยาว" + ซ่อนช่องสูง
+{
+  const ch = mk("2","imp2",6,0);
+  const wWrap = ch.querySelector(".i-w").closest("div"), hWrap = ch.querySelector(".i-h").closest("div");
+  want("ข้อ3 ราวบันได: ช่องกว้าง → label 'ความยาว'", /ความยาว/.test(wWrap.querySelector("label").textContent), wWrap.querySelector("label").textContent);
+  want("ข้อ3 ราวบันได: ซ่อนช่อง 'สูง'", hWrap.style.display==="none", "display="+hWrap.style.display);
+}
+// ข้อ5: X-series ใช้ dropdown .o-closer (เหมือนยูโร)
+{
+  const chX = mk("1","casement_xseries",1,2);
+  want("ข้อ5 X-series มี dropdown .o-closer (ไม่ใช่ checkbox)", !!chX.querySelector("select.o-closer"), "");
+  const chE = mk("1","casement_euro",1,2);
+  want("ข้อ5 ยูโร ก็มี .o-closer (รูปแบบเดียวกัน)", !!chE.querySelector("select.o-closer"), "");
+}
+// ข้อ6: summary box โชว์ VAT line เมื่อ vatPct>0
+{
+  mk("1","casement_euro",2,2);
+  const vp = doc.getElementById("vat-pct"); vp.value="7"; fire(vp,"change"); w.calcQuote();
+  const vatLine = doc.getElementById("sVatLine"), grandLine = doc.getElementById("sGrandLine");
+  want("ข้อ6 summary โชว์บรรทัด VAT เมื่อ 7%", vatLine && vatLine.style.display!=="none" && /VAT 7%/.test(doc.getElementById("sVatLabel").textContent), "");
+  want("ข้อ6 summary โชว์ 'รวมทั้งสิ้น (รวม VAT)'", grandLine && grandLine.style.display!=="none", "");
+  vp.value="0"; fire(vp,"change"); w.calcQuote();
+  want("ข้อ6 VAT 0% → ซ่อนบรรทัด VAT", doc.getElementById("sVatLine").style.display==="none", "");
+}
+// ข้อ8: resetQuote ล้างฟิลด์หัวบิลครบ
+{
+  doc.getElementById("custName").value="ทดสอบ"; doc.getElementById("custAddress").value="ที่อยู่"; doc.getElementById("custPhone").value="0812345678";
+  const _origConfirm = w.confirm; w.confirm = () => true;
+  w.resetQuote();
+  w.confirm = _origConfirm;
+  want("ข้อ8 resetQuote ล้าง custName/custAddress/custPhone", doc.getElementById("custName").value==="" && doc.getElementById("custAddress").value==="" && doc.getElementById("custPhone").value==="", "");
+}
+
 want("Z jsdom ไม่มี error", errors.length === 0, errors.join(" | "));
 
 let pass = 0;

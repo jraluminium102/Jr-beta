@@ -291,6 +291,7 @@
         <button type="button" class="addbtn" onclick="addSet()" style="flex:1;">+ เพิ่มชุด</button>
         <button type="button" class="addbtn" onclick="addGlasshouseSet()" style="flex:1;min-width:160px;border-color:#B3151D;color:#B3151D;" title="สร้างชุดกั้นห้องกระจก (ชื่อชุด preset + ด้าน A พร้อม)">+ กั้นห้องกระจก</button>
       </div>
+      <div class="hint" style="margin-top:4px;">ⓘ "กั้นห้องกระจก" = สร้างชุดหลายด้าน (A/B/C…) + หลังคา ในชุดเดียว · กดปุ่มแล้วเพิ่มบานแต่ละด้าน</div>
     </div>
 
     <div class="card">
@@ -1617,6 +1618,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   addQuickItem();
   addSet();
   calcCompare();
+  calcQuote(); // ข้อ13: คิดยอดตอนโหลด → Protection พื้น (default ติ๊ก) สะท้อนในกล่องสรุปทันที ไม่ต้องรอกด
 });
 
 /* ---- QUICK ---- */
@@ -2174,7 +2176,7 @@ function buildItemOpts(d){
     h+='<div class="gh-box"><b style="color:#B3151D;">🪟 ม่านซิป — กรอกขนาดในช่อง กว้าง/สูง ด้านบน</b><div style="font-size:12px;color:#666;margin-bottom:6px;">เลือกรุ่น/ผ้า/ระบบ/กลุ่มลูกค้า แล้วราคาคิดอัตโนมัติ</div>';
     h+='<label class="gh-row">กลุ่มลูกค้า <select class="o-zgrp"><option value="retail" selected>ปลีก (×2.0)</option><option value="project">โครงการ (×1.75)</option></select></label>';
     h+='<label class="gh-row">รุ่น <select class="o-zmodel"><option value="auto" selected>อัตโนมัติ (ตามขนาด)</option><option value="Z100">JR-Z100 (กว้าง≤5 สูง≤3)</option><option value="Z120">JR-Z120 (สูงถึง 4 ม.)</option><option value="Z145D">JR-Z145D (2 ชั้น)</option><option value="Z120W">JR-Z120W (กว้างถึง 30 ม.)</option></select></label>';
-    h+='<label class="gh-row">ผ้า (ความโปร่ง) <select class="o-zfab"><option value="0">0% ทึบ</option><option value="1">1-2%</option><option value="3">3%</option><option value="5" selected>5%</option><option value="10">10%</option><option value="30">30%</option><option value="PET">PET ใส</option></select></label>';
+    h+='<label class="gh-row">ผ้า (ความโปร่ง) <select class="o-zfab"><option value="0">0% ทึบ</option><option value="1">1-2%</option><option value="3">3%</option><option value="5" selected>5%</option><option value="10">10%</option><option value="30">30%</option><option value="PET">PET ใส (ผ้าพิเศษ แพงกว่า)</option></select><span style="font-size:11px;color:#666;display:block;">ⓘ ผ้าทึบ/โปร่งราคาเท่ากัน · PET ใส คิดเพิ่ม (ดูยอดหลังกรอกขนาด)</span></label>';
     h+='<label class="gh-row">ระบบควบคุม <select class="o-zctrl"><option value="manual">มือดึง</option><option value="aok220" selected>มอเตอร์ AOK 220V</option><option value="dooya">มอเตอร์ DOOYA</option><option value="aok50n">มอเตอร์ AOK 50N</option></select></label>';
     h+='</div>';
   }
@@ -2206,6 +2208,7 @@ function buildItemOpts(d){
   }
   // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 ราคาสุดท้าย (รวม Fork Drive แล้ว · เคาะ 2026-06-08)
   if(p.cat==='บานกระทุ้ง'){
+    h+='<label class="opt" style="width:100%;font-size:11px;color:#666;">ⓘ บานกระทุ้งคู่/หลายบาน: ใส่ "จำนวนบานทั้งหมด" ด้านบน (เช่น 2) — ราคาคิดเพิ่มต่อบานที่ 2 ขึ้นไป</label>';
     h+='<label class="opt">มือจับ Cmech หลบมุ้ง <select class="o-cmechawn" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="normal">สีธรรมดา (ดำ/ขาว) +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></label>';
   }
   // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
@@ -2757,7 +2760,17 @@ function resetQuote(){
   if(!confirm('ล้างรายการทั้งหมด?'))return;
   document.getElementById('items').innerHTML=''; itemSeq=0;
   document.getElementById('custName').value=''; document.getElementById('discPct').value=0; document.getElementById('discFlat').value=0;
-  document.getElementById('installRate').value=0; addSet();
+  document.getElementById('installRate').value=0;
+  // ข้อ8: ล้างฟิลด์หัวบิล + บริการเสริม ให้ครบ (เดิมเหลือค้างข้ามใบ)
+  ['custAddress','custContact','custPhone','qdate'].forEach(function(id){ var e=document.getElementById(id); if(e)e.value=''; });
+  var _sn=document.getElementById('sellerName'); if(_sn)_sn.selectedIndex=0;
+  var _so=document.getElementById('sellerOther'); if(_so)_so.value='';
+  // svc-*: รีเซ็ตเป็น default (protect ติ๊ก · ที่เหลือปลด · ช่องตัวเลขเป็น 0/1)
+  document.querySelectorAll('[id^="svc-"]').forEach(function(e){
+    if(e.type==='checkbox'){ e.checked=(e.id==='svc-protect'); }
+    else if(e.type==='number'){ e.value=(e.id==='svc-floors'||e.id==='svc-ship-trucks')?'1':'0'; }
+  });
+  addSet(); calcQuote();
 }
 
 /* ---- QUOTE doc (ใช้ร่วมทั้งใบเสนอราคา + คิดเร็ว) ---- */
