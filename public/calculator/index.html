@@ -1396,7 +1396,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(optSel.motor==='300')opt+=28000; }
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
   if(['บานเลื่อน','เลื่อนภายใน','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
-  if(p.optInsul&&optSel&&optSel.insul){ opt+=600*a; }
+  if((p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]) opt+=o.price*(o.perPanel?Math.max(1,panels):1); }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
   // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
@@ -2272,7 +2272,7 @@ function buildItemOpts(d){
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   if(p.cat === 'PC Door'){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
-  if(p.optInsul){ h+=`<label class="opt"><input type="checkbox" class="o-insul"> ฉนวนกันความร้อน +600/ตร.ม.</label>`; }
+  if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
   // หลังคาเลื่อน — ทำเลื่อน → 3 ช่อง: จำนวนบาน / พื้นที่เลื่อน(auto) / มอเตอร์(จำนวน×ราคา auto แก้ได้) · รางน้ำย้ายไปของเสริม
   if(p.optSlide){
     h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
@@ -2361,6 +2361,20 @@ function buildItemOpts(d){
   }
   if(p.grid){ h+='<label class="opt">เส้นแนวนอน <input type="number" class="o-nh" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">เส้นแนวตั้ง <input type="number" class="o-nv" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">สีเส้น <select class="o-gridcolor" style="width:auto;height:32px;"><option value="200">อบขาว/ดำ/ซาฮาร่า (200/ม.)</option><option value="250">ลายไม้สต็อก (250/ม.)</option><option value="300">อบสีพิเศษ/Fuji (300/ม.)</option><option value="350">ลายไม้อบพิเศษ (350/ม.)</option></select></label>'+'<label class="opt">เส้นโค้ง (เส้น·3,000) <input type="number" class="o-nc" step="1" min="0" value="0" style="width:55px;height:30px"></label>'; }
   if(p.ceiling){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; }
+  // สเปก rev2: ฝ้า-ผนัง — ฟิลด์รายละเอียดวัสดุ (โครง/สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ)
+  if(p.cat==='ฝ้า-ผนัง'){
+    h+='<label class="opt">โครง <select class="o-wallframe" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ">โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select></label>';
+    if(p.id==='isowall'){
+      h+='<label class="opt">ความหนา ISOWALL <select class="o-isothick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select></label>';
+      h+='<label class="opt">สี <input type="text" class="o-isocolor" placeholder="เช่น ขาว" style="width:auto;min-width:90px;height:32px;" oninput="calcQuote();"></label>';
+    } else if(p.id==='ceiling_smooth'){
+      h+='<label class="opt">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select></label>';
+      h+='<label class="opt"><input type="checkbox" class="o-ceilslope" onchange="calcQuote();"> ฝ้าเฉียงตามแนวหลังคา</label>';
+    } else if(!p.ceiling){
+      h+='<label class="opt">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select></label>';
+      h+='<label class="opt">ทาสี <select class="o-wallpaint" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select></label>';
+    }
+  }
   if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>'; }
   if(p.future_tech){ h+='<label class="opt" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="width:auto;height:32px;max-width:240px;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select> <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
   if(p.handrail){
@@ -2498,7 +2512,13 @@ function readItem(d){
     const _gmr=d.querySelector('.o-gm-rate'); optSel.gmRate=_gmr?_gmr.value:'200';
     const _gmc=d.querySelector('.o-gm-curve'); optSel.gmCurve=_gmc?_gmc.value:'0';
   }
-  if(p.optInsul){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
+  if(p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id)){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
+  // สเปก rev2: ฝ้า-ผนัง ฟิลด์รายละเอียด
+  if(p.cat==='ฝ้า-ผนัง'){ const _wf=d.querySelector('.o-wallframe'); optSel.wallframe=_wf?_wf.value:'';
+    const _it=d.querySelector('.o-isothick'); if(_it)optSel.isothick=_it.value; const _ic=d.querySelector('.o-isocolor'); if(_ic)optSel.isocolor=(_ic.value||'').trim();
+    const _cf=d.querySelector('.o-ceilfinish'); if(_cf)optSel.ceilfinish=_cf.value; const _cs=d.querySelector('.o-ceilslope'); if(_cs)optSel.ceilslope=_cs.checked;
+    const _smt=d.querySelector('.o-smartthick'); if(_smt)optSel.smartthick=_smt.value; const _wp=d.querySelector('.o-wallpaint'); if(_wp)optSel.wallpaint=_wp.value;
+    const _ck=d.querySelector('.o-ckolor'); if(_ck)optSel.ckolor=_ck.value; }
   if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2;
     const sa=d.querySelector('.o-sarea'); optSel.sarea=sa?sa.value:0;
     const mq=d.querySelector('.o-smotorqty'); optSel.smotorqty=mq?mq.value:1;
@@ -3064,6 +3084,17 @@ function genQuote(keepNo){
     // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
     let det = '';
     if(it.p.fin){ det = (it.finLabel||'ไม่อบสี'); }
+    else if(it.p.cat==='ฝ้า-ผนัง'){
+      // สเปก rev2: ฝ้า/ผนัง ออกรายละเอียดวัสดุ (เดิม render แต่หัวข้อ) — สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ + ฉนวน + โครง
+      var _os=it.optSel||{}; var _wl=[];
+      var _frame = _os.wallframe==='เหล็กชุบ' ? 'โครงเหล็กชุบซิงค์ (ไร้สนิม)' : 'โครงอลูมิเนียม';
+      if(it.p.id==='isowall'){ _wl.push('แผ่น ISOWALL หนา '+(_os.isothick||'10')+' ซม.'+(_os.isocolor?(' สี'+_os.isocolor):'')); _wl.push(_frame); }
+      else if(it.p.id==='ceiling_smooth'){ _wl.push('ฝ้าฉาบเรียบ'+(_os.ceilfinish?(' พร้อม'+_os.ceilfinish):'')); if(_os.ceilslope) _wl.push('ฝ้าเฉียงตามแนวหลังคา'); }
+      else if(it.p.ceiling){ _wl.push(it.p.name.replace(/\s*\([^)]*\)/g,'').trim()+(_os.ckolor?(' สี'+_os.ckolor):'')); }
+      else { _wl.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _wl.push(_frame); }
+      if(_os.insul) _wl.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');
+      det = _wl.join('\n') || '-';
+    }
     else if(AREA_CATS.indexOf(it.p.cat)>=0 && it.p.cat!=='หลังคา'){ det = '-'; }  // ข้อ40: หลังคาไม่ใช้ '-' — ไปเข้า branch หลังคา (โครงอลู)
     else if(it.p.zipscreen){
       // ม่านซิป — ไม่มีกระจก ไม่มีอลู มีแค่สีผ้า
