@@ -38,17 +38,22 @@ export async function POST(req: Request) {
 
   const supabase = createClient();
 
-  // 1) ดึงใบวางบิล → copy customer_snapshot
+  // 1) ดึงใบวางบิล → copy customer_snapshot + job_id (ใช้กรณีไม่มี installment [HIGH-3])
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
-    .select("id, customer_snapshot")
+    .select("id, customer_snapshot, job_id")
     .eq("id", body.billing_note_id)
-    .single<Pick<BillingNote, "id" | "customer_snapshot">>();
+    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
 
-  // 2) คำนวณ VAT (vat แยกจากยอด) + ยอดสุทธิ
-  const vat_amt = round2((amount * vat_rate) / 100);
-  const net = round2(amount + vat_amt);
+  // [MEDIUM-2] ถอด VAT ออกจากยอดรวม (amount = ยอดรวม VAT แล้ว)
+  // vat_rate=7 → vat_amt = round(amount*7/107), base = amount - vat_amt, net = amount (ยอดรับจริง)
+  // ไม่บวก VAT ซ้ำ (เดิมคิด amount*1.07 ผิด)
+  let vat_amt = 0;
+  if (vat_rate > 0) {
+    vat_amt = round2((amount * vat_rate) / (100 + vat_rate));
+  }
+  const net = amount; // net = ยอดรวม VAT ที่รับจริง (ไม่บวกเพิ่ม)
 
   // 3) ออกรหัสอัตโนมัติผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "INV" });
@@ -75,15 +80,36 @@ export async function POST(req: Request) {
     .single();
   if (rcErr || !rc) return fail("บันทึกใบเสร็จไม่สำเร็จ: " + (rcErr?.message ?? ""), 500);
 
+  const receiptId = Number((rc as { id: number; code: string }).id);
+
   // 5) ถ้าออกใบเสร็จต่องวด → ปิดงวดนั้น + recompute สถานะใบวางบิล (A1, helper ร่วมกับ /pay)
+  // [HIGH-3] ส่ง receiptId เข้า applyInstallmentPayment เพื่อ set finance_entries.receipt_id
   if (body.installment_id) {
     const { error: payErr } = await applyInstallmentPayment(supabase, {
       installmentId: Number(body.installment_id),
-      billingNoteId: bn.id,
+      billingNoteId: String(bn.id),
       paidDate: body.issue_date, // ไม่ส่ง paidAmount = ปิดงวดเต็มจำนวน
+      receiptId,
     });
     // ใบเสร็จออกสำเร็จแล้ว — ถ้า sync งวดพลาด ไม่ rollback แต่แจ้งเตือน (กันใบเสร็จหาย)
     if (payErr) return ok({ id: rc.id, code: rc.code, warn: "ออกใบเสร็จสำเร็จ แต่ปิดงวดไม่สำเร็จ: " + payErr }, 201);
+  } else if (bn.job_id) {
+    // [HIGH-3] ไม่มี installment แต่มี job_id → สร้าง finance_entry จากใบเสร็จตรงๆ
+    // (เช่น ใบเสร็จจ่ายตรงโดยไม่ผ่านงวด) เพื่อให้เงินรับเข้าเส้น B
+    const issueDate = body.issue_date || new Date().toISOString().slice(0, 10);
+    await supabase.from("finance_entries").insert({
+      job_id: bn.job_id,
+      amount,
+      payment_date: issueDate,
+      type: "FINAL",
+      channel: "TRANSFER",
+      source: "BILLING",
+      receipt_id: receiptId,
+      billing_installment_id: null,
+      is_auto_created: false,
+      is_voided: false,
+    });
+    // best-effort: ไม่ fail ใบเสร็จถ้า finance_entry insert พลาด
   }
 
   return ok({ id: rc.id, code: rc.code }, 201);

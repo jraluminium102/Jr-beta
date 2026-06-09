@@ -12,6 +12,8 @@ export interface ApplyPaymentOpts {
   /** ยอดที่รับชำระ; ถ้าไม่ระบุ = ปิดงวดเต็มจำนวน (กรณีออกใบเสร็จต่อ 1 งวด) */
   paidAmount?: number;
   paidDate?: string;
+  /** receipt id ที่ผูกกับการชำระนี้ (ถ้ามี) — ใช้ set finance_entries.receipt_id [HIGH-3] */
+  receiptId?: number | string;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -35,17 +37,30 @@ export async function applyInstallmentPayment(
   supabase: SupabaseClient,
   opts: ApplyPaymentOpts,
 ): Promise<{ error?: string }> {
-  // 1) ยืนยันงวดอยู่ในใบวางบิลนี้จริง + อ่านยอดงวด + seq
+  // 1) ยืนยันงวดอยู่ในใบวางบิลนี้จริง + อ่านยอดงวด + seq + paid_amount ปัจจุบัน
   const { data: inst, error: iErr } = await supabase
     .from("billing_installments")
-    .select("amount, seq")
+    .select("amount, seq, paid_amount")
     .eq("id", opts.installmentId)
     .eq("billing_note_id", opts.billingNoteId)
-    .single<{ amount: number; seq: number }>();
+    .single<{ amount: number; seq: number; paid_amount: number | null }>();
   if (iErr || !inst) return { error: "ไม่พบงวดในใบวางบิลนี้" };
 
   const amount = Number(inst.amount) || 0;
-  const paid = opts.paidAmount != null ? round2(Number(opts.paidAmount) || 0) : amount;
+
+  // [MEDIUM-1] partial payment: สะสม paid_amount แทนการ overwrite
+  // - ถ้าส่ง paidAmount มา (จาก /pay route = จ่ายบางส่วน/เพิ่ม): บวกสะสม, reject ถ้าเกิน
+  // - ถ้าไม่ส่ง paidAmount (จาก receipts = ปิดงวดเต็ม): set = amount เหมือนเดิม
+  let paid: number;
+  if (opts.paidAmount != null) {
+    const existing = Number(inst.paid_amount) || 0;
+    const newPaid = round2(existing + (Number(opts.paidAmount) || 0));
+    if (newPaid > amount + 0.01) return { error: "จ่ายเกินยอดงวด" };
+    paid = newPaid;
+  } else {
+    paid = amount;
+  }
+
   // installment_status enum = ('pending','paid') → จ่ายครบ=paid, บางส่วน=pending
   const status = paid >= amount ? "paid" : "pending";
 
@@ -86,6 +101,7 @@ export async function applyInstallmentPayment(
       seq: inst.seq,
       paid,
       paidDate: opts.paidDate || today(),
+      receiptId: opts.receiptId != null ? Number(opts.receiptId) : undefined,
     });
     if (syncErr) {
       // best-effort: log แต่ไม่ fail การจ่ายเงิน
@@ -99,66 +115,91 @@ export async function applyInstallmentPayment(
 /** sync หรือ upsert finance_entry เส้น B */
 async function syncFinanceEntry(
   supabase: SupabaseClient,
-  opts: { jobId: string; installmentId: number; seq: number; paid: number; paidDate: string },
+  opts: {
+    jobId: string;
+    installmentId: number;
+    seq: number;
+    paid: number;
+    paidDate: string;
+    receiptId?: number; // [HIGH-3] ผูก receipt_id เพื่อให้ void by receipt ทำงาน
+  },
 ): Promise<string | null> {
   const type = seqToType(opts.seq);
 
   // ตรวจว่า finance_entry ผูกงวดนี้มีอยู่แล้วไหม (by billing_installment_id, not voided)
   const { data: existing } = await supabase
     .from("finance_entries")
-    .select("id")
+    .select("id, is_auto_created, amount")
     .eq("billing_installment_id", opts.installmentId)
     .eq("is_voided", false)
-    .maybeSingle<{ id: string }>();
+    .maybeSingle<{ id: string; is_auto_created: boolean; amount: number }>();
 
   if (existing?.id) {
-    // update amount เพื่อให้ตรงกับยอดที่จ่ายจริง
+    // [MEDIUM-1] finance_entry.amount = ยอดสะสมล่าสุด (paid หลังบวก)
+    // [HIGH-3] set receipt_id ถ้ามี
+    // [HIGH-2] คง is_auto_created เดิม (ไม่ overwrite)
+    const updatePayload: Record<string, unknown> = {
+      amount: opts.paid,
+      payment_date: opts.paidDate,
+    };
+    if (opts.receiptId != null) updatePayload.receipt_id = opts.receiptId;
     const { error } = await supabase
       .from("finance_entries")
-      .update({ amount: opts.paid, payment_date: opts.paidDate })
+      .update(updatePayload)
       .eq("id", existing.id);
     return error?.message ?? null;
   }
 
-  // กรณี seq=1 (DEPOSIT): ค้น auto-created DEPOSIT ที่ยังไม่ผูกงวด → ผูกแทน insert ใหม่
+  // กรณี seq=1 (DEPOSIT): ค้น auto-created DEPOSIT ที่ยังไม่ผูกงวด → link แทน insert ใหม่
+  // [HIGH-2] คง is_auto_created=true และ amount เดิมของมัดจำ (ไม่ overwrite ด้วยยอดงวด)
   if (opts.seq === 1) {
     const { data: autoDeposit } = await supabase
       .from("finance_entries")
-      .select("id")
+      .select("id, amount")
       .eq("job_id", opts.jobId)
       .eq("type", "DEPOSIT")
       .eq("is_auto_created", true)
       .eq("is_voided", false)
       .is("billing_installment_id", null)
-      .maybeSingle<{ id: string }>();
+      .maybeSingle<{ id: string; amount: number }>();
 
     if (autoDeposit?.id) {
+      // link เข้าหางวด — คง amount เดิม (มัดจำจริงที่รับ), คง is_auto_created=true
+      // overwrite amount เฉพาะถ้ายอดงวดกับมัดจำเท่ากัน (ปกติควรเท่ากัน)
+      const depositAmt = Number(autoDeposit.amount) || 0;
+      const linkPayload: Record<string, unknown> = {
+        billing_installment_id: opts.installmentId,
+        source: "BILLING",
+        // ไม่เปลี่ยน is_auto_created (คงเป็น true)
+      };
+      if (opts.receiptId != null) linkPayload.receipt_id = opts.receiptId;
+      // อัปเดต payment_date ตามวันที่รับ แต่ไม่แตะ amount (คงยอดมัดจำจริง)
+      // ยกเว้นถ้ายอดงวดตรงกับมัดจำพอดี ให้ sync เพื่อความสอดคล้อง
+      if (Math.abs(depositAmt - opts.paid) < 0.01) {
+        linkPayload.amount = opts.paid;
+        linkPayload.payment_date = opts.paidDate;
+      }
       const { error } = await supabase
         .from("finance_entries")
-        .update({
-          billing_installment_id: opts.installmentId,
-          amount: opts.paid,
-          payment_date: opts.paidDate,
-          source: "BILLING",
-        })
+        .update(linkPayload)
         .eq("id", autoDeposit.id);
       return error?.message ?? null;
     }
   }
 
   // insert finance_entry ใหม่
-  const { error } = await supabase
-    .from("finance_entries")
-    .insert({
-      job_id: opts.jobId,
-      amount: opts.paid,
-      payment_date: opts.paidDate,
-      type,
-      channel: "TRANSFER",
-      source: "BILLING",
-      billing_installment_id: opts.installmentId,
-      is_auto_created: false,
-      is_voided: false,
-    });
+  const insertPayload: Record<string, unknown> = {
+    job_id: opts.jobId,
+    amount: opts.paid,
+    payment_date: opts.paidDate,
+    type,
+    channel: "TRANSFER",
+    source: "BILLING",
+    billing_installment_id: opts.installmentId,
+    is_auto_created: false,
+    is_voided: false,
+  };
+  if (opts.receiptId != null) insertPayload.receipt_id = opts.receiptId;
+  const { error } = await supabase.from("finance_entries").insert(insertPayload);
   return error?.message ?? null;
 }

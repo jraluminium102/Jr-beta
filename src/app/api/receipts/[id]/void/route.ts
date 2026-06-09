@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err, notFound } from "@/lib/bff/response";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const VoidSchema = z.object({
   reason: z.string().min(1, "ต้องระบุเหตุผล"),
@@ -69,20 +70,15 @@ export const POST = withRoute(async (req: Request, { params }: { params: { id: s
     }
   }
 
-  // 4) void finance_entry ที่ผูกกับ receipt นี้
-  await ctx.supabase
-    .from("finance_entries")
-    .update({ is_voided: true, void_reason: reason, voided_at: new Date().toISOString(), voided_by: ctx.user.id })
-    .eq("receipt_id", receiptId)
-    .eq("is_voided", false);
+  // 4) void/unlink finance_entries ที่ผูกกับ receipt นี้
+  // [HIGH-2] ถ้า entry เป็น is_auto_created=true (มัดจำที่รับจริง) → unlink แทน void
+  //           (set billing_installment_id=null, source=null, receipt_id=null, คง amount + is_voided=false)
+  //           ถ้า is_auto_created=false → void ตามปกติ
+  await voidOrUnlinkByReceiptId(ctx.supabase, receiptId, reason, ctx.user.id);
 
-  // 5) void finance_entry ที่ผูกกับ installment_id (ถ้ามีและไม่มี receipt_id ตรง)
+  // 5) void/unlink finance_entry ที่ผูกกับ installment_id (ถ้ามีและยังไม่ถูกจัดการด้านบน)
   if (rc.installment_id) {
-    await ctx.supabase
-      .from("finance_entries")
-      .update({ is_voided: true, void_reason: reason, voided_at: new Date().toISOString(), voided_by: ctx.user.id })
-      .eq("billing_installment_id", rc.installment_id)
-      .eq("is_voided", false);
+    await voidOrUnlinkByInstallmentId(ctx.supabase, rc.installment_id, reason, ctx.user.id);
   }
 
   // 6) audit log
@@ -96,3 +92,77 @@ export const POST = withRoute(async (req: Request, { params }: { params: { id: s
 
   return ok({ ok: true });
 });
+
+// ─── helpers: void หรือ unlink finance_entries [HIGH-2] ───────────────────────
+
+/**
+ * void หรือ unlink finance_entries ที่ผูกกับ receipt_id นี้
+ * is_auto_created=true → unlink (คงเงินมัดจำจริง)
+ * is_auto_created=false → void ตามปกติ
+ */
+async function voidOrUnlinkByReceiptId(
+  supabase: SupabaseClient,
+  receiptId: string | number,
+  reason: string,
+  userId: string,
+) {
+  const { data: entries } = await supabase
+    .from("finance_entries")
+    .select("id, is_auto_created")
+    .eq("receipt_id", receiptId)
+    .eq("is_voided", false);
+
+  if (!entries || entries.length === 0) return;
+
+  const now = new Date().toISOString();
+  for (const entry of entries as { id: string; is_auto_created: boolean }[]) {
+    if (entry.is_auto_created) {
+      // unlink: คง amount + is_voided=false, ล้าง billing link
+      await supabase
+        .from("finance_entries")
+        .update({ billing_installment_id: null, receipt_id: null, source: null })
+        .eq("id", entry.id);
+    } else {
+      // void ตามปกติ
+      await supabase
+        .from("finance_entries")
+        .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
+        .eq("id", entry.id);
+    }
+  }
+}
+
+/**
+ * void หรือ unlink finance_entries ที่ผูกกับ billing_installment_id นี้
+ * (เฉพาะที่ยังไม่ถูกจัดการจาก voidOrUnlinkByReceiptId)
+ * is_auto_created=true → unlink; is_auto_created=false → void
+ */
+async function voidOrUnlinkByInstallmentId(
+  supabase: SupabaseClient,
+  installmentId: number,
+  reason: string,
+  userId: string,
+) {
+  const { data: entries } = await supabase
+    .from("finance_entries")
+    .select("id, is_auto_created")
+    .eq("billing_installment_id", installmentId)
+    .eq("is_voided", false);
+
+  if (!entries || entries.length === 0) return;
+
+  const now = new Date().toISOString();
+  for (const entry of entries as { id: string; is_auto_created: boolean }[]) {
+    if (entry.is_auto_created) {
+      await supabase
+        .from("finance_entries")
+        .update({ billing_installment_id: null, receipt_id: null, source: null })
+        .eq("id", entry.id);
+    } else {
+      await supabase
+        .from("finance_entries")
+        .update({ is_voided: true, void_reason: reason, voided_at: now, voided_by: userId })
+        .eq("id", entry.id);
+    }
+  }
+}
