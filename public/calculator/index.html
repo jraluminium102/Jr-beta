@@ -2100,6 +2100,14 @@ function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
   const box=d.querySelector('.i-opts');
   let h='';
+  // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
+  // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
+  d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
+    var _pwIn=_smbOld.querySelector('.i-panels-wrap');
+    if(_pwIn){ var _qtyEl=d.querySelector('.i-qty'); var _qtyWrap=_qtyEl?_qtyEl.parentNode:null;
+      if(_qtyWrap&&_qtyWrap.parentNode){ _qtyWrap.parentNode.insertBefore(_pwIn,_qtyWrap); } }
+    _smbOld.remove();
+  });
   // R3.3: ประตูบานเปิด — banner Std/Up1/Up2/Up3 (เลือก 1 ใน 4)
   if(p.cat==='บานเปิด'){
     h+='<div class="opt" style="width:100%;background:#E2EFDA;border-left:4px solid #70AD47;padding:8px 12px;margin-bottom:6px;font-size:12px;line-height:1.5;"><b style="color:#385723;">ประตูบานเปิด — เลือกมือจับ 1 ใน 4:</b><br>'
