@@ -133,12 +133,14 @@ export default function CalculatorClient({
         </a>
       </div>
 
-      {/* Customer registry selector — combobox with search */}
-      <div className="glass rounded-2xl p-4">
+      {/* Customer registry selector — combobox with search (ยุบเป็น dropdown · กดหัวข้อเปิด) */}
+      <details className="glass rounded-2xl p-4 marker:hidden [&::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none select-none flex items-center justify-between gap-2 text-xs font-semibold text-brand-dark">
+          <span>① ผูกลูกค้าจากทะเบียน + วิธีออกใบเสนอราคา</span>
+          <span className="font-normal text-ink-3">กดเพื่อเปิด ▾</span>
+        </summary>
+        <div className="mt-3">
         <div className="max-w-xl" ref={comboRef}>
-          <span className="block text-xs font-semibold text-brand-dark mb-1">
-            ① ลูกค้า (จากทะเบียน) — จะผูกกับใบเสนอราคาอัตโนมัติ
-          </span>
 
           {/* Combobox input row */}
           <div className="relative">
@@ -257,7 +259,8 @@ export default function CalculatorClient({
           หมายเหตุ: <strong>ผูกลูกค้าเข้าระบบใช้ช่อง ① ด้านบนนี้</strong>{" "}
           — เมื่อเลือกแล้ว ช่องข้อมูลลูกค้าในเครื่องคิดราคาด้านล่างจะถูกเติมให้อัตโนมัติ
         </p>
-      </div>
+        </div>
+      </details>
 
       <div className="glass rounded-2xl overflow-hidden">
         <iframe
