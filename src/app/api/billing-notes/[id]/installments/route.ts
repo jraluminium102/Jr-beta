@@ -53,107 +53,34 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
   }
 
   const existingInst = bn.billing_installments ?? [];
-
-  // 3) ตรวจงวดที่ห้ามแก้ (paid หรือมี receipt active หรือมี finance_entry ผูก)
-  for (const ex of existingInst) {
-    if (ex.status === "paid") {
-      // งวดที่ paid ต้องยังอยู่ใน newInst (ห้ามลบ) และ amount ต้องเดิม
-      const match = newInst.find((n) => n.seq === ex.seq);
-      if (!match) return err(`งวดที่ ${ex.seq} ชำระแล้ว ไม่สามารถลบได้`, 400);
-      const exAmount = Number(existingInst.find((e) => e.seq === ex.seq)?.paid_amount) || 0;
-      // paid_amount ล็อก amount ไม่ให้ต่ำกว่ายอดที่จ่ายแล้ว
-      if (match.amount < exAmount) return err(`งวดที่ ${ex.seq} ชำระไปแล้ว ${exAmount} บาท ไม่สามารถลดยอดต่ำกว่านี้ได้`, 400);
-    }
-  }
-
-  // ตรวจ finance_entry ผูก
   const existingIds = existingInst.map((e) => e.id);
+
+  // 3) Business rule: แต่งงวดได้เฉพาะตอน "ยังไม่มีการชำระ/ออกใบเสร็จ" ใดๆ
+  // (ถ้าเริ่มเก็บเงิน/ออกใบเสร็จแล้ว → โครงสร้างงวดล็อก ต้อง void ใบวางบิลแล้วออกใหม่)
+  // กัน FK error จาก receipts/finance_entries ที่อ้างงวด + กันตัวเลขเพี้ยน
+  if (existingInst.some((e) => e.status === "paid" || (Number(e.paid_amount) || 0) > 0)) {
+    return err("ใบวางบิลนี้มีงวดที่ชำระแล้ว — ปรับงวดไม่ได้ ต้องยกเลิกใบวางบิลแล้วออกใหม่", 409);
+  }
   if (existingIds.length > 0) {
-    const { data: boundFe } = await ctx.supabase
-      .from("finance_entries")
-      .select("billing_installment_id")
-      .in("billing_installment_id", existingIds)
-      .eq("is_voided", false);
-
-    const boundSeqs = new Set(
-      (boundFe ?? []).map((f) => {
-        const inst = existingInst.find((e) => e.id === f.billing_installment_id);
-        return inst?.seq;
-      }).filter(Boolean),
-    );
-
-    for (const seq of boundSeqs) {
-      const match = newInst.find((n) => n.seq === seq);
-      if (!match) return err(`งวดที่ ${seq} มีรายการชำระผูกอยู่ ไม่สามารถลบได้`, 400);
+    const [{ count: rcCount }, { count: feCount }] = await Promise.all([
+      ctx.supabase.from("receipts").select("id", { count: "exact", head: true }).in("installment_id", existingIds),
+      ctx.supabase.from("finance_entries").select("id", { count: "exact", head: true }).in("billing_installment_id", existingIds),
+    ]);
+    if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) {
+      return err("ใบวางบิลนี้มีใบเสร็จ/รายการชำระผูกอยู่ — ปรับงวดไม่ได้ ต้องยกเลิกใบวางบิลแล้วออกใหม่", 409);
     }
   }
 
-  // ตรวจ receipt active
-  if (existingIds.length > 0) {
-    const { data: rcActive } = await ctx.supabase
-      .from("receipts")
-      .select("installment_id")
-      .in("installment_id", existingIds)
-      .eq("is_voided", false);
-
-    const rcSeqs = new Set(
-      (rcActive ?? []).map((r) => {
-        const inst = existingInst.find((e) => e.id === r.installment_id);
-        return inst?.seq;
-      }).filter(Boolean),
-    );
-
-    for (const seq of rcSeqs) {
-      const match = newInst.find((n) => n.seq === seq);
-      if (!match) return err(`งวดที่ ${seq} มีใบเสร็จผูกอยู่ ไม่สามารถลบได้`, 400);
-    }
-  }
-
-  // 4) replace งวด — ลบของเก่า (เฉพาะที่ไม่มี receipt/fe active) แล้ว insert ใหม่
-  // ใช้ deferred constraint ได้เพราะ trigger เป็น deferrable initially deferred
-
-  // ลบงวดที่ไม่ได้ถูก lock
-  const lockedSeqs = new Set(existingInst.filter((e) => e.status === "paid").map((e) => e.seq));
-  const idsToDelete = existingInst
-    .filter((e) => !lockedSeqs.has(e.seq))
-    .map((e) => e.id);
-
-  if (idsToDelete.length > 0) {
-    const { error: delErr } = await ctx.supabase
-      .from("billing_installments")
-      .delete()
-      .in("id", idsToDelete);
-    if (delErr) throw new Error("ลบงวดเดิมไม่สำเร็จ: " + delErr.message);
-  }
-
-  // update งวดที่ locked (paid) เฉพาะ label/due_date
-  for (const ex of existingInst.filter((e) => lockedSeqs.has(e.seq))) {
-    const match = newInst.find((n) => n.seq === ex.seq);
-    if (match) {
-      await ctx.supabase
-        .from("billing_installments")
-        .update({ label: match.label, due_date: match.due_date ?? null })
-        .eq("id", ex.id);
-    }
-  }
-
-  // insert งวดใหม่ (เฉพาะ seq ที่ไม่ locked)
-  const toInsert = newInst.filter((n) => !lockedSeqs.has(n.seq)).map((n, i) => ({
-    billing_note_id: Number(bnId),
-    seq: n.seq,
-    label: n.label,
-    amount: n.amount,
-    due_date: n.due_date ?? null,
-    sort_order: n.seq - 1,
-    status: "pending" as const,
-  }));
-
-  if (toInsert.length > 0) {
-    const { error: insErr } = await ctx.supabase
-      .from("billing_installments")
-      .insert(toInsert);
-    if (insErr) throw new Error("บันทึกงวดใหม่ไม่สำเร็จ: " + insErr.message);
-  }
+  // 4) replace งวดทั้งชุดผ่าน RPC (1 transaction) — ให้ deferred constraint (sum=total)
+  // เช็คตอน commit ได้ (PostgREST แยก delete/insert เป็นคนละ txn → trigger ปัดกลางทาง)
+  const sb = ctx.supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+  };
+  const { error: rpcErr } = await sb.rpc("replace_billing_installments", {
+    p_bn_id: Number(bnId),
+    p_items: newInst.map((n) => ({ seq: n.seq, label: n.label, amount: n.amount, due_date: n.due_date ?? null })),
+  });
+  if (rpcErr) return err("แก้งวดไม่สำเร็จ: " + rpcErr.message, 400);
 
   // audit
   await audit({

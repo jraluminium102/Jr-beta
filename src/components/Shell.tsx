@@ -19,7 +19,6 @@ const DOC_NAV: NavItem[] = [
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
   { href: "/billing-notes", icon: "banknote", label: "ใบวางบิล" },
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
-  { href: "/production-orders", icon: "factory", label: "ใบสั่งผลิต" },
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
   { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
