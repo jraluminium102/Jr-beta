@@ -314,7 +314,8 @@
       <label class="chk" style="margin-top:8px;display:block;"><input type="checkbox" id="svc-bkk" onchange="calcQuote()"> ในกทม.+ปริมณฑล (ฟรีถ้ายอด>20,000)</label>
       <label class="chk mt"><input type="checkbox" id="svc-elec" onchange="calcQuote()"> งานไฟ</label>
       <div id="svc-elec-box" class="hide mt" style="padding-left:16px;">
-        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟ 2 ดวง (+3,000)</label>
+        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟดาวน์ไลท์ (+1,500/ดวง)</label>
+        <div class="mt"><label>จำนวนดาวน์ไลท์ (ดวง)</label><input type="number" id="svc-elec-run-qty" min="1" step="1" value="2" oninput="calcQuote()" style="max-width:120px;"></div>
         <div class="mt"><label>สวิตซ์ใหม่ (จุด) +1,000/จุด</label><input type="number" id="svc-elec-sw" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
       </div>
       <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม</label>
@@ -2609,7 +2610,7 @@ function jobServices(net, totalArea){
   if(svcChk('svc-ship')){ const km=Math.max(0,svcNum('svc-ship-km')); const trucks=Math.max(1,Math.round(svcNum('svc-ship-trucks'))||1); const bkk=svcChk('svc-bkk'); let v=0; if(km>0&&!(bkk&&net>20000)){ const rate=km<=100?23:(km<=200?18:16); v=Math.round(km*rate*trucks); } lines.push(['ค่าขนส่ง ตจว. × '+trucks+' คัน', v]); }
   // Q14 งานไฟ
   if(svcChk('svc-elec')){
-    if(svcChk('svc-elec-run')) lines.push(['งานไฟ — เดินไฟ 2 ดวง', 3000]);
+    if(svcChk('svc-elec-run')){ const _dl=Math.max(1,Math.round(svcNum('svc-elec-run-qty'))||2); lines.push(['งานไฟ — เดินไฟดาวน์ไลท์ '+_dl+' ดวง', _dl*1500]); }
     const sw=Math.max(0,Math.round(svcNum('svc-elec-sw'))||0); if(sw>0) lines.push(['งานไฟ — สวิตซ์ใหม่ '+sw+' จุด', sw*1000]);
   }
   // Q15 งานรื้อของเดิม
