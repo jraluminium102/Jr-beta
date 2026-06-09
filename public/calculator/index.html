@@ -1331,7 +1331,9 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   const glassUp=GLASS[gi].s*a;
   const colorUp=colorPrice(ci,a,p.series||'');
   let opt=0;
-  if(p.opts&&optSel){ p.opts.forEach(o=>{ if(optSel[o.id]) opt+=o.price; }); }
+  if(p.opts&&optSel){ p.opts.forEach(o=>{ if(o.type==='select'||o.depends) return; if(optSel[o.id]) opt+=(o.price||0); }); }
+  // R3.9: บานกระทุ้ง tilt&turn (awn_mode=2) +5,000/บาน — ขับด้วย select แบบเปิด ไม่ใช่ checkbox
+  if(p.cat==='บานกระทุ้ง'&&optSel&&optSel.awn_mode==='2'){ const _tt=5000*Math.max(1,panels); opt+=_tt; msgs.push('tilt & turn +5,000/บาน × '+Math.max(1,panels)+' = '+fmt(_tt)); }
   if(p.closer&&optSel&&optSel.closer){ opt+=parseFloat(optSel.closer)||0; }
   if(p.digihandle&&optSel&&optSel.digi!==''&&optSel.digi!=null){ const di=DIGI[parseInt(optSel.digi)]; if(di){
       // R3.2: JR Prime ใช้กับยูโร + โซลิด วัน/ทู เท่านั้น (R3.8.2 renamed)
@@ -2180,7 +2182,11 @@ function buildItemOpts(d){
     h+='<label class="gh-row">ระบบควบคุม <select class="o-zctrl"><option value="manual">มือดึง</option><option value="aok220" selected>มอเตอร์ AOK 220V</option><option value="dooya">มอเตอร์ DOOYA</option><option value="aok50n">มอเตอร์ AOK 50N</option></select></label>';
     h+='</div>';
   }
-  if(p.opts){ p.opts.forEach(o=>{ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }); }
+  if(p.opts){ p.opts.forEach(o=>{
+    if(o.type==='select'){ h+=`<label class="opt">${o.label} <select class="o-${o.id}" onchange="calcQuote()" style="width:auto;height:32px;">`+(o.options||[]).map((t,i)=>`<option value="${i}"${i===(o.defaults||0)?' selected':''}>${t}</option>`).join('')+`</select></label>`; }
+    else if(o.depends){ /* ขับด้วย select อื่น (เช่น tilt&turn ตาม awn_mode) — ไม่วาดเป็น checkbox */ }
+    else { h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; }
+  }); }
   // shower — เลือก config ประตู+ติดตาย / ติดตายเดี่ยว / ประตูเดี่ยว + ถ้ามีประตูเลือกบานเปิด/เลื่อน
   if(p.id==='shower'){
     h+='<label class="opt">รูปแบบ shower <select class="o-shtype" style="width:auto;height:32px;"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select></label>';
@@ -2463,7 +2469,7 @@ function buildItemOpts(d){
 function readItem(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
   const optSel={};
-  if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); optSel[o.id]=c&&c.checked; });
+  if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(!c){ optSel[o.id]=(o.type==='select')?String(o.defaults||0):false; return; } optSel[o.id]=(o.type==='select')?c.value:c.checked; });
   // Pass2-A: ธรณี บานเปิด
   if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
   // Pass2-A: ธรณี บานเฟี้ยม
