@@ -186,33 +186,28 @@ function check(optName, setup, expected, detail) {
   entry.ok = ok;
 }
 
-// ===== TEST 3: หลังคา ปิดปลาย กว้าง 4 =====
-// สูตร: +1,000×w บาท (คิดก่อน roundUp)
-// ราคาหลังคา w=4: base + 4000 แล้ว roundUp → delta จะ ≥ 4000 (roundUp ขึ้นไปได้)
-// ตรวจ: delta ≥ 4,000 AND ใบมี "ปิดปลายหลังคา"
+// ===== TEST 3: หลังคา ปิดปลายกันน้ำ (ข้อ8 — ใช้ o-rfeave กรอกยาวเอง · ตัด o-roofend=ปิดปลาย ออกแล้ว) =====
+// สูตร: o-rfeave (ยาว ม.) × 1,000 · ยาว 4 → +4,000 (ก่อน roundUp)
 {
   clearAll();
   const ch = addItem({ g: 3, prod: "roof_vinyl", w: 4, h: 3 });
   const baseSell = readItemSell(ch);
 
-  setF(ch, ".o-roofend", "ปิดปลาย");
+  // ข้อ8: o-roofend ต้องไม่มีตัวเลือก "ปิดปลาย" แล้ว (กันคิดซ้ำ)
+  const roofendOpts = [...ch.querySelector(".o-roofend").options].map(o => o.value);
+  const noAutoEnd = !roofendOpts.includes("ปิดปลาย");
+
+  setF(ch, ".o-rfeave", "4"); // ปิดปลายกันน้ำ ยาว 4 ม.
   const afterSell = readItemSell(ch);
   const delta = afterSell - baseSell;
+  const expectedDelta = roundUp(baseSell + 4000) - baseSell;
 
-  const qt = getQuoteText();
-  const hasText = qt.includes("ปิดปลายหลังคา");
-
-  // ถ้า baseSell เป็น multiple ของ 1000 → delta = roundUp(base + 4000) - base = 4000 (เพราะ base+4000 อาจ roundUp เป๊ะ)
-  // รองรับ rounding: delta ต้องอยู่ในช่วง [4000, 5000)
-  const rawEndCost = 1000 * 4; // 4000
-  const expectedDelta = roundUp(baseSell + rawEndCost) - baseSell;
-
-  const ok = delta === expectedDelta && hasText;
+  const ok = noAutoEnd && delta === expectedDelta;
   const entry = check(
-    "หลังคา ปิดปลาย",
-    "roof_vinyl 4×3, .o-roofend=ปิดปลาย",
-    `delta=+${expectedDelta} (1,000×4 หลัง roundUp), ใบมี 'ปิดปลายหลังคา'`,
-    `delta=${delta} (คาด ${expectedDelta}) | hasText=${hasText} | base=${fmt(baseSell)} after=${fmt(afterSell)}`
+    "หลังคา ปิดปลายกันน้ำ (o-rfeave)",
+    "roof_vinyl 4×3, .o-rfeave=4 ม. · o-roofend ไม่มี 'ปิดปลาย'",
+    `o-roofend ตัด 'ปิดปลาย' ออก + delta=+${expectedDelta} (1,000×4)`,
+    `noAutoEnd=${noAutoEnd} | delta=${delta} (คาด ${expectedDelta}) | base=${fmt(baseSell)} after=${fmt(afterSell)}`
   );
   entry.ok = ok;
 }
