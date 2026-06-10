@@ -1160,7 +1160,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if((parseInt(panels)||1) > 3) _msg += ' · ⚠ เกิน 3 บาน/ชุด — ให้แยกชุดใหม่';
     return {a:aPerDoor, sell:roundUp(_ft), cost:null, addonLabel:'', msgs:[_msg]};
   }
-  if(p.gate){ const W=parseFloat(w)||0,H=parseFloat(h)||0,A=W*H; const mk=A<=6?4000:A<=8?3500:A<=10?3000:2500; const makeC=A*mk; const rnp=(optSel&&optSel.gatern)?PBYID[optSel.gatern]:null; const rnr=rnp?rnp.rate:0; const rnC=rnr>0?A*rnr*(1-ranaeDisc(A)):0; const fkey=optSel&&optSel.gfin; const fup=(rnp&&fkey&&rnp.fin&&rnp.fin[fkey])?rnp.fin[fkey]:0; const finC=fup>0?Math.round(A*fup*(1-ranaeDisc(A))):0; const mt=parseInt(optSel&&optSel.gmotor)||0; const mtC=mt*30000; const rt=(optSel&&optSel.railtype)||'straight'; const railr=rt==='curved'?2500:1500; const railC=2*W*railr; let leaves=0,leafC=0; if(rt==='curved'){ leaves=Math.ceil(W/0.75); leafC=leaves*4000; } const _g=roundUp(makeC+rnC+finC+mtC+railC+leafC); return {a:A, sell:_g, cost:null, addonLabel:'', msgs:['ค่าทำประตู '+fmt(makeC)+(rnp?(' · ระแนง'+fmt(Math.round(rnC))):'')+(finC>0?(' · อบสี '+fkey+' '+fmt(finC)):'')+(mt?(' · มอเตอร์ '+mt+' ตัว'):'')+' · ราง'+(rt==='curved'?'โค้ง':'ตรง')+'(2×กว้าง) '+fmt(railC)+(rt==='curved'?(' · บานโค้ง '+leaves+' บาน '+fmt(leafC)):'')]}; }
+  if(p.gate){ const W=parseFloat(w)||0,H=parseFloat(h)||0,A=W*H; const mk=A<=6?4000:A<=8?3500:A<=10?3000:2500; const makeC=A*mk; const rnp=(optSel&&optSel.gatern)?PBYID[optSel.gatern]:null; const rnr=rnp?rnp.rate:0; const rnC=rnr>0?A*rnr*(1-ranaeDisc(A)):0; const fkey=optSel&&optSel.gfin; const fup=(rnp&&fkey&&rnp.fin&&rnp.fin[fkey])?rnp.fin[fkey]:0; const finC=fup>0?Math.round(A*fup*(1-ranaeDisc(A))):0; const mt=parseInt(optSel&&optSel.gmotor)||0; const mtC=mt*30000; const rt=(optSel&&optSel.railtype)||'straight'; const railr=rt==='curved'?2500:1500; const railC=2*W*railr; let leaves=0,leafC=0; if(rt==='curved'){ leaves=Math.ceil(W/0.75); leafC=leaves*4000; } const woodC=parseFloat(optSel&&optSel.gatewood)||0; /* G2-12: OPTION ลายไม้ Golden Teak กรอกเอง */ const _g=roundUp(makeC+rnC+finC+mtC+railC+leafC+woodC); return {a:A, sell:_g, cost:null, addonLabel:'', msgs:['ค่าทำประตู '+fmt(makeC)+(rnp?(' · ระแนง'+fmt(Math.round(rnC))):'')+(finC>0?(' · อบสี '+fkey+' '+fmt(finC)):'')+(mt?(' · มอเตอร์ '+mt+' ตัว'):'')+' · ราง'+(rt==='curved'?'โค้ง':'ตรง')+'(2×กว้าง) '+fmt(railC)+(rt==='curved'?(' · บานโค้ง '+leaves+' บาน '+fmt(leafC)):'')+(woodC>0?(' · OPTION ลายไม้ Golden Teak +'+fmt(woodC)):'')]}; }
   if(p.grid){ const W=parseFloat(w)||0,H=parseFloat(h)||0; const nh=parseInt(optSel&&optSel.nh)||0, nv=parseInt(optSel&&optSel.nv)||0; const cr=parseFloat(optSel&&optSel.gridcolor)||200; const len=nh*W+nv*H; const nc=parseInt(optSel&&optSel.nc)||0; const curveC=nc*3000; const _gb=roundUp(len*cr+curveC); return {a:W*H, sell:_gb, cost:null, addonLabel:'', msgs:['เส้นคาด '+nh+'นอน+'+nv+'ตั้ง '+len.toFixed(1)+'ม.×'+cr+(nc>0?(' + โค้ง '+nc+' เส้น×3,000'):'')]}; }
   if(p.ceiling){ const real=area(w,h); const A=Math.max(real,10); const keys=Object.keys(p.crates); const ck=(optSel&&optSel.ckolor&&p.crates[optSel.ckolor]!==undefined)?optSel.ckolor:keys[0]; const rate=p.crates[ck]; const _c=roundUp(A*rate); return {a:real, sell:_c, cost:null, addonLabel:'', msgs:[ck+' '+fmt(rate)+'/ตร.ม.'+(real<10?(' · คิดขั้นต่ำ 10 ตร.ม.'):'')]}; }
   if(p.color_addon){
@@ -2434,7 +2434,7 @@ function buildItemOpts(d){
     h+='<label class="opt">กำไร % (มือ) <input type="number" class="o-glassprofit" min="0" step="1" value="100" style="width:70px;height:32px;"></label>';
     h+='<div class="opt" style="font-size:11px;color:#666;width:100%">Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-4000=+70% / >4001=+30% · ขั้น2 พื้นที่รวม >30=ลด10% / >80=ลด15% / >130=ลด20%</div>';
   }
-    if(p.gate){ h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></label>'; }
+    if(p.gate){ h+='<label class="opt">ลักษณะการเปิด <select class="o-gatetype" style="width:auto;height:32px;" onchange="calcQuote();"><option value="swing">บานสวิง</option><option value="casement">บานเปิด</option><option value="slide_bottom" selected>บานเลื่อนเปิดคู่กลางรางล่าง</option><option value="slide_top">บานเลื่อนเปิดคู่กลางรางบน</option></select></label>'; h+='<label class="opt">ลายระแนง <select class="o-gatern" style="width:auto;height:32px;max-width:230px;">'+PRODUCTS.filter(function(q){return q.ranae&&/ไม่โครง/.test(q.name);}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(' ไม่โครง','')+' ('+fmt(q.rate)+')</option>';}).join('')+'</select></label>'+'<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></label>'; h+='<label class="opt"><input type="checkbox" class="o-gatethresh" onchange="calcQuote();"> มีธรณี</label>'; h+='<label class="opt">OPTION ลายไม้ Golden Teak SMS (กรอกราคาเพิ่มเอง) <input type="number" class="o-gatewood" min="0" step="500" value="0" placeholder="บาท" style="width:90px;height:32px;" oninput="calcQuote();"> บาท</label>'; }
   if(p.bar_grid){ h+='<label class="opt">ทิศระแนง <select class="o-bgdir" style="width:auto;height:32px;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select></label>'; }
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
   if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ตามสีบาน (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
@@ -2661,7 +2661,7 @@ function readItem(d){
     const _cr=d.querySelector('.o-customrate'); optSel.customRate=_cr?_cr.value:'0';
     const _cd=d.querySelector('.o-customdesc'); optSel.customDesc=_cd?_cd.value:'';
   }
-    if(p.gate){ const _gr=d.querySelector('.o-gatern'); optSel.gatern=_gr?_gr.value:''; const _gm=d.querySelector('.o-gmotor'); optSel.gmotor=_gm?_gm.value:'0'; const _rt=d.querySelector('.o-railtype'); optSel.railtype=_rt?_rt.value:'straight'; const _gf=d.querySelector('.o-gfin'); optSel.gfin=_gf?_gf.value:''; }
+    if(p.gate){ const _gr=d.querySelector('.o-gatern'); optSel.gatern=_gr?_gr.value:''; const _gm=d.querySelector('.o-gmotor'); optSel.gmotor=_gm?_gm.value:'0'; const _rt=d.querySelector('.o-railtype'); optSel.railtype=_rt?_rt.value:'straight'; const _gf=d.querySelector('.o-gfin'); optSel.gfin=_gf?_gf.value:''; const _gt=d.querySelector('.o-gatetype'); optSel.gatetype=_gt?_gt.value:'slide_bottom'; const _gw=d.querySelector('.o-gatewood'); optSel.gatewood=_gw?_gw.value:'0'; const _gth=d.querySelector('.o-gatethresh'); optSel.gatethresh=_gth?_gth.checked:false; }
   if(p.grid){ const _nh=d.querySelector('.o-nh'); optSel.nh=_nh?_nh.value:'0'; const _nv=d.querySelector('.o-nv'); optSel.nv=_nv?_nv.value:'0'; const _gc=d.querySelector('.o-gridcolor'); optSel.gridcolor=_gc?_gc.value:'200'; const _nc=d.querySelector('.o-nc'); optSel.nc=_nc?_nc.value:'0'; }
   if(p.mosquito){
     const _m=d.querySelector('.o-mosq'); optSel.mosqId=_m?_m.value:'';
@@ -3257,6 +3257,26 @@ function genQuote(keepNo){
       var _fLines = ['ฝาตู้ Future Tech '+_fN+' บาน'];
       if((parseInt(_fo.ftcolor)||0)>0) _fLines.push('สีพิเศษ (นอกเหนือสีมาตรฐาน)');
       det = _fLines.join('\n');
+    }
+    else if(it.p.gate){
+      // G2-2/3/12/15: ประตูรั้วระแนง — ลักษณะเปิด + ระแนงติดตายด้านข้าง + ลายระแนง + สี + OPTION ลายไม้ + ธรณี
+      var _go=it.optSel||{};
+      var _gtMap={swing:'บานสวิง',casement:'บานเปิด',slide_bottom:'บานเลื่อนเปิดคู่กลางรางล่าง',slide_top:'บานเลื่อนเปิดคู่กลางรางบน'};
+      var _gtTxt=_gtMap[_go.gatetype]||'บานเลื่อนเปิดคู่กลางรางล่าง';
+      var _gLines=['ประตูระแนงอลูมิเนียม'+_gtTxt+' พร้อมระแนงติดตายด้านข้าง'];
+      // ลายระแนง (ซี่)
+      var _grnp=_go.gatern?PBYID[_go.gatern]:null;
+      if(_grnp){ _gLines.push('ระแนงอลูมิเนียม '+_grnp.name.replace(' ไม่โครง','').replace(/\s*\(ข้อ[^)]*\)/g,'').trim()); }
+      // สี (gfin)
+      var _gfinTxt=_go.gfin||'สีอบขาว'; if(_gfinTxt) _gLines.push('สี'+_gfinTxt.replace(/^สี/,''));
+      // ธรณี (G2-15)
+      if(_go.gatethresh) _gLines.push('มีธรณี'); else _gLines.push('ไม่มีธรณี');
+      // มอเตอร์
+      var _gmt=parseInt(_go.gmotor)||0; if(_gmt>0) _gLines.push('มอเตอร์ '+_gmt+' ตัว');
+      // G2-12: OPTION ลายไม้ Golden Teak SMS (ราคากรอกเอง · scale ตามงาน)
+      var _gwd=parseFloat(_go.gatewood)||0;
+      if(_gwd>0) _gLines.push('OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม '+fmt(_gwd)+' บาท');
+      det=_gLines.join('\n');
     }
     else if(AREA_CATS.indexOf(it.p.cat)>=0 && it.p.cat!=='หลังคา'){ det = '-'; }  // ข้อ40: หลังคาไม่ใช้ '-' — ไปเข้า branch หลังคา (โครงอลู)
     else if(it.p.zipscreen){
