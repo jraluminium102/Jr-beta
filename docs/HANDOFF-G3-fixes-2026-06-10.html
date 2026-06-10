@@ -166,6 +166,26 @@
 <li>render ใบ G3 อีกครั้งเทียบ verbatim ใบจริง (ธนบัตร/นก/หญิง/ยี/สุจินต์)</li>
 </ul>
 
+<h2>ภาคผนวก — ข้อมูลที่หามาเติม (10 มิ.ย. · ค้นสเปก/ตารางราคา/ซัพพลายเออร์)</h2>
+<div class="note"><b>FIX-5 ชินโคไลท์ — เจอลิสต์สีครบ พร้อมเติม <code>.o-roofcolor</code> ต่อรุ่นได้เลย</b> · แหล่ง: ไฟล์เฟิร์น (06_ราคาซัพพลายเออร์เฟิร์น เซลล์) · ชื่อรุ่นในระบบ = prefix รหัสจริง (ตรงกัน)</div>
+<table>
+<tr><th style="width:22%;">รุ่น (ระบบ imp15–20)</th><th class="c" style="width:42px;">หนา</th><th>สี (รหัส — ชื่อ) → ใส่เป็นตัวเลือก .o-roofcolor</th></tr>
+<tr><td>Heat Cut (HC-)</td><td class="c">6มม.</td><td>HC-N828 Modern Grey · HC-B703 Royal Blue · HC-570 Classic Brown · HC-N590 Noble Green</td></tr>
+<tr><td>Superior (SP-)</td><td class="c">6มม.</td><td>SP-NB00 ขาวขุ่น · SP-NB30 Foggy Brown · SP-B857 Marine Blue · SP-NC95 Light Brown (น้ำตาล)</td></tr>
+<tr><td>Nature (NT-)</td><td class="c">6มม.</td><td>NT-001 สีใส · NT-332 เทาอ่อน <b>⚠ R2 ระบุ "ไม่ขาย" แต่ใบจริงเฟิร์นเสนอ — เช็คซ้ำ</b></td></tr>
+<tr><td>Shade (430S)</td><td class="c">4มม.</td><td>Pearl White (สีเดียว)</td></tr>
+<tr><td>Prime (562)</td><td class="c">10มม.</td><td>Brownish Green (สีเดียว)</td></tr>
+<tr><td>Grang / กรัง</td><td class="c">10มม.</td><td>⚠ ไม่พบรหัส+สีในเอกสาร (P-NET ฟอนต์ไทยฝัง ดึงไม่ออก) — รอพี่นัท</td></tr>
+</table>
+<div class="note"><b>FIX-5 เมทัลชีท — ราคา 8 สเปกตรงระบบเป๊ะ · แต่ "ลิสต์สีแผ่น" ยังขาด</b></div>
+<ul>
+<li>ราคา R2 ตรง RATES ในระบบ (เช่น 1" ท้อง PVC EPS 6,300/5,800/5,300/4,800 = IMP7) — ราคาถูกแล้ว ไม่ต้องแก้</li>
+<li><b>ลิสต์สีแผ่นเมทัลชีท ไม่พบในเอกสารใด</b> — ใบจริง "สีน้ำตาล" จริง ๆ คือสีท่อ PVC/โซ่รางน้ำ <b>ไม่ใช่สีแผ่น</b> → ต้องขอแคตตาล็อกซัพพลายเออร์เมทัลชีทเพิ่ม</li>
+<li><b>⚠ "เมทัลชีท PU หนา 45 มม." (ใบคุณยี) ไม่ match ระบบ</b> (ระบบใช้หน่วย 1"/2") — เช็คซ้ำว่าสเปกเดียวกันไหม</li>
+</ul>
+<div class="crit"><b>FIX-8/9/10 (Phase 2) — ยืนยันค้นแล้ว: ไม่มีราคาในเอกสารเลย</b><br>
+ISOWALL/สมาร์ทบอร์ด (ต่อความหนา) · โครงเหล็กชุบซิงค์ (vs อลู) · ฝ้าเฉียง → ทุกตัว UI พร้อม แต่ <b>rate ว่าง</b> (เครื่องคิด 0 · index.html มี comment "รอเช็คราคาจริง") · <b>ต้องขอราคาจากพี่นัท/ทีมก่อนถึงเติมสูตรได้</b> — แนะนำเพิ่มเข้า <code>02_รวมออปชั่น_R3.9รายการขอราคา_เพิ่มเติม.md</code></div>
+
 <div class="foot">
 สร้างโดย skill quote-option-audit · รวมผล Batch 1 (หลังคา) + Batch 2 (ฝ้า/ผนัง+ราคา) + ใบเทียบใบจริง + เทส subagent ×3 (render ทุก product เทียบใบจริง) · READ-ONLY ไม่แตะ index.html · เอกสารนี้ = handoff สั่งแก้ HTML อีกแชท
 </div>
