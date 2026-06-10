@@ -369,7 +369,7 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
       {/* flex-col + header/footer ติดขอบ → ปิด/บันทึกเห็นเสมอแม้เนื้อหายาว */}
-      <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl fade-in flex flex-col max-h-[88dvh]">
+      <div className="relative w-full sm:max-w-md glass-dark rounded-t-3xl sm:rounded-3xl fade-in flex flex-col max-h-[88dvh]">
         {/* header (ปิดได้เสมอ) */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-white/10">
           <h2 className="text-white font-bold text-lg">เพิ่มงานผลิต</h2>
