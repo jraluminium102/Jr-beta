@@ -6,6 +6,131 @@ import { baht } from "@/lib/money";
 import Icon from "@/components/Icon";
 
 // ─────────────────────────────────────────────
+// Edit billing total dialog
+// ─────────────────────────────────────────────
+export function EditBillingTotalButton({
+  billingNoteId,
+  currentTotal,
+}: {
+  billingNoteId: number;
+  currentTotal: number;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(String(currentTotal));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const newTotal = Number(value);
+    if (!newTotal || newTotal <= 0) { setError("ยอดต้องมากกว่า 0"); return; }
+    setBusy(true);
+    setError("");
+    const res = await fetch(`/api/billing-notes/${billingNoteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ total: newTotal }),
+    });
+    const json = await res.json();
+    setBusy(false);
+    if (res.ok) { setOpen(false); router.refresh(); }
+    else setError(json.error ?? "แก้ยอดไม่สำเร็จ");
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark min-h-[44px] focus:outline-none focus-visible:ring-2"
+        aria-label="แก้ยอดบิล"
+      >
+        <Icon name="pencil" size={16} /> แก้ยอดบิล
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      role="dialog"
+      aria-modal="true"
+      aria-label="แก้ยอดบิล"
+    >
+      <form
+        onSubmit={submit}
+        className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+            <Icon name="pencil" size={18} /> แก้ยอดบิล
+          </h2>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="ปิด"
+            className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+          ยอดปัจจุบัน:{" "}
+          <b className="tabular-nums">฿{baht(currentTotal)}</b>
+          <br />
+          งวดชำระจะถูก re-split อัตโนมัติ — แก้งวดต่อได้ภายหลัง
+        </div>
+
+        <label className="block text-sm">
+          <span className="text-xs font-medium text-gray-500">
+            ยอดบิลใหม่ (บาท) <span className="text-red-600">*</span>
+          </span>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0.01"
+            required
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            aria-label="ยอดบิลใหม่"
+          />
+        </label>
+
+        {error && (
+          <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            disabled={busy}
+            className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2"
+          >
+            ยกเลิก
+          </button>
+          <button
+            type="submit"
+            disabled={busy || !value || Number(value) <= 0}
+            className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2"
+          >
+            {busy && (
+              <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+            )}
+            บันทึกยอดใหม่
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Void billing note dialog
 // ─────────────────────────────────────────────
 export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number }) {

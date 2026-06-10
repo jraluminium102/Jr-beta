@@ -5,11 +5,25 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht, suggestInstallments } from "@/lib/money";
-import type { ApprovedQuotation } from "./page";
+import type { AvailableQuotation } from "./page";
 
-export default function NewBillingClient({ quotations, preselectId }: { quotations: ApprovedQuotation[]; preselectId?: number | null }) {
+const STATUS_LABEL: Record<string, string> = {
+  draft: "ฉบับร่าง",
+  sent: "ส่งแล้ว",
+  approved: "อนุมัติ",
+};
+
+export default function NewBillingClient({
+  quotations,
+  preselectId,
+}: {
+  quotations: AvailableQuotation[];
+  preselectId?: number | null;
+}) {
   const router = useRouter();
-  const [quotationId, setQuotationId] = useState<number | "">(preselectId ?? quotations[0]?.id ?? "");
+  const [quotationId, setQuotationId] = useState<number | "">(
+    preselectId ?? quotations[0]?.id ?? ""
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -49,24 +63,33 @@ export default function NewBillingClient({ quotations, preselectId }: { quotatio
 
       {quotations.length === 0 ? (
         <Card className="p-6 text-center text-ink-3">
-          ยังไม่มีใบเสนอราคาที่อนุมัติ — ต้องอนุมัติใบเสนอราคาก่อนจึงจะวางบิลได้
+          ยังไม่มีใบเสนอราคาที่พร้อมวางบิล — ต้องสร้างใบเสนอราคาและยังไม่มีบิลที่ active
         </Card>
       ) : (
         <div className="grid lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
             <Card className="p-5">
               <label className="block text-sm">
-                <span className="text-xs font-medium text-ink-3">ใบเสนอราคาที่อนุมัติ *</span>
-                <select value={quotationId} onChange={(e) => setQuotationId(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
+                <span className="text-xs font-medium text-ink-3">ใบเสนอราคา *</span>
+                <select
+                  value={quotationId}
+                  onChange={(e) => setQuotationId(e.target.value ? Number(e.target.value) : "")}
+                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none"
+                >
                   <option value="">— เลือกใบเสนอราคา —</option>
                   {quotations.map((q) => (
                     <option key={q.id} value={q.id}>
                       {q.code} · {q.customer_snapshot?.name} · ฿{baht(q.net)}
+                      {q.status !== "approved" ? ` [${STATUS_LABEL[q.status] ?? q.status}]` : ""}
                     </option>
                   ))}
                 </select>
               </label>
+              {selected && selected.status !== "approved" && (
+                <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ใบเสนอราคานี้ยังไม่ถูกอนุมัติ — การสร้างบิลจะอนุมัติใบเสนอราคาให้อัตโนมัติ
+                </p>
+              )}
             </Card>
 
             <Card className="p-5">
@@ -87,7 +110,7 @@ export default function NewBillingClient({ quotations, preselectId }: { quotatio
                       <tr key={p.seq} className="border-b border-gray-100">
                         <td className="p-2">{p.seq}</td>
                         <td>{p.label}</td>
-                        <td className="text-right p-2 font-semibold">฿{baht(p.amount)}</td>
+                        <td className="text-right p-2 font-semibold tabular-nums">฿{baht(p.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -101,20 +124,35 @@ export default function NewBillingClient({ quotations, preselectId }: { quotatio
               <h3 className="font-bold text-brand-dark mb-3">สรุป</h3>
               <div className="flex justify-between text-sm py-0.5">
                 <span className="text-ink-3">ยอดรวม (จากใบเสนอ)</span>
-                <span className="font-bold" style={{ color: "#7d0f15" }}>฿{baht(selected?.net ?? 0)}</span>
+                <span className="font-bold tabular-nums" style={{ color: "#7d0f15" }}>
+                  ฿{baht(selected?.net ?? 0)}
+                </span>
               </div>
               <div className="flex justify-between text-sm py-0.5">
                 <span className="text-ink-3">จำนวนงวด</span>
                 <span>{plan.length} งวด</span>
               </div>
 
-              {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
+              {err && (
+                <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">
+                  {err}
+                </p>
+              )}
 
               <div className="mt-4 space-y-2">
-                <button onClick={submit} disabled={busy || !quotationId} className="press w-full rounded-xl py-3 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
+                <button
+                  onClick={submit}
+                  disabled={busy || !quotationId}
+                  className="press w-full rounded-xl py-3 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60 min-h-[44px]"
+                >
                   {busy ? "กำลังบันทึก…" : "สร้างใบวางบิล"}
                 </button>
-                <button onClick={() => router.back()} className="press w-full glass-soft rounded-xl py-2.5 text-sm text-ink-2">ยกเลิก</button>
+                <button
+                  onClick={() => router.back()}
+                  className="press w-full glass-soft rounded-xl py-2.5 text-sm text-ink-2 min-h-[44px]"
+                >
+                  ยกเลิก
+                </button>
               </div>
             </Card>
           </div>

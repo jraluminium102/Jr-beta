@@ -6,7 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
-import { VoidBillingNoteButton, InstallmentEditor } from "./BillingFinanceActions";
+import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton } from "./BillingFinanceActions";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
@@ -33,6 +33,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   const writable = canWrite(profile?.role);
   const canVoid = can((profile?.role ?? "VIEWER") as Role, "finance", "void");
   const isCancelled = bn.status === "cancelled";
+  // ซ่อนปุ่มแก้ยอดถ้ามีงวดที่ชำระแล้ว (BFF guard ซ้ำอีกชั้น)
+  const hasAnyPayment = installments.some(
+    (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
+  );
 
   // ดึงรหัสใบเสนออ้างอิง (ถ้ามี)
   let refCode: string | null = null;
@@ -55,6 +59,12 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           <Link href={`/billing-notes/${bn.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
+          {writable && !isCancelled && !hasAnyPayment && (
+            <EditBillingTotalButton
+              billingNoteId={bn.id}
+              currentTotal={bn.total}
+            />
+          )}
           {writable && !isCancelled && (
             <InstallmentEditor
               billingNoteId={bn.id}

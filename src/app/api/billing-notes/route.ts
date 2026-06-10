@@ -18,7 +18,8 @@ export async function GET() {
   return ok(data);
 }
 
-// POST /api/billing-notes  → สร้างใบวางบิลจากใบเสนอราคาที่อนุมัติ (ออกรหัส + แบ่งงวด)
+// POST /api/billing-notes  → สร้างใบวางบิลจากใบเสนอราคา
+// การสร้างบิล = รู้โดยนัยว่าลูกค้าอนุมัติแล้ว → auto-approve quotation ถ้ายังไม่ approved
 export async function POST(req: Request) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
@@ -30,22 +31,32 @@ export async function POST(req: Request) {
 
   const supabase = createClient();
 
-  // 1) ดึงใบเสนอราคา — ต้องอนุมัติแล้วเท่านั้น
+  // 1) ดึงใบเสนอราคา
   const { data: q, error: qErr } = await supabase
     .from("quotations")
     .select("id, status, net, customer_snapshot, job_id")
     .eq("id", body.quotation_id)
     .single<Pick<Quotation, "id" | "status" | "net" | "customer_snapshot"> & { job_id: string | null }>();
   if (qErr || !q) return fail("ไม่พบใบเสนอราคา", 404);
-  if (q.status !== "approved") return fail("ใบเสนอต้องอนุมัติก่อน");
+  // ห้ามสร้างจากใบที่ถูกยกเลิก
+  if (q.status === "cancelled") return fail("ใบเสนอราคาถูกยกเลิกแล้ว สร้างบิลไม่ได้", 409);
+
+  // 2) auto-approve quotation ถ้ายังไม่ approved (การสร้างบิล = อนุมัติโดยนัย)
+  if (q.status !== "approved") {
+    const { error: approveErr } = await supabase
+      .from("quotations")
+      .update({ status: "approved" })
+      .eq("id", q.id);
+    if (approveErr) return fail("อนุมัติใบเสนอราคาอัตโนมัติไม่สำเร็จ: " + approveErr.message, 500);
+  }
 
   const net = Number(q.net) || 0;
 
-  // 2) ออกรหัสอัตโนมัติผ่าน RPC
+  // 3) ออกรหัสอัตโนมัติผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "BL" });
   if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
 
-  // 3) insert หัวเอกสาร
+  // 4) insert หัวเอกสาร
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
     .insert({
@@ -63,7 +74,7 @@ export async function POST(req: Request) {
     .single();
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
 
-  // 4) สร้างงวดชำระอัตโนมัติ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
+  // 5) สร้างงวดชำระอัตโนมัติ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
   const plan = suggestInstallments(net);
   const rows = plan.map((p) => ({
     billing_note_id: bn.id,

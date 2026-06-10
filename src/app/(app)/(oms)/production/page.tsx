@@ -5,8 +5,8 @@ import { api } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
-import { TriangleAlert, Clock, ChevronRight } from "@/components/ui/icons";
-import { ProductionStepModal, type ProdRow } from "@/components/production/ProductionStepModal";
+import { TriangleAlert, Clock, ChevronRight, Package, PackageCheck, Search } from "@/components/ui/icons";
+import { ProductionStepModal, type ProdRow, type BoqSummary } from "@/components/production/ProductionStepModal";
 import type { ProdStatus } from "@/lib/database.types";
 
 type Row = ProdRow & {
@@ -14,6 +14,29 @@ type Row = ProdRow & {
   measure_scheduled: string | null; planned_install_date: string | null;
   producer_note: string | null;
 };
+
+function BoqBadge({ boq }: { boq: BoqSummary | null }) {
+  if (!boq) return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-300/25 text-amber-200">
+      <TriangleAlert size={10} /> ไม่มี BOQ
+    </span>
+  );
+  if (boq.status === "ordered") return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-300/25 text-emerald-200">
+      <PackageCheck size={10} /> สั่งของแล้ว
+    </span>
+  );
+  if (boq.status === "confirmed") return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-300/25 text-sky-200">
+      <Package size={10} /> BOQ ยืนยันแล้ว
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-white/8 border border-white/12 text-white/55">
+      <Package size={10} /> BOQ ร่าง
+    </span>
+  );
+}
 
 const today = new Date().toISOString().slice(0, 10);
 // กลุ่มสรุปสำหรับ dashboard ช่าง
@@ -36,6 +59,7 @@ function daysSince(d: string | null, created: string) {
 export default function ProductionPage() {
   const [view, setView] = useState<"table" | "board">("table");
   const [filterKey, setFilterKey] = useState<string | null>(null);
+  const [q, setQ] = useState("");
   const [open, setOpen] = useState<Row | null>(null);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["production"], queryFn: () => api.get<Row[]>("/production") });
@@ -50,12 +74,20 @@ export default function ProductionPage() {
 
   const overdue = rows.filter((r) => r.status !== "READY" && daysSince(r.status_updated_at, r.created_at) >= 5);
   const todayJobs = rows.filter((r) => r.measure_scheduled === today || r.planned_install_date === today);
+  // เตือนเดดไลน์: วันติดตั้งใกล้ (ภายใน 3 วัน) หรือเลยกำหนด แต่งานยังไม่พร้อมติดตั้ง
+  const in3days = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  const dueSoon = rows.filter((r) => r.status !== "READY" && r.planned_install_date && r.planned_install_date <= in3days);
 
   const filtered = useMemo(() => {
     const g = GROUPS.find((x) => x.key === filterKey);
-    const list = g ? rows.filter((r) => g.statuses.includes(r.status)) : rows;
+    let list = g ? rows.filter((r) => g.statuses.includes(r.status)) : rows;
+    const term = q.trim().toLowerCase();
+    if (term) list = list.filter((r) =>
+      (r.job?.job_code ?? "").toLowerCase().includes(term) ||
+      (r.job?.customer_name ?? "").toLowerCase().includes(term) ||
+      (r.job?.customer_area ?? "").toLowerCase().includes(term));
     return [...list].sort((a, b) => (FLOW_ORDER[a.status] - FLOW_ORDER[b.status]) || (daysSince(b.status_updated_at, b.created_at) - daysSince(a.status_updated_at, a.created_at)));
-  }, [rows, filterKey]);
+  }, [rows, filterKey, q]);
 
   return (
     <div className="p-4 sm:p-6 fade-in">
@@ -81,8 +113,21 @@ export default function ProductionPage() {
         ))}
       </div>
 
-      {/* งานค้างนาน + วันนี้ */}
+      {/* ค้นหา */}
+      <label className="glass-card rounded-xl flex items-center gap-2.5 px-3.5 py-2.5 mb-3 focusable" style={{ color: "var(--t-mid)" }}>
+        <Search size={18} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา job / ชื่อลูกค้า / พื้นที่…" aria-label="ค้นหางานผลิต"
+          className="bg-transparent outline-none text-sm text-white placeholder-white/45 w-full" />
+        {q && <button onClick={() => setQ("")} aria-label="ล้าง" className="text-white/50 hover:text-white text-sm">✕</button>}
+      </label>
+
+      {/* งานค้างนาน + ใกล้เดดไลน์ + วันนี้ */}
       <div className="flex flex-wrap gap-2 mb-4">
+        {dueSoon.length > 0 && (
+          <div className="flex items-center gap-2 bg-amber-500/20 border border-amber-300/40 rounded-xl px-3 py-2 text-[13px] text-amber-100 font-semibold">
+            ⏰ ใกล้/เลยวันติดตั้ง (ยังไม่พร้อม) <b className="tnum">{dueSoon.length}</b> งาน
+          </div>
+        )}
         {overdue.length > 0 && (
           <div className="flex items-center gap-2 bg-rose-500/15 border border-rose-300/30 rounded-xl px-3 py-2 text-[13px] text-rose-100">
             <Clock size={16} /> งานค้างเกิน 5 วัน <b className="tnum">{overdue.length}</b> งาน
@@ -114,6 +159,7 @@ export default function ProductionPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <Chip>{PROD_STATUS[r.status]}</Chip>
+                    <BoqBadge boq={r.boq_summary} />
                     {r.production_queued && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
                     {r.production_done && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>เสร็จ: {thDate(r.production_done)}</span>}
                   </div>
@@ -140,6 +186,7 @@ export default function ProductionPage() {
                     <button key={r.id} onClick={() => setOpen(r)} className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
                       <div className="text-white text-sm font-medium tnum">{r.job?.job_code}</div>
                       <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</div>
+                      <div className="mt-1.5"><BoqBadge boq={r.boq_summary} /></div>
                     </button>
                   ))}
                   {items.length === 0 && <div className="text-[12px] text-center py-4" style={{ color: "rgba(255,255,255,0.35)" }}>—</div>}

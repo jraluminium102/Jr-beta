@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -8,6 +8,29 @@ import {
   FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus,
 } from "@/lib/queue";
+
+// ---- slot-conflict helpers --------------------------------------------------
+
+type SlotConflict = {
+  kind: "leave" | "full" | "warn";
+  msg: string;
+};
+
+type AvailabilityRow = {
+  sales_id: string;
+  date: string;
+  kind: string;
+  half: string | null;
+};
+
+type ExistingSlot = {
+  id: string;
+  sales_id: string | null;
+  queue_date: string | null;
+  queue_time: string | null;
+  status: string;
+  customer_name: string;
+};
 
 type FormState = {
   status: QueueStatus;
@@ -73,6 +96,89 @@ export function QueueModal({
   const coords = parseLatLng(f.location_url);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
+
+  // ---- slot-conflict check ----
+  const [conflicts, setConflicts] = useState<SlotConflict[]>([]);
+  const [checkingConflict, setCheckingConflict] = useState(false);
+
+  useEffect(() => {
+    if (!f.queue_date || !f.queue_time || !f.sales_id) { setConflicts([]); return; }
+    let cancelled = false;
+    setCheckingConflict(true);
+
+    async function checkConflict() {
+      try {
+        // โหลด availability + existing entries ของวันนั้น
+        const [availRes, entryRes] = await Promise.all([
+          api.get<AvailabilityRow[]>(`/queue/availability?sales_id=${f.sales_id}`),
+          api.get<ExistingSlot[]>(`/queue?month=${f.queue_date!.slice(0, 7)}&sales=${f.sales_id}`),
+        ]);
+        if (cancelled) return;
+
+        const found: SlotConflict[] = [];
+        const slot = f.queue_time.slice(0, 5);
+        const date = f.queue_date;
+
+        // ตรวจวันลา
+        const av = (availRes.data ?? []).filter((a) => a.sales_id === f.sales_id && a.date === date);
+        const isFullLeave = av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY");
+        const isAMLeave = av.some((a) => (a.kind === "LEAVE_HALF" && a.half === "AM") || a.kind === "OFFICE_HALF");
+        const isPMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "PM");
+
+        if (isFullLeave) found.push({ kind: "leave", msg: "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
+        else if (isAMLeave && slot === "10:00") found.push({ kind: "leave", msg: "เซลล์ลาช่วงเช้า — ไม่สามารถรับคิว 10:00" });
+        else if (isPMLeave && slot === "14:00") found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — ไม่สามารถรับคิว 14:00" });
+
+        // ตรวจชนคิวเดิม
+        const sameSlot = (entryRes.data ?? []).filter((e) =>
+          e.sales_id === f.sales_id &&
+          e.queue_date === date &&
+          e.queue_time?.slice(0, 5) === slot &&
+          e.status !== "CANCELLED" &&
+          (!editing || e.id !== entry!.id)
+        );
+        if (sameSlot.length > 0) {
+          found.push({ kind: "full", msg: `slot นี้มีคิวอยู่แล้ว: ${sameSlot.map((x) => x.customer_name).join(", ")}` });
+        }
+
+        // ตรวจ FULLDAY: ต้องการทั้ง 2 slot
+        if (f.job_size === "FULLDAY") {
+          const otherSlot = slot === "10:00" ? "14:00" : "10:00";
+          const otherTaken = (entryRes.data ?? []).filter((e) =>
+            e.sales_id === f.sales_id &&
+            e.queue_date === date &&
+            e.queue_time?.slice(0, 5) === otherSlot &&
+            e.status !== "CANCELLED" &&
+            (!editing || e.id !== entry!.id)
+          );
+          if (otherTaken.length > 0) {
+            found.push({ kind: "warn", msg: `งานเต็มวัน — slot ${otherSlot} ถูกจองแล้ว` });
+          }
+        }
+
+        // ตรวจเกิน 2 slot ต่อวัน
+        const dayCount = (entryRes.data ?? []).filter((e) =>
+          e.sales_id === f.sales_id &&
+          e.queue_date === date &&
+          e.status !== "CANCELLED" &&
+          (!editing || e.id !== entry!.id)
+        ).length;
+        if (dayCount >= 2 && !sameSlot.length) {
+          found.push({ kind: "warn", msg: "เซลล์มีคิวครบ 2 ช่องในวันนี้แล้ว" });
+        }
+
+        setConflicts(found);
+      } catch {
+        setConflicts([]);
+      } finally {
+        if (!cancelled) setCheckingConflict(false);
+      }
+    }
+
+    checkConflict();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.queue_date, f.queue_time, f.sales_id, f.job_size]);
 
   // Separate main sales reps from assistants for dropdowns
   const mainSales = salesList.filter((s) => s.role !== "ASSISTANT");
@@ -290,9 +396,51 @@ export function QueueModal({
           <Field label="วันที่นัด">
             <input type="date" value={f.queue_date} onChange={(e) => set("queue_date", e.target.value)} className={inp} />
           </Field>
-          <Field label="เวลา">
-            <input type="time" value={f.queue_time} onChange={(e) => set("queue_time", e.target.value)} className={inp} />
+          <Field label="เวลา (slot)">
+            <div className="flex gap-2">
+              {(["", "10:00", "14:00"] as const).map((slot) => {
+                const isActive = f.queue_time === slot;
+                const label = slot === "" ? "— ยังไม่ระบุ" : slot === "10:00" ? "เช้า 10:00" : "บ่าย 14:00";
+                return (
+                  <button key={slot} type="button"
+                    onClick={() => set("queue_time", slot)}
+                    className={`press flex-1 rounded-lg px-2 py-2 text-sm font-semibold border transition-colors min-h-[44px]
+                      ${isActive
+                        ? slot === "10:00" ? "bg-sky-600 text-white border-sky-600"
+                          : slot === "14:00" ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-gray-200 text-ink border-gray-300"
+                        : "glass-soft text-ink-2 hover:bg-white/60"
+                      }`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </Field>
+
+          {/* แสดงคำเตือน conflict */}
+          {(conflicts.length > 0 || checkingConflict) && (
+            <div className="col-span-2">
+              {checkingConflict ? (
+                <p className="text-[11px] text-ink-3 flex items-center gap-1">
+                  <Icon name="refresh" size={11} className="animate-spin" /> ตรวจสอบ slot…
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {conflicts.map((c, i) => (
+                    <p key={i} role="alert"
+                      className={`text-[12px] rounded-lg px-2.5 py-1.5 flex items-center gap-1.5
+                        ${c.kind === "leave" ? "bg-red-50 text-red-700" :
+                          c.kind === "full" ? "bg-orange-50 text-orange-800" :
+                          "bg-amber-50 text-amber-800"}`}>
+                      <Icon name={c.kind === "leave" ? "warn" : "info"} size={13} />
+                      {c.msg}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <Field label="LINE ติดต่อลูกค้า">
             <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)} className={inp} />

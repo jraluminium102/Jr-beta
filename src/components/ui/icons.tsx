@@ -3,6 +3,7 @@ import {
   Wallet, Users, Settings, Search, Plus, X, LogOut, Bell, Menu,
   Lock, Download, ChevronRight, Clock, Check, ShieldCheck,
   PencilRuler, ClipboardList, CalendarDays, Trash2,
+  Package, ExternalLink, PackageCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,5 +18,5 @@ export const NavIcons: Record<string, LucideIcon> = {
 export {
   Search, Plus, X, LogOut, Bell, Menu, Lock, Download,
   ChevronRight, Clock, Check, ShieldCheck, TriangleAlert,
-  CalendarDays, Trash2,
+  CalendarDays, Trash2, Package, ExternalLink, PackageCheck,
 };

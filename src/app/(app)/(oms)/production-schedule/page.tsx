@@ -72,7 +72,10 @@ export default function ProductionSchedulePage() {
     }
   };
 
-  const markDone = (r: SchedRow) => save(r, { status: "DONE" } as Partial<SchedRow>);
+  const markDone = (r: SchedRow) => {
+    if (!confirm(`ยืนยันว่างาน "${r.title}" เสร็จแล้ว? (จะหายจากตารางคิว)`)) return;
+    save(r, { status: "DONE" } as Partial<SchedRow>);
+  };
   const del = async (r: SchedRow) => {
     if (!confirm(`ลบงาน "${r.title}" ออกจากตาราง?`)) return;
     setSavingId(r.id);
