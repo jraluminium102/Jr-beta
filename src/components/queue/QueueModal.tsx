@@ -93,9 +93,25 @@ export function QueueModal({
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setF((s) => ({ ...s, [k]: v }));
 
-  const coords = parseLatLng(f.location_url);
+  const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(null);
+  const [resolving, setResolving] = useState(false);
+  // พิกัด: parse ตรงๆ (raw/ลิงก์เต็ม) ก่อน, ไม่ได้ค่อยใช้ที่ server แกะลิงก์ย่อมา
+  const coords = parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
+
+  // แกะลิงก์แผนที่ผ่าน server (รองรับ maps.app.goo.gl) เมื่อ parse ตรงๆ ไม่ได้
+  async function resolveLink() {
+    const raw = f.location_url.trim();
+    if (!raw || parseLatLng(raw)) { setResolved(null); return; }
+    if (!/^https?:\/\//i.test(raw)) { setResolved(null); return; }
+    setResolving(true);
+    try {
+      const r = await api.post<{ lat: number; lng: number }>("/queue/resolve-location", { url: raw });
+      setResolved(r.data ?? null);
+    } catch { setResolved(null); }
+    finally { setResolving(false); }
+  }
 
   // ---- slot-conflict check ----
   const [conflicts, setConflicts] = useState<SlotConflict[]>([]);
@@ -455,16 +471,19 @@ export function QueueModal({
           </Field>
 
           <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
-            <input value={f.location_url} onChange={(e) => set("location_url", e.target.value)}
+            <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); }}
+              onBlur={resolveLink}
               placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
             <span className="text-[11px] mt-1 block">
-              {coords ? (
+              {resolving ? (
+                <span className="text-ink-3">⏳ กำลังอ่านพิกัดจากลิงก์…</span>
+              ) : coords ? (
                 <span className="text-emerald-700">
-                  ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                  ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{resolved ? " (จากลิงก์)" : ""}
                 </span>
               ) : f.location_url ? (
                 <span className="text-amber-700">
-                  ดึงพิกัดไม่ได้ (ลิงก์ย่อ) — วาง "lat, lng" ตรง ๆ เพื่อให้คำนวณระยะได้
+                  อ่านพิกัดจากลิงก์ไม่ได้ — ลองวางลิงก์ Google Maps แบบเต็ม หรือพิมพ์ "lat, lng" ตรง ๆ
                 </span>
               ) : (
                 <span className="text-ink-3">ใส่พิกัดเพื่อใช้ตรวจกฎ R-45min อัตโนมัติ</span>

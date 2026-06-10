@@ -74,7 +74,7 @@ export const POST = withRoute(async (req: Request) => {
   if (body.sales_id) {
     sales = sales.filter((s) => s.id === body.sales_id);
   } else {
-    const team = detectTeam(body.address);
+    const team = detectTeam(body.address, body.lat, body.lng);
     sales = sales.filter((s) => s.team === team);
   }
   if (!sales.length) throw new HttpError(422, "ไม่มีเซลล์ที่ตรงเงื่อนไข/โซน");

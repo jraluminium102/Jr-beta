@@ -143,9 +143,12 @@ export const SOUTH_PROVINCES = [
   "กระบี่", "ชุมพร", "ตรัง", "นครศรีธรรมราช", "นราธิวาส", "ปัตตานี", "พังงา",
   "พัทลุง", "ภูเก็ต", "ยะลา", "ระนอง", "สงขลา", "สตูล",
 ];
-export function detectTeam(address?: string | null): QueueTeam {
-  if (!address) return "BKK";
-  return SOUTH_PROVINCES.some((p) => address.includes(p)) ? "PHUKET" : "BKK";
+// ดูโซนจาก "พิกัด" ก่อน (แม่นกว่าคำในที่อยู่) — ใต้/ภูเก็ต lat < ~11.5 (กทม.13.7, ภูเก็ต7.8, ชุมพร10.5)
+// ไม่มีพิกัด → ดูคำจังหวัดในที่อยู่ · ไม่เข้าเงื่อนไข = กทม.
+export function detectTeam(address?: string | null, lat?: number | null, lng?: number | null): QueueTeam {
+  if (lat != null && Number.isFinite(lat) && lat < 11.5 && (lng == null || (lng > 96 && lng < 101))) return "PHUKET";
+  if (address && SOUTH_PROVINCES.some((p) => address.includes(p))) return "PHUKET";
+  return "BKK";
 }
 
 // แปลงระยะเส้นตรง -> นาทีเดินทางโดยประมาณ (ปรับ avgSpeed/detour ได้จาก queue_settings)

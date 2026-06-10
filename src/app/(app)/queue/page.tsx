@@ -141,7 +141,7 @@ export default function QueuePage() {
         }
         // team filter
         if (filterTeam) {
-          const team = e.sales?.team ?? detectTeam(e.address);
+          const team = e.sales?.team ?? detectTeam(e.address, e.lat, e.lng);
           if (team !== filterTeam) return false;
         }
         // status filter
@@ -174,7 +174,7 @@ export default function QueuePage() {
     return rows.filter((e) => {
       if (!e.queue_date) return false;
       if (filterTeam) {
-        const team = e.sales?.team ?? detectTeam(e.address);
+        const team = e.sales?.team ?? detectTeam(e.address, e.lat, e.lng);
         if (team !== filterTeam) return false;
       }
       if (filterStatus && e.status !== filterStatus) return false;
