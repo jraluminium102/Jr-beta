@@ -1404,7 +1404,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(p.motor&&optSel){ if(optSel.motor==='80'){ if(a<=3.5)opt+=18000; else msgs.push('มอเตอร์80กก. ใช้ได้ ≤3.5 ตร.ม.'); }
     if(optSel.motor==='300')opt+=28000; }
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
-  if(['บานเลื่อน','เลื่อนภายใน','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
+  if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
   if((p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]) opt+=o.price*(o.perPanel?Math.max(1,panels):1); }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
@@ -2303,8 +2303,7 @@ function buildItemOpts(d){
     // โชว์/ซ่อนราง — เฉพาะรางบน
     if(_isTop){
       h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
-      // งาน4: เสริมคาน โผล่ทุกแบบราง (โชว์ราง/ซ่อนราง) — รางบนมีเสริมคานได้เสมอ
-      h+='<span class="o-beamm-wrap" style="display:inline-block;"><label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label></span>';
+      // ข้อ5(G1): เสริมคาน ย้ายไปบล็อกรวมด้านล่าง (บานเลื่อน/เลื่อนภายใน/บานเปิด/PC) — กันซ้ำ class
     }
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
@@ -2338,7 +2337,8 @@ function buildItemOpts(d){
     h+='</span>';
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
-  if(p.cat === 'PC Door'){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
+  // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
+  if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)){ h+='<label class="opt">เสริมคาน <select class="o-beamm" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
   if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
   // หลังคาเลื่อน — ทำเลื่อน → 3 ช่อง: จำนวนบาน / พื้นที่เลื่อน(auto) / มอเตอร์(จำนวน×ราคา auto แก้ได้) · รางน้ำย้ายไปของเสริม
   if(p.optSlide){
@@ -2588,7 +2588,7 @@ function readItem(d){
     const _sx=d.querySelector('.o-screen_extra'); if(_sx) optSel.screen_extra=_sx.value; }
   if(p.motor){ const m=d.querySelector('.o-motor'); optSel.motor=m?m.value:'0'; }
   if(p.optBeam){ const b=d.querySelector('.o-beam'); optSel.beam=b&&b.checked; }
-  if(['บานเลื่อน','เลื่อนภายใน','PC Door'].includes(p.cat)){ const _bm=d.querySelector('.o-beamm'),_bml=d.querySelector('.o-beammlen'); optSel.beamM=_bm?_bm.value:'0'; optSel.beamMlen=_bml?_bml.value:'0'; }
+  if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)){ const _bm=d.querySelector('.o-beamm'),_bml=d.querySelector('.o-beammlen'); optSel.beamM=_bm?_bm.value:'0'; optSel.beamMlen=_bml?_bml.value:'0'; }
   // บานเลื่อน/เลื่อนภายใน — options ใหม่
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
     const _ot=d.querySelector('.o-opentype'); optSel.opentype=_ot?_ot.value:'บานเลื่อน';
@@ -3138,8 +3138,8 @@ function genQuote(keepNo){
       // เสริมคาน (เฉพาะรางบน + ซ่อนราง)
       const _beamRate = parseFloat(_os.beamM)||0;
       const _beamLen = parseFloat(_os.beamMlen)||0;
-      // งาน4: เสริมคาน โผล่ทุกแบบราง (ไม่ผูกกับ _track=ซ่อนราง)
-      const _beamStr = (_sr.rail==='top' && _beamRate>0 && _beamLen>0)
+      // ข้อ5(G1): เสริมคาน โผล่ทุกแบบราง (บน/ล่าง) — เดิมผูกแค่รางบน
+      const _beamStr = (_beamRate>0 && _beamLen>0)
         ? (' (เสริมคานซัพพอร์ทรุ่น' + (_beamRate===2400?'1':_beamRate===3600?'2':'3') + ' ยาว '+_beamLen+' ม.)')
         : '';
       // มุ้ง — ดึงจาก addonLines (ที่บันทึก mosqArea ไว้)
@@ -3479,6 +3479,9 @@ function genQuote(keepNo){
           lines.push(msName+(_frName?(' (เฟรม'+_frName+' / '+mfLabel+')'):(' '+mfLabel)));
         }
       }
+      // ข้อ5(G1): เสริมคาน (บานเปิด/PC Door) ลงใบเมื่อเลือก — คิดเงินต้องโชว์
+      { const _bR=parseFloat(it.optSel&&it.optSel.beamM)||0, _bL=parseFloat(it.optSel&&it.optSel.beamMlen)||0;
+        if(_bR>0&&_bL>0) lines.push('เสริมคานซัพพอร์ทรุ่น'+(_bR===2400?'1':_bR===3600?'2':'3')+' ยาว '+_bL+' ม.'); }
       // ข้อ8/18: "ใช้ภายใน ไม่กันน้ำ" เป็นคำเตือนเซลล์เท่านั้น (มีในชื่อสินค้าตอนเลือกแล้ว) — ไม่ลงรายละเอียดในใบลูกค้า
       det = lines.join('\n');
       if(!det.trim()) det = '-';
