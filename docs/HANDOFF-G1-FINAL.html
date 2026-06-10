@@ -31,12 +31,12 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <h2>🔴 ต้องแก้ — กระทบการเงิน/ขาดของ (6)</h2>
 <table>
 <tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
-<tr><td class="r">1</td><td><b>โซลิดลูกฟูก</b> (วัน/ทู) <code>custom_price</code> ราคาขาดค่าลูกฟูก → ลืมกรอก = ใบต่ำ (~29k)</td><td>574-575</td><td>เลิก custom_price → auto: <b>บานเปิดยูโร + (พื้นที่×3,500×ฝั่ง: วัน=1/ทู=2) + สี</b> (สูตรพี่นัทยืนยัน) · เช็คซ้ำ: มีกระจกช่องแสงบนไหม</td></tr>
+<tr><td class="r">1</td><td><b>โซลิดลูกฟูก</b> (วัน/ทู) <code>custom_price</code> ราคาขาดค่าลูกฟูก → ลืมกรอก = ใบต่ำ (~29k)</td><td>574-575</td><td>เลิก custom_price → auto: <b>บานเปิดยูโร + (พื้นที่×3,500×ฝั่ง: วัน=1/ทู=2) + สี</b> · <b>✅มีกระจกช่องแสงบนได้</b> → เพิ่ม option ช่องแสง: บวกกระจกเฉพาะพื้นที่ช่องแสง (ส่วนลูกฟูกไม่คิดกระจก)</td></tr>
 <tr><td class="r">2</td><td><b>ดัดโค้ง</b> ไม่บังคับเลือกกระจกดัดโค้ง → เลือกกระจกธรรมดา ราคาขาด ~26,000</td><td>601-604</td><td>บังคับ/เตือนเลือก GLASS ดัดโค้ง (idx ~555-556) เมื่อ cat ดัดโค้ง</td></tr>
 <tr><td class="r">3</td><td><b>มือจับ Cmech บานเปิด</b> UI ไม่วาด (เงื่อนไข <code>cat==='บานเลื่อน'</code> เท่านั้น) ทั้งที่ banner บอกมี</td><td>2235</td><td>เพิ่ม cat <code>'บานเปิด'</code> (+เฟี้ยม/กระทุ้ง?) ในเงื่อนไข o-cmech</td></tr>
 <tr><td class="r">4</td><td><b>PC Door</b> ไม่มีมือจับ (digihandle) + ไม่มีชุดล็อค/กุญแจ</td><td>pc_door_2/4 def</td><td>เพิ่ม <code>digihandle:1</code> + เข้าเงื่อนไข o-slidelock</td></tr>
 <tr><td class="r">5</td><td><b>เสริมคาน บานเลื่อน/บานเปิด</b> ไม่มีช่อง (มีแค่ PC/เฟี้ยม/รางบน) · งานจริงบางชุดต้องใช้คาน</td><td>2268-2298</td><td>เพิ่ม optBeam/o-beamm ให้ cat บานเลื่อน + บานเปิด</td></tr>
-<tr><td class="y">6</td><td><b>ykk_exhido min=50,000</b> · render ออก 120,000 (tier guard) — เช็คซ้ำว่าตั้งใจ min ไหน</td><td>~617</td><td>ยืนยัน min ที่ถูก (50k หรือ 120k) กับพี่นัท</td></tr>
+<tr><td class="r">6</td><td><b>ykk_exhido min</b> — เคาะแล้ว ✅ ต้องเป็น <b>120,000</b></td><td>~617</td><td>แก้ <code>min:50000</code> → <code>min:120000</code></td></tr>
 </table>
 
 <h2>🟡 ต้องแก้ — ฟอร์แมต/ออกไม่ครบ (7)</h2>
@@ -67,5 +67,5 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 </ol>
 ของใหม่ที่โผล่กลางทาง = เฟส G1.1 (ไม่บล็อกการปิด) · กลุ่ม G2-G7 = คนอื่นทำ</div>
 
-<p class="sub">READ-ONLY · ส่งแชทแก้ index.html · แก้ 🔴 1,2 (โซลิด/ดัดโค้ง) ก่อนคุ้มสุด (กระทบเงินตรงๆ)</p>
+<p class="sub">พี่นัทเคาะครบแล้ว (ไม่มีค้างถาม): ykk min=120,000 ✅ · โซลิดมีกระจกช่องแสงบนได้ ✅ · READ-ONLY ส่งแชทแก้ index.html ได้ทันที · แก้ 🔴 1,2 (โซลิด/ดัดโค้ง) ก่อนคุ้มสุด</p>
 </body></html>
