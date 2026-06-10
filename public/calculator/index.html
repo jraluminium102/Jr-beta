@@ -3237,7 +3237,7 @@ function genQuote(keepNo){
       const _zCtrl = _zo.zctrl||'aok220';
       const _zCtrlTxt = (ZIP.CTRL_LABEL&&ZIP.CTRL_LABEL[_zCtrl])||_zCtrl;
       const _zFabTxt = ZIP_FAB_LABEL[zfab]||('ผ้าโปร่ง '+zfab+'%');
-      det = [_zModelTxt, 'ผ้า '+_zFabTxt, 'ระบบควบคุม: '+_zCtrlTxt].join('\n');
+      det = [_zModelTxt, _zFabTxt, 'ระบบควบคุม: '+_zCtrlTxt].join('\n');
     }
     else if(it.p.cat==='มุ้ง'){
       // v5: มุ้ง — โชว์เฉพาะชื่อมุ้ง + สีผ้า ไม่มีกระจก/อลู
