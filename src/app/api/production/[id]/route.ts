@@ -46,13 +46,16 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (current.status === "READY" && newIdx < curIdx) {
         return err("งานพร้อมติดตั้งแล้ว ไม่สามารถถอยสถานะได้", 409);
       }
-      // กันข้าม "ด่านสำคัญ" เข้าสู่การผลิต — ห้ามลงคิว/เริ่มผลิตก่อนลูกค้ายืนยัน
-      // (ไม่บังคับทีละขั้นทั้งหมด เพราะ REVISING เป็น optional branch: งานไม่ต้องแก้แบบจะข้ามได้)
-      if (body.status === "QUEUED" && current.status !== "PENDING_CONFIRM") {
-        return err("ต้องผ่านขั้น 'รอลูกค้ายืนยัน' (PENDING_CONFIRM) ก่อนจึงลงคิวผลิตได้", 409);
+      // เริ่มผลิต (ลงวันผลิต) — ProductionStepModal ตัดขั้น QUEUED ออก: เข้า MANUFACTURING
+      // ตรงจากหลังประชุม/ยืนยันแบบได้ (PENDING_MEETING/REVISING/PENDING_CONFIRM) + จาก QUEUED(งานเก่า)/ISSUE
+      const MFG_FROM = ["PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "ISSUE"];
+      if (body.status === "MANUFACTURING" && !MFG_FROM.includes(current.status as string)) {
+        return err("ต้องผ่านขั้นประชุม/ยืนยันแบบก่อนจึงเริ่มผลิตได้", 409);
       }
-      if (body.status === "MANUFACTURING" && current.status !== "QUEUED") {
-        return err("ต้องลงคิวผลิต (QUEUED) ก่อนจึงเริ่มผลิตได้", 409);
+      // ลงคิวผลิต (QUEUED จากหน้าตารางผลิต) — ได้จากขั้นวัด/ประชุม/ยืนยัน (กันลงคิวตั้งแต่ยังไม่วัด)
+      const QUEUE_FROM = ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"];
+      if (body.status === "QUEUED" && !QUEUE_FROM.includes(current.status as string)) {
+        return err("ต้องวัด/ประชุมแบบก่อนจึงลงคิวผลิตได้", 409);
       }
       // ห้ามข้ามไป READY โดยตรง (ต้องผ่าน QC ก่อน)
       if (body.status === "READY" && current.status !== "QC") {

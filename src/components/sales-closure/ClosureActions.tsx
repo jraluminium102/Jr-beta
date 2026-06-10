@@ -27,7 +27,7 @@ function ModalShell({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
-      <div className="relative w-full max-w-sm glass rounded-3xl p-6 fade-in">
+      <div className="relative w-full max-w-sm glass-dark rounded-3xl p-6 fade-in">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-2.5">
             <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl shrink-0 ${accent}`}>{icon}</span>
