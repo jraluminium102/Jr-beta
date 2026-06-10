@@ -46,6 +46,25 @@ export async function POST(req: Request) {
     .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
 
+  // [idempotency/partial] ถ้าระบุงวด → ตรวจยอดคงเหลือก่อนสร้างใบเสร็จ
+  // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)
+  if (body.installment_id) {
+    const { data: inst, error: instErr } = await supabase
+      .from("billing_installments")
+      .select("amount, paid_amount, status")
+      .eq("id", Number(body.installment_id))
+      .eq("billing_note_id", bn.id)
+      .single<{ amount: number; paid_amount: number | null; status: string }>();
+    if (instErr || !inst) return fail("ไม่พบงวดในใบวางบิลนี้", 404);
+    const remaining = round2((Number(inst.amount) || 0) - (Number(inst.paid_amount) || 0));
+    if (inst.status === "paid" || remaining <= 0.01) {
+      return fail("งวดนี้ชำระครบแล้ว ออกใบเสร็จซ้ำไม่ได้", 409);
+    }
+    if (amount > remaining + 0.01) {
+      return fail(`ยอดเกินยอดคงเหลือของงวด (คงเหลือ ฿${remaining.toFixed(2)})`, 400);
+    }
+  }
+
   // [MEDIUM-2] ถอด VAT ออกจากยอดรวม (amount = ยอดรวม VAT แล้ว)
   // vat_rate=7 → vat_amt = round(amount*7/107), base = amount - vat_amt, net = amount (ยอดรับจริง)
   // ไม่บวก VAT ซ้ำ (เดิมคิด amount*1.07 ผิด)
@@ -88,7 +107,8 @@ export async function POST(req: Request) {
     const { error: payErr } = await applyInstallmentPayment(supabase, {
       installmentId: Number(body.installment_id),
       billingNoteId: String(bn.id),
-      paidDate: body.issue_date, // ไม่ส่ง paidAmount = ปิดงวดเต็มจำนวน
+      paidAmount: amount, // จ่ายตามยอดที่รับจริง (รองรับจ่ายบางส่วน + สะสม paid_amount)
+      paidDate: body.issue_date,
       receiptId,
     });
     // ใบเสร็จออกสำเร็จแล้ว — ถ้า sync งวดพลาด ไม่ rollback แต่แจ้งเตือน (กันใบเสร็จหาย)

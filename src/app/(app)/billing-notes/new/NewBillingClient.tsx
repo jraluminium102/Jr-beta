@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
@@ -25,6 +25,7 @@ export default function NewBillingClient({
     preselectId ?? quotations[0]?.id ?? ""
   );
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
   const [err, setErr] = useState("");
 
   const selected = useMemo(
@@ -37,18 +38,37 @@ export default function NewBillingClient({
   );
 
   async function submit() {
+    // synchronous guard — กัน double-tap / กดรัว
+    if (busyRef.current) return;
+
     setErr("");
     if (!quotationId) { setErr("ต้องเลือกใบเสนอราคา"); return; }
+
+    // confirm ก่อนสร้างถ้าใบเสนอยังไม่ approved (auto-approve ย้อนกลับยาก)
+    if (selected && selected.status !== "approved") {
+      const ok = window.confirm(
+        "การสร้างบิลจะอนุมัติใบเสนอนี้อัตโนมัติและย้อนกลับยาก ยืนยัน?"
+      );
+      if (!ok) return;
+    }
+
+    busyRef.current = true;
     setBusy(true);
-    const res = await fetch("/api/billing-notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quotation_id: quotationId }),
-    });
-    const json = await res.json();
-    setBusy(false);
-    if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
-    router.push(`/billing-notes/${json.data.id}`);
+    try {
+      const res = await fetch("/api/billing-notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotation_id: quotationId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
+      router.push(`/billing-notes/${json.data.id}`);
+    } catch {
+      setErr("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
 
   return (

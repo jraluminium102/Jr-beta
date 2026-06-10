@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -116,20 +116,30 @@ export function QueueModal({
   // ---- slot-conflict check ----
   const [conflicts, setConflicts] = useState<SlotConflict[]>([]);
   const [checkingConflict, setCheckingConflict] = useState(false);
+  // ref เก็บ AbortController ปัจจุบัน ยกเลิก request เก่าก่อนเริ่ม request ใหม่
+  const conflictAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!f.queue_date || !f.queue_time || !f.sales_id) { setConflicts([]); return; }
-    let cancelled = false;
+
+    // ยกเลิก request เก่าถ้ายังค้างอยู่
+    conflictAbortRef.current?.abort();
+    const controller = new AbortController();
+    conflictAbortRef.current = controller;
+
     setCheckingConflict(true);
 
     async function checkConflict() {
       try {
-        // โหลด availability + existing entries ของวันนั้น
+        // โหลด availability + existing entries ของวันนั้น (timeout 8 วินาที)
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const [availRes, entryRes] = await Promise.all([
           api.get<AvailabilityRow[]>(`/queue/availability?sales_id=${f.sales_id}`),
           api.get<ExistingSlot[]>(`/queue?month=${f.queue_date!.slice(0, 7)}&sales=${f.sales_id}`),
         ]);
-        if (cancelled) return;
+        clearTimeout(timeoutId);
+
+        if (controller.signal.aborted) return;
 
         const found: SlotConflict[] = [];
         const slot = f.queue_time.slice(0, 5);
@@ -185,20 +195,28 @@ export function QueueModal({
 
         setConflicts(found);
       } catch {
-        setConflicts([]);
+        if (!controller.signal.aborted) setConflicts([]);
       } finally {
-        if (!cancelled) setCheckingConflict(false);
+        if (!controller.signal.aborted) setCheckingConflict(false);
       }
     }
 
     checkConflict();
-    return () => { cancelled = true; };
+    return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.queue_date, f.queue_time, f.sales_id, f.job_size]);
 
   // Separate main sales reps from assistants for dropdowns
   const mainSales = salesList.filter((s) => s.role !== "ASSISTANT");
-  const assistants = salesList.filter((s) => s.role === "ASSISTANT");
+
+  // ---- ข้อ 3: local mirror ของ assistants เพื่อให้เพิ่มใหม่แล้วเห็นใน dropdown ทันที ----
+  const [localAssistants, setLocalAssistants] = useState<QueueSales[]>(() =>
+    salesList.filter((s) => s.role === "ASSISTANT")
+  );
+  // sync เมื่อ salesList prop เปลี่ยน (เช่น parent reload)
+  useEffect(() => {
+    setLocalAssistants(salesList.filter((s) => s.role === "ASSISTANT"));
+  }, [salesList]);
 
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
@@ -206,8 +224,18 @@ export function QueueModal({
   const [addAssistBusy, setAddAssistBusy] = useState(false);
   const [addAssistErr, setAddAssistErr] = useState("");
 
+  // ref สำหรับ AbortController ของ suggestAuto
+  const suggestAbortRef = useRef<AbortController | null>(null);
+
   async function suggestAuto() {
+    // ยกเลิก request เก่าถ้ายังค้างอยู่
+    suggestAbortRef.current?.abort();
+    const controller = new AbortController();
+    suggestAbortRef.current = controller;
+
     setSuggesting(true); setSuggestMsg("");
+    // timeout 10 วินาที
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const r = await api.post<{
         queue_date: string; queue_time: string;
@@ -216,10 +244,12 @@ export function QueueModal({
         sales_id: f.sales_id || null,
         job_size: f.job_size || null,
         address: f.address || null,
-        location_url: f.location_url || null, // ให้ server resolve ลิงก์ย่อ → พิกัด (กฎ 45 นาที)
+        location_url: f.location_url || null,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
       });
+      clearTimeout(timeoutId);
+      if (controller.signal.aborted) return;
       setF((s) => ({
         ...s,
         queue_date: r.data.queue_date,
@@ -228,33 +258,62 @@ export function QueueModal({
       }));
       setSuggestMsg("✓ " + r.data.reason);
     } catch (e) {
-      setSuggestMsg(e instanceof Error ? e.message : "เสนอคิวไม่สำเร็จ");
+      clearTimeout(timeoutId);
+      if (controller.signal.aborted) {
+        setSuggestMsg("หมดเวลา — ลองใหม่อีกครั้ง");
+      } else {
+        setSuggestMsg(e instanceof Error ? e.message : "เสนอคิวไม่สำเร็จ");
+      }
     } finally {
-      setSuggesting(false);
+      if (!controller.signal.aborted) setSuggesting(false);
+      else setSuggesting(false);
     }
   }
 
-  // Create a new ASSISTANT record in queue_sales, then select it
+  // ---- ข้อ 3: Create a new ASSISTANT record in queue_sales ----
   async function addAssistant() {
     if (!newAssistantName.trim()) { setAddAssistErr("กรุณาระบุชื่อผู้ช่วย"); return; }
+
+    // ตรวจชื่อซ้ำใน local list ก่อน — ถ้าซ้ำให้เลือกตัวเดิมแทนการสร้างซ้ำ
+    const trimmedName = newAssistantName.trim();
+    const existing = localAssistants.find(
+      (a) => a.name.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (existing) {
+      setF((s) => ({ ...s, assistant_id: existing.id }));
+      setAddingAssistant(false);
+      setNewAssistantName("");
+      setAddAssistErr("");
+      return;
+    }
+
     setAddAssistBusy(true); setAddAssistErr("");
     try {
-      // POST to a dedicated endpoint — reuse queue_sales write via settings or a slim endpoint
-      // We call /api/queue/sales (expected to exist or falls back to generic message)
       const res = await api.post<{ id: string; name: string }>("/queue/sales", {
-        name: newAssistantName.trim(),
-        code: newAssistantName.trim().toLowerCase().replace(/\s+/g, "_").slice(0, 20),
+        name: trimmedName,
+        code: trimmedName.toLowerCase().replace(/\s+/g, "_").slice(0, 20),
         team: "BKK",
         role: "ASSISTANT",
         active: true,
       });
-      // Optimistically add to assistants list and select
+      // เพิ่มเข้า local mirror ทันที และเลือกเป็นค่าที่เลือกอยู่
+      const newRecord: QueueSales = {
+        id: res.data.id,
+        name: res.data.name,
+        code: trimmedName.toLowerCase().replace(/\s+/g, "_").slice(0, 20),
+        team: "BKK",
+        role: "ASSISTANT",
+        active: true,
+        start_label: null,
+        start_lat: null,
+        start_lng: null,
+        profile_id: null,
+        parent_sales_id: null,
+      };
+      setLocalAssistants((prev) => [...prev, newRecord]);
       setF((s) => ({ ...s, assistant_id: res.data.id }));
       setAddingAssistant(false);
       setNewAssistantName("");
-      // Trigger parent reload so the new assistant shows in dropdown next time
-      // (onSaved would close modal — use a separate signal here via re-fetch won't work easily
-      //  so we notify parent after full save; the new ID is already in assistant_id)
     } catch (e) {
       setAddAssistErr(e instanceof Error ? e.message : "เพิ่มผู้ช่วยไม่สำเร็จ");
     } finally {
@@ -264,7 +323,40 @@ export function QueueModal({
 
   async function save() {
     if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
+
+    // ---- ข้อ 1: ตรวจ/ยืนยันก่อนเปลี่ยนสถานะเป็น DONE ----
+    if (f.status === "DONE") {
+      if (!f.queue_date) { setErr("กรุณาระบุวันที่นัดก่อนยืนยันประเมินเสร็จ"); return; }
+      if (!f.sales_id) { setErr("กรุณาเลือกเซลล์ก่อนยืนยันประเมินเสร็จ"); return; }
+
+      const confirmed = window.confirm(
+        "ยืนยันว่าประเมินเสร็จ? ระบบจะสร้างลูกค้า + งานจริงทันที และย้อนกลับยาก"
+      );
+      if (!confirmed) return;
+
+      // เตือนถ้าไม่มีเบอร์โทร
+      const telRaw = f.tel.trim();
+      if (!telRaw) {
+        const telOk = window.confirm(
+          "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
+        );
+        if (!telOk) return;
+      }
+    }
+
+    // ---- ข้อ 2: ตรวจ conflict ร้าย (leave / full) ก่อน save ----
+    const badConflicts = conflicts.filter((c) => c.kind === "leave" || c.kind === "full");
+    if (badConflicts.length > 0) {
+      const reason = badConflicts.map((c) => c.msg).join(" / ");
+      const ok = window.confirm(`วันนี้ ${reason} — ยืนยันบันทึกทับ?`);
+      if (!ok) return;
+    }
+
     setBusy(true); setErr("");
+
+    // ---- ข้อ 1: normalize เบอร์โทร (ตัดช่องว่าง/ขีด/วงเล็บ) ----
+    const telNormalized = f.tel.replace(/[\s\-()]/g, "").trim() || null;
+
     const payload = {
       status: f.status,
       queue_date: f.queue_date || null,
@@ -274,7 +366,7 @@ export function QueueModal({
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
       customer_name: f.customer_name.trim(),
-      tel: f.tel || null,
+      tel: telNormalized,
       address: f.address || null,
       location_url: f.location_url || null,
       lat: coords?.lat ?? null,
@@ -330,7 +422,8 @@ export function QueueModal({
           </button>
         </div>
 
-        <fieldset disabled={readOnly} className="grid grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
+        {/* ---- ข้อ 4: grid-cols-1 sm:grid-cols-2 แทน grid-cols-2 hardcode ---- */}
+        <fieldset disabled={readOnly} className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
           <Field label="ชื่อลูกค้า *" wide>
             <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)}
               placeholder="คุณ…" className={inp} />
@@ -348,7 +441,7 @@ export function QueueModal({
             </select>
           </Field>
 
-          {/* Assistant (role=ASSISTANT) */}
+          {/* Assistant (role=ASSISTANT) — ใช้ localAssistants แทน prop โดยตรง */}
           <Field label="ผู้ช่วยเซลล์">
             {addingAssistant ? (
               <div className="space-y-1.5">
@@ -375,7 +468,7 @@ export function QueueModal({
                 <select value={f.assistant_id} onChange={(e) => set("assistant_id", e.target.value)}
                   className={`${inp} flex-1`}>
                   <option value="">— ไม่มีผู้ช่วย —</option>
-                  {assistants.map((s) => (
+                  {localAssistants.map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
@@ -436,7 +529,7 @@ export function QueueModal({
 
           {/* แสดงคำเตือน conflict */}
           {(conflicts.length > 0 || checkingConflict) && (
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               {checkingConflict ? (
                 <p className="text-[11px] text-ink-3 flex items-center gap-1">
                   <Icon name="refresh" size={11} className="animate-spin" /> ตรวจสอบ slot…
@@ -577,7 +670,7 @@ const inp = "w-full glass-soft rounded-lg px-3 py-2 outline-none";
 
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <label className={`block ${wide ? "col-span-2" : ""}`}>
+    <label className={`block ${wide ? "col-span-1 sm:col-span-2" : ""}`}>
       <span className="text-xs font-medium text-ink-3">{label}</span>
       <div className="mt-1">{children}</div>
     </label>

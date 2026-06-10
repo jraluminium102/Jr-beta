@@ -35,10 +35,10 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requirePermission("production", "write");
   const body = schema.parse(await req.json());
 
-  // Guard: ห้าม rollback จาก READY, ห้ามข้ามไป READY โดยไม่ผ่าน QC
+  // Guard: ห้ามข้ามขั้น / ห้าม rollback จาก READY
   if (body.status && body.status !== "ISSUE") {
     const { data: current } = await ctx.supabase
-      .from("productions").select("status").eq("id", params.id).single();
+      .from("productions").select("status, production_queued, planned_install_date").eq("id", params.id).single();
     if (current) {
       const curIdx = PROD_FLOW.indexOf(current.status as ProdFlowStatus);
       const newIdx = PROD_FLOW.indexOf(body.status as ProdFlowStatus);
@@ -46,10 +46,25 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (current.status === "READY" && newIdx < curIdx) {
         return err("งานพร้อมติดตั้งแล้ว ไม่สามารถถอยสถานะได้", 409);
       }
+      // กันข้าม "ด่านสำคัญ" เข้าสู่การผลิต — ห้ามลงคิว/เริ่มผลิตก่อนลูกค้ายืนยัน
+      // (ไม่บังคับทีละขั้นทั้งหมด เพราะ REVISING เป็น optional branch: งานไม่ต้องแก้แบบจะข้ามได้)
+      if (body.status === "QUEUED" && current.status !== "PENDING_CONFIRM") {
+        return err("ต้องผ่านขั้น 'รอลูกค้ายืนยัน' (PENDING_CONFIRM) ก่อนจึงลงคิวผลิตได้", 409);
+      }
+      if (body.status === "MANUFACTURING" && current.status !== "QUEUED") {
+        return err("ต้องลงคิวผลิต (QUEUED) ก่อนจึงเริ่มผลิตได้", 409);
+      }
       // ห้ามข้ามไป READY โดยตรง (ต้องผ่าน QC ก่อน)
       if (body.status === "READY" && current.status !== "QC") {
         return err("ต้องผ่านขั้น QC ก่อนจึงจะพร้อมติดตั้งได้", 409);
       }
+    }
+
+    // Guard: install_date >= produce_date (ถ้า field ทั้งสองมีค่า)
+    const produceDate = body.production_queued ?? null;
+    const installDate = body.planned_install_date ?? null;
+    if (produceDate && installDate && installDate < produceDate) {
+      return err("วันติดตั้งต้องไม่ก่อนวันผลิต", 400);
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
@@ -11,6 +11,7 @@ export type InstallmentOption = {
   seq: number;
   label: string;
   amount: number;
+  paid_amount: number | null;
   status: string;
   sort_order: number;
 };
@@ -63,51 +64,63 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
     [installments, installmentId]
   );
 
-  // ยอดงวด/ยอดบิลมาจาก quotation.net ซึ่ง "รวม VAT แล้ว" → ถอด VAT ออกเพื่อให้ได้ "ยอดก่อน VAT"
-  // (กัน VAT ซ้อน: ถ้า default เป็นยอดรวม VAT แล้วบวก 7% อีกจะผิด) · ยอดสุทธิใบเสร็จจะ ≈ ยอดงวด
-  const preVat = (incl: number) => (vatRate ? round2(incl / (1 + vatRate / 100)) : incl);
+  // amount ที่กรอก = "ยอดรับชำระ รวม VAT แล้ว" (ตรงกับ API: net = amount, ถอด VAT แบบ inclusive)
+  // ยอดงวด/ยอดบิลรวม VAT อยู่แล้ว → default = ยอดคงเหลือของงวด (amount - paid_amount) ไม่ถอด VAT
+  const remainingOf = (it: InstallmentOption) =>
+    round2((Number(it.amount) || 0) - (Number(it.paid_amount) || 0));
 
-  // เมื่อเปลี่ยนใบวางบิล → reset งวด + ตั้งยอด default = ถอด VAT จากยอดบิล
+  // เมื่อเปลี่ยนใบวางบิล → reset งวด + ตั้งยอด default = ยอดบิลรวม
   useEffect(() => {
     setInstallmentId("");
-    if (selected) setAmount(String(preVat(selected.total)));
+    if (selected) setAmount(String(selected.total));
   }, [selected]);
 
-  // เมื่อเลือกงวด/เปลี่ยน VAT → ตั้งยอด default = ถอด VAT จากยอดงวด
+  // เมื่อเลือกงวด → ตั้งยอด default = ยอดคงเหลือของงวดนั้น (รวม VAT)
   useEffect(() => {
-    if (selectedInstallment) setAmount(String(preVat(selectedInstallment.amount)));
-    else if (selected) setAmount(String(preVat(selected.total)));
-  }, [selectedInstallment, selected, vatRate]);
+    if (selectedInstallment) setAmount(String(remainingOf(selectedInstallment)));
+    else if (selected) setAmount(String(selected.total));
+  }, [selectedInstallment, selected]);
 
   const amountNum = Number(amount) || 0;
-  const vatAmt = round2((amountNum * vatRate) / 100);
-  const net = round2(amountNum + vatAmt);
+  // ถอด VAT แบบ inclusive ให้ตรงกับ API: vat = amount*rate/(100+rate), ฐานภาษี = amount - vat, ยอดสุทธิ = amount
+  const vatAmt = vatRate ? round2((amountNum * vatRate) / (100 + vatRate)) : 0;
+  const baseAmt = round2(amountNum - vatAmt);
+  const net = amountNum;
 
   // บิลที่มีงวด (pending อยู่) บังคับเลือกงวด
   const hasInstallments = installments.length > 0;
 
+  const busyRef = useRef(false);
   async function submit() {
+    if (busyRef.current) return; // กันกดรัว/ดับเบิลแท็ป (synchronous ก่อน state busy re-render)
     setErr("");
     if (!billingNoteId) { setErr("ต้องเลือกใบวางบิล"); return; }
     if (hasInstallments && !installmentId) { setErr("ใบวางบิลนี้มีงวด กรุณาเลือกงวดที่จะออกใบเสร็จ"); return; }
     if (amountNum <= 0) { setErr("จำนวนเงินต้องมากกว่า 0"); return; }
+    busyRef.current = true;
     setBusy(true);
-    const res = await fetch("/api/receipts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        billing_note_id: billingNoteId,
-        installment_id: installmentId || null,
-        amount: amountNum,
-        vat_rate: vatRate,
-        payment_method: paymentMethod,
-        note,
-      }),
-    });
-    const json = await res.json();
-    setBusy(false);
-    if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
-    router.push(`/receipts/${json.data.id}`);
+    try {
+      const res = await fetch("/api/receipts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          billing_note_id: billingNoteId,
+          installment_id: installmentId || null,
+          amount: amountNum,
+          vat_rate: vatRate,
+          payment_method: paymentMethod,
+          note,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
+      router.push(`/receipts/${json.data.id}`);
+    } catch {
+      setErr("เชื่อมต่อไม่สำเร็จ ลองใหม่อีกครั้ง");
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
 
   return (
@@ -154,7 +167,8 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                   <option value="">— {hasInstallments ? "เลือกงวด *" : "ทั้งใบ / ไม่ระบุงวด"} —</option>
                   {installments.map((it) => (
                     <option key={it.id} value={it.id}>
-                      งวด {it.seq} · {it.label} · ฿{baht(it.amount)}
+                      งวด {it.seq} · {it.label} · คงเหลือ ฿{baht(remainingOf(it))}
+                      {Number(it.paid_amount) > 0 ? ` (จ่ายแล้ว ฿${baht(Number(it.paid_amount))})` : ""}
                     </option>
                   ))}
                 </select>
@@ -163,7 +177,7 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
 
             <Card className="p-5 space-y-4">
               <label className="block text-sm">
-                <span className="text-xs font-medium text-ink-3">ยอดก่อน VAT *</span>
+                <span className="text-xs font-medium text-ink-3">ยอดรับชำระ (รวม VAT แล้ว) *</span>
                 <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none tabular-nums" />
               </label>
@@ -200,15 +214,15 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
             <Card className="p-5 sticky top-4">
               <h3 className="font-bold text-brand-dark mb-3">สรุป</h3>
               <div className="flex justify-between text-sm py-0.5">
-                <span className="text-ink-3">ยอดก่อน VAT</span>
-                <span className="tabular-nums">฿{baht(amountNum)}</span>
+                <span className="text-ink-3">ฐานภาษี (ก่อน VAT)</span>
+                <span className="tabular-nums">฿{baht(baseAmt)}</span>
               </div>
               <div className="flex justify-between text-sm py-0.5">
                 <span className="text-ink-3">VAT {vatRate}%</span>
                 <span className="tabular-nums">฿{baht(vatAmt)}</span>
               </div>
               <div className="flex justify-between text-sm py-1 mt-1 border-t font-bold" style={{ color: "#7d0f15" }}>
-                <span>ยอดสุทธิ</span>
+                <span>ยอดรับสุทธิ (รวม VAT)</span>
                 <span className="tabular-nums">฿{baht(net)}</span>
               </div>
 

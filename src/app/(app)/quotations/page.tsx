@@ -13,12 +13,13 @@ export default async function QuotationsPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("quotations")
-    .select("id, code, customer_snapshot, issue_date, status, net")
+    .select("id, code, customer_snapshot, issue_date, status, net, job_id, jobs:job_id(job_code)")
     .order("created_at", { ascending: false });
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
     issue_date: string; status: QuotationStatus; net: number;
+    job_id: string | null; jobs: { job_code: string | null } | null;
   }[];
 
   return (
@@ -65,6 +66,15 @@ export default async function QuotationsPage() {
                     <td>
                       <div className="font-medium">{r.customer_snapshot?.name}</div>
                       <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
+                      {r.job_id ? (
+                        <span className="inline-block mt-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100 rounded px-1.5 py-0.5">
+                          ผูกงาน {r.jobs?.job_code ?? "JB"}
+                        </span>
+                      ) : (
+                        <span className="inline-block mt-0.5 text-[10px] font-bold text-red-700 bg-red-100 rounded px-1.5 py-0.5" title="ใบเสนอนี้ไม่ผูกกับงานลูกค้า — บิล/การเงิน/สถิติจะตามไม่เจอ">
+                          ⚠ ยังไม่ผูกงาน (เสี่ยงตกหล่น)
+                        </span>
+                      )}
                     </td>
                     <td className="text-ink-2">{r.issue_date}</td>
                     <td className="text-right font-semibold">฿{baht(r.net)}</td>

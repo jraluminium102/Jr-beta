@@ -76,6 +76,38 @@ export default function ProductionSchedulePage() {
     if (!confirm(`ยืนยันว่างาน "${r.title}" เสร็จแล้ว? (จะหายจากตารางคิว)`)) return;
     save(r, { status: "DONE" } as Partial<SchedRow>);
   };
+
+  // ปุ่มเลื่อนสถานะสำหรับงานในระบบ (kind==='job')
+  const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
+    QUEUED:        { label: "เริ่มผลิต", nextStatus: "MANUFACTURING", confirmMsg: (t) => `เริ่มผลิต "${t}" ใช่ไหม?` },
+    MANUFACTURING: { label: "ส่ง QC",    nextStatus: "QC",            confirmMsg: (t) => `ส่งงาน "${t}" เข้าตรวจ QC ใช่ไหม?` },
+    QC:            { label: "ผลิตเสร็จ", nextStatus: "READY",         confirmMsg: (t) => `ยืนยันว่างาน "${t}" ผ่าน QC และพร้อมติดตั้งแล้ว?` },
+  };
+
+  const advanceJobStatus = async (r: SchedRow) => {
+    const cfg = JOB_NEXT[r.status];
+    if (!cfg) return;
+    if (!confirm(cfg.confirmMsg(r.title))) return;
+    setSavingId(r.id);
+    try {
+      const body: Record<string, string> = { status: cfg.nextStatus };
+      if (cfg.nextStatus === "QC") {
+        // ต้องส่ง production_done ด้วย — ใช้วันนี้ถ้าไม่มีใน draft
+        body.production_done = today();
+      }
+      if (cfg.nextStatus === "READY") {
+        // READY ต้องการ qc_result + qc_date — ให้แจ้งให้ไปทำที่หน้าผลิต
+        alert("กรุณายืนยันผล QC และวันตรวจที่หน้า \"ผลิต\" ก่อนเปลี่ยนสถานะ พร้อมติดตั้ง");
+        return;
+      }
+      await api.patch(`/production/${r.id}`, body);
+      await refetch();
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSavingId((s) => (s === r.id ? null : s));
+    }
+  };
   const del = async (r: SchedRow) => {
     if (!confirm(`ลบงาน "${r.title}" ออกจากตาราง?`)) return;
     setSavingId(r.id);
@@ -130,8 +162,15 @@ export default function ProductionSchedulePage() {
                     {/* วันผลิต */}
                     <label className="block">
                       <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
-                      <input type="date" disabled={!canWrite || savingId === r.id} value={v(r, "produce_date")}
-                        onChange={(e) => save(r, { produce_date: e.target.value } as Partial<SchedRow>)} className={`${dateCls} w-full`} aria-label={`วันผลิต ${r.title}`} />
+                      <input
+                        type="date"
+                        disabled={!canWrite || savingId === r.id}
+                        value={v(r, "produce_date")}
+                        onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: e.target.value } }))}
+                        onBlur={(e) => { if (e.target.value !== (r.produce_date ?? "")) save(r, { produce_date: e.target.value } as Partial<SchedRow>); }}
+                        className={`${dateCls} w-full`}
+                        aria-label={`วันผลิต ${r.title}`}
+                      />
                     </label>
 
                     {/* ช่างผลิต */}
@@ -153,11 +192,27 @@ export default function ProductionSchedulePage() {
                     <div className="col-span-2 lg:col-span-1 flex items-center gap-1.5 justify-end">
                       {r.kind === "adhoc" && canWrite && (
                         <>
-                          <button onClick={() => markDone(r)} disabled={savingId === r.id} className="focusable pressable inline-flex items-center gap-1 bg-emerald-500/90 hover:bg-emerald-400 text-white rounded-lg px-2.5 py-1.5 text-[12px] font-semibold min-h-[36px] disabled:opacity-50"><Check size={13} /> เสร็จ</button>
-                          <button onClick={() => del(r)} disabled={savingId === r.id} aria-label="ลบ" className="focusable pressable inline-flex items-center justify-center text-rose-300 hover:bg-rose-500/15 rounded-lg w-9 h-9"><Trash2 size={15} /></button>
+                          <button onClick={() => markDone(r)} disabled={savingId === r.id} className="focusable pressable inline-flex items-center gap-1 bg-emerald-500/90 hover:bg-emerald-400 text-white rounded-lg px-2.5 py-1.5 text-[12px] font-semibold min-h-[44px] disabled:opacity-50"><Check size={13} /> เสร็จ</button>
+                          <button onClick={() => del(r)} disabled={savingId === r.id} aria-label="ลบ" className="focusable pressable inline-flex items-center justify-center text-rose-300 hover:bg-rose-500/15 rounded-lg w-11 h-11"><Trash2 size={15} /></button>
                         </>
                       )}
-                      {r.kind === "job" && <span className="text-[11px]" style={{ color: "var(--t-low)" }}>จัดการสถานะที่หน้า “ผลิต”</span>}
+                      {r.kind === "job" && canWrite && JOB_NEXT[r.status] && (
+                        <button
+                          onClick={() => advanceJobStatus(r)}
+                          disabled={savingId === r.id}
+                          className="focusable pressable inline-flex items-center gap-1.5 bg-sky-500/90 hover:bg-sky-400 text-white rounded-xl px-3 py-2 text-[13px] font-semibold min-h-[44px] disabled:opacity-50"
+                        >
+                          {savingId === r.id
+                            ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                            : <Check size={14} />}
+                          {JOB_NEXT[r.status]?.label ?? "เลื่อนสถานะ"}
+                        </button>
+                      )}
+                      {r.kind === "job" && (!canWrite || !JOB_NEXT[r.status]) && (
+                        <span className="text-[11px]" style={{ color: "var(--t-low)" }}>
+                          {r.status === "READY" ? "พร้อมติดตั้งแล้ว" : "จัดการที่หน้า \"ผลิต\""}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -202,7 +257,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
-        await api.patch(`/production/${pickId}`, { status: "MANUFACTURING", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
+        await api.patch(`/production/${pickId}`, { status: "QUEUED", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
       }
       onSaved();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); setSaving(false); }

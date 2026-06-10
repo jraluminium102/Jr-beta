@@ -61,29 +61,29 @@ export const POST = withRoute(async (req: Request, { params }: { params: { id: s
         .update({ paid_amount: 0, paid_date: null, status: "pending" })
         .eq("id", rc.installment_id);
       if (iErr) throw new Error("คืนงวดไม่สำเร็จ: " + iErr.message);
+    }
+    // isDepositInstallment=true → ไม่คืนงวด (คง paid ไว้) เงินมัดจำยังนับอยู่ในยอดบิล
 
-      // 3a) recompute สถานะใบวางบิล
-      if (rc.billing_note_id) {
-        const { data: bn } = await ctx.supabase
+    // 3a) recompute สถานะใบวางบิลเสมอ (ทั้งกรณีปกติ + มัดจำ) ให้ self-heal ตรงผลรวม paid_amount จริง
+    if (rc.billing_note_id) {
+      const { data: bn } = await ctx.supabase
+        .from("billing_notes")
+        .select("total, billing_installments(paid_amount)")
+        .eq("id", rc.billing_note_id)
+        .single<{ total: number; billing_installments: { paid_amount: number }[] }>();
+
+      if (bn) {
+        const totalPaid = (bn.billing_installments ?? []).reduce(
+          (a, i) => a + (Number(i.paid_amount) || 0), 0,
+        );
+        const total = Number(bn.total) || 0;
+        const blStatus = totalPaid <= 0 ? "unpaid" : totalPaid >= total ? "paid" : "partial";
+        await ctx.supabase
           .from("billing_notes")
-          .select("total, billing_installments(paid_amount)")
-          .eq("id", rc.billing_note_id)
-          .single<{ total: number; billing_installments: { paid_amount: number }[] }>();
-
-        if (bn) {
-          const totalPaid = (bn.billing_installments ?? []).reduce(
-            (a, i) => a + (Number(i.paid_amount) || 0), 0,
-          );
-          const total = Number(bn.total) || 0;
-          const blStatus = totalPaid <= 0 ? "unpaid" : totalPaid >= total ? "paid" : "partial";
-          await ctx.supabase
-            .from("billing_notes")
-            .update({ status: blStatus })
-            .eq("id", rc.billing_note_id);
-        }
+          .update({ status: blStatus })
+          .eq("id", rc.billing_note_id);
       }
     }
-    // isDepositInstallment=true → ไม่ทำอะไรกับงวด (คง paid ไว้) เงินมัดจำยังนับอยู่ในยอดบิล
   }
 
   // 4) void/unlink finance_entries ที่ผูกกับ receipt นี้

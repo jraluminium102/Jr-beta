@@ -12,7 +12,7 @@ export async function GET() {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("quotations")
-    .select("id, code, customer_snapshot, issue_date, status, net, created_at")
+    .select("id, code, customer_snapshot, issue_date, status, net, created_at, job_id, jobs:job_id(job_code)")
     .order("created_at", { ascending: false });
   if (error) return fail(error.message, 500);
   return ok(data);
@@ -50,7 +50,20 @@ export async function POST(req: Request) {
     line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
   };
 
-  // 2) คำนวณยอด (แหล่งความจริงเดียว)
+  // 2) ผูกใบเสนอกับ "งาน (job) ที่เปิดอยู่ล่าสุด" ของลูกค้า — ไม่สร้างงานใหม่
+  //    ถ้าลูกค้ายังไม่มีงาน active → job_id = null (หน้า list/หัวใบจะโชว์ป้าย "ยังไม่ผูกงาน")
+  //    สำคัญ: ถ้า null → BOQ/วางบิล/การเงิน/สถิติ จะตามงานนี้ไม่เจอ (ต้นเหตุงานหลุดทั้งสาย)
+  const { data: activeJob } = await supabase
+    .from("jobs")
+    .select("id")
+    .eq("customer_id", cust.id)
+    .not("status", "in", "(COMPLETED,CANCELLED)")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  const jobId: string | null = activeJob?.id ?? null;
+
+  // 3) คำนวณยอด (แหล่งความจริงเดียว)
   const t = computeTotals({ items, vat_rate, discount_pct, wht_rate });
 
   // 3) ออกรหัสอัตโนมัติ (พ.ศ. · reset รายเดือน) ผ่าน RPC
@@ -63,6 +76,7 @@ export async function POST(req: Request) {
     .insert({
       code,
       customer_id: cust.id,
+      job_id: jobId,
       customer_snapshot: snapshot,
       issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
       status: "draft",

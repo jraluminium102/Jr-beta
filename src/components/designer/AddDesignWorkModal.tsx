@@ -499,6 +499,8 @@ function WalkInMode({
 
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState("");
+  // Synchronous guard — กันกดสร้างงานซ้ำ (double-submit)
+  const busyRef = useRef(false);
 
   const fieldCls =
     "focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none min-h-[44px] placeholder-white/40 [&>option]:text-gray-800 disabled:opacity-60";
@@ -506,10 +508,22 @@ function WalkInMode({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Synchronous guard ก่อน await ใดๆ
+    if (busyRef.current) return;
     const name = customerName.trim();
     if (!name) { setSaveErr("กรุณาระบุชื่อลูกค้า"); return; }
     if (!designerRef) { setSaveErr("กรุณาเลือกผู้รับผิดชอบ"); return; }
+
+    // เตือนเมื่อเบอร์โทรว่าง — ระบบผูกลูกค้าซ้ำไม่ได้
+    if (!customerTel.trim()) {
+      const proceed = window.confirm(
+        "ไม่ได้ใส่เบอร์โทร\nถ้าไม่ใส่เบอร์ ระบบจะผูกลูกค้าเดิมไม่ได้ เกิดลูกค้าซ้ำ\n\nต้องการสร้างงานโดยไม่มีเบอร์หรือไม่?"
+      );
+      if (!proceed) return;
+    }
+
     setSaveErr("");
+    busyRef.current = true;
     setSaving(true);
     try {
       // 1) Create the job
@@ -553,6 +567,7 @@ function WalkInMode({
       setSaveErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
+      busyRef.current = false;
     }
   }
 
@@ -575,7 +590,12 @@ function WalkInMode({
       </div>
 
       <div>
-        <label className={lblCls} htmlFor="wk-tel">เบอร์โทร (ไม่บังคับ)</label>
+        <label className={lblCls} htmlFor="wk-tel">
+          เบอร์โทร{" "}
+          <span className="text-amber-300 font-medium">
+            (แนะนำใส่ — ถ้าไม่ใส่ผูกลูกค้าเดิมไม่ได้ เกิดลูกค้าซ้ำ)
+          </span>
+        </label>
         <input
           id="wk-tel"
           type="tel"

@@ -16,12 +16,12 @@ export default async function ReceiptsPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("receipts")
-    .select("id, code, customer_snapshot, issue_date, net, payment_method")
+    .select("id, code, customer_snapshot, issue_date, net, payment_method, is_voided")
     .order("created_at", { ascending: false });
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
-    issue_date: string; net: number; payment_method: string;
+    issue_date: string; net: number; payment_method: string; is_voided: boolean;
   }[];
 
   return (
@@ -60,16 +60,17 @@ export default async function ReceiptsPage() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
+                  <tr key={r.id} className={`border-t border-gray-200/70 hover:bg-white/50 ${r.is_voided ? "opacity-55" : ""}`}>
                     <td className="py-3">
-                      <Link href={`/receipts/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                      <Link href={`/receipts/${r.id}`} className={`font-mono font-semibold hover:underline ${r.is_voided ? "text-ink-3 line-through" : "text-brand-dark"}`}>{r.code}</Link>
+                      {r.is_voided && <span className="ml-2 inline-block text-[10px] font-bold text-red-700 bg-red-100 rounded px-1.5 py-0.5 no-underline align-middle">ยกเลิกแล้ว</span>}
                     </td>
                     <td>
-                      <div className="font-medium">{r.customer_snapshot?.name}</div>
+                      <div className={`font-medium ${r.is_voided ? "line-through text-ink-3" : ""}`}>{r.customer_snapshot?.name}</div>
                       <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
                     </td>
                     <td className="text-ink-2">{r.issue_date}</td>
-                    <td className="text-right font-semibold">฿{baht(r.net)}</td>
+                    <td className={`text-right font-semibold ${r.is_voided ? "line-through text-ink-3" : ""}`}>฿{baht(r.net)}</td>
                     <td className="text-ink-2">{PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</td>
                   </tr>
                 ))}

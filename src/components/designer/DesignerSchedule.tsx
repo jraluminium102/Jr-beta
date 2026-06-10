@@ -243,9 +243,10 @@ function placeJobs(jobs: Job[], rangeStart: string, today: string): PlacedBar[] 
 
   for (const job of jobs) {
     // Determine bar start & end ISO dates
-    // DONE ใช้ design_end เป็นวันสิ้นสุดจริง (ช่วงเวลาที่ทำจริง) — เก็บเป็นประวัติ
-    const rawStart = job.design_start ?? job.design_due_date ?? job.design_end ?? today;
-    const rawEnd = (job.design_state === "DONE" ? (job.design_end ?? job.design_due_date) : job.design_due_date) ?? job.design_start ?? today;
+    // แถบแสดงช่วงทำงานช่าง (design_start → design_end)
+    // design_due_date = วันนัดลูกค้า — แสดง deadline marker แยกต่างหาก ไม่ใช้เป็นขอบแถบ
+    const rawStart = job.design_start ?? today;
+    const rawEnd = job.design_end ?? job.design_start ?? today;
     const startIso = rawStart;
     const endIso = rawEnd < rawStart ? rawStart : rawEnd;
 
@@ -394,8 +395,10 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
     }
 
     // Compute new ISO dates
-    let newStartIso = job.design_start ?? job.design_due_date ?? today;
-    let newEndIso = job.design_due_date ?? job.design_start ?? today;
+    // "work start/end" = design_start / design_end (ช่วงที่ช่างทำงานจริง)
+    // design_due_date = วันนัดส่งลูกค้า — ไม่แตะจากการลาก/resize ที่นี่
+    let newStartIso = job.design_start ?? today;
+    let newEndIso = job.design_end ?? job.design_start ?? today;
     if (newEndIso < newStartIso) newEndIso = newStartIso;
 
     if (mode === "move") {
@@ -418,10 +421,11 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
     await onSave(job.id, newStartIso, newEndIso);
   }
 
-  // Tooltip text
-  const startLabel = thShortDate(job.design_start ?? job.design_due_date ?? job.design_end ?? today);
-  const endLabel = thShortDate((job.design_state === "DONE" ? (job.design_end ?? job.design_due_date) : job.design_due_date) ?? job.design_start ?? today);
-  const tooltip = `${job.job_code ?? "—"}  |  ${startLabel} – ${endLabel}`;
+  // Tooltip text — แสดงช่วงงานช่าง + วันนัดลูกค้าแยก
+  const startLabel = thShortDate(job.design_start ?? today);
+  const endLabel = thShortDate(job.design_end ?? job.design_start ?? today);
+  const dueLabel = job.design_due_date ? ` | นัด ${thShortDate(job.design_due_date)}` : "";
+  const tooltip = `${job.job_code ?? "—"}  |  ${startLabel} – ${endLabel}${dueLabel}`;
 
   return (
     <div
@@ -505,10 +509,11 @@ function BarPopover({
   const { job } = bar;
   const c = STATE_COLOR[job.design_state];
   const [startVal, setStartVal] = useState(
-    job.design_start ?? job.design_due_date ?? today
+    job.design_start ?? today
   );
+  // work end = design_end (ช่วงที่ช่างทำจริง) — ไม่ใช่ design_due_date
   const [endVal, setEndVal] = useState(
-    job.design_due_date ?? job.design_start ?? today
+    job.design_end ?? job.design_start ?? today
   );
   const [busy, setBusy] = useState(false);
 
@@ -582,7 +587,7 @@ function BarPopover({
               />
             </label>
             <label className="block">
-              <span className="text-[12px] text-ink-2 font-medium">วันกำหนดส่ง</span>
+              <span className="text-[12px] text-ink-2 font-medium">วันสิ้นสุดงาน (ช่างเขียนแบบ)</span>
               <input
                 type="date"
                 value={endVal}
@@ -857,19 +862,49 @@ export default function DesignerSchedule({
     return map;
   }, [filteredJobs, visibleDesigners]);
 
-  // PATCH design_start + design_due_date
+  // PATCH design_start + design_end (ช่วงทำงานช่าง)
+  // ไม่แตะ design_due_date เว้นแต่ผู้ใช้ยืนยันเองเมื่อวันสิ้นสุดงานเลย due
   const handleSave = useCallback(async (
     jobId: string,
     newStart: string,
     newEnd: string,
   ) => {
+    // ตรวจว่า newEnd เลย design_due_date ของงานนั้นหรือไม่
+    const job = jobs.find((j) => j.id === jobId);
+    if (job?.design_due_date && newEnd > job.design_due_date) {
+      const confirmed = window.confirm(
+        `วันสิ้นสุดงาน (${newEnd}) เลยวันนัดส่งลูกค้า (${job.design_due_date})\nจะเลื่อนวันนัดส่งลูกค้าด้วยหรือไม่?\n\nกด OK = เลื่อนวันนัดลูกค้าด้วย\nกด Cancel = บันทึกเฉพาะช่วงงานช่าง (วันนัดลูกค้าคงเดิม)`
+      );
+      if (confirmed) {
+        try {
+          const res = await fetch(`/api/jobs/${jobId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              design_start: newStart,
+              design_end: newEnd,
+              design_due_date: newEnd,
+            }),
+          });
+          if (!res.ok) {
+            const json = await res.json().catch(() => ({})) as { error?: string };
+            console.error("gantt save failed:", json.error);
+          }
+          await onRefresh();
+        } catch (e) {
+          console.error("gantt save error:", e);
+        }
+        return;
+      }
+    }
+
     try {
       const res = await fetch(`/api/jobs/${jobId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           design_start: newStart,
-          design_due_date: newEnd,
+          design_end: newEnd,
         }),
       });
       if (!res.ok) {
@@ -880,7 +915,7 @@ export default function DesignerSchedule({
     } catch (e) {
       console.error("gantt save error:", e);
     }
-  }, [onRefresh]);
+  }, [onRefresh, jobs]);
 
   if (designers.length === 0) {
     return (

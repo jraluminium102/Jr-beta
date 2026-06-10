@@ -13,7 +13,7 @@ export default async function NewReceiptPage() {
   // ดึงใบวางบิลที่ยังไม่ชำระครบ (unpaid / partial) + งวดชำระ
   const { data } = await supabase
     .from("billing_notes")
-    .select("id, code, customer_snapshot, total, status, billing_installments(id, seq, label, amount, status, sort_order)")
+    .select("id, code, customer_snapshot, total, status, billing_installments(id, seq, label, amount, paid_amount, status, sort_order)")
     .in("status", ["unpaid", "partial"])
     .order("created_at", { ascending: false });
 

@@ -161,9 +161,32 @@ export default function DesignerBoard({
     }
   }
 
+  // ลำดับขั้นปกติ — ใช้ตรวจว่า "ข้ามขั้น" หรือไม่
+  const STATE_ORDER: DesignState[] = [
+    "NOT_STARTED", "DRAWING", "PENDING_CUSTOMER", "REVISING", "DONE",
+  ];
+
   // Move design_state (PATCH /api/designer/[id])
   async function moveTo(job: Job, state: DesignState) {
     if (state === job.design_state) return;
+
+    const fromIdx = STATE_ORDER.indexOf(job.design_state);
+    const toIdx   = STATE_ORDER.indexOf(state);
+
+    // ยืนยันก่อนปิดงาน (DONE)
+    if (state === "DONE") {
+      const confirmed = window.confirm(
+        `ยืนยันปิดงานเขียนแบบ "${job.customer_name}" (${job.job_code ?? "—"})?\nระบบจะ stamp วันเสร็จ`
+      );
+      if (!confirmed) return;
+    } else if (toIdx - fromIdx > 1) {
+      // ข้ามขั้นมากกว่า 1 ขั้น — เตือน (DB ยังเป็นคนตัดสินใจสุดท้าย)
+      const confirmed = window.confirm(
+        `กำลังย้ายจาก "${STATE_TH[job.design_state]}" ไป "${STATE_TH[state]}" (ข้ามขั้น)\nต้องการดำเนินการต่อหรือไม่?`
+      );
+      if (!confirmed) return;
+    }
+
     setMoving(job.id);
     setErr("");
     try {

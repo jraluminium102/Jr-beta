@@ -14,7 +14,7 @@ type TimelineJob = {
   design_end: string | null;
   design_due_date: string | null;
   design_state: DesignState;
-  designer: { full_name: string | null } | null;
+  designer_lookup: { name: string } | null; // join on designer_ref → designers(name)
 };
 
 // GET /api/designer/timeline — ข้อมูล Gantt (เฉพาะงานที่มี design_start)
@@ -27,7 +27,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, design_start, design_end, design_due_date, design_state, designer:designer_id(full_name)"
+      "id, job_code, customer_name, design_start, design_end, design_due_date, design_state, designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
     .not("design_start", "is", null)
@@ -39,7 +39,7 @@ export async function GET() {
     id: r.id,
     job_code: r.job_code,
     customer_name: r.customer_name,
-    designer_name: r.designer?.full_name ?? "ยังไม่มอบหมาย",
+    designer_name: r.designer_lookup?.name ?? "ยังไม่มอบหมาย",
     design_start: r.design_start,
     design_end: r.design_end,
     design_due_date: r.design_due_date,
