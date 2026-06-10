@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}
+*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:12px;line-height:1.5;}
+h1{color:#B3151D;font-size:19px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 12px;}
+h2{color:#fff;background:#B3151D;font-size:14px;margin:16px 0 6px;padding:5px 10px;border-radius:6px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 10px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+.r{color:#B3151D;font-weight:700;} .y{color:#ca8a04;font-weight:700;}
+.card{display:inline-block;border:2px solid #B3151D;border-radius:8px;padding:6px 14px;margin:3px;text-align:center;}
+.card b{font-size:20px;display:block;}
+.box{background:#fff8f8;border:1px solid #f0c0c4;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:11.5px;}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:11.5px;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+ul{margin:3px 0;padding-left:18px;} li{margin:1px 0;}
+</style></head><body>
+
+<h1>FIXLIST รวม 7 กลุ่มสินค้า — เครื่องคิดราคา JR</h1>
+<p class="sub">ตรวจขนาน 7 subagent (กลุ่มละตัว) เทียบใบจริง · 2026-06-10 · ไฟล์ <code>public/calculator/index.html</code> · READ-ONLY audit → ส่งแชทแก้ทีเดียว · เลขบรรทัดอาจขยับ เช็คก่อนแก้</p>
+
+<div style="text-align:center;margin:10px 0;">
+<span class="card"><b class="r">28</b>🔴 ผิดแน่/ขาด</span>
+<span class="card"><b class="y">37</b>🟡 น่าสงสัย</span>
+<span class="card"><b style="color:#15803d">46</b>🟢 ผ่าน</span>
+</div>
+
+<div class="box"><b>🔑 Root cause ร่วม (แก้ทีเดียวคุ้มหลายจุด):</b>
+<ul>
+<li><b>A. genQuote det builder ไม่ออกทุก option</b> — ของที่ "คิดเงิน/เก็บค่าแล้วแต่ไม่พิมพ์ลงใบ": ของเสริมหลังคา · มอเตอร์หลังคาเลื่อน · รุ่น/สี/ควบคุมม่านซิป · รายละเอียดตู้ → จุดเดียวกระทบหลายกลุ่ม (G3,G4,G6,G7)</li>
+<li><b>B. AREA_CATS เหวี่ยงเกิน</b> — ตู้/ฝาตู้ อยู่ใน AREA_CATS → <code>ci=0</code> (สีไม่คิดเงิน) + <code>det='-'</code> (G4 🔴5 จุดรากเดียว)</li>
+<li><b>C. selector สีหาย</b> — bar_grid_z · ชินโค · เมทัล · ม่านซิปผ้า · ตู้ → <b>รอ list สีจากพี่นัท</b></li>
+<li><b>D. readItem ไม่ save บาง optSel</b> — screenFabricColor (G5) · rfbatten fallback ผิด (G3)</li>
+</ul></div>
+
+<h2>G1 บาน — 🔴4 🟡8 🟢3</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">R1</td><td>บานเลื่อนไม่มี option ธรณี (กันน้ำ/ไม่มี/ดรอปพื้น)</td><td>2196-2198</td><td>เพิ่ม o-thresh แบบบานเลื่อน (cosmetic ลงใบ)</td></tr>
+<tr><td class="r">R2</td><td>"บานเลื่อนไร้ราง" ไม่มีใน PRODUCTS (ใบจริงขวัญใช้หลายรายการ)</td><td>PRODUCTS</td><td>เพิ่ม product + เรท (เช็คซ้ำราคา)</td></tr>
+<tr><td class="r">R3</td><td>สี "ไวท์แบมบู (KL19022WD)" ไม่มีใน COLORS · ไวท์โอ๊คชื่อไม่ตรง</td><td>COLORS 862-889</td><td>เพิ่ม/แก้ชื่อสีให้ตรงใบจริง</td></tr>
+<tr><td class="r">R4</td><td>ชุดล็อค (o-slidelock) ไม่ครอบ PC Door (ใบจริงระบุ)</td><td>2285-2289</td><td>เพิ่ม 'PC Door' ในเงื่อนไข</td></tr>
+<tr><td class="y">Y1-8</td><td>ขาด: เส้นคาดมุ้ง · ธรณี "ไม่มี" ในบานเปิด · มุ้งนิรภัยเฟรมตันแยกจากจีบนิรภัย · frameless_fixed ไม่มีสีเฟรม · สีกรอบมุ้ง addon มีแค่ 3 สี ฯลฯ</td><td>ดูรายงาน G1</td><td>—</td></tr>
+</table>
+
+<h2>G2 ระแนง / รั้ว / ราวกันตก — 🔴3 🟡6 🟢6</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">R1</td><td>ประตูรั้ว (fence_gate) ไม่มี selector ลักษณะเปิด — hardcode "บานเลื่อน" เสมอ</td><td>590, 2402</td><td>เพิ่ม o-gatetype (สวิง/เลื่อน) + ชื่อ dynamic (เช็คซ้ำ pricing ต่าง type)</td></tr>
+<tr><td class="r">R2</td><td>ระแนงเกล็ด Z (bar_grid_z) เลือกสีไม่ได้เลย</td><td>587, 2403</td><td>เพิ่ม fin/selector สี (รอ list สี)</td></tr>
+<tr><td class="r">R3</td><td>ชื่อ fence_gate ในใบ hardcode "ประตูรั้วบานเลื่อน"</td><td>590</td><td>ผูกชื่อกับ gatetype</td></tr>
+<tr><td class="y">Y1-6</td><td>ราวกันตกควร lock กระจกเทมเปอร์ 10/12 (ตอนนี้เปลี่ยนเป็นใส 6 ได้) · rate rn33-36 ซ้ำ (เช็คซ้ำ) · bar_slide list มี fence_gate (recursive?)</td><td>ดูรายงาน G2</td><td>—</td></tr>
+</table>
+
+<h2>G3 หลังคา / ฝ้า-ผนัง — 🔴5 🟡5 🟢15</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">H1</td><td>ไม่มีช่อง "ท่อน้ำทิ้ง PVC 2.5 นิ้ว" (ใบจริงทุกใบที่มีราง) — มีแค่ "ครอบท่อ" คนละอย่าง</td><td>ของเสริม ~2367</td><td>เพิ่ม dropdown ท่อน้ำทิ้ง (สี+จุด)</td></tr>
+<tr><td class="r">H2</td><td>ไม่มี "ตะแกรงกันใบไม้" (ใบจริงมีคู่รางน้ำเสมอ)</td><td>2363-2374</td><td>เพิ่ม checkbox ตะแกรง + ลงใบ</td></tr>
+<tr><td class="r">H3</td><td>readItem fallback แป = 'แปเดี่ยว' แต่ UI default 'แปคู่'</td><td>2585</td><td>แก้เป็น 'แปคู่'</td></tr>
+<tr><td class="r">H4</td><td>ชินโคไลท์ (imp15-20) เลือกสีไม่ได้</td><td>2338-2344</td><td>เพิ่ม branch สีชินโค (รอ list)</td></tr>
+<tr><td class="r">H5</td><td>เมทัลชีท (imp7-14) เลือกสีไม่ได้</td><td>2338-2344</td><td>เพิ่ม input สีเมทัล (รอ list)</td></tr>
+<tr><td class="r">S1</td><td>หลังคาเลื่อน: det ไม่ออกข้อมูลมอเตอร์/เลื่อน (อ่านใบไม่รู้ว่าเลื่อน)</td><td>3243-3277</td><td>เพิ่ม if(_os.slide) append</td></tr>
+<tr><td class="y">H6-8,W4-5</td><td>ลามิเนตเลือกฟิล์มไม่ได้ · o-rfgut ไม่ลง det · ISOWALL placeholder สีว่าง · ชื่อ wall_int สั้นไป</td><td>ดูรายงาน G3</td><td>—</td></tr>
+</table>
+
+<h2>G4 ตู้ — 🔴5 🟡2 🟢3 (รากเดียว!)</h2>
+<div class="box"><b>รากเดียว:</b> ตู้อลู/ฝาตู้ อยู่ใน <code>AREA_CATS</code> (บรรทัด 840) → <code>ci=0</code> (สีไม่คิดเงิน บรรทัด 2662) + <code>det='-'</code> (บรรทัด 3197) · <b>แก้ = ถอดตู้/ฝาตู้ออกจาก AREA_CATS + เพิ่ม branch det เฉพาะ cabinet/future_tech</b> → ปิด 🔴 5 จุดรวด (สีตู้/สีฝาตู้/รายละเอียดวัสดุ/ชั้นวาง/คอมโพสิต)</div>
+
+<h2>G5 มุ้ง standalone — 🔴4 🟡6 🟢3</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">R1</td><td>⚠️ <b>มุ้งเฟรม imp21/22/23 ไม่มีช่องจำนวนบาน → min คิดขาดทุน</b> (5 บาน คิดแค่ 1×min)</td><td>922 usesPanels</td><td>เพิ่ม <code>|| !!p.screen_addon</code></td></tr>
+<tr><td class="r">R2</td><td>สีผ้ามุ้ง (o-screenfabriccolor) ไม่ save ใน optSel → เสี่ยงหาย</td><td>2641, 3211</td><td>เพิ่มใน readItem</td></tr>
+<tr><td class="r">R3-4</td><td>imp30(แม่เหล็ก)/imp33/imp35 ไม่มี mscolor (เลือกสีเฟรมไม่ได้)</td><td>680,683,685</td><td>เพิ่ม mscolor (เช็คซ้ำ)</td></tr>
+<tr><td class="y">Y1-6</td><td>เส้นคาดมุ้งไม่มี · itype ซ่อนแต่ calc ใช้ (มุ้งหน้าต่างได้ min ประตู) · มุ้งม้วนเตะไม่ validate กว้าง</td><td>ดูรายงาน G5</td><td>—</td></tr>
+</table>
+
+<h2>G6 กั้นห้องกระจก — 🔴3 🟡7 🟢13</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">12</td><td>"วัสดุปิดรอยต่อแผ่นหลังคา" ไม่มี field (ใบหญิง/ธนบัตรระบุ)</td><td>buildItemOpts หลังคา</td><td>เพิ่ม o-rfsealer + สี</td></tr>
+<tr><td class="r">16</td><td>⚠️ <b>ไม่มี product "พื้น" เลย</b> (สมาร์ทบอร์ด/ไม้เทียม/ลามิเนต) — ใบยี/ธนบัตรใช้</td><td>_GM['6']</td><td>เพิ่มกลุ่มพื้น + เรท</td></tr>
+<tr><td class="r">17</td><td>"ปูพื้นลามิเนต (รอราคา)" ไม่รองรับ</td><td>—</td><td>เพิ่ม field กรอกราคาเหมาพื้น</td></tr>
+<tr><td class="y">2,7,10,11,14,20,23</td><td>สีอลูหลังคาในชุดไม่ sync จาก master (group 3) · default โครงอลูควรเหล็กชุบใน G6 · หลังคาผสม 2 วัสดุไม่มี hint · ราวกันตกเหล็กในใบยี (เช็คซ้ำ)</td><td>1817 ฯลฯ</td><td>—</td></tr>
+</table>
+
+<h2>G7 ม่านซิป — 🔴4 🟡3 🟢3</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">1-2</td><td>ใบไม่ออก "รุ่น (Z100/Z120/Z145D)" + "ระบบควบคุม (มอเตอร์/มือดึง)" (เก็บค่าแล้วแต่ไม่ลง det)</td><td>3198-3202</td><td>ต่อ det: รุ่น + ควบคุม</td></tr>
+<tr><td class="r">3</td><td>ไม่มี dropdown สีผ้าม่านซิป</td><td>2204-2210</td><td>เพิ่ม o-zfabcolor (รอ list สี)</td></tr>
+<tr><td class="r">4</td><td>ม่านซิปโชว์ "ครอบวงกบ/ดรอปพื้น" ผิดประเภท (ไม่มีวงกบ)</td><td>2460</td><td>เพิ่ม <code>&& !p.zipscreen</code></td></tr>
+<tr><td class="y">5-7</td><td>ช่องว่างคู่หลังตัด "(zipscreen)" · Z145D ไม่ระบุ "2 ชั้น"</td><td>3052</td><td>—</td></tr>
+</table>
+
+<div class="note"><b>📋 รอพี่นัทตัดสิน/ให้ข้อมูล (ปลดล็อกหลายจุด):</b>
+<ul>
+<li><b>list สีจริง</b> → ระแนงเกล็ด Z (G2-R2) · ชินโค (G3-H4) · เมทัล (G3-H5) · ผ้าม่านซิป (G7-R3) · ตู้ (G4)</li>
+<li><b>list ฟิล์มหลังคากระจกลามิเนต</b> (G3-H6)</li>
+<li><b>ประตูรั้ว</b> มีแบบอะไรบ้าง + ราคาต่างกันไหม (G2-R1) → แยก product หรือ dropdown</li>
+<li><b>ราคาพื้น</b> (สมาร์ทบอร์ด/ไม้เทียม/ลามิเนต ต่อตร.ม.) (G6-16,17)</li>
+<li><b>ราวกันตกเหล็ก</b> เป็น product จริงไหม หรือ extrawork (G2/G6 เช็คซ้ำ)</li>
+<li><b>มุ้งนิรภัยเฟรมตัน</b> ทำสีได้ไหม + แยกจากจีบนิรภัยไหม (G1/G5)</li>
+</ul></div>
+
+<div class="box"><b>⚡ แก้ก่อน (กระทบเงิน/ทำได้เลยไม่รอข้อมูล):</b>
+<ol>
+<li><b>G5-R1</b> มุ้งเฟรม min คิดขาดทุน (usesPanels +screen_addon) — กระทบราคาขายตรงๆ</li>
+<li><b>G4 รากเดียว</b> ถอดตู้/ฝาตู้จาก AREA_CATS → ปิด 🔴 5 จุด</li>
+<li><b>Root cause A</b> genQuote det ออกให้ครบ (หลังคาของเสริม/มอเตอร์/ม่านซิปรุ่น-สี-ควบคุม/ตู้)</li>
+<li><b>H1/H2</b> ท่อน้ำทิ้ง PVC + ตะแกรงกันใบไม้ (ใบจริงมีทุกใบ)</li>
+<li><b>H3/G3-readItem</b> แก้ fallback แปคู่ · <b>G5-R2</b> save สีผ้ามุ้ง</li>
+<li><b>G2-R1/R3</b> ประตูรั้ว type · <b>G7-1/2/4</b> ม่านซิป det + ตัดออปชั่นผิด</li>
+</ol></div>
+
+<p class="sub">เอกสาร READ-ONLY · ไม่แตะ index.html · ส่งแชทแก้ดำเนินการ — แก้ root cause A,B ก่อนคุ้มสุด</p>
+</body></html>
