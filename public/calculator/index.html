@@ -2251,7 +2251,8 @@ function buildItemOpts(d){
   if(p.digihandle){ h+='<label class="opt">มือจับรุ่นอื่น (กรอกเอง) <input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="width:180px;height:32px;" oninput="calcQuote()"> + <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:90px;height:32px;" oninput="calcQuote()"> บาท</label>'; }
   // ข้อ4A: มือจับ Cmech — เฉพาะ "ชุดบานเลื่อน" (handoff) · แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
   //   เดิมเปิดให้ เปิด/กระทุ้ง ด้วย แต่ใบโชว์เฉพาะสาขาบานเลื่อน → คิดเงินไม่โชว์ · จำกัดเป็นบานเลื่อนปิด gap
-  if(p.cat==='บานเลื่อน'){
+  if(p.cat==='บานเลื่อน' || p.cat==='บานเปิด'){
+    // ข้อ3(G1): เพิ่ม 'บานเปิด' — เดิม cat==='บานเลื่อน' เท่านั้น ทั้งที่ banner บอกบานเปิดมี Cmech (คิดเงินแต่ UI ไม่วาด)
     h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="black">สีดำ</option><option value="white">สีขาว</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
   }
   // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 ราคาสุดท้าย (รวม Fork Drive แล้ว · เคาะ 2026-06-08)
