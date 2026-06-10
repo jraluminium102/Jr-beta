@@ -552,8 +552,8 @@ const GLASS=[
  {n:"★ กระจกลามิเนตสีฟ้า+สีฟ้า 6+6",c:1900,s:3400},
  {n:"★ กระจกลามิเนตยูโรบรอนซ์+ใส 6+6",c:1600,s:2800},
  {n:"★ กระจกลามิเนตยูโรบรอนซ์+ยูโรบรอนซ์ 6+6",c:1900,s:3400},
- {n:"★ กระจกใสดัดโค้งหนา 10 มม. (ราคาช่วง 6500-7000)",c:6750,s:8550},
- {n:"★ กระจกใสดัดโค้งลามิเนตใส 5+5 มม. (ราคาช่วง 8500-9000)",c:8750,s:11150},
+ {n:"★ กระจกใสดัดโค้งหนา 10 มม.",c:6750,s:8550},
+ {n:"★ กระจกใสดัดโค้งลามิเนตใส 5+5 มม.",c:8750,s:11150},
  {n:"★ กระจกลามิเนต 4+4 ยูโรเกรย์",c:1700,s:3000},
  {n:"★ กระจกเงาทอง",c:700,s:1000},
  {n:"★ กระจกลามิเนตลอนแก้ว/กระจกเงาทอง 4+4",c:2000,s:3600},
@@ -1330,6 +1330,9 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   // ข้อ1(G1): ค่าทึบลูกฟูก 2 หน้า × ฝั่ง (ทู=2 · วัน=1) × พื้นที่บาน × 3,500 — auto (เลิกกรอกราคาเอง)
   if(p.solid_door){
     const _sides=p.solid_sides||1;
+    // R2-5: โชว์ฐานบาน ใน breakdown (ราคารวมถูกอยู่แล้ว · แค่อ่านให้ครบ)
+    const _solidBase=basePrice(p,a,panels);
+    msgs.push('ฐานบาน (บานเปิดยูโร) '+a.toFixed(2)+' ตร.ม. = '+fmt(_solidBase));
     const _corr=a*3500*_sides;
     opt+=_corr;
     msgs.push('ทึบลูกฟูกเรียบ 2 หน้า ('+(_sides===2?'ทู · 2 ฝั่ง':'วัน · 1 ฝั่ง')+') '+a.toFixed(2)+'×3,500×'+_sides+' = '+fmt(_corr));
@@ -2205,14 +2208,8 @@ function buildItemOpts(d){
     if(_wWrap){ var _wl=_wWrap.querySelector('label'); if(_wl) _wl.textContent=_isLen?_lenLbl:'กว้าง (ม.)'; }
     if(_hWrap){ _hWrap.style.display=_isLen?'none':''; }
   }
-  // R3.3: ประตูบานเปิด — banner Std/Up1/Up2/Up3 (เลือก 1 ใน 4)
+  // R2-6: ลบ banner "ประตูบานเปิด — เลือกมือจับ 1 ใน 4" (ข้อความเฉยๆ · dropdown มือจับยังอยู่ครบ)
   if(p.cat==='บานเปิด'){
-    h+='<div class="opt" style="width:100%;background:#E2EFDA;border-left:4px solid #70AD47;padding:8px 12px;margin-bottom:6px;font-size:12px;line-height:1.5;"><b style="color:#385723;">ประตูบานเปิด — เลือกมือจับ 1 ใน 4:</b><br>'
-       +'<b>Std</b>=ก้านโยก+กุญแจ (รวมในราคาบาน) · '
-       +'<b>Up1</b>=Cmech 6 สี (ดู dropdown Cmech) · '
-       +'<b>Up2</b>=ดิจิตอล 11 รุ่น (ดู dropdown ดิจิตอล + JR Prime ใส่ได้เฉพาะยูโร/Flush/Inset) · '
-       +'<b>Up3</b>=สแตน + โช๊ค (ดู dropdown สแตนอร่าม + dropdown โช๊ค)'
-       +'</div>';
     // Pass2-A: ธรณี บานเปิด
     h+='<label class="opt">ธรณี <select class="o-thresh" style="width:auto;height:32px;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select></label>'; // ข้อ8(G1): รางยู disable ตัวนี้เมื่อติ๊ก
   }
@@ -2877,6 +2874,8 @@ function today(){ const t=new Date(); return String(t.getDate()).padStart(2,'0')
 function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,itemId){
   // PDF-like format: # | รายละเอียด (multi-line) | จำนวน | ราคา/หน่วย | ยอดรวม
   const _ed = window.qEdit && itemId;  // งาน4: โหมดแก้ในใบ
+  // R2-4: ถ้าเซลล์แก้ "รายละเอียดงาน" ไว้ → ใช้ข้อความที่แก้ (override ทั้งก้อน · คล้าย _nameOv)
+  if(window._detOv && itemId && window._detOv[itemId]!=null && window._detOv[itemId]!=='') glass = window._detOv[itemId];
   let content = `<div style="font-weight:700;color:#1F2937;">${name}</div>`;
   // R4.3: แนบขนาดท้ายชื่อสินค้า (size = "(กว้าง × สูง ม.)" หรือ "" ถ้าไม่มี เช่น กั้นห้องกระจก)
   // #4 2026-06-05: prod รองรับ multiline (\n) — บรรทัดแรกผูก size, บรรทัดถัดไปเป็นบรรยายด้าน A-H/หลังคา
@@ -2903,7 +2902,13 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
   // รายละเอียดงาน
   if (glass && glass !== '-') {
     content += `<div style="margin-top:8px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>`;
-    glass.split(/\n|\s·\s/).filter(g=>g.trim()).forEach(g => { g=g.trim(); const keep=g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ'); content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${keep?g:'- '+g}</div>`; });
+    if(_ed){
+      // R2-4: แก้รายละเอียดงานได้ทั้งก้อน (contenteditable) → setRowDet เก็บ override
+      const _detLines = glass.split(/\n|\s·\s/).filter(g=>g.trim()).map(g=>{ g=g.trim(); const keep=g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ'); return keep?g:'- '+g; }).join('\n');
+      content += `<div contenteditable="true" onblur="setRowDet('${itemId}',this)" style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;white-space:pre-wrap;border:1px dashed #B3151D;outline:none;cursor:text;padding:2px 5px;border-radius:4px;">${_detLines}</div>`;
+    } else {
+      glass.split(/\n|\s·\s/).filter(g=>g.trim()).forEach(g => { g=g.trim(); const keep=g.startsWith('-')||g.startsWith('OPTION')||g.startsWith('หมายเหตุ'); content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${keep?g:'- '+g}</div>`; });
+    }
   }
   if(optText){ content += `<div style="margin-top:6px;color:#B3151D;font-size:13px;">OPTION : ${optText}${optDelta?(' (ราคา'+(optDelta>0?'+':'-')+fmt(Math.abs(optDelta))+' บาท)'):''}</div>`; }
   const unitCell = _ed ? `<span contenteditable="true" onblur="setRowPrice('${itemId}',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">${q2(unit)}</span>` : q2(unit);
@@ -2911,7 +2916,9 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
     `<td class="r" style="vertical-align:top;">${qty} ชุด</td><td class="r" style="vertical-align:top;">${unitCell}</td><td class="r" style="vertical-align:top;">${q2(line)}</td></tr>`;
 }
 // งาน4: โหมดแก้ราคา/ข้อความในใบ
-window.qEdit=false; window._nameOv=window._nameOv||{};
+window.qEdit=false; window._nameOv=window._nameOv||{}; window._detOv=window._detOv||{};
+// R2-4: เก็บ override รายละเอียดงานที่เซลล์แก้ (ทั้งก้อน) · ว่าง=กลับใช้อัตโนมัติ
+function setRowDet(id,el){ var t=(el.innerText||'').replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').trim(); if(t) window._detOv[id]=t; else delete window._detOv[id]; genQuote(true); }
 function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElementById('editBtn'); if(b){ b.textContent=window.qEdit?'✓ เสร็จการแก้':'✎ แก้ราคา/ข้อความ'; b.style.background=window.qEdit?'#B3151D':''; b.style.color=window.qEdit?'#fff':''; } genQuote(true); }
 function setRowName(id,el){ var t=(el.innerText||'').replace(/^-\s*/,'').trim(); if(t) window._nameOv[id]=t; else delete window._nameOv[id]; genQuote(true); }
 function setRowPrice(id,el){ var v=parseFloat((el.innerText||'').replace(/[^0-9.]/g,'')); var ch=document.querySelector('#items .ch[data-id="'+id+'"]'); if(ch){ var ov=ch.querySelector('.i-override'); if(ov){ ov.value=(isNaN(v)?'':v); ov.dispatchEvent(new Event('input',{bubbles:true})); } calcQuote(); genQuote(true); } }
@@ -3119,6 +3126,7 @@ function genQuote(keepNo){
       .replace(/\s*\((?:ก|ข)\)\s*/g,' ')
       .replace(/\s+\(รวม[^)]+\)/g,'')  // ตัด "(รวม soft close+สลิง+เทมเปอร์6มม.)" ออกจากหัวข้อ — ย้ายเป็นคำบรรยายใต้หัวข้อแทน
       .replace(/\s*·\s*แข็งแรงกว่า/g,'')  // ข้อ10: ตัด "· แข็งแรงกว่า" — คงไว้แค่ "(ลูกฟูกเสมอกรอบ)"
+      .replace(/(โซลิด)\s*(?:ทู|วัน)\s*\([^)]*\)/g,'$1')  // R2-1: ตัด "ทู/วัน (ลูกฟูก...)" จากชื่อใบลูกค้า → "ประตูบานเปิด โซลิด"
       .replace(/\s*·\s*ข้อ\s*[\d.]+/g,'')  // ตัด "· ข้อ 38.2" อ้างอิงเอกสารภายใน ออกจากใบลูกค้า (คงคำบรรยายเทคนิคไว้)
       .replace(/\s+\(เลื่อนซ้อน\)/g,'')  // ตัดวงเล็บ "(เลื่อนซ้อน)" ออก — เทคนิค ไม่ใช่ชื่อ
       .replace(/\s+\(zipscreen\)\s*/g,' ')  // ตัด "(zipscreen)" ออกจากชื่อ — ใช้ภาษาไทย
@@ -3200,7 +3208,9 @@ function genQuote(keepNo){
     // บานเลื่อน: มุ้งถูก include ใน _slideName แล้ว ไม่ต้องต่ออีก
     if(it.p.mosquito && it.optSel && it.optSel.mosqId && it.p.cat!=='บานเลื่อน' && it.p.cat!=='เลื่อนภายใน'){
       var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย',imp21:'พร้อมมุ้งเฟรมเล็ก',imp22:'พร้อมมุ้งเฟรมเล็ก',imp23:'พร้อมมุ้งเฟรมใหญ่'};
-      prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ');
+      // R2-2: ขนาดมุ้งย้ายมาที่ชื่อรายการ (เดิมอยู่ในรายละเอียดงาน "— ขนาด ~X ตร.ม.")
+      var _mqDim=(it.w&&it.h)?(' ขนาด '+it.w+'×'+it.h+' ม.'):'';
+      prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ')+_mqDim;
     }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
@@ -3566,7 +3576,7 @@ function genQuote(keepNo){
       // Velora/SlimLux รวมเทมเปอร์ 6 มม. ในราคา — ไม่ใช้ glass selector ของผู้ใช้
       if(it.p.solid_door){
         // ข้อ1(G1): โซลิดลูกฟูก — บานทึบ ไม่ใช่กระจกทั้งบาน · ระบุช่องแสงถ้ามี
-        const _sideTxt = (it.p.solid_sides===2) ? 'เสมอกรอบ (ทู)' : 'กลางบาน (วัน)';
+        const _sideTxt = (it.p.solid_sides===2) ? 'เสมอกรอบ' : 'กลางบาน'; // R2-1: ตัด (ทู)/(วัน) จากใบลูกค้า
         lines.push('บานทึบลูกฟูกเรียบ 2 หน้า '+_sideTxt);
         const _lA = parseFloat(it.optSel&&it.optSel.solidlight)||0;
         if(_lA>0){
@@ -3605,10 +3615,8 @@ function genQuote(keepNo){
           // ข้อ13(G1): สีกรอบมุ้ง — special เลือกไว้โชว์สีนั้น · ว่าง=ตามสีบาน (มีชื่อสีเสมอ)
           var _mqcMap={sahara:'เทาซาฮาร่า',kl_special:'เคแอลอบพิเศษ',kl_wood:'เคแอลลายไม้'};
           var _frShow=_mqcMap[it.optSel&&it.optSel.mosqColor]||(_frName?('ตามสีบาน '+_frName):'ตามสีบาน');
-          // ข้อ9(G1): มุ้ง non-sliding (บานเปิด/กระทุ้ง/ฯลฯ) โชว์ขนาดด้วย เหมือนบานเลื่อน
-          var _mosqAddonG=(it.r && it.r.addonLines||[]).find(function(al){return al.mosqArea!==undefined;});
-          var _szTxtG=_mosqAddonG?(' — ขนาด ~'+_mosqAddonG.mosqArea.toFixed(1)+' ตร.ม.'):'';
-          lines.push(msName+' (เฟรม'+_frShow+' / '+mfLabel+')'+_szTxtG);
+          // R2-2: ขนาดมุ้งย้ายไปชื่อรายการแล้ว — ตัด "— ขนาด ~X ตร.ม." ออกจากรายละเอียดงาน
+          lines.push(msName+' (เฟรม'+_frShow+' / '+mfLabel+')');
         }
       }
       // ข้อ5(G1): เสริมคาน (บานเปิด/PC Door) ลงใบเมื่อเลือก — คิดเงินต้องโชว์
