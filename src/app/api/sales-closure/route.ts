@@ -14,15 +14,20 @@ export type ClosureRow = {
   id: string;
   job_code: string | null;
   customer_name: string;
+  customer_tel: string | null;       // ไว้ไล่โทรปิดการขาย
   current_stage: number;
   stage_name: string;
   status: string;
   design_state: string;
+  remark: string | null;             // โน้ตเซลล์ / สถานะติดตามคร่าวๆ
+  quote_sent_date: string | null;    // วันส่งใบเสนอ
+  days_waiting: number | null;       // กี่วันแล้วที่รอ (จากวันส่งใบเสนอ)
+  estimator_name: string | null;     // ผู้รับผิดชอบ
   /** Latest quotation linked to this job */
   quotation_id: number | null;
   quotation_code: string | null;
   net: number | null;
-  /** Allowed to send back to designer revision */
+  /** Allowed to send back to designer revision (เฉพาะ stage 5/6) */
   can_revise: boolean;
 };
 
@@ -39,9 +44,13 @@ export const GET = withRoute(async () => {
         "id",
         "job_code",
         "customer_name",
+        "customer_tel",
         "current_stage",
         "status",
         "design_state",
+        "remark",
+        "quote_sent_date",
+        "estimator:estimator_id(full_name)",
         // PostgREST: embed ผ่าน FK quotations.job_id ให้ชัด (ไม่งั้นใบเสนอ job_id=null resolve ไม่เจอ ขึ้น '—')
         "quotations!quotations_job_id_fkey(id, code, net, created_at)",
       ].join(",")
@@ -69,19 +78,30 @@ export const GET = withRoute(async () => {
     )[0] ?? null;
 
     const stage = Number(j.current_stage);
+    const qsd = (j.quote_sent_date as string | null) ?? null;
+    const daysWaiting = qsd
+      ? Math.max(0, Math.floor((Date.now() - new Date(qsd).getTime()) / 86400000))
+      : null;
+    const est = j.estimator as { full_name: string | null } | null;
 
     return {
       id: j.id as string,
       job_code: j.job_code as string | null,
       customer_name: j.customer_name as string,
+      customer_tel: (j.customer_tel as string | null) ?? null,
       current_stage: stage,
       stage_name: STAGE_NAMES[stage] ?? `ขั้น ${stage}`,
       status: j.status as string,
       design_state: j.design_state as string,
+      remark: (j.remark as string | null) ?? null,
+      quote_sent_date: qsd,
+      days_waiting: daysWaiting,
+      estimator_name: est?.full_name ?? null,
       quotation_id: latestQ?.id ?? null,
       quotation_code: latestQ?.code ?? null,
       net: latestQ?.net ?? null,
-      can_revise: canWrite,
+      // ส่งแก้แบบเฉพาะ stage 5/6 (stage 7 ส่งใบเสนอแล้ว + RPC ไม่มี loop 7→x)
+      can_revise: canWrite && (stage === 5 || stage === 6),
     };
   });
 

@@ -111,9 +111,21 @@ export default function SalesClosurePage() {
                       <td className="px-4 py-3 text-white font-medium tnum">
                         {row.job_code ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-white/90">{row.customer_name}</td>
+                      <td className="px-4 py-3">
+                        <div className="text-white/90 font-medium">{row.customer_name}</div>
+                        {row.customer_tel && (
+                          <a href={`tel:${row.customer_tel}`} className="text-[12px] text-sky-300 hover:underline tnum inline-block">📞 {row.customer_tel}</a>
+                        )}
+                        {row.estimator_name && <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ดูแลโดย {row.estimator_name}</div>}
+                        {row.remark && <div className="text-[11px] italic mt-0.5 max-w-[240px]" style={{ color: "var(--t-mid)" }}>📝 {row.remark}</div>}
+                      </td>
                       <td className="px-4 py-3">
                         <StageBadge stage={row.current_stage} name={row.stage_name} />
+                        {row.days_waiting != null && (
+                          <div className={`text-[11px] mt-1 tnum ${row.days_waiting > 7 ? "text-rose-300 font-medium" : "text-white/50"}`}>
+                            รอ {row.days_waiting} วัน{row.quote_sent_date ? ` · ส่ง ${row.quote_sent_date}` : ""}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <DesignBadge state={row.design_state} />
@@ -142,11 +154,20 @@ export default function SalesClosurePage() {
               <div key={row.id} className="glass-card rounded-2xl p-4 space-y-2.5">
                 {/* Top: Job ID + stage */}
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
                     <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
+                    {row.customer_tel && (
+                      <a href={`tel:${row.customer_tel}`} className="text-[12px] text-sky-300 tnum inline-block mt-0.5">📞 {row.customer_tel}</a>
+                    )}
+                    {row.estimator_name && <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ดูแลโดย {row.estimator_name}</div>}
                   </div>
-                  <StageBadge stage={row.current_stage} name={row.stage_name} />
+                  <div className="text-right shrink-0">
+                    <StageBadge stage={row.current_stage} name={row.stage_name} />
+                    {row.days_waiting != null && (
+                      <div className={`text-[11px] mt-1 tnum ${row.days_waiting > 7 ? "text-rose-300 font-medium" : "text-white/50"}`}>รอ {row.days_waiting} วัน</div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Middle: design + quote */}
@@ -163,6 +184,11 @@ export default function SalesClosurePage() {
                     </span>
                   )}
                 </div>
+
+                {/* Note/status */}
+                {row.remark && (
+                  <div className="text-[12px] italic glass-card rounded-lg px-3 py-2" style={{ color: "var(--t-mid)" }}>📝 {row.remark}</div>
+                )}
 
                 {/* Action */}
                 {canWrite && (

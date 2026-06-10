@@ -488,14 +488,14 @@ function JobCard({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <a
-            href={`/jobs/${job.id}`}
+            href={`/jobs?open=${job.id}`}
             className="font-semibold text-brand-dark hover:underline focus:outline-none focus:ring-2 focus:ring-brand/40 rounded"
             aria-label={`ดูงาน ${job.job_code ?? ""}`}
           >
             {job.job_code ?? "—"}
           </a>
           <a
-            href={`/jobs/${job.id}`}
+            href={`/jobs?open=${job.id}`}
             className="inline-flex items-center gap-0.5 text-[10px] text-ink-3 hover:text-brand border border-ink-3/30 hover:border-brand/40 rounded px-1 py-0.5 min-h-[22px] focus:outline-none focus:ring-2 focus:ring-brand/40"
             aria-label="ดูงาน"
             tabIndex={0}

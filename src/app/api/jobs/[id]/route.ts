@@ -85,6 +85,16 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       .from("jobs").update(payload as Record<string, unknown>).eq("id", params.id).select().single();
     if (error) throw dbError(error);
   if (!data) throw dbError({ message: "Update failed" });
+
+    // ยกเลิกงาน → cascade ยกเลิกใบเสนอราคาที่ผูกอยู่ (เฉพาะ draft/sent; ข้าม approved ที่อาจมีบิล)
+    if (payload.status === "CANCELLED") {
+      await ctx.supabase
+        .from("quotations")
+        .update({ status: "cancelled" })
+        .eq("job_id", params.id)
+        .in("status", ["draft", "sent"]);
+    }
+
     await audit({
       jobId: params.id, userId: ctx.user.id, action: "STATUS_CHANGED",
       table: "jobs", recordId: params.id, newValue: { status: payload.status },

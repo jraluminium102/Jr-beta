@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { JOB_STATUS } from "@/lib/constants";
@@ -20,6 +20,12 @@ export default function JobsPage() {
   const [status, setStatus] = useState("ALL");
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // เปิด JobDrawer อัตโนมัติจาก ?open=<jobId> (ลิงก์ "ดูงาน" จากหน้าอื่น เช่น บอร์ดเขียนแบบ)
+  useEffect(() => {
+    const o = new URLSearchParams(window.location.search).get("open");
+    if (o) setOpenId(o);
+  }, []);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["jobs", q, status],
