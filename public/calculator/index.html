@@ -2439,7 +2439,7 @@ function buildItemOpts(d){
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
   if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ตามสีบาน (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
   if(p.bar_slide){
-    const doorOpts = ['sliding_sms','sliding_euro','casement_euro','casement_dseries','folding','folding_xseries','fence_gate']
+    const doorOpts = ['sliding_sms','sliding_euro','casement_euro','casement_dseries','folding','folding_xseries'] // G2-4: ตัด fence_gate (เลือกแล้วแครช TypeError — gate ไม่มี method/rates)
       .filter(id => PBYID[id])
       .map(id => '<option value="'+id+'">'+PBYID[id].name+'</option>').join('');
     h+='<label class="opt">ค่าประตู (เลือกรุ่น) <select class="o-bsdoor" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่มี (ระแนงเปล่า)</option>'+doorOpts+'</select></label>';
