@@ -3298,7 +3298,14 @@ function genQuote(keepNo){
       } else { // door_fixed
         shConfigLabel = shdoortype==='sliding' ? 'บานติดตายพร้อมบานเลื่อน' : 'บานติดตายพร้อมบานเปิด';
       }
-      const shLines = [shConfigLabel, 'กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส'];
+      // ข้อ10(G1): กระจก ตามที่เลือกจริง — default (gi=0) = เทมเปอร์ใส 10 (มาตรฐานรวมในราคา) · เลือกอื่นโชว์ตามนั้น
+      let _shGlass='กระจกเทมเปอร์ใส 10 มม.';
+      // เลือกกระจก premium (s>0 เช่น ลามิเนต/เทมเปอร์พิเศษ) → โชว์ตามเลือก · กระจกฐาน (s=0) คงเทมเปอร์ 10 มาตรฐาน
+      if((it.gi||0)>0 && GLASS[it.gi] && GLASS[it.gi].s>0){ let _gn=GLASS[it.gi].n.replace(/^[★⚠\s]+/,'').trim(); if(_gn.indexOf('หนา')<0)_gn=_gn.replace(/(\s)(\d)/,'$1หนา $2'); if(!_gn.startsWith('กระจก'))_gn='กระจก'+_gn; _shGlass=_gn; }
+      // ข้อ10(G1): สีอุปกรณ์ (เงิน/ดำ+4,000/ทอง+6,000) — คิดเงินต้องออกในใบ
+      const _shHw=parseInt(it.optSel&&it.optSel.showerhw)||0;
+      const _shHwTxt=['ราวสแตนเลส (สีเงิน)','อุปกรณ์สีดำ','อุปกรณ์สีทอง'][_shHw]||'ราวสแตนเลส';
+      const shLines = [shConfigLabel, _shGlass+' + '+_shHwTxt];
       // สีอลูจาก glass selector (shower มีสีอลูเลือกได้)
       const ci0s = it.ci || 0;
       const cs = COLORS[ci0s];
