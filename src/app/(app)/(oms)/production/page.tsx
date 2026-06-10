@@ -20,8 +20,7 @@ const today = new Date().toISOString().slice(0, 10);
 const GROUPS: { key: string; label: string; statuses: ProdStatus[]; tone: string }[] = [
   { key: "measure", label: "รอวัดจริง", statuses: ["PENDING_MEASURE"], tone: "text-sky-300" },
   { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", statuses: ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"], tone: "text-cyan-300" },
-  { key: "queue", label: "รอลงผลิต", statuses: ["QUEUED"], tone: "text-amber-300" },
-  { key: "producing", label: "กำลังผลิต", statuses: ["MANUFACTURING"], tone: "text-orange-300" },
+  { key: "producing", label: "กำลังผลิต", statuses: ["QUEUED", "MANUFACTURING"], tone: "text-orange-300" },
   { key: "qc", label: "รอ QC", statuses: ["QC"], tone: "text-violet-300" },
   { key: "ready", label: "พร้อมติดตั้ง", statuses: ["READY"], tone: "text-emerald-300" },
   { key: "issue", label: "มีปัญหา", statuses: ["ISSUE"], tone: "text-rose-300" },

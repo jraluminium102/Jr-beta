@@ -199,7 +199,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
         await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
-        await api.patch(`/production/${pickId}`, { status: "QUEUED", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
+        await api.patch(`/production/${pickId}`, { status: "MANUFACTURING", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
       }
       onSaved();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); setSaving(false); }

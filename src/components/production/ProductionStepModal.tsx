@@ -29,6 +29,8 @@ type Action = {
 
 // ── State machine งานผลิต (มีทางแยก ไม่ใช่เส้นตรง) ─────────────────────
 // แต่ละสถานะ → action ที่ทำได้ (ปุ่มเลือกเส้นทาง)
+// หมายเหตุ: ตัดขั้น "รอลงผลิต" (QUEUED) ออก — ใส่วันผลิตแล้วเข้า "กำลังผลิต" เลย
+// วันติดตั้งที่กำหนด (planned_install_date) ย้ายไปเป็นช่องแก้ได้ตลอด (ดูใน modal) ตั้งแต่ขั้นแรก
 const TRANSITIONS: Record<ProdStatus, Action[]> = {
   // รอวัด: นัดวัดล่วงหน้าได้ (อาจเป็นเดือน) — บันทึกนัดวัดแยกด้านบน, ปุ่มนี้คือ "วัดเสร็จแล้ว"
   PENDING_MEASURE: [
@@ -38,34 +40,26 @@ const TRANSITIONS: Record<ProdStatus, Action[]> = {
   MEASURED: [
     { to: "PENDING_MEETING", label: "เข้าสู่ขั้นประชุมสรุปแบบ", tone: "go" },
   ],
-  // หลังประชุม → เลือกได้ 3 ทาง
+  // หลังประชุม → เลือกได้ 3 ทาง (ลงวันผลิต = เข้าผลิตเลย)
   PENDING_MEETING: [
-    { to: "QUEUED", label: "แบบโอเค → ลงคิวผลิต", hint: "ลงวันผลิต + วันติดตั้งที่นัดลูกค้า", tone: "go",
-      fields: [
-        { field: "planned_install_date", label: "วันติดตั้งที่กำหนด (นัดลูกค้า)" },
-        { field: "production_queued", label: "วันเริ่มผลิต" },
-      ] },
+    { to: "MANUFACTURING", label: "แบบโอเค → เริ่มผลิต (ลงวันผลิต)", hint: "ใส่วันผลิตแล้วเข้าขั้นผลิตเลย", tone: "go",
+      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
     { to: "PENDING_CONFIRM", label: "รอลูกค้าคอนเฟิร์มแบบก่อน", tone: "wait" },
     { to: "REVISING", label: "ต้องแก้แบบ → ส่งกลับทีมเขียนแบบ", hint: "งานจะเด้งไปหน้าเขียนแบบ (สถานะ: แก้แบบ)", tone: "warn" },
   ],
   // แก้แบบหลังวัด
   REVISING: [
     { to: "PENDING_CONFIRM", label: "แก้แบบเสร็จ → รอลูกค้าคอนเฟิร์ม", tone: "go" },
-    { to: "QUEUED", label: "แก้เสร็จ + ลูกค้าโอเค → ลงคิวผลิต", tone: "go",
-      fields: [
-        { field: "planned_install_date", label: "วันติดตั้งที่กำหนด (นัดลูกค้า)" },
-        { field: "production_queued", label: "วันเริ่มผลิต" },
-      ] },
+    { to: "MANUFACTURING", label: "แก้เสร็จ + ลูกค้าโอเค → เริ่มผลิต (ลงวันผลิต)", tone: "go",
+      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
   ],
   // รอลูกค้าคอนเฟิร์ม
   PENDING_CONFIRM: [
-    { to: "QUEUED", label: "ลูกค้าคอนเฟิร์มแล้ว → ลงคิวผลิต", tone: "go",
-      fields: [
-        { field: "planned_install_date", label: "วันติดตั้งที่กำหนด (นัดลูกค้า)" },
-        { field: "production_queued", label: "วันเริ่มผลิต" },
-      ] },
+    { to: "MANUFACTURING", label: "ลูกค้าคอนเฟิร์มแล้ว → เริ่มผลิต (ลงวันผลิต)", tone: "go",
+      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
     { to: "REVISING", label: "ลูกค้าขอแก้แบบอีก → ส่งกลับเขียนแบบ", tone: "warn" },
   ],
+  // QUEUED: คงไว้สำหรับงานเก่าที่ยังค้างสถานะนี้ — กดเข้าผลิตได้
   QUEUED: [
     { to: "MANUFACTURING", label: "เริ่มลงมือผลิตแล้ว", tone: "go" },
   ],
@@ -85,7 +79,7 @@ const TRANSITIONS: Record<ProdStatus, Action[]> = {
   READY: [],
   // กู้คืนจากปัญหา
   ISSUE: [
-    { to: "QUEUED", label: "เคลียร์ปัญหาแล้ว → กลับไปลงคิวผลิต", tone: "go" },
+    { to: "MANUFACTURING", label: "เคลียร์ปัญหาแล้ว → กลับไปผลิต", tone: "go" },
     { to: "PENDING_MEASURE", label: "ต้องวัด/ประชุมใหม่ → กลับไปรอวัด", tone: "wait" },
   ],
 };
@@ -108,6 +102,8 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 
   // นัดวัด (เฉพาะตอน PENDING_MEASURE) — บันทึกได้โดยไม่เลื่อนสถานะ
   const [sched, setSched] = useState(prod.measure_scheduled ?? today());
+  // วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น (ลูกค้ารู้ตั้งแต่ก่อนมัดจำ) ใช้วางเดดไลน์
+  const [installDate, setInstallDate] = useState(prod.planned_install_date ?? "");
 
   // action ที่ "กางฟอร์ม" อยู่ (null = ยังไม่เลือก)
   const [armed, setArmed] = useState<string | null>(null);
@@ -193,6 +189,20 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
                     className="focusable pressable px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold min-h-[52px] disabled:opacity-60">บันทึกนัด</button>
                 </div>
                 <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ยังอยู่ขั้น "รอวัด" — กดปุ่มเขียวด้านล่างเมื่อวัดจริงเสร็จแล้ว</p>
+              </div>
+            )}
+
+            {/* วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น (ตั้งแต่รอวัด) เพื่อวางเดดไลน์ล่วงหน้า */}
+            {prod.status !== "READY" && (
+              <div className="mt-3 glass-card rounded-2xl p-4 border border-emerald-300/20">
+                <label className="block text-[13px] mb-1.5 font-medium text-emerald-100">📅 วันติดตั้งที่กำหนด (นัดลูกค้า)</label>
+                <div className="flex gap-2">
+                  <input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} aria-label="วันติดตั้งที่กำหนด"
+                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                  <button onClick={() => patch({ planned_install_date: installDate || null })} disabled={saving}
+                    className="focusable pressable px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold min-h-[52px] disabled:opacity-60">บันทึกวัน</button>
+                </div>
+                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ลูกค้ารู้วันติดตั้งตั้งแต่ก่อนมัดจำ — กรอกไว้เลยเพื่อกำหนดเดดไลน์ผลิต/วัด</p>
               </div>
             )}
 
