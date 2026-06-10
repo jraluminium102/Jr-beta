@@ -602,8 +602,8 @@ const PRODUCTS=[
  {id:'curved_single',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานเดี่ยว',method:'bucket',min:32000,rates:'CURVE_SGL',cost:null,digihandle:1,glassDef:60},
  {id:'curved_fixed',cat:'ดัดโค้ง',name:'บานติดตายดัดโค้ง',method:'bucket',min:10000,rates:'CURVE_FIX',cost:null,glassDef:60},
  {id:'curved_slim',cat:'ดัดโค้ง',name:'บานดัดโค้งสลิม',method:'bucket',min:50000,rates:'CURVE_SLIM',cost:null,digihandle:1,glassDef:60},
- {id:'pc_door_2',cat:'PC Door',name:'PC Door 2 บาน',method:'bucket',min:36000,rates:'PC2',cost:null,mosquito:1},
- {id:'pc_door_4',cat:'PC Door',name:'PC Door 4 บาน',method:'area_rate',rates:'PC4',min:46000,cost:null,mosquito:1},
+ {id:'pc_door_2',cat:'PC Door',name:'PC Door 2 บาน',method:'bucket',min:36000,rates:'PC2',cost:null,mosquito:1,digihandle:1},
+ {id:'pc_door_4',cat:'PC Door',name:'PC Door 4 บาน',method:'area_rate',rates:'PC4',min:46000,cost:null,mosquito:1,digihandle:1},
  {id:'roof_vinyl',cat:'หลังคา',name:'หลังคา ไวนิล',method:'bucket',min:28000,rates:'ROOF_STD',cost:'roof_vinyl',optSlide:true},
  {id:'roof_delight',cat:'หลังคา',name:'หลังคา ดีไลท์',method:'bucket',min:28000,rates:'ROOF_STD',cost:'roof_delight',optSlide:true},
  {id:'roof_polyton',cat:'หลังคา',name:'หลังคา โพลีตัน 3มม.',method:'bucket',min:30000,rates:'ROOF_POLY',cost:null,optSlide:true},
@@ -2312,6 +2312,13 @@ function buildItemOpts(d){
       h+='<label class="opt">ชุดล็อค <select class="o-slidelock" style="width:auto;height:32px;"><option value="มีกุญแจ" selected>มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
     }
     // คาดตาราง (sliding-specific block ยังคงมี — เพื่อรักษา readItem branch เดิม)
+  }
+  // ข้อ4(G1): PC Door — ชุดล็อค/กุญแจ (เดิมไม่มี · ใบจริงระบุ) · มือจับมาจาก digihandle UI ด้านบน
+  if(p.cat==='PC Door'){
+    const _itypePc=(d.querySelector('.i-type')||{}).value||'door';
+    if(_itypePc==='door'){
+      h+='<label class="opt">ชุดล็อค <select class="o-slidelock" style="width:auto;height:32px;"><option value="มีกุญแจ" selected>มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
+    }
   }
   // UX (พี่นัท): กล่องฟ้า "จำนวนบาน" สำหรับ บานเปิด/ติดตาย ด้วย — relocation logic ย้ายขึ้นฟอร์มหลัก + ดึง panels เข้ากล่อง
   if(['บานเปิด','ติดตาย'].includes(p.cat)){
