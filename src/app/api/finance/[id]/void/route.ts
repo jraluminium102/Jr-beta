@@ -26,7 +26,9 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
 
   await audit({
     jobId: data.job_id, userId: ctx.user.id, action: "FINANCE_VOID",
-    table: "finance_entries", recordId: params.id, newValue: { reason },
+    table: "finance_entries", recordId: params.id,
+    oldValue: { amount: data.amount, type: data.type, channel: data.channel },
+    newValue: { reason },
   });
   return ok(data);
 });

@@ -54,11 +54,7 @@ const arr = <T,>(v: T[] | T | null | undefined): T[] => (Array.isArray(v) ? v : 
 // Stages 3-4 split by design_state: if APPROVED/REJECTED we've moved past design → QUOTE; otherwise DESIGNING
 export function phaseFromStage(stage: number, design_state?: string | null): PhaseKey {
   if (stage <= 2)  return "LEAD";
-  if (stage === 3) {
-    // stage 3 = designer drawing; if design approved/sent treat as QUOTE-ready
-    if (design_state === "APPROVED" || design_state === "SENT") return "QUOTE";
-    return "QUOTE"; // still map to QUOTE group (design is pre-quote work)
-  }
+  if (stage === 3) return "QUOTE"; // เขียนแบบ = งานก่อนเสนอราคา (จัดกลุ่ม QUOTE; design_state ไม่เปลี่ยนเฟส)
   if (stage === 4)  return "QUOTE";       // เซลล์ตรวจแบบ
   if (stage === 5)  return "QUOTE";       // ทำใบเสนอราคา
   if (stage === 6)  return "NEGOTIATE";   // เจรจาราคา
