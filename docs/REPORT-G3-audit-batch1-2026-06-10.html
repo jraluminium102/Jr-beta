@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Audit ออปชั่นกลุ่ม G3 — Batch 1 หลังคา (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10.5px;margin-bottom:9px;}
+  h2{font-size:14px;margin:15px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  .ok{color:#2F855A;}.miss{color:#B3151D;}.part{color:#B7791F;}
+  .kpi{display:flex;gap:7px;margin:9px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+  .kpi .n{font-size:21px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .sys{color:#374151;}.realq{color:#7C2D12;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .p1{border-left:3px solid #B3151D;}.p2{border-left:3px solid #B7791F;}.p3{border-left:3px solid #2F855A;}
+  .pbox{border:1px solid #E5E7EB;border-radius:7px;padding:7px 10px;margin-bottom:6px;}
+  .pbox h3{margin:0 0 3px;font-size:12px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}.t3{background:#DCFCE7;color:#166534;}
+  .mono{font-family:"Consolas",monospace;font-size:9px;white-space:pre-wrap;background:#FAFAFA;border:1px solid #Eee;border-radius:5px;padding:5px 7px;}
+  .foot{margin-top:14px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>Audit ออปชั่นกลุ่ม G3 (หลังคา / ฝ้า-ผนัง) — Batch 1/2 : หลังคา</h1>
+<div class="sub">เทียบ "ระบบ render จริง (jsdom)" ↔ "ใบเสนอราคาจริง + checklist G3" · READ-ONLY ไม่แตะโค้ด · 10 มิ.ย. 2026 · ส่งแชทที่แก้ <code>public/calculator/index.html</code></div>
+
+<div class="note">
+<b>Batch 1 นี้ = ตระกูลหลังคา 6 แบบ (ครอบ 18 product)</b> — ไวนิล · ดีไลท์ · โพลีตัน · กระจกลามิเนต · เมทัลชีท (imp7–14, 8 ตัว) · ชินโคไลท์ (imp15–20, 6 ตัว). ทุกตัวใช้ <code>cat:'หลังคา'</code> + genQuote engine เดียวกัน → แก้ engine นี้ = แก้ครบทั้ง 18 ตัว. <b>Batch 2 (ฝ้า/ผนัง 6 ตัว)</b> ส่งต่อไป.<br>
+วิธีเทส: render แต่ละตระกูล × 6 รูปแบบ (ปล่อย / รางน้ำ-ท่อ / รางน้ำ-โซ่ / โครงเหล็ก+แปเดี่ยว / หลังคาเลื่อน / ของเสริม) = 36 เคส + เคสยืนยันการเงินของเสริมอีก 2 เคส
+</div>
+
+<div class="kpi">
+  <div><span class="n red">3</span>🔴 ผิด/ขาด (P1)</div>
+  <div><span class="n yellow">7</span>🟡 น่าสงสัย/ขาดข้อมูล (P2)</div>
+  <div><span class="n green">4</span>🟢 ดีอยู่แล้ว</div>
+  <div><span class="n blue">6/6</span>ตระกูลตรวจครบ</div>
+</div>
+
+<div class="crit">
+<b>⚠ จุดร้ายแรงสุด (verify ด้วย render):</b> "ของเสริมหลังคา" 10 รายการ (เสาแผง/คานเหล็กถัก/รางน้ำเสริม/โซ่รางน้ำ/ปิดปลายกันน้ำ/ครอบ PVC/<b>ซ่อนสโลป</b>/ปิดซ่อนราง/ครอบคาน) <b>คิดเงินจริงเข้า "ยอดรวม" แต่ไม่ออกบรรทัดในใบเลย</b>. เทสจริง: หลังคาไวนิล 4×3 ม. ใส่ของเสริม → ราคาเด้ง <b>72,000 → 120,000 (+48,000)</b> แต่ "รายละเอียดงาน" ในใบเหมือนเดิมเป๊ะ → เซลล์/ลูกค้าอ่านใบไม่รู้ว่าจ่าย 48,000 ค่าอะไร
+</div>
+
+<h2>ความครอบคลุม — 6 ตระกูล = 18 รายการในกลุ่มหลังคา</h2>
+<table>
+<tr><th style="width:26%;">ตระกูล (engine เดียวกัน)</th><th style="width:30%;">ตัวที่ render ทดสอบ</th><th>ครอบ product id</th><th class="c" style="width:42px;">จำนวน</th></tr>
+<tr><td>หลังคาไวนิล</td><td>roof_vinyl</td><td>roof_vinyl</td><td class="c">1</td></tr>
+<tr><td>หลังคาดีไลท์</td><td>roof_delight</td><td>roof_delight</td><td class="c">1</td></tr>
+<tr><td>หลังคาโพลีตัน</td><td>roof_polyton</td><td>roof_polyton</td><td class="c">1</td></tr>
+<tr><td>หลังคากระจกลามิเนต</td><td>roof_laminate</td><td>roof_laminate</td><td class="c">1</td></tr>
+<tr><td>เมทัลชีท</td><td>imp7</td><td>imp7, imp8, imp9, imp10, imp11, imp12, imp13, imp14</td><td class="c">8</td></tr>
+<tr><td>ชินโคไลท์</td><td>imp15</td><td>imp15, imp16, imp17, imp18, imp19, imp20</td><td class="c">6</td></tr>
+</table>
+
+<h2>เทียบทีละจุด — ระบบ render อะไร ↔ ใบจริง/checklist ต้องมีอะไร</h2>
+<table>
+<tr><th style="width:14%;">จุด</th><th style="width:29%;">ระบบ render ออกมา (จริง)</th><th style="width:28%;">ใบจริง / checklist G3 ต้องมี</th><th class="c" style="width:40px;">ผล</th><th>ขาด/ผิด + root cause</th></tr>
+
+<tr>
+<td><b>ของเสริมหลังคา</b> (10 รายการคิดเงิน)</td>
+<td class="sys">รายละเอียดงานมีแค่ "หลังคา__ สี__ / โครงอลู (แปคู่)" — <b>ไม่มีบรรทัดของเสริมเลย</b> แม้ราคาเด้ง +48,000</td>
+<td class="realq">ใบจริงระบุของเสริมทุกชิ้นที่คิดเงิน: เสาแผง, คานเหล็กถัก, รางน้ำเสริม, ซ่อนสโลป, ครอบคาน ฯลฯ</td>
+<td class="c miss">🔴</td>
+<td>genQuote หลังคา (<code>L3317–3327</code>) render เฉพาะ rfplate/rfpull/slide · ของเสริมที่คิดเงินใน calc (<code>L1402</code>) ไม่ถูกดึงลง det</td>
+</tr>
+
+<tr>
+<td><b>ซ่อนสโลป</b> (subset เด่นสุด)</td>
+<td class="sys">เลือกซ่อนสโลปคอมโพสิต กรอกสูง/ยาว/ด้าน → ราคา +19,600~29,400 <b>แต่ใบไม่เขียน "ซ่อนสโลป" เลย</b></td>
+<td class="realq">"ซ่อนสโลปคอมโพสิต 3มม." / "สมาร์ทบอร์ด 6มม." ตามที่ขาย (checklist G3)</td>
+<td class="c miss">🔴</td>
+<td>เงินก้อนใหญ่สุดในของเสริม · calc มี <code>msgs.push('ซ่อนสโลป…')</code> แต่ msg เป็น log ภายใน ไม่ลงใบ</td>
+</tr>
+
+<tr>
+<td><b>แป เดี่ยว/คู่</b></td>
+<td class="sys">แปคู่ → "(แปคู่)" ✓ · <b>แปเดี่ยว → ไม่เขียนอะไร</b> ("โครงอลูมิเนียม สีอบขาว" จบ)</td>
+<td class="realq">ใบจริงระบุแปเสมอ (เดี่ยว/คู่) — อ่านใบต้องรู้</td>
+<td class="c miss">🔴</td>
+<td><code>L3293</code> <code>_battenSuffix = (rfbatten==='แปคู่') ? ' (แปคู่)' : ''</code> → แปเดี่ยวได้ค่าว่าง</td>
+</tr>
+
+<tr>
+<td><b>หลังคาเลื่อน</b> (เมทัล/ชินโค)</td>
+<td class="sys">ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต ทำเลื่อนได้ (ราคา+ลงใบ ✓) · <b>เมทัลชีท + ชินโคไลท์ ไม่มีติ๊ก "ทำเลื่อน" เลย</b> (ราคาไม่ขยับ)</td>
+<td class="realq">(เช็คซ้ำ) เมทัลชีท/ชินโคไลท์ ทำหลังคาเลื่อนในงานจริงไหม</td>
+<td class="c part">🟡</td>
+<td>imp7–imp20 ไม่มี <code>optSlide:true</code> ใน product def (<code>L661–674</code>) ต่างจาก roof_* (<code>L607–610</code>) — ตั้งใจ? หรือควรเปิด</td>
+</tr>
+
+<tr>
+<td><b>หลังคากระจกลามิเนต</b></td>
+<td class="sys">ทุกรูปแบบลงแค่ "หลังคากระจกลามิเนต" — ไม่มีความหนา/ฟิล์ม/สี</td>
+<td class="realq">checklist G3: "กระจกลามิเนต (ฟิล์ม + หนา 4+4)" — ใบจริงระบุชั้น/ฟิล์ม</td>
+<td class="c part">🟡</td>
+<td>roof_laminate (<code>L610</code>) ไม่มี option เลือกหนา/ฟิล์ม · genQuote ใช้แค่ชื่อ product</td>
+</tr>
+
+<tr>
+<td><b>ชินโคไลท์ — สี</b></td>
+<td class="sys">"หลังคาชินโคไลท์ 6 มม. รุ่น Heat Cut" — มีรุ่น <b>ไม่มีสี</b></td>
+<td class="realq">checklist G3: "ชินโคไลท์ (รุ่น + สี)" (เช็คซ้ำใบจริง)</td>
+<td class="c part">🟡</td>
+<td>imp15–20 ไม่มี <code>o-roofcolor</code> (มีเฉพาะ roof_vinyl/delight/polyton ที่ <code>L2338–2343</code>)</td>
+</tr>
+
+<tr>
+<td><b>เมทัลชีท — สี</b></td>
+<td class="sys">"หลังคาเมทัลชีท 1 นิ้ว ท้องPVC EPS" — ไม่มีสีแผ่น</td>
+<td class="realq">(เช็คซ้ำ) ใบจริงเมทัลชีทมักระบุสีแผ่น (ขาว/แดง/…)</td>
+<td class="c part">🟡</td>
+<td>imp7–14 ไม่มี <code>o-roofcolor</code></td>
+</tr>
+
+<tr>
+<td><b>โครงเหล็กชุบซิงค์ — ราคา</b></td>
+<td class="sys">เลือกโครงเหล็กชุบ → ราคาเท่าโครงอลู (0 เพิ่ม) · ใบเขียน "โครงเหล็กชุบซิงค์" ✓</td>
+<td class="realq">เหล็กชุบราคาควรต่างจากอลู</td>
+<td class="c part">🟡</td>
+<td>มี warn ใน UI "ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง" (<code>L2348</code>, calc <code>L1406</code>) ยังไม่ได้ทำ (เช็คซ้ำราคา)</td>
+</tr>
+
+<tr>
+<td><b>ปลายหลังคา "ปล่อย"</b></td>
+<td class="sys">เลือกปล่อย → <b>ไม่มีบรรทัดเรื่องชายคา/รางน้ำเลย</b> (เงียบ)</td>
+<td class="realq">ควรระบุว่า "ปล่อยชาย ไม่มีราง" กันอ่านใบสับสนว่าลืมรางน้ำ</td>
+<td class="c part">🟡</td>
+<td>genQuote (<code>L3294–3305</code>) ปล่อย=ไม่เขียน gutterLine — by design แต่เงียบเกิน</td>
+</tr>
+
+<tr>
+<td><b>ท่อน้ำทิ้ง PVC 2.5″</b></td>
+<td class="sys">"ท่อน้ำทิ้ง PVC 2.5″ สีดำ" — มีสี <b>ไม่มีจำนวนจุด</b></td>
+<td class="realq">checklist G3: "ท่อน้ำทิ้ง PVC 2.5" (สี + จำนวนจุด)"</td>
+<td class="c part">🟡</td>
+<td>option <code>L2363</code> มีแค่สี · ไม่มีช่องจำนวนจุด</td>
+</tr>
+
+<tr>
+<td class="green"><b>รางน้ำ ท่อ/โซ่ + ลาย + สี</b></td>
+<td class="sys">"รางน้ำ (ท่อ สีขาว)" / "รางน้ำ (โซ่ลายทิวลิป สีน้ำตาล) + ตะแกรงพลาสติกกันใบไม้ สีดำ"</td>
+<td class="realq">ตรงใบจริง ✓</td>
+<td class="c ok">🟢</td>
+<td>ระบบรางน้ำ (ท่อ/โซ่ + ลาย + สี + ตะแกรงกันใบไม้) ลงใบถูกครบ</td>
+</tr>
+
+<tr>
+<td class="green"><b>สีวัสดุมุง ไวนิล/ดีไลท์/โพลีตัน</b></td>
+<td class="sys">"หลังคาโพลีตัน 3มม. Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" · "ดีไลท์ DG-2 สีฟ้าคราม"</td>
+<td class="realq">ระบุรหัส + แสงผ่าน ✓</td>
+<td class="c ok">🟢</td>
+<td>3 ตระกูลนี้สี/รหัส/แสงผ่าน ลงใบครบ</td>
+</tr>
+
+<tr>
+<td class="green"><b>หลังคาเลื่อน (ตระกูล optSlide)</b></td>
+<td class="sys">"ระบบหลังคาเลื่อน 4 บาน (มอเตอร์ 1 ตัว)" · ราคา 57,000 → 141,000</td>
+<td class="realq">ลงใบ + คิดเงินถูก ✓</td>
+<td class="c ok">🟢</td>
+<td>ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต ออกข้อมูลเลื่อน+มอเตอร์ลงใบ</td>
+</tr>
+
+<tr>
+<td class="green"><b>โครงสร้าง อลู (ชื่อ+สี)</b></td>
+<td class="sys">"โครงอลูมิเนียม สีอบขาว (แปคู่)"</td>
+<td class="realq">ระบุวัสดุโครง + สี ✓</td>
+<td class="c ok">🟢</td>
+<td>เคสโครงอลู+แปคู่ ลงใบถูก (ปัญหาอยู่ที่เหล็กชุบ+แปเดี่ยวด้านบน)</td>
+</tr>
+
+</table>
+
+<h2>หลักฐาน render — ตัวอย่างเทียบ (หลังคาไวนิล 4×3 ม.)</h2>
+<div class="mono">BASE (ปลายปล่อย):                          ราคา 72,000
+- หลังคาไวนิล สีขาว
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+
++ ของเสริม (เสาแผง2 / คานถัก4ม. / รางน้ำเสริม4ม. / ซ่อนสโลป / โซ่2เส้น):   ราคา 120,000  (+48,000)
+- หลังคาไวนิล สีขาว              ← เหมือน BASE เป๊ะ
+- โครงอลูมิเนียม สีอบขาว (แปคู่)   ← ไม่มีบรรทัดของเสริมแม้แต่ชิ้นเดียว ❌</div>
+<div class="mono">V4 โครงเหล็กชุบ + แปเดี่ยว:
+- หลังคาไวนิล สีขาว
+- โครงเหล็กชุบซิงค์              ← "แปเดี่ยว" หายไป (ควรมี) + ราคาเท่าอลู</div>
+
+<h2>จุดที่ต้องแก้ — จัดลำดับ + เลขบรรทัด (ส่งแชทแก้โค้ด)</h2>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 1. ของเสริมหลังคา 10 รายการ คิดเงินแต่ไม่ลงใบ</h3>
+ราคาเด้งเข้ายอดรวม แต่ "รายละเอียดงาน" ไม่เขียน → เซลล์ตอบลูกค้าไม่ได้ + อ่านใบย้อนหลังไม่รู้ได้อะไร
+<ul>
+<li>รายการที่กระทบ: เสาแผง · เสา 4"x8" · คานเหล็กถัก · รางน้ำเสริม (อลู/สแตน) · โซ่รางน้ำ · ปิดปลายกันน้ำ · ครอบท่อ PVC · <b>ซ่อนสโลป</b> · ปิดซ่อนราง · ครอบคาน</li>
+<li>แก้: ใน genQuote หลังคา <code>L3317–3327</code> เพิ่มการ build บรรทัดของเสริมจาก <code>optSel</code> (rfgut/rfbeam/rfpolep/rfpole4/rfchain/rfeave/rfpvc/rfhs/rfgc/rfbc) — ค่าราคา/เงื่อนไขมีอยู่แล้วใน calc <code>L1402</code> ใช้ logic เดียวกัน</li>
+<li>ระวัง: เพลทเหล็กล่าง + เหล็กดึง (ฟรี) <b>ลงใบอยู่แล้ว</b> — ของที่คิดเงินกลับไม่ลง (inversion) อย่าลบของฟรีออก</li>
+</ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 2. ซ่อนสโลป — เน้นเป็นพิเศษ (เงินก้อนใหญ่)</h3>
+เป็น subset ของข้อ 1 แต่เงินเยอะสุด (คอมโพสิต 3,500/ตร.ม. · สมาร์ท 4,000/ตร.ม.) — ควรมีบรรทัด "ซ่อนสโลปคอมโพสิต 3มม." + พื้นที่ ลงใบชัด
+<ul><li>calc สูตร: comp = (2×สูง+0.1)×ด้าน×ยาว×3,500 · smart = สูง×ด้าน×ยาว×4,000 (<code>L1402</code>)</li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 3. แปเดี่ยว ไม่ลงใบ</h3>
+<ul><li>แก้ <code>L3293</code>: ให้เขียน " (แปเดี่ยว)" ด้วย ไม่ใช่เฉพาะแปคู่ → เช่น <code>_battenSuffix = ' ('+_rfbatten+')'</code></li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 4. เมทัลชีท / ชินโคไลท์ ทำหลังคาเลื่อนไม่ได้ (เช็คซ้ำ)</h3>
+<ul><li>ถ้าต้องการให้ทำเลื่อนได้ → เพิ่ม <code>optSlide:true</code> ใน imp7–imp20 (<code>L661–674</code>) · ถ้าไม่ทำเลื่อน (วัสดุหนัก) = ปล่อยไว้ แต่ยืนยันกับพี่นัท</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 5. หลังคากระจกลามิเนต — ไม่มีฟิล์ม/ความหนา</h3>
+<ul><li>เพิ่ม option ความหนา (4+4 / 5+5) + ฟิล์ม (ใส/เขียว/กันร้อน) ให้ roof_laminate · ลงใบในหัวรายละเอียด</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 6–7. ชินโคไลท์ / เมทัลชีท — ไม่มีสี (เช็คซ้ำใบจริง)</h3>
+<ul><li>เพิ่ม <code>o-roofcolor</code> สำหรับ imp7–20 (เลียนแบบ <code>L2338–2343</code>) — รอพี่นัทให้ลิสต์สีที่ขาย</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 8. โครงเหล็กชุบซิงค์ — ราคาเท่าโครงอลู</h3>
+<ul><li>ใส่ราคาเหล็กชุบจริง (calc <code>L1406</code>) — รอราคาซัพพลายเออร์</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 9. ปลายหลังคา "ปล่อย" เงียบเกินไป</h3>
+<ul><li>พิจารณาเพิ่มบรรทัด "ปล่อยชายคา (ไม่มีรางน้ำ)" เมื่อ rfend=ปล่อย (<code>L3294</code>)</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 10. ท่อน้ำทิ้ง PVC 2.5″ — ไม่มีจำนวนจุด</h3>
+<ul><li>เพิ่มช่องจำนวนจุด (option <code>L2363</code>) + ลงใบ "…N จุด" (<code>L3310</code>)</li></ul></div>
+
+<div class="pbox p3"><h3><span class="tag t3">ดี</span> ที่ทำถูกแล้ว (อย่าแก้)</h3>
+<ul>
+<li>ระบบรางน้ำ ท่อ/โซ่ + ลาย + สี + ตะแกรงกันใบไม้ → ลงใบครบถูก</li>
+<li>สีวัสดุมุง ไวนิล/ดีไลท์/โพลีตัน (รหัส + % แสงผ่าน) → ครบ</li>
+<li>หลังคาเลื่อน (ตระกูล optSlide) → ออกบาน+มอเตอร์ลงใบ + คิดเงินถูก</li>
+<li>โครงอลู + แปคู่ → ลงใบถูก</li>
+</ul></div>
+
+<div class="foot">
+สร้างโดย skill quote-option-audit · เทียบ render (jsdom) ↔ ใบจริง/checklist G3 · READ-ONLY · นับ pill: 🔴3 🟡7 🟢4 · Batch 1/2 (หลังคา) — ถัดไป Batch 2 ฝ้า/ผนัง (ceil_cshape, ceil_bsc, ceiling_smooth, isowall, wall_ext, wall_int)
+</div>
+
+</body>
+</html>

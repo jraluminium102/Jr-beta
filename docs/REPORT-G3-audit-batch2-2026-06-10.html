@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Audit ออปชั่นกลุ่ม G3 — Batch 2 ฝ้า/ผนัง + ตารางราคา G3 (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10.5px;margin-bottom:9px;}
+  h2{font-size:14px;margin:15px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  td.num{text-align:right;white-space:nowrap;font-family:"Consolas",monospace;}
+  .ok{color:#2F855A;}.miss{color:#B3151D;}.part{color:#B7791F;}
+  .kpi{display:flex;gap:7px;margin:9px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+  .kpi .n{font-size:21px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .good{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .sys{color:#374151;}.realq{color:#7C2D12;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .p1{border-left:3px solid #B3151D;}.p2{border-left:3px solid #B7791F;}.p3{border-left:3px solid #2F855A;}
+  .pbox{border:1px solid #E5E7EB;border-radius:7px;padding:7px 10px;margin-bottom:6px;}
+  .pbox h3{margin:0 0 3px;font-size:12px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}.t3{background:#DCFCE7;color:#166534;}
+  .foot{margin-top:14px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>Audit ออปชั่นกลุ่ม G3 (หลังคา / ฝ้า-ผนัง) — Batch 2/2 : ฝ้า-ผนัง + ตารางราคา G3</h1>
+<div class="sub">เทียบ "ระบบ render จริง (jsdom)" ↔ "ใบจริง/checklist G3" + ตรวจราคาเทียบสูตรทุกตัว · READ-ONLY ไม่แตะโค้ด · 10 มิ.ย. 2026</div>
+
+<div class="good">
+<b>สรุปเร็ว:</b> ฝ้า/ผนัง 6 ตัว <b>สะอาดกว่าหลังคามาก — ไม่มี 🔴 (P1) เลย</b>. ราคาคิด <b>ถูกทุกตัวตามสูตร</b> (ตรวจมือเทียบ roundUp/bucket/crates). ปัญหาที่เหลือเป็น 🟡 "เลือกได้แต่ราคาไม่ขยับ" (ความหนา/โครงเหล็กชุบ/ฝ้าเฉียง) — ต้องยืนยันกับพี่นัทว่าตั้งใจหรือควรคิดเพิ่ม.<br>
+รายละเอียดงานลงใบ <b>ครบตาม checklist G3</b> (ISOWALL หนา+สี ✓ · ผนังสมาร์ท 12/20+ทาสี+โครง+ฉนวน ✓ · ฝ้า สี/ทาสี/เฉียง ✓)
+</div>
+
+<div class="kpi">
+  <div><span class="n red">0</span>🔴 ผิด/ขาด (P1)</div>
+  <div><span class="n yellow">4</span>🟡 เช็คซ้ำ (P2)</div>
+  <div><span class="n green">5</span>🟢 ดีอยู่แล้ว</div>
+  <div><span class="n blue">6/6</span>product ตรวจครบ</div>
+</div>
+
+<h2>ความครอบคลุม — ฝ้า/ผนัง 6 product (จบกลุ่ม G3)</h2>
+<table>
+<tr><th style="width:22%;">Product</th><th style="width:18%;">id</th><th style="width:18%;">วิธีคิดราคา</th><th>เรท</th></tr>
+<tr><td>ฝ้าอลูมิเนียม ไทยทิพย์ (ตัวซี)</td><td>ceil_cshape</td><td>crates (สี×ตร.ม.) min 10 ตร.ม.</td><td>ขาว-ดำ 2,100 · ลายไม้ 2,700</td></tr>
+<tr><td>ฝ้าไม้เทียม remood (แผ่นเรียบ)</td><td>ceil_bsc</td><td>crates min 10 ตร.ม.</td><td>มาตรฐาน 2,600 · ลายไม้/สีอื่น 2,800</td></tr>
+<tr><td>ฝ้าฉาบเรียบ</td><td>ceiling_smooth</td><td>bucket CEILING min 12,000</td><td>10–20=1,200 · &gt;20=1,150 /ตร.ม.</td></tr>
+<tr><td>ISOWALL</td><td>isowall</td><td>bucket ISOWALL min 7,000</td><td>ลดตามพื้นที่ 7,000→4,500/ตร.ม.</td></tr>
+<tr><td>ผนังเบาภายนอก</td><td>wall_ext</td><td>bucket WALL_EXT min 13,500</td><td>4,500→3,600/ตร.ม.</td></tr>
+<tr><td>ผนังเบาภายใน</td><td>wall_int</td><td>bucket WALL_INT min 13,500</td><td>4,100→3,200/ตร.ม.</td></tr>
+</table>
+
+<h2>ตรวจราคา ฝ้า/ผนัง — สูตร ↔ ราคาระบบ (ตรวจง่าย ครบทุกตัว)</h2>
+<table>
+<tr><th style="width:21%;">รายการ / รูปแบบ</th><th class="c" style="width:48px;">ขนาด</th><th class="c" style="width:42px;">ตร.ม.</th><th>สูตร (เรท × พื้นที่ → ปัดขึ้นพัน)</th><th class="num" style="width:62px;">ควรเป็น</th><th class="num" style="width:62px;">ระบบออก</th><th class="c" style="width:34px;">ตรง</th></tr>
+<tr><td>ฝ้าอลู — ขาว-ดำ</td><td class="c">4×3</td><td class="c">12.00</td><td>12 × 2,100 = 25,200</td><td class="num">26,000</td><td class="num">26,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าอลู — ลายไม้</td><td class="c">4×3</td><td class="c">12.00</td><td>12 × 2,700 = 32,400</td><td class="num">33,000</td><td class="num">33,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าอลู — เล็ก (ทดสอบ min 10)</td><td class="c">2×2</td><td class="c">4.00</td><td><b>คิดที่ 10 ตร.ม.</b> × 2,100 = 21,000</td><td class="num">21,000</td><td class="num">21,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าไม้เทียม — มาตรฐาน</td><td class="c">4×3</td><td class="c">12.00</td><td>12 × 2,600 = 31,200</td><td class="num">32,000</td><td class="num">32,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าไม้เทียม — ลายไม้/สีอื่น</td><td class="c">4×3</td><td class="c">12.00</td><td>12 × 2,800 = 33,600</td><td class="num">34,000</td><td class="num">34,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าฉาบเรียบ — ทาสีขาว</td><td class="c">4×3</td><td class="c">12.00</td><td>12 × 1,200 = 14,400 (&gt;min 12,000)</td><td class="num">15,000</td><td class="num">15,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าฉาบเรียบ — + ฉนวน 3"</td><td class="c">4×3</td><td class="c">12.00</td><td>14,400 + (600×12=7,200) = 21,600</td><td class="num">22,000</td><td class="num">22,000</td><td class="c ok">✓</td></tr>
+<tr><td>ฝ้าฉาบเรียบ — เล็ก (ทดสอบ min)</td><td class="c">2×2</td><td class="c">4.00</td><td>4×1,200=4,800 &lt; <b>min 12,000</b></td><td class="num">12,000</td><td class="num">12,000</td><td class="c ok">✓</td></tr>
+<tr><td>ISOWALL — หนา 10 ซม.</td><td class="c">3×2.4</td><td class="c">7.20</td><td>7.2 × 4,500 = 32,400</td><td class="num">33,000</td><td class="num">33,000</td><td class="c ok">✓</td></tr>
+<tr><td>ISOWALL — หนา 5 ซม.</td><td class="c">3×2.4</td><td class="c">7.20</td><td>เท่าหนา 10 (เรตเดียว) → ดู 🟡 ด้านล่าง</td><td class="num">33,000</td><td class="num">33,000</td><td class="c part">=</td></tr>
+<tr><td>ISOWALL — + เหล็กชุบ + ฉนวน</td><td class="c">3×2.4</td><td class="c">7.20</td><td>32,400 + (600×7.2=4,320) = 36,720</td><td class="num">37,000</td><td class="num">37,000</td><td class="c ok">✓</td></tr>
+<tr><td>ผนังภายนอก — สมาร์ท 12 มม.</td><td class="c">3×2.4</td><td class="c">7.20</td><td>7.2 × 3,900 = 28,080</td><td class="num">29,000</td><td class="num">29,000</td><td class="c ok">✓</td></tr>
+<tr><td>ผนังภายนอก — สมาร์ท 20 มม.</td><td class="c">3×2.4</td><td class="c">7.20</td><td>เท่า 12 มม. → ดู 🟡 ด้านล่าง</td><td class="num">29,000</td><td class="num">29,000</td><td class="c part">=</td></tr>
+<tr><td>ผนังภายนอก — + ฉนวน + เหล็กชุบ</td><td class="c">3×2.4</td><td class="c">7.20</td><td>28,080 + 4,320 = 32,400</td><td class="num">33,000</td><td class="num">33,000</td><td class="c ok">✓</td></tr>
+<tr><td>ผนังภายใน — สมาร์ท 12 มม.</td><td class="c">3×2.4</td><td class="c">7.20</td><td>7.2 × 3,500 = 25,200</td><td class="num">26,000</td><td class="num">26,000</td><td class="c ok">✓</td></tr>
+<tr><td>ผนังภายใน — + ฉนวน</td><td class="c">3×2.4</td><td class="c">7.20</td><td>25,200 + 4,320 = 29,520</td><td class="num">30,000</td><td class="num">30,000</td><td class="c ok">✓</td></tr>
+</table>
+<div class="note" style="background:#F0FDF4;border-color:#86EFAC;"><b>ผลตรวจราคา:</b> ✓ ทุกแถวคิดถูกตามสูตร (bucket = max(min, เรต×พื้นที่) แล้วปัดขึ้นหลักพัน · crates = max(พื้นที่,10) × เรตสี) · ฉนวน +600/ตร.ม. ถูก · "=" สองแถว = ราคาไม่ขยับเมื่อเปลี่ยนความหนา (ดู 🟡 ข้อ 1–2)</div>
+
+<h2>เทียบรายละเอียดงาน — ระบบ render ↔ checklist G3</h2>
+<table>
+<tr><th style="width:15%;">จุด</th><th style="width:33%;">ระบบ render ออกมา (จริง)</th><th style="width:25%;">checklist G3 / ใบจริง</th><th class="c" style="width:36px;">ผล</th><th>หมายเหตุ</th></tr>
+<tr><td><b>ฝ้าอลู/ไม้เทียม</b></td><td class="sys">"ฝ้าอลูมิเนียม ไทยทิพย์ สีขาว-ดำ" · สีเปลี่ยน → ราคาเปลี่ยน + ลงใบ</td><td class="realq">ฝ้าอลู/ไม้เทียม + สี</td><td class="c ok">🟢</td><td>สี/ราคา/ขั้นต่ำ 10 ตร.ม. ถูกครบ</td></tr>
+<tr><td><b>ฝ้าฉาบเรียบ</b></td><td class="sys">"ฝ้าฉาบเรียบ พร้อมทาสีรองพื้นสีขาว" + "ฝ้าเฉียงตามแนวหลังคา" + ฉนวน</td><td class="realq">"ฝ้าฉาบเรียบ (ทาสี + ตำแหน่ง/เฉียง)"</td><td class="c ok">🟢</td><td>ทาสี (ขาว/รองพื้น/ไม่ทา) + เฉียง + ฉนวน ลงใบครบ</td></tr>
+<tr><td><b>ISOWALL</b></td><td class="sys">"แผ่น ISOWALL หนา 10 ซม. สีขาว" + โครง + ฉนวน</td><td class="realq">"ISOWALL หนา(ซม.) + สี"</td><td class="c ok">🟢</td><td>หนา (10/7.5/5) + สี (พิมพ์เอง) + โครง + ฉนวน ลงใบครบ</td></tr>
+<tr><td><b>ผนังเบา (นอก/ใน)</b></td><td class="sys">"แผ่นสมาร์ทบอร์ด หนา 12 มม. พร้อมทาสีขาว" + โครง + ฉนวน</td><td class="realq">"สมาร์ทบอร์ด 12/20 มม. + ทาสีขาว + ฉนวน 3" + โครงเหล็กชุบ"</td><td class="c ok">🟢</td><td>หนา 12/20 + ทาสี + โครง + ฉนวน ลงใบครบ</td></tr>
+<tr><td><b>ISOWALL — ความหนา</b></td><td class="sys">เลือก 10/7.5/5 ซม. → <b>ราคาเท่ากันทั้ง 3</b> (ลงใบแสดงหนาถูก)</td><td class="realq">หนาต่างกัน ต้นทุนต่างกัน?</td><td class="c part">🟡</td><td>เรต ISOWALL คิดตามพื้นที่อย่างเดียว ไม่แยกความหนา (เช็คซ้ำ)</td></tr>
+<tr><td><b>ผนัง — สมาร์ทบอร์ด หนา</b></td><td class="sys">เลือก 12/20 มม. → <b>ราคาเท่ากัน</b></td><td class="realq">20 มม. ควรแพงกว่า 12 มม.?</td><td class="c part">🟡</td><td>เรต WALL ไม่แยกความหนา (เช็คซ้ำ)</td></tr>
+<tr><td><b>โครงเหล็กชุบซิงค์</b></td><td class="sys">เลือกเหล็กชุบ (ฝ้า/ผนัง) → ราคาเท่าโครงอลู · ลงใบ "โครงเหล็กชุบซิงค์ (ไร้สนิม)" ✓</td><td class="realq">เหล็กชุบควรต่างจากอลู?</td><td class="c part">🟡</td><td>เหมือนหลังคา — calc ไม่บวกเพิ่ม (เช็คซ้ำราคา)</td></tr>
+<tr><td><b>ฝ้าเฉียงตามแนวหลังคา</b></td><td class="sys">ติ๊กฝ้าเฉียง → ราคาเท่าเดิม · ลงใบ "ฝ้าเฉียงตามแนวหลังคา" ✓</td><td class="realq">งานเฉียงทำยากกว่า ควรคิดเพิ่ม?</td><td class="c part">🟡</td><td>เป็นข้อความเฉย ๆ ไม่กระทบราคา (เช็คซ้ำ)</td></tr>
+</table>
+
+<h2>ภาคผนวก — ตรวจราคาหลังคา (จาก Batch 1) ให้ครบ G3</h2>
+<table>
+<tr><th style="width:24%;">รายการ (ฐาน ปลายปล่อย)</th><th class="c" style="width:48px;">ขนาด</th><th>สูตร</th><th class="num" style="width:62px;">ควรเป็น</th><th class="num" style="width:62px;">ระบบออก</th><th class="c" style="width:34px;">ตรง</th></tr>
+<tr><td>หลังคาไวนิล (ROOF_STD)</td><td class="c">3.6×2.4</td><td>8.64 × 6,500 = 56,160</td><td class="num">57,000</td><td class="num">57,000</td><td class="c ok">✓</td></tr>
+<tr><td>หลังคาไวนิล</td><td class="c">4×3</td><td>12 × 6,000 = 72,000</td><td class="num">72,000</td><td class="num">72,000</td><td class="c ok">✓</td></tr>
+<tr><td>หลังคาดีไลท์ (เล็ก ติด min)</td><td class="c">0.9×2.1</td><td>1.89×6,500=12,285 &lt; min 28,000</td><td class="num">28,000</td><td class="num">28,000</td><td class="c ok">✓</td></tr>
+<tr><td>หลังคาโพลีตัน (ROOF_POLY)</td><td class="c">3.6×2.4</td><td>8.64 × 7,500 = 64,800</td><td class="num">65,000</td><td class="num">65,000</td><td class="c ok">✓</td></tr>
+<tr><td>หลังคากระจกลามิเนต (ROOF_LAM)</td><td class="c">3.6×2.4</td><td>8.64 × 11,000 = 95,040</td><td class="num">96,000</td><td class="num">96,000</td><td class="c ok">✓</td></tr>
+<tr><td>เมทัลชีท imp7 (IMP7)</td><td class="c">3.6×2.4</td><td>8.64 × 6,300 = 54,432</td><td class="num">55,000</td><td class="num">55,000</td><td class="c ok">✓</td></tr>
+<tr><td>ชินโคไลท์ imp15 (IMP15)</td><td class="c">3.6×2.4</td><td>8.64 × 11,000 = 95,040</td><td class="num">96,000</td><td class="num">96,000</td><td class="c ok">✓</td></tr>
+<tr><td>หลังคาเลื่อน ไวนิล 4 บาน+มอเตอร์</td><td class="c">3.6×2.4</td><td>ฐาน 57,000 + เลื่อน/มอเตอร์</td><td class="num">141,000</td><td class="num">141,000</td><td class="c ok">✓</td></tr>
+</table>
+<div class="note">หลังคา: <b>ราคาฐาน + เลื่อน คิดถูกตามสูตร</b> · แต่ปัญหา P1 ของหลังคาอยู่ที่ <b>"ของเสริมคิดเงินแต่ไม่ลงใบ"</b> (ราคาถูก แต่ใบไม่เขียน) — ดู Batch 1</div>
+
+<h2>จุดที่ต้องเช็คซ้ำ/ตัดสินใจ (ฝ้า-ผนัง — ส่งแชทแก้หลังพี่นัทยืนยัน)</h2>
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 1–2. ความหนา (ISOWALL / สมาร์ทบอร์ด) ไม่กระทบราคา</h3>
+<ul><li>ISOWALL 10/7.5/5 ซม. ราคาเท่ากัน · สมาร์ท 12/20 มม. ราคาเท่ากัน — ถ้าต้นทุนต่างจริงต้องเพิ่ม rate ต่อความหนา (calc <code>L1389</code> ย่าน · option <code>L2428/2434</code>) · <b>รอพี่นัทยืนยันราคาต่อความหนา</b></li></ul></div>
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 3. โครงเหล็กชุบซิงค์ (ฝ้า/ผนัง) ราคาเท่าโครงอลู</h3>
+<ul><li>เหมือนหลังคา · ถ้าต่างต้องบวกใน calc (อ่าน optSel.wallframe <code>L2578</code> แล้วไม่บวก) · รอราคาซัพพลายเออร์</li></ul></div>
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 4. ฝ้าเฉียงตามแนวหลังคา ไม่คิดเพิ่ม</h3>
+<ul><li>ติ๊กแล้วเป็นข้อความเฉย ๆ · งานเฉียงทำยากกว่า — ยืนยันว่าคิดเพิ่ม %/ตร.ม. ไหม</li></ul></div>
+
+<div class="pbox p3"><h3><span class="tag t3">ดี</span> ที่ทำถูกแล้ว (อย่าแก้)</h3>
+<ul>
+<li>ฝ้าอลู/ไม้เทียม (crates) — สีเปลี่ยนราคา + ขั้นต่ำ 10 ตร.ม. + ลงใบสี ✓</li>
+<li>ฝ้าฉาบเรียบ — ทาสี (ขาว/รองพื้น/ไม่ทา) + ฝ้าเฉียง + min 12,000 + ฉนวน +600/ตร.ม. ✓</li>
+<li>ISOWALL — หนา + สี (พิมพ์เอง) + โครง + ฉนวน ลงใบครบตาม checklist ✓</li>
+<li>ผนังเบา นอก/ใน — สมาร์ท 12/20 + ทาสี + โครง + ฉนวน ลงใบครบ ✓</li>
+<li><b>ราคาทุกตัวคิดถูกตามสูตร</b> (ตรวจมือเทียบ bucket/crates/roundUp/ฉนวน) ✓</li>
+</ul></div>
+
+<div class="foot">
+สร้างโดย skill quote-option-audit · เทียบ render (jsdom) ↔ ใบจริง/checklist G3 + ตรวจราคาเทียบสูตร · READ-ONLY · นับ pill: 🔴0 🟡4 🟢5 · <b>จบกลุ่ม G3 ครบ 24 product</b> (Batch 1 หลังคา 18 + Batch 2 ฝ้า/ผนัง 6) · ขั้นต่อไป: รอพี่นัทแก้/ยืนยันครบ แล้วค่อยรวม handoff ส่งแชทแก้ index.html
+</div>
+
+</body>
+</html>

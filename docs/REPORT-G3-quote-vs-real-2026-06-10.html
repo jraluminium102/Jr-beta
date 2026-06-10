@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ใบเสนอราคา G3 ทุกรูปแบบ + วิธีคิด เทียบใบจริง (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:11mm 10mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.45;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:14px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  .kpi{display:flex;gap:7px;margin:9px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+  .kpi .n{font-size:20px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  /* case card */
+  .case{border:1px solid #E5E7EB;border-radius:8px;margin:7px 0;overflow:hidden;page-break-inside:avoid;}
+  .case>.hd{padding:5px 10px;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center;}
+  .hd .pill{font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;}
+  .b1{background:#FEE2E2;color:#991B1B;}.b2{background:#FEF3C7;color:#92400E;}.b3{background:#DCFCE7;color:#166534;}
+  .cols{display:flex;}
+  .col{flex:1;padding:7px 9px;border-right:1px solid #EEE;}
+  .col:last-child{border-right:none;}
+  .col h4{margin:0 0 3px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+  .c-sys h4{color:#374151;}.c-calc h4{color:#1E40AF;}.c-real h4{color:#7C2D12;}
+  .qrow{font-size:10px;white-space:pre-wrap;}
+  .qrow .ttl{font-weight:700;}
+  .qrow .price{color:#B3151D;font-weight:700;}
+  .calcbox{font-family:"Consolas",monospace;font-size:9.5px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:5px;padding:4px 6px;white-space:pre-wrap;}
+  .realbox{font-size:9.5px;white-space:pre-wrap;color:#7C2D12;}
+  .verdict{font-size:9.5px;margin-top:4px;padding:3px 6px;border-radius:5px;}
+  .vmiss{background:#FEF2F2;color:#991B1B;}.vpart{background:#FFFBEB;color:#92400E;}.vok{background:#F0FDF4;color:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:4px 6px;vertical-align:top;text-align:left;font-size:9.5px;}
+  th{background:#F3F4F6;}
+  td.num{text-align:right;font-family:"Consolas",monospace;white-space:nowrap;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+</style>
+</head>
+<body>
+
+<h1>ใบเสนอราคา G3 ทุกรูปแบบ + วิธีคิดราคา เทียบใบจริง</h1>
+<div class="sub">render ระบบจริง (jsdom) แต่ละรูปแบบ → โชว์ "ใบที่ระบบออก" + "วิธีคิดราคา (breakdown จาก engine)" + "ใบจริงเขียนว่าอะไร" · READ-ONLY · 10 มิ.ย. 2026 · อ่านใบจริง 15 ใบ (เจอ G3 จริง 8 ใบ)</div>
+
+<div class="crit">
+<b>⚠ จุดสำคัญที่เห็นชัดในเอกสารนี้:</b> คอลัมน์ <b>"วิธีคิดราคา"</b> (สีฟ้า = breakdown จริงจาก engine) โชว์ <b>"เสาแผง 2 ต้น", "ซ่อนสโลป 17,150", "โซ่รางน้ำ 3,000/6,000"</b> = คิดเงินจริง · แต่คอลัมน์ <b>"ใบที่ระบบออก"</b> (ซ้าย) <b>ไม่มีบรรทัดพวกนี้</b> ทั้งที่ <b>ใบจริงเขียนชัด</b> ("เสาแผง จำนวน 2 ต้น" / "ซ่อนสโลปคอมโพสิต" / "โซ่รางน้ำ ลายดอกทิวลิป 2 เส้น") → ยืนยัน P1 ของ Batch 1
+</div>
+
+<div class="kpi">
+  <div><span class="n red">3</span>🔴 เคสมีบั๊กลงใบ (P1)</div>
+  <div><span class="n yellow">5</span>🟡 ขาดข้อมูล (P2)</div>
+  <div><span class="n green">5</span>🟢 ตรงใบจริง</div>
+  <div><span class="n blue">13</span>รูปแบบที่ render</div>
+</div>
+
+<div class="note">
+<b>โครงสร้างใบจริงที่เจอ (สำคัญต่อ handoff):</b> รายการ G3 ในใบจริง <b>ขายเป็น "1 ชุด" เหมาทั้งงาน ไม่ระบุขนาด กว้าง×ยาว ในหัวข้อ</b> และมักรวมกับกั้นห้อง/ประตูเป็นชุดเดียว · แต่ระบบใส่ "(กว้าง × สูง ม.)" ในหัวข้อหลังคาเสมอ → ต่างจากใบจริง (🟡 ดูสรุปท้าย) · ใบจริงเขียนปลายปล่อยว่า <b>"ยื่นปลาย / ปล่อยปลาย-ไม่มีรางน้ำ"</b> + <b>"(แปเดี่ยว)/(แปคู่)"</b> ทุกครั้ง
+</div>
+
+<h2>ส่วนหลังคา (roof) — 9 รูปแบบ</h2>
+
+<!-- CASE 1 -->
+<div class="case"><div class="hd" style="background:#FFFBEB;"><span>1. หลังคาไวนิล · ปล่อยปลาย · แปเดี่ยว · โครงเหล็กชุบ <span style="color:#6B7280;font-weight:400;">[4×3 ม. · 72,000]</span></span><span class="pill b2">🟡 ขาดคำ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา ไวนิล (4 × 3 ม.)</span>
+- หลังคาไวนิล สีขาว
+- โครงเหล็กชุบซิงค์
+<span class="price">72,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน ROOF_STD: 12 ตร.ม. × 6,000 = 72,000
+(เหล็กชุบ +0 · แปเดี่ยว +0)</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณสุจินต์ #12)</h4><div class="realbox">"หลังคาไวนิล สีขาว
+โครงเหล็กชุบซิงค์ <b>(ไร้สนิม)</b>
+<b>ยื่นปลาย</b> · <b>ปล่อยปลาย/ไม่มีรางน้ำ</b>"</div>
+<div class="verdict vpart">ระบบขาด: "(แปเดี่ยว)" · "(ไร้สนิม)" · "ปล่อยปลาย/ไม่มีรางน้ำ"</div></div>
+</div></div>
+
+<!-- CASE 2 -->
+<div class="case"><div class="hd" style="background:#FEF2F2;"><span>2. หลังคาไวนิล · รางน้ำท่อขาว · <b>เสาแผง 2 ต้น</b> · ท่อ PVC ดำ <span style="color:#6B7280;font-weight:400;">[6×3.5 ม. · 124,000]</span></span><span class="pill b1">🔴 ของเสริมไม่ลงใบ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา ไวนิล (6 × 3.5 ม.)</span>
+- หลังคาไวนิล สีขาว
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+- รางน้ำ (ท่อ สีขาว) + ตะแกรงพลาสติกกันใบไม้ สีดำ
+- ท่อน้ำทิ้ง PVC 2.5″ สีดำ
+- เสริมเพลทเหล็กล่าง (รับล่าง)
+- เหล็กดึงด้านบน
+<span class="price">124,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน: 21 ตร.ม. × 5,500 = 115,500
+<b>+ เสาแผง 2 ต้น × 4,000 = 8,000</b>
+รวม 123,500 → ปัด 124,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณธนบัตร #1)</h4><div class="realbox">"...พร้อมรางน้ำอลูมิเนียม + ตะแกรงกันใบไม้ ท่อน้ำทิ้ง PVC
+<b>เสาแผง (เสริมเหล็กภายใน) จำนวน 2 ต้น</b>"</div>
+<div class="verdict vmiss">🔴 "เสาแผง 2 ต้น" คิดเงิน 8,000 อยู่ในวิธีคิด แต่ <b>ใบไม่เขียน</b> · ใบจริงเขียนชัด</div></div>
+</div></div>
+
+<!-- CASE 3 -->
+<div class="case"><div class="hd" style="background:#FEF2F2;"><span>3. หลังคาไวนิล · รางน้ำโซ่ทิวลิป · <b>ซ่อนสโลปคอมโพสิต</b> <span style="color:#6B7280;font-weight:400;">[3.5×4.3 ม. · 111,000]</span></span><span class="pill b1">🔴 ซ่อนสโลปไม่ลงใบ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา ไวนิล (3.5 × 4.3 ม.)</span>
+- หลังคาไวนิล สีขาว
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+- รางน้ำ (โซ่ลายทิวลิป สีน้ำตาล) + ตะแกรงพลาสติกกันใบไม้ สีดำ
+- ท่อน้ำทิ้ง PVC 2.5″ สีดำ
+<span class="price">111,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน: 90,000 (กันราคาช่วง 15 ตร.ม.)
+<b>+ โซ่รางน้ำ 1 เส้น = 3,000</b>
+<b>+ ซ่อนสโลป คอมโพสิต = 17,150</b>
+รวม 110,150 → ปัด 111,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณนก #7)</h4><div class="realbox">"...+ โซ่รางน้ำ 1 จุด
++ <b>ซ่อนสโลปหลังคาด้วยคอมโพสิต</b>
+รายละเอียด: <b>แผ่นคอมโพสิตสโลปหลังคา สีดำ</b>"</div>
+<div class="verdict vmiss">🔴 ซ่อนสโลป 17,150 + โซ่เสริม 3,000 อยู่ในวิธีคิด แต่ <b>ใบไม่เขียนทั้งคู่</b></div></div>
+</div></div>
+
+<!-- CASE 4 -->
+<div class="case"><div class="hd" style="background:#FEF2F2;"><span>4. หลังคาโพลีตัน Opal 103 · รางน้ำโซ่ทิวลิป <b>2 เส้น</b> <span style="color:#6B7280;font-weight:400;">[5×3 ม. · 104,000]</span></span><span class="pill b1">🔴 จำนวนโซ่ไม่ลงใบ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา โพลีตัน 3มม. (5 × 3 ม.)</span>
+- หลังคาโพลีตัน 3มม. Opal 103 สีขาวขุ่น (แสงผ่าน 20%)
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+- รางน้ำ (โซ่ลายทิวลิป สีน้ำตาล) + ตะแกรงพลาสติกกันใบไม้ สีดำ
+- ท่อน้ำทิ้ง PVC 2.5″ สีดำ
+<span class="price">104,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน ROOF_POLY: 90,000 (ช่วง 15)
+<b>+ โซ่รางน้ำ 2 เส้น × 3,000 = 6,000</b>
+รวม 96,000 ... (+ของอื่น) → 104,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณนก #3)</h4><div class="realbox">"หลังคาโพลีตัน 3มม. สีขาวขุ่น (Opal 103)
+<b>โซ่รางน้ำ ลายดอกทิวลิป สีน้ำตาล จำนวน 2 เส้น</b>"</div>
+<div class="verdict vmiss">🔴 สี/รหัส Opal 103 ตรง ✓ · แต่ <b>โซ่เสริม 2 เส้น (6,000) ไม่เขียนจำนวน</b> ในใบ</div></div>
+</div></div>
+
+<!-- CASE 5 -->
+<div class="case"><div class="hd" style="background:#FFFBEB;"><span>5. หลังคาโพลีตัน Opal 103 · ปล่อยปลาย · แปเดี่ยว <span style="color:#6B7280;font-weight:400;">[2.4×1.5 ม. · 30,000]</span></span><span class="pill b2">🟡 ขาดคำ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา โพลีตัน 3มม. (2.4 × 1.5 ม.)</span>
+- หลังคาโพลีตัน 3มม. Opal 103 สีขาวขุ่น (แสงผ่าน 20%)
+- โครงอลูมิเนียม สีอบขาว
+<span class="price">30,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">3.6 ตร.ม. × เรต < min
+→ ราคาขั้นต่ำ min 30,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณนก #2/6/8)</h4><div class="realbox">"หลังคาโพลีตัน <b>ยื่นปลาย (แปเดี่ยว)</b> โครงอลูมิเนียม
+<b>ปล่อยปลาย/ไม่มีรางน้ำ</b>
+หลังคาโพลีตัน หนา 3 มม. สีขาวขุ่น (Opal 103)"</div>
+<div class="verdict vpart">ระบบขาด: "(แปเดี่ยว)" · "ปล่อยปลาย/ไม่มีรางน้ำ" (เงียบ)</div></div>
+</div></div>
+
+<!-- CASE 6 -->
+<div class="case"><div class="hd" style="background:#FFFBEB;"><span>6. หลังคากระจกลามิเนต · ปล่อยปลาย <span style="color:#6B7280;font-weight:400;">[3×2.5 ม. · 83,000]</span></span><span class="pill b2">🟡 ขาดฟิล์ม/หนา</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา กระจกลามิเนต (3 × 2.5 ม.)</span>
+- หลังคากระจกลามิเนต
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+<span class="price">83,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน ROOF_LAM: 7.5 ตร.ม. × 11,000 = 82,500
+→ ปัด 83,000</div></div>
+<div class="col c-real"><h4>ใบจริง (ชวลิต #11 / หญิง #1)</h4><div class="realbox">"หลังคากระจก<b>นิรภัย</b>ลามิเนต
+หลังคากระจกลามิเนตใส <b>ฟิล์มกันร้อน หนา 4+4 มม.</b>"</div>
+<div class="verdict vpart">🟡 ระบบลงแค่ "กระจกลามิเนต" · ขาด <b>ฟิล์ม (กันร้อน/ใส/เขียว) + หนา 4+4</b> ที่ใบจริงมีทุกใบ</div></div>
+</div></div>
+
+<!-- CASE 7 -->
+<div class="case"><div class="hd" style="background:#FFFBEB;"><span>7. หลังคาเมทัลชีท imp7 (1 นิ้ว ท้อง PVC EPS) <span style="color:#6B7280;font-weight:400;">[4×3 ม. · 70,000]</span></span><span class="pill b2">🟡 ขาดสี</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">เมทัลชีท 1 นิ้ว ท้องPVC EPS (4 × 3 ม.)</span>
+- หลังคาเมทัลชีท 1 นิ้ว ท้องPVC EPS
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+<span class="price">70,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน IMP7: 12 ตร.ม. × 5,800 = 69,600
+→ ปัด 70,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณยี)</h4><div class="realbox">"หลังคา<b>เมทัลชีท PU หนา 45 มม. สีน้ำตาล</b>"</div>
+<div class="verdict vpart">🟡 ระบบไม่มีช่อง <b>สี</b> (ใบจริงระบุ "สีน้ำตาล") · ความหนาอยู่ในชื่อรุ่นแล้ว</div></div>
+</div></div>
+
+<!-- CASE 8 -->
+<div class="case"><div class="hd" style="background:#FFFBEB;"><span>8. หลังคาชินโคไลท์ imp15 (6มม. Heat Cut) · รางน้ำท่อ <span style="color:#6B7280;font-weight:400;">[4×3 ม. · 126,000]</span></span><span class="pill b2">🟡 ขาดสี</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">ชินโคไลท์ 6 มม. รุ่น Heat Cut (4 × 3 ม.)</span>
+- หลังคาชินโคไลท์ 6 มม. รุ่น Heat Cut
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+- รางน้ำ (ท่อ สีขาว) + ตะแกรงพลาสติกกันใบไม้ สีดำ
+- ท่อน้ำทิ้ง PVC 2.5″ สีขาว
+<span class="price">126,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน IMP15: 12 ตร.ม. × 10,500 = 126,000
+(รางน้ำท่อ cosmetic +0)</div></div>
+<div class="col c-real"><h4>ใบจริง (ธนบัตร / ใบเฟริล)</h4><div class="realbox">"ชินโคไลท์ <b>รุ่น NT-332 สี Light Grey</b> หนา 6 มม."
+"ชินโคไลท์ <b>รุ่น HC-N828 สี Modern Grey</b>"</div>
+<div class="verdict vpart">🟡 ระบบมีรุ่น+หนา แต่ <b>ขาดสี</b> · ใบจริงระบุสีทุกใบ (Light Grey/Modern Grey)</div></div>
+</div></div>
+
+<!-- CASE 9 -->
+<div class="case"><div class="hd" style="background:#F0FDF4;"><span>9. หลังคาไวนิล · หลังคาเลื่อน 4 บาน + มอเตอร์ <span style="color:#6B7280;font-weight:400;">[6×3 ม. · 235,000]</span></span><span class="pill b3">🟢 ครบ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">หลังคา ไวนิล (6 × 3 ม.)</span>
+- หลังคาไวนิล สีขาว
+- โครงอลูมิเนียม สีอบขาว (แปคู่)
+- ระบบหลังคาเลื่อน 4 บาน (มอเตอร์ 1 ตัว)
+<span class="price">235,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน 108,000 + เลื่อน (3×tier)
+<b>+ มอเตอร์ 1 × 36,000</b> → 235,000</div></div>
+<div class="col c-real"><h4>ใบจริง</h4><div class="realbox">(ไม่เจอหลังคาเลื่อนในใบตัวอย่าง)</div>
+<div class="verdict vok">🟢 บาน+มอเตอร์ ลงใบ + คิดเงินถูก (วิธีคิดตรงกับใบ)</div></div>
+</div></div>
+
+<h2>ส่วนฝ้า / ผนัง (ceiling / wall) — 4 รูปแบบ</h2>
+
+<!-- CASE 10 -->
+<div class="case"><div class="hd" style="background:#F0FDF4;"><span>10. ฝ้าฉาบเรียบ · ทาสีขาว + ฝ้าเฉียง <span style="color:#6B7280;font-weight:400;">[3.26×1.52 ม. · 12,000]</span></span><span class="pill b3">🟢 ตรงใบจริง</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">ฝ้าฉาบเรียบ (3.26 × 1.52 ม.)</span>
+- ฝ้าฉาบเรียบ พร้อมทาสีขาว
+- ฝ้าเฉียงตามแนวหลังคา
+<span class="price">12,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">4.96 ตร.ม. × 1,200 = 5,947 < min
+→ min 12,000 (เฉียง +0)</div></div>
+<div class="col c-real"><h4>ใบจริง (สุจินต์ #12 / นก #1)</h4><div class="realbox">"<b>ฝ้าฉาบเรียบพร้อมทาสีขาว (ฝ้าเฉียงตามแนวหลังคา)</b>"
+นก: OPTION เพิ่มฝ้าฉาบเรียบ 3.26×1.52 = +10,000</div>
+<div class="verdict vok">🟢 ข้อความตรงใบจริงเป๊ะ (เฉียงไม่คิดเพิ่ม — เช็คซ้ำ vs OPTION นก 10,000)</div></div>
+</div></div>
+
+<!-- CASE 11 -->
+<div class="case"><div class="hd" style="background:#F0FDF4;"><span>11. ผนังสมาร์ทบอร์ด 12มม. · ทาสีรองพื้น + ฉนวน + เหล็กชุบ <span style="color:#6B7280;font-weight:400;">[3×2.4 ม. · 30,000]</span></span><span class="pill b3">🟢 ตรงเป๊ะ</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">ผนังเบาภายใน (3 × 2.4 ม.)</span>
+- แผ่นสมาร์ทบอร์ด หนา 12 มม. พร้อมทาสีรองพื้นสีขาว
+- โครงเหล็กชุบซิงค์ (ไร้สนิม)
+- ฉนวนกันความร้อนและกันเสียง หนา 3"
+<span class="price">30,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน WALL_INT: 7.2 × 3,500 = 25,200
+<b>+ ฉนวน 600 × 7.2 = 4,320</b>
+รวม 29,520 → ปัด 30,000</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณสุจินต์ #1,3,4,5)</h4><div class="realbox">"<b>แผ่นสมาร์ทบอร์ด หนา 12 มม. พร้อมทาสีรองพื้นสีขาว</b>
+<b>ฉนวนกันความร้อนและกันเสียง หนา 3"</b>
+<b>โครงเหล็กชุบซิงค์ (ไร้สนิม)</b>"</div>
+<div class="verdict vok">🟢 ทุกบรรทัดตรงใบจริงเป๊ะ · ฉนวนคิดเงิน+ลงใบถูก</div></div>
+</div></div>
+
+<!-- CASE 12 -->
+<div class="case"><div class="hd" style="background:#F0FDF4;"><span>12. ISOWALL หนา 10 ซม. <span style="color:#6B7280;font-weight:400;">[3×2.4 ม. · 33,000]</span></span><span class="pill b3">🟢 ตรงใบจริง</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">ISOWALL (3 × 2.4 ม.)</span>
+- แผ่น ISOWALL หนา 10 ซม. สีขาว
+- โครงอลูมิเนียม
+<span class="price">33,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">ฐาน ISOWALL: 7.2 × 4,500 = 32,400
+→ ปัด 33,000 (หนา 5/7.5/10 = เรตเดียว)</div></div>
+<div class="col c-real"><h4>ใบจริง (คุณยี)</h4><div class="realbox">"<b>แผ่น ISOWALL หนา 10 ซม. (รอสรุปสี)</b>"</div>
+<div class="verdict vok">🟢 หนา+สี ลงใบตรง · 🟡 ความหนาไม่กระทบราคา (ดู Batch 2)</div></div>
+</div></div>
+
+<!-- CASE 13 -->
+<div class="case"><div class="hd" style="background:#F0FDF4;"><span>13. ฝ้าอลูมิเนียม ไทยทิพย์ ขาว-ดำ <span style="color:#6B7280;font-weight:400;">[4×3 ม. · 26,000]</span></span><span class="pill b3">🟢 ระบบมี</span></div>
+<div class="cols">
+<div class="col c-sys"><h4>ใบที่ระบบออก</h4><div class="qrow"><span class="ttl">ฝ้าอลูมิเนียม ไทยทิพย์ (ตัวซี หน้า 15 ซม.) (4 × 3 ม.)</span>
+- ฝ้าอลูมิเนียม ไทยทิพย์ สีขาว-ดำ
+<span class="price">26,000</span></div></div>
+<div class="col c-calc"><h4>วิธีคิดราคา</h4><div class="calcbox">crates: 12 ตร.ม. × 2,100 = 25,200
+→ ปัด 26,000</div></div>
+<div class="col c-real"><h4>ใบจริง</h4><div class="realbox">(ไม่เจอฝ้าอลู/ไม้เทียม ในใบตัวอย่าง 15 ใบ)</div>
+<div class="verdict vok">🟢 ระบบมีครบ (สี+ราคา+ลงใบ) · ใบจริงยังไม่เคยขาย — capability พร้อม</div></div>
+</div></div>
+
+<h2>สรุปสิ่งที่ใบจริง "ยืนยัน" + จุดต้องแก้ (รวมเข้า handoff)</h2>
+<table>
+<tr><th style="width:21%;">จุด</th><th>ใบจริงเขียน (verbatim)</th><th style="width:26%;">ระบบทำ</th><th class="c" style="width:34px;">P</th></tr>
+<tr><td><b>ของเสริมหลังคา ไม่ลงใบ</b></td><td>"เสาแผง (เสริมเหล็กภายใน) จำนวน 2 ต้น" · "ซ่อนสโลปหลังคาด้วยคอมโพสิต / แผ่นคอมโพสิตสโลปหลังคา สีดำ" · "โซ่รางน้ำ ลายดอกทิวลิป 2 เส้น"</td><td>คิดเงินใน "วิธีคิด" แต่ไม่ออกบรรทัดในใบ (genQuote <code>L3317–3327</code>)</td><td class="c red">P1</td></tr>
+<tr><td><b>แป เดี่ยว/คู่</b></td><td>"ยื่นปลาย <b>(แปเดี่ยว)</b>" · "<b>(แปคู่)</b>"</td><td>แปคู่ออก · <b>แปเดี่ยวไม่ออก</b> (<code>L3293</code>)</td><td class="c red">P1</td></tr>
+<tr><td><b>ปลายปล่อย</b></td><td>"<b>ปล่อยปลาย/ไม่มีรางน้ำ</b>"</td><td>เงียบ ไม่เขียนอะไร (<code>L3294</code>)</td><td class="c yellow">P2</td></tr>
+<tr><td><b>ลามิเนต ฟิล์ม+หนา</b></td><td>"กระจกลามิเนตใส <b>ฟิล์มกันร้อน หนา 4+4 มม.</b>" · "กระจกนิรภัยลามิเนต"</td><td>ลงแค่ "กระจกลามิเนต" · ไม่มี option ฟิล์ม/หนา</td><td class="c yellow">P2</td></tr>
+<tr><td><b>ชินโคไลท์ สี</b></td><td>"รุ่น NT-332 <b>สี Light Grey</b>" · "HC-N828 <b>สี Modern Grey</b>"</td><td>มีรุ่น+หนา ไม่มีสี</td><td class="c yellow">P2</td></tr>
+<tr><td><b>เมทัลชีท สี</b></td><td>"เมทัลชีท PU 45 มม. <b>สีน้ำตาล</b>"</td><td>ไม่มีสี</td><td class="c yellow">P2</td></tr>
+<tr><td><b>วัสดุปิดรอยต่อแผ่นหลังคา</b></td><td>"<b>วัสดุปิดรอยต่อแผ่นหลังคา สีขาว</b>" (คุณหญิง)</td><td>ไม่มี option/ไม่ลงใบ (เช็คซ้ำ)</td><td class="c yellow">P2</td></tr>
+<tr><td><b>ขนาดในหัวข้อหลังคา</b></td><td>ไม่ใส่ขนาด — ขาย "1 ชุด" เหมา</td><td>ใส่ "(กว้าง × สูง ม.)" เสมอ</td><td class="c yellow">P2</td></tr>
+<tr><td><b>หลังคาผสม 2 วัสดุ</b></td><td>"ไวนิล <b>ต่อปลายหลังคากระจกลามิเนต</b>" (คุณหญิง)</td><td>1 รายการ = 1 วัสดุ (เช็คซ้ำ)</td><td class="c yellow">P2</td></tr>
+</table>
+<div class="note" style="background:#F0FDF4;border-color:#86EFAC;"><b>ที่ใบจริงยืนยันว่าระบบ "ถูกแล้ว":</b> โพลีตัน สี+รหัส (Opal 103 ✓) · รางน้ำท่อ/โซ่+ลาย+สี+ตะแกรงกันใบไม้ ✓ · ผนังสมาร์ทบอร์ด+ทาสีรองพื้น+ฉนวน 3"+เหล็กชุบ (ไร้สนิม) <b>ตรงเป๊ะ</b> ✓ · ISOWALL หนา+สี ✓ · ฝ้าฉาบเรียบ+เฉียง ✓ · ราคาทุกตัวคิดถูกตามสูตร ✓</div>
+
+<div class="foot">
+สร้างโดย skill quote-option-audit · render 13 รูปแบบ + ดึง breakdown ราคาจาก <code>readItem().r.msgs</code> + เทียบใบจริง 15 ใบ (มี G3 จริง 8 ใบ: ธนบัตร/นก/หญิง/ยี/ชวลิต/ใบเฟริล/ดลยา/ประภาพรรณ + สุจินต์) · READ-ONLY · นับ: 🔴4 🟡5 🟢4 · <b>ใช้ประกอบ handoff G3 ตอนสั่งแก้ HTML</b>
+</div>
+
+</body>
+</html>
