@@ -3390,7 +3390,10 @@ function genQuote(keepNo){
           const _szTxt = _mosqAddonSl ? (' — ขนาด ~'+_mosqAddonSl.mosqArea.toFixed(1)+' ตร.ม.') : '';
           const _msNameSl = _mscSl.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s*\(สีขาว\/ดำ\)/g,'').replace(/\s+/g,' ').trim();  // C1: ตัด SD พื้นฐาน
           var _frcSl=COLORS[it.ci||0]; var _frNameSl=_frcSl?(_frcSl.quoteName||_frcSl.n).replace(/[★⚠]/g,'').trim():'';
-          _slLines.push(_msNameSl+(_frNameSl?(' (เฟรม'+_frNameSl+' / '+_mfLblSl+')'):(' '+_mfLblSl)));
+          // ข้อ13(G1): สีกรอบมุ้ง — special โชว์สีนั้น · ว่าง=ตามสีบาน
+          var _mqcMapSl={sahara:'เทาซาฮาร่า',kl_special:'เคแอลอบพิเศษ',kl_wood:'เคแอลลายไม้'};
+          var _frShowSl=_mqcMapSl[it.optSel&&it.optSel.mosqColor]||(_frNameSl?('ตามสีบาน '+_frNameSl):'ตามสีบาน');
+          _slLines.push(_msNameSl+' (เฟรม'+_frShowSl+' / '+_mfLblSl+')');
         }
       }
       // ชุดล็อค (ถ้าเลือก)
@@ -3479,10 +3482,13 @@ function genQuote(keepNo){
           // C1: ตัด "SD พื้นฐาน" ทิ้ง → รายละเอียดเหลือ "มุ้งจีบ {ผ้า}" (ชนิดอื่นเช่นตีนตะขาบยังคงไว้)
           const msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s+/g,' ').trim();
           var _frc=COLORS[it.ci||0]; var _frName=_frc?(_frc.quoteName||_frc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim():'';
+          // ข้อ13(G1): สีกรอบมุ้ง — special เลือกไว้โชว์สีนั้น · ว่าง=ตามสีบาน (มีชื่อสีเสมอ)
+          var _mqcMap={sahara:'เทาซาฮาร่า',kl_special:'เคแอลอบพิเศษ',kl_wood:'เคแอลลายไม้'};
+          var _frShow=_mqcMap[it.optSel&&it.optSel.mosqColor]||(_frName?('ตามสีบาน '+_frName):'ตามสีบาน');
           // ข้อ9(G1): มุ้ง non-sliding (บานเปิด/กระทุ้ง/ฯลฯ) โชว์ขนาดด้วย เหมือนบานเลื่อน
           var _mosqAddonG=(it.r && it.r.addonLines||[]).find(function(al){return al.mosqArea!==undefined;});
           var _szTxtG=_mosqAddonG?(' — ขนาด ~'+_mosqAddonG.mosqArea.toFixed(1)+' ตร.ม.'):'';
-          lines.push(msName+(_frName?(' (เฟรม'+_frName+' / '+mfLabel+')'):(' '+mfLabel))+_szTxtG);
+          lines.push(msName+' (เฟรม'+_frShow+' / '+mfLabel+')'+_szTxtG);
         }
       }
       // ข้อ5(G1): เสริมคาน (บานเปิด/PC Door) ลงใบเมื่อเลือก — คิดเงินต้องโชว์
