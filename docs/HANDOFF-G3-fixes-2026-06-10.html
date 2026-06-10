@@ -41,7 +41,18 @@
 </div>
 
 <div class="ask" style="background:#ECFDF5;border-color:#6EE7B7;">
-<b>🟢 ขอบเขตรอบนี้ (แก้ได้ทันที): FIX-1 ถึง FIX-7</b> — ข้อมูล + code before/after ครบ ทำได้เลย · <b>⏸ FIX-8 / FIX-9 / FIX-10 = พักไว้ (Phase 2)</b> รอราคา/มติพี่นัท ยังไม่ต้องแก้รอบนี้ (อยู่ท้ายเอกสาร)
+<b>🟢 พร้อมส่งแก้ HTML: FIX-1 ถึง FIX-7</b> (ข้อมูลครบทุกข้อแล้ว)<br><br>
+<b>✅ มติพี่นัท 10 มิ.ย. — Phase 2 ปิด (ราคาเท่าเดิมถูกต้อง ไม่แก้สูตรราคา):</b>
+<ul style="margin:3px 0;">
+<li><b>FIX-8</b> ความหนา: ผนังใช้ <b>ISOWALL 10 ซม. + สมาร์ทบอร์ด 12 มม. เท่านั้น</b> (20 มม.=งานพื้น คนละงาน) → ราคาเดียวที่มีถูกแล้ว · <i>ทำเพิ่มได้ (ไม่บังคับ): ล็อก dropdown เหลือค่าจริง กันเลือกผิด</i></li>
+<li><b>FIX-9</b> โครงเหล็กชุบ = ราคาเท่าอลู (เท่ากันไปเลย) → ปิด</li>
+<li><b>FIX-10</b> ฝ้าเฉียง = ราคาเท่าฝ้าตรง → ปิด</li>
+</ul>
+<b>✅ FIX-5 งานชัด (ทำรอบนี้ได้):</b>
+<ul style="margin:3px 0;">
+<li><b>ชินโคไลท์: ไม่เพิ่มสี</b> ใช้ 6 รุ่นเดิม · <b>เปลี่ยนชื่อ imp20 "Grang" → "Grand"</b> (L674) + <b>ราคา=Prime</b> (เปลี่ยน <code>rates:'IMP20'</code> → <code>rates:'IMP19'</code>) · Nature (imp17) คงป้าย "(ไม่ขาย)" แต่ทำราคาได้ (คงเดิม)</li>
+<li><b>เมทัลชีท (imp7–14): เพิ่มช่องสีแบบพิมพ์เอง เว้นว่าง</b> — เซลล์กรอกสีภายหลัง · ลงใบเมื่อกรอก (ถ้าว่าง=ไม่ลง)</li>
+</ul>
 </div>
 
 <h2>สรุปจุดแก้ทั้งหมด (เรียงความสำคัญ)</h2>
@@ -51,12 +62,12 @@
 <tr><td class="c">FIX-2</td><td><b>แปเดี่ยว ไม่ลงใบ</b></td><td>"ยื่นปลาย (แปเดี่ยว)"</td><td class="c" style="color:#B3151D;">P1</td><td class="c">L3317</td></tr>
 <tr><td class="c">FIX-3</td><td>ปลายปล่อย เงียบ + ขาดคำ "ยื่นปลาย"</td><td>"ยื่นปลาย / ปล่อยปลาย/ไม่มีรางน้ำ"</td><td class="c" style="color:#B7791F;">P2</td><td class="c">L3318–3351</td></tr>
 <tr><td class="c">FIX-4</td><td>ลามิเนต ขาดฟิล์ม/หนา/ไวท์โอ๊ค</td><td>"ลามิเนตใส ฟิล์มกันร้อน หนา 4+4 มม."</td><td class="c" style="color:#B7791F;">P2</td><td class="c">+option · L3338</td></tr>
-<tr><td class="c">FIX-5</td><td>เมทัลชีท + ชินโคไลท์ ขาดสี (+ชื่อรุ่นไม่ตรง)</td><td>"เมทัลชีท PU สีน้ำตาล", "ชินโคไลท์ NT-332 สี Light Grey"</td><td class="c" style="color:#B7791F;">P2</td><td class="c">+option L2358</td></tr>
+<tr><td class="c">FIX-5</td><td>ชินโค: Grang→Grand + ราคา Prime (ไม่เพิ่มสี) · เมทัล: +ช่องสีเว้นว่าง</td><td>"เมทัลชีท PU สีน้ำตาล", "ชินโคไลท์ NT-332 สี Light Grey"</td><td class="c" style="color:#B7791F;">P2</td><td class="c">+option L2358</td></tr>
 <tr><td class="c">FIX-6</td><td>"(ไร้สนิม)" หายจากโครงเหล็กชุบหลังคา</td><td>"โครงเหล็กชุบซิงค์ (ไร้สนิม)"</td><td class="c" style="color:#6B7280;">P3</td><td class="c">L3315</td></tr>
 <tr><td class="c">FIX-7</td><td>วัสดุปิดรอยต่อแผ่นหลังคา — ระบบไม่มี</td><td>"วัสดุปิดรอยต่อแผ่นหลังคา สีขาว"</td><td class="c" style="color:#6B7280;">P3</td><td class="c">+option</td></tr>
-<tr><td class="c">FIX-8</td><td>ความหนา ISOWALL/สมาร์ทบอร์ด ไม่กระทบราคา</td><td>ISOWALL 10ซม / สมาร์ท 12-20มม</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">รอราคา</td></tr>
-<tr><td class="c">FIX-9</td><td>โครงเหล็กชุบ (ทุกหมวด) ราคาเท่าอลู</td><td>—</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">รอราคา</td></tr>
-<tr><td class="c">FIX-10</td><td>ฝ้าเฉียง / เมทัล-ชินโค หลังคาเลื่อน / หลังคาผสม 2 วัสดุ / ขนาดในหัวข้อ</td><td>(ดูท้าย — ถามพี่นัท)</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">—</td></tr>
+<tr><td class="c">FIX-8</td><td>ความหนา ISOWALL/สมาร์ทบอร์ด ไม่กระทบราคา</td><td>ISOWALL 10ซม / สมาร์ท 12-20มม</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">รอราคา</td></tr>
+<tr><td class="c">FIX-9</td><td>โครงเหล็กชุบ (ทุกหมวด) ราคาเท่าอลู</td><td>—</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">รอราคา</td></tr>
+<tr><td class="c">FIX-10</td><td>ฝ้าเฉียง / เมทัล-ชินโค หลังคาเลื่อน / หลังคาผสม 2 วัสดุ / ขนาดในหัวข้อ</td><td>(ดูท้าย — ถามพี่นัท)</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">—</td></tr>
 </table>
 
 <div class="note"><b>ภาพรวม:</b> G3 มี 24 product · <b>ฝ้า/ผนัง 6 ตัว สะอาด (ไม่มี P1)</b> · <b>P1 ทั้งหมดอยู่ที่หลังคา</b> (FIX-1, FIX-2) · ราคาทุกตัวคิดถูกตามสูตร (ตรวจมือ + breakdown แล้ว)</div>
@@ -115,7 +126,7 @@
 <div class="lbl">ใบจริง:</div> <span class="real">เมทัลชีท: "เมทัลชีท PU หนา 45 มม. <b>สีน้ำตาล</b>" (ยี) · ชินโคไลท์: "รุ่น NT-332 <b>สี Light Grey</b> หนา 6 มม." (ธนบัตร), "รุ่น HC-N828 <b>สี Modern Grey</b>" (ใบเฟริล)</span>
 <div class="lbl">Root cause:</div> option builder <code>L2361–2366</code> สร้าง <code>.o-roofcolor</code> เฉพาะ <code>roof_vinyl/delight/polyton</code> (เงื่อนไข <code>if(p.id==='...')</code>) — imp ไม่เข้า · genQuote head ไม่มี <code>_rfColor</code> สำหรับ imp
 <div class="lbl">วิธีแก้:</div> เพิ่ม branch <code>else if(p.id.startsWith('imp'))</code> ใน option builder สร้าง <code>.o-roofcolor</code> (ลิสต์สีเมทัล/ชินโคที่ขายจริง) → readItem มี rfcolor อยู่แล้ว → head แสดงสี
-<div class="ask"><b>FIX-5 ทำได้รอบนี้ (ใส่ข้อมูลเท่าที่มี):</b> เพิ่มโครง <code>.o-roofcolor</code> ให้ imp ได้เลย · starter list สีเท่าที่เจอในใบจริง: เมทัลชีท "สีน้ำตาล" · ชินโคไลท์ "Light Grey", "Modern Grey" (พี่นัทเติมทีหลังได้) · <b>เช็คซ้ำภายหลัง (ไม่บล็อกรอบนี้):</b> ① ชื่อรุ่นในระบบ (ชินโค: Heat Cut/Superior/Nature/Shade/Prime/Grang · เมทัล: 1"/2" ท้อง PVC/เหล็ก/ฟอยล์ EPS/PU) <b>ไม่ตรงรหัสใบจริง</b> (ชินโค NT-332/HC-N828 · เมทัล PU 45มม.) — ต้องยืนยันว่ารุ่นไหนขายจริง/แมปกันยังไง ② ลิสต์สีที่ขายจริงต่อรุ่น</div>
+<div class="ask"><b>⚠ FIX-5 อัปเดต (ดูกล่องมติบนสุด): ชินโคไลท์ไม่เพิ่มสี · เมทัลเพิ่มช่องสีเว้นว่าง</b> · (รายละเอียดด้านล่างเป็น reference): เพิ่มโครง <code>.o-roofcolor</code> ให้ imp ได้เลย · starter list สีเท่าที่เจอในใบจริง: เมทัลชีท "สีน้ำตาล" · ชินโคไลท์ "Light Grey", "Modern Grey" (พี่นัทเติมทีหลังได้) · <b>เช็คซ้ำภายหลัง (ไม่บล็อกรอบนี้):</b> ① ชื่อรุ่นในระบบ (ชินโค: Heat Cut/Superior/Nature/Shade/Prime/Grang · เมทัล: 1"/2" ท้อง PVC/เหล็ก/ฟอยล์ EPS/PU) <b>ไม่ตรงรหัสใบจริง</b> (ชินโค NT-332/HC-N828 · เมทัล PU 45มม.) — ต้องยืนยันว่ารุ่นไหนขายจริง/แมปกันยังไง ② ลิสต์สีที่ขายจริงต่อรุ่น</div>
 </div>
 
 <h2>FIX-6, FIX-7 (P3) — wording เก็บตก</h2>
@@ -132,7 +143,7 @@
 ใบจริง (หญิง): <span class="real">"วัสดุปิดรอยต่อแผ่นหลังคา สีขาว"</span> — ระบบไม่มี option/ไม่ลงใบ · เพิ่ม checkbox/สี option ในของเสริมหลังคา (เช็คซ้ำว่าใช้บ่อยไหม)
 </div>
 
-<h2>Phase 2 — พักไว้ (ยังไม่แก้รอบนี้ · รอราคา/มติพี่นัท)</h2>
+<h2>Phase 2 — ✅ ปิดแล้ว (มติพี่นัท 10 มิ.ย. · ราคาเท่าเดิมถูกต้อง — ดูกล่องมติบนสุด)</h2>
 <div class="ask">
 <b>FIX-8 ความหนาไม่กระทบราคา:</b> ISOWALL 5/7.5/10 ซม. = ราคาเท่ากัน · สมาร์ทบอร์ด 12/20 มม. = เท่ากัน → ถ้าต้นทุนต่างจริง ต้องเพิ่ม rate ต่อความหนา (calc <code>L452 ISOWALL</code> คิดตามพื้นที่อย่างเดียว · smartthick เป็น detail-only) — <b>รอราคาต่อความหนา</b><br>
 <b>FIX-9 โครงเหล็กชุบ ราคาเท่าอลู:</b> หลังคา/ฝ้า/ผนัง · มี comment ในโค้ด "รอเช็คราคาจริง" — <b>รอราคาซัพพลายเออร์</b><br>
@@ -167,7 +178,7 @@
 </ul>
 
 <h2>ภาคผนวก — ข้อมูลที่หามาเติม (10 มิ.ย. · ค้นสเปก/ตารางราคา/ซัพพลายเออร์)</h2>
-<div class="note"><b>FIX-5 ชินโคไลท์ — เจอลิสต์สีครบ พร้อมเติม <code>.o-roofcolor</code> ต่อรุ่นได้เลย</b> · แหล่ง: ไฟล์เฟิร์น (06_ราคาซัพพลายเออร์เฟิร์น เซลล์) · ชื่อรุ่นในระบบ = prefix รหัสจริง (ตรงกัน)</div>
+<div class="note"><b>FIX-5 ชินโคไลท์ — มติ: ไม่เพิ่มสี (ใช้ 6 รุ่นเดิม) · ตารางสีด้านล่างเก็บเป็น reference เฉยๆ</b> · แหล่ง: ไฟล์เฟิร์น (06_ราคาซัพพลายเออร์เฟิร์น เซลล์) · ชื่อรุ่นในระบบ = prefix รหัสจริง (ตรงกัน)</div>
 <table>
 <tr><th style="width:22%;">รุ่น (ระบบ imp15–20)</th><th class="c" style="width:42px;">หนา</th><th>สี (รหัส — ชื่อ) → ใส่เป็นตัวเลือก .o-roofcolor</th></tr>
 <tr><td>Heat Cut (HC-)</td><td class="c">6มม.</td><td>HC-N828 Modern Grey · HC-B703 Royal Blue · HC-570 Classic Brown · HC-N590 Noble Green</td></tr>
