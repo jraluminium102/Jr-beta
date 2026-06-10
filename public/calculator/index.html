@@ -2373,6 +2373,16 @@ function buildItemOpts(d){
       h+='<label class="opt">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="DG-2 สีฟ้าคราม" selected>DG-2 สีฟ้าคราม</option><option value="DG-4 สีเทาโซล่าร์">DG-4 สีเทาโซล่าร์</option></select></label>';
     } else if(p.id==='roof_polyton'){
       h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="Clear 101 สีใส (แสงผ่าน 83%)">Clear 101 สีใส (แสงผ่าน 83%)</option><option value="Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" selected>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option><option value="Bronze 107 สีชาใส (แสงผ่าน 30%)">Bronze 107 สีชาใส (แสงผ่าน 30%)</option><option value="Green 109 สีเขียวใส (แสงผ่าน 45%)">Green 109 สีเขียวใส (แสงผ่าน 45%)</option><option value="Australian Grey 108 สีเทาออส (แสงผ่าน 40%)">Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option><option value="Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)">Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option><option value="Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)">Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option><option value="Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)">Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option></select></label>';
+    } else if(p.id==='roof_laminate'){
+      // FIX-4(G3): ลามิเนต — ชนิดฟิล์ม + ความหนา (display · ไม่กระทบราคา)
+      h+='<label class="opt">ชนิดฟิล์ม <select class="o-lamfilm" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ใส">ลามิเนตใส</option><option value="เขียว">ลามิเนตเขียว</option><option value="กันร้อน" selected>ฟิล์มกันร้อน</option></select></label>';
+      h+='<label class="opt">ความหนากระจก <select class="o-lamthick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="4+4" selected>4+4 มม.</option><option value="5+5">5+5 มม.</option></select></label>';
+    } else if(/^imp(7|8|9|1[0-4])$/.test(p.id)){
+      // FIX-5(G3): เมทัลชีท — สี (starter list · พี่นัทเติมได้) · display
+      h+='<label class="opt">สีเมทัลชีท <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="สีน้ำตาล">สีน้ำตาล</option><option value="สีขาว">สีขาว</option><option value="สีเทา">สีเทา</option></select></label>';
+    } else if(/^imp(1[5-9]|20)$/.test(p.id)){
+      // FIX-5(G3): ชินโคไลท์ — สี (starter list) · display
+      h+='<label class="opt">สีชินโคไลท์ <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="Light Grey">Light Grey</option><option value="Modern Grey">Modern Grey</option></select></label>';
     }
     // A: แป
     h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่ (default)</option></select></label>';
@@ -2401,6 +2411,8 @@ function buildItemOpts(d){
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">โซ่รางน้ำ (3,000/เส้น) <input type="number" class="o-rfchain" min="0" step="1" value="0" style="width:55px;height:30px;"> · ปิดปลายกันน้ำ (1,000/ม.) ยาว <input type="number" class="o-rfeave" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว(ม.) <input type="number" class="o-rfpvc" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
+    // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา (display · ใบจริงหญิงระบุ)
+    h+='<label class="opt"><input type="checkbox" class="o-rfsealer" onchange="calcQuote();"> วัสดุปิดรอยต่อแผ่นหลังคา สี <select class="o-rfsealercolor" style="width:auto;height:30px;" onchange="calcQuote();"><option value="ขาว" selected>ขาว</option><option value="ดำ">ดำ</option><option value="เทา">เทา</option></select></label>';
     // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความเฉยๆ ไม่บวกเงิน)
     h+='<label class="opt"><input type="checkbox" class="o-rfplate"> เสริมเพลทเหล็กล่าง (รับล่าง)</label>';
     h+='<label class="opt"><input type="checkbox" class="o-rfpull"> เหล็กดึงด้านบน</label>';
@@ -2622,6 +2634,9 @@ function readItem(d){
     const mq=d.querySelector('.o-smotorqty'); optSel.smotorqty=mq?mq.value:1;
     const mp=d.querySelector('.o-smotorprice'); optSel.smotorprice=mp?mp.value:0; }
   if(p.cat==='หลังคา'){ const _g=d.querySelector('.o-rfgut'),_gl2=d.querySelector('.o-rfgutlen'),_b=d.querySelector('.o-rfbeam'),_bl=d.querySelector('.o-rfbeamlen'),_pp=d.querySelector('.o-rfpolep'),_p4=d.querySelector('.o-rfpole4'); optSel.rfgut=_g?_g.value:'0'; optSel.rfgutlen=_gl2?_gl2.value:'0'; optSel.rfbeam=_b?_b.value:'0'; optSel.rfbeamlen=_bl?_bl.value:'0'; optSel.rfpolep=_pp?_pp.value:'0'; optSel.rfpole4=_p4?_p4.value:'0'; const _ch=d.querySelector('.o-rfchain'),_ev=d.querySelector('.o-rfeave'),_pv=d.querySelector('.o-rfpvc'); optSel.rfchain=_ch?_ch.value:'0'; optSel.rfeave=_ev?_ev.value:'0'; optSel.rfpvc=_pv?_pv.value:'0'; const _hs=d.querySelector('.o-rfhs'),_hsh=d.querySelector('.o-rfhsh'),_hsl=d.querySelector('.o-rfhsl'),_hsn=d.querySelector('.o-rfhsn'),_gcw=d.querySelector('.o-rfgcw'),_gch=d.querySelector('.o-rfgch'),_gcl=d.querySelector('.o-rfgcl'); optSel.rfhs=_hs?_hs.value:'0'; optSel.rfhsh=_hsh?_hsh.value:'0'; optSel.rfhsl=_hsl?_hsl.value:'0'; optSel.rfhsn=_hsn?_hsn.value:'1'; optSel.rfgcw=_gcw?_gcw.value:'0'; optSel.rfgch=_gch?_gch.value:'0'; optSel.rfgcl=_gcl?_gcl.value:'0'; const _bcw=d.querySelector('.o-rfbcw'),_bcl=d.querySelector('.o-rfbcl'); optSel.rfbcw=_bcw?_bcw.value:'0'; optSel.rfbcl=_bcl?_bcl.value:'0';
+    // FIX-4(G3): ลามิเนต ฟิล์ม/ความหนา
+    const _lf=d.querySelector('.o-lamfilm'); if(_lf) optSel.lamfilm=_lf.value;
+    const _lt=d.querySelector('.o-lamthick'); if(_lt) optSel.lamthick=_lt.value;
     // options ใหม่: แป / โครง / ปลายหลังคา / ระบบรางน้ำ
     const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปคู่'; // H3: fallback ตรงกับ UI default (แปคู่)
     const _rf=d.querySelector('.o-roofframe'); optSel.rfframe=_rf?_rf.value:'โครงอลูมิเนียม';
@@ -2635,6 +2650,9 @@ function readItem(d){
     // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความ)
     const _rfpl=d.querySelector('.o-rfplate'); optSel.rfplate=_rfpl?_rfpl.checked:false;
     const _rfpu=d.querySelector('.o-rfpull'); optSel.rfpull=_rfpu?_rfpu.checked:false;
+    // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา
+    const _rfsl=d.querySelector('.o-rfsealer'); optSel.rfsealer=_rfsl?_rfsl.checked:false;
+    const _rfslc=d.querySelector('.o-rfsealercolor'); optSel.rfsealercolor=_rfslc?_rfslc.value:'ขาว';
     // H1/H2: สเปกพ่วงรางน้ำ — ตะแกรงกันใบไม้ + ท่อน้ำทิ้ง PVC (ฟรี ลงใบ)
     const _rfl=d.querySelector('.o-rfleaf'); optSel.rfleaf=_rfl?_rfl.checked:true;
     const _rfd=d.querySelector('.o-rfdrain'); optSel.rfdrain=_rfd?_rfd.value:'ดำ';
@@ -3415,8 +3433,13 @@ function genQuote(keepNo){
       // F6: หัวรายละเอียด = ชนิดหลังคา + สีวัสดุมุง (เช่น "หลังคาไวนิล สีขาว") — ใบจริงระบุชนิดในรายละเอียดงานด้วย
       const _rfColor = _os.rfcolor || '';
       const _roofType = (it.p.name||'หลังคา').replace(/^หลังคา\s*/,'');
+      // FIX-4(G3): ลามิเนต — หัว = "หลังคากระจกลามิเนตใส ฟิล์ม{X} หนา {Y} มม."
+      let _roofTypeTxt = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'');
+      if(it.p.id==='roof_laminate'){
+        _roofTypeTxt = 'หลังคากระจกลามิเนตใส ฟิล์ม'+(_os.lamfilm||'กันร้อน')+' หนา '+(_os.lamthick||'4+4')+' มม.';
+      }
       // FIX-3(G3): "ยื่นปลาย" + แป อยู่บรรทัดหัว (ตามใบจริง "หลังคาไวนิล ยื่นปลาย (แปเดี่ยว)")
-      const _roofHead = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'') + ' ยื่นปลาย'+_battenSuffix;
+      const _roofHead = _roofTypeTxt + ' ยื่นปลาย'+_battenSuffix;
       // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
       let _rfExtra = '';
       if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
@@ -3434,6 +3457,8 @@ function genQuote(keepNo){
         if((_f('rfgcw')+_f('rfgch'))>0 && _f('rfgcl')>0) _rfExtra += '\nปิดซ่อนราง';
         if(_f('rfbcw')>0 && _f('rfbcl')>0) _rfExtra += '\nครอบคาน';
       }
+      // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา
+      if(_os.rfsealer) _rfExtra += '\nวัสดุปิดรอยต่อแผ่นหลังคา สี'+(_os.rfsealercolor||'ขาว');
       // FIX-3(G3): ปลายปล่อย = ระบุ "ปล่อยปลาย/ไม่มีรางน้ำ" ลงใบ (เดิมเงียบ)
       if(_rfend === 'ปล่อย') _rfExtra += '\nปล่อยปลาย/ไม่มีรางน้ำ';
       // G3-S1: หลังคาเลื่อน — ออกข้อมูลบานเลื่อน + มอเตอร์ ลงใบ (เดิมอ่านใบไม่รู้ว่าเลื่อน)
