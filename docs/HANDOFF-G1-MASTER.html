@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+.r{color:#B3151D;font-weight:700;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 11px;margin:6px 0;font-size:11px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+.done{background:#f3f4f6;border-radius:7px;padding:7px 11px;margin:6px 0;font-size:10.5px;color:#374151;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+</style></head><body>
+
+<h1>HANDOFF G1 (บาน) — MASTER · ส่งแก้ HTML ตัวเดียวจบ</h1>
+<p class="sub">รวมงานค้างทั้งหมด · 2026-06-10 · ไฟล์ <code>public/calculator/index.html</code> · เลขบรรทัดเช็คก่อนแก้ · ตรวจ READ-ONLY (verify จาก render จริง)</p>
+
+<div class="done"><b>✅ เสร็จแล้ว (verify ผ่าน — ห้ามแตะ):</b> G1-1..14 รอบแรก (โซลิด auto / ดัดโค้ง default กระจกดัด / Cmech บานเปิด / PC มือจับ+ล็อค / เสริมคานเลื่อน-เปิด / ykk 120,000 / เมโทรไม่ซ้ำล็อค / มุ้งโชว์ขนาด / shower สีอุปกรณ์ / ธรณีเฟี้ยม / บานหมุนมือจับ / สีกรอบมุ้ง / คาดตาราง auto) + <b>ข้อ 8 รางยู↔หลังเต่า</b> (disable+block ครบ)</div>
+
+<h2>🔴 ค้าง รอบ 2 — เก็บกวาดข้อความใบ</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">R2-1</td><td>"(ทู)/(วัน)" หลุดลงใบ (โซลิด)</td><td>574 · 3569</td><td>ตัด "(ทู)"/"(วัน)" ออกจากข้อความที่ออกใบ · <code>'เสมอกรอบ (ทู)'</code>→<code>'เสมอกรอบ'</code></td></tr>
+<tr><td class="r">R2-2</td><td>มุ้งจีบ ขนาดอยู่ผิดช่อง (อยู่ในรายละเอียดเป็น "~ตร.ม.")</td><td>3203 · 3610</td><td>(1) ชื่อรายการ: เพิ่ม "พร้อมมุ้งจีบ ขนาด ก×ส ม." (2) ตัด "— ขนาด ~X ตร.ม." ออกจากรายละเอียดงาน</td></tr>
+<tr><td class="r">R2-3</td><td>ดัดโค้ง "(ราคาช่วง 6500-7000)" หลุดลงใบ</td><td>555-556</td><td>ตัดวงเล็บราคาออกจากชื่อกระจก (เป็น internal ref)</td></tr>
+<tr><td>R2-5</td><td>โซลิด breakdown ไม่โชว์ฐานบาน (ราคารวม<b>ถูกแล้ว</b>)</td><td>1335</td><td>เพิ่ม msg "ฐานบาน {พื้นที่}×{เรท} = {base}" (cosmetic · ไม่แตะ logic ราคา)</td></tr>
+<tr><td>R2-6</td><td>banner "เลือกมือจับ 1 ใน 4" บานเปิด (ข้อความเฉยๆ)</td><td>2210-2215</td><td>ลบ block banner (dropdown มือจับใช้ได้อยู่แล้ว)</td></tr>
+</table>
+
+<h2>🔴 ค้าง รอบ 3 — ระบบแก้ไขรวม (มติพี่นัท)</h2>
+<table>
+<tr><th>#</th><th>เรื่อง</th><th>บรรทัด</th><th>ทำอะไร</th></tr>
+<tr><td class="r">E1</td><td>แก้ข้อความได้ทุกจุด (โหมดแก้ไข ✏️)</td><td>2904-2906</td><td>โหมดแก้ไข → <b>รายละเอียดงานทุกบรรทัด editable</b> + เพิ่ม/ลบบรรทัด + หมายเหตุ · เก็บ override <code>_detOv</code> (คล้าย <code>_nameOv</code>) · (รวม R2-4 เดิม)</td></tr>
+<tr><td class="r">E2</td><td>ลบ "คิดราคาเหมา"</td><td>—</td><td>เอา checkbox + ช่อง "ราคาเหมาต่อชุด" ออก (ซ้ำซ้อน) · ใช้แก้ราคาตรงๆ ในช่องราคา/หน่วย (โหมดแก้ไข) แทน</td></tr>
+<tr><td class="r">E3</td><td>OPTION เลือก/พิมพ์เอง + ราคาเอง</td><td>OPTION block</td><td>หมวด (กระจก/มุ้ง/สี/มือจับ/หลังคา/อื่นๆ) → รายการ preset <b>หรือพิมพ์เอง</b> + ±ราคาเอง · ระบบเติม "OPTION :" หัวบรรทัดเอง · หลายตัวได้</td></tr>
+</table>
+
+<div class="box"><b>เอกสารอ้างอิง (อ่านประกอบ):</b> วิธีคิดราคา <code>docs/PRICING-METHOD-G1.pdf</code> · ฟอร์แมต <code>skill/references/output-format.md</code> · เปิด/ติดตาย <code>sharepicjr/draft-G1-opening-patterns</code> · ดราฟแก้ไข <code>sharepicjr/draft-G1-edit-ux</code> · ดราฟราคา <code>draft-G1-full-pricing</code></div>
+
+<div class="dod"><b>📋 Definition of Done — G1 ปิด 100% เมื่อ:</b>
+<ol style="margin:3px 0;">
+<li>R2-1,2,3,5,6 ครบ — render โซลิด/มุ้ง/ดัดโค้ง ใบสะอาด (ไม่มี (ทู) · มุ้งขนาดอยู่ช่องรายการ · ไม่มีราคาช่วง)</li>
+<li>E1,E2,E3 ครบ — โหมดแก้ไขแก้ข้อความทุกจุดได้ · ไม่มี checkbox ราคาเหมา · OPTION พิมพ์เอง+ราคาเองได้</li>
+<li><code>node test/quote-fidelity.mjs</code> PASS · ราคา sanity ตรง</li>
+<li>render G1 ทุกรูปแบบ → ครบ option + ฟอร์แมตตาม output-format</li>
+<li>พี่นัทเล่นผ่าน</li>
+</ol>
+ของใหม่กลางทาง = เฟส G1.x (ไม่บล็อกการปิด) · กลุ่ม G2-G7 = คนอื่นทำ</div>
+
+<p class="sub">commit แยกข้อ (git commit -F) · รัน quote-fidelity ทุกครั้ง · เสร็จกลับให้ผม verify รอบปิด</p>
+</body></html>
