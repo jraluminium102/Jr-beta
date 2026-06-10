@@ -63,6 +63,13 @@ export async function POST(req: Request) {
   }
 
   const net = Number(q.net) || 0;
+  if (net <= 0) return fail("ยอดสุทธิของใบเสนอต้องมากกว่า 0 จึงวางบิลได้", 400);
+
+  // [🔴#2] total ต้อง = ผลรวมงวด (suggestInstallments ปัด Math.round(net) เป็นบาทเต็ม)
+  // ถ้าใช้ total = net (มีเศษสตางค์) constraint tg_check_installment_sum (tol 0.01) จะเด้ง
+  // → insert งวดล้ม → ลบหัวบิลทิ้ง → ลูกค้าวางบิลใบนั้นไม่ได้เลย
+  const plan = suggestInstallments(net);
+  const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
   // 3) ออกรหัสอัตโนมัติผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "BL" });
@@ -77,7 +84,7 @@ export async function POST(req: Request) {
       job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
       customer_snapshot: q.customer_snapshot,
       issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
-      total: net,
+      total: billTotal,
       status: "unpaid",
       note: body.note ?? "",
       created_by: profile.id,
@@ -86,8 +93,7 @@ export async function POST(req: Request) {
     .single();
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
 
-  // 5) สร้างงวดชำระอัตโนมัติ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
-  const plan = suggestInstallments(net);
+  // 5) สร้างงวดชำระอัตโนมัติ (plan คำนวณไว้แล้วด้านบน) — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
   const rows = plan.map((p) => ({
     billing_note_id: bn.id,
     seq: p.seq,
