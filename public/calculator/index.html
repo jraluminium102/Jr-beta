@@ -3390,10 +3390,10 @@ function genQuote(keepNo){
       const _rfbatten = _os.rfbatten || 'แปคู่'; // F5: ชุดหลังคา fallback แปคู่ (ตรงกับ default standalone)
       const _rfend = _os.rfend || 'ปล่อย';
       const _rfgutsys = _os.rfgutsys || 'ท่อ';
-      // ชื่อโครง (อลู=เดิม / เหล็กชุบ=เปลี่ยน)
-      const _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? 'โครงเหล็กชุบซิงค์' : ('โครงอลูมิเนียม'+_rcName);
-      // แปคู่ต่อท้าย
-      const _battenSuffix = _rfbatten === 'แปคู่' ? ' (แปคู่)' : '';
+      // ชื่อโครง (อลู=เดิม / เหล็กชุบ=เปลี่ยน) · FIX-6: เติม "(ไร้สนิม)" ให้เหล็กชุบหลังคา (ตรงฝ้า/ผนัง)
+      const _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? 'โครงเหล็กชุบซิงค์ (ไร้สนิม)' : ('โครงอลูมิเนียม'+_rcName);
+      // FIX-2: แป ออกทั้งเดี่ยว/คู่ (เดิมเขียนเฉพาะแปคู่)
+      const _battenSuffix = _rfbatten ? ' ('+_rfbatten+')' : '';
       // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / รางน้ำ=ระบุระบบ) · ข้อ2: ลบ branch 'ปิดปลาย' (auto) ที่ตัดออกแล้ว
       let _gutterLine = '';
       if(_rfend === 'รางน้ำ'){
@@ -3415,19 +3415,35 @@ function genQuote(keepNo){
       // F6: หัวรายละเอียด = ชนิดหลังคา + สีวัสดุมุง (เช่น "หลังคาไวนิล สีขาว") — ใบจริงระบุชนิดในรายละเอียดงานด้วย
       const _rfColor = _os.rfcolor || '';
       const _roofType = (it.p.name||'หลังคา').replace(/^หลังคา\s*/,'');
-      const _roofHead = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'');
+      // FIX-3(G3): "ยื่นปลาย" + แป อยู่บรรทัดหัว (ตามใบจริง "หลังคาไวนิล ยื่นปลาย (แปเดี่ยว)")
+      const _roofHead = 'หลังคา'+_roofType + (_rfColor?(' '+_rfColor):'') + ' ยื่นปลาย'+_battenSuffix;
       // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
       let _rfExtra = '';
       if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
       if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
+      // FIX-1(G3): ของเสริมหลังคาที่ "คิดเงินใน calc แล้ว" ต้องลงใบด้วย (เดิมลงแต่ของฟรี) · คำตามใบจริง
+      { const _n=function(v){return parseInt(_os[v])||0;}, _f=function(v){return parseFloat(_os[v])||0;};
+        if(_n('rfpolep')>0) _rfExtra += '\nเสาแผง (เสริมเหล็กภายใน) จำนวน '+_n('rfpolep')+' ต้น';
+        if(_n('rfpole4')>0) _rfExtra += '\nเสา 4"x8" จำนวน '+_n('rfpole4')+' ต้น';
+        if(_f('rfbeam')>0 && _f('rfbeamlen')>0) _rfExtra += '\nคานเหล็กถัก';
+        if(_f('rfgut')>0 && _f('rfgutlen')>0) _rfExtra += '\nรางน้ำอลูมิเนียม';
+        if(_n('rfchain')>0) _rfExtra += '\nโซ่รางน้ำ ลายดอกทิวลิป จำนวน '+_n('rfchain')+' เส้น';
+        if(_f('rfeave')>0) _rfExtra += '\nปิดปลายกันน้ำ';
+        if(_f('rfpvc')>0) _rfExtra += '\nครอบท่อ PVC';
+        if(_os.rfhs==='comp'||_os.rfhs==='smart') _rfExtra += '\nซ่อนสโลปหลังคาด้วย'+(_os.rfhs==='comp'?'คอมโพสิต':'สมาร์ทบอร์ด');
+        if((_f('rfgcw')+_f('rfgch'))>0 && _f('rfgcl')>0) _rfExtra += '\nปิดซ่อนราง';
+        if(_f('rfbcw')>0 && _f('rfbcl')>0) _rfExtra += '\nครอบคาน';
+      }
+      // FIX-3(G3): ปลายปล่อย = ระบุ "ปล่อยปลาย/ไม่มีรางน้ำ" ลงใบ (เดิมเงียบ)
+      if(_rfend === 'ปล่อย') _rfExtra += '\nปล่อยปลาย/ไม่มีรางน้ำ';
       // G3-S1: หลังคาเลื่อน — ออกข้อมูลบานเลื่อน + มอเตอร์ ลงใบ (เดิมอ่านใบไม่รู้ว่าเลื่อน)
       if(it.p.optSlide && _os.slide){
         const _sN = Math.max(2, parseInt(_os.spanels)||2);
         const _sMq = Math.max(1, parseInt(_os.smotorqty)||1);
         _rfExtra += '\nระบบหลังคาเลื่อน '+_sN+' บาน (มอเตอร์ '+_sMq+' ตัว)';
       }
-      // F3: ถ้า _gutterLine ว่าง (ปล่อย) ไม่ใส่บรรทัดเปล่า
-      det = _roofHead+'\n'+_frameTxt+_battenSuffix+(_gutterLine?('\n'+_gutterLine+_drainLine):'')+_rfExtra;
+      // F3: ถ้า _gutterLine ว่าง (ปล่อย) ไม่ใส่บรรทัดเปล่า · FIX-2/3: batten+ยื่นปลาย ย้ายไปหัวแล้ว
+      det = _roofHead+'\n'+_frameTxt+(_gutterLine?('\n'+_gutterLine+_drainLine):'')+_rfExtra;
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ
