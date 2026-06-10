@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G3 (หลังคา/ฝ้า-ผนัง) — สั่งแก้ HTML เครื่องคิดราคา JR</title>
+<style>
+  @page{size:A4;margin:11mm 10mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.46;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:15px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  h3{font-size:12px;margin:0 0 4px;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:9.5px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  pre{font-family:"Consolas",monospace;font-size:9px;background:#0F172A;color:#E2E8F0;border-radius:6px;padding:7px 9px;white-space:pre-wrap;margin:4px 0;overflow-x:auto;}
+  pre .c{color:#64748B;}pre .k{color:#7DD3FC;}pre .s{color:#FCA5A5;}pre .add{color:#86EFAC;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .ask{background:#EFF6FF;border:1px solid #93C5FD;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .fix{border:1px solid #E5E7EB;border-radius:8px;margin:8px 0;padding:8px 11px;page-break-inside:avoid;}
+  .fix.p1{border-left:4px solid #B3151D;}.fix.p2{border-left:4px solid #B7791F;}.fix.p3{border-left:4px solid #6B7280;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;margin-right:5px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}.t3{background:#E5E7EB;color:#374151;}
+  .real{color:#7C2D12;}.lbl{font-weight:700;color:#374151;font-size:9.5px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:2px;}
+  .chk{list-style:none;padding-left:2px;}.chk li:before{content:"☐ ";font-weight:700;}
+  .foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G3 (หลังคา / ฝ้า-ผนัง) — สั่งแก้ HTML</h1>
+<div class="sub">เป้า: ให้ใบเสนอราคากลุ่ม G3 "ออกมาเหมือนใบจริง" · ไฟล์เป้าหมาย <code>public/calculator/index.html</code> · 10 มิ.ย. 2026 · อ้างอิงผลเทส render จริง (jsdom) + breakdown ราคา + ใบจริง 15 ใบ (มี G3 จริง 8 ใบ)</div>
+
+<div class="crit">
+<b>กฎก่อนแก้:</b> ① หลังแก้ทุกครั้ง รัน <code>node test/quote-fidelity.mjs</code> ต้อง <b>PASS</b> (กัน regression) · ② <b>ราคา (calc) ถูกหมดแล้ว — ห้ามแตะสูตรราคา</b> ปัญหาเกือบทั้งหมดอยู่ที่ <b>"ข้อความที่ลงใบ (genQuote)"</b> ไม่ใช่ราคา · ③ เลขบรรทัดอ้างอิง snapshot 10 มิ.ย. — ถ้าเลื่อน ให้ค้นด้วย code anchor ที่ให้
+</div>
+
+<div class="ask" style="background:#ECFDF5;border-color:#6EE7B7;">
+<b>🟢 ขอบเขตรอบนี้ (แก้ได้ทันที): FIX-1 ถึง FIX-7</b> — ข้อมูล + code before/after ครบ ทำได้เลย · <b>⏸ FIX-8 / FIX-9 / FIX-10 = พักไว้ (Phase 2)</b> รอราคา/มติพี่นัท ยังไม่ต้องแก้รอบนี้ (อยู่ท้ายเอกสาร)
+</div>
+
+<h2>สรุปจุดแก้ทั้งหมด (เรียงความสำคัญ)</h2>
+<table>
+<tr><th class="c" style="width:42px;">ID</th><th style="width:30%;">ปัญหา</th><th>หลักฐาน (ใบจริง)</th><th class="c" style="width:38px;">P</th><th class="c" style="width:60px;">จุดแก้</th></tr>
+<tr><td class="c">FIX-1</td><td><b>ของเสริมหลังคา 10 รายการ คิดเงินแต่ไม่ลงใบ</b></td><td>"เสาแผง จำนวน 2 ต้น", "ซ่อนสโลปคอมโพสิต", "โซ่รางน้ำ 2 เส้น"</td><td class="c" style="color:#B3151D;">P1</td><td class="c">genQuote L3341–3351</td></tr>
+<tr><td class="c">FIX-2</td><td><b>แปเดี่ยว ไม่ลงใบ</b></td><td>"ยื่นปลาย (แปเดี่ยว)"</td><td class="c" style="color:#B3151D;">P1</td><td class="c">L3317</td></tr>
+<tr><td class="c">FIX-3</td><td>ปลายปล่อย เงียบ + ขาดคำ "ยื่นปลาย"</td><td>"ยื่นปลาย / ปล่อยปลาย/ไม่มีรางน้ำ"</td><td class="c" style="color:#B7791F;">P2</td><td class="c">L3318–3351</td></tr>
+<tr><td class="c">FIX-4</td><td>ลามิเนต ขาดฟิล์ม/หนา/ไวท์โอ๊ค</td><td>"ลามิเนตใส ฟิล์มกันร้อน หนา 4+4 มม."</td><td class="c" style="color:#B7791F;">P2</td><td class="c">+option · L3338</td></tr>
+<tr><td class="c">FIX-5</td><td>เมทัลชีท + ชินโคไลท์ ขาดสี (+ชื่อรุ่นไม่ตรง)</td><td>"เมทัลชีท PU สีน้ำตาล", "ชินโคไลท์ NT-332 สี Light Grey"</td><td class="c" style="color:#B7791F;">P2</td><td class="c">+option L2358</td></tr>
+<tr><td class="c">FIX-6</td><td>"(ไร้สนิม)" หายจากโครงเหล็กชุบหลังคา</td><td>"โครงเหล็กชุบซิงค์ (ไร้สนิม)"</td><td class="c" style="color:#6B7280;">P3</td><td class="c">L3315</td></tr>
+<tr><td class="c">FIX-7</td><td>วัสดุปิดรอยต่อแผ่นหลังคา — ระบบไม่มี</td><td>"วัสดุปิดรอยต่อแผ่นหลังคา สีขาว"</td><td class="c" style="color:#6B7280;">P3</td><td class="c">+option</td></tr>
+<tr><td class="c">FIX-8</td><td>ความหนา ISOWALL/สมาร์ทบอร์ด ไม่กระทบราคา</td><td>ISOWALL 10ซม / สมาร์ท 12-20มม</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">รอราคา</td></tr>
+<tr><td class="c">FIX-9</td><td>โครงเหล็กชุบ (ทุกหมวด) ราคาเท่าอลู</td><td>—</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">รอราคา</td></tr>
+<tr><td class="c">FIX-10</td><td>ฝ้าเฉียง / เมทัล-ชินโค หลังคาเลื่อน / หลังคาผสม 2 วัสดุ / ขนาดในหัวข้อ</td><td>(ดูท้าย — ถามพี่นัท)</td><td class="c" style="color:#1E40AF;">⏸พัก</td><td class="c">—</td></tr>
+</table>
+
+<div class="note"><b>ภาพรวม:</b> G3 มี 24 product · <b>ฝ้า/ผนัง 6 ตัว สะอาด (ไม่มี P1)</b> · <b>P1 ทั้งหมดอยู่ที่หลังคา</b> (FIX-1, FIX-2) · ราคาทุกตัวคิดถูกตามสูตร (ตรวจมือ + breakdown แล้ว)</div>
+
+<h2>FIX-1 (P1) — ของเสริมหลังคาคิดเงินแต่ไม่ลงใบ</h2>
+<div class="fix p1">
+<h3><span class="tag t1">P1</span> ของเสริม 10 รายการ: เสาแผง · เสา 4"x8" · คานเหล็กถัก · รางน้ำเสริม · โซ่รางน้ำ · ปิดปลายกันน้ำ · ครอบท่อ PVC · ซ่อนสโลป · ปิดซ่อนราง · ครอบคาน</h3>
+<div class="lbl">อาการ (verify ด้วย render):</div> ไวนิล 4×3 ม. ใส่ของเสริม → ราคา <b>72,000 → 116,000~124,000</b> แต่ "รายละเอียดงาน" ในใบ <b>ไม่มีบรรทัดของเสริมเลย</b> · breakdown (วิธีคิด) โชว์ "เสาแผง 2 ต้น", "ซ่อนสโลป 17,150~19,600", "โซ่รางน้ำ 6,000" — เก็บเงินลูกค้าแต่ใบไม่บอกได้อะไร
+<div class="lbl">ใบจริงเขียน (verbatim):</div> <span class="real">"เสาแผง (เสริมเหล็กภายใน) จำนวน 2 ต้น" (ธนบัตร) · "ซ่อนสโลปหลังคาด้วยคอมโพสิต / แผ่นคอมโพสิตสโลปหลังคา สีดำ" (นก) · "โซ่รางน้ำ ลายดอกทิวลิป สีน้ำตาล จำนวน 2 เส้น" (นก)</span>
+<div class="lbl">Root cause:</div> calc <code>L1421</code> คิดเงิน + push msgs ของเสริมครบแล้ว (gr/br/pp/p4/ch/ev/pv/hs/gc/bc) · แต่ genQuote ที่สร้าง <code>_rfExtra</code> (<code>L3341–3343</code>) ใส่แค่ <code>rfplate</code>/<code>rfpull</code> (ของฟรี) + <code>slide</code> — <b>ไม่ดึงของเสริมที่คิดเงินลงใบ</b> (inversion: ของฟรีลงใบ ของคิดเงินไม่ลง)
+<div class="lbl">วิธีแก้ — เพิ่มใน genQuote หลังบรรทัด 3343 (ก่อน slide L3345) ให้ mirror เงื่อนไข calc L1421:</div>
+<pre><span class="c">// ของเสริมหลังคา (คิดเงินใน calc L1421 แล้ว — ต้องลงใบด้วย · ใช้คำตามใบจริง)</span>
+<span class="k">const</span> _n=(v)=>parseInt(_os[v])||0, _f=(v)=>parseFloat(_os[v])||0;
+<span class="k">if</span>(_n('rfpolep')>0) _rfExtra += <span class="add">'\nเสาแผง (เสริมเหล็กภายใน) จำนวน '+_n('rfpolep')+' ต้น'</span>;
+<span class="k">if</span>(_n('rfpole4')>0) _rfExtra += <span class="add">'\nเสา 4"x8" จำนวน '+_n('rfpole4')+' ต้น'</span>;
+<span class="k">if</span>(_f('rfbeam')>0 && _f('rfbeamlen')>0) _rfExtra += <span class="add">'\nคานเหล็กถัก'</span>;
+<span class="k">if</span>(_f('rfgut')>0 && _f('rfgutlen')>0) _rfExtra += <span class="add">'\nรางน้ำอลูมิเนียม'</span>;  <span class="c">// หรือสแตน ตามเรต</span>
+<span class="k">if</span>(_n('rfchain')>0) _rfExtra += <span class="add">'\nโซ่รางน้ำ ลายดอกทิวลิป จำนวน '+_n('rfchain')+' เส้น'</span>;
+<span class="k">if</span>(_f('rfeave')>0) _rfExtra += <span class="add">'\nปิดปลายกันน้ำ'</span>;
+<span class="k">if</span>(_f('rfpvc')>0) _rfExtra += <span class="add">'\nครอบท่อ PVC'</span>;
+<span class="k">if</span>(_os.rfhs==='comp'||_os.rfhs==='smart') _rfExtra += <span class="add">'\nซ่อนสโลปหลังคาด้วย'+(_os.rfhs==='comp'?'คอมโพสิต':'สมาร์ทบอร์ด')</span>;
+<span class="k">if</span>((_f('rfgcw')+_f('rfgch'))>0 && _f('rfgcl')>0) _rfExtra += <span class="add">'\nปิดซ่อนราง'</span>;
+<span class="k">if</span>(_f('rfbcw')>0 && _f('rfbcl')>0) _rfExtra += <span class="add">'\nครอบคาน'</span>;</pre>
+<div class="lbl">หมายเหตุ:</div> เพลทเหล็กล่าง+เหล็กดึง (ฟรี) ลงใบอยู่แล้ว <b>อย่าลบ</b> · เช็คซ้ำกับพี่นัท: รวม 2 บรรทัดเป็น "เสริมเพลทเหล็กรับล่างและเหล็กดึงด้านบน" (คำใบจริง) ไหม
+</div>
+
+<h2>FIX-2 (P1) — แปเดี่ยว ไม่ลงใบ</h2>
+<div class="fix p1">
+<h3><span class="tag t1">P1</span> เลือกแปเดี่ยว → ใบไม่เขียน (เขียนเฉพาะแปคู่)</h3>
+<div class="lbl">ใบจริง:</div> <span class="real">"หลังคาไวนิล ยื่นปลาย <b>(แปเดี่ยว)</b>" / "<b>(แปคู่)</b>" — ระบุทุกครั้ง</div>
+<div class="lbl">โค้ดปัจจุบัน <code>L3317</code>:</div>
+<pre><span class="k">const</span> _battenSuffix = _rfbatten === 'แปคู่' ? <span class="s">' (แปคู่)'</span> : <span class="s">''</span>;</pre>
+<div class="lbl">แก้เป็น (ออกทั้งเดี่ยว/คู่):</div>
+<pre><span class="k">const</span> _battenSuffix = _rfbatten ? <span class="add">' ('+_rfbatten+')'</span> : <span class="s">''</span>;</pre>
+</div>
+
+<h2>FIX-3 (P2) — ปลายปล่อยเงียบ + ขาดคำ "ยื่นปลาย"</h2>
+<div class="fix p2">
+<h3><span class="tag t2">P2</span> เมื่อ <code>rfend==='ปล่อย'</code> ใบไม่เขียนอะไรเรื่องชายคา</h3>
+<div class="lbl">ใบจริง:</div> <span class="real">"หลังคา... <b>ยื่นปลาย</b> (แป...) โครง... <b>ปล่อยปลาย/ไม่มีรางน้ำ</b>"</span> — มีทั้ง "ยื่นปลาย" และ "ปล่อยปลาย/ไม่มีรางน้ำ"
+<div class="lbl">วิธีแก้:</div> ใน genQuote roof block เพิ่ม branch เมื่อ <code>_rfend==='ปล่อย'</code> ใส่บรรทัด <code>'\nปล่อยปลาย/ไม่มีรางน้ำ'</code> (คู่กับ FIX-1 _rfExtra หรือก่อน assembly L3351) · และพิจารณาเติมคำ "ยื่นปลาย" ในบรรทัดงาน/หัวข้อ
+<div class="lbl">เช็คซ้ำ:</div> "ยื่นปลาย" ควรอยู่บรรทัดงาน (header) หรือ detail — ดูตำแหน่งกับพี่นัท
+</div>
+
+<h2>FIX-4 (P2) — หลังคากระจกลามิเนต ขาดฟิล์ม/ความหนา/ไวท์โอ๊ค</h2>
+<div class="fix p2">
+<h3><span class="tag t2">P2</span> ระบบลงแค่ "หลังคากระจกลามิเนต" เปล่า ๆ</h3>
+<div class="lbl">ใบจริง (ทุกใบของชวลิต/หญิง):</div> <span class="real">"หลังคากระจก<b>นิรภัย</b>ลามิเนต" · "หลังคากระจกลามิเนตใส <b>ฟิล์มกันร้อน หนา 4+4 มม.</b>" (มี ฟิล์มใส/เขียว/กันร้อน) · โครง "<b>อลูมิเนียมลายไม้สีไวท์โอ๊ค</b>"</span>
+<div class="lbl">Root cause:</div> roof_laminate ไม่มี option ฟิล์ม/หนา · head (<code>L3338–3339</code>) = ชื่อ product ตรง ๆ
+<div class="lbl">วิธีแก้:</div> เพิ่ม option เฉพาะ <code>roof_laminate</code> (ใน option builder roof L2358 block): <code>.o-lamfilm</code> (ใส / เขียว / กันร้อน) + <code>.o-lamthick</code> (4+4 / 5+5) · readItem เก็บลง optSel · genQuote head: "หลังคากระจกลามิเนต{ใส} ฟิล์ม{...} หนา {4+4} มม." · (สี/ไวท์โอ๊ค ใช้ระบบสีอลูเดิม — เลือก "ลายไม้ไวท์โอ๊ค" ได้อยู่แล้ว)
+</div>
+
+<h2>FIX-5 (P2) — เมทัลชีท + ชินโคไลท์ ขาดสี (+ ชื่อรุ่นไม่ตรงใบจริง)</h2>
+<div class="fix p2">
+<h3><span class="tag t2">P2</span> imp7–14 (เมทัลชีท 8) + imp15–20 (ชินโคไลท์ 6) ไม่มีช่องสีเลย</h3>
+<div class="lbl">ใบจริง:</div> <span class="real">เมทัลชีท: "เมทัลชีท PU หนา 45 มม. <b>สีน้ำตาล</b>" (ยี) · ชินโคไลท์: "รุ่น NT-332 <b>สี Light Grey</b> หนา 6 มม." (ธนบัตร), "รุ่น HC-N828 <b>สี Modern Grey</b>" (ใบเฟริล)</span>
+<div class="lbl">Root cause:</div> option builder <code>L2361–2366</code> สร้าง <code>.o-roofcolor</code> เฉพาะ <code>roof_vinyl/delight/polyton</code> (เงื่อนไข <code>if(p.id==='...')</code>) — imp ไม่เข้า · genQuote head ไม่มี <code>_rfColor</code> สำหรับ imp
+<div class="lbl">วิธีแก้:</div> เพิ่ม branch <code>else if(p.id.startsWith('imp'))</code> ใน option builder สร้าง <code>.o-roofcolor</code> (ลิสต์สีเมทัล/ชินโคที่ขายจริง) → readItem มี rfcolor อยู่แล้ว → head แสดงสี
+<div class="ask"><b>FIX-5 ทำได้รอบนี้ (ใส่ข้อมูลเท่าที่มี):</b> เพิ่มโครง <code>.o-roofcolor</code> ให้ imp ได้เลย · starter list สีเท่าที่เจอในใบจริง: เมทัลชีท "สีน้ำตาล" · ชินโคไลท์ "Light Grey", "Modern Grey" (พี่นัทเติมทีหลังได้) · <b>เช็คซ้ำภายหลัง (ไม่บล็อกรอบนี้):</b> ① ชื่อรุ่นในระบบ (ชินโค: Heat Cut/Superior/Nature/Shade/Prime/Grang · เมทัล: 1"/2" ท้อง PVC/เหล็ก/ฟอยล์ EPS/PU) <b>ไม่ตรงรหัสใบจริง</b> (ชินโค NT-332/HC-N828 · เมทัล PU 45มม.) — ต้องยืนยันว่ารุ่นไหนขายจริง/แมปกันยังไง ② ลิสต์สีที่ขายจริงต่อรุ่น</div>
+</div>
+
+<h2>FIX-6, FIX-7 (P3) — wording เก็บตก</h2>
+<div class="fix p3">
+<h3><span class="tag t3">P3</span> FIX-6: "(ไร้สนิม)" หายจากโครงเหล็กชุบหลังคา</h3>
+ผนัง/ฝ้า ออก "โครงเหล็กชุบซิงค์ <b>(ไร้สนิม)</b>" ถูก · แต่หลังคา (<code>L3315</code>) ออกแค่ "โครงเหล็กชุบซิงค์"
+<pre><span class="c">// L3315 ปัจจุบัน</span>
+<span class="k">const</span> _frameTxt = _rfframe === 'โครงเหล็กชุบซิงค์' ? <span class="s">'โครงเหล็กชุบซิงค์'</span> : (...);
+<span class="c">// แก้เป็น</span>
+... ? <span class="add">'โครงเหล็กชุบซิงค์ (ไร้สนิม)'</span> : (...);</pre>
+</div>
+<div class="fix p3">
+<h3><span class="tag t3">P3</span> FIX-7: วัสดุปิดรอยต่อแผ่นหลังคา</h3>
+ใบจริง (หญิง): <span class="real">"วัสดุปิดรอยต่อแผ่นหลังคา สีขาว"</span> — ระบบไม่มี option/ไม่ลงใบ · เพิ่ม checkbox/สี option ในของเสริมหลังคา (เช็คซ้ำว่าใช้บ่อยไหม)
+</div>
+
+<h2>Phase 2 — พักไว้ (ยังไม่แก้รอบนี้ · รอราคา/มติพี่นัท)</h2>
+<div class="ask">
+<b>FIX-8 ความหนาไม่กระทบราคา:</b> ISOWALL 5/7.5/10 ซม. = ราคาเท่ากัน · สมาร์ทบอร์ด 12/20 มม. = เท่ากัน → ถ้าต้นทุนต่างจริง ต้องเพิ่ม rate ต่อความหนา (calc <code>L452 ISOWALL</code> คิดตามพื้นที่อย่างเดียว · smartthick เป็น detail-only) — <b>รอราคาต่อความหนา</b><br>
+<b>FIX-9 โครงเหล็กชุบ ราคาเท่าอลู:</b> หลังคา/ฝ้า/ผนัง · มี comment ในโค้ด "รอเช็คราคาจริง" — <b>รอราคาซัพพลายเออร์</b><br>
+<b>FIX-10 อื่น ๆ:</b> ① ฝ้าเฉียง ควรคิดเพิ่มไหม (ตอนนี้ลงใบแต่ไม่บวกเงิน · นกมี OPTION ฝ้าฉาบ 3.26×1.52=+10,000) ② เมทัลชีท/ชินโคไลท์ ควรทำหลังคาเลื่อนได้ไหม (ตอนนี้ทำไม่ได้ — ไม่มี optSlide) ③ หลังคาผสม 2 วัสดุในจุดเดียว ("ไวนิลต่อปลายลามิเนต" — หญิง) ระบบยังทำ 1 รายการ=1 วัสดุ ④ ขนาด ก×ย ในหัวข้อหลังคา — ใบจริงไม่ใส่ (ขาย "1 ชุด") จะตัดออกหรือเก็บเป็น reference ⑤ รหัสสีโพลีตันเรียงสลับ: ระบบ "Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" ↔ ใบจริง "สีขาวขุ่น (Opal 103)" + ตัด (แสงผ่าน%) ออกจากใบไหม
+</div>
+
+<h2>สิ่งที่ "ถูกแล้ว" — อย่าแก้</h2>
+<table>
+<tr><th style="width:30%;">หมวด</th><th>ยืนยันตรงใบจริง</th></tr>
+<tr><td>ผนังสมาร์ทบอร์ด</td><td>"แผ่นสมาร์ทบอร์ด หนา 12 มม. พร้อมทาสีรองพื้นสีขาว" + "ฉนวนกันความร้อนและกันเสียง หนา 3"" + "โครงเหล็กชุบซิงค์ (ไร้สนิม)" — <b>ตรงคุณสุจินต์เป๊ะ</b></td></tr>
+<tr><td>ISOWALL</td><td>"แผ่น ISOWALL หนา 10 ซม. (สี)" — ตรงคุณยี</td></tr>
+<tr><td>ฝ้าฉาบเรียบ</td><td>"ฝ้าฉาบเรียบ พร้อมทาสีขาว" + "ฝ้าเฉียงตามแนวหลังคา" — ตรง</td></tr>
+<tr><td>โพลีตัน สี+รหัส</td><td>"Opal 103 สีขาวขุ่น" — รหัสถูก (แค่ลำดับคำ ดู FIX-10)</td></tr>
+<tr><td>รางน้ำ ท่อ/โซ่</td><td>ท่อ+สี / โซ่+ลาย+สี + ตะแกรงกันใบไม้ + ท่อน้ำทิ้ง PVC 2.5″ — ลงใบถูกทุก product (รวม imp)</td></tr>
+<tr><td>หลังคาเลื่อน (ตระกูล optSlide)</td><td>"ระบบหลังคาเลื่อน N บาน (มอเตอร์ N ตัว)" + ราคา ถูก</td></tr>
+<tr><td>ฉนวน +600/ตร.ม.</td><td>calc L1408 ถูก + ลงใบ "ฉนวนกันความร้อนและกันเสียง หนา 3"" ถูก</td></tr>
+<tr><td>ราคาทุก product</td><td>bucket/crates/roundUp/min — ตรวจมือเทียบสูตรครบ ตรงหมด</td></tr>
+</table>
+
+<h2>เช็คลิสต์ปิดงาน (สำหรับแชทที่แก้)</h2>
+<ul class="chk">
+<li>FIX-1 ของเสริมลงใบครบ 10 รายการ (render ทดสอบ: ไวนิล+เสาแผง 2+ซ่อนสโลป → ใบต้องมีบรรทัด)</li>
+<li>FIX-2 แปเดี่ยวลงใบ "(แปเดี่ยว)"</li>
+<li>FIX-3 ปล่อยปลาย ลงใบ "ปล่อยปลาย/ไม่มีรางน้ำ" + "ยื่นปลาย"</li>
+<li>FIX-4 ลามิเนต ฟิล์ม+หนา 4+4 ลงใบ (รอ option)</li>
+<li>FIX-5 เมทัล/ชินโค สีลงใบ (รอพี่นัทยืนยันรุ่น+ลิสต์สี)</li>
+<li>FIX-6 หลังคาเหล็กชุบ "(ไร้สนิม)"</li>
+<li>FIX-7 วัสดุปิดรอยต่อ (ถ้าพี่นัทยืนยัน)</li>
+<li><b>(Phase 2 — ข้ามรอบนี้)</b> FIX-8/9/10 รอราคา/มติพี่นัท</li>
+<li>รัน <code>node test/quote-fidelity.mjs</code> = PASS</li>
+<li>render ใบ G3 อีกครั้งเทียบ verbatim ใบจริง (ธนบัตร/นก/หญิง/ยี/สุจินต์)</li>
+</ul>
+
+<div class="foot">
+สร้างโดย skill quote-option-audit · รวมผล Batch 1 (หลังคา) + Batch 2 (ฝ้า/ผนัง+ราคา) + ใบเทียบใบจริง + เทส subagent ×3 (render ทุก product เทียบใบจริง) · READ-ONLY ไม่แตะ index.html · เอกสารนี้ = handoff สั่งแก้ HTML อีกแชท
+</div>
+
+</body>
+</html>
