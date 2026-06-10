@@ -571,8 +571,8 @@ const PRODUCTS=[
  {id:'casement_xseries',cat:'บานเปิด',name:'บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)',method:'bucket',min:28000,rates:'XOPEN',cost:null,addon:{kind:'door',extra:5000},series:'S',mosquito:1,closer:1}, // ข้อ5: ใช้ closer:1 (dropdown .o-closer) เหมือนยูโร — เดิมเป็น checkbox opts ไม่ตรงกัน
  {id:'casement_velora',cat:'บานเปิด',name:'บานเปิด Velora (รวมเทมเปอร์6มม.)',method:'bucket',min:19000,rates:'VELORA',cost:null,addon:{kind:'door',extra:15000},series:'S',mosquito:1},
  // R3 2026-05-30: เพิ่ม 2 รุ่นประตูบานเปิด ลูกฟูกทึบ — ราคากรอกเอง
- {id:'casement_flush_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
- {id:'casement_inset_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด วัน (ลูกฟูกกลางบาน)',method:'bucket',min:0,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,custom_price:1,solid_door:1,full_grid:1},
+ {id:'casement_flush_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)',method:'bucket',min:18000,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,solid_door:1,solid_sides:2,full_grid:1},
+ {id:'casement_inset_solid',cat:'บานเปิด',name:'ประตูบานเปิด โซลิด วัน (ลูกฟูกกลางบาน)',method:'bucket',min:18000,rates:'OPEN',cost:null,addon:{kind:'door',extra:0},closer:1,digihandle:1,series:'L',mosquito:1,solid_door:1,solid_sides:1,full_grid:1},
  {id:'pivot',cat:'บานหมุน',name:'บานหมุนเมืองทอง',method:'bucket',min:26000,rates:'PIVOT',cost:null,addon:{kind:'window',extra:5000}},
  {id:'pivot_aluinch',cat:'บานหมุน',name:'บานหมุน aluinch (ยกเลิกขาย)',method:'same_as',ref:'pivot',cost:null},
  {id:'folding',cat:'บานเฟี้ยม',name:'บานเฟี้ยม เซมิยูโร',method:'fold',unit_rate:9000,per_panel_min:15000,cost:null,optBeam:true,series:'M',mosquito:1},
@@ -1312,9 +1312,24 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     let base=basePrice(p,a,panels);
   if(p.ranae && shipOnly && p.prod){ base=a*p.prod; msgs.push('เรตเฉพาะผลิต(ผลิตส่ง)'); }
   const ad=addonCalc(p,panels);
-  const glassUp=GLASS[gi].s*a;
+  // ข้อ1(G1): โซลิดลูกฟูก — ทึบ ไม่คิดกระจกทั้งบาน · คิดกระจกเฉพาะ "ช่องแสง" (o-solidlight ตร.ม.)
+  let glassUp;
+  if(p.solid_door){
+    const _lightA=parseFloat(optSel&&optSel.solidlight)||0;
+    glassUp=GLASS[gi].s*_lightA;
+    if(_lightA>0) msgs.push('ช่องแสง '+_lightA.toFixed(2)+' ตร.ม. กระจก '+GLASS[gi].n.replace(/^[★⚠\s]+/,'').trim()+' +'+fmt(GLASS[gi].s*_lightA));
+  } else {
+    glassUp=GLASS[gi].s*a;
+  }
   const colorUp=colorPrice(ci,a,p.series||'');
   let opt=0;
+  // ข้อ1(G1): ค่าทึบลูกฟูก 2 หน้า × ฝั่ง (ทู=2 · วัน=1) × พื้นที่บาน × 3,500 — auto (เลิกกรอกราคาเอง)
+  if(p.solid_door){
+    const _sides=p.solid_sides||1;
+    const _corr=a*3500*_sides;
+    opt+=_corr;
+    msgs.push('ทึบลูกฟูกเรียบ 2 หน้า ('+(_sides===2?'ทู · 2 ฝั่ง':'วัน · 1 ฝั่ง')+') '+a.toFixed(2)+'×3,500×'+_sides+' = '+fmt(_corr));
+  }
   if(p.opts&&optSel){ p.opts.forEach(o=>{ if(o.type==='select'||o.depends) return; if(optSel[o.id]) opt+=(o.price||0); }); }
   // ข้อ11: อุปกรณ์ shower (select เดียว) — เงิน(0)/ดำ(+4,000)/ทอง(+6,000) · กันติ๊กซ้อน 2 อัน
   if(p.id==='shower'&&optSel&&optSel.showerhw){ const _hw=parseInt(optSel.showerhw)||0; const _hwp=[0,4000,6000][_hw]||0; if(_hwp>0){ opt+=_hwp; msgs.push('อุปกรณ์'+(['','ดำ','ทอง'][_hw]||'')+' +'+fmt(_hwp)); } }
@@ -2248,6 +2263,10 @@ function buildItemOpts(d){
   if(p.full_grid){
     h+='<label class="opt"><input type="checkbox" class="o-fullgrid"> ตารางเต็มบาน +5,000 (กว้าง≤1.2 / สูง≤3)</label>';
   }
+  // ข้อ1(G1): โซลิด — ช่องแสงบน (กระจกเฉพาะพื้นที่นี้ · ส่วนทึบลูกฟูกไม่คิดกระจก)
+  if(p.solid_door){
+    h+='<label class="opt">ช่องแสง (กระจก) พื้นที่ <input type="number" class="o-solidlight" min="0" step="0.1" value="0" placeholder="ตร.ม." style="width:70px;height:32px;" oninput="calcQuote()"> ตร.ม. <span style="font-size:11px;color:#666;">เว้น 0 = ทึบล้วน</span></label>';
+  }
   // R3.2: combo บานกระทุ้งเข้าใน + มุ้งติดตาย (ยูโร + โซลิด วัน/ทู)
   if(['casement_euro','casement_flush_solid','casement_inset_solid'].includes(p.id)){
     h+='<label class="opt"><input type="checkbox" class="o-combo_awn_inside"> combo บานกระทุ้งเข้าใน + มุ้งจีบนิรภัยติดตายนอก</label>';
@@ -2549,6 +2568,7 @@ function readItem(d){
     const _xh=d.querySelector('.o-xhandle'); if(_xh) optSel.xhandle=_xh.value; // ข้อ4C: มือจับ X-series ฟรี
     const _caw=d.querySelector('.o-cmechawn'); if(_caw) optSel.cmechawn=_caw.value; // ข้อ4B: Cmech หลบมุ้ง บานกระทุ้ง
     const _fg=d.querySelector('.o-fullgrid'); if(_fg) optSel.fullgrid=_fg.checked;
+    const _sld=d.querySelector('.o-solidlight'); if(_sld) optSel.solidlight=_sld.value; // ข้อ1(G1): ช่องแสงโซลิด
     const _ci=d.querySelector('.o-combo_awn_inside'); if(_ci) optSel.combo_awn=_ci.checked;
     const _cip=d.querySelector('.o-combo_price'); if(_cip) optSel.combo_price=_cip.value;
     const _bgm=d.querySelector('.o-bg_motor'); if(_bgm) optSel.bg_motor=_bgm.checked;
@@ -3406,7 +3426,19 @@ function genQuote(keepNo){
       }
       // บรรทัด 2: กระจก{ชนิด} หนา {x} มม.
       // Velora/SlimLux รวมเทมเปอร์ 6 มม. ในราคา — ไม่ใช้ glass selector ของผู้ใช้
-      if(it.p.id==='casement_velora' || it.p.id==='inner_top_slimlux'){
+      if(it.p.solid_door){
+        // ข้อ1(G1): โซลิดลูกฟูก — บานทึบ ไม่ใช่กระจกทั้งบาน · ระบุช่องแสงถ้ามี
+        const _sideTxt = (it.p.solid_sides===2) ? 'เสมอกรอบ (ทู)' : 'กลางบาน (วัน)';
+        lines.push('บานทึบลูกฟูกเรียบ 2 หน้า '+_sideTxt);
+        const _lA = parseFloat(it.optSel&&it.optSel.solidlight)||0;
+        if(_lA>0){
+          const _gO=GLASS[it.gi];
+          let _gnm=_gO?_gO.n.replace(/^[★⚠\s]+/,'').trim():'';
+          if(_gnm.indexOf('หนา')<0)_gnm=_gnm.replace(/(\s)(\d)/,'$1หนา $2');
+          if(_gnm&&!_gnm.startsWith('กระจก'))_gnm='กระจก'+_gnm;
+          lines.push('ช่องแสง '+_lA.toFixed(2)+' ตร.ม.'+(_gnm?(' ('+_gnm+')'):''));
+        }
+      } else if(it.p.id==='casement_velora' || it.p.id==='inner_top_slimlux'){
         lines.push('กระจกเทมเปอร์ใส หนา 6 มม.');  // ข้อ9/18: ตัด "(รวมในราคา)" ออก
       } else {
         const glassObj = GLASS[it.gi];
