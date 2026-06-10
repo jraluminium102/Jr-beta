@@ -3236,9 +3236,18 @@ function genQuote(keepNo){
        ใบจริงโชว์เฉพาะวัสดุ (กระจก/สีอลู) ใต้ "รายละเอียดงาน" ไม่โชว์ราคาย่อย */
     // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
     let det = '';
-    if(it.p.fin){ det = (it.finLabel||'ไม่อบสี');
-      // G2-9: เกล็ด Z — เติมทิศ (แนวตั้ง/แนวนอน) ลงใบ ตามแม่แบบ
-      if(it.p.cat==='ระแนง-เกล็ด' && it.optSel && it.optSel.grDir){ det = det + ' ( '+it.optSel.grDir+' )'; }
+    if(it.p.fin){
+      var _finColor=(it.finLabel||'ไม่อบสี');
+      var _finColorTxt=(_finColor==='ไม่อบสี')?'ไม่อบสี':('สี'+_finColor.replace(/^สี/,''));
+      if(/^ระแนง/.test(it.p.cat)){
+        // G2-14: ใส่ขนาดซี่ (จากชื่อรุ่น) ลง "รายละเอียดงาน" + สี + ทิศ
+        var _specLine=it.p.name.replace(/\s*\([^)]*\)/g,'').replace(/\s*·\s*ข้อ\s*[\d.]+/g,'').replace(/\s+/g,' ').trim();
+        det=_specLine+'\n'+_finColorTxt;
+        // G2-9: เกล็ด Z — ทิศ (แนวตั้ง/แนวนอน)
+        if(it.p.cat==='ระแนง-เกล็ด' && it.optSel && it.optSel.grDir){ det += '\n( '+it.optSel.grDir+' )'; }
+      } else {
+        det = _finColor;
+      }
     }
     else if(it.p.cat==='ฝ้า-ผนัง'){
       // สเปก rev2: ฝ้า/ผนัง ออกรายละเอียดวัสดุ (เดิม render แต่หัวข้อ) — สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ + ฉนวน + โครง
