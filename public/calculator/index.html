@@ -2328,7 +2328,7 @@ function buildItemOpts(d){
   }
   // คาดตาราง (generic) · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2 — ไม่ใช่งานบาน
   if(!p.grid && !['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){
-    h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\');"> มีคาดตาราง (คิดตามสูตร)</label>';
+    h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\'); if(this.checked){ var nv=c.querySelector(\'.o-gm-nv\'); var pn=parseInt((c.querySelector(\'.i-panels\')||{}).value)||0; if(nv && !(parseInt(nv.value)>0) && pn>0) nv.value=pn; } calcQuote();"> มีคาดตาราง (คิดตามสูตร)</label>'; // ข้อ14(G1): เส้นตั้ง auto=จำนวนบาน
     h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
     h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">เส้นตั้ง <input type="number" class="o-gm-nv" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
