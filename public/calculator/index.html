@@ -1427,8 +1427,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // แปคู่ — ไม่คิดเพิ่ม
     // รางน้ำใหม่ (chain D) — cosmetic ไม่คิดเงิน
   }
-  // Pass2-A: ธรณีหลังเต่า + Drop Seal บานเปิด +1,000
-  if(p.cat==='บานเปิด' && optSel && optSel.thresh==='turtle'){
+  // Pass2-A: ธรณีหลังเต่า + Drop Seal บานเปิด +1,000 · ข้อ8(G1): รางยู priority → ไม่ชาร์จหลังเต่าถ้าติ๊กรางยู
+  if(p.cat==='บานเปิด' && optSel && optSel.thresh==='turtle' && !optSel.uchannel){
     opt += 1000;
     msgs.push('ธรณีหลังเต่า + Drop Seal +1,000');
   }
@@ -2214,11 +2214,11 @@ function buildItemOpts(d){
        +'<b>Up3</b>=สแตน + โช๊ค (ดู dropdown สแตนอร่าม + dropdown โช๊ค)'
        +'</div>';
     // Pass2-A: ธรณี บานเปิด
-    h+='<label class="opt">ธรณี <select class="o-thresh" style="width:auto;height:32px;" onchange="if(this.value===\'turtle\'){var u=this.closest(\'.ch\').querySelector(\'.o-uchannel\');if(u&&u.checked)u.checked=false;}calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select></label>'; // ข้อ8(G1): หลังเต่า → ตัดรางยู
+    h+='<label class="opt">ธรณี <select class="o-thresh" style="width:auto;height:32px;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select></label>'; // ข้อ8(G1): รางยู disable ตัวนี้เมื่อติ๊ก
   }
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
-    h+='<label class="opt">ธรณี <select class="o-threshf" style="width:auto;height:32px;" onchange="if(this.value===\'inner\'){var u=this.closest(\'.ch\').querySelector(\'.o-uchannel\');if(u&&u.checked)u.checked=false;}calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select></label>'; // ข้อ8(G1): หลังเต่า → ตัดรางยู
+    h+='<label class="opt">ธรณี <select class="o-threshf" style="width:auto;height:32px;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select></label>'; // ข้อ8(G1): รางยู disable ตัวนี้เมื่อติ๊ก
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
@@ -2485,7 +2485,7 @@ function buildItemOpts(d){
   }
   // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
   if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){
-    h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="if(this.checked){var c=this.closest(\'.ch\');var t=c.querySelector(\'.o-thresh\');if(t&&t.value===\'turtle\')t.value=\'std\';var tf=c.querySelector(\'.o-threshf\');if(tf&&tf.value===\'inner\')tf.value=\'outer\';}calcQuote();"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ทำพร้อมธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1)
+    h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="var c=this.closest(\'.ch\');var t=c.querySelector(\'.o-thresh\');var tf=c.querySelector(\'.o-threshf\');if(this.checked){if(t){t.value=\'std\';t.disabled=true;}if(tf){tf.value=\'outer\';tf.disabled=true;}}else{if(t)t.disabled=false;if(tf)tf.disabled=false;}calcQuote();"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → disable หลังเต่า
   }
   h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
   h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
@@ -3197,12 +3197,14 @@ function genQuote(keepNo){
       if(_fts.length) prodName += '\n(รวม '+_fts.join(' + ')+')';
     }
     const _parts=[];
+    // ข้อ8(G1) FIX: ฝังรางยู priority — ถ้าติ๊กรางยู ไม่ให้หลังเต่าโผล่ (กันขัดแย้ง + กันรางยูหาย)
+    var _hasUchannel = !!(it.optSel && it.optSel.uchannel);
     // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
-    if(it.p.cat==='บานเปิด' && it.optSel && it.optSel.thresh==='turtle'){
+    if(it.p.cat==='บานเปิด' && it.optSel && it.optSel.thresh==='turtle' && !_hasUchannel){
       _parts.push('ธรณีหลังเต่า + Drop Seal');
     }
-    // Pass2-A: ธรณี บานเฟี้ยม — แสดงชนิดธรณีที่เลือก (ทั้งคู่ +0)
-    if(it.p.cat==='บานเฟี้ยม' && it.optSel){
+    // Pass2-A: ธรณี บานเฟี้ยม — แสดงชนิดธรณีที่เลือก (ทั้งคู่ +0) · รางยู priority
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel && !(_hasUchannel && it.optSel.threshf==='inner')){
       const _thfLabel = it.optSel.threshf==='inner' ? 'ธรณีหลังเต่าภายใน' : 'ธรณีกันน้ำภายนอก';
       _parts.push(_thfLabel);
     }
