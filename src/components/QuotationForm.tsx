@@ -7,6 +7,8 @@ import Icon from "./Icon";
 import { computeTotals, baht } from "@/lib/money";
 import type { Customer } from "@/lib/types";
 
+type ActiveJob = { id: string; job_code: string | null; current_stage: number; status: string; created_at: string };
+
 type Item = { name: string; detail: string; qty: number; unit_price: number };
 const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0 });
 
@@ -22,6 +24,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
+  const [activeJobsLoading, setActiveJobsLoading] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [calcCustomer, setCalcCustomer] = useState("");
   const [calcMatched, setCalcMatched] = useState(false); // preselect ให้แล้ว (จาก calc)
   const [calcExact, setCalcExact] = useState(false); // มั่นใจ (customer_id ตรง/ชื่อตรงเป๊ะรายเดียว) → เขียว; เดา → เหลือง
@@ -102,6 +107,27 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
   }, []);
 
+  // fetch งาน active ของลูกค้าเมื่อ customerId เปลี่ยน
+  useEffect(() => {
+    setActiveJobs([]);
+    setSelectedJobId("");
+    if (!customerId) return;
+    let cancelled = false;
+    setActiveJobsLoading(true);
+    fetch(`/api/jobs/by-customer?customer_id=${customerId}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const jobs: ActiveJob[] = Array.isArray(json?.data) ? json.data : [];
+        setActiveJobs(jobs);
+        // default เลือกงานล่าสุด (index 0 เพราะ order desc)
+        setSelectedJobId(jobs[0]?.id ?? "");
+      })
+      .catch(() => { if (!cancelled) setActiveJobs([]); })
+      .finally(() => { if (!cancelled) setActiveJobsLoading(false); });
+    return () => { cancelled = true; };
+  }, [customerId]);
+
   const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: disc, wht_rate: wht }), [items, vat, disc, wht]);
 
   const setItem = (i: number, k: keyof Item, v: string | number) =>
@@ -138,7 +164,16 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       const res = await fetch("/api/quotations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: customerId, issue_date: issueDate, items: valid, vat_rate: vat, discount_pct: disc, wht_rate: wht, note }),
+        body: JSON.stringify({
+          customer_id: customerId,
+          issue_date: issueDate,
+          items: valid,
+          vat_rate: vat,
+          discount_pct: disc,
+          wht_rate: wht,
+          note,
+          ...(selectedJobId ? { job_id: selectedJobId } : {}),
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
@@ -180,7 +215,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
               </label>
             </div>
             {customers.length === 0 && (
-              <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู “ทะเบียนลูกค้า” ก่อน</p>
+              <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู "ทะเบียนลูกค้า" ก่อน</p>
             )}
             {calcCustomer && calcMatched && calcExact && (
               <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">
@@ -189,13 +224,52 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             )}
             {calcCustomer && calcMatched && !calcExact && (
               <p className="text-xs text-amber-800 bg-amber-100 rounded-lg px-3 py-2 mt-2 border border-amber-300">
-                ⚠️ เดาลูกค้าให้จากชื่อ “<strong>{calcCustomer}</strong>” — <strong>โปรดยืนยัน</strong>ในช่องด้านบนว่าตรงคนก่อนบันทึก
+                ⚠️ เดาลูกค้าให้จากชื่อ "<strong>{calcCustomer}</strong>" — <strong>โปรดยืนยัน</strong>ในช่องด้านบนว่าตรงคนก่อนบันทึก
               </p>
             )}
             {calcCustomer && !calcMatched && (
               <p className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2 mt-2 border border-rose-200">
-                ไม่พบ/มีชื่อคล้ายหลายคนกับ “<strong>{calcCustomer}</strong>” ในทะเบียน — เลือกลูกค้าให้ตรงเอง (หรือเพิ่มที่เมนูทะเบียนลูกค้า)
+                ไม่พบ/มีชื่อคล้ายหลายคนกับ "<strong>{calcCustomer}</strong>" ในทะเบียน — เลือกลูกค้าให้ตรงเอง (หรือเพิ่มที่เมนูทะเบียนลูกค้า)
               </p>
+            )}
+
+            {/* Job picker — แสดงเมื่อเลือกลูกค้าแล้ว */}
+            {customerId !== "" && (
+              <div className="mt-3">
+                {activeJobsLoading && (
+                  <p className="text-xs text-ink-3 flex items-center gap-1.5">
+                    <Icon name="refresh" size={13} className="animate-spin" /> กำลังโหลดรายการงาน…
+                  </p>
+                )}
+                {!activeJobsLoading && activeJobs.length === 0 && (
+                  <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                    ลูกค้ายังไม่มีงานในระบบ — ใบเสนอราคานี้จะยังไม่ผูกกับงาน (สามารถผูกทีหลังได้)
+                  </p>
+                )}
+                {!activeJobsLoading && activeJobs.length === 1 && (
+                  <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
+                    <Icon name="briefcase" size={12} className="inline mr-1" />
+                    จะผูกกับงาน <strong>{activeJobs[0].job_code ?? activeJobs[0].id}</strong> อัตโนมัติ
+                  </p>
+                )}
+                {!activeJobsLoading && activeJobs.length >= 2 && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">เลือกงานที่จะผูก *</span>
+                    <select
+                      value={selectedJobId}
+                      onChange={(e) => setSelectedJobId(e.target.value)}
+                      className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none text-sm text-ink"
+                    >
+                      {activeJobs.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.job_code ?? j.id} — {j.status} ({new Date(j.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-amber-700 mt-0.5 block">ลูกค้ามี {activeJobs.length} งาน active — กรุณาเลือกให้ถูกต้องเพื่อกัน auto ผูกผิด</span>
+                  </label>
+                )}
+              </div>
             )}
           </Card>
 

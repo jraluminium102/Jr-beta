@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Printer } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
@@ -48,16 +49,30 @@ export default function ProductionSchedulePage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, Partial<SchedRow>>>({});
 
-  // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด)
+  // ── ดึงรายชื่อช่างจาก /api/producers (ครั้งเดียว) ──
+  const { data: producersData } = useQuery({
+    queryKey: ["producers"],
+    queryFn: () => api.get<{ producers: string[] }>("/producers"),
+    staleTime: 5 * 60 * 1000,
+  });
+  const producerList: string[] = producersData?.data?.producers ?? [];
+
+  // ── filter ช่าง ──
+  const [producerFilter, setProducerFilter] = useState<string>("");
+
+  // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด) + apply producer filter
   const groups = useMemo(() => {
+    const filtered = producerFilter
+      ? rows.filter((r) => r.producer_note === producerFilter)
+      : rows;
     const map = new Map<string, SchedRow[]>();
-    for (const r of rows) {
+    for (const r of filtered) {
       const key = r.produce_date ?? "zzz";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(r);
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [rows]);
+  }, [rows, producerFilter]);
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -118,10 +133,41 @@ export default function ProductionSchedulePage() {
   const dateCls = "glass-card rounded-lg px-2 py-1.5 text-[13px] text-white outline-none tnum min-h-[40px] [&::-webkit-calendar-picker-indicator]:invert disabled:opacity-50";
   const txtCls = "glass-card rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none placeholder-white/35 min-h-[40px] disabled:opacity-50";
 
+  // datalist id
+  const DATALIST_ID = "producers-list";
+
   return (
     <div className="p-4 sm:p-6 fade-in">
-      <div className="flex items-center justify-between gap-3 mb-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2"><CalendarDays size={22} /> ตารางผลิต</h1>
+      {/* ── หัว: title + filter ช่าง + ปุ่มเพิ่ม ── */}
+      <div className="flex flex-wrap items-center gap-3 mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 mr-auto"><CalendarDays size={22} /> ตารางผลิต</h1>
+
+        {/* filter ช่าง */}
+        <div className="flex items-center gap-1.5">
+          <label htmlFor="producer-filter" className="text-[12px] shrink-0" style={{ color: "var(--t-low)" }}>ช่าง:</label>
+          <select
+            id="producer-filter"
+            value={producerFilter}
+            onChange={(e) => setProducerFilter(e.target.value)}
+            className="glass-card rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none min-h-[40px] appearance-none focus:ring-2 focus:ring-white/30"
+            aria-label="กรองตามช่างผลิต"
+          >
+            <option value="">ทั้งหมด</option>
+            {producerList.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+          {producerFilter && (
+            <button
+              onClick={() => setProducerFilter("")}
+              className="focusable pressable text-[12px] text-white/60 hover:text-white min-h-[40px] px-1.5"
+              aria-label="ล้างตัวกรองช่าง"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         {canWrite && (
           <button onClick={() => setAddOpen(true)} className="focusable pressable inline-flex items-center gap-1.5 bg-white/90 text-[#1F4E78] rounded-xl px-3.5 py-2 text-sm font-semibold min-h-[40px]">
             <Plus size={16} /> เพิ่มงานผลิต
@@ -130,99 +176,128 @@ export default function ProductionSchedulePage() {
       </div>
       <p className="text-sm mb-5" style={{ color: "var(--t-low)" }}>ตารางงานสำหรับช่าง · เรียงตามวันผลิต · แก้วัน/ใส่ชื่อช่างได้เลย · งานในระบบดึงจากหน้างานผลิตอัตโนมัติ</p>
 
+      {/* datalist รายชื่อช่าง (ใช้ร่วมกันทั้งหน้า) */}
+      <datalist id={DATALIST_ID}>
+        {producerList.map((name) => <option key={name} value={name} />)}
+      </datalist>
+
       {isLoading ? <Spinner /> : rows.length === 0 ? (
         <EmptyState title="ยังไม่มีงานในตารางผลิต" sub="กด 'เพิ่มงานผลิต' หรือไปลงคิวผลิตในหน้างานผลิต" />
       ) : (
         <div className="space-y-5">
-          {groups.map(([dateKey, items]) => (
-            <div key={dateKey}>
-              <div className="flex items-center gap-2 mb-2 px-1">
-                <span className={`text-sm font-bold ${dateKey === today() ? "text-emerald-300" : "text-white"}`}>{thHead(items[0].produce_date)}</span>
-                {dateKey === today() && <span className="text-[11px] bg-emerald-500/20 text-emerald-200 rounded-md px-1.5 py-0.5">วันนี้</span>}
-                <span className="text-[12px] tnum px-1.5 py-0.5 rounded-md bg-white/10" style={{ color: "var(--t-mid)" }}>{items.length}</span>
-              </div>
-              <div className="space-y-2">
-                {items.map((r) => (
-                  <div key={r.id} className="glass-card rounded-2xl p-3 grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center">
-                    {/* งาน/ลูกค้า */}
-                    <div className="col-span-2 lg:col-span-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-white font-semibold text-sm truncate">{r.title}</span>
-                        {r.kind === "job" ? (
-                          <span className="text-[10px] tnum bg-sky-500/20 text-sky-200 rounded px-1.5 py-0.5">{r.job_code}</span>
-                        ) : (
-                          <span className="text-[10px] bg-amber-500/20 text-amber-200 rounded px-1.5 py-0.5">จดเอง</span>
+          {groups.length === 0 && producerFilter ? (
+            <EmptyState title={`ไม่มีงานของ "${producerFilter}"`} sub="ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" />
+          ) : (
+            groups.map(([dateKey, items]) => (
+              <div key={dateKey}>
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className={`text-sm font-bold ${dateKey === today() ? "text-emerald-300" : "text-white"}`}>{thHead(items[0].produce_date)}</span>
+                  {dateKey === today() && <span className="text-[11px] bg-emerald-500/20 text-emerald-200 rounded-md px-1.5 py-0.5">วันนี้</span>}
+                  <span className="text-[12px] tnum px-1.5 py-0.5 rounded-md bg-white/10" style={{ color: "var(--t-mid)" }}>{items.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {items.map((r) => (
+                    <div key={r.id} className="glass-card rounded-2xl p-3 grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center">
+                      {/* งาน/ลูกค้า */}
+                      <div className="col-span-2 lg:col-span-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-white font-semibold text-sm truncate">{r.title}</span>
+                          {r.kind === "job" ? (
+                            <span className="text-[10px] tnum bg-sky-500/20 text-sky-200 rounded px-1.5 py-0.5">{r.job_code}</span>
+                          ) : (
+                            <span className="text-[10px] bg-amber-500/20 text-amber-200 rounded px-1.5 py-0.5">จดเอง</span>
+                          )}
+                          {/* ลิงก์พิมพ์ใบงาน — เฉพาะงานในระบบ */}
+                          {r.kind === "job" && (
+                            <a
+                              href={`/production/${r.id}/print`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`พิมพ์ใบงาน ${r.job_code ?? r.title}`}
+                              className="focusable inline-flex items-center gap-1 text-[11px] bg-white/10 hover:bg-white/20 text-white/75 hover:text-white rounded-lg px-2 py-1 min-h-[28px] transition-colors"
+                            >
+                              <Printer size={12} /> ใบงาน
+                            </a>
+                          )}
+                        </div>
+                        {r.subtitle && (
+                          <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>{r.subtitle}</div>
                         )}
                       </div>
-                      {r.subtitle && (
-                        <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>{r.subtitle}</div>
-                      )}
+
+                      {/* วันผลิต */}
+                      <label className="block">
+                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
+                        <input
+                          type="date"
+                          disabled={!canWrite || savingId === r.id}
+                          value={v(r, "produce_date")}
+                          onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: e.target.value } }))}
+                          onBlur={(e) => { if (e.target.value !== (r.produce_date ?? "")) save(r, { produce_date: e.target.value } as Partial<SchedRow>); }}
+                          className={`${dateCls} w-full`}
+                          aria-label={`วันผลิต ${r.title}`}
+                        />
+                      </label>
+
+                      {/* ช่างผลิต — input + datalist */}
+                      <label className="block">
+                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>ช่างผลิต</span>
+                        <input
+                          type="text"
+                          list={DATALIST_ID}
+                          disabled={!canWrite}
+                          placeholder="ใส่ชื่อช่าง…"
+                          value={v(r, "producer_note")}
+                          onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], producer_note: e.target.value } }))}
+                          onBlur={(e) => { if (e.target.value !== (r.producer_note ?? "")) save(r, { producer_note: e.target.value } as Partial<SchedRow>); }}
+                          className={`${txtCls} w-full`}
+                          aria-label={`ช่างผลิต ${r.title}`}
+                        />
+                      </label>
+
+                      {/* สถานะ + วันติดตั้ง */}
+                      <div className="flex flex-col gap-1">
+                        <Chip>{r.kind === "job" ? PROD_STATUS[r.status as ProdStatus] : "งานจดเอง"}</Chip>
+                        {r.install_date && <span className="text-[11px] tnum" style={{ color: "var(--t-low)" }}>ติดตั้ง {thShort(r.install_date)}</span>}
+                      </div>
+
+                      {/* actions */}
+                      <div className="col-span-2 lg:col-span-1 flex items-center gap-1.5 justify-end">
+                        {r.kind === "adhoc" && canWrite && (
+                          <>
+                            <button onClick={() => markDone(r)} disabled={savingId === r.id} className="focusable pressable inline-flex items-center gap-1 bg-emerald-500/90 hover:bg-emerald-400 text-white rounded-lg px-2.5 py-1.5 text-[12px] font-semibold min-h-[44px] disabled:opacity-50"><Check size={13} /> เสร็จ</button>
+                            <button onClick={() => del(r)} disabled={savingId === r.id} aria-label="ลบ" className="focusable pressable inline-flex items-center justify-center text-rose-300 hover:bg-rose-500/15 rounded-lg w-11 h-11"><Trash2 size={15} /></button>
+                          </>
+                        )}
+                        {r.kind === "job" && canWrite && JOB_NEXT[r.status] && (
+                          <button
+                            onClick={() => advanceJobStatus(r)}
+                            disabled={savingId === r.id}
+                            className="focusable pressable inline-flex items-center gap-1.5 bg-sky-500/90 hover:bg-sky-400 text-white rounded-xl px-3 py-2 text-[13px] font-semibold min-h-[44px] disabled:opacity-50"
+                          >
+                            {savingId === r.id
+                              ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                              : <Check size={14} />}
+                            {JOB_NEXT[r.status]?.label ?? "เลื่อนสถานะ"}
+                          </button>
+                        )}
+                        {r.kind === "job" && (!canWrite || !JOB_NEXT[r.status]) && (
+                          <span className="text-[11px]" style={{ color: "var(--t-low)" }}>
+                            {r.status === "READY" ? "พร้อมติดตั้งแล้ว" : "จัดการที่หน้า \"ผลิต\""}
+                          </span>
+                        )}
+                      </div>
                     </div>
-
-                    {/* วันผลิต */}
-                    <label className="block">
-                      <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
-                      <input
-                        type="date"
-                        disabled={!canWrite || savingId === r.id}
-                        value={v(r, "produce_date")}
-                        onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: e.target.value } }))}
-                        onBlur={(e) => { if (e.target.value !== (r.produce_date ?? "")) save(r, { produce_date: e.target.value } as Partial<SchedRow>); }}
-                        className={`${dateCls} w-full`}
-                        aria-label={`วันผลิต ${r.title}`}
-                      />
-                    </label>
-
-                    {/* ช่างผลิต */}
-                    <label className="block">
-                      <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>ช่างผลิต</span>
-                      <input type="text" disabled={!canWrite} placeholder="ใส่ชื่อช่าง…" value={v(r, "producer_note")}
-                        onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], producer_note: e.target.value } }))}
-                        onBlur={(e) => { if (e.target.value !== (r.producer_note ?? "")) save(r, { producer_note: e.target.value } as Partial<SchedRow>); }}
-                        className={`${txtCls} w-full`} aria-label={`ช่างผลิต ${r.title}`} />
-                    </label>
-
-                    {/* สถานะ + วันติดตั้ง */}
-                    <div className="flex flex-col gap-1">
-                      <Chip>{r.kind === "job" ? PROD_STATUS[r.status as ProdStatus] : "งานจดเอง"}</Chip>
-                      {r.install_date && <span className="text-[11px] tnum" style={{ color: "var(--t-low)" }}>ติดตั้ง {thShort(r.install_date)}</span>}
-                    </div>
-
-                    {/* actions */}
-                    <div className="col-span-2 lg:col-span-1 flex items-center gap-1.5 justify-end">
-                      {r.kind === "adhoc" && canWrite && (
-                        <>
-                          <button onClick={() => markDone(r)} disabled={savingId === r.id} className="focusable pressable inline-flex items-center gap-1 bg-emerald-500/90 hover:bg-emerald-400 text-white rounded-lg px-2.5 py-1.5 text-[12px] font-semibold min-h-[44px] disabled:opacity-50"><Check size={13} /> เสร็จ</button>
-                          <button onClick={() => del(r)} disabled={savingId === r.id} aria-label="ลบ" className="focusable pressable inline-flex items-center justify-center text-rose-300 hover:bg-rose-500/15 rounded-lg w-11 h-11"><Trash2 size={15} /></button>
-                        </>
-                      )}
-                      {r.kind === "job" && canWrite && JOB_NEXT[r.status] && (
-                        <button
-                          onClick={() => advanceJobStatus(r)}
-                          disabled={savingId === r.id}
-                          className="focusable pressable inline-flex items-center gap-1.5 bg-sky-500/90 hover:bg-sky-400 text-white rounded-xl px-3 py-2 text-[13px] font-semibold min-h-[44px] disabled:opacity-50"
-                        >
-                          {savingId === r.id
-                            ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                            : <Check size={14} />}
-                          {JOB_NEXT[r.status]?.label ?? "เลื่อนสถานะ"}
-                        </button>
-                      )}
-                      {r.kind === "job" && (!canWrite || !JOB_NEXT[r.status]) && (
-                        <span className="text-[11px]" style={{ color: "var(--t-low)" }}>
-                          {r.status === "READY" ? "พร้อมติดตั้งแล้ว" : "จัดการที่หน้า \"ผลิต\""}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
-      {addOpen && <AddModal onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
+      {addOpen && <AddModal producerList={producerList} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
     </div>
   );
 }
@@ -230,7 +305,7 @@ export default function ProductionSchedulePage() {
 // ── Modal เพิ่มงานผลิต (จดเอง / เลือกจากงานในระบบ) ──
 type Candidate = { id: string; status: ProdStatus; job: { job_code: string; customer_name: string } | null };
 
-function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; onClose: () => void; onSaved: () => void }) {
   const [tab, setTab] = useState<"adhoc" | "job">("adhoc");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -248,6 +323,8 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
   const NOT_QUEUED: ProdStatus[] = ["MEASURED", "PENDING_MEETING", "PENDING_CONFIRM", "REVISING"];
   const candidates = (prodData?.data ?? []).filter((p) => NOT_QUEUED.includes(p.status));
   const [pickId, setPickId] = useState("");
+
+  const MODAL_DATALIST_ID = "modal-producers-list";
 
   const submit = async () => {
     setErr(null); setSaving(true);
@@ -288,6 +365,11 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
 
         {/* body (scroll) */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
+          {/* datalist สำหรับ modal */}
+          <datalist id={MODAL_DATALIST_ID}>
+            {producerList.map((name) => <option key={name} value={name} />)}
+          </datalist>
+
           {/* tabs */}
           <div className="flex gap-1.5 glass-card rounded-xl p-1 mb-4">
             {[["adhoc", "จดเอง"], ["job", "เลือกจากงานในระบบ"]].map(([t, l]) => (
@@ -308,8 +390,16 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
                 <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง/ส่ง</label>
                   <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
               </div>
-              <div><label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
-                <input value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="ชื่อช่าง" className={inp} /></div>
+              <div>
+                <label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
+                <input
+                  list={MODAL_DATALIST_ID}
+                  value={producer}
+                  onChange={(e) => setProducer(e.target.value)}
+                  placeholder="ชื่อช่าง"
+                  className={inp}
+                />
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -325,7 +415,7 @@ function AddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
                 <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง</label>
                   <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
               </div>
-              <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ “ลงคิวผลิต” + ใส่วันให้</p>
+              <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ "ลงคิวผลิต" + ใส่วันให้</p>
             </div>
           )}
 

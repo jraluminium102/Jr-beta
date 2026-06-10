@@ -50,18 +50,40 @@ export async function POST(req: Request) {
     line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
   };
 
-  // 2) ผูกใบเสนอกับ "งาน (job) ที่เปิดอยู่ล่าสุด" ของลูกค้า — ไม่สร้างงานใหม่
+  // 2) ผูกใบเสนอกับงาน (job) ของลูกค้า — ไม่สร้างงานใหม่
+  //    ลำดับความสำคัญ:
+  //    a) ถ้า body.job_id ส่งมา → validate ว่าเป็น active job ของลูกค้านี้จริง แล้วใช้ค่านั้น
+  //    b) ถ้าไม่มี/ไม่ผ่าน validate → fallback: auto-link งาน active ล่าสุดของลูกค้า (พฤติกรรมเดิม)
   //    ถ้าลูกค้ายังไม่มีงาน active → job_id = null (หน้า list/หัวใบจะโชว์ป้าย "ยังไม่ผูกงาน")
   //    สำคัญ: ถ้า null → BOQ/วางบิล/การเงิน/สถิติ จะตามงานนี้ไม่เจอ (ต้นเหตุงานหลุดทั้งสาย)
-  const { data: activeJob } = await supabase
-    .from("jobs")
-    .select("id")
-    .eq("customer_id", cust.id)
-    .not("status", "in", "(COMPLETED,CANCELLED)")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<{ id: string }>();
-  const jobId: string | null = activeJob?.id ?? null;
+  let jobId: string | null = null;
+  const requestedJobId = typeof body.job_id === "string" && body.job_id.trim() ? body.job_id.trim() : null;
+  if (requestedJobId) {
+    // validate: งานต้องเป็นของลูกค้านี้ + ยังไม่ COMPLETED/CANCELLED
+    const { data: requestedJob } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", requestedJobId)
+      .eq("customer_id", cust.id)
+      .not("status", "in", "(COMPLETED,CANCELLED)")
+      .maybeSingle<{ id: string }>();
+    if (requestedJob?.id) {
+      jobId = requestedJob.id;
+    }
+    // ถ้าไม่ผ่าน validate → jobId ยังเป็น null → ตกไป fallback ด้านล่าง
+  }
+  if (!jobId) {
+    // fallback: auto-link งาน active ล่าสุด (พฤติกรรมเดิม)
+    const { data: activeJob } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("customer_id", cust.id)
+      .not("status", "in", "(COMPLETED,CANCELLED)")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+    jobId = activeJob?.id ?? null;
+  }
 
   // 3) คำนวณยอด (แหล่งความจริงเดียว)
   const t = computeTotals({ items, vat_rate, discount_pct, wht_rate });
