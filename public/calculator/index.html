@@ -2097,7 +2097,7 @@ function addItem(container){
        `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
        `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
        `<input type="hidden" class="o-optdelta" value="0">`+
-       `<div style="margin-top:6px;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="o-lumpsum" style="width:18px;height:18px;"> คิดราคาเหมา — กรอกราคารวมต่อชุดเอง ไม่คิดจากขนาด (สำหรับงานพิเศษคิดเหมา)</label><div class="o-lumpsum-wrap" style="display:none;margin-top:4px;"><label style="font-size:12px;color:var(--muted);">ราคาเหมาต่อชุด (บาท)</label><input class="o-lumpsumprice" type="number" min="0" step="100" placeholder="กรอกราคารวมต่อชุด" style="height:36px;font-size:14px;font-variant-numeric:tabular-nums;"></div></div>`+
+       /* E2: ลบ checkbox "คิดราคาเหมา" + ช่องราคาเหมา — ซ้ำซ้อน · ใช้แก้ราคาตรงในช่องราคา/หน่วย (โหมดแก้ไข ✎) แทน */
      `</div>`+
    `</div>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
