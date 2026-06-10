@@ -3479,7 +3479,10 @@ function genQuote(keepNo){
           // C1: ตัด "SD พื้นฐาน" ทิ้ง → รายละเอียดเหลือ "มุ้งจีบ {ผ้า}" (ชนิดอื่นเช่นตีนตะขาบยังคงไว้)
           const msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s+/g,' ').trim();
           var _frc=COLORS[it.ci||0]; var _frName=_frc?(_frc.quoteName||_frc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim():'';
-          lines.push(msName+(_frName?(' (เฟรม'+_frName+' / '+mfLabel+')'):(' '+mfLabel)));
+          // ข้อ9(G1): มุ้ง non-sliding (บานเปิด/กระทุ้ง/ฯลฯ) โชว์ขนาดด้วย เหมือนบานเลื่อน
+          var _mosqAddonG=(it.r && it.r.addonLines||[]).find(function(al){return al.mosqArea!==undefined;});
+          var _szTxtG=_mosqAddonG?(' — ขนาด ~'+_mosqAddonG.mosqArea.toFixed(1)+' ตร.ม.'):'';
+          lines.push(msName+(_frName?(' (เฟรม'+_frName+' / '+mfLabel+')'):(' '+mfLabel))+_szTxtG);
         }
       }
       // ข้อ5(G1): เสริมคาน (บานเปิด/PC Door) ลงใบเมื่อเลือก — คิดเงินต้องโชว์
