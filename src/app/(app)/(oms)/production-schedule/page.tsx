@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
@@ -62,8 +62,9 @@ export default function ProductionSchedulePage() {
 
   // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด) + apply producer filter
   const groups = useMemo(() => {
-    const filtered = producerFilter
-      ? rows.filter((r) => r.producer_note === producerFilter)
+    const filterTrimmed = producerFilter.trim();
+    const filtered = filterTrimmed
+      ? rows.filter((r) => (r.producer_note ?? "").trim() === filterTrimmed)
       : rows;
     const map = new Map<string, SchedRow[]>();
     for (const r of filtered) {
@@ -85,6 +86,13 @@ export default function ProductionSchedulePage() {
     } finally {
       setSavingId((s) => (s === r.id ? null : s));
     }
+  };
+
+  // debounce ref — 1 timer ต่อ row id
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const debounceSave = (r: SchedRow, patch: Partial<SchedRow>, ms = 600) => {
+    clearTimeout(debounceRef.current[r.id]);
+    debounceRef.current[r.id] = setTimeout(() => save(r, patch), ms);
   };
 
   const markDone = (r: SchedRow) => {
@@ -233,7 +241,11 @@ export default function ProductionSchedulePage() {
                           type="date"
                           disabled={!canWrite || savingId === r.id}
                           value={v(r, "produce_date")}
-                          onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: e.target.value } }))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: val } }));
+                            if (val && val !== (r.produce_date ?? "")) debounceSave(r, { produce_date: val } as Partial<SchedRow>);
+                          }}
                           onBlur={(e) => { if (e.target.value !== (r.produce_date ?? "")) save(r, { produce_date: e.target.value } as Partial<SchedRow>); }}
                           className={`${dateCls} w-full`}
                           aria-label={`วันผลิต ${r.title}`}
@@ -251,6 +263,7 @@ export default function ProductionSchedulePage() {
                           value={v(r, "producer_note")}
                           onChange={(e) => setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], producer_note: e.target.value } }))}
                           onBlur={(e) => { if (e.target.value !== (r.producer_note ?? "")) save(r, { producer_note: e.target.value } as Partial<SchedRow>); }}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); save(r, { producer_note: e.currentTarget.value } as Partial<SchedRow>); } }}
                           className={`${txtCls} w-full`}
                           aria-label={`ช่างผลิต ${r.title}`}
                         />

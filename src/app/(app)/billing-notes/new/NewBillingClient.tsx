@@ -99,7 +99,8 @@ export default function NewBillingClient({
                   <option value="">— เลือกใบเสนอราคา —</option>
                   {quotations.map((q) => (
                     <option key={q.id} value={q.id}>
-                      {q.code} · {q.customer_snapshot?.name} · ฿{baht(q.net)}
+                      {q.code} · {q.customer_snapshot?.name}
+                      {q.customer_snapshot?.job ? ` · ${q.customer_snapshot.job}` : ""} · ฿{baht(q.net)}
                       {q.status !== "approved" ? ` [${STATUS_LABEL[q.status] ?? q.status}]` : ""}
                     </option>
                   ))}
@@ -108,6 +109,11 @@ export default function NewBillingClient({
               {selected && selected.status !== "approved" && (
                 <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   ใบเสนอราคานี้ยังไม่ถูกอนุมัติ — การสร้างบิลจะอนุมัติใบเสนอราคาให้อัตโนมัติ
+                </p>
+              )}
+              {selected && !selected.job_id && (
+                <p className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  ⚠ ใบเสนอนี้ยังไม่ผูกงาน — เงินที่รับจะไม่ขึ้นในระบบบัญชี/ค้างรับ (ตามงานไม่เจอ) แนะนำให้ผูกงานที่ใบเสนอก่อนวางบิล
                 </p>
               )}
             </Card>

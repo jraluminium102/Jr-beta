@@ -53,7 +53,7 @@ export default function FinancePage() {
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <button className="focusable pressable flex items-center gap-2 glass-card text-white rounded-xl px-4 py-2.5 text-sm hover:bg-white/20 min-h-[44px] flex-1 sm:flex-none justify-center"><Download size={17} /> Export</button>
+          <button disabled title="เร็วๆ นี้" className="flex items-center gap-2 glass-card text-white/40 rounded-xl px-4 py-2.5 text-sm min-h-[44px] flex-1 sm:flex-none justify-center cursor-not-allowed" aria-disabled="true"><Download size={17} /> Export</button>
           {canWrite && (
             <button onClick={() => openRecord(undefined)} className="focusable pressable flex items-center gap-2 bg-white text-[#1F4E78] rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-white/90 shadow-lg min-h-[44px] flex-1 sm:flex-none justify-center"><Plus size={18} /> บันทึกรับเงิน</button>
           )}

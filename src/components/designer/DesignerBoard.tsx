@@ -179,6 +179,12 @@ export default function DesignerBoard({
         `ยืนยันปิดงานเขียนแบบ "${job.customer_name}" (${job.job_code ?? "—"})?\nระบบจะ stamp วันเสร็จ`
       );
       if (!confirmed) return;
+    } else if (toIdx < fromIdx) {
+      // ถอยหลัง — ต้องยืนยันเสมอ (#16)
+      const confirmed = window.confirm(
+        `ยืนยันถอยสถานะจาก "${STATE_TH[job.design_state]}" กลับไป "${STATE_TH[state]}"?`
+      );
+      if (!confirmed) return;
     } else if (toIdx - fromIdx > 1) {
       // ข้ามขั้นมากกว่า 1 ขั้น — เตือน (DB ยังเป็นคนตัดสินใจสุดท้าย)
       const confirmed = window.confirm(
@@ -455,12 +461,51 @@ function JobCard({
   onDueDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
 }) {
+  // toast feedback สำหรับ #37 (บันทึกกำหนดส่ง)
+  const [dueSaved, setDueSaved] = useState(false);
+
+  async function handleDueBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (!val || val === (job.design_due_date ?? "")) return;
+    // ถ้าวันที่กรอกเป็นอดีต — ยืนยันก่อน (#37)
+    if (val < TODAY) {
+      const ok = window.confirm(
+        `กำหนดส่งที่กรอก (${val}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`
+      );
+      if (!ok) {
+        e.target.value = job.design_due_date ?? "";
+        return;
+      }
+    }
+    await onDueDate(job, val);
+    setDueSaved(true);
+    setTimeout(() => setDueSaved(false), 2000);
+  }
+
   return (
     <div className="glass-soft rounded-xl p-3 text-sm">
+      {/* job_code + ปุ่มดูงาน (#26) */}
       <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold text-brand-dark">{job.job_code ?? "—"}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <a
+            href={`/jobs/${job.id}`}
+            className="font-semibold text-brand-dark hover:underline focus:outline-none focus:ring-2 focus:ring-brand/40 rounded"
+            aria-label={`ดูงาน ${job.job_code ?? ""}`}
+          >
+            {job.job_code ?? "—"}
+          </a>
+          <a
+            href={`/jobs/${job.id}`}
+            className="inline-flex items-center gap-0.5 text-[10px] text-ink-3 hover:text-brand border border-ink-3/30 hover:border-brand/40 rounded px-1 py-0.5 min-h-[22px] focus:outline-none focus:ring-2 focus:ring-brand/40"
+            aria-label="ดูงาน"
+            tabIndex={0}
+          >
+            <Icon name="external" size={10} />
+            ดูงาน
+          </a>
+        </div>
         {job.design_revise_count > 0 && (
-          <span className="text-[11px] font-medium text-white bg-brand rounded-full px-1.5 py-0.5">
+          <span className="text-[11px] font-medium text-white bg-brand rounded-full px-1.5 py-0.5 shrink-0">
             แก้ {job.design_revise_count}
           </span>
         )}
@@ -480,25 +525,27 @@ function JobCard({
             onDesignerAdded={onDesignerAdded}
           />
 
-          {/* design_due_date date input — editable */}
+          {/* design_due_date date input — editable (#37: confirm อดีต + toast) */}
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
             <input
               type="date"
               defaultValue={job.design_due_date ?? ""}
               disabled={assigning}
-              onBlur={(e) => onDueDate(job, e.target.value)}
+              onBlur={handleDueBlur}
               aria-label="กำหนดส่งแบบ"
               className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum ${
                 job.overdue ? "text-brand font-semibold" : "text-ink-2"
               }`}
             />
-            {job.overdue && (
+            {dueSaved ? (
+              <span className="text-[10px] text-emerald-600 font-semibold shrink-0">บันทึกแล้ว</span>
+            ) : job.overdue ? (
               <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
-            )}
+            ) : null}
           </div>
 
-          {/* Move design_state */}
+          {/* Move design_state (#16: disable option ปัจจุบัน) */}
           <select
             value={job.design_state}
             disabled={moving}
@@ -507,8 +554,8 @@ function JobCard({
             className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
           >
             {COLUMNS.map((c) => (
-              <option key={c.state} value={c.state}>
-                ย้ายไป: {STATE_TH[c.state]}
+              <option key={c.state} value={c.state} disabled={c.state === job.design_state}>
+                {c.state === job.design_state ? `[ปัจจุบัน] ${STATE_TH[c.state]}` : `ย้ายไป: ${STATE_TH[c.state]}`}
               </option>
             ))}
           </select>

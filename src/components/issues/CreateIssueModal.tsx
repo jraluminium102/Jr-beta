@@ -40,8 +40,10 @@ export function CreateIssueModal({ onClose, onSaved, presetJobId, presetJobLabel
   const { data: jobs } = useQuery({ queryKey: ["jobs", "issue-picker"], queryFn: () => api.get<JobOpt[]>("/jobs?limit=100").then((r) => r.data), enabled: !presetJobId });
   const filtered = useMemo(() => {
     const list = jobs ?? [];
-    if (!q) return list;
-    return list.filter((j) => j.customer_name.includes(q) || j.job_code.toLowerCase().includes(q.toLowerCase()));
+    const trimmed = q.trim();
+    if (!trimmed) return list;
+    const lower = trimmed.toLowerCase();
+    return list.filter((j) => j.customer_name.toLowerCase().includes(lower) || j.job_code.toLowerCase().includes(lower));
   }, [jobs, q]);
   const selected = (jobs ?? []).find((j) => j.id === jobId);
 
@@ -82,10 +84,13 @@ export function CreateIssueModal({ onClose, onSaved, presetJobId, presetJobLabel
             </div>
           ) : (
             <>
-              <div className="glass-card rounded-xl flex items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] focusable mb-2" style={{ color: "var(--t-mid)" }}>
+              <div className="glass-card rounded-xl flex items-center gap-2.5 px-3.5 py-2.5 min-h-[44px] focusable mb-1" style={{ color: "var(--t-mid)" }}>
                 <Search size={18} />
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ / Job ID" aria-label="ค้นหางาน" className="bg-transparent outline-none text-sm text-white placeholder-white/45 w-full" />
               </div>
+              <p className="text-[11px] mb-1.5 px-0.5" style={{ color: "var(--t-low)" }}>
+                แสดงเฉพาะงานล่าสุด 100 รายการ — พิมพ์รหัสงานให้ตรงเพื่อค้นหา
+              </p>
               <div className="max-h-40 overflow-y-auto space-y-1.5">
                 {filtered.length === 0 && <div className="text-[12px] px-1 py-2" style={{ color: "var(--t-low)" }}>ไม่พบงาน</div>}
                 {filtered.map((j) => (

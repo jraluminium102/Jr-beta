@@ -47,7 +47,28 @@ export default async function ReceiptsPage() {
             <Link href="/receipts/new" className="text-brand font-semibold text-sm">+ สร้างใบแรก</Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* มือถือ: card layout */}
+            <div className="md:hidden space-y-2">
+              {rows.map((r) => (
+                <Link key={r.id} href={`/receipts/${r.id}`} className={`block glass-soft rounded-xl p-3.5 ${r.is_voided ? "opacity-60" : ""}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`font-mono font-semibold ${r.is_voided ? "text-ink-3 line-through" : "text-brand-dark"}`}>{r.code}</span>
+                    {r.is_voided
+                      ? <span className="text-[10px] font-bold text-red-700 bg-red-100 rounded px-1.5 py-0.5">ยกเลิกแล้ว</span>
+                      : <span className="text-xs text-ink-3">{PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</span>}
+                  </div>
+                  <div className={`font-medium mt-1 ${r.is_voided ? "line-through text-ink-3" : ""}`}>{r.customer_snapshot?.name}</div>
+                  {r.customer_snapshot?.job && <div className="text-xs text-ink-3">{r.customer_snapshot.job}</div>}
+                  <div className="flex items-center justify-between mt-1.5 text-sm">
+                    <span className="text-ink-3">{r.issue_date}</span>
+                    <span className={`font-bold ${r.is_voided ? "line-through text-ink-3" : "text-brand-dark"}`}>฿{baht(r.net)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {/* เดสก์ท็อป: ตาราง */}
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-ink-3">
@@ -76,7 +97,8 @@ export default async function ReceiptsPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </Card>
     </div>

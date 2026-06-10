@@ -50,35 +50,55 @@ export default async function BillingNotesPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-ink-3">
-                  <th className="py-2 font-semibold">รหัส</th>
-                  <th className="font-semibold">ลูกค้า / งาน</th>
-                  <th className="font-semibold">วันที่</th>
-                  <th className="text-right font-semibold">ยอดรวม</th>
-                  <th className="font-semibold">สถานะ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
-                    <td className="py-3">
-                      <Link href={`/billing-notes/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
-                    </td>
-                    <td>
-                      <div className="font-medium">{r.customer_snapshot?.name}</div>
-                      <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
-                    </td>
-                    <td className="text-ink-2">{r.issue_date}</td>
-                    <td className="text-right font-semibold">฿{baht(r.total)}</td>
-                    <td><Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge></td>
+          <>
+            {/* มือถือ: card layout (กันตารางล้นจอ) */}
+            <div className="md:hidden space-y-2">
+              {rows.map((r) => (
+                <Link key={r.id} href={`/billing-notes/${r.id}`} className="block glass-soft rounded-xl p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-semibold text-brand-dark">{r.code}</span>
+                    <Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge>
+                  </div>
+                  <div className="font-medium mt-1">{r.customer_snapshot?.name}</div>
+                  {r.customer_snapshot?.job && <div className="text-xs text-ink-3">{r.customer_snapshot.job}</div>}
+                  <div className="flex items-center justify-between mt-1.5 text-sm">
+                    <span className="text-ink-3">{r.issue_date}</span>
+                    <span className="font-bold text-brand-dark">฿{baht(r.total)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {/* เดสก์ท็อป: ตาราง */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-ink-3">
+                    <th className="py-2 font-semibold">รหัส</th>
+                    <th className="font-semibold">ลูกค้า / งาน</th>
+                    <th className="font-semibold">วันที่</th>
+                    <th className="text-right font-semibold">ยอดรวม</th>
+                    <th className="font-semibold">สถานะ</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
+                      <td className="py-3">
+                        <Link href={`/billing-notes/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                      </td>
+                      <td>
+                        <div className="font-medium">{r.customer_snapshot?.name}</div>
+                        <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
+                      </td>
+                      <td className="text-ink-2">{r.issue_date}</td>
+                      <td className="text-right font-semibold">฿{baht(r.total)}</td>
+                      <td><Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>

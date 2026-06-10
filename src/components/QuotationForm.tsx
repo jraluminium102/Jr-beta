@@ -80,18 +80,10 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             setCustomerId(exact[0].id); // ชื่อตรงเป๊ะรายเดียว → มั่นใจ (เขียว)
             setCalcMatched(true);
             setCalcExact(true);
-          } else if (exact.length === 0) {
-            const fuzzy = customers.filter((c) => {
-              const cn = norm(c.name);
-              return cn.includes(target) || target.includes(cn);
-            });
-            if (fuzzy.length === 1) {
-              setCustomerId(fuzzy[0].id); // เดาให้รายเดียว → เหลือง (ต้องยืนยัน)
-              setCalcMatched(true);
-              setCalcExact(false);
-            }
-            // fuzzy 0 หรือ >1 ราย → ไม่ preselect (ปล่อยว่าง ให้เลือกเอง)
           }
+          // exact 0 (ชื่อไม่ตรงเป๊ะ) → ไม่เดา/ไม่ preselect ลูกค้าเด็ดขาด
+          // (กันผูกผิดคนเงียบ โดยเฉพาะจากเครื่องคิดราคา "เต็มจอ" ที่ส่งมาแต่ชื่อพิมพ์มือ)
+          // ปล่อย customerId ว่าง + calcMatched=false → โชว์แถบเตือนแดงให้เลือกเอง
           // exact >1 (ชื่อซ้ำเป๊ะหลายราย) → ไม่ preselect ให้เลือกเอง
         }
       }

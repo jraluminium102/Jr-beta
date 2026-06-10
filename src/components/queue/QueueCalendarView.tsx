@@ -75,10 +75,11 @@ type Props = {
   sales: QueueSales[];
   avail: AvailRow[];
   onEntryClick: (e: QueueEntry) => void;
+  onAddSlot?: (date: string, slot: string, salesId: string) => void;
   filterTeam?: QueueTeam | "";
 };
 
-export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, filterTeam }: Props) {
+export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, onAddSlot, filterTeam }: Props) {
   const days = useMemo(() => weekDays(week), [week]);
 
   // แสดงเฉพาะ MAIN sales rep, กรองตาม team ถ้ามี
@@ -200,14 +201,14 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, f
                     <td key={`${s.id}-${d}-am`}
                       className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : "bg-sky-50/30"}`}>
                       {!isSun && !isFullLeave && !isAMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} onClick={onEntryClick} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                     {/* Slot บ่าย 14:00 */}
                     <td key={`${s.id}-${d}-pm`}
                       className={`px-1 py-1 align-top border-r border-gray-100/30 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : "bg-amber-50/30"}`}>
                       {!isSun && !isFullLeave && !isPMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} onClick={onEntryClick} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                   </>
@@ -223,8 +224,19 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, f
 
 // ---- sub-components ---------------------------------------------------------
 
-function SlotCell({ entries, onClick }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void }) {
+function SlotCell({ entries, onClick, onAdd }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void; onAdd?: () => void }) {
   if (!entries.length) {
+    if (onAdd) {
+      return (
+        <button
+          type="button"
+          onClick={onAdd}
+          aria-label="เพิ่มคิวในช่องนี้"
+          className="press h-8 w-full flex items-center justify-center text-gray-300 text-[10px] hover:text-brand hover:bg-brand/5 rounded transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+          ว่าง
+        </button>
+      );
+    }
     return <div className="h-8 flex items-center justify-center text-gray-300 text-[10px]">ว่าง</div>;
   }
   return (

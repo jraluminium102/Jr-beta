@@ -442,6 +442,8 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
         width,
         height: BAR_HEIGHT,
         zIndex: isDragging ? 30 : 10,
+        // กัน browser ตีเป็น scroll บนมือถือ (#25)
+        touchAction: editable ? "none" : "auto",
       }}
       title={tooltip}
       onPointerDown={onPointerDownBar}
@@ -453,6 +455,7 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       {editable && (
         <div
           className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-l-md"
+          style={{ touchAction: "none" }}
           onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeStart(e); }}
           aria-hidden="true"
         />
@@ -484,6 +487,7 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       {editable && (
         <div
           className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 rounded-r-md"
+          style={{ touchAction: "none" }}
           onPointerDown={(e) => { e.stopPropagation(); onPointerDownResizeEnd(e); }}
           aria-hidden="true"
         />
@@ -852,15 +856,24 @@ export default function DesignerSchedule({
   }, [designers, designerFilter]);
 
   // Jobs per designer (keyed by designer id string)
+  // key "0" = ยังไม่มอบหมาย (#33)
   const jobsByDesigner = useMemo(() => {
     const map: Record<string, Job[]> = {};
     for (const d of visibleDesigners) map[String(d.id)] = [];
+    map["0"] = [];
     for (const j of filteredJobs) {
-      const key = j.designer_ref != null ? String(j.designer_ref) : null;
-      if (key && map[key]) map[key].push(j);
+      const key = j.designer_ref != null ? String(j.designer_ref) : "0";
+      if (map[key] !== undefined) map[key].push(j);
     }
     return map;
   }, [filteredJobs, visibleDesigners]);
+
+  // งานยังไม่มอบหมาย (active เท่านั้น) — ใช้แสดง badge + lane (#33)
+  const unassignedActive = useMemo(
+    () => filteredJobs.filter((j) => j.designer_ref == null && j.design_state !== "DONE"),
+    [filteredJobs]
+  );
+  const UNASSIGNED_DESIGNER: DesignerOption = { id: 0, name: "ยังไม่มอบหมาย" };
 
   // PATCH design_start + design_end (ช่วงทำงานช่าง)
   // ไม่แตะ design_due_date เว้นแต่ผู้ใช้ยืนยันเองเมื่อวันสิ้นสุดงานเลย due
@@ -945,6 +958,16 @@ export default function DesignerSchedule({
       />
 
       {/* 3. Gantt timeline */}
+      {/* Badge งานค้างมอบหมาย (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่าง */}
+      {!designerFilter && unassignedActive.length > 0 && (
+        <div className="flex items-center gap-2 px-1">
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+            งานยังไม่มอบหมาย {unassignedActive.length} งาน — แสดงที่ด้านบน Gantt
+          </span>
+        </div>
+      )}
+
       <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
           <div style={{ minWidth: LANE_NAME_WIDTH + TOTAL_DAYS * DAY_WIDTH }}>
@@ -957,18 +980,33 @@ export default function DesignerSchedule({
                 ไม่มีช่างเขียนแบบที่ตรงกับตัวกรอง
               </div>
             ) : (
-              visibleDesigners.map((d) => (
-                <GanttLane
-                  key={d.id}
-                  designer={d}
-                  jobs={jobsByDesigner[String(d.id)] ?? []}
-                  rangeStart={rangeStart}
-                  today={today}
-                  days={days}
-                  canWrite={canWrite}
-                  onSave={handleSave}
-                />
-              ))
+              <>
+                {/* Lane ยังไม่มอบหมาย บนสุด (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่างและมีงาน */}
+                {!designerFilter && jobsByDesigner["0"] && jobsByDesigner["0"].length > 0 && (
+                  <GanttLane
+                    key="unassigned"
+                    designer={UNASSIGNED_DESIGNER}
+                    jobs={jobsByDesigner["0"]}
+                    rangeStart={rangeStart}
+                    today={today}
+                    days={days}
+                    canWrite={canWrite}
+                    onSave={handleSave}
+                  />
+                )}
+                {visibleDesigners.map((d) => (
+                  <GanttLane
+                    key={d.id}
+                    designer={d}
+                    jobs={jobsByDesigner[String(d.id)] ?? []}
+                    rangeStart={rangeStart}
+                    today={today}
+                    days={days}
+                    canWrite={canWrite}
+                    onSave={handleSave}
+                  />
+                ))}
+              </>
             )}
           </div>
         </div>

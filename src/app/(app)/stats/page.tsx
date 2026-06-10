@@ -84,7 +84,7 @@ export default function StatsPage() {
             <Kpi label="งานในช่วง" value={data.summary.jobs} />
             <Kpi label="ปิดการขายได้" value={data.summary.won} color="#0f7a38" />
             <Kpi label="อัตราปิด" value={`${data.summary.close_rate}%`} color="#b3151d" />
-            <Kpi label="ยอดปิด (฿)" value={baht(data.summary.revenue_closed)} color="#1F4E78" />
+            <Kpi label="มูลค่างานที่ปิด (เต็มบิล)" value={baht(data.summary.revenue_closed)} color="#1F4E78" />
             <Kpi label="เก็บเงินแล้ว (฿)" value={baht(data.summary.collected)} color="#7d0f15" />
           </div>
 
@@ -114,7 +114,7 @@ export default function StatsPage() {
                   <div key={it.name} className="flex items-center gap-2 text-xs">
                     <span className="w-32 truncate text-ink-3" title={it.name}>{it.name}</span>
                     <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: `${(it.qty / itemMax) * 100}%` }} /></div>
-                    <span className="w-10 text-right tabular-nums text-ink-2">{baht(it.qty)}</span>
+                    <span className="w-20 text-right tabular-nums text-ink-2">{it.qty.toLocaleString()} ชุด/ชิ้น</span>
                   </div>
                 ))}
                 {data.topItems.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
@@ -124,7 +124,8 @@ export default function StatsPage() {
             {/* Sales close-rate */}
             <Card className="p-5 lg:col-span-2">
               <h3 className="font-bold text-brand-dark mb-3">ปิดการขายต่อเซลล์</h3>
-              <div className="overflow-x-auto">
+              {/* desktop table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
                     <th className="py-2 font-semibold">เซลล์</th><th className="font-semibold text-center">งาน</th>
@@ -144,6 +145,23 @@ export default function StatsPage() {
                     {data.bySales.length === 0 && <tr><td colSpan={5} className="py-4 text-center text-ink-3">ไม่มีข้อมูล</td></tr>}
                   </tbody>
                 </table>
+              </div>
+              {/* mobile card layout */}
+              <div className="md:hidden space-y-2">
+                {data.bySales.map((s, i) => (
+                  <div key={i} className="rounded-xl border border-gray-200/70 bg-white/50 p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-semibold text-sm text-ink-2">{s.name}</span>
+                      <span className="text-xs font-bold text-brand tabular-nums">{s.close_rate}%</span>
+                    </div>
+                    <div className="flex gap-3 text-xs text-ink-3">
+                      <span>งาน <span className="tabular-nums text-ink-2 font-medium">{s.jobs}</span></span>
+                      <span>ปิด <span className="tabular-nums text-emerald-700 font-medium">{s.won}</span></span>
+                      <span className="ml-auto tabular-nums text-ink-2">฿{baht(s.revenue)}</span>
+                    </div>
+                  </div>
+                ))}
+                {data.bySales.length === 0 && <p className="text-ink-3 text-sm text-center py-3">ไม่มีข้อมูล</p>}
               </div>
             </Card>
 

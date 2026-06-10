@@ -21,8 +21,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const supabase = createClient();
 
-  // เริ่มลงมือเขียนแบบครั้งแรก -> stamp design_start ถ้ายังไม่มี (RPC จัดการ design_end/นับรอบแก้เอง)
-  if (state === "DRAWING") {
+  // stamp design_start ครั้งแรกเมื่อเข้าสู่ขั้นทำงานใดๆ (DRAWING/REVISING/PENDING_CUSTOMER)
+  // ครอบคลุมกรณีถูกส่งแก้ก่อนเคยเริ่มเขียน ป้องกันงานหายจาก Gantt (#14)
+  if (state === "DRAWING" || state === "REVISING" || state === "PENDING_CUSTOMER") {
     await supabase
       .from("jobs")
       .update({ design_start: new Date().toISOString().slice(0, 10) })

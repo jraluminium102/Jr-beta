@@ -16,7 +16,7 @@ export const GET = withRoute(async () => {
     ctx.supabase
       .from("productions")
       .select("id, status, production_queued, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
-      .in("status", ["QUEUED", "MANUFACTURING", "QC"]),
+      .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY"]),
     sb
       .from("adhoc_production_tasks")
       .select("*")

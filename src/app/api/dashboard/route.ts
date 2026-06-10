@@ -43,20 +43,33 @@ export const GET = withRoute(async () => {
   });
 
   // ── 3. งานค้างเกิน 7 วัน ─────────────────────────────────────────────────
-  // Definition: jobs that are active (not CANCELLED/COMPLETED/on_hold)
-  // and have not been updated for > 7 days
+  // วัด "ไม่ขยับขั้นจริง" โดยใช้ productions.status_updated_at ถ้ามี
+  // (ป้องกัน false-positive: งานที่ขยับ production แต่ updated_at ของ jobs ยังเก่า)
+  const prodLastMap = new Map<string, Date>();
+  P.forEach((p: any) => {
+    const ts = p.status_updated_at ?? p.created_at;
+    if (!ts) return;
+    const d = new Date(ts);
+    const prev = prodLastMap.get(p.job_id);
+    if (!prev || d > prev) prodLastMap.set(p.job_id, d);
+  });
+
   const staleJobs = activeJobs
     .filter((j: any) => {
       if (j.on_hold) return false;
-      const last = j.updated_at ? new Date(j.updated_at) : null;
+      // ถ้ามี production record ให้ใช้ status_updated_at ของ production แทน
+      const last = prodLastMap.get(j.id) ?? (j.updated_at ? new Date(j.updated_at) : null);
       return last && last < sevenAgo;
     })
-    .map((j: any) => ({
-      jobCode: j.job_code as string,
-      customerName: j.customer_name as string,
-      status: j.status as string,
-      days: Math.floor((now.getTime() - new Date(j.updated_at).getTime()) / 86_400_000),
-    }))
+    .map((j: any) => {
+      const last = prodLastMap.get(j.id) ?? new Date(j.updated_at);
+      return {
+        jobCode: j.job_code as string,
+        customerName: j.customer_name as string,
+        status: j.status as string,
+        days: Math.floor((now.getTime() - last.getTime()) / 86_400_000),
+      };
+    })
     .sort((a: any, b: any) => b.days - a.days);
 
   // ── 4. เลยกำหนด ───────────────────────────────────────────────────────────

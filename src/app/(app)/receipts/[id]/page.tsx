@@ -93,9 +93,9 @@ export default async function ReceiptDetail({ params }: { params: { id: string }
         <div className="flex justify-end mt-5">
           <table className="text-sm">
             <tbody>
-              <tr><td className="pr-8 py-0.5 text-ink-3 tabular-nums">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rc.amount)}</td></tr>
+              <tr><td className="pr-8 py-0.5 text-ink-3 tabular-nums">ฐานภาษี (ก่อน VAT)</td><td className="text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td></tr>
               <tr><td className="pr-8 py-0.5 text-ink-3">VAT {rc.vat_rate}%</td><td className="text-right tabular-nums">{baht(rc.vat_amt)}</td></tr>
-              <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1 border-t">ยอดสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
+              <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1 border-t">ยอดสุทธิ (รวม VAT)</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
             </tbody>
           </table>
         </div>

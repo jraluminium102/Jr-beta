@@ -49,6 +49,13 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     const co = await resolveMapLink(body.location_url);
     if (co) { body.lat = co.lat; body.lng = co.lng; }
   }
+  // ลบพิกัดเมื่อลบ location_url ออก (และ client ไม่ได้ส่ง lat/lng มาเอง)
+  // body.lat/lng ที่มาจาก client จะเป็น number ถ้าส่งมาเอง — ถ้า nullish แสดงว่าไม่ได้ส่ง
+  const clientSentCoords = typeof body.lat === "number" || typeof body.lng === "number";
+  if ((body.location_url === null || body.location_url === "") && !clientSentCoords) {
+    body.lat = null;
+    body.lng = null;
+  }
 
   const { data, error } = await sb.from("queue_entries")
     .update(body).eq("id", params.id).select(SELECT).maybeSingle();

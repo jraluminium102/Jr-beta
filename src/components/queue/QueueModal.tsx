@@ -78,16 +78,28 @@ function initForm(e?: QueueEntry | null): FormState {
 }
 
 export function QueueModal({
-  entry, salesList, onClose, onSaved, readOnly = false,
+  entry, preset, salesList, onClose, onSaved, readOnly = false,
 }: {
   entry?: QueueEntry | null;
+  preset?: { queue_date?: string; queue_time?: string; sales_id?: string };
   salesList: QueueSales[];
   onClose: () => void;
   onSaved: () => void;
   readOnly?: boolean;
 }) {
   const editing = !!entry;
-  const [f, setF] = useState<FormState>(() => initForm(entry));
+  const [f, setF] = useState<FormState>(() => {
+    const base = initForm(entry);
+    if (!entry && preset) {
+      return {
+        ...base,
+        queue_date: preset.queue_date ?? base.queue_date,
+        queue_time: preset.queue_time ?? base.queue_time,
+        sales_id: preset.sales_id ?? base.sales_id,
+      };
+    }
+    return base;
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -350,11 +362,23 @@ export function QueueModal({
     }
 
     // ---- ข้อ 2: ตรวจ conflict ร้าย (leave / full) ก่อน save ----
-    const badConflicts = conflicts.filter((c) => c.kind === "leave" || c.kind === "full");
-    if (badConflicts.length > 0) {
-      const reason = badConflicts.map((c) => c.msg).join(" / ");
-      const ok = window.confirm(`วันนี้ ${reason} — ยืนยันบันทึกทับ?`);
+    // leave → block ทันที (ห้ามทับ)
+    const leaveConflicts = conflicts.filter((c) => c.kind === "leave");
+    if (leaveConflicts.length > 0) {
+      setErr("เซลล์ลาวันนี้ เปลี่ยนวัน/เซลล์ก่อน");
+      return;
+    }
+    // full → confirm ก่อน
+    const fullConflicts = conflicts.filter((c) => c.kind === "full");
+    if (fullConflicts.length > 0) {
+      const reason = fullConflicts.map((c) => c.msg).join(" / ");
+      const ok = window.confirm(`${reason} — ยืนยันบันทึกทับ?`);
       if (!ok) return;
+    }
+    // เตือนเมื่อ queue_date มีค่าแต่ queue_time ว่าง
+    if (f.queue_date && !f.queue_time) {
+      const slotOk = window.confirm("ยังไม่ได้เลือก slot เวลา (เช้า/บ่าย) — ยืนยันบันทึกโดยไม่ระบุเวลา?");
+      if (!slotOk) return;
     }
 
     savingRef.current = true;
@@ -387,10 +411,14 @@ export function QueueModal({
     try {
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
-        if (payload.status === "DONE" && r.meta?.job_id) {
-          alert(
-            "✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
-          );
+        if (payload.status === "DONE") {
+          if (r.meta?.job_id) {
+            alert(
+              "✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
+            );
+          } else {
+            alert("เข้าประเมินเสร็จแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
+          }
         }
       } else {
         await api.post("/queue", payload);

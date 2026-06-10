@@ -78,7 +78,7 @@ export default function QueuePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
-  const [modal, setModal] = useState<null | { entry: QueueEntry | null }>(null);
+  const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   // View mode
@@ -390,14 +390,26 @@ export default function QueuePage() {
           <p className="text-center text-ink-3 py-12">กำลังโหลด…</p>
         ) : viewMode === "calendar" ? (
           /* ===== Calendar View ===== */
-          <QueueCalendarView
-            week={filterWeek}
-            entries={calEntries}
-            sales={sales}
-            avail={avail}
-            onEntryClick={(e) => setModal({ entry: e })}
-            filterTeam={filterTeam}
-          />
+          <>
+            <QueueCalendarView
+              week={filterWeek}
+              entries={calEntries}
+              sales={sales}
+              avail={avail}
+              onEntryClick={(e) => setModal({ entry: e })}
+              onAddSlot={canWrite ? (date, slot, salesId) => setModal({ entry: null, preset: { queue_date: date, queue_time: slot, sales_id: salesId } }) : undefined}
+              filterTeam={filterTeam}
+            />
+            {(() => {
+              const noSalesCount = calEntries.filter((e) => !e.sales_id).length;
+              return noSalesCount > 0 ? (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
+                  <Icon name="warn" size={15} className="shrink-0" />
+                  <span>มี {noSalesCount} คิวยังไม่ระบุเซลล์ — ดูที่มุมมองตาราง</span>
+                </div>
+              ) : null;
+            })()}
+          </>
         ) : list.length === 0 ? (
           <p className="text-center text-ink-3 py-12">
             {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
@@ -461,6 +473,7 @@ export default function QueuePage() {
       {modal && (
         <QueueModal
           entry={modal.entry}
+          preset={modal.preset}
           salesList={sales}
           readOnly={!canWrite}
           onClose={() => setModal(null)}
@@ -595,6 +608,15 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
         </div>
       )}
       {e.address && <div className="text-sm text-ink-2 mt-1">{e.address}</div>}
+      {(e.assess_fee != null || e.payment) && (
+        <div className="text-xs text-ink-2 mt-1 tabular-nums">
+          {e.assess_fee != null && (
+            <span>ค่าประเมิน {e.assess_fee.toLocaleString("th-TH")} บาท</span>
+          )}
+          {e.assess_fee != null && e.payment && <span> · </span>}
+          {e.payment && <span>ชำระ {e.payment}</span>}
+        </div>
+      )}
       <div className="flex items-center justify-between mt-2">
         {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
           <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}

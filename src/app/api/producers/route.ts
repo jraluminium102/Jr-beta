@@ -11,17 +11,27 @@ export const GET = withRoute(async () => {
   const ctx = await requirePermission("production", "read");
 
   try {
-    const { data } = await ctx.supabase
-      .from("productions")
-      .select("producer_note")
-      .not("producer_note", "is", null)
-      .neq("producer_note", "");
+    // adhoc_production_tasks ยังไม่อยู่ใน generated types → cast
+    const sb = ctx.supabase as unknown as { from: (t: string) => any };
 
-    // dedup + sort (ดึงทั้งหมดแล้ว dedup ใน JS เพราะ Supabase REST ไม่รองรับ SELECT DISTINCT column เดียว)
+    const [{ data: prodRows }, { data: adhocRows }] = await Promise.all([
+      ctx.supabase
+        .from("productions")
+        .select("producer_note")
+        .not("producer_note", "is", null)
+        .neq("producer_note", ""),
+      sb
+        .from("adhoc_production_tasks")
+        .select("producer_note")
+        .not("producer_note", "is", null)
+        .neq("producer_note", ""),
+    ]);
+
+    // dedup + sort จากทั้งสองแหล่ง
     const names: string[] = [];
     const seen = new Set<string>();
-    for (const row of data ?? []) {
-      const n = (row.producer_note ?? "").trim();
+    for (const row of [...(prodRows ?? []), ...(adhocRows ?? [])]) {
+      const n = ((row as { producer_note?: string | null }).producer_note ?? "").trim();
       if (n && !seen.has(n)) {
         seen.add(n);
         names.push(n);

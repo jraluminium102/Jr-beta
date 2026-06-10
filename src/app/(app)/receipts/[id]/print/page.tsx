@@ -86,7 +86,7 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
                 รับชำระเงินตามใบวางบิล{refCode ? ` ${refCode}` : ""}
                 {rc.note && <div className="text-xs text-gray-500">{rc.note}</div>}
               </td>
-              <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rc.amount)}</td>
+              <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td>
             </tr>
           </tbody>
         </table>
@@ -97,9 +97,9 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           </div>
           <table className="text-sm">
             <tbody>
-              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rc.amount)}</td></tr>
+              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {rc.vat_rate}%</td><td className="text-right tabular-nums">{baht(rc.vat_amt)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">ยอดสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">ยอดสุทธิ (รวม VAT)</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
             </tbody>
           </table>
         </div>

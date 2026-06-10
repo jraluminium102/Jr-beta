@@ -33,12 +33,13 @@ export const GET = withRoute(async (req: Request) => {
 
   // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก
   const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
-  const wonJobs = J.filter((j: any) => WON.includes(j.status) && inRange(j.deposit_date));
+  // wonJobs อิง assess_date เดียวกัน เพื่อให้ฐานตรงกับ close_rate (ไม่เกิน 100%)
+  const wonJobs = inJobs.filter((j: any) => WON.includes(j.status));
 
   const summary = {
     jobs: inJobs.length,
     won: wonJobs.length,
-    close_rate: inJobs.length ? Math.round((inJobs.filter((j: any) => WON.includes(j.status)).length / inJobs.length) * 100) : 0,
+    close_rate: inJobs.length ? Math.round((wonJobs.length / inJobs.length) * 100) : 0,
     revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.total_amount), 0),
     collected: F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0),
   };

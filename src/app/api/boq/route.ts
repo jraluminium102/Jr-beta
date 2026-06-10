@@ -77,10 +77,18 @@ export async function POST(req: Request) {
     .single();
   if (boqErr || !boq) return fail("บันทึก BOQ ไม่สำเร็จ: " + (boqErr?.message ?? ""), 500);
 
+  // [#21] เดาหมวดวัสดุจากชื่อ + สเปก (ป้องกัน category:"" ตกหมวดแรกทั้งหมด)
+  function guessCategory(name: string, detail: string): string {
+    const hay = (name + " " + detail).toLowerCase();
+    if (/กระจก|glass/.test(hay)) return "กระจก";
+    if (/อลู|อะลู|alumin|เส้น/.test(hay)) return "เส้นอลู";
+    return "อุปกรณ์";
+  }
+
   // 4) prefill รายการวัสดุจากใบเสนอ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
   const rows = srcItems.map((it: QuotationItem, i: number) => ({
     boq_id: boq.id,
-    category: "",
+    category: guessCategory(String(it.name ?? ""), String(it.detail ?? "")),
     name: String(it.name ?? ""),
     spec: String(it.detail ?? ""),
     qty: Number(it.qty) || 0,

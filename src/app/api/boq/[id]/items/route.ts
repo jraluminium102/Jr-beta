@@ -12,6 +12,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const body = await req.json().catch(() => null);
   if (!body || !Array.isArray(body.items)) return fail("payload ไม่ถูกต้อง (ต้องมี items[])");
 
+  // --- [#17] validate payload ก่อน "ลบของเก่า" กันข้อมูลหายเมื่อเน็ตหลุดกลางคัน ---
+  const rawItems = body.items as Record<string, unknown>[];
+  const invalidRow = rawItems.findIndex(
+    (it) => !it.name || String(it.name).trim() === ""
+  );
+  if (invalidRow !== -1) {
+    return fail(`แถวที่ ${invalidRow + 1}: ต้องระบุชื่อรายการ`, 400);
+  }
+
   const supabase = createClient();
 
   // ยืนยันว่ามี BOQ จริงก่อน
@@ -23,7 +32,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   if (boqErr || !boq) return fail("ไม่พบ BOQ", 404);
 
   // normalize รายการ → ผูก boq_id + sort_order ตามลำดับ array
-  const rows = (body.items as Record<string, unknown>[]).map((it, i) => ({
+  const rows = rawItems.map((it, i) => ({
     boq_id: boq.id,
     category: String(it.category ?? ""),
     name: String(it.name ?? ""),
@@ -34,7 +43,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     sort_order: i,
   }));
 
-  // ลบของเก่าทั้งหมด
+  // ลบของเก่าทั้งหมด (ถึงขั้นนี้ได้ = payload ผ่านแล้ว)
   const { error: delErr } = await supabase.from("boq_items").delete().eq("boq_id", boq.id);
   if (delErr) return fail("ลบรายการเดิมไม่สำเร็จ: " + delErr.message, 500);
 

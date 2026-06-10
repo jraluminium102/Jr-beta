@@ -149,7 +149,8 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                   <option value="">— เลือกใบวางบิล —</option>
                   {notes.map((n) => (
                     <option key={n.id} value={n.id}>
-                      {n.code} · {n.customer_snapshot?.name} · ฿{baht(n.total)}
+                      {n.code} · {n.customer_snapshot?.name}
+                      {n.customer_snapshot?.job ? ` · ${n.customer_snapshot.job}` : ""} · ฿{baht(n.total)}
                     </option>
                   ))}
                 </select>

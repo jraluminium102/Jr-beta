@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
@@ -57,6 +57,23 @@ export default function BoqEditor({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  // [#17] dirty flag — ติดตามการแก้ที่ยังไม่เซฟ
+  const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef(false);
+
+  // sync ref ให้ beforeunload ใช้ได้ (closure ไม่ต้องการ re-register)
+  useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+
+  // เตือนก่อนปิด/รีเฟรช tab เมื่อมีการแก้ค้าง
+  useEffect(() => {
+    if (!writable) return;
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (!dirtyRef.current) return;
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [writable]);
 
   // จัดกลุ่มตาม category สำหรับแสดงผล
   const grouped = useMemo(() => {
@@ -70,12 +87,15 @@ export default function BoqEditor({
 
   function update(idx: number, patch: Partial<BoqItem>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    setDirty(true);
   }
   function remove(idx: number) {
     setItems((prev) => prev.filter((_, i) => i !== idx));
+    setDirty(true);
   }
   function addRow(category: string, unit: string) {
     setItems((prev) => [...prev, { category, name: "", spec: "", qty: 0, unit }]);
+    setDirty(true);
   }
 
   async function save() {
@@ -90,11 +110,25 @@ export default function BoqEditor({
     setBusy(false);
     if (!res.ok) { setErr(json.error ?? "บันทึกไม่สำเร็จ"); return; }
     setMsg("บันทึกแล้ว");
+    setDirty(false);
     router.refresh();
   }
 
+  // [#21] validate qty > 0 และ name ไม่ว่าง ก่อนเปลี่ยนเป็น confirmed/ordered
   async function changeStatus(next: string) {
     setErr(""); setMsg("");
+    if (next === "confirmed" || next === "ordered") {
+      const emptyName = items.findIndex((it) => !it.name || it.name.trim() === "");
+      if (emptyName !== -1) {
+        setErr(`แถวที่ ${emptyName + 1}: ต้องระบุชื่อรายการก่อนยืนยัน`);
+        return;
+      }
+      const badQty = items.findIndex((it) => !it.qty || it.qty <= 0);
+      if (badQty !== -1) {
+        setErr(`แถวที่ ${badQty + 1}: จำนวนต้องมากกว่า 0 ก่อนยืนยัน`);
+        return;
+      }
+    }
     const res = await fetch(`/api/boq/${header.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -110,9 +144,16 @@ export default function BoqEditor({
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-2 print:hidden">
         <div className="flex items-center gap-3">
-          <Link href="/boq" aria-label="ย้อนกลับ" className="press glass-soft w-9 h-9 rounded-xl inline-flex items-center justify-center text-brand-dark focusable">
+          <button
+            onClick={() => {
+              if (dirty && !window.confirm("มีรายการที่แก้ค้างอยู่ยังไม่ได้บันทึก — ต้องการออกหรือไม่?")) return;
+              router.push("/boq");
+            }}
+            aria-label="ย้อนกลับ"
+            className="press glass-soft w-9 h-9 rounded-xl inline-flex items-center justify-center text-brand-dark focusable"
+          >
             <Icon name="arrowLeft" size={18} />
-          </Link>
+          </button>
           <h1 className="text-xl font-bold text-brand-dark font-mono">{header.code}</h1>
           <Badge tone={STATUS_TONE[status] ?? "gray"} dot>{STATUS_LABEL[status] ?? status}</Badge>
         </div>
@@ -202,7 +243,7 @@ export default function BoqEditor({
                           </td>
                           <td className="p-1.5 text-right">
                             {writable ? (
-                              <input type="number" value={it.qty} onChange={(e) => update(idx, { qty: Number(e.target.value) })}
+                              <input type="number" min={0} value={it.qty} onChange={(e) => update(idx, { qty: Number(e.target.value) })}
                                 className="w-full glass-soft rounded-lg px-2 py-1.5 text-right outline-none focusable" />
                             ) : it.qty}
                           </td>
