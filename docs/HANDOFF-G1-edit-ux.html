@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:12px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 12px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:11px;}
+th,td{border:1px solid #d1d5db;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+.r{color:#B3151D;font-weight:700;}
+</style></head><body>
+
+<h1>HANDOFF G1 — ระบบแก้ไขรวม (แก้ข้อความ + ราคา + OPTION)</h1>
+<p class="sub">มติพี่นัท 2026-06-10 · ขยายจาก R2-4 · ดราฟ: sharepicjr/draft-G1-edit-ux.html · ไฟล์ <code>public/calculator/index.html</code> · READ-ONLY</p>
+
+<div class="box"><b>แนวคิด:</b> รวมทุกการแก้ไว้ใน "โหมดแก้ไข" (กดดินสอ ✏️) เดียว — แก้ข้อความทุกจุด + ราคาตรงๆ · เลิก checkbox "คิดราคาเหมา" ที่ซ้ำซ้อน · OPTION เลือก preset หรือพิมพ์เอง + ราคาเอง</div>
+
+<h2>3 เรื่องที่ต้องทำ</h2>
+<table>
+<tr><th>#</th><th>เรื่อง</th><th>รายละเอียด</th></tr>
+<tr><td class="r">E1</td><td><b>แก้ข้อความได้ทุกจุด (โหมดแก้ไข)</b></td><td>กดดินสอ → editable ทั้งหมด: ชื่อรายการ (มีแล้ว) + <b>ทุกบรรทัด "รายละเอียดงาน"</b> + หมายเหตุ · เพิ่ม/ลบบรรทัดรายละเอียดได้ · เก็บเป็น override (คล้าย <code>_nameOv</code> → ทำ <code>_detOv</code>) · ออกปุ่ม/ค่าที่แก้ลงใบ</td></tr>
+<tr><td class="r">E2</td><td><b>ลบ "คิดราคาเหมา" (ยกเลิก)</b></td><td>เอา checkbox <code>คิดราคาเหมา</code> + ช่อง "ราคาเหมาต่อชุด" ออก (ซ้ำซ้อน) · ราคาแก้ได้ตรงๆ ในช่องราคา/หน่วย (โหมดแก้ไข) อยู่แล้ว — ใช้อันนั้นแทน</td></tr>
+<tr><td class="r">E3</td><td><b>OPTION เลือก/พิมพ์เอง + ราคาเอง</b></td><td>บล็อก "+ OPTION ทางเลือกลูกค้า": เลือก<b>หมวด</b> (กระจก/มุ้ง/สี/มือจับ/หลังคา/อื่นๆ) → เลือก<b>รายการ preset</b> <b>หรือพิมพ์เอง</b> + กรอก <b>±ราคาเอง</b> → ออกใบ "OPTION : {ข้อความ} (ราคา ±N)" · ระบบเติม "OPTION :" หัวบรรทัดเอง (ผู้ใช้ไม่พิมพ์) · ใส่หลายตัวได้</td></tr>
+</table>
+
+<div class="box"><b>หมายเหตุ:</b> ดราฟ interactive โชว์ครบทั้ง 3 (กดดินสอ → แก้ข้อความ/เพิ่มบรรทัด/แก้ราคา · OPTION dropdown+พิมพ์เอง+ราคา) — ให้ดูเป็นต้นแบบ UX</div>
+
+<p class="sub">DoD: โหมดแก้ไข → แก้ข้อความทุกจุด+เพิ่ม/ลบบรรทัดได้ · ไม่มี checkbox ราคาเหมาแล้ว · OPTION เลือก/พิมพ์เอง+ราคาเองได้ · quote-fidelity PASS · ค่าที่แก้ออกใบถูก</p>
+</body></html>
