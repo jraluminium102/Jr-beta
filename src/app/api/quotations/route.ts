@@ -69,8 +69,10 @@ export async function POST(req: Request) {
       .maybeSingle<{ id: string }>();
     if (requestedJob?.id) {
       jobId = requestedJob.id;
+    } else {
+      // ผู้ใช้เลือกงานมาแล้วแต่ใช้ไม่ได้ (ถูกปิด/ยกเลิก/id เพี้ยน) → ห้าม fallback เงียบ ให้เลือกใหม่
+      return fail("งานที่เลือกผูกใช้ไม่ได้แล้ว (อาจถูกปิดหรือยกเลิก) — กรุณาเลือกงานใหม่", 409);
     }
-    // ถ้าไม่ผ่าน validate → jobId ยังเป็น null → ตกไป fallback ด้านล่าง
   }
   if (!jobId) {
     // fallback: auto-link งาน active ล่าสุด (พฤติกรรมเดิม)

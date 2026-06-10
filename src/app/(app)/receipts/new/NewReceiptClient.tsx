@@ -69,16 +69,17 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
   const remainingOf = (it: InstallmentOption) =>
     round2((Number(it.amount) || 0) - (Number(it.paid_amount) || 0));
 
-  // เมื่อเปลี่ยนใบวางบิล → reset งวด + ตั้งยอด default = ยอดบิลรวม
+  // เมื่อเปลี่ยนใบวางบิล → reset งวด. ถ้าบิล "มีงวด" ให้เว้นยอดว่างจนกว่าจะเลือกงวด
+  // (กันคนโลว์เทคกดบันทึกยอดเต็มบิลทั้งที่ต้องรับเป็นงวด); บิลไม่มีงวด → default = ยอดบิล
   useEffect(() => {
     setInstallmentId("");
-    if (selected) setAmount(String(selected.total));
+    if (selected) setAmount(installments.length > 0 ? "" : String(selected.total));
   }, [selected]);
 
   // เมื่อเลือกงวด → ตั้งยอด default = ยอดคงเหลือของงวดนั้น (รวม VAT)
   useEffect(() => {
     if (selectedInstallment) setAmount(String(remainingOf(selectedInstallment)));
-    else if (selected) setAmount(String(selected.total));
+    else if (selected && installments.length === 0) setAmount(String(selected.total));
   }, [selectedInstallment, selected]);
 
   const amountNum = Number(amount) || 0;

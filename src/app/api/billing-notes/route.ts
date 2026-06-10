@@ -41,6 +41,18 @@ export async function POST(req: Request) {
   // ห้ามสร้างจากใบที่ถูกยกเลิก
   if (q.status === "cancelled") return fail("ใบเสนอราคาถูกยกเลิกแล้ว สร้างบิลไม่ได้", 409);
 
+  // กันวางบิลซ้ำจากใบเสนอเดิม (เปิดสองแท็บ/กด back) — มีบิล active อยู่แล้วห้ามสร้างซ้ำ
+  const { data: existingBn } = await supabase
+    .from("billing_notes")
+    .select("id, code")
+    .eq("quotation_id", q.id)
+    .neq("status", "cancelled")
+    .limit(1)
+    .maybeSingle<{ id: number; code: string }>();
+  if (existingBn?.id) {
+    return fail(`ใบเสนอนี้มีใบวางบิลแล้ว (${existingBn.code}) — เปิดใบเดิมแทนการสร้างซ้ำ`, 409);
+  }
+
   // 2) auto-approve quotation ถ้ายังไม่ approved (การสร้างบิล = อนุมัติโดยนัย)
   if (q.status !== "approved") {
     const { error: approveErr } = await supabase

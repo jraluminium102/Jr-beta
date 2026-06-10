@@ -96,7 +96,7 @@ export default function ProductionSchedulePage() {
   const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
     QUEUED:        { label: "เริ่มผลิต", nextStatus: "MANUFACTURING", confirmMsg: (t) => `เริ่มผลิต "${t}" ใช่ไหม?` },
     MANUFACTURING: { label: "ส่ง QC",    nextStatus: "QC",            confirmMsg: (t) => `ส่งงาน "${t}" เข้าตรวจ QC ใช่ไหม?` },
-    QC:            { label: "ผลิตเสร็จ", nextStatus: "READY",         confirmMsg: (t) => `ยืนยันว่างาน "${t}" ผ่าน QC และพร้อมติดตั้งแล้ว?` },
+    QC:            { label: "ยืนยัน QC (หน้าผลิต)", nextStatus: "READY", confirmMsg: (t) => `งาน "${t}" ต้องกรอกผล QC + วันตรวจที่หน้า "ผลิต" — ไปที่หน้าผลิตเลยไหม?` },
   };
 
   const advanceJobStatus = async (r: SchedRow) => {
@@ -111,8 +111,8 @@ export default function ProductionSchedulePage() {
         body.production_done = today();
       }
       if (cfg.nextStatus === "READY") {
-        // READY ต้องการ qc_result + qc_date — ให้แจ้งให้ไปทำที่หน้าผลิต
-        alert("กรุณายืนยันผล QC และวันตรวจที่หน้า \"ผลิต\" ก่อนเปลี่ยนสถานะ พร้อมติดตั้ง");
+        // READY ต้องกรอกผล QC + วันตรวจ ซึ่งมีเฉพาะหน้า "ผลิต" → พาไปที่นั่นแทนการเด้ง alert ทางตัน
+        window.location.href = "/production";
         return;
       }
       await api.patch(`/production/${r.id}`, body);

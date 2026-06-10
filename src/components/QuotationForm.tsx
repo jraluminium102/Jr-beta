@@ -120,8 +120,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         if (cancelled) return;
         const jobs: ActiveJob[] = Array.isArray(json?.data) ? json.data : [];
         setActiveJobs(jobs);
-        // default เลือกงานล่าสุด (index 0 เพราะ order desc)
-        setSelectedJobId(jobs[0]?.id ?? "");
+        // 1 งาน → เลือกอัตโนมัติ; ≥2 งาน → เว้นว่างบังคับให้ผู้ใช้เลือกเอง (กันผูกงานล่าสุดผิด)
+        setSelectedJobId(jobs.length === 1 ? jobs[0].id : "");
       })
       .catch(() => { if (!cancelled) setActiveJobs([]); })
       .finally(() => { if (!cancelled) setActiveJobsLoading(false); });
@@ -157,6 +157,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   async function submit() {
     setErr("");
     if (!customerId) { setErr("ต้องเลือกลูกค้าก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
+    if (activeJobsLoading) { setErr("กำลังโหลดรายการงานของลูกค้า รอสักครู่แล้วกดอีกครั้ง"); return; }
+    if (activeJobs.length >= 2 && !selectedJobId) { setErr("ลูกค้ามีหลายงาน — เลือกงานที่จะผูกก่อน (ช่อง 'เลือกงานที่จะผูก')"); return; }
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
@@ -260,6 +262,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       onChange={(e) => setSelectedJobId(e.target.value)}
                       className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none text-sm text-ink"
                     >
+                      <option value="">— เลือกงาน —</option>
                       {activeJobs.map((j) => (
                         <option key={j.id} value={j.id}>
                           {j.job_code ?? j.id} — {j.status} ({new Date(j.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })})

@@ -42,8 +42,8 @@ export const GET = withRoute(async () => {
         "current_stage",
         "status",
         "design_state",
-        // PostgREST: embed quotations ordered by created_at desc, take first row
-        "quotations(id, code, net, created_at)",
+        // PostgREST: embed ผ่าน FK quotations.job_id ให้ชัด (ไม่งั้นใบเสนอ job_id=null resolve ไม่เจอ ขึ้น '—')
+        "quotations!quotations_job_id_fkey(id, code, net, created_at)",
       ].join(",")
     )
     .in("current_stage", CLOSURE_STAGES)

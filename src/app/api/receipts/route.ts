@@ -14,7 +14,7 @@ export async function GET() {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("receipts")
-    .select("id, code, customer_snapshot, issue_date, net, payment_method, created_at")
+    .select("id, code, customer_snapshot, issue_date, net, payment_method, created_at, is_voided")
     .order("created_at", { ascending: false });
   if (error) return fail(error.message, 500);
   return ok(data);

@@ -39,6 +39,20 @@ export async function POST(req: Request) {
   if (qErr || !q) return fail("ไม่พบใบเสนอราคา", 404);
 
   const quotation = q as Quotation & { job_id: string | null };
+
+  // กันสร้าง BOQ ซ้ำจากใบเสนอเดิม (เปิดสองแท็บ/กดซ้ำ) → คืนใบเดิมแทนการสร้างใบเปล่าซ้ำ
+  // (ผลิตหยิบ "BOQ ล่าสุด" ถ้ามีใบซ้ำใบเปล่า ของจะหลุดทั้งใบ)
+  const { data: existingBoq } = await supabase
+    .from("boqs")
+    .select("id, code")
+    .eq("quotation_id", quotation.id)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: number; code: string }>();
+  if (existingBoq?.id) {
+    return ok({ id: existingBoq.id, code: existingBoq.code, existing: true }, 200);
+  }
+
   const srcItems = (quotation.quotation_items ?? [])
     .slice()
     .sort((a: QuotationItem, b: QuotationItem) => a.sort_order - b.sort_order);

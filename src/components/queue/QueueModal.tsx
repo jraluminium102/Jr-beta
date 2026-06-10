@@ -226,8 +226,12 @@ export function QueueModal({
 
   // ref สำหรับ AbortController ของ suggestAuto
   const suggestAbortRef = useRef<AbortController | null>(null);
+  // ref กันกดบันทึกรัว (synchronous ก่อน state busy re-render)
+  const savingRef = useRef(false);
 
   async function suggestAuto() {
+    // ถ้ามีวันนัดอยู่แล้ว ถามก่อนเขียนทับ (กันเผลอกดทับวันที่ตกลงกับลูกค้า)
+    if (f.queue_date && !window.confirm("มีวันนัดอยู่แล้ว จะให้ระบบเสนอวัน/เวลาใหม่ทับไหม?")) return;
     // ยกเลิก request เก่าถ้ายังค้างอยู่
     suggestAbortRef.current?.abort();
     const controller = new AbortController();
@@ -322,6 +326,7 @@ export function QueueModal({
   }
 
   async function save() {
+    if (savingRef.current) return; // กันกดบันทึกรัว/ดับเบิลแท็ป
     if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
 
     // ---- ข้อ 1: ตรวจ/ยืนยันก่อนเปลี่ยนสถานะเป็น DONE ----
@@ -352,6 +357,7 @@ export function QueueModal({
       if (!ok) return;
     }
 
+    savingRef.current = true;
     setBusy(true); setErr("");
 
     // ---- ข้อ 1: normalize เบอร์โทร (ตัดช่องว่าง/ขีด/วงเล็บ) ----
@@ -393,6 +399,8 @@ export function QueueModal({
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
       setBusy(false);
+    } finally {
+      savingRef.current = false;
     }
   }
 
