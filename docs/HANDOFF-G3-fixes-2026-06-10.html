@@ -52,6 +52,7 @@
 <ul style="margin:3px 0;">
 <li><b>ชินโคไลท์: ไม่เพิ่มสี</b> ใช้ 6 รุ่นเดิม · <b>เปลี่ยนชื่อ imp20 "Grang" → "Grand"</b> (L674) + <b>ราคา=Prime</b> (เปลี่ยน <code>rates:'IMP20'</code> → <code>rates:'IMP19'</code>) · Nature (imp17) คงป้าย "(ไม่ขาย)" แต่ทำราคาได้ (คงเดิม)</li>
 <li><b>เมทัลชีท (imp7–14): เพิ่มช่องสีแบบพิมพ์เอง เว้นว่าง</b> — เซลล์กรอกสีภายหลัง · ลงใบเมื่อกรอก (ถ้าว่าง=ไม่ลง)</li>
+<li><b>มติเพิ่ม (ท้าย FIX-10):</b> <b>FIX-11</b> imp หลังคาเลื่อน=ทำได้ (เพิ่ม optSlide) · <b>FIX-12</b> หลังคาผสม 2 วัสดุ=ทำ คิด ตร.ม.แยก (feature) · ขนาดในหัวข้อ=ใส่ไว้ตามเดิม (คงเดิม)</li>
 </ul>
 </div>
 
@@ -67,7 +68,9 @@
 <tr><td class="c">FIX-7</td><td>วัสดุปิดรอยต่อแผ่นหลังคา — ระบบไม่มี</td><td>"วัสดุปิดรอยต่อแผ่นหลังคา สีขาว"</td><td class="c" style="color:#6B7280;">P3</td><td class="c">+option</td></tr>
 <tr><td class="c">FIX-8</td><td>ความหนา ISOWALL/สมาร์ทบอร์ด ไม่กระทบราคา</td><td>ISOWALL 10ซม / สมาร์ท 12-20มม</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">รอราคา</td></tr>
 <tr><td class="c">FIX-9</td><td>โครงเหล็กชุบ (ทุกหมวด) ราคาเท่าอลู</td><td>—</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">รอราคา</td></tr>
-<tr><td class="c">FIX-10</td><td>ฝ้าเฉียง / เมทัล-ชินโค หลังคาเลื่อน / หลังคาผสม 2 วัสดุ / ขนาดในหัวข้อ</td><td>(ดูท้าย — ถามพี่นัท)</td><td class="c" style="color:#1E40AF;">✅ปิด</td><td class="c">—</td></tr>
+<tr><td class="c">FIX-10</td><td>ฝ้าเฉียง=เท่าฝ้าตรง · ขนาดในหัวข้อ=ใส่ไว้ตามเดิม</td><td>มติพี่นัท</td><td class="c" style="color:#2F855A;">✅ปิด</td><td class="c">คงเดิม</td></tr>
+<tr><td class="c">FIX-11</td><td><b>เมทัลชีท/ชินโคไลท์ ทำหลังคาเลื่อนได้</b></td><td>มติพี่นัท: ทำได้</td><td class="c" style="color:#B7791F;">P2</td><td class="c">imp7–20 L661–674</td></tr>
+<tr><td class="c">FIX-12</td><td><b>หลังคาผสม 2 วัสดุ (คิด ตร.ม. แยก)</b></td><td>"ไวนิลต่อปลายลามิเนต" (หญิง)</td><td class="c" style="color:#B7791F;">P2·feat</td><td class="c">UI+calc+genQuote</td></tr>
 </table>
 
 <div class="note"><b>ภาพรวม:</b> G3 มี 24 product · <b>ฝ้า/ผนัง 6 ตัว สะอาด (ไม่มี P1)</b> · <b>P1 ทั้งหมดอยู่ที่หลังคา</b> (FIX-1, FIX-2) · ราคาทุกตัวคิดถูกตามสูตร (ตรวจมือ + breakdown แล้ว)</div>
@@ -176,6 +179,29 @@
 <li>รัน <code>node test/quote-fidelity.mjs</code> = PASS</li>
 <li>render ใบ G3 อีกครั้งเทียบ verbatim ใบจริง (ธนบัตร/นก/หญิง/ยี/สุจินต์)</li>
 </ul>
+
+<h2>FIX-11 (P2) — เมทัลชีท/ชินโคไลท์ ทำหลังคาเลื่อนได้ (มติพี่นัท)</h2>
+<div class="fix p2">
+<h3><span class="tag t2">P2</span> เปิดหลังคาเลื่อนให้ imp7–imp20</h3>
+<div class="lbl">ปัจจุบัน:</div> มีแค่ roof_vinyl/delight/polyton/laminate ที่ติด <code>optSlide:true</code> (L607–610) · imp7–20 ไม่มี → ติ๊ก "ทำหลังคาเลื่อน" ไม่ขึ้น
+<div class="lbl">วิธีแก้ (ง่าย):</div> เพิ่ม <code>optSlide:true</code> ใน product def imp7–imp20 (L661–674) · calc(L1419)/option(L2313)/genQuote(L3345) รองรับผ่าน <code>p.optSlide</code> อยู่แล้ว ไม่ต้องแก้ที่อื่น
+<pre>{id:'imp7',cat:'หลังคา',name:"เมทัลชีท 1 นิ้ว ท้องPVC EPS",method:'bucket',min:0,rates:'IMP7',cost:null<span class="add">,optSlide:true</span>},
+<span class="c">// ทำเหมือนกันทุกตัว imp7 → imp20</span></pre>
+<div class="lbl">เช็ค:</div> ติ๊กหลังคาเลื่อน imp7 → ราคาเด้ง + ลงใบ "ระบบหลังคาเลื่อน N บาน (มอเตอร์ N ตัว)"
+</div>
+
+<h2>FIX-12 (P2 · feature) — หลังคาผสม 2 วัสดุในจุดเดียว · คิด ตร.ม. แยก (มติพี่นัท)</h2>
+<div class="fix p2">
+<h3><span class="tag t2">P2 · feature</span> ให้รายการหลังคา 1 จุด มี 2 วัสดุ คิดราคาแยกตามพื้นที่</h3>
+<div class="lbl">ใบจริง (คุณหญิง):</div> <span class="real">"หลังคาไวนิล (แปคู่) ต่อปลายหลังคากระจกลามิเนต" → รายละเอียด: "หลังคาไวนิล สีขาว" + "หลังคากระจกลามิเนตใส ฟิล์มเขียว หนา 4+4 มม."</span>
+<div class="lbl">ปัจจุบัน:</div> 1 รายการ = 1 วัสดุ (เลือก product เดียว)
+<div class="lbl">วิธีแก้ (scope ใหญ่กว่า text-fix — เป็น feature · ทำหลัง FIX-1..7 เสถียร):</div>
+<ul>
+<li><b>UI:</b> ในรายการหลังคา เพิ่ม "+ ต่อปลายวัสดุที่ 2" → เลือก product หลังคาอื่น + กรอก<b>พื้นที่ (ตร.ม.) ของส่วนที่ 2</b></li>
+<li><b>calc:</b> ราคา = วัสดุหลัก × (พื้นที่รวม − พื้นที่2) + วัสดุ2 × พื้นที่2 (เรตของแต่ละวัสดุ คิดตาม ตร.ม. แยกกัน)</li>
+<li><b>genQuote:</b> ลงใบ 2 บรรทัดวัสดุ + คำเชื่อม "ต่อปลาย..." (ใช้คู่กับ FIX-4 ฟิล์ม/หนา ลามิเนต)</li>
+</ul>
+</div>
 
 <h2>ภาคผนวก — ข้อมูลที่หามาเติม (10 มิ.ย. · ค้นสเปก/ตารางราคา/ซัพพลายเออร์)</h2>
 <div class="note"><b>FIX-5 ชินโคไลท์ — มติ: ไม่เพิ่มสี (ใช้ 6 รุ่นเดิม) · ตารางสีด้านล่างเก็บเป็น reference เฉยๆ</b> · แหล่ง: ไฟล์เฟิร์น (06_ราคาซัพพลายเออร์เฟิร์น เซลล์) · ชื่อรุ่นในระบบ = prefix รหัสจริง (ตรงกัน)</div>
