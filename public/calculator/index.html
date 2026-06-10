@@ -2597,6 +2597,8 @@ function readItem(d){
     const _sl=d.querySelector('.o-slidelock'); optSel.slidelock=_sl?_sl.value:'';
     const _fx=d.querySelector('.o-fixed'); optSel.fixedPanes=_fx?(parseInt(_fx.value)||0):0;
   }
+  // ข้อ4(G1): อ่านชุดล็อคแบบ generic (PC Door ฯลฯ ที่ไม่ใช่ sliding) — ถ้ายังไม่ได้อ่านข้างบน
+  if(optSel.slidelock===undefined){ const _sl2=d.querySelector('.o-slidelock'); if(_sl2) optSel.slidelock=_sl2.value; }
   // คาดตาราง generic (ทุก cat ยกเว้น p.grid)
   if(!p.grid){
     const _gm=d.querySelector('.o-gridmark'); optSel.gridmark=_gm?_gm.checked:false;
@@ -3393,7 +3395,8 @@ function genQuote(keepNo){
       }
       // ชุดล็อค (ถ้าเลือก)
       const _lockSl = (it.optSel && it.optSel.slidelock) || '';
-      if(_lockSl) _slLines.push('ชุดล็อค ('+_lockSl+')');
+      // ข้อ7(G1): เมโทรมีกุญแจในตัว → ไม่เขียน "ชุดล็อค (มีกุญแจ)" ซ้ำ
+      if(_lockSl && !(it.optSel && it.optSel.cmech==='metro')) _slLines.push('ชุดล็อค ('+_lockSl+')');
       // มือจับ (digi/stainless/cmech — เฉพาะ digihandle)
       if(it.p.digihandle && it.optSel){
         const _dgSl = it.optSel.digi;
@@ -3482,6 +3485,8 @@ function genQuote(keepNo){
       // ข้อ5(G1): เสริมคาน (บานเปิด/PC Door) ลงใบเมื่อเลือก — คิดเงินต้องโชว์
       { const _bR=parseFloat(it.optSel&&it.optSel.beamM)||0, _bL=parseFloat(it.optSel&&it.optSel.beamMlen)||0;
         if(_bR>0&&_bL>0) lines.push('เสริมคานซัพพอร์ทรุ่น'+(_bR===2400?'1':_bR===3600?'2':'3')+' ยาว '+_bL+' ม.'); }
+      // ข้อ4/7(G1): ชุดล็อค (PC Door ฯลฯ) ลงใบ · เมโทรมีกุญแจในตัว → ไม่เขียนซ้ำ
+      { const _lk=(it.optSel&&it.optSel.slidelock)||''; if(_lk && !(it.optSel&&it.optSel.cmech==='metro')) lines.push('ชุดล็อค ('+_lk+')'); }
       // ข้อ8/18: "ใช้ภายใน ไม่กันน้ำ" เป็นคำเตือนเซลล์เท่านั้น (มีในชื่อสินค้าตอนเลือกแล้ว) — ไม่ลงรายละเอียดในใบลูกค้า
       det = lines.join('\n');
       if(!det.trim()) det = '-';
