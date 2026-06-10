@@ -34,7 +34,8 @@ export function computeTotals(input: MoneyInput): MoneyResult {
   const vat_amt = roundBaht((after_discount * (Number(input.vat_rate) || 0)) / 100);
   const total = round2(after_discount + vat_amt);
   const wht_amt = roundBaht((after_discount * (Number(input.wht_rate) || 0)) / 100);
-  const net = round2(total - wht_amt);
+  // [🟡#3] ปัดยอดรับสุทธิเป็นบาทเต็ม → ตรงกับใบวางบิล (ผลรวมงวด = round(net)) ตัดส่วนต่างเศษสตางค์ bill↔quote
+  const net = roundBaht(total - wht_amt);
   return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net };
 }
 

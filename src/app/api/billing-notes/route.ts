@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { suggestInstallments } from "@/lib/money";
 import type { Quotation } from "@/lib/types";
@@ -23,7 +24,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role)) return FORBIDDEN();
+  if (!can(profile.role, "finance", "write")) return FORBIDDEN(); // [🟡#6] วางบิล = สิทธิ์ finance (ADMIN/ACCOUNTING)
 
   const body = await req.json().catch(() => null);
   if (!body) return fail("payload ไม่ถูกต้อง");
