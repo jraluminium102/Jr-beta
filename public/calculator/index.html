@@ -1310,6 +1310,17 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     return {a:1, sell:p.rate, cost:null, addonLabel:'', msgs:['1 หน่วย × '+fmt(p.rate)+' (× '+(parseInt(panels)||1)+' หรือ qty)']};
   }
     let base=basePrice(p,a,panels);
+  // FIX-12(G3): หลังคาผสม 2 วัสดุ — base = วัสดุหลัก×(พื้นที่รวม−พื้นที่2) + วัสดุ2×พื้นที่2 (เรตแยกตาม ตร.ม.)
+  if(p.cat==='หลังคา' && optSel && optSel.roof2 && PBYID[optSel.roof2]){
+    const _a2=Math.min(Math.max(0,parseFloat(optSel.roof2area)||0), a);
+    if(_a2>0){
+      const _m2=PBYID[optSel.roof2]; const _mainA=Math.max(0,a-_a2);
+      const _mainCost=_mainA>0?monoRate(_mainA,RATES[p.rates]):0;
+      const _mat2Cost=_m2.rates?monoRate(_a2,RATES[_m2.rates]):0;
+      base=Math.max(p.min||0, _mainCost+_mat2Cost);
+      msgs.push('หลังคาผสม: '+(p.name||'').replace(/^หลังคา\s*/,'')+' '+_mainA.toFixed(1)+' ตร.ม. ('+fmt(_mainCost)+') + '+(_m2.name||'').replace(/^หลังคา\s*/,'')+' '+_a2.toFixed(1)+' ตร.ม. ('+fmt(_mat2Cost)+')');
+    }
+  }
   if(p.ranae && shipOnly && p.prod){ base=a*p.prod; msgs.push('เรตเฉพาะผลิต(ผลิตส่ง)'); }
   const ad=addonCalc(p,panels);
   // ข้อ1(G1): โซลิดลูกฟูก — ทึบ ไม่คิดกระจกทั้งบาน · คิดกระจกเฉพาะ "ช่องแสง" (o-solidlight ตร.ม.)
@@ -2381,6 +2392,8 @@ function buildItemOpts(d){
       // FIX-5(G3): ชินโคไลท์ — สี (starter list) · display
       h+='<label class="opt">สีชินโคไลท์ <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="Light Grey">Light Grey</option><option value="Modern Grey">Modern Grey</option></select></label>';
     }
+    // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
+    h+='<label class="opt" style="width:100%;background:#FFF7ED;border-left:3px solid #F59E0B;padding:5px 9px;">+ ต่อปลายวัสดุที่ 2 <select class="o-roof2" style="width:auto;height:32px;max-width:210px;" onchange="calcQuote();"><option value="">— ไม่มี —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select> พื้นที่ส่วนที่ 2 <input type="number" class="o-roof2area" min="0" step="0.1" value="0" style="width:62px;height:30px;" oninput="calcQuote();"> ตร.ม. <span style="font-size:11px;color:#92400e;">(เรตแยกตามวัสดุ)</span></label>';
     // A: แป
     h+='<label class="opt">แป <select class="o-roofbatten" style="width:auto;height:32px;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่ (default)</option></select></label>';
     // B: โครงสร้าง
@@ -2634,6 +2647,9 @@ function readItem(d){
     // FIX-4(G3): ลามิเนต ฟิล์ม/ความหนา
     const _lf=d.querySelector('.o-lamfilm'); if(_lf) optSel.lamfilm=_lf.value;
     const _lt=d.querySelector('.o-lamthick'); if(_lt) optSel.lamthick=_lt.value;
+    // FIX-12(G3): หลังคาผสม 2 วัสดุ
+    const _r2=d.querySelector('.o-roof2'); optSel.roof2=_r2?_r2.value:'';
+    const _r2a=d.querySelector('.o-roof2area'); optSel.roof2area=_r2a?_r2a.value:'0';
     // options ใหม่: แป / โครง / ปลายหลังคา / ระบบรางน้ำ
     const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปคู่'; // H3: fallback ตรงกับ UI default (แปคู่)
     const _rf=d.querySelector('.o-roofframe'); optSel.rfframe=_rf?_rf.value:'โครงอลูมิเนียม';
@@ -3466,6 +3482,12 @@ function genQuote(keepNo){
         if(_os.rfhs==='comp'||_os.rfhs==='smart') _rfExtra += '\nซ่อนสโลปหลังคาด้วย'+(_os.rfhs==='comp'?'คอมโพสิต':'สมาร์ทบอร์ด');
         if((_f('rfgcw')+_f('rfgch'))>0 && _f('rfgcl')>0) _rfExtra += '\nปิดซ่อนราง';
         if(_f('rfbcw')>0 && _f('rfbcl')>0) _rfExtra += '\nครอบคาน';
+      }
+      // FIX-12(G3): หลังคาผสม — บรรทัดวัสดุที่ 2 (ต่อปลาย)
+      if(_os.roof2 && PBYID[_os.roof2] && (parseFloat(_os.roof2area)||0)>0){
+        var _m2n=(PBYID[_os.roof2].name||'').replace(/^หลังคา\s*/,'หลังคา');
+        if(!/^หลังคา/.test(_m2n)) _m2n='หลังคา'+_m2n;
+        _rfExtra += '\nต่อปลาย '+_m2n+' (พื้นที่ '+(parseFloat(_os.roof2area)||0).toFixed(1)+' ตร.ม.)';
       }
       // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา
       if(_os.rfsealer) _rfExtra += '\nวัสดุปิดรอยต่อแผ่นหลังคา สี'+(_os.rfsealercolor||'ขาว');
