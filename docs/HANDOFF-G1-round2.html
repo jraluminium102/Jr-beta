@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 12px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+.r{color:#B3151D;font-weight:700;}
+.box{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 11px;margin:7px 0;font-size:11px;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+</style></head><body>
+
+<h1>HANDOFF G1 รอบ 2 — จุดที่เจอหลัง render จริง</h1>
+<p class="sub">verify โดย doc-option-auditor render จริง · 2026-06-10 · ไฟล์ <code>public/calculator/index.html</code> · เลขบรรทัดเช็คก่อนแก้ · READ-ONLY</p>
+
+<div class="box"><b>✅ รอบ 1 ปิดแล้ว 13/14 + ข้อ 8 (รางยู↔หลังเต่า) verify รอบนี้ = PASS</b> (disable UI + block ราคา + block det ครบ) · รอบ 2 นี้คือจุดใหม่จากใบที่ render</div>
+
+<h2>ต้องแก้ (รอบ 2)</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>บรรทัด</th><th>แก้</th></tr>
+<tr><td class="r">R2-1</td><td><b>"(ทู)/(วัน)" หลุดลงใบ</b> — โซลิด ทู: ชื่อ + รายละเอียด "บานทึบลูกฟูกเรียบ 2 หน้า เสมอกรอบ <b>(ทู)</b>"</td><td>574 (name) · 3569 (det)</td><td>ตัด "(ทู)"/"(วัน)" ออกจากข้อความที่ออกใบ · det: <code>'เสมอกรอบ (ทู)'</code> → <code>'เสมอกรอบ'</code></td></tr>
+<tr><td class="r">R2-2</td><td><b>มุ้งจีบ ขนาดอยู่ผิดช่อง</b> — ตอนนี้อยู่ในรายละเอียดงาน "— ขนาด ~2.0 ตร.ม." · ชื่อรายการมีแค่ "พร้อมมุ้งจีบ"</td><td>3203 (ชื่อ) · 3610 (det)</td><td>(1) ชื่อ: <code>'พร้อมมุ้งจีบ'</code> → <code>'พร้อมมุ้งจีบ ขนาด '+w+'×'+h+' ม.'</code> (2) ตัด "— ขนาด ~X ตร.ม." ออกจากรายละเอียดงาน</td></tr>
+<tr><td class="r">R2-3</td><td><b>ดัดโค้ง "(ราคาช่วง 6500-7000)" หลุดลงใบลูกค้า</b> (จากชื่อ GLASS)</td><td>555-556</td><td>แก้ชื่อกระจกดัดโค้งเป็น "กระจกใสดัดโค้งหนา 10 มม." (ตัดวงเล็บราคาออก — เป็น internal ref)</td></tr>
+<tr><td class="r">R2-4</td><td><b>รายละเอียดงานแก้ข้อความไม่ได้</b> (ทุกสินค้า) — ตอนนี้แก้ได้แค่ชื่อสินค้าบรรทัดแรก</td><td>2904-2906</td><td>เพิ่ม contenteditable ให้บรรทัดในรายละเอียดงาน + เก็บ override (คล้าย <code>_nameOv</code>) · หรือ textarea ต่อ item ที่ override det ทั้งก้อน (เปิดเมื่อโหมดแก้)</td></tr>
+<tr><td>R2-5</td><td><b>โซลิด ราคารวม "ดูเหมือนไม่รวม"</b> — ราคารวม<b>ถูกแล้ว</b> (ฐานบาน+ลูกฟูก+สี) แต่ breakdown msg โชว์แค่ลูกฟูก 25,200 ไม่โชว์ฐานบาน</td><td>1335</td><td>ราคาไม่ต้องแก้ · เพิ่ม msg "ฐานบาน {พื้นที่}×{เรท} = {base}" ให้ breakdown อ่านครบ</td></tr>
+<tr><td>R2-6</td><td>banner "ประตูบานเปิด — เลือกมือจับ 1 ใน 4" เป็น<b>ข้อความเฉยๆ</b> (dropdown ใช้ได้อยู่แล้ว) — พี่นัทขอลบ</td><td>2210-2215</td><td>ลบ block banner ออก (ไม่กระทบ logic · dropdown มือจับยังอยู่)</td></tr>
+</table>
+
+<div class="box"><b>หมายเหตุ R2-5 (ตอบพี่นัท):</b> ราคาโซลิด <b>รวมบาน+ลูกฟูกแล้วจริง</b> (เช่น 1.8×2.0: ฐานบาน ~25,200 + ลูกฟูก 25,200 + สี → ~50,000) · ที่เห็น "= 25,200" คือบรรทัดอธิบายเฉพาะส่วนลูกฟูก ไม่ใช่ราคารวม</div>
+
+<p class="sub">DoD: แก้ R2-1..6 → render โซลิด/มุ้ง/ดัดโค้ง ใบสะอาด (ไม่มี (ทู)/ตร.ม.ในรายละเอียด/ราคาช่วง) + รายละเอียดงานแก้ข้อความได้ + quote-fidelity PASS → G1 ปิด 100%</p>
+</body></html>
