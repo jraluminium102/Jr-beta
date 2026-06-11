@@ -50,6 +50,7 @@ body {
 .section h3:first-child { margin-top: 0; }
 .section h3.orange { color: #C2410C; }
 .section h3.teal   { color: #1565C0; }
+.section h3.green  { color: #065F46; }
 .callout {
   border-radius: 8px; padding: 12px 16px; margin: 12px 0;
   font-size: 13.5px; line-height: 1.6;
@@ -123,7 +124,7 @@ tr.hl-green  td { background: #F0FFF4; }
   <p>สเปก handoff สำหรับ developer — ปรับ UX ฟอร์มกรอกรายการ G1 (บานกระจก ประตู/หน้าต่าง)</p>
   <div class="meta">
     <span>วันที่: 2026-06-11</span>
-    <span>สถานะ: อัปเดต — มือจับ multi-toggle (มติพี่นัท 2026-06-11)</span>
+    <span>สถานะ: อัปเดต — มือจับ multi-toggle + ชิปลักษณะการเปิดมุ้ง (มติพี่นัท 2026-06-11)</span>
     <span>ไฟล์เป้าหมาย: public/calculator/index.html</span>
     <span>ดราฟ demo: draft-G1-formux.html</span>
   </div>
@@ -148,7 +149,8 @@ tr.hl-green  td { background: #F0FFF4; }
     <li><span class="icon">3️⃣</span> เปลี่ยน select ≤4 ตัวเลือก → ชิป (8 ช่อง รายละเอียดในตาราง)</li>
     <li><span class="icon">4️⃣</span> <b>ก้อนใหม่:</b> รวบมือจับ → 1 กล่อง multi-toggle (ติ๊กได้หลายแบรนด์พร้อมกัน) พร้อม X-series (ฟรี) + Cmech หลบมุ้ง</li>
     <li><span class="icon">5️⃣</span> <b>ก้อนใหม่:</b> รวบมุ้ง 4 ช่องกระจาย → 1 กล่อง (โผล่/ซ่อนตาม o-mosq)</li>
-    <li><span class="icon">6️⃣</span> ปุ่ม/ชิปทุกตัวสูง ≥40px (tap target มือถือ)</li>
+    <li><span class="icon">6️⃣</span> <b>ก้อนย่อยในมุ้ง:</b> เพิ่มชิปลักษณะการเปิด (.o-mosqopenstyle) — โผล่เฉพาะ imp21/imp23 · label-only ไม่กระทบราคา</li>
+    <li><span class="icon">7️⃣</span> ปุ่ม/ชิปทุกตัวสูง ≥40px (tap target มือถือ)</li>
   </ul>
 </div>
 
@@ -262,6 +264,23 @@ tr.hl-green  td { background: #F0FFF4; }
         <td class="consolidate">กล่องโผล่/ซ่อนตาม o-mosq · สีกรอบ→ชิป</td>
         <td>ผ้า/ขนาด/สีกรอบโผล่แม้ไม่เลือกมุ้ง → เซลล์งง · ซ่อนทั้งหมดถ้า "ไม่ใส่"</td>
         <td>buildItemOpts L2461–2469</td>
+      </tr>
+      <!-- ชิปลักษณะการเปิด — ใหม่ -->
+      <tr class="hl-green">
+        <td colspan="5" style="font-weight:700;color:#065F46;font-size:13px;">
+          ก้อนย่อยในมุ้ง: ชิปลักษณะการเปิด — โผล่เฉพาะ imp21/imp23 <span class="badge green">ใหม่ 2026-06-11</span>
+        </td>
+      </tr>
+      <tr class="hl-green">
+        <td><code>.o-mosqopenstyle</code> (ลักษณะการเปิดมุ้งเฟรม)</td>
+        <td>4 (เปิด/เลื่อน/กระทุ้ง/ยก)</td>
+        <td class="chip">ชิป sm (40px) · label-only</td>
+        <td>
+          มติพี่นัท 2026-06-11: มุ้งเฟรมเล็ก/ใหญ่มีลักษณะการเปิดหลายแบบ แต่ชื่อมัดรวมไว้ในวงเล็บ →
+          แยกเป็นชิปให้เลือกจริง · ค่าที่เลือกต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" ·
+          <b>ไม่กระทบราคา / logic ใดๆ</b> · default = "เปิด"
+        </td>
+        <td>buildItemOpts — ใน mosq-detail-group (ใหม่)</td>
       </tr>
       <!-- ช่องเดิม -->
       <tr>
@@ -629,6 +648,146 @@ h += <span class="cs">`
   </div>
 </div>
 
+<!-- 3C. ชิปลักษณะการเปิดมุ้ง — ใหม่ 2026-06-11 -->
+<div class="section">
+  <h2>3C. ก้อนย่อยในมุ้ง — ชิปลักษณะการเปิด (.o-mosqopenstyle)</h2>
+
+  <div class="callout ok">
+    <b>มติพี่นัท 2026-06-11:</b>
+    มุ้งเฟรมเล็ก (imp21) และมุ้งเฟรมใหญ่ (imp23) มีลักษณะการเปิดหลายแบบ — ปัจจุบันมัดรวมไว้ในชื่อวงเล็บ
+    "(เปิด/เลื่อน/กระทุ้ง/ยก)" · ควรให้เซลล์เลือกจริงแทน<br>
+    <b>เป็น label-only ไม่กระทบราคา/logic</b> — ค่าที่เลือกต่อท้ายชื่อมุ้งในใบ genQuote เท่านั้น
+  </div>
+
+  <div class="callout warn">
+    <b>ข้อเตือน class — อย่าชนกับ .o-mosqopen (dead code):</b>
+    ในโค้ดปัจจุบันมี <code>if(false){ ... .o-mosqopen ... }</code> — เป็น dead code ที่ถูก comment/bypass ไว้
+    ห้ามใช้ class <code>.o-mosqopen</code> · ใช้เฉพาะ <b><code>.o-mosqopenstyle</code></b> เท่านั้น
+  </div>
+
+  <h3 class="green">เงื่อนไขการโผล่/ซ่อน</h3>
+  <ul style="font-size:13.5px;line-height:1.9;">
+    <li>โผล่เมื่อ <code>o-mosq === 'imp21'</code> (มุ้งเฟรมเล็ก) หรือ <code>o-mosq === 'imp23'</code> (มุ้งเฟรมใหญ่)</li>
+    <li>ซ่อนเมื่อเลือกชนิดมุ้งอื่น (imp22, mj_sd_basic, imp29, imp30, imp31, mj_screen_safety ฯลฯ)</li>
+    <li>ซ่อนเมื่อ o-mosq = "" (ไม่ใส่)</li>
+    <li>เมื่อเปลี่ยนชนิดมุ้ง → reset ชิปกลับ default "เปิด" ทุกครั้ง</li>
+  </ul>
+
+  <h3 class="green">ตัวเลือก 4 ชิป (ตามกฎ select≤4 → chip)</h3>
+  <table>
+    <thead>
+      <tr><th>ค่า (value)</th><th>ป้ายบนชิป</th><th>default</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>เปิด</code></td><td>เปิด</td><td>ใช่ — ชิปแรก .on</td></tr>
+      <tr><td><code>เลื่อน</code></td><td>เลื่อน</td><td>-</td></tr>
+      <tr><td><code>กระทุ้ง</code></td><td>กระทุ้ง</td><td>-</td></tr>
+      <tr><td><code>ยก</code></td><td>ยก</td><td>-</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="green">HTML Pattern — ชิปลักษณะการเปิด (ใน mosq-detail-group)</h3>
+  <pre><code><span class="cm">// แทรกใน mosq-detail-group ระหว่างบล็อกขนาดมุ้ง กับ ผ้ามุ้ง</span>
+<span class="cm">// โผล่/ซ่อนด้วย mosqGroupToggle จาก o-mosq + เช็ค imp21/imp23 เพิ่มเติม</span>
+
+<span class="cm">// ใน HTML string ที่ build ใน buildItemOpts:</span>
+<span class="ck">const</span> showOpenStyle = (mosqVal === <span class="cs">'imp21'</span> || mosqVal === <span class="cs">'imp23'</span>);
+h += <span class="cs">`
+&lt;!-- ชิปลักษณะการเปิด (.o-mosqopenstyle) — โผล่เฉพาะ imp21/imp23 --&gt;
+&lt;div class="mosq-openstyle-row" style="
+    display:${ showOpenStyle ? '' : 'none' };
+    margin-top:8px;padding-top:8px;
+    border-top:1px dashed #90CAF9;"&gt;
+  &lt;div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;"&gt;
+    ลักษณะการเปิด
+    &lt;span style="background:#E0F2FE;color:#0369A1;font-size:10px;
+        font-weight:700;padding:1px 6px;border-radius:4px;margin-left:4px;"&gt;
+      label-only
+    &lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="chip-group chip-sm"&gt;
+    &lt;button type="button" class="chip on" data-val="เปิด"
+      onclick="mosqOpenStylePick(this)"&gt;เปิด&lt;/button&gt;
+    &lt;button type="button" class="chip" data-val="เลื่อน"
+      onclick="mosqOpenStylePick(this)"&gt;เลื่อน&lt;/button&gt;
+    &lt;button type="button" class="chip" data-val="กระทุ้ง"
+      onclick="mosqOpenStylePick(this)"&gt;กระทุ้ง&lt;/button&gt;
+    &lt;button type="button" class="chip" data-val="ยก"
+      onclick="mosqOpenStylePick(this)"&gt;ยก&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;!-- hidden input — ค่าจริงที่ genQuote อ่าน · ไม่กระทบ calcQuote/ราคา --&gt;
+  &lt;input type="hidden" class="o-mosqopenstyle" value="เปิด"&gt;
+  &lt;div style="margin-top:5px;font-size:11px;color:#6B7280;"&gt;
+    ค่าจะต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา
+  &lt;/div&gt;
+&lt;/div&gt;`</span>;
+</code></pre>
+
+  <h3 class="green">JS function: mosqOpenStylePick</h3>
+  <pre><code><span class="cm">// เพิ่มใน script global</span>
+<span class="cm">// เลือกชิปลักษณะการเปิด → sync ค่าลง hidden input .o-mosqopenstyle</span>
+<span class="ck">function</span> <span class="ca">mosqOpenStylePick</span>(btn) {
+  <span class="ck">const</span> wrap = btn.closest(<span class="cs">'.mosq-openstyle-row'</span>);
+  <span class="ck">if</span> (!wrap) <span class="ck">return</span>;
+  wrap.querySelectorAll(<span class="cs">'.chip'</span>).forEach(<span class="ck">function</span>(c) { c.classList.remove(<span class="cs">'on'</span>); });
+  btn.classList.add(<span class="cs">'on'</span>);
+  <span class="ck">const</span> hid = wrap.querySelector(<span class="cs">'.o-mosqopenstyle'</span>);
+  <span class="ck">if</span> (hid) hid.value = btn.dataset.val;
+  <span class="cm">// ไม่ call calcQuote() — label-only ไม่กระทบราคา</span>
+}
+</code></pre>
+
+  <h3 class="green">การอัปเดต mosqGroupToggle — เพิ่มเงื่อนไข imp21/imp23</h3>
+  <pre><code><span class="cm">// แก้ mosqGroupToggle ให้จัดการชิปลักษณะการเปิดด้วย</span>
+<span class="ck">function</span> <span class="ca">mosqGroupToggle</span>(sel) {
+  <span class="ck">const</span> wrap = sel.closest(<span class="cs">'.mosq-wrap'</span>);
+  <span class="ck">if</span> (!wrap) <span class="ck">return</span>;
+
+  <span class="cm">// โผล่/ซ่อน detail group ทั้งหมด</span>
+  <span class="ck">const</span> grp = wrap.querySelector(<span class="cs">'.mosq-detail-group'</span>);
+  <span class="ck">if</span> (grp) grp.style.display = sel.value ? <span class="cs">''</span> : <span class="cs">'none'</span>;
+
+  <span class="cm">// โผล่/ซ่อนชิปลักษณะการเปิดเฉพาะ imp21/imp23</span>
+  <span class="ck">const</span> openRow = wrap.querySelector(<span class="cs">'.mosq-openstyle-row'</span>);
+  <span class="ck">if</span> (openRow) {
+    <span class="ck">const</span> show = (sel.value === <span class="cs">'imp21'</span> || sel.value === <span class="cs">'imp23'</span>);
+    openRow.style.display = show ? <span class="cs">''</span> : <span class="cs">'none'</span>;
+    <span class="cm">// reset → default "เปิด" ทุกครั้งที่เปลี่ยนชนิดมุ้ง</span>
+    <span class="ck">if</span> (show) {
+      openRow.querySelectorAll(<span class="cs">'.chip'</span>).forEach(<span class="ck">function</span>(c) {
+        c.classList.toggle(<span class="cs">'on'</span>, c.dataset.val === <span class="cs">'เปิด'</span>);
+      });
+      <span class="ck">const</span> hid = openRow.querySelector(<span class="cs">'.o-mosqopenstyle'</span>);
+      <span class="ck">if</span> (hid) hid.value = <span class="cs">'เปิด'</span>;
+    }
+  }
+}
+</code></pre>
+
+  <h3 class="green">genQuote — ต่อท้ายชื่อมุ้ง</h3>
+  <pre><code><span class="cm">// ใน genQuote หรือ readItem ส่วนที่สร้างชื่อรายการ</span>
+<span class="cm">// ถ้า o-mosqopenstyle มีค่า (และ mosqId = imp21/imp23) → ต่อท้ายชื่อ</span>
+<span class="ck">const</span> openStyle = ch.querySelector(<span class="cs">'.o-mosqopenstyle'</span>);
+<span class="ck">if</span> (openStyle &amp;&amp; openStyle.value &amp;&amp;
+    (mosqId === <span class="cs">'imp21'</span> || mosqId === <span class="cs">'imp23'</span>)) {
+  mosqName += <span class="cs">' บาน'</span> + openStyle.value; <span class="cm">// เช่น "มุ้งเฟรมเล็ก บานเลื่อน"</span>
+}
+</code></pre>
+
+  <div class="callout info">
+    <b>ตัวอย่างผลลัพธ์ในใบ:</b><br>
+    o-mosq = imp21 + o-mosqopenstyle = "เลื่อน" → ชื่อในใบ = "มุ้งเฟรมเล็ก บานเลื่อน"<br>
+    o-mosq = imp23 + o-mosqopenstyle = "กระทุ้ง" → ชื่อในใบ = "มุ้งเฟรมใหญ่ บานกระทุ้ง"<br>
+    o-mosq = imp22 (ติดตาย) → ชิปไม่โผล่ · ชื่อในใบ = "มุ้งเฟรมเล็กติดตาย" ตามปกติ
+  </div>
+
+  <div class="callout warn">
+    <b>ห้ามใช้ class .o-mosqopen (dead code):</b>
+    โค้ดปัจจุบันมี <code>if(false){ ... }</code> ที่ครอบ .o-mosqopen ไว้ — เป็น dead code ที่ไม่รัน
+    ชื่อคล้ายกันมากจนอาจชนกันได้ · <b>ใช้เฉพาะ .o-mosqopenstyle เท่านั้น</b>
+  </div>
+</div>
+
 <!-- 4. HTML Pattern ชิป -->
 <div class="section">
   <h2>4. HTML Pattern: select → ชิป (วิธีทำ)</h2>
@@ -761,6 +920,18 @@ h += <span class="cs">`
         <td>แทน 4 label แยก ด้วยกล่อง mosq-wrap + mosq-detail-group (ซ่อน default) · เพิ่ม mosqGroupToggle() · o-mosqcolor เปลี่ยนเป็นชิป</td>
         <td><span class="badge amber">กลาง</span> ตั้ง display:none ให้ถูกตอน build HTML</td>
       </tr>
+      <tr class="hl-green">
+        <td><b>buildItemOpts</b> — ชิปลักษณะการเปิดมุ้ง <span class="badge green">ใหม่ 2026-06-11</span></td>
+        <td>ใน mosq-detail-group (ใหม่)</td>
+        <td>
+          แทรก .mosq-openstyle-row ใน mosq-detail-group · ชิป 4 ตัว (เปิด/เลื่อน/กระทุ้ง/ยก)<br>
+          โผล่เฉพาะ imp21/imp23 · ซ่อนชนิดอื่น<br>
+          class: <code>.o-mosqopenstyle</code> · <b>ห้ามใช้ .o-mosqopen (dead code)</b><br>
+          เพิ่ม mosqOpenStylePick() · อัปเดต mosqGroupToggle() ให้จัดการ openRow<br>
+          genQuote อ่าน .o-mosqopenstyle แล้วต่อท้ายชื่อมุ้ง (label-only · ไม่กระทบราคา)
+        </td>
+        <td><span class="badge blue">ต่ำ</span> label-only · ไม่แตะ logic ราคา · อย่าใช้ .o-mosqopen</td>
+      </tr>
       <tr>
         <td><b>buildItemOpts</b> — Cmech (ชิป)</td>
         <td>2290</td>
@@ -788,7 +959,7 @@ h += <span class="cs">`
       <tr>
         <td><b>script global</b></td>
         <td>ใหม่</td>
-        <td>เพิ่ม: chSetChip() · toggleHandleBrand() · clearHandleBrandControls() · cmechTypePick() · mosqGroupToggle()</td>
+        <td>เพิ่ม: chSetChip() · toggleHandleBrand() · clearHandleBrandControls() · cmechTypePick() · mosqGroupToggle() (อัปเดต) · mosqOpenStylePick() (ใหม่)</td>
         <td><span class="badge blue">ต่ำ</span> function ใหม่ ไม่กระทบของเดิม</td>
       </tr>
     </tbody>
@@ -807,6 +978,7 @@ h += <span class="cs">`
         <li>ราง/ล็อค/Cmech = dropdown แม้ตัวเลือกน้อย</li>
         <li>มือจับ 4 ช่องโผล่พร้อมกัน — ไม่ชัดว่าเลือกได้กี่แบรนด์ · ช่องว่างคิดราคาผิด</li>
         <li>มุ้ง 4 ช่องกระจาย โผล่แม้ยังไม่เลือกมุ้ง</li>
+        <li>ลักษณะการเปิดมุ้งมัดในชื่อ ไม่มีช่องเลือก</li>
         <li>tap target เล็ก (select height:32px)</li>
       </ul>
     </div>
@@ -818,6 +990,7 @@ h += <span class="cs">`
         <li>8 ช่อง (≤4 ตัวเลือก) เปลี่ยนเป็นชิป</li>
         <li>มือจับ 1 กล่อง multi-toggle: ติ๊กแบรนด์ที่ใช้ ได้หลายอัน · บวกราคาสะสมถูก</li>
         <li>มุ้ง 1 กล่อง: ซ่อนผ้า/ขนาด/สีกรอบถ้า "ไม่ใส่"</li>
+        <li>ชิปลักษณะการเปิด 4 ตัว โผล่เฉพาะ imp21/imp23 · label-only</li>
         <li>ทุกชิปสูง ≥40px (มาตรฐาน mobile)</li>
         <li>~14 ช่อง default (ยังไม่ติ๊กมือจับ/มุ้ง) / ~22 ช่อง full (ลด ~29%)</li>
       </ul>
@@ -862,6 +1035,40 @@ h += <span class="cs">`
       <span><b>o-solidlower show/hide:</b> dispatchEvent change จาก chip → select.onchange inline trigger .o-solidlower-wrap และ .o-sl-colorwrap ได้ปกติ (chSetChip ทำอยู่แล้ว)</span>
     </li>
     <li>
+      <span class="icon">⚠️</span>
+      <span>
+        <b>ชิปลักษณะการเปิด — โผล่เฉพาะ imp21/imp23:</b><br>
+        เลือก imp21 (มุ้งเฟรมเล็ก) → ชิปลักษณะการเปิดโผล่ · default = "เปิด"<br>
+        เลือก imp23 (มุ้งเฟรมใหญ่) → ชิปลักษณะการเปิดโผล่ · default = "เปิด"<br>
+        เลือก imp22 (ติดตาย) / มุ้งจีบ / มุ้งม้วน / ฯลฯ → ชิปซ่อน<br>
+        เปลี่ยนจาก imp21 → imp22 → ชิปต้องซ่อนทันที (ไม่โผล่ค้าง)
+      </span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span>
+        <b>ชิปลักษณะการเปิด — label-only ไม่กระทบราคา:</b>
+        กดชิปลักษณะการเปิดแล้วราคาในใบต้องไม่เปลี่ยน ·
+        ค่าที่ใบโชว์เฉพาะชื่อ "...บานเลื่อน" ต่อท้าย · ไม่มีบวก/ลบใดๆ
+      </span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span>
+        <b>ห้ามใช้ .o-mosqopen (dead code):</b>
+        class <code>.o-mosqopen</code> มีในโค้ดแต่อยู่ใน <code>if(false){...}</code> — ไม่มีผลต่อ UI/ราคา
+        ถ้าเผลอใช้ชื่อนี้แทน .o-mosqopenstyle จะไม่ error แต่ genQuote จะอ่านค่าไม่ได้
+      </span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span>
+        <b>genQuote ต่อท้ายชื่อมุ้งถูกต้อง:</b>
+        เลือก imp21 + ชิป "เลื่อน" → ใบโชว์ "มุ้งเฟรมเล็ก บานเลื่อน" ·
+        เลือก imp23 + ชิป "กระทุ้ง" → ใบโชว์ "มุ้งเฟรมใหญ่ บานกระทุ้ง"
+      </span>
+    </li>
+    <li>
       <span class="icon">✅</span>
       <span><b>collapseOthers / toggleCh:</b> ไม่กระทบ — chip และกล่องใหม่อยู่ภายใน .ch DOM เดิม</span>
     </li>
@@ -871,7 +1078,7 @@ h += <span class="cs">`
     </li>
     <li>
       <span class="icon">✅</span>
-      <span><b>ก้อนมุ้ง / 8 ชิปเดิม / ลำดับแบบ #2:</b> ไม่มีการแก้ไข — ดีอยู่แล้ว</span>
+      <span><b>ก้อนมือจับ multi / 8 ชิปเดิม / ลำดับแบบ #2 / มุ้งรวบเดิม:</b> ไม่มีการแก้ไขใน session นี้ — ยืนยันแล้ว</span>
     </li>
   </ul>
 </div>
@@ -898,6 +1105,14 @@ h += <span class="cs">`
         <td><b>ขนาดมุ้ง (o-mosqw/h) auto</b></td>
         <td>เว้นว่าง = auto จากบานหลัก — ยืนยันแล้วว่าถูกต้อง (มติพี่นัท)</td>
         <td>label "auto จากบาน" ในดราฟถูกแล้ว · คงไว้</td>
+      </tr>
+      <tr class="hl-green">
+        <td><b>.o-mosqopen vs .o-mosqopenstyle (ชื่อใกล้เคียง)</b></td>
+        <td>
+          <code>.o-mosqopen</code> = dead code (if false) ที่มีอยู่แล้วในโค้ด — ไม่มีผลต่อ UI<br>
+          <code>.o-mosqopenstyle</code> = class ใหม่ที่ developer ต้องใช้
+        </td>
+        <td>ถ้าสลับชื่อกัน: genQuote อ่านค่าไม่ได้ (hidden input ผิด class) · ชื่อในใบไม่ต่อท้าย · ไม่กระทบราคา</td>
       </tr>
     </tbody>
   </table>

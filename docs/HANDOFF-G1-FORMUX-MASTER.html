@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+.r{color:#B3151D;font-weight:700;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.key{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+.pill{display:inline-block;background:#15803d;color:#fff;font-size:10px;padding:1px 7px;border-radius:5px;}
+</style></head><body>
+
+<h1>HANDOFF G1 — FORM UX REDESIGN · MASTER (ส่งแก้ HTML ตัวเดียวจบ)</h1>
+<p class="sub">รวมทุกการเปลี่ยน UX ฟอร์มกรอก G1 · 2026-06-11 · ไฟล์ <code>public/calculator/index.html</code> · สเปกละเอียด+โค้ด = <code>docs/SPEC-G1-formux.pdf</code> · ดราฟกดเล่น = sharepicjr/draft-G1-formux.html</p>
+
+<div class="key"><b>🔑 หลักการเดียว (อ่านก่อนเริ่ม):</b> ทุกการเปลี่ยนนี้ <b>แก้แค่ "หน้าตา control" (UI) ไม่แตะ logic/ราคา/genQuote</b> — วิธี: <b>ซ่อน control เดิม (<code>.o-*</code>/<code>.i-*</code>) ไว้ + UI ใหม่ (ชิป/toggle/กล่อง) sync ค่ากลับเข้า element เดิม + <code>fire Event('change')</code></b> → <code>readItem</code>/<code>calcQuote</code>/ราคา/ใบ ไม่ต้องแก้เลย · <b>ห้ามเปลี่ยน value/ชื่อ class ที่ readItem อ่าน</b></div>
+
+<h2>สิ่งที่ต้องแก้ — 5 ก้อน</h2>
+<table>
+<tr><th>#</th><th>ก้อน</th><th>ทำอะไร</th><th>จุดในโค้ด</th></tr>
+<tr><td class="r">1</td><td>เรียงลำดับใหม่</td><td>ย้าย "แบบ" (<code>.i-prod</code>) ขึ้น <b>#2 ทันทีหลังกลุ่มงาน</b> (เดิมอันดับ 4) · ลำดับ: กลุ่มงาน→แบบ→ประเภท→ตำแหน่ง→กว้าง×สูง→…</td><td>addItem template ~L2072</td></tr>
+<tr><td class="r">2</td><td>8 ชิป (select ≤4)</td><td>เปลี่ยนเป็นชิปติ๊ก: ประเภท · ราง · ชุดล็อค · Cmech · สีกรอบมุ้ง · แผ่นทึบล่าง · ครอบวงกบ · เสริมคาน · (<b>ผ้ามุ้ง 5 ตัว คง dropdown</b>)</td><td>buildItemOpts + template</td></tr>
+<tr><td class="r">3</td><td>รวบมือจับ 4→1 <b>(multi)</b></td><td>กล่องเดียว <b>ติ๊กแบรนด์ได้หลายอันพร้อมกัน</b> (Cmech/ดิจิตอล/สแตนอร่าม/X-series ฟรี/รุ่นอื่น✎) → ติ๊กไหนโผล่ sub นั้น · <b>ราคาบวกสะสมทุกแบรนด์</b> · ปิด=เคลียร์เฉพาะตัวเอง · Cmech หลบมุ้ง(<code>.o-cmechawn</code>)=checkbox ใน sub Cmech</td><td>controls: <code>.o-cmech .o-digi .o-stainless .o-handlename .o-xhandle .o-cmechawn</code></td></tr>
+<tr><td class="r">4</td><td>รวบมุ้ง 4→1</td><td>กล่องเดียว: <code>.o-mosq</code> + (ผ้ามุ้ง/ขนาด/สีกรอบ) · เลือก "ไม่ใส่" = ซ่อนทุกช่องล่าง</td><td><code>.o-mosq .o-mosqfabric .o-mosqw/h .o-mosqcolor</code></td></tr>
+<tr><td class="r">5</td><td>ชิปลักษณะการเปิดมุ้ง <span class="pill">ใหม่</span></td><td>ในกล่องมุ้ง เพิ่มชิป <b>เปิด/เลื่อน/กระทุ้ง/ยก</b> · <b>โผล่เฉพาะเลือก imp21/imp23</b> (อื่นซ่อน) · <b>label-only ไม่กระทบราคา</b> → ต่อท้ายชื่อมุ้งในใบ (เช่น "มุ้งเฟรมเล็ก บานเลื่อน") · class ใหม่ <code>.o-mosqopenstyle</code> (อย่าชน <code>.o-mosqopen</code> = dead code <code>if(false)</code>)</td><td>genQuote มุ้ง ~L3631 + buildItemOpts</td></tr>
+</table>
+
+<h2>มติพี่นัท (ตัดสินแล้ว — ทำตามนี้)</h2>
+<table>
+<tr><th>เรื่อง</th><th>มติ</th></tr>
+<tr><td>มือจับใน 1 รายการ</td><td>✅ <b>ใส่หลายอย่างพร้อมกันได้</b> (multi-toggle · ไม่ใช่เลือกแบรนด์เดียว) · ราคาบวกรวม</td></tr>
+<tr><td>X-series มือจับ</td><td>toggle ในกล่องมือจับ · <b>ฟรี</b> (ไม่มีราคา) · เฉพาะบานสลิม/X-series</td></tr>
+<tr><td>Cmech หลบมุ้ง</td><td>checkbox ใน sub Cmech · เฉพาะบานกระทุ้ง</td></tr>
+<tr><td>ลักษณะการเปิดมุ้ง</td><td><b>ระบุในใบเฉยๆ ไม่กระทบราคา</b> · เฉพาะ imp21/imp23 (imp22 ติดตาย ไม่มี)</td></tr>
+<tr><td>ขนาดมุ้งเว้นว่าง</td><td>= auto จากบาน (ถูกแล้ว · คงไว้)</td></tr>
+<tr><td>P3 มุ้งจีบนิรภัยโน้ตหลุด</td><td>⏹️ <b>ปล่อยไว้ ไม่แก้</b> ("กรอบทำสีไม่ได้" มีประโยชน์ต่อลูกค้า)</td></tr>
+</table>
+
+<div class="box"><b>ผลลัพธ์ที่คาดหวัง:</b> ฟอร์ม ~31 ช่อง → default ~14 / เต็ม ~22 · กรอกไวขึ้น แตะง่ายบนมือถือ · <b>ไม่ตัด field ไหนทิ้ง</b> (แค่เรียง+รวบ+ซ่อนที่ยังไม่ใช้) · <b>HTML/JS pattern + snippet ครบใน <code>SPEC-G1-formux.pdf</code></b> (section 3A มือจับ · 3B รวบ · 3C ชิปลักษณะการเปิด · section 6 จุดโค้ด · section 8 QA)</div>
+
+<div class="dod"><b>📋 Definition of Done — เสร็จเมื่อ:</b>
+<ol style="margin:3px 0;">
+<li>5 ก้อนครบ — render G1: แบบอยู่ #2 · 8 ช่องเป็นชิป · มือจับติ๊กหลายอันได้+ราคาบวกถูก · มุ้งรวบกล่องเดียว · ชิปลักษณะการเปิดโผล่เฉพาะ imp21/23 ต่อท้ายชื่อในใบ</li>
+<li><code>node test/quote-fidelity.mjs</code> <b>PASS</b> — ราคา/ใบ baseline ไม่เพี้ยน (สำคัญ: pattern นี้ห้ามทำราคาเปลี่ยน)</li>
+<li>มือจับหลายแบรนด์พร้อมกัน → ราคารวมถูก · ลักษณะการเปิดมุ้ง → ราคาไม่เปลี่ยน (label-only)</li>
+<li>readItem/genQuote อ่าน value เดิมได้ครบ (ชิป sync เข้า control เดิมถูก)</li>
+<li>พี่นัทเล่นผ่าน (กรอกง่ายขึ้นจริง)</li>
+</ol>
+commit แยกก้อน · เสร็จกลับให้แชทตรวจ (ผม) verify รอบปิด · ของใหม่กลางทาง = เฟสถัดไป ไม่บล็อก</div>
+
+<p class="sub">หลังทำ G1 ผ่าน → จะขยาย pattern นี้เป็นสกิลปรับ UI กับ G2–G7 · ดราฟ interactive (กดเล่นก่อนแก้): https://jraluminium102.github.io/sharepicjr/draft-G1-formux.html</p>
+</body></html>
