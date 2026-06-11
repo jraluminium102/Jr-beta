@@ -91,9 +91,10 @@ const TCS = [
   {
     tc: "TC3", name: "ราวกันตก 47.4 บันไดตรง เสาอลู (imp6) ยาว 6.0 ม. (พยายามใส่ราวจับ ยู 5 หุน)",
     build() { const ch = addItem(doc.getElementById("items")); setItem(ch, { group: 2, prod: "imp6", w: 6.0, h: 1.0, qty: 1, opts: { ".o-handrail": "u5" } }); },
-    // imp6: len=6 → tier [5,10]=8000. + ราวจับ ยู 5 หุน 500/ม. → roundUp(6*8000 + 500*6)=51000
+    // imp6: len=6 → tier [5,10]=7200 (มติพี่นัท: IMP6=IMP5 · L470). + ราวจับ ยู 5 หุน 500/ม. → roundUp(6*7200 + 500*6)=47000
+    // (แก้ 2026-06-11: เดิมเทสใช้เรตเก่า 8000 → คาด 51000 ผิด · handrail บวกถูกอยู่แล้ว ไม่ใช่บั๊กระบบ)
     expect(it) {
-      const len = it.r.a, rate = 8000, byLen = len * rate, handrail = 500 * len; // ยู 5 หุน +500/ม.
+      const len = it.r.a, rate = 7200, byLen = len * rate, handrail = 500 * len; // ยู 5 หุน +500/ม.
       const sell = roundUp(byLen + handrail);
       return { sell, note: `ยาว ${len} × ${fmt(rate)} = ${fmt(byLen)} + ราวจับ ยู 5 หุน ${fmt(handrail)} → roundUp` };
     },
