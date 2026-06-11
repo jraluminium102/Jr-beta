@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G1 CLOSE-OUT — ผล verify รอบปิด (8/8 ผ่าน)</title>
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:#1f2937;font-size:13px;padding:14px;}
+.wrap{max-width:920px;margin:0 auto;}
+h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:12px;margin:0 0 12px;}
+.cards{text-align:center;margin:8px 0 14px;}
+.card{display:inline-block;border:2px solid #15803d;border-radius:8px;padding:6px 18px;margin:3px;}
+.card.r{border-color:#B3151D;} .card.b{border-color:#0369a1;}
+.card b{font-size:22px;display:block;}
+table{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:12px;background:#fff;border-radius:8px;overflow:hidden;}
+th,td{border:1px solid #e5e7eb;padding:6px 9px;text-align:left;vertical-align:top;}
+th{background:#B3151D;color:#fff;}
+.pass{color:#15803d;font-weight:700;}
+.r{color:#B3151D;font-weight:700;}
+.mono{font-family:Consolas,monospace;font-size:11px;background:#f3f4f6;padding:0 3px;border-radius:3px;}
+.note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:9px 12px;font-size:12px;margin:10px 0;}
+.flag{background:#fffbeb;border-left:3px solid #f0c000;padding:8px 11px;border-radius:0 6px 6px 0;font-size:12px;margin:10px 0;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:9px 12px;font-size:12.5px;margin:10px 0;}
+</style></head><body><div class="wrap">
+
+<h1>G1 (บาน) — ผล VERIFY รอบปิด</h1>
+<p class="sub">เทสงานค้างที่แชทแก้ทำเสร็จ (R2-1,2,3,5,6 + E1,E2,E3) · render จริงด้วย jsdom ทุกจุด · 2026-06-11 · READ-ONLY</p>
+
+<div class="cards">
+<span class="card"><b style="color:#15803d">8/8</b>✅ ผ่าน</span>
+<span class="card r"><b style="color:#B3151D">0</b>❌ ตก</span>
+<span class="card b"><b style="color:#0369a1">1</b>🟡 จุดเล็ก (P3)</span>
+</div>
+
+<table>
+<tr><th>#</th><th>จุด</th><th>หลักฐานจาก render จริง</th><th>ผล</th></tr>
+<tr><td class="r">R2-1</td><td>ตัด (ทู)/(วัน) จากใบ</td><td>โซลิด detail = <span class="mono">บานทึบลูกฟูกเรียบ 2 หน้า เสมอกรอบ</span> — ไม่มี (ทู)</td><td class="pass">PASS</td></tr>
+<tr><td class="r">R2-2</td><td>มุ้งจีบ ขนาดย้ายช่องรายการ</td><td>ชื่อ = <span class="mono">…พร้อมมุ้งจีบนิรภัย ขนาด 1×2.2 ม.</span> · รายละเอียดไม่มี <span class="mono">— ขนาด ~X ตร.ม.</span></td><td class="pass">PASS</td></tr>
+<tr><td class="r">R2-3</td><td>ดัดโค้ง ตัดราคาช่วง</td><td>ชื่อกระจก = <span class="mono">กระจกใสดัดโค้งหนา 10 มม.</span> — ไม่มี (ราคาช่วง 6500-7000)</td><td class="pass">PASS</td></tr>
+<tr><td class="r">R2-5</td><td>โซลิด breakdown โชว์ฐานบาน</td><td>จอเซลล์มี msg <span class="mono">ฐานบาน (บานเปิดยูโร) … = …</span> (ราคารวมถูกอยู่แล้ว)</td><td class="pass">PASS</td></tr>
+<tr><td class="r">R2-6</td><td>ลบ banner "เลือกมือจับ 1 ใน 4"</td><td>banner หายจาก DOM (เหลือแค่ comment @2225) · dropdown มือจับยังครบ</td><td class="pass">PASS</td></tr>
+<tr><td class="r">E1</td><td>แก้ข้อความทุกจุด (โหมดแก้ไข)</td><td><span class="mono">_detOv</span> override → แก้+เพิ่มบรรทัดขึ้นใบจริง · มี <span class="mono">contenteditable</span> ในใบตอนกด ✎</td><td class="pass">PASS</td></tr>
+<tr><td class="r">E2</td><td>ลบ checkbox "คิดราคาเหมา"</td><td>ไม่มี element checkbox/ช่อง "ราคาเหมาต่อชุด" ในการ์ดจริง (ลบสะอาด)</td><td class="pass">PASS</td></tr>
+<tr><td class="r">E3</td><td>OPTION เลือก/พิมพ์เอง + ราคาเอง</td><td>cascade 6 หมวด · พิมพ์เอง+ใส่ ±บาท → ใบขึ้น <span class="mono">OPTION : … (ราคา+4,500 บาท)</span></td><td class="pass">PASS</td></tr>
+</table>
+
+<div class="flag"><b>🟡 จุดเล็กที่เจอเพิ่ม (P3 · นอก 8 จุด · เช็คซ้ำ):</b> รายละเอียด "มุ้งจีบนิรภัย" มีโน้ตภายในหลุดลงใบ <span class="mono">(ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)</span> และ <span class="mono">·</span> แสดงเป็น <span class="mono">-</span> — ลักษณะเดียวกับ R2-3 (โน้ต internal หลุด) แต่คนละสินค้า · ไม่บล็อกการปิด G1 · เก็บเป็น G1.x ถ้าพี่นัทอยากให้เก็บกวาด</div>
+
+<div class="dod"><b>📋 Definition of Done — G1:</b> งานค้างทั้ง 8 จุดทำครบ + verify render ผ่านหมด · ราคา/ฟอร์แมตไม่เพี้ยน · <b>G1 ปิดได้ 100%</b> (เหลือจุดเล็ก P3 เป็น optional) · กลุ่ม G2–G7 = คนอื่นทำ</div>
+
+<div class="note"><b>วิธีตรวจ:</b> render index.html ด้วย jsdom (runScripts) → addItem โซลิด/ดัดโค้ง/บานกระทุ้ง+มุ้งจีบนิรภัย/บานเลื่อน → calcQuote + genQuote → อ่านเนื้อ <span class="mono">#quoteContent</span> + breakdown การ์ด + ทดสอบ _detOv/OPTION cascade · temp script ลบทิ้งแล้ว · ไม่แตะ index.html</div>
+
+</div></body></html>
