@@ -281,7 +281,12 @@ export default function QueuePage() {
       });
     }
     // วันลา/หยุด/อยู่ออฟฟิศ (จาก sales_availability ของวันนั้น) — แสดงทุกวัน (ของจริงที่บันทึกไว้)
-    avail.filter((a) => a.date === d).forEach((a) => {
+    const leaveOfDay = avail.filter((a) => a.date === d);
+    if (d === "2026-06-25" || d === "2026-06-15") {
+      // eslint-disable-next-line no-console
+      console.log("[DBG buildDayItems]", d, "availLen", avail.length, "leaveOfDay", leaveOfDay.length, leaveOfDay.map((a) => `${a.kind}/${a.sales_id?.slice(0, 6)}`));
+    }
+    leaveOfDay.forEach((a) => {
       const s = sales.find((x) => x.id === a.sales_id);
       if (!s) return;
       const tMin = (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") ? -1 : (a.kind === "LEAVE_HALF" && a.half === "PM") ? 840 : 600;
