@@ -473,13 +473,17 @@ export default function QueuePage() {
               ) : null;
             })()}
           </>
-        ) : list.length === 0 ? (
-          <p className="text-center text-ink-3 py-12">
-            {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
-          </p>
         ) : (
           /* ===== List View ===== */
           <>
+            {/* กล่องวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก */}
+            <LeaveStrip avail={avail} sales={sales} month={filterMonth} />
+            {list.length === 0 ? (
+              <p className="text-center text-ink-3 py-12">
+                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
+              </p>
+            ) : (
+              <>
             {/* กล่อง "รอจัดคิว" */}
             {pendingRows.length > 0 && (
               <div className="mb-5">
@@ -528,6 +532,8 @@ export default function QueuePage() {
                   );
                 })}
               </div>
+            )}
+              </>
             )}
           </>
         )}
@@ -693,6 +699,47 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
             onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
             className="w-4 h-4 accent-brand" /> ใบเสร็จ
         </label>
+      </div>
+    </div>
+  );
+}
+
+// กล่องสรุปวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก (อ่านจาก avail ที่โหลดไว้แล้ว)
+const AVAIL_KIND_META: Record<string, { th: string; cls: string }> = {
+  LEAVE_FULL:  { th: "ลาทั้งวัน", cls: "bg-red-50 text-red-700 border-red-200" },
+  LEAVE_HALF:  { th: "ลาครึ่งวัน", cls: "bg-orange-50 text-orange-700 border-orange-200" },
+  OFFICE_HALF: { th: "อยู่ออฟฟิศเช้า", cls: "bg-sky-50 text-sky-700 border-sky-200" },
+  HOLIDAY:     { th: "วันหยุด", cls: "bg-gray-100 text-gray-600 border-gray-200" },
+};
+
+function LeaveStrip({ avail, sales, month }: { avail: AvailRow[]; sales: QueueSales[]; month: string }) {
+  const items = useMemo(() => {
+    const nameOf = (id: string) => sales.find((s) => s.id === id)?.name ?? "—";
+    return avail
+      .filter((a) => a.date.startsWith(month))
+      .sort((a, b) => a.date.localeCompare(b.date) || nameOf(a.sales_id).localeCompare(nameOf(b.sales_id), "th"))
+      .map((a) => ({ ...a, name: nameOf(a.sales_id) }));
+  }, [avail, sales, month]);
+
+  if (!items.length) return null;
+  return (
+    <div className="mb-5 rounded-xl border border-gray-200/70 bg-white/40 p-3">
+      <div className="flex items-center gap-1.5 mb-2 text-sm font-semibold text-ink-2">
+        <Icon name="calendar" size={14} /> วันลา / อยู่ออฟฟิศ (เดือนนี้)
+        <span className="tabular-nums text-xs text-ink-3">{items.length} รายการ</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((a) => {
+          const k = AVAIL_KIND_META[a.kind] ?? { th: a.kind, cls: "bg-gray-100 text-gray-600 border-gray-200" };
+          const half = a.kind === "LEAVE_HALF" && a.half ? (a.half === "AM" ? " เช้า" : " บ่าย") : "";
+          return (
+            <span key={a.id} className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs ${k.cls}`}>
+              <span className="tabular-nums opacity-90">{thaiDate(a.date)}</span>
+              <span className="font-semibold">{a.name}</span>
+              <span className="opacity-80">{k.th}{half}</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );
