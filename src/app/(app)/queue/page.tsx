@@ -252,24 +252,37 @@ export default function QueuePage() {
 
   const sortedDays = useMemo(() => [...byDay.keys()].sort(), [byDay]);
 
-  // รวมคิว + อยู่ออฟฟิศประจำ + วันลา ของวันนั้น เรียงตามเซลล์→เวลา (แทรกในตารางวัน)
+  // รวมคิว + อยู่ออฟฟิศประจำ + วันลา ของวันนั้น เรียงตาม "เวลา" ก่อน (เซลล์เป็น tiebreak)
+  // office ประจำ = แสดงเฉพาะวันนี้เป็นต้นไป (ไม่ย้อนหลัง) และหลบให้คิว (ช่องที่มีคิวแล้วไม่โชว์ออฟฟิศ)
   const buildDayItems = useCallback((d: string): DayItem[] => {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const wd = new Date(d + "T00:00:00").getDay();
     const rankOf = (sid: string | null) => (sid ? (salesRank.get(sid) ?? 9998) : 9999);
     const acc: { item: DayItem; sRank: number; tMin: number }[] = [];
 
-    (byDay.get(d) ?? []).forEach((e) =>
-      acc.push({ item: { kind: "queue", entry: e }, sRank: rankOf(e.sales_id), tMin: timeToMin(e.queue_time) })
-    );
-    // อยู่ออฟฟิศประจำ (ข้ามถ้าลาทั้งวัน)
-    sales.filter((s) => s.role !== "ASSISTANT").forEach((s) => {
-      const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"));
-      if (fullLeave) return;
-      (s.office_slots ?? []).filter((o) => o.weekday === wd).forEach((o) =>
-        acc.push({ item: { kind: "office", sales: s, half: o.half }, sRank: rankOf(s.id), tMin: o.half === "AM" ? 600 : 840 })
-      );
+    const queues = byDay.get(d) ?? [];
+    // ช่องครึ่งวันที่ "มีคิวแล้ว" ของแต่ละเซลล์ (office จะหลบ) — `${sales_id}-AM/PM`
+    const occupied = new Set<string>();
+    queues.forEach((e) => {
+      acc.push({ item: { kind: "queue", entry: e }, sRank: rankOf(e.sales_id), tMin: timeToMin(e.queue_time) });
+      if (e.sales_id) {
+        const t = timeToMin(e.queue_time);
+        if (t < 99999) occupied.add(`${e.sales_id}-${t < 720 ? "AM" : "PM"}`);
+      }
     });
-    // วันลา/หยุด/อยู่ออฟฟิศ (จาก sales_availability ของวันนั้น)
+    // อยู่ออฟฟิศประจำ — เฉพาะ d >= วันนี้ · ข้ามถ้าลาทั้งวัน หรือช่องนั้นมีคิวแล้ว
+    if (d >= todayStr) {
+      sales.filter((s) => s.role !== "ASSISTANT").forEach((s) => {
+        const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"));
+        if (fullLeave) return;
+        (s.office_slots ?? []).filter((o) => o.weekday === wd).forEach((o) => {
+          if (occupied.has(`${s.id}-${o.half}`)) return; // หลบให้คิว
+          acc.push({ item: { kind: "office", sales: s, half: o.half }, sRank: rankOf(s.id), tMin: o.half === "AM" ? 600 : 840 });
+        });
+      });
+    }
+    // วันลา/หยุด/อยู่ออฟฟิศ (จาก sales_availability ของวันนั้น) — แสดงทุกวัน (ของจริงที่บันทึกไว้)
     avail.filter((a) => a.date === d).forEach((a) => {
       const s = sales.find((x) => x.id === a.sales_id);
       if (!s) return;
@@ -277,7 +290,8 @@ export default function QueuePage() {
       acc.push({ item: { kind: "leave", sales: s, av: a }, sRank: rankOf(s.id), tMin });
     });
 
-    acc.sort((a, b) => a.sRank - b.sRank || a.tMin - b.tMin);
+    // เรียงเวลาก่อน → เซลล์เป็น tiebreak (ลาทั้งวัน tMin=-1 ขึ้นบนสุด)
+    acc.sort((a, b) => a.tMin - b.tMin || a.sRank - b.sRank);
     return acc.map((x) => x.item);
   }, [byDay, sales, avail, salesRank]);
 

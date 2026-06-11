@@ -189,9 +189,10 @@ export function QueueModal({
         else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
         else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
 
-        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน)
+        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน) · เฉพาะวันนี้เป็นต้นไป
         const half = isAMSlot ? "AM" : isPMSlot ? "PM" : null;
-        if (half) {
+        const nowStr = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
+        if (half && date >= nowStr) {
           const selSales = salesList.find((s) => s.id === f.sales_id);
           const wd = new Date(date + "T00:00:00").getDay();
           if ((selSales?.office_slots ?? []).some((o) => o.weekday === wd && o.half === half)) {
