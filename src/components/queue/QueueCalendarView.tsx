@@ -80,6 +80,7 @@ export type AvailRow = {
   date: string;
   kind: string;
   half: string | null;
+  note?: string | null;
 };
 
 // ---- component --------------------------------------------------------------
