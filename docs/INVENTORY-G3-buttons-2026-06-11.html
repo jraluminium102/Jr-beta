@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventory ปุ่ม/ชิป G3 หลังคา — JR 2026-06-11</title>
+<style>
+  :root{--red:#B3151D;--line:#E5E7EB;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;font-size:13px;color:#1F2937;margin:0;padding:12px;background:#F9FAFB;}
+  h1{font-size:17px;color:var(--red);margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:11px;margin-bottom:12px;}
+  h2{font-size:14px;color:var(--red);margin:16px 0 6px;border-bottom:2px solid var(--red);padding-bottom:3px;}
+  h3{font-size:13px;color:#374151;margin:10px 0 4px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;}
+  th{background:#B3151D;color:#fff;padding:7px 8px;text-align:left;font-weight:700;}
+  td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:nth-child(even) td{background:#FFF5F5;}
+  .high{background:#FEE2E2 !important;font-weight:700;}
+  .mid{background:#FEF9C3 !important;}
+  .low{background:#F3F4F6 !important;color:#6B7280;}
+  .cls{font-family:monospace;font-size:11px;color:#7C3AED;background:#F5F3FF;padding:1px 5px;border-radius:4px;}
+  .opts{font-size:11px;color:#374151;line-height:1.6;}
+  .pri{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:9px;}
+  .pri.h{background:#FEE2E2;color:#991B1B;}
+  .pri.m{background:#FEF9C3;color:#854D0E;}
+  .pri.l{background:#F3F4F6;color:#6B7280;}
+  .box-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:#DBEAFE;color:#1D4ED8;}
+  .summary-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .summary-box table{margin-bottom:0;}
+  .cnt-big{font-size:28px;font-weight:700;color:var(--red);line-height:1;}
+  .cnt-label{font-size:12px;color:#6B7280;margin-top:2px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .stat-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
+  .note-box{background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px;}
+  .note-box b{color:#92400E;}
+</style>
+</head>
+<body>
+
+<h1>Inventory ปุ่ม/ชิป/ช่องกรอก — G3 หลังคา</h1>
+<div class="sub">เครื่องคิดราคา JR · อ้างอิง index.html + _coverage-G3.json · 11 มิ.ย. 2026</div>
+
+<!-- สรุปตัวเลข -->
+<div class="stat-grid">
+  <div class="stat-card"><div class="cnt-big">14</div><div class="cnt-label">ชิปหลังคา</div></div>
+  <div class="stat-card"><div class="cnt-big">12</div><div class="cnt-label">ช่องกรอกตัวเลข</div></div>
+  <div class="stat-card"><div class="cnt-big">5</div><div class="cnt-label">checkbox</div></div>
+  <div class="stat-card"><div class="cnt-big">44</div><div class="cnt-label">ช่องรวมต่อสินค้า</div></div>
+</div>
+
+<div class="note-box">
+  <b>หมายเหตุ:</b> ตัวเลข 44 ช่อง/สินค้า มาจาก <code>_coverage-G3.json</code> (เช่น roof_vinyl total:44) ซึ่งนับ chip(14) + drop(2) + ช่องตัวเลขต่างๆ รวมกัน · ตารางนี้แยกรายชิป/ช่อง พร้อม class อ้างอิงในโค้ดจริง
+</div>
+
+<!-- ===== กลุ่ม 1: ขนาด ===== -->
+<h2>กล่อง 1 — ขนาดหลังคา (เปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>ชนิด</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="high">
+    <td>ความยาว (ด้านขนานบ้าน)</td>
+    <td><span class="cls">i-w</span></td>
+    <td>input number</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">1 ขนาด</span></td>
+  </tr>
+  <tr class="high">
+    <td>ความยื่น (ระยะยื่นออก)</td>
+    <td><span class="cls">i-h</span></td>
+    <td>input number</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">1 ขนาด</span></td>
+  </tr>
+</table>
+
+<!-- ===== กลุ่ม 2: วัสดุมุง ===== -->
+<h2>กล่อง 2 — วัสดุมุง · สี · โครง (เปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>จำนวน option</th><th>ตัวเลือก</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="high">
+    <td>สีวัสดุมุง (ไวนิล)</td>
+    <td><span class="cls">o-roofcolor</span></td>
+    <td>3</td>
+    <td class="opts">สีเทา · สีขาว (default) · สีน้ำตาล<br><span style="color:#6B7280;">(ดีไลท์=2, โพลีตัน=dropdown, เมทัล=4, ชินโคไลท์=3)</span></td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">2 วัสดุ</span></td>
+  </tr>
+  <tr class="high">
+    <td>แป</td>
+    <td><span class="cls">o-roofbatten</span></td>
+    <td>2</td>
+    <td class="opts">แปเดี่ยว · แปคู่ (default)</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">2 วัสดุ</span></td>
+  </tr>
+  <tr class="high">
+    <td>โครงสร้าง</td>
+    <td><span class="cls">o-roofframe</span></td>
+    <td>2</td>
+    <td class="opts">โครงอลูมิเนียม (default) · โครงเหล็กชุบซิงค์</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">2 วัสดุ</span></td>
+  </tr>
+</table>
+
+<!-- ===== กลุ่ม 3: หลังคาเลื่อน ===== -->
+<h2>กล่อง 3 — หลังคาเลื่อน (toggle เด่น สีฟ้า · ปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>ชนิด</th><th>จำนวน option / ช่วง</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="high">
+    <td>toggle ทำเป็นหลังคาเลื่อน</td>
+    <td><span class="cls">.slide toggle</span></td>
+    <td>toggle (CSS on/off)</td>
+    <td>เปิด/ปิด</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>ชนิดเลื่อน</td>
+    <td><span class="cls">o-slidetype</span> <span style="color:#6B7280;font-size:11px;">(label)</span></td>
+    <td>chip เลือก 1</td>
+    <td class="opts">เลื่อนยื่น · เลื่อนข้าง (ราคาเท่ากัน)</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>จำนวนบานเลื่อน</td>
+    <td><span class="cls">o-smslide</span></td>
+    <td>stepper −[N]+</td>
+    <td>0–99</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>จำนวนบานติดตาย</td>
+    <td><span class="cls">o-smfixed</span></td>
+    <td>stepper −[N]+</td>
+    <td>0–99</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>พื้นที่เลื่อน ยาว</td>
+    <td><span class="cls">o-smw</span></td>
+    <td>input number</td>
+    <td>ม.</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>พื้นที่เลื่อน ยื่น</td>
+    <td><span class="cls">o-smh</span></td>
+    <td>input number</td>
+    <td>ม.</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+  <tr class="mid">
+    <td>มอเตอร์</td>
+    <td><span class="cls">o-smotorprice / o-smotor</span></td>
+    <td>input number</td>
+    <td>จำนวนตัว (auto ตามพื้นที่)</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">3 เลื่อน</span></td>
+  </tr>
+</table>
+
+<!-- ===== กลุ่ม 4: ปลายหลังคา/รางน้ำ ===== -->
+<h2>กล่อง 4 — ปลายหลังคา · รางน้ำ (เปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>จำนวน option</th><th>ตัวเลือก</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="high">
+    <td>ปลายหลังคา</td>
+    <td><span class="cls">o-roofend</span></td>
+    <td>2</td>
+    <td class="opts">ปล่อย (default) · รางน้ำ (รวมในราคาหลังคา)</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">4 ราง</span></td>
+  </tr>
+  <tr class="high">
+    <td>ชนิดราง</td>
+    <td><span class="cls">o-rfgut</span></td>
+    <td>3</td>
+    <td class="opts">อลู S 1,000/ม. (default) · สแตนเลส M 2,000/ม. · สแตนเลส L 3,000/ม.</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">4 ราง</span></td>
+  </tr>
+  <tr class="high">
+    <td>ความยาวราง (ฝั่งยาว)</td>
+    <td><span class="cls">o-rfgutlen</span></td>
+    <td>—</td>
+    <td class="opts">input number (ว่าง/0 = ใช้ด้านยาวหลังคา)</td>
+    <td><span class="pri h">สูง</span></td>
+    <td><span class="box-tag">4 ราง</span></td>
+  </tr>
+  <tr class="mid">
+    <td>ระบบระบาย (ท่อ/โซ่)</td>
+    <td><span class="cls">o-guttersys</span></td>
+    <td>2</td>
+    <td class="opts">ท่อ (default) · โซ่</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+  <tr class="mid">
+    <td>สีท่อ PVC 2.5″</td>
+    <td><span class="cls">o-gutter-pipecolor</span></td>
+    <td>2</td>
+    <td class="opts">ขาว (default) · ดำ</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+  <tr class="mid">
+    <td>ลายโซ่</td>
+    <td><span class="cls">o-gutter-chainpat</span></td>
+    <td>2</td>
+    <td class="opts">ทิวลิป (default) · โลตัส</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+  <tr class="mid">
+    <td>สีโซ่</td>
+    <td><span class="cls">o-gutter-chaincolor</span></td>
+    <td>2</td>
+    <td class="opts">ขาว (default) · น้ำตาล</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+  <tr class="mid">
+    <td>ท่อน้ำทิ้ง PVC 2.5″</td>
+    <td><span class="cls">o-rfdrain</span></td>
+    <td>4</td>
+    <td class="opts">ไม่มี · ดำ (default) · ขาว · เทา</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>ตะแกรงกันใบไม้ สีดำ</td>
+    <td><span class="cls">o-rfleaf</span></td>
+    <td>checkbox</td>
+    <td class="opts">checked default · รวมในราคา (ฟรี)</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">4 ราง → subbox</span></td>
+  </tr>
+</table>
+
+<!-- ===== กลุ่ม 5: ของเสริม ===== -->
+<h2>กล่อง 5 — ของเสริมหลังคา (ปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>จำนวน option / ชนิด</th><th>ตัวเลือก</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="mid">
+    <td>คานเหล็กถัก</td>
+    <td><span class="cls">o-rfbeam</span> + <span class="cls">o-rfbeamlen</span></td>
+    <td>4 + input ยาว</td>
+    <td class="opts">ไม่มี (default) · รุ่น1 2,400/ม. · รุ่น2 3,600/ม. · รุ่น3 4,400/ม.</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">5 เสริม</span></td>
+  </tr>
+  <tr class="mid">
+    <td>เสาแผง</td>
+    <td><span class="cls">o-rfpolep</span></td>
+    <td>stepper/input จำนวน</td>
+    <td class="opts">4,000/ต้น</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">5 เสริม</span></td>
+  </tr>
+  <tr class="mid">
+    <td>เสา 4″×8″</td>
+    <td><span class="cls">o-rfpole4</span></td>
+    <td>stepper/input จำนวน</td>
+    <td class="opts">2,000/ต้น</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">5 เสริม</span></td>
+  </tr>
+  <tr class="mid">
+    <td>ซ่อนสโลป</td>
+    <td><span class="cls">o-rfhs</span> + <span class="cls">o-rfhsh</span> + <span class="cls">o-rfhsl</span> + <span class="cls">o-rfhsn</span></td>
+    <td>3 + 3 input</td>
+    <td class="opts">ไม่มี (default) · คอมโพสิต 3,500/ตร.ม. · สมาร์ทบอร์ด 4,000/ตร.ม. · + สูง/ยาว/จำนวนด้าน</td>
+    <td><span class="pri m">กลาง</span></td>
+    <td><span class="box-tag">5 เสริม</span></td>
+  </tr>
+  <tr class="low">
+    <td>ปิดปลายกันน้ำ</td>
+    <td><span class="cls">o-rfeave</span></td>
+    <td>input ยาว (ม.)</td>
+    <td class="opts">1,000/ม.</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>โซ่รางน้ำ</td>
+    <td><span class="cls">o-rfchain</span></td>
+    <td>stepper/input จำนวน</td>
+    <td class="opts">3,000/เส้น</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>ครอบท่อ PVC</td>
+    <td><span class="cls">o-rfpvc</span></td>
+    <td>input ยาว (ม.)</td>
+    <td class="opts">1,500/1.5ม. ปัดขึ้น</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>วัสดุปิดรอยต่อ + สี</td>
+    <td><span class="cls">o-rfsealer</span> + <span class="cls">o-rfsealercolor</span></td>
+    <td>checkbox + 3 สี</td>
+    <td class="opts">ขาว (default) · ดำ · เทา</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>เสริมเพลทเหล็กล่าง</td>
+    <td><span class="cls">o-rfplate</span></td>
+    <td>checkbox</td>
+    <td class="opts">ฟรี ลงใบ</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>เหล็กดึงด้านบน</td>
+    <td><span class="cls">o-rfpull</span></td>
+    <td>checkbox</td>
+    <td class="opts">ฟรี ลงใบ</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>ปิดซ่อนราง</td>
+    <td><span class="cls">o-rfgcw</span> + <span class="cls">o-rfgch</span> + <span class="cls">o-rfgcl</span></td>
+    <td>3 input (กว้าง/สูง/ยาว)</td>
+    <td class="opts">ซม./ซม./ม. — คิดเงิน</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+  <tr class="low">
+    <td>ครอบคาน</td>
+    <td><span class="cls">o-rfbcw</span> + <span class="cls">o-rfbcl</span></td>
+    <td>2 input (กว้างห่อ/ยาวคาน)</td>
+    <td class="opts">ลด 40% · คิดเงิน</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">5 เสริม → subbox</span></td>
+  </tr>
+</table>
+
+<!-- ===== กลุ่ม 6-7 ===== -->
+<h2>กล่อง 6–7 — หลังคาผสม · หมายเหตุ (ปิดเริ่มต้น)</h2>
+<table>
+  <tr><th>ชื่อ (ภาษาคน)</th><th>class ในระบบ</th><th>ชนิด</th><th>หมายเหตุ</th><th>ความสำคัญ</th><th>กล่อง</th></tr>
+  <tr class="low">
+    <td>หลังคาผสม (วัสดุที่ 2)</td>
+    <td><span class="cls">roof2</span> (dropdown)</td>
+    <td>select (18 ตัวเลือก)</td>
+    <td>เลือกหลังคาอีกชนิด + พื้นที่แยก</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">6 ผสม</span></td>
+  </tr>
+  <tr class="low">
+    <td>หมายเหตุ / งานเสริม</td>
+    <td><span class="cls">remark-add</span> (dropdown/text · 18 ตัวเลือก)</td>
+    <td>textarea/select</td>
+    <td>งานพิเศษ/รื้อของเดิม ฯลฯ</td>
+    <td><span class="pri l">ต่ำ</span></td>
+    <td><span class="box-tag">7 หมายเหตุ</span></td>
+  </tr>
+</table>
+
+<!-- ===== สรุป ===== -->
+<h2>สรุปภาพรวม</h2>
+<div class="summary-box">
+  <table>
+    <tr><th>หมวด</th><th>จำนวน</th><th>รายการ</th><th>เปิด/ปิดเริ่มต้น</th></tr>
+    <tr><td><b>กล่อง 1</b> ขนาด</td><td>2 input</td><td>ยาว · ยื่น</td><td style="color:#15803D;font-weight:700;">เปิด</td></tr>
+    <tr><td><b>กล่อง 2</b> วัสดุ</td><td>3 chip group</td><td>roofcolor · roofbatten · roofframe</td><td style="color:#15803D;font-weight:700;">เปิด</td></tr>
+    <tr><td><b>กล่อง 3</b> เลื่อน</td><td>toggle + 6 ช่อง</td><td>toggle เด่น สีฟ้า · ชนิด/บาน/พื้นที่/มอเตอร์</td><td style="color:#B45309;font-weight:700;">ปิด (toggle)</td></tr>
+    <tr><td><b>กล่อง 4</b> ราง</td><td>3 chip group + 1 input<br>+ subbox 4 chip/checkbox</td><td>roofend · rfgut · rfgutlen · guttersys · pipecolor · chainpat · chaincolor · rfdrain · rfleaf</td><td style="color:#15803D;font-weight:700;">เปิด (subbox พับ)</td></tr>
+    <tr><td><b>กล่อง 5</b> เสริม</td><td>4 chip group + 8 input/checkbox<br>+ subbox รายการย่อย</td><td>rfbeam · rfpolep · rfpole4 · rfhs · rfeave · rfchain · rfpvc · rfsealer · rfplate · rfpull · rfgcw/h/l · rfbcw/l</td><td style="color:#B3151D;font-weight:700;">ปิด</td></tr>
+    <tr><td><b>กล่อง 6</b> ผสม</td><td>1 dropdown</td><td>roof2</td><td style="color:#B3151D;font-weight:700;">ปิด</td></tr>
+    <tr><td><b>กล่อง 7</b> หมายเหตุ</td><td>1 field</td><td>remark-add</td><td style="color:#B3151D;font-weight:700;">ปิด</td></tr>
+  </table>
+</div>
+
+<div class="summary-box" style="margin-top:8px;">
+  <div style="font-weight:700;color:var(--red);margin-bottom:8px;">นับปุ่ม/ชิป/ช่องรวมทั้งหมด</div>
+  <table>
+    <tr><th>ประเภท</th><th>จำนวน</th><th>หมายเหตุ</th></tr>
+    <tr><td>ชิปหลังคา (chip group)</td><td><b>14 กลุ่ม</b></td><td>roofcolor, roofbatten, roofframe, roofend, guttersys, gutter-pipecolor, gutter-chainpat, gutter-chaincolor, rfdrain, rfgut, rfbeam, rfsealercolor, rfhs + ชนิดเลื่อน</td></tr>
+    <tr><td>ตัวเลือกชิปรวม (ปุ่มกด)</td><td><b>~36 ปุ่ม</b></td><td>นับทุก option ในทุก group (เฉลี่ย 2-4 ต่อ group)</td></tr>
+    <tr><td>stepper (−[N]+)</td><td><b>4 ชุด</b></td><td>บานเลื่อน · บานติดตาย · เสาแผง · โซ่รางน้ำ</td></tr>
+    <tr><td>input number อื่นๆ</td><td><b>~14 ช่อง</b></td><td>ขนาด(2) + พื้นที่เลื่อน(2) + มอเตอร์ + ยาวราง + คาน(2) + ซ่อนสโลป(3) + ปิดปลาย + ครอบท่อ + ปิดซ่อนราง(3) + ครอบคาน(2)</td></tr>
+    <tr><td>checkbox</td><td><b>5 ช่อง</b></td><td>rfleaf · rfsealer · rfplate · rfpull + toggle หลังคาเลื่อน</td></tr>
+    <tr><td>dropdown (select)</td><td><b>2 รายการ</b></td><td>roof2 (หลังคาผสม) · remark-add (หมายเหตุ)</td></tr>
+    <tr style="background:#FEE2E2;"><td><b>รวมทั้งหมด</b></td><td><b>≈ 44 ช่อง</b></td><td>ตรงกับ coverage JSON · กล่อง 7 กล่อง</td></tr>
+  </table>
+</div>
+
+<div style="font-size:11px;color:#9CA3AF;margin-top:12px;text-align:center;">
+  Inventory G3 หลังคา · อ้างอิง index.html ~L2517-2573 + _coverage-G3.json · 11 มิ.ย. 2026
+</div>
+</body>
+</html>
