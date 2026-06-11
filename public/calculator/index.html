@@ -671,7 +671,7 @@ const PRODUCTS=[
  {id:'imp17',cat:'หลังคา',name:"ชินโคไลท์ 6 มม. รุ่น Nature",method:'bucket',min:0,rates:'IMP17',cost:null,optSlide:true},
  {id:'imp18',cat:'หลังคา',name:"ชินโคไลท์ 4 มม. รุ่น Shade",method:'bucket',min:0,rates:'IMP18',cost:null,optSlide:true},
  {id:'imp19',cat:'หลังคา',name:"ชินโคไลท์ 10 มม. รุ่น Prime",method:'bucket',min:0,rates:'IMP19',cost:null,optSlide:true},
- {id:'imp20',cat:'หลังคา',name:"ชินโคไลท์ 10 มม. รุ่น Grang",method:'bucket',min:0,rates:'IMP20',cost:null,optSlide:true},
+ {id:'imp20',cat:'หลังคา',name:"ชินโคไลท์ 10 มม. รุ่น Grand",method:'bucket',min:0,rates:'IMP19',cost:null,optSlide:true}, // FIX-5: Grang→Grand + ราคา=Prime (IMP19) มติพี่นัท
  {id:'imp21',cat:'มุ้ง',name:"มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์ (บานเปิด/เลื่อน/กระทุ้ง/ยก) ห้าม PC",method:'bucket',min:0,rates:'IMP21',cost:null,min_door:2400,min_window:1200,screen_addon:1,mscolor:true,deny_with:['pc_door_2','pc_door_4']},
  {id:'imp22',cat:'มุ้ง',name:"มุ้งเฟรมเล็กติดตาย ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP22',cost:null,min_door:1500,min_window:800,screen_addon:1,mscolor:true},
  {id:'imp23',cat:'มุ้ง',name:"มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก · ตัด PC)",method:'bucket',min:0,rates:'IMP23',cost:null,min_door:7200,min_window:4800,screen_addon:1,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
@@ -2393,7 +2393,7 @@ function buildItemOpts(d){
       h+='<label class="opt">สีเมทัลชีท <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="สีน้ำตาล">สีน้ำตาล</option><option value="สีขาว">สีขาว</option><option value="สีเทา">สีเทา</option></select></label>';
     } else if(/^imp(1[5-9]|20)$/.test(p.id)){
       // FIX-5(G3): ชินโคไลท์ — สี (starter list) · display
-      h+='<label class="opt">สีชินโคไลท์ <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="Light Grey">Light Grey</option><option value="Modern Grey">Modern Grey</option></select></label>';
+      h+='<label class="opt">สีชินโคไลท์ <select class="o-roofcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุสี —</option><option value="สี Light Grey">Light Grey</option><option value="สี Modern Grey">Modern Grey</option></select></label>'; // FIX-5: เติม "สี" นำหน้า value (ตรงใบจริง "รุ่น ... สี Light Grey")
     }
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     h+='<label class="opt" style="width:100%;background:#FFF7ED;border-left:3px solid #F59E0B;padding:5px 9px;">+ ต่อปลายวัสดุที่ 2 <select class="o-roof2" style="width:auto;height:32px;max-width:210px;" onchange="calcQuote();"><option value="">— ไม่มี —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select> พื้นที่ส่วนที่ 2 <input type="number" class="o-roof2area" min="0" step="0.1" value="0" style="width:62px;height:30px;" oninput="calcQuote();"> ตร.ม. <span style="font-size:11px;color:#92400e;">(เรตแยกตามวัสดุ)</span></label>';
