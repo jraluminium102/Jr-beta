@@ -146,7 +146,7 @@ tr.hl-green  td { background: #F0FFF4; }
   <ul class="checklist">
     <li><span class="icon">1️⃣</span> ย้าย .i-prod (แบบ) ขึ้นมาเป็นลำดับ 2 (ทันทีหลัง .i-group)</li>
     <li><span class="icon">2️⃣</span> เปลี่ยน .i-type (ประเภท) จาก select → ชิป 2 ปุ่มใหญ่ (52px)</li>
-    <li><span class="icon">3️⃣</span> เปลี่ยน select ≤4 ตัวเลือก → ชิป (8 ช่อง รายละเอียดในตาราง)</li>
+    <li><span class="icon">3️⃣</span> เปลี่ยน select ≤4 ตัวเลือก → ชิป — <b>กฎ generic: ทุก select ที่มี 2-4 option ใน buildItemOpts (ยกเว้น cmech ที่ย้ายเข้ากล่องมือจับ)</b> รวม 18 ช่อง ดูตารางครบในหัวข้อ 3</li>
     <li><span class="icon">4️⃣</span> <b>ก้อนใหม่:</b> รวบมือจับ → 1 กล่อง multi-toggle (ติ๊กได้หลายแบรนด์พร้อมกัน) พร้อม X-series (ฟรี) + Cmech หลบมุ้ง</li>
     <li><span class="icon">5️⃣</span> <b>ก้อนใหม่:</b> รวบมุ้ง 4 ช่องกระจาย → 1 กล่อง (โผล่/ซ่อนตาม o-mosq)</li>
     <li><span class="icon">6️⃣</span> <b>ก้อนย่อยในมุ้ง:</b> เพิ่มชิปลักษณะการเปิด (.o-mosqopenstyle) — โผล่เฉพาะ imp21/imp23 · label-only ไม่กระทบราคา</li>
@@ -185,9 +185,17 @@ tr.hl-green  td { background: #F0FFF4; }
 <!-- 3. ตารางตัดสิน -->
 <div class="section">
   <h2>3. ตารางตัดสิน: ช่องไหนเปลี่ยนอะไร</h2>
+
   <div class="callout info">
-    กฎ A: select ≤4 ตัวเลือก → ชิป<br>
-    กฎ B: กลุ่ม control ที่เกี่ยวกับ "สิ่งเดียว" แต่กระจาย → รวบเป็น 1 กล่อง (consolidate)
+    <b>กฎ generic (ใช้ทั่ว G1 ทุก 41 แบบ — ตรวจสอบกับ buildItemOpts):</b><br>
+    กฎ A: <b>ชิป = ทุก select ที่มี 2-4 option ใน buildItemOpts</b> ยกเว้น .o-cmech ที่ย้ายเข้ากล่องมือจับ
+    ตารางล่างคือลิสต์ครบ 18 ช่อง ใช้ตรวจว่าทำครบก่อน PR<br>
+    กฎ B: กลุ่ม control ที่เกี่ยวกับ "สิ่งเดียว" แต่กระจาย &rarr; รวบเป็น 1 กล่อง (consolidate)
+  </div>
+
+  <h3>ตาราง: ชิป select&le;4 ครบ 18 ช่อง — ลิสต์ตรวจสอบ (กฎ A)</h3>
+  <div class="callout warn" style="margin-bottom:10px;">
+    <b>Ground truth</b> จาก render จริงทุกแบบ (2026-06-11) — developer ใช้ตรวจสอบว่า chip ครบก่อน PR
   </div>
 
   <table>
@@ -196,118 +204,62 @@ tr.hl-green  td { background: #F0FFF4; }
         <th>ช่อง (class)</th>
         <th>ตัวเลือก</th>
         <th>Control ใหม่</th>
-        <th>เหตุผล</th>
+        <th>โผล่กี่แบบ</th>
+        <th>หมายเหตุ</th>
         <th>บรรทัดโค้ด</th>
       </tr>
     </thead>
     <tbody>
       <tr>
+        <td colspan="6" style="font-weight:700;color:#1E3A5F;font-size:12px;background:#EFF6FF;">
+          เดิมมีในสเปก (8 ช่อง)
+        </td>
+      </tr>
+      <tr>
         <td><code>.i-type</code> (ประเภท)</td>
         <td>2</td>
         <td class="chip">ชิป 2up (52px)</td>
-        <td>2 ตัว · แกนหลักของฟอร์ม · tap ได้เลย</td>
+        <td>ทุกแบบ</td>
+        <td>แกนหลัก &middot; tap ได้เลย</td>
         <td>addItem L2103</td>
       </tr>
       <tr>
         <td><code>.o-bottomrail</code> (ราง)</td>
         <td>2</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>2 ตัว (กันน้ำ/เตี้ย) · ใช้ทุกงานบานเลื่อน</td>
+        <td>บานเลื่อน (sliding)</td>
+        <td>กันน้ำ/เตี้ย</td>
         <td>buildItemOpts L2334</td>
       </tr>
       <tr>
         <td><code>.o-slidelock</code> (ชุดล็อค)</td>
         <td>2</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>2 ตัว (มีกุญแจ/ไม่มี) · เฉพาะ itype=door</td>
+        <td>itype=door บางแบบ</td>
+        <td>มีกุญแจ/ไม่มี &middot; 2 branch (บานเลื่อน + PC Door)</td>
         <td>buildItemOpts L2345, 2353</td>
       </tr>
-      <!-- ก้อน 1: มือจับ -->
-      <tr class="hl-orange">
-        <td colspan="5" style="font-weight:700;color:#C2410C;font-size:13px;">
-          ก้อน 1 (Consolidate): มือจับ — 1 กล่อง multi-toggle <span class="badge orange">อัปเดต: multi</span>
-        </td>
-      </tr>
-      <tr class="hl-orange">
-        <td>
-          <code>.o-cmech</code> (Cmech ฝัง/เมโทร)<br>
-          <code>.o-cmechcolor</code> (สี 7 ตัว)<br>
-          <code>.o-cmechawn</code> (หลบมุ้ง · บานกระทุ้ง)<br>
-          <code>.o-digi</code> (ดิจิตอล 11 รุ่น)<br>
-          <code>.o-stainless</code> (สแตน 6 ขนาด)<br>
-          <code>.o-xhandle</code> (X-series · ฟรี)<br>
-          <code>.o-handlename</code> + <code>.o-handleprice</code>
-        </td>
-        <td>3 / 7 / chk / 11 / 6 / flag / text+num</td>
-        <td class="consolidate">กล่อง multi-toggle แบรนด์ → sub control อิสระ</td>
-        <td>
-          มติพี่นัท 2026-06-11: เลือกได้หลายแบรนด์พร้อมกัน (เช่น ดิจิตอล + สแตนอร่าม ในบานเดียว)<br>
-          แต่ละแบรนด์ = toggle อิสระ · ติ๊ก = โผล่ sub · ปิด = เคลียร์ค่า + ซ่อน sub<br>
-          ยังไม่ติ๊กอะไร = ซ่อนทุก sub (ฟอร์มสั้น)
-        </td>
-        <td>buildItemOpts L2281–2299</td>
-      </tr>
-      <!-- ก้อน 2: มุ้ง -->
-      <tr class="hl-teal">
-        <td colspan="5" style="font-weight:700;color:#1565C0;font-size:13px;">
-          ก้อน 2 (Consolidate): มุ้ง — รวบ 4 ช่อง → 1 กล่อง <span class="badge teal">ใหม่</span>
-        </td>
-      </tr>
-      <tr class="hl-teal">
-        <td>
-          <code>.o-mosq</code> (dropdown ชนิดมุ้ง)<br>
-          <code>.o-mosqw</code> / <code>.o-mosqh</code> / <code>.o-mosqpanels</code><br>
-          <code>.o-mosqfabric</code> (ผ้ามุ้ง 5 ตัว)<br>
-          <code>.o-mosqcolor</code> (สีกรอบ 4 ตัว)
-        </td>
-        <td>10+ / 3 inputs / 5 / 4</td>
-        <td class="consolidate">กล่องโผล่/ซ่อนตาม o-mosq · สีกรอบ→ชิป</td>
-        <td>ผ้า/ขนาด/สีกรอบโผล่แม้ไม่เลือกมุ้ง → เซลล์งง · ซ่อนทั้งหมดถ้า "ไม่ใส่"</td>
-        <td>buildItemOpts L2461–2469</td>
-      </tr>
-      <!-- ชิปลักษณะการเปิด — ใหม่ -->
-      <tr class="hl-green">
-        <td colspan="5" style="font-weight:700;color:#065F46;font-size:13px;">
-          ก้อนย่อยในมุ้ง: ชิปลักษณะการเปิด — โผล่เฉพาะ imp21/imp23 <span class="badge green">ใหม่ 2026-06-11</span>
-        </td>
-      </tr>
-      <tr class="hl-green">
-        <td><code>.o-mosqopenstyle</code> (ลักษณะการเปิดมุ้งเฟรม)</td>
-        <td>4 (เปิด/เลื่อน/กระทุ้ง/ยก)</td>
-        <td class="chip">ชิป sm (40px) · label-only</td>
-        <td>
-          มติพี่นัท 2026-06-11: มุ้งเฟรมเล็ก/ใหญ่มีลักษณะการเปิดหลายแบบ แต่ชื่อมัดรวมไว้ในวงเล็บ →
-          แยกเป็นชิปให้เลือกจริง · ค่าที่เลือกต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" ·
-          <b>ไม่กระทบราคา / logic ใดๆ</b> · default = "เปิด"
-        </td>
-        <td>buildItemOpts — ใน mosq-detail-group (ใหม่)</td>
-      </tr>
-      <!-- ช่องเดิม -->
       <tr>
         <td><code>.o-mosqcolor</code> (สีกรอบมุ้ง)</td>
         <td>4</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>4 ตัว · อยู่ในกล่องมุ้งรวบแล้ว</td>
+        <td>18 แบบที่มีมุ้ง</td>
+        <td>อยู่ในกล่องมุ้งรวบแล้ว</td>
         <td>buildItemOpts L2469</td>
-      </tr>
-      <tr>
-        <td><code>.o-mosqfabric</code> (ผ้ามุ้ง)</td>
-        <td>5</td>
-        <td class="keep">คง dropdown</td>
-        <td>5 ตัว เกิน 4 · บางชื่อยาว (สแตนนิรภัย)</td>
-        <td>buildItemOpts L2467</td>
       </tr>
       <tr>
         <td><code>.o-solidlower</code> (แผ่นทึบล่าง)</td>
         <td>3</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>3 ตัว (ไม่มี/อลูลูกฟูก/คอมโพสิท)</td>
+        <td>บานเลื่อนบางแบบ</td>
+        <td>ไม่มี/อลูลูกฟูก/คอมโพสิท</td>
         <td>buildItemOpts L2562</td>
       </tr>
       <tr>
         <td><code>.o-fcsides</code> (ครอบวงกบ)</td>
         <td>3</td>
         <td class="chip">ชิป sm (44px)</td>
+        <td>casement บางแบบ</td>
         <td>3 ตัว + ช่องกรอก .o-fcm ต่อท้าย</td>
         <td>buildItemOpts L2565</td>
       </tr>
@@ -315,28 +267,232 @@ tr.hl-green  td { background: #F0FFF4; }
         <td><code>.o-beamm</code> (เสริมคาน)</td>
         <td>4</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>4 ตัว (ไม่มี/รุ่น1/รุ่น2/รุ่น3)</td>
+        <td>บางแบบ</td>
+        <td>ไม่มี/รุ่น1/รุ่น2/รุ่น3</td>
         <td>buildItemOpts L2375</td>
+      </tr>
+      <tr>
+        <td><code>.o-cmech</code> (Cmech ฝัง/เมโทร)</td>
+        <td>2</td>
+        <td class="consolidate">ชิปใน sub-cmech (กล่องมือจับ)</td>
+        <td>5 แบบ (sliding_sms/euro, casement บางแบบ)</td>
+        <td>ย้ายเข้ากล่องมือจับ — ไม่โผล่เดี่ยว</td>
+        <td>buildItemOpts L2290 &rarr; section 3A</td>
+      </tr>
+      <tr>
+        <td colspan="6" style="font-weight:700;color:#065F46;font-size:12px;background:#D1FAE5;">
+          เพิ่มใหม่ (10 ช่อง — จาก render ทุกแบบ 2026-06-11) <span class="badge green">ใหม่</span>
+        </td>
+      </tr>
+      <tr>
+        <td><code>.o-closer</code> (โช้ค)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>7 แบบ (casement_euro, casement_flush_solid ฯลฯ + YKK บางแบบ)</td>
+        <td>ตรวจ option count &le;4 ใน buildItemOpts</td>
+        <td>buildItemOpts (closer)</td>
+      </tr>
+      <tr>
+        <td><code>.o-thresh</code> (ธรณี)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>6 แบบ (casement บานเปิด)</td>
+        <td>ตรวจ option count &le;4</td>
+        <td>buildItemOpts (thresh)</td>
+      </tr>
+      <tr>
+        <td><code>.o-threshf</code> (ธรณีเฟี้ยม)</td>
+        <td>3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>3 แบบ (folding)</td>
+        <td>&mdash;</td>
+        <td>buildItemOpts (threshf)</td>
+      </tr>
+      <tr>
+        <td><code>.o-track</code> (ราง เลื่อนภายใน)</td>
+        <td>3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>เลื่อนภายใน (inner_top)</td>
+        <td>ราง 3 แบบ &middot; ต่างจาก .o-bottomrail</td>
+        <td>buildItemOpts (track)</td>
+      </tr>
+      <tr>
+        <td><code>.o-motor</code> (มอเตอร์)</td>
+        <td>2</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>2 แบบ (บานยก)</td>
+        <td>มี/ไม่มี</td>
+        <td>buildItemOpts (motor)</td>
+      </tr>
+      <tr>
+        <td><code>.o-awn_mode</code> (โหมดกระทุ้ง)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>1 แบบ (awning)</td>
+        <td>ตรวจ option count &le;4</td>
+        <td>buildItemOpts (awn_mode)</td>
+      </tr>
+      <tr>
+        <td><code>.o-gridcolor</code> (สีเส้นคาด)</td>
+        <td>2&ndash;4</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>เส้นคาด (casement_grid)</td>
+        <td>ตรวจ option count &le;4</td>
+        <td>buildItemOpts (gridcolor)</td>
+      </tr>
+      <tr>
+        <td><code>.o-shtype</code> (ประเภทห้องน้ำ)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>shower แบบ</td>
+        <td>&mdash;</td>
+        <td>buildItemOpts (shtype)</td>
+      </tr>
+      <tr>
+        <td><code>.o-shdoortype</code> (บานห้องน้ำ)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>shower แบบ</td>
+        <td>&mdash;</td>
+        <td>buildItemOpts (shdoortype)</td>
+      </tr>
+      <tr>
+        <td><code>.o-showerhw</code> (อุปกรณ์ห้องน้ำ)</td>
+        <td>2&ndash;3</td>
+        <td class="chip">ชiป sm (44px)</td>
+        <td>shower แบบ</td>
+        <td>ตรวจ option count &le;4</td>
+        <td>buildItemOpts (showerhw)</td>
+      </tr>
+      <tr>
+        <td><code>.o-frametype</code> (เปลือย)</td>
+        <td>2</td>
+        <td class="chip">ชิป sm (44px)</td>
+        <td>1 แบบ (casement_bare)</td>
+        <td>มีกรอบ/เปลือย</td>
+        <td>buildItemOpts (frametype)</td>
+      </tr>
+
+      <!-- Consolidate rows -->
+      <tr class="hl-orange">
+        <td colspan="6" style="font-weight:700;color:#C2410C;font-size:12px;">
+          กฎ B (Consolidate): มือจับ — 1 กล่อง multi-toggle <span class="badge orange">อัปเดต: multi</span>
+        </td>
+      </tr>
+      <tr class="hl-orange">
+        <td>
+          <code>.o-cmech</code> / <code>.o-cmechcolor</code> / <code>.o-cmechawn</code><br>
+          <code>.o-digi</code> (11) / <code>.o-stainless</code> (6)<br>
+          <code>.o-xhandle</code> / <code>.o-handlename</code> + <code>.o-handleprice</code>
+        </td>
+        <td>3/7/chk/11/6/flag/text</td>
+        <td class="consolidate">กล่อง multi-toggle &rarr; sub อิสระ</td>
+        <td>7 ลาย (ดู section 3A)</td>
+        <td>โชว์เฉพาะ toggle ที่ buildItemOpts สร้าง control ให้ &middot; ไม่มีมือจับ=ไม่โชว์กล่องเลย</td>
+        <td>buildItemOpts L2281&ndash;2299</td>
+      </tr>
+      <tr class="hl-teal">
+        <td colspan="6" style="font-weight:700;color:#1565C0;font-size:12px;">
+          กฎ B (Consolidate): มุ้ง — รวบ 4 ช่อง &rarr; 1 กล่อง <span class="badge teal">ใหม่</span>
+        </td>
+      </tr>
+      <tr class="hl-teal">
+        <td>
+          <code>.o-mosq</code> + <code>.o-mosqw/h/panels</code><br>
+          <code>.o-mosqfabric</code> (5) + <code>.o-mosqcolor</code> (4)
+        </td>
+        <td>10+/inputs/5/4</td>
+        <td class="consolidate">กล่องโผล่/ซ่อนตาม o-mosq &middot; สีกรอบ&rarr;ชิป</td>
+        <td>18 แบบมีมุ้ง / 23 แบบไม่มี (ไม่โชว์กล่องเลย)</td>
+        <td>โชว์กล่องเฉพาะแบบที่ buildItemOpts สร้าง .o-mosq ให้</td>
+        <td>buildItemOpts L2461&ndash;2469</td>
+      </tr>
+      <tr class="hl-green">
+        <td colspan="6" style="font-weight:700;color:#065F46;font-size:12px;">
+          ก้อนย่อยในมุ้ง: ชิปลักษณะการเปิด — โผล่เฉพาะ imp21/imp23 <span class="badge green">ใหม่</span>
+        </td>
+      </tr>
+      <tr class="hl-green">
+        <td><code>.o-mosqopenstyle</code></td>
+        <td>4 (เปิด/เลื่อน/กระทุ้ง/ยก)</td>
+        <td class="chip">ชิป sm (40px) &middot; label-only</td>
+        <td>2 แบบ (imp21, imp23)</td>
+        <td>ไม่กระทบราคา &middot; default "เปิด" &middot; อย่าใช้ .o-mosqopen (dead code)</td>
+        <td>buildItemOpts &rarr; mosq-detail-group</td>
       </tr>
     </tbody>
     <tfoot>
       <tr style="background:var(--greenbg);font-weight:700;">
-        <td colspan="2">Before: ~31 ช่อง/control มองเห็น</td>
-        <td colspan="3" style="color:var(--green);">After: ~14 default (ยังไม่ติ๊กมือจับ/มุ้ง) / ~22 full (ลด ~29%)</td>
+        <td colspan="2">ชิป select&le;4 รวม 18 ช่อง (เดิม 8 + ใหม่ 10)</td>
+        <td colspan="4" style="color:var(--green);">After: ~14 default / ~22 full &middot; ตรวจครบด้วย 8 ตัวแทน QA (ดูหัวข้อ 3D)</td>
       </tr>
     </tfoot>
   </table>
 
   <div class="callout warn">
     <b>ไม่เปลี่ยน (เกิน 4 ตัวเลือก หรือ dynamic):</b>
-    .i-group (7), .i-prod (40+), .i-color, .i-glass, .o-opentype (4 แต่ตัวเลือกยาว),
+    .i-group (7), .i-prod (41+), .i-color, .i-glass, .o-opentype (4 แต่ตัวเลือกยาว),
     .o-cmechcolor (7 สี), .o-digi (11), .o-stainless (6), .o-mosqfabric (5)
   </div>
 </div>
-
 <!-- 3A. Consolidate มือจับ -->
 <div class="section">
   <h2>3A. Consolidate ก้อน 1 — มือจับ (multi-toggle)</h2>
+
+  <div class="callout orange" style="margin-top:0;">
+    <b>7 ลาย — กล่องมือจับ render เฉพาะ control ที่สินค้านั้นมี (ไม่ใช่ทุกแบบครบ 5 แบรนด์)</b><br>
+    วิธีเช็คก่อนโชว์ toggle: <code>if (d.querySelector('.o-cmech'))</code> เป็นต้น —
+    ถ้า buildItemOpts ไม่ได้สร้าง element นั้น = ไม่โชว์ toggle นั้น &middot; สินค้าไม่มีมือจับเลย = ไม่โชว์กล่องมือจับ
+  </div>
+
+  <h3 class="orange">7 ลายมือจับ (จาก render ทุกแบบ)</h3>
+  <table>
+    <thead>
+      <tr><th>ลาย</th><th>control ที่มี</th><th>แบบที่ใช้</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>1. เต็ม</b></td>
+        <td>cmech + cmechcolor + digi + handlename + handleprice + stainless</td>
+        <td>sliding_sms, sliding_euro, casement_euro, casement_flush_solid, casement_inset_solid (5 แบบ)</td>
+      </tr>
+      <tr>
+        <td><b>2. cmech อย่างเดียว</b></td>
+        <td>cmech + cmechcolor</td>
+        <td>sliding_eseries, casement_dseries, casement_velora (3 แบบ)</td>
+      </tr>
+      <tr>
+        <td><b>3. digi (ไม่มี cmech)</b></td>
+        <td>digi + handlename + handleprice + stainless</td>
+        <td>pivot, curved_double, curved_single, curved_slim, pc_door_2, pc_door_4 (6 แบบ)</td>
+      </tr>
+      <tr>
+        <td><b>4. cmechawn</b></td>
+        <td>cmech + cmechcolor + cmechawn (หลบมุ้ง)</td>
+        <td>awning_euro, awning_aluinch (2 แบบ)</td>
+      </tr>
+      <tr>
+        <td><b>5. cmech + xhandle</b></td>
+        <td>cmech + cmechcolor + xhandle</td>
+        <td>casement_xseries (1 แบบ)</td>
+      </tr>
+      <tr>
+        <td><b>6. xhandle อย่างเดียว</b></td>
+        <td>xhandle เท่านั้น</td>
+        <td>folding_xseries, inner_top_slimlux, inner_top_xseries (3 แบบ)</td>
+      </tr>
+      <tr style="background:#F3F4F6;">
+        <td><b>7. ไม่มีมือจับ</b></td>
+        <td>(ไม่โชว์กล่องเลย)</td>
+        <td>ติดตาย, เฟี้ยม, เลื่อนภายในส่วนใหญ่, YKK, เส้นคาด, ลูกฟูกทึบ ฯลฯ (21 แบบ)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info" style="margin-top:8px;">
+    <b>วิธี implement:</b> ใน buildItemOpts ก่อนสร้าง HTML กล่องมือจับ ให้ตรวจว่ามี control ไหนบ้าง
+    แล้วโชว์เฉพาะ toggle แบรนด์ที่มีจริง &mdash; ไม่ต้อง hardcode ลายตามชื่อสินค้า
+  </div>
 
   <div class="callout ok">
     <b>มติพี่นัท 2026-06-11 (อัปเดต):</b>
@@ -1118,6 +1274,122 @@ h += <span class="cs">`
   </table>
 </div>
 
+
+<!-- 3D. QA 8 ตัวแทน -->
+<div class="section">
+  <h2>3D. QA 8 ตัวแทน — ครอบทุกลายฟอร์ม G1</h2>
+
+  <div class="callout ok">
+    <b>ตรวจ 8 ตัวแทนนี้พอ ไม่ต้องไล่ครบ 41 แบบ</b> &mdash; คัดเลือกให้ครอบทุกลายฟอร์ม ทุกกลุ่มชิปใหม่ และทุกกรณีพิเศษ
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>แบบ (i-prod)</th>
+        <th>ตรวจอะไร (สิ่งที่ต้องโผล่/ทำงานถูก)</th>
+        <th>จุดเสี่ยงพิเศษ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>1</b></td>
+        <td><code>sliding_euro</code> (บานเลื่อน SMS Euro &mdash; ฟอร์มเต็ม)</td>
+        <td>
+          &bull; ลำดับ: แบบ #2 &middot; ประเภทชิป 2up<br>
+          &bull; ชิป: bottomrail, slidelock (itype=door), mosqcolor<br>
+          &bull; กล่องมือจับลาย 1 เต็ม (5 toggle)<br>
+          &bull; กล่องมุ้ง (18 แบบมี o-mosq)
+        </td>
+        <td>ชิปทั้งหมดใน baseline หลัก</td>
+      </tr>
+      <tr>
+        <td><b>2</b></td>
+        <td><code>casement_euro</code> (บานเปิด Euro)</td>
+        <td>
+          &bull; ชิปใหม่: closer, thresh<br>
+          &bull; กล่องมือจับลาย 1 เต็ม<br>
+          &bull; fcsides ชิป (ครอบวงกบ)
+        </td>
+        <td>closer + thresh = 2 ชิปใหม่แรกที่ต้องตรวจ</td>
+      </tr>
+      <tr>
+        <td><b>3</b></td>
+        <td><code>casement_flush_solid</code> (บานเปิดทึบ &mdash; ยาวสุด 37 ช่อง มีช่องแสง)</td>
+        <td>
+          &bull; solidlower ชิป (แผ่นทึบล่าง)<br>
+          &bull; beamm ชิป (เสริมคาน 4 ตัว)<br>
+          &bull; frametype ชิป (เปลือย)<br>
+          &bull; ฟอร์มยาวสุด &mdash; ตรวจว่า scroll ได้บนมือถือ
+        </td>
+        <td>ฟอร์มที่มีช่องมากสุด &mdash; tap target ต้องครบ</td>
+      </tr>
+      <tr>
+        <td><b>4</b></td>
+        <td><code>awning_euro</code> (บานกระทุ้ง Euro)</td>
+        <td>
+          &bull; ชิปใหม่: awn_mode<br>
+          &bull; กล่องมือจับลาย 4 (cmechawn) &mdash; ต้องโชว์ checkbox หลบมุ้ง<br>
+          &bull; ปิด Cmech toggle &rarr; .o-cmechawn ต้องเคลียร์
+        </td>
+        <td>clearHandleBrandControls ต้องเคลียร์ cmechawn ด้วย</td>
+      </tr>
+      <tr>
+        <td><b>5</b></td>
+        <td><code>folding_xseries</code> (บานพับ X-series)</td>
+        <td>
+          &bull; กล่องมือจับลาย 6 (xhandle อย่างเดียว &mdash; ไม่มี Cmech/digi)<br>
+          &bull; ชิปใหม่: threshf (ธรณีเฟี้ยม)<br>
+          &bull; กล่องมุ้ง (folding มีมุ้ง)
+        </td>
+        <td>toggle ที่โผล่ต้องตรงลาย 6 ไม่โผล่ toggle cmech/digi ที่ไม่มี</td>
+      </tr>
+      <tr>
+        <td><b>6</b></td>
+        <td><code>pc_door_2</code> (ประตู PC 2 บาน)</td>
+        <td>
+          &bull; กล่องมือจับลาย 3 (digi + stainless ไม่มี cmech)<br>
+          &bull; slidelock ชิป (PC door มี itype=door)<br>
+          &bull; ตรวจราคาบวกสะสมถูก: ดิจิตอล + สแตนอร่าม พร้อมกัน
+        </td>
+        <td>multi-toggle ราคาสะสมถูก</td>
+      </tr>
+      <tr>
+        <td><b>7</b></td>
+        <td><code>curved_double</code> (กระจกดัด 2 บาน)</td>
+        <td>
+          &bull; กล่องมือจับลาย 3 (digi)<br>
+          &bull; ไม่มีกล่องมุ้ง (กระจกดัดไม่มี .o-mosq)<br>
+          &bull; gridcolor ชิป (ถ้ามี)
+        </td>
+        <td>กล่องมุ้งต้องไม่โผล่เลย (ไม่มี .o-mosq)</td>
+      </tr>
+      <tr>
+        <td><b>8</b></td>
+        <td><code>shower</code> (บานกระจกห้องน้ำ)</td>
+        <td>
+          &bull; ชิปใหม่ 3 ตัว: shtype, shdoortype, showerhw<br>
+          &bull; ตรวจ option count &le;4 ทุกตัว<br>
+          &bull; ราคาถูก (ห้องน้ำมีสูตรพิเศษ)
+        </td>
+        <td>ชิปใหม่กลุ่ม shower 3 ตัว</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr style="background:var(--greenbg);font-weight:700;">
+        <td colspan="4" style="color:var(--green);">
+          ผ่าน 8 ตัวแทนนี้ = ครอบ 7 ลายมือจับ + 18 ชิป + 3 กลุ่ม consolidate + มุ้งมี/ไม่มี/ชิปลักษณะเปิด
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="callout warn">
+    <b>QA ลำดับงาน:</b> developer ทำเสร็จ &rarr; แชทตรวจ render ทั้ง 8 แบบ &rarr; ตรวจ readItem/calcQuote
+    &rarr; ตรวจ genQuote ต่อท้ายชื่อมุ้ง &rarr; พี่นัทลองบนมือถือ
+  </div>
+</div>
 <!-- 10. Pattern ขยายกลุ่มอื่น -->
 <div class="section">
   <h2>10. แนวทางขยาย Pattern ไปกลุ่มอื่น (G2–G7)</h2>

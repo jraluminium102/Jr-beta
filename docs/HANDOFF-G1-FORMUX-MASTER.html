@@ -26,8 +26,13 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <table>
 <tr><th>#</th><th>ก้อน</th><th>ทำอะไร</th><th>จุดในโค้ด</th></tr>
 <tr><td class="r">1</td><td>เรียงลำดับใหม่</td><td>ย้าย "แบบ" (<code>.i-prod</code>) ขึ้น <b>#2 ทันทีหลังกลุ่มงาน</b> (เดิมอันดับ 4) · ลำดับ: กลุ่มงาน→แบบ→ประเภท→ตำแหน่ง→กว้าง×สูง→…</td><td>addItem template ~L2072</td></tr>
-<tr><td class="r">2</td><td>8 ชิป (select ≤4)</td><td>เปลี่ยนเป็นชิปติ๊ก: ประเภท · ราง · ชุดล็อค · Cmech · สีกรอบมุ้ง · แผ่นทึบล่าง · ครอบวงกบ · เสริมคาน · (<b>ผ้ามุ้ง 5 ตัว คง dropdown</b>)</td><td>buildItemOpts + template</td></tr>
-<tr><td class="r">3</td><td>รวบมือจับ 4→1 <b>(multi)</b></td><td>กล่องเดียว <b>ติ๊กแบรนด์ได้หลายอันพร้อมกัน</b> (Cmech/ดิจิตอล/สแตนอร่าม/X-series ฟรี/รุ่นอื่น✎) → ติ๊กไหนโผล่ sub นั้น · <b>ราคาบวกสะสมทุกแบรนด์</b> · ปิด=เคลียร์เฉพาะตัวเอง · Cmech หลบมุ้ง(<code>.o-cmechawn</code>)=checkbox ใน sub Cmech</td><td>controls: <code>.o-cmech .o-digi .o-stainless .o-handlename .o-xhandle .o-cmechawn</code></td></tr>
+<tr><td class="r">2</td><td>ชิปทุก select&le;4 (18 ช่อง)</td><td>
+  <b>กฎ generic: ทุก select 2-4 option ใน buildItemOpts &rarr; ชิป</b> (ยกเว้น .o-cmech ที่อยู่ในกล่องมือจับ)<br>
+  เดิม 8: ประเภท · ราง · ชุดล็อค · Cmech (ในกล่องมือจับ) · สีกรอบมุ้ง · แผ่นทึบล่าง · ครอบวงกบ · เสริมคาน<br>
+  ใหม่ 10: closer · thresh · threshf · track(เลื่อนใน) · motor · awn_mode · gridcolor · shtype · shdoortype · showerhw · frametype<br>
+  (<b>ผ้ามุ้ง 5 ตัว คง dropdown</b>) &mdash; ตารางครบดู SPEC หัวข้อ 3
+</td><td>buildItemOpts + template</td></tr>
+<tr><td class="r">3</td><td>รวบมือจับ 4→1 <b>(multi)</b></td><td>กล่องเดียว <b>ติ๊กแบรนด์ได้หลายอันพร้อมกัน</b> (Cmech/ดิจิตอล/สแตนอร่าม/X-series ฟรี/รุ่นอื่น✎) → ติ๊กไหนโผล่ sub นั้น · <b>ราคาบวกสะสมทุกแบรนด์</b> · ปิด=เคลียร์เฉพาะตัวเอง · Cmech หลบมุ้ง(<code>.o-cmechawn</code>)=checkbox ใน sub Cmech<br><b>7 ลายมือจับ:</b> กล่องโชว์เฉพาะ toggle แบรนด์ที่ buildItemOpts สร้าง control ให้ (เช็ค element ก่อนโชว์ toggle) &mdash; ไม่มีมือจับ=ไม่โชว์กล่องเลย &middot; รายละเอียด 7 ลายดู SPEC หัวข้อ 3A</td><td>controls: <code>.o-cmech .o-digi .o-stainless .o-handlename .o-xhandle .o-cmechawn</code></td></tr>
 <tr><td class="r">4</td><td>รวบมุ้ง 4→1</td><td>กล่องเดียว: <code>.o-mosq</code> + (ผ้ามุ้ง/ขนาด/สีกรอบ) · เลือก "ไม่ใส่" = ซ่อนทุกช่องล่าง</td><td><code>.o-mosq .o-mosqfabric .o-mosqw/h .o-mosqcolor</code></td></tr>
 <tr><td class="r">5</td><td>ชิปลักษณะการเปิดมุ้ง <span class="pill">ใหม่</span></td><td>ในกล่องมุ้ง เพิ่มชิป <b>เปิด/เลื่อน/กระทุ้ง/ยก</b> · <b>โผล่เฉพาะเลือก imp21/imp23</b> (อื่นซ่อน) · <b>label-only ไม่กระทบราคา</b> → ต่อท้ายชื่อมุ้งในใบ (เช่น "มุ้งเฟรมเล็ก บานเลื่อน") · class ใหม่ <code>.o-mosqopenstyle</code> (อย่าชน <code>.o-mosqopen</code> = dead code <code>if(false)</code>)</td><td>genQuote มุ้ง ~L3631 + buildItemOpts</td></tr>
 </table>
@@ -47,7 +52,8 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 
 <div class="dod"><b>📋 Definition of Done — เสร็จเมื่อ:</b>
 <ol style="margin:3px 0;">
-<li>5 ก้อนครบ — render G1: แบบอยู่ #2 · 8 ช่องเป็นชิป · มือจับติ๊กหลายอันได้+ราคาบวกถูก · มุ้งรวบกล่องเดียว · ชิปลักษณะการเปิดโผล่เฉพาะ imp21/23 ต่อท้ายชื่อในใบ</li>
+<li>5 ก้อนครบ — render G1: แบบอยู่ #2 &middot; <b>18 ชิป (select&le;4 ทุกช่อง)</b> &middot; มือจับ 7 ลาย (multi-toggle/ราคาบวกถูก) &middot; มุ้งรวบกล่องเดียว &middot; ชิปลักษณะการเปิดโผล่เฉพาะ imp21/23 ต่อท้ายชื่อในใบ</li>
+<li>ทดสอบผ่าน <b>8 ตัวแทน QA</b> (sliding_euro &middot; casement_euro &middot; casement_flush_solid &middot; awning_euro &middot; folding_xseries &middot; pc_door_2 &middot; curved_double &middot; shower) &mdash; ดูรายการตรวจ SPEC หัวข้อ 3D</li>
 <li><code>node test/quote-fidelity.mjs</code> <b>PASS</b> — ราคา/ใบ baseline ไม่เพี้ยน (สำคัญ: pattern นี้ห้ามทำราคาเปลี่ยน)</li>
 <li>มือจับหลายแบรนด์พร้อมกัน → ราคารวมถูก · ลักษณะการเปิดมุ้ง → ราคาไม่เปลี่ยน (label-only)</li>
 <li>readItem/genQuote อ่าน value เดิมได้ครบ (ชิป sync เข้า control เดิมถูก)</li>
