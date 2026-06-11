@@ -2495,7 +2495,7 @@ function buildItemOpts(d){
     h+='<label class="opt">โครงสร้าง <select class="o-roofframe" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม">โครงอลูมิเนียม (default)</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select> <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // C: ปลายหลังคา + chain D — option[1]=รางน้ำ (no-op) เพื่อให้ enableAllOpts ไม่คิดเงิน
     // ข้อ8: ตัดตัวเลือก "ปิดปลาย" (auto กว้าง) ออก — กันคิดซ้ำกับ "ปิดปลายกันน้ำ" (o-rfeave กรอกยาวเอง) ในของเสริม
-    h+='<label class="opt">ปลายหลังคา <select class="o-roofend" style="width:auto;height:32px;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-guttersys-wrap\'); if(w) w.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\');"><option value="ปล่อย">ปล่อย (default)</option><option value="รางน้ำ">รางน้ำ (รวมในราคาหลังคา)</option></select> <span style="font-size:11px;color:#666;">(ปิดปลายกันน้ำ = กรอกยาวในของเสริม)</span></label>';
+    h+='<label class="opt">ปลายหลังคา <select class="o-roofend" style="width:auto;height:32px;" onchange="var d=this.closest(\'.ch\'); var wp=d.querySelector(\'.o-guttersys-wrap\'); if(wp) wp.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\'); var gl=d.querySelector(\'.o-rfgutlen\'),iw=d.querySelector(\'.i-w\'); if(this.value===\'รางน้ำ\'){ if(gl&&iw&&(!gl.value||gl.value===\'0\')) gl.value=iw.value; } else { if(gl) gl.value=\'0\'; } calcQuote();"><option value="ปล่อย">ปล่อย (default)</option><option value="รางน้ำ">รางน้ำ (รวมในราคาหลังคา)</option></select> <span style="font-size:11px;color:#666;">(ปิดปลายกันน้ำ = กรอกยาวในของเสริม)</span></label>';
     // D: ระบบรางน้ำ (โชว์เมื่อ C=รางน้ำ) — chain show/hide เหมือน .o-beamm-wrap
     h+='<div class="o-guttersys-wrap" style="display:none;">';
     h+='<label class="opt">ระบบรางน้ำ <select class="o-guttersys" style="width:auto;height:32px;" onchange="var d=this.closest(\'.ch\'); d.querySelector(\'.o-gutter-pipe-wrap\').style.display=(this.value===\'ท่อ\'?\'inline\':\'none\'); d.querySelector(\'.o-gutter-chain-wrap\').style.display=(this.value===\'โซ่\'?\'inline\':\'none\');"><option value="ท่อ">ท่อ (default)</option><option value="โซ่">โซ่</option></select> ';
@@ -2508,10 +2508,12 @@ function buildItemOpts(d){
     h+='<label class="opt"><input type="checkbox" class="o-rfleaf" checked> ตะแกรงพลาสติกกันใบไม้ สีดำ (รวมในราคา)</label>';
     // H1: ท่อน้ำทิ้ง PVC 2.5″ — สเปกพ่วงรางน้ำ (ฟรี ลงใบ · คนละอย่างกับ "ครอบท่อ PVC")
     h+='<label class="opt">ท่อน้ำทิ้ง PVC 2.5″ <select class="o-rfdrain" style="width:auto;height:32px;"><option value="">ไม่มี</option><option value="ดำ" selected>สีดำ</option><option value="ขาว">สีขาว</option><option value="เทา">สีเทา</option></select> <span style="font-size:11px;color:#666;">(สเปกพ่วงรางน้ำ)</span></label>';
+    // FIX-13: ชนิดราง 3 แบบ + ความยาว (ย้ายรางน้ำมารวมที่นี่ · default อลู S · ยาว=กว้าง auto จาก onchange o-roofend) · คิดเงิน = เรต × ยาว
+    h+='<label class="opt" style="width:100%;">ชนิดราง <select class="o-rfgut" style="width:auto;height:32px;" onchange="calcQuote();"><option value="1000" selected>อลู S 1,000/ม.</option><option value="2000">สแตนเลส M 2,000/ม.</option><option value="3000">สแตนเลส L 3,000/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfgutlen" min="0" step="0.1" value="0" placeholder="=กว้าง" style="width:62px;height:30px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(ว่าง/0 = ใช้ความกว้างหลังคา)</span></label>';
     h+='</div>';
     // P1 (แชท B): ยุบ "ของเสริมหลังคา" เป็น <details> พับ default — เคสปกติเห็น ~4 ช่องหลัก (สี/แป/โครงสร้าง/ปลายหลังคา)
-    h+='<details class="optbox" style="width:100%;"><summary style="cursor:pointer;font-size:13px;color:#2E7D32;font-weight:600;padding:6px 0;">＋ ของเสริมหลังคา (รางน้ำ/เสา/คาน/ซ่อนสโลป/ครอบ...)</summary>';
-    h+='<label class="opt">รางน้ำ <select class="o-rfgut" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="1000">อลู S 1,000/ม.</option><option value="2000">สแตน M 2,000/ม.</option><option value="3000">สแตน L 3,000/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfgutlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
+    h+='<details class="optbox" style="width:100%;"><summary style="cursor:pointer;font-size:13px;color:#2E7D32;font-weight:600;padding:6px 0;">＋ ของเสริมหลังคา (เสา/คาน/ซ่อนสโลป/ครอบ...)</summary>';
+    // FIX-13: ช่อง "รางน้ำ" (o-rfgut/o-rfgutlen) ย้ายไปรวมใต้ "ปลายหลังคา=รางน้ำ" แล้ว (กล่อง o-guttersys-wrap)
     h+='<label class="opt">คานเหล็กถัก <select class="o-rfbeam" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfbeamlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">โซ่รางน้ำ (3,000/เส้น) <input type="number" class="o-rfchain" min="0" step="1" value="0" style="width:55px;height:30px;"> · ปิดปลายกันน้ำ (1,000/ม.) ยาว <input type="number" class="o-rfeave" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
@@ -3573,13 +3575,15 @@ function genQuote(keepNo){
       // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / รางน้ำ=ระบุระบบ) · ข้อ2: ลบ branch 'ปิดปลาย' (auto) ที่ตัดออกแล้ว
       let _gutterLine = '';
       if(_rfend === 'รางน้ำ'){
+        // FIX-13: ชนิดรางตามราคา (>=2,000 = สแตนเลส) · รวมบรรทัดรางน้ำที่นี่ที่เดียว (ตัดบรรทัดซ้ำใน _rfExtra)
+        const _gmat = (parseFloat(_os.rfgut)||0)>=2000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม';
         if(_rfgutsys === 'โซ่'){
           const _pat = _os.rfgutchainpat || 'ทิวลิป';
           const _col = _os.rfgutchaincolor || 'ขาว';
-          _gutterLine = 'รางน้ำ (โซ่ลาย'+_pat+' สี'+_col+')';
+          _gutterLine = _gmat+' (โซ่ลาย'+_pat+' สี'+_col+')';
         } else {
           const _col = _os.rfgutpipecolor || 'ขาว';
-          _gutterLine = 'รางน้ำ (ท่อ สี'+_col+')';
+          _gutterLine = _gmat+' (ท่อ สี'+_col+')';
         }
       }
       // H2: ตะแกรงกันใบไม้ พ่วงรางน้ำ (ใบจริงมีเสมอ) · H1: ท่อน้ำทิ้ง PVC 2.5″ แยกบรรทัด
@@ -3607,7 +3611,7 @@ function genQuote(keepNo){
         if(_n('rfpolep')>0) _rfExtra += '\nเสาแผง (เสริมเหล็กภายใน) จำนวน '+_n('rfpolep')+' ต้น';
         if(_n('rfpole4')>0) _rfExtra += '\nเสา 4"x8" จำนวน '+_n('rfpole4')+' ต้น';
         if(_f('rfbeam')>0 && _f('rfbeamlen')>0) _rfExtra += '\nคานเหล็กถัก';
-        if(_f('rfgut')>0 && _f('rfgutlen')>0) _rfExtra += '\nรางน้ำอลูมิเนียม';
+        // FIX-13: บรรทัดรางน้ำรวมไว้ใน _gutterLine แล้ว (ใต้ปลายหลังคา=รางน้ำ) — ตัดบรรทัดซ้ำตรงนี้
         if(_n('rfchain')>0) _rfExtra += '\nโซ่รางน้ำ ลายดอกทิวลิป จำนวน '+_n('rfchain')+' เส้น';
         if(_f('rfeave')>0) _rfExtra += '\nปิดปลายกันน้ำ';
         if(_f('rfpvc')>0) _rfExtra += '\nครอบท่อ PVC';
