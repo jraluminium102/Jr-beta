@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC UX — เพิ่มส่วน + มุ้งบาน R2 | JR Calculator</title>
+<style>
+:root{--red:#B3151D;--blue:#1565C0;--green:#1B5E20;--amber:#E65100;--line:#E5E7EB;--bg:#F8F9FA;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Sarabun',sans-serif;}
+body{background:var(--bg);color:#1A1A1A;padding:16px;font-size:14px;line-height:1.6;}
+h1{font-size:20px;font-weight:800;color:var(--red);margin-bottom:4px;}
+.meta{font-size:12px;color:#888;margin-bottom:20px;}
+h2{font-size:16px;font-weight:800;color:var(--red);margin:24px 0 10px;border-left:4px solid var(--red);padding-left:10px;}
+h3{font-size:14px;font-weight:700;color:var(--blue);margin:14px 0 6px;}
+h4{font-size:13px;font-weight:700;color:#333;margin:10px 0 4px;}
+p{margin-bottom:8px;}
+ul,ol{margin:6px 0 10px 20px;}
+li{margin-bottom:3px;}
+code{background:#F1F1F1;border:1px solid #DDD;border-radius:4px;padding:1px 5px;font-family:monospace;font-size:12px;color:#333;}
+pre{background:#1E1E1E;color:#D4D4D4;border-radius:8px;padding:14px;font-size:12px;overflow-x:auto;margin:8px 0 14px;line-height:1.5;}
+.section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;margin-right:4px;}
+.tag-must{background:#FFCDD2;color:#B71C1C;}
+.tag-ui{background:#E3F2FD;color:#1565C0;}
+.tag-js{background:#FFF9C4;color:#827717;}
+.tag-test{background:#E8F5E9;color:#1B5E20;}
+.tag-ref{background:#F3E5F5;color:#6A1B9A;}
+.before{background:#FFF3F3;border:1.5px solid #FFCDD2;border-radius:8px;padding:10px 14px;margin:8px 0;}
+.after{background:#F1F8E9;border:1.5px solid #A5D6A7;border-radius:8px;padding:10px 14px;margin:8px 0;}
+.before-head{font-size:12px;font-weight:700;color:#B71C1C;margin-bottom:6px;}
+.after-head{font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px;}
+.warn{background:#FFF8E1;border:1px solid #FFB300;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:12px;}
+.dod{background:#E8F5E9;border:1.5px solid #66BB6A;border-radius:8px;padding:10px 14px;margin:8px 0;}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 14px;}
+th{background:var(--red);color:#fff;padding:8px;text-align:left;}
+td{padding:7px 8px;border:1px solid #E5E7EB;}
+tr:nth-child(even){background:#F9F9F9;}
+.anchor{color:var(--red);font-size:12px;font-weight:700;}
+.toc{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px;}
+.toc a{color:var(--blue);text-decoration:none;font-size:13px;}
+.toc li{margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<h1>SPEC UX R2 — "+ เพิ่มส่วน" flow + ชิปจำนวนบานมุ้ง</h1>
+<div class="meta">เอกสาร: SPEC-addflow-mosq-r2.html · วันที่: 2026-06-11 · สถานะ: Draft ส่ง developer</div>
+
+<div class="toc">
+  <strong style="font-size:13px;">สารบัญ</strong>
+  <ul style="margin-top:6px;">
+    <li><a href="#s1">เรื่องที่ 1 — "+ เพิ่มส่วน" flow ใหม่</a></li>
+    <li><a href="#s1-design">ดีไซน์ที่เลือก</a></li>
+    <li><a href="#s1-code">จุดโค้ดที่แก้</a></li>
+    <li><a href="#s1-guard">Guard กั้นห้อง (ต้องไม่กระทบ)</a></li>
+    <li><a href="#s1-dod">DoD เรื่องที่ 1</a></li>
+    <li><a href="#s2">เรื่องที่ 2 — ชิปจำนวนบานมุ้ง</a></li>
+    <li><a href="#s2-design">ดีไซน์ที่เลือก</a></li>
+    <li><a href="#s2-code">จุดโค้ดที่แก้</a></li>
+    <li><a href="#s2-dod">DoD เรื่องที่ 2</a></li>
+    <li><a href="#qa">จุดต้องถามพี่นัท</a></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="s1">เรื่องที่ 1 — "+ เพิ่มส่วน" flow ใหม่</h2>
+
+<div class="section">
+  <h3>ปัญหาเดิม (ยืนยันจากพี่นัทกดเบราว์เซอร์จริง)</h3>
+  <div class="before">
+    <div class="before-head">BEFORE — toggleAddSecPanel (L1947)</div>
+    <ul>
+      <li>กดปุ่ม "+ เพิ่มส่วน" (<code>.set-addpart</code>) → เรียก <code>toggleAddSecPanel(btn, box)</code></li>
+      <li>ฟังก์ชันสร้าง panel แบบ toggle: กดซ้ำ = ลบ panel ออก</li>
+      <li>ใน panel: ชิป 8 ตัว + ปุ่ม "งานบานทั่วไป" → ต้องกดต่ออีก 1 ครั้งถึงได้การ์ด</li>
+      <li><strong>tap count:</strong> เพิ่มงานบาน = 2 tap · เพิ่มซ้ำ = 3 tap (เปิด panel ใหม่)</li>
+      <li><strong>ผล:</strong> รู้สึกว่า "กด เพิ่ม แล้วไม่เพิ่ม" + toggle สับสน</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section" id="s1-design">
+  <h3>ดีไซน์ที่เลือก — แบบ (ก) + persistent strip</h3>
+  <div class="after">
+    <div class="after-head">AFTER — 2 ส่วนแยก หน้าที่ชัด</div>
+    <ol>
+      <li>
+        <strong>Persistent quick-strip</strong> — แถวชิปของใช้บ่อย เห็นตลอดเวลา (ไม่ toggle ไม่หาย)<br>
+        กดชิป → <code>quickAddItem</code> ทันที (1 tap) · ชิปไม่หายหลังกด → กดซ้ำได้
+      </li>
+      <li>
+        <strong>ปุ่ม "+ เพิ่มส่วน" (งานบานทั่วไป)</strong> — กดแล้วได้การ์ดทันที <code>addItem + calcQuote</code><br>
+        ไม่มี toggle ไม่มี panel กลาง · ปุ่ม verb ทำตามชื่อ
+      </li>
+    </ol>
+  </div>
+
+  <h4>เหตุผลที่เลือกแบบนี้</h4>
+  <ul>
+    <li>แบบ (ก): "เพิ่มส่วน" = เพิ่มทันที ตรงกับชื่อปุ่ม ไม่งง</li>
+    <li>ชิปด่วนเห็นตลอด: เซลล์ที่เพิ่มของบ่อยซ้ำไม่ต้องสะดุดทุกครั้ง</li>
+    <li>ลด tap จาก 2-3 เหลือ 1 ทุกเส้นทาง</li>
+    <li>ไม่กระทบ logic/ราคา — แค่จัด UI ใหม่, <code>quickAddItem</code> เดิมใช้ได้</li>
+  </ul>
+
+  <h4>Layout ใน setbox (HTML ใหม่)</h4>
+  <pre>
+&lt;!-- persistent quick-strip: เห็นตลอด บน set-parts --&gt;
+&lt;div class="addsec-quickstrip"&gt;
+  &lt;div class="addsec-strip-head"&gt;⚡ เพิ่มด่วน&lt;/div&gt;
+  &lt;div class="addsec-chips-wrap"&gt;
+    &lt;button class="addsec-chip" data-g="1" data-id="fixed_glass"&gt;กระจกติดตาย&lt;/button&gt;
+    &lt;button class="addsec-chip" data-g="1" data-id="rn89"&gt;ลูกฟูก 1 ทาง&lt;/button&gt;
+    &lt;!-- ...chip อื่น 8 ตัวจาก QUICK_ADD_CHIPS เดิม... --&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class="set-parts"&gt;&lt;/div&gt;
+
+&lt;!-- ปุ่มหลัก: set-addpart → addItem ทันที ไม่เรียก toggleAddSecPanel --&gt;
+&lt;div class="set-btns set-btns-top"&gt;
+  &lt;button type="button" class="set-addpart"&gt;＋ เพิ่มส่วน&lt;/button&gt;
+&lt;/div&gt;</pre>
+</div>
+
+<div class="section" id="s1-code">
+  <h3>จุดโค้ดที่แก้ (index.html)</h3>
+
+  <h4>1. addSet() — L1965 (innerHTML ของ setbox)</h4>
+  <p>เพิ่ม <code>.addsec-quickstrip</code> ก่อน <code>.set-parts</code> ใน innerHTML:</p>
+  <pre>
+// เดิม (ย่อ):
+box.innerHTML = '...&lt;div class="set-btns set-btns-top"&gt;&lt;button class="set-addpart"&gt;+ เพิ่มส่วน&lt;/button&gt;&lt;/div&gt;&lt;div class="set-parts"&gt;&lt;/div&gt;...';
+
+// ใหม่: ย้าย quick-strip มาก่อน set-parts · ลบ toggleAddSecPanel ออกจาก click handler
+box.innerHTML = '...'
+  + '&lt;div class="addsec-quickstrip" style="..."&gt;'
+  +   '&lt;div class="addsec-strip-head"&gt;⚡ เพิ่มด่วน &lt;span ...&gt;กดชิปเพิ่มทันที&lt;/span&gt;&lt;/div&gt;'
+  +   '&lt;div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;"&gt;'
+  +   QUICK_ADD_CHIPS.map(c =&gt; '&lt;button ... data-g="'+c.g+'" data-id="'+c.id+'"&gt;'+c.label+'&lt;/button&gt;').join('')
+  +   '&lt;/div&gt;&lt;/div&gt;'
+  + '&lt;div class="set-parts"&gt;&lt;/div&gt;'
+  + '&lt;div class="set-btns set-btns-top"&gt;&lt;button type="button" class="set-addpart"&gt;＋ เพิ่มส่วน&lt;/button&gt;&lt;/div&gt;'
+  + '...';</pre>
+
+  <h4>2. addSet() — event listener ของ .set-addpart (L1969-1994)</h4>
+  <p>แก้ branch <code>!hasGH</code>: เดิมเรียก <code>toggleAddSecPanel</code> → เปลี่ยนเป็น <code>addItem + calcQuote</code> ทันที:</p>
+  <pre>
+// เดิม (L1972-1975):
+if(!hasGH){
+  toggleAddSecPanel(b, box);  // ← ลบออก
+  return;
+}
+
+// ใหม่:
+if(!hasGH){
+  addItem(parts);
+  refreshSet(box);
+  calcQuote();
+  // scroll to new card
+  const chs = parts.querySelectorAll('.ch');
+  const newCh = chs[chs.length-1];
+  if(newCh) newCh.scrollIntoView({behavior:'smooth', block:'center'});
+  return;
+}</pre>
+
+  <h4>3. addSet() — bind click ให้ .addsec-chip (ใน quickstrip)</h4>
+  <p>หลัง <code>document.getElementById('items').appendChild(box)</code> เพิ่ม:</p>
+  <pre>
+box.querySelectorAll('.addsec-chip').forEach(function(cb){
+  cb.addEventListener('click', function(){
+    var parts = box.querySelector('.set-parts');
+    quickAddItem(parts, cb.dataset.g, cb.dataset.id);
+    refreshSet(box);
+    calcQuote();
+    // ไม่ลบชิปออก — เห็นตลอด
+  });
+});</pre>
+
+  <h4>4. toggleAddSecPanel (L1947-1959)</h4>
+  <p>ฟังก์ชันนี้ไม่ถูกเรียกใน flow ใหม่แล้ว — <strong>สามารถลบหรือ comment ออก</strong> ได้ (ตรวจว่าไม่มี caller อื่นก่อน)</p>
+  <div class="warn">ตรวจ grep <code>toggleAddSecPanel</code> ทั้งไฟล์ก่อน — ถ้าไม่มี caller อื่น ลบออกได้เลย</div>
+
+  <h4>5. CSS สำหรับ quickstrip</h4>
+  <pre>
+.addsec-quickstrip {
+  background: #FFF3E0;
+  border: 1.5px solid #FFB300;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.addsec-strip-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: #E65100;
+  margin-bottom: 7px;
+}
+.addsec-chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #FFB300;
+  border-radius: 22px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+}
+.addsec-chip:active {
+  background: #E65100;
+  color: #fff;
+}
+/* ปุ่ม .set-addpart ใหม่: solid แทน outline */
+.set-addpart {
+  min-height: 44px;
+  width: 100%;
+  border: 2px solid var(--red);
+  border-radius: 9px;
+  background: var(--red);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}</pre>
+</div>
+
+<div class="section" id="s1-guard">
+  <h3>Guard กั้นห้องกระจก (ต้องไม่กระทบ)</h3>
+  <div class="warn">
+    ⚠ ตรวจ <code>hasGH</code> branch (L1971-1994) — กั้นห้องกระจก (group=6) ยังใช้ <code>addItem + auto-set group 6</code> เหมือนเดิมทุกอย่าง<br>
+    quickstrip ต้อง <strong>ไม่โผล่ในชุดกั้นห้อง</strong> — เพิ่ม condition: ถ้า <code>hasGH</code> ให้ซ่อน <code>.addsec-quickstrip</code> (หรือ render แยก)
+  </div>
+  <pre>
+// ในฟังก์ชัน refreshSet หรือหลัง bind event:
+var strip = box.querySelector('.addsec-quickstrip');
+if(strip){
+  strip.style.display = hasGH ? 'none' : '';
+}
+
+// หรือ: เพิ่ม logic ใน QUICK_ADD_CHIPS click — ถ้า hasGH ไม่ทำอะไร (safe guard)
+// แต่วิธีซ่อน strip ทั้งก้อนชัดกว่า</pre>
+</div>
+
+<div class="section" id="s1-dod">
+  <h3>DoD (Definition of Done) — เรื่องที่ 1</h3>
+  <div class="dod">
+    <ol>
+      <li><span class="tag tag-test">TEST</span> กด "+ เพิ่มส่วน" ครั้งเดียว → การ์ดงานบานโผล่ทันที (ไม่มี panel กลาง)</li>
+      <li><span class="tag tag-test">TEST</span> กดชิปใน quickstrip → การ์ดกระจกติดตาย/ลูกฟูก/ฯ โผล่ทันที (1 tap)</li>
+      <li><span class="tag tag-test">TEST</span> กด "+ เพิ่มส่วน" ซ้ำ 3 ครั้ง → การ์ดเพิ่ม 3 ใบ (ไม่มี toggle)</li>
+      <li><span class="tag tag-test">TEST</span> ชุดกั้นห้องกระจก (group=6 อยู่ใน set): quickstrip ซ่อน · ปุ่ม "+ เพิ่มบาน" ทำงานตามเดิม</li>
+      <li><span class="tag tag-test">TEST</span> <code>addGlasshouseSet</code> — ยังสร้างชุดกั้นห้องถูกต้อง ไม่กระทบ</li>
+      <li><span class="tag tag-test">TEST</span> quote-fidelity: เพิ่มบานเลื่อน 4 บาน → calcQuote ได้ราคาถูก เทียบ baseline</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="s2">เรื่องที่ 2 — ชิปจำนวนบานมุ้ง</h2>
+
+<div class="section">
+  <h3>ปัญหาเดิม</h3>
+  <div class="before">
+    <div class="before-head">BEFORE — buildItemOpts (L2586)</div>
+    <ul>
+      <li><code>.o-mosqpanels</code> = <code>&lt;input type="number" width:50px placeholder="auto"&gt;</code></li>
+      <li>เซลล์ต้องจำว่าบานประตู (<code>.i-panels</code>) มีกี่บาน → ตัวเองพิมพ์ตัวเลข</li>
+      <li>ไม่มี visual เชื่อมระหว่าง i-panels กับ o-mosqpanels → ผิดพลาดได้ง่าย</li>
+      <li>3 ช่องเรียงบรรทัดเดียว (กว้าง × ยาว · บาน) — อ่านยาก บน mobile</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section" id="s2-design">
+  <h3>ดีไซน์ที่เลือก — ชิปจำนวนบาน + fallback</h3>
+  <div class="after">
+    <div class="after-head">AFTER — ใน mosq-detail-group (แทรกก่อน o-mosqw/h/panels)</div>
+    <ol>
+      <li><strong>ชิปจำนวนบาน (วิธีหลัก)</strong>: แสดงชิป "auto", 1, 2, …, N โดย N = ค่า <code>.i-panels</code><br>
+        · กดชิป → set <code>.o-mosqpanels</code>.value = ตัวเลข (auto = ว่าง) → <code>fire input event</code> → <code>calcQuote()</code><br>
+        · N &gt; 5 → ซ่อนชิป แสดง stepper แทน (fallback)
+      </li>
+      <li><strong>ช่องขนาด (กว้าง×ยาว) — พับ default</strong>: ย้ายเข้า <code>&lt;details&gt;</code> "กรอกขนาดมุ้งเอง (กรณีแต่ละบานไม่เท่ากัน)"<br>
+        · <code>.o-mosqw</code> / <code>.o-mosqh</code> ยังเชื่อมกับ calcQuote ตามเดิม ไม่เปลี่ยน logic
+      </li>
+      <li><strong><code>.o-mosqpanels</code> ยังอยู่ในฟอร์ม</strong> (hidden หรือ sync) — readItem เดิมใช้ได้ไม่เปลี่ยน</li>
+    </ol>
+  </div>
+
+  <h4>State machine</h4>
+  <table>
+    <thead><tr><th>กรณี</th><th>UI</th><th>.o-mosqpanels value</th><th>ราคา</th></tr></thead>
+    <tbody>
+      <tr><td>ชิป "auto"</td><td>chip auto = on</td><td>"" (ว่าง)</td><td>auto คำนวณจากบาน</td></tr>
+      <tr><td>ชิป "2"</td><td>chip 2 = on</td><td>"2"</td><td>2 บาน × max(min, พื้นที่×rate)</td></tr>
+      <tr><td>ชิป "4"</td><td>chip 4 = on</td><td>"4"</td><td>4 บาน ×…</td></tr>
+      <tr><td>N &gt; 5 (fallback)</td><td>stepper แสดง</td><td>stepper.value</td><td>N บาน ×…</td></tr>
+      <tr><td>กรอกขนาดเอง</td><td>details คลาย</td><td>คงค่าชิป</td><td>ใช้ w/h ที่กรอก แทน auto</td></tr>
+    </tbody>
+  </table>
+
+  <h4>เกณฑ์ชิป N &gt; 5</h4>
+  <p>ถ้า <code>i-panels &gt; 5</code> → ชิปจะมี 6+ ปุ่ม ใหญ่เกิน → ซ่อนชิปทั้งแถว แสดง stepper แทน<br>
+  ตัวเลข 5 เป็น default ตาม UX principle "ชิป &gt; 5 รายการ เริ่มอ่านยาก"</p>
+</div>
+
+<div class="section" id="s2-code">
+  <h3>จุดโค้ดที่แก้ (index.html)</h3>
+
+  <h4>1. buildItemOpts — มุ้ง section (L2585-2592)</h4>
+  <p>ใน <code>mosq-detail-group</code> แทรกชิปบานก่อน label ขนาด:</p>
+  <pre>
+// เดิม (L2585-2586):
+h += '&lt;div class="mosq-detail-group" style="display:none;..."&gt;';
+h += '&lt;label class="opt"&gt;ขนาดมุ้ง ... กว้าง &lt;input class="o-mosqw"...&gt; × ยาว &lt;input class="o-mosqh"...&gt; · บาน &lt;input class="o-mosqpanels"...&gt;&lt;/label&gt;';
+
+// ใหม่:
+h += '&lt;div class="mosq-detail-group" style="display:none;..."&gt;';
+
+// ── [NEW] จำนวนบานมุ้ง ──
+h += '&lt;div class="mosq-panels-bar"&gt;';
+h += '&lt;div class="mosq-panels-bar-head"&gt;จำนวนบานมุ้ง &lt;span class="mosq-panels-bar-hint"&gt;กระทบราคา&lt;/span&gt;&lt;/div&gt;';
+// ชิป: สร้าง placeholder → rebuild ตอน bind (ดูข้อ 2)
+h += '&lt;div class="mosq-panel-chips" style="display:flex;flex-wrap:wrap;gap:6px;"&gt;&lt;/div&gt;';
+// fallback stepper (N&gt;5)
+h += '&lt;div class="mosq-panels-fallback" style="display:none;align-items:center;gap:6px;"&gt;';
+h += '  จำนวนบาน: &lt;input type="number" class="o-mosqpanels-stepper" min="1" step="1" style="width:60px;height:44px;..." oninput="syncMosqPanels(this)"&gt;';
+h += '&lt;/div&gt;';
+h += '&lt;/div&gt;';  // /mosq-panels-bar
+
+// ── ช่องขนาด → พับใน details ──
+h += '&lt;details class="mosq-size-details" style="margin-top:8px;"&gt;';
+h += '&lt;summary style="font-size:12px;color:#0369A1;cursor:pointer;"&gt;';
+h += '  กรอกขนาดมุ้งเอง (กรณีแต่ละบานไม่เท่ากัน)&lt;/summary&gt;';
+h += '&lt;div style="padding:8px 0;"&gt;';
+h += '  &lt;span style="font-size:11px;color:#0369A1;"&gt;[เว้นว่าง=auto จากบาน]&lt;/span&gt;';
+h += '  กว้าง &lt;input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"&gt;';
+h += '  × ยาว &lt;input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"&gt;';
+h += '&lt;/div&gt;&lt;/details&gt;';
+
+// .o-mosqpanels ยังอยู่ (hidden) — readItem เดิมอ่านค่าจาก field นี้
+h += '&lt;input type="hidden" class="o-mosqpanels" value=""&gt;';</pre>
+
+  <h4>2. afterBuildOpts — rebuild ชิปตาม i-panels (เพิ่ม helper ใหม่)</h4>
+  <p>ใน <code>buildItemOpts</code> หรือ event handler หลัง build เสร็จ:</p>
+  <pre>
+function rebuildMosqPanelChips(d){
+  // d = .ch div ของบานนั้น
+  var bar = d.querySelector('.mosq-panels-bar');
+  if(!bar) return;
+  var chipWrap = bar.querySelector('.mosq-panel-chips');
+  var fallback = bar.querySelector('.mosq-panels-fallback');
+  var hiddenInp = d.querySelector('.o-mosqpanels');
+  var iPanels = parseInt((d.querySelector('.i-panels')||{}).value||'2') || 2;
+
+  chipWrap.innerHTML = '';
+  if(iPanels > 5){
+    // fallback stepper
+    chipWrap.style.display = 'none';
+    fallback.style.display = 'flex';
+    var stepper = fallback.querySelector('.o-mosqpanels-stepper');
+    if(stepper && hiddenInp.value) stepper.value = hiddenInp.value;
+    return;
+  }
+  chipWrap.style.display = 'flex';
+  fallback.style.display = 'none';
+
+  // chip "auto"
+  chipWrap.appendChild(makeMosqChip('', 'auto', hiddenInp, d));
+  // chip 1…N
+  for(var i=1; i&lt;=iPanels; i++){
+    chipWrap.appendChild(makeMosqChip(String(i), i+' บาน', hiddenInp, d));
+  }
+  // mark active chip
+  var cur = hiddenInp.value;
+  chipWrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){
+    c.classList.toggle('on', c.dataset.val === cur);
+  });
+}
+
+function makeMosqChip(val, label, hiddenInp, d){
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'mosq-panel-chip chip'; // ใช้ class chip เดิมสำหรับ style
+  btn.dataset.val = val;
+  btn.textContent = label;
+  btn.style.cssText = 'min-height:44px;min-width:44px;padding:0 12px;font-size:14px;font-weight:700;';
+  btn.addEventListener('click', function(){
+    hiddenInp.value = val;
+    hiddenInp.dispatchEvent(new Event('input', {bubbles:true}));  // → calcQuote
+    // update active
+    var wrap = btn.closest('.mosq-panel-chips');
+    wrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){ c.classList.remove('on'); });
+    btn.classList.add('on');
+  });
+  return btn;
+}
+
+function syncMosqPanels(stepper){
+  // sync stepper → hidden .o-mosqpanels
+  var d = stepper.closest('.ch');
+  var hid = d.querySelector('.o-mosqpanels');
+  if(hid){ hid.value = stepper.value; hid.dispatchEvent(new Event('input',{bubbles:true})); }
+}</pre>
+
+  <h4>3. เรียก rebuildMosqPanelChips เมื่อ</h4>
+  <ul>
+    <li>หลัง <code>buildItemOpts</code> เสร็จ (ใน <code>afterBuildOpts</code> หรือท้าย buildItemOpts เอง)</li>
+    <li>เมื่อ <code>.i-panels</code> เปลี่ยน (<code>input</code> event) — L2269 มี listener อยู่แล้ว → เพิ่ม call <code>rebuildMosqPanelChips(d)</code></li>
+    <li>เมื่อเลือกชนิดมุ้ง (<code>.o-mosq</code> change) — ใน <code>mosqGroupToggle</code> L2174</li>
+  </ul>
+  <pre>
+// ใน listener ของ .i-panels (L2269):
+d.querySelector('.i-panels').addEventListener('input', function(){
+  var pm = d.querySelector('.i-panels-mirror'); if(pm) pm.value = this.value;
+  // [NEW]:
+  rebuildMosqPanelChips(d);
+  calcQuote();
+});
+
+// ใน mosqGroupToggle (L2174):
+function mosqGroupToggle(sel){
+  var d = sel.closest('.ch');
+  var show = !!sel.value;
+  // ...existing logic...
+  if(show) rebuildMosqPanelChips(d);  // [NEW]
+}</pre>
+
+  <h4>4. readItem — .o-mosqpanels ยังอ่านเหมือนเดิม (L2887)</h4>
+  <p>ไม่ต้องแก้ readItem เพราะ hidden input <code>.o-mosqpanels</code> ยังอยู่ในตำแหน่งเดิม sync ค่าให้ครบก่อน calcQuote ถูกเรียก</p>
+  <pre>
+// L2887 — ไม่เปลี่ยน:
+const _mqp = d.querySelector('.o-mosqpanels'); optSel.mosqPanels = _mqp ? _mqp.value : '';</pre>
+
+  <h4>5. CSS เพิ่มเติม (ในส่วน &lt;style&gt;)</h4>
+  <pre>
+.mosq-panels-bar { margin-bottom: 10px; }
+.mosq-panels-bar-head {
+  font-size: 12px; font-weight: 700;
+  color: #1565C0; margin-bottom: 6px;
+}
+.mosq-panels-bar-hint {
+  font-size: 11px; font-weight: 400;
+  color: #888; margin-left: 4px;
+}
+.mosq-size-details summary { list-style: none; }
+.mosq-size-details summary::-webkit-details-marker { display: none; }</pre>
+</div>
+
+<div class="section" id="s2-dod">
+  <h3>DoD (Definition of Done) — เรื่องที่ 2</h3>
+  <div class="dod">
+    <ol>
+      <li><span class="tag tag-test">TEST</span> บานเลื่อน 4 บาน → ชิปโผล่ "auto, 1, 2, 3, 4" ทั้ง 5 ปุ่ม</li>
+      <li><span class="tag tag-test">TEST</span> กดชิป "2" → <code>.o-mosqpanels</code> = "2" → calcQuote คิดราคา 2 บาน</li>
+      <li><span class="tag tag-test">TEST</span> กดชิป "auto" → <code>.o-mosqpanels</code> = "" → calcQuote คิดราคา auto (ช่องเปิด)</li>
+      <li><span class="tag tag-test">TEST</span> เปลี่ยน i-panels จาก 4 → 6 → ชิป rebuild เป็น "auto,1,2,3,4,5,6" (6 ตัว ยังแสดง เพราะ &gt;5 ต้อง &gt;5 ไม่ใช่ &gt;=5)</li>
+      <li><span class="tag tag-test">TEST</span> i-panels = 6 → ชิปแสดง (N=6 ≤ 5 จะ fallback) <em>— ดูหมายเหตุข้อ Q2 ด้านล่าง</em></li>
+      <li><span class="tag tag-test">TEST</span> i-panels = 8 → fallback stepper โผล่ ชิปซ่อน → กรอก 6 → .o-mosqpanels = "6" → calcQuote ถูก</li>
+      <li><span class="tag tag-test">TEST</span> กดชิปมุ้ง + ช่องขนาดพับ → เปิด details "กรอกขนาดเอง" → กรอกกว้าง×ยาว → calcQuote ใช้ขนาดที่กรอก</li>
+      <li><span class="tag tag-test">TEST</span> <strong>quote-fidelity MUST PASS:</strong> บานเลื่อน 4 บาน + มุ้งจีบ SD 2 บาน → ราคามุ้ง = max(3,500×2, พื้นที่×2,500) ถูก</li>
+      <li><span class="tag tag-test">TEST</span> บานเปิด 1 บาน → ชิปโผล่ "auto, 1" (2 ปุ่ม) · กด "1" → คิด 1 บาน</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="qa">จุดต้องถามพี่นัท (ก่อน implement)</h2>
+
+<div class="section">
+  <table>
+    <thead><tr><th>#</th><th>คำถาม</th><th>ผลกระทบ</th><th>ค่า default ถ้าไม่ถาม</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Q1</td>
+        <td><strong>เรื่อง 1:</strong> ชิปใน quickstrip กดซ้ำกัน (เช่น กด "กระจกติดตาย" 3 ครั้ง) = เพิ่ม 3 การ์ดได้ไหม?<br>
+        หรือ: ควรมีสัญญาณ feedback (เช่น flash ปุ่ม) ก่อนเพิ่ม?</td>
+        <td>UX feedback</td>
+        <td>เพิ่มได้เลย (chip ไม่ toggle)</td>
+      </tr>
+      <tr>
+        <td>Q2</td>
+        <td><strong>เรื่อง 2:</strong> N &gt; 5 → fallback stepper (เกณฑ์ &gt;5 หรือ ≥5?)<br>
+        ตัวอย่าง: 5 บาน = ชิปยังแสดง? หรือ fallback แล้ว?</td>
+        <td>จำนวนชิปบนหน้าจอ</td>
+        <td>ถ้า i-panels &gt; 5 → fallback (ชิปแสดงถึง 5 ตัว)</td>
+      </tr>
+      <tr>
+        <td>Q3</td>
+        <td><strong>เรื่อง 2:</strong> มุ้งกี่บานเกินบานประตูได้ไหม? เช่น ประตู 2 บาน → ใส่มุ้ง 3 บานได้ไหม?<br>
+        (กรณีหน้าต่างติดข้าง ต้องใส่มุ้งด้วย)</td>
+        <td>cap ชิปที่ i-panels หรือไม่?</td>
+        <td>cap ที่ i-panels (มุ้งไม่เกินบาน) · fallback stepper ให้กรอกได้อิสระ</td>
+      </tr>
+      <tr>
+        <td>Q4</td>
+        <td><strong>เรื่อง 1:</strong> ลำดับชิปใน quickstrip — 8 ตัวปัจจุบัน (QUICK_ADD_CHIPS) โอเคไหม? หรืออยากเพิ่ม/เรียงใหม่?</td>
+        <td>content</td>
+        <td>ใช้ QUICK_ADD_CHIPS เดิมทั้ง 8 ตัว</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 13px;margin-top:10px;font-size:13px;">
+  <b>✅ มติพี่นัท (เคาะแล้ว 2026-06-11) — ทำตามนี้:</b>
+  <ul style="margin:5px 0;">
+    <li><b>Q1:</b> กดชิปด่วนซ้ำ = <b>เพิ่มหลายการ์ดได้เลย + มี flash เด้งสั้นๆ</b> ที่การ์ดใหม่/ปุ่ม ให้รู้ว่าเพิ่มแล้ว</li>
+    <li><b>Q2:</b> ชิปบานมุ้งแสดงได้ถึง <b>5</b> · i-panels &gt; 5 → <b>fallback เป็น stepper</b></li>
+    <li><b>Q3:</b> <b>มุ้งไม่เกินจำนวนบานประตู</b> — ชิป cap ที่ i-panels (1 ถึง N เท่านั้น) · <b>ไม่มี fallback ให้กรอกเกิน</b> (ถ้า N&gt;5 stepper ก็ยัง cap ที่ N)</li>
+    <li><b>Q4:</b> ลำดับ 8 ชิปของใช้บ่อย = <b>ตามเดิม</b> (QUICK_ADD_CHIPS)</li>
+  </ul></div>
+</div>
+
+<div class="section">
+  <h3>ไฟล์อ้างอิง</h3>
+  <ul>
+    <li>ดราฟ interactive: <code>C:\Users\Nut\Desktop\Sharepicjr\draft-addflow-mosq-r2.html</code></li>
+    <li>ไฟล์จริง: <code>public/calculator/index.html</code></li>
+    <li>L1926-1960: QUICK_ADD_CHIPS + toggleAddSecPanel + addSet click handler</li>
+    <li>L2577-2592: buildItemOpts — มุ้ง section</li>
+    <li>L2877-2887: readItem — อ่าน .o-mosqpanels</li>
+    <li>L2269: .i-panels input event listener</li>
+    <li>L2174: mosqGroupToggle</li>
+  </ul>
+</div>
+
+</body>
+</html>
