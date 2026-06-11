@@ -98,10 +98,15 @@
 <li>เพิ่ม stepper/input <code>.o-sfixed</code> (default 0–1) = บานที่ไม่เลื่อน (ส่วนติดตาย)</li>
 <li>readItem เก็บ <code>optSel.sfixed</code> · genQuote ลงใบ "...N บานเลื่อน + M บานติดตาย" · <b>เช็คซ้ำ: บานติดตายกระทบราคาไหม</b> (ถ้าคิดตามพื้นที่หลังคารวมอยู่แล้ว = label · ถ้าคิดแยก บอกเรตมา)</li>
 </ul>
-<h3>② พื้นที่เลื่อน = กรอก กว้าง × ยาว (แทน auto)</h3>
+<h3>② พื้นที่เลื่อน = กรอก <b>ยาว × ยื่น</b> (แทน auto) · บานเลื่อน/ติดตาย = stepper</h3>
 <ul>
-<li>เดิม <code>.o-sarea</code> = ช่องเดียว (auto จากพื้นที่หลังคา) → เปลี่ยนเป็น <b>2 ช่อง กว้าง × ยาว</b> (<code>.o-sareaw</code> × <code>.o-sareah</code>)</li>
-<li>readItem: <code>optSel.sarea = sareaw × sareah</code> (ถ้ากรอกทั้งคู่ · ว่าง=auto เดิม) → calc ใช้ <code>optSel.sarea</code> คิดมอเตอร์/ราคาเลื่อนตามเดิม (สูตรเลื่อนไม่ต้องแก้ · L1441 ใช้ sarea อยู่แล้ว)</li>
+<li>เดิม <code>.o-sarea</code> = ช่องเดียว (auto) → เปลี่ยนเป็น <b>2 ช่อง ยาว × ยื่น</b> (<code>.o-sareaw</code> × <code>.o-sareah</code>) · readItem: <code>optSel.sarea = ยาว × ยื่น</code> (ว่าง=auto เดิม) → calc L1441 ใช้ <code>sarea</code> ตามเดิม (สูตรไม่แก้)</li>
+<li><b>จำนวนบานเลื่อน (<code>.o-spanels</code>) + บานติดตาย (<code>.o-sfixed</code>) = stepper − [N] +</b> (กดเลื่อน/กรอกเองได้) อยู่ข้างกัน · ค่าเดิม/logic เหมือนเดิม แค่เปลี่ยน control เป็น stepper</li>
+</ul>
+<h3>④ คำศัพท์งานหลังคา: "กว้าง/สูง" → "ยาว/ยื่น" (label only · มติพี่นัท)</h3>
+<ul>
+<li>ช่องขนาดหลัก <code>.i-w</code>/<code>.i-h</code> ของหลังคา — เปลี่ยน <b>label</b> เป็น "ยาว" (=<code>.i-w</code>) / "ยื่น" (=<code>.i-h</code>) <b>เฉพาะ cat=หลังคา</b> · value/logic เดิม (พื้นที่ = ยาว×ยื่น = w×h เท่าเดิม)</li>
+<li><b>รางน้ำอยู่ฝั่งยาว:</b> FIX-13 ความยาวราง default = <code>parseFloat(w)</code> (=ด้านยาว) — <b>ตรงกับ "ฝั่งยาว" แล้ว</b> (ถ้า ยาว=<code>.i-w</code>) · แก้แค่ hint label เป็น "(ว่าง=ใช้ด้านยาว)"</li>
 </ul>
 <div class="ok"><b>✅ มติพี่นัท 11 มิ.ย.:</b> "เลื่อนยื่น" = "เลื่อนข้าง" <b>ราคาเท่ากัน</b> → <code>.o-slidetype</code> เป็นแค่ label ลงใบ <b>ไม่แตะ calc</b> · พื้นที่ กว้าง×ยาว ใช้สูตรเลื่อนเดิม (L1441 <code>sarea</code>) ได้เลย · <b>สเปกหลังคา (FIX A/B/C) ครบ พร้อมส่ง dev</b></div>
 
