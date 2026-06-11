@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>รายการเทส G3 — แตกราคาย่อย + ราคารวม (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4 landscape;margin:9mm 8mm 11mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:9.5px;line-height:1.4;margin:0;}
+  h1{font-size:17px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  .kpi{display:flex;gap:7px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:18px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.blue{color:#1E40AF;}
+  .note{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:7px 10px;margin:8px 0;font-size:10px;}
+  .warn{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:7px 10px;margin:8px 0;font-size:9.5px;}
+  table{width:100%;border-collapse:collapse;margin-top:4px;}
+  th,td{border:1px solid #D1D5DB;padding:4px 6px;vertical-align:top;text-align:left;}
+  th{background:#B3151D;color:#fff;font-size:9.5px;}
+  td.grp{background:#FCE8EA;color:#B3151D;font-weight:700;font-size:10.5px;}
+  td.id{font-weight:600;width:16%;}
+  td.sz{width:8%;white-space:nowrap;color:#374151;}
+  td.sz .ar{color:#6B7280;font-size:9px;}
+  td.dt{width:30%;font-size:9px;line-height:1.55;}
+  td.ca{width:30%;font-size:9px;}
+  td.pr{width:8%;text-align:right;font-weight:700;white-space:nowrap;font-family:"Consolas",monospace;color:#B3151D;}
+  .bl{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #E5E7EB;padding:1px 0;}
+  .bl span:first-child{color:#374151;}
+  .bl .a{font-family:"Consolas",monospace;white-space:nowrap;color:#1F2937;}
+  .bl .a i{color:#2F855A;font-style:normal;font-size:8.5px;}
+  .bl.tot{border-bottom:none;border-top:1.5px solid #B3151D;margin-top:2px;font-weight:700;}
+  .bl.tot span{color:#B3151D;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+<h1>รายการเทส G3 (หลังคา / ฝ้า / ผนัง) — แตกราคาย่อย + ราคารวม</h1>
+<div class="sub">สำหรับคุณเฟิร์น (เซลล์ใบเสนอราคา) ตรวจ · ทุกเคสแตก <b>ราคาย่อยแต่ละรายการ</b> + <b>ราคาหลักรวม</b> · render จริง + วิธีคิดจาก engine · {{DATE}}</div>
+
+<div class="kpi">
+  <div><span class="n red">{{N}}</span>เคสทดสอบ (งานจริง)</div>
+  <div><span class="n green">24/24</span>product ครบ</div>
+  <div><span class="n green">✓</span>ราคาย่อยรวม = engine</div>
+  <div><span class="n blue">รางน้ำ</span>รวมในราคาหลังคา (มติ A)</div>
+</div>
+
+<div class="note"><b>วิธีอ่าน “ราคาย่อย”:</b> แต่ละบรรทัด = ราคาของรายการนั้น · <b>“รางน้ำหลัก + ตะแกรง + ท่อ PVC = รวมในราคาหลังคา”</b> (มติพี่นัท — ไม่บวกแยก ตรงใบจริง) · ของเสริม (เสาแผง/ซ่อนสโลป ฯลฯ) บวกแยกชัด · บรรทัดสุดท้าย <b>รวม (ปัดขึ้นพันครั้งเดียว)</b> = ราคาหลักที่ลงใบ · ทุกเลข validate ตรงกับ engine</div>
+
+<div class="warn"><b>หมายเหตุ wording (เช็คซ้ำ — ปรับให้เหมือนใบเฟิร์นได้):</b> ① ระบบเขียน “รางน้ำ (ท่อ สีขาว)” · ใบจริง “รางน้ำอลูมิเนียม + ตะแกรง…” · ② โพลีตันมี “(แสงผ่าน N%)” — ใบจริงไม่ใส่ · ③ “3มม.” ใบจริง “หนา 3 มม.” · ④ ″ แทน “นิ้ว”</div>
+
+<table>
+<tr><th>รายการที่เทส</th><th>ขนาด / พื้นที่</th><th>สิ่งที่ลงใบเสนอราคา</th><th>ราคาย่อยแต่ละรายการ → ราคารวม</th><th>ราคาหลัก</th></tr>
+{{ROWS}}
+</table>
+
+<div class="foot">สร้างโดย skill quote-option-audit · {{N}} เคส (แบบงานจริง · รางน้ำรวมในราคา) · ราคาย่อยทุกบรรทัด validate = engine · READ-ONLY</div>
+</body>
+</html>
