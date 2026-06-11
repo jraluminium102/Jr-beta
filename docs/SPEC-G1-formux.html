@@ -18,174 +18,99 @@
   --bluebg: #EFF6FF;
   --amber: #92400E;
   --amberbg: #FEF3C7;
+  --orange: #7C2D12;
+  --orangebg: #FFF7ED;
+  --teal: #0F4C75;
+  --tealbg: #E3F2FD;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: "Sarabun", "Prompt", "Leelawadee UI", sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.6;
+  background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.6;
 }
 .wrap { max-width: 860px; margin: 0 auto; padding: 24px 20px 80px; }
-
-/* HEADER */
 .doc-header {
-  background: var(--red);
-  color: #fff;
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 24px;
+  background: var(--red); color: #fff; border-radius: 14px;
+  padding: 20px 24px; margin-bottom: 24px;
 }
 .doc-header h1 { margin: 0 0 4px; font-size: 20px; font-weight: 800; }
-.doc-header p { margin: 0; font-size: 13px; opacity: .85; }
-.doc-header .meta { display: flex; gap: 20px; margin-top: 12px; font-size: 12px; opacity: .8; }
-
-/* SECTION */
+.doc-header p  { margin: 0; font-size: 13px; opacity: .85; }
+.doc-header .meta { display: flex; gap: 20px; margin-top: 12px; font-size: 12px; opacity: .8; flex-wrap:wrap; }
 .section {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
+  background: #fff; border: 1px solid var(--line);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
 }
 .section h2 {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--red);
-  margin: 0 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--redbg);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: 16px; font-weight: 800; color: var(--red);
+  margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--redbg);
+  display: flex; align-items: center; gap: 8px;
 }
-.section h3 {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--blue);
-  margin: 18px 0 8px;
-}
+.section h3 { font-size: 14px; font-weight: 700; color: var(--blue); margin: 18px 0 8px; }
 .section h3:first-child { margin-top: 0; }
-
-/* CALLOUT BOXES */
+.section h3.orange { color: #C2410C; }
+.section h3.teal   { color: #1565C0; }
 .callout {
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin: 12px 0;
-  font-size: 13.5px;
-  line-height: 1.6;
+  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  font-size: 13.5px; line-height: 1.6;
 }
-.callout.warn { background: var(--amberbg); border-left: 4px solid #F59E0B; color: var(--amber); }
-.callout.info { background: var(--bluebg); border-left: 4px solid #3B82F6; color: var(--blue); }
-.callout.ok   { background: var(--greenbg); border-left: 4px solid #10B981; color: var(--green); }
-.callout.red  { background: var(--redbg); border-left: 4px solid var(--red); color: var(--red); }
+.callout.warn   { background: var(--amberbg);  border-left: 4px solid #F59E0B; color: var(--amber); }
+.callout.info   { background: var(--bluebg);   border-left: 4px solid #3B82F6; color: var(--blue); }
+.callout.ok     { background: var(--greenbg);  border-left: 4px solid #10B981; color: var(--green); }
+.callout.red    { background: var(--redbg);    border-left: 4px solid var(--red); color: var(--red); }
+.callout.orange { background: var(--orangebg); border-left: 4px solid #F97316; color: var(--orange); }
+.callout.teal   { background: var(--tealbg);   border-left: 4px solid #1565C0; color: var(--teal); }
 .callout b { font-weight: 800; }
-
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-  margin: 12px 0;
-}
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0; }
 th {
-  background: #F3F4F6;
-  padding: 9px 10px;
-  text-align: left;
-  border-bottom: 2px solid var(--line);
-  font-weight: 700;
-  color: var(--ink);
+  background: #F3F4F6; padding: 9px 10px; text-align: left;
+  border-bottom: 2px solid var(--line); font-weight: 700; color: var(--ink);
 }
-td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--line);
-  vertical-align: top;
-}
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tr:nth-child(even) td { background: #FAFBFC; }
 td.chip { color: var(--green); font-weight: 700; }
 td.keep { color: var(--muted); }
-
-/* BADGES */
+td.consolidate { color: #C2410C; font-weight: 700; }
 .badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 4px;
-  vertical-align: middle;
-  margin-left: 4px;
+  display: inline-block; font-size: 10px; font-weight: 800;
+  padding: 2px 7px; border-radius: 4px; vertical-align: middle; margin-left: 4px;
 }
-.badge.red   { background: var(--redbg); color: var(--red); }
-.badge.green { background: var(--greenbg); color: var(--green); }
-.badge.blue  { background: var(--bluebg); color: #1D4ED8; }
-.badge.amber { background: var(--amberbg); color: var(--amber); }
-
-/* CODE BLOCK */
+.badge.red    { background: var(--redbg);    color: var(--red); }
+.badge.green  { background: var(--greenbg);  color: var(--green); }
+.badge.blue   { background: var(--bluebg);   color: #1D4ED8; }
+.badge.amber  { background: var(--amberbg);  color: var(--amber); }
+.badge.orange { background: var(--orangebg); color: #C2410C; }
+.badge.teal   { background: var(--tealbg);   color: #1565C0; }
 pre {
-  background: #1E293B;
-  color: #E2E8F0;
-  border-radius: 10px;
-  padding: 16px 18px;
-  font-size: 13px;
-  overflow-x: auto;
-  line-height: 1.7;
-  margin: 12px 0;
+  background: #1E293B; color: #E2E8F0; border-radius: 10px;
+  padding: 16px 18px; font-size: 13px; overflow-x: auto; line-height: 1.7; margin: 12px 0;
 }
-code {
-  font-family: "Consolas", "Cascadia Code", "Fira Code", monospace;
-}
+code { font-family: "Consolas", "Cascadia Code", "Fira Code", monospace; }
 pre code { color: inherit; background: none; }
-.cm  { color: #94A3B8; }   /* comment */
-.ck  { color: #93C5FD; }   /* keyword */
-.cs  { color: #86EFAC; }   /* string */
-.ca  { color: #FCD34D; }   /* attr/class */
-.cv  { color: #F9A8D4; }   /* value */
-
-/* FLOW DIAGRAM */
-.flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  align-items: center;
-  margin: 12px 0;
-  font-size: 13px;
-}
+.cm { color: #94A3B8; }
+.ck { color: #93C5FD; }
+.cs { color: #86EFAC; }
+.ca { color: #FCD34D; }
+.cv { color: #F9A8D4; }
+.flow { display: flex; flex-wrap: wrap; gap: 0; align-items: center; margin: 12px 0; font-size: 13px; }
 .flow-step {
-  background: var(--redbg);
-  border: 1px solid #FCA5A5;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-weight: 700;
-  color: var(--red);
-  white-space: nowrap;
+  background: var(--redbg); border: 1px solid #FCA5A5;
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; color: var(--red); white-space: nowrap;
 }
-.flow-step.was {
-  background: #F3F4F6;
-  border-color: var(--line);
-  color: var(--muted);
-  text-decoration: line-through;
-}
-.flow-arrow {
-  padding: 0 8px;
-  color: var(--muted);
-  font-size: 18px;
-  line-height: 1;
-}
-
-/* CHECKLIST */
+.flow-step.was  { background: #F3F4F6; border-color: var(--line); color: var(--muted); text-decoration: line-through; }
+.flow-step.new  { background: var(--greenbg); border-color: #6EE7B7; color: var(--green); }
+.flow-arrow { padding: 0 8px; color: var(--muted); font-size: 18px; line-height: 1; }
 .checklist { list-style: none; padding: 0; margin: 10px 0; }
 .checklist li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 5px 0;
-  font-size: 13.5px;
-  border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 5px 0; font-size: 13.5px; border-bottom: 1px solid var(--line);
 }
 .checklist li:last-child { border-bottom: none; }
 .checklist li .icon { flex: none; font-size: 16px; margin-top: 1px; }
+
+/* highlight row */
+tr.hl-orange td { background: #FFF7ED; }
+tr.hl-teal   td { background: #E3F2FD; }
 </style>
 </head>
 <body>
@@ -197,7 +122,7 @@ pre code { color: inherit; background: none; }
   <p>สเปก handoff สำหรับ developer — ปรับ UX ฟอร์มกรอกรายการ G1 (บานกระจก ประตู/หน้าต่าง)</p>
   <div class="meta">
     <span>วันที่: 2026-06-11</span>
-    <span>สถานะ: ดราฟพร้อม handoff</span>
+    <span>สถานะ: ดราฟพร้อม handoff (อัปเดต: +consolidate มือจับ + มุ้ง)</span>
     <span>ไฟล์เป้าหมาย: public/calculator/index.html</span>
     <span>ดราฟ demo: draft-G1-formux.html</span>
   </div>
@@ -212,105 +137,54 @@ pre code { color: inherit; background: none; }
   </div>
   <div class="callout warn">
     <b>กฎเหล็ก:</b> readItem() อ่านค่าจาก <code>d.querySelector('.i-type').value</code>,
-    <code>d.querySelector('.o-bottomrail').value</code> ฯลฯ — ต้อง element เหล่านี้ยังคงอยู่ใน DOM (hidden input หรือ select ที่ซ่อน)
+    <code>d.querySelector('.o-bottomrail').value</code> ฯลฯ — element เหล่านี้ต้องยังคงอยู่ใน DOM (hidden input หรือ select ที่ซ่อน)
     พร้อมค่าที่ถูกต้องเสมอ ก่อนที่ calcQuote() จะรัน
   </div>
-
-  <h3>สรุปงาน</h3>
+  <h3>สรุปงานทั้งหมด (รอบนี้เพิ่ม consolidate 2 ก้อน)</h3>
   <ul class="checklist">
     <li><span class="icon">1️⃣</span> ย้าย .i-prod (แบบ) ขึ้นมาเป็นลำดับ 2 (ทันทีหลัง .i-group)</li>
-    <li><span class="icon">2️⃣</span> เปลี่ยน .i-type (ประเภท) จาก select → ชิป 2 ปุ่มใหญ่ (ไม่เกิน 52px สูง)</li>
+    <li><span class="icon">2️⃣</span> เปลี่ยน .i-type (ประเภท) จาก select → ชิป 2 ปุ่มใหญ่ (52px)</li>
     <li><span class="icon">3️⃣</span> เปลี่ยน select ≤4 ตัวเลือก → ชิป (8 ช่อง รายละเอียดในตาราง)</li>
-    <li><span class="icon">4️⃣</span> ปุ่ม/ชิปทุกตัวสูง ≥40px (tap target มือถือ)</li>
+    <li><span class="icon">4️⃣</span> <b>ก้อนใหม่:</b> รวบมือจับ 4 ช่อง → 1 กล่อง (ชิปแบรนด์ → dropdown/input รุ่น)</li>
+    <li><span class="icon">5️⃣</span> <b>ก้อนใหม่:</b> รวบมุ้ง 4 ช่องกระจาย → 1 กล่อง (โผล่/ซ่อนตาม o-mosq)</li>
+    <li><span class="icon">6️⃣</span> ปุ่ม/ชิปทุกตัวสูง ≥40px (tap target มือถือ)</li>
   </ul>
 </div>
 
 <!-- 2. ลำดับช่องใหม่ -->
 <div class="section">
   <h2>2. ลำดับช่องใหม่ (addItem template)</h2>
-
-  <h3>Before (ลำดับปัจจุบัน บรรทัด 2101–2127)</h3>
+  <h3>Before → After</h3>
   <div class="flow">
-    <div class="flow-step">กลุ่มงาน</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">ด้าน/ตำแหน่ง</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step was">ประเภท</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step was">แบบ (อันดับ 4!)</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">กว้าง/สูง</div>
-    <div class="flow-arrow">→</div>
+    <div class="flow-step">กลุ่มงาน</div><div class="flow-arrow">→</div>
+    <div class="flow-step was">ด้าน/ตำแหน่ง</div><div class="flow-arrow">→</div>
+    <div class="flow-step was">ประเภท</div><div class="flow-arrow">→</div>
+    <div class="flow-step was">แบบ (อันดับ 4!)</div><div class="flow-arrow">→</div>
+    <div class="flow-step">กว้าง/สูง</div><div class="flow-arrow">→</div>
     <div class="flow-step">บานทั้งหมด/ชุด</div>
   </div>
-
-  <h3>After (ลำดับใหม่)</h3>
+  <div style="margin:8px 0;font-size:13px;color:var(--muted);">ลำดับใหม่:</div>
   <div class="flow">
-    <div class="flow-step">กลุ่มงาน</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">แบบ (.i-prod) <span class="badge green">ขึ้น #2</span></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">ประเภท (ชิป) <span class="badge green">ชิป</span></div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">ด้าน/ตำแหน่ง</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">กว้าง/สูง</div>
-    <div class="flow-arrow">→</div>
-    <div class="flow-step">บล็อกฟ้า (บาน+ราง+ล็อค)</div>
-    <div class="flow-arrow">→</div>
+    <div class="flow-step">กลุ่มงาน</div><div class="flow-arrow">→</div>
+    <div class="flow-step new">แบบ (.i-prod) #2</div><div class="flow-arrow">→</div>
+    <div class="flow-step new">ประเภท (ชิป)</div><div class="flow-arrow">→</div>
+    <div class="flow-step">ด้าน/ตำแหน่ง</div><div class="flow-arrow">→</div>
+    <div class="flow-step">กว้าง/สูง</div><div class="flow-arrow">→</div>
+    <div class="flow-step">บล็อกฟ้า (บาน+ราง+ล็อค)</div><div class="flow-arrow">→</div>
     <div class="flow-step">จำนวนชุด</div>
   </div>
-
-  <h3>HTML template ที่ต้องแก้ (addItem · บรรทัด 2099–2128)</h3>
-  <div class="callout info">
+  <div class="callout info" style="margin-top:12px;">
     แก้เฉพาะลำดับ div ใน <code>d.innerHTML = ...</code> — ห้ามเปลี่ยน class ของ element ใดๆ<br>
-    ประเภทชิปใช้ <code>&lt;input type="hidden" class="i-type"&gt;</code> แทน select (หรือซ่อน select แล้ว sync) — ดูแพทเทิร์นในหัวข้อ 4
+    ประเภทชิปใช้ <code>&lt;select class="i-type" style="display:none;"&gt;</code> ซ่อน + chip sync — ดูแพทเทิร์นในหัวข้อ 4
   </div>
-
-  <pre><code><span class="cm">// ลำดับใหม่ใน addItem() template (แก้เฉพาะส่วนนี้)</span>
-<span class="cm">// ก่อน: group → position → type → prod → w/h → panels/qty</span>
-<span class="cm">// หลัง: group → prod → type-chip → position → w/h → (slide-block) → qty</span>
-
-d.innerHTML =
-  <span class="cs">`&lt;div class="top"&gt;...&lt;/div&gt;`</span> +
-  <span class="cs">`&lt;div class="chgrid"&gt;`</span> +
-
-    <span class="cm">// 1. กลุ่มงาน (คงเดิม)</span>
-    <span class="cs">`&lt;div class="full"&gt;&lt;label&gt;กลุ่มงาน&lt;/label&gt;
-      &lt;select class="i-group"&gt;...&lt;/select&gt;&lt;/div&gt;`</span> +
-
-    <span class="cm">// 2. แบบ — ย้ายขึ้นมา (เดิมอยู่อันดับ 4)</span>
-    <span class="cs">`&lt;div class="full"&gt;&lt;label&gt;แบบ&lt;/label&gt;
-      &lt;select class="i-prod"&gt;...&lt;/select&gt;&lt;/div&gt;`</span> +
-
-    <span class="cm">// 3. ประเภท — เปลี่ยนเป็นชิป (pattern ดูหัวข้อ 4)</span>
-    <span class="cs">`&lt;div class="full"&gt;&lt;label&gt;ประเภท&lt;/label&gt;
-      &lt;div class="chip-group chip-2up" data-chip="i-type"&gt;
-        &lt;button type="button" class="chip on" data-val="door"&gt;ประตู&lt;/button&gt;
-        &lt;button type="button" class="chip" data-val="window"&gt;หน้าต่าง&lt;/button&gt;
-      &lt;/div&gt;
-      &lt;select class="i-type" style="display:none;"&gt;
-        &lt;option value="door"&gt;ประตู&lt;/option&gt;
-        &lt;option value="window"&gt;หน้าต่าง&lt;/option&gt;
-      &lt;/select&gt;&lt;/div&gt;`</span> +
-
-    <span class="cm">// 4. ด้าน/ตำแหน่ง (ย้ายลงมา)</span>
-    <span class="cs">`&lt;div class="full"&gt;&lt;label&gt;ด้าน/ตำแหน่ง...&lt;/label&gt;
-      &lt;input class="i-position" list="posPreset" ...&gt;&lt;/div&gt;`</span> +
-
-    <span class="cm">// 5. กว้าง/สูง (คงเดิม)</span>
-    <span class="cs">`&lt;div&gt;...กว้าง...&lt;/div&gt;&lt;div&gt;...สูง...&lt;/div&gt;`</span> +
-
-    <span class="cm">// 6–N. ที่เหลือคงเดิมทุกอย่าง (panels/qty/opts/etc.)</span>
-    ...
-</code></pre>
 </div>
 
 <!-- 3. ตารางตัดสิน -->
 <div class="section">
-  <h2>3. ตารางตัดสิน: ช่องไหนเปลี่ยนเป็นชิป</h2>
+  <h2>3. ตารางตัดสิน: ช่องไหนเปลี่ยนอะไร</h2>
   <div class="callout info">
-    กฎ: select ≤4 ตัวเลือก → ชิป · select ≥5 ตัวเลือก → คง dropdown (หรือ dropdown + search)
+    กฎ A: select ≤4 ตัวเลือก → ชิป<br>
+    กฎ B: กลุ่ม control ที่เกี่ยวกับ "สิ่งเดียว" แต่กระจาย → รวบเป็น 1 กล่อง (consolidate)
   </div>
 
   <table>
@@ -320,7 +194,7 @@ d.innerHTML =
         <th>ตัวเลือก</th>
         <th>Control ใหม่</th>
         <th>เหตุผล</th>
-        <th>ตำแหน่งในโค้ด</th>
+        <th>บรรทัดโค้ด</th>
       </tr>
     </thead>
     <tbody>
@@ -328,7 +202,7 @@ d.innerHTML =
         <td><code>.i-type</code> (ประเภท)</td>
         <td>2</td>
         <td class="chip">ชิป 2up (52px)</td>
-        <td>2 ตัว · tap ได้เลย · แกนหลักของฟอร์ม</td>
+        <td>2 ตัว · แกนหลักของฟอร์ม · tap ได้เลย</td>
         <td>addItem L2103</td>
       </tr>
       <tr>
@@ -343,63 +217,370 @@ d.innerHTML =
         <td>2</td>
         <td class="chip">ชิป sm (44px)</td>
         <td>2 ตัว (มีกุญแจ/ไม่มี) · เฉพาะ itype=door</td>
-        <td>buildItemOpts L2345</td>
+        <td>buildItemOpts L2345, 2353</td>
       </tr>
-      <tr>
-        <td><code>.o-cmech</code> (มือจับ Cmech)</td>
-        <td>3</td>
-        <td class="chip">ชิป sm (44px)</td>
-        <td>3 ตัว (ไม่ใส่/ฝัง/เมโทร)</td>
-        <td>buildItemOpts L2290</td>
+      <!-- ก้อน 1: มือจับ -->
+      <tr class="hl-orange">
+        <td colspan="5" style="font-weight:700;color:#C2410C;font-size:13px;">
+          ก้อน 1 (Consolidate): มือจับ — รวบ 4 ช่อง → 1 กล่อง <span class="badge orange">ใหม่</span>
+        </td>
       </tr>
+      <tr class="hl-orange">
+        <td>
+          <code>.o-cmech</code> (Cmech ฝัง/เมโทร)<br>
+          <code>.o-cmechcolor</code> (สี 7 ตัว)<br>
+          <code>.o-digi</code> (ดิจิตอล 11 รุ่น)<br>
+          <code>.o-stainless</code> (สแตน 6 ขนาด)<br>
+          <code>.o-handlename</code> + <code>.o-handleprice</code>
+        </td>
+        <td>3 / 7 / 11 / 6 / text+num</td>
+        <td class="consolidate">กล่องชิปแบรนด์ → sub control</td>
+        <td>4 ช่องโผล่พร้อมกัน → เซลล์ไม่รู้ว่าเลือกได้กี่แบรนด์พร้อมกัน · รวบให้เลือกแบรนด์ก่อน ค่อยโชว์รุ่น</td>
+        <td>buildItemOpts L2281–2295</td>
+      </tr>
+      <!-- ก้อน 2: มุ้ง -->
+      <tr class="hl-teal">
+        <td colspan="5" style="font-weight:700;color:#1565C0;font-size:13px;">
+          ก้อน 2 (Consolidate): มุ้ง — รวบ 4 ช่อง → 1 กล่อง <span class="badge teal">ใหม่</span>
+        </td>
+      </tr>
+      <tr class="hl-teal">
+        <td>
+          <code>.o-mosq</code> (dropdown ชนิดมุ้ง)<br>
+          <code>.o-mosqw</code> / <code>.o-mosqh</code> / <code>.o-mosqpanels</code><br>
+          <code>.o-mosqfabric</code> (ผ้ามุ้ง 5 ตัว)<br>
+          <code>.o-mosqcolor</code> (สีกรอบ 4 ตัว)
+        </td>
+        <td>10+ / 3 inputs / 5 / 4</td>
+        <td class="consolidate">กล่องโผล่/ซ่อนตาม o-mosq · สีกรอบ→ชิป</td>
+        <td>ผ้า/ขนาด/สีกรอบโผล่แม้ไม่เลือกมุ้ง → เซลล์งง · ซ่อนทั้งหมดถ้า "ไม่ใส่"</td>
+        <td>buildItemOpts L2461–2469</td>
+      </tr>
+      <!-- ช่องเดิม -->
       <tr>
         <td><code>.o-mosqcolor</code> (สีกรอบมุ้ง)</td>
         <td>4</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>4 ตัว (ตามสีบาน/ซาฮาร่า/KL พิเศษ/KL ลายไม้)</td>
+        <td>4 ตัว · อยู่ในกล่องมุ้งรวบแล้ว</td>
         <td>buildItemOpts L2469</td>
       </tr>
       <tr>
         <td><code>.o-mosqfabric</code> (ผ้ามุ้ง)</td>
         <td>5</td>
         <td class="keep">คง dropdown</td>
-        <td>5 ตัว เกินกว่า 4 · บางชื่อยาว (สแตนนิรภัย)</td>
+        <td>5 ตัว เกิน 4 · บางชื่อยาว (สแตนนิรภัย)</td>
         <td>buildItemOpts L2467</td>
       </tr>
       <tr>
         <td><code>.o-solidlower</code> (แผ่นทึบล่าง)</td>
         <td>3</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>3 ตัว (ไม่มี/อลูลูกฟูก/คอมโพสิท) · เห็นทันที</td>
+        <td>3 ตัว (ไม่มี/อลูลูกฟูก/คอมโพสิท)</td>
         <td>buildItemOpts L2562</td>
       </tr>
       <tr>
         <td><code>.o-fcsides</code> (ครอบวงกบ)</td>
         <td>3</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>3 ตัว (ไม่มี/3 ด้าน/4 ด้าน) + ช่องกรอก .o-fcm ต่อท้าย</td>
+        <td>3 ตัว + ช่องกรอก .o-fcm ต่อท้าย</td>
         <td>buildItemOpts L2565</td>
       </tr>
       <tr>
         <td><code>.o-beamm</code> (เสริมคาน)</td>
         <td>4</td>
         <td class="chip">ชิป sm (44px)</td>
-        <td>4 ตัว (ไม่มี/รุ่น1/รุ่น2/รุ่น3) · ราคาต่างชัดเจน</td>
+        <td>4 ตัว (ไม่มี/รุ่น1/รุ่น2/รุ่น3)</td>
         <td>buildItemOpts L2375</td>
       </tr>
     </tbody>
     <tfoot>
-      <tr style="background: var(--greenbg); font-weight: 700;">
-        <td colspan="2">รวม: 8 ช่องเปลี่ยนเป็นชิป + 1 ช่องคง dropdown</td>
-        <td colspan="3" style="color: var(--green);">ผลรวม 9 ช่อง (G1 scope)</td>
+      <tr style="background:var(--greenbg);font-weight:700;">
+        <td colspan="2">Before: ~31 ช่อง/control มองเห็น</td>
+        <td colspan="3" style="color:var(--green);">After: ~22 ช่อง (ลด ~29%)</td>
       </tr>
     </tfoot>
   </table>
 
   <div class="callout warn">
-    <b>ไม่เปลี่ยน (เกิน 4 ตัวเลือก หรือตัวเลือก dynamic):</b>
-    .i-group (7), .i-prod (40+), .i-color (เยอะ), .i-glass (เยอะ), .o-opentype (4 แต่ตัวเลือกยาว),
-    .o-mosq (12+), .o-digi (เยอะ), .o-stainless (เยอะ), .o-mosqfabric (5)
+    <b>ไม่เปลี่ยน (เกิน 4 ตัวเลือก หรือ dynamic):</b>
+    .i-group (7), .i-prod (40+), .i-color, .i-glass, .o-opentype (4 แต่ตัวเลือกยาว),
+    .o-cmechcolor (7 สี), .o-digi (11), .o-stainless (6), .o-mosqfabric (5)
+  </div>
+</div>
+
+<!-- 3A. Consolidate มือจับ -->
+<div class="section">
+  <h2>3A. Consolidate ก้อน 1 — มือจับ (4 ช่อง → 1 กล่อง)</h2>
+
+  <div class="callout orange">
+    <b>สถานะปัจจุบัน (index.html L2281–2295):</b>
+    มือจับ 4 ช่องโผล่พร้อมกันเสมอถ้า <code>p.digihandle === true</code>
+    — เซลล์ไม่รู้ว่าเลือกหลายแบรนด์พร้อมกันได้หรือไม่<br>
+    <b>มติพี่นัท:</b> เลือกได้ 1 แบรนด์ต่อรายการ (เคลียร์อีก 3 เมื่อเปลี่ยนแบรนด์)
+  </div>
+
+  <h3 class="orange">การทำงานที่ต้องการ</h3>
+  <ol style="font-size:13.5px;line-height:1.9;">
+    <li>แสดงชิปแบรนด์ 5 ตัว: ไม่ใส่ · Cmech · ดิจิตอล · สแตนอร่าม · รุ่นอื่น ✎</li>
+    <li>กดแบรนด์ → โผล่ sub control ของแบรนด์นั้น (dropdown รุ่น หรือ input)</li>
+    <li>พร้อมกัน: เคลียร์ค่า control จริงของอีก 3 แบรนด์ (กันคิดซ้ำ)</li>
+    <li>กด "ไม่ใส่" → เคลียร์ทั้งหมด ซ่อน sub ทุกตัว</li>
+  </ol>
+
+  <h3 class="orange">HTML Pattern — กล่องมือจับรวบ</h3>
+  <pre><code><span class="cm">// แทนที่ 4 label แยก (L2281–2295) ด้วยกล่องนี้กล่องเดียว</span>
+<span class="cm">// control จริงทั้ง 4 ยังคงอยู่ใน DOM (ซ่อน) — readItem อ่านจากตรงนี้</span>
+h += <span class="cs">`
+&lt;label class="opt" style="width:100%;"&gt;
+  &lt;b&gt;มือจับ&lt;/b&gt;
+  &lt;div class="handle-brand-wrap" style="
+      background:#FFF8E1;border:1px solid #FFD54F;
+      border-radius:10px;padding:10px 12px;margin-top:4px;"&gt;
+
+    &lt;div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:8px;"&gt;
+      เลือกแบรนด์ (1 แบรนด์ต่อรายการ)
+    &lt;/div&gt;
+
+    &lt;!-- ชิปแบรนด์ --&gt;
+    &lt;div class="chip-group chip-sm"&gt;
+      &lt;button type="button" class="chip on" data-hbrand="none"
+        onclick="handleBrandPick(this)"&gt;ไม่ใส่&lt;/button&gt;
+      &lt;button type="button" class="chip" data-hbrand="cmech"
+        onclick="handleBrandPick(this)"&gt;Cmech&lt;/button&gt;
+      &lt;button type="button" class="chip" data-hbrand="digital"
+        onclick="handleBrandPick(this)"&gt;ดิจิตอล&lt;/button&gt;
+      &lt;button type="button" class="chip" data-hbrand="stainless"
+        onclick="handleBrandPick(this)"&gt;สแตนอร่าม&lt;/button&gt;
+      &lt;button type="button" class="chip" data-hbrand="other"
+        onclick="handleBrandPick(this)"&gt;รุ่นอื่น ✎&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;!-- sub: Cmech — ฝัง/เมโทร (ชิป) + สี (dropdown) --&gt;
+    &lt;div class="hsub hsub-cmech" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
+      &lt;div class="chip-group chip-sm"&gt;
+        &lt;button type="button" class="chip on" data-val="embed"
+          onclick="cmechTypePick(this)"&gt;ฝัง&lt;/button&gt;
+        &lt;button type="button" class="chip" data-val="metro"
+          onclick="cmechTypePick(this)"&gt;เมโทร&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;!-- o-cmech ซ่อน — readItem อ่านจากตรงนี้ --&gt;
+      &lt;select class="o-cmech" style="display:none;" onchange="calcQuote()"&gt;
+        &lt;option value=""&gt;ไม่ใส่&lt;/option&gt;
+        &lt;option value="embed"&gt;ฝัง&lt;/option&gt;
+        &lt;option value="metro"&gt;เมโทร&lt;/option&gt;
+      &lt;/select&gt;
+      &lt;!-- o-cmechcolor คง dropdown (7 สี) --&gt;
+      &lt;select class="o-cmechcolor" style="height:40px;margin-top:8px;" onchange="calcQuote()"&gt;
+        &lt;option value="black"&gt;สีดำ&lt;/option&gt;...
+      &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- sub: ดิจิตอล — dropdown รุ่น (11 ตัว) --&gt;
+    &lt;div class="hsub hsub-digital" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
+      &lt;!-- o-digi ไม่ซ่อน — โชว์ตรงๆ ให้เลือกรุ่น --&gt;
+      &lt;select class="o-digi" style="height:44px;width:100%;" onchange="calcQuote()"&gt;
+        &lt;option value=""&gt;— เลือกรุ่น —&lt;/option&gt;
+        ${ DIGI.map(function(d,i){ return '&lt;option value="'+i+'"&gt;'+d.n+' +'+fmt(d.p)+'&lt;/option&gt;'; }).join('') }
+      &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- sub: สแตนอร่าม — dropdown ขนาด (6 ตัว) --&gt;
+    &lt;div class="hsub hsub-stainless" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
+      &lt;!-- o-stainless ไม่ซ่อน --&gt;
+      &lt;select class="o-stainless" style="height:44px;width:100%;" onchange="calcQuote()"&gt;
+        &lt;option value=""&gt;— เลือกขนาด —&lt;/option&gt;
+        ${ HANDLE_STAINLESS.map(function(s,i){ return '&lt;option value="'+i+'"&gt;'+s.n+' +'+fmt(s.p)+'&lt;/option&gt;'; }).join('') }
+      &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- sub: รุ่นอื่น — text + number (o-handlename + o-handleprice) --&gt;
+    &lt;div class="hsub hsub-other" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
+      &lt;input type="text" class="o-handlename"
+        placeholder="ชื่อรุ่น เช่น HD182 / Berin"
+        style="height:40px;margin-bottom:6px;" oninput="calcQuote()"&gt;
+      ราคา &lt;input type="number" class="o-handleprice"
+        min="0" step="100" value="0"
+        style="width:110px;height:40px;" oninput="calcQuote()"&gt; บาท
+    &lt;/div&gt;
+
+  &lt;/div&gt;
+&lt;/label&gt;`</span>;
+</code></pre>
+
+  <h3 class="orange">JS function: handleBrandPick + cmechTypePick</h3>
+  <pre><code><span class="cm">// เพิ่มใน script global — ทำงานกับกล่องมือจับในแต่ละ .ch</span>
+<span class="ck">function</span> <span class="ca">handleBrandPick</span>(btn) {
+  <span class="ck">const</span> wrap = btn.closest(<span class="cs">'.handle-brand-wrap'</span>);
+  <span class="ck">if</span> (!wrap) <span class="ck">return</span>;
+
+  <span class="cm">// toggle chip</span>
+  wrap.querySelectorAll(<span class="cs">'[data-hbrand]'</span>).forEach(<span class="ck">function</span>(c) { c.classList.remove(<span class="cs">'on'</span>); });
+  btn.classList.add(<span class="cs">'on'</span>);
+  <span class="ck">const</span> brand = btn.dataset.hbrand;
+
+  <span class="cm">// ซ่อนทุก sub</span>
+  wrap.querySelectorAll(<span class="cs">'.hsub'</span>).forEach(<span class="ck">function</span>(s) { s.style.display = <span class="cs">'none'</span>; });
+
+  <span class="cm">// เคลียร์ค่า control จริงทั้ง 4 แบรนด์ (กันคิดราคาซ้ำ)</span>
+  <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
+  <span class="ck">if</span> (ch) {
+    [<span class="cs">'.o-cmech'</span>, <span class="cs">'.o-digi'</span>, <span class="cs">'.o-stainless'</span>].forEach(<span class="ck">function</span>(cls) {
+      <span class="ck">const</span> el = ch.querySelector(cls);
+      <span class="ck">if</span> (el) { el.value = <span class="cs">''</span>; }
+    });
+    <span class="ck">const</span> hn = ch.querySelector(<span class="cs">'.o-handlename'</span>);
+    <span class="ck">const</span> hp = ch.querySelector(<span class="cs">'.o-handleprice'</span>);
+    <span class="ck">if</span> (hn) hn.value = <span class="cs">''</span>;
+    <span class="ck">if</span> (hp) hp.value = <span class="cs">'0'</span>;
+  }
+
+  <span class="cm">// โผล่ sub ของแบรนด์ที่เลือก</span>
+  <span class="ck">if</span> (brand !== <span class="cs">'none'</span>) {
+    <span class="ck">const</span> sub = wrap.querySelector(<span class="cs">'.hsub-'</span> + brand);
+    <span class="ck">if</span> (sub) sub.style.display = <span class="cs">''</span>;
+    <span class="cm">// default Cmech = embed</span>
+    <span class="ck">if</span> (brand === <span class="cs">'cmech'</span> && ch) {
+      <span class="ck">const</span> cmSel = ch.querySelector(<span class="cs">'.o-cmech'</span>);
+      <span class="ck">if</span> (cmSel) cmSel.value = <span class="cs">'embed'</span>;
+    }
+  }
+  calcQuote();
+}
+
+<span class="cm">// sync ชิป Cmech type → select ซ่อน</span>
+<span class="ck">function</span> <span class="ca">cmechTypePick</span>(btn) {
+  <span class="ck">const</span> sub = btn.closest(<span class="cs">'.hsub-cmech'</span>);
+  <span class="ck">if</span> (!sub) <span class="ck">return</span>;
+  sub.querySelectorAll(<span class="cs">'[data-val]'</span>).forEach(<span class="ck">function</span>(c) { c.classList.remove(<span class="cs">'on'</span>); });
+  btn.classList.add(<span class="cs">'on'</span>);
+  <span class="ck">const</span> sel = sub.querySelector(<span class="cs">'.o-cmech'</span>);
+  <span class="ck">if</span> (sel) { sel.value = btn.dataset.val; sel.dispatchEvent(<span class="ck">new</span> Event(<span class="cs">'change'</span>, {bubbles:<span class="ck">true</span>})); }
+}
+</code></pre>
+
+  <div class="callout warn">
+    <b>ข้อสำคัญ — มือจับ Cmech หลบมุ้ง (.o-cmechawn):</b>
+    เป็น control แยกสำหรับบานกระทุ้งเท่านั้น (L2295) — ไม่ต้องรวมใน brand picker
+    ให้คงไว้เป็น label แยกใต้กล่องมือจับ (หรือซ่อนในกล่องเมื่อ brand=cmech)
+    ต้องเคลียร์ค่า .o-cmechawn ด้วยเมื่อเปลี่ยนแบรนด์ออกจาก cmech
+  </div>
+
+  <div class="callout warn">
+    <b>ข้อสำคัญ — มือจับ X-series (.o-xhandle):</b>
+    มีเฉพาะบาน X-series/SlimLux (L2299) — ฟรี ไม่บวกเงิน
+    ควรรวมไว้ในกล่อง brand picker เพิ่มชิปแบรนด์ "X-series (ฟรี)" หรือแสดงแยกต่างหากชัดเจน
+    (เช็คซ้ำกับพี่นัทว่า X-series + Cmech เลือกพร้อมกันได้ไหม)
+  </div>
+</div>
+
+<!-- 3B. Consolidate มุ้ง -->
+<div class="section">
+  <h2>3B. Consolidate ก้อน 2 — มุ้ง (4 ช่อง → 1 กล่อง)</h2>
+
+  <div class="callout teal">
+    <b>สถานะปัจจุบัน (index.html L2461–2469):</b>
+    ช่อง o-mosqw, o-mosqh, o-mosqpanels, o-mosqfabric, o-mosqcolor โผล่ทั้งหมด
+    แม้ยังเลือก o-mosq = "" (ไม่ใส่) — เซลล์งงว่าต้องกรอกหรือเปล่า<br>
+    <b>เป้าหมาย:</b> ซ่อนทั้งหมดถ้า o-mosq = "" · โผล่เมื่อเลือกมุ้ง · จัดอยู่กล่องเดียวกัน
+  </div>
+
+  <h3 class="teal">การทำงานที่ต้องการ</h3>
+  <ol style="font-size:13.5px;line-height:1.9;">
+    <li>dropdown <code>.o-mosq</code> อยู่บนสุดกล่อง — ค่า default = "" (ไม่ใส่)</li>
+    <li>ถ้า .o-mosq = "" → ซ่อน: ผ้ามุ้ง + ขนาด + จำนวนบาน + สีกรอบทั้งหมด</li>
+    <li>ถ้า .o-mosq มีค่า → โผล่ทั้งกลุ่มในกล่องสีฟ้าใต้ dropdown</li>
+    <li>สีกรอบมุ้ง (.o-mosqcolor) เปลี่ยนจาก dropdown → ชิป 4 ตัว (ตามสีบาน / ซาฮาร่า / KL พิเศษ / KL ลายไม้)</li>
+    <li>ผ้ามุ้ง (.o-mosqfabric) คง dropdown (5 ตัว)</li>
+  </ol>
+
+  <h3 class="teal">HTML Pattern — กล่องมุ้งรวบ</h3>
+  <pre><code><span class="cm">// แทนที่ 4 label แยก (L2465–2469) ด้วยกล่องนี้กล่องเดียว</span>
+<span class="cm">// control จริงทั้งหมดอยู่ใน DOM เดิม (ไม่ซ่อน) — readItem อ่านได้ปกติ</span>
+h += <span class="cs">`
+&lt;label class="opt" style="width:100%;"&gt;
+  &lt;b&gt;มุ้ง&lt;/b&gt;
+  &lt;div class="mosq-wrap" style="
+      background:#E3F2FD;border:1px solid #90CAF9;
+      border-radius:10px;padding:10px 12px;margin-top:4px;"&gt;
+
+    &lt;div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:8px;"&gt;
+      เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนรายละเอียดทั้งหมด
+    &lt;/div&gt;
+
+    &lt;!-- dropdown ชนิดมุ้ง (o-mosq) --&gt;
+    &lt;select class="o-mosq" style="height:44px;width:100%;"
+      onchange="mosqGroupToggle(this); calcQuote();"&gt;
+      &lt;option value=""&gt;ไม่ใส่&lt;/option&gt;
+      ${ MOSQUITO_SCREENS.filter(...).map(...).join('') }
+    &lt;/select&gt;
+
+    &lt;!-- กลุ่มรายละเอียด — ซ่อน default --&gt;
+    &lt;div class="mosq-detail-group" style="
+        display:none;margin-top:10px;
+        border-top:1px solid #90CAF9;padding-top:10px;"&gt;
+
+      &lt;!-- ขนาดมุ้ง (o-mosqw, o-mosqh, o-mosqpanels) --&gt;
+      &lt;label class="opt"&gt;
+        ขนาดมุ้ง &lt;span style="font-size:11px;color:#0369A1;"&gt;[auto จากบาน]&lt;/span&gt;&lt;br&gt;
+        กว้าง &lt;input type="number" class="o-mosqw" min="0" step="0.1" value=""
+          placeholder="ม." style="width:64px;height:36px;" oninput="calcQuote()"&gt;
+        × ยาว &lt;input type="number" class="o-mosqh" min="0" step="0.1" value=""
+          placeholder="ม." style="width:64px;height:36px;" oninput="calcQuote()"&gt;
+        · บาน &lt;input type="number" class="o-mosqpanels" min="0" step="1" value=""
+          placeholder="auto" style="width:56px;height:36px;" oninput="calcQuote()"&gt;
+      &lt;/label&gt;
+
+      &lt;!-- ผ้ามุ้ง (o-mosqfabric) — คง dropdown --&gt;
+      &lt;label class="opt"&gt;ผ้ามุ้ง
+        &lt;select class="o-mosqfabric" style="height:36px;" onchange="calcQuote()"&gt;
+          &lt;option value="fiber_gray" selected&gt;ไฟเบอร์เทา (default)&lt;/option&gt;
+          &lt;option value="fiber_black"&gt;ไฟเบอร์ดำ&lt;/option&gt;
+          &lt;option value="anti_pet"&gt;กันแมว/หมา +800&lt;/option&gt;
+          &lt;option value="stainless"&gt;สแตนกันหนู +1,200&lt;/option&gt;
+          &lt;option value="safety08"&gt;สแตนนิรภัย 0.8มม.&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+
+      &lt;!-- สีกรอบมุ้ง (o-mosqcolor) — เปลี่ยนเป็นชิป --&gt;
+      &lt;label class="opt" style="width:100%;"&gt;สีกรอบมุ้ง
+        &lt;div class="chip-group chip-sm"&gt;
+          &lt;button type="button" class="chip on" data-val=""
+            onclick="chSetChip(this,'o-mosqcolor')"&gt;ตามสีบาน&lt;/button&gt;
+          &lt;button type="button" class="chip" data-val="sahara"
+            onclick="chSetChip(this,'o-mosqcolor')"&gt;เทาซาฮาร่า&lt;/button&gt;
+          &lt;button type="button" class="chip" data-val="kl_special"
+            onclick="chSetChip(this,'o-mosqcolor')"&gt;KL พิเศษ&lt;/button&gt;
+          &lt;button type="button" class="chip" data-val="kl_wood"
+            onclick="chSetChip(this,'o-mosqcolor')"&gt;KL ลายไม้&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;!-- o-mosqcolor ซ่อน — readItem อ่านจากตรงนี้ --&gt;
+        &lt;select class="o-mosqcolor" style="display:none;" onchange="calcQuote()"&gt;
+          &lt;option value=""&gt;ตามสีบาน (ฟรี)&lt;/option&gt;
+          &lt;option value="sahara"&gt;เทาซาฮาร่า (×0.5)&lt;/option&gt;
+          &lt;option value="kl_special"&gt;เคแอลอบพิเศษ (×0.5)&lt;/option&gt;
+          &lt;option value="kl_wood"&gt;เคแอลลายไม้ (×0.5)&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+
+    &lt;/div&gt;&lt;!-- /mosq-detail-group --&gt;
+  &lt;/div&gt;&lt;!-- /mosq-wrap --&gt;
+&lt;/label&gt;`</span>;
+</code></pre>
+
+  <h3 class="teal">JS function: mosqGroupToggle</h3>
+  <pre><code><span class="cm">// เพิ่มใน script global</span>
+<span class="ck">function</span> <span class="ca">mosqGroupToggle</span>(sel) {
+  <span class="ck">const</span> wrap = sel.closest(<span class="cs">'.mosq-wrap'</span>);
+  <span class="ck">if</span> (!wrap) <span class="ck">return</span>;
+  <span class="ck">const</span> grp = wrap.querySelector(<span class="cs">'.mosq-detail-group'</span>);
+  <span class="ck">if</span> (grp) grp.style.display = sel.value ? <span class="cs">''</span> : <span class="cs">'none'</span>;
+}
+</code></pre>
+
+  <div class="callout warn">
+    <b>ข้อสำคัญ — มุ้งโหมด B (.o-screen_existing · L2472):</b>
+    checkbox "ติดมุ้งบานเดิม" อยู่ใน <code>if(p.cat==='มุ้ง')</code> — เป็น G5 ไม่ใช่ G1
+    ไม่ต้องรวมในกล่อง G1 นี้ เว้นไว้ตามเดิม
   </div>
 </div>
 
@@ -414,18 +595,12 @@ d.innerHTML =
   <pre><code><span class="cm">&lt;!-- ใน addItem template — แทน select class="i-type" เดิม --&gt;</span>
 <span class="ck">&lt;div</span> <span class="ca">class</span>=<span class="cs">"full"</span><span class="ck">&gt;</span>
   <span class="ck">&lt;label</span> <span class="ca">class</span>=<span class="cs">"field-label"</span><span class="ck">&gt;</span>ประเภท<span class="ck">&lt;/label&gt;</span>
-
-  <span class="cm">&lt;!-- ชิป UI --&gt;</span>
   <span class="ck">&lt;div</span> <span class="ca">class</span>=<span class="cs">"chip-group chip-2up"</span><span class="ck">&gt;</span>
     <span class="ck">&lt;button</span> <span class="ca">type</span>=<span class="cs">"button"</span> <span class="ca">class</span>=<span class="cs">"chip on"</span>
-      <span class="ca">data-val</span>=<span class="cs">"door"</span>
-      <span class="ca">onclick</span>=<span class="cs">"chSetChip(this,'i-type')"</span><span class="ck">&gt;</span>ประตู<span class="ck">&lt;/button&gt;</span>
+      <span class="ca">data-val</span>=<span class="cs">"door"</span> <span class="ca">onclick</span>=<span class="cs">"chSetChip(this,'i-type')"</span><span class="ck">&gt;</span>ประตู<span class="ck">&lt;/button&gt;</span>
     <span class="ck">&lt;button</span> <span class="ca">type</span>=<span class="cs">"button"</span> <span class="ca">class</span>=<span class="cs">"chip"</span>
-      <span class="ca">data-val</span>=<span class="cs">"window"</span>
-      <span class="ca">onclick</span>=<span class="cs">"chSetChip(this,'i-type')"</span><span class="ck">&gt;</span>หน้าต่าง<span class="ck">&lt;/button&gt;</span>
+      <span class="ca">data-val</span>=<span class="cs">"window"</span> <span class="ca">onclick</span>=<span class="cs">"chSetChip(this,'i-type')"</span><span class="ck">&gt;</span>หน้าต่าง<span class="ck">&lt;/button&gt;</span>
   <span class="ck">&lt;/div&gt;</span>
-
-  <span class="cm">&lt;!-- select เดิม — ซ่อน · readItem ยังอ่านจากตรงนี้ --&gt;</span>
   <span class="ck">&lt;select</span> <span class="ca">class</span>=<span class="cs">"i-type"</span> <span class="ca">style</span>=<span class="cs">"display:none;"</span><span class="ck">&gt;</span>
     <span class="ck">&lt;option</span> <span class="ca">value</span>=<span class="cs">"door"</span><span class="ck">&gt;</span>ประตู<span class="ck">&lt;/option&gt;</span>
     <span class="ck">&lt;option</span> <span class="ca">value</span>=<span class="cs">"window"</span><span class="ck">&gt;</span>หน้าต่าง<span class="ck">&lt;/option&gt;</span>
@@ -433,21 +608,14 @@ d.innerHTML =
 <span class="ck">&lt;/div&gt;</span>
 </code></pre>
 
-  <h3>Pattern B: ชิปเล็ก (ราง, ล็อค, Cmech ฯลฯ)</h3>
-  <pre><code><span class="cm">&lt;!-- ตัวอย่าง o-bottomrail (ใน buildItemOpts · L2334) --&gt;</span>
-<span class="cm">&lt;!-- แทน: h += '&lt;label class="opt"&gt;ราง &lt;select class="o-bottomrail"...&gt;...' --&gt;</span>
-
-h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
+  <h3>Pattern B: ชิปเล็ก (ราง, ล็อค ฯลฯ)</h3>
+  <pre><code>h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
   ราง
   &lt;div class="chip-group chip-sm"&gt;
     &lt;button type="button" class="chip ${ _brDef==='กันน้ำ'?'on':'' }"
-      data-val="กันน้ำ" onclick="chSetChip(this,'o-bottomrail')"&gt;
-      รางกันน้ำ
-    &lt;/button&gt;
+      data-val="กันน้ำ" onclick="chSetChip(this,'o-bottomrail')"&gt;รางกันน้ำ&lt;/button&gt;
     &lt;button type="button" class="chip ${ _brDef==='เตี้ย'?'on':'' }"
-      data-val="เตี้ย" onclick="chSetChip(this,'o-bottomrail')"&gt;
-      รางเตี้ย 7 มม.
-    &lt;/button&gt;
+      data-val="เตี้ย" onclick="chSetChip(this,'o-bottomrail')"&gt;รางเตี้ย 7 มม.&lt;/button&gt;
   &lt;/div&gt;
   &lt;select class="o-bottomrail" style="display:none;" onchange="calcQuote();"&gt;
     &lt;option value="กันน้ำ" ${ _brDef==='กันน้ำ'?'selected':'' }&gt;รางล่าง (รุ่นกันน้ำ)&lt;/option&gt;
@@ -457,20 +625,14 @@ h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
 </code></pre>
 
   <h3>Helper function: chSetChip (เพิ่มใน JS global)</h3>
-  <pre><code><span class="cm">// เพิ่ม 1 function นี้ใน script หลัก (ทำงานกับทุกชิปในระบบ)</span>
-<span class="ck">function</span> <span class="ca">chSetChip</span>(btn, selectClass) {
-  <span class="cm">// หา .ch ที่ครอบ (scope ถูกต้อง ไม่ข้ามรายการ)</span>
+  <pre><code><span class="ck">function</span> <span class="ca">chSetChip</span>(btn, selectClass) {
   <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
   <span class="ck">if</span> (!ch) <span class="ck">return</span>;
   <span class="ck">const</span> val = btn.dataset.val;
-
-  <span class="cm">// toggle active chip</span>
   ch.querySelectorAll(<span class="cs">`.chip[onclick*="${selectClass}"]`</span>).forEach(<span class="ck">function</span>(c) {
     c.classList.remove(<span class="cs">'on'</span>);
   });
   btn.classList.add(<span class="cs">'on'</span>);
-
-  <span class="cm">// sync ค่าเข้า select เดิม + fire change → calcQuote รับรู้</span>
   <span class="ck">const</span> sel = ch.querySelector(<span class="cs">'.'</span> + selectClass);
   <span class="ck">if</span> (sel) {
     sel.value = val;
@@ -486,57 +648,26 @@ h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
   </div>
 </div>
 
-<!-- 5. CSS ที่ต้องเพิ่ม -->
+<!-- 5. CSS -->
 <div class="section">
   <h2>5. CSS ที่ต้องเพิ่มใน &lt;style&gt;</h2>
   <pre><code><span class="cm">/* ===== CHIP CONTROLS (G1 UX Redesign) ===== */</span>
-.chip-group {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
+.chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;       <span class="cm">/* tap target มือถือ */</span>
-  padding: 8px 14px;
-  border: 1.5px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--ink);
-  font-size: 14px;
-  font-family: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  line-height: 1.3;
-  text-align: center;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 8px 14px;
+  border: 1.5px solid var(--line); border-radius: 10px;
+  background: #fff; color: var(--ink);
+  font-size: 14px; font-family: inherit; font-weight: 600; cursor: pointer;
+  line-height: 1.3; text-align: center;
   transition: background .12s, border-color .12s;
   -webkit-tap-highlight-color: transparent;
 }
 .chip:active { background: var(--redbg); }
-.chip.on {
-  background: var(--red-dark);
-  border-color: var(--red-dark);
-  color: #fff;
-}
-
-<span class="cm">/* ประเภท — 2 ปุ่มใหญ่เต็มแถว */</span>
-.chip-2up .chip {
-  flex: 1;
-  font-size: 16px;
-  min-height: 52px;
-}
-
-<span class="cm">/* ชิปเล็ก (option ใน .i-opts) */</span>
-.chip-sm .chip {
-  min-height: 40px;
-  padding: 6px 12px;
-  font-size: 13px;
-}
+.chip.on { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
+.chip-2up .chip { flex: 1; font-size: 16px; min-height: 52px; }
+.chip-sm .chip   { min-height: 40px; padding: 6px 12px; font-size: 13px; }
 </code></pre>
-
   <div class="callout info">
     เพิ่ม CSS ต่อท้าย <code>&lt;style&gt;</code> ที่มีอยู่แล้ว (ไม่ทับ rule เดิม)<br>
     ตัวแปร <code>--red-dark</code> มีอยู่แล้วในโค้ด (<code>#B3151D</code>) — ใช้ได้เลย
@@ -546,26 +677,16 @@ h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
 <!-- 6. จุดโค้ดอ้างอิง -->
 <div class="section">
   <h2>6. จุดโค้ดที่ต้องแก้ (พร้อม line reference)</h2>
-
   <table>
     <thead>
-      <tr>
-        <th>จุด</th>
-        <th>บรรทัด</th>
-        <th>งาน</th>
-        <th>ความเสี่ยง</th>
-      </tr>
+      <tr><th>จุด</th><th>บรรทัด</th><th>งาน</th><th>ความเสี่ยง</th></tr>
     </thead>
     <tbody>
       <tr>
         <td><b>addItem template</b></td>
         <td>2099–2128</td>
-        <td>
-          1. เรียงลำดับ div ใหม่ (prod ขึ้นก่อน type)<br>
-          2. เปลี่ยน .i-type select → chip + hidden select<br>
-          3. เพิ่ม data-chip attribute บน wrapper
-        </td>
-        <td><span class="badge amber">กลาง</span> อย่าลืมซ่อน select เดิม ห้ามลบ</td>
+        <td>เรียงลำดับใหม่ (prod ขึ้นก่อน type) · เปลี่ยน .i-type select → chip + hidden select</td>
+        <td><span class="badge amber">กลาง</span> อย่าลืมซ่อน select เดิม</td>
       </tr>
       <tr>
         <td><b>buildItemOpts</b> — ราง</td>
@@ -576,143 +697,179 @@ h += <span class="cs">`&lt;label class="opt" style="width:100%;"&gt;
       <tr>
         <td><b>buildItemOpts</b> — ชุดล็อค</td>
         <td>2345, 2353</td>
-        <td>เปลี่ยน o-slidelock select → chip · มี 2 ที่ (banan_luen + PC Door)</td>
+        <td>เปลี่ยน o-slidelock select → chip · มี 2 ที่ (บานเลื่อน + PC Door)</td>
         <td><span class="badge red">สูง</span> มี 2 branch แก้ให้ครบ</td>
       </tr>
-      <tr>
-        <td><b>buildItemOpts</b> — Cmech</td>
-        <td>2290</td>
-        <td>เปลี่ยน o-cmech select → chip (3 ตัว) · o-cmechcolor คง dropdown (7 ตัว)</td>
-        <td><span class="badge amber">กลาง</span></td>
+      <tr class="hl-orange">
+        <td><b>buildItemOpts</b> — มือจับรวบ <span class="badge orange">ใหม่</span></td>
+        <td>2281–2295</td>
+        <td>แทน 4 label แยก ด้วยกล่อง handle-brand-wrap + ชิปแบรนด์ + sub controls · เพิ่ม handleBrandPick() + cmechTypePick()</td>
+        <td><span class="badge red">สูง</span> เคลียร์ 3 แบรนด์เสมอ · อย่าลืม .o-cmechawn แยก</td>
+      </tr>
+      <tr class="hl-teal">
+        <td><b>buildItemOpts</b> — มุ้งรวบ <span class="badge teal">ใหม่</span></td>
+        <td>2461–2469</td>
+        <td>แทน 4 label แยก ด้วยกล่อง mosq-wrap + mosq-detail-group (ซ่อน default) · เพิ่ม mosqGroupToggle() · o-mosqcolor เปลี่ยนเป็นชิป</td>
+        <td><span class="badge amber">กลาง</span> ตั้ง display:none ให้ถูกตอน build HTML</td>
       </tr>
       <tr>
-        <td><b>buildItemOpts</b> — สีกรอบมุ้ง</td>
-        <td>2469</td>
-        <td>เปลี่ยน o-mosqcolor select → chip (4 ตัว)</td>
+        <td><b>buildItemOpts</b> — Cmech (ชิป)</td>
+        <td>2290</td>
+        <td>o-cmech select (ฝัง/เมโทร) → ชิปใน sub-cmech · o-cmechcolor คง dropdown (7 สี)</td>
         <td><span class="badge amber">กลาง</span></td>
       </tr>
       <tr>
         <td><b>buildItemOpts</b> — แผ่นทึบล่าง</td>
         <td>2562</td>
-        <td>เปลี่ยน o-solidlower select → chip (3 ตัว) · logic show/hide .o-solidlower-wrap ยังอยู่ใน onchange ของ select ซ่อน</td>
-        <td><span class="badge red">สูง</span> show/hide sub-fields ต้อง trigger จาก chip onclick ด้วย</td>
+        <td>o-solidlower → chip (3 ตัว)</td>
+        <td><span class="badge red">สูง</span> show/hide .o-solidlower-wrap ต้อง trigger จาก chip onclick</td>
       </tr>
       <tr>
         <td><b>buildItemOpts</b> — ครอบวงกบ</td>
         <td>2565</td>
-        <td>เปลี่ยน o-fcsides select → chip (3 ตัว) · ช่อง o-fcm (กรอกเอง) ยังคงอยู่ต่อท้าย</td>
+        <td>o-fcsides → chip (3 ตัว) + .o-fcm ช่องกรอกต่อท้าย</td>
         <td><span class="badge amber">กลาง</span></td>
       </tr>
       <tr>
         <td><b>buildItemOpts</b> — เสริมคาน</td>
         <td>2375</td>
-        <td>เปลี่ยน o-beamm select → chip (4 ตัว) · input o-beammlen ยังคงอยู่ต่อท้าย</td>
+        <td>o-beamm → chip (4 ตัว) + .o-beammlen ต่อท้าย</td>
         <td><span class="badge amber">กลาง</span></td>
       </tr>
       <tr>
         <td><b>script global</b></td>
-        <td>ใหม่ (เพิ่ม)</td>
-        <td>เพิ่ม function chSetChip(btn, selectClass) — ดูหัวข้อ 4</td>
+        <td>ใหม่</td>
+        <td>เพิ่ม: chSetChip() · handleBrandPick() · cmechTypePick() · mosqGroupToggle()</td>
         <td><span class="badge blue">ต่ำ</span> function ใหม่ ไม่กระทบของเดิม</td>
       </tr>
     </tbody>
   </table>
-
-  <div class="callout warn">
-    <b>กรณีพิเศษ: o-solidlower</b> — select เดิมมี inline onchange ที่ show/hide .o-solidlower-wrap
-    และ .o-sl-colorwrap เมื่อชิปกด ต้อง dispatchEvent('change') จาก chSetChip เพื่อ trigger logic นี้ด้วย
-    (chSetChip ที่เขียนไว้ในหัวข้อ 4 ทำสิ่งนี้แล้วผ่าน <code>sel.dispatchEvent(new Event('change', {bubbles:true}))</code>)
-  </div>
 </div>
 
 <!-- 7. Before/After สรุป -->
 <div class="section">
   <h2>7. Before / After สรุป</h2>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
     <div>
-      <h3 style="color:var(--red);">Before (ปัจจุบัน)</h3>
+      <h3 style="color:var(--red);">Before (~31 ช่อง)</h3>
       <ul style="font-size:13.5px;line-height:1.8;padding-left:18px;">
         <li>"แบบ" อยู่อันดับ 4 — เลื่อนหา</li>
         <li>"ประเภท" = dropdown popup 2 ตัว</li>
         <li>ราง/ล็อค/Cmech = dropdown แม้ตัวเลือกน้อย</li>
-        <li>ทุก option อยู่ในระดับเดียวกัน (ยาว)</li>
+        <li>มือจับ 4 ช่องโผล่พร้อมกัน (เลือกหลายแบรนด์พร้อมกันได้โดยไม่รู้)</li>
+        <li>มุ้ง 4 ช่องกระจาย โผล่แม้ยังไม่เลือกมุ้ง</li>
         <li>tap target เล็ก (select height:32px)</li>
-        <li>ไม่มี stepper → พิมพ์ตัวเลขอย่างเดียว</li>
       </ul>
     </div>
     <div>
-      <h3 style="color:var(--green);">After (ดราฟใหม่)</h3>
+      <h3 style="color:var(--green);">After (~22 ช่อง)</h3>
       <ul style="font-size:13.5px;line-height:1.8;padding-left:18px;">
         <li>"แบบ" ขึ้นอันดับ 2 ทันที</li>
         <li>"ประเภท" = 2 ปุ่มใหญ่ tap ได้เลย (52px)</li>
         <li>8 ช่อง (≤4 ตัวเลือก) เปลี่ยนเป็นชิป</li>
-        <li>option พับใน details · ฟอร์มหลักสั้นลง</li>
+        <li>มือจับ 1 กล่อง: เลือกแบรนด์ก่อน → โผล่รุ่น (เคลียร์อีก 3 auto)</li>
+        <li>มุ้ง 1 กล่อง: ซ่อนผ้า/ขนาด/สีกรอบถ้า "ไม่ใส่"</li>
         <li>ทุกชิปสูง ≥40px (มาตรฐาน mobile)</li>
-        <li>จำนวนบาน/ชุด มี stepper ±</li>
       </ul>
     </div>
   </div>
-
-  <div class="callout ok" style="margin-top:16px;">
-    <b>ผลลัพธ์คาดหวัง:</b> เซลล์กรอกฟอร์ม 1 รายการ G1 ปกติ (บานเลื่อน ราคา+มุ้ง) บนมือถือ
-    ลดจาก ~14 tap/swipe เหลือ ~8 tap — ลดเวลากรอกประมาณ 40%
+  <div class="callout ok">
+    <b>ผลลัพธ์คาดหวัง:</b> เซลล์กรอกฟอร์ม 1 รายการ G1 (บานเลื่อน+มุ้ง) บนมือถือ
+    ลดจาก ~16 tap/swipe เหลือ ~9 tap — ลดเวลากรอกประมาณ 40–45%
   </div>
 </div>
 
-<!-- 8. ข้อควรระวัง -->
+<!-- 8. QA Checklist -->
 <div class="section">
   <h2>8. ข้อควรระวัง / QA Checklist</h2>
   <ul class="checklist">
     <li>
       <span class="icon">⚠️</span>
-      <span><b>readItem ต้องอ่านได้ครบ</b> — หลังแก้ให้ทดสอบ genQuote 1 รายการ G1 ตรวจว่า optSel มี bottomrail / slidelock / cmech / mosqcolor ถูกต้อง</span>
+      <span><b>readItem ครบ:</b> หลังแก้ทดสอบ genQuote 1 รายการ G1 — ตรวจว่า optSel มี cmech / mosqId / mosqFabric / mosqColor / bottomrail / slidelock ถูกต้อง</span>
     </li>
     <li>
       <span class="icon">⚠️</span>
-      <span><b>i-type.value ต้องอัปเดตก่อน refreshItype()</b> — d.querySelector('.i-type').addEventListener('change') ยังทำงานปกติ เพราะ select ยังอยู่ใน DOM (แค่ซ่อน) + chip fire change event ผ่าน chSetChip</span>
+      <span><b>handleBrandPick เคลียร์ครบ:</b> เมื่อเปลี่ยนแบรนด์ .o-digi / .o-stainless / .o-cmech / .o-handlename / .o-handleprice ต้องเป็น "" / "0" ทั้งหมด — ป้องกันคิดราคาซ้ำ</span>
     </li>
     <li>
       <span class="icon">⚠️</span>
-      <span><b>buildItemOpts rebuild ทุกครั้ง</b> — chip ที่อยู่ใน .i-opts จะถูก regenerate เมื่อ i-prod หรือ i-group เปลี่ยน → ต้อง set default class "on" ให้ถูกต้องในขณะ build HTML string (h += ...)</span>
+      <span><b>mosqGroupToggle ทำงานครั้งแรก:</b> ตอน buildItemOpts สร้าง HTML ใหม่ — mosq-detail-group ต้อง display:none ถ้า o-mosq = "" (set ใน HTML string โดยตรง)</span>
     </li>
     <li>
       <span class="icon">⚠️</span>
-      <span><b>addItem chip (i-type) ไม่ถูก rebuild</b> — i-type chip อยู่ใน addItem template (ไม่ใช่ buildItemOpts) จึงถูกสร้างครั้งเดียวตอนเพิ่มรายการ และ default = "door" ถูกต้องแล้ว</span>
+      <span><b>buildItemOpts rebuild:</b> chip และกล่องทั้งหมดจะถูก regenerate เมื่อ i-prod / i-group เปลี่ยน — ต้อง set default class "on" และ display ให้ถูกตอน build HTML string</span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span><b>i-type.value ต้องอัปเดตก่อน refreshItype():</b> select ยังอยู่ใน DOM (แค่ซ่อน) + chip fire change event → ทำงานปกติ</span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span><b>o-solidlower show/hide:</b> dispatchEvent change จาก chip → select.onchange inline trigger .o-solidlower-wrap และ .o-sl-colorwrap ได้ปกติ (chSetChip ทำอยู่แล้ว)</span>
     </li>
     <li>
       <span class="icon">✅</span>
-      <span><b>ทดสอบ collapseOthers / toggleCh</b> — ฟังก์ชัน collapse ทำงานกับ .ch ทั้งหมด chip ที่เพิ่มเข้าไปไม่กระทบ เพราะอยู่ภายใน DOM เดิมอยู่แล้ว</span>
+      <span><b>collapseOthers / toggleCh:</b> ไม่กระทบ — chip และกล่องใหม่อยู่ภายใน .ch DOM เดิม</span>
     </li>
     <li>
       <span class="icon">✅</span>
-      <span><b>ทดสอบ global default color/glass</b> — apply global defaults (L2133) อ่าน .i-color/.i-glass ไม่ใช่ chip ใหม่ ไม่กระทบ</span>
-    </li>
-    <li>
-      <span class="icon">✅</span>
-      <span><b>o-solidlower show/hide</b> — dispatchEvent change จาก chip → select.onchange inline จะ trigger .o-solidlower-wrap และ .o-sl-colorwrap ได้ปกติ</span>
+      <span><b>global default color/glass:</b> apply global defaults (L2133) อ่าน .i-color/.i-glass ไม่ใช่ chip ใหม่ ไม่กระทบ</span>
     </li>
   </ul>
 </div>
 
-<!-- 9. Pattern ขยายกลุ่มอื่น -->
+<!-- 9. ความเสี่ยง / จุดต้องถามพี่นัท -->
 <div class="section">
-  <h2>9. แนวทางขยาย Pattern ไปกลุ่มอื่น (G2–G7)</h2>
+  <h2>9. ความเสี่ยง / จุดต้องถามพี่นัท</h2>
+  <table>
+    <thead>
+      <tr><th>จุด</th><th>คำถาม</th><th>ผลต่อ UX</th></tr>
+    </thead>
+    <tbody>
+      <tr class="hl-orange">
+        <td><b>มือจับหลายแบรนด์พร้อมกัน</b></td>
+        <td>ในทางปฏิบัติ ใส่ Cmech + สแตนอร่าม พร้อมกันได้ไหม? (เช่น บานเปิดใส่ทั้ง 2 ชิ้น)</td>
+        <td>ถ้าได้ → ต้องเปลี่ยนจาก "เลือก 1 แบรนด์" เป็น multi-select · สเปกนี้ assume "เลือกได้ 1"</td>
+      </tr>
+      <tr class="hl-orange">
+        <td><b>มือจับ X-series (.o-xhandle)</b></td>
+        <td>X-series ฟรี — รวมอยู่ใน brand picker หรือแยกไว้ตามเดิม (เพราะฟรี ไม่มีราคา)?</td>
+        <td>ถ้ารวม → เพิ่มชิป "X-series (ฟรี)" · ถ้าแยก → แสดงเป็น checkbox แทน</td>
+      </tr>
+      <tr class="hl-orange">
+        <td><b>มือจับ Cmech หลบมุ้ง (.o-cmechawn)</b></td>
+        <td>เป็น control พิเศษเฉพาะบานกระทุ้ง — รวมในกล่อง Cmech sub หรือแยกออกมา?</td>
+        <td>ถ้ารวม → แสดงในกล่อง Cmech sub ต่อท้าย · ถ้าแยก → label แยกใต้กล่องมือจับ</td>
+      </tr>
+      <tr class="hl-teal">
+        <td><b>ขนาดมุ้ง (o-mosqw/h) auto</b></td>
+        <td>ปัจจุบัน placeholder="ม." — เว้นว่าง = auto จากบานหลัก ถูกต้องหรือไม่?</td>
+        <td>ถ้าถูก → label "auto จากบาน" ในดราฟถูกแล้ว · ถ้าต้องกรอกเสมอ → เปลี่ยน placeholder + ทำ required</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 10. Pattern ขยายกลุ่มอื่น -->
+<div class="section">
+  <h2>10. แนวทางขยาย Pattern ไปกลุ่มอื่น (G2–G7)</h2>
   <div class="callout info">
-    <b>กฎ generic ที่ทำซ้ำได้:</b> select ≤4 ตัวเลือก → chip · select ≥5 → คง dropdown<br>
-    ใช้ function <code>chSetChip</code> เดิม (global) ไม่ต้องเขียนใหม่ต่อ group
+    <b>กฎ generic ที่ทำซ้ำได้:</b><br>
+    กฎ A: select ≤4 ตัวเลือก → chip · select ≥5 → คง dropdown<br>
+    กฎ B (Consolidate): control กลุ่มเดียวกันที่กระจาย → รวบเป็นก้อน · เลือกชนิดก่อน ค่อยโผล่รายละเอียด<br>
+    ใช้ function <code>chSetChip</code> / <code>handleBrandPick</code> / <code>mosqGroupToggle</code> เดิม (global) ไม่ต้องเขียนใหม่ต่อ group
   </div>
   <p style="font-size:13.5px;">ตัวอย่าง G2 (ระแนง/รั้ว) ที่คาดว่า chip ได้:</p>
   <ul style="font-size:13.5px;line-height:1.9;">
-    <li>.o-hmode (ปัด/ต่อ) — 2 ตัว → chip การ์ดแบบ before/after (มีอยู่แล้วใน hmode-block)</li>
+    <li>.o-hmode (ปัด/ต่อ) — 2 ตัว → chip</li>
     <li>.o-bgdir (ทิศระแนง) — 2 ตัว (ตั้ง/นอน) → chip</li>
     <li>.o-bocdir (ทิศระแนงเปิดปิด) — 2 ตัว → chip</li>
     <li>.o-roofbatten (แป) — 2 ตัว (เดี่ยว/คู่) → chip [G3]</li>
     <li>.o-roofframe (โครงสร้าง) — 2 ตัว → chip [G3]</li>
   </ul>
   <div class="callout ok">
-    <b>ขั้นต่อไป:</b> เมื่อ G1 ผ่าน QA แล้ว ให้ใช้ SPEC นี้เป็น template สำหรับ
-    ทำ SPEC-G2, SPEC-G3 ฯลฯ โดยเปลี่ยนเฉพาะตาราง "ช่องที่เปลี่ยน" และ line reference
+    <b>ขั้นต่อไป:</b> เมื่อ G1 ผ่าน QA แล้ว ใช้ SPEC นี้เป็น template สำหรับ SPEC-G2, SPEC-G3 ฯลฯ
+    เปลี่ยนเฉพาะตาราง "ช่องที่เปลี่ยน" และ line reference
   </div>
 </div>
 
