@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G1 Coverage — ตรวจ UX redesign ครบทุกแบบ</title>
+<style>
+@page{size:A4 landscape;margin:9mm;}*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:#1f2937;font-size:12px;padding:12px;}
+.wrap{max-width:1080px;margin:0 auto;}
+h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:11.5px;margin:0 0 12px;}
+h2{color:#fff;background:#B3151D;font-size:14px;margin:18px 0 7px;padding:6px 11px;border-radius:6px;}
+.cards{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.card{flex:1;min-width:130px;background:#fff;border:2px solid #B3151D;border-radius:9px;padding:7px 12px;text-align:center;}
+.card b{font-size:22px;color:#B3151D;display:block;}
+.card span{font-size:11px;color:#555;}
+table{border-collapse:collapse;width:100%;margin:5px 0;font-size:11px;background:#fff;}
+th,td{border:1px solid #e5e7eb;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;position:sticky;top:0;}
+td.c{text-align:center;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+.key{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 13px;font-size:12px;margin:9px 0;}
+.gap{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 13px;font-size:12px;margin:9px 0;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:9px 13px;font-size:12px;margin:9px 0;}
+ol,ul{margin:4px 0;padding-left:20px;} li{margin:2px 0;}
+.rep{background:#ecfdf5;border-left:4px solid #15803d;padding:3px 9px;margin:3px 0;border-radius:0 6px 6px 0;font-size:11.5px;}
+</style></head><body><div class="wrap">
+
+<h1>G1 Coverage — ตรวจ UX Redesign ครบทุกแบบ (41 สินค้า)</h1>
+<p class="sub">วิธีตรวจง่าย + ช่องว่างที่สเปกเดิม (ทำจากบานเลื่อนตัวเดียว) ยังไม่ครอบ · ดึงฟอร์มจริงทุกแบบจาก jsdom · 2026-06-11 · READ-ONLY</p>
+
+<div class="cards">
+<div class="card"><b>41</b><span>สินค้า G1</span></div>
+<div class="card"><b>19</b><span>ช่องชิป (≤4) ทั้งหมด</span></div>
+<div class="card"><b>7</b><span>ลายมือจับ</span></div>
+<div class="card"><b>18</b><span>แบบมีกล่องมุ้ง</span></div>
+<div class="card"><b>8</b><span>ตัวแทนตรวจ (พอ)</span></div>
+</div>
+
+<div class="key"><b>🎯 วิธีตรวจง่าย — ไม่ต้องไล่ 41 แบบ ตรวจ "8 ตัวแทน" ครอบทุกลายฟอร์มพอ:</b>
+<div class="rep">1. <b>บานเลื่อนยูโร</b> (sliding_euro) — ฟอร์มเต็ม: ราง+มือจับ6+มุ้ง6+ชิป7 <i>(ตรวจแล้ว ✓)</i></div>
+<div class="rep">2. <b>บานเปิดยูโร</b> (casement_euro) — มือจับ6+มุ้ง6+closer+thresh+เสริมคาน</div>
+<div class="rep">3. <b>โซลิด ทู</b> (casement_flush_solid) — ฟอร์มยาวสุด 37 ช่อง: solidlower+ช่องแสง</div>
+<div class="rep">4. <b>บานกระทุ้งยูโร</b> (awning_euro) — awn_mode + Cmech หลบมุ้ง (cmechawn) + มุ้ง</div>
+<div class="rep">5. <b>บานเฟี้ยม</b> (folding) — มุ้ง6 แต่ไม่มีมือจับ + threshf</div>
+<div class="rep">6. <b>PC Door</b> (pc_door_2) — มือจับ digi4 + slidelock (ไม่มี cmech)</div>
+<div class="rep">7. <b>ดัดโค้งบานคู่</b> (curved_double) — กระจกดัด + มือจับ4 + ไม่มีมุ้ง</div>
+<div class="rep">8. <b>shower</b> — shtype/shdoortype/showerhw + ไม่มีมือจับ/มุ้ง · (เสริม: YKK/เส้นคาด/ลูกฟูกทึบ = ฟอร์มสั้น ชิป 0-1)</div>
+ตรวจ 8 ตัวนี้ผ่าน = ครอบลายฟอร์มทั้ง 41 แบบ
+</div>
+
+<div class="gap"><b>🔴 ช่องว่างสเปกเดิม (สำคัญ — ต้องเก็บก่อนส่งแก้):</b>
+<ul>
+<li><b>ชิปขาด 11 ช่อง</b> — สเปกเก็บแค่ 8 (จากบานเลื่อน) แต่บานอื่นมี select ≤4 อีก: <code>closer</code>(7แบบ) · <code>thresh</code>(6) · <code>threshf</code>(3) · <code>track</code>(3) · <code>motor</code>(2) · <code>awn_mode</code> · <code>gridcolor</code> · <code>shtype</code> · <code>shdoortype</code> · <code>showerhw</code> · <code>frametype</code> — ตามกฎ select≤4→ชิป ต้องทำด้วย</li>
+<li><b>มือจับ 7 ลาย</b> — box ต้องโชว์เฉพาะแบรนด์ที่สินค้านั้นมี: เต็ม6(เลื่อน/เปิด/โซลิด) · cmech2 · digi4(หมุน/ดัดโค้ง/PC) · cmechawn(กระทุ้ง) · xhandle(X-series) · ไม่มี(21แบบ)</li>
+</ul>
+</div>
+
+<h2>ตารางครอบคลุมเต็ม (41 แบบ)</h2>
+<table>
+<tr><th>หมวด</th><th>id</th><th>ช่อง</th><th>ชิป</th><th>drop</th><th>มือจับ</th><th>มุ้ง</th><th>หมายเหตุ / ชิปพิเศษ (แดง=นอก 8 เดิม)</th></tr>
+<tr><td>บานเลื่อน</td><td><code>sliding_sms</code></td><td class="c">35</td><td class="c">7</td><td class="c">8</td><td class="c">6</td><td class="c">✓</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานเลื่อน</td><td><code>sliding_euro</code></td><td class="c">35</td><td class="c">7</td><td class="c">8</td><td class="c">6</td><td class="c">✓</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานเลื่อน</td><td><code>sliding_eseries</code></td><td class="c">31</td><td class="c">7</td><td class="c">6</td><td class="c">2</td><td class="c">✓</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>ติดตาย</td><td><code>fixed_glass</code></td><td class="c">17</td><td class="c">2</td><td class="c">2</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานกระทุ้ง</td><td><code>awning_euro</code></td><td class="c">25</td><td class="c">4</td><td class="c">5</td><td class="c">1</td><td class="c">✓</td><td style="font-size:9.5px">Cmech หลบมุ้ง+awn_mode <span style="color:#B3151D">+awn_mode</span></td></tr>
+<tr><td>บานกระทุ้ง</td><td><code>awning_aluinch</code></td><td class="c">24</td><td class="c">3</td><td class="c">5</td><td class="c">1</td><td class="c">✓</td><td style="font-size:9.5px">Cmech หลบมุ้ง+awn_mode </td></tr>
+<tr><td>บานเปิด</td><td><code>casement_euro</code></td><td class="c">35</td><td class="c">7</td><td class="c">7</td><td class="c">6</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+thresh,closer</span></td></tr>
+<tr><td>บานเปิด</td><td><code>casement_dseries</code></td><td class="c">28</td><td class="c">6</td><td class="c">5</td><td class="c">2</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+thresh</span></td></tr>
+<tr><td>บานเปิด</td><td><code>casement_xseries</code></td><td class="c">30</td><td class="c">8</td><td class="c">5</td><td class="c">3</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+thresh,closer,xhandle</span></td></tr>
+<tr><td>บานเปิด</td><td><code>casement_velora</code></td><td class="c">28</td><td class="c">6</td><td class="c">5</td><td class="c">2</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+thresh</span></td></tr>
+<tr><td>บานเปิด</td><td><code>casement_flush_solid</code></td><td class="c">37</td><td class="c">7</td><td class="c">7</td><td class="c">6</td><td class="c">✓</td><td style="font-size:9.5px">โซลิด: solidlower+ช่องแสง <span style="color:#B3151D">+thresh,closer</span></td></tr>
+<tr><td>บานเปิด</td><td><code>casement_inset_solid</code></td><td class="c">37</td><td class="c">7</td><td class="c">7</td><td class="c">6</td><td class="c">✓</td><td style="font-size:9.5px">โซลิด: solidlower+ช่องแสง <span style="color:#B3151D">+thresh,closer</span></td></tr>
+<tr><td>บานหมุน</td><td><code>pivot</code></td><td class="c">17</td><td class="c">1</td><td class="c">3</td><td class="c">4</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานหมุน</td><td><code>pivot_aluinch</code></td><td class="c">13</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานเฟี้ยม</td><td><code>folding</code></td><td class="c">28</td><td class="c">4</td><td class="c">4</td><td class="c">-</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+threshf</span></td></tr>
+<tr><td>บานเฟี้ยม</td><td><code>folding_euro</code></td><td class="c">25</td><td class="c">4</td><td class="c">4</td><td class="c">-</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+threshf</span></td></tr>
+<tr><td>บานเฟี้ยม</td><td><code>folding_xseries</code></td><td class="c">29</td><td class="c">5</td><td class="c">4</td><td class="c">1</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+threshf,xhandle</span></td></tr>
+<tr><td>เลื่อนภายใน</td><td><code>inner_top_stack</code></td><td class="c">26</td><td class="c">5</td><td class="c">3</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+track</span></td></tr>
+<tr><td>เลื่อนภายใน</td><td><code>inner_top_slimlux</code></td><td class="c">26</td><td class="c">6</td><td class="c">3</td><td class="c">1</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+track,xhandle</span></td></tr>
+<tr><td>เลื่อนภายใน</td><td><code>inner_top_xseries</code></td><td class="c">28</td><td class="c">6</td><td class="c">3</td><td class="c">1</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+track,xhandle</span></td></tr>
+<tr><td>เส้นคาด</td><td><code>grid_bars</code></td><td class="c">9</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+gridcolor</span></td></tr>
+<tr><td>เลื่อนภายใน</td><td><code>inner_bottom_sms</code></td><td class="c">23</td><td class="c">5</td><td class="c">3</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>เลื่อนภายใน</td><td><code>inner_bottom_euro</code></td><td class="c">23</td><td class="c">5</td><td class="c">3</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานยก</td><td><code>lift_sms</code></td><td class="c">20</td><td class="c">3</td><td class="c">3</td><td class="c">-</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+motor</span></td></tr>
+<tr><td>บานยก</td><td><code>lift_aluinch</code></td><td class="c">20</td><td class="c">3</td><td class="c">3</td><td class="c">-</td><td class="c">✓</td><td style="font-size:9.5px"> <span style="color:#B3151D">+motor</span></td></tr>
+<tr><td>shower</td><td><code>shower</code></td><td class="c">17</td><td class="c">4</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px">สีอุปกรณ์ shtype/showerhw <span style="color:#B3151D">+shtype,shdoortype,showerhw</span></td></tr>
+<tr><td>บานเปลือย</td><td><code>frameless_fixed</code></td><td class="c">13</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>บานเปลือย</td><td><code>frameless_door</code></td><td class="c">15</td><td class="c">2</td><td class="c">2</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+frametype</span></td></tr>
+<tr><td>ดัดโค้ง</td><td><code>curved_double</code></td><td class="c">17</td><td class="c">1</td><td class="c">3</td><td class="c">4</td><td class="c">-</td><td style="font-size:9.5px">กระจกดัด+มือจับ4 </td></tr>
+<tr><td>ดัดโค้ง</td><td><code>curved_single</code></td><td class="c">17</td><td class="c">1</td><td class="c">3</td><td class="c">4</td><td class="c">-</td><td style="font-size:9.5px">กระจกดัด+มือจับ4 </td></tr>
+<tr><td>ดัดโค้ง</td><td><code>curved_fixed</code></td><td class="c">13</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>ดัดโค้ง</td><td><code>curved_slim</code></td><td class="c">17</td><td class="c">1</td><td class="c">3</td><td class="c">4</td><td class="c">-</td><td style="font-size:9.5px">กระจกดัด+มือจับ4 </td></tr>
+<tr><td>PC Door</td><td><code>pc_door_2</code></td><td class="c">30</td><td class="c">5</td><td class="c">6</td><td class="c">4</td><td class="c">✓</td><td style="font-size:9.5px">digihandle+ล็อค </td></tr>
+<tr><td>PC Door</td><td><code>pc_door_4</code></td><td class="c">30</td><td class="c">5</td><td class="c">6</td><td class="c">4</td><td class="c">✓</td><td style="font-size:9.5px">digihandle+ล็อค </td></tr>
+<tr><td>YKK</td><td><code>ykk_vent</code></td><td class="c">11</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+closer</span></td></tr>
+<tr><td>YKK</td><td><code>ykk_exhido</code></td><td class="c">11</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+closer</span></td></tr>
+<tr><td>YKK</td><td><code>tostem_a01</code></td><td class="c">11</td><td class="c">1</td><td class="c">1</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> <span style="color:#B3151D">+closer</span></td></tr>
+<tr><td>ลูกฟูก+คอมโพสิททึบ</td><td><code>rn89</code></td><td class="c">13</td><td class="c">0</td><td class="c">3</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>ลูกฟูก+คอมโพสิททึบ</td><td><code>rn90</code></td><td class="c">13</td><td class="c">0</td><td class="c">3</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>ลูกฟูก+คอมโพสิททึบ</td><td><code>rn91</code></td><td class="c">12</td><td class="c">0</td><td class="c">2</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+<tr><td>ลูกฟูก+คอมโพสิททึบ</td><td><code>rn92</code></td><td class="c">12</td><td class="c">0</td><td class="c">2</td><td class="c">-</td><td class="c">-</td><td style="font-size:9.5px"> </td></tr>
+</table>
+
+<div class="box"><b>สรุป:</b> redesign pattern (ซ่อน control+sync+ชิป) ใช้ได้ทุกแบบ แต่ <b>รายการชิป + ลายมือจับต้องเก็บให้ครบทุกบาน</b> ไม่ใช่แค่บานเลื่อน · เสนอ: อัปเดต SPEC/handoff ให้ระบุ "ชิป = ทุก select≤4 ที่ buildItemOpts สร้าง (19 ช่อง)" + "มือจับ box render เฉพาะ control ที่สินค้านั้นมี (7 ลาย)" แล้วใช้ 8 ตัวแทนนี้เป็น QA checklist</div>
+
+<p class="sub">ดึงจาก public/calculator/index.html (R3.9.2) jsdom · ตรวจ READ-ONLY · ตัวแทน 8 แบบครอบลายฟอร์มครบ</p>
+</div></body></html>
