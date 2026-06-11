@@ -17,24 +17,35 @@ const bodySchema = z.object({
   note: z.string().nullish(),
 });
 
-// GET /api/queue/availability — list sales_availability records (today onwards)
+// GET /api/queue/availability — list sales_availability records
 // Optional ?sales_id=<uuid> to filter by one sales rep
+// Optional ?month=YYYY-MM    to filter by specific month (for list view per-month)
+// No date filter by default — returns ALL records so past-month leaves are visible
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "read");
   const sb = ctx.supabase as unknown as Sb;
 
   const url = new URL(req.url);
   const salesFilter = url.searchParams.get("sales_id");
-
-  const today = new Date();
-  const todayStr = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`;
+  const monthFilter = url.searchParams.get("month"); // "YYYY-MM"
 
   let query = sb
     .from("sales_availability")
     .select(SELECT)
-    .gte("date", todayStr)
     .order("date", { ascending: true })
     .order("sales_id");
+
+  // กรองตาม month ถ้าระบุมา — ใช้สำหรับ conflict check ใน QueueModal
+  if (monthFilter) {
+    const mMatch = monthFilter.match(/^(\d{4})-(\d{2})$/);
+    if (mMatch) {
+      const [, yr, mo] = mMatch;
+      const dateFrom = `${yr}-${mo}-01`;
+      const last = new Date(Number(yr), Number(mo), 0);
+      const dateTo = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}-${String(last.getDate()).padStart(2, "0")}`;
+      query = query.gte("date", dateFrom).lte("date", dateTo);
+    }
+  }
 
   if (salesFilter) {
     query = query.eq("sales_id", salesFilter);

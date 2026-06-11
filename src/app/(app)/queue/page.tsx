@@ -172,6 +172,8 @@ export default function QueuePage() {
 
   const loadAvail = useCallback(async () => {
     try {
+      // โหลดวันลาของเดือนที่แสดง ± 1 เดือน (เพื่อให้ calendar view ข้ามเดือนได้)
+      // ไม่กรอง date >= today อีกต่อไป — ต้องการดูวันลาย้อนหลังในตาราง + LeaveSummaryModal
       const res = await api.get<AvailRow[]>("/queue/availability");
       setAvail(res.data ?? []);
     } catch {
@@ -674,7 +676,19 @@ export default function QueuePage() {
         <LeaveModal
           salesList={sales}
           onClose={() => setLeaveOpen(false)}
-          onSaved={() => { setLeaveOpen(false); loadAvail(); }}
+          onSaved={(savedDate?: string, savedRecord?: AvailRow) => {
+            setLeaveOpen(false);
+            // optimistic: เติม record ที่เพิ่งสร้างเข้า state ทันที (กัน race ตอน refetch หลัง POST)
+            if (savedRecord?.id) {
+              setAvail((prev) => (prev.some((a) => a.id === savedRecord.id) ? prev : [...prev, savedRecord]));
+            }
+            // ถ้าบันทึกวันลาคนละเดือนกับที่กำลังดูอยู่ → เปลี่ยน filterMonth ให้ตรง
+            if (savedDate) {
+              const savedMonth = savedDate.slice(0, 7); // "YYYY-MM"
+              if (savedMonth !== filterMonth) setFilterMonth(savedMonth);
+            }
+            loadAvail(); // sync กับ server (เผื่อมี record อื่น)
+          }}
         />
       )}
 
