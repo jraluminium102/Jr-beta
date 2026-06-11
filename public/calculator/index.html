@@ -1923,6 +1923,41 @@ function refreshSet(box){
     });
   }
 }
+// ── flow "+ เพิ่มส่วน" 2 โหมด (แบนชั้นเดียว · SPEC-addsection-2mode) ──
+// ⚡ ของใช้บ่อย = ชิป 8 รายการ เห็นทันที · 🚪 งานบานทั่วไป = ปุ่มเดียว (addItem เดิม)
+var QUICK_ADD_CHIPS=[
+  {g:'1',id:'fixed_glass',label:'กระจกติดตาย'},
+  {g:'1',id:'rn89',label:'ลูกฟูก 1 ทาง'},
+  {g:'1',id:'rn90',label:'ลูกฟูก 2 ทาง'},
+  {g:'1',id:'rn91',label:'คอมโพสิต 3 มม.'},
+  {g:'1',id:'rn92',label:'คอมโพสิต 4 มม.'},
+  {g:'3',id:'isowall',label:'ISOWALL'},
+  {g:'3',id:'wall_ext',label:'ผนังเบาภายนอก'},
+  {g:'3',id:'wall_int',label:'ผนังเบาภายใน'}
+];
+// quick-add: ลัดการเลือก (set กลุ่ม+แบบ auto) → ปลายทาง = การ์ดเดิม · ไม่แตะ logic/ราคา
+function quickAddItem(parts, group, prodId){
+  addItem(parts);
+  var chs=parts.querySelectorAll('.ch'); var ch=chs[chs.length-1]; if(!ch)return;
+  var grp=ch.querySelector('.i-group'); if(grp){ grp.value=String(group); grp.dispatchEvent(new Event('change',{bubbles:true})); }
+  var ps=ch.querySelector('.i-prod'); if(ps){ ps.innerHTML=prodOptionsG6(String(group)); ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true})); }
+  try{ ch.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+}
+// panel เดียว (toggle) — ชิป + ปุ่มทั่วไป เห็นพร้อมกัน · เฉพาะโหมด "+ เพิ่มส่วน" (ไม่ใช่ "+ เพิ่มบาน" กั้นห้อง)
+function toggleAddSecPanel(btn, box){
+  var existing=box.querySelector('.addsec-panel'); if(existing){ existing.remove(); return; }
+  var parts=box.querySelector('.set-parts');
+  var panel=document.createElement('div'); panel.className='addsec-panel';
+  panel.style.cssText='border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;margin:6px 0 10px;background:#FAFAFA;';
+  var chipsHtml=QUICK_ADD_CHIPS.map(function(c){ return '<button type="button" class="addsec-chip" data-g="'+c.g+'" data-id="'+c.id+'" style="min-height:44px;padding:0 14px;border:1px solid #CBD5E1;border-radius:22px;background:#fff;cursor:pointer;font-size:13px;color:#374151;">'+c.label+'</button>'; }).join('');
+  panel.innerHTML='<div style="font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;">⚡ ของใช้บ่อย — แตะเพิ่มได้เลย</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:7px;">'+chipsHtml+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin:11px 0 9px;color:#9CA3AF;font-size:11px;"><span style="flex:1;height:1px;background:#E5E7EB;"></span>หรือ<span style="flex:1;height:1px;background:#E5E7EB;"></span></div>'
+    +'<button type="button" class="addsec-general" style="width:100%;min-height:44px;border:1.5px solid #B3151D;border-radius:9px;background:#fff;color:#B3151D;font-size:14px;font-weight:600;cursor:pointer;">🚪 งานบานทั่วไป (เลือกกลุ่ม → แบบ)</button>';
+  var row=btn.closest('.set-btns')||btn.parentElement; row.parentNode.insertBefore(panel, row.nextSibling);
+  panel.querySelectorAll('.addsec-chip').forEach(function(cb){ cb.addEventListener('click',function(){ quickAddItem(parts, cb.dataset.g, cb.dataset.id); panel.remove(); refreshSet(box); calcQuote(); }); });
+  panel.querySelector('.addsec-general').addEventListener('click',function(){ addItem(parts); panel.remove(); refreshSet(box); calcQuote(); });
+}
 function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
@@ -1934,8 +1969,14 @@ function addSet(){
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){
     const parts = box.querySelector('.set-parts');
     const hasGH = Array.from(box.querySelectorAll('.ch')).some(function(c){ return (c.querySelector('.i-group')||{}).value==='6'; });
+    if(!hasGH){
+      // "+ เพิ่มส่วน" → เปิด panel 2 โหมด (แบนชั้นเดียว · SPEC-addsection-2mode) แทนการ addItem ทันที
+      toggleAddSecPanel(b, box);
+      return;
+    }
+    // กั้นห้องกระจก "+ เพิ่มบาน" — คงเดิม ไม่กระทบ
     addItem(parts);
-    if(hasGH){
+    {
       const chs = parts.querySelectorAll('.ch');
       const newCh = chs[chs.length-1];
       if(newCh){
