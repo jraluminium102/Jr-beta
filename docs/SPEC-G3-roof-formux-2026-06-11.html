@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>สเปก UX ฟอร์มหลังคา G3 — ส่ง dev (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:14px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  h3{font-size:12px;margin:10px 0 4px;color:#B3151D;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  pre{font-family:"Consolas",monospace;font-size:9px;background:#0F172A;color:#E2E8F0;border-radius:6px;padding:8px 10px;white-space:pre-wrap;margin:5px 0;}
+  pre .c{color:#64748B;}pre .k{color:#7DD3FC;}pre .s{color:#FCA5A5;}pre .add{color:#86EFAC;}pre .d{color:#F0A0A0;text-decoration:line-through;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  .chk{list-style:none;padding-left:2px;}.chk li:before{content:"☐ ";font-weight:700;}
+  .foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>สเปก UX — ฟอร์มกรอก "หลังคา" (G3) · ส่ง dev</h1>
+<div class="sub">ไฟล์ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026 · ดราฟกดเล่น: jraluminium102.github.io/sharepicjr (การ์ด draft g3 roof formux)</div>
+
+<div class="crit"><b>กฎ:</b> redesign นี้เปลี่ยนแค่ <b>การจัดกล่อง/ชื่อ/ลำดับ (UI)</b> — <b>ห้ามแตะ logic/ราคา/genQuote/readItem</b> · ห้ามเปลี่ยน class/value ที่ logic อ่าน · DoD: <code>node test/quote-fidelity.mjs</code> PASS + กรอกหลังคาแล้วราคา/ใบเท่าเดิม</div>
+
+<h2>4 จุดที่ต้องแก้ (ตามที่พี่นัทชี้)</h2>
+<table>
+<tr><th class="c" style="width:34px;">#</th><th style="width:32%;">ปัญหา</th><th>แก้เป็น</th><th class="c" style="width:80px;">จุดแก้</th></tr>
+<tr><td class="c">①</td><td>OPTION "เปลี่ยนกระจก/มุ้ง/มือจับ" โผล่ในหลังคา (ไม่เกี่ยว)</td><td>หลังคา → เหลือ "เปลี่ยนสี/วัสดุมุง/หลังคา" เท่านั้น</td><td class="c">OPTION cascade ~L2021 / label L2181</td></tr>
+<tr><td class="c">②</td><td>"ทำเป็นหลังคาเลื่อน" ตกไปกล่อง "อื่นๆ" ล่างสุด</td><td>ทำเป็นกล่อง/toggle เด่น ขึ้นด้านบน</td><td class="c">groupGHOpts L1747</td></tr>
+<tr><td class="c">③</td><td>หัวข้อ "🚪 ชนิด/การเปิด" ไม่ตรงงานหลังคา + เรียงมั่ว</td><td>หลังคา → ชื่อกล่องเฉพาะ + เรียงใหม่</td><td class="c">groupGHOpts L1747</td></tr>
+<tr><td class="c">④</td><td>ของเสริมหลังคา ซ่อน details ซ้อน accordion (2 ชั้น) · กล่อง "อื่นๆ (ครอบวงกบ/ดรอปพื้น)" = ของบาน</td><td>ของเสริม = กล่องเดียว 1 ชั้น · catch-all เปลี่ยนชื่อ "หมายเหตุ/งานเสริม"</td><td class="c">L1768 + optbox L2421/2435</td></tr>
+</table>
+
+<h2>โครงกล่องใหม่ (เฉพาะ cat='หลังคา') — ตามดราฟ</h2>
+<table>
+<tr><th class="c" style="width:30px;">ลำดับ</th><th style="width:34%;">กล่อง (เปิด/พับ)</th><th>ช่องในกล่อง</th></tr>
+<tr><td class="c">1</td><td><b>🏠 หลังคา · วัสดุมุง · โครง</b> (เปิด)</td><td>สีวัสดุมุง · แป · โครงสร้าง · (ลามิเนต: ฟิล์ม+หนา)</td></tr>
+<tr><td class="c">2</td><td><b>🌧️ ปลายหลังคา · รางน้ำ</b> (เปิด)</td><td>ปลายหลังคา · ระบบรางน้ำ ท่อ/โซ่+สี · ชนิดราง+ยาว · ตะแกรง · ท่อ PVC</td></tr>
+<tr><td class="c">3</td><td><b>⬅️➡️ หลังคาเลื่อน</b> (toggle เด่น)</td><td>ทำเป็นหลังคาเลื่อน → จำนวนบาน · พื้นที่เลื่อน · มอเตอร์</td></tr>
+<tr><td class="c">4</td><td><b>🔩 ของเสริมหลังคา</b> (พับ 1 ชั้น)</td><td>เสาแผง · เสา4x8 · คานถัก · โซ่ · ปิดปลาย · ครอบ PVC · ซ่อนสโลป · ปิดซ่อนราง · ครอบคาน · วัสดุปิดรอยต่อ · เพลท · เหล็กดึง</td></tr>
+<tr><td class="c">5</td><td>➕ ต่อปลายวัสดุที่ 2 (หลังคาผสม)</td><td>วัสดุ2 + พื้นที่</td></tr>
+<tr><td class="c">6</td><td><b>📝 หมายเหตุ / งานเสริม</b> (catch-all)</td><td>งานเสริม/วิศวกรรม · รื้อของเดิม · ฯลฯ (ไม่ใช่ "ครอบวงกบ")</td></tr>
+</table>
+
+<h2>FIX A — groupGHOpts ให้รู้จักหมวด "หลังคา" (จุด ②③④)</h2>
+<div class="note">ปัจจุบัน <code>groupGHOpts(ch)</code> (L1747) ใช้ CATS ชุดเดียวทุกสินค้า · ทำให้ใช้ keyword 'ชนิด/การเปิด' กับหลังคา · slide ตก catch-all</div>
+<h3>วิธีแก้:</h3>
+<ul>
+<li><b>ตรวจหมวด:</b> ก่อนสร้าง CATS ดูว่าเป็นหลังคาไหม — <code>var isRoof = ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten');</code></li>
+<li><b>ถ้า isRoof → ใช้ CATS ชุดหลังคา</b> (6 กล่องตามตารางบน) ตัวอย่าง keyword:</li>
+</ul>
+<pre><span class="k">var</span> CATS = isRoof ? [
+ {key:'🏠 หลังคา · วัสดุมุง · โครง', open:true, kw:['สีวัสดุมุง','แป ','โครงสร้าง','ชนิดฟิล์ม','ความหนากระจก']},
+ {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, kw:['ปลายหลังคา','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
+ {key:'⬅️➡️ หลังคาเลื่อน', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','พื้นที่เลื่อน','มอเตอร์']},
+ {key:'🔩 ของเสริมหลังคา', open:false, kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ปิดปลาย','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง','รางน้ำ S','รางน้ำ (เสริม)']},
+ {key:'➕ ต่อปลายวัสดุที่ 2', open:false, kw:['ต่อปลายวัสดุ','พื้นที่ส่วนที่ 2']},
+ {key:'📝 หมายเหตุ / งานเสริม', open:false, kw:[]}   <span class="c">// catch-all (เปลี่ยนชื่อจาก "อื่นๆ ครอบวงกบ")</span>
+] : [ <span class="c">/* CATS เดิม สำหรับกลุ่มอื่น (บาน/ระแนง...) คงไว้ */</span> ];</pre>
+<div class="note"><b>จุด ②:</b> keyword 'หลังคาเลื่อน' จับ checkbox "ทำเป็นหลังคาเลื่อน" → เข้ากล่องเลื่อนเอง (เด่น) · อาจทำกล่องนี้ <code>open:true</code> หรือสไตล์พิเศษ (กรอบน้ำเงิน toggle) ตามดราฟ</div>
+
+<h3>จุด ④ — ของเสริม "1 ชั้น" (เลิกซ้อน details):</h3>
+<div class="note">ตอนนี้ของเสริมอยู่ใน <code>&lt;details class="optbox"&gt;</code> (L2421–2435) ซึ่งเป็น 1 child ของ <code>.i-opts</code> → groupGHOpts ดันทั้งก้อนเข้า 1 กล่อง (กลายเป็น details-ใน-details)</div>
+<pre><span class="c">// L2421 + L2435 — ลบ wrapper &lt;details class="optbox"&gt; ... &lt;/details&gt; ออก</span>
+<span class="d">h+='&lt;details class="optbox"...&gt;&lt;summary&gt;＋ ของเสริมหลังคา...&lt;/summary&gt;';  // ← ลบบรรทัดเปิด</span>
+... (ปล่อย label เสาแผง/คาน/ฯลฯ ลอยใน .i-opts ตามเดิม) ...
+<span class="d">h+='&lt;/details&gt;';  // ← ลบบรรทัดปิด</span></pre>
+→ ของเสริมจะกลายเป็น child ตรงของ <code>.i-opts</code> → groupGHOpts จับด้วย keyword เข้ากล่อง "🔩 ของเสริมหลังคา" (พับ 1 ชั้น) เอง
+
+<h2>FIX B — OPTION ทางเลือกลูกค้า ให้ตรงหลังคา (จุด ①)</h2>
+<div class="note">OPTION cascade (F2 · ~L2021) ให้ลูกค้าเลือก "หมวด → รายการ" เปลี่ยนของ · ปัจจุบันหลังคาโชว์หมวด กระจก/มุ้ง/มือจับ (ไม่เกี่ยว)</div>
+<ul>
+<li><b>กรองหมวดตามสินค้า:</b> ถ้าเป็นหลังคา → เสนอเฉพาะหมวดที่เกี่ยว (เปลี่ยนสี/วัสดุมุง/เปลี่ยนชนิดหลังคา) ตัด กระจก/มุ้ง/มือจับ ออก (เช็ค cat ก่อน build รายการ cascade)</li>
+<li><b>แก้ label summary L2181:</b> "เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา" → context หลังคา = "เปลี่ยนสี/วัสดุมุง/หลังคา" (หรือทำ label ตามหมวดสินค้า)</li>
+</ul>
+<div class="note">(เช็คซ้ำกับพี่นัท: หลังคาอยากให้มี OPTION อะไรบ้าง — เปลี่ยนสีอลู? เปลี่ยนชนิดหลังคา? เพิ่ม/ลดของเสริม?)</div>
+
+<h2>เช็คลิสต์ปิดงาน (QA)</h2>
+<ul class="chk">
+<li>หลังคา (roof_vinyl/imp7/ลามิเนต) — กล่องใหม่ 6 กล่อง ชื่อตรง · เรียงตามตาราง</li>
+<li>"หลังคาเลื่อน" อยู่กล่องเด่น (ไม่ใช่ "อื่นๆ")</li>
+<li>ของเสริม (เสาแผง/ซ่อนสโลป) อยู่กล่อง "ของเสริมหลังคา" พับ 1 ชั้น (ไม่ใช่ details ซ้อน)</li>
+<li>catch-all ชื่อ "หมายเหตุ/งานเสริม" (ไม่มี "ครอบวงกบ")</li>
+<li>OPTION หลังคา ไม่มี กระจก/มุ้ง/มือจับ</li>
+<li><b>กลุ่มอื่น (บาน/ระแนง/มุ้ง) กล่องเดิมไม่เปลี่ยน</b> (isRoof=false ใช้ CATS เดิม)</li>
+<li><code>node test/quote-fidelity.mjs</code> = PASS · กรอกหลังคา ราคา/ใบเท่าเดิม</li>
+</ul>
+
+<div class="foot">สร้างโดย skill form-ux-redesign (READ-ONLY) · ดราฟ interactive: Desktop/Sharepicjr/draft-g3-roof-formux.html (publish แล้ว) · เปลี่ยนแค่ UI grouping ไม่แตะราคา/logic</div>
+</body>
+</html>
