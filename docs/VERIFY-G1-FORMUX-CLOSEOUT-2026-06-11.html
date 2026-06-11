@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VERIFY G1 Form UX — ปิดงาน (ผ่านหมด)</title>
+<style>
+@page{size:A4;margin:11mm;}*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:#1f2937;font-size:12.5px;padding:13px;}
+.wrap{max-width:900px;margin:0 auto;}
+h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:11.5px;margin:0 0 13px;}
+.cards{text-align:center;margin:8px 0 14px;}
+.card{display:inline-block;border:2px solid #15803d;border-radius:9px;padding:6px 18px;margin:3px;}
+.card.r{border-color:#B3151D;}.card b{font-size:22px;display:block;}
+h2{color:#fff;background:#B3151D;font-size:14px;margin:16px 0 6px;padding:6px 11px;border-radius:6px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 11px;font-size:12px;background:#fff;}
+th,td{border:1px solid #e5e7eb;padding:6px 9px;text-align:left;vertical-align:top;}
+th{background:#B3151D;color:#fff;}
+.pass{color:#15803d;font-weight:700;}
+.mono{font-family:Consolas,monospace;font-size:11px;background:#f3f4f6;padding:0 3px;border-radius:3px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:9px 13px;font-size:12.5px;margin:10px 0;}
+.note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:9px 12px;font-size:12px;margin:9px 0;}
+</style></head><body><div class="wrap">
+
+<h1>G1 Form UX Redesign — ผล VERIFY ปิดงาน</h1>
+<p class="sub">เทสงานที่แชทแก้ทำ (5 ก้อน) · render จริง jsdom ทุกตัวแทน + regression · 2026-06-11 · READ-ONLY</p>
+
+<div class="cards">
+<span class="card"><b style="color:#15803d">5/5</b>ก้อน ผ่าน</span>
+<span class="card"><b style="color:#15803d">8/8</b>ตัวแทน ผ่าน</span>
+<span class="card"><b style="color:#15803d">14/14</b>regression PASS</span>
+<span class="card r"><b style="color:#B3151D">0</b>JS error</span>
+</div>
+
+<h2>5 ก้อน — ผล verify (จาก render จริง)</h2>
+<table>
+<tr><th>#</th><th>ก้อน</th><th>หลักฐาน</th><th>ผล</th></tr>
+<tr><td>1</td><td>เรียง "แบบ" ขึ้น #2</td><td>ลำดับ: กลุ่มงาน(1) → <b>แบบ(2)</b> → ประเภท(3) → ตำแหน่ง → กว้าง×สูง</td><td class="pass">PASS</td></tr>
+<tr><td>2</td><td>ชิป select≤5 (sync เข้า control เดิม)</td><td>คลิกชิป "รางเตี้ย 7 มม." → <span class="mono">.o-bottomrail=เตี้ย</span> · ผ้ามุ้ง 5 ตัว = <b>คง dropdown</b> ถูกต้อง</td><td class="pass">PASS</td></tr>
+<tr><td>3</td><td>มือจับ 4→1 multi-toggle (7 ลาย)</td><td>โชว์เฉพาะแบรนด์ที่สินค้ามี · Cmech+digital ติ๊กพร้อมกันไม่ล้าง · ราคาบวกสะสม 25k→26k→36k</td><td class="pass">PASS</td></tr>
+<tr><td>4</td><td>มุ้ง 4→1 กล่องเดียว</td><td>กล่องมุ้ง (<span class="mono">.o-mosq</span>) โผล่/ซ่อนตามเลือก · ผ้า/ขนาด/สีกรอบ รวมในกล่อง</td><td class="pass">PASS</td></tr>
+<tr><td>5</td><td>ชิปลักษณะการเปิดมุ้ง (imp21/23)</td><td>เลือก imp21 → ชิป เปิด/เลื่อน/กระทุ้ง/ยก โผล่ · คลิก "เลื่อน" → <span class="mono">.o-mosqopenstyle=เลื่อน</span> → ออกใบ (label-only)</td><td class="pass">PASS</td></tr>
+</table>
+
+<h2>8 ตัวแทน — handle box โชว์ถูกตามลายสินค้า</h2>
+<table>
+<tr><th>ตัวแทน</th><th>มือจับ (toggle ที่โชว์)</th><th>มุ้ง</th><th>ผล</th></tr>
+<tr><td>sliding_euro / casement_euro / โซลิด</td><td>cmech · digital · stainless · รุ่นอื่น</td><td>มี</td><td class="pass">PASS</td></tr>
+<tr><td>awning_euro (กระทุ้ง)</td><td>Cmech หลบมุ้ง (cmechawn) เท่านั้น</td><td>มี</td><td class="pass">PASS</td></tr>
+<tr><td>folding_xseries</td><td>X-series เท่านั้น</td><td>มี</td><td class="pass">PASS</td></tr>
+<tr><td>pc_door_2 / curved_double</td><td>digital · stainless · รุ่นอื่น (ไม่มี cmech)</td><td>pc=มี / curved=ไม่มี</td><td class="pass">PASS</td></tr>
+<tr><td>shower</td><td>ไม่มีกล่องมือจับ</td><td>ไม่มี</td><td class="pass">PASS</td></tr>
+</table>
+
+<div class="dod"><b>📋 Definition of Done — ครบทุกข้อ:</b> 5 ก้อนผ่าน · 8 ตัวแทน render ไม่มี error · <span class="mono">node test/quote-fidelity.mjs</span> PASS 14/14 (ราคาไม่เพี้ยน) · มือจับหลายอันบวกถูก · ชิป sync เข้า control เดิม (readItem อ่านได้) · ลักษณะการเปิด label-only ไม่กระทบราคา · <b>G1 Form UX ปิด 100%</b></div>
+
+<div class="note"><b>วิธีตรวจ:</b> render index.html ด้วย jsdom → addItem 8 ตัวแทน → กดชิป/toggle จริง → เช็คค่า hidden control + ราคา + genQuote · regression ผ่าน harness เดิม · ไม่แตะ index.html (READ-ONLY)</div>
+
+<p class="sub">ขั้นต่อไป: เริ่มสกิล form-ux-redesign กับ G2 (98 สินค้า · ชิปคนละชุด ไม่มีมือจับ)</p>
+</div></body></html>
