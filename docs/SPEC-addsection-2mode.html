@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.55;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 11px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+pre{background:#0f172a;color:#e2e8f0;padding:9px 11px;border-radius:7px;font-size:10px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+</style></head><body>
+
+<h1>SPEC — "+ เพิ่มส่วน" 2 โหมด (ของใช้บ่อย / งานบานทั่วไป)</h1>
+<p class="sub">2026-06-11 · ไฟล์ <code>public/calculator/index.html</code> · ดราฟ: sharepicjr/draft-addsection-2mode.html · READ-ONLY (แชท dev ทำจริง)</p>
+
+<div class="box"><b>แนวคิด:</b> ตอนนี้กด "+ เพิ่มส่วน" → การ์ดโผล่ default บานเลื่อน ต้องเลือกกลุ่ม + ไล่ dropdown 40+ แบบทุกครั้ง ·
+ของแผ่นๆ ที่ใช้บ่อย (ติดตาย/ลูกฟูก/คอมโพสิท/ผนังเบา) เพิ่มช้า · <b>เพิ่ม "ปุ่มลัด" ให้กดทีเดียวได้เลย</b> · งานบานปกติคงเดิม</div>
+
+<h2>flow ใหม่ (มติพี่นัท: 2 ปุ่มใหญ่)</h2>
+<p>กด <code>"+ เพิ่มส่วน"</code> → แทนที่จะ addItem ทันที ให้โผล่ <b>2 ปุ่ม</b>:</p>
+<table>
+<tr><th>ปุ่ม</th><th>ทำอะไร</th></tr>
+<tr><td>⚡ <b>ของใช้บ่อย</b></td><td>โผล่ชิปลัด 8 รายการ (ตารางล่าง) · กดชิป → <b>addItem + auto set กลุ่ม+แบบ</b> ของรายการนั้น → เปิดการ์ดให้กรอกขนาดต่อทันที</td></tr>
+<tr><td>🚪 <b>งานบานทั่วไป</b></td><td>addItem แบบเดิม (default กลุ่ม 1 · เลือกกลุ่ม→แบบ เอง) — <b>logic เดิม ไม่แตะ</b></td></tr>
+</table>
+
+<h2>รายการ "ของใช้บ่อย" (8 ชิป · ทดสอบ render+ราคาแล้ว ✅)</h2>
+<table>
+<tr><th>หมวดชิป</th><th>ชื่อชิป</th><th>กลุ่ม</th><th>product id</th></tr>
+<tr><td>บานติดตาย</td><td>กระจกติดตาย</td><td>G1</td><td><code>fixed_glass</code></td></tr>
+<tr><td rowspan="4">ลูกฟูก / คอมโพสิท</td><td>ลูกฟูก 1 ทาง</td><td>G1</td><td><code>rn89</code></td></tr>
+<tr><td>ลูกฟูก 2 ทาง</td><td>G1</td><td><code>rn90</code></td></tr>
+<tr><td>คอมโพสิต 3 มม.</td><td>G1</td><td><code>rn91</code></td></tr>
+<tr><td>คอมโพสิต 4 มม.</td><td>G1</td><td><code>rn92</code></td></tr>
+<tr><td rowspan="3">ผนังเบา</td><td>ISOWALL</td><td>G3</td><td><code>isowall</code></td></tr>
+<tr><td>ผนังเบาภายนอก</td><td>G3</td><td><code>wall_ext</code></td></tr>
+<tr><td>ผนังเบาภายใน</td><td>G3</td><td><code>wall_int</code></td></tr>
+</table>
+
+<h2>กลไก quick-add (non-breaking — จบที่การ์ดปกติ)</h2>
+<p>กดชิป = ทำ flow เพิ่มส่วนปกติ แต่ set กลุ่ม+แบบให้อัตโนมัติ (ข้ามกลุ่ม G1↔G3 ได้ · ยืนยันแล้ว):</p>
+<pre>function quickAddItem(group, prodId){
+  addItem(document.getElementById('items'));          // ใช้ addItem เดิม
+  const ch = document.querySelector('#items .ch:last-child');
+  const grp = ch.querySelector('.i-group'); grp.value = group;
+  grp.dispatchEvent(new Event('change',{bubbles:true}));
+  const ps = ch.querySelector('.i-prod');
+  ps.innerHTML = prodOptionsG6(String(group));         // rebuild ตามกลุ่ม
+  ps.value = prodId;
+  ps.dispatchEvent(new Event('change',{bubbles:true})); // → buildItemOpts/readItem ทำงานเหมือนเดิม
+  ch.scrollIntoView({behavior:'smooth'});
+}</pre>
+<div class="box"><b>ไม่พังของเดิม:</b> quick-add แค่ "ลัดการเลือก" — ปลายทาง = การ์ดเดียวกับกดทั่วไป · ราคา/readItem/genQuote เหมือนเดิมเป๊ะ · ไม่แตะ logic</div>
+
+<h2>จุดในโค้ด</h2>
+<table>
+<tr><th>จุด</th><th>บรรทัด (เช็คก่อนแก้)</th><th>ทำ</th></tr>
+<tr><td>ปุ่ม "+ เพิ่มส่วน"</td><td>~1813 (<code>btn.textContent='+ เพิ่มส่วน'</code>) + onclick ที่เรียก addItem</td><td>เปลี่ยน onclick → เปิด mode picker (2 ปุ่ม) แทนเรียก addItem ตรง · (ของกั้นห้องที่เป็น "+ เพิ่มบาน" คงเดิม)</td></tr>
+<tr><td>addItem</td><td>~2156</td><td>คงเดิม · เพิ่ม <code>quickAddItem()</code> ใหม่เรียกใช้ addItem</td></tr>
+<tr><td>mode picker UI</td><td>—</td><td>ปุ่ม/ชิป HTML + CSS (ดูดราฟ) · ชิปแตะง่าย ≥44px · mobile-first</td></tr>
+</table>
+
+<div class="dod"><b>📋 Definition of Done:</b>
+<ol style="margin:3px 0;">
+<li>กด "+ เพิ่มส่วน" → โผล่ 2 ปุ่ม (ใช้บ่อย / ทั่วไป)</li>
+<li>⚡ ใช้บ่อย → 8 ชิป · กดแต่ละชิป → การ์ดเพิ่มถูก product + ถูกกลุ่ม (G1/G3) + กรอกขนาดต่อได้</li>
+<li>🚪 ทั่วไป → flow เดิมครบ (เลือกกลุ่ม→แบบ)</li>
+<li><code>node test/quote-fidelity.mjs</code> PASS · ราคา/ใบของทั้ง 8 รายการไม่เพี้ยน (ลัดแล้วได้ผลเท่ากดเอง)</li>
+<li>กั้นห้องกระจก "+ เพิ่มบาน" ไม่กระทบ</li>
+</ol>
+เสร็จกลับให้แชทตรวจ verify · ของใหม่กลางทาง = เฟสถัดไป</div>
+
+<p class="sub">หมายเหตุ: ราคาทดสอบ 8 รายการ (gen จริง) — ติดตาย 20k · ลูกฟูก/คอมโพสิท 14-16k · ผนังเบา 17-18k (ที่ 2×2 ม.) · ทุกตัว render ผ่าน ไม่มี JS error</p>
+</body></html>
