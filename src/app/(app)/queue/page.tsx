@@ -6,6 +6,7 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { QueueModal } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
+import { OfficeScheduleModal } from "@/components/queue/OfficeScheduleModal";
 import {
   QueueCalendarView, toIsoWeek,
   type AvailRow,
@@ -20,6 +21,15 @@ import {
 
 const isMapUrl = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
 const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"));
+
+// แปลงเวลาเป็นนาที — รองรับทั้ง "09:30", "9:30", "14.00", "9.30" (ข้อมูล import เก่าใช้ "." + ชม.หลักเดียว)
+// คืน 99999 ถ้าไม่มี/พาร์สไม่ได้ → คิวไม่ระบุเวลาตกท้ายเซลล์
+function timeToMin(t: string | null): number {
+  if (!t) return 99999;
+  const m = String(t).match(/(\d{1,2})[:.](\d{2})/);
+  if (!m) return 99999;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
 
 // เปรียบเทียบคิว: วัน → เซลล์ (ตามลำดับใน salesRank = team→name) → เวลา → ลูกค้า
 // salesRank: map sales_id → ลำดับ (ยิ่งน้อยยิ่งมาก่อน); เซลล์ที่ไม่อยู่ในลิสต์/ไม่ระบุ → ท้ายสุด
@@ -38,9 +48,9 @@ function makeQueueCmp(salesRank: Map<string, number>) {
     const nb = b.sales?.name ?? "";
     if (na !== nb) return na.localeCompare(nb, "th");
 
-    const ta = a.queue_time ?? "00:00";
-    const tb = b.queue_time ?? "00:00";
-    if (ta !== tb) return ta.localeCompare(tb);
+    const ta = timeToMin(a.queue_time);
+    const tb = timeToMin(b.queue_time);
+    if (ta !== tb) return ta - tb;
 
     return (a.customer_name ?? "").localeCompare(b.customer_name ?? "", "th");
   };
@@ -100,6 +110,7 @@ export default function QueuePage() {
   const [q, setQ] = useState("");
   const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [officeOpen, setOfficeOpen] = useState(false);
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -210,6 +221,21 @@ export default function QueuePage() {
     });
   }, [rows, filterTeam, filterStatus]);
 
+  // ปฏิทินแสดงเฉพาะคิว "ประเมิน" ของเซลล์หลัก (MAIN) — คิวที่ผูกผู้ช่วย/โชว์รูม (เช่น ส้ม) ไม่ขึ้นปฏิทิน
+  const calMainIds = useMemo(
+    () => new Set(sales.filter((s) => s.role !== "ASSISTANT" && (!filterTeam || s.team === filterTeam)).map((s) => s.id)),
+    [sales, filterTeam]
+  );
+  // จำนวนคิวที่ปฏิทินแสดงจริง (เซลล์หลัก) vs คิวโชว์รูม/ผู้ช่วยที่ดูได้ที่ตาราง
+  const calShownCount = useMemo(
+    () => calEntries.filter((e) => e.sales_id && calMainIds.has(e.sales_id)).length,
+    [calEntries, calMainIds]
+  );
+  const calAssistCount = useMemo(
+    () => calEntries.filter((e) => e.sales_id && !calMainIds.has(e.sales_id)).length,
+    [calEntries, calMainIds]
+  );
+
   // month options
   const monthOptions = useMemo(() => {
     const opts: string[] = [];
@@ -292,6 +318,10 @@ export default function QueuePage() {
               <button onClick={() => setLeaveOpen(true)}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
                 <Icon name="calendar" size={16} /> วันลา
+              </button>
+              <button onClick={() => setOfficeOpen(true)}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
+                <Icon name="building" size={16} /> วันออฟฟิศ
               </button>
               <button onClick={() => setModal({ entry: null })}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
@@ -399,8 +429,19 @@ export default function QueuePage() {
             </label>
           )}
 
-          <span className="text-sm text-ink-3 tabular-nums ml-auto">
-            {viewMode === "list" ? `${list.length} คิว` : `${calEntries.length} คิว/สัปดาห์`}
+          <span className="text-sm text-ink-3 tabular-nums ml-auto flex items-center gap-1.5">
+            {viewMode === "list" ? (
+              `${list.length} คิว`
+            ) : (
+              <>
+                {calShownCount} คิวประเมิน/สัปดาห์
+                {calAssistCount > 0 && (
+                  <span className="text-[11px] text-ink-3 bg-gray-100 rounded-md px-1.5 py-0.5 whitespace-nowrap">
+                    +{calAssistCount} โชว์รูม · ดูที่ตาราง
+                  </span>
+                )}
+              </>
+            )}
           </span>
         </div>
 
@@ -438,13 +479,17 @@ export default function QueuePage() {
               ) : null;
             })()}
           </>
-        ) : list.length === 0 ? (
-          <p className="text-center text-ink-3 py-12">
-            {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
-          </p>
         ) : (
           /* ===== List View ===== */
           <>
+            {/* กล่องวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก */}
+            <LeaveStrip avail={avail} sales={sales} month={filterMonth} />
+            {list.length === 0 ? (
+              <p className="text-center text-ink-3 py-12">
+                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
+              </p>
+            ) : (
+              <>
             {/* กล่อง "รอจัดคิว" */}
             {pendingRows.length > 0 && (
               <div className="mb-5">
@@ -494,6 +539,8 @@ export default function QueuePage() {
                 })}
               </div>
             )}
+              </>
+            )}
           </>
         )}
       </Card>
@@ -514,6 +561,14 @@ export default function QueuePage() {
           salesList={sales}
           onClose={() => setLeaveOpen(false)}
           onSaved={() => { setLeaveOpen(false); loadAvail(); }}
+        />
+      )}
+
+      {officeOpen && (
+        <OfficeScheduleModal
+          salesList={sales}
+          onClose={() => setOfficeOpen(false)}
+          onSaved={() => { setOfficeOpen(false); load(); }}
         />
       )}
     </div>
@@ -658,6 +713,47 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
             onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
             className="w-4 h-4 accent-brand" /> ใบเสร็จ
         </label>
+      </div>
+    </div>
+  );
+}
+
+// กล่องสรุปวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก (อ่านจาก avail ที่โหลดไว้แล้ว)
+const AVAIL_KIND_META: Record<string, { th: string; cls: string }> = {
+  LEAVE_FULL:  { th: "ลาทั้งวัน", cls: "bg-red-50 text-red-700 border-red-200" },
+  LEAVE_HALF:  { th: "ลาครึ่งวัน", cls: "bg-orange-50 text-orange-700 border-orange-200" },
+  OFFICE_HALF: { th: "อยู่ออฟฟิศเช้า", cls: "bg-sky-50 text-sky-700 border-sky-200" },
+  HOLIDAY:     { th: "วันหยุด", cls: "bg-gray-100 text-gray-600 border-gray-200" },
+};
+
+function LeaveStrip({ avail, sales, month }: { avail: AvailRow[]; sales: QueueSales[]; month: string }) {
+  const items = useMemo(() => {
+    const nameOf = (id: string) => sales.find((s) => s.id === id)?.name ?? "—";
+    return avail
+      .filter((a) => a.date.startsWith(month))
+      .sort((a, b) => a.date.localeCompare(b.date) || nameOf(a.sales_id).localeCompare(nameOf(b.sales_id), "th"))
+      .map((a) => ({ ...a, name: nameOf(a.sales_id) }));
+  }, [avail, sales, month]);
+
+  if (!items.length) return null;
+  return (
+    <div className="mb-5 rounded-xl border border-gray-200/70 bg-white/40 p-3">
+      <div className="flex items-center gap-1.5 mb-2 text-sm font-semibold text-ink-2">
+        <Icon name="calendar" size={14} /> วันลา / อยู่ออฟฟิศ (เดือนนี้)
+        <span className="tabular-nums text-xs text-ink-3">{items.length} รายการ</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((a) => {
+          const k = AVAIL_KIND_META[a.kind] ?? { th: a.kind, cls: "bg-gray-100 text-gray-600 border-gray-200" };
+          const half = a.kind === "LEAVE_HALF" && a.half ? (a.half === "AM" ? " เช้า" : " บ่าย") : "";
+          return (
+            <span key={a.id} className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs ${k.cls}`}>
+              <span className="tabular-nums opacity-90">{thaiDate(a.date)}</span>
+              <span className="font-semibold">{a.name}</span>
+              <span className="opacity-80">{k.th}{half}</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

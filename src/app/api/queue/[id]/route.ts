@@ -63,7 +63,12 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   if (!data) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");
 
   // เข้าประเมินเสร็จ (DONE) → carry-forward เป็น customer + job ครั้งเดียว (idempotent ที่ DB)
+  // เฉพาะ "ประเมินหน้างาน" เท่านั้น · โชว์รูม/อื่นๆ = ปิดคิวเฉยๆ ไม่เข้า flow ลูกค้า
   if (body.status === "DONE") {
+    const jt: string = ((data as { job_type?: string | null }).job_type ?? "").trim();
+    const isAssess = jt === "" || jt === "ประเมินหน้างาน" || jt === "ประเมิน";
+    if (!isAssess) return ok(data); // ไม่สร้างลูกค้า/งาน
+
     const { data: jobId, error: pErr } = await (ctx.supabase as unknown as {
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null; error: { message: string } | null }>;
     }).rpc("promote_queue_to_job", { p_queue_id: params.id });

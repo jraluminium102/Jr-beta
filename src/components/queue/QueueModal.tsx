@@ -6,8 +6,26 @@ import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
 import {
   FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng,
-  type QueueEntry, type QueueSales, type JobSize, type QueueStatus,
+  type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
+
+// ---- helpers ----------------------------------------------------------------
+
+// เวลา "HH:MM"/"H.MM" → นาที (รองรับข้อมูล import จุด) · null ถ้าพาร์สไม่ได้
+function timeToMin(t: string | null): number | null {
+  if (!t) return null;
+  const m = String(t).match(/(\d{1,2})[:.](\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+// ประเภทงานที่ "เข้า flow ลูกค้า" (สร้างลูกค้า+งาน+ใบเสนอ+แบบ ตอน DONE) = ประเมินหน้างานเท่านั้น
+// ("" / "ประเมิน" = ค่าเดิม/ข้อมูล import ถือเป็นประเมินด้วย)
+export const ASSESS_JOB_TYPE = "ประเมินหน้างาน";
+export function isAssessJobType(jt: string | null | undefined): boolean {
+  const v = (jt ?? "").trim();
+  return v === "" || v === ASSESS_JOB_TYPE || v === "ประเมิน";
+}
 
 // ---- slot-conflict helpers --------------------------------------------------
 
@@ -59,7 +77,7 @@ function initForm(e?: QueueEntry | null): FormState {
     status: e?.status ?? "PENDING",
     queue_date: e?.queue_date ?? "",
     queue_time: e?.queue_time ?? "",
-    job_type: e?.job_type ?? "",
+    job_type: e?.job_type ?? ASSESS_JOB_TYPE,
     sales_id: e?.sales_id ?? "",
     assistant_id: e?.assistant_id ?? "",
     line_contact: e?.line_contact ?? "",
@@ -156,6 +174,10 @@ export function QueueModal({
         const found: SlotConflict[] = [];
         const slot = f.queue_time.slice(0, 5);
         const date = f.queue_date;
+        // AM/PM จากเวลาจริง (รองรับเวลาอิสระ ไม่ใช่แค่ 10:00/14:00) — < 12:00 = เช้า
+        const min = timeToMin(f.queue_time);
+        const isAMSlot = min != null && min < 12 * 60;
+        const isPMSlot = min != null && min >= 12 * 60;
 
         // ตรวจวันลา
         const av = (availRes.data ?? []).filter((a) => a.sales_id === f.sales_id && a.date === date);
@@ -164,8 +186,18 @@ export function QueueModal({
         const isPMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "PM");
 
         if (isFullLeave) found.push({ kind: "leave", msg: "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
-        else if (isAMLeave && slot === "10:00") found.push({ kind: "leave", msg: "เซลล์ลาช่วงเช้า — ไม่สามารถรับคิว 10:00" });
-        else if (isPMLeave && slot === "14:00") found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — ไม่สามารถรับคิว 14:00" });
+        else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
+        else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
+
+        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน)
+        const half = isAMSlot ? "AM" : isPMSlot ? "PM" : null;
+        if (half) {
+          const selSales = salesList.find((s) => s.id === f.sales_id);
+          const wd = new Date(date + "T00:00:00").getDay();
+          if ((selSales?.office_slots ?? []).some((o) => o.weekday === wd && o.half === half)) {
+            found.push({ kind: "warn", msg: `${selSales?.name ?? "เซลล์"} อยู่ออฟฟิศประจำช่วง${isAMSlot ? "เช้า" : "บ่าย"}วันนี้ — ปกติไม่ออกประเมิน` });
+          }
+        }
 
         // ตรวจชนคิวเดิม
         const sameSlot = (entryRes.data ?? []).filter((e) =>
@@ -218,17 +250,34 @@ export function QueueModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.queue_date, f.queue_time, f.sales_id, f.job_size]);
 
-  // Separate main sales reps from assistants for dropdowns
-  const mainSales = salesList.filter((s) => s.role !== "ASSISTANT");
-
-  // ---- ข้อ 3: local mirror ของ assistants เพื่อให้เพิ่มใหม่แล้วเห็นใน dropdown ทันที ----
+  // ---- local mirror ของเซลล์หลัก + ผู้ช่วย เพื่อเพิ่มใหม่แล้วเห็นใน dropdown ทันที ----
+  const [localMain, setLocalMain] = useState<QueueSales[]>(() =>
+    salesList.filter((s) => s.role !== "ASSISTANT")
+  );
   const [localAssistants, setLocalAssistants] = useState<QueueSales[]>(() =>
     salesList.filter((s) => s.role === "ASSISTANT")
   );
   // sync เมื่อ salesList prop เปลี่ยน (เช่น parent reload)
   useEffect(() => {
+    setLocalMain(salesList.filter((s) => s.role !== "ASSISTANT"));
     setLocalAssistants(salesList.filter((s) => s.role === "ASSISTANT"));
   }, [salesList]);
+  const mainSales = localMain;
+
+  // "เพิ่มเซลล์เอง" inline form state (เซลล์หลัก role=MAIN)
+  const [addingSales, setAddingSales] = useState(false);
+  const [newSalesName, setNewSalesName] = useState("");
+  const [newSalesTeam, setNewSalesTeam] = useState<QueueTeam>("BKK");
+  const [addSalesBusy, setAddSalesBusy] = useState(false);
+  const [addSalesErr, setAddSalesErr] = useState("");
+
+  // ประเภทงาน: หมวด (ประเมินหน้างาน/โชว์รูม/อื่นๆ) — "อื่นๆ" เก็บข้อความอิสระใน f.job_type
+  const [jobCat, setJobCat] = useState<"ประเมินหน้างาน" | "โชว์รูม" | "อื่นๆ">(() => {
+    const jt = entry?.job_type;
+    if (isAssessJobType(jt)) return "ประเมินหน้างาน";
+    if (jt === "โชว์รูม") return "โชว์รูม";
+    return "อื่นๆ";
+  });
 
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
@@ -283,6 +332,52 @@ export function QueueModal({
     } finally {
       if (!controller.signal.aborted) setSuggesting(false);
       else setSuggesting(false);
+    }
+  }
+
+  // ---- เพิ่มเซลล์หลัก (MAIN) ใหม่ถาวรใน queue_sales ----
+  async function addMainSales() {
+    const trimmedName = newSalesName.trim();
+    if (!trimmedName) { setAddSalesErr("กรุณาระบุชื่อเซลล์"); return; }
+
+    // ชื่อซ้ำใน local list → เลือกตัวเดิมแทนสร้างซ้ำ
+    const existing = localMain.find((s) => s.name.trim().toLowerCase() === trimmedName.toLowerCase());
+    if (existing) {
+      setF((s) => ({ ...s, sales_id: existing.id }));
+      setAddingSales(false); setNewSalesName(""); setAddSalesErr("");
+      return;
+    }
+
+    setAddSalesBusy(true); setAddSalesErr("");
+    try {
+      const code = trimmedName.toLowerCase().replace(/\s+/g, "_").slice(0, 20) || `s_${Date.now().toString(36)}`;
+      const res = await api.post<{ id: string; name: string }>("/queue/sales", {
+        name: trimmedName,
+        code,
+        team: newSalesTeam,
+        role: "MAIN",
+        active: true,
+      });
+      const newRecord: QueueSales = {
+        id: res.data.id,
+        name: res.data.name,
+        code,
+        team: newSalesTeam,
+        role: "MAIN",
+        active: true,
+        start_label: null,
+        start_lat: null,
+        start_lng: null,
+        profile_id: null,
+        parent_sales_id: null,
+      };
+      setLocalMain((prev) => [...prev, newRecord]);
+      setF((s) => ({ ...s, sales_id: res.data.id }));
+      setAddingSales(false); setNewSalesName("");
+    } catch (e) {
+      setAddSalesErr(e instanceof Error ? e.message : "เพิ่มเซลล์ไม่สำเร็จ");
+    } finally {
+      setAddSalesBusy(false);
     }
   }
 
@@ -342,22 +437,30 @@ export function QueueModal({
     if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
 
     // ---- ข้อ 1: ตรวจ/ยืนยันก่อนเปลี่ยนสถานะเป็น DONE ----
+    // เฉพาะ "ประเมินหน้างาน" เท่านั้นที่เข้า flow ลูกค้า (สร้างลูกค้า+งาน) · โชว์รูม/อื่นๆ = ปิดคิวเฉยๆ
     if (f.status === "DONE") {
-      if (!f.queue_date) { setErr("กรุณาระบุวันที่นัดก่อนยืนยันประเมินเสร็จ"); return; }
-      if (!f.sales_id) { setErr("กรุณาเลือกเซลล์ก่อนยืนยันประเมินเสร็จ"); return; }
+      if (isAssessJobType(f.job_type)) {
+        if (!f.queue_date) { setErr("กรุณาระบุวันที่นัดก่อนยืนยันประเมินเสร็จ"); return; }
+        if (!f.sales_id) { setErr("กรุณาเลือกเซลล์ก่อนยืนยันประเมินเสร็จ"); return; }
 
-      const confirmed = window.confirm(
-        "ยืนยันว่าประเมินเสร็จ? ระบบจะสร้างลูกค้า + งานจริงทันที และย้อนกลับยาก"
-      );
-      if (!confirmed) return;
-
-      // เตือนถ้าไม่มีเบอร์โทร
-      const telRaw = f.tel.trim();
-      if (!telRaw) {
-        const telOk = window.confirm(
-          "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
+        const confirmed = window.confirm(
+          "ยืนยันว่าประเมินเสร็จ? ระบบจะสร้างลูกค้า + งานจริงทันที และย้อนกลับยาก"
         );
-        if (!telOk) return;
+        if (!confirmed) return;
+
+        // เตือนถ้าไม่มีเบอร์โทร
+        const telRaw = f.tel.trim();
+        if (!telRaw) {
+          const telOk = window.confirm(
+            "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
+          );
+          if (!telOk) return;
+        }
+      } else {
+        const ok = window.confirm(
+          `ปิดงานคิวนี้ (${f.job_type || "อื่นๆ"}) โดยไม่สร้างลูกค้า/งานในระบบ — ยืนยัน?`
+        );
+        if (!ok) return;
       }
     }
 
@@ -387,11 +490,14 @@ export function QueueModal({
     // ---- ข้อ 1: normalize เบอร์โทร (ตัดช่องว่าง/ขีด/วงเล็บ) ----
     const telNormalized = f.tel.replace(/[\s\-()]/g, "").trim() || null;
 
+    // กัน edge: เลือก "อื่นๆ" แต่ไม่พิมพ์ → job_type="" จะถูกตีเป็นประเมิน เลย default เป็น "อื่นๆ"
+    const jobTypeOut = jobCat === "อื่นๆ" && !f.job_type.trim() ? "อื่นๆ" : (f.job_type || null);
+
     const payload = {
       status: f.status,
       queue_date: f.queue_date || null,
       queue_time: f.queue_time || null,
-      job_type: f.job_type || null,
+      job_type: jobTypeOut,
       sales_id: f.sales_id || null,
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
@@ -411,7 +517,7 @@ export function QueueModal({
     try {
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
-        if (payload.status === "DONE") {
+        if (payload.status === "DONE" && isAssessJobType(payload.job_type)) {
           if (r.meta?.job_id) {
             alert(
               "✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
@@ -465,16 +571,52 @@ export function QueueModal({
               placeholder="คุณ…" className={inp} />
           </Field>
 
-          {/* Main sales rep (role=MAIN only) */}
+          {/* Main sales rep (role=MAIN only) — เพิ่มเซลล์ใหม่เองได้ */}
           <Field label="เซลล์">
-            <select value={f.sales_id} onChange={(e) => set("sales_id", e.target.value)} className={inp}>
-              <option value="">— ยังไม่ระบุ —</option>
-              {mainSales.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.team === "PHUKET" ? "ภูเก็ต" : "กทม."})
-                </option>
-              ))}
-            </select>
+            {addingSales ? (
+              <div className="space-y-1.5">
+                <div className="flex gap-1.5">
+                  <input
+                    value={newSalesName}
+                    onChange={(e) => setNewSalesName(e.target.value)}
+                    placeholder="ชื่อเซลล์ใหม่"
+                    className={`${inp} flex-1`}
+                  />
+                  <select value={newSalesTeam} onChange={(e) => setNewSalesTeam(e.target.value as QueueTeam)}
+                    className="glass-soft rounded-lg px-2 py-1.5 text-xs outline-none shrink-0">
+                    <option value="BKK">กทม.</option>
+                    <option value="PHUKET">ภูเก็ต</option>
+                  </select>
+                  <button type="button" onClick={addMainSales} disabled={addSalesBusy}
+                    className="press glass-soft rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-dark disabled:opacity-60 shrink-0">
+                    {addSalesBusy ? "…" : "บันทึก"}
+                  </button>
+                  <button type="button" onClick={() => { setAddingSales(false); setNewSalesName(""); setAddSalesErr(""); }}
+                    className="press glass-soft rounded-lg px-2 text-xs text-ink-3 shrink-0">
+                    <Icon name="close" size={13} />
+                  </button>
+                </div>
+                {addSalesErr && <p className="text-[11px] text-red-600">{addSalesErr}</p>}
+              </div>
+            ) : (
+              <div className="flex gap-1.5">
+                <select value={f.sales_id} onChange={(e) => set("sales_id", e.target.value)} className={`${inp} flex-1`}>
+                  <option value="">— ยังไม่ระบุ —</option>
+                  {mainSales.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.team === "PHUKET" ? "ภูเก็ต" : "กทม."})
+                    </option>
+                  ))}
+                </select>
+                {!readOnly && (
+                  <button type="button" onClick={() => setAddingSales(true)}
+                    className="press glass-soft rounded-lg px-2.5 text-xs text-ink-2 shrink-0"
+                    title="เพิ่มเซลล์เอง">
+                    <Icon name="plus" size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </Field>
 
           {/* Assistant (role=ASSISTANT) — ใช้ localAssistants แทน prop โดยตรง */}
@@ -520,10 +662,33 @@ export function QueueModal({
           </Field>
 
           <Field label="ประเภทงาน">
-            <select value={f.job_type} onChange={(e) => set("job_type", e.target.value)} className={inp}>
-              <option value="">ประเมินหน้างาน</option>
-              <option value="โชว์รูม">โชว์รูม</option>
-            </select>
+            <div className="space-y-1.5">
+              <select
+                value={jobCat}
+                onChange={(e) => {
+                  const cat = e.target.value as "ประเมินหน้างาน" | "โชว์รูม" | "อื่นๆ";
+                  setJobCat(cat);
+                  if (cat === "ประเมินหน้างาน") set("job_type", ASSESS_JOB_TYPE);
+                  else if (cat === "โชว์รูม") set("job_type", "โชว์รูม");
+                  else set("job_type", ""); // อื่นๆ → ให้พิมพ์เอง
+                }}
+                className={inp}>
+                <option value="ประเมินหน้างาน">ประเมินหน้างาน</option>
+                <option value="โชว์รูม">โชว์รูม</option>
+                <option value="อื่นๆ">อื่นๆ (พิมพ์เอง)</option>
+              </select>
+              {jobCat === "อื่นๆ" && (
+                <input
+                  value={f.job_type}
+                  onChange={(e) => set("job_type", e.target.value)}
+                  placeholder="ระบุประเภทงาน เช่น เคลียร์แบบ, วัดพื้นที่"
+                  className={inp}
+                />
+              )}
+              {jobCat !== "ประเมินหน้างาน" && (
+                <p className="text-[11px] text-ink-3">ℹ️ ประเภทนี้ไม่เข้าระบบลูกค้า (ไม่สร้างใบเสนอ/แบบตอนปิดงาน)</p>
+              )}
+            </div>
           </Field>
 
           {!readOnly && (
@@ -542,24 +707,32 @@ export function QueueModal({
             <input type="date" value={f.queue_date} onChange={(e) => set("queue_date", e.target.value)} className={inp} />
           </Field>
           <Field label="เวลา (slot)">
-            <div className="flex gap-2">
-              {(["", "10:00", "14:00"] as const).map((slot) => {
-                const isActive = f.queue_time === slot;
-                const label = slot === "" ? "— ยังไม่ระบุ" : slot === "10:00" ? "เช้า 10:00" : "บ่าย 14:00";
-                return (
-                  <button key={slot} type="button"
-                    onClick={() => set("queue_time", slot)}
-                    className={`press flex-1 rounded-lg px-2 py-2 text-sm font-semibold border transition-colors min-h-[44px]
-                      ${isActive
-                        ? slot === "10:00" ? "bg-sky-600 text-white border-sky-600"
-                          : slot === "14:00" ? "bg-amber-500 text-white border-amber-500"
-                          : "bg-gray-200 text-ink border-gray-300"
-                        : "glass-soft text-ink-2 hover:bg-white/60"
-                      }`}>
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="space-y-1.5">
+              <div className="flex gap-2">
+                {(["", "10:00", "14:00"] as const).map((slot) => {
+                  const isActive = f.queue_time === slot;
+                  const label = slot === "" ? "— ยังไม่ระบุ" : slot === "10:00" ? "เช้า 10:00" : "บ่าย 14:00";
+                  return (
+                    <button key={slot} type="button"
+                      onClick={() => set("queue_time", slot)}
+                      className={`press flex-1 rounded-lg px-2 py-2 text-sm font-semibold border transition-colors min-h-[44px]
+                        ${isActive
+                          ? slot === "10:00" ? "bg-sky-600 text-white border-sky-600"
+                            : slot === "14:00" ? "bg-amber-500 text-white border-amber-500"
+                            : "bg-gray-200 text-ink border-gray-300"
+                          : "glass-soft text-ink-2 hover:bg-white/60"
+                        }`}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* กรอกเวลาเอง — ไม่ล็อกแค่ 10:00/14:00 */}
+              <label className="flex items-center gap-2 text-xs text-ink-3">
+                หรือกรอกเวลาเอง
+                <input type="time" value={f.queue_time} onChange={(e) => set("queue_time", e.target.value)}
+                  className="glass-soft rounded-lg px-2.5 py-1.5 text-sm outline-none tabular-nums" />
+              </label>
             </div>
           </Field>
 

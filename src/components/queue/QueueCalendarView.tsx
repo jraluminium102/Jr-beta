@@ -51,6 +51,21 @@ function weekDays(isoWeek: string): string[] {
   });
 }
 
+/** queue_time → นาที — รองรับ "09:30"/"9:30"/"14.00"/"9.30" (import เก่าใช้ "." + ชม.หลักเดียว) */
+function timeToMin(t: string | null): number | null {
+  if (!t) return null;
+  const m = String(t).match(/(\d{1,2})[:.](\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+/** queue_time → "H:MM" สำหรับแสดงบนการ์ด (normalize จุด→ทวิภาค, ตัด leading zero ชม.) */
+function fmtTime(t: string | null): string {
+  const min = timeToMin(t);
+  if (min == null) return "";
+  return `${Math.floor(min / 60)}:${String(min % 60).padStart(2, "0")}`;
+}
+
 /** แปลง ISO date → label วันที่ไทย กระชับ */
 function dayHeaderLabel(iso: string): string {
   const [y, mo, d] = iso.split("-").map(Number);
@@ -98,14 +113,23 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
       });
     });
     entries.forEach((e) => {
-      if (!e.queue_date || !e.queue_time) return;
-      const slot = e.queue_time.slice(0, 5);
-      if (slot !== "10:00" && slot !== "14:00") return;
+      if (!e.queue_date) return;
+      const min = timeToMin(e.queue_time);
+      // ไม่มีเวลา → ลงช่องเช้าไว้ก่อน (ให้โผล่ ไม่หาย); มีเวลา → < 12:00 เช้า, ≥ 12:00 บ่าย
+      const slot = min == null || min < 12 * 60 ? "10:00" : "14:00";
       const sid = e.sales_id;
       if (!sid || !m[sid]) return;
       if (!m[sid][e.queue_date]) return;
       m[sid][e.queue_date][slot].push(e);
     });
+    // เรียงคิวในแต่ละช่องตามเวลา (เช้าหลายคิว 9:00 < 10:00 < 11:00)
+    Object.values(m).forEach((byDate) =>
+      Object.values(byDate).forEach((bySlot) =>
+        Object.values(bySlot).forEach((arr) =>
+          arr.sort((a, b) => (timeToMin(a.queue_time) ?? 9999) - (timeToMin(b.queue_time) ?? 9999))
+        )
+      )
+    );
     return m;
   }, [entries, salesRows, days]);
 
@@ -118,6 +142,15 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
     });
     return m;
   }, [avail]);
+
+  // (0030) วันอยู่ออฟฟิศประจำ: [salesId] → Set("<weekday>-AM"/"<weekday>-PM")
+  const officeIndex = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    salesRows.forEach((s) => {
+      m[s.id] = new Set((s.office_slots ?? []).map((o) => `${o.weekday}-${o.half}`));
+    });
+    return m;
+  }, [salesRows]);
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -194,6 +227,9 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
                 const isPMLeave = av && av.kind === "LEAVE_HALF" && av.half === "PM";
+                // (0030) วันอยู่ออฟฟิศประจำ (soft — ยังลงคิวทับได้ แต่จะเตือน)
+                const isOfficeAM = officeIndex[s.id]?.has(`${dow}-AM`) ?? false;
+                const isOfficePM = officeIndex[s.id]?.has(`${dow}-PM`) ?? false;
 
                 return (
                   <>
@@ -201,14 +237,14 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                     <td key={`${s.id}-${d}-am`}
                       className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : "bg-sky-50/30"}`}>
                       {!isSun && !isFullLeave && !isAMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} office={isOfficeAM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                     {/* Slot บ่าย 14:00 */}
                     <td key={`${s.id}-${d}-pm`}
                       className={`px-1 py-1 align-top border-r border-gray-100/30 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : "bg-amber-50/30"}`}>
                       {!isSun && !isFullLeave && !isPMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} office={isOfficePM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                   </>
@@ -224,8 +260,24 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
 
 // ---- sub-components ---------------------------------------------------------
 
-function SlotCell({ entries, onClick, onAdd }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void; onAdd?: () => void }) {
+function SlotCell({ entries, onClick, onAdd, office }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void; onAdd?: () => void; office?: boolean }) {
   if (!entries.length) {
+    // (0030) วันอยู่ออฟฟิศประจำ — แสดงป้าย แต่ยังกดลงคิวทับได้ (soft, จะเตือนในฟอร์ม)
+    if (office) {
+      const tag = (
+        <span className="inline-flex items-center gap-0.5 text-[10px] text-indigo-600 bg-indigo-50 rounded px-1.5 py-0.5 font-medium">
+          <Icon name="building" size={9} /> อยู่ออฟฟิศ
+        </span>
+      );
+      return onAdd ? (
+        <button type="button" onClick={onAdd} title="อยู่ออฟฟิศประจำ — กดเพื่อลงคิวทับ (จะเตือน)"
+          className="press h-8 w-full flex items-center justify-center hover:brightness-95 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+          {tag}
+        </button>
+      ) : (
+        <div className="h-8 flex items-center justify-center">{tag}</div>
+      );
+    }
     if (onAdd) {
       return (
         <button
@@ -241,20 +293,26 @@ function SlotCell({ entries, onClick, onAdd }: { entries: QueueEntry[]; onClick:
   }
   return (
     <div className="space-y-0.5 min-h-[32px]">
-      {entries.map((e) => (
-        <button key={e.id}
-          onClick={() => onClick(e)}
-          title={`${e.customer_name} — ${STATUS_ABBR[e.status] ?? e.status}`}
-          className={`press w-full text-left px-1.5 py-0.5 rounded text-[10px] truncate block leading-tight
-            ${STATUS_CLR[e.status] ?? "bg-gray-100 text-gray-700"}
-            ${e.status === "CANCELLED" ? "opacity-60" : ""}
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand`}>
-          <span className="font-medium">{e.customer_name}</span>
-          {e.status !== "CONFIRMED" && e.status !== "DONE" && (
-            <span className="ml-1 opacity-70">[{STATUS_ABBR[e.status]}]</span>
-          )}
-        </button>
-      ))}
+      {entries.map((e) => {
+        const tlabel = fmtTime(e.queue_time);
+        // โชว์เวลาเฉพาะคิวที่ไม่ตรง slot มาตรฐาน (เช่น 9:30, 11:00, 13:00) ให้สังเกตง่าย
+        const showTime = tlabel && tlabel !== "10:00" && tlabel !== "14:00";
+        return (
+          <button key={e.id}
+            onClick={() => onClick(e)}
+            title={`${tlabel ? tlabel + " " : ""}${e.customer_name} — ${STATUS_ABBR[e.status] ?? e.status}`}
+            className={`press w-full text-left px-1.5 py-0.5 rounded text-[10px] truncate block leading-tight
+              ${STATUS_CLR[e.status] ?? "bg-gray-100 text-gray-700"}
+              ${e.status === "CANCELLED" ? "opacity-60" : ""}
+              focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand`}>
+            {showTime && <span className="tabular-nums font-semibold mr-0.5">{tlabel}</span>}
+            <span className="font-medium">{e.customer_name}</span>
+            {e.status !== "CONFIRMED" && e.status !== "DONE" && (
+              <span className="ml-1 opacity-70">[{STATUS_ABBR[e.status]}]</span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
