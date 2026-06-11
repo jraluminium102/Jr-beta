@@ -2161,9 +2161,11 @@ function addItem(container){
    `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
      `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div>`+
-     `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
-     `<div class="full"><label>ประเภท</label><select class="i-type"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
+     /* ก้อน1: แบบ (.i-prod) ขึ้น #2 ทันทีหลังกลุ่มงาน */
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
+     /* ก้อน1: ประเภท (.i-type) → ชิป 2 ปุ่มใหญ่ · select เดิมซ่อนไว้ให้ readItem อ่าน */
+     `<div class="full"><label class="field-label">ประเภท</label><div class="chip-group chip-2up"><button type="button" class="chip on" data-val="door" onclick="chSetChip(this,'i-type')">ประตู</button><button type="button" class="chip" data-val="window" onclick="chSetChip(this,'i-type')">หน้าต่าง</button></div><select class="i-type" style="display:none;"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
+     `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
      `<div><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
      `<div><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
      `<div class="full i-color-wrap" style="display:none;"><label>สีอลูมิเนียม (รายการนี้)</label><select class="i-color">${colorOpts()}</select></div>`+
