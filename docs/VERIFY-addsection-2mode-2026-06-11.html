@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VERIFY เพิ่มส่วน 2 โหมด — ปิดงาน</title>
+<style>
+@page{size:A4;margin:11mm;}*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:#1f2937;font-size:12.5px;padding:13px;}
+.wrap{max-width:840px;margin:0 auto;}
+h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:11.5px;margin:0 0 13px;}
+.cards{text-align:center;margin:8px 0 14px;}
+.card{display:inline-block;border:2px solid #15803d;border-radius:9px;padding:6px 18px;margin:3px;}
+.card b{font-size:22px;display:block;}
+h2{color:#fff;background:#B3151D;font-size:14px;margin:16px 0 6px;padding:6px 11px;border-radius:6px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 11px;font-size:12px;background:#fff;}
+th,td{border:1px solid #e5e7eb;padding:6px 9px;text-align:left;}
+th{background:#B3151D;color:#fff;}
+.pass{color:#15803d;font-weight:700;}
+td.c{text-align:center;}
+.mono{font-family:Consolas,monospace;font-size:11px;background:#f3f4f6;padding:0 3px;border-radius:3px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:9px 13px;font-size:12.5px;margin:10px 0;}
+</style></head><body><div class="wrap">
+
+<h1>เพิ่มส่วน 2 โหมด (แบนชั้นเดียว) — ผล VERIFY ปิดงาน</h1>
+<p class="sub">เทสงานที่แชทแก้ทำ · render จริง jsdom + regression · 2026-06-11 · READ-ONLY</p>
+
+<div class="cards">
+<span class="card"><b style="color:#15803d">8/8</b>ชิป ผ่าน</span>
+<span class="card"><b style="color:#15803d">14/14</b>regression</span>
+<span class="card"><b style="color:#15803d">≤2</b>แตะถึงเป้า</span>
+<span class="card"><b style="color:#15803d">0</b>JS error</span>
+</div>
+
+<h2>ผล verify</h2>
+<table>
+<tr><th>จุด</th><th>หลักฐาน</th><th>ผล</th></tr>
+<tr><td>panel แบนชั้นเดียว</td><td>กด "+ เพิ่มส่วน" → ชิป 8 + ปุ่ม "🚪 งานบานทั่วไป" <b>เห็นพร้อมกันในจอเดียว</b> (ไม่ซ้อนปุ่ม · ถึงเป้า ≤2 แตะ)</td><td class="pass">PASS</td></tr>
+<tr><td>ชิป 8 รายการ (auto กลุ่ม+แบบ)</td><td>กดแต่ละชิป → การ์ดถูก product + ถูกกลุ่ม + ราคาตรงกดเอง (ดูตาราง)</td><td class="pass">PASS</td></tr>
+<tr><td>🚪 งานบานทั่วไป</td><td>กด → <span class="mono">addItem</span> เดิม (เลือกกลุ่ม→แบบ) ไม่แตะ logic</td><td class="pass">PASS</td></tr>
+<tr><td>กั้นห้องกระจก "+ เพิ่มบาน"</td><td>guard <span class="mono">hasGH</span> → flow เดิม ไม่โดน panel · regression กั้นห้อง PASS</td><td class="pass">PASS</td></tr>
+<tr><td>regression ราคา</td><td><span class="mono">quote-fidelity</span> 14/14 PASS · ไม่มี JS error</td><td class="pass">PASS</td></tr>
+</table>
+
+<h2>ราคา 8 ชิป (เท่ากดเอง · ที่ 2×2 ม.)</h2>
+<table>
+<tr><th>ชิป</th><th>product</th><th>กลุ่ม</th><th class="c">ราคา</th></tr>
+<tr><td>กระจกติดตาย</td><td class="mono">fixed_glass</td><td>G1</td><td class="c">฿20,000</td></tr>
+<tr><td>ลูกฟูก 1 ทาง / 2 ทาง</td><td class="mono">rn89 / rn90</td><td>G1</td><td class="c">฿14,000</td></tr>
+<tr><td>คอมโพสิต 3 มม. / 4 มม.</td><td class="mono">rn91 / rn92</td><td>G1</td><td class="c">฿14,000 / 16,000</td></tr>
+<tr><td>ISOWALL / ผนังเบานอก</td><td class="mono">isowall / wall_ext</td><td>G3</td><td class="c">฿18,000</td></tr>
+<tr><td>ผนังเบาภายใน</td><td class="mono">wall_int</td><td>G3</td><td class="c">฿17,000</td></tr>
+</table>
+
+<div class="dod"><b>📋 Definition of Done — ครบทุกข้อ:</b> panel แบนชั้นเดียว (≤2 แตะ) · ชิป 8 รายการได้การ์ดถูก product+กลุ่ม ราคาตรงกดเอง · 🚪 ทั่วไป = addItem เดิม · กั้นห้อง "+ เพิ่มบาน" ไม่กระทบ · <span class="mono">quote-fidelity</span> PASS 14/14 · ไม่มี JS error · <b>เพิ่มส่วน 2 โหมด ปิด 100%</b></div>
+
+<p class="sub">กลไก quick-add: addItem + set .i-group + prodOptionsG6 + set .i-prod + fire change (ลัด · ปลายทาง=การ์ดเดิม ไม่แตะ logic) · L1928–1996 · ตรวจ READ-ONLY</p>
+</div></body></html>
