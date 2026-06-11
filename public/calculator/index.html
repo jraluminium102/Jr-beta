@@ -2107,14 +2107,14 @@ function toggleHandleBrand(btn){
   var sub=wrap?wrap.querySelector('.hsub-'+brand):null;
   if(isOn){ btn.classList.remove('on'); clearHandleBrandControls(btn,brand); if(sub)sub.style.display='none'; }
   else{ btn.classList.add('on'); if(sub)sub.style.display='';
-    if(brand==='cmech'&&ch){ var s=ch.querySelector('.o-cmech'); if(s&&!s.value)s.value='embed'; }
-    if(brand==='xseries'&&ch){ var xh=ch.querySelector('.o-xhandle'); if(xh)xh.value='1'; }
+    if(brand==='cmech'&&ch){ var s=ch.querySelector('.o-cmech'); if(s&&!s.value){ s.value='embed'; s.dispatchEvent(new Event('change',{bubbles:true})); } }
   }
   calcQuote();
 }
 function clearHandleBrandControls(btn,brand){
   var ch=btn.closest('.ch'); if(!ch)return;
-  if(brand==='cmech'){ var s=ch.querySelector('.o-cmech'); if(s)s.value=''; var a=ch.querySelector('.o-cmechawn'); if(a)a.checked=false; }
+  if(brand==='cmech'){ var s=ch.querySelector('.o-cmech'); if(s)s.value=''; }
+  else if(brand==='cmechawn'){ var a=ch.querySelector('.o-cmechawn'); if(a)a.value=''; }
   else if(brand==='digital'){ var d=ch.querySelector('.o-digi'); if(d)d.value=''; }
   else if(brand==='stainless'){ var st=ch.querySelector('.o-stainless'); if(st)st.value=''; }
   else if(brand==='xseries'){ var xh=ch.querySelector('.o-xhandle'); if(xh)xh.value=''; }
@@ -2342,25 +2342,31 @@ function buildItemOpts(d){
     h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
   }
   if(p.closer){ h+='<label class="opt">[Up3] โช๊ค (combo สแตน) <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช๊คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช๊ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช๊ค">บานพับ +5,000</option></select></label>'; }
-  if(p.digihandle){ h+='<label class="opt">[Up2] มือจับดิจิตอล <select class="o-digi" style="width:auto;height:32px;max-width:220px;"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></label>'; }
-  // มือจับสแตนเลสอร่าม 6 ขนาด (สำหรับบานเปิด/บานเลื่อน รุ่น M, S)
-  if(p.digihandle){ h+='<label class="opt">[Up3] มือจับสแตนอร่าม <select class="o-stainless" style="width:auto;height:32px;"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></label>'; }
-  // P3-3: มือจับรุ่นอื่น — กรอกชื่อรุ่น + ราคาเอง (HD182/Berin/ฯลฯ ที่ยังไม่มีในลิสต์)
-  if(p.digihandle){ h+='<label class="opt">มือจับรุ่นอื่น (กรอกเอง) <input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="width:180px;height:32px;" oninput="calcQuote()"> + <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:90px;height:32px;" oninput="calcQuote()"> บาท</label>'; }
-  // ข้อ4A: มือจับ Cmech — เฉพาะ "ชุดบานเลื่อน" (handoff) · แบบ ฝัง/เมโทร × สี ธรรมดา/พิเศษ · ราคาตามตาราง (ประตู2ฝั่ง/หน้าต่าง1ฝั่ง)
-  //   เดิมเปิดให้ เปิด/กระทุ้ง ด้วย แต่ใบโชว์เฉพาะสาขาบานเลื่อน → คิดเงินไม่โชว์ · จำกัดเป็นบานเลื่อนปิด gap
-  if(p.cat==='บานเลื่อน' || p.cat==='บานเปิด'){
-    // ข้อ3(G1): เพิ่ม 'บานเปิด' — เดิม cat==='บานเลื่อน' เท่านั้น ทั้งที่ banner บอกบานเปิดมี Cmech (คิดเงินแต่ UI ไม่วาด)
-    h+='<label class="opt">[Up1] มือจับ Cmech <select class="o-cmech" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select> <select class="o-cmechcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="black">สีดำ</option><option value="white">สีขาว</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></label>';
-  }
-  // ข้อ4B: มือจับ Cmech หลบมุ้ง (บานกระทุ้ง) — ธรรมดา 600 / พิเศษชุบ 840 ราคาสุดท้าย (รวม Fork Drive แล้ว · เคาะ 2026-06-08)
-  if(p.cat==='บานกระทุ้ง'){
-    h+='<label class="opt" style="width:100%;font-size:11px;color:#666;">ⓘ บานกระทุ้งคู่/หลายบาน: ใส่ "จำนวนบานทั้งหมด" ด้านบน (เช่น 2) — ราคาคิดเพิ่มต่อบานที่ 2 ขึ้นไป</label>';
-    h+='<label class="opt">มือจับ Cmech หลบมุ้ง <select class="o-cmechawn" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="black">สีดำ +600</option><option value="white">สีขาว +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></label>';
-  }
-  // ข้อ4C: มือจับ X-J/XO/XT — เฉพาะบาน SlimLux + X-series · ฟรี (โชว์ชื่อรุ่น ไม่บวกเงิน)
-  if(/xseries|slimlux/.test(p.id)){
-    h+='<label class="opt">มือจับ X-series (ฟรี) <select class="o-xhandle" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></label>';
+  // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
+  { var _cmechOK=(p.cat==='บานเลื่อน'||p.cat==='บานเปิด'), _xOK=/xseries|slimlux/.test(p.id), _awnOK=(p.cat==='บานกระทุ้ง');
+    if(p.digihandle||_cmechOK||_xOK||_awnOK){
+      var _hsub='';
+      // toggle แบรนด์ (เฉพาะที่ใช้ได้กับสินค้านี้)
+      var _btoggle='';
+      if(_cmechOK) _btoggle+='<button type="button" class="chip" data-hbrand="cmech" onclick="toggleHandleBrand(this)">Cmech</button>';
+      if(p.digihandle) _btoggle+='<button type="button" class="chip" data-hbrand="digital" onclick="toggleHandleBrand(this)">ดิจิตอล</button><button type="button" class="chip" data-hbrand="stainless" onclick="toggleHandleBrand(this)">สแตนอร่าม</button>';
+      if(_xOK) _btoggle+='<button type="button" class="chip" data-hbrand="xseries" onclick="toggleHandleBrand(this)">X-series (ฟรี)</button>';
+      if(_awnOK) _btoggle+='<button type="button" class="chip" data-hbrand="cmechawn" onclick="toggleHandleBrand(this)">Cmech หลบมุ้ง</button>';
+      if(p.digihandle) _btoggle+='<button type="button" class="chip" data-hbrand="other" onclick="toggleHandleBrand(this)">รุ่นอื่น ✎</button>';
+      // sub: Cmech (ฝัง/เมโทร ชิป + สี dropdown) — o-cmech ซ่อน · o-cmechcolor คง dropdown
+      if(_cmechOK) _hsub+='<div class="hsub hsub-cmech" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="embed" onclick="cmechTypePick(this)">ฝัง</button><button type="button" class="chip" data-val="metro" onclick="cmechTypePick(this)">เมโทร</button></div><select class="o-cmech" style="display:none;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select><select class="o-cmechcolor" style="height:40px;margin-top:8px;" onchange="calcQuote();"><option value="black">สีดำ</option><option value="white">สีขาว</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></div>';
+      // sub: ดิจิตอล
+      if(p.digihandle) _hsub+='<div class="hsub hsub-digital" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><select class="o-digi" style="height:44px;width:100%;max-width:260px;" onchange="calcQuote();"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></div>';
+      // sub: สแตนอร่าม
+      if(p.digihandle) _hsub+='<div class="hsub hsub-stainless" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><select class="o-stainless" style="height:44px;width:100%;max-width:260px;" onchange="calcQuote();"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></div>';
+      // sub: X-series (ฟรี) — o-xhandle dropdown เดิม
+      if(_xOK) _hsub+='<div class="hsub hsub-xseries" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div style="font-size:12px;color:#065F46;margin-bottom:4px;">มือจับ X-series (ฟรี · ไม่บวกราคา)</div><select class="o-xhandle" style="height:40px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></div>';
+      // sub: Cmech หลบมุ้ง (บานกระทุ้ง) — o-cmechawn dropdown เดิม
+      if(_awnOK) _hsub+='<div class="hsub hsub-cmechawn" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div style="font-size:11px;color:#666;margin-bottom:4px;">ⓘ บานกระทุ้งคู่/หลายบาน: ใส่ "จำนวนบานทั้งหมด" ด้านบน</div><select class="o-cmechawn" style="height:40px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="black">สีดำ +600</option><option value="white">สีขาว +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></div>';
+      // sub: รุ่นอื่น (กรอกเอง)
+      if(p.digihandle) _hsub+='<div class="hsub hsub-other" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="height:40px;width:100%;max-width:220px;margin-bottom:6px;" oninput="calcQuote()"> ราคา <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:110px;height:40px;" oninput="calcQuote()"> บาท</div>';
+      h+='<label class="opt" style="width:100%;"><b>มือจับ</b><div class="handle-brand-wrap" style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:10px 12px;margin-top:4px;"><div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:8px;">ติ๊กแบรนด์ที่ใช้ (ติ๊กได้หลายอัน · ยังไม่ติ๊ก = ซ่อนทุก sub)</div><div class="chip-group chip-sm">'+_btoggle+'</div>'+_hsub+'</div></label>';
+    }
   }
   // R3.2: ตารางเต็มบาน 5,000 (เฉพาะ โซลิด วัน/ทู)
   if(p.full_grid){
