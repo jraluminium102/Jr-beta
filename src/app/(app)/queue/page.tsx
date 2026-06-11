@@ -21,6 +21,15 @@ import {
 const isMapUrl = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
 const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"));
 
+// แปลงเวลาเป็นนาที — รองรับทั้ง "09:30", "9:30", "14.00", "9.30" (ข้อมูล import เก่าใช้ "." + ชม.หลักเดียว)
+// คืน 99999 ถ้าไม่มี/พาร์สไม่ได้ → คิวไม่ระบุเวลาตกท้ายเซลล์
+function timeToMin(t: string | null): number {
+  if (!t) return 99999;
+  const m = String(t).match(/(\d{1,2})[:.](\d{2})/);
+  if (!m) return 99999;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
 // เปรียบเทียบคิว: วัน → เซลล์ (ตามลำดับใน salesRank = team→name) → เวลา → ลูกค้า
 // salesRank: map sales_id → ลำดับ (ยิ่งน้อยยิ่งมาก่อน); เซลล์ที่ไม่อยู่ในลิสต์/ไม่ระบุ → ท้ายสุด
 function makeQueueCmp(salesRank: Map<string, number>) {
@@ -38,9 +47,9 @@ function makeQueueCmp(salesRank: Map<string, number>) {
     const nb = b.sales?.name ?? "";
     if (na !== nb) return na.localeCompare(nb, "th");
 
-    const ta = a.queue_time ?? "00:00";
-    const tb = b.queue_time ?? "00:00";
-    if (ta !== tb) return ta.localeCompare(tb);
+    const ta = timeToMin(a.queue_time);
+    const tb = timeToMin(b.queue_time);
+    if (ta !== tb) return ta - tb;
 
     return (a.customer_name ?? "").localeCompare(b.customer_name ?? "", "th");
   };
