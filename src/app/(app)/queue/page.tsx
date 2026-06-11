@@ -281,18 +281,12 @@ export default function QueuePage() {
       });
     }
     // วันลา/หยุด/อยู่ออฟฟิศ (จาก sales_availability ของวันนั้น) — แสดงทุกวัน (ของจริงที่บันทึกไว้)
-    const leaveOfDay = avail.filter((a) => a.date === d);
-    leaveOfDay.forEach((a) => {
+    avail.filter((a) => a.date === d).forEach((a) => {
       const s = sales.find((x) => x.id === a.sales_id);
       if (!s) return;
       const tMin = (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") ? -1 : (a.kind === "LEAVE_HALF" && a.half === "PM") ? 840 : 600;
       acc.push({ item: { kind: "leave", sales: s, av: a }, sRank: rankOf(s.id), tMin });
     });
-
-    if (d === "2026-06-25" || d === "2026-06-15") {
-      // eslint-disable-next-line no-console
-      console.log("[DBG2]", d, "todayStr", todayStr, "d>=today", d >= todayStr, "items", acc.map((x) => x.item.kind + (x.item.kind === "office" ? `:${x.item.sales.name}` : x.item.kind === "leave" ? `:${x.item.sales.name}/${x.item.av.kind}` : "")));
-    }
 
     // เรียงเวลาก่อน → เซลล์เป็น tiebreak (ลาทั้งวัน tMin=-1 ขึ้นบนสุด)
     acc.sort((a, b) => a.tMin - b.tMin || a.sRank - b.sRank);
