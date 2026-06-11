@@ -2531,12 +2531,19 @@ function buildItemOpts(d){
   // R3.8: มุ้ง option ในบาน (ใหม่) — สำหรับบานที่ p.mosquito = true
   if(p.mosquito){
     const _itypeMosq = (d.querySelector('.i-type')||{}).value || 'door';
-    h+='<label class="opt" style="background:#E3F2FD;border-left:3px solid #1976D2;padding:5px 10px;font-size:12px;width:100%;display:block;">🪟 <b>เพิ่มมุ้งในบานนี้</b> (ราคาคิดตามพื้นที่บาน)</label>';
-    h+='<label class="opt">มุ้ง <select class="o-mosq" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select></label>';
-    h+='<label class="opt">ขนาดมุ้ง (เว้นว่าง=ตามบาน) กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:52px;height:30px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:52px;height:30px;" oninput="calcQuote()"> · จำนวนบานมุ้ง <input type="number" class="o-mosqpanels" min="0" step="1" value="" placeholder="auto" style="width:48px;height:30px;" oninput="calcQuote()"></label>';
-    h+='<label class="opt">ผ้ามุ้ง <select class="o-mosqfabric" style="width:auto;height:32px;"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
-    // ข้อ10: สีกรอบมุ้ง addon (เดิมไม่มีช่อง → เลือกสีไม่ได้) · value ตรงกับที่ calc คิด (sahara/kl_special/kl_wood · ค่าทำสี×0.5)
-    h+='<label class="opt">สีกรอบมุ้ง <select class="o-mosqcolor" onchange="calcQuote()" style="width:auto;height:32px;"><option value="">ตามสีบาน (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
+    // ก้อน4+5(G1 formux): รวบมุ้ง 4 ช่อง → กล่องเดียว (โผล่/ซ่อนตาม o-mosq) + ชิปลักษณะการเปิด (imp21/imp23)
+    h+='<label class="opt" style="width:100%;"><b>มุ้ง</b> <span style="font-size:11px;color:#1565C0;">(ราคาคิดตามพื้นที่บาน)</span>';
+    h+='<div class="mosq-wrap" style="background:#E3F2FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 12px;margin-top:4px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:8px;">เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนรายละเอียดทั้งหมด</div>';
+    h+='<select class="o-mosq" style="height:44px;width:100%;max-width:300px;" onchange="mosqGroupToggle(this); calcQuote();"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select>';
+    h+='<div class="mosq-detail-group" style="display:none;margin-top:10px;border-top:1px solid #90CAF9;padding-top:10px;">';
+    h+='<label class="opt" style="width:100%;">ขนาดมุ้ง <span style="font-size:11px;color:#0369A1;">[เว้นว่าง=auto จากบาน]</span> กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> · บาน <input type="number" class="o-mosqpanels" min="0" step="1" value="" placeholder="auto" style="width:50px;height:36px;" oninput="calcQuote()"></label>';
+    // ก้อน5: ชิปลักษณะการเปิด (.o-mosqopenstyle · ห้ามชน .o-mosqopen dead code) — โผล่เฉพาะ imp21/imp23 · label-only
+    h+='<div class="mosq-openstyle-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #90CAF9;"><div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button><button type="button" class="chip" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button><button type="button" class="chip" data-val="กระทุ้ง" onclick="mosqOpenStylePick(this)">กระทุ้ง</button><button type="button" class="chip" data-val="ยก" onclick="mosqOpenStylePick(this)">ยก</button></div><input type="hidden" class="o-mosqopenstyle" value="เปิด"><div style="margin-top:5px;font-size:11px;color:#6B7280;">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา</div></div>';
+    h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <select class="o-mosqfabric" style="height:40px;" onchange="calcQuote()"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
+    // ข้อ10: สีกรอบมุ้ง → ชิป 4 (value ตรงกับ calc · o-mosqcolor ซ่อน)
+    h+='<label class="opt" style="width:100%;">สีกรอบมุ้ง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-mosqcolor\')">ตามสีบาน</button><button type="button" class="chip" data-val="sahara" onclick="chSetChip(this,\'o-mosqcolor\')">เทาซาฮาร่า</button><button type="button" class="chip" data-val="kl_special" onclick="chSetChip(this,\'o-mosqcolor\')">KL พิเศษ</button><button type="button" class="chip" data-val="kl_wood" onclick="chSetChip(this,\'o-mosqcolor\')">KL ลายไม้</button></div><select class="o-mosqcolor" style="display:none;" onchange="calcQuote()"><option value="">ตามสีบาน (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
+    h+='</div></div></label>';
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
@@ -2823,6 +2830,7 @@ function readItem(d){
     const _mp=d.querySelector('.o-mosqpat'); optSel.mosqPat=_mp?_mp.value:'p_2slide';
     const _mt=d.querySelector('.o-mosqtotal'); optSel.mosqTotal=_mt?_mt.value:'2';
     const _mo=d.querySelector('.o-mosqopen'); optSel.mosqOpen=_mo?_mo.value:'1';
+    const _mos=d.querySelector('.o-mosqopenstyle'); optSel.mosqOpenStyle=_mos?_mos.value:''; // ก้อน5: ลักษณะการเปิดมุ้ง (label-only)
     const _mc=d.querySelector('.o-mosqcolor'); optSel.mosqColor=_mc?_mc.value:'';
     const _mf=d.querySelector('.o-mosqfabric'); optSel.mosqFabric=_mf?_mf.value:'fiber_gray';
     const _mqw=d.querySelector('.o-mosqw'); optSel.mosqW=_mqw?_mqw.value:'';
@@ -3347,7 +3355,10 @@ function genQuote(keepNo){
       var _mosqShortMap={mj_kick_150:'พร้อมมุ้งม้วน',mj_kick_300:'พร้อมมุ้งม้วน',mj_kick_600:'พร้อมมุ้งม้วน',mj_screen_safety:'พร้อมมุ้งจีบนิรภัย',imp21:'พร้อมมุ้งเฟรมเล็ก',imp22:'พร้อมมุ้งเฟรมเล็ก',imp23:'พร้อมมุ้งเฟรมใหญ่'};
       // R2-2: ขนาดมุ้งย้ายมาที่ชื่อรายการ (เดิมอยู่ในรายละเอียดงาน "— ขนาด ~X ตร.ม.")
       var _mqDim=(it.w&&it.h)?(' ขนาด '+it.w+'×'+it.h+' ม.'):'';
-      prodName += ' '+(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ')+_mqDim;
+      var _mosqNm=(_mosqShortMap[it.optSel.mosqId]||'พร้อมมุ้งจีบ');
+      // ก้อน5(G1 formux): imp21/imp23 ต่อท้ายลักษณะการเปิด (label-only · ไม่กระทบราคา) เช่น "พร้อมมุ้งเฟรมเล็ก บานเลื่อน"
+      if((it.optSel.mosqId==='imp21'||it.optSel.mosqId==='imp23') && it.optSel.mosqOpenStyle){ _mosqNm += ' บาน'+it.optSel.mosqOpenStyle; }
+      prodName += ' '+_mosqNm+_mqDim;
     }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
