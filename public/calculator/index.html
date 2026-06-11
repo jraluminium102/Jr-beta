@@ -207,6 +207,15 @@
   .set-btns-bot{margin-top:8px;}
   .set-addpart,.set-addfixed{flex:1;height:38px;border-radius:8px;cursor:pointer;font-size:14px;border:1.5px dashed var(--red);background:#fff;color:var(--red);}
   .set-addfixed{border-style:solid;background:var(--red);color:#fff;}
+  /* ===== CHIP CONTROLS (G1 Form UX Redesign) ===== */
+  .chip-group{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .chip{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 14px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-size:14px; font-family:inherit; font-weight:600; cursor:pointer; line-height:1.3; text-align:center; transition:background .12s,border-color .12s; -webkit-tap-highlight-color:transparent; }
+  .chip:active{ background:var(--redbg); }
+  .chip.on{ background:var(--red-dark); border-color:var(--red-dark); color:#fff; }
+  .chip-2up{ }
+  .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
+  .chip-sm .chip{ min-height:40px; padding:6px 12px; font-size:13px; }
+  .field-label{ display:block; font-size:13px; color:var(--muted); margin-bottom:2px; }
 </style>
 </head>
 <body>
@@ -2080,6 +2089,59 @@ function rnSetHmode(el,mode){ var ch=el.closest('.ch'); if(!ch)return; var hm=ch
   if(rc){ rc.style.borderColor=mode==='round'?'#2563EB':'#E5E7EB'; rc.style.background=mode==='round'?'#EFF6FF':'#fff'; }
   if(sc){ sc.style.borderColor=mode==='splice'?'#2563EB':'#E5E7EB'; sc.style.background=mode==='splice'?'#EFF6FF':'#fff'; }
   rnHmodeCompare(ch); calcQuote();
+}
+/* ===== G1 Form UX Redesign — chip/toggle helpers (UI only · sync ค่ากลับ control เดิม + fire change) ===== */
+// ชิป → set .value ของ select/hidden ที่ซ่อน แล้ว fire change → readItem/calcQuote เดิมทำงาน
+function chSetChip(btn, selectClass){
+  var ch=btn.closest('.ch'); if(!ch)return; var val=btn.dataset.val;
+  // deselect ชิปพี่น้องที่คุม selectClass เดียวกัน (ผูกด้วย onclick ที่อ้าง selectClass)
+  ch.querySelectorAll('.chip[onclick*="'+selectClass+'"]').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  var sel=ch.querySelector('.'+selectClass);
+  if(sel){ sel.value=val; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+// มือจับ multi-toggle — แต่ละแบรนด์อิสระ (ไม่ clear แบรนด์อื่น)
+function toggleHandleBrand(btn){
+  var brand=btn.dataset.hbrand; var isOn=btn.classList.contains('on');
+  var wrap=btn.closest('.handle-brand-wrap'); var ch=btn.closest('.ch');
+  var sub=wrap?wrap.querySelector('.hsub-'+brand):null;
+  if(isOn){ btn.classList.remove('on'); clearHandleBrandControls(btn,brand); if(sub)sub.style.display='none'; }
+  else{ btn.classList.add('on'); if(sub)sub.style.display='';
+    if(brand==='cmech'&&ch){ var s=ch.querySelector('.o-cmech'); if(s&&!s.value)s.value='embed'; }
+    if(brand==='xseries'&&ch){ var xh=ch.querySelector('.o-xhandle'); if(xh)xh.value='1'; }
+  }
+  calcQuote();
+}
+function clearHandleBrandControls(btn,brand){
+  var ch=btn.closest('.ch'); if(!ch)return;
+  if(brand==='cmech'){ var s=ch.querySelector('.o-cmech'); if(s)s.value=''; var a=ch.querySelector('.o-cmechawn'); if(a)a.checked=false; }
+  else if(brand==='digital'){ var d=ch.querySelector('.o-digi'); if(d)d.value=''; }
+  else if(brand==='stainless'){ var st=ch.querySelector('.o-stainless'); if(st)st.value=''; }
+  else if(brand==='xseries'){ var xh=ch.querySelector('.o-xhandle'); if(xh)xh.value=''; }
+  else if(brand==='other'){ var hn=ch.querySelector('.o-handlename'); if(hn)hn.value=''; var hp=ch.querySelector('.o-handleprice'); if(hp)hp.value='0'; }
+}
+// ชิป Cmech ฝัง/เมโทร → sync .o-cmech (ซ่อน)
+function cmechTypePick(btn){
+  var sub=btn.closest('.hsub-cmech'); if(!sub)return;
+  sub.querySelectorAll('[data-val]').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  var sel=sub.querySelector('.o-cmech'); if(sel){ sel.value=btn.dataset.val; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+// มุ้ง: โผล่/ซ่อนกลุ่มรายละเอียดตาม o-mosq + ชิปลักษณะการเปิด (เฉพาะ imp21/imp23)
+function mosqGroupToggle(sel){
+  var wrap=sel.closest('.mosq-wrap'); if(!wrap)return;
+  var grp=wrap.querySelector('.mosq-detail-group'); if(grp)grp.style.display=sel.value?'':'none';
+  var openRow=wrap.querySelector('.mosq-openstyle-row');
+  if(openRow){ var show=(sel.value==='imp21'||sel.value==='imp23'); openRow.style.display=show?'':'none';
+    if(show){ openRow.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val==='เปิด'); }); var hid=openRow.querySelector('.o-mosqopenstyle'); if(hid)hid.value='เปิด'; }
+  }
+}
+// ชิปลักษณะการเปิดมุ้ง → sync hidden .o-mosqopenstyle (label-only · ไม่เรียก calcQuote)
+function mosqOpenStylePick(btn){
+  var wrap=btn.closest('.mosq-openstyle-row'); if(!wrap)return;
+  wrap.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  var hid=wrap.querySelector('.o-mosqopenstyle'); if(hid)hid.value=btn.dataset.val;
 }
 // UX (C): พับเก็บรายการ (accordion) — ลดความยาวฟอร์ม · พับแล้วโชว์แค่ ส่วนที่ N + ชนิดบาน+ขนาด
 function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w')||{}).value, h=(ch.querySelector('.i-h')||{}).value; var ty=(ch.querySelector('.i-type')||{}).value==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
