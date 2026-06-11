@@ -480,11 +480,14 @@ export function QueueModal({
     // ---- ข้อ 1: normalize เบอร์โทร (ตัดช่องว่าง/ขีด/วงเล็บ) ----
     const telNormalized = f.tel.replace(/[\s\-()]/g, "").trim() || null;
 
+    // กัน edge: เลือก "อื่นๆ" แต่ไม่พิมพ์ → job_type="" จะถูกตีเป็นประเมิน เลย default เป็น "อื่นๆ"
+    const jobTypeOut = jobCat === "อื่นๆ" && !f.job_type.trim() ? "อื่นๆ" : (f.job_type || null);
+
     const payload = {
       status: f.status,
       queue_date: f.queue_date || null,
       queue_time: f.queue_time || null,
-      job_type: f.job_type || null,
+      job_type: jobTypeOut,
       sales_id: f.sales_id || null,
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
