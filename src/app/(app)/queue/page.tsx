@@ -21,9 +21,29 @@ import {
 const isMapUrl = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
 const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"));
 
-function sortKey(e: QueueEntry): string {
-  const d = e.queue_date ?? "0000-00-00";
-  return `${d} ${e.queue_time ?? "00:00"}`;
+// เปรียบเทียบคิว: วัน → เซลล์ (ตามลำดับใน salesRank = team→name) → เวลา → ลูกค้า
+// salesRank: map sales_id → ลำดับ (ยิ่งน้อยยิ่งมาก่อน); เซลล์ที่ไม่อยู่ในลิสต์/ไม่ระบุ → ท้ายสุด
+function makeQueueCmp(salesRank: Map<string, number>) {
+  return (a: QueueEntry, b: QueueEntry): number => {
+    const da = a.queue_date ?? "0000-00-00";
+    const db = b.queue_date ?? "0000-00-00";
+    if (da !== db) return da.localeCompare(db);
+
+    const ra = a.sales_id ? salesRank.get(a.sales_id) ?? 9998 : 9999;
+    const rb = b.sales_id ? salesRank.get(b.sales_id) ?? 9998 : 9999;
+    if (ra !== rb) return ra - rb;
+
+    // เผื่อชื่อซ้ำลำดับ — เรียงชื่อเซลล์แบบไทยให้เสถียร
+    const na = a.sales?.name ?? "";
+    const nb = b.sales?.name ?? "";
+    if (na !== nb) return na.localeCompare(nb, "th");
+
+    const ta = a.queue_time ?? "00:00";
+    const tb = b.queue_time ?? "00:00";
+    if (ta !== tb) return ta.localeCompare(tb);
+
+    return (a.customer_name ?? "").localeCompare(b.customer_name ?? "", "th");
+  };
 }
 
 function thisMonth(): string {
@@ -128,9 +148,17 @@ export default function QueuePage() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadAvail(); }, [loadAvail]);
 
+  // ลำดับเซลล์ตามที่ API ส่งมา (เรียง team → name แล้ว) ใช้จัดกลุ่มคิวตามเซลล์
+  const salesRank = useMemo(() => {
+    const m = new Map<string, number>();
+    sales.forEach((s, i) => m.set(s.id, i));
+    return m;
+  }, [sales]);
+
   // ---- client-side filter ----
   const list = useMemo(() => {
     const kw = q.trim().toLowerCase();
+    const cmp = makeQueueCmp(salesRank);
     return [...rows]
       .filter((e) => {
         // text search
@@ -148,8 +176,8 @@ export default function QueuePage() {
         if (filterStatus && e.status !== filterStatus) return false;
         return true;
       })
-      .sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
-  }, [rows, q, filterTeam, filterStatus]);
+      .sort(cmp);
+  }, [rows, q, filterTeam, filterStatus, salesRank]);
 
   // แยก "รอจัดคิว" (queue_date=null) ออกจากที่นัดแล้ว
   const pendingRows = useMemo(() => list.filter((e) => !e.queue_date), [list]);
