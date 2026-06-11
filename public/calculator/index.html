@@ -1750,7 +1750,16 @@ let setSeq=0;
 function groupGHOpts(ch){
   var box=ch&&ch.querySelector('.i-opts'); if(!box || !box.children.length) return;
   if(box.querySelector('.gh-opt-cat-det')) return;
-  var CATS=[
+  // FIX A (G3 roof form-ux): หลังคา ใช้ CATS ชุดเฉพาะ (กล่องตรงงานหลังคา · เลื่อนก่อนรางน้ำ)
+  var isRoof = !!(ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten'));
+  var CATS = isRoof ? [
+    {key:'🏠 วัสดุมุง · สี · โครง', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','แป ','โครงสร้าง','ชนิดฟิล์ม','ความหนากระจก']},
+    {key:'⬅️➡️ หลังคาเลื่อน', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์']},
+    {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, kw:['ปลายหลังคา','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
+    {key:'🔩 ของเสริมหลังคา', open:false, kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ปิดปลาย','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
+    {key:'➕ ต่อปลายวัสดุที่ 2', open:false, kw:['ต่อปลายวัสดุ','พื้นที่ส่วนที่ 2']},
+    {key:'📝 หมายเหตุ / งานเสริม', open:false, kw:[]}
+  ] : [
     {key:'🚪 ชนิด / การเปิด', open:true, kw:[
       'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
       'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง','ซ่อนราง','ทิศระแนง',
@@ -2066,7 +2075,7 @@ function addSetOptPreset(sel){
 const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mosq',label:'เปลี่ยนผ้ามุ้ง'},{id:'color',label:'เปลี่ยนสีอลู'},{id:'handle',label:'เปลี่ยนมือจับ'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
 // มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
 const OC_HANDLES=[{n:'Cmech ฝัง ประตู ธรรมดา',p:1050},{n:'Cmech ฝัง ประตู พิเศษชุบ',p:1470},{n:'Cmech ฝัง หน้าต่าง ธรรมดา',p:350},{n:'Cmech ฝัง หน้าต่าง พิเศษชุบ',p:490},{n:'Cmech เมโทร ประตู ธรรมดา',p:1000},{n:'Cmech เมโทร ประตู พิเศษชุบ',p:1400},{n:'Cmech เมโทร หน้าต่าง ธรรมดา',p:600},{n:'Cmech เมโทร หน้าต่าง พิเศษชุบ',p:840}];
-function ocCatOptions(){ return '<option value="">— เลือกหมวด —</option>'+OC_CATS.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join(''); }
+function ocCatOptions(isRoof){ var cats=isRoof?OC_CATS.filter(function(c){return ['color','roof','other'].indexOf(c.id)>=0;}):OC_CATS; return '<option value="">— เลือกหมวด —</option>'+cats.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join(''); } // FIX B (G3): หลังคา → เหลือ สี/หลังคา/อื่นๆ (ตัด กระจก/มุ้ง/มือจับ)
 function ocItemOptions(cat){
   if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
     GLASS.forEach(function(g,i){ var k=/อินซูเลท/.test(g.n)?'อินซูเลท':(/เทมเปอร์/.test(g.n)?'เทมเปอร์':(/ลามิเนต/.test(g.n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(g.n)?'กระจกใส/สี':'อื่นๆ'))); grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
@@ -2093,14 +2102,15 @@ function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(
   else if(cat==='mosq'){ delta=Math.round((parseFloat(opt.getAttribute('data-r'))||0)*area); }
   else if(cat==='roof'){ var rp=PBYID[sel.value]; var nr=(rp&&rp.rates)?rateOf(area,RATES[rp.rates]):0; delta=Math.round(nr*area); }
   tx.value='เปลี่ยนเป็น'+name; dl.value=delta||''; calcQuote(); }
-function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
-  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions()+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
+function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var _ocCh=btn.closest('.ch'); var _isRoof=!!(_ocCh&&_ocCh.querySelector('.o-roofend')); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
+  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions(_isRoof)+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
   box.appendChild(row); }
 // หลังคาเลื่อน: auto-fill ราคามอเตอร์ตามพื้นที่ (18,000/28,000/36,000/72,000) ลงช่อง · ผู้ใช้แก้ทับได้ (data-edited)
 function rfSlideMotorFill(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p||!p.optSlide)return;
   var w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, a=w*h;
   var N=Math.max(2,parseInt((ch.querySelector('.o-spanels')||{}).value)||2);
-  var sa=parseFloat((ch.querySelector('.o-sarea')||{}).value)||0;
+  var _saw=parseFloat((ch.querySelector('.o-sareaw')||{}).value)||0, _sah=parseFloat((ch.querySelector('.o-sareah')||{}).value)||0;
+  var sa=(_saw>0&&_sah>0)?_saw*_sah:0; // FIX C②: พื้นที่เลื่อน = ยาว×ยื่น
   var marea=sa>0?sa:(a*N/(N+1));
   var auto=marea<=3.5?18000:marea<=14?28000:marea<=40?36000:72000;
   var pe=ch.querySelector('.o-smotorprice'); if(pe && !pe.dataset.edited){ pe.value=auto; }
@@ -2492,6 +2502,8 @@ function buildItemOpts(d){
   if(p.optSlide){
     h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
     h+='<span class="o-slide-wrap" style="display:none;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:6px 10px;">';
+    // FIX C① (G3): ชนิดเลื่อน (เลื่อนยื่น/เลื่อนข้าง) — มติพี่นัทราคาเท่ากัน = label only (ไม่แตะ calc)
+    h+='<label class="opt" style="width:100%;">ชนิดเลื่อน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เลื่อนยื่น" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนยื่น</button><button type="button" class="chip" data-val="เลื่อนข้าง" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนข้าง</button></div><select class="o-slidetype" style="display:none;" onchange="calcQuote();"><option value="เลื่อนยื่น" selected>เลื่อนยื่น</option><option value="เลื่อนข้าง">เลื่อนข้าง</option></select> <span style="font-size:11px;color:#666;">(ราคาเท่ากัน · ระบุในใบ)</span></label>';
     // P2: จำนวนบานเลื่อน = ชิป [2][3][4][6] + stepper (input number ยังเป็น source of truth · readItem เดิมไม่ต้องแก้)
     h+='<label class="opt" style="width:100%;flex-wrap:wrap;">จำนวนบานเลื่อน '
       +'<span style="display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;">'
@@ -2502,8 +2514,10 @@ function buildItemOpts(d){
       +'<input type="number" class="o-spanels" step="1" min="2" value="2" style="width:52px;height:44px;text-align:center;" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();">'
       +'<button type="button" onclick="rfStepSpanels(this,1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">+</button>'
       +'</span></label>';
-    // P4: พื้นที่เลื่อน placeholder "auto" (ว่าง=auto · logic sa>0?sa:auto รองรับว่างแล้ว) — เลิกสับสน "0 คือ auto หรือ 0 จริง"
-    h+='<label class="opt">พื้นที่เลื่อน(ตร.ม.) <input type="number" class="o-sarea" step="0.1" min="0" placeholder="auto" style="width:70px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> <span style="font-size:11px;color:#666;">เว้นว่าง=auto</span></label>';
+    // FIX C③ (G3): บานติดตาย (ส่วนไม่เลื่อน) — ระบุในใบ (พื้นที่รวมในหลังคาแล้ว = label · ไม่แตะ calc)
+    h+='<label class="opt">บานติดตาย <input type="number" class="o-sfixed" step="1" min="0" value="0" style="width:52px;height:44px;text-align:center;" oninput="calcQuote();"> บาน <span style="font-size:11px;color:#666;">(ส่วนไม่เลื่อน · ระบุในใบ)</span></label>';
+    // FIX C② (G3): พื้นที่เลื่อน = ยาว × ยื่น (2 ช่อง · readItem คูณเป็น sarea เดิม · ว่าง=auto · calc L1445 ไม่แตะ)
+    h+='<label class="opt">พื้นที่เลื่อน ยาว <input type="number" class="o-sareaw" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> × ยื่น <input type="number" class="o-sareah" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ม. <span style="font-size:11px;color:#666;">เว้นว่าง=auto</span></label>';
     // P4: มอเตอร์ — โชว์ราคา auto เป็น helper อ่านอย่างเดียว · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์ (เคสปกติ 0 การพิมพ์)
     h+='<label class="opt" style="width:100%;flex-wrap:wrap;">มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:52px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ตัว '
       +'<span class="o-smotor-auto" style="font-size:12px;color:#2E7D32;font-weight:600;"></span> '
@@ -2555,8 +2569,7 @@ function buildItemOpts(d){
     // FIX-13: ชนิดราง 3 แบบ + ความยาว (ย้ายรางน้ำมารวมที่นี่ · default อลู S · ยาว=กว้าง auto จาก onchange o-roofend) · คิดเงิน = เรต × ยาว
     h+='<label class="opt" style="width:100%;">ชนิดราง <select class="o-rfgut" style="width:auto;height:32px;" onchange="calcQuote();"><option value="1000" selected>อลู S 1,000/ม.</option><option value="2000">สแตนเลส M 2,000/ม.</option><option value="3000">สแตนเลส L 3,000/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfgutlen" min="0" step="0.1" value="0" placeholder="=กว้าง" style="width:62px;height:30px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(ว่าง/0 = ใช้ความกว้างหลังคา)</span></label>';
     h+='</div>';
-    // P1 (แชท B): ยุบ "ของเสริมหลังคา" เป็น <details> พับ default — เคสปกติเห็น ~4 ช่องหลัก (สี/แป/โครงสร้าง/ปลายหลังคา)
-    h+='<details class="optbox" style="width:100%;"><summary style="cursor:pointer;font-size:13px;color:#2E7D32;font-weight:600;padding:6px 0;">＋ ของเสริมหลังคา (เสา/คาน/ซ่อนสโลป/ครอบ...)</summary>';
+    // FIX A④ (G3 form-ux): ลบ wrapper <details optbox> — ปล่อย label ลอยใน .i-opts → groupGHOpts จัดเข้ากล่อง "🔩 ของเสริมหลังคา" (พับ 1 ชั้น) เอง (เลิก details ซ้อน details)
     // FIX-13: ช่อง "รางน้ำ" (o-rfgut/o-rfgutlen) ย้ายไปรวมใต้ "ปลายหลังคา=รางน้ำ" แล้ว (กล่อง o-guttersys-wrap)
     h+='<label class="opt">คานเหล็กถัก <select class="o-rfbeam" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-rfbeamlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
@@ -2570,7 +2583,7 @@ function buildItemOpts(d){
     h+='<label class="opt">ซ่อนสโลป <select class="o-rfhs" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="comp">คอมโพสิต 3มม. (3,500/ตร.ม.)</option><option value="smart">สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.)</option></select> สูง <input type="number" class="o-rfhsh" min="0" step="0.05" value="0" style="width:50px;height:30px;"> ยาว/ด้าน <input type="number" class="o-rfhsl" min="0" step="0.1" value="0" style="width:55px;height:30px;"> ด้าน <input type="number" class="o-rfhsn" min="1" step="1" value="1" style="width:45px;height:30px;"></label>';
     h+='<label class="opt">ปิดซ่อนราง: กว้างราง(ซม.) <input type="number" class="o-rfgcw" min="0" step="1" value="0" style="width:55px;height:30px;"> สูง(ซม.) <input type="number" class="o-rfgch" min="0" step="1" value="10" style="width:50px;height:30px;"> ยาวรวม(ม.) <input type="number" class="o-rfgcl" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     h+='<label class="opt">ครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม.) <input type="number" class="o-rfbcw" min="0" step="0.05" value="0" style="width:55px;height:30px;"> ยาวคาน(ม.) <input type="number" class="o-rfbcl" min="0" step="0.1" value="0" style="width:55px;height:30px;"></label>';
-    h+='</details>'; // P1: ปิด <details> ของเสริมหลังคา
+    // FIX A④: (เลิก h+='</details>' — ไม่มี wrapper แล้ว)
   }
   const areaOnly=AREA_CATS.includes(p.cat);
   COMMON_OPTS.forEach(o=>{ if(o.ids&&o.ids.includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; } });
@@ -2817,9 +2830,13 @@ function readItem(d){
     const _smt=d.querySelector('.o-smartthick'); if(_smt)optSel.smartthick=_smt.value; const _wp=d.querySelector('.o-wallpaint'); if(_wp)optSel.wallpaint=_wp.value;
     const _ck=d.querySelector('.o-ckolor'); if(_ck)optSel.ckolor=_ck.value; }
   if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2;
-    const sa=d.querySelector('.o-sarea'); optSel.sarea=sa?sa.value:0;
+    // FIX C② (G3): พื้นที่เลื่อน = ยาว×ยื่น → sarea (ว่าง=auto เดิม) · calc ไม่แตะ
+    const _saw=parseFloat((d.querySelector('.o-sareaw')||{}).value)||0, _sah=parseFloat((d.querySelector('.o-sareah')||{}).value)||0;
+    optSel.sarea=(_saw>0&&_sah>0)?(_saw*_sah):'';
     const mq=d.querySelector('.o-smotorqty'); optSel.smotorqty=mq?mq.value:1;
-    const mp=d.querySelector('.o-smotorprice'); optSel.smotorprice=mp?mp.value:0; }
+    const mp=d.querySelector('.o-smotorprice'); optSel.smotorprice=mp?mp.value:0;
+    const _st=d.querySelector('.o-slidetype'); optSel.slidetype=_st?_st.value:'เลื่อนยื่น'; // FIX C① label only
+    const _sf=d.querySelector('.o-sfixed'); optSel.sfixed=_sf?_sf.value:0; } // FIX C③ บานติดตาย
   if(p.cat==='หลังคา'){ const _g=d.querySelector('.o-rfgut'),_gl2=d.querySelector('.o-rfgutlen'),_b=d.querySelector('.o-rfbeam'),_bl=d.querySelector('.o-rfbeamlen'),_pp=d.querySelector('.o-rfpolep'),_p4=d.querySelector('.o-rfpole4'); optSel.rfgut=_g?_g.value:'0'; optSel.rfgutlen=_gl2?_gl2.value:'0'; optSel.rfbeam=_b?_b.value:'0'; optSel.rfbeamlen=_bl?_bl.value:'0'; optSel.rfpolep=_pp?_pp.value:'0'; optSel.rfpole4=_p4?_p4.value:'0'; const _ch=d.querySelector('.o-rfchain'),_ev=d.querySelector('.o-rfeave'),_pv=d.querySelector('.o-rfpvc'); optSel.rfchain=_ch?_ch.value:'0'; optSel.rfeave=_ev?_ev.value:'0'; optSel.rfpvc=_pv?_pv.value:'0'; const _hs=d.querySelector('.o-rfhs'),_hsh=d.querySelector('.o-rfhsh'),_hsl=d.querySelector('.o-rfhsl'),_hsn=d.querySelector('.o-rfhsn'),_gcw=d.querySelector('.o-rfgcw'),_gch=d.querySelector('.o-rfgch'),_gcl=d.querySelector('.o-rfgcl'); optSel.rfhs=_hs?_hs.value:'0'; optSel.rfhsh=_hsh?_hsh.value:'0'; optSel.rfhsl=_hsl?_hsl.value:'0'; optSel.rfhsn=_hsn?_hsn.value:'1'; optSel.rfgcw=_gcw?_gcw.value:'0'; optSel.rfgch=_gch?_gch.value:'0'; optSel.rfgcl=_gcl?_gcl.value:'0'; const _bcw=d.querySelector('.o-rfbcw'),_bcl=d.querySelector('.o-rfbcl'); optSel.rfbcw=_bcw?_bcw.value:'0'; optSel.rfbcl=_bcl?_bcl.value:'0';
     // FIX-4(G3): ลามิเนต ฟิล์ม/ความหนา
     const _lf=d.querySelector('.o-lamfilm'); if(_lf) optSel.lamfilm=_lf.value;
@@ -3229,6 +3246,13 @@ function itypeFor(p){
 function itypeLabel(t){ return t==='window' ? 'หน้าต่าง' : 'ประตู'; }
 function refreshItype(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p) return;
+  // FIX D① (G3 roof form-ux): หลังคา → label ขนาด "ยาว/ยื่น" (label only · value/พื้นที่ = w×h เท่าเดิม)
+  { var _wi=d.querySelector('.i-w'), _hi=d.querySelector('.i-h');
+    var _wl=_wi&&_wi.previousElementSibling, _hl=_hi&&_hi.previousElementSibling;
+    var _roof=(p.cat==='หลังคา');
+    if(_wl&&_wl.tagName==='LABEL') _wl.textContent=_roof?'ยาว (ม.)':'กว้าง (ม.)';
+    if(_hl&&_hl.tagName==='LABEL') _hl.textContent=_roof?'ยื่น (ม.)':'สูง (ม.)';
+  }
   const sel=d.querySelector('.i-type'); if(!sel) return;
   const wrap=sel.closest('.full'); if(!wrap) return;
   if(ITYPE_NA.indexOf(p.cat)>=0){ wrap.style.display='none'; return; }
@@ -3681,7 +3705,9 @@ function genQuote(keepNo){
       if(it.p.optSlide && _os.slide){
         const _sN = Math.max(2, parseInt(_os.spanels)||2);
         const _sMq = Math.max(1, parseInt(_os.smotorqty)||1);
-        _rfExtra += '\nระบบหลังคาเลื่อน '+_sN+' บาน (มอเตอร์ '+_sMq+' ตัว)';
+        const _sType = _os.slidetype || 'เลื่อนยื่น'; // FIX C① ชนิดเลื่อน (label)
+        const _sFx = Math.max(0, parseInt(_os.sfixed)||0); // FIX C③ บานติดตาย
+        _rfExtra += '\nระบบหลังคาเลื่อนแบบ'+_sType+' '+_sN+' บาน'+(_sFx>0?(' + '+_sFx+' บานติดตาย'):'')+' (มอเตอร์ '+_sMq+' ตัว)';
       }
       // F3: ถ้า _gutterLine ว่าง (ปล่อย) ไม่ใส่บรรทัดเปล่า · FIX-2/3: batten+ยื่นปลาย ย้ายไปหัวแล้ว
       det = _roofHead+'\n'+_frameTxt+(_gutterLine?('\n'+_gutterLine+_drainLine):'')+_rfExtra;
