@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สรุปงานแก้ + วิธีใช้งานของใหม่ — เครื่องคิดราคา JR</title>
+<style>
+  :root{--red:#B3151D;--red2:#E61E28;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#FFFCFC;--green:#15803d;--amber:#b7791f;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:var(--ink);max-width:920px;margin:0 auto;padding:22px 18px 70px;line-height:1.62;background:var(--bg);font-size:14.5px;}
+  h1{color:var(--red);font-size:23px;border-bottom:3px solid var(--red);padding-bottom:8px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 16px;}
+  h2{color:#fff;background:var(--red);font-size:17px;margin:26px 0 8px;padding:7px 12px;border-radius:7px;}
+  h3{color:var(--red);font-size:15.5px;margin:18px 0 4px;border-left:4px solid var(--red);padding-left:9px;}
+  .how{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .how b.step{color:var(--red);}
+  .tip{background:#ecfdf5;border-left:4px solid var(--green);border-radius:0 8px 8px 0;padding:9px 13px;margin:9px 0;font-size:13.5px;}
+  .warn{background:#fff7ed;border-left:4px solid var(--amber);border-radius:0 8px 8px 0;padding:9px 13px;margin:9px 0;font-size:13.5px;}
+  table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13px;}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top;}
+  th{background:#fbe9ea;color:var(--red);}
+  code{background:#f3f4f6;padding:1px 6px;border-radius:4px;font-size:12.5px;}
+  .chip{display:inline-block;background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:2px 10px;font-size:12.5px;font-weight:600;margin:1px;}
+  .chip.on{background:var(--red);border-color:var(--red);color:#fff;}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:9px;}
+  .p-done{background:#dcfce7;color:#166534;} .p-wait{background:#fef9c3;color:#854d0e;}
+  ol li,ul li{margin:3px 0;}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin:10px 0 18px;font-size:13.5px;}
+  .toc a{color:var(--red);text-decoration:none;} .toc a:hover{text-decoration:underline;}
+  .big{font-size:16px;font-weight:700;}
+</style></head><body>
+
+<h1>สรุปงานแก้ + วิธีใช้งานของใหม่</h1>
+<p class="sub">เครื่องคิดราคา JR (<code>public/calculator/index.html</code>) · รวมงาน G1 / G2 / G3 ทั้งหมด · อัปเดต 11 มิ.ย. 2026 · ทุกข้อ push ขึ้น github jr-beta แล้ว · <b>ไว้ลองเล่นรวดเดียวตอนจบทุกรอบ</b></p>
+
+<div class="toc">
+<b>สารบัญ</b><br>
+📌 <a href="#a">ส่วน A — ของใหม่ที่เปลี่ยน "วิธีกรอก" (อ่านก่อนลองเล่น)</a><br>
+📋 <a href="#b">ส่วน B — สรุปงานแก้ทั้งหมด รายกลุ่ม (changelog)</a><br>
+⏳ <a href="#c">ส่วน C — จุดที่รอพี่นัทเคาะ / รอบถัดไป</a>
+</div>
+
+<!-- ============ ส่วน A ============ -->
+<h2 id="a">📌 ส่วน A — ของใหม่ที่เปลี่ยน "วิธีกรอก" (อ่านก่อนลองเล่น)</h2>
+<p>จุดเหล่านี้ <b>หน้าตา/วิธีกดเปลี่ยนไป</b> จากเดิม — ราคาและผลในใบเหมือนเดิม แต่กรอกเร็วขึ้น/แตะง่ายขึ้นบนมือถือ</p>
+
+<h3>A1. ฟอร์มกรอกบาน (G1) — เรียงใหม่ + ปุ่มชิป</h3>
+<div class="how">
+<b>ลำดับช่องใหม่:</b> กลุ่มงาน → <b>แบบ</b> (เลื่อนขึ้นมาเป็นช่องที่ 2 แล้ว ไม่ต้องเลื่อนหา) → ประเภท → ด้าน/ตำแหน่ง → กว้าง×สูง → …<br><br>
+<b>ช่องที่เป็น "ปุ่มชิป" แทน dropdown</b> (กดปุ่มเลย ไม่ต้องเปิด dropdown):
+<div style="margin:6px 0;">
+ประเภท: <span class="chip on">ประตู</span><span class="chip">หน้าต่าง</span> &nbsp;·&nbsp;
+ราง: <span class="chip on">รางกันน้ำ</span><span class="chip">รางเตี้ย</span> &nbsp;·&nbsp;
+ชุดล็อค: <span class="chip on">มีกุญแจ</span><span class="chip">ไม่มีกุญแจ</span>
+</div>
+<div style="margin:6px 0;">เสริมคาน · แผ่นทึบล่าง · ครอบวงกบ · สีกรอบมุ้ง = ปุ่มชิปเหมือนกัน</div>
+<span style="color:var(--muted);font-size:12.5px;">ปุ่มที่เลือกอยู่จะเป็นสีแดง · กดปุ่มอื่นเพื่อเปลี่ยน</span>
+</div>
+
+<h3>A2. มือจับ — กล่องเดียว "ติ๊กได้หลายแบรนด์พร้อมกัน" 🆕</h3>
+<div class="how">
+เดิมมือจับ 4 ช่องโผล่พร้อมกันงงๆ · ตอนนี้รวมเป็น <b>กล่องสีเหลือง</b> กล่องเดียว<br><br>
+<b class="step">วิธีใช้:</b>
+<ol>
+<li>ติ๊กแบรนด์ที่ลูกค้าใช้ (ปุ่มชิป): <span class="chip">Cmech</span><span class="chip">ดิจิตอล</span><span class="chip">สแตนอร่าม</span><span class="chip">X-series (ฟรี)</span><span class="chip">รุ่นอื่น ✎</span></li>
+<li>ติ๊กแบรนด์ไหน → ช่องเลือกของแบรนด์นั้นโผล่ขึ้นมาให้กรอก</li>
+<li><b>ติ๊กได้หลายอันพร้อมกัน</b> (เช่น ดิจิตอลล็อค + มือจับดึงสแตนอร่าม ในบานเดียว) → <b>ราคาบวกรวมทุกอันที่ติ๊ก</b></li>
+<li>กดปุ่มซ้ำ = ปิดแบรนด์นั้น → ช่องหาย + ราคาตัวนั้นออก (ตัวอื่นที่ติ๊กไว้ยังอยู่)</li>
+</ol>
+<div class="tip">✓ ยังไม่ติ๊กอะไร = ฟอร์มสั้น ไม่มีช่องมือจับรก · X-series = ฟรี ไม่บวกเงิน</div>
+</div>
+
+<h3>A3. มุ้ง — กล่องเดียว "เลือกชนิดก่อน ค่อยโผล่รายละเอียด" 🆕</h3>
+<div class="how">
+เดิมช่องมุ้ง (ผ้า/ขนาด/สีกรอบ) โผล่หมดแม้ยังไม่เลือกมุ้ง · ตอนนี้รวมเป็น <b>กล่องสีฟ้า</b><br><br>
+<b class="step">วิธีใช้:</b>
+<ol>
+<li>เลือกชนิดมุ้งก่อน — ถ้าเลือก <b>"ไม่ใส่"</b> = รายละเอียดทั้งหมดซ่อน (ฟอร์มสั้น)</li>
+<li>เลือกมุ้งแล้ว → โผล่: ขนาดมุ้ง (เว้นว่าง = auto ตามบาน) · ผ้ามุ้ง · สีกรอบ (ชิป)</li>
+<li>🆕 <b>ลักษณะการเปิดมุ้ง</b> — ถ้าเลือก "มุ้งเฟรมเล็ก" (imp21) หรือ "มุ้งเฟรมใหญ่" (imp23) จะมีชิปให้เลือก:
+<span class="chip on">เปิด</span><span class="chip">เลื่อน</span><span class="chip">กระทุ้ง</span><span class="chip">ยก</span></li>
+</ol>
+<div class="tip">✓ ลักษณะการเปิด = แค่ระบุในใบ ("มุ้งเฟรมเล็ก <b>บานเลื่อน</b>") <b>ไม่กระทบราคา</b> · มุ้งชนิดอื่น (ติดตาย/จีบ/ม้วน) ชิปนี้จะไม่โผล่</div>
+</div>
+
+<h3>A4. โซลิดลูกฟูก — คิดราคาเองอัตโนมัติ + ช่องแสง</h3>
+<div class="how">
+เดิมต้องกรอกราคาเอง (ลืม = ใบต่ำผิด) · ตอนนี้ <b>คิดให้อัตโนมัติ</b><br>
+• โซลิด <b>ทู</b> = ลูกฟูก 2 ฝั่ง · โซลิด <b>วัน</b> = 1 ฝั่ง (คิดให้เลย)<br>
+• ถ้ามี <b>ช่องแสง</b> (กระจกด้านบน) → กรอกพื้นที่ช่องแสง (ตร.ม.) ในช่อง "ช่องแสง" → คิดกระจกเฉพาะส่วนนั้น
+</div>
+
+<h3>A5. ดัดโค้ง — กระจกดัดโค้งอัตโนมัติ</h3>
+<div class="how">
+เลือกสินค้าดัดโค้ง → ระบบ <b>ตั้งกระจกเป็น "ดัดโค้ง" ให้เลย</b> (กันลืม ราคาขาด) · ถ้าเผลอเปลี่ยนเป็นกระจกธรรมดาจะมีคำเตือน 🛑
+</div>
+
+<h3>A6. OPTION ทางเลือกลูกค้า — เลือก/พิมพ์เอง + ราคาเอง หลายอัน 🆕</h3>
+<div class="how">
+ในแต่ละรายการมีปุ่ม <b>"＋ เพิ่ม OPTION ทางเลือกลูกค้า"</b><br><br>
+<b class="step">วิธีใช้:</b> กดเพิ่ม → เลือกหมวด (กระจก/มุ้ง/สี/มือจับ/หลังคา/อื่นๆ) → เลือกรายการสำเร็จรูป <b>หรือพิมพ์เอง</b> → ใส่ ±ราคา → กดเพิ่มได้หลายอัน (ปุ่ม ✕ ลบ)<br>
+ระบบเติม "OPTION :" หัวบรรทัดให้เอง + บวกราคาเข้ายอด
+</div>
+
+<h3>A7. แก้ข้อความในใบได้ทุกบรรทัด (โหมดแก้ไข)</h3>
+<div class="how">
+ที่หน้าใบเสนอราคา กดปุ่ม <b>"✎ แก้ราคา/ข้อความ"</b> → แก้ได้: ชื่อรายการ · ราคา/หน่วย · <b>รายละเอียดงานทั้งก้อน</b> (เพิ่ม/ลบบรรทัดได้)<br>
+<span style="color:var(--muted);font-size:12.5px;">เว้นว่าง = กลับไปใช้ข้อความอัตโนมัติ</span>
+</div>
+
+<h3>A8. ระแนงขายเดี่ยว — การ์ดเทียบราคา "ปัด/ต่อ" 🆕 (G2)</h3>
+<div class="how">
+กรอกขนาดระแนงเสร็จ → โผล่ <b>"วิธีตัดระแนง (มีผลต่อราคา)"</b> เป็น 2 การ์ดเทียบราคาทันที:<br>
+🔵 <b>ปัดไม่ต่อ (เนียน)</b> = ราคาสูงกว่า ไม่มีรอยต่อ &nbsp;·&nbsp; 🟢 <b>ต่อสูงจริง (ประหยัด)</b> = "ถูกกว่า X บาท" มีรอยต่อ<br>
+เซลล์เห็น 2 ราคาเทียบกัน เสนอลูกค้าปิดการขายได้เลย · default = ปัดไม่ต่อ
+</div>
+
+<h3>A9. จุด default / กฎใหม่ที่ต้องรู้</h3>
+<table>
+<tr><th>เรื่อง</th><th>ของใหม่</th></tr>
+<tr><td>สีอลูมิเนียม default</td><td><b>สีอบขาว</b> ทุกสินค้า (รวมระแนง) · สีอื่นเลือกเองได้</td></tr>
+<tr><td>"คิดราคาเหมา"</td><td>เอา checkbox ออกแล้ว → ใช้ <b>แก้ราคาตรงในโหมดแก้ไข ✎</b> แทน</td></tr>
+<tr><td>ระแนง "ไม่โครง"</td><td><b>ขายเดี่ยวไม่ได้</b> — dropdown ขายเดี่ยวเหลือแต่รุ่น "รวมโครง" (ไม่โครงใช้ในประตูรั้ว/ติดบานได้)</td></tr>
+<tr><td>ฝังรางยู ↔ ธรณีหลังเต่า</td><td>ติ๊กรางยู → หลังเต่ากดไม่ได้ (เลือกซ้อนไม่ได้)</td></tr>
+</table>
+
+<!-- ============ ส่วน B ============ -->
+<h2 id="b">📋 ส่วน B — สรุปงานแก้ทั้งหมด รายกลุ่ม (changelog)</h2>
+
+<h3>G1 — บานกระจก ประตู/หน้าต่าง <span class="pill p-done">เสร็จ</span></h3>
+<table>
+<tr><th>รอบ</th><th>สิ่งที่แก้</th></tr>
+<tr><td><b>รอบ 1</b><br>(14 จุด)</td><td>โซลิดคิดราคาอัตโนมัติ+ช่องแสง · ดัดโค้งบังคับกระจกดัด · Cmech บานเปิด · PC Door มือจับ+ล็อค · เสริมคานบานเลื่อน/เปิด · YKK Exhido min 120,000 · เมโทรไม่เขียนชุดล็อคซ้ำ · รางยู↔หลังเต่าเลือกซ้อนไม่ได้ · มุ้งโชว์ขนาด · Shower สีอุปกรณ์ลงใบ · ธรณีบานเฟี้ยม · บานหมุนมือจับ · สีกรอบมุ้ง · คาดตาราง auto</td></tr>
+<tr><td><b>รอบ 2</b><br>(R2-1..6)</td><td>ตัด "(ทู)/(วัน)" จากใบ · มุ้งขนาดย้ายไปชื่อรายการ · ดัดโค้งตัด "(ราคาช่วง)" · breakdown โชว์ฐานบาน · ลบ banner มือจับ · แก้รายละเอียดงานในใบได้</td></tr>
+<tr><td><b>รอบ 3</b><br>(E1-E3)</td><td>โหมดแก้ไขแก้ข้อความทุกจุด+เพิ่ม/ลบบรรทัด · ลบ "คิดราคาเหมา" · OPTION เลือก/พิมพ์เอง+ราคาเอง หลายอัน</td></tr>
+<tr><td><b>เพิ่ม</b></td><td>default สีอลู = สีอบขาว ทุกสินค้า</td></tr>
+<tr><td><b>Form UX</b><br>(5 ก้อน)</td><td>เรียงแบบขึ้น #2 · 8 ช่อง select→ชิป · มือจับกล่อง multi-toggle · มุ้งรวบกล่องเดียว · ชิปลักษณะการเปิดมุ้ง</td></tr>
+</table>
+
+<h3>G2 — ระแนง / รั้ว / ราวกันตก <span class="pill p-done">เสร็จ</span></h3>
+<table>
+<tr><th>รอบ</th><th>สิ่งที่แก้</th></tr>
+<tr><td><b>รอบ 1</b><br>(15 จุด)</td><td>ประตูรั้วสีพิเศษคิดเงินถูก · ลักษณะการเปิด 4 แบบ · รายละเอียดลงใบ "พร้อมระแนงติดตายด้านข้าง" · bar_slide ไม่แครช · ระแนงเกล็ด/เลื่อน/เปิด-ปิด สี+ทิศลงใบ · มอเตอร์ทิศถูก · strip jargon · เกล็ด Z ทิศ · ราวกันตกกระจก 10/12 มม. + บรรทัดสแตนเลส · OPTION ลายไม้ Golden Teak · default ซาฮาร่า (ภายหลัง revert เป็นขาว) · ขนาดซี่ลงรายละเอียด · ธรณีประตูรั้ว</td></tr>
+<tr><td><b>รอบ 2</b></td><td>ลายไม้ Golden Teak ไม่นับซ้ำ (เป็น OPTION) · ระแนงไม่โครงห้ามขายเดี่ยว · ตัดคำซ้ำ "สีอบสีพิเศษ"</td></tr>
+<tr><td><b>UX</b></td><td>การ์ดเทียบราคา "ปัด/ต่อ" ระแนง</td></tr>
+</table>
+
+<h3>G3 — หลังคา / ฝ้า-ผนัง <span class="pill p-done">เสร็จ FIX-1..12</span></h3>
+<table>
+<tr><th>FIX</th><th>สิ่งที่แก้</th></tr>
+<tr><td>1-3, 6</td><td>ของเสริมหลังคา 10 รายการลงใบ · แปเดี่ยว/แปคู่ · ยื่นปลาย/ปล่อยปลาย · โครงเหล็กชุบ "(ไร้สนิม)"</td></tr>
+<tr><td>4, 5, 7</td><td>ลามิเนตเลือกฟิล์ม/ความหนา · เมทัลชีท+ชินโคไลท์เลือกสี · วัสดุปิดรอยต่อแผ่นหลังคา</td></tr>
+<tr><td>11, 12</td><td>เมทัล/ชินโค ทำหลังคาเลื่อนได้ · หลังคาผสม 2 วัสดุ (คิด ตร.ม.แยก "ต่อปลาย")</td></tr>
+<tr><td>เก็บตก</td><td>ชินโค imp20 Grang→Grand + ราคา = Prime · เติมคำ "สี" หน้าสีชินโค</td></tr>
+</table>
+<div class="tip">✓ ทุกการแก้ <b>ผ่านชุดทดสอบ quote-fidelity 14/14</b> ทุกครั้ง · ราคา baseline ไม่เพี้ยน · ทุกกลุ่มยึดหลัก "ไม่แตะเรท/สูตรราคา" (ยกเว้นจุดที่พี่นัทสั่งโดยตรง)</div>
+
+<!-- ============ ส่วน C ============ -->
+<h2 id="c">⏳ ส่วน C — จุดที่รอพี่นัทเคาะ / รอบถัดไป</h2>
+<table>
+<tr><th>เรื่อง</th><th>สถานะ</th></tr>
+<tr><td>G2 ประตูรั้ว ราง บน/ล่าง ราคาต่างกัน</td><td><span class="pill p-wait">รอตัวเลข</span> ตอนนี้ทำแค่ระบุในใบ ยังไม่แยกราคาราง — ถ้ามีเรตส่วนต่างบอกได้</td></tr>
+<tr><td>G2 ระแนง "ต่อ" มีค่ารอยต่อไหม</td><td><span class="pill p-done">เคาะแล้ว</span> ไม่มีค่าเพิ่ม (คิดตามพื้นที่จริง)</td></tr>
+<tr><td>G3 รหัสรุ่น/ลิสต์สีเมทัล-ชินโคเต็ม</td><td><span class="pill p-wait">รอยืนยัน</span> ใส่ starter list เท่าที่เจอในใบจริง เติมเพิ่มได้</td></tr>
+<tr><td>G3 ราคาต่อความหนา ISOWALL/สมาร์ทบอร์ด</td><td><span class="pill p-done">ปิด</span> ใช้ค่าเดียว (มติพี่นัท ราคาถูกแล้ว)</td></tr>
+<tr><td>กลุ่ม G4 (ตู้) · G5 (มุ้ง) · G6 (กั้นห้องกระจก) · G7 (ม่านซิป)</td><td><span class="pill p-wait">รอ handoff</span> ยังไม่ได้ลงรายละเอียดรอบนี้</td></tr>
+</table>
+
+<div class="warn">
+<b class="big">📌 แผนลองเล่น (ตามที่พี่นัทบอก — รอแก้อีก 4-5 รอบ แล้วลองรวดเดียว):</b><br>
+เอกสารนี้จะ <b>อัปเดตเพิ่มทุกรอบที่แก้</b> · พอครบทุกกลุ่มแล้วค่อยเปิดเครื่องคิดราคาลองกรอกจริงทีเดียว
+โดยใช้ <b>ส่วน A</b> เป็นไกด์ว่าของใหม่กดยังไง · ถ้าเจอจุดไหนกรอกแล้วงง/ราคาเพี้ยน จดไว้แล้วส่งมาแก้รอบถัดไป
+</div>
+
+<hr style="margin-top:30px;border:none;border-top:1px solid var(--line);">
+<p class="sub">JR · เครื่องคิดราคา · งานแก้ G1/G2/G3 ทั้งหมด push ขึ้น github jr-beta (branch main) แล้ว · อัปเดตเอกสาร 11 มิ.ย. 2026</p>
+
+</body></html>
