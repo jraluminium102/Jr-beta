@@ -111,6 +111,7 @@ pre code { color: inherit; background: none; }
 /* highlight row */
 tr.hl-orange td { background: #FFF7ED; }
 tr.hl-teal   td { background: #E3F2FD; }
+tr.hl-green  td { background: #F0FFF4; }
 </style>
 </head>
 <body>
@@ -122,7 +123,7 @@ tr.hl-teal   td { background: #E3F2FD; }
   <p>สเปก handoff สำหรับ developer — ปรับ UX ฟอร์มกรอกรายการ G1 (บานกระจก ประตู/หน้าต่าง)</p>
   <div class="meta">
     <span>วันที่: 2026-06-11</span>
-    <span>สถานะ: ดราฟพร้อม handoff (อัปเดต: +consolidate มือจับ + มุ้ง)</span>
+    <span>สถานะ: อัปเดต — มือจับ multi-toggle (มติพี่นัท 2026-06-11)</span>
     <span>ไฟล์เป้าหมาย: public/calculator/index.html</span>
     <span>ดราฟ demo: draft-G1-formux.html</span>
   </div>
@@ -140,12 +141,12 @@ tr.hl-teal   td { background: #E3F2FD; }
     <code>d.querySelector('.o-bottomrail').value</code> ฯลฯ — element เหล่านี้ต้องยังคงอยู่ใน DOM (hidden input หรือ select ที่ซ่อน)
     พร้อมค่าที่ถูกต้องเสมอ ก่อนที่ calcQuote() จะรัน
   </div>
-  <h3>สรุปงานทั้งหมด (รอบนี้เพิ่ม consolidate 2 ก้อน)</h3>
+  <h3>สรุปงานทั้งหมด</h3>
   <ul class="checklist">
     <li><span class="icon">1️⃣</span> ย้าย .i-prod (แบบ) ขึ้นมาเป็นลำดับ 2 (ทันทีหลัง .i-group)</li>
     <li><span class="icon">2️⃣</span> เปลี่ยน .i-type (ประเภท) จาก select → ชิป 2 ปุ่มใหญ่ (52px)</li>
     <li><span class="icon">3️⃣</span> เปลี่ยน select ≤4 ตัวเลือก → ชิป (8 ช่อง รายละเอียดในตาราง)</li>
-    <li><span class="icon">4️⃣</span> <b>ก้อนใหม่:</b> รวบมือจับ 4 ช่อง → 1 กล่อง (ชิปแบรนด์ → dropdown/input รุ่น)</li>
+    <li><span class="icon">4️⃣</span> <b>ก้อนใหม่:</b> รวบมือจับ → 1 กล่อง multi-toggle (ติ๊กได้หลายแบรนด์พร้อมกัน) พร้อม X-series (ฟรี) + Cmech หลบมุ้ง</li>
     <li><span class="icon">5️⃣</span> <b>ก้อนใหม่:</b> รวบมุ้ง 4 ช่องกระจาย → 1 กล่อง (โผล่/ซ่อนตาม o-mosq)</li>
     <li><span class="icon">6️⃣</span> ปุ่ม/ชิปทุกตัวสูง ≥40px (tap target มือถือ)</li>
   </ul>
@@ -222,21 +223,27 @@ tr.hl-teal   td { background: #E3F2FD; }
       <!-- ก้อน 1: มือจับ -->
       <tr class="hl-orange">
         <td colspan="5" style="font-weight:700;color:#C2410C;font-size:13px;">
-          ก้อน 1 (Consolidate): มือจับ — รวบ 4 ช่อง → 1 กล่อง <span class="badge orange">ใหม่</span>
+          ก้อน 1 (Consolidate): มือจับ — 1 กล่อง multi-toggle <span class="badge orange">อัปเดต: multi</span>
         </td>
       </tr>
       <tr class="hl-orange">
         <td>
           <code>.o-cmech</code> (Cmech ฝัง/เมโทร)<br>
           <code>.o-cmechcolor</code> (สี 7 ตัว)<br>
+          <code>.o-cmechawn</code> (หลบมุ้ง · บานกระทุ้ง)<br>
           <code>.o-digi</code> (ดิจิตอล 11 รุ่น)<br>
           <code>.o-stainless</code> (สแตน 6 ขนาด)<br>
+          <code>.o-xhandle</code> (X-series · ฟรี)<br>
           <code>.o-handlename</code> + <code>.o-handleprice</code>
         </td>
-        <td>3 / 7 / 11 / 6 / text+num</td>
-        <td class="consolidate">กล่องชิปแบรนด์ → sub control</td>
-        <td>4 ช่องโผล่พร้อมกัน → เซลล์ไม่รู้ว่าเลือกได้กี่แบรนด์พร้อมกัน · รวบให้เลือกแบรนด์ก่อน ค่อยโชว์รุ่น</td>
-        <td>buildItemOpts L2281–2295</td>
+        <td>3 / 7 / chk / 11 / 6 / flag / text+num</td>
+        <td class="consolidate">กล่อง multi-toggle แบรนด์ → sub control อิสระ</td>
+        <td>
+          มติพี่นัท 2026-06-11: เลือกได้หลายแบรนด์พร้อมกัน (เช่น ดิจิตอล + สแตนอร่าม ในบานเดียว)<br>
+          แต่ละแบรนด์ = toggle อิสระ · ติ๊ก = โผล่ sub · ปิด = เคลียร์ค่า + ซ่อน sub<br>
+          ยังไม่ติ๊กอะไร = ซ่อนทุก sub (ฟอร์มสั้น)
+        </td>
+        <td>buildItemOpts L2281–2299</td>
       </tr>
       <!-- ก้อน 2: มุ้ง -->
       <tr class="hl-teal">
@@ -296,7 +303,7 @@ tr.hl-teal   td { background: #E3F2FD; }
     <tfoot>
       <tr style="background:var(--greenbg);font-weight:700;">
         <td colspan="2">Before: ~31 ช่อง/control มองเห็น</td>
-        <td colspan="3" style="color:var(--green);">After: ~22 ช่อง (ลด ~29%)</td>
+        <td colspan="3" style="color:var(--green);">After: ~14 default (ยังไม่ติ๊กมือจับ/มุ้ง) / ~22 full (ลด ~29%)</td>
       </tr>
     </tfoot>
   </table>
@@ -310,26 +317,33 @@ tr.hl-teal   td { background: #E3F2FD; }
 
 <!-- 3A. Consolidate มือจับ -->
 <div class="section">
-  <h2>3A. Consolidate ก้อน 1 — มือจับ (4 ช่อง → 1 กล่อง)</h2>
+  <h2>3A. Consolidate ก้อน 1 — มือจับ (multi-toggle)</h2>
 
-  <div class="callout orange">
-    <b>สถานะปัจจุบัน (index.html L2281–2295):</b>
-    มือจับ 4 ช่องโผล่พร้อมกันเสมอถ้า <code>p.digihandle === true</code>
-    — เซลล์ไม่รู้ว่าเลือกหลายแบรนด์พร้อมกันได้หรือไม่<br>
-    <b>มติพี่นัท:</b> เลือกได้ 1 แบรนด์ต่อรายการ (เคลียร์อีก 3 เมื่อเปลี่ยนแบรนด์)
+  <div class="callout ok">
+    <b>มติพี่นัท 2026-06-11 (อัปเดต):</b>
+    ใส่มือจับได้หลายอย่างพร้อมกันในบานเดียว (เช่น ดิจิตอลล็อค + มือจับดึงสแตนอร่าม)<br>
+    pattern เปลี่ยนจาก "เลือก 1 แบรนด์ (clear อื่น)" → <b>multi-toggle อิสระ</b><br>
+    ติ๊กแบรนด์ไหน = โผล่ sub นั้น · ปิดแบรนด์ = เคลียร์ค่า + ซ่อน sub · บวกราคาสะสมทุกแบรนด์ที่ติ๊ก
   </div>
 
-  <h3 class="orange">การทำงานที่ต้องการ</h3>
+  <div class="callout info">
+    <b>สถานะปัจจุบัน (index.html L2281–2299):</b>
+    มือจับ 4 ช่องโผล่พร้อมกันเสมอถ้า <code>p.digihandle === true</code>
+    — เซลล์ไม่รู้ว่าเลือกหลายแบรนด์พร้อมกันได้หรือไม่ · แต่ละช่องว่างก็เสี่ยงคิดราคาผิด
+  </div>
+
+  <h3 class="orange">การทำงานที่ต้องการ (multi-toggle)</h3>
   <ol style="font-size:13.5px;line-height:1.9;">
-    <li>แสดงชิปแบรนด์ 5 ตัว: ไม่ใส่ · Cmech · ดิจิตอล · สแตนอร่าม · รุ่นอื่น ✎</li>
-    <li>กดแบรนด์ → โผล่ sub control ของแบรนด์นั้น (dropdown รุ่น หรือ input)</li>
-    <li>พร้อมกัน: เคลียร์ค่า control จริงของอีก 3 แบรนด์ (กันคิดซ้ำ)</li>
-    <li>กด "ไม่ใส่" → เคลียร์ทั้งหมด ซ่อน sub ทุกตัว</li>
+    <li>แสดง toggle แบรนด์ 5 ตัว: Cmech · ดิจิตอล · สแตนอร่าม · X-series (ฟรี) · รุ่นอื่น ✎</li>
+    <li>แต่ละตัวเป็น toggle อิสระ — กดครั้งแรก = ติ๊ก (โผล่ sub) · กดซ้ำ = ปิด (เคลียร์ค่า + ซ่อน sub)</li>
+    <li>ห้ามเคลียร์แบรนด์อื่นเมื่อติ๊กตัวใหม่ — แต่ละ sub/control ทำงานอิสระ</li>
+    <li>ยังไม่ติ๊กอะไร = ซ่อน sub ทุกตัว (ฟอร์มสั้น เหมือนเดิม)</li>
+    <li>readItem / calcQuote อ่านค่าจาก .o-cmech / .o-digi / .o-stainless / .o-handlename / .o-handleprice ตามปกติ — บวกราคาสะสมทุกที่ที่มีค่า</li>
   </ol>
 
-  <h3 class="orange">HTML Pattern — กล่องมือจับรวบ</h3>
-  <pre><code><span class="cm">// แทนที่ 4 label แยก (L2281–2295) ด้วยกล่องนี้กล่องเดียว</span>
-<span class="cm">// control จริงทั้ง 4 ยังคงอยู่ใน DOM (ซ่อน) — readItem อ่านจากตรงนี้</span>
+  <h3 class="orange">HTML Pattern — กล่องมือจับ multi-toggle</h3>
+  <pre><code><span class="cm">// แทนที่ 4 label แยก (L2281–2299) ด้วยกล่องนี้กล่องเดียว</span>
+<span class="cm">// control จริงทั้งหมดยังคงอยู่ใน DOM — readItem อ่านตามปกติ</span>
 h += <span class="cs">`
 &lt;label class="opt" style="width:100%;"&gt;
   &lt;b&gt;มือจับ&lt;/b&gt;
@@ -338,24 +352,24 @@ h += <span class="cs">`
       border-radius:10px;padding:10px 12px;margin-top:4px;"&gt;
 
     &lt;div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:8px;"&gt;
-      เลือกแบรนด์ (1 แบรนด์ต่อรายการ)
+      ติ๊กแบรนด์ที่ใช้ (ติ๊กได้หลายอัน · ยังไม่ติ๊ก = ซ่อนทุก sub)
     &lt;/div&gt;
 
-    &lt;!-- ชิปแบรนด์ --&gt;
+    &lt;!-- toggle แบรนด์ — แต่ละตัวอิสระ --&gt;
     &lt;div class="chip-group chip-sm"&gt;
-      &lt;button type="button" class="chip on" data-hbrand="none"
-        onclick="handleBrandPick(this)"&gt;ไม่ใส่&lt;/button&gt;
       &lt;button type="button" class="chip" data-hbrand="cmech"
-        onclick="handleBrandPick(this)"&gt;Cmech&lt;/button&gt;
+        onclick="toggleHandleBrand(this)"&gt;Cmech&lt;/button&gt;
       &lt;button type="button" class="chip" data-hbrand="digital"
-        onclick="handleBrandPick(this)"&gt;ดิจิตอล&lt;/button&gt;
+        onclick="toggleHandleBrand(this)"&gt;ดิจิตอล&lt;/button&gt;
       &lt;button type="button" class="chip" data-hbrand="stainless"
-        onclick="handleBrandPick(this)"&gt;สแตนอร่าม&lt;/button&gt;
+        onclick="toggleHandleBrand(this)"&gt;สแตนอร่าม&lt;/button&gt;
+      &lt;button type="button" class="chip" data-hbrand="xseries"
+        onclick="toggleHandleBrand(this)"&gt;X-series (ฟรี)&lt;/button&gt;
       &lt;button type="button" class="chip" data-hbrand="other"
-        onclick="handleBrandPick(this)"&gt;รุ่นอื่น ✎&lt;/button&gt;
+        onclick="toggleHandleBrand(this)"&gt;รุ่นอื่น ✎&lt;/button&gt;
     &lt;/div&gt;
 
-    &lt;!-- sub: Cmech — ฝัง/เมโทร (ชิป) + สี (dropdown) --&gt;
+    &lt;!-- sub: Cmech — ฝัง/เมโทร (ชิป) + สี (dropdown) + หลบมุ้ง (checkbox) --&gt;
     &lt;div class="hsub hsub-cmech" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
       &lt;div class="chip-group chip-sm"&gt;
         &lt;button type="button" class="chip on" data-val="embed"
@@ -373,11 +387,17 @@ h += <span class="cs">`
       &lt;select class="o-cmechcolor" style="height:40px;margin-top:8px;" onchange="calcQuote()"&gt;
         &lt;option value="black"&gt;สีดำ&lt;/option&gt;...
       &lt;/select&gt;
+      &lt;!-- o-cmechawn — หลบมุ้ง เฉพาะบานกระทุ้ง --&gt;
+      &lt;label style="display:flex;align-items:center;gap:8px;margin-top:8px;
+          background:#FFF3E0;border-radius:8px;padding:6px 8px;font-size:13px;"&gt;
+        &lt;input type="checkbox" class="o-cmechawn"
+          style="width:20px;height:20px;" onchange="calcQuote()"&gt;
+        หลบมุ้ง &lt;span style="color:#6B7280;font-size:12px;"&gt;(o-cmechawn · เฉพาะบานกระทุ้ง)&lt;/span&gt;
+      &lt;/label&gt;
     &lt;/div&gt;
 
     &lt;!-- sub: ดิจิตอล — dropdown รุ่น (11 ตัว) --&gt;
     &lt;div class="hsub hsub-digital" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
-      &lt;!-- o-digi ไม่ซ่อน — โชว์ตรงๆ ให้เลือกรุ่น --&gt;
       &lt;select class="o-digi" style="height:44px;width:100%;" onchange="calcQuote()"&gt;
         &lt;option value=""&gt;— เลือกรุ่น —&lt;/option&gt;
         ${ DIGI.map(function(d,i){ return '&lt;option value="'+i+'"&gt;'+d.n+' +'+fmt(d.p)+'&lt;/option&gt;'; }).join('') }
@@ -386,11 +406,20 @@ h += <span class="cs">`
 
     &lt;!-- sub: สแตนอร่าม — dropdown ขนาด (6 ตัว) --&gt;
     &lt;div class="hsub hsub-stainless" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
-      &lt;!-- o-stainless ไม่ซ่อน --&gt;
       &lt;select class="o-stainless" style="height:44px;width:100%;" onchange="calcQuote()"&gt;
         &lt;option value=""&gt;— เลือกขนาด —&lt;/option&gt;
         ${ HANDLE_STAINLESS.map(function(s,i){ return '&lt;option value="'+i+'"&gt;'+s.n+' +'+fmt(s.p)+'&lt;/option&gt;'; }).join('') }
       &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- sub: X-series (ฟรี · o-xhandle) — เฉพาะบาน X-series/SlimLux --&gt;
+    &lt;div class="hsub hsub-xseries" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"&gt;
+      &lt;div style="background:#F0FFF4;border-radius:8px;padding:8px 10px;font-size:13px;color:#065F46;"&gt;
+        มือจับ X-series (ฟรี) — ไม่บวกราคาเพิ่ม&lt;br&gt;
+        &lt;span style="color:#6B7280;font-size:12px;"&gt;o-xhandle · เฉพาะบาน X-series / SlimLux&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;!-- o-xhandle ซ่อน — readItem อ่าน --&gt;
+      &lt;input type="hidden" class="o-xhandle" value="1"&gt;
     &lt;/div&gt;
 
     &lt;!-- sub: รุ่นอื่น — text + number (o-handlename + o-handleprice) --&gt;
@@ -407,47 +436,58 @@ h += <span class="cs">`
 &lt;/label&gt;`</span>;
 </code></pre>
 
-  <h3 class="orange">JS function: handleBrandPick + cmechTypePick</h3>
-  <pre><code><span class="cm">// เพิ่มใน script global — ทำงานกับกล่องมือจับในแต่ละ .ch</span>
-<span class="ck">function</span> <span class="ca">handleBrandPick</span>(btn) {
-  <span class="ck">const</span> wrap = btn.closest(<span class="cs">'.handle-brand-wrap'</span>);
-  <span class="ck">if</span> (!wrap) <span class="ck">return</span>;
-
-  <span class="cm">// toggle chip</span>
-  wrap.querySelectorAll(<span class="cs">'[data-hbrand]'</span>).forEach(<span class="ck">function</span>(c) { c.classList.remove(<span class="cs">'on'</span>); });
-  btn.classList.add(<span class="cs">'on'</span>);
+  <h3 class="orange">JS function: toggleHandleBrand + cmechTypePick</h3>
+  <pre><code><span class="cm">// เพิ่มใน script global (แทน handleBrandPick เดิม)</span>
+<span class="cm">// multi-toggle อิสระ — ไม่ clear แบรนด์อื่น</span>
+<span class="ck">function</span> <span class="ca">toggleHandleBrand</span>(btn) {
   <span class="ck">const</span> brand = btn.dataset.hbrand;
+  <span class="ck">const</span> isOn = btn.classList.contains(<span class="cs">'on'</span>);
 
-  <span class="cm">// ซ่อนทุก sub</span>
-  wrap.querySelectorAll(<span class="cs">'.hsub'</span>).forEach(<span class="ck">function</span>(s) { s.style.display = <span class="cs">'none'</span>; });
-
-  <span class="cm">// เคลียร์ค่า control จริงทั้ง 4 แบรนด์ (กันคิดราคาซ้ำ)</span>
-  <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
-  <span class="ck">if</span> (ch) {
-    [<span class="cs">'.o-cmech'</span>, <span class="cs">'.o-digi'</span>, <span class="cs">'.o-stainless'</span>].forEach(<span class="ck">function</span>(cls) {
-      <span class="ck">const</span> el = ch.querySelector(cls);
-      <span class="ck">if</span> (el) { el.value = <span class="cs">''</span>; }
-    });
-    <span class="ck">const</span> hn = ch.querySelector(<span class="cs">'.o-handlename'</span>);
-    <span class="ck">const</span> hp = ch.querySelector(<span class="cs">'.o-handleprice'</span>);
-    <span class="ck">if</span> (hn) hn.value = <span class="cs">''</span>;
-    <span class="ck">if</span> (hp) hp.value = <span class="cs">'0'</span>;
-  }
-
-  <span class="cm">// โผล่ sub ของแบรนด์ที่เลือก</span>
-  <span class="ck">if</span> (brand !== <span class="cs">'none'</span>) {
-    <span class="ck">const</span> sub = wrap.querySelector(<span class="cs">'.hsub-'</span> + brand);
+  <span class="ck">if</span> (isOn) {
+    <span class="cm">// ปิด: เคลียร์ค่า control ของแบรนด์นี้เท่านั้น + ซ่อน sub</span>
+    btn.classList.remove(<span class="cs">'on'</span>);
+    <span class="ca">clearHandleBrandControls</span>(btn, brand);
+    <span class="ck">const</span> sub = btn.closest(<span class="cs">'.handle-brand-wrap'</span>).querySelector(<span class="cs">'.hsub-'</span> + brand);
+    <span class="ck">if</span> (sub) sub.style.display = <span class="cs">'none'</span>;
+  } <span class="ck">else</span> {
+    <span class="cm">// เปิด: ติ๊กแบรนด์ + โผล่ sub + set default</span>
+    btn.classList.add(<span class="cs">'on'</span>);
+    <span class="ck">const</span> sub = btn.closest(<span class="cs">'.handle-brand-wrap'</span>).querySelector(<span class="cs">'.hsub-'</span> + brand);
     <span class="ck">if</span> (sub) sub.style.display = <span class="cs">''</span>;
     <span class="cm">// default Cmech = embed</span>
-    <span class="ck">if</span> (brand === <span class="cs">'cmech'</span> && ch) {
-      <span class="ck">const</span> cmSel = ch.querySelector(<span class="cs">'.o-cmech'</span>);
-      <span class="ck">if</span> (cmSel) cmSel.value = <span class="cs">'embed'</span>;
+    <span class="ck">if</span> (brand === <span class="cs">'cmech'</span>) {
+      <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
+      <span class="ck">if</span> (ch) { <span class="ck">const</span> s = ch.querySelector(<span class="cs">'.o-cmech'</span>); <span class="ck">if</span> (s) s.value = <span class="cs">'embed'</span>; }
+    }
+    <span class="cm">// X-series: set flag</span>
+    <span class="ck">if</span> (brand === <span class="cs">'xseries'</span>) {
+      <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
+      <span class="ck">if</span> (ch) { <span class="ck">const</span> xh = ch.querySelector(<span class="cs">'.o-xhandle'</span>); <span class="ck">if</span> (xh) xh.value = <span class="cs">'1'</span>; }
     }
   }
   calcQuote();
 }
 
-<span class="cm">// sync ชิป Cmech type → select ซ่อน</span>
+<span class="cm">// เคลียร์ค่า control เฉพาะแบรนด์ที่กำหนด (ไม่แตะแบรนด์อื่น)</span>
+<span class="ck">function</span> <span class="ca">clearHandleBrandControls</span>(btn, brand) {
+  <span class="ck">const</span> ch = btn.closest(<span class="cs">'.ch'</span>);
+  <span class="ck">if</span> (!ch) <span class="ck">return</span>;
+  <span class="ck">if</span> (brand === <span class="cs">'cmech'</span>) {
+    <span class="ck">const</span> s = ch.querySelector(<span class="cs">'.o-cmech'</span>); <span class="ck">if</span> (s) s.value = <span class="cs">''</span>;
+    <span class="ck">const</span> a = ch.querySelector(<span class="cs">'.o-cmechawn'</span>); <span class="ck">if</span> (a) a.checked = <span class="ck">false</span>;
+  } <span class="ck">else if</span> (brand === <span class="cs">'digital'</span>) {
+    <span class="ck">const</span> s = ch.querySelector(<span class="cs">'.o-digi'</span>); <span class="ck">if</span> (s) s.value = <span class="cs">''</span>;
+  } <span class="ck">else if</span> (brand === <span class="cs">'stainless'</span>) {
+    <span class="ck">const</span> s = ch.querySelector(<span class="cs">'.o-stainless'</span>); <span class="ck">if</span> (s) s.value = <span class="cs">''</span>;
+  } <span class="ck">else if</span> (brand === <span class="cs">'xseries'</span>) {
+    <span class="ck">const</span> xh = ch.querySelector(<span class="cs">'.o-xhandle'</span>); <span class="ck">if</span> (xh) xh.value = <span class="cs">''</span>;
+  } <span class="ck">else if</span> (brand === <span class="cs">'other'</span>) {
+    <span class="ck">const</span> hn = ch.querySelector(<span class="cs">'.o-handlename'</span>); <span class="ck">if</span> (hn) hn.value = <span class="cs">''</span>;
+    <span class="ck">const</span> hp = ch.querySelector(<span class="cs">'.o-handleprice'</span>); <span class="ck">if</span> (hp) hp.value = <span class="cs">'0'</span>;
+  }
+}
+
+<span class="cm">// sync ชิป Cmech type → select ซ่อน (ไม่เปลี่ยน)</span>
 <span class="ck">function</span> <span class="ca">cmechTypePick</span>(btn) {
   <span class="ck">const</span> sub = btn.closest(<span class="cs">'.hsub-cmech'</span>);
   <span class="ck">if</span> (!sub) <span class="ck">return</span>;
@@ -458,18 +498,22 @@ h += <span class="cs">`
 }
 </code></pre>
 
-  <div class="callout warn">
-    <b>ข้อสำคัญ — มือจับ Cmech หลบมุ้ง (.o-cmechawn):</b>
-    เป็น control แยกสำหรับบานกระทุ้งเท่านั้น (L2295) — ไม่ต้องรวมใน brand picker
-    ให้คงไว้เป็น label แยกใต้กล่องมือจับ (หรือซ่อนในกล่องเมื่อ brand=cmech)
-    ต้องเคลียร์ค่า .o-cmechawn ด้วยเมื่อเปลี่ยนแบรนด์ออกจาก cmech
+  <div class="callout ok">
+    <b>มือจับ X-series (.o-xhandle) — default ใหม่:</b>
+    รวมใน toggle แบรนด์เป็นตัวที่ 4 "X-series (ฟรี)" · sub แสดงข้อความอธิบาย + hidden input value="1"<br>
+    ไม่บวกเงิน · เฉพาะบาน X-series / SlimLux · (L2299 ในโค้ดเดิม)
+  </div>
+
+  <div class="callout ok">
+    <b>มือจับ Cmech หลบมุ้ง (.o-cmechawn) — default ใหม่:</b>
+    รวมใน sub ของ Cmech เป็น checkbox ย่อยท้ายสุด (โผล่เมื่อติ๊ก Cmech)<br>
+    เฉพาะบานกระทุ้ง · เมื่อปิด Cmech toggle ต้อง clearHandleBrandControls เคลียร์ .o-cmechawn ด้วย
   </div>
 
   <div class="callout warn">
-    <b>ข้อสำคัญ — มือจับ X-series (.o-xhandle):</b>
-    มีเฉพาะบาน X-series/SlimLux (L2299) — ฟรี ไม่บวกเงิน
-    ควรรวมไว้ในกล่อง brand picker เพิ่มชิปแบรนด์ "X-series (ฟรี)" หรือแสดงแยกต่างหากชัดเจน
-    (เช็คซ้ำกับพี่นัทว่า X-series + Cmech เลือกพร้อมกันได้ไหม)
+    <b>ข้อสำคัญ — ราคาบวกสะสม:</b>
+    readItem/calcQuote อ่าน .o-digi, .o-stainless, .o-cmech, .o-handleprice แยกกัน
+    และบวกรวมตามที่ logic เดิมทำอยู่แล้ว — ไม่ต้องแก้ logic · แค่ให้แต่ละ control มีค่าถูกต้องเมื่อ toggle ปิด (ค่าว่าง/0)
   </div>
 </div>
 
@@ -491,6 +535,7 @@ h += <span class="cs">`
     <li>ถ้า .o-mosq มีค่า → โผล่ทั้งกลุ่มในกล่องสีฟ้าใต้ dropdown</li>
     <li>สีกรอบมุ้ง (.o-mosqcolor) เปลี่ยนจาก dropdown → ชิป 4 ตัว (ตามสีบาน / ซาฮาร่า / KL พิเศษ / KL ลายไม้)</li>
     <li>ผ้ามุ้ง (.o-mosqfabric) คง dropdown (5 ตัว)</li>
+    <li>ขนาดมุ้ง (o-mosqw/h) เว้นว่าง = auto จากบานหลัก — label "auto จากบาน" · ถูกต้องแล้ว คงไว้</li>
   </ol>
 
   <h3 class="teal">HTML Pattern — กล่องมุ้งรวบ</h3>
@@ -701,10 +746,14 @@ h += <span class="cs">`
         <td><span class="badge red">สูง</span> มี 2 branch แก้ให้ครบ</td>
       </tr>
       <tr class="hl-orange">
-        <td><b>buildItemOpts</b> — มือจับรวบ <span class="badge orange">ใหม่</span></td>
-        <td>2281–2295</td>
-        <td>แทน 4 label แยก ด้วยกล่อง handle-brand-wrap + ชิปแบรนด์ + sub controls · เพิ่ม handleBrandPick() + cmechTypePick()</td>
-        <td><span class="badge red">สูง</span> เคลียร์ 3 แบรนด์เสมอ · อย่าลืม .o-cmechawn แยก</td>
+        <td><b>buildItemOpts</b> — มือจับรวบ <span class="badge orange">อัปเดต: multi</span></td>
+        <td>2281–2299</td>
+        <td>
+          แทน 4 label แยก ด้วยกล่อง handle-brand-wrap · toggle แบรนด์อิสระ 5 ตัว (Cmech/digital/stainless/xseries/other)<br>
+          เพิ่ม toggleHandleBrand() + clearHandleBrandControls() + cmechTypePick()<br>
+          ใน sub-cmech ใส่ .o-cmechawn checkbox ย่อย · ใน sub-xseries ใส่ hidden input .o-xhandle
+        </td>
+        <td><span class="badge red">สูง</span> clearHandleBrandControls เคลียร์เฉพาะแบรนด์ตัวเองเท่านั้น · อย่าลืม .o-cmechawn ใน sub-cmech</td>
       </tr>
       <tr class="hl-teal">
         <td><b>buildItemOpts</b> — มุ้งรวบ <span class="badge teal">ใหม่</span></td>
@@ -739,7 +788,7 @@ h += <span class="cs">`
       <tr>
         <td><b>script global</b></td>
         <td>ใหม่</td>
-        <td>เพิ่ม: chSetChip() · handleBrandPick() · cmechTypePick() · mosqGroupToggle()</td>
+        <td>เพิ่ม: chSetChip() · toggleHandleBrand() · clearHandleBrandControls() · cmechTypePick() · mosqGroupToggle()</td>
         <td><span class="badge blue">ต่ำ</span> function ใหม่ ไม่กระทบของเดิม</td>
       </tr>
     </tbody>
@@ -756,20 +805,21 @@ h += <span class="cs">`
         <li>"แบบ" อยู่อันดับ 4 — เลื่อนหา</li>
         <li>"ประเภท" = dropdown popup 2 ตัว</li>
         <li>ราง/ล็อค/Cmech = dropdown แม้ตัวเลือกน้อย</li>
-        <li>มือจับ 4 ช่องโผล่พร้อมกัน (เลือกหลายแบรนด์พร้อมกันได้โดยไม่รู้)</li>
+        <li>มือจับ 4 ช่องโผล่พร้อมกัน — ไม่ชัดว่าเลือกได้กี่แบรนด์ · ช่องว่างคิดราคาผิด</li>
         <li>มุ้ง 4 ช่องกระจาย โผล่แม้ยังไม่เลือกมุ้ง</li>
         <li>tap target เล็ก (select height:32px)</li>
       </ul>
     </div>
     <div>
-      <h3 style="color:var(--green);">After (~22 ช่อง)</h3>
+      <h3 style="color:var(--green);">After</h3>
       <ul style="font-size:13.5px;line-height:1.8;padding-left:18px;">
         <li>"แบบ" ขึ้นอันดับ 2 ทันที</li>
         <li>"ประเภท" = 2 ปุ่มใหญ่ tap ได้เลย (52px)</li>
         <li>8 ช่อง (≤4 ตัวเลือก) เปลี่ยนเป็นชิป</li>
-        <li>มือจับ 1 กล่อง: เลือกแบรนด์ก่อน → โผล่รุ่น (เคลียร์อีก 3 auto)</li>
+        <li>มือจับ 1 กล่อง multi-toggle: ติ๊กแบรนด์ที่ใช้ ได้หลายอัน · บวกราคาสะสมถูก</li>
         <li>มุ้ง 1 กล่อง: ซ่อนผ้า/ขนาด/สีกรอบถ้า "ไม่ใส่"</li>
         <li>ทุกชิปสูง ≥40px (มาตรฐาน mobile)</li>
+        <li>~14 ช่อง default (ยังไม่ติ๊กมือจับ/มุ้ง) / ~22 ช่อง full (ลด ~29%)</li>
       </ul>
     </div>
   </div>
@@ -789,7 +839,11 @@ h += <span class="cs">`
     </li>
     <li>
       <span class="icon">⚠️</span>
-      <span><b>handleBrandPick เคลียร์ครบ:</b> เมื่อเปลี่ยนแบรนด์ .o-digi / .o-stainless / .o-cmech / .o-handlename / .o-handleprice ต้องเป็น "" / "0" ทั้งหมด — ป้องกันคิดราคาซ้ำ</span>
+      <span><b>toggleHandleBrand ไม่ clear ข้ามแบรนด์:</b> เมื่อปิด Cmech ต้องเคลียร์เฉพาะ .o-cmech / .o-cmechawn — ห้ามแตะ .o-digi หรือ .o-stainless · ป้องกันราคาหาย</span>
+    </li>
+    <li>
+      <span class="icon">⚠️</span>
+      <span><b>ราคาบวกสะสมถูกต้อง:</b> ติ๊ก Cmech + ดิจิตอล + สแตนอร่าม พร้อมกัน → calcQuote ต้องบวกทั้ง 3 ชิ้น · ทดสอบ genQuote แล้วเช็คยอดรวม</span>
     </li>
     <li>
       <span class="icon">⚠️</span>
@@ -797,7 +851,7 @@ h += <span class="cs">`
     </li>
     <li>
       <span class="icon">⚠️</span>
-      <span><b>buildItemOpts rebuild:</b> chip และกล่องทั้งหมดจะถูก regenerate เมื่อ i-prod / i-group เปลี่ยน — ต้อง set default class "on" และ display ให้ถูกตอน build HTML string</span>
+      <span><b>buildItemOpts rebuild:</b> chip และกล่องทั้งหมดจะถูก regenerate เมื่อ i-prod / i-group เปลี่ยน — toggle state จะ reset ทุกครั้ง · พฤติกรรมนี้ถูกต้องแล้ว (ไม่ต้อง persist)</span>
     </li>
     <li>
       <span class="icon">⚠️</span>
@@ -815,36 +869,35 @@ h += <span class="cs">`
       <span class="icon">✅</span>
       <span><b>global default color/glass:</b> apply global defaults (L2133) อ่าน .i-color/.i-glass ไม่ใช่ chip ใหม่ ไม่กระทบ</span>
     </li>
+    <li>
+      <span class="icon">✅</span>
+      <span><b>ก้อนมุ้ง / 8 ชิปเดิม / ลำดับแบบ #2:</b> ไม่มีการแก้ไข — ดีอยู่แล้ว</span>
+    </li>
   </ul>
 </div>
 
-<!-- 9. ความเสี่ยง / จุดต้องถามพี่นัท -->
+<!-- 9. ความเสี่ยงที่ยังต้องระวัง -->
 <div class="section">
-  <h2>9. ความเสี่ยง / จุดต้องถามพี่นัท</h2>
+  <h2>9. ความเสี่ยง / จุดต้องระวัง</h2>
   <table>
     <thead>
-      <tr><th>จุด</th><th>คำถาม</th><th>ผลต่อ UX</th></tr>
+      <tr><th>จุด</th><th>รายละเอียด</th><th>ผลต่อ UX / ราคา</th></tr>
     </thead>
     <tbody>
       <tr class="hl-orange">
-        <td><b>มือจับหลายแบรนด์พร้อมกัน</b></td>
-        <td>ในทางปฏิบัติ ใส่ Cmech + สแตนอร่าม พร้อมกันได้ไหม? (เช่น บานเปิดใส่ทั้ง 2 ชิ้น)</td>
-        <td>ถ้าได้ → ต้องเปลี่ยนจาก "เลือก 1 แบรนด์" เป็น multi-select · สเปกนี้ assume "เลือกได้ 1"</td>
+        <td><b>X-series + แบรนด์อื่น พร้อมกัน</b></td>
+        <td>X-series ฟรี — แต่ถ้าติ๊กพร้อม Cmech หรือดิจิตอล ต้องแน่ใจว่า readItem ไม่นับ xhandle เป็นราคา</td>
+        <td>ดูแล value="" เมื่อ toggle ปิด · readItem logic เดิมอ่าน o-xhandle อยู่แล้ว</td>
       </tr>
       <tr class="hl-orange">
-        <td><b>มือจับ X-series (.o-xhandle)</b></td>
-        <td>X-series ฟรี — รวมอยู่ใน brand picker หรือแยกไว้ตามเดิม (เพราะฟรี ไม่มีราคา)?</td>
-        <td>ถ้ารวม → เพิ่มชิป "X-series (ฟรี)" · ถ้าแยก → แสดงเป็น checkbox แทน</td>
-      </tr>
-      <tr class="hl-orange">
-        <td><b>มือจับ Cmech หลบมุ้ง (.o-cmechawn)</b></td>
-        <td>เป็น control พิเศษเฉพาะบานกระทุ้ง — รวมในกล่อง Cmech sub หรือแยกออกมา?</td>
-        <td>ถ้ารวม → แสดงในกล่อง Cmech sub ต่อท้าย · ถ้าแยก → label แยกใต้กล่องมือจับ</td>
+        <td><b>.o-cmechawn กับบานที่ไม่ใช่กระทุ้ง</b></td>
+        <td>checkbox หลบมุ้งอยู่ใน sub-Cmech (โผล่ทุกครั้งที่ติ๊ก Cmech) แต่ logic จริงใช้กับบานกระทุ้งเท่านั้น</td>
+        <td>ถ้า developer ไม่ซ่อนตาม i-prod → เซลล์ติ๊กโดยไม่รู้ · ควรซ่อน checkbox เมื่อ i-prod ไม่ใช่บานกระทุ้ง</td>
       </tr>
       <tr class="hl-teal">
         <td><b>ขนาดมุ้ง (o-mosqw/h) auto</b></td>
-        <td>ปัจจุบัน placeholder="ม." — เว้นว่าง = auto จากบานหลัก ถูกต้องหรือไม่?</td>
-        <td>ถ้าถูก → label "auto จากบาน" ในดราฟถูกแล้ว · ถ้าต้องกรอกเสมอ → เปลี่ยน placeholder + ทำ required</td>
+        <td>เว้นว่าง = auto จากบานหลัก — ยืนยันแล้วว่าถูกต้อง (มติพี่นัท)</td>
+        <td>label "auto จากบาน" ในดราฟถูกแล้ว · คงไว้</td>
       </tr>
     </tbody>
   </table>
@@ -857,7 +910,7 @@ h += <span class="cs">`
     <b>กฎ generic ที่ทำซ้ำได้:</b><br>
     กฎ A: select ≤4 ตัวเลือก → chip · select ≥5 → คง dropdown<br>
     กฎ B (Consolidate): control กลุ่มเดียวกันที่กระจาย → รวบเป็นก้อน · เลือกชนิดก่อน ค่อยโผล่รายละเอียด<br>
-    ใช้ function <code>chSetChip</code> / <code>handleBrandPick</code> / <code>mosqGroupToggle</code> เดิม (global) ไม่ต้องเขียนใหม่ต่อ group
+    ใช้ function <code>chSetChip</code> / <code>toggleHandleBrand</code> / <code>mosqGroupToggle</code> เดิม (global) ไม่ต้องเขียนใหม่ต่อ group
   </div>
   <p style="font-size:13.5px;">ตัวอย่าง G2 (ระแนง/รั้ว) ที่คาดว่า chip ได้:</p>
   <ul style="font-size:13.5px;line-height:1.9;">
