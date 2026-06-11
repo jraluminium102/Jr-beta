@@ -219,6 +219,21 @@ export default function QueuePage() {
     });
   }, [rows, filterTeam, filterStatus]);
 
+  // ปฏิทินแสดงเฉพาะคิว "ประเมิน" ของเซลล์หลัก (MAIN) — คิวที่ผูกผู้ช่วย/โชว์รูม (เช่น ส้ม) ไม่ขึ้นปฏิทิน
+  const calMainIds = useMemo(
+    () => new Set(sales.filter((s) => s.role !== "ASSISTANT" && (!filterTeam || s.team === filterTeam)).map((s) => s.id)),
+    [sales, filterTeam]
+  );
+  // จำนวนคิวที่ปฏิทินแสดงจริง (เซลล์หลัก) vs คิวโชว์รูม/ผู้ช่วยที่ดูได้ที่ตาราง
+  const calShownCount = useMemo(
+    () => calEntries.filter((e) => e.sales_id && calMainIds.has(e.sales_id)).length,
+    [calEntries, calMainIds]
+  );
+  const calAssistCount = useMemo(
+    () => calEntries.filter((e) => e.sales_id && !calMainIds.has(e.sales_id)).length,
+    [calEntries, calMainIds]
+  );
+
   // month options
   const monthOptions = useMemo(() => {
     const opts: string[] = [];
@@ -408,8 +423,19 @@ export default function QueuePage() {
             </label>
           )}
 
-          <span className="text-sm text-ink-3 tabular-nums ml-auto">
-            {viewMode === "list" ? `${list.length} คิว` : `${calEntries.length} คิว/สัปดาห์`}
+          <span className="text-sm text-ink-3 tabular-nums ml-auto flex items-center gap-1.5">
+            {viewMode === "list" ? (
+              `${list.length} คิว`
+            ) : (
+              <>
+                {calShownCount} คิวประเมิน/สัปดาห์
+                {calAssistCount > 0 && (
+                  <span className="text-[11px] text-ink-3 bg-gray-100 rounded-md px-1.5 py-0.5 whitespace-nowrap">
+                    +{calAssistCount} โชว์รูม · ดูที่ตาราง
+                  </span>
+                )}
+              </>
+            )}
           </span>
         </div>
 
