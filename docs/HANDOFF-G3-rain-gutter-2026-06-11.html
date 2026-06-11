@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G3 FIX-13 — คิดราคารางน้ำหลัก (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:14px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  pre{font-family:"Consolas",monospace;font-size:9.5px;background:#0F172A;color:#E2E8F0;border-radius:6px;padding:8px 10px;white-space:pre-wrap;margin:5px 0;}
+  pre .c{color:#64748B;}pre .k{color:#7DD3FC;}pre .s{color:#FCA5A5;}pre .add{color:#86EFAC;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10px;}
+  .lbl{font-weight:700;color:#374151;font-size:10px;}
+  .real{color:#7C2D12;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  .chk{list-style:none;padding-left:2px;}.chk li:before{content:"☐ ";font-weight:700;}
+  .foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G3 — FIX-13: คิดราคา "รางน้ำหลัก" (1,000/ม. × ความกว้าง)</h1>
+<div class="sub">เรื่องราคา (แตะสูตร calc) · ไฟล์ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026 · มติพี่นัท: เรตหลังคาฐาน = ค่าหลังคาเปล่า ไม่รวมรางน้ำ</div>
+
+<div class="crit"><b>⚠ FIX นี้แตะสูตรราคา (ต่างจาก FIX-1..12 ที่เป็น wording)</b> — ทำให้หลังคาที่เลือก "ปลายหลังคา=รางน้ำ" ราคาเพิ่มขึ้น w×1,000 · <b>ต้องอัปเดต baseline ของ <code>test/quote-fidelity.mjs</code> ด้วย</b> (ราคาหลังคาในเทสจะเปลี่ยน — เป็นการเปลี่ยนที่ตั้งใจ)</div>
+
+<h2>1. ทำไมต้องแก้ (หลักฐาน)</h2>
+<div class="ok">
+<b>มติพี่นัท 11 มิ.ย.:</b> เรตหลังคาฐาน (เช่น ไวนิล 6,500/ตร.ม.) = <b>ค่าหลังคาเปล่า ยังไม่รวมรางน้ำ</b> → รางน้ำต้องคิดเพิ่ม
+</div>
+<div class="lbl">สเปกต้นทุน (รายการสูตรราคาประเมิน_ฉบับเต็ม.md · หมวด D หลังคา ข้อ 33):</div>
+<span class="real">"ของเสริมหลังคา: <b>รางน้ำ 1,000/ม.</b> / เสาแผง 4,000/ต้น / เสา 4″x8″ 2,000/ต้น / ซ่อนสโลป… / โซ่รางน้ำ 3,000/เส้น"</span> → รางน้ำอยู่กลุ่ม "ของเสริม" = คิดเพิ่ม เหมือนเสาแผง
+<div class="lbl">ใบจริง (5 ใบ):</div> หลังคาขายเหมา "1 ชุด" รางน้ำไม่แตกบรรทัด แต่ <b>"มีรางน้ำแพงกว่าปล่อยปลาย"</b> (คุณนก: โพลีตันมีรางน้ำ+โซ่ 43,000 vs ปล่อยปลาย 30,000)
+<div class="lbl">บั๊กปัจจุบัน (verify ด้วย render):</div> ไวนิล 4×3 ปลายปล่อย = 72,000 · <b>ปลายรางน้ำ = 72,000 (เท่ากัน — รางน้ำหลักฟรี ผิด)</b> · เซลล์เลือกรางน้ำคิดว่าคิดเงินแล้ว แต่จริง ๆ ฟรี → เสี่ยงขายขาดทุน
+
+<h2>2. จุดแก้ — calc engine</h2>
+<div class="lbl">ตำแหน่ง: ในบล็อก <code>if(p.cat==='หลังคา'&&optSel){ … }</code> หลังบรรทัด <code>const _rfend = optSel.rfend || 'ปล่อย';</code> (ปัจจุบัน ~<code>L1450</code>)</div>
+<div class="lbl">โค้ดปัจจุบัน (L1450–1454) — รางน้ำหลัก "cosmetic ไม่คิดเงิน":</div>
+<pre><span class="k">const</span> _rfend = optSel.rfend || 'ปล่อย';
+<span class="c">// ข้อ8: ลบ calc "ปิดปลาย" …</span>
+<span class="c">// โครงเหล็กชุบซิงค์ — ราคาเท่าโครงอลู …</span>
+<span class="c">// แปคู่ — ไม่คิดเพิ่ม</span>
+<span class="c">// รางน้ำใหม่ (chain D) — cosmetic ไม่คิดเงิน  ← จุดนี้คือบั๊ก</span></pre>
+<div class="lbl">เพิ่มโค้ด (หลัง <code>const _rfend …</code>):</div>
+<pre><span class="c">// FIX-13: ปลายหลังคา=รางน้ำ → คิดรางน้ำหลัก 1,000/ม. × ความกว้าง</span>
+<span class="c">//   (สเปก ของเสริมหลังคา ข้อ 33 · มติพี่นัท: เรตฐาน=หลังคาเปล่า)</span>
+<span class="k">if</span>(_rfend==='รางน้ำ'){
+  <span class="k">const</span> _glen = parseFloat(w)||0;        <span class="c">// ความยาวราง = ความกว้างหลังคา (ชายคาล่าง 1 เส้น)</span>
+  <span class="k">if</span>(_glen&gt;0){
+    opt += <span class="add">_glen*1000</span>;
+    msgs.push(<span class="add">'รางน้ำหลัก '+_glen+'ม.×1,000 = '+fmt(_glen*1000)</span>);
+  }
+}</pre>
+<div class="note"><b>ตรวจ double-count:</b> นี่คือ "รางน้ำหลัก" (จากปลายหลังคา=รางน้ำ) · ช่อง "ของเสริม→รางน้ำ" (<code>o-rfgut</code>) เป็นรางน้ำเพิ่มพิเศษ แยกกัน ไม่ซ้ำ · genQuote ลงใบ "รางน้ำ (ท่อ/โซ่ สี) + ตะแกรง…" อยู่แล้ว — <b>ไม่ต้องแก้ genQuote</b> แค่ราคาเพิ่ม</div>
+
+<h2>3. จุดที่ต้องพี่นัท/แชทยืนยัน (1 จุด)</h2>
+<div class="note"><b>ความยาวราง = ความกว้างหลังคา (w) อัตโนมัติ</b> — ใช้กรณีรางน้ำชายคาล่าง 1 เส้น (เคสปกติ)<br>
+ถ้างานมี <b>รางน้ำ 2 ด้าน</b> หรือยาวต่างจากกว้าง → เซลล์ใช้ช่อง "ของเสริม → รางน้ำ" กรอกยาวเพิ่มเอง (มีอยู่แล้ว)<br>
+<b>ทางเลือก (ถ้าอยากยืดหยุ่น):</b> เพิ่มช่อง "ความยาวราง (ม.)" ใต้ปลายหลังคา=รางน้ำ (default=กว้าง แก้ได้) → แทน <code>parseFloat(w)</code> ด้วยค่าจากช่อง · <b>แนะนำเริ่มแบบ auto (w) ก่อน — ง่าย+เร็ว</b></div>
+
+<h2>4. ผลกระทบราคา (ตัวอย่าง)</h2>
+<table>
+<tr><th>เคส</th><th class="c">เดิม</th><th class="c">ราคารางน้ำ (+w×1,000)</th><th class="c">ใหม่</th></tr>
+<tr><td>ไวนิล 4×3 (กว้าง 4) ปลายรางน้ำ</td><td class="c">72,000</td><td class="c">+4,000</td><td class="c">76,000</td></tr>
+<tr><td>ไวนิล 6×3.5 (กว้าง 6) ปลายรางน้ำ</td><td class="c">~122,000 (ฐาน 115,500)</td><td class="c">+6,000</td><td class="c">~122,000</td></tr>
+<tr><td>ไวนิล ปลายปล่อย (ไม่มีราง)</td><td class="c">72,000</td><td class="c">+0</td><td class="c">72,000 (เท่าเดิม)</td></tr>
+</table>
+<div class="note">หลังแก้: "มีรางน้ำ &gt; ปล่อยปลาย" → ตรงใบจริงแล้ว</div>
+
+<h2>5. เช็คลิสต์ปิดงาน</h2>
+<ul class="chk">
+<li>เพิ่มโค้ด FIX-13 ในบล็อกหลังคา (หลัง <code>const _rfend</code>)</li>
+<li>render เทส: ไวนิล 4×3 ปลายรางน้ำ → ต้อง = 76,000 (เพิ่ม 4,000) · ปลายปล่อย = 72,000 (เท่าเดิม)</li>
+<li><b>อัปเดต baseline</b> <code>test/quote-fidelity.mjs</code> — ราคาหลังคา (หมวด 6) จะเปลี่ยน (harness เลือกปลาย=รางน้ำ) · รัน <code>node scripts/gen-quotes-full.mjs</code> ดูราคาใหม่ แล้วแก้ค่าคาดหวังในเทส</li>
+<li>รัน <code>node test/quote-fidelity.mjs</code> = PASS (หลังอัปเดต baseline)</li>
+<li>ยืนยันวิธีคิดในใบ: รางน้ำหลักลงใบ + ราคารวมเพิ่มถูก</li>
+</ul>
+
+<div class="foot">สร้างโดย skill quote-option-audit (READ-ONLY) · FIX-13 รางน้ำหลัก 1,000/ม. · หลักฐาน: สเปกข้อ 33 + ใบจริง 5 ใบ + มติพี่นัท 11 มิ.ย. · หลังแชทแก้ index.html → ผู้ตรวจ re-test + อัปเดตตารางเทส G3 (รางน้ำจะมีราคาแล้ว)</div>
+</body>
+</html>
