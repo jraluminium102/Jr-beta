@@ -250,8 +250,6 @@ export default function QueuePage() {
     return map;
   }, [scheduledRows]);
 
-  const sortedDays = useMemo(() => [...byDay.keys()].sort(), [byDay]);
-
   // รวมคิว + อยู่ออฟฟิศประจำ + วันลา ของวันนั้น เรียงตาม "เวลา" ก่อน (เซลล์เป็น tiebreak)
   // office ประจำ = แสดงเฉพาะวันนี้เป็นต้นไป (ไม่ย้อนหลัง) และหลบให้คิว (ช่องที่มีคิวแล้วไม่โชว์ออฟฟิศ)
   const buildDayItems = useCallback((d: string): DayItem[] => {
@@ -294,6 +292,28 @@ export default function QueuePage() {
     acc.sort((a, b) => a.tMin - b.tMin || a.sRank - b.sRank);
     return acc.map((x) => x.item);
   }, [byDay, sales, avail, salesRank]);
+
+  // วันที่ต้องมี section ในตาราง = วันที่มีคิว ∪ วันลา/หยุด ∪ วันอยู่ออฟฟิศประจำ (อนาคต)
+  // กันบั๊ก: วันลาที่ไม่มีคิวต้องโผล่ในตารางด้วย
+  const scheduleDays = useMemo(() => {
+    const set = new Set<string>(byDay.keys());
+    avail.forEach((a) => { if (a.date.startsWith(filterMonth)) set.add(a.date); });
+    // office ประจำ (อนาคต) — เพิ่มวัน Mon-Thu ที่มี office_slot
+    const officeWeekdays = new Set<number>();
+    sales.forEach((s) => { if (s.role !== "ASSISTANT") (s.office_slots ?? []).forEach((o) => officeWeekdays.add(o.weekday)); });
+    if (officeWeekdays.size) {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const [yy, mm] = filterMonth.split("-").map(Number);
+      const last = new Date(yy, mm, 0).getDate();
+      for (let dd = 1; dd <= last; dd++) {
+        const ds = `${filterMonth}-${String(dd).padStart(2, "0")}`;
+        if (ds < todayStr) continue;
+        if (officeWeekdays.has(new Date(yy, mm - 1, dd).getDay())) set.add(ds);
+      }
+    }
+    return [...set].sort();
+  }, [byDay, avail, sales, filterMonth]);
 
   // calendar: entries ในสัปดาห์ที่เลือก (queue_date มีค่า)
   const calEntries = useMemo(() => {
@@ -574,9 +594,9 @@ export default function QueuePage() {
         ) : (
           /* ===== List View ===== */
           <>
-            {list.length === 0 ? (
+            {(scheduleDays.length === 0 && pendingRows.length === 0) ? (
               <p className="text-center text-ink-3 py-12">
-                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
+                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
               </p>
             ) : (
               <>
@@ -601,12 +621,13 @@ export default function QueuePage() {
               </div>
             )}
 
-            {/* คิวที่นัดแล้ว จัดกลุ่มตามวัน */}
-            {sortedDays.length > 0 && (
+            {/* คิว + วันลา/อยู่ออฟฟิศ จัดกลุ่มตามวัน (รวมวันที่ไม่มีคิวแต่มีลา/ออฟฟิศ) */}
+            {scheduleDays.length > 0 && (
               <div className="space-y-4">
-                {sortedDays.map((d) => {
-                  const dayRows = byDay.get(d)!;
+                {scheduleDays.map((d) => {
                   const items = buildDayItems(d);
+                  if (items.length === 0) return null;
+                  const dayRows = byDay.get(d) ?? [];
                   const c = dayColor(d);
                   const label = `${dayLabel(d)} ${thaiDate(d)}`;
                   return (
