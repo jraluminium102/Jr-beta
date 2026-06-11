@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:12px;line-height:1.55;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 12px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:11px;}
+th,td{border:1px solid #d1d5db;padding:5px 8px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:1px 4px;border-radius:3px;font-family:Consolas,monospace;font-size:10.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:9px 12px;margin:8px 0;}
+pre{background:#0f172a;color:#e2e8f0;padding:10px 12px;border-radius:7px;font-size:10.5px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.45;}
+.bad{color:#fca5a5;} .good{color:#86efac;}
+</style></head><body>
+
+<h1>HANDOFF G1 — P3 เก็บกวาด: โน้ตมุ้งจีบนิรภัยหลุดลงใบ</h1>
+<p class="sub">2026-06-11 · ไฟล์ <code>public/calculator/index.html</code> · ตรวจ READ-ONLY (verify จาก render จริง) · จุดเล็ก P3 · ไม่บล็อก G1</p>
+
+<div class="box"><b>อาการ:</b> เมื่อเลือกมุ้งจีบนิรภัยเป็น addon บานเปิด/กระทุ้ง → ใบลูกค้าโชว์รายละเอียด
+<br><code>- มุ้งจีบนิรภัย (ติดล้นนอกวงกบ- กรอบทำสีไม่ได้) (เฟรมตามสีบาน...)</code>
+<br>โน้ตภายใน <b>(ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)</b> ไม่ควรหลุดลงใบลูกค้า · และตัว <code>·</code> ถูก qrow ตัดบรรทัดเพี้ยนเป็น <code>-</code></div>
+
+<h2>Root cause (2 จุดต่อเนื่อง)</h2>
+<table>
+<tr><th>จุด</th><th>บรรทัด</th><th>อธิบาย</th></tr>
+<tr><td>ต้นเหตุ</td><td><b>3638</b></td><td><code>mscreen.name</code> ของมุ้งจีบนิรภัย = <code>"มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)"</code> · บรรทัดนี้ replace แค่ <code>"SD พื้นฐาน"</code> → วงเล็บโน้ตภายในรอด</td></tr>
+<tr><td>ลามผล</td><td>2926</td><td>qrow split รายละเอียดที่ <code>/\n|\s·\s/</code> → ตัดที่ <code>·</code> กลางวงเล็บ เลยกลายเป็น <code>(ติดล้นนอกวงกบ-</code> + บรรทัดใหม่ <code>กรอบทำสีไม่ได้)</code></td></tr>
+</table>
+<p style="font-size:11px;color:#555;">แก้ที่ <b>3638 จุดเดียวจบ</b> (ตัดวงเล็บโน้ตทิ้ง → ไม่มี <code>·</code> ให้ split อีก) · ไม่ต้องแตะ 2926</p>
+
+<h2>วิธีแก้ — บรรทัด 3638</h2>
+<pre><span class="bad">- const msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s+/g,' ').trim();</span>
+<span class="good">+ const msName = mscreen.name</span>
+<span class="good">+   .replace(/\s*SD พื้นฐาน\s*/g,' ')</span>
+<span class="good">+   .replace(/\s*\((?:ติดล้นนอกวงกบ|กรอบทำสีไม่ได้)[^)]*\)/g,'')  // P3: ตัดโน้ตภายใน ไม่ให้หลุดลงใบลูกค้า</span>
+<span class="good">+   .replace(/\s+/g,' ').trim();</span></pre>
+
+<div class="box"><b>ผลที่ต้องได้ (verify):</b> render บานกระทุ้งยูโร + มุ้งจีบนิรภัย → รายละเอียดเหลือ
+<code>- มุ้งจีบนิรภัย (เฟรมตามสีบาน {สี} / ผ้า...)</code> สะอาด ไม่มี (ติดล้นนอกวงกบ...) และไม่มีบรรทัดเพี้ยน</div>
+
+<p class="sub">DoD: render มุ้งจีบนิรภัยใบสะอาด · <code>node test/quote-fidelity.mjs</code> PASS · ราคาไม่เปลี่ยน (แก้ข้อความล้วน) · เสร็จกลับให้ผม verify</p>
+</body></html>

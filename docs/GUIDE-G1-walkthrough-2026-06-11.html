@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>คู่มือ G1 — กรอกยังไง + คิดราคายังไง + ออกใบยังไง</title>
+<style>
+:root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--y:#f0c000;}
+*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:var(--ink);font-size:14px;line-height:1.55;padding:14px;}
+.wrap{max-width:860px;margin:0 auto;}
+h1{color:var(--red);font-size:21px;margin:0 0 2px;}
+.sub{color:var(--mut);font-size:12.5px;margin:0 0 16px;}
+h2{color:#fff;background:var(--red);font-size:15px;margin:22px 0 10px;padding:7px 13px;border-radius:7px;}
+.lead{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:10px;}
+/* steps */
+.step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:13px;overflow:hidden;box-shadow:0 1px 3px #0000000d;}
+.step-hd{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fbe9ea;border-bottom:1px solid var(--line);}
+.num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.step-hd b{font-size:14.5px;color:var(--red);}
+.step-bd{padding:12px 15px;}
+/* mock form field */
+.fld{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px dashed #eee;}
+.fld:last-child{border-bottom:none;}
+.fld .tag{flex:none;width:118px;font-size:12.5px;color:var(--mut);font-weight:600;padding-top:3px;}
+.fld .ctrl{flex:1;}
+.inp{display:inline-block;min-width:90px;border:1.5px solid #cbd5e1;border-radius:7px;padding:5px 10px;background:#f8fafc;font-size:13px;color:var(--ink);}
+.inp.sel{background:#fff;border-color:#94a3b8;padding-right:24px;position:relative;}
+.inp.sel::after{content:"▾";position:absolute;right:8px;color:#64748b;}
+.inp.fill{background:#fef9e7;border-color:var(--y);font-weight:700;}
+.hint{font-size:11.5px;color:var(--mut);margin-top:2px;}
+.req{color:var(--red);font-weight:800;font-size:11px;}
+.opt-badge{background:#eef2ff;color:#3730a3;font-size:10.5px;padding:1px 6px;border-radius:5px;margin-left:4px;}
+/* callout */
+.call{background:#f0f9ff;border-left:4px solid #0ea5e9;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12.5px;margin:8px 0;}
+/* price calc */
+.calc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px 0;overflow:hidden;}
+.calc .r{display:flex;justify-content:space-between;padding:9px 16px;border-bottom:1px solid #f1f1f1;font-size:13.5px;}
+.calc .r .l{color:var(--ink);} .calc .r .v{font-weight:700;font-variant-numeric:tabular-nums;}
+.calc .r small{color:var(--mut);font-size:11.5px;display:block;font-weight:400;}
+.calc .r.sum{background:#fbe9ea;border-top:2px solid var(--red);}
+.calc .r.sum .l,.calc .r.sum .v{color:var(--red);font-weight:800;font-size:15px;}
+.calc .r.sub{background:#f8fafc;}
+.formula{font-family:Consolas,monospace;font-size:12px;background:#0f172a;color:#e2e8f0;padding:3px 7px;border-radius:5px;display:inline-block;margin-top:2px;}
+/* quote preview */
+.quote{background:#fff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;}
+.quote .qhd{background:var(--red);color:#fff;padding:9px 14px;font-weight:700;font-size:13.5px;}
+.qtbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.qtbl th{background:#fbe9ea;color:var(--red);padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:12px;}
+.qtbl td{padding:9px;vertical-align:top;border-bottom:1px solid #f1f1f1;}
+.qtbl .num{text-align:right;font-variant-numeric:tabular-nums;width:90px;}
+.qtbl .ctr{text-align:center;width:56px;}
+.det{color:#374151;font-size:12px;}
+.det .ttl{font-weight:700;color:var(--ink);font-size:12.5px;margin-bottom:3px;}
+.det .lbl{color:var(--red);font-weight:600;margin:4px 0 1px;font-size:11.5px;}
+.qfoot{padding:4px 0;}
+.qfoot .r{display:flex;justify-content:space-between;padding:5px 14px;font-size:12.5px;}
+.qfoot .r.t{background:#fbe9ea;font-weight:800;color:var(--red);font-size:14px;border-top:2px solid var(--red);}
+.tip{font-size:12px;color:var(--mut);margin-top:5px;}
+.kbd{background:var(--red);color:#fff;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700;display:inline-block;}
+.pill{display:inline-block;background:#15803d;color:#fff;font-size:11px;padding:1px 8px;border-radius:6px;}
+</style></head><body><div class="wrap">
+
+<h1>คู่มือ G1 (บาน) — กรอกยังไง · คิดราคายังไง · ออกใบยังไง</h1>
+<p class="sub">สำหรับคนไม่เคยเล่นแอพมาก่อน · ใช้ตัวอย่างจริง: ประตูบานเลื่อนยูโร 4 บาน + มุ้งจีบ · ข้อมูล/ราคาดึงจากระบบจริง (R3.9.2) เมื่อ 2026-06-11</p>
+
+<div class="lead">📱 <b>ภาพรวม 4 ขั้น:</b> ① เลือกแท็บ <b>“ใบเสนอราคา”</b> → ② กรอกชื่อลูกค้า → ③ กด <span class="kbd">+ เพิ่มส่วน</span> แล้วกรอกทีละรายการ → ④ ดูราคา/ชุด แล้วกดออกใบ · <b>ช่องที่มี <span class="req">★</span> = ต้องกรอก</b> · ที่เหลือมีค่าตั้งต้นอยู่แล้ว เว้นได้</div>
+
+<!-- ============ ส่วน A: กรอกยังไง ============ -->
+<h2>① วิธีกรอก — ทีละช่อง (ตัวอย่าง: บานเลื่อนยูโร ห้องนั่งเล่น)</h2>
+
+<div class="step">
+<div class="step-hd"><span class="num">1</span><b>เลือกว่าเป็นงานอะไร + อยู่ตรงไหน</b></div>
+<div class="step-bd">
+  <div class="fld"><span class="tag">กลุ่มงาน <span class="req">★</span></span><div class="ctrl"><span class="inp sel fill">1. บานกระจก (ประตู/หน้าต่าง)</span><div class="hint">มี 7 กลุ่ม — บาน/กระจกทั้งหมดอยู่กลุ่ม 1</div></div></div>
+  <div class="fld"><span class="tag">ด้าน/ตำแหน่ง</span><div class="ctrl"><span class="inp fill">ห้องนั่งเล่น</span><div class="hint">พิมพ์เองได้ เช่น ห้องนอน, ด้านหน้า — โชว์เป็นหัวรายการในใบ</div></div></div>
+  <div class="fld"><span class="tag">ประเภท <span class="req">★</span></span><div class="ctrl"><span class="inp sel fill">ประตู</span> <span class="hint" style="display:inline">/ หน้าต่าง — มีผลกับราคาขั้นต่ำของมุ้ง</span></div></div>
+</div></div>
+
+<div class="step">
+<div class="step-hd"><span class="num">2</span><b>เลือกแบบบาน + ใส่ขนาด</b></div>
+<div class="step-bd">
+  <div class="fld"><span class="tag">แบบ <span class="req">★</span></span><div class="ctrl"><span class="inp sel fill">บานเลื่อน ยูโร</span><div class="hint">ลิสต์มีทุกชนิด: บานเลื่อน/บานเปิด/บานเฟี้ยม/PC Door/ดัดโค้ง/โซลิด ฯลฯ</div></div></div>
+  <div class="fld"><span class="tag">กว้าง (ม.) <span class="req">★</span></span><div class="ctrl"><span class="inp fill">3.6</span> &nbsp;<span class="tag" style="width:auto">สูง (ม.) <span class="req">★</span></span> <span class="inp fill">2.4</span><div class="hint">หน่วยเป็น “เมตร” → ระบบคิดพื้นที่ให้ = 3.6 × 2.4 = <b>8.64 ตร.ม.</b></div></div></div>
+  <div class="fld"><span class="tag">จำนวนบานทั้งหมด</span><div class="ctrl"><span class="inp fill">4</span><div class="hint">บานเลื่อนแบ่งกี่บาน (เช่น 4 บาน เปิดคู่กลาง)</div></div></div>
+  <div class="fld"><span class="tag">ชนิดการเปิด</span><div class="ctrl"><span class="inp sel">บานเลื่อนสลับ / เปิดคู่กลาง…</span><div class="hint">เลือกรูปแบบเปิด — auto ใส่คำบรรยายลงใบให้</div></div></div>
+  <div class="fld"><span class="tag">ราง</span><div class="ctrl"><span class="inp sel">รางล่าง (รุ่นกันน้ำ)</span> <span class="opt-badge">ค่าตั้งต้น</span><div class="hint">รุ่นกันน้ำเป็นค่ามาตรฐาน — ไม่ต้องแตะถ้าไม่เปลี่ยน</div></div></div>
+</div></div>
+
+<div class="step">
+<div class="step-hd"><span class="num">3</span><b>เลือกสี + กระจก (โชว์ในรายละเอียดใบ)</b></div>
+<div class="step-bd">
+  <div class="fld"><span class="tag">สีอลูมิเนียม <span class="req">★</span></span><div class="ctrl"><span class="inp sel fill">สีเทาซาฮาร่า</span><div class="hint">ค่าตั้งต้น = สีอบขาว · เปลี่ยนได้ตามที่ลูกค้าเลือก</div></div></div>
+  <div class="fld"><span class="tag">กระจก <span class="req">★</span></span><div class="ctrl"><span class="inp sel fill">กระจกเขียว 6 มม.</span><div class="hint">มีใส/เขียว/ชา/เทมเปอร์/ลามิเนต/อินซูเลท — ราคาต่างกันตามชนิด</div></div></div>
+</div></div>
+
+<div class="step">
+<div class="step-hd"><span class="num">4</span><b>ออปชั่นเสริม (เลือกเท่าที่ใช้ — เว้นได้หมด)</b></div>
+<div class="step-bd">
+  <div class="fld"><span class="tag">🪟 มุ้ง</span><div class="ctrl"><span class="inp sel fill">มุ้งจีบ SD พื้นฐาน (2,500/ตร.ม.)</span><div class="hint">เลือกแล้วระบบ +ราคามุ้งให้อัตโนมัติ + ขึ้น “(มีมุ้งจีบ)” ในชื่อ</div></div></div>
+  <div class="fld"><span class="tag">ผ้ามุ้ง</span><div class="ctrl"><span class="inp sel">ไฟเบอร์เทา (default)</span> <span class="opt-badge">/ ดำ / กันแมว +800 / กันหนู +1,200</span></div></div>
+  <div class="fld"><span class="tag">มือจับ</span><div class="ctrl"><span class="inp sel">Cmech ฝัง/เมโทร</span> · <span class="inp sel">ดิจิตอล S1 +10,000</span> · <span class="inp sel">สแตนอร่าม</span><div class="hint">3 ช่องมือจับแยกกัน — เลือกที่ใช้ช่องเดียวพอ</div></div></div>
+  <div class="fld"><span class="tag">ชุดล็อค</span><div class="ctrl"><span class="inp sel">มีกุญแจ</span> <span class="opt-badge">ค่าตั้งต้น</span></div></div>
+  <div class="fld"><span class="tag">เสริมคาน</span><div class="ctrl"><span class="inp sel">ไม่มี / รุ่น1 2,400/ม. / รุ่น2 3,600/ม.</span></div></div>
+  <div class="fld"><span class="tag">แผ่นทึบล่าง</span><div class="ctrl"><span class="inp sel">ไม่มี / อลูลูกฟูก / คอมโพสิท</span></div></div>
+  <div class="fld"><span class="tag">หมายเหตุ/OPTION</span><div class="ctrl"><span class="inp">ปุ่ม + OPTION ทางเลือกลูกค้า</span><div class="hint">กดเพิ่มออปชั่นทางเลือก (เปลี่ยนกระจก/มุ้ง/สี…) เลือก preset หรือพิมพ์เอง + ใส่ราคาเองได้</div></div></div>
+</div></div>
+
+<div class="call">✅ <b>พอกรอกเสร็จ</b> มุมขวาของการ์ดจะโชว์ <b>“8.64 ตร.ม. · /ชุด ฿74,000”</b> ทันที (คิดสดทุกครั้งที่แก้) · ถ้ามีหลายรายการ กด <span class="kbd">+ เพิ่มส่วน</span> ทำซ้ำ → เสร็จแล้วกดแท็บ/ปุ่ม <b>ออกใบเสนอราคา</b></div>
+
+<!-- ============ ส่วน B: คิดราคายังไง ============ -->
+<h2>② วิธีคิดราคา — ตัวอย่างนี้ (ระบบคิดให้อัตโนมัติ)</h2>
+<div class="calc">
+  <div class="r"><div class="l">ฐานบานเลื่อนยูโร <small>คิดตามพื้นที่ 8.64 ตร.ม. (เปิดตารางเรทตามขนาด · ปัดขึ้นหลักพัน · ไม่ต่ำกว่าขั้นต่ำ 6,500)</small></div><div class="v">฿52,000</div></div>
+  <div class="r"><div class="l">+ มุ้งจีบ SD พื้นฐาน <small><span class="formula">พื้นที่ × 2,500/ตร.ม.</span> (ขั้นต่ำ 3,500/บาน) ≈ 8.64 × 2,500</small></div><div class="v">฿22,000</div></div>
+  <div class="r sub"><div class="l">= ราคาต่อชุด <small>52,000 + 22,000 (ปัดขึ้นพัน)</small></div><div class="v">฿74,000</div></div>
+  <div class="r"><div class="l">× จำนวนชุด (1 ชุด)</div><div class="v">฿74,000</div></div>
+  <div class="r"><div class="l">+ Protection พื้น/ผนัง <small>ค่ากันเปื้อน/กันงานเสียหาย (บริการเสริม)</small></div><div class="v">฿2,000</div></div>
+  <div class="r"><div class="l">+ ภาษีมูลค่าเพิ่ม 7% <small><span class="formula">(74,000 + 2,000) × 7%</span></small></div><div class="v">฿5,320</div></div>
+  <div class="r sum"><div class="l">จำนวนเงินรวมทั้งสิ้น</div><div class="v">฿81,320</div></div>
+</div>
+<p class="tip">💡 หลักคิด G1 ทุกชนิด = <b>ฐานบาน (ตามชนิด+พื้นที่)</b> + <b>ออปชั่นที่เลือก (มุ้ง/มือจับ/แผ่นทึบ/เสริมคาน…)</b> → ปัดขึ้นพัน → × จำนวนชุด → +บริการเสริม → +VAT 7%. แต่ละชนิดบานมีตารางเรท/สูตรของตัวเอง (เช่น โซลิด = บานเปิดยูโร + ลูกฟูก 3,500×พื้นที่×ฝั่ง · ดัดโค้ง = เรตดัดโค้ง + กระจกดัด).</p>
+
+<!-- ============ ส่วน C: รายการในใบ ============ -->
+<h2>③ รายการที่ออกในใบเสนอราคา (ของจริงจากระบบ)</h2>
+<div class="quote">
+  <div class="qhd">บจก. เจอาร์.อลูมิเนียมแอนด์กลาส · ใบเสนอราคา JR11_06_69_001 · ลูกค้า คุณสมชาย ใจดี</div>
+  <table class="qtbl">
+    <thead><tr><th class="ctr">#</th><th>รายละเอียด</th><th class="ctr">จำนวน</th><th class="num">ราคา/หน่วย</th><th class="num">ยอดรวม</th></tr></thead>
+    <tbody><tr>
+      <td class="ctr">1</td>
+      <td><div class="det">
+        <div class="ttl">ห้องนั่งเล่น</div>
+        <div>- ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) แบ่ง 4 บาน (มีมุ้งจีบ) (รุ่น L ยูโร) (3.6 × 2.4 ม.)</div>
+        <div class="lbl">รายละเอียดงาน</div>
+        <div>- อลูมิเนียม สีเทาซาฮาร่า</div>
+        <div>- กระจกเขียว หนา 6 มม.</div>
+        <div>- มุ้งจีบ (เฟรมตามสีบาน สีเทาซาฮาร่า / ผ้าไฟเบอร์เทา)</div>
+        <div>- ชุดล็อค (มีกุญแจ)</div>
+      </div></td>
+      <td class="ctr">1 ชุด</td>
+      <td class="num">74,000.00</td>
+      <td class="num">74,000.00</td>
+    </tr></tbody>
+  </table>
+  <div class="qfoot">
+    <div class="r"><span>รวมเป็นเงิน</span><span>74,000.00 บาท</span></div>
+    <div class="r"><span>Protection พื้น/ผนัง</span><span>2,000.00 บาท</span></div>
+    <div class="r"><span>ภาษีมูลค่าเพิ่ม 7%</span><span>5,320.00 บาท</span></div>
+    <div class="r t"><span>จำนวนเงินรวมทั้งสิ้น</span><span>81,320.00 บาท</span></div>
+  </div>
+</div>
+<p class="tip">📋 สังเกต: ชื่อรายการรวม <b>ชนิดบาน + จำนวนบาน + (มีมุ้งจีบ) + รุ่น + ขนาด</b> · ใต้รายการมี <b>“รายละเอียดงาน”</b> แตกเป็นบรรทัด (อลู/กระจก/มุ้ง/ล็อค) ตรงกับฟอร์แมตใบจริงของบริษัท · ทุกบรรทัดกด ✎ แก้ข้อความเองได้ (โหมดแก้ไข).</p>
+
+<div class="lead" style="margin-top:18px;background:#ecfdf5;border-color:#a7f3d0;">
+<b>สถานะ G1:</b> <span class="pill">ปิด 100% (8/8 ผ่าน)</span> · เหลือจุดเล็ก P3 (โน้ตมุ้งจีบนิรภัยหลุด) อยู่ระหว่างเก็บกวาด — ดู HANDOFF-G1-P3 · กลุ่ม G2–G7 ทีมอื่นดูแล</div>
+
+<p class="sub" style="margin-top:14px;">ทดสอบ/ดึงข้อมูลจากระบบจริง public/calculator/index.html (R3.9.2) ผ่าน live preview + jsdom · ตรวจ READ-ONLY (ไม่แก้โค้ด) · 2026-06-11</p>
+</div></body></html>
