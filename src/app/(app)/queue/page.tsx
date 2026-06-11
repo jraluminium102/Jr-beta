@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { QueueModal } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
 import { OfficeScheduleModal } from "@/components/queue/OfficeScheduleModal";
+import { LeaveSummaryModal } from "@/components/queue/LeaveSummaryModal";
 import {
   QueueCalendarView, toIsoWeek,
   type AvailRow,
@@ -96,6 +97,49 @@ function dateToWeek(iso: string): string {
   return toIsoWeek(new Date(y, m - 1, d));
 }
 
+// รายการในตารางวัน: คิว / อยู่ออฟฟิศประจำ / วันลา (แทรกรวมกันเรียงตามเซลล์→เวลา)
+type DayItem =
+  | { kind: "queue"; entry: QueueEntry }
+  | { kind: "office"; sales: QueueSales; half: "AM" | "PM" }
+  | { kind: "leave"; sales: QueueSales; av: AvailRow };
+
+// ป้าย/สไตล์ของแถว office/leave
+function dayItemMeta(it: Extract<DayItem, { kind: "office" | "leave" }>): {
+  timeText: string; label: string; rowCls: string; tagCls: string; tagText: string;
+} {
+  if (it.kind === "office") {
+    const isAM = it.half === "AM";
+    return {
+      timeText: isAM ? "เช้า" : "บ่าย",
+      label: `${it.sales.name} อยู่ออฟฟิศ (${isAM ? "เช้า" : "บ่าย"})`,
+      rowCls: "bg-indigo-50/40", tagCls: "bg-indigo-100 text-indigo-700", tagText: "ออฟฟิศ",
+    };
+  }
+  const a = it.av;
+  const note = a.note ? ` · ${a.note}` : "";
+  if (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") {
+    return {
+      timeText: "ทั้งวัน",
+      label: `${it.sales.name} ${a.kind === "HOLIDAY" ? "วันหยุด" : "ลาทั้งวัน"}${note}`,
+      rowCls: "bg-red-50/50", tagCls: "bg-red-100 text-red-700", tagText: "ลา",
+    };
+  }
+  if (a.kind === "OFFICE_HALF") {
+    return {
+      timeText: "เช้า",
+      label: `${it.sales.name} อยู่ออฟฟิศเช้า${note}`,
+      rowCls: "bg-indigo-50/40", tagCls: "bg-indigo-100 text-indigo-700", tagText: "ออฟฟิศ",
+    };
+  }
+  // LEAVE_HALF
+  const isAM = a.half === "AM";
+  return {
+    timeText: isAM ? "เช้า" : "บ่าย",
+    label: `${it.sales.name} ลาครึ่งวัน (${isAM ? "เช้า" : "บ่าย"})${note}`,
+    rowCls: "bg-orange-50/50", tagCls: "bg-orange-100 text-orange-700", tagText: "ลา",
+  };
+}
+
 // ---- component --------------------------------------------------------------
 
 type ViewMode = "list" | "calendar";
@@ -111,6 +155,7 @@ export default function QueuePage() {
   const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -127,6 +172,8 @@ export default function QueuePage() {
 
   const loadAvail = useCallback(async () => {
     try {
+      // โหลดวันลาของเดือนที่แสดง ± 1 เดือน (เพื่อให้ calendar view ข้ามเดือนได้)
+      // ไม่กรอง date >= today อีกต่อไป — ต้องการดูวันลาย้อนหลังในตาราง + LeaveSummaryModal
       const res = await api.get<AvailRow[]>("/queue/availability");
       setAvail(res.data ?? []);
     } catch {
@@ -205,7 +252,70 @@ export default function QueuePage() {
     return map;
   }, [scheduledRows]);
 
-  const sortedDays = useMemo(() => [...byDay.keys()].sort(), [byDay]);
+  // รวมคิว + อยู่ออฟฟิศประจำ + วันลา ของวันนั้น เรียงตาม "เวลา" ก่อน (เซลล์เป็น tiebreak)
+  // office ประจำ = แสดงเฉพาะวันนี้เป็นต้นไป (ไม่ย้อนหลัง) และหลบให้คิว (ช่องที่มีคิวแล้วไม่โชว์ออฟฟิศ)
+  const buildDayItems = useCallback((d: string): DayItem[] => {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const wd = new Date(d + "T00:00:00").getDay();
+    const rankOf = (sid: string | null) => (sid ? (salesRank.get(sid) ?? 9998) : 9999);
+    const acc: { item: DayItem; sRank: number; tMin: number }[] = [];
+
+    const queues = byDay.get(d) ?? [];
+    // ช่องครึ่งวันที่ "มีคิวแล้ว" ของแต่ละเซลล์ (office จะหลบ) — `${sales_id}-AM/PM`
+    const occupied = new Set<string>();
+    queues.forEach((e) => {
+      acc.push({ item: { kind: "queue", entry: e }, sRank: rankOf(e.sales_id), tMin: timeToMin(e.queue_time) });
+      if (e.sales_id) {
+        const t = timeToMin(e.queue_time);
+        if (t < 99999) occupied.add(`${e.sales_id}-${t < 720 ? "AM" : "PM"}`);
+      }
+    });
+    // อยู่ออฟฟิศประจำ — เฉพาะ d >= วันนี้ · ข้ามถ้าลาทั้งวัน หรือช่องนั้นมีคิวแล้ว
+    if (d >= todayStr) {
+      sales.filter((s) => s.role !== "ASSISTANT").forEach((s) => {
+        const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"));
+        if (fullLeave) return;
+        (s.office_slots ?? []).filter((o) => o.weekday === wd).forEach((o) => {
+          if (occupied.has(`${s.id}-${o.half}`)) return; // หลบให้คิว
+          acc.push({ item: { kind: "office", sales: s, half: o.half }, sRank: rankOf(s.id), tMin: o.half === "AM" ? 600 : 840 });
+        });
+      });
+    }
+    // วันลา/หยุด/อยู่ออฟฟิศ (จาก sales_availability ของวันนั้น) — แสดงทุกวัน (ของจริงที่บันทึกไว้)
+    avail.filter((a) => a.date === d).forEach((a) => {
+      const s = sales.find((x) => x.id === a.sales_id);
+      if (!s) return;
+      const tMin = (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") ? -1 : (a.kind === "LEAVE_HALF" && a.half === "PM") ? 840 : 600;
+      acc.push({ item: { kind: "leave", sales: s, av: a }, sRank: rankOf(s.id), tMin });
+    });
+
+    // เรียงเวลาก่อน → เซลล์เป็น tiebreak (ลาทั้งวัน tMin=-1 ขึ้นบนสุด)
+    acc.sort((a, b) => a.tMin - b.tMin || a.sRank - b.sRank);
+    return acc.map((x) => x.item);
+  }, [byDay, sales, avail, salesRank]);
+
+  // วันที่ต้องมี section ในตาราง = วันที่มีคิว ∪ วันลา/หยุด ∪ วันอยู่ออฟฟิศประจำ (อนาคต)
+  // กันบั๊ก: วันลาที่ไม่มีคิวต้องโผล่ในตารางด้วย
+  const scheduleDays = useMemo(() => {
+    const set = new Set<string>(byDay.keys());
+    avail.forEach((a) => { if (a.date.startsWith(filterMonth)) set.add(a.date); });
+    // office ประจำ (อนาคต) — เพิ่มวัน Mon-Thu ที่มี office_slot
+    const officeWeekdays = new Set<number>();
+    sales.forEach((s) => { if (s.role !== "ASSISTANT") (s.office_slots ?? []).forEach((o) => officeWeekdays.add(o.weekday)); });
+    if (officeWeekdays.size) {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const [yy, mm] = filterMonth.split("-").map(Number);
+      const last = new Date(yy, mm, 0).getDate();
+      for (let dd = 1; dd <= last; dd++) {
+        const ds = `${filterMonth}-${String(dd).padStart(2, "0")}`;
+        if (ds < todayStr) continue;
+        if (officeWeekdays.has(new Date(yy, mm - 1, dd).getDay())) set.add(ds);
+      }
+    }
+    return [...set].sort();
+  }, [byDay, avail, sales, filterMonth]);
 
   // calendar: entries ในสัปดาห์ที่เลือก (queue_date มีค่า)
   const calEntries = useMemo(() => {
@@ -312,6 +422,10 @@ export default function QueuePage() {
             className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-brand-dark disabled:opacity-60">
             <Icon name="refresh" size={16} className={loading ? "animate-spin" : ""} />
             <span className="hidden sm:inline">รีเฟรช</span>
+          </button>
+          <button onClick={() => setSummaryOpen(true)}
+            className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
+            <Icon name="calendar" size={16} /> <span className="hidden sm:inline">สรุปวันลา</span>
           </button>
           {canWrite && (
             <>
@@ -482,11 +596,9 @@ export default function QueuePage() {
         ) : (
           /* ===== List View ===== */
           <>
-            {/* กล่องวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก */}
-            <LeaveStrip avail={avail} sales={sales} month={filterMonth} />
-            {list.length === 0 ? (
+            {(scheduleDays.length === 0 && pendingRows.length === 0) ? (
               <p className="text-center text-ink-3 py-12">
-                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิวในช่วงนี้"}
+                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
               </p>
             ) : (
               <>
@@ -511,11 +623,13 @@ export default function QueuePage() {
               </div>
             )}
 
-            {/* คิวที่นัดแล้ว จัดกลุ่มตามวัน */}
-            {sortedDays.length > 0 && (
+            {/* คิว + วันลา/อยู่ออฟฟิศ จัดกลุ่มตามวัน (รวมวันที่ไม่มีคิวแต่มีลา/ออฟฟิศ) */}
+            {scheduleDays.length > 0 && (
               <div className="space-y-4">
-                {sortedDays.map((d) => {
-                  const dayRows = byDay.get(d)!;
+                {scheduleDays.map((d) => {
+                  const items = buildDayItems(d);
+                  if (items.length === 0) return null;
+                  const dayRows = byDay.get(d) ?? [];
                   const c = dayColor(d);
                   const label = `${dayLabel(d)} ${thaiDate(d)}`;
                   return (
@@ -528,11 +642,13 @@ export default function QueuePage() {
                       </div>
                       {/* mobile cards */}
                       <div className="xl:hidden space-y-2">
-                        {dayRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} />)}
+                        {items.map((it, i) => it.kind === "queue"
+                          ? <MobileCard key={it.entry.id} e={it.entry} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} />
+                          : <MobileScheduleRow key={`s${i}`} it={it} />)}
                       </div>
                       {/* desktop table */}
                       <div className="hidden xl:block overflow-x-auto rounded-xl border border-gray-200/60">
-                        <DesktopTable rows={dayRows} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+                        <DayTable items={items} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
                       </div>
                     </div>
                   );
@@ -560,7 +676,19 @@ export default function QueuePage() {
         <LeaveModal
           salesList={sales}
           onClose={() => setLeaveOpen(false)}
-          onSaved={() => { setLeaveOpen(false); loadAvail(); }}
+          onSaved={(savedDate?: string, savedRecord?: AvailRow) => {
+            setLeaveOpen(false);
+            // optimistic: เติม record ที่เพิ่งสร้างเข้า state ทันที (กัน race ตอน refetch หลัง POST)
+            if (savedRecord?.id) {
+              setAvail((prev) => (prev.some((a) => a.id === savedRecord.id) ? prev : [...prev, savedRecord]));
+            }
+            // ถ้าบันทึกวันลาคนละเดือนกับที่กำลังดูอยู่ → เปลี่ยน filterMonth ให้ตรง
+            if (savedDate) {
+              const savedMonth = savedDate.slice(0, 7); // "YYYY-MM"
+              if (savedMonth !== filterMonth) setFilterMonth(savedMonth);
+            }
+            loadAvail(); // sync กับ server (เผื่อมี record อื่น)
+          }}
         />
       )}
 
@@ -569,6 +697,15 @@ export default function QueuePage() {
           salesList={sales}
           onClose={() => setOfficeOpen(false)}
           onSaved={() => { setOfficeOpen(false); load(); }}
+        />
+      )}
+
+      {summaryOpen && (
+        <LeaveSummaryModal
+          salesList={sales}
+          avail={avail}
+          month={filterMonth}
+          onClose={() => setSummaryOpen(false)}
         />
       )}
     </div>
@@ -585,71 +722,130 @@ type TableProps = {
   slotLabel: (t: string | null) => string;
 };
 
+const QueueTableHead = () => (
+  <thead>
+    <tr className="text-left text-ink-3 text-xs border-b border-gray-200/70 whitespace-nowrap bg-white/50">
+      <th className="px-2 py-2 font-semibold">สถานะ</th>
+      <th className="px-2 py-2 font-semibold">เวลา</th>
+      <th className="px-2 py-2 font-semibold">ประเภท</th>
+      <th className="px-2 py-2 font-semibold">เซลล์</th>
+      <th className="px-2 py-2 font-semibold">ผู้ช่วย</th>
+      <th className="px-2 py-2 font-semibold">LINE</th>
+      <th className="px-2 py-2 font-semibold">ชื่อ</th>
+      <th className="px-2 py-2 font-semibold">เบอร์</th>
+      <th className="px-2 py-2 font-semibold">ที่อยู่</th>
+      <th className="px-2 py-2 font-semibold">แผนที่</th>
+      <th className="px-2 py-2 font-semibold">ขนาด</th>
+      <th className="px-2 py-2 font-semibold text-right">ค่าประเมิน</th>
+      <th className="px-2 py-2 font-semibold">ชำระ</th>
+      <th className="px-2 py-2 font-semibold text-center">ใบเสร็จ</th>
+      <th className="px-2 py-2 font-semibold">หมายเหตุ</th>
+    </tr>
+  </thead>
+);
+
+function QueueRow({ e, onOpen, onToggleReceipt, canWrite, slotLabel }: {
+  e: QueueEntry; onOpen: (s: { entry: QueueEntry }) => void;
+  onToggleReceipt: (e: QueueEntry, v: boolean) => void; canWrite: boolean; slotLabel: (t: string | null) => string;
+}) {
+  const c = dayColor(e.queue_date);
+  const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
+  return (
+    <tr onClick={() => onOpen({ entry: e })}
+      className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
+      <td className="px-2 py-2.5">
+        <Badge tone={STATUS_META[e.status].tone} dot>{STATUS_META[e.status].th}</Badge>
+      </td>
+      <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">
+        {slotLabel(e.queue_time)}
+      </td>
+      <td className="px-2 py-2.5 text-ink-2">{e.job_type || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2">{e.line_contact || "—"}</td>
+      <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
+      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2 max-w-[220px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
+      <td className="px-2 py-2.5">
+        {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
+          <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
+            className="inline-flex items-center gap-1 text-brand font-medium hover:underline">
+            <Icon name={isMapUrlFn(e.location_url) ? "pin" : "external"} size={13} />
+            {isMapUrlFn(e.location_url) ? "แผนที่" : "ลิงก์"}
+          </a>
+        ) : <span className="text-ink-3">—</span>}
+      </td>
+      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
+      <td className="px-2 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2">{e.payment || "—"}</td>
+      <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+        <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
+          onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
+          className="w-4 h-4 accent-brand" />
+      </td>
+      <td className="px-2 py-2.5 text-ink-2 max-w-[160px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
+    </tr>
+  );
+}
+
+// แถวอยู่ออฟฟิศ/วันลา ในตารางวัน (สถานะ + เวลา + ป้ายยาว colspan)
+function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave" }> }) {
+  const m = dayItemMeta(it);
+  return (
+    <tr className={`border-b border-gray-200/50 ${m.rowCls} align-top`}>
+      <td className="px-2 py-2.5">
+        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${m.tagCls}`}>{m.tagText}</span>
+      </td>
+      <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">{m.timeText}</td>
+      <td className="px-2 py-2.5 text-ink-2" colSpan={13}>
+        <span className="inline-flex items-center gap-1.5">
+          <Icon name={it.kind === "office" ? "building" : "calendar"} size={13} /> {m.label}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
 function DesktopTable({ rows, onOpen, onToggleReceipt, canWrite, slotLabel }: TableProps) {
   return (
     <table className="w-full text-sm">
-      <thead>
-        <tr className="text-left text-ink-3 text-xs border-b border-gray-200/70 whitespace-nowrap bg-white/50">
-          <th className="px-2 py-2 font-semibold">สถานะ</th>
-          <th className="px-2 py-2 font-semibold">เวลา</th>
-          <th className="px-2 py-2 font-semibold">ประเภท</th>
-          <th className="px-2 py-2 font-semibold">เซลล์</th>
-          <th className="px-2 py-2 font-semibold">ผู้ช่วย</th>
-          <th className="px-2 py-2 font-semibold">LINE</th>
-          <th className="px-2 py-2 font-semibold">ชื่อ</th>
-          <th className="px-2 py-2 font-semibold">เบอร์</th>
-          <th className="px-2 py-2 font-semibold">ที่อยู่</th>
-          <th className="px-2 py-2 font-semibold">แผนที่</th>
-          <th className="px-2 py-2 font-semibold">ขนาด</th>
-          <th className="px-2 py-2 font-semibold text-right">ค่าประเมิน</th>
-          <th className="px-2 py-2 font-semibold">ชำระ</th>
-          <th className="px-2 py-2 font-semibold text-center">ใบเสร็จ</th>
-          <th className="px-2 py-2 font-semibold">หมายเหตุ</th>
-        </tr>
-      </thead>
+      <QueueTableHead />
       <tbody>
-        {rows.map((e) => {
-          const c = dayColor(e.queue_date);
-          const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
-          return (
-            <tr key={e.id} onClick={() => onOpen({ entry: e })}
-              className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
-              <td className="px-2 py-2.5">
-                <Badge tone={STATUS_META[e.status].tone} dot>{STATUS_META[e.status].th}</Badge>
-              </td>
-              <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">
-                {slotLabel(e.queue_time)}
-              </td>
-              <td className="px-2 py-2.5 text-ink-2">{e.job_type || "—"}</td>
-              <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
-              <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
-              <td className="px-2 py-2.5 text-ink-2">{e.line_contact || "—"}</td>
-              <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
-              <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
-              <td className="px-2 py-2.5 text-ink-2 max-w-[220px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
-              <td className="px-2 py-2.5">
-                {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
-                  <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
-                    className="inline-flex items-center gap-1 text-brand font-medium hover:underline">
-                    <Icon name={isMapUrlFn(e.location_url) ? "pin" : "external"} size={13} />
-                    {isMapUrlFn(e.location_url) ? "แผนที่" : "ลิงก์"}
-                  </a>
-                ) : <span className="text-ink-3">—</span>}
-              </td>
-              <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
-              <td className="px-2 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
-              <td className="px-2 py-2.5 text-ink-2">{e.payment || "—"}</td>
-              <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
-                <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
-                  onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
-                  className="w-4 h-4 accent-brand" />
-              </td>
-              <td className="px-2 py-2.5 text-ink-2 max-w-[160px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
-            </tr>
-          );
-        })}
+        {rows.map((e) => (
+          <QueueRow key={e.id} e={e} onOpen={onOpen} onToggleReceipt={onToggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+        ))}
       </tbody>
     </table>
+  );
+}
+
+// ตารางวัน — คิว + อยู่ออฟฟิศ + วันลา แทรกรวมกัน
+function DayTable({ items, onOpen, onToggleReceipt, canWrite, slotLabel }: {
+  items: DayItem[]; onOpen: (s: { entry: QueueEntry }) => void;
+  onToggleReceipt: (e: QueueEntry, v: boolean) => void; canWrite: boolean; slotLabel: (t: string | null) => string;
+}) {
+  return (
+    <table className="w-full text-sm">
+      <QueueTableHead />
+      <tbody>
+        {items.map((it, i) => it.kind === "queue"
+          ? <QueueRow key={it.entry.id} e={it.entry} onOpen={onOpen} onToggleReceipt={onToggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+          : <OfficeLeaveRow key={`s${i}`} it={it} />)}
+      </tbody>
+    </table>
+  );
+}
+
+// การ์ดอยู่ออฟฟิศ/วันลา (mobile)
+function MobileScheduleRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave" }> }) {
+  const m = dayItemMeta(it);
+  return (
+    <div className={`rounded-xl px-3.5 py-2.5 border border-gray-200/60 ${m.rowCls} flex items-center gap-2 text-sm`}>
+      <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${m.tagCls}`}>{m.tagText}</span>
+      <Icon name={it.kind === "office" ? "building" : "calendar"} size={13} className="text-ink-3" />
+      <span className="text-ink-2">{m.label}</span>
+      <span className="ml-auto text-xs text-ink-3 tabular-nums">{m.timeText}</span>
+    </div>
   );
 }
 
@@ -713,47 +909,6 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
             onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
             className="w-4 h-4 accent-brand" /> ใบเสร็จ
         </label>
-      </div>
-    </div>
-  );
-}
-
-// กล่องสรุปวันลา / อยู่ออฟฟิศ ของเดือนที่เลือก (อ่านจาก avail ที่โหลดไว้แล้ว)
-const AVAIL_KIND_META: Record<string, { th: string; cls: string }> = {
-  LEAVE_FULL:  { th: "ลาทั้งวัน", cls: "bg-red-50 text-red-700 border-red-200" },
-  LEAVE_HALF:  { th: "ลาครึ่งวัน", cls: "bg-orange-50 text-orange-700 border-orange-200" },
-  OFFICE_HALF: { th: "อยู่ออฟฟิศเช้า", cls: "bg-sky-50 text-sky-700 border-sky-200" },
-  HOLIDAY:     { th: "วันหยุด", cls: "bg-gray-100 text-gray-600 border-gray-200" },
-};
-
-function LeaveStrip({ avail, sales, month }: { avail: AvailRow[]; sales: QueueSales[]; month: string }) {
-  const items = useMemo(() => {
-    const nameOf = (id: string) => sales.find((s) => s.id === id)?.name ?? "—";
-    return avail
-      .filter((a) => a.date.startsWith(month))
-      .sort((a, b) => a.date.localeCompare(b.date) || nameOf(a.sales_id).localeCompare(nameOf(b.sales_id), "th"))
-      .map((a) => ({ ...a, name: nameOf(a.sales_id) }));
-  }, [avail, sales, month]);
-
-  if (!items.length) return null;
-  return (
-    <div className="mb-5 rounded-xl border border-gray-200/70 bg-white/40 p-3">
-      <div className="flex items-center gap-1.5 mb-2 text-sm font-semibold text-ink-2">
-        <Icon name="calendar" size={14} /> วันลา / อยู่ออฟฟิศ (เดือนนี้)
-        <span className="tabular-nums text-xs text-ink-3">{items.length} รายการ</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((a) => {
-          const k = AVAIL_KIND_META[a.kind] ?? { th: a.kind, cls: "bg-gray-100 text-gray-600 border-gray-200" };
-          const half = a.kind === "LEAVE_HALF" && a.half ? (a.half === "AM" ? " เช้า" : " บ่าย") : "";
-          return (
-            <span key={a.id} className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs ${k.cls}`}>
-              <span className="tabular-nums opacity-90">{thaiDate(a.date)}</span>
-              <span className="font-semibold">{a.name}</span>
-              <span className="opacity-80">{k.th}{half}</span>
-            </span>
-          );
-        })}
       </div>
     </div>
   );

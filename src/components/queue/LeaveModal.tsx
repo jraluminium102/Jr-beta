@@ -43,7 +43,7 @@ export function LeaveModal({
 }: {
   salesList: QueueSales[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (savedDate?: string, savedRecord?: AvailRow) => void;
 }) {
   const [f, setF] = useState<FormState>(initForm);
   const [busy, setBusy] = useState(false);
@@ -60,14 +60,15 @@ export function LeaveModal({
     if (f.kind === "LEAVE_HALF" && !f.half) { setErr("กรุณาระบุช่วงเวลา (เช้า/บ่าย)"); return; }
     setBusy(true); setErr("");
     try {
-      await api.post("/queue/availability", {
+      const res = await api.post<AvailRow>("/queue/availability", {
         sales_id: f.sales_id,
         date: f.date,
         kind: f.kind,
         half: f.half || null,
         note: f.note || null,
       });
-      onSaved();
+      // ส่งทั้งวันที่ + record ที่เพิ่งสร้าง → parent เติมเข้า state ทันที (optimistic, กัน race ตอน refetch)
+      onSaved(f.date, res.data ?? undefined);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
       setBusy(false);

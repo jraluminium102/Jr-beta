@@ -80,6 +80,7 @@ export type AvailRow = {
   date: string;
   kind: string;
   half: string | null;
+  note?: string | null;
 };
 
 // ---- component --------------------------------------------------------------
@@ -227,9 +228,10 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
                 const isPMLeave = av && av.kind === "LEAVE_HALF" && av.half === "PM";
-                // (0030) วันอยู่ออฟฟิศประจำ (soft — ยังลงคิวทับได้ แต่จะเตือน)
-                const isOfficeAM = officeIndex[s.id]?.has(`${dow}-AM`) ?? false;
-                const isOfficePM = officeIndex[s.id]?.has(`${dow}-PM`) ?? false;
+                // (0030) วันอยู่ออฟฟิศประจำ (soft — ยังลงคิวทับได้ แต่จะเตือน) · เฉพาะวันนี้เป็นต้นไป ไม่ย้อนหลัง
+                const isFuture = d >= todayStr;
+                const isOfficeAM = isFuture && (officeIndex[s.id]?.has(`${dow}-AM`) ?? false);
+                const isOfficePM = isFuture && (officeIndex[s.id]?.has(`${dow}-PM`) ?? false);
 
                 return (
                   <>
