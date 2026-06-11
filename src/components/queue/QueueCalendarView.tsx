@@ -143,6 +143,15 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
     return m;
   }, [avail]);
 
+  // (0030) วันอยู่ออฟฟิศประจำ: [salesId] → Set("<weekday>-AM"/"<weekday>-PM")
+  const officeIndex = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    salesRows.forEach((s) => {
+      m[s.id] = new Set((s.office_slots ?? []).map((o) => `${o.weekday}-${o.half}`));
+    });
+    return m;
+  }, [salesRows]);
+
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
@@ -218,6 +227,9 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
                 const isPMLeave = av && av.kind === "LEAVE_HALF" && av.half === "PM";
+                // (0030) วันอยู่ออฟฟิศประจำ (soft — ยังลงคิวทับได้ แต่จะเตือน)
+                const isOfficeAM = officeIndex[s.id]?.has(`${dow}-AM`) ?? false;
+                const isOfficePM = officeIndex[s.id]?.has(`${dow}-PM`) ?? false;
 
                 return (
                   <>
@@ -225,14 +237,14 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                     <td key={`${s.id}-${d}-am`}
                       className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : "bg-sky-50/30"}`}>
                       {!isSun && !isFullLeave && !isAMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} office={isOfficeAM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                     {/* Slot บ่าย 14:00 */}
                     <td key={`${s.id}-${d}-pm`}
                       className={`px-1 py-1 align-top border-r border-gray-100/30 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : "bg-amber-50/30"}`}>
                       {!isSun && !isFullLeave && !isPMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} office={isOfficePM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                   </>
@@ -248,8 +260,24 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
 
 // ---- sub-components ---------------------------------------------------------
 
-function SlotCell({ entries, onClick, onAdd }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void; onAdd?: () => void }) {
+function SlotCell({ entries, onClick, onAdd, office }: { entries: QueueEntry[]; onClick: (e: QueueEntry) => void; onAdd?: () => void; office?: boolean }) {
   if (!entries.length) {
+    // (0030) วันอยู่ออฟฟิศประจำ — แสดงป้าย แต่ยังกดลงคิวทับได้ (soft, จะเตือนในฟอร์ม)
+    if (office) {
+      const tag = (
+        <span className="inline-flex items-center gap-0.5 text-[10px] text-indigo-600 bg-indigo-50 rounded px-1.5 py-0.5 font-medium">
+          <Icon name="building" size={9} /> อยู่ออฟฟิศ
+        </span>
+      );
+      return onAdd ? (
+        <button type="button" onClick={onAdd} title="อยู่ออฟฟิศประจำ — กดเพื่อลงคิวทับ (จะเตือน)"
+          className="press h-8 w-full flex items-center justify-center hover:brightness-95 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+          {tag}
+        </button>
+      ) : (
+        <div className="h-8 flex items-center justify-center">{tag}</div>
+      );
+    }
     if (onAdd) {
       return (
         <button

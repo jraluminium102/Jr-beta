@@ -189,6 +189,16 @@ export function QueueModal({
         else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
         else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
 
+        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน)
+        const half = isAMSlot ? "AM" : isPMSlot ? "PM" : null;
+        if (half) {
+          const selSales = salesList.find((s) => s.id === f.sales_id);
+          const wd = new Date(date + "T00:00:00").getDay();
+          if ((selSales?.office_slots ?? []).some((o) => o.weekday === wd && o.half === half)) {
+            found.push({ kind: "warn", msg: `${selSales?.name ?? "เซลล์"} อยู่ออฟฟิศประจำช่วง${isAMSlot ? "เช้า" : "บ่าย"}วันนี้ — ปกติไม่ออกประเมิน` });
+          }
+        }
+
         // ตรวจชนคิวเดิม
         const sameSlot = (entryRes.data ?? []).filter((e) =>
           e.sales_id === f.sales_id &&

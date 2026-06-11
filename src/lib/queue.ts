@@ -4,6 +4,8 @@ export type QueueStatus = "PENDING" | "PROPOSED" | "CONFIRMED" | "DONE" | "CANCE
 export type QueueTeam = "BKK" | "PHUKET";
 export type JobSize = "SINGLE" | "MULTI" | "FULLDAY";
 export type QueueSalesRole = "MAIN" | "ASSISTANT";  // (0019)
+export type OfficeHalf = "AM" | "PM";
+export type OfficeSlot = { weekday: number; half: OfficeHalf };  // (0030) weekday 0=อา..6=ส
 
 export type QueueSales = {
   id: string;
@@ -17,6 +19,7 @@ export type QueueSales = {
   active: boolean;
   role: QueueSalesRole;             // (0019) ผู้ช่วยเซลล์
   parent_sales_id: string | null;   // (0019) สังกัดเซลล์หลัก
+  office_slots?: OfficeSlot[] | null; // (0030) วันอยู่ออฟฟิศประจำ (ครึ่งวัน)
 };
 
 export type QueueEntry = {

@@ -6,6 +6,7 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { QueueModal } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
+import { OfficeScheduleModal } from "@/components/queue/OfficeScheduleModal";
 import {
   QueueCalendarView, toIsoWeek,
   type AvailRow,
@@ -109,6 +110,7 @@ export default function QueuePage() {
   const [q, setQ] = useState("");
   const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [officeOpen, setOfficeOpen] = useState(false);
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -316,6 +318,10 @@ export default function QueuePage() {
               <button onClick={() => setLeaveOpen(true)}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
                 <Icon name="calendar" size={16} /> วันลา
+              </button>
+              <button onClick={() => setOfficeOpen(true)}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
+                <Icon name="building" size={16} /> วันออฟฟิศ
               </button>
               <button onClick={() => setModal({ entry: null })}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
@@ -555,6 +561,14 @@ export default function QueuePage() {
           salesList={sales}
           onClose={() => setLeaveOpen(false)}
           onSaved={() => { setLeaveOpen(false); loadAvail(); }}
+        />
+      )}
+
+      {officeOpen && (
+        <OfficeScheduleModal
+          salesList={sales}
+          onClose={() => setOfficeOpen(false)}
+          onSaved={() => { setOfficeOpen(false); load(); }}
         />
       )}
     </div>
