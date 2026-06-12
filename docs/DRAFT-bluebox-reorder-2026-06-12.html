@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAFT — กล่องฟ้า bluebox reorder (เดโม)</title>
+<style>
+  :root{
+    --red:#B3151D; --red-dark:#9A1119; --redbg:#FFF0F0;
+    --blue:#1E5AA8; --bluebg:#EAF3FF; --blueline:#9DBCE0;
+    --ink:#1a1a1a; --line:#CBD5E1;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Noto Sans Thai','Sarabun',sans-serif; font-size:14px; background:#f5f7fa; color:var(--ink); }
+
+  /* ===== DEMO BANNER ===== */
+  .demo-banner{
+    background:var(--red); color:#fff; text-align:center;
+    padding:10px 16px; font-weight:700; font-size:15px; letter-spacing:.03em;
+  }
+  .demo-banner span{ opacity:.85; font-size:12px; font-weight:400; margin-left:8px; }
+
+  /* ===== PAGE LAYOUT ===== */
+  .page{ max-width:900px; margin:0 auto; padding:20px 16px 40px; }
+  h1{ font-size:18px; font-weight:800; color:var(--red); margin-bottom:6px; }
+  .subtitle{ font-size:13px; color:#555; margin-bottom:24px; }
+
+  /* ===== COMPARISON CONTAINER ===== */
+  .compare{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    margin-bottom:32px;
+  }
+  @media(max-width:640px){ .compare{ grid-template-columns:1fr; } }
+
+  .col-head{
+    text-align:center; font-size:13px; font-weight:700;
+    padding:7px 0; border-radius:8px 8px 0 0; margin-bottom:-1px;
+  }
+  .col-head.before{ background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; }
+  .col-head.after{ background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
+
+  /* ===== FORM PANEL (simulates .ch box) ===== */
+  .form-panel{
+    background:#fff; border:1px solid var(--line);
+    border-radius:0 0 12px 12px; padding:14px; display:flex;
+    flex-direction:column; gap:10px;
+  }
+  .form-panel.before{ border:1px solid #FCA5A5; }
+  .form-panel.after { border:1px solid #6EE7B7; }
+
+  /* ===== SIMULATED MAIN-FORM ROWS (above the blue box) ===== */
+  .main-row{
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    background:#f9fafb; border:1px solid var(--line);
+    border-radius:8px; padding:7px 10px;
+    font-size:13px; color:#444;
+  }
+  .main-row label{ font-size:12px; color:#888; }
+  .main-row .stepper{
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .stepper button{
+    width:32px; height:32px; border:1px solid var(--line); border-radius:6px;
+    background:#fff; cursor:pointer; font-size:16px; line-height:1;
+  }
+  .stepper input{
+    width:44px; height:32px; text-align:center; border:1px solid var(--line);
+    border-radius:6px; font-size:14px;
+  }
+
+  /* ===== BLUE BOX ===== */
+  .bluebox{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    background:var(--bluebg); border:1px solid var(--blueline);
+    border-radius:8px; padding:7px 11px; margin:2px 0;
+    width:100%;
+  }
+  .bluebox-label{
+    font-size:12px; color:var(--blue); font-weight:700;
+    white-space:nowrap;
+  }
+
+  /* ===== OPT LABEL ===== */
+  .opt{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:13px; white-space:nowrap; flex-shrink:0;
+  }
+  .opt select{
+    height:32px; border:1px solid var(--line); border-radius:6px;
+    padding:0 6px; font-size:13px; background:#fff;
+  }
+  .opt input[type=number]{
+    height:30px; border:1px solid var(--line); border-radius:6px;
+    padding:0 6px; font-size:13px;
+  }
+
+  /* ===== CHIP ===== */
+  .chip-group{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-height:40px; padding:6px 12px;
+    border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink);
+    font-size:13px; font-weight:600; cursor:pointer;
+    transition:background .12s, border-color .12s;
+    -webkit-tap-highlight-color:transparent;
+    white-space:nowrap;
+  }
+  .chip:active{ background:var(--redbg); }
+  .chip.on{ background:var(--red-dark); border-color:var(--red-dark); color:#fff; }
+
+  /* ===== INLINE CHIP ROW — for rail chips (after fix) ===== */
+  .inline-chip-row{
+    display:inline-flex; align-items:center; gap:8px;
+    flex-wrap:nowrap;
+  }
+  .inline-chip-row .opt-label{ font-size:13px; white-space:nowrap; }
+
+  /* ===== ANNOTATION ===== */
+  .annotation{
+    font-size:11px; padding:6px 10px; border-radius:6px; margin-top:4px;
+  }
+  .annotation.bad{ background:#FEF2F2; color:#991B1B; border-left:3px solid #EF4444; }
+  .annotation.good{ background:#F0FDF4; color:#065F46; border-left:3px solid #22C55E; }
+
+  /* ===== ARROW DIVIDER ===== */
+  .arrow-divider{
+    text-align:center; font-size:24px; color:var(--red); padding:12px 0;
+    display:none;
+  }
+  @media(max-width:640px){ .arrow-divider{ display:block; } }
+
+  /* ===== CHANGE LIST ===== */
+  .change-list{
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    padding:16px; margin-bottom:24px;
+  }
+  .change-list h2{ font-size:15px; font-weight:700; margin-bottom:12px; color:var(--red); }
+  .change-list table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .change-list th{
+    text-align:left; padding:6px 10px; background:#f1f5f9;
+    border-bottom:2px solid var(--line); color:#334155;
+  }
+  .change-list td{ padding:6px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+  .change-list tr:last-child td{ border-bottom:none; }
+  .tag{
+    display:inline-block; padding:2px 8px; border-radius:20px;
+    font-size:11px; font-weight:700;
+  }
+  .tag.order{ background:#FEF3C7; color:#92400E; }
+  .tag.layout{ background:#EDE9FE; color:#4C1D95; }
+  .tag.css{ background:#E0F2FE; color:#0C4A6E; }
+
+  /* ===== SECTION HEADER ===== */
+  .sec-head{
+    font-size:13px; font-weight:700; color:#334155;
+    padding:10px 0 6px; border-bottom:2px solid var(--line); margin-bottom:16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-banner">
+  เดโม UX — กล่องฟ้า บานเลื่อน/บานเปิด (reorder + rail ปรับ layout)
+  <span>ราคาในเดโมนี้เป็นตัวอย่างเท่านั้น ไม่ใช่ราคาจริง</span>
+</div>
+
+<div class="page">
+  <h1>DRAFT — Bluebox Reorder 2026-06-12</h1>
+  <p class="subtitle">Before / After เปรียบเทียบลำดับ field + ปุ่มราง · สำหรับ dev implement</p>
+
+  <!-- ===== CHANGE TABLE ===== -->
+  <div class="change-list">
+    <h2>สรุปการเปลี่ยนแปลง</h2>
+    <table>
+      <thead>
+        <tr><th>จุด</th><th>Before</th><th>After</th><th>ประเภท</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ลำดับ field</td>
+          <td>label → panels-slot → ชนิดการเปิด → ติดตาย/เปิด</td>
+          <td>label → ชนิดการเปิด → panels-slot → ติดตาย/เปิด</td>
+          <td><span class="tag order">ลำดับ</span></td>
+        </tr>
+        <tr>
+          <td>ปุ่มราง</td>
+          <td><code>width:100%</code> (กินแถว)</td>
+          <td>ลบ <code>width:100%</code> ออกจาก label wrapper · ชิปและ label อยู่แถวเดียว</td>
+          <td><span class="tag css">CSS</span></td>
+        </tr>
+        <tr>
+          <td>จุด apply</td>
+          <td colspan="2">L2550 (บานเลื่อน/เลื่อนภายใน) และ L2582 (บานเปิด/ติดตาย) — ทั้งสองจุด</td>
+          <td><span class="tag layout">HTML</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== BEFORE / AFTER COMPARE ===== -->
+  <div class="sec-head">บานเลื่อน (Sliding) — รางล่าง (เคสที่ซับซ้อนสุด)</div>
+
+  <div class="compare">
+    <!-- BEFORE -->
+    <div>
+      <div class="col-head before">BEFORE — ลำดับปัจจุบัน</div>
+      <div class="form-panel before">
+
+        <!-- main form row (panels อยู่นอก blue box = ก่อน blue box จะมา) -->
+        <div class="main-row">
+          <label>จำนวนบานทั้งหมด</label>
+          <div class="stepper">
+            <button>−</button>
+            <input type="number" value="2" style="width:44px;">
+            <button>+</button>
+          </div>
+          <span style="font-size:12px;color:#888;">บาน</span>
+        </div>
+
+        <!-- Blue box BEFORE -->
+        <div class="bluebox">
+          <span class="bluebox-label">🔢 บานเลื่อน:</span>
+          <!-- panels-slot อยู่ก่อน opentype -->
+          <span style="font-size:11px;color:#9DBCE0;font-style:italic;">[panels-slot]</span>
+          <label class="opt">ชนิดการเปิด
+            <select>
+              <option disabled selected>— เลือกลักษณะการเปิด —</option>
+              <option>บานเลื่อน</option>
+              <option>บานเลื่อนสลับ</option>
+              <option>บานเลื่อนเปิดคู่กลาง</option>
+              <option>บานเลื่อนลากจูง</option>
+            </select>
+          </label>
+          <label class="opt">ติดตาย
+            <input type="number" value="0" style="width:45px;">
+            บาน · เปิด <span style="font-weight:700;color:#1E7E45;">2</span> บาน
+          </label>
+          <!-- ราง — กินเต็มแถว -->
+          <label class="opt" style="width:100%;">ราง
+            <div class="chip-group">
+              <button type="button" class="chip on" onclick="chToggleBefore(this)">รางกันน้ำ</button>
+              <button type="button" class="chip" onclick="chToggleBefore(this)">รางเตี้ย 7 มม.</button>
+            </div>
+          </label>
+        </div>
+
+        <div class="annotation bad">
+          จุดที่งง: จำนวนบาน (main form) อยู่ก่อน ชนิดการเปิด (blue box) — ต้องเลือกชนิดก่อนถึงจะรู้ว่าจำนวนบานเหมาะสมไหม<br>
+          ราง: label "ราง" + ชิป 2 ปุ่มกินแถวเต็ม — เปลืองพื้นที่
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div>
+      <div class="col-head after">AFTER — ลำดับใหม่</div>
+      <div class="form-panel after">
+
+        <!-- main form row (panels ยังอยู่ที่นี่ก่อน relocation) -->
+        <div class="main-row" style="opacity:.4;font-size:12px;">
+          <span style="font-style:italic;">จำนวนบาน (ถูก relocate เข้า blue box ด้านล่าง)</span>
+        </div>
+
+        <!-- Blue box AFTER -->
+        <div class="bluebox">
+          <span class="bluebox-label">🔢 บานเลื่อน:</span>
+          <!-- opentype ก่อน -->
+          <label class="opt">ชนิดการเปิด
+            <select onchange="syncOpentype(this)">
+              <option disabled selected>— เลือกลักษณะการเปิด —</option>
+              <option>บานเลื่อน</option>
+              <option>บานเลื่อนสลับ</option>
+              <option>บานเลื่อนเปิดคู่กลาง</option>
+              <option>บานเลื่อนลากจูง</option>
+            </select>
+          </label>
+          <!-- panels-slot ตามหลัง opentype -->
+          <label class="opt">จำนวนบาน
+            <div class="stepper">
+              <button type="button" onclick="stepAfter(this,-1)">−</button>
+              <input type="number" class="panels-after" value="2" style="width:44px;">
+              <button type="button" onclick="stepAfter(this,1)">+</button>
+            </div>
+            บาน
+          </label>
+          <label class="opt">ติดตาย
+            <input type="number" class="fixed-after" value="0" style="width:45px;" oninput="syncOpen(this)">
+            บาน · เปิด <span class="opencount-after" style="font-weight:700;color:#1E7E45;">2</span> บาน
+          </label>
+          <!-- ราง — ไม่มี width:100% แล้ว → อยู่ inline -->
+          <label class="opt">ราง
+            <div class="chip-group">
+              <button type="button" class="chip on" onclick="chToggleAfter(this)">รางกันน้ำ</button>
+              <button type="button" class="chip" onclick="chToggleAfter(this)">รางเตี้ย 7 มม.</button>
+            </div>
+          </label>
+        </div>
+
+        <div class="annotation good">
+          Flow: เลือกชนิดก่อน → ระบุจำนวนบาน → ติดตาย/เปิด (ชัดเจน ไม่งง)<br>
+          ราง: อยู่แถวเดียวกับชิป — กระชับ ประหยัดพื้นที่ ~40px
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== บานเปิด ===== -->
+  <div class="sec-head">บานเปิด / ติดตาย — L2582</div>
+  <div class="compare">
+    <div>
+      <div class="col-head before">BEFORE</div>
+      <div class="form-panel before">
+        <div class="main-row">
+          <label>จำนวนบานทั้งหมด</label>
+          <div class="stepper">
+            <button>−</button><input type="number" value="1" style="width:44px;"><button>+</button>
+          </div>
+          <span style="font-size:12px;color:#888;">บาน</span>
+        </div>
+        <div class="bluebox">
+          <span class="bluebox-label">🔢 บานเปิด:</span>
+          <span style="font-size:11px;color:#9DBCE0;font-style:italic;">[panels-slot]</span>
+        </div>
+        <div class="annotation bad">
+          panels-slot ว่างเปล่า (บานเปิดไม่มี field อื่นใน bluebox) — panel อยู่นอก bluebox ไม่ได้ follow ชนิด
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="col-head after">AFTER</div>
+      <div class="form-panel after">
+        <div class="main-row" style="opacity:.4;font-size:12px;">
+          <span style="font-style:italic;">จำนวนบาน (relocate เข้า blue box)</span>
+        </div>
+        <div class="bluebox">
+          <span class="bluebox-label">🔢 บานเปิด:</span>
+          <!-- panels-slot อยู่หลัง label เสมอ (ไม่มี opentype สำหรับ cat=บานเปิด) -->
+          <label class="opt">จำนวนบาน
+            <div class="stepper">
+              <button type="button">−</button>
+              <input type="number" value="1" style="width:44px;">
+              <button type="button">+</button>
+            </div>
+            บาน
+          </label>
+        </div>
+        <div class="annotation good">
+          bluebox บานเปิด: ลำดับเดิมคงไว้ (ไม่มี opentype ใน cat=บานเปิด) — panels ตามทันที
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MOBILE PREVIEW NOTE ===== -->
+  <div style="background:#FFF7ED;border-left:4px solid #F59E0B;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:13px;">
+    <strong>หมายเหตุสำหรับ dev:</strong> ชิปปุ่มราง <code>min-height:40px</code> (chip-sm) เกิน 40px tap-target ตามมาตรฐาน — OK ไม่ต้องปรับเพิ่ม
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  // chip toggle (before group)
+  function chToggleBefore(btn){
+    btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    btn.classList.add('on');
+  }
+  // chip toggle (after group)
+  function chToggleAfter(btn){
+    btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    btn.classList.add('on');
+  }
+  // stepper (after)
+  function stepAfter(btn, delta){
+    var inp = btn.closest('.opt').querySelector('.panels-after') ||
+              btn.closest('.bluebox').querySelector('.panels-after');
+    if(!inp) return;
+    var v = (parseInt(inp.value)||0) + delta;
+    if(v < 1) v = 1;
+    inp.value = v;
+    syncOpenFromPanels(btn.closest('.bluebox'));
+  }
+  function syncOpenFromPanels(box){
+    var p = parseInt((box.querySelector('.panels-after')||{}).value)||0;
+    var f = parseInt((box.querySelector('.fixed-after')||{}).value)||0;
+    var oc = box.querySelector('.opencount-after');
+    if(oc) oc.textContent = Math.max(0, p - f);
+  }
+  function syncOpen(inp){
+    syncOpenFromPanels(inp.closest('.bluebox'));
+  }
+  // opentype sync (demo only — auto-set ติดตาย เปิดคู่กลาง=2)
+  function syncOpentype(sel){
+    var box = sel.closest('.bluebox');
+    var fixed = box.querySelector('.fixed-after');
+    if(!fixed) return;
+    if(sel.value === 'บานเลื่อนเปิดคู่กลาง') fixed.value = 2;
+    else if(['บานเลื่อนสลับ','บานเลื่อนลากจูง'].includes(sel.value)) fixed.value = 0;
+    syncOpenFromPanels(box);
+  }
+</script>
+</body>
+</html>

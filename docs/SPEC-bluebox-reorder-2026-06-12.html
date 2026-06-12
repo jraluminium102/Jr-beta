@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPEC — Bluebox Reorder 2026-06-12</title>
+<style>
+  :root{ --red:#B3151D; --ink:#1a1a1a; --line:#CBD5E1; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Noto Sans Thai','Sarabun',monospace; font-size:13px; background:#f8fafc; color:var(--ink); }
+  .page{ max-width:860px; margin:0 auto; padding:24px 16px 48px; }
+  h1{ font-size:20px; font-weight:800; color:var(--red); margin-bottom:4px; }
+  .meta{ font-size:12px; color:#64748b; margin-bottom:24px; }
+  h2{ font-size:15px; font-weight:700; color:#1E40AF; border-left:4px solid #1E40AF; padding-left:10px; margin:24px 0 10px; }
+  h3{ font-size:13px; font-weight:700; color:#334155; margin:16px 0 6px; }
+  p{ font-size:13px; line-height:1.7; color:#334155; margin-bottom:8px; }
+  ul{ padding-left:20px; margin-bottom:10px; }
+  li{ line-height:1.8; font-size:13px; }
+  pre{
+    background:#0F172A; color:#E2E8F0; border-radius:8px;
+    padding:14px 16px; overflow-x:auto; font-size:12px;
+    line-height:1.6; margin:8px 0 14px; white-space:pre;
+  }
+  code{ background:#F1F5F9; color:#B91C1C; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .tag{
+    display:inline-block; padding:2px 8px; border-radius:20px;
+    font-size:11px; font-weight:700; margin-right:4px;
+  }
+  .tag.html{ background:#DBEAFE; color:#1E40AF; }
+  .tag.css{ background:#F3E8FF; color:#6B21A8; }
+  .tag.note{ background:#FEF9C3; color:#713F12; }
+  .note-box{
+    background:#FFF7ED; border-left:4px solid #F59E0B;
+    border-radius:0 8px 8px 0; padding:10px 14px;
+    margin:10px 0; font-size:12px; color:#78350F;
+  }
+  .ok-box{
+    background:#F0FDF4; border-left:4px solid #22C55E;
+    border-radius:0 8px 8px 0; padding:10px 14px;
+    margin:10px 0; font-size:12px; color:#14532D;
+  }
+  hr{ border:none; border-top:1px solid var(--line); margin:20px 0; }
+  .line-ref{ color:#64748B; font-size:11px; }
+  /* diff highlight */
+  .del{ background:#FEE2E2; color:#991B1B; }
+  .ins{ background:#D1FAE5; color:#065F46; }
+  .ctx{ color:#64748B; }
+  .diff-table{ width:100%; border-collapse:collapse; font-size:12px; font-family:monospace; }
+  .diff-table td{ padding:2px 10px; vertical-align:top; }
+  .diff-table .ln{ color:#94A3B8; user-select:none; width:40px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>SPEC — กล่องฟ้า Bluebox Reorder</h1>
+<p class="meta">วันที่: 2026-06-12 · ไฟล์เป้าหมาย: <code>public/calculator/index.html</code> · ออกโดย: UX Agent</p>
+
+<hr>
+
+<h2>1. บริบท + เป้าหมาย</h2>
+<p>กล่องฟ้า <code>.sliding-main-block</code> สร้างขึ้น 2 จุดใน <code>buildItemOpts()</code>:</p>
+<ul>
+  <li><strong>จุด A</strong> — บานเลื่อน/เลื่อนภายใน (L2545–2572) มี field: ชนิดการเปิด + ติดตาย/เปิด + ราง</li>
+  <li><strong>จุด B</strong> — บานเปิด/ติดตาย (L2581–2586) มีแค่ label + panels-slot</li>
+</ul>
+<p>หลัง build เสร็จ relocation logic (L2849–2855) ย้าย <code>.sliding-main-block</code> ขึ้นฟอร์มหลัก และดึง <code>.i-panels-wrap</code> (จำนวนบาน) เข้ากล่องฟ้าผ่าน <code>.smb-panels-slot</code></p>
+
+<p><strong>ปัญหาปัจจุบัน (2 ข้อ):</strong></p>
+<ul>
+  <li>ลำดับ: <code>smb-panels-slot</code> วางก่อน <code>o-opentype</code> → จำนวนบานมาก่อนชนิด ขัด flow ธรรมชาติ</li>
+  <li>ปุ่มราง: <code>style="width:100%"</code> บน <code>&lt;label&gt;</code> wrapper ทำให้ชิปกินแถวเต็ม เปลืองพื้นที่</li>
+</ul>
+
+<hr>
+
+<h2>2. การเปลี่ยนแปลง — จุด A (L2550–2560)</h2>
+<p class="line-ref">บรรทัดอ้างอิง: ~L2550</p>
+
+<span class="tag html">HTML</span> <strong>ย้าย <code>&lt;span class="smb-panels-slot"&gt;</code> ไปหลัง opentype label</strong>
+
+<h3>diff (จุด A — กล่องฟ้า บานเลื่อน)</h3>
+<pre>
+<span class="ctx">h+='&lt;div class="full sliding-main-block" ...&gt;';</span>
+<span class="ctx">h+='&lt;span style="font-size:12px;color:#1E5AA8;font-weight:700;"&gt;🔢 บานเลื่อน:&lt;/span&gt;';</span>
+<span class="del">- h+='&lt;span class="smb-panels-slot"&gt;&lt;/span&gt;';   // ← ลบออกจากตำแหน่งนี้</span>
+<span class="ctx">h+='&lt;label class="opt"&gt;ชนิดการเปิด &lt;select class="o-opentype" ...&gt;...&lt;/select&gt;&lt;/label&gt;';</span>
+<span class="ins">+ h+='&lt;span class="smb-panels-slot"&gt;&lt;/span&gt;';   // ← ย้ายมาหลัง opentype</span>
+<span class="ctx">h+='&lt;label class="opt"&gt;ติดตาย &lt;input ...&gt; บาน · เปิด ...&lt;/label&gt;';</span>
+</pre>
+
+<h3>diff (จุด A — label ราง, บรรทัด ~L2558)</h3>
+<span class="tag css">CSS</span> <strong>ลบ <code>style="width:100%;"</code> ออกจาก <code>&lt;label class="opt"&gt;</code> ของราง</strong>
+<pre>
+<span class="del">- h+='&lt;label class="opt" style="width:100%;"&gt;ราง ...</span>
+<span class="ins">+ h+='&lt;label class="opt"&gt;ราง ...</span>
+</pre>
+
+<div class="ok-box">
+  ผลลัพธ์: ชิปรางกันน้ำ / รางเตี้ย 7 มม. ไม่กินแถวเต็มอีกต่อไป — นั่งอยู่ในแถวเดียวกับ label "ราง" · กระชับขึ้น ~40px แนวตั้ง
+</div>
+
+<hr>
+
+<h2>3. การเปลี่ยนแปลง — จุด B (L2582–2585)</h2>
+<p class="line-ref">บรรทัดอ้างอิง: ~L2582</p>
+<p>จุด B (บานเปิด/ติดตาย) ไม่มี <code>o-opentype</code> — <code>smb-panels-slot</code> ตามหลัง label ทันที ซึ่ง <strong>ถูกต้องแล้ว</strong> ไม่ต้องแก้ลำดับ</p>
+<p>แต่ถ้ามีการเพิ่ม field อื่นใน bluebox บานเปิดในอนาคต ให้วาง <code>smb-panels-slot</code> ไว้ท้ายสุดเสมอ</p>
+
+<div class="note-box">
+  จุด B: ไม่ต้องแก้ HTML ในรอบนี้
+</div>
+
+<hr>
+
+<h2>4. Relocation Logic — ไม่ต้องแก้</h2>
+<p>Logic L2849–2855 ทำงานโดยหา <code>.smb-panels-slot</code> แล้ว insert <code>.i-panels-wrap</code> ไปหลัง slot นั้น — เมื่อ slot ย้ายไปหลัง opentype แล้ว panels จะตาม <em>โดยอัตโนมัติ</em></p>
+<pre>
+// L2852-2853 (ไม่ต้องแก้ — แค่อ้างอิง)
+var _anchor = _smb.querySelector('.smb-panels-slot') || _smb.firstChild;
+_smb.insertBefore(_pw, _anchor &amp;&amp; _anchor.nextSibling ? _anchor.nextSibling : null);
+</pre>
+<div class="ok-box">
+  หลังย้าย slot แล้ว panels จะอยู่หลัง opentype โดยอัตโนมัติ ไม่ต้องแตะ L2849-2855
+</div>
+
+<hr>
+
+<h2>5. สรุปไฟล์ที่แก้ + จำนวนจุด</h2>
+<table style="border-collapse:collapse;font-size:13px;width:100%;">
+  <thead>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:6px 10px;text-align:left;border-bottom:2px solid var(--line);">ไฟล์</th>
+      <th style="padding:6px 10px;text-align:left;border-bottom:2px solid var(--line);">บรรทัด</th>
+      <th style="padding:6px 10px;text-align:left;border-bottom:2px solid var(--line);">การแก้</th>
+      <th style="padding:6px 10px;text-align:left;border-bottom:2px solid var(--line);">ชนิด</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><code>public/calculator/index.html</code></td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">~L2552</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">ลบ <code>h+='&lt;span class="smb-panels-slot"&gt;&lt;/span&gt;';</code></td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><span class="tag html">HTML</span></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><code>public/calculator/index.html</code></td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">~L2553 (หลัง opentype label)</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">เพิ่ม <code>h+='&lt;span class="smb-panels-slot"&gt;&lt;/span&gt;';</code></td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><span class="tag html">HTML</span></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><code>public/calculator/index.html</code></td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">~L2558</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;">ลบ <code>style="width:100%;"</code> จาก label wrapper ของราง</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;"><span class="tag css">CSS</span></td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-top:10px;font-size:12px;color:#64748B;">รวม: 3 จุด · 2 บรรทัดเดิม · logic/ราคา ไม่แตะ</p>
+
+<hr>
+
+<h2>6. Checklist สำหรับ Dev หลัง implement</h2>
+<ul>
+  <li>เปิด index.html จริงในเบราว์เซอร์ → เลือกสินค้า "บานเลื่อน"</li>
+  <li>กล่องฟ้า: เห็น "ชนิดการเปิด" ก่อน แล้วถึง "จำนวนบาน" — ถูกต้อง</li>
+  <li>ชิปรางกันน้ำ / รางเตี้ย: ไม่กินแถวเต็ม — ไม่มี gap ว่างใต้ชิป</li>
+  <li>กด "บานเลื่อนเปิดคู่กลาง" → ติดตาย auto-fill 2 · เปิด = จำนวนบาน - 2</li>
+  <li>เปลี่ยนจำนวนบาน → เปิด re-calc ถูกต้อง</li>
+  <li>ทดสอบซ้ำกับ "เลื่อนภายใน" (จุด A เหมือนกัน)</li>
+  <li>ทดสอบ "บานเปิด" (จุด B) — ยังแสดงปกติ ไม่หาย</li>
+</ul>
+
+</div>
+</body>
+</html>
