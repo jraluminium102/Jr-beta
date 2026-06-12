@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC — จัดออปชั่นบานเฟี้ยม (folding) ใหม่</title>
+<style>
+  :root {
+    --red: #B3151D;
+    --red-light: #fdf2f2;
+    --red-border: #e8b0b3;
+    --amber: #92400e;
+    --amber-bg: #fffbeb;
+    --amber-border: #fcd34d;
+    --green: #065f46;
+    --green-bg: #ecfdf5;
+    --green-border: #6ee7b7;
+    --blue: #1e40af;
+    --blue-bg: #eff6ff;
+    --blue-border: #93c5fd;
+    --gray: #374151;
+    --gray-light: #f9fafb;
+    --gray-border: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; font-size: 14px; color: var(--gray); background: #fff; }
+  .page { max-width: 900px; margin: 0 auto; padding: 28px 28px 60px; }
+  h1 { color: var(--red); font-size: 22px; font-weight: 800; border-bottom: 3px solid var(--red); padding-bottom: 10px; margin-bottom: 6px; }
+  .meta { font-size: 12px; color: #6b7280; margin-bottom: 24px; }
+  h2 { color: var(--red); font-size: 16px; font-weight: 700; margin: 28px 0 10px; padding: 6px 12px; background: var(--red-light); border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
+  h3 { font-size: 13px; font-weight: 700; color: var(--gray); margin: 14px 0 6px; }
+  p { line-height: 1.7; margin-bottom: 8px; }
+  ul, ol { padding-left: 20px; line-height: 1.8; margin-bottom: 8px; }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 18px; }
+  th { background: var(--red); color: #fff; padding: 8px 10px; text-align: left; font-weight: 700; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--gray-border); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--gray-light); }
+
+  /* badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 700; vertical-align: middle; }
+  .b-keep  { background: #d1fae5; color: #065f46; }
+  .b-cut   { background: #fee2e2; color: #991b1b; }
+  .b-merge { background: #dbeafe; color: #1e40af; }
+  .b-move  { background: #fef3c7; color: #92400e; }
+  .b-new   { background: #ede9fe; color: #5b21b6; }
+  .b-owner { background: #e5e7eb; color: #374151; }
+
+  /* callout boxes */
+  .box { border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+  .box-red    { background: var(--red-light);  border: 1px solid var(--red-border); }
+  .box-amber  { background: var(--amber-bg);   border: 1px solid var(--amber-border); }
+  .box-green  { background: var(--green-bg);   border: 1px solid var(--green-border); }
+  .box-blue   { background: var(--blue-bg);    border: 1px solid var(--blue-border); }
+  .box-gray   { background: var(--gray-light); border: 1px solid var(--gray-border); }
+  .box-title  { font-weight: 700; font-size: 12px; margin-bottom: 5px; }
+  .box-red   .box-title { color: var(--red); }
+  .box-amber .box-title { color: var(--amber); }
+  .box-green .box-title { color: var(--green); }
+  .box-blue  .box-title { color: var(--blue); }
+
+  /* section tags */
+  .tag { display: inline-block; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 4px; }
+  .tag-dev  { background: #1d4ed8; }
+  .tag-pnat { background: #d97706; }
+
+  /* code ref */
+  code { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; padding: 1px 5px; font-family: 'Consolas', monospace; font-size: 12px; color: #1f2937; }
+
+  /* demo section */
+  .demo-frame { border: 2px dashed var(--red-border); border-radius: 10px; padding: 16px; margin: 14px 0; background: #fdf2f2; }
+  .demo-label { font-size: 11px; font-weight: 700; color: var(--red); letter-spacing: 0.05em; margin-bottom: 10px; }
+  .demo-badge { display: inline-block; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+
+  /* form demo styles */
+  .demo-form { font-size: 13px; }
+  .demo-section { background: #fff; border: 1px solid var(--red-border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .demo-section summary { list-style: none; padding: 10px 14px; font-weight: 700; color: var(--red); cursor: pointer; font-size: 13px; min-height: 44px; display: flex; align-items: center; gap: 6px; }
+  .demo-section summary::-webkit-details-marker { display: none; }
+  .demo-section[open] summary { background: var(--red-light); border-bottom: 1px solid var(--red-border); }
+  .demo-body { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .demo-row  { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .demo-chip-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .demo-chip { min-height: 36px; padding: 0 14px; border: 1.5px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; font-family: inherit; }
+  .demo-chip.on { background: var(--red); color: #fff; border-color: var(--red); }
+  .demo-label-txt { font-size: 12px; color: #6b7280; font-weight: 600; min-width: 80px; }
+  .demo-input { height: 36px; border: 1.5px solid #d1d5db; border-radius: 6px; padding: 0 8px; font-size: 13px; width: 80px; }
+  .demo-select { height: 36px; border: 1.5px solid #d1d5db; border-radius: 6px; padding: 0 8px; font-size: 13px; background: #fff; }
+  .demo-auto { font-size: 11px; font-weight: 700; color: #059669; margin-left: 4px; }
+  .demo-price-row { width: 100%; background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 8px 12px; font-weight: 700; color: var(--green); font-size: 14px; margin-top: 6px; }
+  .demo-warn { font-size: 11px; color: #6b7280; font-style: italic; }
+
+  /* print */
+  @media print {
+    .page { padding: 15px; max-width: 100%; }
+    h1 { font-size: 18px; }
+    .demo-frame { border-style: solid; }
+  }
+  @page { size: A4; margin: 15mm; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>SPEC — จัดออปชั่น "บานเฟี้ยม" (folding) ใหม่</h1>
+  <p class="meta">ไฟล์: docs/SPEC-G1-folding-options-2026-06-12.html &nbsp;|&nbsp; วันที่: 2026-06-12 &nbsp;|&nbsp; ผู้ออกสเปก: UX Agent &nbsp;|&nbsp; ผู้รับ: Developer (แชท B)</p>
+
+  <!-- ========== ส่วนที่ 1: บั๊กที่ยืนยันแล้ว ========== -->
+  <h2>1. บั๊กที่ยืนยันจากโค้ด (ต้องแก้ทุกตัว)</h2>
+
+  <div class="box box-red">
+    <div class="box-title">บั๊ก A — "ซ่อนราง" โผล่ 2 รอบ (ซ้ำ)</div>
+    <p>
+      <strong>สาเหตุ:</strong> <code>COMMON_OPTS</code> (บ.927) มี <code>hide_track</code> id รวม <code>folding</code> → render เป็น checkbox ที่บ.2685<br>
+      พร้อมกันนั้น บ.2557-2559 มี <code>o-track</code> dropdown "โชว์ราง / ซ่อนราง (+5,000)" แสดงเฉพาะบานเลื่อนรางบน (<code>_isTop</code>)<br>
+      <strong>แต่</strong> folding <strong>ไม่ผ่าน</strong> block <code>if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat))</code> → dropdown <code>o-track</code> ไม่ render สำหรับ folding<br>
+      ดังนั้นที่เห็นซ้ำจริงคือ <code>COMMON_OPTS</code> render <code>hide_track</code> checkbox ครั้งแรก แล้ว <code>groupGHOpts</code> จัดหมวดแล้วทำซ้ำอีกครั้ง
+      <br><strong>หรือ</strong> (ตรวจสอบในเบราว์เซอร์จริง): อาจมี keyword "ซ่อนราง" ใน 2 bucket ของ <code>CATS</code> (บ.1782-1784 และ 1776) → node ถูก append 2 ครั้ง
+    </p>
+    <p><strong>โค้ดอ้างอิง:</strong> <code>COMMON_OPTS</code> บ.927 · render loop บ.2685 · groupGHOpts บ.1767</p>
+  </div>
+
+  <div class="box box-red">
+    <div class="box-title">บั๊ก B — "รางยู" ซ้ำ 2 ที่</div>
+    <table>
+      <tr><th>ตัว</th><th>class / id</th><th>label ที่เห็น</th><th>บรรทัด</th><th>คิดเงินที่ไหน</th></tr>
+      <tr>
+        <td><strong>u_track</strong></td>
+        <td><code>o-u_track</code> checkbox</td>
+        <td>รางยู +5,000</td>
+        <td>927 (COMMON_OPTS) · 2685 (render)</td>
+        <td>บ.1456 <code>opt += o.price</code> flat 5,000</td>
+      </tr>
+      <tr>
+        <td><strong>o-uchannel</strong></td>
+        <td><code>o-uchannel</code> checkbox</td>
+        <td>ฝังรางยู (ในพื้น)</td>
+        <td>2807 (render ทุก cat ยกเว้น excluded list) — folding ไม่อยู่ใน excluded → แสดง</td>
+        <td>บ.1476-1479 <code>opt += 1000</code> (ธรณีหลังเต่า บานเปิด เท่านั้น) — folding ไม่มีผลทางการเงินจาก uchannel โดยตรง</td>
+      </tr>
+    </table>
+    <p>สองตัวนี้เป็นคนละสิ่ง: <code>u_track</code> = ราง U-profile ที่ฝังผนัง/เพดาน (ฟีเจอร์บานเฟี้ยมแบบซ่อน) · <code>o-uchannel</code> = ฝังธรณีรางยูในพื้น (บานเปิด/บานเลื่อน)</p>
+  </div>
+
+  <div class="box box-red">
+    <div class="box-title">บั๊ก C — "เสริมคาน" หมวดผิด + ไม่มีช่องความยาว/รุ่น</div>
+    <p>
+      <strong>หมวดผิด:</strong> <code>groupGHOpts</code> (บ.1790-1793) หมวด "มือจับ/ล็อค" มี keyword <code>'เสริมคาน'</code> → <code>o-beam</code> checkbox label "เสริมคาน (เหล็กกล่อง)" ถูก bucket เข้าหมวดนี้<br>
+      <strong>UI ขาดช่องความยาว/รุ่น:</strong> folding ใช้ <code>p.optBeam</code> → render checkbox <code>o-beam</code> (บ.2539) เท่านั้น ไม่มีช่อง dropdown รุ่น + ความยาว (ม.) แบบที่บานเลื่อน/เปิด/PC Door มี ผ่าน <code>o-beamm</code> + <code>o-beammlen</code> (บ.2595)<br>
+      <strong>ผลต่อราคา:</strong> calc บ.1453 ใช้ <code>RATES.BEAM × พื้นที่</code> (min 4,000) — ราคาคิดตามพื้นที่ แต่ UI เป็นแค่ checkbox ไม่มีช่องรุ่น/ยาวให้เซลล์ระบุ
+    </p>
+    <p><strong>โค้ดอ้างอิง:</strong> <code>optBeam</code> flag บ.600 · render บ.2539 · calc บ.1453 · <code>o-beamm</code> บ.2595</p>
+  </div>
+
+  <!-- ========== ส่วนที่ 2: ตารางออปชั่นทั้งหมด ========== -->
+  <h2>2. ตารางออปชั่นบานเฟี้ยม — เก็บ/ตัด/รวม</h2>
+
+  <table>
+    <tr>
+      <th style="width:22%">ออปชั่น (code id)</th>
+      <th style="width:18%">หมวดปัจจุบัน</th>
+      <th style="width:18%">หมวดที่ควรอยู่</th>
+      <th style="width:17%">ราคา / วิธีคิด</th>
+      <th style="width:12%">สถานะ</th>
+      <th style="width:13%">หมายเหตุ</th>
+    </tr>
+    <tr>
+      <td><strong>ธรณี</strong> (<code>o-threshf</code>)</td>
+      <td>ชนิด/การเปิด</td>
+      <td>ชนิด/การเปิด (คงที่)</td>
+      <td>display only · ไม่คิดเงิน</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>บ.2467-2468 · ถูกที่แล้ว</td>
+    </tr>
+    <tr>
+      <td><strong>ซ่อนคาน</strong> (<code>hide_beam</code>)</td>
+      <td>ชนิด/การเปิด (ผ่าน COMMON_OPTS)</td>
+      <td>ชนิด/การเปิด</td>
+      <td>flat 5,000</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>ราคา flat เหมาะสมหรือไม่ — ดูข้อ 4</td>
+    </tr>
+    <tr>
+      <td><strong>ซ่อนราง</strong> (<code>hide_track</code>)</td>
+      <td>ชนิด/การเปิด (COMMON_OPTS)</td>
+      <td>ชนิด/การเปิด</td>
+      <td>flat 5,000</td>
+      <td><span class="badge b-keep">เก็บ</span> แก้ซ้ำ</td>
+      <td>แก้บั๊ก A ก่อน · ราคา flat ดูข้อ 4</td>
+    </tr>
+    <tr>
+      <td><strong>รางยู</strong> (<code>u_track</code>)</td>
+      <td>ชนิด/การเปิด (COMMON_OPTS)</td>
+      <td>ชนิด/การเปิด</td>
+      <td>flat 5,000</td>
+      <td><span class="badge b-keep">เก็บ</span> ตัดคู่</td>
+      <td>เก็บตัวนี้ ตัด o-uchannel ออกจาก folding (ดูข้อ 2b)</td>
+    </tr>
+    <tr>
+      <td><strong>ฝังรางยู (ในพื้น)</strong> (<code>o-uchannel</code>)</td>
+      <td>อื่นๆ</td>
+      <td>—</td>
+      <td>calc: บวกเงินเฉพาะ บานเปิด+ธรณีหลังเต่า เท่านั้น · folding ไม่มีผลทางการเงิน</td>
+      <td><span class="badge b-cut">ตัดออก</span></td>
+      <td>ซ้ำกับ u_track · แก้บ.2806 เพิ่ม 'บานเฟี้ยม' ใน excluded list</td>
+    </tr>
+    <tr>
+      <td><strong>เสริมคาน</strong> (<code>o-beam</code>)</td>
+      <td>มือจับ/ล็อค (ผิด)</td>
+      <td>โครงสร้าง/งานพิเศษ (ใหม่)</td>
+      <td>area×RATES.BEAM min 4,000 (ปัจจุบัน)<br>เสนอ: upgrade เป็น รุ่น×ความยาว (ดูข้อ 3)</td>
+      <td><span class="badge b-move">ย้ายหมวด</span> + upgrade UI</td>
+      <td>ย้ายออกจากหมวด "มือจับ/ล็อค" · แก้ keyword groupGHOpts บ.1790-1793</td>
+    </tr>
+    <tr>
+      <td><strong>มุ้ง</strong> (<code>o-mosq</code>)</td>
+      <td>มุ้ง</td>
+      <td>มุ้ง (คงที่)</td>
+      <td>ตามเรตมุ้ง</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>ถูกที่แล้ว · p.mosquito=1</td>
+    </tr>
+    <tr>
+      <td><strong>คาดตาราง</strong> (<code>o-gridmark</code>)</td>
+      <td>คาดตาราง</td>
+      <td>คาดตาราง (คงที่)</td>
+      <td>เส้นนอน/ตั้ง × ม. × เรต</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>ถูกที่แล้ว</td>
+    </tr>
+    <tr>
+      <td><strong>แผ่นทึบล่าง</strong> (<code>o-solidlower</code>)</td>
+      <td>อื่นๆ</td>
+      <td>โครงสร้าง/งานพิเศษ</td>
+      <td>3,500 หรือ 3,300 × ตร.ม.</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>p.cat 'บานเฟี้ยม' อยู่ใน _isPaneCat บ.2812</td>
+    </tr>
+    <tr>
+      <td><strong>ครอบวงกบ</strong> (<code>o-fcsides</code>)</td>
+      <td>อื่นๆ</td>
+      <td>อื่นๆ (คงที่)</td>
+      <td>ม. × เรตสี</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>ถูกที่แล้ว</td>
+    </tr>
+    <tr>
+      <td><strong>ดรอปพื้น</strong> (<code>o-dfm</code>)</td>
+      <td>อื่นๆ</td>
+      <td>อื่นๆ (คงที่)</td>
+      <td>5,000 + (เกิน7ม.×750)</td>
+      <td><span class="badge b-keep">เก็บ</span></td>
+      <td>ถูกที่แล้ว</td>
+    </tr>
+    <tr>
+      <td><strong>ฝังรางยู (ในพื้น)</strong> อีกครั้ง</td>
+      <td>อื่นๆ</td>
+      <td>—</td>
+      <td>ดูด้านบน</td>
+      <td><span class="badge b-cut">ตัดออก</span></td>
+      <td>ซ้ำกับ u_track</td>
+    </tr>
+  </table>
+
+  <!-- ========== ส่วนที่ 3: เสริมคาน ========== -->
+  <h2>3. เสริมคาน — ข้อเสนอ UX + คำถามให้พี่นัทเคาะ</h2>
+
+  <div class="box box-amber">
+    <div class="box-title">สถานะปัจจุบัน (ข้อเท็จจริงจากโค้ด)</div>
+    <ul>
+      <li><strong>UI:</strong> checkbox เดียว label "เสริมคาน (เหล็กกล่อง)" — ไม่มีช่องรุ่น ไม่มีช่องความยาว</li>
+      <li><strong>Calc:</strong> บ.1453 <code>opt += Math.max(4000, area × rateOf(area, RATES.BEAM))</code>
+        <br>RATES.BEAM = [[3.5,8,1300],[8,10,1100],[10,12,900],[12,∞,800]] บาท/ตร.ม.
+        <br>ตัวอย่าง: พื้นที่ 4 ตร.ม. → 4×1300 = 5,200 บาท · พื้นที่ 10 ตร.ม. → 10×900 = 9,000 บาท</li>
+      <li><strong>ต่างจากบานอื่น:</strong> บานเลื่อน/เปิด/PC Door มี <code>o-beamm</code> dropdown เลือกรุ่น (2,400/3,600/4,400 ต่อ ม.) + ช่องกรอกความยาว (ม.) — เซลล์ระบุเองได้ชัดเจนกว่า</li>
+    </ul>
+  </div>
+
+  <h3>ข้อเสนอ: ควรเพิ่มช่องรุ่น + ความยาว (ม.) ให้ folding ด้วยไหม?</h3>
+
+  <div class="box box-blue">
+    <div class="box-title">ทางเลือก A — คง checkbox เดิม (ราคา × พื้นที่ auto)</div>
+    <p><strong>ข้อดี:</strong> กดน้อย · เซลล์ไม่ต้องรู้ความยาวคาน · เหมาะกับงานมาตรฐาน</p>
+    <p><strong>ข้อเสีย:</strong> ราคาไม่ตรงงานจริงถ้าความยาวคานกับพื้นที่ไม่สัมพันธ์กัน · เซลล์ไม่รู้ว่าราคาคิดจากอะไร · ใบเสนอราคาระบุรุ่นไม่ได้</p>
+    <p><strong>แก้เล็กน้อยได้:</strong> เพิ่ม hint "ราคา auto จากพื้นที่" ใต้ checkbox เพื่อให้เซลล์เข้าใจ</p>
+  </div>
+
+  <div class="box box-green">
+    <div class="box-title">ทางเลือก B — upgrade เป็น chip รุ่น + ช่องความยาว (แบบเดียวกับ o-beamm)</div>
+    <p><strong>ข้อดี:</strong> ราคาตรงความเป็นจริง · เซลล์คุมราคาได้ · ใบเสนอราคาระบุรุ่น+ความยาวได้ชัด · pattern เดียวกับบานอื่น = ไม่งง</p>
+    <p><strong>ข้อเสีย:</strong> กรอกเพิ่ม 2 ช่อง (รุ่น + ความยาว) · ต้องแก้ calc ด้วย (ตัด <code>p.optBeam</code> branch · เพิ่ม folding เข้า <code>o-beamm</code> block บ.2595 + readItem บ.2923)</p>
+    <p><strong>โค้ดที่ต้องแก้:</strong> บ.2595 เพิ่ม <code>'บานเฟี้ยม'</code> ใน cat list · บ.2923 เพิ่ม <code>'บานเฟี้ยม'</code> ใน readItem · ตัด <code>p.optBeam</code> check บ.1453 สำหรับ folding</p>
+  </div>
+
+  <div class="box box-gray" style="border-left: 4px solid #d97706;">
+    <div class="box-title" style="color: #d97706;">คำถามให้พี่นัทเคาะ (เรื่องราคา — UX ไม่ตัดสิน)</div>
+    <ol>
+      <li>บานเฟี้ยมงานจริง — เสริมคานมักจะยาวเท่าไร? ตรงกับความกว้างบาน หรือแตกต่างกัน?</li>
+      <li>ใช้คานรุ่นเดียวกับบานเลื่อน (2,400 / 3,600 / 4,400 ต่อ ม.) หรือรุ่นพิเศษ?</li>
+      <li>เซลล์ต้องการระบุรุ่นคานในใบเสนอราคาบานเฟี้ยมไหม?</li>
+    </ol>
+    <p style="margin-top:8px; font-size:12px; color:#92400e;"><strong>ถ้าพี่นัทเลือก B:</strong> dev แก้บ.2595 + บ.2923 + ลบ <code>p.optBeam</code> branch สำหรับ folding ออก</p>
+  </div>
+
+  <!-- ========== ส่วนที่ 4: ราคา flat vs ×ความยาว ========== -->
+  <h2>4. ซ่อนคาน / รางยู / ซ่อนราง — flat 5,000 vs ×ความยาว</h2>
+
+  <p>ปัจจุบันทั้ง 3 ตัวคิด flat 5,000 บาท (บ.1456 <code>opt += o.price</code>)</p>
+
+  <table>
+    <tr>
+      <th style="width:20%">ออปชั่น</th>
+      <th style="width:40%">ข้อดี flat 5,000</th>
+      <th style="width:40%">ข้อดี ×ความยาว (ม.)</th>
+    </tr>
+    <tr>
+      <td><strong>ซ่อนคาน</strong><br>(hide_beam)</td>
+      <td>
+        <ul>
+          <li>กดเดียวจบ ไม่ต้องกรอกความยาว</li>
+          <li>งานขนาดมาตรฐานราคาใกล้เคียงกัน</li>
+          <li>เซลล์ไม่ต้องวัดความยาวคาน</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>งานกว้าง (เช่น 5-6 ม.) flat 5,000 ถูกเกิน</li>
+          <li>ราคาสะท้อนต้นทุนวัสดุ+แรงงานจริง</li>
+          <li>ใบเสนอราคาโปร่งใสขึ้น</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>ซ่อนราง</strong><br>(hide_track)</td>
+      <td>
+        <ul>
+          <li>เหมือนกันกับซ่อนคาน</li>
+          <li>งานส่วนใหญ่รางไม่ยาวมาก</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>รางยาวหลายเมตร flat ขาดทุน</li>
+          <li>ตรง pattern หลังคา (ซ่อนสโลป ×ม.)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>รางยู</strong><br>(u_track)</td>
+      <td>
+        <ul>
+          <li>เหมือนกัน</li>
+          <li>งาน folding ส่วนใหญ่รางยูสั้น</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>folding กว้าง 4-5 ม. flat ถูกเกิน</li>
+          <li>รางยูฝังพื้นยาวตามบาน</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <div class="box box-gray" style="border-left: 4px solid #d97706;">
+    <div class="box-title" style="color: #d97706;">คำถามให้พี่นัทเคาะ (เรื่องราคา — UX ไม่ตัดสิน)</div>
+    <ol>
+      <li>ซ่อนคาน/ซ่อนราง/รางยู ของบานเฟี้ยม — งานจริงราคาต่างกันมากไหมตามความยาว?</li>
+      <li>ถ้าคิด ×ม.: เรตควรเป็นเท่าไร (เช่น 1,000/ม. · 1,500/ม.) และมี minimum ไหม?</li>
+      <li>หรือพอใจ flat 5,000 ต่อไปเพราะงานเฟี้ยมส่วนใหญ่ขนาดใกล้เคียงกัน?</li>
+    </ol>
+    <p style="margin-top:8px; font-size:12px; color:#92400e;"><strong>ถ้าพี่นัทเปลี่ยนเป็น ×ม.:</strong> dev ต้องแก้ COMMON_OPTS เพิ่ม field <code>perLength:true</code> + เพิ่มช่องกรอกความยาวให้แต่ละตัว + แก้ calc บ.1456</p>
+  </div>
+
+  <!-- ========== ส่วนที่ 5: ลำดับหมวดใหม่ ========== -->
+  <h2>5. ลำดับ/หมวดที่เสนอ — ฟอร์มบานเฟี้ยม</h2>
+
+  <p>หลักคิด: เคสปกติเห็นน้อย → พับของไม่ค่อยใช้ · ออปชั่นที่ต้องเลือกทุกงานอยู่บนสุดและเปิดไว้</p>
+
+  <div class="demo-frame">
+    <div class="demo-label">ดราฟ Interactive — บานเฟี้ยม เซมิยูโร <span class="demo-badge">DEMO</span></div>
+    <div class="demo-form" id="demo-folding">
+
+      <!-- ── หมวด 1: ชนิด/การเปิด (เปิด default) ── -->
+      <details class="demo-section" open>
+        <summary>🚪 ชนิด / การเปิด</summary>
+        <div class="demo-body">
+          <div class="demo-row">
+            <span class="demo-label-txt">ธรณี</span>
+            <select class="demo-select" id="d-thresh">
+              <option value="outer">ธรณีกันน้ำภายนอก</option>
+              <option value="inner">ธรณีหลังเต่าภายใน</option>
+            </select>
+          </div>
+          <div class="demo-row">
+            <span class="demo-label-txt">ซ่อนคาน</span>
+            <div class="demo-chip-group">
+              <button class="demo-chip" id="dc-hidebeam-no" onclick="dChip('hidebeam','no',this)">ไม่ซ่อน</button>
+              <button class="demo-chip" id="dc-hidebeam-yes" onclick="dChip('hidebeam','yes',this)">ซ่อนคาน +5,000 <span class="demo-warn" id="dw-hidebeam-hint"></span></button>
+            </div>
+          </div>
+          <div class="demo-row">
+            <span class="demo-label-txt">ซ่อนราง</span>
+            <div class="demo-chip-group">
+              <button class="demo-chip" id="dc-hidetrack-no" onclick="dChip('hidetrack','no',this)">โชว์ราง</button>
+              <button class="demo-chip" id="dc-hidetrack-yes" onclick="dChip('hidetrack','yes',this)">ซ่อนราง +5,000 <span class="demo-warn" id="dw-hidetrack-hint"></span></button>
+            </div>
+          </div>
+          <div class="demo-row">
+            <span class="demo-label-txt">รางยู</span>
+            <div class="demo-chip-group">
+              <button class="demo-chip" id="dc-utrack-no" onclick="dChip('utrack','no',this)">ไม่มี</button>
+              <button class="demo-chip" id="dc-utrack-yes" onclick="dChip('utrack','yes',this)">รางยู +5,000 <span class="demo-warn" id="dw-utrack-hint"></span></button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- ── หมวด 2: โครงสร้าง/งานพิเศษ (พับ default) ── -->
+      <details class="demo-section">
+        <summary>🔩 โครงสร้าง / งานพิเศษ</summary>
+        <div class="demo-body">
+          <div class="demo-row" style="background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; padding:8px 10px;">
+            <span class="demo-label-txt">เสริมคาน</span>
+            <div class="demo-chip-group" id="dc-beam-group">
+              <button class="demo-chip on" id="dc-beam-no" onclick="dBeam('no',this)">ไม่มี</button>
+              <button class="demo-chip" id="dc-beam-r1" onclick="dBeam('r1',this)">รุ่น 1 — 2,400/ม.</button>
+              <button class="demo-chip" id="dc-beam-r2" onclick="dBeam('r2',this)">รุ่น 2 — 3,600/ม.</button>
+              <button class="demo-chip" id="dc-beam-r3" onclick="dBeam('r3',this)">รุ่น 3 — 4,400/ม.</button>
+            </div>
+            <span id="d-beam-len-wrap" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
+              ยาว <input type="number" class="demo-input" id="d-beam-len" min="0" step="0.1" value="0" oninput="dCalc()"> ม.
+              <span class="demo-auto" id="d-beam-auto"></span>
+            </span>
+          </div>
+          <div class="demo-row">
+            <span class="demo-label-txt">แผ่นทึบล่าง</span>
+            <div class="demo-chip-group">
+              <button class="demo-chip on" id="dc-solid-no" onclick="dChip('solid','no',this)">ไม่มี</button>
+              <button class="demo-chip" id="dc-solid-corrugated" onclick="dChip('solid','corrugated',this)">ลูกฟูก 3,500/ตร.ม.</button>
+              <button class="demo-chip" id="dc-solid-composite" onclick="dChip('solid','composite',this)">คอมโพสิท 3,300/ตร.ม.</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- ── หมวด 3: มือจับ/ล็อค (พับ default) ── -->
+      <details class="demo-section">
+        <summary>🔧 มือจับ / ล็อค</summary>
+        <div class="demo-body">
+          <p style="font-size:12px; color:#6b7280;">(มือจับ digihandle / ชุดล็อค ตามรุ่น — เหมือนเดิม ไม่แก้)</p>
+        </div>
+      </details>
+
+      <!-- ── หมวด 4: มุ้ง (พับ default) ── -->
+      <details class="demo-section">
+        <summary>🪟 มุ้ง</summary>
+        <div class="demo-body">
+          <p style="font-size:12px; color:#6b7280;">(ชนิดมุ้ง / ผ้า / สี — เหมือนเดิม ไม่แก้)</p>
+        </div>
+      </details>
+
+      <!-- ── หมวด 5: คาดตาราง (พับ default) ── -->
+      <details class="demo-section">
+        <summary>📐 คาดตาราง</summary>
+        <div class="demo-body">
+          <p style="font-size:12px; color:#6b7280;">(เส้นนอน/ตั้ง/โค้ง — เหมือนเดิม ไม่แก้)</p>
+        </div>
+      </details>
+
+      <!-- ── หมวด 6: อื่นๆ (พับ default) ── -->
+      <details class="demo-section">
+        <summary>➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)</summary>
+        <div class="demo-body">
+          <p style="font-size:12px; color:#6b7280;">(ครอบวงกบ / ดรอปพื้น / งานเสริม — เหมือนเดิม ไม่แก้)</p>
+        </div>
+      </details>
+
+      <!-- ── ราคาออปชั่น (demo) ── -->
+      <div class="demo-price-row" id="d-price-row">ราคาออปชั่นเพิ่ม: ฿0 <span class="demo-warn">&nbsp;(DEMO — ไม่ใช่ราคาจริง)</span></div>
+    </div>
+  </div>
+
+  <!-- ========== ส่วนที่ 6: Before / After ========== -->
+  <h2>6. Before / After — จุดโค้ดอ้างอิง</h2>
+
+  <table>
+    <tr>
+      <th style="width:8%">หัวข้อ</th>
+      <th style="width:30%">Before (ปัญหา)</th>
+      <th style="width:30%">After (แก้)</th>
+      <th style="width:32%">ไฟล์ + บรรทัดอ้างอิง</th>
+    </tr>
+    <tr>
+      <td>ซ้ำ: ซ่อนราง</td>
+      <td>COMMON_OPTS render checkbox ซ้ำ / groupGHOpts bucket ผิด</td>
+      <td>ยืนยัน render path ครั้งเดียว · ถ้า groupGHOpts ทำซ้ำ ให้ตรวจ keyword ไม่ทับกัน</td>
+      <td><code>index.html</code> บ.927, 2685, 1767-1810</td>
+    </tr>
+    <tr>
+      <td>ซ้ำ: รางยู</td>
+      <td>u_track (COMMON_OPTS) + o-uchannel (บ.2807) ต่างอยู่ใน folding</td>
+      <td>เพิ่ม <code>'บานเฟี้ยม'</code> ใน excluded list ของ o-uchannel (บ.2806)</td>
+      <td><code>index.html</code> บ.2806 — เพิ่ม <code>'บานเฟี้ยม'</code> ใน array ข้าง <code>!['หลังคา',...</code></td>
+    </tr>
+    <tr>
+      <td>หมวดผิด: เสริมคาน</td>
+      <td>keyword 'เสริมคาน' ใน CATS หมวด "มือจับ/ล็อค" → o-beam ถูก bucket ผิด</td>
+      <td>ลบ <code>'เสริมคาน'</code> ออกจาก kw ของหมวด "มือจับ/ล็อค" บ.1790-1793 · เพิ่มหมวดใหม่ "โครงสร้าง/งานพิเศษ" หรือย้ายใส่หมวดที่เหมาะ</td>
+      <td><code>index.html</code> บ.1790-1793</td>
+    </tr>
+    <tr>
+      <td>เสริมคาน UI (ถ้าพี่นัทเลือก ทางเลือก B)</td>
+      <td>checkbox เดียว ไม่มีรุ่น/ความยาว</td>
+      <td>เพิ่ม <code>'บานเฟี้ยม'</code> ใน cat list บ.2595 (o-beamm block) · เพิ่มใน readItem บ.2923 · ตัด <code>p.optBeam</code> branch บ.1453 สำหรับ folding</td>
+      <td><code>index.html</code> บ.2595, 2923, 1453</td>
+    </tr>
+    <tr>
+      <td>ราคา flat→×ม. (ถ้าพี่นัทเลือก)</td>
+      <td>COMMON_OPTS price: 5000 flat</td>
+      <td>เพิ่ม field <code>perLength</code> + ช่องกรอกความยาว + แก้ calc บ.1456</td>
+      <td><code>index.html</code> บ.927 (COMMON_OPTS), 1456 (calc), 2685 (render)</td>
+    </tr>
+  </table>
+
+  <!-- ========== ส่วนที่ 7: สรุปงานค้าง ========== -->
+  <h2>7. สรุปงานค้าง — ลำดับความสำคัญ</h2>
+
+  <table>
+    <tr>
+      <th style="width:6%">ลำดับ</th>
+      <th style="width:14%">งาน</th>
+      <th style="width:10%">ประเภท</th>
+      <th style="width:55%">รายละเอียด + โค้ดอ้างอิง</th>
+      <th style="width:15%">ผู้ตัดสิน</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>ตัด o-uchannel ออกจาก folding</td>
+      <td><span class="tag">แก้ได้เลย</span></td>
+      <td>บ.2806: เพิ่ม <code>'บานเฟี้ยม'</code> ใน excluded cats list</td>
+      <td><span class="tag tag-dev">Dev</span></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>แก้หมวด เสริมคาน</td>
+      <td><span class="tag">แก้ได้เลย</span></td>
+      <td>บ.1790: ลบ <code>'เสริมคาน'</code> จาก kw หมวด "มือจับ/ล็อค" · เพิ่มหมวดใหม่/ใส่หมวด "ชนิด/การเปิด"</td>
+      <td><span class="tag tag-dev">Dev</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>ตรวจ/แก้ซ้ำ ซ่อนราง</td>
+      <td><span class="tag">ตรวจก่อน</span></td>
+      <td>เปิดเบราว์เซอร์จริง → เลือก folding → นับ "ซ่อนราง" · ถ้าซ้ำ → หา DOM node ที่ซ้ำ → แก้ groupGHOpts keyword</td>
+      <td><span class="tag tag-dev">Dev</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>เสริมคาน UI: รุ่น + ความยาว?</td>
+      <td><span class="tag tag-pnat" style="background:#d97706;">เคาะราคาก่อน</span></td>
+      <td>ดูข้อ 3 — ถ้าพี่นัทเลือก B: dev แก้บ.2595 + 2923 + 1453</td>
+      <td><span class="tag tag-pnat">พี่นัทเคาะ</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>flat vs ×ม. (ซ่อนคาน/ราง/รางยู)</td>
+      <td><span class="tag tag-pnat" style="background:#d97706;">เคาะราคาก่อน</span></td>
+      <td>ดูข้อ 4 — ถ้าเปลี่ยน: dev แก้ COMMON_OPTS + render + calc</td>
+      <td><span class="tag tag-pnat">พี่นัทเคาะ</span></td>
+    </tr>
+  </table>
+
+  <div class="box box-green" style="margin-top: 24px;">
+    <div class="box-title">งานที่ทำได้เลยโดยไม่ต้องรอพี่นัทเคาะ</div>
+    <ul>
+      <li>ตัด <code>o-uchannel</code> ออกจาก folding (บ.2806 — 1 บรรทัด)</li>
+      <li>ย้าย keyword 'เสริมคาน' ออกจากหมวด "มือจับ/ล็อค" (บ.1790-1793)</li>
+      <li>ตรวจ + แก้ซ้ำ "ซ่อนราง" ในเบราว์เซอร์จริง</li>
+    </ul>
+  </div>
+
+</div><!-- .page -->
+
+<script>
+// ── Demo interactive ──
+var dState = {
+  hidebeam: 'no',
+  hidetrack: 'no',
+  utrack: 'no',
+  solid: 'no',
+  beam: 'no',
+  beamlen: 0
+};
+
+function dChip(key, val, btn) {
+  dState[key] = val;
+  // toggle chips in same group
+  var grp = btn.parentNode;
+  grp.querySelectorAll('.demo-chip').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  dCalc();
+}
+
+function dBeam(val, btn) {
+  dState.beam = val;
+  var grp = document.getElementById('dc-beam-group');
+  grp.querySelectorAll('.demo-chip').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  var wrap = document.getElementById('d-beam-len-wrap');
+  if (wrap) wrap.style.display = (val !== 'no') ? 'flex' : 'none';
+  dCalc();
+}
+
+function dCalc() {
+  var opt = 0;
+  if (dState.hidebeam === 'yes') opt += 5000;
+  if (dState.hidetrack === 'yes') opt += 5000;
+  if (dState.utrack === 'yes') opt += 5000;
+
+  // beam
+  var beamRates = {r1: 2400, r2: 3600, r3: 4400};
+  var blen = parseFloat(document.getElementById('d-beam-len').value) || 0;
+  var bauto = document.getElementById('d-beam-auto');
+  if (dState.beam !== 'no' && beamRates[dState.beam]) {
+    var bprice = beamRates[dState.beam] * blen;
+    opt += bprice;
+    if (bauto) bauto.textContent = blen > 0 ? ('= ฿' + Math.round(bprice).toLocaleString('en-US')) : '(กรอกความยาว)';
+  } else {
+    if (bauto) bauto.textContent = '';
+  }
+
+  var row = document.getElementById('d-price-row');
+  if (row) row.innerHTML = 'ราคาออปชั่นเพิ่ม: <strong>฿' + opt.toLocaleString('en-US') + '</strong> <span class="demo-warn">&nbsp;(DEMO — ไม่ใช่ราคาจริง)</span>';
+}
+
+// init: set first chip as 'on' for each group
+document.querySelectorAll('.demo-chip-group').forEach(function(grp) {
+  var chips = grp.querySelectorAll('.demo-chip');
+  if (chips.length && !grp.querySelector('.demo-chip.on')) chips[0].classList.add('on');
+});
+dCalc();
+</script>
+</body>
+</html>

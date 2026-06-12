@@ -1453,6 +1453,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
   if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
   if((p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
+  if(p.cat==='ฝ้า-ผนัง'&&optSel){ const _wpp=parseFloat(optSel.wallpaintprice)||0; if(_wpp>0){ opt+=_wpp; msgs.push('ทาสี +'+fmt(_wpp)); } if(optSel.wallmodel) msgs.push(optSel.wallmodel); } // G3 ข้อ2: ทาสี(กรอกเอง) + รุ่น/ความหนา(label)
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]) opt+=o.price*(o.perPanel?Math.max(1,panels):1); }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
   // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
@@ -1789,8 +1790,8 @@ function groupGHOpts(ch){
     ]},
     {key:'🔧 มือจับ / ล็อค', open:false, kw:[
       'มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
-      'ติดตายกี่บาน','เสริมคาน'
-    ]},
+      'ติดตายกี่บาน'
+    ]}, // folding bug C: เอา 'เสริมคาน' ออก (เคย bucket o-beam ผิดเข้ามือจับ/ล็อค) → ตกหมวด "อื่นๆ" แทน
     {key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},
     {key:'📐 คาดตาราง', open:false, kw:[
       'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง',
@@ -2594,6 +2595,11 @@ function buildItemOpts(d){
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
   if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)){ h+='<label class="opt" style="width:100%;">เสริมคาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-beamm\')">ไม่มี</button><button type="button" class="chip" data-val="2400" onclick="chSetChip(this,\'o-beamm\')">รุ่น1 2,400/ม.</button><button type="button" class="chip" data-val="3600" onclick="chSetChip(this,\'o-beamm\')">รุ่น2 3,600/ม.</button><button type="button" class="chip" data-val="4400" onclick="chSetChip(this,\'o-beamm\')">รุ่น3 4,400/ม.</button></div><select class="o-beamm" style="display:none;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
   if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
+  // G3 ข้อ2 (มติพี่นัท ข): ฝ้า-ผนัง — รุ่น/ความหนา (ระบุในใบ) + ทาสี (กรอกราคาเอง)
+  if(p.cat==='ฝ้า-ผนัง'){
+    h+='<label class="opt" style="width:100%;">รุ่น/ความหนา <select class="o-wallmodel" style="width:auto;height:32px;max-width:340px;" onchange="calcQuote();"><option value="">ไม่ระบุ</option><option value="สมาร์ทบอร์ด หนา 12 มม.">สมาร์ทบอร์ด หนา 12 มม.</option><option value="เวเทอร์บล็อค ตราช้าง หนา 9 มม. เสริมฟอยล์กันร้อน/น้ำ/รา">เวเทอร์บล็อค ตราช้าง 9 มม. (ฟอยล์ กันร้อน/น้ำ/รา)</option></select> <span style="font-size:11px;color:#666;">(ระบุในใบ · ราคาตามวัสดุ รอเรต)</span></label>';
+    h+='<label class="opt">ทาสี <input type="number" class="o-wallpaintprice" min="0" step="100" value="0" placeholder="กรอกราคาเอง" style="width:120px;height:32px;" oninput="calcQuote();"> บาท</label>';
+  }
   // หลังคาเลื่อน — ทำเลื่อน → 3 ช่อง: จำนวนบาน / พื้นที่เลื่อน(auto) / มอเตอร์(จำนวน×ราคา auto แก้ได้) · รางน้ำย้ายไปของเสริม
   if(p.optSlide){
     h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
@@ -2803,7 +2809,7 @@ function buildItemOpts(d){
     h+='<span class="opt" style="color:#666;font-size:12px;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
   // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
-  if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){ // UX-ALL: ฝังรางยูเฉพาะงานบานพื้น (ตัด shower/เปลือย/ดัดโค้ง/หมุน/เลื่อนใน/มุ้ง/ตู้/ราวกันตก)
+  if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){ // UX-ALL+folding: ฝังรางยูเฉพาะงานบานพื้น · บานเฟี้ยมใช้ u_track (COMMON_OPTS) แทน — ตัดกันซ้ำ
     h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="var c=this.closest(\'.ch\');var t=c.querySelector(\'.o-thresh\');var tf=c.querySelector(\'.o-threshf\');if(this.checked){if(t){t.value=\'std\';t.disabled=true;}if(tf){tf.value=\'outer\';tf.disabled=true;}}else{if(t)t.disabled=false;if(tf)tf.disabled=false;}calcQuote();"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → disable หลังเต่า
   }
   h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
@@ -2940,6 +2946,7 @@ function readItem(d){
     const _gmc=d.querySelector('.o-gm-curve'); optSel.gmCurve=_gmc?_gmc.value:'0';
   }
   if(p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id)){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
+  if(p.cat==='ฝ้า-ผนัง'){ const _wm=d.querySelector('.o-wallmodel'); if(_wm)optSel.wallmodel=_wm.value; const _wpp=d.querySelector('.o-wallpaintprice'); if(_wpp)optSel.wallpaintprice=_wpp.value; } // G3 ข้อ2
   // สเปก rev2: ฝ้า-ผนัง ฟิลด์รายละเอียด
   if(p.cat==='ฝ้า-ผนัง'){ const _wf=d.querySelector('.o-wallframe'); optSel.wallframe=_wf?_wf.value:'';
     const _it=d.querySelector('.o-isothick'); if(_it)optSel.isothick=_it.value; const _ic=d.querySelector('.o-isocolor'); if(_ic)optSel.isocolor=(_ic.value||'').trim();
