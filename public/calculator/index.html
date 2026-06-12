@@ -924,7 +924,7 @@ function colorPrice(ci,a,series){
   return Math.max(min, a*rateOf(a,rates));
 }
 const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
-const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'รางยู',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']}]; // R3.9: ซ่อนคาน/ซ่อนราง ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม.
+const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'รางยู',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ทเฉพาะเลื่อนภายใน+บานเฟี้ยม (เลิกรุ่น1/2/3)
 // SLIDING_RAIL: metadata ราง ต่อรุ่น — ใช้ใน buildItemOpts + itemDetail
 const SLIDING_RAIL={
   sliding_sms:{rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'},
@@ -2537,7 +2537,7 @@ function buildItemOpts(d){
     h+='<label class="opt"><input type="checkbox" class="o-bg_motor"> มอเตอร์ระแนง 38.1 (⌈D÷3⌉ × 10,000)</label>';
   }
   if(p.motor){ h+=`<label class="opt">มอเตอร์ <select class="o-motor" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="80">80กก.+18,000</option><option value="300">300กก.+28,000</option></select></label>`; }
-  if(p.optBeam){ h+=`<label class="opt"><input type="checkbox" class="o-beam"> เสริมคาน (เหล็กกล่อง)</label>`; }
+  // R3.9: เลิก o-beam checkbox (บานเฟี้ยม) → ใช้ "เสริมคานซัพพอร์ท" (COMMON_OPTS · 4,000+500/ม. ตามความยาว) แทน
   // บานเลื่อน/เลื่อนภายใน — controls ใหม่ตาม SLIDING_RAIL
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
     const _sr = SLIDING_RAIL[p.id];
@@ -2593,7 +2593,7 @@ function buildItemOpts(d){
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
-  if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)){ h+='<label class="opt" style="width:100%;">เสริมคาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-beamm\')">ไม่มี</button><button type="button" class="chip" data-val="2400" onclick="chSetChip(this,\'o-beamm\')">รุ่น1 2,400/ม.</button><button type="button" class="chip" data-val="3600" onclick="chSetChip(this,\'o-beamm\')">รุ่น2 3,600/ม.</button><button type="button" class="chip" data-val="4400" onclick="chSetChip(this,\'o-beamm\')">รุ่น3 4,400/ม.</button></div><select class="o-beamm" style="display:none;"><option value="0">ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select> ยาว(ม.) <input type="number" class="o-beammlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>'; }
+  // R3.9: เลิก "เสริมคาน รุ่น1/2/3" (o-beamm · บานเลื่อน/เปิด/PC) — เสริมคานเหลือเฉพาะเลื่อนภายใน+บานเฟี้ยม ผ่าน "เสริมคานซัพพอร์ท" (COMMON_OPTS) · บานเลื่อนรางล่าง/เปิด/PC ไม่มีเสริมคาน
   if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
   // G3 ข้อ2 (มติพี่นัท ข): ฝ้า-ผนัง — รุ่น/ความหนา (ระบุในใบ) + ทาสี (กรอกราคาเอง)
   if(p.cat==='ฝ้า-ผนัง'){
