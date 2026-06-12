@@ -141,13 +141,15 @@ const EXPECTED = [
   { // quote-01
     lineItems: [
       { no: "1", unitPrice: 47000, total: 47000 },
-      { no: "2", unitPrice: 39000, total: 78000 },
+      // row 2 = casement_euro 1.6×2.2 panels=2 → re-baseline 2026-06-12: สูตร Linear ปัดร้อย 24,700/บาน × 2 = 49,400 (เดิม 39,000 ยุค bucket) · qty 2 = 98,800
+      { no: "2", unitPrice: 49400, total: 98800 },
       { no: "3", unitPrice: 30000, total: 30000 },
       { no: "4", unitPrice: 15000, total: 60000 },
       { no: "5", unitPrice: 90000, total: 90000 },
       { no: "6", unitPrice: 54000, total: 54000 },
     ],
-    subtotal: 359000, vat: 25130, grandTotal: 384130,
+    // subtotal +20,800 (98,800-78,000) → 379,800 · VAT 7% = 26,586 · grand 406,386
+    subtotal: 379800, vat: 26586, grandTotal: 406386,
   },
   { // quote-02
     lineItems: [
