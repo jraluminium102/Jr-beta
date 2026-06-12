@@ -39,9 +39,10 @@ const dF2 = mk("folding");
 want("ซ่อนคาน 7ม. = 4,000+2,000 = 6,000", optDelta(dF2, ".o-hide_beam", ".o-hide_beam-len", "7") === 6000, "");
 
 // ===== บานเลื่อน/บานเปิด/PC — ไม่มีเสริมคานแล้ว =====
-const dS = mk("sliding_euro"), dC = mk("casement_euro");
+const dS = mk("sliding_euro"), dC = mk("casement_euro"), dPC = mk("pc_door_2");
 want("บานเลื่อน: ไม่มีเสริมคาน (เลิกรุ่น)", !dS.querySelector(".o-beam_support") && !dS.querySelector(".o-beamm"));
 want("บานเปิด: ไม่มีเสริมคาน", !dC.querySelector(".o-beam_support") && !dC.querySelector(".o-beamm"));
+want("PC Door: มีเสริมคานซัพพอร์ท (เดิมมี)", !!dPC.querySelector(".o-beam_support"));
 
 want("ไม่มี JS error", errors.length === 0, errors.slice(0, 2).join(" / "));
 

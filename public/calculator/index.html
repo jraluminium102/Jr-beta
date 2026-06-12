@@ -915,6 +915,14 @@ const COLORS=[
 function colorOpts(series){ return COLORS.map((c,i)=>{ const sOk=!series||!c.series||c.series.indexOf(series)>=0; return sOk?`<option value="${i}"${i===0?' selected':''}>${c.n}${c.note?(' — '+c.note):''}</option>`:''; }).join(''); }  // R3.8: default = สีอบขาว
 // อัปเดต dropdown สีตาม series ของผลิตภัณฑ์ที่เลือก
 function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; }  // R3.9: default = สีอบขาว (index 0)
+// SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
+function rn90FinRate(ci){
+  if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
+  if(ci>=5&&ci<=7) return 1500;             // ลายไม้สต๊อก
+  if(ci===8||ci===9||ci===11) return 2200;  // ลายไม้อบพิเศษ
+  if(ci===4||ci===10||ci===12) return 1600; // Aztec / อบพิเศษ / สีชุบ → อบสีพิเศษ
+  return 0;                                  // idx 0,1 ขาว/ดำ = ไม่คิด
+}
 function colorPrice(ci,a,series){
   const c=COLORS[ci]; if(!c)return 0;
   // ถ้า color มี altFor และ series ตรง → ใช้เรท alt (เช่น S+สักทอง = Fuji rate)
@@ -924,7 +932,7 @@ function colorPrice(ci,a,series){
   return Math.max(min, a*rateOf(a,rates));
 }
 const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
-const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'รางยู',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ทเฉพาะเลื่อนภายใน+บานเฟี้ยม (เลิกรุ่น1/2/3)
+const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'รางยู',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3)
 // SLIDING_RAIL: metadata ราง ต่อรุ่น — ใช้ใน buildItemOpts + itemDetail
 const SLIDING_RAIL={
   sliding_sms:{rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'},
@@ -1051,10 +1059,21 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const perDoor = baseRate + colorPlus;
     const extraFee = nDoors>=2 ? (nDoors-1)*5500 : 0;
     const front = perDoor*nDoors + extraFee;
-    let wall=2*D*H*4000; const _bw=(optSel&&optSel.backwall); if(_bw)wall+=W*H*4000;
-    const fl=W*D*4000, shc=nsh*srate;
-    const _sell=roundUp(front+wall+fl+shc);
-    return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง 2 ข้าง'+(_bw?'+หลัง':'(หลังใช้ผนังปูน)')]};
+    const _bw=(optSel&&optSel.backwall);
+    // SPEC-G4-color-pricing: เนื้องานผนัง + ค่าสีโครง (ผนัง/พื้น/ชั้นอลู) ตามวัสดุผนัง
+    const wmat=(optSel&&optSel.cabwallmat)||'alu';
+    const aWall=2*D*H + (_bw ? W*H : 0);
+    const aFloor=W*D;
+    const nShelfAlu=(sg==='glass')?0:nsh;          // ชั้นกระจกไม่คิดค่าสี
+    const aShelfAlu=aFloor*nShelfAlu;
+    const wall=(wmat==='glass') ? Math.max(5000, aWall*rateOf(aWall, RATES.FIX))*0.7 : aWall*4000; // กระจก = บานติดตาย ×0.7 (×0.7 หลัง max)
+    const cWall=(wmat==='glass') ? colorPrice(ci,aWall,p.series||'') : aWall*rn90FinRate(ci);
+    const cFloor=aFloor*rn90FinRate(ci);
+    const cShelf=aShelfAlu*rn90FinRate(ci);
+    const colorStruct=Math.round(cWall+cFloor+cShelf);
+    const fl=aFloor*4000, shc=nsh*srate;
+    const _sell=roundUp(front+wall+fl+shc+colorStruct);
+    return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(wmat==='glass'?'กระจก':'อลูทึบ')+(_bw?'+หลัง':'(หลังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')]};
   }
   if(p.frame_wrap){ const W=parseFloat(w)||0, H=parseFloat(h)||0; const perim = (p.frame_wrap==='door') ? (W + 2*H) : 2*(W+H); const _sell = Math.max(1500, perim * (p.rate||700)); return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['เส้นรอบวง '+perim.toFixed(2)+' ม. × '+(p.rate||700)+'/ม. (min 1,500)']}; }
     if(p.screen_addon){
@@ -2749,6 +2768,8 @@ function buildItemOpts(d){
     h+='<label class="opt" style="width:100%;">ประเภทตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\')">ตู้ทั่วไป</button><button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\')">ตู้รองเท้า</button></div><select class="o-cabtype" style="display:none;"><option value="wardrobe" selected>ตู้ทั่วไป (ชั้น~40ซม.)</option><option value="shoe">ตู้รองเท้า (ชั้น~20ซม.)</option></select></label>';
     h+='<label class="opt" style="width:100%;">จำนวนบานหน้าตู้ <div class="chip-group chip-sm"><button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')">1 บาน</button><button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')">2 บาน</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')">3 บาน</button></div><select class="o-cabdoors" style="display:none;"><option value="1">1 บาน</option><option value="2" selected>2 บาน</option><option value="3">3 บาน</option></select></label>';
     h+='<label class="opt" style="width:100%;">ชนิดชั้น <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\')">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\')">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\')">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select></label>';
+    // SPEC-G4-color-pricing: วัสดุผนังตู้ (อลูทึบ default / กระจก) → เนื้องาน+ค่าสีผนังเปลี่ยนตามวัสดุ
+    h+='<label class="opt" style="width:100%;">วัสดุผนังตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-cabwallmat\')">อลูทึบ</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-cabwallmat\')">กระจก</button></div><select class="o-cabwallmat" style="display:none;"><option value="alu" selected>อลูทึบ</option><option value="glass">กระจก</option></select></label>';
     h+='<label class="opt">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:30px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></label>'+'<label class="opt">จำนวนชั้น (ว่าง=อัตโนมัติ) <input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:30px"></label>';
     h+='<label class="opt"><input type="checkbox" class="o-backwall"> +ผนังหลัง (ด้าน 4 · ปกติใช้ผนังปูน)</label>'; }
   if(p.glass_replace){
@@ -2995,7 +3016,7 @@ function readItem(d){
   let finLabel='';
   if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
-  if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:''; const _bw=d.querySelector('.o-backwall'); optSel.backwall=_bw?_bw.checked:false; }
+  if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:''; const _bw=d.querySelector('.o-backwall'); optSel.backwall=_bw?_bw.checked:false; const _cwm=d.querySelector('.o-cabwallmat'); if(_cwm)optSel.cabwallmat=_cwm.value; } // SPEC-G4-color: วัสดุผนัง
   if(p.glass_replace){
     const _gc=d.querySelector('.o-glasscost'); optSel.glassCost=_gc?_gc.value:'0';
     const _gp=d.querySelector('.o-glassprofit'); optSel.glassProfit=_gp?_gp.value:'100';
