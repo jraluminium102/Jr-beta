@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G3 — 2 จุดค้าง (ตรวจ 12 มิ.ย.) ส่ง dev</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.55;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:10px;}
+  h2{font-size:13.5px;margin:14px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;}
+  code{font-family:"Consolas",monospace;font-size:10px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  pre{font-family:"Consolas",monospace;font-size:9.5px;background:#0F172A;color:#E2E8F0;border-radius:6px;padding:9px 11px;white-space:pre-wrap;margin:6px 0;}
+  pre .c{color:#64748B;}pre .k{color:#7DD3FC;}pre .s{color:#FCA5A5;}pre .d{color:#F0A0A0;text-decoration:line-through;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:9px 12px;margin:8px 0;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:9px 12px;margin:8px 0;}
+  table{width:100%;border-collapse:collapse;margin:5px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;text-align:left;font-size:10px;vertical-align:top;}
+  th{background:#F3F4F6;}
+  b.red{color:#B3151D;}
+  .foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+<h1>HANDOFF G3 — 2 จุดค้าง (ส่ง dev แก้)</h1>
+<div class="sub">ไฟล์ <code>public/calculator/index.html</code> · ตรวจในเบราว์เซอร์จริง 12 มิ.ย. 2026 · ต่อจาก SPEC-G3-roof-formux v2 · อีก 5 จุด (กล่อง/dropdown/เลื่อน/ขนาด/ซ่อน itype) แก้ผ่านแล้ว ✅</div>
+
+<div class="ok"><b>สถานะ:</b> dev แก้ FIX A/B-dropdown/C/D ผ่านหมดแล้ว · เหลือ <b class="red">2 จุดนี้ที่ยังไม่ถูกแก้</b> (อาจลืมส่ง) — ทั้งคู่เป็น <b>ข้อความ label เท่านั้น ไม่แตะ logic/ราคา</b></div>
+
+<h2>จุดที่ 1 — ชื่อหัวข้อ OPTION ยังผิด (กระทบทุกหลังคา · พี่นัทเห็นหน้าจอ)</h2>
+<table>
+<tr><th style="width:90px;">ตอนนี้ (ผิด)</th><td>＋ OPTION ทางเลือกลูกค้า (เปลี่ยน<b class="red">กระจก/มุ้ง</b>/สี/<b class="red">มือจับ</b>/หลังคา · คิดราคาให้)</td></tr>
+<tr><th>ควรเป็น (หลังคา)</th><td>＋ OPTION ทางเลือกลูกค้า (เปลี่ยน<b>สี / วัสดุมุง / หลังคา</b> · คิดราคาให้)</td></tr>
+</table>
+<p><b>เหตุ:</b> แก้แค่ตัวเลือกใน dropdown (<code>ocCatOptions</code>) แล้ว แต่ "ชื่อหัวข้อ" (<code>.oc-block &gt; summary</code>) ยัง hardcode คงที่ทุกสินค้า ใน template <code>addItem</code> (ราว L2334)</p>
+<p><b>วิธีแก้ (ทำให้ชื่อ sync ตามสินค้า เหมือน dropdown):</b> เพิ่มท้ายฟังก์ชัน <code>buildItemOpts(d)</code> — หลังสร้าง <code>.i-opts</code> เสร็จ (จุดที่ <code>.o-roofend</code> ถูกสร้างแล้ว):</p>
+<pre><span class="k">var</span> _ocSum = d.querySelector(<span class="s">'.oc-block&gt;summary'</span>);
+<span class="k">if</span>(_ocSum){
+  <span class="k">var</span> _isRoof = !!(d.querySelector(<span class="s">'.o-roofend'</span>) || d.querySelector(<span class="s">'.o-roofbatten'</span>));
+  _ocSum.textContent = _isRoof
+    ? <span class="s">'＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)'</span>
+    : <span class="s">'＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)'</span>;
+}</pre>
+<p><span class="c">// ใช้ <code>_isRoof</code> เงื่อนไขเดียวกับ <code>ocCatOptions</code> → ชื่อหัวข้อกับ dropdown ตรงกันเสมอ · <code>buildItemOpts</code> รันทุกครั้งที่เปลี่ยนสินค้า ชื่ออัปเดตตามกลุ่มเอง</span></p>
+
+<h2>จุดที่ 2 — label "รางน้ำ" ขัดกับมติ (รางน้ำต้องคิดเงิน)</h2>
+<table>
+<tr><th style="width:90px;">ตอนนี้ (ขัด)</th><td>ปลายหลังคา → "รางน้ำ <b class="red">(รวมในราคาหลังคา)</b>" · แต่ "ชนิดราง อลู S <b>1,000/ม.</b>" คิดเงินจริง → ข้อความขัดกัน</td></tr>
+<tr><th>แก้เป็น</th><td>"รางน้ำ <b>(คิดตามชนิด/ความยาว)</b>"</td></tr>
+</table>
+<p><b>เหตุ:</b> มติพี่นัท = เรตหลังคาเป็น "ราคาเปล่า" · รางน้ำคิดเพิ่ม 1,000/ม. × ความยาว (FIX-13) · ข้อความ "(รวมในราคาหลังคา)" เป็นของเก่าค้าง ทำให้เข้าใจผิดว่าฟรี</p>
+<p><b>วิธีแก้:</b> ในตัวสร้างชิป "ปลายหลังคา" (roof end option · ราว L2662) แก้ string</p>
+<pre><span class="d">'รางน้ำ (รวมในราคาหลังคา)'</span>  →  <span class="s">'รางน้ำ (คิดตามชนิด/ความยาว)'</span></pre>
+<p><span class="c">// แก้แค่ข้อความ ไม่แตะ calc — ราคารางน้ำคิดจากกล่อง "ชนิดราง × ยาว" อยู่แล้ว (ถูกต้อง)</span></p>
+
+<h2>เช็คหลังแก้</h2>
+<p>เลือก "หลังคา ไวนิล" (กลุ่ม 3) → (1) หัวข้อ OPTION = "เปลี่ยนสี / วัสดุมุง / หลังคา" · (2) ปลายหลังคา = "รางน้ำ (คิดตามชนิด/ความยาว)" · (3) <code>node test/quote-fidelity.mjs</code> = PASS (ราคาไม่เปลี่ยน เพราะแก้แค่ label)</p>
+
+<div class="foot">ตรวจโดย skill form-ux-redesign (READ-ONLY · เบราว์เซอร์จริง) · ทั้ง 2 จุด = label only ไม่กระทบราคา/logic</div>
+</body>
+</html>
