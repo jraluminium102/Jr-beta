@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REVIEW G3 หัวข้อ+หมวด — 2026-06-12</title>
+<style>
+  :root{--red:#B3151D;--ok:#15803D;--warn:#92400E;--line:#E5E7EB;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;font-size:13px;color:#1F2937;margin:0;padding:16px;background:#F9FAFB;}
+  h1{font-size:17px;color:var(--red);margin:0 0 2px;}
+  .meta{color:#6B7280;font-size:11px;margin-bottom:14px;}
+  /* table */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-bottom:18px;}
+  th{background:#FFF5F5;color:var(--red);font-size:12px;padding:8px 10px;text-align:left;border-bottom:2px solid #FECACA;}
+  td{padding:7px 10px;border-bottom:1px solid #F3F4F6;vertical-align:top;font-size:12px;line-height:1.5;}
+  tr:last-child td{border-bottom:none;}
+  /* priority tags */
+  .p1{display:inline-block;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 7px;font-weight:700;font-size:11px;}
+  .p2{display:inline-block;background:#FEF3C7;color:var(--warn);border-radius:6px;padding:1px 7px;font-weight:700;font-size:11px;}
+  .p3{display:inline-block;background:#DCFCE7;color:var(--ok);border-radius:6px;padding:1px 7px;font-weight:700;font-size:11px;}
+  .box{font-weight:700;color:var(--red);}
+  code{background:#F3F4F6;border-radius:4px;padding:1px 5px;font-size:11px;font-family:Consolas,monospace;}
+  /* section header */
+  .sec{font-size:14px;font-weight:700;color:var(--red);margin:0 0 6px;padding-top:4px;}
+  .sec2{font-size:13px;font-weight:700;color:#374151;margin:16px 0 6px;}
+  /* dev note box */
+  .devnote{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:14px;}
+  .devnote b{color:#1D4ED8;}
+  /* summary box */
+  .sum{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<h1>REVIEW G3 — หัวข้อ+หมวด ฟอร์มหลังคา</h1>
+<div class="meta">ตรวจโดย UX/UI Designer sub-agent · 12 มิ.ย. 2026 · READ-ONLY · ส่ง dev แก้ index.html</div>
+
+<!-- dev note -->
+<div class="devnote">
+  <b>Context สำหรับ dev:</b> ระบบ groupGHOpts ใน index.html ~L1796 ใช้ CATS array + keyword-match จัด option เข้ากล่อง<br>
+  ไฟล์: <code>public/calculator/index.html</code> · Function: <code>groupGHOpts(ch)</code> · CATS หลังคา ~L1801-1808
+</div>
+
+<!-- ===== SECTION 1: 🔴 สำคัญ ===== -->
+<div class="sec">🔴 สำคัญ (แก้ก่อน — กระทบการแสดงผลฟอร์ม)</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>กล่อง / ออปชั่น</th>
+      <th>ปัญหา</th>
+      <th>เสนอแก้</th>
+      <th>จุดโค้ดที่ dev ต้องแก้</th>
+      <th>ความสำคัญ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="box">⑥ หมายเหตุ / งานเสริม</span><br>• สีอลูมิเนียม (รายการนี้)<br>• กระจก (รายการนี้)</td>
+      <td>
+        <b>หลงหมวด (catch-all)</b> — ทั้ง 2 รายการเป็น field กลางของ addSet (<code>.i-color-wrap</code> / <code>.i-glass-wrap</code>) ปกติซ่อน (display:none) แต่เมื่อ product บางชนิดเปิดใช้ จะโผล่ในกล่อง ⑥ แทนที่จะเป็นกล่อง ① ซึ่งไม่ตรงบริบทหลังคา
+      </td>
+      <td>
+        <b>วิธีที่ 1 (แนะนำ):</b> เพิ่ม guard ใน <code>groupGHOpts</code> loop — ก่อน push เข้า bucket ให้ check ว่า element มี class <code>i-color-wrap</code> หรือ <code>i-glass-wrap</code> → ข้ามไม่ใส่กล่อง (append ตามลำดับ DOM ปกติ หรือซ่อนไว้ก่อน)
+        <br><br>
+        <b>วิธีที่ 2:</b> เพิ่ม class <code>no-group-gh</code> ให้ทั้ง 2 wrap แล้วเช็คก่อน loop
+      </td>
+      <td>
+        <code>groupGHOpts</code> ~L1830–1838<br>
+        บรรทัด loop: <code>kids.forEach(function(k){</code><br>
+        เพิ่มก่อน <code>ci=CATS.length-1</code>:<br>
+        <code>if(k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')) return;</code>
+      </td>
+      <td><span class="p1">🔴 สำคัญ</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">④ ของเสริมหลังคา</span><br>(10 รายการปนกัน)</td>
+      <td>
+        <b>ไม่มีหัวข้อรอง</b> — 10 รายการเรียงต่อกันไม่มีการแบ่งกลุ่ม เซลล์ต้องไล่อ่านทั้งหมดเพื่อหา 1 รายการ · ทั้ง 10 อยู่ใน bucket เดียว
+      </td>
+      <td>
+        แบ่ง sub-group 3 กลุ่มใน CSS/HTML ใน CATS key เดิม "🔩 ของเสริมหลังคา" (ไม่ต้องแตกกล่องใหม่):<br>
+        • <b>🏗️ เสา · คาน</b> — คานเหล็กถัก, เสาแผง, เสา 4"×8", เพลทเหล็ก, เหล็กดึง<br>
+        • <b>🎨 ซ่อนสโลป · ปิด/ครอบ</b> — ซ่อนสโลป, ปิดซ่อนราง, ครอบคาน<br>
+        • <b>💧 กันน้ำ · รอยต่อ</b> — ปิดปลายกันน้ำ, วัสดุปิดรอยต่อ, โซ่รางน้ำ, ครอบท่อ PVC<br>
+        <i>สร้าง sub-header ใน bucket หรือ nested details ก็ได้</i>
+      </td>
+      <td>
+        <code>groupGHOpts</code> ~L1841–1853<br>
+        ส่วน render bucket ⑤ (index 3 "ของเสริม") — แทน <code>buckets[i].forEach</code> ธรรมดา ให้จัด sub-group ก่อน append<br>
+        หรือเพิ่ม <code>subgroups</code> field ใน CATS entry
+      </td>
+      <td><span class="p1">🔴 สำคัญ</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===== SECTION 2: 🟡 ควรแก้ ===== -->
+<div class="sec">🟡 ควรแก้ (UX ดีขึ้นชัดเจน)</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>กล่อง / ออปชั่น</th>
+      <th>ปัญหา</th>
+      <th>เสนอแก้</th>
+      <th>จุดโค้ดที่ dev ต้องแก้</th>
+      <th>ความสำคัญ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="box">① ชื่อกล่อง</span><br>"🏠 วัสดุมุง · สี · โครง"</td>
+      <td>
+        <b>คำ "สี" ในชื่อกล่องซ้ำซ้อน</b> — ทำงงว่า "สีอลู" (global header) vs "สีวัสดุมุง" (ใน ①) · ข้างในกล่องมีแค่สีวัสดุมุง ไม่ใช่สีอลู
+      </td>
+      <td>เปลี่ยนเป็น <b>"🏠 วัสดุมุง · โครง"</b> (ตัด "· สี" ออก)</td>
+      <td>
+        CATS[0].key ~L1802<br>
+        <code>{key:'🏠 วัสดุมุง · สี · โครง', ...}</code><br>
+        → แก้เป็น <code>{key:'🏠 วัสดุมุง · โครง', ...}</code>
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">② อิโมจิชื่อกล่อง</span><br>"⬅️➡️ หลังคาเลื่อน"</td>
+      <td>
+        <b>อิโมจิ 2 ตัวหนักตา</b> — สายตาต้องหยุดอ่าน ⬅️➡️ ก่อนถึงคำ · อิโมจิลูกศร 2 อันไม่ได้สื่อ "เลื่อน" ชัดขึ้น
+      </td>
+      <td>เปลี่ยนเป็น <b>"🔄 หลังคาเลื่อน"</b> — 🔄 สื่อ "เลื่อน/หมุน" ชัดกว่า อิโมจิเดียว</td>
+      <td>
+        CATS[1].key ~L1803<br>
+        <code>{key:'⬅️➡️ หลังคาเลื่อน', ...}</code><br>
+        → แก้เป็น <code>{key:'🔄 หลังคาเลื่อน', ...}</code>
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">② label ใน หลังคาเลื่อน</span><br>"บานติดตาย (บาน · ส่วนไม่เลื่อน · ระบุในใบ)"</td>
+      <td>
+        <b>label ยาว 3 ชั้น</b> — "(บาน · ส่วนไม่เลื่อน · ระบุในใบ)" ซ้อนคำอธิบายไว้ใน label ทำให้แถวสูง ขยายพื้นที่มือถือ
+      </td>
+      <td>
+        label หลัก: <b>"บานติดตาย"</b><br>
+        hint แยก: <span style="color:#6B7280;font-size:11px;">"ส่วนที่ไม่เลื่อน · ระบุในใบ"</span>
+      </td>
+      <td>
+        buildItemOpts / o-roofslide section<br>
+        หา label <code>"บานติดตาย"</code> ในโค้ด render option → แยก hint ออก
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">③ ลำดับใน ปลายหลังคา · รางน้ำ</span><br>ระบบรางน้ำ (ท่อ/โซ่) อยู่ก่อนชนิดราง</td>
+      <td>
+        <b>ลำดับสลับ</b> — เลือก "ระบบระบาย (ท่อ/โซ่)" ก่อน แต่ยังไม่รู้ว่าเป็นราง S/M/L · ชนิดรางมีผลต่อราคา ควรเลือกก่อน
+      </td>
+      <td>
+        จัดลำดับใหม่:<br>
+        1. ปลายหลังคา (ปล่อย / มีรางน้ำ)<br>
+        2. <b>ชนิดราง</b> — อลู S / สแตน M / สแตน L<br>
+        3. ระบบระบาย (ท่อ / โซ่) + สี/ลาย<br>
+        4. ตะแกรงกันใบไม้
+      </td>
+      <td>
+        CATS[2].kw ~L1804<br>
+        keyword <code>'ชนิดราง'</code> ครอบแล้ว · แก้ที่ HTML render order ของ option ใน buildItemOpts สำหรับ o-roofend section
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">⑤ ชื่อกล่อง</span><br>"➕ ต่อปลายวัสดุที่ 2 (หลังคาผสม)"</td>
+      <td>
+        <b>ชื่อหลักไม่ใช่ภาษาช่าง</b> — "ต่อปลายวัสดุที่ 2" เป็นชื่อทางเทคนิค · ช่างและเซลล์พูด "หลังคาผสม" ·  "(หลังคาผสม)" ควรเป็นชื่อหลัก
+      </td>
+      <td>เปลี่ยนเป็น <b>"➕ หลังคาผสม (วัสดุที่ 2)"</b></td>
+      <td>
+        CATS[4].key ~L1806<br>
+        <code>{key:'➕ ต่อปลายวัสดุที่ 2', ...}</code><br>
+        → แก้เป็น <code>{key:'➕ หลังคาผสม (วัสดุที่ 2)', ...}</code>
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">⑥ ชื่อกล่อง</span><br>"📝 หมายเหตุ / งานเสริม"</td>
+      <td>
+        <b>ชื่อกำกวม</b> — "หมายเหตุ" เป็นชื่อ textarea ด้านล่าง ไม่ใช่ชื่อหมวด · "งานเสริม" ไม่ชัดว่าหมายถึงอะไร (งานวิศวกรรม? อุปกรณ์เสริม?)
+      </td>
+      <td>เปลี่ยนเป็น <b>"📝 งานพิเศษ · รื้อของเดิม"</b> — ตรงกับ 2 รายการที่ควรอยู่ในกล่องนี้จริงๆ</td>
+      <td>
+        CATS[5].key ~L1807<br>
+        <code>{key:'📝 หมายเหตุ / งานเสริม', ...}</code><br>
+        → แก้เป็น <code>{key:'📝 งานพิเศษ · รื้อของเดิม', ...}</code>
+      </td>
+      <td><span class="p2">🟡 ควรแก้</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===== SECTION 3: 🟢 แต่งสวย ===== -->
+<div class="sec">🟢 แต่งสวย (ทำได้ ไม่รีบ)</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>กล่อง / ออปชั่น</th>
+      <th>ปัญหา</th>
+      <th>เสนอแก้</th>
+      <th>จุดโค้ด</th>
+      <th>ความสำคัญ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="box">③ ชื่อออปชั่น</span><br>"ตะแกรงพลาสติกกันใบไม้ สีดำ (รวมในราคา)"</td>
+      <td>ชื่อยาว · "(รวมในราคา)" ซ้ำกับ label ของ "ปลายหลังคา" ที่กำลังแก้อยู่แล้ว</td>
+      <td>เปลี่ยนเป็น <b>"ตะแกรงกันใบไม้ (รวมราคา)"</b> — ตัด "พลาสติก สีดำ" ออก เพราะมีแค่ชนิดเดียว ไม่ต้องระบุ</td>
+      <td>buildItemOpts หา label "ตะแกรง"</td>
+      <td><span class="p3">🟢 แต่งสวย</span></td>
+    </tr>
+    <tr>
+      <td><span class="box">④ ชื่อ sub-group ใน ของเสริม</span><br>ป้ายกลุ่ม "ครอบคาน"</td>
+      <td>"ครอบคาน (ลูกฟูก 1 หน้า ลด 40%)" — ข้อมูลราคาใน label หัวข้อ อ่านยาก</td>
+      <td>แยก: label = "ครอบคาน" · hint = "(ลูกฟูก 1 หน้า · ลด 40%)"</td>
+      <td>buildItemOpts หา label "ครอบคาน"</td>
+      <td><span class="p3">🟢 แต่งสวย</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===== สรุป keyword ที่ต้อง maintain ===== -->
+<div class="sec2">Keyword ที่ต้อง maintain ใน CATS หลังคา (index.html ~L1801)</div>
+<div class="sum">
+  <table style="width:100%;margin:0;border:none;">
+    <tr style="background:transparent;"><th style="background:transparent;color:#374151;border-bottom:1px solid var(--line);">CATS index</th><th style="background:transparent;color:#374151;border-bottom:1px solid var(--line);">key (เสนอ)</th><th style="background:transparent;color:#374151;border-bottom:1px solid var(--line);">keyword สำคัญ (ห้ามลบ)</th></tr>
+    <tr><td>0</td><td>🏠 วัสดุมุง · โครง</td><td><code>'สีวัสดุมุง','สีเมทัลชีท','แป ','โครงสร้าง'</code></td></tr>
+    <tr><td>1</td><td>🔄 หลังคาเลื่อน</td><td><code>'หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','ชนิดเลื่อน','มอเตอร์'</code></td></tr>
+    <tr><td>2</td><td>🌧️ ปลายหลังคา · รางน้ำ</td><td><code>'ปลายหลังคา','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง'</code></td></tr>
+    <tr><td>3</td><td>🔩 ของเสริมหลังคา</td><td><code>'เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ปิดปลาย','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง'</code></td></tr>
+    <tr><td>4</td><td>➕ หลังคาผสม (วัสดุที่ 2)</td><td><code>'ต่อปลายวัสดุ','พื้นที่ส่วนที่ 2'</code></td></tr>
+    <tr><td>5 (catch-all)</td><td>📝 งานพิเศษ · รื้อของเดิม</td><td>kw:[] — catch-all (เพิ่ม exclude guard แทน)</td></tr>
+  </table>
+  <div style="margin-top:8px;font-size:11px;color:#DC2626;">⚠️ exclude guard ที่ต้องเพิ่ม: ก่อน loop kids ใน groupGHOpts ให้กรอง element ที่มี class <code>i-color-wrap</code> หรือ <code>i-glass-wrap</code> ออกไม่ให้เข้า bucket ใดๆ</div>
+</div>
+
+<!-- ===== จุดที่ต้องถามพี่นัท ===== -->
+<div class="sec2">จุดที่ต้องถามพี่นัท (เช็คซ้ำ)</div>
+<div class="sum">
+  <ol style="margin:0;padding-left:18px;font-size:12px;line-height:2;">
+    <li>
+      <b>"กระจก (รายการนี้)" ใน หลังคา</b> — <code>.i-glass-wrap</code> ปกติซ่อน แต่สินค้าหลังคาชนิดไหนบ้างที่แสดงช่องนี้? ถ้าหลังคากระจกลามิเนตแสดงขึ้นมา ควรอยู่กล่องไหน (กล่อง ① วัสดุมุง หรือกล่อง ② หลังคาเลื่อน หรือเพิ่ม keyword ใน CATS ①)?
+      <br><span style="color:#6B7280;font-size:11px;">ผลของคำตอบ: ถ้า "กระจก" เกี่ยวกับวัสดุมุง → เพิ่ม keyword <code>'ความหนากระจก'</code> เข้า CATS[0] ถ้าไม่เกี่ยวกับหลังคาเลย → exclude ออกทั้งหมด</span>
+    </li>
+    <li>
+      <b>sub-group ④ ของเสริม</b> — "เสริมเพลทเหล็กล่าง" + "เหล็กดึงด้านบน" ควรอยู่กลุ่ม "เสา/คาน" หรือ "กันน้ำ/รอยต่อ"? ทั้ง 2 เป็นโครงสร้างหรือเป็นงานกันน้ำ?
+      <br><span style="color:#6B7280;font-size:11px;">ผลของคำตอบ: กำหนดว่า keyword ทั้ง 2 ไปอยู่ใน subgroups ไหน</span>
+    </li>
+  </ol>
+</div>
+
+<div style="font-size:10px;color:#9CA3AF;text-align:center;margin-top:16px;">REVIEW-G3-headings · READ-ONLY · ส่ง dev แก้ index.html · 12 มิ.ย. 2026</div>
+</body>
+</html>

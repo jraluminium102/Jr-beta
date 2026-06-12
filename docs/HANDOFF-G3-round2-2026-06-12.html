@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G3 รอบ 2 — รางน้ำ/ปลายหลังคา + ชิป + ชื่อ/ลำดับ (ส่ง dev · 12 มิ.ย.)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13px;margin:13px 0 5px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  h3{font-size:11.5px;margin:9px 0 3px;color:#B3151D;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  pre{font-family:"Consolas",monospace;font-size:9px;background:#0F172A;color:#E2E8F0;border-radius:6px;padding:8px 10px;white-space:pre-wrap;margin:5px 0;}
+  pre .c{color:#64748B;}pre .k{color:#7DD3FC;}pre .s{color:#FCA5A5;}pre .d{color:#F0A0A0;text-decoration:line-through;}pre .a{color:#86EFAC;}
+  .crit{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .money{background:#FEFCE8;border:1px solid #FDE047;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  .chk{list-style:none;padding-left:2px;}.chk li:before{content:"\2610 ";font-weight:700;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G3 รอบ 2 — ส่ง dev</h1>
+<div class="sub">ไฟล์ <code>public/calculator/index.html</code> · 12 มิ.ย. 2026 · ตรวจในเบราว์เซอร์จริง + มติพี่นัท · รวม 6 หมวด (A–F)</div>
+
+<div class="crit"><b>กฎ:</b> ส่วนใหญ่เป็น <b>UI/label/ลำดับ</b> · มี 2 จุดแตะ <b>logic ราคา</b> (C ปลายหลังคา 3 ตัวเลือก, E รุ่น M) — ทำตามสเปกเป๊ะ · DoD: <code>node test/quote-fidelity.mjs</code> PASS + กรอกหลังคาเทียบราคา/ใบก่อน-หลัง</div>
+
+<h2>A. แก้ 2 label ค้าง (จาก handoff ก่อน · ยังไม่ถูกแก้)</h2>
+<table>
+<tr><th style="width:120px;">จุด</th><th>แก้</th></tr>
+<tr><td>ชื่อหัวข้อ OPTION (<code>.oc-block&gt;summary</code> · ~L2334)</td><td>หลังคา → "＋ OPTION ทางเลือกลูกค้า (เปลี่ยน<b>สี / วัสดุมุง / หลังคา</b> · คิดราคาให้)" · ทำ dynamic ใน <code>buildItemOpts</code> ตาม <code>_isRoof</code> (โค้ดเต็มใน HANDOFF-G3-2fixes)</td></tr>
+<tr><td>label "ปลายหลังคา" option รางน้ำ (<code>o-roofend</code> · ~L2658)</td><td>"รางน้ำ <span style="text-decoration:line-through;">(รวมในราคาหลังคา)</span>" → ดู C (ถูกรื้อใหม่เป็น 3 ตัวเลือก)</td></tr>
+</table>
+
+<h2>C. ปลายหลังคา = 3 ตัวเลือก เลือกอย่างเดียว (มติพี่นัท · แตะ logic)</h2>
+<div class="note">เดิม <code>o-roofend</code> มี 2 ค่า: ปล่อย / รางน้ำ · "ปิดปลายกันน้ำ" (<code>o-rfeave</code>) แยกอยู่ในของเสริม (L2678) · <b>มติ:</b> รวมเป็น 3 ตัวเลือก single-select เพราะปลายหลังคาเลือกได้แบบเดียว</div>
+<h3>① เปลี่ยน <code>o-roofend</code> เป็น 3 ค่า:</h3>
+<pre><span class="k">ปลายหลังคา:</span>  ปล่อย  |  มีรางน้ำ  |  ปิดปลายกันน้ำกระเด็น   <span class="c">// เลือกได้อย่างเดียว (ชิป/segmented)</span></pre>
+<ul>
+<li><b>ปล่อย</b> → ไม่มีราง ไม่มีปิดปลาย</li>
+<li><b>มีรางน้ำ</b> → โชว์กล่องรางน้ำ (<code>o-guttersys-wrap</code>: ระบบระบาย ท่อ/โซ่ + ชนิดราง <code>o-rfgut</code> + ความยาว)</li>
+<li><b>ปิดปลายกันน้ำกระเด็น</b> → โชว์ความยาว (ใช้ <code>o-rfeave</code> เดิม 1,000/ม.) · <b>ย้าย <code>o-rfeave</code> ออกจากของเสริม (L2678) มาที่นี่</b></li>
+</ul>
+<h3>② ช่องความยาว 1 ช่อง ใช้ร่วม · default = ความยาวหลังคา (<code>i-w</code> = ด้านยาว)</h3>
+<div class="money">
+<b>logic ราคา (สำคัญ):</b><br>
+— ถ้า "มีรางน้ำ" → ราคา = เรตราง (<code>o-rfgut</code>) × ความยาว<br>
+— ถ้า "ปิดปลายกันน้ำกระเด็น" → ราคา = 1,000 × ความยาว (สูตร <code>o-rfeave</code> เดิม)<br>
+— ถ้า "ปล่อย" → 0<br>
+ทั้ง 2 แบบกรอก "ความยาว" ช่องเดียวกันได้ (เพราะเลือกอย่างเดียว) · default เติม <code>i-w</code> (ด้านยาว) ให้อัตโนมัติ ตอนเลือก "มีรางน้ำ"/"ปิดปลายกันน้ำ" (onchange เดิมเติม <code>gl.value=iw.value</code> อยู่แล้ว ใช้ pattern เดียวกัน)
+</div>
+<div class="note"><b>readItem/calc:</b> อ่าน <code>o-roofend</code> 3 ค่า → branch ราคาให้ถูก · <code>o-rfeave</code> ไม่อยู่ในของเสริมแล้ว (อ่านจากกล่องปลายหลังคาแทน) · ระวัง quote text genQuote (~L3768) ให้ลงใบตามตัวเลือกที่เลือก</div>
+
+<h2>E. รางน้ำรุ่น M = อลูมิเนียม (ไม่ใช่สแตนเลส) · มติพี่นัท</h2>
+<h3>① label ชนิดราง (<code>o-rfgut</code> · L2672):</h3>
+<pre><span class="d">&lt;option value="2000"&gt;สแตนเลส M 2,000/ม.&lt;/option&gt;</span>
+<span class="a">&lt;option value="2000"&gt;อลูมิเนียม M 2,000/ม.&lt;/option&gt;</span>   <span class="c">// value/ราคา 2,000 เท่าเดิม เปลี่ยนแค่ชื่อวัสดุ</span></pre>
+<h3>② ข้อความวัสดุในใบ (genQuote · L3777):</h3>
+<pre><span class="d">const _gmat = (parseFloat(_os.rfgut)||0)&gt;=2000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม';</span>
+<span class="a">const _gmat = (parseFloat(_os.rfgut)||0)&gt;=3000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม';</span>
+<span class="c">// เดิม: 2000(M)+3000(L)=สแตนเลส · ใหม่: เฉพาะ 3000(L)=สแตนเลส · 1000(S)+2000(M)=อลูมิเนียม</span></pre>
+<div class="money"><b>เช็คซ้ำ (พี่นัทยืนยันแล้วว่าเปลี่ยนแค่ชื่อ):</b> ราคา รุ่น M คงเดิม 2,000/ม. — ถ้าอลูมิเนียมควรถูกกว่าสแตนเลส ค่อยแจ้งแก้ value ทีหลัง</div>
+<div class="ok"><b>หมายเหตุ:</b> "ปิดซ่อนราง" (<code>o-rfgcw/ch/cl</code>) <b>ไม่ต้องแตะ</b> — คงเดิมทุกอย่าง (พี่นัทยืนยัน)</div>
+
+<h2>B. ชื่อกล่อง + ลำดับ (จากรีวิว · label เท่านั้น)</h2>
+<table>
+<tr><th class="c" style="width:24px;">#</th><th style="width:33%;">เดิม</th><th>เปลี่ยนเป็น</th></tr>
+<tr><td class="c">①</td><td>🏠 วัสดุมุง · สี · โครง</td><td>🏠 <b>วัสดุมุง · โครง</b> (ตัด "สี" กันสับสนกับสีอลู)</td></tr>
+<tr><td class="c">②</td><td>⬅️➡️ หลังคาเลื่อน</td><td>🔄 หลังคาเลื่อน</td></tr>
+<tr><td class="c">③</td><td>🌧️ ปลายหลังคา · รางน้ำ</td><td>คงชื่อ · <b>เรียงใน: ปลายหลังคา → ชนิดราง → ระบบระบาย(ท่อ/โซ่)</b> (ชนิดรางขึ้นก่อน)</td></tr>
+<tr><td class="c">⑤</td><td>➕ ต่อปลายวัสดุที่ 2 (หลังคาผสม)</td><td>➕ หลังคาผสม (วัสดุที่ 2)</td></tr>
+<tr><td class="c">⑥</td><td>📝 หมายเหตุ / งานเสริม</td><td>📝 งานพิเศษ · รื้อของเดิม</td></tr>
+</table>
+
+<h2>D. ของเสริมหลังคา — กลุ่มเดียว เรียงลำดับ + แปลงดรอปดาวน์เป็นชิป (มติพี่นัท)</h2>
+<div class="note"><b>มติ:</b> ไม่ซอย sub-group ย่อย — <b>กลุ่มเดียวเรียงไหลตามงาน</b> · เรียง: โครงรับ → งานสวยงาม → กันน้ำ/รอยต่อ</div>
+<table>
+<tr><th class="c" style="width:24px;">ลำดับ</th><th>ออปชั่น (class)</th></tr>
+<tr><td class="c">1</td><td>เสาแผง (<code>o-rfpolep</code>) · เสา 4"x8" (<code>o-rfpole4</code>)</td></tr>
+<tr><td class="c">2</td><td>คานเหล็กถัก (<code>o-rfbeam</code> + <code>o-rfbeamlen</code>)</td></tr>
+<tr><td class="c">3</td><td>เสริมเพลทเหล็กล่าง (<code>o-rfplate</code>) · เหล็กดึงด้านบน (<code>o-rfpull</code>) — ฟรี</td></tr>
+<tr><td class="c">4</td><td>ซ่อนสโลป (<code>o-rfhs</code> + สูง/ยาว/ด้าน)</td></tr>
+<tr><td class="c">5</td><td>ปิดซ่อนราง (<code>o-rfgcw/ch/cl</code>) — คงเดิม</td></tr>
+<tr><td class="c">6</td><td>ครอบคาน (<code>o-rfbcw/bcl</code>)</td></tr>
+<tr><td class="c">7</td><td>วัสดุปิดรอยต่อ + สี (<code>o-rfsealer</code> / <code>o-rfsealercolor</code>)</td></tr>
+<tr><td class="c">8</td><td>โซ่รางน้ำ (<code>o-rfchain</code>)</td></tr>
+<tr><td class="c">9</td><td>ครอบท่อ PVC (<code>o-rfpvc</code>)</td></tr>
+</table>
+<div class="note"><b>หมายเหตุ:</b> "ปิดปลายกันน้ำ" (<code>o-rfeave</code>) ย้ายออกไปกล่องปลายหลังคาแล้ว (ดู C) — เอาออกจากของเสริม</div>
+
+<h3>แปลง select (≤5 ตัวเลือก) → ชิป/segmented · 14 ตัว (เน้นติ๊ก ไม่เน้นดรอปดาวน์):</h3>
+<table>
+<tr><th>กล่อง</th><th>select ที่แปลงเป็นชิป</th></tr>
+<tr><td>วัสดุมุง·โครง</td><td><code>o-roofcolor</code>(3) · <code>o-roofbatten</code>(2) · <code>o-roofframe</code>(2)</td></tr>
+<tr><td>หลังคาเลื่อน</td><td><code>o-slidetype</code>(2)</td></tr>
+<tr><td>ปลายหลังคา·ราง</td><td><code>o-roofend</code>(3) · <code>o-guttersys</code>(2) · <code>o-gutter-pipecolor</code>(2) · <code>o-gutter-chainpat</code>(2) · <code>o-gutter-chaincolor</code>(2) · <code>o-rfdrain</code>(4) · <code>o-rfgut</code>(3)</td></tr>
+<tr><td>ของเสริม</td><td><code>o-rfbeam</code>(4) · <code>o-rfsealercolor</code>(3) · <code>o-rfhs</code>(3)</td></tr>
+</table>
+<div class="crit"><b>เก็บดรอปดาวน์ไว้:</b> <code>o-roof2</code> (วัสดุที่ 2 · 18 ตัวเลือก — เยอะไป ทำชิปไม่ไหว)</div>
+<div class="note"><b>pattern แปลงชิป (ห้ามแตะ logic):</b> ซ่อน <code>&lt;select&gt;</code> เดิม (display:none) + วาดชิปทับ · กดชิป → set <code>select.value</code> + <code>fire('change')</code> → readItem/calc อ่าน value เดิมได้เหมือนเดิม · <b>ห้ามเปลี่ยน value/class ที่ logic อ่าน</b></div>
+
+<h2>F. เก็บตก — field กลางหลงเข้ากล่อง catch-all</h2>
+<div class="note"><code>.i-color-wrap</code> (สีอลูมิเนียม) + <code>.i-glass-wrap</code> (กระจก) เป็น field กลางของ addSet · ตอน product=หลังคา ตกเข้ากล่อง ⑥ "งานพิเศษ" ผิดหมวด · แก้: ใน <code>groupGHOpts</code> ข้าม element ที่มี class <code>i-color-wrap</code>/<code>i-glass-wrap</code> (ไม่จัดเข้ากล่องใด)</div>
+
+<h2>เช็คลิสต์ปิดงาน (QA · หลังคาไวนิล + ลามิเนต)</h2>
+<ul class="chk">
+<li>A: หัวข้อ OPTION หลังคา = "เปลี่ยนสี/วัสดุมุง/หลังคา"</li>
+<li>C: ปลายหลังคา 3 ปุ่ม เลือกอย่างเดียว · "ปิดปลายกันน้ำ" ไม่อยู่ในของเสริมแล้ว · ความยาว default = ด้านยาว · ราคา 3 แบบถูก (ราง=เรต×ยาว · ปิดปลาย=1,000×ยาว · ปล่อย=0)</li>
+<li>E: รุ่น M = "อลูมิเนียม M 2,000/ม." · ใบลง "รางน้ำอลูมิเนียม" สำหรับ M · รุ่น L ยังเป็น "สแตนเลส"</li>
+<li>B: ชื่อกล่อง 5 จุดเปลี่ยนตามตาราง · กล่อง ③ ชนิดรางขึ้นก่อนระบบระบาย</li>
+<li>D: ของเสริมกลุ่มเดียวเรียงตามลำดับ · 14 select เป็นชิป · o-roof2 ยังเป็นดรอปดาวน์</li>
+<li>F: สีอลู/กระจก ไม่โผล่ในกล่อง "งานพิเศษ"</li>
+<li><b>ปิดซ่อนราง คงเดิม</b> (ไม่ถูกแตะ)</li>
+<li><code>node test/quote-fidelity.mjs</code> = PASS · ราคา/ใบ เทียบก่อน-หลังตรง (ยกเว้นที่ตั้งใจแก้: ปลายหลังคา 3 แบบ + ชื่อวัสดุ M)</li>
+</ul>
+
+<div class="foot">ตรวจ+รีวิวโดย skill form-ux-redesign + ux-designer (READ-ONLY · เบราว์เซอร์จริง) · มติพี่นัท 12 มิ.ย. · ของเสริม/ราคา = ให้ accountant ตรวจซ้ำหลัง dev แก้</div>
+</body>
+</html>
