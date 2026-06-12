@@ -1362,13 +1362,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     glassUp=GLASS[gi].s*_lightA;
     if(_lightA>0) msgs.push('ช่องแสง '+_lightA.toFixed(2)+' ตร.ม. กระจก '+GLASS[gi].n.replace(/^[★⚠\s]+/,'').trim()+' +'+fmt(GLASS[gi].s*_lightA));
   } else {
-    glassUp=GLASS[gi].s*a;
+    glassUp=GLASS[gi].s*a*(p.ceLinear?Math.max(1,parseInt(panels)||1):1); // casement-euro: กระจก ×จำนวนบาน (มติพี่นัท ข้อ4-ก)
   }
   // ข้อ2(G1): ดัดโค้ง ต้องใช้กระจกดัดโค้ง — เตือนถ้าเลือกกระจกธรรมดา (ราคาขาด ~26,000)
   if(p.cat==='ดัดโค้ง' && GLASS[gi] && GLASS[gi].n.indexOf('ดัดโค้ง')<0){
     msgs.push('🛑 ดัดโค้งต้องเลือก "กระจกดัดโค้ง" (10มม./ลามิเนต) — ตอนนี้เลือกกระจกธรรมดา ราคาขาด ~26,000');
   }
-  const colorUp=colorPrice(ci,a,p.series||'');
+  const colorUp=colorPrice(ci,a,p.series||'')*(p.ceLinear?Math.max(1,parseInt(panels)||1):1); // casement-euro: สี ×จำนวนบาน (มติพี่นัท ข้อ4-ก)
   let opt=0;
   // ข้อ1(G1): ค่าทึบลูกฟูก 2 หน้า × ฝั่ง (ทู=2 · วัน=1) × พื้นที่บาน × 3,500 — auto (เลิกกรอกราคาเอง)
   if(p.solid_door){

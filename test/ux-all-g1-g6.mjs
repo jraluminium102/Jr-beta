@@ -61,6 +61,14 @@ want("casement: 0.8×2.2/บาน × 2 = 35,000", w.readItem(dCe).r.sell === 35
 // เกินขนาด → เตือน
 sf(dCe, ".i-w", "1.8"); sf(dCe, ".i-h", "2.2");
 want("casement: กว้าง 1.8 > 1.5 → เตือนเกินขนาด", (w.readItem(dCe).r.msgs || []).join(" ").includes("เกินขนาด"), "");
+// ข้อ4-ก: กระจก/สี ×จำนวนบาน (เลือกพรีเมียม → ราคา/บาน คงที่ทุกบาน)
+sf(dCe, ".i-w", "0.8"); sf(dCe, ".i-h", "2.2");
+const _gi = dCe.querySelector(".i-glass"); if (_gi && _gi.options.length > 3) sf(dCe, ".i-glass", _gi.options[_gi.options.length - 1].value);
+const _ci = dCe.querySelector(".i-color"); if (_ci && _ci.options.length > 3) sf(dCe, ".i-color", _ci.options[3].value);
+sf(dCe, ".i-panels", "1"); const _ce1 = w.readItem(dCe).r.sell;
+sf(dCe, ".i-panels", "2"); const _ce2 = w.readItem(dCe).r.sell;
+sf(dCe, ".i-panels", "3"); const _ce3 = w.readItem(dCe).r.sell;
+want("casement ข้อ4: กระจก/สี ×จำนวนบาน (ราคา/บาน คงที่)", (_ce2 - _ce1) === (_ce3 - _ce2) && (_ce2 - _ce1) > 0, "1=" + _ce1 + " 2=" + _ce2 + " 3=" + _ce3);
 
 // ===== G4 บั๊กการเงิน: สีตู้อลู บวกเงินได้ =====
 const dCab = add("4", "cabinet_alu", "1.2", "2.4");
