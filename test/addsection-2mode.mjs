@@ -14,10 +14,10 @@ const checks = [];
 const want = (n, ok, d) => checks.push({ n, ok: !!ok, d: d || "" });
 function sf(ch, sel, v) { const e = ch.querySelector(sel); if (!e) throw new Error("no " + sel); e.value = String(v); e.dispatchEvent(new w.Event("input", { bubbles: true })); e.dispatchEvent(new w.Event("change", { bubbles: true })); return e; }
 
+// มติพี่นัท 2026-06-12: ชิปเพิ่มด่วนใหม่ 5 ตัว (กระจกติดตาย·ประตูบานเปิด·บานกระทุ้ง·ผนังเบาภายนอก·ผนังเบาภายใน)
 const EXPECT = [
-  { id: "fixed_glass", g: "1" }, { id: "rn89", g: "1" }, { id: "rn90", g: "1" },
-  { id: "rn91", g: "1" }, { id: "rn92", g: "1" },
-  { id: "isowall", g: "3" }, { id: "wall_ext", g: "3" }, { id: "wall_int", g: "3" },
+  { id: "fixed_glass", g: "1" }, { id: "casement_euro", g: "1" }, { id: "awning_euro", g: "1" },
+  { id: "wall_ext", g: "3" }, { id: "wall_int", g: "3" },
 ];
 
 // ===== สร้างชุด — quickstrip โชว์ทันที =====
@@ -26,7 +26,7 @@ const boxes = doc.querySelectorAll("#items .setbox");
 const sb = boxes[boxes.length - 1];
 const strip = sb.querySelector(".addsec-quickstrip");
 want("ชุดมี quickstrip (โชว์ตลอด)", !!strip && strip.style.display !== "none");
-want("quickstrip มีชิป 8 รายการ", strip && strip.querySelectorAll(".addsec-chip").length === 8, strip && strip.querySelectorAll(".addsec-chip").length);
+want("quickstrip มีชิป 5 รายการ", strip && strip.querySelectorAll(".addsec-chip").length === 5, strip && strip.querySelectorAll(".addsec-chip").length);
 const btn = sb.querySelector(".set-addpart");
 want("ชุดมีปุ่ม ＋ เพิ่มส่วน", !!btn && /เพิ่มส่วน/.test(btn.textContent), btn && btn.textContent);
 
