@@ -20,10 +20,11 @@
   header .ht{border-left:3px solid var(--red);padding-left:12px;}
   header h1{font-size:16px;margin:0;font-weight:700;}
   header p{font-size:12px;margin:2px 0 0;color:var(--muted);}
-  .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
-  .tab{height:46px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);
-    font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
-  .tab.on{background:var(--red);border-color:var(--red);color:#fff;}
+  .tabs{display:flex;gap:6px;padding:4px;background:#F3F4F6;border-radius:12px;margin-bottom:14px;}
+  .tab{flex:1;height:36px;border:none;border-radius:9px;background:transparent;color:var(--muted);
+    font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;}
+  .tab.on{background:#fff;color:var(--red-dark);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .tab .t-sm{display:none;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
   .card h2{font-size:14px;margin:0 0 10px;color:var(--red-dark);font-weight:700;}
   label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
@@ -147,8 +148,8 @@
   @media(max-width:768px){
     body{padding:0;}
     .container,.wrap{padding:8px;}
-    .tabs{flex-wrap:wrap;}
-    .tab{flex:1 1 45%;font-size:13px;padding:8px;}
+    .tab{font-size:12px;}
+    .tab .t-lg{display:none;} .tab .t-sm{display:inline;}
     .ch{padding:10px;margin-bottom:10px;}
     .chgrid{grid-template-columns:1fr 1fr;gap:6px;}
     .chgrid .full{grid-column:1/-1;}
@@ -207,11 +208,24 @@
   .set-btns-bot{margin-top:8px;}
   .set-addpart,.set-addfixed{flex:1;min-height:44px;border-radius:8px;cursor:pointer;font-size:14px;border:2px solid var(--red);background:var(--red);color:#fff;font-weight:700;}
   .set-addfixed{border-style:solid;background:var(--red);color:#fff;}
-  /* ===== QUICK ADD STRIP (addflow R2) ===== */
-  .addsec-quickstrip{background:#FFF3E0;border:1.5px solid #FFB300;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+  /* ===== ADD ZONE (formtop R3.10: รวม เพิ่มด่วน+เพิ่มส่วน · วางใต้บาน เหนือ OPTION) ===== */
+  .addzone{margin-top:8px;border:1.5px solid #FFB300;border-radius:12px;overflow:hidden;}
+  .addzone-head{background:#FFF3E0;padding:8px 14px;display:flex;align-items:center;gap:8px;}
+  .addzone-head-txt{font-size:13px;font-weight:700;color:#92400E;}
+  .addzone-body{padding:10px 12px;}
+  .addzone-divider{display:flex;align-items:center;gap:8px;color:#9CA3AF;font-size:11px;margin:8px 0;}
+  .addzone-divider span{flex:1;height:1px;background:#E5E7EB;}
+  /* quickstrip = wrapper ในกล่อง addzone (ไม่มีกล่องส้มซ้อน · refreshSet ซ่อนตัวนี้เมื่อ GH) */
+  .addsec-quickstrip{margin-bottom:0;}
   .addsec-strip-head{font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;}
   .addsec-chip{min-height:44px;padding:0 14px;border:1.5px solid #FFB300;border-radius:22px;background:#fff;cursor:pointer;font-size:13px;color:#374151;font-family:inherit;}
   .addsec-chip:active{background:#E65100;color:#fff;}
+  /* OPTION ชุด — ห่อ details ย้ายลงล่างสุด */
+  .set-opt-det{border:1px solid var(--line);border-radius:10px;margin-top:8px;overflow:hidden;}
+  .set-opt-det summary{padding:9px 12px;font-size:13px;font-weight:600;color:var(--red-dark);background:#FFF9F9;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}
+  .set-opt-det summary::-webkit-details-marker{display:none;}
+  .set-opt-det summary::after{content:"▸";margin-left:auto;font-size:11px;transition:transform .2s;}
+  .set-opt-det[open] summary::after{transform:rotate(90deg);}
   @keyframes addsec-flash{0%{box-shadow:0 0 0 0 #FFB30066;}60%{box-shadow:0 0 0 8px #FFB30000;}100%{box-shadow:0 0 0 0 #FFB30000;}}
   .addsec-flash{animation:addsec-flash .4s ease-out;}
   /* ===== MOSQ PANEL CHIPS (mosq-r2) ===== */
@@ -243,7 +257,7 @@
 
   <div class="tabs">
     <button class="tab on" data-m="quick" onclick="setMode('quick')">คิดเร็ว</button>
-    <button class="tab" data-m="quote" onclick="setMode('quote')">ใบเสนอราคา</button>
+    <button class="tab" data-m="quote" onclick="setMode('quote')"><span class="t-lg">ใบเสนอราคา</span><span class="t-sm">ใบเสนอ</span></button>
     <button class="tab" data-m="compare" onclick="setMode('compare')">เทียบราคา</button>
     <button class="tab" data-m="check" onclick="setMode('check')">เช็คลิสต์</button>
   </div>
@@ -932,7 +946,7 @@ function colorPrice(ci,a,series){
   return Math.max(min, a*rateOf(a,rates));
 }
 const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
-const COMMON_OPTS=[{id:'soft_close',label:'soft close',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'รางยู',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3)
+const COMMON_OPTS=[{id:'soft_close',label:'Soft Close (สลักหน่วงบาน)',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'ฝังรางยู (U-Track)',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3)
 // SLIDING_RAIL: metadata ราง ต่อรุ่น — ใช้ใน buildItemOpts + itemDetail
 const SLIDING_RAIL={
   sliding_sms:{rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'},
@@ -1906,9 +1920,10 @@ function refreshSet(box){
       ghColorRow.innerHTML =
         '<div style="flex:1;min-width:140px;"><label style="font-size:12px;color:#92400e;font-weight:700;display:block;margin-bottom:4px;">สีอลู (ทั้งห้อง)</label><select class="gh-color-sel" style="width:100%;height:36px;border:1px solid #F0C040;border-radius:7px;font-size:14px;background:#fff;">'+colorOpts()+'</select></div>'+
         '<div style="flex:1;min-width:140px;"><label style="font-size:12px;color:#92400e;font-weight:700;display:block;margin-bottom:4px;">กระจก (ทั้งห้อง)</label><select class="gh-glass-sel" style="width:100%;height:36px;border:1px solid #F0C040;border-radius:7px;font-size:14px;background:#fff;">'+glassOpts()+'</select></div>';
-      var topBtns = box.querySelector('.set-btns-top');
-      if(topBtns) box.insertBefore(ghColorRow, topBtns);
-      else box.querySelector('.set-parts') && box.insertBefore(ghColorRow, box.querySelector('.set-parts'));
+      // formtop R3.10: addzone(set-btns-top) ย้ายลงใต้ set-parts แล้ว → วางแถบสีหัวห้องเหนือ set-parts (direct child ของ box)
+      var _ghAnchor = box.querySelector('.set-parts');
+      if(_ghAnchor) box.insertBefore(ghColorRow, _ghAnchor);
+      else box.appendChild(ghColorRow);
 
       var syncGHColor = function(){
         var colorVal = ghColorRow.querySelector('.gh-color-sel').value;
@@ -2016,7 +2031,8 @@ function addSet(){
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
   var _quickChipsHtml=QUICK_ADD_CHIPS.map(function(c){ return '<button type="button" class="addsec-chip" data-g="'+c.g+'" data-id="'+c.id+'">'+c.label+'</button>'; }).join('');
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="addsec-quickstrip"><div class="addsec-strip-head">⚡ เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div><div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;">'+_quickChipsHtml+'</div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div><div class="set-parts"></div>';
+  // formtop R3.10: ลำดับใหม่ set-head → set-parts(บาน) → addzone(เพิ่มด่วน+เพิ่มส่วน) → OPTION ชุด (details ล่างสุด) · ตัด .set-optpreset (ซ้ำเลือกกระจกในหมวด)
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-parts"></div><div class="addzone"><div class="addzone-head"><span class="addzone-head-txt">⚡ เพิ่มส่วน / เพิ่มด่วน</span></div><div class="addzone-body"><div class="addsec-quickstrip"><div class="addsec-strip-head">เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div><div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;">'+_quickChipsHtml+'</div><div class="addzone-divider"><span></span>หรือ<span></span></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div></div></div><details class="set-opt-det"><summary>ออปชั่น / OPTION ชุดนี้</summary><div class="set-opt" style="padding:10px 12px;"><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div></details>';
   // E: ตัดปุ่ม "+ ช่องแสงติดตาย" (ซ้ำ) — ใช้ "+ เพิ่มบานย่อย" ในแต่ละบานแทน (มีชนิดติดตายครบใน SUBITEM_TYPES)
   document.getElementById('items').appendChild(box);
   // bind .addsec-chip (quickstrip) — กดชิป = quickAddItem + flash (Q1: กดซ้ำได้ ชิปไม่หาย)
@@ -2103,41 +2119,9 @@ function addGlasshouseSet(){
   return box;
 }
 // dead code ลบแล้ว (2026-06-09): addFixedToSet (ปุ่มถูกตัด) · OPT_PRESETS/optPresetOptions/addOptPreset
-// (dropdown OPTION สำเร็จรูประดับบานถูกตัด) — SET_OPT_PRESETS ด้านล่างยังใช้อยู่
-// OPTION สำเร็จรูป ระดับชุด — กดแล้วเติมข้อความ + คิดราคาส่วนต่างให้ (กระจก=ตามพื้นที่ · อื่น=ระบุเอง)
-// rate กระจก = ราคาส่วนต่าง/ตร.ม. จากตาราง GLASS (.s) ตัวเลขจริงในระบบ — ไม่เดา
-const SET_OPT_PRESETS=[
-  {t:'เปลี่ยนเป็นกระจกเทมเปอร์เขียว/ใส 6มม.', m:'sqm', r:600},
-  {t:'เปลี่ยนเป็นกระจกเทมเปอร์ใสพิเศษ 6มม.', m:'sqm', r:2500},
-  {t:'เปลี่ยนเป็นกระจกลามิเนต 4+4มม. (เขียว/ใส)', m:'sqm', r:2200},
-  {t:'เปลี่ยนเป็นกระจกลามิเนตกันร้อน 4+4มม. (Solar Max)', m:'sqm', r:4300},
-  {t:'เปลี่ยนเป็นกระจกอินซูเลท 6+6+6มม.', m:'sqm', r:4000},
-  {t:'เพิ่มมุ้งจีบนิรภัย', m:'ask'},
-  {t:'เปลี่ยนสีอลูมิเนียมเป็นสีพิเศษ', m:'ask'}
-];
-function setOptPresetOptions(){
-  return '<option value="">+ OPTION สำเร็จรูป (คิดราคาให้)…</option>'
-    + SET_OPT_PRESETS.map(function(p,i){ var h=p.m==='sqm'?(' · '+fmt(p.r)+'/ตร.ม.'):' · ระบุราคาเอง'; return '<option value="'+i+'">'+p.t+h+'</option>'; }).join('');
-}
-function addSetOptPreset(sel){
-  if(sel.value===''){ return; }
-  const p=SET_OPT_PRESETS[parseInt(sel.value)]; const box=sel.closest('.setbox');
-  if(!p||!box){ sel.value=''; return; }
-  const ot=box.querySelector('.set-opttext'), od=box.querySelector('.set-optdelta');
-  let text=p.t, delta=0;
-  if(p.m==='sqm'){
-    let area=0;
-    box.querySelectorAll('.set-parts .ch').forEach(function(ch){
-      const w=parseFloat((ch.querySelector('.i-w')||{}).value)||0, h=parseFloat((ch.querySelector('.i-h')||{}).value)||0, q=parseInt((ch.querySelector('.i-qty')||{}).value)||1;
-      area+=w*h*q;
-    });
-    delta=Math.round(p.r*area);
-    text=p.t+(area>0?(' (กระจกทั้งชุด ~'+area.toFixed(1)+' ตร.ม.)'):'');
-  } else { text=p.t+' (ราคาเพิ่มตามจริง)'; delta=0; }
-  ot.value=text; ot.dispatchEvent(new Event('input',{bubbles:true}));
-  od.value=delta||''; od.dispatchEvent(new Event('input',{bubbles:true}));
-  sel.value=''; calcQuote();
-}
+// dead code ลบแล้ว (formtop R3.10 · 2026-06-12): SET_OPT_PRESETS/setOptPresetOptions/addSetOptPreset
+//   — ตัด dropdown ".set-optpreset" (มติพี่นัท: ซ้ำกับเลือกกระจกในหมวด ซึ่ง auto-price/ตร.ม. แล้ว)
+//   — เหลือ OPTION ชุดแบบกรอกเอง (.set-opttext + .set-optdelta) ใน details ล่างสุด
 // ===== F2: OPTION ทางเลือกลูกค้า ต่อบาน (cascade หมวด→รายการ · auto-price · หลาย OPTION) =====
 const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mosq',label:'เปลี่ยนผ้ามุ้ง'},{id:'color',label:'เปลี่ยนสีอลู'},{id:'handle',label:'เปลี่ยนมือจับ'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
 // มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
