@@ -30,6 +30,13 @@ const aluPrem = w.readItem(d).r.sell;
 want("สีพิเศษ(idx10): ค่าสีโครงเพิ่ม", aluPrem > white && /ค่าสีโครง/.test(msgOf(d)), "ขาว=" + white + " พิเศษ=" + aluPrem);
 want("ผนังอลูทึบ ระบุในใบ", /ผนังอลูทึบ/.test(msgOf(d)));
 
+// PART A (2026-06-12): Aztec gray idx4 = 950/ตร.ม. → ค่าสีโครง > ขาว แต่ < อบพิเศษ(1600)
+sf(d, ".i-color", "4");
+const aztec = w.readItem(d).r.sell;
+want("Aztec(idx4): ค่าสีโครงเพิ่ม > ขาว", aztec > white && /ค่าสีโครง/.test(msgOf(d)), "ขาว=" + white + " aztec=" + aztec);
+want("Aztec(idx4=950) < อบพิเศษ(idx10=1600)", aztec < aluPrem, "aztec=" + aztec + " พิเศษ=" + aluPrem);
+sf(d, ".i-color", "10"); // คืนสภาพ idx10 ก่อนเทสต่อ (ผนังกระจก)
+
 // สลับเป็นผนังกระจก → ราคาเปลี่ยน + ระบุผนังกระจก
 sf(d, ".o-cabwallmat", "glass");
 const glassPrem = w.readItem(d).r.sell;

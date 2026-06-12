@@ -927,9 +927,10 @@ function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').valu
 // SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
 function rn90FinRate(ci){
   if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
+  if(ci===4) return 950;                     // Aztec gray (stock) — มติพี่นัท 2026-06-12 แยกออกจากอบพิเศษ (ตรง o-bsfinish)
   if(ci>=5&&ci<=7) return 1500;             // ลายไม้สต๊อก
   if(ci===8||ci===9||ci===11) return 2200;  // ลายไม้อบพิเศษ
-  if(ci===4||ci===10||ci===12) return 1600; // Aztec / อบพิเศษ / สีชุบ → อบสีพิเศษ
+  if(ci===10||ci===12) return 1600;          // อบพิเศษ / สีชุบ → อบสีพิเศษ
   return 0;                                  // idx 0,1 ขาว/ดำ = ไม่คิด
 }
 function colorPrice(ci,a,series){
@@ -1810,7 +1811,7 @@ function groupGHOpts(ch){
     {key:'📝 หมายเหตุ / งานเสริม', open:false, kw:[]}
   ] : [
     // G4: หมวดตู้ ต้องอยู่ก่อน 🚪 (loop เจอ match แรกแล้ว break) · keyword เฉพาะตู้ล้วน → สินค้าอื่นไม่หลุดเข้า · ห้ามลบ keyword 'ประเภท'/'จำนวนบาน' จาก 🚪
-    {key:'📦 รายละเอียดตู้', open:true, kw:['ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้']},
+    {key:'📦 รายละเอียดตู้', open:true, kw:['cab-detail','ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้','วัสดุผนัง']}, // cab-detail = class marker คุมทุก UI ตู้ให้อยู่หมวดนี้ตามลำดับ (HANDOFF-G4-cabinet-next)
     {key:'🚪 ชนิด / การเปิด', open:true, kw:[
       'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
       'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง','ซ่อนราง','ทิศระแนง',
@@ -2203,6 +2204,24 @@ function chSetChip(btn, selectClass){
   btn.classList.add('on');
   var sel=ch.querySelector('.'+selectClass);
   if(sel){ sel.value=val; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+// G4 (HANDOFF-G4-cabinet-next ข้อ4): ชิป switch สินค้า ตู้อลู↔ฝาตู้ — set .i-prod เดิม + rebuild ฟอร์ม (ไม่ hardcode รายการ)
+function cabProdSwitch(btn, prodId){
+  var ch=btn.closest('.ch'); if(!ch) return;
+  var ps=ch.querySelector('.i-prod'); if(!ps || ps.value===prodId) return;
+  ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true}));
+}
+// G4 (ข้อ1/2): อัปเดต hint cascade ในฟอร์มตู้ — สีกระทบเฉพาะโครง (rn90/colorPrice ตามผนัง) + ชั้นกระจกไม่คิดค่าสี
+function cabUpdateHints(ch){
+  if(!ch) return;
+  var wm=(ch.querySelector('.o-cabwallmat')||{}).value||'alu';
+  var sm=(ch.querySelector('.o-shelfmat')||{}).value||'';
+  var ct=(ch.querySelector('.o-cabtype')||{}).value||'wardrobe';
+  var colorHint=ch.querySelector('.cab-color-hint');
+  if(colorHint) colorHint.innerHTML='สีอลู (ช่องสีด้านบน) กระทบ <b>เฉพาะโครงตู้</b> ไม่ใช่บานหน้า · '+(wm==='glass'?'ผนังกระจก → คิดสีเต็ม (colorPrice)':'ผนังอลูทึบ → ค่าสีโครง (rn90)');
+  var shelfGlass=ch.querySelector('.cab-shelf-glass-hint');
+  var isGlassShelf=(sm==='glass')||(sm===''&&ct==='shoe'); // ชั้นกระจกจริง: เลือกเอง หรือ ตู้รองเท้า(auto=กระจก)
+  if(shelfGlass) shelfGlass.style.display=isGlassShelf?'block':'none';
 }
 // มือจับ multi-toggle — แต่ละแบรนด์อิสระ (ไม่ clear แบรนด์อื่น)
 function toggleHandleBrand(btn){
@@ -2748,14 +2767,27 @@ function buildItemOpts(d){
     h+='<label class="opt">ทำเป็นประตู <select class="o-doortype" style="width:auto;height:32px;"><option value="">ไม่ทำ</option><option value="sliding_sms">บานเลื่อน SMS</option><option value="sliding_euro">บานเลื่อน ยูโร</option><option value="casement_euro">บานเปิด</option><option value="folding">บานเฟี้ยม</option><option value="curved_single">ดัดโค้งเดี่ยว</option></select></label>';
     h+='<label class="opt">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(R3-2: กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ · รอสูตรจำนวนบาน)</span></label>';
   }
-  if(p.cabinet){ // G4: 3 dropdown → ชิป + จัดลำดับ (ประเภทตู้ก่อน เพราะ trigger auto สูง/ลึก) · label "ประเภทตู้"/"จำนวนบานหน้าตู้" → match หมวด 📦 รายละเอียดตู้
-    h+='<label class="opt" style="width:100%;">ประเภทตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\')">ตู้ทั่วไป</button><button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\')">ตู้รองเท้า</button></div><select class="o-cabtype" style="display:none;"><option value="wardrobe" selected>ตู้ทั่วไป (ชั้น~40ซม.)</option><option value="shoe">ตู้รองเท้า (ชั้น~20ซม.)</option></select></label>';
-    h+='<label class="opt" style="width:100%;">จำนวนบานหน้าตู้ <div class="chip-group chip-sm"><button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')">1 บาน</button><button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')">2 บาน</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')">3 บาน</button></div><select class="o-cabdoors" style="display:none;"><option value="1">1 บาน</option><option value="2" selected>2 บาน</option><option value="3">3 บาน</option></select></label>';
-    h+='<label class="opt" style="width:100%;">ชนิดชั้น <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\')">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\')">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\')">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select></label>';
-    // SPEC-G4-color-pricing: วัสดุผนังตู้ (อลูทึบ default / กระจก) → เนื้องาน+ค่าสีผนังเปลี่ยนตามวัสดุ
-    h+='<label class="opt" style="width:100%;">วัสดุผนังตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-cabwallmat\')">อลูทึบ</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-cabwallmat\')">กระจก</button></div><select class="o-cabwallmat" style="display:none;"><option value="alu" selected>อลูทึบ</option><option value="glass">กระจก</option></select></label>';
-    h+='<label class="opt">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:30px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></label>'+'<label class="opt">จำนวนชั้น (ว่าง=อัตโนมัติ) <input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:30px"></label>';
-    h+='<label class="opt"><input type="checkbox" class="o-backwall"> +ผนังหลัง (ด้าน 4 · ปกติใช้ผนังปูน)</label>'; }
+  if(p.cabinet){ // G4 (HANDOFF-G4-cabinet-next): UX 6 จุด · ทุก element มี class cab-detail → groupGHOpts จัดเข้า 📦 ตามลำดับ
+    // B4: ชิป switch สินค้า ตู้อลู/ฝาตู้ บนสุด (sync .i-prod)
+    h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip on" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip" onclick="cabProdSwitch(this,\'future_tech\')">ฝาตู้</button></div></label>';
+    h+='<label class="opt cab-detail" style="width:100%;">ประเภทตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้ทั่วไป</button><button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้รองเท้า</button></div><select class="o-cabtype" style="display:none;"><option value="wardrobe" selected>ตู้ทั่วไป (ชั้น~40ซม.)</option><option value="shoe">ตู้รองเท้า (ชั้น~20ซม.)</option></select></label>';
+    // B5: hint ใต้ จำนวนบาน
+    h+='<label class="opt cab-detail" style="width:100%;">จำนวนบานหน้าตู้ <div class="chip-group chip-sm"><button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')">1 บาน</button><button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')">2 บาน</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')">3 บาน</button></div><select class="o-cabdoors" style="display:none;"><option value="1">1 บาน</option><option value="2" selected>2 บาน</option><option value="3">3 บาน</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานลด</div></label>';
+    // B1: วัสดุผนัง + ชนิดชั้น = บล็อกเดียว (จับคู่ในกล่อง) + cascade ชั้นกระจกไม่คิดค่าสี
+    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
+      +'<label class="opt" style="width:100%;margin:0;">วัสดุผนังตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-cabwallmat\');cabUpdateHints(this.closest(\'.ch\'))">อลูทึบ</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-cabwallmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก</button></div><select class="o-cabwallmat" style="display:none;"><option value="alu" selected>อลูทึบ</option><option value="glass">กระจก</option></select></label>'
+      +'<label class="opt" style="width:100%;margin:6px 0 0;">ชนิดชั้น <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select></label>'
+      +'<div class="cab-shelf-glass-hint" style="display:none;font-size:11px;color:#059669;font-weight:600;margin-top:4px;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง</div>'
+      +'</div>';
+    // B2: hint สี กระทบเฉพาะโครง (อัปเดตตามวัสดุผนัง · default อลูทึบ→rn90)
+    h+='<div class="opt cab-detail cab-color-hint" style="width:100%;font-size:11px;color:#1E40AF;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:5px 9px;">สีอลู (ช่องสีด้านบน) กระทบ <b>เฉพาะโครงตู้</b> ไม่ใช่บานหน้า · ผนังอลูทึบ → ค่าสีโครง (rn90)</div>';
+    // B3: ลึก + จำนวนชั้น แถวเดียว · badge auto ทั้งคู่
+    h+='<div class="opt cab-detail" style="width:100%;display:flex;flex-wrap:wrap;gap:16px;align-items:center;">'
+      +'<span style="display:inline-flex;align-items:center;gap:5px;">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:32px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span>'
+      +'<span style="display:inline-flex;align-items:center;gap:5px;">จำนวนชั้น <input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:32px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span>'
+      +'</div>';
+    // B6: +ผนังหลัง — tap zone ใหญ่ 2 บรรทัด ≥44px คลิกได้ทั้งแถบ
+    h+='<label class="opt cab-detail" style="width:100%;display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;border:1px solid #E5E7EB;border-radius:8px;padding:6px 10px;"><input type="checkbox" class="o-backwall" style="width:20px;height:20px;flex-shrink:0;"><span style="line-height:1.3;"><b>+ ผนังหลัง</b> (ด้านที่ 4)<br><span style="font-size:11px;color:#6B7280;font-weight:400;">ปกติชนผนังปูน — ติ๊กเมื่อต้องการปิดหลังด้วยอลู/กระจก</span></span></label>'; }
   if(p.glass_replace){
     h+='<label class="opt">ทุนกระจก (บาท/ตร.ม.) <input type="number" class="o-glasscost" min="0" step="50" value="0" style="width:90px;height:32px;"></label>';
     // R3 2026-05-30: เพิ่ม auto กำไร 2 ขั้น — ขั้น1 ทุน→กำไร%, ขั้น2 พื้นที่รวม→ลดกำไร
@@ -2798,7 +2830,10 @@ function buildItemOpts(d){
     }
   }
   if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
-  if(p.future_tech){ h+='<label class="opt" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="width:auto;height:32px;max-width:240px;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select> <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
+  if(p.future_tech){
+    // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
+    h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
+    h+='<label class="opt cab-detail" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="width:auto;height:32px;max-width:240px;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select> <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
   if(p.handrail){
     h+='<label class="opt" style="width:100%;">ความหนากระจก <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="10" onclick="chSetChip(this,\'o-railglass\')">10 มม.</button><button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-railglass\')">12 มม.</button></div><select class="o-railglass" style="display:none;" onchange="calcQuote();"><option value="10" selected>เทมเปอร์ใส 10 มม. (default)</option><option value="12">เทมเปอร์ใส 12 มม.</option></select> <span style="font-size:11px;color:#666;">ราคาไม่ขึ้นกับความหนา</span></label>'; // G2-10 · ชิป
     h+='<label class="opt" style="width:100%;">ราวมือจับด้านบน (option) <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-handrail\')">ไม่มี</button><button type="button" class="chip" data-val="u5" onclick="chSetChip(this,\'o-handrail\')">ยู อลูมิเนียม +500/ม.</button><button type="button" class="chip" data-val="box" onclick="chSetChip(this,\'o-handrail\')">กล่อง 1"x2" +600/ม.</button></div><select class="o-handrail" style="display:none;" onchange="calcQuote();"><option value="" selected>ไม่มี</option><option value="u5">ยู อลูมิเนียม +500/ม.</option><option value="box">กล่อง 1"x2" +600/ม.</option></select></label>'; // R3-4: ราวมือจับด้านบน (ชิป)
