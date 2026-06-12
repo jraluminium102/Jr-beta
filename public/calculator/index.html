@@ -1803,12 +1803,12 @@ function groupGHOpts(ch){
   // FIX A (G3 roof form-ux): หลังคา ใช้ CATS ชุดเฉพาะ (กล่องตรงงานหลังคา · เลื่อนก่อนรางน้ำ)
   var isRoof = !!(ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten'));
   var CATS = isRoof ? [
-    {key:'🏠 วัสดุมุง · สี · โครง', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','แป ','โครงสร้าง','ชนิดฟิล์ม','ความหนากระจก']},
-    {key:'⬅️➡️ หลังคาเลื่อน', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์']},
-    {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, kw:['ปลายหลังคา','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
-    {key:'🔩 ของเสริมหลังคา', open:false, kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ปิดปลาย','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
-    {key:'➕ ต่อปลายวัสดุที่ 2', open:false, kw:['ต่อปลายวัสดุ','พื้นที่ส่วนที่ 2']},
-    {key:'📝 หมายเหตุ / งานเสริม', open:false, kw:[]}
+    {key:'🏠 วัสดุมุง · โครง', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','แป ','โครงสร้าง','ชนิดฟิล์ม','ความหนากระจก']}, // G3-round2 B①: ตัด "สี" (กันสับสนกับสีอลู)
+    {key:'🔄 หลังคาเลื่อน', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์']}, // G3-round2 B②
+    {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, kw:['ปลายหลังคา','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
+    {key:'🔩 ของเสริมหลังคา', open:false, kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, // G3-round2 D: เอา 'ปิดปลาย' ออก (ย้ายไปกล่องปลายหลังคา C)
+    {key:'➕ หลังคาผสม (วัสดุที่ 2)', open:false, kw:['ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2']}, // G3-round2 B⑤
+    {key:'📝 งานพิเศษ · รื้อของเดิม', open:false, kw:[]} // G3-round2 B⑥
   ] : [
     // G4: หมวดตู้ ต้องอยู่ก่อน 🚪 (loop เจอ match แรกแล้ว break) · keyword เฉพาะตู้ล้วน → สินค้าอื่นไม่หลุดเข้า · ห้ามลบ keyword 'ประเภท'/'จำนวนบาน' จาก 🚪
     {key:'📦 รายละเอียดตู้', open:true, kw:['cab-detail','ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้','วัสดุผนัง']}, // cab-detail = class marker คุมทุก UI ตู้ให้อยู่หมวดนี้ตามลำดับ (HANDOFF-G4-cabinet-next)
@@ -1832,8 +1832,10 @@ function groupGHOpts(ch){
     {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', open:false, kw:[]}
   ];
   var kids=[].slice.call(box.children);
+  var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap'))){ skipEls.push(k); return; }
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -1842,6 +1844,7 @@ function groupGHOpts(ch){
     buckets[ci].push(k);
   });
   box.innerHTML='';
+  skipEls.forEach(function(k){ box.appendChild(k); }); // คงไว้ด้านบนสุด ไม่เข้า accordion
   CATS.forEach(function(c,i){
     if(!buckets[i].length) return;
     var det=document.createElement('details');
@@ -2889,6 +2892,8 @@ function buildItemOpts(d){
       _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
     }
   }
+  // G3-round2 A: หัวข้อ OPTION ทางเลือกลูกค้า — หลังคาใช้คำเฉพาะ (เปลี่ยนสี/วัสดุมุง/หลังคา) · อื่นๆ คำเดิม
+  { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){ _ocSum.textContent = (p.cat==='หลังคา') ? '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)' : '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)'; } }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
@@ -3812,8 +3817,8 @@ function genQuote(keepNo){
       // รางน้ำ line (F3: ปล่อย=ไม่เขียนรางน้ำ / รางน้ำ=ระบุระบบ) · ข้อ2: ลบ branch 'ปิดปลาย' (auto) ที่ตัดออกแล้ว
       let _gutterLine = '';
       if(_rfend === 'รางน้ำ'){
-        // FIX-13: ชนิดรางตามราคา (>=2,000 = สแตนเลส) · รวมบรรทัดรางน้ำที่นี่ที่เดียว (ตัดบรรทัดซ้ำใน _rfExtra)
-        const _gmat = (parseFloat(_os.rfgut)||0)>=2000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม';
+        // G3-round2 E: รุ่น M(2,000)=อลูมิเนียม · เฉพาะ L(3,000)=สแตนเลส (มติพี่นัท · เปลี่ยนแค่ชื่อ ราคาเท่าเดิม)
+        const _gmat = (parseFloat(_os.rfgut)||0)>=3000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม';
         if(_rfgutsys === 'โซ่'){
           const _pat = _os.rfgutchainpat || 'ทิวลิป';
           const _col = _os.rfgutchaincolor || 'ขาว';

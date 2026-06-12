@@ -55,12 +55,16 @@ want("ใบมีคำ 'รางน้ำ' (บรรทัดรวม)", qc
 want("ใบไม่มีบรรทัดรางน้ำซ้ำ (≤2 ครั้ง: หัวข้อ+บรรทัด)", gutterCount <= 2, "count=" + gutterCount);
 want("ใบโชว์ชนิดท่อ", qc.includes("รางน้ำอลูมิเนียม (ท่อ"), "");
 
-// --- เปลี่ยนชนิดเป็นสแตนเลส M (2000) ---
+// --- รุ่น M (2000) = อลูมิเนียม (G3-round2 E: ราคาเท่าเดิม เปลี่ยนแค่ชื่อ) ---
 sf(d, ".o-rfgut", "2000");
 const sellSS = w.readItem(d).r.sell;
-want("สแตนเลส M: +2,000×6 = 12,000", (sellSS - baseSell) === 12000, "delta=" + (sellSS - baseSell));
+want("อลูมิเนียม M: +2,000×6 = 12,000 (ราคาเท่าเดิม)", (sellSS - baseSell) === 12000, "delta=" + (sellSS - baseSell));
 w.genQuote();
-want("ใบเปลี่ยนเป็น 'รางน้ำสแตนเลส'", doc.querySelector("#quoteContent").textContent.includes("รางน้ำสแตนเลส"), "");
+want("ใบลง 'รางน้ำอลูมิเนียม' สำหรับ M (G3-round2 E)", doc.querySelector("#quoteContent").textContent.includes("รางน้ำอลูมิเนียม"), "");
+// --- รุ่น L (3000) = สแตนเลส ---
+sf(d, ".o-rfgut", "3000");
+w.genQuote();
+want("ใบลง 'รางน้ำสแตนเลส' สำหรับ L (3000)", doc.querySelector("#quoteContent").textContent.includes("รางน้ำสแตนเลส"), "");
 
 // --- สลับกลับ ปล่อย → ยาว=0 ไม่คิดเงิน ---
 sf(d, ".o-roofend", "ปล่อย");

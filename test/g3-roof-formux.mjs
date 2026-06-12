@@ -28,7 +28,7 @@ const names = boxNames(d);
 want("FIX A: กล่องวัสดุมุงอยู่บนสุด", /วัสดุมุง/.test(names[0]), names[0]);
 want("FIX A: หลังคาเลื่อน อยู่ก่อนรางน้ำ", names.findIndex((x) => /หลังคาเลื่อน/.test(x)) < names.findIndex((x) => /รางน้ำ/.test(x)) && names.some((x) => /หลังคาเลื่อน/.test(x)), names.join(" | "));
 want("FIX A: มีกล่อง ของเสริมหลังคา", names.some((x) => /ของเสริมหลังคา/.test(x)));
-want("FIX A: catch-all = หมายเหตุ/งานเสริม (ไม่มีครอบวงกบ)", names.some((x) => /หมายเหตุ/.test(x)) && !names.some((x) => /ครอบวงกบ/.test(x)), names.join(" | "));
+want("FIX A: catch-all = งานพิเศษ/รื้อของเดิม (ไม่มีครอบวงกบ) [G3-round2 B⑥]", names.some((x) => /งานพิเศษ|รื้อ/.test(x)) && !names.some((x) => /ครอบวงกบ/.test(x)), names.join(" | "));
 want("FIX A④: ไม่มี details.optbox ซ้อน", d.querySelectorAll(".i-opts details.optbox").length === 0);
 
 // non-roof ยังใช้ CATS เดิม
