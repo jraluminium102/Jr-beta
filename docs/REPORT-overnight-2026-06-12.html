@@ -107,8 +107,25 @@
 </table>
 <b>ผ่านดีแล้ว (ไม่แตะ):</b> ชิป ≥40px ทุกฟอร์ม · G3 cascade วัสดุ→รุ่น + auto-fill · ปิดซ่อนราง/ครอบคาน reveal · G4 ผนังหลัง tap≥44px · G5 โหมด B กล่องส้ม + ชิปบานมุ้ง</div>
 
-<h3>5.3 doc-option-auditor — ออปชั่น vs ใบจริง</h3>
-<div class="amber-box" id="doc-pending"><b>⏳ ยังรัน (background)</b> — เทียบออปชั่น G3/G4/G5 vs samples · หาขาด/ผิด/เกิน หลัง redesign ชิป · จะเติมผล + แนวทางแก้เมื่อเสร็จ (ออก <code>docs/AUDIT-G3G4G5-options-2026-06-12.html</code>)</div>
+<h3>5.3 doc-option-auditor — ออปชั่น vs ใบจริง (เจอบั๊กจริง 2 + 1 — <b>แก้ครบแล้ว</b>)</h3>
+<div class="box">รายงานเต็ม <code>docs/AUDIT-G3G4G5-options-2026-06-12.html</code> · ผ่าน 14 จุด · เจอบั๊ก 3:
+<table>
+<tr><th>#</th><th>บั๊ก</th><th>ผลกระทบ</th><th>แก้ (commit bce3c9e)</th></tr>
+<tr><td>🔴 BUG1</td><td>G4 genQuote ตู้ hardcode "ผนังอลู 2 ข้าง" ไม่อ่าน cabwallmat → เลือกผนังกระจกแต่<b>ใบออกอลูเสมอ</b></td><td>ใบผิด (ราคาถูก)</td><td><span class="pill p-done">อ่าน cabwallmat → ผนังกระจก/อลู</span></td></tr>
+<tr><td>🔴 BUG2</td><td>G5 โหมด B <code>screen_extra</code> (ค่าเสริมกล่อง/ราง) บวกเฉพาะมุ้งจีบ/ม้วน · <b>เฟรม imp21/22/23 (screen_addon) return ก่อน → ไม่บวก = คิดขาด</b></td><td><b>การเงิน (คิดขาด)</b></td><td><span class="pill p-done">บวก screen_extra ในบล็อก screen_addon</span></td></tr>
+<tr><td>🟡 YELLOW</td><td>G5 สีกรอบมุ้ง (mscolor) คิดเงินถูกแต่<b>ชื่อสีไม่ขึ้นใบ</b></td><td>ใบขาดรายละเอียด</td><td><span class="pill p-done">det += สีกรอบมุ้ง COLORS[index]</span></td></tr>
+</table>
+<b>verify:</b> ผนังกระจก→ใบถูก · เฟรม+screen_extra 3,000→sell +3,000 · สีกรอบมุ้ง=สีเทาซาฮาร่า ขึ้นใบ · เทส gate เขียวครบ</div>
+<div class="green-box"><b>ผ่าน 14 จุด:</b> G3 ออปชั่น/ลำดับกล่อง/ชิปปลายหลังคา/ของเสริม/สีวัสดุ · G4 ชิป switch/auto สูง-ลึก/backwall/ftcolor · G5 ชิปผ้า/สีผ้า/โหมด B</div>
+
+<h2>6. แนวทางแก้ที่เหลือ (ข้อเสนอ · ยังไม่ทำ)</h2>
+<table>
+<tr><th>จาก</th><th>เรื่อง</th><th>แนวทาง</th><th>priority</th></tr>
+<tr><td>accountant</td><td>casement convention (w=ต่อบาน) — ยืนยันกับพี่นัท + แก้ label main form ชัดขึ้น</td><td>ยืนยัน convention · label โหมดคิดเร็วแก้แล้ว</td><td><b>สูง</b> (กันคิดเกิน)</td></tr>
+<tr><td>ux P1</td><td>G3 ของเสริม keyword เปราะ</td><td>เพิ่ม class <code>rf-extra</code> + match class</td><td>กลาง</td></tr>
+<tr><td>ux P2</td><td>G4 hint สีห่าง dropdown · ผ้ามุ้งใน-บานยังเป็น dropdown · G3 ระบบระบายแน่นมือถือ</td><td>inject hint ใกล้สี · แปลงผ้ามุ้งใน-บานเป็นชิป · แยกสี/ลายรางเป็น reveal</td><td>กลาง-ต่ำ</td></tr>
+<tr><td>handoff</td><td><b>G2 cascade ระแนง 76 รุ่น</b> + <b>G1+G6 รื้อฟอร์มทั้งระบบ</b></td><td>ทำเป็นเฟส (ดู §4) · pattern พร้อม</td><td>งานใหญ่รอบถัดไป</td></tr>
+</table>
 
 <div class="foot small" style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:6px;color:#9ca3af;">
 รายงานนี้สร้างอัตโนมัติ (overnight run) · commit/push ตรวจได้ใน git log · เทสรันด้วย node test/*.mjs · ทุกการแก้ราคา verify เบราว์เซอร์จริงแล้ว
