@@ -220,12 +220,7 @@
   .addsec-strip-head{font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;}
   .addsec-chip{min-height:44px;padding:0 14px;border:1.5px solid #FFB300;border-radius:22px;background:#fff;cursor:pointer;font-size:13px;color:#374151;font-family:inherit;}
   .addsec-chip:active{background:#E65100;color:#fff;}
-  /* OPTION ชุด — ห่อ details ย้ายลงล่างสุด */
-  .set-opt-det{border:1px solid var(--line);border-radius:10px;margin-top:8px;overflow:hidden;}
-  .set-opt-det summary{padding:9px 12px;font-size:13px;font-weight:600;color:var(--red-dark);background:#FFF9F9;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}
-  .set-opt-det summary::-webkit-details-marker{display:none;}
-  .set-opt-det summary::after{content:"▸";margin-left:auto;font-size:11px;transition:transform .2s;}
-  .set-opt-det[open] summary::after{transform:rotate(90deg);}
+  /* (formtop R3.11) ตัด OPTION ระดับชุด .set-opt-det ออกแล้ว — ซ้ำกับ OPTION ต่อบาน */
   @keyframes addsec-flash{0%{box-shadow:0 0 0 0 #FFB30066;}60%{box-shadow:0 0 0 8px #FFB30000;}100%{box-shadow:0 0 0 0 #FFB30000;}}
   .addsec-flash{animation:addsec-flash .4s ease-out;}
   /* ===== MOSQ PANEL CHIPS (mosq-r2) ===== */
@@ -2032,7 +2027,10 @@ function addSet(){
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
   var _quickChipsHtml=QUICK_ADD_CHIPS.map(function(c){ return '<button type="button" class="addsec-chip" data-g="'+c.g+'" data-id="'+c.id+'">'+c.label+'</button>'; }).join('');
   // formtop R3.10: ลำดับใหม่ set-head → set-parts(บาน) → addzone(เพิ่มด่วน+เพิ่มส่วน) → OPTION ชุด (details ล่างสุด) · ตัด .set-optpreset (ซ้ำเลือกกระจกในหมวด)
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-parts"></div><div class="addzone"><div class="addzone-head"><span class="addzone-head-txt">⚡ เพิ่มส่วน / เพิ่มด่วน</span></div><div class="addzone-body"><div class="addsec-quickstrip"><div class="addsec-strip-head">เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div><div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;">'+_quickChipsHtml+'</div><div class="addzone-divider"><span></span>หรือ<span></span></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div></div></div><details class="set-opt-det"><summary>ออปชั่น / OPTION ชุดนี้</summary><div class="set-opt" style="padding:10px 12px;"><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div></details>';
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-parts"></div><div class="addzone"><div class="addzone-head"><span class="addzone-head-txt">⚡ เพิ่มส่วน / เพิ่มด่วน</span></div><div class="addzone-body"><div class="addsec-quickstrip"><div class="addsec-strip-head">เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div><div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;">'+_quickChipsHtml+'</div><div class="addzone-divider"><span></span>หรือ<span></span></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div></div></div>';
+  // formtop R3.11 (มติพี่นัท 2026-06-12): ตัด OPTION ระดับชุด (.set-opt-det / .set-opttext+.set-optdelta) ออก
+  //   — ซ้ำกับ OPTION ต่อบาน (.oc-block) ซึ่งเลือกหมวด+คิดราคาให้+แก้เองได้ ดีกว่าทุกอย่าง
+  //   — readItem (groupOptText/groupOptDelta) มี null-guard อยู่แล้ว → ค่าเป็น ''/0 ปลอดภัย
   // E: ตัดปุ่ม "+ ช่องแสงติดตาย" (ซ้ำ) — ใช้ "+ เพิ่มบานย่อย" ในแต่ละบานแทน (มีชนิดติดตายครบใน SUBITEM_TYPES)
   document.getElementById('items').appendChild(box);
   // bind .addsec-chip (quickstrip) — กดชิป = quickAddItem + flash (Q1: กดซ้ำได้ ชิปไม่หาย)
