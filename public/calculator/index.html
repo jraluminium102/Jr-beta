@@ -2340,6 +2340,19 @@ function rnSelectorHTML(p){
   h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+p.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
   return h+'</div>';
 }
+// G2 เฟส3 "ทำเป็นบาน": เลือกชนิดบาน → switch ระแนง→ไม่โครง อัตโนมัติ (บานให้โครงเอง · กันคิดโครงซ้ำ +12k)
+//   เก็บ doortype ใน d.dataset.rnDoorType → buildItemOpts restore ข้าม rebuild (g3SyncProd) · "ไม่ทำ" ปล่อย frame ให้ชิปโครงคุม (ไม่บังคับรวมโครงทับ)
+function rnDoorSwitch(ch){
+  var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p||!rnCatKey(p))return;
+  var dt=ch.querySelector('.o-doortype'); var doortype=dt?dt.value:'';
+  ch.dataset.rnDoorType=doortype; // persist ข้าม rebuild
+  if(!doortype) return; // ไม่ทำบาน → ไม่ยุ่ง frame
+  var ck=rnCatKey(p), d=rnParse(p);
+  if(d.frame==='ไม่โครง') return; // ไม่โครงอยู่แล้ว
+  var k1=(ck==='bangta')?d.profile:(ck==='gleed'?d.size:d.spacing);
+  var newId=rnResolve(ck,k1,d.spacing,'ไม่โครง');
+  if(newId && newId!==p.id) g3SyncProd(ch,newId); // rebuild · doortype restore ผ่าน dataset (buildItemOpts)
+}
 // G4 (HANDOFF-G4-cabinet-next ข้อ4): ชิป switch สินค้า ตู้อลู↔ฝาตู้ — set .i-prod เดิม + rebuild ฟอร์ม (ไม่ hardcode รายการ)
 function cabProdSwitch(btn, prodId){
   var ch=btn.closest('.ch'); if(!ch) return;
@@ -2913,8 +2926,11 @@ function buildItemOpts(d){
       +'</div>'
       +'<div style="font-size:10px;color:#9CA3AF;margin-top:3px;">กรอกขนาดให้ครบเพื่อดูราคาเทียบ · default = ปัดไม่ต่อ (เนียน)</div>'
     +'</div>';
-    // G2-formux: "ทำเป็นบาน" = โหมดในระแนง (ชิปเด่น) · เลือกชนิดบาน → ค่าทำบาน(door base)+ค่าระแนง (logic L1538 เดิม · R3-2) · select ซ่อน sync เดิม
-    h+='<label class="opt" style="width:100%;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:6px 10px;">🚪 ทำเป็นบาน <span style="font-size:11px;color:#92400e;">(ระแนงไม่โครง + ค่าทำบาน)</span> <select class="o-doortype" style="display:none;"><option value="">ไม่ทำ</option><option value="sliding_sms">บานเลื่อน SMS</option><option value="sliding_euro">บานเลื่อน ยูโร</option><option value="casement_euro">บานเปิด</option><option value="folding">บานเฟี้ยม</option><option value="curved_single">ดัดโค้งเดี่ยว</option></select>'+rfChips('o-doortype',[['','ไม่ทำ'],['sliding_sms','บานเลื่อนเซมิ'],['sliding_euro','บานเลื่อนยูโร'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['curved_single','ดัดโค้ง']],'')+'</label>';
+    // G2-formux: "ทำเป็นบาน" = โหมดในระแนง (ชิปเด่น) · เลือกชนิดบาน → ค่าทำบาน(door base)+ค่าระแนงไม่โครง (logic L1538 เดิม · R3-2)
+    //   เฟส3: restore doortype จาก d.dataset.rnDoorType ข้าม rebuild (auto-switch ไม่โครงต้องไม่ทำให้บานหลุด)
+    var _curDoor=(d.dataset.rnDoorType)||'';
+    var _doorSelOpts=[['','ไม่ทำ'],['sliding_sms','บานเลื่อน SMS'],['sliding_euro','บานเลื่อน ยูโร'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['curved_single','ดัดโค้งเดี่ยว']];
+    h+='<label class="opt" style="width:100%;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:6px 10px;">🚪 ทำเป็นบาน <span style="font-size:11px;color:#92400e;">(ระแนงไม่โครง + ค่าทำบาน)</span> <select class="o-doortype" style="display:none;">'+_doorSelOpts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===_curDoor?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+rfChips('o-doortype',[['','ไม่ทำ'],['sliding_sms','บานเลื่อนเซมิ'],['sliding_euro','บานเลื่อนยูโร'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['curved_single','ดัดโค้ง']],_curDoor)+'</label>';
     h+='<label class="opt">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(R3-2: กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ · รอสูตรจำนวนบาน)</span></label>';
   }
   if(p.cabinet){ // G4 (HANDOFF-G4-cabinet-next): UX 6 จุด · ทุก element มี class cab-detail → groupGHOpts จัดเข้า 📦 ตามลำดับ
@@ -3072,7 +3088,7 @@ function buildItemOpts(d){
   { var _hb=d.querySelector('.o-hmode-block'); if(_hb){ rnHmodeCompare(d);
       ['.i-w','.i-h'].forEach(function(s){ var el=d.querySelector(s); if(el && !el.dataset.hmHook){ el.dataset.hmHook='1'; el.addEventListener('input',function(){ rnHmodeCompare(d); }); } });
       var _fs=d.querySelector('.o-finish'); if(_fs && !_fs.dataset.hmHook){ _fs.dataset.hmHook='1'; _fs.addEventListener('change',function(){ rnHmodeCompare(d); }); }
-      var _dt=d.querySelector('.o-doortype'); if(_dt && !_dt.dataset.hmHook){ _dt.dataset.hmHook='1'; _dt.addEventListener('change',function(){ rnHmodeCompare(d); }); }
+      var _dt=d.querySelector('.o-doortype'); if(_dt && !_dt.dataset.hmHook){ _dt.dataset.hmHook='1'; _dt.addEventListener('change',function(){ rnDoorSwitch(d); rnHmodeCompare(d); }); }
   } }
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
