@@ -6,6 +6,12 @@
 // หมายเหตุ (มติ 2026-06-09 · UX checklist ข้อ20 "ทาง A"): FULL-A/C/D สร้างใหม่ด้วยระบบบานแล้ว ·
 //   ใบที่มี "กั้นห้องกระจก" (เช่น quote-09) ยังใช้ราคาเหมา (lumpsum) แบบเก่า — ตั้งใจคงไว้ (ไม่มีขนาดบานเดิม)
 //   → row กั้นห้องกระจกขึ้น FAIL เป็นเรื่องปกติ ไม่ใช่บั๊ก engine · ไฟล์นี้เป็น dev test (prefix _ ไม่อยู่ใน gate)
+//
+// หมายเหตุเพิ่ม (2026-06-12 · มติพี่นัท "ปล่อยไว้"): ทุกใบที่ FAIL ตอนนี้มี 2 สาเหตุที่ "อนุมัติแล้ว" ทั้งคู่ → expected-fail ไม่ใช่บั๊ก:
+//   (1) glasshouse redesign (เลิก lumpsum → คิดต่อบาน) ทำ engine ต่ำกว่าใบอ้างอิง lumpsum: quote-09 −680k · FULL-A/B/C ติดลบ
+//   (2) casement_euro → Linear ปัดร้อย (สูงกว่ายุค bucket) ทำ engine สูงขึ้น: FULL-D +131,372 (casement ดันบวกมากกว่า glasshouse ดันลบ)
+//   accountant audit (2026-06-12): EXPECTED ทุกใบ arithmetic ถูก (VAT 7%/ลำดับลด/ปัดเศษ) · ไม่มีบั๊กการเงินฝัง · สูตร casement ถูก
+//   ⚠ re-baseline ไม่ได้ (ใบ glasshouse ไม่มีขนาดบานเดิม) · ถ้าอยาก verify ลึก: decompose FULL-D ทีละ line ภายหลัง
 
 import { JSDOM, VirtualConsole } from "jsdom";
 import { readFileSync } from "node:fs";
