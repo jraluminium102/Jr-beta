@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT G2 UX (เดโม กดเล่นได้) — รั้ว/ระแนง/ราวกันตก</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;background:#F3F4F6;margin:0;padding:14px;max-width:520px;margin:0 auto;font-size:14px;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:11px;margin-bottom:12px;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:14px 15px;margin:10px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .lbl{font-size:12px;font-weight:700;color:#374151;margin:10px 0 6px;}
+  .lbl .hint{font-weight:400;color:#9CA3AF;font-size:11px;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{min-height:44px;padding:0 15px;border:2px solid #E5E7EB;border-radius:24px;background:#fff;
+    font-size:13px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.12s;}
+  .chip:active{transform:scale(.96);}
+  .chip.on{border-color:#B3151D;background:#B3151D;color:#fff;}
+  .chip.big{font-size:14px;padding:0 16px;min-height:50px;border-radius:14px;flex-direction:column;gap:1px;line-height:1.15;}
+  .chip.big .s{font-size:10px;font-weight:400;opacity:.8;}
+  .row{display:flex;gap:10px;}
+  .fld{flex:1;}
+  .fld input{width:100%;height:46px;border:2px solid #D1D5DB;border-radius:10px;padding:0 12px;font-size:16px;font-variant-numeric:tabular-nums;}
+  .fld span{font-size:11px;color:#6B7280;font-weight:700;display:block;margin-bottom:4px;}
+  .hide{display:none;}
+  .price{position:sticky;bottom:10px;background:linear-gradient(135deg,#B3151D,#7F1D1D);color:#fff;border-radius:14px;
+    padding:13px 16px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 14px rgba(179,21,29,.35);}
+  .price .t{font-size:12px;opacity:.85;}
+  .price .v{font-size:24px;font-weight:800;}
+  .det{font-size:11px;color:#6B7280;margin-top:7px;line-height:1.5;}
+  .stepper{display:inline-flex;align-items:center;gap:0;border:2px solid #D1D5DB;border-radius:10px;overflow:hidden;}
+  .stepper button{width:44px;height:44px;border:none;background:#F3F4F6;font-size:20px;cursor:pointer;color:#B3151D;}
+  .stepper input{width:50px;height:44px;border:none;text-align:center;font-size:16px;font-weight:700;}
+  .demo{display:inline-block;background:#1F2937;color:#fff;font-size:9px;padding:1px 7px;border-radius:9px;}
+</style>
+</head>
+<body>
+<h1>เครื่องคิดราคา — กลุ่ม G2 <span class="demo">เดโม UX กดเล่นได้</span></h1>
+<div class="sub">รั้ว/ระแนง/ราวกันตก · เน้นชิป ไม่เอา dropdown · ราคาเดโม (dev ดึงเรตจริง) · 12 มิ.ย. 2026</div>
+
+<div class="card">
+  <div class="lbl">① เลือกชนิดงาน</div>
+  <div class="chips" id="kindChips">
+    <button class="chip big on" data-k="gate" onclick="pickKind(this)">🚪 ประตูรั้ว<span class="s">บานสวิง/เลื่อน</span></button>
+    <button class="chip big" data-k="ranae" onclick="pickKind(this)">🪟 ระแนงบังตา<span class="s">มีโครง/ไม่โครง</span></button>
+    <button class="chip big" data-k="gleed" onclick="pickKind(this)">🧊 ระแนงเกล็ด Z<span class="s">1"/1.6"/4"</span></button>
+    <button class="chip big" data-k="rail" onclick="pickKind(this)">🛡️ ราวกันตกกระจก<span class="s">เฉียง/ตรง</span></button>
+  </div>
+</div>
+
+<div class="card" id="form">
+  <!-- ฟอร์มเปลี่ยนตามชนิดงาน (render ด้วย JS) -->
+</div>
+
+<div class="price">
+  <div><div class="t" id="ptitle">ประตูรั้ว</div><div class="v" id="pval">฿0</div></div>
+  <div style="font-size:11px;text-align:right;opacity:.85;" id="psize">—</div>
+</div>
+<div class="det" id="pdet"></div>
+
+<script>
+var S = { kind:'gate', w:3.0, h:1.8, len:6.0,
+  gate:{open:'slide_bottom', color:'white', motor:1},
+  ranae:{frame:'with', cut:'round', color:'white'},
+  gleed:{size:'1', dir:'v', color:'white'},
+  rail:{shape:'slope', mount:'stud', glass:'10', handrail:'none'} };
+
+var COLORS = [['white','อบขาว',0],['black','ดำ',0],['sahara','ซาฮาร่า',400],['wood','ลายไม้สต๊อก',1500],['special','อบพิเศษ',1600]];
+
+function chipRow(name, opts, cur, cb){
+  return '<div class="chips">'+opts.map(function(o){
+    return '<button class="chip'+(o[0]===cur?' on':'')+'" onclick="'+cb+'(\''+o[0]+'\',this)">'+o[1]+'</button>';
+  }).join('')+'</div>';
+}
+function colorRow(cur){
+  return '<div class="chips">'+COLORS.map(function(c){
+    var ex = c[2]>0?(' +'+c[2]):'';
+    return '<button class="chip'+(c[0]===cur?' on':'')+'" onclick="setColor(\''+c[0]+'\',this)">'+c[1]+'<span class="s" style="font-size:10px;opacity:.7;"> '+(c[2]>0?ex:'')+'</span></button>';
+  }).join('')+'</div>';
+}
+function sizeRow(wv,hv,wl,hl){
+  return '<div class="row"><div class="fld"><span>'+(wl||'กว้าง (ม.)')+'</span><input type="number" step="0.1" value="'+wv+'" oninput="S.'+S.kind+'_dummy=0;setSize(\'w\',this.value)"></div>'+
+    '<div class="fld"><span>'+(hl||'สูง (ม.)')+'</span><input type="number" step="0.1" value="'+hv+'" oninput="setSize(\'h\',this.value)"></div></div>';
+}
+
+function render(){
+  var f=document.getElementById('form'), h='';
+  if(S.kind==='gate'){
+    h+='<div class="lbl">② ลักษณะการเปิด</div>'+chipRow('open',[['swing','สวิง'],['casement','บานเปิด'],['slide_bottom','เลื่อนล่าง'],['slide_top','เลื่อนบน']],S.gate.open,'setGateOpen');
+    h+='<div class="lbl">③ ขนาด</div>'+sizeRow(S.w,S.h);
+    h+='<div class="lbl">④ สีอบ</div>'+colorRow(S.gate.color);
+    h+='<div class="lbl">⑤ มอเตอร์ <span class="hint">(ตัว)</span></div>'+stepper(S.gate.motor,'setMotor');
+  } else if(S.kind==='ranae'){
+    h+='<div class="lbl">② รุ่นโครง <span class="hint">(ไม่โครง = ขายเดี่ยวไม่ได้ ใช้ในประตู/ติดบาน)</span></div>'+chipRow('frame',[['with','รวมโครง'],['no','ไม่โครง']],S.ranae.frame,'setFrame');
+    h+='<div class="lbl">③ ขนาด</div>'+sizeRow(S.w,S.h);
+    h+='<div class="lbl">④ วิธีตัดระแนง <span class="hint">(มีผลต่อราคา)</span></div>'+chipRow('cut',[['round','ปัดไม่ต่อ (เนียน)'],['splice','ต่อสูงจริง (ประหยัด)']],S.ranae.cut,'setCut');
+    h+='<div class="lbl">⑤ สี/ผิว</div>'+colorRow(S.ranae.color);
+  } else if(S.kind==='gleed'){
+    h+='<div class="lbl">② ขนาดเกล็ด</div>'+chipRow('size',[['1','1 นิ้ว'],['1.6','1.6 นิ้ว'],['4','4 นิ้ว']],S.gleed.size,'setGleedSize');
+    h+='<div class="lbl">③ ทิศติดตั้ง</div>'+chipRow('dir',[['v','แนวตั้ง'],['h','แนวนอน']],S.gleed.dir,'setGleedDir');
+    h+='<div class="lbl">④ ขนาด</div>'+sizeRow(S.w,S.h);
+    h+='<div class="lbl">⑤ สี/ผิว</div>'+colorRow(S.gleed.color);
+  } else if(S.kind==='rail'){
+    h+='<div class="lbl">② ทรงราว</div>'+chipRow('shape',[['slope','เฉียง'],['straight','ตรง']],S.rail.shape,'setShape');
+    h+='<div class="lbl">③ ระบบยึด</div>'+chipRow('mount',[['stud','หมุดแปะข้าง'],['ubar','วางยู+ครอบอลู'],['post','เสาตั้ง+ราวบน']],S.rail.mount,'setMount');
+    h+='<div class="lbl">④ ความหนากระจก <span class="hint">(ราคาไม่ขึ้นกับความหนา)</span></div>'+chipRow('glass',[['10','10 มม.'],['12','12 มม.']],S.rail.glass,'setGlass');
+    h+='<div class="lbl">⑤ ราวมือจับด้านบน</div>'+chipRow('hr',[['none','ไม่มี'],['u','ยู อลู +500/ม.'],['box','กล่อง 1"x2" +600/ม.']],S.rail.handrail,'setHandrail');
+    h+='<div class="lbl">⑥ ความยาว <span class="hint">(ม.)</span></div><div class="fld"><input type="number" step="0.1" value="'+S.len+'" oninput="setLen(this.value)"></div>';
+    if(S.rail.mount==='ubar'||S.rail.mount==='post'){
+      h+='<div class="lbl">⑦ สีอลู</div>'+chipRow('rc',[['white','ขาว'],['gray','เทา'],['black','ดำ']],S.rail.color||'white','setRailColor');
+    }
+  }
+  f.innerHTML=h;
+  calc();
+}
+
+function fmt(n){return '฿'+Math.round(n).toLocaleString();}
+function colorPlus(key){var c=COLORS.find(function(x){return x[0]===key;});return c?c[2]:0;}
+
+function calc(){
+  var area=S.w*S.h, val=0, det='', size='';
+  if(S.kind==='gate'){
+    var base=area*7000; if(S.gate.open.indexOf('slide')>=0)base*=1.1;
+    var col=colorPlus(S.gate.color)*area, motor=S.gate.motor*8000;
+    val=base+col+motor; det='ฐาน '+fmt(base)+' + สี '+fmt(col)+' + มอเตอร์ '+S.gate.motor+'×8,000'; size=S.w+'×'+S.h+' ม.';
+    document.getElementById('ptitle').textContent='ประตูรั้ว';
+  } else if(S.kind==='ranae'){
+    var r=area*2800; if(S.ranae.cut==='splice')r*=0.85;
+    var col2=colorPlus(S.ranae.color)*area; val=r+col2;
+    det='ระแนง '+fmt(r)+(S.ranae.cut==='splice'?' (ต่อ -15%)':'')+' + สี '+fmt(col2); size=S.w+'×'+S.h+' ม.';
+    document.getElementById('ptitle').textContent='ระแนงบังตา ('+(S.ranae.frame==='with'?'รวมโครง':'ไม่โครง')+')';
+  } else if(S.kind==='gleed'){
+    var gr={'1':3200,'1.6':2900,'4':2400}[S.gleed.size];
+    var base3=area*gr, col3=colorPlus(S.gleed.color)*area; val=base3+col3;
+    det='เกล็ด '+S.gleed.size+'" '+(S.gleed.dir==='v'?'ตั้ง':'นอน')+' '+fmt(base3)+' + สี '+fmt(col3); size=S.w+'×'+S.h+' ม.';
+    document.getElementById('ptitle').textContent='ระแนงเกล็ด Z';
+  } else if(S.kind==='rail'){
+    var rate=10700, base4=S.len*rate;
+    var hr=S.rail.handrail==='u'?500*S.len:(S.rail.handrail==='box'?600*S.len:0);
+    val=base4+hr; det='ยาว '+S.len+' ม. × '+rate.toLocaleString()+(hr>0?(' + ราวจับ '+fmt(hr)):''); size='ยาว '+S.len+' ม.';
+    document.getElementById('ptitle').textContent='ราวกันตกกระจก'+(S.rail.shape==='slope'?'เฉียง':'ตรง');
+  }
+  val=Math.ceil(val/1000)*1000;
+  document.getElementById('pval').textContent=fmt(val);
+  document.getElementById('psize').textContent=size;
+  document.getElementById('pdet').textContent=det+' = '+fmt(val)+' (ปัดขึ้นพัน)';
+}
+
+// handlers
+function pickKind(b){document.querySelectorAll('#kindChips .chip').forEach(function(c){c.classList.remove('on');});b.classList.add('on');S.kind=b.dataset.k;render();}
+function setSize(k,v){S[k]=parseFloat(v)||0;calc();}
+function setLen(v){S.len=parseFloat(v)||0;calc();}
+function reChip(b){var p=b.parentNode;p.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});b.classList.add('on');}
+function setGateOpen(v,b){reChip(b);S.gate.open=v;calc();}
+function setColor(v,b){reChip(b);S[S.kind].color=v;calc();}
+function setMotor(v){S.gate.motor=v;calc();}
+function setFrame(v,b){reChip(b);S.ranae.frame=v;calc();}
+function setCut(v,b){reChip(b);S.ranae.cut=v;calc();}
+function setGleedSize(v,b){reChip(b);S.gleed.size=v;calc();}
+function setGleedDir(v,b){reChip(b);S.gleed.dir=v;calc();}
+function setShape(v,b){reChip(b);S.rail.shape=v;calc();}
+function setMount(v,b){reChip(b);S.rail.mount=v;render();}
+function setGlass(v,b){reChip(b);S.rail.glass=v;calc();}
+function setHandrail(v,b){reChip(b);S.rail.handrail=v;calc();}
+function setRailColor(v,b){reChip(b);S.rail.color=v;calc();}
+
+function stepper(v,cb){return '<div class="stepper"><button onclick="stepM(-1)">−</button><input id="motorIn" value="'+v+'" readonly><button onclick="stepM(1)">+</button></div>';}
+function stepM(d){S.gate.motor=Math.max(0,S.gate.motor+d);var el=document.getElementById('motorIn');if(el)el.value=S.gate.motor;calc();}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC G2 UX — สเปก Dev (2026-06-11)</title>
+<style>
+:root{--red:#B3151D;--blue:#1565C0;--green:#2E7D32;--amber:#F59E0B;--border:#E5E7EB;--bg:#F9FAFB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;color:#111;background:#F3F4F6;}
+.page{max-width:820px;margin:0 auto;padding:20px 16px;}
+h1{font-size:20px;font-weight:700;color:var(--red);margin-bottom:4px;}
+.sub{font-size:12px;color:#6B7280;margin-bottom:20px;}
+h2{font-size:15px;font-weight:700;color:var(--blue);margin:20px 0 8px;border-bottom:2px solid var(--blue);padding-bottom:4px;}
+h3{font-size:13px;font-weight:700;color:#374151;margin:12px 0 6px;}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px;}
+th{background:#F3F4F6;border:1px solid var(--border);padding:6px 9px;text-align:left;font-weight:700;color:#374151;}
+td{border:1px solid var(--border);padding:6px 9px;vertical-align:top;}
+td.before{background:#FFF5F5;color:#B3151D;}
+td.after{background:#F0FDF4;color:#166534;}
+td.note{background:#FFFBEB;color:#92400E;font-size:12px;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
+.tag-cut{background:#FEE2E2;color:#B91C1C;}
+.tag-chip{background:#DBEAFE;color:#1D4ED8;}
+.tag-merge{background:#D1FAE5;color:#065F46;}
+.tag-new{background:#FEF3C7;color:#92400E;}
+.tag-r4{background:#EDE9FE;color:#5B21B6;}
+code{background:#F3F4F6;border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;}
+.rule{background:#FFF7ED;border-left:4px solid var(--amber);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+.dev-note{background:#EFF6FF;border-left:4px solid var(--blue);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+ul{padding-left:18px;margin:4px 0;}
+li{margin-bottom:3px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>SPEC G2 UX — สเปกส่ง Dev</h1>
+<div class="sub">2026-06-11 · ดราฟ: DRAFT-G2-ux-2026-06-11.html · ไฟล์แก้: public/calculator/index.html (ห้ามแก้ต้นฉบับ — dev ใช้สเปกนี้เป็นอ้างอิง)</div>
+
+<!-- ============================================================ -->
+<h2>ภาพรวม G2 (6 หมวด)</h2>
+<table>
+<tr><th>หมวด</th><th>cat ใน code</th><th>id หลัก</th><th>property หลัก</th></tr>
+<tr><td>ประตูรั้ว</td><td>ประตูรั้ว</td><td>fence_gate</td><td>gate:1</td></tr>
+<tr><td>ระแนง-บังตา</td><td>ระแนง-บังตา</td><td>rn1–rn82</td><td>ranae:1, fin:{}</td></tr>
+<tr><td>ระแนง-ผนัง</td><td>ระแนง-ผนัง</td><td>rn37–rn42</td><td>ranae:1, fin:{}</td></tr>
+<tr><td>ระแนง-เกล็ด Z</td><td>ระแนง-เกล็ด</td><td>rn83–rn88</td><td>ranae:1, bar_grid:1</td></tr>
+<tr><td>ระแนง-เลื่อน</td><td>ระแนง</td><td>bar_slide</td><td>bar_slide:1</td></tr>
+<tr><td>ระแนง-เปิดปิด</td><td>ระแนง</td><td>bar_openclose</td><td>bar_openclose:1</td></tr>
+<tr><td>ราวกันตก (ราวบันได)</td><td>ราวบันได</td><td>imp1–imp6</td><td>handrail:1, method:'per_length_tier'</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>1. ประตูรั้วระแนง (fence_gate)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th width="30%">ช่อง/control เดิม</th><th width="30%">ปรับเป็น (After)</th><th width="40%">หมายเหตุ</th></tr>
+<tr>
+  <td class="before">o-gatetype: dropdown 4 ตัวเลือก</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> 4 ตัว ขนาด 44px</td>
+  <td>ตัวเลือก ≤5 → ชิป · select ซ่อน</td>
+</tr>
+<tr>
+  <td class="before">o-gatern: dropdown ยาว (ชื่อสินค้าเต็ม)</td>
+  <td class="after"><span class="tag tag-chip">cascade</span> เลือกลาย → เรต auto</td>
+  <td>แทนด้วย dropdown สั้น (ชื่อ profile เท่านั้น)</td>
+</tr>
+<tr>
+  <td class="before">o-railtype: dropdown</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> 2 ตัว</td>
+  <td>ตรง / โค้ง</td>
+</tr>
+<tr>
+  <td class="before">o-gfin: dropdown 7 ตัวเลือก</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 4 ตัว (ขาว/ดำ, ซาฮาร่า, ลายไม้สต๊อก, อบพิเศษ)</td>
+  <td>select ซ่อน · ค่าส่ง via hidden select</td>
+</tr>
+<tr>
+  <td class="before">o-gmotor: input number หน้าตาธรรมดา</td>
+  <td class="after"><span class="tag tag-chip">stepper</span> −/+</td>
+  <td>ค่า default=1</td>
+</tr>
+<tr>
+  <td class="before">ธรณี + ลายไม้ Golden Teak + งานเสริม — กระจัดกระจายในฟอร์มหลัก</td>
+  <td class="after"><span class="tag tag-merge">พับใน &lt;details&gt;</span> "ตัวเลือกเพิ่มเติม"</td>
+  <td>เคสปกติไม่เห็น · เปิดเองถ้าต้องการ</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด:</b> บล็อก <code>if(p.gate){...}</code> บรรทัด ~2629 — ของเดิมใช้ select/dropdown ทั้งหมด<br>
+  <b>Pattern:</b> ชิปกด → set value ลงใน hidden &lt;select&gt; เดิม → calcQuote() (เหมือนแพทเทิร์น G1 ที่ทำแล้ว)
+</div>
+
+<!-- ============================================================ -->
+<h2>2. ระแนง-บังตา / ระแนง-ผนัง (rn1–rn42, ranae:1)</h2>
+
+<h3>ปัญหาหลักเดิม</h3>
+<ul>
+  <li>dropdown สินค้ายาวมาก (~80 รายการ) — เลื่อนหาไม่ถูก</li>
+  <li>ปัด/ต่อ (hmode) มีอยู่แต่ซ่อนในกล่องสีส้ม อ่านยาก</li>
+  <li>ฟอร์ม "ทำเป็นประตู" + ราคาประตู override กระจัดกระจาย</li>
+</ul>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น (After)</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">dropdown สินค้า 1 ตัว (80 รายการ รวมกัน)</td>
+  <td class="after"><span class="tag tag-chip">cascade 3 ขั้น</span> หมวด (บังตา/ผนัง) → Profile → ช่อง cm. + โครง/ไม่โครง</td>
+  <td>ค้นหาแบบ drill-down · แต่ละ level ≤9 ตัวเลือก</td>
+</tr>
+<tr>
+  <td class="before">hmode (ปัด/ต่อ) เป็น card สีส้มที่ดูไม่เป็นมิตร</td>
+  <td class="after"><span class="tag tag-chip">card เลือกได้ 2 ใบ</span> โชว์ราคาทั้งสองแบบ live</td>
+  <td>กดการ์ดซ้าย = ปัดไม่ต่อ · กดการ์ดขวา = ต่อสูงจริง · ราคา update realtime</td>
+</tr>
+<tr>
+  <td class="before">o-finish: dropdown 7 ตัวเลือก</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 5 ตัว (ขาว/ดำ, ซาฮาร่า, ลายไม้สต๊อก, อบพิเศษ, ลายไม้อบพิเศษ)</td>
+  <td>สีขาว/ดำ = default ฟรี · ตัวอื่น +บาท/ตร.ม.</td>
+</tr>
+<tr>
+  <td class="before">o-doortype: dropdown (เลือกรุ่นบาน) · o-doorprice: input ธรรมดา</td>
+  <td class="after"><span class="tag tag-new">กล่อง override เด่น</span> dropdown รุ่น + stepper จำนวนบาน + กล่องกรอกราคา (สีส้ม โดดเด่น) + ราคา auto แสดง</td>
+  <td>ดู spec ข้อ 3 (บานเปิดมติ R4)</td>
+</tr>
+<tr>
+  <td class="before">ครอบวงกบ/งานเสริม/รื้อของเดิม — ในฟอร์มหลัก</td>
+  <td class="after"><span class="tag tag-merge">พับใน &lt;details&gt;</span></td>
+  <td></td>
+</tr>
+</table>
+
+<div class="rule">
+  <b>มติ R4 — ระแนง imp1/4 (หมุดแปะข้าง):</b> ในใบราคา detail เดิมมีข้อความ "อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน" ตามด้วย "หมุดสแตนเลสสีเงิน" ซ้ำคำ<br>
+  <b>แก้:</b> บรรทัดแรกให้เหลือ "อุปกรณ์มาตรฐานผู้ผลิต" (ตัดคำ "สแตนเลสสีเงิน" ออก) · บรรทัดที่สองคงเป็น "หมุดสแตนเลสสีเงิน"<br>
+  <b>จุดโค้ด (index.html ≈ บรรทัด 3753):</b>
+  <code>var _hLines=['อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน',...]</code> →
+  <code>var _hLines=['อุปกรณ์มาตรฐานผู้ผลิต',...]</code>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. มติ R4 — บานเปิด (override ราคาประตู)</h2>
+
+<p style="margin-bottom:8px;">ใช้ได้กับ: ระแนง (o-doortype + o-doorprice) และ ระแนงเลื่อน (o-bsdoor + o-bsdoorprice)</p>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>เดิม</th><th>ใหม่</th></tr>
+<tr>
+  <td class="before">input ราคาประตู override ดูเหมือน field ธรรมดา · ไม่มีคำแนะนำขั้นต่ำ · จำนวนบาน = ไม่มีในฟอร์มนี้</td>
+  <td class="after">
+    <b>กล่องสีส้มเด่น</b> ประกอบด้วย:<br>
+    1. input ราคา (กว้าง โดดเด่น)<br>
+    2. stepper จำนวนบาน (1–4)<br>
+    3. ราคา auto แสดงใต้ stepper: <i>"auto: 18,000 บ."</i> (คำนวณตามสูตรด้านล่าง)<br>
+    4. คำแนะนำ: บานเดี่ยว ≥ 18,000 · บานที่ 2+ = 16,000/บาน<br>
+    5. ข้อความเตือนแดง: "กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ"
+  </td>
+</tr>
+</table>
+
+<div class="rule">
+  <b>สูตรราคาประตู auto (floor):</b><br>
+  <code>n=1: 18,000 บ.</code><br>
+  <code>n=2: 18,000 + 16,000 = 34,000 บ.</code><br>
+  <code>n=3: 18,000 + 32,000 = 50,000 บ.</code><br>
+  <code>n=4: 18,000 + 48,000 = 66,000 บ.</code><br>
+  สูตร: <code>18,000 + (n-1) × 16,000</code> · ใช้วงกบร่วม บานที่ 2+ ถูกกว่า
+</div>
+
+<div class="dev-note">
+  <b>Logic:</b> ถ้ากรอก override &gt; 0 → ใช้แทนราคาอัตโนมัติ (ไม่คำนวณเอง)<br>
+  ถ้าว่าง/0 → ใช้ auto ตามสูตร<br>
+  <b>จุดโค้ด:</b> ระแนง <code>o-doorprice</code> ≈ บรรทัด 2619 · ระแนงเลื่อน <code>o-bsdoorprice</code> ≈ บรรทัด 2639<br>
+  <b>ข้อมูลจำนวนบาน:</b> ต้องเพิ่ม stepper/input จำนวนบาน (ปัจจุบัน code ยังไม่มี field นี้ใน G2 door block)
+</div>
+
+<!-- ============================================================ -->
+<h2>4. ระแนง-เกล็ด Z (rn83–rn88, bar_grid:1)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น (After)</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">ทิศติดตั้ง: dropdown (แนวตั้ง/แนวนอน)</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> 2 ตัว</td>
+  <td>code: <code>o-grdir</code> ≈ บรรทัด 2631</td>
+</tr>
+<tr>
+  <td class="before">ขนาดเกล็ด: ต้องเลือกจาก product dropdown ยาว</td>
+  <td class="after"><span class="tag tag-chip">ชิป 6 ตัว</span> 1"/1.6"/4" × ไม่โครง/รวมโครง</td>
+  <td>ค่า data-val = rn83–rn88</td>
+</tr>
+<tr>
+  <td class="before">สีอบ (bar_grid): dropdown</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span></td>
+  <td>code: <code>o-bgcolor</code> ≈ บรรทัด 2630 — display-only ในใบ</td>
+</tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>5. ระแนง-เลื่อน (bar_slide)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น (After)</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">o-bsdoor: dropdown รุ่นบาน (ชื่อยาว)</td>
+  <td class="after">dropdown (คง) + <span class="tag tag-new">กล่อง override ราคาประตู เด่น</span></td>
+  <td>โผล่เมื่อเลือกรุ่นบาน</td>
+</tr>
+<tr>
+  <td class="before">o-bsdoorprice: input ธรรมดา label "R3-2: กรอก..."</td>
+  <td class="after">กล่องสีส้ม + stepper บาน + auto price hint</td>
+  <td>เหมือนข้อ 3</td>
+</tr>
+<tr>
+  <td class="before">o-bsfinish: dropdown 9 ตัวเลือก</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 6 ตัว</td>
+  <td>ตัด Fuji ออก (ถ้าน้อยกว่า 6 ตัว)</td>
+</tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>6. ระแนง-เปิดปิด (bar_openclose)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น (After)</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">o-bocdir: dropdown ทิศระแนง</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> แนวตั้ง / แนวนอน</td>
+  <td></td>
+</tr>
+<tr>
+  <td class="before">o-bocmotor: checkbox "เอามอเตอร์"</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> ไม่มี / มีมอเตอร์</td>
+  <td>ชัดเจนกว่า checkbox</td>
+</tr>
+<tr>
+  <td class="before">o-bocfinish: dropdown 9 ตัวเลือก</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 6 ตัว</td>
+  <td></td>
+</tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>7. ราวกันตกกระจก (imp1–6, handrail:1)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น (After)</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">product dropdown ยาว (imp1–imp6 รวมกับสินค้าอื่นในหมวด)</td>
+  <td class="after"><span class="tag tag-chip">cascade 2 ขั้น</span> กระจกเฉียง/ตรง → ระบบยึด (หมุด/ยูเหล็ก/เสาตั้ง) → โชว์รุ่นที่ได้</td>
+  <td>เลือกแค่ 2 step แทนจำ code imp1–imp6</td>
+</tr>
+<tr>
+  <td class="before">ช่องกว้าง = ความยาว (ข้อความเตือน "กรอกความยาวในช่องกว้าง" — สับสน)</td>
+  <td class="after">ช่อง <b>ยาว (ม.)</b> ชัดเจน + info note อธิบาย</td>
+  <td>กรอก field เดียว = ความยาวรวม</td>
+</tr>
+<tr>
+  <td class="before">o-railglass: chipset (มีอยู่แล้ว) + o-handrail: chipset (มีอยู่แล้ว)</td>
+  <td class="after">คง chipset เดิม — OK แล้ว</td>
+  <td>ดีอยู่แล้ว ไม่ต้องแก้</td>
+</tr>
+<tr>
+  <td class="before">o-railalucolor: chipset (มีอยู่แล้ว · เฉพาะ imp2/3/5/6)</td>
+  <td class="after">คง chipset เดิม + <b>ซ่อนถ้าเลือก imp1/imp4</b></td>
+  <td>logic show/hide ตาม model: <code>['imp2','imp3','imp5','imp6'].includes(model)</code></td>
+</tr>
+<tr>
+  <td class="before" style="background:#FFF0F0;">
+    <span class="tag tag-cut">ตัดออก R4</span>
+    คาดตาราง (o-gridmark) · ฝังรางยู (o-uchannel) · ครอบวงกบอลู (o-fcsides/o-fcm) · ดรอปพื้น (o-dfm)
+  </td>
+  <td class="after"><span class="tag tag-cut">ตัดออก</span> ไม่แสดงในหมวด ราวบันได เลย</td>
+  <td>ออปชั่นเหล่านี้เป็น generic ของบาน ไม่ใช่งานราวกันตก · ปัจจุบัน code ยังโชว์อยู่เพราะ generic block ไม่ check cat</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ดที่ต้องแก้:</b> บล็อก generic option ≈ บรรทัด 2679–2691<br>
+  ปัจจุบัน: <code>if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → โชว์ ฝังรางยู สำหรับทุก cat รวมถึง ราวบันได<br>
+  แก้เป็น: <code>if(!['หลังคา','ฝ้า-ผนัง','ราวบันได'].includes(p.cat))</code><br>
+  และบล็อก ครอบวงกบอลู+ดรอปพื้น ≈ บรรทัด 2691:<br>
+  <code>if(!areaOnly && !p.zipscreen)</code> → เพิ่ม <code>&& p.cat!=='ราวบันได'</code><br>
+  และบล็อก คาดตาราง ≈ บรรทัด 2479:<br>
+  <code>if(!p.grid && !['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → เพิ่ม ราวบันได ใน exclude list
+</div>
+
+<!-- ============================================================ -->
+<h2>8. Pattern ที่ใช้ซ้ำ (สรุปเพื่อ dev)</h2>
+
+<h3>8.1 ชิปแทน dropdown (pattern ใช้ทั่ว G2)</h3>
+<div class="dev-note">
+HTML: <code>&lt;div class="chip-group chip-sm" id="xxx-chips"&gt;</code> + ปุ่ม chip แต่ละตัว<br>
+Hidden select: <code>&lt;select class="o-xxx" style="display:none;"&gt;</code><br>
+JS: <code>onclick="chSetChip(this,'o-xxx')"</code> (ฟังก์ชันเดิมใน index.html)<br>
+ชิปที่ active: class <code>on</code> · ค่า: <code>data-val="..."</code>
+</div>
+
+<h3>8.2 กล่อง override ราคาประตู (สีส้ม)</h3>
+<div class="dev-note">
+โชว์เมื่อ: เลือก o-doortype หรือ o-bsdoor ≠ ""<br>
+ประกอบด้วย:
+<ul>
+  <li>input <code>o-doorprice</code> / <code>o-bsdoorprice</code> (ราคาเต็ม · บาท)</li>
+  <li>stepper input <code>o-door-panels</code> (จำนวนบาน 1–4)</li>
+  <li>span แสดง auto price = <code>18000 + (n-1)*16000</code></li>
+  <li>คำแนะนำ: บานเดี่ยว ≥ 18,000 · บานที่ 2+ 16,000/บาน</li>
+</ul>
+</div>
+
+<h3>8.3 &lt;details&gt; พับ option รอง</h3>
+<div class="dev-note">
+class <code>optbox</code> ที่มีอยู่แล้ว หรือสร้าง <code>&lt;details class="extra"&gt;</code> ใหม่<br>
+รวม: รื้อของเดิม (o-removeold) · งานเสริม/วิศวกรรม (o-extrawork) · ครอบวงกบ (o-fcm)<br>
+default: ปิด (<code>open</code> attribute ไม่ใส่)
+</div>
+
+<h3>8.4 cascade product (ระแนง)</h3>
+<div class="dev-note">
+แทนที่ product dropdown 1 ตัวขนาดใหญ่ด้วยการ drill-down:<br>
+step 1 — หมวด chip (บังตา/ผนัง)<br>
+step 2 — profile dropdown (1×5, 1"×1.6", ...)<br>
+step 3 — chip ช่อง (2/3/5 cm. + ทึบ) + chip โครง (ไม่โครง/รวมโครง)<br>
+→ 3 ค่า map เป็น product id (rn1–rn88) ผ่าน lookup table ใน JS
+</div>
+
+<!-- ============================================================ -->
+<h2>9. จุดที่ยังต้องให้พี่นัทตัดสิน</h2>
+
+<table>
+<tr><th>#</th><th>ประเด็น</th><th>เลือก</th></tr>
+<tr>
+  <td>1</td>
+  <td>ระแนงเลื่อน (bar_slide): ปัจจุบัน "ค่าประตู" เลือกรุ่นบาน (dropdown รุ่น) แล้วคำนวณเอง — ควรเปลี่ยนเป็นกรอกราคาอย่างเดียว (override เต็ม) หรือยังให้เลือกรุ่นได้?</td>
+  <td class="note">รอมติ (draft ทำทั้งสอง — เลือกรุ่น + override)</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>ระแนง-บังตา: profile "1×5 cm." มีตัวเลือกช่องโชว์เป็น 1 cm. หรือ 5 cm. — ดราฟใช้ chip ช่อง แต่ใน dropdown เดิม "ช่องโชว์" ไม่ได้ระบุชัด ในชื่อรุ่น (rn1 = 1 ช่อง 5 cm., rn7 = 5 ช่อง 5 cm.) — cascade นี้ถูกต้องไหม?</td>
+  <td class="note">รอยืนยัน mapping profile↔id จากพี่นัท</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>ราวกันตก imp1/4 บรรทัด detail: "อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน" (บรรทัด 1) + "หมุดสแตนเลสสีเงิน" (บรรทัด 2) — ตัด "สแตนเลสสีเงิน" ออกจากบรรทัดแรกตามมติ R4 ยืนยันไหม?</td>
+  <td class="note">ยืนยันแล้วตามมติ R4 · dev แก้ได้เลย</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>ราวกันตก IMP rates ในดราฟใช้ราคา dummy (5,000–7,000/ม.) — ต้องตรวจสอบกับ RATES จริงใน code (RATES['IMP1'] ฯลฯ) ก่อน dev ทำ cascade</td>
+  <td class="note">dev ใช้ RATES จาก index.html โดยตรง · ดราฟ = demo ราคาไม่จริง</td>
+</tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>10. Checklist ก่อน dev ลงมือ</h2>
+<ul>
+  <li>[ ] อ่าน DRAFT-G2-ux-2026-06-11.html ให้เข้าใจ interaction ก่อน</li>
+  <li>[ ] สร้าง branch แยก (ไม่แก้บน main โดยตรง)</li>
+  <li>[ ] แก้เฉพาะบล็อก option ใน buildItemOpts() (~L2400–2750) · ห้ามแตะ calcPrice engine</li>
+  <li>[ ] ทดสอบ: กรอกขนาด → ราคาเปลี่ยน, กด chip → ราคาเปลี่ยน, เปิด details → ช่องโผล่</li>
+  <li>[ ] ทดสอบบนมือถือ (tap target ≥44px ทุกปุ่ม)</li>
+  <li>[ ] ตรวจ ราวกันตก: ไม่โชว์ คาดตาราง/ฝังรางยู/ครอบวงกบ/ดรอปพื้น</li>
+  <li>[ ] ตรวจ ราวกันตก imp1/4: detail line 1 = "อุปกรณ์มาตรฐานผู้ผลิต" (ไม่มี "สแตนเลสสีเงิน")</li>
+</ul>
+
+<div style="margin-top:20px;padding:10px 14px;background:#F3F4F6;border-radius:8px;font-size:12px;color:#6B7280;">
+  ไฟล์นี้สร้างโดย UX Agent 2026-06-11 · อ้างอิงจาก public/calculator/index.html ที่อ่านวันนี้<br>
+  ดราฟ interactive: docs/DRAFT-G2-ux-2026-06-11.html · ห้ามใช้ราคาในดราฟอ้างอิงงานจริง (DEMO)
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สรุปสิ่งที่แก้ G2 — ก่อน → หลัง (เทสแล้ว)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:13px;line-height:1.5;margin:0;background:#F3F4F6;padding:16px;}
+  .wrap{max-width:920px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;}
+  .hd{background:#166534;color:#fff;padding:14px 18px;}
+  .hd h1{margin:0;font-size:19px;}.hd .s{font-size:12px;opacity:.92;margin-top:2px;}
+  .kpi{display:flex;gap:8px;padding:12px 18px;background:#F0FDF4;border-bottom:1px solid #BBF7D0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #BBF7D0;border-radius:7px;padding:8px;background:#fff;}
+  .kpi .n{font-size:22px;font-weight:700;color:#166534;display:block;}
+  table{width:100%;border-collapse:collapse;}
+  th{background:#14532D;color:#fff;padding:8px 9px;text-align:left;font-size:12px;}
+  td{border-bottom:1px solid #E5E7EB;padding:8px 9px;vertical-align:top;font-size:11.5px;}
+  td.c{text-align:center;white-space:nowrap;}
+  .id{font-weight:700;color:#166534;white-space:nowrap;}
+  .bef{color:#B3151D;}.aft{color:#166534;font-weight:600;}
+  .ok{color:#166534;font-weight:700;}
+  .arrow{color:#9CA3AF;}
+  h2{font-size:14px;margin:16px 18px 6px;color:#166534;}
+  .warn{margin:8px 18px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;font-size:11.5px;color:#7C2D12;}
+  .foot{padding:12px 18px;font-size:11px;color:#9CA3AF;background:#FAFAFA;border-top:1px solid #E5E7EB;}
+  code{font-family:Consolas,monospace;font-size:10px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hd">
+  <h1>📝 สรุปสิ่งที่แก้ — กลุ่ม G2 (รั้ว / ระแนง / ราวกันตก)</h1>
+  <div class="s">12 จุดหลัก + เก็บรายละเอียด · เทสจริงทุกจุด · baseline PASS 14/14 ไม่พัง · 10 มิ.ย. 2026</div>
+</div>
+
+<div class="kpi">
+  <div><span class="n">13</span>commit แก้</div>
+  <div><span class="n">12+</span>จุดที่แก้</div>
+  <div><span class="n">9/9</span>เคสเทสผ่าน</div>
+  <div><span class="n">14/14</span>baseline</div>
+</div>
+
+<h2>ตารางสิ่งที่แก้ — ก่อน → หลัง</h2>
+<table>
+<thead><tr><th style="width:8%;">commit</th><th style="width:22%;">เรื่อง</th><th style="width:31%;">ก่อน (ปัญหา)</th><th style="width:31%;">หลัง (output จริง)</th><th class="c" style="width:8%;">เทส</th></tr></thead>
+<tbody>
+
+<tr><td class="id">G2-1</td><td><b>สีพิเศษคิดเงิน</b> (บั๊กเงินหาย)</td>
+<td class="bef">เลือกสีอบพิเศษ/ลายไม้ → คิดเพิ่ม <b>0 บาท</b> (key ไม่ตรง)</td>
+<td class="aft">value dropdown ตรง key → อบสีพิเศษ <b>+8,000</b> (51,000→59,000)</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-2</td><td><b>ลักษณะการเปิดประตูรั้ว</b></td>
+<td class="bef">hardcode "ประตูรั้วบานเลื่อน" อย่างเดียว</td>
+<td class="aft">เลือกได้ 4 แบบ: บานสวิง / บานเปิด / เลื่อนคู่กลาง<b>รางล่าง</b> / <b>รางบน</b> · ชื่อ generic</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-3</td><td><b>รายละเอียดลงใบลูกค้า</b></td>
+<td class="bef">โชว์แค่ "ประตูรั้วบานเลื่อน" — ระแนง/ซี่/สี อยู่แค่ msg เทา</td>
+<td class="aft">ลงครบ: "พร้อมระแนงติดตายด้านข้าง" + ซี่ + สี + ธรณี</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-4</td><td><b>bar_slide แครช</b></td>
+<td class="bef">เลือกประตู fence_gate → <code>TypeError</code> แอปค้าง</td>
+<td class="aft">ตัด fence_gate ออกจากตัวเลือก → ไม่แครช</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-5/6/7</td><td><b>สี + ทิศ ระแนงเกล็ด/เลื่อน/เปิด-ปิด</b></td>
+<td class="bef">เลือกสีได้แต่ไม่ลงใบ · มอเตอร์นับผิดทิศ</td>
+<td class="aft">"สีเทาซาฮาร่า · ( แนวตั้ง )" ลงใบ · มอเตอร์ D ตามทิศ</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-8</td><td><b>ตัดศัพท์ภายในออกจากชื่อ</b></td>
+<td class="bef">ใบลูกค้ามี "(ข้อ 38.1)", "47.1 …(ทำยากสุด)", "(ก)(ข)"</td>
+<td class="aft">ชื่อสะอาด: "ระแนงบานเกล็ดอลู…", "ราวกันตก บันไดเฉียง หมุดแปะปูน"</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-9</td><td><b>ทิศเกล็ด Z 6 รุ่น</b></td>
+<td class="bef">ไม่โชว์ทิศ (ใบจริงระบุ "แนวตั้ง" เสมอ)</td>
+<td class="aft">เลือก/โชว์ "( แนวตั้ง / แนวนอน )" · ราคาเท่ากัน 2 ทิศ</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-10</td><td><b>กระจกราวกันตก 12 มม.</b></td>
+<td class="bef">มีแต่ 10 มม. (ใบจริงชวลิตใช้ 12)</td>
+<td class="aft">เลือก 10 / 12 มม. ได้ (default 10)</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-11</td><td><b>อุปกรณ์สแตนเลส (บังคับ)</b></td>
+<td class="bef">ไม่มีบรรทัดนี้ (ใบจริงทุกใบมี)</td>
+<td class="aft">"- อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน" ลงใบทุกครั้ง</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-12</td><td><b>OPTION ลายไม้ Golden Teak SMS</b></td>
+<td class="bef">ไม่มี (ใบจริงมีแทบทุกใบ)</td>
+<td class="aft">"OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม X บาท"</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-13</td><td><b>default สีระแนง</b></td>
+<td class="bef">สีอบขาว (ใบจริงใช้เทาซาฮาร่าเป็นหลัก)</td>
+<td class="aft">default = สีเทาซาฮาร่า</td><td class="c ok">✓*</td></tr>
+
+<tr><td class="id">G2-14</td><td><b>ขนาดซี่ระแนงลงใบ + สี</b></td>
+<td class="bef">ขนาดซี่/สี ไม่อยู่ในรายละเอียดงาน</td>
+<td class="aft">"บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. · สีเทาซาฮาร่า" ลงใบ</td><td class="c ok">✓</td></tr>
+
+<tr><td class="id">G2-15</td><td><b>ธรณีประตูรั้ว</b></td>
+<td class="bef">ไม่มี option (ใบจริงระบุ "(ไม่มีธรณี)")</td>
+<td class="aft">เลือก มี/ไม่มีธรณี → ลงใบ</td><td class="c ok">✓</td></tr>
+
+</tbody>
+</table>
+
+<div class="warn">
+<b>⚠ 2 จุดเล็กที่อยากให้พี่นัทเช็คซ้ำ (ไม่ใช่บั๊ก แต่กระทบราคา/หน้าตา):</b>
+<ol style="margin:4px 0;padding-left:18px;">
+<li><b>G2-13* default ซาฮาร่า ทำให้ราคาฐานระแนง +300–500/ตร.ม.</b> — เช่น rn13 เดิม(ขาว) 23,000 → ตอนนี้(ซาฮาร่า) 24,000 · ถ้า "สีเทาซาฮาร่า = สีมาตรฐานฟรี" ควรไม่บวก / ถ้าเป็นสีพรีเมียมก็ถูกแล้ว — <b>ยืนยันด้วย</b></li>
+<li><b>คำซ้ำเล็กน้อย</b> — สีพิเศษโชว์ "สีอบสีพิเศษ" (มี "สี" ซ้ำ) · ควรเป็น "สีอบพิเศษ" หรือ "อบสีพิเศษ" เฉยๆ</li>
+</ol>
+</div>
+
+<h2>✅ ที่ไม่ต้องแก้ (ยืนยันถูกอยู่แล้ว)</h2>
+<div style="padding:0 18px 6px;font-size:11.5px;color:#374151;">
+ราคา/เรตทุก engine (37/38.1-38.4/47) · เรตระแนง 92/92 ตรงต้นฉบับ · เรตซ้ำ (rn33=rn35, imp2=imp3=imp4) = ตั้งใจในต้นฉบับ · ระแนง 82 รุ่นครอบขนาดซี่ครบ — <b>ทั้งหมดไม่ถูกแตะ ถูกต้องเหมือนเดิม (baseline PASS 14/14)</b>
+</div>
+
+<div class="foot">
+  อ้างอิง commit: f4f7774(G2-1) · aae100c(G2-4) · 3ea1d9d(G2-2/3/12/15) · 66e90bd(G2-10/11) · 3b02faa(G2-8) · 28ea0bd(G2-5/6/7/9) · 430e839(G2-13) · e54467e(G2-14) · 95aa39c(G2-2 ชื่อ) · เทสด้วย jsdom render + quote-fidelity · 10 มิ.ย. 2026
+</div>
+
+</div>
+</body>
+</html>

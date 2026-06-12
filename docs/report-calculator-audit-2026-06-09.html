@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>รายงานตรวจ Calculator index.html — 2026-06-09</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Leelawadee UI","Tahoma",sans-serif; color:#1F2937; font-size:12px; line-height:1.5; margin:0; }
+  h1 { font-size:20px; color:#B3151D; margin:0 0 2px; }
+  h2 { font-size:15px; margin:18px 0 6px; padding:5px 9px; border-radius:5px; color:#fff; }
+  h2.red { background:#B3151D; } h2.yellow { background:#B7791F; } h2.green { background:#2F855A; } h2.note{ background:#3B5EA6; }
+  .sub { color:#6B7280; font-size:11px; margin-bottom:10px; }
+  .kpi { display:flex; gap:8px; margin:10px 0 4px; }
+  .kpi div { flex:1; text-align:center; border:1px solid #E5E7EB; border-radius:6px; padding:8px; }
+  .kpi .n { font-size:22px; font-weight:700; display:block; }
+  .kpi .red{ color:#B3151D; } .kpi .yellow{ color:#B7791F; } .kpi .green{ color:#2F855A; }
+  table { width:100%; border-collapse:collapse; margin-bottom:4px; }
+  th,td { border:1px solid #D1D5DB; padding:5px 7px; vertical-align:top; text-align:left; }
+  th { background:#F3F4F6; font-size:11px; }
+  td.ln { white-space:nowrap; font-family:"Consolas",monospace; font-size:11px; color:#B3151D; font-weight:700; }
+  td.grp { white-space:nowrap; font-size:11px; color:#3B5EA6; font-weight:700; }
+  .fix { color:#2F855A; }
+  .badge { display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:700; vertical-align:middle; }
+  .v { background:#DCFCE7; color:#166534; } .s { background:#FEF3C7; color:#92400E; }
+  .legend { font-size:10px; color:#6B7280; margin-top:2px; }
+  ul.green-list { margin:4px 0; padding-left:18px; }
+  ul.green-list li { margin-bottom:3px; }
+  .foot { margin-top:16px; font-size:10px; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:6px; }
+</style>
+</head>
+<body>
+
+<h1>รายงานตรวจเครื่องคิดราคา — index.html</h1>
+<div class="sub">
+  ไฟล์: <b>public/calculator/index.html</b> (R3.9.2 · 3,509 บรรทัด) ·
+  วันที่ตรวจ: <b>9 มิ.ย. 2026</b> ·
+  วิธี: subagent 6 กลุ่มตรวจขนานกัน (ประตูบานหลัก / หลังคา / มุ้ง / กระจก+กั้นห้อง / งานพิเศษ / ออปชั่น+ใบเสนอราคา) ·
+  อ่านอย่างเดียว ยังไม่แก้ไฟล์
+</div>
+
+<div class="kpi">
+  <div><span class="n red">7</span>🔴 ผิดแน่ (กระทบเงิน/พังจริง)</div>
+  <div><span class="n yellow">13</span>🟡 น่าสงสัย (ต้องตัดสินใจ)</div>
+  <div><span class="n green">4</span>🟢 จัดสวย / cosmetic</div>
+</div>
+<div class="legend">
+  <span class="badge v">ยืนยันเอง</span> = พี่นัท(ผม)เปิดโค้ดเช็คซ้ำด้วยตาแล้ว &nbsp;·&nbsp;
+  <span class="badge s">เช็คซ้ำ</span> = subagent รายงาน มีเลขบรรทัดอ้างอิง ยังไม่ยืนยันด้วยตา
+</div>
+
+<h2 class="red">🔴 ผิดแน่ — แก้ก่อนใช้จริง</h2>
+<table>
+<tr><th style="width:48px;">กลุ่ม</th><th style="width:90px;">บรรทัด</th><th>จุดที่ผิด</th><th style="width:33%;">เสนอแก้</th></tr>
+
+<tr>
+<td class="grp">ออปชั่น/ใบ</td>
+<td class="ln">L3270<br>L2556<br>L1944</td>
+<td><b>OPTION ระดับชุด (preset ทั้งชุด) โชว์ราคาแต่ไม่บวกเข้ายอด</b> <span class="badge v">ยืนยันเอง</span><br>
+ปุ่ม "OPTION สำเร็จรูป" ตั้งค่า <code>.set-optdelta</code> → อ่านที่ L2556 → <b>แสดงข้อความ "OPTION : … (ราคา+N บาท)" ที่ L3270 เท่านั้น</b> ไม่เคยบวกเข้า r.sell/gTotal/subtotal เลย → ใบบอกลูกค้า +N บาท แต่ยอดรวมไม่รวม = <b>ขายขาดทุน</b> (แพตเทิร์นเดียวกับบั๊กมุ้ง o-mosq ที่เพิ่งแก้)</td>
+<td class="fix">บวก groupOptDelta เข้า sell ของบานแรกในชุดครั้งเดียว (เหมือน optChoicesNote) หรือ <code>gTotal += groupOptDelta</code> ที่ L3271 (ระวังบวกครั้งเดียว/ชุด) — <b>ถ้า preset ทั้งชุดเลิกใช้แล้ว ให้ซ่อน UI แทน</b></td>
+</tr>
+
+<tr>
+<td class="grp">ออปชั่น/ใบ</td>
+<td class="ln">L3389</td>
+<td><b>Excel export ฮาร์ดโค้ด VAT 7%</b> <span class="badge v">ยืนยันเอง</span><br>
+<code>exportQuoteExcel</code> คิด <code>vat=(net+svc)*0.07</code> ตายตัว → ถ้าเลือก "0% (ไม่มีใบกำกับ)" ที่ช่อง vat-pct ไฟล์ Excel ยังชาร์จ 7% → เลข Excel ไม่ตรงใบ HTML (ใบ HTML อ่าน vat-pct ถูก)</td>
+<td class="fix">L3389 อ่าน <code>vatPct</code> จาก <code>#vat-pct</code> แล้วใช้ <code>*vatPct/100</code> แทน 0.07 (export นี้พลาด groupOptDelta ด้วย เพราะวนทีละ item)</td>
+</tr>
+
+<tr>
+<td class="grp">บานหลัก</td>
+<td class="ln">L552<br>L2152<br>L2393<br>L1329</td>
+<td><b>บานกระทุ้งยูโร: awn_mode (select) ถูก render เป็น checkbox</b> <span class="badge v">ยืนยันเอง</span><br>
+L552 awn_mode เป็น type:'select' (ไม่มี price) แต่ loop generic L2152 วาดเป็น checkbox "แบบเปิด +undefined"; อ่านที่ L2393 ได้ boolean → ติ๊กแล้ว L1329 <code>opt+=o.price</code> ที่ undefined → <b>opt = NaN ราคาทั้งบานพัง</b>. นอกจากนี้ tilt&turn คิด flat 5,000 (ไม่ใช่ต่อบาน) + warning "เปิดออกนอกบ้าน" ไม่เด้ง (depends ไม่ทำงาน)</td>
+<td class="fix">ทำ awn_mode เป็น select จริง (เก็บ 0/1/2); ผูก tilt_turn ราคา 5,000×บาน + warning กับ awn_mode=2; ตัด awn_mode ออกจาก loop checkbox generic</td>
+</tr>
+
+<tr>
+<td class="grp">บานหลัก</td>
+<td class="ln">L556</td>
+<td><b>บานเปิด X-series: flag mosquito:1 วางผิดที่</b> <span class="badge v">ยืนยันเอง</span><br>
+<code>mosquito:1</code> อยู่ใน object ของ opt closer แทนที่จะเป็น property ของ product → <code>p.mosquito</code> = undefined → UI เพิ่มมุ้ง + การคิดเงินมุ้งไม่ทำงานกับ X-series (ทั้งที่ allow_with ของเฟรมมุ้งใส่ casement_xseries ไว้ = ตั้งใจให้ใส่มุ้งได้)</td>
+<td class="fix">ย้าย <code>mosquito:1</code> ออกมาเป็น property ของ product: <code>opts:[{id:'closer',price:5000}], mosquito:1</code> — <b>ยืนยันเจตนาว่า X-series ต้องใส่มุ้งได้</b></td>
+</tr>
+
+<tr>
+<td class="grp">มุ้ง</td>
+<td class="ln">L803-805<br>L1488</td>
+<td><b>มุ้งม้วนเตะ maxWidth ไม่ validate</b> <span class="badge s">เช็คซ้ำ</span><br>
+maxWidth (150/300/600 = 1.5/3.0/6.0 ม.) ประกาศไว้แต่ไม่มีโค้ดอ่าน → เลือกรุ่น 150 (min 15,000) กับบานกว้าง 5 ม. ได้โดยไม่เตือน ทั้งที่ควรใช้รุ่น 600 (min 67,500) → <b>เก็บเงินขาด/สเปคผิด</b></td>
+<td class="fix">เพิ่ม validation: ถ้า W &gt; mscreen.maxWidth ขึ้น ⚠ เตือนเปลี่ยนรุ่น</td>
+</tr>
+
+<tr>
+<td class="grp">มุ้ง</td>
+<td class="ln">L2298<br>L2490<br>L1530</td>
+<td><b>สีกรอบมุ้ง addon ต่อบาน เลือกไม่ได้ + ไม่บวกเงิน</b> <span class="badge s">เช็คซ้ำ</span><br>
+UI สร้าง class <code>.o-mscolor</code> (L2298) แต่ตัวอ่านหา <code>.o-mosqcolor</code> (L2490 — ไม่มี element นี้) และโค้ดคิดค่าทำสีกรอบ (L1530-1535) อยู่ใน <code>if(false)</code> ตาย → addon mscolor:true ทุกตัวคิดค่าทำสีไม่ได้</td>
+<td class="fix">ผูก <code>.o-mscolor</code> เข้า addon mosqColor + ย้ายโค้ดคิดสี (L1530-1535) ออกจาก if(false) มาไว้ block จริง (ช่วง L1504)</td>
+</tr>
+
+<tr>
+<td class="grp">กระจก/กั้นห้อง</td>
+<td class="ln">L1850<br>L1880<br>L2044</td>
+<td><b>กั้นห้องกระจก: auto-label ด้าน B/C/D ไม่ทำงาน</b> <span class="badge s">เช็คซ้ำ</span><br>
+ทุกบานที่กดเพิ่มถูกตั้ง "ด้าน A" ตายตัว (hardcode 3 จุด) ขัดกับคอมเมนต์ L1869 ที่ว่า auto-label B/C/D → ห้องหลายด้านได้ "ด้าน A" ซ้ำหมด แยกด้านในใบไม่ได้</td>
+<td class="fix">ตอนเพิ่มบาน นับ ch ใน group6 ที่มีอยู่ แล้วตั้ง <code>pos='ด้าน '+String.fromCharCode(65+index)</code> แทนค่าคงที่</td>
+</tr>
+</table>
+
+<h2 class="yellow">🟡 น่าสงสัย — ต้องตัดสินใจ/เช็คซ้ำ</h2>
+<table>
+<tr><th style="width:48px;">กลุ่ม</th><th style="width:90px;">บรรทัด</th><th>จุดที่สงสัย</th><th style="width:30%;">เสนอแก้</th></tr>
+
+<tr><td class="grp">ออปชั่น/ใบ</td><td class="ln">L2619<br>L3386</td><td><b>discFlat (ส่วนลดค่าประเมิน) ไม่มี cap → net ติดลบได้</b> ถ้า discFlat &gt; subtotal → net ติดลบ → VAT ติดลบ (discPct มี clamp แต่ discFlat ไม่มี)</td><td class="fix">clamp <code>net = Math.max(0, …)</code></td></tr>
+
+<tr><td class="grp">ออปชั่น/ใบ</td><td class="ln">L2528</td><td><b>lumpsum (เหมา) แล้วยังบวก OPTION/subItems ทับ</b> L2528 set sell=ราคาเหมา แต่บรรทัดถัดมา optDelta/OPTION/subItems ยัง += ทับ → ถ้าเหมา=ราคาตายตัว จะบวกเกิน</td><td class="fix">ยืนยันเจตนา (เหมา+ออปชั่น?) หรือล็อกราคาเมื่อเปิดเหมา</td></tr>
+
+<tr><td class="grp">ออปชั่น/ใบ</td><td class="ln">ทั้งใบ</td><td><b>ไม่มีตารางมัดจำ/งวดชำระในใบ</b> มี ยอดรวม/ส่วนลด/VAT ครบ แต่ไม่มีตารางมัดจำ-งวด (มีแต่คำว่ามัดจำในเงื่อนไข narrative)</td><td class="fix">เช็คว่าตั้งใจไม่ใส่ หรือยังไม่ทำ</td></tr>
+
+<tr><td class="grp">งานพิเศษ</td><td class="ln">L583<br>L2152</td><td><b>shower อุปกรณ์ดำ(+4,000)/ทอง(+6,000) เป็น checkbox ติ๊กพร้อมกันได้</b> → บวกซ้ำ 10,000 (ปกติเลือกสีเดียว)</td><td class="fix">เปลี่ยนเป็น radio/dropdown เลือกอย่างเดียว</td></tr>
+
+<tr><td class="grp">กระจก</td><td class="ln">L513</td><td><b>เทมเปอร์ยูโรบรอนซ์ 10มม. (BSG) s=1,230 — margin ต่ำผิดปกติ</b> ทุนสูงสุด (c4670) แต่ส่วนเพิ่มขายต่ำสุดในกลุ่ม ดูเหมือน s ใส่ผิด</td><td class="fix">ตรวจราคาจริง BSG น่าจะ s~6,400+ ไม่ใช่ 5,900</td></tr>
+
+<tr><td class="grp">กระจก</td><td class="ln">L508-509<br>L525</td><td><b>ใสพิเศษ 6/10มม. ช่วงทุนห่าง + ★ตาราง28 ซ้ำซ้อน list หลัก</b> เช็คว่าต้องมี 8มม.คั่นไหม / ★ลามิเนตซ้ำกับของหลัก ลูกค้าเลือกผิดราคาได้</td><td class="fix">ยืนยันแยก ★=สั่งพิเศษ vs หลัก=stock + ติดป้ายให้ชัด</td></tr>
+
+<tr><td class="grp">งานพิเศษ</td><td class="ln">L572-574<br>L642-647</td><td><b>เลขข้อ spec ซ้ำ</b> imp2/imp3 ตั้งชื่อ "47.2" ทั้งคู่, imp5/imp6 "47.4" ทั้งคู่; imp2==imp3 ราคาเท่ากันเป๊ะ แต่ imp5≠imp6</td><td class="fix">เทียบ quote-spec.docx ว่าเลขข้อซ้ำตั้งใจไหม + imp2/imp3 ราคาควรต่างไหม</td></tr>
+
+<tr><td class="grp">บานหลัก</td><td class="ln">L559-560</td><td><b>โซลิด วัน/ทู custom_price แต่ rates:'OPEN'</b> ถ้าลืมกรอกราคา override ระบบ auto คิดเรตบานเปิดยูโรเงียบๆ (อาจไม่ตรงต้นทุนลูกฟูกทึบ)</td><td class="fix">บังคับ/เตือนเมื่อช่องราคา override ว่าง</td></tr>
+
+<tr><td class="grp">บานหลัก</td><td class="ln">L1505</td><td><b>บานกระทุ้งหลายบาน: addon window 2,900/บาน + floor multi-panel 0.67</b> ตรวจว่าไม่ซ้อนคิดสองทาง (ต่อบาน + floor)</td><td class="fix">ยืนยันเจตนากับพี่นัท</td></tr>
+
+<tr><td class="grp">มุ้ง</td><td class="ln">L1539</td><td><b>คำเตือน overhang "ติดล้นนอกวงกบ" อยู่ใน if(false)</b> → ไม่เด้งในข้อความคำนวณ (มุ้งม้วนเตะ/นิรภัยที่ต้องติดล้น)</td><td class="fix">ย้ายเช็ค overhang มา push ใน block จริง L1504</td></tr>
+
+<tr><td class="grp">มุ้ง</td><td class="ln">L3184-3193</td><td><b>บานทั่วไป (เปิด/กระทุ้ง/ยก) ในใบโชว์ชื่อมุ้งแต่ไม่โชว์ขนาด ตร.ม.</b> ต่างจาก path บานเลื่อน (L3115) ที่มี _szTxt</td><td class="fix">ต่อ _szTxt จาก mosqArea เหมือน L3114-3115 (เช็คว่าตั้งใจตัด)</td></tr>
+
+<tr><td class="grp">หลังคา</td><td class="ln">L2249<br>L2263</td><td><b>"ปิดปลาย" ซ้ำซ้อน 2 ช่อง</b> o-roofend "ปิดปลาย" (1,000×กว้างชุด auto) กับ o-rfeave "ปิดปลายกันน้ำ" (1,000×ยาวกรอกเอง) — ผู้ใช้เลือกพร้อมกันได้ → คิดปิดปลาย 2 รอบ</td><td class="fix">ตั้งชื่อให้ต่างชัด หรือซ่อน o-rfeave เมื่อ roofend=ปิดปลาย</td></tr>
+
+<tr><td class="grp">หลังคา</td><td class="ln">L2445</td><td><b>default "แป" fallback string ขัดกันเอง</b> collect fallback=แปเดี่ยว (L2445) แต่ HTML default + ใบ=แปคู่ (L2245/L3056) — ไม่กระทบเงิน (แปคู่/เดี่ยวฟรีทั้งคู่)</td><td class="fix">เปลี่ยน L2445 fallback 'แปเดี่ยว'→'แปคู่' ให้ตรง</td></tr>
+</table>
+
+<h2 class="green">🟢 จัดสวย / cosmetic</h2>
+<ul class="green-list">
+<li><b>L498-545 (กระจก)</b> — dropdown กระจกหลัก ~50 รายการเป็น flat list หายาก/เลื่อนนาน → ใส่ <code>&lt;optgroup&gt;</code> ใน glassOpts() (F2 OPTION ต่อบานทำ optgroup แล้ว ของบานหลักยังไม่ทำ)</li>
+<li><b>L520-545 (กระจก)</b> — ★ตาราง28 บางตัวซ้ำความหมายกับ list หลัก ลูกค้าอาจเลือกผิดราคา → ติดป้าย stock / สั่งพิเศษ ให้ชัด</li>
+<li><b>L559 (บานหลัก)</b> — flag <code>solid_door:1</code> ประกาศไว้แต่ไม่มีที่ไหนอ่านใช้ (dead flag) → ลบทิ้ง หรือผูก logic ที่ตั้งใจ</li>
+<li><b>L1131 (งานพิเศษ)</b> — comment ระบุ "บานเพิ่ม +5,000" แต่โค้ดคิด 5,500 (ข้อความที่ลูกค้าเห็น L1145 ใช้ 5,500 ถูกแล้ว ผิดแค่ comment) → แก้ comment เป็น +5,500</li>
+</ul>
+
+<h2 class="note">หมายเหตุการตรวจ</h2>
+<ul class="green-list">
+<li>ราคา/สูตรหลักส่วนใหญ่ <b>ผ่าน</b>: bucket/rate tables (SMS/EURO/OPEN/ROOF/AWN ฯลฯ), VAT ฐานถูก (หักส่วนลดก่อน รวม VAT), clampDisc เพดาน 2%, บริการรื้อถอน, มุ้ง o-mosq บวกเข้า sell แล้ว (บั๊กเดิม 2026-06-08 ไม่ regression), F2 OPTION cascade ต่อบาน บวกเข้า sell จริง</li>
+<li>เลขข้อ spec (38.x/41/47.x) เทียบกันเองในไฟล์ — <b>ยังไม่ได้เทียบกับ quote-spec.docx</b> ถ้าต้องการยืนยันต้องเปิด spec เทียบ</li>
+<li>กั้นห้องกระจก redesign: ยืนยันตรง memory — ไม่มี gh-box พิเศษแล้ว ใช้บานหลัก+ย่อยเดิม (เว้นบั๊กด้าน A ข้างบน)</li>
+</ul>
+
+<div class="foot">
+JR · ผู้ตรวจเอกสาร — รายงานนี้ส่งพี่นัทเช็คซ้ำ ไม่อนุมัติแทน · สร้าง 2026-06-09 · ยังไม่แก้ไฟล์ใดๆ
+</div>
+
+</body>
+</html>

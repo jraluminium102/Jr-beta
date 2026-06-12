@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUDIT G4 — ออปชั่น ตู้อลู / ฝาตู้ (2026-06-11)</title>
+<style>
+:root{--red:#B3151D;--red-light:#FFF0F0;--green:#166534;--green-light:#F0FDF4;
+  --amber:#92400E;--amber-light:#FFF7ED;--blue:#1E40AF;--blue-light:#EFF6FF;
+  --border:#E5E7EB;--radius:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;background:#F9FAFB;color:#111;line-height:1.6;}
+.page{max-width:860px;margin:0 auto;padding:16px;}
+h1{font-size:18px;font-weight:700;color:var(--red);margin-bottom:4px;}
+.meta{font-size:12px;color:#6B7280;margin-bottom:16px;}
+h2{font-size:15px;font-weight:700;margin:18px 0 8px;border-left:4px solid var(--red);padding-left:10px;color:#111;}
+h3{font-size:13px;font-weight:700;color:#374151;margin:10px 0 5px;}
+table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px;}
+th{background:#F3F4F6;font-weight:700;padding:7px 10px;border:1px solid var(--border);text-align:left;}
+td{padding:6px 10px;border:1px solid var(--border);vertical-align:top;}
+tr:nth-child(even) td{background:#FAFAFA;}
+.ok{background:var(--green-light)!important;color:var(--green);font-weight:700;}
+.warn{background:var(--amber-light)!important;color:var(--amber);font-weight:700;}
+.err{background:var(--red-light)!important;color:var(--red);font-weight:700;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.tag-ok{background:var(--green-light);color:var(--green);}
+.tag-warn{background:var(--amber-light);color:var(--amber);}
+.tag-err{background:var(--red-light);color:var(--red);}
+.tag-blue{background:var(--blue-light);color:var(--blue);}
+.box{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;}
+.box-err{border-color:#FCA5A5;background:var(--red-light);}
+.box-warn{border-color:#FCD34D;background:var(--amber-light);}
+.box-ok{border-color:#86EFAC;background:var(--green-light);}
+.box-blue{border-color:#93C5FD;background:var(--blue-light);}
+ul{padding-left:18px;}
+li{margin:3px 0;}
+code{background:#F3F4F6;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:12px;}
+.section-note{font-size:12px;color:#6B7280;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>AUDIT G4 — ออปชั่น ตู้อลู / ฝาตู้ (2026-06-11)</h1>
+<p class="meta">ตรวจหลัง commit <code>6ef160f</code> "G4 ตู้อลู/ฝาตู้ form-ux" · READ-ONLY audit · ไม่แก้ index.html</p>
+
+<!-- ===================== ส่วน 1: 3 ออปชั่นที่ dev ตัด ===================== -->
+<h2>1. 3 ออปชั่นที่ dev ตัดใน commit 6ef160f</h2>
+<p class="section-note">commit บอก "ตัด 3 ออปชั่น" จาก diff จริงมี 2 เงื่อนไขใหม่ + 1 หมายเหตุ:</p>
+
+<table>
+  <thead><tr><th>ออปชั่น</th><th>วิธีตัด</th><th>เหตุผล</th><th>ถูก?</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>ฝังรางยู <code>o-uchannel</code></td>
+      <td>เพิ่ม <code>&amp;&amp; !p.cabinet &amp;&amp; !p.future_tech</code> ใน condition</td>
+      <td>ตู้ไม่มีพื้น/ราง ไม่เกี่ยวกัน</td>
+      <td class="ok">ถูก</td>
+    </tr>
+    <tr>
+      <td>ดรอปพื้น <code>o-dfm</code></td>
+      <td>ย้ายเข้า <code>if(!p.cabinet &amp;&amp; !p.future_tech)</code></td>
+      <td>ตู้ไม่มีขอบพื้น</td>
+      <td class="ok">ถูก</td>
+    </tr>
+    <tr>
+      <td>ประเภท (ประตู/หน้าต่าง) <code>i-type</code></td>
+      <td>ซ่อนอยู่แล้วผ่าน <code>ITYPE_NA</code> (ทั้ง 'ตู้อลู' และ 'ฝาตู้' อยู่ในลิสต์)</td>
+      <td>ตู้/ฝาตู้ไม่มีประเภทบาน</td>
+      <td class="ok">ถูก (ซ่อนอยู่ก่อนแล้ว — commit แค่ยืนยัน)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="box box-ok">
+สรุป: 3 ออปชั่นที่ตัดถูกทั้งหมด ไม่มี leak กลับมา
+</div>
+
+<!-- ===================== ส่วน 2: ออปชั่นที่มีอยู่ใน G4 ตอนนี้ ===================== -->
+<h2>2. ออปชั่น G4 ปัจจุบัน — สรุปตาราง</h2>
+
+<h3>2a. ตู้อลูมิเนียม (cabinet_alu · p.cabinet=1)</h3>
+<table>
+  <thead><tr><th>#</th><th>ออปชั่น / field</th><th>หมวด</th><th>ลำดับ</th><th>ประเภท</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>ประเภทตู้ <code>o-cabtype</code></td><td>📦 รายละเอียดตู้</td><td>1 (บนสุด)</td><td>ชิป 2 ตัว</td><td class="ok">ถูกประเภท · trigger auto สูง/ลึก</td></tr>
+    <tr><td>2</td><td>จำนวนบานหน้าตู้ <code>o-cabdoors</code></td><td>📦</td><td>2</td><td>ชิป 3 ตัว (1/2/3)</td><td class="ok">ถูกประเภท</td></tr>
+    <tr><td>3</td><td>ชนิดชั้น <code>o-shelfmat</code></td><td>📦</td><td>3</td><td>ชิป 3 ตัว</td><td class="ok">ถูกประเภท</td></tr>
+    <tr><td>4</td><td>ลึก(ม.) <code>o-depth</code></td><td>📦</td><td>4</td><td>number + auto badge</td><td class="ok">ถูกประเภท · default 0.6 auto</td></tr>
+    <tr><td>5</td><td>จำนวนชั้น <code>o-shelves</code></td><td>📦</td><td>5</td><td>number (placeholder=auto)</td><td class="ok">ถูกประเภท</td></tr>
+    <tr><td>6</td><td>ผนังหลัง <code>o-backwall</code></td><td>📦</td><td>6</td><td>checkbox</td><td class="ok">ถูกประเภท</td></tr>
+    <tr><td>7</td><td>ครอบวงกบอลู <code>o-fcsides/o-fcm</code></td><td>(ซ่อนอยู่)</td><td>—</td><td>ชิป</td><td class="err">ไม่แสดง — cabinet อยู่ใน AREA_CATS → areaOnly=true → block <code>if(!areaOnly &amp;&amp; !p.zipscreen)</code> ตัดออก</td></tr>
+    <tr><td>8</td><td>งานเสริม/วิศวกรรม <code>o-extrawork</code></td><td>📝</td><td>—</td><td>text</td><td class="ok">โชว์ทุกรายการ — ถูก</td></tr>
+    <tr><td>9</td><td>รื้อของเดิม <code>o-removeold</code></td><td>📝</td><td>—</td><td>checkbox</td><td class="ok">โชว์ทุกรายการ — ถูก</td></tr>
+    <tr><td>10</td><td>สีอลูมิเนียม (i-color dropdown หลัก)</td><td>ซ่อนอยู่</td><td>—</td><td>—</td><td class="warn">cabinet อยู่ใน AREA_CATS → ci force=0 เสมอ → สูตรใน calcUnit L2946 บังคับ ci=0 → colorPlus=0 → ราคาบานหน้าตู้ไม่มีสีพิเศษได้เลย (แม้แสดง UI สี ก็ไม่กระทบราคา)</td></tr>
+  </tbody>
+</table>
+
+<h3>2b. ฝาตู้ Future Tech (future_tech · p.future_tech=1)</h3>
+<table>
+  <thead><tr><th>#</th><th>ออปชั่น / field</th><th>หมวด</th><th>ประเภท</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>สีฝาตู้ <code>o-ftcolor</code></td><td>📦</td><td>dropdown 12 สี</td><td class="ok">ถูกประเภท · index 0=ฟรี · i≥2=บวกเพิ่ม</td></tr>
+    <tr><td>2</td><td>งานเสริม/วิศวกรรม <code>o-extrawork</code></td><td>📝</td><td>text</td><td class="ok">โชว์ทุกรายการ — ถูก</td></tr>
+    <tr><td>3</td><td>รื้อของเดิม <code>o-removeold</code></td><td>—</td><td>checkbox</td><td class="ok">ถูก</td></tr>
+    <tr><td>4</td><td>ครอบวงกบ (ซ่อน)</td><td>ซ่อน</td><td>—</td><td class="ok">ฝาตู้อยู่ใน AREA_CATS → areaOnly=true → ไม่โชว์ครอบวงกบ (ถูก)</td></tr>
+    <tr><td>5</td><td>ดรอปพื้น (ซ่อน)</td><td>ซ่อน</td><td>—</td><td class="ok">ตัดแล้วใน commit 6ef160f (ถูก)</td></tr>
+    <tr><td>6</td><td>ฝังรางยู (ซ่อน)</td><td>ซ่อน</td><td>—</td><td class="ok">ตัดแล้วใน commit 6ef160f (ถูก)</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== ส่วน 3: จุดผิด/ข้อสังเกต ===================== -->
+<h2>3. สรุปจุดผิดและข้อสังเกต</h2>
+
+<div class="box box-err">
+  <strong>🔴 Gap สำคัญ: สีบานหน้าตู้ไม่มีทางเปลี่ยนได้</strong><br>
+  cabinet_alu อยู่ใน <code>AREA_CATS</code> (L849) → <code>areaOnly=true</code> → <code>ci</code> ถูก force = 0 ใน <code>calcUnit</code> (L2946)<br>
+  แต่ในสูตร <code>p.cabinet</code> (L1036) ใช้ <code>const useOther = ci &amp;&amp; ci&gt;0</code><br>
+  ผลลัพธ์: ไม่ว่าเลือกสีอะไรใน i-color dropdown ราคาบานหน้าตู้ก็เป็น "ขาว/ดำ (ฟรี)" ตลอด<br>
+  <strong>ผลกระทบ:</strong> หากลูกค้าต้องการตู้สีพิเศษ เซลล์จะได้ราคาต่ำกว่าความเป็นจริง<br>
+  <strong>แนวทางแก้:</strong> ต้องถามพี่นัทก่อน → ดูข้อ 4 ด้านล่าง
+</div>
+
+<div class="box box-ok">
+  <strong>ออปชั่นที่ถูกต้อง (ไม่ต้องแก้)</strong>
+  <ul>
+    <li>3 ออปชั่นที่ตัด (รางยู / ดรอปพื้น / i-type) — ถูกทั้งหมด</li>
+    <li>ชิป 3 ตัว (ประเภทตู้ / บาน / ชนิดชั้น) — เรียงลำดับถูก trigger cascade</li>
+    <li>หมวด 📦 รายละเอียดตู้ ขึ้นก่อน 🚪 — ถูก</li>
+    <li>auto listener ตู้รองเท้า → สูง 2.0 / ลึก 0.4 — ถูก</li>
+    <li>สีฝาตู้ dropdown (ฝาตู้) ใช้ index ตรง FT_COLOR_PLUS — ถูก</li>
+    <li>ครอบวงกบ ฝาตู้/ตู้อลู — ซ่อนถูก (areaOnly block)</li>
+    <li>detail output ในใบเสนอราคา (L3524-3545) — มีข้อมูลครบ</li>
+  </ul>
+</div>
+
+<div class="box box-warn">
+  <strong>🟡 สีอลู ตู้อลู (ดูออปชั่น #10 ตารางด้านบน) — ซ่อนอยู่ใน i-color แต่ ci force=0</strong><br>
+  ใน DRAFT-G4 เก่า (2026-06-11) มีชิปสีอลู 4 สี แสดงให้เลือก แต่ engine จริงตัดออกเพราะ AREA_CATS<br>
+  ต้องถามพี่นัท: ตู้อลูควรมีตัวเลือกสีบานไหม? และถ้ามี ต้องเอา cabinet_alu ออกจาก AREA_CATS หรือ handle ci พิเศษใน p.cabinet branch
+</div>
+
+<!-- ===================== ส่วน 4: ลิสต์ถามพี่นัท ===================== -->
+<h2>4. รายการ 🟡 ถามพี่นัท (ก่อนสั่ง dev แก้)</h2>
+
+<table>
+  <thead><tr><th>#</th><th>คำถาม</th><th>ผลต่างสองทาง</th><th>Code ที่เกี่ยว</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Q1</strong></td>
+      <td>ตู้อลูควรมีตัวเลือก <strong>สีบานหน้าตู้พิเศษ</strong> (เช่น ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ) ไหม?</td>
+      <td>
+        <strong>ใช่:</strong> ต้องเอา cabinet_alu ออกจาก AREA_CATS หรือ handle ci แยกใน p.cabinet branch<br>
+        <strong>ไม่:</strong> ปล่อยไว้ (บานตู้ = ขาว/ดำ เท่านั้น — colorPlus=0 ตลอด)
+      </td>
+      <td><code>AREA_CATS</code> L849 · <code>calcUnit</code> L2946 · <code>p.cabinet</code> L1036</td>
+    </tr>
+    <tr>
+      <td><strong>Q2</strong></td>
+      <td>default จำนวนบานหน้าตู้ ควรเป็น <strong>1</strong> หรือ <strong>2</strong>?<br>
+        ปัจจุบัน code: chip default = 2 (chip "2 บาน" มี class <code>on</code>)<br>
+        แต่ DRAFT เก่า (2026-06-11) chip default = 1
+      </td>
+      <td>
+        <strong>1 บาน:</strong> ปลอดภัยกว่า (ราคาต่ำกว่า ไม่ overestimate)<br>
+        <strong>2 บาน:</strong> เหมาะถ้าตู้ส่วนใหญ่กว้างพอ (เช่น ≥1.2 ม.)
+      </td>
+      <td><code>buildItemOpts</code> L2638 · chip <code>on</code> ที่ data-val="2"</td>
+    </tr>
+    <tr>
+      <td><strong>Q3</strong></td>
+      <td>ครอบวงกบตู้อลู — มีใช้จริงไหม?<br>
+        ตอนนี้ซ่อนอยู่ (areaOnly block) แต่มีสินค้าแยก <code>fw_cabinet_basic/stock/special/wood</code> (L641-644)<br>
+        รายการครอบวงกบตู้อลูมีในระบบเป็นสินค้าแยกอยู่แล้ว — ต้องการ inline ด้วยไหม หรือพอแยกรายการ?
+      </td>
+      <td>
+        <strong>inline:</strong> ต้องเอา cabinet ออกจาก AREA_CATS เพื่อให้ o-fcsides โชว์<br>
+        <strong>แยกรายการ:</strong> ปล่อยไว้ ใช้ fw_cabinet_* เพิ่มบรรทัดเอง
+      </td>
+      <td><code>fw_cabinet_*</code> L641-644 · <code>AREA_CATS</code> L849</td>
+    </tr>
+    <tr>
+      <td><strong>Q4</strong></td>
+      <td>ฝาตู้ Future Tech — dropdown สีมี 12 สี (i≥2 = ลายไม้/อบพิเศษ/ชุบ ฯลฯ)<br>
+        แต่ DRAFT เก่าแสดงแค่ 4 ชิป (ขาว/ดำ · ซาฮาร่า · ลายไม้สต๊อก · อบพิเศษ)<br>
+        ต้องการ <strong>จำกัดตัวเลือกสีฝาตู้</strong> เหลือ 4 กลุ่มใหญ่ หรือโชว์ทุกสีเหมือนปัจจุบัน?
+      </td>
+      <td>
+        <strong>4 ชิป:</strong> UX เร็ว/ง่าย แต่ต้องอัปเดต engine แยก group<br>
+        <strong>12 dropdown:</strong> เลือกได้ละเอียดกว่า แต่ UI ยาว (ปัจจุบัน)
+      </td>
+      <td><code>buildItemOpts</code> L2684 · <code>p.future_tech</code> L1167-1168</td>
+    </tr>
+    <tr>
+      <td><strong>Q5</strong></td>
+      <td>ตู้รองเท้า — ชนิดชั้น default ควรเป็น <strong>กระจก</strong> (ปัจจุบัน engine L1027: stype=shoe → sg='glass')<br>
+        แต่ชิป default แสดง "ตามประเภท" (value='') ซึ่ง engine แปลเป็น glass อยู่แล้ว<br>
+        UX ไม่ชัด — ควรเปลี่ยนชิปตู้รองเท้าให้ active "กระจก" อัตโนมัติเมื่อเลือก ตู้รองเท้า ไหม?
+      </td>
+      <td>
+        <strong>auto-switch chip:</strong> UX ชัดกว่า เห็น glass ทันที<br>
+        <strong>ปล่อยไว้:</strong> "ตามประเภท" ก็ถูกต้อง แต่เซลล์อาจงง
+      </td>
+      <td><code>p.cabinet</code> L1027 · <code>buildItemOpts</code> L2639</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== ส่วน 5: จัดหมวดออปชั่น ===================== -->
+<h2>5. ลำดับออปชั่นที่แนะนำ (หลัง dev แก้ตาม Q1-Q5)</h2>
+
+<h3>ตู้อลู — ลำดับที่แนะนำ</h3>
+<table>
+  <thead><tr><th>ลำดับ</th><th>field</th><th>ประเภท UI</th><th>เหตุผล</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>ประเภทตู้</td><td>ชิป 44px</td><td>trigger auto สูง/ลึก → ต้องกดก่อน</td></tr>
+    <tr><td>2</td><td>จำนวนบานหน้าตู้</td><td>ชิป 44px</td><td>กระทบราคามาก</td></tr>
+    <tr><td>3</td><td>ลึก(ม.)</td><td>stepper/number + auto badge</td><td>auto หลังเลือกประเภท · แก้ override ได้</td></tr>
+    <tr><td>4</td><td>จำนวนชั้น</td><td>stepper + auto hint</td><td>auto หลังรู้สูง · แก้ override ได้</td></tr>
+    <tr><td>5</td><td>ชนิดชั้น</td><td>ชิป 3 ตัว</td><td>ไม่กระทบ default — ใน📦 หมวดเดียวกัน</td></tr>
+    <tr><td>6</td><td>สีบานตู้ (ถ้า Q1=ใช่)</td><td>ชิป 4 กลุ่ม</td><td>กระทบราคาบาน</td></tr>
+    <tr><td>7</td><td>[พับ] ผนังหลัง / ครอบวงกบ</td><td>details พับ</td><td>ไม่ค่อยใช้ → ซ่อน default</td></tr>
+    <tr><td>8</td><td>งานเสริม / รื้อของเดิม</td><td>text / checkbox</td><td>ทุกรายการ — ท้ายสุด</td></tr>
+  </tbody>
+</table>
+
+<h3>ฝาตู้ — ลำดับที่แนะนำ</h3>
+<table>
+  <thead><tr><th>ลำดับ</th><th>field</th><th>ประเภท UI</th><th>เหตุผล</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>จำนวนบาน (1-3)</td><td>ชิป 3 ตัว</td><td>กระทบ extraFee (+5,500/บานเพิ่ม)</td></tr>
+    <tr><td>2</td><td>สีฝาตู้</td><td>ชิป 4 กลุ่ม (Q4) หรือ dropdown 12 สี</td><td>กระทบราคา colorPlus</td></tr>
+    <tr><td>3</td><td>งานเสริม / รื้อของเดิม</td><td>text / checkbox</td><td>ท้ายสุด</td></tr>
+  </tbody>
+</table>
+
+<!-- ===================== ส่วน 6: Leak check ===================== -->
+<h2>6. Leak check — ออปชั่นของกลุ่มอื่นที่ไม่ควรอยู่ใน G4</h2>
+
+<table>
+  <thead><tr><th>ออปชั่น</th><th>โชว์ใน G4?</th><th>เหตุผล</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>มุ้ง / ผ้ามุ้ง <code>p.screen_addon</code></td><td>ไม่</td><td>cabinet/future_tech ไม่มี property screen_addon</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>มือจับบาน <code>p.digihandle</code></td><td>ไม่</td><td>ไม่มี property</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>คาดตาราง <code>p.grid</code></td><td>ไม่</td><td>ไม่มี property</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>ดรอปพื้น <code>o-dfm</code></td><td>ไม่</td><td>ตัดใน commit 6ef160f</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>ฝังรางยู <code>o-uchannel</code></td><td>ไม่</td><td>ตัดใน commit 6ef160f</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>แผ่นทึบล่าง <code>o-solidlower</code></td><td>ไม่</td><td>cat ตู้อลู/ฝาตู้ ไม่อยู่ใน _isPaneCat list</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>ราวมือจับ <code>p.handrail</code></td><td>ไม่</td><td>ไม่มี property</td><td class="ok">ไม่ leak</td></tr>
+    <tr><td>ครอบวงกบ <code>o-fcsides</code></td><td>ไม่</td><td>areaOnly=true block (cabinet ใน AREA_CATS)</td><td class="ok">ไม่ leak (แต่เป็น Q3 ถามพี่นัท)</td></tr>
+    <tr><td>สีอลูมิเนียม (i-color)</td><td>ซ่อน</td><td>AREA_CATS → ci force=0 · ไม่กระทบ UI แต่กระทบ logic</td><td class="warn">Q1 ถามพี่นัท</td></tr>
+  </tbody>
+</table>
+
+<h2>7. สรุปรวม</h2>
+<div class="box box-blue">
+  <strong>สิ่งที่ dev ทำถูกใน commit 6ef160f:</strong>
+  <ul>
+    <li>3 ออปชั่นที่ตัด (รางยู/ดรอปพื้น/i-type) — ถูกทั้งหมด ไม่มี regression</li>
+    <li>ชิป 3 ชุด (ประเภทตู้/บาน/ชนิดชั้น) — pattern ถูก · listener ตู้รองเท้าทำงาน</li>
+    <li>หมวด 📦 รายละเอียดตู้ อยู่บนสุด match keyword ถูก</li>
+    <li>detail output ใบเสนอราคา — ครบ (ประเภท/บาน/ชั้น/ผนัง)</li>
+    <li>leak ออปชั่นกลุ่มอื่น — ไม่พบ</li>
+  </ul>
+  <br>
+  <strong>สิ่งที่ต้องถามพี่นัทก่อนแก้ต่อ (Q1-Q5):</strong>
+  <ul>
+    <li>Q1 (สำคัญ) — สีบานตู้อลูเปิดให้เลือกไหม? (ci force=0 ตอนนี้)</li>
+    <li>Q2 — default บาน = 1 หรือ 2?</li>
+    <li>Q3 — ครอบวงกบตู้ inline หรือแยกรายการ?</li>
+    <li>Q4 — สีฝาตู้ 4 ชิปกลุ่ม หรือ 12 dropdown เหมือนปัจจุบัน?</li>
+    <li>Q5 — auto-switch ชิปชนิดชั้นเป็น "กระจก" เมื่อเลือกตู้รองเท้าไหม?</li>
+  </ul>
+</div>
+
+<p style="margin-top:14px;font-size:12px;color:#9CA3AF;">ไฟล์นี้ READ-ONLY audit · ไม่แก้ public/calculator/index.html · จัดทำโดย UX agent 2026-06-12</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAFT — Form Container UX (4 issues) · JR 2026-06-12</title>
+<style>
+:root{
+  --red:#E61E28; --red-dark:#B3151D; --bg:#F7F8FA; --card:#fff;
+  --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937; --redbg:#FDECEC;
+  --orange:#F97316; --amber:#F59E0B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:"Sarabun","Prompt","Leelawadee UI","Noto Sans Thai","Segoe UI",Tahoma,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;}
+.wrap{max-width:780px;margin:0 auto;padding:14px 14px 80px;}
+
+/* ===== DEMO BANNER ===== */
+.demo-banner{background:#1F2937;color:#FCD34D;font-size:13px;font-weight:700;
+  text-align:center;padding:8px 14px;letter-spacing:.3px;position:sticky;top:0;z-index:100;}
+.demo-banner span{background:#EF4444;color:#fff;border-radius:4px;padding:1px 8px;margin-right:6px;font-size:12px;}
+
+/* ===== SECTION HEADER ===== */
+.section-lbl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;
+  margin:20px 0 6px;padding-left:4px;}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(max-width:480px){.before-after{grid-template-columns:1fr;}}
+.col-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;}
+.col-before .col-label{color:#DC2626;}
+.col-after .col-label{color:#059669;}
+.demo-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;}
+.badge-demo{display:inline-block;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;
+  border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle;}
+.note-ux{font-size:12px;color:var(--muted);margin:4px 0 10px;padding:6px 10px;
+  background:#F0F9FF;border-left:3px solid #38BDF8;border-radius:0 6px 6px 0;}
+.divider{border:none;border-top:2px dashed var(--line);margin:24px 0;}
+
+/* ===== ISSUE 1: TABS ===== */
+/* BEFORE: .tabs กริด 3 col · height 46px · font 15px */
+.tabs-before{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
+.tab-before{height:46px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;padding:0 4px;width:100%;}
+.tab-before.on{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* AFTER: compact · 36px height · font 13px · pill shape */
+.tabs-after{display:flex;gap:6px;padding:4px;background:#F3F4F6;border-radius:12px;}
+.tab-after{flex:1;height:36px;border:none;border-radius:9px;background:transparent;color:var(--muted);
+  font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;padding:0 2px;
+  transition:background .15s,color .15s;}
+.tab-after.on{background:#fff;color:var(--red-dark);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.tab-after:not(.on):hover{background:rgba(255,255,255,.6);}
+
+/* ===== ISSUE 2: OPTION (before) ===== */
+.opt-before-box{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fff;}
+.opt-row{display:flex;gap:6px;margin-bottom:6px;}
+.opt-row select,.opt-row input{height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;
+  font-size:13px;font-family:inherit;background:#fff;color:var(--ink);}
+.opt-row select{flex:1;}
+.opt-row input.delta{width:90px;flex:none;}
+.opt-label{font-size:12px;color:var(--muted);margin-bottom:4px;}
+
+/* ISSUE 2: OPTION (after) — collapsed in details */
+.opt-after-block{margin-top:8px;}
+details.opt-det{border:1px solid var(--line);border-radius:10px;margin-top:6px;overflow:hidden;}
+details.opt-det summary{padding:9px 12px;font-size:13px;font-weight:600;color:var(--red-dark);
+  background:#FFF9F9;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}
+details.opt-det summary::after{content:"▸";margin-left:auto;font-size:11px;transition:transform .2s;}
+details.opt-det[open] summary::after{transform:rotate(90deg);}
+details.opt-det summary::-webkit-details-marker{display:none;}
+.opt-det-body{padding:10px 12px;background:#fff;}
+.oc-row-new{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;
+  padding:6px 8px;background:#FFF5F5;border:1px solid #FECACA;border-radius:7px;}
+.oc-cat{height:32px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;
+  background:#fff;color:var(--ink);flex:none;width:130px;}
+.oc-text-in{flex:1;min-width:100px;height:32px;border:1px solid var(--line);border-radius:6px;
+  padding:0 8px;font-size:13px;font-family:inherit;background:#fff;}
+.oc-delta-in{width:90px;flex:none;height:32px;border:1px solid var(--line);border-radius:6px;
+  padding:0 8px;font-size:13px;font-family:inherit;background:#fff;}
+.oc-add-btn{height:32px;border:1px dashed var(--red);border-radius:7px;background:#fff;
+  color:var(--red-dark);font-size:13px;cursor:pointer;padding:0 10px;}
+.auto-tag{font-size:11px;color:#059669;background:#DCFCE7;border-radius:4px;
+  padding:1px 7px;font-weight:700;white-space:nowrap;}
+
+/* ===== ISSUE 3: ADD SECTION (before) ===== */
+.addzone-before{margin-bottom:8px;}
+.quickstrip-before{background:#FFF3E0;border:1.5px solid #FFB300;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.strip-head{font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;}
+.chip{min-height:44px;padding:0 14px;border:1.5px solid #FFB300;border-radius:22px;
+  background:#fff;cursor:pointer;font-size:13px;color:#374151;font-family:inherit;}
+.chip:active,.chip.hit{background:#E65100;color:#fff;}
+.addbtn-before{width:100%;height:44px;border:1.5px dashed var(--red);border-radius:10px;background:#fff;
+  color:var(--red-dark);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+
+/* AFTER: รวมกล่องเดียว ย้ายล่าง */
+.addzone-after{margin-top:12px;border:1.5px solid #FFB300;border-radius:12px;overflow:hidden;}
+.addzone-head{background:#FFF3E0;padding:8px 14px;display:flex;align-items:center;gap:8px;}
+.addzone-head-txt{font-size:13px;font-weight:700;color:#92400E;}
+.addzone-body{padding:10px 12px;}
+.addzone-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.addzone-divider{display:flex;align-items:center;gap:8px;color:#9CA3AF;font-size:11px;margin:8px 0;}
+.addzone-divider span{flex:1;height:1px;background:#E5E7EB;}
+.addbtn-after{width:100%;min-height:44px;border:1.5px solid var(--red-dark);border-radius:9px;background:#fff;
+  color:var(--red-dark);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;}
+
+/* ===== FAKE CARD WRAPPER ===== */
+.setbox{border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:12px;
+  margin-bottom:14px;background:#FFF9F9;}
+.set-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.set-badge{background:var(--red);color:#fff;border-radius:6px;padding:3px 10px;
+  font-size:13px;font-weight:700;white-space:nowrap;}
+.set-name{flex:1;height:38px;border:1px solid var(--line);border-radius:8px;
+  padding:0 10px;font-size:14px;font-family:inherit;}
+.set-del{height:34px;border:1px solid #ddd;border-radius:8px;background:#fff;
+  color:var(--red);cursor:pointer;padding:0 12px;font-size:13px;white-space:nowrap;font-family:inherit;}
+.ch{border:1px solid var(--line);border-radius:10px;padding:12px;background:#FAFBFD;}
+.chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.chgrid label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
+.chgrid input,.chgrid select{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);
+  border-radius:8px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
+.ch-price{display:flex;justify-content:space-between;align-items:center;
+  border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
+.ch-price .price{font-weight:800;font-size:17px;color:var(--red-dark);}
+
+/* ===== ISSUE 4: COMMON OPTS TABLE ===== */
+.common-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+.common-table th{background:var(--red-dark);color:#fff;padding:7px 10px;text-align:left;font-weight:600;}
+.common-table td{padding:6px 10px;border-bottom:1px solid var(--line);}
+.common-table tr:nth-child(even) td{background:#FAFBFD;}
+.tag-keep{background:#DCFCE7;color:#166534;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;}
+.tag-rename{background:#FEF3C7;color:#92400E;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;}
+.tag-ask{background:#FEE2E2;color:#991B1B;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;}
+
+/* ===== ISSUE 1 note ===== */
+.resize-demo{padding:8px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;
+  font-size:12px;margin-top:8px;color:#166534;}
+
+/* ===== INTERACTIVE DEMO area ===== */
+#demo-area{background:#fff;border:2px dashed var(--red);border-radius:14px;padding:16px;margin-top:18px;}
+#demo-area h3{font-size:14px;color:var(--red-dark);margin:0 0 12px;font-weight:700;}
+.flow-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;
+  text-transform:uppercase;margin:12px 0 6px;}
+
+/* ===== MOBILE ===== */
+@media(max-width:500px){
+  .chgrid{grid-template-columns:1fr 1fr;}
+  .tabs-before{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="demo-banner">
+  <span>DEMO</span> ราคาในหน้านี้เป็นตัวอย่างเท่านั้น · ไม่ใช่ราคาจริง · DRAFT-formtop-ux-2026-06-12
+</div>
+
+<div class="wrap">
+
+  <p style="font-size:13px;color:var(--muted);margin-bottom:0;">
+    ดราฟ UX 4 เรื่อง: (1) ปุ่มโหมดบรรทัดเดียว (2) OPTION รวมล่าง (3) เพิ่มส่วน/ด่วนรวมล่าง (4) ตาราง COMMON_OPTS
+  </p>
+
+  <!-- ====================== ISSUE 1 ====================== -->
+  <div class="section-lbl">เรื่อง 1 — ปุ่มโหมดบนสุด (ลดขนาด · บรรทัดเดียว)</div>
+  <div class="note-ux">ปัญหา: 4 ปุ่ม grid 1fr×1fr×1fr×1fr · height 46px · font 15px → บน 375px ตัวหนังสือล้น 2 บรรทัด ต้องเลื่อนลงก่อนเริ่มงาน</div>
+
+  <div class="before-after">
+    <div class="col-before">
+      <div class="col-label">BEFORE (ปัจจุบัน)</div>
+      <div class="demo-card">
+        <!-- จำลองขนาด 375px ใน column นี้ -->
+        <div class="tabs-before">
+          <button class="tab-before on">คิดเร็ว</button>
+          <button class="tab-before">ใบเสนอราคา</button>
+          <button class="tab-before">เทียบราคา</button>
+          <button class="tab-before">เช็คลิสต์</button>
+        </div>
+        <p style="font-size:11px;color:#DC2626;margin:6px 0 0;">ตัดเป็น 2 บรรทัดบนมือถือ 375px</p>
+      </div>
+    </div>
+    <div class="col-after">
+      <div class="col-label">AFTER (เสนอ)</div>
+      <div class="demo-card">
+        <div class="tabs-after" id="tabs-demo">
+          <button class="tab-after on" onclick="switchTab(this,'quick')">คิดเร็ว</button>
+          <button class="tab-after" onclick="switchTab(this,'quote')">ใบเสนอ</button>
+          <button class="tab-after" onclick="switchTab(this,'compare')">เทียบราคา</button>
+          <button class="tab-after" onclick="switchTab(this,'check')">เช็คลิสต์</button>
+        </div>
+        <div class="resize-demo">height 36px · font 13px · pill container bg #F3F4F6 · กดเพื่อลอง</div>
+      </div>
+    </div>
+  </div>
+
+  <details style="margin-bottom:20px;"><summary style="font-size:13px;cursor:pointer;color:var(--red-dark);">ดูสเปกเพิ่มเติม: เรื่อง 1</summary>
+  <div style="font-size:13px;padding:10px;background:#FAFAFA;border:1px solid var(--line);border-radius:8px;margin-top:6px;">
+    <b>CSS แก้ .tabs:</b> เปลี่ยน <code>display:grid;grid-template-columns:1fr 1fr 1fr</code>
+    → <code>display:flex;gap:6px;padding:4px;background:#F3F4F6;border-radius:12px;</code><br>
+    <b>CSS แก้ .tab:</b> height: 46px→36px · font-size: 15px→13px · border→none · เพิ่ม border-radius:9px<br>
+    <b>active state:</b> background:#fff + box-shadow แทน background:red (pill highlight)<br>
+    <b>ชื่อ tab "ใบเสนอราคา"</b> → ย่อเป็น "ใบเสนอ" ได้ (ถาม 🟡)<br>
+    <b>Mobile fallback:</b> ถ้า font เล็กไป เพิ่ม <code>font-size:clamp(11px,3.5vw,13px)</code>
+  </div></details>
+
+  <hr class="divider">
+
+  <!-- ====================== ISSUE 2 ====================== -->
+  <div class="section-lbl">เรื่อง 2 — OPTION ซ้ำ 2 ช่อง → ความต่างของ 2 ช่อง + เสนอรวม</div>
+  <div class="note-ux">
+    ตอนนี้ใน <code>.set-opt</code> (บนหัวการ์ดชุด) มี 2 ช่อง:<br>
+    (ก) <code>.set-optpreset</code> = dropdown "OPTION สำเร็จรูป" (SET_OPT_PRESETS · auto-price ×พื้นที่)<br>
+    (ข) <code>.set-opttext</code> + <code>.set-optdelta</code> = พิมพ์ชื่อ + กรอก ±บาท เอง<br>
+    หน้าที่ <b>ต่างกันชัดเจน</b> แต่ <b>อยู่บนหัวการ์ด</b> = เห็นก่อนกรอกข้อมูลบาน → ควรย้ายลงล่าง
+  </div>
+
+  <div class="before-after">
+    <div class="col-before">
+      <div class="col-label">BEFORE (ปัจจุบัน — อยู่บนหัว setbox)</div>
+      <div class="demo-card">
+        <!-- จำลอง set-opt ที่อยู่บนสุดของ setbox -->
+        <div class="opt-before-box">
+          <div class="opt-label">ช่องที่ 1: OPTION สำเร็จรูป (auto-price)</div>
+          <select style="width:100%;height:32px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);margin-bottom:6px;">
+            <option>+ OPTION สำเร็จรูป (คิดราคาให้)…</option>
+            <option>เปลี่ยนเป็นกระจกเทมเปอร์เขียว/ใส 6มม. · 600/ตร.ม.</option>
+            <option>เปลี่ยนเป็นกระจกเทมเปอร์ใสพิเศษ 6มม. · 2,500/ตร.ม.</option>
+            <option>เพิ่มมุ้งจีบนิรภัย · ระบุราคาเอง</option>
+          </select>
+          <div class="opt-label">ช่องที่ 2: OPTION ทางเลือกลูกค้า (กรอกเอง)</div>
+          <div class="opt-row">
+            <input type="text" class="opt-row" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)">
+            <input type="number" style="width:90px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;" placeholder="±บาท">
+          </div>
+        </div>
+        <p style="font-size:11px;color:#DC2626;margin:4px 0 0;">2 ช่อง อยู่บนหัวการ์ด ก่อนกรอกข้อมูลบาน</p>
+      </div>
+    </div>
+    <div class="col-after">
+      <div class="col-label">AFTER (เสนอ — ย้ายล่าง + รวมกล่องเดียว)</div>
+      <div class="demo-card">
+        <p style="font-size:12px;color:var(--muted);margin:0 0 6px;">[ กรอกข้อมูลบานก่อน... ]</p>
+        <details class="opt-det" id="opt-after-demo">
+          <summary>
+            ออปชั่น / OPTION
+            <span class="auto-tag">auto-price</span>
+          </summary>
+          <div class="opt-det-body">
+            <div class="opt-label" style="margin-bottom:6px;">เลือกสำเร็จรูป (คิดราคาให้อัตโนมัติ)</div>
+            <select style="width:100%;height:32px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red-dark);margin-bottom:10px;">
+              <option value="">+ เลือก OPTION สำเร็จรูป…</option>
+              <option>เปลี่ยนกระจกเทมเปอร์เขียว/ใส 6มม. (+600/ตร.ม.) [DEMO]</option>
+              <option>เปลี่ยนกระจกเทมเปอร์ใสพิเศษ 6มม. (+2,500/ตร.ม.) [DEMO]</option>
+              <option>เพิ่มมุ้งจีบนิรภัย (ระบุราคาเอง)</option>
+            </select>
+            <div class="opt-label" style="margin-bottom:6px;">หรือพิมพ์เอง + ±บาท</div>
+            <div id="oc-list">
+              <div class="oc-row-new">
+                <select class="oc-cat" onchange="ocCatChanged(this)">
+                  <option value="">— เลือกหมวด —</option>
+                  <option value="glass">เปลี่ยนกระจก</option>
+                  <option value="mosq">เปลี่ยนผ้ามุ้ง</option>
+                  <option value="color">เปลี่ยนสีอลู</option>
+                  <option value="handle">เปลี่ยนมือจับ</option>
+                  <option value="other">อื่นๆ (พิมพ์เอง)</option>
+                </select>
+                <input type="text" class="oc-text-in" placeholder="ชื่อ option">
+                <input type="number" class="oc-delta-in" placeholder="±บาท">
+                <button onclick="this.closest('.oc-row-new').remove()" style="height:32px;width:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--red);cursor:pointer;flex:none;">×</button>
+              </div>
+            </div>
+            <button class="oc-add-btn" onclick="addOcRow()">+ เพิ่ม option</button>
+          </div>
+        </details>
+        <p style="font-size:11px;color:#059669;margin:4px 0 0;">รวมกล่องเดียว · ย้ายล่างหลังกรอกข้อมูล · พับ default</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ====================== ISSUE 3 ====================== -->
+  <div class="section-lbl">เรื่อง 3 — เพิ่มส่วน + เพิ่มด่วน รวม + ย้ายล่าง</div>
+  <div class="note-ux">
+    ตอนนี้: quickstrip (⚡ เพิ่มด่วน) + ปุ่ม "+ เพิ่มส่วน" อยู่บน — เห็นก่อนเห็นข้อมูล<br>
+    เสนอ: ย้ายรวมล่างหลัง set-parts · flow คือ กรอกบาน → ดูราคา → ค่อยเพิ่มส่วน
+  </div>
+
+  <div class="before-after">
+    <div class="col-before">
+      <div class="col-label">BEFORE (อยู่บน · 2 บล็อกแยกกัน)</div>
+      <div class="demo-card">
+        <!-- set-opt (OPTION) บนสุด -->
+        <div style="background:#fff8f8;border:1px solid #fca5a5;border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px;color:#991B1B;">
+          .set-opt (OPTION ชุด) — บนสุด
+        </div>
+        <!-- quickstrip -->
+        <div class="quickstrip-before">
+          <div class="strip-head">⚡ เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="chip" onclick="this.classList.add('hit');setTimeout(()=>this.classList.remove('hit'),300)">กระจกติดตาย</button>
+            <button class="chip" onclick="this.classList.add('hit');setTimeout(()=>this.classList.remove('hit'),300)">บานเลื่อน SMS</button>
+            <button class="chip" onclick="this.classList.add('hit');setTimeout(()=>this.classList.remove('hit'),300)">บานเปิดยูโร</button>
+          </div>
+        </div>
+        <!-- set-btns-top -->
+        <div style="margin-bottom:8px;">
+          <button class="addbtn-before">＋ เพิ่มส่วน</button>
+        </div>
+        <!-- set-parts placeholder -->
+        <div style="border:1px dashed #ccc;border-radius:8px;padding:14px;text-align:center;font-size:12px;color:#999;">[ รายการบาน 1 ]</div>
+      </div>
+    </div>
+    <div class="col-after">
+      <div class="col-label">AFTER (รวมล่าง · flow ถูกต้อง)</div>
+      <div class="demo-card">
+        <!-- set-parts ก่อน -->
+        <div style="border:1px dashed #ccc;border-radius:8px;padding:14px;text-align:center;font-size:12px;color:#999;margin-bottom:12px;">[ รายการบาน 1 ]</div>
+
+        <!-- ADD ZONE รวมล่าง -->
+        <div class="addzone-after">
+          <div class="addzone-head">
+            <span style="font-size:16px;">⚡</span>
+            <span class="addzone-head-txt">เพิ่มส่วน / เพิ่มด่วน</span>
+            <span style="font-size:11px;color:#92400E;font-weight:400;">กดชิปหรือปุ่มล่าง</span>
+          </div>
+          <div class="addzone-body">
+            <div class="addzone-chips" id="chips-after">
+              <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">กระจกติดตาย</button>
+              <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">บานเลื่อน SMS</button>
+              <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">บานเปิดยูโร</button>
+              <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">บานเฟี้ยม</button>
+            </div>
+            <div class="addzone-divider">
+              <span></span>หรือ<span></span>
+            </div>
+            <button class="addbtn-after" onclick="this.textContent='+ กำลังเพิ่ม...';setTimeout(()=>{this.textContent='＋ เพิ่มส่วน (งานบานทั่วไป)'},600)">
+              ＋ เพิ่มส่วน (งานบานทั่วไป)
+            </button>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#059669;margin:6px 0 0;">รวมกล่องเดียว ท้าย set-parts · ชิปยังกดซ้ำได้</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ย้าย OPTION ล่างด้วย — interactive demo รวม -->
+  <div class="section-lbl" style="margin-top:24px;">Demo รวม — flow ใหม่ทั้งการ์ดชุด (กดเล่นได้)</div>
+  <div id="demo-area">
+    <h3>ตัวอย่าง Setbox ตาม Flow ใหม่ <span class="badge-demo">DEMO · ราคาสมมติ</span></h3>
+    <div class="setbox">
+      <!-- HEAD -->
+      <div class="set-head">
+        <span class="set-badge">ชุด 1</span>
+        <input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง">
+        <button class="set-del">ลบ ✕</button>
+      </div>
+
+      <!-- FLOW STEP 1: กรอกข้อมูลบาน -->
+      <div class="flow-label">ขั้น 1 — กรอกข้อมูลบาน</div>
+      <div class="ch" id="demo-ch">
+        <div class="chgrid">
+          <div>
+            <label>กลุ่มสินค้า</label>
+            <select style="width:100%;height:40px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;">
+              <option>1 — บาน/กระจก</option>
+              <option>2 — รั้ว/ระแนง</option>
+              <option>3 — หลังคา</option>
+            </select>
+          </div>
+          <div>
+            <label>แบบ / รุ่น</label>
+            <select style="width:100%;height:40px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;">
+              <option>บานเลื่อน SMS</option>
+              <option>บานเปิดยูโร</option>
+              <option>กระจกติดตาย</option>
+            </select>
+          </div>
+          <div>
+            <label>กว้าง (ม.)</label>
+            <input type="number" value="1.50" style="width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;" oninput="calcDemoPrice()">
+          </div>
+          <div>
+            <label>สูง (ม.)</label>
+            <input type="number" value="2.10" style="width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;" oninput="calcDemoPrice()">
+          </div>
+        </div>
+        <div class="ch-price">
+          <span>ราคา (DEMO)</span>
+          <span class="price" id="demo-price">฿24,000</span>
+        </div>
+      </div>
+
+      <!-- FLOW STEP 2: เพิ่มส่วน / เพิ่มด่วน (ล่าง) -->
+      <div class="flow-label">ขั้น 2 — เพิ่มส่วนถัดไป (ถ้ามี)</div>
+      <div class="addzone-after" style="margin-bottom:12px;">
+        <div class="addzone-head">
+          <span style="font-size:16px;">⚡</span>
+          <span class="addzone-head-txt">เพิ่มส่วน / เพิ่มด่วน</span>
+        </div>
+        <div class="addzone-body">
+          <div class="addzone-chips">
+            <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">กระจกติดตาย</button>
+            <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">บานเลื่อน SMS</button>
+            <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">บานเปิดยูโร</button>
+            <button class="chip" style="border-color:#FFB300;" onclick="flashChip(this)">ผนังเบาภายใน</button>
+          </div>
+          <div class="addzone-divider"><span></span>หรือ<span></span></div>
+          <button class="addbtn-after">＋ เพิ่มส่วน (งานบานทั่วไป)</button>
+        </div>
+      </div>
+
+      <!-- FLOW STEP 3: OPTION (พับล่างสุด) -->
+      <div class="flow-label">ขั้น 3 — ออปชั่น (ถ้ามี)</div>
+      <details class="opt-det">
+        <summary>ออปชั่น / OPTION ชุดนี้ <span class="auto-tag">auto-price</span></summary>
+        <div class="opt-det-body">
+          <div class="opt-label">OPTION สำเร็จรูป (คิดราคาให้อัตโนมัติ)</div>
+          <select style="width:100%;height:32px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red-dark);margin-bottom:10px;">
+            <option value="">+ เลือก OPTION สำเร็จรูป…</option>
+            <option>เปลี่ยนกระจกเทมเปอร์เขียว/ใส 6มม. (+600/ตร.ม.) [DEMO]</option>
+            <option>เปลี่ยนกระจกเทมเปอร์ใสพิเศษ 6มม. (+2,500/ตร.ม.) [DEMO]</option>
+            <option>เพิ่มมุ้งจีบนิรภัย (ระบุราคาเอง)</option>
+            <option>เปลี่ยนสีอลูมิเนียมเป็นสีพิเศษ (ระบุราคาเอง)</option>
+          </select>
+          <div class="opt-label">หรือพิมพ์เอง</div>
+          <div id="oc-list-demo">
+            <div class="oc-row-new">
+              <select class="oc-cat">
+                <option value="">— เลือกหมวด —</option>
+                <option value="glass">เปลี่ยนกระจก</option>
+                <option value="mosq">เปลี่ยนผ้ามุ้ง</option>
+                <option value="color">เปลี่ยนสีอลู</option>
+                <option value="handle">เปลี่ยนมือจับ</option>
+                <option value="other">อื่นๆ (พิมพ์เอง)</option>
+              </select>
+              <input type="text" class="oc-text-in" placeholder="ชื่อ option">
+              <input type="number" class="oc-delta-in" placeholder="±บาท">
+              <button onclick="this.closest('.oc-row-new').remove()" style="height:32px;width:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--red);cursor:pointer;flex:none;">×</button>
+            </div>
+          </div>
+          <button class="oc-add-btn" onclick="addOcRowDemo()">+ เพิ่ม option</button>
+        </div>
+      </details>
+
+    </div><!-- /setbox -->
+  </div><!-- /demo-area -->
+
+  <hr class="divider">
+
+  <!-- ====================== ISSUE 4 ====================== -->
+  <div class="section-lbl">เรื่อง 4 — ตาราง COMMON_OPTS: ชื่อ + สถานะ</div>
+  <div class="note-ux">
+    COMMON_OPTS ใน index.html บรรทัด 935 — เป็น option ระดับกลางใช้ร่วมทุกบาน<br>
+    ตรวจแล้ว: <b>ไม่มีซ้ำกัน</b> — แต่บางชื่อไม่สื่อความสำหรับเซลล์ · เสนอแก้ชื่อ
+  </div>
+
+  <div class="demo-card">
+    <table class="common-table">
+      <thead>
+        <tr>
+          <th>id (code)</th>
+          <th>ชื่อปัจจุบัน</th>
+          <th>ราคา</th>
+          <th>ใช้กับสินค้า</th>
+          <th>เสนอแก้ชื่อ</th>
+          <th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>soft_close</code></td>
+          <td>soft close</td>
+          <td>4,000/ชุด</td>
+          <td>inner_top_stack, inner_top_xseries</td>
+          <td>Soft Close (สลักหน่วงบาน)</td>
+          <td><span class="tag-rename">แนะนำเพิ่มวงเล็บ</span></td>
+        </tr>
+        <tr>
+          <td><code>sling</code></td>
+          <td>สลิงเปิดซ้อน(×บาน)</td>
+          <td>2,000/บาน</td>
+          <td>inner_top_stack, inner_top_xseries</td>
+          <td>สลิงเปิดซ้อน ×บาน</td>
+          <td><span class="tag-keep">ชื่อดีแล้ว</span></td>
+        </tr>
+        <tr>
+          <td><code>hide_beam</code></td>
+          <td>ซ่อนคาน</td>
+          <td>4,000 + 500/ม.(เกิน 3ม.)</td>
+          <td>inner_top_stack/slimlux/xseries, folding, folding_xseries</td>
+          <td>ซ่อนคาน (4,000 base)</td>
+          <td><span class="tag-rename">เพิ่มราคาในฉลาก</span></td>
+        </tr>
+        <tr>
+          <td><code>hide_track</code></td>
+          <td>ซ่อนราง</td>
+          <td>4,000 + 500/ม.(เกิน 3ม.)</td>
+          <td>folding, folding_xseries</td>
+          <td>ซ่อนราง (4,000 base)</td>
+          <td><span class="tag-rename">เพิ่มราคาในฉลาก</span></td>
+        </tr>
+        <tr>
+          <td><code>u_track</code></td>
+          <td>รางยู</td>
+          <td>4,000 + 500/ม.(เกิน 2ม.)</td>
+          <td>folding, folding_xseries, inner_top_slimlux/xseries</td>
+          <td>ฝังรางยู (U-Track)</td>
+          <td><span class="tag-rename">เพิ่ม "ฝัง" + อักษรอังกฤษ</span></td>
+        </tr>
+        <tr>
+          <td><code>beam_support</code></td>
+          <td>เสริมคานซัพพอร์ท</td>
+          <td>4,000 + 500/ม.(เกิน 3ม.)</td>
+          <td>inner_top_*, folding*, pc_door_2/4</td>
+          <td>เสริมคานซัพพอร์ท (Support Beam)</td>
+          <td><span class="tag-keep">ชื่อดีแล้ว</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px;">
+      สรุป: COMMON_OPTS 6 รายการ — <b>ไม่มีซ้ำกัน</b> ทำงานต่างกันทุกตัว<br>
+      เสนอแก้ชื่อ 4 ตัว (soft_close / hide_beam / hide_track / u_track) ให้ชัดขึ้น<br>
+      <span style="color:#991B1B;font-weight:700;">🟡 ถามพี่นัท: ตัวย่อ "ซ่อนคาน" / "ซ่อนราง" — เซลล์รู้ความหมายดีไหม หรืออยากเพิ่มราคาในวงเล็บ?</span>
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ====================== SUMMARY ====================== -->
+  <div class="section-lbl">สรุปลิสต์ 🟡 ถามพี่นัท</div>
+  <div class="demo-card">
+    <ol style="font-size:14px;line-height:2;">
+      <li>
+        <b>[เรื่อง 1]</b> ชื่อ tab "ใบเสนอราคา" — ย่อเป็น "ใบเสนอ" ได้ไหม (บน 375px) หรือจะคงเต็ม?
+      </li>
+      <li>
+        <b>[เรื่อง 2]</b> OPTION 2 ช่อง (set-optpreset + set-opttext) — <b>ต่างกันชัด</b> แต่ควรรวมเป็น details เดียวไหม
+        หรือ option สำเร็จรูป ยังควรโชว์เด่นแยก?
+      </li>
+      <li>
+        <b>[เรื่อง 2]</b> ช่อง "OPTION ทางเลือกลูกค้า" ตอนนี้อยู่ระดับ <b>ชุด (set)</b>
+        แต่ใน item-level ก็มี .oc-row แยก — ซ้อนกันไหม? ระดับไหนควรเป็น master?
+      </li>
+      <li>
+        <b>[เรื่อง 3]</b> "เพิ่มด่วน" ชิป — ตอนนี้ชิปเป็น global QUICK_ADD_CHIPS (8 รายการ)
+        อยากได้ชิปแบบไหน: คงเดิม 8 ชิป หรือ ตัดเหลือ 5-6 ที่ใช้บ่อยสุด?
+      </li>
+      <li>
+        <b>[เรื่อง 4]</b> COMMON_OPTS ชื่อ — "ซ่อนคาน/ซ่อนราง" ชัดพอไหม หรืออยากใส่ราคา base ในวงเล็บ ช่วยให้เซลล์เดา ballpark ได้เลย?
+      </li>
+    </ol>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// Tab switch demo
+function switchTab(btn, mode){
+  document.querySelectorAll('#tabs-demo .tab-after').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// Flash chip
+function flashChip(btn){
+  btn.style.background='#E65100';
+  btn.style.color='#fff';
+  setTimeout(()=>{
+    btn.style.background='';
+    btn.style.color='';
+  }, 350);
+}
+
+// Demo price calc
+function calcDemoPrice(){
+  var inputs = document.querySelectorAll('#demo-ch input[type="number"]');
+  var w = parseFloat(inputs[0]&&inputs[0].value)||0;
+  var h = parseFloat(inputs[1]&&inputs[1].value)||0;
+  var area = w*h;
+  // DEMO rate สมมติ 8,000/ตร.ม. min 15,000
+  var price = Math.max(15000, area*8000);
+  var el = document.getElementById('demo-price');
+  if(el) el.textContent = '฿'+Math.round(price).toLocaleString('en-US');
+}
+
+// Add OC row (issue 2 demo)
+function addOcRow(){
+  var list = document.getElementById('oc-list');
+  if(!list) return;
+  var row = document.createElement('div');
+  row.className = 'oc-row-new';
+  row.innerHTML = '<select class="oc-cat"><option value="">— เลือกหมวด —</option><option>เปลี่ยนกระจก</option><option>เปลี่ยนมือจับ</option><option>อื่นๆ</option></select>'
+    +'<input type="text" class="oc-text-in" placeholder="ชื่อ option">'
+    +'<input type="number" class="oc-delta-in" placeholder="±บาท">'
+    +'<button onclick="this.closest(\'.oc-row-new\').remove()" style="height:32px;width:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:#B3151D;cursor:pointer;flex:none;">×</button>';
+  list.appendChild(row);
+}
+function addOcRowDemo(){
+  var list = document.getElementById('oc-list-demo');
+  if(!list) return;
+  var row = document.createElement('div');
+  row.className = 'oc-row-new';
+  row.innerHTML = '<select class="oc-cat"><option value="">— เลือกหมวด —</option><option>เปลี่ยนกระจก</option><option>เปลี่ยนมือจับ</option><option>อื่นๆ</option></select>'
+    +'<input type="text" class="oc-text-in" placeholder="ชื่อ option">'
+    +'<input type="number" class="oc-delta-in" placeholder="±บาท">'
+    +'<button onclick="this.closest(\'.oc-row-new\').remove()" style="height:32px;width:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:#B3151D;cursor:pointer;flex:none;">×</button>';
+  list.appendChild(row);
+}
+</script>
+</body>
+</html>

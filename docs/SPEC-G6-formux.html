@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>SPEC G6 กั้นห้องกระจก — form-ux ส่ง dev</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;color:#1a1a1a;max-width:900px;margin:0 auto;padding:28px;line-height:1.55;}
+  h1{color:#B3151D;font-size:24px;margin:0 0 4px;}
+  h2{color:#B3151D;font-size:18px;margin:26px 0 8px;border-bottom:2px solid #B3151D;padding-bottom:4px;}
+  h3{font-size:15px;margin:16px 0 6px;}
+  .sub{color:#666;font-size:13px;margin:0 0 16px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0;}
+  th,td{border:1px solid #d8c9c9;padding:7px 9px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;}
+  code{background:#f3f0f0;padding:1px 5px;border-radius:4px;font-size:12px;font-family:Consolas,monospace;}
+  pre{background:#1e1e1e;color:#e8e8e8;padding:12px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.45;}
+  pre .c{color:#6a9955;}
+  .box{border:1px solid #d8c9c9;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fffafa;}
+  .must{border-left:4px solid #B3151D;}
+  .should{border-left:4px solid #C77B0B;background:#fffaf2;}
+  .opt{border-left:4px solid #888;background:#f8f8f8;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:13px;}
+  .ok{color:#1f7a33;font-weight:700;}
+  .bad{color:#B3151D;font-weight:700;}
+  ul{margin:6px 0;padding-left:20px;}
+  li{margin:3px 0;}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;}
+  .pill.m{background:#B3151D;color:#fff;}
+  .pill.s{background:#C77B0B;color:#fff;}
+  .pill.o{background:#888;color:#fff;}
+  .small{font-size:12px;color:#666;}
+</style>
+</head>
+<body>
+
+<h1>SPEC — กลุ่ม 6 กั้นห้องกระจก · form-ux</h1>
+<p class="sub">ส่ง dev แชทB แก้ <code>public/calculator/index.html</code> · จากการรีวิว flow ทั้งกล่อง · 2026-06-11<br>
+ดราฟกดเล่น: <b>https://jraluminium102.github.io/sharepicjr/draft-G6-formux.html</b></p>
+
+<div class="warn">
+<b>หลักการเดียว (ห้ามพลาด):</b> งานนี้เปลี่ยนแค่ <b>"หน้าตา control" (UI)</b> — ไม่แตะ logic/ราคา/genQuote<br>
+ทุกชิป/stepper ต้อง <b>sync ค่ากลับเข้า control เดิม</b> (<code>.i-prod</code> / <code>.o-opentype</code> / <code>.i-panels</code>) + <code>dispatchEvent(new Event('change',{bubbles:true}))</code><br>
+<b>ห้ามเปลี่ยน</b> <code>value</code> หรือชื่อ <code>class</code> ที่ <code>readItem()</code> (L2778) อ่าน
+</div>
+
+<h2>1. บริบท — กลุ่ม 6 ไม่เหมือนกลุ่มอื่น</h2>
+<ul>
+<li>กลุ่ม 6 "กั้นห้องกระจก" <b>ไม่มีสินค้าของตัวเอง</b> — ใช้การ์ดเดียวกับกลุ่ม 1 แล้วระบบ "ชุด" (setbox) ประกอบหลายด้าน A/B/C + หลังคา</li>
+<li><code>refreshSet()</code> (L1798–1925) เป็น GH-aware: เมื่อชุดมี <code>.ch</code> ที่ <code>.i-group=6</code> → ซ่อนช่องพื้นฐาน + เพิ่มแถวสี/กระจก "ทั้งห้อง" + จัด option เป็น <code>&lt;details&gt;</code> ผ่าน <code>groupGHOpts()</code> (L1750)</li>
+<li>หลัง refreshSet การ์ด "ด้าน" เหลือ <b>5 ช่อง</b>: แบบ(.i-prod) · ด้าน(.i-position) · กว้าง · สูง · จำนวนบาน(.i-panels) + 4 หมวด option พับ</li>
+</ul>
+<p><span class="ok">✓ ของเดิมที่ดีแล้ว — คงไว้ ห้ามแก้:</span> แถวสี/กระจก "ทั้งห้อง" · auto ด้าน A/B/C · ปุ่ม +เพิ่มบาน/+เพิ่มหลังคา · ลดช่อง 25→5 · option พับ 4 หมวด</p>
+
+<h2>2. ตารางตัดสิน control</h2>
+<table>
+<tr><th>ช่อง / class</th><th>เดิม</th><th>ตัวเลือก</th><th>→ เปลี่ยนเป็น</th><th>ระดับ</th><th>เหตุผล</th></tr>
+<tr><td><b>แบบ</b> <code>.i-prod</code></td><td>dropdown</td><td class="bad">154</td><td><b>ชิป 6 ชนิดบ่อย + dropdown "รุ่น/อื่นๆ"</b></td><td><span class="pill m">MUST</span></td><td>flatten: เลือกชนิด 1 แตะ ไม่ต้องเลื่อน 154 × ทุกด้าน</td></tr>
+<tr><td>จำนวนบาน <code>.i-panels</code></td><td>number</td><td>—</td><td>stepper − [n] +</td><td><span class="pill s">SHOULD</span></td><td>ช่วงแคบ แตะง่ายบนมือถือ</td></tr>
+<tr><td>ชนิดการเปิด <code>.o-opentype</code></td><td>dropdown</td><td>5</td><td>ชิป (+ ดันขึ้นการ์ด)</td><td><span class="pill o">เคาะ</span></td><td>≤5 · เลือกบ่อยบานเลื่อน · <b>shared G1</b></td></tr>
+<tr><td>ราง <code>.o-bottomrail</code></td><td>dropdown</td><td>2</td><td>ชิป</td><td><span class="pill o">เคาะ</span></td><td>≤5 · <b>shared G1</b></td></tr>
+<tr><td>สีอลู/กระจก "ทั้งห้อง"</td><td>dropdown</td><td>13 / 66</td><td><b>คง dropdown</b></td><td>—</td><td>&gt;5 ชิปจะล้น</td></tr>
+</table>
+
+<h2>3. <span class="pill m">MUST</span> ชิป "ชนิดบาน" แทนดรอปดาวน์ 154 (ตัวสำคัญสุด)</h2>
+<p>เป็นของ <b>เฉพาะกั้นห้อง</b> → inject ใน <code>refreshSet()</code> สาขา GH (เฉพาะ <code>.ch</code> ที่ <code>isGH</code>) <b>ไม่แตะ template กลุ่ม 1</b></p>
+
+<h3>3.1 ชิป → mapping ชนิด (set <code>.i-prod</code> เป็น prodId ตัวแทน + fire change)</h3>
+<table>
+<tr><th>ชิป (label)</th><th>optgroup/cat ปลายทาง</th><th>prodId ตัวแทน (default)</th></tr>
+<tr><td>บานเลื่อน</td><td>บานเลื่อน</td><td><code>sliding_euro</code></td></tr>
+<tr><td>บานเปิด</td><td>บานเปิด</td><td><code>casement_euro</code></td></tr>
+<tr><td>บานเฟี้ยม</td><td>บานเฟี้ยม</td><td><code>folding_euro</code></td></tr>
+<tr><td>กระจกติดตาย</td><td>ติดตาย</td><td><code>fixed_glass</code></td></tr>
+<tr><td>ระแนงบังตา</td><td>ระแนง-บังตา</td><td><span class="small">prodId default ของหมวด (76 รายการ — ใช้ตัวที่พี่นัทใช้บ่อย เช่นระแนงบังตา 1×5)</span></td></tr>
+<tr><td>บานเปลือย</td><td>บานเปลือย</td><td><code>frameless_fixed</code></td></tr>
+<tr><td>อื่นๆ ▾</td><td colspan="2">ไม่ใช่ชิป — โชว์ dropdown "รุ่น" เต็ม 154 (fallback)</td></tr>
+</table>
+<p class="small">⚠️ prodId ด้านบนเป็นค่าเริ่มต้นแนะนำ — ยืนยันกับพี่นัทว่าแต่ละชนิด "รุ่นที่ใช้บ่อยสุด" คือตัวไหน ก่อน hardcode</p>
+
+<h3>3.2 พฤติกรรม</h3>
+<ul>
+<li>กดชิป → set <code>.i-prod</code> value = prodId ตัวแทน → <code>dispatchEvent('change')</code> (trigger buildItemOpts/calcQuote เดิมครบ ไม่ต้องแก้)</li>
+<li>dropdown เดิม <b>ยังอยู่</b> แต่ relabel เป็น "รุ่น" — user เปลี่ยนรุ่นย่อยในชนิดเดิมได้ (เช่น sliding_euro → sliding_sms)</li>
+<li><b>Nice-to-have:</b> กรอง option ใน dropdown ให้เหลือเฉพาะ optgroup ของชนิดที่เลือก + ปุ่ม "แสดงทั้งหมด" (ลดความยาว) · ถ้าไม่ทำ ให้ dropdown โชว์เต็มได้</li>
+<li>ตอนเปิดการ์ดที่มี <code>.i-prod</code> ค่าอยู่แล้ว → highlight ชิปชนิดที่ตรงกับ cat ของ prod ปัจจุบัน (อ่าน <code>PBYID[val].cat</code> map กลับเป็นชิป)</li>
+</ul>
+
+<h3>3.3 Pattern (อิง references/chip-pattern.md)</h3>
+<pre><span class="c">// ใน refreshSet() สาขา isGH — ต่อจากที่ groupGHOpts(c) ทำงาน</span>
+<span class="c">// inject ครั้งเดียวต่อการ์ด (เช็ค flag กัน duplicate เหมือน gh-opt-cat-det)</span>
+function injectTypeChips(ch){
+  var prodSel = ch.querySelector('.i-prod'); if(!prodSel) return;
+  var wrap = prodSel.closest('.full'); if(!wrap || wrap.querySelector('.gh-type-chips')) return;
+  var MAP = [
+    {t:'บานเลื่อน', id:'sliding_euro'}, {t:'บานเปิด', id:'casement_euro'},
+    {t:'บานเฟี้ยม', id:'folding_euro'}, {t:'กระจกติดตาย', id:'fixed_glass'},
+    {t:'ระแนงบังตา', id:'<span class="c">/*default ระแนงบังตา*/</span>'}, {t:'บานเปลือย', id:'frameless_fixed'}
+  ];
+  var bar = document.createElement('div'); bar.className='gh-type-chips';
+  bar.innerHTML = MAP.map(function(m){
+    return '&lt;button type="button" class="gh-tchip" data-id="'+m.id+'"&gt;'+m.t+'&lt;/button&gt;';
+  }).join('') + '&lt;button type="button" class="gh-tchip more" data-id=""&gt;อื่นๆ ▾&lt;/button&gt;';
+  wrap.insertBefore(bar, prodSel);           <span class="c">// ชิปอยู่เหนือ dropdown "รุ่น"</span>
+  bar.querySelectorAll('.gh-tchip').forEach(function(b){
+    b.addEventListener('click', function(){
+      bar.querySelectorAll('.gh-tchip').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      if(b.dataset.id){ prodSel.value=b.dataset.id; prodSel.dispatchEvent(new Event('change',{bubbles:true})); }
+      <span class="c">// (option) filter dropdown ตาม optgroup ของชนิดที่เลือก</span>
+    });
+  });
+  <span class="c">// relabel dropdown เดิม</span>
+  var lbl = wrap.querySelector('label'); if(lbl) lbl.textContent='รุ่น (ปรับได้)';
+}</pre>
+<p class="small">CSS ชิป: <code>min-height:44px; border:1.5px solid; border-radius:11px;</code> · on = พื้นแดง #B3151D ขาว (ตาม chip-pattern.md)</p>
+
+<h2>4. <span class="pill s">SHOULD</span> stepper "จำนวนบาน" <code>.i-panels</code></h2>
+<ul>
+<li>ทำใน <b>addItem template</b> (L2219) — มีผลทั้ง G1+G6 (stepper ดีกับทุกกลุ่ม ความเสี่ยงต่ำ)</li>
+<li>ครอบ <code>&lt;input class="i-panels"&gt;</code> ด้วยปุ่ม − / + : กดแล้ว <code>value = max(1, value±1)</code> → fire <code>input</code> (มี listener sync mirror อยู่แล้ว L2269)</li>
+<li><b>ห้ามลบ</b> <code>&lt;input class="i-panels"&gt;</code> — ยังพิมพ์เลขเองได้ (ปุ่มแค่เสริม) · listener เดิมที่ผูก <code>i-panels</code> ต้องทำงานเหมือนเดิม</li>
+</ul>
+
+<h2>5. <span class="pill o">เคาะก่อน</span> ชิป o-opentype / o-bottomrail (กระทบกลุ่ม 1)</h2>
+<div class="warn">
+<code>.o-opentype</code> (5) และ <code>.o-bottomrail</code> (2) สร้างใน <code>buildItemOpts()</code> (L2346) — <b>ใช้ร่วมกับกลุ่ม 1</b><br>
+ถ้าทำชิปใน buildItemOpts → กลุ่ม 1 ได้ชิปด้วย (สม่ำเสมอดี แต่ G1 form-ux ผ่านแล้ว ต้องเทสซ้ำ)<br>
+<b>ต้องให้พี่นัทเคาะ:</b> (ก) ทำชิปทั้ง G1+G6 · (ข) เฉพาะ G6 (ห่อใน refreshSet GH) · (ค) ข้ามไปก่อน
+</div>
+<p>ถ้าทำ: + ดัน <code>.o-opentype</code> ออกจากกล่องพับ "🚪 ชนิด/การเปิด" ขึ้นมาในการ์ด GH (เลือกบ่อย) — ปรับใน <code>groupGHOpts()</code> ให้ field นี้อยู่นอก details เมื่อ isGH</p>
+
+<h2>6. QA — ตัวแทน (ครอบทุกลายฟอร์ม)</h2>
+<p>กดผ่านดราฟ + ทดสอบในระบบจริงทุกเคส:</p>
+<table>
+<tr><th>#</th><th>เคส (ชนิดด้าน)</th><th>เช็คอะไร</th></tr>
+<tr><td>1</td><td>ด้าน A = บานเลื่อน (sliding_euro)</td><td>ชิปบานเลื่อนติด on · o-opentype/ราง โผล่ · ราคาตรง</td></tr>
+<tr><td>2</td><td>ด้าน B = กระจกติดตาย (fixed_glass)</td><td>ซ่อน "รุ่น" (มีตัวเดียว) · ไม่มี opentype · ราคาตรง</td></tr>
+<tr><td>3</td><td>ด้าน C = ระแนงบังตา</td><td>ชิปไปหมวดระแนง-บังตา · option ระแนงครบ</td></tr>
+<tr><td>4</td><td>ด้าน D = บานเปลือย (frameless)</td><td>ไม่มีมุ้ง/มือจับแบบบาน · ราคาตรง</td></tr>
+<tr><td>5</td><td>+ เพิ่มหลังคา (group=3)</td><td>การ์ดหลังคา <b>ไม่มีชิปชนิดบาน</b> (เฉพาะ group 6) · option หลังคาครบ</td></tr>
+<tr><td>6</td><td>เปลี่ยนชิป → เปลี่ยน "รุ่น" ใน dropdown</td><td>i-prod value = รุ่นย่อยที่เลือก · ราคาตามรุ่น</td></tr>
+<tr><td>7</td><td>กลุ่ม 1 (บานเดี่ยว ไม่ใช่ชุด)</td><td><b>regression:</b> ไม่มีชิปชนิดบาน · stepper จำนวนบานทำงาน · ราคาเดิม</td></tr>
+<tr><td>8</td><td>เปิดใบเสนอราคา (genQuote) ชุดกั้นห้อง 3 ด้าน + หลังคา</td><td>หัวข้อ="กั้นห้องกระจก" · group ตามด้าน · ยอดรวมตรง</td></tr>
+</table>
+
+<h2>7. Definition of Done</h2>
+<ul>
+<li><span class="ok">☐</span> ชิปชนิดบานโผล่เฉพาะการ์ด group=6 · กดแล้ว set <code>.i-prod</code> + fire change ถูกต้อง</li>
+<li><span class="ok">☐</span> dropdown "รุ่น" ยังเปลี่ยนรุ่นย่อยได้ · "อื่นๆ" เข้าถึง 154 แบบครบ</li>
+<li><span class="ok">☐</span> stepper จำนวนบาน +/- ทำงาน · พิมพ์เองได้ · listener เดิมไม่พัง</li>
+<li><span class="ok">☐</span> <code>node test/quote-fidelity.mjs</code> <b>PASS</b> (ราคา/ใบไม่เพี้ยน)</li>
+<li><span class="ok">☐</span> <code>readItem()</code> อ่าน value เดิมครบ — ราคาทุกเคส QA ตรง baseline</li>
+<li><span class="ok">☐</span> regression กลุ่ม 1 (บานเดี่ยว) ไม่มีชิปชนิดบานหลุดเข้ามา</li>
+<li><span class="ok">☐</span> พี่นัทกดเล่นผ่าน (มือถือจริง)</li>
+</ul>
+
+<h2>8. กับดัก (เตือน dev)</h2>
+<ul>
+<li><b>scope ต่อการ์ด</b> — query control ใน <code>.ch</code> เดียวกันเสมอ (ชุดมีหลายด้าน) ห้าม querySelector ทั้งหน้า</li>
+<li><b>inject ครั้งเดียว</b> — refreshSet ถูกเรียกซ้ำหลายรอบ ต้องเช็ค flag กัน duplicate (เหมือน <code>.gh-opt-cat-det</code>, <code>.gh-set-color-row</code>)</li>
+<li><b>คืนสภาพเมื่อเปลี่ยนกลับจาก group 6</b> — ถ้า user เปลี่ยน group 6→1 ในการ์ด ต้องลบชิปชนิดบาน + relabel dropdown กลับ "แบบ" (ดู branch <code>else</code> ใน refreshSet L1910)</li>
+<li><b>map prod→ชิป</b> — ตอน highlight ชิปจากค่าเดิม ใช้ <code>PBYID[val].cat</code> · ระแนงมีหลาย cat (ระแนง-บังตา/ผนัง/เกล็ด) map ให้ครบ</li>
+<li><b>ห้าม</b> แตะ <code>prodOptionsG6()</code> (L864) — list 154 ยังต้องครบใน dropdown "อื่นๆ"</li>
+</ul>
+
+</body>
+</html>

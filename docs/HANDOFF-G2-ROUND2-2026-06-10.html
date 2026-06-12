@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF G2 รอบ 2 — จุดที่เจอเพิ่มหลังแก้ (ส่งแก้ HTML)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.45;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:13px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2.ok{background:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .kpi{display:flex;gap:6px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:8px 11px;margin:7px 0;}
+  .b1{border-left:4px solid #B3151D;}.b2{border-left:4px solid #B7791F;}
+  .box h3{margin:0 0 4px;font-size:12.5px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:2px;}
+  .proof{background:#F8FAFC;border:1px dashed #94A3B8;border-radius:5px;padding:5px 8px;font-size:9.5px;margin:3px 0;font-family:Consolas,monospace;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G2 รอบ 2 — จุดที่เจอเพิ่ม "หลังแก้รอบ 1"</h1>
+<div class="sub">เทส render ระบบที่แก้แล้ว (G2-1..15) เจอบั๊กใหม่ 2 จุด + จุดให้ตัดสิน 2 · ส่งแชทที่แก้ <code>public/calculator/index.html</code> · 10 มิ.ย. 2026 · READ-ONLY</div>
+
+<div class="kpi">
+  <div><span class="n green">15/15</span>รอบ1 แก้ครบ ✓</div>
+  <div><span class="n red">2</span>🔴 บั๊กใหม่</div>
+  <div><span class="n yellow">2</span>🟡 ให้ตัดสิน</div>
+  <div><span class="n green">14/14</span>baseline</div>
+</div>
+
+<div class="good">
+<b>✅ รอบ 1 (G2-1 ถึง G2-15) เทสผ่านหมด</b> — ลักษณะเปิด/รายละเอียดลงใบ/สแตนเลส/ทิศเกล็ด/jargon/กระจก12มม. ทำงานครบ ·
+<b>ราคาทุกตัวถูก</b> (สูตร verify + baseline 14/14) · <b>ห้ามแตะเรท/สูตร</b> · 2 จุดด้านล่างคือที่เจอเพิ่มตอนตรวจละเอียด</div>
+
+<h2>🔴 บั๊กใหม่ — ต้องแก้</h2>
+
+<div class="box b1"><h3><span class="tag t1">R2-1</span> ค่าลายไม้ (gatewood) นับซ้ำ — บวกเข้ายอด + โชว์เป็น OPTION พร้อมกัน</h3>
+<b>อาการ:</b> ช่อง "ลายไม้ (ราคาเพิ่มเอง)" <code>o-gatewood</code> ถูกบวกเข้ายอดรวมจริง <u>และ</u> พิมพ์บรรทัด "OPTION : …ราคาเพิ่ม X บาท" (= ทางเลือกที่ยังไม่บวก) พร้อมกัน → ขัดแย้ง/นับซ้ำ
+<div class="proof">พิสูจน์ (render): slide_top สีขาว gatewood=0 → <b>51,000</b> · เปลี่ยน gatewood=5,000 → <b>56,000</b> (บวกจริง +5,000) แต่ใบยังเขียน "OPTION : …ราคาเพิ่ม 5,000 บาท"</div>
+<b>จุด:</b> calc <code>L1163</code> (<code>const woodC=parseFloat(optSel.gatewood)||0</code> → บวกใน sell) · genQuote <code>L3347</code> (<code>_gwd</code> → พิมพ์ "OPTION")
+<b>เสนอแก้ (เลือก 1):</b>
+<ul>
+<li><b>แนะนำ — ให้เป็น "ทางเลือก" ตามคำว่า OPTION:</b> เอา <code>woodC</code> ออกจากผลรวม sell (L1163) → ยอดไม่บวก · คงบรรทัด OPTION ไว้ (ตรงธรรมเนียมใบจริง "หากลูกค้าต้องการเปลี่ยน…")</li>
+<li><b>หรือ — ถ้าลูกค้าเลือกลายไม้จริง:</b> คงบวกใน sell · เปลี่ยนข้อความ L3347 จาก "OPTION : …ราคาเพิ่ม" → บรรทัดปกติ "เปลี่ยนเป็นลายไม้ Golden Teak SMS (รวมในราคาแล้ว)"</li>
+</ul></div>
+
+<div class="box b1"><h3><span class="tag t1">R2-2</span> ระแนง "ไม่โครง" ห้ามขายเดี่ยว — standalone ต้องเลือก "รวมโครง" เท่านั้น</h3>
+<b>กฎ (พี่นัทยืนยัน):</b> ระแนงบังตา/ผนัง/เกล็ด แบบ <b>ไม่โครง</b> ขายเดี่ยวไม่ได้ ต้องติดร่วมกับบาน · ถ้าขายระแนงเดี่ยว → เลือกได้เฉพาะรุ่น <b>รวมโครง</b>
+<b>อาการ:</b> ตอนนี้ dropdown สินค้า standalone กลุ่ม 2 โชว์รุ่นไม่โครง (rn1,3,5,…,rn13,rn85 ฯลฯ) ให้เลือกเดี่ยวได้ → ผิดกฎ
+<b>จุด:</b> <code>prodOptionsG('2')</code> <code>L844-850</code> (รายชื่อสินค้า standalone กลุ่ม 2)
+<b>เสนอแก้:</b>
+<ul>
+<li>ใน <code>prodOptionsG</code> เฉพาะ cat <code>ระแนง-บังตา/ผนัง/เกล็ด</code> → กรองเหลือเฉพาะรุ่นที่ชื่อมี "รวมโครง" (ตัด <code>/ไม่โครง/</code> ออกจาก dropdown เดี่ยว)</li>
+<li>รุ่นไม่โครง คงไว้ใช้เป็น sub-item/ติดบาน + ใน <code>o-gatern</code> ของประตูรั้ว (ตรงนั้นไม่โครงถูกต้องแล้ว — อย่าไปตัด)</li>
+<li>เสริม: ถ้าเลือกไม่โครงเดี่ยว แจ้งเตือน "ระแนงไม่โครงต้องติดร่วมกับบาน"</li>
+</ul></div>
+
+<h2>🟡 ให้พี่นัทตัดสิน (ไม่ใช่บั๊กโปรแกรม)</h2>
+
+<div class="box b2"><h3><span class="tag t2">R2-3</span> default สีเทาซาฮาร่า ทำให้ราคาฐานระแนง +300–500/ตร.ม.</h3>
+หลัง G2-13 (default = ซาฮาร่า) ราคาฐานบวกค่าสีซาฮาร่าทุกครั้ง · เช่น rn13 เดิม(ขาว) 23,000 → ตอนนี้(ซาฮาร่า) 24,000
+<ul><li>ถ้า "เทาซาฮาร่า = สีมาตรฐานฟรี" → ตั้ง upcharge ซาฮาร่า = 0 (หรือใช้ขาวเป็นฐานแต่โชว์ชื่อซาฮาร่า)</li>
+<li>ถ้า "ซาฮาร่า = สีพรีเมียม" → ถูกแล้ว ไม่ต้องแก้</li></ul></div>
+
+<div class="box b2"><h3><span class="tag t2">R2-4</span> คำซ้ำ "สีอบสีพิเศษ"</h3>
+สีพิเศษโชว์ในใบเป็น "- <b>สีอบสีพิเศษ</b>" (มี "สี" ซ้ำ จาก prefix "สี" + value "อบสีพิเศษ") → ควรเป็น "อบสีพิเศษ" หรือ "สีอบพิเศษ" · จุด: ตอน render สีระแนงลงใบ (genQuote)</div>
+
+<h2 class="ok">✅ ตรวจซ้ำแล้ว "ถูก" — ไม่ต้องแก้</h2>
+<table>
+<tr><th style="width:26%;">ที่สงสัย</th><th>ผลตรวจ</th></tr>
+<tr><td><b>ข้อ 2 อบสีพิเศษ +8,000 น้อยไป?</b></td><td>calc ถูก — rn13 อบสีพิเศษ = <b>1,400/ตร.ม.</b> × 5.4 ตร.ม. = 7,560 (ปัดเป็น 8,000) · ตรงตาราง 38.4 · ถ้ารู้สึกน้อย = แก้ <b>เรตในตาราง</b> ไม่ใช่โปรแกรม (เช็คซ้ำ)</td></tr>
+<tr><td>ขนาดประตูรั้วเทส</td><td>3.0 × 1.8 = 5.4 ตร.ม. (เท่าข้อ 1)</td></tr>
+<tr><td>ราคา/เรตทุก engine</td><td>verify 5/5 + baseline 14/14 + เรต 92/92 ตรงต้นฉบับ — ถูกหมด</td></tr>
+</table>
+
+<h2>ลำดับแก้รอบ 2</h2>
+<div class="box" style="border-left:4px solid #2563EB;">
+1. <b>R2-1</b> gatewood นับซ้ำ (เลือกแนวทาง) → 2. <b>R2-2</b> ไม่โครงห้ามขายเดี่ยว (filter dropdown) → 3. <b>R2-4</b> คำซ้ำ → 4. <b>R2-3</b> รอพี่นัทเคาะ ซาฮาร่า ฟรี/พรีเมียม<br>
+<b>หลังแก้:</b> รัน <code>node test/quote-fidelity.mjs</code> ต้อง PASS 14/14
+</div>
+
+<div class="foot">
+ต่อจาก HANDOFF-G2-FINAL (รอบ 1 แก้ครบแล้ว) · เจอเพิ่มจากการ render ทดสอบหลังแก้ + พี่นัทรีวิว · ราคา/เลขยกจาก render จริง+ตาราง 38.4 ไม่เดา · READ-ONLY ไม่แตะ index.html · 10 มิ.ย. 2026
+</div>
+
+</body>
+</html>

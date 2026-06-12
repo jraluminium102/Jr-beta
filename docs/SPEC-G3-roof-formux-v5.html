@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC G3 หลังคา — form-ux v5 (dev handoff)</title>
+<style>
+:root{--red:#B3151D;--red-light:#FFF0F0;--blue:#1565C0;--blue-light:#EAF3FF;
+  --green:#2E7D32;--green-light:#E8F5E9;--amber:#92400E;--amber-light:#FFF7ED;
+  --border:#E5E7EB;--gray:#6B7280;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;background:#F9FAFB;color:#111;padding:0 0 60px;}
+.header{background:var(--red);color:#fff;padding:16px 20px 14px;}
+.header h1{font-size:18px;font-weight:700;margin-bottom:4px;}
+.header .sub{font-size:12px;opacity:.8;}
+.page{max-width:900px;margin:0 auto;padding:16px;}
+h2{font-size:15px;font-weight:700;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:6px;margin:24px 0 12px;}
+h3{font-size:13px;font-weight:700;color:var(--blue);margin:16px 0 8px;}
+/* status badges */
+.ok{display:inline-block;background:#D1FAE5;color:var(--green);border:1px solid #6EE7B7;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:700;}
+.fix{display:inline-block;background:#FEE2E2;color:var(--red);border:1px solid #FCA5A5;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:700;}
+.warn{display:inline-block;background:#FEF3C7;color:var(--amber);border:1px solid #FCD34D;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:700;}
+/* tables */
+table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px;}
+th{background:#F3F4F6;padding:8px 10px;text-align:left;border:1px solid var(--border);font-weight:700;font-size:12px;}
+td{padding:7px 10px;border:1px solid var(--border);vertical-align:top;line-height:1.5;}
+tr:nth-child(even) td{background:#FAFAFA;}
+/* code */
+pre,code{font-family:'Cascadia Code','Consolas',monospace;font-size:12px;background:#1E293B;color:#E2E8F0;border-radius:6px;}
+code{padding:1px 5px;background:#F1F5F9;color:#0F172A;border-radius:3px;}
+pre{padding:10px 14px;overflow-x:auto;margin:6px 0 10px;}
+pre code{background:none;color:inherit;padding:0;}
+/* callout */
+.callout{border-left:4px solid var(--red);background:var(--red-light);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+.callout.blue{border-color:var(--blue);background:var(--blue-light);}
+.callout.green{border-color:var(--green);background:var(--green-light);}
+.callout.amber{border-color:#F59E0B;background:var(--amber-light);}
+/* dod */
+.dod-list{list-style:none;padding:0;}
+.dod-list li{padding:5px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;}
+.dod-list li:last-child{border-bottom:none;}
+.dod-list li::before{content:'□';font-size:16px;color:var(--gray);flex-shrink:0;}
+/* section card */
+.scard{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;}
+.scard-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SPEC — G3 หลังคา form-ux v5</h1>
+  <div class="sub">dev handoff · 2026-06-12 · ยึดดราฟ DRAFT-G3-ux-v5-2026-06-12.html · อ้างบรรทัด public/calculator/index.html commit 86bff14</div>
+</div>
+
+<div class="page">
+
+<!-- ============================================================ -->
+<h2>1. สรุปงาน — ต้องแก้กี่จุด</h2>
+
+<table>
+  <tr><th style="width:60px;">สถานะ</th><th style="width:40px;">#</th><th>รายการ</th><th style="width:160px;">ตำแหน่ง index.html</th></tr>
+  <tr>
+    <td><span class="fix">🔧 แก้</span></td>
+    <td>1</td>
+    <td><b>รุ่นหลังคา dropdown → ชิป 2 ชั้น</b><br>ซ่อน <code>.i-prod</code> เดิม · ทำชิปกลุ่มวัสดุ + ชิปรุ่นในกลุ่ม (wrap) · กดชิปรุ่น = set .i-prod.value + dispatchEvent('change')</td>
+    <td>~บรรทัด 2659–2688 (ก้อน <code>if(p.cat==='หลังคา')</code>)<br>+ form header ส่วน <code>.i-prod</code></td>
+  </tr>
+  <tr>
+    <td><span class="fix">🔧 แก้</span></td>
+    <td>2</td>
+    <td><b>ปิดซ่อนราง → checkbox reveal</b><br>บรรทัด ~2714: label ลอย 3 ช่อง (o-rfgcw/gch/gcl) → ห่อด้วย checkbox "มีงานปิดซ่อนราง" ติ๊กก่อนค่อย reveal</td>
+    <td>~บรรทัด 2714</td>
+  </tr>
+  <tr>
+    <td><span class="fix">🔧 แก้</span></td>
+    <td>3</td>
+    <td><b>ครอบคาน → checkbox reveal</b><br>บรรทัด ~2715–2716: label ลอย 2 ช่อง (o-rfbcw/bcl) → ห่อด้วย checkbox "มีงานครอบคาน" ติ๊กก่อนค่อย reveal</td>
+    <td>~บรรทัด 2715–2716</td>
+  </tr>
+  <tr>
+    <td><span class="ok">✅ โอเค</span></td>
+    <td>—</td>
+    <td><b>ปลายหลังคา 3 ชิป</b> (ปล่อย / รางน้ำ / ปิดปลายกันน้ำกระเด็น) · mutual-exclusive reveal<br>ตรวจแล้ว: <code>o-roofend</code> เป็นชิปแล้ว (บรรทัด ~2688)</td>
+    <td>~2688</td>
+  </tr>
+  <tr>
+    <td><span class="ok">✅ โอเค</span></td>
+    <td>—</td>
+    <td><b>โซ่รางน้ำ</b> รวมใน ระบบระบาย = โซ่ (<code>o-guttersys</code>) · ไม่มี stepper แยก<br>ตรวจแล้ว: บรรทัด ~2693</td>
+    <td>~2693</td>
+  </tr>
+  <tr>
+    <td><span class="ok">✅ โอเค</span></td>
+    <td>—</td>
+    <td><b>เวเทอร์บล็อค 9 มม.</b> อยู่ในชิปรุ่น/วัสดุของ wall_ext/wall_int (<code>o-wallmodel</code>) แล้ว</td>
+    <td>~2629</td>
+  </tr>
+  <tr>
+    <td><span class="ok">✅ โอเค</span></td>
+    <td>—</td>
+    <td><b>ทาสีฝ้า-ผนัง</b> ไม่มีช่องกรอกราคา · ใช้ <code>o-wallpaintprice</code> ที่ dev กรอกเอง (บรรทัด ~2630)</td>
+    <td>~2630</td>
+  </tr>
+</table>
+
+<div class="callout"><b>สรุป: ต้องแก้ 3 จุด</b> — จุดที่ 1 ซับซ้อนสุด (chip-sync .i-prod) · จุด 2 และ 3 เป็น checkbox-reveal pattern ตรงๆ</div>
+
+<!-- ============================================================ -->
+<h2>2. จุดที่ 1 — ชิปรุ่นหลังคา (สำคัญ · FLAG ระวัง)</h2>
+
+<div class="callout"><b>⚠ FLAG DEV ระวัง:</b> <code>.i-prod</code> เป็น control หลักที่ <code>buildItemOpts()</code> อ่านเพื่อ rebuild ออปชั่น · การ set value ต้อง fire <code>dispatchEvent('change')</code> เสมอ ไม่อย่างนั้น engine ไม่ rebuild · pattern เดียวกับ G4 switch สินค้า</div>
+
+<h3>ข้อมูลสินค้าหลังคา (sync กับ PRODUCTS array)</h3>
+<table>
+  <tr><th>กลุ่มชิป (ชั้น 1)</th><th>id สินค้า</th><th>ชื่อสั้น (บนชิปรุ่น)</th></tr>
+  <tr><td rowspan="8"><b>เมทัลชีท</b></td><td>imp7</td><td>1 นิ้ว ท้อง PVC EPS</td></tr>
+  <tr><td>imp8</td><td>2 นิ้ว ท้อง PVC EPS</td></tr>
+  <tr><td>imp9</td><td>1 นิ้ว ท้องเหล็ก EPS</td></tr>
+  <tr><td>imp10</td><td>2 นิ้ว ท้องเหล็ก EPS</td></tr>
+  <tr><td>imp11</td><td>1 นิ้ว ท้องฟอยล์ PU</td></tr>
+  <tr><td>imp12</td><td>2 นิ้ว ท้องฟอยล์ PU</td></tr>
+  <tr><td>imp13</td><td>1 นิ้ว ท้องเหล็ก PU</td></tr>
+  <tr><td>imp14</td><td>2 นิ้ว ท้องเหล็ก PU</td></tr>
+  <tr><td rowspan="6"><b>ชินโคไลท์</b></td><td>imp15</td><td>6 มม. Heat Cut</td></tr>
+  <tr><td>imp16</td><td>6 มม. Superior</td></tr>
+  <tr><td>imp17</td><td>6 มม. Nature</td></tr>
+  <tr><td>imp18</td><td>4 มม. Shade</td></tr>
+  <tr><td>imp19</td><td>10 มม. Prime</td></tr>
+  <tr><td>imp20</td><td>10 มม. Grand</td></tr>
+  <tr><td rowspan="2"><b>โพลีตัน / กระจก</b></td><td>roof_polyton</td><td>โพลีตัน 3 มม.</td></tr>
+  <tr><td>roof_laminate</td><td>กระจกลามิเนต</td></tr>
+  <tr><td rowspan="2"><b>ไวนิล / ดีไลท์</b></td><td>roof_vinyl</td><td>ไวนิล VG Snow Roof Pro</td></tr>
+  <tr><td>roof_delight</td><td>ดีไลท์</td></tr>
+</table>
+
+<h3>Pattern HTML — ชิปกลุ่ม (ชั้น 1)</h3>
+<p>เพิ่มก่อนหรือแทนที่ส่วน <code>.i-prod</code> dropdown เดิม ใน template ของ cat=หลังคา:</p>
+<pre><code>&lt;!-- ชั้น 1: กลุ่มวัสดุ --&gt;
+&lt;label class="opt" style="width:100%;"&gt;กลุ่มวัสดุ
+  &lt;div class="chip-group chip-sm" id="rf-grp-chips"&gt;
+    &lt;button type="button" class="chip on" data-grp="metal"
+      onclick="rfPickGrp(this)"&gt;เมทัลชีท&lt;/button&gt;
+    &lt;button type="button" class="chip" data-grp="chinco"
+      onclick="rfPickGrp(this)"&gt;ชินโคไลท์&lt;/button&gt;
+    &lt;button type="button" class="chip" data-grp="poly"
+      onclick="rfPickGrp(this)"&gt;โพลีตัน / กระจก&lt;/button&gt;
+    &lt;button type="button" class="chip" data-grp="vinyl"
+      onclick="rfPickGrp(this)"&gt;ไวนิล / ดีไลท์&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/label&gt;
+
+&lt;!-- ชั้น 2: ชิปรุ่น (inject) --&gt;
+&lt;label class="opt" style="width:100%;"&gt;รุ่น
+  &lt;div class="chip-group chip-sm" id="rf-prod-chips"&gt;&lt;/div&gt;
+  &lt;!-- .i-prod ยังคงอยู่ เป็น hidden source of truth --&gt;
+&lt;/label&gt;</code></pre>
+
+<h3>Pattern JS — ฟังก์ชัน 3 ตัว</h3>
+<pre><code>/* ตาราง: กลุ่ม → array of {id, name} */
+var RF_PRODS = {
+  metal:  [{id:'imp7',n:'1" PVC EPS'},{id:'imp8',n:'2" PVC EPS'},
+            {id:'imp9',n:'1" เหล็ก EPS'},{id:'imp10',n:'2" เหล็ก EPS'},
+            {id:'imp11',n:'1" ฟอยล์ PU'},{id:'imp12',n:'2" ฟอยล์ PU'},
+            {id:'imp13',n:'1" เหล็ก PU'},{id:'imp14',n:'2" เหล็ก PU'}],
+  chinco: [{id:'imp15',n:'6มม. Heat Cut'},{id:'imp16',n:'6มม. Superior'},
+            {id:'imp17',n:'6มม. Nature'},{id:'imp18',n:'4มม. Shade'},
+            {id:'imp19',n:'10มม. Prime'},{id:'imp20',n:'10มม. Grand'}],
+  poly:   [{id:'roof_polyton',n:'โพลีตัน 3มม.'},{id:'roof_laminate',n:'กระจกลามิเนต'}],
+  vinyl:  [{id:'roof_vinyl',n:'ไวนิล VG'},{id:'roof_delight',n:'ดีไลท์'}],
+};
+
+/* กดชิปกลุ่ม */
+function rfPickGrp(btn){
+  var ch = btn.closest('.ch');
+  ch.querySelectorAll('#rf-grp-chips .chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  rfBuildProdChips(ch, btn.dataset.grp);
+}
+
+/* inject ชิปรุ่น + set default = ตัวแรก */
+function rfBuildProdChips(ch, grp){
+  var box = ch.querySelector('#rf-prod-chips'); if(!box) return;
+  var prods = RF_PRODS[grp] || [];
+  box.innerHTML = prods.map(function(p,i){
+    return '<button type="button" class="chip'+(i===0?' on':'')+'"'
+      +' data-id="'+p.id+'" onclick="rfPickProd(this)">'+p.n+'</button>';
+  }).join('');
+  /* set default */
+  if(prods.length) rfSyncProd(ch, prods[0].id);
+}
+
+/* กดชิปรุ่น → sync .i-prod + fire change (⚠ fire change ต้องทำเสมอ) */
+function rfPickProd(btn){
+  var ch = btn.closest('.ch');
+  ch.querySelectorAll('#rf-prod-chips .chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  rfSyncProd(ch, btn.dataset.id);
+}
+
+/* sync .i-prod + dispatchEvent — DEV: นี่คือจุดเชื่อม engine */
+function rfSyncProd(ch, prodId){
+  var sel = ch.querySelector('.i-prod'); if(!sel) return;
+  /* update option หรือ inject ถ้าขาด */
+  if(!sel.querySelector('option[value="'+prodId+'"]')){
+    var o = document.createElement('option');
+    o.value = prodId; o.textContent = prodId;
+    sel.appendChild(o);
+  }
+  sel.value = prodId;
+  /* ⚠ fire change → buildItemOpts rebuild ออปชั่น */
+  sel.dispatchEvent(new Event('change',{bubbles:true}));
+}</code></pre>
+
+<div class="callout amber"><b>จุดระวัง — .i-prod sync:</b><br>
+1. <code>dispatchEvent('change')</code> ต้องทำทุกครั้งที่กดชิปรุ่น — ไม่อย่างนั้น groupGHOpts ไม่ rebuild · ราคาไม่ update<br>
+2. <code>rfBuildProdChips</code> ต้อง call ทุกครั้งที่ buildItemOpts สร้าง form ใหม่ (เช่น เพิ่มชุดใหม่) — ไม่ใช่แค่ครั้งแรก<br>
+3. ถ้า .i-prod มี option imp7–imp20/roof_* อยู่แล้ว ไม่ต้อง inject ซ้ำ — เช็ค <code>querySelector('option[value="..."]')</code> ก่อน<br>
+4. groupGHOpts ใช้ <code>isRoof = !!(ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten'))</code> เพื่อตรวจ — ไม่ต้องแก้</div>
+
+<!-- ============================================================ -->
+<h2>3. จุดที่ 2 — ปิดซ่อนราง: checkbox reveal</h2>
+
+<p>สถานะปัจจุบัน (บรรทัด ~2714 — แสดงตลอด):</p>
+<pre><code>// ก่อนแก้ (index.html ~2714)
+h+='&lt;label class="opt"&gt;ปิดซ่อนราง: กว้างราง(ซม.) '
+  +'&lt;input type="number" class="o-rfgcw" ...&gt; '
+  +'สูง(ซม.) &lt;input type="number" class="o-rfgch" ...&gt; '
+  +'ยาวรวม(ม.) &lt;input type="number" class="o-rfgcl" ...&gt;&lt;/label&gt;';</code></pre>
+
+<p>แก้เป็น (pattern checkbox-reveal):</p>
+<pre><code>// หลังแก้ — checkbox reveal
+h+='&lt;div class="o-rfgc-wrap"&gt;'
+  +'&lt;label class="opt"&gt;'
+  +'&lt;input type="checkbox" class="o-rfgc-toggle"'
+  +' onchange="var r=this.closest(\'.ch\').querySelector(\'.o-rfgc-reveal\');'
+  +'if(r)r.style.display=this.checked?\'flex\':\'none\'; calcQuote();"&gt; '
+  +'มีงานปิดซ่อนราง'
+  +'&lt;/label&gt;'
+  +'&lt;span class="o-rfgc-reveal" style="display:none;flex-wrap:wrap;gap:4px 10px;"&gt;'
+  +' กว้างราง(ซม.) &lt;input type="number" class="o-rfgcw" min="0" step="1" value="0"'
+  +' style="width:55px;height:30px;" oninput="calcQuote();"&gt;'
+  +' สูง(ซม.) &lt;input type="number" class="o-rfgch" min="0" step="1" value="10"'
+  +' style="width:50px;height:30px;" oninput="calcQuote();"&gt;'
+  +' ยาวรวม(ม.) &lt;input type="number" class="o-rfgcl" min="0" step="0.1" value="0"'
+  +' style="width:60px;height:30px;" oninput="calcQuote();"&gt;'
+  +'&lt;/span&gt;'
+  +'&lt;/div&gt;';</code></pre>
+
+<div class="callout blue"><b>readItem ไม่ต้องแก้:</b> engine อ่าน o-rfgcw/gch/gcl โดยตรง — เมื่อ reveal ซ่อน ค่าใน input ยังอยู่แต่ผู้ใช้ไม่ได้กรอก (value=0) → คำนวณออก 0 อยู่ดี · ปลอดภัย</div>
+
+<!-- ============================================================ -->
+<h2>4. จุดที่ 3 — ครอบคาน: checkbox reveal</h2>
+
+<p>สถานะปัจจุบัน (บรรทัด ~2715–2716 — แสดงตลอด):</p>
+<pre><code>// ก่อนแก้ (index.html ~2715)
+h+='&lt;label class="opt"&gt;ครอบคาน (ลูกฟูก 1 หน้า ลด 40%) '
+  +'กว้างห่อ(ม.) &lt;input type="number" class="o-rfbcw" ...&gt; '
+  +'ยาวคาน(ม.) &lt;input type="number" class="o-rfbcl" ...&gt;&lt;/label&gt;';</code></pre>
+
+<p>แก้เป็น:</p>
+<pre><code>// หลังแก้ — checkbox reveal
+h+='&lt;div class="o-rfbc-wrap"&gt;'
+  +'&lt;label class="opt"&gt;'
+  +'&lt;input type="checkbox" class="o-rfbc-toggle"'
+  +' onchange="var r=this.closest(\'.ch\').querySelector(\'.o-rfbc-reveal\');'
+  +'if(r)r.style.display=this.checked?\'flex\':\'none\'; calcQuote();"&gt; '
+  +'มีงานครอบคาน &lt;span style="font-size:11px;color:#6B7280;"&gt;(ลูกฟูก 1 หน้า ลด 40%)&lt;/span&gt;'
+  +'&lt;/label&gt;'
+  +'&lt;span class="o-rfbc-reveal" style="display:none;flex-wrap:wrap;gap:4px 10px;"&gt;'
+  +' กว้างห่อ(ม.) &lt;input type="number" class="o-rfbcw" min="0" step="0.05" value="0"'
+  +' style="width:55px;height:30px;" oninput="calcQuote();"&gt;'
+  +' ยาวคาน(ม.) &lt;input type="number" class="o-rfbcl" min="0" step="0.1" value="0"'
+  +' style="width:55px;height:30px;" oninput="calcQuote();"&gt;'
+  +'&lt;/span&gt;'
+  +'&lt;/div&gt;';</code></pre>
+
+<div class="callout blue"><b>readItem ไม่ต้องแก้:</b> เช่นเดียวกับ ปิดซ่อนราง — value=0 เมื่อไม่ได้กรอก · calc ออก 0 อัตโนมัติ</div>
+
+<!-- ============================================================ -->
+<h2>5. รายการ "ตรวจแล้วโอเค — ไม่ต้องแก้"</h2>
+
+<table>
+  <tr><th>รายการ</th><th>ตำแหน่ง</th><th>หมายเหตุ</th></tr>
+  <tr>
+    <td>ปลายหลังคา 3 ชิป (ปล่อย / รางน้ำ / ปิดปลายกันน้ำกระเด็น)</td>
+    <td>~2688</td>
+    <td>เป็นชิปแล้ว · mutual-exclusive reveal ทำงาน · ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>โซ่รางน้ำ รวมใน "ระบบระบาย = โซ่"</td>
+    <td>~2693</td>
+    <td>ไม่มี stepper โซ่แยก · ลาย/สีโซ่อยู่ใน gutter-chain-wrap · ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>เวเทอร์บล็อค 9 มม. ใน wall_ext/wall_int</td>
+    <td>~2629</td>
+    <td>อยู่ใน o-wallmodel dropdown · พี่นัทอนุมัติ pattern "dropdown ฝ้า-ผนัง ไม่ต้องชิป" · ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>ทาสีฝ้า-ผนัง — ไม่มีช่องกรอกราคาสี</td>
+    <td>~2630</td>
+    <td>o-wallpaintprice กรอกเอง · ชิป "ทาสีขาว/รองพื้น/ไม่ทาสี" เป็น label ไม่กระทบราคา · ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>แป (o-roofbatten) เป็นชิปแล้ว</td>
+    <td>~2682</td>
+    <td>แปเดี่ยว / แปคู่ · ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>โครงสร้าง (o-roofframe) เป็นชิปแล้ว + warn เหล็กชุบ</td>
+    <td>~2684</td>
+    <td>ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>คานเหล็กถัก (o-rfbeam) เป็นชิปแล้ว</td>
+    <td>~2707</td>
+    <td>ไม่ต้องแก้</td>
+  </tr>
+  <tr>
+    <td>ซ่อนสโลป (o-rfhs) เป็นชิปแล้ว</td>
+    <td>~2712</td>
+    <td>ไม่ต้องแก้</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>6. DoD (Definition of Done)</h2>
+
+<ul class="dod-list">
+  <li>กดชิปกลุ่มวัสดุ (เมทัลชีท → ชินโคไลท์ → โพลีตัน/กระจก → ไวนิล/ดีไลท์) → ชิปรุ่นในกลุ่มโหลดใหม่ถูกต้อง</li>
+  <li>กดชิปรุ่น → .i-prod.value เปลี่ยน + buildItemOpts rebuild ออปชั่นหลังคา (เช่น ชิปสีเปลี่ยน)</li>
+  <li>ราคาหลังคาไม่เพี้ยน — เทสด้วยชุดที่มีอยู่: กดรุ่นต่างๆ ราคาเปลี่ยนตาม bucket เดิม</li>
+  <li>ปิดซ่อนราง: ก่อนติ๊ก = ซ่อน 3 ช่อง · หลังติ๊ก = reveal · ถอด = ซ่อนอีกครั้ง</li>
+  <li>ครอบคาน: ก่อนติ๊ก = ซ่อน 2 ช่อง · หลังติ๊ก = reveal · ถอด = ซ่อนอีกครั้ง</li>
+  <li>ของเสริม (ปิดซ่อนราง/ครอบคาน) เมื่อ reveal+กรอก → ราคาคำนวณรวมถูกต้อง (ไม่เป็น 0)</li>
+  <li>เพิ่มชุดหลังคาใหม่ (คลิก +เพิ่มชุด) → ชิปกลุ่ม/รุ่นโหลดขึ้นมาพร้อมใช้ (ไม่ใช่ว่างเปล่า)</li>
+  <li>ออปชั่นอื่นใน G3 (ปลายหลังคา/รางน้ำ/เลื่อน/ของเสริมอื่นๆ) ยังคำนวณครบ · ไม่ regression</li>
+  <li>quote-fidelity PASS: ใบเสนอราคา G3 ที่สร้างจาก index.html มี product name/ออปชั่น ตรงกับที่กรอก</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>7. ไฟล์อ้างอิง</h2>
+
+<table>
+  <tr><th>ไฟล์</th><th>หมายเหตุ</th></tr>
+  <tr>
+    <td><code>docs/DRAFT-G3-ux-v5-2026-06-12.html</code></td>
+    <td>ดราฟ interactive ลองกดได้ — เน้นชิปรุ่นหลังคา (v5 จุดเดียวที่ต่างจาก v4)</td>
+  </tr>
+  <tr>
+    <td><code>docs/DRAFT-G3-ux-v4-2026-06-12.html</code></td>
+    <td>v4 ก่อนหน้า — มี checkbox-reveal ปิดซ่อนราง/ครอบคานเป็น pattern reference แล้ว</td>
+  </tr>
+  <tr>
+    <td><code>public/calculator/index.html</code> (commit 86bff14)</td>
+    <td>ไฟล์จริงที่ dev แก้ — อ้างบรรทัดในสเปกนี้ทุกอย่าง</td>
+  </tr>
+</table>
+
+<div class="callout green" style="margin-top:20px;">
+  <b>หมายเหตุพี่นัท:</b> สเปกนี้ = ส่วนที่ต้องแก้เพิ่มจาก v2 (commit 86bff14) เท่านั้น · ไม่ใช่ rewrite ทั้ง G3 · dev ทำ 3 จุดแล้วส่งตรวจ
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

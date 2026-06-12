@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายงานงาน Phase 5 — เครื่องคิดราคา JR</title>
+<style>
+  :root{ --red:#B3151D; --red2:#8f1018; --ink:#1f2937; --mut:#6b7280; --bg:#f4f5f7; --line:#e5e7eb; --green:#16a34a; --amber:#b45309; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;line-height:1.6}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+  header{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-radius:16px;padding:28px 26px;box-shadow:0 8px 24px rgba(179,21,29,.25)}
+  header h1{margin:0 0 6px;font-size:24px}
+  header .sub{opacity:.92;font-size:14px}
+  .badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:12px;margin-top:10px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+  .stat .n{font-size:26px;font-weight:800;color:var(--red)}
+  .stat .l{font-size:12px;color:var(--mut)}
+  h2{font-size:18px;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--red)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  .card h3{margin:0 0 8px;font-size:16px;color:var(--red)}
+  .card ul{margin:6px 0 0;padding-left:20px}
+  .card li{margin:3px 0;font-size:14px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:13.5px}
+  th{background:var(--red);color:#fff;text-align:left;padding:10px 12px;font-weight:600}
+  td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+  tr:nth-child(even) td{background:#fafafa}
+  .ok{color:var(--green);font-weight:700;white-space:nowrap}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--green);border:1px solid #a7f3d0;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700}
+  .review{background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:16px 20px}
+  .review h3{color:var(--amber);margin:0 0 8px}
+  .review li{margin:5px 0}
+  .link{display:block;background:#fff;border:2px dashed var(--red);border-radius:12px;padding:14px 18px;margin-top:10px;word-break:break-all;font-family:Consolas,monospace;font-size:14px;color:var(--red);font-weight:600}
+  .note{font-size:12.5px;color:var(--mut);margin-top:8px}
+  .commit{font-family:Consolas,monospace;background:#f3f4f6;border-radius:6px;padding:1px 7px;font-size:12px;color:var(--red)}
+  footer{text-align:center;color:var(--mut);font-size:12px;margin-top:30px}
+  @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📋 รายงานงาน Phase 5 — เครื่องคิดราคา JR</h1>
+    <div class="sub">เทสออปชันทั้งหมด · ซ่อมระบบเทสกั้นห้อง · ปรับ UX/UI ฟอร์ม</div>
+    <span class="badge">branch: feat/quote-phase5-ux · 4 commits · ยังไม่ merge เข้า main</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">13/13</div><div class="l">ออปชันเทสผ่าน</div></div>
+    <div class="stat"><div class="n">684,800</div><div class="l">FullA (baseline ใหม่)</div></div>
+    <div class="stat"><div class="n">8.07M</div><div class="l">FullB (baseline ใหม่)</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">JS error</div></div>
+  </div>
+
+  <h2>✅ ทำอะไรไปบ้าง</h2>
+
+  <div class="card">
+    <h3>งาน A — เทส + ซ่อมระบบเทสกั้นห้อง <span class="commit">f5b1b47</span> <span class="commit">c2c0e72</span></h3>
+    <ul>
+      <li>เขียน fixture กั้นห้องกระจกใหม่เป็น "ระบบชุด" (ของเก่าพังเพราะ gh-box ถูกลบไปแล้ว)</li>
+      <li>ตั้ง <b>baseline ราคาใหม่</b>: FullA = 684,800 · FullB = 8,073,471 (กั้นห้องเลิกเหมา → คิด auto ต่อด้าน + ค่าทำชุด 5,000)</li>
+      <li>เทสทุกออปชันว่า "ทำงานจริง" 13/13 ผ่าน → ตารางอ่านง่ายที่ <code>docs/test-summary.md</code></li>
+      <li>test suite เดิมผ่านครบ 10 ไฟล์</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>งาน B — จัดโครงสร้างฟอร์มให้กระชับ</h3>
+    <ul>
+      <li>ซ่อนช่อง "ราคากำหนดเอง" สำหรับสินค้าปกติ + ใส่ hint "แก้ราคาที่หน้าใบเสนอราคา (ปุ่ม ✎)" · คงไว้เฉพาะสินค้าโซลิด</li>
+      <li>label จำนวนบานชัดขึ้น (จำนวนบานทั้งหมด / บานเลื่อนที่เปิดได้)</li>
+      <li>รวมกล่อง "หมายเหตุ/OPTION" + "อุปกรณ์เสริม" เป็นกลุ่มเดียว</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>งาน C — ปรับหน้าตา UI</h3>
+    <ul>
+      <li>ปุ่ม "📤 ส่งเข้าระบบ JR" เด่นสุด (แดง #B3151D ใหญ่ + icon) · ปุ่มพรีวิวเป็นรอง</li>
+      <li>โทนสี/ฟอนต์/ปุ่มสม่ำเสมอ · จัด layout & spacing ให้สะอาด อ่านง่าย</li>
+    </ul>
+  </div>
+
+  <h2>🧪 ผลเทสรายออปชัน (13/13 ผ่าน)</h2>
+  <table>
+    <thead><tr><th>ออปชัน</th><th>ใส่ค่าอะไร</th><th>ผลที่ได้</th><th>ผล</th></tr></thead>
+    <tbody>
+      <tr><td>หลังคา แปคู่</td><td>หลังคาไวนิล 4×3 เลือก "แปคู่"</td><td>ไม่คิดเพิ่ม · ใบมี "(แปคู่)"</td><td class="ok">✅</td></tr>
+      <tr><td>หลังคา โครงเหล็กชุบ</td><td>เลือก "โครงเหล็กชุบซิงค์"</td><td>ราคาเท่าอลู · ใบมี "เหล็กชุบ"</td><td class="ok">✅</td></tr>
+      <tr><td>หลังคา ปิดปลาย</td><td>กว้าง 4 ม. เลือก "ปิดปลาย"</td><td>+4,000 (1,000×กว้าง) · ใบมี "ปิดปลายหลังคา"</td><td class="ok">✅</td></tr>
+      <tr><td>หลังคา รางน้ำ ท่อ สีดำ</td><td>รางน้ำ → ท่อ → สีดำ</td><td>ไม่คิดเพิ่ม · ใบมี "รางน้ำ (ท่อ สีดำ)"</td><td class="ok">✅</td></tr>
+      <tr><td>สีวัสดุมุง โพลีตัน</td><td>เลือก "Clear 101 สีใส (แสงผ่าน 83%)"</td><td>ไม่คิดเพิ่ม · ใบมี "สีวัสดุมุง" + "แสงผ่าน"</td><td class="ok">✅</td></tr>
+      <tr><td>คาดตาราง</td><td>บานเปิด 2×2 · นอน 2 ตั้ง 2 · 200/ม.</td><td>+1,600 (ปัดพันเป็น +2,000) · โค้ง 1 เส้น +3,000</td><td class="ok">✅</td></tr>
+      <tr><td>งานไฟ</td><td>เดินไฟ 2 ดวง + สวิตซ์ใหม่ 2 จุด</td><td>3,000 + 2,000 = 5,000 บาท</td><td class="ok">✅</td></tr>
+      <tr><td>งานรื้อ ครบทุกชนิด</td><td>หลังคา 2 ชุด + กรีด 1 ราง + ราว 4 ม. + ประตูเหมา 6,000</td><td>10,000+5,000+5,800+6,000 = <b>26,800 บาท</b></td><td class="ok">✅</td></tr>
+      <tr><td>ธรณีหลังเต่า (บานเปิด)</td><td>เลือก "หลังเต่า + Drop Seal"</td><td>+1,000 · ใบมี "หลังเต่า"</td><td class="ok">✅</td></tr>
+      <tr><td>ธรณีเฟี้ยม</td><td>เลือก "ธรณีหลังเต่าภายใน"</td><td>ไม่คิดเพิ่ม · ใบมีข้อความธรณี</td><td class="ok">✅</td></tr>
+      <tr><td>Shower</td><td>ประตู+ติดตาย + ประเภทบานเลื่อน</td><td>ใบมี "บานติดตายพร้อมบานเลื่อน" + "กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส"</td><td class="ok">✅</td></tr>
+      <tr><td>กั้นห้องกระจก</td><td>ชุด: ด้าน A บานเลื่อน + ด้าน B ติดตาย + หลังคา</td><td>ใบ 1 ข้อ group ด้าน A/B + ค่าทำชุด · รวม <b>66,000 บาท</b></td><td class="ok">✅</td></tr>
+    </tbody>
+  </table>
+  <div class="note">* คาดตาราง: ราคาออปชันคิดถูก แต่ระบบปัดราคารวมขึ้นทุก 1,000 บาท (roundUp) ที่ทำให้เลขที่เห็นเป็น +2,000/+5,000 — เป็นพฤติกรรมปกติ ไม่ใช่บั๊ก</div>
+
+  <h2>🛡️ Invariant (เช็คซ้ำเองทุกครั้งหลังแก้)</h2>
+  <div class="card">
+    <ul>
+      <li>ราคา FullA = 684,800 / FullB = 8,073,471 — <span class="pill">ผ่าน</span></li>
+      <li>ออปชัน 13 ตัว — <span class="pill">13/13</span></li>
+      <li>กั้นห้องกระจกออกใบ grouped (ด้าน A/B + ค่าทำชุด) — <span class="pill">ผ่าน</span></li>
+      <li>โหลด jsdom ไม่มี JS error — <span class="pill">0 error</span></li>
+    </ul>
+    <div class="note">ไม่แตะ engine/สูตรราคา · แก้แค่ index.html (ฟอร์ม/UI) + ไฟล์เทส</div>
+  </div>
+
+  <h2>👀 ต้องให้พี่นัทรีวิว</h2>
+  <div class="review">
+    <h3>3 จุดที่ผมตัดสินใจเอง (ตามกฎ goal: ไม่ถาม + flag ไว้)</h3>
+    <ul>
+      <li><b>หน้าตา UI (งาน C)</b> — ผมเช็คได้แค่ logic/ราคาไม่พัง แต่ <u>ความสวย/เลย์เอาต์ต้องใช้ตาดู</u> → เปิด preview ดู</li>
+      <li><b>B2 จำนวนบาน</b> — ทำแบบ conservative (ปรับ label ให้ชัด ไม่รวม field) เพราะรวมจริงเสี่ยงราคาเพี้ยน · ถ้าอยากรวมเต็มบอกได้</li>
+      <li><b>ยังไม่ merge เข้า main</b> — รีวิว preview ก่อน ค่อยบอกให้ merge ขึ้นเวปจริง</li>
+    </ul>
+  </div>
+
+  <h2>🔗 เปิดดู Preview</h2>
+  <div class="card">
+    <div>รอ Vercel build ~1–2 นาที แล้วเปิด (ล็อกอิน Vercel อยู่แล้วเปิดได้):</div>
+    <span class="link">jr-beta-git-feat-quote-phase5-ux-jraluminium103.vercel.app/calculator/index.html</span>
+    <div class="note">เช็คว่าได้ของใหม่: ปุ่ม "ส่งเข้าระบบ JR" สีแดงใหญ่เด่น · กั้นห้องกระจกเป็นปุ่ม "+ กั้นห้องกระจก"</div>
+  </div>
+
+  <h2>⚙️ หมายเหตุเทคนิค</h2>
+  <div class="card">
+    <ul>
+      <li>งาน <code>docs/quote-spec.md</code> ของอีกแชทที่ค้าง — ผม <b>stash เก็บไว้</b> กันชน → กู้คืน <code>git stash pop</code></li>
+      <li>ทุก commit อยู่บน <code>feat/quote-phase5-ux</code> เท่านั้น · ไม่แตะ main / src/ (Phase 3)</li>
+      <li>รายละเอียดเต็ม: <code>docs/test-summary.md</code> · <code>docs/autonomous-progress.md</code></li>
+    </ul>
+  </div>
+
+  <footer>สร้างโดย Claude (autonomous goal) · เครื่องคิดราคา JR · 2026-06-08</footer>
+</div>
+</body>
+</html>

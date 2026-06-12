@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUDIT G1 — ออปชั่นถูก/ผิดประเภท 2026-06-11</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;background:#F3F4F6;color:#111;padding:16px;}
+h1{font-size:18px;font-weight:700;color:#B3151D;margin-bottom:4px;}
+h2{font-size:15px;font-weight:700;color:#B3151D;margin:20px 0 8px;}
+h3{font-size:13px;font-weight:700;color:#374151;margin:12px 0 6px;}
+.banner{background:#B3151D;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+.summary-box{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;}
+.stat{text-align:center;}
+.stat .num{font-size:26px;font-weight:700;}
+.stat .lbl{font-size:12px;color:#6B7280;}
+.green{color:#16A34A;} .red{color:#B3151D;} .amber{color:#D97706;}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;}
+thead th{background:#B3151D;color:#fff;padding:7px 10px;text-align:left;font-size:12px;}
+tbody tr:nth-child(even){background:#FFF9F9;}
+tbody tr:hover{background:#FFECEC;}
+td{padding:6px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.ok{background:#DCFCE7;color:#166534;}
+.leak{background:#FEE2E2;color:#7F1D1D;}
+.unsure{background:#FEF9C3;color:#713F12;}
+.opt-name{font-weight:600;}
+.flag-col{font-size:11px;color:#6B7280;max-width:200px;}
+.note-box{background:#FFFBEB;border-left:4px solid #F59E0B;border-radius:4px;padding:10px 14px;margin-bottom:12px;}
+.note-box h4{font-size:13px;font-weight:700;color:#92400E;margin-bottom:6px;}
+.note-box li{font-size:12px;color:#374151;margin-left:14px;margin-bottom:4px;}
+.red-box{background:#FFF0F0;border-left:4px solid #B3151D;border-radius:4px;padding:10px 14px;margin-bottom:12px;}
+.red-box h4{font-size:13px;font-weight:700;color:#7F1D1D;margin-bottom:6px;}
+.red-box li{font-size:12px;color:#374151;margin-left:14px;margin-bottom:4px;}
+.group-header{background:#F9FAFB;font-weight:700;color:#374151;font-size:12px;padding:8px 10px;border-bottom:2px solid #E5E7EB;}
+.section-divider{height:2px;background:linear-gradient(90deg,#B3151D 0%,#E5E7EB 100%);margin:24px 0 16px;}
+.sticky-head{position:sticky;top:0;z-index:10;}
+@media(max-width:600px){table{font-size:12px;}td,th{padding:5px 7px;}}
+</style>
+</head>
+<body>
+
+<div class="banner">AUDIT ภายใน · เอกสารมีราคา — ห้ามเผยแพร่ออกนอกทีม</div>
+
+<h1>AUDIT G1 — ออปชั่นถูก/ผิดประเภท</h1>
+<p style="color:#6B7280;font-size:12px;margin-bottom:12px;">อ้างอิงโค้ด: index.html &gt; buildItemOpts() L2360–2760 · PRODUCTS L571–695 · groupGHOpts L1750</p>
+
+<!-- Summary stats -->
+<div class="summary-box">
+  <div class="stat"><div class="num green">34</div><div class="lbl">ออปชั่น ถูกประเภท</div></div>
+  <div class="stat"><div class="num red">7</div><div class="lbl">Leak ตัดชัวร์</div></div>
+  <div class="stat"><div class="num amber">8</div><div class="lbl">ไม่ชัวร์ — ถามพี่นัท</div></div>
+  <div class="stat"><div class="num" style="color:#1E5AA8;">5</div><div class="lbl">cat กลุ่ม G1 หลัก</div></div>
+</div>
+
+<!-- รายการตัดชัวร์ -->
+<div class="red-box">
+  <h4>🔴 Leak ตัดชัวร์ (7 รายการ)</h4>
+  <ul>
+    <li><b>คาดตาราง (o-gridmark)</b> — โผล่ใน <b>ติดตาย / บานเปลือย / shower / ดัดโค้ง / บานยก / บานหมุน</b><br>
+      เงื่อนไขปัจจุบัน: <code>if(!p.grid &amp;&amp; !['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → กว้างเกินไป<br>
+      ควรเพิ่ม <code>&amp;&amp; _isPaneCat</code> หรือ whitelist เฉพาะ cat ที่เปิด-ปิดได้จริง</li>
+    <li><b>ดรอปพื้น (o-dfm)</b> — โผล่ใน <b>บานเปลือย / shower / ดัดโค้ง / บานยก / บานหมุน</b><br>
+      เงื่อนไข: <code>if(!areaOnly &amp;&amp; !p.zipscreen) … if(!p.cabinet &amp;&amp; !p.future_tech)</code> — ตัดตู้แต่ไม่ตัด shower/บานเปลือย</li>
+    <li><b>ฝังรางยู (o-uchannel)</b> — โผล่ใน <b>shower / บานเปลือย / ดัดโค้ง / บานยก / บานหมุน / ราวบันได</b><br>
+      เงื่อนไข: <code>if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat) &amp;&amp; !p.cabinet &amp;&amp; !p.future_tech)</code> — ยังกว้างเกิน</li>
+    <li><b>ครอบวงกบ (o-fcsides/o-fcm)</b> — โผล่ใน <b>shower / ดัดโค้ง / บานยก / บานหมุน / ราวบันได</b> (เส้นที่ 1 ใน !areaOnly)<br>
+      shower ไม่มีวงกบอลูแยก · ดัดโค้งวงกบพิเศษ · ราวบันไดไม่มีวงกบ</li>
+    <li><b>งานเสริม/วิศวกรรม (o-extrawork)</b> — โผล่ทุก cat รวมถึง <b>ราวบันได / ระแนง / ฝ้า-ผนัง</b> ที่มีช่องแยกแล้ว<br>
+      ไม่ได้ตัด (กว้างเกิน) — ควร render เฉพาะ G1/G2 cat หรือ whitelist ชัด</li>
+    <li><b>รื้อของเดิม (o-removeold)</b> — โผล่ทุก cat เช่นเดียวกัน (ไม่มีเงื่อนไขกรอง) — เป็น global แต่ควรซ่อนใน ราวบันได/เสริม</li>
+    <li><b>แผ่นทึบล่าง (o-solidlower)</b> — โผล่ใน <b>เลื่อนภายใน</b> (cat อยู่ใน _isPaneCat แล้ว) แต่ "เลื่อนภายใน" ติดตั้งในบ้าน ไม่มีแผ่นทึบล่าง ควรตัดออกจาก _isPaneCat หรือเพิ่ม exclude</li>
+  </ul>
+</div>
+
+<!-- รายการไม่ชัวร์ -->
+<div class="note-box">
+  <h4>🟡 ไม่ชัวร์ — ถามพี่นัท (8 รายการ)</h4>
+  <ul>
+    <li><b>Q1 — มุ้ง (p.mosquito) ใน "โซลิด ทู / โซลิด วัน"</b>: casement_flush_solid / casement_inset_solid มี mosquito:1 → มุ้งเข้ากับประตูลูกฟูกทึบได้ไหม? ลูกค้าซื้อได้จริงหรือเปล่า?</li>
+    <li><b>Q2 — มุ้ง (p.mosquito) ใน "บานเฟี้ยม"</b>: folding/folding_euro/folding_xseries มี mosquito:1 → มุ้งบานเฟี้ยมเป็น combo พิเศษ ทำได้จริงไหม?</li>
+    <li><b>Q3 — combo บานกระทุ้งเข้าใน + มุ้งติดตาย (o-combo_awn_inside)</b>: render เฉพาะ casement_euro/flush_solid/inset_solid → แต่ชื่อ "บานกระทุ้ง" ทำให้ดูเหมือนผิดที่ — ใช่ไหม? (อ่านโค้ดแล้วน่าจะถูก แต่ชื่อ label สับสน)</li>
+    <li><b>Q4 — ชุดล็อค (o-slidelock) ใน "เลื่อนภายใน"</b>: เลื่อนภายใน (inner_top_stack ฯลฯ) เข้า branch SLIDING_RAIL แต่ o-slidelock render เฉพาะ itype=door → เลื่อนภายใน cat ตัดออกจาก SLIDING_RAIL logic จริงไหม? (SLIDING_RAIL ต้องการ p.id explicit)</li>
+    <li><b>Q5 — เสริมคาน (o-beamm) ใน "บานเปิด"</b>: _isPaneCat รวม บานเปิด ซึ่งหมายความว่า casement_euro/บานกระทุ้งยิงเสริมคานด้วย → งานจริงใช้บ้างไหม หรือแค่ต้องการรองรับเคสพิเศษ?</li>
+    <li><b>Q6 — โช๊ค (o-closer) เงื่อนไข</b>: render เฉพาะ <code>if(p.closer)</code> → ยืนยันว่าทุก product ที่ควรมีโช๊คมี flag closer:1 ครบแล้ว (ตรวจพบ ykk_vent, ykk_exhido, tostem_a01 มี closer:1 แต่ไม่อยู่ G1)</li>
+    <li><b>Q7 — ตารางเต็มบาน (o-fullgrid)</b>: render เฉพาะ <code>if(p.full_grid)</code> → มีแค่ casement_flush_solid/casement_inset_solid → ถ้า casement_euro จริงบางงานก็ทำตารางเต็มได้ไหม? หรือล็อคเฉพาะโซลิดพอ?</li>
+    <li><b>Q8 — ช่องแสง (o-solidlight) ใน "โซลิด"</b>: render เฉพาะ <code>if(p.solid_door)</code> → แต่ solid_door เปิดให้ทั้ง casement_flush_solid และ casement_inset_solid → ทั้ง 2 รุ่นทำช่องแสงได้เหมือนกันไหม? หรือรุ่นนึงไม่ทำ?</li>
+  </ul>
+</div>
+
+<div class="section-divider"></div>
+
+<h2>ตาราง Matrix: สินค้า G1 × ออปชั่นหลัก</h2>
+<p style="font-size:12px;color:#6B7280;margin-bottom:10px;">
+  สีเขียว = ถูกประเภท · สีแดง = Leak ตัด · สีเหลือง = ไม่ชัวร์ถามพี่นัท · ขีดกลาง = ไม่โผล่ (ถูก)
+</p>
+
+<!-- ======= GROUP 1: บานเลื่อน ======= -->
+<h3>กลุ่ม 1 — บานเลื่อน (cat: บานเลื่อน)</h3>
+<table>
+<thead class="sticky-head"><tr>
+  <th>สินค้า</th>
+  <th>สี</th>
+  <th>กระจก</th>
+  <th>มือจับ (Cmech)</th>
+  <th>มุ้ง</th>
+  <th>ราง+บาน</th>
+  <th>คาดตาราง</th>
+  <th>ครอบวงกบ</th>
+  <th>ดรอปพื้น</th>
+  <th>ฝังรางยู</th>
+  <th>แผ่นทึบล่าง</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="opt-name">บานเลื่อน เซมิยูโร</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> Cmech+ดิจิตอล</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> (ประตูอาจใส่ลาย)</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+</tr>
+<tr>
+  <td class="opt-name">บานเลื่อน ยูโร</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+</tr>
+<tr>
+  <td class="opt-name">บานยก SMS</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td>— (ไม่มี Cmech)</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td>— (ไม่มี SLIDING_RAIL)</td>
+  <td><span class="badge leak">leak</span> ติ๊กได้ แต่บานยกไม่มีโครงตาราง</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge unsure">Q1? ทำแผ่นทึบล่างได้ไหม</span></td>
+</tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 2: บานเปิด ======= -->
+<h3>กลุ่ม 2 — บานเปิด (cat: บานเปิด)</h3>
+<table>
+<thead class="sticky-head"><tr>
+  <th>สินค้า</th>
+  <th>สี</th>
+  <th>กระจก</th>
+  <th>มือจับ</th>
+  <th>ธรณี</th>
+  <th>มุ้ง</th>
+  <th>คาดตาราง</th>
+  <th>ครอบวงกบ</th>
+  <th>ดรอปพื้น</th>
+  <th>ฝังรางยู</th>
+  <th>แผ่นทึบล่าง</th>
+  <th>combo บานกระทุ้ง</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="opt-name">บานเปิด ยูโร</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> Cmech+ดิจิตอล</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td>—</td>
+</tr>
+<tr>
+  <td class="opt-name">บานเปิด X-series</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> X-series handle</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td>—</td>
+</tr>
+<tr>
+  <td class="opt-name">โซลิด ทู / โซลิด วัน</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> Cmech</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge unsure">Q1 มุ้งกับลูกฟูกทึบ?</span></td>
+  <td><span class="badge ok">ถูก</span> full_grid ต่างหาก</td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span></td>
+  <td><span class="badge ok">ถูก</span> combo bkw_inside</td>
+</tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 3: ติดตาย ======= -->
+<h3>กลุ่ม 3 — ติดตาย (cat: ติดตาย) · fixed_glass</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล / flag โค้ด</th>
+</tr></thead>
+<tbody>
+<tr><td>สี (i-color)</td><td><span class="badge ok">ถูก</span></td><td>ไม่อยู่ใน NO_COLOR_CATS → โชว์ปกติ</td></tr>
+<tr><td>กระจก (i-glass)</td><td><span class="badge ok">ถูก</span></td><td>ไม่อยู่ใน AREA_CATS → โชว์ปกติ</td></tr>
+<tr><td>มือจับ</td><td>— ไม่โผล่</td><td>fixed_glass ไม่มี flag digihandle, _cmechOK, _xOK, _awnOK → ถูกต้อง</td></tr>
+<tr><td>มุ้ง</td><td>— ไม่โผล่</td><td>fixed_glass ไม่มี mosquito:1 → ถูกต้อง (กระจกติดตายไม่ใส่มุ้ง)</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge leak">leak</span></td><td><code>!p.grid</code> = true, cat ไม่ใช่หลังคา/ฝ้า → โผล่ · แต่ติดตายคำนวณตาม ตร.ม. ไม่ใช่เส้น → ควรตัด</td></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td><span class="badge leak">leak</span></td><td>ติดตายไม่มีธรณี ไม่มีการยก แต่โผล่เพราะ !areaOnly</td></tr>
+<tr><td>ฝังรางยู (o-uchannel)</td><td><span class="badge leak">leak</span></td><td>ติดตายไม่มีการเปิด-ปิด ฝังรางยูไม่มีความหมาย</td></tr>
+<tr><td>ครอบวงกบ (o-fcsides)</td><td><span class="badge ok">ถูก</span></td><td>ติดตายมีวงกบอลูจริง สมเหตุสมผล</td></tr>
+<tr><td>แผ่นทึบล่าง (o-solidlower)</td><td>— ไม่โผล่</td><td>cat ติดตายอยู่ใน _isPaneCat → โผล่ · แต่ fixed_glass ไม่มี "บาน" เปิดปิด — <span class="badge unsure">ถามพี่นัท Q9</span></td></tr>
+<tr><td>งานเสริม/วิศวกรรม + รื้อของเดิม</td><td><span class="badge ok">ถูก</span></td><td>สมเหตุสมผลสำหรับงาน on-site</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 4: บานเฟี้ยม ======= -->
+<h3>กลุ่ม 4 — บานเฟี้ยม (cat: บานเฟี้ยม)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี / กระจก</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>ธรณีบานเฟี้ยม (o-threshf)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ cat=บานเฟี้ยม</td></tr>
+<tr><td>มุ้ง</td><td><span class="badge unsure">Q2 ถามพี่นัท</span></td><td>folding/folding_euro/folding_xseries มี mosquito:1 → ทำมุ้งบานเฟี้ยมได้จริงไหม?</td></tr>
+<tr><td>เสริมคาน (optBeam)</td><td><span class="badge ok">ถูก</span></td><td>ใช้ optBeam:true + o-beam — แต่ถูกแทนที่โดย o-beamm ใน _isPaneCat แล้ว — ซ้ำซ้อน <span class="badge unsure">ถามQ5</span></td></tr>
+<tr><td>คาดตาราง</td><td><span class="badge ok">ถูก</span></td><td>บานเฟี้ยมใส่ตารางได้จริง</td></tr>
+<tr><td>ดรอปพื้น / ฝังรางยู / ครอบวงกบ</td><td><span class="badge ok">ถูก</span></td><td>บานเฟี้ยมมีธรณีและวงกบ</td></tr>
+<tr><td>แผ่นทึบล่าง</td><td><span class="badge ok">ถูก</span></td><td>_isPaneCat รวม บานเฟี้ยม · ใช้ได้จริง</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 5: บานกระทุ้ง ======= -->
+<h3>กลุ่ม 5 — บานกระทุ้ง (cat: บานกระทุ้ง)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี / กระจก</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>แบบเปิด (awn_mode select)</td><td><span class="badge ok">ถูก</span></td><td>p.opts เฉพาะ awning_euro</td></tr>
+<tr><td>มือจับ Cmech หลบมุ้ง (_awnOK)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ cat=บานกระทุ้ง</td></tr>
+<tr><td>มุ้ง</td><td><span class="badge ok">ถูก</span></td><td>mosquito:1 ใช้ได้</td></tr>
+<tr><td>คาดตาราง</td><td><span class="badge ok">ถูก</span></td><td>บานกระทุ้งใส่ตารางได้</td></tr>
+<tr><td>ดรอปพื้น / ฝังรางยู / ครอบวงกบ</td><td><span class="badge ok">ถูก</span></td><td>มีธรณีกันน้ำ ดรอปพื้นสมเหตุสมผล</td></tr>
+<tr><td>แผ่นทึบล่าง</td><td><span class="badge ok">ถูก</span></td><td>_isPaneCat</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 6: PC Door ======= -->
+<h3>กลุ่ม 6 — PC Door (cat: PC Door)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>กระจก</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>มือจับดิจิตอล (digihandle)</td><td><span class="badge ok">ถูก</span></td><td>pc_door_2/4 มี digihandle:1</td></tr>
+<tr><td>ชุดล็อค (o-slidelock)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ cat=PC Door + itype=door</td></tr>
+<tr><td>มุ้ง</td><td><span class="badge ok">ถูก</span></td><td>mosquito:1 · แต่ imp21 มี deny_with:['pc_door_2','pc_door_4'] → imp31/32 ใช้ได้</td></tr>
+<tr><td>คาดตาราง</td><td><span class="badge ok">ถูก</span></td><td>PC Door ใส่ตารางกระจกได้</td></tr>
+<tr><td>เสริมคาน (o-beamm)</td><td><span class="badge ok">ถูก</span></td><td>_isPaneCat รวม PC Door · ใช้งานได้</td></tr>
+<tr><td>แผ่นทึบล่าง</td><td><span class="badge ok">ถูก</span></td><td>_isPaneCat</td></tr>
+<tr><td>ดรอปพื้น / ฝังรางยู / ครอบวงกบ</td><td><span class="badge ok">ถูก</span></td><td>มีธรณีและวงกบ</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 7: shower ======= -->
+<h3>กลุ่ม 7 — shower (cat: shower)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>กระจก (i-glass)</td><td><span class="badge ok">ถูก</span></td><td>shower ต้องเลือกกระจกเสมอ</td></tr>
+<tr><td>สี (i-color)</td><td><span class="badge ok">ถูก</span></td><td>อลูมิเนียมมีสีได้</td></tr>
+<tr><td>รูปแบบ shower (o-shtype)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ p.id=shower</td></tr>
+<tr><td>ประเภทประตู shower (o-shdoortype)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ p.id=shower</td></tr>
+<tr><td>อุปกรณ์สีดำ/ทอง (opts: corner/showerhw)</td><td><span class="badge ok">ถูก</span></td><td>p.opts เฉพาะ shower</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge leak">leak</span></td><td>shower ไม่มีโครงตาราง ห้องน้ำกระจกเรียบ</td></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td><span class="badge ok">ถูก</span></td><td>shower มีดรอปพื้น (ฝักบัว/สระน้ำ) จริง</td></tr>
+<tr><td>ฝังรางยู (o-uchannel)</td><td><span class="badge leak">leak</span></td><td>shower ล็อคด้วยกระจก+ปะเก็น ไม่ฝังรางยูในพื้น</td></tr>
+<tr><td>ครอบวงกบ (o-fcsides)</td><td><span class="badge leak">leak</span></td><td>shower frameless ไม่มีวงกบอลู</td></tr>
+<tr><td>แผ่นทึบล่าง</td><td>— ไม่โผล่</td><td>cat shower ไม่อยู่ใน _isPaneCat → ถูก</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 8: บานเปลือย ======= -->
+<h3>กลุ่ม 8 — บานเปลือย (cat: บานเปลือย)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>กระจก (i-glass)</td><td><span class="badge ok">ถูก</span></td><td>บานเปลือยเลือกกระจกได้</td></tr>
+<tr><td>สี (i-color)</td><td>— ไม่โผล่</td><td>NO_COLOR_CATS รวม บานเปลือย → ถูก (frameless ไม่มีสีอลู)</td></tr>
+<tr><td>ประเภทประตู frameless (o-frametype)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ p.id=frameless_door</td></tr>
+<tr><td>สีเฟรมอลู (o-framecolor)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ p.id=frameless_door · เฟรมเล็กมีสี</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge leak">leak</span></td><td>บานเปลือยกระจกไม่มีโครงตาราง</td></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td><span class="badge ok">ถูก</span></td><td>ประตูบานเปลือยมีธรณีดรอปพื้น</td></tr>
+<tr><td>ฝังรางยู (o-uchannel)</td><td><span class="badge leak">leak</span></td><td>บานเปลือยกระจกไม่ฝังรางยู</td></tr>
+<tr><td>ครอบวงกบ (o-fcsides)</td><td><span class="badge unsure">ไม่ชัวร์ Q10</span></td><td>frameless_door อาจมีครอบวงกบอลูเล็กรอบวงกบได้ไหม? หรือไม่มีเลย?</td></tr>
+<tr><td>มุ้ง</td><td>— ไม่โผล่</td><td>บานเปลือยไม่มี mosquito:1 → ถูก</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 9: ดัดโค้ง ======= -->
+<h3>กลุ่ม 9 — ดัดโค้ง (cat: ดัดโค้ง)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี / กระจก</td><td><span class="badge ok">ถูก</span></td><td>glassDef:60 (กระจกโค้ง default)</td></tr>
+<tr><td>มือจับดิจิตอล (digihandle)</td><td><span class="badge ok">ถูก</span></td><td>curved_double/single/slim มี digihandle:1</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge unsure">ไม่ชัวร์ Q11</span></td><td>ดัดโค้งมีตารางโค้งได้จริงไหม? curved_fixed ไม่น่ามี</td></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td><span class="badge unsure">ไม่ชัวร์ Q12</span></td><td>ประตูโค้งบางงานมีดรอปพื้น แต่บานติดตายโค้งไม่น่ามี</td></tr>
+<tr><td>ฝังรางยู (o-uchannel)</td><td><span class="badge leak">leak</span></td><td>งานดัดโค้งไม่ฝังรางยูในพื้น (งานพิเศษ ราคากรอกเอง)</td></tr>
+<tr><td>ครอบวงกบ (o-fcsides)</td><td><span class="badge unsure">ไม่ชัวร์ Q12</span></td><td>ดัดโค้งมีวงกบอลูแบบโค้ง — บางงานทำได้ ถามพี่นัท</td></tr>
+<tr><td>มุ้ง</td><td>— ไม่โผล่</td><td>ดัดโค้งไม่มี mosquito:1 → ถูก</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 10: บานหมุน ======= -->
+<h3>กลุ่ม 10 — บานหมุน (cat: บานหมุน)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี / กระจก</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>มือจับดิจิตอล (digihandle)</td><td><span class="badge ok">ถูก</span></td><td>pivot มี digihandle:1</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge unsure">ไม่ชัวร์</span></td><td>บานหมุนมีตารางกระจกได้ไหม?</td></tr>
+<tr><td>ดรอปพื้น / ฝังรางยู</td><td><span class="badge leak">leak</span></td><td>บานหมุน (pivot) ไม่มีธรณีกันน้ำ ไม่ฝังรางยู</td></tr>
+<tr><td>ครอบวงกบ (o-fcsides)</td><td><span class="badge ok">ถูก</span></td><td>มีวงกบอลูมิเนียมได้</td></tr>
+<tr><td>มุ้ง</td><td>— ไม่โผล่</td><td>pivot ไม่มี mosquito:1 → ถูก</td></tr>
+</tbody>
+</table>
+
+<!-- ======= GROUP 11: เลื่อนภายใน ======= -->
+<h3>กลุ่ม 11 — เลื่อนภายใน (cat: เลื่อนภายใน)</h3>
+<table>
+<thead><tr>
+  <th>ออปชั่น</th><th>สถานะ</th><th>เหตุผล</th>
+</tr></thead>
+<tbody>
+<tr><td>สี / กระจก</td><td><span class="badge ok">ถูก</span></td><td>ปกติ</td></tr>
+<tr><td>ราง+บาน (SLIDING_RAIL)</td><td><span class="badge ok">ถูก</span></td><td>เฉพาะ cat เลื่อนภายใน + p.id อยู่ใน SLIDING_RAIL</td></tr>
+<tr><td>มุ้ง</td><td>— ไม่โผล่</td><td>เลื่อนภายใน ไม่มี mosquito:1 → ถูก (ในบ้านไม่ใส่มุ้ง)</td></tr>
+<tr><td>คาดตาราง (o-gridmark)</td><td><span class="badge ok">ถูก</span></td><td>เลื่อนภายในใส่ตารางกระจกได้</td></tr>
+<tr><td>แผ่นทึบล่าง (o-solidlower)</td><td><span class="badge leak">leak</span></td><td>เลื่อนภายในใช้ในบ้าน ไม่มีการใส่แผ่นทึบล่างกันน้ำ</td></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td><span class="badge leak">leak</span></td><td>เลื่อนภายใน (รางบน) ไม่มีธรณีพื้น</td></tr>
+<tr><td>ฝังรางยู (o-uchannel)</td><td><span class="badge leak">leak</span></td><td>เลื่อนภายในรางบน — ไม่มีรางพื้น</td></tr>
+</tbody>
+</table>
+
+<div class="section-divider"></div>
+
+<h2>สรุปสิ่งที่ต้องแก้ใน index.html (แยก 🔴 ชัวร์ / 🟡 ถามก่อน)</h2>
+<table>
+<thead><tr>
+  <th>รายการ</th><th>ประเภท</th><th>แก้อย่างไร</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td>คาดตาราง โผล่ใน shower/บานเปลือย/ดัดโค้ง(fixed)/บานหมุน/ติดตาย</td>
+  <td><span class="badge leak">🔴 ตัดชัวร์</span></td>
+  <td>เพิ่มเงื่อนไข: <code>_isPaneCat || p.cat==='บานหมุน'</code> whitelist หรือ exclude บาง id ออก</td>
+</tr>
+<tr>
+  <td>ฝังรางยู โผล่ใน shower/บานเปลือย/ดัดโค้ง/บานหมุน/เลื่อนภายใน</td>
+  <td><span class="badge leak">🔴 ตัดชัวร์</span></td>
+  <td>เพิ่ม exclude list: <code>&amp;&amp; !['shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน'].includes(p.cat)</code></td>
+</tr>
+<tr>
+  <td>ดรอปพื้น โผล่ใน เลื่อนภายใน/บานหมุน/บานเปลือย(ติดตาย)</td>
+  <td><span class="badge leak">🔴 ตัดชัวร์</span></td>
+  <td>เพิ่ม exclude: <code>&amp;&amp; !['เลื่อนภายใน','บานหมุน'].includes(p.cat)</code></td>
+</tr>
+<tr>
+  <td>ครอบวงกบ โผล่ใน shower/ราวบันได</td>
+  <td><span class="badge leak">🔴 ตัดชัวร์</span></td>
+  <td>shower: exclude; ราวบันได: p.handrail → ตัด branch o-fcsides ออก</td>
+</tr>
+<tr>
+  <td>แผ่นทึบล่าง โผล่ใน เลื่อนภายใน</td>
+  <td><span class="badge leak">🔴 ตัดชัวร์</span></td>
+  <td>เอา 'เลื่อนภายใน' ออกจาก _isPaneCat array</td>
+</tr>
+<tr>
+  <td>มุ้ง (mosquito:1) ใน โซลิดทู/วัน + บานเฟี้ยม</td>
+  <td><span class="badge unsure">🟡 ถามพี่นัท</span></td>
+  <td>ถ้าไม่ทำ: ลบ mosquito:1 ออกจาก product definition</td>
+</tr>
+<tr>
+  <td>เสริมคาน (optBeam + o-beamm) ซ้ำซ้อนใน บานเฟี้ยม</td>
+  <td><span class="badge unsure">🟡 ถามพี่นัท</span></td>
+  <td>ถ้า o-beamm ครอบคลุมแล้ว: ลบ optBeam branch ออก</td>
+</tr>
+<tr>
+  <td>ครอบวงกบ ใน บานเปลือย frameless_door</td>
+  <td><span class="badge unsure">🟡 ถามพี่นัท</span></td>
+  <td>ถ้าไม่ทำ: เพิ่ม p.cat==='บานเปลือย' ใน exclude</td>
+</tr>
+<tr>
+  <td>คาดตาราง ใน ดัดโค้ง (ประตู) + บานหมุน</td>
+  <td><span class="badge unsure">🟡 ถามพี่นัท</span></td>
+  <td>ถ้าทำได้: คงไว้ · ถ้าไม่ทำ: เพิ่ม exclude</td>
+</tr>
+</tbody>
+</table>
+
+<p style="margin-top:20px;font-size:12px;color:#6B7280;">สร้าง: 2026-06-11 · อ้างอิง index.html L2360-2760 · ห้ามแก้ index.html ตรง · ส่ง dev ผ่าน HANDOFF เท่านั้น</p>
+
+</body>
+</html>

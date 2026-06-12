@@ -1,0 +1,1043 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+<title>รายงานตรวจออปชั่นเทียบใบจริง 14 ใบ · 2026-06-09</title>
+<style>
+@page{size:A4;margin:12mm 10mm;}*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:10.5px;line-height:1.4;margin:0;}
+h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+.sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+h2{font-size:13px;margin:15px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#3B5EA6;page-break-after:avoid;}
+h2 .c{float:right;font-size:10.5px;font-weight:400;opacity:.9;}
+h2.gap{background:#B3151D;}h2.act{background:#0F766E;}h2.voc{background:#6B7280;}
+table{width:100%;border-collapse:collapse;margin:3px 0 7px;}
+th,td{border:1px solid #D1D5DB;padding:3px 5px;vertical-align:top;text-align:left;font-size:9.5px;}
+th{background:#F3F4F6;}
+td.c{text-align:center;white-space:nowrap;font-weight:700;}
+td.fix{color:#1f6b43;}
+.kpi{display:flex;gap:6px;margin:9px 0;}
+.kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+.kpi .n{font-size:18px;font-weight:700;display:block;}
+.red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#2563EB;}
+.verdict{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:9px 12px;margin:9px 0;font-size:11px;}
+.gapbox{border:1px solid #FCA5A5;border-radius:7px;padding:7px 10px;margin-bottom:6px;background:#FFF7F7;}
+.gapbox h3{margin:0 0 3px;font-size:12.5px;color:#B3151D;}
+.cols{column-count:2;column-gap:14px;font-size:9.5px;}
+ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+.foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style></head><body>
+
+<h1>รายงานตรวจออปชั่น — เทียบใบเสนอราคาจริง 14 ใบ</h1>
+<div class="sub">เครื่องคิดราคา <code>public/calculator/index.html</code> · ใบจริงลูกค้า 14 ใบ (QT) · 9 มิ.ย. 2026 · READ-ONLY · 22 agent อ่านใบจริง (pdftotext) + เทียบระบบ + คิด UX fix</div>
+
+<div class="verdict">
+<b style="color:#B3151D;font-size:14px;">สรุป: ระบบยังออกใบไม่เหมือนใบจริง — เจอ 34 จุดต้องแก้ (🔴)</b><br>
+อ่านใบจริงสำเร็จ <b>14/14 ใบ</b> · เทียบได้ <b>107 จุด</b> ทุกสินค้า/ทุกชั้นข้อมูล · ระบบทำได้ดีแล้ว 25 จุด แต่ยังขาด/ผิด 82 จุด<br>
+<b>ตัวการหลัก (ยืนยันเต็มสเกล):</b> ① ระบบไม่มี "หมายเหตุมาตรฐาน/เงื่อนไข" ที่ใบจริงมีทุกใบ&nbsp; ② สีเฟรมมุ้งไม่ลงใบ&nbsp; ③ ชื่อ/รหัสสีรุ่นเฉพาะไม่ครบ
+</div>
+
+<div class="kpi">
+<div><span class="n blue">14</span>ใบจริงที่อ่าน</div>
+<div><span class="n">107</span>จุดที่เทียบ</div>
+<div><span class="n red">34</span>🔴 ต้องแก้</div>
+<div><span class="n yellow">48</span>🟡 ปรับ</div>
+<div><span class="n green">25</span>✅ ผ่าน</div>
+</div>
+
+<h2 class="gap">3 Gap หลัก (cross-cutting — ตัวการ "ไม่เหมือนใบจริง") <span class="c">แก้ 3 อันนี้ = เหมือนขึ้น 70%+</span></h2>
+<div class="gapbox"><h3>① หมายเหตุ/เงื่อนไขมาตรฐาน หายทั้งระบบ</h3>
+ใบจริง <b>ทุกใบ</b> มีย่อหน้าเงื่อนไขมาตรฐาน (รับประกัน 1 ปี · รวม/ไม่รวมงานรื้อ-ดรอปพื้น-เดินไฟ · ไม่รวม VAT · Sealant · เงื่อนไขแบบ 3D/มัดจำ ฯลฯ — ดูภาคผนวกคลังคำ 76 แบบ) · ระบบมีแค่ช่องโน้ตอิสระ ไม่มี template
+<br><b>วิธีแก้ UX:</b> ทำชุด "หมายเหตุมาตรฐาน" (เลือกติ๊ก/auto ตามชนิดงาน + แก้ข้อความได้) ดึงลงใบใต้แต่ละรายการ/ท้ายใบ</div>
+<div class="gapbox"><h3>② สีเฟรมมุ้ง ไม่ render ลงใบ</h3>
+ใบจริงเขียน "มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู KL19022WD / ผ้าไฟเบอร์ดำ)" · ระบบออกแค่ชนิดผ้า → ตรงบั๊ก BUG-001/F-07
+<br><b>วิธีแก้ UX:</b> render สีเฟรมมุ้ง + ผ้า ลง "รายละเอียดงาน" (ผูก optSel สีกรอบมุ้ง)</div>
+<div class="gapbox"><h3>③ ชื่อ/รหัสสีรุ่นเฉพาะ ไม่ครบ</h3>
+ใบจริงระบุชื่อรุ่น+รหัส (เช่น Golden Teak SMS, ไวท์แบมบู KL19022WD, Grey RAL7022 KL10232A) · ระบบมีชื่อสีหลักแต่ไม่มีรหัส/รุ่นย่อย
+<br><b>วิธีแก้ UX:</b> เพิ่มชื่อรุ่น+รหัสในตาราง COLORS (ตามที่ใบจริงใช้) แสดงในใบ</div>
+
+<h2>กลุ่ม: บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี) <span class="c">13 จุด · 🔴2 🟡8</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>หมายเหตุมาตรฐานต่อรายการ (per-item standardNotes ในใบ)</td>
+<td>(4)หมายเหตุมาตรฐาน</td>
+<td>notes ใบจริง: 'หมายเหตุ ราคาที่เสนอไม่รวมงานดรอปพื้น' (พบในทุกบานเลื่อน/เปิดที่มีธรณี) · 'ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู แต่ไม่รวมความเสียหาย...'</td>
+<td>i-note = textarea ว่างเปล่า ให้พิมพ์เอง · qrow render note (เทา) / OPTION (แดง) ก่อน 'รายละเอียดงาน' · เงื่อนไขมาตรฐาน (รับประกัน 1 ปี + เงื่อนไขแบบ/3D) hardcode เป็น footer ท้ายใบ (บรรทัด 2876-2906) ครั้งเดียว</td>
+<td class="c">🔴</td>
+<td>ยืนยัน gap หลักของ pilot: ไม่มี template/dropdown 'หมายเหตุมาตรฐาน' ที่ใบจริงมีต่อรายการแทบทุกบรรทัด — เช่น 'ราคาที่เสนอไม่รวมงานดรอปพื้น', 'ราคาที่เสนอไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง', 'รวมงานรื้อบานเดิม แต่ไม่รวมความเสียหาย...', 'รวมงานกรีดพื้นเพื่อฝังรางยู...' → เซลล์ต้องพิมพ์มือทุกครั้ง = ตกหล่น/พิมพ์ผิด/ใบไม่ครบ</td>
+<td class="fix">P1: เพิ่ม STD_NOTES = array ~15 หมายเหตุมาตรฐานจากคลัง standardNotes (ไม่รวมดรอปพื้น / ไม่รวมลงเข็ม-เทพื้น-ปูกระเบื้อง / รวมรื้อบานเดิมไม่รวมเสียหาย / รวมกรีดพื้นฝังรางยู / รวม Protection แนวติดตั้ง / งานเก็บสีเฉพาะจุดไม่รวมสี / ฯลฯ). เพิ่ม &lt;details&gt; 'หมายเหตุมาตรฐาน (ติ๊กเลือก)' เหนือ textarea i-note: checkbox list ของ STD_NOTES → ติ๊กแล้ว append เข้า i-note (หรือ field แยก .i-stdnote) → readItem รวมเข้า note → render ใต้รายการตามเดิม. P1: เพิ่มปุ่ม 'ใส่หมายเหตุชุดนี้ทุกด้าน' สำหรับงานกั้นห้อง. นี่คือ fix สำคัญสุดที่กระทบความครบของใบ</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>สีกรอบมุ้ง (addon มุ้งในบานเลื่อน/เปิด/ติดตาย) render ลงใบ</td>
+<td>(5)วัสดุมุ้ง/เฟรม</td>
+<td>mosquito ใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' · 'มุ้งนิรภัย (เฟรมสีเทาซาฮาร่า)'</td>
+<td>บานที่ mosquito:true มี .o-mosq (เลือกชนิดมุ้ง), .o-mosqfabric (ผ้า), .o-mosqcolor (สีกรอบมุ้ง: ขาว/ดำ/ซาฮาร่า/อบพิเศษ/ลายไม้ ค่าทำสี×0.5 — บรรทัด 2356) · readItem 2604 อ่าน optSel.mosqColor · calc คิดเงินสีกรอบได้ (บรรทัด 1518,1546)</td>
+<td class="c">🔴</td>
+<td>ยืนยัน gap (ข) ของ pilot: .o-mosqcolor คิดเงินได้ แต่ itemDetail บรรทัด 3342-3351 (else) และ 3266-3276 (บานเลื่อน) render มุ้งเป็น '{ชื่อมุ้ง} {ผ้า}' เท่านั้น — ไม่ดึง mosqColor มาเขียนลงใบ → ใบจริงระบุ 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)', 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)' → ระบบออกแค่ 'มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา' ขาดสีเฟรม = ลูกค้าเห็นไม่ครบ</td>
+<td class="fix">P1: ใน itemDetail แก้ทั้ง 2 จุดที่ประกอบชื่อมุ้ง (บรรทัด ~3275 บานเลื่อน, ~3349 else): อ่าน it.optSel.mosqColor → map sahara→'เทาซาฮาร่า', kl_special→'อบพิเศษ', kl_wood→'ลายไม้' → ต่อท้ายเป็น 'มุ้งเฟรมเล็ก (ผ้า{X}/เฟรมสี{Y})'. P2: ขยาย .o-mosqcolor ให้ครอบคลุมสีที่ใบจริงมี + ช่องรหัสรุ่น (ไวท์แบมบู KL19022WD) เหมือน hasCode ของสีอลู. นี่คือ fix สำคัญ — กระทบหน้าตาใบโดยตรง</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ชนิดกระจก (GLASS table) — ใส/เขียว/เทมเปอร์/ลามิเนต/ยูโร</td>
+<td>(5)วัสดุกระจก</td>
+<td>glass ใบจริง: 'กระจกฝ้า (ด้านเรียบไว้ด้านนอก) / กระจกใส หนา 6 มม.' · 'กระจกลอนแก้วยูโรเกรย์ 5 มม.'</td>
+<td>GLASS มี ~60 ชนิด ครอบคลุม ใส/เขียว/เทมเปอร์ 6-15มม./ยูโรเกรย์/ยูโรบรอนซ์/ลามิเนต 4+4,5+5,6+6/ฟิล์มกันเสียง/STG/reflective/ลอนแก้ว 5มม./กระจกเงา · itemDetail แปลงชื่อเป็น 'กระจก{X} หนา Y มม.' ลงใบ (บรรทัด 3328-3338) · ดึง .s (ราคาขาย) คิดเงินได้</td>
+<td class="c">🟡</td>
+<td>ครอบคลุมส่วนใหญ่ แต่ขาดชนิดเฉพาะที่ใบจริงใช้: (1)'กระจกลอนแก้วยูโรเกรย์ 5 มม.' (มีแค่ 'ลอนแก้ว 5 มม.' เฉยๆ) (2)'กระจกลามิเนตลอนแก้วใสพิเศษ (ลอนกลาง) 5 มม.+ฟิล์มเทาเย็น+ฟิล์มใส+กระจกเงาใส 3 มม.' (combo OPTION 43,500) (3)'กระจกลายผ้าสีขุ่นมัว 5 มม.' (มี 'ชาดำ/ฝ้า/ลายผ้า 5-6มม.' รวม — ชื่อไม่ตรงเป๊ะ) (4)'กระจกฝ้า (ด้านเรียบไว้ด้านนอก/ใน)' — ระบบมีแค่ 'เทมเปอร์ฝ้า' ไม่มี 'กระจกฝ้า' ธรรมดา+คำระบุด้านเรียบ</td>
+<td class="fix">P1: เพิ่มใน GLASS: 'กระจกฝ้า 5 มม.', 'กระจกฝ้า 6 มม.' (ธรรมดา ไม่ใช่เทมเปอร์), 'กระจกลอนแก้วยูโรเกรย์ 5 มม.', 'กระจกลายผ้าสีขุ่นมัว 5 มม.' พร้อม c/s. P2: เพิ่ม checkbox/select 'ด้านเรียบ' (ไว้ด้านนอก/ใน) สำหรับกระจกฝ้า/ลอนแก้ว → ต่อท้าย det '(ด้านเรียบไว้ด้านนอก)'. P3: combo กระจกลามิเนตลอนแก้วพิเศษ ใช้ glass_replace (กรอกทุน+กำไร) หรือ OC-row other ได้แล้ว — เพิ่มเป็น preset ใน OC glass list</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>สีอลูมิเนียม (COLORS table) — ซาฮาร่า/อบขาว/ดำ/ลายไม้/อบพิเศษ</td>
+<td>(5)วัสดุสี + รหัสรุ่น</td>
+<td>aluColor: 'อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)' · 'อลูมิเนียมลายไม้ สี Golden Teak SMS'</td>
+<td>COLORS 13 สี: อบขาว/ดำ/เทาซาฮาร่า/ดำซาฮาร่า/Aztec/ลายไม้สต๊อก(สักทอง/มะฮอกกานี/ไวท์โอ๊ค)/Fuji Oak·Makha/อบพิเศษ(hasCode)/ลายไม้อบพิเศษ(hasCode)/ชุบ(hasCode+sampleConfirm) · มี .i-colorcode สำหรับ hasCode → render 'อลูมิเนียม สีอบพิเศษ [KL10232A]' (บรรทัด 3310-3311) · refreshColorByProduct กรอง series</td>
+<td class="c">🟡</td>
+<td>มีระบบรหัสรุ่น (hasCode) แล้ว = ดีกว่าที่ pilot กังวล · แต่ gap: (1)ใบจริงใช้ 'สี Golden Teak SMS', 'Grey RAL7022 (KL10232A)', 'ไวท์แบมบู (KL19022WD)', 'KL10232A' — ระบบมี free-text colorcode ครอบคลุมได้ แต่ลายไม้สต๊อกชื่อตายตัว (สักทอง/มะฮอกกานี/ไวท์โอ๊ค) ไม่มี 'Golden Teak SMS' / 'ไวท์โอ๊ค SMS' เป็น option เฉพาะ → เซลล์ต้องเลือก 'ลายไม้อบพิเศษ' + พิมพ์รหัสเอง (2)default index 0 = สีอบขาว แต่ใบจริงส่วนใหญ่ = เทาซาฮาร่า (index 2) → เซลล์ลืมเปลี่ยน = สีผิด</td>
+<td class="fix">P1: เพิ่ม global default สี = เทาซาฮาร่า (index 2) ถ้าตั้ง global-color ได้แล้ว — แต่ refreshColorByProduct รีเซ็ตเป็น 0 (บรรทัด 892) ทุกครั้งที่สลับ product → แก้ให้ default = index 2 (เทาซาฮาร่า) สำหรับ cat บานเลื่อน/เปิด/ติดตาย (ใบจริงใช้บ่อยสุด) แทน 0. P2: เพิ่มใน COLORS preset 'ลายไม้สต๊อก Golden Teak SMS' (rate เท่าลายไม้สต๊อก) เพราะใบจริงใช้ซ้ำมาก. P2: hasCode มีแล้ว — เพิ่ม placeholder ตัวอย่าง 'Golden Teak SMS / KL19022WD' ใน .i-colorcode</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>OPTION ทางเลือกลูกค้า (ขึ้น 'OPTION : ...' ในใบ)</td>
+<td>(3)OPTION±ราคา</td>
+<td>'OPTION : หากลูกค้าต้องการเปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 5,000 บาท'</td>
+<td>oc-block + ocAddRow: หมวด glass/mosq/color/handle/roof/other → auto-fill 'เปลี่ยนเป็น{ชื่อ}' + คำนวณ delta (glass=ผลต่าง s×area, color=colorPrice diff, mosq=rate×area, handle=flat, roof=rate diff) · readItem เก็บ optChoicesNote → note → qrow render 'OPTION : เปลี่ยนเป็นX (ราคา+N บาท)'</td>
+<td class="c">🟡</td>
+<td>ระบบดีมาก auto คิด delta ได้ · gap วลี: (1)ใบจริงใช้ 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น X ราคาเพิ่ม/ลดลง N บาท' แต่ระบบออก 'OPTION : เปลี่ยนเป็นX (ราคา+N บาท)' — ขาดคำ 'หากลูกค้าต้องการ' และ 'ราคาเพิ่ม/ลดลง...บาท' (รูปแบบต่าง) (2)delta แสดงในวงเล็บ '(ราคา+N บาท)' แต่ใบจริงเขียนติดในประโยค 'ราคาเพิ่ม N บาท'</td>
+<td class="fix">P1: แก้ ocPick บรรทัด 1977 ให้ tx.value='หากลูกค้าต้องการเปลี่ยนเป็น'+name แทน 'เปลี่ยนเป็น'+name. P1: แก้ render OPTION (qrow 2809 + group 3435) ให้ออก '...ราคา'+(delta&gt;0?'เพิ่ม ':'ลดลง ')+fmt(abs)+' บาท' ต่อท้ายข้อความแทนวงเล็บ '(ราคา±N บาท)' — ให้ตรง phrasing ใบจริงเป๊ะ. P3: เพิ่มหมวด OC 'door' (เปลี่ยนรุ่นประตู เช่น เป็นบานเลื่อนรางบนเฟรมสลิม ราคา 32,000) — ใบจริงมี OPTION เปลี่ยนทั้งรุ่น</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานเลื่อน (sliding_sms / sliding_euro / sliding_eseries)</td>
+<td>(2)บรรยายเต็ม + (5)วัสดุ</td>
+<td>'ประตูบานเลื่อนเปิดคู่กลางรางล่าง (รุ่นกันน้ำ) พร้อมกระจกติดตายด้านข้าง (มีคาดตาราง...) ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบ+คิ้วอลูมิเนียมวิ่งรอบด้านล่าง + มีมุ้งเฟรมเล็ก' (price 79,000)</td>
+<td>มี product ครบ (SMS=M, ยูโร=L, E-series=S ยกเลิกขาย) · buildItemOpts วาด .o-opentype (บานเลื่อน/สลับ/เปิดคู่กลาง/ลากจูง), .o-fixed (ติดตาย), .o-bottomrail (กันน้ำ/รางเตี้ย 7มม.), .o-slidelock (มีกุญแจ/ไม่มีกุญแจ) · itemDetail (บรรทัด 3053-3092) ประกอบชื่อตรงใบจริงมาก: 'ประตูบานเลื่อนสลับรางล่าง (รุ่นกันน้ำ) แบ่ง 3 บาน (เลื่อน X ติดตาย Y)' + รายละเอียดงาน อลู/กระจก/มุ้ง/ชุดล็อค ครบ</td>
+<td class="c">🟡</td>
+<td>ชื่อ/ราง/ติดตาย/ล็อค render ลงใบได้ครบ — gap อยู่ที่ (ก)ไม่มี template หมายเหตุมาตรฐาน (ดู finding รวม) · (ข)วลี 'พร้อมกระจกติดตายด้านข้าง/ด้านบน' ใบจริงมีแทบทุกบานเลื่อน แต่ระบบไม่มีช่องเลือกตำแหน่งติดตาย — ออกได้แค่ '(เลื่อน X ติดตาย Y บาน)' ไม่ระบุ 'ด้านข้าง/ด้านบน/รอบ' ที่ใบจริงใช้</td>
+<td class="fix">P2: เพิ่ม dropdown .o-fixedpos ใต้ช่องติดตาย (เมื่อ o-fixed&gt;0) ตัวเลือก: 'ด้านข้าง' / 'ด้านบน' / 'ด้านข้างและด้านบน' / 'รอบ' / 'ด้านบนและด้านล่าง' → itemDetail แทรกเป็น 'พร้อมกระจกติดตาย{ตำแหน่ง}' ต่อท้ายชื่อแทน '(ติดตาย N บาน)' (หรือคงทั้งคู่). P3: เพิ่ม checkbox .o-solidlower-corrug 'ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบ+คิ้ววิ่งรอบด้านล่าง' (ปัจจุบันมี solidlower แต่บังคับกรอกขนาด+คิดเงิน — ใบจริงมักเป็นข้อความฟรี) → ให้มีโหมด 'แค่ระบุข้อความ ไม่คิดเงิน'</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>บานเปิด ยูโร / D-series / Velora (casement_euro / casement_dseries / casement_velora)</td>
+<td>(2)บรรยายเต็ม + (3)OPTION</td>
+<td>'ประตูบานเปิดคู่ (มีธรณีกันน้ำ) พร้อมติดตั้งมือจับ Digital Door Lock รุ่น X2 ... OPTION : เปลี่ยนเป็น มือจับก้านโยก (Cmech) สีดำ รุ่น Berin ราคาลดลง 17,000 บาท'</td>
+<td>product ครบ · banner เลือกมือจับ 4 แบบ (Std/Up1 Cmech/Up2 ดิจิตอล/Up3 สแตน+โช๊ค) · .o-thresh (ธรณีกันน้ำ/หลังเต่า+Drop Seal +1,000) · .o-digi (11 รุ่น), .o-stainless (6 ขนาด), .o-closer, .o-handlename+.o-handleprice (มือจับรุ่นอื่นกรอกเอง เช่น Berin/HD182) · addon door extra · itemDetail บรรทัด else (3301-3356) ออก อลู/กระจก/มุ้ง ครบ</td>
+<td class="c">🟡</td>
+<td>render ลงใบครบ · gap: (1)มือจับ Cmech Berin ในใบจริง = 'มือจับก้านโยก (Cmech) สีดำ รุ่น Berin' แต่ระบบบานเปิดไม่มี dropdown Cmech (มีเฉพาะ cat บานเลื่อน บรรทัด 2206) — บานเปิดต้องใช้ช่อง handlename กรอกเอง = กรอกยาก/ไม่รวมสี · (2)วลีติดตาย 'พร้อมกระจกติดตายด้านข้างและด้านบน' ไม่มีช่องเลือก (เหมือนบานเลื่อน)</td>
+<td class="fix">P2: เพิ่ม dropdown Cmech ให้ cat บานเปิด (ขยาย if(p.cat==='บานเลื่อน') บรรทัด 2206 ให้รวม 'บานเปิด' หรือ p.digihandle) แบบ+สี → render 'มือจับ Cmech ก้านโยก รุ่น Berin สี{X}' ลง det. P2: เพิ่มช่องเลือกตำแหน่งกระจกติดตายเหมือน finding บานเลื่อน. P3: OPTION-row หมวด handle ปัจจุบันบวกเป็น delta บวกอย่างเดียว — เพิ่ม OC_HANDLES ให้มี 'Cmech Berin' เพื่อ auto-fill 'เปลี่ยนเป็น มือจับก้านโยก (Cmech) รุ่น Berin' พร้อม delta ลบได้</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ประตูบานเปิด โซลิด วัน / ทู (casement_flush_solid / casement_inset_solid)</td>
+<td>(2)บรรยายเต็ม + (5)วัสดุ</td>
+<td>aluColor ใบจริง = 'สีเทาซาฮาร่า (อลูมิเนียมลูกฟูกเรียบ 2 หน้า + คิ้วอลูมิเนียม)'</td>
+<td>product มี solid_door:1, full_grid:1, custom_price:1 (กรอกราคาเอง) · มี .o-fullgrid (ตารางเต็มบาน +5,000), .o-combo_awn_inside (combo บานกระทุ้งเข้าใน+มุ้งติดตาย กรอกราคาเอง) · itemDetail ตัด '· แข็งแรงกว่า' คง '(ลูกฟูกเสมอกรอบ)'</td>
+<td class="c">🟡</td>
+<td>ราคากรอกเอง (custom_price) → ต้องใช้ i-override · gap: ใบจริงบรรยาย 'ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบ+คิ้วอลูมิเนียมวิ่งรอบ' + สีอลูระบุ '(อลูมิเนียมลูกฟูกเรียบ 2 หน้า + คิ้วอลูมิเนียม)' — ระบบ COLORS ไม่มีตัวเลือกข้อความวัสดุลูกฟูก/คิ้ว ออกได้แค่ 'อลูมิเนียม สีเทาซาฮาร่า' ขาดส่วน '(ลูกฟูกเรียบ 2 หน้า + คิ้ว)'</td>
+<td class="fix">P2: เพิ่ม checkbox/select .o-alumat 'รายละเอียดอลู' ตัวเลือก: '(ลูกฟูกเรียบ 2 หน้า + คิ้วอลูมิเนียม)' / '(ลูกฟูกเรียบ 2 หน้า)' / 'ไม่ระบุ' → itemDetail ต่อท้ายบรรทัด 'อลูมิเนียม สี{X}' ด้วยข้อความนี้ (เฉพาะ solid_door หรือทุก cat บานเปิด/เลื่อน) ให้ตรงใบจริง</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>กระจกติดตาย (fixed_glass)</td>
+<td>(2)บรรยายเต็ม + (6)งานหลายด้าน</td>
+<td>'ช่องแสงกระจกติดตายด้านบน' · 'บานกระจกเงาติดตาย' (glass=กระจกเงา 5 มม.)</td>
+<td>product method bucket · itemDetail ใช้ branch else ออก 'บานกระจกติดตาย' + อลู + กระจก · noPrefix=true (ไม่เติม ประตู/หน้าต่าง) · group _shortGl ออก 'บานกระจกติดตาย'</td>
+<td class="c">🟡</td>
+<td>render พื้นฐานได้ · gap: ใบจริงมีหลายชื่อย่อย — 'ช่องแสงกระจกติดตายด้านบน', 'บานกระจกเงาติดตาย', 'กระจกติดตาย (มีคาดตาราง)', 'กระจกติดตาย (ด้านบน/ด้านข้าง/ด้านล่าง)' — ระบบออกชื่อเดียว 'บานกระจกติดตาย' ตายตัว ไม่มีช่องระบุตำแหน่ง/ประเภท(ช่องแสง/กระจกเงา)</td>
+<td class="fix">P2: เพิ่ม dropdown .o-fixedkind 'ประเภทติดตาย': 'บานกระจกติดตาย' / 'ช่องแสงกระจกติดตายด้านบน' / 'กระจกติดตายด้านข้าง' / 'บานกระจกเงาติดตาย' → ใช้แทนชื่อหัวข้อ. ใช้ i-position สำหรับด้าน. กระจกเงา/กระจกเงาทอง มีใน GLASS แล้ว (line 534,558) — ครบ</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>งานหลายด้าน / กั้นห้อง (group + i-position ด้าน A-G)</td>
+<td>(6)งานหลายด้าน</td>
+<td>'ด้าน C ... และปิดทึบด้วยอลูมิเนียมทึบด้านบน; ด้าน D ปิดทึบด้วยอลูมิเนียมทึบด้านบน (ตามแบบ)'</td>
+<td>i-group=6 (กั้นห้องกระจก) + i-position (ด้าน A-G) · genQuote จัดกลุ่ม byPos → หัวด้านแดง + บานเรียงใต้ (บรรทัด 3412-3423) · matLines dedupe วัสดุ · specialLines เก็บ OPTION/หมายเหตุ · set-optdelta บวกยอดชุด</td>
+<td class="c">🟡</td>
+<td>โครงสร้างหลายด้านทำได้ดี · gap: ใบจริงด้านที่ปิดทึบเขียน 'ด้าน D ปิดทึบด้วยอลูมิเนียมทึบด้านบน (ตามแบบ)' — ระบบไม่มี product/option 'ปิดทึบด้วยอลูมิเนียมทึบ' เป็นบรรทัดด้าน (ต้องใช้ custom_item) · และหมายเหตุมาตรฐานต่อด้าน (ดู finding 🔴 หมายเหตุ)</td>
+<td class="fix">P2: เพิ่ม product 'ปิดทึบด้วยอลูมิเนียมทึบ' (cat ลูกฟูก+คอมโพสิททึบ หรือเสริม) ที่ออกชื่อด้านได้ตรง + กรอกราคา/พื้นที่ · หรือเพิ่ม checkbox .o-solidpanel 'ปิดทึบด้วยอลูมิเนียมทึบด้านบน' ในบานเลื่อน/เปิด ที่ต่อ det ฟรี. P3: เชื่อมกับ STD_NOTES (finding หมายเหตุ) ให้ใส่หมายเหตุระดับชุดได้</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>บานเปิด X-series (casement_xseries) — ใช้ภายใน ไม่กันน้ำ</td>
+<td>(2)บรรยายเต็ม</td>
+<td>ใบจริงหมวดนี้พบใน OPTION เช่น 'OPTION : เปลี่ยนเป็น ประตูบานเลื่อนรางบน (รุ่นเฟรม สลิม) ราคา 32,000 บาท' — ระบบรองรับผ่าน OC-row roof/other</td>
+<td>product มี series:'S', closer:1, mosquito:1, addon door · itemDetail ตัด '(ใช้ภายใน ไม่กันน้ำ)' ออกจากหัวชื่อ (บรรทัด 3014) ตามดีไซน์ (เป็นคำเตือนเซลล์ ไม่ลงใบลูกค้า) · ออกชื่อ+อลู+กระจก+มุ้งได้</td>
+<td class="c">✅</td>
+<td>ไม่มีปัญหา structural — ทำงานตามสเปก</td>
+<td class="fix">ไม่ต้องแก้ (ผ่าน) — แต่ควร double-check ว่า det ไม่หลุดคำเตือน 'ไม่กันน้ำ' ที่เซลล์ต้องเห็น: เพิ่ม badge สีส้มในฟอร์ม (ไม่ลงใบ) เตือนเซลล์ว่า X-series ใช้ภายใน</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>คาดตาราง (grid mark บนบานเลื่อน/เปิด/ติดตาย)</td>
+<td>(2)บรรยายเต็ม</td>
+<td>'หน้าต่างบานยก (มีคาดตาราง) + มุ้งนิรภัย'</td>
+<td>.o-gridmark + .o-gm-nh/.o-gm-nv/.o-gm-rate/.o-gm-curve (generic ทุก cat ยกเว้นหลังคา/ฝ้า) · itemDetail บรรทัด 3101-3105 ต่อท้าย '(คาดตาราง แนวนอน N เส้น แนวตั้ง M เส้น)' หรือ '(มีคาดตาราง)' · คิดเงินตามสูตร</td>
+<td class="c">✅</td>
+<td>render + คิดเงินครบ ตรงใบจริง '(มีคาดตาราง)'</td>
+<td class="fix">ไม่ต้องแก้ (ผ่าน). ข้อสังเกตเล็ก: ใบจริงบางจุดเขียนแค่ '(มีคาดตาราง)' ไม่ระบุจำนวนเส้น — ระบบทำได้ทั้ง 2 แบบแล้ว (ถ้าไม่กรอกเส้น = '(มีคาดตาราง)')</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>จำนวนบาน / รูปแบบเปิด (OPENING_PATTERNS + i-panels)</td>
+<td>(2)บรรยายเต็ม</td>
+<td>'ประตูบานเลื่อนสลับรางล่าง (รุ่นรางเตี้ย 7 มม.) แบ่ง 3 บาน'</td>
+<td>.i-panels (จำนวนบานทั้งหมด) ย้ายเข้ากล่องฟ้า sliding-main-block · .o-fixed คำนวณเปิด=บาน-ติดตาย แสดง realtime · itemDetail ออก 'แบ่ง N บาน (เลื่อน X ติดตาย Y บาน)'</td>
+<td class="c">✅</td>
+<td>ครบ ตรงใบจริง 'แบ่ง 3 บาน' · OPENING_PATTERNS preset มีใน data แต่ buildItemOpts ใช้ .o-opentype แทน (เพียงพอ)</td>
+<td class="fix">ไม่ต้องแก้ (ผ่าน)</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน <span class="c">21 จุด · 🔴8 🟡6</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>บานกระทุ้ง ยูโร (awning_euro) — แบบเปิด (เปิดล่าง/เปิดข้าง/tilt&amp;turn)</td>
+<td>(2)บรรยายเต็ม + (3)OPTION</td>
+<td>ใบจริงระบุ 'หน้าต่างบานกระทุ้ง' และมี '( มีโช๊คด้านบน )' / รูปแบบเปิด — ระบบออกแค่ 'หน้าต่างบานกระทุ้ง' ลอยๆ ไม่บอกแบบเปิด ทั้งที่ tilt&amp;turn บวกเงิน 5,000</td>
+<td>มี select .o-awn_mode (เปิดล่าง/เปิดข้าง/tilt&amp;turn) อ่านเข้า optSel.awn_mode และ tilt&amp;turn คิดเงิน +5,000/บาน (calcUnit บรรทัด 1322) — แต่ผลลัพธ์ push เข้า msgs เท่านั้น และ msgs ถูกตัดทิ้งไม่ขึ้นใบ (คอมเมนต์ R4.1 บรรทัด 3148). itemDetail สาขา generic else (3301-3356) ไม่มีโค้ดอ่าน awn_mode เลย → ใบจริงไม่บอกเลยว่าเป็นบานกระทุ้งเปิดล่าง/เปิดข้าง/tilt&amp;turn</td>
+<td class="c">🔴</td>
+<td>กรอกได้+คิดเงินได้ แต่ไม่ render ลงใบ (ข้อมูลอยู่ใน msgs ซึ่งถูกตัด) — ไม่มี branch ต่อท้าย prodName/det สำหรับ awn_mode</td>
+<td class="fix">ใน itemDetail (ก่อน det=lines.join) เพิ่ม: ถ้า p.cat==='บานกระทุ้ง' &amp;&amp; optSel.awn_mode → push label ลง _parts: awn_mode='0'→'เปิดล่าง' (ถ้าเลือก awning_brace/เสริมแขนค้ำ ให้ต่อ 'พร้อมแขนค้ำ'), '1'→'เปิดข้าง', '2'→'tilt &amp; turn (เปิดออกนอกบ้าน)'. ให้ tilt&amp;turn เป็นบรรทัดในรายละเอียดงานเสมอเพราะมีราคา. priority P1 เพราะกระทบทั้งหน้าตาใบและความถูกต้องที่ลูกค้าเห็น (จ่ายเพิ่ม 5,000 แต่ใบไม่เขียน)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานกระทุ้ง — combo บานกระทุ้งเข้าใน + มุ้งจีบนิรภัยติดตายนอก (o-combo_awn_inside)</td>
+<td>(2)บรรยายเต็ม</td>
+<td>ตรงกับ vocabulary 'combo บานกระทุ้งเข้าใน+มุ้งติดตาย' ที่ขายจริง — ลูกค้าจ่ายเงินแต่ไม่เห็นรายการในใบ</td>
+<td>checkbox + ช่องราคากรอกเอง อ่านเข้า optSel.combo_awn/combo_price คิดเงินจริง (1357-1361) แต่ผลลัพธ์อยู่ใน msgs เท่านั้น → ไม่ขึ้นใบ. itemDetail ไม่มี branch combo_awn</td>
+<td class="c">🔴</td>
+<td>คิดเงินได้แต่ข้อความหายไปกับ msgs — ไม่มีการ render combo ลง _parts/det</td>
+<td class="fix">itemDetail: ถ้า optSel.combo_awn → _parts.push('บานกระทุ้งเปิดเข้าใน + มุ้งจีบนิรภัยติดตายด้านนอก'). priority P1 (มีราคา/กระทบใบ)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานกระทุ้ง — สีกรอบมุ้ง (เฟรม) เทาซาฮาร่า/เคแอลอบพิเศษ/ลายไม้ (o-mosqcolor)</td>
+<td>(5)รายละเอียดมุ้ง(เฟรม)</td>
+<td>ใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' / 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู / ผ้าไฟเบอร์ดำ)' — ระบบออกแค่ 'มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา' ขาดสีเฟรม</td>
+<td>select .o-mosqcolor อ่านเข้า optSel.mosqColor (2600) และคิดเงิน ×0.5 จริง (calcUnit 1517-1527,1546-1548) เก็บ label ลง addonLines[].det. แต่ itemDetail สาขามุ้ง (3342-3351) แสดงเฉพาะ msName + mfLabel(ผ้า) — ไม่เคยอ่าน mosqColor; qrow render เฉพาะ addons[].n (ไม่ใช่ .det) และเฉพาะตอน qSplit → สีเฟรมมุ้งหายจากใบ</td>
+<td class="c">🔴</td>
+<td>กรอกได้+คิดเงินได้ แต่ render มุ้งใช้แต่ผ้า ไม่ดึงสีเฟรม (gap หลักที่ pilot ยืนยัน)</td>
+<td class="fix">ในทุก branch ที่ render มุ้ง (itemDetail generic 3342-3351, sliding 3266-3276) ต่อท้าย mfLabel ด้วยสีเฟรม: map optSel.mosqColor → {''(ดำ/ขาว default):โชว์ 'เฟรมสีขาว/ดำ' หรือเว้น, sahara:'เฟรมสีเทาซาฮาร่า', kl_special:'เฟรมสีอบพิเศษ', kl_wood:'เฟรมลายไม้'} ให้ออกเป็น 'มุ้งเฟรมเล็ก (ผ้า{X} / {เฟรมสี Y})'. แก้ครั้งเดียวใช้ได้ทุก cat ในกลุ่ม (กระทุ้ง/ยก/เฟี้ยม/เลื่อนภายใน). priority P1 — เป็น gap หลักที่ยืนยันแล้ว กระทบหน้าตาใบทุกใบที่มีมุ้งสีพิเศษ + ลูกค้าจ่ายค่าทำสีแต่ไม่เห็น</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานเฟี้ยม เซมิยูโร / ยูโร (folding, folding_euro) — จำนวนบาน/การแบ่ง 3+3</td>
+<td>(2)บรรยายเต็ม</td>
+<td>ใบจริง: 'ประตูบานเฟี้ยมอิสระ แบ่ง 3+3 บาน', 'ประตูบานเฟี้ยม (รุ่นรางกันน้ำ) แบ่ง 2+3 บาน' — ระบบออกแค่ 'ประตูบานเฟี้ยม (รุ่น M เซมิยูโร)' ไม่บอกจำนวน/การแบ่ง</td>
+<td>method:'fold' คิดราคาตาม per_panel_min×panels (939) ใช้ช่อง 'จำนวนบานทั้งหมด' (.i-panels) แต่ prodName สาขา generic ไม่มีการต่อ 'แบ่ง N บาน' (logic 'แบ่ง N บาน' อยู่เฉพาะ SLIDING_RAIL branch บรรทัด 3083 ซึ่ง folding ไม่เข้า). ไม่มีช่องระบุรูปแบบแบ่ง 3+3 / 2+3</td>
+<td class="c">🔴</td>
+<td>ไม่มี template/branch render จำนวนบาน+รูปแบบการแบ่งสำหรับ fold; ไม่มีช่องกรอกแพทเทิร์น (เช่น 3+3, 2+3)</td>
+<td class="fix">1) เพิ่ม branch ใน itemDetail สำหรับ p.cat==='บานเฟี้ยม': ถ้า panels&gt;1 ต่อ 'แบ่ง '+panels+' บาน'. 2) เพิ่มช่อง input ข้อความ .o-foldsplit (placeholder '3+3 / 2+3 / อิสระ') ใน buildItemOpts เฉพาะ cat บานเฟี้ยม แล้ว render เป็น 'แบ่ง {ค่า} บาน' ถ้ากรอก (ทับการนับ panels). priority P1 (กระทบหน้าตาใบโดยตรง ทุกใบบานเฟี้ยมราคาหลักแสน)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานเฟี้ยม — เสริมคาน (o-beam / optBeam)</td>
+<td>(2)บรรยายเต็ม + (3)ราคา</td>
+<td>ใบจริง: 'เสริมคานซัพพอร์ทรุ่นโชว์คาน และฝังรางยูกันบานแกว่ง 1 ราง' — ระบบไม่ออกข้อความนี้เลย</td>
+<td>checkbox .o-beam (optBeam) อ่านเข้า optSel.beam (2524) คิดเงิน Math.max(4000, a×BEAM) (1387) แต่ไม่ push msg และ itemDetail ไม่มีโค้ด render คำว่า 'เสริมคาน/เสริมคานซัพพอร์ท' สำหรับ fold → ลูกค้าจ่ายค่าเสริมคานแต่ใบไม่เขียน</td>
+<td class="c">🔴</td>
+<td>คิดเงินได้แต่ไม่มีบรรทัด render เสริมคานสำหรับ cat บานเฟี้ยม (ต่างจาก sliding ที่มี _beamStr)</td>
+<td class="fix">itemDetail: ถ้า p.optBeam &amp;&amp; optSel.beam → _parts.push('เสริมคานซัพพอร์ท'). เสริม: ปรับ checkbox o-beam เป็น select รุ่นซ่อนคาน/โชว์คาน เพื่อให้ตรงคำใบจริง ('รุ่นโชว์คาน'/'รุ่นซ่อนคาน'). ส่วน 'ฝังรางยู' มีช่อง o-uchannel อยู่แล้ว (render บรรทัด 3137) — แนะนำ default แนะนำเซลล์ติ๊กคู่กับบานเฟี้ยม. priority P1 (มีราคา 4,000+)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>เลื่อนภายในรางล่าง ยูโร (inner_bottom_euro)</td>
+<td>(2)บรรยาย</td>
+<td>เลื่อนภายในรางล่างยูโรควรออก 'รางล่าง (รุ่นกันน้ำ) แบ่ง N บาน' เหมือน SMS — ปัจจุบันออกแค่ชื่อรุ่น</td>
+<td>PRODUCTS บรรทัด 595 มี inner_bottom_euro (rates INBOT_EURO) แต่ SLIDING_RAIL (908-911) ไม่มี key 'inner_bottom_euro' → ไม่เข้า sliding render branch และ buildItemOpts ไม่สร้าง controls บานเลื่อน (gate SLIDING_RAIL[p.id] บรรทัด 2234) → ตกไป generic: ไม่มีชนิดเปิด/ราง/แบ่งบาน/ชุดล็อค</td>
+<td class="c">🔴</td>
+<td>ขาด entry ใน SLIDING_RAIL สำหรับ inner_bottom_euro (ตกหล่นเหมือน xseries) — gap ชัด</td>
+<td class="fix">เพิ่ม SLIDING_RAIL.inner_bottom_euro={rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'} ให้ตรง pattern SMS. priority P1 (ยูโรเป็นรุ่นขายหลัก กระทบหน้าตาใบ + form กรอกไม่ได้ครบ)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ทุกสินค้าในกลุ่ม — หมายเหตุมาตรฐานต่อรายการ (per-zone notes)</td>
+<td>(4)หมายเหตุมาตรฐาน</td>
+<td>ใบจริงเกือบทุก zone มีหมายเหตุ เช่น 'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / ดรอปพื้น', 'หมายเหตุ ราคาที่เสนอไม่รวมงานดรอปพื้น', 'รวมงานกรีดพื้นเพื่อฝังรางยู...' — ระบบให้พิมพ์มือล้วน</td>
+<td>เงื่อนไขมาตรฐาน (รับประกัน/แบบ3D/เข้าทำงาน) อยู่ใน footer qcond เดียว ท้ายใบทั้งใบ (2876-2912). หมายเหตุระดับรายการต้องพิมพ์เองในช่อง .i-note (textarea 2031) → render ผ่าน note (2799-2801, 3460). ไม่มี template/dropdown หมายเหตุสำเร็จรูป</td>
+<td class="c">🔴</td>
+<td>ไม่มีระบบ template 'หมายเหตุมาตรฐานต่อรายการ' (gap หลักที่ pilot ยืนยัน) — เซลล์ต้องพิมพ์ทุกประโยคเอง เสี่ยงลืม/พิมพ์ไม่ตรงคำ</td>
+<td class="fix">เพิ่มชุด checkbox/multiselect 'หมายเหตุมาตรฐาน' ใน buildItemOpts (ทุก cat บานในกลุ่ม) ดึงจาก array template เช่น NOTE_TEMPLATES=['ไม่รวมงานดรอปพื้น','ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง','รวมงานกรีดพื้นฝังรางยู (ไม่รวมความเสียหาย)','รวมงานรื้อบานเดิม (ไม่รวมความเสียหาย)','รวมค่าแรงเก็บสีเฉพาะจุด (ไม่รวมสี)']; ติ๊กแล้ว push เข้า optSel.stdNotes → render เป็นบรรทัด 'หมายเหตุ ...' ใต้รายการ (สีเทา เหมือน note ปัจจุบัน). เก็บช่อง .i-note ไว้สำหรับเคสพิเศษ. priority P1 — กระทบหน้าตา/ความครบของทุกใบในกลุ่ม และลดงานพิมพ์เซลล์</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานยก SMS (lift_sms)</td>
+<td>(2)บรรยาย + (5)มุ้ง</td>
+<td>ใบจริง: 'หน้าต่างบานยก (มีคาดตาราง) + มุ้งนิรภัย', '+ มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา' — ระบบออก 'มุ้ง...' ได้ แต่สีเฟรมหาย</td>
+<td>method:'lift', maxPanels 2, motor:true, mosquito:1. มี guard &gt;10 ตร.ม. block (1453) + warning. มี select มอเตอร์ (2231). itemDetail generic render อลู/กระจก/มุ้ง(ผ้า)ได้ แต่: (ก) สีเฟรมมุ้งไม่ขึ้น (ดูข้อ mosqColor) (ข) ไม่มีการต่อ '(มีคาดตาราง)' อัตโนมัติ — ใบจริงบานยกมักมี 'มีคาดตาราง' (มี checkbox o-gridmark generic อยู่ แต่ต้องติ๊กเอง+กรอกเส้น)</td>
+<td class="c">🟡</td>
+<td>มุ้ง render เฉพาะผ้า (gap ร่วม); คาดตารางต้องกรอกเอง(UX ภาระ)</td>
+<td class="fix">1) แก้สีเฟรมมุ้งตามข้อ mosqColor (ครอบบานยกด้วย). 2) มอเตอร์: เพิ่ม render บรรทัด 'มอเตอร์ {80/300} กก.' ลง _parts เมื่อ optSel.motor&gt;0 (ปัจจุบันคิดเงินแต่อาจไม่ขึ้นชื่อ — ตรวจซ้ำ). 3) คงคาดตาราง generic ไว้ (ทำงานถูก). priority P1 (สีเฟรมมุ้ง) — บานยกใช้มุ้งแทบทุกใบ</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานยก — มอเตอร์ (o-motor) render ลงใบ</td>
+<td>(2)บรรยาย</td>
+<td>บานยกมอเตอร์เป็นงานราคาสูง — ถ้าใบไม่เขียน 'พร้อมมอเตอร์ 80 กก.' ลูกค้าไม่เห็นของที่จ่าย</td>
+<td>select มอเตอร์ 80/300 กก. (+18,000/+28,000) อ่าน optSel.motor และคิดเงิน — ต้องยืนยันว่ามี branch render 'มอเตอร์ ...' ลง prodName/det หรือไม่ (ไม่พบ branch render motor ใน itemDetail สำหรับ lift; น่าจะอยู่ใน msgs เท่านั้น)</td>
+<td class="c">🟡</td>
+<td>(เช็คซ้ำ) อาจเป็น msgs-only เหมือน awn_mode → ไม่ขึ้นใบ ทั้งที่บวกเงินหมื่นกว่า</td>
+<td class="fix">ตรวจซ้ำ grep 'motor' ใน render path; ถ้าไม่มี → itemDetail: ถ้า p.motor &amp;&amp; optSel.motor&gt;0 → _parts.push('พร้อมมอเตอร์ '+(motor==='80'?'80':'300')+' กก.'). priority P1 ถ้ายืนยันว่าไม่ขึ้น (มีราคาสูง)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>บานหมุน เมืองทอง (pivot)</td>
+<td>(2)บรรยาย + (5)รายละเอียด + (3)OPTION</td>
+<td>คลังคำมี 'บานหมุน' แต่ในใบจริงประตูบานเปิด/หมุนมักมีมือจับ Cmech/ดิจิตอล + OPTION เปลี่ยนลายไม้ — pivot กรอกมือจับไม่ได้เลย</td>
+<td>method:'bucket' min 26000 + addon window +5,000. แต่ pivot ไม่มี mosquito, ไม่มี series, ไม่มี opts, ไม่มี digihandle/closer. itemDetail เข้า generic else: render อลู+กระจกได้ แต่ไม่มีช่องระบุ 'แบ่ง 2 บาน/บานเดี่ยว', ไม่มีมือจับ, ไม่มี OPTION เปลี่ยนสี/เปลี่ยนกระจก ที่ใบจริงมีเสมอ</td>
+<td class="c">🔴</td>
+<td>product config เบามาก — ไม่มี mosquito/digihandle/opts; พึ่งช่อง OPTION ทางเลือกลูกค้า (oc-row) ที่เป็น generic เท่านั้น</td>
+<td class="fix">1) ตรวจกับพี่นัทว่าบานหมุนต้องมีมือจับเลือกไหม — ถ้าใช่ เพิ่ม digihandle:1 ใน product (จะได้ dropdown มือจับดิจิตอล/สแตน/กรอกเอง อัตโนมัติ). 2) ยืนยันว่า OPTION ทางเลือกลูกค้า (ปุ่ม oc-row) ใช้กับ pivot ได้ (เป็น generic ควรได้) — เป็นทางลดสำหรับ OPTION เปลี่ยนสี/กระจก. priority P2 (กลุ่มนี้ใช้น้อยกว่าเฟี้ยม/ยก แต่ขาดมือจับชัด)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>บานเฟี้ยม X-series (folding_xseries)</td>
+<td>(1)ชื่อ + (2)บรรยาย</td>
+<td>ใช้ภายใน — ใบจริงในคลังเน้น 2+3/3+3; ระบบไม่ระบุจำนวน</td>
+<td>method:'fold_flat' min 36000, series S. ชื่อรุ่นออก '(รุ่น S สลิม)'. ปัญหาเดียวกับ folding: ไม่ render 'แบ่ง N บาน' + ไม่ render เสริมคาน. คำเตือน 'ใช้ภายใน ไม่กันน้ำ' ถูกตัดจากใบลูกค้า (ตั้งใจ บรรทัด 3353) ถูกต้อง</td>
+<td class="c">🟡</td>
+<td>สืบทอด gap จาก fold (จำนวนบาน/เสริมคาน) — ดู 2 ข้อบน</td>
+<td class="fix">แก้พร้อม fold (เพิ่ม 'แบ่ง N บาน' + เสริมคาน ครอบ cat บานเฟี้ยมทั้งหมด). priority P2</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>เลื่อนภายในรางบน (ซ้อน) (inner_top_stack)</td>
+<td>(2)บรรยาย + (5)มุ้ง</td>
+<td>คลังคำมี 'เลื่อนซ้อนผนัง' — ใบจริงเลื่อนภายในมักไม่มีมุ้ง (อยู่ในบ้าน) จึงอาจถูก</td>
+<td>method:'area_rate_addon', SLIDING_RAIL rail:top → เข้า sliding branch (3053+, 3246+): render อลู/กระจก/มุ้ง/ชนิดเปิด/ราง/แบ่ง N บาน/เสริมคาน ครบ. แต่มุ้งยัง render เฉพาะผ้า (สีเฟรมหาย, ดู mosqColor) + product นี้ไม่มี mosquito:1 flag → ตรวจซ้ำว่าใส่มุ้งได้ไหม (ใน PRODUCTS บรรทัด 582 ไม่มี mosquito)</td>
+<td class="c">🟡</td>
+<td>(เช็คซ้ำ) inner_top_stack ไม่มี mosquito:1 → ช่องมุ้งไม่โผล่ (buildItemOpts gate ด้วย p.mosquito บรรทัด 2350); เลื่อนภายในบางงานอาจไม่ต้องมุ้ง (ภายใน) จึงอาจตั้งใจ</td>
+<td class="fix">ยืนยันกับพี่นัทว่าเลื่อนภายในต้องใส่มุ้งได้ไหม — ถ้าต้อง เพิ่ม mosquito:1. ส่วน 'แบ่ง N บาน'/ชนิดเปิด/เสริมคาน ผ่าน (เข้า sliding branch). priority P2</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>เลื่อนภายในรางบน X-series (inner_top_xseries)</td>
+<td>(2)บรรยาย</td>
+<td>vocabulary 'เลื่อนซ้อน' X-series ใช้ภายใน — ใบจะออกชื่อรุ่นแต่ไม่มี 'แบ่ง N บาน/รางบน'</td>
+<td>area_rate_addon rates SLIMLUX, series S. แต่ SLIDING_RAIL ไม่มี key 'inner_top_xseries' (มีแค่ inner_top_stack/slimlux/inner_bottom_sms บรรทัด 908-911) → itemDetail เงื่อนไข (cat เลื่อนภายใน &amp;&amp; SLIDING_RAIL[id]) เป็น false → ตกไป generic else: ไม่ได้ render ชนิดเปิด/ราง/แบ่ง N บาน</td>
+<td class="c">🟡</td>
+<td>ขาด entry ใน SLIDING_RAIL สำหรับ inner_top_xseries → ไม่เข้า sliding render branch (regression/ตกหล่น)</td>
+<td class="fix">เพิ่ม SLIDING_RAIL.inner_top_xseries={rail:'top'} (และตรวจ buildItemOpts gate บรรทัด 2234 ที่ก็เช็ค SLIDING_RAIL[p.id] — ตอนนี้ X-series ไม่ได้ controls บานเลื่อนด้วย). priority P2 (สินค้าเฉพาะ ใช้น้อย แต่ตกหล่นชัด)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ทุกสินค้าในกลุ่ม — รหัสสี/รุ่นย่อย (color code)</td>
+<td>(5)รายละเอียดสี</td>
+<td>ใบจริง: 'อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)', 'ไวท์แบมบู (KL19022WD)', 'Modern Grey (ชินโคไลท์ HC-N828)' — ถ้าสีนั้นไม่ได้ตั้ง hasCode:true เซลล์ใส่รหัสไม่ได้</td>
+<td>COLORS มี hasCode → มีช่อง .i-colorcode ให้กรอกรหัส และ render '[code]' ต่อท้ายชื่อสี (3309-3311); มี sampleConfirm สำหรับสีที่ต้องยืนยันตัวอย่าง (3312-3315). แต่ครอบเฉพาะสีที่ flag hasCode — สีรุ่นย่อยที่ใบจริงมีรหัสแต่ตาราง COLORS ยังไม่ได้ใส่ จะกรอกรหัสไม่ได้</td>
+<td class="c">🟡</td>
+<td>มีโครงรองรับรหัสสีแล้ว แต่ coverage ไม่ครบทุกสีที่ใบจริงใช้ (pilot ชี้ 'ไม่มีรหัสสีรุ่นย่อย')</td>
+<td class="fix">1) ตรวจ COLORS ทุกตัวที่ใบจริงมีรหัสในวงเล็บ → set hasCode:true (RAL7022/KL10232A, KL19022WD ไวท์แบมบู, ฯลฯ). 2) หรือเพิ่มช่องรหัสสี generic แบบ optional ให้ทุกสี (ถ้ากรอกค่อยโชว์ '[...]'). 3) สำหรับสี 'รอสรุปสี' ให้มี checkbox '(รอสรุปสี)' ต่อท้ายตามคลังคำ 'อลูมิเนียมลายไม้สีอบพิเศษ (รอสรุปสี)'. priority P2 (กระทบเฉพาะงานสีพิเศษ แต่เป็น gap ที่ยืนยันแล้ว)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>บานกระทุ้ง — มือจับ Cmech หลบมุ้ง (o-cmechawn)</td>
+<td>(5)รายละเอียดวัสดุ/อุปกรณ์</td>
+<td>vocabulary 'มือจับก้านโยก (Cmech)' — ระบบออกชื่อ+สีถูก</td>
+<td>select .o-cmechawn อ่านเข้า optSel.cmechawn คิดเงิน 600/840 (1344-1350) และ render ลง _parts ถูกต้อง (บรรทัด 3133-3134 'มือจับ Cmech หลบมุ้ง ดำ/ขาว|ชุบ')</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน — ไม่ต้องแก้. (เสริม P3: อาจเพิ่มชื่อรุ่น Berin ตามคลังคำ 'รุ่น Berin' เป็น option ชื่อรุ่น ถ้าอยากตรงใบเป๊ะ)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>บานเฟี้ยม — ธรณี (o-threshf)</td>
+<td>(5)รายละเอียด</td>
+<td>ตรง vocabulary 'รุ่นรางกันน้ำ' / ธรณี — ผ่าน</td>
+<td>select .o-threshf (ภายนอก/หลังเต่าภายใน) อ่านเข้า optSel.threshf (2496) และ render ลง _parts ถูกต้อง (3117-3121)</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน — ไม่ต้องแก้</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>บานหมุน aluinch (pivot_aluinch, ยกเลิกขาย)</td>
+<td>(1)ชื่อ</td>
+<td>-</td>
+<td>method same_as ref pivot, ต่อท้าย '(ยกเลิกขาย)' ถูกต้อง (3032-3033). สืบทอด gap จาก pivot</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน (ยกเลิกขายแล้ว) — แก้ pivot จะได้ผลตามถ้ายังเปิดใช้</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>บานยก aluinch (lift_aluinch, ยกเลิกขาย)</td>
+<td>(1)ชื่อ</td>
+<td>-</td>
+<td>same_as ref lift_sms, motor+mosquito, '(ยกเลิกขาย)' ต่อท้ายถูก. สืบทอด gap มุ้งสีเฟรม</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน — แก้ตาม lift_sms</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>เลื่อนภายในรางบน SlimLux (inner_top_slimlux)</td>
+<td>(1)ชื่อ + (5)กระจก</td>
+<td>vocabulary 'Soft-Close (รุ่น SlimLux)' / 'ระบบสลิงดึง' — ชื่อในใบมี SlimLux ครบ</td>
+<td>series S, รวมเทมเปอร์ 6มม. → itemDetail hard-code 'กระจกเทมเปอร์ใส หนา 6 มม.' (3254-3255) ถูกต้อง; มือจับ X-series (o-xhandle) render ฟรี (3130). เข้า sliding branch render ครบ. คำเตือน 'ใช้ภายใน ไม่กันน้ำ' ตัดจากใบ (ตั้งใจ)</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน. (P3: 'รวม soft close+สลิงลากเปิด' อยู่ในชื่อรุ่นยาว — ดู _incl logic 3107 ดึง '(รวม...)' ลงบรรทัดใต้หัวข้อ ทำงานถูก)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>เลื่อนภายในรางล่าง SMS (inner_bottom_sms)</td>
+<td>(2)บรรยาย</td>
+<td>vocabulary 'รางล่าง (รุ่นรางเตี้ย 7 มม.)' / 'ลากจูง' — ระบบมี opentype 'บานเลื่อนลากจูง' ครบ</td>
+<td>SLIDING_RAIL rail:low txt 'รางล่าง (รุ่นรางเตี้ย 7 มม.)' → เข้า sliding branch render ชนิดเปิด/ราง/แบ่ง N บาน/ชุดล็อค ครบ. มี o-bottomrail ให้สลับกันน้ำ/เตี้ย</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน (ติดเฉพาะสีเฟรมมุ้งร่วม ถ้าใส่มุ้ง — แต่ product นี้ไม่มี mosquito:1 เช่นกัน, ตรวจซ้ำตาม inner_top_stack)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ทุกสินค้าในกลุ่ม — OPTION ทางเลือกลูกค้า (oc-row / ปุ่ม OPTION)</td>
+<td>(3)OPTION±ราคา</td>
+<td>ตรง optionPhrases 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม N บาท' — เซลล์พิมพ์ข้อความ+ใส่ราคาได้ครบ</td>
+<td>มีกลไก oc-row (oc-text + oc-delta) อ่านเข้า optChoicesNote + บวก/ลบ sell จริง (2642-2647) และ render เป็นบรรทัด 'OPTION : {ข้อความ} (ราคา±N บาท)' สีแดง (2799-2801). รองรับ OPTION ระดับชุด (set-optdelta) ด้วย (3435)</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน. (P3 เสริม: ทำ dropdown OPTION สำเร็จรูปจาก optionPhrases ที่พบบ่อย เช่น 'เปลี่ยนเป็นลายไม้ Golden Teak SMS', 'เพิ่มมุ้งนิรภัย', 'เปลี่ยนกระจกเทมเปอร์ 6มม.' เพื่อความเร็ว/ความตรงคำ — แต่กลไกหลักใช้ได้แล้ว)</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK <span class="c">12 จุด · 🔴4 🟡7</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>บานเปลือยติดตาย (frameless_fixed)</td>
+<td>(5)รายละเอียดวัสดุ/สี + (4)หมายเหตุ</td>
+<td>ใบจริง 'ราวกันตกกระจก' / 'Shower-บานเปิด' โชว์เฉพาะกระจก (เทมเปอร์ใส 10 มม.) ไม่มีบรรทัด 'อลูมิเนียม สีอบขาว'</td>
+<td>cat='บานเปลือย' อยู่ใน NO_COLOR_CATS (บรรทัด 901) → ไม่มี dropdown สีอลู และไม่ใช่ frameless_door จึงตกลง branch ทั่วไป (itemDetail บรรทัด 3301) ที่ดึง it.ci||0 มา render เป็น 'อลูมิเนียม สีอบขาว' เสมอ ทั้งที่บานเปลือย=ไม่มีเฟรม. ส่วน frameless_door กลับมีช่อง o-framecolor (บรรทัด 2196) → 2 สินค้าหมวดเดียวกันพฤติกรรมขัดกัน</td>
+<td class="c">🔴</td>
+<td>frameless_fixed ไม่มี option สีเฟรมเหมือน frameless_door + ตก branch ทั่วไปที่บังคับพิมพ์ 'อลูมิเนียม สี...' (ci default 0)</td>
+<td class="fix">P1: (ก) เพิ่มเงื่อนไขใน itemDetail: ถ้า it.p.cat==='บานเปลือย' ให้ข้ามบรรทัด 'อลูมิเนียม สี...' — render เฉพาะกระจก. (ข) เพิ่ม branch frameless_fixed คล้าย frameless_door: ใส่ช่อง 'สีเฟรม/ตัวยึด (ถ้ามี)' optional (ขาว/ดำ/บรอนซ์/แชมเปญ/เทาซาฮาร่า/อบพิเศษ) + ช่องระบุชนิดอุปกรณ์ยึด (clip/spider). (ค) ให้ det = ชนิดกระจก + (ถ้าเลือกสีเฟรม) 'เฟรม/ตัวยึด สี...'. กันบรรทัดผิด 'อลูมิเนียม สีอบขาว' โผล่ในงานกระจกเปลือย</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>shower กั้นห้องอาบน้ำ (shower)</td>
+<td>(3)OPTION/อุปกรณ์ + (5)รายละเอียด</td>
+<td>ใบจริง 'Shower - ประตูบานเปิด พร้อมกระจกติดตายด้านข้าง' กระจกเทมเปอร์ใส 10 มม. — แต่ถ้าเลือกอุปกรณ์ดำ/ทอง ใบต้องระบุสี</td>
+<td>opts มี corner(เข้ามุม +3,000) และ showerhw select(เงิน/ดำ+4,000/ทอง+6,000) คิดราคาถูกต้อง. แต่ itemDetail (บรรทัด 3183-3201) hardcode det = '{config}\nกระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส' + สีอลู — ไม่อ่าน optSel.showerhw หรือ optSel.corner เลย → สีอุปกรณ์(ดำ/ทอง)ที่ลูกค้าจ่ายเงินเพิ่ม ไม่ปรากฏในใบ และ 'เข้ามุม' ก็ไม่โชว์</td>
+<td class="c">🔴</td>
+<td>det ของ shower เขียนตายตัว ไม่ผูกกับ optSel.showerhw/corner ที่เก็บค่าไว้แล้ว (readItem อ่าน opts ทั่วไปผ่าน p.opts loop บรรทัด 2492)</td>
+<td class="fix">P1: แก้ itemDetail branch shower ให้: (ก) อ่าน optSel.showerhw → ถ้า=1 ต่อ 'อุปกรณ์สีดำ', =2 'อุปกรณ์สีทอง', default 'อุปกรณ์สีเงิน' แทนคำว่า 'ราวสแตนเลส' ตายตัว. (ข) ถ้า optSel.corner=true เติม config '(เข้ามุม)' ต่อท้าย shConfigLabel. (ค) เปิดให้เลือกความหนากระจก (ปัจจุบัน hardcode 10มม. — บาง shower ใช้ 8/12มม.) ผ่าน glass selector หรือ dropdown เฉพาะ</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>PC Door 2 บาน / 4 บาน (pc_door_2, pc_door_4)</td>
+<td>(5)รายละเอียดมุ้ง(เฟรม/สี)</td>
+<td>ใบจริง 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' / 'มุ้งนิรภัย (เฟรมสีเทาซาฮาร่า)' — ระบบโชว์แค่ผ้า ตกสีเฟรม</td>
+<td>ทั้งคู่มี mosquito:1 → โผล่บล็อกมุ้งในบาน (o-mosq + o-mosqfabric + o-mosqcolor บรรทัด 2353-2356). readItem เก็บ mosqColor (บรรทัด 2600) และ calc บวกค่าทำสีเฟรม×0.5 จริง (บรรทัด 1518-1527) เก็บลง addonLines[].det. แต่ itemDetail branch ทั่วไป (3342-3351) อ่านแค่ mosqFabric → render 'มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา' โดยไม่ดึง mosqColor → สีเฟรมมุ้ง(เทาซาฮาร่า/อบพิเศษ)ที่คิดเงินแล้ว ไม่ขึ้นใบ</td>
+<td class="c">🔴</td>
+<td>gap (ข) pilot ยืนยัน: itemDetail มุ้ง addon ไม่ map optSel.mosqColor เป็นข้อความ — มีเฉพาะใน addonLines.det ที่ไม่ถูกนำมา render ใน det</td>
+<td class="fix">P1: ในทุก branch ที่ render มุ้ง addon (generic 3342-3351, sliding 3266-3275) เพิ่มอ่าน it.optSel.mosqColor → map {sahara:'เฟรมสีเทาซาฮาร่า', kl_special:'เฟรมสีอบพิเศษ', kl_wood:'เฟรมลายไม้'} แล้วต่อท้ายชื่อมุ้งในวงเล็บ เช่น 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)'. รูปแบบวงเล็บ (ผ้า.../เฟรมสี...) ตรงกับใบจริง. ถ้า mosqColor='' (ขาว/ดำ) ไม่ต้องระบุเฟรม</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หมายเหตุมาตรฐานต่อรายการ (ทุกสินค้าในกลุ่ม)</td>
+<td>(4)หมายเหตุมาตรฐาน</td>
+<td>ใบจริงทุกชุดงาน เช่น 'ราคาที่เสนอไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง/ทาสี/ดรอปพื้น/ผนังปูน', 'ราคาที่เสนอรวมงานรื้อประตูเดิม...แต่ไม่รวมวัสดุ' — เซลล์ต้องพิมพ์เองทุกครั้ง เสี่ยงตกหล่น/พิมพ์ไม่ตรง</td>
+<td>ระบบมีหมายเหตุมาตรฐาน hardcode เพียงชุดเดียวที่ footer ใบ (บรรทัด 2878-2892 เงื่อนไขเข้าทำงาน/รับประกัน/แบบ3D). ไม่มี template หมายเหตุ 'รวม/ไม่รวมงาน' ต่อรายการ (ลงเข็ม/เทพื้น/ปูกระเบื้อง/ดรอปพื้น/รื้อของเดิม ฯลฯ) ที่ใบจริงมีแทบทุกรายการ. มีแค่ช่อง i-note ให้พิมพ์เอง + svc checkbox รื้อ (บรรทัด 2701-2704) ที่ผูกราคา</td>
+<td class="c">🔴</td>
+<td>gap (ก) pilot ยืนยัน: ไม่มีคลัง template หมายเหตุมาตรฐานให้ติ๊กต่อรายการ — ต้องพิมพ์มือใน i-note</td>
+<td class="fix">P1: เพิ่มชุด checkbox/multi-select 'หมายเหตุมาตรฐาน' ใต้ช่อง i-note ต่อรายการ (และ/หรือระดับชุด) ที่มีรายการสำเร็จรูปจากใบจริง: [ ] ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง [ ] ไม่รวมดรอปพื้น [ ] รวมงานรื้อ(ประตู/หน้าต่าง/หลังคา/มุ้ง)เดิม แต่ไม่รวมวัสดุ [ ] รวมงานกรีดพื้นฝังรางยู [ ] รวมงานเก็บสีเฉพาะจุด ไม่รวมสี [ ] ไม่รวมงานไฟ/ย้ายแอร์/ย้ายกล้อง ฯลฯ. ติ๊กแล้ว push เป็นบรรทัด 'หมายเหตุ' ใต้รายการ (สีเทา) ตรงรูปแบบใบจริง. แก้ไขข้อความได้. ลดการพิมพ์มือ+กันตกหล่น — กระทบหน้าตาใบโดยตรง</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ประตูสวิง/เลื่อน บานเปลือย (frameless_door)</td>
+<td>(5)รายละเอียดวัสดุ/สี</td>
+<td>ใบจริงหมวดบานเปลือยมักระบุประเภท+สีเฟรม — ระบบทำได้</td>
+<td>มี o-frametype (สวิง/เลื่อน) + o-framecolor (6 สี: ขาว/ดำ/บรอนซ์/แชมเปญ/เทาซาฮาร่า/อบพิเศษ) และ itemDetail บรรทัด 3203-3208 render 'ประตูบานเปลือย{สวิง/เลื่อน}\nเฟรมอลูมิเนียม สี{fc}'. ทำงานครบ</td>
+<td class="c">🟡</td>
+<td>ช่อง o-framecolor มี 'สีอบพิเศษ' แต่ไม่มีช่องกรอกรหัสรุ่น (เช่น KL10232A) — gap (ค) ของ pilot. และไม่มีบรรทัดกระจก (frameless_door ไม่ render ชนิดกระจกใน det แม้มี glass selector)</td>
+<td class="fix">P2: (ก) เมื่อ o-framecolor='สีอบพิเศษ' ให้โผล่ช่อง input รหัสสี (เหมือน i-colorcode ของ COLORS hasCode) แล้วต่อท้าย det เป็น 'เฟรมอลูมิเนียม สีอบพิเศษ [รหัส]'. (ข) เพิ่มบรรทัดชนิดกระจกใน det ของ frameless_door (ดึง GLASS[it.gi]) เพราะบานเปลือยมีกระจกเสมอ — ใบจริงระบุ 'กระจกเทมเปอร์ใส 10 มม.'</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ประตูดัดโค้งบานคู่/เดี่ยว/สลิม (curved_double, curved_single, curved_slim)</td>
+<td>(5)รายละเอียดวัสดุ/สี/กระจก</td>
+<td>งานดัดโค้งใบจริงระบุสีอลู+กระจกดัดโค้ง — ระบบทำได้ครบ</td>
+<td>3 ตัวมี digihandle:1 + RATES (CURVE_DBL/SGL/SLIM) + อยู่ใน cat 'ดัดโค้ง' (ไม่ใน NO_COLOR_CATS) → มี dropdown สีอลู+กระจก. ตก branch ทั่วไป (3301) render 'อลูมิเนียม สี...' + กระจก + มือจับดิจิตอล. GLASS มี 'กระจกใสดัดโค้งหนา 10 มม.' และ 'ดัดโค้งลามิเนต 5+5' (บรรทัด 555-556) รองรับ</td>
+<td class="c">🟡</td>
+<td>ไม่มี gap โครงสร้าง แต่ (ก)ไม่มี template หมายเหตุมาตรฐานต่อรายการ (gap ก) (ข)ถ้าเลือกกระจกดัดโค้งที่ราคาเป็นช่วง (6500-7000) ระบบใช้ค่ากลาง c:6750 — เซลล์ควรเห็น warning ว่าเป็นราคาประมาณ</td>
+<td class="fix">P2: (ก) เพิ่มชุด template หมายเหตุมาตรฐาน (ดูข้อ 'หมายเหตุมาตรฐาน' P1 รวม) ให้ติ๊กต่อรายการ. (ข) เมื่อเลือกกระจก '★ ดัดโค้ง...ราคาช่วง' ให้โผล่ helper '⚠ ราคากระจกเป็นช่วง เช็คซัพพลายก่อนยืนยัน'. (ค) เพิ่มช่องรหัสสีเมื่อเลือกสีอบพิเศษ (มี hasCode อยู่แล้วใน COLORS index 10/11 — ตรวจว่า i-colorcode โผล่ในหมวดดัดโค้ง)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>บานติดตายดัดโค้ง (curved_fixed)</td>
+<td>(2)บรรยาย + (5)รายละเอียด</td>
+<td>ใบจริง 'บานกระจกติดตาย' ไม่มีคำนำ 'ประตู/หน้าต่าง'</td>
+<td>cat 'ดัดโค้ง', method bucket CURVE_FIX, ไม่มี digihandle (ถูกต้อง=ติดตาย). ตก branch ทั่วไป render สีอลู+กระจก. ชื่อ rawName='บานติดตายดัดโค้ง' — prefix logic บรรทัด 3000/3051: ถ้า itype default='door' จะเติม 'ประตู' นำหน้า เพราะชื่อขึ้นต้น 'บาน' ไม่ match regex /^(ประตู|หน้าต่าง)/ → ได้ 'ประตูบานติดตายดัดโค้ง' ซึ่งผิด (เป็นบานติดตาย ไม่ใช่ประตู)</td>
+<td class="c">🟡</td>
+<td>prefix logic เติม 'ประตู' ให้ทุก cat ที่ itype=door และชื่อไม่ขึ้นต้นด้วยประตู/หน้าต่าง — curved_fixed เป็นติดตายแต่ไม่อยู่ใน noPrefix list (บรรทัด 2999 มีแค่ shower/ม่านซิป/กั้นห้องกระจก/บานเปลือย/ติดตาย — 'ดัดโค้ง' ไม่อยู่)</td>
+<td class="fix">P2: ทำให้ curved_fixed ไม่เติม prefix 'ประตู': เพิ่มเงื่อนไขใน noPrefix — ถ้าชื่อสินค้ามีคำว่า 'ติดตาย' → noPrefix=true (กันทุก *_fixed). หรือใส่ id 'curved_fixed' ใน noPrefix list ตรงๆ. ตรวจซ้ำว่า det ยังโชว์สีอลู+กระจกครบ</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ประตู Ventilation YKK / Exhido YKK / Tostem A01 (ykk_vent, ykk_exhido, tostem_a01)</td>
+<td>(5)รายละเอียด + (2)บรรยาย</td>
+<td>ประตู YKK ใบจริงระบุสีอลู (เช่น Tostem ลายไม้หน้าบ้าน) + กระจก — ระบบ render '-'</td>
+<td>ทั้ง 3 มี closer:1 (โช๊ค) + sizeCheck. ykk_vent/tostem_a01 method per_sqm, ykk_exhido bucket. cat 'YKK' อยู่ใน AREA_CATS (บรรทัด 840) → areaOnly=true → ไม่โชว์สี/กระจก และ itemDetail (3164) ให้ det='-' (เพราะ AREA_CATS &amp;&amp; !หลังคา). สินค้า YKK เป็นประตูจริงควรมีสี/กระจก แต่ถูกตัดเป็น area-only</td>
+<td class="c">🟡</td>
+<td>YKK อยู่ใน AREA_CATS ทำให้ det='-' และซ่อนสี/กระจก แม้เป็นงานประตูที่ต้องระบุวัสดุ. Tostem A01 ชื่อระบุ 'ลายไม้' แต่ไม่มีช่องสีให้ตรง</td>
+<td class="fix">P2: (ก) เอา 'YKK' ออกจาก AREA_CATS หรือสร้าง branch itemDetail เฉพาะ YKK ให้ render สีอลู+กระจก+โช๊ค (อ่าน o-closer). (ข) Tostem A01 ตั้ง default สีลายไม้ + แสดงรหัสรุ่น YKK/Tostem. (ค) ระบุ 'ช่องเปิดเต็ม' สำหรับ Exhido ใน det. ปัจจุบัน det='-' ทำให้ใบโล่งไม่มีสเปก</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>โช๊ค (o-closer) สำหรับ YKK/บานเปิด</td>
+<td>(3)อุปกรณ์/render</td>
+<td>ใบจริงประตู Ventilation '(มีโช๊คด้านบน)' — ระบุมีโช๊ค</td>
+<td>closer:1 สร้าง o-closer (บรรทัด 2198) มี data-n (แขนยื่น/รางเลื่อน/บานพับ +5,000). คิดราคาได้ แต่ตรวจ itemDetail ไม่พบการอ่าน optSel ของ closer มา render ชนิดโช๊คในใบ (มีแต่ enableAllOpts คิดเงิน)</td>
+<td class="c">🟡</td>
+<td>o-closer คิดเงินแต่ค่า data-n ไม่ถูก map เข้า det (ไม่มี branch อ่าน closer ใน itemDetail)</td>
+<td class="fix">P2: ใน readItem เก็บ optSel.closerName (จาก option ที่เลือก data-n) และใน itemDetail _parts.push('มี{ชนิดโช๊ค}ด้านบน') เมื่อ closer&gt;0 — ให้ใบระบุ '(มีโช๊คด้านบน)' ตรงใบจริง</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>รหัสสีรุ่นย่อย (สีอบพิเศษ/ลายไม้) — curved/PC/YKK/shower</td>
+<td>(5)รหัสสี</td>
+<td>ใบจริง 'อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)', 'ลายไม้ สี Golden Teak SMS' — มีรหัสรุ่นเฉพาะ</td>
+<td>COLORS index 10 (สีอบพิเศษ)/11 (ลายไม้อบพิเศษ)/12 (สีชุบ) มี hasCode:1 → itemDetail บรรทัด 3309-3311 ดึง i-colorcode มาต่อ '[รหัส]'. ใช้ได้กับ curved/PC/YKK/shower (ที่มีสี). แต่สี stock เช่น 'เทาซาฮาร่า' หรือ Aztec/ลายไม้สต๊อก ไม่มีช่องรหัสรุ่นย่อย (เช่น KL10232A, SMS code)</td>
+<td class="c">🟡</td>
+<td>gap (ค) pilot: hasCode มีเฉพาะ 3 สีพิเศษ. สีลายไม้สต๊อก/Aztec/ซาฮาร่า ใบจริงระบุชื่อรุ่น (Golden Teak SMS) แต่ระบบ render แค่ชื่อสีกว้างๆ</td>
+<td class="fix">P2: เพิ่ม hasCode:1 (หรือ optional code field) ให้สีลายไม้สต๊อก (Golden Teak SMS) และ Aztec gray — หรือเพิ่ม quoteName ที่มีรหัสรุ่นในตัว. ให้ทุกสีที่ไม่ใช่ ขาว/ดำ/ซาฮาร่าพื้นฐาน มีช่องระบุรหัส/ชื่อรุ่น optional ต่อท้าย 'สี... [รหัส]' ตรงใบจริง</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>PC Door (ชื่อหัวข้อ/บรรยาย)</td>
+<td>(2)บรรยายเต็ม + (3)OPTION</td>
+<td>ใบจริง productType 'ประตูบาน PC Door / Panoramic door (บานเลื่อน+บานเปิด)'</td>
+<td>prodName: cat 'PC Door' อยู่ใน _shortGl list (3380) → ชุดได้ชื่อ 'ประตูPC Door'. มี o-beamm เสริมคาน (3281). แต่ใบจริงเรียก 'ประตูบาน PC Door / Panoramic door (บานเลื่อน+บานเปิด)' — ระบบไม่มีช่องระบุ config บานเลื่อน+บานเปิด หรือจำนวนเปิด/ติดตาย</td>
+<td class="c">🟡</td>
+<td>PC Door ไม่มี opentype/fixed selector (มีเฉพาะบานเลื่อนหมวด SLIDING_RAIL) → บรรยายรูปแบบเปิดไม่ได้</td>
+<td class="fix">P3: เพิ่ม dropdown 'รูปแบบ PC Door' (บานเลื่อนล้วน / บานเลื่อน+บานเปิด / Panoramic) ที่ต่อท้าย prodName. และเพิ่มช่องระบุจำนวนบานเปิด/ติดตาย (optional) ให้บรรยายครบเหมือนใบจริง</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>OPTION ทางเลือกลูกค้า (cascade F2) — ทุกสินค้าในกลุ่ม</td>
+<td>(3)OPTION±ราคา</td>
+<td>ใบจริง 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น... ราคาเพิ่ม/ลด N บาท' — ระบบทำได้ครบรูปแบบ</td>
+<td>OC_CATS (บรรทัด 1948) มี เปลี่ยนกระจก/ผ้ามุ้ง/สีอลู/มือจับ/หลังคา/อื่นๆ + auto คำนวณส่วนต่าง (ocPick บรรทัด 1965-1977) แล้ว push 'OPTION : เปลี่ยนเป็น...(ราคา±N บาท)' ขึ้นใบสีแดง (qrow บรรทัด 2809). รองรับหลาย OPTION/บาน. ใช้กับ curved/PC/shower/YKK/frameless ได้</td>
+<td class="c">✅</td>
+<td>ทำงานถูกต้อง ไม่มี gap หลัก</td>
+<td class="fix">P3 (เสริม): OC_CATS หมวด 'color' ใช้ colorPrice(...,'') series ว่าง — สำหรับ curved/PC ที่ series เฉพาะ อาจคำนวณส่วนต่างไม่ตรง 100% เช็คซ้ำ. และเพิ่ม preset OPTION ยอดนิยม 'เพิ่มมุ้งนิรภัย +N' สำหรับ PC/YKK ให้กดเร็ว</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก) <span class="c">13 จุด · 🔴7 🟡4</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (id bar_grid_z · ข้อ 38.1)</td>
+<td>(5) รายละเอียด + (1) ชื่อ</td>
+<td>งานระแนงบานเกล็ด/เลื่อน/เปิด-ปิด เป็นงานราคาสูง (เปิด-ปิด min 20,700/ชุด, มอเตอร์) แต่ใบออกรายละเอียด '-' ลูกค้าไม่เห็นว่าทำอะไร/สีอะไร/มอเตอร์กี่ตัว</td>
+<td>มี product + form (o-bgdir ทิศระแนง + bg_motor มอเตอร์). คำนวณราคาแยก code (line 1064). ออกในใบ: เป็น cat 'ระแนง' → อยู่ใน AREA_CATS + NO_COLOR_CATS + ITYPE_NA → det='-' (line 3164).</td>
+<td class="c">🔴</td>
+<td>cat='ระแนง' เข้า branch AREA_CATS (line 3164) ที่ตั้ง det='-' เพราะไม่ใช่ 'หลังคา' และไม่มี fin → รายละเอียดงานออก '-'. ทิศระแนง/มอเตอร์/สีอลู ไม่ render ลงใบเลย.</td>
+<td class="fix">P1: เพิ่ม branch render สำหรับ cat==='ระแนง' (bar_grid_z/bar_slide/bar_openclose) ใน itemDetail — ประกอบบรรทัด: 'ระแนงอลูมิเนียม{ลูกฟูกเรียบ 2 หน้า/กล่อง 1"x4" โชว์ 4"} สี{finLabel}' + 'ทิศ{ตั้ง/นอน}' + ถ้ามีมอเตอร์ 'พร้อมมอเตอร์ N ตัว'. ดึงค่าจาก optSel.bgdir/bocdir/bocfinish/bsfinish ที่อ่านไว้แล้ว (line 2606-2613). กระทบหน้าตาใบงานราคาสูง = P1</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ระแนงเลื่อน ลูกฟูกเรียบ 2 ทาง (id bar_slide · ข้อ 38.2)</td>
+<td>(5) รายละเอียด + (3) ค่าประตู</td>
+<td>เลือก 'ระแนงเลื่อน + ประตูบานเลื่อน ยูโร + สี Fuji' → ใบออก '-' ไม่เห็นว่ามีประตูแนบหรือสีอะไร</td>
+<td>มี product + form: o-bsdoor (เลือกรุ่นประตูแนบ sliding/casement/folding/fence_gate) + o-bsfinish (สีอบ ลูกฟูก 2 ทาง 10 เกรด). คำนวณ code (line 1084). ออกในใบ det='-' (cat ระแนง).</td>
+<td class="c">🔴</td>
+<td>เหมือน bar_grid: cat='ระแนง' → det='-'. สีอบ (o-bsfinish มี 10 ตัวเลือก data-n เช่น Aztec gray/Fuji) และรุ่นประตูที่แนบ (bsdoor) ไม่ render ลงใบ — ทั้งที่มีผลราคา.</td>
+<td class="fix">P1: ใน branch render ระแนง (ข้อข้างบน) เพิ่มกรณี bar_slide → 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง) สี{bsfinish data-n}' + ถ้า bsdoor!='' เพิ่ม 'พร้อม{ชื่อรุ่นประตู}'. ค่าอ่านไว้แล้วใน readItem (line 2609-2613 อ่าน bsfinish/bsdoor). P1</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ระแนงเปิด-ปิด กล่อง 1"x4" โชว์ 4" (id bar_openclose · ข้อ 38.3)</td>
+<td>(5) รายละเอียด + (3) มอเตอร์</td>
+<td>ระแนงเปิด-ปิดมอเตอร์ราคาหลักหมื่น แต่ใบไม่ระบุว่ามอเตอร์/มือ และสีอะไร</td>
+<td>มี product + form: o-bocdir (ทิศ) + o-bocmotor (เอามอเตอร์/มือ) + o-bocfinish (สีอบ 10 เกรด). คำนวณ code line 1118 (ค่าระแนง+เปิด-ปิด+มอเตอร์+ค่าผิว). ออกในใบ det='-'.</td>
+<td class="c">🔴</td>
+<td>เหมือน bar_grid/bar_slide: cat='ระแนง' → det='-'. มอเตอร์ vs มือ + สีอบ ไม่ออกในใบ — ทั้งที่ราคาต่างกันมาก (มอเตอร์ในสูตร).</td>
+<td class="fix">P1: branch render ระแนง — กรณี bar_openclose → 'ระแนงเปิด-ปิด (กล่อง 1"x4" โชว์ 4") สี{bocfinish} ทิศ{ตั้ง/นอน}' + (bocmotor? 'พร้อมมอเตอร์เปิด-ปิด' : 'เปิด-ปิดด้วยมือ'). ค่าอ่านไว้แล้ว (line 2613). P1</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ประตูรั้วบานเลื่อน (id fence_gate · cat ประตูรั้ว · gate:1)</td>
+<td>(5) รายละเอียดวัสดุ/สี + (1)(2)</td>
+<td>ประตูรั้วบานเลื่อน 1 มอเตอร์ ลายระแนงกล่อง 1"x4" สีอบขาว ราง 6 ม. → ใบเสนอราคาออกแค่ชื่อ 'ประตูรั้วบานเลื่อน' + รายละเอียดงาน '-' (ไม่เห็นลายระแนง/สี/มอเตอร์/ราง)</td>
+<td>กรอกได้ครบ (o-gatern เลือกลายระแนง + o-gmotor จำนวนมอเตอร์ + o-railtype ตรง/โค้ง + o-gfin อบสี 8 ตัวเลือก). คำนวณ code line 1163 แม่นยำ (ค่าทำ+ระแนง+อบสี+มอเตอร์ 30,000/ตัว+ราง 2×กว้าง+บานโค้ง). แต่ออกในใบ: cat='ประตูรั้ว' อยู่ใน AREA_CATS (line 840) + ไม่ใช่ 'หลังคา' + ไม่มี fin → det='-' (line 3164). ทุกตัวเลือก (ลายระแนง/สี/มอเตอร์/ราง) ลง msgs ที่ R4.1 ตัดไม่ลงใบ.</td>
+<td class="c">🔴</td>
+<td>ไม่มี branch render สำหรับ p.gate ใน itemDetail — ตกลง else AREA_CATS → det='-'. optSel.gatern/gfin/gmotor/railtype อ่านไว้แล้ว (line 2593) แต่ไม่ถูกนำมาประกอบ det. = สินค้าราคาหลักแสน (มอเตอร์ 30,000/ตัว) แต่ใบออกรายละเอียด '-' ว่างเปล่า</td>
+<td class="fix">P1: เพิ่ม branch `else if(it.p.gate)` ใน itemDetail — ประกอบ: บรรทัด1 'ประตูรั้วบานเลื่อน' (+ราง โค้ง→'รางโค้ง'/ตรง→'รางตรง'); บรรทัด2 ถ้า gatern เลือก → 'ลายระแนง {PBYID[gatern].name ตัด " ไม่โครง"}'; บรรทัด3 'อลูมิเนียม {gfin}'; บรรทัด4 ถ้า gmotor&gt;0 → 'พร้อมมอเตอร์ {gmotor} ตัว'. ค่าทั้งหมดอ่านไว้แล้วใน optSel. นี่กระทบใบงานราคาแพงโดยตรง = P1 สูงสุด</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หมายเหตุมาตรฐาน (standard notes) — ทุกสินค้าในกลุ่ม ระแนง/รั้ว/ราว</td>
+<td>(4) หมายเหตุมาตรฐาน</td>
+<td>ใบจริงระแนง+หลังคา: notes 'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / ก่อผนังปูน / ระบบไฟฟ้า' — ระบบไม่มีให้ติ๊กเลือก ต้องพิมพ์เอง</td>
+<td>มีแค่ free-text i-note (พิมพ์เอง) + OPTION rows (ocAddRow). ไม่มี template หมายเหตุมาตรฐานสำเร็จรูป.</td>
+<td class="c">🔴</td>
+<td>ยืนยัน gap หลักของ pilot: ไม่มีระบบ template note. ใบจริงทุกใบมี standard notes บล็อกใหญ่ (ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง/ก่อผนังปูน/งานไฟ/ดรอปพื้น · รับประกัน 1 ปี · เงื่อนไขแบบ 3D · เงื่อนไขเข้าทำงาน). ระแนง/รั้วมักมีโน้ตเฉพาะ เช่น 'รั้วระแนงวางบนผนังปูน', 'ไม่รวมงานก่อผนังปูน/ลงเข็ม', 'รวมงานกรีดพื้นฝังรางยู'. เซลล์ต้องพิมพ์มือทุกครั้ง = ตกหล่น/ไม่สม่ำเสมอ.</td>
+<td class="fix">P1: สร้าง template หมายเหตุมาตรฐาน — เพิ่มบล็อก checkbox 'หมายเหตุมาตรฐาน (ติ๊กเพื่อเพิ่มลงใบ)' ระดับใบ (footer ใบ) ที่มี preset: [ไม่รวม ลงเข็ม/เทพื้น/ปูกระเบื้อง/ก่อผนังปูน/งานไฟ/ดรอปพื้น] (ติ๊กแยกรายการได้), [รับประกัน 1 ปี เต็มข้อความ], [เงื่อนไขแบบ+3D เต็มข้อความ], [เงื่อนไขเข้าทำงาน รื้ออลูมิเนียม], [ราคายังไม่รวม VAT], [วัสดุตามแบบมาตรฐานผู้ผลิต]. ดึงข้อความเต็มจาก standardNotes คลังที่มีอยู่. + เฉพาะกลุ่มระแนง/รั้ว preset เพิ่ม 'รั้วระแนงวางบนผนังปูน', 'รวมงานกรีดพื้นฝังรางยู'. นี่กระทบทุกใบ = P1</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>งานหลายด้าน / รั้วระแนง+หลังคารวมชุด (เช่น 'หลังคากันสาด พร้อมรั้วระแนง' ด้าน A-G)</td>
+<td>(6) งานหลายด้าน</td>
+<td>ใบจริงชุด 'หลังคากันสาด+ระแนงรั้วด้าน A': ด้าน A 'ระแนงอลูมิเนียมกล่อง สีอบขาว ขนาด 1x5 ซม. โชว์หน้า 5 ซม.' — ในระบบด้าน A (ระแนง) จะออก '-'</td>
+<td>มีระบบกลุ่ม (groups) + i-position (ด้าน A/B/C) + กลุ่มงาน 6 (กั้นห้องกระจก) ที่ render หัวด้าน + บานใต้ + รายละเอียดงานรวม (line 3409-3431). ระแนงเดี่ยวสามารถใส่ position ได้ถ้าอยู่ในชุด.</td>
+<td class="c">🔴</td>
+<td>ระบบรองรับงานหลายด้านดี แต่เพราะระแนง/รั้ว/gate render det='-' (ข้อบนๆ) เมื่อรวมในชุดหลายด้าน บรรทัด matLines ของด้านที่เป็นระแนงจะว่าง — ด้านระแนงในชุดเลยไม่มีรายละเอียดวัสดุ. ปัญหา root เดียวกับ det='-'.</td>
+<td class="fix">P1 (แก้พร้อมกับ branch render ระแนง/gate ข้างบน): เมื่อแก้ det ของ cat ระแนง/ประตูรั้ว ให้มีบรรทัดวัสดุจริงแล้ว ระบบงานหลายด้านจะดึงเข้า matLines อัตโนมัติ (โค้ดรวม det อยู่แล้ว line 3391). ไม่ต้องแก้ logic กลุ่ม แค่แก้ที่ต้นทาง det. P1 ผูกกับงาน P1 ด้านบน</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ราวกันตกกระจก (แนวราบ/ระเบียง · ใบจริงมี 'ราวกันตกกระจก' / 'ราวกันตกกระจกติดตาย' / 'ราวกันตกเหล็ก')</td>
+<td>(1) ชื่อสินค้า — ขาด product</td>
+<td>ใบจริง productType: 'ราวกันตกกระจก', 'ราวกันตกกระจกติดตาย', 'ราวกันตกเหล็ก' — ระบบไม่มี 3 ตัวนี้ (มีแค่ราวบันได)</td>
+<td>ไม่มี product 'ราวกันตกกระจก' แนวราบ (แนวราบ คิดต่อเมตร/ต่อ ตร.ม. แบบระเบียง) ตรงๆ. มีแต่ imp1-6 (ราวบันได คิด per_length_tier บันไดเฉียง/ตรง) — สูตรเฉพาะบันได. ใบจริงมี 'ราวกันตกกระจก (ทางเข้าหลัก)' ราคา 10,000 (งานราบ) และ 'ราวกันตกเหล็ก' ที่เป็นเหล็กไม่ใช่อลู/กระจก.</td>
+<td class="c">🔴</td>
+<td>ไม่มี product สำหรับราวกันตกกระจกแนวราบ (ระเบียง/ดาดฟ้า) และไม่มี 'ราวกันตกเหล็ก' เลย. ถ้าจะคิดต้องดัดแปลงใช้ imp (บันได) ซึ่งสูตร tier คนละแบบ หรือใช้ custom_item (กรอกราคาเอง — เสียระบบคิดราคา).</td>
+<td class="fix">P2: เพิ่ม product (1) 'ราวกันตกกระจก (แนวราบ/ระเบียง)' คิดต่อเมตรหรือ ตร.ม. + default กระจกเทมเปอร์ 10 มม. + o-handrail; (2) 'ราวกันตกกระจกติดตาย'; (3) 'ราวกันตกเหล็ก' (วัสดุเหล็ก สีดำ — ระบุ 'เหล็ก สีดำ' ในใบ). ถ้ายังไม่มีเรตยืนยัน ให้ทำเป็น method bucket/per_length + เปิดให้กรอกราคา. ระหว่างนี้ติดป้าย (เช็คซ้ำ) เรื่องเรต. P2</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ระแนง-บังตา (rn1–rn82 · 82 รุ่น · cat ระแนง-บังตา/ระแนง-ผนัง · per_sqm + fin) — บังตาผนังระแนงทุกขนาดกล่อง (1x5, 1"x1.6", 1"x1", 1"x1½", 1"x4", 1.6"x1.6", 1.6"x4", 4"x4", สลับ)</td>
+<td>(5) รายละเอียดวัสดุ/สี + (3) OPTION</td>
+<td>ใบจริง: 'ระแนงอลูมิเนียมกล่องลายไม้ สี Golden Teak SMS ขนาด 1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 5 ซม. (ด้าน E)'. ระบบออก: prodName 'บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm.' + รายละเอียด 'อบสีลายไม้' — ชื่อสีจริง/ด้าน หาย</td>
+<td>กรอกได้ครบ (เลือกรุ่นตามขนาดกล่อง/โชว์หน้า/ระยะห่าง + o-finish เลือกผิว/สี + o-hmode + o-doortype + ครอบวงกบ ม.). ออกในใบ: prodName = ชื่อรุ่นเต็ม (มีสเปกกล่อง/โชว์หน้า/ระยะห่างในชื่อ) + บรรทัดรายละเอียดงาน = finLabel (สีอย่างเดียว). ราคาคูณพื้นที่+ส่วนลดพื้นที่+ค่าผิวถูกต้อง (basePrice/finC/ranaeDisc).</td>
+<td class="c">🟡</td>
+<td>o-finish (p.fin) มีแค่ 4 เกรดสี: ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ/อบสีลายไม้ — ไม่มีชื่อสีจริงที่ใบใช้ เช่น 'Golden Teak SMS', 'อบขาว (ระบุชื่อ)' และไม่มีช่องกรอกรหัสรุ่น (KL19022WD ฯลฯ). ใบจริงเขียน 'ระแนงอลูมิเนียมกล่องลายไม้ สี Golden Teak SMS' / 'ระแนงอลูมิเนียมกล่อง สีอบขาว (ด้าน A)' — ระบบได้แค่ 'อบสีลายไม้'. msgs (ส่วนลดพื้นที่) ถูกตัดไม่ลงใบโดยตั้งใจ (R4.1) — โอเค.</td>
+<td class="fix">P2: ขยาย dropdown o-finish ให้แต่ละเกรดมี data-n เป็นชื่อสีจริง (เช่นภายใต้ 'อบสีลายไม้' เพิ่มตัวเลือกย่อย 'Golden Teak SMS', 'ไวท์โอ๊ค', 'ไวท์แบมบู' ที่ map ราคาเดียวกัน) + เพิ่ม input ข้อความ 'ชื่อสี/รหัสรุ่นที่โชว์ในใบ' (o-fincolorname) override finLabel ตอน render det. และเพิ่ม input 'ตำแหน่ง/ด้าน' (มีใน i-position กลุ่ม 6 — เปิดให้ใช้กับระแนงเดี่ยว) เพื่อออก '(ด้าน A)'. ราคาไม่เปลี่ยน เพิ่มเฉพาะ label ที่ render</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ลูกฟูก+คอมโพสิททึบ (rn89–rn92 · ลูกฟูกเรียบ 1/2 ทาง ไม่โครง · คอมโพสิต 3/4 มม.)</td>
+<td>(5) รายละเอียดวัสดุ/สี</td>
+<td>ใบจริง 'แผ่นคอมโพสิตสโลปหลังคา สีดำ' / 'แผ่นคอมโพสิต สีเทา (บานหน้าตู้)'. ระบบ rn91 'คอมโพสิต 3 มม.' → รายละเอียดงาน '-' (สีหาย)</td>
+<td>rn89-90 มี fin (4 เกรด) · rn91-92 (คอมโพสิต) ไม่มี fin → ไม่มี finLabel → ตกเข้า else AREA_CATS → det='-'. ราคา per_sqm ถูกต้อง.</td>
+<td class="c">🟡</td>
+<td>คอมโพสิต (rn91/92) ไม่มี fin จึงไม่เข้า branch p.fin → ไปเข้า else (AREA_CATS, cat≠หลังคา) → det='-'. ใบจริงเขียน 'แผ่นคอมโพสิต สีเทา/สีอบขาว/สีดำ' — ระบบออก '-' (ไม่มีสีคอมโพสิตให้เลือกเลย).</td>
+<td class="fix">P2: เพิ่มช่องสีให้ rn91/rn92 (คอมโพสิต) — dropdown 'สีคอมโพสิต' (เทา/อบขาว/ดำ/อื่นๆ + ช่องพิมพ์เอง) ที่ render เป็นบรรทัด 'แผ่นคอมโพสิต สี…'. สำหรับ rn89/90 (ลูกฟูก) ใช้ทางแก้ชื่อสีเดียวกับ ระแนง-บังตา. ไม่กระทบราคา</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ราวกันตก/ราวบันได 47.1–47.4 (id imp1–imp6 · cat ราวบันได · per_length_tier · handrail:1 · glassDef:14)</td>
+<td>(5) รายละเอียด + (3) ราวจับ</td>
+<td>ใบจริง 'ราวกันตกกระจก' + กระจกเทมเปอร์ใส 10 มม. + สีอลู — ระบบออกได้ตรง ✅; แต่ถ้าเลือก 'ราวจับ กล่อง 1"x2" +600/ม.' (บวกเงินแล้ว) ใบไม่มีบรรทัดราวจับ</td>
+<td>กรอกได้ครบ: เลือกรุ่น 6 แบบ (บันไดเฉียง/ตรง × หมุดแปะปูน/U+เสาอลู/เสาอลู) + กรอกความยาวในช่อง 'กว้าง' + default กระจกเทมเปอร์ใส 10 มม. (glassDef 14, เลือก 12 มม.ได้) + o-handrail (ราวจับ ยู5หุน/กล่อง). คำนวณ per_length_tier ถูก (line 1183). cat='ราวบันได' อยู่ใน ITYPE_NA แต่ไม่ใน AREA_CATS/NO_COLOR_CATS → render ผ่าน else (line 3301) = ออก 'อลูมิเนียม สี… + กระจก…' ถูก.</td>
+<td class="c">🟡</td>
+<td>จุดเดียวที่ขาด: option ราวจับ (o-handrail ยู5หุน/กล่อง 1"x2") ลงแค่ msgs (line 1198) → ไม่ render ลงใบ. ถ้าลูกค้าเลือกราวจับ +500-600/ม. (มีผลราคา) ใบไม่เขียนว่ามีราวจับ. ส่วนชื่อรุ่น 47.x render ผ่าน prodName (ชื่อเต็มมี 47.x ในใบ — อาจรกถ้าโชว์ '47.1 หมุดแปะปูน (ทำยากสุด)' ให้ลูกค้า).</td>
+<td class="fix">P2: (ก) ใน _parts ของ itemDetail เพิ่ม: if(it.optSel.handrail) _parts.push('พร้อมราวจับ '+(u5?'ยู 5 หุน':'กล่องอลู 1"x2"')) — ให้ราวจับที่บวกเงินแล้วโชว์ในใบ. (ข) ชื่อหัวข้อ: ปัจจุบัน prodName='ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)' — รก/internal; แนะนำใช้ name_override หรือเพิ่ม field 'ชื่อที่โชว์ในใบ' ให้สรุปเป็น 'ราวกันตกกระจก (บันได)'. (ค) เพิ่มลายน้ำเตือนกรอกยาวในช่องกว้าง (มี hint แล้ว line 2408). P2 เพราะราวจับกระทบเงิน</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ระแนง-เกล็ด (rn83–rn88 · เกล็ด Z 1"/4" ไม่โครง/รวมโครง)</td>
+<td>(5) รายละเอียดวัสดุ/สี</td>
+<td>ใบจริง productType 'ระแนงอลูมิเนียมเกล็ด Z (แนวตั้ง)' aluColor 'ระแนงอลูมิเนียมเกล็ด Z สีดำ'. ระบบ prodName 'เกล็ด Z 1" รวมโครง' + 'สีดำ' (default)</td>
+<td>กรอกได้ครบ (per_sqm + fin). ออกในใบ prodName 'เกล็ด Z 1" รวมโครง' + รายละเอียด finLabel.</td>
+<td class="c">🟡</td>
+<td>ชื่อสินค้าในใบจริงคือ 'ระแนงอลูมิเนียมเกล็ด Z สีดำ' — ระบบ prodName ใช้ 'เกล็ด Z 1"' ตัดคำ 'ระแนงอลูมิเนียม' ออก ทำให้ชื่อสั้นกว่าใบจริง. ส่วนสี/ราคาคิดถูก.</td>
+<td class="fix">P3: ปรับ name ของ rn83-88 ให้ขึ้นต้น 'ระแนงอลูมิเนียมเกล็ด Z ...' (ตอนนี้แค่ 'เกล็ด Z') เพื่อให้ prodName ในใบตรงคำที่ใบจริงใช้. + เพิ่มทิศ (แนวตั้ง/นอน) เป็นช่องถ้าจำเป็น. กระทบเฉพาะถ้อยคำหัวข้อ ไม่กระทบราคา</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ครอบวงกบ ระแนง (id fw_ranae_basic/stock/special/wood · 700/800/1200/1300 ต่อ ม.)</td>
+<td>(3) งานเสริม</td>
+<td>ใบจริง 'ครอบวงกบอลูมิเนียม' — ระบบรองรับ ✅</td>
+<td>มี 4 รุ่นตามเกรดสี (ดำ/ขาว/ซาฮาร่า · สต๊อก · อบพิเศษ · ลายไม้อบพิเศษ) คิดต่อเมตร. + ระแนงทุกตัวมีช่อง 'ครอบวงกบ(ม.)' (o-fcm) ในฟอร์มเอง (line 2430). ทำงานครบ.</td>
+<td class="c">✅</td>
+<td>ไม่มีปัญหา — ครอบวงกบกรอกได้ทั้งแบบ product แยกและ inline ในระแนง.</td>
+<td class="fix">ไม่ต้องแก้ — ผ่าน. (ข้อสังเกตเล็ก: มี 2 ทางเข้า (product fw_ranae + o-fcm inline) อาจสับสนว่าใช้อันไหน แต่ไม่กระทบความถูกต้อง)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>OPTION ±ราคา (เปลี่ยนเป็นลายไม้ Golden Teak / เปลี่ยนสี ฯลฯ) สำหรับระแนง-รั้ว</td>
+<td>(3) OPTION±ราคา</td>
+<td>ใบจริง 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 10,000 บาท' — ระบบกรอกผ่าน ocAddRow ได้ ✅</td>
+<td>มีกลไก ocAddRow + o-optdelta (line 2030,2033,2640) — เพิ่มแถว OPTION พิมพ์ข้อความ + กรอก ±ราคา → บวก/ลบเข้ายอดจริง + render บรรทัดสีแดง 'OPTION :' ในใบ (line 3434-3435). ระดับชุดก็มี groupOptText/groupOptDelta.</td>
+<td class="c">✅</td>
+<td>ไม่มีปัญหาเชิงกลไก — OPTION ของระแนงเช่น 'เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 5,000/10,000/19,500/25,000' กรอกได้ครบ + บวกเงินถูก.</td>
+<td class="fix">P3 (ปรับ UX เล็ก): เพิ่ม preset OPTION สำเร็จรูปใน ocAddRow สำหรับระแนง เช่น dropdown 'เปลี่ยนเป็นลายไม้ Golden Teak SMS' กรอกแค่ราคา — ลดการพิมพ์ผิด/คำไม่ตรงใบ. ไม่บังคับ</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: หลังคา-ฝ้า-ผนัง <span class="c">16 จุด · 🔴3 🟡9</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>หลังคาเมทัลชีท (imp7-imp14: 1"/2" ท้อง PVC/เหล็ก/ฟอยล์ EPS/PU)</td>
+<td>(5) วัสดุ/สี</td>
+<td>คลังคำใบจริง: 'หลังคาเมทัลชีท สีน้ำตาล' (color) + productType 'หลังคาเมทัลชีท (แปคู่) โครงอลูมิเนียม'. ระบบออกได้แต่ชื่อรุ่น+โครง ไม่มีสีแผ่นเมทัล.</td>
+<td>มี 8 product (imp7-14) cat==='หลังคา' → render บล็อกหลังคาเต็ม (แป/โครง/ปลาย/รางน้ำ/ของเสริม) · method bucket min:0 = กรอกราคาเอง. genQuote ออก det = ชื่อรุ่น + โครงอลู + รางน้ำ.</td>
+<td class="c">🔴</td>
+<td>ไม่มี o-roofcolor สำหรับเมทัลชีท (เงื่อนไขสีเฉพาะ vinyl/delight/polyton). ใบจริงระบุ 'หลังคาเมทัลชีท สีน้ำตาล' — ระบบกรอกสีวัสดุมุงไม่ได้เลย → สีหายจากใบ.</td>
+<td class="fix">P1: ขยายเงื่อนไข o-roofcolor ให้ครอบเมทัลชีท (imp7-14) ด้วย — เพิ่ม dropdown 'สีแผ่นเมทัลชีท' (น้ำตาล/แดง/เทา/ขาว/เขียว ฯลฯ ตามที่ขายจริง · เช็คซ้ำกับพี่นัท) ต่อเข้า _roofHead เป็น 'หลังคาเมทัลชีท สีน้ำตาล'. ปัจจุบัน _rfColor='' จึงไม่มีสีต่อท้าย. P1: template หมายเหตุร่วม.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หลังคาชินโคไลท์ (imp15-imp20: Heat Cut/Superior/Nature/Shade/Prime/Grang)</td>
+<td>(5) วัสดุ/สี + รหัสรุ่น</td>
+<td>ใบจริง: 'หลังคาชินโคไลท์ รุ่น NT-332 สี Light Grey หนา 6 มม.' + OPTION 'รุ่น HC-N828 สี Modern Grey ราคาเพิ่ม 17,000'. ระบบมีรุ่นแบบ marketing (Heat Cut/Superior...) แต่ไม่ตรงรหัส NT-332/HC-N828 และไม่มีช่องสี.</td>
+<td>มี 6 product (imp15-20) cat==='หลังคา' → บล็อกหลังคาเต็ม · ชื่อรุ่น+ความหนาอยู่ในชื่อ product (6มม. Heat Cut ฯลฯ). genQuote ออกชื่อรุ่น+โครง+รางน้ำ.</td>
+<td class="c">🔴</td>
+<td>ไม่มี o-roofcolor สำหรับชินโคไลท์ → กรอกสี (Light Grey / Modern Grey) ไม่ได้. ใบจริงยังมีรหัสรุ่นย่อย NT-332, HC-N828 ที่ระบบไม่มีช่องกรอก. นี่คือ gap (ค) 'ไม่มีรหัสสีรุ่นย่อย' ที่ pilot ยืนยัน — ขยายผลชัดในชินโคไลท์.</td>
+<td class="fix">P1: (1) เพิ่ม dropdown 'สีชินโคไลท์' (Light Grey/Modern Grey/Clear ฯลฯ) ต่อเข้า _roofHead. (2) เพิ่มช่อง free-text 'รหัสรุ่น/สี' (เช่น NT-332, HC-N828) ใต้ชื่อหลังคา — render เป็น 'รุ่น NT-332 สี Light Grey'. ทบทวนชื่อรุ่นใน PRODUCTS ให้ map กับรหัสจริงที่ผู้ผลิตใช้ (เช็คซ้ำ — Heat Cut=รุ่นอะไร? NT-332?). P1: template หมายเหตุมาตรฐานร่วม.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หลังคาไวนิล (roof_vinyl)</td>
+<td>(5) วัสดุ/สี + (4) หมายเหตุมาตรฐาน</td>
+<td>ใบจริง 'หลังคาหน้าบ้าน' → หลังคาไวนิล สีขาว / รางน้ำอลูมิเนียม+ตะแกรงพลาสติกกันใบไม้ สีดำ / ท่อน้ำทิ้ง PVC 2.5" สีดำ / เสาแผง 2 ต้น + หมายเหตุ 2 บรรทัด (ไม่รวมงานรื้อ/ย้ายแอร์).</td>
+<td>มี product ครบ · cat==='หลังคา' render บล็อกหลังคาเต็ม: o-roofcolor (3 สี: เทา/ขาว/น้ำตาล), o-roofbatten (แปเดี่ยว/คู่), o-roofframe (อลู/เหล็กชุบ), o-roofend (ปล่อย/รางน้ำ→ระบบราง ท่อ/โซ่+สี+ลาย), +ของเสริมหลังคา (รางน้ำ/คาน/เสา/โซ่/ปิดปลาย/ซ่อนสโลป/ครอบท่อ PVC/เพลท/เหล็กดึง). genQuote (3210-3244) ประกอบ det = 'หลังคาไวนิล สีขาว' + 'โครงอลูมิเนียม สี...' + (แปคู่) + รางน้ำ(ท่อ สีขาว) ลงใบครบ. รองรับหลังคาเลื่อน (optSlide) + มอเตอร์.</td>
+<td class="c">🟡</td>
+<td>ไม่มี root cause เชิงโครงสร้าง แต่ขาด: (ก) ไม่มี template หมายเหตุมาตรฐานต่อรายการ — ใบจริงทุกหลังคามี 'ราคาที่เสนอไม่รวมงาน รื้อพื้นเดิม/รื้อกระเบื้อง/รื้อหลังคาเดิม/งานเดินไฟ/งานสี' + 'ไม่รวมงาน ย้ายกล้องวงจรปิด/ย้ายแอร์' ฯลฯ — ระบบให้พิมพ์เองใน i-note (free-form) เท่านั้น (qrow 2799 render note ที่พิมพ์มือ). เสี่ยงเซลล์ลืม/พิมพ์ผิด.</td>
+<td class="fix">P1: เพิ่ม 'คลังหมายเหตุมาตรฐาน' เป็น checklist chips ในกล่องของแต่ละ item (ไม่ใช้ textarea เปล่า) — preset 8-10 บรรทัดที่ใบจริงใช้บ่อย เช่น [ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง][ไม่รวมงาน รื้อหลังคาเดิม/งานเดินไฟ/งานสี][ไม่รวม ย้ายกล้อง/ย้ายแอร์][รวมโครงยึดเข้าตัวบ้านพร้อมครอบอลู] ติ๊กแล้ว push เข้า note อัตโนมัติ + ยังพิมพ์เพิ่มเองได้. ใส่ logic: ถ้าเลือกหลังคา ให้ default แนะนำ chip กลุ่มหลังคา. P2: เพิ่มช่อง 'ตะแกรงกันใบไม้ สี' (ดำ/ขาว) — ใบจริงระบุ 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สีดำ' แต่ระบบมีแค่สีท่อ (o-gutter-pipecolor) ไม่มีสีตะแกรง.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หลังคาดีไลท์ (roof_delight)</td>
+<td>(5) วัสดุ/สี</td>
+<td>คลังคำใบจริงในกลุ่มนี้ไม่พบดีไลท์ระบุชัด แต่ระบบรองรับไว้.</td>
+<td>product มี · render บล็อกหลังคาเต็มเหมือนไวนิล · o-roofcolor มี 2 สีดีไลท์ (DG-2 ฟ้าคราม / DG-4 เทาโซล่าร์). genQuote ออก 'หลังคาดีไลท์ DG-4...' ลงใบได้.</td>
+<td class="c">🟡</td>
+<td>เหมือนไวนิล: ขาด template หมายเหตุมาตรฐาน (พิมพ์มือใน i-note). สีดีไลท์มีแค่ 2 ตัว — ถ้ารุ่นจริงมีมากกว่านี้ต้องเช็คซ้ำ (เช็คซ้ำ).</td>
+<td class="fix">P1: ใช้ template หมายเหตุมาตรฐานร่วม (ดู roof_vinyl). P3: ยืนยันรายการสีดีไลท์กับพี่นัทว่าครบ 2 สีจริงไหม.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หลังคากระจกลามิเนต (roof_laminate)</td>
+<td>(5) วัสดุ/สี</td>
+<td>ใบจริง 'กั้นห้องกระจก พร้อมหลังคา' → หลังคากระจกลามิเนตใส ฟิล์มเขียว หนา 4+4 มม. · OPTION เปลี่ยนฟิล์มใส/เขียว 4+4. ระบบไม่มีช่องระบุฟิล์ม/หนา.</td>
+<td>product มี (min 45000) · บล็อกหลังคาเต็ม (แป/โครง/ปลาย/ของเสริม). genQuote ออก 'หลังคากระจกลามิเนต' + โครง + รางน้ำ.</td>
+<td class="c">🟡</td>
+<td>ไม่มี o-roofcolor สำหรับลามิเนต (เงื่อนไข render สีเฉพาะ roof_vinyl/delight/polyton เท่านั้น บรรทัด 2309-2315). ใบจริงระบุชนิดฟิล์ม/ความหนา เช่น 'หลังคากระจกลามิเนตใส ฟิล์มเขียว หนา 4+4 มม.' — ระบบออกแค่ 'หลังคากระจกลามิเนต' ลอยๆ ไม่มีช่องเลือกฟิล์ม/หนา.</td>
+<td class="fix">P1: เพิ่ม dropdown 'ชนิดกระจกลามิเนตหลังคา' เฉพาะ roof_laminate — ตัวเลือก: ลามิเนตใส ฟิล์มเขียว 4+4 / ฟิล์มใส 4+4 / ฟิล์มกันร้อน 4+4 / ฟิล์มกันเสียง 4+4 / 5+5. ให้ค่านี้ต่อเข้า _roofHead ('หลังคากระจกลามิเนต...ฟิล์ม...หนา...มม.') แทนการพึ่ง GLASS selector. P1: template หมายเหตุร่วม.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>กั้นห้องกระจก พร้อมหลังคา (glasshouse set + roof)</td>
+<td>(6) งานหลายด้าน A-G + หลังคารวมชุด</td>
+<td>ใบจริง 'กั้นห้องเก็บของ พร้อมหลังคา' → ด้าน B ประตูเปิดคู่ / ด้าน C หน้าต่างเลื่อนสลับ+มุ้ง / ด้าน E ระแนงบังตา / หลังคาไวนิล + พื้นไม้เทียม + note 7 บรรทัด.</td>
+<td>มีปุ่ม '+ กั้นห้องกระจก' (addGlasshouseSet) สร้างชุดหลายด้าน A/B/C...+หลังคาในชุดเดียว. genQuote (3359-3453) รวม prodName multiline แยกบรรยายต่อด้าน + หลังคา · ป้ายด้าน auto A/B/C (ghSideLabel บรรทัด 1884). OPTION/หมายเหตุ ต่อด้าน push เข้า specialLines (3397-3398).</td>
+<td class="c">🟡</td>
+<td>โครงสร้างรองรับครบ. จุดเสี่ยง: หมายเหตุมาตรฐานต่อชุด (ใบจริงกั้นห้อง+หลังคามักมี 4-6 บรรทัด: ไม่รวมลงเข็ม/เทพื้น/ปูกระเบื้อง/งานไฟ/ก่อผนังปูนด้าน A/ดรอปพื้น) — ยังพิมพ์มือ. การ map ด้านกับชนิดงาน (ด้าน A=ประตู, ด้าน E=ระแนง) ทำได้ผ่าน i-position แต่ไม่มีตัวช่วย preset.</td>
+<td class="fix">P1: ในชุดกั้นห้อง เพิ่มแถบ 'หมายเหตุมาตรฐานของชุด' (chips) แชร์ทั้งชุด — รวม [ไม่รวม ลงเข็ม/เทพื้น/ปูกระเบื้อง][ไม่รวมงานไฟ][ไม่รวมก่อผนังปูนด้าน...][ไม่รวมดรอปพื้น][รวมพื้นไม้เทียม รวมวางตง]. P2: เพิ่ม preset 'พื้นไม้เทียม' เป็น item ในชุด (ใบจริงมี 'พื้นไม้เทียม WG11 สี DARK OAK' ในกั้นห้อง) — ตรวจว่ามี product พื้นไม้เทียมไหม (ไม่พบใน PRODUCTS กลุ่มนี้ — อาจต้องใช้ custom_item).</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ผนังเบาภายนอก (wall_ext) / ภายใน (wall_int) — สมาร์ทบอร์ด</td>
+<td>(5) วัสดุ + (4) หมายเหตุ</td>
+<td>ใบจริง 'ผนังเบากรุสมาร์ทบอร์ดทาสีขาว พร้อมฉนวนกันร้อนและกันเสียง โครงเหล็กชุบซิงค์(ไร้สนิม)' + note 'ไม่รวมงานย้ายแอร์เดิม/งานผนังสมาร์ทบอร์ด'. ระบบ render วัสดุครบ แต่ note ต้องพิมพ์มือ.</td>
+<td>2 product มี · option: o-smartthick (12/20 มม.), o-wallpaint, o-insul, o-wallframe (อลู/เหล็กชุบซิงค์ไร้สนิม). genQuote (3160) ออก 'แผ่นสมาร์ทบอร์ด หนา 12 มม. พร้อมทาสีรองพื้นสีขาว' + 'โครงเหล็กชุบซิงค์ (ไร้สนิม)' + 'ฉนวนกันความร้อนและกันเสียง หนา 3"'. ตรงใบจริงดีมาก.</td>
+<td class="c">✅</td>
+<td>ผ่านดี — material breakdown ตรงใบจริง. footer ทั่วบิลก็มีหมายเหตุสมาร์ทบอร์ดแตกร้าว (Cracks) แล้ว (บรรทัด 2891). ยังขาด per-item note 'ไม่รวมงานก่อผนังปูน/ระบบไฟฟ้า' แบบ template.</td>
+<td class="fix">P1: template หมายเหตุมาตรฐาน (chips) — เพิ่มกลุ่มผนัง: [ไม่รวมงานก่อผนังปูน][ไม่รวมระบบไฟฟ้า][รวมงานกรีดผนังใส่แฟลชชิ่งกันน้ำ][งานเก็บสีเฉพาะจุด ไม่รวมสี]. P3: คงส่วน material render.</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>พื้นไม้เทียม / ปูพื้นสมาร์ทบอร์ด (productType ในใบจริง)</td>
+<td>(1)(2) ไม่มี product</td>
+<td>ใบจริง: 'พื้นไม้เทียม WG11 สี DARK OAK' (กั้นห้องเก็บของ) · productType 'พื้นไม้เทียม รวมวางตงไม้เทียม', 'ปูพื้นสมาร์ทบอร์ด หนา 20 มม. โครงเหล็ก', 'ปูพื้นไม้เทียม โครงเหล็ก'.</td>
+<td>ไม่พบ product 'พื้นไม้เทียม' / 'ปูพื้นสมาร์ทบอร์ด หนา 20มม. โครงเหล็ก' / 'ปูพื้นไม้เทียม โครงเหล็ก' ใน PRODUCTS. ต้องใช้ custom_item (➕ รายการกรอกเอง free-form) กรอกชื่อ+ราคาเอง.</td>
+<td class="c">🔴</td>
+<td>ไม่มี product/template สำหรับงานพื้น (ไม้เทียม/สมาร์ทบอร์ด) ที่ใบจริงในกลุ่มนี้มี (มากับกั้นห้อง/หลังคา). เป็น productType ในคลังใบจริงแต่ระบบไม่มี.</td>
+<td class="fix">P2: เพิ่ม product 'พื้นไม้เทียม รวมวางตง (โครงเหล็ก)' + 'ปูพื้นสมาร์ทบอร์ด 20มม. โครงเหล็ก' แบบ per_sqm/bucket กรอกราคา + dropdown สี/ลาย (WG11 DARK OAK ฯลฯ) + free-text รหัสลาย. ถ้ายังไม่อยากเพิ่ม product เต็ม อย่างน้อยทำ custom_item ให้มี preset ชื่อ+ช่องสี. (เช็คซ้ำราคากับช่างก่อน).</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>หลังคาโพลีตัน 3มม. (roof_polyton)</td>
+<td>(5) วัสดุ/สี</td>
+<td>ใบจริง '2 หลังคากันสาด' → หลังคาโพลีตัน หนา 3 มม. สีขาวขุ่น (Opal 103) ✓ตรง · แต่ '603S Ice' และ 'Australian Grey 108S' ไม่ตรง suffix (ระบบ '108' ไม่มี S).</td>
+<td>product มี · บล็อกหลังคาเต็ม · o-roofcolor มีสีโพลีตัน 8 ตัว (Clear 101/Opal 103/Bronze 107/Green 109/Aus Grey 108/Silver 501/Bronze Metallic 503/Green Metallic 504) ระบุ % แสงผ่าน. genQuote ออก 'หลังคาโพลีตัน Opal 103 สีขาวขุ่น...' ตรงใบจริง. รองรับ 'ยื่นปลาย ปล่อยปลาย/ไม่มีรางน้ำ' (o-roofend=ปล่อย).</td>
+<td class="c">🟡</td>
+<td>ผ่านดี — สีครบ มีรหัสรุ่น (101/103/108S ฯลฯ) ตรงใบจริง 'สีขาวขุ่น (Opal 103)' / 'สีไอซ์ (603S Ice)' / 'สีออสเกรย์ (108S)'. หมายเหตุ: ใบจริงมี '603S Ice' แต่ dropdown ไม่มี Ice — มี Clear101/Opal103/Bronze107/Green109/AusGrey108/Silver501 ฯลฯ → ขาดสี Ice 603S (เช็คซ้ำ).</td>
+<td class="fix">P2: เพิ่มสี 'Ice 603S' เข้า o-roofcolor (ใบจริงใช้). ตรวจ suffix รุ่น — ใบจริงเขียน '108S Aus Grey' / '603S Ice' (มี S) ระบบเขียน '108' → ปรับชื่อ option ให้ตรง. P1: template หมายเหตุมาตรฐานร่วม.</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>เมทัลชีท เสริม (imp7-14) — รางน้ำ/ตะแกรง สี</td>
+<td>(5) วัสดุย่อย: ตะแกรงกันใบไม้</td>
+<td>ใบจริงเกือบทุกหลังคา: 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สีดำ'. ระบบ render 'รางน้ำ (ท่อ สีขาว)' เท่านั้น — ขาดวรรค ตะแกรง+สี.</td>
+<td>ของเสริมหลังคามีรางน้ำ (o-rfgut), โซ่, ครอบท่อ PVC, สีท่อ PVC (ขาว/ดำ via o-gutter-pipecolor).</td>
+<td class="c">🟡</td>
+<td>ใบจริงแยกสีของ 3 ชิ้น: หลังคา / 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สีดำ' / 'ท่อน้ำทิ้ง PVC สีขาว/ดำ'. ระบบมีสีท่อ PVC แต่ไม่มี field สีตะแกรงกันใบไม้แยก — ใบจริงระบุ 'ตะแกรงพลาสติกกันใบไม้ สีดำ' เสมอ.</td>
+<td class="fix">P2: เมื่อ o-roofend=รางน้ำ ให้ render บรรทัดมาตรฐาน 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สี[X]' โดยเพิ่ม select สีตะแกรง (ดำ default/ขาว). ปัจจุบันคำว่า 'ตะแกรงกันใบไม้' หายจากใบทั้งที่ราคารวมไว้แล้ว.</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ISOWALL (isowall)</td>
+<td>(5) วัสดุ/สี</td>
+<td>คลังคำใบจริง: color 'ISOWALL (รอสรุปสี)' + productType 'ผนัง ISOWALL'. ระบบรองรับได้.</td>
+<td>product มี (optInsul-like) · option: o-isothick (ความหนา ซม.), o-isocolor, o-insul, o-wallframe (อลู/เหล็กชุบ). genQuote (3157) ออก 'แผ่น ISOWALL หนา 10 ซม. สี...' + โครง + ฉนวน.</td>
+<td class="c">🟡</td>
+<td>ใบจริงระบุ 'ISOWALL (รอสรุปสี)' — สีเป็น free-text ในระบบ (o-isocolor) ดีแล้ว. ไม่มีปัญหาโครงสร้าง. ขาด template หมายเหตุมาตรฐานร่วม.</td>
+<td class="fix">P2: ทำ o-isocolor เป็น input ที่รับค่า '(รอสรุปสี)' ได้ (free-text) — ตรวจว่าเป็น text ไม่ใช่ dropdown ปิด. รวม template หมายเหตุร่วม.</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>หลังคา — โครงเหล็กชุบซิงค์ (o-roofframe)</td>
+<td>(3) ราคา option</td>
+<td>คลังคำใบจริง productType: 'หลังคาไวนิล โครงเหล็กชุบซิงค์(ไร้สนิม)' + 'ผนังสมาร์ทบอร์ด...โครงเหล็กชุบซิงค์(ไร้สนิม)'.</td>
+<td>o-roofframe มีตัวเลือก 'โครงเหล็กชุบซิงค์' + warning UI 'ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง' (บรรทัด 2319). genQuote render 'โครงเหล็กชุบซิงค์' แทน 'โครงอลูมิเนียม สี...'.</td>
+<td class="c">🟡</td>
+<td>ราคาโครงเหล็กชุบ = ราคาโครงอลู (ไม่บวกส่วนต่าง) — มี warning เตือนแล้ว แต่เซลล์อาจพลาด. ใบจริงมี productType 'หลังคาไวนิล โครงเหล็กชุบซิงค์(ไร้สนิม)' จริง.</td>
+<td class="fix">P2: เพิ่มช่องส่วนต่างราคาโครงเหล็กชุบ (กรอก/ม. หรือ %) เมื่อเลือกโครงเหล็กชุบ แทนการคิดเท่าอลู — หรืออย่างน้อยบังคับให้กรอกราคา (custom_price) เพื่อไม่ให้ใต้ราคา. คง warning ไว้.</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>ฝ้าอลูมิเนียม ตัวซี (ceil_cshape) / ฝ้าไม้เทียม remood (ceil_bsc)</td>
+<td>(5) วัสดุ/สี</td>
+<td>คลังคำใบจริงไม่พบฝ้าตัวซี/remood โดยตรง (ส่วนใหญ่เป็นฝ้าฉาบเรียบ). ระบบมีรองรับไว้.</td>
+<td>2 product มี · ceiling:1 + crates (สี-เรท): ตัวซี ขาว-ดำ 2100/ลายไม้ 2700 · remood มาตรฐาน 2600/ลายไม้ 2800. option o-ckolor เลือกสี. genQuote (3159) ออก 'ฝ้าอลูมิเนียม ไทยทิพย์ สีลายไม้'. คิดขั้นต่ำ 10 ตร.ม.</td>
+<td class="c">🟡</td>
+<td>สีเป็นกลุ่มกว้าง (ขาว-ดำ / ลายไม้) ไม่มีรหัสสีย่อย/ชื่อลายไม้เฉพาะ. ใบจริงในกลุ่มนี้ไม่มีฝ้าตัวซี/remood ตัวอย่างชัด — ความเสี่ยงต่ำ แต่ถ้าลูกค้าถามชื่อลายไม้จะระบุไม่ได้.</td>
+<td class="fix">P3: เพิ่ม free-text 'ระบุลาย/รหัสสี' (option) เมื่อเลือก 'ลายไม้' เพื่อ render เช่น 'ฝ้าไม้เทียม remood ลาย...'. รวม template หมายเหตุร่วม.</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ฝ้าฉาบเรียบ (ceiling_smooth)</td>
+<td>(5) วัสดุ + (2) บรรยาย</td>
+<td>ใบจริง OPTION (1) 'เพิ่มงานฝ้าฉาบเรียบพร้อมทาสีขาว ใต้หลังคาไวนิล ขนาด 3.26x1.52 ราคาเพิ่ม 10,000' — ทำเป็น item แยก/OPTION ได้.</td>
+<td>product มี (optInsul) · option: o-insul (ฉนวน 3" +600/ตร.ม.), o-ceilfinish (ทาสีขาว/รองพื้น/ไม่ทา), o-ceilslope (ฝ้าเฉียงตามแนวหลังคา). genQuote (3158) ออก 'ฝ้าฉาบเรียบ พร้อมทาสีขาว' + 'ฝ้าเฉียงตามแนวหลังคา' + ฉนวน. ตรงใบจริง.</td>
+<td class="c">✅</td>
+<td>ผ่านดี. ใบจริง 'ฝ้าฉาบเรียบพร้อมทาสีขาว' + OPTION 'เพิ่มงานฝ้าฉาบเรียบพร้อมทาสีขาว ใต้หลังคาไวนิล' รองรับผ่านปุ่ม OPTION/พิมพ์ที่ได้.</td>
+<td class="fix">P3: คงสภาพ. แนะนำเพิ่ม preset note 'ใต้หลังคาไวนิล/หลังคา...' เป็น quick-fill เพื่อ match ถ้อยคำใบจริง.</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ของเสริมหลังคา: เสาแผง/เสา 4x8/คานเหล็กถัก/โซ่/ครอบท่อ PVC/ซ่อนสโลป/ครอบคาน</td>
+<td>(3) ราคา/option + (6) งานหลายชิ้น</td>
+<td>ใบจริง 'หลังคาหน้าบ้าน' → เสริมเพลทเหล็กด้านล่างและเหล็กดึงด้านบน + เสาแผง 2 ต้น ✓. '3 หลังคากันสาด' → โซ่รางน้ำ ลายทิวลิป สีน้ำตาล 2 จุด ✓.</td>
+<td>ครบในกล่อง '+ของเสริมหลังคา' (พับ details default): รางน้ำ 3 เกรด, คานเหล็กถัก 3 รุ่น (2400/3600/4400), เสาแผง 4000, เสา 4x8 2000, โซ่รางน้ำ 3000, ปิดปลายกันน้ำ 1000/ม., ครอบท่อ PVC 1500/1.5ม., ซ่อนสโลป (comp 3500/smart 4000), ปิดซ่อนราง, ครอบคาน, เพลทเหล็กล่าง, เหล็กดึงบน. คิดเงิน+render ลงใบ.</td>
+<td class="c">✅</td>
+<td>ผ่านดี — ครอบคลุมรายละเอียดงานหลังคาในใบจริง (เสาแผง 2 ต้น / โซ่รางน้ำ ลายทิวลิป / เพลทเหล็กล่าง+เหล็กดึงบน).</td>
+<td class="fix">P3: คงสภาพ. แต่โซ่รางน้ำในของเสริม (o-rfchain) ออกแค่จำนวน — ตรวจว่า render ระบุ 'ลายทิวลิป สีน้ำตาล' ด้วยไหม (ระบบ o-gutter-chainpat/color อยู่ใน path รางน้ำหลัก ไม่ผูกกับ o-rfchain ของเสริม) → ถ้าใช้ o-rfchain ลาย/สีอาจหาย (เช็คซ้ำ).</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>OPTION ทางเลือกลูกค้า (เปลี่ยนสี/วัสดุ ±ราคา) — หลังคา</td>
+<td>(3) OPTION±ราคา</td>
+<td>ใบจริง '2 หลังคากันสาด' → OPTION(1) เพิ่มยื่น 120→150 +5,000 / OPTION(2) เปลี่ยนเทาซาฮาร่า +2,000. ระบบทำได้.</td>
+<td>qrow รองรับ optText (OPTION : ...) สีแดง + optDelta (±ราคา) บรรทัด 2809. ในชุดกั้นห้อง OPTION ต่อด้าน push เข้า specialLines (3398). i-note พิมพ์ 'OPTION : ...' จะ render แดงอัตโนมัติ (บรรทัด 2800).</td>
+<td class="c">✅</td>
+<td>ผ่าน — OPTION เปลี่ยนสี/ขนาดหลังคา (เช่น 'เพิ่มขนาดหลังคาจากยื่น 120→150 ซม. +5,000', 'เปลี่ยนเป็นเทาซาฮาร่า +9,500') ทำได้ผ่านปุ่ม OPTION + optDelta หรือพิมพ์ใน i-note.</td>
+<td class="fix">P3: คงสภาพ. แนะนำ preset OPTION หลังคาบ่อยๆ (เปลี่ยนสีเทาซาฮาร่า / เพิ่มขนาดยื่น) เป็น quick chips เพื่อลดพิมพ์มือ + กันลืมใส่ optDelta.</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง) <span class="c">13 จุด · 🔴6 🟡6</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>สีเฟรมมุ้ง (frame color) — addon มุ้งในบาน (o-mosqcolor)</td>
+<td>(5) รายละเอียดวัสดุ/สี — render ลงใบ</td>
+<td>ใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)', 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)', 'มุ้งจีบ เฟรมสีอบขาว' — ระบบออกได้แค่ 'มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา' (ไม่มีคำว่าเฟรมสี...)</td>
+<td>มี dropdown 'สีกรอบมุ้ง' (o-mosqcolor: ขาว/ดำ, sahara, kl_special, kl_wood) คิดราคาถูก (×0.5) และเก็บ optSel.mosqColor แต่ ค่า frame color ไม่ render ลงใบ. โค้ดสร้าง label สีกรอบไว้ที่ addonLines[].det (บรรทัด 1527 _mosqColorLbl) แต่ตอนวาดใบ (บรรทัด 3074/3272) อ่านเฉพาะ al.mosqArea ทิ้ง al.det; det ถูกประกอบใหม่จาก mscreen.name + ผ้า เท่านั้น (3275/3350) → สีเฟรมหาย ทั้ง path generic, บานเลื่อน</td>
+<td class="c">🔴</td>
+<td>กรอกแล้วไม่ดึงลงใบ: addonLines[].det (มีสีเฟรม) ไม่ถูกใช้ตอน render; det rebuild ใหม่ละสีเฟรมทิ้ง</td>
+<td class="fix">P1: ในทุก det-path ของมุ้ง addon (บรรทัด ~3275 บานเลื่อน, ~3350 generic) ให้เติมสีเฟรมต่อท้าย: map optSel.mosqColor → ข้อความ ('sahara'→'เฟรมสีเทาซาฮาร่า', 'kl_special'→'เฟรมอบสีพิเศษ', 'kl_wood'→'เฟรมลายไม้อบพิเศษ', ''→'เฟรมขาว/ดำ') แล้ว push เป็นรูปใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา / เฟรมสีเทาซาฮาร่า)'. ทางลัดที่ปลอดภัยกว่า: ใช้ addonLines[].det ที่มีอยู่แล้ว (สร้างไว้ครบที่ 1527) แทนการ rebuild ใหม่. เพิ่มช่องรหัสรุ่นสีเฟรม (free-text) คู่ dropdown เมื่อเลือก kl_special/kl_wood เพื่อพิมพ์ KL19022WD/KL10232A ลงใบ (ดู finding รหัสสี)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>สีเฟรมมุ้ง — มุ้ง standalone (cat='มุ้ง', o-mscolor)</td>
+<td>(5) รายละเอียดวัสดุ/สี — render ลงใบ</td>
+<td>ใบจริงมี 'มุ้งจีบ เฟรมสีอบขาว', 'มุ้งจีบ (เฟรมสีเทาซาฮาร่า / ผ้าไฟเบอร์ดำ)' — มุ้งจีบ standalone ในระบบออกได้แค่ 'ผ้าไฟเบอร์ดำ' ไม่มีสีเฟรม</td>
+<td>product มุ้ง standalone (imp28/imp29/mj_* ฯลฯ) มี p.mscolor=true → dropdown o-mscolor ให้เลือกสีเฟรมจาก COLORS เต็ม + คิดค่าทำสี×0.5 (บรรทัด 1174-1180) และเก็บ optSel.mscolor (2604). แต่ det ของ cat='มุ้ง' (บรรทัด 3171-3181) render เฉพาะ 'ผ้าไฟเบอร์{สี}' จาก fabric เท่านั้น — ไม่อ่าน optSel.mscolor เลย → สีเฟรมที่ลูกค้าจ่ายไม่ขึ้นใบ</td>
+<td class="c">🔴</td>
+<td>กรอกแล้วไม่ดึงลงใบ: det branch cat='มุ้ง' ไม่มีโค้ดอ่าน optSel.mscolor</td>
+<td class="fix">P1: ใน det branch cat='มุ้ง' (3171-3181) ถ้า optSel.mscolor != '' ให้ดึง COLORS[mscolor].quoteName มาเติมเป็น 'เฟรมสี{X}' และต่อกับชื่อผ้าในวงเล็บตามใบจริง: '{ชื่อมุ้ง} (เฟรมสี{X} / {ผ้า})'. ถ้า COLORS[mscolor].hasCode ให้ดึงค่าจากช่องรหัส (ดู finding รหัสสี) ใส่ [โค้ด] ด้วย</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>หมายเหตุมาตรฐาน (standard notes) — ทุกตัวในกลุ่มมุ้ง/ตู้</td>
+<td>(4) หมายเหตุมาตรฐาน</td>
+<td>ใบจริงมุ้ง: 'ราคาที่เสนอรวมงานรื้อมุ้งเดิม แต่ไม่รวมความเสียหายที่เกิดจากการรื้อ เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี...'; standardNotes ยังมีบล็อกรับประกัน 1 ปี + เงื่อนไข 3D ที่ขึ้นเกือบทุกใบ</td>
+<td>ไม่มี template หมายเหตุมาตรฐานเลย — grep 'standardNote/หมายเหตุมาตรฐาน/ราคาที่เสนอไม่รวม' = 0 hit. มีแค่ textarea .i-note (2031) ให้เซลล์พิมพ์เอง + บริการรวม svcNotes (2823) แบบ free-text. ใบจริงทุกหมวด (รวมมุ้ง/ตู้) มีหมายเหตุยาวซ้ำ ๆ เช่น 'ราคาที่เสนอรวมงานรื้อมุ้งเดิม แต่ไม่รวมความเสียหาย...', 'รับประกัน 1 ปี...', 'เงื่อนไขแบบและใบเสนอราคา 1)...6)'</td>
+<td class="c">🔴</td>
+<td>ไม่มี template/dropdown หมายเหตุมาตรฐาน — เซลล์ต้องพิมพ์ใหม่ทุกครั้ง เสี่ยงตกหล่น/พิมพ์ผิด</td>
+<td class="fix">P1: สร้างชุด STD_NOTES (ก้อนข้อความที่ใบจริงใช้ซ้ำ: รื้อมุ้งเดิม, รับประกัน 1 ปี, เงื่อนไขแบบ/3D, ไม่รวมงานลงเข็ม/เทพื้น ฯลฯ) เป็น array. เพิ่ม UI checkbox-list 'หมายเหตุมาตรฐาน' ใต้ช่อง i-note (กลุ่ม note-opt-group ที่มีอยู่) ติ๊กแล้ว append เข้า note ที่ render. ทำ preset ระดับใบ (footer) สำหรับบล็อกรับประกัน/เงื่อนไข 3D ที่ขึ้นครั้งเดียวท้ายใบ. ตั้ง default ติ๊กบล็อกรับประกัน+เงื่อนไขแบบให้ทุกใบ</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ฝาตู้ Future Tech (id=future_tech, cat='ฝาตู้')</td>
+<td>(5) รายละเอียดวัสดุ/สี — render ลงใบ</td>
+<td>ใบจริง: 'บานหน้าตู้ Future Tech บานเปิด ... ปิดด้วยแผ่นคอมโพสิต', 'แผ่นคอมโพสิต สีอบขาว (ด้านข้างตู้)', glass field = 'แผ่นคอมโพสิต สีเทา (บานหน้าตู้)'</td>
+<td>คิดราคาได้ (มี dropdown สีฝาตู้ o-ftcolor + เก็บ optSel.ftcolor บรรทัด 2605). แต่ det: ฝาตู้ อยู่ใน AREA_CATS/NO_COLOR_CATS → ci=0,gi=0 (2628-2629) → ตกเข้า generic else (3301) render 'อลูมิเนียม สีอบขาว' + 'กระจกใส' (GLASS[0]) ผิดทั้งคู่. optSel.ftcolor (สีฝาตู้ที่เลือก/จ่ายเงิน) และวัสดุจริง 'แผ่นคอมโพสิต/Future Tech' ไม่ขึ้นใบเลย</td>
+<td class="c">🔴</td>
+<td>ไม่มี det branch สำหรับ ฝาตู้: ตกเข้า generic ที่ render สีอลู+กระจกหลอก, ftcolor ไม่ถูกอ่านลง det</td>
+<td class="fix">P1: เพิ่ม det branch `else if(it.p.future_tech)` ก่อน generic else: render 'ฝาตู้ Future Tech' + วัสดุ 'แผ่นคอมโพสิต สี{COLORS[ftcolor].quoteName||ขาว/ดำ}'. อย่าให้ขึ้นบรรทัดอลู/กระจกหลอก. ใส่จำนวนบาน (panels) ในชื่อ/det</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ตู้อลูมิเนียม (id=cabinet_alu, cat='ตู้อลู')</td>
+<td>(5) รายละเอียดวัสดุ/สี + (2) บรรยายเต็ม</td>
+<td>ใบจริง 'ตู้รองเท้า': 'บานตู้ Futuretech ... พร้อมชั้นวางของอลูมิเนียมลูกฟูกเรียบ จำนวน 5 ชั้น (ตามแบบ)', det 'แผ่นคอมโพสิต สีเทา (บานหน้าตู้)', 'ชั้นวางของอลูมิเนียมลูกฟูกเรียบ 2 หน้า สีเทาซาฮาร่า (ขนาด 0.50x1.57 ม. 5 ชั้น)'</td>
+<td>คิดราคาครบ (บานหน้า Future Tech + ผนัง + ชั้นวาง + ตู้รองเท้า/ตู้ทั่วไป + จำนวนชั้น + ชนิดชั้น alu/กระจก + ผนังหลัง — บรรทัด 1011-1032). msgs (seller log) ละเอียดดี. แต่ det ลงใบ: cat='ตู้อลู' ∈ AREA_CATS/NO_COLOR_CATS → ci=0,gi=0 → generic else → 'อลูมิเนียม สีอบขาว' + 'กระจกใส' หลอก; ไม่บอกบานหน้าคอมโพสิต/ชั้นวางกี่ชั้น/ชนิดชั้น/ลึก ที่ใบจริงระบุ</td>
+<td class="c">🔴</td>
+<td>ไม่มี det branch สำหรับ ตู้อลู: รายละเอียดตู้ (ชั้น/วัสดุบาน/ลึก) อยู่ใน msgs ฝั่งคิดราคา ไม่ถูกประกอบเป็น det ลูกค้า</td>
+<td class="fix">P1: เพิ่ม det branch `else if(it.p.cabinet)` ประกอบจาก optSel: 'บานหน้าตู้ Future Tech {nDoors} บาน — แผ่นคอมโพสิต สี{ftcolor/เลือก}' + 'ชั้นวาง {nsh} ชั้น ({alu→อลูมิเนียมลูกฟูกเรียบ / glass→กระจกใส})' + 'ลึก {D} ม.' + (backwall?'ผนังหลังอลู':'ผนังหลังใช้ผนังปูน'). เพิ่ม dropdown 'สีบานหน้าตู้/วัสดุ' ให้ระบุคอมโพสิต+สี (ตอนนี้ cabinet ใช้ ci ของสีอลู ไม่ใช่คอมโพสิต — ควรแยกช่องวัสดุบานหน้า)</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>รหัสสีรุ่นย่อยของเฟรมมุ้ง (KL19022WD / KL10232A)</td>
+<td>(5) รายละเอียดวัสดุ/สี — รหัสรุ่น</td>
+<td>ใบจริง: 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)' — ต้องมี KL19022WD; ระบบใส่ไม่ได้</td>
+<td>สีอลูหลัก มี hasCode + ช่อง .i-colorcode (free-text) render เป็น '[KL10232A]' ได้ (3310-3311) — ส่วนนี้ผ่าน. แต่ dropdown สีเฟรมมุ้ง (o-mscolor/o-mosqcolor) ไม่มีช่องรหัสคู่กัน → พิมพ์รหัสรุ่นย่อยของเฟรมไม่ได้เลย</td>
+<td class="c">🔴</td>
+<td>ไม่มี input รหัสสีสำหรับเฟรมมุ้ง (มีเฉพาะสีอลูหลัก)</td>
+<td class="fix">P2: เพิ่มช่อง free-text 'รหัส/ชื่อสีเฟรม' (โผล่เมื่อเลือกสีเฟรมที่ hasCode) ทั้งใน o-mscolor (standalone) และ o-mosqcolor (addon — แต่ addon ใช้ค่า fixed sahara/kl_*; เปลี่ยนให้รับรหัสจาก dropdown สี COLORS เหมือน standalone จะคุมรหัสได้). render เป็น 'เฟรมสีไวท์แบมบู [KL19022WD]'</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>มุ้งนิรภัย (mj_screen_safety / imp31 / imp32 / addon mj_screen_safety)</td>
+<td>(2) บรรยาย + (5) วัสดุ</td>
+<td>ใบจริงมี 'มุ้งนิรภัย', 'มุ้งนิรภัย (เฟรมสีเทาซาฮาร่า)', 'มุ้งนิรภัย (เฟรมลายไม้สีไวท์โอ๊ค)' — เฟรมนิรภัย *มี* สีในใบจริง! แต่ระบบ mj_screen_safety/imp31 ตั้ง 'กรอบทำสีไม่ได้' (no mscolor)</td>
+<td>มีครบ: standalone mj_screen_safety (min 5000), addon mj_screen_safety (overhang:true), imp31/imp32 (เสริมวงกบ) + allow_with คุมว่าบานไหนใส่ได้. det addon map ชื่อสั้น 'พร้อมมุ้งจีบนิรภัย' (3097). แต่ mj_screen_safety/imp31/32 ไม่มี mscolor → เลือกสีเฟรมไม่ได้ (กรอบนิรภัยทำสีไม่ได้ตามดีไซน์ — ถูกต้อง). โน้ต overhang 'ติดล้นนอกวงกบ' โชว์ใน msgs แต่ตรวจไม่พบว่าขึ้น det ลูกค้า</td>
+<td class="c">🟡</td>
+<td>overhang/ติดล้นนอกวงกบ เป็น msgs ฝั่งคิดราคา — ใบจริงมักระบุ 'ติดล้นนอกวงกบ' ให้ลูกค้าทราบ</td>
+<td class="fix">P2: ทบทวนกับพี่นัท — ใบจริงมุ้งนิรภัยมีระบุสีเฟรม (เทาซาฮาร่า/ไวท์โอ๊ค) ถ้าจริงต้องเปิด mscolor ให้ มุ้งนิรภัยด้วย (ตอนนี้ปิด). P3: ดัน overhang note 'ติดล้นนอกวงกบ' ลง det ลูกค้าเมื่อ mscreen.overhang=true</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>มุ้งเฟรมเล็ก/เฟรมใหญ่/ติดตาย (imp21/imp22/imp23 — standalone + addon)</td>
+<td>(3)(5) — min ตามประตู/หน้าต่าง, ผ้า, สีเฟรม</td>
+<td>ใบจริง 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' — ระบบ addon ออก 'ผ้าไฟเบอร์เทา' ครบยกเว้นเฟรมสี</td>
+<td>ครบดี: standalone (screen_addon) + addon (frame:true) มี min_door/min_window แยก × จำนวนบาน, ผ้า cat/rat/safety(IMP23), mscolor, allow/deny_with (imp21 ห้าม PC, imp23 allow list). det map 'พร้อมมุ้งเฟรมเล็ก/ใหญ่'. สีผ้า o-screenfabriccolor render ได้</td>
+<td class="c">🟡</td>
+<td>สีเฟรม addon ไม่ขึ้นใบ (ผูก P1). ชื่อผ้า addon path ใช้ map mosqFabric (fiber_gray→ผ้าไฟเบอร์เทา) ส่วน standalone ใช้ screenFabric (fiber→ผ้าไฟเบอร์{สี}) — 2 ชุด label ต่างกันเล็กน้อย เสี่ยงข้อความไม่สม่ำเสมอ</td>
+<td class="fix">P1 (สีเฟรม ดู finding แรก). P3: รวม fabric label map ให้เป็นชุดเดียว (กัน fiber vs fiber_gray ให้ผลข้อความเหมือนกัน) — ตอนนี้มี map ซ้ำ 4 จุด (3173,3269,3345,1515)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>มุ้งกันแมว/กันหมา (imp33 / ผ้า cat ใน addon)</td>
+<td>(5) วัสดุ — ชื่อผ้า</td>
+<td>ใบจริง: 'มุ้งเฟรมเล็ก ผ้ามุ้งกันแมว ( ด้าน B, E, G )' — ระบบออก 'มุ้งเฟรมเล็ก ผ้ากันแมว/หมา'</td>
+<td>มี imp33 standalone + ผ้า 'cat' ใน screen_addon (+800/ตร.ม.) + map ผ้า anti_pet→'ผ้ากันแมว/หมา'. คิดราคาได้ render ผ้าได้</td>
+<td class="c">🟡</td>
+<td>ชื่อผ้าในระบบ 'ผ้ากันแมว/หมา' vs ใบจริง 'ผ้ามุ้งกันแมว' — ใกล้เคียง แต่ไม่ตรงเป๊ะ; และใบจริงระบุด้านที่ติด '( ด้าน B, E, G )' ทำได้ผ่าน i-note เท่านั้น</td>
+<td class="fix">P3: ปรับ label map anti_pet/cat ให้ตรงใบจริง 'ผ้ามุ้งกันแมว'. ด้านที่ติด (B/E/G) ใช้ i-note ได้อยู่แล้ว — ยอมรับได้</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>มุ้งจีบ ทุกรุ่น (SD/Blackout/ทูเวย์/ตีนตะขาบ/imp28)</td>
+<td>(2) บรรยาย + (5) วัสดุ</td>
+<td>ใบจริง 'มุ้งจีบ เฟรมสีอบขาว', 'มุ้งจีบ (เฟรมสีเทาซาฮาร่า / ผ้าไฟเบอร์ดำ)' — ชื่อรุ่นถูก แต่เฟรมสีหาย</td>
+<td>ครบมาก: mj_sd_basic, mj_sd_twoway, mj_blackout, mj_keep_twoway, mj_keep_honey, imp28(ตีนตะขาบ) ทั้ง standalone และ addon. คิดตามช่องเปิด (เต็มช่อง สำหรับจีบ). มี mscolor. det ตัด 'SD พื้นฐาน/(สีขาว/ดำ)' ออกสวย (3274/3349). ปัญหาเดียว = สีเฟรมไม่ขึ้น (ดู 2 finding แรก)</td>
+<td class="c">🟡</td>
+<td>ผูกกับบั๊กสีเฟรมมุ้งไม่ render (P1) — ตัวคิดราคา/ชื่อรุ่นเองครบ</td>
+<td class="fix">แก้ผ่าน finding สีเฟรมมุ้ง (P1). นอกนั้นมุ้งจีบผ่าน</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>สีผ้าไฟเบอร์ (ดำ/เทา/ขาว — o-screenfabriccolor)</td>
+<td>(5) วัสดุ</td>
+<td>ใบจริง 'ผ้าไฟเบอร์เทา' / 'ผ้าไฟเบอร์ดำ' — addon ทำได้ผ่าน mosqFabric (มี fiber_gray/fiber_black/fiber_white) จึงครอบคลุม; แต่ผูกสีกับชนิดผ้า</td>
+<td>standalone มุ้ง cat อ่าน o-screenfabriccolor → 'ผ้าไฟเบอร์{สี}' (3178-3180) ✅. แต่ addon มุ้งในบาน (mosqFabric) ใช้ค่า fixed map (fiber_gray→เทา, fiber_black→ดำ) ไม่มี dropdown สีผ้าแยกเหมือน standalone — เลือกผ้าได้แค่ผ่าน mosqFabric ที่ผูกสีตายตัว</td>
+<td class="c">🟡</td>
+<td>addon path ไม่มีช่องสีผ้าอิสระ (standalone มี) — coverage ไม่เท่ากัน</td>
+<td class="fix">P3: ยอมรับได้ (mosqFabric มีครบ 3 สี). ถ้าต้องการเป๊ะ เพิ่ม dropdown สีผ้าแยกใน addon เหมือน standalone</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ครอบวงกบ ตู้อลู (fw_cabinet_basic/stock/special/wood)</td>
+<td>(5) วัสดุ/สี — เสริม</td>
+<td>ใบจริงมี 'ครอบวงกบอลูมิเนียม 4 ด้าน/3 ด้าน', 'วงกบอลูมิเนียม สีดำ' — ระบบมีรุ่นแต่ det ไม่ระบุสี</td>
+<td>มี 4 รุ่นครอบวงกบตู้ (700/800/1200/1300 ตามสี) คิดราคาเส้นรอบวง (frame_wrap). เป็น cat='เสริม' → det='-' (3164 AREA_CATS) ไม่มีรายละเอียดสีครอบลงใบ</td>
+<td class="c">🟡</td>
+<td>cat เสริม render det='-' — รุ่น/สีครอบวงกบไม่ลงใบ (อยู่ในชื่อ product เท่านั้น)</td>
+<td class="fix">P3: ครอบวงกบมักรวมในบรรทัด _parts ของบานหลักอยู่แล้ว; ถ้าขายเดี่ยวควรให้ det ระบุ 'ครอบวงกบอลูมิเนียม สี{X} {รอบ/3ด้าน}'</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>มุ้งม้วน / ม้วนเตะได้ (imp29 / mj_kick_150/300/600)</td>
+<td>(2)(3)(5)</td>
+<td>ระบบรองรับ มุ้งม้วน ครบ; ใบจริงตัวอย่างกลุ่มนี้ไม่มีม้วนตรง ๆ แต่ระบบเผื่อไว้ดี</td>
+<td>ครบ: รุ่นตามความกว้าง (150/300/600) + maxWidth guard เตือน+ไม่คิดราคาถ้าเกิน (1476-1479 กันเก็บเงินขาด) + mscolor + overhang. det map 'พร้อมมุ้งม้วน' (3097). คิดราคาถูกต้อง</td>
+<td class="c">✅</td>
+<td>-</td>
+<td class="fix">ผ่าน — เพียงพึ่ง finding สีเฟรม (P1) สำหรับเคสที่เลือกสีเฟรม</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: กั้นห้องกระจก-ม่านซิป <span class="c">8 จุด · 🔴2 🟡3</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>หมายเหตุต่อรายการ/ต่อด้าน (ราคาที่เสนอไม่รวม.../รวมงานดรอปพื้น.../รายละเอียดงาน: หลังคาไวนิล สีขาว...)</td>
+<td>(4) หมายเหตุมาตรฐาน</td>
+<td>ทุกชุดกั้นห้องในใบจริงมี: 'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูนด้าน A / งานดรอปพื้น' · 'ราคาที่เสนอรวมงานดรอปพื้น ด้าน B แต่ไม่รวมความเสียหาย...' · 'รายละเอียดงาน: หลังคาไวนิล สีขาว / รางน้ำ...สีดำ / ท่อน้ำทิ้ง PVC 2.5นิ้ว สีดำ'</td>
+<td>มีแค่ช่อง .i-note (textarea, บรรทัด 2031) ให้พิมพ์เอง · เงื่อนไขมาตรฐานบริษัท (เงื่อนไขการเข้าทำงาน + เงื่อนไขแบบและใบเสนอราคา) เป็น block ตายตัวท้ายใบ (บรรทัด 2876-2907) ✅ · แต่ 'หมายเหตุ' รายแถวที่ใบจริงมีแทบทุกรายการกั้นห้อง ไม่มี template เลย</td>
+<td class="c">🔴</td>
+<td>ไม่มี template/dropdown 'หมายเหตุมาตรฐาน' — พนักงานต้องพิมพ์เองทั้งก้อนทุกครั้ง เสี่ยงพิมพ์ตกหล่น/สะกดต่างกัน ทำให้ใบที่ระบบออกขาดหมายเหตุที่ใบจริงมีครบ (gap หลัก ก ที่ pilot ยืนยัน)</td>
+<td class="fix">P1: เพิ่มกล่อง 'เพิ่มหมายเหตุมาตรฐาน' (multi-select chips) ใต้ช่อง i-note — preset จากคลังจริง: (ก) งานไม่รวม: 'ลงเข็ม','เทพื้น','ปูกระเบื้อง','งานไฟ/เดินไฟ','ก่อผนังปูน (เลือกด้าน A/B/C/D...)','ดรอปพื้น','รื้อพื้นเดิม','รื้อหลังคาเดิม','รื้อราวกันตก','ย้ายแอร์/กล้องวงจรปิด','รื้อและตัดต้นไม้' → ประกอบเป็น 'ราคาที่เสนอไม่รวมงาน {a} / {b} / ...'  (ข) งานรวม: 'รวมงานดรอปพื้น (ระบุด้าน) แต่ไม่รวมความเสียหาย เช่น กระเบื้องแตก งานเก็บสี','รวมเสริมคานรับพัดลม/รับม่าน (เลือกด้าน)','รวมงานเดินไฟดาวน์ไลท์ N ดวง','รวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม','รวมงานกรีดผนังใส่แฟลชชิ่งกันน้ำ' · ให้ใส่ช่อง [จำนวน]/[ด้าน] แทรกในประโยค · กดแล้ว push เข้า specialLines (เรนเดอร์อยู่แล้ว บรรทัด 3393/3434). ส่วน 'รายละเอียดงาน: หลังคาไวนิล สีขาว...' หลังคาออก auto อยู่แล้ว (det บรรทัด 3235-3244) แต่ควรเพิ่ม auto-summary 'รายละเอียดงาน' รวมสีรางน้ำ/สีท่อ PVC/โซ่/สีระแนง ของทุกด้านในชุดให้เป็นบล็อกเดียว</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>สีเฟรมมุ้ง (เฟรมสีเทาซาฮาร่า / เฟรมลายไม้สีไวท์โอ๊ค / เฟรมสีอบขาว)</td>
+<td>(5) วัสดุ/มุ้ง(เฟรม)</td>
+<td>ใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' · 'มุ้งนิรภัย (เฟรมลายไม้สีไวท์โอ๊ค)' · 'มุ้งจีบ เฟรมสีอบขาว' · 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)'</td>
+<td>มีช่อง .o-mosqcolor (addon มุ้งในบาน, บรรทัด 2356: ขาว-ดำ/เทาซาฮาร่า/เคแอลอบพิเศษ/เคแอลลายไม้) + คิดราคา ×0.5 จริง (บรรทัด 1518-1527) และเก็บ label ลง addonLines.det · แต่ตอนเรนเดอร์ลงใบ generic det (บรรทัด 3342-3351) และบานเลื่อน (3266-3275) โชว์เฉพาะ 'สีผ้า' (mfLabel) ไม่โชว์สีเฟรม · group render โชว์แค่ a.n (ชื่อมุ้ง ไม่มีสีเฟรม, บรรทัด 3423)</td>
+<td class="c">🔴</td>
+<td>สีเฟรมมุ้งคิดเงินแล้วแต่ไม่ render ลงใบ — โค้ดเรนเดอร์ det ใช้แค่ mfLabel (สีผ้า) ไม่ดึง optSel.mosqColor มาต่อท้าย (gap หลัก ข ที่ pilot ยืนยัน — มุ้งใช้หนักทุกด้านกั้นห้อง)</td>
+<td class="fix">P1: ในการเรนเดอร์มุ้งทุกจุด (generic บรรทัด 3350, บานเลื่อน 3275) ให้ต่อท้าย 'เฟรม{สี}' โดยแมป optSel.mosqColor → ''=เฟรมสีตามอลู (หรือ ดำ/ขาว), 'sahara'→'เฟรมสีเทาซาฮาร่า', 'kl_special'→'เฟรมสีอบพิเศษ', 'kl_wood'→'เฟรมลายไม้อบพิเศษ' · ทำเป็นรูปแบบใบจริง '{ชื่อมุ้ง} (ผ้า{สีผ้า}/เฟรม{สีเฟรม})' · เพิ่ม option 'เฟรมลายไม้สีไวท์โอ๊ค/ไวท์แบมบู' + ช่องรหัสรุ่นเฟรม (เช่น KL19022WD) ลง .o-mosqcolor ให้ครบคลังจริง · ใน group render (บรรทัด 3423) เปลี่ยนจาก a.n เป็น a.det (มีสีเฟรมแล้ว) หรือดึง det มุ้งจาก itemDetail</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>กั้นห้องกระจก (โครงสร้างชุดหลายด้าน A-G)</td>
+<td>(6) งานหลายด้าน + (1) ชื่อโซน</td>
+<td>'กั้นห้องกระจก พร้อมหลังคา ครบทุกด้าน A-G: ด้าน A ประตูระบายอากาศ...; ด้าน B หน้าต่างบานเลื่อนเปิดคู่กลาง...; ...ด้าน G...; หลังคาไวนิล (แปคู่)...' (ราคา 506,000)</td>
+<td>มีปุ่ม + กั้นห้องกระจก (addGlasshouseSet, บรรทัด 1896) สร้างชุด group 6 + ตั้งชื่อชุด default 'กั้นห้องกระจก (ห้อง...)' + ส่วนแรก i-position='ด้าน A' · ปุ่ม +เพิ่มบาน auto-label ด้าน B/C/D... (ghSideLabel) · ปุ่ม +เพิ่มหลังคา → group 3 / position 'หลังคา' · genQuote จัดกลุ่มตามด้าน โชว์หัวด้านสีแดง (บรรทัด 3411-3424) บานเรียงใต้</td>
+<td class="c">🟡</td>
+<td>โครงสร้างสร้างหลายด้านได้+ออกในใบครบ แต่ posPreset (บรรทัด 276) มีแค่ ด้านบน/ล่าง/ซ้าย/ขวา/ข้าง/โดยรอบ — ไม่มี ด้าน A-G ใน datalist (ต้องพึ่ง addGlasshouseSet เติมให้ทีละด้าน หรือพิมพ์เอง) ถ้าผู้ใช้สร้างชุดเองไม่ผ่านปุ่ม จะไม่มี dropdown ด้าน</td>
+<td class="fix">P2: เพิ่ม ด้าน A–ด้าน G เข้า &lt;datalist id='posPreset'&gt; (บรรทัด 276) ให้ทุก i-position เลือกด้านได้ทันทีโดยไม่ต้องพึ่ง addGlasshouseSet · เพิ่มชิป A/B/C/D/E/F/G เหนือช่อง position ในชุด group 6 (กดเติม label เร็ว) · ปุ่ม +เพิ่มบาน ควร auto ข้ามไป D ถ้า C ถูกลบแล้ว (ป้องกันด้านซ้ำ)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>สีอลู — รหัสรุ่น + Golden Teak SMS + สเปกระแนง</td>
+<td>(5) วัสดุ/สี</td>
+<td>ใบจริง: 'อลูมิเนียมลายไม้ สี Golden Teak SMS' (โผล่หลายรายการ) · 'อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)' · 'ระแนงอลูมิเนียมกล่อง สีอบขาว (ระแนงอลูมิเนียมกล่อง ขนาด 1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม.)'</td>
+<td>COLORS (บรรทัด 862-889) มี hasCode:1 เฉพาะ index 10 (สีอบพิเศษ), 11 (ลายไม้อบพิเศษ), 12 (สีชุบ) → มี .i-colorcode ให้พิมพ์รหัส แล้ว render '[CODE]' (บรรทัด 3309-3311) ✅ · sampleConfirm สำหรับสีชุบ render '(ลูกค้าเห็นตัวอย่างจริง...)' ✅ · แต่ 'อลูมิเนียมลายไม้ สี Golden Teak SMS' (สีฮิตสุดในกลุ่ม ระแนง/หลังคา) ไม่มีเป็น preset แยก มีแค่ 'สีลายไม้สต๊อก (สักทอง/ไวท์โอ๊ค)' generic</td>
+<td class="c">🟡</td>
+<td>(1) ไม่มี preset สี 'Golden Teak SMS' — ต้องเลือก generic แล้วใบไม่ตรงคำใบจริง (2) สเปกระแนง (ขนาดกล่อง/โชว์หน้า/เว้นระยะ) ในใบจริงผูกกับสีอลู แต่ระบบ render บรรทัดสีเป็น 'อลูมิเนียม {สี}' เฉยๆ ไม่มีสเปกระแนงต่อท้าย (gap ค บางส่วน — รหัสรุ่นมีแล้วสำหรับอบพิเศษ/ชุบ แต่ลายไม้สต๊อก/Golden Teak ยังไม่มีรหัส/ชื่อรุ่น)</td>
+<td class="fix">P2: เพิ่ม COLORS preset 'อลูมิเนียมลายไม้ Golden Teak SMS' (ใช้ rate เท่าลายไม้สต๊อก) เป็น quoteName ตรงคำใบจริง · เพิ่ม hasCode:1 ให้ลายไม้สต๊อก index 5-7 เพื่อพิมพ์รหัส/ชื่อรุ่น (เช่น SMS, ไวท์แบมบู KL19022WD) · สำหรับระแนงในชุดกั้นห้อง เพิ่มช่อง 'สเปกระแนง' (ขนาดกล่อง/โชว์หน้า/เว้นระยะ — มีอยู่บางส่วนใน cat ระแนง) ให้ render ต่อท้ายบรรทัดสีอลูในรูปแบบใบจริง 'ระแนงอลูมิเนียมกล่อง {สี} (ขนาด ... โชว์หน้า ... เว้นระยะห่าง ... ซม.)'</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>คำบรรยายเต็มต่อด้าน (พร้อมกระจกติดตายด้านข้าง/บน/ล่าง, ปิดทึบอลูทึบด้านบน, มีคาดตาราง)</td>
+<td>(2) บรรยายเต็ม</td>
+<td>'ด้าน C ประตูบานเลื่อนลากจูงรางล่าง (รุ่นกันน้ำ) แบ่ง 2 บาน พร้อมกระจกติดตายด้านข้างและด้านบน และปิดทึบด้วยอลูมิเนียมทึบด้านบน' · 'ด้าน F ประตูบานเปิดคู่ (มีธรณีกันน้ำ) (มีคาดตาราง) พร้อมกระจกติดตายด้านบน'</td>
+<td>itemDetail ประกอบชื่อบานต่อด้านได้ดี: คาดตาราง auto (บรรทัด 3101-3105 '(คาดตาราง แนวนอน N เส้น...)'), บานเลื่อนประกอบราง/แบ่งบาน/เลื่อน-ติดตาย (3082-3092), ครอบวงกบ/มือจับ/ฝังรางยู (3130-3137) · กระจกติดตายด้านข้าง/บน ปกติพิมพ์ใน i-position หรือ subItems</td>
+<td class="c">🟡</td>
+<td>คำว่า 'พร้อมกระจกติดตายด้านข้าง/บน/ล่าง', 'ปิดทึบด้วยอลูมิเนียมทึบด้านบน', 'พร้อมกระจกติดตายโดยรอบ' ไม่มีเป็น checkbox/preset — ต้องพิมพ์ใน i-position หรือ i-note เอง เสี่ยงสะกดต่างจากคลังจริง</td>
+<td class="fix">P2: เพิ่มกลุ่ม checkbox 'ส่วนติดตาย/ปิดทึบ' ในฟอร์มบาน group 6: [ ] กระจกติดตายด้านบน [ ] ด้านข้าง [ ] ด้านล่าง [ ] โดยรอบ [ ] ปิดทึบด้วยอลูมิเนียมทึบด้านบน [ ] ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบด้านล่าง → ประกอบเป็น 'พร้อมกระจกติดตาย{ด้าน} ปิดทึบด้วย...' ต่อท้าย prodName ให้ตรงคลังจริง · ลดการพิมพ์มือ ลดสะกดเพี้ยน</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>OPTION ± ราคา (เปลี่ยนกระจก/มุ้ง/สี/หลังคา + ส่วนลดมัดจำ)</td>
+<td>(3) OPTION±ราคา</td>
+<td>'OPTION : หากลูกค้าต้องการเปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 5,000 บาท' · 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น มุ้งเฟรมเล็ก... ราคาลดลง 8,000 บาท' · 'OPTION (3) : เปลี่ยนสีระแนงด้าน D, E... ราคาเพิ่ม 24,000'</td>
+<td>F2 cascade (บรรทัด 1947-1980): เลือกหมวด→รายการ→auto-price ส่วนต่าง (กระจก=×พื้นที่, สี=colorPrice diff, มุ้ง=×พื้นที่, หลังคา=rate, มือจับ=flat) เก็บเป็น optChoicesNote → render 'OPTION : เปลี่ยนเป็น... (ราคา±N บาท)' (บรรทัด 2645/3434) ✅ · SET_OPT_PRESETS ระดับชุด (บรรทัด 1915-1936) สำหรับเปลี่ยนกระจกทั้งชุด ✅ · groupOptText/Delta บวกเข้ายอดจริงครั้งเดียว/ชุด (บรรทัด 3385) ✅</td>
+<td class="c">✅</td>
+<td>ระบบรองรับครบ — กรอกได้ + บวกราคา + ออกในใบ · ข้อจำกัดเล็ก: คำที่ออกขึ้นต้น 'เปลี่ยนเป็น...' ส่วนใบจริงขึ้น 'หากลูกค้าต้องการเปลี่ยนเป็น...' (ต่างรูปประโยคเล็กน้อย แต่ความหมายตรง)</td>
+<td class="fix">P3: ปรับ prefix ข้อความ optChoicesNote จาก 'OPTION : เปลี่ยนเป็น...' → 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น...' (บรรทัด 1977 tx.value + 2645) ให้ตรงสำนวนใบจริงเป๊ะ · เพิ่ม preset 'เพิ่มมุ้งนิรภัย' / 'เพิ่มงานฝ้าฉาบเรียบใต้หลังคา' ใน SET_OPT_PRESETS (พบบ่อยในชุดกั้นห้อง+หลังคา)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ม่านซิป (zipscreen) — รุ่น/ผ้า/ระบบ/ขนาด/ราคา</td>
+<td>(2)(5) บรรยาย+วัสดุ</td>
+<td>คลังม่านซิปในใบจริงน้อย (เป็นเครื่องคิดราคาแยกเดิม) — ค่าตรงทุกค่ากับเครื่องเดิมตาม comment โค้ด</td>
+<td>product zipscreen (บรรทัด 654) + ZIP engine (790-806) + UI กล่อง gh-box กรอกขนาดกว้าง/สูง เลือกรุ่น (Z100/Z120/Z145D/Z120W)/ผ้า (0-30%/PET)/ระบบ (มือดึง/มอเตอร์ AOK/DOOYA)/กลุ่มลูกค้า (ปลีก×2.0/โครงการ×1.75) → ราคา auto · det โชว์สีผ้า (บรรทัด 3165-3169 'ผ้าโปร่ง 5%') · ชื่อตัด '(zipscreen)/ม่านม้วนกันลม' ออก (3019-3020)</td>
+<td class="c">✅</td>
+<td>กรอกได้+ออกในใบครบสำหรับสเปกหลัก (รุ่น/ผ้า/ขนาด/ราคา) · ข้อสังเกต: det โชว์เฉพาะ %ผ้า ไม่โชว์ 'สีผ้า/สีกล่อง-เฟรม' ม่านซิป และไม่โชว์รุ่น (JR-Z100) ในรายละเอียดงาน (รุ่นอยู่ใน msgs คิดราคาเท่านั้น บรรทัด 1275 ซึ่งไม่ลงใบ)</td>
+<td class="fix">P3: เพิ่ม det ม่านซิปให้ระบุรุ่น (ZIP.MODEL_LABEL เช่น 'ม่านซิป รุ่น JR-Z100') + ระบบควบคุม (มือดึง/มอเตอร์ รุ่น) + เพิ่มช่อง 'สีกล่อง/สีเฟรมม่านซิป' (dropdown สีอลู) render ต่อท้าย det · ปัจจุบันใช้ได้ดีพอแล้ว ปรับเสริมเพื่อใบละเอียดขึ้น</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>หลังคาในชุดกั้นห้อง (ไวนิล/ชินโคไลท์/โพลีตัน/กระจกลามิเนต + รางน้ำ/ท่อ/โซ่)</td>
+<td>(2)(5) บรรยาย+วัสดุหลังคา</td>
+<td>'หลังคาไวนิล โครงอลูมิเนียม พร้อมรางน้ำอลูมิเนียม + ตะแกรงกันใบไม้ และมีท่อน้ำทิ้ง PVC ปล่อยปลาย' · 'หลังคาไวนิล (แปคู่) ต่อปลายหลังคากระจกลามิเนต...'</td>
+<td>ปุ่ม +เพิ่มหลังคา ในชุด → group 3 position 'หลังคา' · det หลังคา (บรรทัด 3210-3244) ออก auto: หัว 'หลังคา{ชนิด} {สี}', โครง (อลู/เหล็กชุบ), แป (เดี่ยว/คู่), รางน้ำ (ท่อ สี/โซ่ลาย สี), เสริมเพลท/เหล็กดึง · สีวัสดุมุง (ไวนิล/ดีไลท์/โพลีตัน) เลือกได้ (2309-2314) · ของเสริม (เสาแผง/โซ่/ครอบ PVC/ซ่อนสโลป) ครบ</td>
+<td class="c">✅</td>
+<td>กรอกได้+ออกในใบครบสำหรับสเปกหลัก — สอดคล้องผลตรวจกลุ่มหลังคาเดิม · ข้อสังเกต: 'ตะแกรงพลาสติกกันใบไม้ สีดำ' และ 'ท่อน้ำทิ้ง PVC 2.5 นิ้ว สี...' ออกในบรรทัดรางน้ำแต่รูปคำอาจไม่ตรงเป๊ะใบจริง (ใบจริงแยกบรรทัด 'รายละเอียดงาน:')</td>
+<td class="fix">P3: ปรับ det รางน้ำหลังคาให้ระบุ 'ตะแกรงพลาสติกกันใบไม้ สี{ดำ/ขาว}' + 'ท่อน้ำทิ้ง PVC 2.5 นิ้ว สี{สี}' แยกบรรทัดตามรูปแบบ 'รายละเอียดงาน:' ของใบจริง · ใช้ได้ดีอยู่แล้ว เป็นการ polish ให้ตรงคำ</td>
+<td class="c"><b>P3</b></td></tr></table><h2>กลุ่ม: ส่วนกลาง-หมายเหตุ-การเงิน-ใบ <span class="c">11 จุด · 🔴2 🟡5</span></h2>
+<table><tr><th style="width:13%">สินค้า/หัวข้อ</th><th style="width:9%">ชั้น</th><th style="width:21%">ใบจริงมี</th><th style="width:16%">ระบบทำ</th><th class="c" style="width:34px">ผล</th><th style="width:16%">root cause</th><th class="fix" style="width:21%">วิธีแก้ UX</th><th class="c" style="width:34px">P</th></tr>
+<tr>
+<td>หมายเหตุมาตรฐาน per-item</td>
+<td>(4) หมายเหตุมาตรฐาน</td>
+<td>ใบจริง: 'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูนด้าน A / งานดรอปพื้น' · 'ราคาที่เสนอรวมงานรื้อมุ้งเดิม แต่ไม่รวมความเสียหายที่เกิดจากการรื้อ เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี'</td>
+<td>ระบบไม่มี template/dropdown หมายเหตุมาตรฐานเลย มีแค่ &lt;textarea class='i-note'&gt; ให้เซลล์พิมพ์มือล้วน (index.html:2031). genQuote render note ที่พิมพ์เองออกได้ (สีเทา · บรรทัด 2799-2801) แต่ไม่มีคลังคำให้เลือก</td>
+<td class="c">🔴</td>
+<td>ไม่มี template — ใบจริงเกือบทุกรายการมีหมายเหตุชุด 'ราคาที่เสนอไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง/ทาสี/งานไฟ/ก่อผนังปูน/ดรอปพื้น' และ 'รวมงานรื้อ...แต่ไม่รวมความเสียหาย เช่น กระเบื้องแตก งานเก็บสี' แต่ระบบให้พิมพ์เอง → ตกหล่น/พิมพ์ไม่เหมือนกันทุกใบ</td>
+<td class="fix">P1: เพิ่มกล่อง &lt;details&gt; 'หมายเหตุมาตรฐาน (เลือกได้หลายข้อ)' เหนือ textarea i-note ในทุกรายการ. ทำเป็น checkbox list จากคลังคำ standardNotes (จัด 5 กลุ่ม: ก.ไม่รวมงาน[ลงเข็ม/เทพื้น/ปูกระเบื้อง/ทาสี/งานไฟ/ก่อผนัง/ดรอปพื้น — แบบ multi-select chip ต่อท้ายคำว่า 'ราคาที่เสนอไม่รวมงาน '], ข.รวมงานรื้อ+ข้อความความเสียหาย, ค.รวมงานกรีดพื้น/ฝังรางยู, ง.รวมงานเดินไฟ/ย้ายโคม, จ.เก็บสีเฉพาะจุด). ติ๊กแล้ว auto-เติมข้อความเต็มลง i-note (ขึ้นใบสีเทาผ่าน path เดิม 2799). ปุ่ม 'ไม่รวมงาน' ให้เลือกหลายงานแล้วประกอบเป็นบรรทัดเดียวคั่น /. ตั้ง default set ตามหมวด (บาน/หลังคา/กั้นห้อง) ให้ติ๊กมาก่อน</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>รายละเอียดงาน (rendering วัสดุ/สี/กระจก/มุ้งเฟรม) — ใต้แต่ละรายการ</td>
+<td>(5) รายละเอียดวัสดุ + (เฟรมมุ้ง)</td>
+<td>คลัง mosquito ใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)' · 'มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)' — ใบจริงระบุสีเฟรมเสมอ</td>
+<td>genQuote สร้างบล็อก 'รายละเอียดงาน' ดึง อลู(quoteName)/กระจก/มุ้ง+ผ้า (single 1474-1527, group 3200-3275). มุ้งในบานโชว์ชื่อมุ้ง+ผ้า (3270-3275) แต่ไม่ดึงสีเฟรมมุ้ง (mosqColor)</td>
+<td class="c">🔴</td>
+<td>สีเฟรมมุ้งไม่ render — readItem อ่าน optSel.mosqColor (2600) และ calc บวกเงิน + ทำ label _mosqColorLbl ใน addonLines.det (1527) แต่ตอนสร้าง 'รายละเอียดงาน' (3270-3275 และ 3175-3181) ใช้แค่ mosqFabric ไม่ผนวก mosqColor → ใบไม่บอกว่าเฟรมมุ้งสีเทาซาฮาร่า/ลายไม้</td>
+<td class="fix">P1: ที่ block render มุ้ง (3270-3275 group + 1527/3175-3181 single) ผนวกสีเฟรมจาก mosqColor: map sahara→'เฟรมสีเทาซาฮาร่า', kl_special→'เฟรมอบพิเศษ', kl_wood→'เฟรมลายไม้', ''→'เฟรมขาว/ดำ'. ประกอบเป็น 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรม&lt;สี&gt;)' ให้ตรงสำนวนใบจริง. ดึง mscolor (o-mscolor) สำหรับ product มุ้งโหมด B ด้วย</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>ส่วนลดพิเศษ 2% + เงื่อนไขมัดจำภายในวันที่ (discPct)</td>
+<td>(การเงิน)</td>
+<td>ใบจริง: 'ส่วนลดพิเศษ 2% = 3,940 บาท (ก่อน Vat 7%) หากลูกค้ามัดจำภายในวันที่ 09/08/2567'</td>
+<td>input #discPct (max 2, index.html:300) + clampDisc (≥50,000 ถึงทำได้). คิด discAmt ก่อน VAT ถูกต้อง โชว์บรรทัด 'ส่วนลด N%'. แต่ไม่มีช่องกรอก 'วันที่มัดจำ' (ภายในวันที่ DD/MM/YYYY) ที่ใบจริงผูกกับส่วนลดพิเศษเสมอ</td>
+<td class="c">🟡</td>
+<td>ขาดฟิลด์วันหมดเขตมัดจำ — ใบจริงทุกใบที่มีส่วนลดพิเศษเขียน 'หากลูกค้ามัดจำภายในวันที่ 25/04/2568' / 'ก่อน Vat 7%' ระบบไม่มีที่กรอก จึงไม่ขึ้นในใบ → เซลล์ต้องพิมพ์ใน i-note เอง</td>
+<td class="fix">P1: เพิ่มช่อง date 'มัดจำภายในวันที่ (เงื่อนไขส่วนลดพิเศษ)' ข้าง #discPct. ถ้ากรอก discPct&gt;0 ให้ render บรรทัดส่วนลดในใบเป็น 'ส่วนลดพิเศษ N% (ก่อน VAT 7%) หากลูกค้ามัดจำภายในวันที่ DD/MM/YYYY'. แปลงปี ค.ศ.→พ.ศ.อัตโนมัติให้ตรงใบจริง. ถ้าเว้นว่าง = โชว์แค่ 'ส่วนลดพิเศษ N%'</td>
+<td class="c"><b>P1</b></td></tr>
+<tr>
+<td>OPTION ทางเลือกลูกค้า ต่อบาน (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา ± ราคา)</td>
+<td>(3) OPTION±ราคา</td>
+<td>ใบจริง: 'OPTION (1) : หากลูกค้าต้องการเพิ่มขนาดหลังคาจากยื่น 120 ซม. เป็น 150 ซม. ราคาเพิ่ม 5,000 บาท' · 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น มุ้งเฟรมเล็ก ... ราคาลดลง 8,000 บาท' (ใช้คำ 'ราคาลดลง')</td>
+<td>มี F2 cascade .oc-block (index.html:1947-1980): เลือกหมวด→รายการ auto-คิด delta ตามพื้นที่/flat แล้วเก็บข้อความ 'OPTION : เปลี่ยนเป็น...' + บวก ±บาท เข้า sell (readItem 2645) และ render สีแดงลงใบ (2809/3434). ครอบคลุม glass/mosq/color/handle/roof/other</td>
+<td class="c">🟡</td>
+<td>กลไกครบและคิดเงินถูก แต่ (1) ข้อความ auto = 'เปลี่ยนเป็น&lt;ชื่อ&gt;' ขณะใบจริงใช้สำนวนเต็ม 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น &lt;X&gt; ราคาเพิ่ม N บาท' / 'ราคาลดลง N บาท' (2) ใบจริงมี OPTION ที่ขึ้น (1)(2)(3) หลายข้อต่อรายการ (เช่น หลังคา เพิ่มขนาดยื่น 120→150 + เปลี่ยนสีอลู) ระบบเพิ่มหลาย row ได้ แต่ไม่มี OPTION สำเร็จรูปเฉพาะทาง 'เพิ่มขนาดหลังคายื่น' / 'เพิ่มงานฝ้าฉาบใต้หลังคา' ต้องไป other พิมพ์เอง+กรอกราคาเอง</td>
+<td class="fix">P2: (ก) ปรับ ocPick ให้ข้อความ auto ตามสำนวนใบจริง: 'หากลูกค้าต้องการเปลี่ยนเป็น &lt;name&gt; ราคา'+(delta&gt;=0?'เพิ่ม':'ลดลง')+' N บาท' (ขึ้นต้น 'OPTION :' มีแล้วใน readItem) แทน 'เปลี่ยนเป็น&lt;name&gt;'. (ข) เพิ่มหมวด OPTION สำเร็จรูปเฉพาะหลังคา: 'เพิ่มขนาดหลังคายื่น (ระบุ ซม.เดิม→ใหม่ + ราคา)', 'เพิ่มงานฝ้าฉาบเรียบทาสีขาวใต้หลังคา (พื้นที่×ราคา)'. (ค) ปรับ render delta ปัจจุบันโชว์ '(ราคา+N บาท)' ซ้ำกับข้อความ — เลือกโชว์ครั้งเดียว</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>รหัสสี/ชื่อสีรุ่นย่อย (สีอบพิเศษ KL/RAL) — i-colorcode</td>
+<td>(5) รายละเอียดวัสดุ-รหัสรุ่น</td>
+<td>คลังสีใบจริง: 'อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)' · 'อลูมิเนียมลายไม้อบพิเศษ สีไวท์แบมบู (KL19022WD)' · 'Golden Teak SMS'</td>
+<td>มีช่อง i-colorcode (index.html:2022) โผล่เมื่อสีมี hasCode (2083) ให้พิมพ์ 'KL10232A/RAL7022/Fuji' + i-sampleconfirm สำหรับสีชุบ (2084). genQuote ผนวก code เข้าชื่อสี (3309-3313)</td>
+<td class="c">🟡</td>
+<td>มีกลไกแล้วแต่เป็น free text — ต้องพิมพ์รหัสเอง ไม่มี dropdown รหัสรุ่นย่อยมาตรฐาน (KL10232A, KL19022WD, RAL7022, Golden Teak SMS) ที่ใบจริงใช้ซ้ำๆ → เสี่ยงพิมพ์ผิด/ตกหล่น และต้องพึ่ง hasCode flag ในตาราง COLORS ว่าตั้งครบไหม</td>
+<td class="fix">P2: เปลี่ยน i-colorcode เป็น input list (datalist) เติม preset รหัสที่ใบจริงใช้บ่อย: KL10232A, KL19022WD, RAL7022, Golden Teak SMS, ไวท์โอ๊ค, ไวท์แบมบู, Fuji, Aztec Grey. ยังพิมพ์เองได้. ตรวจ COLORS ว่าทุกสีอบพิเศษตั้ง hasCode:true เพื่อให้ช่องโผล่จริง (เช็คซ้ำ)</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>งานหลายด้าน (กั้นห้องกระจก/หลังคากันสาด — ด้าน A/B/C... ในรายการเดียว)</td>
+<td>(6) งานหลายด้าน</td>
+<td>ใบจริง: 'กั้นห้องกระจก พร้อมหลังคา ครบทุกด้าน A-G: ด้าน A ประตูระบายอากาศ...; ด้าน B หน้าต่างบานเลื่อน...; ... หลังคาไวนิล (แปคู่)...' (price 506,000)</td>
+<td>ใบจริงรวมหลายด้านในชุดเดียว (ด้าน A ประตู / ด้าน B หน้าต่าง / หลังคาไวนิล...). ระบบใช้ 1 ส่วน(.ch)=1 product จึงต้องแยกหลายส่วนแล้วผูกเป็นกลุ่มเดียวด้วย i-group(6 กั้นห้องกระจก) + i-position (ด้าน A/B/C) แล้ว group rendering รวม specialLines/notes ต่อชุด (3384-3435)</td>
+<td class="c">🟡</td>
+<td>ทำได้แต่กรอกยาก — ต้องเพิ่มหลายส่วน ระบุ position ทีละด้าน ไม่มี template 'กั้นห้องครบด้าน A-G' ให้กดทีเดียว และ desc รวมด้าน (ด้าน A.../ ด้าน B...) ต้องอาศัย i-position ของแต่ละส่วน — เซลล์มือใหม่ทำพลาดง่าย/ลำดับด้านสลับ</td>
+<td class="fix">P2: (ก) ทำ preset 'กั้นห้องกระจกพร้อมหลังคา (หลายด้าน)' ที่กด add แล้วสร้างหลายส่วนพร้อม i-position=A/B/C... + group เดียวกันให้อัตโนมัติ. (ข) ใน group rendering ให้ใส่ prefix 'ด้าน &lt;position&gt; ' หน้า desc ของแต่ละส่วนเรียงตามลำดับ position (เช็คว่า 3384-3435 เรียง A→G ตาม i-position ไม่ใช่ลำดับ add). (ค) ปุ่ม 'เรียงด้านใหม่ A→Z' กันลำดับสลับ</td>
+<td class="c"><b>P2</b></td></tr>
+<tr>
+<td>รายการส่วนลด/หมายเหตุล้วน (** หมายเหตุ ** งานเพิ่ม / บรรทัดไม่มีราคา)</td>
+<td>(2) บรรยาย-รายการพิเศษ</td>
+<td>ใบจริง: แถว zone '** หมายเหตุ **' desc 'นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด...' price 0.00</td>
+<td>ใบจริงมีแถว '** หมายเหตุ ** นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่ม...' (price 0.00) เป็นแถวในตาราง. ระบบมี footer ครอบคลุมข้อความนี้แล้ว (2888) แต่ไม่มีวิธีแทรกแถว 'หมายเหตุล้วน price 0' กลางตารางถ้าเซลล์อยากได้</td>
+<td class="c">🟡</td>
+<td>ข้อความ 'งานเพิ่มทั้งหมด' อยู่ใน footer แล้ว (ไม่ตกหล่น) แต่ถ้าต้องการแถวคั่นกลางตาราง (เช่นคั่นกลุ่มงาน) ทำไม่ได้ — ต้องเพิ่มส่วนแล้วใส่ override 0 + พิมพ์ใน i-note</td>
+<td class="fix">P3: เนื่องจาก footer มีข้อความนี้ครบแล้ว ไม่จำเป็นต้องทำแถวกลางตาราง. ถ้าต้องการ — เพิ่ม product พิเศษ 'แถวหมายเหตุ/หัวข้อ (ไม่คิดเงิน)' ที่ render เฉพาะ desc ไม่มี qty/price. แต่ priority ต่ำเพราะไม่กระทบยอด/ความครบ</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>เงื่อนไขการรับประกัน + เงื่อนไขแบบและใบเสนอราคา (footer มาตรฐานทั้งใบ)</td>
+<td>(4) หมายเหตุมาตรฐาน-ระดับใบ</td>
+<td>ใบจริง 'รับประกันผลงาน การติดตั้ง 1 ปี...ยกเว้นการทรุดของพื้นดิน/ภัยธรรมชาติ' + '2.2 ยอด&lt;200,000 นำค่าแบบ 3D มาลดไม่ได้' → footer มีครบ</td>
+<td>genQuote ฝัง footer block ตายตัว: 'เงื่อนไขการเข้าทำงาน 1-5', 'เงื่อนไขการรับประกันผลงาน 1 ปี' (พร้อมข้อสมาร์ทบอร์ด Cracks), 'เงื่อนไขแบบและใบเสนอราคา 1-6' (3D 200,000 บาท) — index.html:2876-2912 ตรงกับ standardNotes ใบจริงเป๊ะ</td>
+<td class="c">✅</td>
+<td>ครบ — footer hardcode ตรงคลังคำ standardNotes ข้อยาว (เงื่อนไขเข้าทำงาน/รับประกัน/แบบ3D) ทุกบรรทัด</td>
+<td class="fix">ผ่าน — ไม่ต้องแก้. (ทางเลือก P3: ทำ footer ข้อ 'เงื่อนไขการเข้าทำงาน 2 (รื้ออลูมิเนียม)' ให้ซ่อนได้ถ้างานไม่มีการรื้อ เพื่อไม่ให้ใบยาวเกินจำเป็น)</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>ส่วนลดค่าประเมินหน้างาน (discFlat)</td>
+<td>(การเงิน)</td>
+<td>ใบจริง: 'ส่วนลด ค่าประเมินหน้างาน = 4,000 บาท' (price -4,000)</td>
+<td>input #discFlat (index.html:301) หักออกจาก net (2820) และโชว์บรรทัด 'ส่วนลด' รวมกับ discPct (2860). Excel แยกบรรทัด 'ส่วนลดค่าประเมินหน้างาน' (3560)</td>
+<td class="c">✅</td>
+<td>ครบ — ตรงรายการจริง 'ส่วนลดค่าประเมินหน้างาน = 2,000/3,500/4,000 บาท'</td>
+<td class="fix">ผ่าน. P3: ในใบ HTML รวมส่วนลด 2 ก้อน (discPct+discFlat) เป็นบรรทัด 'ส่วนลด' เดียว — ใบจริงแยกเป็น 'ส่วนลดค่าประเมิน' กับ 'ส่วนลดพิเศษ 2%' คนละบรรทัด. แนะนำแยกบรรทัดใน qtot ให้เหมือน Excel/ใบจริง</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>VAT (ภาษีมูลค่าเพิ่ม) + รวมทั้งสิ้น + คำอ่านบาท</td>
+<td>(การเงิน)</td>
+<td>ใบจริง footer note 'ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม' + บรรทัด VAT 7% ในยอด</td>
+<td>#vat-pct เลือก 0/7% (index.html:312), คิด vat=(net+svc)×% (2838), โชว์บรรทัด 'ภาษีมูลค่าเพิ่ม 7%' + 'จำนวนเงินรวมทั้งสิ้น' + bahtText คำอ่าน (2857/2863). กล่องสรุปหน้าจอโชว์ยอดรวม VAT ด้วย (2741-2747)</td>
+<td class="c">✅</td>
+<td>ครบ — ตรง standardNotes 'ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม' + ใบจริงแสดง VAT 7%</td>
+<td class="fix">ผ่าน — ไม่ต้องแก้</td>
+<td class="c"><b>P3</b></td></tr>
+<tr>
+<td>หัวใบ (เลขที่/วันที่/ลูกค้า/ที่อยู่/ผู้ติดต่อ/เบอร์/ผู้ขาย+เบอร์เซลล์)</td>
+<td>(หัวใบ)</td>
+<td>หัวใบจริง: เลขที่/วันที่/ในนามลูกค้า/ผู้เสนอราคา+เบอร์</td>
+<td>genQuote สร้าง qno auto (JRdd_mm_yy_NNN กันชนด้วย localStorage 2843), วันที่ไทย, โลโก้+ที่อยู่บริษัท+เลขภาษี, ลูกค้า+ที่อยู่ (2855), dropdown ผู้ขายผูกเบอร์เซลล์+เบอร์กลาง (2829-2836), custContact/custPhone/custAddress (2837)</td>
+<td class="c">✅</td>
+<td>ครบ — มีครบทุกฟิลด์หัวใบที่ใบเสนอราคาต้องมี รวมเบอร์เซลล์รายคน</td>
+<td class="fix">ผ่าน. P3: SELLER_PHONE 'เซลล์แอม' ว่าง (ใช้เบอร์กลางไปก่อน) — เช็คซ้ำว่ามีเบอร์จริงแล้วเติม. ตรวจว่า custAddress ขึ้นในใบครบ (2855 ใส่แล้ว)</td>
+<td class="c"><b>P3</b></td></tr></table>
+
+<h2 class="act">รายการแก้ — เรียงความสำคัญ <span class="c">P1 41 · P2 34 · P3 32</span></h2>
+<div class="gapbox" style="background:#FFF7F7;"><b>P1 — ทำก่อน (กระทบหน้าตาใบ/เก็บเงิน)</b><ul><li><b>[🔴]</b> <b>หมายเหตุมาตรฐานต่อรายการ (per-item standardNotes ในใบ)</b> — P1: เพิ่ม STD_NOTES = array ~15 หมายเหตุมาตรฐานจากคลัง standardNotes (ไม่รวมดรอปพื้น / ไม่รวมลงเข็ม-เทพื้น-ปูกระเบื้อง / รวมรื้อบานเดิมไม่รวมเสียหาย / รวมกรีดพื้นฝังรางยู / รวม Protection แนวติดตั้ง / งานเก็บสีเฉพาะจุดไม่รวมสี / ฯลฯ). เพิ่ม &lt;details&gt; 'หมายเหตุมาตรฐาน (ติ๊กเลือก)' เหนือ textarea i-note: checkbox list ของ STD_NOTES → ติ๊กแล้ว append เข้า i-note (หรือ field แยก .i-stdnote) → readItem รวมเข้า note → render ใต้รายการตามเดิม. P1: เพิ่มปุ่ม 'ใส่หมายเหตุชุดนี้ทุกด้าน' สำหรับงานกั้นห้อง. นี่คือ fix สำคัญสุดที่กระทบความครบของใบ <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🔴]</b> <b>สีกรอบมุ้ง (addon มุ้งในบานเลื่อน/เปิด/ติดตาย) render ลงใบ</b> — P1: ใน itemDetail แก้ทั้ง 2 จุดที่ประกอบชื่อมุ้ง (บรรทัด ~3275 บานเลื่อน, ~3349 else): อ่าน it.optSel.mosqColor → map sahara→'เทาซาฮาร่า', kl_special→'อบพิเศษ', kl_wood→'ลายไม้' → ต่อท้ายเป็น 'มุ้งเฟรมเล็ก (ผ้า{X}/เฟรมสี{Y})'. P2: ขยาย .o-mosqcolor ให้ครอบคลุมสีที่ใบจริงมี + ช่องรหัสรุ่น (ไวท์แบมบู KL19022WD) เหมือน hasCode ของสีอลู. นี่คือ fix สำคัญ — กระทบหน้าตาใบโดยตรง <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🔴]</b> <b>บานกระทุ้ง ยูโร (awning_euro) — แบบเปิด (เปิดล่าง/เปิดข้าง/tilt&amp;turn)</b> — ใน itemDetail (ก่อน det=lines.join) เพิ่ม: ถ้า p.cat==='บานกระทุ้ง' &amp;&amp; optSel.awn_mode → push label ลง _parts: awn_mode='0'→'เปิดล่าง' (ถ้าเลือก awning_brace/เสริมแขนค้ำ ให้ต่อ 'พร้อมแขนค้ำ'), '1'→'เปิดข้าง', '2'→'tilt &amp; turn (เปิดออกนอกบ้าน)'. ให้ tilt&amp;turn เป็นบรรทัดในรายละเอียดงานเสมอเพราะมีราคา. priority P1 เพราะกระทบทั้งหน้าตาใบและความถูกต้องที่ลูกค้าเห็น (จ่ายเพิ่ม 5,000 แต่ใบไม่เขียน) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>บานกระทุ้ง — combo บานกระทุ้งเข้าใน + มุ้งจีบนิรภัยติดตายนอก (o-combo_awn_inside)</b> — itemDetail: ถ้า optSel.combo_awn → _parts.push('บานกระทุ้งเปิดเข้าใน + มุ้งจีบนิรภัยติดตายด้านนอก'). priority P1 (มีราคา/กระทบใบ) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>บานกระทุ้ง — สีกรอบมุ้ง (เฟรม) เทาซาฮาร่า/เคแอลอบพิเศษ/ลายไม้ (o-mosqcolor)</b> — ในทุก branch ที่ render มุ้ง (itemDetail generic 3342-3351, sliding 3266-3276) ต่อท้าย mfLabel ด้วยสีเฟรม: map optSel.mosqColor → {''(ดำ/ขาว default):โชว์ 'เฟรมสีขาว/ดำ' หรือเว้น, sahara:'เฟรมสีเทาซาฮาร่า', kl_special:'เฟรมสีอบพิเศษ', kl_wood:'เฟรมลายไม้'} ให้ออกเป็น 'มุ้งเฟรมเล็ก (ผ้า{X} / {เฟรมสี Y})'. แก้ครั้งเดียวใช้ได้ทุก cat ในกลุ่ม (กระทุ้ง/ยก/เฟี้ยม/เลื่อนภายใน). priority P1 — เป็น gap หลักที่ยืนยันแล้ว กระทบหน้าตาใบทุกใบที่มีมุ้งสีพิเศษ + ลูกค้าจ่ายค่าทำสีแต่ไม่เห็น <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>บานเฟี้ยม เซมิยูโร / ยูโร (folding, folding_euro) — จำนวนบาน/การแบ่ง 3+3</b> — 1) เพิ่ม branch ใน itemDetail สำหรับ p.cat==='บานเฟี้ยม': ถ้า panels&gt;1 ต่อ 'แบ่ง '+panels+' บาน'. 2) เพิ่มช่อง input ข้อความ .o-foldsplit (placeholder '3+3 / 2+3 / อิสระ') ใน buildItemOpts เฉพาะ cat บานเฟี้ยม แล้ว render เป็น 'แบ่ง {ค่า} บาน' ถ้ากรอก (ทับการนับ panels). priority P1 (กระทบหน้าตาใบโดยตรง ทุกใบบานเฟี้ยมราคาหลักแสน) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>บานเฟี้ยม — เสริมคาน (o-beam / optBeam)</b> — itemDetail: ถ้า p.optBeam &amp;&amp; optSel.beam → _parts.push('เสริมคานซัพพอร์ท'). เสริม: ปรับ checkbox o-beam เป็น select รุ่นซ่อนคาน/โชว์คาน เพื่อให้ตรงคำใบจริง ('รุ่นโชว์คาน'/'รุ่นซ่อนคาน'). ส่วน 'ฝังรางยู' มีช่อง o-uchannel อยู่แล้ว (render บรรทัด 3137) — แนะนำ default แนะนำเซลล์ติ๊กคู่กับบานเฟี้ยม. priority P1 (มีราคา 4,000+) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>เลื่อนภายในรางล่าง ยูโร (inner_bottom_euro)</b> — เพิ่ม SLIDING_RAIL.inner_bottom_euro={rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'} ให้ตรง pattern SMS. priority P1 (ยูโรเป็นรุ่นขายหลัก กระทบหน้าตาใบ + form กรอกไม่ได้ครบ) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>ทุกสินค้าในกลุ่ม — หมายเหตุมาตรฐานต่อรายการ (per-zone notes)</b> — เพิ่มชุด checkbox/multiselect 'หมายเหตุมาตรฐาน' ใน buildItemOpts (ทุก cat บานในกลุ่ม) ดึงจาก array template เช่น NOTE_TEMPLATES=['ไม่รวมงานดรอปพื้น','ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง','รวมงานกรีดพื้นฝังรางยู (ไม่รวมความเสียหาย)','รวมงานรื้อบานเดิม (ไม่รวมความเสียหาย)','รวมค่าแรงเก็บสีเฉพาะจุด (ไม่รวมสี)']; ติ๊กแล้ว push เข้า optSel.stdNotes → render เป็นบรรทัด 'หมายเหตุ ...' ใต้รายการ (สีเทา เหมือน note ปัจจุบัน). เก็บช่อง .i-note ไว้สำหรับเคสพิเศษ. priority P1 — กระทบหน้าตา/ความครบของทุกใบในกลุ่ม และลดงานพิมพ์เซลล์ <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>บานเปลือยติดตาย (frameless_fixed)</b> — P1: (ก) เพิ่มเงื่อนไขใน itemDetail: ถ้า it.p.cat==='บานเปลือย' ให้ข้ามบรรทัด 'อลูมิเนียม สี...' — render เฉพาะกระจก. (ข) เพิ่ม branch frameless_fixed คล้าย frameless_door: ใส่ช่อง 'สีเฟรม/ตัวยึด (ถ้ามี)' optional (ขาว/ดำ/บรอนซ์/แชมเปญ/เทาซาฮาร่า/อบพิเศษ) + ช่องระบุชนิดอุปกรณ์ยึด (clip/spider). (ค) ให้ det = ชนิดกระจก + (ถ้าเลือกสีเฟรม) 'เฟรม/ตัวยึด สี...'. กันบรรทัดผิด 'อลูมิเนียม สีอบขาว' โผล่ในงานกระจกเปลือย <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🔴]</b> <b>shower กั้นห้องอาบน้ำ (shower)</b> — P1: แก้ itemDetail branch shower ให้: (ก) อ่าน optSel.showerhw → ถ้า=1 ต่อ 'อุปกรณ์สีดำ', =2 'อุปกรณ์สีทอง', default 'อุปกรณ์สีเงิน' แทนคำว่า 'ราวสแตนเลส' ตายตัว. (ข) ถ้า optSel.corner=true เติม config '(เข้ามุม)' ต่อท้าย shConfigLabel. (ค) เปิดให้เลือกความหนากระจก (ปัจจุบัน hardcode 10มม. — บาง shower ใช้ 8/12มม.) ผ่าน glass selector หรือ dropdown เฉพาะ <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🔴]</b> <b>PC Door 2 บาน / 4 บาน (pc_door_2, pc_door_4)</b> — P1: ในทุก branch ที่ render มุ้ง addon (generic 3342-3351, sliding 3266-3275) เพิ่มอ่าน it.optSel.mosqColor → map {sahara:'เฟรมสีเทาซาฮาร่า', kl_special:'เฟรมสีอบพิเศษ', kl_wood:'เฟรมลายไม้'} แล้วต่อท้ายชื่อมุ้งในวงเล็บ เช่น 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)'. รูปแบบวงเล็บ (ผ้า.../เฟรมสี...) ตรงกับใบจริง. ถ้า mosqColor='' (ขาว/ดำ) ไม่ต้องระบุเฟรม <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🔴]</b> <b>หมายเหตุมาตรฐานต่อรายการ (ทุกสินค้าในกลุ่ม)</b> — P1: เพิ่มชุด checkbox/multi-select 'หมายเหตุมาตรฐาน' ใต้ช่อง i-note ต่อรายการ (และ/หรือระดับชุด) ที่มีรายการสำเร็จรูปจากใบจริง: [ ] ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง [ ] ไม่รวมดรอปพื้น [ ] รวมงานรื้อ(ประตู/หน้าต่าง/หลังคา/มุ้ง)เดิม แต่ไม่รวมวัสดุ [ ] รวมงานกรีดพื้นฝังรางยู [ ] รวมงานเก็บสีเฉพาะจุด ไม่รวมสี [ ] ไม่รวมงานไฟ/ย้ายแอร์/ย้ายกล้อง ฯลฯ. ติ๊กแล้ว push เป็นบรรทัด 'หมายเหตุ' ใต้รายการ (สีเทา) ตรงรูปแบบใบจริง. แก้ไขข้อความได้. ลดการพิมพ์มือ+กันตกหล่น — กระทบหน้าตาใบโดยตรง <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🔴]</b> <b>ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (id bar_grid_z · ข้อ 38.1)</b> — P1: เพิ่ม branch render สำหรับ cat==='ระแนง' (bar_grid_z/bar_slide/bar_openclose) ใน itemDetail — ประกอบบรรทัด: 'ระแนงอลูมิเนียม{ลูกฟูกเรียบ 2 หน้า/กล่อง 1"x4" โชว์ 4"} สี{finLabel}' + 'ทิศ{ตั้ง/นอน}' + ถ้ามีมอเตอร์ 'พร้อมมอเตอร์ N ตัว'. ดึงค่าจาก optSel.bgdir/bocdir/bocfinish/bsfinish ที่อ่านไว้แล้ว (line 2606-2613). กระทบหน้าตาใบงานราคาสูง = P1 <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>ระแนงเลื่อน ลูกฟูกเรียบ 2 ทาง (id bar_slide · ข้อ 38.2)</b> — P1: ใน branch render ระแนง (ข้อข้างบน) เพิ่มกรณี bar_slide → 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง) สี{bsfinish data-n}' + ถ้า bsdoor!='' เพิ่ม 'พร้อม{ชื่อรุ่นประตู}'. ค่าอ่านไว้แล้วใน readItem (line 2609-2613 อ่าน bsfinish/bsdoor). P1 <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>ระแนงเปิด-ปิด กล่อง 1"x4" โชว์ 4" (id bar_openclose · ข้อ 38.3)</b> — P1: branch render ระแนง — กรณี bar_openclose → 'ระแนงเปิด-ปิด (กล่อง 1"x4" โชว์ 4") สี{bocfinish} ทิศ{ตั้ง/นอน}' + (bocmotor? 'พร้อมมอเตอร์เปิด-ปิด' : 'เปิด-ปิดด้วยมือ'). ค่าอ่านไว้แล้ว (line 2613). P1 <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>ประตูรั้วบานเลื่อน (id fence_gate · cat ประตูรั้ว · gate:1)</b> — P1: เพิ่ม branch `else if(it.p.gate)` ใน itemDetail — ประกอบ: บรรทัด1 'ประตูรั้วบานเลื่อน' (+ราง โค้ง→'รางโค้ง'/ตรง→'รางตรง'); บรรทัด2 ถ้า gatern เลือก → 'ลายระแนง {PBYID[gatern].name ตัด " ไม่โครง"}'; บรรทัด3 'อลูมิเนียม {gfin}'; บรรทัด4 ถ้า gmotor&gt;0 → 'พร้อมมอเตอร์ {gmotor} ตัว'. ค่าทั้งหมดอ่านไว้แล้วใน optSel. นี่กระทบใบงานราคาแพงโดยตรง = P1 สูงสุด <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>หมายเหตุมาตรฐาน (standard notes) — ทุกสินค้าในกลุ่ม ระแนง/รั้ว/ราว</b> — P1: สร้าง template หมายเหตุมาตรฐาน — เพิ่มบล็อก checkbox 'หมายเหตุมาตรฐาน (ติ๊กเพื่อเพิ่มลงใบ)' ระดับใบ (footer ใบ) ที่มี preset: [ไม่รวม ลงเข็ม/เทพื้น/ปูกระเบื้อง/ก่อผนังปูน/งานไฟ/ดรอปพื้น] (ติ๊กแยกรายการได้), [รับประกัน 1 ปี เต็มข้อความ], [เงื่อนไขแบบ+3D เต็มข้อความ], [เงื่อนไขเข้าทำงาน รื้ออลูมิเนียม], [ราคายังไม่รวม VAT], [วัสดุตามแบบมาตรฐานผู้ผลิต]. ดึงข้อความเต็มจาก standardNotes คลังที่มีอยู่. + เฉพาะกลุ่มระแนง/รั้ว preset เพิ่ม 'รั้วระแนงวางบนผนังปูน', 'รวมงานกรีดพื้นฝังรางยู'. นี่กระทบทุกใบ = P1 <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>งานหลายด้าน / รั้วระแนง+หลังคารวมชุด (เช่น 'หลังคากันสาด พร้อมรั้วระแนง' ด้าน A-G)</b> — P1 (แก้พร้อมกับ branch render ระแนง/gate ข้างบน): เมื่อแก้ det ของ cat ระแนง/ประตูรั้ว ให้มีบรรทัดวัสดุจริงแล้ว ระบบงานหลายด้านจะดึงเข้า matLines อัตโนมัติ (โค้ดรวม det อยู่แล้ว line 3391). ไม่ต้องแก้ logic กลุ่ม แค่แก้ที่ต้นทาง det. P1 ผูกกับงาน P1 ด้านบน <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>หลังคาเมทัลชีท (imp7-imp14: 1"/2" ท้อง PVC/เหล็ก/ฟอยล์ EPS/PU)</b> — P1: ขยายเงื่อนไข o-roofcolor ให้ครอบเมทัลชีท (imp7-14) ด้วย — เพิ่ม dropdown 'สีแผ่นเมทัลชีท' (น้ำตาล/แดง/เทา/ขาว/เขียว ฯลฯ ตามที่ขายจริง · เช็คซ้ำกับพี่นัท) ต่อเข้า _roofHead เป็น 'หลังคาเมทัลชีท สีน้ำตาล'. ปัจจุบัน _rfColor='' จึงไม่มีสีต่อท้าย. P1: template หมายเหตุร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🔴]</b> <b>หลังคาชินโคไลท์ (imp15-imp20: Heat Cut/Superior/Nature/Shade/Prime/Grang)</b> — P1: (1) เพิ่ม dropdown 'สีชินโคไลท์' (Light Grey/Modern Grey/Clear ฯลฯ) ต่อเข้า _roofHead. (2) เพิ่มช่อง free-text 'รหัสรุ่น/สี' (เช่น NT-332, HC-N828) ใต้ชื่อหลังคา — render เป็น 'รุ่น NT-332 สี Light Grey'. ทบทวนชื่อรุ่นใน PRODUCTS ให้ map กับรหัสจริงที่ผู้ผลิตใช้ (เช็คซ้ำ — Heat Cut=รุ่นอะไร? NT-332?). P1: template หมายเหตุมาตรฐานร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🔴]</b> <b>สีเฟรมมุ้ง (frame color) — addon มุ้งในบาน (o-mosqcolor)</b> — P1: ในทุก det-path ของมุ้ง addon (บรรทัด ~3275 บานเลื่อน, ~3350 generic) ให้เติมสีเฟรมต่อท้าย: map optSel.mosqColor → ข้อความ ('sahara'→'เฟรมสีเทาซาฮาร่า', 'kl_special'→'เฟรมอบสีพิเศษ', 'kl_wood'→'เฟรมลายไม้อบพิเศษ', ''→'เฟรมขาว/ดำ') แล้ว push เป็นรูปใบจริง: 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา / เฟรมสีเทาซาฮาร่า)'. ทางลัดที่ปลอดภัยกว่า: ใช้ addonLines[].det ที่มีอยู่แล้ว (สร้างไว้ครบที่ 1527) แทนการ rebuild ใหม่. เพิ่มช่องรหัสรุ่นสีเฟรม (free-text) คู่ dropdown เมื่อเลือก kl_special/kl_wood เพื่อพิมพ์ KL19022WD/KL10232A ลงใบ (ดู finding รหัสสี) <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🔴]</b> <b>สีเฟรมมุ้ง — มุ้ง standalone (cat='มุ้ง', o-mscolor)</b> — P1: ใน det branch cat='มุ้ง' (3171-3181) ถ้า optSel.mscolor != '' ให้ดึง COLORS[mscolor].quoteName มาเติมเป็น 'เฟรมสี{X}' และต่อกับชื่อผ้าในวงเล็บตามใบจริง: '{ชื่อมุ้ง} (เฟรมสี{X} / {ผ้า})'. ถ้า COLORS[mscolor].hasCode ให้ดึงค่าจากช่องรหัส (ดู finding รหัสสี) ใส่ [โค้ด] ด้วย <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🔴]</b> <b>หมายเหตุมาตรฐาน (standard notes) — ทุกตัวในกลุ่มมุ้ง/ตู้</b> — P1: สร้างชุด STD_NOTES (ก้อนข้อความที่ใบจริงใช้ซ้ำ: รื้อมุ้งเดิม, รับประกัน 1 ปี, เงื่อนไขแบบ/3D, ไม่รวมงานลงเข็ม/เทพื้น ฯลฯ) เป็น array. เพิ่ม UI checkbox-list 'หมายเหตุมาตรฐาน' ใต้ช่อง i-note (กลุ่ม note-opt-group ที่มีอยู่) ติ๊กแล้ว append เข้า note ที่ render. ทำ preset ระดับใบ (footer) สำหรับบล็อกรับประกัน/เงื่อนไข 3D ที่ขึ้นครั้งเดียวท้ายใบ. ตั้ง default ติ๊กบล็อกรับประกัน+เงื่อนไขแบบให้ทุกใบ <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🔴]</b> <b>ฝาตู้ Future Tech (id=future_tech, cat='ฝาตู้')</b> — P1: เพิ่ม det branch `else if(it.p.future_tech)` ก่อน generic else: render 'ฝาตู้ Future Tech' + วัสดุ 'แผ่นคอมโพสิต สี{COLORS[ftcolor].quoteName||ขาว/ดำ}'. อย่าให้ขึ้นบรรทัดอลู/กระจกหลอก. ใส่จำนวนบาน (panels) ในชื่อ/det <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🔴]</b> <b>ตู้อลูมิเนียม (id=cabinet_alu, cat='ตู้อลู')</b> — P1: เพิ่ม det branch `else if(it.p.cabinet)` ประกอบจาก optSel: 'บานหน้าตู้ Future Tech {nDoors} บาน — แผ่นคอมโพสิต สี{ftcolor/เลือก}' + 'ชั้นวาง {nsh} ชั้น ({alu→อลูมิเนียมลูกฟูกเรียบ / glass→กระจกใส})' + 'ลึก {D} ม.' + (backwall?'ผนังหลังอลู':'ผนังหลังใช้ผนังปูน'). เพิ่ม dropdown 'สีบานหน้าตู้/วัสดุ' ให้ระบุคอมโพสิต+สี (ตอนนี้ cabinet ใช้ ci ของสีอลู ไม่ใช่คอมโพสิต — ควรแยกช่องวัสดุบานหน้า) <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🔴]</b> <b>หมายเหตุต่อรายการ/ต่อด้าน (ราคาที่เสนอไม่รวม.../รวมงานดรอปพื้น.../รายละเอียดงาน: หลังคาไวนิล สีขาว...)</b> — P1: เพิ่มกล่อง 'เพิ่มหมายเหตุมาตรฐาน' (multi-select chips) ใต้ช่อง i-note — preset จากคลังจริง: (ก) งานไม่รวม: 'ลงเข็ม','เทพื้น','ปูกระเบื้อง','งานไฟ/เดินไฟ','ก่อผนังปูน (เลือกด้าน A/B/C/D...)','ดรอปพื้น','รื้อพื้นเดิม','รื้อหลังคาเดิม','รื้อราวกันตก','ย้ายแอร์/กล้องวงจรปิด','รื้อและตัดต้นไม้' → ประกอบเป็น 'ราคาที่เสนอไม่รวมงาน {a} / {b} / ...'  (ข) งานรวม: 'รวมงานดรอปพื้น (ระบุด้าน) แต่ไม่รวมความเสียหาย เช่น กระเบื้องแตก งานเก็บสี','รวมเสริมคานรับพัดลม/รับม่าน (เลือกด้าน)','รวมงานเดินไฟดาวน์ไลท์ N ดวง','รวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม','รวมงานกรีดผนังใส่แฟลชชิ่งกันน้ำ' · ให้ใส่ช่อง [จำนวน]/[ด้าน] แทรกในประโยค · กดแล้ว push เข้า specialLines (เรนเดอร์อยู่แล้ว บรรทัด 3393/3434). ส่วน 'รายละเอียดงาน: หลังคาไวนิล สีขาว...' หลังคาออก auto อยู่แล้ว (det บรรทัด 3235-3244) แต่ควรเพิ่ม auto-summary 'รายละเอียดงาน' รวมสีรางน้ำ/สีท่อ PVC/โซ่/สีระแนง ของทุกด้านในชุดให้เป็นบล็อกเดียว <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[🔴]</b> <b>สีเฟรมมุ้ง (เฟรมสีเทาซาฮาร่า / เฟรมลายไม้สีไวท์โอ๊ค / เฟรมสีอบขาว)</b> — P1: ในการเรนเดอร์มุ้งทุกจุด (generic บรรทัด 3350, บานเลื่อน 3275) ให้ต่อท้าย 'เฟรม{สี}' โดยแมป optSel.mosqColor → ''=เฟรมสีตามอลู (หรือ ดำ/ขาว), 'sahara'→'เฟรมสีเทาซาฮาร่า', 'kl_special'→'เฟรมสีอบพิเศษ', 'kl_wood'→'เฟรมลายไม้อบพิเศษ' · ทำเป็นรูปแบบใบจริง '{ชื่อมุ้ง} (ผ้า{สีผ้า}/เฟรม{สีเฟรม})' · เพิ่ม option 'เฟรมลายไม้สีไวท์โอ๊ค/ไวท์แบมบู' + ช่องรหัสรุ่นเฟรม (เช่น KL19022WD) ลง .o-mosqcolor ให้ครบคลังจริง · ใน group render (บรรทัด 3423) เปลี่ยนจาก a.n เป็น a.det (มีสีเฟรมแล้ว) หรือดึง det มุ้งจาก itemDetail <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[🔴]</b> <b>หมายเหตุมาตรฐาน per-item</b> — P1: เพิ่มกล่อง &lt;details&gt; 'หมายเหตุมาตรฐาน (เลือกได้หลายข้อ)' เหนือ textarea i-note ในทุกรายการ. ทำเป็น checkbox list จากคลังคำ standardNotes (จัด 5 กลุ่ม: ก.ไม่รวมงาน[ลงเข็ม/เทพื้น/ปูกระเบื้อง/ทาสี/งานไฟ/ก่อผนัง/ดรอปพื้น — แบบ multi-select chip ต่อท้ายคำว่า 'ราคาที่เสนอไม่รวมงาน '], ข.รวมงานรื้อ+ข้อความความเสียหาย, ค.รวมงานกรีดพื้น/ฝังรางยู, ง.รวมงานเดินไฟ/ย้ายโคม, จ.เก็บสีเฉพาะจุด). ติ๊กแล้ว auto-เติมข้อความเต็มลง i-note (ขึ้นใบสีเทาผ่าน path เดิม 2799). ปุ่ม 'ไม่รวมงาน' ให้เลือกหลายงานแล้วประกอบเป็นบรรทัดเดียวคั่น /. ตั้ง default set ตามหมวด (บาน/หลังคา/กั้นห้อง) ให้ติ๊กมาก่อน <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[🔴]</b> <b>รายละเอียดงาน (rendering วัสดุ/สี/กระจก/มุ้งเฟรม) — ใต้แต่ละรายการ</b> — P1: ที่ block render มุ้ง (3270-3275 group + 1527/3175-3181 single) ผนวกสีเฟรมจาก mosqColor: map sahara→'เฟรมสีเทาซาฮาร่า', kl_special→'เฟรมอบพิเศษ', kl_wood→'เฟรมลายไม้', ''→'เฟรมขาว/ดำ'. ประกอบเป็น 'มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรม&lt;สี&gt;)' ให้ตรงสำนวนใบจริง. ดึง mscolor (o-mscolor) สำหรับ product มุ้งโหมด B ด้วย <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[🟡]</b> <b>ชนิดกระจก (GLASS table) — ใส/เขียว/เทมเปอร์/ลามิเนต/ยูโร</b> — P1: เพิ่มใน GLASS: 'กระจกฝ้า 5 มม.', 'กระจกฝ้า 6 มม.' (ธรรมดา ไม่ใช่เทมเปอร์), 'กระจกลอนแก้วยูโรเกรย์ 5 มม.', 'กระจกลายผ้าสีขุ่นมัว 5 มม.' พร้อม c/s. P2: เพิ่ม checkbox/select 'ด้านเรียบ' (ไว้ด้านนอก/ใน) สำหรับกระจกฝ้า/ลอนแก้ว → ต่อท้าย det '(ด้านเรียบไว้ด้านนอก)'. P3: combo กระจกลามิเนตลอนแก้วพิเศษ ใช้ glass_replace (กรอกทุน+กำไร) หรือ OC-row other ได้แล้ว — เพิ่มเป็น preset ใน OC glass list <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>สีอลูมิเนียม (COLORS table) — ซาฮาร่า/อบขาว/ดำ/ลายไม้/อบพิเศษ</b> — P1: เพิ่ม global default สี = เทาซาฮาร่า (index 2) ถ้าตั้ง global-color ได้แล้ว — แต่ refreshColorByProduct รีเซ็ตเป็น 0 (บรรทัด 892) ทุกครั้งที่สลับ product → แก้ให้ default = index 2 (เทาซาฮาร่า) สำหรับ cat บานเลื่อน/เปิด/ติดตาย (ใบจริงใช้บ่อยสุด) แทน 0. P2: เพิ่มใน COLORS preset 'ลายไม้สต๊อก Golden Teak SMS' (rate เท่าลายไม้สต๊อก) เพราะใบจริงใช้ซ้ำมาก. P2: hasCode มีแล้ว — เพิ่ม placeholder ตัวอย่าง 'Golden Teak SMS / KL19022WD' ใน .i-colorcode <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>OPTION ทางเลือกลูกค้า (ขึ้น 'OPTION : ...' ในใบ)</b> — P1: แก้ ocPick บรรทัด 1977 ให้ tx.value='หากลูกค้าต้องการเปลี่ยนเป็น'+name แทน 'เปลี่ยนเป็น'+name. P1: แก้ render OPTION (qrow 2809 + group 3435) ให้ออก '...ราคา'+(delta&gt;0?'เพิ่ม ':'ลดลง ')+fmt(abs)+' บาท' ต่อท้ายข้อความแทนวงเล็บ '(ราคา±N บาท)' — ให้ตรง phrasing ใบจริงเป๊ะ. P3: เพิ่มหมวด OC 'door' (เปลี่ยนรุ่นประตู เช่น เป็นบานเลื่อนรางบนเฟรมสลิม ราคา 32,000) — ใบจริงมี OPTION เปลี่ยนทั้งรุ่น <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>บานยก SMS (lift_sms)</b> — 1) แก้สีเฟรมมุ้งตามข้อ mosqColor (ครอบบานยกด้วย). 2) มอเตอร์: เพิ่ม render บรรทัด 'มอเตอร์ {80/300} กก.' ลง _parts เมื่อ optSel.motor&gt;0 (ปัจจุบันคิดเงินแต่อาจไม่ขึ้นชื่อ — ตรวจซ้ำ). 3) คงคาดตาราง generic ไว้ (ทำงานถูก). priority P1 (สีเฟรมมุ้ง) — บานยกใช้มุ้งแทบทุกใบ <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>บานยก — มอเตอร์ (o-motor) render ลงใบ</b> — ตรวจซ้ำ grep 'motor' ใน render path; ถ้าไม่มี → itemDetail: ถ้า p.motor &amp;&amp; optSel.motor&gt;0 → _parts.push('พร้อมมอเตอร์ '+(motor==='80'?'80':'300')+' กก.'). priority P1 ถ้ายืนยันว่าไม่ขึ้น (มีราคาสูง) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>หลังคาไวนิล (roof_vinyl)</b> — P1: เพิ่ม 'คลังหมายเหตุมาตรฐาน' เป็น checklist chips ในกล่องของแต่ละ item (ไม่ใช้ textarea เปล่า) — preset 8-10 บรรทัดที่ใบจริงใช้บ่อย เช่น [ไม่รวมงาน ลงเข็ม/เทพื้น/ปูกระเบื้อง][ไม่รวมงาน รื้อหลังคาเดิม/งานเดินไฟ/งานสี][ไม่รวม ย้ายกล้อง/ย้ายแอร์][รวมโครงยึดเข้าตัวบ้านพร้อมครอบอลู] ติ๊กแล้ว push เข้า note อัตโนมัติ + ยังพิมพ์เพิ่มเองได้. ใส่ logic: ถ้าเลือกหลังคา ให้ default แนะนำ chip กลุ่มหลังคา. P2: เพิ่มช่อง 'ตะแกรงกันใบไม้ สี' (ดำ/ขาว) — ใบจริงระบุ 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สีดำ' แต่ระบบมีแค่สีท่อ (o-gutter-pipecolor) ไม่มีสีตะแกรง. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>หลังคาดีไลท์ (roof_delight)</b> — P1: ใช้ template หมายเหตุมาตรฐานร่วม (ดู roof_vinyl). P3: ยืนยันรายการสีดีไลท์กับพี่นัทว่าครบ 2 สีจริงไหม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>หลังคากระจกลามิเนต (roof_laminate)</b> — P1: เพิ่ม dropdown 'ชนิดกระจกลามิเนตหลังคา' เฉพาะ roof_laminate — ตัวเลือก: ลามิเนตใส ฟิล์มเขียว 4+4 / ฟิล์มใส 4+4 / ฟิล์มกันร้อน 4+4 / ฟิล์มกันเสียง 4+4 / 5+5. ให้ค่านี้ต่อเข้า _roofHead ('หลังคากระจกลามิเนต...ฟิล์ม...หนา...มม.') แทนการพึ่ง GLASS selector. P1: template หมายเหตุร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>กั้นห้องกระจก พร้อมหลังคา (glasshouse set + roof)</b> — P1: ในชุดกั้นห้อง เพิ่มแถบ 'หมายเหตุมาตรฐานของชุด' (chips) แชร์ทั้งชุด — รวม [ไม่รวม ลงเข็ม/เทพื้น/ปูกระเบื้อง][ไม่รวมงานไฟ][ไม่รวมก่อผนังปูนด้าน...][ไม่รวมดรอปพื้น][รวมพื้นไม้เทียม รวมวางตง]. P2: เพิ่ม preset 'พื้นไม้เทียม' เป็น item ในชุด (ใบจริงมี 'พื้นไม้เทียม WG11 สี DARK OAK' ในกั้นห้อง) — ตรวจว่ามี product พื้นไม้เทียมไหม (ไม่พบใน PRODUCTS กลุ่มนี้ — อาจต้องใช้ custom_item). <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>ส่วนลดพิเศษ 2% + เงื่อนไขมัดจำภายในวันที่ (discPct)</b> — P1: เพิ่มช่อง date 'มัดจำภายในวันที่ (เงื่อนไขส่วนลดพิเศษ)' ข้าง #discPct. ถ้ากรอก discPct&gt;0 ให้ render บรรทัดส่วนลดในใบเป็น 'ส่วนลดพิเศษ N% (ก่อน VAT 7%) หากลูกค้ามัดจำภายในวันที่ DD/MM/YYYY'. แปลงปี ค.ศ.→พ.ศ.อัตโนมัติให้ตรงใบจริง. ถ้าเว้นว่าง = โชว์แค่ 'ส่วนลดพิเศษ N%' <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[✅]</b> <b>ผนังเบาภายนอก (wall_ext) / ภายใน (wall_int) — สมาร์ทบอร์ด</b> — P1: template หมายเหตุมาตรฐาน (chips) — เพิ่มกลุ่มผนัง: [ไม่รวมงานก่อผนังปูน][ไม่รวมระบบไฟฟ้า][รวมงานกรีดผนังใส่แฟลชชิ่งกันน้ำ][งานเก็บสีเฉพาะจุด ไม่รวมสี]. P3: คงส่วน material render. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li></ul></div>
+<div class="gapbox" style="background:#FFFBEB;border-color:#FDE68A;"><b>P2 — ปรับถัดมา</b><ul><li><b>[🔴]</b> <b>บานหมุน เมืองทอง (pivot)</b> — 1) ตรวจกับพี่นัทว่าบานหมุนต้องมีมือจับเลือกไหม — ถ้าใช่ เพิ่ม digihandle:1 ใน product (จะได้ dropdown มือจับดิจิตอล/สแตน/กรอกเอง อัตโนมัติ). 2) ยืนยันว่า OPTION ทางเลือกลูกค้า (ปุ่ม oc-row) ใช้กับ pivot ได้ (เป็น generic ควรได้) — เป็นทางลดสำหรับ OPTION เปลี่ยนสี/กระจก. priority P2 (กลุ่มนี้ใช้น้อยกว่าเฟี้ยม/ยก แต่ขาดมือจับชัด) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🔴]</b> <b>ราวกันตกกระจก (แนวราบ/ระเบียง · ใบจริงมี 'ราวกันตกกระจก' / 'ราวกันตกกระจกติดตาย' / 'ราวกันตกเหล็ก')</b> — P2: เพิ่ม product (1) 'ราวกันตกกระจก (แนวราบ/ระเบียง)' คิดต่อเมตรหรือ ตร.ม. + default กระจกเทมเปอร์ 10 มม. + o-handrail; (2) 'ราวกันตกกระจกติดตาย'; (3) 'ราวกันตกเหล็ก' (วัสดุเหล็ก สีดำ — ระบุ 'เหล็ก สีดำ' ในใบ). ถ้ายังไม่มีเรตยืนยัน ให้ทำเป็น method bucket/per_length + เปิดให้กรอกราคา. ระหว่างนี้ติดป้าย (เช็คซ้ำ) เรื่องเรต. P2 <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🔴]</b> <b>พื้นไม้เทียม / ปูพื้นสมาร์ทบอร์ด (productType ในใบจริง)</b> — P2: เพิ่ม product 'พื้นไม้เทียม รวมวางตง (โครงเหล็ก)' + 'ปูพื้นสมาร์ทบอร์ด 20มม. โครงเหล็ก' แบบ per_sqm/bucket กรอกราคา + dropdown สี/ลาย (WG11 DARK OAK ฯลฯ) + free-text รหัสลาย. ถ้ายังไม่อยากเพิ่ม product เต็ม อย่างน้อยทำ custom_item ให้มี preset ชื่อ+ช่องสี. (เช็คซ้ำราคากับช่างก่อน). <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🔴]</b> <b>รหัสสีรุ่นย่อยของเฟรมมุ้ง (KL19022WD / KL10232A)</b> — P2: เพิ่มช่อง free-text 'รหัส/ชื่อสีเฟรม' (โผล่เมื่อเลือกสีเฟรมที่ hasCode) ทั้งใน o-mscolor (standalone) และ o-mosqcolor (addon — แต่ addon ใช้ค่า fixed sahara/kl_*; เปลี่ยนให้รับรหัสจาก dropdown สี COLORS เหมือน standalone จะคุมรหัสได้). render เป็น 'เฟรมสีไวท์แบมบู [KL19022WD]' <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>บานเลื่อน (sliding_sms / sliding_euro / sliding_eseries)</b> — P2: เพิ่ม dropdown .o-fixedpos ใต้ช่องติดตาย (เมื่อ o-fixed&gt;0) ตัวเลือก: 'ด้านข้าง' / 'ด้านบน' / 'ด้านข้างและด้านบน' / 'รอบ' / 'ด้านบนและด้านล่าง' → itemDetail แทรกเป็น 'พร้อมกระจกติดตาย{ตำแหน่ง}' ต่อท้ายชื่อแทน '(ติดตาย N บาน)' (หรือคงทั้งคู่). P3: เพิ่ม checkbox .o-solidlower-corrug 'ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบ+คิ้ววิ่งรอบด้านล่าง' (ปัจจุบันมี solidlower แต่บังคับกรอกขนาด+คิดเงิน — ใบจริงมักเป็นข้อความฟรี) → ให้มีโหมด 'แค่ระบุข้อความ ไม่คิดเงิน' <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>บานเปิด ยูโร / D-series / Velora (casement_euro / casement_dseries / casement_velora)</b> — P2: เพิ่ม dropdown Cmech ให้ cat บานเปิด (ขยาย if(p.cat==='บานเลื่อน') บรรทัด 2206 ให้รวม 'บานเปิด' หรือ p.digihandle) แบบ+สี → render 'มือจับ Cmech ก้านโยก รุ่น Berin สี{X}' ลง det. P2: เพิ่มช่องเลือกตำแหน่งกระจกติดตายเหมือน finding บานเลื่อน. P3: OPTION-row หมวด handle ปัจจุบันบวกเป็น delta บวกอย่างเดียว — เพิ่ม OC_HANDLES ให้มี 'Cmech Berin' เพื่อ auto-fill 'เปลี่ยนเป็น มือจับก้านโยก (Cmech) รุ่น Berin' พร้อม delta ลบได้ <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>ประตูบานเปิด โซลิด วัน / ทู (casement_flush_solid / casement_inset_solid)</b> — P2: เพิ่ม checkbox/select .o-alumat 'รายละเอียดอลู' ตัวเลือก: '(ลูกฟูกเรียบ 2 หน้า + คิ้วอลูมิเนียม)' / '(ลูกฟูกเรียบ 2 หน้า)' / 'ไม่ระบุ' → itemDetail ต่อท้ายบรรทัด 'อลูมิเนียม สี{X}' ด้วยข้อความนี้ (เฉพาะ solid_door หรือทุก cat บานเปิด/เลื่อน) ให้ตรงใบจริง <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>กระจกติดตาย (fixed_glass)</b> — P2: เพิ่ม dropdown .o-fixedkind 'ประเภทติดตาย': 'บานกระจกติดตาย' / 'ช่องแสงกระจกติดตายด้านบน' / 'กระจกติดตายด้านข้าง' / 'บานกระจกเงาติดตาย' → ใช้แทนชื่อหัวข้อ. ใช้ i-position สำหรับด้าน. กระจกเงา/กระจกเงาทอง มีใน GLASS แล้ว (line 534,558) — ครบ <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>งานหลายด้าน / กั้นห้อง (group + i-position ด้าน A-G)</b> — P2: เพิ่ม product 'ปิดทึบด้วยอลูมิเนียมทึบ' (cat ลูกฟูก+คอมโพสิททึบ หรือเสริม) ที่ออกชื่อด้านได้ตรง + กรอกราคา/พื้นที่ · หรือเพิ่ม checkbox .o-solidpanel 'ปิดทึบด้วยอลูมิเนียมทึบด้านบน' ในบานเลื่อน/เปิด ที่ต่อ det ฟรี. P3: เชื่อมกับ STD_NOTES (finding หมายเหตุ) ให้ใส่หมายเหตุระดับชุดได้ <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[🟡]</b> <b>บานเฟี้ยม X-series (folding_xseries)</b> — แก้พร้อม fold (เพิ่ม 'แบ่ง N บาน' + เสริมคาน ครอบ cat บานเฟี้ยมทั้งหมด). priority P2 <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>เลื่อนภายในรางบน (ซ้อน) (inner_top_stack)</b> — ยืนยันกับพี่นัทว่าเลื่อนภายในต้องใส่มุ้งได้ไหม — ถ้าต้อง เพิ่ม mosquito:1. ส่วน 'แบ่ง N บาน'/ชนิดเปิด/เสริมคาน ผ่าน (เข้า sliding branch). priority P2 <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>เลื่อนภายในรางบน X-series (inner_top_xseries)</b> — เพิ่ม SLIDING_RAIL.inner_top_xseries={rail:'top'} (และตรวจ buildItemOpts gate บรรทัด 2234 ที่ก็เช็ค SLIDING_RAIL[p.id] — ตอนนี้ X-series ไม่ได้ controls บานเลื่อนด้วย). priority P2 (สินค้าเฉพาะ ใช้น้อย แต่ตกหล่นชัด) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>ทุกสินค้าในกลุ่ม — รหัสสี/รุ่นย่อย (color code)</b> — 1) ตรวจ COLORS ทุกตัวที่ใบจริงมีรหัสในวงเล็บ → set hasCode:true (RAL7022/KL10232A, KL19022WD ไวท์แบมบู, ฯลฯ). 2) หรือเพิ่มช่องรหัสสี generic แบบ optional ให้ทุกสี (ถ้ากรอกค่อยโชว์ '[...]'). 3) สำหรับสี 'รอสรุปสี' ให้มี checkbox '(รอสรุปสี)' ต่อท้ายตามคลังคำ 'อลูมิเนียมลายไม้สีอบพิเศษ (รอสรุปสี)'. priority P2 (กระทบเฉพาะงานสีพิเศษ แต่เป็น gap ที่ยืนยันแล้ว) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[🟡]</b> <b>ประตูสวิง/เลื่อน บานเปลือย (frameless_door)</b> — P2: (ก) เมื่อ o-framecolor='สีอบพิเศษ' ให้โผล่ช่อง input รหัสสี (เหมือน i-colorcode ของ COLORS hasCode) แล้วต่อท้าย det เป็น 'เฟรมอลูมิเนียม สีอบพิเศษ [รหัส]'. (ข) เพิ่มบรรทัดชนิดกระจกใน det ของ frameless_door (ดึง GLASS[it.gi]) เพราะบานเปลือยมีกระจกเสมอ — ใบจริงระบุ 'กระจกเทมเปอร์ใส 10 มม.' <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>ประตูดัดโค้งบานคู่/เดี่ยว/สลิม (curved_double, curved_single, curved_slim)</b> — P2: (ก) เพิ่มชุด template หมายเหตุมาตรฐาน (ดูข้อ 'หมายเหตุมาตรฐาน' P1 รวม) ให้ติ๊กต่อรายการ. (ข) เมื่อเลือกกระจก '★ ดัดโค้ง...ราคาช่วง' ให้โผล่ helper '⚠ ราคากระจกเป็นช่วง เช็คซัพพลายก่อนยืนยัน'. (ค) เพิ่มช่องรหัสสีเมื่อเลือกสีอบพิเศษ (มี hasCode อยู่แล้วใน COLORS index 10/11 — ตรวจว่า i-colorcode โผล่ในหมวดดัดโค้ง) <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>บานติดตายดัดโค้ง (curved_fixed)</b> — P2: ทำให้ curved_fixed ไม่เติม prefix 'ประตู': เพิ่มเงื่อนไขใน noPrefix — ถ้าชื่อสินค้ามีคำว่า 'ติดตาย' → noPrefix=true (กันทุก *_fixed). หรือใส่ id 'curved_fixed' ใน noPrefix list ตรงๆ. ตรวจซ้ำว่า det ยังโชว์สีอลู+กระจกครบ <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>ประตู Ventilation YKK / Exhido YKK / Tostem A01 (ykk_vent, ykk_exhido, tostem_a01)</b> — P2: (ก) เอา 'YKK' ออกจาก AREA_CATS หรือสร้าง branch itemDetail เฉพาะ YKK ให้ render สีอลู+กระจก+โช๊ค (อ่าน o-closer). (ข) Tostem A01 ตั้ง default สีลายไม้ + แสดงรหัสรุ่น YKK/Tostem. (ค) ระบุ 'ช่องเปิดเต็ม' สำหรับ Exhido ใน det. ปัจจุบัน det='-' ทำให้ใบโล่งไม่มีสเปก <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>โช๊ค (o-closer) สำหรับ YKK/บานเปิด</b> — P2: ใน readItem เก็บ optSel.closerName (จาก option ที่เลือก data-n) และใน itemDetail _parts.push('มี{ชนิดโช๊ค}ด้านบน') เมื่อ closer&gt;0 — ให้ใบระบุ '(มีโช๊คด้านบน)' ตรงใบจริง <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>รหัสสีรุ่นย่อย (สีอบพิเศษ/ลายไม้) — curved/PC/YKK/shower</b> — P2: เพิ่ม hasCode:1 (หรือ optional code field) ให้สีลายไม้สต๊อก (Golden Teak SMS) และ Aztec gray — หรือเพิ่ม quoteName ที่มีรหัสรุ่นในตัว. ให้ทุกสีที่ไม่ใช่ ขาว/ดำ/ซาฮาร่าพื้นฐาน มีช่องระบุรหัส/ชื่อรุ่น optional ต่อท้าย 'สี... [รหัส]' ตรงใบจริง <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>ระแนง-บังตา (rn1–rn82 · 82 รุ่น · cat ระแนง-บังตา/ระแนง-ผนัง · per_sqm + fin) — บังตาผนังระแนงทุกขนาดกล่อง (1x5, 1"x1.6", 1"x1", 1"x1½", 1"x4", 1.6"x1.6", 1.6"x4", 4"x4", สลับ)</b> — P2: ขยาย dropdown o-finish ให้แต่ละเกรดมี data-n เป็นชื่อสีจริง (เช่นภายใต้ 'อบสีลายไม้' เพิ่มตัวเลือกย่อย 'Golden Teak SMS', 'ไวท์โอ๊ค', 'ไวท์แบมบู' ที่ map ราคาเดียวกัน) + เพิ่ม input ข้อความ 'ชื่อสี/รหัสรุ่นที่โชว์ในใบ' (o-fincolorname) override finLabel ตอน render det. และเพิ่ม input 'ตำแหน่ง/ด้าน' (มีใน i-position กลุ่ม 6 — เปิดให้ใช้กับระแนงเดี่ยว) เพื่อออก '(ด้าน A)'. ราคาไม่เปลี่ยน เพิ่มเฉพาะ label ที่ render <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🟡]</b> <b>ลูกฟูก+คอมโพสิททึบ (rn89–rn92 · ลูกฟูกเรียบ 1/2 ทาง ไม่โครง · คอมโพสิต 3/4 มม.)</b> — P2: เพิ่มช่องสีให้ rn91/rn92 (คอมโพสิต) — dropdown 'สีคอมโพสิต' (เทา/อบขาว/ดำ/อื่นๆ + ช่องพิมพ์เอง) ที่ render เป็นบรรทัด 'แผ่นคอมโพสิต สี…'. สำหรับ rn89/90 (ลูกฟูก) ใช้ทางแก้ชื่อสีเดียวกับ ระแนง-บังตา. ไม่กระทบราคา <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🟡]</b> <b>ราวกันตก/ราวบันได 47.1–47.4 (id imp1–imp6 · cat ราวบันได · per_length_tier · handrail:1 · glassDef:14)</b> — P2: (ก) ใน _parts ของ itemDetail เพิ่ม: if(it.optSel.handrail) _parts.push('พร้อมราวจับ '+(u5?'ยู 5 หุน':'กล่องอลู 1"x2"')) — ให้ราวจับที่บวกเงินแล้วโชว์ในใบ. (ข) ชื่อหัวข้อ: ปัจจุบัน prodName='ราวกันตก 47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)' — รก/internal; แนะนำใช้ name_override หรือเพิ่ม field 'ชื่อที่โชว์ในใบ' ให้สรุปเป็น 'ราวกันตกกระจก (บันได)'. (ค) เพิ่มลายน้ำเตือนกรอกยาวในช่องกว้าง (มี hint แล้ว line 2408). P2 เพราะราวจับกระทบเงิน <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🟡]</b> <b>หลังคาโพลีตัน 3มม. (roof_polyton)</b> — P2: เพิ่มสี 'Ice 603S' เข้า o-roofcolor (ใบจริงใช้). ตรวจ suffix รุ่น — ใบจริงเขียน '108S Aus Grey' / '603S Ice' (มี S) ระบบเขียน '108' → ปรับชื่อ option ให้ตรง. P1: template หมายเหตุมาตรฐานร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>เมทัลชีท เสริม (imp7-14) — รางน้ำ/ตะแกรง สี</b> — P2: เมื่อ o-roofend=รางน้ำ ให้ render บรรทัดมาตรฐาน 'รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สี[X]' โดยเพิ่ม select สีตะแกรง (ดำ default/ขาว). ปัจจุบันคำว่า 'ตะแกรงกันใบไม้' หายจากใบทั้งที่ราคารวมไว้แล้ว. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>ISOWALL (isowall)</b> — P2: ทำ o-isocolor เป็น input ที่รับค่า '(รอสรุปสี)' ได้ (free-text) — ตรวจว่าเป็น text ไม่ใช่ dropdown ปิด. รวม template หมายเหตุร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>หลังคา — โครงเหล็กชุบซิงค์ (o-roofframe)</b> — P2: เพิ่มช่องส่วนต่างราคาโครงเหล็กชุบ (กรอก/ม. หรือ %) เมื่อเลือกโครงเหล็กชุบ แทนการคิดเท่าอลู — หรืออย่างน้อยบังคับให้กรอกราคา (custom_price) เพื่อไม่ให้ใต้ราคา. คง warning ไว้. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>มุ้งนิรภัย (mj_screen_safety / imp31 / imp32 / addon mj_screen_safety)</b> — P2: ทบทวนกับพี่นัท — ใบจริงมุ้งนิรภัยมีระบุสีเฟรม (เทาซาฮาร่า/ไวท์โอ๊ค) ถ้าจริงต้องเปิด mscolor ให้ มุ้งนิรภัยด้วย (ตอนนี้ปิด). P3: ดัน overhang note 'ติดล้นนอกวงกบ' ลง det ลูกค้าเมื่อ mscreen.overhang=true <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>มุ้งเฟรมเล็ก/เฟรมใหญ่/ติดตาย (imp21/imp22/imp23 — standalone + addon)</b> — P1 (สีเฟรม ดู finding แรก). P3: รวม fabric label map ให้เป็นชุดเดียว (กัน fiber vs fiber_gray ให้ผลข้อความเหมือนกัน) — ตอนนี้มี map ซ้ำ 4 จุด (3173,3269,3345,1515) <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>กั้นห้องกระจก (โครงสร้างชุดหลายด้าน A-G)</b> — P2: เพิ่ม ด้าน A–ด้าน G เข้า &lt;datalist id='posPreset'&gt; (บรรทัด 276) ให้ทุก i-position เลือกด้านได้ทันทีโดยไม่ต้องพึ่ง addGlasshouseSet · เพิ่มชิป A/B/C/D/E/F/G เหนือช่อง position ในชุด group 6 (กดเติม label เร็ว) · ปุ่ม +เพิ่มบาน ควร auto ข้ามไป D ถ้า C ถูกลบแล้ว (ป้องกันด้านซ้ำ) <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[🟡]</b> <b>สีอลู — รหัสรุ่น + Golden Teak SMS + สเปกระแนง</b> — P2: เพิ่ม COLORS preset 'อลูมิเนียมลายไม้ Golden Teak SMS' (ใช้ rate เท่าลายไม้สต๊อก) เป็น quoteName ตรงคำใบจริง · เพิ่ม hasCode:1 ให้ลายไม้สต๊อก index 5-7 เพื่อพิมพ์รหัส/ชื่อรุ่น (เช่น SMS, ไวท์แบมบู KL19022WD) · สำหรับระแนงในชุดกั้นห้อง เพิ่มช่อง 'สเปกระแนง' (ขนาดกล่อง/โชว์หน้า/เว้นระยะ — มีอยู่บางส่วนใน cat ระแนง) ให้ render ต่อท้ายบรรทัดสีอลูในรูปแบบใบจริง 'ระแนงอลูมิเนียมกล่อง {สี} (ขนาด ... โชว์หน้า ... เว้นระยะห่าง ... ซม.)' <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[🟡]</b> <b>คำบรรยายเต็มต่อด้าน (พร้อมกระจกติดตายด้านข้าง/บน/ล่าง, ปิดทึบอลูทึบด้านบน, มีคาดตาราง)</b> — P2: เพิ่มกลุ่ม checkbox 'ส่วนติดตาย/ปิดทึบ' ในฟอร์มบาน group 6: [ ] กระจกติดตายด้านบน [ ] ด้านข้าง [ ] ด้านล่าง [ ] โดยรอบ [ ] ปิดทึบด้วยอลูมิเนียมทึบด้านบน [ ] ปิดทึบด้วยอลูมิเนียมลูกฟูกเรียบด้านล่าง → ประกอบเป็น 'พร้อมกระจกติดตาย{ด้าน} ปิดทึบด้วย...' ต่อท้าย prodName ให้ตรงคลังจริง · ลดการพิมพ์มือ ลดสะกดเพี้ยน <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[🟡]</b> <b>OPTION ทางเลือกลูกค้า ต่อบาน (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา ± ราคา)</b> — P2: (ก) ปรับ ocPick ให้ข้อความ auto ตามสำนวนใบจริง: 'หากลูกค้าต้องการเปลี่ยนเป็น &lt;name&gt; ราคา'+(delta&gt;=0?'เพิ่ม':'ลดลง')+' N บาท' (ขึ้นต้น 'OPTION :' มีแล้วใน readItem) แทน 'เปลี่ยนเป็น&lt;name&gt;'. (ข) เพิ่มหมวด OPTION สำเร็จรูปเฉพาะหลังคา: 'เพิ่มขนาดหลังคายื่น (ระบุ ซม.เดิม→ใหม่ + ราคา)', 'เพิ่มงานฝ้าฉาบเรียบทาสีขาวใต้หลังคา (พื้นที่×ราคา)'. (ค) ปรับ render delta ปัจจุบันโชว์ '(ราคา+N บาท)' ซ้ำกับข้อความ — เลือกโชว์ครั้งเดียว <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[🟡]</b> <b>รหัสสี/ชื่อสีรุ่นย่อย (สีอบพิเศษ KL/RAL) — i-colorcode</b> — P2: เปลี่ยน i-colorcode เป็น input list (datalist) เติม preset รหัสที่ใบจริงใช้บ่อย: KL10232A, KL19022WD, RAL7022, Golden Teak SMS, ไวท์โอ๊ค, ไวท์แบมบู, Fuji, Aztec Grey. ยังพิมพ์เองได้. ตรวจ COLORS ว่าทุกสีอบพิเศษตั้ง hasCode:true เพื่อให้ช่องโผล่จริง (เช็คซ้ำ) <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[🟡]</b> <b>งานหลายด้าน (กั้นห้องกระจก/หลังคากันสาด — ด้าน A/B/C... ในรายการเดียว)</b> — P2: (ก) ทำ preset 'กั้นห้องกระจกพร้อมหลังคา (หลายด้าน)' ที่กด add แล้วสร้างหลายส่วนพร้อม i-position=A/B/C... + group เดียวกันให้อัตโนมัติ. (ข) ใน group rendering ให้ใส่ prefix 'ด้าน &lt;position&gt; ' หน้า desc ของแต่ละส่วนเรียงตามลำดับ position (เช็คว่า 3384-3435 เรียง A→G ตาม i-position ไม่ใช่ลำดับ add). (ค) ปุ่ม 'เรียงด้านใหม่ A→Z' กันลำดับสลับ <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li></ul></div>
+<div class="gapbox" style="background:#F9FAFB;border-color:#E5E7EB;"><b>P3 — เก็บรายละเอียด</b><ul><li><b>[🟡]</b> <b>PC Door (ชื่อหัวข้อ/บรรยาย)</b> — P3: เพิ่ม dropdown 'รูปแบบ PC Door' (บานเลื่อนล้วน / บานเลื่อน+บานเปิด / Panoramic) ที่ต่อท้าย prodName. และเพิ่มช่องระบุจำนวนบานเปิด/ติดตาย (optional) ให้บรรยายครบเหมือนใบจริง <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[🟡]</b> <b>ระแนง-เกล็ด (rn83–rn88 · เกล็ด Z 1"/4" ไม่โครง/รวมโครง)</b> — P3: ปรับ name ของ rn83-88 ให้ขึ้นต้น 'ระแนงอลูมิเนียมเกล็ด Z ...' (ตอนนี้แค่ 'เกล็ด Z') เพื่อให้ prodName ในใบตรงคำที่ใบจริงใช้. + เพิ่มทิศ (แนวตั้ง/นอน) เป็นช่องถ้าจำเป็น. กระทบเฉพาะถ้อยคำหัวข้อ ไม่กระทบราคา <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[🟡]</b> <b>ฝ้าอลูมิเนียม ตัวซี (ceil_cshape) / ฝ้าไม้เทียม remood (ceil_bsc)</b> — P3: เพิ่ม free-text 'ระบุลาย/รหัสสี' (option) เมื่อเลือก 'ลายไม้' เพื่อ render เช่น 'ฝ้าไม้เทียม remood ลาย...'. รวม template หมายเหตุร่วม. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[🟡]</b> <b>มุ้งกันแมว/กันหมา (imp33 / ผ้า cat ใน addon)</b> — P3: ปรับ label map anti_pet/cat ให้ตรงใบจริง 'ผ้ามุ้งกันแมว'. ด้านที่ติด (B/E/G) ใช้ i-note ได้อยู่แล้ว — ยอมรับได้ <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>มุ้งจีบ ทุกรุ่น (SD/Blackout/ทูเวย์/ตีนตะขาบ/imp28)</b> — แก้ผ่าน finding สีเฟรมมุ้ง (P1). นอกนั้นมุ้งจีบผ่าน <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>สีผ้าไฟเบอร์ (ดำ/เทา/ขาว — o-screenfabriccolor)</b> — P3: ยอมรับได้ (mosqFabric มีครบ 3 สี). ถ้าต้องการเป๊ะ เพิ่ม dropdown สีผ้าแยกใน addon เหมือน standalone <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>ครอบวงกบ ตู้อลู (fw_cabinet_basic/stock/special/wood)</b> — P3: ครอบวงกบมักรวมในบรรทัด _parts ของบานหลักอยู่แล้ว; ถ้าขายเดี่ยวควรให้ det ระบุ 'ครอบวงกบอลูมิเนียม สี{X} {รอบ/3ด้าน}' <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[🟡]</b> <b>รายการส่วนลด/หมายเหตุล้วน (** หมายเหตุ ** งานเพิ่ม / บรรทัดไม่มีราคา)</b> — P3: เนื่องจาก footer มีข้อความนี้ครบแล้ว ไม่จำเป็นต้องทำแถวกลางตาราง. ถ้าต้องการ — เพิ่ม product พิเศษ 'แถวหมายเหตุ/หัวข้อ (ไม่คิดเงิน)' ที่ render เฉพาะ desc ไม่มี qty/price. แต่ priority ต่ำเพราะไม่กระทบยอด/ความครบ <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[✅]</b> <b>บานเปิด X-series (casement_xseries) — ใช้ภายใน ไม่กันน้ำ</b> — ไม่ต้องแก้ (ผ่าน) — แต่ควร double-check ว่า det ไม่หลุดคำเตือน 'ไม่กันน้ำ' ที่เซลล์ต้องเห็น: เพิ่ม badge สีส้มในฟอร์ม (ไม่ลงใบ) เตือนเซลล์ว่า X-series ใช้ภายใน <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[✅]</b> <b>คาดตาราง (grid mark บนบานเลื่อน/เปิด/ติดตาย)</b> — ไม่ต้องแก้ (ผ่าน). ข้อสังเกตเล็ก: ใบจริงบางจุดเขียนแค่ '(มีคาดตาราง)' ไม่ระบุจำนวนเส้น — ระบบทำได้ทั้ง 2 แบบแล้ว (ถ้าไม่กรอกเส้น = '(มีคาดตาราง)') <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[✅]</b> <b>จำนวนบาน / รูปแบบเปิด (OPENING_PATTERNS + i-panels)</b> — ไม่ต้องแก้ (ผ่าน) <span style="color:#9CA3AF">(บาน/กระจก-เลื่อน-เปิด-ติดตาย (บานเลื่อน + บานเปิด + ติดตาย + ชนิดกระจก/สี))</span></li><li><b>[✅]</b> <b>บานกระทุ้ง — มือจับ Cmech หลบมุ้ง (o-cmechawn)</b> — ผ่าน — ไม่ต้องแก้. (เสริม P3: อาจเพิ่มชื่อรุ่น Berin ตามคลังคำ 'รุ่น Berin' เป็น option ชื่อรุ่น ถ้าอยากตรงใบเป๊ะ) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>บานเฟี้ยม — ธรณี (o-threshf)</b> — ผ่าน — ไม่ต้องแก้ <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>บานหมุน aluinch (pivot_aluinch, ยกเลิกขาย)</b> — ผ่าน (ยกเลิกขายแล้ว) — แก้ pivot จะได้ผลตามถ้ายังเปิดใช้ <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>บานยก aluinch (lift_aluinch, ยกเลิกขาย)</b> — ผ่าน — แก้ตาม lift_sms <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>เลื่อนภายในรางบน SlimLux (inner_top_slimlux)</b> — ผ่าน. (P3: 'รวม soft close+สลิงลากเปิด' อยู่ในชื่อรุ่นยาว — ดู _incl logic 3107 ดึง '(รวม...)' ลงบรรทัดใต้หัวข้อ ทำงานถูก) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>เลื่อนภายในรางล่าง SMS (inner_bottom_sms)</b> — ผ่าน (ติดเฉพาะสีเฟรมมุ้งร่วม ถ้าใส่มุ้ง — แต่ product นี้ไม่มี mosquito:1 เช่นกัน, ตรวจซ้ำตาม inner_top_stack) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>ทุกสินค้าในกลุ่ม — OPTION ทางเลือกลูกค้า (oc-row / ปุ่ม OPTION)</b> — ผ่าน. (P3 เสริม: ทำ dropdown OPTION สำเร็จรูปจาก optionPhrases ที่พบบ่อย เช่น 'เปลี่ยนเป็นลายไม้ Golden Teak SMS', 'เพิ่มมุ้งนิรภัย', 'เปลี่ยนกระจกเทมเปอร์ 6มม.' เพื่อความเร็ว/ความตรงคำ — แต่กลไกหลักใช้ได้แล้ว) <span style="color:#9CA3AF">(บาน-กระทุ้ง-เฟี้ยม-หมุน-ยก-เลื่อนภายใน)</span></li><li><b>[✅]</b> <b>OPTION ทางเลือกลูกค้า (cascade F2) — ทุกสินค้าในกลุ่ม</b> — P3 (เสริม): OC_CATS หมวด 'color' ใช้ colorPrice(...,'') series ว่าง — สำหรับ curved/PC ที่ series เฉพาะ อาจคำนวณส่วนต่างไม่ตรง 100% เช็คซ้ำ. และเพิ่ม preset OPTION ยอดนิยม 'เพิ่มมุ้งนิรภัย +N' สำหรับ PC/YKK ให้กดเร็ว <span style="color:#9CA3AF">(งานพิเศษ-เปลือย-ดัดโค้ง-PCdoor-shower-YKK)</span></li><li><b>[✅]</b> <b>ครอบวงกบ ระแนง (id fw_ranae_basic/stock/special/wood · 700/800/1200/1300 ต่อ ม.)</b> — ไม่ต้องแก้ — ผ่าน. (ข้อสังเกตเล็ก: มี 2 ทางเข้า (product fw_ranae + o-fcm inline) อาจสับสนว่าใช้อันไหน แต่ไม่กระทบความถูกต้อง) <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[✅]</b> <b>OPTION ±ราคา (เปลี่ยนเป็นลายไม้ Golden Teak / เปลี่ยนสี ฯลฯ) สำหรับระแนง-รั้ว</b> — P3 (ปรับ UX เล็ก): เพิ่ม preset OPTION สำเร็จรูปใน ocAddRow สำหรับระแนง เช่น dropdown 'เปลี่ยนเป็นลายไม้ Golden Teak SMS' กรอกแค่ราคา — ลดการพิมพ์ผิด/คำไม่ตรงใบ. ไม่บังคับ <span style="color:#9CA3AF">(ระแนง-รั้ว-ราว (ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ลูกฟูก+คอมโพสิททึบ, ระแนงบานเกล็ด/เลื่อน/เปิด-ปิด, ประตูรั้ว, ราวบันได/ราวกันตก))</span></li><li><b>[✅]</b> <b>ฝ้าฉาบเรียบ (ceiling_smooth)</b> — P3: คงสภาพ. แนะนำเพิ่ม preset note 'ใต้หลังคาไวนิล/หลังคา...' เป็น quick-fill เพื่อ match ถ้อยคำใบจริง. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[✅]</b> <b>ของเสริมหลังคา: เสาแผง/เสา 4x8/คานเหล็กถัก/โซ่/ครอบท่อ PVC/ซ่อนสโลป/ครอบคาน</b> — P3: คงสภาพ. แต่โซ่รางน้ำในของเสริม (o-rfchain) ออกแค่จำนวน — ตรวจว่า render ระบุ 'ลายทิวลิป สีน้ำตาล' ด้วยไหม (ระบบ o-gutter-chainpat/color อยู่ใน path รางน้ำหลัก ไม่ผูกกับ o-rfchain ของเสริม) → ถ้าใช้ o-rfchain ลาย/สีอาจหาย (เช็คซ้ำ). <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[✅]</b> <b>OPTION ทางเลือกลูกค้า (เปลี่ยนสี/วัสดุ ±ราคา) — หลังคา</b> — P3: คงสภาพ. แนะนำ preset OPTION หลังคาบ่อยๆ (เปลี่ยนสีเทาซาฮาร่า / เพิ่มขนาดยื่น) เป็น quick chips เพื่อลดพิมพ์มือ + กันลืมใส่ optDelta. <span style="color:#9CA3AF">(หลังคา-ฝ้า-ผนัง)</span></li><li><b>[✅]</b> <b>มุ้งม้วน / ม้วนเตะได้ (imp29 / mj_kick_150/300/600)</b> — ผ่าน — เพียงพึ่ง finding สีเฟรม (P1) สำหรับเคสที่เลือกสีเฟรม <span style="color:#9CA3AF">(ตู้-มุ้ง (ตู้อลู / ฝาตู้ / มุ้งทุกชนิด + สีเฟรมมุ้ง))</span></li><li><b>[✅]</b> <b>OPTION ± ราคา (เปลี่ยนกระจก/มุ้ง/สี/หลังคา + ส่วนลดมัดจำ)</b> — P3: ปรับ prefix ข้อความ optChoicesNote จาก 'OPTION : เปลี่ยนเป็น...' → 'OPTION : หากลูกค้าต้องการเปลี่ยนเป็น...' (บรรทัด 1977 tx.value + 2645) ให้ตรงสำนวนใบจริงเป๊ะ · เพิ่ม preset 'เพิ่มมุ้งนิรภัย' / 'เพิ่มงานฝ้าฉาบเรียบใต้หลังคา' ใน SET_OPT_PRESETS (พบบ่อยในชุดกั้นห้อง+หลังคา) <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[✅]</b> <b>ม่านซิป (zipscreen) — รุ่น/ผ้า/ระบบ/ขนาด/ราคา</b> — P3: เพิ่ม det ม่านซิปให้ระบุรุ่น (ZIP.MODEL_LABEL เช่น 'ม่านซิป รุ่น JR-Z100') + ระบบควบคุม (มือดึง/มอเตอร์ รุ่น) + เพิ่มช่อง 'สีกล่อง/สีเฟรมม่านซิป' (dropdown สีอลู) render ต่อท้าย det · ปัจจุบันใช้ได้ดีพอแล้ว ปรับเสริมเพื่อใบละเอียดขึ้น <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[✅]</b> <b>หลังคาในชุดกั้นห้อง (ไวนิล/ชินโคไลท์/โพลีตัน/กระจกลามิเนต + รางน้ำ/ท่อ/โซ่)</b> — P3: ปรับ det รางน้ำหลังคาให้ระบุ 'ตะแกรงพลาสติกกันใบไม้ สี{ดำ/ขาว}' + 'ท่อน้ำทิ้ง PVC 2.5 นิ้ว สี{สี}' แยกบรรทัดตามรูปแบบ 'รายละเอียดงาน:' ของใบจริง · ใช้ได้ดีอยู่แล้ว เป็นการ polish ให้ตรงคำ <span style="color:#9CA3AF">(กั้นห้องกระจก-ม่านซิป)</span></li><li><b>[✅]</b> <b>เงื่อนไขการรับประกัน + เงื่อนไขแบบและใบเสนอราคา (footer มาตรฐานทั้งใบ)</b> — ผ่าน — ไม่ต้องแก้. (ทางเลือก P3: ทำ footer ข้อ 'เงื่อนไขการเข้าทำงาน 2 (รื้ออลูมิเนียม)' ให้ซ่อนได้ถ้างานไม่มีการรื้อ เพื่อไม่ให้ใบยาวเกินจำเป็น) <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[✅]</b> <b>ส่วนลดค่าประเมินหน้างาน (discFlat)</b> — ผ่าน. P3: ในใบ HTML รวมส่วนลด 2 ก้อน (discPct+discFlat) เป็นบรรทัด 'ส่วนลด' เดียว — ใบจริงแยกเป็น 'ส่วนลดค่าประเมิน' กับ 'ส่วนลดพิเศษ 2%' คนละบรรทัด. แนะนำแยกบรรทัดใน qtot ให้เหมือน Excel/ใบจริง <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[✅]</b> <b>VAT (ภาษีมูลค่าเพิ่ม) + รวมทั้งสิ้น + คำอ่านบาท</b> — ผ่าน — ไม่ต้องแก้ <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li><li><b>[✅]</b> <b>หัวใบ (เลขที่/วันที่/ลูกค้า/ที่อยู่/ผู้ติดต่อ/เบอร์/ผู้ขาย+เบอร์เซลล์)</b> — ผ่าน. P3: SELLER_PHONE 'เซลล์แอม' ว่าง (ใช้เบอร์กลางไปก่อน) — เช็คซ้ำว่ามีเบอร์จริงแล้วเติม. ตรวจว่า custAddress ขึ้นในใบครบ (2855 ใส่แล้ว) <span style="color:#9CA3AF">(ส่วนกลาง-หมายเหตุ-การเงิน-ใบ)</span></li></ul></div>
+
+<h2 class="voc">ภาคผนวก — คลังคำที่ใบจริงใช้ (เกณฑ์เทียบ / ใช้เติมระบบ)</h2>
+<h3 style="color:#B3151D;font-size:12px;margin:8px 0 3px;">สี/วัสดุ (48)</h3><div class="cols"><ul><li>สีเทาซาฮาร่า</li><li>อลูมิเนียมลายไม้ สี Golden Teak SMS</li><li>มือจับก้านโยก (Cmech) สีดำ รุ่น Berin</li><li>ชุบสีทอง</li><li>อลูมิเนียม สีเทาซาฮาร่า</li><li>หลังคาไวนิล สีขาว</li><li>รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้ สีดำ</li><li>ท่อน้ำทิ้ง PVC สีดำ</li><li>ท่อน้ำทิ้ง PVC สีขาว</li><li>แผ่นคอมโพสิต สีเทา</li><li>ระแนงอลูมิเนียมกล่อง สีอบขาว</li><li>ระแนงอลูมิเนียมกล่องลายไม้ สี Golden Teak SMS</li><li>หลังคาชินโคไลท์ สี Light Grey</li><li>โซ่รางน้ำลายดอกทิวลิป สีขาว</li><li>พื้นไม้เทียม WG11 สี DARK OAK</li><li>อลูมิเนียม สีอบขาว</li><li>แผ่นคอมโพสิต สีอบขาว</li><li>สีอบขาว</li><li>สีดำ (ตะแกรงพลาสติกกันใบไม้)</li><li>สีขาว (หลังคาไวนิล / ท่อน้ำทิ้ง PVC)</li><li>อลูมิเนียม สีดำ</li><li>อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 (KL10232A)</li><li>อลูมิเนียมลายไม้สีอบพิเศษ (รอสรุปสี)</li><li>หลังคาโพลีตัน สีขาวขุ่น (Opal 103)</li><li>โซ่รางน้ำลายดอกทิวลิป สีน้ำตาล</li><li>แผ่นคอมโพสิต สีดำ</li><li>อลูมิเนียมทึบ สีอบขาว</li><li>วัสดุปิดรอยต่อแผ่นหลังคา สีขาว</li><li>ตะแกรงพลาสติกกันใบไม้ สีดำ</li><li>หลังคาโพลีตัน สีไอซ์ ( 603S Ice )</li><li>วงกบอลูมิเนียม สีดำ</li><li>อลูมิเนียมทึบ สีดำ</li><li>ระแนงอลูมิเนียมเกล็ด Z สีดำ</li><li>เหล็ก สีดำ</li><li>หลังคาเมทัลชีท สีน้ำตาล</li><li>ไม้เทียม Desk-140 สี Teak</li><li>ISOWALL (รอสรุปสี)</li><li>อลูมิเนียมลายไม้ สีไวท์โอ๊ค</li><li>อลูมิเนียมลายไม้อบพิเศษ สีไวท์แบมบู (KL19022WD)</li><li>สียูโรบรอนซ์ (กระจกลอนแก้ว)</li><li>สีขาว (อุปกรณ์บานเกล็ด/มือจับล็อค SlimLux)</li><li>สีดำ (มือจับ)</li><li>อลูมิเนียมทึบ สีเทาซาฮาร่า</li><li>สีขาว (พัดลมดูดอากาศ/ฝาครอบกันแมลง)</li><li>สีออสเกรย์ ( 108S Aus Grey ) (หลังคาโพลีตัน)</li><li>สีดำ (ตะแกรงพลาสติกกันใบไม้ / ท่อน้ำทิ้ง PVC)</li><li>Modern Grey (ชินโคไลท์ HC-N828 - option)</li><li>สแตนเลสสีเงิน</li></ul></div>
+<h3 style="color:#B3151D;font-size:12px;margin:8px 0 3px;">ชนิดกระจก/แผ่น (30)</h3><div class="cols"><ul><li>กระจกใส หนา 6 มม.</li><li>กระจกลอนแก้ว (ด้านเรียบไว้ด้านใน)</li><li>กระจกเทมเปอร์ใส หนา 10 มม.</li><li>กระจกลายผ้าสีขุ่นมัว หนา 5 มม.</li><li>กระจกฝ้า (ด้านเรียบไว้ด้านนอก)</li><li>กระจกฝ้า (ด้านเรียบไว้ด้านใน)</li><li>กระจกลอนแก้วยูโรเกรย์ 5 มม.</li><li>กระจกลามิเนตลอนแก้วใสพิเศษ (ลอนกลาง) 5 มม. + ฟิล์มเทาเย็น + ฟิล์มใส + กระจกเงาใส 3 มม.</li><li>กระจกลามิเนตเขียว + ฟิล์มใส STG หนา 1.52 + กระจกเขียว หนา 5 มม.</li><li>กระจกยูโรบรอนซ์ หนา 6 มม.</li><li>กระจกเขียว หนา 6 มม.</li><li>หลังคาชินโคไลท์ รุ่น NT-332 สี Light Grey หนา 6 มม.</li><li>แผ่นคอมโพสิต สีเทา (บานหน้าตู้)</li><li>กระจกเทมเปอร์ใส หนา 6 มม.</li><li>กระจกใส หนา 5 มม.</li><li>ชั้นวางกระจกใส หนา 6 มม.</li><li>กระจกลามิเนตใส หนา 4+4 มม. ฟิล์มกันเสียง</li><li>หลังคาโพลีตัน หนา 3 มม. สีขาวขุ่น (Opal 103)</li><li>หลังคาไวนิล สีขาว</li><li>กระจกเขียว หนา 5 มม. ( Ventilation Door )</li><li>หลังคากระจกลามิเนตใส ฟิล์มเขียว หนา 4+4 มม.</li><li>หลังคาโพลีตัน หนา 3 มม. สีไอซ์ ( 603S Ice )</li><li>กระจกลามิเนตใส ฟิล์มเขียว หนา 5+5 มม.</li><li>กระจกเงา หนา 5 มม.</li><li>กระจกเทมเปอร์ใส หนา 12 มม.</li><li>กระจกลอนแก้วใหญ่ สียูโรบรอนซ์</li><li>หลังคากระจกนิรภัยลามิเนต (โครงอลูมิเนียม ยื่นปลาย ปล่อยปลาย/ไม่มีรางน้ำ)</li><li>หลังคากระจกลามิเนตใส ฟิล์มกันร้อน หนา 4+4 มม.</li><li>หลังคากระจกลามิเนตใส ฟิล์มใส/เขียว หนา 4+4 มม. (ออปชั่น)</li><li>กระจกเงา 2 ด้าน ( ด้านนอก-ใน )</li></ul></div>
+<h3 style="color:#B3151D;font-size:12px;margin:8px 0 3px;">มุ้ง+เฟรม (13)</h3><div class="cols"><ul><li>มุ้งนิรภัย</li><li>มุ้งเฟรมเล็ก ผ้าไฟเบอร์เทา</li><li>มุ้งเฟรมเล็ก (ผ้าไฟเบอร์เทา/เฟรมสีเทาซาฮาร่า)</li><li>มุ้งจีบ เฟรมสีอบขาว</li><li>มุ้ง เฟรมเล็ก ผ้ามุ้งไฟเบอร์เทา</li><li>มุ้งเฟรมเล็ก ผ้ามุ้งกันแมว ( ด้าน B, E, G )</li><li>มุ้งเฟรมเล็ก ผ้าไฟเบอร์ดำ</li><li>มุ้งนิรภัย (เฟรมลายไม้สีไวท์โอ๊ค)</li><li>มุ้งนิรภัย (เฟรมสีเทาซาฮาร่า)</li><li>มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD) / ผ้าไฟเบอร์ดำ)</li><li>มุ้งจีบ (เฟรมสีเทาซาฮาร่า / ผ้าไฟเบอร์ดำ)</li><li>ฝาครอบกันแมลง สีขาว ขนาด 8"</li><li>มุ้งจีบ ผ้าไฟเบอร์ดำ</li></ul></div>
+<h3 style="color:#B3151D;font-size:12px;margin:8px 0 3px;">หมายเหตุมาตรฐาน (76) — ★ ใช้ทำ template</h3><ul><li>ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม</li><li>วัสดุและอุปกรณ์ตามแบบมาตรฐานผู้ผลิต</li><li>ราคาที่เสนอรวมงานนั่งร้าน และโพรเทคฟิล์มฟ้าบริเวณกระจกเพื่อกันสิ่งสกปรก แต่ไม่รวมงานทำความสะอาด Big cleaning</li><li>วัสดุ Sealant ภายนอก-ภายใน ใช้ PU / MS สีขาว (สำหรับทาสีได้), ใช้ซิลิโคนใส สำหรับยิงกระจก</li><li>จำนวนและราคาอาจมีการเปลี่ยนแปลงเมื่อช่างเข้าวัดหน้างานจริง</li><li>รับประกันผลงาน การติดตั้ง 1 ปี เช่น บานตก บานไม่ลื่น น้ำรั่ว อื่นๆ นับจากวันที่ส่งมอบงาน ยกเว้นโครงสร้างหลักที่เกิดจากการทรุดตัวของพื้นดินบริเวณนั้น และเหตุเกิดจากการใช้งานผิดประเภท, อุบัติเหตุ รวมถึงภัยธรรมชาติ</li><li>หมายเหตุ ราคาที่เสนอไม่รวมงานดรอปพื้น</li><li>ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู แต่ไม่รวมความเสียหายที่เกิดจากการดรอปพื้น เช่น กระเบื้องแตก งานเก็บสี และงานอื่นๆ</li><li>ราคาที่เสนอรวมค่าแรงงานเก็บสีเฉพาะจุดในบริเวณทำงานและจุดที่เกิดอุบัติเหตุจากการทำงาน แต่ไม่รวมสี ( ลูกค้าดำเนินการเตรียมสีให้ )</li><li>ราคาที่เสนอไม่รวมงานรื้อบานประตูเดิมและทุบปูนเดิม ( ลูกค้าดำเนินการเอง )</li><li>เงื่อนไขการเข้าทำงาน 1. ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา</li><li>2. สำหรับหน้างานที่มีการรื้ออลูมิเนียม มีรายละเอียด ดังนี้ 2.1 ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น 2.2 อาจมีเสียงดังระหว่างการผ่างานปูน 2.3 อาจมีฝุ่นเป็นจำนวนมากที่เกิดขึ้นจากงานผ่าปูน</li><li>3. การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกันก่อนเข้าทำงาน ลูกค้าเป็นผู้ดำเนินการจัดหา (กรณีเริ่มงานแล้วเกิดเหตุสุดวิสัยระหว่างทำงานทำให้ไม่สามารถทำงานต่อได้ บริษัทขอสงวนสิทธิ์คิดค่าดำเนินการตามจริง)</li><li>4. นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ</li><li>5. เงื่อนไขการรับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่น บานตก บานไม่ลื่น น้ำรั่ว และอื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกันในการทรุดของพื้นดิน หากมีความชำรุดเสียหายใดๆ อันเกิดจากการทรุดตัวของพื้นดินและเหตุเกิดจากการใช้งานผิดประเภท, อุบัติเหตุ, รวมถึงภัยธรรมชาติ ผู้ว่าจ้างไม่ติดใจเรียกร้องใดๆกับผู้รับจ้างทุกกรณี</li><li>เงื่อนไขแบบและใบเสนอราคา 1) หากลูกค้าต้องการปรับเปลี่ยนสีวัสดุอุปกรณ์หรือการปรับแก้ไขแบบ ต้องแจ้งข้อความผ่านช่องทาง LINE Official, Facebook เท่านั้น และสามารถแก้ไขได้ก่อนภายในวันที่มัดจำ</li><li>2) หากลูกค้าต้องการแบบ 3D จะมีค่าใช้จ่ายเพิ่มเติม(มี 2 แพ็กเกจ) ซึ่งลูกค้าสามารถส่ง Reference ที่ต้องการมาก่อนการออกแบบได้ แต่ถ้าไม่มี Reference บริษัทจะทำการออกแบบตามแบบ 2D ของบริษัท 2.1) กรณีที่ยอดรวมงานมากกว่า 200,000 บาท สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้เต็มจำนวน 2.2) กรณีที่ยอดรวมงานน้อยกว่า 200,000 บาท จะไม่สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้ 2.3) แบบ 3D สามารถแก้ไขได้ไม่เกิน 3 ครั้ง</li><li>3) หากลูกค้าต้องการให้บริษัทจัดซื้อและติดตั้งอุปกรณ์เครื่องใช้ไฟฟ้าต่างๆ เช่น ปลั๊กไฟ, สวิตช์ไฟ, ชุดโคมไฟพร้อมหลอด, พัดลมระบายอากาศ หรืออื่นๆ รูปแบบจะเป็นไปตามบริษัทกำหนดและจัดหาได้</li><li>4) หากลูกค้าต้องการให้บริษัทจัดซื้อสีสำหรับใช้ทาผนังเบากรุสมาร์ทบอร์ดและสำหรับงานเก็บสี เฉดสีจะเป็นไปตามมาตรฐานของบริษัทที่จัดหาได้ ซึ่งจะใกล้เคียงกับสีเดิม(อาจจะไม่เหมือนสีเดิม)</li><li>5) ถ้าลูกค้าต้องการธรณีประตูเรียบเสมอพื้น(ดรอปพื้นฝังธรณี) สามารถใช้ระยะดรอปพื้นจากแบบ 2D ส่งให้ผู้รับเหมาดำเนินการดรอปพื้น ก่อนช่างของบริษัทเข้าวัดหน้างานจริงก่อนผลิต</li><li>6) หลังจากมัดจำและหน้างานดรอปพื้นก่อฉาบช่องเปิดเรียบร้อยแล้ว ทีมช่างผลิตของบริษัทจะเข้าวัดหน้างานจริง ซึ่งจะไม่สามารถปรับเปลี่ยนแบบหรือแก้ไขขนาดพื้นที่ติดตั้งหน้างานทุกกรณี เช่น ปูกระเบื้อง, ทาฝ้า, ฉาบปูน และอื่นๆ</li><li>ราคาที่เสนอไม่รวมงาน รื้อพื้นเดิม / รื้อกระเบื้อง / รื้อหลังคาเดิม / งานเดินไฟ / งานสี</li><li>ราคาที่เสนอไม่รวมงาน ย้ายกล้องวงจรปิด / ย้ายแอร์ (ลูกค้าดำเนินการเอง)</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / ทาสี / ดรอปพื้น / ผนังปูน</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / ก่อผนังปูน / ระบบไฟฟ้า</li><li>ราคาที่เสนอรวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม</li><li>ราคาที่เสนอไม่รวมงาน ถอดรางน้ำเดิม / งานทาสี / งานเดินไฟ</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูนด้าน A / งานดรอปพื้น</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูนด้าน A, D / งานดรอปพื้น / งานรื้อและตัดต้นไม้เดิม</li><li>นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ</li><li>รับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่นบานตก บานไม่ลื่น น้ำรั่ว อื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกัน ในการทรุดของพื้นดิน หากมีความชำรุดเสียหายใดๆอันเกิดจากการทรุดตัวของพื้นดินและเหตุเกิดจากการใช้งานผิดประเภท, อุบัติเหตุ, รวมถึงภัยธรรมชาติ ผู้ว่าจ้างไม่ติดใจ เรียกร้องใดๆกับผู้รับจ้างทุกกรณี</li><li>หากลูกค้ามัดจำภายใน วันที่ 6 / 12 / 2566</li><li>รับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่นบานตก บานไม่ลื่น น้ำรั่ว อื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกันในการทรุดของพื้นดิน หากมีความชำรุดเสียหายใดๆอันเกิดจากการทรุดตัวของพื้นดินและเหตุเกิดจากการใช้งานผิดประเภท,อุบัติเหตุ,รวมถึงภัยธรรมชาติ ผู้ว่าจ้างไม่ติดใจเรียกร้องใดๆกับผู้รับจ้างทุกกรณี</li><li>ราคาที่เสนอรวมงานดรอปพื้น ด้าน B แต่ไม่รวมความเสียหายที่เกิดจากการดรอปพื้น เช่น กระเบื้องแตก งานเก็บสี และงานอื่นๆ</li><li>ราคาที่เสนอรวมงานเดินไฟดาวน์ไลท์แบบท่อลอย 2 ดวง (ไม่รวมดวงโคม) ใช้สวิตซ์ไฟเดิม และไม่รวมงานเดินไฟเข้าตู้เมนหลัก</li><li>ราคาที่เสนอรวมงานย้ายดวงโคมเดิม 1 ดวง แต่ไม่รวมความเสียหายจากการรื้อ เช่น งานเก็บสี และงานอื่นๆ (ลูกค้าดำเนินการเก็บสีเอง)</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง</li><li>รับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่น บานตก บานไม่ลื่น น้ำรั่ว อื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกัน ในการทรุดของพื้นดิน หากมีความชำรุดเสียหายใดๆอันเกิดจากการทรุดตัวของพื้นดินและเหตุเกิดจากการใช้งานผิดประเภท,อุบัติเหตุ, รวมถึงภัยธรรมชาติ ผู้ว่าจ้างไม่ติดใจ เรียกร้องใดๆกับผู้รับจ้างทุกกรณี</li><li>ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)</li><li>เงื่อนไขการเข้าทำงาน 1. ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา 2. สำหรับหน้างานที่มีการรื้ออลูมิเนียม มีรายละเอียด ดังนี้ 2.1 ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น 2.2 อาจมีเสียงดังระหว่างการผ่างานปูน 2.3 อาจมีฝุ่นเป็นจำนวนมากที่เกิดขึ้นจากงานผ่าปูน 3. การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกันก่อนเข้าทำงาน ลูกค้าเป็นผู้ดำเนินการจัดหา (กรณีเริ่มงานแล้วเกิดเหตุสุดวิสัยระหว่างทำงานทำให้ไม่สามารถทำงานต่อได้ บริษัทขอสงวนสิทธิ์คิดค่าดำเนินการตามจริง) 4. นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ 5. เงื่อนไขการรับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่น บานตก บานไม่ลื่น น้ำรั่ว และอื่นๆ นับจากวันที่ส่งมอบงาน</li><li>เงื่อนไขแบบและใบเสนอราคา 1) หากลูกค้าต้องการปรับเปลี่ยนสีวัสดุอุปกรณ์หรือการปรับแก้ไขแบบ ต้องแจ้งข้อความผ่านช่องทาง LINE Official, Facebook เท่านั้น และสามารถแก้ไขได้ก่อนภายในวันที่มัดจำ 2) หากลูกค้าต้องการแบบ 3D จะมีค่าใช้จ่ายเพิ่มเติม(มี 2 แพ็กเกจ) ซึ่งลูกค้าสามารถส่ง Reference ที่ต้องการมาก่อนการออกแบบได้ แต่ถ้าไม่มี Reference บริษัทจะทำการออกแบบตามแบบ 2D ของบริษัท 2.1) กรณีที่ยอดรวมงานมากกว่า 200,000 บาท สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้เต็มจำนวน 2.2) กรณีที่ยอดรวมงานน้อยกว่า 200,000 บาท จะไม่สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้ 2.3) แบบ 3D สามารถแก้ไขได้ไม่เกิน 3 ครั้ง 3) หากลูกค้าต้องการให้บริษัทจัดซื้อและติดตั้งอุปกรณ์เครื่องใช้ไฟฟ้าต่างๆ เช่น ปลั๊กไฟ, สวิตช์ไฟ, ชุดโคมไฟพร้อมหลอด, พัดลมระบายอากาศ หรืออื่นๆ รูปแบบจะเป็นไปตามบริษัทกำหนดและจัดหาได้ 4) หากลูกค้าต้องการให้บริษัทจัดซื้อสีสำหรับใช้ทาผนังเบากรุสมาร์ทบอร์ดและสำหรับงานเก็บสี เฉดสีจะเป็นไปตามมาตรฐานของบริษัทที่จัดหาได้ ซึ่งจะใกล้เคียงกับสีเดิม(อาจจะไม่เหมือนสีเดิม) 5) ถ้าลูกค้าต้องการธรณีประตูเรียบเสมอพื้น(ดรอปพื้นฝังธรณี) 6) หลังจากมัดจำและหน้างานดรอปพื้นก่อฉาบช่องเปิดเรียบร้อยแล้ว ทีมช่างผลิตของบริษัทจะเข้าวัดหน้างานจริง ซึ่งจะไม่สามารถปรับเปลี่ยนแบบหรือแก้ไขขนาดพื้นที่ติดตั้งหน้างานทุกกรณี</li><li>ราคาที่เสนอรวมเสริมคานรับพัดลม</li><li>ราคาที่เสนอรวมงานเดินไฟดาวน์ไลท์แบบท่อลอย 3 ดวง (ไม่รวมชุดดวงโคม/ลูกค้าดำเนินการจัดเตรียมชุดดวงโคม) พร้อมสวิตซ์ไฟ 2 จุด และปลั๊กไฟ 2 จุด แต่ไม่รวมงานเดินไฟเข้าตู้เมนหลัก</li><li>ราคาที่เสนอรวมงานกรีดผนังเพื่อใส่แฟลชชิ่งกันน้ำ แต่ไม่รวมความเสียหายที่เกิดจากการกรีด เช่น ผนังแตกร้าว งานเก็บสี และงานอื่นๆ (ทีมช่างจะทำงานอย่างระมัดระวัง)</li><li>ราคาที่เสนอรวมค่าแรงงานเก็บสีเฉพาะจุดในบริเวณทำงานและจุดที่เกิดอุบัติเหตุจากการทำงาน แต่ไม่รวมสี (ลูกค้าดำเนินการเตรียมสีให้)</li><li>ราคาที่เสนอไม่รวมงาน ทำพื้น / ก่อผนังปูนด้าน B / ดรอปพื้นด้าน C</li><li>ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูไม้เทียม / ระบบไฟฟ้า / บันได / ผนังปูน +ที่นั่ง</li><li>เงื่อนไขการเข้าทำงาน: ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา / หน้างานรื้ออลูมิเนียม: ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น / อาจมีเสียงดังระหว่างการผ่างานปูน / อาจมีฝุ่นจากงานผ่าปูน</li><li>การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกัน ลูกค้าเป็นผู้ดำเนินการจัดหา</li><li>เงื่อนไขการรับประกันผลงานการติดตั้ง 1 ปี ไม่รับประกันการทรุดของพื้นดิน และเหตุใช้งานผิดประเภท/ภัยธรรมชาติ</li><li>หากต้องการแบบ 3D มีค่าใช้จ่ายเพิ่ม (มี 2 แพ็กเกจ) / ยอดงาน &gt; 200,000 บาท นำค่าแบบ 3D มาเป็นส่วนลดได้เต็มจำนวน / &lt; 200,000 ไม่ได้ / แก้ไขได้ไม่เกิน 3 ครั้ง</li><li>หลังมัดจำและดรอปพื้นก่อฉาบช่องเปิดเรียบร้อยแล้ว ทีมช่างผลิตจะเข้าวัดหน้างานจริง ไม่สามารถปรับเปลี่ยนแบบ/ขนาดได้</li><li>เงื่อนไขการเข้าทำงาน 1. ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา 2. สำหรับหน้างานที่มีการรื้ออลูมิเนียม มีรายละเอียด ดังนี้ 2.1 ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น 2.2 อาจมีเสียงดังระหว่างการผ่างานปูน 2.3 อาจมีฝุ่นเป็นจำนวนมากที่เกิดขึ้นจากงานผ่าปูน 3. การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกันก่อนเข้าทำงาน ลูกค้าเป็นผู้ดำเนินการจัดหา (กรณีเริ่มงานแล้วเกิดเหตุสุดวิสัยระหว่างทำงานทำให้ไม่สามารถทำงานต่อได้ บริษัทขอสงวนสิทธิ์คิดค่าดำเนินการตามจริง) 4. นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ 5. เงื่อนไขการรับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่น บานตก บานไม่ลื่น น้ำรั่ว และอื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกันในการทรุดของพื้นดิน</li><li>เงื่อนไขแบบและใบเสนอราคา 1) หากลูกค้าต้องการปรับเปลี่ยนสีวัสดุอุปกรณ์หรือการปรับแก้ไขแบบ ต้องแจ้งข้อความผ่านช่องทาง LINE Official, Facebook เท่านั้น 2) หากลูกค้าต้องการแบบ 3D จะมีค่าใช้จ่ายเพิ่มเติม(มี 2 แพ็กเกจ); 2.1) ยอดรวม&gt;200,000 บาท นำค่าแบบ 3D มาใช้เป็นส่วนลดได้เต็มจำนวน; 2.2) &lt;200,000 ไม่ได้; 2.3) แบบ 3D แก้ได้ไม่เกิน 3 ครั้ง 3) หากให้บริษัทจัดซื้อ/ติดตั้งอุปกรณ์ไฟฟ้า รูปแบบเป็นไปตามบริษัทกำหนด 4) สีทาผนัง/งานเก็บสี เฉดสีไปตามมาตรฐานบริษัท (อาจไม่เหมือนสีเดิม) 5) ธรณีเรียบเสมอพื้น(ดรอปพื้นฝังธรณี) ใช้ระยะจากแบบ 2D 6) หลังมัดจำ+ดรอปพื้นก่อฉาบช่องเปิดเสร็จ ทีมช่างผลิตจะเข้าวัดหน้างานจริง ไม่สามารถปรับแบบ/ขนาดได้อีก</li><li>ราคาที่เสนอรวมงานรื้อมุ้งเดิม แต่ไม่รวมความเสียหายที่เกิดจากการรื้อ เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี และงานอื่นๆ ( ทีมช่างทำงานอย่างระมัดระวัง )</li><li>งานเก็บสีเฉพาะในบริเวณจุดทำงานและจุดที่เกิดอุบัติเหตุจากการทำงาน ( ไม่มีค่าใช้จ่าย) แต่ไม่รวมสี (ลูกค้าดำเนินการเตรียมสีให้)</li><li>ราคาที่เสนอไม่รวมงานย้ายแอร์เดิม / งานผนังสมาร์ทบอร์ด (ลูกค้าดำเนินการเอง)</li><li>เงื่อนไขการเข้าทำงาน 1. ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา 2. สำหรับหน้างานที่มีการรื้ออลูมิเนียม มีรายละเอียด ดังนี้ 2.1 ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น 2.2 อาจมีเสียงดังระหว่างการผ่างานปูน 2.3 อาจมีฝุ่นเป็นจำนวนมากที่เกิดขึ้นจากงานผ่าปูน 3. การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกันก่อนเข้าทำงาน ลูกค้าเป็นผู้ดำเนินการจัดหา (กรณีเริ่มงานแล้วเกิดเหตุสุดวิสัยระหว่างทำงานทำให้ไม่สามารถทำงานต่อได้ บริษัทขอสงวนสิทธิ์คิดค่าดำเนินการตามจริง) 4. นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ 5. เงื่อนไขการรับประกันผลงาน การติดตั้ง 1 ปี โดยการรับประกันผลงานการติดตั้งอุปกรณ์ดังกล่าว เช่น บานตก บานไม่ลื่น น้ำรั่ว และอื่นๆ นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกันในการทรุดของพื้นดิน หากมีความชำรุดเสียหายใดๆ อันเกิดจากการทรุดตัวของพื้นดินและเหตุเกิดจากการใช้งานผิดประเภท, อุบัติเหตุ, รวมถึงภัยธรรมชาติ ผู้ว่าจ้างไม่ติดใจเรียกร้องใดๆ กับผู้รับจ้างทุกกรณี</li><li>เงื่อนไขแบบและใบเสนอราคา 1) หากลูกค้าต้องการปรับเปลี่ยนสีวัสดุอุปกรณ์หรือการปรับแก้ไขแบบ ต้องแจ้งข้อความผ่านช่องทาง LINE Official, Facebook เท่านั้น และสามารถแก้ไขได้ก่อนภายในวันที่มัดจำ 2) หากลูกค้าต้องการแบบ 3D จะมีค่าใช้จ่ายเพิ่มเติม(มี 2 แพ็กเกจ) ซึ่งลูกค้าสามารถส่ง Reference ที่ต้องการมาก่อนการออกแบบได้ แต่ถ้าไม่มี Reference บริษัทจะทำการออกแบบตามแบบ 2D ของบริษัท 2.1) กรณีที่ยอดรวมงานมากกว่า 200,000 บาท สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้เต็มจำนวน 2.2) กรณีที่ยอดรวมงานน้อยกว่า 200,000 บาท จะไม่สามารถนำค่าแบบ 3D มาใช้เป็นส่วนลดได้ 2.3) แบบ 3D สามารถแก้ไขได้ไม่เกิน 3 ครั้ง 3) หากลูกค้าต้องการให้บริษัทจัดซื้อและติดตั้งอุปกรณ์เครื่องใช้ไฟฟ้าต่างๆ เช่น ปลั๊กไฟ, สวิตช์ไฟ, ชุดโคมไฟพร้อมหลอด, พัดลมระบายอากาศ หรืออื่นๆ รูปแบบจะเป็นไปตามบริษัทกำหนดและจัดหาได้ 4) หากลูกค้าต้องการให้บริษัทจัดซื้อสีสำหรับใช้ทาผนังเบากรุสมาร์ทบอร์ดและสำหรับงานเก็บสี เฉดสีจะเป็นไปตามมาตรฐานของบริษัทที่จัดหาได้ ซึ่งจะใกล้เคียงกับสีเดิม(อาจจะไม่เหมือนสีเดิม) 5) ถ้าลูกค้าต้องการธรณีประตูเรียบเสมอพื้น(ดรอปพื้นฝังธรณี) สามารถใช้ระยะดรอปพื้นจากแบบ 2D ส่งให้ผู้รับเหมาดำเนินการดรอปพื้น ก่อนช่างของบริษัทเข้าวัดหน้างานจริงก่อนผลิต 6) หลังจากมัดจำและหน้างานดรอปพื้นก่อฉาบช่องเปิดเรียบร้อยแล้ว ทีมช่างผลิตของบริษัทจะเข้าวัดหน้างานจริง ซึ่งจะไม่สามารถปรับเปลี่ยนแบบหรือแก้ไขขนาดพื้นที่ติดตั้งหน้างานทุกกรณี เช่น ปูกระเบื้อง, ทาฝ้า, ฉาบปูน และอื่นๆ</li><li>ไม่รับประกันพื้นแอ่นหรือยวบ</li><li>ราคาที่เสนอไม่รวมงาน ระบบสุขาภิบาล / ท่อน้ำดี-น้ำเสีย / ติดตั้งสุขภัณฑ์ / สกัดผนังอิฐมอญ / ขัดมันผนัง / ทำฟุตติ้ง / เปิดพื้นชั้น 1 เพื่อหาบ่อแซก</li><li>ราคาที่เสนอรวมงานรื้อกระจกเงาเดิม (ชั้น 3) นำมาติดตั้งใหม่ ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น งานเก็บปูนแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)</li><li>ราคาที่เสนอรวม งานรื้อ[ประตู/หน้าต่าง/ราวกันตก/หลังคา/กลาสเฮ้าส์/ชุด Shower]เดิม [+ งานดรอปพื้น] ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น วัสดุเดิมเป็นรอย กระจกแตก [กระเบื้องพื้นแตกร้าว] งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)</li><li>ราคาที่เสนอไม่รวมงานปูกระเบื้อง (ลูกค้าดำเนินการเอง)</li><li>เงื่อนไขการเข้าทำงาน: 1. ไฟฟ้าและน้ำประปา ลูกค้าเป็นผู้ดำเนินการจัดหา 2. สำหรับหน้างานที่มีการรื้ออลูมิเนียม: 2.1 ไม่เก็บงานปูน รอยแตกร้าว รอยบิ่น 2.2 อาจมีเสียงดังระหว่างการผ่างานปูน 2.3 อาจมีฝุ่นเป็นจำนวนมากที่เกิดขึ้นจากงานผ่าปูน 3. การขออนุญาตเข้าทำงานในพื้นที่และการวางเงินค้ำประกันก่อนเข้าทำงาน ลูกค้าเป็นผู้ดำเนินการจัดหา (กรณีเริ่มงานแล้วเกิดเหตุสุดวิสัยระหว่างทำงานทำให้ไม่สามารถทำงานต่อได้ บริษัทขอสงวนสิทธิ์คิดค่าดำเนินการตามจริง) 4. นอกเหนือจากราคาที่เสนอจะคิดเป็นงานเพิ่มทั้งหมด และจะต้องเสนอราคางานเพิ่มก่อนเริ่มดำเนินการ 5. เงื่อนไขการรับประกันผลงานการติดตั้ง 1 ปี (บานตก บานไม่ลื่น น้ำรั่ว ฯลฯ) นับจากวันที่ส่งมอบงาน ผู้รับจ้างขอสงวนสิทธิ์ไม่รับประกันการทรุดของพื้นดิน การใช้งานผิดประเภท อุบัติเหตุ ภัยธรรมชาติ</li><li>เงื่อนไขแบบและใบเสนอราคา: 1) การปรับเปลี่ยนสีวัสดุอุปกรณ์/แก้แบบ ต้องแจ้งผ่าน LINE Official, Facebook เท่านั้น และแก้ได้ก่อนภายในวันที่มัดจำ 2) แบบ 3D มีค่าใช้จ่ายเพิ่ม (2 แพ็กเกจ); 2.1) ยอดรวมงาน &gt; 200,000 บาท นำค่าแบบ 3D มาใช้เป็นส่วนลดได้เต็มจำนวน 2.2) &lt; 200,000 บาท นำมาเป็นส่วนลดไม่ได้ 2.3) แบบ 3D แก้ไขได้ไม่เกิน 3 ครั้ง 3) อุปกรณ์เครื่องใช้ไฟฟ้ารูปแบบเป็นไปตามบริษัทกำหนด 4) สีทาผนัง/งานเก็บสีเป็นไปตามมาตรฐานบริษัท (อาจไม่เหมือนสีเดิม) 5) ธรณีประตูเรียบเสมอพื้น (ดรอปพื้นฝังธรณี) ใช้ระยะจากแบบ 2D ส่งผู้รับเหมาดรอปพื้นก่อนช่างวัดหน้างานจริง 6) หลังมัดจำและดรอปพื้น/ก่อฉาบช่องเปิดเรียบร้อย ทีมช่างผลิตเข้าวัดหน้างานจริง ซึ่งจะไม่สามารถปรับเปลี่ยนแบบ/ขนาด/พื้นที่ติดตั้งหน้างานทุกกรณี</li><li>ราคาที่เสนอรวมงานดรอปพื้น ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น กระเบื้องพื้นแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)</li><li>ราคาที่เสนอไม่รวมเจาะเสาบานสำหรับใส่มือจับ Digital Door Lock และงานติดตั้งมือจับ Digital Door Lock (ลูกค้าดำเนินการเอง)</li><li>หมายเหตุ - ราคาที่เสนอไม่รวม เทพื้น / ปรับระดับพื้น / ปูกระเบื้อง / ทาสี / งานไฟ / งานเดินไฟพัดลมดูดอากาศ / ย้ายไฟกริ่ง 2 ดวง / ก่อผนังปูน / รื้อประตูเดิม / ปิดช่อง Hood เดิม</li><li>ราคาที่เสนอรวมงานรื้อประตูเดิม ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)</li><li>ราคาที่เสนอไม่รวมงานดรอปพื้น (ผู้รับเหมาลูกค้าดำเนินการเอง)</li><li>ราคาที่เสนอรวมค่าตั้งนั่งร้านเหล็กเพื่อขนของขึ้นพร้อมติดตั้ง</li><li>ราคาที่เสนอรวมงานย้ายไฟเดิมลงมาติดตั้งใหม่ 1 จุด พร้อมเก็บงานฝ้า และไม่รวมงานเดินไฟเข้าตู้เมนหลัก</li><li>เงื่อนไขการรับประกันผลงาน การติดตั้ง 1 ปี นับจากวันที่ส่งมอบงาน (บานตก, บานไม่ลื่น, น้ำรั่ว และอื่นๆ) — ไม่รับประกันกรณีทรุดตัวพื้นดิน/ใช้งานผิดประเภท/อุบัติเหตุ/ภัยธรรมชาติ รวมถึงน้ำรั่วซึมจากผนัง/บัว/หลังคาเดิมที่แตกร้าว ผนังเบาสมาร์ทบอร์ดอาจเกิดรอยแตกร้าว (Cracks) ตามคุณสมบัติของวัสดุ</li><li>เงื่อนไขแบบและใบเสนอราคา: แก้ไขสี/แบบต้องแจ้งผ่าน LINE Official/Facebook ก่อนวันมัดจำ; แบบ 3D มีค่าใช้จ่ายเพิ่ม (ยอดงาน&gt;200,000 นำค่าแบบ 3D มาลดได้เต็ม; &lt;200,000 ลดไม่ได้; แก้ได้ไม่เกิน 3 ครั้ง); หลังมัดจำ+ดรอปพื้นเรียบร้อยแล้ว ช่างเข้าวัดจริง ไม่สามารถปรับแบบ/ขนาดได้ทุกกรณี</li><li>เงื่อนไขการเข้าทำงาน: ไฟฟ้า/น้ำประปา ลูกค้าจัดหา; งานรื้ออลูมิเนียมไม่เก็บงานปูน/รอยแตกร้าว/รอยบิ่น อาจมีเสียงดัง/ฝุ่นจากงานผ่าปูน; ค่าขออนุญาตพื้นที่/เงินค้ำประกัน ลูกค้าจัดหา; งานนอกเหนือราคาคิดเพิ่มต้องเสนอราคาก่อนเริ่ม</li></ul>
+<h3 style="color:#B3151D;font-size:12px;margin:8px 0 3px;">ชนิดสินค้า/บาน ที่ใบจริงใช้ (131)</h3><div class="cols"><ul><li>ประตูระแนงอลูมิเนียมบานสวิง</li><li>ประตูบานเปิดคู่</li><li>ประตูบานเปิดเดี่ยว</li><li>ประตูอลูมิเนียมลูกฟูกเรียบบานเปิดเดี่ยว</li><li>ราวกันตกกระจก</li><li>หน้าต่างบานยก</li><li>หน้าต่างบานกระทุ้ง</li><li>หน้าต่างบานเลื่อนสลับ</li><li>หน้าต่างบานเลื่อน</li><li>หน้าต่างบานเลื่อนเปิดคู่กลาง</li><li>ประตูบานเลื่อนสลับรางล่าง (รุ่นรางเตี้ย 7 มม.)</li><li>ประตูบานเลื่อนเดี่ยวรางบน</li><li>ประตูบานเลื่อนเดี่ยวรางล่าง (รุ่นกันน้ำ)</li><li>ประตูบานเลื่อนเปิดคู่กลางรางล่าง (รุ่นกันน้ำ)</li><li>Shower - ประตูบานเปิด พร้อมกระจกติดตายด้านข้าง</li><li>ระแนงอลูมิเนียมบังตาติดตาย</li><li>ประตูระแนงอลูมิเนียมบานเปิด</li><li>ประตูระแนงอลูมิเนียมบานเลื่อนเปิดคู่กลางรางบน</li><li>บานกระจกติดตาย</li><li>ประตูมุ้งนิรภัย</li><li>ประตูบานเปิด (มีธรณีหลังเต่า และ Door Drop Seal)</li><li>ประตูบานเฟี้ยม (รุ่นเฟรมสลิม)</li><li>ประตูบานเฟี้ยมอิสระ แบ่ง 3+3 บาน</li><li>หลังคาไวนิล โครงอลูมิเนียม</li><li>หลังคาชินโคไลท์ โครงอลูมิเนียม</li><li>หลังคากันสาด</li><li>เสาแผง (เสริมเหล็กภายใน)</li><li>รางน้ำอลูมิเนียม + ตะแกรงกันใบไม้</li><li>ท่อน้ำทิ้ง PVC ปล่อยปลาย</li><li>บานตู้ Futuretech บานเปิดเดี่ยว</li><li>บานตู้ Futuretech บานเลื่อนสลับแบ่ง 2 บาน</li><li>ชั้นวางของอลูมิเนียมลูกฟูกเรียบ 2 หน้า</li><li>ประตูบานเปิดคู่ (มีธรณี)</li><li>กระจกติดตาย (ด้านข้าง/ด้านบน)</li><li>ระแนงอลูมิเนียมบังตาแนวตั้ง</li><li>ระแนงอลูมิเนียมกล่อง</li><li>ระแนงอลูมิเนียมกล่องลายไม้</li><li>พื้นไม้เทียม รวมวางตงไม้เทียม</li><li>โซ่รางน้ำ</li><li>ประตูบานเลื่อนลากจูงรางล่าง ( รุ่นรางเตี้ย 7 มม. )</li><li>บานเลื่อนซ้อนผนัง</li><li>กระจกติดตาย</li><li>บานหน้าตู้ Future Tech บานเปิด</li><li>ผนังเบากรุสมาร์ทบอร์ด</li><li>ตู้วางของ พร้อมชั้นวางกระจก</li><li>คาดตาราง</li><li>ประตูบานเฟี้ยม (รุ่นรางกันน้ำ) แบ่ง 2+3 บาน</li><li>แผ่นอลูมิเนียมลูกฟูกเรียบ 1 หน้า (ปิดทึบด้านบน)</li><li>รางน้ำอลูมิเนียม + ตะแกรงพลาสติกกันใบไม้</li><li>ท่อน้ำทิ้ง PVC หนา 2.5 นิ้ว</li><li>มุ้งจีบ</li><li>ประตูบานเลื่อนลากจูงรางบนรุ่นโชว์ราง</li><li>ประตูบานเลื่อนเปิดคู่กลางรางล่าง (รุ่นรางเตี้ย 7 มม.)</li><li>ประตูบานเลื่อนเปิดคู่กลางรางบนรุ่นโชว์ราง</li><li>ประตูบานเปิด (มีธรณี)</li><li>รุ่นเฟรมสลิม</li><li>กั้นห้อง พร้อมหลังคา</li><li>หน้าต่างบานเลื่อนสลับ (มีมุ้ง เฟรมเล็ก) พร้อมกระจกติดตาย (มีคาดตาราง)</li><li>ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) (มีมุ้ง เฟรมเล็ก) พร้อมกระจกติดตาย (มีคาดตาราง)</li><li>ระแนงอลูมิเนียมบังตา</li><li>หลังคาไวนิล ยื่นด้านข้าง (แปเดี่ยว) โครงอลูมิเนียม</li><li>หลังคากันสาด หลังคาโพลีตัน ยื่นปลาย (แปเดี่ยว) โครงอลูมิเนียม เสริมเพลทเหล็กด้านล่าง</li><li>หลังคากันสาด หลังคาโพลีตัน (แปเดี่ยว) พร้อมรางน้ำ + โซ่รางน้ำ</li><li>หลังคากันสาด พร้อมรั้วระแนง (รั้วระแนงอลูมิเนียมบังตาลายไม้ + หลังคาไวนิล + ระแนงลายใต้หลังคา + ซ่อนสโลปด้วยคอมโพสิต)</li><li>ติดตั้งโซ่รางน้ำต่อจาก overflow เดิม</li><li>ส่วนลด / ส่วนลดพิเศษ</li><li>ประตูระบายอากาศบานเปิด (Ventilation Door) (มีโช๊คด้านบน)</li><li>ประตูบานเลื่อนลากจูงรางล่าง (รุ่นกันน้ำ) แบ่ง 2 บาน</li><li>ประตูบานเปิดคู่ (มีธรณีกันน้ำ)</li><li>กระจกติดตาย (ด้านบน/ด้านข้าง/ด้านล่าง)</li><li>ปิดทึบด้วยอลูมิเนียมทึบ</li><li>ระแนงอลูมิเนียมบังตา / ระแนงอลูมิเนียมกล่อง</li><li>หลังคาไวนิล (แปคู่)</li><li>หลังคากระจกลามิเนต โครงอลูมิเนียม</li><li>หลังคาโพลีตัน (แปคู่) โครงอลูมิเนียม เสริมเพลทเหล็กรับด้านล่าง</li><li>กั้นห้องกระจก</li><li>ประตูบานเลื่อนสลับรางล่าง (รุ่นกันน้ำ)</li><li>ประตูบานเลื่อนสลับรางล่าง แบ่ง 3 บาน</li><li>ช่องแสงกระจกติดตายด้านบน</li><li>ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ)</li><li>ประตูบานเลื่อนเปิดคู่กลางรางบน (รุ่นโชว์ราง)</li><li>ประตูบานเปิดไม้เดิม (มาติดตั้ง) ครอบวงกบอลูมิเนียม</li><li>บานกระจกเงาติดตาย</li><li>กระจกติดตาย (มีคาดตาราง)</li><li>ผนัง ISOWALL</li><li>ผนังเบากรุสมาร์ทบอร์ดทาสีขาว พร้อมฉนวนกันร้อนและกันเสียง</li><li>ระแนงอลูมิเนียมเกล็ด Z (แนวตั้ง)</li><li>ราวกันตกเหล็ก</li><li>หลังคาเมทัลชีท (แปคู่) โครงอลูมิเนียม</li><li>ปูพื้นสมาร์ทบอร์ด หนา 20 มม. โครงเหล็ก</li><li>ปูพื้นไม้เทียม โครงเหล็ก</li><li>ประตูบานเลื่อนลากจูงรางล่าง (รุ่นกันน้ำ)</li><li>ประตูบานเลื่อนยูโรลากจูงรางล่าง (รุ่นกันน้ำ)</li><li>ประตูบานเลื่อนเดี่ยวรางบน (รุ่นโชว์ราง)</li><li>ประตูบานเลื่อนสลับรางบน (รุ่นโชว์ราง) มีระบบสลิงดึง + Soft-Close (รุ่น SlimLux)</li><li>ประตูบานเปลือยบานสวิง</li><li>ประตู Shower บานเลื่อน</li><li>หน้าต่างบานเลื่อนยูโรสลับ</li><li>หน้าต่างบานเปิด</li><li>บานเกล็ดอลูมิเนียมลูกฟูก (พร้อมสายดึงเปิด-ปิด)</li><li>ราวกันตกกระจกติดตาย</li><li>หลังคากันสาด / หลังคากระจกนิรภัยลามิเนต โครงอลูมิเนียม</li><li>Skylight</li><li>กลาสเฮ้าส์ (ชุดยูโร)</li><li>ประตูอลูมิเนียมลูกฟูกเรียบบานเปิดคู่ (มีธรณีกันน้ำ) พร้อมช่องแสงกระจกติดตาย</li><li>ประตูบานเลื่อนเปิดคู่กลางรางบน(รุ่นโชว์ราง) +เสริมคานซัพพอร์ท</li><li>ประตูอลูมิเนียมลูกฟูกเรียบบานเลื่อนไร้ราง</li><li>ประตูบานเลื่อนไร้ราง</li><li>ประตูบานเลื่อนลากจูงรางบน(รุ่นโชว์ราง) แบ่ง 2 บาน</li><li>ประตูอลูมิเนียมลูกฟูกเรียบบานเปิด (มีธรณีกันน้ำ)</li><li>หน้าต่างอลูมิเนียมลูกฟูกเรียบบานเลื่อนสลับ + ช่องแสงกระจกติดตาย</li><li>ประตูบานเลื่อนเดี่ยวรางบน(รุ่นโชว์ราง) ระบบสลิงดึง + Soft-Close (รุ่น SlimLux)</li><li>ประตูบานเปิด แบ่ง 4 บาน</li><li>ประตูบานเลื่อนรางบน (รุ่นเฟรม สลิม) — OPTION</li><li>ประตูระบายอากาศบานเปิด (Ventilation Door) — OPTION</li><li>กั้นห้องกระจก พร้อมหลังคา</li><li>พัดลมดูดอากาศ พร้อมฝาครอบกันแมลง</li><li>ประตูบานเปิด ( มีธรณีกันน้ำ )</li><li>หลังคาโพลีตัน ยื่นปลาย ( แปคู่ ) โครงอลูมิเนียม ปล่อยปลาย/ไม่มีรางน้ำ</li><li>หลังคาโพลีตัน ( แปคู่ ) โครงอลูมิเนียม เสริมเพลทเหล็กรับล่างและเหล็กดึงด้านบน พร้อมรางน้ำ (หลังคากันสาด)</li><li>หลังคาชินโคไลท์ รุ่น HC-N828 (option)</li><li>ท่อน้ำทิ้ง PVC 2.5 นิ้ว</li><li>ประตูบานเลื่อนเปิดคู่กลาง</li><li>ประตูบาน PC Door / Panoramic door (บานเลื่อน+บานเปิด)</li><li>ประตูบานเลื่อนรางบนรุ่นโชว์ราง</li><li>ชุด Shower</li><li>กั้นห้องกระจกพร้อมหลังคา</li><li>ผนังสมาร์ทบอร์ดพร้อมฉนวนกันร้อนกันเสียง โครงเหล็กชุบซิงค์(ไร้สนิม)</li><li>หลังคาไวนิล โครงเหล็กชุบซิงค์(ไร้สนิม)</li><li>ฝ้าฉาบเรียบพร้อมทาสีขาว</li><li>งานติดตั้งต่างจังหวัด (ค่าเดินทาง/ค่าที่พัก)</li></ul></div>
+
+<div class="foot">JR · ตรวจออปชั่นเทียบใบจริง 14 ใบ · 22 agent · READ-ONLY ไม่แตะ index.html · ส่งพี่นัทเช็คซ้ำ ไม่อนุมัติแทน · 9 มิ.ย. 2026</div>
+</body></html>

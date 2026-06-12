@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ UX — เลือกสินค้าหลังคา (G3) แบบการ์ด · เครื่องคิดราคา JR</title>
+<style>
+  :root{--red:#B3151D;--red-dark:#8E1118;--redbg:#FDECEC;--line:#E5E7EB;--ink:#1F2937;--muted:#6B7280;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:var(--ink);font-size:14px;line-height:1.5;margin:0;background:#F3F4F6;padding:12px;}
+  .wrap{max-width:430px;margin:0 auto;}
+  h1{font-size:17px;color:var(--red);margin:0 0 2px;}
+  .sub{color:var(--muted);font-size:11px;margin-bottom:10px;}
+  .demo{background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;color:#854D0E;margin-bottom:10px;text-align:center;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;}
+  /* breadcrumb / back */
+  .topbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;min-height:40px;}
+  .back{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--red);display:none;align-items:center;gap:5px;min-height:40px;}
+  .back.show{display:inline-flex;}
+  .crumb{font-size:13px;font-weight:700;color:var(--ink);}
+  .crumb small{color:var(--muted);font-weight:400;}
+  /* card grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .card{border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:13px 11px;cursor:pointer;min-height:74px;display:flex;flex-direction:column;justify-content:center;gap:3px;transition:border-color .12s,background .12s;text-align:left;font-family:inherit;}
+  .card:active{background:var(--redbg);}
+  .card.on{border-color:var(--red);background:var(--redbg);border-width:2px;}
+  .card .ic{font-size:20px;line-height:1;}
+  .card .nm{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.25;}
+  .card .ds{font-size:11px;color:var(--muted);}
+  .card .cnt{font-size:11px;color:var(--red);font-weight:700;}
+  .card .go{font-size:11px;color:var(--muted);margin-top:2px;}
+  /* full width card (category) */
+  .grid.cat{grid-template-columns:1fr;}
+  .grid.cat .card{flex-direction:row;align-items:center;gap:11px;min-height:62px;}
+  .grid.cat .card .ic{font-size:24px;}
+  .grid.cat .card .txt{flex:1;}
+  .grid.cat .card .arr{color:#9CA3AF;font-size:16px;}
+  /* metal sheet: thickness toggle */
+  .seg{display:flex;gap:6px;margin:2px 0 10px;}
+  .seg button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:9px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;min-height:44px;color:var(--ink);}
+  .seg button.on{background:var(--red);color:#fff;border-color:var(--red);}
+  /* confirm bar */
+  .confirm{margin-top:12px;background:var(--red);color:#fff;border-radius:11px;padding:12px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;}
+  .confirm.show{display:flex;}
+  .confirm .lbl{font-size:11px;opacity:.85;}
+  .confirm .val{font-size:15px;font-weight:700;}
+  .confirm button{background:#fff;color:var(--red);border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;min-height:44px;}
+  .sec-h{font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 5px;}
+  .foot{margin-top:12px;font-size:10px;color:#9CA3AF;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ดราฟ UX — เลือกสินค้า "หลังคา / ฝ้า-ผนัง" (G3)</h1>
+<div class="sub">แทนดรอปดาวน์ 24 รุ่น → การ์ดกด · กดหมวด → เห็นรุ่น (2 แตะจบ) · มือถือ · 12 มิ.ย. 2026</div>
+<div class="demo">ดราฟกดเล่น — แทนดรอปดาวน์เลือกสินค้าที่เลื่อนหายาก</div>
+
+<div class="panel">
+  <div class="topbar">
+    <button class="back" id="back" onclick="goHome()">← กลับ</button>
+    <div class="crumb" id="crumb">เลือกหมวดสินค้า <small>(แตะ 1 ครั้ง)</small></div>
+  </div>
+
+  <!-- LEVEL 1: หมวด -->
+  <div id="lv1">
+    <div class="grid cat">
+      <div class="card" onclick="openCat('std')"><span class="ic">🏠</span><div class="txt"><div class="nm">หลังคา มาตรฐาน / โปร่งแสง</div><div class="ds">ไวนิล · ดีไลท์ · โพลีตัน · กระจกลามิเนต</div></div><span class="cnt">4 รุ่น</span><span class="arr">›</span></div>
+      <div class="card" onclick="openCat('metal')"><span class="ic">🔩</span><div class="txt"><div class="nm">เมทัลชีท</div><div class="ds">1"/2" · ท้อง PVC / เหล็ก / ฟอยล์</div></div><span class="cnt">8 รุ่น</span><span class="arr">›</span></div>
+      <div class="card" onclick="openCat('shinko')"><span class="ic">☀️</span><div class="txt"><div class="nm">ชินโคไลท์ (โปร่งแสง)</div><div class="ds">Heat Cut · Superior · Prime · Grand …</div></div><span class="cnt">6 รุ่น</span><span class="arr">›</span></div>
+      <div class="card" onclick="openCat('ceil')"><span class="ic">🪵</span><div class="txt"><div class="nm">ฝ้า</div><div class="ds">ฝ้าอลู · ฝ้าไม้เทียม · ฝ้าฉาบเรียบ</div></div><span class="cnt">3 รุ่น</span><span class="arr">›</span></div>
+      <div class="card" onclick="openCat('wall')"><span class="ic">🧱</span><div class="txt"><div class="nm">ผนัง</div><div class="ds">ISOWALL · ผนังเบานอก/ใน</div></div><span class="cnt">3 รุ่น</span><span class="arr">›</span></div>
+    </div>
+  </div>
+
+  <!-- LEVEL 2: รุ่น -->
+  <div id="lv2" style="display:none;">
+    <!-- เมทัลชีท: toggle ความหนา -->
+    <div id="metalSeg" style="display:none;">
+      <div class="sec-h">ความหนา</div>
+      <div class="seg"><button class="on" onclick="metalThick(this,'1')">1 นิ้ว</button><button onclick="metalThick(this,'2')">2 นิ้ว</button></div>
+      <div class="sec-h">ชนิดท้อง (แตะเลือก)</div>
+    </div>
+    <div class="grid" id="modelGrid"></div>
+  </div>
+
+  <div class="confirm" id="confirm">
+    <div><div class="lbl">เลือกแล้ว</div><div class="val" id="cval">—</div></div>
+    <button onclick="useIt()">ใช้รุ่นนี้ →</button>
+  </div>
+</div>
+
+<div class="foot">ดราฟ UX · ไม่กระทบราคา/logic (เปลี่ยนแค่วิธีเลือกสินค้า) · กดการ์ด = set .i-prod เดิม + fire change</div>
+</div>
+
+<script>
+var DATA={
+ std:{title:'หลังคา มาตรฐาน / โปร่งแสง', items:[
+   {id:'roof_vinyl',nm:'หลังคา ไวนิล',ds:'ทึบ กันร้อน'},
+   {id:'roof_delight',nm:'หลังคา ดีไลท์',ds:'โปร่งแสง'},
+   {id:'roof_polyton',nm:'หลังคา โพลีตัน 3มม.',ds:'โปร่งแสง'},
+   {id:'roof_laminate',nm:'หลังคา กระจกลามิเนต',ds:'กระจกนิรภัย'}
+ ]},
+ shinko:{title:'ชินโคไลท์ (โปร่งแสง)', items:[
+   {id:'imp15',nm:'Heat Cut',ds:'6 มม.'},
+   {id:'imp16',nm:'Superior',ds:'6 มม.'},
+   {id:'imp17',nm:'Nature',ds:'6 มม.'},
+   {id:'imp18',nm:'Shade',ds:'4 มม.'},
+   {id:'imp19',nm:'Prime',ds:'10 มม.'},
+   {id:'imp20',nm:'Grand',ds:'10 มม.'}
+ ]},
+ ceil:{title:'ฝ้า', items:[
+   {id:'ceil_cshape',nm:'ฝ้าอลูมิเนียม ไทยทิพย์',ds:'ตัวซี หน้า 15 ซม.'},
+   {id:'ceil_bsc',nm:'ฝ้าไม้เทียม remood',ds:'แผ่นเรียบ หน้า 12 ซม.'},
+   {id:'ceiling_smooth',nm:'ฝ้าฉาบเรียบ',ds:''}
+ ]},
+ wall:{title:'ผนัง', items:[
+   {id:'isowall',nm:'ISOWALL',ds:''},
+   {id:'wall_ext',nm:'ผนังเบาภายนอก',ds:''},
+   {id:'wall_int',nm:'ผนังเบาภายใน',ds:''}
+ ]}
+};
+// เมทัลชีท: ท้อง 4 แบบ × ความหนา 1"/2" → id imp7..imp14
+var METAL={
+ '1':[{id:'imp7',nm:'ท้อง PVC EPS'},{id:'imp9',nm:'ท้องเหล็ก EPS'},{id:'imp11',nm:'ท้องฟอยล์ PU'},{id:'imp13',nm:'ท้องเหล็ก PU'}],
+ '2':[{id:'imp8',nm:'ท้อง PVC EPS'},{id:'imp10',nm:'ท้องเหล็ก EPS'},{id:'imp12',nm:'ท้องฟอยล์ PU'},{id:'imp14',nm:'ท้องเหล็ก PU'}]
+};
+var selId=null, selName=null, curCat=null;
+
+function openCat(cat){
+  curCat=cat;
+  document.getElementById('lv1').style.display='none';
+  document.getElementById('lv2').style.display='block';
+  document.getElementById('back').classList.add('show');
+  var seg=document.getElementById('metalSeg');
+  if(cat==='metal'){ seg.style.display='block'; document.getElementById('crumb').innerHTML='เมทัลชีท <small>(เลือกความหนา + ท้อง)</small>'; renderMetal('1',null); }
+  else{ seg.style.display='none'; document.getElementById('crumb').innerHTML=DATA[cat].title+' <small>(แตะเลือกรุ่น)</small>'; renderModels(DATA[cat].items); }
+}
+function renderModels(items){
+  var g=document.getElementById('modelGrid'); g.className='grid'; g.innerHTML='';
+  items.forEach(function(it){
+    var c=document.createElement('button'); c.className='card'+(it.id===selId?' on':''); c.type='button';
+    c.innerHTML='<div class="nm">'+it.nm+'</div>'+(it.ds?'<div class="ds">'+it.ds+'</div>':'');
+    c.onclick=function(){ pick(it.id, it.nm); };
+    g.appendChild(c);
+  });
+}
+function metalThick(btn,t){ [...btn.parentElement.children].forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderMetal(t,btn); }
+function renderMetal(t,btn){
+  var items=METAL[t].map(function(m){ return {id:m.id, nm:m.nm, ds:t+' นิ้ว'}; });
+  renderModels(items);
+}
+function pick(id,nm){
+  selId=id; selName=nm;
+  [...document.querySelectorAll('#modelGrid .card')].forEach(function(c){ c.classList.toggle('on', c.querySelector('.nm').textContent===nm); });
+  var pretty = (curCat==='metal') ? ('เมทัลชีท '+nm) : (curCat==='shinko'?('ชินโคไลท์ '+nm):nm);
+  document.getElementById('cval').textContent=pretty;
+  document.getElementById('confirm').classList.add('show');
+}
+function goHome(){
+  document.getElementById('lv2').style.display='none';
+  document.getElementById('lv1').style.display='block';
+  document.getElementById('back').classList.remove('show');
+  document.getElementById('confirm').classList.remove('show');
+  document.getElementById('crumb').innerHTML='เลือกหมวดสินค้า <small>(แตะ 1 ครั้ง)</small>';
+  selId=null;selName=null;
+}
+function useIt(){ alert('เดโม: จะ set .i-prod = "'+selId+'" แล้ว fire change → ฟอร์มกรอกของรุ่นนี้โผล่'); }
+</script>
+</body>
+</html>

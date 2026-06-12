@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUDIT G5 — ตรวจออปชั่นมุ้ง 2026-06-12</title>
+<style>
+:root{--red:#B3151D;--line:#e5d3d4;--bg:#FFF9F9;}
+*{box-sizing:border-box}
+body{font-family:"Segoe UI",Tahoma,sans-serif;color:#222;max-width:960px;margin:0 auto;padding:24px;line-height:1.55}
+h1{color:var(--red);font-size:22px;border-bottom:3px solid var(--red);padding-bottom:8px}
+h2{color:var(--red);font-size:17px;margin-top:28px;border-left:4px solid var(--red);padding-left:9px}
+h3{font-size:14px;margin:16px 0 5px;color:#444}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--red);color:#fff;font-weight:600}
+tr:nth-child(even){background:var(--bg)}
+code{background:#f4eaea;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;color:#fff;white-space:nowrap}
+.red{background:#B3151D} .green{background:#1D9E75} .amber{background:#BA7517}
+.gray{background:#888} .blue{background:#1565C0}
+.warn{border-left:5px solid #BA7517;background:#FAEEDA;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+.ok{border-left:5px solid #1D9E75;background:#E1F5EE;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+.info{border-left:5px solid #1565C0;background:#E3F2FD;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+.meta{font-size:12px;color:#666;margin-top:-4px}
+ul{margin:6px 0 6px 4px;padding-left:20px}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+
+<h1>AUDIT G5 — ตรวจออปชั่นมุ้ง (options audit)</h1>
+<p class="meta">วันที่: 2026-06-12 · ไฟล์อ้างอิง: <code>public/calculator/index.html</code> · อ่านบรรทัด 684–703, 2489–2498, 2592–2613, 2691–2698, 2725–2726</p>
+
+<div class="info">
+<b>สถานะสเปกเดิม (HANDOFF-G5-mosquito-formux-2026-06-11):</b>
+มติพี่นัทเคาะ 5 ข้อไว้แล้ว (ตัดกระจก · สีอลู · คาดตาราง · ดึงโหมด B บนสุด · ผ้ามุ้ง+สีผ้าเป็นชิป)
+รายงานนี้ตรวจว่า <b>ยังมี leak อยู่ไหมในโค้ดปัจจุบัน</b> และขยายไปถึงออปชั่นที่ยังไม่ได้จัดประเภท
+</div>
+
+<h2>1) ตรวจ Leak ที่ยังมีอยู่ (สิ่งที่โค้ดยังไม่แก้ตามสเปก)</h2>
+
+<table>
+<tr><th>ออปชั่น (class)</th><th>เส้นโค้ด</th><th>เงื่อนไขปัจจุบัน</th><th>ปัญหา</th><th>สถานะ</th></tr>
+
+<tr>
+<td><b>สีอลูมิเนียม</b><br><code>i-color-wrap / i-color</code></td>
+<td>~2725</td>
+<td><code>_showCw = cw &amp;&amp; !(areaOnly || NO_COLOR_CATS.includes(p.cat))</code><br>
+<b>มุ้ง ไม่อยู่ใน NO_COLOR_CATS</b></td>
+<td>สินค้า cat=มุ้ง ที่มี screen_addon (imp21/22/23) จะโผล่ i-color-wrap เพราะ usesPanels()=true และมุ้งไม่ถูกกัน<br>
+<b>ยังมี leak ครบถ้วน ยังไม่แก้</b></td>
+<td><span class="tag red">🔴 leak ยืนยัน</span></td>
+</tr>
+
+<tr>
+<td><b>กระจก</b><br><code>i-glass-wrap / i-glass</code></td>
+<td>~2726</td>
+<td><code>_showGw = gw &amp;&amp; !(areaOnly || p.zipscreen)</code><br>
+<b>ไม่มีการกัน p.cat==='มุ้ง'</b></td>
+<td>มุ้ง (imp21/22/23) screen_addon ทำให้ usesPanels()=true → i-glass-wrap โผล่ด้วย<br>
+<b>ยังมี leak ครบถ้วน ยังไม่แก้</b></td>
+<td><span class="tag red">🔴 leak ยืนยัน</span></td>
+</tr>
+
+<tr>
+<td><b>คาดตาราง</b><br><code>o-gridmark</code></td>
+<td>~2490</td>
+<td><code>if(!p.grid &amp;&amp; !['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code><br>
+<b>ไม่มีการกัน p.cat==='มุ้ง'</b></td>
+<td>สินค้า cat=มุ้ง ทุกตัว (19 รายการ) จะได้เห็น "มีคาดตาราง" เสมอ<br>
+<b>ยังมี leak ครบถ้วน ยังไม่แก้</b></td>
+<td><span class="tag red">🔴 leak ยืนยัน</span></td>
+</tr>
+
+<tr>
+<td><b>ผ้ามุ้ง (screen_addon)</b><br><code>o-screenfabric / o-screenfabriccolor</code></td>
+<td>~2691–2696</td>
+<td><code>if(p.screen_addon){...dropdown...}</code><br>
+ยังเป็น plain dropdown · อยู่กลางฟอร์ม</td>
+<td>สเปกสั่งเปลี่ยนเป็น chip + ดึงขึ้นหลัก — ยังไม่ทำ<br>
+<b>(ยังเป็น dropdown ธรรมดา)</b></td>
+<td><span class="tag amber">🟡 pending chip</span></td>
+</tr>
+
+<tr>
+<td><b>โหมด B (ติดบานเดิม)</b><br><code>o-screen_existing / o-screen_extra</code></td>
+<td>~2610–2612</td>
+<td><code>if(p.cat==='มุ้ง'){...checkbox กลางฟอร์ม...}</code></td>
+<td>สเปกสั่งดึงขึ้นบนสุด + ทำกล่องส้มเด่น — ยังอยู่กลางฟอร์ม<br>
+<b>ยังไม่ย้าย</b></td>
+<td><span class="tag amber">🟡 pending move</span></td>
+</tr>
+
+</table>
+
+<div class="ok">
+<b>สรุป leak ยืนยัน 3 จุด (ยังอยู่ในโค้ด):</b>
+กระจก (<code>i-glass</code>) · สีอลูมิเนียม (<code>i-color</code>) · คาดตาราง (<code>o-gridmark</code>)
+ทั้ง 3 จุดนี้โผล่กับ cat=มุ้ง ทุกตัว — แก้ตามสเปก HANDOFF-G5 เดิมได้เลย (3 บรรทัด)
+</div>
+
+<h2>2) ออปชั่นมุ้งปัจจุบันทั้งหมด — จัดประเภท</h2>
+
+<h3>2A) กลุ่ม G5 — มุ้งขายเดี่ยว (p.cat==='มุ้ง' · 19 รายการ)</h3>
+<table>
+<tr><th>ออปชั่น</th><th>class</th><th>โผล่กับ</th><th>ปัจจุบัน</th><th>ถูก/ผิด</th><th>เสนอ</th></tr>
+
+<tr>
+<td>ประเภทบาน</td><td><code>i-type</code></td><td>19/19</td><td>ชิป (ประตู/หน้าต่าง)</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม</td></tr>
+
+<tr>
+<td>ครอบวงกบอลู</td><td><code>o-fcsides / o-fcm</code></td><td>19/19</td><td>ชิป (ไม่มี/3ด้าน/4ด้าน)</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม</td></tr>
+
+<tr>
+<td><b>ติดมุ้งบานเดิม (โหมด B)</b></td><td><code>o-screen_existing</code></td><td>19/19</td><td>checkbox กลางฟอร์ม (label แดง)</td>
+<td><span class="tag amber">แก้ UX</span></td><td>ดึงขึ้นบนสุด + กล่องส้มเด่น (ตามสเปก)</td></tr>
+
+<tr>
+<td>ค่าเสริมกล่อง/ราง</td><td><code>o-screen_extra</code></td><td>19/19</td><td>input number กลางฟอร์ม</td>
+<td><span class="tag amber">แก้ UX</span></td><td>ขึ้นคู่โหมด B</td></tr>
+
+<tr>
+<td><b>ผ้ามุ้ง</b></td><td><code>o-screenfabric</code></td><td>3/19 (screen_addon)</td><td>dropdown plain</td>
+<td><span class="tag amber">แก้ UX</span></td><td>เปลี่ยนเป็นชิป + ดึงขึ้นหลัก (ตามสเปก)</td></tr>
+
+<tr>
+<td>สีผ้ามุ้ง</td><td><code>o-screenfabriccolor</code></td><td>3/19 (screen_addon)</td><td>dropdown plain</td>
+<td><span class="tag amber">แก้ UX</span></td><td>เปลี่ยนเป็นชิป + ดึงขึ้นหลัก (ตามสเปก)</td></tr>
+
+<tr>
+<td>สีกรอบมุ้ง</td><td><code>o-mscolor</code></td><td>15/19 (mscolor:true)</td><td>dropdown (12 สี)</td>
+<td><span class="tag green">ถูก</span></td><td>คง dropdown ใน accordion</td></tr>
+
+<tr>
+<td>หมายเหตุ</td><td><code>o-remark-add</code></td><td>19/19</td><td>dropdown</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม</td></tr>
+
+<tr style="background:#FFE0E0;">
+<td><b>กระจก (LEAK)</b></td><td><code>i-glass / i-glass-wrap</code></td><td>19/19 (leak)</td><td>โผล่ผิด — ไม่มีกัน cat=มุ้ง</td>
+<td><span class="tag red">🔴 ตัด</span></td><td>เพิ่ม <code>|| p.cat==='มุ้ง'</code> ใน _showGw บรรทัด ~2726</td></tr>
+
+<tr style="background:#FFE0E0;">
+<td><b>สีอลูมิเนียม (LEAK)</b></td><td><code>i-color / i-color-wrap</code></td><td>19/19 (leak)</td><td>โผล่ผิด — มุ้งไม่ใน NO_COLOR_CATS</td>
+<td><span class="tag red">🔴 ตัด</span></td><td>เพิ่ม <code>'มุ้ง'</code> เข้า NO_COLOR_CATS <b>หรือ</b> เพิ่มเงื่อนไข _showCw</td></tr>
+
+<tr style="background:#FFE0E0;">
+<td><b>คาดตาราง (LEAK)</b></td><td><code>o-gridmark</code></td><td>19/19 (leak)</td><td>โผล่ผิด — ไม่กัน cat=มุ้ง</td>
+<td><span class="tag red">🔴 ตัด</span></td><td>เพิ่ม <code>'มุ้ง'</code> ใน exclusion list บรรทัด ~2490</td></tr>
+
+<tr>
+<td>ฝังรางยู</td><td><code>o-uchannel</code></td><td>19/19</td><td>โผล่ทุกบาน (ไม่กัน cat=มุ้ง)</td>
+<td><span class="tag amber">🟡 ถามพี่นัท</span></td><td>มุ้งต้องฝังรางยูด้วยไหม? ถ้าไม่ → เพิ่ม <code>'มุ้ง'</code> ใน exclude</td></tr>
+
+<tr>
+<td>ครอบท่อ PVC / ดรอปพื้น</td><td><code>o-dfm</code></td><td>19/19</td><td>โผล่ทุกบาน</td>
+<td><span class="tag amber">🟡 ถามพี่นัท</span></td><td>มุ้งต้องมีดรอปพื้นไหม? (มุ้งเฟรมปกติน่าจะไม่มี)</td></tr>
+
+<tr>
+<td>รื้อของเดิม</td><td><code>o-removeold</code></td><td>19/19</td><td>checkbox</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม (ใช้ได้กับมุ้งเปลี่ยนใหม่)</td></tr>
+
+<tr>
+<td>งานเสริม/วิศวกรรม</td><td><code>o-extrawork</code></td><td>19/19</td><td>text input</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม</td></tr>
+
+<tr>
+<td>แผ่นทึบล่าง</td><td><code>o-solidlower</code></td><td>19/19 ถ้า cat อยู่ใน _isPaneCat</td>
+<td>โผล่เฉพาะ cat บาน — มุ้งไม่อยู่ใน _isPaneCat</td>
+<td><span class="tag green">ถูก</span></td><td>คงเดิม (มุ้งไม่โผล่อยู่แล้ว)</td></tr>
+</table>
+
+<h3>2B) กลุ่ม G1 — มุ้งต่อบาน (p.mosquito=true · ใน buildItemOpts บรรทัด ~2592–2607)</h3>
+<p class="meta">นี่คือ "มุ้งเสริม" ของสินค้าบาน G1 (ไม่ใช่ G5) — ระบบนี้แยกออกมาแล้ว ไม่ได้รับผลกระทบจาก leak ข้างต้น</p>
+<table>
+<tr><th>ออปชั่น</th><th>class</th><th>สถานะ</th></tr>
+<tr><td>เลือกชนิดมุ้ง</td><td><code>o-mosq</code></td><td><span class="tag green">ถูก</span> — dropdown พร้อมรายการ MOSQUITO_SCREENS</td></tr>
+<tr><td>ขนาดมุ้ง (auto จากบาน)</td><td><code>o-mosqw / o-mosqh / o-mosqpanels</code></td><td><span class="tag green">ถูก</span></td></tr>
+<tr><td>ลักษณะการเปิด</td><td><code>o-mosqopenstyle</code></td><td><span class="tag green">ถูก</span> — ชิปแล้ว (label-only)</td></tr>
+<tr><td>ผ้ามุ้ง</td><td><code>o-mosqfabric</code></td><td><span class="tag green">ถูก</span> — dropdown (G1 zone แยก)</td></tr>
+<tr><td>สีกรอบมุ้ง</td><td><code>o-mosqcolor</code></td><td><span class="tag green">ถูก</span> — ชิปแล้ว (4 ปุ่ม)</td></tr>
+</table>
+
+<h2>3) จัดหมวดออปชั่นที่ถูกต้องสำหรับ G5 (ลำดับใหม่)</h2>
+<table>
+<tr><th>ลำดับ</th><th>หมวด</th><th>ออปชั่น</th><th>UI</th><th>ใครเห็น</th></tr>
+<tr><td>1</td><td><b>โหมด B (บนสุด)</b></td><td>ติดมุ้งบานเดิม + ค่าเสริมกล่อง/ราง</td><td>กล่องส้มเด่น</td><td>19/19</td></tr>
+<tr><td>2</td><td><b>หลัก</b></td><td>เลือกชนิดมุ้ง (cascade card)</td><td>การ์ดหมวด</td><td>19/19</td></tr>
+<tr><td>3</td><td><b>หลัก</b></td><td>ขนาด กว้าง×สูง</td><td>number input</td><td>19/19</td></tr>
+<tr><td>4</td><td><b>หลัก</b></td><td>จำนวนชิ้น/บาน</td><td>stepper</td><td>19/19</td></tr>
+<tr><td>5</td><td><b>หลัก</b></td><td>ประเภทบาน (ประตู/หน้าต่าง)</td><td>ชิป</td><td>19/19 (มีผลต่อ min)</td></tr>
+<tr><td>6</td><td><b>หลัก — screen_addon</b></td><td>ผ้ามุ้ง + สีผ้า</td><td>ชิป (เห็นทันที)</td><td>3/19 (imp21/22/23)</td></tr>
+<tr><td>7</td><td><b>หลัก</b></td><td>ครอบวงกบอลู</td><td>ชิป</td><td>19/19</td></tr>
+<tr><td>8</td><td>accordion เสริม</td><td>สีกรอบมุ้ง (12 สี)</td><td>dropdown</td><td>15/19 (mscolor)</td></tr>
+<tr><td>9</td><td>accordion เสริม</td><td>งานเสริม/วิศวกรรม · รื้อของเดิม</td><td>text/checkbox</td><td>19/19</td></tr>
+</table>
+
+<h2>4) จุดแก้โค้ดที่ยังค้างอยู่ (เสริมจากสเปกเดิม)</h2>
+<table>
+<tr><th>#</th><th>บรรทัด</th><th>เดิม</th><th>แก้เป็น</th><th>ผล</th></tr>
+<tr>
+<td>1</td><td>~2725</td>
+<td><code>var _showCw=!!(cw&amp;&amp;!(areaOnly||NO_COLOR_CATS.includes(p.cat)));</code></td>
+<td><code>var _showCw=!!(cw&amp;&amp;!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'));</code></td>
+<td>ตัดสีอลูออกจากมุ้ง</td>
+</tr>
+<tr>
+<td>2</td><td>~2726</td>
+<td><code>var _showGw=!!(gw&amp;&amp;!(areaOnly||p.zipscreen));</code></td>
+<td><code>var _showGw=!!(gw&amp;&amp;!(areaOnly||p.zipscreen||p.cat==='มุ้ง'));</code></td>
+<td>ตัดกระจกออกจากมุ้ง</td>
+</tr>
+<tr>
+<td>3</td><td>~2490</td>
+<td><code>if(!p.grid &amp;&amp; !['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code></td>
+<td><code>if(!p.grid &amp;&amp; !['หลังคา','ฝ้า-ผนัง','มุ้ง'].includes(p.cat))</code></td>
+<td>ตัดคาดตารางออกจากมุ้ง</td>
+</tr>
+</table>
+<p class="meta">3 จุดนี้เหมือนสเปกเดิมทุกอย่าง — ยืนยันว่ายังไม่ได้แก้จริงในโค้ด</p>
+
+<h2>5) ลิสต์ 🟡 ถามพี่นัท</h2>
+<table>
+<tr><th>#</th><th>ออปชั่น</th><th>คำถาม</th><th>ผลถ้าตัด / ผลถ้าเก็บ</th></tr>
+
+<tr>
+<td>Q1</td>
+<td>ฝังรางยู (<code>o-uchannel</code>)</td>
+<td>มุ้ง G5 ต้องมีตัวเลือก "ฝังรางยูในพื้น" ไหม?<br>
+ปัจจุบันโผล่กับมุ้งทุกตัว (เพราะ <code>!['หลังคา','ฝ้า-ผนัง'].includes(p.cat)</code>)</td>
+<td>ตัด = มุ้งไม่เห็นช่องฝังรางยู (ฟอร์มสั้นลง)<br>
+เก็บ = เซลล์เลือกฝังรางได้ถ้ามุ้งต้องฝัง</td>
+</tr>
+
+<tr>
+<td>Q2</td>
+<td>ดรอปพื้น (<code>o-dfm</code>)</td>
+<td>มุ้ง G5 ต้องมีช่องดรอปพื้น (ม.) ไหม?<br>
+โผล่อยู่เพราะ <code>!areaOnly &amp;&amp; !p.zipscreen</code></td>
+<td>ตัด = มุ้งไม่เห็นช่องดรอปพื้น<br>
+เก็บ = เซลล์ระบุดรอปพื้นได้ถ้าจำเป็น</td>
+</tr>
+
+<tr>
+<td>Q3</td>
+<td>สีกรอบมุ้งมุ้ง (<code>o-mscolor</code>) — 4 ตัวที่ไม่มี mscolor<br>
+<code>imp30 imp31 imp32 mj_screen_safety</code></td>
+<td>4 ตัวนี้ไม่มี <code>mscolor:true</code> จึงไม่มีช่องสีกรอบ — ตั้งใจหรือยัง?<br>
+imp31/32 = มุ้งนิรภัย · imp30 = มุ้งแม่เหล็ก · mj_screen_safety = มุ้งจีบนิรภัย</td>
+<td>เพิ่ม mscolor → ลูกค้าเลือกสีกรอบได้<br>
+ไม่เพิ่ม → สีตามสินค้าเท่านั้น</td>
+</tr>
+
+<tr>
+<td>Q4</td>
+<td>ชนิดมุ้งใน G5 — cascade card</td>
+<td>Draft v2 จัดหมวดเป็น 4 กลุ่ม (เฟรม/จีบ/ม้วน+นิรภัย/อื่น) ถูกต้องไหม?<br>
+เฉพาะ <code>mj_keep_honey</code> และ <code>mj_keep_twoway</code> ยังอยู่กลุ่ม "จีบ" — ถูกไหม?</td>
+<td>ถ้าผิดหมวด → ปรับ label ในดราฟ</td>
+</tr>
+
+<tr>
+<td>Q5</td>
+<td>ลักษณะการเปิดมุ้ง (<code>o-mosqopenstyle</code>)</td>
+<td>ดราฟปัจจุบัน (v1) มีชิป "เปิด/เลื่อน/กระทุ้ง/ยก" — ใน v2 ควรโชว์ตัวเลือกเต็มหรือ filter ตาม mosq?<br>
+เช่น imp22 (ติดตาย) ควรมีชิปลักษณะเปิดไหม?</td>
+<td>ถ้า filter → แสดงเฉพาะที่ตรงกับสินค้า<br>
+ถ้าเต็ม → เซลล์ระบุได้ทุกกรณี</td>
+</tr>
+
+<tr>
+<td>Q6</td>
+<td>ผ้ามุ้งของ G5 (ไม่ใช่ screen_addon)</td>
+<td>สินค้า G5 ที่ไม่มี screen_addon เช่น imp28/29/31/32/mj_* มีผ้ามุ้งเลือกได้ไหม?<br>
+ปัจจุบันไม่มีช่องผ้ามุ้งให้เลยกับสินค้าพวกนี้</td>
+<td>เพิ่มผ้ามุ้ง → ครอบคลุมมากขึ้น<br>
+ไม่เพิ่ม → สินค้าพวกนี้ผ้าตายตัว</td>
+</tr>
+</table>
+
+<h2>6) สรุป</h2>
+<div class="warn">
+<b>🔴 แก้ได้เลย 3 บรรทัด (ตัดสิ้น — ตรงสเปกเดิม มติเคาะแล้ว):</b><br>
+1. บรรทัด ~2725 — เพิ่ม <code>||p.cat==='มุ้ง'</code> ใน _showCw → ตัดสีอลู<br>
+2. บรรทัด ~2726 — เพิ่ม <code>||p.cat==='มุ้ง'</code> ใน _showGw → ตัดกระจก<br>
+3. บรรทัด ~2490 — เพิ่ม <code>'มุ้ง'</code> ใน exclusion array → ตัดคาดตาราง
+</div>
+<div class="ok">
+<b>🟡 รอพี่นัทตอบ 6 ข้อก่อน (Q1–Q6) แล้วค่อยขยาย:</b>
+Q1 ฝังรางยู · Q2 ดรอปพื้น · Q3 mscolor 4 ตัว · Q4 การจัดหมวด · Q5 ลักษณะเปิดมุ้ง · Q6 ผ้ามุ้ง non-screen_addon
+</div>
+<div class="ok">
+<b>ดราฟ interactive v2:</b> <code>docs/DRAFT-G5-ux-v2-2026-06-12.html</code> — ต่อยอดจาก v1 เพิ่มโหมด B บนสุด + ผ้ามุ้งชิป + ไม่มีกระจก/สีอลู/คาดตาราง
+</div>
+
+</body>
+</html>

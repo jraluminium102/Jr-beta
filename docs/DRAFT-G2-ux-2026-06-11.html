@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G2 UX — เครื่องคิดราคา JR (เดโม)</title>
+<style>
+:root{
+  --red:#B3151D;
+  --red-dark:#8B0F15;
+  --red-light:#FFF0F0;
+  --blue:#1565C0;
+  --blue-light:#EAF3FF;
+  --blue-border:#9DBCE0;
+  --green:#2E7D32;
+  --green-light:#E8F5E9;
+  --amber:#F59E0B;
+  --amber-light:#FFF7ED;
+  --gray:#6B7280;
+  --border:#E5E7EB;
+  --bg:#F9FAFB;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:#111;}
+.demo-banner{background:#B3151D;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700;letter-spacing:.5px;}
+.page{max-width:640px;margin:0 auto;padding:12px;}
+
+/* ===== Tab bar ===== */
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.tabs::-webkit-scrollbar{height:4px;}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;
+  cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;transition:.15s;}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.tab:hover:not(.on){border-color:var(--red);color:var(--red);}
+
+/* ===== Section card ===== */
+.section{display:none;}
+.section.on{display:block;}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px 14px 12px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title .badge{font-size:11px;background:var(--red-light);color:var(--red);border-radius:4px;padding:1px 7px;font-weight:700;}
+
+/* ===== Label / field rows ===== */
+.field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:8px;}
+.field-lbl{font-size:13px;color:#374151;min-width:90px;}
+.field input[type=number], .field input[type=text], .field select{
+  height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:14px;font-family:inherit;color:#111;background:#fff;
+  min-width:0;outline:none;transition:.15s;
+}
+.field input[type=number]:focus, .field input[type=text]:focus, .field select:focus{border-color:var(--blue);}
+.field input[type=number]{width:80px;}
+.field select{width:auto;max-width:260px;}
+.field input.wide{width:120px;}
+.unit{font-size:12px;color:var(--gray);}
+.hint{font-size:11px;color:var(--gray);margin-top:2px;width:100%;}
+
+/* ===== Chip group ===== */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.chip{height:44px;min-width:64px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:14px;font-family:inherit;color:#374151;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:4px;transition:.15s;font-weight:600;}
+.chip:hover{border-color:var(--blue);color:var(--blue);}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chip.red.on{background:var(--red);border-color:var(--red);}
+.chips.sm .chip{height:36px;min-width:52px;padding:0 10px;font-size:13px;}
+
+/* ===== Stepper ===== */
+.stepper{display:inline-flex;align-items:center;gap:4px;}
+.step-btn{width:44px;height:44px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#374151;transition:.15s;}
+.step-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.step-val{width:52px;height:44px;text-align:center;border:1.5px solid var(--border);border-radius:8px;
+  font-size:16px;font-weight:700;font-family:inherit;color:#111;background:#fff;}
+
+/* ===== Override price box ===== */
+.override-box{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:8px;
+  padding:8px 12px;margin-bottom:8px;}
+.override-box .lbl{font-size:12px;font-weight:700;color:#92400E;margin-bottom:4px;}
+.override-box .hint{font-size:11px;color:#A16207;margin-top:4px;}
+.override-box input{height:44px;width:130px;border:1.5px solid #F59E0B;border-radius:8px;
+  padding:0 10px;font-size:15px;font-weight:700;color:#92400E;background:#FFFBEB;font-family:inherit;}
+.override-box .guide{font-size:11px;color:#555;margin-top:5px;line-height:1.5;}
+
+/* ===== Hmode (ปัด/ต่อ) ===== */
+.hmode-row{display:flex;gap:8px;margin-bottom:8px;}
+.hmode-card{flex:1;border:2px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;transition:.15s;}
+.hmode-card.on{border-color:var(--blue);}
+.hmode-card .hm-title{font-size:12px;font-weight:700;margin-bottom:2px;}
+.hmode-card .hm-price{font-size:15px;font-weight:700;color:var(--red);margin:2px 0;}
+.hmode-card .hm-sub{font-size:10px;color:var(--gray);}
+
+/* ===== Preview price bar ===== */
+.price-bar{position:sticky;bottom:0;left:0;right:0;
+  background:var(--red);color:#fff;padding:10px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-radius:10px 10px 0 0;margin:-12px;margin-top:12px;}
+.price-bar .plbl{font-size:12px;opacity:.85;}
+.price-bar .pval{font-size:20px;font-weight:700;letter-spacing:.5px;}
+.price-bar .pdemo{font-size:10px;background:rgba(255,255,255,.25);padding:2px 7px;border-radius:4px;margin-left:6px;}
+
+/* ===== Collapsible extra ===== */
+details.extra{border:1px solid var(--border);border-radius:8px;margin-top:6px;}
+details.extra summary{padding:8px 12px;cursor:pointer;font-size:13px;color:var(--green);font-weight:600;}
+details.extra > *:not(summary){padding:10px 12px 8px;}
+
+/* ===== Common option row ===== */
+.opt-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 0;
+  border-bottom:1px solid var(--border);}
+.opt-row:last-child{border-bottom:none;}
+.opt-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:#374151;cursor:pointer;}
+.opt-row input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--red);}
+
+/* ===== Responsive ===== */
+@media(max-width:440px){
+  .field-lbl{min-width:70px;}
+  .card{padding:11px 10px;}
+  .price-bar .pval{font-size:17px;}
+}
+/* ===== Warn ===== */
+.warn{font-size:11px;color:var(--red);font-weight:600;margin-top:3px;}
+.info-note{font-size:11px;color:#555;background:#F9FAFB;border-left:3px solid #D1D5DB;padding:4px 8px;border-radius:4px;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<div class="demo-banner">DRAFT / เดโม — ราคาเป็นเพียงตัวอย่างคำนวณ ไม่ใช้อ้างอิงงานจริง</div>
+
+<div class="page">
+  <h2 style="font-size:17px;font-weight:700;color:var(--red);margin:10px 0 8px;">กลุ่ม G2 — ดราฟ UX ใหม่</h2>
+
+  <!-- Tab bar -->
+  <div class="tabs" id="tabs">
+    <button class="tab on" onclick="switchTab('gate')">ประตูรั้ว</button>
+    <button class="tab" onclick="switchTab('ranae')">ระแนง (บังตา/ผนัง)</button>
+    <button class="tab" onclick="switchTab('ranae_slide')">ระแนง-เลื่อน</button>
+    <button class="tab" onclick="switchTab('ranae_geld')">ระแนง-เกล็ด</button>
+    <button class="tab" onclick="switchTab('ranae_oc')">ระแนง-เปิดปิด</button>
+    <button class="tab" onclick="switchTab('handrail')">ราวกันตก</button>
+  </div>
+
+  <!-- ======== 1. ประตูรั้ว ======== -->
+  <div class="section on" id="sec-gate">
+
+    <div class="card">
+      <div class="card-title">ขนาด <span class="badge">ประตูรั้วระแนง</span></div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="gate-w" min="0.5" step="0.1" value="3" oninput="calcGate()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง (ม.)</span>
+        <input type="number" id="gate-h" min="0.5" step="0.1" value="2" oninput="calcGate()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ลักษณะการเปิด</div>
+      <div class="chips" id="gate-open-chips">
+        <button class="chip on" data-val="slide_bottom" onclick="chipPick(this,'gate-open')">เลื่อนเปิดคู่ล่าง</button>
+        <button class="chip" data-val="slide_top" onclick="chipPick(this,'gate-open')">เลื่อนเปิดคู่บน</button>
+        <button class="chip" data-val="swing" onclick="chipPick(this,'gate-open')">บานสวิง</button>
+        <button class="chip" data-val="casement" onclick="chipPick(this,'gate-open')">บานเปิด</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ลายระแนง</div>
+      <div class="field">
+        <select id="gate-ranae" style="height:44px;width:100%;max-width:300px;" onchange="calcGate()">
+          <option value="0">— เลือกลาย —</option>
+          <option value="3300">1×5 cm. โชว์ 1 ช่อง 5 cm.</option>
+          <option value="2800">1×5 cm. โชว์ 5 ช่อง 5 cm.</option>
+          <option value="3700">1"×1.6" โชว์ 1" ช่อง 5cm.</option>
+          <option value="3200">1"×1" โชว์ 1" ช่อง 5cm.</option>
+          <option value="5500">1"×4" โชว์ 1" ช่อง 5cm.</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ชนิดราง</div>
+      <div class="chips" id="gate-rail-chips">
+        <button class="chip on" data-val="straight" onclick="chipPick(this,'gate-rail');calcGate()">ตรง (1,500/ม.)</button>
+        <button class="chip" data-val="curved" onclick="chipPick(this,'gate-rail');calcGate()">โค้ง (2,500/ม.)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">อบสี</div>
+      <div class="chips sm" id="gate-fin-chips">
+        <button class="chip on" data-val="" onclick="chipPick(this,'gate-fin');calcGate()">ขาว/ดำ</button>
+        <button class="chip" data-val="300" onclick="chipPick(this,'gate-fin');calcGate()">ซาฮาร่า +300</button>
+        <button class="chip" data-val="1000" onclick="chipPick(this,'gate-fin');calcGate()">ลายไม้สต๊อก +1,000</button>
+        <button class="chip" data-val="1700" onclick="chipPick(this,'gate-fin');calcGate()">อบพิเศษ +1,700</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">มอเตอร์</div>
+      <div class="field">
+        <span class="field-lbl">จำนวน</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="step('gate-motor',-1)">−</button>
+          <input type="number" class="step-val" id="gate-motor" value="1" min="0" max="4" oninput="calcGate()">
+          <button class="step-btn" onclick="step('gate-motor',1)">+</button>
+        </div>
+        <span class="unit">ตัว × 30,000</span>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row">
+        <label><input type="checkbox" id="gate-thresh" onchange="calcGate()"> มีธรณี</label>
+      </div>
+      <div class="opt-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">
+        <span style="font-size:12px;color:#92400E;font-weight:600;">OPTION ลายไม้ Golden Teak SMS</span>
+        <input type="number" id="gate-wood" min="0" step="500" value="0" style="height:36px;width:100px;margin-left:8px;" oninput="calcGate()">
+        <span class="unit">บาท (ไม่รวมในยอด)</span>
+      </div>
+      <div class="opt-row">
+        <label><input type="checkbox" id="gate-removeold" onchange="calcGate()"> รื้อของเดิม</label>
+      </div>
+      <div class="opt-row">
+        <span style="font-size:13px;">งานเสริม</span>
+        <input type="text" id="gate-extrawork" placeholder="ระบุถ้ามี" style="height:36px;flex:1;min-width:140px;">
+      </div>
+    </details>
+  </div><!-- /sec-gate -->
+
+  <!-- ======== 2. ระแนง (บังตา/ผนัง) ======== -->
+  <div class="section" id="sec-ranae">
+
+    <div class="card">
+      <div class="card-title">เลือกหมวด</div>
+      <div class="chips" id="rn-cat-chips">
+        <button class="chip on" data-val="bangta" onclick="chipPick(this,'rn-cat');buildRanaeList()">บังตา</button>
+        <button class="chip" data-val="wall" onclick="chipPick(this,'rn-cat');buildRanaeList()">ผนัง</button>
+      </div>
+    </div>
+
+    <div class="card" id="rn-select-card">
+      <div class="card-title">รุ่น / ขนาดระแนง <span id="rn-cat-label" style="font-weight:400;color:var(--gray);font-size:12px;">(บังตา)</span></div>
+      <!-- cascade: เลือก profile → โชว์ตัวเลือกช่อง -->
+      <div class="field">
+        <span class="field-lbl">Profile</span>
+        <select id="rn-profile" style="height:44px;width:100%;max-width:280px;" onchange="buildRanaeList()">
+          <option value="1x5">1×5 cm.</option>
+          <option value="1i16">1"×1.6"</option>
+          <option value="1i1">1"×1"</option>
+          <option value="1i1h">1"×1½"</option>
+          <option value="1i4">1"×4"</option>
+          <option value="16i16">1.6"×1.6"</option>
+          <option value="16i4">1.6"×4"</option>
+          <option value="4i4">4"×4"</option>
+          <option value="mixed">สลับ 5ต่อ3</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-lbl">ช่อง (cm.)</span>
+        <div class="chips sm" id="rn-gap-chips">
+          <button class="chip on" data-val="5" onclick="chipPick(this,'rn-gap');matchRanaeProduct()">5 cm.</button>
+          <button class="chip" data-val="3" onclick="chipPick(this,'rn-gap');matchRanaeProduct()">3 cm.</button>
+          <button class="chip" data-val="2" onclick="chipPick(this,'rn-gap');matchRanaeProduct()">2 cm.</button>
+          <button class="chip" data-val="solid" onclick="chipPick(this,'rn-gap');matchRanaeProduct()">ทึบ</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-lbl">โครง</span>
+        <div class="chips sm" id="rn-frame-chips">
+          <button class="chip on" data-val="noframe" onclick="chipPick(this,'rn-frame');matchRanaeProduct()">ไม่โครง</button>
+          <button class="chip" data-val="frame" onclick="chipPick(this,'rn-frame');matchRanaeProduct()">รวมโครง</button>
+        </div>
+      </div>
+      <div id="rn-matched-name" style="font-size:12px;color:var(--blue);background:var(--blue-light);border-radius:6px;padding:5px 9px;margin-top:4px;display:none;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ขนาด (ตร.ม.)</div>
+      <!-- hmode: ปัด/ต่อ -->
+      <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">วิธีตัดระแนง <span style="color:var(--red);">(มีผลต่อราคา)</span></div>
+      <div class="hmode-row" id="rn-hmode-row">
+        <div class="hmode-card on" id="hm-round" onclick="setHmode('round')">
+          <div class="hm-title">ปัดไม่ต่อ (เนียน)</div>
+          <div class="hm-price" id="hm-round-price">—</div>
+          <div class="hm-sub">ไม่มีรอยต่อ</div>
+        </div>
+        <div class="hmode-card" id="hm-splice" onclick="setHmode('splice')">
+          <div class="hm-title">ต่อสูงจริง (ประหยัด)</div>
+          <div class="hm-price" id="hm-splice-price">—</div>
+          <div class="hm-sub" id="hm-save-lbl">มีรอยต่อ</div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="rn-w" min="0.1" step="0.1" value="3" oninput="calcRanae()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง (ม.)</span>
+        <input type="number" id="rn-h" min="0.1" step="0.1" value="2.4" oninput="calcRanae()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">อบสี</div>
+      <div class="chips sm" id="rn-fin-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'rn-fin');calcRanae()">ขาว/ดำ</button>
+        <button class="chip" data-val="sahara" onclick="chipPick(this,'rn-fin');calcRanae()">ซาฮาร่า</button>
+        <button class="chip" data-val="stock" onclick="chipPick(this,'rn-fin');calcRanae()">ลายไม้สต๊อก</button>
+        <button class="chip" data-val="special" onclick="chipPick(this,'rn-fin');calcRanae()">อบพิเศษ</button>
+        <button class="chip" data-val="wood" onclick="chipPick(this,'rn-fin');calcRanae()">ลายไม้อบพิเศษ</button>
+      </div>
+    </div>
+
+    <div class="card" id="rn-door-card">
+      <div class="card-title">ทำเป็นประตู (ถ้ามี)</div>
+      <div class="field">
+        <span class="field-lbl">รูปแบบ</span>
+        <select id="rn-doortype" style="height:44px;width:100%;max-width:260px;" onchange="toggleDoorPrice()">
+          <option value="">ไม่ทำ</option>
+          <option value="sliding_sms">บานเลื่อน SMS</option>
+          <option value="sliding_euro">บานเลื่อน ยูโร</option>
+          <option value="casement_euro">บานเปิด</option>
+          <option value="folding">บานเฟี้ยม</option>
+          <option value="curved_single">ดัดโค้งเดี่ยว</option>
+        </select>
+      </div>
+      <div id="rn-door-price-block" style="display:none;">
+        <div class="override-box">
+          <div class="lbl">ราคาประตู (กรอกเอง)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+            <input type="number" id="rn-doorprice" min="0" step="500" value="" placeholder="กรอกราคา" oninput="calcRanae()">
+            <span class="unit">บาท</span>
+          </div>
+          <div class="guide">
+            บานเดี่ยว ≥ 18,000 · บานที่ 2+ = 16,000/บาน<br>
+            <span style="color:var(--red);">กรอก &gt; 0 = ใช้แทนราคาอัตโนมัติ (ราคาจริงให้พี่นัทยืนยัน)</span>
+          </div>
+          <!-- จำนวนบาน -->
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;">จำนวนบาน</span>
+            <div class="stepper">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('rn-door-panels',-1)">−</button>
+              <input type="number" class="step-val" id="rn-door-panels" value="1" min="1" max="4" style="width:44px;height:36px;font-size:15px;" oninput="autoFillDoorPrice()">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('rn-door-panels',1)">+</button>
+            </div>
+            <span id="rn-door-auto-price" style="font-size:12px;color:var(--green);font-weight:700;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row"><label><input type="checkbox" id="rn-removeold" onchange="calcRanae()"> รื้อของเดิม</label></div>
+      <div class="opt-row">
+        <span style="font-size:13px;">งานเสริม/วิศวกรรม</span>
+        <input type="text" id="rn-extrawork" placeholder="ระบุถ้ามี" style="height:36px;flex:1;min-width:140px;">
+      </div>
+      <div class="opt-row">
+        <span style="font-size:13px;">ครอบวงกบ (ม.)</span>
+        <input type="number" id="rn-fcm" min="0" step="0.1" value="0" style="height:36px;width:80px;" oninput="calcRanae()">
+      </div>
+    </details>
+  </div><!-- /sec-ranae -->
+
+  <!-- ======== 3. ระแนง-เลื่อน ======== -->
+  <div class="section" id="sec-ranae_slide">
+    <div class="card">
+      <div class="card-title">ขนาด <span class="badge">ระแนงเลื่อน ลูกฟูกเรียบ 2 ทาง</span></div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="bsl-w" min="0.5" step="0.1" value="3" oninput="calcBslide()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง (ม.)</span>
+        <input type="number" id="bsl-h" min="0.5" step="0.1" value="2" oninput="calcBslide()">
+      </div>
+      <div id="bsl-warn" class="warn" style="display:none;">สูงเกิน 3 ม. — ต้องเสริมโครงเหล็ก</div>
+    </div>
+
+    <div class="card" id="bsl-door-card">
+      <div class="card-title">ประตูในระแนง (ถ้ามี)</div>
+      <div class="field">
+        <span class="field-lbl">รูปแบบ</span>
+        <select id="bsl-doortype" style="height:44px;width:100%;max-width:260px;" onchange="toggleBslDoor()">
+          <option value="">ไม่มี (ระแนงเปล่า)</option>
+          <option value="sliding_sms">บานเลื่อน SMS</option>
+          <option value="sliding_euro">บานเลื่อน ยูโร</option>
+          <option value="casement_euro">บานเปิด</option>
+          <option value="folding">บานเฟี้ยม</option>
+        </select>
+      </div>
+      <div id="bsl-door-price-block" style="display:none;">
+        <div class="override-box">
+          <div class="lbl">ราคาประตู (กรอกเอง)</div>
+          <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+            <input type="number" id="bsl-doorprice" min="0" step="500" value="" placeholder="กรอกราคา" oninput="calcBslide()">
+            <span class="unit">บาท</span>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;">จำนวนบาน</span>
+            <div class="stepper">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('bsl-door-panels',-1)">−</button>
+              <input type="number" class="step-val" id="bsl-door-panels" value="1" min="1" max="4" style="width:44px;height:36px;font-size:15px;" oninput="autoFillBslDoorPrice()">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('bsl-door-panels',1)">+</button>
+            </div>
+            <span id="bsl-door-auto-price" style="font-size:12px;color:var(--green);font-weight:700;"></span>
+          </div>
+          <div class="guide">บานเดี่ยว ≥ 18,000 · บานที่ 2+ = 16,000/บาน</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">อบสี (ลูกฟูกเรียบ 2 ทาง)</div>
+      <div class="chips sm" id="bsl-fin-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'bsl-fin');calcBslide()">ขาว/ดำ</button>
+        <button class="chip" data-val="400" onclick="chipPick(this,'bsl-fin');calcBslide()">ซาฮาร่า +400</button>
+        <button class="chip" data-val="950" onclick="chipPick(this,'bsl-fin');calcBslide()">Aztec gray +950</button>
+        <button class="chip" data-val="1500" onclick="chipPick(this,'bsl-fin');calcBslide()">ลายไม้สต๊อก +1,500</button>
+        <button class="chip" data-val="1600" onclick="chipPick(this,'bsl-fin');calcBslide()">อบพิเศษ +1,600</button>
+        <button class="chip" data-val="2200" onclick="chipPick(this,'bsl-fin');calcBslide()">ลายไม้อบพิเศษ +2,200</button>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row"><label><input type="checkbox" id="bsl-removeold" onchange="calcBslide()"> รื้อของเดิม</label></div>
+      <div class="opt-row">
+        <span style="font-size:13px;">งานเสริม/วิศวกรรม</span>
+        <input type="text" id="bsl-extrawork" placeholder="ระบุถ้ามี" style="height:36px;flex:1;min-width:140px;">
+      </div>
+    </details>
+  </div><!-- /sec-ranae_slide -->
+
+  <!-- ======== 4. ระแนง-เกล็ด Z ======== -->
+  <div class="section" id="sec-ranae_geld">
+    <div class="card">
+      <div class="card-title">ขนาด <span class="badge">เกล็ด Z</span></div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="bg-w" min="0.5" step="0.1" value="3" oninput="calcBarGrid()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง (ม.)</span>
+        <input type="number" id="bg-h" min="0.5" step="0.1" value="2" oninput="calcBarGrid()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ขนาดเกล็ด Z</div>
+      <div class="chips" id="bg-size-chips">
+        <button class="chip on" data-val="rn83" onclick="chipPick(this,'bg-size');calcBarGrid()">1" ไม่โครง</button>
+        <button class="chip" data-val="rn84" onclick="chipPick(this,'bg-size');calcBarGrid()">1" รวมโครง</button>
+        <button class="chip" data-val="rn85" onclick="chipPick(this,'bg-size');calcBarGrid()">1.6" ไม่โครง</button>
+        <button class="chip" data-val="rn86" onclick="chipPick(this,'bg-size');calcBarGrid()">1.6" รวมโครง</button>
+        <button class="chip" data-val="rn87" onclick="chipPick(this,'bg-size');calcBarGrid()">4" ไม่โครง</button>
+        <button class="chip" data-val="rn88" onclick="chipPick(this,'bg-size');calcBarGrid()">4" รวมโครง</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ทิศติดตั้ง</div>
+      <div class="chips" id="bg-dir-chips">
+        <button class="chip on" data-val="v" onclick="chipPick(this,'bg-dir');calcBarGrid()">แนวตั้ง</button>
+        <button class="chip" data-val="h" onclick="chipPick(this,'bg-dir');calcBarGrid()">แนวนอน</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">อบสี</div>
+      <div class="chips sm" id="bg-fin-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'bg-fin');calcBarGrid()">ขาว/ดำ</button>
+        <button class="chip" data-val="300" onclick="chipPick(this,'bg-fin');calcBarGrid()">ซาฮาร่า +300</button>
+        <button class="chip" data-val="1000" onclick="chipPick(this,'bg-fin');calcBarGrid()">ลายไม้สต๊อก +1,000</button>
+        <button class="chip" data-val="1500" onclick="chipPick(this,'bg-fin');calcBarGrid()">อบพิเศษ +1,500</button>
+        <button class="chip" data-val="2200" onclick="chipPick(this,'bg-fin');calcBarGrid()">ลายไม้อบพิเศษ +2,200</button>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row"><label><input type="checkbox" id="bg-removeold" onchange="calcBarGrid()"> รื้อของเดิม</label></div>
+    </details>
+  </div><!-- /sec-ranae_geld -->
+
+  <!-- ======== 5. ระแนง-เปิดปิด ======== -->
+  <div class="section" id="sec-ranae_oc">
+    <div class="card">
+      <div class="card-title">ขนาด <span class="badge">ระแนงเปิด-ปิด กล่อง 1"×4"</span></div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="boc-w" min="0.5" step="0.1" value="3" oninput="calcBoc()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง (ม.)</span>
+        <input type="number" id="boc-h" min="0.5" step="0.1" value="2" oninput="calcBoc()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ทิศระแนง</div>
+      <div class="chips" id="boc-dir-chips">
+        <button class="chip on" data-val="v" onclick="chipPick(this,'boc-dir');calcBoc()">แนวตั้ง</button>
+        <button class="chip" data-val="h" onclick="chipPick(this,'boc-dir');calcBoc()">แนวนอน</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">มอเตอร์</div>
+      <div class="chips" id="boc-motor-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'boc-motor');calcBoc()">ไม่มี (เปิด-ปิดมือ)</button>
+        <button class="chip" data-val="1" onclick="chipPick(this,'boc-motor');calcBoc()">มีมอเตอร์</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">อบสี</div>
+      <div class="chips sm" id="boc-fin-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'boc-fin');calcBoc()">ขาว/ดำ</button>
+        <button class="chip" data-val="500" onclick="chipPick(this,'boc-fin');calcBoc()">ซาฮาร่า +500</button>
+        <button class="chip" data-val="1050" onclick="chipPick(this,'boc-fin');calcBoc()">Aztec gray +1,050</button>
+        <button class="chip" data-val="1600" onclick="chipPick(this,'boc-fin');calcBoc()">ลายไม้สต๊อก +1,600</button>
+        <button class="chip" data-val="3000" onclick="chipPick(this,'boc-fin');calcBoc()">อบพิเศษ +3,000</button>
+        <button class="chip" data-val="4300" onclick="chipPick(this,'boc-fin');calcBoc()">ลายไม้อบพิเศษ +4,300</button>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row"><label><input type="checkbox" id="boc-removeold" onchange="calcBoc()"> รื้อของเดิม</label></div>
+      <div class="opt-row">
+        <span style="font-size:13px;">งานเสริม/วิศวกรรม</span>
+        <input type="text" id="boc-extrawork" placeholder="ระบุถ้ามี" style="height:36px;flex:1;min-width:140px;">
+      </div>
+    </details>
+  </div><!-- /sec-ranae_oc -->
+
+  <!-- ======== 6. ราวกันตก (imp1-6) ======== -->
+  <div class="section" id="sec-handrail">
+
+    <div class="card">
+      <div class="card-title">เลือกรุ่น <span class="badge">ราวกันตกกระจก</span></div>
+      <!-- cascade: เฉียง/ตรง → ระบบยึด -->
+      <div style="font-size:12px;color:var(--gray);margin-bottom:6px;">ขั้นที่ 1: เลือกทิศกระจก</div>
+      <div class="chips" id="hr-angle-chips">
+        <button class="chip on" data-val="slant" onclick="chipPick(this,'hr-angle');buildHrModel()">กระจกเฉียง</button>
+        <button class="chip" data-val="straight" onclick="chipPick(this,'hr-angle');buildHrModel()">กระจกตรง</button>
+      </div>
+      <div style="font-size:12px;color:var(--gray);margin:8px 0 4px;">ขั้นที่ 2: ระบบยึดกระจก</div>
+      <div class="chips" id="hr-sys-chips">
+        <button class="chip on" data-val="stud" onclick="chipPick(this,'hr-sys');buildHrModel()">หมุดแปะข้าง</button>
+        <button class="chip" data-val="uchannel" onclick="chipPick(this,'hr-sys');buildHrModel()">วางยูเหล็ก ครอบอลู</button>
+        <button class="chip" data-val="post" onclick="chipPick(this,'hr-sys');buildHrModel()">เสาตั้ง+ราวจับอลู</button>
+      </div>
+      <div id="hr-model-lbl" style="margin-top:6px;font-size:13px;color:var(--blue);font-weight:700;background:var(--blue-light);border-radius:6px;padding:5px 9px;">รุ่น: —</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ความยาว (ม.)</div>
+      <div class="field">
+        <span class="field-lbl">ยาว</span>
+        <input type="number" id="hr-len" min="0.5" step="0.5" value="5" oninput="calcHandrail()">
+        <span class="unit">เมตร</span>
+      </div>
+      <div class="info-note">กรอกความยาวรวมทั้งหมด (เมตร) — ราคาคิดเป็น บาท/เมตร ตามตาราง</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ความหนากระจก</div>
+      <div class="chips" id="hr-glass-chips">
+        <button class="chip on" data-val="10" onclick="chipPick(this,'hr-glass');calcHandrail()">10 มม.</button>
+        <button class="chip" data-val="12" onclick="chipPick(this,'hr-glass');calcHandrail()">12 มม.</button>
+      </div>
+      <div class="hint">ราคาเท่ากัน — ระบุในใบราคาเพื่อความชัดเจน</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ราวมือจับด้านบน (option)</div>
+      <div class="chips" id="hr-handle-chips">
+        <button class="chip on" data-val="" onclick="chipPick(this,'hr-handle');calcHandrail()">ไม่มี</button>
+        <button class="chip" data-val="u5" onclick="chipPick(this,'hr-handle');calcHandrail()">ยู อลูมิเนียม +500/ม.</button>
+        <button class="chip" data-val="box" onclick="chipPick(this,'hr-handle');calcHandrail()">กล่อง 1"×2" +600/ม.</button>
+      </div>
+    </div>
+
+    <!-- สีอลู เฉพาะ imp2/3/5/6 (uchannel/post) -->
+    <div class="card" id="hr-alucolor-card" style="display:none;">
+      <div class="card-title">สีอลูมิเนียม</div>
+      <div class="chips" id="hr-alucolor-chips">
+        <button class="chip on" data-val="ขาว" onclick="chipPick(this,'hr-alucolor');calcHandrail()">ขาว</button>
+        <button class="chip" data-val="เทา" onclick="chipPick(this,'hr-alucolor');calcHandrail()">เทา</button>
+        <button class="chip" data-val="ดำ" onclick="chipPick(this,'hr-alucolor');calcHandrail()">ดำ</button>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ตัวเลือกเพิ่มเติม</summary>
+      <div class="opt-row"><label><input type="checkbox" id="hr-removeold" onchange="calcHandrail()"> รื้อของเดิม</label></div>
+      <div class="opt-row">
+        <span style="font-size:13px;">งานเสริม/วิศวกรรม</span>
+        <input type="text" id="hr-extrawork" placeholder="ระบุถ้ามี" style="height:36px;flex:1;min-width:140px;">
+      </div>
+    </details>
+
+    <!-- ตัดออกแล้ว (R4 มติ): คาดตาราง / ฝังรางยู / ครอบวงกบอลู / ดรอปพื้น -->
+    <div class="info-note" style="margin-top:6px;">
+      ออปชั่นที่ตัดออก (R4): คาดตาราง, ฝังรางยู, ครอบวงกบอลู, ดรอปพื้น — ไม่เกี่ยวกับงานราวกันตก
+    </div>
+  </div><!-- /sec-handrail -->
+
+  <!-- Price bar sticky -->
+  <div class="price-bar" id="price-bar">
+    <div>
+      <div class="plbl" id="price-lbl">ประตูรั้วระแนง</div>
+      <div style="display:flex;align-items:center;">
+        <span class="pval" id="price-val">—</span>
+        <span class="pdemo">DEMO</span>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;opacity:.75;" id="price-detail"></div>
+    </div>
+  </div>
+</div><!-- /page -->
+
+<script>
+// ===== utilities =====
+function fmt(n){ return n.toLocaleString('th-TH'); }
+function chipPick(btn, group){
+  btn.closest('.chips, .hmode-row').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+}
+function chipVal(group){
+  const c = document.querySelector('#'+group+'-chips .chip.on, [id$="-chips"].chip.on');
+  if(!c) return '';
+  return c.dataset.val||'';
+}
+function getChip(groupId){
+  const el = document.getElementById(groupId+'-chips');
+  if(!el) return '';
+  const on = el.querySelector('.chip.on');
+  return on ? (on.dataset.val||'') : '';
+}
+function roundUp(n,r=100){ return Math.ceil(n/r)*r; }
+function step(id, delta){
+  const el=document.getElementById(id);
+  if(!el) return;
+  let v=(parseInt(el.value)||0)+delta;
+  const mn=parseInt(el.min)||0, mx=parseInt(el.max)||999;
+  v=Math.max(mn,Math.min(mx,v));
+  el.value=v;
+  el.dispatchEvent(new Event('input'));
+}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));
+  document.querySelector('#sec-'+name).classList.add('on');
+  document.querySelectorAll('.tab').forEach(t=>{
+    if(t.getAttribute('onclick').includes("'"+name+"'")) t.classList.add('on');
+  });
+  // update price bar label
+  const labels={'gate':'ประตูรั้วระแนง','ranae':'ระแนง (บังตา/ผนัง)','ranae_slide':'ระแนงเลื่อน','ranae_geld':'ระแนง-เกล็ด Z','ranae_oc':'ระแนงเปิด-ปิด','handrail':'ราวกันตกกระจก'};
+  document.getElementById('price-lbl').textContent = labels[name]||name;
+  document.getElementById('price-val').textContent = '—';
+  document.getElementById('price-detail').textContent = '';
+  // calc
+  ({gate:calcGate,ranae:calcRanae,ranae_slide:calcBslide,ranae_geld:calcBarGrid,ranae_oc:calcBoc,handrail:calcHandrail})[name]&&
+  ({gate:calcGate,ranae:calcRanae,ranae_slide:calcBslide,ranae_geld:calcBarGrid,ranae_oc:calcBoc,handrail:calcHandrail})[name]();
+}
+
+// ===== 1. ประตูรั้ว =====
+const GATE_MK_TABLE=[[6,4000],[8,3500],[10,3000],[Infinity,2500]];
+function gateMakeRate(a){ for(const [lim,r] of GATE_MK_TABLE){ if(a<=lim) return r; } return 2500; }
+function calcGate(){
+  const W=parseFloat(document.getElementById('gate-w').value)||0;
+  const H=parseFloat(document.getElementById('gate-h').value)||0;
+  const A=W*H;
+  if(!A){ setPrice('—',''); return; }
+  const mk=A*gateMakeRate(A);
+  const rnRate=parseFloat(getChip('gate-ranae'))||0;
+  const gateRanaeEl=document.getElementById('gate-ranae');
+  const rnRate2=gateRanaeEl?parseFloat(gateRanaeEl.value)||0:0;
+  const rnC=rnRate2>0?A*rnRate2:0;
+  const finRate=parseFloat(getChip('gate-fin'))||0;
+  const finC=A*finRate;
+  const motor=parseInt(document.getElementById('gate-motor').value)||0;
+  const motorC=motor*30000;
+  const rt=getChip('gate-rail');
+  const railR=rt==='curved'?2500:1500;
+  const railC=2*W*railR;
+  let leafC=0;
+  if(rt==='curved'){ const leaves=Math.ceil(W/0.75); leafC=leaves*4000; }
+  const total=mk+rnC+finC+motorC+railC+leafC;
+  const sell=roundUp(total);
+  const detail=['ค่าทำ '+fmt(Math.round(mk))];
+  if(rnC>0) detail.push('ระแนง '+fmt(Math.round(rnC)));
+  if(finC>0) detail.push('สี '+fmt(Math.round(finC)));
+  if(motorC>0) detail.push('มอเตอร์ '+fmt(motorC));
+  detail.push('ราง '+(rt==='curved'?'โค้ง':'ตรง')+' '+fmt(Math.round(railC)));
+  setPrice(fmt(sell),detail.join(' · '));
+}
+
+// ===== 2. ระแนง =====
+// ข้อมูล ranae หลักๆ (ตัวอย่าง: ดึงเฉพาะ key products)
+const RANAE_DATA={
+  bangta:{
+    '1x5':{5:{noframe:{rate:3300,fin:{sahara:300,special:1700,wood:2400}},frame:{rate:5200,fin:{sahara:300,special:1700,wood:2400}}},3:{noframe:{rate:4300,fin:{sahara:400,special:2500,wood:3500}},frame:{rate:6000}},2:{noframe:{rate:5000},frame:{rate:7200}}},
+    '1i16':{5:{noframe:{rate:3700,fin:{sahara:300,stock:1000,special:1400,wood:2000}},frame:{rate:5300}},3:{noframe:{rate:4500},frame:{rate:6400}},2:{noframe:{rate:4800},frame:{rate:6900}}},
+    '1i4':{5:{noframe:{rate:5500,fin:{sahara:600,stock:2000,special:3700,wood:5300}},frame:{rate:8100}},3:{noframe:{rate:7100},frame:{rate:10100}},2:{noframe:{rate:7900},frame:{rate:10800}},4:{noframe:{rate:4000,fin:{sahara:400,stock:1200,special:2300,wood:3200}},frame:{rate:6000}},solid:{noframe:{rate:5100},frame:{rate:6900}}},
+  },
+  wall:{
+    '1i16':{5:{noframe:{rate:3200,fin:{sahara:300,stock:800,special:1100,wood:1600}},frame:{rate:4900}},3:{noframe:{rate:3700},frame:{rate:5300}},2:{noframe:{rate:4000},frame:{rate:5800}}},
+  }
+};
+const FIN_LABEL={sahara:'ซาฮาร่า',stock:'ลายไม้สต๊อก',special:'อบพิเศษ',wood:'ลายไม้อบพิเศษ'};
+let currentHmode='round'; // 'round' or 'splice'
+function setHmode(m){
+  currentHmode=m;
+  document.getElementById('hm-round').classList.toggle('on',m==='round');
+  document.getElementById('hm-splice').classList.toggle('on',m==='splice');
+  calcRanae();
+}
+function getRanaeRate(){
+  const cat=getChip('rn-cat')||'bangta';
+  const profile=document.getElementById('rn-profile').value;
+  const gap=getChip('rn-gap')||'5';
+  const frame=getChip('rn-frame')||'noframe';
+  try{ return RANAE_DATA[cat][profile][gap][frame]||null; }catch(e){ return null; }
+}
+function buildRanaeList(){
+  const cat=getChip('rn-cat')||'bangta';
+  document.getElementById('rn-cat-label').textContent='('+({bangta:'บังตา',wall:'ผนัง'}[cat]||cat)+')';
+  matchRanaeProduct();
+}
+function matchRanaeProduct(){
+  const d=getRanaeRate();
+  const el=document.getElementById('rn-matched-name');
+  if(d){ el.style.display=''; el.textContent='เรต '+fmt(d.rate)+'/ตร.ม.'; }
+  else { el.style.display='none'; }
+  calcRanae();
+}
+function calcRanae(){
+  const d=getRanaeRate();
+  if(!d){ setPrice('—','กรุณาเลือกรุ่นระแนง'); return; }
+  const W=parseFloat(document.getElementById('rn-w').value)||0;
+  const H=parseFloat(document.getElementById('rn-h').value)||0;
+  if(!W||!H){ setPrice('—','กรอกขนาดให้ครบ'); return; }
+  const A=W*H;
+  // splice mode: H_actual vs H_round
+  const H_round=H<=1.0?1.0:H<=1.5?1.5:H<=2.0?2.0:H<=2.5?2.5:H<=3.0?3.0:Math.ceil(H/0.5)*0.5;
+  const A_splice=W*H_round; // ถ้า round = ปัดไม่ต่อ → ใช้ H_round · splice = H จริง
+  const A_round=W*H_round;
+  const baseRound=A_round*d.rate;
+  const baseSplice=A*d.rate;
+  const fin=getChip('rn-fin')||'0';
+  const finRate=fin&&fin!=='0'&&d.fin?d.fin[fin]||0:0;
+  const finCRound=A_round*finRate;
+  const finCSplice=A*finRate;
+  const sellRound=roundUp(baseRound+finCRound);
+  const sellSplice=roundUp(baseSplice+finCSplice);
+  // update hmode cards
+  document.getElementById('hm-round-price').textContent=fmt(sellRound)+' บ.';
+  document.getElementById('hm-splice-price').textContent=fmt(sellSplice)+' บ.';
+  const save=sellRound-sellSplice;
+  document.getElementById('hm-save-lbl').textContent=save>0?'ประหยัด '+fmt(save)+' บ.':'ราคาเท่ากัน';
+  const finalSell=currentHmode==='round'?sellRound:sellSplice;
+  const detail=[fmt(d.rate)+'/ตร.ม.',currentHmode==='round'?'ปัด '+H_round+' ม.':'สูงจริง '+H+' ม.'];
+  if(finRate>0) detail.push(FIN_LABEL[fin]||fin+' +'+fmt(finRate));
+  // door price
+  const dt=document.getElementById('rn-doortype').value;
+  let doorAdd=0,doorNote='';
+  if(dt){
+    const ovr=parseFloat(document.getElementById('rn-doorprice').value)||0;
+    const np=parseInt(document.getElementById('rn-door-panels').value)||1;
+    const auto=doorAutoPrice(np);
+    doorAdd=ovr>0?ovr:auto;
+    doorNote=' + ประตู '+fmt(doorAdd);
+  }
+  setPrice(fmt(finalSell+doorAdd), detail.join(' · ')+doorNote);
+}
+function doorAutoPrice(n){ return 18000+Math.max(0,n-1)*16000; }
+function autoFillDoorPrice(){
+  const n=parseInt(document.getElementById('rn-door-panels').value)||1;
+  const auto=doorAutoPrice(n);
+  document.getElementById('rn-door-auto-price').textContent='auto: '+fmt(auto)+' บ.';
+  calcRanae();
+}
+function toggleDoorPrice(){
+  const show=!!document.getElementById('rn-doortype').value;
+  document.getElementById('rn-door-price-block').style.display=show?'':'none';
+  if(show) autoFillDoorPrice();
+  calcRanae();
+}
+
+// ===== 3. ระแนงเลื่อน =====
+function calcBslide(){
+  const W=parseFloat(document.getElementById('bsl-w').value)||0;
+  const H=parseFloat(document.getElementById('bsl-h').value)||0;
+  if(!W||!H){ setPrice('—','กรอกขนาดให้ครบ'); return; }
+  const A=W*H;
+  document.getElementById('bsl-warn').style.display=H>3?'':'none';
+  const slideCost=Math.max(3000,A*1000);
+  const H_round=H<=1.0?1.0:H<=1.5?1.5:H<=2.0?2.0:3.0;
+  const A_round=W*H_round;
+  const corrCost=Math.max(3500,A_round*3500);
+  const finRate=parseFloat(getChip('bsl-fin'))||0;
+  const finCost=finRate*A;
+  const doorId=document.getElementById('bsl-doortype').value;
+  let doorCost=0;
+  if(doorId){
+    const ovr=parseFloat(document.getElementById('bsl-doorprice').value)||0;
+    const np=parseInt(document.getElementById('bsl-door-panels').value)||1;
+    doorCost=ovr>0?ovr:doorAutoPrice(np);
+  }
+  const total=doorCost+slideCost+corrCost+finCost;
+  const sell=roundUp(total);
+  const detail=[];
+  if(doorCost>0) detail.push('ประตู '+fmt(Math.round(doorCost)));
+  detail.push('เลื่อน '+fmt(Math.round(slideCost)));
+  detail.push('ลูกฟูก '+H_round+'ม. '+fmt(Math.round(corrCost)));
+  if(finCost>0) detail.push('สี '+fmt(Math.round(finCost)));
+  setPrice(fmt(sell),detail.join(' · '));
+}
+function toggleBslDoor(){
+  const show=!!document.getElementById('bsl-doortype').value;
+  document.getElementById('bsl-door-price-block').style.display=show?'':'none';
+  if(show) autoFillBslDoorPrice();
+  calcBslide();
+}
+function autoFillBslDoorPrice(){
+  const n=parseInt(document.getElementById('bsl-door-panels').value)||1;
+  const auto=doorAutoPrice(n);
+  document.getElementById('bsl-door-auto-price').textContent='auto: '+fmt(auto)+' บ.';
+  calcBslide();
+}
+
+// ===== 4. ระแนงเกล็ด Z =====
+const BG_RATES={rn83:3600,rn84:5200,rn85:4900,rn86:6900,rn87:5300,rn88:7700};
+const BG_FIN={rn83:{300:300,1000:1000,1500:1500,2200:2200},rn85:{500:500,1600:1600,2200:2200,3100:3100},rn87:{500:500,1800:1800,2800:2800,4000:4000}};
+function calcBarGrid(){
+  const W=parseFloat(document.getElementById('bg-w').value)||0;
+  const H=parseFloat(document.getElementById('bg-h').value)||0;
+  if(!W||!H){ setPrice('—',''); return; }
+  const A=W*H;
+  const size=getChip('bg-size')||'rn83';
+  const dir=getChip('bg-dir')||'v';
+  const D=dir==='v'?H:W;
+  const numSets=Math.max(1,Math.ceil(D/1.5));
+  const areaPerSet=A/numSets;
+  const base=Math.max(5500,A*5500);
+  const extraPerSet=Math.max(500,areaPerSet*1500)+1000;
+  const sell=roundUp(base+(numSets-1)*extraPerSet);
+  setPrice(fmt(sell),(dir==='v'?'แนวตั้ง':'แนวนอน')+' '+numSets+' ชุด · ฐาน '+fmt(base));
+}
+
+// ===== 5. ระแนงเปิด-ปิด =====
+function calcBoc(){
+  const W=parseFloat(document.getElementById('boc-w').value)||0;
+  const H=parseFloat(document.getElementById('boc-h').value)||0;
+  if(!W||!H){ setPrice('—',''); return; }
+  const A=W*H;
+  const dir=getChip('boc-dir')||'v';
+  const D_parallel=dir==='v'?H:W;
+  const D=dir==='v'?W:H;
+  const numSets=Math.min(3,Math.max(1,Math.ceil(D_parallel/3)));
+  const A_per=A/numSets;
+  const ranaeCost=numSets*Math.max(20700,A_per*6900);
+  const openCloseCost=numSets*D*2000;
+  const motorOn=getChip('boc-motor')==='1';
+  const motorCost=motorOn?(numSets*Math.ceil(D/3)*10000):0;
+  const finRate=parseFloat(getChip('boc-fin'))||0;
+  const finCost=finRate*A;
+  const sell=roundUp(ranaeCost+openCloseCost+motorCost+finCost);
+  const detail=[(dir==='v'?'แนวตั้ง':'แนวนอน')+' '+numSets+' ชุด','ระแนง '+fmt(Math.round(ranaeCost)),'เปิด-ปิด '+fmt(Math.round(openCloseCost))];
+  if(motorCost>0) detail.push('มอเตอร์ '+fmt(motorCost));
+  if(D_parallel>9) detail.push('เกิน 3×3ม.');
+  setPrice(fmt(sell),detail.join(' · '));
+}
+
+// ===== 6. ราวกันตก =====
+// Tier rates (ตัวอย่าง — ราคาจริงในระบบ)
+const HR_RATES={
+  imp1:[{lo:0,hi:10,r:5000},{lo:10,hi:20,r:4500},{lo:20,hi:Infinity,r:4000}],
+  imp2:[{lo:0,hi:10,r:6000},{lo:10,hi:20,r:5500},{lo:20,hi:Infinity,r:5000}],
+  imp3:[{lo:0,hi:10,r:7000},{lo:10,hi:20,r:6500},{lo:20,hi:Infinity,r:6000}],
+  imp4:[{lo:0,hi:10,r:5000},{lo:10,hi:20,r:4500},{lo:20,hi:Infinity,r:4000}],
+  imp5:[{lo:0,hi:10,r:6000},{lo:10,hi:20,r:5500},{lo:20,hi:Infinity,r:5000}],
+  imp6:[{lo:0,hi:10,r:7000},{lo:10,hi:20,r:6500},{lo:20,hi:Infinity,r:6000}],
+};
+const HR_MODEL_MAP={slant:{stud:'imp1',uchannel:'imp2',post:'imp3'},straight:{stud:'imp4',uchannel:'imp5',post:'imp6'}};
+const HR_NAMES={imp1:'imp1 — กระจกเฉียง หมุดแปะข้าง',imp2:'imp2 — กระจกเฉียง วางยูเหล็ก ครอบอลู',imp3:'imp3 — กระจกเฉียง เสาตั้ง+ราวจับอลู',imp4:'imp4 — กระจกตรง หมุดแปะข้าง',imp5:'imp5 — กระจกตรง วางยูเหล็ก ครอบอลู',imp6:'imp6 — กระจกตรง เสาตั้ง+ราวจับอลู'};
+function getHrModel(){
+  const ang=getChip('hr-angle')||'slant';
+  const sys=getChip('hr-sys')||'stud';
+  return HR_MODEL_MAP[ang]&&HR_MODEL_MAP[ang][sys]||'imp1';
+}
+function buildHrModel(){
+  const m=getHrModel();
+  document.getElementById('hr-model-lbl').textContent='รุ่น: '+HR_NAMES[m];
+  // สีอลู เฉพาะ imp2/3/5/6
+  const showAlu=['imp2','imp3','imp5','imp6'].includes(m);
+  document.getElementById('hr-alucolor-card').style.display=showAlu?'':'none';
+  calcHandrail();
+}
+function hrRate(model,len){
+  const tiers=HR_RATES[model]||HR_RATES.imp1;
+  for(const t of tiers){ if(len>=t.lo&&len<t.hi) return t.r; }
+  return tiers[tiers.length-1].r;
+}
+function calcHandrail(){
+  const len=parseFloat(document.getElementById('hr-len').value)||0;
+  if(!len){ setPrice('—','กรอกความยาว'); return; }
+  const model=getHrModel();
+  const rate=hrRate(model,len);
+  let sell=len*rate;
+  const handle=getChip('hr-handle')||'';
+  let handleAdd=0;
+  if(handle==='u5') handleAdd=500*len;
+  else if(handle==='box') handleAdd=600*len;
+  sell+=handleAdd;
+  const totalSell=roundUp(sell);
+  const detail=[len+' ม. × '+fmt(rate)+'/ม.'];
+  if(handleAdd>0) detail.push('ราวมือจับ +'+(handle==='u5'?'500':'600')+'/ม. = '+fmt(Math.round(handleAdd)));
+  setPrice(fmt(totalSell),detail.join(' · '));
+}
+
+// ===== price bar =====
+function setPrice(val, detail){
+  document.getElementById('price-val').textContent=val+(val!=='—'?' บ.':'');
+  document.getElementById('price-detail').textContent=detail||'';
+}
+
+// ===== init =====
+document.addEventListener('DOMContentLoaded',function(){
+  calcGate();
+  autoFillDoorPrice();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Audit ออปชั่นกลุ่ม G2 — Batch 1 (เครื่องคิดราคา JR)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 14mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10.5px;margin-bottom:9px;}
+  h2{font-size:14px;margin:15px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  .ok{color:#2F855A;}.miss{color:#B3151D;}.part{color:#B7791F;}
+  .kpi{display:flex;gap:7px;margin:9px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+  .kpi .n{font-size:21px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .sys{color:#374151;}.realq{color:#7C2D12;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .p1{border-left:3px solid #B3151D;}.p2{border-left:3px solid #B7791F;}.p3{border-left:3px solid #2F855A;}
+  .pbox{border:1px solid #E5E7EB;border-radius:7px;padding:7px 10px;margin-bottom:6px;}
+  .pbox h3{margin:0 0 3px;font-size:12px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}.t3{background:#DCFCE7;color:#166534;}
+  .foot{margin-top:14px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>Audit ออปชั่นกลุ่ม G2 (รั้ว / ระแนง / ราวกันตก) — Batch 1/2</h1>
+<div class="sub">เทียบ "ระบบ render จริง (jsdom)" ↔ "ใบเสนอราคาจริง" · READ-ONLY ไม่แตะโค้ด · 10 มิ.ย. 2026 · ส่งแชทที่แก้ <code>index.html</code></div>
+
+<div class="note">
+<b>Batch 1 นี้ครอบ "ทุก render-engine" ของกลุ่ม G2 (98 รายการ → 6 engine)</b> — แก้ 6 engine นี้ = แก้ครบทั้งกลุ่ม ดูตาราง "ความครอบคลุม" ด้านล่าง · ราวกันตกเหล็ก = ไม่ตรวจ (ไม่ได้ขาย)
+</div>
+
+<div class="kpi">
+  <div><span class="n red">8</span>🔴 ผิด/ขาด (P1)</div>
+  <div><span class="n yellow">3</span>🟡 น่าสงสัย (P2)</div>
+  <div><span class="n green">3</span>🟢 ดีอยู่แล้ว</div>
+  <div><span class="n blue">6/6</span>engine ตรวจครบ</div>
+</div>
+
+<h2>ความครอบคลุม — 6 engine = 98 รายการในกลุ่ม</h2>
+<table>
+<tr><th style="width:22%;">Engine (logic)</th><th style="width:26%;">ตัวที่ render ทดสอบ</th><th>ครอบรายการใด (แก้ engine = แก้ทั้งหมด)</th><th class="c" style="width:42px;">จำนวน</th></tr>
+<tr><td>gate</td><td>fence_gate</td><td>ประตูรั้ว ทั้งหมด</td><td class="c">1</td></tr>
+<tr><td>bar_grid (มอเตอร์)</td><td>bar_grid_z</td><td>ระแนงบานเกล็ด Z</td><td class="c">1</td></tr>
+<tr><td>bar_slide</td><td>bar_slide</td><td>ระแนงเลื่อน</td><td class="c">1</td></tr>
+<tr><td>bar_openclose</td><td>bar_openclose</td><td>ระแนงเปิด-ปิด</td><td class="c">1</td></tr>
+<tr><td>per_length_tier (ราว+กระจก)</td><td>imp1</td><td>ราวบันได / ราวกันตกกระจก imp1–imp6</td><td class="c">6</td></tr>
+<tr><td>per_sqm (ranae)</td><td>rn1</td><td>ระแนงบังตา 76 + ระแนง-ผนัง 6 + ระแนง-เกล็ด 6</td><td class="c">88</td></tr>
+</table>
+
+<h2>เทียบทีละรายการ — ระบบ render อะไร ↔ ใบจริงต้องมีอะไร</h2>
+<table>
+<tr><th style="width:13%;">รายการ</th><th style="width:30%;">ระบบ render ออกมา (จริง)</th><th style="width:30%;">ใบจริงเขียนอะไร</th><th class="c" style="width:46px;">ผล</th><th>ขาด/ผิด</th></tr>
+
+<tr>
+<td><b>ประตูรั้ว</b><br>fence_gate</td>
+<td class="sys">"ประตูรั้วบานเลื่อน (3 × 1.8 ม.)" <b>— จบแค่นี้</b> ไม่มีรายละเอียดงาน</td>
+<td class="realq">"ประตูระแนงอลูมิเนียม<b>บานสวิง</b> (ไม่มีธรณี) <b>พร้อมระแนงติดตายด้านข้าง</b>" + "ระแนงกล่อง สีเทาซาฮาร่า 1"x1.6" โชว์หน้า 1" เว้น 2.5 ซม." (บุญญารัตน์ ข้อ 1)</td>
+<td class="c miss">🔴</td>
+<td>ลักษณะเปิด hardcode บานเลื่อน · ระแนงข้าง/ซี่/สี ไม่ลงบรรทัดลูกค้า (อยู่แค่ msg เทา)</td>
+</tr>
+
+<tr>
+<td><b>ระแนงเกล็ด Z</b><br>bar_grid_z</td>
+<td class="sys">"ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า <b>(ข้อ 38.1)</b> (2.4 × 2.2 ม.)" ไม่มีสี/ทิศ</td>
+<td class="realq">"ระแนงอลูมิเนียมเกล็ด Z <b>(แนวตั้ง)</b> หนา 1.6" <b>สีดำ</b>" (คุณยี)</td>
+<td class="c miss">🔴</td>
+<td>ไม่มี selector สี · ทิศไม่ลงใบ · ชื่อหลุด "(ข้อ 38.1)" · มอเตอร์นับผิดทิศตั้ง</td>
+</tr>
+
+<tr>
+<td><b>ระแนงเลื่อน</b><br>bar_slide</td>
+<td class="sys">"ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง) (2.4 × 2.2 ม.)" — เลือกสีได้แต่ไม่โชว์</td>
+<td class="realq">ระบุสี + ขนาดซี่ (ตามแม่แบบระแนง)</td>
+<td class="c miss">🔴</td>
+<td>สี (o-bsfinish) กระทบราคาแต่ไม่ลงใบ · เลือกประตู fence_gate = แครช</td>
+</tr>
+
+<tr>
+<td><b>ระแนงเปิด-ปิด</b><br>bar_openclose</td>
+<td class="sys">"ระแนงเปิด-ปิด (กล่อง 1"x4" โชว์ 4") (2.4 × 2.2 ม.)" — เลือกสีได้แต่ไม่โชว์</td>
+<td class="realq">ระบุสี + ขนาดซี่</td>
+<td class="c miss">🔴</td>
+<td>สี (o-bocfinish) ไม่ลงใบ</td>
+</tr>
+
+<tr>
+<td><b>ราวกันตก/ราวบันได</b><br>imp1–imp6</td>
+<td class="sys">"ราวกันตก <b>47.1 บันไดเฉียง หมุดแปะปูน (ทำยากสุด)</b> (ยาว 6 ม.)" · กระจกเทมเปอร์ใส 10 มม. ✓ · สีอบขาว</td>
+<td class="realq">"ราวกันตกกระจกติดตาย" · "กระจกเทมเปอร์ใส 12 มม." · "อุปกรณ์มาตรฐานผู้ผลิต <b>สแตนเลสสีเงิน</b>" (ชวลิต ข้อ 3)</td>
+<td class="c part">🟡</td>
+<td>ชื่อหลุด jargon "47.1…ทำยากสุด" · ไม่มีบรรทัดอุปกรณ์สแตนเลส (กระจกถูกแล้ว)</td>
+</tr>
+
+<tr>
+<td><b>ระแนงบังตา</b><br>rn1 (×88)</td>
+<td class="sys">"บังตาผนังระแนง <b>1x5 cm. โชว์ 1cm. 5cm.</b> ไม่โครง (2.4 × 2.2 ม.)" · สีอบขาว</td>
+<td class="realq">"ระแนงอลูมิเนียมกล่อง <b>สีเทาซาฮาร่า</b> ขนาด <b>1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม.</b>" (บุญญารัตน์)</td>
+<td class="c part">🟡</td>
+<td>default สีควรเป็นเทาซาฮาร่า · wording ซี่ต่างใบจริง (นิ้ว + "เว้นระยะห่าง")</td>
+</tr>
+
+</table>
+
+<h2>จุดที่ต้องแก้ — จัดลำดับ + เลขบรรทัด (ส่งแชทแก้โค้ด)</h2>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 1. ประตูรั้ว: ไม่มีให้เลือกลักษณะการเปิด (hardcode บานเลื่อน)</h3>
+ใบจริงมี บานสวิง / บานเปิด / บานเลื่อนเปิดคู่กลางรางบน · ระบบ fix เป็นบานเลื่อน ราง 2×กว้างเสมอ
+<ul><li>แก้: เพิ่ม <code>o-gateopen</code> (สวิง/เปิด/เลื่อนคู่กลาง) → ชื่อ+สูตรรางเปลี่ยนตาม · จุด: <code>L590</code> (name), <code>L1163</code> (calc), <code>L2406</code> (opts)</li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 2. ประตูรั้ว: รายละเอียดงานไม่ลงบรรทัดลูกค้า</h3>
+ระแนงติดตายด้านข้าง / ซี่ระแนง 1"x1.6" โชว์หน้า เว้นระยะ / สีระแนง — อยู่แค่ msg เทาภายใน ไม่ขึ้นใบ
+<ul><li>แก้: ผลัก detail ของ gate เข้าบรรทัด "รายละเอียดงาน" (เหมือน rn/บาน) · จุด: <code>L1163 msgs[]</code> → genQuote</li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 3. ประตูรั้ว: สีพิเศษคิดเพิ่ม = 0 บาท (key ไม่ตรง)</h3>
+<code>o-gfin</code> ใช้ค่า "สีอบพิเศษ/สีลายไม้อบพิเศษ/สีดำซาฮาร่า/สีลายไม้สต๊อก" แต่ <code>fin</code> ของระแนงใช้ "อบสีพิเศษ/อบสีลายไม้" → match ไม่ได้ → +0 (เฉพาะ "สีเทาซาฮาร่า" ที่ตรง)
+<ul><li>แก้ option value ให้ตรง key จริง + ตัด "สีดำซาฮาร่า/สีลายไม้สต๊อก" (rn ไม่มี key นี้) · จุด: <code>L2406</code> vs <code>L695-770</code></li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 4. ระแนงเลื่อน bar_slide: เลือกประตู fence_gate แล้วแอปแครช</h3>
+<code>doorOpts</code> มี <code>'fence_gate'</code> ปน → <code>basePrice(fence_gate)</code> ไม่มี method/rates → TypeError
+<ul><li>แก้: ตัด <code>'fence_gate'</code> ออกจาก array · จุด: <code>L2411</code></li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 5. ระแนงเกล็ด bar_grid_z: ไม่มี selector สี + ทิศ/สี ไม่ลงใบ</h3>
+มีแค่ <code>o-bgdir</code> (ทิศ) ไม่มีช่องสีเลย · และทิศก็ไม่ลงบรรทัดใบ
+<ul><li>แก้: เพิ่ม dropdown สีอบ (แบบ bar_openclose) + ผลักทิศ/สี ลงรายละเอียดงาน · จุด: <code>L587</code>, <code>L2407</code></li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 6. ระแนงเกล็ด bar_grid_z: มอเตอร์นับผิดเมื่อทิศตั้ง</h3>
+<code>motorCount = ceil(W/3)</code> ใช้กว้างเสมอ · ทิศตั้ง (v) ควรใช้สูง (H)
+<ul><li>แก้: เลือก D ตามทิศ (v→H, h→W) · จุด: <code>L1371-1376</code></li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 7. ระแนงเลื่อน/เปิด-ปิด: สีที่เลือกไม่ลงใบ</h3>
+<code>o-bsfinish</code>/<code>o-bocfinish</code> กระทบราคาแต่ไม่ถูก render เป็นบรรทัดสีในใบ → ลูกค้าไม่เห็นสีที่จ่ายเพิ่ม
+<ul><li>แก้: genQuote ดึง bsFinish/bocFinish (data-n) มาเป็นบรรทัด "สี…" · จุด: <code>L2415/2420</code> + readItem <code>L2651/2656</code> → genQuote</li></ul></div>
+
+<div class="pbox p1"><h3><span class="tag t1">P1</span> 8. ชื่อสินค้าหลุดศัพท์ภายในลงใบลูกค้า</h3>
+"(ข้อ 38.1/38.2/38.3)", "ลูกฟูกเรียบ 2 หน้า/ทาง", "47.1 … (ทำยากสุด)" — เป็นโค้ดภายใน ไม่ควรอยู่ในใบเสนอราคา
+<ul><li>แก้: แยก field ชื่อสำหรับลูกค้า (เช่น <code>qname</code>) หรือ strip ข้อ/วงเล็บภายในตอน genQuote · จุด: <code>L587-589</code>, <code>L655-660</code></li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 9. ราวกันตกกระจก: ไม่มีบรรทัดอุปกรณ์สแตนเลส</h3>
+ใบจริง "อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน" — ระบบไม่มี (กระจกเทมเปอร์ 10/12มม. ลงถูกแล้ว)
+<ul><li>แก้: เพิ่มบรรทัดอุปกรณ์ default ให้ราวกันตกกระจก (เช็คซ้ำ ความหนา 10 vs 12 ต่อเคส)</li></ul></div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 10. ระแนงบังตา: default สีควรเป็น "สีเทาซาฮาร่า" <span style="font-weight:400;font-size:10px;">(เช็คซ้ำ)</span></h3>
+ระบบ default สีอบขาว · ใบจริงทุกใบใช้สีเทาซาฮาร่าเป็นหลัก → ควรตั้ง default ให้ตรงงานจริง</div>
+
+<div class="pbox p2"><h3><span class="tag t2">P2</span> 11. ระแนงบังตา: รูปแบบคำขนาดซี่ต่างใบจริง <span style="font-weight:400;font-size:10px;">(เช็คซ้ำ)</span></h3>
+ระบบ "1x5 cm. โชว์ 1cm. 5cm." · ใบจริง "1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม." (หน่วยนิ้ว + คำ "เว้นระยะห่าง") — อ่านออกแต่คำไม่ตรง</div>
+
+<div class="pbox p3"><h3><span class="tag t3">🟢 ดีแล้ว</span> ไม่ต้องแก้</h3>
+<ul>
+<li>ราวบันได: กระจกเทมเปอร์ใส 10 มม. ลงใบถูก (<code>glassDef:14</code>)</li>
+<li>ขนาดท้ายบรรทัด "(X × Y ม.)" / "(ยาว X ม.)" ถูกทุกตัว</li>
+<li>หน่วย "1 ชุด" ตรงใบจริง (lump sum)</li>
+</ul></div>
+
+<div class="foot">
+Batch 1/2 · render ด้วย jsdom จาก index.html ปัจจุบัน + เทียบใบจริง 3 ใบ (บุญญารัตน์ 68032001 Rev02 · คุณยี QT2025060015 · ชวลิต QT2025070050) · ราคา/คำยกจากใบจริง ไม่เดา · ตัวเลข KPI นับ pill จริงในตาราง · READ-ONLY ไม่แตะ public/calculator/index.html<br>
+Batch 2 (ถัดไป): ไล่ rate-variant rn2–rn92 / imp2–imp6 ทีละ 6 เพื่อยืนยันว่าใช้ engine เดียวกัน (ปัญหาชุดเดียวกับ batch 1) — บอกได้ถ้าต้องการ
+</div>
+
+</body>
+</html>

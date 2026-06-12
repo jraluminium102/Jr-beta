@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G2 (FINAL) — สั่งแก้ HTML ให้ใบเสนอราคาตรงใบจริง</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:10.5px;line-height:1.45;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:13px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  h2.ok{background:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:9.5px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .kpi{display:flex;gap:6px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}
+  .new{display:inline-block;font-size:8.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;border-radius:8px;padding:0 6px;margin-left:4px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  pre{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:5px;padding:6px 8px;font-size:9px;white-space:pre-wrap;margin:3px 0;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G2 (FINAL) — สั่งแก้ HTML ให้ใบเสนอราคา "ตรงใบจริง"</h1>
+<div class="sub">กลุ่มรั้ว/ระแนง/ราวกันตก · ตรวจครบ 98 รายการ + ไล่ใบจริง 15 ใบ (3 subagent) + verify ราคา · ส่งแชทที่แก้ <code>public/calculator/index.html</code> · 10 มิ.ย. 2026</div>
+
+<div class="kpi">
+  <div><span class="n green">98</span>รายการตรวจครบ</div>
+  <div><span class="n green">15</span>ใบจริงไล่ครบ</div>
+  <div><span class="n green">5/5·14/14</span>ราคา verify</div>
+  <div><span class="n red">12</span>🔴 ต้องแก้</div>
+  <div><span class="n yellow">4</span>🟡 ควรแก้</div>
+</div>
+
+<div class="good">
+<b>✅ ราคาถูกทั้งกลุ่ม — ห้ามแก้เรท/สูตร:</b> สูตร 37/38.1-38.4/47 verify เป็นตัวเลขผ่าน 5/5 · baseline 14/14 · เรตระแนง 92/92 ตรงต้นฉบับ xlsx ·
+เรทที่ซ้ำกัน (rn33=rn35, imp2=imp3=imp4 ฯลฯ) = <b>ตั้งใจในต้นฉบับ ไม่ใช่บั๊ก</b> · ระแนง <b>82 รุ่นครอบขนาดซี่ครบแล้ว</b> (1"/1.6"/4"/5cm × ระยะ 5/3/2cm × ไม่โครง/รวมโครง) → <b>ไม่ต้องเพิ่ม product</b> ·
+ทั้งหมดที่ต้องแก้ = <b>การแสดงผล/ออปชั่น/ทิศ/สี</b> (ยกเว้น #1 บั๊กคิดเงินขาด)
+</div>
+
+<h2>🔴 P1 — แก้ให้ output ตรงใบจริง</h2>
+<table>
+<tr><th style="width:30px;">#</th><th>อาการ</th><th style="width:23%;">จุด/บรรทัด</th><th style="width:30%;">แก้ยังไง</th></tr>
+
+<tr><td>1</td><td><b>ประตูรั้ว: สีพิเศษคิดเพิ่ม = 0 บาท</b> (คิดเงินขาด) — <code>o-gfin</code> value ไม่ตรง key ใน fin</td><td><code>L2406</code> vs <code>L695-770</code></td>
+<td>"สีอบพิเศษ"→<b>"อบสีพิเศษ"</b> · "สีลายไม้อบพิเศษ"→<b>"อบสีลายไม้"</b> · ตัด "สีดำซาฮาร่า"</td></tr>
+
+<tr><td>2</td><td><b>ประตูรั้ว: เพิ่ม "ลักษณะการเปิด" 4 แบบ</b> <span class="new">อัปเดต</span> — ใบจริงมี: บานสวิง · บานเปิด · บานเลื่อนเปิดคู่กลาง<b>รางล่าง</b> · บานเลื่อนเปิดคู่กลาง<b>รางบน</b></td><td><code>L590</code>(name) <code>L1163</code>(calc/ราง) <code>L2406</code>(opts)</td>
+<td>dropdown ลักษณะเปิด → เปลี่ยนชื่อ + แยกราง บน/ล่าง (ราคารางต่างกัน)</td></tr>
+
+<tr><td>3</td><td><b>ประตูรั้ว: รายละเอียดไม่ลงบรรทัดลูกค้า</b> — วลี "พร้อมระแนงติดตายด้านข้าง" + ซี่ระแนง + สี อยู่แค่ msg เทา</td><td><code>L1163 msgs[]</code>→genQuote</td>
+<td>ผลัก detail เข้า "รายละเอียดงาน" + เติมวลี "พร้อมระแนงติดตายด้านข้าง"</td></tr>
+
+<tr><td>4</td><td><b>ระแนงเลื่อน bar_slide: เลือกประตู fence_gate → แครช</b> (TypeError)</td><td><code>L2411</code></td><td>ตัด <code>'fence_gate'</code> ออกจาก doorOpts</td></tr>
+
+<tr><td>5</td><td><b>ระแนงเกล็ด bar_grid_z: ไม่มี selector สี + ทิศไม่ลงใบ</b></td><td><code>L587</code>, <code>L2407</code></td><td>เพิ่ม dropdown สี + ผลักทิศ/สีลงรายละเอียดงาน</td></tr>
+
+<tr><td>6</td><td><b>มอเตอร์ bar_grid: ⌈D÷3⌉ ใช้กว้างเสมอ</b> ทิศตั้งผิด</td><td><code>L1371-1376</code></td><td>D ตามทิศ (v→H, h→W) หรือเอามอเตอร์ออกจาก 38.1</td></tr>
+
+<tr><td>7</td><td><b>ระแนงเลื่อน/เปิด-ปิด: สีที่เลือกไม่ลงใบ</b></td><td><code>L2415/2420</code>→genQuote</td><td>genQuote ดึง bsFinish/bocFinish (data-n) เป็นบรรทัดสี</td></tr>
+
+<tr><td>8</td><td><b>ชื่อสินค้าหลุด jargon ลงใบ</b> — "(ข้อ 38.x)", "47.x …(ทำยากสุด)", "(ก)/(ข)"</td><td><code>L587-589</code>, <code>L655-660</code></td><td>แยก field ชื่อลูกค้า หรือ strip ตอน genQuote</td></tr>
+
+<tr><td>9</td><td><b>เกล็ด Z 6 รุ่น: ไม่โชว์ทิศ "(แนวตั้ง)/(แนวนอน)"</b> — ราคาเท่ากัน แต่ใบจริงระบุเสมอ</td><td>cat <code>ระแนง-เกล็ด</code></td><td>dropdown ทิศ (ไม่ผูกราคา) → ลงบรรทัดชื่อ</td></tr>
+
+<tr><td>10</td><td><b>ราวกันตกกระจก: ไม่มี option ความหนากระจก 12 มม.</b> <span class="new">ใหม่</span> — ใบจริงใช้ทั้ง 10 และ 12 มม. (ชวลิต=12)</td><td>imp / glassDef</td><td>เพิ่ม selector กระจก 10/12 มม. (default 10)</td></tr>
+
+<tr><td>11</td><td><b>ราวกันตกกระจก: ไม่มีบรรทัด "อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน"</b> <span class="new">ยืนยันบังคับ</span> — ทุกใบมีบรรทัดนี้</td><td>imp → genQuote</td><td>เพิ่มบรรทัดอุปกรณ์สแตนเลส default (บังคับ ไม่ optional)</td></tr>
+
+<tr><td>12</td><td><b>OPTION ลายไม้ Golden Teak SMS</b> <span class="new">ใหม่</span> — ใบจริงมีแทบทุกใบ (ประตูรั้ว+ระแนง) · ราคา scale ตามขนาด/ราคางาน (65,000 แทน / +5,000 / +19,500 / +25,000) ไม่ fixed</td><td>option ระแนง/gate</td><td>เพิ่ม option เปลี่ยนเป็นลายไม้ Golden Teak SMS — ราคาคิดเป็น % ของฐาน หรือ ส่วนต่างเรตลายไม้×พื้นที่ (เช็คซ้ำวิธีคิดกับพี่นัท)</td></tr>
+</table>
+
+<h2>🟡 P2 — ควรแก้</h2>
+<table>
+<tr><th style="width:30px;">#</th><th>อาการ</th><th>แก้ยังไง</th></tr>
+<tr><td>13</td><td><b>สี default rn ทั้งหมด = "สีอบขาว"</b> — ใบจริงใช้สีเทาซาฮาร่ามากสุด</td><td>เปลี่ยน default → เทาซาฮาร่า + สีที่เลือกลงใบ</td></tr>
+<tr><td>14</td><td><b>ขนาดซี่ระแนงไม่ลงใบ</b> — ข้อมูลมีในชื่อรุ่นแล้ว แต่ต้องจัด format บรรทัดให้ตรงใบจริง (ดูแม่แบบด้านล่าง)</td><td>genQuote ออกบรรทัด "ระแนงอลูมิเนียมกล่อง ขนาด … โชว์หน้า … เว้นระยะห่าง … ซม."</td></tr>
+<tr><td>15</td><td><b>ประตูรั้ว: "(ไม่มีธรณี)/(มีธรณี)"</b> — ใบจริงระบุ</td><td>เพิ่ม option ธรณี ให้ gate</td></tr>
+<tr><td>16</td><td><b>edge case:</b> งาน bundle (ราวกันตก+หลังคา ขายเป็นชุดรวม) — สูตร/เมตร ถูก แต่ควรรู้ว่าบางใบรวมเป็น package</td><td>หมายเหตุไว้ ไม่ใช่บั๊ก</td></tr>
+</table>
+
+<h2>📐 แม่แบบข้อความที่ระบบต้องออก (ยกจากใบจริง — ให้ตรงคำ)</h2>
+<div class="note">
+<b>ระแนงกล่อง/บังตา/ผนัง:</b>
+<pre>- ระแนงอลูมิเนียมกล่อง [สี]
+- ระแนงอลูมิเนียมกล่อง ขนาด 1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม.</pre>
+<b>เกล็ด Z:</b>
+<pre>- ระแนงอลูมิเนียมเกล็ด Z หนา 1.6" [สี] ( แนวตั้ง / แนวนอน )</pre>
+<b>ประตูรั้วระแนง:</b>
+<pre>ประตูระแนงอลูมิเนียม[บานสวิง/บานเปิด/บานเลื่อนเปิดคู่กลางรางบน] พร้อมระแนงติดตายด้านข้าง
+OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคา[เพิ่ม] X บาท</pre>
+<b>ราวกันตกกระจก:</b>
+<pre>- อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน
+- กระจกเทมเปอร์ใส หนา 10/12 มม.</pre>
+</div>
+
+<h2>ลำดับแก้ (คุ้มสุด → น้อยสุด)</h2>
+<div class="note">
+<b>รอบ 1 (เงิน/พัง):</b> #1 สีพิเศษคิด 0 → #4 แครช bar_slide<br>
+<b>รอบ 2 (ใบไม่เหมือนจริง · เจอบ่อยสุด):</b> #2 ลักษณะเปิดประตูรั้ว → #3 detail+วลีระแนงติดตายข้าง → #11 สแตนเลส → #12 OPTION ลายไม้ → #8 ตัด jargon → #9 ทิศเกล็ด Z → #13 สี default<br>
+<b>รอบ 3 (เก็บละเอียด):</b> #5 สี bar_grid → #7 สี bar_slide/openclose → #10 กระจก 12มม. → #6 มอเตอร์ทิศ → #14 format ซี่ → #15 ธรณี<br>
+<b>หลังแก้ทุกรอบ:</b> รัน <code>node test/quote-fidelity.mjs</code> ต้อง PASS 14/14 + gen ใบเทียบดราฟ <code>DRAFT-G2-pricing-method</code> / <code>DRAFT-G2-ranae-fence-rail</code>
+</div>
+
+<h2 class="ok">📎 เอกสารแนบ (docs/)</h2>
+<table>
+<tr><th style="width:46%;">ไฟล์</th><th>เนื้อหา</th></tr>
+<tr><td><code>HANDOFF-G2-FINAL-2026-06-10 (ไฟล์นี้)</code></td><td>fixlist รวม 12🔴+4🟡 + แม่แบบคำ + ลำดับแก้ + สิ่งห้ามแตะ</td></tr>
+<tr><td><code>REPORT-G2-pricebook-2026-06-10.pdf</code></td><td>สมุดราคา 98 รายการ (ตรวจราคา)</td></tr>
+<tr><td><code>REPORT-G2-audit-batch1/2/3 .pdf</code></td><td>รายละเอียดการตรวจแต่ละรอบ</td></tr>
+<tr><td><code>DRAFT-G2-pricing-method-2026-06-10.html</code></td><td>ฟอร์แมตใบ + วิธีคิดราคา (เป้าหมายหน้าตา)</td></tr>
+<tr><td><code>DRAFT-G2-ranae-fence-rail.html</code></td><td>ดราฟใบ "หลังแก้" เทียบใบจริง</td></tr>
+</table>
+
+<div class="foot">
+ตรวจครบ 98 รายการ G2 + ไล่ใบจริง 15 ใบ (บุญญารัตน์/ธนบัตร/นก/หญิง/ชวลิต/สุจินต์/ยี ฯลฯ) ด้วย 3 subagent · ราวกันตกเหล็ก=ไม่ขาย ไม่ตรวจ · ราคา verify 5/5+14/14 · เรต 92/92 ตรงต้นฉบับ · ข้อความ/ราคายกจากใบจริง+สูตร R3.9 ไม่เดา · READ-ONLY ไม่แตะ index.html · 10 มิ.ย. 2026
+</div>
+
+</body>
+</html>

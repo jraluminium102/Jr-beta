@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HANDOFF G5 มุ้ง — FINAL (ส่ง dev แก้ index.html)</title>
+<style>
+  :root{--red:#B3151D;--line:#e5d3d4;--bg:#FFF9F9;}
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Tahoma,sans-serif;color:#222;max-width:920px;margin:0 auto;padding:24px;line-height:1.55}
+  h1{color:var(--red);font-size:23px;border-bottom:3px solid var(--red);padding-bottom:8px}
+  h2{color:var(--red);font-size:18px;margin-top:30px;border-left:4px solid var(--red);padding-left:9px}
+  h3{font-size:15px;margin:18px 0 6px}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--red);color:#fff;font-weight:600}
+  tr:nth-child(even){background:var(--bg)}
+  code{background:#f4eaea;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace}
+  pre{background:#2b2b2b;color:#f0f0f0;padding:13px;border-radius:8px;overflow-x:auto;font-size:11.5px;line-height:1.5}
+  pre.old{background:#3a2626}pre.new{background:#23332a}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;color:#fff;white-space:nowrap}
+  .t-new{background:#A32D2D}.t-keep{background:#888}.t-done{background:#1D9E75}.t-cut{background:#444}.t-up{background:#BA7517}
+  .box{border:1px solid var(--line);border-radius:9px;padding:13px 16px;margin:13px 0;background:var(--bg)}
+  .warn{border-left:5px solid #BA7517;background:#FAEEDA;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+  .ok{border-left:5px solid #1D9E75;background:#E1F5EE;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+  ul{margin:6px 0 6px 4px;padding-left:20px}li{margin:3px 0}
+  .meta{font-size:12.5px;color:#666;margin-top:-6px}
+  .order{counter-reset:step;list-style:none;padding-left:0}
+  .order li{counter-increment:step;margin:7px 0;padding:9px 12px 9px 44px;position:relative;background:#fff;border:1px solid var(--line);border-radius:8px}
+  .order li::before{content:counter(step);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;background:var(--red);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G5 — มุ้ง · FINAL (รวมทุกมติ)</h1>
+<p class="meta">ส่ง: dev แชท B · 2026-06-12 · ไฟล์ <code>public/calculator/index.html</code> · กลุ่ม 5 มุ้ง · แทนที่ HANDOFF-G5 ฉบับ 06-11 (รวมมติเพิ่มทั้งหมด)</p>
+
+<div class="ok"><b>ภาพรวมงาน:</b> ปรับ UX ฟอร์มมุ้งให้กรอกง่าย + จัดออปชั่นให้ถูกประเภท · <b>เป็นงาน UI/จัดหมวดเป็นหลัก — ไม่แตะสูตรราคา</b> (cross-check ยืนยันสูตรเดิมถูก) <b>ยกเว้น 1 จุด: ผ้ากันหนูระบุสีในใบ</b></div>
+
+<div class="warn"><b>⚠ กฎเหล็ก:</b> redesign = เปลี่ยน UI control + ซ่อน select เดิม + UI ใหม่ sync ค่ากลับ + fire change · <b>ห้ามเปลี่ยน value/ชื่อ class ที่ logic อ่าน</b> · ใช้ <code>chSetChip()</code> (บรรทัด ~2139) ที่มีอยู่ · CSS <code>chip/chip-group/chip-sm</code> มีแล้ว ไม่ต้องเพิ่ม · เลขบรรทัดอ้างอิงคร่าว — dev อ้าง class/flag เป็นหลัก</div>
+
+<h2>มติทั้งหมด (เคาะแล้วโดยพี่นัท)</h2>
+<table>
+<tr><th>#</th><th>มติ</th><th>ประเภทงาน</th></tr>
+<tr><td>1</td><td>ตัด <b>กระจก / สีอลูมิเนียม / คาดตาราง</b> ออกจากมุ้ง</td><td>UI (ซ่อน)</td></tr>
+<tr><td>2</td><td>ดึง <b>ติดมุ้งบานเดิม (โหมด B)</b> ขึ้นเด่นบนสุด</td><td>UI (ย้าย)</td></tr>
+<tr><td>3</td><td><b>ผ้ามุ้ง + สีผ้า</b> → ชิป + ดึงขึ้นออปชั่นหลัก (ไม่ซ่อน accordion)</td><td>UI (ชิป)</td></tr>
+<tr><td>4</td><td><b>สีผ้าผูกกับชนิดผ้า</b> — เปลี่ยนชุดสีตามผ้าที่เลือก</td><td>UI (conditional)</td></tr>
+<tr><td>5</td><td><b>ผ้ากันหนู (rat) ระบุสีในใบ</b> (เงิน/ดำ)</td><td><b>Logic ราคา/ใบ</b></td></tr>
+<tr><td>6</td><td><b>รูปแบบเลือกสินค้า</b> → drill-down 3 หมวด (เฟรม/จีบ/ม้วน)</td><td>UI (cascade)</td></tr>
+<tr><td>7</td><td>ย้าย <b>มุ้งแม่เหล็กพับ (imp30)</b> เข้าหมวดเฟรม</td><td>UI (จัดกลุ่ม)</td></tr>
+<tr><td>8</td><td><b>ซ่อน imp33 (กันแมว) + imp35 (กันหนู)</b> จากเมนู — เก็บสินค้า/เรตไว้</td><td>UI (ซ่อน)</td></tr>
+<tr><td>9</td><td><b>ลักษณะการเปิด</b> (เปิด/เลื่อน/กระทุ้ง/ยก) — label-only คู่ผ้ามุ้ง (imp21/23)</td><td>UI</td></tr>
+</table>
+
+<h2>1) ลำดับฟอร์มมุ้งใหม่</h2>
+<ol class="order">
+<li><b>รูปแบบมุ้ง</b> — drill-down: หมวด (เฟรม/จีบ/ม้วน) → การ์ดรุ่น</li>
+<li><b>ติดมุ้งบานเดิม (โหมด B)</b> <code>o-screen_existing</code> + ค่าเสริม <code>o-screen_extra</code> — กล่องส้มเด่น</li>
+<li><b>ประเภท</b> <code>i-type</code> ชิป · <b>ขนาด</b> ก×ส · <b>จำนวนบาน</b></li>
+<li><b>ผ้ามุ้ง + สีผ้า (ผูกผ้า) + ลักษณะการเปิด</b> — ชิปหลัก (เฉพาะ screen_addon = imp21/22/23)</li>
+<li>accordion <b>อุปกรณ์เสริม</b> → สีกรอบมุ้ง (12) + ครอบวงกบ + งานเสริม + รื้อ</li>
+<li>accordion <b>หมายเหตุ / OPTION</b></li>
+</ol>
+<p class="meta">ตัดหายจากมุ้ง: กระจก (<code>i-glass</code>) · สีอลู (<code>i-color</code>) · คาดตาราง (<code>o-gridmark</code>)</p>
+
+<h2>2) จุดแก้โค้ด — before/after</h2>
+
+<h3>จุด A — ตัดกระจก + สีอลู ออกจากมุ้ง (บรรทัด ~2716–2717)</h3>
+<pre class="old">var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
+var _showGw=!!(gw&&!(areaOnly||p.zipscreen));</pre>
+<pre class="new">var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'));
+var _showGw=!!(gw&&!(areaOnly||p.zipscreen||p.cat==='มุ้ง'));</pre>
+<p class="meta">⚠ ห้ามลบ <code>screen_addon</code> จาก <code>usesPanels()</code> (บรรทัด 934) — ยังคุมจำนวนบาน→min</p>
+
+<h3>จุด B — ตัดคาดตาราง ออกจากมุ้ง (บรรทัด ~2488)</h3>
+<pre class="old">if(!p.grid && !['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){</pre>
+<pre class="new">if(!p.grid && !['หลังคา','ฝ้า-ผนัง','มุ้ง'].includes(p.cat)){</pre>
+
+<h3>จุด C — ดึงโหมด B ขึ้นบนสุด (ย้ายบล็อก <code>if(p.cat==='มุ้ง')</code> บรรทัด ~2611–2612 ไปต้น buildItemOpts + render นอก accordion)</h3>
+<pre class="new">h+='&lt;div class="opt" style="width:100%;background:#FFF3E0;border:2px solid #FF9800;border-radius:8px;padding:8px 12px;"&gt;'
+ +'&lt;label style="display:flex;align-items:center;gap:8px;font-weight:700;"&gt;&lt;input type="checkbox" class="o-screen_existing" onchange="calcQuote();"&gt; ติดมุ้งบานเดิม (โหมด B)&lt;/label&gt;&lt;/div&gt;';
+h+='&lt;label class="opt"&gt;ค่าเสริมกล่อง/ราง (บาท) &lt;input type="number" class="o-screen_extra" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" style="width:140px;height:30px;"&gt;&lt;/label&gt;';</pre>
+<p class="meta">class <code>o-screen_existing</code>/<code>o-screen_extra</code> ห้ามเปลี่ยน (อ่าน ~2811–2812 · คิดราคา ~1413, 3473)</p>
+
+<h3>จุด D — ผ้ามุ้ง → ชิป (บล็อก <code>if(p.screen_addon)</code> บรรทัด ~2684)</h3>
+<pre class="new">if(p.screen_addon){
+  h+='&lt;label class="opt" style="width:100%;"&gt;ผ้ามุ้ง &lt;div class="chip-group chip-sm"&gt;'
+   +'&lt;button type="button" class="chip on" data-val="fiber" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)"&gt;ไฟเบอร์ เทา/ดำ&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)"&gt;กันแมว/หมา ขาว +800&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="rat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)"&gt;สแตนกันหนู +1,200&lt;/button&gt;'
+   +(p.rates==='IMP23'?'&lt;button type="button" class="chip" data-val="safety" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)"&gt;นิรภัยสแตน 304 ดำ&lt;/button&gt;':'')
+   +'&lt;/div&gt;&lt;select class="o-screenfabric" style="display:none;" onchange="calcQuote();"&gt;...(option value เดิม fiber/cat/rat/safety)...&lt;/select&gt;&lt;/label&gt;';</pre>
+
+<h3>จุด E — สีผ้า → ชิป + <b>ผูกกับชนิดผ้า</b> (บรรทัด ~2848)</h3>
+<p>สีผ้าต้องเปลี่ยนชุดตามผ้าที่เลือก (ฟังก์ชัน <code>mosqFabricColors</code> ที่ chip ผ้าเรียก):</p>
+<table>
+<tr><th>ผ้า (value)</th><th>สีผ้าที่โชว์</th><th>แบบ</th></tr>
+<tr><td><code>fiber</code> ไฟเบอร์</td><td>ดำ, เทา</td><td>ชิปกดเลือก (ไม่มีขาว)</td></tr>
+<tr><td><code>cat</code> กันแมว/หมา</td><td>ขาว</td><td>ชิปติดตาย + ป้าย "สีเดียว"</td></tr>
+<tr><td><code>rat</code> สแตนกันหนู</td><td>เงิน, ดำ</td><td>ชิปกดเลือก</td></tr>
+<tr><td><code>safety</code> นิรภัย 304</td><td>ดำ</td><td>ชิปติดตาย + ป้าย "สีเดียว"</td></tr>
+</table>
+<pre class="new">// ฟังก์ชันใหม่ — เลือกผ้าแล้ว rebuild ชิปสีผ้า + sync .o-screenfabriccolor (ค่าเดิม) + fire change
+function mosqFabricColors(fabBtn){
+  var ch=fabBtn.closest('.ch'); var fab=fabBtn.dataset.val;
+  var MAP={fiber:['ดำ','เทา'],cat:['ขาว'],rat:['เงิน','ดำ'],safety:['ดำ']};
+  var cols=MAP[fab]||['ดำ']; var fixed=cols.length===1;
+  var wrap=ch.querySelector('.o-sfc-chipwrap'); var sel=ch.querySelector('.o-screenfabriccolor');
+  wrap.innerHTML=cols.map(function(c,i){return fixed
+    ? '&lt;button type="button" class="chip on" disabled&gt;'+c+'&lt;/button&gt;'
+    : '&lt;button type="button" class="chip'+(i===0?' on':'')+'" data-val="'+c+'" onclick="chSetChip(this,\'o-screenfabriccolor\')"&gt;'+c+'&lt;/button&gt;';}).join('')
+    + (fixed?'&lt;span class="opt" style="font-size:11px;color:#0369A1;"&gt;สีเดียว&lt;/span&gt;':'');
+  if(sel){ sel.value=cols[0]; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+}</pre>
+<p class="meta">HTML สีผ้า: เปลี่ยน dropdown เป็น <code>&lt;div class="o-sfc-chipwrap"&gt;&lt;/div&gt;</code> + select ซ่อน <code>.o-screenfabriccolor</code> (value: ดำ/เทา/ขาว/เงิน) · เรียก <code>mosqFabricColors</code> ครั้งแรกตอน build (default fiber)</p>
+
+<h3>จุด F — ผ้ากันหนู (rat) ระบุสีในใบ (บรรทัด ~3760–3762) <span class="tag t-new">แก้ logic ใบ</span></h3>
+<p class="meta">เดิมเก็บสีผ้าเฉพาะ fiber · มติพี่นัท: rat ต้องระบุสี (เงิน/ดำ) ในใบด้วย</p>
+<pre class="old">const fabricFull = sf==='fiber' ? ('ผ้าไฟเบอร์'+sfcColor) : fabricLabel;</pre>
+<pre class="new">const fabricFull = (sf==='fiber') ? ('ผ้าไฟเบอร์'+sfcColor)
+                 : (sf==='rat')   ? ('ผ้าสแตนกันหนู'+sfcColor)   // เงิน/ดำ
+                 : fabricLabel;</pre>
+<p class="meta">⚠ เช็คซ้ำ: ราคาไม่เปลี่ยน (สีผ้าเป็น label) · ตรวจ branch อื่นที่ map fabric (บรรทัด ~1614, 3903, 4008) ว่าออกชื่อถูก</p>
+
+<h3>จุด G — รูปแบบเลือกสินค้า: drill-down 3 หมวด (เฉพาะกลุ่ม 5)</h3>
+<p>เมื่อกลุ่มงาน = 5 (มุ้ง) ให้เลือกสินค้าแบบ 2 ชั้น แทน dropdown ยาว — หมวด → รุ่น:</p>
+<table>
+<tr><th>หมวด</th><th>รุ่น (id)</th></tr>
+<tr><td><b>เฟรม</b> (4)</td><td>imp21, imp22, imp23, <b>imp30 (แม่เหล็กพับ — ย้ายมา)</b></td></tr>
+<tr><td><b>จีบ</b> (9)</td><td>imp28, mj_sd_basic, mj_sd_twoway, mj_keep_twoway, mj_keep_honey, mj_blackout, imp31, imp32, mj_screen_safety</td></tr>
+<tr><td><b>ม้วน</b> (4)</td><td>imp29, mj_kick_150, mj_kick_300, mj_kick_600</td></tr>
+</table>
+<div class="warn"><b>ซ่อนจากเมนู (มติ — เก็บสินค้า/เรตไว้ ห้ามลบ):</b> <code>imp33</code> (กันแมว/หมา IMP33 800/ตร.ม.) · <code>imp35</code> (กันหนู IMP35 1,200/ตร.ม.) — เป็นมุ้งสำเร็จราคาถูก คนละราคากับ option ผ้า cat/rat บนเฟรม · แค่ไม่โชว์ในเมนูเลือกรุ่น (เผื่อใบเก่า/ลูกค้าเก่ายังใช้ได้)</div>
+<p class="meta">วิธี dev เลือกได้: (ก) เพิ่มชิปหมวดก่อน <code>.i-prod</code> แล้ว filter option ตามหมวด · หรือ (ข) ทำการ์ดรุ่น 2 ชั้น แทน dropdown เฉพาะ cat='มุ้ง' · ดูดราฟ <code>docs/DRAFT-G5-ux-v3-2026-06-12.html</code> เป็นต้นแบบ</p>
+
+<h2>3) สูตรราคา — ยืนยันแล้ว ไม่ต้องแก้ (cross-check 9/11 ตรง engine)</h2>
+<div class="box">
+<b>screen_addon (imp21/22/23):</b> <code>sell = ปัดพัน( max( A×(rate+ค่าผ้า) , min×จำนวนบาน ) )</code><br>
+A = พื้นที่รวม (ไม่คูณบาน) · min×panels · ค่าผ้า/ตร.ม.: fiber 0, กันแมว 800, กันหนู 1,200, นิรภัย 3,500 (บวกเข้า base ก่อนเทียบ min)<br>
+<b>non-addon:</b> <code>sell = ปัดพัน( max( min, A×rate ) )</code><br>
+<b>ทุกราคาปัดขึ้นพัน</b> (<code>roundUp = Math.ceil(x/1000)*1000</code>)
+</div>
+<p class="meta">⚠ เช็คซ้ำ: เคส "หน้าต่าง + min ชนะ" — <code>calcUnit</code> อ่าน itype จาก DOM <code>.i-type</code> (ตัวแปร <code>d</code> บรรทัด ~1056) ไม่ใช่ optSel · ใช้งานจริงในเบราว์เซอร์ window→min_window ถูก · ยืนยันในเบราว์เซอร์ตอนทำ</p>
+
+<h2>4) QA Checklist</h2>
+<table>
+<tr><th>#</th><th>เช็ค</th></tr>
+<tr><td>1</td><td>เลือกหมวด เฟรม → 4 รุ่น (มี แม่เหล็กพับ) · จีบ → 9 · ม้วน → 4 · ไม่มีหมวดพิเศษ</td></tr>
+<tr><td>2</td><td><code>imp33/imp35</code> ไม่โผล่ในเมนู · แต่ยังอยู่ใน PRODUCTS (เรตเดิม)</td></tr>
+<tr><td>3</td><td>imp21/22/23: ชิปผ้ามุ้ง · imp23 มี 4 ชิป (safety) · อื่นไม่มี block ผ้า</td></tr>
+<tr><td>4</td><td>เลือกผ้า → สีผ้าเปลี่ยนชุด: fiber=ดำ/เทา · cat=ขาว(เดียว) · rat=เงิน/ดำ · safety=ดำ(เดียว)</td></tr>
+<tr><td>5</td><td>ผ้ากันหนู (rat) → ใบออก "ผ้าสแตนกันหนูเงิน/ดำ" ตามที่เลือก</td></tr>
+<tr><td>6</td><td>มุ้งทุกตัว: ไม่มี กระจก/สีอลู/คาดตาราง · โหมด B อยู่บนสุด</td></tr>
+<tr><td>7</td><td><code>node test/quote-fidelity.mjs</code> + <code>node test/calc-mosq-frame.mjs</code> PASS</td></tr>
+</table>
+
+<h2>5) Definition of Done</h2>
+<ul>
+<li>✅ <code>node test/quote-fidelity.mjs</code> + <code>calc-mosq-frame.mjs</code> PASS — ราคาไม่เพี้ยน</li>
+<li>✅ เปิดเบราว์เซอร์จริง: drill-down หมวด→รุ่น · สีผ้าผูกผ้าถูก · โหมด B/ผ้า/สี เห็นทันที</li>
+<li>✅ มุ้งไม่มี กระจก/สีอลู/คาดตาราง · imp33/35 ไม่อยู่ในเมนู (แต่เรตเดิมอยู่)</li>
+<li>✅ ใบ: ผ้ากันหนูระบุสี (เงิน/ดำ) · readItem อ่าน value เดิมครบ</li>
+</ul>
+
+<div class="ok"><b>ต้นแบบดราฟกดเล่นได้:</b> <code>docs/DRAFT-G5-ux-v3-2026-06-12.html</code> (เรตจริง · cross-check 9/11) · <code>Desktop/Sharepicjr/draft-g5-mosquito-formux-v3.html</code></div>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G4 ตู้อลู — รอบถัดไป (Aztec 950 + UX 6 จุด) · ส่ง dev แชท B</title>
+<style>
+  body{ font-family:'Segoe UI',Tahoma,sans-serif; color:#1F2937; max-width:940px; margin:0 auto; padding:24px; line-height:1.6; }
+  h1{ color:#B3151D; font-size:22px; margin-bottom:2px; }
+  h2{ color:#B3151D; font-size:16px; margin-top:26px; border-bottom:2px solid #FCA5A5; padding-bottom:4px; }
+  h3{ font-size:14px; margin:14px 0 6px; }
+  .sub{ color:#6B7280; font-size:13px; margin-bottom:6px; }
+  code{ background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:12.5px; color:#B3151D; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+  th,td{ border:1px solid #D1D5DB; padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:#FEE2E2; color:#7F1D1D; }
+  tr:nth-child(even) td{ background:#FAFAFA; }
+  pre{ background:#0F172A; color:#E2E8F0; padding:13px 15px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.5; }
+  pre .c{ color:#94A3B8; }
+  .box{ background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .warn{ background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .ok{ background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  ul,ol{ margin:6px 0; padding-left:22px; } li{ margin:3px 0; }
+  .pri{ display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:5px; }
+  .p-must{ background:#FECACA; color:#991B1B; } .p-hi{ background:#FED7AA; color:#9A3412; } .p-low{ background:#E5E7EB; color:#374151; }
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G4 ตู้อลู — รอบถัดไป</h1>
+<p class="sub">ส่ง dev แชท B · 12 มิ.ย. 2026 · พี่นัทอนุมัติ UX แล้ว — รวมงานค้าง "แก้ทีเดียว"</p>
+<p class="sub">ดราฟ UX (อนุมัติ): https://jraluminium102.github.io/sharepicjr/draft-G4-cabinet-v2.html</p>
+
+<div class="ok">
+<b>บริบท:</b> งานตู้หลักเสร็จแล้ว (commit 36e815f ค่าสีโครง + 6ef160f ชิป/หมวด · เทส 8/8 ผ่าน). เอกสารนี้ = งานค้าง 2 ส่วนที่เหลือ →
+<b>(A) แก้ราคา Aztec</b> + <b>(B) ปรับ UX 6 จุด</b> (พี่นัทอนุมัติดราฟแล้ว "เอาประมาณนี้")
+</div>
+
+<h2>PART A — แก้ราคา: Aztec gray = 950 (stock)</h2>
+<div class="warn">
+<b>มติพี่นัท (ใหม่):</b> Aztec gray (สีหลัก idx 4) เมื่อเป็นของ <b>stock</b> ค่าสีอลูทึบ = <b>950/ตร.ม.</b> (ไม่ใช่ 1,600 ที่ตั้งไว้)<br>
+950 อยู่ระหว่างซาฮารา 400 กับอบพิเศษ 1,600 · ตรงกับตาราง <code>o-bsfinish</code> (ระแนงเลื่อน ลูกฟูก 2 ทาง) ที่ Aztec=950 อยู่แล้ว
+</div>
+<p>แก้ <code>rn90FinRate</code> (บ.~933) — แยก idx4 ออกจากกลุ่มอบพิเศษ:</p>
+<pre><span class="c">// เดิม: if(ci===4||ci===10||ci===12) return 1600;</span>
+function rn90FinRate(ci){
+  if(ci===2||ci===3) return 400;
+  if(ci===4) return 950;                    <span class="c">// ← เพิ่ม: Aztec gray (stock) แยกออกมา</span>
+  if(ci&gt;=5&&ci&lt;=7) return 1500;
+  if(ci===8||ci===9||ci===11) return 2200;
+  if(ci===10||ci===12) return 1600;         <span class="c">// อบพิเศษ / สีชุบ (เอา 4 ออก)</span>
+  return 0;
+}</pre>
+<p class="sub">+ อัปเทส <code>test/g4-color-pricing.mjs</code> เพิ่มเคส Aztec → ค่าสีโครงใช้ 950 · gate ต้องยัง PASS</p>
+
+<h2>PART B — ปรับ UX 6 จุด (อนุมัติแล้ว · เรียงความสำคัญ)</h2>
+<p class="sub">ทำในฟอร์มตู้ <code>if(p.cabinet)</code> (buildItemOpts บ.~2751) · ทุกจุดเป็น UI ไม่แตะ logic/ราคา · ดูดราฟประกอบ</p>
+<table>
+<tr><th>#</th><th>จุดปรับ</th><th>ทำอะไร</th><th>ระดับ</th></tr>
+<tr><td>1</td><td><b>จับ "วัสดุผนัง + ชนิดชั้น" เป็นบล็อกเดียว</b></td><td>การ์ดวัสดุผนัง (อลูทึบ/กระจก) อยู่บน → ชิปชนิดชั้นอยู่ใต้ทันที + ข้อความ cascade "ชั้นกระจก = ไม่คิดค่าสี" โผล่เมื่อเลือกชั้นกระจก</td><td><span class="pri p-must">คุ้มสุด</span></td></tr>
+<tr><td>2</td><td>สี → โชว์ผลกระทบ cascade</td><td>ใต้ dropdown สี แสดง hint ตามวัสดุผนังที่เลือก: ผนังอลู="ค่าสี rn90" / ผนังกระจก="colorPrice เต็ม" · ย้ำว่าสีนี้กระทบ "เฉพาะโครง" ไม่ใช่บานหน้า</td><td><span class="pri p-hi">สูง</span></td></tr>
+<tr><td>3</td><td>ลึก + จำนวนชั้น จัดแถวเดียว</td><td>วาง 2 ช่องในแถวเดียว badge <code>auto</code> ชัดทั้งคู่ — สื่อว่าข้ามได้</td><td><span class="pri p-hi">สูง</span></td></tr>
+<tr><td>4</td><td><b>ชิป switch "ตู้อลู / ฝาตู้" บนสุด</b></td><td>เพิ่มชิป 2 ตัวบนสุดของฟอร์ม (sync กับ <code>.i-prod</code>) → รู้ทันทีกำลังกรอกสินค้าอะไร section ล่างเปลี่ยนตาม</td><td><span class="pri p-must">คุ้มสุด</span></td></tr>
+<tr><td>5</td><td>hint ใต้ "จำนวนบาน"</td><td>ตู้อลู: "ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานลด" · ฝาตู้: "บานที่ 2-3 +5,500/บาน"</td><td><span class="pri p-low">เสริม</span></td></tr>
+<tr><td>6</td><td>ผนังหลัง checkbox tap zone ใหญ่</td><td>แยก label "+ผนังหลัง" + hint "ปกติชนผนังปูน" 2 บรรทัด · row คลิกได้ทั้งแถบ ≥44px</td><td><span class="pri p-low">เสริม</span></td></tr>
+</table>
+<p class="sub">pattern: ชิป switch สินค้า (ข้อ 4) ใช้ <code>chSetChip</code> sync กับ <code>.i-prod</code> เดิม + trigger <code>buildItemOpts</code> · อย่า hardcode รายการสินค้า อ่านจาก dropdown เดิม</p>
+
+<h2>⚠ PART C — เตือน: ห้ามลบของเดิม (ตรวจแล้ว)</h2>
+<div class="warn">
+ดราฟ UX โชว์เฉพาะ <b>ช่องหลัก</b> เพื่อความชัด — <b>ไม่ได้แปลว่าให้ตัดของอื่นทิ้ง</b>. generic เหล่านี้ยังต้องอยู่ในฟอร์มตู้ตามเดิม:
+<ul>
+  <li><b>มีคาดตาราง</b> (<code>o-gridmark</code>) — พี่นัทเก็บไว้ (ไม่ตัด)</li>
+  <li><b>งานเสริม/วิศวกรรม</b> (<code>o-extrawork</code>) · <b>รื้อของเดิม</b> (<code>o-removeold</code>)</li>
+  <li><b>หมายเหตุ/OPTION</b> (<code>i-note</code>) + ปุ่มหมายเหตุมาตรฐาน (<code>o-remark-add</code>)</li>
+  <li><b>สีอลู</b> (<code>i-color</code>) — header</li>
+</ul>
+</div>
+<div class="ok">
+<b>ตัดของไม่เกี่ยวออกครบแล้ว (ยืนยันในโค้ดปัจจุบัน — ไม่ต้องทำซ้ำ):</b>
+<ul>
+  <li>ฝังรางยู <code>o-uchannel</code> → ตัดแล้ว (<code>&& !p.cabinet && !p.future_tech</code>)</li>
+  <li>ดรอปพื้น <code>o-dfm</code> + ครอบวงกบ <code>o-fcsides</code> → ไม่ render (ตู้เป็น areaOnly)</li>
+  <li>ประตู/หน้าต่าง <code>i-type</code> → ซ่อนแล้ว (ITYPE_NA มี 'ตู้อลู'+'ฝาตู้')</li>
+</ul>
+</div>
+
+<h2>Definition of Done</h2>
+<ul>
+  <li><b>A:</b> Aztec (idx4) ค่าสีโครง = 950/ตร.ม. · idx10/12 ยัง 1,600 · ขาว/ดำ ยัง 0</li>
+  <li><b>B:</b> ฟอร์มตู้ตามดราฟ — วัสดุผนัง+ชนิดชั้นจับคู่, switch สินค้าบนสุด, ลึก/ชั้น แถวเดียว, cascade note ครบ</li>
+  <li>generic เดิม (มีคาดตาราง/งานเสริม/รื้อ/หมายเหตุ/สี) ยังอยู่ครบ ไม่ถูกลบ</li>
+  <li><code>node test/g4-color-pricing.mjs</code> + <code>g4-cabinet-formux.mjs</code> PASS (อัปเคส Aztec)</li>
+  <li><code>node test/quote-fidelity.mjs</code> PASS · regression G1/G3 (groupGHOpts หมวด) ไม่กระทบ</li>
+  <li>verify browser จริง: กดชิปครบ · ราคา Aztec ขยับ · สลับผนัง/สินค้าทำงาน</li>
+</ul>
+
+</body>
+</html>

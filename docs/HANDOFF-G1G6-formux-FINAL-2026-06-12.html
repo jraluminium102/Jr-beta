@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G1+G6 form-ux FINAL — ส่ง dev</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;color:#1a1a1a;max-width:920px;margin:0 auto;padding:28px;line-height:1.55;}
+  h1{color:#B3151D;font-size:24px;margin:0 0 4px;}
+  h2{color:#B3151D;font-size:18px;margin:24px 0 8px;border-bottom:2px solid #B3151D;padding-bottom:4px;}
+  h3{font-size:15px;margin:15px 0 6px;}
+  .sub{color:#666;font-size:13px;margin:0 0 14px;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin:10px 0;}
+  th,td{border:1px solid #d8c9c9;padding:7px 9px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;}
+  code{background:#f3f0f0;padding:1px 5px;border-radius:4px;font-size:12px;font-family:Consolas,monospace;}
+  .box{border:1px solid #d8c9c9;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fffafa;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;border-radius:8px;padding:11px 14px;margin:10px 0;font-size:13px;}
+  .ok-box{background:#F0FDF4;border:2px solid #16A34A;border-radius:8px;padding:11px 14px;margin:12px 0;}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;color:#fff;}
+  .p-both{background:#1565C0;}.p-gh{background:#15803D;}.p-chk{background:#92400E;}
+  ul{margin:6px 0;padding-left:20px;}li{margin:3px 0;}
+  .ok{color:#15803D;font-weight:700;}.bad{color:#B3151D;font-weight:700;}
+  .small{font-size:12px;color:#666;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — G1 + G6 form-ux (บานปกติ + กั้นห้องกระจก)</h1>
+<p class="sub">ส่ง dev แชทB · แก้ <code>public/calculator/index.html</code> · พี่นัทเคาะครบ 2026-06-12<br>
+ดราฟอ้างอิง (กดเล่น): <code>docs/DRAFT-G6-ux-2026-06-12.html</code> (v2) · สเปกย่อยประกอบ: <code>SPEC-G6-formux / options-buttons / page-review / options-full</code></p>
+
+<div class="ok-box">
+<b style="color:#15803D;">🔑 ขอบเขต (มติใหญ่):</b> ปรับ <b>G1 (บานปกติ) + G6 (กั้นห้องกระจก) พร้อมกัน</b> — ใช้การ์ด <code>.ch</code> เดียวกัน
+ดังนั้นแก้ที่โค้ดร่วม (<code>addItem</code> template / <code>buildItemOpts</code> / <code>groupGHOpts</code>) จะมีผลทั้ง 2 กลุ่มอัตโนมัติ ·
+<b>ต้องเทส regression G1 ทุก product type ด้วย</b>
+</div>
+
+<div class="warn">
+<b>หลักการเดียว (ห้ามพลาด):</b> เปลี่ยนแค่ "หน้าตา control" (UI) — ไม่แตะ logic/ราคา/genQuote ·
+ทุกการ์ด/ปุ่ม/ชิป/toggle ต้อง <b>sync ค่ากลับเข้า control เดิม</b> (<code>.i-group</code> / <code>.i-prod</code> / <code>.o-*</code> / <code>.i-panels</code>) + <code>dispatchEvent(new Event('change',{bubbles:true}))</code> ·
+<b>ห้ามเปลี่ยน</b> <code>value</code> / ชื่อ <code>class</code> ที่ <code>readItem()</code> (~L2778) อ่าน · ออปชั่นยัง<b>ครบ 71 ตัว</b> (ไม่ตัด แค่ย้ายที่)
+</div>
+
+<h2>1. รายการงาน (เรียงทำก่อน-หลัง)</h2>
+<table>
+<tr><th>#</th><th>งาน</th><th>ขอบเขต</th><th>จุดในโค้ด</th></tr>
+<tr><td>A</td><td><b>กลุ่มงาน 1-7 = การ์ด</b> แทนดรอปดาวน์ <code>.i-group</code> · กดการ์ด→ set value+fire change เดิม</td><td><span class="pill p-both">G1+G6</span></td><td>addItem template ~L2207</td></tr>
+<tr><td>B</td><td><b>เลือกแบบ = การ์ดตระกูล + รุ่นเป็นปุ่ม (ไม่มีดรอปดาวน์) — ทุกกลุ่ม 1-7</b> · กดตระกูล→รุ่นเป็น<b>ปุ่ม</b> · set <code>.i-prod</code>+fire change · มี "อื่นๆ" fallback สำหรับ list ยาว · <b>รุ่นเริ่มต้น = เซมิยูโร (กลุ่ม 1)</b> · ตระกูลต่อกลุ่ม <b>ดูข้อ 3.5</b></td><td><span class="pill p-both">ทุกกลุ่ม 1-7</span></td><td>addItem (.i-prod) + prodOptionsG6 + map ตระกูล→cat/prodId</td></tr>
+<tr><td>C</td><td><b>ออปชั่นเฉพาะสินค้า → โผล่ inline กับตัวสินค้า</b> (ไม่ใช่หมวดทั่วไป) — Shower / มอเตอร์-ดัดโค้ง / ระแนง(ผิว,วิธีตัด) แสดงใต้ช่องเลือกรุ่นเมื่อเลือกสินค้านั้น</td><td><span class="pill p-both">G1+G6</span></td><td>buildItemOpts ~L2346 + groupGHOpts ~L1750</td></tr>
+<tr><td>D</td><td><b>หมวดทั่วไปเหลือ 7 หมวด</b> (ดูข้อ 2) — จัด keyword <code>groupGHOpts</code> ให้ครบ ไม่ตกหล่น</td><td><span class="pill p-both">G1+G6</span></td><td>groupGHOpts CATS keyword</td></tr>
+<tr><td>E</td><td><b>ชนิดการเปิด + ราง ดันขึ้นเห็นทันที</b> (เป็นชิป เหนือหมวดออปชั่น) เฉพาะบานเลื่อน/เฟี้ยม</td><td><span class="pill p-chk">เคาะ→เอา</span> <span class="pill p-both">G1+G6</span></td><td>buildItemOpts (o-opentype/o-bottomrail) · เช็ค readItem อ่านได้</td></tr>
+<tr><td>F</td><td><b>แก้สีซ้ำ 2 ชั้น</b> — gh master "ทั้งห้อง" ย่อเป็นแถบบรรทัดเดียว "ตามทั้งใบ" + ปุ่ม "แก้เฉพาะห้องนี้" + badge "ต่างจากทั้งใบ" เมื่อ override</td><td><span class="pill p-gh">GH</span></td><td>refreshSet gh-set-color-row ~L1849 + sync global ~L1717</td></tr>
+<tr><td>G</td><td><b>การ์ดด้านไม่พับอัตโนมัติ</b> — guard ข้ามการ์ด group 6</td><td><span class="pill p-gh">GH ก่อน (pilot)</span></td><td>collapseOthers ~L2301 (+ optbox <code>isGH?open</code> ~L2228)</td></tr>
+<tr><td>H</td><td><b>1 ด้าน = หลายชิ้นได้</b> (ระแนง + ประตู + ช่องแสง รวมด้านเดียว) — เปิดใช้ "บานย่อย" ในด้านกั้นห้อง (ปุ่ม "เพิ่มชิ้นในด้านนี้")</td><td><span class="pill p-gh">GH</span></td><td>refreshSet (sub-addbtn เดิมถูกซ่อนใน GH ~L1897 → เปิดคืน/ทำใหม่)</td></tr>
+</table>
+<p class="small"><span class="pill p-both">G1+G6</span> = แก้โค้ดร่วม มีผลทั้งคู่ · <span class="pill p-gh">GH</span> = เฉพาะกั้นห้อง · <span class="pill p-chk">เคาะ→เอา</span> = พี่นัทเคาะให้ทำแล้ว</p>
+
+<h2>2. ออปชั่นครบ 71 ตัว — จัดที่ใหม่ (ไม่ตัด)</h2>
+<p>เดิม 10 หมวด → <b>7 หมวดทั่วไป + 3 ชุด "เฉพาะสินค้า" ย้ายไป inline กับสินค้า</b> (ดู authoritative list <code>test/_g1-option-union.json</code> · ครบ 71)</p>
+<h3>7 หมวดทั่วไป (ใต้การ์ดด้าน · บานส่วนใหญ่ใช้)</h3>
+<table>
+<tr><th>#</th><th>หมวด</th><th>cls หลัก</th></tr>
+<tr><td>①</td><td>ธรณี / ครอบวงกบ / ติดตาย</td><td>o-thresh, o-threshf, o-fcsides, o-fcm, o-fixed, o-solidlight</td></tr>
+<tr><td>②</td><td>มือจับ / ล็อค / โช๊ค (multi-toggle)</td><td>o-cmech, o-cmechcolor, o-digi, o-stainless, o-xhandle, o-cmechawn, o-handlename, o-handleprice, o-slidelock, o-closer</td></tr>
+<tr><td>③</td><td>มุ้ง (conditional)</td><td>o-mosq, o-mosqfabric, o-mosqcolor, o-mosqw, o-mosqh, o-mosqpanels, o-mosqpanels-stepper, o-mosqopenstyle</td></tr>
+<tr><td>④</td><td>คาดตาราง</td><td>o-gridmark, o-gm-nh, o-gm-nv, o-gm-rate, o-gm-curve, o-fullgrid, o-gridcolor, o-nh, o-nv, o-nc</td></tr>
+<tr><td>⑤</td><td>โครงสร้าง / คาน / ราง / ซ่อน</td><td>o-beam_support(+len), o-hide_beam(+len), o-hide_track(+len), o-u_track(+len), o-uchannel, o-soft_close, o-sling, o-dfm</td></tr>
+<tr><td>⑥</td><td>แผ่นทึบล่าง / ลูกฟูก</td><td>o-solidlower, o-sl-w, o-sl-h, o-sl-color</td></tr>
+<tr><td>⑦</td><td>งานเสริม / หมายเหตุ / OPTION</td><td>o-extrawork, o-removeold, o-remark-add, o-optdelta, o-combo_awn_inside, o-combo_price</td></tr>
+</table>
+<h3>3 ชุด "เฉพาะสินค้า" → ย้าย inline กับช่องเลือกสินค้า (แก้ที่ ⑦-⑨ เคยลอยผิดที่)</h3>
+<table>
+<tr><th>ชุด</th><th>โผล่เมื่อ</th><th>cls</th></tr>
+<tr><td>Shower</td><td>เลือกสินค้า shower</td><td>o-shtype, o-shdoortype, o-corner, o-showerhw</td></tr>
+<tr><td>มอเตอร์ / ดัดโค้ง / บานเปลือย</td><td>เลือก motor/ranae/frameless</td><td>o-motor, o-doortype, o-doorprice, o-framecolor</td></tr>
+<tr><td>ระแนง (ผิว / วิธีตัด)</td><td>เลือกระแนง</td><td>o-finish, o-hmode</td></tr>
+</table>
+<p class="small">⚠️ <b>completeness:</b> 7 หมวด (61) + 3 ชุดเฉพาะ (10) = <b>71 ครบ</b> · dev ทำ checklist เทียบ <code>test/_g1-option-union.json</code> ว่าทุก cls มีที่อยู่</p>
+
+<h2>3. การ์ดเลือกแบบ — map ตระกูล → prodId เริ่มต้น (เซมิยูโร)</h2>
+<table>
+<tr><th>การ์ดตระกูล</th><th>cat ปลายทาง</th><th>รุ่นเริ่มต้น (เซมิยูโร)</th></tr>
+<tr><td>บานเลื่อน</td><td>บานเลื่อน</td><td><code>sliding_sms</code> (เซมิยูโร)</td></tr>
+<tr><td>บานเปิด</td><td>บานเปิด</td><td>เซมิยูโร <span class="small">(ถ้าไม่มี เซมิ ใช้ casement_euro — ยืนยัน prodId กับพี่นัท)</span></td></tr>
+<tr><td>บานเฟี้ยม</td><td>บานเฟี้ยม</td><td><code>folding</code> (เซมิยูโร)</td></tr>
+<tr><td>กระจกติดตาย</td><td>ติดตาย</td><td><code>fixed_glass</code> (ไม่มีรุ่นย่อย)</td></tr>
+<tr><td>ระแนงบังตา</td><td>ระแนง-บังตา</td><td>รุ่นบ่อย <span class="small">(76 รุ่น — ยืนยัน default กับพี่นัท)</span></td></tr>
+<tr><td>ผนังเบา</td><td>ฝ้า-ผนัง</td><td>ภายนอก สมาร์ทบอร์ด (รวม นอก/ใน ในตระกูลเดียว)</td></tr>
+<tr><td>อื่นๆ 154</td><td>—</td><td>dropdown/ค้นหาเต็ม 154 (fallback)</td></tr>
+</table>
+<div class="warn">⚠️ <b>ต้องยืนยัน prodId กับพี่นัทก่อน hardcode:</b> รุ่น "เซมิยูโร" ที่ตรง id จริง + รุ่น default ของ <b>ระแนงบังตา (76 รุ่น)</b></div>
+
+<h2>3.5 การ์ดเลือกแบบ — ทุกกลุ่ม 1-7 (ไม่มีดรอปดาวน์ "แบบ" เหลือเลย)</h2>
+<div class="ok-box"><b style="color:#15803D;">มติพี่นัท 12 มิ.ย.:</b> <b>ทุกกลุ่มงาน 1-7</b> ให้เลือกแบบ/รุ่นเป็น <b>การ์ด + ปุ่ม (ไม่มีดรอปดาวน์)</b> เหมือนกันหมด — เลือกง่าย กดทีเดียว</div>
+<table>
+<tr><th>กลุ่ม</th><th>ทำการ์ด?</th></tr>
+<tr><td><b>1</b> บาน / กระจก</td><td>✓ (ทำแล้วในดราฟ v2)</td></tr>
+<tr><td><b>2</b> ระแนง / รั้ว / ราวกันตก</td><td>✓</td></tr>
+<tr><td><b>3</b> หลังคา / ฝ้า-ผนัง</td><td>✓</td></tr>
+<tr><td><b>4</b> ตู้อลู / ฝาตู้</td><td>✓</td></tr>
+<tr><td><b>5</b> มุ้ง</td><td>✓</td></tr>
+<tr><td><b>6</b> กั้นห้องกระจก</td><td>✓ (ทำแล้วในดราฟ v2)</td></tr>
+<tr><td><b>7</b> ม่านซิป</td><td>✓</td></tr>
+</table>
+<div class="warn"><b>การจัดตระกูล/รุ่นของแต่ละกลุ่ม — ยังไม่ fix ในใบนี้</b> · dev จัด "ตามที่เหมาะสมของกลุ่มนั้น" โดยอิงงาน/ดราฟเดิมของกลุ่มนั้น (<code>DRAFT-G2/G3/G4/G5</code>) <b>เพื่อกันชนกับแชทอื่นที่แก้กลุ่มนั้นไปแล้วบางส่วน</b> · หลักการเดียวกันทุกกลุ่ม: การ์ดตระกูล → ปุ่มรุ่น → "อื่นๆ" ถ้า list ยาว · set <code>.i-prod</code>+fire change เดิม</div>
+
+<h2>4. GH-specific vs Shared — สรุปชัด</h2>
+<table>
+<tr><th>ทำที่ไหน</th><th>มีผลกับ</th><th>งาน</th></tr>
+<tr><td>addItem template / buildItemOpts / groupGHOpts (โค้ดร่วม)</td><td><b>G1 + G6</b></td><td>A การ์ดกลุ่ม · B การ์ดเลือกแบบ · C ออปชั่นเฉพาะสินค้า inline · D 7 หมวด · E ชนิดการเปิด/ราง ดันขึ้น</td></tr>
+<tr><td>refreshSet สาขา GH เท่านั้น</td><td><b>G6 only</b></td><td>F สีซ้ำ · H หลายชิ้นต่อด้าน · gh master row</td></tr>
+<tr><td>collapseOthers (guard isGH)</td><td><b>G6 ก่อน (pilot)</b></td><td>G ไม่พับ — ถ้าดีค่อยขยาย G1</td></tr>
+</table>
+
+<h2>5. QA — ตัวแทน (ต้องเทสทั้ง G1 + G6)</h2>
+<table>
+<tr><th>#</th><th>เคส</th><th>เช็ค</th></tr>
+<tr><td>1</td><td><b>G1 regression</b> — บานเลื่อนยูโร (ไม่ใช่ชุด)</td><td>การ์ดกลุ่ม/แบบทำงาน · ออปชั่นครบ · <b>ราคาเท่าเดิม</b></td></tr>
+<tr><td>2</td><td>G1 — shower</td><td>ออปชั่น shower โผล่ inline กับสินค้า · ราคาตรง</td></tr>
+<tr><td>3</td><td>G1 — บานกระทุ้ง (awn) / ดัดโค้ง (motor)</td><td>o-awn_mode/o-motor โผล่ถูก · ราคาตรง</td></tr>
+<tr><td>4</td><td>G6 — ด้าน A = ระแนง + ประตู (หลายชิ้น)</td><td>เพิ่มได้ 2 ชิ้นในด้านเดียว · ผิว/วิธีตัดระแนง inline · ราคารวมถูก</td></tr>
+<tr><td>5</td><td>G6 — สี/กระจก ทั้งใบ ↔ ทั้งห้อง override</td><td>ย่อบรรทัดเดียว · badge "ต่างจากทั้งใบ" · sync ถูก</td></tr>
+<tr><td>6</td><td>G6 — + เพิ่มด้าน B + เพิ่มหลังคา</td><td>auto ด้าน B · หลังคา group 3 · ใบ group ตามด้าน</td></tr>
+<tr><td>7</td><td>genQuote ชุดกั้นห้อง 3 ด้าน + หลังคา</td><td>หัวข้อ "กั้นห้องกระจก" · ยอดรวมตรง</td></tr>
+</table>
+
+<h2>6. Definition of Done</h2>
+<ul>
+<li><span class="ok">☐</span> <code>node test/quote-fidelity.mjs</code> <b>PASS</b> (ราคา/ใบไม่เพี้ยน)</li>
+<li><span class="ok">☐</span> <code>readItem()</code> อ่าน value ครบทุก control — ราคาทุกเคส QA ตรง baseline (G1 + G6)</li>
+<li><span class="ok">☐</span> ออปชั่นครบ 71 ตัว (checklist เทียบ <code>test/_g1-option-union.json</code> — ไม่ตกหล่น)</li>
+<li><span class="ok">☐</span> <b>ดรอปดาวน์ "กลุ่มงาน" + "แบบ/รุ่น" หายทุกกลุ่ม 1-7</b> (เป็นการ์ด/ปุ่มหมด) · เหลือดรอปดาวน์แค่ สี(13)/กระจก(66) + list ยาวบางจุด</li>
+<li><span class="ok">☐</span> G1 regression: บานเดี่ยวไม่มีของ GH (หลายชิ้น/gh master) หลุดเข้ามา</li>
+<li><span class="ok">☐</span> พี่นัทกดเล่นผ่าน (มือถือจริง) — ตรงดราฟ <code>DRAFT-G6-ux-2026-06-12.html</code></li>
+</ul>
+
+<h2>7. กับดัก (เตือน dev)</h2>
+<ul>
+<li><b>scope ต่อการ์ด</b> — query control ใน <code>.ch</code> เดียวกัน (ชุดมีหลายด้าน)</li>
+<li><b>inject ครั้งเดียว</b> — refreshSet เรียกซ้ำ ต้องเช็ค flag กัน duplicate (เหมือน <code>.gh-opt-cat-det</code>)</li>
+<li><b>คืนสภาพเมื่อเปลี่ยนกลุ่ม</b> — เปลี่ยน group 6→1 ต้องลบของ GH (gh master/หลายชิ้น) คืน</li>
+<li><b>dead-code</b> — <code>o-mosqopen</code> อยู่ใน <code>if(false)</code> อย่าใช้ชื่อซ้ำ</li>
+<li><b>label-only fields</b> — บางช่องแค่ขึ้นข้อความในใบ ไม่กระทบราคา → ไม่ต้องแตะ logic</li>
+<li><b>ห้ามแตะ</b> <code>prodOptionsG6()</code> (~L864) — list 154 ยังต้องครบใน "อื่นๆ"</li>
+<li><b>เลขราคา</b> — ปัดขึ้นพัน · มือจับหลายอัน/ออปชั่น บวกสะสมถูก · งาน C/E แตะการแสดง o-opentype/ราคา ให้ accountant ตรวจหลัง dev</li>
+</ul>
+
+<p class="small" style="margin-top:20px;">เอกสารนี้รวบจาก 4 สเปกย่อย (SPEC-G6-formux / options-buttons / page-review / options-full) + ดราฟ v2 · ใช้เป็น source หลักในการทำ · อ่านสเปกย่อยประกอบสำหรับ pattern HTML/JS (ชิป sync / multi-toggle / conditional / กล่องรวบ)</p>
+
+</body>
+</html>

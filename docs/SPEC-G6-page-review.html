@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPEC — G6 หน้ารายการ: แก้สีซ้ำ 2 ชั้น + ออปชั่นพับลึก</title>
+<style>
+:root{--red:#B3151D;--ink:#1a1a1a;--muted:#555;--line:#ddd;--bg:#fafafa;--gold:#F59E0B;--green:#15803D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:800;color:var(--red);margin-bottom:4px;}
+.meta{font-size:12px;color:var(--muted);margin-bottom:20px;border-bottom:2px solid var(--red);padding-bottom:10px;}
+h2{font-size:15px;font-weight:800;color:var(--red);margin:22px 0 8px;border-left:4px solid var(--red);padding-left:10px;}
+h3{font-size:13px;font-weight:700;color:#1E5AA8;margin:14px 0 6px;}
+p{margin-bottom:8px;color:var(--ink);}
+ul,ol{padding-left:18px;margin-bottom:8px;}
+li{margin-bottom:4px;}
+code{background:#f0f0f0;border:1px solid #ddd;border-radius:4px;padding:1px 5px;font-family:"Courier New",monospace;font-size:12px;color:#c7254e;}
+pre{background:#1e1e1e;color:#d4d4d4;border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:12px;margin:6px 0 10px;line-height:1.5;}
+pre code{background:none;border:none;color:inherit;padding:0;}
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px;}
+th{background:#f3e8e8;color:var(--red);font-weight:700;text-align:left;padding:7px 10px;border:1px solid #e0c8c8;}
+td{padding:6px 10px;border:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even){background:#fdf9f9;}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700;margin-right:4px;}
+.badge.red{background:#fde7e7;color:var(--red);}
+.badge.orange{background:#FFF3E0;color:#c2610a;}
+.badge.green{background:#dcfce7;color:var(--green);}
+.badge.blue{background:#EAF3FF;color:#1E5AA8;}
+.badge.gray{background:#f0f0f0;color:#444;}
+.issue-box{border:1.5px solid;border-radius:8px;padding:10px 14px;margin:8px 0;}
+.issue-box.red{border-color:var(--red);background:#fff8f8;}
+.issue-box.orange{border-color:var(--gold);background:#fffbf0;}
+.issue-box.green{border-color:var(--green);background:#f0fdf4;}
+.issue-box.blue{border-color:#9DBCE0;background:#EAF3FF;}
+.sep{height:1px;background:var(--line);margin:18px 0;}
+.note{font-size:12px;color:var(--muted);font-style:italic;}
+.lineref{font-size:11px;background:#fff3f3;border:1px solid #f0c0c0;border-radius:4px;padding:1px 6px;font-family:monospace;}
+.dod-item{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--line);}
+.dod-item:last-child{border-bottom:none;}
+.dod-check{width:18px;height:18px;border:2px solid var(--line);border-radius:4px;flex:none;margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SPEC — G6 หน้ารายการ: UX Page Review</h1>
+<div class="meta">
+  วันที่: 2026-06-12 &nbsp;|&nbsp;
+  ดราฟ: <code>draft-G6-page-review.html</code> (Sharepicjr) &nbsp;|&nbsp;
+  ไฟล์จริง: <code>public/calculator/index.html</code> (READ-ONLY — dev แชทอื่นแก้) &nbsp;|&nbsp;
+  สถานะ: สเปกส่ง dev
+</div>
+
+<!-- ====== OVERVIEW ====== -->
+<h2>ภาพรวม: ปัญหาที่พบ + วิธีแก้</h2>
+<p>ตรวจหน้า "รายการ" ในระบบ (<code>index.html</code>) โฟกัสชุดกั้นห้องกระจก (กลุ่ม 6) พบ friction 2 จุดหลักที่ทำให้คนกรอกสับสนบนมือถือ:</p>
+
+<div class="issue-box red">
+  <strong>ปัญหา 1 — สี/กระจก ซ้ำกัน 2 ชั้น (เห็นค่าเดิม 2 ที่ ไม่รู้อันไหนคุมอะไร)</strong>
+  <ul style="margin-top:6px;">
+    <li>ชั้นบน: กล่องฟ้า <code>#global-color-row</code> — "สีอลูมิเนียม (ทั้งใบ)" + "กระจก (ทั้งใบ)"</li>
+    <li>ชั้นล่าง: กล่องเหลือง <code>.gh-set-color-row</code> inject โดย <code>refreshSet()</code> — "สีอลู (ทั้งห้อง)" + "กระจก (ทั้งห้อง)"</li>
+    <li>ทั้งคู่ sync ค่าเดียวกันตลอด (ถ้าไม่มีการ override) → user เห็น dropdown สองคู่ค่าเหมือนกัน ไม่เข้าใจ hierarchy</li>
+  </ul>
+</div>
+
+<div class="issue-box red">
+  <strong>ปัญหา 2 — ออปชั่นบาน "หายหมด" (จริงๆ พับ 3-4 ชั้น)</strong>
+  <ul style="margin-top:6px;">
+    <li>ชั้น 1: <code>collapseOthers()</code> <span class="lineref">~L2301</span> → การ์ด <code>.ch</code> ได้ <code>class="ch collapsed"</code> เมื่อเพิ่มบานใหม่ หรือกดบานอื่น</li>
+    <li>ชั้น 2: <code>refreshSet()</code> <span class="lineref">~L1953-1954</span> set <code>_det.open=false</code> บน <code>&lt;details&gt;</code> wrapper ของ <code>.i-opts</code> → "⚙ ตัวเลือกเพิ่มเติม" พับ</li>
+    <li>ชั้น 3: หมวดออปชั่น (<code>.gh-opt-cat-det</code>) ใน <code>groupGHOpts()</code> <span class="lineref">~L1796</span> → <code>open=false</code> ยกเว้นหมวดที่ตั้ง <code>open:true</code></li>
+    <li>ผลรวม: กว่าจะเห็นออปชั่นต้อง กดขยายการ์ด → กด "⚙" → กดเปิดหมวด = 3-4 tap</li>
+  </ul>
+</div>
+
+<!-- ====== PROBLEM 1 DETAIL ====== -->
+<div class="sep"></div>
+<h2>ปัญหา 1 — สี/กระจก ซ้ำ 2 ชั้น: root cause + ทางแก้</h2>
+
+<h3>Root cause (บรรทัดที่ dev ต้องดู)</h3>
+<table>
+  <tr><th>Element</th><th>บรรทัดในโค้ด</th><th>พฤติกรรม</th></tr>
+  <tr>
+    <td><code>#global-color-row</code></td>
+    <td><span class="lineref">L309-319</span></td>
+    <td>กล่องฟ้า render ใน HTML ตายตัว — แสดงตลอดเวลาในการ์ด "รายการ"</td>
+  </tr>
+  <tr>
+    <td><code>.gh-set-color-row</code></td>
+    <td><span class="lineref">L1909-1921</span> ใน <code>refreshSet()</code></td>
+    <td>inject กล่องเหลืองเมื่อชุดมี GH (group 6) — วางก่อน <code>.set-parts</code> · sync ค่าจาก <code>colorOpts()</code>/<code>glassOpts()</code> เหมือนกัน</td>
+  </tr>
+  <tr>
+    <td><code>syncGHColor()</code></td>
+    <td><span class="lineref">L1923-1934</span></td>
+    <td>เมื่อเปลี่ยน gh-color-sel → overwrite ทุก ch กลุ่ม 6 ใน set นั้น</td>
+  </tr>
+  <tr>
+    <td><code>syncGlobalColor()</code></td>
+    <td><span class="lineref">L1717-1723</span></td>
+    <td>เมื่อ global เปลี่ยน → skip ch กลุ่ม 6 ที่มี gh-set-color-row (ให้ GH master win) → ถูกต้อง แต่ไม่ได้ sync gh-set-color-sel ให้ตาม global ด้วย ทำให้ค่าค้างเดิม</td>
+  </tr>
+</table>
+
+<h3>UX ที่เสนอ (After — ดูดราฟ)</h3>
+<div class="issue-box green">
+  <strong>Pattern: Collapsed summary → Expand on demand</strong>
+  <ul style="margin-top:6px;">
+    <li>ปกติ: แสดงกล่องส้มบางๆ 1 บรรทัด "สี/กระจกห้องนี้: ตามทั้งใบ · [สีอบขาว] [กระจกเขียว 6 มม.]" พร้อมปุ่ม "แก้เฉพาะห้องนี้ ▾"</li>
+    <li>กดปุ่ม → ขยาย dropdown 2 ช่อง พร้อม badge "แตกต่างจากทั้งใบ" เมื่อค่าต่างกัน</li>
+    <li>เมื่อ global เปลี่ยน → sync ค่า gh dropdown + อัปเดต summary text</li>
+    <li>ผล: ไม่เห็น dropdown ซ้อน dropdown ในสภาพปกติ</li>
+  </ul>
+</div>
+
+<h3>Code change สำหรับ dev (เฉพาะ GH — ไม่กระทบ G1)</h3>
+<pre><code>// ใน refreshSet() หลัง inject ghColorRow (L1921) เพิ่ม:
+// 1. sync ค่า gh-color-sel/gh-glass-sel ตาม global ถ้ายังไม่เคย override
+var _gcGlobal = document.getElementById('global-color').value;
+var _ggGlobal = document.getElementById('global-glass').value;
+var _ghCSel = ghColorRow.querySelector('.gh-color-sel');
+var _ghGSel = ghColorRow.querySelector('.gh-glass-sel');
+if(_ghCSel && !ghColorRow.dataset.ghOverrideColor) _ghCSel.value = _gcGlobal;
+if(_ghGSel && !ghColorRow.dataset.ghOverrideGlass) _ghGSel.value = _ggGlobal;
+
+// 2. ห่อ .gh-set-color-row ด้วย collapsed wrapper
+//    (หรือซ่อน row เลย ถ้าค่าตรง global — ขึ้นอยู่กับมติพี่นัท → ดูหัวข้อ "จุดต้องเคาะ")
+
+// ใน syncGlobalColor() (L1717) เพิ่ม: sync gh-color-sel ให้ตาม global ด้วย
+document.querySelectorAll('.gh-set-color-row').forEach(function(ghRow){
+  var ghCSel = ghRow.querySelector('.gh-color-sel');
+  var ghGSel = ghRow.querySelector('.gh-glass-sel');
+  if(ghCSel && !ghRow.dataset.ghOverrideColor) ghCSel.value = colorVal;
+  if(ghGSel && !ghRow.dataset.ghOverrideGlass) ghGSel.value = glassVal;
+  // fire syncGHColor ให้ ch อัปเดตด้วย
+  if(ghCSel) ghCSel.dispatchEvent(new Event('change',{bubbles:true}));
+});</code></pre>
+
+<div class="issue-box blue">
+  <strong>จุดต้องเคาะกับพี่นัท ก่อน dev แก้ (กระทบ GH เท่านั้น ไม่กระทบ G1)</strong>
+  <ul style="margin-top:6px;">
+    <li><strong>Option A (แนะนำ):</strong> "ทั้งห้อง" ซ่อนถ้าค่าตรง global → โชว์เฉพาะ summary 1 บรรทัด — เรียบ ไม่สับสน</li>
+    <li><strong>Option B:</strong> ลบ <code>.gh-set-color-row</code> ออกเลย ใช้ global อย่างเดียว แล้วแก้รายบานผ่าน override ในออปชั่น — ง่ายสุด แต่ต้องดูว่า workflow override ชัดพอไหม</li>
+    <li><strong>Option C:</strong> คง 2 กล่องแต่ label ให้ต่างกันชัด เช่น "ทั้งใบ (default)" / "ห้องนี้ (override ถ้าต้องการ)" + เพิ่ม hint ชัดๆ — ไม่ต้องแก้โค้ดมาก</li>
+  </ul>
+</div>
+
+<!-- ====== PROBLEM 2 DETAIL ====== -->
+<div class="sep"></div>
+<h2>ปัญหา 2 — ออปชั่นพับ 3-4 ชั้น: root cause + ทางแก้</h2>
+
+<h3>Root cause (บรรทัดที่ dev ต้องดู)</h3>
+<table>
+  <tr><th>ชั้น</th><th>Code / บรรทัด</th><th>พฤติกรรม</th></tr>
+  <tr>
+    <td>ชั้น 1 — การ์ดพับ</td>
+    <td><code>collapseOthers(active)</code> <span class="lineref">L2301</span><br>เรียกจาก <code>addItem()</code> <span class="lineref">L2346</span></td>
+    <td>เพิ่มรายการใหม่ = พับการ์ดอื่นทั้งหมด ทำให้ทุกบานกั้นห้องพับเก็บ</td>
+  </tr>
+  <tr>
+    <td>ชั้น 2 — details พับ</td>
+    <td><code>refreshSet()</code> <span class="lineref">L1953-1954</span><br><code>_det.open=false</code></td>
+    <td>ทุกครั้งที่ refreshSet รัน (เพิ่มบาน/เปลี่ยนกลุ่ม/ลบ) → set <code>&lt;details&gt;</code> "⚙ อุปกรณ์เสริม" ปิด</td>
+  </tr>
+  <tr>
+    <td>ชั้น 3 — หมวดออปชั่นพับ</td>
+    <td><code>groupGHOpts()</code> <span class="lineref">L1796</span><br>CATS: <code>open:true</code> เฉพาะ 🚪+📦</td>
+    <td>rebuild หมวด → หมวดส่วนใหญ่ <code>open=false</code> ยกเว้น "🚪 ชนิด/การเปิด" และ "📦 รายละเอียดตู้"</td>
+  </tr>
+  <tr>
+    <td>ชั้น 4 — ออปชั่น (optional)</td>
+    <td>หมวดย่อยใน <code>.gh-opt-cat-det</code></td>
+    <td>ออปชั่นบางอย่างซ่อนในหมวดที่พับ → ต้องกดเปิดหมวดอีกที</td>
+  </tr>
+</table>
+
+<h3>UX ที่เสนอ (After — ดูดราฟ)</h3>
+<div class="issue-box green">
+  <strong>Pattern: การ์ดกั้นห้องไม่พับ + ออปชั่นสำคัญดันขึ้นฟอร์มหลัก</strong>
+  <ol style="margin-top:6px;">
+    <li><strong>การ์ด GH ไม่เข้า collapseOthers:</strong> เมื่อ GH set อยู่ → ข้ามการ์ดที่ <code>.i-group === '6'</code> ใน collapse loop</li>
+    <li><strong>details ไม่ปิดสำหรับ GH:</strong> ใน <code>refreshSet()</code> L1954 เพิ่ม guard: <code>if(isGH) _det.open=true; else _det.open=false;</code></li>
+    <li><strong>ออปชั่นสำคัญ inline:</strong> "ชนิดการเปิด" + "ราง" ดันขึ้นฟอร์มหลัก (ไม่อยู่ใน opts) — ดูดราฟ: <code>inline-block</code> สีฟ้าเหนือช่องขนาด</li>
+    <li><strong>หมวด 🚪 เปิดตั้งแต่ต้น:</strong> CATS entry สำหรับ GH: <code>{key:'🚪 ชนิด / การเปิด', open:true, ...}</code> แล้วอยู่ — ถูกแล้ว · แต่ถูกบังด้วยชั้น 1+2 → fix ชั้น 1+2 ก่อน</li>
+  </ol>
+</div>
+
+<h3>Code change สำหรับ dev</h3>
+<pre><code>// === แก้ชั้น 1: collapseOthers — ข้ามการ์ด GH ===
+// L2301 (function collapseOthers)
+function collapseOthers(active){
+  document.querySelectorAll('#items .ch').forEach(function(ch){
+    if(ch===active) return setChCollapsed(ch, false);
+    // *** เพิ่ม: การ์ดกลุ่ม 6 ใน set ที่มี GH → ไม่พับ ***
+    var isGH = (ch.querySelector('.i-group')||{}).value === '6';
+    var inGHSet = isGH && ch.closest('.setbox') &&
+                  ch.closest('.setbox').querySelector('.gh-set-color-row');
+    if(inGHSet) return; // *** ไม่พับการ์ดกั้นห้อง ***
+    setChCollapsed(ch, true);
+  });
+}
+
+// === แก้ชั้น 2: refreshSet — ไม่พับ details ของ GH ===
+// L1953-1954 ใน parts.forEach(function(c){...})
+var _oe=c.querySelector('.i-opts'); var _det=_oe?_oe.closest('details'):null;
+if(_det){
+  // *** แก้: GH = เปิด, อื่น = ปิด ***
+  _det.open = isGH ? true : false;
+  var _sm=_det.querySelector('summary');
+  if(_sm && !_sm.dataset.ghSm){
+    _sm.dataset.ghSm='1';
+    _sm.textContent = isGH
+      ? '⚙ ตัวเลือกเพิ่มเติม (มือจับ / มุ้ง / คาดตาราง / อื่นๆ)'
+      : '⚙ ตัวเลือกเพิ่มเติม (มือจับ/ล็อค/มุ้ง/ครอบวงกบ — กดถ้าต้องใช้)';
+  }
+}</code></pre>
+
+<div class="issue-box blue">
+  <strong>จุดต้องเคาะกับพี่นัท ก่อน dev แก้ (กระทบทั้ง G1 ด้วย!)</strong>
+  <ul style="margin-top:6px;">
+    <li><strong><code>collapseOthers()</code> ถูกใช้ทุกกลุ่ม (G1-G6)</strong> — แก้แบบ guard <code>isGH</code> ปลอดภัยสำหรับ G1 (G1 ไม่มี <code>.gh-set-color-row</code>) แต่ควรเคาะพี่นัทว่า: "ก็ยังต้องการให้ G1 พับแบบเดิมไหม?" → ถ้าใช่ guard แค่ GH ก็พอ</li>
+    <li><strong>"ออปชั่นสำคัญ inline"</strong> — "ชนิดการเปิด" + "ราง" อยู่ใน opts อยู่แล้ว (<code>.gh-opt-cat-det</code> หมวด 🚪) ถ้าจะดันขึ้นฟอร์มหลักต้อง: (a) เพิ่ม HTML ใหม่ในฟอร์ม หรือ (b) move node ออกจาก opts ขึ้นมา → กระทบ readItem? ต้องตรวจก่อน ไม่แนะนำแก้ในรอบนี้ถ้าไม่แน่ใจ</li>
+    <li><strong>ทางเลือกปลอดภัยกว่า:</strong> แก้แค่ชั้น 1+2 (ไม่พับการ์ด GH + details GH เปิด) แล้วประเมินผลก่อนทำ inline</li>
+  </ul>
+</div>
+
+<!-- ====== OTHER UX NOTES ====== -->
+<div class="sep"></div>
+<h2>UX อื่นๆ ที่ควรปรับ (ไม่ใช่ bug — ขัดหลักเรียบง่าย)</h2>
+
+<table>
+  <tr><th>จุด</th><th>สถานะ</th><th>เสนอแก้</th><th>ผลกระทบ</th></tr>
+  <tr>
+    <td>summary "⚙ อุปกรณ์เสริม" text ยาวเกิน</td>
+    <td><span class="badge orange">เสริม</span></td>
+    <td>เปลี่ยนเป็น "⚙ ตัวเลือกเพิ่มเติม (มือจับ / มุ้ง / คาดตาราง / อื่นๆ)" — สั้น ชัด ครอบคลุม</td>
+    <td>เฉพาะ GH</td>
+  </tr>
+  <tr>
+    <td>ปุ่ม "+ เพิ่มบาน" / "+ เพิ่มหลังคา" อยู่หลัง gh-master color row</td>
+    <td><span class="badge orange">เสริม</span></td>
+    <td>ย้ายปุ่มขึ้นก่อน gh-master (อยู่หัวชุด) — ผู้ใช้ไม่ต้องเลื่อนผ่านกล่องสีก่อน</td>
+    <td>เฉพาะ GH · ดูดราฟ</td>
+  </tr>
+  <tr>
+    <td>ชุดล็อค (มีกุญแจ/ไม่มีกุญแจ) อยู่ใน opts ชั้นลึก</td>
+    <td><span class="badge orange">เสริม</span></td>
+    <td>ดันขึ้นฟอร์มหลักเฉพาะชนิดที่เป็น "ประตู" (เหมือนดราฟ) — แต่ต้องตรวจ readItem ก่อน</td>
+    <td>กระทบ G1 ด้วย — เคาะพี่นัท</td>
+  </tr>
+  <tr>
+    <td>hint "เปลี่ยนที่นี่ = sync…" ใน global row</td>
+    <td><span class="badge gray">OK</span></td>
+    <td>hint ชัดพอ แต่ font เล็กมาก (11px) — ลอง 12px ขยับได้ตามใจ</td>
+    <td>ทุกกลุ่ม</td>
+  </tr>
+  <tr>
+    <td>badge ชุด (ชุด 1/2/3) สีแดงทึบ</td>
+    <td><span class="badge gray">OK</span></td>
+    <td>คงเดิมได้ · ถ้าต้องการแยก GH ออกให้ชัด ลองชุดสี outline-red แทน solid</td>
+    <td>Visual เล็กน้อย</td>
+  </tr>
+</table>
+
+<!-- ====== COLOROPTS DUPLICATE CHECK ====== -->
+<div class="sep"></div>
+<h2>ตรวจ colorOpts() / glassOpts() — มีรายชื่อซ้ำไหม</h2>
+<p>สี 13 ตัวเลือก / กระจก 66 ตัวเลือก → ใช้ dropdown (ถูกต้อง เกิน 6 ตัว) ไม่เปลี่ยนเป็นชิป</p>
+<div class="issue-box green">
+  <strong>ผลตรวจ: ไม่พบซ้ำในรายชื่อตัวเลือก</strong> — ทั้ง <code>colorOpts()</code> และ <code>glassOpts()</code> generate จาก array COLORS/GLASSES ที่ไม่ซ้ำ · ปัญหาที่เห็น "ค่าเดิมโชว์ 2 ที่" เกิดจาก sync พฤติกรรม ไม่ใช่ข้อมูลซ้ำ
+</div>
+
+<!-- ====== QA CHECKLIST ====== -->
+<div class="sep"></div>
+<h2>QA Checklist หลัง dev แก้</h2>
+<table>
+  <tr><th>#</th><th>Test</th><th>Expected</th></tr>
+  <tr>
+    <td>Q1</td>
+    <td>กด "+ กั้นห้องกระจก" → มีการ์ด "ด้าน A" โผล่</td>
+    <td>การ์ดไม่ถูกพับ (ไม่มี <code>class="collapsed"</code>)</td>
+  </tr>
+  <tr>
+    <td>Q2</td>
+    <td>กด "+ เพิ่มบาน" → โผล่ "ด้าน B"</td>
+    <td>ด้าน A ยังเปิดอยู่ (ไม่ถูก collapseOthers พับ)</td>
+  </tr>
+  <tr>
+    <td>Q3</td>
+    <td>เปิดการ์ด "ด้าน A" → เห็น "⚙ ตัวเลือกเพิ่มเติม"</td>
+    <td>details เปิดอยู่ (ไม่ต้องกดเพิ่ม)</td>
+  </tr>
+  <tr>
+    <td>Q4</td>
+    <td>เปิดออปชั่น → เห็นหมวด 🚪 เปิดอยู่</td>
+    <td>หมวดอื่น (🔧🪟📐➕) พับ · 🚪 เปิด</td>
+  </tr>
+  <tr>
+    <td>Q5</td>
+    <td>เปลี่ยน global color → กล่อง "ทั้งห้อง" summary อัปเดต</td>
+    <td>summary text เปลี่ยน · ถ้าค่าตรง global → "ตามทั้งใบ"</td>
+  </tr>
+  <tr>
+    <td>Q6</td>
+    <td>กด "แก้เฉพาะห้องนี้" → เปลี่ยนสีห้องเป็น Champagne ขณะ global = ขาว</td>
+    <td>badge "แตกต่างจากทั้งใบ" โผล่ · ราคาคำนวณตามสี override</td>
+  </tr>
+  <tr>
+    <td>Q7</td>
+    <td>รัน <code>node test/quote-fidelity.mjs</code></td>
+    <td>PASS ทุกเคส (ราคา/ใบไม่เพี้ยน)</td>
+  </tr>
+  <tr>
+    <td>Q8</td>
+    <td>มือถือ 375px — แตะปุ่มทุกปุ่มได้</td>
+    <td>tap target ≥44px ทุกปุ่ม/ชิป</td>
+  </tr>
+</table>
+
+<!-- ====== DOD ====== -->
+<div class="sep"></div>
+<h2>Definition of Done (DoD)</h2>
+<div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;">
+  <div class="dod-item"><div class="dod-check"></div><div>การ์ด .ch กลุ่ม 6 ใน GH set ไม่ถูกพับโดย collapseOthers</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div>details "⚙ ตัวเลือกเพิ่มเติม" เปิด default ในการ์ด GH</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div>.gh-set-color-row ไม่โชว์ dropdown ซ้ำค่า global (ซ่อน หรือ collapsed summary)</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div>เมื่อ global color เปลี่ยน → gh summary/dropdown ตาม</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div>QA Q1-Q8 ผ่านทั้งหมด</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div><code>node test/quote-fidelity.mjs</code> PASS — ราคาไม่เพี้ยน</div></div>
+  <div class="dod-item"><div class="dod-check"></div><div>ทดสอบ G1 (บานเลื่อน ยูโร) — ยืนยัน collapseOthers ยัง work ตามปกติ ไม่กระทบ</div></div>
+</div>
+
+<!-- ====== FILES ====== -->
+<div class="sep"></div>
+<h2>ไฟล์อ้างอิง</h2>
+<table>
+  <tr><th>ไฟล์</th><th>ใช้ทำอะไร</th></tr>
+  <tr>
+    <td><code>public/calculator/index.html</code></td>
+    <td>ไฟล์จริง — READ-ONLY สำหรับ UX reviewer · dev แก้เท่านั้น</td>
+  </tr>
+  <tr>
+    <td><code>C:\Users\Nut\Desktop\Sharepicjr\draft-G6-page-review.html</code></td>
+    <td>ดราฟ After กดเล่นได้ — pattern reference สำหรับ dev</td>
+  </tr>
+  <tr>
+    <td><code>C:\Users\Nut\Desktop\Sharepicjr\draft-G6-formux.html</code></td>
+    <td>ดราฟชิปชนิดบาน (ต่อยอดได้)</td>
+  </tr>
+  <tr>
+    <td><code>C:\Users\Nut\Desktop\Sharepicjr\draft-G6-options-buttons.html</code></td>
+    <td>ดราฟออปชั่น 4 หมวด + ปุ่มระดับชุด (ต่อยอดได้)</td>
+  </tr>
+  <tr>
+    <td><code>docs/SPEC-G6-page-review.html</code> (ไฟล์นี้)</td>
+    <td>สเปกส่ง dev</td>
+  </tr>
+  <tr>
+    <td><code>docs/SPEC-G6-page-review.pdf</code></td>
+    <td>PDF version (Edge headless)</td>
+  </tr>
+</table>
+
+<div class="sep"></div>
+<p class="note">ดราฟ (DEMO): ราคา/ข้อมูลในดราฟเป็นตัวอย่างเท่านั้น · ไม่ใช่ราคาจริงจากระบบ · ห้ามนำไปใช้อ้างอิงราคา</p>
+
+</div>
+</body>
+</html>

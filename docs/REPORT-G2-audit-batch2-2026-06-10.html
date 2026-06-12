@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Audit ออปชั่นกลุ่ม G2 — Batch 2 (ทุก variant 98 ตัว)</title>
+<style>
+  @page{size:A4;margin:11mm 10mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.4;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:14px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:4px 6px;vertical-align:top;text-align:left;font-size:9.5px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  td.r{text-align:right;white-space:nowrap;}
+  .miss{color:#B3151D;font-weight:700;}.part{color:#B7791F;font-weight:700;}.ok{color:#2F855A;font-weight:700;}
+  .kpi{display:flex;gap:6px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:7px 10px;margin:7px 0;font-size:10px;}
+  .anom{background:#FEF2F2;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+  .small{font-size:9px;color:#6B7280;}
+</style>
+</head>
+<body>
+
+<h1>Audit ออปชั่นกลุ่ม G2 — Batch 2 (ไล่ทุก variant · 98 ตัว)</h1>
+<div class="sub">render ทุก product กลุ่ม 2 ด้วย jsdom → ตรวจ ราคา/ชื่อ/สี/แครช ทีละตัว · READ-ONLY · 10 มิ.ย. 2026 · ต่อจาก Batch 1 (engine)</div>
+
+<div class="kpi">
+  <div><span class="n green">98/98</span>render สำเร็จ ไม่แครช</div>
+  <div><span class="n red">10</span>🔴 เรทผูกผิดปกติ (เช็คซ้ำ)</div>
+  <div><span class="n yellow">88</span>🟡 สืบทอดปัญหา engine</div>
+  <div><span class="n blue">0</span>ราคา = 0 / NaN</div>
+</div>
+
+<div class="note">
+<b>สรุป Batch 2:</b> ทุก variant render ออกได้จริง ราคา&gt;0 ขนาดถูก หน่วย "1 ชุด" — <b>ไม่มีตัวไหนพังเพิ่ม</b> ·
+ทุก rn ใช้ engine <code>per_sqm</code> เดียวกัน → <b>สืบทอดปัญหาชุด Batch 1 ทั้งหมด</b> (สี default = สีอบขาว ควรเป็นเทาซาฮาร่า · สีที่เลือกไม่ลงใบ) ·
+imp ใช้ <code>per_length_tier</code> → กระจกเทมเปอร์ 10 มม. ลงถูก ✓ · <b>ของใหม่ที่เจอจากการไล่ทีละตัว = "เรทผูกกันผิดปกติ" 10 จุด</b> (ด้านล่าง)
+</div>
+
+<h2>🔴 จุดใหม่ — เรทผูกกัน ทั้งที่สเปกต่าง (ระยะแคบควรแพงกว่า) · เช็คซ้ำกับ Excel ต้นทาง</h2>
+<p class="small">เทียบกับกลุ่มที่ถูกต้อง เช่น <b>1"x1.6" โชว์1"</b>: rn13(5cm)=3,700 &lt; rn15(3cm)=4,500 &lt; rn17(2cm)=4,800 (ไล่ขึ้นตามระยะแคบ ✓) · แต่กลุ่มล่างนี้ 2 ระยะแรกเรทเท่ากัน:</p>
+<table>
+<tr><th style="width:9%;">id</th><th>กลุ่มหน้าระแนง</th><th class="c">5 ซม.</th><th class="c">3 ซม.</th><th class="c">2 ซม.</th><th>อาการ</th></tr>
+<tr class="anom"><td>rn31/33/35</td><td>1"x1½" โชว์ 1½" ไม่โครง</td><td class="c">3,300</td><td class="c miss">3,700</td><td class="c miss">3,700</td><td>3cm = 2cm (rn33=rn35)</td></tr>
+<tr class="anom"><td>rn32/34/36</td><td>1"x1½" โชว์ 1½" รวมโครง</td><td class="c">5,200</td><td class="c miss">5,600</td><td class="c miss">5,600</td><td>3cm = 2cm (rn34=rn36)</td></tr>
+<tr class="anom"><td>rn49/51/53</td><td>1"x4" โชว์ 4" ไม่โครง</td><td class="c miss">4,000</td><td class="c miss">4,000</td><td class="c">4,800</td><td>5cm = 3cm (rn49=rn51)</td></tr>
+<tr class="anom"><td>rn50/52/54</td><td>1"x4" โชว์ 4" รวมโครง</td><td class="c miss">6,000</td><td class="c miss">6,000</td><td class="c">6,900</td><td>5cm = 3cm (rn50=rn52)</td></tr>
+<tr class="anom"><td>rn69/71/73</td><td>1.6"x4" โชว์ 4" ไม่โครง</td><td class="c miss">4,600</td><td class="c miss">4,600</td><td class="c">5,400</td><td>5cm = 3cm (rn69=rn71)</td></tr>
+<tr class="anom"><td>rn70/72/74</td><td>1.6"x4" โชว์ 4" รวมโครง</td><td class="c miss">6,500</td><td class="c miss">6,500</td><td class="c">7,900</td><td>5cm = 3cm (rn70=rn72)</td></tr>
+<tr class="anom"><td>rn75/77/79</td><td>4"x4" โชว์ 4" ไม่โครง</td><td class="c miss">6,600</td><td class="c miss">6,600</td><td class="c">8,300</td><td>5cm = 3cm (rn75=rn77)</td></tr>
+<tr class="anom"><td>rn76/78/80</td><td>4"x4" โชว์ 4" รวมโครง</td><td class="c miss">9,600</td><td class="c miss">9,600</td><td class="c">12,000</td><td>5cm = 3cm (rn76=rn78)</td></tr>
+</table>
+<p class="small">รูปแบบ: ทุกกลุ่ม <b>"โชว์ 4""</b> (หน้ากว้าง) มีเรท 5cm=3cm เสมอ · กลุ่ม "โชว์ 1½"" มี 3cm=2cm — เป็นรูปแบบสม่ำเสมอ อาจตั้งใจ (หน้ากว้างใช้จำนวนซี่เท่ากันที่ 5/3cm) หรือก๊อปเรทพลาด → <b>ยืนยันกับตาราง Excel ต้นฉบับ</b></p>
+
+<h2>🔴 ราวบันได/ราวกันตก — เรทผูกกัน 2 คู่</h2>
+<table>
+<tr><th style="width:9%;">id</th><th>รายการ</th><th class="c">ราคา(6 ม.)</th><th>อาการ (เช็คซ้ำ)</th></tr>
+<tr class="anom"><td>imp2</td><td>47.2 บันไดเฉียง (ก) U+เสาอลู</td><td class="r">54,000</td><td rowspan="3">imp2 = imp3 = imp4 เท่ากันหมด · imp4 "บันไดตรง หมุด" ไม่ควรเท่า "บันไดเฉียง"</td></tr>
+<tr class="anom"><td>imp3</td><td>47.2 บันไดเฉียง (ข) เสาอลู</td><td class="r">54,000</td></tr>
+<tr class="anom"><td>imp4</td><td>47.3 บันไดตรง หมุดแปะปูน</td><td class="r">54,000</td></tr>
+<tr class="anom"><td>imp5</td><td>47.4 บันไดตรง (ก) U+เสาอลู</td><td class="r">44,000</td><td rowspan="2">imp5 = imp6 เท่ากัน (U+เสาอลู vs เสาอลู ควรต่าง)</td></tr>
+<tr class="anom"><td>imp6</td><td>47.4 บันไดตรง (ข) เสาอลู</td><td class="r">44,000</td></tr>
+</table>
+
+<h2>🟡 ปัญหา engine ที่ทุก variant สืบทอด (= Batch 1 · ไม่ซ้ำรายตัว)</h2>
+<table>
+<tr><th style="width:26%;">ปัญหา</th><th>กระทบ variant</th><th class="c" style="width:46px;">จำนวน</th></tr>
+<tr><td>สี default = "สีอบขาว" (ใบจริงใช้สีเทาซาฮาร่า)</td><td>rn1–rn88 ทุกตัว render "รายละเอียดงาน- สีอบขาว"</td><td class="c">88</td></tr>
+<tr><td>สีที่เลือก (fin) ไม่ลงบรรทัดใบ — กระทบราคาอย่างเดียว</td><td>rn ทุกตัว (fin: เทาซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ/ลายไม้)</td><td class="c">88</td></tr>
+<tr><td>ชื่อหลุด jargon ภายในลงใบ "(ข้อ 38.x)"/"47.x ทำยากสุด/(ก)(ข)"</td><td>bar_grid_z, bar_slide, bar_openclose, imp1–imp6</td><td class="c">9</td></tr>
+<tr><td>ราวกันตกกระจก ไม่มีบรรทัดอุปกรณ์สแตนเลส</td><td>imp1–imp6</td><td class="c">6</td></tr>
+</table>
+
+<h2>🟢 ผ่าน (ไล่ครบ 98 ตัว)</h2>
+<table>
+<tr><th style="width:34%;">เกณฑ์</th><th>ผล</th></tr>
+<tr><td>render ไม่แครช</td><td class="ok">98/98 ✓ (รวม bar_slide ที่ไม่ได้เลือกประตู — เลือก fence_gate ถึงแครช ดู Batch1 #4)</td></tr>
+<tr><td>ราคา &gt; 0 / ไม่ NaN</td><td class="ok">98/98 ✓ ต่ำสุด 21,000 (rn7) สูงสุด 87,000 (rn80)</td></tr>
+<tr><td>ขนาดท้ายบรรทัด "(X × Y ม.)" / "(ยาว X ม.)"</td><td class="ok">ถูกทุกตัว ✓</td></tr>
+<tr><td>หน่วย "1 ชุด" (lump sum) ตรงใบจริง</td><td class="ok">✓</td></tr>
+<tr><td>ราวบันได กระจกเทมเปอร์ใส 10 มม.</td><td class="ok">imp1–imp6 ลงใบถูก ✓ (glassDef:14)</td></tr>
+<tr><td>เรทไล่ขึ้นตามระยะแคบ (กลุ่มที่ถูก)</td><td class="ok">โชว์ 1" / 1.6" ทุกกลุ่ม ✓ (ผิดเฉพาะ โชว์ 4" + 1½")</td></tr>
+</table>
+
+<h2>ภาคผนวก — เรททั้งหมด 88 ระแนง (จัดกลุ่มหน้าระแนง · แถวแดง=เรทผูกผิดปกติ)</h2>
+<p class="small">เรท = บาท/ตร.ม. ก่อนส่วนลด ranae · เรียงตามหน้าระแนง × ระยะ (5/3/2 ซม.) × ไม่โครง/รวมโครง</p>
+<table>
+<tr><th>หน้าระแนง</th><th class="c">5cm ไม่โครง</th><th class="c">5cm รวมโครง</th><th class="c">3cm ไม่โครง</th><th class="c">3cm รวมโครง</th><th class="c">2cm ไม่โครง</th><th class="c">2cm รวมโครง</th></tr>
+<tr><td>1x5cm โชว์ 1cm</td><td class="c">rn1 3,300</td><td class="c">rn2 5,200</td><td class="c">rn3 4,300</td><td class="c">rn4 6,000</td><td class="c">rn5 5,000</td><td class="c">rn6 7,200</td></tr>
+<tr><td>1x5cm โชว์ 5cm</td><td class="c">rn7 2,800</td><td class="c">rn8 4,500</td><td class="c">rn9 3,200</td><td class="c">rn10 4,800</td><td class="c">rn11 3,300</td><td class="c">rn12 5,100</td></tr>
+<tr><td>1"x1.6" โชว์ 1"</td><td class="c">rn13 3,700</td><td class="c">rn14 5,300</td><td class="c">rn15 4,500</td><td class="c">rn16 6,400</td><td class="c">rn17 4,800</td><td class="c">rn18 6,900</td></tr>
+<tr><td>1"x1" โชว์ 1"</td><td class="c">rn19 3,200</td><td class="c">rn20 4,700</td><td class="c">rn21 3,700</td><td class="c">rn22 5,400</td><td class="c">rn23 3,900</td><td class="c">rn24 5,600</td></tr>
+<tr><td>1"x1½" โชว์ 1"</td><td class="c">rn25 3,300</td><td class="c">rn26 5,200</td><td class="c">rn27 4,000</td><td class="c">rn28 6,100</td><td class="c">rn29 4,300</td><td class="c">rn30 6,500</td></tr>
+<tr class="anom"><td>1"x1½" โชว์ 1½"</td><td class="c">rn31 3,300</td><td class="c">rn32 5,200</td><td class="c miss">rn33 3,700</td><td class="c miss">rn34 5,600</td><td class="c miss">rn35 3,700</td><td class="c miss">rn36 5,600</td></tr>
+<tr><td>ผนัง 1"x1.6" โชว์ 1.6"</td><td class="c">rn37 3,200</td><td class="c">rn38 4,900</td><td class="c">rn39 3,700</td><td class="c">rn40 5,300</td><td class="c">rn41 4,000</td><td class="c">rn42 5,800</td></tr>
+<tr class="anom"><td>1"x4" โชว์ 1"</td><td class="c">rn43 5,500</td><td class="c">rn44 8,100</td><td class="c">rn45 7,100</td><td class="c">rn46 10,100</td><td class="c">rn47 7,900</td><td class="c">rn48 10,800</td></tr>
+<tr class="anom"><td>1"x4" โชว์ 4"</td><td class="c miss">rn49 4,000</td><td class="c miss">rn50 6,000</td><td class="c miss">rn51 4,000</td><td class="c miss">rn52 6,000</td><td class="c">rn53 4,800</td><td class="c">rn54 6,900</td></tr>
+<tr><td>1"x4" โชว์ 4" ทึบ</td><td class="c" colspan="2">rn55 5,100 / rn56 6,900</td><td class="c" colspan="4">(แบบทึบ ไม่มีระยะ)</td></tr>
+<tr><td>1.6"x1.6" โชว์ 1.6"</td><td class="c">rn57 3,900</td><td class="c">rn58 5,600</td><td class="c">rn59 4,400</td><td class="c">rn60 6,400</td><td class="c">rn61 5,000</td><td class="c">rn62 7,200</td></tr>
+<tr><td>1.6"x4" โชว์ 1.6"</td><td class="c">rn63 5,400</td><td class="c">rn64 7,900</td><td class="c">rn65 6,500</td><td class="c">rn66 9,200</td><td class="c">rn67 7,300</td><td class="c">rn68 10,600</td></tr>
+<tr class="anom"><td>1.6"x4" โชว์ 4"</td><td class="c miss">rn69 4,600</td><td class="c miss">rn70 6,500</td><td class="c miss">rn71 4,600</td><td class="c miss">rn72 6,500</td><td class="c">rn73 5,400</td><td class="c">rn74 7,900</td></tr>
+<tr class="anom"><td>4"x4" โชว์ 4"</td><td class="c miss">rn75 6,600</td><td class="c miss">rn76 9,600</td><td class="c miss">rn77 6,600</td><td class="c miss">rn78 9,600</td><td class="c">rn79 8,300</td><td class="c">rn80 12,000</td></tr>
+<tr><td>สลับ 5ต่อ3 โชว์ 1.6"ต่อ4"</td><td class="c" colspan="6">rn81 5,400 (ไม่โครง) / rn82 7,700 (รวมโครง)</td></tr>
+<tr><td>เกล็ด Z 1"</td><td class="c" colspan="3">rn83 3,600 (ไม่โครง)</td><td class="c" colspan="3">rn84 5,200 (รวมโครง)</td></tr>
+<tr><td>เกล็ด Z 1.6"</td><td class="c" colspan="3">rn85 4,900 (ไม่โครง)</td><td class="c" colspan="3">rn86 6,900 (รวมโครง)</td></tr>
+<tr><td>เกล็ด Z 4"</td><td class="c" colspan="3">rn87 5,300 (ไม่โครง)</td><td class="c" colspan="3">rn88 7,700 (รวมโครง)</td></tr>
+</table>
+
+<div class="foot">
+Batch 2/2 · render 98 product กลุ่ม G2 ทั้งหมดด้วย jsdom จาก index.html ปัจจุบัน · เรท/ราคายกจากข้อมูลในโค้ดจริง (PRODUCTS) ไม่เดา · เลข KPI นับจริงจากตาราง · ราวกันตกเหล็ก = ไม่มีในระบบ/ไม่ตรวจ (ไม่ได้ขาย) · READ-ONLY ไม่แตะ public/calculator/index.html<br>
+เรทผูกผิดปกติทั้งหมดติดป้าย "เช็คซ้ำ" — ต้องยืนยันกับตารางราคา Excel ต้นฉบับก่อนแก้ (อาจตั้งใจ)
+</div>
+
+</body>
+</html>

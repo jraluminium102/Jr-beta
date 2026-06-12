@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G3 UX — หลังคา / ฝ้า-ผนัง (เดโม)</title>
+<style>
+:root{
+  --red:#B3151D;--red-dark:#8B0F15;--red-light:#FFF0F0;
+  --blue:#1565C0;--blue-light:#EAF3FF;--blue-border:#9DBCE0;
+  --green:#2E7D32;--green-light:#E8F5E9;
+  --amber:#F59E0B;--amber-light:#FFF7ED;
+  --gray:#6B7280;--border:#E5E7EB;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:#111;}
+.demo-banner{background:#B3151D;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700;}
+.page{max-width:640px;margin:0 auto;padding:12px;}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.tabs::-webkit-scrollbar{height:4px;}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;
+  cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;transition:.15s;}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.tab:hover:not(.on){border-color:var(--red);color:var(--red);}
+.section{display:none;}.section.on{display:block;}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px 14px 12px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title .badge{font-size:11px;background:var(--red-light);color:var(--red);border-radius:4px;padding:1px 7px;font-weight:700;}
+.field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:8px;}
+.field-lbl{font-size:13px;color:#374151;min-width:70px;}
+.field input[type=number],.field input[type=text],.field select{
+  height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:14px;font-family:inherit;color:#111;background:#fff;
+  min-width:0;outline:none;transition:.15s;}
+.field input[type=number]:focus,.field select:focus{border-color:var(--blue);}
+.field input[type=number]{width:80px;}.field select{width:auto;max-width:280px;}
+.unit{font-size:12px;color:var(--gray);}
+.hint{font-size:11px;color:var(--gray);margin-top:2px;width:100%;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{height:44px;min-width:64px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:14px;font-family:inherit;color:#374151;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:.15s;font-weight:600;}
+.chip:hover{border-color:var(--blue);color:var(--blue);}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chips.sm .chip{height:36px;min-width:44px;padding:0 10px;font-size:13px;}
+.stepper{display:inline-flex;align-items:center;gap:4px;}
+.step-btn{width:44px;height:44px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.step-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.step-val{width:52px;height:44px;text-align:center;border:1.5px solid var(--border);border-radius:8px;
+  font-size:16px;font-weight:700;font-family:inherit;background:#fff;}
+.price-bar{position:sticky;bottom:0;background:var(--red);color:#fff;padding:10px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-radius:10px 10px 0 0;margin:-12px;margin-top:12px;}
+.price-bar .plbl{font-size:12px;opacity:.85;}
+.price-bar .pval{font-size:20px;font-weight:700;}
+.price-bar .pdemo{font-size:10px;background:rgba(255,255,255,.25);padding:2px 7px;border-radius:4px;margin-left:6px;}
+details.extra{border:1px solid var(--border);border-radius:8px;margin-top:6px;}
+details.extra summary{padding:8px 12px;cursor:pointer;font-size:13px;color:var(--green);font-weight:600;}
+details.extra>*:not(summary){padding:10px 12px 8px;}
+.opt-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 0;
+  border-bottom:1px solid var(--border);}
+.opt-row:last-child{border-bottom:none;}
+.opt-row label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;}
+.opt-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--red);}
+/* กล่องฟ้า slide-wrap */
+.slide-wrap{background:var(--blue-light);border:1px solid var(--blue-border);border-radius:8px;padding:10px 12px;margin-top:8px;}
+.slide-wrap .sw-title{font-size:12px;font-weight:700;color:#1E5AA8;margin-bottom:8px;}
+/* gutter chain */
+.chain-wrap{display:none;}
+/* amber box */
+.amber-box{background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;margin-top:6px;}
+.amber-box .lbl{font-size:12px;font-weight:700;color:#92400E;margin-bottom:4px;}
+.amber-box input{height:44px;width:130px;border:1.5px solid #F59E0B;border-radius:8px;
+  padding:0 10px;font-size:15px;font-weight:700;color:#92400E;background:#FFFBEB;font-family:inherit;}
+.info-note{font-size:11px;color:#555;background:#F9FAFB;border-left:3px solid #D1D5DB;padding:4px 8px;border-radius:4px;margin-top:4px;}
+@media(max-width:440px){.field-lbl{min-width:55px;}.card{padding:11px 10px;}.price-bar .pval{font-size:17px;}}
+</style>
+</head>
+<body>
+<div class="demo-banner">DRAFT / เดโม — ราคาเป็นตัวอย่าง dev ต้องดึง RATES จริงจาก engine</div>
+<div class="page">
+  <h2 style="font-size:17px;font-weight:700;color:var(--red);margin:10px 0 8px;">กลุ่ม G3 — ดราฟ UX ใหม่ (หลังคา / ฝ้า-ผนัง)</h2>
+  <div class="hint" style="margin-bottom:10px;color:#B3151D;font-size:12px;font-weight:600;">
+    หมายเหตุดราฟ: ต่อยอดแนว dev FIX A/D ที่ทำค้างอยู่ (CATS กล่องชิป + label ยาว/ยื่น) — ไม่รื้อใหม่
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('roof')">หลังคา</button>
+    <button class="tab" onclick="switchTab('ceiling')">ฝ้า-ผนัง</button>
+  </div>
+
+  <!-- ======== 1. หลังคา ======== -->
+  <div class="section on" id="sec-roof">
+
+    <!-- CAT A: วัสดุมุง · สี · โครง (เปิดเสมอ) -->
+    <details open style="border:1px solid #EED5D5;border-radius:8px;margin-bottom:8px;">
+      <summary style="padding:10px 12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--red);min-height:44px;display:flex;align-items:center;">
+        วัสดุมุง · สี · โครง
+      </summary>
+      <div style="padding:10px 12px 10px;">
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">วัสดุมุง <span class="badge">G3</span></div>
+          <!-- CASCADE: เลือกกลุ่ม → เลือกรุ่น -->
+          <div class="chips sm" style="margin-bottom:8px;">
+            <button class="chip on" data-grp="poly" onclick="chipPick(this,'roof-grp');buildRoofProducts()">โพลีตัน / กระจก</button>
+            <button class="chip" data-grp="metal" onclick="chipPick(this,'roof-grp');buildRoofProducts()">เมทัลชีท</button>
+            <button class="chip" data-grp="chinco" onclick="chipPick(this,'roof-grp');buildRoofProducts()">ชินโคไลท์</button>
+            <button class="chip" data-grp="vinyl" onclick="chipPick(this,'roof-grp');buildRoofProducts()">ไวนิล / ดีไลท์</button>
+            <button class="chip" data-grp="lam" onclick="chipPick(this,'roof-grp');buildRoofProducts()">ลามิเนต</button>
+          </div>
+          <select id="roof-prod" style="height:44px;width:100%;max-width:320px;" onchange="onRoofProdChange()">
+            <option value="roof_polyton">โพลีตัน (หลังคาโปร่งแสง)</option>
+          </select>
+          <div id="roof-color-row" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">ขนาดหลังคา (ตร.ม.)</div>
+          <div class="field">
+            <span class="field-lbl">ยาว (ม.)</span>
+            <input type="number" id="roof-w" min="0.5" step="0.1" value="4.0" oninput="calcRoof()">
+            <span class="unit">×</span>
+            <span class="field-lbl" style="min-width:0">ยื่น (ม.)</span>
+            <input type="number" id="roof-h" min="0.5" step="0.1" value="3.0" oninput="calcRoof()">
+          </div>
+          <div class="hint">ยาว = แนวขนานผนัง · ยื่น = ระยะยื่นออกจากบ้าน</div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">แป</div>
+          <div class="chips sm">
+            <button class="chip" data-val="แปเดี่ยว" onclick="chipPick(this,'roof-batten');calcRoof()">แปเดี่ยว</button>
+            <button class="chip on" data-val="แปคู่" onclick="chipPick(this,'roof-batten');calcRoof()">แปคู่ (default)</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">โครงสร้าง</div>
+          <div class="chips sm">
+            <button class="chip on" data-val="โครงอลูมิเนียม" onclick="chipPick(this,'roof-frame');calcRoof()">โครงอลูมิเนียม</button>
+            <button class="chip" data-val="โครงเหล็กชุบซิงค์" onclick="chipPick(this,'roof-frame');calcRoof()">โครงเหล็กชุบซิงค์</button>
+          </div>
+          <div id="roof-frame-warn" style="display:none;font-size:11px;color:#c0392b;margin-top:4px;">
+            ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- CAT B: หลังคาเลื่อน (พับ default) -->
+    <details id="roof-slide-det" style="border:1px solid #EED5D5;border-radius:8px;margin-bottom:8px;">
+      <summary style="padding:10px 12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--blue);min-height:44px;display:flex;align-items:center;">
+        หลังคาเลื่อน (ติ๊กถ้าต้องการ)
+      </summary>
+      <div style="padding:10px 12px 10px;">
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <input type="checkbox" id="roof-slide-enable" style="width:18px;height:18px;accent-color:var(--red);" onchange="toggleRoofSlide()">
+            <b>ทำเป็นหลังคาเลื่อน</b>
+          </label>
+        </div>
+        <div id="roof-slide-box" style="display:none;">
+          <div class="slide-wrap">
+            <div class="sw-title">ชนิดเลื่อน</div>
+            <div class="chips sm" style="margin-bottom:10px;">
+              <button class="chip on" data-val="เลื่อนยื่น" onclick="chipPick(this,'roof-slidetype')">เลื่อนยื่น</button>
+              <button class="chip" data-val="เลื่อนข้าง" onclick="chipPick(this,'roof-slidetype')">เลื่อนข้าง</button>
+            </div>
+            <div class="hint" style="color:var(--blue);margin-bottom:8px;">ราคาเท่ากัน 2 แบบ · ระบุในใบ</div>
+
+            <div class="sw-title">จำนวนบานเลื่อน</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">
+              <button class="chip sm on" data-n="2" onclick="setRoofSPanels(2)" style="height:36px;min-width:40px;">2</button>
+              <button class="chip sm" data-n="3" onclick="setRoofSPanels(3)" style="height:36px;min-width:40px;">3</button>
+              <button class="chip sm" data-n="4" onclick="setRoofSPanels(4)" style="height:36px;min-width:40px;">4</button>
+              <button class="chip sm" data-n="6" onclick="setRoofSPanels(6)" style="height:36px;min-width:40px;">6</button>
+              <div class="stepper">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofS(-1)">−</button>
+                <input type="number" class="step-val" id="roof-spanels" value="2" min="2" style="width:44px;height:36px;font-size:14px;" oninput="syncRoofSChips()">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofS(1)">+</button>
+              </div>
+            </div>
+
+            <div class="sw-title">บานติดตาย (ส่วนไม่เลื่อน · ระบุในใบ)</div>
+            <div class="field" style="margin-bottom:8px;">
+              <div class="stepper">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofFixed(-1)">−</button>
+                <input type="number" class="step-val" id="roof-sfixed" value="0" min="0" style="width:44px;height:36px;font-size:14px;">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofFixed(1)">+</button>
+              </div>
+              <span class="unit">บาน</span>
+            </div>
+
+            <div class="sw-title">พื้นที่เลื่อน (ว่าง = auto)</div>
+            <div class="field">
+              <span class="field-lbl" style="min-width:50px;">ยาว (ม.)</span>
+              <input type="number" id="roof-sareaw" min="0" step="0.1" placeholder="auto" style="width:75px;" oninput="fillRoofMotor()">
+              <span class="unit">×</span>
+              <span class="field-lbl" style="min-width:50px;">ยื่น (ม.)</span>
+              <input type="number" id="roof-sareah" min="0" step="0.1" placeholder="auto" style="width:75px;" oninput="fillRoofMotor()">
+            </div>
+
+            <div class="sw-title" style="margin-top:8px;">มอเตอร์</div>
+            <div class="field">
+              <div class="stepper">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofMotorQty(-1)">−</button>
+                <input type="number" class="step-val" id="roof-smotorqty" value="1" min="1" style="width:44px;height:36px;font-size:14px;" oninput="fillRoofMotor()">
+                <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="stepRoofMotorQty(1)">+</button>
+              </div>
+              <span class="unit">ตัว</span>
+              <span id="roof-smotor-auto" style="font-size:12px;color:var(--green);font-weight:600;margin-left:4px;"></span>
+              <a id="roof-smotor-edit-link" onclick="showRoofMotorEdit()" style="font-size:12px;color:#1976D2;text-decoration:underline;cursor:pointer;margin-left:8px;">แก้ราคา</a>
+            </div>
+            <div id="roof-smotor-price-wrap" style="display:none;" class="field">
+              <span class="unit">× ราคา</span>
+              <input type="number" id="roof-smotorprice" min="0" step="1000" value="18000" style="width:90px;" oninput="calcRoof()">
+              <span class="unit">บาท/ตัว</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- CAT C: ปลายหลังคา · รางน้ำ (เปิดเสมอ) -->
+    <details open style="border:1px solid #EED5D5;border-radius:8px;margin-bottom:8px;">
+      <summary style="padding:10px 12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--red);min-height:44px;display:flex;align-items:center;">
+        ปลายหลังคา · รางน้ำ
+      </summary>
+      <div style="padding:10px 12px 10px;">
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">ปลายหลังคา</div>
+          <div class="chips sm">
+            <button class="chip on" data-val="ปล่อย" onclick="chipPick(this,'roof-end');toggleGutter()">ปล่อย (default)</button>
+            <button class="chip" data-val="รางน้ำ" onclick="chipPick(this,'roof-end');toggleGutter()">รางน้ำ (รวมราคา)</button>
+          </div>
+          <div class="hint">ปิดปลายกันน้ำ = กรอกยาวใน "ของเสริม"</div>
+        </div>
+
+        <!-- กล่องรางน้ำ (โผล่เมื่อเลือก รางน้ำ) -->
+        <div id="gutter-box" style="display:none;">
+          <div class="card" style="margin-bottom:8px;">
+            <div class="card-title">ชนิดราง</div>
+            <div class="chips sm">
+              <button class="chip on" data-val="1000" onclick="chipPick(this,'roof-guttype');calcRoof()">อลู S 1,000/ม.</button>
+              <button class="chip" data-val="2000" onclick="chipPick(this,'roof-guttype');calcRoof()">สแตนเลส M 2,000/ม.</button>
+              <button class="chip" data-val="3000" onclick="chipPick(this,'roof-guttype');calcRoof()">สแตนเลส L 3,000/ม.</button>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:8px;">
+            <div class="card-title">ระบบ</div>
+            <div class="chips sm">
+              <button class="chip on" data-val="ท่อ" onclick="chipPick(this,'roof-gutsys');toggleGutterSys()">ท่อ</button>
+              <button class="chip" data-val="โซ่" onclick="chipPick(this,'roof-gutsys');toggleGutterSys()">โซ่</button>
+            </div>
+          </div>
+          <div id="gutter-pipe-box" class="card" style="margin-bottom:8px;">
+            <div class="card-title">สีท่อน้ำทิ้ง</div>
+            <div class="chips sm">
+              <button class="chip on" data-val="ขาว" onclick="chipPick(this,'roof-pipecolor')">ขาว (default)</button>
+              <button class="chip" data-val="ดำ" onclick="chipPick(this,'roof-pipecolor')">ดำ</button>
+            </div>
+          </div>
+          <div id="gutter-chain-box" class="card" style="display:none;margin-bottom:8px;">
+            <div class="card-title">โซ่รางน้ำ — ลาย + สี</div>
+            <div class="chips sm" style="margin-bottom:6px;">
+              <button class="chip on" data-val="ทิวลิป" onclick="chipPick(this,'roof-chainpat')">ทิวลิป</button>
+              <button class="chip" data-val="โลตัส" onclick="chipPick(this,'roof-chainpat')">โลตัส</button>
+            </div>
+            <div class="chips sm">
+              <button class="chip on" data-val="ขาว" onclick="chipPick(this,'roof-chaincolor')">ขาว</button>
+              <button class="chip" data-val="น้ำตาล" onclick="chipPick(this,'roof-chaincolor')">น้ำตาล</button>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:8px;">
+            <div class="card-title">ความยาวราง (ม.)</div>
+            <div class="field">
+              <input type="number" id="roof-gutlen" min="0" step="0.1" value="0" placeholder="ว่าง/0 = ใช้ความยาวหลังคา" style="width:120px;" oninput="calcRoof()">
+              <span class="unit">ม. <span style="color:var(--green);">(ว่าง = auto = ยาวหลังคา)</span></span>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0;">
+            <div class="card-title">ท่อน้ำทิ้ง PVC 2.5″</div>
+            <div class="chips sm">
+              <button class="chip" data-val="" onclick="chipPick(this,'roof-drain')">ไม่มี</button>
+              <button class="chip on" data-val="ดำ" onclick="chipPick(this,'roof-drain')">สีดำ</button>
+              <button class="chip" data-val="ขาว" onclick="chipPick(this,'roof-drain')">สีขาว</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- CAT D: ของเสริม (พับ default) -->
+    <details style="border:1px solid #EED5D5;border-radius:8px;margin-bottom:8px;">
+      <summary style="padding:10px 12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--green);min-height:44px;display:flex;align-items:center;">
+        ของเสริมหลังคา (กดถ้าต้องการ)
+      </summary>
+      <div style="padding:10px 12px 10px;">
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">คานเหล็กถัก</div>
+          <div class="chips sm" style="margin-bottom:6px;">
+            <button class="chip on" data-val="0" onclick="chipPick(this,'roof-beam');calcRoof()">ไม่มี</button>
+            <button class="chip" data-val="2400" onclick="chipPick(this,'roof-beam');calcRoof()">รุ่น1 2,400/ม.</button>
+            <button class="chip" data-val="3600" onclick="chipPick(this,'roof-beam');calcRoof()">รุ่น2 3,600/ม.</button>
+            <button class="chip" data-val="4400" onclick="chipPick(this,'roof-beam');calcRoof()">รุ่น3 4,400/ม.</button>
+          </div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:60px;">ยาว (ม.)</span>
+            <input type="number" id="roof-beamlen" min="0" step="0.1" value="0" style="width:75px;" oninput="calcRoof()">
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">เสา</div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:70px;">เสาแผง</span>
+            <div class="stepper">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('roof-polep',-1);calcRoof()">−</button>
+              <input type="number" class="step-val" id="roof-polep" value="0" min="0" style="width:44px;height:36px;font-size:14px;" oninput="calcRoof()">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('roof-polep',1);calcRoof()">+</button>
+            </div>
+            <span class="unit">ต้น × 4,000</span>
+          </div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:70px;">เสา 4″×8″</span>
+            <div class="stepper">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('roof-pole4',-1);calcRoof()">−</button>
+              <input type="number" class="step-val" id="roof-pole4" value="0" min="0" style="width:44px;height:36px;font-size:14px;" oninput="calcRoof()">
+              <button class="step-btn" style="width:36px;height:36px;font-size:16px;" onclick="step('roof-pole4',1);calcRoof()">+</button>
+            </div>
+            <span class="unit">ต้น × 2,000</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:8px;">
+          <div class="card-title">ปิดปลายกันน้ำ + ซ่อนสโลป + ครอบท่อ</div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:80px;">ปิดปลาย</span>
+            <input type="number" id="roof-eave" min="0" step="0.1" value="0" style="width:70px;" oninput="calcRoof()">
+            <span class="unit">ม. × 1,000</span>
+          </div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:80px;">ซ่อนสโลป</span>
+            <div class="chips sm">
+              <button class="chip on" data-val="0" onclick="chipPick(this,'roof-hs')">ไม่มี</button>
+              <button class="chip" data-val="comp" onclick="chipPick(this,'roof-hs')">คอมโพสิต 3 มม.</button>
+              <button class="chip" data-val="smart" onclick="chipPick(this,'roof-hs')">สมาร์ทบอร์ด 6 มม.</button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-lbl" style="min-width:80px;">ครอบท่อ PVC</span>
+            <input type="number" id="roof-pvc" min="0" step="0.1" value="0" style="width:70px;" oninput="calcRoof()">
+            <span class="unit">ม. (1,500/1.5 ม.)</span>
+          </div>
+        </div>
+
+        <!-- ต่อปลายวัสดุที่ 2 -->
+        <div class="card" style="background:var(--amber-light);border-color:var(--amber);margin-bottom:0;">
+          <div class="card-title" style="color:#92400E;">+ ต่อปลายวัสดุที่ 2</div>
+          <select id="roof-ext2" style="height:44px;width:100%;max-width:280px;margin-bottom:8px;" onchange="calcRoof()">
+            <option value="">— ไม่มี —</option>
+            <option value="roof_polyton">โพลีตัน</option>
+            <option value="roof_vinyl">ไวนิล</option>
+            <option value="roof_delight">ดีไลท์</option>
+            <option value="roof_laminate">ลามิเนต</option>
+            <option value="metal_sheet">เมทัลชีท</option>
+            <option value="chincolite">ชินโคไลท์</option>
+          </select>
+          <div class="field">
+            <span class="field-lbl">พื้นที่ส่วน 2</span>
+            <input type="number" id="roof-ext2area" min="0" step="0.1" value="0" style="width:80px;" oninput="calcRoof()">
+            <span class="unit">ตร.ม. (เรตแยกตามวัสดุ)</span>
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+  </div><!-- /sec-roof -->
+
+  <!-- ======== 2. ฝ้า-ผนัง ======== -->
+  <div class="section" id="sec-ceiling">
+
+    <div class="card">
+      <div class="card-title">ชนิดงาน <span class="badge">G3</span></div>
+      <div class="chips">
+        <button class="chip on" data-val="isowall" onclick="chipPick(this,'ceil-prod');calcCeiling()">ISOWALL</button>
+        <button class="chip" data-val="wall_ext" onclick="chipPick(this,'ceil-prod');calcCeiling()">ผนังเบาภายนอก</button>
+        <button class="chip" data-val="wall_int" onclick="chipPick(this,'ceil-prod');calcCeiling()">ผนังเบาภายใน</button>
+        <button class="chip" data-val="ceiling_alum" onclick="chipPick(this,'ceil-prod');calcCeiling()">ฝ้าอลูมิเนียม</button>
+        <button class="chip" data-val="ceiling_smart" onclick="chipPick(this,'ceil-prod');calcCeiling()">ฝ้าสมาร์ทบอร์ด</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ขนาด (ตร.ม.)</div>
+      <div class="field">
+        <span class="field-lbl">กว้าง (ม.)</span>
+        <input type="number" id="ceil-w" min="0.5" step="0.1" value="3.0" oninput="calcCeiling()">
+        <span class="unit">×</span>
+        <span class="field-lbl" style="min-width:0">สูง/ยาว (ม.)</span>
+        <input type="number" id="ceil-h" min="0.5" step="0.1" value="2.5" oninput="calcCeiling()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">จำนวนชุด</div>
+      <div class="stepper">
+        <button class="step-btn" onclick="step('ceil-qty',-1);calcCeiling()">−</button>
+        <input type="number" class="step-val" id="ceil-qty" value="1" min="1" oninput="calcCeiling()">
+        <button class="step-btn" onclick="step('ceil-qty',1);calcCeiling()">+</button>
+      </div>
+    </div>
+
+    <details class="extra">
+      <summary>+ ฉนวน / งานเสริม</summary>
+      <div class="opt-row">
+        <label><input type="checkbox" id="ceil-insul" onchange="calcCeiling()"> ฉนวนกันความร้อนและกันเสียง หนา 3″ (+600/ตร.ม.)</label>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Price bar -->
+  <div class="price-bar">
+    <div>
+      <div class="plbl" id="price-label">หลังคา 4.0×3.0 ม.</div>
+      <div class="plbl" id="price-breakdown" style="font-size:10px;opacity:.7;"></div>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <span class="pval" id="price-total">฿0</span>
+      <span class="pdemo">เดโม</span>
+    </div>
+  </div>
+</div>
+
+<script>
+var state = {
+  tab:'roof',
+  'roof-grp':'poly','roof-prod':'roof_polyton',
+  'roof-batten':'แปคู่','roof-frame':'โครงอลูมิเนียม','roof-end':'ปล่อย',
+  'roof-guttype':'1000','roof-gutsys':'ท่อ','roof-pipecolor':'ขาว',
+  'roof-chainpat':'ทิวลิป','roof-chaincolor':'ขาว','roof-drain':'ดำ',
+  'roof-beam':'0','roof-slidetype':'เลื่อนยื่น','roof-hs':'0',
+  'ceil-prod':'isowall',
+};
+
+var ROOF_PRODUCTS = {
+  poly:[
+    {id:'roof_polyton',name:'โพลีตัน'},
+    {id:'roof_laminate',name:'ลามิเนตกระจก'},
+    {id:'roof_glass_clear',name:'กระจกใสเทมเปอร์'},
+  ],
+  metal:[
+    {id:'roof_metal_0.47',name:'เมทัลชีท 0.47 มม.'},
+    {id:'roof_metal_0.5',name:'เมทัลชีท 0.5 มม.'},
+    {id:'roof_sandwich',name:'แซนวิชพาแนล'},
+  ],
+  chinco:[
+    {id:'roof_chinco_7',name:'ชินโคไลท์ 7 มม.'},
+    {id:'roof_chinco_10',name:'ชินโคไลท์ 10 มม. (Prime/Grand)'},
+  ],
+  vinyl:[
+    {id:'roof_vinyl',name:'ไวนิล VG Snow Roof Pro'},
+    {id:'roof_delight',name:'ดีไลท์'},
+  ],
+  lam:[
+    {id:'roof_laminate',name:'ลามิเนตกระจก (4+4 / 5+5)'},
+  ],
+};
+var ROOF_COLOR_OPTIONS = {
+  roof_vinyl:['สีเทา','สีขาว','สีน้ำตาล'],
+  roof_delight:['DG-2 สีฟ้าคราม','DG-4 สีเทาโซล่าร์'],
+  'roof_polyton':['Clear 101 ใส','Opal 103 ขาวขุ่น','Bronze 107 ชาใส','Green 109 เขียวใส','Silver 501','Bronze Metallic 503'],
+};
+
+function fmt(n){ return n.toLocaleString('th-TH'); }
+
+function chipPick(btn,group){
+  btn.parentElement.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  state[group] = btn.dataset.val||btn.dataset.grp||'';
+}
+
+function switchTab(t){
+  state.tab=t;
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('on'); });
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('on'); });
+  document.getElementById('sec-'+t).classList.add('on');
+  var tabs = document.querySelectorAll('.tab');
+  tabs[t==='roof'?0:1].classList.add('on');
+  updatePrice();
+}
+
+function buildRoofProducts(){
+  var grp = state['roof-grp']||'poly';
+  var sel = document.getElementById('roof-prod'); if(!sel) return;
+  var prods = ROOF_PRODUCTS[grp]||[];
+  sel.innerHTML = prods.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+  if(prods.length) { sel.value = prods[0].id; state['roof-prod'] = prods[0].id; }
+  buildRoofColorRow();
+  calcRoof();
+}
+
+function buildRoofColorRow(){
+  var prod = state['roof-prod']||'';
+  var box = document.getElementById('roof-color-row'); if(!box) return;
+  var opts = ROOF_COLOR_OPTIONS[prod]||[];
+  if(!opts.length){ box.innerHTML=''; return; }
+  var chips = opts.map(function(o,i){
+    return '<button class="chip'+(i===0?' on':'')+'" data-val="'+o+'" onclick="chipPick(this,\'roof-color\')" style="height:36px;font-size:12px;min-width:80px;">'+o+'</button>';
+  }).join('');
+  box.innerHTML = '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;">สีวัสดุมุง</div><div class="chips sm">'+chips+'</div>';
+}
+
+function onRoofProdChange(){
+  var sel = document.getElementById('roof-prod'); if(!sel) return;
+  state['roof-prod'] = sel.value;
+  buildRoofColorRow();
+  calcRoof();
+}
+
+function toggleGutter(){
+  var en = state['roof-end']==='รางน้ำ';
+  var box = document.getElementById('gutter-box'); if(box) box.style.display = en?'':'none';
+  // auto-fill gutter length = roof width
+  if(en){
+    var gl = document.getElementById('roof-gutlen');
+    var rw = document.getElementById('roof-w');
+    if(gl && rw && (!gl.value||gl.value==='0')) gl.value = rw.value;
+  }
+  calcRoof();
+}
+
+function toggleGutterSys(){
+  var sys = state['roof-gutsys'];
+  document.getElementById('gutter-pipe-box').style.display = sys==='ท่อ' ? '' : 'none';
+  document.getElementById('gutter-chain-box').style.display = sys==='โซ่' ? '' : 'none';
+}
+
+function toggleRoofSlide(){
+  var en = document.getElementById('roof-slide-enable').checked;
+  document.getElementById('roof-slide-box').style.display = en?'':'none';
+  if(en) fillRoofMotor();
+  calcRoof();
+}
+
+function setRoofSPanels(n){
+  var el = document.getElementById('roof-spanels'); if(!el) return;
+  el.value = Math.max(2,n);
+  syncRoofSChips();
+  fillRoofMotor();
+  calcRoof();
+}
+function syncRoofSChips(){
+  var el = document.getElementById('roof-spanels'); if(!el) return;
+  var n = parseInt(el.value)||2;
+  document.querySelectorAll('#sec-roof .chip[data-n]').forEach(function(c){
+    c.classList.toggle('on', parseInt(c.dataset.n)===n);
+  });
+}
+function stepRoofS(d){ var el=document.getElementById('roof-spanels'); if(!el)return; el.value=Math.max(2,(parseInt(el.value)||2)+d); syncRoofSChips(); fillRoofMotor(); calcRoof(); }
+function stepRoofFixed(d){ var el=document.getElementById('roof-sfixed'); if(!el)return; el.value=Math.max(0,(parseInt(el.value)||0)+d); }
+function stepRoofMotorQty(d){ var el=document.getElementById('roof-smotorqty'); if(!el)return; el.value=Math.max(1,(parseInt(el.value)||1)+d); fillRoofMotor(); }
+
+function fillRoofMotor(){
+  // auto-calculate motor price based on slide area (dev: real formula in engine)
+  var w = parseFloat((document.getElementById('roof-sareaw')||{}).value)||0;
+  var h = parseFloat((document.getElementById('roof-sareah')||{}).value)||0;
+  var rw = parseFloat((document.getElementById('roof-w')||{}).value)||4;
+  var rh = parseFloat((document.getElementById('roof-h')||{}).value)||3;
+  var N = parseInt((document.getElementById('roof-spanels')||{}).value)||2;
+  var sa = (w>0&&h>0)?w*h:(rw*rh*N/(N+1));
+  var auto = sa<=3.5?18000:sa<=14?28000:sa<=40?36000:72000;
+  var autoEl = document.getElementById('roof-smotor-auto');
+  var qty = parseInt((document.getElementById('roof-smotorqty')||{}).value)||1;
+  if(autoEl) autoEl.textContent = '· auto ฿'+fmt(auto)+(qty>1?' × '+qty:'');
+  var priceEl = document.getElementById('roof-smotorprice');
+  if(priceEl && !priceEl.dataset.edited) priceEl.value = auto;
+  calcRoof();
+}
+function showRoofMotorEdit(){
+  var wrap = document.getElementById('roof-smotor-price-wrap');
+  var link = document.getElementById('roof-smotor-edit-link');
+  if(wrap) wrap.style.display='inline-flex';
+  if(link) link.style.display='none';
+}
+
+function step(id,d){ var el=document.getElementById(id); if(!el)return; el.value=Math.max(parseInt(el.min||0),(parseInt(el.value)||0)+d); }
+
+/* Dummy price calc */
+var DUMMY = {
+  roof_polyton:1200, roof_vinyl:900, roof_delight:1100, roof_laminate:1800,
+  roof_metal_0_47:800, roof_metal_0_5:900, roof_sandwich:1600,
+  roof_chinco_7:1400, roof_chinco_10:1600, roof_glass_clear:2200,
+  isowall:1800, wall_ext:2200, wall_int:1600, ceiling_alum:1400, ceiling_smart:1200,
+};
+
+function calcRoof(){
+  var w = parseFloat((document.getElementById('roof-w')||{}).value)||4;
+  var h = parseFloat((document.getElementById('roof-h')||{}).value)||3;
+  var area = w*h;
+  var prod = state['roof-prod']||'roof_polyton';
+  var key = prod.replace(/\./g,'_');
+  var rate = DUMMY[key]||1200;
+  var base = Math.max(12000, rate*area);
+
+  // motor
+  var motorAdd = 0;
+  if(document.getElementById('roof-slide-enable') && document.getElementById('roof-slide-enable').checked){
+    var qty = parseInt((document.getElementById('roof-smotorqty')||{}).value)||1;
+    var mp = parseInt((document.getElementById('roof-smotorprice')||{}).value)||18000;
+    motorAdd = qty*mp;
+  }
+
+  // gutter
+  var gutAdd = 0;
+  if(state['roof-end']==='รางน้ำ'){
+    var gl = parseFloat((document.getElementById('roof-gutlen')||{}).value)||0;
+    if(gl<=0) gl=w;
+    gutAdd = gl * (parseInt(state['roof-guttype'])||1000);
+  }
+
+  // beam
+  var beamAdd = 0;
+  var bv = parseInt(state['roof-beam'])||0;
+  if(bv>0){ var bl=parseFloat((document.getElementById('roof-beamlen')||{}).value)||0; beamAdd=bv*bl; }
+
+  // poles
+  var poleAdd = (parseInt((document.getElementById('roof-polep')||{}).value)||0)*4000
+              + (parseInt((document.getElementById('roof-pole4')||{}).value)||0)*2000;
+
+  // eave
+  var eaveAdd = (parseFloat((document.getElementById('roof-eave')||{}).value)||0)*1000;
+
+  // ext2
+  var ext2 = document.getElementById('roof-ext2') && document.getElementById('roof-ext2').value;
+  var ext2area = parseFloat((document.getElementById('roof-ext2area')||{}).value)||0;
+  var ext2Add = ext2&&ext2area>0 ? Math.max(8000,(DUMMY[ext2.replace(/\./g,'_')]||1200)*ext2area) : 0;
+
+  var total = base + motorAdd + gutAdd + beamAdd + poleAdd + eaveAdd + ext2Add;
+  showPrice('หลังคา '+w+'×'+h+' ม. ('+area.toFixed(1)+' ตร.ม.)', total, 'dev: RATES จริงจาก engine');
+}
+
+function calcCeiling(){
+  var w = parseFloat((document.getElementById('ceil-w')||{}).value)||3;
+  var h = parseFloat((document.getElementById('ceil-h')||{}).value)||2.5;
+  var qty = parseInt((document.getElementById('ceil-qty')||{}).value)||1;
+  var area = w*h*qty;
+  var prod = state['ceil-prod']||'isowall';
+  var rate = DUMMY[prod]||1800;
+  var base = Math.max(5000, rate*area);
+  var insulAdd = document.getElementById('ceil-insul') && document.getElementById('ceil-insul').checked ? 600*area : 0;
+  showPrice(prod+' '+area.toFixed(1)+' ตร.ม.', base+insulAdd, 'dev: RATES จริง');
+}
+
+function showPrice(label, total, bd){
+  document.getElementById('price-label').textContent = label;
+  document.getElementById('price-total').textContent = '฿'+fmt(Math.round(total));
+  document.getElementById('price-breakdown').textContent = bd||'';
+}
+
+function updatePrice(){
+  if(state.tab==='roof') calcRoof();
+  else calcCeiling();
+}
+
+// Init
+buildRoofProducts();
+calcRoof();
+</script>
+</body>
+</html>

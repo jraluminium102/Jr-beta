@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>PILOT — ตรวจออปชั่นเทียบใบจริง (คุณชวลิต) · 2026-06-09</title>
+<style>
+  @page{size:A4;margin:13mm 11mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10.5px;margin-bottom:8px;}
+  h2{font-size:14px;margin:15px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  .pilot{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:11px;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10.5px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;font-weight:700;}
+  .ok{color:#2F855A;}.miss{color:#B3151D;}.part{color:#B7791F;}
+  .kpi{display:flex;gap:7px;margin:9px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}
+  .gap{border:1px solid #E5E7EB;border-radius:7px;padding:7px 10px;margin-bottom:6px;}
+  .gap h3{margin:0 0 3px;font-size:12.5px;}
+  code{font-family:"Consolas",monospace;font-size:10px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .foot{margin-top:14px;font-size:9.5px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+<h1>PILOT — ตรวจออปชั่นเทียบใบจริง</h1>
+<div class="sub">ใบจริง: <b>QT2025070050 คุณชวลิต</b> (8 หน้า · 5 รายการ) · เทียบกับเครื่องคิดราคา <code>index.html</code> · 9 มิ.ย. 2026 · READ-ONLY</div>
+
+<div class="pilot">
+<b>นี่คือ PILOT 1 ใบ</b> เพื่อพิสูจน์วิธี + ปรับฟอร์แมตก่อนรันครบ 14 ใบ · อ่านใบจริงด้วย <code>pdftotext -enc UTF-8</code> · ดูผล render ระบบจาก harness จริง
+</div>
+
+<div class="kpi">
+  <div><span class="n green">5/6</span>ชั้นข้อมูล ระบบทำได้</div>
+  <div><span class="n red">2</span>🔴 ขาด (กระทบหน้าตาใบ)</div>
+  <div><span class="n yellow">1</span>🟡 ขาดบางส่วน</div>
+</div>
+
+<h2>เทียบทีละชั้นข้อมูล (6 ชั้นที่ใบจริงมี)</h2>
+<table>
+<tr><th style="width:16%;">ชั้นข้อมูล</th><th style="width:34%;">ใบจริงเขียนอะไร (ตัวอย่าง)</th><th style="width:30%;">ระบบออกอะไร</th><th class="c" style="width:60px;">ผล</th><th>root cause</th></tr>
+<tr><td>1. ชื่อโซนรายการ</td><td>"ประตูหน้าบ้าน (ชุดยูโร)", "Shower ห้องน้ำโซนสระ ชั้น1"</td><td>"ประตู โถงหน้าบ้าน", "หน้าต่าง ห้องนอนใหญ่"</td><td class="c ok">✅</td><td>ชื่อชุด/โซน รองรับ</td></tr>
+<tr><td>2. บรรยายเต็มประโยค</td><td>"บานเลื่อนสลับรางล่าง (รุ่นกันน้ำ) แบ่ง 2 บาน + กระจกติดตายด้านข้าง + มุ้งนิรภัย"</td><td>"บานเลื่อนรางล่าง (รุ่นกันน้ำ) แบ่ง 4 บาน (มีมุ้งจีบ) (รุ่น L ยูโร) (3.6×2.4 ม.)"</td><td class="c ok">✅</td><td>ประกอบจากชื่อ+addon+ขนาด ได้</td></tr>
+<tr><td>3. OPTION ทางเลือก</td><td>"หากเปลี่ยนเป็น...ราคาลดลง 4,000 บาท" (×2 ต่อรายการ)</td><td>"OPTION : เปลี่ยนเป็นกระจกลามิเนต...ราคาเพิ่มตามจริง"</td><td class="c ok">✅</td><td>oc-row free text + ราคา ±</td></tr>
+<tr><td>4. <b>หมายเหตุมาตรฐาน</b></td><td>"ราคาที่เสนอรวมงานรื้อประตูเดิม/ดรอปพื้น...แต่ไม่รวมวัสดุ (ลูกค้าเตรียมให้)" + "ไม่รวมเจาะเสาใส่ Digital Door Lock" — <b>มีทุกรายการ</b></td><td>มีแค่ช่องโน้ตอิสระ (พิมพ์เอง) — <b>ไม่มี template เงื่อนไข</b></td><td class="c miss">🔴 ขาด</td><td>genQuote ไม่มี standard remark · checkbox รื้อ ไม่ผลิตย่อหน้าเงื่อนไข</td></tr>
+<tr><td>5a. รายละเอียด: อลู/สี</td><td>"อลูมิเนียมลายไม้ สีไวท์โอ๊ค"</td><td>"อลูมิเนียม สีดำ / ลายไม้ (ไวท์โอ๊ค มีในระบบ)"</td><td class="c ok">✅</td><td>COLORS มีไวท์โอ๊ค/สักทอง/โอ๊ค</td></tr>
+<tr><td>5b. รายละเอียด: กระจก</td><td>"กระจกเทมเปอร์ใส 6/10/12 มม.", "ลามิเนต 4+4 กันร้อน"</td><td>"กระจกใส/เขียว หนา 6 มม." (เลือกชนิดได้ครบ)</td><td class="c ok">✅</td><td>GLASS มีครบ</td></tr>
+<tr><td>5c. รายละเอียด: <b>สีเฟรมมุ้ง</b></td><td>"มุ้งจีบ (เฟรมลายไม้สีไวท์แบมบู (KL19022WD)/ผ้าไฟเบอร์ดำ)"</td><td>"มุ้งจีบ ผ้าไฟเบอร์ดำ" — <b>ไม่มีสีเฟรม</b></td><td class="c miss">🔴 ขาด</td><td>สีเฟรมมุ้งไม่ถูก render ลงใบ (ตรงบั๊ก BUG-001/F-07)</td></tr>
+<tr><td>5d. รหัสสีเฉพาะ</td><td>"ไวท์แบมบู (KL19022WD)" (รหัสรุ่น)</td><td>มีแค่ชื่อสี ไม่มีรหัสรุ่น (KL19022WD = ไม่พบ)</td><td class="c part">🟡 บางส่วน</td><td>COLORS ไม่เก็บรหัสรุ่น/ชื่อย่อย</td></tr>
+<tr><td>6. งานหลายด้าน A-F</td><td>หลังคากันสาด ด้าน A-F (เปลือยสวิง/ราวกันตกกระจกสลับกัน) + หลังคาลามิเนตยื่นปลาย ปล่อยปลาย/ไม่มีรางน้ำ</td><td>กั้นห้อง/หลายด้าน auto-label A/B/C + หลังคา + ปล่อยปลายไม่มีรางน้ำ (แก้แล้ว)</td><td class="c part">🟡 เช็คซ้ำ</td><td>ต้องยืนยันว่าได้ถึงด้าน F + ราวกันตกกระจกต่อด้าน (verify รอบเต็ม)</td></tr>
+</table>
+
+<h2>สรุป Gap (จาก pilot ใบเดียว)</h2>
+<div class="gap"><h3>🔴 GAP-1 — หมายเหตุมาตรฐานหายทั้งหมด <span style="font-size:10px;color:#B3151D;">(ตัวการหลักที่ทำให้ "ไม่เหมือนใบจริง")</span></h3>
+ใบจริงมีย่อหน้าเงื่อนไขใต้<b>ทุกรายการ</b> (รวมงานรื้อ/ดรอปพื้น · ไม่รวมวัสดุ · ไม่รวมเจาะเสา Digital Door Lock) — ระบบไม่มีเลย
+<ul><li><b>เสนอแก้:</b> ทำชุด "หมายเหตุมาตรฐาน" (template ตามชนิดงาน) ให้ติ๊กเลือก/auto ใส่ลงใบ · มีช่องแก้ข้อความได้</li></ul></div>
+
+<div class="gap"><h3>🔴 GAP-2 — สีเฟรมมุ้งไม่ขึ้นในรายละเอียดงาน</h3>
+ใบจริงระบุสีเฟรมมุ้ง + ผ้า · ระบบออกแค่ผ้า → ตรงกับบั๊ก BUG-001/F-07 ที่เจอใน QA
+<ul><li><b>เสนอแก้:</b> render สีเฟรมมุ้งลง "รายละเอียดงาน" (ผูกกับ optSel สีกรอบมุ้งที่เพิ่งเพิ่ม)</li></ul></div>
+
+<div class="gap"><h3>🟡 GAP-3 — รหัสสี/ชื่อรุ่นย่อยไม่มี</h3>
+สีไม้หลักมี (ไวท์โอ๊ค/สักทอง/โอ๊ค) แต่ไม่มีรหัสรุ่น (เช่น ไวท์แบมบู KL19022WD)
+<ul><li><b>เสนอแก้:</b> เพิ่มชื่อรุ่น/รหัสในตาราง COLORS (เฉพาะที่ใบจริงใช้บ่อย)</li></ul></div>
+
+<h2>สิ่งที่ระบบทำได้ดีแล้ว (ไม่ต้องแก้)</h2>
+<div class="gap">ชื่อโซน · บรรยายเต็มประโยค (สินค้า+addon+ขนาด) · OPTION ทางเลือก ±ราคา · กระจกชนิด/ความหนา · สีไม้หลัก · งานหลายด้าน auto-label · ราคา/VAT (ผ่าน QA 100% แล้ว)</div>
+
+<div class="foot">
+PILOT 1/14 ใบ · ฟอร์แมตนี้จะใช้กับครบ 14 ใบในรอบเต็ม · เกณฑ์ผ่าน = ข้อมูลครบ (จัดเรียงต่างได้) · ตกหล่น=จด UX fix · 9 มิ.ย. 2026 · READ-ONLY ไม่แตะ index.html
+</div>
+</body>
+</html>

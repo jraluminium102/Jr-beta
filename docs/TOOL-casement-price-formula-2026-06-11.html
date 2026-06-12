@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เครื่องลองสูตรราคาบานเปิด — ต่อบาน (พื้น/เพดาน)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:14px;line-height:1.5;margin:0;padding:16px;background:#F3F4F6;max-width:760px;margin:0 auto;}
+  h1{font-size:20px;color:#B3151D;margin:0 0 3px;}
+  .sub{color:#6B7280;font-size:12px;margin-bottom:14px;}
+  .panel{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:15px 17px;margin:11px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .panel h2{font-size:15px;margin:0 0 10px;color:#B3151D;}
+  .ctrl{display:flex;align-items:center;gap:10px;margin:9px 0;flex-wrap:wrap;}
+  .ctrl label{font-weight:700;min-width:135px;font-size:13px;}
+  input[type=number]{height:40px;border:2px solid #D1D5DB;border-radius:8px;padding:0 10px;font-size:15px;width:110px;font-variant-numeric:tabular-nums;}
+  input[type=range]{flex:1;min-width:140px;accent-color:#B3151D;height:30px;}
+  .unit{color:#6B7280;font-size:12px;}
+  table{width:100%;border-collapse:collapse;margin:6px 0;}
+  th,td{border:1px solid #E5E7EB;padding:7px 9px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px;}
+  th{background:#B3151D;color:#fff;font-size:12px;}
+  td.sz{background:#F9FAFB;font-weight:700;text-align:left;white-space:nowrap;}
+  .clamp-lo{background:#FEF3C7;color:#92400E;font-weight:700;}
+  .clamp-hi{background:#DBEAFE;color:#1E40AF;font-weight:700;}
+  .price{font-weight:800;color:#B3151D;font-size:15px;}
+  .ref{background:#ECFDF5;border-left:4px solid #10B981;padding:8px 11px;border-radius:6px;font-size:12.5px;margin:7px 0;}
+  .tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:9px;font-weight:700;}
+  .tag.lo{background:#FEF3C7;color:#92400E;}.tag.hi{background:#DBEAFE;color:#1E40AF;}.tag.mid{background:#F3F4F6;color:#374151;}
+  .big{font-size:26px;font-weight:800;color:#B3151D;}
+  .calc-out{background:#FFF7ED;border:1px solid #FDBA74;border-radius:10px;padding:13px 15px;margin-top:10px;}
+  .row2{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+  .mini{display:flex;flex-direction:column;gap:3px;}.mini span{font-size:11px;color:#6B7280;font-weight:700;}
+  .preset{background:#1F2937;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;margin:2px;}
+  .note{color:#6B7280;font-size:11.5px;margin-top:5px;}
+</style>
+</head>
+<body>
+<h1>เครื่องลองสูตรราคาบานเปิด</h1>
+<div class="sub">คิด <b>ต่อบาน</b> · ราคา/บาน = clamp(พื้นที่บาน × เรต, พื้น, เพดาน) · หมุนค่าด้านล่างแล้วราคาอัปเดตทันที · 11 มิ.ย. 2026</div>
+
+<div class="panel">
+  <h2>⚙ ปรับพารามิเตอร์</h2>
+  <div class="ctrl"><label>เรต/ตร.ม.</label>
+    <input type="range" id="rateR" min="6000" max="13000" step="100" value="9500" oninput="syncRate(this.value)">
+    <input type="number" id="rate" value="9500" step="100" oninput="syncRate(this.value)"><span class="unit">บาท</span></div>
+  <div class="ctrl"><label>พื้น (ขั้นต่ำ/บาน)</label>
+    <input type="range" id="floorR" min="8000" max="22000" step="500" value="14000" oninput="syncFloor(this.value)">
+    <input type="number" id="floor" value="14000" step="500" oninput="syncFloor(this.value)"><span class="unit">บาท/บาน</span></div>
+  <div class="ctrl"><label>เพดาน (สูงสุด/บาน)</label>
+    <input type="range" id="ceilR" min="22000" max="40000" step="500" value="28000" oninput="syncCeil(this.value)">
+    <input type="number" id="ceil" value="28000" step="500" oninput="syncCeil(this.value)"><span class="unit">บาท/บาน</span></div>
+  <div class="ref">📌 จุดอ้างอิงพี่นัท: บานเล็ก <b>0.6×2.0</b> (1.2 ตร.ม.) ≥ 14,000 · บานใหญ่ <b>1.2×3.0</b> (3.6 ตร.ม.) ≤ 28,000
+    <div id="refcheck" style="margin-top:5px;font-weight:700;"></div></div>
+</div>
+
+<div class="panel">
+  <h2>📊 ราคา/บาน ทุกขนาด (อัปเดตสด)</h2>
+  <table id="tbl">
+    <tr><th>ขนาดบาน (กว้าง×สูง)</th><th>พื้นที่<br>ตร.ม.</th><th>พื้นที่×เรต</th><th>ราคา/บาน</th><th>เรต/ตร.ม.<br>ที่ได้จริง</th><th>สถานะ</th></tr>
+  </table>
+  <div class="note"><span class="tag lo">เหลือง</span> = ถูกดันขึ้นพื้น · <span class="tag hi">ฟ้า</span> = ถูกตัดที่เพดาน · <span class="tag mid">เทา</span> = ตามเรตปกติ</div>
+</div>
+
+<div class="panel">
+  <h2>🧮 คิดราคารวม (กรอกขนาด + จำนวนบาน)</h2>
+  <div class="row2">
+    <div class="mini"><span>กว้าง/บาน (ม.)</span><input type="number" id="cw" value="0.9" step="0.05" oninput="calc()"></div>
+    <div class="mini"><span>สูง (ม.)</span><input type="number" id="chh" value="2.2" step="0.05" oninput="calc()"></div>
+    <div class="mini"><span>จำนวนบาน</span><input type="number" id="cn" value="2" min="1" step="1" oninput="calc()"></div>
+  </div>
+  <div style="margin-top:8px;">
+    <button class="preset" onclick="setCalc(0.6,2.0,1)">บานเล็ก 0.6×2.0</button>
+    <button class="preset" onclick="setCalc(0.9,2.2,2)">บานคู่ 0.9×2.2</button>
+    <button class="preset" onclick="setCalc(1.2,3.0,1)">บานใหญ่ 1.2×3.0</button>
+    <button class="preset" onclick="setCalc(0.6,2.2,4)">4 บานๆละ 0.6×2.2</button>
+  </div>
+  <div class="calc-out" id="calcout"></div>
+</div>
+
+<script>
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function P(){ return {rate:+document.getElementById('rate').value, floor:+document.getElementById('floor').value, ceil:+document.getElementById('ceil').value}; }
+function perPanel(area){ const p=P(); return clamp(area*p.rate, p.floor, p.ceil); }
+
+function syncRate(v){ document.getElementById('rate').value=v; document.getElementById('rateR').value=v; render(); }
+function syncFloor(v){ document.getElementById('floor').value=v; document.getElementById('floorR').value=v; render(); }
+function syncCeil(v){ document.getElementById('ceil').value=v; document.getElementById('ceilR').value=v; render(); }
+
+const SIZES=[[0.6,2.0],[0.7,2.0],[0.8,2.1],[0.9,2.2],[1.0,2.4],[1.1,2.6],[1.2,3.0]];
+function render(){
+  const p=P();
+  let rows='<tr><th>ขนาดบาน (กว้าง×สูง)</th><th>พื้นที่<br>ตร.ม.</th><th>พื้นที่×เรต</th><th>ราคา/บาน</th><th>เรต/ตร.ม.<br>ที่ได้จริง</th><th>สถานะ</th></tr>';
+  for(const [w,h] of SIZES){
+    const area=+(w*h).toFixed(2); const raw=area*p.rate; const pp=clamp(raw,p.floor,p.ceil);
+    let cls='',tag='<span class="tag mid">ปกติ</span>';
+    if(pp>raw+0.5){ cls='clamp-lo'; tag='<span class="tag lo">ดันถึงพื้น</span>'; }
+    else if(pp<raw-0.5){ cls='clamp-hi'; tag='<span class="tag hi">ตัดที่เพดาน</span>'; }
+    rows+=`<tr><td class="sz">${w} × ${h}</td><td>${area}</td><td>${fmt(raw)}</td><td class="price ${cls}">${fmt(pp)}</td><td>${fmt(pp/area)}</td><td>${tag}</td></tr>`;
+  }
+  document.getElementById('tbl').innerHTML=rows;
+  // ref check
+  const r1=perPanel(1.2), r2=perPanel(3.6);
+  const ok1=r1>=14000-1, ok2=r2<=28000+1;
+  document.getElementById('refcheck').innerHTML=
+    `บานเล็ก 1.2 ตร.ม. → <b>${fmt(r1)}</b> ${ok1?'✅':'❌ ต่ำกว่า 14,000'} &nbsp;·&nbsp; บานใหญ่ 3.6 ตร.ม. → <b>${fmt(r2)}</b> ${ok2?'✅':'❌ เกิน 28,000'}`;
+  calc();
+}
+function setCalc(w,h,n){ document.getElementById('cw').value=w; document.getElementById('chh').value=h; document.getElementById('cn').value=n; calc(); }
+function calc(){
+  const w=+document.getElementById('cw').value, h=+document.getElementById('chh').value, n=+document.getElementById('cn').value||1;
+  const area=w*h; const pp=perPanel(area); const total=pp*n;
+  const p=P(); const raw=area*p.rate;
+  let how = pp>raw+0.5 ? `ดันถึงพื้น ${fmt(p.floor)}` : (pp<raw-0.5 ? `ตัดที่เพดาน ${fmt(p.ceil)}` : `ตามเรต (${fmt(area)}×${fmt(p.rate)})`);
+  document.getElementById('calcout').innerHTML=
+    `<div>ขนาด/บาน <b>${w}×${h}</b> = ${area.toFixed(2)} ตร.ม. → ราคา/บาน <b>${fmt(pp)}</b> <span class="note">(${how})</span></div>`+
+    `<div style="margin-top:6px;">รวม ${n} บาน = <span class="big">${fmt(total)}</span> บาท</div>`;
+}
+render();
+</script>
+</body>
+</html>

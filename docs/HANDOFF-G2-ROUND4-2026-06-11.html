@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF G2 รอบ 4 — บานเปิด 4 บาน + สแตนเลสซ้ำ + ออปชั่นราวกันตก leak</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:13px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2.ok{background:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}td.c{text-align:center;white-space:nowrap;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:8px 11px;margin:7px 0;border-left:4px solid #B3151D;}
+  .box.q{border-left-color:#2563EB;background:#EFF6FF;}
+  .box h3{margin:0 0 4px;font-size:12.5px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;background:#FEE2E2;color:#991B1B;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .warn{background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:6px 9px;margin:5px 0;font-size:10px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:2px;}
+  .keep{color:#166534;font-weight:700;}.cut{color:#B3151D;font-weight:700;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G2 รอบ 4 — บานเปิด 4 บาน · สแตนเลสซ้ำ · ออปชั่นราวกันตก leak</h1>
+<div class="sub">มติพี่นัทหลังเทส R3 · ส่งแชทที่แก้ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026 · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="good">
+<b>ที่มา:</b> พี่นัทเทสหลัง dev แก้ R3 → เจอ 3 จุด: (1) บานเปิดยูโรล็อก 2 บาน ทำ 3–4 บานไม่ได้ (2) ราวกันตก imp1/4 ขึ้น "สแตนเลสสีเงิน" ซ้ำ 2 บรรทัด (3) ราวกันตกมีออปชั่นบาน/หน้าต่าง leak มา 4 ตัว
+</div>
+
+<h2>🔴 ต้องแก้ 3 จุด</h2>
+
+<div class="box"><h3><span class="tag">R4-1</span> บานเปิดยูโร: เปลี่ยนวิธีคิดราคาเป็น "ต่อบาน" (clamp พื้น/เพดาน) — แทนสูตรเดิม</h3>
+<b>มติพี่นัท (เคาะจากเครื่องลองสูตร 11 มิ.ย.):</b> คิดราคา <b>ต่อบาน</b> มีพื้น/เพดาน ไม่ใช่ bucket+addon เดิม
+<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;padding:7px 10px;margin:5px 0;font-size:11px;">
+<b>ราคา/บาน = clamp(พื้นที่บาน × 8,000 , ขั้นต่ำ 15,000 , เพดาน 23,500)</b><br>
+<b>ราคารวม = ราคา/บาน × จำนวนบาน</b> · พื้นที่บาน = กว้าง×สูง <b>ที่กรอก = ต่อ 1 บาน</b>
+</div>
+<table>
+<tr><th>ขนาด/บาน</th><th>พื้นที่</th><th>ราคา/บาน</th><th>1 บาน</th><th>2 บาน</th><th>3 บาน</th><th>4 บาน</th></tr>
+<tr><td>0.6×2.0</td><td class="c">1.20</td><td class="c">15,000 <span style="color:#92400E;">(พื้น)</span></td><td class="c">15,000</td><td class="c">30,000</td><td class="c">45,000</td><td class="c">60,000</td></tr>
+<tr><td>0.9×2.2</td><td class="c">1.98</td><td class="c">15,840</td><td class="c">15,840</td><td class="c">31,680</td><td class="c">47,520</td><td class="c">63,360</td></tr>
+<tr><td>1.0×2.4</td><td class="c">2.40</td><td class="c">19,200</td><td class="c">19,200</td><td class="c">38,400</td><td class="c">57,600</td><td class="c">76,800</td></tr>
+<tr><td>1.2×3.0</td><td class="c">3.60</td><td class="c">23,500 <span style="color:#1E40AF;">(เพดาน)</span></td><td class="c">23,500</td><td class="c">47,000</td><td class="c">70,500</td><td class="c">94,000</td></tr>
+</table>
+<ul>
+<li><b>เอาออก</b> (สำหรับ <code>casement_euro</code> เท่านั้น): method <code>'bucket'</code> + <code>min:18000</code> + <code>addon:{kind:'door',extra:5000}</code> เดิม (L578) → แทนด้วยสูตร clamp ต่อบานข้างบน</li>
+<li><b>ปลดจำนวนบาน</b>: <code>L2655</code> <code>pn.max=2</code> → <b>4</b> (หรือมากกว่า) — กรอกบานได้หลายบาน</li>
+<li><b>ช่องกว้าง</b>: เปลี่ยน label เป็น "<b>กว้าง/บาน (ม.)</b>" ให้ชัดว่ากรอกขนาด <b>ต่อ 1 บาน</b> (ระบบ ×จำนวนบานเอง)</li>
+<li>✅ <b>ออปชั่นเสริมคิดเหมือนเดิม</b> (มติพี่นัท): สูตร clamp ใช้แค่ <b>ราคาฐานบาน</b> เท่านั้น · มือจับดิจิตอล/โช๊ค/มุ้ง/สี/ครอบวงกบ/combo บานกระทุ้ง ยังบวกเพิ่มจากราคาฐานตามเดิม · เอาออกแค่ <code>addon door +5,000</code> (รวมในสูตร clamp แล้ว)</li>
+</ul>
+<div class="warn">⚠ <b>เช็คซ้ำกับพี่นัท:</b> (1) สูตรนี้ใช้เฉพาะ <b>บานเปิดยูโร</b> (เรต 8,000) — บานเปิด D/X/Velora เรตคนละตัว ยังใช้สูตรเดิม ใช่ไหม · (2) "กว้าง×สูง ที่กรอก = ต่อบาน" ยืนยัน (ไม่ใช่ขนาดช่องรวม)</div>
+</div>
+
+<div class="box"><h3><span class="tag">R4-2</span> ราวกันตก imp1/4: ตัดบรรทัด "อุปกรณ์มาตรฐาน" (สแตนเลสซ้ำ)</h3>
+<b>ปัญหา:</b> imp1/4 (หมุดแปะข้าง) ขึ้น <code>อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน</code> (L3712 บังคับทุกใบ) + <code>หมุดสแตนเลสสีเงิน</code> (L3713 R3-4) → คำว่า "สแตนเลสสีเงิน" โผล่ 2 หน
+<ul>
+<li>มติ: <b>imp1/4 ตัดบรรทัด "อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน" ทิ้ง</b> (ให้เหลือ "หมุดสแตนเลสสีเงิน" บรรทัดเดียว)</li>
+<li>จุด: <code>L3712</code> ทำให้บรรทัด "อุปกรณ์มาตรฐาน..." ขึ้น <b>เฉพาะตัวที่ไม่ใช่ railstud</b> เช่น<br>
+<code>var _hLines=[]; if(!it.p.railstud) _hLines.push('อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน'); _hLines.push('กระจกเทมเปอร์ใส หนา '+_hThick+' มม.'); if(it.p.railstud) _hLines.push('หมุดสแตนเลสสีเงิน');</code></li>
+<li>ผลที่ถูก imp1: กระจกเทมเปอร์ใส 10 มม. → หมุดสแตนเลสสีเงิน → ราวมือจับ (ไม่ซ้ำ)</li>
+<li>imp2/3/5/6 (railalu) ไม่กระทบ — ยังขึ้น "อุปกรณ์มาตรฐาน..." + "อลูมิเนียม สี…" ตามเดิม (ไม่ซ้ำ)</li>
+</ul></div>
+
+<div class="box"><h3><span class="tag">R4-3</span> ราวกันตก: ตัดออปชั่นบาน/หน้าต่างที่ leak มา 4 ตัว</h3>
+<b>ปัญหา:</b> ราวกันตก (<code>method:'per_length_tier'</code> · <code>p.handrail</code> · cat 'ราวบันได') render รวมออปชั่นทั่วไปโดยไม่ได้กันชนิดออก → มีออปชั่นที่ไม่เกี่ยวโผล่
+<table>
+<tr><th style="width:34%;">ออปชั่น</th><th>จุด</th><th>สถานะ</th></tr>
+<tr><td>คาดตาราง (มีคาดตาราง คิดตามสูตร)</td><td><code>L2478</code></td><td class="cut">ตัด</td></tr>
+<tr><td>ฝังรางยู (ในพื้น)</td><td><code>L2680</code></td><td class="cut">ตัด</td></tr>
+<tr><td>ครอบวงกบอลู (ไม่มี/3/4 ด้าน)</td><td><code>L2691</code></td><td class="cut">ตัด</td></tr>
+<tr><td>ดรอปพื้น (ม.)</td><td><code>L2691</code></td><td class="cut">ตัด</td></tr>
+</table>
+<b>วิธีแก้:</b> เพิ่มเงื่อนไข <b><code>&amp;&amp; !p.handrail</code></b> (หรือ <code>&amp;&amp; p.cat!=='ราวบันได'</code>) ในแต่ละบล็อก
+<ul>
+<li><code>L2478</code> <code>if(!p.grid &amp;&amp; !['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → เติม <code>&amp;&amp; !p.handrail</code></li>
+<li><code>L2680</code> <code>if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → เติม <code>&amp;&amp; !p.handrail</code></li>
+<li><code>L2691</code> <code>if(!areaOnly &amp;&amp; !p.zipscreen)</code> → เติม <code>&amp;&amp; !p.handrail</code> (กันทั้งครอบวงกบอลู + ดรอปพื้น)</li>
+</ul>
+<div class="good"><b class="keep">เก็บไว้ (ถูกต้องแล้ว · อย่าตัด):</b> ความหนากระจก 10/12 (<code>L2666</code> ราวกันตก=กระจก ใช้จริง) · ราวมือจับด้านบน (<code>L2667</code>) · สีอลู 3 สี (<code>L2668</code>) · งานเสริม/วิศวกรรม (<code>L2683</code>) · <b>รื้อของเดิม (รายการนี้) (<code>L2684</code>)</b> — มติพี่นัท เก็บ</div>
+</div>
+
+<h2 class="ok">✅ ไม่ต้องแก้ (ยืนยันแล้ว)</h2>
+<table>
+<tr><th style="width:30%;">เรื่อง</th><th>สรุป</th></tr>
+<tr><td><b>เรตบานเปิดยูโร</b></td><td>⚠ <b>เปลี่ยนแล้ว</b> — ดู R4-1 (คิดต่อบาน clamp 15,000–23,500 เรต 8,000) · ของเดิม bucket+min18,000 <b>ยกเลิก</b></td></tr>
+<tr><td><b>เรตราวกันตก imp1–6</b></td><td>per_length_tier (ยาว × เรตตามช่วง) + ราวมือจับ (ยู 500/ม. · กล่อง 600/ม.) · ถูกต้อง</td></tr>
+<tr><td><b>ชื่อ + ราวมือจับ + สีอลู (R3-4)</b></td><td>แก้ถูกแล้ว · รอบนี้แค่จัดบรรทัดสแตนเลสไม่ให้ซ้ำ</td></tr>
+</table>
+
+<h2>ลำดับแก้</h2>
+<div class="box" style="border-left-color:#2563EB;">
+1. <b>R4-1</b> <code>pn.max=4</code> (L2655) → 2. <b>R4-2</b> สแตนเลสไม่ซ้ำ (L3712) → 3. <b>R4-3</b> ตัด 4 ออปชั่น leak (L2478/2680/2691)<br>
+<b>หลังแก้:</b> รัน <code>node test/quote-fidelity.mjs</code> PASS 14/14 · แล้วผมรันสกิล <code>product-test-cards</code> + สวีปออปชั่นทั้ง G2 ออกรายงานให้พี่นัท/เฟิร์นเช็คอีกรอบ
+</div>
+
+<div class="foot">
+ต่อจาก HANDOFF-G2-ROUND3 · จุดจากพี่นัทเทส R3 + ที่มาในโค้ด (L2655 จำนวนบาน · L3712-3713 สแตนเลส · L2478/2680/2691 ออปชั่น leak) · พี่นัทตัดสินครบ · READ-ONLY ไม่แตะ index.html · 11 มิ.ย. 2026
+</div>
+
+</body>
+</html>

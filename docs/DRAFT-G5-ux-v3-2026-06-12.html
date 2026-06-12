@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G5 มุ้ง — UX v3 (เรตจริง · กดเล่นได้)</title>
+<style>
+:root{--red:#B3151D;--redbg:#FDECEC;--ok:#1D9E75;--warn:#BA7517;--line:#E5E7EB;--bg:#F7F8FA;--card:#fff;--ink:#1F2937;--muted:#6B7280;--blue:#1565C0;--bluebg:#E3F2FD;--orange:#FF9800;--orangebg:#FFF3E0;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;background:var(--bg);font-family:"Sarabun","Prompt","Noto Sans Thai","Segoe UI",sans-serif;color:var(--ink);}
+.wrap{max-width:430px;margin:0 auto;padding:12px 12px 60px;font-size:14px;line-height:1.55;}
+.header{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.logo{font-size:22px;font-weight:800;color:var(--red);font-style:italic;}
+.demo-badge{background:#FF9800;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.note-info{background:var(--bluebg);border-left:4px solid var(--blue);padding:8px 10px;border-radius:6px;font-size:12px;color:#0D3B75;margin-bottom:10px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--red);margin:0 0 10px;}
+.sec{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin:12px 0 6px;}
+.cat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.cat-btn{border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:11.5px;font-weight:700;cursor:pointer;padding:8px 4px;text-align:center;line-height:1.35;font-family:inherit;transition:all .15s;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.cat-btn.on{background:var(--red);border-color:var(--red);color:#fff;}
+.cat-icon{font-size:18px;line-height:1;}
+.cat-n{font-size:10px;color:var(--muted);font-weight:400;}
+.cat-btn.on .cat-n{color:#fff;opacity:.85;}
+.model-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:6px;}
+.mcard{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:9px 10px;cursor:pointer;font-family:inherit;text-align:left;transition:all .15s;font-size:12.5px;font-weight:600;line-height:1.4;}
+.mcard.on{background:var(--redbg);border-color:var(--red);color:var(--red);}
+.mcard-sub{font-size:11px;font-weight:400;color:var(--muted);margin-top:2px;}
+.mcard.on .mcard-sub{color:var(--red);}
+.field{margin-bottom:10px;}
+.field>label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:3px;font-weight:600;}
+.field input,.field select{width:100%;height:40px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.hint{font-size:11px;color:var(--muted);margin-top:3px;}
+.chip-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chip{height:38px;padding:0 15px;border:1.5px solid var(--line);border-radius:20px;background:#fff;color:var(--ink);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap;}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff;}
+.chip-2up{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.chip-2up .chip{height:44px;border-radius:10px;width:100%;font-size:14px;}
+.cc{height:38px;padding:0 18px;border:1.5px solid var(--line);border-radius:20px;background:#fff;color:var(--ink);font-size:13px;font-family:inherit;cursor:pointer;font-weight:700;transition:all .15s;}
+.cc.on{background:var(--red);border-color:var(--red);color:#fff;}
+.cc.fixed{background:#4B5563;border-color:#4B5563;color:#fff;cursor:default;}
+.single-badge{font-size:11px;font-weight:700;background:#E0F2FE;color:#0369A1;padding:1px 6px;border-radius:4px;margin-left:5px;}
+.color-note{font-size:11px;color:var(--muted);margin-top:5px;padding:5px 8px;background:#F9FAFB;border-radius:6px;}
+.label-only{font-size:11px;font-weight:700;background:#D1FAE5;color:#065F46;padding:1px 5px;border-radius:4px;margin-left:4px;}
+.openstyle{background:var(--bluebg);border:1px solid #90CAF9;border-radius:8px;padding:8px 10px;margin-bottom:8px;display:none;}
+.openstyle.show{display:block;}
+.openstyle-title{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;}
+.mode-b{background:var(--orangebg);border:2px solid var(--orange);border-radius:10px;padding:10px 12px;margin-bottom:10px;}
+.mode-b-title{font-weight:700;font-size:13px;color:#7C4700;margin-bottom:6px;}
+.field-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.field-inline label{font-size:12px;color:var(--muted);white-space:nowrap;}
+.field-inline input{width:120px;height:36px;padding:0 8px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;}
+.chk input[type=checkbox]{width:20px;height:20px;accent-color:var(--red);cursor:pointer;flex-shrink:0;}
+details.acc{border:1px solid #eedede;border-radius:8px;margin-bottom:8px;background:#fffafa;}
+details.acc summary{font-weight:700;color:var(--red);font-size:12.5px;cursor:pointer;padding:11px 12px;min-height:44px;display:flex;align-items:center;list-style:none;user-select:none;}
+details.acc summary::-webkit-details-marker{display:none;}
+details.acc summary::after{content:"▸";margin-left:auto;color:var(--muted);font-size:11px;}
+details.acc[open] summary::after{content:"▾";}
+.acc-body{padding:6px 12px 12px;}
+.count-badge{background:var(--redbg);color:var(--red);font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:6px;}
+.sep{border:none;border-top:1px dashed var(--line);margin:12px 0;}
+.price{text-align:center;padding:16px;background:var(--redbg);border-radius:10px;margin-top:12px;position:sticky;bottom:8px;}
+.price-big{font-size:32px;font-weight:800;color:var(--red);}
+.price-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;}
+.remark-sel{width:100%;height:36px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-family:inherit;color:var(--red);background:#FFF9F9;margin-bottom:5px;}
+textarea.note{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;min-height:56px;}
+.cut-box{margin-top:8px;}
+.cut-hd{font-size:11px;color:#9CA3AF;margin:0 0 5px;}
+.cut-item{background:#f4f4f3;border:1px dashed #c9c7c0;border-radius:7px;padding:7px 11px;margin-bottom:5px;font-size:12px;color:#9CA3AF;text-decoration:line-through;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">JR</div>
+    <div>
+      <div style="font-weight:700;font-size:14px;">กลุ่ม 5 มุ้ง <span class="demo-badge">DRAFT v3 · เรตจริง</span></div>
+      <div style="font-size:11px;color:var(--muted);">19 สินค้า · ดราฟ UX · ไม่ใช่ index.html จริง</div>
+    </div>
+  </div>
+  <div class="note-info"><b>เรตคำนวณจากค่าจริงใน index.html</b> — ใช้ลองเล่นตรวจ UX · ก่อนส่ง dev แก้</div>
+
+  <div class="card">
+    <div class="card-title">รายการที่ 1</div>
+
+    <div class="sec">รูปแบบมุ้ง — เลือกหมวดก่อน</div>
+    <div class="cat-row" style="grid-template-columns:repeat(3,1fr);">
+      <button type="button" class="cat-btn on" id="cat-frame" onclick="selCat('frame')"><span class="cat-icon">▦</span>เฟรม<span class="cat-n">4 รุ่น</span></button>
+      <button type="button" class="cat-btn" id="cat-pleat" onclick="selCat('pleat')"><span class="cat-icon">≣</span>จีบ<span class="cat-n">9 รุ่น</span></button>
+      <button type="button" class="cat-btn" id="cat-roll" onclick="selCat('roll')"><span class="cat-icon">◎</span>ม้วน<span class="cat-n">4 รุ่น</span></button>
+    </div>
+    <div class="model-grid" id="model-grid"></div>
+    <input type="hidden" id="prod" value="imp21">
+
+    <hr class="sep">
+
+    <div class="field">
+      <label>ประเภท</label>
+      <div class="chip-2up">
+        <button type="button" class="chip on" data-val="door" onclick="setChip(this,'itype')">ประตู</button>
+        <button type="button" class="chip" data-val="window" onclick="setChip(this,'itype')">หน้าต่าง</button>
+      </div>
+      <input type="hidden" id="itype" value="door">
+    </div>
+    <div class="row2">
+      <div class="field"><label>กว้าง (ม.)</label><input type="number" id="iw" step="0.1" min="0" value="0.9" oninput="calc()"></div>
+      <div class="field"><label>สูง (ม.)</label><input type="number" id="ih" step="0.1" min="0" value="2.0" oninput="calc()"></div>
+    </div>
+    <div class="field" id="panels-wrap" style="display:none;">
+      <label>จำนวนบาน</label>
+      <input type="number" id="panels" step="1" min="1" value="1" style="width:90px;" oninput="calc()">
+    </div>
+
+    <hr class="sep">
+
+    <div class="mode-b">
+      <div class="mode-b-title">ติดมุ้งบานเดิม (โหมด B)</div>
+      <label class="chk"><input type="checkbox" id="modeB" onchange="calc()"><span>ลูกค้าเก่ามาเพิ่มมุ้ง (ราคา/ตร.ม. เท่าโหมด A)</span></label>
+      <div class="field-inline">
+        <label>ค่าเสริมกล่อง/ราง (บาท):</label>
+        <input type="number" id="extra" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" oninput="calc()">
+      </div>
+      <div class="hint" style="color:#9A5A00;">กรอกถ้ารางเดิมใช้ไม่ได้</div>
+    </div>
+
+    <div id="addon-block" style="display:none;">
+      <div class="field">
+        <label>ผ้ามุ้ง</label>
+        <div class="chip-group" id="fabric-chips"></div>
+        <input type="hidden" id="fabric" value="fiber">
+      </div>
+      <div class="field">
+        <label>สีผ้า <span id="single-badge" class="single-badge" style="display:none;">สีเดียว</span></label>
+        <div class="chip-group" id="color-chips"></div>
+        <input type="hidden" id="fabcolor" value="ดำ">
+        <div class="color-note" id="color-note"></div>
+      </div>
+      <div class="openstyle" id="openstyle-row">
+        <div class="openstyle-title">ลักษณะการเปิด <span class="label-only">label-only · ไม่กระทบราคา</span></div>
+        <div class="chip-group">
+          <button type="button" class="chip on" data-val="เปิด" onclick="setOpen(this)">เปิด</button>
+          <button type="button" class="chip" data-val="เลื่อน" onclick="setOpen(this)">เลื่อน</button>
+          <button type="button" class="chip" data-val="กระทุ้ง" onclick="setOpen(this)">กระทุ้ง</button>
+          <button type="button" class="chip" data-val="ยก" onclick="setOpen(this)">ยก</button>
+        </div>
+        <input type="hidden" id="openstyle" value="เปิด">
+      </div>
+    </div>
+
+    <details class="acc">
+      <summary>อุปกรณ์เสริม / ออปชั่น <span class="count-badge" id="acc-count">3</span></summary>
+      <div class="acc-body">
+        <div class="field" id="mscolor-wrap" style="display:none;">
+          <label>สีกรอบมุ้ง <span class="hint" style="display:inline;">(12 ตัวเลือกจริง · ค่าทำสี×0.5)</span></label>
+          <select id="mscolor" onchange="calc()"></select>
+        </div>
+        <div class="field">
+          <label>ครอบวงกบอลู</label>
+          <div class="chip-group">
+            <button type="button" class="chip on" data-val="0" onclick="setChip(this,'fcsides')">ไม่มี</button>
+            <button type="button" class="chip" data-val="3" onclick="setChip(this,'fcsides')">3 ด้าน</button>
+            <button type="button" class="chip" data-val="4" onclick="setChip(this,'fcsides')">4 ด้าน</button>
+          </div>
+          <input type="hidden" id="fcsides" value="0">
+        </div>
+        <div class="field"><label>งานเสริม/วิศวกรรม</label><input type="text" placeholder="ระบุถ้ามี"></div>
+        <div class="field"><label class="chk"><input type="checkbox"><span>รื้อของเดิม (รายการนี้)</span></label></div>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary>หมายเหตุ / OPTION <span class="count-badge">18</span></summary>
+      <div class="acc-body">
+        <select class="remark-sel" id="remark-sel" onchange="addRemark(this)"></select>
+        <textarea class="note" id="note-ta" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ"></textarea>
+      </div>
+    </details>
+
+    <div class="cut-box">
+      <p class="cut-hd">✕ ตัดออกจากมุ้งแล้ว (เคยโผล่ผิดประเภท):</p>
+      <div class="cut-item">กระจก (รายการนี้)</div>
+      <div class="cut-item">สีอลูมิเนียม (รายการนี้) — ใช้ "สีกรอบมุ้ง" แทน</div>
+      <div class="cut-item">คาดตาราง (เส้นแบ่งช่อง)</div>
+    </div>
+
+    <div class="price">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:2px;">ราคาประมาณ (เรตจริง)</div>
+      <div class="price-big" id="price">฿0</div>
+      <div class="price-sub" id="msgs">กรอกขนาดเพื่อดูราคา</div>
+    </div>
+  </div>
+
+  <p style="text-align:center;font-size:11px;color:#9CA3AF;margin-top:14px;">JR DRAFT G5 v3 · 2026-06-12 · ราคาเดโมจากเรตจริง ห้ามอ้างอิงในใบเสนอ</p>
+</div>
+
+<script>
+// ===== ข้อมูลจริงจาก index.html =====
+var CATS={
+ frame:[
+  {id:'imp21',name:'เฟรมเล็ก',sub:'เปิด/เลื่อน/กระทุ้ง/ยก',rates:'IMP21',sa:1,mscolor:1,panels:1,openstyle:1,min_d:2400,min_w:1200},
+  {id:'imp22',name:'เฟรมเล็กติดตาย',sub:'ติดตาย',rates:'IMP22',sa:1,mscolor:1,panels:1,min_d:1500,min_w:800},
+  {id:'imp23',name:'เฟรมใหญ่',sub:'เลื่อน/เปิด/กระทุ้ง/ยก',rates:'IMP23',sa:1,mscolor:1,panels:1,openstyle:1,safety:1,min_d:7200,min_w:4800},
+  {id:'imp30',name:'แม่เหล็กพับ',sub:'พับเปิดได้',rates:'IMP30',mscolor:0,min:0}
+ ],
+ pleat:[
+  {id:'imp28',name:'จีบตีนตะขาบ',sub:'รางเตี้ยพิเศษ',rates:'IMP28',mscolor:1,min:0},
+  {id:'mj_sd_basic',name:'จีบ SD พื้นฐาน',sub:'ขาว/ดำ',rates:'MJ_SD_BASIC',mscolor:1,min:3500},
+  {id:'mj_sd_twoway',name:'จีบ SD + ทูเวย์',sub:'ม่านรังผึ้ง',rates:'MJ_SD_TWOWAY',mscolor:1,min:4000},
+  {id:'mj_keep_twoway',name:'ตีนตะขาบ + ทูเวย์',sub:'ม่านรังผึ้ง',rates:'MJ_KEEPRAIL_TWOWAY',mscolor:1,min:6000},
+  {id:'mj_keep_honey',name:'ตีนตะขาบ + รังผึ้ง',sub:'',rates:'MJ_KEEPRAIL_HONEY',mscolor:1,min:4500},
+  {id:'mj_blackout',name:'จีบ Blackout',sub:'รังผึ้งทึบแสง',rates:'MJ_BLACKOUT',mscolor:1,min:3500},
+  {id:'imp31',name:'จีบนิรภัย 0.8มม.',sub:'สแตนเลส',rates:'IMP31',mscolor:0,min:0},
+  {id:'imp32',name:'จีบนิรภัย + วงกบ',sub:'เสริมวงกบ',rates:'IMP32',mscolor:0,min:0},
+  {id:'mj_screen_safety',name:'จีบนิรภัย',sub:'ขาว/ดำ/เทา',rates:'MJ_SCREEN_SAFETY',mscolor:0,min:5000}
+ ],
+ roll:[
+  {id:'imp29',name:'ม้วนไฟเบอร์',sub:'เลื่อน/กระทุ้ง/ยก',rates:'IMP29',mscolor:1,min:0},
+  {id:'mj_kick_150',name:'ม้วนเตะได้ 150',sub:'กว้าง ≤150ซม.',rates:'MJ_KICK_150',mscolor:1,min:15000},
+  {id:'mj_kick_300',name:'ม้วนเตะได้ 300',sub:'กว้าง 151-300ซม.',rates:'MJ_KICK_300',mscolor:1,min:37500},
+  {id:'mj_kick_600',name:'ม้วนเตะได้ 600',sub:'กว้าง 301-600ซม.',rates:'MJ_KICK_600',mscolor:1,min:67500}
+ ]
+};
+var RATES={
+ IMP21:[[0,1.5,2200],[1.5,2.5,1700],[2.5,9999,1500]],
+ IMP22:[[0,1.5,1200],[1.5,2.5,1000],[2.5,9999,850]],
+ IMP23:[[0,1.5,4500],[1.5,3,3700],[3,9999,3500]],
+ IMP28:[[1,9999,4500]],IMP29:[[1,9999,3000]],IMP30:[[1,9999,1500]],
+ IMP31:[[0,1.5,3500],[1.5,3,3200],[3,9999,3000]],IMP32:[[0.01,9999,5000]],
+ IMP33:[[0.01,9999,800]],IMP35:[[0.01,9999,1200]],
+ MJ_BLACKOUT:[[0.01,9999,2500]],MJ_SD_TWOWAY:[[0.01,9999,4000]],
+ MJ_KEEPRAIL_TWOWAY:[[0.01,9999,6000]],MJ_KEEPRAIL_HONEY:[[0.01,9999,4500]],
+ MJ_SD_BASIC:[[0.01,9999,2500]],MJ_SCREEN_SAFETY:[[0.01,9999,5000]],
+ MJ_KICK_150:[[0.01,9999,7500]],MJ_KICK_300:[[0.01,9999,7500]],MJ_KICK_600:[[0.01,9999,7500]]
+};
+// สีต่อผ้า (จาก label + logic line 3762)
+var FC={
+ fiber:{fixed:0,colors:['ดำ','เทา'],note:'ไฟเบอร์ — เลือก ดำ หรือ เทา (ไม่มีขาว)'},
+ cat:{fixed:1,colors:['ขาว'],note:'กันแมว/หมา — ขาวอย่างเดียว'},
+ rat:{fixed:0,colors:['เงิน','ดำ'],note:'สแตนกันหนู — เงิน หรือ ดำ'},
+ safety:{fixed:1,colors:['ดำ'],note:'นิรภัยสแตน 304 — ดำอย่างเดียว'}
+};
+// สีกรอบมุ้ง = ตามสีบาน(ฟรี) + COLORS idx2-12 (12 ตัวเลือกจริง)
+var MSCOLORS=['ตามสีบาน (ฟรี)','สีเทาซาฮาร่า','สีดำซาฮาร่า','สี Aztec gray','สีลายไม้สต๊อก สักทอง','สีลายไม้สต๊อก มะฮอกกานี','สีลายไม้สต๊อก ไวท์โอ๊ค','Fuji Oak (โอ๊ค)','Fuji Makha (มะค่า)','สีอบพิเศษ','สีลายไม้อบพิเศษ','สีชุบ'];
+// หมายเหตุ (REMARK_PRESETS — ตัวอย่างจริง 3 หมวด)
+var REMARKS=[
+ ['รวมในราคา',['ราคาที่เสนอรวมงานติดตั้ง','ราคาที่เสนอรวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม']],
+ ['ไม่รวมในราคา',['ราคาที่เสนอไม่รวมงานดรอปพื้น','ราคาที่เสนอไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)','ราคาที่เสนอไม่รวมงานรื้อบานเดิมและทุบปูนเดิม']],
+ ['เงื่อนไข / วัสดุ',['วัสดุและอุปกรณ์ตามแบบมาตรฐานผู้ผลิต','จำนวนและราคาอาจเปลี่ยนแปลงเมื่อช่างเข้าวัดหน้างานจริง','ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม']]
+];
+var FABRIC_ADDON={cat:800,rat:1200,safety:3500};
+
+var curCat='frame',curMeta=CATS.frame[0];
+function rateOf(A,tbl){for(var i=0;i<tbl.length;i++){if(A>=tbl[i][0]&&A<tbl[i][1])return tbl[i][2];}return tbl[0][2];}
+function roundUp(x){return Math.ceil(x/1000)*1000;}
+function fmt(n){return '฿'+Math.round(n).toLocaleString();}
+
+window.selCat=function(cat){curCat=cat;['frame','pleat','roll'].forEach(function(c){document.getElementById('cat-'+c).classList.toggle('on',c===cat);});renderModels(cat);selModel(CATS[cat][0].id);};
+function renderModels(cat){document.getElementById('model-grid').innerHTML=CATS[cat].map(function(m){return '<button type="button" class="mcard" id="mc-'+m.id+'" onclick="selModel(\''+m.id+'\')">'+m.name+(m.sub?'<div class="mcard-sub">'+m.sub+'</div>':'')+'</button>';}).join('');}
+window.selModel=function(id){var meta=null;for(var c in CATS){for(var i=0;i<CATS[c].length;i++){if(CATS[c][i].id===id){meta=CATS[c][i];break;}}}if(!meta)return;curMeta=meta;document.querySelectorAll('.mcard').forEach(function(x){x.classList.remove('on');});var mc=document.getElementById('mc-'+id);if(mc)mc.classList.add('on');document.getElementById('prod').value=id;
+ document.getElementById('addon-block').style.display=meta.sa?'':'none';
+ if(meta.sa){buildFabric(meta);document.getElementById('openstyle-row').classList.toggle('show',!!meta.openstyle);}
+ document.getElementById('panels-wrap').style.display=meta.panels?'':'none';
+ var mw=document.getElementById('mscolor-wrap');mw.style.display=meta.mscolor?'':'none';
+ if(meta.mscolor){var s=document.getElementById('mscolor');s.innerHTML=MSCOLORS.map(function(c,i){return '<option value="'+i+'">'+c+(i>0?' (ค่าทำสี×0.5)':'')+'</option>';}).join('');}
+ var n=(meta.sa?1:0)+(meta.mscolor?1:0)+2;document.getElementById('acc-count').textContent=n;
+ calc();
+};
+function buildFabric(meta){var fabs=[{v:'fiber',l:'ไฟเบอร์ เทา/ดำ'},{v:'cat',l:'กันแมว/หมา +800'},{v:'rat',l:'สแตนกันหนู +1,200'}];if(meta.safety)fabs.push({v:'safety',l:'นิรภัยสแตน 304 +3,500'});document.getElementById('fabric-chips').innerHTML=fabs.map(function(f,i){return '<button type="button" class="chip'+(i===0?' on':'')+'" data-val="'+f.v+'" onclick="fabChip(this)">'+f.l+'</button>';}).join('');document.getElementById('fabric').value='fiber';updColors('fiber');}
+window.fabChip=function(b){b.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});b.classList.add('on');var v=b.dataset.val;document.getElementById('fabric').value=v;updColors(v);calc();};
+function updColors(fv){var cfg=FC[fv]||FC.fiber;var cc=document.getElementById('color-chips');document.getElementById('single-badge').style.display=cfg.fixed?'':'none';if(cfg.fixed){cc.innerHTML=cfg.colors.map(function(c){return '<button type="button" class="cc fixed" disabled>'+c+'</button>';}).join('');}else{cc.innerHTML=cfg.colors.map(function(c,i){return '<button type="button" class="cc'+(i===0?' on':'')+'" data-val="'+c+'" onclick="colChip(this)">'+c+'</button>';}).join('');}document.getElementById('fabcolor').value=cfg.colors[0];document.getElementById('color-note').textContent=cfg.note;}
+window.colChip=function(b){b.closest('#color-chips').querySelectorAll('.cc').forEach(function(c){c.classList.remove('on');});b.classList.add('on');document.getElementById('fabcolor').value=b.dataset.val;calc();};
+window.setChip=function(b,id){b.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});b.classList.add('on');document.getElementById(id).value=b.dataset.val;calc();};
+window.setOpen=function(b){b.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});b.classList.add('on');document.getElementById('openstyle').value=b.dataset.val;};
+window.addRemark=function(s){if(!s.value)return;var ta=document.getElementById('note-ta');ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+s.value;s.value='';};
+window.calc=function(){
+ var m=curMeta,itype=document.getElementById('itype').value,w=parseFloat(document.getElementById('iw').value)||0,h=parseFloat(document.getElementById('ih').value)||0,panels=parseInt(document.getElementById('panels').value)||1,fabric=document.getElementById('fabric').value,modeB=document.getElementById('modeB').checked,extra=parseFloat(document.getElementById('extra').value)||0;
+ var A=w*h,sell=0,msgs=[];
+ var raw=0;
+ if(A>0){
+  var rate=rateOf(A,RATES[m.rates]);
+  if(m.sa){
+   var minPer=itype==='window'?m.min_w:m.min_d;
+   var fa=FABRIC_ADDON[fabric]||0;
+   var base=A*rate + A*fa;            // พื้นที่รวม × (เรต + ค่าผ้า/ตร.ม.) — ไม่คูณบาน
+   var totalMin=minPer*panels;        // min × จำนวนบาน
+   raw=Math.max(base,totalMin);
+   msgs.push(w+'×'+h+' = '+A.toFixed(2)+' ตร.ม. × '+rate.toLocaleString()+'/ตร.ม. = '+Math.round(A*rate).toLocaleString());
+   if(fa)msgs.push('ผ้า'+(fabric==='cat'?'กันแมว/หมา':fabric==='rat'?'สแตนกันหนู':'นิรภัย')+' +'+fa.toLocaleString()+'/ตร.ม. = +'+Math.round(A*fa).toLocaleString());
+   if(totalMin>base)msgs.push('ใช้ min '+(itype==='window'?'หน้าต่าง':'ประตู')+' '+minPer.toLocaleString()+' × '+panels+' บาน = '+totalMin.toLocaleString());
+  } else {
+   var b2=A*rate,mn=m.min||0;raw=Math.max(mn,b2);
+   msgs.push(w+'×'+h+' = '+A.toFixed(2)+' ตร.ม. × '+rate.toLocaleString()+'/ตร.ม. = '+Math.round(b2).toLocaleString()+(mn>b2?(' (ใช้ min '+mn.toLocaleString()+')'):''));
+  }
+  if(modeB){if(extra>0){raw+=extra;msgs.push('[โหมด B] +ค่าเสริมกล่อง/ราง '+extra.toLocaleString());}else{msgs.push('[โหมด B] ติดบานเดิม (ไม่เสริมกล่อง/ราง)');}}
+  sell=roundUp(raw);
+  msgs.push('<b>ปัดขึ้นพัน → '+fmt(sell)+'</b>');
+ }
+ document.getElementById('price').textContent=sell>0?fmt(sell):'฿0';
+ document.getElementById('msgs').innerHTML=msgs.length?msgs.join('<br>'):'กรอกขนาดเพื่อดูราคา';
+};
+// init remark select
+document.getElementById('remark-sel').innerHTML='<option value="">＋ เพิ่มหมายเหตุมาตรฐาน (เลือกทีละข้อ)</option>'+REMARKS.map(function(g){return '<optgroup label="'+g[0]+'">'+g[1].map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('')+'</optgroup>';}).join('');
+renderModels('frame');selModel('imp21');
+</script>
+</body>
+</html>

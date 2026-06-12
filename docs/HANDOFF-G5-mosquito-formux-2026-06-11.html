@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HANDOFF G5 มุ้ง — Form UX (จัดประเภทออปชั่นใหม่ + ชิป)</title>
+<style>
+  :root{--red:#B3151D;--line:#e5d3d4;--bg:#FFF9F9;}
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Tahoma,sans-serif;color:#222;max-width:900px;margin:0 auto;padding:24px;line-height:1.55}
+  h1{color:var(--red);font-size:23px;border-bottom:3px solid var(--red);padding-bottom:8px}
+  h2{color:var(--red);font-size:18px;margin-top:30px;border-left:4px solid var(--red);padding-left:9px}
+  h3{font-size:15px;margin:18px 0 6px}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--red);color:#fff;font-weight:600}
+  tr:nth-child(even){background:var(--bg)}
+  code{background:#f4eaea;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace}
+  pre{background:#2b2b2b;color:#f0f0f0;padding:13px;border-radius:8px;overflow-x:auto;font-size:11.5px;line-height:1.5}
+  pre.old{background:#3a2626}
+  pre.new{background:#23332a}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;color:#fff;white-space:nowrap}
+  .t-new{background:#A32D2D}.t-keep{background:#888}.t-done{background:#1D9E75}.t-cut{background:#444}.t-up{background:#BA7517}
+  .box{border:1px solid var(--line);border-radius:9px;padding:13px 16px;margin:13px 0;background:var(--bg)}
+  .warn{border-left:5px solid #BA7517;background:#FAEEDA;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+  .ok{border-left:5px solid #1D9E75;background:#E1F5EE;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:13.5px}
+  ul{margin:6px 0 6px 4px;padding-left:20px}
+  li{margin:3px 0}
+  .meta{font-size:12.5px;color:#666;margin-top:-6px}
+  .order{counter-reset:step;list-style:none;padding-left:0}
+  .order li{counter-increment:step;margin:7px 0;padding:9px 12px 9px 44px;position:relative;background:#fff;border:1px solid var(--line);border-radius:8px}
+  .order li::before{content:counter(step);position:absolute;left:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;background:var(--red);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G5 — มุ้ง · Form UX (จัดประเภทออปชั่นใหม่)</h1>
+<p class="meta">ส่ง: dev แชท B · 2026-06-11 (rev2 — ขยายขอบเขตตามภาพฟอร์มจริง) · ไฟล์ <code>public/calculator/index.html</code> · กลุ่ม 5 มุ้ง 19 สินค้า</p>
+
+<div class="warn">
+<b>ที่มา:</b> สินค้ามุ้งเฟรม (imp21/22/23) มี flag <code>screen_addon</code> ทำให้ <code>usesPanels()</code> (บรรทัด 934) คืน <code>true</code> →
+ฟอร์มดึง logic "บาน" มาทั้งชุด ทำให้โผล่ <b>กระจก / สีอลูมิเนียม / คาดตาราง</b> ที่มุ้งไม่ได้ใช้
+ส่วนออปชั่นมุ้งจริง (<b>ผ้ามุ้ง / สีผ้า</b>) กลับถูกซ่อนใน accordion อุปกรณ์เสริม
+</div>
+
+<div class="ok"><b>มติพี่นัท (เคาะ 2026-06-11):</b>
+1) ตัด <b>กระจก</b> ออกจากมุ้ง ·
+2) ตัด <b>สีอลูมิเนียม</b> ใช้ <b>สีกรอบมุ้ง</b> อันเดียว ·
+3) ดึง <b>ติดมุ้งบานเดิม (โหมด B)</b> ขึ้นเด่นบนสุด ·
+4) ตัด <b>คาดตาราง</b> ออกจากมุ้ง ·
+5) ดึง <b>ผ้ามุ้ง + สีผ้า</b> ขึ้นเป็นออปชั่นหลัก + แปลงเป็น <b>ชิป</b>
+</div>
+
+<h2>1) ลำดับฟอร์มมุ้งใหม่ (บนลงล่าง)</h2>
+<ol class="order">
+<li><b>ติดมุ้งบานเดิม (โหมด B)</b> <code>o-screen_existing</code> + ค่าเสริมกล่อง/ราง <code>o-screen_extra</code> — กล่องส้มเด่น บนสุด</li>
+<li><b>แบบ</b> (เลือกสินค้า) + <b>ขนาด</b> กว้าง×สูง + <b>จำนวนบาน/ชุด</b> — หลัก ทุกสินค้า</li>
+<li><b>ประเภท</b> <code>i-type</code> — ชิป ประตู/หน้าต่าง (มีผลต่อ min) <span class="tag t-done">ชิปแล้ว</span></li>
+<li><b>ผ้ามุ้ง + สีผ้า</b> — ชิปหลัก เห็นทันที (เฉพาะ screen_addon = imp21/22/23)</li>
+<li><b>ครอบวงกบอลู</b> <code>o-fcsides</code> — ชิป <span class="tag t-done">ชิปแล้ว</span></li>
+<li>accordion อุปกรณ์เสริม → <b>สีกรอบมุ้ง</b> (12) + <b>หมายเหตุ</b> (18) — คง dropdown</li>
+</ol>
+<p class="meta">ตัดหายทั้งหมดจากมุ้ง: กระจก (<code>i-glass-wrap</code>) · สีอลู (<code>i-color-wrap</code>) · คาดตาราง (<code>o-gridmark</code>)</p>
+
+<h2>2) ตารางตัดสิน control</h2>
+<table>
+<tr><th>ช่อง (class)</th><th>ออปชั่น</th><th>โผล่</th><th>เดิม</th><th>ตัดสิน</th></tr>
+<tr><td>ประเภท <code>i-type</code></td><td>2</td><td>19</td><td>ชิป</td><td><span class="tag t-done">คงเดิม</span></td></tr>
+<tr><td>ครอบวงกบ <code>o-fcsides</code></td><td>3</td><td>19</td><td>ชิป</td><td><span class="tag t-done">คงเดิม</span></td></tr>
+<tr><td>ติดมุ้งบานเดิม <code>o-screen_existing</code></td><td>checkbox</td><td>19</td><td>กลางฟอร์ม</td><td><span class="tag t-up">ดึงขึ้นบนสุด</span></td></tr>
+<tr><td>ค่าเสริมกล่อง/ราง <code>o-screen_extra</code></td><td>number</td><td>19</td><td>—</td><td><span class="tag t-up">ขึ้นคู่โหมด B</span></td></tr>
+<tr><td><b>ผ้ามุ้ง <code>o-screenfabric</code></b></td><td>3–4</td><td>3</td><td>dropdown</td><td><span class="tag t-new">ชิป + ดึงขึ้นหลัก</span></td></tr>
+<tr><td><b>สีผ้า <code>o-screenfabriccolor</code></b></td><td>3</td><td>3</td><td>dropdown</td><td><span class="tag t-new">ชิป + ดึงขึ้นหลัก</span></td></tr>
+<tr><td>สีกรอบมุ้ง <code>o-mscolor</code></td><td>12</td><td>15</td><td>dropdown</td><td><span class="tag t-keep">คง dropdown</span></td></tr>
+<tr><td>หมายเหตุ <code>o-remark-add</code></td><td>18</td><td>19</td><td>dropdown</td><td><span class="tag t-keep">คง dropdown</span></td></tr>
+<tr><td>กระจก <code>i-glass</code></td><td>—</td><td>generic</td><td>โผล่ผิด</td><td><span class="tag t-cut">ตัดจากมุ้ง</span></td></tr>
+<tr><td>สีอลู <code>i-color</code></td><td>—</td><td>generic</td><td>โผล่ผิด</td><td><span class="tag t-cut">ตัดจากมุ้ง</span></td></tr>
+<tr><td>คาดตาราง <code>o-gridmark</code></td><td>checkbox</td><td>generic</td><td>โผล่ผิด</td><td><span class="tag t-cut">ตัดจากมุ้ง</span></td></tr>
+</table>
+
+<h2>3) จุดแก้โค้ด — before/after (5 จุด)</h2>
+
+<h3>จุด 1 — ตัดกระจก + สีอลู ออกจากมุ้ง (บรรทัด ~2716–2717)</h3>
+<pre class="old">var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)));
+var _showGw=!!(gw&&!(areaOnly||p.zipscreen));</pre>
+<pre class="new">var _showCw=!!(cw&&!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'));
+var _showGw=!!(gw&&!(areaOnly||p.zipscreen||p.cat==='มุ้ง'));</pre>
+<p class="meta">⚠ <b>ห้ามลบ</b> <code>screen_addon</code> ออกจาก <code>usesPanels()</code> (บรรทัด 934) — ยังใช้คุม <code>i-panels-wrap</code> (จำนวนบาน) ที่มีผลต่อ min (บรรทัด ~1058–1060). แก้แค่ <code>_showCw/_showGw</code></p>
+
+<h3>จุด 2 — ตัดคาดตาราง ออกจากมุ้ง (บรรทัด ~2488)</h3>
+<pre class="old">if(!p.grid && !['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){</pre>
+<pre class="new">if(!p.grid && !['หลังคา','ฝ้า-ผนัง','มุ้ง'].includes(p.cat)){</pre>
+
+<h3>จุด 3 — ดึงโหมด B ขึ้นบนสุด (ย้ายบล็อก <code>if(p.cat==='มุ้ง')</code> บรรทัด ~2611–2612)</h3>
+<p>ย้ายบล็อกนี้ไปไว้ <b>ต้นสุดของ <code>buildItemOpts</code></b> และ render <b>นอก accordion</b> (ใน main form ให้เห็นทันที) + เปลี่ยน style ให้เด่น:</p>
+<pre class="new">h+='&lt;div class="opt" style="width:100%;background:#FFF3E0;border:2px solid #FF9800;border-radius:8px;padding:8px 12px;"&gt;'
+ +'&lt;label style="display:flex;align-items:center;gap:8px;font-weight:700;"&gt;'
+ +'&lt;input type="checkbox" class="o-screen_existing" onchange="calcQuote();"&gt; ติดมุ้งบานเดิม (โหมด B · ลูกค้าเก่ามาเพิ่มมุ้ง)'
+ +'&lt;/label&gt;&lt;/div&gt;';
+h+='&lt;label class="opt"&gt;ค่าเสริมกล่อง/ราง (บาท · กรอกถ้ารางเดิมใช้ไม่ได้) '
+ +'&lt;input type="number" class="o-screen_extra" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" style="width:140px;height:30px;"&gt;&lt;/label&gt;';</pre>
+<p class="meta">class เดิม <code>o-screen_existing</code> / <code>o-screen_extra</code> ห้ามเปลี่ยน (readItem อ่านที่ ~2811–2812 · คิดราคาที่ ~1413, 3473)</p>
+
+<h3>จุด 4 — ผ้ามุ้ง + สีผ้า: dropdown → ชิป + ดึงขึ้นหลัก (บล็อก <code>if(p.screen_addon)</code> บรรทัด ~2684–2689)</h3>
+<pre class="old">if(p.screen_addon){
+  h+='&lt;label class="opt"&gt;ผ้ามุ้ง &lt;select class="o-screenfabric" ...&gt;&lt;option value="fiber"&gt;ไฟเบอร์ เทา/ดำ (default)&lt;/option&gt;&lt;option value="cat"&gt;กันแมว/หมา สีขาว +800/ตร.ม.&lt;/option&gt;&lt;option value="rat"&gt;สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.&lt;/option&gt;';
+  if(p.rates==='IMP23') h+='&lt;option value="safety"&gt;นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)&lt;/option&gt;';
+  h+='&lt;/select&gt;&lt;/label&gt;';
+  h+='&lt;label class="opt"&gt;สีผ้า &lt;select class="o-screenfabriccolor" ...&gt;&lt;option value="ดำ"&gt;ดำ&lt;/option&gt;&lt;option value="เทา"&gt;เทา&lt;/option&gt;&lt;option value="ขาว"&gt;ขาว&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;';</pre>
+<pre class="new">if(p.screen_addon){
+  h+='&lt;label class="opt" style="width:100%;"&gt;ผ้ามุ้ง &lt;div class="chip-group chip-sm"&gt;'
+   +'&lt;button type="button" class="chip on" data-val="fiber" onclick="chSetChip(this,\'o-screenfabric\')"&gt;ไฟเบอร์ เทา/ดำ&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\')"&gt;กันแมว/หมา ขาว +800&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="rat" onclick="chSetChip(this,\'o-screenfabric\')"&gt;สแตนกันหนู +1,200&lt;/button&gt;'
+   +(p.rates==='IMP23'?'&lt;button type="button" class="chip" data-val="safety" onclick="chSetChip(this,\'o-screenfabric\')"&gt;นิรภัยสแตน 304 ดำ 0.8มม.&lt;/button&gt;':'')
+   +'&lt;/div&gt;'
+   +'&lt;select class="o-screenfabric" style="display:none;" onchange="calcQuote();"&gt;&lt;option value="fiber" selected&gt;ไฟเบอร์ เทา/ดำ (default)&lt;/option&gt;&lt;option value="cat"&gt;กันแมว/หมา สีขาว +800/ตร.ม.&lt;/option&gt;&lt;option value="rat"&gt;สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.&lt;/option&gt;'
+   +(p.rates==='IMP23'?'&lt;option value="safety"&gt;นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)&lt;/option&gt;':'')
+   +'&lt;/select&gt;&lt;/label&gt;';
+  h+='&lt;label class="opt" style="width:100%;"&gt;สีผ้า &lt;div class="chip-group chip-sm"&gt;'
+   +'&lt;button type="button" class="chip on" data-val="ดำ" onclick="chSetChip(this,\'o-screenfabriccolor\')"&gt;ดำ&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="เทา" onclick="chSetChip(this,\'o-screenfabriccolor\')"&gt;เทา&lt;/button&gt;'
+   +'&lt;button type="button" class="chip" data-val="ขาว" onclick="chSetChip(this,\'o-screenfabriccolor\')"&gt;ขาว&lt;/button&gt;'
+   +'&lt;/div&gt;'
+   +'&lt;select class="o-screenfabriccolor" style="display:none;"&gt;&lt;option value="ดำ" selected&gt;ดำ&lt;/option&gt;&lt;option value="เทา"&gt;เทา&lt;/option&gt;&lt;option value="ขาว"&gt;ขาว&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;';</pre>
+<p class="meta"><b>"ดึงขึ้นหลัก"</b> = ผ้ามุ้ง+สีผ้า ต้องเห็นใน main form ทันที (ไม่ต้องกดเปิด accordion). ทำเหมือน pattern ย้าย cw/gw (บรรทัด 2719–2721 ใช้ <code>box.insertBefore</code>) หรือ render นอก <code>.i-opts</code>. <b>value เดิมห้ามเปลี่ยน</b> — logic อ่านที่ ~2894 / ~3588</p>
+
+<h3>จุด 5 — แก้ keyword bucketing accordion (บรรทัด ~1775)</h3>
+<pre class="old">{key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},</pre>
+<pre class="new">{key:'🪟 มุ้ง', open:false, kw:['สีกรอบมุ้ง']},</pre>
+<p class="meta">เหตุผล: ผ้ามุ้ง/สีผ้า/โหมดB ดึงขึ้น main form แล้ว — ลบ keyword <code>'มุ้ง','ผ้ามุ้ง','สีผ้า'</code> ออก ไม่งั้น label ที่มีคำพวกนี้จะถูกดูดกลับเข้า accordion <span class="tag t-keep">เช็คซ้ำ: ถ้าหลังแก้ยังมีอะไรหลงเข้า bucket มุ้ง ให้ดู groupGHOpts</span></p>
+
+<h2>4) QA Checklist — ตัวแทนครอบทุกลาย</h2>
+<table>
+<tr><th>#</th><th>สินค้า</th><th>เช็คอะไร</th></tr>
+<tr><td>1</td><td><code>imp21</code> เฟรมเล็ก</td><td>ชิปผ้ามุ้ง 3 / สีผ้า 3 · default fiber+ดำ on · <b>กระจก/สีอลู/คาดตาราง ไม่โผล่</b></td></tr>
+<tr><td>2</td><td><code>imp23</code> เฟรมใหญ่</td><td>ชิปผ้ามุ้ง <b>4 ปุ่ม</b> (มี safety) · กด safety→ราคาเปลี่ยน · สลับกลับ imp21 ปุ่ม safety หาย</td></tr>
+<tr><td>3</td><td><code>imp22</code> ติดตาย</td><td>กด "กันแมว/หมา"→ราคา +800/ตร.ม. ทันที · readItem.optSel.screenFabric==='cat'</td></tr>
+<tr><td>4</td><td><code>imp28</code> จีบตีนตะขาบ</td><td>ไม่มีชิปผ้ามุ้ง (ไม่มี screen_addon) · mscolor dropdown ปกติ · กระจก/คาดตารางไม่โผล่</td></tr>
+<tr><td>5</td><td><code>mj_kick_300</code> ม้วนเตะ</td><td>ฟอร์มปกติ · ราคา bucket 37,500 ไม่เพี้ยน · กระจกไม่โผล่</td></tr>
+<tr><td>6</td><td><code>mj_screen_safety</code> จีบนิรภัย</td><td><code>mscolor:false</code> → ไม่มี dropdown สีกรอบ · ฟอร์มไม่พัง</td></tr>
+<tr><td>7</td><td>โหมด B (ทุกตัว)</td><td>checkbox <code>o-screen_existing</code> อยู่บนสุด · ติ๊กแล้วราคา +ค่าเสริม (<code>o-screen_extra</code>) ถูก</td></tr>
+</table>
+
+<h2>5) Definition of Done</h2>
+<ul>
+<li>✅ <code>node test/quote-fidelity.mjs</code> ผ่านทุก case — ราคา/ใบไม่เพี้ยน <b>(สำคัญสุด)</b></li>
+<li>✅ เปิดฟอร์มมุ้งในเบราว์เซอร์จริง: เห็น <b>โหมด B + ผ้ามุ้ง + สีผ้า ทันที</b> โดยไม่ต้องเปิด accordion</li>
+<li>✅ มุ้งทุกตัว: <b>ไม่มี</b> ช่องกระจก / สีอลูมิเนียม / คาดตาราง</li>
+<li>✅ กดชิปผ้ามุ้ง → ราคาขึ้นทันที · imp23 มี 4 ชิป · imp21/22 มี 3 ชิป</li>
+<li>✅ <code>readItem</code> อ่าน value เดิมครบ (<code>screenfabric/screenfabriccolor/screen_existing/screen_extra</code>)</li>
+<li>✅ ใบเสนอราคา: ข้อความผ้ามุ้ง/สีผ้า/โหมด B ออกเหมือนเดิมเป๊ะ</li>
+</ul>
+
+<div class="ok"><b>หมายเหตุ:</b> CSS <code>chip / chip-group / chip-sm / chip.on</code> มีในไฟล์แล้ว (ใช้กับ fcsides/handrail) — <b>ไม่ต้องเพิ่ม CSS</b> · ดราฟกดเล่นได้: <code>Desktop\Sharepicjr\draft-g5-mosquito-formux.html</code></div>
+
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC G1-G6 UX — สเปกส่ง Dev (2026-06-11)</title>
+<style>
+:root{--red:#B3151D;--blue:#1565C0;--green:#2E7D32;--amber:#F59E0B;--border:#E5E7EB;--bg:#F9FAFB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;color:#111;background:#F3F4F6;}
+.page{max-width:860px;margin:0 auto;padding:20px 16px;}
+h1{font-size:20px;font-weight:700;color:var(--red);margin-bottom:4px;}
+.sub{font-size:12px;color:#6B7280;margin-bottom:20px;}
+h2{font-size:16px;font-weight:700;color:var(--blue);margin:24px 0 8px;border-bottom:2px solid var(--blue);padding-bottom:4px;}
+h3{font-size:13px;font-weight:700;color:#374151;margin:12px 0 6px;}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px;}
+th{background:#F3F4F6;border:1px solid var(--border);padding:6px 9px;text-align:left;font-weight:700;color:#374151;}
+td{border:1px solid var(--border);padding:6px 9px;vertical-align:top;line-height:1.5;}
+td.before{background:#FFF5F5;color:#B3151D;}
+td.after{background:#F0FDF4;color:#166534;}
+td.note{background:#FFFBEB;color:#92400E;font-size:12px;}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:3px;}
+.tag-cut{background:#FEE2E2;color:#B91C1C;}
+.tag-chip{background:#DBEAFE;color:#1D4ED8;}
+.tag-merge{background:#D1FAE5;color:#065F46;}
+.tag-new{background:#FEF3C7;color:#92400E;}
+.tag-stepper{background:#EDE9FE;color:#5B21B6;}
+.tag-cascade{background:#F0FDF4;color:#166534;}
+code{background:#F3F4F6;border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;}
+.rule{background:#FFF7ED;border-left:4px solid var(--amber);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+.dev-note{background:#EFF6FF;border-left:4px solid var(--blue);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+.warn{background:#FFF0F0;border-left:4px solid var(--red);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;}
+ul{padding-left:18px;margin:4px 0;}li{margin-bottom:3px;}
+.files-box{background:#F0FDF4;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;margin:12px 0;}
+.files-box code{background:none;border:none;color:var(--green);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>SPEC G1–G6 UX — สเปกส่ง Dev</h1>
+<div class="sub">2026-06-11 · ไม่แตะ public/calculator/index.html (แชท dev ทำเอง) · ดราฟ interactive อยู่ใน docs/</div>
+
+<div class="files-box">
+  <b>ไฟล์ดราฟที่ส่งมาพร้อมสเปกนี้:</b><br>
+  <code>docs/DRAFT-G1-ux-2026-06-11.html</code> — บาน/กระจก (บานเลื่อน/เปิด/ติดตาย/เฟี้ยม/กระทุ้ง/PC Door/ตู้อลู)<br>
+  <code>docs/DRAFT-G3-ux-2026-06-11.html</code> — หลังคา / ฝ้า-ผนัง<br>
+  <code>docs/DRAFT-G4-ux-2026-06-11.html</code> — ตู้อลู / ฝาตู้ Future Tech<br>
+  <code>docs/DRAFT-G5-ux-2026-06-11.html</code> — มุ้ง (ขายเดี่ยว)<br>
+  <code>docs/DRAFT-G6-ux-2026-06-11.html</code> — กั้นห้องกระจก (multi-side)<br>
+  <code>docs/DRAFT-G2-ux-2026-06-11.html</code> — รั้ว/ระแนง/ราวกันตก (อนุมัติแล้ว ใช้เป็น reference)
+</div>
+
+<div class="rule">
+  <b>กฎ RATES:</b> ราคาในดราฟทุกไฟล์เป็น dummy เพื่อสาธิต pattern เท่านั้น
+  dev ต้องดึง RATES จริงจาก <code>calcUnit()</code> engine เดิมใน index.html — ห้ามใช้ตัวเลขดราฟในงานจริง
+</div>
+
+<!-- ============================================================ -->
+<h2>G1 — บาน/กระจก (กลุ่มใหญ่สุด · สำคัญสุด)</h2>
+
+<h3>ภาพรวม before → after</h3>
+<table>
+<tr><th width="28%">ช่อง/control เดิม</th><th width="28%">ปรับเป็น (After)</th><th width="44%">หมายเหตุ / จุดโค้ด</th></tr>
+<tr>
+  <td class="before">i-group: select dropdown 7 ตัวเลือก (เห็นทุกชิ้นงาน)</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> Tab bar บน (บานเลื่อน/เปิด/ติดตาย/เฟี้ยม/กระทุ้ง/PC Door) · แยกหมวดชัด</td>
+  <td>เดิม: select dropdown กลุ่มงาน → แบบ (ยาวมาก) · After: tab bar + cascade prod ของแต่ละ tab</td>
+</tr>
+<tr>
+  <td class="before">i-type: select ประตู/หน้าต่าง</td>
+  <td class="after"><span class="tag tag-chip">ชิป 2 ตัว</span> ประตู / หน้าต่าง · select ซ่อน</td>
+  <td>มีอยู่แล้วใน G1 formux · pattern: <code>chSetChip(btn,'i-type')</code></td>
+</tr>
+<tr>
+  <td class="before">บานเลื่อน: ช่องจำนวนบาน input number + ชนิดการเปิด dropdown กระจัดกระจาย</td>
+  <td class="after"><span class="tag tag-chip">ชิป quick</span> [2][3][4][6] + stepper + ชนิดเปิดชิป → รวมในกล่องฟ้า sliding-main-block</td>
+  <td>มีอยู่แล้วใน buildItemOpts · ยืนยันไม่รื้อ → เพิ่มชิป quick [2][3][4][6] ด้านบน block</td>
+</tr>
+<tr>
+  <td class="before">มือจับ: toggle brand อยู่ใน opts ห่อ handle-brand-wrap (มีแล้ว)</td>
+  <td class="after"><span class="tag tag-merge">คงเดิม</span> + ยืนยันพับใน details "มือจับ/ล็อค" ของ groupGHOpts</td>
+  <td>G1 formux ทำแล้ว · ดราฟ G1 แสดง pattern สำหรับ dev ใหม่ดู</td>
+</tr>
+<tr>
+  <td class="before">มุ้ง: 4 ช่องกระจัด (o-mosq select + o-msfabric + o-msframecolor + o-mosqopenstyle)</td>
+  <td class="after"><span class="tag tag-merge">รวบกล่อง mosq-wrap</span> (มีอยู่แล้ว) · select มุ้ง → โชว์/ซ่อน detail group</td>
+  <td>มีอยู่แล้วใน G1 formux (ก้อน4+5) · ดราฟแสดง pattern ชัดขึ้น</td>
+</tr>
+<tr>
+  <td class="before">เสริมคาน: chips 4 ตัว (มีอยู่แล้ว)</td>
+  <td class="after"><span class="tag tag-merge">คงเดิม</span> · พับใน details "เสริมคาน/คาดตาราง"</td>
+  <td>G1 formux ทำแล้ว</td>
+</tr>
+<tr>
+  <td class="before">สีอลู: select dropdown ยาว</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 4 ตัว ขาว/ดำ · ซาฮาร่า · ลายไม้สต๊อก · อบพิเศษ</td>
+  <td>select <code>.i-color</code> ยังต้องอยู่ (logic ใช้ index) · ชิปกด → set value → calcQuote</td>
+</tr>
+<tr>
+  <td class="before">กระจก: select dropdown ยาวมาก (~20 รายการ)</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 4 รายการยอดนิยม + "อื่นๆ ▾" เปิด dropdown เต็ม</td>
+  <td>select <code>.i-glass</code> ยังต้องอยู่ · ชิปตัวแรก 4 = ใส5/เขียว5/เทมเปอร์6/อินซูเลท · pattern "other" เปิด select</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด G1:</b>
+  <ul>
+    <li>ชิปประเภท (<code>i-type</code>): <code>chSetChip()</code> บรรทัด ~2149 — มีอยู่แล้ว</li>
+    <li>มือจับ toggle brand: <code>toggleHandleBrand()</code> บรรทัด ~2158 — มีอยู่แล้ว</li>
+    <li>มุ้ง mosq-wrap: <code>mosqGroupToggle()</code> บรรทัด ~2185 — มีอยู่แล้ว</li>
+    <li><b>ยังต้องทำ:</b> ชิป สีอลู (4 ตัว) + ชิป กระจก (4 ตัว + other) → sync <code>.i-color</code> / <code>.i-glass</code></li>
+    <li><b>ยังต้องทำ:</b> Tab bar ระดับบนสุด (เลือก cat บาน) แทน dropdown กลุ่มงาน — ทำใน addItem() HTML</li>
+  </ul>
+</div>
+
+<h3>G1 — สรุปงานที่ยังต้องทำ (dev)</h3>
+<table>
+<tr><th>หัวข้อ</th><th>Action</th><th>ลำดับ</th></tr>
+<tr><td>ชิปสีอลู (i-color)</td><td>เพิ่มชิป 4 ตัวใน buildItemOpts (ทุก cat) · sync .i-color value</td><td>1</td></tr>
+<tr><td>ชิปกระจก (i-glass)</td><td>เพิ่มชิป 4 ตัว + "อื่นๆ" เปิด select เต็ม · sync .i-glass</td><td>1</td></tr>
+<tr><td>Tab bar cat บานใน addItem HTML</td><td>เพลี่ยน i-group dropdown → chip tab bar บน (หรือ chip 2 ชั้น cat→prod)</td><td>2</td></tr>
+<tr><td>ชิปด่วน prod per cat</td><td>บานเลื่อน → [SMS][Euro] · บานเปิด → [ยูโร][Velora][โซลิด] (cascade)</td><td>2</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>G3 — หลังคา / ฝ้า-ผนัง</h2>
+
+<div class="warn">
+  <b>ข้อควรระวัง:</b> แชท dev กำลังทำ FIX A/D (G3 roof form-ux) ค้างอยู่ใน index.html
+  — CATS กล่อง details (วัสดุมุง·สี·โครง / หลังคาเลื่อน / ปลายหลังคา·รางน้ำ / ของเสริม)
+  + label "ยาว/ยื่น" แทน กว้าง/สูง
+  <br><b>ดราฟนี้ต่อยอดทิศทางเดิม — ห้ามรื้อ</b>
+</div>
+
+<h3>Before → After (G3 หลังคา)</h3>
+<table>
+<tr><th width="28%">ช่อง/control เดิม</th><th width="28%">ปรับเป็น (After)</th><th width="44%">หมายเหตุ</th></tr>
+<tr>
+  <td class="before">i-prod: dropdown ยาว (หลังคาทุกรุ่น ปนกัน)</td>
+  <td class="after"><span class="tag tag-cascade">cascade</span> ชิปกลุ่ม (โพลีตัน / เมทัลชีท / ชินโคไลท์ / ไวนิล / ลามิเนต) → select รุ่นใน group</td>
+  <td>FIX A ทำอยู่ · dev ใช้ pattern นี้ต่อ · แต่ละ group มี 2-3 รุ่น</td>
+</tr>
+<tr>
+  <td class="before">label กว้าง/สูง (ไม่ตรงกับหลังคา)</td>
+  <td class="after"><span class="tag tag-new">label</span> ยาว (ม.) × ยื่น (ม.) — FIX D ทำแล้ว</td>
+  <td>ยาว = แนวขนานผนัง · ยื่น = ระยะยื่น — ตรงความเข้าใจเซลล์</td>
+</tr>
+<tr>
+  <td class="before">o-roofbatten + o-roofframe: dropdown กระจัด</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> แป (เดี่ยว/คู่) + โครง (อลู/เหล็กชุบ) · แยกใน CAT A ที่เปิดเสมอ</td>
+  <td>จัดเข้ากล่อง "วัสดุมุง · สี · โครง" (CAT A) — FIX A ทำแล้ว</td>
+</tr>
+<tr>
+  <td class="before">o-roofend + o-guttersys-wrap: chain show/hide ซับซ้อน</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> ปลายหลังคา (ปล่อย/รางน้ำ) → โชว์ sub-card รางน้ำ · ชนิดราง ชิป 3 ตัว</td>
+  <td>FIX A ทำแล้ว · ดราฟแสดง visual ที่ดีขึ้น</td>
+</tr>
+<tr>
+  <td class="before">o-slide: checkbox + o-slide-wrap (ซับซ้อน)</td>
+  <td class="after"><span class="tag tag-merge">คงแนว</span> checkbox ทำเป็นหลังคาเลื่อน → โชว์ CAT B block (ชนิดเลื่อน ชิป + ชิปบาน 2/3/4/6 + stepper)</td>
+  <td>FIX C ทำแล้ว · ดราฟแสดง pattern ชัดขึ้น (ชิปจำนวนบาน → rfSetSpanels)</td>
+</tr>
+<tr>
+  <td class="before">o-rfbeam + เสา + ปิดปลาย + ซ่อนสโลป ฯลฯ กระจัด</td>
+  <td class="after"><span class="tag tag-merge">พับใน</span> details "ของเสริม" (CAT D) · เปิดเองถ้าต้องการ</td>
+  <td>FIX A④ ทำแล้ว (ลบ wrapper details ซ้อน) · ดราฟรวบสะอาด</td>
+</tr>
+<tr>
+  <td class="before">สีวัสดุมุง: dropdown แยกต่างหากต่อ id</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> สีตามรุ่น (buildRoofColorRow dynamic)</td>
+  <td>โพลีตัน 6 สี · ดีไลท์ 2 สี · ไวนิล 3 สี · ไม่มีสีถ้าไม่ applicable</td>
+</tr>
+</table>
+
+<h3>Before → After (G3 ฝ้า-ผนัง)</h3>
+<table>
+<tr><th>ช่อง/control เดิม</th><th>ปรับเป็น</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td class="before">i-prod: dropdown รวมกับหลังคา</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> 5 ตัว (ISOWALL / ผนังเบาภายนอก / ภายใน / ฝ้าอลู / ฝ้าสมาร์ทบอร์ด)</td>
+  <td>แยก tab ฝ้า-ผนัง ออกจากหลังคา ชัดเจน</td>
+</tr>
+<tr>
+  <td class="before">o-insul: checkbox กระจัด</td>
+  <td class="after"><span class="tag tag-merge">พับใน</span> details extra ด้านล่าง</td>
+  <td>ไม่ค่อยใช้ ไม่ต้องเห็นตลอด</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด G3:</b>
+  <ul>
+    <li><code>if(p.cat==='หลังคา'){ ... }</code> ใน buildItemOpts ~บรรทัด 2528 — ทั้งบล็อกนี้คือ opts หลังคา</li>
+    <li><code>groupGHOpts()</code> ~2147: CATS หลังคา เป็น 5 CAT (วัสดุ/เลื่อน/ปลาย/เสริม/ต่อปลาย)</li>
+    <li>FIX C: <code>rfSetSpanels()</code> + <code>rfSlideMotorFill()</code> ~2123 — ชิปบานเลื่อนมีแล้ว</li>
+    <li>FIX A④: เลิก wrapper <code>&lt;details optbox&gt;</code> ใน cat หลังคา — flatten label ลง .i-opts</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>G4 — ตู้อลู / ฝาตู้</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th width="28%">ช่อง/control เดิม</th><th width="28%">ปรับเป็น</th><th width="44%">หมายเหตุ</th></tr>
+<tr>
+  <td class="before">ประเภทตู้ (wardrobe/shoe): ซ่อนอยู่ใน opts</td>
+  <td class="after"><span class="tag tag-chip">ชิป 2 ตัว</span> ตู้ทั่วไป / ตู้รองเท้า · เปิดเสมอ</td>
+  <td>เลือกประเภทก่อน → depth default เปลี่ยน auto (ทั่วไป 0.6, รองเท้า 0.45)</td>
+</tr>
+<tr>
+  <td class="before">o-depth: input number เปล่าๆ</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 0.6 / 0.5 / 0.45 + input number กรอกเองถ้าต่างออกไป</td>
+  <td>ลด keystroke · sync ทั้ง 2 ทาง (chip → input · input → state)</td>
+</tr>
+<tr>
+  <td class="before">o-cabdoors: dropdown 1/2/3</td>
+  <td class="after"><span class="tag tag-chip">ชิป 3 ตัว</span> 1 บาน / 2 บาน / 3 บาน</td>
+  <td>select <code>.o-cabdoors</code> ยังต้องอยู่ · ชิปกด sync value</td>
+</tr>
+<tr>
+  <td class="before">o-shelves: input number (ว่าง = auto — ไม่ชัด)</td>
+  <td class="after"><span class="tag tag-stepper">stepper</span> + label "(0 = auto ตามสูง)" + แสดง auto calc เป็น text สีเขียว</td>
+  <td>เซลล์เข้าใจทันทีว่า 0 = ปล่อยระบบคำนวณ</td>
+</tr>
+<tr>
+  <td class="before">o-shelfmat: dropdown</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 3 ตัว (ตามประเภท / อลู 1,200 / กระจก 1,000)</td>
+  <td>select <code>.o-shelfmat</code> ยังต้องอยู่</td>
+</tr>
+<tr>
+  <td class="before">future_tech o-ftcolor: dropdown สียาว</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> 4 ตัว + warning "ดูตัวอย่างก่อน"</td>
+  <td>tab แยก ฝาตู้ vs ตู้อลู</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด G4:</b>
+  <ul>
+    <li><code>if(p.cabinet){ h+=... }</code> ใน buildItemOpts ~บรรทัด 2634 — จุดเพิ่ม chip ประเภท/ลึก/บาน/ชั้น</li>
+    <li><code>if(p.future_tech){ h+=... }</code> ~บรรทัด 2677 — จุดเพิ่ม chip สีฝาตู้</li>
+    <li><code>optSel.cabDoors, .depth, .cabtype, .shelves, .shelfmat</code> ~2874 — readItem อ่าน จาก select/input เดิม → ไม่ต้องแก้</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>G5 — มุ้ง (ขายเดี่ยว)</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th width="28%">ช่อง/control เดิม</th><th width="28%">ปรับเป็น</th><th width="44%">หมายเหตุ</th></tr>
+<tr>
+  <td class="before">i-prod: dropdown ยาว (มุ้งทุกรุ่นปนกัน ~12 รายการ)</td>
+  <td class="after"><span class="tag tag-cascade">cascade drill-down</span> card แต่ละชนิด (ชื่อ + คำอธิบาย + ราคา range) · กดเลือกแล้วโชว์ detail</td>
+  <td>มุ้งต่างประเภท: เฟรม/จีบ/ม้วน/นิรภัย — แสดงชัดว่าต่างกันอย่างไร</td>
+</tr>
+<tr>
+  <td class="before">o-mosqopenstyle: ซ่อน · แสดงเฉพาะ imp21/imp23</td>
+  <td class="after"><span class="tag tag-chip">ชิป</span> เปิด/ซ้าย/ขวา · โชว์เฉพาะเมื่อ select มุ้งที่มี hasOpen:true</td>
+  <td><code>mosqGroupToggle()</code> เดิมทำแล้ว · ดราฟชัดขึ้น</td>
+</tr>
+<tr>
+  <td class="before">o-mscolor (สีกรอบ): dropdown ใน opts ยาว</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> ขาว / ดำ / ซาฮาร่า / อบพิเศษ</td>
+  <td>select <code>.o-mscolor</code> ยังต้องอยู่ (logic colorPrice)</td>
+</tr>
+<tr>
+  <td class="before">ผ้ามุ้ง: ไม่มีช่อง หรือ hidden</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> ไฟเบอร์ / PET / นิรภัย</td>
+  <td>label-only สำหรับระบุในใบ · บางชนิดมีผลราคา</td>
+</tr>
+<tr>
+  <td class="before">ราคาขั้นต่ำ: ไม่แสดงใน form</td>
+  <td class="after"><span class="tag tag-new">info bar</span> โชว์ขั้นต่ำ (min_door/min_window) เมื่อพื้นที่ต่ำกว่า</td>
+  <td>เซลล์เข้าใจว่าราคาถูก clamp ที่ min</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด G5:</b>
+  <ul>
+    <li>มุ้งขายเดี่ยว (group 5): <code>CATS['5'] = ['มุ้ง']</code> ~865 · product id <code>imp21, imp22, imp23, imp28, imp29, imp31, imp32, mj_*</code></li>
+    <li>ราคาคำนวณ: <code>calcUnit(p, w, h, ...)</code> — min_door/min_window อยู่ใน product obj</li>
+    <li>สีกรอบมุ้ง: <code>colorPrice()</code> · o-mscolor select · ค่าใช้ index ใน COLORS array</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>G6 — กั้นห้องกระจก</h2>
+
+<h3>Before → After</h3>
+<table>
+<tr><th width="28%">ช่อง/control เดิม</th><th width="28%">ปรับเป็น</th><th width="44%">หมายเหตุ</th></tr>
+<tr>
+  <td class="before">สีอลู + กระจก: ซ่อนในแต่ละ ch (sync ด้วย .gh-set-color-row)</td>
+  <td class="after"><span class="tag tag-merge">คงแนว</span> master สีอลู + กระจก (ทั้งห้อง) อยู่ที่บนสุดของชุด · ชิป 4 ตัว</td>
+  <td>refreshSet() มีอยู่แล้ว · .gh-set-color-row inject ครั้งเดียวต่อชุด</td>
+</tr>
+<tr>
+  <td class="before">+ เพิ่มบาน / + เพิ่มหลังคา: ปุ่มล่างชุด</td>
+  <td class="after"><span class="tag tag-merge">คงแนว</span> + ปรับ label ชัด "เพิ่มด้าน A/B/C..." auto</td>
+  <td>ghSideLabel() มีอยู่แล้ว · refreshSet() จัดการ</td>
+</tr>
+<tr>
+  <td class="before">i-prod ต่อบาน: dropdown ยาว (ทุก cat กลุ่ม 6)</td>
+  <td class="after"><span class="tag tag-chip">ชิป sm</span> แบบบาน (เลื่อนยูโร/เปิดยูโร/ติดตาย/เฟี้ยม) + หลังคา แยก card</td>
+  <td>ดราฟ G6 แสดง side-card accordion ที่แตะเปิด/ปิดได้ · prod ชิปแต่ละ side</td>
+</tr>
+<tr>
+  <td class="before">i-group, i-qty, i-override ซ่อนทั้งหมดในกั้นห้อง</td>
+  <td class="after"><span class="tag tag-cut">ซ่อน</span> คงเดิม (refreshSet ซ่อน data-gh-h2)</td>
+  <td>ไม่แก้ logic</td>
+</tr>
+<tr>
+  <td class="before">ไม่มี summary รวมทั้งห้อง</td>
+  <td class="after"><span class="tag tag-new">room-total bar</span> แสดงยอดรวมทุกด้าน + price bar sticky</td>
+  <td>dev inject ใน setbox level · คำนวณ sum ทุก ch ใน setbox</td>
+</tr>
+</table>
+
+<div class="dev-note">
+  <b>จุดโค้ด G6:</b>
+  <ul>
+    <li><code>addGlasshouseSet()</code> ~2023 · <code>refreshSet()</code> ~1807 — หัวใจ GH logic</li>
+    <li>สีทั้งห้อง: <code>.gh-set-color-row</code> inject ใน refreshSet · sync .i-color .i-glass ทุก ch</li>
+    <li><code>ghSideLabel()</code> ~2012 — auto ด้าน A/B/C/D</li>
+    <li><b>ยังต้องทำ:</b> ชิป prod แต่ละ side (แทน i-prod dropdown ยาว) · ดูดราฟ G6 เป็น reference</li>
+    <li><b>ยังต้องทำ:</b> room-total bar ระดับ setbox — sum ทุก .ch .i-price ใน setbox</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>หลักการ UX ร่วม (ทุกกลุ่ม)</h2>
+<table>
+<tr><th>หลักการ</th><th>Implementation</th></tr>
+<tr><td>ตัวเลือก ≤5 → ชิป</td><td><span class="tag tag-chip">chip</span> height:44px · min-width:64px · font-weight:600 · border-radius:8px</td></tr>
+<tr><td>รายการยาว → cascade</td><td>ชิปกลุ่ม → select/chip ย่อย · อย่าใช้ dropdown 20+ รายการ</td></tr>
+<tr><td>ตัวเลข → stepper</td><td>−/+ ขนาด 44px · input ตรงกลาง width:52px · fire oninput → calcQuote</td></tr>
+<tr><td>ของไม่ค่อยใช้ → พับ</td><td><code>&lt;details&gt;</code> open=false · ข้อความ summary เป็น <code>+ ตัวเลือกเพิ่มเติม</code></td></tr>
+<tr><td>auto-fill + แก้ได้</td><td>fill value → ผู้ใช้กด "แก้ราคา" เปิด input · เหมือน o-smotorprice</td></tr>
+<tr><td>tap target ≥44px</td><td>chip/button/input ทุกอันสูงอย่างน้อย 44px</td></tr>
+<tr><td>ซ่อน select เดิม</td><td>select ที่แทนด้วยชิป: <code>style="display:none;"</code> + fire <code>change</code> event → readItem/calcQuote ทำงานเหมือนเดิม</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>จุดที่พี่นัทต้องตัดสินใจ</h2>
+<table>
+<tr><th>ประเด็น</th><th>ตัวเลือก A</th><th>ตัวเลือก B</th><th>กลุ่ม</th></tr>
+<tr>
+  <td>ชิปกระจก — โชว์กี่ตัว</td>
+  <td>4 ตัวยอดนิยม + "อื่นๆ" เปิด dropdown</td>
+  <td>6 ตัว (ใส/เขียว/เทมเปอร์/อินซูเลท/ลามิเนต/อื่นๆ)</td>
+  <td>G1, G6</td>
+</tr>
+<tr>
+  <td>Tab bar บน G1 — ใช้ cat หรือ series</td>
+  <td>Tab ตาม cat (บานเลื่อน/เปิด/ติดตาย ฯลฯ)</td>
+  <td>ยังใช้ dropdown กลุ่มงาน+แบบ (ปรับแค่ inside opts)</td>
+  <td>G1</td>
+</tr>
+<tr>
+  <td>G5 มุ้งขายเดี่ยว vs ต่อบาน</td>
+  <td>ฟอร์มเดี่ยวต่างหาก (G5) เหมาะขายมุ้งไม่มีบาน</td>
+  <td>รวมใน G1 เป็น addon เท่านั้น (ลด complexity)</td>
+  <td>G5</td>
+</tr>
+<tr>
+  <td>G4 ตู้อลู + ฝาตู้: Tab หรือ dropdown prod</td>
+  <td>Tab 2 ปุ่ม (ตู้อลู / ฝาตู้ Future Tech)</td>
+  <td>รวม dropdown prod แล้ว UI เปลี่ยน dynamic</td>
+  <td>G4</td>
+</tr>
+<tr>
+  <td>G6 room-total bar</td>
+  <td>แถบรวมยอดทั้งห้อง ระดับ setbox (ใหม่)</td>
+  <td>คง price bar เดิม (ต่อบาน)</td>
+  <td>G6</td>
+</tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เทสราคาบานเปิดยูโร — ขนาด × จำนวนบาน</title><style>
+@page{size:A4 landscape;margin:9mm;}*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;margin:0;padding:14px;background:#F9FAFB;}
+h1{font-size:18px;color:#B3151D;margin:0 0 2px;}.sub{color:#6B7280;font-size:11px;margin-bottom:10px;}
+.real{display:inline-block;background:#1F2937;color:#fff;font-size:9px;padding:1px 7px;border-radius:9px;}
+table{width:100%;border-collapse:collapse;margin:8px 0;background:#fff;}
+th,td{border:1px solid #D1D5DB;padding:6px 8px;text-align:center;font-variant-numeric:tabular-nums;}
+th{background:#B3151D;color:#fff;font-size:11px;}th.g{background:#374151;}
+td.sz{background:#F3F4F6;font-weight:700;text-align:left;white-space:nowrap;}
+td.base{background:#EFF6FF;font-weight:700;color:#1D4ED8;}
+.tot{font-weight:800;color:#B3151D;}.bump{background:#FEF2F2;color:#991B1B;}.ok{background:#F0FDF4;}
+.legend{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:10px 13px;font-size:11px;margin:8px 0;}
+.legend b{color:#B3151D;}code{font-family:Consolas,monospace;background:#F3F4F6;padding:0 4px;border-radius:3px;color:#B3151D;font-size:10px;}
+.note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:8px 11px;font-size:11px;margin:8px 0;}
+</style></head><body>
+<h1>เทสราคาบานเปิดยูโร — ขนาด × จำนวนบาน 1-4 <span class="real">ฐาน=render จริง</span></h1>
+<div class="sub">ฐาน(พื้นที่) ดึงจากระบบจริง · ส่วนเพิ่ม "ทบต้น" + floor = จำลองตามสูตรพี่นัท (ยังไม่ใส่ในโค้ด) · 11 มิ.ย. 2026</div>
+
+<div class="legend">
+<b>สูตรที่จำลอง:</b> ส่วนเพิ่มทบต้น — บาน2 <b>+5,000</b> · บาน3 <b>+10,000</b> (รวม +15,000) · บาน4 <b>+5,000</b> (รวม +20,000) →
+ราคา = <code>ฐานพื้นที่ + ส่วนเพิ่ม</code><br>
+<b>ขั้นต่ำ (floor):</b> บานเดี่ยว ≥ 18,000 · บานที่ 2 ขึ้นไป 16,000/บาน (ใช้วงกบร่วม) → <code>floor(n) = 18,000 + 16,000×(n−1)</code>
+= 18,000 / 34,000 / 50,000 / 66,000
+</div>
+
+<table>
+<tr><th class="g" rowspan="2">ขนาด (กว้าง×สูง)</th><th class="g" rowspan="2">พื้นที่<br>ตร.ม.</th><th class="g" rowspan="2">ฐาน<br>(1 บาน)</th><th colspan="4">ราคา = ฐาน + ส่วนเพิ่มทบต้น</th></tr>
+<tr><th>1 บาน</th><th>2 บาน</th><th>3 บาน</th><th>4 บาน</th></tr>
+<tr>
+<td class="sz">0.9 × 2</td><td>1.8</td><td class="base">18,000</td>
+<td><span class="tot">18,000</span></td><td><span class="tot">23,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">33,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">38,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr><tr>
+<td class="sz">1.2 × 2.2</td><td>2.64</td><td class="base">19,000</td>
+<td><span class="tot">19,000</span></td><td><span class="tot">24,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">34,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">39,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr><tr>
+<td class="sz">1.8 × 2.2</td><td>3.96</td><td class="base">26,000</td>
+<td><span class="tot">26,000</span></td><td><span class="tot">31,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">41,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">46,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr><tr>
+<td class="sz">2.4 × 2.2</td><td>5.28</td><td class="base">30,000</td>
+<td><span class="tot">30,000</span></td><td><span class="tot">35,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">45,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">50,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr><tr>
+<td class="sz">3 × 2.4</td><td>7.2</td><td class="base">36,000</td>
+<td><span class="tot">36,000</span></td><td><span class="tot">41,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">51,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">56,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr><tr>
+<td class="sz">3.6 × 2.4</td><td>8.64</td><td class="base">44,000</td>
+<td><span class="tot">44,000</span></td><td><span class="tot">49,000</span><br><span style="font-size:9px;color:#6B7280;">+5,000</span></td><td><span class="tot">59,000</span><br><span style="font-size:9px;color:#6B7280;">+15,000</span></td><td><span class="tot">64,000</span><br><span style="font-size:9px;color:#6B7280;">+20,000</span></td>
+</tr>
+</table>
+
+<div class="note"><b>⚠ ถ้าใส่ floor (ขั้นต่ำ 16,000/บาน) ด้วย</b> — ช่องที่ราคาต่ำกว่าขั้นต่ำจะถูกดันขึ้น (พื้นหลังแดง):</div>
+<table>
+<tr><th class="g" rowspan="2">ขนาด</th><th colspan="4">ราคาหลังกันขั้นต่ำ = max(ฐาน+เพิ่ม, floor)</th></tr>
+<tr><th>1 บาน<br><span style="font-weight:400;">min 18k</span></th><th>2 บาน<br><span style="font-weight:400;">min 34k</span></th><th>3 บาน<br><span style="font-weight:400;">min 50k</span></th><th>4 บาน<br><span style="font-weight:400;">min 66k</span></th></tr>
+<tr><td class="sz">0.9 × 2</td>
+<td class="ok"><span class="tot">18,000</span></td><td class="bump"><span class="tot">34,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">50,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr><tr><td class="sz">1.2 × 2.2</td>
+<td class="ok"><span class="tot">19,000</span></td><td class="bump"><span class="tot">34,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">50,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr><tr><td class="sz">1.8 × 2.2</td>
+<td class="ok"><span class="tot">26,000</span></td><td class="bump"><span class="tot">34,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">50,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr><tr><td class="sz">2.4 × 2.2</td>
+<td class="ok"><span class="tot">30,000</span></td><td class="ok"><span class="tot">35,000</span></td><td class="bump"><span class="tot">50,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr><tr><td class="sz">3 × 2.4</td>
+<td class="ok"><span class="tot">36,000</span></td><td class="ok"><span class="tot">41,000</span></td><td class="ok"><span class="tot">51,000</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr><tr><td class="sz">3.6 × 2.4</td>
+<td class="ok"><span class="tot">44,000</span></td><td class="ok"><span class="tot">49,000</span></td><td class="ok"><span class="tot">59,000</span></td><td class="bump"><span class="tot">66,000</span><br><span style="font-size:9px;">↑ ดันถึง min</span></td>
+</tr>
+</table>
+
+<div class="note"><b>จุดที่ต้องเคาะ:</b> เคสตัวอย่าง 2.4×2.2 (ฐาน 30,000) — แบบ "ฐาน+เพิ่ม" ได้ 3 บาน = <b>45,000</b> ตรงเป้าพี่นัท
+แต่ถ้าใส่ floor 16k/บาน → 3 บาน = <b>50,000</b> (floor ดันขึ้น) → <b>floor กับเป้า 45,000 ขัดกัน</b> ที่ขนาดนี้ · ต้องเลือกว่า floor ใช้เฉพาะบานเล็ก หรือ override เป้า</div>
+</body></html>

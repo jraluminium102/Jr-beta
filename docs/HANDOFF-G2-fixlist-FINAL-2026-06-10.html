@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF — แก้กลุ่ม G2 (รั้ว/ระแนง/ราวกันตก) ครบทั้งกลุ่ม</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.45;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:14px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  h2.ok{background:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:9.5px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  code{font-family:"Consolas",monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .kpi{display:flex;gap:6px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;}
+  .t1{background:#FEE2E2;color:#991B1B;}.t2{background:#FEF3C7;color:#92400E;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — แก้กลุ่ม G2 (รั้ว / ระแนง / ราวกันตก) · ครบทั้งกลุ่ม 98 รายการ</h1>
+<div class="sub">ตรวจครบ + verify ตัวเลขแล้ว · ส่งให้แชทที่แก้ <code>public/calculator/index.html</code> · 10 มิ.ย. 2026 · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="kpi">
+  <div><span class="n green">98/98</span>ตรวจครบ</div>
+  <div><span class="n green">5/5</span>สูตร verify PASS</div>
+  <div><span class="n green">14/14</span>baseline PASS</div>
+  <div><span class="n red">9</span>🔴 ต้องแก้</div>
+  <div><span class="n yellow">3</span>🟡 ควรแก้</div>
+</div>
+
+<div class="good">
+<b>✅ ยืนยันแล้ว "ราคาถูกต้องทั้งกลุ่ม" — อย่าแก้ราคา/เรต:</b>
+<ul>
+<li>สูตรทุก engine verify เป็นตัวเลขผ่าน: <b>38.1</b> (2×2=26,000 · 4×0.5=15,000) · <b>38.3</b> (2×2+มอเตอร์=42,000 · 4×2=84,000) · <b>47.1</b> (6ม.=60,000) — ตรง worked example เอกสาร R3.9 เป๊ะ · <b>37/38.2</b> โครงสร้างโค้ดตรงสูตรครบ</li>
+<li>เรต ระแนง <b>92/92 ตัวตรงต้นฉบับ</b> <code>ตาราง_38.4_ระแนง92รุ่น.xlsx</code> · เกล็ด Z 6 รุ่นตรง 100%</li>
+<li><b>"เรทผูกกัน" ที่เคยสงสัย = ตั้งใจในต้นฉบับ ไม่ใช่บั๊ก:</b> rn33=rn35, rn49=rn51, rn69=rn71, rn75=rn77 (+รวมโครง) · imp2=imp3=imp4 (47.2=47.3 เรตเดียวกัน) · imp5=imp6 → <b>ห้ามแก้</b></li>
+<li>กระจกเทมเปอร์ใส 10 มม. (ราวบันได) · ขนาดท้ายบรรทัด · หน่วย "1 ชุด" — ถูกแล้ว</li>
+</ul>
+ทั้งหมดที่ต้องแก้ด้านล่าง = <b>เรื่องแสดงผล/ออปชั่น/ทิศ/สี เท่านั้น</b> (ยกเว้น #1 ที่เป็นบั๊กคิดเงินขาด)
+</div>
+
+<h2>🔴 P1 — ต้องแก้</h2>
+<table>
+<tr><th style="width:34px;">#</th><th>อาการ</th><th style="width:24%;">จุด / เลขบรรทัด</th><th style="width:30%;">แก้ยังไง</th></tr>
+
+<tr><td>1</td><td><b>ประตูรั้ว: สีพิเศษคิดเพิ่ม = 0 บาท</b> (คิดเงินขาด!) — <code>o-gfin</code> value ไม่ตรง key ใน <code>fin</code></td>
+<td><code>L2406</code> vs fin <code>L695-770</code></td>
+<td>แก้ value: "สีอบพิเศษ"→<b>"อบสีพิเศษ"</b> · "สีลายไม้อบพิเศษ"→<b>"อบสีลายไม้"</b> · ตัด "สีดำซาฮาร่า" (rn ไม่มี key) · ("สีเทาซาฮาร่า"/"สีลายไม้สต๊อก" ตรงแล้ว)</td></tr>
+
+<tr><td>2</td><td><b>ประตูรั้ว: hardcode บานเลื่อนอย่างเดียว</b> — ใบจริงมี สวิง/เปิด/เลื่อนเปิดคู่กลางรางบน</td>
+<td><code>L590</code>(name) <code>L1163</code>(calc) <code>L2406</code>(opts)</td>
+<td>เพิ่ม dropdown ลักษณะเปิด → เปลี่ยนชื่อ+สูตรราง (เลื่อน=2ราง / สวิง-เปิด=ต่างออกไป)</td></tr>
+
+<tr><td>3</td><td><b>ประตูรั้ว: รายละเอียดไม่ลงบรรทัดลูกค้า</b> — ระแนงติดตายข้าง/ซี่ระแนง/สี อยู่แค่ msg เทาภายใน</td>
+<td><code>L1163 msgs[]</code> → genQuote</td>
+<td>ผลัก detail ของ gate เข้าบรรทัด "รายละเอียดงาน" เหมือน rn/บาน</td></tr>
+
+<tr><td>4</td><td><b>ระแนงเลื่อน bar_slide: เลือกประตู fence_gate → แอปแครช</b> (TypeError)</td>
+<td><code>L2411</code></td>
+<td>ตัด <code>'fence_gate'</code> ออกจาก array <code>doorOpts</code></td></tr>
+
+<tr><td>5</td><td><b>ระแนงเกล็ด bar_grid_z: ไม่มี selector สี + ทิศไม่ลงใบ</b> (มีแค่ <code>o-bgdir</code>)</td>
+<td><code>L587</code>, <code>L2407</code></td>
+<td>เพิ่ม dropdown สีอบ (แบบ bar_openclose) + ผลักทิศ/สีลงรายละเอียดงาน</td></tr>
+
+<tr><td>6</td><td><b>มอเตอร์ bar_grid (bg_motor): ⌈D÷3⌉ ใช้กว้างเสมอ</b> ทิศตั้งควรใช้สูง <span style="color:#6B7280">(สูตร 38.1 ไม่มีมอเตอร์ด้วยซ้ำ — พิจารณาตัด option หรือแก้ทิศ)</span></td>
+<td><code>L1371-1376</code></td>
+<td>เลือก D ตามทิศ (v→H, h→W) หรือเอา option มอเตอร์ออกจาก 38.1</td></tr>
+
+<tr><td>7</td><td><b>ระแนงเลื่อน/เปิด-ปิด: สีที่เลือกไม่ลงใบ</b> (กระทบราคาแต่ลูกค้าไม่เห็น)</td>
+<td><code>L2415/2420</code> · readItem <code>L2651/2656</code> → genQuote</td>
+<td>genQuote ดึง bsFinish/bocFinish (data-n) มาเป็นบรรทัด "สี…"</td></tr>
+
+<tr><td>8</td><td><b>ชื่อสินค้าหลุดศัพท์ภายในลงใบ</b> — "(ข้อ 38.1/38.2/38.3)", "47.x … (ทำยากสุด)", "(ก)/(ข)"</td>
+<td><code>L587-589</code>, <code>L655-660</code></td>
+<td>แยก field ชื่อลูกค้า (<code>qname</code>) หรือ strip "(ข้อ…)/(ทำยากสุด)" ตอน genQuote</td></tr>
+
+<tr><td>9</td><td><b>เกล็ด Z 6 รุ่น (rn83-88): ไม่มีทิศ "(แนวตั้ง)/(แนวนอน)" บนใบ</b> — ราคาเท่ากัน 2 ทิศ (สูตร 38.4) แต่ใบจริงระบุเสมอ</td>
+<td>cat <code>ระแนง-เกล็ด</code></td>
+<td>เพิ่ม dropdown ทิศ (<b>ไม่ผูกราคา</b> แค่ label) → ลงบรรทัดชื่อ</td></tr>
+</table>
+
+<h2>🟡 P2 — ควรแก้</h2>
+<table>
+<tr><th style="width:34px;">#</th><th>อาการ</th><th>แก้ยังไง</th></tr>
+<tr><td>10</td><td><b>สี default = "สีอบขาว" ทุก rn (88 ตัว)</b> + สีที่เลือกไม่ลงใบ — ใบจริงใช้สีเทาซาฮาร่า/ดำ</td><td>เปลี่ยน default เป็นเทาซาฮาร่า · render fin ลงรายละเอียดงาน (ปัญหา engine ร่วม)</td></tr>
+<tr><td>11</td><td><b>ราวกันตกกระจก (imp): ไม่มีบรรทัด "อุปกรณ์มาตรฐาน สแตนเลสสีเงิน"</b></td><td>เพิ่มบรรทัดอุปกรณ์ default · (ความหนา 10 vs 12 มม. — เช็คซ้ำต่อเคส)</td></tr>
+<tr><td>12</td><td><b>rn บังตา: คำขนาดซี่ต่างใบจริงเล็กน้อย</b> — ระบบ "1x5 cm. โชว์ 1cm." ใบจริง "1"x1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม." <span style="color:#6B7280">(อ่านออก · เช็คซ้ำ)</span></td><td>ปรับ wording ชื่อรุ่นให้ตรงใบจริง (optional)</td></tr>
+</table>
+
+<h2>ลำดับแนะนำการแก้ (คุ้มสุด → น้อยสุด)</h2>
+<div class="note">
+<b>รอบ 1 (กระทบเงิน/พัง):</b> #1 สีพิเศษคิด 0 → #4 แครช bar_slide<br>
+<b>รอบ 2 (ใบไม่เหมือนจริง):</b> #2 ลักษณะเปิดประตูรั้ว → #3 detail ลงใบ → #8 ตัด jargon → #9 ทิศเกล็ด Z → #10 สี default+ลงใบ<br>
+<b>รอบ 3 (เก็บละเอียด):</b> #5 สี bar_grid → #7 สี bar_slide/openclose → #6 มอเตอร์ทิศ → #11 อุปกรณ์ราวกระจก → #12 wording<br>
+<b>หลังแก้:</b> รัน <code>node test/quote-fidelity.mjs</code> ต้อง PASS 14/14 + gen ใบเทียบดราฟ <code>DRAFT-G2-ranae-fence-rail.html</code>
+</div>
+
+<h2 class="ok">📎 เอกสารแนบ (docs/)</h2>
+<table>
+<tr><th style="width:42%;">ไฟล์</th><th>เนื้อหา</th></tr>
+<tr><td><code>REPORT-G2-audit-batch1-2026-06-10.pdf</code></td><td>6 engine หลัก + render เทียบใบจริง (P1 ละเอียด)</td></tr>
+<tr><td><code>REPORT-G2-audit-batch2-2026-06-10.pdf</code></td><td>ไล่ 98 variant + ตารางเรททั้งหมด (anomaly ที่ปิดแล้ว)</td></tr>
+<tr><td><code>REPORT-G2-audit-batch3-gleedZ-2026-06-10.pdf</code></td><td>เกล็ด Z 6 รุ่น เทียบสูตร 38.4 (เรตตรงต้นฉบับ)</td></tr>
+<tr><td><code>DRAFT-G2-ranae-fence-rail.html</code></td><td>ดราฟใบเสนอราคา "หลังแก้" เทียบใบจริง (เป้าหมายหน้าตา)</td></tr>
+<tr><td><b>HANDOFF-G2-fixlist-FINAL (ไฟล์นี้)</b></td><td>สรุปรวม fixlist + สิ่งที่ห้ามแตะ + ลำดับแก้</td></tr>
+</table>
+
+<div class="foot">
+ตรวจครบ 98 รายการกลุ่ม G2 (ราวกันตกเหล็ก = ไม่ขาย ไม่ตรวจ) · verify สูตร 5/5 + baseline 14/14 + เรต 92/92 ตรงต้นฉบับ · ราคา/เลขยกจากสูตร R3.9 + ใบจริง 3 ใบ ไม่เดา · READ-ONLY ไม่แตะ index.html · 10 มิ.ย. 2026
+</div>
+
+</body>
+</html>

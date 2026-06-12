@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUDIT G3 Options — 2026-06-12</title>
+<style>
+  :root { --red:#B3151D; --orange:#D97706; --green:#15803D; --blue:#1D4ED8; }
+  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 16px 20px; background: #FAFAFA; color: #111; font-size: 14px; }
+  h1 { color: var(--red); font-size: 18px; border-bottom: 3px solid var(--red); padding-bottom: 8px; }
+  h2 { font-size: 14px; color: #374151; margin: 20px 0 6px; }
+  .meta { font-size: 12px; color: #6B7280; margin-bottom: 16px; }
+  .card { border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; border-left: 4px solid; }
+  .red   { background: #FEF2F2; border-color: var(--red); }
+  .orange{ background: #FFFBEB; border-color: var(--orange); }
+  .green { background: #F0FDF4; border-color: var(--green); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; margin-right: 6px; }
+  .tag-red    { background: var(--red); color: #fff; }
+  .tag-orange { background: var(--orange); color: #fff; }
+  .tag-green  { background: var(--green); color: #fff; }
+  b.field { background: #F3F4F6; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+  .fix { font-size: 12px; color: #1E40AF; margin-top: 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+  th { background: #F3F4F6; padding: 5px 8px; text-align: left; font-size: 11px; border: 1px solid #E5E7EB; }
+  td { padding: 5px 8px; border: 1px solid #E5E7EB; vertical-align: top; }
+  .section-head { font-weight: 700; font-size: 13px; color: var(--red); margin: 16px 0 4px; background: #FEE2E2; padding: 5px 10px; border-radius: 6px; }
+  .r39 { font-size: 11px; color: #6B7280; font-style: italic; }
+  hr { border: none; border-top: 1px solid #E5E7EB; margin: 16px 0; }
+</style>
+</head>
+<body>
+<h1>AUDIT G3 — ออปชั่นกลุ่ม 3 (หลังคา + ฝ้า-ผนัง) หลัง G3 v5</h1>
+<div class="meta">วันที่ตรวจ: 2026-06-12 | ผู้ตรวจ: JR (READ-ONLY) | ไฟล์: public/calculator/index.html | เทียบ: R3.9_v11</div>
+<div class="meta">commit ที่ตรวจ: cfc2d33 (v5 จุด1 แท็บ+drill-down) + a37f3c8 (จุด2/3 checkbox-reveal ซ่อนราง+ครอบคาน)</div>
+
+<div class="section-head">ผิดแน่ / ต้องแก้ (4 จุด)</div>
+
+<div class="card red">
+  <span class="tag tag-red">1</span><b>checkbox-reveal ซ่อนราง: o-rfgch default value="10" รั่วเข้า calc ถ้า rfgcl ถูกกรอก</b>
+  <p>
+    ปิดซ่อนราง (.o-rfgc-reveal) ซ่อนอยู่จนกว่าติ๊ก .o-rfgc-toggle<br>
+    แต่ภายใน span ที่ซ่อน ช่อง <b class="field">o-rfgch</b> มี <code>value="10"</code> (สูง ซม.) ไม่ใช่ 0<br>
+    calc บรรทัด 1500: <code>_gh = (parseFloat(optSel.rfgch)||0)/100 = 0.1</code> เสมอแม้ไม่ติ๊ก toggle<br>
+    เงื่อนไขคิดเงิน: <code>if((_gw+_gh)&gt;0 &amp;&amp; _gll&gt;0)</code> — ถ้า rfgcl มีค่า (เช่นหลังจาก edit แล้ว uncheck) จะคิดเงินผิด<br>
+    ทดสอบ edge case: user ติ๊ก กรอก gcl=10 แล้ว uncheck toggle → gcl ยังมีค่า 10, gh=10 → gc = (0+0.1)×10×3500×0.7 = 2,450 บาท โดยไม่ได้ติ๊ก
+  </p>
+  <div class="fix">แก้: ใน onchange ของ toggle เพิ่ม reset ค่า rfgcw=0 และ rfgcl=0 เมื่อ uncheck — หรือ readItem ตรวจ toggle.checked ก่อนอ่าน rfgcw/rfgch/rfgcl</div>
+  <div class="r39">R3.9 ข้อ 33: ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง x 50%) ตามขนาด</div>
+</div>
+
+<div class="card red">
+  <span class="tag tag-red">2</span><b>เมทัลชีท EPS (imp7-10) min:0 ไม่ตรง R3.9 ที่ระบุขั้นต่ำ 28,000 บาท</b>
+  <p>
+    R3.9 ข้อ 33: เมทัลชีท EPS (4 สเปก) ขั้นต่ำ 28,000 บาท<br>
+    ระบบ: <b class="field">imp7, imp8, imp9, imp10</b> ทุกตัว <code>min:0</code> (บรรทัด 692-695)<br>
+    ความเสี่ยง: ถ้าพื้นที่น้อย (เช่น 3 ตร.ม. @ 6,300/ตร.ม. = 18,900) ราคาออกต่ำกว่า 28,000 โดยไม่มี floor<br>
+    ผล: undersell เมทัลชีท EPS พื้นที่น้อย
+  </p>
+  <div class="fix">แก้: imp7-10 ตั้ง min:28000</div>
+  <div class="r39">R3.9 ข้อ 33: เมทัลชีท EPS (4 สเปก) 28,000 | เมทัลชีท PU เหล็ก 30,000</div>
+</div>
+
+<div class="card red">
+  <span class="tag tag-red">3</span><b>เมทัลชีท PU เหล็ก (imp13-14) min:0 ไม่ตรง R3.9 ที่ระบุขั้นต่ำ 30,000 บาท</b>
+  <p>
+    R3.9 ข้อ 33: เมทัลชีท PU เหล็ก ขั้นต่ำ 30,000 บาท<br>
+    ระบบ: <b class="field">imp13, imp14</b> <code>min:0</code> (บรรทัด 698-699)<br>
+    ตัวอย่าง: 3 ตร.ม. @ 7,300/ตร.ม. = 21,900 (ต่ำกว่า 30,000 มาก)
+  </p>
+  <div class="fix">แก้: imp13-14 ตั้ง min:30000</div>
+</div>
+
+<div class="card red">
+  <span class="tag tag-red">4</span><b>ชินโคไลท์รุ่น "Nature" (imp17) ไม่อยู่ใน R3.9 v11 — อาจยกเลิกแล้ว</b>
+  <p>
+    R3.9: <code>ชินโคไลท์ (HC/Superior/Shade/Prime/Grang)</code> — 5 รุ่น ไม่มี Nature<br>
+    ระบบ RF_GRP_PRODS.chinco มี 6 รุ่น: HC, Superior, <b>Nature</b>, Shade, Prime, Grand<br>
+    <b class="field">imp17</b> ชินโคไลท์ 6มม. รุ่น Nature — ไม่ปรากฏใน R3.9 ล่าสุด<br>
+    ถ้า R3.9 ยกเลิกแล้วแต่ระบบยังมี จะเสนอรุ่นที่ไม่ขายแล้วในใบเสนอราคา
+  </p>
+  <div class="fix">(เช็คซ้ำกับพี่นัท) ถาม: รุ่น Nature ยังขายอยู่ไหม ถ้าไม่ขาย ตัด imp17 ออกจาก RF_GRP_PRODS.chinco</div>
+</div>
+
+<div class="section-head">น่าสงสัย / เช็คซ้ำกับพี่นัท (5 จุด)</div>
+
+<div class="card orange">
+  <span class="tag tag-orange">5</span><b>o-rfchain (โซ่รางน้ำ 3,000/เส้น) กับ o-guttersys=โซ่ — ซ้ำซ้อนหรือต่างกัน?</b>
+  <p>
+    มีสอง field เกี่ยวโซ่:<br>
+    - <b class="field">o-guttersys</b> = ชนิดระบบระบาย (ท่อ/โซ่) — label ลงใบ, ไม่คิดเงิน (readItem เก็บเป็น rfgutsys ไม่เข้า calc ราคา)<br>
+    - <b class="field">o-rfchain</b> = โซ่รางน้ำ (3,000/เส้น) — ของเสริม คิดเงิน<br>
+    สรุปเบื้องต้น: ไม่ซ้ำกัน — guttersys=โซ่ บอกว่า "ใช้โซ่แทนท่อ", rfchain คือจำนวนเส้นโซ่ที่ซื้อเพิ่ม<br>
+    แต่ UX อาจสับสน: user เลือก guttersys=โซ่ แล้วต้องไปกรอก rfchain แยก และ R3.9 ระบุ "โซ่รางน้ำ 3,000/เส้น" โดยไม่แยก 2 field
+  </p>
+  <div class="fix">(เช็คซ้ำ) ถาม: guttersys=โซ่ ควรผูก rfchain auto ไหม หรือ user ต้องกรอกแยก</div>
+</div>
+
+<div class="card orange">
+  <span class="tag tag-orange">6</span><b>สูตรปิดซ่อนรางน้ำ: ระบบใช้ 0.7 (ลด 30%) แต่ R3.9 บอก "x50%" (ลด 50%)</b>
+  <p>
+    R3.9 ข้อ 33: "ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง x 50%)"<br>
+    ระบบ calc บรรทัด 1500: <code>gc = (rfgcw/100 + rfgch/100) x rfgcl x 3500 x 0.7</code><br>
+    0.7 = ลด 30%, แต่ R3.9 บอก x50% = 0.5<br>
+    ถ้า R3.9 ถูก ราคาจะสูงกว่าจริง 40% (0.7/0.5 = 1.4)
+  </p>
+  <div class="fix">(เช็คซ้ำ) ถาม: calc ใช้ 0.7 ถูกไหม หรือควรเป็น 0.5 ตาม R3.9</div>
+</div>
+
+<div class="card orange">
+  <span class="tag tag-orange">7</span><b>โพลีตัน min:30,000 แต่ R3.9 จัดกลุ่มกับ "ไวนิล/ดีไลท์/โพลีตัน 28,000"</b>
+  <p>
+    R3.9 ข้อ 33: "ไวนิล / ดีไลท์ / โพลีตัน 28,000"<br>
+    ระบบ: roof_vinyl=28,000, roof_delight=28,000, <b class="field">roof_polyton min:30,000</b> (บรรทัด 640)<br>
+    ต่างกัน 2,000 บาท
+  </p>
+  <div class="fix">(เช็คซ้ำ) ถาม: โพลีตัน min ควรเป็น 28,000 หรือ 30,000 — ถ้า R3.9 ถูกแก้เป็น min:28000</div>
+</div>
+
+<div class="card orange">
+  <span class="tag tag-orange">8</span><b>เมทัลชีท PU ฟอยล์ (imp11-12) min ไม่ชัด — R3.9 ไม่แยก EPS/PU ฟอยล์</b>
+  <p>
+    R3.9 ระบุ "เมทัลชีท EPS (4 สเปก) 28,000" และ "เมทัลชีท PU เหล็ก 30,000"<br>
+    imp11 (1" ฟอยล์ PU) + imp12 (2" ฟอยล์ PU) — อยู่ระหว่าง EPS และ PU เหล็ก<br>
+    R3.9 ไม่ระบุ min แยก "PU ฟอยล์" — ต้องเคาะ: ควรเป็น 28,000 (ใกล้ EPS) หรือ 30,000 (เหมือน PU เหล็ก)?
+  </p>
+  <div class="fix">(เช็คซ้ำ) ถาม: imp11-12 (ฟอยล์ PU) min ควรเป็นเท่าไหร่</div>
+</div>
+
+<div class="card orange">
+  <span class="tag tag-orange">9</span><b>g3PickTab reset รุ่น: กลับ tab หลังคา จะ default imp7 เสมอ ไม่จำรุ่นเดิม</b>
+  <p>
+    function g3PickTab(btn, tab): tab='roof' → sync g3SyncProd(ch, RF_GRP_PRODS.metal[0][0]) = imp7<br>
+    ถ้า user เลือก imp15 (ชินโค) ก่อน กด "ฝ้า-ผนัง" แล้วกลับ "หลังคา" → ได้ imp7 ไม่ใช่ imp15<br>
+    ไม่กระทบ calc (แค่ UX) แต่ผู้ใช้ต้องเลือกรุ่นใหม่ทุกครั้งที่สลับ tab
+  </p>
+  <div class="fix">(เช็คซ้ำ) ถาม: จำรุ่นเดิมก่อนสลับไหม หรือ reset เป็น default imp7 โอเค (พี่นัทตัดสิน)</div>
+</div>
+
+<div class="section-head">ผ่าน / ครบ (7 จุด)</div>
+
+<div class="card green">
+  <span class="tag tag-green">10</span><b>แท็บ หลังคา/ฝ้า-ผนัง (v5 จุด1) render ครบ ทุกรุ่น</b>
+  <p>
+    g3SelectorHTML(p) สร้างแท็บ 2 ปุ่ม + ชิปกลุ่มวัสดุ + ชิปรุ่น<br>
+    หลังคา 4 กลุ่ม: metal 8รุ่น + chinco 6รุ่น + poly 2รุ่น + vinyl 2รุ่น = 18 รุ่นในชิปทั้งหมด<br>
+    ฝ้า-ผนัง: 6 รุ่น (ceil_cshape, ceil_bsc, ceiling_smooth, isowall, wall_ext, wall_int)<br>
+    g3SyncProd/g3PickProd/g3PickGrp/g3PickTab sync .i-prod + fire change ทุกครั้ง
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">11</span><b>checkbox-reveal ครอบคาน (v5 จุด3) logic และสูตรถูกต้อง</b>
+  <p>
+    o-rfbc-toggle ติ๊ก → โชว์ o-rfbc-reveal (rfbcw, rfbcl)<br>
+    rfbcw/rfbcl default=0 → ไม่ติ๊กก็ bc=0 ปลอดภัย (ต่างจากข้อ 1 ที่ rfgch default=10)<br>
+    calc: bc = 3500 x 0.6 x rfbcw x rfbcl — ตรง R3.9 ข้อ 33 "ลูกฟูกเรียบ 1 หน้า x 0.6 x พื้นที่ x ยาวคาน (ลด 40%)"
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">12</span><b>ออปชั่นหลังคา 10 รายการของเสริมครบตาม R3.9 ข้อ 33</b>
+  <p>
+    1. เสาแผง (4,000/ต้น) + เสา 4"x8" (2,000/ต้น)<br>
+    2. คานเหล็กถัก 3 รุ่น (2,400/3,600/4,400 /ม.)<br>
+    3. เสริมเพลทเหล็กล่าง (รับล่าง)<br>
+    4. เหล็กดึงด้านบน (ฟรี)<br>
+    5. ซ่อนสโลปคอม 3มม. (3,500/ตร.ม.) + สมาร์ทบอร์ด 6มม. (4,000/ตร.ม.)<br>
+    6. ปิดซ่อนราง checkbox-reveal<br>
+    7. ครอบคาน checkbox-reveal<br>
+    8. วัสดุปิดรอยต่อ + สี<br>
+    9. โซ่รางน้ำ (3,000/เส้น)<br>
+    10. ครอบท่อ PVC (⌈ยาว/1.5⌉ x 1,500)
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">13</span><b>ฝ้า-ผนัง 6 รุ่น ออปชั่นตรงประเภทครบ</b>
+  <p>
+    ceil_cshape/ceil_bsc: o-ckolor dropdown เรตตาม p.crates — ตรง R3.9 ข้อ 36<br>
+    ceiling_smooth: o-ceilfinish + o-ceilslope + o-insul — ตรง R3.9 ข้อ 35 + 35.1<br>
+    isowall: o-isothick (10/5/7.5ซม.) + o-isocolor — ตรง R3.9 ข้อ 39<br>
+    wall_ext/wall_int: o-smartthick + o-wallpaint + o-wallframe + o-insul — ตรง R3.9 ข้อ 40<br>
+    o-wallframe (โครงอลู/เหล็กชุบ) มีทุกรุ่น ฝ้า-ผนัง
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">14</span><b>สีวัสดุมุงหลังคาครบทุกรุ่น</b>
+  <p>
+    ไวนิล: 3 สี ชิป | ดีไลท์: 2 สี ชิป | โพลีตัน: 8 สี dropdown<br>
+    ลามิเนต: ชนิดฟิล์ม 3 ตัว + ความหนา 2 ตัว<br>
+    เมทัลชีท (imp7-14): 4 สี ชิป | ชินโค (imp15-20): 3 สี ชิป<br>
+    ทุกรุ่นมี field สี ไม่มีรุ่นไหนขาด
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">15</span><b>ปลายหลังคา + รางน้ำ flow ถูกต้อง</b>
+  <p>
+    o-roofend ชิป 3 ปุ่ม (ปล่อย/รางน้ำ/ปิดปลาย) onchange ซ่อน/โชว์ guttersys-wrap และ eave-wrap<br>
+    เลือก "รางน้ำ": โชว์ ชนิดราง + ระบบระบาย (ท่อ/โซ่) + ตะแกรงกันใบไม้ + ท่อน้ำทิ้ง<br>
+    เลือก "ปิดปลาย": โชว์ o-rfeave (ยาว/ม.) 1,000/ม. กรอกยาวเอง<br>
+    readItem: rfgutlen ว่าง=ใช้ความกว้างหลังคา auto
+  </p>
+</div>
+
+<div class="card green">
+  <span class="tag tag-green">16</span><b>ชิป drill-down sync ถูกต้อง (v5 จุด1)</b>
+  <p>
+    g3PickGrp กด chip กลุ่ม → sync รุ่นแรกของกลุ่ม → buildItemOpts rebuild form<br>
+    g3PickProd กด chip รุ่น → sync prodId โดยตรง<br>
+    g3SyncProd เพิ่ม option ถ้าไม่มีใน .i-prod ก่อน set value → ไม่ crash แม้ prod ไม่อยู่ใน dropdown เดิม<br>
+    fire change event ทุกครั้ง → buildItemOpts + calcQuote ทำงาน
+  </p>
+</div>
+
+<hr>
+<h2>ตารางเทียบรุ่นหลังคา</h2>
+<table>
+  <tr><th>รุ่น</th><th>R3.9 min</th><th>ระบบ min</th><th>สถานะ</th></tr>
+  <tr><td>ไวนิล (roof_vinyl)</td><td>28,000</td><td>28,000</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ดีไลท์ (roof_delight)</td><td>28,000</td><td>28,000</td><td style="color:green">ตรง</td></tr>
+  <tr><td>โพลีตัน (roof_polyton)</td><td>28,000 (รวมกลุ่ม)</td><td style="color:red">30,000</td><td style="color:orange">ไม่ตรง — เช็คซ้ำ</td></tr>
+  <tr><td>กระจกลามิเนต (roof_laminate)</td><td>45,000</td><td>45,000</td><td style="color:green">ตรง</td></tr>
+  <tr><td>เมทัลชีท EPS imp7-10</td><td>28,000</td><td style="color:red">0</td><td style="color:red">ขาด min — แก้ทันที</td></tr>
+  <tr><td>เมทัลชีท PU ฟอยล์ imp11-12</td><td>ไม่ระบุแยก</td><td style="color:red">0</td><td style="color:orange">เช็คซ้ำ</td></tr>
+  <tr><td>เมทัลชีท PU เหล็ก imp13-14</td><td>30,000</td><td style="color:red">0</td><td style="color:red">ขาด min — แก้ทันที</td></tr>
+  <tr><td>ชินโค HC (imp15)</td><td>ตามรุ่น</td><td>0</td><td style="color:orange">เช็คซ้ำ</td></tr>
+  <tr><td>ชินโค Superior (imp16)</td><td>ตามรุ่น</td><td>0</td><td style="color:orange">เช็คซ้ำ</td></tr>
+  <tr><td>ชินโค Nature (imp17)</td><td style="color:red">ไม่ระบุใน R3.9</td><td>0</td><td style="color:red">อาจยกเลิก — เช็คซ้ำ</td></tr>
+  <tr><td>ชินโค Shade (imp18)</td><td>ตามรุ่น</td><td>0</td><td style="color:orange">เช็คซ้ำ</td></tr>
+  <tr><td>ชินโค Prime (imp19)</td><td>ตามรุ่น</td><td>0</td><td style="color:orange">เช็คซ้ำ</td></tr>
+  <tr><td>ชินโค Grand (imp20)</td><td>Grang=Grand ตามรุ่น</td><td>0 (ใช้เรต IMP19)</td><td style="color:orange">เช็คซ้ำ ชื่อ/เรต=มติแล้ว</td></tr>
+</table>
+
+<h2>ตารางเทียบฝ้า-ผนัง</h2>
+<table>
+  <tr><th>รุ่น</th><th>R3.9</th><th>ระบบ id</th><th>ออปชั่นหลัก</th><th>สถานะ</th></tr>
+  <tr><td>ฝ้าฉาบเรียบ</td><td>ข้อ 35</td><td>ceiling_smooth</td><td>ceilfinish, ceilslope, insul</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ฝ้าอลู ตัวซี 15ซม.</td><td>ข้อ 36</td><td>ceil_cshape</td><td>ckolor (2,100/2,700)</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ฝ้าไม้เทียม remood 12ซม.</td><td>ข้อ 36</td><td>ceil_bsc</td><td>ckolor (2,600/2,800)</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ISOWALL</td><td>ข้อ 39</td><td>isowall</td><td>isothick, isocolor, wallframe</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ผนังเบาภายนอก</td><td>ข้อ 40.1</td><td>wall_ext</td><td>smartthick, wallpaint, wallframe, insul</td><td style="color:green">ตรง</td></tr>
+  <tr><td>ผนังเบาภายใน</td><td>ข้อ 40.2</td><td>wall_int</td><td>smartthick, wallpaint, wallframe, insul</td><td style="color:green">ตรง</td></tr>
+</table>
+
+<hr>
+<h2>สรุป</h2>
+<table>
+  <tr><th>ระดับ</th><th>จำนวน</th><th>รายการย่อ</th></tr>
+  <tr><td style="color:red;font-weight:700">ผิดแน่ (แก้ทันที)</td><td>4</td><td>1.rfgch=10 รั่ว, 2.imp7-10 min=0, 3.imp13-14 min=0, 4.ชินโค Nature ไม่อยู่ R3.9</td></tr>
+  <tr><td style="color:orange;font-weight:700">เช็คซ้ำ</td><td>5</td><td>5.โซ่ 2 field, 6.ปิดซ่อนราง 0.7 vs 0.5, 7.โพลีตัน min 28k vs 30k, 8.imp11-12 min, 9.tab reset</td></tr>
+  <tr><td style="color:green;font-weight:700">ผ่าน</td><td>7</td><td>แท็บ drill-down, ครอบคาน, ของเสริม 10 รายการ, ฝ้า 6 รุ่น, สีวัสดุ, ปลายหลังคา, ชิป sync</td></tr>
+</table>
+<p style="font-size:12px;color:#6B7280;margin-top:12px;">
+  ออปชั่นฝ้า-ผนัง 6 รุ่น ครบถ้วนตรง R3.9 | หลังคา form render ถูก ชิป/drill-down ทำงาน |
+  จุดที่ต้องแก้แน่: min ราคาเมทัลชีท imp7-14 + rfgch default bug |
+  จุดเคาะกับพี่นัท: รุ่น Nature, โพลีตัน min, สูตรปิดซ่อนราง 0.7 vs 0.5, โซ่ 2 field
+</p>
+</body>
+</html>

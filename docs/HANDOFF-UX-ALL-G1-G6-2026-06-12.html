@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF UX รวม G1-G6 — ออปชั่นถูกประเภท + จัดหมวด (ปิดงาน)</title>
+<style>
+  @page{size:A4;margin:11mm;}*{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:14px;margin:14px 0 5px;padding:5px 10px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2 .small{font-size:10px;font-weight:400;opacity:.85;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 9px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .cut{color:#B3151D;font-weight:700;white-space:nowrap;}
+  .keep{color:#166534;font-weight:700;white-space:nowrap;}
+  .fix{color:#B45309;font-weight:700;white-space:nowrap;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .ref{font-size:9px;color:#6B7280;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+  .pill{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#FEE2E2;color:#991B1B;margin-right:3px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF UX รวม G1-G6 — ออปชั่นถูกประเภท + จัดหมวด</h1>
+<div class="sub">ปิดงาน UX ภาพรวม · ส่งแชทที่แก้ <code>public/calculator/index.html</code> · มติพี่นัทครบ 12 มิ.ย. 2026 · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="good">
+<b>หลักการแก้ทุกกลุ่ม:</b> ตัดออปชั่น "ผิดประเภท" (leak) ที่โผล่ผิดสินค้า + จัดหมวด/เรียงความสำคัญ · <b class="cut">🔴 = ตัด/แก้ชัวร์</b> · <b class="keep">🟢 = เก็บ (พี่นัทยืนยัน)</b> · รายละเอียดต่อสินค้าดูไฟล์ <code>AUDIT-G{n}-options</code> · ดราฟ UX = <code>DRAFT-G{n}-ux(-v2)</code>
+</div>
+
+<h2>หน้าฟอร์มหลัก (container · ทุกกลุ่ม) <span class="small">— SPEC-formtop-ux-2026-06-12.html</span></h2>
+<table>
+<tr><th style="width:23%;">จุด</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>ปุ่มโหมดบน (คิดเร็ว/ใบเสนอ/เทียบ/เช็คลิสต์)</td><td class="fix">ย่อ</td><td>flex pill เตี้ยลง 46→36px บรรทัดเดียว · มือถือย่อ "ใบเสนอราคา"→"ใบเสนอ" (CSS ล้วน)</td></tr>
+<tr><td><b>OPTION "เลือกสำเร็จรูป"</b> <code>.set-optpreset</code></td><td class="cut">🔴 ตัด</td><td>ซ้ำกับเลือกกระจกในหมวด (auto-price/ตร.ม. แล้ว) → ลบดรอปดาวน์ · เหลือ OPTION กรอกเอง (<code>set-opttext</code>+<code>set-optdelta</code> ±บาท · แก้ข้อความ/ราคาเองได้) · ย้ายลงล่าง (details)</td></tr>
+<tr><td>เพิ่มส่วน + เพิ่มด่วน <code>.addzone</code></td><td class="fix">รวม+ย้าย</td><td>รวมกล่องเดียว · วาง <b>ใต้ลักษณะการเปิด/จำนวนบาน · เหนือ OPTION</b> (set-parts→addzone→set-opt)</td></tr>
+<tr><td>ชื่อ COMMON_OPTS</td><td class="fix">แก้ชื่อ</td><td>4 ตัวให้ชัด (ซ่อนคาน/ซ่อนราง ใส่ "(base 4,000)" ฯลฯ) · string label · คงชิป 8 ตัว</td></tr>
+</table>
+
+<h2>G1 บาน/กระจก <span class="small">— AUDIT-G1-options-2026-06-11.html</span></h2>
+<table>
+<tr><th style="width:23%;">ออปชั่น (class)</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>คาดตาราง <code>o-gridmark</code></td><td class="cut">🔴 ตัด (บางcat)</td><td>ตัดจาก shower · บานเปลือย · ติดตาย · ดัดโค้งติดตาย · <b class="keep">เก็บ</b> ดัดโค้งประตู + บานหมุน (มติ: ทำได้บางงาน)</td></tr>
+<tr><td>ฝังรางยู <code>o-uchannel</code></td><td class="cut">🔴 ตัด</td><td>exclude <code>['shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน']</code></td></tr>
+<tr><td>ดรอปพื้น <code>o-dfm</code></td><td class="cut">🔴 ตัด</td><td>exclude <code>['เลื่อนภายใน','บานหมุน']</code> + ติดตาย</td></tr>
+<tr><td>ครอบวงกบ <code>o-fcsides</code></td><td class="cut">🔴 ตัด</td><td>ตัดจาก shower · ราวบันได (p.handrail) · <b>บานเปลือย frameless</b> (มติ: frameless ไม่มีวงกบ)</td></tr>
+<tr><td>แผ่นทึบล่าง <code>o-solidlower</code></td><td class="cut">🔴 ตัด</td><td>เอา <code>'เลื่อนภายใน'</code> ออกจาก <code>_isPaneCat</code> array</td></tr>
+<tr><td>มุ้ง <code>mosquito:1</code> โซลิด/เฟี้ยม</td><td class="keep">🟢 เก็บ</td><td><b>ขายจริงทั้งคู่</b> (บานเฟี้ยม + โซลิดลูกฟูกทึบ) — ไม่แก้</td></tr>
+<tr><td>เสริมคาน ซ้ำซ้อน <code>optBeam</code>+<code>o-beamm</code></td><td class="fix">🔴 ลบซ้ำ</td><td>ลบ <code>optBeam</code> branch (เก็บ <code>o-beamm</code> ที่ครอบคลุมแล้ว)</td></tr>
+</table>
+
+<h2>G2 รั้ว/ระแนง/ราวกันตก <span class="small">— ดู HANDOFF-G2-ROUND4 (รายละเอียดเต็ม)</span></h2>
+<table>
+<tr><th style="width:23%;">จุด</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>ราวกันตก leak 4 ตัว</td><td class="cut">🔴 ตัด</td><td>คาดตาราง·ฝังรางยู·ครอบวงกบ·ดรอปพื้น เติม <code>&amp;&amp; !p.handrail</code> (L2478/2680/2691)</td></tr>
+<tr><td>imp1/4 "สแตนเลสสีเงิน" ซ้ำ</td><td class="fix">🔴 แก้</td><td>ตัดบรรทัด "อุปกรณ์มาตรฐาน" เมื่อ railstud (L3712)</td></tr>
+<tr><td>ราคาบานเปิดยูโร</td><td class="fix">→ แยก</td><td>ดู <b>HANDOFF-casement-euro-price</b> (ส่งแชท B แก้+push)</td></tr>
+</table>
+
+<h2>G3 หลังคา/ฝ้า-ผนัง <span class="small">— AUDIT-G3-options-2026-06-12.html</span></h2>
+<table>
+<tr><th style="width:23%;">จุด</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>หลังคา (form-ux dev commit แล้ว)</td><td class="keep">🟢 0 leak</td><td>กัน leak ครบ 6 ชั้น — ไม่ต้องแก้</td></tr>
+<tr><td>ฝ้า-ผนัง ออปชั่นตกหมวด "อื่นๆ"</td><td class="fix">🟡→แยก</td><td>โครง/หนา/สมาร์ทบอร์ด/ทาสี/ฉนวน → <b>แยกหมวด "ฝ้า-ผนัง" เอง</b> (เพิ่ม keyword หรือ CATS แยก · กรอกง่าย)</td></tr>
+</table>
+
+<h2>G4 ตู้อลู/ฝาตู้ <span class="small">— ✅ มีสเปกครบ 3 ตัว (เคาะแล้ว): SPEC-G4-formux · SPEC-G4-categories-UX · SPEC-G4-color-pricing (commit b48b7c8)</span></h2>
+<table>
+<tr><th style="width:23%;">จุด</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td><b>ค่าสีโครงตู้ ไม่บวกเงิน</b> (บั๊กการเงิน · ~6,000-10,000/ใบ)</td><td class="fix">🔴 แก้ → <b>ดู SPEC-G4-color-pricing</b></td><td>เดิมโครงตู้ไม่บวกค่าสีเลย · มติ: คิดค่าสี<b>เฉพาะโครง</b> (บานหน้า/ฝาตู้ FT flat คงเดิม) · เพิ่มชิป <b>วัสดุผนัง</b> (อลูทึบ default/กระจก) · <b>ผนังกระจก</b>=colorPrice เต็ม(มี min · ชุบ idx12=16,000) · <b>ผนังอลู/พื้น/ชั้นอลู</b>=rn90 fin (no-min) · ชั้นกระจก=ไม่คิด · helper <code>rn90FinRate(ci)</code>. รายละเอียด+ตัวอย่างนักบัญชีใน SPEC</td></tr>
+<tr><td>3 ออปชั่นที่ dev ตัด</td><td class="keep">🟢 ถูก</td><td>ฝังรางยู/ดรอปพื้น/i-type — ตัดถูกแล้ว</td></tr>
+<tr><td>default บานหน้าตู้</td><td class="keep">🟢 = 2</td><td>คงไว้ 2 บาน</td></tr>
+<tr><td>ครอบวงกบตู้</td><td class="keep">🟢 แยก</td><td>ใช้รายการ <code>fw_cabinet_*</code> ที่มี (ไม่ inline ซ้ำ)</td></tr>
+<tr><td>สีฝาตู้</td><td class="fix">ชิป</td><td>4 ชิปกลุ่ม + ขยายสีย่อย (ไม่ใช่ dropdown 12)</td></tr>
+<tr><td>ตู้รองเท้า ชั้นกระจก</td><td class="keep">ป้าย</td><td>โชว์ "ชั้นกระจก (auto)" · ไม่เปลี่ยน logic</td></tr>
+</table>
+
+<h2>G5 มุ้ง <span class="small">— AUDIT-G5-options-2026-06-12.html · ต่อ HANDOFF-G5-mosquito-formux</span></h2>
+<table>
+<tr><th style="width:23%;">ออปชั่น (class)</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>สีอลู <code>i-color</code></td><td class="cut">🔴 ตัด</td><td>เพิ่ม <code>|| p.cat==='มุ้ง'</code> ใน _showCw (มุ้งไม่มีสีอลูบาน)</td></tr>
+<tr><td>กระจก <code>i-glass</code></td><td class="cut">🔴 ตัด</td><td>เพิ่ม <code>|| p.cat==='มุ้ง'</code> ใน _showGw</td></tr>
+<tr><td>คาดตาราง <code>o-gridmark</code></td><td class="cut">🔴 ตัด</td><td>เพิ่ม <code>'มุ้ง'</code> ใน exclude array</td></tr>
+<tr><td>ฝังรางยู <code>o-uchannel</code> · ดรอปพื้น <code>o-dfm</code></td><td class="cut">🔴 ตัด</td><td>มุ้งไม่มีรางยู/ดรอปพื้น → exclude 'มุ้ง' (มติ: usage ตาม subagit แนะนำ)</td></tr>
+</table>
+
+<h2>G6 กั้นห้องกระจก <span class="small">— AUDIT-G6-options-2026-06-11.html</span></h2>
+<table>
+<tr><th style="width:23%;">จุด</th><th style="width:15%;">สถานะ</th><th>ทำอะไร</th></tr>
+<tr><td>product set มี 19 cat ปนกัน</td><td class="cut">🔴 ตัด</td><td>เอาออกจาก GH set: <b>shower · ระแนง (4 cat) · ราวบันได</b> (ไม่เกี่ยวงานกั้นห้อง)</td></tr>
+<tr><td>บานหมุน · ดัดโค้ง</td><td class="keep">🟢 เก็บ</td><td>ใช้ไม่บ่อยแต่เก็บ (เคยมีงาน)</td></tr>
+<tr><td>ฝ้า-ผนัง</td><td class="keep">🟢 เก็บ</td><td>ใช้ร่วมในงานกั้นห้องบ่อย</td></tr>
+</table>
+
+<div class="foot">
+มติพี่นัทครบ 6 กลุ่ม (12 มิ.ย.) · รายละเอียดต่อสินค้า + ดราฟ interactive: <code>docs/AUDIT-G{n}-options</code> + <code>docs/DRAFT-G{n}-ux(-v2)</code> · casement แยกไป HANDOFF-casement-euro-price (แชท B) · READ-ONLY ไม่แตะ index.html · ลำดับแนะนำ: G1→G4(บั๊กสี)→G5→G6→G2→G3 · หลังแก้รัน quote-fidelity ทุกครั้ง
+</div>
+
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPEC G4 — หมวดหมู่ + ลำดับการกรอก (ส่ง dev แชท B)</title>
+<style>
+  body{ font-family:'Segoe UI',Tahoma,sans-serif; color:#1F2937; max-width:960px; margin:0 auto; padding:24px; line-height:1.6; }
+  h1{ color:#B3151D; font-size:22px; margin-bottom:2px; }
+  h2{ color:#B3151D; font-size:16px; margin-top:28px; border-bottom:2px solid #FCA5A5; padding-bottom:4px; }
+  h3{ font-size:14px; margin:14px 0 6px; color:#374151; }
+  .sub{ color:#6B7280; font-size:13px; margin-bottom:6px; }
+  code,.cls{ background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:12.5px; color:#B3151D; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+  th,td{ border:1px solid #D1D5DB; padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:#FEE2E2; color:#7F1D1D; }
+  tr:nth-child(even) td{ background:#FAFAFA; }
+  .tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 7px; border-radius:5px; white-space:nowrap; }
+  .chip-tag{ background:#B3151D; color:#fff; }
+  .keep-tag{ background:#E5E7EB; color:#374151; }
+  .drop-tag{ background:#FEE2E2; color:#991B1B; }
+  .hide-tag{ background:#FEF3C7; color:#92400E; }
+  .auto-tag{ background:#D1FAE5; color:#065F46; }
+  .new-tag{ background:#DBEAFE; color:#1E40AF; }
+  pre{ background:#0F172A; color:#E2E8F0; padding:13px 15px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.5; }
+  pre .c{ color:#94A3B8; } pre .kw{ color:#7DD3FC; } pre .str{ color:#86EFAC; } pre .fn{ color:#FCD34D; }
+  .box{ background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .warn{ background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .ok{ background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .info{ background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  ul{ margin:6px 0; padding-left:20px; } li{ margin:3px 0; }
+  ol{ margin:6px 0; padding-left:22px; } ol li{ margin:4px 0; }
+  .small{ font-size:12px; color:#6B7280; }
+  .line{ border:none; border-top:1px solid #E5E7EB; margin:18px 0; }
+  .step-num{ display:inline-block; background:#B3151D; color:#fff; font-weight:700; border-radius:50%; width:20px; height:20px; text-align:center; line-height:20px; font-size:12px; margin-right:4px; flex-shrink:0; }
+  .order-block{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .order-item{ border:1px solid #D1D5DB; border-radius:6px; padding:6px 10px; font-size:13px; background:#fff; }
+  .order-item.primary{ border-color:#B3151D; background:#FFF5F5; font-weight:600; }
+  .order-item.auto{ border-color:#059669; background:#ECFDF5; }
+  .order-item.extra{ border-color:#9CA3AF; background:#F9FAFB; color:#6B7280; }
+</style>
+</head>
+<body>
+
+<h1>SPEC G4 — การจัดหมวด + ลำดับความสำคัญการกรอก</h1>
+<p class="sub">ต่อยอดจาก SPEC-G4-formux.html · ส่ง dev แชท B แก้ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026</p>
+<p class="sub">สินค้า: ตู้อลู <code>cabinet_alu</code> (flag <code>p.cabinet</code>) · ฝาตู้ <code>future_tech</code> (flag <code>p.future_tech</code>)</p>
+
+<div class="ok">
+<b>สรุปงานนี้ (3 ส่วน):</b>
+<ol>
+  <li>เพิ่มหมวด <b>"📦 รายละเอียดตู้"</b> ใน <code>groupGHOpts</code> + เติม keyword ให้ match ถูก (แก้ปัญหาตกหมวดอื่นๆ)</li>
+  <li>ซ่อน <b>3 ออปชั่นที่ไม่เกี่ยว</b> (รางยู / ดรอปพื้น / ประเภทประตู-หน้าต่าง) เฉพาะ p.cabinet/p.future_tech</li>
+  <li>จัดลำดับ render ของ <code>p.cabinet</code> ใหม่ — ประเภทตู้ขึ้นบนสุด</li>
+</ol>
+</div>
+
+<hr class="line">
+
+<h2>1. ปัญหาที่พบ — keyword miss ทำให้ตกหมวดอื่นๆ</h2>
+
+<div class="warn">
+<b>ต้นเหตุ:</b> <code>groupGHOpts</code> (บรรทัด ~1750) ตรวจ textContent ของ label แต่ keyword ใน CATS ไม่ตรงกับ text จริงในโค้ด:
+</div>
+
+<table>
+<tr><th>ช่อง (class)</th><th>label จริงใน render (บรรทัด ~2621)</th><th>keyword ใน CATS</th><th>ผล</th></tr>
+<tr>
+  <td><code>.o-depth</code></td>
+  <td>"ลึก(ม.)"</td>
+  <td><code>ความลึก</code> ← ไม่ match</td>
+  <td><span class="tag drop-tag">ตกอื่นๆ</span></td>
+</tr>
+<tr>
+  <td><code>.o-shelves</code></td>
+  <td>"จำนวนชั้น (ว่าง=อัตโนมัติ)"</td>
+  <td><code>จำนวนบาน</code> / <code>ชนิดชั้น</code> ← ไม่ match</td>
+  <td><span class="tag drop-tag">ตกอื่นๆ</span></td>
+</tr>
+<tr>
+  <td><code>.o-backwall</code></td>
+  <td>"+ผนังหลัง"</td>
+  <td>ไม่มี keyword ใดในหมวดหลัก ← ไม่ match</td>
+  <td><span class="tag drop-tag">ตกอื่นๆ</span></td>
+</tr>
+<tr>
+  <td><code>.o-cabtype</code></td>
+  <td>"ประเภท" — <b>match</b> keyword <code>ประเภท</code></td>
+  <td><code>ประเภท</code> ✓</td>
+  <td><span class="tag auto-tag">เข้า ชนิด/การเปิด</span></td>
+</tr>
+<tr>
+  <td><code>.o-cabdoors</code></td>
+  <td>"จำนวนบานหน้าตู้" — <b>match</b> keyword <code>จำนวนบาน</code></td>
+  <td><code>จำนวนบาน</code> ✓</td>
+  <td><span class="tag auto-tag">เข้า ชนิด/การเปิด</span></td>
+</tr>
+<tr>
+  <td><code>.o-shelfmat</code></td>
+  <td>"ชนิดชั้น" — <b>match</b> keyword <code>ชนิดชั้น</code></td>
+  <td><code>ชนิดชั้น</code> ✓</td>
+  <td><span class="tag auto-tag">เข้า ชนิด/การเปิด</span></td>
+</tr>
+</table>
+
+<p class="small">ผลลัพธ์ปัจจุบัน: ตู้อลูมี 6 ช่อง → 3 เข้าหมวด "ชนิด/การเปิด" ปนกับ option บาน/ประตูอื่น · 3 ตกหมวด "อื่นๆ" ปนกับครอบวงกบ/หมายเหตุ</p>
+
+<hr class="line">
+
+<h2>2. โครงหมวดใหม่สำหรับ G4 — ตู้อลู</h2>
+<p>หลักการ: ของถามบ่อย/กำหนดราคา → <b>เปิด default</b> · เสริม/นานๆใช้ → <b>พับ default</b> · เป้าหมายกด 1-2 tap ถึงช่องหลัก</p>
+
+<h3>ลำดับการกรอก (บนลงล่าง)</h3>
+<div class="order-block">
+  <div class="order-item primary"><span class="step-num">1</span> ประเภทตู้ <span class="tag chip-tag">ชิป</span></div>
+  <div class="order-item primary"><span class="step-num">2</span> จำนวนบานหน้าตู้ <span class="tag chip-tag">ชิป</span></div>
+  <div class="order-item primary"><span class="step-num">3</span> ชนิดชั้น <span class="tag chip-tag">ชิป</span></div>
+  <div class="order-item auto"><span class="step-num">4</span> ลึก(ม.) <span class="tag auto-tag">auto</span></div>
+  <div class="order-item auto"><span class="step-num">5</span> จำนวนชั้น <span class="tag auto-tag">auto</span></div>
+  <div class="order-item"><span class="step-num">6</span> +ผนังหลัง checkbox</div>
+</div>
+<div class="order-block">
+  <div class="order-item extra"><span class="step-num">7</span> ครอบวงกบอลู (ชิป · เสริม)</div>
+  <div class="order-item extra"><span class="step-num">8</span> มีคาดตาราง (checkbox · เสริม)</div>
+  <div class="order-item extra"><span class="step-num">9</span> งานเสริม / รื้อของเดิม</div>
+  <div class="order-item extra"><span class="step-num">10</span> หมายเหตุ / OPTION</div>
+</div>
+
+<p class="small">ข้อ 1-6 = "รายละเอียดตู้" เปิด default · ข้อ 7-10 = "เสริม / หมายเหตุ" พับ default</p>
+
+<h3>โครงหมวดที่แนะนำ (เทียบกับ CATS เดิม)</h3>
+<table>
+<tr><th>#</th><th>หมวดใหม่</th><th>open default?</th><th>ออปชั่นที่อยู่ในหมวดนี้ (G4)</th></tr>
+<tr>
+  <td>1</td>
+  <td><code>📦 รายละเอียดตู้</code> <span class="tag new-tag">ใหม่</span></td>
+  <td>เปิด</td>
+  <td>ประเภทตู้ · จำนวนบาน · ชนิดชั้น · ลึก · จำนวนชั้น · +ผนังหลัง</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>🚪 ชนิด / การเปิด</code> (เดิม)</td>
+  <td>เปิด (G4 จะว่าง → ไม่แสดง)</td>
+  <td>—  (ออปชั่นตู้ย้ายไปหมวด 1 หมด)</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>📐 คาดตาราง</code> (เดิม)</td>
+  <td>พับ</td>
+  <td>มีคาดตาราง (ถ้ามี)</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>➕ อื่นๆ</code> (เดิม)</td>
+  <td>พับ</td>
+  <td>ครอบวงกบอลู · งานเสริม · รื้อ · หมายเหตุ</td>
+</tr>
+</table>
+<p class="small">หมวด "มือจับ/ล็อค" และ "มุ้ง" ไม่มี item ของตู้ → groupGHOpts จะข้ามให้อัตโนมัติ (buckets ว่าง)</p>
+
+<hr class="line">
+
+<h2>3. แนวทางที่เลือก — (ก) เพิ่มหมวด "📦 รายละเอียดตู้" ใน CATS</h2>
+
+<div class="ok">
+<b>เลือกแนว (ก):</b> เพิ่ม cat ใหม่เข้า CATS array ก่อนหมวด "อื่นๆ" + เติม keyword ให้ match label จริง<br>
+<b>เหตุผล:</b> idempotent, ปลอดภัย, ไม่ต้องเพิ่ม DOM พิเศษ, ใช้ mechanism เดิม 100%, dev เข้าใจง่าย
+</div>
+
+<div class="info">
+<b>ทำไมไม่ใช้แนว (ข) — เขียน groupGHOpts ใหม่สำหรับ cabinet โดยเฉพาะ:</b><br>
+ข้อเสีย = logic แยก 2 สาย ทำให้ maintain ยาก + ถ้าเพิ่มสินค้าใหม่ต้องแก้ 2 ที่ · แนว (ก) แค่เพิ่ม keyword row เดียว
+</div>
+
+<h3>3.1 แก้ไข CATS array (บรรทัด ~1753)</h3>
+<p>วางหมวด <code>📦 รายละเอียดตู้</code> ไว้ <b>ก่อน</b> หมวด 🚪 ในลำดับ array และใช้ keyword เฉพาะตู้ล้วน (สินค้าอื่นไม่มีคำเหล่านี้ใน label → ไม่หลุดเข้า 📦):</p>
+
+<pre><span class="c">// บรรทัด ~1753 — ใน function groupGHOpts(ch)</span>
+<span class="c">// CATS loop: เจอหมวดแรกที่ match แล้วหยุด (break) — ลำดับ array จึงสำคัญ</span>
+<span class="kw">var</span> CATS=[
+
+  <span class="c">// ---- หมวดตู้: ต้องอยู่ก่อน 🚪 เพื่อให้ "ชนิดชั้น" ถูก intercept ที่นี่ก่อน ----</span>
+  {key:<span class="str">'📦 รายละเอียดตู้'</span>, open:<span class="kw">true</span>, kw:[
+    <span class="str">'ประเภทตู้'</span>,        <span class="c">// label ของ o-cabtype (แก้จาก "ประเภท" → "ประเภทตู้" ในข้อ 3.2)</span>
+    <span class="str">'จำนวนบานหน้าตู้'</span>,  <span class="c">// label ของ o-cabdoors — เฉพาะตู้ ไม่ชนกับ "จำนวนบาน" ของบานเลื่อน</span>
+    <span class="str">'ชนิดชั้น'</span>,          <span class="c">// label ของ o-shelfmat — คำนี้ไม่มีในสินค้าอื่น</span>
+    <span class="str">'ลึก(ม.)'</span>,            <span class="c">// label ของ o-depth (match textContent จริง)</span>
+    <span class="str">'จำนวนชั้น'</span>,          <span class="c">// label ของ o-shelves — เฉพาะตู้ (ไม่ใช่ "จำนวนชั้นอาคาร" ซึ่งอยู่นอก .i-opts)</span>
+    <span class="str">'ผนังหลัง'</span>,           <span class="c">// label ของ o-backwall "+ผนังหลัง" → match ด้วย substring</span>
+    <span class="str">'สีฝาตู้'</span>             <span class="c">// label ของ o-ftcolor (ฝาตู้ future_tech)</span>
+  ]},
+
+  {key:<span class="str">'🚪 ชนิด / การเปิด'</span>, open:<span class="kw">true</span>, kw:[
+    <span class="str">'ชนิดการเปิด'</span>,<span class="str">'combo บาน'</span>,<span class="str">'ธรณี'</span>,<span class="str">'ปลายหลังคา'</span>,<span class="str">'โครงสร้าง'</span>,
+    <span class="str">'แป '</span>,<span class="str">'รูปแบบ shower'</span>,<span class="str">'ประเภทประตู'</span>,<span class="str">'โชว์ราง'</span>,<span class="str">'ซ่อนราง'</span>,<span class="str">'ทิศระแนง'</span>,
+    <span class="str">'ลายระแนง'</span>,<span class="str">'ชนิดราง'</span>,<span class="str">'ของเสริมหลังคา'</span>,<span class="str">'สีวัสดุมุง'</span>,
+    <span class="str">'ความสูง'</span>,<span class="str">'ทำเป็นประตู'</span>,<span class="str">'ซ่อนสโลป'</span>,<span class="str">'มอเตอร์'</span>,<span class="str">'ค่าประตู'</span>,
+    <span class="str">'อบสี'</span>,<span class="str">'สีอบ'</span>,<span class="str">'ผิว/สี'</span>,<span class="str">'สี '</span>,<span class="str">'ลาย'</span>,<span class="str">'ความลึก'</span>,<span class="str">'จำนวนบาน'</span>,
+    <span class="str">'ประเภท'</span>,<span class="str">'ชนิดชั้น'</span>,<span class="str">'ราวจับ'</span>
+    <span class="c">// ⚠ ห้ามลบ 'ประเภท', 'จำนวนบาน', 'ชนิดชั้น' ออกจากหมวดนี้</span>
+    <span class="c">// เหตุผล: สินค้าอื่น (G1 บานเลื่อน/เปิด, G3 หลังคา ฯลฯ) ยังพึ่ง keyword เหล่านี้อยู่</span>
+    <span class="c">// ตู้จะไม่หลุดเข้าหมวดนี้ เพราะ 📦 อยู่ก่อนใน array และ label ตู้ใช้คำเฉพาะ</span>
+    <span class="c">// ("ประเภทตู้" ไม่ match "ประเภท" แบบ exact · "จำนวนบานหน้าตู้" match 📦 ก่อน)</span>
+  ]},
+  {key:<span class="str">'🔧 มือจับ / ล็อค'</span>, open:<span class="kw">false</span>, kw:[
+    <span class="str">'มือจับ'</span>,<span class="str">'Cmech'</span>,<span class="str">'โช๊ค'</span>,<span class="str">'[Up'</span>,<span class="str">'ชุดล็อค'</span>,<span class="str">'กุญแจ'</span>,<span class="str">'เลือกมือจับ'</span>,
+    <span class="str">'ติดตายกี่บาน'</span>,<span class="str">'เสริมคาน'</span>
+  ]},
+  {key:<span class="str">'🪟 มุ้ง'</span>, open:<span class="kw">false</span>, kw:[<span class="str">'มุ้ง'</span>,<span class="str">'ผ้ามุ้ง'</span>,<span class="str">'สีผ้า'</span>,<span class="str">'สีกรอบมุ้ง'</span>]},
+  {key:<span class="str">'📐 คาดตาราง'</span>, open:<span class="kw">false</span>, kw:[
+    <span class="str">'คาดตาราง'</span>,<span class="str">'เส้นนอน'</span>,<span class="str">'เส้นตั้ง'</span>,<span class="str">'ราคา/ม.'</span>,<span class="str">'เส้นโค้ง'</span>,
+    <span class="str">'เส้นแนวนอน'</span>,<span class="str">'เส้นแนวตั้ง'</span>,<span class="str">'สีเส้น'</span>,<span class="str">'มีคาดตาราง'</span>
+  ]},
+  {key:<span class="str">'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)'</span>, open:<span class="kw">false</span>, kw:[]}  <span class="c">// catch-all คงเดิม</span>
+];</pre>
+
+<div class="warn">
+<b>ทำไมใช้ keyword เฉพาะตู้ + วาง 📦 ก่อน (ไม่ใช่การลบออกจาก 🚪):</b><br><br>
+<b>ห้ามลบ <code>'ประเภท'</code>, <code>'จำนวนบาน'</code> ออกจากหมวด 🚪</b> — สินค้าอื่นพึ่งคำเหล่านี้อยู่:
+<ul>
+  <li>G1 บานเลื่อน: label "จำนวนบาน" → ต้องอยู่ใน 🚪 · ถ้าลบออก → หลุดเป็น "อื่นๆ" ทันที (regression)</li>
+  <li>G3 หลังคา: label "ประเภท..." → ต้องอยู่ใน 🚪 (match ด้วย substring)</li>
+</ul>
+<b>วิธีที่ปลอดภัย:</b> ให้ label ของตู้ใช้คำที่ <i>ยาวกว่า / เฉพาะกว่า</i> เช่น "ประเภทตู้" และ "จำนวนบานหน้าตู้" แล้ววาง 📦 ไว้ก่อน 🚪 ใน array — loop เจอ 📦 match ก่อน break ทันที ตู้ไม่หลุดไป 🚪 · สินค้าอื่นไม่มีคำเหล่านี้ใน label → ไม่หลุดเข้า 📦 เลย<br><br>
+<b>ข้อสังเกต keyword "ชนิดชั้น":</b> คำนี้เฉพาะตู้จริง (สินค้าอื่นไม่มี) การไว้ทั้งใน 📦 และ 🚪 ไม่ใช่ปัญหา — 📦 อยู่ก่อน จะ intercept ก่อนเสมอ
+</div>
+
+<h3>3.2 ปรับ label ของ o-cabtype ในบล็อก render (บรรทัด ~2621)</h3>
+<p>ปัจจุบัน label = "ประเภท" → match keyword <code>ประเภท</code> ในหมวด "ชนิด/การเปิด" ก่อน · แก้เป็น "ประเภทตู้" ให้ match หมวดใหม่แทน (เพราะ "ประเภทตู้" ยาวกว่า ไม่ match <code>ประเภท</code> ใน 🚪 ด้วย substring)</p>
+<pre><span class="c">// บรรทัด ~2621 — if(p.cabinet){ ... }</span>
+<span class="c">// เดิม:</span>
+h+=<span class="str">'&lt;label class="opt"&gt;ประเภท &lt;select class="o-cabtype"&gt;...&lt;/select&gt;&lt;/label&gt;'</span>
+<span class="c">// แก้เป็น:</span>
+h+=<span class="str">'&lt;label class="opt"&gt;ประเภทตู้ &lt;select class="o-cabtype"&gt;...&lt;/select&gt;&lt;/label&gt;'</span>
+<span class="c">// หรือถ้าทำเป็นชิปแล้ว (ตาม SPEC-G4-formux) ให้ใช้ label "ประเภทตู้" ในชิป-wrapper</span>
+<span class="c">// ⚠ "ประเภทตู้" match keyword 'ประเภทตู้' ใน 📦 ✓</span>
+<span class="c">// ⚠ "ประเภทตู้" ไม่ match keyword 'ประเภท' ใน 🚪 เพราะ indexOf('ประเภท') ≥0 แต่ 📦 อยู่ก่อน → break แล้ว</span></pre>
+
+<hr class="line">
+
+<h2>4. ตารางแมป option → หมวด (ครบทุกตัว)</h2>
+
+<h3>ตู้อลู (<code>p.cabinet</code>) — หลังตัดตามมติพี่นัท</h3>
+<table>
+<tr><th>ออปชั่น (class)</th><th>label ที่แสดง</th><th>หมวดใหม่</th><th>เปิด/พับ</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td><code>.o-cabtype</code></td>
+  <td>ประเภทตู้ (แก้จาก "ประเภท")</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td>เลือกก่อน — trigger auto สูง/ลึก · <span class="tag chip-tag">ชิป</span></td>
+</tr>
+<tr>
+  <td><code>.o-cabdoors</code></td>
+  <td>จำนวนบานหน้าตู้</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td><span class="tag chip-tag">ชิป</span></td>
+</tr>
+<tr>
+  <td><code>.o-shelfmat</code></td>
+  <td>ชนิดชั้น</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td><span class="tag chip-tag">ชิป</span></td>
+</tr>
+<tr>
+  <td><code>.o-depth</code></td>
+  <td>ลึก(ม.)</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td><span class="tag auto-tag">auto</span> · auto-set โดย listener cabtype</td>
+</tr>
+<tr>
+  <td><code>.o-shelves</code></td>
+  <td>จำนวนชั้น (ว่าง=อัตโนมัติ)</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td><span class="tag auto-tag">auto</span> · placeholder "auto"</td>
+</tr>
+<tr>
+  <td><code>.o-backwall</code></td>
+  <td>+ผนังหลัง (checkbox)</td>
+  <td>📦 รายละเอียดตู้</td>
+  <td>เปิด</td>
+  <td>ใช้บ่อยพอ — เปิดให้เห็นตั้งแต่แรก</td>
+</tr>
+<tr style="background:#FFF7ED;">
+  <td><code>.o-fcsides / .o-fcm</code></td>
+  <td>ครอบวงกบอลู</td>
+  <td>➕ อื่นๆ</td>
+  <td>พับ</td>
+  <td>เก็บไว้ (มี fw_cabinet จริง) · ชิปมีอยู่แล้ว</td>
+</tr>
+<tr style="background:#FFF7ED;">
+  <td><code>.grid / มีคาดตาราง</code></td>
+  <td>มีคาดตาราง</td>
+  <td>📐 คาดตาราง</td>
+  <td>พับ</td>
+  <td>เก็บไว้ (ตู้บางใบมีคาด)</td>
+</tr>
+<tr style="background:#FFF7ED;">
+  <td><code>.o-extrawork</code></td>
+  <td>งานเสริม/วิศวกรรม</td>
+  <td>➕ อื่นๆ</td>
+  <td>พับ</td>
+  <td>คงเดิม</td>
+</tr>
+<tr style="background:#FFF7ED;">
+  <td><code>.o-removeold</code></td>
+  <td>รื้อของเดิม</td>
+  <td>➕ อื่นๆ</td>
+  <td>พับ</td>
+  <td>คงเดิม</td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.o-uchannel</code></td>
+  <td>ฝังรางยู (ในพื้น)</td>
+  <td><b>ตัดออก</b></td>
+  <td>—</td>
+  <td><span class="tag drop-tag">ซ่อน</span> เมื่อ p.cabinet || p.future_tech · ดูข้อ 5</td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.o-dfm</code></td>
+  <td>ดรอปพื้น(ม.)</td>
+  <td><b>ตัดออก</b></td>
+  <td>—</td>
+  <td><span class="tag drop-tag">ซ่อน</span> เมื่อ p.cabinet || p.future_tech · ดูข้อ 5</td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.i-type</code> (chip header)</td>
+  <td>ประเภท ประตู/หน้าต่าง</td>
+  <td><b>ตัดออก</b></td>
+  <td>—</td>
+  <td><span class="tag hide-tag">ซ่อน wrapper</span> เมื่อ p.cabinet || p.future_tech · ดูข้อ 5</td>
+</tr>
+</table>
+
+<h3>ฝาตู้ (<code>p.future_tech</code>) — หลังตัดตามมติพี่นัท</h3>
+<table>
+<tr><th>ออปชั่น (class)</th><th>label ที่แสดง</th><th>หมวด</th><th>หมายเหตุ</th></tr>
+<tr>
+  <td><code>.o-ftcolor</code></td>
+  <td>สีฝาตู้</td>
+  <td>📦 รายละเอียดตู้ <span class="tag new-tag">เพิ่ม kw</span></td>
+  <td><span class="tag keep-tag">คงดรอปดาวน์</span> 12 สี · label "สีฝาตู้" → เติม keyword <code>สีฝาตู้</code></td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.o-uchannel</code></td>
+  <td>ฝังรางยู</td>
+  <td>ตัดออก</td>
+  <td><span class="tag drop-tag">ซ่อน</span></td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.o-dfm</code></td>
+  <td>ดรอปพื้น</td>
+  <td>ตัดออก</td>
+  <td><span class="tag drop-tag">ซ่อน</span></td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td><code>.i-type</code></td>
+  <td>ประเภท ประตู/หน้าต่าง</td>
+  <td>ตัดออก</td>
+  <td><span class="tag hide-tag">ซ่อน wrapper</span></td>
+</tr>
+<tr style="background:#FFF7ED;">
+  <td><code>.o-fcsides / .o-fcm</code></td>
+  <td>ครอบวงกบอลู</td>
+  <td>➕ อื่นๆ</td>
+  <td>เก็บไว้</td>
+</tr>
+</table>
+
+<hr class="line">
+
+<h2>5. วิธีซ่อน 3 ออปชั่นที่ตัดออก — Pattern โค้ด (ปลอดภัย)</h2>
+
+<div class="warn">
+<b>กฎเหล็ก: ห้ามลบ element</b> — ให้ซ่อนด้วย conditional ใน string <code>h</code> ก่อน append (render ไม่ออก) หรือ <code>style="display:none"</code> หลัง render · ห้าม remove node ที่ readItem อาจ querySelector อยู่
+</div>
+
+<h3>5.1 ซ่อน ฝังรางยู (<code>.o-uchannel</code>) บรรทัด ~2680</h3>
+<p>เดิม: <code>if(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat))</code> → เพิ่ม cabinet/future_tech เข้า condition:</p>
+<pre><span class="c">// บรรทัด ~2680 — แก้ condition</span>
+<span class="c">// เดิม:</span>
+<span class="kw">if</span>(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat)){
+  h+=<span class="str">'&lt;label...&gt;ฝังรางยู...&lt;/label&gt;'</span>;
+}
+
+<span class="c">// แก้เป็น — เพิ่มเช็ค p.cabinet และ p.future_tech:</span>
+<span class="kw">if</span>(!['หลังคา','ฝ้า-ผนัง'].includes(p.cat) &amp;&amp; !p.cabinet &amp;&amp; !p.future_tech){
+  h+=<span class="str">'&lt;label...&gt;ฝังรางยู...&lt;/label&gt;'</span>;
+}</pre>
+
+<h3>5.2 ซ่อน ดรอปพื้น (<code>.o-dfm</code>) บรรทัด ~2691</h3>
+<p>ดรอปพื้นอยู่ใน template string เดียวกับครอบวงกบ (บรรทัด ~2691) โดย concatenate ต่อกัน:</p>
+<pre><span class="c">// บรรทัด ~2691 — ปัจจุบันมีทั้ง ครอบวงกบ และ ดรอปพื้นในบรรทัดเดียว</span>
+<span class="c">// logic: if(!areaOnly && !p.zipscreen){ h += ครอบวงกบ + ดรอปพื้น }</span>
+
+<span class="c">// แก้: แยก ดรอปพื้น ออกมา ซ่อนเฉพาะ p.cabinet/p.future_tech</span>
+<span class="kw">if</span>(!areaOnly &amp;&amp; !p.zipscreen){
+  <span class="c">// ครอบวงกบ — แสดงทุกสินค้า (รวมตู้)</span>
+  h+=<span class="str">`&lt;label class="opt" style="width:100%;"&gt;ครอบวงกบอลู ...&lt;/label&gt;`</span>;
+  <span class="c">// ดรอปพื้น — ซ่อนเฉพาะตู้/ฝาตู้</span>
+  <span class="kw">if</span>(!p.cabinet &amp;&amp; !p.future_tech){
+    h+=<span class="str">`&lt;label class="opt"&gt;ดรอปพื้น(ม.) &lt;input type="number" class="o-dfm" ...&gt;&lt;/label&gt;`</span>;
+  }
+}
+
+<span class="c">// readItem ยังทำงาน: บรรทัด ~2851 คือ const df=d.querySelector('.o-dfm'); if(df)optSel.dfm=df.value;</span>
+<span class="c">// เมื่อ element ไม่ถูก render → querySelector คืน null → if(df) ไม่รัน → optSel.dfm ไม่ถูก set (ปลอดภัย)</span></pre>
+
+<h3>5.3 ซ่อน ประเภทประตู/หน้าต่าง (<code>.i-type</code> chip + wrapper) บรรทัด ~2211</h3>
+<p><code>.i-type</code> อยู่ใน addItem template ตายตัว (ทุกสินค้า) — ซ่อนหลัง render โดยใช้ <code>buildItemOpts</code> ซึ่งรู้ <code>p</code> แล้ว:</p>
+<pre><span class="c">// ในฟังก์ชัน buildItemOpts(d, p) — หลัง box.innerHTML=h; (บรรทัด ~2705)</span>
+<span class="c">// ซ่อน .i-type wrapper เมื่อเป็น cabinet หรือ future_tech</span>
+<span class="kw">if</span>(p.cabinet || p.future_tech){
+  <span class="kw">const</span> _tw = d.querySelector(<span class="str">'.i-type'</span>);
+  <span class="kw">if</span>(_tw){
+    <span class="c">// หา wrapper ระดับ div.full (parent ของ chip-group + select)</span>
+    <span class="kw">const</span> _twrap = _tw.closest(<span class="str">'div.full'</span>);
+    <span class="kw">if</span>(_twrap) _twrap.style.display = <span class="str">'none'</span>;
+  }
+}
+
+<span class="c">// ✅ ปลอดภัย: select .i-type ยังอยู่ใน DOM (display:none ไม่ remove)</span>
+<span class="c">// readItem บรรทัด ~2888: const _mit=d.querySelector('.i-type'); optSel.itype=(_mit&&_mit.value)||'door'</span>
+<span class="c">// → querySelector หา display:none ได้ → value ยังอ่านได้ · default 'door' ไม่กระทบ calcUnit ตู้</span></pre>
+
+<div class="box">
+<b>ตำแหน่งที่แนะนำวางโค้ดซ่อน i-type:</b> วางหลังบรรทัด <code>box.innerHTML=h;</code> (~2705) และก่อนบล็อก <code>if(cw){...}</code> (~2707) เพื่อให้ DOM build เสร็จแล้วค่อยซ่อน — pattern เดียวกับที่โค้ดใช้กับ _showCw / _showGw อยู่แล้ว
+</div>
+
+<hr class="line">
+
+<h2>6. จัดลำดับ render ของ p.cabinet (บรรทัด ~2621) ใหม่</h2>
+<p>เดิม render ลำดับ: cabdoors → depth → cabtype → shelves → shelfmat → backwall<br>
+แก้เป็น: <b>cabtype → cabdoors → shelfmat → depth → shelves → backwall</b> (ประเภทก่อน เพราะ trigger auto)</p>
+
+<pre><span class="c">// บรรทัด ~2621 — if(p.cabinet){ ... }</span>
+<span class="c">// จัดลำดับใหม่: ประเภทตู้ (ชิป) → บาน (ชิป) → ชนิดชั้น (ชิป) → ลึก → ชั้น → ผนังหลัง</span>
+<span class="kw">if</span>(p.cabinet){
+  <span class="c">// 1. ประเภทตู้ — ชิป (ใช้ label "ประเภทตู้" เพื่อ match keyword หมวด 📦)</span>
+  h+=<span class="str">'&lt;label class="opt" style="width:100%;"&gt;ประเภทตู้'</span>
+    +<span class="str">'&lt;div class="chip-group chip-sm"&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\')"&gt;ตู้ทั่วไป&lt;/button&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\')"&gt;ตู้รองเท้า&lt;/button&gt;'</span>
+    +<span class="str">'&lt;/div&gt;'</span>
+    +<span class="str">'&lt;select class="o-cabtype" style="display:none;"&gt;&lt;option value="wardrobe" selected&gt;ตู้ทั่วไป (ชั้น~40ซม.)&lt;/option&gt;&lt;option value="shoe"&gt;ตู้รองเท้า (ชั้น~20ซม.)&lt;/option&gt;&lt;/select&gt;'</span>
+    +<span class="str">'&lt;/label&gt;'</span>;
+  <span class="c">// 2. จำนวนบานหน้าตู้ — ชิป</span>
+  h+=<span class="str">'&lt;label class="opt" style="width:100%;"&gt;จำนวนบานหน้าตู้'</span>
+    +<span class="str">'&lt;div class="chip-group chip-sm"&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')"&gt;1 บาน&lt;/button&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')"&gt;2 บาน&lt;/button&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')"&gt;3 บาน&lt;/button&gt;'</span>
+    +<span class="str">'&lt;/div&gt;'</span>
+    +<span class="str">'&lt;select class="o-cabdoors" style="display:none;"&gt;&lt;option value="1"&gt;1 บาน&lt;/option&gt;&lt;option value="2" selected&gt;2 บาน&lt;/option&gt;&lt;option value="3"&gt;3 บาน&lt;/option&gt;&lt;/select&gt;'</span>
+    +<span class="str">'&lt;/label&gt;'</span>;
+  <span class="c">// 3. ชนิดชั้น — ชิป</span>
+  h+=<span class="str">'&lt;label class="opt" style="width:100%;"&gt;ชนิดชั้น'</span>
+    +<span class="str">'&lt;div class="chip-group chip-sm"&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\')"&gt;ตามประเภท&lt;/button&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\')"&gt;อลู (+1,200)&lt;/button&gt;'</span>
+    +<span class="str">'&lt;button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\')"&gt;กระจก (+1,000)&lt;/button&gt;'</span>
+    +<span class="str">'&lt;/div&gt;'</span>
+    +<span class="str">'&lt;select class="o-shelfmat" style="display:none;"&gt;&lt;option value="" selected&gt;ตามประเภท&lt;/option&gt;&lt;option value="alu"&gt;อลู (1,200)&lt;/option&gt;&lt;option value="glass"&gt;กระจก (1,000)&lt;/option&gt;&lt;/select&gt;'</span>
+    +<span class="str">'&lt;/label&gt;'</span>;
+  <span class="c">// 4-5. ลึก + ชั้น — number (auto) แถวคู่</span>
+  h+=<span class="str">'&lt;label class="opt"&gt;ลึก(ม.) &lt;input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:30px"&gt; &lt;span class="auto-badge" style="font-size:11px;color:#059669;font-weight:700;"&gt;AUTO&lt;/span&gt;&lt;/label&gt;'</span>
+    +<span class="str">'&lt;label class="opt"&gt;จำนวนชั้น &lt;input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:30px"&gt; &lt;span style="font-size:11px;color:#6B7280;"&gt;(ว่าง=อัตโนมัติ)&lt;/span&gt;&lt;/label&gt;'</span>;
+  <span class="c">// 6. +ผนังหลัง</span>
+  h+=<span class="str">'&lt;label class="opt"&gt;&lt;input type="checkbox" class="o-backwall"&gt; +ผนังหลัง &lt;span style="font-size:11px;color:#6B7280;"&gt;(ด้าน 4 · ปกติใช้ผนังปูน)&lt;/span&gt;&lt;/label&gt;'</span>;
+}</pre>
+
+<div class="ok">
+<b>keyword match หลังแก้:</b>
+<ul>
+  <li>"ประเภทตู้" → match <code>ประเภทตู้</code> ใน 📦 ก่อน (📦 อยู่บนสุดใน array) ✓</li>
+  <li>"จำนวนบานหน้าตู้" → match <code>จำนวนบานหน้าตู้</code> ใน 📦 ก่อน (แม้ "จำนวนบาน" ยังอยู่ใน 🚪 แต่ 📦 match ก่อน → break) ✓</li>
+  <li>"ชนิดชั้น" → match <code>ชนิดชั้น</code> ใน 📦 ก่อน (📦 อยู่ก่อน 🚪) ✓</li>
+  <li>"ลึก(ม.)" → match <code>ลึก(ม.)</code> ใน 📦 ✓</li>
+  <li>"จำนวนชั้น" → match <code>จำนวนชั้น</code> ใน 📦 ✓</li>
+  <li>"+ผนังหลัง" → match <code>ผนังหลัง</code> (substring) ใน 📦 ✓</li>
+</ul>
+<b>G1/G2/G3 ไม่กระทบ:</b> "จำนวนบาน" (บานเลื่อน) ไม่มีคำ "จำนวนบานหน้าตู้" → ไม่ match 📦 · "ประเภท..." (หลังคา/อื่นๆ) ไม่มีคำ "ประเภทตู้" → ไม่ match 📦
+</div>
+
+<hr class="line">
+
+<h2>7. เพิ่ม keyword สีฝาตู้ เข้า CATS (ฝาตู้)</h2>
+<p>Label จริง "สีฝาตู้" ไม่มี keyword ตรงในหมวดไหน → ตกอื่นๆ · รวม <code>'สีฝาตู้'</code> เข้าหมวด 📦 แล้ว (ดูโค้ด CATS ใน 3.1 ข้างต้น)</p>
+<pre><span class="c">// ยืนยัน: ใน CATS หมวด 📦 รายละเอียดตู้ มี keyword ครบ 7 ตัว:</span>
+{key:<span class="str">'📦 รายละเอียดตู้'</span>, open:<span class="kw">true</span>, kw:[
+  <span class="str">'ประเภทตู้'</span>, <span class="str">'จำนวนบานหน้าตู้'</span>, <span class="str">'ชนิดชั้น'</span>,
+  <span class="str">'ลึก(ม.)'</span>, <span class="str">'จำนวนชั้น'</span>, <span class="str">'ผนังหลัง'</span>,
+  <span class="str">'สีฝาตู้'</span>   <span class="c">// label ของ .o-ftcolor</span>
+]}</pre>
+
+<hr class="line">
+
+<h2>8. จุดในโค้ดที่แตะ (สรุป)</h2>
+<table>
+<tr><th>บรรทัด</th><th>งาน</th><th>ระดับความเสี่ยง</th></tr>
+<tr><td>~1753 (CATS array)</td><td>เพิ่มหมวด 📦 ไว้ก่อน 🚪 · <b>ไม่แตะ keyword ใน 🚪</b></td><td>ต่ำ — เป็นแค่ text classification · 🚪 คงเดิมทุก keyword</td></tr>
+<tr><td>~2621 (if p.cabinet)</td><td>เปลี่ยน 3 select → ชิป + จัดลำดับ render ใหม่</td><td>กลาง — เทสว่า listener cabtype ยังทำงาน</td></tr>
+<tr><td>~2680 (if !หลังคา/ฝ้า)</td><td>เพิ่ม <code>&amp;&amp; !p.cabinet &amp;&amp; !p.future_tech</code></td><td>ต่ำ</td></tr>
+<tr><td>~2691 (ครอบวงกบ+ดรอปพื้น)</td><td>แยก ดรอปพื้น ออกมา + ซ่อนเฉพาะตู้</td><td>ต่ำ — readItem รับ null ได้</td></tr>
+<tr><td>~2705 (หลัง box.innerHTML=h)</td><td>ซ่อน wrapper ของ .i-type เมื่อ p.cabinet/p.future_tech</td><td>ต่ำ — display:none ไม่กระทบ querySelector</td></tr>
+</table>
+
+<div class="warn">
+<b>ไม่แตะ:</b>
+<ul>
+  <li>value ของ options: <code>wardrobe/shoe</code>, <code>1/2/3</code>, <code>""/alu/glass</code> — readItem บรรทัด ~2857 อ่านตรง</li>
+  <li><code>if(p.future_tech)</code> บรรทัด ~2664 — คงดรอปดาวน์สีฝาตู้</li>
+  <li>listener auto สูง/ลึก บรรทัด ~2754 — ชิปยิง change event ผ่าน chSetChip → listener ยังทำงาน (เทสยืนยันเท่านั้น)</li>
+  <li><code>readItem</code> บรรทัด ~2857 cabinet / ~2891 future_tech — ไม่แตะ</li>
+  <li><code>chSetChip</code> helper บรรทัด ~2139 — ใช้ตัวเดิม ไม่เขียนใหม่</li>
+  <li><b>CATS หมวด 🚪 — ไม่แตะ keyword ใดๆ ทั้งสิ้น</b> (แก้แค่เพิ่ม 📦 ไว้ก่อน)</li>
+</ul>
+</div>
+
+<hr class="line">
+
+<h2>9. QA Checklist</h2>
+<table>
+<tr><th>#</th><th>สินค้า</th><th>สิ่งที่ต้องตรวจ</th></tr>
+<tr>
+  <td>1</td>
+  <td>ตู้อลู</td>
+  <td>
+    ชิป ประเภทตู้: กด "ตู้รองเท้า" → สูง=2.0 ลึก=0.4 เด้งทันที ·
+    กด "ตู้ทั่วไป" → สูง=2.4 ลึก=0.6 ·
+    ชิปบาน 1/2/3 กดสลับได้ ·
+    ชิปชนิดชั้น กระจก/อลู → ราคาเปลี่ยน ·
+    +ผนังหลัง ติ๊ก → ราคาเพิ่ม ·
+    <b>ทั้ง 6 ช่อง</b> อยู่ในหมวด "📦 รายละเอียดตู้" เปิด default ·
+    ไม่มี "ฝังรางยู" / "ดรอปพื้น" / "ประเภท ประตู/หน้าต่าง" ·
+    ครอบวงกบ/งานเสริม/รื้อ ยังอยู่ในหมวด "อื่นๆ" พับ
+  </td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>ฝาตู้</td>
+  <td>
+    สีฝาตู้ดรอปดาวน์ครบ 12 สี อยู่ในหมวด "📦 รายละเอียดตู้" ·
+    ไม่มี "ฝังรางยู" / "ดรอปพื้น" / "ประเภท ประตู/หน้าต่าง" ·
+    ราคา/บาน ถูก
+  </td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td>3</td>
+  <td><b>Regression: G1 บานเลื่อน</b></td>
+  <td>
+    เปิดฟอร์มบานเลื่อน → ยืนยันว่า:<br>
+    - หมวด "🚪 ชนิด / การเปิด" ยังแสดงปกติ และมีช่อง <b>"จำนวนบาน"</b> อยู่ในหมวดนี้ (ไม่หลุดไป "📦 รายละเอียดตู้")<br>
+    - "ฝังรางยู" ยังแสดง · "ดรอปพื้น" ยังแสดง · "ประเภท ประตู/หน้าต่าง" ยังแสดง<br>
+    - ไม่มีหมวด "📦 รายละเอียดตู้" โผล่ในฟอร์มบานเลื่อนเลย
+  </td>
+</tr>
+<tr style="background:#FEF2F2;">
+  <td>4</td>
+  <td><b>Regression: G3 หลังคา</b></td>
+  <td>
+    เปิดฟอร์มหลังคา → ยืนยันว่า:<br>
+    - ช่อง <b>"ประเภท..."</b> (เช่น ประเภทการเปิด/ประเภทหลังคา) ยังอยู่ใน "🚪 ชนิด / การเปิด" (ไม่หลุดไป 📦)<br>
+    - ไม่มีหมวด "📦 รายละเอียดตู้" โผล่ในฟอร์มหลังคาเลย
+  </td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>สินค้าอื่น (G2 รั้ว, กั้นห้องฯ)</td>
+  <td>
+    "ฝังรางยู" ยังแสดงปกติ · "ดรอปพื้น" ยังแสดง ·
+    "ประเภท ประตู/หน้าต่าง" ยังแสดง · หมวดหมู่ไม่เปลี่ยน ·
+    ไม่มีหมวด "📦 รายละเอียดตู้" โผล่
+  </td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>ทุกสินค้า</td>
+  <td><code>node test/quote-fidelity.mjs</code> PASS · ราคา/ใบไม่เพี้ยนเทียบ baseline</td>
+</tr>
+</table>
+
+<div class="box">
+<b>อ้างอิงสเปกเดิม:</b> SPEC-G4-formux.html ข้อ 4 (pattern ชิป) + ข้อ 3 (listener cabtype) + ข้อ 5 (จุดในโค้ด) ยังใช้ได้ทั้งหมด — สเปกนี้ต่อยอดในส่วน groupGHOpts + ซ่อน 3 ออปชั่น + ลำดับ render เท่านั้น
+</div>
+
+</body>
+</html>

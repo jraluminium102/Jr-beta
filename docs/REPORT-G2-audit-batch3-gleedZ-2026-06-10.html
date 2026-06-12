@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Audit G2 Batch 3 — เกล็ด Z 6 รุ่น (สูตร 38.4)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:14px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;page-break-after:avoid;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}
+  td.c{text-align:center;white-space:nowrap;}
+  td.r{text-align:right;white-space:nowrap;}
+  .miss{color:#B3151D;font-weight:700;}.part{color:#B7791F;font-weight:700;}.ok{color:#2F855A;font-weight:700;}
+  .kpi{display:flex;gap:6px;margin:8px 0;}
+  .kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:6px;}
+  .kpi .n{font-size:19px;font-weight:700;display:block;}
+  .red{color:#B3151D;}.green{color:#2F855A;}.yellow{color:#B7791F;}.blue{color:#1E40AF;}
+  code{font-family:"Consolas",monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  .corr{background:#EFF6FF;border:1px solid #93C5FD;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:10.5px;}
+  ul{margin:2px 0;padding-left:15px;}li{margin-bottom:2px;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+  .small{font-size:9.5px;color:#6B7280;}
+</style>
+</head>
+<body>
+
+<h1>Audit G2 Batch 3 — ระแนงเกล็ด Z 6 รุ่น (rn83–rn88)</h1>
+<div class="sub">เทียบ ระบบ render ↔ สูตร R3.9 (38.4) + ตารางต้นฉบับ + ใบจริงคุณยี · READ-ONLY · 10 มิ.ย. 2026</div>
+
+<div class="corr">
+<b>⚠️ แก้ความเข้าใจจาก Batch 1 (#4):</b> "เกล็ด Z" ที่อยู่ในใบจริง (คุณยี "ระแนงอลูมิเนียมเกล็ด Z (แนวตั้ง) หนา 1.6" สีดำ") =
+<b>6 รุ่นนี้ (rn83–rn88) คิดราคา per ตร.ม. แบบ flat ตามตาราง 38.4</b> — <u>ไม่ใช่</u> <code>bar_grid_z</code> (38.1 ระแนงบานเกล็ด ลูกฟูกเรียบ มอเตอร์) ที่ผมตรวจใน Batch 1
+→ ปัญหา "มอเตอร์นับผิดทิศ" (Batch 1 #6) เป็นของ <code>bar_grid_z</code> (38.1) คนละตัว · 6 รุ่นนี้<b>ไม่มีมอเตอร์ ไม่เกี่ยว</b>
+</div>
+
+<div class="kpi">
+  <div><span class="n green">6/6</span>เรตตรงต้นฉบับ 38.4</div>
+  <div><span class="n red">2</span>🔴 ขาด (ทิศ + สี)</div>
+  <div><span class="n green">0</span>ราคาผิด</div>
+</div>
+
+<div class="note">
+<b>สูตร 38.4 (เกล็ด Z):</b> คิด <code>per ตร.ม. × เรตรุ่น</code> แบบ flat · <b>จับแนวตั้ง/แนวนอนได้เลย ราคาเท่ากัน</b> (ทิศไม่กระทบราคา — ต่างจาก 38.1 ที่ทิศเปลี่ยน num_ชุด) · หน้าระแนง 1" / 1.6" / 4" × ไม่โครง/รวมโครง = 6 รุ่น
+</div>
+
+<h2>✅ ตรวจเรท — ระบบ ↔ ตารางต้นฉบับ 38.4 (รวมติดตั้ง บาท/ตร.ม.)</h2>
+<table>
+<tr><th style="width:9%;">id</th><th>รุ่น (ระบบ)</th><th class="c">เรตระบบ</th><th class="c">เรตต้นฉบับ 38.4</th><th class="c">ผล</th><th>สีเพิ่ม (ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ/ลายไม้)</th></tr>
+<tr><td>rn83</td><td>เกล็ด Z 1" ไม่โครง</td><td class="c">3,600</td><td class="c">3,600</td><td class="c ok">ตรง</td><td class="small">+300 / +1,000 / +1,500 / +2,200</td></tr>
+<tr><td>rn84</td><td>เกล็ด Z 1" รวมโครง</td><td class="c">5,200</td><td class="c">5,200</td><td class="c ok">ตรง</td><td class="small">+300 / +1,000 / +1,500 / +2,200</td></tr>
+<tr><td>rn85</td><td>เกล็ด Z 1.6" ไม่โครง</td><td class="c">4,900</td><td class="c">4,900</td><td class="c ok">ตรง</td><td class="small">+500 / +1,600 / +2,200 / +3,100</td></tr>
+<tr><td>rn86</td><td>เกล็ด Z 1.6" รวมโครง</td><td class="c">6,900</td><td class="c">6,900</td><td class="c ok">ตรง</td><td class="small">+500 / +1,600 / +2,200 / +3,100</td></tr>
+<tr><td>rn87</td><td>เกล็ด Z 4" ไม่โครง</td><td class="c">5,300</td><td class="c">5,300</td><td class="c ok">ตรง</td><td class="small">+500 / +1,800 / +2,800 / +4,000</td></tr>
+<tr><td>rn88</td><td>เกล็ด Z 4" รวมโครง</td><td class="c">7,700</td><td class="c">7,700</td><td class="c ok">ตรง</td><td class="small">+500 / +1,800 / +2,800 / +4,000</td></tr>
+</table>
+<p class="small">ต้นฉบับ: <code>02_รวมออปชั่น_R3.9/ตาราง_38.4_ระแนง92รุ่น_2026-05-30.xlsx</code> หัวข้อ "━ ขนาด เกล็ด ━ (6 รุ่น)" — <b>เรตฐานตรง 100% ทั้ง 6 รุ่น</b></p>
+
+<h2>เทียบ render ↔ ใบจริง (คุณยี)</h2>
+<table>
+<tr><th style="width:30%;">ระบบ render (rn85 1.6")</th><th style="width:30%;">ใบจริงคุณยีเขียน</th><th class="c" style="width:46px;">ผล</th><th>ขาด</th></tr>
+<tr>
+<td class="small">"เกล็ด Z 1.6" ไม่โครง (2.4 × 2.2 ม.) รายละเอียดงาน- <b>สีอบขาว</b>" <i>(ไม่มีทิศ)</i></td>
+<td class="small">"ระแนงอลูมิเนียมเกล็ด Z <b>(แนวตั้ง)</b> หนา 1.6" <b>สีดำ</b>"</td>
+<td class="c miss">🔴</td>
+<td>ไม่มีทิศ (แนวตั้ง/แนวนอน) · สี default ขาว (ควรดำ) · ชื่อย่อ "เกล็ด Z" ควรเป็น "ระแนงอลูมิเนียมเกล็ด Z"</td>
+</tr>
+</table>
+
+<h2>🔴 จุดต้องแก้ (เฉพาะ 6 รุ่นนี้)</h2>
+<div class="note" style="background:#FEF2F2;border-color:#FCA5A5;">
+<b>1. เพิ่มเลือก/แสดง "ทิศ แนวตั้ง/แนวนอน"</b> — สูตร 38.4 ราคาเท่ากันทั้ง 2 ทิศ (ไม่ต้องคิดเงินเพิ่ม) แต่<b>ใบต้องโชว์ "(แนวตั้ง)" หรือ "(แนวนอน)"</b> ตามที่ลูกค้าเลือก (ใบจริงระบุเสมอ)
+<ul><li>แก้: เพิ่ม dropdown ทิศให้ cat <code>ระแนง-เกล็ด</code> (เหมือน <code>o-bgdir</code> ของ bar_grid แต่<b>ไม่ผูกราคา</b> แค่ลง label) → ผลักลงบรรทัดชื่อ/รายละเอียด</li></ul>
+</div>
+<div class="note" style="background:#FEF2F2;border-color:#FCA5A5;">
+<b>2. สี — default + แสดงบนใบ</b> (ปัญหา engine ร่วมกับ rn ทั้งหมด · Batch 1/2)
+<ul><li>default สีอบขาว → ควรเป็น <b>สีดำ/เทาซาฮาร่า</b> (ใบจริงเกล็ด Z ใช้ดำ)</li><li>สีที่เลือก (fin) ต้องลงบรรทัด "รายละเอียดงาน" ของใบ (ตอนนี้กระทบราคาอย่างเดียว)</li></ul>
+</div>
+
+<h2>🟢 ผ่าน</h2>
+<table>
+<tr><th style="width:36%;">เกณฑ์</th><th>ผล</th></tr>
+<tr><td>เรตฐาน 6 รุ่น ตรงต้นฉบับ 38.4</td><td class="ok">6/6 ✓</td></tr>
+<tr><td>คิด per ตร.ม. flat (จับ 2 ทิศ ราคาเท่ากัน)</td><td class="ok">ตรงสูตร ✓ (ทิศไม่ผูกราคา)</td></tr>
+<tr><td>render ไม่แครช · ราคา&gt;0 · ขนาด+หน่วยถูก</td><td class="ok">6/6 ✓ (26,000–56,000)</td></tr>
+<tr><td>หน้าระแนง 1"/1.6"/4" + ไม่โครง/รวมโครง ในชื่อ</td><td class="ok">ครบ ✓ (= "หนา 1.6"" ในใบจริง)</td></tr>
+<tr><td>ไม่มี jargon "(ข้อ 38.x)" ในชื่อ 6 รุ่นนี้</td><td class="ok">สะอาด ✓ (ต่างจาก bar_grid_z)</td></tr>
+</table>
+
+<div class="foot">
+Batch 3 · 6 รุ่นเกล็ด Z (rn83–rn88) · เรตยืนยันกับ <code>ตาราง_38.4_ระแนง92รุ่น_2026-05-30.xlsx</code> + สูตร <code>รายการสูตรราคาประเมิน_ฉบับเต็ม.md</code> (38.1–38.4) + ใบจริงคุณยี QT2025060015 · ราคา/เรตยกจากต้นฉบับ ไม่เดา · READ-ONLY ไม่แตะ index.html
+</div>
+
+</body>
+</html>

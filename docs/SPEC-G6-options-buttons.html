@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>SPEC G6 — ออปชั่น + ปุ่ม · ส่ง dev</title>
+<style>
+body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;color:#1a1a1a;max-width:960px;margin:0 auto;padding:28px;line-height:1.55;}
+h1{color:#B3151D;font-size:24px;margin:0 0 4px;}
+h2{color:#B3151D;font-size:18px;margin:28px 0 8px;border-bottom:2px solid #B3151D;padding-bottom:4px;}
+h3{font-size:15px;margin:16px 0 6px;}
+.sub{color:#666;font-size:13px;margin:0 0 16px;}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0 18px;}
+th,td{border:1px solid #d8c9c9;padding:7px 9px;text-align:left;vertical-align:top;}
+th{background:#fbeeee;color:#B3151D;}
+code{background:#f3f0f0;padding:1px 5px;border-radius:4px;font-size:12px;font-family:Consolas,monospace;}
+pre{background:#1e1e1e;color:#e8e8e8;padding:14px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.5;}
+pre .c{color:#6a9955;} pre .k{color:#569cd6;} pre .s{color:#ce9178;}
+.box{border:1px solid #d8c9c9;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fffafa;}
+.must{border-left:4px solid #B3151D;}
+.should{border-left:4px solid #C77B0B;background:#fffaf2;}
+.opt{border-left:4px solid #888;background:#f8f8f8;}
+.warn{background:#fff4e5;border:1px solid #f0c070;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:13px;}
+.ok{color:#1f7a33;font-weight:700;}
+.bad{color:#B3151D;font-weight:700;}
+.kaep{color:#C77B0B;font-weight:700;}
+ul{margin:6px 0;padding-left:20px;}
+li{margin:4px 0;}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.pill.m{background:#B3151D;color:#fff;}
+.pill.s{background:#C77B0B;color:#fff;}
+.pill.o{background:#888;color:#fff;}
+.small{font-size:12px;color:#666;}
+.label-only{display:inline-block;background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;}
+.row2{display:flex;gap:20px;flex-wrap:wrap;}
+.row2>div{flex:1;min-width:300px;}
+</style>
+</head>
+<body>
+
+<h1>SPEC — กลุ่ม 6 กั้นห้องกระจก · ออปชั่น + ปุ่ม</h1>
+<p class="sub">ส่ง dev แชทB แก้ <code>public/calculator/index.html</code> · ต่อจาก SPEC-G6-formux.html (ชิปชนิดบาน+stepper) · 2026-06-12<br>
+ดราฟกดเล่น: <b>https://jraluminium102.github.io/sharepicjr/draft-G6-options-buttons.html</b></p>
+
+<div class="warn">
+<b>หลักการเดียว (ห้ามพลาด):</b> งานนี้เปลี่ยนแค่ <b>"หน้าตา control" (UI)</b> — ไม่แตะ logic/ราคา/genQuote<br>
+ทุกชิป/toggle ต้อง <b>sync ค่ากลับเข้า control เดิม</b> (<code>.o-opentype</code> / <code>.o-bottomrail</code> / <code>.o-mosqcolor</code> ฯลฯ) + <code>dispatchEvent(new Event('change',{bubbles:true}))</code><br>
+<b>ห้ามเปลี่ยน</b> <code>value</code> / ชื่อ <code>class</code> ที่ <code>readItem()</code> (L2778+) อ่าน · <b>ห้ามแก้ buildItemOpts ที่กระทบ G1 โดยไม่ได้เคาะกับพี่นัท</b>
+</div>
+
+<h2>1. ภาพรวม — ออปชั่น + ปุ่มที่เปลี่ยน</h2>
+<p>SPEC ฉบับนี้ครอบ <b>3 ส่วน</b> ที่ยังไม่ได้ทำใน SPEC-G6-formux.html:</p>
+<ol>
+<li><b>ปุ่มระดับชุด</b> — "+ เพิ่มบาน" / "+ เพิ่มหลังคา" ขึ้น layout ชัด · แยกสีบอกหน้าที่</li>
+<li><b>summary ออปชั่น</b> — text ชัดขึ้น / ชนิดการเปิด+ราง+ชุดล็อคย้ายออกมาฟอร์มหลัก</li>
+<li><b>ภายใน 4 หมวด opts</b> — มือจับ multi-toggle / มุ้ง conditional / อื่นๆ รวมหมวด</li>
+</ol>
+<p class="small">สิ่งที่ SPEC-G6-formux ครอบแล้ว (อย่าทำซ้ำ): ชิปชนิดบาน · stepper จำนวนบาน · แถบสีหัวห้อง · QA เคส 1-8 · DoD</p>
+
+<h2>2. ตารางตัดสิน control ออปชั่น (ครบ)</h2>
+<table>
+<tr><th>control / class</th><th>ตัวเลือก</th><th>เดิม</th><th>→ เปลี่ยนเป็น</th><th>ที่ตั้ง</th><th>ระดับ</th><th>หมายเหตุ</th></tr>
+<tr><td><code>.o-opentype</code></td><td>4 ตัว</td><td>dropdown ใน "🚪 ชนิด/การเปิด" (พับ)</td><td><b>ชิป 4 ตัว</b> ขึ้นฟอร์มหลัก (sliding-main-block)</td><td>ใน <code>buildItemOpts</code> บรรทัด sliding block (L2553)</td><td><span class="pill s">SHOULD</span> <span class="bad">เคาะพี่นัท</span></td><td>shared G1 — ถ้าทำชิป buildItemOpts กระทบ G1 ด้วย · ตอนนี้เป็น dropdown อยู่แล้ว (มี placeholder disable) → เปลี่ยน UI ชั้น</td></tr>
+<tr><td><code>.o-bottomrail</code></td><td>2 ตัว</td><td>ชิป 2 (ทำแล้วใน buildItemOpts L2559)</td><td>คงไว้ — ทำแล้ว ดีแล้ว</td><td>—</td><td><span class="pill o">done</span></td><td>อยู่ใน sliding-main-block อยู่แล้ว</td></tr>
+<tr><td><code>.o-slidelock</code></td><td>2 ตัว</td><td>ชิป 2 ใน "🔧 มือจับ/ล็อค" (พับ)</td><td>ชิป 2 ยังอยู่ <b>ขึ้นฟอร์มหลัก</b> (ออกจาก opts) เฉพาะ itype=door</td><td>ใน <code>buildItemOpts</code> L2570 · ย้ายก่อน <code>box.innerHTML=h</code></td><td><span class="pill m">MUST</span></td><td>shared G1 — ขึ้นฟอร์มหลักใน slidingblock (เดิมอยู่หลัง block) ซ่อนใน opts ไม่ทำให้ไม่เห็น · ลบออกจากหมวดมือจับ/ล็อค</td></tr>
+<tr><td>มือจับ (ก้อนรวบ)</td><td>brand toggle</td><td>brand chip + hsub แต่ละ brand อยู่ใน opts ปกติ</td><td><b>คงโครงเดิม</b> (multi-toggle ทำแล้วใน G1 formux) — เพียงแต่ย้ายออก "🔧" ให้เปิด default</td><td>ใน <code>groupGHOpts</code> CATS — เพิ่ม <code>open:true</code> หมวดมือจับสำหรับ GH</td><td><span class="pill s">SHOULD</span></td><td>ของ G1 ทำแล้ว ไม่ต้องแก้ buildItemOpts</td></tr>
+<tr><td><code>.o-mosq</code></td><td>13 รุ่น</td><td>dropdown 13 + detail group ซ่อน/โชว์ (mosqGroupToggle)</td><td>คง dropdown + conditional detail — <b>คงไว้ดีแล้ว</b> · เฉพาะ GH: เปิดหมวดมุ้ง default</td><td>ใน <code>groupGHOpts</code> CATS open:true สำหรับ GH</td><td><span class="pill o">OK</span></td><td>13 ตัว = คง dropdown ตามกฎ</td></tr>
+<tr><td><code>.o-mosqfabric</code></td><td>5 ตัว</td><td>dropdown 5</td><td><b>คง dropdown</b> (5 ตัวพอดีเส้นกั้น · ราคาต่างกัน label ยาว)</td><td>—</td><td><span class="pill o">คงไว้</span></td><td>ชิปจะล้นเพราะ label ยาว (anti_pet/stainless/safety08)</td></tr>
+<tr><td><code>.o-mosqcolor</code></td><td>4 ตัว</td><td>ชิป 4 (ทำแล้วใน G1 formux)</td><td>คงไว้ — ดีแล้ว</td><td>—</td><td><span class="pill o">done</span></td><td>—</td></tr>
+<tr><td><code>.o-fcsides</code></td><td>3 ตัว (0/3/4)</td><td>ชิป 3 (ทำแล้วใน G1 formux)</td><td>คงไว้ + ย้ายหมวด "ครอบวงกบ" เข้า "➕ อื่นๆ" เดียวกับ fcsides/uchannel/solidlower</td><td>ใน <code>groupGHOpts</code> CATS keyword · เติม kw ให้ match</td><td><span class="pill s">SHOULD</span></td><td>เดิม fcsides อยู่ "➕ อื่นๆ (ครอบวงกบ/ดรอปพื้น/หมายเหตุ)" อยู่แล้ว — เช็คว่า keyword match ถูก</td></tr>
+<tr><td><code>.o-solidlower</code></td><td>3 ตัว</td><td>ชิป 3 conditional sub (ทำแล้วใน G1 formux)</td><td>คงไว้ — conditional โชว์ solidlower-wrap + sl-colorwrap เมื่อ value</td><td>—</td><td><span class="pill o">done</span></td><td>—</td></tr>
+<tr><td><code>.o-sl-color</code></td><td>5 ตัว</td><td>dropdown ใน solidlower-wrap</td><td>คง dropdown (5 ตัว ราคาต่างกัน)</td><td>—</td><td><span class="pill o">คงไว้</span></td><td>อยู่ใน conditional sub อยู่แล้ว</td></tr>
+<tr><td><code>.o-cmech</code></td><td>2 ตัว (embed/metro)</td><td>ชิป 2 ใน hsub-cmech (ทำแล้ว G1)</td><td>คงไว้</td><td>—</td><td><span class="pill o">done</span></td><td>—</td></tr>
+<tr><td><code>.o-cmechcolor</code></td><td>7 ตัว</td><td>dropdown ใน hsub-cmech</td><td>คง dropdown (7 ตัว)</td><td>—</td><td><span class="pill o">คงไว้</span></td><td>≥6 = dropdown ตามกฎ</td></tr>
+<tr><td><code>.o-digi</code></td><td>12 รุ่น</td><td>dropdown ใน hsub-digital</td><td>คง dropdown</td><td>—</td><td><span class="pill o">คงไว้</span></td><td>≥6</td></tr>
+<tr><td><code>.o-stainless</code></td><td>7 ขนาด</td><td>dropdown ใน hsub-stainless</td><td>คง dropdown</td><td>—</td><td><span class="pill o">คงไว้</span></td><td>≥6</td></tr>
+<tr><td><code>.o-gridmark</code></td><td>checkbox</td><td>checkbox + conditional wrap</td><td>คงไว้ — ดีแล้ว</td><td>—</td><td><span class="pill o">done</span></td><td>—</td></tr>
+<tr><td><code>.o-uchannel</code></td><td>checkbox</td><td>checkbox</td><td>คงไว้ในหมวด "อื่นๆ"</td><td>—</td><td><span class="pill o">OK</span></td><td>—</td></tr>
+<tr><td><code>.o-extrawork</code></td><td>text</td><td>text input</td><td>คงไว้ในหมวด "อื่นๆ"</td><td>—</td><td><span class="pill o">OK</span></td><td>label-only (ไม่กระทบราคา)</td></tr>
+<tr><td><code>.o-removeold</code></td><td>checkbox</td><td>checkbox</td><td>คงไว้ในหมวด "อื่นๆ"</td><td>—</td><td><span class="pill o">OK</span></td><td>label-only</td></tr>
+<tr><td><code>.o-dfm</code></td><td>number</td><td>number input</td><td>คงไว้ในหมวด "อื่นๆ"</td><td>—</td><td><span class="pill o">OK</span></td><td>กระทบราคา</td></tr>
+</table>
+
+<h2>3. <span class="pill m">MUST</span> ชุดล็อค (<code>.o-slidelock</code>) ขึ้นฟอร์มหลัก</h2>
+<div class="box must">
+<b>ปัญหาเดิม:</b> ชุดล็อค (ชิป มีกุญแจ/ไม่มีกุญแจ) ซ่อนอยู่ในหมวด "🔧 มือจับ/ล็อค" ที่พับ default — เซลล์มักลืมเลือก<br>
+<b>แนวทางแก้:</b> ย้าย <code>.o-slidelock</code> ออกมาอยู่ <b>ต่อจาก sliding-main-block</b> (ฟอร์มหลัก · เห็นทันที) — ไม่ซ่อนใน opts
+</div>
+
+<h3>3.1 จุดแก้ใน buildItemOpts (L2569–2571)</h3>
+<pre><span class="c">// เดิม: o-slidelock อยู่ต่อจาก sliding-main-block (L2570) แต่อยู่นอก sliding-block div</span>
+<span class="c">// ปัญหา: groupGHOpts จับ keyword "ชุดล็อค" เข้าหมวด 🔧 ทำให้ซ่อน</span>
+
+<span class="c">// แก้ใน CATS ของ groupGHOpts — ลบ 'ชุดล็อค' ออกจาก kw หมวด 🔧</span>
+{key:'🔧 มือจับ / ล็อค', open:false, kw:[
+  'มือจับ','Cmech','โช๊ค','[Up','กุญแจ','เลือกมือจับ',
+  'ติดตายกี่บาน'
+  <span class="c">// ลบ 'ชุดล็อค' ออก → ทำให้ .o-slidelock label ตก "อื่นๆ" แล้วเราดึงขึ้นฟอร์มหลัก</span>
+]},
+
+<span class="c">// แนวทาง B (ดีกว่า): ใน refreshSet() isGH — inject ชิปล็อคขึ้นฟอร์มหลัก</span>
+<span class="c">// (inject ครั้งเดียวต่อการ์ด เช็ค flag .gh-lock-chips)</span>
+<span class="k">function</span> injectLockChips(ch){
+  <span class="k">var</span> lockSel = ch.querySelector('.o-slidelock');
+  <span class="k">if</span>(!lockSel) <span class="k">return</span>; <span class="c">// ไม่มี (เช่น กระจกติดตาย)</span>
+  <span class="k">var</span> smb = ch.querySelector('.sliding-main-block');
+  <span class="k">if</span>(!smb || smb.querySelector('.gh-lock-chips')) <span class="k">return</span>;
+  <span class="c">// inject ชิปล็อคต่อจาก smb</span>
+  <span class="k">var</span> bar = document.createElement('div');
+  bar.className = 'gh-lock-chips full';
+  bar.style.cssText = 'margin:4px 0;';
+  bar.innerHTML = '<label style="font-size:12px;color:#666;font-weight:700;display:block;margin-bottom:5px;">ชุดล็อค</label>'
+    + '<div class="chip-group chip-sm">'
+    + '<button type="button" class="chip on" data-val="มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีกุญแจ</button>'
+    + '<button type="button" class="chip" data-val="ไม่มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">ไม่มีกุญแจ</button>'
+    + '</div>';
+  smb.parentNode.insertBefore(bar, smb.nextSibling);
+}
+<span class="c">// เรียกใน refreshSet() loop isGH หลัง groupGHOpts(c):</span>
+<span class="c">//   if(isGH) { groupGHOpts(c); injectLockChips(c); }</span></pre>
+
+<div class="warn">
+<b>⚠ ระวัง:</b> <code>.o-slidelock</code> สร้างใน <code>buildItemOpts</code> (shared G1+G6) — <code>chSetChip</code> sync ค่ากลับ hidden select อยู่แล้ว<br>
+<b>ไม่ต้องแก้ buildItemOpts</b> — inject ชิปใน refreshSet GH อ่านค่าจาก select เดิม (ที่อยู่ใน opts · hidden โดย groupGHOpts)
+</div>
+
+<h2>4. <span class="pill s">SHOULD</span> ปุ่มระดับชุด — layout ชัด</h2>
+<div class="box should">
+<b>เดิม:</b> "+ เพิ่มส่วน" (ปุ่มเดี่ยว ทั่วไป) · "+ เพิ่มหลังคา" inject ข้าง · ขนาดไม่เท่ากัน<br>
+<b>ใหม่:</b> ปุ่มทั้งสองอยู่ <code>.set-btns-top</code> หรือ <code>.set-btns</code> เดียวกัน · height ≥44px · สีต่างกัน (บาน=แดงขอบ · หลังคา=เขียวขอบ)
+</div>
+<h3>4.1 จุดแก้ใน refreshSet() [2] (L1876–1910)</h3>
+<pre><span class="c">// เดิม: .set-addpart เปลี่ยน text + ซ่อน btn ที่ idx>0</span>
+<span class="c">// เพิ่ม: style ปุ่ม + ตรวจ height</span>
+box.querySelectorAll('.set-addpart').forEach(<span class="k">function</span>(btn, idx){
+  btn.textContent = hasGH ? '+ เพิ่มบาน' : '＋ เพิ่มส่วน';
+  btn.style.display = (hasGH && idx>0) ? 'none' : '';
+  <span class="c">// เพิ่ม: ปรับ style ให้ชัด</span>
+  <span class="k">if</span>(hasGH){
+    btn.style.minHeight = '44px';
+    btn.style.borderRadius = '10px';
+    btn.style.border = '2px solid #B3151D';
+    btn.style.color = '#B3151D';
+    btn.style.fontWeight = '700';
+    btn.style.background = '#fff';
+  }
+});
+<span class="c">// .set-addroof (inject ครั้งเดียว L1889) — เพิ่ม style:</span>
+roofBtn.style.cssText = 'flex:1;min-height:44px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;border:2px solid #16A34A;background:#fff;color:#15803D;';
+<span class="c">// (เดิม height:38px → เปลี่ยนเป็น min-height:44px)</span></pre>
+
+<h2>5. <span class="pill s">SHOULD</span> summary ออปชั่น — text ชัดขึ้น + เปิด default สำหรับ GH</h2>
+<h3>5.1 text ของ summary</h3>
+<pre><span class="c">// ใน refreshSet() L1959:</span>
+<span class="c">// เดิม:</span>
+_sm.textContent = '⚙ ตัวเลือกเพิ่มเติม (มือจับ/ล็อค/มุ้ง/ครอบวงกบ — กดถ้าต้องใช้)';
+<span class="c">// ใหม่ (ครอบ content จริงกว่า):</span>
+_sm.textContent = '⚙ ออปชั่นเพิ่มเติม — มือจับ · มุ้ง · คาดตาราง · ครอบวงกบ (กดเปิดถ้าต้องใช้)';
+<span class="c">// ความยาว summary ≤60 ตัวอักษร · ห้ามเปลี่ยน class/id ของ _det/_sm</span></pre>
+
+<h3>5.2 เปิด default หมวดมือจับ (GH)</h3>
+<pre><span class="c">// ใน groupGHOpts CATS — เพิ่ม flag open:true เฉพาะเมื่อ isGH</span>
+<span class="c">// วิธีที่ปลอดภัยที่สุด: เพิ่ม param ให้ groupGHOpts(ch, isGH)</span>
+<span class="k">function</span> groupGHOpts(ch, isGH){
+  <span class="c">// ... เดิม ...</span>
+  <span class="c">// ใน CATS ทั่วไป: {key:'🔧 มือจับ / ล็อค', open:false, ...}</span>
+  <span class="c">// ถ้า isGH: override open=true เฉพาะหมวด 🔧 + 🪟</span>
+  <span class="k">if</span>(isGH){
+    CATS.forEach(<span class="k">function</span>(c){
+      <span class="k">if</span>(c.key.includes('มือจับ') || c.key.includes('มุ้ง')) c.open = <span class="k">true</span>;
+    });
+  }
+  <span class="c">// ... ต่อ ...</span>
+}
+<span class="c">// เรียกว่า: groupGHOpts(c, isGH);  // ส่ง flag เข้าไป</span></pre>
+
+<h2>6. <span class="pill o">เคาะก่อน</span> ชิป <code>.o-opentype</code> (5 ตัว) ขึ้นฟอร์มหลัก</h2>
+<div class="warn">
+<code>.o-opentype</code> สร้างใน <code>buildItemOpts</code> (L2553) เป็น <b>dropdown ที่มี placeholder disabled</b> อยู่แล้ว — อยู่ใน <code>.sliding-main-block</code><br>
+<b>ข้อมูลเพิ่ม:</b> ใน buildItemOpts (L2553) มีโค้ดเปลี่ยน <code>.o-opentype</code> เป็น dropdown เรียบร้อย — ถ้าจะเป็น <b>ชิป 4 ตัว</b> ต้องเปลี่ยน L2553 → กระทบ G1<br>
+<b>ต้องให้พี่นัทเคาะ:</b> (ก) เปลี่ยนเป็นชิปทั้ง G1+G6 · (ข) wrap ชิปเฉพาะ GH ใน refreshSet (inject ทับ dropdown) · (ค) คง dropdown (เลือกได้ใน GH ที่มีช่องกว้างพอ)
+</div>
+<table>
+<tr><th>ตัวเลือก</th><th>ข้อดี</th><th>ข้อเสีย</th><th>ผลต่อ G1</th></tr>
+<tr><td>(ก) ชิป buildItemOpts</td><td>UI สม่ำเสมอ G1+G6</td><td>G1 ต้องเทสซ้ำ (G1 formux pass แล้ว)</td><td>กระทบ · ต้อง regression</td></tr>
+<tr><td>(ข) inject GH refreshSet</td><td>แยก scope ชัด ไม่กระทบ G1</td><td>ซ้ำโค้ดเล็กน้อย</td><td>ไม่กระทบ</td></tr>
+<tr><td>(ค) คง dropdown</td><td>ไม่ต้องแก้</td><td>UX ยังกด 2 ขั้น</td><td>ไม่กระทบ</td></tr>
+</table>
+
+<h2>7. Pattern — ชิป single-select (ใช้ทั้ง G1+G6)</h2>
+<pre><span class="c">// chSetChip(btn, selectClass) — มีอยู่แล้วใน index.html (global helper)</span>
+<span class="c">// ใช้ได้เลย ไม่ต้องเพิ่ม</span>
+<span class="k">function</span> chSetChip(b, cls){
+  <span class="k">var</span> ch = b.closest('.ch');
+  <span class="k">var</span> sel = ch ? ch.querySelector('.'+cls) : <span class="k">null</span>;
+  <span class="k">if</span>(!sel) <span class="k">return</span>;
+  b.closest('.chip-group').querySelectorAll('.chip').forEach(<span class="k">function</span>(c){ c.classList.remove('on'); });
+  b.classList.add('on');
+  sel.value = b.dataset.val;
+  sel.dispatchEvent(<span class="k">new</span> Event('change', {bubbles:<span class="k">true</span>}));
+}</pre>
+
+<h2>8. Pattern — multi-toggle มือจับ (ใช้อยู่แล้วใน G1)</h2>
+<pre><span class="c">// toggleHandleBrand(btn) — มีอยู่แล้วใน index.html</span>
+<span class="c">// เรียกใช้จาก onclick="toggleHandleBrand(this)"</span>
+<span class="c">// ชิปแต่ละตัว data-hbrand="cmech|digital|stainless|xseries|cmechawn|other"</span>
+<span class="c">// sub div class="hsub hsub-{brand}" — show/hide ตาม brand ที่ on</span>
+<span class="c">// handle box อยู่ใน buildItemOpts แล้ว (L2500–2523) → ไม่ต้องสร้างใหม่</span>
+<span class="c">// สิ่งที่ต้องทำ: ใน groupGHOpts เปิด หมวด 🔧 default (open:true) เมื่อ isGH</span></pre>
+
+<h2>9. Pattern — conditional reveal มุ้ง (มีอยู่แล้ว)</h2>
+<pre><span class="c">// mosqGroupToggle(sel) — มีอยู่แล้วใน index.html</span>
+<span class="c">// เรียกจาก onchange="mosqGroupToggle(this); calcQuote();"</span>
+<span class="c">// toggle class "mosq-detail-group" show/hide ตาม sel.value</span>
+<span class="c">// สิ่งที่ต้องทำ: ใน groupGHOpts เปิด หมวด 🪟 default (open:true) เมื่อ isGH</span></pre>
+
+<h2>10. จุดแก้ใน groupGHOpts — หมวด "ครอบวงกบ" เข้า "อื่นๆ"</h2>
+<div class="box">
+<b>ปัจจุบัน:</b> keyword ใน CATS (non-roof) เป็น keyword-based — ตรวจ <code>textContent+className</code> ของ child<br>
+<b>ปัญหา:</b> <code>.o-fcsides</code> label text = "ครอบวงกบอลู" → match หมวด "🚪 ชนิด/การเปิด" (kw มี 'ราวจับ' แต่ไม่มี 'ครอบวงกบ'?) ต้องตรวจ render จริง<br>
+<b>แก้:</b> เพิ่ม <code>'ครอบวงกบ'</code> เข้า kw หมวด "➕ อื่นๆ" หรือตัดออกจาก kw หมวดอื่น ตรวจสอบก่อน
+</div>
+<pre><span class="c">// CATS non-roof ปัจจุบัน — ตรวจ keyword ที่อาจจับ "ครอบวงกบ" ผิดหมวด:</span>
+<span class="c">// หมวด 🚪: kw มี 'ราวจับ' → ไม่ match ครอบวงกบ (OK)</span>
+<span class="c">// หมวด 🔧: kw ไม่มี 'ครอบ' → ไม่ match (OK)</span>
+<span class="c">// หมวด ➕ (last bucket): ทุกที่ที่ไม่ match → ตกหมวด "อื่นๆ" อัตโนมัติ</span>
+<span class="c">// ผลคือ fcsides/solidlower/uchannel/extrawork/removeold/dfm ตกหมวด "อื่นๆ" แล้ว (ถูกต้อง)</span>
+
+<span class="c">// ตรวจสอบด้วย: ใน Chrome devtools เปิดชุดกั้นห้อง → console.log elements ใน "➕ อื่นๆ"</span></pre>
+
+<h2>11. QA ออปชั่น + ปุ่ม</h2>
+<table>
+<tr><th>#</th><th>เคส</th><th>เช็คอะไร</th><th>Pass criteria</th></tr>
+<tr><td>1</td><td>ด้าน A = บานเลื่อน (itype=door)</td><td>ชุดล็อคโผล่ฟอร์มหลัก (นอก opts)</td><td>.gh-lock-chips อยู่ถัดจาก .sliding-main-block · ชิปมีกุญแจ active</td></tr>
+<tr><td>2</td><td>กด "Cmech" (toggle)</td><td>hsub-cmech โผล่ · กด Cmech อีกครั้ง = ซ่อน</td><td>multi-toggle ทำงาน · ชิป Cmech on/off</td></tr>
+<tr><td>3</td><td>เลือกมุ้ง ≠ ไม่ใส่</td><td>detail group (บานมุ้ง/ผ้า/สีกรอบ) โผล่</td><td>mosqGroupToggle ทำงาน · เลือก "ไม่ใส่" = ซ่อน</td></tr>
+<tr><td>4</td><td>เลือก "อลูลูกฟูก"</td><td>solidlower-wrap + sl-colorwrap โผล่</td><td>conditional reveal ทำงาน · composite = ซ่อน sl-colorwrap</td></tr>
+<tr><td>5</td><td>กด "+ เพิ่มบาน"</td><td>การ์ดด้านใหม่โผล่ · ชุดล็อค/option ครบ</td><td>refreshSet inject ชิปล็อค + groupGHOpts ทำงาน</td></tr>
+<tr><td>6</td><td>กด "+ เพิ่มหลังคา"</td><td>การ์ดหลังคา (group=3) ไม่มีชิปล็อค/ชนิดการเปิด</td><td>injectLockChips เช็ค .o-slidelock ไม่มี = ไม่ inject</td></tr>
+<tr><td>7</td><td>readItem() ทุกด้าน</td><td>optSel.uchannel/slidelock/mosq/fcsides/solidlower ครบ</td><td>node test/quote-fidelity.mjs PASS</td></tr>
+<tr><td>8</td><td>regression G1 (บานเดี่ยว)</td><td>ชิปล็อคไม่หลุดเข้า G1 · opts layout ไม่เพี้ยน</td><td>G1 ราคาเดิม · ไม่มี .gh-lock-chips ใน non-GH card</td></tr>
+</table>
+
+<h2>12. Definition of Done (ออปชั่น + ปุ่ม)</h2>
+<ul>
+<li><span class="ok">☐</span> ชุดล็อคโผล่ฟอร์มหลัก (นอก opts) เฉพาะ GH บานเลื่อน itype=door · inject ครั้งเดียว</li>
+<li><span class="ok">☐</span> ปุ่ม "+ เพิ่มบาน" / "+ เพิ่มหลังคา" — min-height:44px · สีบ่งบอกหน้าที่ชัด</li>
+<li><span class="ok">☐</span> groupGHOpts เปิดหมวด 🔧 มือจับ + 🪟 มุ้ง default เมื่อ isGH</li>
+<li><span class="ok">☐</span> summary opts text ชัด ≤60 ตัวอักษร</li>
+<li><span class="ok">☐</span> fcsides/solidlower/uchannel/extrawork/removeold/dfm ตกหมวด "➕ อื่นๆ" ถูกต้อง</li>
+<li><span class="ok">☐</span> <code>node test/quote-fidelity.mjs</code> PASS (ราคา/ใบไม่เพี้ยน)</li>
+<li><span class="ok">☐</span> regression G1: ไม่มีชิปล็อค/inject GH หลุดเข้าการ์ด non-GH</li>
+<li><span class="ok">☐</span> พี่นัทเคาะ: (ก) o-opentype ชิป G1+G6 · (ข) inject GH เฉพาะ · (ค) คง dropdown</li>
+</ul>
+
+<h2>13. กับดัก (เตือน dev)</h2>
+<ul>
+<li><b>inject ครั้งเดียว</b> — refreshSet ถูกเรียกซ้ำ · เช็ค <code>.gh-lock-chips</code> flag ก่อน inject (เหมือน <code>.gh-opt-cat-det</code>)</li>
+<li><b>scope ต่อ .ch</b> — querySelector ใน <code>ch</code> เท่านั้น ห้าม querySelector ทั้งหน้า</li>
+<li><b>injectLockChips ทำงานหลัง buildItemOpts</b> — ต้องมี .o-slidelock ใน DOM ก่อน inject ชิป</li>
+<li><b>isGH flag ต้องส่งผ่าน</b> — groupGHOpts เรียกก่อน injectLockChips · ทั้งสองต้องรู้ว่า ch นี้ isGH</li>
+<li><b>ลบ 'ชุดล็อค' จาก kw หมวด 🔧</b> ถ้าใช้แนวทาง inject — กัน groupGHOpts จับ .o-slidelock label เข้าหมวดมือจับ</li>
+<li><b>หมวด 🪟 มุ้ง ไม่มีใน หลังคา</b> — groupGHOpts เรียกทุก ch ใน isGH แต่หลังคา (group=3) ไม่มี mosquito → ไม่มี bucket มุ้ง = ไม่โผล่ (OK อยู่แล้วตาม if(!buckets[i].length) return)</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPEC — Form Container UX (4 issues) · ส่ง Dev · 2026-06-12</title>
+<style>
+:root{
+  --red:#E61E28; --red-dark:#B3151D; --bg:#F7F8FA; --card:#fff;
+  --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937;
+  --green:#059669; --amber:#D97706; --blue:#1D4ED8;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Sarabun","Prompt","Leelawadee UI","Noto Sans Thai","Segoe UI",Tahoma,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+h1{font-size:20px;color:var(--red-dark);margin:0 0 4px;}
+.meta{font-size:12px;color:var(--muted);margin-bottom:20px;}
+h2{font-size:15px;color:var(--red-dark);margin:28px 0 8px;border-left:4px solid var(--red);padding-left:10px;}
+h3{font-size:13px;margin:14px 0 6px;color:#374151;}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+code{background:#F3F4F6;border-radius:4px;padding:1px 5px;font-size:12px;font-family:Consolas,monospace;color:#374151;}
+pre{background:#1F2937;color:#E5E7EB;border-radius:8px;padding:12px 14px;font-size:12px;
+  font-family:Consolas,monospace;overflow-x:auto;margin:8px 0;}
+pre .c{color:#6B7280;} pre .k{color:#93C5FD;} pre .v{color:#FCD34D;} pre .s{color:#86EFAC;}
+
+/* STATUS TAGS */
+.tag{display:inline-block;border-radius:5px;padding:1px 8px;font-size:11px;font-weight:700;white-space:nowrap;}
+.tag-must{background:#FEE2E2;color:#991B1B;}
+.tag-ux{background:#DBEAFE;color:#1E40AF;}
+.tag-ask{background:#FEF9C3;color:#854D0E;}
+.tag-done{background:#DCFCE7;color:#166534;}
+
+/* BEFORE/AFTER */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
+@media(max-width:600px){.ba{grid-template-columns:1fr;}}
+.ba-col{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;}
+.ba-col.before{background:#FEF2F2;border-color:#FECACA;}
+.ba-col.after{background:#F0FDF4;border-color:#BBF7D0;}
+.ba-label{font-size:11px;font-weight:700;margin-bottom:6px;}
+.ba-col.before .ba-label{color:#DC2626;}
+.ba-col.after .ba-label{color:#059669;}
+
+/* TABLE */
+table.spec{width:100%;border-collapse:collapse;font-size:13px;}
+table.spec th{background:var(--red-dark);color:#fff;padding:7px 10px;text-align:left;}
+table.spec td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+table.spec tr:nth-child(even) td{background:#FAFBFD;}
+table.spec code{font-size:11px;}
+
+/* ASK BOX */
+.ask-box{background:#FFFBEB;border:2px solid #F59E0B;border-radius:10px;padding:14px 16px;margin-top:16px;}
+.ask-box h3{color:#92400E;margin:0 0 10px;font-size:14px;}
+.ask-item{display:flex;gap:10px;align-items:baseline;margin-bottom:8px;font-size:13px;}
+.ask-num{flex:none;background:#F59E0B;color:#fff;border-radius:50%;width:22px;height:22px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.note-inline{font-size:12px;color:var(--muted);}
+hr{border:none;border-top:1px dashed var(--line);margin:24px 0;}
+.warn{background:#FFF7ED;border-left:3px solid #F97316;border-radius:0 6px 6px 0;
+  padding:8px 12px;font-size:13px;margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SPEC — Form Container UX · 4 Issues</h1>
+<div class="meta">
+  วันที่: 2026-06-12 · ไฟล์อ้างอิง: <code>public/calculator/index.html</code> (R3.9 · 4,330 บรรทัด)<br>
+  ดราฟ interactive: <code>docs/DRAFT-formtop-ux-2026-06-12.html</code><br>
+  Dev: แก้เฉพาะ container/form กลาง — ไม่ใช่ G1-G6 (ทำไปแล้ว)
+</div>
+
+<div style="background:#ECFDF5;border:2px solid #10B981;border-radius:10px;padding:14px 16px;margin:14px 0;">
+<div style="font-size:15px;font-weight:800;color:#065F46;margin-bottom:8px;">✅ มติพี่นัท (เคาะ 12 มิ.ย. · ทำตามนี้ — ทับข้อเสนอเดิมในไฟล์)</div>
+<ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.7;">
+<li><b>Issue 2 — ตัด "เลือก OPTION สำเร็จรูป" (<code>.set-optpreset</code>) ทิ้งทั้งดรอปดาวน์</b> · มัน<b>ซ้ำ</b>กับการเลือกกระจกในหมวด (ซึ่งคิดราคา/ตร.ม. อัตโนมัติอยู่แล้ว) · เหลือเฉพาะ OPTION <b>กรอกเอง</b> (<code>.set-opttext</code> + <code>.set-optdelta</code> ±บาท + ปุ่ม + เพิ่ม option) — auto-price มาจากการเลือกกระจกในหมวด แต่ <b>แก้ข้อความ/ราคาเองได้</b> · ⇒ ลบ row/element ของ <code>.set-optpreset</code> + handler ที่เกี่ยว (เช็ค caller ก่อนลบ)</li>
+<li><b>Issue 3 — ตำแหน่ง <code>.addzone</code> (เพิ่มส่วน+เพิ่มด่วน รวม)</b>: วาง <b>ใต้ ลักษณะการเปิด/จำนวนบาน · เหนือ OPTION</b> → ลำดับ: การ์ดบาน(ขนาด/สี/กระจก/จำนวนบาน) → <b>addzone</b> → OPTION (details) · = <code>set-parts → addzone → set-opt</code> (ตรงข้อเสนอเดิมแล้ว)</li>
+<li><b>Issue 1</b>: ปุ่มบนบรรทัดเดียว (เตี้ยลง 46→36px) · มือถือย่อ "ใบเสนอราคา"→"ใบเสนอ" ได้</li>
+<li><b>Issue 4</b>: แก้ชื่อ 4 ตัวให้ชัด (ใส่ "(base 4,000)" ฯลฯ ตามตาราง Issue 4)</li>
+<li><b>คงไว้ (ยังไม่ตัด)</b>: ชิปเพิ่มด่วน 8 ตัวเท่าเดิม · OPTION ระดับชุด + ระดับบาน คงทั้งคู่ (ถ้าจะตัดค่อยว่าทีหลัง)</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>Issue 1 — ปุ่มโหมดบนสุด: เล็กลง + บรรทัดเดียว</h2>
+
+<div class="card">
+  <div class="ba">
+    <div class="ba-col before">
+      <div class="ba-label">BEFORE (ปัจจุบัน)</div>
+      CSS <code>.tabs</code>: <code>display:grid; grid-template-columns:1fr 1fr 1fr</code> (3 col จริงแต่ใน HTML มี 4 ปุ่ม)<br>
+      CSS <code>.tab</code>: <code>height:46px; font-size:15px;</code><br>
+      บน 375px → ตัวอักษร "ใบเสนอราคา" ล้น กด 2 บรรทัด
+    </div>
+    <div class="ba-col after">
+      <div class="ba-label">AFTER (เสนอ)</div>
+      <code>.tabs</code>: <code>display:flex; gap:6px; padding:4px; background:#F3F4F6; border-radius:12px;</code><br>
+      <code>.tab</code>: <code>flex:1; height:36px; border:none; border-radius:9px; font-size:13px; background:transparent;</code><br>
+      active: <code>background:#fff; color:var(--red-dark); box-shadow:0 1px 3px rgba(0,0,0,.1);</code>
+    </div>
+  </div>
+
+  <h3>จุดโค้ดอ้างอิง (grep symbols)</h3>
+  <pre><span class="c">/* grep: .tabs{ (CSS บรรทัด ~23) */</span>
+<span class="c">/* BEFORE */</span>
+.tabs<span class="k">{</span>display:grid;grid-template-columns:<span class="v">1fr 1fr 1fr</span>;gap:8px;margin-bottom:14px;<span class="k">}</span>
+.tab<span class="k">{</span>height:<span class="v">46px</span>;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);
+  font-size:<span class="v">15px</span>;font-weight:700;font-family:inherit;cursor:pointer;<span class="k">}</span>
+.tab.on<span class="k">{</span>background:var(--red);border-color:var(--red);color:#fff;<span class="k">}</span>
+
+<span class="c">/* AFTER */</span>
+.tabs<span class="k">{</span>display:flex;gap:6px;padding:4px;background:#F3F4F6;border-radius:12px;margin-bottom:14px;<span class="k">}</span>
+.tab<span class="k">{</span>flex:1;height:<span class="v">36px</span>;border:none;border-radius:9px;background:transparent;
+  color:var(--muted);font-size:<span class="v">13px</span>;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap;<span class="k">}</span>
+.tab.on<span class="k">{</span>background:#fff;color:var(--red-dark);box-shadow:0 1px 3px rgba(0,0,0,.1);<span class="k">}</span></pre>
+
+  <pre><span class="c">/* grep: @media(max-width:768px) → .tabs (CSS บรรทัด ~150) — ตัดทิ้งได้แล้ว */</span>
+<span class="c">/* BEFORE: .tabs{flex-wrap:wrap;} .tab{flex:1 1 45%;font-size:13px;padding:8px;} */</span>
+<span class="c">/* AFTER: ลบ media query นี้ออก (flex 1 row พอแล้ว) */</span></pre>
+
+  <div class="warn">
+    🟡 ถามพี่นัท: ชื่อ tab "ใบเสนอราคา" (7 ตัว) ย่อเป็น "ใบเสนอ" ได้ไหม บน 375px จะสบายขึ้น
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Issue 2 — OPTION ซ้ำ 2 ช่อง: วิเคราะห์ + เสนอจัดใหม่</h2>
+
+<div class="card">
+  <h3>ผลตรวจโค้ด: 2 ช่องทำงาน "ต่างกัน" ไม่ซ้ำ</h3>
+  <table class="spec">
+    <thead><tr><th>ช่อง</th><th>class/selector</th><th>กลไก</th><th>บวกราคาอย่างไร</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>(ก) OPTION สำเร็จรูป</td>
+        <td><code>.set-optpreset</code></td>
+        <td>dropdown <code>SET_OPT_PRESETS[]</code> → fn <code>addSetOptPreset(sel)</code> → เติมข้อความ + ราคา auto ×พื้นที่ ลงช่อง (ข)</td>
+        <td>เขียนลง <code>.set-opttext</code> + <code>.set-optdelta</code> แล้วเรียก <code>calcQuote()</code></td>
+      </tr>
+      <tr>
+        <td>(ข) OPTION ทางเลือก (กรอกเอง)</td>
+        <td><code>.set-opttext</code> + <code>.set-optdelta</code></td>
+        <td>text input + number input · อ่านใน <code>readItem()</code> เป็น <code>groupOptText</code> + <code>groupOptDelta</code></td>
+        <td>บวกเข้า <code>gTotal</code> ผ่าน <code>groupOptDelta</code> (บรรทัด ~4037-4038) และขึ้นข้อความในใบ</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warn">
+    ช่อง (ก) เป็นแค่ shortcut เติมข้อความ → ช่อง (ข) · ช่อง (ข) คือ source of truth จริง<br>
+    ปัญหา: ทั้ง 2 ช่องอยู่บนหัวการ์ดใน <code>.set-opt</code> ก่อนผู้ใช้กรอกข้อมูลบาน
+  </div>
+
+  <h3>เสนอ: ย้าย .set-opt ลงล่าง + ห่อด้วย details</h3>
+  <div class="ba">
+    <div class="ba-col before">
+      <div class="ba-label">BEFORE</div>
+      ใน <code>addSet()</code> บรรทัด ~2019:<br>
+      HTML order: <code>set-head → set-opt → addsec-quickstrip → set-btns-top → set-parts</code><br>
+      <code>.set-opt</code> อยู่ก่อน <code>.set-parts</code>
+    </div>
+    <div class="ba-col after">
+      <div class="ba-label">AFTER</div>
+      HTML order: <code>set-head → set-parts → [addzone] → set-opt (details)</code><br>
+      ย้าย <code>.set-opt</code> ไปท้ายสุด ห่อด้วย <code>&lt;details&gt;</code><br>
+      summary: "ออปชั่น / OPTION ชุดนี้"
+    </div>
+  </div>
+
+  <h3>จุดโค้ดอ้างอิง (grep symbols)</h3>
+  <pre><span class="c">/* grep: addSetOptPreset (fn · บรรทัด ~2122) — ไม่ต้องแก้ logic */</span>
+<span class="c">/* grep: box.innerHTML= ใน addSet() (บรรทัด ~2019) — แก้ลำดับ HTML */</span>
+
+<span class="c">/* เพิ่ม CSS สำหรับ details wrapper */</span>
+.set-opt-det<span class="k">{</span>border:1px solid var(--line);border-radius:10px;margin-top:8px;overflow:hidden;<span class="k">}</span>
+.set-opt-det summary<span class="k">{</span>padding:9px 12px;font-size:13px;font-weight:600;color:var(--red-dark);
+  background:#FFF9F9;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;<span class="k">}</span>
+.set-opt-det summary::after<span class="k">{</span>content:<span class="s">"▸"</span>;margin-left:auto;font-size:11px;transition:transform .2s;<span class="k">}</span>
+.set-opt-det[open] summary::after<span class="k">{</span>transform:rotate(90deg);<span class="k">}</span>
+
+<span class="c">/* HTML ใหม่ใน addSet() — .set-opt ย้ายล่างสุดใน setbox template */</span>
+<span class="c">/* &lt;details class="set-opt-det"&gt;
+     &lt;summary&gt;ออปชั่น / OPTION ชุดนี้&lt;/summary&gt;
+     &lt;div class="set-opt" style="padding:10px 12px;"&gt;
+       ... (เนื้อหาเดิมของ .set-opt ย้ายมา)
+     &lt;/div&gt;
+   &lt;/details&gt; */</span></pre>
+
+  <div class="warn">
+    🟡 ถามพี่นัท (1): ช่อง (ก) OPTION สำเร็จรูป + ช่อง (ข) กรอกเอง — ควรรวม UI เป็นกล่องเดียว หรือคงแยก 2 ช่องแต่ย้ายลงล่าง?<br>
+    🟡 ถามพี่นัท (2): ระดับ OPTION ชุด (<code>set-optdelta</code>) กับระดับ OPTION บาน (<code>.oc-row</code> ใน item) ซ้อนกันไหม? ควรมีทั้งสองระดับไหม?
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Issue 3 — เพิ่มส่วน + เพิ่มด่วน: รวม + ย้ายล่าง</h2>
+
+<div class="card">
+  <h3>สถานะปัจจุบัน</h3>
+  <table class="spec">
+    <thead><tr><th>Element</th><th>selector/class</th><th>ตำแหน่งปัจจุบัน</th><th>การทำงาน</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>⚡ เพิ่มด่วน</td>
+        <td><code>.addsec-quickstrip</code></td>
+        <td>ก่อน <code>.set-btns-top</code></td>
+        <td>ชิป 8 รายการ (QUICK_ADD_CHIPS) → <code>quickAddItem()</code> · กดซ้ำได้ ชิปไม่หาย</td>
+      </tr>
+      <tr>
+        <td>+ เพิ่มส่วน</td>
+        <td><code>.set-addpart</code> ใน <code>.set-btns-top</code></td>
+        <td>ก่อน <code>.set-parts</code></td>
+        <td>→ <code>addItem()</code> ทันที (1 tap) · กรณี GH → เพิ่มบาน</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>เสนอ: รวมเป็น .addzone ล่าง set-parts</h3>
+  <div class="ba">
+    <div class="ba-col before">
+      <div class="ba-label">BEFORE (ลำดับ)</div>
+      <code>set-head</code><br>
+      <code>set-opt</code> (OPTION)<br>
+      <code>addsec-quickstrip</code> (⚡ ด่วน)<br>
+      <code>set-btns-top</code> (+ เพิ่มส่วน)<br>
+      <code>set-parts</code> (การ์ดบาน)
+    </div>
+    <div class="ba-col after">
+      <div class="ba-label">AFTER (ลำดับใหม่)</div>
+      <code>set-head</code><br>
+      <code>set-parts</code> (การ์ดบาน) ← ขยับขึ้น<br>
+      <code>addzone</code> (⚡+เพิ่มส่วน รวมล่าง) ← ใหม่<br>
+      <code>set-opt details</code> (OPTION ชุด)
+    </div>
+  </div>
+
+  <h3>จุดโค้ดอ้างอิง (grep symbols)</h3>
+  <pre><span class="c">/* grep: addsec-quickstrip (CSS บรรทัด ~211) */</span>
+<span class="c">/* เพิ่ม CSS ใหม่สำหรับ .addzone */</span>
+.addzone<span class="k">{</span>margin-top:8px;border:1.5px solid #FFB300;border-radius:12px;overflow:hidden;<span class="k">}</span>
+.addzone-head<span class="k">{</span>background:#FFF3E0;padding:8px 14px;display:flex;align-items:center;gap:8px;<span class="k">}</span>
+.addzone-head-txt<span class="k">{</span>font-size:13px;font-weight:700;color:#92400E;<span class="k">}</span>
+.addzone-body<span class="k">{</span>padding:10px 12px;<span class="k">}</span>
+.addzone-chips<span class="k">{</span>display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;<span class="k">}</span>
+.addzone-divider<span class="k">{</span>display:flex;align-items:center;gap:8px;color:#9CA3AF;font-size:11px;margin:6px 0;<span class="k">}</span>
+.addzone-divider span<span class="k">{</span>flex:1;height:1px;background:#E5E7EB;<span class="k">}</span>
+<span class="c">/* .addsec-chip ใช้เดิม — ไม่ต้องแก้ */</span>
+<span class="c">/* .set-addpart ปรับ class ใหม่ หรือย้าย element เข้า .addzone-body */</span></pre>
+
+  <pre><span class="c">/* grep: box.innerHTML= ใน addSet() (บรรทัด ~2019) */</span>
+<span class="c">/* HTML template ใหม่ (ใน addSet) */</span>
+<span class="c">/* ลำดับ:
+   1. .set-head
+   2. .set-parts (ว่าง → addItem() เพิ่มทีหลัง)
+   3. .addzone
+      - .addzone-head "⚡ เพิ่มส่วน / เพิ่มด่วน"
+      - .addzone-body
+          - chips (เดิม .addsec-quickstrip → ย้ายมา)
+          - divider "หรือ"
+          - button "+ เพิ่มส่วน" (เดิม .set-addpart)
+   4. details.set-opt-det → .set-opt (OPTION)
+*/</span></pre>
+
+  <pre><span class="c">/* grep: box.querySelectorAll('.set-addpart') (event binding · บรรทัด ~2037) */</span>
+<span class="c">/* grep: box.querySelectorAll('.addsec-chip') (event binding · บรรทัด ~2023) */</span>
+<span class="c">/* Event binding 2 จุดนี้ไม่ต้องแก้ logic — แค่ HTML structure เปลี่ยน */</span></pre>
+
+  <pre><span class="c">/* grep: var _qs = box.querySelector('.addsec-quickstrip') (refreshSet · บรรทัด ~1868) */</span>
+<span class="c">/* AFTER: เปลี่ยน selector เป็น .addzone แทน .addsec-quickstrip */</span>
+<span class="c">/* if(_qs) _qs.style.display = hasGH ? 'none' : '';  ← logic เดิม คงไว้ */</span></pre>
+
+  <div class="warn">
+    🟡 ถามพี่นัท: ชิป QUICK_ADD_CHIPS ปัจจุบัน 8 รายการ — ตัดเหลือ 5-6 ที่ใช้จริงบ่อยสุดได้ไหม หรือคง 8?
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Issue 4 — COMMON_OPTS: ตรวจชื่อ + เสนอแก้</h2>
+
+<div class="card">
+  <h3>COMMON_OPTS definition</h3>
+  <pre><span class="c">/* grep: const COMMON_OPTS= (บรรทัด ~935) */</span>
+<span class="c">/* ใช้ใน: buildItemOpts (render UI) + readItem (อ่านค่า) + calcPrice (คิดเงิน) */</span></pre>
+
+  <p>COMMON_OPTS มี 6 รายการ — ตรวจแล้ว <strong>ไม่มีซ้ำกัน</strong> แต่ละตัวทำงานต่างกัน</p>
+  <table class="spec">
+    <thead>
+      <tr>
+        <th>id</th><th>ชื่อปัจจุบัน (label)</th><th>ราคา</th>
+        <th>ใช้กับสินค้า (ids)</th><th>เสนอแก้ชื่อ</th><th>เหตุผล</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>soft_close</code></td>
+        <td>soft close</td>
+        <td>4,000/ชุด</td>
+        <td>inner_top_stack, inner_top_xseries</td>
+        <td><strong>Soft Close (สลักหน่วงบาน)</strong></td>
+        <td>ภาษาอังกฤษล้วน เซลล์อาจต้องอธิบายลูกค้า เพิ่มคำไทยช่วย</td>
+      </tr>
+      <tr>
+        <td><code>sling</code></td>
+        <td>สลิงเปิดซ้อน(×บาน)</td>
+        <td>2,000/บาน</td>
+        <td>inner_top_stack, inner_top_xseries</td>
+        <td><em>คงเดิม</em></td>
+        <td>ชัดเจน · สื่อได้ดี</td>
+      </tr>
+      <tr>
+        <td><code>hide_beam</code></td>
+        <td>ซ่อนคาน</td>
+        <td>4,000 base + 500/ม. (เกิน 3ม.)</td>
+        <td>inner_top_stack/slimlux/xseries, folding, folding_xseries</td>
+        <td><strong>ซ่อนคาน (base 4,000)</strong></td>
+        <td>เพิ่มราคา base ให้เซลล์เดา ballpark ได้ทันที</td>
+      </tr>
+      <tr>
+        <td><code>hide_track</code></td>
+        <td>ซ่อนราง</td>
+        <td>4,000 base + 500/ม. (เกิน 3ม.)</td>
+        <td>folding, folding_xseries</td>
+        <td><strong>ซ่อนราง (base 4,000)</strong></td>
+        <td>เพิ่มราคา base เช่นเดียวกัน</td>
+      </tr>
+      <tr>
+        <td><code>u_track</code></td>
+        <td>รางยู</td>
+        <td>4,000 base + 500/ม. (เกิน 2ม.)</td>
+        <td>folding*, inner_top_slimlux/xseries</td>
+        <td><strong>ฝังรางยู (U-Track)</strong></td>
+        <td>เพิ่มคำว่า "ฝัง" (งานพื้น) + ตัวย่ออังกฤษให้ทีมเทคนิคเข้าใจตรงกัน</td>
+      </tr>
+      <tr>
+        <td><code>beam_support</code></td>
+        <td>เสริมคานซัพพอร์ท</td>
+        <td>4,000 base + 500/ม. (เกิน 3ม.)</td>
+        <td>inner_top_*, folding*, pc_door_2/4</td>
+        <td><em>คงเดิม</em></td>
+        <td>ชัดเจน · มีทั้งไทย+ทับศัพท์แล้ว</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>จุดโค้ดอ้างอิง</h3>
+  <pre><span class="c">/* grep: const COMMON_OPTS= (บรรทัด ~935) — แก้ label ในอาร์เรย์ */</span>
+<span class="c">/* BEFORE */</span>
+{id:'soft_close',label:'<span class="v">soft close</span>',price:4000,...}
+{id:'hide_beam',label:'<span class="v">ซ่อนคาน</span>',perLen:true,base:4000,...}
+{id:'hide_track',label:'<span class="v">ซ่อนราง</span>',perLen:true,base:4000,...}
+{id:'u_track',label:'<span class="v">รางยู</span>',perLen:true,base:4000,...}
+
+<span class="c">/* AFTER */</span>
+{id:'soft_close',label:'<span class="s">Soft Close (สลักหน่วงบาน)</span>',price:4000,...}
+{id:'hide_beam',label:'<span class="s">ซ่อนคาน (base 4,000)</span>',perLen:true,base:4000,...}
+{id:'hide_track',label:'<span class="s">ซ่อนราง (base 4,000)</span>',perLen:true,base:4000,...}
+{id:'u_track',label:'<span class="s">ฝังรางยู (U-Track)</span>',perLen:true,base:4000,...}
+
+<span class="c">/* label นี้โผล่ใน buildItemOpts HTML (checkbox label) → เซลล์เห็นทันที */</span>
+<span class="c">/* ไม่กระทบ logic คิดราคา — แก้แค่ string label */</span></pre>
+
+  <h3>ของกลางอื่นๆ ที่โผล่ทุกการ์ด (ไม่ใช่ COMMON_OPTS แต่ตรวจด้วย)</h3>
+  <table class="spec">
+    <thead><tr><th>selector</th><th>ชื่อที่ใช้</th><th>สถานะ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>.o-extrawork</code></td>
+        <td>งานเสริม/วิศวกรรม (text input)</td>
+        <td><span class="tag tag-done">คงเดิม</span> — ไม่มีราคา บันทึกในใบเท่านั้น</td>
+      </tr>
+      <tr>
+        <td><code>.o-removeold</code></td>
+        <td>รื้อของเดิม (checkbox)</td>
+        <td><span class="tag tag-done">คงเดิม</span> — ชัดเจน</td>
+      </tr>
+      <tr>
+        <td><code>.o-fcm</code></td>
+        <td>ครอบวงกบอลู (input ม.)</td>
+        <td><span class="tag tag-done">คงเดิม</span> — G1 audit ไปแล้ว</td>
+      </tr>
+      <tr>
+        <td><code>.o-dfm</code></td>
+        <td>วงกบไม้ (กรอกม. · บางสินค้า)</td>
+        <td><span class="tag tag-done">คงเดิม</span></td>
+      </tr>
+      <tr>
+        <td><code>.o-solidlower</code></td>
+        <td>แผ่นทึบล่าง (ลูกฟูก/คอมโพสิท)</td>
+        <td><span class="tag tag-done">คงเดิม</span> — G1 audit ไปแล้ว</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warn">
+    🟡 ถามพี่นัท: "ซ่อนคาน" / "ซ่อนราง" — เซลล์รู้ความหมายดีไหม หรืออยากให้ใส่ราคา base ในวงเล็บด้วย?
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>สรุปลำดับงาน dev + priority</h2>
+
+<div class="card">
+  <table class="spec">
+    <thead><tr><th>#</th><th>งาน</th><th>ยาก/ง่าย</th><th>priority</th><th>หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>แก้ CSS .tabs + .tab (Issue 1)</td>
+        <td>ง่าย — CSS อย่างเดียว</td>
+        <td><span class="tag tag-must">ทำก่อน</span></td>
+        <td>grep .tabs{ · 3 บรรทัด</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>แก้ label COMMON_OPTS 4 ตัว (Issue 4)</td>
+        <td>ง่าย — string เท่านั้น</td>
+        <td><span class="tag tag-must">ทำก่อน</span></td>
+        <td>grep const COMMON_OPTS= · ไม่กระทบ logic</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>ย้าย .set-opt + ห่อ details (Issue 2)</td>
+        <td>กลาง — HTML template ใน addSet()</td>
+        <td><span class="tag tag-ux">รอถาม 🟡 ก่อน</span></td>
+        <td>รอยืนยันพี่นัท เรื่องรวม/แยก</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>รวม quickstrip+เพิ่มส่วน → addzone ล่าง (Issue 3)</td>
+        <td>กลาง — HTML + selector ใน refreshSet</td>
+        <td><span class="tag tag-ux">รอถาม 🟡 ก่อน</span></td>
+        <td>grep var _qs = box.querySelector('.addsec-quickstrip')</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<div class="ask-box">
+  <h3>🟡 ลิสต์ถามพี่นัท (รวม · ก่อน dev ลงมือ Issue 2-3)</h3>
+
+  <div class="ask-item">
+    <span class="ask-num">1</span>
+    <span><b>[Issue 1]</b> tab "ใบเสนอราคา" → ย่อเป็น "ใบเสนอ" บน mobile ได้ไหม? (7 ตัว → 5 ตัว ช่วยมาก)</span>
+  </div>
+
+  <div class="ask-item">
+    <span class="ask-num">2</span>
+    <span><b>[Issue 2]</b> OPTION 2 ช่อง (สำเร็จรูป auto + กรอกเอง) — รวมเป็น details กล่องเดียวพอไหม หรือ OPTION สำเร็จรูปควรยังอยู่ด้านนอก?</span>
+  </div>
+
+  <div class="ask-item">
+    <span class="ask-num">3</span>
+    <span><b>[Issue 2]</b> OPTION ระดับชุด (<code>set-optdelta</code>) กับ OPTION ระดับบาน (<code>.oc-row</code> ใน item) — ใช้พร้อมกันบ่อยไหม? หรือควรเลือกมีแค่ระดับเดียว?</span>
+  </div>
+
+  <div class="ask-item">
+    <span class="ask-num">4</span>
+    <span><b>[Issue 3]</b> ชิปเพิ่มด่วน QUICK_ADD_CHIPS ปัจจุบัน 8 ชิป — ตัดเหลือ 5-6 ได้ไหม? หรือเซลล์ใช้ทุกชิป?</span>
+  </div>
+
+  <div class="ask-item">
+    <span class="ask-num">5</span>
+    <span><b>[Issue 4]</b> "ซ่อนคาน" / "ซ่อนราง" — เซลล์รู้ความหมายดีพอไหม หรือควรใส่ราคา base "(base 4,000)" ในวงเล็บ?</span>
+  </div>
+</div>
+
+<hr>
+<p style="font-size:12px;color:var(--muted);">
+  ไฟล์นี้: <code>docs/SPEC-formtop-ux-2026-06-12.html</code> ·
+  ดราฟ: <code>docs/DRAFT-formtop-ux-2026-06-12.html</code> ·
+  ห้ามแก้ <code>public/calculator/index.html</code> ก่อนพี่นัทอนุมัติ 🟡
+</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>UX Checklist — แก้เครื่องคิดราคา ส่งแชทหลัก · 2026-06-09</title>
+<style>
+  @page { size: A4; margin: 13mm 11mm; }
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.45;margin:0;}
+  h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10.5px;margin-bottom:8px;}
+  .how{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:7px;padding:8px 11px;margin:8px 0;font-size:11px;}
+  h2{font-size:14px;margin:16px 0 6px;padding:6px 10px;border-radius:5px;color:#fff;page-break-after:avoid;}
+  h2.p1{background:#B3151D;} h2.p2{background:#B7791F;} h2.p3{background:#3B5EA6;} h2.p4{background:#6B7280;}
+  h2 .c{float:right;font-size:11px;font-weight:400;opacity:.9;}
+  .item{border:1px solid #E5E7EB;border-radius:7px;padding:7px 10px 7px 30px;margin-bottom:6px;position:relative;page-break-inside:avoid;}
+  .chk{position:absolute;left:9px;top:7px;width:14px;height:14px;border:1.5px solid #9CA3AF;border-radius:3px;}
+  .item h3{font-size:12px;margin:0 0 3px;}
+  .row{display:flex;gap:10px;}
+  .col{flex:1;}
+  .lbl{font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px;}
+  ul{margin:0;padding-left:14px;} li{margin-bottom:2px;}
+  ul.fix li::marker{color:#2F855A;}
+  code{font-family:"Consolas",monospace;font-size:10px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;word-break:break-all;}
+  .anchor{font-family:"Consolas",monospace;font-size:10px;background:#FFF7ED;border:1px dashed #FDBA74;padding:1px 4px;border-radius:3px;color:#9A3412;}
+  .sev{display:inline-block;font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;}
+  .s-r{background:#FEE2E2;color:#B3151D;} .s-y{background:#FEF3C7;color:#92400E;} .s-g{background:#E5E7EB;color:#374151;}
+  .foot{margin-top:14px;font-size:9.5px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>UX Checklist — แก้เครื่องคิดราคา <code>index.html</code></h1>
+<div class="sub">จากแชทตรวจ (QA รอบใหญ่) → แชทหลัก · 9 มิ.ย. 2026 · ติ๊ก ☐ เมื่อแก้เสร็จ · ฟังก์ชันการคำนวณผ่านหมดแล้ว เหลือ UX/ข้อมูล</div>
+
+<div class="how">
+<b>หมายเหตุ:</b> เครื่อง<b>คำนวณถูก 100%</b> แล้ว (ดู TEST-REPORT) · รายการนี้คือ <b>UX + ข้อมูล + คู่มือ</b> ไม่บล็อก deploy แต่ช่วยให้ใช้งานง่าย/กันกรอกผิด ·
+ใช้ <span class="anchor">ข้อความค้นหา</span> หาจุดแก้ (เลขบรรทัดขยับ) · เรียงตามความสำคัญ P1→P4
+</div>
+
+<!-- P1 -->
+<h2 class="p1">P1 — ทำเลย (เล็ก + กันพลาด/กันงง) <span class="c">2 จุด</span></h2>
+
+<div class="item"><span class="chk"></span>
+<h3>1. สีกรอบมุ้ง addon เปลี่ยนแล้วราคาไม่รีเฟรช (BUG-001) <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>เลือกสีกรอบมุ้งใน addon ต่อบาน แล้วราคาไม่อัพเดท ต้องกด field อื่นก่อน (select ขาด event)</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">o-mosqcolor</span> → เติม <code>onchange="calcQuote()"</code> ใน select นั้น (1 attribute)</li></ul></div>
+</div></div>
+
+<div class="item"><span class="chk"></span>
+<h3>2. ลบ dead code "ปิดปลาย" ในใบเสนอราคา <span class="sev s-g">🟢</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>ตัดตัวเลือก "ปิดปลาย" auto ออกแล้ว แต่ยังมี <code>if(_rfend==='ปิดปลาย')</code> ค้างใน buildQuoteDoc (value ไม่มีทางมาแล้ว)</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">_rfend === 'ปิดปลาย'</span> → ลบ branch นั้นทิ้ง</li></ul></div>
+</div></div>
+
+<!-- P2 RED -->
+<h2 class="p2">P2 — UX สำคัญ (กันกรอกผิด/เข้าใจผิดราคา) <span class="c">🔴 5 จุด</span></h2>
+
+<div class="item"><span class="chk"></span>
+<h3>3. ราวกันตก กรอก "ความยาว" ในช่องที่ป้ายว่า "กว้าง" <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>imp1-6 (method per_length_tier) อ่านความยาวจากช่อง "กว้าง" → ผู้ใช้ใหม่กรอกความกว้างราว ราคาเพี้ยนทันที</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">per_length_tier</span> → เปลี่ยน label ช่องแรกเป็น "ความยาว (ม.)" + ซ่อนช่อง "สูง" สำหรับสินค้ากลุ่มนี้</li></ul></div>
+</div></div>
+
+<div class="item"><span class="chk"></span>
+<h3>4. ครอบท่อ PVC / ปิดซ่อนรางน้ำ — ช่องกว้าง×สูง ไม่ตรงความหมาย <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>ครอบ PVC ใช้ช่อง "กว้าง" เป็นจำนวนท่อน · ช่อง "สูง" ไม่มีผล แต่ยังโชว์ → งงว่ากรอกอะไร</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">pvc_cover</span> / <span class="anchor">gutter_cover</span> → โชว์ช่องเดียว + ป้าย "จำนวนท่อน (1.5 ม./ท่อน)" หรือ hint อธิบาย W,H</li></ul></div>
+</div></div>
+
+<div class="item"><span class="chk"></span>
+<h3>5. โช้คบานเปิด — ยูโร (dropdown) กับ X-series (checkbox) ไม่เหมือนกัน <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>สินค้าเดียวกันแต่ UI โช้คคนละแบบ → switch รุ่นแล้วงงว่าโช้คอยู่ไหน</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">o-closer</span> + <span class="anchor">casement_xseries</span> → รวมรูปแบบให้เหมือนกัน (เลือกแนวเดียว)</li></ul></div>
+</div></div>
+
+<div class="item"><span class="chk"></span>
+<h3>6. หน้าสรุปยอด (summary box) ไม่โชว์ VAT/ยอดรวมจริง <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>เลือก VAT 7% แต่หน้าหลักโชว์ "(ก่อน VAT)" → ต้อง preview ก่อนถึงเห็นยอดที่คุยกับลูกค้า</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">ก่อน VAT</span> / <code>.sum</code> → เพิ่มบรรทัด "VAT 7%" + "รวมทั้งสิ้น (รวม VAT)" ใน summary box เมื่อ vatPct&gt;0</li></ul></div>
+</div></div>
+
+<div class="item"><span class="chk"></span>
+<h3>7. แท็บ "คิดเร็ว" ไม่บอกว่าใช้กระจก/สีอะไรคำนวณ <span class="sev s-r">🔴</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>คิดด้วยกระจกใส 6มม.+สีมาตรฐาน (index 0) แต่ไม่แจ้ง → อาจยกราคาให้ลูกค้าโดยไม่รวมกระจกพิเศษ</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>ค้น <span class="anchor">readQuickItem</span> → เพิ่มหมายเหตุใต้ยอด "ราคานี้ใช้กระจกใส 6มม. สีมาตรฐาน"</li></ul></div>
+</div></div>
+
+<!-- P3 YELLOW -->
+<h2 class="p3">P3 — UX ปานกลาง <span class="c">🟡 7 จุด</span></h2>
+<div class="item"><span class="chk"></span>
+<h3>8-14. รายการ 🟡 (รวม)</h3>
+<ul>
+<li><b>resetQuote ("ล้างทั้งหมด") ล้างไม่ครบ</b> — ค้น <span class="anchor">resetQuote</span> → เพิ่มล้าง custAddress/custContact/custPhone/sellerName/qdate/svc-*</li>
+<li><b>ช่องผู้ขาย (Sales) ซ่อนใน accordion</b> ส่งได้โดยไม่เตือน → ดึงออกมานอก หรือบังคับเลือก</li>
+<li><b>ระบบสีมุ้ง 2 แบบไม่ตรงกัน</b> — สินค้าใช้ดัชนีเลข (o-mscolor) / addon ใช้คีย์ข้อความ (o-mosqcolor) → รวมเป็นดัชนีเดียว</li>
+<li><b>ม่านซิป / เมทัลชีท</b> ป้ายออปชั่นไม่บอกราคา-หน่วย → เพิ่ม hint สั้นๆ (เช่น "ผ้า ~xxx บ./ตร.ม.")</li>
+<li><b>ปุ่ม "+ กั้นห้องกระจก"</b> ไม่มีคำอธิบายบนมือถือ → เพิ่ม hint ใต้ปุ่ม 1 บรรทัด</li>
+<li><b>Protection พื้น default ติ๊ก</b> แต่ยอดไม่บวกจนกด calc → เรียก calcQuote() ตอนโหลดหน้า (DOMContentLoaded)</li>
+<li><b>ส่วนลด% เงื่อนไข &lt;50,000 ลดไม่ได้</b> ไม่บอกล่วงหน้า · <b>AWN twin</b> ไม่ auto-fill บาน=2 → เพิ่ม hint/auto</li>
+</ul>
+</div>
+
+<!-- P4 DATA -->
+<h2 class="p4">P4 — ข้อมูล / คู่มือ <span class="c">5 จุด</span></h2>
+<div class="item"><span class="chk"></span>
+<h3>15-19. ข้อมูล + คู่มือ (รวม)</h3>
+<ul>
+<li><b>คู่มือผิด: กั้นห้องกระจก</b> เขียน "กรอกราคาเหมาเอง" แต่โค้ดคิดจากบานย่อยรวมกัน → แก้คู่มือ <span class="anchor">คู่มือ/คู่มือกรอกใบเสนอราคา.html</span> <span class="sev s-r">แก้</span></li>
+<li><b>สินค้า "ยกเลิกขาย" 5 ตัว</b> (E-series, aluinch×3, D-series) ยังโผล่ใน dropdown → ค้น <span class="anchor">ยกเลิกขาย</span> → disable หรือ filter ออก <span class="sev s-y">เช็ค</span></li>
+<li><b>คู่มือไม่มีค่าบริการ/ค่าติดตั้งม่านซิป</b> (jobServices + 5,000+600/ตร.ม.) → เพิ่มหัวข้ออธิบาย <span class="sev s-y">เพิ่ม</span></li>
+<li><b>mj_sd_sahara</b> มีเป็นสินค้าแต่ไม่มีใน addon ต่อบาน → ตัดสินใจว่าต้องการไหม <span class="sev s-y">เช็ค</span></li>
+<li><b>กระจกโค้ง margin ต่ำ</b> (★ ใสดัดโค้ง 10มม. ทุน 6,750/ขาย+8,550) → ยืนยันราคากับพี่นัท <span class="sev s-y">เช็ค</span></li>
+</ul>
+</div>
+
+<!-- separate task -->
+<h2 class="p3" style="background:#0F766E;">งานแยก (ไม่ใช่ UX) — ทำเพื่อให้ test รอบหน้าแม่น <span class="c">1 จุด</span></h2>
+<div class="item"><span class="chk"></span>
+<h3>20. Regenerate ใบเสนอราคาอ้างอิง</h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div>ใบอ้างอิง quote-05/09 + FULL-A/C/D ถูก gen ด้วยระบบกั้นห้องกระจกเก่า → cross-check ขึ้น FAIL (ไม่ใช่บั๊ก engine)</div>
+<div class="col"><div class="lbl">แก้</div><ul class="fix"><li>อัปเดต <span class="anchor">scripts/gen-quotes.mjs</span> (+ gen-quotes-c/d/full) ให้ใช้ <code>addGlasshouseSet()</code> + lumpsum แทน <code>prod:"glasshouse"</code>/<code>.o-ghprice</code> เดิม</li><li>รันใหม่ → regenerate ใบ → รัน cross-check ยืนยัน baseline ใหม่</li></ul></div>
+</div></div>
+
+<div class="foot">
+JR · UX Checklist (รอบ 2 หลัง functional fix) · ฟังก์ชันคำนวณผ่าน 100% แล้ว · ติ๊กเมื่อแก้เสร็จ · อ้างอิงเต็มใน TEST-REPORT-quotation-2026-06-09 · 9 มิ.ย. 2026
+</div>
+
+</body>
+</html>

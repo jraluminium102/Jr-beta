@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF G2 รอบ 3 — ค่าประตู + ราวกันตก (ส่งแก้ HTML)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm 13mm;}
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+  h2{font-size:13.5px;margin:13px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2.ok{background:#166534;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}td.c{text-align:center;white-space:nowrap;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:8px 11px;margin:7px 0;border-left:4px solid #B3151D;}
+  .box.q{border-left-color:#2563EB;background:#EFF6FF;}
+  .box h3{margin:0 0 4px;font-size:12.5px;}
+  .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;background:#FEE2E2;color:#991B1B;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:2px;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G2 รอบ 3 — ค่าประตู (ทำเป็นประตู) + ราวกันตก</h1>
+<div class="sub">มติพี่นัทหลังเฟิร์นเทส · ส่งแชทที่แก้ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026 · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="good">
+<b>ที่มา:</b> เฟิร์นเทสราคาจากการ์ด G2 → เจอจุดแย้งค่าประตู + ขอปรับชื่อราวกันตก · พี่นัทตัดสินครบแล้ว ด้านล่างคือสิ่งที่ต้องแก้
+</div>
+
+<h2>🔴 ต้องแก้</h2>
+
+<div class="box"><h3><span class="tag">R3-1</span> บานเปิดยูโร: เพิ่มบาน +5,000/บาน (เดิม +14,000 เหมา)</h3>
+<b>มติ:</b> บานเปิดคู่ยูโร = <b>+5,000 ต่อบานที่เพิ่ม</b> (ไม่ใช่ +14,000 เหมาเมื่อคู่)
+<ul>
+<li>จุด: <code>L578</code> <code>casement_euro ... addon:{kind:'door',extra:14000}</code> → เปลี่ยนค่า extra เป็น <b>5,000</b></li>
+<li>จุด: <code>addonCalc</code> (~<code>L975</code>) เดิม <code>panels&gt;=2 ? extra : 0</code> (เหมา) → ทำเป็น <b>ต่อบาน: <code>extra × (panels-1)</code></b> (บานที่ 2 เป็นต้นไป บานละ 5,000)</li>
+<li>เช็คซ้ำ: ยืนยันว่า "/บาน" = บานที่ 2,3,4… บานละ 5,000 (เช่น 3 บาน = +10,000)</li>
+</ul></div>
+
+<div class="box"><h3><span class="tag">R3-2</span> ช่องกรอกราคาประตูเอง (override) — รอสูตรจำนวนบาน</h3>
+<b>มติ:</b> จำนวนบาน × ตร.ม. ยังไม่มีสูตร final → <b>ทำช่องกรอกราคาประตูเองไว้ก่อน</b> (เซลล์พิมพ์ราคาถูกได้ทันที) · พอสูตรจริงมาค่อยเปลี่ยนเป็น auto
+<ul>
+<li>เพิ่ม input "ราคาประตู (กรอกเอง · บาท)" ในออปชั่น "ทำเป็นประตู" ของระแนง (ranae <code>o-doortype</code> ~<code>L2454</code>) + ระแนงเลื่อน <code>bar_slide</code> (<code>o-bsdoor</code> ~<code>L2414</code>)</li>
+<li>ถ้ากรอก &gt; 0 → ใช้ค่ากรอกแทน <code>basePrice(ประตู)</code> (override) · ถ้าว่าง → ใช้ auto เดิม</li>
+<li>ใช้ pattern เดียวกับช่อง override ราคา / <code>gatewood</code> ที่มีอยู่แล้ว</li>
+<li>หมายเหตุในใบ: ราคาประตูตามที่กรอก</li>
+</ul></div>
+
+<div class="box"><h3><span class="tag">R3-4</span> ราวกันตก imp1–imp6: เปลี่ยนชื่อ + เพิ่มออปชั่น</h3>
+<b>จุด:</b> <code>L655-660</code> (ชื่อ) · ใบจริงระบุแค่ "ราวกันตกกระจก" (ไม่แยกต่อเปลือย/ไม่ต่อเปลือยในชื่อ) · ตัด "บันได/ทำยากสุด/(ก)(ข)"
+<table>
+<tr><th>id</th><th>ชื่อใหม่</th><th>ออปชั่น</th></tr>
+<tr><td>imp1</td><td>ราวกันตกกระจกเฉียง หมุดแปะข้าง + (ออปชั่นกล่อง/ยูอลู) ราวมือจับด้านบน</td><td>หมุดสแตนเลสสีเงิน</td></tr>
+<tr><td>imp2</td><td>ราวกันตกกระจกเฉียง พร้อมวางยูเหล็ก ครอบอลูรับกระจกล่าง + (ออปชั่นกล่อง/ยู) ราวมือจับบน</td><td>เลือกสีอลู 3 สี (ขาว/เทา/ดำ)</td></tr>
+<tr><td>imp3</td><td>ราวกันตกกระจกเฉียง พร้อมเสาตั้งและราวจับบนอลูมิเนียม</td><td>เลือกสีอลู 3 สี</td></tr>
+<tr><td>imp4</td><td>ราวกันตกกระจกตรง หมุดแปะข้าง + (ออปชั่นกล่อง/ยูอลู) ราวมือจับด้านบน</td><td>หมุดสแตนเลสสีเงิน</td></tr>
+<tr><td>imp5</td><td>ราวกันตกกระจกตรง พร้อมวางยูเหล็ก ครอบอลูรับกระจกล่าง + (ออปชั่นกล่อง/ยู) ราวมือจับบน</td><td>เลือกสีอลู 3 สี</td></tr>
+<tr><td>imp6</td><td>ราวกันตกกระจกตรง พร้อมเสาตั้งและราวจับบนอลูมิเนียม</td><td>เลือกสีอลู 3 สี</td></tr>
+</table>
+<ul>
+<li>เพิ่มออปชั่น <b>ราวมือจับด้านบน</b> (กล่อง / ยู อลูมิเนียม) — ทุกตัว</li>
+<li>imp2,3,5,6 (47.2/47.4) เพิ่ม <b>เลือกสีอลู 3 สี</b> (ขาว/เทา/ดำ)</li>
+<li>imp1,4 (47.1/47.3) ระบุ <b>หมุดสแตนเลสสีเงิน</b> ในรายละเอียด</li>
+</ul></div>
+
+<h2 class="ok">✅ ยืนยันแล้ว — ไม่ต้องแก้</h2>
+<table>
+<tr><th style="width:26%;">เรื่อง</th><th>มติ</th></tr>
+<tr><td><b>บานเฟี้ยม จำนวนบาน</b></td><td>สูตรปัจจุบัน <code>max(พื้นที่×9,000, 15,000×บาน)</code> = บานเยอะ ราคา<b>ขึ้น</b> → <b>ถูกต้องแล้ว</b> (พี่นัทยืนยัน "ต้องแพงขึ้น") · ไม่แก้</td></tr>
+<tr><td><b>เรต imp (ราวกันตก)</b></td><td>เรตในโค้ด (L465) = R3.9 · imp4(47.3)ตรง ยืนยันแล้ว · <b>ราคาถูก ไม่แก้เรต</b> (แก้แค่ชื่อ+ออปชั่น)</td></tr>
+</table>
+
+<div class="box q"><h3>📌 เช็คซ้ำกับพี่นัทตอนทำ (ถ้าไม่ชัด)</h3>
+<ul>
+<li>R3-1 "+5,000/บาน" = บานที่ 2 เป็นต้นไปบานละ 5,000 ใช่ไหม (3 บาน = +10,000)</li>
+<li>R3-2 ช่องกรอกราคาประตู — ใช้กับระแนงทำเป็นประตู + bar_slide เท่านั้น หรือบานในกลุ่ม G1 ด้วย</li>
+</ul></div>
+
+<h2>ลำดับแก้</h2>
+<div class="box" style="border-left-color:#2563EB;">
+1. <b>R3-1</b> บานเปิดยูโร +5,000/บาน → 2. <b>R3-2</b> ช่องกรอกราคาประตู (override) → 3. <b>R3-4</b> ชื่อ+ออปชั่น imp1-6<br>
+<b>หลังแก้:</b> รัน <code>node test/quote-fidelity.mjs</code> PASS 14/14 · แล้วผมรันสกิล <code>product-test-cards</code> ออกการ์ด G2 ใหม่ให้เฟิร์นเช็คอีกรอบ
+</div>
+
+<div class="foot">
+ต่อจาก HANDOFF-G2-FINAL + ROUND2 · จุดแย้งจากเฟิร์นเทส + ที่มาราคาในโค้ด (L578/975 ค่าประตู · L655-660 ชื่อ imp · L465 เรต) · พี่นัทตัดสินครบ · READ-ONLY ไม่แตะ index.html · 11 มิ.ย. 2026
+</div>
+
+</body>
+</html>

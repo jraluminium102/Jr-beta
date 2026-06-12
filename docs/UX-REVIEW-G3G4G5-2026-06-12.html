@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UX Review G3/G4/G5 — 2026-06-12</title>
+<style>
+  :root{
+    --red:#B3151D; --red-light:#fde8ea; --yellow:#FFF3CD; --green-light:#d1fae5;
+    --ink:#1F2937; --muted:#6B7280; --line:#E5E7EB; --bg:#F9FAFB;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);padding:16px;}
+  h1{font-size:18px;color:var(--red);font-weight:800;margin-bottom:4px;}
+  h2{font-size:15px;font-weight:700;color:var(--red);margin:18px 0 6px;border-bottom:2px solid var(--red-light);padding-bottom:4px;}
+  h3{font-size:13px;font-weight:700;color:#374151;margin:12px 0 6px;}
+  .meta{font-size:11px;color:var(--muted);margin-bottom:16px;}
+  .section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0;}
+  th{background:var(--red-light);color:var(--red);font-weight:700;padding:7px 9px;text-align:left;border:1px solid #f5c6ca;}
+  td{padding:7px 9px;border:1px solid var(--line);vertical-align:top;line-height:1.55;}
+  tr:nth-child(even) td{background:#fafafa;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;}
+  .p1{background:#fee2e2;color:#991B1B;}
+  .p2{background:#FEF3C7;color:#92400E;}
+  .p3{background:#D1FAE5;color:#065F46;}
+  .ok{color:#059669;font-weight:700;}
+  .warn{color:#D97706;font-weight:700;}
+  .err{color:#DC2626;font-weight:700;}
+  .top5{background:#fff;border:2px solid var(--red);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .top5 ol{padding-left:18px;}
+  .top5 li{margin:8px 0;line-height:1.6;}
+  .chip-demo{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:6px 12px;border:1.5px solid #9CA3AF;border-radius:9px;background:#fff;font-size:13px;font-weight:600;margin:2px;}
+  .chip-demo.on{background:var(--red);border-color:var(--red);color:#fff;}
+  code{background:#F3F4F6;border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace;}
+  .note{font-size:11px;color:var(--muted);font-style:italic;margin-top:4px;}
+  ul{padding-left:18px;}
+  li{margin:4px 0;}
+</style>
+</head>
+<body>
+<h1>UX Review — G3 หลังคา / G4 ตู้อลู / G5 มุ้ง</h1>
+<div class="meta">วันที่ตรวจ: 2026-06-12 &nbsp;|&nbsp; ตรวจจาก: index.html (4,445 บรรทัด) + DRAFT-G3-ux-v5, DRAFT-G4-ux-v2, DRAFT-G5-ux-v3 &nbsp;|&nbsp; READ-ONLY (ไม่แก้ไฟล์จริง)</div>
+
+<!-- TOP 5 -->
+<div class="top5">
+  <h2 style="margin-top:0;border:none;">TOP 5 — จุดที่กระทบ usability มากสุด</h2>
+  <ol>
+    <li>
+      <span class="badge p1">P1 รก/งง</span>
+      <b>G3 ของเสริมหลังคา 9 รายการ อยู่นอกกล่องพับ</b> — field เสาแผง/คานเหล็กถัก/เสริมเพลท/เหล็กดึง/ซ่อนสโลป/ปิดซ่อนราง/ครอบคาน/วัสดุปิดรอยต่อ/โซ่รางน้ำ/ครอบท่อ PVC ถูก inject ตรงๆ ใน <code>h</code> โดยไม่มี wrapper แต่อาศัย <code>groupGHOpts</code> จัดเข้ากล่อง "ของเสริมหลังคา" ซึ่ง <b>default open=false</b> ถูกต้อง แต่ถ้า groupGHOpts ทำงานผิดพลาด (keyword match พลาด) 9 รายการจะตกไปกล่อง "งานพิเศษ·รื้อ" หรือโผล่ออกมาพร้อมกัน — ผู้ใช้เห็น field ยาวมากก่อนเลื่อนถึงราคา
+      <div class="note">แนวทาง: ใส่ class ตรงเช่น <code>class="rf-extra-item"</code> บน label 9 ตัวนี้ ให้ groupGHOpts match ด้วย class แทน keyword — ป้องกัน false-positive</div>
+    </li>
+    <li>
+      <span class="badge p1">P1 งง</span>
+      <b>G3 ชิปปลายหลังคา label "ปิดปลายกันน้ำกระเด็น" ยาวเกิน 1 บรรทัดบนมือถือ</b> — ชิป 3 ตัวในแถวเดียว (ปล่อย/มีรางน้ำ/ปิดปลายกันน้ำกระเด็น) บนจอ 360px: ตัวที่ 3 wrap ลงบรรทัดใหม่โดดเดี่ยว ดูเหมือนอีก field
+      <div class="note">แนวทาง: ตัดให้สั้น เช่น "ปิดปลาย" แล้วใส่ hint ใต้ชิปว่า "(กันน้ำกระเด็น)" หรือตั้ง <code>flex-wrap:wrap</code> และกำหนด min-width ชิปให้ wrap สวย</div>
+    </li>
+    <li>
+      <span class="badge p2">P2 สับสน</span>
+      <b>G4 hint สี "สีอลู กระทบเฉพาะโครงตู้" อยู่ห่างจาก dropdown สี</b> — dropdown สีอลู (<code>.i-color</code>) อยู่ในฟอร์มหลักเหนือ <code>.i-opts</code> แต่ hint <code>.cab-color-hint</code> อยู่ใน <code>groupGHOpts</code> กล่องตู้ ผู้ใช้อาจไม่รู้ว่า hint นั้น refer ไปถึง dropdown ด้านบน
+      <div class="note">แนวทาง: ย้าย/ซ้อน hint เล็กๆ ไว้ใต้ dropdown สี (inject ด้วย cabUpdateHints ที่รันอยู่แล้ว) แทนที่จะอยู่ในกล่องตู้ด้านล่าง</div>
+    </li>
+    <li>
+      <span class="badge p2">P2 พลาดง่าย</span>
+      <b>G5 มุ้ง (in-panel) ผ้ามุ้ง select ยังเป็น dropdown ไม่ใช่ชิป</b> — ส่วนมุ้งในบานอื่น (<code>p.mosquito</code>) ยังใช้ <code>&lt;select class="o-mosqfabric"&gt;</code> แบบ dropdown ธรรมดา ต่างจาก G5-standalone ที่เป็นชิปผ้า+ชิปสีผ้าผูกกัน — ประสบการณ์ไม่สม่ำเสมอ
+      <div class="note">แนวทาง: แปลง o-mosqfabric ใน p.mosquito block ให้เป็นชิปแบบเดียวกับ G5-standalone พร้อม mosqFabricColors() cascade สีผ้า</div>
+    </li>
+    <li>
+      <span class="badge p2">P2 ไม่สม่ำเสมอ</span>
+      <b>G3 ระบบระบาย (ท่อ/โซ่) ชิปสีท่อ/ลายโซ่ซ้อนกัน 2 ชั้นในบรรทัดเดียว</b> — label "ระบบระบาย" มีชิปท่อ/โซ่ + ชิปสี inline ในบรรทัดเดียว เมื่อเลือก "โซ่" ต้องเลือก ลาย+สีโซ่ด้วย ทั้งหมด fit ใน 1 <code>&lt;label&gt;</code> ทำให้แน่น — บนมือถือ 360px อาจ overflow ได้
+      <div class="note">แนวทาง: split ระบบระบาย+สีออกเป็น 2 label/แถว หรือใช้ reveal-block เหมือน o-guttersys-wrap pattern</div>
+    </li>
+  </ol>
+</div>
+
+<!-- G3 TABLE -->
+<div class="section">
+  <h2>G3 — หลังคา / ฝ้า-ผนัง</h2>
+
+  <h3>1. แท็บ หลังคา/ฝ้า-ผนัง + drill-down กลุ่มวัสดุ→รุ่น</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>แท็บ 2 ตัว (หลังคา/ฝ้า-ผนัง)</td>
+      <td><span class="ok">ดี</span> — ชิป min-height:40px, เห็นชัด, ไม่ scroll หา</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>กลุ่มวัสดุ → รุ่น (2 ชั้น)</td>
+      <td><span class="ok">ดี</span> — cascade ตรงตาม draft v5, default highlight จาก <code>rfGrpOf(p.id)</code></td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>จำนวนชิปในกลุ่ม "จีบ" (G5)</td>
+      <td><span class="warn">9 ชิป</span> ในแถวเดียว — เมทัลชีท/ชินโคไลท์ฯ ฝั่งหลังคาก็มีหลายตัว</td>
+      <td>ถ้า &gt;5 ชิปในกลุ่ม ควร wrap + highlight รุ่นยอดนิยม (เช่น star badge) เพื่อให้ตัดสินใจเร็วขึ้น <span class="badge p3">P3</span></td>
+    </tr>
+    <tr>
+      <td>โพลีตัน — ยัง dropdown ไม่ใช่ชิป</td>
+      <td><span class="warn">ต่างจากรุ่นอื่น</span> — roof_polyton ใช้ <code>&lt;select class="o-roofcolor"&gt;</code> ธรรมดา (8 option ยาว) ขณะที่ไวนิล/ดีไลท์/เมทัลชีท/ชินโคไลท์ ใช้ rfChips แล้ว</td>
+      <td>แปลง o-roofcolor ของ roof_polyton เป็น rfChips ด้วย (8 ตัวจัดได้ใน wrap) — ประสบการณ์สม่ำเสมอ <span class="badge p2">P2</span></td>
+    </tr>
+  </table>
+
+  <h3>2. ปลายหลังคา 3 ชิป</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ชิป 3 ตัว single-select</td>
+      <td><span class="ok">ดี</span> — chSetChip fire change → reveal block ทำงาน</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>label ชิปที่ 3 ยาว</td>
+      <td><span class="warn">"ปิดปลายกันน้ำกระเด็น"</span> — 14 ตัวอักษร บน 360px wrap โดดเดี่ยว</td>
+      <td>เปลี่ยนเป็น "ปิดปลาย" + hint ย่อยใต้ชิปหรือ tooltip <span class="badge p1">P1</span></td>
+    </tr>
+    <tr>
+      <td>auto-fill ความยาว</td>
+      <td><span class="ok">ดี</span> — เลือก "รางน้ำ" → o-rfgutlen auto ดึง i-w; เลือก "ปิดปลาย" → o-rfeave auto ดึง i-w</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ค่า default ปล่อย</td>
+      <td><span class="ok">ดี</span> — default = "ปล่อย" (เคสทำน้อยที่สุด = ไม่ต้องทำอะไร)</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>3. กล่องรางน้ำ (ชนิดราง → ระบบระบาย)</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>เรียง ชนิดราง → ระบบระบาย</td>
+      <td><span class="ok">ดี</span> — ตาม G3-round2 B③+D, ชิปทั้งคู่</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ระบบระบาย + สีท่อ/โซ่ inline</td>
+      <td><span class="warn">แน่น</span> — ชิป ท่อ/โซ่ + span สีท่อ + span ลายโซ่+สีโซ่ อยู่ใน label เดียว ยาวมากบนมือถือ</td>
+      <td>แยก "สีท่อ" / "ลายโซ่+สีโซ่" ออกเป็น label ย่อยด้านล่าง (reveal ตาม o-guttersys) <span class="badge p2">P2</span></td>
+    </tr>
+    <tr>
+      <td>ตะแกรงพลาสติก default checked</td>
+      <td><span class="ok">ดี</span> — สเปกพ่วงรางน้ำเสมอ, ติ๊กล่วงหน้าแล้ว ลดการกด</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ท่อน้ำทิ้ง PVC ชิปสี</td>
+      <td><span class="ok">ดี</span> — rfChips 4 ตัว (ไม่มี/ดำ/ขาว/เทา) default "ดำ" ตามสเปก</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>4. ของเสริมหลังคา 9 รายการ (เรียง 1-9)</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>กล่องพับ default ปิด</td>
+      <td><span class="ok">ดี</span> — groupGHOpts set open=false สำหรับกล่อง "ของเสริม"</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>keyword matching เปราะ</td>
+      <td><span class="err">ความเสี่ยง</span> — ใช้ textContent + className match keyword เช่น 'เพลท','เหล็กดึง','ซ่อนสโลป' ถ้า label เปลี่ยนคำ หรือชิปมี text ซ้อน จะตกกล่องผิด</td>
+      <td>เพิ่ม class marker <code>rf-extra</code> บน label 9 ตัว แล้ว groupGHOpts ตรวจ <code>k.classList.contains('rf-extra')</code> แทน <span class="badge p1">P1</span></td>
+    </tr>
+    <tr>
+      <td>ปิดซ่อนราง + ครอบคาน เป็น checkbox-reveal</td>
+      <td><span class="ok">ดี</span> — ติ๊กก่อนค่อยกรอก ลด clutter ตาม G3-v5 จุด2/จุด3</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ซ่อนสโลป — 3 ช่องในบรรทัดเดียว</td>
+      <td><span class="warn">แน่น</span> — ชิปวัสดุ + สูง + ยาว/ด้าน + ด้าน อยู่ใน 1 label ยาวมาก</td>
+      <td>ห่อ 3 ช่องตัวเลขใน <code>span</code> reveal (โชว์เมื่อเลือกวัสดุ ≠ "ไม่มี") <span class="badge p3">P3</span></td>
+    </tr>
+    <tr>
+      <td>เสาแผง + เสา 4"x8" บรรทัดเดียว</td>
+      <td><span class="ok">ยอมรับได้</span> — 2 ช่องใน label เดียว ไม่ซับซ้อน</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>วัสดุปิดรอยต่อ — checkbox + ชิปสีในบรรทัดเดียว</td>
+      <td><span class="warn">ลำดับอ่านยาก</span> — checkbox ด้านซ้าย แต่ชิปสีโผล่ทันทีโดยไม่ hide เมื่อไม่ติ๊ก</td>
+      <td>ซ่อนชิปสีจนกว่าจะติ๊ก checkbox (reveal pattern เหมือน o-rfgc-wrap) <span class="badge p2">P2</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- G4 TABLE -->
+<div class="section">
+  <h2>G4 — ตู้อลู / ฝาตู้</h2>
+
+  <h3>1. ชิป switch สินค้า ตู้อลู/ฝาตู้</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ชิป สินค้า บนสุด</td>
+      <td><span class="ok">ดี</span> — cabProdSwitch sync .i-prod + rebuild ฟอร์ม ใช้งานได้</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ชิปสินค้าอยู่ใน .i-opts</td>
+      <td><span class="warn">สับสน</span> — ชิปสินค้าอยู่ใน accordion กล่อง "รายละเอียดตู้" ซึ่ง open=true แต่ผู้ใช้ต้องเห็น <em>ก่อน</em> เลื่อนลงมา — เสี่ยงถูกซ่อนหาก accordion collapse</td>
+      <td>ย้าย chip switch ออกนอก accordion เหมือน mosq-modeb (ใช้ skipEls ใน groupGHOpts) <span class="badge p2">P2</span></td>
+    </tr>
+    <tr>
+      <td>ฝาตู้ — hint ขนาดต่อบาน</td>
+      <td><span class="ok">ดี</span> — "ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)" ชัดเจน</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>2. วัสดุผนัง + ชนิดชั้น (บล็อกเดียว + cascade)</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>วัสดุผนัง + ชนิดชั้น ในกล่องเดียว</td>
+      <td><span class="ok">ดี</span> — border:1px solid กั้น ไม่ลอยอิสระ ดูเป็นกลุ่มเดียวกัน</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>cascade hint "ชั้นกระจก = ไม่คิดค่าสีโครง"</td>
+      <td><span class="ok">ดี</span> — cab-shelf-glass-hint โชว์/ซ่อนตาม cabUpdateHints ถูกต้อง</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>hint สีกล่องฟ้า อยู่ห่าง dropdown สี</td>
+      <td><span class="warn">งง</span> — .cab-color-hint อยู่ใน .i-opts ห่างจาก .i-color ที่อยู่บนฟอร์มหลัก</td>
+      <td>inject hint สั้น (เช่น "สีนี้ = โครงตู้เท่านั้น") ไว้ใต้ .i-color ด้วย cabUpdateHints <span class="badge p2">P2</span></td>
+    </tr>
+  </table>
+
+  <h3>3. ลึก/ชั้นแถวเดียว + badge auto</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ลึก+ชั้น แถวเดียว</td>
+      <td><span class="ok">ดี</span> — display:flex;flex-wrap:wrap ดูสะอาด</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>badge "auto" สีเขียว</td>
+      <td><span class="ok">ดี</span> — ชัดว่าค่า default คำนวณให้ · กรอกเองได้</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>input height:32px บน mobile</td>
+      <td><span class="warn">เล็กกว่า 44px</span> — o-depth, o-shelves ใช้ height:32px ไม่ถึง tap target mobile (CSS global <code>.ch .opt input[type=number]{min-height:44px}</code> ควร override แล้ว แต่ inline style ชนะ)</td>
+      <td>ลบ <code>height:32px</code> inline จาก o-depth, o-shelves หรือเปลี่ยนเป็น <code>min-height:44px</code> <span class="badge p2">P2</span></td>
+    </tr>
+  </table>
+
+  <h3>4. ประเภทตู้ + จำนวนบาน + ผนังหลัง tap zone</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ประเภทตู้ ชิป ตู้ทั่วไป/รองเท้า</td>
+      <td><span class="ok">ดี</span> — trigger auto สูง/ลึก ตาม o-cabtype listener</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>จำนวนบาน ชิป 1/2/3 + hint</td>
+      <td><span class="ok">ดี</span> — hint "ยิ่งหลายบาน บานยิ่งเล็ก" ช่วยตัดสินใจ</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>+ผนังหลัง tap zone ≥44px</td>
+      <td><span class="ok">ดี</span> — min-height:44px, border, ข้อความ 2 บรรทัด ชัดเจน</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>hint ผนังหลัง "ปกติชนผนังปูน"</td>
+      <td><span class="ok">ดี</span> — อธิบายบริบทชัดเจน ลดคำถาม</td>
+      <td>—</td>
+    </tr>
+  </table>
+</div>
+
+<!-- G5 TABLE -->
+<div class="section">
+  <h2>G5 — มุ้ง (standalone) + มุ้งใน-บาน</h2>
+
+  <h3>1. Drill-down 3 หมวด (เฟรม/จีบ/ม้วน)</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ชิปหมวด 3 ตัว + ชิปรุ่นใต้</td>
+      <td><span class="ok">ดี</span> — cascade ถูกต้อง, mosqPickGrp เลือกรุ่นแรกในกลุ่มอัตโนมัติ</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>หมวด "จีบ" มี 9 รุ่น</td>
+      <td><span class="warn">รก</span> — SD พื้นฐาน/ทูเวย์/ตีนตะขาบ/รังผึ้ง/Blackout/นิรภัย 2 แบบ/จีบนิรภัย = 9 ตัว</td>
+      <td>เพิ่ม sub-group ใน "จีบ" เช่น SD / ตีนตะขาบ / นิรภัย เป็น 3 ชั้น หรือ highlight รุ่นขายดี เพื่อตัดสินใจเร็ว <span class="badge p3">P3</span></td>
+    </tr>
+    <tr>
+      <td>default รุ่นแรกของกลุ่ม</td>
+      <td><span class="ok">ดี</span> — mosqPickGrp ดึง [0] ของกลุ่มใหม่ทันที ไม่ปล่อยว่าง</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>2. โหมด B กล่องส้มบนสุด</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>กล่องส้ม class mosq-modeb</td>
+      <td><span class="ok">ดี</span> — skipEls ใน groupGHOpts คง mosq-modeb บนสุด ไม่เข้า accordion</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>border 2px orange เด่น</td>
+      <td><span class="ok">ดี</span> — เห็นทันทีว่า "โหมดพิเศษ" ต่างจากฟอร์มปกติ</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>label โหมด B: checkbox อยู่ใน flex</td>
+      <td><span class="ok">ดี</span> — display:flex;align-items:center;gap:8px ชัดเจน</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ค่าเสริมกล่อง/ราง (placeholder "0 = ไม่เสริม")</td>
+      <td><span class="ok">ดี</span> — hint ชัดเจน ไม่ต้องอธิบายเพิ่ม</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>3. ผ้ามุ้ง/สีผ้า (G5-standalone vs มุ้งใน-บาน)</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>G5-standalone: ผ้ามุ้งชิป + สีผ้า cascade</td>
+      <td><span class="ok">ดี</span> — mosqFabricColors() rebuild ชิปสีตามผ้า, สีเดียว disabled+badge</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>มุ้งใน-บาน (p.mosquito): ผ้ามุ้ง dropdown</td>
+      <td><span class="warn">ไม่สม่ำเสมอ</span> — <code>&lt;select class="o-mosqfabric"&gt;</code> ยังเป็น dropdown 5 option ไม่มีชิปสีผ้าผูก</td>
+      <td>ทำชิปผ้า+ชิปสีผ้าใน mosq block เหมือน G5-standalone (ใช้ mosqFabricColors เดิมได้) <span class="badge p2">P2</span></td>
+    </tr>
+    <tr>
+      <td>จำนวนบานมุ้ง ชิป auto/1..N</td>
+      <td><span class="ok">ดี</span> — rebuildMosqPanelChips cap ที่ i-panels, fallback stepper เมื่อ &gt;5</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>ช่องขนาดมุ้ง ซ่อนใน details</td>
+      <td><span class="ok">ดี</span> — "กรณีแต่ละบานไม่เท่ากัน" พับ default ไม่รก</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>สีกรอบมุ้ง ชิป 4 ตัว</td>
+      <td><span class="ok">ดี</span> — default "ตามสีบาน", chSetChip sync o-mosqcolor</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <h3>4. G3-round2 ของเสริมเรียง 1-9</h3>
+  <table>
+    <tr><th style="width:28%">หัวข้อ</th><th style="width:36%">สถานะ</th><th>ข้อเสนอ</th></tr>
+    <tr>
+      <td>ลำดับ โครงรับ→สวยงาม→กันน้ำ/รอยต่อ</td>
+      <td><span class="ok">ดี</span> — เรียงตามการใช้งานจริง ช่างทำโครงก่อน ตกแต่งทีหลัง</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>คานเหล็กถัก ชิป 4 ตัว + ช่องยาว</td>
+      <td><span class="ok">ดี</span> — rfChips("0"→ "ไม่มี") เป็น default, ช่องยาว reveal ตามค่าที่เลือก</td>
+      <td>ปรับ: ซ่อน input ยาว(ม.) เมื่อเลือก "ไม่มี" เพื่อลด clutter <span class="badge p3">P3</span></td>
+    </tr>
+    <tr>
+      <td>วัสดุปิดรอยต่อ — ชิปสีโผล่ทันที</td>
+      <td><span class="warn">งง</span> — ชิปสี ขาว/ดำ/เทา โผล่พร้อม checkbox แม้ยังไม่ได้ติ๊ก</td>
+      <td>ห่อชิปสีใน reveal-span ซ่อนจนกว่า o-rfsealer checked <span class="badge p2">P2</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- SUMMARY -->
+<div class="section">
+  <h2>สรุปตาราง Priority รวม</h2>
+  <table>
+    <tr>
+      <th>Priority</th><th>ฟอร์ม</th><th>จุด</th><th>ผลกระทบ</th>
+    </tr>
+    <tr>
+      <td><span class="badge p1">P1 แก้ก่อน</span></td>
+      <td>G3</td>
+      <td>ชิปปลายหลังคาตัวที่ 3 ยาวเกิน → wrap โดด / keyword matching ของเสริมเปราะ</td>
+      <td>ผู้ใช้งงตำแหน่ง / ตกกล่องผิด → ราคาคิดผิด</td>
+    </tr>
+    <tr>
+      <td><span class="badge p2">P2 ควรทำ</span></td>
+      <td>G4</td>
+      <td>hint สี "กระทบเฉพาะโครง" อยู่ห่าง dropdown สี / o-depth:32px ไม่ถึง 44px</td>
+      <td>ผู้ใช้เลือกสีโดยไม่รู้ว่าเฉพาะโครง / กดพลาดบนมือถือ</td>
+    </tr>
+    <tr>
+      <td><span class="badge p2">P2 ควรทำ</span></td>
+      <td>G5/G1</td>
+      <td>ผ้ามุ้งในบาน ยังเป็น dropdown ไม่เป็นชิปสีผ้า cascade</td>
+      <td>ประสบการณ์ไม่สม่ำเสมอกับ G5-standalone</td>
+    </tr>
+    <tr>
+      <td><span class="badge p2">P2 ควรทำ</span></td>
+      <td>G3</td>
+      <td>ระบบระบาย ท่อ/โซ่ + สี/ลาย inline → แน่นบนมือถือ</td>
+      <td>ชิปชิดกัน tap ผิด, overflow</td>
+    </tr>
+    <tr>
+      <td><span class="badge p2">P2 ควรทำ</span></td>
+      <td>G3</td>
+      <td>วัสดุปิดรอยต่อ ชิปสีโผล่ก่อน tick checkbox</td>
+      <td>ผู้ใช้งงว่าสีนี้เกี่ยวกับอะไร</td>
+    </tr>
+    <tr>
+      <td><span class="badge p2">P2 ควรทำ</span></td>
+      <td>G4</td>
+      <td>ชิป switch สินค้า อยู่ใน accordion (เสี่ยงซ่อน)</td>
+      <td>สลับตู้↔ฝาตู้ไม่สะดวก</td>
+    </tr>
+    <tr>
+      <td><span class="badge p3">P3 ปรับ</span></td>
+      <td>G3/G5</td>
+      <td>กลุ่ม "จีบ" 9 ชิป / โพลีตัน dropdown / คานเหล็กถัก ช่องยาวโผล่ตลอด</td>
+      <td>ตัดสินใจช้า, clutter</td>
+    </tr>
+  </table>
+</div>
+
+<!-- จุดที่ผ่านดีแล้ว -->
+<div class="section">
+  <h2>จุดที่ผ่านดีแล้ว (ไม่ต้องแตะ)</h2>
+  <ul>
+    <li>ชิป min-height:40px (chip-sm) ครบทุกฟอร์ม — tap target ยอมรับได้บนมือถือ</li>
+    <li>G3 แท็บ หลังคา/ฝ้า-ผนัง + cascade กลุ่ม→รุ่น ใช้งานได้ลื่น</li>
+    <li>G3 ปิดซ่อนราง + ครอบคาน เป็น checkbox-reveal — เห็นน้อยจนกว่าต้องการ</li>
+    <li>G3 auto-fill ความยาวรางน้ำ/ปิดปลาย จาก i-w — ลดการพิมพ์</li>
+    <li>G4 ผนังหลัง tap zone ≥44px + ข้อความ 2 บรรทัดอธิบายบริบท</li>
+    <li>G4 hint ชั้นกระจกไม่คิดสี cascade จาก cabUpdateHints ทำงานถูกต้อง</li>
+    <li>G5 โหมด B กล่องส้ม 2px border เด่น + skipEls คงตำแหน่งบนสุด</li>
+    <li>G5 ชิปจำนวนบานมุ้ง auto/1..N + fallback stepper เมื่อ &gt;5</li>
+    <li>G5 สีกรอบมุ้ง ชิป 4 ตัว default "ตามสีบาน" ลดการกด</li>
+    <li>groupGHOpts accordion summary min-height:44px ≥ tap target</li>
+    <li>G3-round2 ของเสริม default ปิด → เห็นน้อย เปิดเมื่อต้องการ</li>
+  </ul>
+</div>
+
+<div class="meta" style="margin-top:10px;">
+  ไฟล์นี้สร้างโดย UX/UI agent 2026-06-12 · READ-ONLY · ห้ามแก้ index.html โดยตรง
+</div>
+</body>
+</html>

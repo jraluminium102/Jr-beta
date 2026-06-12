@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUDIT G6 — ออปชั่นกั้นห้องกระจก</title>
+<style>
+:root{--red:#B3151D;--red-light:#FFF0F0;--amber:#D97706;--amber-light:#FFFBEB;--green:#15803D;--green-light:#F0FDF4;--blue:#1D4ED8;--blue-light:#EFF6FF;--border:#E5E7EB;--gray:#6B7280;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:14px;background:#F3F4F6;color:#111;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700;}
+.page{max-width:900px;margin:0 auto;padding:16px;}
+h1{font-size:18px;font-weight:700;color:var(--red);margin-bottom:4px;}
+.subtitle{font-size:12px;color:var(--gray);margin-bottom:16px;}
+h2{font-size:15px;font-weight:700;margin:20px 0 8px;padding:6px 10px;border-radius:6px;}
+h2.red{background:var(--red-light);color:var(--red);}
+h2.amber{background:var(--amber-light);color:var(--amber);}
+h2.green{background:var(--green-light);color:var(--green);}
+h2.blue{background:var(--blue-light);color:var(--blue);}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}
+th{background:#F9FAFB;border:1px solid var(--border);padding:8px 10px;text-align:left;font-weight:700;}
+td{border:1px solid var(--border);padding:7px 10px;vertical-align:top;}
+tr:hover td{background:#FAFAFA;}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;margin-right:4px;}
+.tag.red{background:var(--red-light);color:var(--red);}
+.tag.amber{background:var(--amber-light);color:var(--amber);}
+.tag.green{background:var(--green-light);color:var(--green);}
+.tag.blue{background:var(--blue-light);color:var(--blue);}
+.note{font-size:12px;color:var(--gray);font-style:italic;}
+.code{font-family:monospace;font-size:12px;background:#F3F4F6;padding:1px 5px;border-radius:3px;}
+ul{padding-left:18px;margin:6px 0;}
+li{margin-bottom:4px;font-size:13px;}
+.section-box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="banner">AUDIT G6 — กั้นห้องกระจก · ตรวจออปชั่น · 2026-06-11</div>
+<div class="page">
+  <h1>ตรวจออปชั่น G6 (กั้นห้องกระจก)</h1>
+  <div class="subtitle">ตรวจจาก public/calculator/index.html R3.9.2 · _GM['6'] + refreshSet/groupGHOpts + docs/DRAFT-G6-ux-2026-06-11.html</div>
+
+  <!-- สรุปโครงสร้างปัจจุบัน -->
+  <div class="section-box">
+    <h2 class="blue" style="margin-top:0;">โครงสร้าง G6 ปัจจุบัน (index.html)</h2>
+    <ul>
+      <li>กด "+ กั้นห้องกระจก" → <span class="code">addGlasshouseSet()</span> สร้างชุด + บานแรกกลุ่ม 6 อัตโนมัติ</li>
+      <li>กด "+ เพิ่มบาน" → เพิ่มส่วน group=6, auto-label ด้าน A/B/C...</li>
+      <li>กด "+ เพิ่มหลังคา" → เพิ่มส่วน group=3 (หลังคา)</li>
+      <li><strong>สีอลู + กระจก</strong>: แสดง row master (<span class="code">gh-set-color-row</span>) ที่ระดับชุด — sync ทุก ch กลุ่ม 6 อัตโนมัติ</li>
+      <li><strong>ซ่อน</strong>: กลุ่มงาน (.i-group), ประเภท (.i-type), จำนวน (.i-qty), override, note, ส่งสินค้า (.i-ship) — ซ่อนทั้งหมดใน GH mode</li>
+      <li><strong>ออปชั่น</strong>: ยุบเข้า details พับ + <span class="code">groupGHOpts()</span> จัดหมวดออปชั่นเป็น 5 กลุ่ม (ชนิดการเปิด / มือจับ / มุ้ง / คาดตาราง / อื่นๆ)</li>
+      <li><strong>_GM['6']</strong>: รายการ cat ที่เลือกได้ = บานเลื่อน, บานเปิด, ติดตาย, บานเฟี้ยม, บานกระทุ้ง, เลื่อนภายใน, บานเปลือย, บานยก, บานหมุน, ดัดโค้ง, PC Door, shower, ระแนง, ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด, ราวบันได, หลังคา, ฝ้า-ผนัง</li>
+    </ul>
+  </div>
+
+  <!-- 🔴 ออปชั่นผิดประเภท (leak) ชัวร์ -->
+  <h2 class="red">🔴 ผิดประเภทชัวร์ — ตัดออกจาก _GM['6'] ได้เลย</h2>
+  <table>
+    <tr><th>cat ใน _GM['6']</th><th>ปัญหา</th><th>เสนอ</th></tr>
+    <tr>
+      <td><span class="code">shower</span></td>
+      <td>shower = <em>"กั้นห้องอาบน้ำ"</em> คนละ context กับ "กั้นห้องกระจก" (ห้อง living/office/ห้องรับแขก) · ซ้ำซ้อน · เซลล์เลือก shower ในชุดกั้นห้องกระจกได้ = งง</td>
+      <td>ตัดออกจาก <span class="code">_GM['6']</span> · shower ยังอยู่ใน _GM['1']</td>
+    </tr>
+    <tr>
+      <td><span class="code">ระแนง, ระแนง-บังตา, ระแนง-ผนัง, ระแนง-เกล็ด</span></td>
+      <td>ระแนงเป็นงาน G2 ไม่ใช่บานของห้องกระจก · ถ้าต้องการผนังทึบในห้องกระจกควรใช้ ฝ้า-ผนัง/ISOWALL แทน</td>
+      <td>ตัดออกจาก _GM['6'] · ถ้ากรณีพิเศษ (กั้นผนังทึบในห้อง) ให้สร้างชุดใหม่แยก</td>
+    </tr>
+    <tr>
+      <td><span class="code">ราวบันได</span></td>
+      <td>ราวบันไดเป็น imp1-imp6 (per_length_tier) ไม่ใช่บาน · ราคา/วิธีคิดต่างกันมาก · ใส่ใน GH set = สับสน</td>
+      <td>ตัดออกจาก _GM['6'] · เพิ่มเป็นรายการแยกนอกชุดถ้าต้องการ</td>
+    </tr>
+    <tr>
+      <td><span class="code">บานหมุน</span></td>
+      <td>บานหมุนเมืองทอง = ประตูใหญ่ pivot ไม่ใช่ผนังห้อง · ไม่มีเคสจริงใน GH · เพิ่มความยาว dropdown ไม่จำเป็น</td>
+      <td><span class="tag amber">🟡 ถามพี่นัทก่อน</span> เคยขายกั้นห้องด้วย pivot ไหม?</td>
+    </tr>
+    <tr>
+      <td><span class="code">ดัดโค้ง</span></td>
+      <td>ประตูดัดโค้งเป็นสินค้าพิเศษมาก ไม่ตรงกับงานกั้นห้องทั่วไป · min 47,000-50,000 · ราคาผิดปกติ</td>
+      <td><span class="tag amber">🟡 ถามพี่นัทก่อน</span> มีงานกั้นห้องดัดโค้งจริงไหม?</td>
+    </tr>
+  </table>
+
+  <!-- 🟡 ไม่ชัวร์ ถามพี่นัท -->
+  <h2 class="amber">🟡 ไม่ชัวร์ — ถามพี่นัทก่อนตัดสินใจ</h2>
+  <table>
+    <tr><th>ประเด็น</th><th>รายละเอียด</th><th>ถามพี่นัทว่า...</th></tr>
+    <tr>
+      <td>บานหมุน (pivot) ใน GH</td>
+      <td>มีอยู่ใน _GM['6'] · min 26,000 · ไม่เคยเห็นใน GH form ดราฟ</td>
+      <td>เคยขายประตู pivot ในห้อง GH ไหม? ถ้าไม่ตัดออก</td>
+    </tr>
+    <tr>
+      <td>ดัดโค้ง ใน GH</td>
+      <td>min 47,000 บาน · ใน GH context ดูเกิน · ไม่มีใน DRAFT-G6</td>
+      <td>เคยมีงาน GH + ดัดโค้งไหม? ถ้าไม่ตัดออก</td>
+    </tr>
+    <tr>
+      <td>บานยก (lift) ใน GH</td>
+      <td>บานยก SMS/aluinch มี maxPanels:2 + motor · ใช้ในห้อง GH ได้ไหม?</td>
+      <td>มีงานกั้นห้องที่ต้องการบานยกไหม? (ถ้ามี ให้คงไว้)</td>
+    </tr>
+    <tr>
+      <td>เลื่อนภายใน (inner_top/inner_bottom) ใน GH</td>
+      <td>ใช้เป็น partition ภายในห้องได้ · แต่ไม่มีใน DRAFT-G6 ดราฟ · อาจเป็น "บาน" ที่ต้องการ</td>
+      <td>งาน GH บางห้องใช้เลื่อนภายในกั้นภายใน (ไม่กันน้ำ) ไหม?</td>
+    </tr>
+    <tr>
+      <td>PC Door ใน GH</td>
+      <td>PC Door มีใน _GM['6'] · ใช้เป็นประตูเข้าห้องได้ · min 36,000</td>
+      <td>งาน GH เคยเปิดด้วย PC Door ไหม? (ถ้ามี คงไว้ ถ้าไม่ตัด)</td>
+    </tr>
+    <tr>
+      <td>ฝ้า-ผนัง ใน GH</td>
+      <td>ใน _GM['6'] มี ceiling_smooth, isowall, wall_ext, wall_int · ควรเป็นส่วนแยก (ไม่ใช่บาน) ใน GH set?</td>
+      <td>ตอนคีย์ GH ต้องใส่ฝ้า-ผนังในชุดเดียวกันไหม หรือแยก set?</td>
+    </tr>
+    <tr>
+      <td>ออปชั่น "ดรอปพื้น" ระดับห้อง</td>
+      <td>ใน DRAFT-G6 v1 มี gh-drop (มีดรอปพื้น) อยู่ใน <code>details.extra</code> · ใน index.html ยังไม่มี</td>
+      <td>ดรอปพื้นควรอยู่ระดับห้อง (ทั้งชุด) หรือระดับบาน (แต่ละด้าน)?</td>
+    </tr>
+    <tr>
+      <td>ออปชั่น "อลูทึบ ติดแอร์/คาน"</td>
+      <td>ใน DRAFT-G6 v1 มี gh-airbeam · ใน index.html ยังไม่มี field นี้</td>
+      <td>อลูทึบ (ติดแอร์) เป็นออปชั่นที่ขายบ่อยไหม? จะเพิ่มใน form หรือไม่?</td>
+    </tr>
+    <tr>
+      <td>ออปชั่น "ปิดซ่อนสโลป"</td>
+      <td>ใน DRAFT-G6 v1 มี gh-slope (ปิดซ่อนสโลปเดิม) · ใน index.html ยังไม่มี</td>
+      <td>งาน GH มักมีสโลปเดิมที่ต้องปิดซ่อนไหม? จะเพิ่มหรือไม่?</td>
+    </tr>
+    <tr>
+      <td>ชิป "กระจกติดตาย" ใน DRAFT-G6</td>
+      <td>DRAFT v1 มีตัวเลือก "กระจกติดตาย (fixed_glass)" ใน SIDE_PROD_OPTIONS · แต่ไม่มีตัวเลือกนี้ในดร็อปดาวน์ปัจจุบัน</td>
+      <td>งาน GH มีด้านที่เป็นกระจกติดตายทั้งหมด (ไม่มีบาน) บ่อยไหม?</td>
+    </tr>
+  </table>
+
+  <!-- ออปชั่นที่ควรมีแต่หาย -->
+  <h2 class="green">🟢 ออปชั่นที่ควรมีแต่หาย (เสนอเพิ่ม)</h2>
+  <table>
+    <tr><th>ออปชั่น</th><th>เหตุผล</th><th>หมวด</th></tr>
+    <tr>
+      <td>สีอลูทั้งห้อง (master)</td>
+      <td>มีใน index.html แล้ว (gh-set-color-row) แต่ใน DRAFT-G6 v1 ใช้ชิปแทน dropdown → UX ดีกว่า · เสนอให้ใช้ชิปเหมือน G1</td>
+      <td>Master (ระดับห้อง)</td>
+    </tr>
+    <tr>
+      <td>กระจกทั้งห้อง (master)</td>
+      <td>มีใน index.html (gh-glass-sel) · DRAFT v1 มีชิปครบ (ใส5/เขียว5/เทมเปอร์6/เทมเปอร์ใส10/ลามิเนต) · ควรแสดงเป็นชิปที่เห็นตลอด</td>
+      <td>Master (ระดับห้อง)</td>
+    </tr>
+    <tr>
+      <td>กระจกเทมเปอร์ฝ้า / ลวดลาย</td>
+      <td>งาน GH บางงานลูกค้าต้องการ frosted/สกรีน · ยังไม่มีใน glassOpts() สำหรับ GH โดยเฉพาะ</td>
+      <td>Master (ระดับห้อง) — <span class="tag amber">🟡 ถามพี่นัท</span></td>
+    </tr>
+    <tr>
+      <td>ชนิดการเปิด (บาน) ระดับด้าน</td>
+      <td>ใน DRAFT v1 มี dropdown "แบบ" (sliding_euro/casement_euro/fixed_glass/folding) — ควรเป็น chip แทน dropdown เพื่อกดเร็ว</td>
+      <td>การ์ดด้าน (ระดับบาน)</td>
+    </tr>
+    <tr>
+      <td>จำนวนบาน (panels) ต่อด้าน</td>
+      <td>มีใน DRAFT v1 (stepper) + index.html ออปชั่นบาน · แต่ใน groupGHOpts() ยังไม่ได้ขึ้นเป็น field เด่น</td>
+      <td>การ์ดด้าน (ระดับบาน)</td>
+    </tr>
+    <tr>
+      <td>ป้าย "auto" กระจกตาม master</td>
+      <td>ตอนนี้ซ่อน i-glass-wrap แต่ไม่โชว์ feedback · ผู้ใช้ไม่รู้ว่ากระจกถูก sync จาก master → ควรโชว์ chip แสดงค่า master ที่ active</td>
+      <td>การ์ดด้าน (UX feedback)</td>
+    </tr>
+  </table>
+
+  <!-- สรุปหมวด _GM['6'] ที่เสนอปรับ -->
+  <h2 class="blue">สรุป _GM['6'] — เสนอปรับ</h2>
+  <table>
+    <tr><th>cat</th><th>สถานะ</th><th>หมายเหตุ</th></tr>
+    <tr><td>บานเลื่อน</td><td><span class="tag green">คงไว้</span></td><td>ใช้บ่อย เป็นค่า default</td></tr>
+    <tr><td>บานเปิด</td><td><span class="tag green">คงไว้</span></td><td>ใช้บ่อย ประตูเข้าห้อง</td></tr>
+    <tr><td>ติดตาย</td><td><span class="tag green">คงไว้</span></td><td>ด้านไม่มีการเปิด</td></tr>
+    <tr><td>บานเฟี้ยม</td><td><span class="tag green">คงไว้</span></td><td>ใช้บ่อยในห้อง GH</td></tr>
+    <tr><td>บานกระทุ้ง</td><td><span class="tag green">คงไว้</span></td><td>ช่องระบายอากาศ</td></tr>
+    <tr><td>เลื่อนภายใน</td><td><span class="tag amber">🟡 ถาม</span></td><td>งาน GH ภายในใช้ไหม?</td></tr>
+    <tr><td>บานเปลือย</td><td><span class="tag green">คงไว้</span></td><td>งาน GH ระดับ hi-end</td></tr>
+    <tr><td>บานยก</td><td><span class="tag amber">🟡 ถาม</span></td><td>มีเคสจริงไหม?</td></tr>
+    <tr><td>บานหมุน</td><td><span class="tag amber">🟡 ถาม</span></td><td>pivot ใน GH — มีเคส?</td></tr>
+    <tr><td>ดัดโค้ง</td><td><span class="tag amber">🟡 ถาม</span></td><td>งานพิเศษ — มีเคส GH?</td></tr>
+    <tr><td>PC Door</td><td><span class="tag amber">🟡 ถาม</span></td><td>ประตูเข้าห้อง — มีเคส?</td></tr>
+    <tr><td>shower</td><td><span class="tag red">🔴 ตัดออก</span></td><td>คนละงาน — ห้องอาบน้ำ</td></tr>
+    <tr><td>ระแนง (ทุกชนิด)</td><td><span class="tag red">🔴 ตัดออก</span></td><td>งาน G2 ไม่ใช่บาน GH</td></tr>
+    <tr><td>ราวบันได</td><td><span class="tag red">🔴 ตัดออก</span></td><td>per_length งาน G2 — ไม่ใช่บาน</td></tr>
+    <tr><td>หลังคา</td><td><span class="tag green">คงไว้</span></td><td>หลังคาห้อง GH ใช้บ่อย</td></tr>
+    <tr><td>ฝ้า-ผนัง</td><td><span class="tag amber">🟡 ถาม</span></td><td>ต้องอยู่ในชุดเดียวกันไหม?</td></tr>
+  </table>
+
+  <!-- ปัญหา UX ที่พบ -->
+  <h2 class="amber">UX friction ที่พบใน index.html (G6 mode)</h2>
+  <table>
+    <tr><th>จุด</th><th>ปัญหา</th><th>เสนอแก้</th></tr>
+    <tr>
+      <td>Dropdown สีอลู</td>
+      <td>gh-set-color-row ใช้ <span class="code">&lt;select&gt;</span> height:36px — ต่ำกว่า 44px · แตะยาก mobile</td>
+      <td>ปรับ height:44px หรือเปลี่ยนเป็น chip (เสนอใน DRAFT v2)</td>
+    </tr>
+    <tr>
+      <td>สีอลูห้อง vs สีอลูบาน</td>
+      <td>ซ่อน i-color-wrap ทุกบาน แต่ไม่โชว์ feedback "ใช้สีจาก master" → เซลล์ไม่รู้ว่าค่าถูก sync แล้วหรือยัง</td>
+      <td>เพิ่ม badge "สีจาก master" ใต้ row สีในการ์ดด้าน</td>
+    </tr>
+    <tr>
+      <td>ป้าย summary ด้าน</td>
+      <td>summary บนหัวการ์ด ch ยังไม่โชว์ขนาด/แบบบาน → เซลล์ต้องเปิดดูทุกการ์ดเพื่อตรวจ</td>
+      <td>เพิ่ม ch-summary แสดง "ด้านA · เลื่อน · 1.8×2.4"</td>
+    </tr>
+    <tr>
+      <td>dropdown "แบบ" ยาวเกิน</td>
+      <td>_GM['6'] = 19 cat → dropdown ยาวมาก ต้องเลื่อนยาว · เสี่ยงเลือกผิด</td>
+      <td>ใช้ chip กลุ่มสั้น (บานเลื่อน/บานเปิด/ติดตาย/บานเฟี้ยม) · ตัดออปชั่นไม่เกี่ยวออก (ดูหัวข้อก่อนหน้า)</td>
+    </tr>
+    <tr>
+      <td>ชื่อชุด default</td>
+      <td>"กั้นห้องกระจก (ห้อง...)" — "ห้อง..." ทำให้ต้องแก้ · เซลล์มักข้ามทำให้ใบเสนอราคาออกชื่อผิด</td>
+      <td>placeholder แทน value หรือ auto-clear เมื่อ focus</td>
+    </tr>
+    <tr>
+      <td>groupGHOpts หมวด "อื่นๆ"</td>
+      <td>ออปชั่นที่ไม่ match keyword ตกลง bucket "อื่นๆ" ทั้งหมด → bucket ยาว ไม่มีลำดับ</td>
+      <td>เพิ่ม keyword ให้ครอบคลุม + เรียงลำดับ bucket ที่เปิดโดย default</td>
+    </tr>
+  </table>
+
+  <!-- ลิสต์คำถามสรุป -->
+  <div class="section-box" style="border-color:var(--amber);background:var(--amber-light);">
+    <h2 class="amber" style="margin-top:0;">🟡 ลิสต์ถามพี่นัท (สรุป)</h2>
+    <ol style="padding-left:20px;">
+      <li style="margin-bottom:8px;"><strong>บานหมุน (pivot)</strong> ใน GH — เคยขายห้อง GH + ประตู pivot ไหม? ถ้าไม่มีเคส → ตัดออกจาก _GM['6']</li>
+      <li style="margin-bottom:8px;"><strong>ดัดโค้ง</strong> ใน GH — งาน GH + ดัดโค้งมีจริงไหม? ถ้าไม่มี → ตัดออก</li>
+      <li style="margin-bottom:8px;"><strong>บานยก (lift)</strong> ใน GH — มีเคสจริงไหม?</li>
+      <li style="margin-bottom:8px;"><strong>เลื่อนภายใน</strong> ใน GH — ใช้เป็นผนังกั้นภายในห้องได้ไหม? ถ้ามีเคสคงไว้</li>
+      <li style="margin-bottom:8px;"><strong>PC Door</strong> ใน GH — ประตูเข้าห้อง GH ใช้ PC Door ไหม?</li>
+      <li style="margin-bottom:8px;"><strong>ฝ้า-ผนัง</strong> ใน GH — ต้องคีย์ในชุดเดียวกันหรือ set แยก?</li>
+      <li style="margin-bottom:8px;"><strong>กระจก frosted/ลวดลาย</strong> — ลูกค้า GH ขอ frosted บ่อยไหม? จะเพิ่มใน master dropdown ไหม?</li>
+      <li style="margin-bottom:8px;"><strong>ดรอปพื้น + ปิดสโลป + อลูทึบ</strong> — 3 ออปชั่นนี้อยู่ใน DRAFT v1 แต่ยังไม่มีใน index.html · จะเพิ่มหรือไม่? ถ้าเพิ่ม → ระดับห้อง หรือระดับบาน?</li>
+      <li style="margin-bottom:8px;"><strong>ชื่อชุด default</strong> — "กั้นห้องกระจก (ห้อง...)" → เซลล์มักข้าม · จะเปลี่ยนเป็น placeholder หรือบังคับกรอกก่อนออกใบ?</li>
+      <li style="margin-bottom:8px;"><strong>กระจกติดตาย</strong> เป็นตัวเลือกด้าน — บ่อยแค่ไหน? จะใส่ใน quick chip หรือปล่อย dropdown?</li>
+    </ol>
+  </div>
+
+  <div style="font-size:12px;color:var(--gray);margin-top:12px;padding-top:8px;border-top:1px solid var(--border);">
+    จัดทำโดย UX/UI agent · ตรวจจากไฟล์จริง · ห้ามแก้ index.html โดยตรง · developer/chat แยกทำ
+  </div>
+</div>
+</body>
+</html>

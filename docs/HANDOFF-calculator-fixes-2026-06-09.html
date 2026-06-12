@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF — รายการแก้ index.html ส่งแชทหลัก · 2026-06-09</title>
+<style>
+  @page { size: A4; margin: 13mm 11mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Leelawadee UI","Tahoma",sans-serif; color:#1F2937; font-size:11.5px; line-height:1.45; margin:0; }
+  h1 { font-size:19px; color:#B3151D; margin:0 0 2px; }
+  .sub { color:#6B7280; font-size:10.5px; margin-bottom:8px; }
+  .warn { background:#FEF2F2; border:1px solid #FCA5A5; border-radius:7px; padding:8px 11px; margin:8px 0; font-size:11px; }
+  .how { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:7px; padding:8px 11px; margin:8px 0; font-size:11px; }
+  h2 { font-size:14px; margin:16px 0 5px; padding:5px 9px; border-radius:5px; color:#fff; background:#B3151D; page-break-after:avoid; }
+  h2.done { background:#2F855A; } h2.decide { background:#B7791F; } h2.cos { background:#6B7280; }
+  h2 .cnt { float:right; font-size:11px; font-weight:400; opacity:.9; }
+  .item { border:1px solid #E5E7EB; border-radius:7px; padding:7px 10px; margin-bottom:7px; page-break-inside:avoid; }
+  .item h3 { font-size:12.5px; margin:0 0 4px; }
+  .tag { display:inline-block; font-size:9px; font-weight:700; padding:1px 6px; border-radius:3px; margin-left:6px; vertical-align:middle; }
+  .tag.done{background:#DCFCE7;color:#166534;} .tag.must{background:#FEE2E2;color:#B3151D;} .tag.decide{background:#FEF3C7;color:#92400E;} .tag.cos{background:#E5E7EB;color:#374151;}
+  .row { display:flex; gap:10px; }
+  .col { flex:1; }
+  .lbl { font-size:9.5px; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:.3px; margin-bottom:2px; }
+  ul { margin:0 0 4px; padding-left:15px; } li { margin-bottom:2px; }
+  ul.fix li::marker { color:#2F855A; }
+  code { font-family:"Consolas",monospace; font-size:10px; background:#F3F4F6; padding:0 3px; border-radius:3px; color:#B3151D; word-break:break-all; }
+  .anchor { font-family:"Consolas",monospace; font-size:10px; background:#FFF7ED; border:1px dashed #FDBA74; padding:1px 4px; border-radius:3px; color:#9A3412; }
+  .foot { margin-top:14px; font-size:9.5px; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:5px; }
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — รายการแก้ <code>public/calculator/index.html</code></h1>
+<div class="sub">จากแชทตรวจ → ส่งแชทหลัก (ผู้แก้ไข) · 9 มิ.ย. 2026 · R3.9.2 · ทำเป็น punch-list แก้ได้เลย</div>
+
+<div class="warn">
+<b>⚠ ไฟล์นี้มีหลายแชท/editor เขียนพร้อมกัน</b> — ระหว่างตรวจพบว่า edit ถูกเขียนทับหายไป (เช่น X-series).
+<b>แชทหลักควรเป็นผู้แก้คนเดียว</b> แล้ว push ทีเดียว · ปิด editor/แชทอื่นที่จับไฟล์นี้ก่อนเริ่ม.
+นอกจากนี้ working tree มีงาน <b>หลังคาเลื่อน rev2</b> ค้างอยู่ (motor auto-fill ฯลฯ) — ระวังอย่าทับ.
+</div>
+<div class="how">
+<b>วิธีหาจุดแก้:</b> ไม่ใช้เลขบรรทัด (ขยับตลอด) — ใช้ <span class="anchor">ข้อความค้นหา</span> ที่ให้ในแต่ละข้อ ค้นใน index.html แล้วแก้ตรงนั้น · ทุกจุด<b>ยืนยันด้วยตา/โค้ดจริงแล้ว</b> เว้นที่ติดป้าย "เช็คซ้ำ"
+</div>
+
+<!-- ===== DONE ===== -->
+<h2 class="done">✅ แก้ไปแล้วในแชทตรวจ — โปรดยืนยันว่ามีในไฟล์ครบ <span class="cnt">3 จุด</span></h2>
+<div class="sub" style="margin-top:-2px;">หมายเหตุ: เพราะไฟล์โดนเขียนทับ บางจุดอาจหลุด — แชทหลักเช็คให้ครบทั้ง 3 ตามนี้</div>
+
+<div class="item">
+<h3>1. ลบ "ตะแกรงเหล็กสาน" ตัวซ้ำ <span class="tag done">แก้แล้ว</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>มี 2 สินค้าชื่อ "ตะแกรงเหล็กสาน" เหมือนกัน ราคา 2,500/ตร.ม. เท่ากัน (<code>steel_mesh</code> + <code>imp34</code>)</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ที่ทำไป</div><ul class="fix">
+<li>ลบบรรทัด <span class="anchor">id:'imp34'</span> ออกจาก PRODUCTS · เก็บ <code>steel_mesh</code> ไว้</li>
+<li>เช็คแล้ว imp34 ไม่ถูกอ้างที่อื่น (เรต IMP34 เหลือเป็น dead data ไม่กระทบ)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>2. บานเปิด X-series ใส่มุ้งได้ <span class="tag done">แก้แล้ว (ถูกเขียนทับ — ทำซ้ำ)</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li><code>mosquito:1</code> วางผิดที่ (อยู่ในตัวเลือกโช้ค) → เมนูเพิ่มมุ้งไม่โผล่</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix">
+<li>ค้น <span class="anchor">casement_xseries</span></li>
+<li>ย้าย <code>mosquito:1</code> ออกมาเป็น property ของสินค้า: <code>...series:'S',mosquito:1,opts:[{id:'closer',label:'โช้ค',price:5000}]</code></li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>3. บานกระทุ้งยูโร ช่อง "แบบเปิด" (awn_mode) <span class="tag done">แก้แล้ว</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>awn_mode เป็น select แต่ถูกวาดเป็น checkbox → ติ๊กแล้วราคาเป็น NaN</li>
+<li>tilt&turn คิดเหมา 5,000 ไม่คูณบาน + คำเตือนน้ำเข้าไม่ขึ้น</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ที่ทำไป (3 จุด)</div><ul class="fix">
+<li>ตัววาดฟอร์ม (ค้น <span class="anchor">input type="checkbox" class="o-${o.id}"</span>): รองรับ <code>o.type==='select'</code> → วาด &lt;select&gt; · ข้าม opt ที่มี <code>depends</code></li>
+<li>ตัวอ่านค่า (ค้น <span class="anchor">optSel[o.id]=c&&c.checked</span>): select เก็บ <code>c.value</code></li>
+<li>ตัวคิดราคา (ค้น <span class="anchor">if(optSel[o.id]) opt+=o.price</span>): ข้าม select/depends กัน NaN + เพิ่ม tilt&turn = 5,000 × บาน เมื่อ awn_mode='2'</li></ul></div>
+</div></div>
+
+<!-- ===== MUST ===== -->
+<h2>🔴 ต้องแก้ — แก้ได้เลย (ยืนยันแล้ว) <span class="cnt">5 จุด</span></h2>
+
+<div class="item">
+<h3>4. VAT ในไฟล์ Excel ติด 7% ตายตัว <span class="tag must">ต้องแก้</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>ส่งออก Excel คิด VAT 7% เสมอ แม้เลือก "0% (ไม่มีใบกำกับ)" → เลขไม่ตรงใบ HTML</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix">
+<li>ค้น <span class="anchor">*0.07</span> ในฟังก์ชัน <code>exportQuoteExcel</code></li>
+<li>อ่านค่าจาก <code>#vat-pct</code> แล้วใช้ <code>net*vatPct/100</code> แทน 0.07 (ใช้ตัวแปร VAT เดียวกับใบ HTML)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>5. OPTION ระดับชุด (preset ทั้งชุด) โชว์ราคาแต่ไม่บวกเข้ายอด <span class="tag must">ต้องแก้</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>ใบบอกลูกค้า "OPTION +N บาท" แต่ยอดรวมไม่รวม → ขายขาดทุน (เหมือนบั๊กมุ้งที่เคยแก้)</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ (เลือกทาง)</div><ul class="fix">
+<li>ค้น <span class="anchor">groupOptDelta</span></li>
+<li>ถ้ายังใช้ preset ทั้งชุด → บวก groupOptDelta เข้า sell บานแรกในชุด <b>ครั้งเดียว</b></li>
+<li>ถ้าเลิกใช้แล้ว (ย้ายไป OPTION ต่อบาน) → ซ่อนปุ่ม/ช่อง preset ทั้งชุด</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>6. มุ้งม้วนเตะ เลือกรุ่นเล็กกับบานใหญ่ได้ ไม่เตือน <span class="tag must">ต้องแก้</span> <span style="font-size:9px;color:#92400E;">(เช็คซ้ำ)</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>รุ่น 150/300/600 มีพิกัดกว้าง (1.5/3.0/6.0 ม.) ประกาศไว้แต่ไม่มีโค้ดอ่าน</li>
+<li>เลือกรุ่น 150 (min 15,000) กับบาน 5 ม.ได้ ทั้งที่ต้องรุ่น 600 (min 67,500) → เก็บเงินขาด</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix">
+<li>ค้น <span class="anchor">mj_kick_150</span> / <code>maxWidth</code></li>
+<li>เพิ่มตรวจ: ถ้ากว้าง &gt; maxWidth ของรุ่น → เตือน "⚠ เกินพิกัด ใช้รุ่นใหญ่ขึ้น" + ไม่คิดราคาจนเปลี่ยนรุ่น</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>7. สีกรอบมุ้ง (addon ต่อบาน) เลือกไม่ได้ + ไม่บวกเงิน <span class="tag must">ต้องแก้</span> <span style="font-size:9px;color:#92400E;">(เช็คซ้ำ)</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>UI สร้าง class <code>.o-mscolor</code> แต่ตัวอ่านหา <code>.o-mosqcolor</code> (ไม่มี element)</li>
+<li>โค้ดคิดค่าทำสีถูกครอบด้วย <code>if(false)</code> = ตาย → มุ้ง mscolor ทุกตัวคิดสีไม่ได้</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix">
+<li>ค้น <span class="anchor">o-mosqcolor</span> และ <span class="anchor">o-mscolor</span> → ทำให้ตรง class กัน</li>
+<li>ย้ายโค้ดคิดสีออกจาก <code>if(false)</code> มาไว้ใน block คิดมุ้งจริง · ทดสอบว่าบวกเงิน</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>8. กั้นห้องกระจก ป้ายด้านเป็น "ด้าน A" ทุกบาน <span class="tag must">ต้องแก้</span> <span style="font-size:9px;color:#92400E;">(เช็คซ้ำ)</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>ทุกบานที่เพิ่มถูกตั้ง "ด้าน A" ตายตัว (ควร auto A/B/C/D) → แยกด้านในใบไม่ได้</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix">
+<li>ค้น <span class="anchor">'ด้าน A'</span> (มี ~3 จุด) ใน refreshSet/เพิ่มบาน</li>
+<li>นับบานในชุด แล้วตั้ง <code>pos='ด้าน '+String.fromCharCode(65+index)</code></li></ul></div>
+</div></div>
+
+<!-- ===== DUPLICATE/DECIDE ===== -->
+<h2 class="decide">♻️🟡 ซ้ำซ้อน + ต้องตัดสินใจก่อนแก้ <span class="cnt">พี่นัทเลือกแนวทาง</span></h2>
+
+<div class="item">
+<h3>9. ปิดปลายหลังคา คิดได้ 3 ทาง (ราคา 1,000/ม.เท่ากัน) <span class="tag decide">ตัดสินใจ</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li>สินค้าแยก <code>roof_eave_cover</code> + ตัวเลือก <code>o-roofend='ปิดปลาย'</code> + ตัวเลือก <code>o-rfeave</code></li>
+<li>2 ตัวเลือกอยู่ในฟอร์มชุดหลังคาเดียวกัน → เผลอกรอกทั้งคู่ = คิดซ้ำ 2 เท่า</li></ul></div>
+<div class="col"><div class="lbl">ต้องตัดสินใจ</div><ul class="fix">
+<li>ตัดทางไหนออก? (แนะนำเหลือทางเดียวในชุดหลังคา)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>10. รางน้ำหลังคา ซ้ำ 2 ทาง (สินค้าแยก vs ตัวเลือกในชุด) <span class="tag decide">ตัดสินใจ</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul>
+<li><code>roof_gutter_s/ss_m/ss_l</code> ราคาตรงกับตัวเลือก <code>o-rfgut</code> เป๊ะ (1,000/2,000/3,000)</li></ul></div>
+<div class="col"><div class="lbl">ต้องตัดสินใจ</div><ul class="fix">
+<li>สินค้าแยกไว้ใช้กรณีไม่มีชุดหลังคาใช่ไหม? ถ้าใช่คงไว้+เตือนซ้ำ · ถ้าไม่ รวมเหลือทางเดียว</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3>11. shower อุปกรณ์ดำ/ทอง ติ๊กพร้อมกันได้ (บวกซ้อน 10,000) <span class="tag decide">ตัดสินใจ</span></h3>
+<div class="lbl">วิธีแก้ที่เสนอ</div><ul class="fix"><li>ค้น <span class="anchor">blackhw</span> → เปลี่ยนดำ/ทองเป็น &lt;select&gt; เลือกสีเดียว (เงิน/ดำ+4,000/ทอง+6,000)</li></ul>
+</div>
+
+<div class="item">
+<h3>12. มุ้งบางตัวไม่จำกัดว่าใช้กับสินค้าไหนได้ <span class="tag decide">ตัดสินใจ</span></h3>
+<div class="lbl">ปัญหา</div><ul><li>imp22/28/30/33/35/mj_* ไม่มี allow_with → โผล่เลือกกับสินค้าที่ใส่มุ้งไม่ได้</li></ul>
+<div class="lbl">ต้องตัดสินใจ</div><ul class="fix"><li>มุ้งกลุ่มนี้ติดได้ทุกที่ (อิสระ) หรือควรจำกัดเหมือน imp21/23?</li></ul>
+</div>
+
+<div class="item">
+<h3>13. discFlat (ส่วนลดค่าประเมิน) ไม่มีเพดาน — ยอดติดลบได้ <span class="tag must">ควรแก้ (ปลอดภัย)</span></h3>
+<div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">discFlat</span> → ใส่ <code>net=Math.max(0,net)</code> หรือเตือนเมื่อ discFlat เกินยอด</li></ul>
+</div>
+
+<div class="item">
+<h3>14. อื่นๆ ที่ต้องข้อมูล/ตัดสินใจ <span class="tag decide">ตัดสินใจ</span></h3>
+<ul>
+<li><b>โหมดเหมา (lumpsum)</b> ตั้งราคาเหมาแล้วยังบวก OPTION/subItems ทับ — เหมา = ราคาล็อก หรือ ฐาน+ออปชั่น?</li>
+<li><b>มัดจำ/งวด</b> ใบไม่มีตารางมัดจำ-งวด — ต้องใส่ในใบไหม?</li>
+<li><b>กระจกเทมเปอร์ยูโรบรอนซ์ 10มม.(BSG)</b> กำไรต่ำผิดปกติ (s=1,230) — ขอราคาขายจริง</li>
+<li><b>ราวบันได imp2/imp3, imp5/imp6</b> เลขข้อ "47.2/47.4" ซ้ำ — เทียบ quote-spec.docx + imp2/imp3 ราคาควรต่างไหม</li>
+<li><b>โซลิด วัน/ทู</b> ลืมกรอกราคา → auto เรตยูโร — บังคับกรอก หรือโชว์ป้ายเตือน?</li>
+<li><b>บานกระทุ้งหลายบาน</b> addon 2,900/บาน + floor 0.67/บาน — ซ้อนคิดไหม?</li>
+</ul>
+</div>
+
+<!-- ===== COSMETIC ===== -->
+<h2 class="cos">🟢 cosmetic — ทำหรือไม่ทำก็ได้ <span class="cnt">3 จุด</span></h2>
+<div class="item">
+<ul>
+<li><b>dropdown กระจกบานหลัก</b> ~50 แบบเรียงพรืด → ใส่ <code>&lt;optgroup&gt;</code> ใน <code>glassOpts()</code> (ใส/สี/เทมเปอร์/ลามิเนต/อินซูเลท)</li>
+<li><b>ฝาตู้ Future Tech</b> คอมเมนต์เขียน "+5,000" แต่โค้ดคิด 5,500 (ลูกค้าเห็นเลขถูก) → แก้คอมเมนต์</li>
+<li><b>กระจก ★ ตาราง28</b> บางตัวคล้ายของหลัก → ติดป้าย "สั่งพิเศษ/นอกสต๊อก" กันเลือกผิด</li>
+</ul>
+</div>
+
+<div class="foot">
+JR · แชทตรวจ → แชทหลัก · ทุกจุดยึดโค้ดจริง (เว้น "เช็คซ้ำ") · ใช้ข้อความค้นหาแทนเลขบรรทัด · สำรองไฟล์เดิม: <code>index.bak-2026-06-09.html</code> · 9 มิ.ย. 2026
+</div>
+
+</body>
+</html>

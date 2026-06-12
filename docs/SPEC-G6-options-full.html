@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>SPEC G6 ออปชั่นบาน — ครบ 71 ตัว</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;font-size:13px;background:#fff;color:#1a1a1a;padding:20px;}
+h1{font-size:20px;font-weight:800;color:#B3151D;margin-bottom:4px;}
+h2{font-size:15px;font-weight:700;color:#B3151D;margin:22px 0 8px;border-bottom:2px solid #B3151D;padding-bottom:4px;}
+h3{font-size:13px;font-weight:700;color:#374151;margin:14px 0 6px;}
+.meta{font-size:11px;color:#888;margin-bottom:14px;}
+p{margin-bottom:8px;line-height:1.6;}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+th{background:#B3151D;color:#fff;padding:6px 8px;text-align:left;font-weight:700;}
+td{padding:5px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top;}
+tr:nth-child(even) td{background:#faf7f7;}
+.grp1{background:#EAF3FF;} .grp2{background:#FFF8E1;} .grp3{background:#E3F2FD;}
+.grp4{background:#F5F3FF;} .grp5{background:#F1F5F9;} .grp6{background:#FFF7ED;}
+.grp7{background:#F0FDF4;} .grp8{background:#FDF4FF;} .grp9{background:#F8FAFC;}
+.chip-ex{display:inline-block;background:#B3151D;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;}
+.drop-ex{display:inline-block;background:#374151;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;}
+.toggle-ex{display:inline-block;background:#6D28D9;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;}
+.cond-ex{background:#FEF3C7;color:#92400E;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;}
+.code{font-family:monospace;font-size:11px;background:#F3F4F6;border-radius:4px;padding:1px 6px;color:#374151;}
+.warn{background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:8px 10px;margin:8px 0;font-size:12px;}
+.ok{background:#DCFCE7;border:1px solid #16A34A;border-radius:6px;padding:8px 10px;margin:8px 0;font-size:12px;}
+.sec{border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:14px;}
+.kw-fix{background:#FEE2E2;border-left:3px solid #B3151D;padding:5px 8px;font-size:11px;font-family:monospace;margin:6px 0;}
+.kw-ok{background:#DCFCE7;border-left:3px solid #16A34A;padding:5px 8px;font-size:11px;font-family:monospace;margin:6px 0;}
+.page-break{page-break-before:always;}
+</style>
+</head>
+<body>
+
+<h1>SPEC G6 — ออปชั่นบาน กั้นห้องกระจก ครบ 71 ตัว</h1>
+<div class="meta">วันที่: 2026-06-12 · ส่ง dev · ไม่แก้ index.html ด้วยมือ</div>
+
+<div class="ok">สรุป: G6 ใช้ <code class="code">buildItemOpts</code> + <code class="code">groupGHOpts</code> เดียวกับ G1 อยู่แล้ว ออปชั่น conditional โผล่ตาม flag ของ product ครบ 71 ตัว — งานนี้คือจัดกลุ่ม keyword ใน <code class="code">groupGHOpts</code> ให้ไม่ตกหล่น และลำดับหมวดให้กรอกง่ายขึ้น</div>
+
+<div style="background:#FFF7E6;border:2px solid #16A34A;border-radius:8px;padding:11px 14px;margin:12px 0;">
+<b style="color:#15803D;">✅ มติพี่นัท (เคาะแล้ว 2026-06-12) — dev ทำตามนี้:</b>
+<ol style="margin:7px 0 0;padding-left:20px;font-size:13px;line-height:1.6;">
+<li><b>จัดหมวดใหม่ทั้ง G1 + G6</b> — แก้ <code class="code">groupGHOpts</code> ตัวเดียว มีผลทั้งบานปกติ (กลุ่ม 1) และกั้นห้อง (กลุ่ม 6) · <b>ต้องเทส regression G1 ทุก product type</b> ว่าหมวดไม่เพี้ยน</li>
+<li><b>แยกหมวด "ระแนง (ผิว/วิธีตัด)" ออกมาต่างหาก</b> — ย้าย <code class="code">o-finish</code> + <code class="code">o-hmode</code> ออกจากหมวด 8 (มอเตอร์/ดัดโค้ง) → เป็นหมวด 9 ใหม่ (รวมเป็น <b>10 หมวด</b>)</li>
+<li><b><code class="code">o-doortype</code> + <code class="code">o-doorprice</code> วางคู่ติดกัน</b> — ยืนยันถูกแล้ว (เลือกแบบประตู → กรอกราคาต่อเลย)</li>
+</ol>
+</div>
+
+<!-- ======================================================
+     ส่วนที่ 1: ตาราง Completeness 71 ตัว
+     ====================================================== -->
+<h2>1. ตาราง Completeness — ครบ 71 cls (QA)</h2>
+<p>ทุก cls ที่ปรากฏใน <code class="code">test/_g1-option-union.json</code> ถูกจัดเข้ากลุ่มใดกลุ่มหนึ่ง และมี control ที่เหมาะสม</p>
+
+<table>
+<tr>
+  <th>#</th><th>cls</th><th>label (ย่อ)</th><th>kind</th><th>nopt</th><th>หมวด</th><th>Control</th><th>เงื่อนไข (conditional)</th>
+</tr>
+<!-- หมวด 1: ชนิด/การเปิด/ราง/ธรณี -->
+<tr class="grp1"><td>1</td><td class="code">o-opentype</td><td>ชนิดการเปิด</td><td>select</td><td>5</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 5</span></td><td class="cond-ex">บานเลื่อน/เลื่อนภายใน</td></tr>
+<tr class="grp1"><td>2</td><td class="code">o-fixed</td><td>ติดตาย (บาน)</td><td>input</td><td>—</td><td>1-เปิด/ราง</td><td><span class="toggle-ex">stepper</span></td><td class="cond-ex">บานเลื่อน/เลื่อนภายใน</td></tr>
+<tr class="grp1"><td>3</td><td class="code">o-bottomrail</td><td>ราง กันน้ำ/เตี้ย</td><td>select</td><td>2</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">บานเลื่อนรางล่าง</td></tr>
+<tr class="grp1"><td>4</td><td class="code">o-track</td><td>โชว์/ซ่อนราง</td><td>select</td><td>2</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">เลื่อนภายใน (รางบน)</td></tr>
+<tr class="grp1"><td>5</td><td class="code">o-thresh</td><td>ธรณี บานเปิด</td><td>select</td><td>2</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">บานเปิด</td></tr>
+<tr class="grp1"><td>6</td><td class="code">o-threshf</td><td>ธรณี บานเฟี้ยม</td><td>select</td><td>2</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">บานเฟี้ยม</td></tr>
+<tr class="grp1"><td>7</td><td class="code">o-awn_mode</td><td>แบบเปิด กระทุ้ง</td><td>select</td><td>3</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 3</span></td><td class="cond-ex">บานกระทุ้ง</td></tr>
+<tr class="grp1"><td>8</td><td class="code">o-frametype</td><td>ประเภทบานเปลือย</td><td>select</td><td>2</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">frameless_door</td></tr>
+<tr class="grp1"><td>9</td><td class="code">o-solidlight</td><td>ช่องแสง (กระจก)</td><td>input</td><td>—</td><td>1-เปิด/ราง</td><td>input number</td><td class="cond-ex">solid_door</td></tr>
+<tr class="grp1"><td>10</td><td class="code">o-fcsides</td><td>ครอบวงกบ ด้าน</td><td>select</td><td>3</td><td>1-เปิด/ราง</td><td><span class="chip-ex">ชิป 3</span></td><td>ส่วนใหญ่ (ยกเว้น shower/frameless/ราว)</td></tr>
+<tr class="grp1"><td>11</td><td class="code">o-fcm</td><td>ครอบวงกบ ม.</td><td>input</td><td>—</td><td>1-เปิด/ราง</td><td>input number</td><td>คู่กับ o-fcsides</td></tr>
+<!-- หมวด 2: มือจับ/ล็อค/โช๊ค -->
+<tr class="grp2"><td>12</td><td class="code">o-cmech</td><td>Cmech ฝัง/เมโทร</td><td>select</td><td>3</td><td>2-มือจับ</td><td><span class="chip-ex">ชิป (multi-toggle sub)</span></td><td class="cond-ex">บานเลื่อน/บานเปิด</td></tr>
+<tr class="grp2"><td>13</td><td class="code">o-cmechcolor</td><td>สี Cmech</td><td>select</td><td>7</td><td>2-มือจับ</td><td><span class="drop-ex">dropdown 7</span></td><td class="cond-ex">คู่กับ cmech</td></tr>
+<tr class="grp2"><td>14</td><td class="code">o-digi</td><td>มือจับดิจิตอล</td><td>select</td><td>12</td><td>2-มือจับ</td><td><span class="drop-ex">dropdown 12</span></td><td class="cond-ex">digihandle</td></tr>
+<tr class="grp2"><td>15</td><td class="code">o-stainless</td><td>สแตนอร่าม</td><td>select</td><td>7</td><td>2-มือจับ</td><td><span class="drop-ex">dropdown 7</span></td><td class="cond-ex">digihandle</td></tr>
+<tr class="grp2"><td>16</td><td class="code">o-xhandle</td><td>X-series (ฟรี)</td><td>select</td><td>4</td><td>2-มือจับ</td><td><span class="chip-ex">ชิป (multi-toggle sub)</span></td><td class="cond-ex">xseries/slimlux</td></tr>
+<tr class="grp2"><td>17</td><td class="code">o-handlename</td><td>กรอกชื่อรุ่น</td><td>input</td><td>—</td><td>2-มือจับ</td><td>input text</td><td class="cond-ex">digihandle</td></tr>
+<tr class="grp2"><td>18</td><td class="code">o-handleprice</td><td>กรอกราคา</td><td>input</td><td>—</td><td>2-มือจับ</td><td>input number</td><td class="cond-ex">digihandle</td></tr>
+<tr class="grp2"><td>19</td><td class="code">o-cmechawn</td><td>Cmech หลบมุ้ง</td><td>select</td><td>8</td><td>2-มือจับ</td><td><span class="drop-ex">dropdown 8</span></td><td class="cond-ex">บานกระทุ้ง</td></tr>
+<tr class="grp2"><td>20</td><td class="code">o-slidelock</td><td>ชุดล็อค</td><td>select</td><td>2</td><td>2-มือจับ</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">บานเลื่อน/PC Door</td></tr>
+<tr class="grp2"><td>21</td><td class="code">o-closer</td><td>โช๊ค [Up3]</td><td>select</td><td>4</td><td>2-มือจับ</td><td><span class="chip-ex">ชิป 4</span></td><td class="cond-ex">บานเปิด</td></tr>
+<!-- หมวด 3: มุ้ง -->
+<tr class="grp3"><td>22</td><td class="code">o-mosq</td><td>ชนิดมุ้ง</td><td>select</td><td>13</td><td>3-มุ้ง</td><td><span class="drop-ex">dropdown 13</span></td><td class="cond-ex">p.mosquito</td></tr>
+<tr class="grp3"><td>23</td><td class="code">o-mosqpanels</td><td>จำนวนบานมุ้ง (hidden)</td><td>input</td><td>—</td><td>3-มุ้ง</td><td>hidden input (source of truth)</td><td class="cond-ex">p.mosquito</td></tr>
+<tr class="grp3"><td>24</td><td class="code">o-mosqpanels-stepper</td><td>จำนวนบานมุ้ง (stepper)</td><td>input</td><td>—</td><td>3-มุ้ง</td><td><span class="toggle-ex">ชิป+stepper</span></td><td class="cond-ex">p.mosquito (N&gt;5=stepper)</td></tr>
+<tr class="grp3"><td>25</td><td class="code">o-mosqw</td><td>กว้างมุ้ง (ม.)</td><td>input</td><td>—</td><td>3-มุ้ง</td><td>input number</td><td class="cond-ex">p.mosquito (พับใน details)</td></tr>
+<tr class="grp3"><td>26</td><td class="code">o-mosqh</td><td>สูงมุ้ง (ม.)</td><td>input</td><td>—</td><td>3-มุ้ง</td><td>input number</td><td class="cond-ex">p.mosquito (พับใน details)</td></tr>
+<tr class="grp3"><td>27</td><td class="code">o-mosqopenstyle</td><td>ลักษณะการเปิดมุ้ง</td><td>input</td><td>—</td><td>3-มุ้ง</td><td><span class="chip-ex">ชิป 4 (label-only)</span></td><td class="cond-ex">imp21/imp23 เท่านั้น</td></tr>
+<tr class="grp3"><td>28</td><td class="code">o-mosqfabric</td><td>ผ้ามุ้ง</td><td>select</td><td>5</td><td>3-มุ้ง</td><td><span class="chip-ex">ชิป 5</span></td><td class="cond-ex">p.mosquito</td></tr>
+<tr class="grp3"><td>29</td><td class="code">o-mosqcolor</td><td>สีกรอบมุ้ง</td><td>select</td><td>4</td><td>3-มุ้ง</td><td><span class="chip-ex">ชิป 4</span></td><td class="cond-ex">p.mosquito</td></tr>
+<!-- หมวด 4: คาดตาราง -->
+<tr class="grp4"><td>30</td><td class="code">o-gridmark</td><td>มีคาดตาราง</td><td>input:cb</td><td>—</td><td>4-ตาราง</td><td><span class="toggle-ex">checkbox → reveal</span></td><td>ยกเว้น shower/บานเปลือย/ติดตาย/มุ้ง/หลังคา/ฝ้า</td></tr>
+<tr class="grp4"><td>31</td><td class="code">o-gm-nh</td><td>เส้นนอน</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number</td><td>โผล่เมื่อ o-gridmark ติ๊ก</td></tr>
+<tr class="grp4"><td>32</td><td class="code">o-gm-nv</td><td>เส้นตั้ง</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number (auto=จำนวนบาน)</td><td>โผล่เมื่อ o-gridmark ติ๊ก</td></tr>
+<tr class="grp4"><td>33</td><td class="code">o-gm-rate</td><td>ราคา/ม.</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number (default 200)</td><td>โผล่เมื่อ o-gridmark ติ๊ก</td></tr>
+<tr class="grp4"><td>34</td><td class="code">o-gm-curve</td><td>เส้นโค้ง</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number</td><td>โผล่เมื่อ o-gridmark ติ๊ก</td></tr>
+<tr class="grp4"><td>35</td><td class="code">o-fullgrid</td><td>ตารางเต็มบาน +5,000</td><td>input:cb</td><td>—</td><td>4-ตาราง</td><td><span class="toggle-ex">checkbox</span></td><td class="cond-ex">p.full_grid (โซลิด วัน/ทู)</td></tr>
+<tr class="grp4"><td>36</td><td class="code">o-gridcolor</td><td>สีเส้น</td><td>select</td><td>4</td><td>4-ตาราง</td><td><span class="chip-ex">ชิป 4</span></td><td class="cond-ex">p.grid (เส้นคาดเฉพาะ)</td></tr>
+<tr class="grp4"><td>37</td><td class="code">o-nh</td><td>เส้นแนวนอน</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number</td><td class="cond-ex">p.grid</td></tr>
+<tr class="grp4"><td>38</td><td class="code">o-nv</td><td>เส้นแนวตั้ง</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number</td><td class="cond-ex">p.grid</td></tr>
+<tr class="grp4"><td>39</td><td class="code">o-nc</td><td>เส้นโค้ง (3,000/เส้น)</td><td>input</td><td>—</td><td>4-ตาราง</td><td>input number</td><td class="cond-ex">p.grid</td></tr>
+<!-- หมวด 5: โครงสร้าง -->
+<tr class="grp5"><td>40</td><td class="code">o-beam_support</td><td>เสริมคานซัพพอร์ท</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">toggle+len</span></td><td class="cond-ex">COMMON_OPTS ids: บานเฟี้ยม/เลื่อนใน/PC</td></tr>
+<tr class="grp5"><td>41</td><td class="code">o-beam_support-len</td><td>ความยาวคาน (ม.)</td><td>input</td><td>—</td><td>5-โครงสร้าง</td><td>input number (reveal)</td><td class="cond-ex">เมื่อ o-beam_support ติ๊ก</td></tr>
+<tr class="grp5"><td>42</td><td class="code">o-hide_beam</td><td>ซ่อนคาน</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">toggle+len</span></td><td class="cond-ex">บานเฟี้ยม/เลื่อนภายใน</td></tr>
+<tr class="grp5"><td>43</td><td class="code">o-hide_beam-len</td><td>ความยาว (ม.)</td><td>input</td><td>—</td><td>5-โครงสร้าง</td><td>input number (reveal)</td><td class="cond-ex">เมื่อ o-hide_beam ติ๊ก</td></tr>
+<tr class="grp5"><td>44</td><td class="code">o-hide_track</td><td>ซ่อนราง</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">toggle+len</span></td><td class="cond-ex">บานเฟี้ยม</td></tr>
+<tr class="grp5"><td>45</td><td class="code">o-hide_track-len</td><td>ความยาว (ม.)</td><td>input</td><td>—</td><td>5-โครงสร้าง</td><td>input number (reveal)</td><td class="cond-ex">เมื่อ o-hide_track ติ๊ก</td></tr>
+<tr class="grp5"><td>46</td><td class="code">o-u_track</td><td>ฝังรางยู (U-Track)</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">toggle+len</span></td><td class="cond-ex">บานเฟี้ยม/เลื่อนภายใน</td></tr>
+<tr class="grp5"><td>47</td><td class="code">o-u_track-len</td><td>ความยาว (ม.)</td><td>input</td><td>—</td><td>5-โครงสร้าง</td><td>input number (reveal)</td><td class="cond-ex">เมื่อ o-u_track ติ๊ก</td></tr>
+<tr class="grp5"><td>48</td><td class="code">o-uchannel</td><td>ฝังรางยู (ในพื้น)</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">checkbox</span></td><td>บานทั่วไป (ยกเว้น หลังคา/ฝ้า/shower/frameless/บานหมุน/เลื่อนใน/เฟี้ยม/ตู้/ราว)</td></tr>
+<tr class="grp5"><td>49</td><td class="code">o-soft_close</td><td>Soft Close +4,000</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">checkbox</span></td><td class="cond-ex">เลื่อนภายใน</td></tr>
+<tr class="grp5"><td>50</td><td class="code">o-sling</td><td>สลิงเปิดซ้อน +2,000</td><td>input:cb</td><td>—</td><td>5-โครงสร้าง</td><td><span class="toggle-ex">checkbox</span></td><td class="cond-ex">เลื่อนภายใน</td></tr>
+<tr class="grp5"><td>51</td><td class="code">o-dfm</td><td>ดรอปพื้น (ม.)</td><td>input</td><td>—</td><td>5-โครงสร้าง</td><td>input number</td><td>บานทั่วไป (ยกเว้น ตู้/เลื่อนใน/หมุน/ติดตาย/มุ้ง)</td></tr>
+<!-- หมวด 6: แผ่นทึบล่าง -->
+<tr class="grp6"><td>52</td><td class="code">o-solidlower</td><td>แผ่นทึบล่าง</td><td>select</td><td>3</td><td>6-ทึบล่าง</td><td><span class="chip-ex">ชิป 3</span></td><td class="cond-ex">บานเลื่อน/เปิด/กระทุ้ง/เฟี้ยม/PC</td></tr>
+<tr class="grp6"><td>53</td><td class="code">o-sl-w</td><td>กว้าง (ม.)</td><td>input</td><td>—</td><td>6-ทึบล่าง</td><td>input number (reveal)</td><td>เมื่อ o-solidlower มีค่า</td></tr>
+<tr class="grp6"><td>54</td><td class="code">o-sl-h</td><td>สูง (ม.)</td><td>input</td><td>—</td><td>6-ทึบล่าง</td><td>input number (reveal)</td><td>เมื่อ o-solidlower มีค่า</td></tr>
+<tr class="grp6"><td>55</td><td class="code">o-sl-color</td><td>สีลูกฟูก</td><td>select</td><td>5</td><td>6-ทึบล่าง</td><td><span class="chip-ex">ชิป 5</span></td><td>เฉพาะ corrugated</td></tr>
+<!-- หมวด 7: Shower -->
+<tr class="grp7"><td>56</td><td class="code">o-shtype</td><td>รูปแบบ shower</td><td>select</td><td>3</td><td>7-shower</td><td><span class="chip-ex">ชิป 3</span></td><td class="cond-ex">p.id==='shower'</td></tr>
+<tr class="grp7"><td>57</td><td class="code">o-shdoortype</td><td>ประเภทประตู</td><td>select</td><td>2</td><td>7-shower</td><td><span class="chip-ex">ชิป 2</span></td><td class="cond-ex">p.id==='shower'</td></tr>
+<tr class="grp7"><td>58</td><td class="code">o-corner</td><td>เข้ามุม +3,000</td><td>input:cb</td><td>—</td><td>7-shower</td><td><span class="toggle-ex">checkbox</span></td><td class="cond-ex">p.id==='shower'</td></tr>
+<tr class="grp7"><td>59</td><td class="code">o-showerhw</td><td>อุปกรณ์ เงิน/ดำ/ทอง</td><td>select</td><td>3</td><td>7-shower</td><td><span class="chip-ex">ชิป 3</span></td><td class="cond-ex">p.id==='shower'</td></tr>
+<!-- หมวด 8: มอเตอร์/ดัดโค้ง/บานเปลือย -->
+<tr class="grp8"><td>60</td><td class="code">o-motor</td><td>มอเตอร์</td><td>select</td><td>3</td><td>8-มอเตอร์</td><td><span class="chip-ex">ชิป 3</span></td><td class="cond-ex">p.motor (บานยก/ดัดโค้ง)</td></tr>
+<tr class="grp8"><td>61</td><td class="code">o-doortype</td><td>ทำเป็นประตู</td><td>select</td><td>6</td><td>8-มอเตอร์</td><td><span class="drop-ex">dropdown 6</span></td><td class="cond-ex">p.ranae (ระแนง/ดัดโค้ง)</td></tr>
+<tr class="grp8"><td>62</td><td class="code">o-doorprice</td><td>ราคาประตู (กรอกเอง)</td><td>input</td><td>—</td><td>8-มอเตอร์</td><td>input number</td><td class="cond-ex">p.ranae (คู่กับ o-doortype)</td></tr>
+<tr class="grp8" style="background:#F0FDF4;"><td>63</td><td class="code">o-finish</td><td>ผิว/สี ระแนง</td><td>select</td><td>7</td><td><b>9-ระแนง</b></td><td><span class="drop-ex">dropdown 7</span></td><td class="cond-ex">p.fin (ระแนง/ดัดโค้ง) · ★ย้ายจากหมวด 8</td></tr>
+<tr class="grp8" style="background:#F0FDF4;"><td>64</td><td class="code">o-hmode</td><td>วิธีตัดระแนง</td><td>input</td><td>—</td><td><b>9-ระแนง</b></td><td>2-card (ปัด/ต่อ) + hidden input</td><td class="cond-ex">p.ranae (ระแนงขายเดี่ยว) · ★ย้ายจากหมวด 8</td></tr>
+<tr class="grp8"><td>65</td><td class="code">o-framecolor</td><td>สีเฟรมอลู</td><td>select</td><td>6</td><td>8-มอเตอร์</td><td><span class="drop-ex">dropdown 6</span></td><td class="cond-ex">p.id==='frameless_door'</td></tr>
+<!-- หมวด 9: งานเสริม -->
+<tr class="grp9"><td>66</td><td class="code">o-combo_awn_inside</td><td>combo บานกระทุ้งเข้าใน</td><td>input:cb</td><td>—</td><td>9-เสริม</td><td><span class="toggle-ex">checkbox → reveal price</span></td><td class="cond-ex">casement_euro/solid</td></tr>
+<tr class="grp9"><td>67</td><td class="code">o-combo_price</td><td>ราคา combo</td><td>input</td><td>—</td><td>9-เสริม</td><td>input number (reveal)</td><td class="cond-ex">เมื่อ o-combo_awn_inside ติ๊ก</td></tr>
+<tr class="grp9"><td>68</td><td class="code">o-extrawork</td><td>งานเสริม/วิศวกรรม</td><td>input</td><td>—</td><td>9-เสริม</td><td>input text</td><td>ทุกสินค้า</td></tr>
+<tr class="grp9"><td>69</td><td class="code">o-removeold</td><td>รื้อของเดิม</td><td>input:cb</td><td>—</td><td>9-เสริม</td><td><span class="toggle-ex">checkbox</span></td><td>ทุกสินค้า</td></tr>
+<tr class="grp9"><td>70</td><td class="code">o-remark-add</td><td>หมายเหตุ/OPTION ขึ้นใบ</td><td>select</td><td>18</td><td>9-เสริม</td><td><span class="drop-ex">dropdown 18</span></td><td>ทุกสินค้า</td></tr>
+<tr class="grp9"><td>71</td><td class="code">o-optdelta</td><td>ปรับราคา (บาท)</td><td>input</td><td>—</td><td>9-เสริม</td><td>input number</td><td>ทุกสินค้า</td></tr>
+</table>
+
+<div class="ok"><b>QA ผ่าน:</b> ครบ 71/71 cls — ทุกตัวอยู่ในกลุ่ม 1-9 ไม่มีตกหล่น</div>
+
+<!-- ======================================================
+     ส่วนที่ 2: โครงกลุ่มใหม่ + ลำดับ + เด่น/พับ
+     ====================================================== -->
+<div class="page-break"></div>
+<h2>2. โครงกลุ่มใหม่ 10 หมวด <span style="font-size:13px;color:#16A34A;">(ปรับตามมติพี่นัท: แยกหมวดระแนง)</span></h2>
+
+<table>
+<tr><th>#</th><th>ชื่อหมวด</th><th>เปิดเริ่มต้น</th><th>จำนวน opt</th><th>เหตุผล</th></tr>
+<tr><td>1</td><td>ชนิด / การเปิด / ราง / ธรณี</td><td>เปิด (open)</td><td>11</td><td>กรอกทุกงาน — อยู่บนสุดเพื่อเห็นก่อน</td></tr>
+<tr><td>2</td><td>มือจับ / ล็อค / โช๊ค</td><td>พับ</td><td>10</td><td>ใช้บ่อยแต่ไม่ทุกงาน · multi-toggle ซ่อน sub ได้</td></tr>
+<tr><td>3</td><td>มุ้ง</td><td>พับ</td><td>8</td><td>conditional ตาม p.mosquito · cascade reveal</td></tr>
+<tr><td>4</td><td>คาดตาราง</td><td>พับ</td><td>10</td><td>conditional reveal เมื่อติ๊ก o-gridmark</td></tr>
+<tr><td>5</td><td>โครงสร้าง / คาน / ราง / ซ่อน</td><td>พับ</td><td>12</td><td>toggle+len ซ่อนช่องยาวจนติ๊ก</td></tr>
+<tr><td>6</td><td>แผ่นทึบล่าง / ลูกฟูก</td><td>พับ</td><td>4</td><td>conditional reveal เมื่อเลือกมี</td></tr>
+<tr><td>7</td><td>Shower</td><td>เปิด (เมื่อ p.id=shower)</td><td>4</td><td>เฉพาะสินค้า shower</td></tr>
+<tr><td>8</td><td>มอเตอร์ / ดัดโค้ง / บานเปลือย</td><td>เปิด (เมื่อ p.motor/ranae)</td><td>4</td><td>เฉพาะสินค้า motor/ranae/frameless · cls: o-motor, o-doortype, o-doorprice, o-framecolor</td></tr>
+<tr style="background:#F0FDF4;"><td>9</td><td><b>ระแนง (ผิว / วิธีตัด)</b> <span style="color:#16A34A;font-size:11px;">★ หมวดใหม่</span></td><td>เปิด (เมื่อ p.fin/ranae)</td><td>2</td><td><b>มติพี่นัท:</b> แยกออกจากหมวด 8 — เป็นงานระแนง คนละพวกมอเตอร์ · cls: o-finish, o-hmode</td></tr>
+<tr><td>10</td><td>งานเสริม / หมายเหตุ</td><td>พับ</td><td>6</td><td>ทุกสินค้า · ล่างสุด เพราะกรอกน้อย</td></tr>
+</table>
+<p style="font-size:13px;color:#555;">หมายเหตุ: <code class="code">o-doortype</code> (ทำเป็นประตู) + <code class="code">o-doorprice</code> (ราคาประตู กรอกเอง) <b>วางคู่ติดกัน</b> — เลือกแบบประตูแล้วกรอกราคาต่อเลย (มติพี่นัทยืนยันถูกแล้ว)</p>
+
+<!-- ======================================================
+     ส่วนที่ 3: Pattern HTML/JS
+     ====================================================== -->
+<h2>3. Pattern HTML/JS ที่ต้องใช้</h2>
+
+<div class="sec">
+<h3>3.1 ชิป sync กับ hidden select (pickOne)</h3>
+<p>ชิปทำหน้าที่ UI เท่านั้น — select ซ่อน (<code class="code">display:none</code>) เป็น source of truth สำหรับ <code class="code">readItem</code></p>
+<pre style="background:#F3F4F6;padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;">
+/* ตัวอย่าง: o-bottomrail */
+&lt;div class="chips"&gt;
+  &lt;button class="chip sm on" data-val="กันน้ำ" onclick="chSetChip(this,'o-bottomrail')"&gt;รางกันน้ำ&lt;/button&gt;
+  &lt;button class="chip sm" data-val="เตี้ย" onclick="chSetChip(this,'o-bottomrail')"&gt;รางเตี้ย 7 มม.&lt;/button&gt;
+&lt;/div&gt;
+&lt;select class="o-bottomrail" style="display:none;" onchange="calcQuote();"&gt;
+  &lt;option value="กันน้ำ" selected&gt;รางล่าง (กันน้ำ)&lt;/option&gt;
+  &lt;option value="เตี้ย"&gt;รางล่าง (รางเตี้ย 7 มม.)&lt;/option&gt;
+&lt;/select&gt;
+/* chSetChip อยู่ใน index.html แล้ว — ไม่ต้องเพิ่ม */
+</pre>
+</div>
+
+<div class="sec">
+<h3>3.2 Multi-toggle มือจับ</h3>
+<p>ปุ่มแบรนด์ติ๊กได้หลายอัน → เปิด/ปิด <code class="code">.hsub-*</code> ราคาบวกสะสมจาก sub select ที่ซ่อน</p>
+<pre style="background:#F3F4F6;padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;">
+/* toggleHandleBrand(btn) อยู่ใน index.html แล้ว */
+&lt;button data-hbrand="cmech" onclick="toggleHandleBrand(this)"&gt;Cmech&lt;/button&gt;
+/* sub div .hsub-cmech โผล่เมื่อติ๊ก */
+</pre>
+</div>
+
+<div class="sec">
+<h3>3.3 Toggle + reveal ช่องความยาว (toggle+len)</h3>
+<p>checkbox ติ๊ก → โผล่ input ความยาว · ค่า perLen คำนวณใน <code class="code">COMMON_OPTS</code> แล้ว</p>
+<pre style="background:#F3F4F6;padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;">
+&lt;label&gt;&lt;input type="checkbox" class="o-beam_support" onchange="calcQuote();"&gt;
+  เสริมคาน &lt;span&gt;(≤3ม.=4,000)&lt;/span&gt;
+  ยาว(ม.) &lt;input type="number" class="o-beam_support-len" style="display:none;" ...&gt;
+&lt;/label&gt;
+/* reveal logic: onchange toggle display */
+</pre>
+</div>
+
+<div class="sec">
+<h3>3.4 Conditional reveal มุ้ง (cascade)</h3>
+<p>เลือก o-mosq ≠ "" → โผล่ .mosq-detail-group ที่ซ่อน</p>
+<pre style="background:#F3F4F6;padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;">
+/* mosqGroupToggle(sel) อยู่ใน index.html แล้ว */
+&lt;select class="o-mosq" onchange="mosqGroupToggle(this); calcQuote();"&gt;...&lt;/select&gt;
+&lt;div class="mosq-detail-group" style="display:none;"&gt;...&lt;/div&gt;
+</pre>
+</div>
+
+<!-- ======================================================
+     ส่วนที่ 4: จุดแก้ใน groupGHOpts
+     ====================================================== -->
+<h2>4. จุดแก้ใน <code class="code">groupGHOpts</code> (~L1796)</h2>
+
+<div class="warn">
+<b>ปัญหาปัจจุบัน:</b> keyword-matching เปราะ — บาง control อาจตกหมวด "อื่นๆ" (bucket สุดท้าย) เพราะ textContent ไม่ตรง keyword ที่กำหนด
+</div>
+
+<h3>keyword ที่ต้องเพิ่ม/แก้ใน CATS (สำหรับ non-roof)</h3>
+
+<table>
+<tr><th>หมวดปัจจุบัน (key)</th><th>keyword ที่ขาด/ต้องเพิ่ม</th><th>ครอบ cls ไหน</th></tr>
+<tr>
+  <td class="code">🚪 ชนิด / การเปิด</td>
+  <td>
+    <div class="kw-ok">เพิ่ม: 'ชนิดการเปิด' (ครอบ o-opentype label)</div>
+    <div class="kw-ok">เพิ่ม: 'ราง ' (มี space — ครอบ o-bottomrail, o-track)</div>
+    <div class="kw-ok">เพิ่ม: 'ธรณี' (ครอบ o-thresh, o-threshf)</div>
+    <div class="kw-ok">เพิ่ม: 'แบบเปิด' (ครอบ o-awn_mode)</div>
+    <div class="kw-ok">เพิ่ม: 'ประเภทบานเปลือย' (ครอบ o-frametype)</div>
+    <div class="kw-ok">เพิ่ม: 'ช่องแสง' (ครอบ o-solidlight)</div>
+    <div class="kw-ok">เพิ่ม: 'ครอบวงกบ' (ครอบ o-fcsides, o-fcm)</div>
+  </td>
+  <td>o-opentype, o-fixed, o-bottomrail, o-track, o-thresh, o-threshf, o-awn_mode, o-frametype, o-solidlight, o-fcsides, o-fcm</td>
+</tr>
+<tr>
+  <td class="code">🔧 มือจับ / ล็อค</td>
+  <td>
+    <div class="kw-ok">เพิ่ม: 'ชุดล็อค' (ครอบ o-slidelock)</div>
+    <div class="kw-ok">เพิ่ม: 'โช๊ค' (ครอบ o-closer — มีอยู่แล้ว)</div>
+    <div class="kw-ok">ตรวจ: '.handle-brand-wrap' ใน className ครอบ multi-toggle block ได้ไหม</div>
+  </td>
+  <td>o-cmech, o-cmechcolor, o-digi, o-stainless, o-xhandle, o-handlename, o-handleprice, o-cmechawn, o-slidelock, o-closer</td>
+</tr>
+<tr>
+  <td class="code">📐 คาดตาราง</td>
+  <td>
+    <div class="kw-ok">เพิ่ม: 'ตารางเต็มบาน' (ครอบ o-fullgrid)</div>
+    <div class="kw-ok">เพิ่ม: 'เส้นแนวนอน', 'เส้นแนวตั้ง' (ครอบ o-nh, o-nv — มีแล้ว)</div>
+    <div class="kw-ok">ตรวจ: 'สีเส้น' ครอบ o-gridcolor ได้</div>
+  </td>
+  <td>o-gridmark, o-gm-nh, o-gm-nv, o-gm-rate, o-gm-curve, o-fullgrid, o-gridcolor, o-nh, o-nv, o-nc</td>
+</tr>
+<tr>
+  <td class="code">➕ อื่นๆ (bucket สุดท้าย)</td>
+  <td>
+    <div class="kw-fix">ปัญหา: ของที่ควรอยู่หมวดอื่นแต่ตกมาที่นี่ — ต้องเพิ่ม keyword ในหมวดข้างบน</div>
+    <div class="kw-ok">ของที่ควรอยู่ที่นี่จริงๆ: o-extrawork, o-removeold, o-optdelta, o-remark-add, o-combo_*, o-dfm, o-uchannel</div>
+  </td>
+  <td>—</td>
+</tr>
+</table>
+
+<h3>โค้ดที่ต้องแก้ใน CATS (non-roof)</h3>
+<pre style="background:#F3F4F6;padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;border-left:3px solid #B3151D;">
+// จุดแก้: ~L1811 ใน index.html (CATS สำหรับ non-roof)
+{key:'🚪 ชนิด / การเปิด', open:true, kw:[
+  'ชนิดการเปิด',   // + เพิ่ม (o-opentype)
+  'ราง ',           // + เพิ่ม space (o-bottomrail, o-track — ระวัง 'ราง' ติด 'รางน้ำ')
+  'ธรณี',           // + เพิ่ม (o-thresh, o-threshf)
+  'แบบเปิด',        // + เพิ่ม (o-awn_mode)
+  'ช่องแสง',        // + เพิ่ม (o-solidlight)
+  'ครอบวงกบ',       // + เพิ่ม (o-fcsides, o-fcm)
+  'ติดตาย',         // + เพิ่ม (o-fixed — label "ติดตาย บาน")
+  'combo บาน', 'ธรณี', 'ปลายหลังคา', 'โครงสร้าง',
+  'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง',
+  'ซ่อนราง','ทิศระแนง','ลายระแนง','ชนิดราง','ของเสริมหลังคา','สีวัสดุมุง',
+  'ความสูง','ทำเป็นประตู','ซ่อนสโลป','มอเตอร์','ค่าประตู',
+  'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน',
+  'ประเภท','ชนิดชั้น','ราวจับ',
+  'ประเภทบานเปลือย',  // + เพิ่ม (o-frametype)
+  'ตารางเต็มบาน',      // ย้ายมาจาก 🔧 ถ้าหลุด
+]},
+{key:'🔧 มือจับ / ล็อค', open:false, kw:[
+  'มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
+  'ติดตายกี่บาน',
+  'handle-brand-wrap',  // + เพิ่ม className match (block มือจับ)
+]},
+{key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},
+{key:'📐 คาดตาราง', open:false, kw:[
+  'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง',
+  'เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง',
+  'ตารางเต็มบาน',  // + เพิ่ม (o-fullgrid)
+]},
+// bucket สุดท้าย: เสริมคาน/ซ่อนคาน/ซ่อนราง/รางยู/ดรอปพื้น/ครอบ/หมายเหตุ
+{key:'➕ อื่นๆ (เสริมโครงสร้าง / ครอบวงกบ / หมายเหตุ)', open:false, kw:[]}
+</pre>
+
+<div class="warn">
+<b>หมายเหตุสำคัญ:</b> การแก้ <code class="code">groupGHOpts</code> มีผลกับ G1 ด้วย — ทดสอบ G1 ทุก product type หลังแก้ด้วย <code class="code">node test/quote-fidelity.mjs</code>
+</div>
+
+<!-- ======================================================
+     ส่วนที่ 5: QA + DoD
+     ====================================================== -->
+<h2>5. QA + DoD</h2>
+
+<table>
+<tr><th>รายการ</th><th>วิธีตรวจ</th><th>ผ่านเมื่อ</th></tr>
+<tr><td>ออปชั่นครบ 71 cls</td><td>เปิดแต่ละ product ใน index.html → inspect .i-opts ว่า cls ครบ</td><td>ทุก cls ที่ buildItemOpts สร้าง อยู่ใน DOM</td></tr>
+<tr><td>ไม่มี cls ตกหมวดผิด</td><td>เปิด sliding_euro → inspect groupGHOpts buckets</td><td>แต่ละ cls อยู่ใน details หมวดที่ถูกต้อง</td></tr>
+<tr><td>ชิป sync select</td><td>กดชิป → inspect select value</td><td>select value ตรงกับ data-val ของชิปที่กด</td></tr>
+<tr><td>readItem อ่านได้ทุก o-*</td><td>node test/quote-fidelity.mjs</td><td>PASS — ไม่มี regression</td></tr>
+<tr><td>ราคาไม่เพี้ยน</td><td>ทดสอบ baseline sliding_euro/casement/shower ก่อน-หลัง</td><td>ราคาเท่าเดิม (แก้แค่ UI label/grouping ไม่แตะ calc)</td></tr>
+<tr><td>tap target ≥44px</td><td>Chrome DevTools → Toggle Device (375px)</td><td>ทุกชิป/ปุ่ม/checkbox min-height ≥44px</td></tr>
+<tr><td>G1 ไม่กระทบ</td><td>เปิด G1 product หลายตัว → ตรวจ groupGHOpts bucket</td><td>keyword ที่เพิ่มไม่ดึง G1 control ไปผิดหมวด</td></tr>
+</table>
+
+<!-- ======================================================
+     ส่วนที่ 6: ไฟล์อ้างอิง
+     ====================================================== -->
+<h2>6. ไฟล์อ้างอิง</h2>
+<table>
+<tr><th>ไฟล์</th><th>บทบาท</th></tr>
+<tr><td class="code">public/calculator/index.html</td><td>READ-ONLY · ฟังก์ชันที่แก้: groupGHOpts ~L1796, buildItemOpts ~L2440</td></tr>
+<tr><td class="code">test/_g1-option-union.json</td><td>รายการ 71 cls authoritative — QA ตรวจเทียบ</td></tr>
+<tr><td class="code">C:\Users\Nut\Desktop\Sharepicjr\draft-G6-options-full.html</td><td>ดราฟ interactive กดเล่นได้ ครบ 71 ตัว</td></tr>
+</table>
+
+<div style="margin-top:20px;font-size:11px;color:#888;border-top:1px solid #e5e5e5;padding-top:10px;">
+SPEC-G6-options-full.html · สร้าง 2026-06-12 · ส่ง developer แชท B · ไม่ใช่ไฟล์สำหรับ end-user
+</div>
+
+</body>
+</html>

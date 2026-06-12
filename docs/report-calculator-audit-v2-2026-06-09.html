@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>รายงานตรวจเครื่องคิดราคา — แยก 7 กลุ่มงาน (ฉบับลงรายตัว) 2026-06-09</title>
+<style>
+  @page { size: A4; margin: 13mm 11mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Leelawadee UI","Tahoma",sans-serif; color:#1F2937; font-size:11.5px; line-height:1.45; margin:0; }
+  h1 { font-size:19px; color:#B3151D; margin:0 0 2px; }
+  .sub { color:#6B7280; font-size:10.5px; margin-bottom:8px; }
+  h2 { font-size:14px; margin:16px 0 5px; padding:5px 9px; border-radius:5px; color:#fff; background:#3B5EA6; page-break-after:avoid; }
+  h2 .cnt { float:right; font-size:11px; font-weight:400; opacity:.9; }
+  table { width:100%; border-collapse:collapse; margin-bottom:4px; }
+  th,td { border:1px solid #D1D5DB; padding:4px 6px; vertical-align:top; text-align:left; }
+  th { background:#F3F4F6; font-size:10.5px; }
+  td.prod { white-space:normal; font-weight:600; width:21%; }
+  td.st { white-space:nowrap; text-align:center; width:42px; font-weight:700; }
+  td.fix { color:#1f6b43; width:31%; }
+  code { font-family:"Consolas",monospace; font-size:10.5px; background:#F3F4F6; padding:0 3px; border-radius:3px; color:#B3151D; }
+  tr.pass td { background:#F7FBF8; }
+  .kpi { display:flex; gap:7px; margin:9px 0; }
+  .kpi div { flex:1; text-align:center; border:1px solid #E5E7EB; border-radius:6px; padding:7px; }
+  .kpi .n { font-size:20px; font-weight:700; display:block; }
+  .red{ color:#B3151D; } .yellow{ color:#B7791F; } .green{ color:#2F855A; } .blue{color:#2563EB;}
+  .badge { display:inline-block; font-size:8.5px; padding:1px 4px; border-radius:3px; font-weight:700; }
+  .v { background:#DCFCE7; color:#166534; } .s { background:#FEF3C7; color:#92400E; }
+  .legend { font-size:9.5px; color:#6B7280; margin:3px 0 0; }
+  .note { font-size:10px; color:#6B7280; font-style:italic; margin:2px 0 6px; }
+  .foot { margin-top:14px; font-size:9.5px; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:5px; }
+  ul { margin:3px 0; padding-left:16px; } li{ margin-bottom:2px; }
+</style>
+</head>
+<body>
+
+<h1>รายงานตรวจเครื่องคิดราคา — ฉบับแยก 7 กลุ่มงาน · ลงรายตัวสินค้า</h1>
+<div class="sub">
+ไฟล์ <b>public/calculator/index.html</b> (R3.9.2 · 3,509 บรรทัด) · วันที่ตรวจ <b>9 มิ.ย. 2026</b> ·
+ตรวจครบทุกหมวด อ่านอย่างเดียว ยังไม่แก้ไฟล์ ·
+จัดกลุ่มตาม "กลุ่มงานเดิม" (ตัวจริงในโค้ด <code>prodOptionsG6._GM</code> บรรทัด 840)
+</div>
+
+<div class="kpi">
+  <div><span class="n red">7</span>🔴 ผิดแน่ (กระทบเงิน/พังจริง)</div>
+  <div><span class="n yellow">13</span>🟡 น่าสงสัย (ต้องตัดสินใจ)</div>
+  <div><span class="n green">4</span>🟢 จัดสวย</div>
+  <div><span class="n blue">~150</span>สินค้าที่ตรวจ (ส่วนใหญ่ผ่าน)</div>
+</div>
+<div class="legend">
+สถานะรายตัว: ✅ ตรวจแล้วผ่าน · 🔴 ผิดแน่ · 🟡 น่าสงสัย · 🟢 จัดสวย &nbsp;|&nbsp;
+<span class="badge v">ยืนยันเอง</span> ผมเปิดโค้ดเช็คเองแล้ว · <span class="badge s">เช็คซ้ำ</span> subagent รายงาน มีเลขบรรทัด ยังไม่ยืนยันด้วยตา
+</div>
+<div class="note">หมายเหตุความครบถ้วน: กลุ่มที่เป็นตารางราคาซ้ำโครงเดียวกัน (ระแนงบังตา rn1–rn88 = 88 แบบ, ชนิดกระจก ~50 แบบ) สรุปเป็น "ชุด" พร้อมระบุจำนวนและตัวที่ผิดปกติ — ไม่มีตัวใดถูกซ่อน เพียงไม่กางทีละแถวเพราะสูตรเดียวกันหมด</div>
+
+<!-- ============ กลุ่ม 1 ============ -->
+<h2>กลุ่มงาน 1 — งานบาน / กระจก <span class="cnt">ประตู-หน้าต่างทุกชนิด + ชนิดกระจก</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+
+<tr><td class="prod">บานกระทุ้งยูโร <code>awning_euro</code></td><td class="st">🔴</td>
+<td><b>ตัวเลือก "แบบเปิด" (awn_mode) พังทั้งระบบ</b> <span class="badge v">ยืนยันเอง</span><br>
+ในข้อมูลสินค้า awn_mode เป็น <code>type:'select'</code> (เปิดล่าง/เปิดข้าง/tilt&turn) <b>ไม่มีราคาในตัวมัน</b> แต่ตัววาดฟอร์ม (บรรทัด 2152) วาดทุก opt เป็น checkbox เหมือนกันหมด → กลายเป็นช่องติ๊ก "แบบเปิด +undefined" · พอติ๊ก โปรแกรมเอา <code>opt += undefined</code> (บรรทัด 1329) → <b>ราคาทั้งบานกลายเป็น NaN (เพี้ยน)</b> · ซ้ำร้าย tilt&turn คิดเหมา 5,000 (ไม่ใช่ต่อบาน) และคำเตือน "ต้องเปิดออกนอกบ้าน" ไม่เคยเด้ง</td>
+<td class="fix"><b>แยก awn_mode ออกจากลูป checkbox</b> แล้วทำเป็น <code>&lt;select&gt;</code> จริง (เก็บค่า 0/1/2) เหมือนที่ทำกับ shower/frameless · ผูก tilt_turn: ถ้า awn_mode=2 บวก <code>5,000 × จำนวนบาน</code> + เด้งคำเตือนทิศเปิด · ลบ "+undefined" ออกจาก label</td></tr>
+
+<tr><td class="prod">บานเปิด X-series <code>casement_xseries</code></td><td class="st">🔴</td>
+<td><b>ใส่มุ้งไม่ได้ เพราะ flag วางผิดที่</b> <span class="badge v">ยืนยันเอง</span><br>
+<code>mosquito:1</code> ถูกเขียนซ้อนอยู่<b>ข้างใน</b> ตัวเลือกโช้ค <code>opts:[{id:'closer',price:5000,mosquito:1}]</code> แทนที่จะเป็นคุณสมบัติของตัวสินค้า → <code>p.mosquito</code> เป็น undefined → เมนูเพิ่มมุ้งและการคิดเงินมุ้งไม่ทำงานกับ X-series · แต่เฟรมมุ้ง (imp23/31/32) กลับใส่ X-series ไว้ในรายการที่อนุญาต = ตั้งใจให้ใส่มุ้งได้</td>
+<td class="fix">ย้าย <code>mosquito:1</code> ออกมาเป็นคุณสมบัติของสินค้า: <code>opts:[{id:'closer',price:5000}], mosquito:1</code> · แล้วทดสอบว่าเมนูมุ้งโผล่ + บวกเงินจริง · <b>ยืนยันก่อน: X-series ใช้ภายในไม่กันน้ำ ตั้งใจให้ใส่มุ้งใช่ไหม</b></td></tr>
+
+<tr><td class="prod">บานเปิด โซลิด วัน/ทู <code>casement_flush_solid</code> · <code>casement_inset_solid</code></td><td class="st">🟡</td>
+<td><b>ลืมกรอกราคา = คิดเรตยูโรเงียบๆ</b> <span class="badge v">ยืนยันเอง</span><br>
+2 รุ่นนี้ตั้งใจ "กรอกราคาเอง" (custom_price) แต่ตั้ง <code>rates:'OPEN'</code> ไว้ → ถ้าพนักงานลืมกรอกราคา override ระบบจะคิดเรตบานเปิดยูโรอัตโนมัติ (ไม่ใช่ 0 จึงไม่สะดุดตา) ซึ่งอาจไม่ตรงต้นทุนลูกฟูกทึบจริง</td>
+<td class="fix">ถ้าราคาต้องกรอกมือเสมอ → เปลี่ยน fallback ให้ขึ้น "⚠ ยังไม่กรอกราคา" + ไม่ให้รวมยอดจนกว่าจะกรอก · หรือถ้ายอมให้ auto ก็แสดงป้ายเตือน "ราคาประมาณจากเรตยูโร" ให้ชัด</td></tr>
+
+<tr><td class="prod">บานกระทุ้งหลายบาน (addon window)</td><td class="st">🟡</td>
+<td><b>เสี่ยงคิดค่าบานเพิ่มซ้อน 2 ทาง</b> <span class="badge s">เช็คซ้ำ</span><br>
+บานกระทุ้ง &gt;1 บาน บวกทั้ง addon หน้าต่าง (2,900/บาน บรรทัด 1505) และ multi-panel floor (×1.67) พร้อมกัน — ต้องยืนยันว่าไม่ซ้อนคิด</td>
+<td class="fix">ยืนยันเจตนากับพี่นัทว่าบานกระทุ้งหลายบานต้องการทั้ง 2,900/บาน และ floor 0.67/บาน พร้อมกันจริง · ถ้าไม่ ให้ตัดทางใดทางหนึ่ง</td></tr>
+
+<tr><td class="prod">shower กั้นอาบน้ำ <code>shower</code></td><td class="st">🟡</td>
+<td><b>อุปกรณ์ดำ/ทอง ติ๊กพร้อมกันได้</b> <span class="badge v">ยืนยันเอง</span><br>
+อุปกรณ์ดำ (+4,000) และอุปกรณ์ทอง (+6,000) เป็น checkbox อิสระ ลูกค้าติ๊กทั้งคู่ได้ → บวกซ้อน +10,000 ทั้งที่จริงเลือกได้สีเดียว</td>
+<td class="fix">เปลี่ยนเป็น <code>&lt;select&gt;</code> อันเดียว "สีอุปกรณ์: เงิน(0)/ดำ(+4,000)/ทอง(+6,000)" เลือกได้ค่าเดียว ป้องกันติ๊กซ้อน</td></tr>
+
+<tr><td class="prod">ชนิดกระจก — เทมเปอร์ยูโรบรอนซ์ 10 มม. (BSG)</td><td class="st">🟡</td>
+<td><b>กำไรต่ำผิดปกติ อาจใส่เลขผิด</b> <span class="badge s">เช็คซ้ำ</span><br>
+บรรทัด 513: ทุน 4,670 / ส่วนเพิ่มขาย 1,230 — ทุนสูงสุดในกลุ่มแต่กำไรต่ำสุด (เทียบยูโรเกรย์ 10มม.ได้ 1,563 · ยูโรบรอนซ์ธรรมดาได้ 2,483)</td>
+<td class="fix">ตรวจราคาจริงจากผู้ผลิต BSG เทมเปอร์ยูโรบรอนซ์ 10มม. → น่าจะส่วนเพิ่มขาย ~6,400+ ไม่ใช่ 5,900 · แก้ค่า s ในตาราง GLASS</td></tr>
+
+<tr><td class="prod">ชนิดกระจก — รายการ ★ (ตาราง 28)</td><td class="st">🟡</td>
+<td><b>★ ซ้ำความหมายกับ list หลัก + ช่วง 8มม.หาย</b> <span class="badge s">เช็คซ้ำ</span><br>
+ลามิเนต/เทมเปอร์ ★ บางตัว (บรรทัด 520–545) คล้ายของใน list หลัก ลูกค้าอาจเลือกผิดราคา · ใสพิเศษมี 6/10มม. แต่ไม่มี 8มม.คั่น</td>
+<td class="fix">นิยามให้ชัด ★ = สั่งพิเศษ/นอกสต๊อก vs ของหลัก = สต๊อก แล้วติดป้ายในชื่อ · ตรวจว่าต้องมีใสพิเศษ 8มม.เพิ่มไหม</td></tr>
+
+<tr><td class="prod">ชนิดกระจก — dropdown เลือกกระจกหลัก</td><td class="st">🟢</td>
+<td><b>รายการยาว ~50 แบบเรียงพรืด หายาก</b> <span class="badge s">เช็คซ้ำ</span><br>
+dropdown กระจกของบานหลัก (<code>glassOpts</code>) เป็น flat list · ส่วน OPTION ต่อบาน (F2) จัด optgroup แล้ว แต่ของบานหลักยังไม่จัด</td>
+<td class="fix">ใส่ <code>&lt;optgroup&gt;</code> ใน <code>glassOpts()</code> (ใส/สี/เทมเปอร์/ลามิเนต/อินซูเลท) เหมือนที่ทำใน OPTION ต่อบานแล้ว</td></tr>
+
+<tr class="pass"><td class="prod">บานเลื่อน (3)</td><td class="st">✅</td>
+<td colspan="2"><code>sliding_sms</code> เซมิยูโร · <code>sliding_euro</code> ยูโร · <code>sliding_eseries</code> E-series(ยกเลิกขาย) — เรต SMS/EURO/ESERIES + addon รางเลื่อน + มุ้ง integrated บวกเข้ายอดถูก</td></tr>
+<tr class="pass"><td class="prod">บานเปิด (ที่เหลือ)</td><td class="st">✅</td>
+<td colspan="2"><code>casement_euro</code> ยูโร · <code>casement_dseries</code> D-series(ยกเลิก) · <code>casement_velora</code> Velora — เรต/มุ้ง/โช้ค/ดิจิทัลแฮนเดิล/ธรณี ครบ</td></tr>
+<tr class="pass"><td class="prod">ติดตาย · บานหมุน · บานยก</td><td class="st">✅</td>
+<td colspan="2"><code>fixed_glass</code> กระจกติดตาย · <code>pivot</code>/<code>pivot_aluinch</code> บานหมุน · <code>lift_sms</code>/<code>lift_aluinch</code> บานยก(มอเตอร์) — สูตรถูก</td></tr>
+<tr class="pass"><td class="prod">บานเฟี้ยม (3) · เลื่อนภายใน (5)</td><td class="st">✅</td>
+<td colspan="2">เฟี้ยม: <code>folding</code>/<code>folding_euro</code>/<code>folding_xseries</code> · เลื่อนภายใน: <code>inner_top_stack</code>/<code>slimlux</code>/<code>xseries</code>/<code>inner_bottom_sms</code>/<code>euro</code> — addon ราง 1-4 บานถูก</td></tr>
+<tr class="pass"><td class="prod">ดัดโค้ง (4) · PC Door (2) · YKK (3)</td><td class="st">✅</td>
+<td colspan="2">ดัดโค้ง: คู่/เดี่ยว/ติดตาย/สลิม · PC: 2บาน/4บาน · YKK: Ventilation/Exhido/Tostem A01 — min/เรต/เช็คขนาด vent·exhido ถูก</td></tr>
+<tr class="pass"><td class="prod">บานเปลือย (2) · เส้นคาด · ลูกฟูก/คอมโพสิท (4)</td><td class="st">✅</td>
+<td colspan="2"><code>frameless_fixed</code>/<code>frameless_door</code> (ref+8,000/บาน) · <code>grid_bars</code> เส้นคาดตาราง · <code>rn89-92</code> ลูกฟูกเรียบ 1/2 ทาง + คอมโพสิต 3/4มม.</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 2 ============ -->
+<h2>กลุ่มงาน 2 — ระแนง / รั้ว / ราวกันตก <span class="cnt">~100 แบบ</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+
+<tr><td class="prod">ราวกันตกบันได <code>imp2</code> · <code>imp3</code> · <code>imp5</code> · <code>imp6</code></td><td class="st">🟡</td>
+<td><b>เลขข้อในชื่อซ้ำกัน</b> <span class="badge s">เช็คซ้ำ</span><br>
+imp2 และ imp3 ตั้งชื่อ "47.2" ทั้งคู่ (U/เสาอลู vs เสาอลู) และราคา IMP2=IMP3 เท่ากันเป๊ะ (9,700/9,000/8,700/8,400) · imp5/imp6 ตั้ง "47.4" ทั้งคู่ แต่ราคาต่างกัน</td>
+<td class="fix">เทียบ <code>quote-spec.docx</code> ว่าเลขข้อ 47.2/47.4 ซ้ำตั้งใจหรือพิมพ์ผิด · ถ้า imp2≠imp3 จริง ราคาควรต่าง (ตอนนี้เท่ากันน่าสงสัย) · แก้ชื่อให้เลขข้อไม่ชนกัน</td></tr>
+
+<tr class="pass"><td class="prod">ระแนง (3) · ประตูรั้ว · ราวบันได imp1/imp4</td><td class="st">✅</td>
+<td colspan="2"><code>bar_grid_z</code>(ข้อ38.1) · <code>bar_slide</code>(38.2) · <code>bar_openclose</code>(38.3) · <code>fence_gate</code> ประตูรั้วเลื่อน · <code>imp1</code>(47.1)/<code>imp4</code>(47.3) — สูตร per-length-tier + ราวจับถูก (เลขข้อ 38.x ยังไม่เทียบ spec)</td></tr>
+<tr class="pass"><td class="prod">ระแนงบังตา <code>rn1–rn88</code> (88 แบบ)</td><td class="st">✅</td>
+<td colspan="2"><b>ตรวจทั้งชุด 88 แบบ</b> — โครงสร้างเดียวกันหมด: <code>per_sqm</code> + ตาราง rate/prod + ตัวเลือก finish (ซาฮาร่า/อบพิเศษ/ลายไม้) · สุ่มเทียบ rate ขึ้นลงตามขนาดหน้าระแนงสมเหตุผล · ไม่พบราคาสลับ/ติดลบ</td></tr>
+<tr class="pass"><td class="prod">ระแนงผนัง <code>rn37–rn42</code> (6) · ระแนงเกล็ด Z <code>rn83–rn88</code> (6)</td><td class="st">✅</td>
+<td colspan="2">โครงเดียวกับบังตา (per ตร.ม. + finish) · เกล็ด Z 1"/1.6"/4" ไม่โครง/รวมโครง — ราคาไล่ตามหน้าเกล็ดถูก</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 3 ============ -->
+<h2>กลุ่มงาน 3 — หลังคา / ฝ้า-ผนัง <span class="cnt">หลังคา 18 แบบ + ฝ้า/ผนัง 6</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+
+<tr><td class="prod">ตัวเลือกหลังคา — "ปิดปลาย" (o-roofend) กับ "ปิดปลายกันน้ำ" (o-rfeave)</td><td class="st">🟡</td>
+<td><b>2 ช่องชื่อคล้ายกัน เสี่ยงกรอกซ้ำ</b> <span class="badge s">เช็คซ้ำ</span><br>
+ปิดปลาย (บรรทัด 2249) คิด 1,000×กว้างชุด อัตโนมัติ · ปิดปลายกันน้ำ (2263) คิด 1,000×ยาวที่กรอก · โปรแกรมไม่บวกซ้ำให้เอง แต่ผู้ใช้เลือกทั้งคู่พร้อมกันได้ = คิดปิดปลาย 2 รอบ</td>
+<td class="fix">ตั้งชื่อให้ต่างชัด (เช่น "ปิดปลายจั่ว (auto)" vs "แผงปิดปลายกันน้ำ (ระบุยาว)") · หรือซ่อน o-rfeave เมื่อเลือกปิดปลายแล้ว เพื่อกันกรอกเบิ้ล</td></tr>
+
+<tr><td class="prod">ตัวเลือกหลังคา — ค่าตั้งต้น "แป"</td><td class="st">🟡</td>
+<td><b>ค่า fallback ขัดกันเอง (ไม่กระทบเงิน)</b> <span class="badge s">เช็คซ้ำ</span><br>
+HTML ตั้งต้น = แปคู่ · ตอน collect ถ้าหา element ไม่เจอ fallback = แปเดี่ยว (บรรทัด 2445) · ในใบเสนอราคา fallback = แปคู่ (3056) · ปกติ element มีเสมอจึงไม่กระทบ แต่ string ไม่ตรงกัน (แปคู่/เดี่ยวฟรีทั้งคู่)</td>
+<td class="fix">แก้ fallback บรรทัด 2445 จาก <code>'แปเดี่ยว'</code> → <code>'แปคู่'</code> ให้ตรงกับค่าตั้งต้น HTML และใบเสนอราคา</td></tr>
+
+<tr class="pass"><td class="prod">หลังคาหลัก (4)</td><td class="st">✅</td>
+<td colspan="2"><code>roof_vinyl</code> ไวนิล · <code>roof_delight</code> ดีไลท์ · <code>roof_polyton</code> โพลีตัน3มม. · <code>roof_laminate</code> ลามิเนต — min/เรต ROOF_STD/POLY/LAM ไล่ลำดับถูก · ราง(slide)+มอเตอร์+รื้อหลังคาเดิม 5,000 บวกเข้ายอดจริง · ระบุชนิด+รางน้ำในใบถูก (commit ล่าสุด)</td></tr>
+<tr class="pass"><td class="prod">หลังคาเมทัล/ชินโคไลท์ <code>imp7–imp20</code> (14)</td><td class="st">✅</td>
+<td colspan="2">เมทัลชีท 1"/2" ท้อง PVC·เหล็ก·ฟอยล์ × EPS/PU (imp7-14) + ชินโคไลท์ 4/6/10มม.หลายรุ่น (imp15-20) — เรต IMP7-20 + bucket ถูก</td></tr>
+<tr class="pass"><td class="prod">ฝ้า-ผนัง (6)</td><td class="st">✅</td>
+<td colspan="2"><code>ceil_cshape</code> ฝ้าไทยทิพย์ · <code>ceil_bsc</code> ฝ้าไม้เทียม remood · <code>ceiling_smooth</code> ฉาบเรียบ · <code>isowall</code> · <code>wall_ext</code>/<code>wall_int</code> ผนังเบา — เรต + ตัวเลือกฉนวนถูก</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 4 ============ -->
+<h2>กลุ่มงาน 4 — ตู้อลู / ฝาตู้ <span class="cnt">2 แบบ</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+<tr><td class="prod">ฝาตู้ Future Tech <code>future_tech</code></td><td class="st">🟢</td>
+<td><b>คอมเมนต์ราคาไม่ตรงโค้ด (ลูกค้าเห็นเลขถูก)</b> <span class="badge s">เช็คซ้ำ</span><br>
+คอมเมนต์ในโค้ด (บรรทัด 1131) เขียน "บานเพิ่ม +5,000" แต่โค้ดจริงคิด 5,500 · ข้อความที่ลูกค้าเห็น (1145) ใช้ 5,500 ถูกแล้ว ผิดแค่คอมเมนต์</td>
+<td class="fix">แก้คอมเมนต์เป็น +5,500 ให้ตรงโค้ด (ปล่อยไว้ก็ไม่กระทบราคา เป็นแค่ความสะอาดของโค้ด)</td></tr>
+<tr class="pass"><td class="prod">ตู้อลูมิเนียม <code>cabinet_alu</code></td><td class="st">✅</td>
+<td colspan="2">คิดตามชนิดตู้ (รองเท้า/ทั่วไป) ตั้งความสูง·ความลึกอัตโนมัติ + บานเพิ่ม 5,500/บาน — สูตรถูก</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 5 ============ -->
+<h2>กลุ่มงาน 5 — มุ้ง <span class="cnt">~21 แบบ</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+
+<tr><td class="prod">มุ้งม้วนเตะ <code>mj_kick_150</code> · <code>mj_kick_300</code> · <code>mj_kick_600</code></td><td class="st">🔴</td>
+<td><b>เลือกรุ่นเล็กกับบานกว้างได้ ไม่เตือน → เก็บเงินขาด</b> <span class="badge s">เช็คซ้ำ</span><br>
+รุ่น 150/300/600 มีขีดจำกัดความกว้าง (1.5/3.0/6.0 ม. บรรทัด 803-805) <b>ประกาศไว้แต่ไม่มีโค้ดอ่าน</b> → เลือกรุ่น 150 (min 15,000) กับบานกว้าง 5 ม. ผ่านได้ ทั้งที่ต้องใช้รุ่น 600 (min 67,500) = สเปคผิด/เก็บเงินขาดหลายหมื่น</td>
+<td class="fix">เพิ่ม validation ตอนคำนวณ: ถ้า <code>กว้าง &gt; maxWidth ของรุ่น</code> → ขึ้น "⚠ เกินพิกัดรุ่นนี้ ใช้รุ่น 300/600" + ไม่ให้คิดราคาจนเปลี่ยนรุ่น · ดึง maxWidth ที่ประกาศไว้แล้วมาใช้จริง</td></tr>
+
+<tr><td class="prod">สีกรอบมุ้ง (addon ต่อบาน · ทุกตัวที่ mscolor)</td><td class="st">🔴</td>
+<td><b>เลือกสีกรอบไม่ได้ + ค่าทำสีไม่บวกเงิน</b> <span class="badge s">เช็คซ้ำ</span><br>
+ตัววาด UI สร้าง class <code>.o-mscolor</code> (บรรทัด 2298) แต่ตัวอ่านไปหา <code>.o-mosqcolor</code> (2490 — ไม่มี element นี้) และโค้ดคิดค่าทำสีกรอบ (1530-1535) ถูกครอบด้วย <code>if(false)</code> = ตายสนิท → มุ้งที่ระบุ mscolor:true ทุกตัวคิดค่าทำสีกรอบไม่ได้</td>
+<td class="fix"><b>2 จุด:</b> (1) แก้ตัวอ่านให้ตรง class <code>.o-mscolor</code> (หรือเปลี่ยนชื่อ class ให้ตรงกัน) (2) ย้ายโค้ดคิดสีออกจาก <code>if(false)</code> มาไว้ใน block คิดมุ้งจริง (ช่วง 1504) · ทดสอบว่าเลือกสีพิเศษแล้วบวกเงินจริง</td></tr>
+
+<tr><td class="prod">มุ้งติดล้นนอกวงกบ (คำเตือน overhang)</td><td class="st">🟡</td>
+<td><b>คำเตือนตายอยู่ใน if(false)</b> <span class="badge s">เช็คซ้ำ</span><br>
+คำเตือน "⚠ ติดล้นนอกวงกบ" (บรรทัด 1539) อยู่ในบล็อก if(false) → ไม่ขึ้นในข้อความคำนวณ สำหรับมุ้งม้วนเตะ/นิรภัยที่ต้องติดล้น</td>
+<td class="fix">ย้ายเงื่อนไขเตือน overhang มา push เข้าข้อความจริง (ช่วง 1504) ให้ลูกค้าเห็นว่าต้องเผื่อล้นวงกบ</td></tr>
+
+<tr><td class="prod">มุ้งในบานทั่วไป (เปิด/กระทุ้ง/ยก) — การแสดงในใบ</td><td class="st">🟡</td>
+<td><b>โชว์ชื่อมุ้งแต่ไม่โชว์ขนาด</b> <span class="badge s">เช็คซ้ำ</span><br>
+ใบเสนอราคาบานทั่วไป (บรรทัด 3184-3193) แสดงชื่อมุ้ง+ผ้า แต่ไม่มีขนาด (~X ตร.ม.) ต่างจากบานเลื่อน (3115) ที่มี · ลูกค้าเห็นชนิดแต่ไม่เห็นขนาดที่คิดเงิน</td>
+<td class="fix">ต่อข้อความขนาด (_szTxt จาก mosqArea) เข้าบรรทัดมุ้งของบานทั่วไป เหมือน path บานเลื่อน · เช็คก่อนว่าตั้งใจตัดออกหรือเปล่า</td></tr>
+
+<tr class="pass"><td class="prod">มุ้งเฟรม <code>imp21/22/23</code> · จีบ/ตีนตะขาบ <code>imp28</code> · ม้วน <code>imp29</code></td><td class="st">✅</td>
+<td colspan="2">เฟรมเล็ก/เล็กติดตาย/ใหญ่ + จีบตีนตะขาบ + ม้วนไฟเบอร์ — min ตามประตู/หน้าต่าง × บานที่เปิด, allow_with/deny_with ถูก, บวกเข้า sell จริง (บั๊กมุ้งเดิมไม่กลับมา)</td></tr>
+<tr class="pass"><td class="prod">มุ้งแม่เหล็ก/นิรภัย/กันแมว-หนู <code>imp30/31/32/33/35</code></td><td class="st">✅</td>
+<td colspan="2">แม่เหล็กพับ · จีบนิรภัยสแตนเลส 0.8มม. (+เสริมวงกบ) · กันแมวหมา · สแตนเลส 0.3มม.กันหนู — เรต IMP30-35 ถูก</td></tr>
+<tr class="pass"><td class="prod">มุ้งจีบรังผึ้ง/SD <code>mj_blackout/sd_twoway/keep_twoway/keep_honey/sd_basic/screen_safety</code></td><td class="st">✅</td>
+<td colspan="2">Blackout · SD+ทูเวย์ · ตีนตะขาบ+ทูเวย์/รังผึ้ง · SD พื้นฐาน · จีบนิรภัย — min/เรต MJ_* ตรง catalog</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 6 ============ -->
+<h2>กลุ่มงาน 6 — กั้นห้องกระจก <span class="cnt">ระบบบานหลัก + บานย่อย</span></h2>
+<table>
+<tr><th>หัวข้อ</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+<tr><td class="prod">ป้ายชื่อด้าน (auto-label ด้าน A/B/C/D)</td><td class="st">🔴</td>
+<td><b>ทุกบานได้ "ด้าน A" หมด</b> <span class="badge s">เช็คซ้ำ</span><br>
+ทุกบานที่กดเพิ่มถูกตั้ง "ด้าน A" ตายตัว (hardcode 3 จุด: บรรทัด 1850/1880/2044) ขัดกับคอมเมนต์ 1869 ที่ว่า auto-label B/C/D — โค้ดไม่มีตรรกะไล่ตัวอักษรเลย → ห้องที่มีหลายด้านได้ "ด้าน A" ซ้ำ แยกด้านในใบไม่ได้</td>
+<td class="fix">ตอนเพิ่มบาน นับจำนวนบาน (ch) ในชุดที่มีอยู่ แล้วตั้ง <code>pos = 'ด้าน ' + String.fromCharCode(65 + index)</code> → A, B, C, D ตามลำดับ · ใส่ที่ refreshSet ทุกจุดที่สร้างบานใหม่</td></tr>
+<tr class="pass"><td class="prod">โครงสร้างชุดกั้นห้อง (redesign)</td><td class="st">✅</td>
+<td colspan="2">ยืนยันตรง memory: เลิกใช้ gh-box พิเศษแล้ว ใช้บานหลัก+บานย่อยเดิม · มีปุ่มเพิ่มบาน/หลังคา/ช่องแสงติดตาย · สีอลู+กระจก sync ทั้งห้อง — ทำงานถูก (เว้นป้ายด้าน A ข้างบน)</td></tr>
+</table>
+
+<!-- ============ กลุ่ม 7 ============ -->
+<h2>กลุ่มงาน 7 — ม่านซิป <span class="cnt">1 ระบบ</span></h2>
+<table>
+<tr><th>สินค้า</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้</th></tr>
+<tr class="pass"><td class="prod">ม่านซิป <code>zipscreen</code></td><td class="st">✅</td>
+<td colspan="2">ม่านม้วนกันลม กลุ่มงานที่ 7 · ราคาดึงจากตาราง ZIP (รุ่น Z100/Z120/Z145D/Z120W × ความโปร่งผ้า × ระบบควบคุม × กลุ่มลูกค้า ×2.0/×1.75) — ยกมาจากเครื่องคิดราคาม่านซิปแยก ค่าตรงกัน ไม่พบจุดผิด</td></tr>
+</table>
+
+<!-- ============ ส่วนกลาง ============ -->
+<h2 style="background:#B3151D;">ส่วนกลาง — การเงิน / ใบเสนอราคา / ออปชั่นเสริม <span class="cnt">ไม่ใช่หมวดสินค้า แต่กระทบทุกหมวด</span></h2>
+<table>
+<tr><th>หัวข้อ</th><th>สถานะ</th><th>รายละเอียด / จุดที่พบ</th><th>วิธีแก้ (เสนอใหม่)</th></tr>
+
+<tr><td class="prod">OPTION ระดับชุด (preset ทั้งชุด)</td><td class="st">🔴</td>
+<td><b>โชว์ราคาในใบ แต่ไม่บวกเข้ายอดจริง → ขายขาดทุน</b> <span class="badge v">ยืนยันเอง</span><br>
+ปุ่ม "OPTION สำเร็จรูป" ตั้งค่า <code>.set-optdelta</code> · ตัวอ่าน (2556) อ่านมาเป็น <code>groupOptDelta</code> · แต่นำไป<b>แสดงข้อความอย่างเดียว</b> (3270) ไม่เคยบวกเข้า sell/gTotal/subtotal เลย → ใบบอกลูกค้า "ราคา +N บาท" แต่ยอดรวมไม่รวม (รูปแบบเดียวกับบั๊กมุ้งต่อบานที่เพิ่งแก้)</td>
+<td class="fix"><b>เลือกทางใดทางหนึ่ง:</b> (ก) ถ้ายังใช้ preset ทั้งชุด → บวก <code>groupOptDelta</code> เข้า sell ของบานแรกในชุด<b>ครั้งเดียว</b> ตอน readItem (เหมือน optChoicesNote) (ข) ถ้าเลิกใช้แล้ว (ย้ายไป OPTION ต่อบาน F2) → <b>ซ่อนปุ่ม/ช่อง preset ทั้งชุด</b> ออกจาก UI กันพนักงานเผลอใช้</td></tr>
+
+<tr><td class="prod">ส่งออก Excel (exportQuoteExcel)</td><td class="st">🔴</td>
+<td><b>ฮาร์ดโค้ด VAT 7% ไม่อ่านช่อง VAT</b> <span class="badge v">ยืนยันเอง</span><br>
+บรรทัด 3389 คิด <code>vat = (net+svc)*0.07</code> ตายตัว → ถ้าเลือก "0% (ไม่มีใบกำกับ)" ไฟล์ Excel ยังชาร์จ 7% → เลขใน Excel ไม่ตรงใบ HTML · และไฟล์ Excel ยังพลาด OPTION ระดับชุดด้วย (วนทีละ item)</td>
+<td class="fix">บรรทัด 3389 อ่าน <code>vatPct</code> จาก <code>#vat-pct</code> แล้วใช้ <code>net*vatPct/100</code> แทน 0.07 · ใช้ตัวแปร VAT ตัวเดียวกับใบ HTML เพื่อให้ตรงกันเสมอ</td></tr>
+
+<tr><td class="prod">ส่วนลดค่าประเมินหน้างาน (discFlat)</td><td class="st">🟡</td>
+<td><b>ไม่มีเพดาน → ยอดสุทธิติดลบได้</b> <span class="badge v">ยืนยันเอง</span><br>
+<code>net = subtotal − discAmt − discFlat</code> · ถ้า discFlat &gt; subtotal → net ติดลบ → VAT ติดลบ · ส่วนลด % มี clamp แต่ discFlat ไม่มี</td>
+<td class="fix">ใส่ <code>net = Math.max(0, net)</code> หรือเตือนเมื่อ discFlat เกินยอดรวม · กันเคสกรอกผิดทำใบเสนอราคาติดลบ</td></tr>
+
+<tr><td class="prod">โหมดเหมา (lumpsum)</td><td class="st">🟡</td>
+<td><b>ตั้งราคาเหมาแล้วยังบวก OPTION/subItems ทับ</b> <span class="badge v">ยืนยันเอง</span><br>
+บรรทัด 2528 ตั้ง sell = ราคาเหมา · แต่บรรทัดถัดมา optDelta/OPTION cascade/subItems ยังบวกทับลงไป → ถ้าเจตนา "เหมา = ราคาสุดท้ายตายตัว" จะบวกเกิน</td>
+<td class="fix">ยืนยันเจตนา: ถ้าเหมา=ราคาล็อก → เมื่อเปิดเหมาให้ข้ามการบวก OPTION/subItems · ถ้าเหมา=ฐาน+ออปชั่นได้ → คงไว้ แต่เขียนกำกับให้ชัด</td></tr>
+
+<tr><td class="prod">มัดจำ / งวดชำระ ในใบเสนอราคา</td><td class="st">🟡</td>
+<td><b>ไม่มีตารางมัดจำ-งวด</b> <span class="badge s">เช็คซ้ำ</span><br>
+ใบมียอดรวม/ส่วนลด/VAT/รวมทั้งสิ้นครบ แต่ไม่มีตารางแบ่งมัดจำ-งวด (มีแต่คำว่ามัดจำในเงื่อนไขเป็นข้อความ)</td>
+<td class="fix">ถ้าธุรกิจต้องระบุ % มัดจำ/งวดในใบ → เพิ่มตารางงวด (มัดจำ X% · งวดติดตั้ง · งวดสุดท้าย) · ถ้าตั้งใจไม่ใส่ ก็ผ่าน</td></tr>
+
+<tr class="pass"><td class="prod">VAT / ยอดรวม / ส่วนลด% (ใบ HTML)</td><td class="st">✅</td>
+<td colspan="2">ฐาน VAT ถูก (หักส่วนลดก่อน รวม VAT) · clampDisc เพดาน 2% เมื่อยอด ≥ 50,000 + เตือนเกินเพดาน · bahtText ตรงยอด · หัวใบครบ (เลขที่/วันที่/ผู้ขาย/ลูกค้า/ที่อยู่) · F2 OPTION ต่อบาน cascade auto-price บวกเข้า sell จริง</td></tr>
+<tr class="pass"><td class="prod">ออปชั่นเสริม (cat เสริม ~35 ตัว)</td><td class="st">✅</td>
+<td colspan="2">ครอบวงกบ ประตู/หน้าต่าง/ระแนง/ตู้ (700-1,300/ม.) · รางน้ำ S/M/L + ปิดราง + โซ่ · เสาหลังคา/เสา4"x8" · คานเหล็กถัก 3 รุ่น + แผ่นปิดครอบ · เสริมแขนค้ำ · ครอบท่อ PVC · ตะแกรงเหล็กสาน · รายการกรอกเอง · คำนวณกระจกใหม่ — บวกเข้ายอดถูก</td></tr>
+<tr class="pass"><td class="prod">บริการรื้อถอน</td><td class="st">✅</td>
+<td colspan="2">รื้อหลังคา/พื้น 5,000×จำนวน · รื้อราวกันตก 3,000+700/ม. · รื้อประตู-หน้าต่าง (เหมา) — เข้า jobServices ถูก</td></tr>
+</table>
+
+<div class="foot">
+JR · ผู้ตรวจเอกสาร — รายงานนี้ส่งพี่นัทเช็คซ้ำ ไม่อนุมัติแทน · จัดตามกลุ่มงานเดิม 7 กลุ่ม + ส่วนกลาง · ลงครบทุกสินค้า (กลุ่ม price-matrix สรุปเป็นชุด) · สร้าง 9 มิ.ย. 2026 · ยังไม่แก้ไฟล์ใดๆ
+</div>
+
+</body>
+</html>

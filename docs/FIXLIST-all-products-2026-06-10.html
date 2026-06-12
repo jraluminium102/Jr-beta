@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+<title>Fix-list ทุกสินค้า เทียบใบจริง · 2026-06-10</title>
+<style>
+@page{size:A4;margin:12mm 10mm;}*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:10.5px;line-height:1.4;margin:0;}
+h1{font-size:19px;color:#B3151D;margin:0 0 2px;}
+.sub{color:#6B7280;font-size:10px;margin-bottom:8px;}
+h2{font-size:14px;margin:15px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;page-break-after:avoid;}
+h2.r{background:#B3151D;}h2.y{background:#B7791F;}h2.g{background:#2F855A;}
+h2 .c{float:right;font-size:11px;font-weight:400;opacity:.9;}
+table{width:100%;border-collapse:collapse;margin:3px 0 8px;}
+th,td{border:1px solid #D1D5DB;padding:4px 6px;vertical-align:top;text-align:left;font-size:9.5px;}
+th{background:#F3F4F6;}
+td.prod{font-weight:600;}
+td.rule{white-space:nowrap;font-size:9px;color:#6B7280;}
+td.fix{color:#1f6b43;}
+td.anchor{font-family:"Consolas",monospace;font-size:9px;color:#9A3412;word-break:break-all;}
+.kpi{display:flex;gap:7px;margin:9px 0;}
+.kpi div{flex:1;text-align:center;border:1px solid #E5E7EB;border-radius:6px;padding:7px;}
+.kpi .n{font-size:19px;font-weight:700;display:block;}
+.red{color:#B3151D;}.yellow{color:#B7791F;}.green{color:#2F855A;}
+.gbox{border:1px solid #E5E7EB;border-radius:6px;padding:6px 9px;margin-bottom:5px;font-size:9.5px;}
+.gbox b{color:#2F855A;}
+.foot{margin-top:13px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style></head><body>
+<h1>Fix-list — audit ทุกสินค้า เทียบใบจริง + feedback R3.9</h1>
+<div class="sub">เครื่องคิดราคา <code>public/calculator/index.html</code> · 8 subagent · เทียบใบจริง 14 ใบ + กฎ 8 ข้อ · 10 มิ.ย. 2026 · READ-ONLY</div>
+<div class="kpi">
+<div><span class="n red">9</span>🔴 ต้องแก้ด่วน</div>
+<div><span class="n yellow">29</span>🟡 ปรับ</div>
+<div><span class="n green">37</span>🟢 ตรวจแล้วผ่าน</div>
+<div><span class="n">75</span>รวมที่ตรวจ</div>
+</div>
+
+<h2 class="r">🔴 ต้องแก้ด่วน <span class="c">9 จุด</span></h2>
+<table><tr><th style="width:15%">สินค้า</th><th style="width:30%">ปัญหา</th><th style="width:10%">กฎ</th><th class="fix" style="width:33%">วิธีแก้</th><th style="width:12%">ค้นหา</th></tr><tr>
+<td class="prod">มุ้งทุกชนิด (มุ้งเป็นรายการเดี่ยว · cat==='มุ้ง')</td>
+<td>ราคามุ้งแบบสินค้าเดี่ยวคิดแบบ 'พื้นที่รวมทั้งช่อง' ไม่ใช่ 'ต่อบาน' ตามสูตรที่พี่นัทกำหนด — basePrice() เคส bucket/default คืน Math.max(q.min, monoRate(area)) โดย area = กว้าง×ยาว ทั้งช่อง · ไม่มีการหารจำนวนบานมุ้งแล้ว max กับ min/บาน</td>
+<td class="rule">ข้อ 2(ข)</td>
+<td class="fix">เพิ่ม logic per-bana สำหรับ cat==='มุ้ง': อ่านจำนวนบานมุ้ง N → ราคา = N × max(min_ต่อบาน, (กว้าง×ยาว ÷ N) × rateOf(พื้นที่/บาน)). ใส่ช่อง 'จำนวนบานมุ้ง' (ดู fix ข้อถัดไป) แล้วแก้ basePrice หรือเพิ่ม branch เฉพาะ cat==='มุ้ง' ใน calcUnit ก่อนตกลง default bucket. เคสจริง 'มุ้งเฟรมเล็ก แบ่ง 2 ชุด' (ใบคุณบุญญารัตน์) ยืนยันว่าต้องคิดเป็นชุด/บาน</td>
+<td class="anchor">function basePrice(p,area,panels){</td></tr>
+<tr>
+<td class="prod">มุ้งทุกชนิด (รายการเดี่ยว cat==='มุ้ง')</td>
+<td>ไม่มีช่องกรอก 'จำนวนบานมุ้ง' — usesPanels() ไม่รวม cat 'มุ้ง' จึงซ่อนช่องจำนวนบาน (i-panels-wrap display:none) ทำให้คิดต่อบานตามสูตรไม่ได้ และ min/บาน × จำนวนบาน ใช้ไม่ได้</td>
+<td class="rule">ข้อ 2(ข)</td>
+<td class="fix">เพิ่มเงื่อนไขให้ usesPanels() คืน true เมื่อ p.cat==='มุ้ง' (อย่างน้อยกลุ่มเฟรม/จีบ/นิรภัยที่คิดต่อบาน) เพื่อโชว์ช่องจำนวนบาน แล้วส่ง panels เข้า basePrice/branch มุ้งใหม่. กรณีมุ้งม้วนเตะ (mj_kick) ให้ใช้ช่องเดียวกันเป็น 'จำนวนชุด'</td>
+<td class="anchor">function usesPanels(p){</td></tr>
+<tr>
+<td class="prod">ประตูรั้ว (fence_gate)</td>
+<td>มีแค่ 'ประตูรั้วบานเลื่อน' ตัวเดียว ไม่มีตัวเลือก 'ลักษณะการเปิด' — โค้ด hard-code เป็นบานเลื่อน (ราง 2×กว้าง) เสมอ. ใบจริงมีประตูระแนงทั้งบานสวิง/บานเปิด/บานเลื่อนเปิดคู่กลางรางบน (คุณบุญญารัตน์ ข้อ 1,23,25-26)</td>
+<td class="rule">ข้อ 3 (ลักษณะการเปิด) + ข้อ 8 (เทียบใบจริง)</td>
+<td class="fix">เพิ่ม dropdown .o-gatemode ในบล็อก if(p.gate) (L2401) ค่า ['บานเลื่อน','บานสวิง','บานเปิด','บานเลื่อนเปิดคู่กลางรางบน'] default 'บานเลื่อน'; เก็บใน optSel.gatemode (L2622); ใน calc (L1163) ถ้า gatemode!=='บานเลื่อน' ให้ข้าม railC (สวิง/เปิดไม่มีรางล่าง 2×กว้าง) และต่อท้ายชื่อใน genQuote ให้ตรงใบจริง ('ประตูระแนงอลูมิเนียม'+gatemode)</td>
+<td class="anchor">if(p.gate){ const W=parseFloat(w)</td></tr>
+<tr>
+<td class="prod">ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (bar_grid_z)</td>
+<td>ไม่มี selector สี/อบสีเลย — มีแค่ 'ทิศระแนง' (.o-bgdir). ขณะที่ระแนงเลื่อน/เปิด-ปิดมีดรอปดาวน์สี. สี alu ก็ถูกซ่อน (cat 'ระแนง' อยู่ใน NO_COLOR_CATS) → เลือกสีระแนงไม่ได้เลย</td>
+<td class="rule">ข้อ 4 (ทุก selector ต้องเลือกสีได้ default สีที่ใช้บ่อย)</td>
+<td class="fix">เพิ่ม dropdown สีอบในบล็อก if(p.bar_grid) แบบเดียวกับ bar_openclose (.o-bocfinish) — option สีอบขาว(default)/สีดำ/ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ/ลายไม้อบพิเศษ พร้อม +เรท/ตร.ม.; เก็บ optSel.bgFinish (L2635) และบวก finCost=finRate×A ใน calc bar_grid (L1064-1082)</td>
+<td class="anchor">if(p.bar_grid){ h+='&lt;label class="opt"&gt;ทิศระแนง</td></tr>
+<tr>
+<td class="prod">หลังคา กระจกลามิเนต (roof_laminate)</td>
+<td>ไม่มี selector สีวัสดุมุง/ฟิล์ม เลย — ในบล็อก p.cat==='หลังคา' สร้าง o-roofcolor เฉพาะ roof_vinyl/roof_delight/roof_polyton (if/else if 3 ตัว) ไม่มี branch ของ laminate. ใบจริงทุกใบที่ใช้หลังคากระจกลามิเนตระบุชนิดฟิล์มเสมอ (ฟิล์มใส/ฟิล์มเขียว/ฟิล์มกันร้อน/ฟิล์มกันเสียง + ความหนา 4+4 หรือ 5+5 มม.) แต่ระบบออกหัวรายละเอียดได้แค่ 'หลังคากระจกลามิเนต' (rfcolor ว่าง) → ขัดกฎ4 (สีวัสดุมุงต้องเลือก default ไม่ปล่อยว่าง)</td>
+<td class="rule">ข้อ4 + ข้อ8</td>
+<td class="fix">เพิ่ม branch `else if(p.id==='roof_laminate')` ในบล็อกสีวัสดุมุง (หลังบรรทัด 2343) สร้าง select.o-roofcolor ตัวเลือกฟิล์มจากใบจริง เช่น &lt;option selected&gt;ฟิล์มใส 4+4 มม.&lt;/option&gt;&lt;option&gt;ฟิล์มเขียว 4+4 มม.&lt;/option&gt;&lt;option&gt;ฟิล์มกันร้อน 4+4 มม.&lt;/option&gt;&lt;option&gt;ฟิล์มกันเสียง 4+4 มม.&lt;/option&gt;&lt;option&gt;ฟิล์มเขียว 5+5 มม.&lt;/option&gt; (ให้พี่นัทคัดรายการสุดท้าย) — readItem อ่าน .o-roofcolor อยู่แล้ว (บรรทัด 2592) และ genQuote เอา rfcolor มาต่อหัว (บรรทัด 3265-3267) จึงโชว์อัตโนมัติ</td>
+<td class="anchor">p.id==='roof_polyton'){</td></tr>
+<tr>
+<td class="prod">หลังคาชินโคไลท์ imp15-imp20 (Heat Cut/Superior/Nature/Shade/Prime/Grang)</td>
+<td>cat='หลังคา' จึงเข้าบล็อก p.cat==='หลังคา' แต่ไม่มี branch สีวัสดุมุง (มีเฉพาะ vinyl/delight/polyton) → ไม่มีช่องเลือกสี/รุ่นย่อยของชินโคไลท์เลย. ใบจริงระบุรุ่น+สี+ความหนาเสมอ (เช่น 'รุ่น NT-332 สี Light Grey หนา 6 มม.', 'รุ่น HC-N828 สี Modern Grey', '603S Ice') แต่ระบบออกหัวได้แค่ชื่อ product ตามตาราง ไม่มีสี → ขัดกฎ4/กฎ8</td>
+<td class="rule">ข้อ4 + ข้อ8</td>
+<td class="fix">เพิ่ม branch สำหรับ id ขึ้นต้น 'imp1' (15-20) ในบล็อกสีวัสดุมุง สร้าง select.o-roofcolor ใส่สีที่ขายจริงของแต่ละรุ่นชินโคไลท์ (Light Grey / Modern Grey / Ice / ฯลฯ) พร้อม default สีที่ขายบ่อย — ให้พี่นัทคัดสีต่อรุ่น. โครง readItem/genQuote รองรับ rfcolor อยู่แล้ว</td>
+<td class="anchor">id:'imp15',cat:'หลังคา'</td></tr>
+<tr>
+<td class="prod">ตู้อลูมิเนียม (cabinet_alu)</td>
+<td>ตู้อลูคิดราคา 'บานหน้าตู้' ตามสีจริง (colorPlus เมื่อ ci&gt;0) แต่ cat 'ตู้อลู' อยู่ใน NO_COLOR_CATS + AREA_CATS ทำให้ readItem บังคับ ci=0 เสมอ (บรรทัด 2658) → ตัวเลือกสีอลูถูกซ่อน (บรรทัด 2471) และโค้ดคิดสีในตู้ (useOther=ci&amp;&amp;ci&gt;0, บรรทัด 1024-1026) เป็น dead code ไม่มีวันทำงาน ลูกค้าเลือกสีฝาตู้ไม่ได้และราคาสีไม่เคยบวก</td>
+<td class="rule">ข้อ 4 (บังคับเลือกสีเดียว default บ่อย) + ข้อ 1 (ออปชั่นตรงสินค้า)</td>
+<td class="fix">ตู้อลูต้องบังคับเลือกสี 1 สี default สีอบขาว. ทางแก้: เพิ่ม selector สีฝาตู้เฉพาะของตู้อลู เหมือนที่ future_tech ทำไว้ (.o-ftcolor บรรทัด 2434) — เพิ่มบล็อก `if(p.cabinet){ h+='สีฝาตู้ &lt;select class="o-cabcolor"&gt;'+COLORS map...'} ` แล้ว readItem อ่าน .o-cabcolor มาแทน ci ในสูตร colorPlus (แก้บรรทัด 1024 ให้ใช้ optSel.cabcolor แทน ci) — อย่าพึ่ง .i-color ที่ถูก force 0</td>
+<td class="anchor">const useOther = ci &amp;&amp; ci&gt;0;</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก (group 6 ทั้งหมด)</td>
+<td>ออปชั่นต่อด้าน 'ครบเท่าบานปกติ' แต่รายการสินค้าที่เลือกได้ในด้าน (prodOptionsG6('6')) ขาดหมวดสำคัญที่ใบจริงใช้: ราวบันได/ราวกันตกเหล็ก (ใบจริงคุณยี ด้าน E/F = 'ราวกันตกเหล็ก'). cats ของ group 6 = ['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','หลังคา','ฝ้า-ผนัง'] — ไม่มี 'ราวบันได' จึงเพิ่มด้านราวกันตกในชุดกั้นห้องไม่ได้ ต้องไปแยกชุด</td>
+<td class="rule">ข้อ 6 (ออปชั่นครบเท่าบานปกติ) + ข้อ 8 (ตรงใบจริง)</td>
+<td class="fix">เพิ่ม 'ราวบันได' (และตรวจ 'เสริม' สำหรับงานครอบ/พื้นถ้าจำเป็น) เข้า array ของ _GM['6'] ในฟังก์ชัน prodOptionsG6 → '6':[...,'ระแนง-เกล็ด','ราวบันได','หลังคา','ฝ้า-ผนัง']. ผล: ด้านในชุดกั้นห้องเลือกราวกันตก (imp1-imp6) ได้ตรงใบจริง</td>
+<td class="anchor">const _GM={'1':[</td></tr>
+<tr>
+<td class="prod">ม่านซิป (zipscreen)</td>
+<td>ไม่มีช่องเลือก 'สีผ้า' ม่านซิป — ฟอร์มมีแค่ รุ่น/ผ้า(ความโปร่ง)/ระบบ/กลุ่มลูกค้า ไม่มี selector สีผ้าเลย ทำให้ใบที่ออกไม่ระบุสี (ผิดกฎข้อ 4: ทุก selector วัสดุต้องเลือกสีเดียว default สีที่ใช้บ่อย ห้าม 'ไม่ระบุ')</td>
+<td class="rule">ข้อ 4 (บังคับสี)</td>
+<td class="fix">เพิ่ม dropdown สีผ้าในบล็อก zipscreen (หลังบรรทัด o-zctrl บรรทัด 2209) เช่น `h+='&lt;label class="gh-row"&gt;สีผ้า &lt;select class="o-zfabcolor"&gt;&lt;option value="เทา" selected&gt;เทา (default)&lt;/option&gt;&lt;option value="ดำ"&gt;ดำ&lt;/option&gt;&lt;option value="น้ำตาล"&gt;น้ำตาล&lt;/option&gt;&lt;option value="ครีม"&gt;ครีม&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;';' โดยให้ค่า default เป็นสีที่ขายบ่อย (เทา/ดำ) ตามสต๊อกจริง · เก็บค่าใน captureOpts บรรทัด ~2611-2616 เพิ่ม `optSel.zfabcolor=(d.querySelector('.o-zfabcolor')||{}).value||'เทา';` · แล้วต่อท้าย det ใน genQuote บรรทัด 3198 ให้รวมสี เช่น `det = ZIP_FAB_LABEL[zfab] + ' · สี' + (it.optSel.zfabcolor||'เทา');` — ยืนยันรายการสีจริงกับพี่นัทก่อน (เช็คซ้ำ)</td>
+<td class="anchor">if(p.zipscreen){\n    h+='&lt;div class="gh-box"&gt;&lt;b style="color:#B3151D;"&gt;🪟 ม่านซิป</td></tr></table>
+
+<h2 class="y">🟡 ควรปรับ <span class="c">29 จุด</span></h2>
+<table><tr><th style="width:15%">สินค้า</th><th style="width:30%">ปัญหา</th><th style="width:10%">กฎ</th><th class="fix" style="width:33%">วิธีแก้</th><th style="width:12%">ค้นหา</th></tr><tr>
+<td class="prod">บานเลื่อน ทุกรุ่น (sliding_sms/euro/eseries)</td>
+<td>ดรอปดาวน์ 'ชนิดการเปิด' (o-opentype) ไม่บังคับเลือก — มี option default 'บานเลื่อน (ระบุติดตายเอง)' เป็นค่าตั้งต้น ทำให้ผู้ใช้ออกใบได้โดยไม่ได้เลือก สลับ/ลากจูง/คู่กลาง ขัดกับกฎข้อ 3 (ต้องเลือกลักษณะการเปิด ไม่ใช่ค่ากลางๆ). ใบจริงทุกใบระบุชัด เช่น 'บานเลื่อนสลับ', 'ยูโรลากจูง', 'เปิดคู่กลาง'</td>
+<td class="rule">ข้อ 3 (ลักษณะการเปิดต้องเลือก)</td>
+<td class="fix">ทำให้บังคับเลือก: เปลี่ยน option แรกเป็น placeholder ที่เลือกไม่ได้ เช่น &lt;option value="" disabled selected&gt;— เลือกลักษณะการเปิด —&lt;/option&gt; แล้วคงตัวเลือกจริง 4 แบบ (สลับ/เปิดคู่กลาง/ลากจูง + บานเลื่อนธรรมดา-ระบุติดตายเอง). เพิ่ม validation ใน genQuote/readItem: ถ้า opentype==='' ให้เตือน 'รายการบานเลื่อนยังไม่ได้เลือกลักษณะการเปิด' และไม่ปล่อยให้ออกใบ. ปรับ readItem บรรทัด 2557 ไม่ให้ fallback เป็น 'บานเลื่อน' เงียบๆ</td>
+<td class="anchor">ชนิดการเปิด &lt;select class="o-opentype"</td></tr>
+<tr>
+<td class="prod">บานเลื่อน + มุ้ง (เฟรมเล็ก imp21 / เฟรมใหญ่ imp23 / จีบ / นิรภัย)</td>
+<td>มุ้งไม่มีช่องกรอก 'กว้าง×ยาว' และ 'จำนวนบานมุ้ง' ของตัวเอง — UI มุ้ง (o-mosq) ใช้พื้นที่บาน (a) และจำนวนบาน/ติดตายของรายการหลักมาคำนวณอัตโนมัติ ขัดกับกฎข้อ 2(ข) ที่ระบุว่าต้อง 'มีช่องกรอกกว้าง×ยาว + จำนวนบานมุ้ง'. เคสมุ้งขนาดไม่เท่าช่องบาน (เช่น มุ้งม้วน/ล้นนอกวงกบ) กรอกแยกไม่ได้</td>
+<td class="rule">ข้อ 2(ข) (ช่องกรอกขนาด+จำนวนบานมุ้ง)</td>
+<td class="fix">เพิ่มช่อง optional ในบล็อกมุ้ง: 'มุ้ง กว้าง(ม.) × ยาว(ม.)' (o-mosqw / o-mosqh) และ 'จำนวนบานมุ้ง' (o-mosqpanels) — ถ้าเว้นว่าง = ใช้ค่าจากบานหลักเหมือนเดิม (backward compatible). ใน calcUnit ถ้ามีค่ากรอกเอง ให้ใช้ mosqArea = (o-mosqw × o-mosqh) และ panels มุ้ง = o-mosqpanels แทน a/panels. โชว์ขนาดที่กรอกในรายละเอียดงาน (บรรทัด 3302 ใช้ mosqArea อยู่แล้ว)</td>
+<td class="anchor">เพิ่มมุ้งในบานนี้</td></tr>
+<tr>
+<td class="prod">บานเลื่อน + มุ้งจีบ/นิรภัย (non-frame: mj_*)</td>
+<td>สูตรราคามุ้ง non-frame ไม่ได้คิด 'ต่อบาน' ตามกฎข้อ 2(ข) — ใช้ max(min รวมก้อนเดียว, พื้นที่รวม×เรท) ไม่ใช่ จำนวนบานมุ้ง × max(min/บาน, (พื้นที่/บาน)×เรท). min ถูกคิดครั้งเดียวต่อรายการ ไม่ใช่ต่อบาน ทำให้บานเลื่อนหลายบานคิด min ต่ำกว่าที่ควร</td>
+<td class="rule">ข้อ 2(ข) (คิดราคาแบบต่อบาน)</td>
+<td class="fix">เปลี่ยน non-frame ให้คิดต่อบาน: คำนวณ _pnOpen (บานที่เปิดได้) เหมือน frame branch แล้ว mosqBase = _pnOpen × Math.max(mscreen.min, (mosqArea/_pnOpen) × mscreen.rate). หรือถ้าพี่นัทยืนยันว่ามุ้งจีบ/นิรภัยคิด min ก้อนเดียวจริง ให้ใส่ comment ยืนยันมติไว้กันเข้าใจผิด (เช็คซ้ำกับพี่นัท)</td>
+<td class="anchor">mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate)</td></tr>
+<tr>
+<td class="prod">บานเปิด (casement_euro / casement_dseries / casement_xseries / casement_velora / casement_flush_solid / casement_inset_solid)</td>
+<td>กล่องเขียวประตูบานเปิด (banner #E2EFDA border #70AD47 'เลือกมือจับ 1 ใน 4: Std/Up1/Up2/Up3') ยังเป็นแค่ข้อความบรรยาย (informational div) ไม่ใช่ option จริง — ผู้ใช้ยังเลือก 'Std' ไม่ได้ในเชิง data ไม่มี selector บังคับเลือกระดับมือจับ มีแต่ dropdown ย่อย (o-closer/o-digi/o-stainless/o-cmech) แยกกัน ถ้าไม่แตะเลย = Std โดยปริยายแต่ไม่ถูกบันทึกเป็นค่าเลือก</td>
+<td class="rule">ข้อ 7 (กล่องเขียวประตูเปิดต้องทำเป็นออปชั่น + บังคับเลือกสี)</td>
+<td class="fix">เปลี่ยนกล่องเขียวเป็น &lt;select class='o-handletier'&gt; ค่า [Std(ก้านโยก+กุญแจ) / Up1(Cmech) / Up2(ดิจิตอล) / Up3(สแตน+โช๊ค)] default='Std' พร้อม onchange ที่ show/hide dropdown ย่อยตามระดับ (Up1→o-cmech, Up2→o-digi, Up3→o-stainless+o-closer) เพื่อบังคับให้เลือก 1 ใน 4 ชัดเจน แล้วเพิ่ม readItem: optSel.handleTier=d.querySelector('.o-handletier').value ให้ genQuote โชว์ในใบ; คงตรรกะราคาเดิม (dropdown ย่อยยังคิดเงินเหมือนเดิม)</td>
+<td class="anchor">ประตูบานเปิด — เลือกมือจับ 1 ใน 4</td></tr>
+<tr>
+<td class="prod">บานเปิด ทุกรุ่น + บานกระทุ้ง + บานเฟี้ยม + บานหมุน + บานยก (สีอลู / สีกระจก)</td>
+<td>สีอลู (i-color) default=index0 'สีอบขาว' และกระจก (i-glass) default=index0 บังคับเลือกค่าเดียวอยู่แล้ว ไม่มี 'ไม่ระบุ' — ผ่านกฎ; แต่ selector สี/กระจกถูกซ่อน (style display:none) แล้วย้ายเข้า ⚙ optbox ที่ 'พับ default' สำหรับ cat บานเปิด/บานกระทุ้ง (ob.open=false เพราะไม่เข้าเงื่อนไข p.ranae/cabinet/...) ทำให้ผู้ขายอาจไม่เห็นช่องเลือกสี → ส่งใบด้วยสีอบขาว default โดยไม่ได้ตั้งใจ</td>
+<td class="rule">ข้อ 4 (บังคับเลือกสีเดียว default สีที่ใช้บ่อย — ต้องเห็น/เลือกได้จริง)</td>
+<td class="fix">เพิ่มเงื่อนไขให้ ⚙ เปิด default เมื่อ cat อยู่ในกลุ่มงานบานกระจก (บานเปิด/บานกระทุ้ง/บานเฟี้ยม/บานหมุน/บานยก) เพื่อให้ช่อง 'สีอลู' + 'กระจก' โผล่ให้ผู้ขายเห็น/ยืนยัน: เปลี่ยนเป็น ob.open=...||['บานเปิด','บานกระทุ้ง','บานเฟี้ยม','บานหมุน','บานยก'].includes(p.cat) — หรือย้าย i-color/i-glass ออกมานอก optbox ให้เห็นเสมอ (READ-ONLY: เสนอแก้)</td>
+<td class="anchor">ob.open=!!(p.ranae||p.cabinet||p.gate</td></tr>
+<tr>
+<td class="prod">บานกระทุ้ง (awning_euro / awning_aluinch) + บานเปิด + บานเฟี้ยม + บานยก — มุ้งในบาน (o-mosq)</td>
+<td>การคิดราคามุ้งต่อบานไม่ตรงสูตรกฎข้อ 2: โค้ดใช้ mosqArea = พื้นที่บานเต็ม (a) × openRatio โดย openRatio=1 สำหรับทุก cat ที่ไม่ใช่บานเลื่อน → ไม่หาร 'จำนวนบาน' ก่อนหาเรท tier แล้วค่อยคูณกลับ ทำให้เรท tier คำนวณจากพื้นที่รวมทั้งชุด (tier ต่ำกว่า/แพงต่างจากการคิดต่อบานแยก); min คูณ _pnOpen ถูกต้องแต่พื้นที่ tier ไม่ได้คิดต่อบาน</td>
+<td class="rule">ข้อ 2ข (คิดต่อบาน = จำนวนบานมุ้ง × max(min/บาน, (กว้าง×ยาว÷จำนวนบาน)×เรท/ตร.ม.))</td>
+<td class="fix">ปรับสูตรมุ้งเฟรมให้คิดต่อบานตามกฎ: ให้ perPanelArea = a / _pnOpen; perPanelRate = rateOf(perPanelArea, RATES[mscreen.rates]); mosqBase = _pnOpen * Math.max(_minPP, perPanelArea * perPanelRate). วิธีนี้ tier เรทคิดจากพื้นที่ต่อบาน แล้วคูณจำนวนบานมุ้ง ตรงกับสูตรเป๊ะ (ปัจจุบันคิดเป็นแผ่นเดียวรวม)</td>
+<td class="anchor">const _fr = rateOf(mosqArea, RATES[mscreen.rates]);</td></tr>
+<tr>
+<td class="prod">บานเปิด โซลิด (casement_flush_solid / casement_inset_solid) — ตารางเต็มบาน + combo</td>
+<td>มี o-fullgrid (ตารางเต็มบาน +5,000) และ o-combo_awn_inside (combo บานกระทุ้งเข้าใน+มุ้งจีบนิรภัยติดตาย, ราคากรอกเอง) เป็น checkbox — combo เป็น 'มุ้ง' ที่ราคากรอกเอง (o-combo_price) ไม่ผ่านสูตรมุ้งต่อบาน/ตร.ม. และไม่บังคับกรอก (default 0) → ถ้าติ๊ก combo แต่ลืมกรอกราคา = มุ้ง combo ฟรี</td>
+<td class="rule">ข้อ 2ก-ข (มุ้งต้องรวมราคา+คิดตามสูตร)</td>
+<td class="fix">เพิ่ม validation: ถ้า o-combo_awn_inside ติ๊กแต่ o-combo_price=0 ให้ขึ้น warning 'กรอกราคา combo' กันคิดเป็นศูนย์ — หรือผูก combo มุ้งจีบนิรภัยติดตายเข้าสูตรมุ้งเฟรม (IMP21 ติดตาย) อัตโนมัติแทนการกรอกเอง เพื่อให้มุ้งรวมราคาตามสูตรไม่ตกหล่น</td>
+<td class="anchor">combo บานกระทุ้งเข้าใน + มุ้งจีบนิรภัยติดตายนอก</td></tr>
+<tr>
+<td class="prod">บานกระทุ้ง (awning_euro) — tilt &amp; turn</td>
+<td>tilt&amp;turn เป็น opt depends 'awn_mode=2' (perPanel +5,000) ผูกกับ select awn_mode ถูกต้อง แต่ราคา tilt&amp;turn คิด perPanel:true — ต้องตรวจว่า panels (door/window addon) ของ awning ส่งเข้า perPanel calc ถูกหรือไม่ และ warning 'เปิดออกนอกบ้านเท่านั้น' โชว์จริงหรือไม่</td>
+<td class="rule">ข้อ 3 (ลักษณะเปิด) + ข้อ 1 (ออปชั่นตรงสินค้า)</td>
+<td class="fix">ตรวจ calcUnit ว่ามีโค้ดอ่าน awn_mode แล้วบวก tilt_turn 5,000×panels เมื่อ awn_mode=2 จริง (depends ไม่วาด UI แต่ราคาควรผูกอัตโนมัติ) — ถ้าไม่มี ให้เพิ่ม logic: เมื่อ optSel.awn_mode==='2' → opt += 5000*panels และ push warning; (เช็คซ้ำว่าราคา tilt&amp;turn เข้ายอดจริง)</td>
+<td class="anchor">tilt&amp;turn ต้องเปิดออกนอกบ้านเท่านั้น</td></tr>
+<tr>
+<td class="prod">บานยก (lift_sms / lift_aluinch)</td>
+<td>method 'lift' ไม่อยู่ใน usesPanels() → ช่องจำนวนบาน (.i-panels-wrap) ถูกซ่อน ทั้งที่ตั้ง pn.max=2 และ maxPanels:2; มุ้ง (mosquito:1) จึงคิดด้วย panels ที่ผู้ใช้กรอกไม่ได้ (panels ค่า default) — บานยกมักเป็น 2 บาน (ยก 1 ติดตาย 1) มุ้งครึ่งบาน แต่ระบบคิดเต็มบาน openRatio=1</td>
+<td class="rule">ข้อ 2ข (มุ้งคิดต่อบาน) + ข้อ 3 (ลักษณะเปิด: บานยกครึ่ง)</td>
+<td class="fix">เพิ่ม method==='lift' เข้า usesPanels() ให้ช่องจำนวนบานโผล่สำหรับบานยก; และใน calcUnit ขยาย openRatio ให้บานยกคิดมุ้งครึ่งช่องเปิด (เช่น lift เปิด 1 จาก 2 บาน → openRatio=0.5 หรือใช้ optSel.fixedPanes เหมือนบานเลื่อน) เพื่อมุ้งคิดต่อบานตามจริง ไม่คิดเต็มบาน</td>
+<td class="anchor">q.method==='lift'){ pn.max=2; }</td></tr>
+<tr>
+<td class="prod">มุ้งทุกชนิด (รายการเดี่ยว cat==='มุ้ง')</td>
+<td>ไม่มี selector 'ลักษณะการเปิด' / itype (ประตู vs หน้าต่าง) สำหรับมุ้งเดี่ยว — min ต่อบานของหลายรุ่นแยกประตู/หน้าต่าง (เช่น imp21 min_door 2400 / min_window 1200) แต่ branch screen_addon อ่าน .i-type ซึ่งมุ้งเดี่ยวไม่มี selector นี้ในฟอร์ม → default 'door' เสมอ คิด min ผิดเมื่อเป็นหน้าต่าง</td>
+<td class="rule">ข้อ 2(ข), ข้อ 3</td>
+<td class="fix">เพิ่ม dropdown ประเภท (ประตู/หน้าต่าง) ในฟอร์มมุ้งเดี่ยว (โดยเฉพาะ imp21/imp22/imp23) แล้วผูกกับ minPerPanel · ปัจจุบัน L1044-1047 อ่าน .i-type ถ้าไม่เจอ fallback 'door' = เก็บเงินเกินกรณีหน้าต่าง</td>
+<td class="anchor">const minPerPanel = (itype==='window') ? (p.min_window||0) : (p.min_door||0);</td></tr>
+<tr>
+<td class="prod">มุ้งเดี่ยวกลุ่มไม่มี mscolor (imp30 แม่เหล็ก, imp33 กันแมว/หมา, imp35 กันหนู, imp28 มุ้งจีบตีนตะขาบพิเศษ)</td>
+<td>ไม่มี selector สีกรอบ/สีผ้าให้เลือกเลย และไม่มี default ที่ชัด — รายงานใบ (det) อาจขึ้นแค่ 'ผ้าไฟเบอร์ดำ' default ทั้งที่ผู้ใช้เลือกอะไรไม่ได้ ผิดกฎต้องเลือกสีเดียว default สีที่ใช้บ่อย</td>
+<td class="rule">ข้อ 4</td>
+<td class="fix">เพิ่ม dropdown สีผ้า/สีกรอบให้มุ้งเดี่ยวทุกตัวที่ทำสีได้ (default ไฟเบอร์เทา/ดำ ตามที่ใช้บ่อย) · ตัวที่ทำสีกรอบไม่ได้จริง (แม่เหล็ก/นิรภัยล้นนอกวงกบ) ให้ระบุข้อความ 'กรอบทำสีไม่ได้' แทนการปล่อยว่าง</td>
+<td class="anchor">if(p.mscolor){ h+='&lt;label class="opt"&gt;สีกรอบมุ้ง</td></tr>
+<tr>
+<td class="prod">มุ้งเดี่ยว — รายละเอียดในใบ (genQuote det)</td>
+<td>ใบที่ระบบออกสำหรับมุ้งเดี่ยวโชว์เฉพาะ 'สีผ้า' แต่ไม่โชว์ 'สีกรอบมุ้ง' ที่ผู้ใช้เลือกจาก o-mscolor — ใบจริงเขียนสีกรอบเสมอ (เช่น 'มุ้งจีบ เฟรมสีอบขาว', 'มุ้งเฟรมเล็ก เฟรมสีเทาซาฮาร่า', 'มุ้งนิรภัย เฟรมลายไม้สีไวท์โอ๊ค')</td>
+<td class="rule">ข้อ 8, ข้อ 4</td>
+<td class="fix">ใน branch det ของ cat==='มุ้ง' (L3200-3210) ให้ดึง o-mscolor (optSel.mscolor → ชื่อสีจาก COLORS) มาต่อท้ายเป็น ' · เฟรมสี{ชื่อสี}' ให้ตรงรูปแบบใบจริง</td>
+<td class="anchor">else if(it.p.cat==='มุ้ง'){</td></tr>
+<tr>
+<td class="prod">มุ้งม้วนเตะได้ (mj_kick_150/300/600 add-on)</td>
+<td>มุ้งม้วนเตะคิดราคาตามพื้นที่ × openRatio เหมือนมุ้งทั่วไป (L1510-1511 mosqArea=a*openRatio, mosqBase=max(min, mosqArea*rate)) แต่รุ่นนี้คิดเป็น 'ชุด' ตามช่วงกว้าง (≤150/≤300/≤600 ซม.) มี min สูง (15000/37500/67500) — การคิดต่อพื้นที่อาจต่ำกว่าราคาจริงต่อชุดเมื่อบานแคบ และไม่มีช่องจำนวนชุด</td>
+<td class="rule">ข้อ 2(ข)</td>
+<td class="fix">(เช็คซ้ำ) ทบทวนสูตรมุ้งม้วนเตะ add-on ให้เป็นต่อชุดตามช่วงกว้าง + จำนวนชุด ไม่ใช่ต่อพื้นที่ล้วน · ปัจจุบันมี maxWidth guard (L1476) แต่ราคายังเป็น area×rate vs min เดียว</td>
+<td class="anchor">mosqBase = Math.max(mscreen.min, mosqArea * mscreen.rate);</td></tr>
+<tr>
+<td class="prod">ประตูรั้ว (fence_gate)</td>
+<td>ดรอปดาวน์ 'อบสี/ผิว' (.o-gfin) มีตัวเลือก 'ไม่อบสี' (value='') = ไม่ระบุสี ผิดกฎบังคับเลือกสีเดียว</td>
+<td class="rule">ข้อ 4 (บังคับเลือกสี ห้าม 'ไม่ระบุ')</td>
+<td class="fix">ลบ &lt;option value=""&gt;ไม่อบสี&lt;/option&gt; ออกจาก .o-gfin (L2401) ให้เหลือเฉพาะสีจริง (สีอบขาว default / สีดำ / ซาฮาร่า / ลายไม้สต๊อก / อบพิเศษ / ลายไม้อบพิเศษ) — บังคับเลือกสีเดียวเสมอ</td>
+<td class="anchor">&lt;select class="o-gfin"</td></tr>
+<tr>
+<td class="prod">ระแนง ทุกตัว (bar_grid_z / bar_slide / bar_openclose)</td>
+<td>ไม่มีช่องระบุ 'ขนาดกล่อง × โชว์หน้า × ระยะเว้น' (เช่น 1"x1.6" โชว์หน้า 1" เว้น 2.5 ซม.) ที่ใบจริงเขียนเป็นรายละเอียดงานทุกใบ — ระบบออกใบจะขาดสเปกระแนงที่ลูกค้าต้องเห็น</td>
+<td class="rule">ข้อ 8 (ใบที่ระบบออกต้องตรงใบจริง) + ข้อ 2-fmt (รายละเอียดครบ)</td>
+<td class="fix">เพิ่ม input/dropdown ขนาดกล่อง (.o-bsize เช่น 1"x1.6" / 1"x5cm) + โชว์หน้า (.o-bface) + ระยะเว้น (.o-bgap ซม.) ในแต่ละบล็อกระแนง; ต่อท้ายข้อความ msgs/รายละเอียดงานใน genQuote ให้ออกเป็น 'ระแนงอลูมิเนียมกล่อง ขนาด &lt;bsize&gt; โชว์หน้า &lt;bface&gt; เว้นระยะ &lt;bgap&gt; ซม.' ตามใบจริง</td>
+<td class="anchor">if(p.bar_grid){
+    // ระแนงบานเกล็ดอลู</td></tr>
+<tr>
+<td class="prod">ราวกันตก/ราวบันได (imp1-imp6)</td>
+<td>ไม่มีตัวเลือกชนิดอุปกรณ์/ราวจับสแตนเลส ที่ใบจริงระบุ 'อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน / ราวสแตนเลสมาตรฐาน สีเงิน' — option .o-handrail มีแค่ 'ยู 5 หุน' กับ 'กล่อง 1"x2"' (อลู) ไม่มีสแตนเลส และ default = 'ไม่มี'</td>
+<td class="rule">ข้อ 8 (ตรงใบจริง) + ข้อ 4 (วัสดุ/สีราวต้องระบุ)</td>
+<td class="fix">เพิ่ม option ราวจับสแตนเลส (เช่น 'สแตนเลสสีเงิน มาตรฐาน') ใน .o-handrail และ/หรือเพิ่ม dropdown วัสดุ/สีราว default 'สแตนเลสสีเงิน'; ให้ข้อความออกใบตรงใบจริง — ตรวจราคา/เรทก่อนใส่ (เช็คซ้ำ ว่าราคาสแตนเลสมาตรฐานรวมในเรท IMP แล้วหรือคิดแยก)</td>
+<td class="anchor">&lt;select class="o-handrail"</td></tr>
+<tr>
+<td class="prod">ราวกันตก/ราวบันได (imp2/imp3/imp5/imp6 — เสาอลู/U+เสาอลู)</td>
+<td>รุ่นที่ใช้เสาอลูมิเนียม (เสาอลู / U+เสาอลู) ควรเลือกสีอลูได้ — ตรวจว่าช่อง 'สีอลูมิเนียม' (i-color) แสดงและใช้งานจริงไหม สำหรับ cat 'ราวบันได' (ไม่อยู่ใน NO_COLOR_CATS/AREA_CATS แต่ areaOnly logic อ่านความยาวจากช่องกว้าง)</td>
+<td class="rule">ข้อ 4 (บังคับสีอลู default สีที่ใช้บ่อย)</td>
+<td class="fix">ยืนยัน i-color แสดงสำหรับ imp2/3/5/6 และตั้ง default สีที่ใช้บ่อย (เช่น สีอบขาว/ซาฮาร่า) ไม่ใช่ option แรกที่อาจเป็น '★ไม่ระบุ'; ถ้า COLORS[0/1] เป็นค่ากลางๆ ให้ set selected เป็นสีจริง (เช็คซ้ำกับ colorOpts())</td>
+<td class="anchor">{id:'imp3',cat:'ราวบันได'</td></tr>
+<tr>
+<td class="prod">หลังคาเมทัลชีท imp7-imp14 (EPS/PU ท้องPVC/เหล็ก/ฟอยล์)</td>
+<td>cat='หลังคา' แต่ไม่มี selector สีวัสดุมุง (เมทัลชีทมีสีแผ่นหลายสี). ระบบออกหัวได้แค่ชื่อ product ('เมทัลชีท 1 นิ้ว ท้องPVC EPS') ไม่มีสีแผ่น/ฉนวน → ขัดกฎ4</td>
+<td class="rule">ข้อ4</td>
+<td class="fix">เพิ่ม branch สำหรับ imp7-imp14 ในบล็อกสีวัสดุมุง สร้าง select.o-roofcolor ใส่สีแผ่นเมทัลชีทที่ขาย (เช่น ขาว/เทา/แดง/น้ำเงิน ตามแคตตาล็อก) default สีที่ใช้บ่อย — ให้พี่นัทคัดสี</td>
+<td class="anchor">id:'imp7',cat:'หลังคา'</td></tr>
+<tr>
+<td class="prod">หลังคา โพลีตัน 3มม. (roof_polyton)</td>
+<td>รายการสีในdropdown ไม่ครบเทียบใบจริง — ขาดสี 'ไอซ์ (603S Ice)' ซึ่งใช้จริงในใบ ≥2 ใบ และอาจขาดรหัสรุ่น S-series อื่น (108S Aus Grey ใบจริงเขียนเป็น '108S' แต่ในระบบเป็น 'Australian Grey 108'). default ปัจจุบันเป็น Opal 103 (ถูก) แต่ตัวเลือกไม่ครบ</td>
+<td class="rule">ข้อ8</td>
+<td class="fix">เพิ่ม &lt;option&gt; 'Ice 603S สีไอซ์' (และเทียบรหัส S-series ให้ตรงใบจริง: 108S Aus Grey) ใน select.o-roofcolor ของ roof_polyton บรรทัด 2343 — ให้พี่นัทเทียบแคตตาล็อก TN ฉบับล่าสุดว่าขายสีไหนบ้าง (เช็คซ้ำ)</td>
+<td class="anchor">สีวัสดุมุง (โพลีตัน)</td></tr>
+<tr>
+<td class="prod">ประตู Ventilation YKK / Exhido YKK / Tostem A01 (ykk_vent, ykk_exhido, tostem_a01)</td>
+<td>cat 'YKK' อยู่ใน NO_COLOR_CATS + AREA_CATS → ซ่อนทั้ง selector สีอลูและกระจก (ci=0, gi=0). แต่ใบจริงเขียนชัด 'อลูมิเนียม สีอบขาว' และ 'กระจกเขียว หนา 5 มม. (Ventilation Door)' ทำให้ใบที่ระบบออกไม่สามารถระบุสี/ความหนากระจกของ YKK ได้ ต้องพิมพ์มือทุกครั้ง</td>
+<td class="rule">ข้อ 4 (บังคับสี) + ข้อ 8 (ตรงใบจริง)</td>
+<td class="fix">เอา 'YKK' ออกจาก NO_COLOR_CATS (และพิจารณาออกจาก AREA_CATS เฉพาะส่วนสี/กระจก) เพื่อให้โชว์ selector สีอลู (default สีอบขาว index 0) + กระจก (default เทมเปอร์/เขียวตามรุ่น). ถ้าราคา YKK เป็น all-in (เรตรวมสี/กระจกแล้ว) ให้คงราคาไว้แต่ปล่อยให้สี/กระจกเป็น cosmetic ที่ขึ้นในรายละเอียดงานเหมือน roof color — ไม่บวกเงินซ้ำ</td>
+<td class="anchor">const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง'</td></tr>
+<tr>
+<td class="prod">บานเปลือยติดตาย (frameless_fixed)</td>
+<td>frameless_fixed อยู่ใน cat 'บานเปลือย' (NO_COLOR_CATS) → ไม่มี selector สีเฟรมเลย ต่างจาก frameless_door ที่มี .o-framecolor (default ขาว). เฟรมบานเปลือยติดตายยังมีตัวยึด/เฟรมอลูที่ต้องระบุสี แต่เลือกไม่ได้</td>
+<td class="rule">ข้อ 4 (บังคับสีเดียว)</td>
+<td class="fix">เพิ่ม selector สีเฟรมให้ frameless_fixed เหมือน frameless_door (ย้ายบล็อก o-framecolor บรรทัด 2225 ให้ครอบทั้ง 2 id: `if(p.cat==='บานเปลือย')` แทน `if(p.id==='frameless_door')`) default 'ขาว' — เลือกสีเดียว ไม่ 'ไม่ระบุ'</td>
+<td class="anchor">if(p.id==='frameless_door'){</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก — ด้านที่เป็นสินค้าไม่มีกระจก (ฝ้า-ผนัง/ISOWALL/ระแนง/ราว)</td>
+<td>master row 'กระจก (ทั้งห้อง)' force-set ค่า .i-glass ลงทุกด้าน group 6 รวมถึงด้านที่ไม่มีกระจก (ISOWALL/ผนังเบา/ระแนง/ราว) — แม้ calc ไม่คิดเงินกระจกให้สินค้าเหล่านี้ แต่เป็นการบังคับค่าที่ไม่เกี่ยวข้อง และทำให้ผู้ใช้เข้าใจว่าด้านนั้นมีกระจก. ใบจริงด้านผนัง ISOWALL/ราวเหล็ก ไม่มีบรรทัดกระจก</td>
+<td class="rule">ข้อ 1 (ออปชั่นตรงประเภทสินค้า) + ข้อ 4 (สีวัสดุตรงตัว)</td>
+<td class="fix">ใน syncGHColor และ block [4] ก่อน force .i-color/.i-glass ให้เช็ค cat ของสินค้าด้านนั้น: ถ้า NO_COLOR_CATS.includes(p.cat) ข้ามการ set สี และถ้าสินค้าไม่มีกระจก (cat ใน ['ฝ้า-ผนัง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได']) ข้ามการ set กระจก — กันบังคับค่าผิดประเภท</td>
+<td class="anchor">var gi = c.querySelector('.i-glass'); if(gi){ gi.value = glassVal;</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก — ด้านบานเลื่อน/บานกระทุ้ง (มุ้งเฟรมเล็ก)</td>
+<td>มุ้งคิดราคา 'ต่อบาน' ไม่มีช่องกรอก 'จำนวนบานมุ้ง' แยกต่างหากตามสเปกข้อ 2 — ระบบ derive จำนวนบานมุ้งจาก (จำนวนบานทั้งหมด − บานติดตาย) เท่านั้น. กรณีด้านที่บานมุ้งไม่เท่าช่องเปิด (เช่นเลื่อนสลับใส่มุ้ง 1 บานแต่ช่องเปิด 2) ปรับจำนวนบานมุ้งตรงๆ ไม่ได้ ต้องพึ่ง openRatio อัตโนมัติ</td>
+<td class="rule">ข้อ 2 (ข) (มีช่องกรอกจำนวนบานมุ้ง + คิดต่อบาน)</td>
+<td class="fix">เพิ่มช่อง optional 'จำนวนบานมุ้ง' (class o-mosqpanels) ใต้ dropdown มุ้ง (default = ช่องเปิด auto) แล้วใน calcUnit ใช้ค่านี้แทน _pnOpen ถ้าผู้ใช้กรอก: '_pnUse=parseInt(optSel.mosqPanels)||_pnOpen; mosqBase=Math.max(_minPP*_pnUse, mosqArea*_fr)'. ถ้ายืนยันว่า auto-derive เพียงพอ ให้ติดป้าย (เช็คซ้ำ) ก่อนปิด</td>
+<td class="anchor">h+='&lt;label class="opt"&gt;มุ้ง &lt;select class="o-mosq"</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก — ด้านบานเลื่อน</td>
+<td>ลักษณะการเปิด (o-opentype) default = 'บานเลื่อน (ระบุติดตายเอง)' ไม่ใช่การบังคับเลือก สลับ/คู่กลาง/ลากจูง — ตามสเปกข้อ 3 ต้องเลือกลักษณะการเปิดจริง ไม่ใช่ค่ากลางที่ไม่ระบุ. ใบจริงระบุชัด เช่น 'บานเลื่อนเปิดคู่กลาง' (คุณยี ด้าน B)</td>
+<td class="rule">ข้อ 3 (ต้องเลือกลักษณะการเปิด)</td>
+<td class="fix">เปลี่ยน option แรกเป็น placeholder บังคับเลือก เช่น '&lt;option value="" disabled selected&gt;— เลือกลักษณะการเปิด —&lt;/option&gt;' หรือเพิ่ม validation ใน calcQuote เตือนถ้าด้านบานเลื่อนยังไม่เลือกชนิดเปิด (ใส่ลง i-msg) — กันออกใบโดยไม่ระบุการเปิด</td>
+<td class="anchor">ชนิดการเปิด &lt;select class="o-opentype"</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก — ทุกด้าน (i-type ประตู/หน้าต่าง)</td>
+<td>ช่อง 'ประเภท' (i-type ประตู/หน้าต่าง) ถูกซ่อนทั้งหมดในโหมดกั้นห้อง (block ลดความรก) แต่ค่า i-type มีผลต่อราคา min ของมุ้งเฟรม (min_door 2400 vs min_window 1200) และต่อ logic บานเลื่อนล็อค. เมื่อซ่อน ผู้ใช้แก้ประตู↔หน้าต่างไม่ได้ → ด้านหน้าต่างบานเลื่อนอาจคิด min แบบประตู (default door) ราคาเกิน/ขาด</td>
+<td class="rule">ข้อ 1 (ออปชั่นตรงสินค้า) + ข้อ 2 (มุ้งคิดถูกต้อง)</td>
+<td class="fix">อย่าซ่อน .i-type สำหรับด้านที่สินค้ารองรับมุ้ง/ล็อค (p.mosquito||p.cat==='บานเลื่อน') — เอา '.i-type' ออกจาก array ที่ซ่อน หรือย้ายไปไว้ในกล่องตัวเลือกที่เปิดได้ เพื่อให้เลือกประตู/หน้าต่างต่อด้านได้ (ใบจริงมีทั้งหน้าต่างบานเลื่อนและประตูบานเลื่อนในชุดเดียว — คุณยี ด้าน A หน้าต่าง vs ด้าน D ประตู)</td>
+<td class="anchor">['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach</td></tr>
+<tr>
+<td class="prod">กั้นห้องกระจก (group 6) — ด้านบานยก/PC Door/บานหมุน/ดัดโค้ง/เลื่อนภายใน</td>
+<td>prodOptionsG6('6') ขาดหมวด บานยก, PC Door, บานหมุน, ดัดโค้ง, เลื่อนภายใน, บานเปลือย, shower, YKK ที่มีในบานปกติ (group 1) — ทำให้ด้านในชุดกั้นห้องเลือกสินค้าเหล่านี้ไม่ได้ ไม่ครบเท่าบานปกติ. (เลื่อนภายในรางบน/บานยก ใช้ในกั้นห้องได้จริง)</td>
+<td class="rule">ข้อ 6 (ออปชั่นครบเท่าบานปกติ)</td>
+<td class="fix">เพิ่มหมวดที่ใช้จริงในกั้นห้องเข้า _GM['6']: อย่างน้อย 'เลื่อนภายใน','บานยก','บานหมุน','ดัดโค้ง','PC Door' (เช็คกับพี่นัทว่าด้านไหนเคยใช้). ถ้าตั้งใจจำกัดเฉพาะที่ทำได้จริง ให้ยืนยันรายการกับพี่นัทแล้วติดป้าย (เช็คซ้ำ)</td>
+<td class="anchor">'6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','ระแนง'</td></tr>
+<tr>
+<td class="prod">ม่านซิป (zipscreen)</td>
+<td>ฟอร์มโชว์ 'ครอบวงกบอลู (3/4 ด้าน)' + 'ดรอปพื้น(ม.)' ทั้งที่ม่านซิปเป็นม่านม้วนผ้า ไม่มีวงกบอลูให้ครอบ — ออปชั่นผิดประเภทสินค้า</td>
+<td class="rule">ข้อ 1 (ออปชั่นต้องตรงประเภทสินค้า)</td>
+<td class="fix">กันออปชั่นนี้ออกจากม่านซิป โดยแก้เงื่อนไขบรรทัด 2459 เป็น `if(!areaOnly &amp;&amp; !p.zipscreen){ ...ครอบวงกบอลู/ดรอปพื้น... }` (หรือเพิ่ม 'ม่านซิป' เข้า list ที่ตัดออก) — ให้ม่านซิปไม่แสดงช่องครอบวงกบอลูและดรอปพื้น</td>
+<td class="anchor">if(!areaOnly){ h+=`&lt;label class="opt"&gt;ครอบวงกบอลู</td></tr>
+<tr>
+<td class="prod">ม่านซิป (zipscreen)</td>
+<td>ไม่มีใบจริงในชุดอ้างอิงให้ cross-check ออปชั่น/วัสดุ/ราคาของม่านซิป — engine ยกค่ามาจาก 'เครื่องคิดราคาม่านซิปแยก' (ตามคอมเมนต์โค้ด) ยังไม่เคยเทียบกับใบเสนอราคาจริงที่ออกให้ลูกค้า</td>
+<td class="rule">ข้อ 8 (เทียบกับใบจริง)</td>
+<td class="fix">ขอใบเสนอราคาม่านซิปจริง 1-2 ใบจากพี่นัท มาเทียบ: รุ่น (Z100/Z120/Z145D/Z120W), เรทผ้าตามความโปร่ง (ZIP.FAB), ค่าระบบควบคุม (ZIP.CTRL), มาร์กอัป (retail×2.0/project×1.75 บรรทัด 804), พื้นที่ขั้นต่ำ (ZIP.MIN), และค่าติดตั้ง 5,000+600/ตร.ม. (บรรทัด 1276) ว่าตรงกับใบจริงไหม — (เช็คซ้ำ: ยังยืนยันความถูกต้องราคาไม่ได้เพราะไม่มีใบอ้างอิง)</td>
+<td class="anchor">ม่านซิป (zipscreen) — รวมจากเครื่องคิดราคาม่านซิปแยก</td></tr>
+<tr>
+<td class="prod">ม่านซิป (zipscreen)</td>
+<td>ผ้า PET ใส ในรุ่น Z120W ไม่มีเรท (null) — ถ้าลูกค้าเลือก Z120W + PET ระบบจะ fallback ไปใช้เรทผ้า 5% เงียบๆ แล้วเตือนแค่ข้อความ อาจคิดราคาผิด/ต่ำกว่าจริงโดยไม่ตั้งใจ</td>
+<td class="rule">ข้อ 1/ข้อ 4 (ออปชั่นที่เลือกได้ต้องคิดราคาถูกต้องตามสินค้า)</td>
+<td class="fix">ทางเลือก: (ก) ถ้า Z120W ทำ PET ไม่ได้จริง ให้ disable option PET เมื่อเลือกรุ่น Z120W (เพิ่ม onchange ที่ o-zmodel เพื่อ enable/disable option ใน o-zfab) แทนการ fallback เงียบ · (ข) ถ้าทำได้แต่ราคายังไม่กรอก ให้ใส่เรท PET จริงของ Z120W ลง ZIP.FAB.Z120W แทน null — ยืนยันกับพี่นัทว่า Z120W รับผ้า PET ได้หรือไม่ (เช็คซ้ำ)</td>
+<td class="anchor">if(rate===null||rate===undefined){ msgsZ.push('⚠ รุ่นนี้ไม่มีผ้านี้ — ใช้ 5% แทน');</td></tr></table>
+
+<h2 class="g">🟢 ตรวจแล้วผ่าน (ไม่ต้องแก้) <span class="c">37 จุด</span></h2>
+<div class="gbox"><b>บานเลื่อน (sliding_sms / sliding_euro / sliding_eseries):</b> บานเลื่อน E-series (sliding_eseries) (ข้อ 1 (ออปชั่น/สินค้าต้องตรงประเภท — ไม่ควรมีรุ่นเลิกขายปนให้เลือก)) · บานเลื่อน — ชุดล็อค (o-slidelock, เฉพาะ itype=ประตู) (ข้อ 4/ข้อ 8 (ห้าม 'ไม่ระบุ' · ต้องตรงใบจริงที่ระบุกุญแจ)) · บานเลื่อน — มือจับ Cmech (o-cmech / o-cmechcolor) (ข้อ 4 (บังคับสีเดียว ห้ามไม่ระบุ)) · บานเลื่อน — สีอลูมิเนียม (i-color) / กระจก (i-glass) (ข้อ 4 (บังคับสีเดียว default ใช้บ่อย)) · บานเลื่อน — แยกราคา (ข้อ 5 (แยกราคาทุกสินค้า)) · บานเลื่อน + มุ้ง — ราคามุ้งรวมเข้ารายการหลัก (ข้อ 2(ก) (ราคามุ้งรวมเข้ารายการหลัก))</div><div class="gbox"><b>บานเปิด-กระทุ้ง-เฟี้ยม-หมุน-ยก:</b> บานกระทุ้ง / บานเปิด / บานเฟี้ยม / บานยก — มุ้งในบาน (ข้อ 2ข (ต้องมีช่องกรอก...จำนวนบานมุ้ง)) · บานเปิด (casement) — ลักษณะการเปิด (ข้อ 3 (ต้องเลือกลักษณะการเปิด ไม่ใช่ใส่มาทั้งหมด)) · บานหมุน (pivot / pivot_aluinch) (ข้อ 2ก (มุ้งทุกแบบรวมราคา) + ข้อ 3 (ลักษณะเปิด)) · บานเฟี้ยม (folding / folding_euro / folding_xseries) (ข้อ 3 (ลักษณะการเปิด)) · บานเปิด X-series (casement_xseries) (ข้อ 1 (ออปชั่นต้องตรงประเภทสินค้า)) · บานเปิด / บานกระทุ้ง / บานเฟี้ยม / บานหมุน / บานยก — แยกราคา (ข้อ 5 (แยกราคาทุกสินค้า))</div><div class="gbox"><b>มุ้ง (ทุกชนิด) — เฟรมเล็ก/เฟรมใหญ่/จีบ/ม้วน/นิรภัย/แม่เหล็ก:</b> มุ้ง add-on ในบาน (o-mosq · p.mosquito) — สีกรอบ (ข้อ 8) · มุ้ง add-on ในบาน (o-mosq) — ผ้าไฟเบอร์สี (ข้อ 4, ข้อ 8) · มุ้ง add-on ในบาน (o-mosq) — กรอง itype (ข้อ 1) · มุ้งจีบ SD พื้นฐาน (mj_sd_basic add-on) (ข้อ 1) · มุ้ง add-on — โค้ดตาย if(false) ค้าง (L1529-1557) (ข้อ 1) · แยกราคา (รองรับทุกสินค้า) — กลุ่มมุ้ง (ข้อ 5)</div><div class="gbox"><b>ประตูรั้ว-ระแนง-ราว:</b> ระแนงเลื่อน (bar_slide) (ข้อ 4 (บังคับเลือกสีเดียว ห้ามไม่ระบุ)) · ระแนงเปิด-ปิด (bar_openclose) (ข้อ 4 (บังคับเลือกสีเดียว)) · เส้นคาดตาราง (grid_bars) (ข้อ 4 (เลือกสีเดียว ไม่ใช่ 2 สีรวม)) · ประตูรั้ว/ระแนง/เส้นคาด (ทั้งกลุ่ม) (ข้อ 5 (แยกราคาทุกสินค้า)) · ประตูรั้ว/ระแนง/ราว (ทั้งกลุ่ม) (ข้อ 2 (มุ้ง) — N/A สำหรับกลุ่มนี้)</div><div class="gbox"><b>หลังคา-ฝ้า-ผนัง:</b> หลังคาทุกรุ่น (vinyl/delight/polyton/laminate/imp7-20) — วัสดุปิดรอยต่อแผ่น (ข้อ8) · ISOWALL (isowall) (ข้อ4) · หลังคาทุกรุ่น (กลุ่มหลังคา) — มุ้ง (ข้อ1/2/3 (ยืนยันผ่าน)) · หลังคา/ฝ้า-ผนัง ทั้งกลุ่ม — แยกราคา (ข้อ5 (ยืนยันผ่าน))</div><div class="gbox"><b>ตู้อลู-ฝาตู้-shower-YKK-เปลือย-ดัดโค้ง-PCdoor:</b> ประตูดัดโค้ง ทุกรุ่น (curved_double/single/fixed/slim) (ข้อ 4 (สี default ที่ใช้บ่อย) — (เช็คซ้ำ)) · shower กั้นห้องอาบน้ำ (shower) (ข้อ 4 (shower อุปกรณ์สีเดียว) — ผ่าน) · ฝาตู้ Future Tech (future_tech) (ข้อ 4 — ผ่าน) · ประตูรั้วบานเลื่อน (fence_gate) (ข้อ 1 (ออปชั่นตรงประเภท) + ข้อ 4 (สี) — ผ่าน) · PC Door 2/4 บาน (pc_door_2, pc_door_4) (ข้อ 2 (มุ้งรวมเข้าหลัก/ต่อบาน) — ผ่าน (เช็คซ้ำ PC4)) · ทุกสินค้าในกลุ่ม (ตู้อลู/ฝาตู้/shower/YKK/เปลือย/ดัดโค้ง/PCdoor) (ข้อ 5 (แยกราคาทุกสินค้า) — ผ่าน)</div><div class="gbox"><b>กั้นห้องกระจก:</b> กั้นห้องกระจก — สีอลู/กระจก master (ทั้งห้อง) (ข้อ 4 (default สีที่ใช้บ่อย)) · กั้นห้องกระจก — แยกราคา/รวมราคา (ข้อ 5 (แยกราคาทุกสินค้า) + ข้อ 2 (ก))</div><div class="gbox"><b>ม่านซิป + เสริม:</b> ม่านซิป (zipscreen) (ข้อ 1 (ออปชั่นต้องตรงประเภทสินค้า)) · เสริม (frame_wrap / custom_item / roof extras / truss beam ฯลฯ) (ข้อ 1 (ยืนยันว่าออปชั่นตรงประเภท — ผ่าน))</div>
+
+<div class="foot">JR · audit ทุกสินค้า เทียบใบจริง · 8 subagent · ส่งพี่นัทเช็คซ้ำ · 10 มิ.ย. 2026</div>
+</body></html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เทสเต็มระบบ G2 — วิธีกรอก + ใบเสนอราคา + วิธีคิดราคา</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:13px;line-height:1.55;margin:0;background:#EEF2F7;padding:16px;}
+  .wrap{max-width:940px;margin:0 auto;}
+  .hd{background:#B3151D;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;}
+  .hd h1{margin:0;font-size:20px;}.hd .s{font-size:12px;opacity:.93;margin-top:3px;}
+  .sec{background:#fff;padding:16px 20px;border-bottom:1px solid #E5E7EB;}
+  .sec:last-child{border-radius:0 0 10px 10px;}
+  .sectit{font-size:16px;font-weight:700;color:#B3151D;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .sectit .num{background:#B3151D;color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
+  .lead{color:#6B7280;font-size:12px;margin:0 0 12px;}
+  /* วิธีกรอก */
+  .step{display:flex;gap:10px;margin:7px 0;align-items:flex-start;}
+  .step .n{flex:none;width:24px;height:24px;border-radius:50%;background:#FEE2E2;color:#B3151D;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px;}
+  .fld{flex:1;border:1px solid #E5E7EB;border-radius:8px;padding:7px 11px;background:#FAFAFA;}
+  .fld .lb{font-size:11px;color:#6B7280;font-weight:700;}
+  .fld .val{font-size:14px;font-weight:700;color:#111827;margin-top:1px;}
+  .fld .val .pick{background:#DBEAFE;color:#1E40AF;border-radius:5px;padding:1px 8px;display:inline-block;}
+  .fld .val .type{background:#FEF3C7;color:#92400E;border-radius:5px;padding:1px 8px;display:inline-block;}
+  .fld .hint{font-size:11px;color:#9CA3AF;margin-top:2px;}
+  .auto{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:9px 12px;margin-top:10px;font-size:13px;color:#065F46;}
+  /* ใบเสนอราคา */
+  table.q{width:100%;border-collapse:collapse;margin-top:6px;}
+  table.q th{background:#7F1D1D;color:#fff;padding:7px 9px;text-align:left;font-size:12px;}
+  table.q th.c,table.q td.c{text-align:right;white-space:nowrap;}
+  table.q td{border-bottom:1px solid #E5E7EB;padding:9px;vertical-align:top;font-size:12px;}
+  .qti{font-weight:700;margin-bottom:2px;}
+  .qd{color:#374151;font-size:11.5px;}.qd .rd{color:#B3151D;font-weight:700;}
+  .qsub{color:#6B7280;font-size:11px;margin-top:3px;}
+  .qopt{color:#B3151D;font-size:11px;margin-top:2px;}
+  .idx{color:#B3151D;font-weight:700;}
+  .tot{margin-top:8px;margin-left:auto;width:300px;}
+  .tot div{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}
+  .tot .g{font-size:16px;font-weight:700;color:#B3151D;border-top:2px solid #B3151D;padding-top:5px;margin-top:3px;}
+  /* วิธีคิด */
+  .calc{background:#EFF6FF;border:1px solid #BFDBFE;border-left:3px solid #2563EB;border-radius:7px;padding:9px 12px;margin:7px 0;}
+  .calc .t{font-weight:700;color:#1E40AF;margin-bottom:3px;font-size:12.5px;}
+  .calc table{width:100%;border-collapse:collapse;}
+  .calc td{padding:1px 0;font-size:12px;border:none;}
+  .calc td.n{text-align:right;font-variant-numeric:tabular-nums;}
+  .calc .sum td{font-weight:700;border-top:1px solid #93C5FD;color:#1E40AF;padding-top:3px;}
+  .calc .f{font-size:10.5px;color:#3730A3;background:#E0E7FF;border-radius:4px;padding:1px 7px;display:inline-block;margin-top:4px;}
+  .note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:9px 12px;margin:10px 0;font-size:12px;color:#7C2D12;}
+  .foot{padding:12px 20px;font-size:11px;color:#9CA3AF;}
+  .badge{display:inline-block;font-size:10px;font-weight:700;background:#DCFCE7;color:#166534;border-radius:9px;padding:1px 8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hd">
+  <h1>🧪 เทสเต็มระบบ G2 — ของจริงจากระบบที่แก้แล้ว</h1>
+  <div class="s">ลูกค้าตัวอย่าง: คุณสมชาย ใจดี · 6 รายการ ครอบทุก engine · render สดจาก index.html ปัจจุบัน · 10 มิ.ย. 2026</div>
+</div>
+
+<!-- ===== ตอน 1 วิธีกรอก ===== -->
+<div class="sec">
+  <div class="sectit"><span class="num">1</span> วิธีกรอก — แบบมือใหม่ไม่เคยใช้ (ตัวอย่าง: ประตูรั้ว รายการที่ 1)</div>
+  <p class="lead">กดปุ่ม "+ เพิ่มรายการ" แล้วกรอกตามนี้ทีละช่อง · <span class="pick" style="background:#DBEAFE;color:#1E40AF;border-radius:4px;padding:0 6px;">ฟ้า = เลือกจาก dropdown</span> · <span style="background:#FEF3C7;color:#92400E;border-radius:4px;padding:0 6px;">เหลือง = พิมพ์เอง</span></p>
+
+  <div class="step"><span class="n">1</span><div class="fld"><div class="lb">กลุ่มงาน</div><div class="val"><span class="pick">เลือก → "2. ระแนง/รั้ว/ราวกันตก"</span></div><div class="hint">ช่องแรกสุด เลือกหมวดก่อน แล้วช่อง "แบบ/สินค้า" จะกรองให้เหลือเฉพาะกลุ่มนี้</div></div></div>
+
+  <div class="step"><span class="n">2</span><div class="fld"><div class="lb">แบบ/สินค้า</div><div class="val"><span class="pick">เลือก → "ประตูรั้วระแนง"</span></div><div class="hint">พอเลือกแล้ว ช่องออปชั่นของประตูรั้วจะโผล่ขึ้นมาให้กรอกต่อ</div></div></div>
+
+  <div class="step"><span class="n">3</span><div class="fld"><div class="lb">ตำแหน่ง/โซน</div><div class="val"><span class="type">พิมพ์ → "ประตูรั้วหน้าบ้าน"</span></div><div class="hint">พิมพ์ชื่อจุดติดตั้งเอง (จะไปขึ้นหัวรายการในใบ)</div></div></div>
+
+  <div class="step"><span class="n">4</span><div class="fld"><div class="lb">กว้าง (ม.) / สูง (ม.)</div><div class="val"><span class="type">พิมพ์ → 3.0</span> &nbsp;×&nbsp; <span class="type">พิมพ์ → 1.8</span></div><div class="hint">ใส่เป็นเมตร เช่น 3.0 × 1.8</div></div></div>
+
+  <div class="step"><span class="n">5</span><div class="fld"><div class="lb">จำนวน (ชุด)</div><div class="val"><span class="type">พิมพ์ → 1</span></div></div></div>
+
+  <div class="step"><span class="n">6</span><div class="fld"><div class="lb">ลักษณะการเปิด</div><div class="val"><span class="pick">เลือก → "บานสวิง"</span></div><div class="hint">มีให้เลือก: บานสวิง / บานเปิด / บานเลื่อนเปิดคู่กลางรางล่าง / รางบน <span class="badge">แก้แล้ว G2-2</span></div></div></div>
+
+  <div class="step"><span class="n">7</span><div class="fld"><div class="lb">ลายระแนง (ซี่)</div><div class="val"><span class="pick">เลือก → "บังตา 1"x1.6" โชว์ 1" 5cm. (3,700)"</span></div><div class="hint">ตัวเลขในวงเล็บคือเรต/ตร.ม. · ซี่ถี่กว่า = แพงกว่า</div></div></div>
+
+  <div class="step"><span class="n">8</span><div class="fld"><div class="lb">อบสี/ผิว</div><div class="val"><span class="pick">เลือก → "สีอบขาว (default)"</span></div><div class="hint">default = สีอบขาว (ฟรี) · เลือกซาฮาร่า/พิเศษ = บวกเพิ่ม <span class="badge">R2-3</span></div></div></div>
+
+  <div class="step"><span class="n">9</span><div class="fld"><div class="lb">ชนิดราง / มอเตอร์ / มีธรณี</div><div class="val"><span class="pick">ราง: ตรง</span> · <span class="type">มอเตอร์: 0</span> · <span class="pick">ธรณี: ไม่ติ๊ก</span></div><div class="hint">บานสวิงไม่ต้องมอเตอร์ · ติ๊กธรณีถ้ามีขอบล่าง</div></div></div>
+
+  <div class="step"><span class="n">10</span><div class="fld"><div class="lb">OPTION ลายไม้ Golden Teak SMS</div><div class="val"><span class="type">เว้นว่าง (0)</span></div><div class="hint">ถ้าจะเสนอทางเลือกลายไม้ ใส่ราคาเพิ่ม เช่น 15,000 → จะขึ้นบรรทัด OPTION ในใบ (ไม่บวกในยอด) <span class="badge">R2-1</span></div></div></div>
+
+  <div class="auto">✅ <b>กรอกเสร็จ ราคาขึ้นเอง = 51,000 บาท/ชุด</b> — ไม่ต้องกดคำนวณ ระบบคิดให้ทันทีทุกครั้งที่เปลี่ยนค่า</div>
+</div>
+
+<!-- ===== ตอน 2 ใบเสนอราคา ===== -->
+<div class="sec">
+  <div class="sectit"><span class="num">2</span> ใบเสนอราคาที่ระบบออกจริง (6 รายการ)</div>
+  <p class="lead">นี่คือ output จริงที่ระบบ render ออกมา — ทุกบรรทัดมาจากการกรอกข้างบน</p>
+  <table class="q">
+    <tr><th style="width:24px;">#</th><th>รายละเอียด</th><th class="c" style="width:52px;">จำนวน</th><th class="c" style="width:78px;">ราคา/หน่วย</th><th class="c" style="width:78px;">ยอดรวม</th></tr>
+
+    <tr><td class="idx">1</td><td>
+      <div class="qti">ประตูรั้วหน้าบ้าน — ประตูรั้วระแนง <span class="qsub">(3 × 1.8 ม.)</span></div>
+      <div class="qd">รายละเอียดงาน<br>- ประตูระแนงอลูมิเนียม<b>บานสวิง</b> พร้อมระแนงติดตายด้านข้าง<br>- ระแนงอลูมิเนียม บังตา 1"x1.6" โชว์ 1" 5cm.<br>- สีอบขาว · ไม่มีธรณี</div>
+    </td><td class="c">1 ชุด</td><td class="c">51,000</td><td class="c">51,000</td></tr>
+
+    <tr><td class="idx">2</td><td>
+      <div class="qti">ประตูรั้วข้างบ้าน — ประตูรั้วระแนง <span class="qsub">(4 × 1.8 ม.)</span></div>
+      <div class="qd">รายละเอียดงาน<br>- ประตูระแนงอลูมิเนียม<b>บานเลื่อนเปิดคู่กลางรางบน</b> พร้อมระแนงติดตายด้านข้าง<br>- ระแนงอลูมิเนียม บังตา 1"x1.6" โชว์ 1" 5cm.<br>- สีอบขาว · ไม่มีธรณี · <b>มอเตอร์ 1 ตัว</b></div>
+      <div class="qopt">OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 15,000 บาท</div>
+    </td><td class="c">1 ชุด</td><td class="c">94,000</td><td class="c">94,000</td></tr>
+
+    <tr><td class="idx">3</td><td>
+      <div class="qti">ระแนงบังตา รั้วข้าง <span class="qsub">(3 × 2 ม.)</span></div>
+      <div class="qd">- บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. <b>รวมโครง</b><br>รายละเอียดงาน<br>- สีอบขาว</div>
+    </td><td class="c">1 ชุด</td><td class="c">32,000</td><td class="c">32,000</td></tr>
+
+    <tr><td class="idx">4</td><td>
+      <div class="qti">ระแนงเกล็ด Z ระเบียง <span class="qsub">(2.4 × 2.2 ม.)</span></div>
+      <div class="qd">- เกล็ด Z 1.6" <b>รวมโครง</b><br>รายละเอียดงาน<br>- สีอบขาว · <b>( แนวตั้ง )</b></div>
+    </td><td class="c">1 ชุด</td><td class="c">50,000</td><td class="c">50,000</td></tr>
+
+    <tr><td class="idx">5</td><td>
+      <div class="qti">ระแนงเปิด-ปิด ช่องลม <span class="qsub">(2.4 × 2.2 ม.)</span></div>
+      <div class="qd">- ระแนงเปิด-ปิด (กล่อง 1"x4" โชว์ 4")<br>รายละเอียดงาน<br>- ระแนงอลูมิเนียมเปิด-ปิด · <b>( แนวตั้ง )</b></div>
+    </td><td class="c">1 ชุด</td><td class="c">42,000</td><td class="c">42,000</td></tr>
+
+    <tr><td class="idx">6</td><td>
+      <div class="qti">ราวกันตกระเบียงชั้น 2 <span class="qsub">(ยาว 6 ม.)</span></div>
+      <div class="qd">- ราวกันตก บันไดเฉียง หมุดแปะปูน<br>รายละเอียดงาน<br>- <b>อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน</b><br>- กระจกเทมเปอร์ใส หนา <b>12 มม.</b></div>
+    </td><td class="c">1 ชุด</td><td class="c">60,000</td><td class="c">60,000</td></tr>
+  </table>
+
+  <div class="tot">
+    <div><span>รวมเป็นเงิน</span><span>329,000.00</span></div>
+    <div><span>ภาษีมูลค่าเพิ่ม 7%</span><span>23,030.00</span></div>
+    <div class="g"><span>จำนวนเงินรวมทั้งสิ้น</span><span>352,030.00</span></div>
+  </div>
+
+  <div class="note">✓ สังเกตว่าใบนี้ออก<b>เหมือนใบจริง</b>แล้ว: ลักษณะเปิด · "พร้อมระแนงติดตายด้านข้าง" · ซี่ระแนง · ทิศเกล็ด Z · สแตนเลส · กระจก 12 มม. · รวมโครง (ไม่โครงขายเดี่ยวไม่ได้) · OPTION ลายไม้ไม่บวกซ้ำ — <b>ครบทุก fix</b></div>
+</div>
+
+<!-- ===== ตอน 3 วิธีคิดราคา ===== -->
+<div class="sec">
+  <div class="sectit"><span class="num">3</span> วิธีคิดราคา — ทีละรายการ (ตรวจตามได้)</div>
+
+  <div class="calc"><div class="t">① ประตูรั้วสวิง (สูตร 37 · 3.0×1.8 = 5.4 ตร.ม.)</div>
+    <table>
+      <tr><td>ค่าทำประตู = 5.4 × 4,000 (≤6 ตร.ม.)</td><td class="n">21,600</td></tr>
+      <tr><td>ค่าระแนง = 5.4 × 3,700 (ซี่ rn13)</td><td class="n">19,980</td></tr>
+      <tr><td>ค่าราง ตรง = 2 × 3.0 × 1,500</td><td class="n">9,000</td></tr>
+      <tr class="sum"><td>รวม (ปัดขึ้นพัน)</td><td class="n">50,580 → 51,000</td></tr>
+    </table></div>
+
+  <div class="calc"><div class="t">② ประตูรั้วเลื่อนรางบน + มอเตอร์ (4.0×1.8 = 7.2 ตร.ม.)</div>
+    <table>
+      <tr><td>ค่าทำประตู = 7.2 × 3,500 (≤8 ตร.ม.)</td><td class="n">25,200</td></tr>
+      <tr><td>ค่าระแนง = 7.2 × 3,700</td><td class="n">26,640</td></tr>
+      <tr><td>ค่าราง = 2 × 4.0 × 1,500</td><td class="n">12,000</td></tr>
+      <tr><td>มอเตอร์ 1 ตัว × 30,000</td><td class="n">30,000</td></tr>
+      <tr class="sum"><td>รวม</td><td class="n">93,840 → 94,000</td></tr>
+    </table>
+    <span class="f">OPTION ลายไม้ +15,000 = ทางเลือก ไม่บวกในยอด (R2-1)</span></div>
+
+  <div class="calc"><div class="t">③ ระแนงบังตา รวมโครง (สูตร 38.4 · 3.0×2.0 = 6.0 ตร.ม.)</div>
+    <table>
+      <tr><td>สูง 2.0 ม. = ลงตัวพอดี (ไม่ปัด)</td><td class="n">6.0 ตร.ม.</td></tr>
+      <tr><td>ราคา = 6.0 × 5,300 (rn14 รวมโครง)</td><td class="n">31,800</td></tr>
+      <tr class="sum"><td>ปัดขึ้นพัน</td><td class="n">→ 32,000</td></tr>
+    </table></div>
+
+  <div class="calc"><div class="t">④ เกล็ด Z รวมโครง (สูตร 38.4 · 2.4×2.2 ม.) ⚠️ มีปัดความสูง</div>
+    <table>
+      <tr><td>สูง 2.2 ม. → <b>ปัดขึ้นเป็น 3.0 ม.</b> (อลูเส้น 6 ม. ตัดไม่ต่อ)</td><td class="n">2.4 × 3.0 = 7.2 ตร.ม.</td></tr>
+      <tr><td>ราคา = 7.2 × 6,900 (rn86)</td><td class="n">49,680</td></tr>
+      <tr class="sum"><td>ปัดขึ้นพัน</td><td class="n">→ 50,000</td></tr>
+    </table>
+    <span class="f">เลือก "ต่อระแนง(สูงจริง)" ได้ถ้าไม่อยากปัด → จะคิด 2.4×2.2=5.28 ตร.ม. แทน</span></div>
+
+  <div class="calc"><div class="t">⑤ ระแนงเปิด-ปิด (สูตร 38.3 · ตั้ง · 2.4×2.2 = 5.28 ตร.ม.)</div>
+    <table>
+      <tr><td>จำนวนชุด = ⌈2.2 ÷ 3⌉ = 1</td><td class="n">1 ชุด</td></tr>
+      <tr><td>ค่าระแนง = max(20,700 , 5.28×6,900)</td><td class="n">36,432</td></tr>
+      <tr><td>ค่าเปิด-ปิด = 1 × 2.4 × 2,000</td><td class="n">4,800</td></tr>
+      <tr class="sum"><td>รวม</td><td class="n">41,232 → 42,000</td></tr>
+    </table></div>
+
+  <div class="calc"><div class="t">⑥ ราวกันตกกระจก (สูตร 47 · คิด/เมตร · ยาว 6 ม.)</div>
+    <table>
+      <tr><td>เรต 47.1 เฉียงหมุด · ช่วง 5–10 ม. = 10,000/ม.</td><td class="n">10,000</td></tr>
+      <tr><td>ราคา = 6 × 10,000</td><td class="n">60,000</td></tr>
+      <tr class="sum"><td>รวม</td><td class="n">60,000</td></tr>
+    </table>
+    <span class="f">กระจก 10↔12 มม. ไม่กระทบราคา (แค่ระบุในใบ)</span></div>
+</div>
+
+<div class="foot">
+  render สดจาก <code>public/calculator/index.html</code> ปัจจุบัน (หลัง G2-1..15 + R2-1..4 + R2-3) · ราคา/ข้อความ/ฟิลด์ฟอร์ม = ของจริงจากระบบ ไม่ได้วาดเอง · baseline quote-fidelity PASS 14/14 · 10 มิ.ย. 2026
+</div>
+
+</div>
+</body>
+</html>

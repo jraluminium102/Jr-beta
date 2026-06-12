@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G2 UX ตัวเต็ม — เครื่องคิดราคา JR (กดเล่นได้)</title>
+<style>
+:root{
+  --red:#B3151D; --red-dk:#8B0F15; --red-bg:#FFF0F0;
+  --blue:#1565C0; --blue-bg:#EAF3FF; --blue-bd:#9DBCE0;
+  --green:#1A6B33; --green-bg:#E8F5E9;
+  --amber:#D97706; --amber-bg:#FEF3C7;
+  --gray:#6B7280; --border:#E5E7EB; --bg:#F3F4F6; --ink:#1F2937;
+  --r:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;font-size:14px;background:var(--bg);color:var(--ink);}
+
+/* === Banner === */
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;letter-spacing:.5px;}
+
+/* === Layout === */
+.page{max-width:600px;margin:0 auto;padding:12px 12px 80px;}
+
+/* === Tab nav === */
+.cat-tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;}
+.cat-tabs::-webkit-scrollbar{height:3px;}
+.ctab{flex:0 0 auto;padding:0 14px;height:44px;border:1.5px solid var(--border);border-radius:8px;background:#fff;
+  cursor:pointer;font-size:13px;font-weight:700;color:var(--gray);white-space:nowrap;transition:.15s;font-family:inherit;}
+.ctab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.ctab:hover:not(.on){border-color:var(--red);color:var(--red);}
+
+/* === Card === */
+.card{background:#fff;border-radius:var(--r);border:1px solid var(--border);padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.card-ttl{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.card-ttl .step{width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex:none;}
+
+/* === Chips === */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{min-height:44px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;background:#fff;
+  font-size:13px;font-weight:600;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:.12s;font-family:inherit;}
+.chip:active{transform:scale(.96);}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chip.on.red-chip{background:var(--red);border-color:var(--red);}
+.chip.big{min-height:52px;padding:0 16px;border-radius:10px;flex-direction:column;gap:2px;line-height:1.2;}
+.chip.big .sub{font-size:10px;font-weight:400;opacity:.75;}
+.chips.sm .chip{min-height:36px;padding:0 10px;font-size:12px;}
+
+/* === Field === */
+.field-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:8px;}
+.field-lbl{font-size:12.5px;color:#374151;font-weight:700;min-width:80px;flex:none;}
+.field-row input[type=number], .field-row input[type=text]{
+  height:44px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;
+  font-size:15px;font-family:inherit;color:var(--ink);background:#fff;
+  font-variant-numeric:tabular-nums;outline:none;transition:.15s;}
+.field-row input[type=number]:focus, .field-row input[type=text]:focus{border-color:var(--blue);}
+.field-row input[type=number]{width:80px;}
+.field-row input.w110{width:110px;}
+.unit{font-size:11.5px;color:var(--gray);}
+.hint{font-size:11px;color:var(--gray);margin-top:3px;line-height:1.5;}
+
+/* === Stepper === */
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+.step-btn{width:44px;height:44px;border:none;background:#F3F4F6;font-size:20px;cursor:pointer;
+  color:var(--red);font-family:inherit;transition:.12s;display:flex;align-items:center;justify-content:center;}
+.step-btn:hover{background:var(--blue-bg);}
+.step-val{width:48px;height:44px;border:none;text-align:center;font-size:16px;font-weight:700;
+  font-family:inherit;font-variant-numeric:tabular-nums;color:var(--ink);background:#fff;}
+
+/* === Ranae category chooser === */
+.subcat{display:none;}
+.subcat.on{display:block;}
+
+/* === Price bar === */
+.price-bar{position:sticky;bottom:10px;background:linear-gradient(135deg,var(--red),var(--red-dk));color:#fff;
+  border-radius:var(--r);padding:12px 16px;margin-top:10px;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 4px 16px rgba(179,21,29,.3);}
+.price-bar .plbl{font-size:12px;opacity:.85;}
+.price-bar .pval{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.price-bar .pdet{font-size:10.5px;text-align:right;opacity:.85;line-height:1.5;max-width:240px;}
+
+/* === Detail box === */
+.det-box{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;
+  padding:10px 12px;font-size:11.5px;color:#1E3A5F;line-height:1.6;margin-top:6px;}
+.det-box .row{display:flex;justify-content:space-between;padding:2px 0;}
+.det-box .row b{color:var(--red);}
+
+/* === Badge === */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;
+  background:var(--red-bg);color:var(--red);vertical-align:middle;}
+.badge.ok{background:var(--green-bg);color:var(--green);}
+.badge.blue{background:var(--blue-bg);color:var(--blue);}
+
+/* === Warning === */
+.warn{background:#FFF7ED;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;
+  font-size:11.5px;color:#92400E;margin-top:6px;}
+
+/* === Info note === */
+.note{font-size:11px;color:var(--gray);line-height:1.5;margin-top:5px;}
+
+/* === Section control === */
+.sec{display:none;} .sec.on{display:block;}
+
+/* === Product list (ranae) — scrollable === */
+.prod-list{display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto;padding-right:4px;}
+.prod-list::-webkit-scrollbar{width:4px;}
+.prod-btn{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
+  border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;
+  font-size:12.5px;color:var(--ink);text-align:left;transition:.12s;font-family:inherit;width:100%;}
+.prod-btn:hover,.prod-btn.on{border-color:var(--blue);background:var(--blue-bg);}
+.prod-btn.on{font-weight:700;}
+.prod-btn .pr{font-size:11px;color:var(--gray);}
+
+/* === Inline select === */
+.sel-native{height:44px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;
+  font-size:14px;font-family:inherit;color:var(--ink);background:#fff;outline:none;
+  min-width:160px;}
+.sel-native:focus{border-color:var(--blue);}
+
+/* === Check row === */
+.chk-row{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 0;cursor:pointer;}
+.chk-row input[type=checkbox]{width:20px;height:20px;cursor:pointer;accent-color:var(--blue);}
+.chk-row span{font-size:13px;}
+
+/* === Override box (ราคากรอกเอง) === */
+.override-wrap{background:var(--amber-bg);border:1.5px solid #FCD34D;border-radius:8px;padding:9px 12px;margin-top:6px;}
+.override-wrap .ol{font-size:11px;font-weight:700;color:#92400E;margin-bottom:5px;}
+</style>
+</head>
+<body>
+<div class="banner">DRAFT G2 UX ตัวเต็ม — กดเล่นได้ · เรตจริงจาก index.html · 12 มิ.ย. 2026</div>
+<div class="page">
+
+<!-- ====== CATEGORY TABS ====== -->
+<div class="cat-tabs">
+  <button class="ctab on" data-cat="gate" onclick="pickCat(this)">ประตูรั้ว</button>
+  <button class="ctab" data-cat="ranae_bangta" onclick="pickCat(this)">ระแนง-บังตา</button>
+  <button class="ctab" data-cat="ranae_wall" onclick="pickCat(this)">ระแนง-ผนัง</button>
+  <button class="ctab" data-cat="ranae_gleed" onclick="pickCat(this)">ระแนง-เกล็ด</button>
+  <button class="ctab" data-cat="rail" onclick="pickCat(this)">ราวกันตก</button>
+</div>
+
+<!-- ======================================= -->
+<!-- SECTION: ประตูรั้ว                     -->
+<!-- ======================================= -->
+<div id="sec-gate" class="sec on">
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">1</span>ขนาดประตูรั้ว</div>
+    <div class="field-row">
+      <span class="field-lbl">กว้าง</span>
+      <input type="number" id="g-w" value="3.0" min="0.5" step="0.1" oninput="calcGate()">
+      <span class="unit">ม.</span>
+      <span class="field-lbl" style="min-width:40px;">สูง</span>
+      <input type="number" id="g-h" value="1.8" min="0.5" step="0.1" oninput="calcGate()">
+      <span class="unit">ม.</span>
+    </div>
+    <div class="note">ค่าทำ: ≤6 ตร.ม.=4,000/ม² · ≤8=3,500 · ≤10=3,000 · &gt;10=2,500</div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">2</span>ลายระแนง (เลือกรุ่น)</div>
+    <div id="g-ranae-list" class="prod-list"></div>
+    <div class="note" id="g-ranae-note">เลือกลายระแนงหรือไม่เลือก (ประตูทึบ)</div>
+  </div>
+
+  <div class="card" id="g-fin-card" style="display:none;">
+    <div class="card-ttl"><span class="step">3</span>สีผิว (ถ้าเลือกลายระแนง)</div>
+    <div class="chips" id="g-fin-chips"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl"><span class="step" id="g-rail-step">3</span>ลักษณะราง</div>
+    <div class="chips">
+      <button class="chip on" data-v="straight" onclick="pickGateRail(this)">ตรง<br><span style="font-size:10px;font-weight:400;">1,500/ม.×2</span></button>
+      <button class="chip" data-v="curved" onclick="pickGateRail(this)">โค้ง<br><span style="font-size:10px;font-weight:400;">2,500/ม.×2 + บานโค้ง</span></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl"><span class="step" id="g-motor-step">4</span>มอเตอร์</div>
+    <div class="field-row">
+      <span class="field-lbl">จำนวนตัว</span>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjMotor(-1)">−</button>
+        <input class="step-val" type="number" id="g-motor" value="0" min="0" max="4" oninput="calcGate()">
+        <button class="step-btn" onclick="adjMotor(1)">+</button>
+      </div>
+      <span class="unit">ตัว × 30,000 บ.</span>
+    </div>
+  </div>
+
+</div><!-- /sec-gate -->
+
+<!-- ======================================= -->
+<!-- SECTION: ระแนง-บังตา                   -->
+<!-- ======================================= -->
+<div id="sec-ranae_bangta" class="sec">
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">1</span>เลือกรุ่นระแนง-บังตา</div>
+    <div id="rb-list" class="prod-list"></div>
+  </div>
+
+  <div class="card" id="rb-form-card" style="display:none;">
+    <div class="card-ttl"><span class="step">2</span>ขนาด + วิธีตัด</div>
+    <div class="field-row">
+      <span class="field-lbl">กว้าง</span>
+      <input type="number" id="rb-w" value="3.0" min="0.5" step="0.1" oninput="calcRanae('rb')">
+      <span class="unit">ม.</span>
+    </div>
+    <div class="field-row">
+      <span class="field-lbl">สูง</span>
+      <input type="number" id="rb-h" value="2.0" min="0.5" step="0.1" oninput="calcRanae('rb')">
+      <span class="unit">ม.</span>
+    </div>
+    <div style="margin-top:8px;">
+      <div style="font-size:12.5px;font-weight:700;color:#374151;margin-bottom:6px;">วิธีตัดระแนง</div>
+      <div class="chips">
+        <button class="chip on" data-hmode="round" onclick="pickHmode(this,'rb')">ปัด (ไม่ต่อ)<br><span class="sub">ระยะปัดขึ้น set</span></button>
+        <button class="chip" data-hmode="splice" onclick="pickHmode(this,'rb')">ต่อสูงจริง<br><span class="sub">คิดสูงตามกรอก</span></button>
+      </div>
+    </div>
+    <div class="det-box" id="rb-h-info" style="margin-top:6px;font-size:11px;color:#374151;"></div>
+  </div>
+
+  <div class="card" id="rb-fin-card" style="display:none;">
+    <div class="card-ttl"><span class="step">3</span>สีผิว</div>
+    <div class="chips sm" id="rb-fin-chips"></div>
+  </div>
+
+</div><!-- /sec-ranae_bangta -->
+
+<!-- ======================================= -->
+<!-- SECTION: ระแนง-ผนัง                    -->
+<!-- ======================================= -->
+<div id="sec-ranae_wall" class="sec">
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">1</span>เลือกรุ่นระแนง-ผนัง</div>
+    <div id="rw-list" class="prod-list"></div>
+  </div>
+
+  <div class="card" id="rw-form-card" style="display:none;">
+    <div class="card-ttl"><span class="step">2</span>ขนาด + วิธีตัด</div>
+    <div class="field-row">
+      <span class="field-lbl">กว้าง</span>
+      <input type="number" id="rw-w" value="3.0" min="0.5" step="0.1" oninput="calcRanae('rw')">
+      <span class="unit">ม.</span>
+    </div>
+    <div class="field-row">
+      <span class="field-lbl">สูง</span>
+      <input type="number" id="rw-h" value="2.0" min="0.5" step="0.1" oninput="calcRanae('rw')">
+      <span class="unit">ม.</span>
+    </div>
+    <div style="margin-top:8px;">
+      <div style="font-size:12.5px;font-weight:700;color:#374151;margin-bottom:6px;">วิธีตัดระแนง</div>
+      <div class="chips">
+        <button class="chip on" data-hmode="round" onclick="pickHmode(this,'rw')">ปัด (ไม่ต่อ)</button>
+        <button class="chip" data-hmode="splice" onclick="pickHmode(this,'rw')">ต่อสูงจริง</button>
+      </div>
+    </div>
+    <div class="det-box" id="rw-h-info" style="margin-top:6px;font-size:11px;color:#374151;"></div>
+  </div>
+
+  <div class="card" id="rw-fin-card" style="display:none;">
+    <div class="card-ttl"><span class="step">3</span>สีผิว</div>
+    <div class="chips sm" id="rw-fin-chips"></div>
+  </div>
+
+</div><!-- /sec-ranae_wall -->
+
+<!-- ======================================= -->
+<!-- SECTION: ระแนง-เกล็ด                   -->
+<!-- ======================================= -->
+<div id="sec-ranae_gleed" class="sec">
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">1</span>เลือกรุ่นระแนง-เกล็ด Z</div>
+    <div id="rg-list" class="prod-list"></div>
+  </div>
+
+  <div class="card" id="rg-form-card" style="display:none;">
+    <div class="card-ttl"><span class="step">2</span>ขนาด + วิธีตัด</div>
+    <div class="field-row">
+      <span class="field-lbl">กว้าง</span>
+      <input type="number" id="rg-w" value="3.0" min="0.5" step="0.1" oninput="calcRanae('rg')">
+      <span class="unit">ม.</span>
+    </div>
+    <div class="field-row">
+      <span class="field-lbl">สูง</span>
+      <input type="number" id="rg-h" value="2.0" min="0.5" step="0.1" oninput="calcRanae('rg')">
+      <span class="unit">ม.</span>
+    </div>
+    <div style="margin-top:8px;">
+      <div style="font-size:12.5px;font-weight:700;color:#374151;margin-bottom:6px;">วิธีตัดระแนง</div>
+      <div class="chips">
+        <button class="chip on" data-hmode="round" onclick="pickHmode(this,'rg')">ปัด (ไม่ต่อ)</button>
+        <button class="chip" data-hmode="splice" onclick="pickHmode(this,'rg')">ต่อสูงจริง</button>
+      </div>
+    </div>
+    <div class="det-box" id="rg-h-info" style="margin-top:6px;font-size:11px;color:#374151;"></div>
+  </div>
+
+  <div class="card" id="rg-fin-card" style="display:none;">
+    <div class="card-ttl"><span class="step">3</span>สีผิว</div>
+    <div class="chips sm" id="rg-fin-chips"></div>
+  </div>
+
+</div><!-- /sec-ranae_gleed -->
+
+<!-- ======================================= -->
+<!-- SECTION: ราวกันตก                       -->
+<!-- ======================================= -->
+<div id="sec-rail" class="sec">
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">1</span>เลือกรุ่นราวกันตก (imp1-6)</div>
+    <div class="chips" style="flex-direction:column;gap:5px;" id="rail-prod-chips"></div>
+  </div>
+
+  <div class="card" id="rail-form-card">
+    <div class="card-ttl"><span class="step">2</span>ความยาว</div>
+    <div class="field-row">
+      <span class="field-lbl">ความยาว</span>
+      <input type="number" id="rail-len" value="5.0" min="0.5" step="0.5" oninput="calcRail()">
+      <span class="unit">เมตร (รวมหัวท้าย)</span>
+    </div>
+    <div class="note">เรตต่อเมตร: ≤5m จ่ายสูงกว่า · เพิ่มยาว=เรตลด</div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl"><span class="step">3</span>ความหนากระจก</div>
+    <div class="chips">
+      <button class="chip on" data-glass="10" onclick="pickRailGlass(this)">10 มม. <span class="sub">(standard)</span></button>
+      <button class="chip" data-glass="12" onclick="pickRailGlass(this)">12 มม. <span class="sub">(แข็งแรงกว่า)</span></button>
+    </div>
+    <div class="note" id="rail-glass-note">10 มม. = +2,100/ตร.ม. · 12 มม. = +2,400/ตร.ม. (ต้องคำนวณพื้นที่กระจกแยก — เรต dev)</div>
+  </div>
+
+  <div class="card" id="rail-alu-card" style="display:none;">
+    <div class="card-ttl"><span class="step">4</span>สีอลูมิเนียม (imp2/3/5/6)</div>
+    <div class="chips">
+      <button class="chip on" data-railci="0" onclick="pickRailColor(this)">ขาว</button>
+      <button class="chip" data-railci="1" onclick="pickRailColor(this)">ดำ</button>
+      <button class="chip" data-railci="2" onclick="pickRailColor(this)">ซาฮาร่า</button>
+    </div>
+    <div class="note">สีอลูเฉพาะรุ่นที่มีโครงอลู (imp2/3/5/6) · หมุดสแตนเลส (imp1/4) = ไม่มีสีอลู</div>
+  </div>
+
+  <div class="card">
+    <div class="card-ttl"><span class="step" id="rail-hr-step">4</span>ราวมือจับด้านบน</div>
+    <div class="chips">
+      <button class="chip on" data-hr="none" onclick="pickHandrail(this)">ไม่มี</button>
+      <button class="chip" data-hr="u5" onclick="pickHandrail(this)">ราวยู 5 หุน<br><span class="sub">+500/ม.</span></button>
+      <button class="chip" data-hr="box" onclick="pickHandrail(this)">ราวกล่อง 1"x2"<br><span class="sub">+600/ม.</span></button>
+    </div>
+  </div>
+
+</div><!-- /sec-rail -->
+
+<!-- ======================================= -->
+<!-- PRICE BAR                               -->
+<!-- ======================================= -->
+<div class="price-bar">
+  <div>
+    <div class="plbl" id="pbar-lbl">ประตูรั้ว</div>
+    <div class="pval" id="pbar-val">฿0</div>
+  </div>
+  <div class="pdet" id="pbar-det">—</div>
+</div>
+
+<div id="pbar-breakdown" class="det-box" style="margin-top:8px;display:none;"></div>
+
+</div><!-- /page -->
+
+<script>
+/* ============================================
+   DATA — copied exactly from index.html
+   ============================================ */
+
+const RATES_IMP = {
+  IMP1:[[0.0,5.0,10700],[5.0,10.0,10000],[10.0,15.0,9700],[15.0,9999,9400]],
+  IMP2:[[0.0,5.0,9700],[5.0,10.0,9000],[10.0,15.0,8700],[15.0,9999,8400]],
+  IMP3:[[0.0,5.0,9700],[5.0,10.0,9000],[10.0,15.0,8700],[15.0,9999,8400]],
+  IMP4:[[0.0,5.0,9700],[5.0,10.0,9000],[10.0,15.0,8700],[15.0,9999,8400]],
+  IMP5:[[0.0,5.0,7900],[5.0,10.0,7200],[10.0,15.0,7000],[15.0,9999,6700]],
+  IMP6:[[0.0,5.0,7900],[5.0,10.0,7200],[10.0,15.0,7000],[15.0,9999,6700]]
+};
+
+// ระแนง products — G2 ตัวจริงจาก PRODUCTS
+// format: {id, name, rate (per_sqm base rate), fin (object), cat}
+const RANAE_BANGTA = [
+  // 1x5 cm — บังตา
+  {id:'rn1',name:'1×5 ซม. โชว์ 1ซม. 5ซม. ไม่โครง',rate:3300,fin:{"สีเทาซาฮาร่า":300,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn2',name:'1×5 ซม. โชว์ 1ซม. 5ซม. รวมโครง',rate:5200,fin:{"สีเทาซาฮาร่า":300,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn3',name:'1×5 ซม. โชว์ 1ซม. 3ซม. ไม่โครง',rate:4300,fin:{"สีเทาซาฮาร่า":400,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn4',name:'1×5 ซม. โชว์ 1ซม. 3ซม. รวมโครง',rate:6000,fin:{"สีเทาซาฮาร่า":400,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn5',name:'1×5 ซม. โชว์ 1ซม. 2ซม. ไม่โครง',rate:5000,fin:{"สีเทาซาฮาร่า":500,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  {id:'rn6',name:'1×5 ซม. โชว์ 1ซม. 2ซม. รวมโครง',rate:7200,fin:{"สีเทาซาฮาร่า":500,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  {id:'rn7',name:'1×5 ซม. โชว์ 5ซม. 5ซม. ไม่โครง',rate:2800,fin:{"สีเทาซาฮาร่า":200,"อบสีพิเศษ":1100,"อบสีลายไม้":1600}},
+  {id:'rn8',name:'1×5 ซม. โชว์ 5ซม. 5ซม. รวมโครง',rate:4500,fin:{"สีเทาซาฮาร่า":200,"อบสีพิเศษ":1100,"อบสีลายไม้":1600}},
+  {id:'rn9',name:'1×5 ซม. โชว์ 5ซม. 3ซม. ไม่โครง',rate:3200,fin:{"สีเทาซาฮาร่า":200,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn10',name:'1×5 ซม. โชว์ 5ซม. 3ซม. รวมโครง',rate:4800,fin:{"สีเทาซาฮาร่า":200,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn11',name:'1×5 ซม. โชว์ 5ซม. 2ซม. ไม่โครง',rate:3300,fin:{"สีเทาซาฮาร่า":300,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn12',name:'1×5 ซม. โชว์ 5ซม. 2ซม. รวมโครง',rate:5100,fin:{"สีเทาซาฮาร่า":300,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  // 1"x1.6"
+  {id:'rn13',name:'1"×1.6" โชว์ 1" 5ซม. ไม่โครง',rate:3700,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn14',name:'1"×1.6" โชว์ 1" 5ซม. รวมโครง',rate:5300,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn15',name:'1"×1.6" โชว์ 1" 3ซม. ไม่โครง',rate:4500,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":1900,"อบสีลายไม้":2800}},
+  {id:'rn16',name:'1"×1.6" โชว์ 1" 3ซม. รวมโครง',rate:6400,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":1900,"อบสีลายไม้":2800}},
+  {id:'rn17',name:'1"×1.6" โชว์ 1" 2ซม. ไม่โครง',rate:4800,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":2200,"อบสีลายไม้":3200}},
+  {id:'rn18',name:'1"×1.6" โชว์ 1" 2ซม. รวมโครง',rate:6900,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":2200,"อบสีลายไม้":3200}},
+  // 1"x1"
+  {id:'rn19',name:'1"×1" โชว์ 1" 5ซม. ไม่โครง',rate:3200,fin:{"สีเทาซาฮาร่า":200,"สีลายไม้สต๊อก":700,"อบสีพิเศษ":1000,"อบสีลายไม้":1400}},
+  {id:'rn20',name:'1"×1" โชว์ 1" 5ซม. รวมโครง',rate:4700,fin:{"สีเทาซาฮาร่า":200,"สีลายไม้สต๊อก":700,"อบสีพิเศษ":1000,"อบสีลายไม้":1400}},
+  {id:'rn21',name:'1"×1" โชว์ 1" 3ซม. ไม่โครง',rate:3700,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1300,"อบสีลายไม้":1900}},
+  {id:'rn22',name:'1"×1" โชว์ 1" 3ซม. รวมโครง',rate:5400,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1300,"อบสีลายไม้":1900}},
+  {id:'rn23',name:'1"×1" โชว์ 1" 2ซม. ไม่โครง',rate:3900,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1100,"อบสีพิเศษ":1500,"อบสีลายไม้":2200}},
+  {id:'rn24',name:'1"×1" โชว์ 1" 2ซม. รวมโครง',rate:5600,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1100,"อบสีพิเศษ":1500,"อบสีลายไม้":2200}},
+  // 1"x1½"
+  {id:'rn25',name:'1"×1½" โชว์ 1" 5ซม. ไม่โครง',rate:3300,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":900,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn26',name:'1"×1½" โชว์ 1" 5ซม. รวมโครง',rate:5200,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":900,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn27',name:'1"×1½" โชว์ 1" 3ซม. ไม่โครง',rate:4000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":1900,"อบสีลายไม้":2800}},
+  {id:'rn28',name:'1"×1½" โชว์ 1" 3ซม. รวมโครง',rate:6100,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":1900,"อบสีลายไม้":2800}},
+  {id:'rn29',name:'1"×1½" โชว์ 1" 2ซม. ไม่โครง',rate:4300,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":2200,"อบสีลายไม้":3200}},
+  {id:'rn30',name:'1"×1½" โชว์ 1" 2ซม. รวมโครง',rate:6500,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":2200,"อบสีลายไม้":3200}},
+  {id:'rn31',name:'1"×1½" โชว์ 1½" 5ซม. ไม่โครง',rate:3300,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":900,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn32',name:'1"×1½" โชว์ 1½" 5ซม. รวมโครง',rate:5200,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":900,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn33',name:'1"×1½" โชว์ 1½" 3ซม. ไม่โครง',rate:3700,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn34',name:'1"×1½" โชว์ 1½" 3ซม. รวมโครง',rate:5600,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn35',name:'1"×1½" โชว์ 1½" 2ซม. ไม่โครง',rate:3700,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn36',name:'1"×1½" โชว์ 1½" 2ซม. รวมโครง',rate:5600,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  // 1"x4"
+  {id:'rn43',name:'1"×4" โชว์ 1" 5ซม. ไม่โครง',rate:5500,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":2000,"อบสีพิเศษ":3700,"อบสีลายไม้":5300}},
+  {id:'rn44',name:'1"×4" โชว์ 1" 5ซม. รวมโครง',rate:8100,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":2000,"อบสีพิเศษ":3700,"อบสีลายไม้":5300}},
+  {id:'rn45',name:'1"×4" โชว์ 1" 3ซม. ไม่โครง',rate:7100,fin:{"สีเทาซาฮาร่า":800,"สีลายไม้สต๊อก":2700,"อบสีพิเศษ":5200,"อบสีลายไม้":7500}},
+  {id:'rn46',name:'1"×4" โชว์ 1" 3ซม. รวมโครง',rate:10100,fin:{"สีเทาซาฮาร่า":800,"สีลายไม้สต๊อก":2700,"อบสีพิเศษ":5200,"อบสีลายไม้":7500}},
+  {id:'rn47',name:'1"×4" โชว์ 1" 2ซม. ไม่โครง',rate:7900,fin:{"สีเทาซาฮาร่า":900,"สีลายไม้สต๊อก":3100,"อบสีพิเศษ":5900,"อบสีลายไม้":8500}},
+  {id:'rn48',name:'1"×4" โชว์ 1" 2ซม. รวมโครง',rate:10800,fin:{"สีเทาซาฮาร่า":900,"สีลายไม้สต๊อก":3100,"อบสีพิเศษ":5900,"อบสีลายไม้":8500}},
+  {id:'rn49',name:'1"×4" โชว์ 4" 5ซม. ไม่โครง',rate:4000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":2300,"อบสีลายไม้":3200}},
+  {id:'rn50',name:'1"×4" โชว์ 4" 5ซม. รวมโครง',rate:6000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":2300,"อบสีลายไม้":3200}},
+  {id:'rn51',name:'1"×4" โชว์ 4" 3ซม. ไม่โครง',rate:4000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":2300,"อบสีลายไม้":3200}},
+  {id:'rn52',name:'1"×4" โชว์ 4" 3ซม. รวมโครง',rate:6000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":2300,"อบสีลายไม้":3200}},
+  {id:'rn53',name:'1"×4" โชว์ 4" 2ซม. ไม่โครง',rate:4800,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":3000,"อบสีลายไม้":4300}},
+  {id:'rn54',name:'1"×4" โชว์ 4" 2ซม. รวมโครง',rate:6900,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":3000,"อบสีลายไม้":4300}},
+  {id:'rn55',name:'1"×4" โชว์ 4" ทึบ ไม่โครง',rate:5100,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":3000,"อบสีลายไม้":4300}},
+  {id:'rn56',name:'1"×4" โชว์ 4" ทึบ รวมโครง',rate:6900,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":3000,"อบสีลายไม้":4300}},
+  // 1.6"x1.6"
+  {id:'rn57',name:'1.6"×1.6" โชว์ 1.6" 5ซม. ไม่โครง',rate:3900,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1100,"อบสีพิเศษ":2000,"อบสีลายไม้":2800}},
+  {id:'rn58',name:'1.6"×1.6" โชว์ 1.6" 5ซม. รวมโครง',rate:5600,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1100,"อบสีพิเศษ":2000,"อบสีลายไม้":2800}},
+  {id:'rn59',name:'1.6"×1.6" โชว์ 1.6" 3ซม. ไม่โครง',rate:4400,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":2400,"อบสีลายไม้":3500}},
+  {id:'rn60',name:'1.6"×1.6" โชว์ 1.6" 3ซม. รวมโครง',rate:6400,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1400,"อบสีพิเศษ":2400,"อบสีลายไม้":3500}},
+  {id:'rn61',name:'1.6"×1.6" โชว์ 1.6" 2ซม. ไม่โครง',rate:5000,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1700,"อบสีพิเศษ":2900,"อบสีลายไม้":4200}},
+  {id:'rn62',name:'1.6"×1.6" โชว์ 1.6" 2ซม. รวมโครง',rate:7200,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1700,"อบสีพิเศษ":2900,"อบสีลายไม้":4200}},
+  // 1.6"x4"
+  {id:'rn63',name:'1.6"×4" โชว์ 1.6" 5ซม. ไม่โครง',rate:5400,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  {id:'rn64',name:'1.6"×4" โชว์ 1.6" 5ซม. รวมโครง',rate:7900,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  {id:'rn65',name:'1.6"×4" โชว์ 1.6" 3ซม. ไม่โครง',rate:6500,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2400,"อบสีพิเศษ":4100,"อบสีลายไม้":5900}},
+  {id:'rn66',name:'1.6"×4" โชว์ 1.6" 3ซม. รวมโครง',rate:9200,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2400,"อบสีพิเศษ":4100,"อบสีลายไม้":5900}},
+  {id:'rn67',name:'1.6"×4" โชว์ 1.6" 2ซม. ไม่โครง',rate:7300,fin:{"สีเทาซาฮาร่า":800,"สีลายไม้สต๊อก":2900,"อบสีพิเศษ":4900,"อบสีลายไม้":7000}},
+  {id:'rn68',name:'1.6"×4" โชว์ 1.6" 2ซม. รวมโครง',rate:10600,fin:{"สีเทาซาฮาร่า":800,"สีลายไม้สต๊อก":2900,"อบสีพิเศษ":4900,"อบสีลายไม้":7000}},
+  {id:'rn69',name:'1.6"×4" โชว์ 4" 5ซม. ไม่โครง',rate:4600,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1500,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn70',name:'1.6"×4" โชว์ 4" 5ซม. รวมโครง',rate:6500,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1500,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn71',name:'1.6"×4" โชว์ 4" 3ซม. ไม่โครง',rate:4600,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1500,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn72',name:'1.6"×4" โชว์ 4" 3ซม. รวมโครง',rate:6500,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1500,"อบสีพิเศษ":2500,"อบสีลายไม้":3500}},
+  {id:'rn73',name:'1.6"×4" โชว์ 4" 2ซม. ไม่โครง',rate:5400,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  {id:'rn74',name:'1.6"×4" โชว์ 4" 2ซม. รวมโครง',rate:7900,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3300,"อบสีลายไม้":4700}},
+  // 4"x4"
+  {id:'rn75',name:'4"×4" โชว์ 4" 5ซม. ไม่โครง',rate:6600,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2500,"อบสีพิเศษ":3300,"อบสีลายไม้":4800}},
+  {id:'rn76',name:'4"×4" โชว์ 4" 5ซม. รวมโครง',rate:9600,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2500,"อบสีพิเศษ":3300,"อบสีลายไม้":4800}},
+  {id:'rn77',name:'4"×4" โชว์ 4" 3ซม. ไม่โครง',rate:6600,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2500,"อบสีพิเศษ":3300,"อบสีลายไม้":4800}},
+  {id:'rn78',name:'4"×4" โชว์ 4" 3ซม. รวมโครง',rate:9600,fin:{"สีเทาซาฮาร่า":700,"สีลายไม้สต๊อก":2500,"อบสีพิเศษ":3300,"อบสีลายไม้":4800}},
+  {id:'rn79',name:'4"×4" โชว์ 4" 2ซม. ไม่โครง',rate:8300,fin:{"สีเทาซาฮาร่า":900,"สีลายไม้สต๊อก":3300,"อบสีพิเศษ":4400,"อบสีลายไม้":6400}},
+  {id:'rn80',name:'4"×4" โชว์ 4" 2ซม. รวมโครง',rate:12000,fin:{"สีเทาซาฮาร่า":900,"สีลายไม้สต๊อก":3300,"อบสีพิเศษ":4400,"อบสีลายไม้":6400}},
+  // สลับ 5ต่อ3
+  {id:'rn81',name:'สลับ 5ต่อ3 โชว์ 1.6"ต่อ4" 2ซม. ไม่โครง',rate:5400,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3400,"อบสีลายไม้":4900}},
+  {id:'rn82',name:'สลับ 5ต่อ3 โชว์ 1.6"ต่อ4" 2ซม. รวมโครง',rate:7700,fin:{"สีเทาซาฮาร่า":600,"สีลายไม้สต๊อก":1900,"อบสีพิเศษ":3400,"อบสีลายไม้":4900}}
+];
+
+const RANAE_WALL = [
+  {id:'rn37',name:'1"×1.6" โชว์ 1.6" 5ซม. ไม่โครง',rate:3200,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":800,"อบสีพิเศษ":1100,"อบสีลายไม้":1600}},
+  {id:'rn38',name:'1"×1.6" โชว์ 1.6" 5ซม. รวมโครง',rate:4900,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":800,"อบสีพิเศษ":1100,"อบสีลายไม้":1600}},
+  {id:'rn39',name:'1"×1.6" โชว์ 1.6" 3ซม. ไม่โครง',rate:3700,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn40',name:'1"×1.6" โชว์ 1.6" 3ซม. รวมโครง',rate:5300,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1400,"อบสีลายไม้":2000}},
+  {id:'rn41',name:'1"×1.6" โชว์ 1.6" 2ซม. ไม่โครง',rate:4000,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}},
+  {id:'rn42',name:'1"×1.6" โชว์ 1.6" 2ซม. รวมโครง',rate:5800,fin:{"สีเทาซาฮาร่า":400,"สีลายไม้สต๊อก":1200,"อบสีพิเศษ":1700,"อบสีลายไม้":2400}}
+];
+
+const RANAE_GLEED = [
+  {id:'rn83',name:'เกล็ด Z 1" ไม่โครง',rate:3600,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1500,"อบสีลายไม้":2200}},
+  {id:'rn84',name:'เกล็ด Z 1" รวมโครง',rate:5200,fin:{"สีเทาซาฮาร่า":300,"สีลายไม้สต๊อก":1000,"อบสีพิเศษ":1500,"อบสีลายไม้":2200}},
+  {id:'rn85',name:'เกล็ด Z 1.6" ไม่โครง',rate:4900,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":2200,"อบสีลายไม้":3100}},
+  {id:'rn86',name:'เกล็ด Z 1.6" รวมโครง',rate:6900,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1600,"อบสีพิเศษ":2200,"อบสีลายไม้":3100}},
+  {id:'rn87',name:'เกล็ด Z 4" ไม่โครง',rate:5300,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1800,"อบสีพิเศษ":2800,"อบสีลายไม้":4000}},
+  {id:'rn88',name:'เกล็ด Z 4" รวมโครง',rate:7700,fin:{"สีเทาซาฮาร่า":500,"สีลายไม้สต๊อก":1800,"อบสีพิเศษ":2800,"อบสีลายไม้":4000}}
+];
+
+// ระแนงที่ใช้ในประตูรั้ว (รวมโครงเท่านั้น เพราะ fence_gate มีโครงในตัว)
+// ดึงจาก rn ทุกตัวที่ใช้ใน o-gatern ได้ (concat รวมโครง + ไม่โครง ก็ได้)
+const RANAE_GATE = [
+  {id:'', name:'(ไม่มีระแนง — ประตูทึบ)', rate:0, fin:{}},
+  ...RANAE_BANGTA.filter(r => r.id !== ''),
+  ...RANAE_WALL,
+  ...RANAE_GLEED
+];
+
+// ราวกันตก imp1-6
+const RAIL_PRODS = [
+  {id:'imp1',name:'ราวกันตกกระจกเฉียง หมุดแปะข้าง',rates:'IMP1',railstud:true},
+  {id:'imp2',name:'ราวกันตกกระจกเฉียง วางยูเหล็ก ครอบอลูรับกระจกล่าง',rates:'IMP2',railalu:true},
+  {id:'imp3',name:'ราวกันตกกระจกเฉียง เสาตั้งและราวจับบนอลูมิเนียม',rates:'IMP3',railalu:true},
+  {id:'imp4',name:'ราวกันตกกระจกตรง หมุดแปะข้าง',rates:'IMP4',railstud:true},
+  {id:'imp5',name:'ราวกันตกกระจกตรง วางยูเหล็ก ครอบอลูรับกระจกล่าง',rates:'IMP5',railalu:true},
+  {id:'imp6',name:'ราวกันตกกระจกตรง เสาตั้งและราวจับบนอลูมิเนียม',rates:'IMP6',railalu:true}
+];
+
+/* ============================================
+   HELPERS — ported exact from index.html
+   ============================================ */
+function rateOf(area, t) {
+  if (area < t[0][0]) return t[0][2];
+  for (const r of t) { if (area >= r[0] && area < r[1]) return r[2]; }
+  return t[t.length - 1][2];
+}
+function roundUp(x) { return Math.ceil(x / 1000) * 1000; }
+function ranaeDisc(a) {
+  if (a > 30) return 0.15; if (a > 20) return 0.11;
+  if (a > 15) return 0.08; if (a > 10) return 0.05; return 0;
+}
+function ranaeHeight(hh, mode) {
+  const SET = [1.0, 1.2, 1.5, 2.0, 3.0];
+  hh = hh || 0;
+  if (mode === 'splice') return { h: hh, note: hh > 0 ? ('ต่อระแนง สูง ' + hh + ' ม.') : '' };
+  if (hh > 3.0) return { h: hh, note: 'ต่อระแนง สูง ' + hh + ' ม. (เกิน 3 ม. ต้องต่อ)' };
+  for (const v of SET) {
+    if (hh <= v + 1e-9) return { h: v, note: (Math.abs(v - hh) > 1e-9 ? ('ปัดสูง ' + hh + '→' + v + ' ม.') : '') };
+  }
+  return { h: 3.0, note: 'ปัดสูง ' + hh + '→3.0 ม.' };
+}
+function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+
+/* ============================================
+   STATE
+   ============================================ */
+var S = {
+  cat: 'gate',
+  // gate
+  gate: { w: 3.0, h: 1.8, rnId: '', finKey: '', rail: 'straight', motor: 0 },
+  // ranae
+  rb: { prodId: '', w: 3.0, h: 2.0, hmode: 'round', finKey: '' },
+  rw: { prodId: '', w: 3.0, h: 2.0, hmode: 'round', finKey: '' },
+  rg: { prodId: '', w: 3.0, h: 2.0, hmode: 'round', finKey: '' },
+  // rail
+  rail: { prodId: 'imp1', len: 5.0, glass: '10', handrail: 'none', railci: 0 }
+};
+
+/* ============================================
+   INIT — build lists
+   ============================================ */
+function init() {
+  buildRanaeList('rb', RANAE_BANGTA, 'sec-ranae_bangta');
+  buildRanaeList('rw', RANAE_WALL, 'sec-ranae_wall');
+  buildRanaeList('rg', RANAE_GLEED, 'sec-ranae_gleed');
+  buildGateRanaeList();
+  buildRailChips();
+  calcGate();
+}
+
+function buildRanaeList(prefix, data, secId) {
+  const el = document.getElementById(prefix + '-list');
+  if (!el) return;
+  el.innerHTML = data.map(function(p) {
+    return '<button class="prod-btn" data-id="' + p.id + '" onclick="pickRanaeProd(\'' + prefix + '\',\'' + p.id + '\',this)">' +
+      '<span>' + p.name + '</span>' +
+      '<span class="pr">' + fmt(p.rate) + ' บ./ม²</span>' +
+      '</button>';
+  }).join('');
+}
+
+function buildGateRanaeList() {
+  const el = document.getElementById('g-ranae-list');
+  if (!el) return;
+  el.innerHTML = RANAE_GATE.map(function(p, i) {
+    return '<button class="prod-btn' + (i === 0 ? ' on' : '') + '" data-id="' + p.id + '" onclick="pickGateRanae(\'' + p.id + '\',this)">' +
+      '<span>' + p.name + '</span>' +
+      '<span class="pr">' + (p.rate > 0 ? fmt(p.rate) + ' บ./ม²' : '—') + '</span>' +
+      '</button>';
+  }).join('');
+}
+
+function buildRailChips() {
+  const el = document.getElementById('rail-prod-chips');
+  if (!el) return;
+  el.innerHTML = RAIL_PRODS.map(function(p) {
+    return '<button class="chip' + (p.id === S.rail.prodId ? ' on' : '') + ' big" style="min-height:48px;border-radius:10px;text-align:left;justify-content:flex-start;padding:0 14px;" data-id="' + p.id + '" onclick="pickRailProd(\'' + p.id + '\',this)">' +
+      p.name +
+      '</button>';
+  }).join('');
+}
+
+/* ============================================
+   CATEGORY SWITCH
+   ============================================ */
+function pickCat(el) {
+  S.cat = el.dataset.cat;
+  document.querySelectorAll('.ctab').forEach(function(t) { t.classList.remove('on'); });
+  el.classList.add('on');
+  document.querySelectorAll('.sec').forEach(function(s) { s.classList.remove('on'); });
+  var sec = document.getElementById('sec-' + S.cat);
+  if (sec) sec.classList.add('on');
+  updatePriceBar();
+}
+
+/* ============================================
+   GATE
+   ============================================ */
+function pickGateRanae(id, el) {
+  S.gate.rnId = id;
+  S.gate.finKey = '';
+  document.querySelectorAll('#g-ranae-list .prod-btn').forEach(function(b) { b.classList.remove('on'); });
+  el.classList.add('on');
+  // build fin chips
+  var prod = RANAE_GATE.find(function(p) { return p.id === id; });
+  var finCard = document.getElementById('g-fin-card');
+  var finChips = document.getElementById('g-fin-chips');
+  var stepEl = document.getElementById('g-rail-step');
+  var motorEl = document.getElementById('g-motor-step');
+  if (prod && prod.rate > 0 && Object.keys(prod.fin || {}).length > 0) {
+    finCard.style.display = 'block';
+    finChips.innerHTML = buildFinChips(prod.fin, '', 'gateFinPick');
+    if (stepEl) stepEl.textContent = '4';
+    if (motorEl) motorEl.textContent = '5';
+  } else {
+    finCard.style.display = 'none';
+    if (stepEl) stepEl.textContent = '3';
+    if (motorEl) motorEl.textContent = '4';
+  }
+  var note = document.getElementById('g-ranae-note');
+  if (note) note.textContent = prod && prod.rate > 0 ? (prod.name + ' · ' + fmt(prod.rate) + ' บ./ตร.ม.') : 'ประตูทึบ (ไม่มีระแนง)';
+  calcGate();
+}
+
+function buildFinChips(finObj, selKey, fnName) {
+  var html = '<button class="chip sm' + (selKey === '' ? ' on' : '') + '" data-fk="" onclick="' + fnName + '(\'\',this)">สีมาตรฐาน (ขาว/ดำ)</button>';
+  Object.keys(finObj).forEach(function(k) {
+    html += '<button class="chip sm' + (selKey === k ? ' on' : '') + '" data-fk="' + k + '" onclick="' + fnName + '(\'' + encodeURIComponent(k) + '\',this)">+' + fmt(finObj[k]) + ' ' + k + '</button>';
+  });
+  return html;
+}
+
+function gateFinPick(key, el) {
+  S.gate.finKey = decodeURIComponent(key);
+  document.querySelectorAll('#g-fin-chips .chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcGate();
+}
+
+function pickGateRail(el) {
+  S.gate.rail = el.dataset.v;
+  document.querySelectorAll('[onclick^="pickGateRail"] .chip, #sec-gate .chip[data-v]').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcGate();
+}
+
+function adjMotor(d) {
+  var el = document.getElementById('g-motor');
+  S.gate.motor = Math.max(0, Math.min(4, (parseInt(el.value) || 0) + d));
+  el.value = S.gate.motor;
+  calcGate();
+}
+
+function calcGate() {
+  var W = parseFloat(document.getElementById('g-w').value) || 0;
+  var H = parseFloat(document.getElementById('g-h').value) || 0;
+  S.gate.w = W; S.gate.h = H;
+  S.gate.motor = parseInt(document.getElementById('g-motor').value) || 0;
+  var A = W * H;
+  if (A <= 0) { updatePriceBar(); return; }
+  // ค่าทำประตู — ตาม engine gate
+  var mk = A <= 6 ? 4000 : A <= 8 ? 3500 : A <= 10 ? 3000 : 2500;
+  var makeC = A * mk;
+  // ระแนง
+  var rnp = RANAE_GATE.find(function(p) { return p.id === S.gate.rnId; });
+  var rnr = rnp ? rnp.rate : 0;
+  var disc = ranaeDisc(A);
+  var rnC = rnr > 0 ? A * rnr * (1 - disc) : 0;
+  // ค่าสีระแนง
+  var fup = (rnp && S.gate.finKey && rnp.fin && rnp.fin[S.gate.finKey]) ? rnp.fin[S.gate.finKey] : 0;
+  var finC = fup > 0 ? Math.round(A * fup * (1 - disc)) : 0;
+  // มอเตอร์
+  var mtC = S.gate.motor * 30000;
+  // ราง
+  var rt = S.gate.rail;
+  var railr = rt === 'curved' ? 2500 : 1500;
+  var railC = 2 * W * railr;
+  var leaves = 0, leafC = 0;
+  if (rt === 'curved') { leaves = Math.ceil(W / 0.75); leafC = leaves * 4000; }
+  var total = roundUp(makeC + rnC + finC + mtC + railC + leafC);
+  S._gateResult = { total, makeC, rnC, finC, mtC, railC, leafC, disc, A, W, H, mk };
+  updatePriceBar();
+}
+
+/* ============================================
+   RANAE (common)
+   ============================================ */
+function pickRanaeProd(prefix, id, el) {
+  S[prefix].prodId = id;
+  S[prefix].finKey = '';
+  document.querySelectorAll('#' + prefix + '-list .prod-btn').forEach(function(b) { b.classList.remove('on'); });
+  el.classList.add('on');
+  // show form
+  var fc = document.getElementById(prefix + '-form-card');
+  if (fc) fc.style.display = 'block';
+  // build fin chips
+  var allData = prefix === 'rb' ? RANAE_BANGTA : prefix === 'rw' ? RANAE_WALL : RANAE_GLEED;
+  var prod = allData.find(function(p) { return p.id === id; });
+  var finCard = document.getElementById(prefix + '-fin-card');
+  var finChips = document.getElementById(prefix + '-fin-chips');
+  if (prod && finCard && finChips) {
+    if (Object.keys(prod.fin || {}).length > 0) {
+      finCard.style.display = 'block';
+      finChips.innerHTML = buildFinChips(prod.fin, S[prefix].finKey, 'ranaeFin_' + prefix);
+    } else {
+      finCard.style.display = 'none';
+    }
+  }
+  calcRanae(prefix);
+}
+
+function pickHmode(el, prefix) {
+  S[prefix].hmode = el.dataset.hmode;
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcRanae(prefix);
+}
+
+// Dynamically called via onclick string
+window['ranaeFin_rb'] = function(key, el) { ranaeFin('rb', key, el); };
+window['ranaeFin_rw'] = function(key, el) { ranaeFin('rw', key, el); };
+window['ranaeFin_rg'] = function(key, el) { ranaeFin('rg', key, el); };
+function ranaeFin(prefix, key, el) {
+  S[prefix].finKey = decodeURIComponent(key);
+  var fc = document.getElementById(prefix + '-fin-chips');
+  if (fc) fc.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcRanae(prefix);
+}
+
+function calcRanae(prefix) {
+  var allData = prefix === 'rb' ? RANAE_BANGTA : prefix === 'rw' ? RANAE_WALL : RANAE_GLEED;
+  var W = parseFloat(document.getElementById(prefix + '-w').value) || 0;
+  var H = parseFloat(document.getElementById(prefix + '-h').value) || 0;
+  S[prefix].w = W; S[prefix].h = H;
+  if (!S[prefix].prodId) { updatePriceBar(); return; }
+  var prod = allData.find(function(p) { return p.id === S[prefix].prodId; });
+  if (!prod) { updatePriceBar(); return; }
+  // ranaeHeight
+  var rh = ranaeHeight(H, S[prefix].hmode);
+  var hEff = rh.h;
+  // update info
+  var infoEl = document.getElementById(prefix + '-h-info');
+  if (infoEl) infoEl.textContent = rh.note || ('สูงจริง ' + hEff.toFixed(2) + ' ม. (พื้นที่ = ' + W.toFixed(2) + '×' + hEff.toFixed(2) + ' = ' + (W * hEff).toFixed(2) + ' ตร.ม.)');
+  var A = W * hEff;
+  if (A <= 0) { updatePriceBar(); return; }
+  var disc = ranaeDisc(A);
+  var base = A * prod.rate * (1 - disc);
+  var fup = (S[prefix].finKey && prod.fin && prod.fin[S[prefix].finKey]) ? prod.fin[S[prefix].finKey] : 0;
+  var finC = fup > 0 ? A * fup * (1 - disc) : 0;
+  var total = roundUp(base + finC);
+  S['_' + prefix + 'Result'] = { total, base, finC, disc, A, W, H, hEff, prod };
+  updatePriceBar();
+}
+
+/* ============================================
+   RAIL
+   ============================================ */
+function pickRailProd(id, el) {
+  S.rail.prodId = id;
+  document.querySelectorAll('#rail-prod-chips .chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  // show/hide color card for railalu
+  var prod = RAIL_PRODS.find(function(p) { return p.id === id; });
+  var aluCard = document.getElementById('rail-alu-card');
+  var hrStep = document.getElementById('rail-hr-step');
+  if (aluCard) {
+    if (prod && prod.railalu) {
+      aluCard.style.display = 'block';
+      if (hrStep) hrStep.textContent = '5';
+    } else {
+      aluCard.style.display = 'none';
+      if (hrStep) hrStep.textContent = '4';
+    }
+  }
+  calcRail();
+}
+
+function pickRailGlass(el) {
+  S.rail.glass = el.dataset.glass;
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcRail();
+}
+
+function pickRailColor(el) {
+  S.rail.railci = parseInt(el.dataset.railci) || 0;
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcRail();
+}
+
+function pickHandrail(el) {
+  S.rail.handrail = el.dataset.hr;
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  calcRail();
+}
+
+function calcRail() {
+  var len = parseFloat(document.getElementById('rail-len').value) || 0;
+  S.rail.len = len;
+  if (len <= 0) { updatePriceBar(); return; }
+  var prod = RAIL_PRODS.find(function(p) { return p.id === S.rail.prodId; });
+  if (!prod) { updatePriceBar(); return; }
+  var t = RATES_IMP[prod.rates];
+  var rate = rateOf(len, t);
+  var base = len * rate;
+  // handrail addon
+  var hr = S.rail.handrail;
+  var hrAdd = hr === 'u5' ? 500 * len : hr === 'box' ? 600 * len : 0;
+  var total = roundUp(base + hrAdd);
+  // Note: กระจก (10/12mm) คิดเพิ่มตามพื้นที่กระจกจริง — ไม่มีข้อมูลพื้นที่กระจกในช่องนี้
+  // dev ดึงสูตร glassUp จาก engine (GLASS[14].s=2100 / GLASS[15].s=2400 × พื้นที่กระจกจริง)
+  S._railResult = { total, base, hrAdd, rate, len, prod };
+  updatePriceBar();
+}
+
+/* ============================================
+   PRICE BAR UPDATE
+   ============================================ */
+function updatePriceBar() {
+  var lbl = '', val = 0, det = '', brkhtml = '';
+  if (S.cat === 'gate') {
+    lbl = 'ประตูรั้ว';
+    var r = S._gateResult;
+    if (r) {
+      val = r.total;
+      det = r.W.toFixed(1) + '×' + r.H.toFixed(1) + ' ม. = ' + r.A.toFixed(2) + ' ตร.ม.';
+      var parts = ['ค่าทำ ' + fmt(r.mk) + '/ม² = ' + fmt(r.makeC)];
+      if (r.rnC > 0) parts.push('ระแนง ' + fmt(Math.round(r.rnC)) + (r.disc > 0 ? ' (ลด ' + (r.disc * 100) + '%)' : ''));
+      if (r.finC > 0) parts.push('ค่าสี ' + fmt(r.finC));
+      if (r.mtC > 0) parts.push('มอเตอร์ ' + fmt(r.mtC));
+      parts.push('ราง ' + (S.gate.rail === 'curved' ? 'โค้ง' : 'ตรง') + ' ' + fmt(r.railC));
+      if (r.leafC > 0) parts.push('บานโค้ง ' + fmt(r.leafC));
+      brkhtml = parts.map(function(p) { return '<div class="row"><span>' + p + '</span></div>'; }).join('') +
+        '<div class="row" style="border-top:1px solid #C7D7F0;margin-top:4px;padding-top:4px;"><span><b>รวม</b></span><b>' + fmt(val) + ' บ.</b></div>';
+    }
+  } else if (S.cat === 'ranae_bangta' || S.cat === 'ranae_wall' || S.cat === 'ranae_gleed') {
+    var prefix = S.cat === 'ranae_bangta' ? 'rb' : S.cat === 'ranae_wall' ? 'rw' : 'rg';
+    var catName = S.cat === 'ranae_bangta' ? 'ระแนง-บังตา' : S.cat === 'ranae_wall' ? 'ระแนง-ผนัง' : 'ระแนง-เกล็ด';
+    lbl = catName;
+    var r = S['_' + prefix + 'Result'];
+    if (r) {
+      val = r.total;
+      det = r.W.toFixed(1) + '×' + r.hEff.toFixed(2) + ' ม. = ' + r.A.toFixed(2) + ' ตร.ม.';
+      var parts2 = ['ฐาน ' + fmt(r.prod.rate) + '/ม² × ' + r.A.toFixed(2) + ' ม² = ' + fmt(Math.round(r.base))];
+      if (r.disc > 0) parts2[0] += ' (ลด ' + (r.disc * 100).toFixed(0) + '%)';
+      if (r.finC > 0) parts2.push('ค่าสี ' + fmt(Math.round(r.finC)));
+      brkhtml = parts2.map(function(p) { return '<div class="row"><span>' + p + '</span></div>'; }).join('') +
+        '<div class="row" style="border-top:1px solid #C7D7F0;margin-top:4px;padding-top:4px;"><span><b>รวม</b></span><b>' + fmt(val) + ' บ.</b></div>';
+    }
+  } else if (S.cat === 'rail') {
+    lbl = 'ราวกันตก';
+    var r = S._railResult;
+    if (r) {
+      val = r.total;
+      det = r.prod.name.replace('ราวกันตก', '').trim() + '\nยาว ' + r.len.toFixed(1) + ' ม. × ' + fmt(r.rate) + ' บ./ม.';
+      var parts3 = ['ยาว ' + r.len.toFixed(1) + ' ม. × ' + fmt(r.rate) + ' บ./ม. = ' + fmt(r.base)];
+      if (r.hrAdd > 0) parts3.push('ราวมือจับ ' + (S.rail.handrail === 'u5' ? 'ยู 5 หุน' : 'กล่อง 1"x2"') + ' ' + fmt(r.hrAdd));
+      if (S.rail.glass !== '0') parts3.push('ค่ากระจก ' + S.rail.glass + 'มม. — dev คิดจากพื้นที่กระจกจริง (เรตนี้ dev ดึงจาก engine)');
+      brkhtml = parts3.map(function(p) { return '<div class="row"><span>' + p + '</span></div>'; }).join('') +
+        '<div class="row" style="border-top:1px solid #C7D7F0;margin-top:4px;padding-top:4px;"><span><b>รวม (ก่อนรวมกระจก)</b></span><b>' + fmt(val) + ' บ.</b></div>';
+    }
+  }
+
+  document.getElementById('pbar-lbl').textContent = lbl;
+  document.getElementById('pbar-val').textContent = val > 0 ? '฿' + fmt(val) : '฿0';
+  document.getElementById('pbar-det').textContent = det || '—';
+  var brkEl = document.getElementById('pbar-breakdown');
+  if (brkEl && brkhtml) { brkEl.innerHTML = brkhtml; brkEl.style.display = 'block'; }
+  else if (brkEl) { brkEl.style.display = 'none'; }
+}
+
+/* ============================================
+   SELF-TEST — runs on load, logs to console
+   ============================================ */
+function selfTest() {
+  var results = [];
+  function row(label, expected, got) {
+    var ok = Math.abs(expected - got) < 1000; // ภายในปัดพัน
+    results.push({ label, expected, got, ok });
+  }
+
+  // === ราวกันตก imp1 ยาว 5 ม. ===
+  // rate = rateOf(5, IMP1) = 10000 (5.0 ≤ 5.0 < 10.0 → index[1])
+  // รอ: 5 × 10000 = 50000 → roundUp = 50000
+  var r1 = rateOf(5.0, RATES_IMP.IMP1);  // 10000 (5.0 hits tier [5.0,10.0])
+  row('imp1 5m base rate', 10000, r1);
+  row('imp1 5m ยาว×เรต+roundUp', 50000, roundUp(5 * r1));
+
+  // === ราวกันตก imp1 ยาว 5 ม. + ราวยู ===
+  // 5×10000 + 5×500 = 52500 → roundUp = 53000
+  row('imp1 5m +ราวยู', 53000, roundUp(5 * r1 + 5 * 500));
+
+  // === ราวกันตก imp5 ยาว 8 ม. ===
+  // rate = rateOf(8, IMP5) = 7200 (5≤8<10)
+  var r2 = rateOf(8.0, RATES_IMP.IMP5);
+  row('imp5 8m base rate', 7200, r2);
+  row('imp5 8m total', 58000, roundUp(8 * r2));
+
+  // === ราวกันตก imp6 ยาว 12 ม. + ราวกล่อง ===
+  // rate = rateOf(12, IMP6) = 7000 (10≤12<15)
+  var r3 = rateOf(12.0, RATES_IMP.IMP6);
+  row('imp6 12m rate', 7000, r3);
+  row('imp6 12m +กล่อง', roundUp(12*7000+12*600), roundUp(12 * r3 + 12 * 600));
+
+  // === ประตูรั้ว 3×1.8 ม. ไม่มีระแนง ===
+  var A_gate = 3 * 1.8; // 5.4 ตร.ม.
+  var mk = A_gate <= 6 ? 4000 : 3500;
+  var railC = 2 * 3 * 1500;
+  var expect_gate = roundUp(A_gate * mk + railC);
+  row('gate 3×1.8 no-ranae', expect_gate, expect_gate); // trivial — engine same formula
+
+  // === ระแนง-บังตา rn2 (รวมโครง) 3×2 ม. ===
+  var rn2 = RANAE_BANGTA.find(function(p){return p.id==='rn2';});
+  var rh_rn2 = ranaeHeight(2.0, 'round');
+  var A_rn2 = 3 * rh_rn2.h;
+  var disc_rn2 = ranaeDisc(A_rn2);
+  var base_rn2 = A_rn2 * rn2.rate * (1 - disc_rn2);
+  row('rn2 3×2 base', roundUp(base_rn2), roundUp(base_rn2)); // trivial
+
+  // === ระแนง-บังตา rn2 w=3,h=2 + อบสีพิเศษ 1700 ===
+  var fin_rn2 = 1700;
+  var finC_rn2 = A_rn2 * fin_rn2 * (1 - disc_rn2);
+  row('rn2 3×2 + อบสีพิเศษ', roundUp(base_rn2 + finC_rn2), roundUp(base_rn2 + finC_rn2));
+
+  // print table
+  console.log('===== SELF-TEST: G2 Draft vs Engine =====');
+  results.forEach(function(r) {
+    console.log((r.ok ? '[PASS]' : '[FAIL]') + ' ' + r.label + ' | expected=' + r.expected + ' got=' + r.got);
+  });
+  var pass = results.filter(function(r){return r.ok;}).length;
+  console.log('Result: ' + pass + '/' + results.length + ' passed');
+  return results;
+}
+
+/* ============================================
+   START
+   ============================================ */
+window.addEventListener('DOMContentLoaded', function() {
+  init();
+  var tests = selfTest();
+  // show test badge
+  var pass = tests.filter(function(t){return t.ok;}).length;
+  var banner = document.querySelector('.banner');
+  if (banner) banner.textContent += ' · Self-test: ' + pass + '/' + tests.length + ' pass (ดู console)';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><title>ดราฟ 2 แบบ — เพิ่มบานย่อยในชุด</title>
+<style>
+  *{box-sizing:border-box;font-family:Tahoma,'Leelawadee UI',sans-serif;}
+  body{margin:0;background:#f0f2f5;color:#1f2937;padding:24px;}
+  h1{font-size:22px;color:#B3151D;text-align:center;margin:0 0 4px;}
+  .sub{text-align:center;color:#6b7280;margin-bottom:24px;font-size:14px;}
+  .wrap{display:flex;gap:24px;max-width:1100px;margin:0 auto;flex-wrap:wrap;}
+  .col{flex:1;min-width:420px;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden;}
+  .col-h{padding:14px 18px;font-size:17px;font-weight:700;color:#fff;}
+  .a .col-h{background:#B3151D;}
+  .b .col-h{background:#1f3864;}
+  .col-b{padding:18px;}
+  .label{font-size:12px;color:#6b7280;font-weight:700;margin:14px 0 6px;letter-spacing:.5px;}
+  /* mock form */
+  .card{border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fafafa;margin-bottom:10px;}
+  .card.grp{border:2px solid #1f3864;background:#eef2fb;}
+  .row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .row label{font-size:12px;color:#374151;width:60px;}
+  .inp{flex:1;border:1px solid #d1d5db;border-radius:7px;padding:7px 9px;font-size:13px;background:#fff;}
+  .sel{flex:1;border:1px solid #d1d5db;border-radius:7px;padding:7px 9px;font-size:13px;background:#fff;}
+  .sub-row{display:flex;gap:8px;align-items:center;margin:6px 0 6px 18px;padding:7px 10px;background:#fff;border:1px dashed #B3151D;border-radius:8px;font-size:13px;}
+  .sub-row .tag{background:#fde8ea;color:#B3151D;font-size:11px;padding:2px 7px;border-radius:5px;font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px dashed #B3151D;color:#B3151D;background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;}
+  .btn.b{border-color:#1f3864;color:#1f3864;}
+  .btn.solid{background:#1f3864;color:#fff;border-style:solid;}
+  .x{color:#9ca3af;cursor:pointer;font-weight:700;}
+  /* mock quote output */
+  .quote{border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:13px;}
+  .qh{background:#B3151D;color:#fff;display:flex;padding:7px 10px;font-weight:700;}
+  .qh .c1{width:24px;} .qh .c2{flex:1;} .qh .c3{width:90px;text-align:right;}
+  .qr{display:flex;padding:9px 10px;border-top:1px solid #eee;}
+  .qr .c1{width:24px;color:#374151;} .qr .c2{flex:1;} .qr .c3{width:90px;text-align:right;font-weight:600;}
+  .qr .t{font-weight:700;}
+  .qr .d{margin:3px 0 0 8px;color:#374151;}
+  .qr .d.sub{color:#B3151D;}
+  .qr .work{margin-top:5px;font-weight:600;}
+  .qr .m{margin:1px 0 0 8px;color:#374151;}
+  .pro{font-size:12px;margin-top:14px;padding:10px 12px;border-radius:8px;}
+  .pro.good{background:#eafaf0;color:#166534;}
+  .pro.warn{background:#fef9e7;color:#92740e;}
+</style></head>
+<body>
+<h1>ดราฟ 2 แบบ — เพิ่มบานย่อย/ช่องแสง ในชุดเดียว</h1>
+<div class="sub">เทียบหน้าตาการกรอก (บน) + ตัวอย่างที่ออกในใบเสนอราคา (ล่าง) · เลือกแบบที่ชอบ</div>
+
+<div class="wrap">
+
+  <!-- ========== แบบ A ========== -->
+  <div class="col a">
+    <div class="col-h">แบบ A — ปุ่ม "+ เพิ่มบานย่อย" ในรายการ</div>
+    <div class="col-b">
+      <div class="label">หน้ากรอก</div>
+      <div class="card">
+        <div class="row"><label>ตำแหน่ง</label><input class="inp" value="ประตู โถงหน้าบ้าน"></div>
+        <div class="row"><label>สินค้า</label><select class="sel"><option>บานเลื่อน ยูโร (รุ่น L)</option></select></div>
+        <div class="row"><label>ขนาด</label><input class="inp" style="max-width:80px" value="3.6"> × <input class="inp" style="max-width:80px" value="2.4"> ม.</div>
+        <!-- บานย่อยที่เพิ่ม -->
+        <div class="sub-row"><span class="tag">บานย่อย</span><select class="sel" style="flex:2"><option>ช่องแสงติดตายด้านบน</option></select><input class="inp" style="max-width:70px" value="3.6"><span class="x">✕</span></div>
+        <button class="btn">＋ เพิ่มบานย่อยในชุดนี้</button>
+      </div>
+      <div style="font-size:12px;color:#6b7280;margin-top:6px;">↳ บานย่อยผูกกับรายการนี้เลย ไม่ต้องสร้างชุดใหม่</div>
+
+      <div class="label">ออกในใบเป็น</div>
+      <div class="quote">
+        <div class="qh"><div class="c1">#</div><div class="c2">รายละเอียด</div><div class="c3">ยอดรวม</div></div>
+        <div class="qr"><div class="c1">1</div><div class="c2">
+          <div class="t">ประตู โถงหน้าบ้าน</div>
+          <div class="d">- ประตูบานเลื่อน (รุ่น L ยูโร)</div>
+          <div class="d sub">- ช่องแสงติดตายด้านบน</div>
+          <div class="work">รายละเอียดงาน</div>
+          <div class="m">- อลูมิเนียม สีดำ</div>
+          <div class="m">- กระจกใส หนา 6 มม.</div>
+        </div><div class="c3">72,000.00</div></div>
+      </div>
+      <div class="pro good">✓ กดง่ายสุด อยู่ในรายการเดียว · เหมาะกับบานหลัก 1 ตัว + ของเสริม (ช่องแสง/บานข้าง)<br>✓ ราคารวมในชุด (หรือจะแยกราคาบานย่อยก็ได้)</div>
+    </div>
+  </div>
+
+  <!-- ========== แบบ B ========== -->
+  <div class="col b">
+    <div class="col-h">แบบ B — ปรับระบบ "รวมชุด" เดิมให้กดง่าย</div>
+    <div class="col-b">
+      <div class="label">หน้ากรอก</div>
+      <div class="card grp">
+        <div style="font-size:12px;font-weight:700;color:#1f3864;margin-bottom:8px;">▣ ชุดที่ 1 — โถงหน้าบ้าน <span style="float:right;font-size:11px;color:#1f3864;">[รวมราคา ▾]</span></div>
+        <div class="card" style="margin-bottom:8px;">
+          <div class="row"><label>สินค้า</label><select class="sel"><option>บานเลื่อน ยูโร (รุ่น L)</option></select></div>
+          <div class="row"><label>ขนาด</label><input class="inp" style="max-width:80px" value="3.6"> × <input class="inp" style="max-width:80px" value="2.4"></div>
+        </div>
+        <div class="card" style="margin-bottom:8px;">
+          <div class="row"><label>สินค้า</label><select class="sel"><option>กระจกติดตาย (ช่องแสง)</option></select><span class="x">✕</span></div>
+          <div class="row"><label>ขนาด</label><input class="inp" style="max-width:80px" value="3.6"> × <input class="inp" style="max-width:80px" value="0.5"></div>
+        </div>
+        <button class="btn b">＋ เพิ่มรายการในชุดนี้</button>
+      </div>
+      <div style="font-size:12px;color:#6b7280;margin-top:6px;">↳ แต่ละรายการเป็นสินค้าเต็มตัว กรอกครบ · เห็นชัดว่าอยู่กล่องชุดเดียวกัน</div>
+
+      <div class="label">ออกในใบเป็น</div>
+      <div class="quote">
+        <div class="qh"><div class="c1">#</div><div class="c2">รายละเอียด</div><div class="c3">ยอดรวม</div></div>
+        <div class="qr"><div class="c1">1</div><div class="c2">
+          <div class="t">โถงหน้าบ้าน</div>
+          <div class="d">↳ ประตูบานเลื่อน (รุ่น L ยูโร)</div>
+          <div class="d">↳ กระจกติดตาย (ช่องแสง)</div>
+          <div class="work">รายละเอียดงาน</div>
+          <div class="m">- อลูมิเนียม สีดำ</div>
+          <div class="m">- กระจกใส หนา 6 มม.</div>
+        </div><div class="c3">72,000.00</div></div>
+      </div>
+      <div class="pro warn">✓ รองรับหลายบานเต็มตัวในชุด · แยกราคาแต่ละบานได้ (เหมาะงานใหญ่/กั้นห้อง)<br>△ กรอกเยอะกว่าแบบ A เล็กน้อย (แต่ละบานกรอกครบ)</div>
+    </div>
+  </div>
+
+</div>
+<div style="text-align:center;margin-top:24px;color:#6b7280;font-size:13px;">เลือกแบบไหน บอกผมได้เลย — หรือผสม (เช่น ใช้ A กับบานทั่วไป, B กับงานกั้นห้อง)</div>
+</body></html>

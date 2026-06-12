@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEMO G2 รอบ 4 — เทส ก่อน→หลัง (render จริง)</title>
+<style>
+@page{size:A4;margin:11mm;}*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:12px;line-height:1.55;margin:0;padding:14px;background:#F9FAFB;}
+h1{font-size:19px;color:#B3151D;margin:0 0 2px;}.sub{color:#6B7280;font-size:11px;margin-bottom:12px;}
+h2{font-size:15px;margin:18px 0 6px;padding:6px 11px;border-radius:6px;color:#fff;background:#B3151D;}
+.card{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:13px 15px;margin:8px 0;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.ba{display:flex;gap:12px;flex-wrap:wrap;}.col{flex:1;min-width:230px;}
+.lab{font-size:11px;font-weight:700;margin-bottom:4px;}.before .lab{color:#B3151D;}.after .lab{color:#166534;}
+.before{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:9px 11px;}
+.after{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:9px 11px;}
+table{width:100%;border-collapse:collapse;margin:5px 0;}th,td{border:1px solid #E5E7EB;padding:5px 8px;font-size:11.5px;text-align:left;}
+th{background:#F3F4F6;}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tot{font-weight:800;color:#B3151D;}.lock{color:#9CA3AF;text-decoration:line-through;}
+.dim{color:#6B7280;font-size:10.5px;}code{font-family:Consolas,monospace;font-size:10px;background:#F3F4F6;padding:0 4px;border-radius:3px;color:#B3151D;}
+.line{padding:2px 0;border-bottom:1px dashed #F3F4F6;}.del{color:#B3151D;text-decoration:line-through;opacity:.7;}.dup{background:#FEE2E2;border-radius:3px;padding:0 3px;}
+.kept{color:#166534;}.leak{color:#B3151D;font-weight:700;}.chip{display:inline-block;font-size:10px;padding:1px 7px;border-radius:9px;margin:2px 3px 2px 0;}
+.chip.k{background:#DCFCE7;color:#166534;}.chip.x{background:#FEE2E2;color:#991B1B;text-decoration:line-through;}
+.note{background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:7px 10px;font-size:11px;margin:6px 0;}
+.real{display:inline-block;background:#1F2937;color:#fff;font-size:9px;padding:1px 7px;border-radius:9px;}
+</style></head><body>
+<h1>DEMO G2 รอบ 4 — เทส ก่อน→หลัง <span class="real">เลขจาก render จริง</span></h1>
+<div class="sub">render <code>public/calculator/index.html</code> ด้วย jsdom · โชว์ผล "หลังแก้" โดยจำลอง (engine คิดเหมือนกัน แค่ UI ปลดล็อก) · 11 มิ.ย. 2026 · ยังไม่ส่ง dev</div>
+
+<h2>R4-1 · บานเปิดยูโร — จำนวนบาน 1→4 (ขนาดทดสอบ 2.4×2.2 = 5.28 ตร.ม.)</h2>
+<div class="card">
+<div class="note">ตอนนี้ช่องจำนวนบานล็อก <code>max=2</code> → กรอกได้แค่ 1–2 · แถว 3–4 คือ <b>ราคาที่ engine จะคิดให้หลังปลดล็อก <code>pn.max=4</code></b> (คิด <code>(บาน−1)×5,000</code> อยู่แล้วจาก R3-1)</div>
+<table>
+<tr><th>จำนวนบาน</th><th>ฐาน (ตามพื้นที่ · min 18,000)</th><th>เพิ่มบาน (บาน−1)×5,000</th><th>รวม/ชุด</th><th>สถานะตอนนี้</th></tr>
+<tr><td>1 บาน</td><td class="n">30,000</td><td class="n">—</td><td class="n tot">30,000</td><td class="">✅ กรอกได้</td></tr><tr><td>2 บาน</td><td class="n">30,000</td><td class="n">+ 5,000</td><td class="n tot">35,000</td><td class="">✅ กรอกได้</td></tr><tr><td>3 บาน</td><td class="n">30,000</td><td class="n">+ 10,000</td><td class="n tot">40,000</td><td class="lock">🔒 ล็อก (แก้แล้วได้)</td></tr><tr><td>4 บาน</td><td class="n">30,000</td><td class="n">+ 15,000</td><td class="n tot">45,000</td><td class="lock">🔒 ล็อก (แก้แล้วได้)</td></tr>
+</table>
+<div class="dim">addon label ที่ระบบออก: 2บาน="บานเพิ่ม 1×5,000" · 3บาน="บานเพิ่ม 2×5,000" · 4บาน="บานเพิ่ม 3×5,000"</div>
+</div>
+
+<h2>R4-2 · ราวกันตก imp1 (หมุดแปะข้าง) — "สแตนเลสสีเงิน" ซ้ำ</h2>
+<div class="card"><div class="dim" style="margin-bottom:6px;">รายการ: <b>ราวกันตกกระจกเฉียง หมุดแปะข้าง (ยาว 1.8 ม.)</b></div><div class="ba">
+<div class="col before"><div class="lab">🔴 ก่อนแก้ (render จริงตอนนี้)</div>
+<div class="line">- อุปกรณ์มาตรฐานผู้ผลิต <span class="dup">สแตนเลสสีเงิน</span></div><div class="line">- กระจกเทมเปอร์ใส หนา 10 มม.</div><div class="line">- หมุด<span class="dup">สแตนเลสสีเงิน</span></div>
+<div class="dim" style="margin-top:5px;">↑ "สแตนเลสสีเงิน" โผล่ 2 บรรทัด</div></div>
+<div class="col after"><div class="lab">🟢 หลังแก้ (R4-2)</div>
+<div class="line"><span class="del">- อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน</span> <span class="dim">(ตัด)</span></div><div class="line">- กระจกเทมเปอร์ใส หนา 10 มม.</div><div class="line">- หมุดสแตนเลสสีเงิน</div>
+<div class="dim" style="margin-top:5px;">เหลือ "หมุดสแตนเลสสีเงิน" บรรทัดเดียว</div></div>
+</div></div>
+
+<h2>R4-3 · ราวกันตก imp1 — ออปชั่นที่ render (หา leak)</h2>
+<div class="card">
+<div class="dim" style="margin-bottom:6px;">ออปชั่นทั้งหมดที่โผล่ในฟอร์ม imp1 (render จริง 13 ตัว) — <span class="leak">แดง=ตัด</span> · <span class="kept">เขียว=เก็บ</span></div>
+<span class="chip x" title="ฝังรางยู (ในพื้น) — ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้">✕ ฝังรางยู (ในพื้น) — ติ๊กแล้วเลือกธรณีห</span><span class="chip k" title="ราวมือจับด้านบน (option) ไม่มียู อลูมิเนียม +500/ม.กล่อง 1"x2" +600/ม.">✓ ราวมือจับด้านบน (option) ไม่มียู อลูมิ</span><span class="chip x" title="มีคาดตาราง (คิดตามสูตร)">✕ มีคาดตาราง (คิดตามสูตร)</span><span class="chip " title="เส้นนอน">เส้นนอน</span><span class="chip " title="เส้นตั้ง">เส้นตั้ง</span><span class="chip " title="ราคา/ม.">ราคา/ม.</span><span class="chip " title="เส้นโค้ง">เส้นโค้ง</span><span class="chip k" title="ความหนากระจก 10 มม.12 มม.เทมเปอร์ใส 10 มม. (default)เทมเปอร์ใส 12 มม. ">✓ ความหนากระจก 10 มม.12 มม.เทมเปอร์ใส 10</span><span class="chip " title="⚠ กรอกความยาว (ม.) ในช่อง "กว้าง"">⚠ กรอกความยาว (ม.) ในช่อง "กว้าง"</span><span class="chip k" title="งานเสริม/วิศวกรรม">✓ งานเสริม/วิศวกรรม</span><span class="chip k" title="รื้อของเดิม (รายการนี้)">✓ รื้อของเดิม (รายการนี้)</span><span class="chip x" title="ครอบวงกบอลู ไม่มี3 ด้าน4 ด้านไม่มี3 ด้าน4 ด้าน หรือระบุ(ม.)">✕ ครอบวงกบอลู ไม่มี3 ด้าน4 ด้านไม่มี3 ด้</span><span class="chip x" title="ดรอปพื้น(ม.)">✕ ดรอปพื้น(ม.)</span>
+<div class="ba" style="margin-top:10px;">
+<div class="col before"><div class="lab">🔴 ตัดทิ้ง 4 ตัว (leak จากบาน/หน้าต่าง)</div>
+<div class="line"><span class="leak">✕</span> คาดตาราง (มีคาดตาราง คิดตามสูตร) <span class="dim">(พบในฟอร์มจริง)</span></div><div class="line"><span class="leak">✕</span> ฝังรางยู (ในพื้น) <span class="dim">(พบในฟอร์มจริง)</span></div><div class="line"><span class="leak">✕</span> ครอบวงกบอลู (ไม่มี/3/4 ด้าน) <span class="dim">(พบในฟอร์มจริง)</span></div><div class="line"><span class="leak">✕</span> ดรอปพื้น (ม.) <span class="dim">(พบในฟอร์มจริง)</span></div>
+</div>
+<div class="col after"><div class="lab">🟢 เก็บไว้ (ถูกต้อง)</div>
+<div class="line"><span class="kept">✓</span> ความหนากระจก 10/12 (ราวกันตก=กระจก)</div>
+<div class="line"><span class="kept">✓</span> ราวมือจับด้านบน</div>
+<div class="line"><span class="kept">✓</span> สีอลู 3 สี (imp2/3/5/6)</div>
+<div class="line"><span class="kept">✓</span> งานเสริม/วิศวกรรม</div>
+<div class="line"><span class="kept">✓</span> รื้อของเดิม (รายการนี้) — มติพี่นัท</div>
+</div></div>
+</div>
+
+<div class="dim" style="margin-top:14px;">เลขราคา/ข้อความ/รายการออปชั่น = ดึงจากการ render ระบบจริง · ส่วน "หลังแก้" = จำลองผลที่ handoff R4 ระบุ (ยังไม่แตะ index.html)</div>
+</body></html>

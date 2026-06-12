@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายงานสรุป overnight — dev แชท B · 2026-06-12</title>
+<style>
+  :root{--red:#B3151D;--line:#e5d3d4;--green:#15803D;--amber:#92400E;--blue:#1D4ED8;}
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Tahoma,sans-serif;color:#1f2937;max-width:1000px;margin:0 auto;padding:24px;line-height:1.55}
+  h1{color:var(--red);font-size:24px;border-bottom:3px solid var(--red);padding-bottom:8px}
+  h2{color:var(--red);font-size:18px;margin-top:28px;border-left:4px solid var(--red);padding-left:9px}
+  h3{font-size:15px;margin:16px 0 6px;color:#374151}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--red);color:#fff;font-weight:600}
+  tr:nth-child(even){background:#fff9f9}
+  code{background:#f4eaea;padding:1px 5px;border-radius:4px;font-size:12px;font-family:Consolas,monospace;color:var(--red)}
+  .ok{color:var(--green);font-weight:700}.warn{color:var(--amber);font-weight:700}.bad{color:var(--red);font-weight:700}
+  .box{border:1px solid var(--line);border-radius:9px;padding:12px 15px;margin:12px 0;background:#fff9f9}
+  .green-box{border-left:5px solid var(--green);background:#f0fdf4;padding:10px 14px;border-radius:6px;margin:12px 0}
+  .amber-box{border-left:5px solid #f59e0b;background:#fff7ed;padding:10px 14px;border-radius:6px;margin:12px 0}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;color:#fff}
+  .p-done{background:var(--green)}.p-part{background:var(--amber)}.p-todo{background:#6b7280}
+  ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+  .small{font-size:12px;color:#666}
+</style>
+</head>
+<body>
+
+<h1>รายงานสรุป overnight — dev แชท B</h1>
+<p class="small">2026-06-12 · ไฟล์ <code>public/calculator/index.html</code> · branch main (push ครบทุก commit) · รันยาวตามคำสั่งพี่นัท "ไล่ทำให้ครบ + crosscheck + รายงาน + เสนอแนวทาง"</p>
+
+<div class="green-box"><b>TL;DR:</b> วันนี้แก้ครบหลาย handoff (formtop · casement bugfix · เก็บกวาดเทส · G4 ตู้ · G3-round2 · G3-v5 · G5-FINAL · G2 บางส่วน) · เทส gate <b>เขียวครบ</b> · push ขึ้น main หมด · เหลือ G2-cascade (UX ใหญ่) + G1+G6 (รื้อฟอร์มทั้งระบบ) เป็นงานรอบถัดไป (มีแผนด้านล่าง) · ผล crosscheck 3 subagent (การเงิน/ออปชั่น/UX) เติมในส่วน §5</div>
+
+<h2>1. งานที่เสร็จวันนี้ (commit · push แล้ว)</h2>
+<table>
+<tr><th>กลุ่ม/handoff</th><th>commit</th><th>เนื้องาน</th><th>สถานะ</th></tr>
+<tr><td><b>หน้าฟอร์มหลัก (formtop)</b></td><td>25ffe92→b182802</td><td>tabs pill · ตัด OPTION สำเร็จรูป (.set-optpreset) · addzone · ชื่อ COMMON_OPTS</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>กล่องฟ้า + ตัด OPTION ชุด + ชิป</b></td><td>5238620/ce994d1/f2c5d38</td><td>ชนิดการเปิดก่อนจำนวนบาน · ตัด OPTION ระดับชุด · ชิปเพิ่มด่วน 8→5 (เพิ่มประตูบานเปิด/บานกระทุ้ง)</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>บั๊กราคา casement_euro</b></td><td>c6655a7→72aaafc</td><td>ฐานยูโรปัดขึ้น "ร้อย" ไม่ใช่พัน (แก้เด้ง +1,000/บาน) · verify 5 เคสเป๊ะ</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>เก็บกวาดเทสแดง + handrail label</b></td><td>ef0b727/14cfb61</td><td>บั๊กจริง label "ความยาว" ราวบันได · 3 เทสล้าสมัยแก้ · _t2 QUOTE-01 re-baseline · accountant audit</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>G4 ตู้ (Aztec 950 + UX 6 จุด)</b></td><td>388caab</td><td>Aztec idx4=950 · ชิป switch สินค้า · วัสดุผนัง+ชนิดชั้น+cascade · ลึก/ชั้นแถวเดียว · ผนังหลัง tap</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>G3-round2 (6 หมวด A-F)</b></td><td>80bb28e/40acbcb/d8ae3e6</td><td>ปลายหลังคา 3 ตัวเลือก · ราง M=อลูมิเนียม · ชื่อกล่อง · ของเสริมเรียง+13 ชิป · OPTION header · field สี</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>G3 v5 (3 จุด)</b></td><td>a37f3c8/cfc2d33</td><td>รุ่นหลังคา แท็บ+drill-down ชิป 2 ชั้น · ปิดซ่อนราง/ครอบคาน checkbox-reveal</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>G5 มุ้ง FINAL (A-G)</b></td><td>382fce8/a1fb8ee</td><td>โหมด B กล่องส้ม · ผ้า/สีผ้าชิปผูกผ้า · rat ลงใบ · drill-down 3 หมวด · ซ่อน imp33/35</td><td><span class="pill p-done">เสร็จ</span></td></tr>
+<tr><td><b>G2 formux (ทำเป็นบาน)</b></td><td>18ee9dc</td><td>o-doortype → ชิป "ทำเป็นบาน" เด่น (ราคาเดิม) · <b>cascade 76 รุ่น ยังไม่ทำ</b></td><td><span class="pill p-part">บางส่วน</span></td></tr>
+</table>
+
+<h2>2. สถานะเทส (gate)</h2>
+<div class="green-box"><b>Gate เขียวครบ:</b> quote-fidelity 14/14 · calc-mosq-frame 18/18 · g4-color 10/10 · g4-cabinet 24/24 · g3-roof-formux 23/23 · g3-rain-gutter 16/16 · option-coverage PASS · calc-roof-tilt 26/26 · ux-all-g1-g6 24/24 · calc-consolidated 22/22 · g2-round3 18/18 · addsection 33/33 · qa-* · calc-smoke 11/11</div>
+<div class="amber-box"><b>แดงตามตั้งใจ (ไม่ใช่บั๊กใหม่):</b> <code>_t2_cross-check</code> (QUOTE-05 กั้นห้องกระจก lumpsum · documented) · <code>_t3_cross-check</code> (glasshouse lumpsum + casement approved · พี่นัทสั่งปล่อย · accountant ยืนยัน EXPECTED arithmetic ถูก) · <code>gen-samples</code> (generator ไม่ใช่เทส)</div>
+
+<h2>3. 🔍 ให้แต่ละแชทมาตรวจงานของตัวเอง (checklist)</h2>
+<table>
+<tr><th>แชท/กลุ่ม</th><th>ตรวจอะไร</th></tr>
+<tr><td><b>แชท formtop/G1</b></td><td>tabs pill มือถือย่อ "ใบเสนอ" · addzone ใต้บาน · OPTION ชุดหายจริง (ใช้ OPTION ต่อบานแทน) · ชิปเพิ่มด่วน 5 ตัวถูกใจไหม</td></tr>
+<tr><td><b>แชท G2</b></td><td>"ทำเป็นบาน" ชิปเด่นพอไหม · ราคา rn+ค่าทำบานตรงใบจริง · <b>cascade 76 รุ่นยังไม่ทำ — ยืนยันแนวทาง §4.1</b> · ดูออปชั่นแต่ละบานครบไหม (ราวกันตก glassUp/สีอลู)</td></tr>
+<tr><td><b>แชท G3 หลังคา</b></td><td>แท็บ หลังคา/ฝ้า-ผนัง + drill-down วัสดุ · ปลายหลังคา 3 แบบราคาถูก · ของเสริม 14 ชิป (รก/ครบ?) · ราง M=อลูมิเนียมในใบ · <b>คำถามค้าง: รางน้ำคิดเงิน=เรต×ยาว ยืนยันแล้วใน handoff C</b></td></tr>
+<tr><td><b>แชท G4 ตู้</b></td><td>Aztec=950 (เดิม 1,600) · ค่าสีโครงบวกถูก · switch สินค้า/วัสดุผนัง cascade · <b>เคาะเดิม: ค่าสีชั้นอลู cShelf คิด (78,000)</b></td></tr>
+<tr><td><b>แชท G5 มุ้ง</b></td><td>drill-down 3 หมวด · imp30 อยู่เฟรม · imp33/35 ซ่อนจากเมนู (เรตยังอยู่) · ผ้า/สีผ้าผูกผ้า · rat ลงใบ "ผ้าสแตนกันหนู+สี"</td></tr>
+<tr><td><b>แชท G6 กั้นห้อง</b></td><td>⏳ ยังไม่ทำ (อยู่ใน G1+G6 handoff · F สีซ้ำ 2 ชั้น · G ด้านไม่พับ · H 1 ด้านหลายชิ้น) — ดู §4.2</td></tr>
+</table>
+
+<h2>4. งานค้าง + เสนอแนวทาง (ทำรอบถัดไป)</h2>
+
+<h3>4.1 G2 — cascade drill-down ระแนง 76 รุ่น + auto ไม่โครง <span class="pill p-todo">TODO</span></h3>
+<div class="box">
+<b>เหลือ:</b> เลือกระแนงเป็น cascade ชิป (ขนาดเส้น → ระยะโชว์ → โครง[ไม่โครง/รวมโครง] → rn auto) แทน dropdown 92 รุ่น · + เมื่อ "ทำเป็นบาน" ให้ระแนง<b>สลับเป็นไม่โครงอัตโนมัติ</b><br>
+<b>แนวทาง (pattern พร้อม):</b> ใช้แบบเดียวกับ G3-v5/G5-G (helper drill-down + sync .i-prod) — สร้าง <code>RANAE_GRP</code> map: {ขนาดเส้น → {ระยะโชว์ → {โครง → rnId}}} แล้ว render ชิป 3 ชั้น cascade · ตัวสุดท้าย g3SyncProd(rnId) · <b>auto ไม่โครง:</b> เมื่อ o-doortype≠'' ให้ map rnId เป็นคู่ "ไม่โครง" (rn คี่/คู่ จับคู่ ไม่โครง/รวมโครง)<br>
+<b>ความเสี่ยง:</b> ต้อง map 92 rn เป็น cascade ให้ถูก (ขนาด/ระยะ/โครง) — ใช้ชื่อ product parse ได้ (เช่น "1x5 cm. โชว์ 1cm. 5cm. ไม่โครง") · ราคาไม่แตะ (เลือก rn เดิม)<br>
+<b>ประเมิน:</b> ~半วัน · ต้องทำตอน context สด (กัน map ผิด)
+</div>
+
+<h3>4.2 G1+G6 formux FINAL — รื้อฟอร์มทั้งระบบ <span class="pill p-todo">TODO ใหญ่</span></h3>
+<div class="box">
+8 งาน A-H · <b>แนะนำทำเป็นเฟส commit ทีละงาน</b> (กันพังเครื่องราคา):<br>
+<table>
+<tr><th>เฟส</th><th>งาน</th><th>ความเสี่ยง</th></tr>
+<tr><td>1</td><td><b>A กลุ่มงาน 1-7 = การ์ด</b> (แทน .i-group dropdown) · sync+fire change</td><td>กลาง (แตะ group switch · มีผลทั้ง G1-G7)</td></tr>
+<tr><td>2</td><td><b>B แบบ/รุ่น = การ์ดตระกูล+ปุ่ม ทุกกลุ่ม</b> · เซมิยูโร บานเปิด=<code>casement_euro</code> (เคาะแล้ว) · <span class="warn">ยังต้องเคาะ default ระแนงบังตา 76 รุ่น</span></td><td>สูง (แตะ .i-prod ทุกกลุ่ม · pattern g3SyncProd ใช้ซ้ำได้)</td></tr>
+<tr><td>3</td><td><b>D จัด 71 ออปชั่น → 7 หมวด</b> (groupGHOpts keyword) · เทียบ <code>test/_g1-option-union.json</code> ครบ 71</td><td>กลาง (จัด keyword · regression ทุก product)</td></tr>
+<tr><td>4</td><td><b>C ออปชั่นเฉพาะสินค้า inline</b> (shower/motor/ระแนง) · <b>E ชนิดการเปิด/ราง ดันขึ้น</b></td><td>กลาง</td></tr>
+<tr><td>5 (G6)</td><td><b>F สีซ้ำ 2 ชั้น</b> · <b>G การ์ดด้านไม่พับ</b> · <b>H 1 ด้านหลายชิ้น</b> (refreshSet สาขา GH)</td><td>สูง (GH-specific · refreshSet inject)</td></tr>
+</table>
+<b>กับดักสำคัญ:</b> inject ครั้งเดียว (flag กัน duplicate) · คืนสภาพเมื่อเปลี่ยนกลุ่ม 6→1 · ห้ามแตะ value/class ที่ readItem อ่าน · ออปชั่นครบ 71 ไม่ตัด · เทส regression G1 ทุก product type<br>
+<b>ประเมิน:</b> 2-3 รอบ session · pattern การ์ด/drill-down/sync มีพร้อมแล้ว (จาก G3-v5/G4/G5)
+</div>
+
+<h2>5. ผล cross-check จาก subagent (เติมเมื่อเสร็จ)</h2>
+<div class="amber-box" id="subagent-pending"><b>⏳ กำลังรอ 3 subagent (รัน background):</b><br>
+1. <b>accountant</b> — cross-check ราคา casement/G4/G3/G5 เทียบ engine + ใบจริง (_t2/_t3) + ตรวจ VAT/ปัดเศษ · flag คิดเกิน-ขาด<br>
+2. <b>doc-option-auditor</b> — เทียบออปชั่น G3/G4/G5 vs ใบจริง (samples) · หาขาด/ผิด/เกิน หลัง redesign ชิป · ออก <code>docs/AUDIT-G3G4G5-options-2026-06-12.html</code><br>
+3. <b>ux-designer</b> — รีวิว UX/UI ฟอร์มใหม่ (กดง่าย/มือถือ/ไม่รก) · ออก <code>docs/UX-REVIEW-G3G4G5-2026-06-12.html</code><br>
+<span class="small">(ส่วนนี้จะอัปเดตด้วยผลจริง + แนวทางแก้ เมื่อ subagent เสร็จ)</span></div>
+
+<div class="foot small" style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:6px;color:#9ca3af;">
+รายงานนี้สร้างอัตโนมัติ (overnight run) · commit/push ตรวจได้ใน git log · เทสรันด้วย node test/*.mjs · ทุกการแก้ราคา verify เบราว์เซอร์จริงแล้ว
+</div>
+
+</body>
+</html>

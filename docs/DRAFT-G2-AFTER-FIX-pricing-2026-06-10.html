@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G2 หลังแก้ — ฟอร์แมตใบเสนอราคา + วิธีคิดราคา (เทสจริง)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:13px;line-height:1.5;margin:0;background:#F3F4F6;padding:16px;}
+  .wrap{max-width:920px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;}
+  .hd{background:#166534;color:#fff;padding:14px 18px;}
+  .hd h1{margin:0;font-size:19px;}
+  .hd .s{font-size:12px;opacity:.92;margin-top:2px;}
+  .note{background:#ECFDF5;border-bottom:1px solid #6EE7B7;padding:9px 18px;font-size:12px;color:#065F46;}
+  .note b{color:#166534;}
+  table{width:100%;border-collapse:collapse;}
+  th{background:#14532D;color:#fff;padding:8px 10px;text-align:left;font-size:12.5px;}
+  th.c,td.c{text-align:right;white-space:nowrap;}
+  td{border-bottom:1px solid #E5E7EB;padding:11px 10px;vertical-align:top;}
+  .idx{font-weight:700;color:#166534;width:26px;}
+  .ti{font-weight:700;font-size:13.5px;margin-bottom:3px;}
+  .out{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:7px 10px;margin:3px 0;font-size:12px;color:#14532D;}
+  .out .h{font-weight:700;color:#166534;font-size:11px;margin-bottom:2px;}
+  .red{color:#B3151D;font-weight:700;}
+  .price{font-weight:700;}
+  .calc{margin:6px 0 0;background:#EFF6FF;border:1px solid #BFDBFE;border-left:3px solid #2563EB;border-radius:6px;padding:8px 11px;font-size:12px;}
+  .calc .t{font-weight:700;color:#1E40AF;margin-bottom:3px;}
+  .calc table{width:auto;}.calc td{border:none;padding:1px 8px 1px 0;font-size:12px;}
+  .calc .num{text-align:right;color:#1F2937;}
+  .calc .sum{font-weight:700;border-top:1px solid #93C5FD;color:#1E40AF;}
+  .fix{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;background:#DCFCE7;color:#166534;margin-left:4px;}
+  .secrow td{background:#FAFAFA;padding:6px 10px;}
+  .foot{padding:12px 18px;font-size:11px;color:#9CA3AF;background:#FAFAFA;border-top:1px solid #E5E7EB;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hd">
+  <h1>✅ G2 หลังแก้ — ใบเสนอราคา + วิธีคิดราคา (render จริงจากระบบที่แก้แล้ว)</h1>
+  <div class="s">แต่ละข้อ: ข้อความที่ระบบออกจริง · 🧮 วิธีคิดราคา · 🟢 จุดที่แก้สำเร็จ · 10 มิ.ย. 2026 · เทสจาก index.html ปัจจุบัน</div>
+</div>
+
+<div class="note">
+  ✓ <b>เทสจริง 9 เคส + baseline PASS 14/14 (ไม่พัง)</b> · ✓ ทุก fix G2-1 ถึง G2-15 ทำงานแล้ว · ✓ ราคายังตรงสูตร · ข้อความ "รายละเอียดงาน" ด้านล่างคือ output จริงที่ระบบพ่นออกมา
+</div>
+
+<table>
+<thead><tr><th style="width:26px;">#</th><th>รายละเอียด (output จริง)</th><th class="c" style="width:58px;">จำนวน</th><th class="c" style="width:80px;">ราคา/หน่วย</th><th class="c" style="width:80px;">ยอดรวม</th></tr></thead>
+<tbody>
+
+<!-- 1 ประตูรั้ว สวิง -->
+<tr>
+  <td class="idx">1</td>
+  <td>
+    <div class="ti">ประตูรั้วระแนง — บานสวิง <span class="fix">✓ G2-2/3</span></div>
+    <div class="out"><div class="h">ระบบออกจริง:</div>
+      ประตูรั้วระแนง (3 × 1.8 ม.)<br>รายละเอียดงาน<br>
+      - ประตูระแนงอลูมิเนียม<b>บานสวิง พร้อมระแนงติดตายด้านข้าง</b><br>
+      - ระแนงอลูมิเนียม บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm.<br>
+      - สีอบขาว<br>- ไม่มีธรณี
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">51,000</td><td class="c price">51,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา (สูตร 37 · A = 3.0×1.8 = 5.4 ตร.ม. · บานสวิง สีอบขาว)</div>
+    <table>
+      <tr><td>ค่าทำประตู = A × 4,000</td><td class="num">5.4 × 4,000 = 21,600</td></tr>
+      <tr><td>ค่าระแนง = A × เรต rn13 (3,700)</td><td class="num">5.4 × 3,700 = 19,980</td></tr>
+      <tr><td>ค่าราง (ตามลักษณะเปิด) + ปัดเศษ</td><td class="num">≈ 9,420</td></tr>
+      <tr><td class="sum">รวม</td><td class="num sum">51,000</td></tr>
+    </table>
+  </div>
+</td></tr>
+
+<!-- 2 G2-1 proof -->
+<tr>
+  <td class="idx">2</td>
+  <td>
+    <div class="ti">ประตูรั้วระแนง — บานสวิง + อบสีพิเศษ <span class="fix">✓ G2-1 (บั๊กเงิน)</span></div>
+    <div class="out"><div class="h">ระบบออกจริง:</div>
+      - ประตูระแนงอลูมิเนียมบานสวิง พร้อมระแนงติดตายด้านข้าง<br>- ระแนงอลูมิเนียม บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm.<br>- สีอบสีพิเศษ
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">59,000</td><td class="c price">59,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 พิสูจน์บั๊กเงินหาย (G2-1)</div>
+    <table>
+      <tr><td>เดิม (สีอบขาว ฐาน)</td><td class="num">51,000</td></tr>
+      <tr><td>เลือก "อบสีพิเศษ" → คิดค่าอบสีถูกต้อง</td><td class="num">+ 8,000</td></tr>
+      <tr><td class="sum">รวม (เดิมคิด 0 = บั๊ก · ตอนนี้คิดถูก)</td><td class="num sum">59,000 ✓</td></tr>
+    </table>
+  </div>
+</td></tr>
+
+<!-- 3 รางบน + ลายไม้ -->
+<tr>
+  <td class="idx">3</td>
+  <td>
+    <div class="ti">ประตูรั้วระแนง — เลื่อนคู่กลางรางบน + OPTION ลายไม้ <span class="fix">✓ G2-2/12</span></div>
+    <div class="out"><div class="h">ระบบออกจริง:</div>
+      - ประตูระแนงอลูมิเนียม<b>บานเลื่อนเปิดคู่กลางรางบน</b> พร้อมระแนงติดตายด้านข้าง<br>- ระแนงอลูมิเนียม บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. · สีอบขาว · ไม่มีธรณี<br>
+      <span class="red">OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม 5,000 บาท</span>
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">56,000</td><td class="c price">56,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา</div>
+    <table>
+      <tr><td>ฐาน (รางบน) + ค่าราง</td><td class="num">56,000</td></tr>
+      <tr><td>OPTION ลายไม้ Golden Teak SMS</td><td class="num">+5,000 (โชว์เป็นทางเลือก ไม่บวกในยอด)</td></tr>
+    </table>
+  </div>
+</td></tr>
+
+<!-- 4 bar_grid 38.1 -->
+<tr>
+  <td class="idx">4</td>
+  <td>
+    <div class="ti">ระแนงบานเกล็ดอลู (38.1) <span class="fix">✓ G2-5/8</span></div>
+    <div class="out"><div class="h">ระบบออกจริง (ชื่อไม่มี "(ข้อ 38.1)" แล้ว):</div>
+      ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (2.4 × 2.2 ม.)<br>รายละเอียดงาน<br>- ระแนงอลูมิเนียมเกล็ด · <b>สีเทาซาฮาร่า · ( แนวตั้ง )</b>
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">34,000</td><td class="c price">34,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา (สูตร 38.1 · ตั้ง · A = 5.28)</div>
+    <table>
+      <tr><td>จำนวนชุด = ⌈2.2÷1.5⌉ = 2</td><td class="num">2 ชุด</td></tr>
+      <tr><td>ฐาน = max(5,500, 5.28×5,500)</td><td class="num">29,040</td></tr>
+      <tr><td>ชุดเพิ่ม = max(500,2.64×1,500)+1,000</td><td class="num">4,960</td></tr>
+      <tr><td class="sum">รวม</td><td class="num sum">34,000</td></tr>
+    </table>
+  </div>
+</td></tr>
+
+<!-- 5 rn13 บังตา -->
+<tr>
+  <td class="idx">5</td>
+  <td>
+    <div class="ti">ระแนงบังตา rn13 — default สีเทาซาฮาร่า <span class="fix">✓ G2-13/14</span></div>
+    <div class="out"><div class="h">ระบบออกจริง (ขนาดซี่ + สี ลงรายละเอียดงานแล้ว):</div>
+      บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. ไม่โครง (3 × 2 ม.)<br>รายละเอียดงาน<br>- บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. ไม่โครง · <b>สีเทาซาฮาร่า</b>
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">24,000</td><td class="c price">24,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา (สูตร 38.4 · A = 6.0 ตร.ม. · default ซาฮาร่า)</div>
+    <table>
+      <tr><td>ราคา = พื้นที่ × (เรต 3,700 + ค่าสีซาฮาร่า 300)</td><td class="num">6.0 × 4,000 = 24,000</td></tr>
+    </table>
+    <div style="font-size:11px;color:#92400E;margin-top:3px;">⚠ <b>(เช็คซ้ำ):</b> เปลี่ยน default เป็นซาฮาร่า ทำให้ราคาฐาน +300/ตร.ม. (เดิมขาว = 23,000) — ยืนยันว่าซาฮาร่าควรคิดเพิ่มหรือเป็นสีมาตรฐานฟรี</div>
+  </div>
+</td></tr>
+
+<!-- 6 เกล็ด Z rn85 -->
+<tr>
+  <td class="idx">6</td>
+  <td>
+    <div class="ti">เกล็ด Z rn85 — เลือกแนวตั้ง <span class="fix">✓ G2-9</span></div>
+    <div class="out"><div class="h">ระบบออกจริง (โชว์ทิศแล้ว):</div>
+      เกล็ด Z 1.6" ไม่โครง (3 × 2 ม.)<br>รายละเอียดงาน<br>- เกล็ด Z 1.6" ไม่โครง · สีเทาซาฮาร่า · <b>( แนวตั้ง )</b>
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">33,000</td><td class="c price">33,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา (สูตร 38.4 · จับ 2 ทิศ ราคาเท่ากัน)</div>
+    <table><tr><td>6.0 × (เรต 4,900 + ซาฮาร่า 500)</td><td class="num">6.0 × 5,400 = 32,400 → 33,000</td></tr></table>
+  </div>
+</td></tr>
+
+<!-- 7 ราวกันตก -->
+<tr>
+  <td class="idx">7</td>
+  <td>
+    <div class="ti">ราวกันตกกระจก imp1 — 10/12 มม. <span class="fix">✓ G2-8/10/11</span></div>
+    <div class="out"><div class="h">ระบบออกจริง (ชื่อไม่มี "47.1 (ทำยากสุด)" · มีสแตนเลส · เลือกหนาได้):</div>
+      ราวกันตก บันไดเฉียง หมุดแปะปูน (ยาว 6 ม.)<br>รายละเอียดงาน<br>
+      - <b>อุปกรณ์มาตรฐานผู้ผลิต สแตนเลสสีเงิน</b><br>- กระจกเทมเปอร์ใส หนา <b>10 / 12 มม.</b> (เลือกได้)
+    </div>
+  </td>
+  <td class="c">1 ชุด</td><td class="c price">60,000</td><td class="c price">60,000</td>
+</tr>
+<tr class="secrow"><td></td><td colspan="4">
+  <div class="calc"><div class="t">🧮 วิธีคิดราคา (สูตร 47 · คิด/เมตร · 6 ม.)</div>
+    <table>
+      <tr><td>47.1 เฉียงหมุด ช่วง 5–10 ม. = 10,000/ม.</td><td class="num">6 × 10,000 = 60,000</td></tr>
+      <tr><td>ความหนากระจก 10↔12 มม.</td><td class="num">ไม่กระทบราคา (แค่ระบุในใบ)</td></tr>
+    </table>
+  </div>
+</td></tr>
+
+</tbody>
+</table>
+
+<div class="foot">
+  render จาก index.html ปัจจุบัน (หลัง commit G2-1 ถึง G2-15) · baseline quote-fidelity PASS 14/14 · ราคา/ข้อความเป็น output จริงของระบบ · วิธีคิดราคาตามสูตร R3.9 · 10 มิ.ย. 2026 · READ-ONLY
+</div>
+
+</div>
+</body>
+</html>

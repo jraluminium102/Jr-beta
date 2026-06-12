@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>SPEC G4 form UX — ตู้อลู + ฝาตู้ (ส่ง dev แชท B)</title>
+<style>
+  body{ font-family:'Segoe UI',Tahoma,sans-serif; color:#1F2937; max-width:920px; margin:0 auto; padding:24px; line-height:1.55; }
+  h1{ color:#B3151D; font-size:23px; margin-bottom:2px; }
+  h2{ color:#B3151D; font-size:17px; margin-top:26px; border-bottom:2px solid #FCA5A5; padding-bottom:4px; }
+  h3{ font-size:14px; margin:16px 0 6px; }
+  .sub{ color:#6B7280; font-size:13px; margin-bottom:8px; }
+  code,.cls{ background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:12.5px; color:#B3151D; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+  th,td{ border:1px solid #D1D5DB; padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:#FEE2E2; color:#7F1D1D; }
+  tr:nth-child(even) td{ background:#FafafA; }
+  .tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 7px; border-radius:5px; }
+  .chip{ background:#B3151D; color:#fff; } .keep{ background:#E5E7EB; color:#374151; } .lbl{ background:#DBEAFE; color:#1E40AF; } .auto{ background:#D1FAE5; color:#065F46; }
+  pre{ background:#0F172A; color:#E2E8F0; padding:12px 14px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.45; }
+  pre .c{ color:#94A3B8; }
+  .box{ background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px; padding:10px 13px; margin:12px 0; font-size:13px; }
+  .warn{ background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 13px; margin:12px 0; font-size:13px; }
+  .ok{ background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:10px 13px; margin:12px 0; font-size:13px; }
+  ul{ margin:6px 0 6px 0; padding-left:20px; } li{ margin:3px 0; }
+  .small{ font-size:12px; color:#6B7280; }
+</style>
+</head>
+<body>
+
+<h1>SPEC — ปรับ UX ฟอร์มกรอก กลุ่ม 4 (ตู้อลู + ฝาตู้)</h1>
+<div class="sub">ส่ง dev แชท B แก้ <code>public/calculator/index.html</code> · 11 มิ.ย. 2026 · ออกโดยสกิล form-ux-redesign (READ-ONLY)</div>
+<div class="sub">ดราฟกดเล่น (มือถือ): <b>https://jraluminium102.github.io/sharepicjr/draft-G4-formux.html</b></div>
+
+<div class="ok">
+<b>สรุปงาน G4 = เบาสุด.</b> มี 2 สินค้า · ไม่มีมือจับ/มุ้ง/กล่องรวบซับซ้อน ·
+แก้จริง = เปลี่ยน <b>3 dropdown ของ "ตู้อลู" เป็นชิป</b> เท่านั้น · ฝาตู้แทบไม่แตะ (สีฝาตู้ 12 สี = คงดรอปดาวน์)
+</div>
+
+<h2>0. หลักการเดียว (ห้ามพลาด)</h2>
+<p>เปลี่ยนแค่ <b>หน้าตา control (UI)</b> — <u>ไม่แตะ logic/ราคา/ใบ</u>. วิธี:</p>
+<ul>
+  <li><b>ไม่ลบ</b> <code>&lt;select&gt;</code> เดิม — แค่ <code>style="display:none;"</code></li>
+  <li>ชิป (ปุ่ม) เป็นหน้ากาก → กดแล้ว set <code>value</code> กลับเข้า select เดิม + ยิง <code>change</code></li>
+  <li><b>มี helper พร้อมใช้แล้ว: <code>chSetChip(this,'ชื่อ-class-ไม่มีจุด')</code></b> (บรรทัด ~2139) — ใช้ตัวนี้เลย</li>
+  <li><b>ห้ามเปลี่ยน</b> <code>value</code> หรือชื่อ <code>class</code> ที่ logic อ่าน (<code>readItem</code>/<code>calcQuote</code>)</li>
+</ul>
+<div class="ok">
+<b>ทำไมราคายังอัปเดตเอง:</b> บรรทัด <b>~2309</b> ผูก <code>change→calcQuote</code> ให้ทุก input/select ในกล่อง opts อยู่แล้ว →
+ชิปยิง <code>change</code> ผ่าน <code>chSetChip</code> ราคาคำนวณใหม่อัตโนมัติ <u>ไม่ต้องเติม onchange เอง</u>
+</div>
+
+<h2>1. ตารางตัดสิน control</h2>
+
+<h3>ตู้อลู — <span class="cls">cabinet_alu</span> (buildItemOpts บรรทัด ~2621)</h3>
+<table>
+<tr><th>ช่อง (class เดิม)</th><th>ตัวเลือก</th><th>ทำเป็น</th><th>หมายเหตุ</th></tr>
+<tr><td>ประเภท <code>.o-cabtype</code></td><td>ตู้ทั่วไป / ตู้รองเท้า (2)</td><td><span class="tag chip">ชิป</span></td><td><b>ขึ้นบนสุดของกล่อง</b> ("นี่คือตู้อะไร") · default = ตู้ทั่วไป (wardrobe)</td></tr>
+<tr><td>จำนวนบานหน้าตู้ <code>.o-cabdoors</code></td><td>1 / 2 / 3 บาน (3)</td><td><span class="tag chip">ชิป</span></td><td>default = 2 บาน</td></tr>
+<tr><td>ชนิดชั้น <code>.o-shelfmat</code></td><td>ตามประเภท / อลู(1,200) / กระจก(1,000) (3)</td><td><span class="tag chip">ชิป</span></td><td>default = "" (ตามประเภท) — <b>คง value <code>""</code> / <code>alu</code> / <code>glass</code> เป๊ะ</b></td></tr>
+<tr><td>ลึก (ม.) <code>.o-depth</code></td><td>number 0.6</td><td><span class="tag keep">คงเดิม</span> <span class="tag auto">auto</span></td><td>ถูก auto-set โดย listener cabtype (ดูข้อ 3) — ไม่ต้องแตะ</td></tr>
+<tr><td>จำนวนชั้น <code>.o-shelves</code></td><td>number (auto)</td><td><span class="tag keep">คงเดิม</span> <span class="tag auto">auto</span></td><td>เว้นว่าง = อัตโนมัติ</td></tr>
+<tr><td>+ผนังหลัง <code>.o-backwall</code></td><td>checkbox</td><td><span class="tag keep">คงเดิม</span></td><td>หรือทำเป็น toggle pill ก็ได้ (ออปชั่น) — value/checked ต้องคงรูปแบบ checkbox</td></tr>
+</table>
+
+<h3>ฝาตู้ — <span class="cls">future_tech</span> (buildItemOpts บรรทัด ~2664)</h3>
+<table>
+<tr><th>ช่อง (class เดิม)</th><th>ตัวเลือก</th><th>ทำเป็น</th><th>หมายเหตุ</th></tr>
+<tr><td>สีฝาตู้ <code>.o-ftcolor</code></td><td>12 สี (จาก COLORS)</td><td><span class="tag keep">คงดรอปดาวน์</span></td><td>≥6 ตัว → ชิปจะล้น · <b>ไม่ต้องแตะ</b> (คง warning "สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน" ไว้)</td></tr>
+</table>
+
+<h3>ช่องร่วมทุกสินค้า (ทำไว้แล้ว / คงเดิม)</h3>
+<table>
+<tr><th>ช่อง</th><th>สถานะ</th></tr>
+<tr><td>ประเภท ประตู/หน้าต่าง <code>.i-type</code></td><td><span class="tag chip">ชิปแล้ว</span> (G1 ทำ บรรทัด ~2211) — ไม่ต้องแตะ</td></tr>
+<tr><td>เพิ่มหมายเหตุ <code>.o-remark-add</code></td><td>18 ตัว → <span class="tag keep">คงดรอปดาวน์</span></td></tr>
+<tr><td>งานเสริม/วิศวกรรม, รื้อของเดิม, ฝังรางยู</td><td><span class="tag keep">คงเดิม</span></td></tr>
+</table>
+
+<h2>2. เรียงลำดับใหม่ + รวบเป็นกล่องเดียว</h2>
+<p>ของ "ตู้อลู" 6 ช่องกระจาย → รวบเป็นกล่อง <b>"รายละเอียดตู้"</b> เรียง "นี่คืออะไร" ก่อน:</p>
+<ol>
+  <li><b>ประเภทตู้</b> (ชิป) — เลือกก่อน เพราะตั้ง สูง/ลึก ให้อัตโนมัติ</li>
+  <li><b>จำนวนบานหน้าตู้</b> (ชิป)</li>
+  <li><b>ชนิดชั้น</b> (ชิป)</li>
+  <li>ลึก / จำนวนชั้น (number · ป้าย <span class="tag auto">auto</span>) — แถวเดียว 2 ช่อง</li>
+  <li>+ผนังหลัง (checkbox/pill)</li>
+</ol>
+<p class="small">ฝาตู้: ประเภท (ชิปอยู่แล้ว) → สีฝาตู้ (ดรอปดาวน์) — ตามเดิม</p>
+
+<h2>3. ⚠ จุดที่ต้องระวังที่สุด — listener auto สูง/ลึก ของ cabtype</h2>
+<div class="warn">
+บรรทัด <b>~2754</b> มี listener: เมื่อ <code>.o-cabtype</code> เปลี่ยนเป็น <code>shoe</code> →
+set <code>.i-h=2.0</code>, <code>.o-depth=0.4</code> · ถ้าไม่ใช่ → <code>.i-h=2.4</code>, <code>.o-depth=0.6</code><br><br>
+<b>เพราะชิปยิง <code>change</code> ผ่าน <code>chSetChip</code> → listener นี้ยังทำงานครบ ✅</b>
+แต่ <u>ต้องเทสยืนยัน</u>: กดชิป "ตู้รองเท้า" แล้ว สูง/ลึก ต้องเด้งเป็น 2.0/0.4 จริง
+</div>
+
+<h2>4. Pattern โค้ด (ก็อปวางได้)</h2>
+<p>แทนที่ <code>&lt;select class="o-cabdoors"&gt;...&lt;/select&gt;</code> เดิมด้วย ชิป + select ซ่อน:</p>
+<pre><span class="c">// ในกล่อง "รายละเอียดตู้" — ตัวอย่าง จำนวนบาน (o-cabdoors)</span>
+h+='&lt;label class="opt" style="width:100%;"&gt;จำนวนบานหน้าตู้'
+ +'&lt;div class="chip-group chip-sm"&gt;'
+ +'&lt;button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')"&gt;1 บาน&lt;/button&gt;'
+ +'&lt;button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')"&gt;2 บาน&lt;/button&gt;'
+ +'&lt;button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')"&gt;3 บาน&lt;/button&gt;'
+ +'&lt;/div&gt;'
+ +'&lt;select class="o-cabdoors" style="display:none;"&gt;&lt;option value="1"&gt;1 บาน&lt;/option&gt;&lt;option value="2" selected&gt;2 บาน&lt;/option&gt;&lt;option value="3"&gt;3 บาน&lt;/option&gt;&lt;/select&gt;'
+ +'&lt;/label&gt;';</pre>
+<p class="small">ทำซ้ำแบบเดียวกันกับ <code>.o-cabtype</code> (2 ชิป) และ <code>.o-shelfmat</code> (3 ชิป) ·
+ชิปตัว default ใส่ class <code>on</code> · select ซ่อนคง <code>selected</code> ให้ตรงกัน ·
+อ้างอิงชิปที่ทำสำเร็จแล้วในไฟล์: <code>.o-slidelock</code> (~2459), <code>.o-bottomrail</code> (~2448)</p>
+
+<div class="box">
+<b>helper มีอยู่แล้ว (อย่าเขียนใหม่):</b> <code>chSetChip(btn, selectClass)</code> บรรทัด ~2139 —
+มันหา <code>.ch</code> การ์ดเดียวกัน, ปลดชิปพี่น้องที่อ้าง selectClass เดียวกัน, ใส่ <code>on</code>,
+แล้ว set value + ยิง <code>change(bubbles)</code> ให้ select ซ่อน · <b>scope ปลอดภัยต่อหลายการ์ด</b>
+</div>
+
+<h2>5. จุดในโค้ดที่แตะ</h2>
+<ul>
+  <li><code>public/calculator/index.html</code> บรรทัด <b>~2621</b> — บล็อก <code>if(p.cabinet){ ... }</code> : แก้ 3 select → ชิป + จัดเป็นกล่อง "รายละเอียดตู้"</li>
+  <li>บรรทัด <b>~2664</b> <code>if(p.future_tech)</code> — <b>ไม่แตะ</b> (สีฝาตู้คงดรอปดาวน์)</li>
+  <li>บรรทัด <b>~2754</b> listener cabtype — <b>ไม่แตะ</b> (แค่เทสว่ายังทำงาน)</li>
+  <li>CSS <code>.chip / .chip-group / .chip-sm</code> มีอยู่แล้ว (บรรทัด ~215) — ใช้ได้เลย</li>
+  <li><code>readItem</code> อ่าน cabinet ที่บรรทัด <b>~2857</b> · future_tech ~2891 — <b>ไม่ต้องแก้</b> (ยังอ่าน <code>.o-*</code> เดิม)</li>
+</ul>
+
+<h2>6. QA — ตรวจครบทั้งกลุ่ม (มี 2 ตัว ตรวจหมด)</h2>
+<table>
+<tr><th>#</th><th>สินค้า</th><th>ต้องเช็ค</th></tr>
+<tr><td>1</td><td><b>ตู้อลู</b> (cabinet_alu)</td><td>
+  ชิป 3 ชุด (ประเภท/จำนวนบาน/ชนิดชั้น) กดติด <code>on</code> สลับถูก ·
+  กด "ตู้รองเท้า" → สูง=2.0 ลึก=0.4 · กด "ตู้ทั่วไป" → สูง=2.4 ลึก=0.6 ·
+  เลือกชนิดชั้น "กระจก/อลู" → ราคาเปลี่ยน · +ผนังหลัง ติ๊กแล้วราคาเพิ่ม · ดูข้อความในใบถูก (ตู้รองเท้า/กระจก ฯลฯ)
+</td></tr>
+<tr><td>2</td><td><b>ฝาตู้</b> (future_tech)</td><td>
+  ประเภทชิป ประตู/หน้าต่าง · สีฝาตู้ดรอปดาวน์ครบ 12 · เลือกสีพิเศษ → ขึ้น "สีพิเศษ" ในใบ · ราคา/บาน ถูก (max 3 บาน/ชุด)
+</td></tr>
+</table>
+
+<h2>7. Definition of Done</h2>
+<ul>
+  <li>render ครบทั้ง 2 สินค้า — ชิปโผล่เฉพาะที่ควร ไม่หลุดไปสินค้าอื่น</li>
+  <li><code>node test/quote-fidelity.mjs</code> <b>PASS</b> (ราคา/ใบ ไม่เพี้ยนเทียบ baseline)</li>
+  <li><code>readItem</code> ยังอ่าน <code>.o-cabdoors / .o-cabtype / .o-shelfmat</code> value เดิมครบ</li>
+  <li>listener auto สูง/ลึก (cabtype) ยังทำงานหลังเปลี่ยนเป็นชิป</li>
+  <li>พี่นัทกดดราฟผ่าน + เทียบหน้าจริงตรงดราฟ</li>
+</ul>
+
+<div class="warn">
+<b>เตือน dev:</b>
+<ul>
+  <li>ห้ามแตะ value: <code>1/2/3</code> (cabdoors), <code>wardrobe/shoe</code> (cabtype), <code>""/alu/glass</code> (shelfmat) — logic + readItem อ่านตรงตัว</li>
+  <li>สีฝาตู้ <code>.o-ftcolor</code> = label/ราคาพิเศษ → อย่าเปลี่ยนเป็นชิป (12 ตัว)</li>
+  <li>ชิป default ต้องตรงกับ <code>selected</code> ของ select ซ่อน (กันค่าตั้งต้นเพี้ยน)</li>
+</ul>
+</div>
+
+</body>
+</html>

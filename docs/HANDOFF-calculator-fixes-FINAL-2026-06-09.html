@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF (FINAL) — รายการแก้ index.html + มติพี่นัท · 2026-06-09</title>
+<style>
+  @page { size: A4; margin: 13mm 11mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Leelawadee UI","Tahoma",sans-serif; color:#1F2937; font-size:11.5px; line-height:1.45; margin:0; }
+  h1 { font-size:19px; color:#B3151D; margin:0 0 2px; }
+  .sub { color:#6B7280; font-size:10.5px; margin-bottom:8px; }
+  .warn { background:#FEF2F2; border:1px solid #FCA5A5; border-radius:7px; padding:8px 11px; margin:8px 0; font-size:11px; }
+  .how { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:7px; padding:8px 11px; margin:8px 0; font-size:11px; }
+  h2 { font-size:14px; margin:16px 0 5px; padding:5px 9px; border-radius:5px; color:#fff; background:#B3151D; page-break-after:avoid; }
+  h2.done { background:#2F855A; } h2.cos { background:#6B7280; } h2.skip { background:#9CA3AF; }
+  h2 .cnt { float:right; font-size:11px; font-weight:400; opacity:.9; }
+  .item { border:1px solid #E5E7EB; border-radius:7px; padding:7px 10px; margin-bottom:7px; page-break-inside:avoid; }
+  .item h3 { font-size:12.5px; margin:0 0 4px; }
+  .num { display:inline-block; min-width:20px; color:#B3151D; }
+  .row { display:flex; gap:10px; }
+  .col { flex:1; }
+  .lbl { font-size:9.5px; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:.3px; margin-bottom:2px; }
+  ul { margin:0 0 4px; padding-left:15px; } li { margin-bottom:2px; }
+  ul.fix li::marker { color:#2F855A; }
+  .verdict { background:#ECFDF5; border-left:3px solid #2F855A; padding:3px 8px; border-radius:0 5px 5px 0; margin-top:3px; font-size:11px; }
+  code { font-family:"Consolas",monospace; font-size:10px; background:#F3F4F6; padding:0 3px; border-radius:3px; color:#B3151D; word-break:break-all; }
+  .anchor { font-family:"Consolas",monospace; font-size:10px; background:#FFF7ED; border:1px dashed #FDBA74; padding:1px 4px; border-radius:3px; color:#9A3412; }
+  .badge { display:inline-block; font-size:8.5px; padding:1px 5px; border-radius:3px; font-weight:700; margin-left:5px; vertical-align:middle; }
+  .v { background:#DCFCE7; color:#166534; } .s { background:#FEF3C7; color:#92400E; }
+  .foot { margin-top:14px; font-size:9.5px; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:5px; }
+</style>
+</head>
+<body>
+
+<h1>HANDOFF (ฉบับสุดท้าย) — แก้ <code>public/calculator/index.html</code></h1>
+<div class="sub">จากแชทตรวจ → แชทหลัก (ผู้แก้) · 9 มิ.ย. 2026 · R3.9.2 · ใส่มติพี่นัทครบทุกข้อแล้ว · พร้อม merge + push</div>
+
+<div class="warn">
+<b>⚠ ให้แชทหลักแก้คนเดียว แล้ว push ทีเดียว</b> — ไฟล์นี้หลายแชท/editor เขียนพร้อมกันแล้ว edit หาย (X-series เคยโดนทับ). ปิด editor/แชทอื่นที่จับไฟล์นี้ก่อนเริ่ม · working tree มีงาน <b>หลังคาเลื่อน rev2</b> ค้างอยู่ ระวังอย่าทับ.
+</div>
+<div class="how">
+<b>วิธีหาจุดแก้:</b> ใช้ <span class="anchor">ข้อความค้นหา</span> ที่ให้ (ไม่ใช้เลขบรรทัด เพราะขยับ) · ทุกจุดยืนยันด้วยโค้ดจริงแล้ว · <span class="badge v">ยืนยันเอง</span> เช็คโค้ดเอง · <span class="badge s">เช็คซ้ำ</span> ยืนยันรอบสองแล้ว
+</div>
+
+<!-- DONE -->
+<h2 class="done">✅ แก้แล้วในไฟล์ — เช็คให้มีครบ <span class="cnt">2 จุด</span></h2>
+<div class="item">
+<h3><span class="num">1.</span> ลบ "ตะแกรงเหล็กสาน" ตัวซ้ำ (imp34) <span class="badge v">ยืนยันเอง</span></h3>
+<ul><li>ลบ <span class="anchor">id:'imp34'</span> ออกแล้ว เก็บ <code>steel_mesh</code> (ราคา 2,500/ตร.ม. เท่ากัน) · เรต IMP34 เหลือ dead data ไม่กระทบ</li></ul>
+</div>
+<div class="item">
+<h3><span class="num">2.</span> บานกระทุ้งยูโร "แบบเปิด" (awn_mode) <span class="badge v">ยืนยันเอง</span></h3>
+<ul><li>แก้ 3 จุด: วาด select จริง / อ่านค่า select / คิดราคา (กัน NaN + tilt&turn 5,000×บาน + คำเตือนน้ำเข้า) — ดูได้จาก <span class="anchor">o.type==='select'</span></li></ul>
+</div>
+
+<!-- MUST FIX -->
+<h2>🔴 ต้องแก้ (ใส่มติแล้ว) <span class="cnt">11 จุด</span></h2>
+
+<div class="item">
+<h3><span class="num">3.</span> บานเปิด X-series ใส่มุ้งไม่ได้ <span class="badge v">ยืนยันเอง</span> <b style="color:#B3151D;">(เคยแก้แล้วแต่โดนทับ — ทำใหม่)</b></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li><code>mosquito:1</code> วางผิดที่ (อยู่ในตัวเลือกโช้ค) → เมนูมุ้งไม่โผล่</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">casement_xseries</span></li><li>ย้ายเป็น <code>...series:'S',mosquito:1,opts:[{id:'closer',label:'โช้ค',price:5000}]</code></li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">4.</span> VAT ในไฟล์ Excel ติด 7% ตายตัว <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>เลือก VAT 0% แต่ Excel ยังคิด 7% → ไม่ตรงใบ HTML</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">*0.07</span> ใน <code>exportQuoteExcel</code></li><li>อ่าน <code>#vat-pct</code> ใช้ <code>net*vatPct/100</code></li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">5.</span> OPTION ระดับชุด โชว์ราคาแต่ไม่บวกยอด (ขายขาดทุน) <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>ใบบอก "+N บาท" แต่ยอดรวมไม่รวม</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">groupOptDelta</span></li><li>บวกเข้า sell บานแรกในชุด <b>ครั้งเดียว</b> · ถ้าเลิกใช้แล้วให้ซ่อนปุ่ม preset</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">6.</span> มุ้งม้วนเตะ เลือกรุ่นเล็กกับบานใหญ่ได้ ไม่เตือน <span class="badge s">เช็คซ้ำ</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li><code>maxWidth</code> (1.5/3.0/6.0 ม.) ประกาศไว้แต่ไม่มีโค้ดอ่าน → เก็บเงินขาด</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">mj_kick_150</span> / <code>maxWidth</code></li><li>ถ้ากว้าง &gt; maxWidth → เตือน + ไม่คิดราคาจนเปลี่ยนรุ่น</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">7.</span> กั้นห้องกระจก ป้ายด้านเป็น "ด้าน A" ทุกบาน <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>hardcode "ด้าน A" 3 จุด ไม่มี auto A/B/C/D</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้</div><ul class="fix"><li>ค้น <span class="anchor">'ด้าน A'</span> (3 จุด)</li><li>นับบานในชุด → <code>pos='ด้าน '+String.fromCharCode(65+index)</code></li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">8.</span> ปิดปลายหลังคา คิดได้ 3 ทาง <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>"ปิดปลาย" (auto กว้าง) + "ปิดปลายกันน้ำ" (กรอกยาว) อยู่ฟอร์มเดียวกัน → กรอกซ้ำ = คิด 2 เท่า</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ <span style="color:#B7791F;">(มติ: เก็บแบบกรอกยาวเอง)</span></div><ul class="fix"><li>ค้น <span class="anchor">o-roofend</span> → <b>ตัดตัวเลือก "ปิดปลาย" (auto) ออก</b></li><li>เก็บ <code>o-rfeave</code> "ปิดปลายกันน้ำ" (กรอกยาวเอง) ไว้</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">9.</span> รางน้ำหลังคา ซ้ำ 2 ทาง <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>สินค้าแยก <code>roof_gutter_s/ss_m/ss_l</code> ราคาตรงกับตัวเลือก <code>o-rfgut</code> เป๊ะ</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ <span style="color:#B7791F;">(มติ: ตัดสินค้าแยก)</span></div><ul class="fix"><li>ลบสินค้า <span class="anchor">roof_gutter_s</span> / <code>roof_gutter_ss_m</code> / <code>roof_gutter_ss_l</code></li><li>เก็บตัวเลือก <code>o-rfgut</code> ในชุดหลังคาไว้ (โซ่/ปิดราง คงไว้)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">10.</span> สีกรอบมุ้ง "addon ต่อบาน" เลือกไม่ได้ <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>มุ้งที่เป็นสินค้า = เลือกสีได้ปกติ ✓ · แต่ <b>มุ้ง addon</b> ไม่มีช่องสีโผล่ (<code>.o-mosqcolor</code> ไม่ถูกสร้าง) + value ไม่ตรงกับ <code>optSel.mosqColor</code> ที่ใช้คิด</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ <span style="color:#B7791F;">(มติ: เพิ่มช่องสีให้)</span></div><ul class="fix"><li>ค้น <span class="anchor">optSel.mosqColor</span> + <span class="anchor">o-mosqcolor</span></li><li>เพิ่ม select สีกรอบให้ addon (ใช้แนวเดียวกับมุ้งสินค้า — index สี ×0.5) + ผูก value ให้ตรงกับโค้ดคิดสี</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">11.</span> shower อุปกรณ์ดำ/ทอง ติ๊กซ้อนได้ (บวก 10,000) <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>checkbox 2 อันแยก ติ๊กทั้งคู่ได้</li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ <span style="color:#B7791F;">(มติ: เลือกสีเดียว)</span></div><ul class="fix"><li>ค้น <span class="anchor">blackhw</span> / <code>goldhw</code></li><li>ทำเป็น &lt;select&gt; เดียว: เงิน(0) / ดำ(+4,000) / ทอง(+6,000)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">12.</span> ราวบันได เลขข้อซ้ำ + imp5/imp6 ราคาผิด <span class="badge v">ยืนยันเอง</span></h3>
+<div class="row">
+<div class="col"><div class="lbl">ปัญหา</div><ul><li>imp2/imp3 ชื่อ "47.2" ซ้ำ (ราคาเท่ากัน = ถูก) · imp5/imp6 ชื่อ "47.4" ซ้ำ <b>แต่ราคาต่างกัน = ผิด</b></li></ul></div>
+<div class="col"><div class="lbl">วิธีแก้ <span style="color:#B7791F;">(มติ)</span></div><ul class="fix"><li>เติม <code>(ก)/(ข)</code> ในชื่อ imp2/imp3 และ imp5/imp6 ให้แยกออก</li><li><b>ทำ IMP5 = IMP6 ให้ราคาเท่ากัน</b> ⚠️ <b>ยืนยันใช้เรตตัวไหน</b> (เช็คราคาจริง/spec ก่อนแก้)</li></ul></div>
+</div></div>
+
+<div class="item">
+<h3><span class="num">13.</span> ส่วนลดค่าประเมิน (discFlat) ไม่มีเพดาน — ยอดติดลบได้ <span class="badge v">ยืนยันเอง</span> <span style="font-size:9px;color:#2F855A;">(ปลอดภัย แก้เล็ก)</span></h3>
+<ul class="fix"><li>ค้น <span class="anchor">discFlat</span> → ใส่ <code>net=Math.max(0,net)</code> หรือเตือนเมื่อเกินยอด</li></ul>
+</div>
+
+<!-- COSMETIC -->
+<h2 class="cos">🟢 cosmetic — ทำหรือไม่ก็ได้ <span class="cnt">4 จุด</span></h2>
+<div class="item"><ul>
+<li><b>dropdown กระจกบานหลัก</b> ~50 แบบเรียงพรืด → ใส่ <code>&lt;optgroup&gt;</code> ใน <code>glassOpts()</code></li>
+<li><b>ฝาตู้ Future Tech</b> คอมเมนต์ "+5,000" แต่โค้ด 5,500 (เลขที่ลูกค้าเห็นถูก) → แก้คอมเมนต์</li>
+<li><b>กระจก ★ ตาราง28</b> คล้ายของหลัก → ติดป้าย "สั่งพิเศษ/นอกสต๊อก"</li>
+<li><b>โหมดเหมา</b> (มติ: เหมา=ฐาน บวกออปชั่นได้) → เขียนกำกับในโค้ด/ป้ายให้ชัด ไม่ต้องแก้ logic</li>
+</ul></div>
+
+<!-- SKIP -->
+<h2 class="skip">✓ พิจารณาแล้ว — ไม่ต้องทำ <span class="cnt">4 จุด</span></h2>
+<div class="item"><ul>
+<li><b>มุ้งบางตัวไม่จำกัดหมวด</b> (imp22/28/30/33/35/mj_*) → มติ: <b>ปล่อยอิสระ ติดได้ทุกที่</b></li>
+<li><b>ตารางมัดจำ/งวด ในใบ</b> → มติ: <b>ไม่ต้องใส่</b> ใช้ข้อความเงื่อนไขพอ</li>
+<li><b>ราคากระจกเทมเปอร์ยูโรบรอนซ์ 10มม.(BSG)</b> → มติ: <b>ราคา 5,900 ถูกแล้ว</b></li>
+<li><b>โซลิด วัน/ทู ราคา</b> → ตรวจแล้ว: สูตร <b>เรตยูโร + แผ่นลูกฟูกทึบล่าง (3,500/คอมโพสิท 3,300×พื้นที่+สี) + full grid ครบแล้ว</b> ไม่ใช่บั๊ก</li>
+</ul></div>
+
+<div class="foot">
+JR · แชทตรวจ → แชทหลัก · ใส่มติพี่นัทครบ 10 ข้อ · ใช้ข้อความค้นหาแทนเลขบรรทัด · สำรองไฟล์เดิม <code>index.bak-2026-06-09.html</code> · เหลือยืนยัน 1 จุด: เรต imp5/imp6 · 9 มิ.ย. 2026
+</div>
+
+</body>
+</html>

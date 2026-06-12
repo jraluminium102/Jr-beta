@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm 13mm;}
+*{box-sizing:border-box;font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.45;margin:0;}
+h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:10.5px;margin:0 0 4px;}
+.legend{font-size:10px;color:#374151;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;margin:8px 0 4px;}
+.legend b{color:#B3151D;}
+
+/* group header */
+.gh{color:#fff;background:#B3151D;font-size:15px;font-weight:700;margin:16px 0 8px;padding:6px 12px;border-radius:6px;}
+.gh .tag{font-size:10.5px;font-weight:400;opacity:.92;}
+
+/* item card */
+.item{border:1px solid #e5e7eb;border-radius:9px;padding:9px 11px 10px;margin:0 0 9px;page-break-inside:avoid;background:#fff;}
+.item .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;}
+.num{flex:0 0 auto;width:21px;height:21px;border-radius:50%;background:#B3151D;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.ttl{font-size:12px;font-weight:700;color:#111827;}
+.ttl .why{display:block;font-size:10px;font-weight:400;color:#6b7280;margin-top:1px;}
+.chk{flex:0 0 auto;font-size:9.5px;color:#9ca3af;border:1px dashed #cbd5e1;border-radius:5px;padding:2px 6px;white-space:nowrap;}
+
+/* before/after row */
+.ba{display:flex;gap:9px;}
+.ba .col{flex:1;border-radius:7px;padding:7px 9px;min-width:0;}
+.before{background:#fef2f2;border:1px solid #fecaca;}
+.after{background:#ecfdf5;border:1px solid #a7f3d0;}
+.col .lab{font-size:9.5px;font-weight:700;letter-spacing:.3px;margin-bottom:5px;text-transform:uppercase;}
+.before .lab{color:#b91c1c;}
+.after .lab{color:#047857;}
+.arrow{flex:0 0 auto;align-self:center;color:#9ca3af;font-size:15px;font-weight:700;}
+
+/* mini mock controls */
+.dd{display:inline-block;border:1px solid #cbd5e1;background:#fff;border-radius:5px;padding:3px 22px 3px 8px;font-size:10px;position:relative;margin:2px 0;color:#374151;}
+.dd::after{content:"▾";position:absolute;right:7px;color:#9ca3af;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0;}
+.chip{border:1px solid #cbd5e1;background:#fff;border-radius:13px;padding:3px 10px;font-size:10px;color:#374151;}
+.chip.on{background:#B3151D;border-color:#B3151D;color:#fff;font-weight:600;}
+.chip.tk{padding-left:7px;}
+.chip.tk::before{content:"☐ ";}
+.chip.tk.on::before{content:"☑ ";}
+.fieldrow{font-size:10px;color:#374151;margin:2px 0;}
+.muted{color:#9ca3af;font-size:9.5px;}
+.box-mock{border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;background:#fff;margin:2px 0;}
+.box-mock .bt{font-size:9.5px;font-weight:700;color:#6b7280;margin-bottom:4px;}
+.note{font-size:9.5px;color:#6b7280;margin-top:5px;padding-top:5px;border-top:1px dashed #e5e7eb;}
+.note b{color:#B3151D;}
+.pricecard{display:flex;gap:6px;margin-top:3px;}
+.pc{flex:1;border:1.5px solid #e5e7eb;border-radius:6px;padding:4px 7px;font-size:9.5px;}
+.pc.sel{border-color:#2563eb;background:#eff6ff;}
+.pc .p{font-size:13px;font-weight:700;color:#B3151D;}
+.pc .sv{color:#166534;font-weight:700;}
+.foot{margin-top:14px;font-size:9px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:6px;}
+.pillnew{display:inline-block;background:#15803d;color:#fff;font-size:8.5px;padding:1px 6px;border-radius:9px;vertical-align:middle;margin-left:4px;}
+</style></head><body>
+
+<h1>เทียบก่อน–หลัง · รายการที่แก้แล้ว (G1 / G2 / G3)</h1>
+<p class="sub">สำหรับพี่นัทเปิดเครื่องคิดราคาไปกดเล่นตรวจทีละจุด · อัปเดต 11 มิ.ย. 2026 · ทุกจุดผ่าน quote-fidelity 14/14 · ราคา baseline ไม่เพี้ยน</p>
+<div class="legend"><b>วิธีอ่าน:</b> ซ้าย = <b style="color:#b91c1c">ก่อนแก้ (แดง)</b> · ขวา = <b style="color:#047857">หลังแก้ (เขียว)</b> · มุมขวาบนของแต่ละจุด = <b>ที่ให้ไปกดเล่น</b> ☐ ติ๊กเองได้ตอนตรวจ · <span class="pillnew">ใหม่</span> = ฟีเจอร์ที่เพิ่งมี</div>
+
+<!-- ===================== G1 ===================== -->
+<div class="gh">G1 — บานกระจก (เลื่อน · เปิด · กระทุ้ง · พับ · PC · Shower · ดัดโค้ง) <span class="tag">· เน้น "วิธีกรอกฟอร์ม" เปลี่ยน</span></div>
+
+<div class="item">
+  <div class="top"><div class="num">1</div>
+    <div class="ttl">เรียงฟอร์มใหม่ — ดึง "แบบ" ขึ้นที่ 2<span class="why">เดิมต้องเลื่อนหา "แบบ" อยู่อันดับ 4 · ตอนนี้อยู่ติดกับกลุ่มงาน เลือกได้ทันที</span></div>
+    <div class="chk">กดเล่น: เพิ่มรายการบาน → ดูลำดับช่อง</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">1. กลุ่มงาน</div><div class="fieldrow">2. ประเภท</div>
+      <div class="fieldrow">3. ด้าน/ตำแหน่ง</div><div class="fieldrow" style="color:#b91c1c;font-weight:700">4. แบบ ← ต้องเลื่อนหา</div>
+      <div class="fieldrow">5. กว้าง × สูง</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="fieldrow">1. กลุ่มงาน</div><div class="fieldrow" style="color:#047857;font-weight:700">2. แบบ ← ขึ้นมาแล้ว</div>
+      <div class="fieldrow">3. ประเภท</div><div class="fieldrow">4. ด้าน/ตำแหน่ง</div>
+      <div class="fieldrow">5. กว้าง × สูง</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">2</div>
+    <div class="ttl">ช่อง dropdown ตัวเลือกน้อย → ปุ่มชิป<span class="why">ประเภท · ราง · ชุดล็อค · เสริมคาน · แผ่นทึบล่าง · ครอบวงกบ · สีกรอบมุ้ง — กดปุ่มเดียวจบ ไม่ต้องเปิด dropdown</span></div>
+    <div class="chk">กดเล่น: ดูช่อง "ประเภท / ราง / ชุดล็อค"</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน · dropdown</div>
+      <div class="fieldrow">ประเภท <span class="dd">บานเลื่อน 2 บาน</span></div>
+      <div class="fieldrow">ราง <span class="dd">รางคู่</span></div>
+      <div class="fieldrow">ชุดล็อค <span class="dd">ล็อคกลาง</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง · ชิป</div>
+      <div class="fieldrow">ประเภท</div>
+      <div class="chips"><span class="chip on">2 บาน</span><span class="chip">3 บาน</span><span class="chip">4 บาน</span></div>
+      <div class="fieldrow" style="margin-top:3px">ราง</div>
+      <div class="chips"><span class="chip">เดี่ยว</span><span class="chip on">คู่</span><span class="chip">สาม</span></div>
+    </div>
+  </div>
+  <div class="note"><b>ราคาเท่าเดิม</b> — ชิปแค่เปลี่ยนหน้าตา ค่าที่ส่งเข้าระบบเหมือน dropdown เป๊ะ</div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">3</div>
+    <div class="ttl">มือจับ 4 ช่องกระจาย → กล่องเดียว "ติ๊กได้หลายแบรนด์" <span class="pillnew">ใหม่</span><span class="why">เดิมมือจับ/ดิจิตอล/สแตนอร่าม/อื่นๆ เป็น dropdown แยกกัน · ตอนนี้รวมกล่องเดียว ติ๊กแบรนด์ → ช่องโผล่ · ติ๊กพร้อมกันหลายอันได้ ราคาบวกรวม</span></div>
+    <div class="chk">กดเล่น: บานเลื่อน/เปิด → กล่องมือจับ ติ๊ก Cmech + ดิจิตอล</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน · 4 dropdown แยก</div>
+      <div class="fieldrow">มือจับ Cmech <span class="dd">ฝัง</span></div>
+      <div class="fieldrow">ดิจิตอล <span class="dd">— ไม่ใส่ —</span></div>
+      <div class="fieldrow">สแตนอร่าม <span class="dd">— ไม่ใส่ —</span></div>
+      <div class="fieldrow">รุ่นอื่น <span class="dd">— ไม่ใส่ —</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง · กล่อง multi-toggle</div>
+      <div class="box-mock"><div class="bt">มือจับ (ติ๊กได้หลายอัน)</div>
+        <div class="chips"><span class="chip tk on">Cmech</span><span class="chip tk on">ดิจิตอล</span><span class="chip tk">สแตนอร่าม</span><span class="chip tk">X-series (ฟรี)</span><span class="chip tk">รุ่นอื่น ✎</span></div>
+        <div class="muted" style="margin-top:4px">↳ Cmech: <span class="chip on" style="font-size:9px">ฝัง</span> <span class="chip" style="font-size:9px">เมโทร</span> &nbsp; ↳ ดิจิตอล: <span class="dd" style="font-size:9px">เลือกรุ่น</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>ติ๊กพร้อมกันได้</b> — เช่น Cmech +1,000 / ดิจิตอล +10,000 / สแตนอร่าม +2,000 → บวกรวมถูกต้อง · กดซ้ำ = ปิดเฉพาะตัวนั้น · X-series ฟรีไม่บวกเงิน</div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">4</div>
+    <div class="ttl">มุ้ง 4 ช่องกระจาย → กล่องเดียว "เลือกชนิดก่อน"<span class="why">เลือก "ไม่ใส่" = ช่องล่างซ่อนหมด ฟอร์มสั้น · เลือกชนิด → โผล่ ขนาด/ผ้า/สีกรอบ</span></div>
+    <div class="chk">กดเล่น: กล่องมุ้ง สลับ "ไม่ใส่" ↔ "เฟรมเล็ก"</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน · โผล่หมดตลอด</div>
+      <div class="fieldrow">ชนิดมุ้ง <span class="dd">— ไม่ใส่ —</span></div>
+      <div class="fieldrow muted">ผ้ามุ้ง <span class="dd">ไฟเบอร์</span></div>
+      <div class="fieldrow muted">กว้างมุ้ง <span class="dd"> </span> สูงมุ้ง <span class="dd"> </span></div>
+      <div class="fieldrow muted">สีกรอบ <span class="dd">อบขาว</span> ← รก แม้ไม่ใส่มุ้ง</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง · ซ่อนตามชนิด</div>
+      <div class="box-mock"><div class="bt">มุ้ง</div>
+        <div class="chips"><span class="chip">ไม่ใส่</span><span class="chip on">เฟรมเล็ก</span><span class="chip">เฟรมใหญ่</span><span class="chip">จีบ</span></div>
+        <div class="muted" style="margin-top:4px">↳ ผ้า <span class="dd" style="font-size:9px">ไฟเบอร์</span> · ขนาด <span class="muted">(ว่าง=auto)</span></div>
+        <div class="muted">↳ สีกรอบ <span class="chip on" style="font-size:9px">อบขาว</span> <span class="chip" style="font-size:9px">ดำ</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">5</div>
+    <div class="ttl">ชิป "ลักษณะการเปิดมุ้ง" <span class="pillnew">ใหม่</span><span class="why">โผล่เฉพาะมุ้งเฟรมเล็ก (imp21)/เฟรมใหญ่ (imp23) · ระบุในใบเฉยๆ ไม่กระทบราคา</span></div>
+    <div class="chk">กดเล่น: เลือกมุ้งเฟรมเล็ก → ดูชิปเปิด/เลื่อน/กระทุ้ง/ยก</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow muted">ไม่มี — ในใบเขียนแค่ "มุ้งเฟรมเล็ก" ไม่บอกว่าเปิดแบบไหน</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="fieldrow">ลักษณะการเปิด</div>
+      <div class="chips"><span class="chip on">เปิด</span><span class="chip">เลื่อน</span><span class="chip">กระทุ้ง</span><span class="chip">ยก</span></div>
+      <div class="muted" style="margin-top:3px">→ ในใบ: "มุ้งเฟรมเล็ก <b>บานเลื่อน</b>"</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">6</div>
+    <div class="ttl">โซลิดลูกฟูก — คิดราคาเองอัตโนมัติ + ช่องแสง<span class="why">เดิมต้องกรอกราคาโซลิดเอง ลืม = ใบต่ำผิด · ตอนนี้ระบบคิดให้ (ทู=2 ฝั่ง · วัน=1 ฝั่ง) + มีช่องแสงด้านบนคิดกระจกแยก</span></div>
+    <div class="chk">กดเล่น: บานเปิด → แผ่นทึบล่าง "ทู" → ดูราคาขึ้นเอง</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">แผ่นทึบล่าง <span class="dd">ทู</span></div>
+      <div class="fieldrow" style="color:#b91c1c;font-weight:700">ราคาโซลิด <span class="dd"> </span> ← ต้องกรอกเอง/ลืมได้</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="chips"><span class="chip">ไม่มี</span><span class="chip">วัน</span><span class="chip on">ทู</span></div>
+      <div class="fieldrow" style="color:#047857;margin-top:3px">✓ ราคาโซลิดคิดอัตโนมัติ</div>
+      <div class="fieldrow">ช่องแสงบน (ตร.ม.) <span class="dd"> </span> → คิดกระจกเฉพาะส่วน</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">7</div>
+    <div class="ttl">ดัดโค้ง — ตั้งกระจก "ดัดโค้ง" อัตโนมัติ + กันพลาด<span class="why">เลือกสินค้าดัดโค้ง → กระจกเป็นดัดโค้งให้เลย · เผลอเปลี่ยนเป็นกระจกธรรมดา = เตือน</span></div>
+    <div class="chk">กดเล่น: เลือกสินค้าดัดโค้ง → ดูชนิดกระจก</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">กระจก <span class="dd">เทมเปอร์ 10</span> ← ต้องจำเปลี่ยนเป็นดัดเอง</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="fieldrow">กระจก <span class="dd">ดัดโค้ง</span> <span style="color:#047857">✓ auto</span></div>
+      <div class="muted">เปลี่ยนเป็นกระจกตรง → 🛑 เตือน</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">8</div>
+    <div class="ttl">default สีอลูมิเนียม = "สีอบขาว" (ทุกสินค้า)<span class="why">เดิมบางสินค้า default เป็นสีพรีเมียม (ซาฮาร่า) คิดเงินเพิ่มโดยไม่ตั้งใจ · ตอนนี้เริ่มที่อบขาวทุกตัว เลือกสีอื่นเองได้</span></div>
+    <div class="chk">กดเล่น: หลายสินค้า → ดูสี default = อบขาว</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">สีกรอบ <span class="dd" style="color:#b91c1c">ซาฮาร่า (พรีเมียม +เงิน)</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="chips"><span class="chip on">อบขาว</span><span class="chip">ดำ</span><span class="chip">ซาฮาร่า</span><span class="chip">เงิน</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== G2 ===================== -->
+<div class="gh">G2 — ระแนง · ประตูรั้ว · ราวกันตก <span class="tag">· เน้น "ราคา/รายละเอียดในใบ" ถูกต้อง</span></div>
+
+<div class="item">
+  <div class="top"><div class="num">9</div>
+    <div class="ttl">ระแนงขายเดี่ยว — การ์ดเทียบราคา "ปัด ↔ ต่อ" <span class="pillnew">ใหม่</span><span class="why">เดิมเป็น dropdown "ความสูง" เฉยๆ มองไม่ออกว่ากระทบราคา · ตอนนี้โชว์ 2 ราคาเทียบกัน เป็นตัวช่วยปิดการขาย</span></div>
+    <div class="chk">กดเล่น: ระแนงเกล็ด Z 2.4×2.2 → ดู 2 การ์ด</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">ความสูง <span class="dd">ปัดสูงขึ้น (ไม่ต่อ)</span></div>
+      <div class="muted">→ ไม่รู้ว่า "ต่อ" ถูกกว่าเท่าไร</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="muted" style="font-weight:700;color:#374151">วิธีตัดระแนง (มีผลต่อราคา)</div>
+      <div class="pricecard">
+        <div class="pc sel">🔵 ปัดไม่ต่อ (เนียน)<div class="p">50,000</div>ไม่มีรอยต่อ</div>
+        <div class="pc">🟢 ต่อสูงจริง<div class="p">37,000</div><span class="sv">ถูกกว่า 13,000</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">10</div>
+    <div class="ttl">ระแนง "ไม่โครง" — ขายเดี่ยวไม่ได้แล้ว<span class="why">ไม่โครงไว้ใช้ในประตูรั้ว/ติดบาน · ขายเดี่ยวเหลือแต่รุ่นรวมโครง (กันเสนอผิด)</span></div>
+    <div class="chk">กดเล่น: ระแนงขายเดี่ยว → ลิสต์รุ่น ไม่มี "ไม่โครง"</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow">รุ่น <span class="dd" style="color:#b91c1c">ไม่โครง / รวมโครง</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="fieldrow">รุ่น <span class="dd">รวมโครง</span> <span class="muted">(ไม่โครงตัดออก)</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">11</div>
+    <div class="ttl">ประตูรั้ว + ราวกันตก — รายละเอียด/ราคาลงใบครบ<span class="why">สีพิเศษคิดเงินถูก · ลักษณะเปิด 4 แบบลงใบ · ราวกันตกกระจก 10/12 + สแตนเลส · ขนาดซี่ · ธรณีรั้ว</span></div>
+    <div class="chk">กดเล่น: ประตูรั้ว เลือกสีพิเศษ + ลักษณะเปิด → ดูใบ</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="muted">สีพิเศษไม่บวกเงิน · ลักษณะเปิด/ขนาดซี่ ไม่ลงใบ · bar_slide แครช</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="muted" style="color:#047857">✓ สีพิเศษบวกเงิน ✓ ลักษณะเปิดลงใบ ✓ ขนาดซี่/ธรณีลงใบ ✓ ไม่แครช</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== G3 ===================== -->
+<div class="gh">G3 — หลังคา · ฝ้า–ผนัง <span class="tag">· เน้น "ของเสริม/วัสดุ ลงใบครบ + ราคาถูก"</span></div>
+
+<div class="item">
+  <div class="top"><div class="num">12</div>
+    <div class="ttl">ของเสริมหลังคา 10 รายการ — ลงใบครบ<span class="why">แป (เดี่ยว/คู่) · ยื่น/ปล่อยปลาย · ไร้สนิม · ฟิล์ม/ความหนาลามิเนต · วัสดุปิดรอยต่อ — เดิมตกหล่นในใบ</span></div>
+    <div class="chk">กดเล่น: หลังคา ติ๊กของเสริม → ดูครบในใบ</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="muted">ติ๊กของเสริมแล้ว แต่ใบไม่ขึ้น / ราคาไม่บวก</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="muted" style="color:#047857">✓ ของเสริม 10 รายการลงใบ + บวกราคาถูก</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">13</div>
+    <div class="ttl">เมทัลชีท / ชินโค — เลือกสีได้ + เติมคำว่า "สี"<span class="why">เดิมไม่มีตัวเลือกสี · ใบเขียน "ชินโคไลท์" ตอนนี้ "ชินโคไลท์สี…"</span></div>
+    <div class="chk">กดเล่น: หลังคาเมทัล/ชินโค → เลือกสี → ดูใบ</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="fieldrow muted">ไม่มีช่องสี · ใบ: "ชินโคไลท์"</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="fieldrow">สี <span class="dd">ขาว / เทา / อิฐ …</span></div>
+      <div class="muted">→ ใบ: "ชินโคไลท์<b>สี</b>ขาว"</div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="top"><div class="num">14</div>
+    <div class="ttl">หลังคาเลื่อน / ผสม 2 วัสดุ + เก็บตก "Grand"<span class="why">หลังคาเลื่อนตามรุ่น imp · ผสม 2 วัสดุในงานเดียว · imp20 แก้ชื่อ Grang→Grand ราคาใช้ Prime</span></div>
+    <div class="chk">กดเล่น: หลังคา → รุ่น Grand / ผสม 2 วัสดุ → ดูราคา+ใบ</div>
+  </div>
+  <div class="ba">
+    <div class="col before"><div class="lab">ก่อน</div>
+      <div class="muted">ชื่อ "Grang" สะกดผิด · ราคา imp20 = 144,000</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after"><div class="lab">หลัง</div>
+      <div class="muted" style="color:#047857">✓ "Grand" · ราคา Prime 162,000 · เลื่อน/ผสมถูก</div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+เอกสารตรวจ before/after · เครื่องคิดราคา JR · 11 มิ.ย. 2026 · 14 จุดหลักที่กดเล่นได้ (G1 ฟอร์ม UX · G2 ระแนง/รั้ว · G3 หลังคา) ·
+รายละเอียดเต็ม + changelog รายข้อ ดูที่ CHANGELOG-วิธีใช้งาน-2026-06-11 · งานรอ handoff: G4 ตู้ · G5 มุ้ง · G6 กั้นห้องกระจก · G7 ม่านซิป
+</div>
+
+</body></html>
