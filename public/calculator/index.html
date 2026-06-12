@@ -2361,6 +2361,38 @@ function railResolve(shape,mount){ var n=RAIL_TREE[shape]; if(!n)return''; retur
 function railPick(btn,dim){ var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p||p.cat!=='ราวบันได')return;
   var d=railParse(p), v=btn.dataset.val, shape=d.shape, mount=d.mount; if(dim==='shape')shape=v; else mount=v;
   var id=railResolve(shape,mount); if(id) g3SyncProd(ch,id); }
+// G1G6-B (HANDOFF-G1G6 งานB): การ์ดตระกูล (cat) + ปุ่มรุ่น — ทุกกลุ่ม ไม่มีดรอปดาวน์แบบ/รุ่น (เหลือ "อื่นๆ" fallback โชว์ dropdown เดิม 154)
+//   ตระกูล=cat · กดตระกูล→set รุ่น default (มติ: เลื่อน sliding_sms · เปิด casement_euro · เฟี้ยม folding · ติดตาย fixed_glass) · กดรุ่น→g3PickProd เดิม
+//   cat ที่มี cascade เฉพาะ (ระแนง×3/ราวบันได) → แถวรุ่นไม่ต้อง (cascade เดิม render ต่อใต้) · ปิดช่องโหว่สลับ cat หลังซ่อน dropdown
+var FAM_CATS={
+  '1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],
+  '2':['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได','ประตูรั้ว','ระแนง'],
+  '6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door']
+};
+var FAM_LABEL={'ติดตาย':'กระจกติดตาย','ระแนง-บังตา':'ระแนงบังตา','ระแนง-ผนัง':'ระแนงผนัง','ระแนง-เกล็ด':'เกล็ด Z','ราวบันได':'ราวกันตก','ระแนง':'ระแนงพิเศษ','ลูกฟูก+คอมโพสิททึบ':'ลูกฟูก/ทึบ'};
+var FAM_DEFAULT={'บานเลื่อน':'sliding_sms','บานเปิด':'casement_euro','บานเฟี้ยม':'folding','ติดตาย':'fixed_glass','ระแนง-บังตา':'rn2','ระแนง-ผนัง':'rn38','ระแนง-เกล็ด':'rn84','ราวบันได':'imp1','ประตูรั้ว':'fence_gate'};
+var FAM_CASCADE_CATS=['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได']; // มี cascade เฉพาะ → ไม่ต้องแถวรุ่น
+function famDefaultProd(cat){ if(FAM_DEFAULT[cat]&&PBYID[FAM_DEFAULT[cat]])return FAM_DEFAULT[cat]; var l=PRODUCTS.filter(function(q){return q.cat===cat&&!_hideRanaeSolo(q);}); return l.length?l[0].id:''; }
+function famPickCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; delete ch.dataset.famOther; var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
+function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset.famOther='1';
+  var ps=ch.querySelector('.i-prod'); var w=ps&&ps.closest('.full'); if(w) w.style.display='';
+  btn.closest('.fam-prodsel').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); }
+function famSelectorHTML(p,grp,famOther){
+  var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
+  var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  h+='<label class="opt" style="width:100%;margin:0;">แบบงาน <div class="chip-group chip-sm">';
+  cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
+  h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div></label>';
+  if(FAM_CASCADE_CATS.indexOf(cur)<0 && !famOther && cats.indexOf(cur)>=0){ // cat นอก family list (เช่น เสริม จาก "อื่นๆ") → ไม่โชว์แถวรุ่น (list ยาว · ใช้ dropdown)
+    var models=PRODUCTS.filter(function(q){return q.cat===cur;});
+    if(models.length>1){
+      h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+      models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name.replace(cur,'').trim()+'</button>'; });
+      h+='</div></label>';
+    }
+  }
+  return h+'</div>';
+}
 // G2 เฟส4b ประตูรั้ว: ลายระแนง cascade (บังตา ไม่โครง · ขนาดเส้น→ระยะโชว์) ขับ hidden .o-gatern (re-render ในที่ · ไม่ rebuild ทั้งฟอร์ม)
 function gateRnParse(id){ var p=PBYID[id]; if(!p||p.cat!=='ระแนง-บังตา')return{profile:Object.keys(RN_TREE.bangta)[0],spacing:''}; var d=rnParse(p); return {profile:d.profile,spacing:d.spacing}; }
 function gateRnResolve(profile,spacing){ var n=RN_TREE.bangta[profile]; if(!n)return''; if(!n[spacing])spacing=Object.keys(n)[0]; var f=n[spacing]; return (f&&f['ไม่โครง'])||''; }
@@ -2558,7 +2590,10 @@ function addItem(container){
     // ข้อ2: ราวกันตก default กระจกเทมเปอร์ใส 10 มม. (glassDef) — เลือก 12 มม.ได้จาก dropdown · ราคาไม่ขึ้นกับกระจก
     { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
     calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
-  d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value); buildItemOpts(d); refreshItype(d);
+  d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value);
+    // G1G6-B: เปลี่ยนกลุ่ม → default รุ่น = ตระกูลแรกของกลุ่ม (กันตกที่ cat "เสริม" เช่น กลุ่ม 2 → rn2 ระแนงบังตา) + เคลียร์โหมด "อื่นๆ"
+    { var _fc=FAM_CATS[d.querySelector('.i-group').value]; if(_fc){ var _fd=famDefaultProd(_fc[0]); var _ps2=d.querySelector('.i-prod'); if(_fd && _ps2.querySelector('option[value="'+_fd+'"]')) _ps2.value=_fd; } delete d.dataset.famOther; }
+    buildItemOpts(d); refreshItype(d);
     // G1G6-A: sync ชิปกลุ่มงานเมื่อ value เปลี่ยน (รวมกรณีโค้ดตั้งตรง เช่น addGlasshouseSet group 6)
     { var _gv=d.querySelector('.i-group').value; d.querySelectorAll('.chip[onclick*="i-group"]').forEach(function(c){ c.classList.toggle('on', c.dataset.val===_gv); }); }
     // กั้นห้องกระจก: เลือกกลุ่มงาน 6 → โชว์ช่องด้านทันที + เติม "ด้าน A" ให้ถ้ายังว่าง
@@ -2654,6 +2689,9 @@ function buildItemOpts(d){
   // G3-v5 จุด1: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ + drill-down วัสดุ บนสุด (class g3-prodsel · groupGHOpts skip · ซ่อน .i-prod ด้านล่าง)
   if(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') h+=g3SelectorHTML(p);
   if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
+  // G1G6-B: การ์ดตระกูล+ปุ่มรุ่น กลุ่ม 1/2/6 (เหนือ cascade เฉพาะ) · famOther=โหมด "อื่นๆ" โชว์ dropdown เดิม
+  var _famGrp=(d.querySelector('.i-group')||{}).value||'1'; var _famOther=d.dataset.famOther==='1';
+  if(FAM_CATS[_famGrp] && p.cat!=='หลังคา' && p.cat!=='ฝ้า-ผนัง') h+=famSelectorHTML(p,_famGrp,_famOther);
   if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p); // G2: drill-down ระแนง cascade บนสุด
   if(p.cat==='ราวบันได') h+=railSelectorHTML(p); // G2 เฟส4: ราวกันตก cascade (ทรง→ระบบยึด→imp)
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
@@ -3108,7 +3146,10 @@ function buildItemOpts(d){
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
-  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด'||p.cat==='ราวบันได')?'none':''; }
+  // G1G6-B: ซ่อน dropdown แบบ/รุ่น เมื่อมี selector ชิป (g3/mosq/fam/cascade/ตู้/ม่านซิป) · ยกเว้นโหมด "อื่นๆ" (famOther)
+  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full');
+    var _hideProd=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ตู้อลู'||p.cat==='ฝาตู้'||p.cat==='ม่านซิป'||(FAM_CATS[(d.querySelector('.i-group')||{}).value||'1']&&d.dataset.famOther!=='1'));
+    if(_ipw) _ipw.style.display=_hideProd?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
