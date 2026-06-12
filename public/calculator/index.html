@@ -1835,7 +1835,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5: โหมด B + แท็บเลือกสินค้าหลังคา คงไว้บนสุดนอก accordion
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -2244,6 +2244,24 @@ function g3SelectorHTML(p){
   }
   return h+'</div>';
 }
+// G5-G (HANDOFF-G5-FINAL จุดG): drill-down มุ้ง 3 หมวด (เฟรม/จีบ/ม้วน) · imp30→เฟรม · imp33/imp35 ไม่อยู่ในชิป (ซ่อนจากเมนู · เก็บ PRODUCTS/เรต) · ใช้ g3SyncProd/g3PickProd ร่วม
+var MOSQ_GRP_PRODS={
+  frame:[['imp21','เฟรมเล็ก'],['imp22','เฟรมเล็กติดตาย'],['imp23','เฟรมใหญ่'],['imp30','แม่เหล็กพับ']],
+  pleat:[['imp28','ตีนตะขาบ'],['mj_sd_basic','SD พื้นฐาน'],['mj_sd_twoway','SD ทูเวย์'],['mj_keep_twoway','ตีนตะขาบ ทูเวย์'],['mj_keep_honey','ตีนตะขาบ รังผึ้ง'],['mj_blackout','Blackout'],['imp31','นิรภัย 0.8'],['imp32','นิรภัย เสริมวงกบ'],['mj_screen_safety','จีบนิรภัย']],
+  roll:[['imp29','ม้วน'],['mj_kick_150','เตะ 150'],['mj_kick_300','เตะ 300'],['mj_kick_600','เตะ 600']]
+};
+var MOSQ_GRP_LABEL={frame:'เฟรม',pleat:'จีบ',roll:'ม้วน'};
+function mosqGrpOf(id){ for(var g in MOSQ_GRP_PRODS){ if(MOSQ_GRP_PRODS[g].some(function(x){return x[0]===id;})) return g; } return null; }
+function mosqPickGrp(btn){ var first=(MOSQ_GRP_PRODS[btn.dataset.grp]||[])[0]; if(first) g3SyncProd(btn.closest('.ch'), first[0]); }
+function mosqSelectorHTML(p){
+  var grp=mosqGrpOf(p.id)||'frame'; var gk;
+  var h='<div class="opt mosq-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  h+='<label class="opt" style="width:100%;margin:0;">หมวดมุ้ง <div class="chip-group chip-sm">';
+  for(gk in MOSQ_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="mosqPickGrp(this)">'+MOSQ_GRP_LABEL[gk]+'</button>'; }
+  h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+  MOSQ_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
+  return h+'</div></label></div>';
+}
 // G5 (HANDOFF-G5-FINAL E): เลือกผ้ามุ้งแล้ว rebuild ชิปสีผ้าตามชนิดผ้า + sync .o-screenfabriccolor (ค่าเดิม) + fire change
 function mosqFabricColors(fabBtn){
   var ch=fabBtn.closest('.ch'); if(!ch) return; var fab=fabBtn.dataset.val;
@@ -2517,6 +2535,7 @@ function buildItemOpts(d){
   let h='';
   // G3-v5 จุด1: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ + drill-down วัสดุ บนสุด (class g3-prodsel · groupGHOpts skip · ซ่อน .i-prod ด้านล่าง)
   if(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') h+=g3SelectorHTML(p);
+  if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
   // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
   d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
@@ -2961,7 +2980,7 @@ function buildItemOpts(d){
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
-  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง')?'none':''; }
+  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง')?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
