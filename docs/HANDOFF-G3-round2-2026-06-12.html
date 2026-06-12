@@ -106,7 +106,28 @@
 <tr><td>ของเสริม</td><td><code>o-rfbeam</code>(4) · <code>o-rfsealercolor</code>(3) · <code>o-rfhs</code>(3)</td></tr>
 </table>
 <div class="crit"><b>เก็บดรอปดาวน์ไว้:</b> <code>o-roof2</code> (วัสดุที่ 2 · 18 ตัวเลือก — เยอะไป ทำชิปไม่ไหว)</div>
-<div class="note"><b>pattern แปลงชิป (ห้ามแตะ logic):</b> ซ่อน <code>&lt;select&gt;</code> เดิม (display:none) + วาดชิปทับ · กดชิป → set <code>select.value</code> + <code>fire('change')</code> → readItem/calc อ่าน value เดิมได้เหมือนเดิม · <b>ห้ามเปลี่ยน value/class ที่ logic อ่าน</b></div>
+<div class="ok"><b>หน้าตาปุ่มต้องเหมือน G1 เป๊ะ — ใช้ของเดิมที่มีอยู่ ห้ามเขียนชิปเอง:</b><br>
+ระบบมี component ชิปอยู่แล้ว: <code>.chip-group</code> / <code>.chip</code> / <code>.chip-sm</code> / <code>.chip.on</code> (CSS L233–239) + helper <code>chSetChip(btn,'selectClass')</code> (L2200) ที่ G1 ใช้ทำปุ่มมือจับ/มุ้ง · <b>ใช้ตัวเดียวกันนี้ทุกชิป</b> → หน้าตา (พื้นแดงตอนเลือก ขอบมน สูง 44px) เหมือน G1/รูป mockup เป๊ะ</div>
+<h3>ตัวอย่างจริง — แปลง "ชนิดราง" (<code>o-rfgut</code>) เป็นชิป (ทำแบบเดียวกันทุกตัว):</h3>
+<pre><span class="c">// เดิม (L2672):</span>
+<span class="d">ชนิดราง &lt;select class="o-rfgut" onchange="calcQuote();"&gt;&lt;option value="1000" selected&gt;อลู S 1,000/ม.&lt;/option&gt;...&lt;/select&gt;</span>
+
+<span class="c">// ใหม่ — ซ่อน select เดิมไว้ (logic อ่านได้เหมือนเดิม) + วาดชิปทับ:</span>
+<span class="a">&lt;label class="opt" style="width:100%;"&gt;ชนิดราง &lt;span class="hint"&gt;(คิด/ม.)&lt;/span&gt;
+  &lt;select class="o-rfgut" style="display:none;" onchange="calcQuote();"&gt;
+    &lt;option value="1000" selected&gt;อลู S 1,000/ม.&lt;/option&gt;
+    &lt;option value="2000"&gt;อลูมิเนียม M 2,000/ม.&lt;/option&gt;   <span class="c">// ← ชื่อใหม่ (E)</span>
+    &lt;option value="3000"&gt;สแตนเลส L 3,000/ม.&lt;/option&gt;
+  &lt;/select&gt;
+  &lt;div class="chip-group chip-sm"&gt;
+    &lt;button type="button" class="chip on" data-val="1000" onclick="chSetChip(this,'o-rfgut')"&gt;อลู S 1,000&lt;/button&gt;
+    &lt;button type="button" class="chip"    data-val="2000" onclick="chSetChip(this,'o-rfgut')"&gt;อลูมิเนียม M 2,000&lt;/button&gt;
+    &lt;button type="button" class="chip"    data-val="3000" onclick="chSetChip(this,'o-rfgut')"&gt;สแตนเลส L 3,000&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/label&gt;</span></pre>
+<div class="note"><b>หลักการ (เหมือน G1 ทุกตัว):</b> <code>chSetChip</code> จะ set <code>select.value=data-val</code> + <code>fire('change')</code> ให้เอง → <code>readItem</code>/<code>calcQuote</code> อ่าน <code>.o-rfgut</code> เดิมได้ครบ · <b>ห้ามเปลี่ยน class/value ของ select</b> · default ใส่ <code>class="chip on"</code> ที่ปุ่มแรก<br>
+• select 2 ตัวเลือก → ใช้ <code>chip-group chip-2up</code> (เต็มความกว้าง 2 ปุ่ม สวยกว่า)<br>
+• select ที่มี onchange โชว์/ซ่อนกล่อง (เช่น <code>o-roofend</code>, <code>o-guttersys</code>) → <code>chSetChip</code> fire('change') ให้ → onchange เดิมทำงานต่อปกติ ไม่ต้องแก้</div>
 
 <h2>F. เก็บตก — field กลางหลงเข้ากล่อง catch-all</h2>
 <div class="note"><code>.i-color-wrap</code> (สีอลูมิเนียม) + <code>.i-glass-wrap</code> (กระจก) เป็น field กลางของ addSet · ตอน product=หลังคา ตกเข้ากล่อง ⑥ "งานพิเศษ" ผิดหมวด · แก้: ใน <code>groupGHOpts</code> ข้าม element ที่มี class <code>i-color-wrap</code>/<code>i-glass-wrap</code> (ไม่จัดเข้ากล่องใด)</div>
