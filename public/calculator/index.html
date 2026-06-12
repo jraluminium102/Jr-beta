@@ -1835,7 +1835,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap'))){ skipEls.push(k); return; }
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb'))){ skipEls.push(k); return; } // G5-FINAL C: โหมด B (ติดมุ้งบานเดิม) คงไว้บนสุดนอก accordion
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -2211,6 +2211,19 @@ function chSetChip(btn, selectClass){
 // G3-round2 D: gen ชิป-group จาก option ของ select (ใช้ chSetChip เดิม · หน้าตาเหมือน G1) · items=[[val,label],...] · 2 ตัว=chip-2up
 function rfChips(cls, items, defVal, twoUp){
   return '<div class="chip-group chip-sm'+(twoUp?' chip-2up':'')+'">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')">'+it[1]+'</button>'; }).join('')+'</div>';
+}
+// G5 (HANDOFF-G5-FINAL E): เลือกผ้ามุ้งแล้ว rebuild ชิปสีผ้าตามชนิดผ้า + sync .o-screenfabriccolor (ค่าเดิม) + fire change
+function mosqFabricColors(fabBtn){
+  var ch=fabBtn.closest('.ch'); if(!ch) return; var fab=fabBtn.dataset.val;
+  var MAP={fiber:['ดำ','เทา'],cat:['ขาว'],rat:['เงิน','ดำ'],safety:['ดำ']};
+  var cols=MAP[fab]||['ดำ']; var fixed=cols.length===1;
+  var wrap=ch.querySelector('.o-sfc-chipwrap'); var sel=ch.querySelector('.o-screenfabriccolor');
+  if(!wrap) return;
+  wrap.innerHTML=cols.map(function(c,i){return fixed
+    ? '<button type="button" class="chip on" disabled>'+c+'</button>'
+    : '<button type="button" class="chip'+(i===0?' on':'')+'" data-val="'+c+'" onclick="chSetChip(this,\'o-screenfabriccolor\')">'+c+'</button>';}).join('')
+    + (fixed?' <span style="font-size:11px;color:#0369A1;">สีเดียว</span>':'');
+  if(sel){ sel.value=cols[0]; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 }
 // G4 (HANDOFF-G4-cabinet-next ข้อ4): ชิป switch สินค้า ตู้อลู↔ฝาตู้ — set .i-prod เดิม + rebuild ฟอร์ม (ไม่ hardcode รายการ)
 function cabProdSwitch(btn, prodId){
@@ -2755,8 +2768,9 @@ function buildItemOpts(d){
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
-    h+='<label class="opt" style="width:100%;background:#FFF3E0;border-left:3px solid #FF9800;padding:5px 10px;font-size:12px;"><input type="checkbox" class="o-screen_existing"> 🔧 ติดมุ้งบานเดิม (โหมด B · ลูกค้าเก่ามาเพิ่มมุ้ง) — ราคา/ตร.ม. เท่าโหมด A · มี option ค่าเสริมกล่อง/ราง</label>';
-    h+='<label class="opt">ค่าเสริมกล่อง/ราง (บาท · กรอกถ้ารางเดิมใช้ไม่ได้) <input type="number" class="o-screen_extra" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" style="width:140px;height:30px;"></label>';
+    // G5-FINAL C: โหมด B กล่องส้มเด่น (class mosq-modeb → groupGHOpts คงไว้บนสุดนอก accordion)
+    h+='<div class="opt mosq-modeb" style="width:100%;background:#FFF3E0;border:2px solid #FF9800;border-radius:8px;padding:8px 12px;"><label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;"><input type="checkbox" class="o-screen_existing" onchange="calcQuote();"> 🔧 ติดมุ้งบานเดิม (โหมด B)</label><div style="font-size:11px;color:#92400e;margin-top:3px;">ลูกค้าเก่ามาเพิ่มมุ้ง · ราคา/ตร.ม. เท่าโหมด A · กรอกค่าเสริมด้านล่างถ้ารางเดิมใช้ไม่ได้</div></div>';
+    h+='<label class="opt mosq-modeb">ค่าเสริมกล่อง/ราง (บาท) <input type="number" class="o-screen_extra" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" style="width:140px;height:30px;"></label>';
   }
   if(p.ranae){
     // UX (hmode): ทำ "วิธีตัดระแนง" ให้เด่น + การ์ดเทียบราคา 2 โหมด (ปัด/ต่อ) · o-hmode (hidden) เก็บค่าให้ readItem เดิม
@@ -2854,12 +2868,16 @@ function buildItemOpts(d){
     h+='<span class="opt" style="color:#666;font-size:12px;">⚠ กรอกความยาว (ม.) ในช่อง "กว้าง"</span>';
   }
   if(p.screen_addon){
-    h+='<label class="opt">ผ้ามุ้ง <select class="o-screenfabric" style="width:auto;height:32px;max-width:280px;"><option value="fiber">ไฟเบอร์ เทา/ดำ (default)</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>';
-    if(p.rates==='IMP23') h+='<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>';
-    h+='</select></label>';
-    // v5: เพิ่ม dropdown สีผ้าไฟเบอร์ (ใช้ในรายละเอียดงาน)
-    h+='<label class="opt">สีผ้า <select class="o-screenfabriccolor" style="width:auto;height:32px;"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option></select></label>';
-    h+='<span class="opt" style="color:#666;font-size:12px;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
+    // G5-FINAL D: ผ้ามุ้ง → ชิป (chSetChip + mosqFabricColors ผูกสีผ้า) · ซ่อน select เดิม (logic อ่าน .o-screenfabric value เดิม)
+    h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <div class="chip-group chip-sm">'
+      +'<button type="button" class="chip on" data-val="fiber" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">ไฟเบอร์ เทา/ดำ</button>'
+      +'<button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">กันแมว/หมา ขาว +800</button>'
+      +'<button type="button" class="chip" data-val="rat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">สแตนกันหนู +1,200</button>'
+      +(p.rates==='IMP23'?'<button type="button" class="chip" data-val="safety" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">นิรภัยสแตน 304 ดำ</button>':'')
+      +'</div><select class="o-screenfabric" style="display:none;" onchange="calcQuote();"><option value="fiber">ไฟเบอร์ เทา/ดำ</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>'+(p.rates==='IMP23'?'<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>':'')+'</select></label>';
+    // G5-FINAL E: สีผ้า → chipwrap (mosqFabricColors rebuild ตามผ้า) · select ซ่อน value: ดำ/เทา/ขาว/เงิน
+    h+='<label class="opt" style="width:100%;">สีผ้า <div class="o-sfc-chipwrap chip-group chip-sm" style="display:inline-flex;"></div><select class="o-screenfabriccolor" style="display:none;" onchange="calcQuote();"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option><option value="เงิน">เงิน</option></select></label>';
+    h+='<span class="opt" style="color:#666;font-size:12px;width:100%;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
   // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
   if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){ // UX-ALL+folding: ฝังรางยูเฉพาะงานบานพื้น · บานเฟี้ยมใช้ u_track (COMMON_OPTS) แทน — ตัดกันซ้ำ
@@ -2904,6 +2922,8 @@ function buildItemOpts(d){
   }
   // G3-round2 A: หัวข้อ OPTION ทางเลือกลูกค้า — หลังคาใช้คำเฉพาะ (เปลี่ยนสี/วัสดุมุง/หลังคา) · อื่นๆ คำเดิม
   { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){ _ocSum.textContent = (p.cat==='หลังคา') ? '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)' : '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)'; } }
+  // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
+  if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
@@ -3774,7 +3794,10 @@ function genQuote(keepNo){
       // สีผ้า: ดึงจาก o-screenfabriccolor หรือ default
       const sfcEl = it.div ? it.div.querySelector('.o-screenfabriccolor') : null;
       const sfcColor = sfcEl ? sfcEl.value : 'ดำ';
-      const fabricFull = sf==='fiber' ? ('ผ้าไฟเบอร์'+sfcColor) : fabricLabel;
+      // G5-FINAL F: rat (สแตนกันหนู) ระบุสีในใบด้วย (เงิน/ดำ) · fiber ระบุสีเดิม · อื่นใช้ label (ราคาไม่เปลี่ยน · สีเป็น label)
+      const fabricFull = (sf==='fiber') ? ('ผ้าไฟเบอร์'+sfcColor)
+                       : (sf==='rat')   ? ('ผ้าสแตนกันหนู'+sfcColor)
+                       : fabricLabel;
       det = fabricFull;
     }
     else if(it.p.id==='shower'){
