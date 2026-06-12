@@ -205,8 +205,15 @@
   .set-btns{display:flex;gap:8px;}
   .set-btns-top{margin:0 0 8px;}
   .set-btns-bot{margin-top:8px;}
-  .set-addpart,.set-addfixed{flex:1;height:38px;border-radius:8px;cursor:pointer;font-size:14px;border:1.5px dashed var(--red);background:#fff;color:var(--red);}
+  .set-addpart,.set-addfixed{flex:1;min-height:44px;border-radius:8px;cursor:pointer;font-size:14px;border:2px solid var(--red);background:var(--red);color:#fff;font-weight:700;}
   .set-addfixed{border-style:solid;background:var(--red);color:#fff;}
+  /* ===== QUICK ADD STRIP (addflow R2) ===== */
+  .addsec-quickstrip{background:#FFF3E0;border:1.5px solid #FFB300;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+  .addsec-strip-head{font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;}
+  .addsec-chip{min-height:44px;padding:0 14px;border:1.5px solid #FFB300;border-radius:22px;background:#fff;cursor:pointer;font-size:13px;color:#374151;font-family:inherit;}
+  .addsec-chip:active{background:#E65100;color:#fff;}
+  @keyframes addsec-flash{0%{box-shadow:0 0 0 0 #FFB30066;}60%{box-shadow:0 0 0 8px #FFB30000;}100%{box-shadow:0 0 0 0 #FFB30000;}}
+  .addsec-flash{animation:addsec-flash .4s ease-out;}
   /* ===== CHIP CONTROLS (G1 Form UX Redesign) ===== */
   .chip-group{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .chip{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 14px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-size:14px; font-family:inherit; font-weight:600; cursor:pointer; line-height:1.3; text-align:center; transition:background .12s,border-color .12s; -webkit-tap-highlight-color:transparent; }
@@ -1824,9 +1831,12 @@ function refreshSet(box){
 
   // ---- [2] ปุ่มระดับชุด: เปลี่ยนข้อความ + ซ่อน/โชว์ ----
   box.querySelectorAll('.set-addpart').forEach(function(btn, idx){
-    btn.textContent = hasGH ? '+ เพิ่มบาน' : '+ เพิ่มส่วน';
+    btn.textContent = hasGH ? '+ เพิ่มบาน' : '＋ เพิ่มส่วน';
     btn.style.display = (hasGH && idx>0) ? 'none' : '';
   });
+  // ---- [2.1] quickstrip: ซ่อนในชุดกั้นห้องกระจก (hasGH) ----
+  var _qs = box.querySelector('.addsec-quickstrip');
+  if(_qs) _qs.style.display = hasGH ? 'none' : '';
   box.querySelectorAll('.set-addfixed').forEach(function(btn){
     btn.style.display = hasGH ? 'none' : '';
   });
@@ -1954,7 +1964,8 @@ function quickAddItem(parts, group, prodId){
   var ps=ch.querySelector('.i-prod'); if(ps){ ps.innerHTML=prodOptionsG6(String(group)); ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true})); }
   try{ ch.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
 }
-// panel เดียว (toggle) — ชิป + ปุ่มทั่วไป เห็นพร้อมกัน · เฉพาะโหมด "+ เพิ่มส่วน" (ไม่ใช่ "+ เพิ่มบาน" กั้นห้อง)
+// toggleAddSecPanel — ไม่มี caller แล้วใน R2 (addflow redesign) · commented out
+/*
 function toggleAddSecPanel(btn, box){
   var existing=box.querySelector('.addsec-panel'); if(existing){ existing.remove(); return; }
   var parts=box.querySelector('.set-parts');
@@ -1969,20 +1980,44 @@ function toggleAddSecPanel(btn, box){
   panel.querySelectorAll('.addsec-chip').forEach(function(cb){ cb.addEventListener('click',function(){ quickAddItem(parts, cb.dataset.g, cb.dataset.id); panel.remove(); refreshSet(box); calcQuote(); }); });
   panel.querySelector('.addsec-general').addEventListener('click',function(){ addItem(parts); panel.remove(); refreshSet(box); calcQuote(); });
 }
+*/
 function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">+ เพิ่มส่วน</button></div><div class="set-parts"></div>';
+  var _quickChipsHtml=QUICK_ADD_CHIPS.map(function(c){ return '<button type="button" class="addsec-chip" data-g="'+c.g+'" data-id="'+c.id+'">'+c.label+'</button>'; }).join('');
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-opt" style="margin:0 0 8px;"><select class="set-optpreset" onchange="addSetOptPreset(this)" style="width:100%;height:32px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;font-size:13px;color:var(--red);">'+setOptPresetOptions()+'</select><div style="display:flex;gap:6px;"><input class="set-opttext" placeholder="OPTION ทางเลือกลูกค้า เช่น เปลี่ยนเป็นเทมเปอร์ (ว่าง=ไม่มี)" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:13px;"><input type="number" class="set-optdelta" placeholder="±บาท" style="width:100px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;"></div></div><div class="addsec-quickstrip"><div class="addsec-strip-head">⚡ เพิ่มด่วน <span style="font-size:11px;font-weight:400;color:#888;">กดชิปเพิ่มทันที</span></div><div class="addsec-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px;">'+_quickChipsHtml+'</div></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div><div class="set-parts"></div>';
   // E: ตัดปุ่ม "+ ช่องแสงติดตาย" (ซ้ำ) — ใช้ "+ เพิ่มบานย่อย" ในแต่ละบานแทน (มีชนิดติดตายครบใน SUBITEM_TYPES)
   document.getElementById('items').appendChild(box);
+  // bind .addsec-chip (quickstrip) — กดชิป = quickAddItem + flash (Q1: กดซ้ำได้ ชิปไม่หาย)
+  box.querySelectorAll('.addsec-chip').forEach(function(cb){
+    cb.addEventListener('click', function(){
+      var _parts=box.querySelector('.set-parts');
+      quickAddItem(_parts, cb.dataset.g, cb.dataset.id);
+      refreshSet(box);
+      calcQuote();
+      var _chs2=_parts.querySelectorAll('.ch'); var _nc=_chs2[_chs2.length-1];
+      if(_nc){
+        _nc.classList.add('addsec-flash');
+        setTimeout(function(){ _nc.classList.remove('addsec-flash'); }, 450);
+      }
+    });
+  });
   box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){
     const parts = box.querySelector('.set-parts');
     const hasGH = Array.from(box.querySelectorAll('.ch')).some(function(c){ return (c.querySelector('.i-group')||{}).value==='6'; });
     if(!hasGH){
-      // "+ เพิ่มส่วน" → เปิด panel 2 โหมด (แบนชั้นเดียว · SPEC-addsection-2mode) แทนการ addItem ทันที
-      toggleAddSecPanel(b, box);
+      // "+ เพิ่มส่วน" → addItem ทันที (1 tap) · R2 ไม่มี panel กลาง
+      addItem(parts);
+      refreshSet(box);
+      calcQuote();
+      var _chs=parts.querySelectorAll('.ch'); var _newCh=_chs[_chs.length-1];
+      if(_newCh){
+        try{ _newCh.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+        _newCh.classList.add('addsec-flash');
+        setTimeout(function(){ _newCh.classList.remove('addsec-flash'); }, 450);
+      }
       return;
     }
     // กั้นห้องกระจก "+ เพิ่มบาน" — คงเดิม ไม่กระทบ
