@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF — ราคาบานเปิดยูโร (ส่งแชท G1-บานเปิด)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm;}*{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11.5px;line-height:1.55;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:13px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2.b{background:#1D4ED8;}
+  table{width:100%;border-collapse:collapse;margin:5px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;text-align:center;font-size:10.5px;font-variant-numeric:tabular-nums;}
+  th{background:#F3F4F6;}td.l{text-align:left;}
+  code{font-family:Consolas,monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:9px 12px;margin:7px 0;border-left:4px solid #B3151D;}
+  .box.b{border-left-color:#1D4ED8;background:#EFF6FF;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10.5px;}
+  .warn{background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;padding:7px 10px;font-size:10.5px;margin:6px 0;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  b.hl{color:#B3151D;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — ราคาบานเปิดยูโร (casement_euro) คิด "ต่อบาน"</h1>
+<div class="sub">ส่งแชทที่ดูแล G1-บานเปิดโดยเฉพาะ · มติพี่นัท 11 มิ.ย. 2026 · เปลี่ยนจาก bucket เดิม → คิดต่อบาน clamp · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="good"><b>สรุปสั้น:</b> บานเปิดยูโรเลิกคิด bucket+min18,000+addon เดิม → คิด <b>ราคาต่อบาน</b> แบบ Linear ตามพื้นที่บาน (พื้น 15,000 · วิ่งขึ้นตามเรท ไม่มีเพดาน) แล้ว ×จำนวนบาน · ออปชั่นเสริมทุกอย่างคิดเหมือนเดิม · <b class="hl">เคาะเรตแล้ว 11 มิ.ย.</b></div>
+
+<h2>1) สูตร (ราคาฐานบาน) — ✅ เคาะแล้ว: Model B Linear</h2>
+<div class="box">
+<b>ราคา/บาน = 15,000 + max(0, พื้นที่บาน − 1.2) × 4,166.67</b> &nbsp;(พื้น 15,000 · ไม่มีเพดานบน)<br>
+<b>ราคารวม = ราคา/บาน × จำนวนบาน</b> · พื้นที่บาน = กว้าง×สูง ที่กรอก (<b class="hl">= ต่อ 1 บาน</b>)
+<br><br>
+ลากเส้น 2 จุด: <b>1.2 ตร.ม. → 15,000</b> &nbsp;ถึง&nbsp; <b>3.6 ตร.ม. → 25,000</b> · ความชัน <b>4,167 บาท/ตร.ม.</b><br>
+แนะนำเก็บเป็นตัวแปรเดียว ปรับง่าย: <code>const CE={floor:15000, refA:1.2, refP:15000, slope:4166.67};</code><br>
+<code>pricePerPanel = CE.floor + Math.max(0, area - CE.refA) * CE.slope;</code>
+<table>
+<tr><th>ขนาด/บาน</th><th>พื้นที่</th><th>ราคา/บาน</th></tr>
+<tr><td>0.6×2.0</td><td>1.20</td><td>15,000 (พื้น)</td></tr>
+<tr><td>0.8×2.1</td><td>1.68</td><td>17,000</td></tr>
+<tr><td>0.9×2.2</td><td>1.98</td><td>18,250</td></tr>
+<tr><td>1.0×2.4</td><td>2.40</td><td>20,000</td></tr>
+<tr><td>1.2×3.0</td><td>3.60</td><td>25,000</td></tr>
+<tr><td>1.5×3.0 (ใหญ่สุด)</td><td>4.50</td><td>28,750</td></tr>
+</table>
+</div>
+
+<h2>2) เงื่อนไขจากพี่นัท (เคาะแล้ว)</h2>
+<table>
+<tr><th>เรื่อง</th><th>ค่า</th></tr>
+<tr><td class="l">พื้น (ขั้นต่ำ/บาน)</td><td><b>15,000</b> (พื้นที่ ≤ 1.2 ตร.ม. = 15,000)</td></tr>
+<tr><td class="l">เพดาน</td><td><b>ไม่มี</b> — บานใหญ่กว่า 3.6 ตร.ม. ราคาวิ่งขึ้นตามเรทต่อ (เช่น 4.5 ตร.ม. = 28,750)</td></tr>
+<tr><td class="l"><b class="hl">ลิมิตขนาดบาน (ใหม่)</b></td><td><b>กว้าง ≤ 1.5 ม. · สูง ≤ 3.0 ม.</b> (สูงสุด 1.5×3.0 = 4.5 ตร.ม.) · เกินนี้ = บล็อก/เตือน เกิน spec</td></tr>
+</table>
+
+<h2 class="b">3) จุดแก้ในโค้ด (index.html)</h2>
+<div class="box b">
+<ul>
+<li><b>ยกเลิก</b> (เฉพาะ <code>casement_euro</code> L578): <code>method:'bucket'</code> + <code>min:18000</code> + <code>addon:{kind:'door',extra:5000}</code> → แทนด้วยสูตร Linear ต่อบานข้างบน (<code>15000 + max(0,area-1.2)×4166.67</code>)</li>
+<li><b>ราคารวม</b> = ราคา/บาน(พื้นที่ = w×h ต่อบาน) × <code>panels</code></li>
+<li><b>ปลดจำนวนบาน</b>: <code>L2655</code> <code>pn.max=2</code> → <code>4</code> (หรือมากกว่า)</li>
+<li><b>label ช่องกว้าง</b>: → "<b>กว้าง/บาน (ม.)</b>" ให้ชัดว่ากรอกต่อบาน</li>
+<li><b class="hl">ลิมิตขนาด (ใหม่):</b> ถ้า <code>w&gt;1.5</code> หรือ <code>h&gt;3.0</code> → บล็อก/เตือน "บานเปิดยูโรเกินขนาด (กว้าง≤1.5 สูง≤3.0)" · ไม่มีเพดานราคา (วิ่งตามเรทถึง 4.5 ตร.ม. = 28,750)</li>
+</ul>
+</div>
+
+<h2>4) ออปชั่นเสริม — คิดเหมือนเดิม (สำคัญ)</h2>
+<div class="good">
+สูตร clamp/Linear ใช้กับ <b>ราคาฐานบาน</b> เท่านั้น · ออปชั่นพวกนี้ยัง <b>บวกเพิ่มจากราคาฐานตามเดิม</b> ทุกตัว:
+<ul>
+<li>มือจับดิจิตอล / JR Prime / โช๊ค +5,000 (บานหลัก)</li>
+<li>มุ้ง · สีอลู (ส่วนต่างสี) · กระจก (glassUp) · ครอบวงกบ · คาดตาราง</li>
+<li>combo บานกระทุ้งเข้าใน + มุ้งติดตาย</li>
+</ul>
+<b>เอาออกอย่างเดียว:</b> <code>addon door +5,000</code> (รวมในสูตรต่อบานแล้ว)
+</div>
+
+<h2>5) ขอบเขต + เช็คซ้ำ</h2>
+<div class="warn">
+<ul>
+<li>✅ สูตรนี้ <b>เฉพาะบานเปิดยูโร</b> (casement_euro) · บานเปิด D-series/X-series/Velora <b>เรตคนละตัว → ใช้สูตรเดิม</b> (พี่นัทยืนยัน)</li>
+<li>✅ "กว้าง×สูง ที่กรอก = ต่อบาน" (ไม่ใช่ขนาดช่องรวม) — พี่นัทยืนยัน</li>
+</ul>
+</div>
+
+<div class="foot">
+ที่มา: พี่นัทเทสบานเปิด → เปลี่ยนวิธีคิดเป็นต่อบาน · เครื่องลองสูตร v1/v2 (docs/TOOL-casement-price-*) · ตัวอย่างยอด docs/TEST-casement-price-matrix · READ-ONLY ไม่แตะ index.html · 11 มิ.ย. 2026
+</div>
+
+</body>
+</html>

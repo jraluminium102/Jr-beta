@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เครื่องลองสูตรราคาบานเปิด v2 — แก้ช่วงกลาง</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:14px;line-height:1.5;margin:0;padding:16px;background:#F3F4F6;max-width:820px;margin:0 auto;}
+  h1{font-size:20px;color:#B3151D;margin:0 0 3px;}
+  .sub{color:#6B7280;font-size:12px;margin-bottom:14px;}
+  .panel{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:15px 17px;margin:11px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .panel h2{font-size:15px;margin:0 0 10px;color:#B3151D;}
+  .ctrl{display:flex;align-items:center;gap:10px;margin:9px 0;flex-wrap:wrap;}
+  .ctrl label{font-weight:700;min-width:150px;font-size:13px;}
+  input[type=number]{height:38px;border:2px solid #D1D5DB;border-radius:8px;padding:0 10px;font-size:15px;width:105px;font-variant-numeric:tabular-nums;}
+  input[type=range]{flex:1;min-width:130px;accent-color:#B3151D;height:30px;}
+  .unit{color:#6B7280;font-size:12px;}
+  table{width:100%;border-collapse:collapse;margin:6px 0;}
+  th,td{border:1px solid #E5E7EB;padding:6px 8px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px;}
+  th{background:#B3151D;color:#fff;font-size:12px;}
+  td.sz{background:#F9FAFB;font-weight:700;text-align:left;white-space:nowrap;}
+  .clamp-lo{background:#FEF3C7;}.clamp-hi{background:#DBEAFE;}
+  .pA{color:#B3151D;font-weight:700;}.pB{color:#1D4ED8;font-weight:800;}
+  .modes{display:flex;gap:8px;margin-bottom:8px;}
+  .mode{flex:1;text-align:center;padding:9px;border:2px solid #E5E7EB;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;}
+  .mode.on{border-color:#B3151D;background:#FEF2F2;color:#B3151D;}
+  .ref{background:#ECFDF5;border-left:4px solid #10B981;padding:8px 11px;border-radius:6px;font-size:12.5px;margin:7px 0;}
+  .big{font-size:24px;font-weight:800;color:#1D4ED8;}
+  .calc-out{background:#FFF7ED;border:1px solid #FDBA74;border-radius:10px;padding:13px 15px;margin-top:10px;}
+  .row2{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;}
+  .mini{display:flex;flex-direction:column;gap:3px;}.mini span{font-size:11px;color:#6B7280;font-weight:700;}
+  .preset{background:#1F2937;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;margin:2px;}
+  .note{color:#6B7280;font-size:11.5px;margin-top:5px;}
+  .hint{font-size:11px;color:#1D4ED8;background:#EFF6FF;border-radius:6px;padding:6px 9px;margin:5px 0;}
+  .box{display:none;}.box.on{display:block;}
+  .gap{font-size:10px;color:#059669;}
+</style>
+</head>
+<body>
+<h1>เครื่องลองสูตรราคาบานเปิด v2</h1>
+<div class="sub">แก้ "ช่วงกลางห่างแปลกๆ" · เพิ่มโหมด Linear (ลากเส้น 2 จุด ช่วงกลางนุ่ม) เทียบกับ Clamp เดิม · 11 มิ.ย. 2026</div>
+
+<div class="panel">
+  <div class="modes">
+    <div class="mode" id="mC" onclick="setMode('clamp')">🔴 Clamp เรตเดียว <span style="font-weight:400;font-size:11px;">(เดิม)</span></div>
+    <div class="mode on" id="mL" onclick="setMode('linear')">🔵 Linear ลากเส้น 2 จุด <span style="font-weight:400;font-size:11px;">(ใหม่ · นุ่ม)</span></div>
+  </div>
+
+  <div class="box" id="boxC">
+    <div class="ctrl"><label>เรต/ตร.ม.</label><input type="range" id="rateR" min="3000" max="13000" step="100" value="8000" oninput="syncC('rate',this.value)"><input type="number" id="rate" value="8000" step="100" oninput="syncC('rate',this.value)"><span class="unit">บาท</span></div>
+    <div class="ctrl"><label>พื้น (ขั้นต่ำ/บาน)</label><input type="range" id="floorR" min="8000" max="22000" step="500" value="15000" oninput="syncC('floor',this.value)"><input type="number" id="floor" value="15000" step="500" oninput="syncC('floor',this.value)"><span class="unit">บาท</span></div>
+    <div class="ctrl"><label>เพดาน (สูงสุด/บาน)</label><input type="range" id="ceilR" min="20000" max="40000" step="500" value="23500" oninput="syncC('ceil',this.value)"><input type="number" id="ceil" value="23500" step="500" oninput="syncC('ceil',this.value)"><span class="unit">บาท</span></div>
+  </div>
+
+  <div class="box on" id="boxL">
+    <div class="hint">ลากเส้นตรงระหว่าง 2 จุด → ช่วงกลางไล่ขึ้น<b>สม่ำเสมอ</b> ไม่กระโดด · นอกช่วงจะคงที่ (clamp)</div>
+    <div class="ctrl"><label>🔹 บานเล็กสุด: พื้นที่</label><input type="number" id="loA" value="1.2" step="0.1" oninput="render()"><span class="unit">ตร.ม. →</span><input type="number" id="loP" value="15000" step="500" oninput="render()"><span class="unit">บาท/บาน</span></div>
+    <div class="ctrl"><label>🔸 บานใหญ่สุด: พื้นที่</label><input type="number" id="hiA" value="3.6" step="0.1" oninput="render()"><span class="unit">ตร.ม. →</span><input type="number" id="hiP" value="23500" step="500" oninput="render()"><span class="unit">บาท/บาน</span></div>
+    <div class="hint" id="slopeInfo"></div>
+  </div>
+
+  <div class="ref">📌 จุดอ้างอิงพี่นัท: บานเล็ก 0.6×2.0 (1.2 ตร.ม.) ≥ 14,000 · บานใหญ่ 1.2×3.0 (3.6 ตร.ม.) ≤ 28,000
+    <div id="refcheck" style="margin-top:5px;font-weight:700;"></div></div>
+</div>
+
+<div class="panel">
+  <h2>📊 ราคา/บาน ทุกขนาด — เทียบ 2 โหมด (ช่วงกลางไฮไลต์)</h2>
+  <table id="tbl"></table>
+  <div class="note">คอลัมน์ <span class="gap">Δ</span> = ส่วนต่างจากแถวก่อน (ดูว่าช่วงกลางไล่นุ่มไหม) · <span class="pB">น้ำเงิน</span> = โหมดที่เลือกอยู่</div>
+</div>
+
+<div class="panel">
+  <h2>🧮 คิดราคารวม</h2>
+  <div class="row2">
+    <div class="mini"><span>กว้าง/บาน (ม.)</span><input type="number" id="cw" value="0.9" step="0.05" oninput="calc()"></div>
+    <div class="mini"><span>สูง (ม.)</span><input type="number" id="chh" value="2.2" step="0.05" oninput="calc()"></div>
+    <div class="mini"><span>จำนวนบาน</span><input type="number" id="cn" value="2" min="1" step="1" oninput="calc()"></div>
+  </div>
+  <div style="margin-top:8px;">
+    <button class="preset" onclick="setCalc(0.6,2.0,1)">เล็ก 0.6×2.0</button>
+    <button class="preset" onclick="setCalc(0.9,2.2,2)">คู่ 0.9×2.2</button>
+    <button class="preset" onclick="setCalc(1.0,2.4,2)">กลาง 1.0×2.4</button>
+    <button class="preset" onclick="setCalc(1.2,3.0,1)">ใหญ่ 1.2×3.0</button>
+  </div>
+  <div class="calc-out" id="calcout"></div>
+</div>
+
+<script>
+let MODE='linear';
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function setMode(m){ MODE=m; document.getElementById('mC').classList.toggle('on',m==='clamp'); document.getElementById('mL').classList.toggle('on',m==='linear'); document.getElementById('boxC').classList.toggle('on',m==='clamp'); document.getElementById('boxL').classList.toggle('on',m==='linear'); render(); }
+function syncC(id,v){ document.getElementById(id).value=v; document.getElementById(id+'R').value=v; render(); }
+
+function priceClamp(area){ const r=+document.getElementById('rate').value,f=+document.getElementById('floor').value,c=+document.getElementById('ceil').value; return clamp(area*r,f,c); }
+function priceLinear(area){ const a1=+document.getElementById('loA').value,p1=+document.getElementById('loP').value,a2=+document.getElementById('hiA').value,p2=+document.getElementById('hiP').value;
+  if(area<=a1) return p1; if(area>=a2) return p2; return p1+(p2-p1)*(area-a1)/(a2-a1); }
+function price(area){ return MODE==='clamp'?priceClamp(area):priceLinear(area); }
+
+const SIZES=[[0.6,2.0],[0.7,2.1],[0.8,2.1],[0.9,2.2],[1.0,2.3],[1.0,2.4],[1.1,2.5],[1.1,2.6],[1.2,2.8],[1.2,3.0]];
+function render(){
+  // slope info
+  const a1=+document.getElementById('loA').value,p1=+document.getElementById('loP').value,a2=+document.getElementById('hiA').value,p2=+document.getElementById('hiP').value;
+  const slope=(p2-p1)/(a2-a1);
+  document.getElementById('slopeInfo').innerHTML=`ความชัน = ${fmt(slope)} บาท/ตร.ม. (เดิม clamp = 8,000 · ยิ่งน้อย = ช่วงกลางนุ่ม)`;
+  let rows='<tr><th>ขนาดบาน</th><th>พื้นที่</th><th>Clamp เดิม</th><th>Linear</th><th>ใช้จริง</th><th>Δ จากแถวก่อน</th></tr>';
+  let prev=null;
+  for(const [w,h] of SIZES){
+    const area=+(w*h).toFixed(2); const pc=priceClamp(area),pl=priceLinear(area); const use=MODE==='clamp'?pc:pl;
+    const d=prev==null?'—':('+'+fmt(use-prev)); prev=use;
+    rows+=`<tr><td class="sz">${w} × ${h}</td><td>${area}</td><td class="pA">${fmt(pc)}</td><td class="pB">${fmt(pl)}</td><td style="font-weight:800;">${fmt(use)}</td><td class="gap">${d}</td></tr>`;
+  }
+  document.getElementById('tbl').innerHTML=rows;
+  const r1=price(1.2), r2=price(3.6);
+  document.getElementById('refcheck').innerHTML=`บานเล็ก 1.2 ตร.ม. → <b>${fmt(r1)}</b> ${r1>=14000-1?'✅':'❌ <14,000'} &nbsp;·&nbsp; บานใหญ่ 3.6 ตร.ม. → <b>${fmt(r2)}</b> ${r2<=28000+1?'✅':'❌ >28,000'}`;
+  calc();
+}
+function setCalc(w,h,n){ document.getElementById('cw').value=w; document.getElementById('chh').value=h; document.getElementById('cn').value=n; calc(); }
+function calc(){
+  const w=+document.getElementById('cw').value,h=+document.getElementById('chh').value,n=+document.getElementById('cn').value||1;
+  const area=w*h; const pp=price(area); const total=pp*n;
+  document.getElementById('calcout').innerHTML=`<div>ขนาด/บาน <b>${w}×${h}</b> = ${area.toFixed(2)} ตร.ม. · โหมด <b>${MODE==='clamp'?'Clamp':'Linear'}</b> → ราคา/บาน <b>${fmt(pp)}</b></div><div style="margin-top:6px;">รวม ${n} บาน = <span class="big">${fmt(total)}</span> บาท</div>`;
+}
+render();
+</script>
+</body>
+</html>
