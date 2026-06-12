@@ -113,11 +113,14 @@ function mkProd(group, prodId, W, H){
   const inner = [...ch.querySelectorAll("details")].find(d => { const s = d.querySelector(":scope > summary"); return s && /ของเสริมหลังคา/.test(s.textContent); });
   want("P1 ของเสริมหลังคา = details พับ (open=false)", !!inner && inner.open === false, inner ? ("open=" + inner.open) : "ไม่เจอ details");
   want("P1 ช่องหลัก (แป/โครงสร้าง/ปลายหลังคา) ยังอยู่", !!ch.querySelector(".o-roofbatten") && !!ch.querySelector(".o-roofframe") && !!ch.querySelector(".o-roofend"), "");
-  want("P1 ของเสริม (รางน้ำ/ซ่อนสโลป) อยู่ใน details", !!inner && !!inner.querySelector(".o-rfgut") && !!inner.querySelector(".o-rfhs"), "");
+  // G3 v2: แยกกล่อง — รางน้ำ (.o-rfgut) → กล่อง "🌧️ ปลายหลังคา · รางน้ำ" · ซ่อนสโลป (.o-rfhs) → กล่อง "🔩 ของเสริมหลังคา"
+  const gutBox = [...ch.querySelectorAll("details")].find(d => { const s = d.querySelector(":scope > summary"); return s && /รางน้ำ/.test(s.textContent) && d.querySelector(".o-rfgut"); });
+  want("P1 ซ่อนสโลปอยู่ในของเสริม + รางน้ำอยู่กล่องปลายหลังคา (G3 v2 แยกกล่อง)", !!inner && !!inner.querySelector(".o-rfhs") && !!gutBox, "");
   // P2/P4: เปิดหลังคาเลื่อน
   const slide = ch.querySelector(".o-slide"); slide.checked = true; fire(slide, "change");
   want("P2 ชิปจำนวนบาน 4 ตัว [2][3][4][6]", ch.querySelectorAll(".spanel-chip").length === 4, "ได้ " + ch.querySelectorAll(".spanel-chip").length);
-  want("P4 พื้นที่เลื่อน placeholder=auto", ch.querySelector(".o-sarea").getAttribute("placeholder") === "auto", "");
+  // G3 v2: พื้นที่เลื่อน .o-sarea (ช่องเดียว) → แยกเป็น .o-sareaw (ยาว) × .o-sareah (ยื่น) ทั้งคู่ placeholder=auto
+  want("P4 พื้นที่เลื่อน ยาว×ยื่น placeholder=auto", (ch.querySelector(".o-sareaw") || {}).getAttribute && ch.querySelector(".o-sareaw").getAttribute("placeholder") === "auto" && ch.querySelector(".o-sareah").getAttribute("placeholder") === "auto", "");
   want("P4 มอเตอร์ helper auto โชว์", /auto/.test(ch.querySelector(".o-smotor-auto").textContent), JSON.stringify(ch.querySelector(".o-smotor-auto").textContent));
   want("P4 ช่องราคามอเตอร์ซ่อน default", ch.querySelector(".o-smotorprice-wrap").style.display === "none", "");
   // P2: กดชิป → set spanels + active

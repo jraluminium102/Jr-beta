@@ -3379,7 +3379,8 @@ function refreshItype(d){
   { var _wi=d.querySelector('.i-w'), _hi=d.querySelector('.i-h');
     var _wl=_wi&&_wi.previousElementSibling, _hl=_hi&&_hi.previousElementSibling;
     var _roof=(p.cat==='หลังคา');
-    if(_wl&&_wl.tagName==='LABEL') _wl.textContent=_roof?'ยาว (ม.)':(p.ceLinear?'กว้าง/บาน (ม.)':'กว้าง (ม.)'); // casement: ชี้ชัดกรอกต่อบาน
+    var _isLen=(p.method==='per_length_tier'||p.pvc_cover||p.gutter_cover); // ราวบันได/ครอบ PVC/ปิดซ่อนราง อ่าน "ความยาว" จากช่องกว้าง (ตรงกับ buildItemOpts L2457 · กัน refreshItype เขียนทับเป็น "กว้าง")
+    if(_wl&&_wl.tagName==='LABEL') _wl.textContent=_roof?'ยาว (ม.)':(_isLen?(p.gutter_cover?'ยาวรวม (ม.)':'ความยาว (ม.)'):(p.ceLinear?'กว้าง/บาน (ม.)':'กว้าง (ม.)')); // casement: ชี้ชัดกรอกต่อบาน
     if(_hl&&_hl.tagName==='LABEL') _hl.textContent=_roof?'ยื่น (ม.)':'สูง (ม.)';
   }
   const sel=d.querySelector('.i-type'); if(!sel) return;
