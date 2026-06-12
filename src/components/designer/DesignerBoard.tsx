@@ -33,6 +33,7 @@ type Job = {
   designer_name: string | null;
   design_state: DesignState;
   design_due_date: string | null;
+  design_received_date: string | null;
   design_start: string | null;
   design_end: string | null;
   design_revise_count: number;
@@ -156,6 +157,27 @@ export default function DesignerBoard({
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "แก้ไขกำหนดส่งไม่สำเร็จ");
+    } finally {
+      setAssigning(null);
+    }
+  }
+
+  // (0032) Update วันได้รับแบบ จาก input บนการ์ด
+  async function updateReceivedDate(job: Job, date: string) {
+    if (date === (job.design_received_date ?? "")) return;
+    setAssigning(job.id);
+    setErr("");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ design_received_date: date || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "แก้ไขวันได้รับแบบไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "แก้ไขวันได้รับแบบไม่สำเร็จ");
     } finally {
       setAssigning(null);
     }
@@ -344,6 +366,7 @@ export default function DesignerBoard({
           onMove={moveTo}
           onAssign={assignDesigner}
           onDueDate={updateDueDate}
+          onReceivedDate={updateReceivedDate}
           onDesignerAdded={reloadDesigners}
         />
       ) : (
@@ -387,6 +410,7 @@ function BoardView({
   onMove,
   onAssign,
   onDueDate,
+  onReceivedDate,
   onDesignerAdded,
 }: {
   byColumn: Record<DesignState, Job[]>;
@@ -397,6 +421,7 @@ function BoardView({
   onMove: (job: Job, state: DesignState) => void;
   onAssign: (job: Job, designerRef: number | null) => void;
   onDueDate: (job: Job, date: string) => void;
+  onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
 }) {
   return (
@@ -427,6 +452,7 @@ function BoardView({
                     onMove={onMove}
                     onAssign={onAssign}
                     onDueDate={onDueDate}
+                    onReceivedDate={onReceivedDate}
                     onDesignerAdded={onDesignerAdded}
                   />
                 ))
@@ -449,6 +475,7 @@ function JobCard({
   onMove,
   onAssign,
   onDueDate,
+  onReceivedDate,
   onDesignerAdded,
 }: {
   job: Job;
@@ -459,6 +486,7 @@ function JobCard({
   onMove: (job: Job, state: DesignState) => void;
   onAssign: (job: Job, designerRef: number | null) => void;
   onDueDate: (job: Job, date: string) => void;
+  onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
 }) {
   // toast feedback สำหรับ #37 (บันทึกกำหนดส่ง)
@@ -544,6 +572,26 @@ function JobCard({
               <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
             ) : null}
           </div>
+
+          {/* (0032) วันได้รับแบบ — editable */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
+            <input
+              type="date"
+              defaultValue={job.design_received_date ?? ""}
+              disabled={assigning}
+              onBlur={(e) => onReceivedDate(job, e.target.value)}
+              aria-label="วันได้รับแบบ"
+              className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum text-ink-2"
+            />
+          </div>
+
+          {/* design_start → design_end (read-only แสดงไทม์ไลน์ทำแบบ) */}
+          {(job.design_start || job.design_end) && (
+            <div className="text-[11px] text-ink-3 tnum">
+              ทำแบบ: {thDate(job.design_start)} → {thDate(job.design_end)}
+            </div>
+          )}
 
           {/* Move design_state (#16: disable option ปัจจุบัน) */}
           <select
