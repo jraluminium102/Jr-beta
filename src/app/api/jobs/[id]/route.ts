@@ -59,6 +59,7 @@ const fieldsSchema = z.object({
   designer_ref:   z.number().int().nullable().optional(),
   design_due_date: z.string().nullable().optional(),
   design_received_date: z.string().nullable().optional(),
+  design_state:   z.enum(["NOT_STARTED", "DRAWING", "PENDING_CUSTOMER", "REVISING", "DONE"]).optional(),
   design_start:   z.string().nullable().optional(),
   design_end:     z.string().nullable().optional(),
   remark:         z.string().optional(),
