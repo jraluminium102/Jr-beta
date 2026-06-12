@@ -214,6 +214,12 @@
   .addsec-chip:active{background:#E65100;color:#fff;}
   @keyframes addsec-flash{0%{box-shadow:0 0 0 0 #FFB30066;}60%{box-shadow:0 0 0 8px #FFB30000;}100%{box-shadow:0 0 0 0 #FFB30000;}}
   .addsec-flash{animation:addsec-flash .4s ease-out;}
+  /* ===== MOSQ PANEL CHIPS (mosq-r2) ===== */
+  .mosq-panels-bar{margin-bottom:10px;}
+  .mosq-panels-bar-head{font-size:12px;font-weight:700;color:#1565C0;margin-bottom:6px;}
+  .mosq-panels-bar-hint{font-size:11px;font-weight:400;color:#888;margin-left:4px;}
+  .mosq-size-details summary{list-style:none;cursor:pointer;font-size:12px;color:#0369A1;}
+  .mosq-size-details summary::-webkit-details-marker{display:none;}
   /* ===== CHIP CONTROLS (G1 Form UX Redesign) ===== */
   .chip-group{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .chip{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 14px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-size:14px; font-family:inherit; font-weight:600; cursor:pointer; line-height:1.3; text-align:center; transition:background .12s,border-color .12s; -webkit-tap-highlight-color:transparent; }
@@ -2218,10 +2224,58 @@ function cmechTypePick(btn){
   btn.classList.add('on');
   var sel=sub.querySelector('.o-cmech'); if(sel){ sel.value=btn.dataset.val; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 }
+// ── [mosq-r2] ชิปจำนวนบานมุ้ง helpers ──
+function rebuildMosqPanelChips(d){
+  var bar=d.querySelector('.mosq-panels-bar'); if(!bar)return;
+  var chipWrap=bar.querySelector('.mosq-panel-chips');
+  var fallback=bar.querySelector('.mosq-panels-fallback');
+  var hiddenInp=d.querySelector('.o-mosqpanels');
+  if(!chipWrap||!fallback||!hiddenInp)return;
+  var iPanels=parseInt((d.querySelector('.i-panels')||{}).value||'2')||2;
+  chipWrap.innerHTML='';
+  if(iPanels>5){
+    // fallback stepper — ยัง cap ที่ N (Q3)
+    chipWrap.style.display='none'; fallback.style.display='flex';
+    var stepper=fallback.querySelector('.o-mosqpanels-stepper');
+    if(stepper){
+      stepper.max=iPanels;
+      if(hiddenInp.value) stepper.value=Math.min(parseInt(hiddenInp.value)||1, iPanels);
+    }
+    return;
+  }
+  chipWrap.style.display='flex'; fallback.style.display='none';
+  chipWrap.appendChild(makeMosqChip('','auto',hiddenInp,d));
+  for(var i=1;i<=iPanels;i++) chipWrap.appendChild(makeMosqChip(String(i),i+' บาน',hiddenInp,d));
+  var cur=hiddenInp.value;
+  chipWrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val===cur); });
+}
+function makeMosqChip(val,label,hiddenInp,d){
+  var btn=document.createElement('button');
+  btn.type='button'; btn.className='chip chip-sm mosq-panel-chip'; btn.dataset.val=val; btn.textContent=label;
+  btn.style.cssText='min-height:44px;min-width:44px;padding:0 12px;font-size:14px;font-weight:700;';
+  btn.addEventListener('click',function(){
+    hiddenInp.value=val;
+    hiddenInp.dispatchEvent(new Event('input',{bubbles:true}));
+    var wrap=btn.closest('.mosq-panel-chips');
+    if(wrap) wrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val===val); });
+  });
+  return btn;
+}
+function syncMosqPanels(stepper){
+  var d=stepper.closest('.ch'); if(!d)return;
+  var hid=d.querySelector('.o-mosqpanels'); if(!hid)return;
+  // cap ที่ i-panels (Q3)
+  var iPanels=parseInt((d.querySelector('.i-panels')||{}).value||'2')||2;
+  var v=Math.min(parseInt(stepper.value)||1, iPanels);
+  if(stepper.value!=String(v)) stepper.value=v;
+  hid.value=String(v); hid.dispatchEvent(new Event('input',{bubbles:true}));
+}
 // มุ้ง: โผล่/ซ่อนกลุ่มรายละเอียดตาม o-mosq + ชิปลักษณะการเปิด (เฉพาะ imp21/imp23)
 function mosqGroupToggle(sel){
   var wrap=sel.closest('.mosq-wrap'); if(!wrap)return;
+  var d=sel.closest('.ch');
   var grp=wrap.querySelector('.mosq-detail-group'); if(grp)grp.style.display=sel.value?'':'none';
+  if(sel.value && d) rebuildMosqPanelChips(d);  // [mosq-r2] rebuild chips เมื่อเลือกชนิดมุ้ง
   var openRow=wrap.querySelector('.mosq-openstyle-row');
   if(openRow){ var show=(sel.value==='imp21'||sel.value==='imp23'); openRow.style.display=show?'':'none';
     if(show){ openRow.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val==='เปิด'); }); var hid=openRow.querySelector('.o-mosqopenstyle'); if(hid)hid.value='เปิด'; }
@@ -2318,6 +2372,7 @@ function addItem(container){
     var p=parseInt(this.value)||0;
     var fEl=d.querySelector('.o-fixed'); var f=fEl?parseInt(fEl.value)||0:0;
     var ow=d.querySelector('.o-opencount'); if(ow) ow.textContent=Math.max(0,p-f);
+    rebuildMosqPanelChips(d);  // [mosq-r2] rebuild ชิปบานมุ้งเมื่อจำนวนบานเปลี่ยน
   });
   // โชว์ช่องรหัสสีเมื่อเลือกสีที่มี hasCode (อบพิเศษ/ลายไม้อบพิเศษ/สีชุบ)
   d.querySelector('.i-color').addEventListener('change',function(){
@@ -2633,7 +2688,19 @@ function buildItemOpts(d){
     h+='<div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:8px;">เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนรายละเอียดทั้งหมด</div>';
     h+='<select class="o-mosq" style="height:44px;width:100%;max-width:300px;" onchange="mosqGroupToggle(this); calcQuote();"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select>';
     h+='<div class="mosq-detail-group" style="display:none;margin-top:10px;border-top:1px solid #90CAF9;padding-top:10px;">';
-    h+='<label class="opt" style="width:100%;">ขนาดมุ้ง <span style="font-size:11px;color:#0369A1;">[เว้นว่าง=auto จากบาน]</span> กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> · บาน <input type="number" class="o-mosqpanels" min="0" step="1" value="" placeholder="auto" style="width:50px;height:36px;" oninput="calcQuote()"></label>';
+    // ── [mosq-r2] จำนวนบานมุ้ง: ชิป auto/1..N (N=i-panels, cap ที่ N) + fallback stepper (N>5, ยัง cap ที่ N) ──
+    h+='<div class="mosq-panels-bar">';
+    h+='<div class="mosq-panels-bar-head">จำนวนบานมุ้ง <span class="mosq-panels-bar-hint">กระทบราคา</span></div>';
+    h+='<div class="mosq-panel-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>';
+    h+='<div class="mosq-panels-fallback" style="display:none;align-items:center;gap:6px;font-size:13px;">จำนวนบาน: <input type="number" class="o-mosqpanels-stepper" min="1" step="1" style="width:60px;height:44px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:14px;" oninput="syncMosqPanels(this)"></div>';
+    h+='</div>';
+    // ── ช่องขนาด: พับใน details ──
+    h+='<details class="mosq-size-details" style="margin-top:8px;">';
+    h+='<summary>กรอกขนาดมุ้งเอง (กรณีแต่ละบานไม่เท่ากัน)</summary>';
+    h+='<div style="padding:8px 0;"><span style="font-size:11px;color:#0369A1;">[เว้นว่าง=auto จากบาน]</span> กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"></div>';
+    h+='</details>';
+    // .o-mosqpanels ยังอยู่ (hidden) — readItem อ่านค่าจาก field นี้
+    h+='<input type="hidden" class="o-mosqpanels" value="">';
     // ก้อน5: ชิปลักษณะการเปิด (.o-mosqopenstyle · ห้ามชน .o-mosqopen dead code) — โผล่เฉพาะ imp21/imp23 · label-only
     h+='<div class="mosq-openstyle-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #90CAF9;"><div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button><button type="button" class="chip" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button><button type="button" class="chip" data-val="กระทุ้ง" onclick="mosqOpenStylePick(this)">กระทุ้ง</button><button type="button" class="chip" data-val="ยก" onclick="mosqOpenStylePick(this)">ยก</button></div><input type="hidden" class="o-mosqopenstyle" value="เปิด"><div style="margin-top:5px;font-size:11px;color:#6B7280;">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา</div></div>';
     h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <select class="o-mosqfabric" style="height:40px;" onchange="calcQuote()"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select></label>';
@@ -2774,6 +2841,8 @@ function buildItemOpts(d){
   }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
+  // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
+  rebuildMosqPanelChips(d);
   // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
   { var _pm=d.querySelector('.i-panels-mirror'); var _pv=d.querySelector('.i-panels');
     if(_pm && _pv){ _pm.value=_pv.value; }
