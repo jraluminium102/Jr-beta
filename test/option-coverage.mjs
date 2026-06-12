@@ -303,13 +303,13 @@ function check(optName, setup, expected, detail) {
   const delta = afterSell - baseSell;
 
   const rawGridCost = (2 * 2 + 2 * 2) * 200; // 1600
-  // delta จริง = roundUp(baseSell + rawGridCost) - baseSell
-  const expectedDelta = roundUp(baseSell + rawGridCost) - baseSell;
+  // casement_euro = ceLinear: sell=Math.round(core+extras) (ไม่ roundUp พัน) · base ×100 ลงตัว → delta = rawGridCost เป๊ะ
+  const expectedDelta = rawGridCost;
   const ok = delta === expectedDelta;
   const entry = check(
     "คาดตาราง (ไม่โค้ง)",
     "casement_euro 2×2, .o-gridmark เช็ค, nh=2, nv=2, rate=200, curve=0",
-    `delta=+${expectedDelta} (rawGridCost=${rawGridCost} หลัง roundUp)`,
+    `delta=+${expectedDelta} (rawGridCost=${rawGridCost} · ceLinear Math.round)`,
     `delta=${delta} (คาด ${expectedDelta}) | rawGridCost=${rawGridCost} | base=${fmt(baseSell)} after=${fmt(afterSell)}`
   );
   entry.ok = ok;
@@ -337,12 +337,13 @@ function check(optName, setup, expected, detail) {
   const delta = afterSell - baseSell;
 
   const rawGridCost = (2 * 2 + 2 * 2) * 200 + 1 * 3000; // 4600
-  const expectedDelta = roundUp(baseSell + rawGridCost) - baseSell;
+  // ceLinear (Math.round · base ×100 ลงตัว) → delta = rawGridCost เป๊ะ ไม่ roundUp พัน
+  const expectedDelta = rawGridCost;
   const ok = delta === expectedDelta;
   const entry = check(
     "คาดตาราง + โค้ง 1 เส้น",
     "casement_euro 2×2, nh=2, nv=2, rate=200, curve=1",
-    `delta=+${expectedDelta} (rawGridCost=${rawGridCost} หลัง roundUp)`,
+    `delta=+${expectedDelta} (rawGridCost=${rawGridCost} · ceLinear Math.round)`,
     `delta=${delta} (คาด ${expectedDelta}) | rawGridCost=${rawGridCost} | base=${fmt(baseSell)} after=${fmt(afterSell)}`
   );
   entry.ok = ok;

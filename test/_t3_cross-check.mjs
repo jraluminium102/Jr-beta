@@ -12,6 +12,11 @@
 //   (2) casement_euro → Linear ปัดร้อย (สูงกว่ายุค bucket) ทำ engine สูงขึ้น: FULL-D +131,372 (casement ดันบวกมากกว่า glasshouse ดันลบ)
 //   accountant audit (2026-06-12): EXPECTED ทุกใบ arithmetic ถูก (VAT 7%/ลำดับลด/ปัดเศษ) · ไม่มีบั๊กการเงินฝัง · สูตร casement ถูก
 //   ⚠ re-baseline ไม่ได้ (ใบ glasshouse ไม่มีขนาดบานเดิม) · ถ้าอยาก verify ลึก: decompose FULL-D ทีละ line ภายหลัง
+//
+// หมายเหตุเพิ่ม (2026-06-13 · มติพี่นัท casement convention B): บานเปิดยูโร "กรอกกว้างรวม → engine หาร÷จำนวนบาน = พื้นที่/บาน"
+//   → casement หลายบาน(panels>1) ที่กรอกกว้างรวม "ลดลง" จาก convention เดิม (เดิมตีความกว้าง=ต่อบาน เลยพองเมื่อกรอกรวม)
+//   เช่น FULL-D row "บานเปิดคู่ 4 บาน w=3.6" : เดิมคิด 3.6/บาน(พอง ~184k) → ใหม่ 0.9/บาน = 76k (ถูกต้องเชิงกายภาพ)
+//   ผลรวม dev-test นี้จึงเลื่อนลงอีก (quote-09/FULL-A/B) — ยังเป็น expected-fail ตามมติ "ปล่อยไว้" (กระจก/มุ้ง/ต้นทุน ไม่กระทบ · verify gate เขียวครบ)
 
 import { JSDOM, VirtualConsole } from "jsdom";
 import { readFileSync } from "node:fs";

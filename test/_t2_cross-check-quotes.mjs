@@ -141,15 +141,15 @@ const EXPECTED = [
   { // quote-01
     lineItems: [
       { no: "1", unitPrice: 47000, total: 47000 },
-      // row 2 = casement_euro 1.6×2.2 panels=2 → re-baseline 2026-06-12: สูตร Linear ปัดร้อย 24,700/บาน × 2 = 49,400 (เดิม 39,000 ยุค bucket) · qty 2 = 98,800
-      { no: "2", unitPrice: 49400, total: 98800 },
+      // row 2 = casement_euro 1.6×2.2 panels=2 → re-baseline 2026-06-13 convention B (กว้างรวม÷บาน): หน้าต่าง 1.6ม. 2บาน = 0.8/บาน → 1.76 ตร.ม./บาน → 17,400/บาน × 2 = 34,800 (เดิม 49,400 ตีความผิดว่า 1.6/บาน) · qty 2 = 69,600
+      { no: "2", unitPrice: 34800, total: 69600 },
       { no: "3", unitPrice: 30000, total: 30000 },
       { no: "4", unitPrice: 15000, total: 60000 },
       { no: "5", unitPrice: 90000, total: 90000 },
       { no: "6", unitPrice: 54000, total: 54000 },
     ],
-    // subtotal +20,800 (98,800-78,000) → 379,800 · VAT 7% = 26,586 · grand 406,386
-    subtotal: 379800, vat: 26586, grandTotal: 406386,
+    // convention B: row2 = 69,600 (เดิม 98,800 ลด 29,200) → subtotal 350,600 · VAT 7% = 24,542 · grand 375,142
+    subtotal: 350600, vat: 24542, grandTotal: 375142,
   },
   { // quote-02
     lineItems: [
