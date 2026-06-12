@@ -2516,7 +2516,8 @@ function addItem(container){
   d.innerHTML=
    `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
-     `<div class="full"><label>กลุ่มงาน</label><select class="i-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div>`+
+     /* G1G6-A: กลุ่มงาน = การ์ดชิป 7 ปุ่ม (select ซ่อนให้ logic เดิมอ่าน · chSetChip set+fire change) */
+     `<div class="full"><label>กลุ่มงาน</label><select class="i-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select>`+rfChips('i-group',[['1','🪟 บาน/กระจก'],['2','🚪 ระแนง·รั้ว·ราว'],['3','🏠 หลังคา·ฝ้า-ผนัง'],['4','📦 ตู้อลู'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้องกระจก'],['7','🎐 ม่านซิป']],'1')+`</div>`+
      /* ก้อน1: แบบ (.i-prod) ขึ้น #2 ทันทีหลังกลุ่มงาน */
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
      /* ก้อน1: ประเภท (.i-type) → ชิป 2 ปุ่มใหญ่ · select เดิมซ่อนไว้ให้ readItem อ่าน */
@@ -2558,6 +2559,8 @@ function addItem(container){
     { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
     calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
   d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value); buildItemOpts(d); refreshItype(d);
+    // G1G6-A: sync ชิปกลุ่มงานเมื่อ value เปลี่ยน (รวมกรณีโค้ดตั้งตรง เช่น addGlasshouseSet group 6)
+    { var _gv=d.querySelector('.i-group').value; d.querySelectorAll('.chip[onclick*="i-group"]').forEach(function(c){ c.classList.toggle('on', c.dataset.val===_gv); }); }
     // กั้นห้องกระจก: เลือกกลุ่มงาน 6 → โชว์ช่องด้านทันที + เติม "ด้าน A" ให้ถ้ายังว่าง
     if(d.querySelector('.i-group').value==='6'){
       const pos=d.querySelector('.i-position');
