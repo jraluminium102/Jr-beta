@@ -26,12 +26,12 @@ function addRow(group, prod, wv, hv, panels) {
 }
 
 // ===== R3-1: casement_euro — เปลี่ยนเป็น Linear ต่อบาน (casement-euro-price แทน R3-1 เดิม) =====
-// 1.6×2.2/บาน → 15,000+max(0,3.52-1.2)×4,166.67 = 24,666.67/บาน
+// 1.6×2.2/บาน → 15,000+max(0,3.52-1.2)×4,166.67 = 24,666.67 → ปัดขึ้นร้อย = 24,700/บาน × 2 = 49,400 (มติ 2026-06-12: ปัดร้อย ไม่ใช่พัน)
 const d1 = addRow("1", "casement_euro", "1.6", "2.2", 2);
 const sell2 = w.readItem(d1).r.sell;
 sf(d1, ".i-panels", "3");
 const sell3 = w.readItem(d1).r.sell;
-want("R3-1→Linear: 2 บาน (1.6×2.2/บาน) = 50,000", sell2 === 50000, "sell2=" + sell2);
+want("R3-1→Linear: 2 บาน (1.6×2.2/บาน) = 49,400 (ปัดร้อย)", sell2 === 49400, "sell2=" + sell2);
 want("R3-1→Linear: 3 บาน เพิ่ม 1 ราคา/บาน (~24,000-25,000)", (sell3 - sell2) >= 23000 && (sell3 - sell2) <= 26000, "Δ=" + (sell3 - sell2));
 
 // ===== R3-2a: ranae ทำเป็นประตู — override ราคา =====

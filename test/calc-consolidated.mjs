@@ -66,19 +66,9 @@ function mk(group, prodId, W, H){ doc.getElementById("items").innerHTML=""; w.ad
     want("ข้อ10 เลือกสีกรอบ (ซาฮาร่า) → ราคาเพิ่ม", cSahara>c0, "Δ="+(cSahara-c0)); }
 }
 
-// ===== ข้อ5: OPTION ระดับชุด (set-optdelta) บวกเข้ายอดจริง =====
-{
-  doc.getElementById("items").innerHTML="";
-  const setBox = w.addSet();
-  const parts = setBox.querySelector(".set-parts");
-  w.addItem(parts);
-  [...setBox.querySelectorAll(".ch")].forEach(ch=>{ setV(ch,".i-group","1"); const ps=ch.querySelector(".i-prod"); ps.value="casement_euro"; fire(ps,"change"); setV(ch,".i-w",2); setV(ch,".i-h",2); });
-  setV(setBox,".set-name","ชุดทดสอบ");
-  const before = subtotal();
-  setV(setBox,".set-optdelta","5000");
-  const after = subtotal();
-  want("ข้อ5 OPTION ชุด +5,000 บวกเข้ายอดจริง (ครั้งเดียว)", after-before===5000, "Δ="+(after-before));
-}
+// ===== ข้อ5: OPTION ระดับชุด (set-optdelta) — ลบทิ้งแล้ว (มติพี่นัท 2026-06-12) =====
+// ฟีเจอร์ OPTION ระดับชุดถูกตัดออก (ซ้ำกับ OPTION ต่อบาน .oc-block) → ไม่มี .set-optdelta อีกต่อไป
+// ใช้ OPTION ต่อบาน (.oc-*) แทน · เทสนี้จึงเอาออก
 
 // ===== ข้อ13: discFlat ส่วนลดเกินยอด → ยอดรวมไม่ติดลบ =====
 {
