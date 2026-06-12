@@ -87,12 +87,28 @@
 <b>ประเมิน:</b> 2-3 รอบ session · pattern การ์ด/drill-down/sync มีพร้อมแล้ว (จาก G3-v5/G4/G5)
 </div>
 
-<h2>5. ผล cross-check จาก subagent (เติมเมื่อเสร็จ)</h2>
-<div class="amber-box" id="subagent-pending"><b>⏳ กำลังรอ 3 subagent (รัน background):</b><br>
-1. <b>accountant</b> — cross-check ราคา casement/G4/G3/G5 เทียบ engine + ใบจริง (_t2/_t3) + ตรวจ VAT/ปัดเศษ · flag คิดเกิน-ขาด<br>
-2. <b>doc-option-auditor</b> — เทียบออปชั่น G3/G4/G5 vs ใบจริง (samples) · หาขาด/ผิด/เกิน หลัง redesign ชิป · ออก <code>docs/AUDIT-G3G4G5-options-2026-06-12.html</code><br>
-3. <b>ux-designer</b> — รีวิว UX/UI ฟอร์มใหม่ (กดง่าย/มือถือ/ไม่รก) · ออก <code>docs/UX-REVIEW-G3G4G5-2026-06-12.html</code><br>
-<span class="small">(ส่วนนี้จะอัปเดตด้วยผลจริง + แนวทางแก้ เมื่อ subagent เสร็จ)</span></div>
+<h2>5. ผล cross-check จาก subagent</h2>
+
+<h3>5.1 accountant — ตรวจราคา/การเงิน (เทียบ engine + ใบจริง)</h3>
+<div class="green-box"><b>✅ ผ่านชัดเจน:</b> VAT 7%/ลำดับหักลดก่อน VAT/grand <b>ถูกทุกใบ</b> (_t2 quote-01..05 · _t3 quote-06..10 + FULL-A/B/C/D) · สูตร casement Linear ถูกเป๊ะทุกเคส (17k/18.3k/20k/25k/28.8k) · G4 สีโครง (Aztec 950/อบพิเศษ 1600/ขาว-ดำ 0 · ชั้นกระจกไม่คิดสี) · G3 ปลายหลังคา/ราง M-L · G5 ผ้ามุ้ง (fiber 0/cat 800/rat 1200) — ถูกหมด</div>
+<div class="amber-box"><b>🔴 FLAG-1 (แก้แล้ว commit 432b7a6):</b> casement Linear คิดกว้าง "ต่อบาน" แต่โหมดคิดเร็ว label = "กว้าง (ม.)" ไม่ชัด → เสี่ยง sales กรอกกว้างรวม = <b>คิดเกินลูกค้า</b> · <b>แก้:</b> qiWLabel → "กว้าง/บาน (ม.)" เมื่อ ceLinear (main form มีแล้ว) · <b>ยังต้องให้พี่นัทยืนยัน convention:</b> w casement = ต่อบาน ใช่ไหม (baseline _t2 QUOTE-01 = 49,400 อิงต่อบาน)<br>
+<b>FLAG-2 (เบา):</b> comment ค้าง "รอเช็คซ้ำ Aztec idx4" (บรรทัด 927) — ค่า 950 ถูกแล้ว แค่ลบ comment เมื่อพี่คอนเฟิร์ม<br>
+<b>FLAG-3 (ข้อสังเกต):</b> G5 "นิรภัย 3,500" จริงเป็น tier (≤1.5=3,500 ≤3=3,200 &gt;3=3,000) · พฤติกรรมเดิม ไม่ใช่บั๊ก</div>
+
+<h3>5.2 ux-designer — รีวิว UX/UI (กดง่าย/มือถือ)</h3>
+<div class="box"><b>Top 5 จุดที่ควรปรับ</b> (รายงานเต็ม <code>docs/UX-REVIEW-G3G4G5-2026-06-12.html</code>):
+<table>
+<tr><th>#</th><th>จุด</th><th>แนวทาง</th><th>สถานะ</th></tr>
+<tr><td>P1</td><td>G3 ของเสริม จัดกล่องด้วย keyword (เปราะ ถ้า label เปลี่ยน)</td><td>เพิ่ม class marker <code>rf-extra</code> + match ด้วย class</td><td><span class="pill p-todo">เสนอ</span></td></tr>
+<tr><td>P1</td><td>ชิป "ปิดปลายกันน้ำกระเด็น" ยาว wrap บน 360px</td><td>ย่อ "ปิดปลายกันน้ำ" + hint</td><td><span class="pill p-done">แก้แล้ว</span></td></tr>
+<tr><td>P2</td><td>G4 hint สี อยู่ห่าง dropdown สี (.i-color บนฟอร์มหลัก)</td><td>inject hint เล็กใต้ dropdown สีด้วย cabUpdateHints</td><td><span class="pill p-todo">เสนอ</span></td></tr>
+<tr><td>P2</td><td>G5/G1 ผ้ามุ้งใน-บาน (p.mosquito) ยังเป็น dropdown (ไม่สม่ำเสมอกับ G5 standalone)</td><td>แปลงเป็นชิปผ้า+สีผ้าผูกกัน (reuse mosqFabricColors)</td><td><span class="pill p-todo">เสนอ</span></td></tr>
+<tr><td>P2</td><td>G3 ระบบระบาย ท่อ/โซ่+สี/ลาย inline บรรทัดเดียว แน่นบนมือถือ</td><td>แยกสี/ลาย เป็น reveal-block ใต้</td><td><span class="pill p-todo">เสนอ</span></td></tr>
+</table>
+<b>ผ่านดีแล้ว (ไม่แตะ):</b> ชิป ≥40px ทุกฟอร์ม · G3 cascade วัสดุ→รุ่น + auto-fill · ปิดซ่อนราง/ครอบคาน reveal · G4 ผนังหลัง tap≥44px · G5 โหมด B กล่องส้ม + ชิปบานมุ้ง</div>
+
+<h3>5.3 doc-option-auditor — ออปชั่น vs ใบจริง</h3>
+<div class="amber-box" id="doc-pending"><b>⏳ ยังรัน (background)</b> — เทียบออปชั่น G3/G4/G5 vs samples · หาขาด/ผิด/เกิน หลัง redesign ชิป · จะเติมผล + แนวทางแก้เมื่อเสร็จ (ออก <code>docs/AUDIT-G3G4G5-options-2026-06-12.html</code>)</div>
 
 <div class="foot small" style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:6px;color:#9ca3af;">
 รายงานนี้สร้างอัตโนมัติ (overnight run) · commit/push ตรวจได้ใน git log · เทสรันด้วย node test/*.mjs · ทุกการแก้ราคา verify เบราว์เซอร์จริงแล้ว

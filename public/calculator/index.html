@@ -1112,6 +1112,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       sell += A * sRate;
       msgs.push('ผ้ามุ้ง: นิรภัยสแตน 304 สีดำ 0.8มม. '+fmt(sRate)+'/ตร.ม. = '+fmt(A*sRate));
     }
+    // BUG2 fix (doc-option-auditor): โหมด B ค่าเสริมกล่อง/ราง — screen_addon (เฟรม imp21/22/23) return ก่อนถึง L1460 → บวกที่นี่ (เดิมคิดขาด)
+    if(optSel && optSel.screen_existing){ const sx=parseFloat(optSel.screen_extra)||0; if(sx>0){ sell+=sx; msgs.push('🔧 ติดบานเดิม + ค่าเสริมกล่อง/ราง +'+fmt(sx)); } else { msgs.push('🔧 ติดบานเดิม (ไม่เสริมกล่อง/ราง)'); } }
     msgs.push('⚠ ไม่รวมเสริมวงกบ/เสริมราง — คิดเพิ่มภายหลัง');
     return {a:A, sell:roundUp(sell), cost:null, addonLabel:'', msgs:[msgs.join(' · ')]};
   }
@@ -3783,7 +3785,8 @@ function genQuote(keepNo){
       var _cLines = ['ตู้อลูมิเนียม ('+_cTypeTxt+')'];
       _cLines.push('บานหน้า Future Tech '+_cDoors+' บาน · ลึก '+_cDepth+' ม.');
       if(_cShelfN>0) _cLines.push('ชั้นวาง '+_cShelfN+' ชั้น ('+_cShelfMat+')');
-      _cLines.push(_co.backwall ? 'ผนังอลู 2 ข้าง + ผนังหลัง' : 'ผนังอลู 2 ข้าง (หลังใช้ผนังปูน)');
+      // BUG1 fix (doc-option-auditor): อ่าน cabwallmat → ใบออกผนังกระจก/อลูตามที่เลือก (เดิม hardcode อลูเสมอ)
+      _cLines.push((_co.cabwallmat==='glass'?'ผนังกระจก 2 ข้าง':'ผนังอลู 2 ข้าง')+(_co.backwall?' + ผนังหลัง':' (หลังใช้ผนังปูน)'));
       det = _cLines.join('\n');
     }
     else if(it.p.future_tech){
@@ -3859,6 +3862,8 @@ function genQuote(keepNo){
                        : (sf==='rat')   ? ('ผ้าสแตนกันหนู'+sfcColor)
                        : fabricLabel;
       det = fabricFull;
+      // 🟡 fix (doc-option-auditor): สีกรอบมุ้ง (mscolor = index สี) ลงใบด้วย (เดิมคิดเงินถูก L1237 แต่ชื่อสีไม่ขึ้นใบ)
+      { var _mci=parseInt(it.optSel&&it.optSel.mscolor); if(!isNaN(_mci)&&_mci>0&&COLORS[_mci]) det += '\nสีกรอบมุ้ง '+(COLORS[_mci].quoteName||COLORS[_mci].n).replace(/[★⚠🔖🔒]/g,'').trim(); }
     }
     else if(it.p.id==='shower'){
       // Pass2-C: shower — ประกอบข้อความจากชนิดบาน + ประเภทประตู → "กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส"

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUDIT G3/G4/G5 Options — 2026-06-12</title>
+<style>
+  :root {
+    --red: #c0392b; --orange: #e67e22; --green: #27ae60;
+    --light-red: #fdf0f0; --light-orange: #fef9f0; --light-green: #f0fdf4;
+    --border: #dde1e7; --header-bg: #2c3e50; --header-fg: #ecf0f1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 14px; color: #333; background: #f7f8fa; }
+  header { background: var(--header-bg); color: var(--header-fg); padding: 20px 28px; }
+  header h1 { font-size: 20px; font-weight: 700; }
+  header p { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+  .section { margin: 20px 28px; }
+  .section h2 { font-size: 15px; font-weight: 700; color: #2c3e50; border-bottom: 2px solid var(--border); padding-bottom: 6px; margin-bottom: 12px; }
+  .summary-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .badge { padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 15px; }
+  .badge.red { background: var(--light-red); color: var(--red); border: 1px solid #f5c6c6; }
+  .badge.orange { background: var(--light-orange); color: var(--orange); border: 1px solid #fad7a0; }
+  .badge.green { background: var(--light-green); color: var(--green); border: 1px solid #a9dfbf; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  th { background: var(--header-bg); color: var(--header-fg); padding: 10px 12px; text-align: left; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tr.red td { background: var(--light-red); }
+  tr.orange td { background: var(--light-orange); }
+  tr.green td { background: var(--light-green); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+  .tag.red { background: #fde8e8; color: var(--red); }
+  .tag.orange { background: #fdf3e3; color: var(--orange); }
+  .tag.green { background: #e8f8f0; color: var(--green); }
+  code { font-family: 'Consolas', monospace; font-size: 12px; background: #f0f2f5; padding: 1px 5px; border-radius: 3px; color: #c0392b; }
+  .fix { font-style: italic; color: #555; font-size: 12px; }
+  .verify { background: #f0f2f5; padding: 12px 16px; border-radius: 6px; font-size: 12px; color: #555; line-height: 1.7; }
+  .verify strong { color: #333; }
+  .note-box { border-left: 4px solid #3498db; background: #eaf4fb; padding: 10px 16px; border-radius: 4px; font-size: 13px; }
+  .section-group { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 24px; }
+  .group-header { background: #34495e; color: #ecf0f1; padding: 10px 16px; font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AUDIT G3/G4/G5 Options — เครื่องคิดราคา JR</h1>
+  <p>ตรวจสอบโดย JR (READ-ONLY) · วันที่ออก 2026-06-12 · ไฟล์ตรวจ: public/calculator/index.html</p>
+</header>
+
+<div class="section">
+  <h2>สรุปผลตรวจ</h2>
+  <div class="summary-row">
+    <div class="badge red">BUG ยืนยันแล้ว: 2 จุด</div>
+    <div class="badge orange">น่าสงสัย (เช็คซ้ำ): 1 จุด</div>
+    <div class="badge green">ผ่าน / ยืนยันถูก: 14 จุด</div>
+  </div>
+  <div class="note-box">
+    ตรวจโดย jsdom headless render (JSDOM + VirtualConsole) · test suite ผ่านครบ (G3 23/23, G4 24/24, G5 18/18, option-coverage 13/13) แต่ test ไม่ครอบคลุม BUG 1 และ BUG 2 — ตรวจพบระหว่าง audit ด้านล่าง
+  </div>
+</div>
+
+<!-- ===== BUG 1 ===== -->
+<div class="section">
+  <div class="section-group">
+    <div class="group-header">G4 — ตู้อลู / ฝาตู้ (cabinet_alu)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>รายการ</th><th>ใบจริง (ที่ควรเป็น)</th><th>ระบบออก (จริง)</th><th>สถานะ</th><th>หน้า/จุด</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="red">
+          <td><strong>BUG 1 — ผนังตู้ในใบ</strong><br>
+            เลือก "วัสดุผนัง = กระจก" (<code>cabwallmat=glass</code>) → ใบต้องระบุ "ผนังกระจก"
+          </td>
+          <td>ผนังกระจก 2 ข้าง<br><span style="color:#888">(หรือ + ผนังหลัง ถ้า backwall=true)</span></td>
+          <td><span style="color:var(--red)">ผนังอลู 2 ข้าง (ออกเสมอ ทุกค่า)</span><br>
+            <code>readItem cabwallmat=glass</code> ถูก, ราคาถูก<br>
+            แต่ใบออก "ผนังอลู" ทุกกรณี
+          </td>
+          <td><span class="tag red">BUG ยืนยัน</span></td>
+          <td>genQuote<br>บรรทัด 3786</td>
+        </tr>
+
+        <tr class="red">
+          <td colspan="5" style="padding: 6px 12px 10px;">
+            <strong>Root cause:</strong> <code>genQuote</code> G4 cabinet block (line 3786) ไม่อ่าน <code>_co.cabwallmat</code> เลย — ออก "ผนังอลู" เสมอ<br>
+            <code style="display:block;margin:4px 0;">// บรรทัด 3786 (ปัจจุบัน — ผิด)
+_cLines.push(_co.backwall ? 'ผนังอลู 2 ข้าง + ผนังหลัง' : 'ผนังอลู 2 ข้าง (หลังใช้ผนังปูน)');</code>
+            <span class="fix">แนวทางแก้: เพิ่มเงื่อนไข cabwallmat —
+              <code>(_co.cabwallmat==='glass' ? 'ผนังกระจก 2 ข้าง' : 'ผนังอลู 2 ข้าง') + (_co.backwall ? ' + ผนังหลัง' : ' (หลังใช้ผนังปูน)')</code>
+            </span>
+          </td>
+        </tr>
+
+        <tr class="green">
+          <td>ชิป switch ตู้อลู / ฝาตู้</td>
+          <td>มี 2 ตัวเลือก, switch ได้</td>
+          <td>ผ่าน (jsdom)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts</td>
+        </tr>
+        <tr class="green">
+          <td>ชนิดตู้ (wardrobe/shoe) + auto สูง/ลึก</td>
+          <td>shoe: สูง 2.0 ลึก 0.4 · wardrobe: สูง 2.4 ลึก 0.6</td>
+          <td>ผ่าน (jsdom)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>cabProdSwitch</td>
+        </tr>
+        <tr class="green">
+          <td>ชิปชนิดชั้น (glass/alu/alu-heavy) + hint</td>
+          <td>glass: hint "ไม่คิดค่าสีโครง"</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts</td>
+        </tr>
+        <tr class="green">
+          <td>ชิปวัสดุผนัง glass → hint "คิดสีเต็ม (colorPrice)"</td>
+          <td>hint แสดงเมื่อเลือก glass</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>cabUpdateHints</td>
+        </tr>
+        <tr class="green">
+          <td>backwall checkbox → ราคาเปลี่ยน</td>
+          <td>delta > 0 (1.2×2.4 cabinet)</td>
+          <td>delta=11000 (ยืนยัน)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>calcUnit line 1079</td>
+        </tr>
+        <tr class="green">
+          <td>ฝาตู้ สีพิเศษ dropdown (ftcolor)</td>
+          <td>≥12 options</td>
+          <td>12 options (ยืนยัน)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G4 future_tech</td>
+        </tr>
+        <tr class="green">
+          <td>ตัด 3 ออปชั่น (ฝังรางยู / ดรอปพื้น / i-type)</td>
+          <td>ไม่มี o-uchannel, o-dfm, i-type สำหรับ G4</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== BUG 2 ===== -->
+<div class="section">
+  <div class="section-group">
+    <div class="group-header">G5 — มุ้ง (imp21/imp22/imp23 + mj_*)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>รายการ</th><th>ใบจริง (ที่ควรเป็น)</th><th>ระบบออก (จริง)</th><th>สถานะ</th><th>หน้า/จุด</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="red">
+          <td><strong>BUG 2 — Mode B screen_extra ไม่กระทบ sell</strong><br>
+            screen_existing=true + screen_extra=1000 → ราคาต้องเพิ่ม 1000
+          </td>
+          <td>sell = base + 1000<br><span style="color:#888">(เช่น base=5000 → 6000)</span></td>
+          <td><span style="color:var(--red)">sell = 5000 (ไม่เปลี่ยน)</span><br>
+            ข้อความในใบถูก: "ติดบานเดิม + ค่าเสริม 1,000 บาท"<br>
+            แต่ราคา delta=0 (jsdom ยืนยัน)
+          </td>
+          <td><span class="tag red">BUG ยืนยัน</span></td>
+          <td>calcUnit<br>~บรรทัด 1130 vs 1460</td>
+        </tr>
+
+        <tr class="red">
+          <td colspan="5" style="padding: 6px 12px 10px;">
+            <strong>Root cause:</strong> <code>screen_addon</code> products (imp21/22/23) มี <code>return</code> ก่อนถึง mode B block (line ~1460) — <code>opt += sx</code> ไม่ถูกรัน<br>
+            <span class="fix">แนวทางแก้: เพิ่ม <code>if(optSel?.screen_existing){ opt += parseFloat(optSel.screen_extra)||0; }</code> ก่อน <code>return</code> ของ screen_addon block (ใกล้ line 1130)</span>
+          </td>
+        </tr>
+
+        <tr class="orange">
+          <td><strong>YELLOW — สีกรอบมุ้ง (mscolor) ไม่แสดงในใบ</strong><br>
+            เลือก mscolor เช่น "ซาฮาร่า" → ใบต้องระบุสี<br>(เช็คซ้ำ)
+          </td>
+          <td>ผ้าไฟเบอร์ดำ<br>สีกรอบมุ้ง ซาฮาร่า</td>
+          <td>ผ้าไฟเบอร์ดำ<br><span style="color:var(--orange)">ไม่มีสีกรอบ</span><br>
+            ราคาถูก (+ค่าสีคิด) แต่ลูกค้าไม่เห็นในใบว่าสีอะไร
+          </td>
+          <td><span class="tag orange">น่าสงสัย (เช็คซ้ำ)</span></td>
+          <td>genQuote line 3861<br>det = fabricFull</td>
+        </tr>
+
+        <tr class="orange">
+          <td colspan="5" style="padding: 6px 12px 10px;">
+            <strong>Root cause:</strong> <code>genQuote</code> มุ้ง det block (line 3861) = <code>fabricFull</code> เท่านั้น — ไม่ต่อ mscolor label<br>
+            <span class="fix">แนวทางแก้: เพิ่ม mscolor ต่อท้าย det —
+              <code>if(it.optSel?.mscolor &amp;&amp; parseInt(it.optSel.mscolor)&gt;0) det += '\nสีกรอบมุ้ง ' + COLORS[parseInt(it.optSel.mscolor)].quoteName</code>
+            </span>
+          </td>
+        </tr>
+
+        <tr class="green">
+          <td>screenfabric chips (imp21/22 = 3 chips, imp23 = 4 chips)</td>
+          <td>imp23 มี safety chip เพิ่ม</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G5</td>
+        </tr>
+        <tr class="green">
+          <td>สีผ้า mosqFabricColors — fiber: ดำ/เทา · cat: ขาว (disabled) · rat: เงิน/ดำ</td>
+          <td>cat เลือกไม่ได้ (disabled)</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>mosqFabricColors line 2265</td>
+        </tr>
+        <tr class="green">
+          <td>Mode B กล่อง mosq-modeb แสดง</td>
+          <td>มี checkbox screen_existing + field screen_extra</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G5 line 2826</td>
+        </tr>
+        <tr class="green">
+          <td>ข้อความในใบ mode B</td>
+          <td>"ติดบานเดิม + ค่าเสริมกล่อง/ราง X บาท"</td>
+          <td>ข้อความถูก</td>
+          <td><span class="tag green">ข้อความตรง</span></td>
+          <td>genQuote G5 mode B block</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== G3 ===== -->
+<div class="section">
+  <div class="section-group">
+    <div class="group-header">G3 — หลังคา / ฝ้า-ผนัง (roof_* / ceiling_* / wall_*)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>รายการ</th><th>ใบจริง (ที่ควรเป็น)</th><th>ระบบออก (จริง)</th><th>สถานะ</th><th>หน้า/จุด</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr class="green">
+          <td>ชิป 3 ตัวเลือกปลายหลังคา (roofend)</td>
+          <td>ปล่อย / รางน้ำ / ปิดปลาย</td>
+          <td>ผ่าน (FIX C)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G3 line 2725</td>
+        </tr>
+        <tr class="green">
+          <td>ของเสริมหลังคา 9 รายการ + ครอบท่อ PVC</td>
+          <td>1-เสาแผง / 2-คาน / 3-เพลท / 4-เหล็กดึง / 5-ซ่อนสโลป / 6-ปิดซ่อนราง / 7-ครอบคาน / 8-วัสดุปิดรอยต่อ / 9-โซ่รางน้ำ + rfpvc</td>
+          <td>ครบ 10 รายการ</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>calcUnit G3 line 1500</td>
+        </tr>
+        <tr class="green">
+          <td>กล่องลำดับ: วัสดุมุง → หลังคาเลื่อน → รางน้ำ → ของเสริม</td>
+          <td>วัสดุมุงอยู่บนสุด, ลำดับถูก</td>
+          <td>ผ่าน (FIX A)</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G3</td>
+        </tr>
+        <tr class="green">
+          <td>สีวัสดุมุง — vinyl 3 สี, delight 2 สี, polyton 8 สี dropdown, metal 3+default ชิป, shinko 2+default</td>
+          <td>ตรงแต่ละชนิด</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G3 roofcolor</td>
+        </tr>
+        <tr class="green">
+          <td>หลังคาผสม roof2 — ลงใบ "ต่อปลาย"</td>
+          <td>มีข้อความต่อปลาย + วัสดุ</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>genQuote G3 line 3894</td>
+        </tr>
+        <tr class="green">
+          <td>label ยาว/ยื่น + ซ่อน i-type สำหรับหลังคา (FIX D)</td>
+          <td>ยาว / ยื่น (ไม่ใช่กว้าง/สูง)</td>
+          <td>ผ่าน</td>
+          <td><span class="tag green">ตรง</span></td>
+          <td>buildItemOpts G3 FIX D</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== VERIFY ===== -->
+<div class="section">
+  <h2>วิธีตรวจ (Verification Method)</h2>
+  <div class="verify">
+    <strong>Engine:</strong> JSDOM 25 + VirtualConsole headless render (Node.js) · <code>public/calculator/index.html</code> อ่านตรง ไม่ใช่ grep<br>
+    <strong>G3:</strong> <code>test/g3-roof-formux.mjs</code> FIX A/B/C/D — 23/23 pass<br>
+    <strong>G4:</strong> <code>test/g4-cabinet-formux.mjs</code> 6 จุด + regression G1/G3 — 24/24 pass<br>
+    <strong>G5:</strong> <code>test/calc-mosq-frame.mjs</code> M1-M15 — 18/18 pass · <code>test/option-coverage.mjs</code> 13/13 pass<br>
+    <strong>BUG 1 (G4 cabwallmat):</strong> jsdom render → readItem → ตรวจ genQuote output ด้วย .includes — <code>มีผนังกระจก: false | มีผนังอลู: true</code><br>
+    <strong>BUG 2 (G5 mode B extra):</strong> calcUnit(imp21, optSel={screen_existing:true, screen_extra:1000}) → <code>delta = sell_after - sell_before = 0</code><br>
+    <strong>YELLOW (mscolor):</strong> genQuote → quoteContent.includes("ซาฮาร่า") = false<br>
+    <strong>Note:</strong> test suite ไม่ครอบคลุม BUG 1/2 — ควรเพิ่ม test case หลังแก้
+  </div>
+</div>
+
+<div class="section" style="margin-bottom:32px;">
+  <h2>รายการ Fix ที่รอพี่นัทอนุมัติ</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Bug</th><th>ไฟล์ / บรรทัด</th><th>แนวทางแก้ (1 บรรทัด)</th></tr>
+    </thead>
+    <tbody>
+      <tr class="red">
+        <td>1</td>
+        <td><span class="tag red">BUG</span> G4: ใบผิด — ผนังกระจกออกเป็น "ผนังอลู"</td>
+        <td><code>genQuote</code> line 3786</td>
+        <td>เปลี่ยนเป็น <code>(_co.cabwallmat==='glass'?'ผนังกระจก 2 ข้าง':'ผนังอลู 2 ข้าง')+(_co.backwall?' + ผนังหลัง':' (หลังใช้ผนังปูน)')</code></td>
+      </tr>
+      <tr class="red">
+        <td>2</td>
+        <td><span class="tag red">BUG</span> G5: mode B screen_extra ไม่บวก sell</td>
+        <td><code>calcUnit</code> screen_addon block ~line 1130</td>
+        <td>เพิ่ม <code>if(optSel?.screen_existing) opt += parseFloat(optSel.screen_extra)||0;</code> ก่อน <code>return</code></td>
+      </tr>
+      <tr class="orange">
+        <td>3</td>
+        <td><span class="tag orange">YELLOW</span> G5: mscolor ไม่แสดงในใบ</td>
+        <td><code>genQuote</code> มุ้ง det block line 3861</td>
+        <td>ต่อ det ด้วย <code>'\nสีกรอบมุ้ง '+COLORS[parseInt(it.optSel.mscolor)].quoteName</code> เมื่อ mscolor > 0</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer style="text-align:center; padding: 16px; color: #aaa; font-size: 12px; border-top: 1px solid var(--border);">
+  AUDIT G3/G4/G5 Options · JR READ-ONLY · 2026-06-12 · พี่นัทเช็คซ้ำก่อนแก้
+</footer>
+
+</body>
+</html>
