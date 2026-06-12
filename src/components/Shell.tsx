@@ -16,6 +16,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/queue", icon: "calendar", label: "คิวงาน" },
   { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
   { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
+  { href: "/quotation-checklist", icon: "clipboard", label: "ใบเสนอ · เช็คลิสต์" },
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
   { href: "/billing-notes", icon: "banknote", label: "ใบวางบิล" },
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
@@ -61,10 +62,12 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
   // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
+  // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
   const role = profile.role as Role;
   const docItems = DOC_NAV.filter((n) => {
-    if (n.href === "/queue")  return can(role, "queue",   "read");
-    if (n.href === "/stats")  return can(role, "finance", "read");
+    if (n.href === "/queue")                  return can(role, "queue",   "read");
+    if (n.href === "/quotation-checklist")    return can(role, "jobs",    "write");
+    if (n.href === "/stats")                  return can(role, "finance", "read");
     return true;
   });
 
