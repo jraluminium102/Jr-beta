@@ -1835,7 +1835,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb'))){ skipEls.push(k); return; } // G5-FINAL C: โหมด B (ติดมุ้งบานเดิม) คงไว้บนสุดนอก accordion
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5: โหมด B + แท็บเลือกสินค้าหลังคา คงไว้บนสุดนอก accordion
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -2212,6 +2212,38 @@ function chSetChip(btn, selectClass){
 function rfChips(cls, items, defVal, twoUp){
   return '<div class="chip-group chip-sm'+(twoUp?' chip-2up':'')+'">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')">'+it[1]+'</button>'; }).join('')+'</div>';
 }
+// G3-v5 จุด1 (SPEC-G3-roof-formux-v5): เลือกสินค้ากลุ่ม 3 = แท็บ หลังคา/ฝ้า-ผนัง + drill-down วัสดุหลังคา (ซ่อน .i-prod · ชิป sync .i-prod + fire change)
+var RF_GRP_PRODS={
+  metal:[['imp7','1" PVC EPS'],['imp8','2" PVC EPS'],['imp9','1" เหล็ก EPS'],['imp10','2" เหล็ก EPS'],['imp11','1" ฟอยล์ PU'],['imp12','2" ฟอยล์ PU'],['imp13','1" เหล็ก PU'],['imp14','2" เหล็ก PU']],
+  chinco:[['imp15','6มม. Heat Cut'],['imp16','6มม. Superior'],['imp17','6มม. Nature'],['imp18','4มม. Shade'],['imp19','10มม. Prime'],['imp20','10มม. Grand']],
+  poly:[['roof_polyton','โพลีตัน 3มม.'],['roof_laminate','กระจกลามิเนต']],
+  vinyl:[['roof_vinyl','ไวนิล VG'],['roof_delight','ดีไลท์']]
+};
+var RF_GRP_LABEL={metal:'เมทัลชีท',chinco:'ชินโคไลท์',poly:'โพลีตัน/กระจก',vinyl:'ไวนิล/ดีไลท์'};
+var G3_WALL_PRODS=[['ceil_cshape','ฝ้าอลู ตัวซี'],['ceil_bsc','ฝ้าไม้เทียม remood'],['ceiling_smooth','ฝ้าฉาบเรียบ'],['isowall','ISOWALL'],['wall_ext','ผนังเบาภายนอก'],['wall_int','ผนังเบาภายใน']];
+function rfGrpOf(id){ for(var g in RF_GRP_PRODS){ if(RF_GRP_PRODS[g].some(function(x){return x[0]===id;})) return g; } return null; }
+function g3SyncProd(ch,prodId){ var sel=ch.querySelector('.i-prod'); if(!sel)return; if(!sel.querySelector('option[value="'+prodId+'"]')){ var o=document.createElement('option'); o.value=prodId; o.textContent=prodId; sel.appendChild(o); } if(sel.value===prodId)return; sel.value=prodId; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+function g3PickProd(btn){ g3SyncProd(btn.closest('.ch'), btn.dataset.id); }
+function g3PickGrp(btn){ var first=(RF_GRP_PRODS[btn.dataset.grp]||[])[0]; if(first) g3SyncProd(btn.closest('.ch'), first[0]); }
+function g3PickTab(btn,tab){ var ch=btn.closest('.ch'); g3SyncProd(ch, tab==='wall'?G3_WALL_PRODS[0][0]:RF_GRP_PRODS.metal[0][0]); }
+function g3SelectorHTML(p){
+  var isWall=(p.cat==='ฝ้า-ผนัง');
+  var h='<div class="opt g3-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  h+='<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip'+(!isWall?' on':'')+'" onclick="g3PickTab(this,\'roof\')">หลังคา</button><button type="button" class="chip'+(isWall?' on':'')+'" onclick="g3PickTab(this,\'wall\')">ฝ้า-ผนัง</button></div>';
+  if(!isWall){
+    var grp=rfGrpOf(p.id)||'metal'; var gk;
+    h+='<label class="opt" style="width:100%;margin:0;">กลุ่มวัสดุ <div class="chip-group chip-sm">';
+    for(gk in RF_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="g3PickGrp(this)">'+RF_GRP_LABEL[gk]+'</button>'; }
+    h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+    RF_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
+    h+='</div></label>';
+  } else {
+    h+='<label class="opt" style="width:100%;margin:0;">รุ่นฝ้า-ผนัง <div class="chip-group chip-sm">';
+    G3_WALL_PRODS.forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
+    h+='</div></label>';
+  }
+  return h+'</div>';
+}
 // G5 (HANDOFF-G5-FINAL E): เลือกผ้ามุ้งแล้ว rebuild ชิปสีผ้าตามชนิดผ้า + sync .o-screenfabriccolor (ค่าเดิม) + fire change
 function mosqFabricColors(fabBtn){
   var ch=fabBtn.closest('.ch'); if(!ch) return; var fab=fabBtn.dataset.val;
@@ -2483,6 +2515,8 @@ function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
   const box=d.querySelector('.i-opts');
   let h='';
+  // G3-v5 จุด1: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ + drill-down วัสดุ บนสุด (class g3-prodsel · groupGHOpts skip · ซ่อน .i-prod ด้านล่าง)
+  if(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') h+=g3SelectorHTML(p);
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
   // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
   d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
@@ -2926,6 +2960,8 @@ function buildItemOpts(d){
   { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){ _ocSum.textContent = (p.cat==='หลังคา') ? '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)' : '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)'; } }
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
+  // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
+  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง')?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
