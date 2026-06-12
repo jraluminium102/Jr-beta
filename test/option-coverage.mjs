@@ -186,34 +186,34 @@ function check(optName, setup, expected, detail) {
   entry.ok = ok;
 }
 
-// ===== TEST 3: หลังคา ปิดปลายกันน้ำ (ข้อ8 — ใช้ o-rfeave กรอกยาวเอง · ตัด o-roofend=ปิดปลาย ออกแล้ว) =====
-// สูตร: o-rfeave (ยาว ม.) × 1,000 · ยาว 4 → +4,000 (ก่อน roundUp)
+// ===== TEST 3: หลังคา ปิดปลายกันน้ำกระเด็น (G3-round2 C: เป็นตัวเลือกที่ 3 ของ o-roofend · auto ยาว=i-w · 1,000/ม.) =====
 {
   clearAll();
   const ch = addItem({ g: 3, prod: "roof_vinyl", w: 4, h: 3 });
   const baseSell = readItemSell(ch);
 
-  // ข้อ8: o-roofend ต้องไม่มีตัวเลือก "ปิดปลาย" แล้ว (กันคิดซ้ำ)
+  // G3-round2 C: o-roofend ต้อง "มี" ตัวเลือก "ปิดปลาย" แล้ว (single-select 3 ค่า)
   const roofendOpts = [...ch.querySelector(".o-roofend").options].map(o => o.value);
-  const noAutoEnd = !roofendOpts.includes("ปิดปลาย");
+  const hasEndOption = roofendOpts.includes("ปิดปลาย");
 
-  setF(ch, ".o-rfeave", "4"); // ปิดปลายกันน้ำ ยาว 4 ม.
+  setF(ch, ".o-roofend", "ปิดปลาย"); // เลือก → onchange auto เติม o-rfeave = i-w (4)
+  const rfeaveAuto = parseFloat(ch.querySelector(".o-rfeave").value) || 0;
   const afterSell = readItemSell(ch);
   const delta = afterSell - baseSell;
-  const expectedDelta = roundUp(baseSell + 4000) - baseSell;
+  const expectedDelta = roundUp(baseSell + 4000) - baseSell; // 1,000 × 4
 
-  const ok = noAutoEnd && delta === expectedDelta;
+  const ok = hasEndOption && rfeaveAuto === 4 && delta === expectedDelta;
   const entry = check(
-    "หลังคา ปิดปลายกันน้ำ (o-rfeave)",
-    "roof_vinyl 4×3, .o-rfeave=4 ม. · o-roofend ไม่มี 'ปิดปลาย'",
-    `o-roofend ตัด 'ปิดปลาย' ออก + delta=+${expectedDelta} (1,000×4)`,
-    `noAutoEnd=${noAutoEnd} | delta=${delta} (คาด ${expectedDelta}) | base=${fmt(baseSell)} after=${fmt(afterSell)}`
+    "หลังคา ปิดปลายกันน้ำกระเด็น (o-roofend=ปิดปลาย)",
+    "roof_vinyl 4×3, เลือก o-roofend='ปิดปลาย' · auto ยาว=4",
+    `o-roofend มี 'ปิดปลาย' + auto ยาว=4 + delta=+${expectedDelta} (1,000×4)`,
+    `hasEndOption=${hasEndOption} | rfeaveAuto=${rfeaveAuto} | delta=${delta} (คาด ${expectedDelta})`
   );
   entry.ok = ok;
 }
 
 // ===== TEST 4: หลังคา รางน้ำ ท่อ สีดำ =====
-// คาดหวัง: delta=0 · ใบมี "รางน้ำ (ท่อ สีดำ)"
+// G3-round2 C (มติพี่นัท): รางน้ำ "คิดเงิน" = เรตราง(o-rfgut) × ยาว(auto=i-w) · default อลู S 1,000 × 4 = 4,000 (ไม่ใช่ฟรี)
 {
   clearAll();
   const ch = addItem({ g: 3, prod: "roof_vinyl", w: 4, h: 3 });
@@ -234,11 +234,11 @@ function check(optName, setup, expected, detail) {
   const qt = getQuoteText();
   const hasText = qt.includes("ท่อ สีดำ") || qt.includes("รางน้ำ (ท่อ สีดำ)");
 
-  const ok = delta === 0 && hasText;
+  const ok = delta === 4000 && hasText;
   const entry = check(
     "หลังคา รางน้ำ ท่อ สีดำ",
     "roof_vinyl 4×3, .o-roofend=รางน้ำ, .o-guttersys=ท่อ, .o-gutter-pipecolor=ดำ",
-    "delta=0, ใบมี 'รางน้ำ (ท่อ สีดำ)'",
+    "delta=4,000 (อลู S 1,000×ยาว 4 · G3-round2 C คิดเงิน), ใบมี 'รางน้ำ...(ท่อ สีดำ)'",
     `delta=${delta} | hasText=${hasText} | base=${fmt(baseSell)} after=${fmt(afterSell)}`
   );
   entry.ok = ok;
