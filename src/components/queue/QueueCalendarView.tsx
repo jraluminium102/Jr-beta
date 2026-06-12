@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Icon from "@/components/Icon";
 import {
-  dayColor, thaiDate,
-  type QueueEntry, type QueueSales, type QueueTeam,
+  dayColor, thaiDate, isOfficeOn,
+  type QueueEntry, type QueueSales, type QueueTeam, type OfficeHalf,
 } from "@/lib/queue";
 
 // ---- helpers ----------------------------------------------------------------
@@ -92,11 +92,15 @@ type Props = {
   avail: AvailRow[];
   onEntryClick: (e: QueueEntry) => void;
   onAddSlot?: (date: string, slot: string, salesId: string) => void;
+  onSetOffice?: (salesId: string, date: string, half: OfficeHalf, want: boolean) => void; // (0031) override รายวัน
   filterTeam?: QueueTeam | "";
 };
 
-export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, onAddSlot, filterTeam }: Props) {
+type CellMenu = { salesId: string; salesName: string; date: string; dateLabel: string; half: OfficeHalf; slot: string; hasOffice: boolean };
+
+export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, onAddSlot, onSetOffice, filterTeam }: Props) {
   const days = useMemo(() => weekDays(week), [week]);
+  const [menu, setMenu] = useState<CellMenu | null>(null);
 
   // แสดงเฉพาะ MAIN sales rep, กรองตาม team ถ้ามี
   const salesRows = useMemo(
@@ -143,15 +147,6 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
     });
     return m;
   }, [avail]);
-
-  // (0030) วันอยู่ออฟฟิศประจำ: [salesId] → Set("<weekday>-AM"/"<weekday>-PM")
-  const officeIndex = useMemo(() => {
-    const m: Record<string, Set<string>> = {};
-    salesRows.forEach((s) => {
-      m[s.id] = new Set((s.office_slots ?? []).map((o) => `${o.weekday}-${o.half}`));
-    });
-    return m;
-  }, [salesRows]);
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -228,10 +223,15 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
                 const isPMLeave = av && av.kind === "LEAVE_HALF" && av.half === "PM";
-                // (0030) วันอยู่ออฟฟิศประจำ (soft — ยังลงคิวทับได้ แต่จะเตือน) · เฉพาะวันนี้เป็นต้นไป ไม่ย้อนหลัง
+                // (0030/0031) office มีผลไหม = pattern + override รายวัน · เฉพาะวันนี้เป็นต้นไป
                 const isFuture = d >= todayStr;
-                const isOfficeAM = isFuture && (officeIndex[s.id]?.has(`${dow}-AM`) ?? false);
-                const isOfficePM = isFuture && (officeIndex[s.id]?.has(`${dow}-PM`) ?? false);
+                const isOfficeAM = isFuture && isOfficeOn(s, d, dow, "AM");
+                const isOfficePM = isFuture && isOfficeOn(s, d, dow, "PM");
+                // คลิกช่องว่าง/ออฟฟิศ → เปิดเมนู (ลงคิว/ใส่-เอาออกออฟฟิศ) เฉพาะวันอนาคต
+                const openMenu = (half: OfficeHalf, slot: string, hasOffice: boolean) =>
+                  (onAddSlot && isFuture)
+                    ? () => setMenu({ salesId: s.id, salesName: s.name, date: d, dateLabel: dayHeaderLabel(d), half, slot, hasOffice })
+                    : (onAddSlot ? () => onAddSlot(d, slot, s.id) : undefined); // วันอดีต → ลงคิวตรงๆ
 
                 return (
                   <>
@@ -239,14 +239,14 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                     <td key={`${s.id}-${d}-am`}
                       className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : "bg-sky-50/30"}`}>
                       {!isSun && !isFullLeave && !isAMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} office={isOfficeAM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "10:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} office={isOfficeAM} onClick={onEntryClick} onAdd={openMenu("AM", "10:00", isOfficeAM)} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                     {/* Slot บ่าย 14:00 */}
                     <td key={`${s.id}-${d}-pm`}
                       className={`px-1 py-1 align-top border-r border-gray-100/30 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : "bg-amber-50/30"}`}>
                       {!isSun && !isFullLeave && !isPMLeave
-                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} office={isOfficePM} onClick={onEntryClick} onAdd={onAddSlot ? () => onAddSlot(d, "14:00", s.id) : undefined} />
+                        ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} office={isOfficePM} onClick={onEntryClick} onAdd={openMenu("PM", "14:00", isOfficePM)} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
                   </>
@@ -256,6 +256,40 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
           ))}
         </tbody>
       </table>
+
+      {/* (0031) เมนูจัดการช่อง — ลงคิว / ใส่-เอาออกออฟฟิศ เฉพาะวันนั้น */}
+      {menu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setMenu(null)}>
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="relative w-full max-w-xs glass rounded-2xl p-4 fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="text-sm font-bold text-ink mb-0.5">{menu.salesName}</div>
+            <div className="text-xs text-ink-3 mb-3">{menu.dateLabel} · {menu.half === "AM" ? "เช้า" : "บ่าย"}</div>
+            <div className="space-y-1.5">
+              {onSetOffice && (
+                menu.hasOffice ? (
+                  <button onClick={() => { onSetOffice(menu.salesId, menu.date, menu.half, false); setMenu(null); }}
+                    className="press w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold bg-red-50 text-red-700 hover:bg-red-100">
+                    <Icon name="close" size={15} /> เอาออฟฟิศออก (วันนี้)
+                  </button>
+                ) : (
+                  <button onClick={() => { onSetOffice(menu.salesId, menu.date, menu.half, true); setMenu(null); }}
+                    className="press w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                    <Icon name="building" size={15} /> ใส่ออฟฟิศ (วันนี้)
+                  </button>
+                )
+              )}
+              {onAddSlot && (
+                <button onClick={() => { onAddSlot(menu.date, menu.slot, menu.salesId); setMenu(null); }}
+                  className="press w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold bg-brand/10 text-brand-dark hover:bg-brand/20">
+                  <Icon name="plus" size={15} /> ลงคิวที่นี่
+                </button>
+              )}
+              <button onClick={() => setMenu(null)}
+                className="press w-full rounded-xl px-3 py-2 text-sm text-ink-2">ปิด</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

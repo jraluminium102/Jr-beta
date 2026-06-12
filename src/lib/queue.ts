@@ -6,6 +6,7 @@ export type JobSize = "SINGLE" | "MULTI" | "FULLDAY";
 export type QueueSalesRole = "MAIN" | "ASSISTANT";  // (0019)
 export type OfficeHalf = "AM" | "PM";
 export type OfficeSlot = { weekday: number; half: OfficeHalf };  // (0030) weekday 0=อา..6=ส
+export type OfficeOverride = { date: string; half: OfficeHalf; action: "add" | "remove" }; // (0031) ทับรายวัน
 
 export type QueueSales = {
   id: string;
@@ -19,8 +20,16 @@ export type QueueSales = {
   active: boolean;
   role: QueueSalesRole;             // (0019) ผู้ช่วยเซลล์
   parent_sales_id: string | null;   // (0019) สังกัดเซลล์หลัก
-  office_slots?: OfficeSlot[] | null; // (0030) วันอยู่ออฟฟิศประจำ (ครึ่งวัน)
+  office_slots?: OfficeSlot[] | null;        // (0030) วันอยู่ออฟฟิศประจำ (ครึ่งวัน)
+  office_overrides?: OfficeOverride[] | null; // (0031) override รายวัน (ย้าย/เอาออก)
 };
+
+// office มีผลไหม ในวันนั้น/ช่วงนั้น — override รายวันทับ pattern ประจำสัปดาห์
+export function isOfficeOn(sales: QueueSales, date: string, weekday: number, half: OfficeHalf): boolean {
+  const ovr = (sales.office_overrides ?? []).find((o) => o.date === date && o.half === half);
+  if (ovr) return ovr.action === "add";
+  return (sales.office_slots ?? []).some((o) => o.weekday === weekday && o.half === half);
+}
 
 export type QueueEntry = {
   id: string;

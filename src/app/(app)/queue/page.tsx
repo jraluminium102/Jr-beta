@@ -14,8 +14,8 @@ import {
 } from "@/components/queue/QueueCalendarView";
 import {
   STATUS_META, STATUS_ORDER, JOB_SIZE_META, dayLabel, dayColor, thaiDate,
-  detectTeam,
-  type QueueEntry, type QueueSales, type QueueStatus, type QueueTeam,
+  detectTeam, isOfficeOn,
+  type QueueEntry, type QueueSales, type QueueStatus, type QueueTeam, type OfficeHalf,
 } from "@/lib/queue";
 
 // ---- helpers ----------------------------------------------------------------
@@ -271,14 +271,15 @@ export default function QueuePage() {
         if (t < 99999) occupied.add(`${e.sales_id}-${t < 720 ? "AM" : "PM"}`);
       }
     });
-    // อยู่ออฟฟิศประจำ — เฉพาะ d >= วันนี้ · ข้ามถ้าลาทั้งวัน หรือช่องนั้นมีคิวแล้ว
+    // อยู่ออฟฟิศ (pattern + override รายวัน) — เฉพาะ d >= วันนี้ · ข้ามถ้าลาทั้งวัน หรือช่องนั้นมีคิวแล้ว
     if (d >= todayStr) {
       sales.filter((s) => s.role !== "ASSISTANT").forEach((s) => {
         const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"));
         if (fullLeave) return;
-        (s.office_slots ?? []).filter((o) => o.weekday === wd).forEach((o) => {
-          if (occupied.has(`${s.id}-${o.half}`)) return; // หลบให้คิว
-          acc.push({ item: { kind: "office", sales: s, half: o.half }, sRank: rankOf(s.id), tMin: o.half === "AM" ? 600 : 840 });
+        (["AM", "PM"] as const).forEach((half) => {
+          if (!isOfficeOn(s, d, wd, half)) return;
+          if (occupied.has(`${s.id}-${half}`)) return; // หลบให้คิว
+          acc.push({ item: { kind: "office", sales: s, half }, sRank: rankOf(s.id), tMin: half === "AM" ? 600 : 840 });
         });
       });
     }
@@ -300,6 +301,8 @@ export default function QueuePage() {
   const scheduleDays = useMemo(() => {
     const set = new Set<string>(byDay.keys());
     avail.forEach((a) => { if (a.date.startsWith(filterMonth)) set.add(a.date); });
+    // override "add" รายวัน (office พิเศษเฉพาะวัน) ในเดือนนี้
+    sales.forEach((s) => { if (s.role !== "ASSISTANT") (s.office_overrides ?? []).forEach((o) => { if (o.action === "add" && o.date.startsWith(filterMonth)) set.add(o.date); }); });
     // office ประจำ (อนาคต) — เพิ่มวัน Mon-Thu ที่มี office_slot
     const officeWeekdays = new Set<number>();
     sales.forEach((s) => { if (s.role !== "ASSISTANT") (s.office_slots ?? []).forEach((o) => officeWeekdays.add(o.weekday)); });
@@ -369,6 +372,25 @@ export default function QueuePage() {
       alert(err instanceof Error ? err.message : "อัปเดตใบเสร็จไม่สำเร็จ");
     }
   }
+
+  // ---- (0031) override office รายวัน (ใส่/เอาออก เฉพาะวัน) — optimistic + API ----
+  const setOffice = useCallback(async (salesId: string, date: string, half: OfficeHalf, want: boolean) => {
+    setSales((prev) => prev.map((s) => {
+      if (s.id !== salesId) return s;
+      const ovr = (s.office_overrides ?? []).filter((o) => !(o.date === date && o.half === half));
+      const wd = new Date(date + "T00:00:00").getDay();
+      const inPattern = (s.office_slots ?? []).some((o) => o.weekday === wd && o.half === half);
+      if (want && !inPattern) ovr.push({ date, half, action: "add" });
+      if (!want && inPattern) ovr.push({ date, half, action: "remove" });
+      return { ...s, office_overrides: ovr };
+    }));
+    try {
+      await api.post("/queue/office-override", { sales_id: salesId, date, half, want });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "เปลี่ยนวันออฟฟิศไม่สำเร็จ");
+      load(); // revert จาก server
+    }
+  }, [load]);
 
   // ---- sub-components ----
   const StatusBadge = ({ e }: { e: QueueEntry }) => (
@@ -581,6 +603,7 @@ export default function QueuePage() {
               avail={avail}
               onEntryClick={(e) => setModal({ entry: e })}
               onAddSlot={canWrite ? (date, slot, salesId) => setModal({ entry: null, preset: { queue_date: date, queue_time: slot, sales_id: salesId } }) : undefined}
+              onSetOffice={canWrite ? setOffice : undefined}
               filterTeam={filterTeam}
             />
             {(() => {
