@@ -53,21 +53,21 @@ const dCe = add("1", "casement_euro", "1.0", "2.2");
 sf(dCe, ".i-type", "door");
 w.refreshItype(dCe); // steady state (เหมือน user โต้ตอบ)
 want("casement: เดี่ยว 1.0×2.2 = 19,200 (Linear ปัดร้อย)", w.readItem(dCe).r.sell === 19200, "sell=" + w.readItem(dCe).r.sell);
-want("casement: label 'กว้าง/บาน'", /กว้าง\/บาน/.test(dCe.querySelector(".i-w").previousElementSibling.textContent), dCe.querySelector(".i-w").previousElementSibling.textContent);
-// 2 บาน
+want("casement: label 'กว้างรวม' (convention B)", /กว้างรวม/.test(dCe.querySelector(".i-w").previousElementSibling.textContent), dCe.querySelector(".i-w").previousElementSibling.textContent);
+// 2 บาน — convention B: กรอกกว้างรวม 1.6 ÷ 2 = 0.8/บาน
 if (dCe.querySelector(".i-panels")) sf(dCe, ".i-panels", "2");
-sf(dCe, ".i-w", "0.8"); sf(dCe, ".i-h", "2.2");
-want("casement: 0.8×2.2/บาน × 2 = 34,800 (ปัดร้อย)", w.readItem(dCe).r.sell === 34800, "sell=" + w.readItem(dCe).r.sell);
-// เกินขนาด → เตือน
-sf(dCe, ".i-w", "1.8"); sf(dCe, ".i-h", "2.2");
-want("casement: กว้าง 1.8 > 1.5 → เตือนเกินขนาด", (w.readItem(dCe).r.msgs || []).join(" ").includes("เกินขนาด"), "");
-// ข้อ4-ก: กระจก/สี ×จำนวนบาน (เลือกพรีเมียม → ราคา/บาน คงที่ทุกบาน)
-sf(dCe, ".i-w", "0.8"); sf(dCe, ".i-h", "2.2");
+sf(dCe, ".i-w", "1.6"); sf(dCe, ".i-h", "2.2");
+want("casement: กว้างรวม 1.6 ÷2 บาน = 34,800 (ปัดร้อย)", w.readItem(dCe).r.sell === 34800, "sell=" + w.readItem(dCe).r.sell);
+// เกินขนาด → เตือน (convention B: เช็ค กว้าง/บาน · 1 บาน 1.8 > 1.5)
+sf(dCe, ".i-panels", "1"); sf(dCe, ".i-w", "1.8"); sf(dCe, ".i-h", "2.2");
+want("casement: กว้าง/บาน 1.8 > 1.5 → เตือนเกินขนาด", (w.readItem(dCe).r.msgs || []).join(" ").includes("เกินขนาด"), "");
+// ข้อ4-ก: กระจก/สี ×จำนวนบาน (convention B: ขยายกว้างรวมตามบาน → กว้าง/บาน 0.8 คงที่ → ราคา/บาน คงที่)
+sf(dCe, ".i-h", "2.2");
 const _gi = dCe.querySelector(".i-glass"); if (_gi && _gi.options.length > 3) sf(dCe, ".i-glass", _gi.options[_gi.options.length - 1].value);
 const _ci = dCe.querySelector(".i-color"); if (_ci && _ci.options.length > 3) sf(dCe, ".i-color", _ci.options[3].value);
-sf(dCe, ".i-panels", "1"); const _ce1 = w.readItem(dCe).r.sell;
-sf(dCe, ".i-panels", "2"); const _ce2 = w.readItem(dCe).r.sell;
-sf(dCe, ".i-panels", "3"); const _ce3 = w.readItem(dCe).r.sell;
+sf(dCe, ".i-panels", "1"); sf(dCe, ".i-w", "0.8"); const _ce1 = w.readItem(dCe).r.sell;
+sf(dCe, ".i-panels", "2"); sf(dCe, ".i-w", "1.6"); const _ce2 = w.readItem(dCe).r.sell;
+sf(dCe, ".i-panels", "3"); sf(dCe, ".i-w", "2.4"); const _ce3 = w.readItem(dCe).r.sell;
 // ฐานปัดร้อย + กระจก/สีพรีเมียม ×บาน → เพิ่ม/บาน คงที่ (±1 บาท จากปัดเศษ Math.round)
 want("casement ข้อ4: กระจก/สี ×จำนวนบาน (ราคา/บาน คงที่ ±1)", Math.abs((_ce2 - _ce1) - (_ce3 - _ce2)) <= 1 && (_ce2 - _ce1) > 0, "1=" + _ce1 + " 2=" + _ce2 + " 3=" + _ce3 + " Δ21=" + (_ce2 - _ce1) + " Δ32=" + (_ce3 - _ce2));
 
