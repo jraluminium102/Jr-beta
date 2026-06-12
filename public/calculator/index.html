@@ -2846,7 +2846,8 @@ function buildItemOpts(d){
       +'</div>'
       +'<div style="font-size:10px;color:#9CA3AF;margin-top:3px;">กรอกขนาดให้ครบเพื่อดูราคาเทียบ · default = ปัดไม่ต่อ (เนียน)</div>'
     +'</div>';
-    h+='<label class="opt">ทำเป็นประตู <select class="o-doortype" style="width:auto;height:32px;"><option value="">ไม่ทำ</option><option value="sliding_sms">บานเลื่อน SMS</option><option value="sliding_euro">บานเลื่อน ยูโร</option><option value="casement_euro">บานเปิด</option><option value="folding">บานเฟี้ยม</option><option value="curved_single">ดัดโค้งเดี่ยว</option></select></label>';
+    // G2-formux: "ทำเป็นบาน" = โหมดในระแนง (ชิปเด่น) · เลือกชนิดบาน → ค่าทำบาน(door base)+ค่าระแนง (logic L1538 เดิม · R3-2) · select ซ่อน sync เดิม
+    h+='<label class="opt" style="width:100%;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:6px 10px;">🚪 ทำเป็นบาน <span style="font-size:11px;color:#92400e;">(ระแนงไม่โครง + ค่าทำบาน)</span> <select class="o-doortype" style="display:none;"><option value="">ไม่ทำ</option><option value="sliding_sms">บานเลื่อน SMS</option><option value="sliding_euro">บานเลื่อน ยูโร</option><option value="casement_euro">บานเปิด</option><option value="folding">บานเฟี้ยม</option><option value="curved_single">ดัดโค้งเดี่ยว</option></select>'+rfChips('o-doortype',[['','ไม่ทำ'],['sliding_sms','บานเลื่อนเซมิ'],['sliding_euro','บานเลื่อนยูโร'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['curved_single','ดัดโค้ง']],'')+'</label>';
     h+='<label class="opt">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(R3-2: กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ · รอสูตรจำนวนบาน)</span></label>';
   }
   if(p.cabinet){ // G4 (HANDOFF-G4-cabinet-next): UX 6 จุด · ทุก element มี class cab-detail → groupGHOpts จัดเข้า 📦 ตามลำดับ
