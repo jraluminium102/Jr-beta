@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.55;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 11px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+pre{background:#0f172a;color:#e2e8f0;padding:9px 11px;border-radius:7px;font-size:10px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+.r{color:#B3151D;font-weight:700;}
+</style></head><body>
+
+<h1>HANDOFF — "แยกราคา" โชว์ทุก component ราคาครบ</h1>
+<p class="sub">มติพี่นัท 2026-06-12 · ไฟล์ <code>public/calculator/index.html</code> · ตรวจ READ-ONLY · เมื่อกด "แยกราคา" ต้องเห็นราคาย่อยทุกตัว (รวมคาดตาราง/สีอลู/กระจก)</p>
+
+<div class="box"><b>โจทย์:</b> ตอนนี้กด "แยกราคา" โชว์แค่ <b>ราคาต่อบานย่อย (ก้อนรวม)</b> + มุ้ง · แต่ภายในบาน (ฐานบาน + คาดตาราง + สีอลู+ + กระจก+ + มือจับ + เสริมคาน + แผ่นทึบ) <b>ถูกรวมเข้า <code>it.r.sell</code> ไม่แตกออก</b> · พี่นัทอยากเห็น<b>ทุกรายการราคาครบถ้วน</b></div>
+
+<h2>1) สถานะปัจจุบัน</h2>
+<table>
+<tr><th>component</th><th>คำนวณที่</th><th>มี msgs?</th><th>โชว์ในแยกราคา?</th></tr>
+<tr><td>ราคาต่อบานย่อย (lump)</td><td><code>it.r.sell</code></td><td>—</td><td>✅ L4041</td></tr>
+<tr><td>มุ้ง</td><td>addonLines</td><td>—</td><td>✅ L4042</td></tr>
+<tr><td>คาดตาราง</td><td>L1518</td><td>✅ (text)</td><td>❌ ไม่ render ในใบ</td></tr>
+<tr><td>ฐานบาน · มือจับ · เสริมคาน · แผ่นทึบ · ทึบลูกฟูก</td><td>L1408/1424/1431/1477…</td><td>✅ (text)</td><td>❌</td></tr>
+<tr><td class="r">สีอลู (colorUp)</td><td>L1401</td><td><b>❌ ไม่มี</b></td><td>❌</td></tr>
+<tr><td class="r">กระจก (glassUp)</td><td>L1395</td><td><b>❌ ไม่มี</b></td><td>❌</td></tr>
+</table>
+<div class="box">component ราคาส่วนใหญ่คำนวณอยู่แล้ว (อยู่ใน <code>msgs</code> เป็นข้อความ) แต่ (ก) <b>สีอลู/กระจก ยังไม่มีแม้ msgs</b> · (ข) <code>msgs</code> เป็น text ไม่ structured → ใบดึงไปแตกไม่ได้</div>
+
+<h2>2) สิ่งที่ต้องทำ</h2>
+<div class="good"><b>แนวคิด:</b> ให้ <code>calcUnit</code> คืน <b>array โครงสร้าง <code>r.priceLines=[{n,p}]</code></b> ของ "ทุก component ที่มีราคา" → genQuote "แยกราคา" loop render แต่ละบรรทัด (เหมือน addonLines)</div>
+<pre>// ── ใน calcUnit: สะสม priceLines ทุกที่ที่บวกราคา component ──
+const priceLines = [];
+priceLines.push({n:'ฐานบาน '+a.toFixed(2)+' ตร.ม.', p: base});      // ราคาฐาน (ทุกชนิด ไม่ใช่แค่โซลิด)
+if(colorUp>0) priceLines.push({n:'เพิ่มสีอลู '+COLORS[ci].n, p: colorUp});   // ★ ใหม่ (L1401)
+if(glassUp>0) priceLines.push({n:'เพิ่มกระจก '+GLASS[gi].n, p: glassUp});    // ★ ใหม่ (L1395)
+if(_gcost>0)  priceLines.push({n:'คาดตาราง '+_gnh+'นอน+'+_gnv+'ตั้ง', p: _gcost});  // คาดตาราง (L1518)
+// + มือจับ/เสริมคาน/แผ่นทึบ/ทึบลูกฟูก/shower hw/tilt&turn — push {n,p} ตอนบวก opt แต่ละตัว
+// (มุ้ง addonLines จะ merge เข้า priceLines หรือคงแยกก็ได้)
+r.priceLines = priceLines;
+
+// ── ใน genQuote แยกราคา (L4042 ต่อจากบรรทัดบานย่อย) ──
+(it.r.priceLines||[]).forEach(function(c){
+  content += '&lt;div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"&gt;'
+    + '&lt;span&gt;· '+c.n+'&lt;/span&gt;&lt;span&gt;'+fmt(c.p)+'&lt;/span&gt;&lt;/div&gt;';
+});</pre>
+
+<h2>3) กฎเหล็ก (ห้ามพลาด)</h2>
+<table>
+<tr><td class="r">ผลรวมต้องเท่าเดิม</td><td><b>Σ priceLines = <code>it.r.sell</code></b> เป๊ะ (แค่ "แสดงการแตก" ไม่เปลี่ยนยอด) · ราคารวม/VAT/ยอดสุทธิ ไม่เพี้ยน</td></tr>
+<tr><td>รวมราคา (ไม่ split)</td><td>โหมด "รวมราคา" คงเดิม โชว์ก้อนเดียว · แตกเฉพาะตอนกด "แยกราคา"</td></tr>
+<tr><td>component = 0</td><td>ไม่ต้องโชว์บรรทัด (เช่น สีอบขาว = สีฟรี colorUp=0 → ไม่ขึ้น "เพิ่มสีอลู")</td></tr>
+<tr><td>ครบทุกชนิดสินค้า</td><td>ทำให้ generic — ทุกบาน/หลังคา/ตู้/ฯลฯ ที่มี component ราคา ต้องแตกได้ ไม่ใช่เฉพาะบานเลื่อน</td></tr>
+</table>
+
+<div class="dod"><b>📋 Definition of Done:</b>
+<ol style="margin:3px 0;">
+<li>กด "แยกราคา" → เห็นทุก component ราคา: ฐานบาน · เพิ่มสีอลู · เพิ่มกระจก · คาดตาราง · มือจับ · เสริมคาน · แผ่นทึบ · มุ้ง · ฯลฯ ครบ</li>
+<li><b>Σ component = ยอดบานย่อยเดิม</b> (ทุกรายการ) · <code>node test/quote-fidelity.mjs</code> PASS (ยอด/VAT ไม่เพี้ยน)</li>
+<li>สีอลู/กระจก upcharge ที่เคยหาย → โชว์แล้ว (เคสสีพิเศษ/กระจกอัปเกรด)</li>
+<li>component=0 ไม่โชว์ · โหมดรวมราคาเดิมไม่กระทบ</li>
+<li>พี่นัทกดแยกราคาแล้วเห็นครบทุกรายการ</li>
+</ol>
+เสร็จกลับให้ผม verify (เปิดเบราว์เซอร์จริง กดแยกราคา เช็คทุก component + ผลรวม)</div>
+
+<p class="sub">ตัวอย่างที่พี่นัทชี้: บานเลื่อน 61,760 (รวมคาดตาราง+สีอลูอยู่ข้างใน) · มุ้งจีบ 5,000 แตกแล้ว · แต่คาดตาราง/สีอลู ยังไม่แตก → ต้องเห็นทุกตัว</p>
+</body></html>
