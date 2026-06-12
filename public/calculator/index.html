@@ -1842,7 +1842,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -2282,6 +2282,64 @@ function mosqFabricColors(fabBtn){
     + (fixed?' <span style="font-size:11px;color:#0369A1;">สีเดียว</span>':'');
   if(sel){ sel.value=cols[0]; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 }
+// G2 (HANDOFF-G2-formux · DRAFT-G2-ux อนุมัติ 2026-06-12): drill-down ระแนง cascade
+//   parse ชื่อรุ่น → tree (rate ดึงจาก PRODUCTS ไม่ embed กันdrift) · ซ่อน .i-prod · ใช้ g3SyncProd ร่วม
+//   บังตา: ขนาดเส้น(profile)→ระยะโชว์(spacing)→โครง · ผนัง: ระยะโชว์→โครง · เกล็ด: ขนาด→โครง
+function rnCatKey(p){ return p.cat==='ระแนง-บังตา'?'bangta':(p.cat==='ระแนง-ผนัง'?'phanang':(p.cat==='ระแนง-เกล็ด'?'gleed':null)); }
+function rnParse(p){ // → {profile,spacing,frame}(บังตา) | {spacing,frame}(ผนัง) | {size,frame}(เกล็ด)
+  var nm=p.name||'', frame=/รวมโครง/.test(nm)?'รวมโครง':'ไม่โครง';
+  if(p.cat==='ระแนง-เกล็ด'){ return {size:nm.replace(/^เกล็ด\s*Z\s*/,'').replace(/(ไม่|รวม)โครง\s*$/,'').trim(), frame:frame}; }
+  var body=nm.replace(/^บังตาผนังระแนง/,'').replace(/^ระแนงผนัง\s*/,'').replace(/(ไม่|รวม)โครง\s*$/,'').trim();
+  var parts=body.split(/โชว์/); var profile=(parts[0]||'').trim(), spacing=(parts[1]||'').trim();
+  if(p.cat==='ระแนง-ผนัง') return {spacing:spacing, frame:frame};
+  return {profile:profile, spacing:spacing, frame:frame};
+}
+var RN_TREE={bangta:{},phanang:{},gleed:{}};
+PRODUCTS.forEach(function(p){ var ck=rnCatKey(p); if(!ck)return; var d=rnParse(p);
+  if(ck==='bangta'){ (RN_TREE.bangta[d.profile]=RN_TREE.bangta[d.profile]||{}); (RN_TREE.bangta[d.profile][d.spacing]=RN_TREE.bangta[d.profile][d.spacing]||{})[d.frame]=p.id; }
+  else if(ck==='phanang'){ (RN_TREE.phanang[d.spacing]=RN_TREE.phanang[d.spacing]||{})[d.frame]=p.id; }
+  else { (RN_TREE.gleed[d.size]=RN_TREE.gleed[d.size]||{})[d.frame]=p.id; }
+});
+function rnRate(id){ var p=PBYID[id]; return p?p.rate:0; }
+function rnResolve(ck,k1,k2,frame){ // k1=profile/spacing/size · k2=spacing(บังตาเท่านั้น)
+  var node;
+  if(ck==='bangta'){ var n=RN_TREE.bangta[k1]; if(!n)return''; if(!n[k2])k2=Object.keys(n)[0]; node=n[k2]; }
+  else if(ck==='phanang'){ if(!RN_TREE.phanang[k1])k1=Object.keys(RN_TREE.phanang)[0]; node=RN_TREE.phanang[k1]; }
+  else { if(!RN_TREE.gleed[k1])k1=Object.keys(RN_TREE.gleed)[0]; node=RN_TREE.gleed[k1]; }
+  if(!node)return''; return node[frame]||node['ไม่โครง']||node[Object.keys(node)[0]]||'';
+}
+function rnPick(btn,dim){
+  var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p)return;
+  var ck=rnCatKey(p); if(!ck)return; var d=rnParse(p), v=btn.dataset.val;
+  var k1=(ck==='bangta')?d.profile:(ck==='gleed'?d.size:d.spacing), k2=d.spacing, frame=d.frame;
+  if(dim==='profile'){ k1=v; var n=RN_TREE.bangta[v]; k2=Object.keys(n)[0]; frame='ไม่โครง'; }
+  else if(dim==='k1'){ k1=v; frame=d.frame||'ไม่โครง'; }      // ผนัง/เกล็ด: เปลี่ยนระดับ1
+  else if(dim==='spacing'){ k2=v; frame=d.frame||'ไม่โครง'; }  // บังตา: เปลี่ยนระยะโชว์
+  else if(dim==='frame'){ frame=v; }
+  var id=rnResolve(ck,k1,k2,frame); if(id) g3SyncProd(ch,id);
+}
+function rnChips(opts,curVal,dim){ var h='<div class="chip-group chip-sm">'; opts.forEach(function(o){ h+='<button type="button" class="chip'+(o===curVal?' on':'')+'" data-val="'+String(o).replace(/"/g,'&quot;')+'" onclick="rnPick(this,\''+dim+'\')">'+o+'</button>'; }); return h+'</div>'; }
+function rnSelectorHTML(p){
+  var ck=rnCatKey(p); if(!ck)return''; var d=rnParse(p);
+  var h='<div class="opt rn-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  if(ck==='bangta'){
+    h+='<label class="opt" style="width:100%;margin:0;">ขนาดเส้นระแนง '+rnChips(Object.keys(RN_TREE.bangta),d.profile,'profile')+'</label>';
+    var sps=RN_TREE.bangta[d.profile]?Object.keys(RN_TREE.bangta[d.profile]):[];
+    h+='<label class="opt" style="width:100%;margin:6px 0 0;">ระยะโชว์ '+rnChips(sps,d.spacing,'spacing')+'</label>';
+    var frs=(RN_TREE.bangta[d.profile]&&RN_TREE.bangta[d.profile][d.spacing])?Object.keys(RN_TREE.bangta[d.profile][d.spacing]):['ไม่โครง','รวมโครง'];
+    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frs,d.frame,'frame')+'</label>';
+  } else if(ck==='phanang'){
+    h+='<label class="opt" style="width:100%;margin:0;">ระยะโชว์ '+rnChips(Object.keys(RN_TREE.phanang),d.spacing,'k1')+'</label>';
+    var frp=RN_TREE.phanang[d.spacing]?Object.keys(RN_TREE.phanang[d.spacing]):['ไม่โครง','รวมโครง'];
+    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frp,d.frame,'frame')+'</label>';
+  } else {
+    h+='<label class="opt" style="width:100%;margin:0;">ขนาดเกล็ด '+rnChips(Object.keys(RN_TREE.gleed),d.size,'k1')+'</label>';
+    var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
+    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frg,d.frame,'frame')+'</label>';
+  }
+  h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+p.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
+  return h+'</div>';
+}
 // G4 (HANDOFF-G4-cabinet-next ข้อ4): ชิป switch สินค้า ตู้อลู↔ฝาตู้ — set .i-prod เดิม + rebuild ฟอร์ม (ไม่ hardcode รายการ)
 function cabProdSwitch(btn, prodId){
   var ch=btn.closest('.ch'); if(!ch) return;
@@ -2543,6 +2601,7 @@ function buildItemOpts(d){
   // G3-v5 จุด1: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ + drill-down วัสดุ บนสุด (class g3-prodsel · groupGHOpts skip · ซ่อน .i-prod ด้านล่าง)
   if(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') h+=g3SelectorHTML(p);
   if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
+  if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p); // G2: drill-down ระแนง cascade บนสุด
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
   // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
   d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
@@ -2989,7 +3048,7 @@ function buildItemOpts(d){
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
-  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง')?'none':''; }
+  { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full'); if(_ipw) _ipw.style.display=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด')?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม
   groupGHOpts(d);
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
