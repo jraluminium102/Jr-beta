@@ -491,6 +491,7 @@ export function DocumentHubPanel({
 
   function onSaved() {
     qc.invalidateQueries({ queryKey: ["job-documents", jobId] });
+    qc.invalidateQueries({ queryKey: ["job-doc-summary", jobId] });
   }
 
   const docs     = data?.documents ?? [];

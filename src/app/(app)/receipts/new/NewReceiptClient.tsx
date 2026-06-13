@@ -22,6 +22,7 @@ export type BillingNoteOption = {
   customer_snapshot: { name: string; job: string };
   total: number;
   status: string;
+  job_vat_rate?: 0 | 7;
   billing_installments?: InstallmentOption[];
 };
 
@@ -45,7 +46,6 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
   );
   const [installmentId, setInstallmentId] = useState<number | "">("");
   const [amount, setAmount] = useState<string>("");
-  const [vatRate, setVatRate] = useState<0 | 7>(7);
   const [paymentMethod, setPaymentMethod] = useState<string>("transfer");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,6 +55,9 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
     () => notes.find((n) => n.id === billingNoteId) ?? null,
     [notes, billingNoteId]
   );
+
+  // vatRate ล็อกตามงาน (source of truth จาก server) — ไม่ให้ผู้ใช้เปลี่ยนได้
+  const vatRate: 0 | 7 = selected?.job_vat_rate ?? 7;
   const installments = useMemo(
     () => (selected?.billing_installments ?? []).filter((i) => i.status !== "paid"),
     [selected]
@@ -185,14 +188,14 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
               </label>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <label className="block text-sm">
+                <div className="block text-sm">
                   <span className="text-xs font-medium text-ink-3">ภาษีมูลค่าเพิ่ม (VAT)</span>
-                  <select value={vatRate} onChange={(e) => setVatRate(Number(e.target.value) === 7 ? 7 : 0)}
-                    className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
-                    <option value={7}>VAT 7%</option>
-                    <option value={0}>ไม่มี VAT (0%)</option>
-                  </select>
-                </label>
+                  {/* ล็อกตามงาน — เปลี่ยนไม่ได้ (กัน VAT ผิดประเภท) */}
+                  <div className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 text-sm text-ink-2 flex items-center gap-2">
+                    {vatRate === 7 ? "VAT 7%" : "ไม่มี VAT (0%)"}
+                    <span className="text-[11px] text-ink-3">(ตามงาน)</span>
+                  </div>
+                </div>
                 <label className="block text-sm">
                   <span className="text-xs font-medium text-ink-3">วิธีชำระ</span>
                   <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}

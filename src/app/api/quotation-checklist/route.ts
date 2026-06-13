@@ -13,6 +13,7 @@ export type ChecklistQuotation = {
   net: number;
   status: string;
   note: string;
+  vat_rate: number;
 };
 
 export type ChecklistItem = {
@@ -23,6 +24,7 @@ export type ChecklistItem = {
   assess_date: string | null;
   design_state: string;
   design_end: string | null;
+  job_status: string;
   quotation: ChecklistQuotation | null;
 };
 
@@ -84,20 +86,20 @@ export const GET = withRoute(async () => {
   // โหลดใบเสนอราคาที่มี marker ทั้งหมดของ jobs เหล่านี้ (ยกเว้น cancelled)
   const { data: quotations, error: qErr } = await sb
     .from("quotations")
-    .select("id, code, net, status, note, job_id")
+    .select("id, code, net, status, note, job_id, vat_rate")
     .in("job_id", jobIds)
     .ilike("note", `${CHECKLIST_MARKER}%`)
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
   if (qErr) throw new Error(qErr.message);
 
-  type QuotRow = { id: number; code: string; net: number; status: string; note: string; job_id: string };
+  type QuotRow = { id: number; code: string; net: number; status: string; note: string; job_id: string; vat_rate: number };
 
   // map: job_id → ใบเช็คลิสต์ล่าสุด (เรียง created_at desc แล้ว → ตัวแรกของแต่ละ job_id)
   const qMap = new Map<string, ChecklistQuotation>();
   for (const q of (quotations ?? []) as QuotRow[]) {
     if (!qMap.has(q.job_id)) {
-      qMap.set(q.job_id, { id: q.id, code: q.code, net: q.net, status: q.status, note: q.note });
+      qMap.set(q.job_id, { id: q.id, code: q.code, net: q.net, status: q.status, note: q.note, vat_rate: Number(q.vat_rate ?? 7) });
     }
   }
 
@@ -115,12 +117,14 @@ export const GET = withRoute(async () => {
       assess_date:   j.assess_date,
       design_state:  j.design_state,
       design_end:    j.design_end,
+      job_status:    j.status,
       quotation:     q,
     };
 
     if (!q) {
-      // ไม่มีใบเช็คลิสต์ active → pending (เฉพาะ LEAD / PENDING_QUOTE)
-      if (["LEAD", "PENDING_QUOTE"].includes(j.status)) {
+      // ไม่มีใบเช็คลิสต์ active → pending (LEAD / PENDING_QUOTE / QUOTE_SENT ที่ยังไม่มีใบในระบบ)
+      // กรณี QUOTE_SENT แต่ไม่มีใบในระบบ → ต้องทำใบเพื่อวางบิล
+      if (["LEAD", "PENDING_QUOTE", "QUOTE_SENT"].includes(j.status)) {
         pending.push(item);
       }
     } else if (q.status === "draft") {
