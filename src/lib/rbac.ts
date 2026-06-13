@@ -3,7 +3,7 @@ import type { Role } from "@/lib/database.types";
 export type Resource =
   | "jobs" | "jobs:finance_fields" | "production" | "installation"
   | "issues" | "finance" | "dashboard" | "settings" | "users" | "queue"
-  | "designer" | "boq" | "sales_closure";
+  | "designer" | "boq" | "sales_closure" | "warranties";
 export type Action = "read" | "write" | "void";
 
 // ตรงกับ PRD REQ-06 + RLS policies ใน 0003_rls.sql
@@ -16,25 +16,32 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     queue: ["read", "write"],
     designer: ["read", "write"], boq: ["read", "write"],
     sales_closure: ["read", "write"],
+    warranties: ["read", "write"],
   },
   SALES: {
     jobs: ["read", "write"], "jobs:finance_fields": ["read"],
     production: ["read"], issues: ["read", "write"], finance: ["read"], dashboard: ["read"],
-    queue: ["read"],
+    queue: ["read", "write"],   // [0035] เซลล์จัดการคิวตัวเองได้ (RLS จำกัดเฉพาะ sales_id ของตัวเอง)
     boq: ["read"],
     sales_closure: ["read", "write"],
+    warranties: ["read", "write"],
   },
   DESIGNER: {
-    jobs: ["read", "write"], production: ["read"], issues: ["read"], dashboard: ["read"],
+    jobs: ["read", "write"], production: ["read"],
+    issues: ["read", "write"],  // [0035] ช่างแบบแจ้งปัญหาแบบได้
+    dashboard: ["read"],
     designer: ["read", "write"],
+    warranties: ["read"],
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
     designer: ["read"], boq: ["read", "write"],
+    warranties: ["read", "write"],  // [0035] ช่างผลิตออกใบรับประกันได้
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
     issues: ["read", "write"], dashboard: ["read"],
+    warranties: ["read", "write"],  // [0035] ช่างติดตั้งออกใบรับประกันหลังจบงานได้
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],

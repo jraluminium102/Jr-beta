@@ -77,10 +77,18 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
 
     // กันย้อนสถานะหลังมัดจำ → กัน ghost Production/Finance record
     const { data: current } = await ctx.supabase
-      .from("jobs").select("status").eq("id", params.id).single();
+      .from("jobs").select("status, estimator_id").eq("id", params.id).single();
     const PRE_DEPOSIT = ["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
     if (current && ["DEPOSITED", "COMPLETED"].includes(current.status) && PRE_DEPOSIT.includes(payload.status)) {
       return err("ย้อนสถานะกลับก่อนมัดจำไม่ได้ (งานมี Production/บัญชีผูกอยู่แล้ว)", 409);
+    }
+
+    // [0035] SALES ยกเลิกได้เฉพาะงานของตัวเอง (estimator_id = user.id) — กัน cross-cancel
+    // ตรวจก่อน update เพื่อไม่ให้ข้อมูลถูกแก้แล้วค่อยตรวจ
+    if (payload.status === "CANCELLED" && ctx.role === "SALES") {
+      if (!current || current.estimator_id !== ctx.user.id) {
+        return err("ไม่มีสิทธิ์ยกเลิกงานของเซลล์คนอื่น", 403);
+      }
     }
 
     const { data, error } = await ctx.supabase

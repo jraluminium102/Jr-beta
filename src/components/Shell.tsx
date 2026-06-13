@@ -65,9 +65,10 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
   const role = profile.role as Role;
   const docItems = DOC_NAV.filter((n) => {
-    if (n.href === "/queue")                  return can(role, "queue",   "read");
-    if (n.href === "/quotation-checklist")    return can(role, "jobs",    "write");
-    if (n.href === "/stats")                  return can(role, "finance", "read");
+    if (n.href === "/queue")                  return can(role, "queue",      "read");
+    if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
+    if (n.href === "/stats")                  return can(role, "finance",    "read");
+    if (n.href === "/warranties")             return can(role, "warranties", "read");
     return true;
   });
 
