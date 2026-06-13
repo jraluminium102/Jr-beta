@@ -2796,7 +2796,8 @@ function buildItemOpts(d){
     h+='<div class="full sliding-main-block" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:7px 11px;margin:4px 0;">';
     h+='<span style="font-size:12px;color:#1E5AA8;font-weight:700;">🔢 บานเลื่อน:</span>';
     // มติพี่นัท 2026-06-12: ชนิดการเปิด (ชนิดบาน) ขึ้นก่อน → จำนวนบานทั้งหมด ตามหลัง (flow ธรรมชาติ)
-    h+='<label class="opt">ชนิดการเปิด <select class="o-opentype" style="width:auto;height:32px;max-width:240px;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="" disabled selected>— เลือกลักษณะการเปิด —</option><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select></label>';
+    // G1G6-E: ชนิดการเปิด = ชิป (select ซ่อน sync เดิม · inline onchange ของ select ยังทำงานผ่าน chSetChip fire change)
+    h+='<label class="opt" style="width:100%;">ชนิดการเปิด <select class="o-opentype" style="display:none;" onchange="var f=this.closest(\'.ch\').querySelector(\'.o-fixed\'); if(f){ f.value=(this.value===\'บานเลื่อนเปิดคู่กลาง\'?2:0); f.dispatchEvent(new Event(\'change\',{bubbles:true})); }"><option value="" disabled selected>— เลือกลักษณะการเปิด —</option><option value="บานเลื่อน">บานเลื่อน (ระบุติดตายเอง)</option><option value="บานเลื่อนสลับ">บานเลื่อนสลับ</option><option value="บานเลื่อนเปิดคู่กลาง">บานเลื่อนเปิดคู่กลาง</option><option value="บานเลื่อนลากจูง">บานเลื่อนลากจูง</option></select>'+rfChips('o-opentype',[['บานเลื่อน','เลื่อน (ระบุติดตาย)'],['บานเลื่อนสลับ','สลับ'],['บานเลื่อนเปิดคู่กลาง','เปิดคู่กลาง'],['บานเลื่อนลากจูง','ลากจูง']],'')+'</label>';
     h+='<span class="smb-panels-slot"></span>'; // ตำแหน่งเสียบ "จำนวนบานทั้งหมด" (หลังชนิดการเปิด · ย้ายเข้ามาหลัง build)
     // เปิด/ติดตาย (จำนวนบานทั้งหมดอยู่ใน slot ด้านบนแล้ว — ตัด mirror ออก)
     h+='<label class="opt">ติดตาย <input type="number" class="o-fixed" min="0" value="0" style="width:45px;height:30px;" oninput="var ch=this.closest(\'.ch\'); var p=parseInt((ch.querySelector(\'.i-panels\')||{}).value)||0; var f=parseInt(this.value)||0; var ow=ch.querySelector(\'.o-opencount\'); if(ow) ow.textContent=Math.max(0,p-f); calcQuote();"> บาน · เปิด <span class="o-opencount" style="display:inline-block;min-width:30px;font-weight:700;color:#1E7E45;text-align:center;">—</span> บาน</label>';
@@ -2804,12 +2805,12 @@ function buildItemOpts(d){
     if(!_isTop){ var _brDef=(_sr.txt&&/เตี้ย/.test(_sr.txt))?'เตี้ย':'กันน้ำ';
       h+='<label class="opt">ราง <div class="chip-group chip-sm"><button type="button" class="chip '+(_brDef==='กันน้ำ'?'on':'')+'" data-val="กันน้ำ" onclick="chSetChip(this,\'o-bottomrail\')">รางกันน้ำ</button><button type="button" class="chip '+(_brDef==='เตี้ย'?'on':'')+'" data-val="เตี้ย" onclick="chSetChip(this,\'o-bottomrail\')">รางเตี้ย 7 มม.</button></div><select class="o-bottomrail" style="display:none;" onchange="calcQuote();"><option value="กันน้ำ"'+(_brDef==='กันน้ำ'?' selected':'')+'>รางล่าง (รุ่นกันน้ำ)</option><option value="เตี้ย"'+(_brDef==='เตี้ย'?' selected':'')+'>รางล่าง (รุ่นรางเตี้ย 7 มม.)</option></select></label>';
     }
-    h+='</div>'; // ปิด .sliding-main-block
-    // โชว์/ซ่อนราง — เฉพาะรางบน
+    // G1G6-E: ราง (บน · โชว์/ซ่อน) = ชิป ใน sliding-main-block (ดันขึ้นเห็นทันทีพร้อมชนิดการเปิด)
     if(_isTop){
-      h+='<label class="opt">ราง <select class="o-track" style="width:auto;height:32px;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
+      h+='<label class="opt">ราง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="โชว์ราง" onclick="chSetChip(this,\'o-track\')">โชว์ราง</button><button type="button" class="chip" data-val="ซ่อนราง" onclick="chSetChip(this,\'o-track\')">ซ่อนราง +5,000</button></div><select class="o-track" style="display:none;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
       // ข้อ5(G1): เสริมคาน ย้ายไปบล็อกรวมด้านล่าง (บานเลื่อน/เลื่อนภายใน/บานเปิด/PC) — กันซ้ำ class
     }
+    h+='</div>'; // ปิด .sliding-main-block
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
     if(_itypeNow === 'door'){
