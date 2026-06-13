@@ -3801,7 +3801,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
 /* ===== Item type prefix logic (ประตู/หน้าต่าง) ===== */
 const ITYPE_LOCK_DOOR = ['PC Door','YKK','บานเฟี้ยม','ประตูรั้ว','shower','บานเปลือย','ดัดโค้ง'];
 const ITYPE_LOCK_WINDOW = ['บานกระทุ้ง','บานยก'];
-const ITYPE_NA = ['หลังคา','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ราวบันได','มุ้ง','เลื่อนภายใน','ฝาตู้','ตู้อลู'];
+const ITYPE_NA = ['ติดตาย','หลังคา','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ราวบันได','มุ้ง','เลื่อนภายใน','ฝาตู้','ตู้อลู']; // ติดตาย: กระจกติดตาย ไม่มีประตู/หน้าต่าง (มติพี่นัท)
 function itypeFor(p){
   if(!p) return 'door';
   if(ITYPE_LOCK_DOOR.indexOf(p.cat)>=0) return 'door';
@@ -3820,7 +3820,8 @@ function refreshItype(d){
     if(_hl&&_hl.tagName==='LABEL') _hl.textContent=_roof?'ยื่น (ม.)':'สูง (ม.)';
   }
   const sel=d.querySelector('.i-type'); if(!sel) return;
-  const wrap=sel.closest('.full'); if(!wrap) return;
+  // ALLG-v2: i-type ย้ายเข้า .size-row แล้ว → ซ่อนแค่ .itype-seg (เดิม .full = size-row ทั้งแถว กว้าง/สูงหาย)
+  const wrap=sel.closest('.itype-seg')||sel.closest('.full'); if(!wrap) return;
   if(ITYPE_NA.indexOf(p.cat)>=0){ wrap.style.display='none'; return; }
   wrap.style.display='';
   const locked=itypeFor(p);
