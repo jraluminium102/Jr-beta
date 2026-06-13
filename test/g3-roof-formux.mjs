@@ -43,7 +43,7 @@ const wlab = d.querySelector(".i-w").previousElementSibling.textContent;
 const hlab = d.querySelector(".i-h").previousElementSibling.textContent;
 want("FIX D①: หลังคา label ยาว/ยื่น", /ยาว/.test(wlab) && /ยื่น/.test(hlab), wlab + " / " + hlab);
 want("FIX D①: บานเลื่อน label กว้าง/สูง (ไม่เปลี่ยน)", /กว้าง/.test(ds.querySelector(".i-w").previousElementSibling.textContent));
-const itypeWrap = d.querySelector(".i-type") && d.querySelector(".i-type").closest(".full");
+const itypeWrap = d.querySelector(".i-type") && (d.querySelector(".i-type").closest(".itype-seg") || d.querySelector(".i-type").closest(".full")); // ALLG-v2: i-type ย้ายเข้า .itype-seg ใน size-row
 want("FIX D②: หลังคา ซ่อน .i-type", itypeWrap && itypeWrap.style.display === "none");
 
 // ===== FIX B: OPTION cascade กรองหมวด =====

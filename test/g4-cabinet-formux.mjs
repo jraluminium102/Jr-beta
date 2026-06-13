@@ -35,7 +35,7 @@ want("ตู้: label = 'ประเภทตู้'", /ประเภทต�
 // ตัด 3 ออปชั่น
 want("ตู้: ไม่มี ฝังรางยู", !dc.querySelector(".o-uchannel"));
 want("ตู้: ไม่มี ดรอปพื้น", !dc.querySelector(".o-dfm"));
-const itw = dc.querySelector(".i-type") && dc.querySelector(".i-type").closest(".full");
+const itw = dc.querySelector(".i-type") && (dc.querySelector(".i-type").closest(".itype-seg") || dc.querySelector(".i-type").closest(".full"));
 want("ตู้: ซ่อน .i-type", itw && itw.style.display === "none");
 // หมายเหตุ: ตู้อลูเป็น areaOnly → ไม่มีครอบวงกบมาแต่เดิม (ไม่เกี่ยวกับงานนี้)
 
@@ -58,7 +58,7 @@ const df = add("4", "future_tech");
 want("ฝาตู้: สีฝาตู้ คงดรอปดาวน์ (≥12 option)", df.querySelectorAll(".o-ftcolor option").length >= 12, "n=" + df.querySelectorAll(".o-ftcolor option").length);
 want("ฝาตู้: สีฝาตู้อยู่ในกล่อง 📦", boxOf(df, /รายละเอียดตู้/) && /สีฝาตู้/.test(boxOf(df, /รายละเอียดตู้/).textContent));
 want("ฝาตู้: ไม่มี ฝังรางยู/ดรอปพื้น", !df.querySelector(".o-uchannel") && !df.querySelector(".o-dfm"));
-const itwF = df.querySelector(".i-type") && df.querySelector(".i-type").closest(".full");
+const itwF = df.querySelector(".i-type") && (df.querySelector(".i-type").closest(".itype-seg") || df.querySelector(".i-type").closest(".full"));
 want("ฝาตู้: ซ่อน .i-type", itwF && itwF.style.display === "none");
 
 // ===== Regression G1 บานเลื่อน =====
