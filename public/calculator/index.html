@@ -1770,16 +1770,17 @@ let qSeq=0;
 // ALLG-v2: คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอราคา (กลุ่ม 7 ชิป + รูปแบบบาน common chips + อื่นๆ ▾ dropdown) · ออปชั่นแค่สี/กระจก
 var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 หลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
 function qiGroupChips(cur){ return '<div class="chip-grid cg4">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
-function qiFamChips(grp,curId){ var cats=FAM_CATS[grp]; var curCat=(PBYID[curId]||{}).cat;
-  if(!cats) return ''; // กลุ่มไม่มี family (เช่นไม่ตรง) → ใช้ dropdown
-  // ALLG-v2: grid layout ปุ่มกว้างเท่ากัน — เลือก cols จากจำนวนรายการ (รวม "อื่นๆ")
-  var total=cats.length+1; var cls=total<=3?'cg3':(total<=4?'cg4':(total<=6?'cg3':''));
-  var h='<div class="chip-grid '+cls+'">';
+// ALLG-v2: คิดเร็ว กลุ่มที่ไม่มี FAM_CATS (3 หลังคา/ฝ้า · 5 มุ้ง) → ใช้ cat เป็นปุ่มแทน dropdown เปล่า
+var QI_EXTRA_CATS={'3':['หลังคา','ฝ้า-ผนัง'],'5':['มุ้ง']};
+function qiCatsOf(grp){ return FAM_CATS[grp]||QI_EXTRA_CATS[grp]||null; }
+function qiFamChips(grp,curId){ var cats=qiCatsOf(grp); var curCat=(PBYID[curId]||{}).cat;
+  if(!cats) return ''; // กลุ่มไม่มี family → ใช้ dropdown
+  var h='<div class="chip-grid">';
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===curCat?' on':'')+'" data-cat="'+c+'" onclick="qiPickFam(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip" style="border-style:dashed;" onclick="qiOther(this)">อื่นๆ ▾</button></div>'; return h; }
 function qiRebuild(d){ var g=d.querySelector('.qi-group').value; var gc=d.querySelector('.qi-groupchips'); if(gc) gc.innerHTML=qiGroupChips(g);
   var fc=d.querySelector('.qi-famchips'); if(fc){ fc.innerHTML=qiFamChips(g,d.querySelector('.qi-prod').value); }
-  var ps=d.querySelector('.qi-prod'); var hasFam=!!FAM_CATS[g]; if(ps&&!d.dataset.qiOther) ps.style.display=hasFam?'none':''; }
+  var ps=d.querySelector('.qi-prod'); var hasFam=!!qiCatsOf(g); if(ps&&!d.dataset.qiOther) ps.style.display=hasFam?'none':''; }
 function qiPickGroup(btn){ var d=btn.closest('.ch'); var sel=d.querySelector('.qi-group'); sel.value=btn.dataset.g; delete d.dataset.qiOther; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 function qiPickFam(btn){ var d=btn.closest('.ch'); var id=famDefaultProd(btn.dataset.cat); var sel=d.querySelector('.qi-prod');
   if(id && sel.querySelector('option[value="'+id+'"]')){ sel.value=id; } delete d.dataset.qiOther; sel.dispatchEvent(new Event('change',{bubbles:true})); }
