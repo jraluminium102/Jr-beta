@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { createClient } from "@/lib/supabase/server";
+import { can } from "@/lib/rbac";
 import { CHECKLIST_MARKER } from "@/lib/checklist-marker";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,10 @@ export const GET = withRoute(async () => {
   // ใช้ createClient() ตรงๆ (untyped) เพราะ Database type ไม่มี quotations/customers
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = createClient() as any;
-  void ctx; // ctx used only for auth check above
+
+  // BUG-06: คำนวณ can_write จาก role จริง (ADMIN/SALES/DESIGNER มี jobs:write)
+  // ส่งกลับใน meta เพื่อให้ client ใช้ตัดสิน แทนการ set canWrite=true เสมอ
+  const canWrite = can(ctx.role, "jobs", "write");
 
   // โหลด jobs ที่ design_state=DONE และ status ไม่ใช่ COMPLETED/CANCELLED
   const { data: jobs, error: jErr } = await sb
@@ -72,7 +76,7 @@ export const GET = withRoute(async () => {
   const jobRows = (jobs ?? []) as JobRow[];
 
   if (jobRows.length === 0) {
-    return ok<ChecklistData>({ pending: [], drafted: [], sent: [] });
+    return ok<ChecklistData>({ pending: [], drafted: [], sent: [] }, { can_write: canWrite });
   }
 
   const jobIds = jobRows.map((j) => j.id);
@@ -126,5 +130,5 @@ export const GET = withRoute(async () => {
     }
   }
 
-  return ok<ChecklistData>({ pending, drafted, sent });
+  return ok<ChecklistData>({ pending, drafted, sent }, { can_write: canWrite });
 });

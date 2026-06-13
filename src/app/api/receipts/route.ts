@@ -34,7 +34,6 @@ export async function POST(req: Request) {
   const amount = Number(body.amount) || 0;
   if (amount <= 0) return fail("จำนวนเงินต้องมากกว่า 0");
 
-  const vat_rate = Number(body.vat_rate) || 0;
   const payment_method = String(body.payment_method ?? "transfer");
 
   const supabase = createClient();
@@ -46,6 +45,19 @@ export async function POST(req: Request) {
     .eq("id", body.billing_note_id)
     .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
+
+  // ดึง vat_rate จากงาน (source of truth) เพื่อกันออกใบกำกับภาษีผิดประเภท
+  // งานไม่คิด VAT (vat_rate=0) → ห้ามออกใบกำกับที่มี vat_rate>0
+  let jobVatRate = 7;
+  if (bn.job_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: j } = await (supabase as any).from("jobs").select("vat_rate").eq("id", bn.job_id).single();
+    jobVatRate = Number(j?.vat_rate ?? 7);
+  }
+  const vat_rate = body.vat_rate != null ? Number(body.vat_rate) : jobVatRate;
+  if (jobVatRate === 0 && vat_rate > 0) {
+    return fail("งานนี้เป็นงานไม่คิด VAT ออกใบกำกับภาษีไม่ได้", 422);
+  }
 
   // [idempotency/partial] ถ้าระบุงวด → ตรวจยอดคงเหลือก่อนสร้างใบเสร็จ
   // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)

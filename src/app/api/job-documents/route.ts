@@ -38,6 +38,21 @@ const schema = z.object({
   doc_date:  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "รูปแบบวันที่ไม่ถูกต้อง").nullable().optional(),
   meta:      z.record(z.unknown()).optional(),
   done:      z.boolean().optional(),
+}).superRefine((val, ctx) => {
+  // BUG-08: ถ้า doc_type=warranty และส่ง meta.years มา → ต้องเป็นตัวเลข >0 หรือ null เท่านั้น
+  if (val.doc_type === "warranty" && val.meta !== undefined) {
+    const years = (val.meta as Record<string, unknown>).years;
+    if (years !== undefined && years !== null) {
+      const n = Number(years);
+      if (!Number.isFinite(n) || n <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["meta", "years"],
+          message: "ปีรับประกันต้องเป็นตัวเลขที่ถูกต้องและมากกว่า 0",
+        });
+      }
+    }
+  }
 });
 
 export const POST = withRoute(async (req: Request) => {

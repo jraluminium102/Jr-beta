@@ -15,6 +15,7 @@ const schema = z.object({
   ext_link:   z.string().optional(),
   issue_date: z.string().optional(),
   step:       z.union([z.literal(1), z.literal(2)]),
+  vat_rate:   z.union([z.literal(0), z.literal(7)]).optional().default(7),
 });
 
 /**
@@ -23,13 +24,22 @@ const schema = z.object({
  * สร้าง "ใบเสนอราคาแบบเบา" (checklist flow) ที่ไม่ผ่าน calculator
  *
  * กฎเงิน (accountant ตรวจแล้ว):
- *   ผู้ใช้กรอก total = ราคาที่ลูกค้าเห็น รวม VAT 7% แล้ว (จำนวนเต็มบาท บังคับ .int())
- *   - vat_amt  = Math.round(total * 7 / 107)  ← VAT บาทเต็ม (สูตรเดียวกับ receipts)
- *   - subtotal = total - vat_amt              ← ฐานก่อน VAT (subtotal+vat=total เป๊ะ)
- *   - total/net = ยอดที่กรอก เป๊ะ → suggestInstallments แตกงวดลงตัว
+ *   ผู้ใช้กรอก total = ราคาที่ลูกค้าเห็น (จำนวนเต็มบาท บังคับ .int())
+ *
+ *   กรณี VAT 7% (vat_rate=7, default):
+ *     total = ยอดรวม VAT แล้ว
+ *     vat_amt  = Math.round(total * 7 / 107)  ← ถอด VAT ออกจากยอด inclusive
+ *     subtotal = total - vat_amt              ← ฐานก่อน VAT (subtotal+vat=total เป๊ะ)
+ *
+ *   กรณีไม่คิด VAT (vat_rate=0):
+ *     total = ยอดที่ลูกค้าจ่าย (ไม่มี VAT)
+ *     vat_amt  = 0
+ *     subtotal = total                        ← ฐาน = ยอดทั้งหมด
+ *
+ *   การ map ลง jobs: net_amount = subtotal + vat_rate
+ *     trigger tg_calc_financials จะคิด vat_amount/total_amount เอง
+ *     ต้องส่ง vat_rate ไปด้วยเสมอ ไม่งั้น no-VAT โดน trigger บวก 7% ซ้ำ
  *   - wht=0, discount=0
- *   การ map ลง jobs: net_amount = subtotal (ก่อน VAT) ให้ trigger tg_calc_financials
- *   คิด vat/total_amount เอง — ห้ามส่ง net_amount=total (รวม VAT) จะโดนบวก VAT ซ้ำ
  *   computeTotals ไม่ใช้ใน flow นี้ (net ต้อง = ยอดกรอกเป๊ะเพื่อลูกโซ่วางบิล)
  */
 export const POST = withRoute(async (req: Request) => {
@@ -43,7 +53,7 @@ export const POST = withRoute(async (req: Request) => {
   const userId = ctx.user.id;
 
   const body = schema.parse(await req.json());
-  const { job_id, total, ext_ref, ext_link, step } = body;
+  const { job_id, total, ext_ref, ext_link, step, vat_rate } = body;
   const issue_date = body.issue_date || new Date().toISOString().slice(0, 10);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -81,8 +91,9 @@ export const POST = withRoute(async (req: Request) => {
     : CHECKLIST_MARKER;
 
   // 4) คำนวณยอด (ดูคอมเมนต์กฎเงินด้านบน — ห้ามเปลี่ยนโดยไม่แจ้ง accountant)
-  // VAT inclusive: ถอด VAT บาทเต็มก่อน แล้วฐาน = total - vat → subtotal+vat_amt = total เป๊ะ
-  const vat_amt  = Math.round((total * 7) / 107);
+  // VAT 7%: ถอด VAT จากยอด inclusive → subtotal+vat_amt = total เป๊ะ
+  // no-VAT (vat_rate=0): vat_amt=0, subtotal=total
+  const vat_amt  = vat_rate > 0 ? Math.round((total * vat_rate) / (100 + vat_rate)) : 0;
   const subtotal = total - vat_amt;
 
   // 5) idempotent — หาใบเช็คลิสต์ active ของงานนี้
@@ -106,7 +117,7 @@ export const POST = withRoute(async (req: Request) => {
       .from("quotations")
       .update({
         note,
-        subtotal, vat_amt, vat_rate: 7,
+        subtotal, vat_amt, vat_rate,
         total, wht_amt: 0, net: total,
         discount_pct: 0, discount_amt: 0, wht_rate: 0,
         issue_date,
@@ -157,7 +168,7 @@ export const POST = withRoute(async (req: Request) => {
         customer_snapshot: snapshot,
         issue_date,
         status: "draft",
-        vat_rate: 7, discount_pct: 0, wht_rate: 0,
+        vat_rate, discount_pct: 0, wht_rate: 0,
         subtotal, discount_amt: 0, vat_amt,
         total, wht_amt: 0, net: total,
         note,
@@ -202,8 +213,9 @@ export const POST = withRoute(async (req: Request) => {
     if (sErr) return err("อัปเดตสถานะส่งไม่สำเร็จ: " + sErr.message, 500);
     currentStatus = "sent";
 
-    // อัปเดต job: quote_sent_date, status, net_amount(=ก่อน VAT)
+    // อัปเดต job: quote_sent_date, status, net_amount(=ก่อน VAT), vat_rate
     // net_amount = subtotal เท่านั้น — trigger tg_calc_financials จะคิด vat_amount/total_amount ให้เอง
+    // ต้องส่ง vat_rate ด้วยเสมอ เพราะ trigger ใหม่ยิงเมื่อ vat_rate เปลี่ยนด้วย
     // (ห้ามส่ง total/total_amount เพราะ total รวม VAT แล้ว → trigger จะบวก VAT ซ้ำ ทำให้ stats เพี้ยน)
     const { error: jUpErr } = await sb
       .from("jobs")
@@ -211,6 +223,7 @@ export const POST = withRoute(async (req: Request) => {
         quote_sent_date: issue_date || today,
         status: "QUOTE_SENT",
         net_amount: subtotal,
+        vat_rate,
       })
       .eq("id", job_id);
     if (jUpErr) {
