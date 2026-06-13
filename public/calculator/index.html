@@ -2009,7 +2009,8 @@ function refreshSet(box){
       }
       // ลดความรก: ซ่อน field พื้นฐานที่ไม่ใช้ในกั้นห้อง + ยุบ option เข้าพับ (ทุกบาน/หลังคาในชุด)
       // ALLG 2.2: i-type/i-qty อยู่ใน .size-row แล้ว — ซ่อนเฉพาะ wrapper ตัวเอง (closest .full จะพาซ่อนทั้งแถว กว้าง/สูงหาย)
-      ['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=(s==='.i-type')?el.closest('.itype-seg'):(s==='.i-qty')?el.parentElement:(el.closest('.full')||el.parentElement); if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
+      // 🔴 fix (พี่นัท): เอา '.i-group' ออกจากการซ่อน — เดิมซ่อน .full ที่มีชิปกลุ่มงาน → "กดกั้นห้องแล้วกลุ่มงานหาย" สลับกลับไม่ได้ · คงชิปกลุ่มไว้ให้สลับด้านได้
+      ['.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=(s==='.i-type')?el.closest('.itype-seg'):(s==='.i-qty')?el.parentElement:(el.closest('.full')||el.parentElement); if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
       var _ohint=c.querySelector('.i-override-hint'); if(_ohint){ _ohint.dataset.ghH2='1'; _ohint.style.display='none'; }
       var _ship=c.querySelector('.i-ship'); if(_ship){ var _sl=_ship.closest('label'); if(_sl){ _sl.dataset.ghH2='1'; _sl.style.display='none'; } }
       var _oe=c.querySelector('.i-opts'); var _det=_oe?_oe.closest('details'):null;
@@ -2629,8 +2630,8 @@ function addItem(container){
      /* ALLG 2.2+2.4 (ดราฟเคาะ 13 มิ.ย.): ประเภท=ติ๊กเล็ก segment + กว้าง/สูง/บาน(stepper)/ชุด รวมแถวเดียว */
      `<div class="full size-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">`+
        `<div class="itype-seg" style="flex:0 0 auto;"><label class="field-label" style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;">ประเภท</label><div class="chip-group" style="gap:0;flex-wrap:nowrap;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;display:inline-flex;"><button type="button" class="chip on" data-val="door" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🚪 ประตู</button><button type="button" class="chip" data-val="window" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🪟 หน้าต่าง</button></div><select class="i-type" style="display:none;"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
-       `<div style="flex:1 1 80px;min-width:76px;"><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
-       `<div style="flex:1 1 80px;min-width:76px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
+       `<div style="flex:0 0 92px;"><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8" style="width:92px;height:40px;text-align:center;"></div>`+
+       `<div style="flex:0 0 92px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0" style="width:92px;height:40px;text-align:center;"></div>`+
        `<div class="i-panels-wrap" style="flex:0 0 auto;"><label>บาน</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-panels" type="number" step="1" min="1" value="1" style="width:46px;border:0;text-align:center;height:42px;"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
        `<div style="flex:0 0 auto;"><label>ชุด</label><input class="i-qty" type="number" step="1" min="1" value="1" style="width:58px;"></div>`+
      `</div>`+
