@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getProfile, canWrite } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/rbac";
 import DesignerBoard from "@/components/designer/DesignerBoard";
@@ -24,5 +24,5 @@ export default async function DesignerPage() {
 
   const designers: DesignerOption[] = (data ?? []) as DesignerOption[];
 
-  return <DesignerBoard designers={designers} canWrite={canWrite(profile.role) && can(profile.role, "designer", "write")} />;
+  return <DesignerBoard designers={designers} canWrite={can(profile.role, "designer", "write")} />;
 }

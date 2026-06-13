@@ -10,16 +10,18 @@ export default async function NewReceiptPage() {
   if (!canWrite(profile?.role)) redirect("/receipts");
 
   const supabase = createClient();
-  // ดึงใบวางบิลที่ยังไม่ชำระครบ (unpaid / partial) + งวดชำระ
-  const { data } = await supabase
+  // ดึงใบวางบิลที่ยังไม่ชำระครบ (unpaid / partial) + งวดชำระ + vat_rate จากงาน
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
     .from("billing_notes")
-    .select("id, code, customer_snapshot, total, status, billing_installments(id, seq, label, amount, paid_amount, status, sort_order)")
+    .select("id, code, customer_snapshot, total, status, job_id, jobs(vat_rate), billing_installments(id, seq, label, amount, paid_amount, status, sort_order)")
     .in("status", ["unpaid", "partial"])
     .order("created_at", { ascending: false });
 
-  const notes = ((data ?? []) as BillingNoteOption[]).map((n) => ({
+  const notes = ((data ?? []) as (BillingNoteOption & { jobs?: { vat_rate?: number } | null })[]).map((n) => ({
     ...n,
-    billing_installments: (n.billing_installments ?? []).slice().sort((a, b) => a.sort_order - b.sort_order),
+    job_vat_rate: Number(n.jobs?.vat_rate ?? 7) as 0 | 7,
+    billing_installments: (n.billing_installments ?? []).slice().sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order),
   }));
 
   return <NewReceiptClient notes={notes} />;

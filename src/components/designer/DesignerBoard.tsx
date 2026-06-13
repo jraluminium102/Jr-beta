@@ -492,8 +492,20 @@ function JobCard({
   // toast feedback สำหรับ #37 (บันทึกกำหนดส่ง)
   const [dueSaved, setDueSaved] = useState(false);
 
-  async function handleDueBlur(e: React.FocusEvent<HTMLInputElement>) {
-    const val = e.target.value;
+  // controlled state สำหรับ date inputs — sync จาก prop เมื่อ job reload
+  const [dueDateVal, setDueDateVal] = useState(job.design_due_date ?? "");
+  const [receivedDateVal, setReceivedDateVal] = useState(job.design_received_date ?? "");
+
+  useEffect(() => {
+    setDueDateVal(job.design_due_date ?? "");
+  }, [job.design_due_date]);
+
+  useEffect(() => {
+    setReceivedDateVal(job.design_received_date ?? "");
+  }, [job.design_received_date]);
+
+  async function handleDueBlur() {
+    const val = dueDateVal;
     if (!val || val === (job.design_due_date ?? "")) return;
     // ถ้าวันที่กรอกเป็นอดีต — ยืนยันก่อน (#37)
     if (val < TODAY) {
@@ -501,13 +513,19 @@ function JobCard({
         `กำหนดส่งที่กรอก (${val}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`
       );
       if (!ok) {
-        e.target.value = job.design_due_date ?? "";
+        setDueDateVal(job.design_due_date ?? "");
         return;
       }
     }
     await onDueDate(job, val);
     setDueSaved(true);
     setTimeout(() => setDueSaved(false), 2000);
+  }
+
+  async function handleReceivedBlur() {
+    const val = receivedDateVal;
+    if (val === (job.design_received_date ?? "")) return;
+    await onReceivedDate(job, val);
   }
 
   return (
@@ -558,7 +576,8 @@ function JobCard({
             <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
             <input
               type="date"
-              defaultValue={job.design_due_date ?? ""}
+              value={dueDateVal}
+              onChange={(e) => setDueDateVal(e.target.value)}
               disabled={assigning}
               onBlur={handleDueBlur}
               aria-label="กำหนดส่งแบบ"
@@ -578,9 +597,10 @@ function JobCard({
             <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
             <input
               type="date"
-              defaultValue={job.design_received_date ?? ""}
+              value={receivedDateVal}
+              onChange={(e) => setReceivedDateVal(e.target.value)}
               disabled={assigning}
-              onBlur={(e) => onReceivedDate(job, e.target.value)}
+              onBlur={handleReceivedBlur}
               aria-label="วันได้รับแบบ"
               className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum text-ink-2"
             />

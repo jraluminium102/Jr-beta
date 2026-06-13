@@ -60,7 +60,9 @@ function Modal({
   const parsed = q ? parseNoteExt(q.note) : { ext_ref: "", ext_link: "" };
 
   const [total,      setTotal]    = useState(q ? String(q.net) : "");
-  const [noVat,      setNoVat]    = useState(false);
+  // restore noVat จาก quotation ที่เปิดแก้ (vat_rate===0 → noVat=true)
+  // กัน: เปิดใบ no-VAT แล้ว toggle เด้งกลับมามี VAT
+  const [noVat,      setNoVat]    = useState(q != null ? q.vat_rate === 0 : false);
   const [extRef,     setExtRef]   = useState(parsed.ext_ref);
   const [extLink,    setExtLink]  = useState(parsed.ext_link);
   const [issueDate,  setIssueDate] = useState(new Date().toISOString().slice(0, 10));
@@ -252,11 +254,13 @@ function JobCard({
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}
         </div>
-        {q && (
+        {q ? (
           <Badge tone={q.status === "draft" ? "gray" : q.status === "sent" ? "sky" : "emerald"}>
             {q.status === "draft" ? "ร่าง" : q.status === "sent" ? "ส่งแล้ว" : "อนุมัติ"}
           </Badge>
-        )}
+        ) : item.job_status === "QUOTE_SENT" ? (
+          <Badge tone="amber">ส่งแล้ว—ยังไม่มีใบในระบบ</Badge>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">

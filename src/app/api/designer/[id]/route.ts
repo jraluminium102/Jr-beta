@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, canWrite } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { can } from "@/lib/rbac";
 
@@ -12,7 +12,7 @@ type DState = (typeof STATES)[number];
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
-  if (!canWrite(profile.role) || !can(profile.role, "designer", "write")) return FORBIDDEN();
+  if (!can(profile.role, "designer", "write")) return FORBIDDEN();
 
   const body = await req.json().catch(() => null);
   if (!body || !body.state || !STATES.includes(body.state)) return fail("สถานะไม่ถูกต้อง");
