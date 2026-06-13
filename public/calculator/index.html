@@ -240,6 +240,9 @@
   /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
   /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
   label.opt:has(> .chip-grid){ display:block; }
+  /* 🔴 selector container (เลือกแบบ/cascade/หลังคา/มุ้ง) เดิม .opt = flex nowrap → label "รูปแบบ" กับ "รุ่น" อยู่ข้างกันคนละครึ่ง + ปุ่มแคบ · บังคับ block ให้ stack เต็มแถว */
+  .fam-prodsel, .rn-prodsel, .g3-prodsel, .mosq-prodsel{ display:block; }
+  .fam-prodsel > label.opt, .rn-prodsel > label.opt, .g3-prodsel > label.opt, .mosq-prodsel > label.opt{ display:block; width:100%; }
   .chip-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin-top:4px; width:100%; } /* auto-fill = ปุ่มกว้างเท่ากันทุกจำนวน เรียงเต็มแถวไม่เละ */
   .chip-grid.cg3{ grid-template-columns:repeat(3,1fr); }
   .chip-grid.cg4{ grid-template-columns:repeat(4,1fr); }
@@ -3228,7 +3231,10 @@ function buildItemOpts(d){
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
   // G1G6-B fix (พี่นัทเล่นจริง 2026-06-13): ย้าย selector เลือกแบบ (fam/rn/rail/g3/mosq prodsel) จาก optbox (details พับ → "ที่เลือกบานหาย") ขึ้นฟอร์มหลัก ใต้ช่องแบบ
   { var _ipf=d.querySelector('.i-prod'); _ipf=_ipf&&_ipf.closest('.full');
-    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel, .i-opts .zipscreen-block').forEach(function(el){ el.style.gridColumn='1 / -1'; /* ALLG 2.1: chgrid เป็น grid 2 คอลัมน์ — ไม่เต็มแถว = ชิปตกแนวตั้งทีละปุ่ม (screenshot พี่นัท) */ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
+    if(_ipf){
+      // 🔴 ALLG-v2 fix (บั๊ก "ซ้อนหลายอัน"): ลบ selector ที่ย้ายมารอบก่อน (อยู่นอก .i-opts = orphan จาก rebuild ก่อน) ก่อนย้ายตัวใหม่ — เดิมสะสมทุกการกด
+      d.querySelectorAll('.fam-prodsel, .rn-prodsel, .g3-prodsel, .mosq-prodsel, .zipscreen-block').forEach(function(el){ if(!el.closest('.i-opts')) el.remove(); });
+      var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel, .i-opts .zipscreen-block').forEach(function(el){ el.style.gridColumn='1 / -1'; _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
   // G1G6-B: ซ่อน dropdown แบบ/รุ่น เมื่อมี selector ชิป (g3/mosq/fam/cascade/ตู้/ม่านซิป) · ยกเว้นโหมด "อื่นๆ" (famOther)
   { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full');
     var _hideProd=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ตู้อลู'||p.cat==='ฝาตู้'||p.cat==='ม่านซิป'||(FAM_CATS[(d.querySelector('.i-group')||{}).value||'1']&&d.dataset.famOther!=='1'));
