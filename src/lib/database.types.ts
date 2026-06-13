@@ -98,6 +98,18 @@ export interface IssueUpdate {
 export interface Designer {  // lookup ไม่ผูก auth (0019)
   id: number; name: string; active: boolean; created_at: string;
 }
+export type JobDocType = "boq" | "contract" | "warranty" | "other";
+export interface JobDocument {  // เอกสารประกอบงาน (0033)
+  id: string; job_id: string;
+  doc_type: JobDocType;
+  doc_no: string | null;
+  file_link: string | null;
+  doc_date: string | null;
+  meta: Record<string, unknown>;
+  done: boolean;
+  created_by: string | null;
+  created_at: string; updated_at: string;
+}
 
 // ─── Supabase Database type (must include Relationships/Views/CompositeTypes) ─
 // @supabase/supabase-js v2 GenericTable requires Relationships field.
@@ -129,6 +141,7 @@ export interface Database {
       boq_items:       Tbl<BoqItem>;
       issue_updates:   Tbl<IssueUpdate>;
       designers:       Tbl<Designer>;
+      job_documents:   Tbl<JobDocument>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
