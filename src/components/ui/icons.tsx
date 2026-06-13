@@ -3,7 +3,7 @@ import {
   Wallet, Users, Settings, Search, Plus, X, LogOut, Bell, Menu,
   Lock, Download, ChevronRight, Clock, Check, ShieldCheck,
   PencilRuler, ClipboardList, CalendarDays, Trash2,
-  Package, ExternalLink, PackageCheck,
+  Package, ExternalLink, PackageCheck, FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,4 +19,5 @@ export {
   Search, Plus, X, LogOut, Bell, Menu, Lock, Download,
   ChevronRight, Clock, Check, ShieldCheck, TriangleAlert,
   CalendarDays, Trash2, Package, ExternalLink, PackageCheck,
+  ClipboardList, FileText,
 };

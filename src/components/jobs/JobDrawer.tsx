@@ -11,6 +11,7 @@ import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
 import { QcPanel } from "@/components/jobs/QcPanel";
 import { StageAdvanceButton } from "@/components/jobs/StageAdvanceButton";
+import { DocumentHubPanel } from "@/components/jobs/DocumentHubPanel";
 import type { Job, Production, Installation, FinanceEntry, Issue, IssuePhase } from "@/lib/database.types";
 
 const SEV_TAG: Record<string, string> = { HIGH: "bg-rose-500/30 text-rose-100 border-rose-300/30", MEDIUM: "bg-amber-500/25 text-amber-100 border-amber-300/30", LOW: "bg-white/12 text-white/80 border-white/15" };
@@ -23,7 +24,7 @@ type Detail = Job & {
 };
 
 export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = false, onClose, onChanged }: { jobId: string; canFinance: boolean; canWriteProd?: boolean; readOnly?: boolean; onClose: () => void; onChanged: () => void }) {
-  const [tab, setTab] = useState<"overview" | "production" | "materials" | "installation" | "finance">("overview");
+  const [tab, setTab] = useState<"overview" | "production" | "materials" | "installation" | "finance" | "documents">("overview");
   const [depOpen, setDepOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const issuePhase: IssuePhase = tab === "production" ? "PRODUCTION" : tab === "installation" ? "INSTALLATION" : "SALES";
@@ -41,6 +42,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
 
   const tabs: [typeof tab, string][] = [["overview", "ภาพรวม"], ["production", "Production"], ["materials", "วัสดุ"], ["installation", "ติดตั้ง"]];
   if (canFinance) tabs.push(["finance", "การเงิน"]);
+  tabs.push(["documents", "เอกสาร"]);
 
   const Row = ({ l, v, num }: { l: string; v?: React.ReactNode; num?: boolean }) => (
     <div className="flex justify-between gap-4 py-2.5 border-b border-white/8">
@@ -187,6 +189,14 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                   {!readOnly && <HandoverForm inst={inst} onSaved={() => { refetch(); onChanged(); }} />}
                 </div>
               ) : <Empty title="ยังไม่เข้าติดตั้ง" sub="เริ่มเมื่อ Production = พร้อมติดตั้ง" />)}
+
+              {tab === "documents" && (
+                <DocumentHubPanel
+                  jobId={jobId}
+                  quoteChecklist={!!job.quote_sent_date}
+                  canWrite={!readOnly}
+                />
+              )}
 
               {tab === "finance" && canFinance && (
                 <div>
