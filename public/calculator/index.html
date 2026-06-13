@@ -1417,6 +1417,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     msgs.push('ทึบลูกฟูกเรียบ 2 หน้า ('+(_sides===2?'ทู · 2 ฝั่ง':'วัน · 1 ฝั่ง')+') '+a.toFixed(2)+'×3,500×'+_sides+' = '+fmt(_corr));
   }
   if(p.opts&&optSel){ p.opts.forEach(o=>{ if(o.type==='select'||o.depends) return; if(optSel[o.id]) opt+=(o.price||0); }); }
+  // มติพี่นัท 2026-06-13: ซ่อนราง (รางบน o-track) +5,000 — เดิม label บอกแต่ engine ไม่เคยบวก (undercharge) · เฉพาะรุ่นรางบน (SLIDING_RAIL top) · คนละตัวกับ hide_track เฟี้ยม (COMMON_OPTS base 4,000)
+  if(optSel&&optSel.track==='ซ่อนราง'&&SLIDING_RAIL[p.id]&&SLIDING_RAIL[p.id].rail==='top'){ opt+=5000; msgs.push('ซ่อนราง +5,000'); }
   // ข้อ11: อุปกรณ์ shower (select เดียว) — เงิน(0)/ดำ(+4,000)/ทอง(+6,000) · กันติ๊กซ้อน 2 อัน
   if(p.id==='shower'&&optSel&&optSel.showerhw){ const _hw=parseInt(optSel.showerhw)||0; const _hwp=[0,4000,6000][_hw]||0; if(_hwp>0){ opt+=_hwp; msgs.push('อุปกรณ์'+(['','ดำ','ทอง'][_hw]||'')+' +'+fmt(_hwp)); } }
   // R3.9: บานกระทุ้ง tilt&turn (awn_mode=2) +5,000/บาน — ขับด้วย select แบบเปิด ไม่ใช่ checkbox

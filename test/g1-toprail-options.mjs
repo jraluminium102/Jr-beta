@@ -44,6 +44,16 @@ want("บานเลื่อน: ไม่มีเสริมคาน (เ�
 want("บานเปิด: ไม่มีเสริมคาน", !dC.querySelector(".o-beam_support") && !dC.querySelector(".o-beamm"));
 want("PC Door: มีเสริมคานซัพพอร์ท (เดิมมี)", !!dPC.querySelector(".o-beam_support"));
 
+// ===== ซ่อนราง (o-track รางบน) +5,000 — มติพี่นัท 2026-06-13 (เดิม label บอก +5,000 แต่ engine ไม่เคยบวก) =====
+{
+  const dT = mk("inner_top_stack");
+  const before = w.readItem(dT).r.sell;
+  sf(dT, ".o-track", "ซ่อนราง");
+  const after = w.readItem(dT).r.sell;
+  want("ซ่อนราง (รางบน) = +5,000 เป๊ะ", after - before === 5000, "Δ=" + (after - before));
+  want("บานเลื่อนรางล่าง: ไม่มี o-track (ไม่โดน +5,000)", !dS.querySelector(".o-track"));
+}
+
 want("ไม่มี JS error", errors.length === 0, errors.slice(0, 2).join(" / "));
 
 let pass = 0;
