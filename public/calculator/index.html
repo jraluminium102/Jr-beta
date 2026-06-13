@@ -236,7 +236,7 @@
   .chip.on{ background:var(--red-dark); border-color:var(--red-dark); color:#fff; }
   .chip-2up{ }
   .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
-  .chip-sm .chip{ min-height:40px; padding:6px 12px; font-size:13px; }
+  .chip-sm .chip{ min-height:44px; padding:6px 12px; font-size:13px; } /* UX-substeps: ≥44px แตะง่ายมือถือ (เดิม 40) */
   .field-label{ display:block; font-size:13px; color:var(--muted); margin-bottom:2px; }
 </style>
 </head>
@@ -1839,7 +1839,7 @@ function groupGHOpts(ch){
   kids.forEach(function(k){
     if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
     // G1G6-C: ออปชั่น "เฉพาะสินค้า" inline ใต้ช่องเลือกรุ่น นอก accordion — Shower(shtype/shdoortype/corner/showerhw) · มอเตอร์-ดัดโค้ง-บานเปลือย(motor/frametype/framecolor) · ระแนง(finish/hmode/doortype/doorprice) · gate cascade
-    if(!isRoof && k.querySelector && (k.querySelector('.o-shtype,.o-shdoortype,.o-corner,.o-showerhw,.o-motor,.o-frametype,.o-framecolor,.o-finish,.o-hmode,.o-doortype,.o-doorprice')||k.classList.contains('gate-rn-casc'))){ skipEls.push(k); return; }
+    if(!isRoof && k.querySelector && (k.querySelector('.o-shtype,.o-shdoortype,.o-corner,.o-showerhw,.o-motor,.o-frametype,.o-framecolor,.o-finish,.o-hmode,.o-doortype,.o-doorprice')||k.classList.contains('gate-rn-casc')||k.classList.contains('zipscreen-block'))){ skipEls.push(k); return; } // zipscreen-block: UX-substeps 🔴 G7 — กล่องม่านซิปอยู่บนสุด ไม่จมใน accordion
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -2368,7 +2368,9 @@ function railPick(btn,dim){ var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.
 var FAM_CATS={
   '1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],
   '2':['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได','ประตูรั้ว','ระแนง'],
-  '6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door']
+  '6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door'],
+  '4':['ตู้อลู','ฝาตู้'], // UX-substeps 🔴: เดิมไม่มี key 4 → dropdown 154 โผล่ · family ชิปสลับตู้/ฝาตู้
+  '7':['ม่านซิป'] // UX-substeps 🔴: เดิมกด 7 แล้วจอว่าง (prod ซ่อน ไม่มีตัวแทน)
 };
 var FAM_LABEL={'ติดตาย':'กระจกติดตาย','ระแนง-บังตา':'ระแนงบังตา','ระแนง-ผนัง':'ระแนงผนัง','ระแนง-เกล็ด':'เกล็ด Z','ราวบันได':'ราวกันตก','ระแนง':'ระแนงพิเศษ','ลูกฟูก+คอมโพสิททึบ':'ลูกฟูก/ทึบ'};
 var FAM_DEFAULT={'บานเลื่อน':'sliding_sms','บานเปิด':'casement_euro','บานเฟี้ยม':'folding','ติดตาย':'fixed_glass','ระแนง-บังตา':'rn2','ระแนง-ผนัง':'rn38','ระแนง-เกล็ด':'rn84','ราวบันได':'imp1','ประตูรั้ว':'fence_gate'};
@@ -2381,7 +2383,8 @@ function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset
 function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
   var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
-  h+='<label class="opt" style="width:100%;margin:0;">แบบงาน <div class="chip-group chip-sm">';
+  var _famHead={'1':'เลือกรูปแบบบาน','2':'เลือกประเภทงาน','4':'เลือกตู้ / ฝาตู้','6':'เลือกรูปแบบบาน','7':'ม่านซิป'}[grp]||'เลือกรูปแบบ';
+  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b> <div class="chip-group chip-sm">'; // UX-substeps 🟡: เดิม "แบบงาน" 12.5px จาง ผู้ใช้ข้ามไปกรอกขนาดก่อน · หัวข้อตามกลุ่ม
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div></label>';
   if(FAM_CASCADE_CATS.indexOf(cur)<0 && !famOther && cats.indexOf(cur)>=0){ // cat นอก family list (เช่น เสริม จาก "อื่นๆ") → ไม่โชว์แถวรุ่น (list ยาว · ใช้ dropdown)
@@ -2723,7 +2726,7 @@ function buildItemOpts(d){
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
-    h+='<div class="gh-box"><b style="color:#B3151D;">🪟 ม่านซิป — กรอกขนาดในช่อง กว้าง/สูง ด้านบน</b><div style="font-size:12px;color:#666;margin-bottom:6px;">เลือกรุ่น/ผ้า/ระบบ/กลุ่มลูกค้า แล้วราคาคิดอัตโนมัติ</div>';
+    h+='<div class="gh-box zipscreen-block"><b style="color:#B3151D;">🪟 ม่านซิป — กรอกขนาดในช่อง กว้าง/สูง ด้านบน</b><div style="font-size:12px;color:#666;margin-bottom:6px;">เลือกรุ่น/ผ้า/ระบบ/กลุ่มลูกค้า แล้วราคาคิดอัตโนมัติ</div>';
     h+='<label class="gh-row">กลุ่มลูกค้า <select class="o-zgrp"><option value="retail" selected>ปลีก (×2.0)</option><option value="project">โครงการ (×1.75)</option></select></label>';
     h+='<label class="gh-row">รุ่น <select class="o-zmodel"><option value="auto" selected>อัตโนมัติ (ตามขนาด)</option><option value="Z100">JR-Z100 (กว้าง≤5 สูง≤3)</option><option value="Z120">JR-Z120 (สูงถึง 4 ม.)</option><option value="Z145D">JR-Z145D (2 ชั้น)</option><option value="Z120W">JR-Z120W (กว้างถึง 30 ม.)</option></select></label>';
     h+='<label class="gh-row">ผ้า (ความโปร่ง) <select class="o-zfab"><option value="0">0% ทึบ</option><option value="1">1-2%</option><option value="3">3%</option><option value="5" selected>5%</option><option value="10">10%</option><option value="30">30%</option><option value="PET">PET ใส (ผ้าพิเศษ แพงกว่า)</option></select><span style="font-size:11px;color:#666;display:block;">ⓘ ผ้าทึบ/โปร่งราคาเท่ากัน · PET ใส คิดเพิ่ม (ดูยอดหลังกรอกขนาด)</span></label>';
@@ -3150,7 +3153,7 @@ function buildItemOpts(d){
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
   // G1G6-B fix (พี่นัทเล่นจริง 2026-06-13): ย้าย selector เลือกแบบ (fam/rn/rail/g3/mosq prodsel) จาก optbox (details พับ → "ที่เลือกบานหาย") ขึ้นฟอร์มหลัก ใต้ช่องแบบ
   { var _ipf=d.querySelector('.i-prod'); _ipf=_ipf&&_ipf.closest('.full');
-    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel').forEach(function(el){ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
+    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel, .i-opts .zipscreen-block').forEach(function(el){ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
   // G1G6-B: ซ่อน dropdown แบบ/รุ่น เมื่อมี selector ชิป (g3/mosq/fam/cascade/ตู้/ม่านซิป) · ยกเว้นโหมด "อื่นๆ" (famOther)
   { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full');
     var _hideProd=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ตู้อลู'||p.cat==='ฝาตู้'||p.cat==='ม่านซิป'||(FAM_CATS[(d.querySelector('.i-group')||{}).value||'1']&&d.dataset.famOther!=='1'));
