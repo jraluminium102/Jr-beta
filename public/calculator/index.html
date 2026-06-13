@@ -3148,6 +3148,9 @@ function buildItemOpts(d){
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
+  // G1G6-B fix (พี่นัทเล่นจริง 2026-06-13): ย้าย selector เลือกแบบ (fam/rn/rail/g3/mosq prodsel) จาก optbox (details พับ → "ที่เลือกบานหาย") ขึ้นฟอร์มหลัก ใต้ช่องแบบ
+  { var _ipf=d.querySelector('.i-prod'); _ipf=_ipf&&_ipf.closest('.full');
+    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel').forEach(function(el){ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
   // G1G6-B: ซ่อน dropdown แบบ/รุ่น เมื่อมี selector ชิป (g3/mosq/fam/cascade/ตู้/ม่านซิป) · ยกเว้นโหมด "อื่นๆ" (famOther)
   { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full');
     var _hideProd=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ตู้อลู'||p.cat==='ฝาตู้'||p.cat==='ม่านซิป'||(FAM_CATS[(d.querySelector('.i-group')||{}).value||'1']&&d.dataset.famOther!=='1'));
