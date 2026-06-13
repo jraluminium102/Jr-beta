@@ -2,13 +2,47 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
-import { Check, ExternalLink, ShieldCheck, ClipboardList, FileText } from "@/components/ui/icons";
+import { baht, thDate } from "@/lib/format";
+import { Check, ExternalLink, ShieldCheck, ClipboardList, FileText, FileCheck, FilePlus, Banknote } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/primitives";
 import type { JobDocument } from "@/lib/database.types";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
 type DocResponse = { documents: JobDocument[] };
+
+type QuotationSummary = {
+  id: number;
+  code: string;
+  status: string; // "draft" | "sent" | "approved" | "cancelled"
+  net: number;
+  vat_rate: number;
+};
+
+type BillingSummary = {
+  id: number;
+  code: string;
+  status: string; // "unpaid" | "partial" | "paid" | "cancelled"
+  total: number;
+  paid: number;
+  installmentCount: number;
+  paidCount: number;
+};
+
+type ReceiptSummary = {
+  id: number;
+  code: string;
+  net: number;
+  issue_date: string | null;
+  is_voided: boolean;
+};
+
+type DocSummary = {
+  vat_rate: number;
+  quotation: QuotationSummary | null;
+  billings: BillingSummary[];
+  receipts: ReceiptSummary[];
+};
 
 type DocState = {
   doc_no:    string;
@@ -43,6 +77,29 @@ function isDirty(s: DocState, doc: JobDocument | undefined): boolean {
   return JSON.stringify(s) !== JSON.stringify(docToState(doc));
 }
 
+// ─── badge helpers ────────────────────────────────────────────────────────────
+
+const QUOTE_STATUS: Record<string, { th: string; cls: string }> = {
+  draft:    { th: "ร่าง",      cls: "bg-white/12 border-white/20 text-white/70" },
+  sent:     { th: "ส่งแล้ว",   cls: "bg-sky-500/25 border-sky-300/30 text-sky-200" },
+  approved: { th: "อนุมัติ",   cls: "bg-emerald-500/25 border-emerald-300/30 text-emerald-200" },
+};
+
+const BILLING_STATUS: Record<string, { th: string; cls: string }> = {
+  unpaid:  { th: "ยังไม่จ่าย", cls: "bg-amber-500/20 border-amber-300/25 text-amber-200" },
+  partial: { th: "จ่ายบางส่วน", cls: "bg-sky-500/25 border-sky-300/30 text-sky-200" },
+  paid:    { th: "ครบแล้ว",    cls: "bg-emerald-500/25 border-emerald-300/30 text-emerald-200" },
+};
+
+function StatusBadge({ map, status }: { map: Record<string, { th: string; cls: string }>; status: string }) {
+  const s = map[status] ?? { th: status, cls: "bg-white/12 border-white/20 text-white/70" };
+  return (
+    <span className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${s.cls}`}>
+      {s.th}
+    </span>
+  );
+}
+
 // ─── sub-component: DocRow ───────────────────────────────────────────────────
 
 const FLD      = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40";
@@ -69,7 +126,6 @@ function DocRow({ label, icon, jobId, docType, doc, onSaved, showWarranty }: Doc
   async function save() {
     setErrMsg(null); setSaving(true);
     try {
-      // BUG-08: กัน NaN ก่อนส่ง — ถ้า w_years กรอกแล้วไม่ใช่ตัวเลขที่ valid ให้เตือนและหยุด
       let yearsVal: number | null = null;
       if (docType === "warranty" && s.w_years) {
         const parsed = Number(s.w_years);
@@ -246,23 +302,191 @@ function ReadOnlyDocRow({ label, doc }: { label: string; doc: JobDocument | unde
   );
 }
 
+// ─── FinanceSection — section การเงินด้านบน ────────────────────────────────────
+
+function FinanceSection({ jobId, summary }: { jobId: string; summary: DocSummary }) {
+  const { vat_rate, quotation, billings, receipts } = summary;
+
+  // logic ว่าใบเสนออนุมัติ/ส่งแล้วไหม (เพื่อแสดงปุ่มวางบิล)
+  const quoteSentOrApproved =
+    quotation && (quotation.status === "sent" || quotation.status === "approved");
+
+  return (
+    <div className="glass-card rounded-xl p-3.5 mb-3">
+      {/* header */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[11px]" style={{ color: "var(--t-low)" }}>การเงิน</span>
+        {vat_rate === 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-300/25 text-amber-200">
+            ไม่คิด VAT
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {/* ── ใบเสนอราคา ── */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <FileText size={13} className="text-white/50 shrink-0" />
+            <span className="text-[12px]" style={{ color: "var(--t-low)" }}>ใบเสนอราคา</span>
+          </div>
+          {quotation ? (
+            <div className="flex items-center justify-between gap-2 bg-white/6 border border-white/10 rounded-xl px-3 py-2.5">
+              <div className="min-w-0">
+                <span className="text-[13px] font-medium text-white tnum">{quotation.code}</span>
+                <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(quotation.net)}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge map={QUOTE_STATUS} status={quotation.status} />
+                <a
+                  href={`/quotations/${quotation.id}`}
+                  className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-white/12 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-colors min-h-[28px]"
+                >
+                  เปิดใบเสนอ <ExternalLink size={11} />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] text-white/40">ยังไม่มีใบเสนอราคา</span>
+              <a
+                href="/quotation-checklist"
+                className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg bg-white/12 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-colors min-h-[32px]"
+              >
+                <FilePlus size={13} />ทำใบเสนอ
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* ── ใบวางบิล ── */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <FileCheck size={13} className="text-white/50 shrink-0" />
+            <span className="text-[12px]" style={{ color: "var(--t-low)" }}>ใบวางบิล</span>
+          </div>
+          {billings.length > 0 ? (
+            <div className="space-y-1.5">
+              {billings.map((bn) => (
+                <div key={bn.id} className="bg-white/6 border border-white/10 rounded-xl px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[13px] font-medium text-white tnum">{bn.code}</span>
+                      <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(bn.total)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StatusBadge map={BILLING_STATUS} status={bn.status} />
+                      <a
+                        href={`/billing-notes/${bn.id}`}
+                        className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-white/12 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-colors min-h-[28px]"
+                      >
+                        เปิดบิล <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  </div>
+                  {bn.installmentCount > 0 && (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <div className="flex-1 h-1 rounded-full bg-white/12 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-400/70 transition-all"
+                          style={{ width: `${bn.installmentCount > 0 ? (bn.paidCount / bn.installmentCount) * 100 : 0}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-white/55 tnum shrink-0">
+                        จ่าย {bn.paidCount}/{bn.installmentCount} งวด
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : quoteSentOrApproved ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] text-white/40">ยังไม่มีใบวางบิล</span>
+              <a
+                href={`/billing-notes/new?quotation=${quotation!.id}`}
+                className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg bg-white/12 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-colors min-h-[32px]"
+              >
+                <FilePlus size={13} />วางบิล
+              </a>
+            </div>
+          ) : (
+            <span className="text-[12px] text-white/35">รอใบเสนอก่อน</span>
+          )}
+        </div>
+
+        {/* ── ใบเสร็จ ── */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Banknote size={13} className="text-white/50 shrink-0" />
+            <span className="text-[12px]" style={{ color: "var(--t-low)" }}>ใบเสร็จ / ใบกำกับภาษี</span>
+          </div>
+          {receipts.length > 0 ? (
+            <div className="space-y-1.5">
+              {receipts.map((rc) => (
+                <div
+                  key={rc.id}
+                  className={`flex items-center justify-between gap-2 bg-white/6 border border-white/10 rounded-xl px-3 py-2.5 ${rc.is_voided ? "opacity-50" : ""}`}
+                >
+                  <div className="min-w-0">
+                    <span className={`text-[13px] font-medium tnum ${rc.is_voided ? "line-through text-white/50" : "text-white"}`}>
+                      {rc.code}
+                    </span>
+                    <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(rc.net)}</span>
+                    {rc.issue_date && (
+                      <span className="ml-2 text-[11px] text-white/40">{thDate(rc.issue_date)}</span>
+                    )}
+                    {rc.is_voided && (
+                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-300/25 text-rose-300">
+                        ยกเลิก
+                      </span>
+                    )}
+                  </div>
+                  <a
+                    href={`/receipts/${rc.id}`}
+                    className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg bg-white/12 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-colors min-h-[28px] shrink-0"
+                  >
+                    เปิด <ExternalLink size={11} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[12px] text-white/35">ยังไม่มีใบเสร็จ</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── DocumentHubPanel (main export) ──────────────────────────────────────────
 
 export function DocumentHubPanel({
   jobId,
-  quoteChecklist,
   canWrite = true,
 }: {
   jobId: string;
-  /** true ถ้างานส่งใบเสนอแล้ว (job.quote_sent_date != null) */
+  /** @deprecated ไม่ใช้แล้ว — ใช้ข้อมูลจริงจาก doc-summary แทน */
   quoteChecklist?: boolean;
   canWrite?: boolean;
 }) {
   const qc = useQueryClient();
 
+  // ── query 1: เอกสารประกอบ (job_documents) ──
   const { data, isLoading } = useQuery({
     queryKey: ["job-documents", jobId],
     queryFn:  () => api.get<DocResponse>(`/job-documents?job_id=${jobId}`).then((r) => r.data),
+  });
+
+  // ── query 2: สรุปเอกสารการเงิน ──
+  const {
+    data: docSummaryData,
+    isLoading: summaryLoading,
+    isError: summaryError,
+  } = useQuery({
+    queryKey: ["job-doc-summary", jobId],
+    queryFn:  () => api.get<DocSummary>(`/jobs/${jobId}/doc-summary`).then((r) => r.data),
   });
 
   function onSaved() {
@@ -276,36 +500,20 @@ export function DocumentHubPanel({
 
   return (
     <div>
-      {/* ─── กลุ่มการเงิน (สถานะอ่านจาก job) ─── */}
-      <div className="glass-card rounded-xl p-3.5 mb-3">
-        <div className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>การเงิน</div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-white/80">ใบเสนอราคา</span>
-            {quoteChecklist ? (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-300/30 text-emerald-200 flex items-center gap-1">
-                <Check size={11} />ส่งแล้ว
-              </span>
-            ) : (
-              <a
-                href={`/quotation-checklist`}
-                className="focusable text-[11px] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/60 hover:text-white/90 hover:bg-white/15 inline-flex items-center gap-1 transition-colors min-h-[28px]"
-              >
-                ทำใบเสนอ <ExternalLink size={11} />
-              </a>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] text-white/80">ใบวางบิล / ใบเสร็จ</span>
-            <a
-              href="/billing-notes"
-              className="focusable text-[11px] px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/60 hover:text-white/90 hover:bg-white/15 inline-flex items-center gap-1 transition-colors min-h-[28px]"
-            >
-              ดูในหน้าบัญชี <ExternalLink size={11} />
-            </a>
-          </div>
+      {/* ─── กลุ่มการเงิน (ข้อมูลจริงจาก doc-summary) ─── */}
+      {summaryLoading ? (
+        <div className="glass-card rounded-xl p-3.5 mb-3">
+          <div className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>การเงิน</div>
+          <div className="py-3"><Spinner label="กำลังโหลด…" /></div>
         </div>
-      </div>
+      ) : summaryError || !docSummaryData ? (
+        <div className="glass-card rounded-xl p-3.5 mb-3">
+          <div className="text-[11px] mb-1" style={{ color: "var(--t-low)" }}>การเงิน</div>
+          <p className="text-[12px] text-rose-200/70">โหลดข้อมูลการเงินไม่สำเร็จ</p>
+        </div>
+      ) : (
+        <FinanceSection jobId={jobId} summary={docSummaryData} />
+      )}
 
       {/* ─── เอกสารประกอบ ─── */}
       <div className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>เอกสารประกอบ</div>

@@ -4,6 +4,7 @@ import {
   Lock, Download, ChevronRight, Clock, Check, ShieldCheck,
   PencilRuler, ClipboardList, CalendarDays, Trash2,
   Package, ExternalLink, PackageCheck, FileText,
+  FileCheck, FilePlus, Banknote,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,5 +20,5 @@ export {
   Search, Plus, X, LogOut, Bell, Menu, Lock, Download,
   ChevronRight, Clock, Check, ShieldCheck, TriangleAlert,
   CalendarDays, Trash2, Package, ExternalLink, PackageCheck,
-  ClipboardList, FileText,
+  ClipboardList, FileText, FileCheck, FilePlus, Banknote,
 };
