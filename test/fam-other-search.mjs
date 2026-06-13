@@ -1,4 +1,4 @@
-// "อื่นๆ" → ช่องค้นหา + ชิป (แก้บั๊ก กดอื่นๆแล้วค้าง · ไม่ใช้ native dropdown 154 รายการ)
+// "อื่นๆ" = บานที่เหลือ (cat ที่ไม่อยู่ในปุ่มหลัก) เป็นชิป — ไม่ใช่ search · ไม่ใช้ native dropdown 154 (แก้บั๊กค้าง)
 import { JSDOM, VirtualConsole } from "jsdom";
 import { readFileSync } from "node:fs";
 
@@ -21,44 +21,43 @@ const otherBtn = [].find.call(d.querySelectorAll('.fam-prodsel .chip'), (c) => /
 want("มีปุ่ม 'อื่นๆ ▾'", !!otherBtn);
 otherBtn.click(); // famPickOther → buildItemOpts re-render
 
-// หลังกด: ต้องมีช่องค้นหา + ชิปรายการรุ่น (ไม่มี native dropdown โผล่)
-const search = d.querySelector(".fam-search");
-want("กดอื่นๆ → มีช่องค้นหา .fam-search", !!search);
+// ไม่มีช่องค้นหาแล้ว (มติพี่นัท: ไม่เอา search)
+want("กดอื่นๆ → ไม่มีช่องค้นหา (.fam-search)", !d.querySelector(".fam-search"));
 const list = d.querySelector(".fam-other-list");
-want("กดอื่นๆ → มีกล่องชิป .fam-other-list", !!list);
-const nChips = list ? list.querySelectorAll(".chip").length : 0;
-want("ชิปรุ่นหลายตัว (>10)", nChips > 10, "n=" + nChips);
+want("กดอื่นๆ → มีกล่องชิปบานที่เหลือ", !!list);
 
-// native .i-prod ต้องยังซ่อน (ไม่เด้ง dropdown 154)
+// ชิปที่เหลือ = cat ที่ไม่อยู่ในปุ่มหลัก FAM_CATS['1']
+const mainCats = w.FAM_CATS ? w.FAM_CATS["1"] : null;
+const restChips = [].map.call(list.querySelectorAll(".chip"), (c) => c.dataset.cat);
+want("ชิปที่เหลือมี บานเปลือย/shower/บานหมุน", restChips.includes("บานเปลือย") && restChips.includes("shower") && restChips.includes("บานหมุน"), restChips.join(","));
+want("ชิปที่เหลือ ไม่ซ้ำกับปุ่มหลัก (ไม่มี บานเลื่อน/บานเปิด)", !restChips.includes("บานเลื่อน") && !restChips.includes("บานเปิด"), restChips.join(","));
+want("จำนวนชิปที่เหลือ < รุ่นทั้งกลุ่ม (ไม่ใช่ 43)", restChips.length > 0 && restChips.length < 15, "n=" + restChips.length);
+
+// native .i-prod ยังซ่อน
 const ipw = d.querySelector(".i-prod").closest(".full");
 want("native .i-prod ยังซ่อน (ไม่ใช้ dropdown)", ipw && ipw.style.display === "none", "disp=" + (ipw && ipw.style.display));
 
-// ===== ค้นหา filter สด =====
-const before = list.querySelectorAll(".chip").length;
-search.value = "เฟี้ยม";
-search.dispatchEvent(new w.Event("input", { bubbles: true }));
-const after = d.querySelector(".fam-other-list").querySelectorAll(".chip").length;
-want("พิมพ์ 'เฟี้ยม' → กรองเหลือน้อยลง", after > 0 && after < before, "before=" + before + " after=" + after);
-const onlyFold = [].every.call(d.querySelector(".fam-other-list").querySelectorAll(".chip"), (c) => /เฟี้ยม/.test(c.textContent));
-want("ผลค้นหามีแต่ 'เฟี้ยม'", onlyFold);
-
-// ===== เลือกชิปจากผลค้นหา → product เปลี่ยนจริง =====
-const pick = d.querySelector(".fam-other-list .chip");
-const pickId = pick.dataset.id;
-pick.click(); // g3PickProd → set .i-prod + fire change → rebuild
-want("เลือกชิปอื่นๆ → .i-prod = id ที่เลือก", d.querySelector(".i-prod").value === pickId, "prod=" + d.querySelector(".i-prod").value);
+// ===== เลือกชิปบานเปลือย → product เปลี่ยน + famOther ยังเปิด + รุ่นย่อยโผล่ =====
+const fl = [].find.call(d.querySelectorAll(".fam-other-list .chip"), (c) => /เปลือย/.test(c.textContent));
+fl.click();
+want("เลือก บานเปลือย → .i-prod = รุ่น frameless", /frameless/.test(d.querySelector(".i-prod").value), "prod=" + d.querySelector(".i-prod").value);
+want("เลือกแล้ว famOther ยังเปิด (ชิปที่เหลือยังโชว์)", d.dataset.famOther === "1" && !!d.querySelector(".fam-other-list"));
+const onChip = [].find.call(d.querySelectorAll(".fam-other-list .chip"), (c) => c.classList.contains("on"));
+want("ชิปบานเปลือยถูกไฮไลต์ (.on)", onChip && onChip.dataset.cat === "บานเปลือย", onChip ? onChip.dataset.cat : "none");
 want("เลือกแล้ว readItem ได้ราคา (sell>0)", w.readItem(d).r.sell > 0, "sell=" + w.readItem(d).r.sell);
 
-// ===== ไม่พบ → ขึ้นข้อความ =====
-const search2 = d.querySelector(".fam-search"); // famOther ยังเปิด หลัง rebuild
-if (search2) { search2.value = "zzzไม่มีจริง"; search2.dispatchEvent(new w.Event("input", { bubbles: true }));
-  want("ค้นหาไม่เจอ → ขึ้น 'ไม่พบ'", /ไม่พบ/.test(d.querySelector(".fam-other-list").textContent)); }
-else want("famOther ยังเปิดหลังเลือก (มีช่องค้นหา)", false, "no .fam-search after pick");
+// รุ่นย่อยของบานเปลือย (frameless มีหลายรุ่น) → มีแถวรุ่น
+const grids = d.querySelectorAll(".fam-prodsel .chip-grid");
+want("มีแถวรุ่นย่อย (>=2 chip-grid: หลัก+เหลือ, อาจมีรุ่น)", grids.length >= 2, "grids=" + grids.length);
+
+// ===== กลับไปเลือกปุ่มหลัก → famOther ปิด =====
+const mainSliding = [].find.call(d.querySelectorAll('.fam-prodsel .chip[data-cat="บานเลื่อน"]'), () => true);
+if (mainSliding) { mainSliding.click(); want("กดปุ่มหลัก (บานเลื่อน) → famOther ปิด", d.dataset.famOther !== "1", "famOther=" + d.dataset.famOther); }
 
 want("ไม่มี JS error", errors.length === 0, errors.slice(0, 2).join(" / "));
 
 let pass = 0;
-console.log("\n=== fam-other-search (อื่นๆ → ค้นหา+ชิป) ===");
+console.log("\n=== fam-other-search (อื่นๆ → บานที่เหลือ เป็นชิป) ===");
 for (const c of checks) { console.log((c.ok ? "  ✓ " : "  ✗ ") + c.n + (c.d ? "  [" + c.d + "]" : "")); if (c.ok) pass++; }
 console.log("\nสรุป: ผ่าน " + pass + "/" + checks.length);
 process.exit(pass === checks.length ? 0 : 1);

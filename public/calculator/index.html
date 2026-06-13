@@ -2508,16 +2508,27 @@ function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset
   var inp=ch.querySelector('.fam-search'); if(inp){ try{ inp.focus(); }catch(e){} } }
 function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
+  var _hasRest=famRestCats(grp).length>0; // ซ่อนปุ่ม "อื่นๆ" เมื่อไม่มีบานเหลือ (เช่น G4 ตู้/ฝาตู้, G7 ม่านซิป) — กัน dead-end
   var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   var _famHead={'1':'เลือกรูปแบบบาน','2':'เลือกประเภทงาน','4':'เลือกตู้ / ฝาตู้','6':'เลือกรูปแบบบาน','7':'ม่านซิป'}[grp]||'เลือกรูปแบบ';
-  var _famGridCls=(cats.length+1)<=3?' cg'+(cats.length+1):''; // UX: กลุ่มปุ่มน้อย (G4 ตู้ 2+อื่นๆ) → คอลัมน์คงที่ ไม่เล็กชิดซ้าย
+  var _famGridCls=(cats.length+(_hasRest?1:0))<=3?' cg'+(cats.length+(_hasRest?1:0)):''; // UX: กลุ่มปุ่มน้อย → คอลัมน์คงที่ ไม่เล็กชิดซ้าย
   h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b><div class="chip-grid'+_famGridCls+'">'; // ALLG-v2: grid ปุ่มเท่ากัน
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
-  h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div></label>';
-  if(famOther){ // ALLG-v2: "อื่นๆ" = ช่องค้นหา + ชิปทุกรุ่นในกลุ่ม (แทน native dropdown 154 รายการที่ค้าง)
-    h+='<label class="opt" style="width:100%;margin:6px 0 0;display:block;">'
-      +'<input type="text" class="fam-search" placeholder="🔍 พิมพ์ค้นหารุ่น..." oninput="famSearchFilter(this)" style="width:100%;height:38px;box-sizing:border-box;border:1px solid #D1D5DB;border-radius:7px;padding:0 12px;margin:0 0 6px;font-size:14px;">'
-      +'<div class="fam-other-list chip-grid">'+famOtherChips(p,grp,'')+'</div></label>';
+  if(_hasRest) h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button>';
+  h+='</div></label>';
+  if(famOther){ // ALLG-v2.1: "อื่นๆ" = บานที่เหลือ (cat ในกลุ่มที่ไม่ได้อยู่ปุ่มหลัก) เป็นชิป — ไม่ใช่ช่องค้นหา (มติพี่นัท 2026-06-13)
+    var _restCats=famRestCats(grp);
+    if(_restCats.length){
+      h+='<label class="opt" style="width:100%;margin:6px 0 0;display:block;"><b style="font-size:12px;color:#6B7280;">บานอื่นๆ ที่เหลือ</b><div class="fam-other-list chip-grid">';
+      _restCats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur?' on':'')+'" data-cat="'+c+'" onclick="famPickOtherCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
+      h+='</div></label>';
+      // รุ่นย่อยของ cat ที่เลือก (ถ้ามี >1 รุ่น)
+      if(_restCats.indexOf(cur)>=0){ var _rm=prodsInGroup(grp).filter(function(q){return q.cat===cur;});
+        if(_rm.length>1){ h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
+          _rm.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name.replace(cur,'').trim()+'</button>'; });
+          h+='</div></label>'; }
+      }
+    }
     return h+'</div>';
   }
   if(FAM_CASCADE_CATS.indexOf(cur)<0 && !famOther && cats.indexOf(cur)>=0){ // cat นอก family list (เช่น เสริม จาก "อื่นๆ") → ไม่โชว์แถวรุ่น (list ยาว · ใช้ dropdown)
@@ -2530,16 +2541,14 @@ function famSelectorHTML(p,grp,famOther){
   }
   return h+'</div>';
 }
-// ALLG-v2 "อื่นๆ" search: รายชื่อรุ่นทั้งกลุ่ม (reuse prodOptionsG6 membership) + ชิปกรองสด
+// ALLG-v2.1 "อื่นๆ" = บานที่เหลือ: cat ในกลุ่ม (reuse prodOptionsG6 membership) ที่ไม่ได้อยู่ในปุ่มหลัก FAM_CATS[grp]
 function prodsInGroup(g){ var s=document.createElement('select'); s.innerHTML=prodOptionsG6(String(g));
   return [].map.call(s.querySelectorAll('option'),function(o){return PBYID[o.value];}).filter(Boolean); }
-function famOtherChips(p,grp,filter){ var f=(filter||'').trim().toLowerCase();
-  var list=prodsInGroup(grp).filter(function(q){ return !f || (q.name||'').toLowerCase().indexOf(f)>=0 || (q.cat||'').toLowerCase().indexOf(f)>=0; });
-  if(!list.length) return '<div style="font-size:12px;color:#9CA3AF;padding:6px 2px;">ไม่พบรุ่นที่ค้นหา</div>';
-  return list.map(function(q){ return '<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name+'</button>'; }).join('');
-}
-function famSearchFilter(inp){ var ch=inp.closest('.ch'); if(!ch)return; var p=PBYID[ch.querySelector('.i-prod').value]||null; var grp=(ch.querySelector('.i-group')||{}).value||'1';
-  var box=ch.querySelector('.fam-other-list'); if(box) box.innerHTML=famOtherChips(p,grp,inp.value); }
+function famRestCats(grp){ var main=FAM_CATS[grp]||[]; var seen={}, rest=[];
+  prodsInGroup(grp).forEach(function(q){ if(q && main.indexOf(q.cat)<0 && !seen[q.cat]){ seen[q.cat]=1; rest.push(q.cat); } });
+  return rest; }
+// กดบานที่เหลือ → คง famOther เปิดไว้ (ให้แผงบานที่เหลือ + รุ่นย่อยยังโชว์) แล้ว set product = default ของ cat
+function famPickOtherCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset.famOther='1'; ch.dataset.rnStep='1'; var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
 // G2 เฟส4b ประตูรั้ว: ลายระแนง cascade (บังตา ไม่โครง · ขนาดเส้น→ระยะโชว์) ขับ hidden .o-gatern (re-render ในที่ · ไม่ rebuild ทั้งฟอร์ม)
 function gateRnParse(id){ var p=PBYID[id]; if(!p||p.cat!=='ระแนง-บังตา')return{profile:Object.keys(RN_TREE.bangta)[0],spacing:''}; var d=rnParse(p); return {profile:d.profile,spacing:d.spacing}; }
 function gateRnResolve(profile,spacing){ var n=RN_TREE.bangta[profile]; if(!n)return''; if(!n[spacing])spacing=Object.keys(n)[0]; var f=n[spacing]; return (f&&f['ไม่โครง'])||''; }
