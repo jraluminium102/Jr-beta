@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G1 UX — บาน/กระจก (ล่าสุด · กรองตามแบบ)</title>
+<style>
+:root{--red:#B3151D;--red2:#8d1016;--org:#E67E22;--blue:#1E5AA8;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;}
+*{font-family:"Leelawadee UI","Tahoma",system-ui,sans-serif;box-sizing:border-box;}
+body{margin:0;background:#ececed;color:var(--ink);font-size:14px;padding:12px;}
+.wrap{max-width:420px;margin:0 auto;}
+h1{color:var(--red);font-size:17px;margin:0 0 2px;}
+.sub{color:var(--mut);font-size:12px;margin:0 0 10px;}
+.demo{background:#fff3cd;border:1px solid #ffe69c;border-radius:7px;padding:6px 10px;font-size:11.5px;margin-bottom:10px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px;box-shadow:0 1px 4px #0001;margin-bottom:12px;}
+.lbl{font-size:12.5px;color:var(--mut);font-weight:700;margin:11px 0 5px;}
+.lbl:first-child{margin-top:0;}
+.row{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{min-height:44px;padding:0 14px;display:flex;align-items:center;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--ink);font-size:13.5px;cursor:pointer;transition:transform .07s;}
+.chip:active{transform:scale(.95);}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700;}
+.chip.sm{min-height:38px;font-size:13px;padding:0 11px;}
+.grp{padding:9px;border-radius:10px;margin-bottom:10px;}
+.grp.blue{background:#eaf3fb;border:1px solid #cfe3f5;}
+.grp.yellow{background:#fff8e8;border:1px solid #f3dca0;}
+.grp.gray{background:#f7f7f8;border:1px solid var(--line);}
+.grp-t{font-size:12.5px;font-weight:800;margin-bottom:7px;}
+.grp.blue .grp-t{color:var(--blue);} .grp.yellow .grp-t{color:#9a6b00;}
+.sizerow{display:flex;gap:7px;}
+.sizerow .f{flex:1;}
+.sizerow label,.miniL{font-size:11px;color:var(--mut);display:block;margin-bottom:2px;}
+input,select{width:100%;height:42px;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:14px;background:#fff;}
+.stepper{display:flex;align-items:center;gap:0;}
+.stepper button{width:42px;height:42px;border:1.5px solid #cbd5e1;background:#f8fafc;font-size:20px;cursor:pointer;color:var(--red);}
+.stepper button:first-child{border-radius:8px 0 0 8px;} .stepper button:last-child{border-radius:0 8px 8px 0;}
+.stepper input{width:46px;text-align:center;border-left:0;border-right:0;border-radius:0;}
+.price{color:var(--red);font-weight:700;font-size:12px;margin-left:6px;}
+.optbox{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:9px;}
+.optbox.hide{display:none;}
+.editrow{display:flex;gap:6px;align-items:center;margin-top:6px;}
+.editrow input.t{flex:1;height:36px;font-size:13px;}
+.editrow input.p{width:84px;height:36px;font-size:13px;text-align:right;}
+.sub-reveal{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+.sub-reveal.hide{display:none;}
+.gbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
+.gbtn{flex:1;min-width:88px;min-height:46px;border:1.5px solid var(--red);border-radius:10px;background:#fff;color:var(--red);font-weight:700;font-size:13px;cursor:pointer;}
+.gbtn.on{background:var(--red);color:#fff;}
+.divider{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:11px;margin:10px 0;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+.qa-chip{border-color:var(--org);background:#fff8f0;color:#9a4a00;font-weight:600;}
+.addbig{width:100%;min-height:46px;border:1.5px dashed var(--red);border-radius:10px;background:#fff;color:var(--red);font-weight:700;font-size:14px;cursor:pointer;}
+.pricebar{position:sticky;bottom:0;background:var(--red);color:#fff;border-radius:11px;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-top:6px;box-shadow:0 -2px 8px #0002;}
+.pricebar .big{font-size:19px;}
+.note{font-size:11px;color:var(--mut);margin-top:3px;}
+small.hint{color:var(--mut);font-size:11px;}
+</style></head><body><div class="wrap">
+
+<h1>DRAFT G1 UX — บาน/กระจก</h1>
+<p class="sub">ล่าสุด · กรองออปชั่นตามแบบบาน · กดเล่นได้จริง</p>
+<div class="demo">⚡ DEMO · ราคาเดโม (dev ดึงเรตจริง) · ลองเปลี่ยน "แบบ" ดูออปชั่นเปลี่ยนตาม</div>
+
+<div class="card">
+  <!-- กลุ่มงาน = ปุ่ม -->
+  <div class="lbl">กลุ่มงาน</div>
+  <div class="gbtns">
+    <button class="gbtn on">1 บาน/กระจก</button>
+    <button class="gbtn">2 รั้ว/ระแนง</button>
+    <button class="gbtn">3 หลังคา/ฝ้า</button>
+  </div>
+  <div class="gbtns">
+    <button class="gbtn">4 ตู้อลู</button>
+    <button class="gbtn">5 มุ้ง</button>
+    <button class="gbtn">6 กั้นห้อง</button>
+    <button class="gbtn">7 ม่านซิป</button>
+  </div>
+
+  <!-- แบบ (drill-down เพราะเยอะ) -->
+  <div class="lbl">แบบ <small class="hint">(เลือกแล้วออปชั่นจะเปลี่ยนตาม)</small></div>
+  <select id="prod" onchange="onProd()">
+    <optgroup label="บานเลื่อน"><option value="sliding">บานเลื่อน ยูโร</option></optgroup>
+    <optgroup label="บานเปิด"><option value="casement">บานเปิด ยูโร</option><option value="solid">ประตูบานเปิด โซลิด</option></optgroup>
+    <optgroup label="ติดตาย"><option value="fixed">กระจกติดตาย</option></optgroup>
+    <optgroup label="บานกระทุ้ง"><option value="awning">บานกระทุ้ง ยูโร</option></optgroup>
+    <optgroup label="บานเฟี้ยม"><option value="folding">บานเฟี้ยม ยูโร</option></optgroup>
+    <optgroup label="PC Door"><option value="pc">PC Door 2 บาน</option></optgroup>
+    <optgroup label="ดัดโค้ง"><option value="curved">ประตูดัดโค้งบานคู่</option></optgroup>
+    <optgroup label="เลื่อนภายใน"><option value="inner">เลื่อนภายในรางบน</option></optgroup>
+    <optgroup label="บานยก"><option value="lift">บานยก SMS</option></optgroup>
+    <optgroup label="บานหมุน"><option value="pivot">บานหมุนเมืองทอง</option></optgroup>
+    <optgroup label="shower"><option value="shower">Shower กั้นอาบน้ำ</option></optgroup>
+    <optgroup label="บานเปลือย"><option value="frameless">บานเปลือยติดตาย</option></optgroup>
+    <optgroup label="ลูกฟูก/คอมโพสิททึบ"><option value="solidpanel">ลูกฟูก/คอมโพสิต</option></optgroup>
+  </select>
+
+  <!-- ประเภท = ชิป -->
+  <div class="lbl">ประเภท</div>
+  <div class="row"><button class="chip on" id="ty-door" onclick="pick('ty','door',this)">ประตู</button><button class="chip" id="ty-win" onclick="pick('ty','win',this)">หน้าต่าง</button></div>
+
+  <!-- ขนาด: กว้าง สูง จำนวน บรรทัดเดียว -->
+  <div class="lbl">ขนาด (ม.) · จำนวนบาน</div>
+  <div class="sizerow">
+    <div class="f"><label>กว้าง</label><input id="w" type="number" value="3.6" oninput="recalc()"></div>
+    <div class="f"><label>สูง</label><input id="h" type="number" value="2.4" oninput="recalc()"></div>
+    <div class="f"><label>บาน</label><div class="stepper"><button onclick="step('pn',-1)">−</button><input id="pn" value="4" oninput="recalc()"><button onclick="step('pn',1)">+</button></div></div>
+  </div>
+
+  <!-- ===== ออปชั่นหลัก (กรองตามแบบ) ===== -->
+  <div class="lbl" style="margin-top:14px;">ปรับแต่งรายการนี้ <small class="hint">(โชว์เฉพาะที่แบบนี้มี)</small></div>
+
+  <!-- บล็อกฟ้า: เฉพาะบานเลื่อน/เลื่อนภายใน -->
+  <div class="grp blue optbox" id="o-rail">
+    <div class="grp-t">🚪 บานเลื่อน</div>
+    <div class="miniL">ราง</div><div class="row"><button class="chip sm on" onclick="pickC(this)">รางกันน้ำ</button><button class="chip sm" onclick="pickC(this)">รางเตี้ย 7มม.</button></div>
+    <div class="miniL" style="margin-top:7px;">ชนิดการเปิด</div><div class="row"><button class="chip sm on" onclick="pickC(this)">เลื่อนสลับ</button><button class="chip sm" onclick="pickC(this)">เปิดคู่กลาง</button><button class="chip sm" onclick="pickC(this)">ติดตาย 1 บาน</button></div>
+    <div class="miniL" style="margin-top:7px;">ชุดล็อค</div><div class="row"><button class="chip sm on" onclick="pickC(this)">มีกุญแจ</button><button class="chip sm" onclick="pickC(this)">ไม่มีกุญแจ</button></div>
+  </div>
+
+  <!-- บานเปิด: โช๊ค/ธรณี -->
+  <div class="optbox" id="o-casement">
+    <div class="miniL">โช๊คอัด <span class="price">+5,000</span></div><div class="row"><button class="chip sm on" onclick="pickC(this)">ไม่มี</button><button class="chip sm" onclick="pickC(this)">มี</button></div>
+    <div class="miniL" style="margin-top:7px;">ธรณี</div><div class="row"><button class="chip sm on" onclick="pickC(this)">มาตรฐาน</button><button class="chip sm" onclick="pickC(this)">หลังเต่า+กันน้ำ</button></div>
+  </div>
+
+  <!-- บานกระทุ้ง: awn_mode -->
+  <div class="optbox" id="o-awning">
+    <div class="miniL">ลักษณะกระทุ้ง</div><div class="row"><button class="chip sm on" onclick="pickC(this)">กระทุ้งเปิดบน</button><button class="chip sm" onclick="pickC(this)">tilt&turn <span class="price">+5,000</span></button></div>
+  </div>
+
+  <!-- บานเฟี้ยม: ธรณีเฟี้ยม + เสริมคาน -->
+  <div class="optbox" id="o-folding">
+    <div class="miniL">ธรณีบานเฟี้ยม</div><div class="row"><button class="chip sm on" onclick="pickC(this)">มาตรฐาน</button><button class="chip sm" onclick="pickC(this)">หลังเต่าภายใน</button></div>
+  </div>
+
+  <!-- เลื่อนภายใน: ราง track -->
+  <div class="optbox" id="o-inner">
+    <div class="miniL">รางเลื่อนภายใน</div><div class="row"><button class="chip sm on" onclick="pickC(this)">รางบนซ้อน</button><button class="chip sm" onclick="pickC(this)">soft close</button></div>
+  </div>
+
+  <!-- บานยก: มอเตอร์ -->
+  <div class="optbox" id="o-lift">
+    <div class="miniL">มอเตอร์</div><div class="row"><button class="chip sm on" onclick="pickC(this)">ไม่มี</button><button class="chip sm" onclick="pickC(this)">80กก. <span class="price">+18,000</span></button></div>
+  </div>
+
+  <!-- โซลิด: ช่องแสง -->
+  <div class="optbox" id="o-solidlight">
+    <div class="miniL">ช่องแสงบน (กระจก)</div><div class="row"><button class="chip sm on" onclick="pickC(this)">ไม่มี (ทึบล้วน)</button><button class="chip sm" onclick="pickC(this)">มีช่องแสง</button></div>
+  </div>
+
+  <!-- shower -->
+  <div class="optbox" id="o-shower">
+    <div class="miniL">รูปแบบ</div><div class="row"><button class="chip sm on" onclick="pickC(this)">บานเปลือย</button><button class="chip sm" onclick="pickC(this)">มีวงกบ</button></div>
+    <div class="miniL" style="margin-top:7px;">อุปกรณ์</div><div class="row"><button class="chip sm on" onclick="pickC(this)">เงิน</button><button class="chip sm" onclick="pickC(this)">ดำ <span class="price">+4,000</span></button><button class="chip sm" onclick="pickC(this)">ทอง <span class="price">+6,000</span></button></div>
+  </div>
+
+  <!-- ลูกฟูกทึบ (standalone) -->
+  <div class="optbox" id="o-solidpanel">
+    <div class="miniL">ชนิด</div><div class="row"><button class="chip sm on" onclick="pickC(this)">ลูกฟูก 1 ทาง</button><button class="chip sm" onclick="pickC(this)">2 ทาง</button><button class="chip sm" onclick="pickC(this)">คอมโพสิต</button></div>
+  </div>
+
+  <!-- ===== สี / กระจก (drill-down · เกือบทุกแบบ ยกเว้น standalone) ===== -->
+  <div class="optbox" id="o-color">
+    <div class="miniL">สีอลูมิเนียม <small class="hint">(เลือกหมวด→สี)</small></div>
+    <div class="row" id="colorCat"><button class="chip sm on" onclick="colCat(this,'std')">มาตรฐาน</button><button class="chip sm" onclick="colCat(this,'wood')">ลายไม้</button><button class="chip sm" onclick="colCat(this,'special')">อบพิเศษ</button></div>
+    <div class="row sub-reveal" id="colorList"></div>
+  </div>
+  <div class="optbox" id="o-glass">
+    <div class="miniL">กระจก <small class="hint">(เลือกหมวด→รุ่น)</small></div>
+    <div class="row" id="glassCat"><button class="chip sm on" onclick="glCat(this,'clear')">ใส/สี</button><button class="chip sm" onclick="glCat(this,'temper')">เทมเปอร์</button><button class="chip sm" onclick="glCat(this,'lam')">ลามิเนต</button><button class="chip sm" onclick="glCat(this,'insul')">อินซูเลท</button></div>
+    <div class="row sub-reveal" id="glassList"></div>
+  </div>
+
+  <!-- ===== มือจับ (multi · เฉพาะแบบที่มี) ===== -->
+  <div class="grp yellow optbox" id="o-handle">
+    <div class="grp-t">มือจับ <small class="hint" style="font-weight:400;">ติ๊กได้หลายอัน</small></div>
+    <div class="row" id="handleBrands"></div>
+    <div class="sub-reveal hide" id="hsub-cmech"><div class="miniL">Cmech</div><div class="row"><button class="chip sm on" onclick="pickC(this)">ฝัง</button><button class="chip sm" onclick="pickC(this)">เมโทร</button></div>
+      <div class="editrow"><label class="miniL" style="margin:0;">หลบมุ้ง (กระทุ้ง)</label><input type="checkbox" style="width:auto;height:auto;"></div></div>
+    <div class="sub-reveal hide" id="hsub-digi"><div class="miniL">ดิจิตอล <span class="price">+10,000</span></div><select><option>S1 ก้านโยก</option><option>S1 ลูกบิด</option></select></div>
+    <div class="sub-reveal hide" id="hsub-stainless"><div class="miniL">สแตนอร่าม</div><select><option>30.5 ซม. +1,500</option><option>45 ซม. +2,000</option></select></div>
+    <div class="sub-reveal hide" id="hsub-other"><div class="editrow"><input class="t" placeholder="ชื่อรุ่นมือจับ"><input class="p" type="number" placeholder="ราคา"></div></div>
+  </div>
+
+  <!-- ===== มุ้ง (เฉพาะแบบที่มี) ===== -->
+  <div class="grp blue optbox" id="o-mosq">
+    <div class="grp-t">🪟 มุ้ง <small class="hint" style="font-weight:400;">(คิดตามพื้นที่บาน)</small></div>
+    <select id="mosqType" onchange="onMosq()"><option value="">ไม่ใส่</option><option>มุ้งจีบ SD พื้นฐาน</option><option>มุ้งจีบนิรภัย</option><option value="frame">มุ้งเฟรมเล็ก</option><option value="frame">มุ้งเฟรมใหญ่</option></select>
+    <div class="sub-reveal hide" id="mosqDetail">
+      <div class="miniL" style="margin-top:8px;">ผ้ามุ้ง</div><select><option>ไฟเบอร์เทา</option><option>ไฟเบอร์ดำ</option><option>กันแมว/หมา +800</option><option>กันหนู +1,200</option></select>
+      <div class="miniL" style="margin-top:7px;">สีกรอบมุ้ง</div><div class="row"><button class="chip sm on" onclick="pickC(this)">ตามสีบาน</button><button class="chip sm" onclick="pickC(this)">เทาซาฮาร่า</button><button class="chip sm" onclick="pickC(this)">KL พิเศษ</button><button class="chip sm" onclick="pickC(this)">KL ลายไม้</button></div>
+      <div class="miniL" style="margin-top:7px;">จำนวนบานมุ้ง <small class="hint">(auto=เท่าบานประตู)</small></div><div class="row" id="mosqPanels"></div>
+      <div class="sub-reveal hide" id="mosqOpenStyle"><div class="miniL">ลักษณะการเปิด (มุ้งเฟรม)</div><div class="row"><button class="chip sm on" onclick="pickC(this)">เปิด</button><button class="chip sm" onclick="pickC(this)">เลื่อน</button><button class="chip sm" onclick="pickC(this)">กระทุ้ง</button><button class="chip sm" onclick="pickC(this)">ยก</button></div></div>
+      <details style="margin-top:7px;"><summary><small class="hint">บานไม่เท่ากัน? กรอกขนาดเอง</small></summary><div class="sizerow" style="margin-top:5px;"><div class="f"><label>กว้าง</label><input placeholder="auto"></div><div class="f"><label>ยาว</label><input placeholder="auto"></div></div></details>
+    </div>
+  </div>
+
+  <!-- ===== แผ่นทึบล่าง (default กว้าง=ขนาดบาน) ===== -->
+  <div class="optbox" id="o-solidlower">
+    <div class="miniL">แผ่นทึบล่าง</div>
+    <div class="row"><button class="chip sm on" onclick="solLower(this,0)">ไม่มี</button><button class="chip sm" onclick="solLower(this,1)">อลูลูกฟูก <span class="price">3,500/ตร.ม.</span></button><button class="chip sm" onclick="solLower(this,2)">คอมโพสิท <span class="price">3,300/ตร.ม.</span></button></div>
+    <div class="sub-reveal hide" id="slDetail">
+      <div class="sizerow" style="margin-top:7px;"><div class="f"><label>กว้าง (auto=บาน)</label><input id="slw" value="3.6"></div><div class="f"><label>สูง</label><input id="slh" value="0.4"></div></div>
+      <div class="miniL" style="margin-top:6px;">สีลูกฟูก</div><select><option>ดำ/ขาว/ซาฮาร่า (+0)</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ</option></select>
+    </div>
+  </div>
+
+  <!-- ===== คาดตาราง (เส้นตั้ง default=จำนวนบาน) ===== -->
+  <div class="optbox" id="o-grid">
+    <div class="miniL">คาดตาราง</div>
+    <div class="row"><button class="chip sm on" onclick="grid(this,0)">ไม่มี</button><button class="chip sm" onclick="grid(this,1)">มี</button></div>
+    <div class="sub-reveal hide" id="gridDetail">
+      <div class="sizerow" style="margin-top:7px;"><div class="f"><label>เส้นนอน</label><input id="gh" value="2"></div><div class="f"><label>เส้นตั้ง (auto=บาน)</label><input id="gv" value="4"></div><div class="f"><label>ราคา/ม.</label><input value="200"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== ครอบวงกบ (เกือบทุกแบบ) ===== -->
+  <div class="optbox" id="o-fcsides">
+    <div class="miniL">ครอบวงกบ</div>
+    <div class="row"><button class="chip sm on" onclick="fcs(this,0)">ไม่มี</button><button class="chip sm" onclick="fcs(this,3)">3 ด้าน</button><button class="chip sm" onclick="fcs(this,4)">4 ด้าน</button></div>
+    <div class="sub-reveal hide" id="fcDetail"><div class="miniL" style="margin-top:6px;">สี/ความยาว</div><div class="sizerow"><div class="f"><select><option>ดำ/ขาว/ซาฮาร่า 700/ม.</option><option>สีอื่น 800/ม.</option><option>อบพิเศษ 1,200/ม.</option></select></div><div class="f"><input placeholder="ความยาว ม."></div></div></div>
+  </div>
+
+  <!-- ดรอปพื้น -->
+  <div class="optbox" id="o-drop"><div class="miniL">ดรอปพื้น (ม.) <small class="hint">0=ไม่มี</small></div><input value="0" style="width:100px;"></div>
+
+  <!-- ===== OPTION ทางเลือกลูกค้า (แบน · ราคา+แก้ได้) ===== -->
+  <div class="grp gray" style="border-color:#f3c0c0;">
+    <div class="grp-t" style="color:var(--red);">OPTION ทางเลือกลูกค้า <small class="hint" style="font-weight:400;">คิดราคาให้ + แก้ข้อความ/ราคาได้</small></div>
+    <div id="optList"></div>
+    <button class="chip sm qa-chip" onclick="addOpt()" style="border-style:dashed;">+ เพิ่ม OPTION</button>
+  </div>
+
+  <!-- ===== บานย่อย / เพิ่มด่วน (รวมกล่องเดียว) ===== -->
+  <div class="grp gray" style="border-color:#f3c0c0;border-style:dashed;">
+    <div class="grp-t" style="color:var(--red);">เพิ่มส่วน / บานย่อย</div>
+    <small class="hint">⚡ เพิ่มด่วน — กดเพิ่มทันที</small>
+    <div class="row" style="margin-top:5px;"><button class="chip sm qa-chip" onclick="flash(this)">+ กระจกติดตาย</button><button class="chip sm qa-chip" onclick="flash(this)">+ ลูกฟูก</button><button class="chip sm qa-chip" onclick="flash(this)">+ คอมโพสิต</button><button class="chip sm qa-chip" onclick="flash(this)">+ ผนังเบา</button></div>
+    <div class="divider">หรือ</div>
+    <button class="addbig" onclick="flash(this)">+ เพิ่มบานย่อยในชุดนี้</button>
+  </div>
+
+  <!-- ตำแหน่ง (ลงล่าง · ไม่บังคับ) -->
+  <div class="lbl" style="margin-top:12px;">ด้าน/ตำแหน่ง <small class="hint">(ไม่บังคับ)</small></div>
+  <input placeholder="เช่น ด้านหน้า / ห้องนอน">
+
+  <!-- หมายเหตุ -->
+  <div class="lbl">หมายเหตุ / สเปกพิเศษ</div>
+  <input placeholder="เช่น รวมงานรื้อบานเดิม">
+
+  <div class="pricebar"><span>ราคาประเมิน (เดโม)</span><span class="big" id="total">฿74,000</span></div>
+</div>
+
+<script>
+// ===== กรองออปชั่นตามแบบ (อ้างอิง option จริงต่อ cat จาก index.html) =====
+var TYPE_OPTS = {
+  sliding:   ['o-rail','o-color','o-glass','o-handle','o-mosq','o-solidlower','o-grid','o-fcsides','o-drop'],
+  casement:  ['o-casement','o-color','o-glass','o-handle','o-mosq','o-solidlower','o-grid','o-fcsides','o-drop'],
+  solid:     ['o-casement','o-solidlight','o-color','o-glass','o-handle','o-mosq','o-solidlower','o-fcsides','o-drop'],
+  fixed:     ['o-color','o-glass','o-solidlower','o-fcsides','o-drop'],   // ✂ ไม่มีมือจับ/มุ้ง
+  awning:    ['o-awning','o-color','o-glass','o-mosq','o-solidlower','o-fcsides'],  // มือจับ=Cmechหลบมุ้งเท่านั้น (อยู่ใน sub)
+  folding:   ['o-folding','o-color','o-glass','o-mosq','o-solidlower','o-fcsides'], // ไม่มีมือจับ
+  pc:        ['o-color','o-glass','o-handle','o-mosq','o-solidlower','o-fcsides'],  // มือจับ digi
+  curved:    ['o-color','o-glass','o-handle','o-fcsides'],   // ✂ ไม่มีมุ้ง
+  inner:     ['o-inner','o-color','o-glass','o-fcsides'],    // ไม่มีมือจับ/มุ้ง
+  lift:      ['o-lift','o-color','o-glass','o-mosq','o-fcsides'],
+  pivot:     ['o-color','o-glass','o-handle','o-fcsides'],   // มือจับ digi · ไม่มีมุ้ง
+  shower:    ['o-shower','o-glass'],   // ✂ ไม่มีมือจับ/มุ้ง/สีอลู
+  frameless: ['o-glass'],
+  solidpanel:['o-solidpanel','o-color'],   // standalone ลูกฟูก
+};
+// แบบไหนมือจับลายไหน (full=cmech+digi+stainless+other · digi=digi+stainless+other · awn=cmechหลบมุ้ง)
+var HANDLE = { sliding:'full',casement:'full',solid:'full',pc:'digi',curved:'digi',pivot:'digi',awning:'awn' };
+function onProd(){
+  var t=document.getElementById('prod').value;
+  var show=TYPE_OPTS[t]||[];
+  document.querySelectorAll('.optbox').forEach(function(el){ el.classList.toggle('hide', show.indexOf(el.id)<0); });
+  // มือจับ: render brand chips ตามลาย
+  if(show.indexOf('o-handle')>=0){ renderHandle(HANDLE[t]||'full'); }
+  recalc();
+}
+function renderHandle(kind){
+  var brands = kind==='awn' ? [['cmechawn','Cmech หลบมุ้ง']]
+    : kind==='digi' ? [['digi','ดิจิตอล'],['stainless','สแตนอร่าม'],['other','รุ่นอื่น ✎']]
+    : [['cmech','Cmech'],['digi','ดิจิตอล'],['stainless','สแตนอร่าม'],['xseries','X-series ฟรี'],['other','รุ่นอื่น ✎']];
+  document.getElementById('handleBrands').innerHTML = brands.map(function(b){
+    return '<button class="chip sm" data-b="'+b[0]+'" onclick="togHandle(this)">'+b[1]+'</button>';
+  }).join('');
+  ['cmech','digi','stainless','other'].forEach(function(s){ var e=document.getElementById('hsub-'+s); if(e)e.classList.add('hide'); });
+}
+function togHandle(btn){ btn.classList.toggle('on'); var b=btn.dataset.b; var sub=document.getElementById('hsub-'+b); if(sub) sub.classList.toggle('hide', !btn.classList.contains('on')); recalc(); }
+// ชิปทั่วไป (single ใน group)
+function pick(g,v,btn){ btn.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); recalc(); }
+function pickC(btn){ btn.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on'); recalc(); }
+function step(id,d){ var e=document.getElementById(id); e.value=Math.max(1,(parseInt(e.value)||1)+d); recalc(); }
+// แผ่นทึบล่าง: default กว้าง=ขนาดบาน
+function solLower(btn,v){ pickC(btn); var d=document.getElementById('slDetail'); d.classList.toggle('hide', v===0); if(v>0){ document.getElementById('slw').value=document.getElementById('w').value; } recalc(); }
+// คาดตาราง: เส้นตั้ง default=จำนวนบาน
+function grid(btn,v){ pickC(btn); var d=document.getElementById('gridDetail'); d.classList.toggle('hide', v===0); if(v>0){ document.getElementById('gv').value=document.getElementById('pn').value; } recalc(); }
+function fcs(btn,v){ pickC(btn); document.getElementById('fcDetail').classList.toggle('hide', v===0); recalc(); }
+// มุ้ง
+function onMosq(){ var sel=document.getElementById('mosqType'); var has=sel.value!==''; document.getElementById('mosqDetail').classList.toggle('hide',!has);
+  document.getElementById('mosqOpenStyle').classList.toggle('hide', sel.value!=='frame');
+  // ชิปจำนวนบานมุ้ง 1..pn
+  var pn=parseInt(document.getElementById('pn').value)||1; var html='<button class="chip sm on" onclick="pickC(this)">auto</button>';
+  for(var i=1;i<=pn;i++) html+='<button class="chip sm" onclick="pickC(this)">'+i+'</button>';
+  document.getElementById('mosqPanels').innerHTML=html; recalc(); }
+// drill-down สี/กระจก
+var COLORS={std:['สีอบขาว','ดำ','เทาซาฮาร่า'],wood:['สักทอง','วอลนัท','โอ๊ค'],special:['อบพิเศษ (รหัส)','เมทัลลิก']};
+var GLASS={clear:['ใส 6มม.','เขียว 6มม.','ชา 6มม.'],temper:['เทมเปอร์ใส 6','เทมเปอร์เขียว 6'],lam:['ลามิเนต 4+4','ลามิเนต 5+5'],insul:['อินซูเลท 5+8+5']};
+function colCat(btn,k){ pickC(btn); document.getElementById('colorList').classList.remove('hide'); document.getElementById('colorList').innerHTML=COLORS[k].map(function(c){return '<button class="chip sm" onclick="pickC(this)">'+c+'</button>';}).join(''); }
+function glCat(btn,k){ pickC(btn); document.getElementById('glassList').classList.remove('hide'); document.getElementById('glassList').innerHTML=GLASS[k].map(function(c){return '<button class="chip sm" onclick="pickC(this)">'+c+'</button>';}).join(''); }
+// OPTION ลูกค้า — ราคา+แก้ได้
+function addOpt(){ var d=document.createElement('div'); d.className='editrow'; d.innerHTML='<input class="t" placeholder="เช่น เปลี่ยนกระจก 2 ด้าน"><input class="p" type="number" placeholder="±บาท"><button class="chip sm" onclick="this.parentNode.remove()">✕</button>'; document.getElementById('optList').appendChild(d); }
+function flash(btn){ var o=btn.style.background; btn.style.background='var(--org)'; btn.style.color='#fff'; setTimeout(function(){btn.style.background='';btn.style.color='';},220); }
+function recalc(){ /* เดโม: ราคาสุ่มตามพื้นที่ */ var w=parseFloat(document.getElementById('w').value)||0,h=parseFloat(document.getElementById('h').value)||0,pn=parseInt(document.getElementById('pn').value)||1; var base=Math.round((w*h*7000+5000)/1000)*1000; document.getElementById('total').textContent='฿'+(base).toLocaleString(); }
+onProd();
+</script>
+</div></body></html>
