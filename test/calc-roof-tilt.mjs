@@ -15,7 +15,7 @@ const checks = [];
 const want = (n, ok, d) => checks.push({ n, ok: !!ok, d: d || "" });
 const fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
 const noSvc = () => ["svc-protect","svc-lift","svc-travel","svc-ship"].forEach(id=>{const e=doc.getElementById(id); if(e&&e.checked){e.checked=false;fire(e,"change");}});
-const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน<\/span><span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
+const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน(?:<\/span>)*<span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
 const setV = (ch, sel, v) => { const el=ch.querySelector(sel); if(!el) throw new Error("ไม่พบ "+sel); el.value=String(v); fire(el,"input"); fire(el,"change"); return el; };
 
 function mkProd(group, prodId, W, H){

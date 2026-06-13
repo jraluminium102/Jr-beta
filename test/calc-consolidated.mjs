@@ -12,7 +12,7 @@ const checks = [];
 const want = (n, ok, d) => checks.push({ n, ok: !!ok, d: d || "" });
 const fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
 const noSvc = () => ["svc-protect","svc-lift","svc-travel","svc-ship"].forEach(id=>{const e=doc.getElementById(id); if(e&&e.checked){e.checked=false;fire(e,"change");}});
-const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน<\/span><span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
+const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน(?:<\/span>)*<span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
 const grand = () => { noSvc(); w.calcQuote(); w.genQuote(); const g=doc.querySelector("#quoteContent .qtot .g"); return g?parseInt((g.textContent||"").replace(/\.\d+/g,"").replace(/[^\d]/g,""),10):NaN; };
 const setV = (root, sel, v) => { const el=root.querySelector(sel); if(!el) throw new Error("ไม่พบ "+sel); el.value=String(v); fire(el,"input"); fire(el,"change"); return el; };
 function mk(group, prodId, W, H){ doc.getElementById("items").innerHTML=""; w.addItem(doc.getElementById("items")); const ch=doc.querySelector("#items .ch"); setV(ch,".i-group",group); const ps=ch.querySelector(".i-prod"); ps.value=prodId; fire(ps,"change"); setV(ch,".i-w",W); setV(ch,".i-h",H); return ch; }

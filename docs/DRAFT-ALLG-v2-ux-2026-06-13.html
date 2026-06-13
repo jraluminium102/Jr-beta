@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT v2 — Progressive reveal ทุกกลุ่ม + คิดเร็วเป็นปุ่ม (2026-06-13)</title>
+<style>
+:root{--red:#B3151D;--red-d:#8f1017;--line:#E5E7EB;--mut:#6B7280;--blue:#EAF3FF;--blue-b:#9DBCE0;--ok:#16A34A;}
+*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI",Tahoma,sans-serif;margin:0;background:#F6F4F2;color:#1F2937;font-size:14px;padding-bottom:72px;}
+header{background:var(--red);color:#fff;padding:10px 14px;}
+header h1{font-size:15px;margin:0;}header .s{font-size:11px;opacity:.9;margin-top:2px;}
+.badge{display:inline-block;background:#FEF3C7;color:#92400E;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:6px;}
+.gtabs{display:flex;gap:6px;overflow-x:auto;padding:9px 12px;background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:5;}
+.gtab{flex:0 0 auto;min-height:42px;padding:8px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.gtab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.sec{display:none;padding:12px;}.sec.on{display:block;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;max-width:620px;margin:0 auto 12px;}
+.lbl{font-size:13.5px;font-weight:700;color:var(--red);margin:2px 0 7px;display:flex;align-items:center;gap:6px;}
+.lbl .n{background:var(--red);color:#fff;font-size:11px;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+.lbl small{color:var(--mut);font-weight:400;font-size:11.5px;}
+/* ✨ ปุ่ม grid เท่ากัน บรรทัดละ 5 — ไม่เละ ไม่ wrap ครึ่งๆ */
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+.grid.g4{grid-template-columns:repeat(4,1fr);}
+.grid.g3{grid-template-columns:repeat(3,1fr);}
+.grid.g2{grid-template-columns:repeat(2,1fr);}
+.btn{min-height:46px;padding:7px 6px;border:1.5px solid #D1D5DB;border-radius:10px;background:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;transition:.12s;}
+.btn:hover{border-color:var(--red);}
+.btn.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700;}
+.btn.more{border-style:dashed;color:var(--mut);}
+@media(max-width:560px){.grid{grid-template-columns:repeat(3,1fr);}.grid.g4,.grid.g2{grid-template-columns:repeat(2,1fr);}}
+/* ✨ ขั้น cascade ที่ยังไม่ถึง = ซ่อน · โผล่ทีละขั้นเมื่อเลือกขั้นบน */
+.step{margin-top:13px;animation:fade .22s ease;}
+.step.hide{display:none;}
+@keyframes fade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+.done-pill{display:inline-block;background:#ECFDF5;border:1px solid #6EE7B7;color:#065F46;font-size:11.5px;padding:3px 9px;border-radius:8px;margin-left:auto;}
+.size-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:13px;}
+.seg{display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;}
+.seg button{min-height:46px;padding:0 13px;border:0;background:#fff;font-size:13px;cursor:pointer;}
+.seg button.on{background:var(--red);color:#fff;font-weight:700;}
+.fld label{display:block;font-size:11px;color:var(--mut);margin-bottom:3px;}
+.fld input{width:100%;height:46px;border:1.5px solid #D1D5DB;border-radius:10px;padding:0 10px;font-size:15px;}
+.stp{display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;}
+.stp button{width:42px;height:44px;border:0;background:#F3F4F6;font-size:18px;cursor:pointer;}
+.stp span{min-width:32px;text-align:center;font-weight:700;}
+.cg{display:flex;flex-wrap:wrap;gap:8px;background:var(--blue);border:1px solid var(--blue-b);border-radius:10px;padding:7px 10px;margin-top:13px;align-items:center;}
+.cg b{color:#1E5AA8;font-size:12.5px;}
+.cg select{height:38px;border:1px solid var(--blue-b);border-radius:8px;font-size:12.5px;flex:1;min-width:130px;}
+details.more-dd{margin-top:7px;}
+details.more-dd summary{cursor:pointer;font-size:12.5px;color:var(--mut);}
+.pricebar{position:fixed;left:0;right:0;bottom:0;background:#1F2937;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:11px 16px;font-size:13.5px;}
+.pricebar b{font-size:20px;color:#FCD34D;}
+.flow{font-size:11px;color:var(--mut);margin-top:5px;}
+</style>
+</head>
+<body>
+<header><h1>ดราฟ v2 — โผล่ทีละขั้น (Progressive reveal) · ปุ่มเรียงเป็น grid · คิดเร็วเป็นปุ่ม<span class="badge">ราคาเดโม</span></h1>
+<div class="s">แก้ตาม screenshot 13 มิ.ย.: ① ไม่โชว์ทุกชั้นพร้อมกัน — เลือกชั้นบนก่อน ชั้นล่างค่อยโผล่ ② รูปแบบบาน 10 ปุ่ม (2 บรรทัด) ที่เหลือใน "อื่นๆ" ③ ปุ่ม grid เท่ากันไม่เละ ④ คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอ</div></header>
+<div class="gtabs" id="gtabs"></div>
+<div id="secs"></div>
+<div class="pricebar"><span id="pl">เดโม</span><b id="pv">฿ —</b></div>
+
+<script>
+// ===== ข้อมูลจริง (id/cat/ชื่อ) · ราคา dummy =====
+// G1/G6 รูปแบบบาน: 10 ใช้บ่อย + อื่นๆ
+var FAM10=[
+ ['บานเลื่อน',['เซมิยูโร','ยูโร']],
+ ['บานเปิด',['ยูโร','X-series','Velora','โซลิด ทู','โซลิด วัน']],
+ ['กระจกติดตาย',[]],
+ ['บานเฟี้ยม',['เซมิยูโร','ยูโร','X-series']],
+ ['บานกระทุ้ง',['ยูโร']],
+ ['เลื่อนภายใน',['รางบนซ้อน','SlimLux','X-series','รางล่าง SMS','รางล่างยูโร']],
+ ['บานเปลือย',['ติดตาย','ประตูสวิง/เลื่อน']],
+ ['Shower',[]],
+ ['ดัดโค้ง',['บานคู่','บานเดี่ยว','ติดตาย','สลิม']],
+ ['PC Door',['2 บาน','4 บาน']]
+];
+var FAM_MORE=[['YKK',['Ventilation','Exhido','Tostem A01']],['บานยก',['SMS','aluinch']],['บานหมุน',['เมืองทอง']],['เส้นคาด',[]],['ลูกฟูก/ทึบ',['ลูกฟูก 2 หน้า','คอมโพสิท']]];
+
+function chips(arr,cls){ return '<div class="grid '+(cls||'')+'">'+arr.map(function(x,i){return '<button class="btn" onclick="pick(this)">'+x+'</button>';}).join('')+'</div>'; }
+
+// G1/G6: รูปแบบบาน(10+อื่นๆ) → รุ่น(progressive) → ขนาด(seg ประเภท+กว้าง/สูง/บาน) → สี
+function g1card(grp){
+ var h='<div class="card">';
+ h+='<div class="lbl"><span class="n">1</span> เลือกรูปแบบ'+(grp==='g6'?'บาน (กั้นห้อง)':'บาน') +' <small>(ใช้บ่อย 10 · ที่เหลือกด “อื่นๆ”)</small></div>';
+ h+='<div class="grid fam">'+FAM10.map(function(f){return '<button class="btn" data-fam="'+f[0]+'" onclick="pickFam(this)">'+f[0]+'</button>';}).join('')
+   +'<button class="btn more" onclick="toggleMore(this)">อื่นๆ ▾</button></div>';
+ h+='<div class="more-wrap step hide"><div class="grid fam2">'+FAM_MORE.map(function(f){return '<button class="btn" data-fam="'+f[0]+'" onclick="pickFam(this)">'+f[0]+'</button>';}).join('')+'</div></div>';
+ // ขั้น 2: รุ่น (ซ่อนจนเลือกตระกูล)
+ h+='<div class="mwrap step hide"></div>';
+ // ขั้น 3: ขนาด (ซ่อนจนเลือกรุ่น/ตระกูลไม่มีรุ่น)
+ h+='<div class="szwrap step hide">'
+   +'<div class="lbl"><span class="n">3</span> ขนาด</div><div class="size-row">'
+   +(grp==='g6'?'':'<div class="seg"><button class="on" onclick="seg(this)">🚪 ประตู</button><button onclick="seg(this)">🪟 หน้าต่าง</button></div>')
+   +'<div class="fld" style="flex:1 1 80px;"><label>กว้าง (ม.)</label><input value="1.8" oninput="bump()"></div>'
+   +'<div class="fld" style="flex:1 1 80px;"><label>สูง (ม.)</label><input value="2.0" oninput="bump()"></div>'
+   +'<div class="fld" style="flex:0 0 auto;"><label>บาน</label><div class="stp"><button onclick="st(this,-1)">−</button><span>1</span><button onclick="st(this,1)">+</button></div></div>'
+   +'<div class="fld" style="flex:0 0 auto;"><label>ชุด</label><input value="1" style="width:56px;"></div></div>'
+   +'<div class="cg"><b>🎨 สี·กระจก</b><select><option>สีอบขาว</option><option>ดำ</option><option>ซาฮาร่า</option></select><select><option>เขียวใส 6มม.</option><option>เทมเปอร์ใส</option></select></div>'
+   +'<details class="more-dd"><summary>＋ อุปกรณ์เสริม (7 หมวด · พับ)</summary><div class="flow">ธรณี/วงกบ · มือจับ/ล็อค · มุ้ง · คาดตาราง · โครงสร้าง/ราง · ทึบล่าง · งานเสริม</div></details>'
+   +'</div>';
+ h+='</div>';
+ return h;
+}
+
+// G2: cascade progressive (ขนาดเส้น → ระยะโชว์ → โครง)
+var RN_SIZE=['1x5 cm.','1"x1.6"','1"x1"','1"x1½"','1"x4"','1.6"x1.6"','1.6"x4"','4"x4"','สลับ 5ต่อ3'];
+var RN_SHOW=['1cm. 5cm.','1cm. 3cm.','1cm. 2cm.','5cm. 5cm.','5cm. 3cm.','5cm. 2cm.'];
+function g2card(){
+ var h='<div class="card">';
+ h+='<div class="lbl"><span class="n">1</span> เลือกประเภทงาน</div>';
+ h+='<div class="grid g3 fam">'+['ระแนงบังตา','ระแนงผนัง','เกล็ด Z','ราวกันตก','ประตูรั้ว','ระแนงพิเศษ'].map(function(x){return '<button class="btn" data-fam="'+x+'" onclick="pickG2(this)">'+x+'</button>';}).join('')+'</div>';
+ // cascade: ซ่อนทั้งหมดก่อน
+ h+='<div class="g2casc step hide">';
+ h+='<div class="lbl"><span class="n">2</span> ขนาดเส้นระแนง</div>'+chips(RN_SIZE);
+ h+='<div class="g2show step hide"><div class="lbl"><span class="n">3</span> ระยะโชว์</div>'+chips(RN_SHOW)+'</div>';
+ h+='<div class="g2frame step hide"><div class="lbl"><span class="n">4</span> โครง</div><div class="grid g2"><button class="btn" onclick="pick(this);bump()">ไม่โครง</button><button class="btn on" onclick="pick(this);bump()">รวมโครง</button></div></div>';
+ h+='<div class="g2size step hide"><div class="lbl"><span class="n">5</span> ขนาด</div><div class="size-row"><div class="fld" style="flex:1;"><label>กว้าง (ม.)</label><input value="3" oninput="bump()"></div><div class="fld" style="flex:1;"><label>สูง (ม.)</label><input value="2" oninput="bump()"></div></div></div>';
+ h+='</div>';
+ h+='</div>';
+ return h;
+}
+// G5 มุ้ง: หมวด(เฟรม/จีบ/ม้วน) → รุ่น progressive
+var MOSQ=[['เฟรม',['Smart 25','Smart 39']],['จีบ',['จีบคู่','จีบเดี่ยว','นิรภัย']],['ม้วน',['ม้วนบน','ม้วนข้าง']]];
+function simpleCard(grp,head,fams,note){
+ var h='<div class="card"><div class="lbl"><span class="n">1</span> '+head+'</div>';
+ h+='<div class="grid '+(fams.length<=3?'g3':(fams.length<=4?'g4':''))+' fam">'+fams.map(function(f){return '<button class="btn" data-fam="'+(f.push?f[0]:f)+'" onclick="pickFam(this)">'+(f.push?f[0]:f)+'</button>';}).join('')+'</div>';
+ h+='<div class="mwrap step hide"></div>';
+ h+='<div class="szwrap step hide"><div class="lbl"><span class="n">3</span> ขนาด</div><div class="size-row"><div class="fld" style="flex:1;"><label>กว้าง (ม.)</label><input value="1.2" oninput="bump()"></div><div class="fld" style="flex:1;"><label>สูง (ม.)</label><input value="1.5" oninput="bump()"></div></div>'+(note?('<div class="flow">'+note+'</div>'):'')+'</div></div>';
+ return h;
+}
+
+var G={
+ g1:{name:'1·บาน/กระจก',html:function(){return g1card('g1');},price:32000},
+ g2:{name:'2·ระแนง/รั้ว/ราว',html:g2card,price:24000},
+ g3:{name:'3·หลังคา/ฝ้า',html:function(){return simpleCard('g3','เลือกประเภทงาน',[['หลังคา',['เมทัลชีท','ชินโคไลท์','กระจก','ไวนิล']],['ฝ้า-ผนัง',['ผนังนอก','ผนังใน','ฝ้า']]],'หลังคา/ฝ้า-ผนัง · เลือกวัสดุแล้วค่อยกรอกพื้นที่');},price:48000},
+ g4:{name:'4·ตู้อลู',html:function(){return simpleCard('g4','เลือกตู้ / ฝาตู้',['ตู้อลู','ฝาตู้'],'เลือกชนิดตู้แล้วค่อยกรอก ลึก/ชั้น');},price:78000},
+ g5:{name:'5·มุ้ง',html:function(){return simpleCard('g5','เลือกชนิดมุ้ง',MOSQ,'เลือกหมวด→รุ่น→ขนาด');},price:6000},
+ g6:{name:'6·กั้นห้อง',html:function(){return g1card('g6');},price:120000},
+ g7:{name:'7·ม่านซิป',html:function(){return simpleCard('g7','ม่านซิป',['ม่านซิป'],'กรอกขนาด + เลือกผ้า/ระบบ/กลุ่มลูกค้า');},price:21000},
+ qk:{name:'⚡ คิดเร็ว',html:function(){return quickCard();},price:0}
+};
+var FAM_MAP={}; FAM10.concat(FAM_MORE).forEach(function(f){FAM_MAP[f[0]]=f[1];});
+MOSQ.forEach(function(f){FAM_MAP[f[0]]=f[1];});
+FAM_MAP['หลังคา']=['เมทัลชีท','ชินโคไลท์','กระจก','ไวนิล']; FAM_MAP['ฝ้า-ผนัง']=['ผนังนอก','ผนังใน','ฝ้า'];
+FAM_MAP['ตู้อลู']=[]; FAM_MAP['ฝาตู้']=[]; FAM_MAP['ม่านซิป']=[];
+
+// ✨ หน้าคิดเร็ว = ปุ่มเหมือนหน้าใบเสนอ (ชิปกลุ่ม 7 + รูปแบบบาน 10+อื่นๆ + สี/กระจก dropdown)
+function quickCard(){
+ var h='<div class="card"><div class="lbl"><span class="n">1</span> กลุ่มงาน <small>(แตะเลือก)</small></div>';
+ h+='<div class="grid g4">'+['🪟 บาน','🚪 ระแนง·ราว','🏠 หลังคา','📦 ตู้','🦟 มุ้ง','🔲 กั้นห้อง','🎐 ม่านซิป'].map(function(x,i){return '<button class="btn'+(i===0?' on':'')+'" onclick="pick(this);qkFam(this)">'+x+'</button>';}).join('')+'</div>';
+ h+='<div class="qkfam step"><div class="lbl"><span class="n">2</span> รูปแบบ</div><div class="grid fam">'+FAM10.map(function(f){return '<button class="btn" data-fam="'+f[0]+'" onclick="pickFam(this)">'+f[0]+'</button>';}).join('')+'<button class="btn more" onclick="toggleMore(this)">อื่นๆ ▾</button></div><div class="more-wrap step hide"><div class="grid fam2">'+FAM_MORE.map(function(f){return '<button class="btn" data-fam="'+f[0]+'" onclick="pickFam(this)">'+f[0]+'</button>';}).join('')+'</div></div><div class="mwrap step hide"></div></div>';
+ h+='<div class="step"><div class="lbl"><span class="n">3</span> ขนาด + สี/กระจก</div><div class="size-row"><div class="fld" style="flex:1;"><label>กว้าง</label><input value="1.8" oninput="bump()"></div><div class="fld" style="flex:1;"><label>สูง</label><input value="2.0" oninput="bump()"></div><div class="fld" style="flex:0 0 auto;"><label>บาน</label><div class="stp"><button onclick="st(this,-1)">−</button><span>1</span><button onclick="st(this,1)">+</button></div></div></div>';
+ h+='<div class="cg"><b>🎨</b><select><option>สีอบขาว</option><option>ดำ</option></select><select><option>เขียวใส 6มม.</option><option>เทมเปอร์</option></select></div></div>';
+ h+='<div class="flow">เดิมหน้านี้เป็น dropdown กลุ่ม+แบบ → เปลี่ยนเป็นปุ่มเหมือนหน้าใบเสนอราคา · ออปชั่นอื่นตัด (คิดเร็ว = สี/กระจกพอ)</div>';
+ h+='</div>';
+ return h;
+}
+
+// ===== interactions =====
+function pick(btn){ var g=btn.parentElement; g.querySelectorAll('.btn').forEach(function(b){if(!b.classList.contains('more'))b.classList.remove('on');}); btn.classList.add('on'); }
+function toggleMore(btn){ var w=btn.closest('.card,.qkfam').querySelector('.more-wrap'); w.classList.toggle('hide'); }
+function seg(btn){ btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); }
+function st(btn,d){ var sp=btn.parentElement.querySelector('span'); sp.textContent=Math.max(1,parseInt(sp.textContent)+d); bump(); }
+// เลือกตระกูล (G1/G3/G4/G5/G7/คิดเร็ว) → โผล่ขั้นรุ่น + ขั้นขนาด (progressive)
+function pickFam(btn){ var card=btn.closest('.card'); var scope=btn.closest('.qkfam')||card;
+ (btn.closest('.grid')).querySelectorAll('.btn').forEach(function(b){if(!b.classList.contains('more'))b.classList.remove('on');}); btn.classList.add('on');
+ var fam=btn.dataset.fam; var models=FAM_MAP[fam]||[];
+ var mw=scope.querySelector('.mwrap');
+ if(models.length){ mw.classList.remove('hide'); mw.innerHTML='<div class="lbl"><span class="n">2</span> รุ่น <small>('+fam+')</small></div><div class="grid '+(models.length<=3?'g3':(models.length<=4?'g4':''))+'">'+models.map(function(m,i){return '<button class="btn'+(i===0?' on':'')+'" onclick="pick(this);revealSize(this)">'+m+'</button>';}).join('')+'</div>'; }
+ else { mw.classList.add('hide'); mw.innerHTML=''; }
+ // โผล่ขั้นขนาด (ถ้าไม่มีรุ่น = โผล่เลย · มีรุ่น = รอเลือกรุ่น แต่ default รุ่นแรก on อยู่แล้ว → โผล่เลยก็ได้)
+ revealSize(btn);
+ bump();
+}
+function revealSize(el){ var card=el.closest('.card'); if(card){ var sz=card.querySelector('.szwrap'); if(sz) sz.classList.remove('hide'); } bump(); }
+function qkFam(btn){ /* คิดเร็ว: เปลี่ยนกลุ่ม — เดโมคง fam เดิม */ }
+// G2 cascade progressive
+function pickG2(btn){ btn.parentElement.querySelectorAll('.btn').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on');
+ var card=btn.closest('.card'); var casc=card.querySelector('.g2casc'); casc.classList.remove('hide');
+ // reset ขั้นถัดไปให้ซ่อนใหม่เมื่อเปลี่ยนประเภท
+ ['.g2show','.g2frame','.g2size'].forEach(function(s){card.querySelector(s).classList.add('hide');});
+ bump();
+}
+// ผูก: เลือกขนาดเส้น → โผล่ระยะโชว์ · เลือกระยะโชว์ → โผล่โครง · เลือกโครง → โผล่ขนาด
+document.addEventListener('click',function(e){
+ var b=e.target.closest('.g2casc .grid .btn'); if(!b) return;
+ var card=b.closest('.card'); var grids=[].slice.call(card.querySelectorAll('.g2casc .grid'));
+ var gi=grids.indexOf(b.closest('.grid'));
+ if(gi===0){ pick(b); card.querySelector('.g2show').classList.remove('hide'); }
+ else if(gi===1){ pick(b); card.querySelector('.g2frame').classList.remove('hide'); }
+ else if(gi===2){ card.querySelector('.g2size').classList.remove('hide'); }
+ bump();
+});
+function bump(){ var k=document.querySelector('.sec.on').id.replace('sec-',''); var pv=document.getElementById('pv'); var base=G[k].price; pv.textContent= base? '฿ '+(base+Math.round(Math.random()*4)*1000).toLocaleString() : '฿ —'; }
+
+// build tabs
+var tabs=document.getElementById('gtabs'), secs=document.getElementById('secs');
+Object.keys(G).forEach(function(k,i){
+ var b=document.createElement('button'); b.className='gtab'+(i===0?' on':''); b.textContent=G[k].name;
+ b.onclick=function(){ document.querySelectorAll('.gtab').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+   document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on');}); document.getElementById('sec-'+k).classList.add('on');
+   document.getElementById('pl').textContent=G[k].name+' · เดโม'; bump(); };
+ tabs.appendChild(b);
+ var s=document.createElement('div'); s.className='sec'+(i===0?' on':''); s.id='sec-'+k; s.innerHTML=G[k].html(); secs.appendChild(s);
+});
+bump();
+</script>
+</body>
+</html>

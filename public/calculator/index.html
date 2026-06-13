@@ -1758,14 +1758,31 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 /* ---- QUICK ---- */
 let qSeq=0;
+// ALLG-v2: คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอราคา (กลุ่ม 7 ชิป + รูปแบบบาน common chips + อื่นๆ ▾ dropdown) · ออปชั่นแค่สี/กระจก
+var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 หลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
+function qiGroupChips(cur){ return '<div class="chip-group chip-sm">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
+function qiFamChips(grp,curId){ var cats=FAM_CATS[grp]; var curCat=(PBYID[curId]||{}).cat;
+  if(!cats) return ''; // กลุ่มไม่มี family (เช่นไม่ตรง) → ใช้ dropdown
+  var h='<div class="chip-group chip-sm">';
+  cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===curCat?' on':'')+'" data-cat="'+c+'" onclick="qiPickFam(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
+  h+='<button type="button" class="chip" style="border-style:dashed;" onclick="qiOther(this)">อื่นๆ ▾</button></div>'; return h; }
+function qiRebuild(d){ var g=d.querySelector('.qi-group').value; var gc=d.querySelector('.qi-groupchips'); if(gc) gc.innerHTML=qiGroupChips(g);
+  var fc=d.querySelector('.qi-famchips'); if(fc){ fc.innerHTML=qiFamChips(g,d.querySelector('.qi-prod').value); }
+  var ps=d.querySelector('.qi-prod'); var hasFam=!!FAM_CATS[g]; if(ps&&!d.dataset.qiOther) ps.style.display=hasFam?'none':''; }
+function qiPickGroup(btn){ var d=btn.closest('.ch'); var sel=d.querySelector('.qi-group'); sel.value=btn.dataset.g; delete d.dataset.qiOther; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+function qiPickFam(btn){ var d=btn.closest('.ch'); var id=famDefaultProd(btn.dataset.cat); var sel=d.querySelector('.qi-prod');
+  if(id && sel.querySelector('option[value="'+id+'"]')){ sel.value=id; } delete d.dataset.qiOther; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+function qiOther(btn){ var d=btn.closest('.ch'); d.dataset.qiOther='1'; d.querySelector('.qi-prod').style.display=''; btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); }
+function qiSyncFamOn(d){ var fc=d.querySelector('.qi-famchips'); if(!fc||d.dataset.qiOther)return; var cat=(PBYID[d.querySelector('.qi-prod').value]||{}).cat; fc.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); }); }
 function addQuickItem(){
   qSeq++;
   const d=document.createElement('div'); d.className='ch'; d.dataset.id=qSeq;
   d.innerHTML=
    `<div class="top"><b style="flex:1;color:var(--red-dark);font-size:13px;">ชุดที่ ${qSeq}</b><button type="button" class="del" title="ลบ">&times;</button></div>`+
    `<div class="chgrid">`+
-     /* SPEC-quickmode-allg 1.1: ครบ 7 กลุ่ม + list สินค้าชุดเดียวกับหน้าทำใบ (prodOptionsG6) */
-     `<div class="full"><label>กลุ่มงาน</label><select class="qi-group"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select></div><div class="full"><label>แบบ</label><select class="qi-prod">${prodOptionsG6('1')}</select></div>`+
+     /* ALLG-v2: กลุ่มงาน + แบบ = ปุ่มชิป (เหมือนหน้าใบเสนอ) · select ซ่อนให้ logic อ่าน · "อื่นๆ ▾" โชว์ dropdown 154 */
+     `<div class="full"><label>กลุ่มงาน</label><select class="qi-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select><div class="qi-groupchips">${qiGroupChips('1')}</div></div>`+
+     `<div class="full"><label>แบบ</label><div class="qi-famchips">${qiFamChips('1','sliding_sms')}</div><select class="qi-prod" style="display:none;">${prodOptionsG6('1')}</select></div>`+
      /* SPEC-quickmode-allg 1.2: สีอลู + กระจก (เฉพาะสินค้าที่ใส่ได้ — กติกาเดียวกับหน้าเต็ม) · ออปชั่นอื่นตัดทิ้งตามมติ */
      `<div class="full qi-cg-row" style="display:flex;gap:8px;flex-wrap:wrap;"><div class="qi-color-wrap" style="flex:1;min-width:140px;"><label>สีอลูมิเนียม</label><select class="qi-color">${colorOpts()}</select></div><div class="qi-glass-wrap" style="flex:1;min-width:140px;"><label>กระจก</label><select class="qi-glass">${glassOpts()}</select></div></div>`+
      `<div><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="1.8"></div>`+
@@ -1783,11 +1800,14 @@ function addQuickItem(){
       var _cs=d.querySelector('.qi-color'); if(_cs){ var _cv=_cs.value; _cs.innerHTML=colorOpts(p.series||''); if(_cv!==''&&_cs.querySelector('option[value="'+_cv+'"]'))_cs.value=_cv; else _cs.value='0'; } } }
   // FLAG-1 (accountant audit): casement_euro Linear คิดกว้าง "ต่อบาน" → label โหมดคิดเร็วต้องชัด กัน sales กรอกกว้างรวม=คิดเกิน
   function qiWLabel(){ var _qp=PBYID[d.querySelector('.qi-prod').value]; var _wl=d.querySelector('.qi-w'); _wl=_wl&&_wl.previousElementSibling; if(_wl&&_wl.tagName==='LABEL') _wl.textContent=(_qp&&_qp.ceLinear)?'กว้างรวม (ม.)':'กว้าง (ม.)'; }
-  d.querySelector('.qi-prod').addEventListener('change',()=>{ syncPanels(); qiWLabel(); calcQuickAll(); });
-  d.querySelector('.qi-group').addEventListener('change',()=>{ d.querySelector('.qi-prod').innerHTML=prodOptionsG6(d.querySelector('.qi-group').value); syncPanels(); qiWLabel(); calcQuickAll(); });
+  d.querySelector('.qi-prod').addEventListener('change',()=>{ syncPanels(); qiWLabel(); qiSyncFamOn(d); calcQuickAll(); });
+  d.querySelector('.qi-group').addEventListener('change',()=>{ var g=d.querySelector('.qi-group').value; var ps=d.querySelector('.qi-prod'); ps.innerHTML=prodOptionsG6(g);
+    // ALLG-v2: เปลี่ยนกลุ่ม → default = ตระกูลแรกของกลุ่ม (กันค้างที่ค่าเก่า) + rebuild ชิป
+    { var _fc=FAM_CATS[g]; if(_fc){ var _fd=famDefaultProd(_fc[0]); if(_fd && ps.querySelector('option[value="'+_fd+'"]')) ps.value=_fd; } }
+    qiRebuild(d); syncPanels(); qiWLabel(); calcQuickAll(); });
   d.querySelector('.del').addEventListener('click',()=>{ d.remove(); renumberItems(); calcQuickAll(); });
   d.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuickAll));
-  syncPanels();
+  qiRebuild(d); syncPanels();
   calcQuickAll();
 }
 function readQuickItem(d){
@@ -2329,32 +2349,48 @@ function rnPick(btn,dim){
   var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p)return;
   var ck=rnCatKey(p); if(!ck)return; var d=rnParse(p), v=btn.dataset.val;
   var k1=(ck==='bangta')?d.profile:(ck==='gleed'?d.size:d.spacing), k2=d.spacing, frame=d.frame;
-  if(dim==='profile'){ k1=v; var n=RN_TREE.bangta[v]; k2=Object.keys(n)[0]; frame='ไม่โครง'; }
-  else if(dim==='k1'){ k1=v; frame=d.frame||'ไม่โครง'; }      // ผนัง/เกล็ด: เปลี่ยนระดับ1
-  else if(dim==='spacing'){ k2=v; frame=d.frame||'ไม่โครง'; }  // บังตา: เปลี่ยนระยะโชว์
+  if(dim==='profile'){ k1=v; var n=RN_TREE.bangta[v]; k2=Object.keys(n)[0]; frame='ไม่โครง'; ch.dataset.rnStep='2'; }      // บังตา เลือกขนาดเส้น → เปิดระยะโชว์
+  else if(dim==='k1'){ k1=v; frame=d.frame||'ไม่โครง'; ch.dataset.rnStep='2'; }      // ผนัง/เกล็ด: เลือกระดับ1 → เปิดโครง
+  else if(dim==='spacing'){ k2=v; frame=d.frame||'ไม่โครง'; ch.dataset.rnStep='3'; }  // บังตา: เลือกระยะโชว์ → เปิดโครง
   else if(dim==='frame'){ frame=v; }
-  var id=rnResolve(ck,k1,k2,frame); if(id) g3SyncProd(ch,id);
+  var id=rnResolve(ck,k1,k2,frame); var cur=ch.querySelector('.i-prod').value;
+  if(id && id!==cur) g3SyncProd(ch,id);
+  else { buildItemOpts(ch); calcQuote(); } // ALLG-v2: เลือกค่าเดิม (product ไม่เปลี่ยน) แต่ step เพิ่ม → re-render เพื่อโผล่ขั้นถัดไป
 }
 function rnChips(opts,curVal,dim,cb){ cb=cb||'rnPick'; var h='<div class="chip-group chip-sm">'; opts.forEach(function(o){ var v=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; h+='<button type="button" class="chip'+(v===curVal?' on':'')+'" data-val="'+String(v).replace(/"/g,'&quot;')+'" onclick="'+cb+'(this,\''+dim+'\')">'+t+'</button>'; }); return h+'</div>'; }
-function rnSelectorHTML(p){
+// ALLG-v2: progressive reveal — โผล่ทีละขั้น (เลือกขั้นบนก่อน ขั้นล่างค่อยโผล่) · step เก็บใน ch.dataset.rnStep
+//   บังตา 3 ขั้น (ขนาดเส้น→ระยะโชว์→โครง) · ผนัง/เกล็ด 2 ขั้น (ระดับ1→โครง)
+function _rnStepHint(){ return '<div style="font-size:11px;color:#9CA3AF;margin-top:6px;">↓ เลือกด้านบนก่อน แล้วตัวเลือกถัดไปจะโผล่</div>'; }
+function rnSelectorHTML(p, ch){
   var ck=rnCatKey(p); if(!ck)return''; var d=rnParse(p);
+  var step=parseInt((ch&&ch.dataset.rnStep)||'1')||1;
   var h='<div class="opt rn-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  var more=false;
   if(ck==='bangta'){
-    h+='<label class="opt" style="width:100%;margin:0;">ขนาดเส้นระแนง '+rnChips(Object.keys(RN_TREE.bangta),d.profile,'profile')+'</label>';
-    var sps=RN_TREE.bangta[d.profile]?Object.keys(RN_TREE.bangta[d.profile]):[];
-    h+='<label class="opt" style="width:100%;margin:6px 0 0;">ระยะโชว์ '+rnChips(sps,d.spacing,'spacing')+'</label>';
-    var frs=(RN_TREE.bangta[d.profile]&&RN_TREE.bangta[d.profile][d.spacing])?Object.keys(RN_TREE.bangta[d.profile][d.spacing]):['ไม่โครง','รวมโครง'];
-    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frs,d.frame,'frame')+'</label>';
+    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดเส้นระแนง '+rnChips(Object.keys(RN_TREE.bangta),d.profile,'profile')+'</label>';
+    if(step>=2){
+      var sps=RN_TREE.bangta[d.profile]?Object.keys(RN_TREE.bangta[d.profile]):[];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> ระยะโชว์ '+rnChips(sps,d.spacing,'spacing')+'</label>';
+    } else more=true;
+    if(step>=3){
+      var frs=(RN_TREE.bangta[d.profile]&&RN_TREE.bangta[d.profile][d.spacing])?Object.keys(RN_TREE.bangta[d.profile][d.spacing]):['ไม่โครง','รวมโครง'];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">③</b> โครง '+rnChips(frs,d.frame,'frame')+'</label>';
+    } else if(step>=2) more=true;
   } else if(ck==='phanang'){
-    h+='<label class="opt" style="width:100%;margin:0;">ระยะโชว์ '+rnChips(Object.keys(RN_TREE.phanang),d.spacing,'k1')+'</label>';
-    var frp=RN_TREE.phanang[d.spacing]?Object.keys(RN_TREE.phanang[d.spacing]):['ไม่โครง','รวมโครง'];
-    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frp,d.frame,'frame')+'</label>';
+    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ระยะโชว์ '+rnChips(Object.keys(RN_TREE.phanang),d.spacing,'k1')+'</label>';
+    if(step>=2){
+      var frp=RN_TREE.phanang[d.spacing]?Object.keys(RN_TREE.phanang[d.spacing]):['ไม่โครง','รวมโครง'];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frp,d.frame,'frame')+'</label>';
+    } else more=true;
   } else {
-    h+='<label class="opt" style="width:100%;margin:0;">ขนาดเกล็ด '+rnChips(Object.keys(RN_TREE.gleed),d.size,'k1')+'</label>';
-    var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
-    h+='<label class="opt" style="width:100%;margin:6px 0 0;">โครง '+rnChips(frg,d.frame,'frame')+'</label>';
+    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดเกล็ด '+rnChips(Object.keys(RN_TREE.gleed),d.size,'k1')+'</label>';
+    if(step>=2){
+      var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frg,d.frame,'frame')+'</label>';
+    } else more=true;
   }
-  h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+p.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
+  if(more) h+=_rnStepHint();
+  else h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+p.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
   return h+'</div>';
 }
 // G2 เฟส3 "ทำเป็นบาน": เลือกชนิดบาน → switch ระแนง→ไม่โครง อัตโนมัติ (บานให้โครงเอง · กันคิดโครงซ้ำ +12k)
@@ -2381,18 +2417,21 @@ function railPick(btn,dim){ var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.
 // G1G6-B (HANDOFF-G1G6 งานB): การ์ดตระกูล (cat) + ปุ่มรุ่น — ทุกกลุ่ม ไม่มีดรอปดาวน์แบบ/รุ่น (เหลือ "อื่นๆ" fallback โชว์ dropdown เดิม 154)
 //   ตระกูล=cat · กดตระกูล→set รุ่น default (มติ: เลื่อน sliding_sms · เปิด casement_euro · เฟี้ยม folding · ติดตาย fixed_glass) · กดรุ่น→g3PickProd เดิม
 //   cat ที่มี cascade เฉพาะ (ระแนง×3/ราวบันได) → แถวรุ่นไม่ต้อง (cascade เดิม render ต่อใต้) · ปิดช่องโหว่สลับ cat หลังซ่อน dropdown
+// ALLG-v2 (มติพี่นัท 13 มิ.ย.): โชว์เฉพาะ "ใช้บ่อย" เป็นปุ่ม (≤10) · ที่เหลือซ่อนใน "อื่นๆ ▾" (dropdown 154)
+// G1: ตัด บานเปลือย/shower/บานหมุน ลงอื่นๆ · ดึง YKK/บานยก ขึ้น · ตัด เส้นคาด/ลูกฟูก ออกจากปุ่มแบบ (เป็นออปชั่น · ยังอยู่ในอื่นๆ)
+// G6: เพิ่ม ผนังเบา (ฝ้า-ผนัง · ใช้บ่อยในงานกั้นห้อง) แทน shower/ดัดโค้ง
 var FAM_CATS={
-  '1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],
+  '1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','YKK','บานยก','ดัดโค้ง'],
   '2':['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได','ประตูรั้ว','ระแนง'],
-  '6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door'],
+  '6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','ฝ้า-ผนัง','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานยก','บานเปลือย'],
   '4':['ตู้อลู','ฝาตู้'], // UX-substeps 🔴: เดิมไม่มี key 4 → dropdown 154 โผล่ · family ชิปสลับตู้/ฝาตู้
   '7':['ม่านซิป'] // UX-substeps 🔴: เดิมกด 7 แล้วจอว่าง (prod ซ่อน ไม่มีตัวแทน)
 };
-var FAM_LABEL={'ติดตาย':'กระจกติดตาย','ระแนง-บังตา':'ระแนงบังตา','ระแนง-ผนัง':'ระแนงผนัง','ระแนง-เกล็ด':'เกล็ด Z','ราวบันได':'ราวกันตก','ระแนง':'ระแนงพิเศษ','ลูกฟูก+คอมโพสิททึบ':'ลูกฟูก/ทึบ'};
-var FAM_DEFAULT={'บานเลื่อน':'sliding_sms','บานเปิด':'casement_euro','บานเฟี้ยม':'folding','ติดตาย':'fixed_glass','ระแนง-บังตา':'rn2','ระแนง-ผนัง':'rn38','ระแนง-เกล็ด':'rn84','ราวบันได':'imp1','ประตูรั้ว':'fence_gate'};
+var FAM_LABEL={'ติดตาย':'กระจกติดตาย','ระแนง-บังตา':'ระแนงบังตา','ระแนง-ผนัง':'ระแนงผนัง','ระแนง-เกล็ด':'เกล็ด Z','ราวบันได':'ราวกันตก','ระแนง':'ระแนงพิเศษ','ลูกฟูก+คอมโพสิททึบ':'ลูกฟูก/ทึบ','ฝ้า-ผนัง':'ผนังเบา'};
+var FAM_DEFAULT={'บานเลื่อน':'sliding_sms','บานเปิด':'casement_euro','บานเฟี้ยม':'folding','ติดตาย':'fixed_glass','ระแนง-บังตา':'rn2','ระแนง-ผนัง':'rn38','ระแนง-เกล็ด':'rn84','ราวบันได':'imp1','ประตูรั้ว':'fence_gate','ฝ้า-ผนัง':'wall_ext'};
 var FAM_CASCADE_CATS=['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได']; // มี cascade เฉพาะ → ไม่ต้องแถวรุ่น
 function famDefaultProd(cat){ if(FAM_DEFAULT[cat]&&PBYID[FAM_DEFAULT[cat]])return FAM_DEFAULT[cat]; var l=PRODUCTS.filter(function(q){return q.cat===cat&&!_hideRanaeSolo(q);}); return l.length?l[0].id:''; }
-function famPickCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; delete ch.dataset.famOther; var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
+function famPickCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; delete ch.dataset.famOther; ch.dataset.rnStep='1'; /* ALLG-v2: เลือกตระกูลใหม่ → cascade เริ่มขั้น 1 (โผล่ทีละขั้น) */ var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
 function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset.famOther='1';
   var ps=ch.querySelector('.i-prod'); var w=ps&&ps.closest('.full'); if(w) w.style.display='';
   btn.closest('.fam-prodsel').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); }
@@ -2711,13 +2750,14 @@ function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
   const box=d.querySelector('.i-opts');
   let h='';
-  // G3-v5 จุด1: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ + drill-down วัสดุ บนสุด (class g3-prodsel · groupGHOpts skip · ซ่อน .i-prod ด้านล่าง)
-  if(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') h+=g3SelectorHTML(p);
-  if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
   // G1G6-B: การ์ดตระกูล+ปุ่มรุ่น กลุ่ม 1/2/6 (เหนือ cascade เฉพาะ) · famOther=โหมด "อื่นๆ" โชว์ dropdown เดิม
   var _famGrp=(d.querySelector('.i-group')||{}).value||'1'; var _famOther=d.dataset.famOther==='1';
-  if(FAM_CATS[_famGrp] && p.cat!=='หลังคา' && p.cat!=='ฝ้า-ผนัง') h+=famSelectorHTML(p,_famGrp,_famOther);
-  if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p); // G2: drill-down ระแนง cascade บนสุด
+  // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · แต่กลุ่ม 6 ผนังเบา (ฝ้า-ผนัง) ให้ใช้ family chips เดิม (ALLG-v2) ไม่ใช่ g3
+  var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6';
+  if(_isG3sel) h+=g3SelectorHTML(p);
+  if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
+  if(FAM_CATS[_famGrp] && !_isG3sel) h+=famSelectorHTML(p,_famGrp,_famOther);
+  if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p,d); // G2: drill-down ระแนง cascade บนสุด (progressive · อ่าน d.dataset.rnStep)
   if(p.cat==='ราวบันได') h+=railSelectorHTML(p); // G2 เฟส4: ราวกันตก cascade (ทรง→ระบบยึด→imp)
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
   // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว

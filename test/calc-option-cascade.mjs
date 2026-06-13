@@ -15,7 +15,7 @@ const checks = [];
 const want = (n, ok, d) => checks.push({ n, ok: !!ok, d: d || "" });
 const fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
 const noSvc = () => ["svc-protect","svc-lift","svc-travel","svc-ship"].forEach(id=>{const e=doc.getElementById(id); if(e&&e.checked){e.checked=false;fire(e,"change");}});
-const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน<\/span><span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
+const subtotal = () => { noSvc(); w.calcQuote(); w.genQuote(); const m=doc.getElementById("quoteContent").innerHTML.match(/รวมเป็นเงิน(?:<\/span>)*<span>([\d,\.]+)/); return m?parseFloat(m[1].replace(/,/g,"")):0; };
 
 function mkDoor(){ doc.getElementById("items").innerHTML=""; w.addItem(doc.getElementById("items")); const ch=doc.querySelector("#items .ch"); ch.querySelector(".i-prod").value="casement_euro"; fire(ch.querySelector(".i-prod"),"change"); ch.querySelector(".i-w").value="2"; fire(ch.querySelector(".i-w"),"input"); ch.querySelector(".i-h").value="2"; fire(ch.querySelector(".i-h"),"input"); return ch; }
 
