@@ -242,6 +242,9 @@
   label.opt:has(> .chip-grid){ display:block; }
   /* 🔴 selector container (เลือกแบบ/cascade/หลังคา/มุ้ง) เดิม .opt = flex nowrap → label "รูปแบบ" กับ "รุ่น" อยู่ข้างกันคนละครึ่ง + ปุ่มแคบ · บังคับ block ให้ stack เต็มแถว */
   .fam-prodsel, .rn-prodsel, .g3-prodsel, .mosq-prodsel{ display:block; }
+  /* 🔴 size-row: inline display:flex โดน strip (เด็กเลยเต็มแถวทีละบรรทัด) · บังคับ flex ใน CSS · กว้าง/สูง/ชุด อยู่แถวเดียว */
+  .size-row{ display:flex !important; flex-wrap:wrap; gap:8px; align-items:flex-end; }
+  .size-row > div{ margin:0; }
   .fam-prodsel > label.opt, .rn-prodsel > label.opt, .g3-prodsel > label.opt, .mosq-prodsel > label.opt{ display:block; width:100%; }
   .chip-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin-top:4px; width:100%; } /* auto-fill = ปุ่มกว้างเท่ากันทุกจำนวน เรียงเต็มแถวไม่เละ */
   .chip-grid.cg3{ grid-template-columns:repeat(3,1fr); }
@@ -2478,7 +2481,8 @@ function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
   var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   var _famHead={'1':'เลือกรูปแบบบาน','2':'เลือกประเภทงาน','4':'เลือกตู้ / ฝาตู้','6':'เลือกรูปแบบบาน','7':'ม่านซิป'}[grp]||'เลือกรูปแบบ';
-  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b><div class="chip-grid">'; // ALLG-v2: grid ปุ่มเท่ากัน (เดิม chip-sm flex = เละ ไม่เหมือนดราฟ)
+  var _famGridCls=(cats.length+1)<=3?' cg'+(cats.length+1):''; // UX: กลุ่มปุ่มน้อย (G4 ตู้ 2+อื่นๆ) → คอลัมน์คงที่ ไม่เล็กชิดซ้าย
+  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b><div class="chip-grid'+_famGridCls+'">'; // ALLG-v2: grid ปุ่มเท่ากัน
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div></label>';
   if(FAM_CASCADE_CATS.indexOf(cur)<0 && !famOther && cats.indexOf(cur)>=0){ // cat นอก family list (เช่น เสริม จาก "อื่นๆ") → ไม่โชว์แถวรุ่น (list ยาว · ใช้ dropdown)
@@ -2655,8 +2659,9 @@ function addItem(container){
        `<div class="itype-seg" style="flex:0 0 auto;"><label class="field-label" style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;">ประเภท</label><div class="chip-group" style="gap:0;flex-wrap:nowrap;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;display:inline-flex;"><button type="button" class="chip on" data-val="door" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🚪 ประตู</button><button type="button" class="chip" data-val="window" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🪟 หน้าต่าง</button></div><select class="i-type" style="display:none;"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
        `<div style="flex:0 0 92px;"><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8" style="width:92px;height:40px;text-align:center;"></div>`+
        `<div style="flex:0 0 92px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0" style="width:92px;height:40px;text-align:center;"></div>`+
+       /* ALLG-v2 (พี่นัท): ชุด ขึ้นก่อน บาน-stepper → กว้าง/สูง/ชุด ติดกันแถวเดียว · บาน(+SMB บานเลื่อน relocate) ตกท้าย/บรรทัดใหม่ */
+       `<div style="flex:0 0 auto;"><label>ชุด</label><input class="i-qty" type="number" step="1" min="1" value="1" style="width:58px;height:40px;text-align:center;"></div>`+
        `<div class="i-panels-wrap" style="flex:0 0 auto;"><label>บาน</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-panels" type="number" step="1" min="1" value="1" style="width:46px;border:0;text-align:center;height:42px;"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
-       `<div style="flex:0 0 auto;"><label>ชุด</label><input class="i-qty" type="number" step="1" min="1" value="1" style="width:58px;"></div>`+
      `</div>`+
      /* ALLG 2.3 (เคาะ A): แถบสี·กระจก (ทั้งใบ→ตามรายการ) ในการ์ด ใต้แถวขนาด — buildItemOpts ย้าย i-color-wrap/i-glass-wrap เข้าที่นี่ */
      `<div class="full cg-row" style="display:none;flex-wrap:wrap;gap:8px;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:10px;padding:6px 10px;"></div>`+
@@ -2799,11 +2804,11 @@ function buildItemOpts(d){
   if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p,d); // G2: drill-down ระแนง cascade บนสุด (progressive · อ่าน d.dataset.rnStep)
   if(p.cat==='ราวบันได') h+=railSelectorHTML(p); // G2 เฟส4: ราวกันตก cascade (ทรง→ระบบยึด→imp)
   // BUG fix (แชท B): กล่องฟ้า .sliding-main-block ค้างตอนสลับ product (relocation ย้ายออกนอก .i-opts → box.innerHTML ไม่ล้างให้)
-  // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .chgrid (ตำแหน่งเดิม ก่อน .i-qty) + ลบ .sliding-main-block orphan ทุกตัว
+  // ก่อน rebuild: กู้ .i-panels-wrap กลับเข้า .size-row (ALLG-v2: หลัง .i-qty เพื่อให้ กว้าง/สูง/ชุด ติดกัน) + ลบ .sliding-main-block orphan
   d.querySelectorAll('.sliding-main-block').forEach(function(_smbOld){
     var _pwIn=_smbOld.querySelector('.i-panels-wrap');
     if(_pwIn){ var _qtyEl=d.querySelector('.i-qty'); var _qtyWrap=_qtyEl?_qtyEl.parentNode:null;
-      if(_qtyWrap&&_qtyWrap.parentNode){ _qtyWrap.parentNode.insertBefore(_pwIn,_qtyWrap); } }
+      if(_qtyWrap&&_qtyWrap.parentNode){ _qtyWrap.parentNode.insertBefore(_pwIn,_qtyWrap.nextSibling); } } // หลัง ชุด (เดิม before = บานแทรกกลาง)
     _smbOld.remove();
   });
   // ข้อ3+4: สินค้าที่อ่าน "ความยาว" จากช่องกว้าง (ราวบันได per_length_tier · ครอบ PVC · ปิดซ่อนราง)
