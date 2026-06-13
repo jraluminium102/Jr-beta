@@ -1972,7 +1972,8 @@ function refreshSet(box){
         var gi = c.querySelector('.i-glass'); if(gi && gi.value !== masterGlass){ gi.value = masterGlass; gi.dispatchEvent(new Event('change',{bubbles:true})); }
       }
       // ลดความรก: ซ่อน field พื้นฐานที่ไม่ใช้ในกั้นห้อง + ยุบ option เข้าพับ (ทุกบาน/หลังคาในชุด)
-      ['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=el.closest('.full')||el.parentElement; if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
+      // ALLG 2.2: i-type/i-qty อยู่ใน .size-row แล้ว — ซ่อนเฉพาะ wrapper ตัวเอง (closest .full จะพาซ่อนทั้งแถว กว้าง/สูงหาย)
+      ['.i-group','.i-type','.i-qty','.i-override','.i-note'].forEach(function(s){ var el=c.querySelector(s); if(el){ var w=(s==='.i-type')?el.closest('.itype-seg'):(s==='.i-qty')?el.parentElement:(el.closest('.full')||el.parentElement); if(w){ w.dataset.ghH2='1'; w.style.display='none'; } } });
       var _ohint=c.querySelector('.i-override-hint'); if(_ohint){ _ohint.dataset.ghH2='1'; _ohint.style.display='none'; }
       var _ship=c.querySelector('.i-ship'); if(_ship){ var _sl=_ship.closest('label'); if(_sl){ _sl.dataset.ghH2='1'; _sl.style.display='none'; } }
       var _oe=c.querySelector('.i-opts'); var _det=_oe?_oe.closest('details'):null;
@@ -2220,6 +2221,8 @@ function rnSetHmode(el,mode){ var ch=el.closest('.ch'); if(!ch)return; var hm=ch
 }
 /* ===== G1 Form UX Redesign — chip/toggle helpers (UI only · sync ค่ากลับ control เดิม + fire change) ===== */
 // ชิป → set .value ของ select/hidden ที่ซ่อน แล้ว fire change → readItem/calcQuote เดิมทำงาน
+// ALLG 2.4: stepper จำนวนบาน −/+ (sync input .i-panels เดิม + fire input/change ให้ logic เดิมทำงาน)
+function panelStep(btn,dlt){ var inp=btn.parentElement.querySelector('input'); if(!inp)return; inp.value=Math.max(1,(parseInt(inp.value)||1)+dlt); inp.dispatchEvent(new Event('input',{bubbles:true})); inp.dispatchEvent(new Event('change',{bubbles:true})); }
 function chSetChip(btn, selectClass){
   var ch=btn.closest('.ch'); if(!ch)return; var val=btn.dataset.val;
   // deselect ชิปพี่น้องที่คุม selectClass เดียวกัน (ผูกด้วย onclick ที่อ้าง selectClass)
@@ -2568,17 +2571,22 @@ function addItem(container){
      `<div class="full"><label>กลุ่มงาน</label><select class="i-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select>`+rfChips('i-group',[['1','🪟 บาน/กระจก'],['2','🚪 ระแนง·รั้ว·ราว'],['3','🏠 หลังคา·ฝ้า-ผนัง'],['4','📦 ตู้อลู'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้องกระจก'],['7','🎐 ม่านซิป']],'1')+`</div>`+
      /* ก้อน1: แบบ (.i-prod) ขึ้น #2 ทันทีหลังกลุ่มงาน */
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
-     /* ก้อน1: ประเภท (.i-type) → ชิป 2 ปุ่มใหญ่ · select เดิมซ่อนไว้ให้ readItem อ่าน */
-     `<div class="full"><label class="field-label">ประเภท</label><div class="chip-group chip-2up"><button type="button" class="chip on" data-val="door" onclick="chSetChip(this,'i-type')">ประตู</button><button type="button" class="chip" data-val="window" onclick="chSetChip(this,'i-type')">หน้าต่าง</button></div><select class="i-type" style="display:none;"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
+     /* ALLG 2.2+2.4 (ดราฟเคาะ 13 มิ.ย.): ประเภท=ติ๊กเล็ก segment + กว้าง/สูง/บาน(stepper)/ชุด รวมแถวเดียว */
+     `<div class="full size-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">`+
+       `<div class="itype-seg" style="flex:0 0 auto;"><label class="field-label" style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;">ประเภท</label><div class="chip-group" style="gap:0;flex-wrap:nowrap;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;display:inline-flex;"><button type="button" class="chip on" data-val="door" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🚪 ประตู</button><button type="button" class="chip" data-val="window" onclick="chSetChip(this,'i-type')" style="border:0;border-radius:0;min-height:44px;">🪟 หน้าต่าง</button></div><select class="i-type" style="display:none;"><option value="door">ประตู</option><option value="window">หน้าต่าง</option></select></div>`+
+       `<div style="flex:1 1 80px;min-width:76px;"><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
+       `<div style="flex:1 1 80px;min-width:76px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
+       `<div class="i-panels-wrap" style="flex:0 0 auto;"><label>บาน</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-panels" type="number" step="1" min="1" value="1" style="width:46px;border:0;text-align:center;height:42px;"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
+       `<div style="flex:0 0 auto;"><label>ชุด</label><input class="i-qty" type="number" step="1" min="1" value="1" style="width:58px;"></div>`+
+     `</div>`+
+     /* ALLG 2.3 (เคาะ A): แถบสี·กระจก (ทั้งใบ→ตามรายการ) ในการ์ด ใต้แถวขนาด — buildItemOpts ย้าย i-color-wrap/i-glass-wrap เข้าที่นี่ */
+     `<div class="full cg-row" style="display:none;flex-wrap:wrap;gap:8px;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:10px;padding:6px 10px;"></div>`+
      `<div class="full"><label>ด้าน/ตำแหน่งของส่วนนี้ (กดเลือกหรือพิมพ์เอง)</label><input class="i-position" list="posPreset" placeholder="เช่น ด้านบน / ด้านข้าง (เว้นว่างได้)"></div>`+
-     `<div><label>กว้าง (ม.)</label><input class="i-w" type="number" step="0.1" min="0" value="1.8"></div>`+
-     `<div><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0"></div>`+
      `<div class="full i-color-wrap" style="display:none;"><label>สีอลูมิเนียม (รายการนี้)</label><select class="i-color">${colorOpts()}</select></div>`+
      `<div class="full i-glass-wrap" style="display:none;"><label>กระจก (รายการนี้)</label><select class="i-glass">${glassOpts()}</select></div>`+
      `<div class="full i-colorcode-wrap" style="display:none;"><label>รหัสสี/ชื่อสี (อบพิเศษ)</label><input class="i-colorcode" type="text" placeholder="เช่น KL10232A · RAL7022 · Fuji"></div>`+
      `<div class="full i-sampleconfirm-wrap" style="display:none;"><label class="chk" style="font-size:13px;"><input type="checkbox" class="i-sampleconfirm" style="width:18px;height:18px;"> <b>ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</b> (สำหรับสีชุบ)</label></div>`+
-     `<div class="i-panels-wrap"><label>จำนวนบานทั้งหมด</label><input class="i-panels" type="number" step="1" min="1" value="1"></div>`+
-     `<div><label>จำนวนชุด</label><input class="i-qty" type="number" step="1" min="1" value="1"></div>`+
+     /* ALLG 2.4: จำนวนบาน+ชุด ย้ายขึ้นแถวขนาด (stepper) ด้านบนแล้ว */
      `<div class="full i-override-wrap" style="display:none;"><label>ราคากำหนดเอง (บาท · ใช้เฉพาะสินค้าที่กรอกราคาเอง)</label><input class="i-override" type="number" min="0" step="100" placeholder="ราคาต่อชุด (บาท)"></div>`+
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
      `<div class="full note-opt-group">`+
@@ -3146,9 +3154,11 @@ function buildItemOpts(d){
   var _showCw=!!(cw&&(p.cabinet||!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))); // UX-ALL G5: มุ้งไม่มีสีอลู · G4: cabinet โชว์สีได้ (calc colorPlus มีอยู่แล้ว L1050 · เดิม areaOnly ซ่อน→ci=0→ไม่บวกเงิน = บั๊กการเงิน)
   var _showGw=!!(gw&&!(areaOnly||p.zipscreen||p.cat==='มุ้ง')); // UX-ALL G5: มุ้งไม่มีกระจก
   box.innerHTML=h;
-  // UX (พี่นัท): กระจก/สี ย้ายเข้า ⚙ อุปกรณ์เสริม (บนสุด) — แถวหลักโล่ง
-  if(cw){ cw.style.display=_showCw?'':'none'; box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
-  if(gw){ gw.style.display=_showGw?'':'none'; var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+  // ALLG 2.3 (เคาะ A 13 มิ.ย.): สี/กระจก เข้าแถบฟ้า .cg-row ในการ์ด ใต้แถวขนาด (เดิมเข้า ⚙ อุปกรณ์เสริม) · ไม่มี cg-row (subitem/การ์ดเก่า) → fallback เดิม
+  { var _cgr=d.querySelector('.cg-row');
+    if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
+    if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+    if(_cgr) _cgr.style.display=(_showCw||_showGw)?'flex':'none'; }
   // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
   { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
     if(_smb && _pw && _pw.parentNode){
@@ -3165,7 +3175,7 @@ function buildItemOpts(d){
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
   // G1G6-B fix (พี่นัทเล่นจริง 2026-06-13): ย้าย selector เลือกแบบ (fam/rn/rail/g3/mosq prodsel) จาก optbox (details พับ → "ที่เลือกบานหาย") ขึ้นฟอร์มหลัก ใต้ช่องแบบ
   { var _ipf=d.querySelector('.i-prod'); _ipf=_ipf&&_ipf.closest('.full');
-    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel, .i-opts .zipscreen-block').forEach(function(el){ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
+    if(_ipf){ var _anch=_ipf; d.querySelectorAll('.i-opts .fam-prodsel, .i-opts .rn-prodsel, .i-opts .g3-prodsel, .i-opts .mosq-prodsel, .i-opts .zipscreen-block').forEach(function(el){ el.style.gridColumn='1 / -1'; /* ALLG 2.1: chgrid เป็น grid 2 คอลัมน์ — ไม่เต็มแถว = ชิปตกแนวตั้งทีละปุ่ม (screenshot พี่นัท) */ _anch.parentElement.insertBefore(el,_anch.nextSibling); _anch=el; }); } }
   // G1G6-B: ซ่อน dropdown แบบ/รุ่น เมื่อมี selector ชิป (g3/mosq/fam/cascade/ตู้/ม่านซิป) · ยกเว้นโหมด "อื่นๆ" (famOther)
   { var _ipw=d.querySelector('.i-prod'); _ipw=_ipw&&_ipw.closest('.full');
     var _hideProd=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง'||p.cat==='มุ้ง'||p.cat==='ตู้อลู'||p.cat==='ฝาตู้'||p.cat==='ม่านซิป'||(FAM_CATS[(d.querySelector('.i-group')||{}).value||'1']&&d.dataset.famOther!=='1'));
