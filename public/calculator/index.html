@@ -2312,12 +2312,20 @@ function chSetChip(btn, selectClass){
   ch.querySelectorAll('.chip[onclick*="'+selectClass+'"]').forEach(function(c){ c.classList.remove('on'); });
   btn.classList.add('on');
   var sel=ch.querySelector('.'+selectClass);
-  if(sel){ sel.value=val; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+  if(sel){ sel.value=val; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); } // input = delegated listener (L3334) สำหรับ select ที่ไม่มี inline onchange · change = inline onchange เดิม
 }
 // G3-round2 D: gen ชิป-group จาก option ของ select (ใช้ chSetChip เดิม · หน้าตาเหมือน G1) · items=[[val,label],...] · 2 ตัว=chip-2up
 function rfChips(cls, items, defVal, twoUp){
   return '<div class="chip-group chip-sm'+(twoUp?' chip-2up':'')+'">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')">'+it[1]+'</button>'; }).join('')+'</div>';
 }
+// sync สถานะ 'on' ของชิป ให้ตรง value ของ select (ใช้เมื่อโค้ดตั้งค่า select เอง) + lock/unlock ชิป (กันแก้)
+function rfChipSync(ch,cls){ var sel=ch.querySelector('.'+cls); if(!sel)return; ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.classList.toggle('on', c.dataset.val===sel.value); }); }
+function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.style.pointerEvents=on?'none':''; c.style.opacity=on?'0.45':''; }); }
+// ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
+function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
+  if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
+  rfChipSync(c,'o-thresh'); rfChipSync(c,'o-threshf'); rfChipLock(c,'o-thresh',cb.checked); rfChipLock(c,'o-threshf',cb.checked);
+  calcQuote(); }
 // G3-v5 จุด1 (SPEC-G3-roof-formux-v5): เลือกสินค้ากลุ่ม 3 = แท็บ หลังคา/ฝ้า-ผนัง + drill-down วัสดุหลังคา (ซ่อน .i-prod · ชิป sync .i-prod + fire change)
 var RF_GRP_PRODS={
   metal:[['imp7','1" PVC EPS'],['imp8','2" PVC EPS'],['imp9','1" เหล็ก EPS'],['imp10','2" เหล็ก EPS'],['imp11','1" ฟอยล์ PU'],['imp12','2" ฟอยล์ PU'],['imp13','1" เหล็ก PU'],['imp14','2" เหล็ก PU']],
@@ -2860,11 +2868,11 @@ function buildItemOpts(d){
   // R2-6: ลบ banner "ประตูบานเปิด — เลือกมือจับ 1 ใน 4" (ข้อความเฉยๆ · dropdown มือจับยังอยู่ครบ)
   if(p.cat==='บานเปิด'){
     // Pass2-A: ธรณี บานเปิด
-    h+='<label class="opt">ธรณี <select class="o-thresh" style="width:auto;height:32px;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select></label>'; // ข้อ8(G1): รางยู disable ตัวนี้เมื่อติ๊ก
+    h+='<label class="opt" style="width:100%;">ธรณี <select class="o-thresh" style="display:none;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select>'+rfChips('o-thresh',[['std','กันน้ำ (มาตรฐาน)'],['turtle','หลังเต่า+Drop Seal +1,000']],'std',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
   }
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
-    h+='<label class="opt">ธรณี <select class="o-threshf" style="width:auto;height:32px;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select></label>'; // ข้อ8(G1): รางยู disable ตัวนี้เมื่อติ๊ก
+    h+='<label class="opt" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
@@ -2882,13 +2890,13 @@ function buildItemOpts(d){
   }); }
   // shower — เลือก config ประตู+ติดตาย / ติดตายเดี่ยว / ประตูเดี่ยว + ถ้ามีประตูเลือกบานเปิด/เลื่อน
   if(p.id==='shower'){
-    h+='<label class="opt">รูปแบบ shower <select class="o-shtype" style="width:auto;height:32px;"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select></label>';
-    h+='<label class="opt">ประเภทประตู (ถ้ามี) <select class="o-shdoortype" style="width:auto;height:32px;"><option value="swing" selected>บานเปิด (swing)</option><option value="sliding">บานเลื่อน</option></select></label>';
+    h+='<label class="opt" style="width:100%;">รูปแบบ shower <select class="o-shtype" style="display:none;" onchange="calcQuote();"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select>'+rfChips('o-shtype',[['door_fixed','ประตู+กระจกติดตาย'],['fixed_only','ติดตายอย่างเดียว'],['door_only','ประตูอย่างเดียว']],'door_fixed')+'</label>';
+    h+='<label class="opt" style="width:100%;">ประเภทประตู (ถ้ามี) <select class="o-shdoortype" style="display:none;" onchange="calcQuote();"><option value="swing" selected>บานเปิด (swing)</option><option value="sliding">บานเลื่อน</option></select>'+rfChips('o-shdoortype',[['swing','บานเปิด (swing)'],['sliding','บานเลื่อน']],'swing',true)+'</label>';
   }
   // frameless_door — เลือกสีเฟรม + สวิง/เลื่อน
   if(p.id==='frameless_door'){
-    h+='<label class="opt">ประเภทประตูบานเปลือย <select class="o-frametype" style="width:auto;height:32px;"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select></label>';
-    h+='<label class="opt">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="width:auto;height:32px;"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select></label>';
+    h+='<label class="opt" style="width:100%;">ประเภทประตูบานเปลือย <select class="o-frametype" style="display:none;" onchange="calcQuote();"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select>'+rfChips('o-frametype',[['swing','สวิง (บานเปิด)'],['sliding','เลื่อน']],'swing',true)+'</label>';
+    h+='<label class="opt" style="width:100%;">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="display:none;" onchange="calcQuote();"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select>'+rfChips('o-framecolor',[['ขาว','ขาว'],['ดำ','ดำ'],['บรอนซ์','บรอนซ์'],['แชมเปญ','แชมเปญ'],['เทาซาฮาร่า','เทาซาฮาร่า'],['สีอบพิเศษ','สีอบพิเศษ']],'ขาว')+'</label>';
   }
   if(p.closer){ h+='<label class="opt">[Up3] โช๊ค (combo สแตน) <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช๊คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช๊ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช๊ค">บานพับ +5,000</option></select></label>'; }
   // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
@@ -2934,7 +2942,7 @@ function buildItemOpts(d){
   if(p.bar_grid){
     h+='<label class="opt"><input type="checkbox" class="o-bg_motor"> มอเตอร์ระแนง 38.1 (⌈D÷3⌉ × 10,000)</label>';
   }
-  if(p.motor){ h+=`<label class="opt">มอเตอร์ <select class="o-motor" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="80">80กก.+18,000</option><option value="300">300กก.+28,000</option></select></label>`; }
+  if(p.motor){ h+='<label class="opt" style="width:100%;">มอเตอร์ <select class="o-motor" style="display:none;"><option value="0">ไม่มี</option><option value="80">80กก.+18,000</option><option value="300">300กก.+28,000</option></select>'+rfChips('o-motor',[['0','ไม่มี'],['80','80กก. +18,000'],['300','300กก. +28,000']],'0')+'</label>'; }
   // R3.9: เลิก o-beam checkbox (บานเฟี้ยม) → ใช้ "เสริมคานซัพพอร์ท" (COMMON_OPTS · 4,000+500/ม. ตามความยาว) แทน
   // บานเลื่อน/เลื่อนภายใน — controls ใหม่ตาม SLIDING_RAIL
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
@@ -3038,8 +3046,8 @@ function buildItemOpts(d){
       h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="Clear 101 สีใส (แสงผ่าน 83%)">Clear 101 สีใส (แสงผ่าน 83%)</option><option value="Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" selected>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option><option value="Bronze 107 สีชาใส (แสงผ่าน 30%)">Bronze 107 สีชาใส (แสงผ่าน 30%)</option><option value="Green 109 สีเขียวใส (แสงผ่าน 45%)">Green 109 สีเขียวใส (แสงผ่าน 45%)</option><option value="Australian Grey 108 สีเทาออส (แสงผ่าน 40%)">Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option><option value="Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)">Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option><option value="Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)">Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option><option value="Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)">Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option></select></label>';
     } else if(p.id==='roof_laminate'){
       // FIX-4(G3): ลามิเนต — ชนิดฟิล์ม + ความหนา (display · ไม่กระทบราคา)
-      h+='<label class="opt">ชนิดฟิล์ม <select class="o-lamfilm" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ใส">ลามิเนตใส</option><option value="เขียว">ลามิเนตเขียว</option><option value="กันร้อน" selected>ฟิล์มกันร้อน</option></select></label>';
-      h+='<label class="opt">ความหนากระจก <select class="o-lamthick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="4+4" selected>4+4 มม.</option><option value="5+5">5+5 มม.</option></select></label>';
+      h+='<label class="opt" style="width:100%;">ชนิดฟิล์ม <select class="o-lamfilm" style="display:none;" onchange="calcQuote();"><option value="ใส">ลามิเนตใส</option><option value="เขียว">ลามิเนตเขียว</option><option value="กันร้อน" selected>ฟิล์มกันร้อน</option></select>'+rfChips('o-lamfilm',[['ใส','ลามิเนตใส'],['เขียว','ลามิเนตเขียว'],['กันร้อน','ฟิล์มกันร้อน']],'กันร้อน')+'</label>';
+      h+='<label class="opt" style="width:100%;">ความหนากระจก <select class="o-lamthick" style="display:none;" onchange="calcQuote();"><option value="4+4" selected>4+4 มม.</option><option value="5+5">5+5 มม.</option></select>'+rfChips('o-lamthick',[['4+4','4+4 มม.'],['5+5','5+5 มม.']],'4+4',true)+'</label>';
     } else if(/^imp(7|8|9|1[0-4])$/.test(p.id)){
       // FIX-5(G3): เมทัลชีท — สี (starter list · พี่นัทเติมได้) · display
       h+='<label class="opt" style="width:100%;">สีเมทัลชีท <select class="o-roofcolor" style="display:none;" onchange="calcQuote();"><option value="" selected>— ระบุสี —</option><option value="สีน้ำตาล">สีน้ำตาล</option><option value="สีขาว">สีขาว</option><option value="สีเทา">สีเทา</option></select>'+rfChips('o-roofcolor',[['','— ระบุสี —'],['สีน้ำตาล','สีน้ำตาล'],['สีขาว','สีขาว'],['สีเทา','สีเทา']],'')+'</label>';
@@ -3183,7 +3191,7 @@ function buildItemOpts(d){
   if(p.glass_replace){
     h+='<label class="opt">ทุนกระจก (บาท/ตร.ม.) <input type="number" class="o-glasscost" min="0" step="50" value="0" style="width:90px;height:32px;"></label>';
     // R3 2026-05-30: เพิ่ม auto กำไร 2 ขั้น — ขั้น1 ทุน→กำไร%, ขั้น2 พื้นที่รวม→ลดกำไร
-    h+='<label class="opt">โหมดกำไร <select class="o-glassmode" style="width:auto;height:32px;"><option value="auto" selected>Auto 2 ขั้น (R3)</option><option value="manual">กรอกเอง</option></select></label>';
+    h+='<label class="opt" style="width:100%;">โหมดกำไร <select class="o-glassmode" style="display:none;"><option value="auto" selected>Auto 2 ขั้น (R3)</option><option value="manual">กรอกเอง</option></select>'+rfChips('o-glassmode',[['auto','Auto 2 ขั้น (R3)'],['manual','กรอกเอง']],'auto',true)+'</label>';
     h+='<label class="opt">กำไร % (มือ) <input type="number" class="o-glassprofit" min="0" step="1" value="100" style="width:70px;height:32px;"></label>';
     h+='<div class="opt" style="font-size:11px;color:#666;width:100%">Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-4000=+70% / >4001=+30% · ขั้น2 พื้นที่รวม >30=ลด10% / >80=ลด15% / >130=ลด20%</div>';
   }
@@ -3191,8 +3199,8 @@ function buildItemOpts(d){
       h+='<label class="opt" style="width:100%;">ลักษณะการเปิด <select class="o-gatetype" style="display:none;" onchange="calcQuote();"><option value="swing">บานสวิง</option><option value="casement">บานเปิด</option><option value="slide_bottom" selected>บานเลื่อนเปิดคู่กลางรางล่าง</option><option value="slide_top">บานเลื่อนเปิดคู่กลางรางบน</option></select>'+rfChips('o-gatetype',[['swing','บานสวิง'],['casement','บานเปิด'],['slide_bottom','เลื่อนคู่กลาง รางล่าง'],['slide_top','เลื่อนคู่กลาง รางบน']],'slide_bottom')+'</label>';
       h+=_gateRnSel+gateRnChipsHTML(_gateRn0);
       h+='<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>'+'<label class="opt">ชนิดราง <select class="o-railtype" style="width:auto;height:32px;"><option value="straight">ตรง (1,500/ม.)</option><option value="curved">โค้ง (2,500/ม. +บานโค้ง)</option></select></label>'+'<label class="opt">อบสี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></label>'; h+='<label class="opt"><input type="checkbox" class="o-gatethresh" onchange="calcQuote();"> มีธรณี</label>'; h+='<label class="opt">OPTION ลายไม้ Golden Teak SMS (กรอกราคาเพิ่มเอง) <input type="number" class="o-gatewood" min="0" step="500" value="0" placeholder="บาท" style="width:90px;height:32px;" oninput="calcQuote();"> บาท</label>'; }
-  if(p.bar_grid){ h+='<label class="opt">ทิศระแนง <select class="o-bgdir" style="width:auto;height:32px;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select></label>'; h+='<label class="opt">สี <select class="o-bgcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select> <span style="font-size:11px;color:#666;">(แสดงในใบ)</span></label>'; } // G2-5: สี display
-  if(p.cat==='ระแนง-เกล็ด'){ h+='<label class="opt">ทิศติดตั้ง <select class="o-grdir" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ระบุ —</option><option value="แนวตั้ง">แนวตั้ง</option><option value="แนวนอน">แนวนอน</option></select></label>'; } // G2-9: ทิศเกล็ด Z display
+  if(p.bar_grid){ h+='<label class="opt" style="width:100%;">ทิศระแนง <select class="o-bgdir" style="display:none;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select>'+rfChips('o-bgdir',[['v','ตั้ง (D=สูง)'],['h','นอน (D=กว้าง)']],'v',true)+'</label>'; h+='<label class="opt">สี <select class="o-bgcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select> <span style="font-size:11px;color:#666;">(แสดงในใบ)</span></label>'; } // G2-5: สี display
+  if(p.cat==='ระแนง-เกล็ด'){ h+='<label class="opt" style="width:100%;">ทิศติดตั้ง <select class="o-grdir" style="display:none;" onchange="calcQuote();"><option value="">— ระบุ —</option><option value="แนวตั้ง">แนวตั้ง</option><option value="แนวนอน">แนวนอน</option></select>'+rfChips('o-grdir',[['','— ระบุ —'],['แนวตั้ง','แนวตั้ง'],['แนวนอน','แนวนอน']],'')+'</label>'; } // G2-9: ทิศเกล็ด Z display
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
   if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ตามสีบาน (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
   if(p.bar_slide){
@@ -3204,7 +3212,7 @@ function buildItemOpts(d){
     h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮาร่า +400/ตร.ม.</option><option value="400">สีดำซาฮาร่า +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>';
   }
   if(p.bar_openclose){
-    h+='<label class="opt">ทิศระแนง <select class="o-bocdir" style="width:auto;height:32px;"><option value="v">แนวตั้ง (default)</option><option value="h">แนวนอน</option></select></label>';
+    h+='<label class="opt" style="width:100%;">ทิศระแนง <select class="o-bocdir" style="display:none;"><option value="v">แนวตั้ง (default)</option><option value="h">แนวนอน</option></select>'+rfChips('o-bocdir',[['v','แนวตั้ง'],['h','แนวนอน']],'v',true)+'</label>';
     h+='<label class="opt"><input type="checkbox" class="o-bocmotor"> เอามอเตอร์ (ถ้าไม่ติ๊ก = เปิด-ปิดด้วยมือ)</label>';
     h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮาร่า +500/ตร.ม.</option><option value="500">สีดำซาฮาร่า +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>';
   }
@@ -3212,16 +3220,16 @@ function buildItemOpts(d){
   if(p.ceiling){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; }
   // สเปก rev2: ฝ้า-ผนัง — ฟิลด์รายละเอียดวัสดุ (โครง/สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ)
   if(p.cat==='ฝ้า-ผนัง'){
-    h+='<label class="opt">โครง <select class="o-wallframe" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ">โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select></label>';
+    h+='<label class="opt" style="width:100%;">โครง <select class="o-wallframe" style="display:none;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ">โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select>'+rfChips('o-wallframe',[['','อลูมิเนียม'],['เหล็กชุบ','เหล็กชุบซิงค์ (ไร้สนิม)']],'',true)+'</label>';
     if(p.id==='isowall'){
-      h+='<label class="opt">ความหนา ISOWALL <select class="o-isothick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select></label>';
+      h+='<label class="opt" style="width:100%;">ความหนา ISOWALL <select class="o-isothick" style="display:none;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select>'+rfChips('o-isothick',[['10','10 ซม.'],['5','5 ซม.'],['7.5','7.5 ซม.']],'10')+'</label>';
       h+='<label class="opt">สี <input type="text" class="o-isocolor" placeholder="เช่น ขาว" style="width:auto;min-width:90px;height:32px;" oninput="calcQuote();"></label>';
     } else if(p.id==='ceiling_smooth'){
-      h+='<label class="opt">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select></label>';
+      h+='<label class="opt" style="width:100%;">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select>'+rfChips('o-ceilfinish',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทาสี']],'ทาสีขาว')+'</label>';
       h+='<label class="opt"><input type="checkbox" class="o-ceilslope" onchange="calcQuote();"> ฝ้าเฉียงตามแนวหลังคา</label>';
     } else if(!p.ceiling){
-      h+='<label class="opt">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="width:auto;height:32px;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select></label>';
-      h+='<label class="opt">ทาสี <select class="o-wallpaint" style="width:auto;height:32px;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select></label>';
+      h+='<label class="opt" style="width:100%;">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="display:none;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select>'+rfChips('o-smartthick',[['12','12 มม.'],['20','20 มม.']],'12',true)+'</label>';
+      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
     }
   }
   if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
@@ -3249,7 +3257,7 @@ function buildItemOpts(d){
   }
   // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
   if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){ // UX-ALL+folding: ฝังรางยูเฉพาะงานบานพื้น · บานเฟี้ยมใช้ u_track (COMMON_OPTS) แทน — ตัดกันซ้ำ
-    h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="var c=this.closest(\'.ch\');var t=c.querySelector(\'.o-thresh\');var tf=c.querySelector(\'.o-threshf\');if(this.checked){if(t){t.value=\'std\';t.disabled=true;}if(tf){tf.value=\'outer\';tf.disabled=true;}}else{if(t)t.disabled=false;if(tf)tf.disabled=false;}calcQuote();"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → disable หลังเต่า
+    h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="toggleUChannel(this);"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → ล็อกชิปธรณีหลังเต่า
   }
   h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
   h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
