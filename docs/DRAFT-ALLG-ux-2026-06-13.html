@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT ภาพรวม G1-G7 — จัดปุ่ม/แถบสี/ติ๊กประเภท (2026-06-13)</title>
+<style>
+:root{--red:#B3151D;--red-d:#8f1017;--line:#E5E7EB;--mut:#6B7280;--blue:#EAF3FF;--blue-b:#9DBCE0;}
+*{box-sizing:border-box;}
+body{font-family:"Leelawadee UI",Tahoma,sans-serif;margin:0;background:#F6F4F2;color:#1F2937;font-size:14px;padding-bottom:70px;}
+header{background:var(--red);color:#fff;padding:10px 14px;}
+header h1{font-size:16px;margin:0;}header .s{font-size:11px;opacity:.85;}
+.demo-badge{display:inline-block;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:6px;}
+/* แท็บกลุ่ม */
+.gtabs{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:5;}
+.gtab{flex:0 0 auto;min-height:44px;padding:8px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:13.5px;font-weight:600;cursor:pointer;}
+.gtab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.sec{display:none;padding:12px;}.sec.on{display:block;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;max-width:560px;margin:0 auto 12px;}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--red);}
+.lbl{font-size:13.5px;font-weight:700;color:var(--red);margin:10px 0 5px;}
+.lbl small{color:var(--mut);font-weight:400;}
+/* ✨จุดแก้ 1: ชิป wrap แนวนอน — ชิปกว้างตามเนื้อหา ไม่ stretch ไม่ตกแนวตั้ง */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{flex:0 0 auto;min-height:44px;padding:8px 13px;border:1.5px solid #D1D5DB;border-radius:10px;background:#fff;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700;}
+.chip.sm{min-height:40px;padding:6px 11px;font-size:13px;}
+/* ✨จุดแก้ 3: แถวรวม — ติ๊กประเภทเล็ก + ขนาด + บาน ในบรรทัดเดียว (wrap บนจอแคบ) */
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:10px 0;}
+.fld{flex:1 1 90px;min-width:84px;}
+.fld label{display:block;font-size:11.5px;color:var(--mut);margin-bottom:3px;}
+.fld input{width:100%;height:44px;border:1.5px solid #D1D5DB;border-radius:10px;padding:0 10px;font-size:15px;}
+.seg{flex:0 0 auto;display:flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;}
+.seg button{min-height:44px;padding:0 14px;border:0;background:#fff;font-size:13.5px;cursor:pointer;}
+.seg button.on{background:var(--red);color:#fff;font-weight:700;}
+.step{flex:0 0 auto;display:flex;align-items:center;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;}
+.step button{width:42px;min-height:44px;border:0;background:#F3F4F6;font-size:18px;cursor:pointer;}
+.step span{min-width:34px;text-align:center;font-weight:700;}
+/* ✨จุดแก้ 2: แถบสีทั้งใบ — บรรทัดเดียวในการ์ด ใต้โซนขนาด */
+.gcolor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--blue);border:1px solid var(--blue-b);border-radius:10px;padding:7px 10px;margin:10px 0;font-size:12.5px;}
+.gcolor b{color:#1E5AA8;}
+.gcolor select{height:36px;border:1px solid var(--blue-b);border-radius:8px;font-size:12.5px;max-width:46%;}
+.gcolor .ed{margin-left:auto;font-size:11.5px;color:var(--red);background:#fff;border:1px dashed var(--red);border-radius:8px;padding:4px 9px;cursor:pointer;}
+.subbox{background:var(--blue);border:1px solid var(--blue-b);border-radius:10px;padding:8px 10px;margin:10px 0;}
+.subbox .t{font-size:12px;font-weight:700;color:#1E5AA8;margin-bottom:5px;}
+details.opt{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:10px;}
+details.opt summary{font-size:13px;color:var(--red);font-weight:600;cursor:pointer;min-height:38px;display:flex;align-items:center;}
+.note{font-size:11.5px;color:var(--mut);margin:6px 0;}
+.pricebar{position:fixed;left:0;right:0;bottom:0;background:#1F2937;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:14px;}
+.pricebar b{font-size:20px;color:#FCD34D;}
+.ba{display:flex;gap:8px;margin:0 auto 12px;max-width:560px;font-size:11.5px;}
+.ba div{flex:1;border-radius:8px;padding:6px 9px;}
+.ba .b4{background:#FEE2E2;}.ba .af{background:#DCFCE7;}
+</style>
+</head>
+<body>
+<header><h1>ดราฟภาพรวม G1-G7 — จัดปุ่มเรียงสวย · แถบสีย้ายลง · ประเภทเป็นติ๊กเล็ก<span class="demo-badge">ราคาเดโม (dev ดึงเรตจริง)</span></h1>
+<div class="s">3 จุดแก้ (มติจาก screenshot 13 มิ.ย.): ① ชิปรูปแบบเรียงแนวนอน wrap ② สี/กระจกทั้งใบ → บรรทัดเดียวในการ์ด ใต้ขนาด ③ ประตู/หน้าต่าง = ติ๊กเล็กรวมแถวเดียวกับ กว้าง·สูง·บาน — pattern เดียวทุกกลุ่ม</div></header>
+
+<div class="gtabs" id="gtabs"></div>
+<div id="secs"></div>
+
+<div class="pricebar"><span id="pl">ส่วนที่ 1 · เดโม</span><b id="pv">฿ 32,000</b></div>
+
+<script>
+// ===== ข้อมูลจริงจาก index.html (id/cat/ชื่อ) — ราคา dummy =====
+var G={
+ g1:{name:'1·บาน/กระจก',fams:[
+  ['บานเลื่อน',['เซมิยูโร','ยูโร']],
+  ['บานเปิด',['ยูโร','X-series','Velora','โซลิด ทู','โซลิด วัน']],
+  ['กระจกติดตาย',[]],
+  ['บานเฟี้ยม',['เซมิยูโร','ยูโร','X-series']],
+  ['บานกระทุ้ง',['ยูโร']],
+  ['เลื่อนภายใน',['รางบน ซ้อน','SlimLux','X-series','รางล่าง SMS','รางล่าง ยูโร']],
+  ['PC Door',['2 บาน','4 บาน']],
+  ['บานเปลือย',['ติดตาย','ประตูสวิง/เลื่อน']],
+  ['Shower',[]],
+  ['บานยก',['SMS','aluinch']],
+  ['YKK',['Ventilation','Exhido','Tostem A01']],
+  ['บานหมุน',['เมืองทอง']],
+  ['ดัดโค้ง',['บานคู่','บานเดี่ยว','ติดตาย','สลิม']],
+  ['เส้นคาด',[]],
+  ['ลูกฟูก/ทึบ',['ลูกฟูก 2 หน้า','คอมโพสิท']],
+  ['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">🔢 บานเลื่อน (โผล่เมื่อเลือกตระกูลเลื่อน)</div><div class="chips"><button class="chip sm on">เลื่อน (ระบุติดตาย)</button><button class="chip sm">สลับ</button><button class="chip sm">เปิดคู่กลาง</button><button class="chip sm">ลากจูง</button></div><div style="margin-top:6px;" class="chips"><button class="chip sm on">รางกันน้ำ</button><button class="chip sm">รางเตี้ย 7 มม.</button></div></div>'},
+ g2:{name:'2·ระแนง/รั้ว/ราว',fams:[
+  ['ระแนงบังตา',['1×1','1×2','1.5×3 ▸ (ขนาดเส้น→ระยะโชว์→โครง)']],
+  ['ระแนงผนัง',['ระยะโชว์ ▸']],
+  ['เกล็ด Z',['1"','1.6"','4"']],
+  ['ราวกันตก',['เฉียง','ตรง ▸ ระบบยึด']],
+  ['ประตูรั้ว',[]],
+  ['ระแนงพิเศษ',['เลื่อน','บานเกล็ดอลู','เปิด-ปิด']],
+  ['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">🪵 cascade ระแนง (ของเดิม — ขยับขึ้นใต้รุ่น)</div><div class="chips"><button class="chip sm on">โชว์ 1ซม.</button><button class="chip sm">โชว์ 2ซม.</button><button class="chip sm">โชว์ 5ซม.</button></div><div style="margin-top:6px;" class="chips"><button class="chip sm on">รวมโครง</button><button class="chip sm">ไม่โครง</button><button class="chip sm">🚪 ทำเป็นบาน</button></div></div>'},
+ g3:{name:'3·หลังคา/ฝ้า-ผนัง',fams:[
+  ['หลังคา',['เมทัลชีท','ชินโคไลท์','กระจก','ไวนิล ▸']],
+  ['ฝ้า-ผนัง',['ผนังเบานอก','ผนังเบาใน','ฝ้า ▸']],
+  ['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">🏠 หลังคา (แท็บเดิม g3 — คงไว้)</div><div class="chips"><button class="chip sm on">ปล่อยน้ำตก</button><button class="chip sm">มีรางน้ำ</button><button class="chip sm">ปิดปลายกันน้ำ</button></div></div>'},
+ g4:{name:'4·ตู้อลู',fams:[['ตู้อลู',[]],['ฝาตู้ Future Tech',[]],['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">📦 รายละเอียดตู้ (บล็อกเดิม)</div><div class="chips"><button class="chip sm on">ตู้เสื้อผ้า</button><button class="chip sm">ตู้รองเท้า</button><button class="chip sm">ตู้ครัว</button></div><div class="row" style="margin:6px 0 0;"><div class="fld"><label>ลึก (ม.)</label><input value="0.6"></div><div class="fld"><label>จำนวนชั้น</label><input value="4"></div></div></div>'},
+ g5:{name:'5·มุ้ง',fams:[
+  ['เฟรม',['Smart 25','Smart 39 ▸']],
+  ['จีบ',['จีบคู่','จีบเดี่ยว ▸']],
+  ['ม้วน',['ม้วนบน','ม้วนข้าง ▸']],
+  ['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">🦟 ผ้ามุ้ง + สีผ้า (ชิปเดิม)</div><div class="chips"><button class="chip sm on">ไฟเบอร์</button><button class="chip sm">โพลี</button><button class="chip sm">สแตนเลส</button></div></div>'},
+ g6:{name:'6·กั้นห้องกระจก',fams:[
+  ['บานเลื่อน',['เซมิยูโร','ยูโร']],
+  ['บานเปิด',['ยูโร','Velora ▸']],
+  ['กระจกติดตาย',[]],
+  ['บานเฟี้ยม',['เซมิยูโร ▸']],
+  ['อื่นๆ ▾',[]]],
+  extra:'<div class="subbox"><div class="t">🔲 ด้าน A (กั้นห้อง — การ์ดด้านเดิม)</div><div class="note">ปุ่ม "＋ เพิ่มชิ้นในด้านนี้" · "＋ เพิ่มด้าน B" · สี/กระจก "ตามทั้งใบ" + badge เมื่อ override (งาน F)</div></div>'},
+ g7:{name:'7·ม่านซิป',fams:[['ม่านซิป',[]]],
+  extra:'<div class="subbox"><div class="t">🪟 ม่านซิป (กล่องเดิม — อยู่บนแล้ว)</div><div class="chips"><button class="chip sm on">ปลีก</button><button class="chip sm">ช่าง</button><button class="chip sm">โครงการ</button></div><div style="margin-top:6px;" class="chips"><button class="chip sm on">มือดึง</button><button class="chip sm">มอเตอร์</button></div></div>'}
+};
+var PRICE={g1:32000,g2:24000,g3:48000,g4:78000,g5:6000,g6:120000,g7:21000};
+
+function chipsHTML(arr,on){ return arr.map(function(x,i){ return '<button class="chip'+(i===on?' on':'')+'" onclick="pick(this)">'+x+'</button>'; }).join(''); }
+
+function cardHTML(k){
+ var g=G[k];
+ var h='<div class="ba"><div class="b4">❌ เดิม: ปุ่มตกแนวตั้งทีละปุ่ม · แถบสีลอยบนหัวรายการ · ประตู/หน้าต่าง ใหญ่เต็มแถว</div><div class="af">✅ ใหม่: ชิป wrap แนวนอน · สีย้ายลงในการ์ด · ประเภท=ติ๊กเล็กรวมแถวขนาด</div></div>';
+ h+='<div class="card"><h3>ส่วนที่ 1 <span style="color:#888;font-weight:400;font-size:12px;">(กลุ่ม '+g.name+')</span></h3>';
+ // ① ชิปตระกูล wrap
+ h+='<div class="lbl">เลือกรูปแบบ'+(k==='g1'||k==='g6'?'บาน':'')+'</div><div class="chips fam">'+chipsHTML(g.fams.map(function(f){return f[0];}),0)+'</div>';
+ // รุ่น
+ var models=g.fams[0][1];
+ h+='<div class="mwrap">'+(models.length?'<div class="lbl">รุ่น <small>(ของตระกูลที่เลือก)</small></div><div class="chips mods">'+chipsHTML(models,0)+'</div>':'')+'</div>';
+ // ③ แถวรวม: ประเภทติ๊กเล็ก + กว้าง + สูง + บาน
+ h+='<div class="lbl">ขนาด</div><div class="row">';
+ if(k==='g1'||k==='g6') h+='<div class="seg"><button class="on" onclick="seg(this)">🚪 ประตู</button><button onclick="seg(this)">🪟 หน้าต่าง</button></div>';
+ h+='<div class="fld"><label>กว้าง (ม.)</label><input value="1.8" oninput="bump()"></div><div class="fld"><label>สูง (ม.)</label><input value="2.0" oninput="bump()"></div>';
+ if(k!=='g4'&&k!=='g7') h+='<div class="step"><button onclick="st(this,-1)">−</button><span>2</span><button onclick="st(this,1)">+</button></div><div style="flex:0 0 auto;font-size:11px;color:var(--mut);align-self:center;">บาน</div>';
+ h+='</div>';
+ // ② แถบสีทั้งใบ — ในการ์ด ใต้ขนาด
+ h+='<div class="gcolor"><b>🎨 สี·กระจก</b> <select><option>สีอบขาว (ทั้งใบ)</option><option>ดำ</option><option>ซาฮาร่า</option></select><select><option>เขียวใส 6 มม. (ทั้งใบ)</option><option>เทมเปอร์ใส</option></select><button class="ed" onclick="alert(\'เดโม: เปิดสี/กระจกเฉพาะรายการนี้ + badge ต่างจากทั้งใบ\')">แก้เฉพาะรายการนี้ ▾</button></div>';
+ // บล็อกเฉพาะกลุ่ม
+ h+=g.extra||'';
+ h+='<details class="opt"><summary>＋ อุปกรณ์เสริม / ออปชั่น (7 หมวดเดิม — พับ)</summary><div class="note">ธรณี/วงกบ · มือจับ/ล็อค · มุ้ง · คาดตาราง · โครงสร้าง/ราง · ทึบล่าง · งานเสริม</div></details>';
+ h+='<div class="note">ราคาเดโม — โครงจริง dev ดึง engine เดิมทั้งหมด (sync class เดิม ไม่แตะ logic)</div></div>';
+ return h;
+}
+
+var tabs=document.getElementById('gtabs'), secs=document.getElementById('secs');
+Object.keys(G).forEach(function(k,i){
+ var b=document.createElement('button'); b.className='gtab'+(i===0?' on':''); b.textContent=G[k].name;
+ b.onclick=function(){ document.querySelectorAll('.gtab').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+   document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on');}); document.getElementById('sec-'+k).classList.add('on');
+   document.getElementById('pv').textContent='฿ '+PRICE[k].toLocaleString(); document.getElementById('pl').textContent='ส่วนที่ 1 · '+G[k].name+' · เดโม'; };
+ tabs.appendChild(b);
+ var s=document.createElement('div'); s.className='sec'+(i===0?' on':''); s.id='sec-'+k; s.innerHTML=cardHTML(k); secs.appendChild(s);
+});
+function pick(btn){ var grp=btn.parentElement; grp.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+ // ถ้าเป็นชิปตระกูล → สลับรุ่น
+ if(grp.classList.contains('fam')){ var sec=btn.closest('.sec'); var k=sec.id.replace('sec-',''); var idx=[].indexOf.call(grp.children,btn);
+   var models=(G[k].fams[idx]||[,[]])[1]; var mw=sec.querySelector('.mwrap');
+   mw.innerHTML=models.length?'<div class="lbl">รุ่น <small>(ของตระกูลที่เลือก)</small></div><div class="chips mods">'+chipsHTML(models,0)+'</div>':''; }
+ bump(); }
+function seg(btn){ btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); }
+function st(btn,d){ var sp=btn.parentElement.querySelector('span'); sp.textContent=Math.max(1,parseInt(sp.textContent)+d); bump(); }
+function bump(){ var pv=document.getElementById('pv'); var k=document.querySelector('.sec.on').id.replace('sec-',''); var v=PRICE[k]+Math.round(Math.random()*4)*1000; pv.textContent='฿ '+v.toLocaleString(); }
+</script>
+</body>
+</html>

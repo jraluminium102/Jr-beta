@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>SPEC รวมสั่งแก้ — โหมดคิดเร็วสินค้าครบ + ALLG 3 จุด (2026-06-13)</title>
+<style>
+body{font-family:"Leelawadee UI",Tahoma,sans-serif;color:#1F2937;font-size:13px;line-height:1.55;max-width:860px;margin:0 auto;padding:24px;}
+h1{color:#B3151D;font-size:19px;margin:0 0 4px;}
+h2{font-size:14.5px;color:#fff;background:#B3151D;padding:5px 10px;border-radius:6px;margin:18px 0 7px;}
+table{border-collapse:collapse;width:100%;font-size:12px;margin:8px 0;}
+th,td{border:1px solid #D8C9C9;padding:6px 8px;text-align:left;vertical-align:top;}
+th{background:#FBEEEE;color:#B3151D;}
+code{background:#F3F4F6;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:11px;color:#B3151D;}
+.ok{background:#F0FDF4;border:1.5px solid #16A34A;border-radius:8px;padding:9px 12px;margin:8px 0;}
+.warn{background:#FFF4E5;border:1px solid #F0C070;border-radius:8px;padding:9px 12px;margin:8px 0;}
+ul{margin:4px 0;padding-left:18px;}li{margin:3px 0;}
+.sub{color:#6B7280;font-size:11px;}
+</style>
+</head>
+<body>
+<h1>SPEC รวมสั่งแก้ — โหมดคิดเร็ว + ภาพรวมทุกกลุ่ม</h1>
+<div class="sub">มติพี่นัท 13 มิ.ย. 2026 (เล่นจริง + ดูดราฟ DRAFT-ALLG) · dev = แชท B · แก้ public/calculator/index.html</div>
+
+<h2>ส่วนที่ 1 — โหมดคิดเร็ว: สินค้าครบทุกกลุ่ม + ออปชั่นเฉพาะ สี·กระจก (มติใหม่)</h2>
+<div class="ok"><b>มติ:</b> "ให้มีสินค้าครบแบบหน้าโหมดทำใบเสนอราคา แต่เลือกได้เฉพาะออปชั่นสีอลูมิเนียม + ออปชั่นกระจกที่ใส่ได้ — ที่เหลือ (มือจับ/อื่นๆ/ออปชั่นปลีกย่อย) ตัดทิ้ง · UX/UI หน้านี้โอเคแล้ว ไม่รื้อ layout"</div>
+<table>
+<tr><th style="width:30%;">จุดแก้</th><th>รายละเอียด</th></tr>
+<tr><td>1.1 กลุ่มงานครบ 7</td><td><code>.qi-group</code> (addQuickItem ~L1766) เดิมมี 2 กลุ่ม → ใส่ครบ 1-7 เหมือนหน้าเต็ม · เปลี่ยน <code>prodOptionsG()</code> → <code>prodOptionsG6()</code> (list สินค้าชุดเดียวกับหน้าทำใบ)</td></tr>
+<tr><td>1.2 เพิ่มสีอลู + กระจก</td><td>เพิ่ม 2 dropdown ในแถวเดิม: <code>.qi-color</code> (colorOpts()) + <code>.qi-glass</code> (glassOpts()) · <b>โชว์เฉพาะสินค้าที่ใส่ได้</b> — ใช้กติกาเดียวกับหน้าเต็ม (สินค้าที่หน้าเต็มโชว์ .i-color-wrap/.i-glass-wrap) · ซ่อนเมื่อไม่เกี่ยว (เช่น หลังคา/ตู้/ม่านซิป)</td></tr>
+<tr><td>1.3 ราคาคิดสี+กระจกจริง</td><td><code>readQuickItem</code> (~L1786) เดิม <code>calcUnit(p,w,h,<b>0,0</b>,panels,{},false)</code> = ล็อกสีขาว+กระจกแรกตลอด → ส่ง <code>gi=qi-glass.value · ci=qi-color.value</code> จริง</td></tr>
+<tr><td>1.4 ออปชั่นอื่น</td><td><b>ไม่เพิ่ม</b> (มือจับ/มุ้ง/ธรณี/คาดตาราง ฯลฯ ตัดทิ้งตามมติ — โหมดนี้ไว้ตีราคาเร็ว)</td></tr>
+<tr><td>1.5 จำนวนบาน/label</td><td>คงของเดิม (qiWLabel casement "กว้าง/บาน" ทำงานต่อ · usesPanels ซ่อน/โชว์เดิม)</td></tr>
+</table>
+<div class="warn">⚠️ เช็คเงิน (accountant ตรวจหลัง dev): สี/กระจกในคิดเร็วต้องให้ราคา<b>เท่าหน้าเต็ม</b>เมื่อ input เดียวกัน — เทียบ 3 เคส (บานเลื่อนยูโร+ดำ+เทมเปอร์ · casement+ซาฮาร่า · ระแนง rn2 ไม่มีกระจก)</div>
+
+<h2>ส่วนที่ 2 — ภาพรวมทุกกลุ่ม (จากดราฟ DRAFT-ALLG-ux-2026-06-13 · UX ผ่านแล้ว)</h2>
+<table>
+<tr><th style="width:30%;">จุดแก้</th><th>รายละเอียด</th></tr>
+<tr><td>2.1 🔴 ชิปรูปแบบ wrap แนวนอน</td><td>ชิปตระกูล/รุ่น (.fam-prodsel ฯลฯ) เดิมตกแนวตั้งทีละปุ่ม → CSS ชิป <code>flex:0 0 auto</code> + container <code>display:flex;flex-wrap:wrap;gap:6px</code> กว้างตามข้อความ (ดูดราฟ .chips)</td></tr>
+<tr><td>2.2 🔴 ประตู/หน้าต่าง = ติ๊กเล็ก</td><td>ชิป .i-type เดิม 2 ปุ่มใหญ่เต็มแถว (chip-2up 52px) → segment เล็ก รวมบรรทัดเดียวกับ กว้าง·สูง·จำนวนบาน (ดูดราฟ .seg + .row) — ทั้ง 6 กลุ่มที่มีประเภท</td></tr>
+<tr><td>2.3 🟡 แถบสีทั้งใบย้ายลง</td><td>แถบ "สีอลู/กระจก (ทั้งใบ)" จากหัวรายการ → บรรทัดเดียวในการ์ด ใต้โซนขนาด + ปุ่ม "แก้เฉพาะรายการนี้ ▾" (รอเคาะข้อ A ด้านล่าง)</td></tr>
+<tr><td>2.4 จำนวนบาน stepper</td><td>ช่องตัวเลข → stepper −/+ ในแถวขนาด (รอเคาะข้อ B)</td></tr>
+</table>
+
+<h2>รอเคาะก่อนลงมือ (2 ข้อ)</h2>
+<ul>
+<li><b>A. แถบสีทั้งใบ:</b> ย้ายเข้า "ทุกการ์ด" ตามดราฟ — หรือคงบนหัว 1 จุดแล้วย่อ?</li>
+<li><b>B. จำนวนบาน:</b> stepper −/+ ตามดราฟ — หรือคงช่องตัวเลขเดิม?</li>
+</ul>
+
+<h2>ลำดับทำ + Definition of Done</h2>
+<ul>
+<li>เฟส 1: โหมดคิดเร็ว (1.1-1.5) → เทียบราคา 3 เคสกับหน้าเต็ม → commit</li>
+<li>เฟส 2: ALLG 2.1+2.2 (ชิป wrap + ติ๊กเล็ก) → verify ทุกกลุ่มในเบราว์เซอร์จริง → commit</li>
+<li>เฟส 3: 2.3+2.4 ตามที่เคาะ A/B → commit</li>
+<li>DoD: gate sweep เขียว · พี่นัทกดเล่นมือถือจริงผ่านลิงก์ calc-beta</li>
+</ul>
+<div class="sub">อ้างอิง: DRAFT-ALLG-ux-2026-06-13.html (กดเล่น) · SPEC-UX-substeps-G1G7-2026-06-13.md (subagent UX) · งานค้างเดิม: G1G6-F (GH สีซ้ำ — รวมแก้กับ 2.3 ได้)</div>
+</body>
+</html>
