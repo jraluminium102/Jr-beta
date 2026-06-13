@@ -69,9 +69,20 @@ function DocRow({ label, icon, jobId, docType, doc, onSaved, showWarranty }: Doc
   async function save() {
     setErrMsg(null); setSaving(true);
     try {
+      // BUG-08: กัน NaN ก่อนส่ง — ถ้า w_years กรอกแล้วไม่ใช่ตัวเลขที่ valid ให้เตือนและหยุด
+      let yearsVal: number | null = null;
+      if (docType === "warranty" && s.w_years) {
+        const parsed = Number(s.w_years);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          setErrMsg("ปีรับประกันต้องเป็นตัวเลขที่ถูกต้องและมากกว่า 0");
+          setSaving(false);
+          return;
+        }
+        yearsVal = parsed;
+      }
       const meta =
         docType === "warranty"
-          ? { start_date: s.w_start || null, years: s.w_years ? Number(s.w_years) : null }
+          ? { start_date: s.w_start || null, years: yearsVal }
           : {};
       await api.post("/job-documents", {
         job_id:    jobId,

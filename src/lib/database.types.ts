@@ -31,6 +31,7 @@ export interface Job {
   estimator_id: string | null; designer_id: string | null;
   design_start: string | null; design_end: string | null; quote_sent_date: string | null;
   discount_amount: number | null; net_amount: number | null; vat_amount: number | null; total_amount: number | null;
+  vat_rate: number;  // 0034: 0=ไม่คิด VAT, 7=คิด VAT 7% (default 7)
   status: JobStatus; deposit_amount: number | null; deposit_date: string | null;
   cancel_reason: string | null; remark: string | null; created_at: string; updated_at: string;
   customer_id: number | null; queue_entry_id: string | null;   // journey backbone (0012)

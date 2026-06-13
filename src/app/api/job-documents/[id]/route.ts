@@ -45,12 +45,15 @@ export const DELETE = withRoute(async (_req: Request, { params }: Params) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = createClient() as any;
 
-  const { error } = await sb
+  // BUG-09: ใช้ .select() หลัง delete เพื่อตรวจว่ามี row ถูกลบจริง → 404 ถ้าไม่พบ
+  const { data, error } = await sb
     .from("job_documents")
     .delete()
-    .eq("id", params.id);
+    .eq("id", params.id)
+    .select("id");
 
   if (error) return err("ลบเอกสารไม่สำเร็จ: " + error.message, 500);
+  if (!data || (data as unknown[]).length === 0) return err("ไม่พบเอกสาร", 404);
 
   return ok({ deleted: true });
 });

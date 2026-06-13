@@ -18,6 +18,7 @@ type PostBody = {
   ext_link?: string;
   issue_date?: string;
   step: 1 | 2;
+  vat_rate: 0 | 7;
 };
 
 // ---------- helpers ----------
@@ -59,6 +60,7 @@ function Modal({
   const parsed = q ? parseNoteExt(q.note) : { ext_ref: "", ext_link: "" };
 
   const [total,      setTotal]    = useState(q ? String(q.net) : "");
+  const [noVat,      setNoVat]    = useState(false);
   const [extRef,     setExtRef]   = useState(parsed.ext_ref);
   const [extLink,    setExtLink]  = useState(parsed.ext_link);
   const [issueDate,  setIssueDate] = useState(new Date().toISOString().slice(0, 10));
@@ -86,6 +88,7 @@ function Modal({
         ext_ref: extRef || undefined, ext_link: extLink || undefined,
         issue_date: issueDate || undefined,
         step: mode === "step1" ? 1 : 2,
+        vat_rate: noVat ? 0 : 7,
       };
       await api.post("/quotations/quick", body);
       onSaved();
@@ -122,7 +125,7 @@ function Modal({
           {/* ยอดรวม */}
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-white/85">
-              ยอดรวม (รวม VAT แล้ว)
+              {noVat ? "ยอดรวม (ไม่มี VAT)" : "ยอดรวม (รวม VAT แล้ว)"}
               <span className="text-red-400 ml-1">*</span>
             </label>
             <input
@@ -133,13 +136,37 @@ function Modal({
               placeholder="เช่น 120000"
               className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15 tabular-nums"
             />
-            {total && parseFloat(total) > 0 && (
-              <p className="text-[11px] text-white/50 mt-1 tabular-nums">
-                ≈ ก่อน VAT ฿{baht(Math.round((parseFloat(total) / 1.07) * 100) / 100)}
-                {" · "}VAT ฿{baht(Math.round(parseFloat(total) - Math.round((parseFloat(total) / 1.07) * 100) / 100))}
-              </p>
-            )}
+            {total && parseFloat(total) > 0 && (() => {
+              const t = parseFloat(total);
+              const vatAmt  = noVat ? 0 : Math.round((t * 7) / 107);
+              const beforeVat = t - vatAmt;
+              return (
+                <p className="text-[11px] text-white/50 mt-1 tabular-nums">
+                  ก่อน VAT ฿{baht(beforeVat)}
+                  {" · "}VAT ฿{baht(vatAmt)}
+                  {noVat && <span className="ml-1 text-amber-300/80">(ไม่มี VAT)</span>}
+                </p>
+              );
+            })()}
           </div>
+
+          {/* ไม่คิด VAT */}
+          <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+            <div className={`relative w-10 h-6 rounded-full transition-colors ${noVat ? "bg-amber-500" : "bg-white/20"}`}>
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${noVat ? "translate-x-5" : "translate-x-1"}`} />
+              <input
+                type="checkbox"
+                checked={noVat}
+                onChange={(e) => setNoVat(e.target.checked)}
+                className="sr-only"
+                aria-label="ไม่คิด VAT"
+              />
+            </div>
+            <span className="text-sm font-semibold text-white/85">
+              ไม่คิด VAT
+              <span className="ml-1.5 text-[11px] font-normal text-white/50">(ลูกค้าไม่เอาใบกำกับ)</span>
+            </span>
+          </label>
 
           {/* เลขใบเสนอนอกระบบ */}
           <div>
@@ -357,11 +384,9 @@ export default function QuotationChecklistClient() {
     try {
       const res = await api.get<ChecklistData>("/quotation-checklist");
       setData(res.data);
-      // ผู้ใช้ที่โหลด GET ได้แล้ว — canWrite ตรวจจาก role ฝั่ง server
-      // เราใช้วิธีลอง POST เมื่อกด; ถ้าได้ข้อมูล = ผ่าน auth → แสดงปุ่มให้ทุกคนที่มีสิทธิ์ read
-      // (handler POST ใช้ requirePermission("jobs","write") ซึ่งให้ ADMIN/SALES)
-      // หน้านี้จึงแสดงปุ่มเสมอ แล้วให้ server reject ถ้าไม่มีสิทธิ์
-      setCanWrite(true);
+      // BUG-06: ใช้ can_write จาก meta ที่ server คำนวณจาก role จริง
+      // (ADMIN/SALES/DESIGNER มี jobs:write → เห็นปุ่ม; PRODUCTION/INSTALLER/VIEWER ไม่เห็น)
+      setCanWrite(res.meta?.can_write === true);
     } catch (e) {
       setErrMsg(e instanceof Error ? e.message : "โหลดข้อมูลไม่สำเร็จ");
     } finally {
