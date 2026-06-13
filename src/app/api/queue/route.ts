@@ -163,14 +163,16 @@ function lastDayOfMonth(year: number, month: number): string {
   return `${last.getUTCFullYear()}-${String(last.getUTCMonth() + 1).padStart(2, "0")}-${String(last.getUTCDate()).padStart(2, "0")}`;
 }
 
-// Returns [monday, sunday] ISO strings for ISO week wk of year yr
+// Returns [monday, saturday] ISO strings for ISO week wk of year yr
+// ร้านทำงาน จ-ส (6 วัน) ให้ตรงกับ weekDays() ใน QueueCalendarView ที่ render 6 คอลัมน์เท่านั้น
+// เดิมคืน sunday (+6) → คิววันอาทิตย์ถูกนับใน count แต่ไม่ render → แก้เป็น +5 (เสาร์)
 function isoWeekRange(yr: number, wk: number): [string, string] {
   // Jan 4 is always in week 1 (ISO 8601)
   const jan4 = new Date(Date.UTC(yr, 0, 4));
   const jan4Dow = jan4.getUTCDay() || 7; // 1=Mon…7=Sun
   const monday = new Date(jan4.getTime() - (jan4Dow - 1) * 86400000 + (wk - 1) * 7 * 86400000);
-  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const saturday = new Date(monday.getTime() + 5 * 86400000);
   const fmt = (d: Date) =>
     `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-  return [fmt(monday), fmt(sunday)];
+  return [fmt(monday), fmt(saturday)];
 }
