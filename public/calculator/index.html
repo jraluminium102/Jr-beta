@@ -1817,32 +1817,27 @@ function groupGHOpts(ch){
     {key:'➕ หลังคาผสม (วัสดุที่ 2)', open:false, kw:['ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2']}, // G3-round2 B⑤
     {key:'📝 งานพิเศษ · รื้อของเดิม', open:false, kw:[]} // G3-round2 B⑥
   ] : [
-    // G4: หมวดตู้ ต้องอยู่ก่อน 🚪 (loop เจอ match แรกแล้ว break) · keyword เฉพาะตู้ล้วน → สินค้าอื่นไม่หลุดเข้า · ห้ามลบ keyword 'ประเภท'/'จำนวนบาน' จาก 🚪
-    {key:'📦 รายละเอียดตู้', open:true, kw:['cab-detail','ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้','วัสดุผนัง']}, // cab-detail = class marker คุมทุก UI ตู้ให้อยู่หมวดนี้ตามลำดับ (HANDOFF-G4-cabinet-next)
-    {key:'🚪 ชนิด / การเปิด', open:true, kw:[
-      'ชนิดการเปิด','combo บาน','ธรณี','ปลายหลังคา','โครงสร้าง',
-      'แป ','รูปแบบ shower','ประเภทประตู','โชว์ราง','ซ่อนราง','ทิศระแนง',
-      'ลายระแนง','ชนิดราง','ของเสริมหลังคา','สีวัสดุมุง',
-      'ความสูง','ทำเป็นประตู','ซ่อนสโลป','มอเตอร์','ค่าประตู',
-      'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน',
-      'ประเภท','ชนิดชั้น','ราวจับ'
-    ]},
-    {key:'🔧 มือจับ / ล็อค', open:false, kw:[
-      'มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
-      'ติดตายกี่บาน'
-    ]}, // folding bug C: เอา 'เสริมคาน' ออก (เคย bucket o-beam ผิดเข้ามือจับ/ล็อค) → ตกหมวด "อื่นๆ" แทน
-    {key:'🪟 มุ้ง', open:false, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']},
-    {key:'📐 คาดตาราง', open:false, kw:[
-      'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง',
-      'เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง'
-    ]},
-    {key:'➕ อื่นๆ (ครอบวงกบ / ดรอปพื้น / หมายเหตุ)', open:false, kw:[]}
+    // G1G6-D: 7 หมวดทั่วไป (HANDOFF-G1G6 ข้อ2) + ตู้ (G4 product-specific) · ลำดับ array = ลำดับจับ keyword (เฉพาะเจาะจงก่อน) · disp = ลำดับแสดงผล ①-⑦
+    {key:'📦 รายละเอียดตู้', open:true, disp:0, kw:['cab-detail','ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้','วัสดุผนัง']}, // cab-detail = class marker (HANDOFF-G4-cabinet-next)
+    {key:'🪟 มุ้ง', open:false, disp:3, kw:['มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง']}, // ③ จับก่อน (กัน 'จำนวนบานมุ้ง' หลุดเข้าโครงสร้าง)
+    {key:'📐 คาดตาราง', open:false, disp:4, kw:['คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง','เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง']}, // ④
+    {key:'🔧 มือจับ / ล็อค / โช๊ค', open:false, disp:2, kw:['มือจับ','Cmech','โช๊ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ']}, // ② (folding bug C: ไม่มี 'เสริมคาน')
+    {key:'🚪 ธรณี / ครอบวงกบ / ติดตาย', open:true, disp:1, kw:['ธรณี','ครอบวงกบ','ติดตาย','ช่องแสง','ดรอปพื้น']}, // ① (จับหลังมือจับ — 'ติดตายกี่บาน' เข้า ① ตาม handoff o-fixed)
+    {key:'🧱 แผ่นทึบล่าง / ลูกฟูก', open:false, disp:6, kw:['แผ่นทึบ','ทึบล่าง','ลูกฟูก']}, // ⑥ จับก่อนโครงสร้าง (กัน 'สี ' กว้างแย่ง)
+    {key:'🏗️ โครงสร้าง / คาน / ราง / ซ่อน', open:false, disp:5, kw:[
+      'ชนิดการเปิด','โครงสร้าง','โชว์ราง','ซ่อนราง','ซ่อนคาน','เสริมคาน','รางยู','Soft Close','สลิง','ชนิดราง','มอเตอร์','ทำเป็นประตู','ค่าประตู',
+      'ทิศระแนง','ลายระแนง','ความสูง','ราวจับ','combo บาน','แป ','ปลายหลังคา','สีวัสดุมุง','ของเสริมหลังคา','ซ่อนสโลป','รูปแบบ shower','ประเภทประตู',
+      'อบสี','สีอบ','ผิว/สี','สี ','ลาย','ความลึก','จำนวนบาน','ประเภท'
+    ]}, // ⑤ (รวม legacy kw 🚪เดิม — ส่วนใหญ่ของ inline/skip ไปแล้ว เก็บกัน orphan)
+    {key:'➕ งานเสริม / หมายเหตุ / OPTION', open:false, disp:7, kw:[]} // ⑦ catch-all
   ];
   var kids=[].slice.call(box.children);
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
     if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
+    // G1G6-C: ออปชั่น "เฉพาะสินค้า" inline ใต้ช่องเลือกรุ่น นอก accordion — Shower(shtype/shdoortype/corner/showerhw) · มอเตอร์-ดัดโค้ง-บานเปลือย(motor/frametype/framecolor) · ระแนง(finish/hmode/doortype/doorprice) · gate cascade
+    if(!isRoof && k.querySelector && (k.querySelector('.o-shtype,.o-shdoortype,.o-corner,.o-showerhw,.o-motor,.o-frametype,.o-framecolor,.o-finish,.o-hmode,.o-doortype,.o-doorprice')||k.classList.contains('gate-rn-casc'))){ skipEls.push(k); return; }
     var t=(k.textContent||'')+(k.className||'');
     var ci=CATS.length-1;
     for(var i=0;i<CATS.length-1;i++){
@@ -1852,7 +1847,9 @@ function groupGHOpts(ch){
   });
   box.innerHTML='';
   skipEls.forEach(function(k){ box.appendChild(k); }); // คงไว้ด้านบนสุด ไม่เข้า accordion
-  CATS.forEach(function(c,i){
+  // G1G6-D: แสดงผลตาม disp (①-⑦) — ลำดับจับ keyword (array order) แยกจากลำดับแสดง
+  CATS.map(function(c,i){return i;}).sort(function(a,b){return ((CATS[a].disp!=null?CATS[a].disp:a)-(CATS[b].disp!=null?CATS[b].disp:b));}).forEach(function(i){
+    var c=CATS[i];
     if(!buckets[i].length) return;
     var det=document.createElement('details');
     det.className='gh-opt-cat-det';

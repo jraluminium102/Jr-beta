@@ -35,7 +35,8 @@ want("FIX A④: ไม่มี details.optbox ซ้อน", d.querySelectorAll
 w.addItem();
 const chs = doc.querySelectorAll("#items .ch"); const ds = chs[chs.length - 1];
 sf(ds, ".i-group", "1"); sf(ds, ".i-prod", "sliding_euro"); sf(ds, ".i-w", "2"); sf(ds, ".i-h", "2");
-want("FIX A: บานเลื่อน ยังใช้กล่องเดิม (🚪 ชนิด/การเปิด)", boxNames(ds).some((x) => /ชนิด \/ การเปิด/.test(x)), boxNames(ds).join(" | "));
+// G1G6-D (2026-06-13): non-roof จัดใหม่ 7 หมวด — บานเลื่อนใช้ชุด 7 หมวด (มี ธรณี) ไม่ใช่ชุดหลังคา
+want("FIX A: บานเลื่อน ใช้กล่อง 7 หมวด (ธรณี — ไม่ใช่ชุดหลังคา)", boxNames(ds).some((x) => /ธรณี/.test(x)) && !boxNames(ds).some((x) => /วัสดุมุง/.test(x)), boxNames(ds).join(" | "));
 
 // ===== FIX D: label ยาว/ยื่น + ซ่อน i-type =====
 const wlab = d.querySelector(".i-w").previousElementSibling.textContent;

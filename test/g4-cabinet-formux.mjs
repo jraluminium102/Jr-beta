@@ -65,8 +65,9 @@ want("ฝาตู้: ซ่อน .i-type", itwF && itwF.style.display === "no
 const dg1 = add("1", "sliding_euro");
 const g1names = boxNames(dg1);
 want("G1: ไม่มีหมวด 📦 รายละเอียดตู้", !g1names.some((x) => /รายละเอียดตู้/.test(x)), g1names.join(" | "));
-const g1kua = boxOf(dg1, /ชนิด \/ การเปิด/);
-want("G1: หมวด 🚪 ชนิด/การเปิด ยังแสดงปกติ", !!g1kua && g1kua.textContent.length > 10, g1kua ? "ok" : "no 🚪 box");
+// G1G6-D (2026-06-13): 🚪 ชนิด/การเปิด ถูกจัดใหม่เป็น 7 หมวด — เช็คหมวด ① ธรณี/ครอบวงกบ แทน
+const g1kua = boxOf(dg1, /ธรณี/);
+want("G1: หมวด ① ธรณี/ครอบวงกบ แสดงปกติ (7 หมวดใหม่)", !!g1kua && g1kua.textContent.length > 10, g1kua ? "ok" : "no ① box");
 want("G1: ยังมี ฝังรางยู + ดรอปพื้น", !!dg1.querySelector(".o-uchannel") && !!dg1.querySelector(".o-dfm"));
 
 // ===== Regression G3 หลังคา =====
