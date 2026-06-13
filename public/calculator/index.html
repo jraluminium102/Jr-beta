@@ -237,6 +237,15 @@
   .chip-2up{ }
   .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
   .chip-sm .chip{ min-height:44px; padding:6px 12px; font-size:13px; } /* UX-substeps: ≥44px แตะง่ายมือถือ (เดิม 40) */
+  /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
+  /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
+  label.opt:has(> .chip-grid){ display:block; }
+  .chip-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin-top:4px; width:100%; } /* auto-fill = ปุ่มกว้างเท่ากันทุกจำนวน เรียงเต็มแถวไม่เละ */
+  .chip-grid.cg3{ grid-template-columns:repeat(3,1fr); }
+  .chip-grid.cg4{ grid-template-columns:repeat(4,1fr); }
+  .chip-grid.cg2{ grid-template-columns:repeat(2,1fr); }
+  .chip-grid .chip{ width:100%; min-height:44px; padding:6px 4px; font-size:12px; line-height:1.2; word-break:keep-all; overflow-wrap:anywhere; }
+  @media(max-width:560px){ .chip-grid{ grid-template-columns:repeat(3,1fr); } .chip-grid.cg4,.chip-grid.cg2{ grid-template-columns:repeat(2,1fr); } }
   .field-label{ display:block; font-size:13px; color:var(--muted); margin-bottom:2px; }
 </style>
 </head>
@@ -1760,10 +1769,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 let qSeq=0;
 // ALLG-v2: คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอราคา (กลุ่ม 7 ชิป + รูปแบบบาน common chips + อื่นๆ ▾ dropdown) · ออปชั่นแค่สี/กระจก
 var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 หลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
-function qiGroupChips(cur){ return '<div class="chip-group chip-sm">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
+function qiGroupChips(cur){ return '<div class="chip-grid cg4">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
 function qiFamChips(grp,curId){ var cats=FAM_CATS[grp]; var curCat=(PBYID[curId]||{}).cat;
   if(!cats) return ''; // กลุ่มไม่มี family (เช่นไม่ตรง) → ใช้ dropdown
-  var h='<div class="chip-group chip-sm">';
+  // ALLG-v2: grid layout ปุ่มกว้างเท่ากัน — เลือก cols จากจำนวนรายการ (รวม "อื่นๆ")
+  var total=cats.length+1; var cls=total<=3?'cg3':(total<=4?'cg4':(total<=6?'cg3':''));
+  var h='<div class="chip-grid '+cls+'">';
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===curCat?' on':'')+'" data-cat="'+c+'" onclick="qiPickFam(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip" style="border-style:dashed;" onclick="qiOther(this)">อื่นๆ ▾</button></div>'; return h; }
 function qiRebuild(d){ var g=d.querySelector('.qi-group').value; var gc=d.querySelector('.qi-groupchips'); if(gc) gc.innerHTML=qiGroupChips(g);
@@ -2276,13 +2287,13 @@ function g3SelectorHTML(p){
   h+='<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip'+(!isWall?' on':'')+'" onclick="g3PickTab(this,\'roof\')">หลังคา</button><button type="button" class="chip'+(isWall?' on':'')+'" onclick="g3PickTab(this,\'wall\')">ฝ้า-ผนัง</button></div>';
   if(!isWall){
     var grp=rfGrpOf(p.id)||'metal'; var gk;
-    h+='<label class="opt" style="width:100%;margin:0;">กลุ่มวัสดุ <div class="chip-group chip-sm">';
+    h+='<label class="opt" style="width:100%;margin:0;">กลุ่มวัสดุ<div class="chip-grid">';
     for(gk in RF_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="g3PickGrp(this)">'+RF_GRP_LABEL[gk]+'</button>'; }
-    h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+    h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
     RF_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
     h+='</div></label>';
   } else {
-    h+='<label class="opt" style="width:100%;margin:0;">รุ่นฝ้า-ผนัง <div class="chip-group chip-sm">';
+    h+='<label class="opt" style="width:100%;margin:0;">รุ่นฝ้า-ผนัง<div class="chip-grid">';
     G3_WALL_PRODS.forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
     h+='</div></label>';
   }
@@ -2300,9 +2311,9 @@ function mosqPickGrp(btn){ var first=(MOSQ_GRP_PRODS[btn.dataset.grp]||[])[0]; i
 function mosqSelectorHTML(p){
   var grp=mosqGrpOf(p.id)||'frame'; var gk;
   var h='<div class="opt mosq-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
-  h+='<label class="opt" style="width:100%;margin:0;">หมวดมุ้ง <div class="chip-group chip-sm">';
+  h+='<label class="opt" style="width:100%;margin:0;">หมวดมุ้ง<div class="chip-grid">';
   for(gk in MOSQ_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="mosqPickGrp(this)">'+MOSQ_GRP_LABEL[gk]+'</button>'; }
-  h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+  h+='</div></label><label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
   MOSQ_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
   return h+'</div></label></div>';
 }
@@ -2357,7 +2368,7 @@ function rnPick(btn,dim){
   if(id && id!==cur) g3SyncProd(ch,id);
   else { buildItemOpts(ch); calcQuote(); } // ALLG-v2: เลือกค่าเดิม (product ไม่เปลี่ยน) แต่ step เพิ่ม → re-render เพื่อโผล่ขั้นถัดไป
 }
-function rnChips(opts,curVal,dim,cb){ cb=cb||'rnPick'; var h='<div class="chip-group chip-sm">'; opts.forEach(function(o){ var v=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; h+='<button type="button" class="chip'+(v===curVal?' on':'')+'" data-val="'+String(v).replace(/"/g,'&quot;')+'" onclick="'+cb+'(this,\''+dim+'\')">'+t+'</button>'; }); return h+'</div>'; }
+function rnChips(opts,curVal,dim,cb){ cb=cb||'rnPick'; var h='<div class="chip-grid">'; opts.forEach(function(o){ var v=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; h+='<button type="button" class="chip'+(v===curVal?' on':'')+'" data-val="'+String(v).replace(/"/g,'&quot;')+'" onclick="'+cb+'(this,\''+dim+'\')">'+t+'</button>'; }); return h+'</div>'; }
 // ALLG-v2: progressive reveal — โผล่ทีละขั้น (เลือกขั้นบนก่อน ขั้นล่างค่อยโผล่) · step เก็บใน ch.dataset.rnStep
 //   บังตา 3 ขั้น (ขนาดเส้น→ระยะโชว์→โครง) · ผนัง/เกล็ด 2 ขั้น (ระดับ1→โครง)
 function _rnStepHint(){ return '<div style="font-size:11px;color:#9CA3AF;margin-top:6px;">↓ เลือกด้านบนก่อน แล้วตัวเลือกถัดไปจะโผล่</div>'; }
@@ -2439,13 +2450,13 @@ function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
   var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   var _famHead={'1':'เลือกรูปแบบบาน','2':'เลือกประเภทงาน','4':'เลือกตู้ / ฝาตู้','6':'เลือกรูปแบบบาน','7':'ม่านซิป'}[grp]||'เลือกรูปแบบ';
-  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b> <div class="chip-group chip-sm">'; // UX-substeps 🟡: เดิม "แบบงาน" 12.5px จาง ผู้ใช้ข้ามไปกรอกขนาดก่อน · หัวข้อตามกลุ่ม
+  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b><div class="chip-grid">'; // ALLG-v2: grid ปุ่มเท่ากัน (เดิม chip-sm flex = เละ ไม่เหมือนดราฟ)
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div></label>';
   if(FAM_CASCADE_CATS.indexOf(cur)<0 && !famOther && cats.indexOf(cur)>=0){ // cat นอก family list (เช่น เสริม จาก "อื่นๆ") → ไม่โชว์แถวรุ่น (list ยาว · ใช้ dropdown)
     var models=PRODUCTS.filter(function(q){return q.cat===cur;});
     if(models.length>1){
-      h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น <div class="chip-group chip-sm">';
+      h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
       models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name.replace(cur,'').trim()+'</button>'; });
       h+='</div></label>';
     }
