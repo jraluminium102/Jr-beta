@@ -2213,7 +2213,23 @@ function addGlasshouseSet(){
 const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mosq',label:'เปลี่ยนผ้ามุ้ง'},{id:'color',label:'เปลี่ยนสีอลู'},{id:'handle',label:'เปลี่ยนมือจับ'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
 // มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
 const OC_HANDLES=[{n:'Cmech ฝัง ประตู ธรรมดา',p:1050},{n:'Cmech ฝัง ประตู พิเศษชุบ',p:1470},{n:'Cmech ฝัง หน้าต่าง ธรรมดา',p:350},{n:'Cmech ฝัง หน้าต่าง พิเศษชุบ',p:490},{n:'Cmech เมโทร ประตู ธรรมดา',p:1000},{n:'Cmech เมโทร ประตู พิเศษชุบ',p:1400},{n:'Cmech เมโทร หน้าต่าง ธรรมดา',p:600},{n:'Cmech เมโทร หน้าต่าง พิเศษชุบ',p:840}];
-function ocCatOptions(isRoof){ var cats=isRoof?OC_CATS.filter(function(c){return ['color','roof','other'].indexOf(c.id)>=0;}):OC_CATS; return '<option value="">— เลือกหมวด —</option>'+cats.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join(''); } // FIX B (G3): หลังคา → เหลือ สี/หลังคา/อื่นๆ (ตัด กระจก/มุ้ง/มือจับ)
+// ALLG-v2 (พี่นัท): OPTION ทางเลือกลูกค้า กรองตาม control ที่สินค้านั้น "มีจริง" — ติดตายไม่มีมุ้ง/มือจับ ฯลฯ
+function ocCatOptions(ch){
+  var has=function(sel){ var e=ch&&ch.querySelector(sel); return e && e.offsetParent!==null && getComputedStyle(e).display!=='none'; };
+  var hasEl=function(sel){ return !!(ch&&ch.querySelector(sel)); };
+  var ids;
+  if(hasEl('.o-roofend')){ ids=['color','roof','other']; } // หลังคา
+  else {
+    ids=[];
+    if(has('.i-glass-wrap')) ids.push('glass');                 // มีช่องกระจก
+    if(hasEl('.o-mosq')) ids.push('mosq');                      // มีมุ้ง
+    if(has('.i-color-wrap')||hasEl('.o-finish')) ids.push('color'); // สีอลู (บาน) หรือ ผิว/สี (ระแนง)
+    if(hasEl('.o-cmech')||hasEl('.o-digi')||hasEl('.o-xhandle')||hasEl('.o-cmechawn')) ids.push('handle'); // มีมือจับ
+    ids.push('other');
+  }
+  var byId={}; OC_CATS.forEach(function(c){byId[c.id]=c;});
+  return '<option value="">— เลือกหมวด —</option>'+ids.filter(function(i){return byId[i];}).map(function(i){return '<option value="'+i+'">'+byId[i].label+'</option>';}).join('');
+}
 function ocItemOptions(cat){
   if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
     GLASS.forEach(function(g,i){ var k=/อินซูเลท/.test(g.n)?'อินซูเลท':(/เทมเปอร์/.test(g.n)?'เทมเปอร์':(/ลามิเนต/.test(g.n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(g.n)?'กระจกใส/สี':'อื่นๆ'))); grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
@@ -2240,8 +2256,8 @@ function ocPick(sel){ var row=sel.closest('.oc-row'), ch=sel.closest('.ch'); if(
   else if(cat==='mosq'){ delta=Math.round((parseFloat(opt.getAttribute('data-r'))||0)*area); }
   else if(cat==='roof'){ var rp=PBYID[sel.value]; var nr=(rp&&rp.rates)?rateOf(area,RATES[rp.rates]):0; delta=Math.round(nr*area); }
   tx.value='เปลี่ยนเป็น'+name; dl.value=delta||''; calcQuote(); }
-function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var _ocCh=btn.closest('.ch'); var _isRoof=!!(_ocCh&&_ocCh.querySelector('.o-roofend')); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
-  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions(_isRoof)+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
+function ocAddRow(btn){ var box=btn.closest('.oc-block').querySelector('.oc-list'); var _ocCh=btn.closest('.ch'); var row=document.createElement('div'); row.className='oc-row'; row.style.cssText='display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;';
+  row.innerHTML='<select class="oc-cat" onchange="ocCat(this)" style="height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;">'+ocCatOptions(_ocCh)+'</select><select class="oc-item" onchange="ocPick(this)" style="height:32px;font-size:12px;max-width:200px;border:1px solid var(--line);border-radius:6px;display:none;"></select><input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="height:32px;font-size:12px;flex:1;min-width:130px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="height:32px;width:90px;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;"><button type="button" class="oc-del" onclick="this.closest(\'.oc-row\').remove();calcQuote();" style="height:32px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#B3151D;">✕</button>';
   box.appendChild(row); }
 // หลังคาเลื่อน: auto-fill ราคามอเตอร์ตามพื้นที่ (18,000/28,000/36,000/72,000) ลงช่อง · ผู้ใช้แก้ทับได้ (data-edited)
 function rfSlideMotorFill(ch){ try{ var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p||!p.optSlide)return;
