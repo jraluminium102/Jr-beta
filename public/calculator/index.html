@@ -1799,7 +1799,9 @@ function addQuickItem(){
      `<div class="full"><label>กลุ่มงาน</label><select class="qi-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select><div class="qi-groupchips">${qiGroupChips('1')}</div></div>`+
      `<div class="full"><label>แบบ</label><div class="qi-famchips">${qiFamChips('1','sliding_sms')}</div><select class="qi-prod" style="display:none;">${prodOptionsG6('1')}</select></div>`+
      /* SPEC-quickmode-allg 1.2: สีอลู + กระจก (เฉพาะสินค้าที่ใส่ได้ — กติกาเดียวกับหน้าเต็ม) · ออปชั่นอื่นตัดทิ้งตามมติ */
-     `<div class="full qi-cg-row" style="display:flex;gap:8px;flex-wrap:wrap;"><div class="qi-color-wrap" style="flex:1;min-width:140px;"><label>สีอลูมิเนียม</label><select class="qi-color">${colorOpts()}</select></div><div class="qi-glass-wrap" style="flex:1;min-width:140px;"><label>กระจก</label><select class="qi-glass">${glassOpts()}</select></div></div>`+
+     `<div class="full qi-cg-row" style="display:flex;gap:8px;flex-wrap:wrap;"><div class="qi-color-wrap" style="flex:1;min-width:140px;"><label>สีอลูมิเนียม</label><select class="qi-color">${colorOpts()}</select></div><div class="qi-finish-wrap" style="flex:1;min-width:140px;display:none;"><label>สีอลู (ระแนง)</label><select class="qi-finish"></select></div><div class="qi-glass-wrap" style="flex:1;min-width:140px;"><label>กระจก</label><select class="qi-glass">${glassOpts()}</select></div></div>`+
+     /* ALLG-v2: บรรทัดเทียบราคาสีอลู/กระจก (ลูกค้าอยากรู้เพิ่มเท่าไร) — เซลล์ตีราคาเบื้องต้น */
+     `<div class="full qi-cmp" style="display:none;font-size:12px;color:#0369A1;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:5px 9px;"></div>`+
      `<div><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="1.8"></div>`+
      `<div><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="2.0"></div>`+
      `<div class="qi-panels-wrap"><label>จำนวนบาน</label><input class="qi-panels" type="number" step="1" min="1" value="1"></div>`+
@@ -1812,7 +1814,12 @@ function addQuickItem(){
     if(p){ var _ao=AREA_CATS.includes(p.cat);
       var _cw=d.querySelector('.qi-color-wrap'); if(_cw) _cw.style.display=(p.cabinet||!(_ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))?'':'none';
       var _gw=d.querySelector('.qi-glass-wrap'); if(_gw) _gw.style.display=(!(_ao||p.zipscreen||p.cat==='มุ้ง'))?'':'none';
-      var _cs=d.querySelector('.qi-color'); if(_cs){ var _cv=_cs.value; _cs.innerHTML=colorOpts(p.series||''); if(_cv!==''&&_cs.querySelector('option[value="'+_cv+'"]'))_cs.value=_cv; else _cs.value='0'; } } }
+      var _cs=d.querySelector('.qi-color'); if(_cs){ var _cv=_cs.value; _cs.innerHTML=colorOpts(p.series||''); if(_cv!==''&&_cs.querySelector('option[value="'+_cv+'"]'))_cs.value=_cv; else _cs.value='0'; }
+      // ALLG-v2: ระแนง (p.fin) — สีอลูคิดจาก finish (เรต/ตร.ม.) คนละกลไก COLORS · โชว์ qi-finish เฉพาะ ระแนง
+      var _fw=d.querySelector('.qi-finish-wrap'); var _fsel=d.querySelector('.qi-finish');
+      if(_fw && _fsel){ if(p.fin){ _fw.style.display='';
+          _fsel.innerHTML='<option value="0" data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('');
+        } else { _fw.style.display='none'; } } } }
   // FLAG-1 (accountant audit): casement_euro Linear คิดกว้าง "ต่อบาน" → label โหมดคิดเร็วต้องชัด กัน sales กรอกกว้างรวม=คิดเกิน
   function qiWLabel(){ var _qp=PBYID[d.querySelector('.qi-prod').value]; var _wl=d.querySelector('.qi-w'); _wl=_wl&&_wl.previousElementSibling; if(_wl&&_wl.tagName==='LABEL') _wl.textContent=(_qp&&_qp.ceLinear)?'กว้างรวม (ม.)':'กว้าง (ม.)'; }
   d.querySelector('.qi-prod').addEventListener('change',()=>{ syncPanels(); qiWLabel(); qiSyncFamOn(d); calcQuickAll(); });
@@ -1834,8 +1841,16 @@ function readQuickItem(d){
   var _gw2=d.querySelector('.qi-glass-wrap'), _cw2=d.querySelector('.qi-color-wrap');
   const gi=(_gw2&&_gw2.style.display!=='none')?(parseInt((d.querySelector('.qi-glass')||{}).value)||0):0;
   const ci=(_cw2&&_cw2.style.display!=='none')?(parseInt((d.querySelector('.qi-color')||{}).value)||0):0;
-  const u=calcUnit(p, w, h, gi, ci, panels, {}, false);
-  return {p, w, h, panels, qty, u};
+  // ALLG-v2: ระแนง finish (สีอลู เรต/ตร.ม.) → optSel.finish · งานบานปกติไม่มี qi-finish
+  var _fw2=d.querySelector('.qi-finish-wrap'); var _finV=(_fw2&&_fw2.style.display!=='none')?(parseFloat((d.querySelector('.qi-finish')||{}).value)||0):0;
+  var _opt=_finV>0?{finish:_finV}:{};
+  const u=calcUnit(p, w, h, gi, ci, panels, _opt, false);
+  // เทียบราคา vs มาตรฐาน (ขาว/กระจกแรก/ไม่อบสี) — ให้เซลล์บอกลูกค้าว่าสี/กระจก/สีระแนง เพิ่มเท่าไร
+  var stdSell=calcUnit(p, w, h, 0, 0, panels, {}, false).sell;
+  var colorDelta = ci>0 ? (calcUnit(p, w, h, 0, ci, panels, {}, false).sell - stdSell) : 0;
+  var glassDelta = gi>0 ? (calcUnit(p, w, h, gi, 0, panels, {}, false).sell - stdSell) : 0;
+  var finDelta = _finV>0 ? (u.sell - calcUnit(p, w, h, gi, ci, panels, {}, false).sell) : 0;
+  return {p, w, h, panels, qty, u, colorDelta, glassDelta, finDelta};
 }
 function calcQuickAll(){
   let total=0;
@@ -1844,6 +1859,14 @@ function calcQuickAll(){
     const line=it.u.sell*it.qty;
     d.querySelector('.qi-area').textContent = it.u.a>0 ? (it.u.a.toFixed(2)+' ตร.ม. · /ชุด '+bht(it.u.sell)+(it.qty>1?(' ×'+it.qty):'')+(it.u.addonLabel?(' · '+it.u.addonLabel):'')+((it.p&&it.p.ranae&&it.u.msgs&&it.u.msgs.length)?(' · '+it.u.msgs.join(', ')):'')) : 'กรอกขนาด';
     d.querySelector('.qi-price').textContent = bht(line);
+    // ALLG-v2: บรรทัดเทียบราคา (สี/กระจก/สีระแนง เพิ่มจากมาตรฐานเท่าไร)
+    var _cmp=d.querySelector('.qi-cmp');
+    if(_cmp){ var parts=[];
+      if(it.colorDelta>0) parts.push('🎨 สีนี้ +'+bht(it.colorDelta));
+      if(it.finDelta>0) parts.push('🎨 สีระแนงนี้ +'+bht(it.finDelta));
+      if(it.glassDelta>0) parts.push('🪟 กระจกนี้ +'+bht(it.glassDelta));
+      if(parts.length && it.u.a>0){ _cmp.style.display=''; _cmp.textContent='เทียบมาตรฐาน: '+parts.join(' · '); }
+      else { _cmp.style.display='none'; } }
     if(it.u.a>0) total+=line;
   });
   document.getElementById('q-total').textContent=bht(total);
