@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:14mm 12mm;}
+*{font-family:"Noto Sans Thai","Leelawadee UI","Tahoma",sans-serif;box-sizing:border-box;}
+body{color:#1f2937;font-size:13px;line-height:1.6;margin:0;}
+h1{color:#B3151D;font-size:23px;margin:0 0 2px;}
+.sub{color:#6b7280;font-size:12px;margin:0 0 16px;}
+.sec{margin:18px 0;}
+.sec>h2{font-size:16px;color:#fff;background:#B3151D;padding:7px 14px;border-radius:8px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+.sec>h2 .ic{font-size:18px;}
+/* flow steps */
+.step{display:flex;gap:11px;align-items:flex-start;margin:9px 0;}
+.step .n{flex:0 0 auto;width:27px;height:27px;border-radius:50%;background:#B3151D;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.step .tx{flex:1;padding-top:2px;}
+.step .tx b{color:#B3151D;}
+.step .tx .d{color:#6b7280;font-size:12px;}
+/* price levels */
+.lvl{display:flex;gap:10px;align-items:flex-start;background:#fff7f7;border:1px solid #f3d2d4;border-radius:10px;padding:11px 14px;margin:8px 0;}
+.lvl .num{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:#B3151D;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.lvl .c b{color:#B3151D;}.lvl .c .d{color:#555;font-size:12.5px;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:13px 16px;margin:9px 0;}
+.card h3{color:#B3151D;font-size:14px;margin:0 0 5px;}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 9px;border-radius:11px;background:#dbeafe;color:#1d4ed8;}
+.note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:9px;padding:10px 14px;margin:10px 0;font-size:12.5px;}
+.profiles{display:flex;gap:10px;flex-wrap:wrap;}
+.profiles .p{flex:1;min-width:160px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px;}
+.profiles .p h4{color:#B3151D;margin:0 0 4px;font-size:13.5px;}
+.profiles .p ul{margin:4px 0 0;padding-left:17px;font-size:12px;color:#444;}
+.foot{margin-top:22px;font-size:11px;color:#9ca3af;border-top:1px solid #eee;padding-top:8px;}
+</style></head><body>
+
+<h1>สรุปรูปแบบ UX — ฟอร์มกรอกงานหลังคา/ฝ้า/ผนัง (G3)</h1>
+<p class="sub">14 มิ.ย. 2026 · ดีไซน์หน้ากรอก (ยึดแม่แบบ G1) · เน้นปุ่ม/ชิป กรอกไว เห็นราคาทุกจุด · คู่กับ "สรุป-G3-ราคาออปชั่นเสริม" + ดราฟกดเล่น</p>
+
+<div class="sec">
+<h2><span class="ic">📋</span>ลำดับการกรอก (บนลงล่าง)</h2>
+<div class="step"><span class="n">1</span><span class="tx"><b>เลือกกลุ่มงาน</b> — ปุ่ม G1–G7 (หลังคา = G3)</span></div>
+<div class="step"><span class="n">2</span><span class="tx"><b>เลือกชนิดงาน</b> — ปุ่มการ์ด 6 กลุ่ม → กดแล้วโชว์รุ่นย่อยเป็นชิป<div class="d">ไวนิล/ดีไลท์ · โพลีตัน/กระจก · เมทัลชีท · ชินโคไลท์ · ฝ้า · ผนัง</div></span></div>
+<div class="step"><span class="n">3</span><span class="tx"><b>กรอกขนาด</b> — หลังคาใช้คำ "<b>ยาว × ยื่น</b>" (ไม่ใช่กว้าง/สูง) + จำนวนชุด</span></div>
+<div class="step"><span class="n">4</span><span class="tx"><b>วัสดุมุง · สี</b> — ชิปเลือกสี (ต่างตามวัสดุ) <span class="badge" style="background:#dcfce7;color:#166534;">ฟรี</span></span></div>
+<div class="step"><span class="n">5</span><span class="tx"><b>โครงสร้าง</b> — แป (เดี่ยว/คู่) · โครง (อลู/เหล็กชุบ) <span class="badge" style="background:#dcfce7;color:#166534;">ฟรี</span></span></div>
+<div class="step"><span class="n">6</span><span class="tx"><b>ออปชั่นหลัก</b> — หลังคาเลื่อน / ต่อปลายวัสดุที่ 2 (กดแล้วมีกล่องย่อยกรอกรายละเอียด)</span></div>
+<div class="step"><span class="n">7</span><span class="tx"><b>ปลายหลังคา · รางน้ำ</b> — เลือกอย่างเดียว: ปล่อย / มีรางน้ำ / ปิดปลายกันน้ำ</span></div>
+<div class="step"><span class="n">8</span><span class="tx"><b>อุปกรณ์เสริมหลังคา</b> — กดติ๊กที่ใช้ (เสา/คาน/ครอบ/ซ่อนสโลป) แต่ละอันมีช่องกรอกย่อย</span></div>
+<div class="step"><span class="n">9</span><span class="tx"><b>OPTION ลูกค้า</b> — เลือกหมวด → กดเติมรายการ → แก้/ลบ/กรอกราคาเองได้</span></div>
+<div class="step"><span class="n">10</span><span class="tx"><b>หมายเหตุ / ตำแหน่ง</b></span></div>
+<div class="step"><span class="n">11</span><span class="tx"><b>ออปชั่นทั้งใบ</b> — ปรับทุกชุดทีเดียว (ท้ายสุด)</span></div>
+</div>
+
+<div class="sec">
+<h2><span class="ic">💰</span>เห็นราคา 4 จุด ตลอดการกรอก (หัวใจของดีไซน์)</h2>
+<div class="lvl"><span class="num">1</span><span class="c"><b>บนปุ่ม/ชิป</b><div class="d">กดออปชั่นไหน ราคาขึ้นตรงปุ่มนั้นทันที</div></span></div>
+<div class="lvl"><span class="num">2</span><span class="c"><b>มุมขวาหัวข้อทุกกล่อง</b><div class="d">ยอดรวมของกล่องนั้น โชว์เสมอ (แม้ ฿0)</div></span></div>
+<div class="lvl"><span class="num">3</span><span class="c"><b>พรีวิวใบเสนอราคา (ท้ายฟอร์ม)</b><div class="d">แยกราคาทุกบรรทัด: ฐาน + ออปชั่น + OPTION → รวม/ชุด</div></span></div>
+<div class="lvl"><span class="num">4</span><span class="c"><b>แถบรวมล่างจอ</b><div class="d">ยอดรวมทั้งใบ อัปเดตสด ติดล่างตลอด</div></span></div>
+</div>
+
+<div class="sec">
+<h2><span class="ic">✨</span>ฟีเจอร์เด่น (กรอกง่าย ไม่งง)</h2>
+<div class="card"><h3>ปุ่มชนิดงาน → รุ่นย่อย</h3>กดการ์ดกลุ่มใหญ่ก่อน แล้วค่อยเลือกรุ่น — ไม่ต้องเลื่อนดรอปดาวน์ยาว 24 รุ่น</div>
+<div class="card"><h3>กรองออปชั่นตามแบบ</h3>แต่ละชนิดงานโชว์เฉพาะออปชั่นที่มีจริง (หลังคาโชว์รางน้ำ/คาน · ฝ้าโชว์ฉนวน) — ไม่รก</div>
+<div class="card"><h3>กล่องย่อยกรอกรายละเอียด (sub-panel)</h3>กดออปชั่น → กล่องครีมโผล่ให้กรอก (เช่น รางน้ำ → ชนิด+ความยาว · คาน → รุ่น+ยาว) + ช่องราคาแก้เองได้</div>
+<div class="card"><h3>ปลายหลังคาเลือกอย่างเดียว</h3>ปล่อย / รางน้ำ / ปิดปลาย — เลือกได้แค่ทางเดียว กันคิดราคาซ้อนกัน · ความยาวเริ่มต้น = ด้านยาวหลังคา</div>
+<div class="card"><h3>ทุกช่องราคาแก้ได้</h3>ราคาที่ระบบคิดให้เป็นค่าตั้งต้น เซลล์ปรับได้หน้างาน</div>
+</div>
+
+<div class="sec">
+<h2><span class="ic">🗂️</span>3 รูปแบบฟอร์ม (ตามชนิดงาน)</h2>
+<div class="profiles">
+<div class="p"><h4>หลังคา</h4><ul><li>ยาว × ยื่น</li><li>วัสดุมุง + สี</li><li>แป / โครง</li><li>หลังคาเลื่อน</li><li>ปลายหลังคา/รางน้ำ</li><li>อุปกรณ์เสริม</li></ul></div>
+<div class="p"><h4>ฝ้า</h4><ul><li>กว้าง × สูง</li><li>รุ่น/สี (ฝ้าอลู crate)</li><li>ฉนวน</li><li>ฝ้าเฉียง</li></ul></div>
+<div class="p"><h4>ผนังเบา</h4><ul><li>กว้าง × สูง</li><li>รุ่น/ความหนา</li><li>ฉนวน · ทาสี</li><li>โครง · ครอบวงกบ · รื้อ</li></ul></div>
+</div>
+</div>
+
+<div class="note"><b>หลักที่ยึด:</b> ① เน้นปุ่ม/ชิป ไม่เน้นดรอปดาวน์ · ② โชว์เฉพาะที่มีจริง · ③ เห็นราคาทุกจุด แก้ได้ · ④ สำคัญขึ้นบน เสริม/หมายเหตุลงล่าง ราคาท้ายสุด · ⑤ กรอกถึงเป้า 1–2 แตะ</div>
+
+<div class="foot">ดีไซน์ตามแม่แบบ G1 (UXDESIGN-G1-MASTER) · ดราฟกดเล่นจริง: DRAFT-G3-ux-FULL-2026-06-14.html · ธีมแดง JR · มือถือ-first</div>
+</body></html>
