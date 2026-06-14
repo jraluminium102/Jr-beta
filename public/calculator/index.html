@@ -2854,9 +2854,18 @@ function buildItemOpts(d){
   // HANDOFF-G6 A4: กลุ่ม 6 = ห้องต่อเติม (paged builder แทนฟอร์มบานปกติ) · guard box null กัน crash
   d.classList.remove('g6room');
   if(_famGrp==='6'){
-    if(box){ d.classList.add('g6room'); box.innerHTML='<div class="g6r-mount"></div>'; if(window.g6rMount){ window.g6rMount(d, function(){ calcQuote(); }); } }
+    d.classList.add('g6room');
+    // render builder ในพื้นที่เห็นเด่น (ไม่ใช่ใน optbox ที่พับ) · ซ่อนฟอร์มบานเก่าด้วย CSS .g6room
+    var _area=d.querySelector('.g6r-room-area');
+    if(!_area){ _area=document.createElement('div'); _area.className='full g6r-room-area'; _area.innerHTML='<div class="g6r-mount"></div>';
+      var _anchor=d.querySelector('.note-opt-group')||d.querySelector('.chfoot');
+      if(_anchor&&_anchor.parentNode) _anchor.parentNode.insertBefore(_area,_anchor); else d.appendChild(_area); }
+    if(box) box.innerHTML=''; // เคลียร์ optbox (ไม่ใช้ในโหมดห้อง)
+    if(window.g6rMount){ window.g6rMount(d, function(){ calcQuote(); }); }
     return; // ไม่สร้างฟอร์มบานปกติ
   }
+  // ออกจากโหมดห้อง (สลับไปกลุ่มอื่น) → ลบพื้นที่ builder ที่ค้าง
+  { var _ra=d.querySelector('.g6r-room-area'); if(_ra) _ra.remove(); }
   // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · แต่กลุ่ม 6 ผนังเบา (ฝ้า-ผนัง) ให้ใช้ family chips เดิม (ALLG-v2) ไม่ใช่ g3
   var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6';
   if(_isG3sel) h+=g3SelectorHTML(p);
@@ -4873,9 +4882,15 @@ window.addEventListener('load',ckRefresh);
   .g6r-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-top:1px solid #EEE;background:#fff;position:sticky;bottom:0;}
   .g6r-foot .nav button{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;}
   .g6r-foot .grand{font-size:18px;font-weight:700;color:#B3151D;}
-  /* A4: กลุ่ม 6 = ห้องต่อเติม → ซ่อนฟอร์มบานปกติ เหลือชิปกลุ่ม + builder */
-  .ch.g6room .size-row, .ch.g6room .fam-prodsel, .ch.g6room .rn-prodsel, .ch.g6room .g3-prodsel, .ch.g6room .mosq-prodsel, .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint{ display:none!important; }
-  .ch.g6room .full:has(> .i-prod){ display:none!important; }
+  /* A4: กลุ่ม 6 = ห้องต่อเติม → ซ่อนฟอร์มบานปกติทั้งหมด เหลือชิปกลุ่ม + builder + ราคา */
+  .ch.g6room .size-row, .ch.g6room .fam-prodsel, .ch.g6room .rn-prodsel, .ch.g6room .g3-prodsel, .ch.g6room .mosq-prodsel,
+  .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-colorcode-wrap, .ch.g6room .i-sampleconfirm-wrap,
+  .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint, .ch.g6room .cg-row,
+  .ch.g6room .note-opt-group, .ch.g6room .subitem-wrap{ display:none!important; }
+  .ch.g6room .full:has(> .i-prod), .ch.g6room .full:has(> .i-position){ display:none!important; }
+  .ch.g6room .g6r-room-area{ display:block!important; margin-top:6px; }
+  /* ห้องไม่ต้องใช้ปุ่มชุด GH (เพิ่มบาน/เพิ่มหลังคา) — builder จัดการด้านเองในตัว */
+  .setbox:has(.ch.g6room) .set-addroof, .setbox:has(.ch.g6room) .set-addpart{ display:none!important; }
 </style>
 <script>
 (function(){
