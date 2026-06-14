@@ -1,0 +1,61 @@
+// G6 room builder — ออปชั่นต่อบาน ราคาตรง engine (delta ตรงสูตร calcUnit + parity กับ G1)
+import { JSDOM, VirtualConsole } from "jsdom";
+import { readFileSync } from "node:fs";
+const html = readFileSync(new URL("../public/calculator/index.html", import.meta.url), "utf8");
+const vc = new VirtualConsole(); const errs = [];
+vc.on("jsdomError", e => { if (!/Not implemented:|scrollIntoView|scrollTo/.test(e.message)) errs.push(e.message); });
+const dom = new JSDOM(html, { runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc, url: "http://localhost/calculator/index.html" });
+await new Promise(r => { if (dom.window.document.readyState === 'complete') r(); else dom.window.addEventListener('load', r); setTimeout(r, 1500); });
+const w = dom.window, doc = w.document;
+const C = []; const want = (n, ok, d) => C.push({ n, ok: !!ok, d: d || "" });
+function sf(ch, sel, v) { const e = ch.querySelector(sel); if (!e) return; e.value = String(v); e.dispatchEvent(new w.Event('input', { bubbles: true })); e.dispatchEvent(new w.Event('change', { bubbles: true })); }
+
+// ===== room: helper เซ็ตบานเดียว + อ่านราคาห้อง =====
+function room(cat, id, ww, hh, opt) {
+  doc.getElementById("items").innerHTML = "";
+  const d = w.addGlasshouseSet();
+  const st = d.__g6state;
+  st.roof = { on: 0 }; st.elec = { down: 0, sw: 0 };
+  st.sides = [{ type: 'glass', cols: [{ pcs: [{ cat, id, w: ww, h: hh, opt: opt || {} }] }] }];
+  return w.readItem(d).r.sell;
+}
+
+// ครอบวงกบ 4 ด้าน บนบานเปิด 1×1 (สีขาว ci=0 → เรต 700) : len=2(1+1)=4 → +2,800
+const base = room('บานเปิด', 'casement_euro', 1, 1, {});
+const fc4 = room('บานเปิด', 'casement_euro', 1, 1, { fcsides: 4 });
+want("ครอบวงกบ 4 ด้าน 1×1 → +2,800 (4ม.×700)", fc4 - base === 2800, "ฐาน=" + base + " fc4=" + fc4 + " Δ=" + (fc4 - base));
+
+// ดรอปพื้น 2 ม. → +5,000
+const dfm = room('บานเปิด', 'casement_euro', 1, 1, { dfm: 2 });
+want("ดรอปพื้น 2ม. → +5,000", dfm - base === 5000, "Δ=" + (dfm - base));
+
+// โช๊ค (casement closer) → +5,000
+const cl = room('บานเปิด', 'casement_euro', 1, 1, { closer: 5000 });
+want("โช๊ค → +5,000", cl - base === 5000, "Δ=" + (cl - base));
+
+// มุ้ง imp28 (จีบ 4,500/ตร.ม.) 1×1 → addon roundUp(4500)=+5,000 (มุ้งปัดหลักพันในตัว)
+const mq = room('บานเปิด', 'casement_euro', 1, 1, { mosq: 1, mosqId: 'imp28', qty: 1 });
+want("มุ้ง imp28 1×1 → +5,000 (roundUp 4,500)", mq - base === 5000, "Δ=" + (mq - base));
+
+// ผ้ามุ้งกันแมว (+800) → roundUp(4500+800)−roundUp(4500) = 6000−5000 = +1,000
+const mqPet = room('บานเปิด', 'casement_euro', 1, 1, { mosq: 1, mosqId: 'imp28', mosqFabric: 'anti_pet', qty: 1 });
+want("ผ้ากันแมว → +1,000 (roundUp 5,300−4,500)", mqPet - mq === 1000, "Δ=" + (mqPet - mq));
+
+// มือจับเพิ่ม (digihandle) +3,500
+const hp = room('บานเปิด', 'casement_euro', 1, 1, { handleprice: 3500 });
+want("มือจับเพิ่ม 3,500 → +3,500", hp - base === 3500, "Δ=" + (hp - base));
+
+// ===== parity กับ G1: บานเปิด 1×1 + ครอบวงกบ 4 = g6rPrice เท่ากัน =====
+w.addItem(); const chs = doc.querySelectorAll('#items .ch'); const g1 = chs[chs.length - 1];
+sf(g1, '.i-group', '1'); sf(g1, '.i-prod', 'casement_euro'); sf(g1, '.i-w', '1'); sf(g1, '.i-h', '1');
+if (g1.querySelector('.o-fcsides')) sf(g1, '.o-fcsides', '4');
+const g1sell = w.readItem(g1).r.sell;
+want("parity: G1 casement+ครอบ4 = room เท่ากัน", g1sell === fc4, "G1=" + g1sell + " room=" + fc4);
+
+want("ไม่มี JS error", errs.length === 0, errs.slice(0, 2).join(" / "));
+
+let pass = 0;
+console.log("\n=== G6 room options (ราคา engine จริง) ===");
+for (const c of C) { console.log((c.ok ? "  ✓ " : "  ✗ ") + c.n + (c.d ? "  [" + c.d + "]" : "")); if (c.ok) pass++; }
+console.log("\nสรุป: ผ่าน " + pass + "/" + C.length);
+process.exit(pass === C.length ? 0 : 1);
