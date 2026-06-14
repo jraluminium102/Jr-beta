@@ -79,6 +79,32 @@ const mqDef = room('บานเปิด','casement_euro',1,2,{mosq:1,qty:1});
 const mqSD  = room('บานเปิด','casement_euro',1,2,{mosq:1,mosqId:'mj_sd_basic',qty:1});
 want("default มุ้ง = SD พื้นฐาน (display=price)", mqDef===mqSD && mqDef>mqNo, "def="+mqDef+" sd="+mqSD);
 
+// ===== รอบ 2: มือจับ/COMMON_OPTS/ทาสี (engine จริง) =====
+// Soft Close เลื่อนภายในรางบน → +4,000
+const scBase = room('เลื่อนภายใน','inner_top_stack',2,2.4,{});
+const scOn = room('เลื่อนภายใน','inner_top_stack',2,2.4,{soft_close:true});
+want("Soft Close (inner_top_stack) → +4,000", scOn-scBase===4000, "Δ="+(scOn-scBase));
+
+// มือจับดิจิตอล A300 (index 5 · +10,000 ไม่มี nc) บนบานเปิดยูโร
+const diBase = room('บานเปิด','casement_euro',1,2,{});
+const diOn = room('บานเปิด','casement_euro',1,2,{digi:'5'});
+want("มือจับดิจิตอล A300 → +10,000", diOn-diBase===10000, "Δ="+(diOn-diBase));
+
+// มือจับสแตนเลส 30.5ซม (index 0 · +1,500) — casement ceLinear ไม่ roundUp → เป๊ะ
+const stOn = room('บานเปิด','casement_euro',1,2,{stainless:'0'});
+want("มือจับสแตนเลส 30.5ซม → +1,500", stOn-diBase===1500, "Δ="+(stOn-diBase));
+
+// ทาสีผนัง ฝ้า-ผนัง กรอก 3,000 → +3,000
+const wpBase = room('ฝ้า-ผนัง','wall_ext',2,2.5,{});
+const wpOn = room('ฝ้า-ผนัง','wall_ext',2,2.5,{wallpaintprice:3000});
+want("ทาสีผนัง 3,000 → +3,000", wpOn-wpBase===3000, "Δ="+(wpOn-wpBase));
+
+// บานหมุน/ดัดโค้ง เข้าถึงได้ใน room builder (FCATS ขยาย) + คิดราคา >0
+const pv = room('บานหมุน','pivot',1.2,2.2,{});
+const cv = room('ดัดโค้ง','curved_single',1.5,2.2,{});
+want("บานหมุน pivot คิดราคา >0", pv>0, "pivot="+pv);
+want("ดัดโค้ง curved_single คิดราคา >0", cv>0, "curve="+cv);
+
 // ===== parity กับ G1: บานเปิด 1×1 + ครอบวงกบ 4 = g6rPrice เท่ากัน =====
 w.addItem(); const chs = doc.querySelectorAll('#items .ch'); const g1 = chs[chs.length - 1];
 sf(g1, '.i-group', '1'); sf(g1, '.i-prod', 'casement_euro'); sf(g1, '.i-w', '1'); sf(g1, '.i-h', '1');

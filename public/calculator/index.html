@@ -4905,7 +4905,8 @@ window.addEventListener('load',ckRefresh);
     var os={rfframe:R.frame, rfgut:R.gut||0, rfgutlen:(R.gut?(R.gutlen||R.w):0), rfeave:R.eave||0, rfbeam:R.ex.beam?2400:0, rfbeamlen:R.ex.beam||0, rfpolep:R.ex.pole||0, rfpvc:R.ex.pvc||0};
     var r=calcUnit(p, R.w||1, R.l||1, 0,0,1, os); return (r&&r.sell)||0; }catch(e){ return 0; } }
   function elecTotalReal(){ return (G6R.elec.down||0)*1500 + (G6R.elec.sw||0)*1000; }
-  function FCATS(){ return (typeof FAM_CATS!=='undefined'&&FAM_CATS['6'])?FAM_CATS['6']:['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม']; }
+  function FCATS(){ var base=(typeof FAM_CATS!=='undefined'&&FAM_CATS['6'])?FAM_CATS['6'].slice():['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม'];
+    ['บานหมุน','ดัดโค้ง'].forEach(function(c){ if(base.indexOf(c)<0 && modelsOf(c).length) base.push(c); }); return base; } // เพิ่มชนิดบานที่มีใน group 6 จริง (pivot/curve) ให้เลือกได้ในห้อง
   function flabel(c){ return (typeof FAM_LABEL!=='undefined'&&FAM_LABEL[c])||c; }
   function modelsOf(cat){ try{ return prodsInGroup('6').filter(function(q){return q.cat===cat;}); }catch(e){ return []; } }
   function defOf(cat){ try{ return famDefaultProd(cat)||((modelsOf(cat)[0]||{}).id); }catch(e){ return (modelsOf(cat)[0]||{}).id; } }
@@ -4929,7 +4930,13 @@ window.addEventListener('load',ckRefresh);
     if(o.fullgrid && prod.full_grid) os.fullgrid=true;                     // ตารางเต็มบาน +5,000 (L1476)
     if(o.insul && (prod.optInsul||['isowall','wall_ext','wall_int'].indexOf(pc.id)>=0)) os.insul=true; // ฉนวน +600/ตร.ม. (L1514)
     if(o.track==='ซ่อนราง') os.track='ซ่อนราง';                            // ซ่อนรางบน +5,000 (L1442 · เฉพาะ SLIDING_RAIL top)
-    if(o.beamM>0 && o.beamMlen>0){ os.beamM=o.beamM; os.beamMlen=o.beamMlen; } // เสริมคาน (L1513)
+    if(o.beamM>0 && o.beamMlen>0){ os.beamM=o.beamM; os.beamMlen=o.beamMlen; } // เสริมคาน กรอกเรต (L1513)
+    if(o.wallpaintprice>0 && prod.cat==='ฝ้า-ผนัง') os.wallpaintprice=o.wallpaintprice; // ทาสีผนัง กรอกเอง (L1515)
+    if(prod.digihandle){ if(o.digi!==''&&o.digi!=null) os.digi=o.digi;            // มือจับดิจิตอล (DIGI[idx].p · L1448)
+      if(o.stainless!==''&&o.stainless!=null) os.stainless=o.stainless; }          // มือจับสแตนเลส (HANDLE_STAINLESS[idx].p · L1507)
+    if(o.slidelock) os.slidelock=o.slidelock;                              // ชุดล็อก (label-only · โผล่ในใบราคา)
+    // COMMON_OPTS โครงสร้าง/ราง (soft_close/sling/hide_beam/hide_track/u_track) — calcUnit ไม่เช็ค ids เอง ต้อง guard ที่นี่ (beam_support ใช้ beamM แทน)
+    try{ COMMON_OPTS.forEach(function(co){ if(co.id==='beam_support')return; if(o[co.id] && co.ids.indexOf(pc.id)>=0){ os[co.id]=true; if(co.perLen) os[co.id+'Len']=o[co.id+'Len']||0; } }); }catch(e){}
     return os; }
   // ชนิดมุ้ง 3 กลุ่ม (เฟรม/จีบ/ม้วน) — ใช้ MOSQ_GRP_PRODS เดิม แต่กรองเหลือเฉพาะ id ที่ MOSQUITO_SCREENS คิดราคาได้ (กันราคาเพี้ยน)
   function g6rMosqGroups(){ var valid={}; try{ MOSQUITO_SCREENS.forEach(function(m){valid[m.id]=1;}); }catch(e){}
@@ -5000,11 +5007,12 @@ window.addEventListener('load',ckRefresh);
         oh+='</div>';
         // ===== ออปชั่นหลักต่อชนิดบาน (chip rows · ตรง engine) =====
         if(prod.cat==='บานเปิด') oh+=chipRow('ธรณี',[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']], o.thresh||'std', 'thresh');
-        if(prod.cat==='บานกระทุ้ง') oh+=chipRow('การเปิด',[['','เปิดปกติ'],['2','Tilt & Turn +5,000']], o.awn_mode||'', 'awn_mode');
+        if(prod.cat==='บานกระทุ้ง') oh+=chipRow('แบบเปิด',[['0','เปิดล่าง'],['1','เปิดข้าง'],['2','Tilt & Turn +5,000']], o.awn_mode||'0', 'awn_mode');
         if(prod.motor) oh+=chipRow('มอเตอร์',[['','ไม่มี'],['80','80กก +18,000'],['300','300กก +28,000']], o.motor||'', 'motor');
         if(prod.cat==='บานเฟี้ยม'){ oh+=chipRow('ทิศเปิด',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['แยกกลาง','แยกกลาง']], o.folddir||'เปิดซ้าย', 'folddir');
           oh+=chipRow('ธรณีเฟี้ยม',[['outer','กันน้ำ'],['inner','ภายใน']], o.threshf||'outer', 'threshf'); }
         if(_sr&&_sr.rail==='top') oh+=chipRow('รางบน',[['โชว์ราง','โชว์ราง'],['ซ่อนราง','ซ่อนราง +5,000']], o.track||'โชว์ราง', 'track');
+        if(prod.cat==='PC Door') oh+=chipRow('ชุดล็อก',[['มีกุญแจ','มีกุญแจ'],['ไม่มีกุญแจ','ไม่มีกุญแจ']], o.slidelock||'มีกุญแจ', 'slidelock');
         // toggles: มุ้ง · คาดตาราง · โช๊ค(closer) · ตารางเต็มบาน(full_grid) · ฉนวน(insul)
         oh+='<div class="chips"><button class="c'+(o.mosq?' on':'')+'" onclick="G6RtogMosq()">'+(o.mosq?'มีมุ้ง ✓':'＋ ใส่มุ้ง')+'</button>'
           +'<button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'มีคาดตาราง ✓':'＋ คาดตาราง')+'</button>';
@@ -5022,12 +5030,21 @@ window.addEventListener('load',ckRefresh);
         if(o.gridmark)oh+='<div class="row"><span class="rl">คาดตาราง</span><input type="number" value="'+(o.gmNh||0)+'" min="0" step="1" oninput="G6RsetOpt(\'gmNh\',this.value)"><span class="u">เส้นนอน</span><input type="number" value="'+(o.gmNv!=null?o.gmNv:(o.qty||1))+'" min="0" step="1" oninput="G6RsetOpt(\'gmNv\',this.value)"><span class="u">เส้นตั้ง ×200/ม.</span></div>';
         // เสริมคาน (บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door · กรอกเรต/ม. × ยาว = ตรง engine)
         if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].indexOf(prod.cat)>=0) oh+='<div class="row"><span class="rl">เสริมคาน</span><input type="number" value="'+(o.beamM||0)+'" min="0" step="100" oninput="G6RsetOpt(\'beamM\',this.value)"><span class="u">บาท/ม. ×</span><input type="number" value="'+(o.beamMlen||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'beamMlen\',this.value)"><span class="u">ม.</span></div>';
+        // COMMON_OPTS โครงสร้าง/ราง (เฉพาะ product ที่ ids ตรง · เลื่อนภายใน/เฟี้ยม) — ตัด beam_support (ใช้ช่องเสริมคานด้านบนแทน)
+        var _cos=[]; try{ _cos=COMMON_OPTS.filter(function(co){return co.id!=='beam_support'&&co.ids.indexOf(p.id)>=0;}); }catch(e){}
+        if(_cos.length){ oh+='<div class="chips"><span class="rl">โครงสร้าง/ราง</span>'+_cos.map(function(co){ var nm=co.label.replace(/\s*\(.*\)\s*/,''); return '<button class="c'+(o[co.id]?' on':'')+'" onclick="G6RtogOpt(\''+co.id+'\')">'+(o[co.id]?nm+' ✓':'＋ '+nm)+'</button>'; }).join('')+'</div>';
+          _cos.forEach(function(co){ if(o[co.id]&&co.perLen){ var nm=co.label.replace(/\s*\(.*\)\s*/,''); oh+='<div class="row"><span class="rl">'+nm+' ยาว</span><input type="number" value="'+(o[co.id+'Len']||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\''+co.id+'Len\',this.value)"><span class="u">ม. (ฟรี '+co.freeLen+'ม. +'+co.lenRate+'/ม.)</span></div>'; } }); }
+        // ทาสีผนัง (ฝ้า-ผนัง · กรอกเอง = ตรง engine L1515)
+        if(prod.cat==='ฝ้า-ผนัง') oh+='<div class="row"><span class="rl">ทาสีผนัง</span><input type="number" value="'+(o.wallpaintprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'wallpaintprice\',this.value)"><span class="u">บาท</span></div>';
         // ครอบวงกบ (ทุกบาน · auto len×เรตสี)
         oh+='<div class="chips"><span class="rl">ครอบวงกบ</span>'+[['0','ไม่มี'],['3','3 ด้าน'],['4','4 ด้าน']].map(function(x){return '<button class="c'+(String(o.fcsides||0)===x[0]?' on':'')+'" onclick="G6RsetOpt(\'fcsides\','+x[0]+')">'+x[1]+'</button>';}).join('')+'</div>';
         // ดรอปพื้น
         oh+='<div class="row"><span class="rl">ดรอปพื้น</span><input type="number" value="'+(o.dfm||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'dfm\',this.value)"><span class="u">ม. (5,000 + เกิน 7ม.)</span></div>';
-        // มือจับเพิ่ม (เฉพาะ digihandle · กรอกราคารุ่นที่เลือก = ตรง engine)
-        if(prod.digihandle) oh+='<div class="row"><span class="rl">มือจับเพิ่ม</span><input type="number" value="'+(o.handleprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'handleprice\',this.value)"><span class="u">บาท</span></div>';
+        // มือจับ (เฉพาะ digihandle) — ดิจิตอล DIGI / สแตนเลส HANDLE_STAINLESS / รุ่นอื่นกรอกเอง · ราคาตรง engine (เลือกพร้อมกันได้เหมือน G1)
+        if(prod.digihandle){ var _ssel='style="flex:1;min-width:0;height:32px;border:1px solid #D1D5DB;border-radius:6px;"';
+          oh+='<div class="row"><span class="rl">มือจับดิจิตอล</span><select onchange="G6RsetOpt2(\'digi\',this.value)" '+_ssel+'><option value="">— ไม่ใส่ —</option>'+(typeof DIGI!=='undefined'?DIGI:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.digi)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+(d.jr?' (เฉพาะยูโร/โซลิด)':'')+'</option>';}).join('')+'</select></div>';
+          oh+='<div class="row"><span class="rl">มือจับสแตนเลส</span><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+_ssel+'><option value="">— ไม่ใส่ —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div>';
+          oh+='<div class="row"><span class="rl">มือจับรุ่นอื่น</span><input type="number" value="'+(o.handleprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'handleprice\',this.value)"><span class="u">บาท (กรอกเอง)</span></div>'; }
         return oh; })()
       +'<div class="g6r-banaPr"><span>ราคาบานนี้ ('+(p.w||1)+'×'+(p.h||0.5)+' ม. · engine จริง)</span><b>'+fmt(g6rPrice(p))+'</b></div>';
     e.innerHTML=h;
