@@ -4860,8 +4860,10 @@ window.addEventListener('load',ckRefresh);
 <script>
 (function(){
   // ---- state (โครงตาม DRAFT-G6-ux-REAL · ราคาต่อ engine จริง) ----
-  var G6R={sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
-    roof:{on:0,matId:null,w:3,l:4,frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{}}, ceil:{has:0}, elec:{down:0,sw:0}, cur:0, sc:0, sp:0, openFam:null};
+  function freshState(){ return {sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
+    roof:{on:0,matId:null,w:3,l:4,frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{}}, ceil:{has:0}, elec:{down:0,sw:0}, cur:0, sc:0, sp:0, openFam:null}; }
+  var G6R=freshState();   // pointer → state ของ item กลุ่ม 6 ที่ active (A4 ชี้ใหม่ต่อ item)
+  var G6MOUNT=null;       // element ที่ render เข้า (default #g6r-host สำหรับ dev · A4 = .i-opts ของ item)
   function roofProds(){ try{ return PRODUCTS.filter(function(q){return q.cat==='หลังคา';}); }catch(e){ return []; } }
   // ราคาหลังคา = engine จริง (calcUnit roof product + opts รางน้ำ/ปิดปลาย/โครง/ของเสริม)
   function roofTotalReal(){ var R=G6R.roof; if(!R.on||!R.matId)return 0; try{ var p=PBYID[R.matId]; if(!p)return 0;
@@ -4887,6 +4889,7 @@ window.addEventListener('load',ckRefresh);
   function sideTotal(s){ var t=0; if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(p){t+=g6rPrice(p);});}); else if(s.type==='wall')t+=Math.round((s.aw||3)*(s.ah||2.6)*1350); return t; }
   function roomTotal(){ var t=0; G6R.sides.forEach(function(s){t+=sideTotal(s);}); t+=roofTotalReal()+elecTotalReal(); return Math.ceil(t/100)*100; }
   function host(){return document.getElementById('g6r-host');}
+  function mountEl(){ return G6MOUNT||host(); }
   function tabsHTML(){ var h=''; G6R.sides.forEach(function(s,i){ h+='<button class="tab'+(G6R.cur===i?' on':'')+'" onclick="G6Rgo('+i+')">ด้าน '+L(i)+'</button>'; });
     h+='<button class="tab addt" onclick="G6RaddSide()">＋ด้าน</button>';
     ['🏠หลังคา/ฝ้า','⚡ไฟ','📄สรุป'].forEach(function(lbl,o){ var idx=G6R.sides.length+o; h+='<button class="tab '+(o<2?'rf':'sm')+(G6R.cur===idx?' on':'')+'" onclick="G6Rgo('+idx+')">'+lbl+'</button>'; });
@@ -4895,8 +4898,8 @@ window.addEventListener('load',ckRefresh);
     var b='<div class="g6r-wrap"><div class="g6r-top"><b>🏗️ ห้องต่อเติม (กั้นห้องกระจก)</b><span class="g6r-pos">'+pageName(G6R.cur)+' · '+(G6R.cur+1)+'/'+np()+'</span></div>'
       +'<div class="g6r-tabs">'+tabsHTML()+'</div><div class="g6r-body" id="g6r-bodyc"></div>'
       +'<div class="g6r-foot"><span class="nav"><button onclick="G6Rnav(-1)">◀ ย้อน</button> <button onclick="G6Rnav(1)">ถัดไป ▶</button></span><span class="grand">'+fmt(roomTotal())+'</span></div></div>';
-    host().innerHTML=b;
-    var bc=document.getElementById('g6r-bodyc');
+    mountEl().innerHTML=b;
+    var bc=mountEl().querySelector('#g6r-bodyc');
     if(G6R.cur<G6R.sides.length) sidePage(bc); else { var o=G6R.cur-G6R.sides.length; if(o===0)roofPage(bc); else if(o===1)elecPage(bc); else sumPage(bc); }
   }
   function sidePage(bc){ var s=G6R.sides[G6R.cur];
@@ -4906,12 +4909,12 @@ window.addEventListener('load',ckRefresh);
       +'<button class="c'+(s.type==='wall'?' on':'')+'" onclick="G6RsetType(\'wall\')">ผนังเบา</button>'
       +'<button class="c'+(s.type==='open'?' on':'')+'" onclick="G6RsetType(\'open\')">เปิดโล่ง</button></div><div id="g6r-sb"></div>';
     bc.innerHTML=h;
-    var sb=document.getElementById('g6r-sb');
+    var sb=mountEl().querySelector('#g6r-sb');
     if(s.type==='glass'){ sb.innerHTML='<div class="g6r-wall" id="g6r-wallc"></div><div class="g6r-wtot" id="g6r-wtot"></div><div class="g6r-edit" id="g6r-editc"></div>'; renderWall(); renderEdit(); }
     else if(s.type==='wall'){ sb.innerHTML='<div class="row"><span class="rl">ขนาด</span><input type="number" value="'+(s.aw||3)+'" step="0.1" oninput="G6RsetWall(\'aw\',this.value)"><span class="u">×</span><input type="number" value="'+(s.ah||2.6)+'" step="0.1" oninput="G6RsetWall(\'ah\',this.value)"><span class="u">ม.</span></div><div class="g6r-banaPr"><span>ผนังเบาด้านนี้ (≈ engine A3)</span><b>'+fmt((s.aw||3)*(s.ah||2.6)*1350)+'</b></div>'; }
     else sb.innerHTML='<div class="g6r-wtot" style="margin-top:8px;">เปิดโล่ง / ติดอาคารเดิม — ไม่มีงานกั้นด้านนี้</div>';
   }
-  function renderWall(){ var W=G6R.sides[G6R.cur].cols, wall=document.getElementById('g6r-wallc'); if(!wall)return; wall.innerHTML=''; var tw=0;
+  function renderWall(){ var W=G6R.sides[G6R.cur].cols, wall=mountEl().querySelector('#g6r-wallc'); if(!wall)return; wall.innerHTML=''; var tw=0;
     W.forEach(function(col,ci){ var colMax=Math.max.apply(null,col.pcs.map(function(p){return p.w||1;}).concat([0.5])); tw+=colMax;
       var cd=document.createElement('div'); cd.className='col'; cd.style.flex=colMax+' 1 0';
       var sum=col.pcs.reduce(function(a,p){return a+(p.h||0);},0), air=2.8-sum; if(air<0)air=0;
@@ -4922,9 +4925,9 @@ window.addEventListener('load',ckRefresh);
         d.innerHTML='<button class="px" onclick="G6RrmPc(event,'+ci+','+pi+')">✕</button><div><b>'+flabel(p.cat)+'</b><br>'+(p.w||1)+'×'+(p.h||0.5)+'</div>'; cd.appendChild(d); });
       wall.appendChild(cd); });
     var add=document.createElement('button'); add.className='addcol'; add.textContent='＋'; add.onclick=function(){ W.push({pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}); G6R.sc=W.length-1; G6R.sp=0; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); }; wall.appendChild(add);
-    var wt=document.getElementById('g6r-wtot'); if(wt)wt.textContent='รวมกว้าง ≈ '+tw.toFixed(1)+' ม. · '+W.length+' ช่อง';
+    var wt=mountEl().querySelector('#g6r-wtot'); if(wt)wt.textContent='รวมกว้าง ≈ '+tw.toFixed(1)+' ม. · '+W.length+' ช่อง';
   }
-  function renderEdit(){ var W=G6R.sides[G6R.cur].cols, e=document.getElementById('g6r-editc'); if(!e)return;
+  function renderEdit(){ var W=G6R.sides[G6R.cur].cols, e=mountEl().querySelector('#g6r-editc'); if(!e)return;
     if(!W[G6R.sc]||!W[G6R.sc].pcs[G6R.sp]){ e.style.display='none'; return; } e.style.display='block';
     var p=W[G6R.sc].pcs[G6R.sp], cf=G6R.openFam||p.cat;
     var h='<div class="fl" style="margin-top:0;">เลือกชนิดบานชั้นนี้ — <b>'+flabel(p.cat)+' › '+pname(p.id).replace(p.cat,'').trim()+'</b></div>'
@@ -4974,7 +4977,8 @@ window.addEventListener('load',ckRefresh);
     h+='<div class="g6r-banaPr"><span>รวมทั้งห้อง (engine จริง · ออปชั่นบานเต็ม ต่อ A3b)</span><b>'+fmt(roomTotal())+'</b></div>';
     bc.innerHTML=h;
   }
-  function refreshGrand(){ var g=host().querySelector('.grand'); if(g)g.textContent=fmt(roomTotal()); }
+  function refreshGrand(){ var g=mountEl().querySelector('.grand'); if(g)g.textContent=fmt(roomTotal()); if(G6BOUND)G6BOUND(); }
+  var G6BOUND=null; // callback เมื่อราคาห้องเปลี่ยน (A4: ให้ calcQuote เก็บราคา)
   // actions (global สำหรับ onclick)
   window.G6Rgo=function(i){ G6R.cur=i; G6R.sc=0; G6R.sp=0; G6R.openFam=null; render(); };
   window.G6Rnav=function(d){ G6R.cur=Math.max(0,Math.min(np()-1,G6R.cur+d)); if(G6R.cur<G6R.sides.length){G6R.sc=0;G6R.sp=0;G6R.openFam=null;} render(); };
@@ -5005,9 +5009,21 @@ window.addEventListener('load',ckRefresh);
   window.G6RroofEx=function(k){ var ex=G6R.roof.ex; if(ex[k]!=null)delete ex[k]; else ex[k]={beam:6,pole:2,pvc:3}[k]; render(); };
   window.G6RroofExV=function(k,v){ G6R.roof.ex[k]=parseFloat(v)||0; render(); };
   window.G6RelecV=function(k,v){ G6R.elec[k]=parseFloat(v)||0; render(); };
-  // dev entry (A4 จะ hook แทนกลุ่ม 6)
-  window.g6rDev=function(){ host().style.display='block'; render(); host().scrollIntoView({behavior:'smooth'}); };
+  // dev entry
+  window.g6rDev=function(){ host().style.display='block'; if(!host().__g6state)host().__g6state=freshState(); G6R=host().__g6state; G6MOUNT=host(); G6BOUND=null; render(); host().scrollIntoView({behavior:'smooth'}); };
   window.G6R_STATE=G6R;
+  // ===== A4 public API : mount ห้องในไอเทมกลุ่ม 6 + ดึงราคา/สรุปให้ readItem/genQuote =====
+  window.g6rMount=function(itemEl, onChange){ if(!itemEl)return; if(!itemEl.__g6state)itemEl.__g6state=freshState();
+    var mt=itemEl.querySelector('.g6r-mount')||itemEl;
+    G6R=itemEl.__g6state; G6MOUNT=mt; G6BOUND=onChange||null;
+    if(!itemEl.__g6hook){ itemEl.__g6hook=1; ['click','input','change'].forEach(function(ev){ itemEl.addEventListener(ev,function(){ if(itemEl.__g6state){ G6R=itemEl.__g6state; G6MOUNT=itemEl.querySelector('.g6r-mount')||itemEl; G6BOUND=onChange||null; } },true); }); }
+    render(); };
+  window.g6rRoomTotal=function(itemEl){ if(!itemEl||!itemEl.__g6state)return 0; var sv=G6R; G6R=itemEl.__g6state; var t=roomTotal(); G6R=sv; return t; };
+  window.g6rRoomSummary=function(itemEl){ if(!itemEl||!itemEl.__g6state)return []; var sv=G6R; G6R=itemEl.__g6state; var lines=[];
+    G6R.sides.forEach(function(s,i){ var pr=sideTotal(s); if(pr>0||s.type!=='open'){ var desc=s.type==='glass'?(s.cols.length+' ช่อง · '+s.cols.reduce(function(a,c){return a+c.pcs.length;},0)+' บาน'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); lines.push(['ด้าน '+L(i)+' · '+desc, pr]); } });
+    if(roofTotalReal()>0)lines.push(['หลังคา/ฝ้า', roofTotalReal()]);
+    if(elecTotalReal()>0)lines.push(['งานไฟ', elecTotalReal()]);
+    G6R=sv; return lines; };
 })();
 </script>
 
