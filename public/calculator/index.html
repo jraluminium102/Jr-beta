@@ -4812,5 +4812,149 @@ window.addEventListener('load',ckRefresh);
 <div id="ckPanel" style="display:none;position:fixed;right:20px;bottom:90px;width:380px;max-height:60vh;overflow:auto;background:#fff;border:2px solid #B3151D;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:999;padding:12px 16px;"></div>
 <div id="ckPrintArea" style="display:none;"></div>
 
+<!-- ===== HANDOFF-G6 Phase A : ห้องต่อเติม paged builder (A1 โครง+mixer + A2 ราคา engine จริง) =====
+     สถานะ: dev guarded — ยังไม่แทนกลุ่ม 6 (เปิดด้วย window.g6rDev()) · A4 จะสลับเข้าใบเสนอราคา -->
+<div id="g6r-host" style="display:none;"></div>
+<style>
+  #g6r-host{max-width:520px;margin:10px auto;font-family:inherit;}
+  .g6r-wrap{border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;background:#fff;}
+  .g6r-top{background:#B3151D;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+  .g6r-top b{font-size:14px;} .g6r-pos{font-size:11px;opacity:.9;}
+  .g6r-tabs{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;background:#FAFAFA;border-bottom:1px solid #EEE;}
+  .g6r-tabs .tab{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;}
+  .g6r-tabs .tab.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-tabs .tab.addt{color:#B3151D;border-style:dashed;} .g6r-tabs .tab.rf{background:#EAF3FF;} .g6r-tabs .tab.sm{background:#F0FDF4;}
+  .g6r-body{padding:11px 13px;}
+  .g6r-body .ph{font-weight:700;color:#B3151D;font-size:13px;margin:0 0 8px;}
+  .g6r-body .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+  .g6r-body .rl{font-size:12px;color:#444;flex:0 0 64px;} .g6r-body .u{font-size:11px;color:#777;}
+  .g6r-body input[type=number]{width:62px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;}
+  .g6r-body .c{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;min-height:34px;}
+  .g6r-body .c.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-body .chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
+  .g6r-body .fl,.g6r-body .sl{font-size:12px;color:#666;margin:7px 0 2px;font-weight:600;}
+  .g6r-wall{display:flex;gap:5px;align-items:stretch;min-height:150px;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:8px;padding:6px;}
+  .g6r-wall .col{display:flex;flex-direction:column;gap:3px;min-width:54px;}
+  .g6r-wall .spacer{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#F3F4F6 4px,#F3F4F6 8px);}
+  .g6r-wall .pane{position:relative;border:1px solid #9DBCE0;background:#EAF3FF;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;cursor:pointer;padding:2px;min-height:26px;}
+  .g6r-wall .pane.on{outline:2px solid #B3151D;}
+  .g6r-wall .pane.g-solid{background:#F1EFE8;border-color:#B4B2A9;} .g6r-wall .pane.g-fix{background:#E1F5EE;border-color:#5DCAA5;}
+  .g6r-wall .pane .px{position:absolute;top:1px;right:1px;border:0;background:rgba(179,21,29,.85);color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;}
+  .g6r-wall .addcol{border:1px dashed #B3151D;background:#fff;color:#B3151D;border-radius:7px;min-width:34px;font-size:18px;cursor:pointer;}
+  .g6r-wtot{font-size:11px;color:#666;margin:5px 0;}
+  .g6r-edit{border:1px solid #E5E7EB;border-radius:8px;padding:9px;margin-top:8px;background:#FAFAFA;}
+  .g6r-btngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:5px;margin:5px 0;}
+  .g6r-btngrid .mb{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 4px;font-size:11px;cursor:pointer;}
+  .g6r-btngrid .mb.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-subc{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0;}
+  .g6r-subc .sc{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;}
+  .g6r-subc .sc.on{background:#1E5AA8;color:#fff;border-color:#1E5AA8;}
+  .g6r-mvrow button{border:1px solid #D1D5DB;background:#fff;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:3px;}
+  .g6r-mvrow button.danger{color:#A32D2D;border-color:#F0C0C0;}
+  .g6r-banaPr{display:flex;justify-content:space-between;align-items:center;background:#FFF7ED;border:1px solid #F0C070;border-radius:7px;padding:6px 10px;margin-top:8px;font-size:12px;}
+  .g6r-banaPr b{color:#B3151D;font-size:14px;}
+  .g6r-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-top:1px solid #EEE;background:#fff;position:sticky;bottom:0;}
+  .g6r-foot .nav button{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;}
+  .g6r-foot .grand{font-size:18px;font-weight:700;color:#B3151D;}
+</style>
+<script>
+(function(){
+  // ---- state (โครงตาม DRAFT-G6-ux-REAL · ราคาต่อ engine จริง) ----
+  var G6R={sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
+    roof:{}, ceil:{has:0}, elec:{}, cur:0, sc:0, sp:0, openFam:null};
+  function FCATS(){ return (typeof FAM_CATS!=='undefined'&&FAM_CATS['6'])?FAM_CATS['6']:['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม']; }
+  function flabel(c){ return (typeof FAM_LABEL!=='undefined'&&FAM_LABEL[c])||c; }
+  function modelsOf(cat){ try{ return prodsInGroup('6').filter(function(q){return q.cat===cat;}); }catch(e){ return []; } }
+  function defOf(cat){ try{ return famDefaultProd(cat)||((modelsOf(cat)[0]||{}).id); }catch(e){ return (modelsOf(cat)[0]||{}).id; } }
+  function pname(id){ return (typeof PBYID!=='undefined'&&PBYID[id])?PBYID[id].name:id; }
+  // ราคาบานต่อชิ้น = engine จริง (calcUnit) — base ตาม product/ขนาด/จำนวนบาน (opt เพิ่ม A3)
+  function g6rPrice(pc){ try{ var p=PBYID[pc.id]; if(!p)return 0; var panels=(pc.opt&&pc.opt.qty)?pc.opt.qty:1; var r=calcUnit(p,pc.w||1,pc.h||1,0,0,panels,{}); return (r&&r.sell)||0; }catch(e){ return 0; } }
+  function L(i){return String.fromCharCode(65+i);}
+  function np(){return G6R.sides.length+3;}
+  function pageName(i){ if(i<G6R.sides.length)return 'ด้าน '+L(i); return ['หลังคา/ฝ้า','งานไฟ','สรุป'][i-G6R.sides.length]; }
+  function fmt(n){return '฿'+Math.round(n).toLocaleString();}
+  function sideTotal(s){ var t=0; if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(p){t+=g6rPrice(p);});}); else if(s.type==='wall')t+=Math.round((s.aw||3)*(s.ah||2.6)*1350); return t; }
+  function roomTotal(){ var t=0; G6R.sides.forEach(function(s){t+=sideTotal(s);}); return Math.ceil(t/100)*100; }
+  function host(){return document.getElementById('g6r-host');}
+  function tabsHTML(){ var h=''; G6R.sides.forEach(function(s,i){ h+='<button class="tab'+(G6R.cur===i?' on':'')+'" onclick="G6Rgo('+i+')">ด้าน '+L(i)+'</button>'; });
+    h+='<button class="tab addt" onclick="G6RaddSide()">＋ด้าน</button>';
+    ['🏠หลังคา/ฝ้า','⚡ไฟ','📄สรุป'].forEach(function(lbl,o){ var idx=G6R.sides.length+o; h+='<button class="tab '+(o<2?'rf':'sm')+(G6R.cur===idx?' on':'')+'" onclick="G6Rgo('+idx+')">'+lbl+'</button>'; });
+    return h; }
+  function render(){ if(G6R.cur>=np())G6R.cur=np()-1;
+    var b='<div class="g6r-wrap"><div class="g6r-top"><b>🏗️ ห้องต่อเติม (กั้นห้องกระจก)</b><span class="g6r-pos">'+pageName(G6R.cur)+' · '+(G6R.cur+1)+'/'+np()+'</span></div>'
+      +'<div class="g6r-tabs">'+tabsHTML()+'</div><div class="g6r-body" id="g6r-bodyc"></div>'
+      +'<div class="g6r-foot"><span class="nav"><button onclick="G6Rnav(-1)">◀ ย้อน</button> <button onclick="G6Rnav(1)">ถัดไป ▶</button></span><span class="grand">'+fmt(roomTotal())+'</span></div></div>';
+    host().innerHTML=b;
+    var bc=document.getElementById('g6r-bodyc');
+    if(G6R.cur<G6R.sides.length) sidePage(bc); else { var o=G6R.cur-G6R.sides.length; if(o===0)roofPage(bc); else if(o===1)elecPage(bc); else sumPage(bc); }
+  }
+  function sidePage(bc){ var s=G6R.sides[G6R.cur];
+    var h='<div class="ph">ด้าน '+L(G6R.cur)+(G6R.sides.length>1?' <button class="c" style="float:right;color:#A32D2D;border-color:#F0C0C0;" onclick="G6RdelSide()">ลบด้าน ✕</button>':'')+'</div>'
+      +'<div class="row"><span class="rl">ประเภท</span>'
+      +'<button class="c'+(s.type==='glass'?' on':'')+'" onclick="G6RsetType(\'glass\')">กระจก/บาน</button>'
+      +'<button class="c'+(s.type==='wall'?' on':'')+'" onclick="G6RsetType(\'wall\')">ผนังเบา</button>'
+      +'<button class="c'+(s.type==='open'?' on':'')+'" onclick="G6RsetType(\'open\')">เปิดโล่ง</button></div><div id="g6r-sb"></div>';
+    bc.innerHTML=h;
+    var sb=document.getElementById('g6r-sb');
+    if(s.type==='glass'){ sb.innerHTML='<div class="g6r-wall" id="g6r-wallc"></div><div class="g6r-wtot" id="g6r-wtot"></div><div class="g6r-edit" id="g6r-editc"></div>'; renderWall(); renderEdit(); }
+    else if(s.type==='wall'){ sb.innerHTML='<div class="row"><span class="rl">ขนาด</span><input type="number" value="'+(s.aw||3)+'" step="0.1" oninput="G6RsetWall(\'aw\',this.value)"><span class="u">×</span><input type="number" value="'+(s.ah||2.6)+'" step="0.1" oninput="G6RsetWall(\'ah\',this.value)"><span class="u">ม.</span></div><div class="g6r-banaPr"><span>ผนังเบาด้านนี้ (≈ engine A3)</span><b>'+fmt((s.aw||3)*(s.ah||2.6)*1350)+'</b></div>'; }
+    else sb.innerHTML='<div class="g6r-wtot" style="margin-top:8px;">เปิดโล่ง / ติดอาคารเดิม — ไม่มีงานกั้นด้านนี้</div>';
+  }
+  function renderWall(){ var W=G6R.sides[G6R.cur].cols, wall=document.getElementById('g6r-wallc'); if(!wall)return; wall.innerHTML=''; var tw=0;
+    W.forEach(function(col,ci){ var colMax=Math.max.apply(null,col.pcs.map(function(p){return p.w||1;}).concat([0.5])); tw+=colMax;
+      var cd=document.createElement('div'); cd.className='col'; cd.style.flex=colMax+' 1 0';
+      var sum=col.pcs.reduce(function(a,p){return a+(p.h||0);},0), air=2.8-sum; if(air<0)air=0;
+      if(air>0){ var sp=document.createElement('div'); sp.className='spacer'; sp.style.flex=air+' 0 0'; cd.appendChild(sp); }
+      col.pcs.forEach(function(p,pi){ var prof=(PBYID[p.id]&&(PBYID[p.id].solid_door||PBYID[p.id].cat==='ลูกฟูก+คอมโพสิททึบ'))?'g-solid':(p.cat==='ติดตาย'?'g-fix':'');
+        var d=document.createElement('div'); d.className='pane '+prof+((ci===G6R.sc&&pi===G6R.sp)?' on':''); d.style.flex=(p.h||0.5)+' 0 0';
+        d.onclick=function(){ G6R.sc=ci; G6R.sp=pi; G6R.openFam=null; renderWall(); renderEdit(); };
+        d.innerHTML='<button class="px" onclick="G6RrmPc(event,'+ci+','+pi+')">✕</button><div><b>'+flabel(p.cat)+'</b><br>'+(p.w||1)+'×'+(p.h||0.5)+'</div>'; cd.appendChild(d); });
+      wall.appendChild(cd); });
+    var add=document.createElement('button'); add.className='addcol'; add.textContent='＋'; add.onclick=function(){ W.push({pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}); G6R.sc=W.length-1; G6R.sp=0; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); }; wall.appendChild(add);
+    var wt=document.getElementById('g6r-wtot'); if(wt)wt.textContent='รวมกว้าง ≈ '+tw.toFixed(1)+' ม. · '+W.length+' ช่อง';
+  }
+  function renderEdit(){ var W=G6R.sides[G6R.cur].cols, e=document.getElementById('g6r-editc'); if(!e)return;
+    if(!W[G6R.sc]||!W[G6R.sc].pcs[G6R.sp]){ e.style.display='none'; return; } e.style.display='block';
+    var p=W[G6R.sc].pcs[G6R.sp], cf=G6R.openFam||p.cat;
+    var h='<div class="fl" style="margin-top:0;">เลือกชนิดบานชั้นนี้ — <b>'+flabel(p.cat)+' › '+pname(p.id).replace(p.cat,'').trim()+'</b></div>'
+      +'<div class="g6r-btngrid">'+FCATS().map(function(c){ return '<button class="mb'+(c===(G6R.openFam||p.cat)?' on':'')+'" onclick="G6RopenF(\''+c+'\')">'+flabel(c)+'</button>'; }).join('')+'</div>'
+      +'<div class="g6r-subc">'+modelsOf(cf).map(function(m){ return '<button class="sc'+(m.id===p.id&&cf===p.cat?' on':'')+'" onclick="G6RsetSub(\''+cf+'\',\''+m.id+'\')">'+m.name.replace(cf,'').trim()+'</button>'; }).join('')+'</div>'
+      +'<div class="row"><span class="rl">ขนาด</span><input type="number" value="'+(p.w||1)+'" step="0.1" oninput="G6RsetW(this.value)"><span class="u">กว้างบาน</span><input type="number" value="'+(p.h||0.5)+'" step="0.1" oninput="G6RsetH(this.value)"><span class="u">สูง ม.</span></div>'
+      +'<div class="g6r-wtot">แต่ละบานที่ซ้อนกว้างไม่เท่ากันได้ · ค่าเริ่มต้น = เท่ากัน</div>'
+      +'<div class="row g6r-mvrow"><span class="rl">จัดเรียง</span><button onclick="G6RmvCol(-1)">◀</button><button onclick="G6RmvCol(1)">▶</button><button onclick="G6RmvPc(-1)">▲</button><button onclick="G6RmvPc(1)">▼</button><button onclick="G6RaddPc(-1)">＋บน</button><button onclick="G6RaddPc(1)">＋ล่าง</button><button class="danger" onclick="G6RrmSel()">ลบ</button></div>'
+      +'<div class="g6r-wtot" style="color:#92400e;">ออปชั่นเต็ม (มือจับ/มุ้ง/โครงสร้าง/อุปกรณ์เสริม) ต่อใน A3 — ตอนนี้ราคาฐาน engine จริง</div>'
+      +'<div class="g6r-banaPr"><span>ราคาบานนี้ ('+(p.w||1)+'×'+(p.h||0.5)+' ม. · engine จริง)</span><b>'+fmt(g6rPrice(p))+'</b></div>';
+    e.innerHTML=h;
+  }
+  function roofPage(bc){ bc.innerHTML='<div class="ph">🏠 หลังคา / ฝ้า</div><div class="g6r-wtot">A3: ต่อ engine หลังคาจริง (o-roofframe โครงเหล็กชุบ + รางน้ำ/คาน/svc) — กำลังทำ</div>'; }
+  function elecPage(bc){ bc.innerHTML='<div class="ph">⚡ งานไฟ / บริการ</div><div class="g6r-wtot">A3: ต่อ svc-elec จริง (ดาวน์ไลท์/สวิตช์/จัดซื้อ) — กำลังทำ</div>'; }
+  function sumPage(bc){ var h='<div class="ph">📄 สรุป — ห้องต่อเติม</div>';
+    G6R.sides.forEach(function(s,i){ var desc=s.type==='glass'?(s.cols.length+' ช่อง'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); h+='<div class="row" style="justify-content:space-between;"><span>ด้าน '+L(i)+' · '+desc+'</span><b>'+fmt(sideTotal(s))+'</b></div>'; });
+    h+='<div class="g6r-banaPr"><span>รวมทั้งห้อง (ราคาฐาน engine จริง · ออปชั่น/หลังคา/ไฟ ต่อ A3)</span><b>'+fmt(roomTotal())+'</b></div>';
+    bc.innerHTML=h;
+  }
+  function refreshGrand(){ var g=host().querySelector('.grand'); if(g)g.textContent=fmt(roomTotal()); }
+  // actions (global สำหรับ onclick)
+  window.G6Rgo=function(i){ G6R.cur=i; G6R.sc=0; G6R.sp=0; G6R.openFam=null; render(); };
+  window.G6Rnav=function(d){ G6R.cur=Math.max(0,Math.min(np()-1,G6R.cur+d)); if(G6R.cur<G6R.sides.length){G6R.sc=0;G6R.sp=0;G6R.openFam=null;} render(); };
+  window.G6RaddSide=function(){ G6R.sides.push({type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]}); G6R.cur=G6R.sides.length-1; G6R.sc=0;G6R.sp=0; render(); };
+  window.G6RdelSide=function(){ G6R.sides.splice(G6R.cur,1); if(!G6R.sides.length)G6R.sides.push({type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]}); if(G6R.cur>=G6R.sides.length)G6R.cur=G6R.sides.length-1; render(); };
+  window.G6RsetType=function(t){ var s=G6R.sides[G6R.cur]; s.type=t; if(t==='glass'&&!s.cols.length)s.cols=[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]; G6R.sc=0;G6R.sp=0; render(); };
+  window.G6RsetWall=function(k,v){ G6R.sides[G6R.cur][k]=parseFloat(v)||1; render(); };
+  window.G6RopenF=function(c){ G6R.openFam=c; renderEdit(); };
+  window.G6RsetSub=function(cat,id){ var p=G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp]; p.cat=cat; p.id=id; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RrmPc=function(e,ci,pi){ e.stopPropagation(); var W=G6R.sides[G6R.cur].cols; W[ci].pcs.splice(pi,1); if(!W[ci].pcs.length)W.splice(ci,1); if(!W.length)W.push({pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}); if(G6R.sc>=W.length)G6R.sc=W.length-1; G6R.sp=0; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RrmSel=function(){ var W=G6R.sides[G6R.cur].cols; W[G6R.sc].pcs.splice(G6R.sp,1); if(!W[G6R.sc].pcs.length)W.splice(G6R.sc,1); if(!W.length)W.push({pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}); if(G6R.sc>=W.length)G6R.sc=W.length-1; G6R.sp=0; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RsetW=function(v){ G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp].w=parseFloat(v)||0.5; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RsetH=function(v){ G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp].h=parseFloat(v)||0.3; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RaddPc=function(d){ var a=G6R.sides[G6R.cur].cols[G6R.sc].pcs, idx=G6R.sp+(d<0?0:1); a.splice(idx,0,{cat:'ติดตาย',id:defOf('ติดตาย'),w:1,h:0.5,opt:{}}); G6R.sp=idx; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RmvPc=function(d){ var a=G6R.sides[G6R.cur].cols[G6R.sc].pcs, j=G6R.sp+d; if(j<0||j>=a.length)return; var t=a[G6R.sp]; a[G6R.sp]=a[j]; a[j]=t; G6R.sp=j; renderWall(); renderEdit(); };
+  window.G6RmvCol=function(d){ var W=G6R.sides[G6R.cur].cols, j=G6R.sc+d; if(j<0||j>=W.length)return; var t=W[G6R.sc]; W[G6R.sc]=W[j]; W[j]=t; G6R.sc=j; renderWall(); renderEdit(); };
+  // dev entry (A4 จะ hook แทนกลุ่ม 6)
+  window.g6rDev=function(){ host().style.display='block'; render(); host().scrollIntoView({behavior:'smooth'}); };
+  window.G6R_STATE=G6R;
+})();
+</script>
+
 </body>
 </html>
