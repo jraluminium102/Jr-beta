@@ -60,6 +60,9 @@ select.g3-sel{height:40px;border:1.5px solid var(--line);border-radius:9px;font-
 .g3-pchip.on{background:var(--info);color:#fff;border-color:var(--info);}
 /* label ย่อย */
 .g3-lbl{font-size:11.5px;color:var(--gray);font-weight:700;display:block;margin-bottom:4px;}
+.g3-mathead{font-size:13.5px;color:var(--red);font-weight:700;display:flex;align-items:center;gap:7px;margin:14px 0 7px;padding-bottom:4px;border-bottom:2px solid #fbe9ea;}
+.g3-mathead:first-of-type{margin-top:4px;}
+.g3-mathead .cnt{margin-left:auto;font-size:11px;color:var(--gray);font-weight:600;}
 .g3-note{font-size:11px;color:var(--gray);margin-top:3px;}
 /* ราคา section */
 .g3-priceline{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #eee;gap:10px;}
@@ -105,8 +108,8 @@ textarea.g3-ta{width:100%;border:1.5px solid var(--line);border-radius:9px;paddi
   <!-- 2 ชนิดงาน (ปุ่มการ์ด grid) -->
   <div class="g3-card">
     <div class="g3-et"><span class="g3-no">2</span>ชนิดงาน <span class="g3-bc" id="g3-bc2">เลือกสินค้า</span></div>
-    <!-- หมวดหลัก -->
-    <div class="g3-lbl">หลังคา (4 รุ่น + เมทัลชีท + ชินโคไลท์)</div>
+    <!-- หัวข้อหลัก = ตระกูลวัสดุ (ทุกอันระดับเดียวกัน) -->
+    <div class="g3-mathead">🏠 ไวนิล / ดีไลท์ <span class="cnt">2 รุ่น</span></div>
     <div class="g3-prodgrid" id="g3-prodgrid-main">
       <button class="g3-prodbtn on" data-pid="roof_vinyl" onclick="g3ProdPick(this)">
         <span class="ic">🏠</span>ไวนิล<span class="sub">Snow Roof Pro · ขั้นต่ำ 28,000</span>
@@ -114,6 +117,9 @@ textarea.g3-ta{width:100%;border:1.5px solid var(--line);border-radius:9px;paddi
       <button class="g3-prodbtn" data-pid="roof_delight" onclick="g3ProdPick(this)">
         <span class="ic">🔵</span>ดีไลท์<span class="sub">D-LITE · ขั้นต่ำ 28,000</span>
       </button>
+    </div>
+    <div class="g3-mathead">▦ โพลีตัน / กระจกลามิเนต <span class="cnt">2 รุ่น</span></div>
+    <div class="g3-prodgrid">
       <button class="g3-prodbtn" data-pid="roof_polyton" onclick="g3ProdPick(this)">
         <span class="ic">🟢</span>โพลีตัน 3มม.<span class="sub">ขั้นต่ำ 30,000</span>
       </button>
@@ -121,7 +127,7 @@ textarea.g3-ta{width:100%;border:1.5px solid var(--line);border-radius:9px;paddi
         <span class="ic">🔲</span>กระจกลามิเนต<span class="sub">ขั้นต่ำ 45,000</span>
       </button>
     </div>
-    <div class="g3-lbl" style="margin-top:10px;">เมทัลชีท (IMP)</div>
+    <div class="g3-mathead">▤ เมทัลชีท <span class="cnt">8 รุ่น</span></div>
     <div class="g3-prodgrid" id="g3-prodgrid-metal">
       <button class="g3-prodbtn" data-pid="imp7" onclick="g3ProdPick(this)"><span class="ic">⬛</span>1นิ้ว ท้อง PVC EPS<span class="sub">IMP7</span></button>
       <button class="g3-prodbtn" data-pid="imp8" onclick="g3ProdPick(this)"><span class="ic">⬛</span>2นิ้ว ท้อง PVC EPS<span class="sub">IMP8</span></button>
@@ -132,7 +138,7 @@ textarea.g3-ta{width:100%;border:1.5px solid var(--line);border-radius:9px;paddi
       <button class="g3-prodbtn" data-pid="imp13" onclick="g3ProdPick(this)"><span class="ic">🟧</span>1นิ้ว ท้องเหล็ก PU<span class="sub">IMP13</span></button>
       <button class="g3-prodbtn" data-pid="imp14" onclick="g3ProdPick(this)"><span class="ic">🟧</span>2นิ้ว ท้องเหล็ก PU<span class="sub">IMP14</span></button>
     </div>
-    <div class="g3-lbl" style="margin-top:10px;">ชินโคไลท์</div>
+    <div class="g3-mathead">☀ ชินโคไลท์ <span class="cnt">6 รุ่น</span></div>
     <div class="g3-prodgrid" id="g3-prodgrid-shinko">
       <button class="g3-prodbtn" data-pid="imp15" onclick="g3ProdPick(this)"><span class="ic">✨</span>6มม. Heat Cut<span class="sub">IMP15</span></button>
       <button class="g3-prodbtn" data-pid="imp16" onclick="g3ProdPick(this)"><span class="ic">✨</span>6มม. Superior<span class="sub">IMP16</span></button>
@@ -141,7 +147,7 @@ textarea.g3-ta{width:100%;border:1.5px solid var(--line);border-radius:9px;paddi
       <button class="g3-prodbtn" data-pid="imp19" onclick="g3ProdPick(this)"><span class="ic">✨</span>10มม. Prime<span class="sub">IMP19</span></button>
       <button class="g3-prodbtn" data-pid="imp20" onclick="g3ProdPick(this)"><span class="ic">✨</span>10มม. Grand<span class="sub">IMP20</span></button>
     </div>
-    <div class="g3-lbl" style="margin-top:10px;">ฝ้า / ผนังเบา</div>
+    <div class="g3-mathead">▭ ฝ้า / ผนังเบา <span class="cnt">3 รุ่น</span></div>
     <div class="g3-prodgrid">
       <button class="g3-prodbtn" data-pid="ceiling" onclick="g3ProdPick(this)"><span class="ic">⬜</span>ฝ้าอลูมิเนียม<span class="sub">1,200/ตร.ม. min 20</span></button>
       <button class="g3-prodbtn" data-pid="wall_ext" onclick="g3ProdPick(this)"><span class="ic">🧱</span>ผนังเบาภายนอก<span class="sub">WALL_EXT</span></button>
