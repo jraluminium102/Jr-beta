@@ -45,6 +45,40 @@ want("ผ้ากันแมว → +1,000 (roundUp 5,300−4,500)", mqPet - m
 const hp = room('บานเปิด', 'casement_euro', 1, 1, { handleprice: 3500 });
 want("มือจับเพิ่ม 3,500 → +3,500", hp - base === 3500, "Δ=" + (hp - base));
 
+// ===== ออปชั่นต่อชนิดบาน (engine จริง · delta คูณพันรอด roundUp เป๊ะ) =====
+const th = room('บานเปิด','casement_euro',1,1,{thresh:'turtle'});
+want("ธรณีหลังเต่า บานเปิด → +1,000", th-base===1000, "Δ="+(th-base));
+
+const awBase = room('บานกระทุ้ง','awning_euro',1,1,{});
+const awTT = room('บานกระทุ้ง','awning_euro',1,1,{awn_mode:'2'});
+want("บานกระทุ้ง Tilt&Turn → +5,000/บาน", awTT-awBase===5000, "ฐาน="+awBase+" Δ="+(awTT-awBase));
+
+const liBase = room('บานยก','lift_sms',2,2,{});
+const liMot = room('บานยก','lift_sms',2,2,{motor:'300'});
+want("บานยก มอเตอร์ 300กก → +28,000", liMot-liBase===28000, "Δ="+(liMot-liBase));
+
+const soBase = room('บานเปิด','casement_flush_solid',1,2,{});
+const soFg = room('บานเปิด','casement_flush_solid',1,2,{fullgrid:true});
+want("ตารางเต็มบาน (โซลิด) → +5,000", soFg-soBase===5000, "Δ="+(soFg-soBase));
+
+const waBase = room('ฝ้า-ผนัง','wall_ext',2,2.5,{});
+const waIns = room('ฝ้า-ผนัง','wall_ext',2,2.5,{insul:true});
+want("ฉนวนผนัง 5 ตร.ม. → +3,000 (600×5)", waIns-waBase===3000, "Δ="+(waIns-waBase));
+
+const trBase = room('เลื่อนภายใน','inner_top_stack',2,2.4,{});
+const trHide = room('เลื่อนภายใน','inner_top_stack',2,2.4,{track:'ซ่อนราง'});
+want("ซ่อนรางบน → +5,000", trHide-trBase===5000, "Δ="+(trHide-trBase));
+
+// มุ้งเฟรม imp21 (เดิมถูก filter หาย) — ตอนนี้เลือกได้ + คิดราคาจริง
+const mqNo = room('บานเปิด','casement_euro',1,2,{});
+const mqFrame = room('บานเปิด','casement_euro',1,2,{mosq:1,mosqId:'imp21',qty:1});
+want("มุ้งเฟรม imp21 เลือกได้ + คิดราคา >0", mqFrame-mqNo>0, "Δ="+(mqFrame-mqNo));
+
+// default มุ้ง = mj_sd_basic (โชว์ตรงกับราคา · กันบั๊ก default imp21 ที่ถูกกรองหาย)
+const mqDef = room('บานเปิด','casement_euro',1,2,{mosq:1,qty:1});
+const mqSD  = room('บานเปิด','casement_euro',1,2,{mosq:1,mosqId:'mj_sd_basic',qty:1});
+want("default มุ้ง = SD พื้นฐาน (display=price)", mqDef===mqSD && mqDef>mqNo, "def="+mqDef+" sd="+mqSD);
+
 // ===== parity กับ G1: บานเปิด 1×1 + ครอบวงกบ 4 = g6rPrice เท่ากัน =====
 w.addItem(); const chs = doc.querySelectorAll('#items .ch'); const g1 = chs[chs.length - 1];
 sf(g1, '.i-group', '1'); sf(g1, '.i-prod', 'casement_euro'); sf(g1, '.i-w', '1'); sf(g1, '.i-h', '1');
