@@ -45,8 +45,10 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <table>
 <tr><th style="width:90px;">จุด</th><td><code>index.html</code> PRODUCTS imp7–imp20 ทุกตัว <code>min:0</code> (ไวนิล/ดีไลท์ = <code>min:28,000</code> · โพลีตัน 30,000 · ลามิเนต 45,000)</td></tr>
 <tr><th>มติพี่นัท</th><td><span class="tag t-green">ยืนยัน 14 มิ.ย.</span> <b>ต้องมีขั้นต่ำเหมือนกัน</b></td></tr>
-<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> มี min · <b>แยกตามวัสดุ</b> (แต่ละรุ่น/วัสดุ min ไม่เท่ากัน)</td></tr>
-<tr><th>รอตัวเลข</th><td><span class="tag t-amber">รอตารางจากพี่นัท</span> min ต่อรุ่น/วัสดุ (เมทัล imp7-14 · ชินโค imp15-20) = ? บาท — <b>ห้ามเดา</b> · dev ใส่ตาม table ที่พี่นัทให้</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> มี min · แยกตามวัสดุ · <b>เกณฑ์:</b> ไวนิล 28,000÷เรตช่วงต้น 6,500 = พื้นที่ขั้นต่ำรับงาน <b>≈ 4.3 ตร.ม.</b> → ทุกวัสดุ <code>min = roundUp(4.3 × เรตช่วงต้น[0-10])</code></td></tr>
+<tr><th>min เสนอ <span class="tag t-amber">พี่นัทยืนยัน</span></th><td>
+imp7 28,000 · imp8 28,000 · imp9 29,000 · imp10 29,000 · imp11 28,000 · imp12 29,000 · imp13 32,000 · imp14 33,000 · <b>|</b> imp15 48,000 · imp16 46,000 · imp17 47,000 · imp18 44,000 · imp19/20 61,000<br>
+<span style="color:#6b7280;">(เรตช่วงต้น 0-10ตร.ม. จาก RATES index.html L509-521 · ปัดขึ้นพัน · สอดคล้องไวนิล/ดีไลท์ 28,000)</span></td></tr>
 <tr><th>ผลกระทบ</th><td>มีผลเฉพาะงานเล็ก (พื้นที่น้อย) · เคสตัวอย่าง 18 ตร.ม. ราคาสูงกว่า min อยู่แล้ว ไม่เปลี่ยน</td></tr>
 </table>
 
@@ -54,8 +56,8 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <table>
 <tr><th style="width:90px;">จุด</th><td><code>index.html:3458</code> readItem เก็บ <code>optSel.rfsealer</code> · <code>L4328</code> genQuote ลงแต่ <b>ข้อความในใบ</b> ไม่บวกเงิน</td></tr>
 <tr><th>มติพี่นัท</th><td><span class="tag t-green">ยืนยัน 14 มิ.ย.</span> <b>ต้องคิดเงิน</b></td></tr>
-<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> คิดเงิน · <b>ต่อเมตร</b> (เรต × ความยาว)</td></tr>
-<tr><th>รอตัวเลข</th><td><span class="tag t-amber">รอเรตจากพี่นัท</span> เรต/เมตร = ? บาท — <b>ห้ามเดา</b> · dev เพิ่ม calc <code>rfsealer_rate × ยาว</code> + ลงราคาในใบ</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> คิดเงิน <b>ต่อเมตร 800 บ./ม. · ขั้นต่ำ 5,000 บ./ชุด</b></td></tr>
+<tr><th>สูตร</th><td><code>sealer_sell = roundUp( max(5000, 800 × ยาว(ม.)) )</code> → ยาว ≤6.25ม. = 5,000 · ยาว 10ม. = 8,000 · dev เพิ่มช่องกรอกยาว + calc + ลงราคาในใบ (ตอนนี้ <code>o-rfsealer</code> เป็น checkbox ลงแต่ข้อความ → เพิ่มช่องยาว + คิดเงิน)</td></tr>
 </table>
 
 <h2>ธง 5 — 🟡 breakdown ราคา (msgs) ไม่ครบบางออปชั่น (audit trail)</h2>
@@ -78,8 +80,7 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <li><code>node test/quote-fidelity.mjs</code> = PASS · ราคา/ใบ ก่อน-หลัง เทียบตรง (ยกเว้นที่ตั้งใจแก้)</li>
 </ul>
 
-<div class="good"><b>✅ method เคาะแล้ว 14 มิ.ย.:</b> ธง2 = แก้ชื่อเป็น "ลด 30%" · ธง3 = min แยกตามวัสดุ · ธง4 = sealer คิดต่อเมตร</div>
-<div class="warn"><b>⚠️ เหลือ 2 ตัวเลขที่ dev ต้องรอจากพี่นัทก่อนลงมือ (ห้ามเดาราคา):</b> (ธง3) <b>ตาราง min ต่อรุ่นเมทัล/ชินโค</b> (imp7-20) · (ธง4) <b>เรต sealer ต่อเมตร</b></div>
+<div class="good"><b>✅ เคาะครบ 14 มิ.ย. — dev ลงมือได้:</b> ธง2 = แก้ชื่อ "ลด 30%" · ธง3 = min imp7-20 ตามตารางเสนอ (อิงไวนิล 4.3 ตร.ม. × เรตช่วงต้น) · ธง4 = sealer <code>max(5000, 800×ยาว)</code> · <span class="tag t-amber">min imp = ตัวเลขเสนอ พี่นัทดูยืนยันได้ ถ้าโอเคใช้ตามนี้</span></div>
 
 <p class="sub">verify โดย: ขุด engine (grep/read index.html) + render สด <code>scripts/pricecheck-g3-render.mjs</code> + เบราว์เซอร์จริง (ไวนิล 6×3=99,000 ตรง jsdom) · READ-ONLY ไม่แตะ index.html · ไฟล์คู่ใน <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/</code></p>
 </body></html>

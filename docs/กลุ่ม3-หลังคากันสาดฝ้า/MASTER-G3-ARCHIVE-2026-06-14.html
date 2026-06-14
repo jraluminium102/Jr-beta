@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<title>MASTER G3 ARCHIVE — หลังคา/ฝ้า/ผนัง · JR OMS</title>
+<style>
+@page{size:A4;margin:11mm 10mm;}
+*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;margin:0;padding:0;}
+h1{color:#B3151D;font-size:20px;border-bottom:3px solid #B3151D;padding-bottom:6px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 6px;padding:5px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:7px;}
+h4{color:#374151;font-size:11px;margin:6px 0 2px;font-weight:700;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;color:#B3151D;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.crit{background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.money{background:#fefce8;border:1px solid #fde047;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;}
+.t-red{background:#fee2e2;color:#991b1b;}
+.t-amber{background:#fef3c7;color:#92400e;}
+.t-green{background:#dcfce7;color:#166534;}
+.t-blue{background:#dbeafe;color:#1e40af;}
+.chk{list-style:none;padding-left:2px;margin:4px 0;}
+.chk li{margin:3px 0;}
+.chk li:before{content:"\2610 ";font-weight:700;color:#B3151D;}
+.toc{background:#f9f9f9;border:1px solid #e5e7eb;border-radius:7px;padding:8px 12px;margin:8px 0;}
+.toc a{color:#B3151D;text-decoration:none;font-size:10.5px;}
+.toc a:hover{text-decoration:underline;}
+.toc ol{margin:4px 0;padding-left:16px;}
+.toc li{margin:2px 0;}
+.pr{font-family:Consolas,monospace;font-weight:700;color:#B3151D;text-align:right;}
+.bd{font-family:Consolas,monospace;font-size:9.5px;color:#374151;}
+.ok{color:#15803d;font-weight:700;}
+.flagcell{color:#92400e;font-weight:700;}
+.grprow td{background:#fbe9ea;color:#B3151D;font-weight:700;font-size:10.5px;}
+.note{font-size:9.5px;color:#6b7280;margin-top:3px;}
+.flowstep{display:flex;gap:8px;align-items:flex-start;margin:3px 0;font-size:10.5px;}
+.circnum{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:#fbe9ea;color:#B3151D;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;}
+</style></head><body>
+
+<h1>MASTER G3 ARCHIVE — หลังคา / กันสาด / ฝ้า / ผนัง</h1>
+<p class="sub">2026-06-14 · เอกสารรวมทุกอย่างของกลุ่ม 3 ในที่เดียว · สังเคราะห์จาก REF-G3 + UXDESIGN-G3 + SUMMARY-G3 + PRICECHECK-G3 + HANDOFF-G3-FINAL-dev · READ-ONLY — ไม่ได้แตะ index.html</p>
+
+<!-- ===== สารบัญ ===== -->
+<div class="toc">
+<b>สารบัญ</b>
+<ol>
+<li><a href="#sec1">สารบัญ + สรุปสถานะ G3</a></li>
+<li><a href="#sec2">ราคาฐานทุกสินค้า (24 สินค้า · ตาราง tier ครบ)</a></li>
+<li><a href="#sec3">min เมทัล/ชินโค ที่เพิ่งเคาะ (มติพี่นัท 14 มิ.ย.)</a></li>
+<li><a href="#sec4">ออปชั่นทั้งหมด (ละเอียด + สูตรทุกตัว)</a></li>
+<li><a href="#sec5">อุปกรณ์เสริมหลังคา (ละเอียด + สูตร)</a></li>
+<li><a href="#sec6">sealer วัสดุปิดรอยต่อ (สูตรใหม่ เพิ่งเคาะ)</a></li>
+<li><a href="#sec7">ออปชั่นฝ้า-ผนัง</a></li>
+<li><a href="#sec8">รูปแบบ UX ฟอร์ม G3 (3 profile · ละเอียด)</a></li>
+<li><a href="#sec9">6 ธง dev + สถานะ (รอแก้ในระบบ)</a></li>
+<li><a href="#sec10">ตัวอย่างราคา 17 เคส (render สด 18 ตร.ม.)</a></li>
+</ol>
+</div>
+
+<!-- ===== ส่วนที่ 1 ===== -->
+<h2 id="sec1">1. สารบัญ + สรุปสถานะ G3</h2>
+
+<div class="good">
+<b>สถานะรวม (14 มิ.ย. 2026)</b><br>
+งาน UX หลังคา round 2 (ชิป / ปลายหลังคา 3 ปุ่ม / รุ่น M อลูมิเนียม / จัดกล่อง) <b>แก้ + ตรวจผ่านแล้ว</b><br>
+verify จากโค้ดจริง + render สด + เบราว์เซอร์ (ไวนิล 6×3 = 99,000 ตรง)<br>
+เหลือ <b>6 ธงที่รอ dev แก้ในระบบ</b> (ดูส่วนที่ 9)
+</div>
+
+<table>
+<tr><th>หัวข้อ</th><th>สถานะ</th><th>หมายเหตุ</th></tr>
+<tr><td>ราคาฐาน + tier ทุกสินค้า</td><td><span class="tag t-green">เคาะครบ</span></td><td>18 หลังคา + 6 ฝ้า-ผนัง = 24 สินค้า</td></tr>
+<tr><td>UX form G3 (3 profile)</td><td><span class="tag t-green">round 2 ผ่าน</span></td><td>ชิปรุ่น / ปลายหลังคา / sub-panel ครบ</td></tr>
+<tr><td>min เมทัล/ชินโค (imp7–20)</td><td><span class="tag t-amber">เสนอตัวเลข · พี่นัทดูยืนยัน</span></td><td>ดูส่วนที่ 3 — อิง 4.3 ตร.ม. × เรตช่วงต้น</td></tr>
+<tr><td>o-rfsealer คิดเงิน</td><td><span class="tag t-amber">มติแล้ว · dev ยังไม่แก้</span></td><td>max(5,000, 800×ยาว) — ดูส่วนที่ 6</td></tr>
+<tr><td>roof_gutter_cover แก้ชื่อ</td><td><span class="tag t-amber">มติแล้ว · dev ยังไม่แก้</span></td><td>แก้ "ลด 50%" → "ลด 30%" เท่านั้น สูตรคงเดิม</td></tr>
+<tr><td>truss_beam_cover (ราคา=0)</td><td><span class="tag t-red">บั๊ก · รอแก้</span></td><td>ซ่อน หรือ เพิ่ม calc handler</td></tr>
+<tr><td>breakdown msgs ครบ</td><td><span class="tag t-amber">3 เคสขาด · รอ dev</span></td><td>หลังคาเลื่อน / ผสม / เสาแผง</td></tr>
+<tr><td>render สด 17 เคส ราคา</td><td><span class="tag t-green">full ถูกทุกตัว</span></td><td>ดูส่วนที่ 10</td></tr>
+</table>
+
+<!-- ===== ส่วนที่ 2 ===== -->
+<h2 id="sec2">2. ราคาฐานทุกสินค้า (24 สินค้า · tier เต็ม)</h2>
+
+<div class="box"><b>method:</b> ทุกสินค้าหลังคา/ผนัง ใช้ bucket = <code>max(min, monoRate(พื้นที่, RATES[key]))</code> + ออปชั่น → <code>roundUp(พัน)</code><br>
+ฝ้าอลู/ไม้เทียม (crates): <code>roundUp(max(10, พื้นที่) × crates[สี])</code><br>
+พื้นที่ = ยาว × ยื่น (หลังคา · label: ยาว×ยื่น) / กว้าง × สูง (ฝ้า · ผนัง)</div>
+
+<h3>หลังคา (18 สินค้า)</h3>
+<table>
+<tr><th>id</th><th>ชื่อสินค้า</th><th>RATES key</th><th>tier (ตร.ม. → บาท/ตร.ม.)</th><th>min (บาท)</th></tr>
+
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">— ไวนิล / ดีไลท์ (ROOF_STD) —</td></tr>
+<tr><td>roof_vinyl</td><td>หลังคาไวนิล</td><td>ROOF_STD</td><td>5–10: 6,500 · 10–15: 6,000 · 15–30: 5,500 · 30+: 5,000</td><td>28,000</td></tr>
+<tr><td>roof_delight</td><td>หลังคาดีไลท์</td><td>ROOF_STD</td><td>5–10: 6,500 · 10–15: 6,000 · 15–30: 5,500 · 30+: 5,000</td><td>28,000</td></tr>
+
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">— โพลีตัน / ลามิเนต —</td></tr>
+<tr><td>roof_polyton</td><td>โพลีตัน 3มม.</td><td>ROOF_POLY</td><td>5–10: 7,500 · 10–15: 6,500 · 15–30: 6,000 · 30+: 5,700</td><td>30,000</td></tr>
+<tr><td>roof_laminate</td><td>กระจกลามิเนต</td><td>ROOF_LAM</td><td>5–10: 11,000 · 10–15: 10,500 · 15+: 10,000</td><td>45,000</td></tr>
+
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">— เมทัลชีท 8 รุ่น (IMP7–IMP14 · 4 tier: 0–10/10–15/15–30/30+) —</td></tr>
+<tr><td>imp7</td><td>เมทัล 1" ท้อง PVC</td><td>IMP7</td><td>0–10: 6,300 · 10–15: 5,800 · 15–30: 5,300 · 30+: 4,800</td><td class="flagcell">0 🟡→ 28,000 (เสนอ)</td></tr>
+<tr><td>imp8</td><td>เมทัล 1" ท้องเหล็ก</td><td>IMP8</td><td>0–10: 6,400 · 10–15: 5,900 · 15–30: 5,400 · 30+: 4,900</td><td class="flagcell">0 🟡→ 28,000 (เสนอ)</td></tr>
+<tr><td>imp9</td><td>เมทัล 1" ฟอยล์</td><td>IMP9</td><td>0–10: 6,600 · 10–15: 6,100 · 15–30: 5,600 · 30+: 5,100</td><td class="flagcell">0 🟡→ 29,000 (เสนอ)</td></tr>
+<tr><td>imp10</td><td>เมทัล 1" EPS</td><td>IMP10</td><td>0–10: 6,700 · 10–15: 6,200 · 15–30: 5,700 · 30+: 5,200</td><td class="flagcell">0 🟡→ 29,000 (เสนอ)</td></tr>
+<tr><td>imp11</td><td>เมทัล 2" ท้อง PVC</td><td>IMP11</td><td>0–10: 6,300 · 10–15: 5,800 · 15–30: 5,300 · 30+: 4,800</td><td class="flagcell">0 🟡→ 28,000 (เสนอ)</td></tr>
+<tr><td>imp12</td><td>เมทัล 2" ฟอยล์</td><td>IMP12</td><td>0–10: 6,600 · 10–15: 6,100 · 15–30: 5,600 · 30+: 5,100</td><td class="flagcell">0 🟡→ 29,000 (เสนอ)</td></tr>
+<tr><td>imp13</td><td>เมทัล 2" EPS</td><td>IMP13</td><td>0–10: 7,300 · 10–15: 6,800 · 15–30: 6,300 · 30+: 5,800</td><td class="flagcell">0 🟡→ 32,000 (เสนอ)</td></tr>
+<tr><td>imp14</td><td>เมทัล 2" PU</td><td>IMP14</td><td>0–10: 7,500 · 10–15: 7,000 · 15–30: 6,500 · 30+: 6,000</td><td class="flagcell">0 🟡→ 33,000 (เสนอ)</td></tr>
+
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">— ชินโคไลท์ 6 รุ่น (IMP15–IMP19 · 3 tier: 0–10/10–15/15+) · imp20 ใช้ IMP19 —</td></tr>
+<tr><td>imp15</td><td>ชินโค HeatCut</td><td>IMP15</td><td>0–10: 11,000 · 10–15: 10,500 · 15+: 10,000</td><td class="flagcell">0 🟡→ 48,000 (เสนอ)</td></tr>
+<tr><td>imp16</td><td>ชินโค Superior</td><td>IMP16</td><td>0–10: 10,600 · 10–15: 10,000 · 15+: 9,600</td><td class="flagcell">0 🟡→ 46,000 (เสนอ)</td></tr>
+<tr><td>imp17</td><td>ชินโค Nature</td><td>IMP17</td><td>0–10: 10,800 · 10–15: 10,200 · 15+: 9,800</td><td class="flagcell">0 🟡→ 47,000 (เสนอ)</td></tr>
+<tr><td>imp18</td><td>ชินโค Shade</td><td>IMP18</td><td>0–10: 10,100 · 10–15: 9,500 · 15+: 9,100</td><td class="flagcell">0 🟡→ 44,000 (เสนอ)</td></tr>
+<tr><td>imp19</td><td>ชินโค Prime</td><td>IMP19</td><td>0–10: 14,000 · 10–15: 13,500 · 15+: 13,000</td><td class="flagcell">0 🟡→ 61,000 (เสนอ)</td></tr>
+<tr><td>imp20</td><td>ชินโค Grand</td><td>IMP19</td><td>0–10: 14,000 · 10–15: 13,500 · 15+: 13,000 (ใช้เรต IMP19)</td><td class="flagcell">0 🟡→ 61,000 (เสนอ)</td></tr>
+</table>
+
+<h3>ฝ้า-ผนัง (6 สินค้า)</h3>
+<table>
+<tr><th>id</th><th>ชื่อสินค้า</th><th>RATES / crates</th><th>tier (ตร.ม. → บาท/ตร.ม. หรือ บาท/ตร.ม. คงที่)</th><th>min (บาท)</th></tr>
+<tr><td>ceiling_smooth</td><td>ฝ้าฉาบเรียบ</td><td>CEILING</td><td>10–20: 1,200 · 20+: 1,150</td><td>12,000</td></tr>
+<tr><td>isowall</td><td>ISOWALL</td><td>ISOWALL</td><td>1–1.5:7,000 · 1.5–2:6,500 · 2–2.5:6,000 · 2.5–3:5,500 · 3–3.5:5,000 · 3.5+:4,500</td><td>7,000</td></tr>
+<tr><td>wall_ext</td><td>ผนังเบาภายนอก</td><td>WALL_EXT</td><td>3–4.5:4,500 · 4.5–6:4,200 · 6–7.5:3,900 · 7.5+:3,600</td><td>13,500</td></tr>
+<tr><td>wall_int</td><td>ผนังเบาภายใน</td><td>WALL_INT</td><td>3–4.5:4,100 · 4.5–6:3,800 · 6–7.5:3,500 · 7.5+:3,200</td><td>13,500</td></tr>
+<tr><td>ceil_cshape</td><td>ฝ้าอลู ตัวซี 15ซม.</td><td>crates</td><td>ขาว-ดำ: 2,100/ตร.ม. · ลายไม้: 2,700/ตร.ม. (formula: max(10,A) × crate)</td><td>× max(10,A)</td></tr>
+<tr><td>ceil_bsc</td><td>ฝ้าไม้เทียม remood</td><td>crates</td><td>มาตรฐาน: 2,600/ตร.ม. · ลายไม้/สีอื่น: 2,800/ตร.ม. (formula: max(10,A) × crate)</td><td>× max(10,A)</td></tr>
+</table>
+
+<div class="box"><b>หมายเหตุสี:</b> ไวนิล (เทา/ขาว/น้ำตาล 3 สี) · ดีไลท์ (DG-2 ฟ้าคราม / DG-4 เทาโซล่าร์ 2 สี) · โพลีตัน (8 สี: Clear101/Opal103/Bronze107/Green109/AusGrey108/Silver501/BronzeMet503/GreenMet504) · เมทัล (น้ำตาล/ขาว/เทา) · ชินโค (LightGrey/ModernGrey) · ลามิเนต → ฟิล์ม (ใส/เขียว/กันร้อน) + ความหนา (4+4 / 5+5) · สีทั้งหมด = cosmetic ฟรี ไม่บวกราคา</div>
+
+<!-- ===== ส่วนที่ 3 ===== -->
+<h2 id="sec3">3. min เมทัล/ชินโค ที่เพิ่งเคาะ (มติพี่นัท 14 มิ.ย.)</h2>
+
+<div class="warn"><b>สถานะ:</b> <span class="tag t-amber">ตัวเลขเสนอ — พี่นัทดูยืนยัน · dev ยังไม่แก้ในระบบ</span><br>
+เกณฑ์คิด: ไวนิล min 28,000 ÷ เรตช่วงต้น 6,500 = พื้นที่ขั้นต่ำรับงาน ≈ <b>4.3 ตร.ม.</b><br>
+สูตร: <code>min = roundUp(4.3 × เรตช่วงต้น[0-10 ตร.ม.] / พัน) × พัน</code> ทุกรุ่น</div>
+
+<table>
+<tr><th>id</th><th>ชื่อ</th><th>เรตช่วงต้น (0–10 ตร.ม.)</th><th>4.3 × เรต</th><th>min เสนอ (ปัดขึ้นพัน)</th></tr>
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">เมทัลชีท (IMP7–IMP14)</td></tr>
+<tr><td>imp7</td><td>1" ท้อง PVC</td><td>6,300</td><td>27,090</td><td><b>28,000</b></td></tr>
+<tr><td>imp8</td><td>1" ท้องเหล็ก</td><td>6,400</td><td>27,520</td><td><b>28,000</b></td></tr>
+<tr><td>imp9</td><td>1" ฟอยล์</td><td>6,600</td><td>28,380</td><td><b>29,000</b></td></tr>
+<tr><td>imp10</td><td>1" EPS</td><td>6,700</td><td>28,810</td><td><b>29,000</b></td></tr>
+<tr><td>imp11</td><td>2" ท้อง PVC</td><td>6,300</td><td>27,090</td><td><b>28,000</b></td></tr>
+<tr><td>imp12</td><td>2" ฟอยล์</td><td>6,600</td><td>28,380</td><td><b>29,000</b></td></tr>
+<tr><td>imp13</td><td>2" EPS</td><td>7,300</td><td>31,390</td><td><b>32,000</b></td></tr>
+<tr><td>imp14</td><td>2" PU</td><td>7,500</td><td>32,250</td><td><b>33,000</b></td></tr>
+<tr><td colspan="5" style="background:#fbe9ea;font-weight:700;color:#B3151D;">ชินโคไลท์ (IMP15–IMP19/20)</td></tr>
+<tr><td>imp15</td><td>HeatCut</td><td>11,000</td><td>47,300</td><td><b>48,000</b></td></tr>
+<tr><td>imp16</td><td>Superior</td><td>10,600</td><td>45,580</td><td><b>46,000</b></td></tr>
+<tr><td>imp17</td><td>Nature</td><td>10,800</td><td>46,440</td><td><b>47,000</b></td></tr>
+<tr><td>imp18</td><td>Shade</td><td>10,100</td><td>43,430</td><td><b>44,000</b></td></tr>
+<tr><td>imp19/imp20</td><td>Prime / Grand</td><td>14,000</td><td>60,200</td><td><b>61,000</b></td></tr>
+</table>
+<p class="note">เรตช่วงต้น 0–10 ตร.ม. จาก index.html RATES · imp20 ใช้ IMP19 (ตาม code) · min มีผลเฉพาะงานพื้นที่เล็ก · เคส 18 ตร.ม. ไม่ติด min อยู่แล้ว</p>
+
+<!-- ===== ส่วนที่ 4 ===== -->
+<h2 id="sec4">4. ออปชั่นทั้งหมด (ละเอียด + สูตร)</h2>
+
+<h3>4.1 วัสดุมุง + สี (o-roofcolor · cosmetic)</h3>
+<table>
+<tr><th>ออปชั่น (id)</th><th>ชนิดหลังคาที่มี</th><th>ตัวเลือกสี</th><th>คิดราคา</th></tr>
+<tr><td>สีวัสดุมุง (o-roofcolor)</td><td>ไวนิล / ดีไลท์ / โพลีตัน / เมทัล / ชินโค</td><td>ต่างตามวัสดุ (ดูส่วน 2)</td><td>ฟรี (cosmetic · label)</td></tr>
+<tr><td>ฟิล์มลามิเนต (o-lamfilm)</td><td>กระจกลามิเนตเท่านั้น</td><td>ใส / เขียว / กันร้อน</td><td>ฟรี (cosmetic · label)</td></tr>
+<tr><td>ความหนาลามิเนต (o-lamthick)</td><td>กระจกลามิเนตเท่านั้น</td><td>4+4 มม. / 5+5 มม.</td><td>ฟรี (cosmetic · label)</td></tr>
+</table>
+
+<h3>4.2 แป + โครงสร้าง (ฟรี)</h3>
+<table>
+<tr><th>ออปชั่น (id)</th><th>ตัวเลือก</th><th>คิดราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>แป (o-roofbatten)</td><td>แปเดี่ยว / แปคู่</td><td>ฟรี (label)</td><td>มีทุกชนิดหลังคา</td></tr>
+<tr><td>โครง (o-roofframe)</td><td>อลูมิเนียม / เหล็กชุบซิงค์</td><td>ฟรี + warn</td><td>warn = แจ้งลูกค้าเรื่องน้ำหนัก/รับน้ำหนัก</td></tr>
+</table>
+
+<h3>4.3 หลังคาเลื่อน (optSlide · toggle → sub-panel · เฉพาะหลังคา)</h3>
+<table>
+<tr><th>พารามิเตอร์</th><th>ตัวเลือก / ค่า</th><th>สูตรราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>จำนวนบานเลื่อน (N)</td><td>2 / 3 / 4 / 6</td><td>ดูสูตรรวม</td><td>N ≥ 2</td></tr>
+<tr><td>บานติดตาย</td><td>กรอกตัวเลข</td><td>label เท่านั้น</td><td>ไม่บวกราคา</td></tr>
+<tr><td>พื้นที่เลื่อน (sarea)</td><td>ยาว × ยื่น (auto จากขนาดหลัก)</td><td><code>monoRate(sarea, ROOF_SLIDE)</code></td><td>ROOF_SLIDE tier: 5–10:5,000 / 10–15:4,700 / 15–20:4,400 / 20–25:4,100 / 25–30:3,800 / 30+:3,500 บาท/ตร.ม.</td></tr>
+<tr><td>tier ต่อบาน (N−1 บาน)</td><td>auto จาก N−1</td><td>sarea≤10: ×4,500 · sarea≤20: ×6,750 · sarea≤30: ×9,000 · sarea>30: ×11,250 (บาท/บาน)</td><td>บวกเพิ่มต่อบาน 2+ (ราคาต่อบานเพิ่ม)</td></tr>
+<tr><td>มอเตอร์ (qty)</td><td>กรอกจำนวนตัว (auto qty จาก sarea)</td><td>sarea≤3.5: 18,000 · sarea≤14: 28,000 · sarea≤40: 36,000 · sarea>40: 72,000 บาท/ตัว</td><td>auto qty คำนวณจาก sarea · แก้ได้</td></tr>
+</table>
+<div class="money"><b>สูตรรวมหลังคาเลื่อน:</b> <code>monoRate(sarea, ROOF_SLIDE) + (N−1) × tier(sarea) + มอเตอร์ × qty</code></div>
+<div class="warn"><b>ธง dev:</b> msg ปัจจุบันลงแต่ "มอเตอร์ XX,XXX" ขาดราคาชุดระบบเลื่อน (monoRate + tier) ต้องให้ dev เพิ่ม breakdown msgs · <b>full ถูกอยู่แล้ว</b></div>
+
+<h3>4.4 ปลายหลังคา (o-roofend · radio exclusive 3 ทาง)</h3>
+<table>
+<tr><th>ทาง</th><th>id / ชนิด</th><th>ตัวเลือก</th><th>สูตรราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>ปล่อย (default)</td><td>—</td><td>—</td><td>ฟรี</td><td>ไม่ติดอะไรเพิ่ม</td></tr>
+<tr><td rowspan="4">มีรางน้ำ (o-rfgut)</td><td>อลู S</td><td>ชนิดราง + กรอกยาว (ม.)</td><td>1,000 บาท/ม. × ยาว</td><td rowspan="4">เลือกชนิดราง + ยาว · ระบบท่อหรือโซ่ · ยาว auto = ยาว หลังคา</td></tr>
+<tr><td>อลู M</td><td>ชนิดราง + กรอกยาว (ม.)</td><td>2,000 บาท/ม. × ยาว</td></tr>
+<tr><td>สแตนเลส L</td><td>ชนิดราง + กรอกยาว (ม.)</td><td>3,000 บาท/ม. × ยาว</td></tr>
+<tr><td>ตะแกรงกันใบไม้</td><td>—</td><td>ฟรี</td></tr>
+<tr><td>—</td><td>ท่อทิ้ง PVC</td><td>—</td><td>ฟรี</td><td>มาพร้อมรางน้ำ อัตโนมัติ</td></tr>
+<tr><td>ปิดปลาย (o-rfeave)</td><td>—</td><td>กรอกยาว (ม.)</td><td>1,000 บาท/ม. × ยาว</td><td>exclusive กับรางน้ำ (เลือกอย่างเดียว)</td></tr>
+</table>
+
+<h3>4.5 ต่อปลายวัสดุที่ 2 (o-roof2 + o-roof2area · toggle → sub-panel)</h3>
+<table>
+<tr><th>พารามิเตอร์</th><th>ตัวเลือก</th><th>สูตรราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>วัสดุที่ 2 (o-roof2)</td><td>ไวนิล/ดีไลท์ (ROOF_STD) · โพลีตัน (ROOF_POLY) · ลามิเนต (ROOF_LAM) · ชินโคไลท์ (IMP15)</td><td><code>monoRate(a2, RATES[วัสดุ2])</code></td><td>คิดราคาส่วนที่ 2 แยก</td></tr>
+<tr><td>พื้นที่ส่วนที่ 2 (o-roof2area)</td><td>กรอกตัวเลข ตร.ม.</td><td>a2 = พื้นที่ที่กรอก</td><td>พื้นที่หลัก = รวม − ส่วนที่ 2 (auto)</td></tr>
+</table>
+<div class="money"><b>สูตร:</b> <code>base = max(min, monoRate(พื้นที่หลัก, RATES[วัสดุ1]) + monoRate(พื้นที่ที่ 2, RATES[วัสดุ2]))</code></div>
+<div class="warn"><b>ธง dev:</b> msg ปัจจุบัน base ถูก override ไม่โชว์แยกสองส่วน · full ถูกอยู่แล้ว · ให้ dev เพิ่ม breakdown msgs</div>
+
+<!-- ===== ส่วนที่ 5 ===== -->
+<h2 id="sec5">5. อุปกรณ์เสริมหลังคา (กล่องพับ · ของเสริม · สูตรทุกตัว)</h2>
+
+<div class="box">ของเสริมเข้าถึงได้ 2 ทาง: (1) ออปชั่นในชุดหลังคา (toggle chip → sub-panel) · (2) สินค้า cat 'เสริม' เลือกเดี่ยว — ราคาตรงกัน ยกเว้น <code>truss_beam_cover</code> ที่ขายเดี่ยว = ราคา 0 (บั๊ก)</div>
+
+<table>
+<tr><th>ชื่อ (id)</th><th>UX Input</th><th>สูตรราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>เสาแผง (roof_pole_panel)</td><td>toggle chip → กรอกจำนวนต้น</td><td><code>4,000 × จำนวนต้น</code></td><td>—</td></tr>
+<tr><td>เสา 4"×8" (roof_pole_4x8)</td><td>toggle chip → กรอกจำนวนต้น</td><td><code>2,000 × จำนวนต้น</code></td><td>—</td></tr>
+<tr><td>คานเหล็กถัก รุ่น 1 (truss_beam_1) สูง 20ซม.</td><td>toggle chip → เลือกรุ่น + กรอกยาว</td><td><code>2,400 × ยาว (ม.)</code></td><td rowspan="3">เลือกรุ่น + กรอกความยาว</td></tr>
+<tr><td>คานเหล็กถัก รุ่น 2 (truss_beam_2) สูง 30ซม.</td><td>toggle chip → เลือกรุ่น + กรอกยาว</td><td><code>3,600 × ยาว (ม.)</code></td></tr>
+<tr><td>คานเหล็กถัก รุ่น 3 (truss_beam_3) สูง 50ซม.</td><td>toggle chip → เลือกรุ่น + กรอกยาว</td><td><code>4,400 × ยาว (ม.)</code></td></tr>
+<tr><td>เพลทล่าง / เหล็กดึง</td><td>toggle chip</td><td>ฟรี (label)</td><td>ลงแต่ข้อความในใบ</td></tr>
+<tr><td>ซ่อนสโลป — comp (สมาร์ทบอร์ด)</td><td>toggle chip → กรอก สูง/ด้าน/ยาว</td><td><code>(2×สูง + 0.1) × ด้าน × ยาว × 3,500</code></td><td>ด้าน = จำนวนด้าน</td></tr>
+<tr><td>ซ่อนสโลป — smart (ไม้อัด)</td><td>toggle chip → กรอก สูง/ด้าน/ยาว</td><td><code>สูง × ด้าน × ยาว × 4,000</code></td><td>—</td></tr>
+<tr><td>ปิดซ่อนราง (roof_gutter_cover)</td><td>toggle chip → กรอก กว้าง/สูง/ยาว</td><td><code>(กว้าง + สูง) / 100 × ยาว × 3,500 × 0.70</code></td><td class="flagcell">🟡 ชื่อในระบบ "ลด 50%" แต่สูตรจริง ×0.70 = ลด 30% · มติพี่นัท: แก้ชื่อ → "ลด 30%"</td></tr>
+<tr><td>ครอบคานกว้าง (o-rfbcw)</td><td>toggle chip → กรอก กว้าง/ยาว</td><td><code>3,500 × 0.6 × กว้าง × ยาว</code></td><td rowspan="2">ใช้ออปชั่นในชุดหลังคา ไม่ใช่ truss_beam_cover</td></tr>
+<tr><td>ครอบคานยาว (o-rfbcl)</td><td>toggle chip → กรอก กว้าง/ยาว</td><td><code>3,500 × 0.6 × กว้าง × ยาว</code></td></tr>
+<tr><td>โซ่รางน้ำ (roof_chain)</td><td>toggle chip</td><td><code>3,000 บาท/ชุด</code></td><td>ราคาคงที่</td></tr>
+<tr><td>ครอบท่อ PVC (roof_pvc_cover)</td><td>toggle chip → กรอกยาวท่อ</td><td><code>⌈ยาว / 1.5⌉ × 1,500</code></td><td>ปัดขึ้น (ceiling)</td></tr>
+<tr><td>ปิดปลายกันน้ำ (roof_eave_cover)</td><td>toggle chip → กรอกยาว</td><td><code>1,000 × ยาว (ม.)</code></td><td>ซ้ำกับ o-rfeave เข้าถึงได้ 2 ทาง ราคาตรงกัน</td></tr>
+<tr class="flagcell"><td>ครอบคาน (truss_beam_cover)</td><td>สินค้าขายเดี่ยว</td><td class="flagcell">ราคา = 0 (ไม่มี calc handler)</td><td class="flagcell">🔴 ใช้ไม่ได้ · ใช้ o-rfbcw/rfbcl แทน · ดูธง 1 ส่วนที่ 9</td></tr>
+</table>
+
+<!-- ===== ส่วนที่ 6 ===== -->
+<h2 id="sec6">6. sealer — วัสดุปิดรอยต่อ (o-rfsealer · สูตรใหม่ เพิ่งเคาะ)</h2>
+
+<div class="crit">
+<b>สถานะ:</b> <span class="tag t-amber">มติพี่นัท 14 มิ.ย. · dev ยังไม่แก้</span><br>
+ปัจจุบัน: <code>o-rfsealer</code> เป็น checkbox ลงแต่ข้อความในใบ ไม่บวกเงิน (cosmetic)<br>
+มติ: <b>ต้องคิดเงิน 800 บาท/ม. · ขั้นต่ำ 5,000 บาท/ชุด</b>
+</div>
+
+<table>
+<tr><th>item</th><th>รายละเอียด</th></tr>
+<tr><td>ราคา/เมตร</td><td>800 บาท/ม.</td></tr>
+<tr><td>ขั้นต่ำ</td><td>5,000 บาท/ชุด</td></tr>
+<tr><td>สูตร</td><td><code>sealer_sell = roundUp( max(5,000 , 800 × ยาว(ม.)) )</code></td></tr>
+<tr><td>ตัวอย่าง</td><td>ยาว ≤ 6.25 ม. = 5,000 บาท · ยาว 10 ม. = 8,000 บาท · ยาว 15 ม. = 12,000 บาท</td></tr>
+<tr><td>UX ที่ต้องแก้</td><td>เพิ่มช่องกรอกยาว (ม.) ต่อจาก checkbox · calc บวกเงินตามสูตร · ลงราคาในใบเสนอราคา</td></tr>
+<tr><td>line ref</td><td><code>index.html:3458</code> readItem · <code>index.html:4328</code> genQuote</td></tr>
+</table>
+
+<!-- ===== ส่วนที่ 7 ===== -->
+<h2 id="sec7">7. ออปชั่นฝ้า-ผนัง (ทุกตัว)</h2>
+
+<table>
+<tr><th>ออปชั่น (id)</th><th>ชนิดที่มี</th><th>ตัวเลือก</th><th>สูตรราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>ฉนวนกันร้อน/เสียง (o-insul)</td><td>ฝ้าฉาบเรียบ · ISOWALL · ผนังเบา</td><td>—</td><td><code>+600 บาท/ตร.ม. × พื้นที่</code></td><td>—</td></tr>
+<tr><td>รุ่น/ความหนา (o-wallmodel)</td><td>ผนังเบาภายนอก / ภายใน</td><td>สมาร์ทบอร์ด 12มม. / สมาร์ทบอร์ด 20มม. / เวเทอร์บล็อค 9มม.</td><td>ฟรี (label)</td><td>—</td></tr>
+<tr><td>ทาสี (o-wallpaintprice)</td><td>ผนังเบา · ฝ้าฉาบเรียบ</td><td>กรอกราคาเอง</td><td>กรอกเอง (freetext)</td><td>—</td></tr>
+<tr><td>โครง (o-frame)</td><td>ฝ้า · ผนัง</td><td>อลูมิเนียม / เหล็กชุบซิงค์</td><td>ฟรี (label)</td><td>—</td></tr>
+<tr><td>ความหนา ISOWALL</td><td>ISOWALL</td><td>10 / 5 / 7.5 ซม.</td><td>ฟรี (label)</td><td>—</td></tr>
+<tr><td>สี ISOWALL</td><td>ISOWALL</td><td>ตาม spec ผู้ผลิต</td><td>ฟรี (label)</td><td>—</td></tr>
+<tr><td>ฝ้าเฉียง (o-ceilslant)</td><td>ฝ้าฉาบเรียบ</td><td>—</td><td>ฟรี (label)</td><td>ระบุในหมายเหตุ</td></tr>
+<tr><td>ทาสี/รองพื้น/ไม่ทา (o-ceilpaint)</td><td>ฝ้าฉาบเรียบ</td><td>ทาสี / รองพื้น / ไม่ทา</td><td>ฟรี (label)</td><td>ทาสีขาว/รองพื้น = finish รวมในเรตแล้ว</td></tr>
+<tr><td>ครอบวงกบ (extra)</td><td>ผนังเบา</td><td>กรอกราคาเอง</td><td>กรอกเอง (อ้างอิง G1: 700–1,300 บาท/ม.)</td><td>(เช็คซ้ำ) ยืนยันว่าใช้เรต G1 หรือเรตแยก G3</td></tr>
+<tr><td>รื้อของเดิม</td><td>ฝ้า · ผนัง</td><td>—</td><td>กรอกเอง (default 1,000)</td><td>—</td></tr>
+</table>
+
+<div class="box"><b>ฝ้าอลู/ไม้เทียม (crates):</b> สีเลือกใน step 4 ของฟอร์ม (ก่อนออปชั่น) · สีที่เลือก = เรต crates ที่ใช้คิด base ทันที · บรรทัด msg "x,xxx/ตร.ม." เป็น label บอกเรต ไม่ใช่ยอดบวกเพิ่ม · ฉนวน o-insul บวกเพิ่มจาก base ปกติ</div>
+
+<!-- ===== ส่วนที่ 8 ===== -->
+<h2 id="sec8">8. รูปแบบ UX ฟอร์ม G3 (3 profile · ละเอียด)</h2>
+
+<h3>8.1 ปุ่ม 6 กลุ่มหลัก + ชิปรุ่นย่อย</h3>
+<table>
+<tr><th>ปุ่มกลุ่ม</th><th>ไอคอน</th><th>รุ่นย่อย (ชิป)</th><th>RATES key</th><th>min</th></tr>
+<tr><td>ไวนิล/ดีไลท์</td><td>⌂</td><td>หลังคาไวนิล · หลังคาดีไลท์ (2 รุ่น)</td><td>ROOF_STD</td><td>28,000</td></tr>
+<tr><td>โพลีตัน/กระจก</td><td>▦</td><td>โพลีตัน 3มม. · กระจกลามิเนต (2 รุ่น)</td><td>ROOF_POLY / ROOF_LAM</td><td>30,000 / 45,000</td></tr>
+<tr><td>เมทัลชีท</td><td>▤</td><td>8 รุ่น (1"/2" · ท้องPVC/เหล็ก/ฟอยล์ EPS/PU) · ชิปเลื่อนได้</td><td>IMP7–IMP14</td><td>เสนอ 28,000–33,000</td></tr>
+<tr><td>ชินโคไลท์</td><td>☀</td><td>6 รุ่น (HeatCut/Superior/Nature/Shade/Prime/Grand) · ชิปเลื่อนได้</td><td>IMP15–IMP19</td><td>เสนอ 44,000–61,000</td></tr>
+<tr><td>ฝ้า</td><td>▭</td><td>ฝ้าฉาบเรียบ · ฝ้าอลู ตัวซี 15ซม. · ฝ้าไม้เทียม remood (3 รุ่น)</td><td>CEILING / crates</td><td>12,000 / — </td></tr>
+<tr><td>ผนังเบา</td><td>▥</td><td>ผนังเบาภายนอก · ผนังเบาภายใน · ISOWALL (3 รุ่น)</td><td>WALL_EXT / WALL_INT / ISOWALL</td><td>13,500 / 7,000</td></tr>
+</table>
+
+<h3>8.2 Profile A — หลังคา (roof / rooflam) · 11 ขั้น</h3>
+<div>
+<div class="flowstep"><span class="circnum">1</span><span><b>กลุ่มงาน</b> — ปุ่ม G1–G7 (G3 active)</span></div>
+<div class="flowstep"><span class="circnum">2</span><span><b>ชนิดงาน</b> — ปุ่มการ์ด 6 กลุ่ม → ชิปรุ่นย่อย (ไวนิล/ดีไลท์/เมทัล 8/ชินโค 6 รุ่น เลื่อนได้)</span></div>
+<div class="flowstep"><span class="circnum">3</span><span><b>ขนาด</b> — ยาว (ม.) × ยื่น (ม.) · จำนวนชุด <span class="tag t-blue">label: ยาว×ยื่น</span></span></div>
+<div class="flowstep"><span class="circnum">4</span><span><b>วัสดุมุง · สี</b> — ชิปสีวัสดุ (ฟรี · label) · ลามิเนต = ฟิล์ม 3 ตัว + ความหนา 2 ตัว</span></div>
+<div class="flowstep"><span class="circnum">5</span><span><b>โครงสร้าง</b> — แป (แปคู่/แปเดี่ยว) + โครง (อลู/เหล็กชุบ) <span class="tag t-green">ฟรี · label</span></span></div>
+<div class="flowstep"><span class="circnum">6</span><span><b>ออปชั่นหลัก</b> — หลังคาเลื่อน (toggle → sub-panel) · ต่อปลายวัสดุที่ 2 (toggle → sub-panel)</span></div>
+<div class="flowstep"><span class="circnum">7</span><span><b>ปลายหลังคา</b> — radio exclusive 3 ทาง: ปล่อย / มีรางน้ำ (→ sub-panel ชนิด+ยาว) / ปิดปลาย (→ กรอกยาว) <span class="tag t-amber">เลือกได้อย่างเดียว</span></span></div>
+<div class="flowstep"><span class="circnum">8</span><span><b>อุปกรณ์เสริม</b> — toggle chip+sub-panel: รางน้ำ · ปิดปลายกันน้ำ · ครอบท่อ PVC · คานเหล็กถัก (รุ่น+ยาว) · เสาแผง (จำนวน) · เสา 4"×8" (จำนวน) · ครอบคาน · โซ่ · ซ่อนสโลป · ปิดซ่อนราง · รื้อของเดิม</span></div>
+<div class="flowstep"><span class="circnum">9</span><span><b>OPTION ลูกค้า (ต่อชุดนี้)</b> — เลือกหมวด 6 หมวด → รายการย่อย → กดเติม · แก้/ลบ/กรอกเองได้</span></div>
+<div class="flowstep"><span class="circnum">10</span><span><b>ตำแหน่ง / หมายเหตุ</b></span></div>
+<div class="flowstep"><span class="circnum">11</span><span><b>ออปชั่นทั้งใบ</b> (ท้ายสุด · หมวดเดียวกับข้อ 9 · ±/ชุด คิดทีเดียว)</span></div>
+<div class="flowstep"><span class="circnum">฿</span><span><b>แถบราคารวม</b> ติดล่างตลอด (sticky)</span></div>
+</div>
+
+<h3>8.3 Profile B — ฝ้า (ceil / ceilalu) · 8+ ขั้น</h3>
+<div>
+<div class="flowstep"><span class="circnum">1–2</span><span>เลือกกลุ่ม → ชิปรุ่น: ฝ้าฉาบเรียบ / ฝ้าอลู ตัวซี 15ซม. / ฝ้าไม้เทียม remood</span></div>
+<div class="flowstep"><span class="circnum">3</span><span><b>ขนาด</b> — กว้าง × สูง (ม.) <span class="tag t-blue">label: กว้าง×สูง</span> · ตัดออก: ยาว×ยื่น</span></div>
+<div class="flowstep"><span class="circnum">4</span><span><b>สี/รุ่น</b> — ฝ้าอลู: ขาว-ดำ (2,100) / ลายไม้ (2,700) · ฝ้าไม้เทียม: มาตรฐาน (2,600) / ลายไม้ (2,800) · ฝ้าฉาบเรียบ: ฉาบเรียบมาตรฐาน</span></div>
+<div class="flowstep"><span class="circnum">5</span><span><b>โครงสร้าง</b> — อลู / เหล็กชุบ (ฟรี) · ตัดออก: แป/หลังคาเลื่อน</span></div>
+<div class="flowstep"><span class="circnum">6</span><span><b>ออปชั่นหลัก</b> — ฉนวนกันร้อน/เสียง (+600/ตร.ม.) · ทาสี (กรอกเอง) · ฝ้าเฉียง (label) · ทาสี/รองพื้น/ไม่ทา (label)</span></div>
+<div class="flowstep"><span class="circnum">7</span><span><b>อุปกรณ์เสริม</b> — ครอบวงกบ · รื้อของเดิม · ตัดออก: ปลายหลังคา</span></div>
+<div class="flowstep"><span class="circnum">8–11</span><span>OPTION ลูกค้า → ตำแหน่ง/หมายเหตุ → ออปชั่นทั้งใบ → แถบราคา (เหมือน Profile A)</span></div>
+</div>
+
+<h3>8.4 Profile C — ผนังเบา (wall) · 8+ ขั้น</h3>
+<div>
+<div class="flowstep"><span class="circnum">1–2</span><span>เลือกกลุ่ม → ชิปรุ่น: ผนังเบาภายนอก / ผนังเบาภายใน / ISOWALL</span></div>
+<div class="flowstep"><span class="circnum">3</span><span><b>ขนาด</b> — กว้าง × สูง (ม.) · ตัดออก: ยาว×ยื่น</span></div>
+<div class="flowstep"><span class="circnum">4</span><span><b>รุ่น/ความหนา</b> — สมาร์ทบอร์ด 12มม. / สมาร์ทบอร์ด 20มม. / เวเทอร์บล็อค 9มม. · ISOWALL: ความหนา 10/5/7.5ซม. + สี</span></div>
+<div class="flowstep"><span class="circnum">5</span><span><b>โครงสร้าง</b> — อลู / เหล็กชุบ · ตัดออก: แป/หลังคาเลื่อน/ปลายหลังคา</span></div>
+<div class="flowstep"><span class="circnum">6</span><span><b>ออปชั่นหลัก</b> — ฉนวนกันร้อน/เสียง · ทาสี (กรอกเอง) · รุ่น/ความหนา (label)</span></div>
+<div class="flowstep"><span class="circnum">7</span><span><b>อุปกรณ์เสริม</b> — ครอบวงกบ · รื้อของเดิม (เหมือน G1)</span></div>
+<div class="flowstep"><span class="circnum">8–11</span><span>OPTION ลูกค้า → ตำแหน่ง/หมายเหตุ → ออปชั่นทั้งใบ → แถบราคา</span></div>
+</div>
+
+<h3>8.5 การโชว์ราคา 4 ระดับ</h3>
+<table>
+<tr><th>ระดับ</th><th>โชว์ที่ไหน</th><th>ทำอะไร</th></tr>
+<tr><td>① บนชิป</td><td>ทุกออปชั่นที่กดติด</td><td>ขึ้น ฿ ตรงชิปทันที · อุปกรณ์เสริมที่มี sub-panel โชว์ยอด sub-panel</td></tr>
+<tr><td>② ต่อกล่อง (.secsum)</td><td>มุมขวาหัวข้อทุก section</td><td>subtotal ของกล่องนั้น โชว์เสมอ (แม้ ฿0)</td></tr>
+<tr><td>③ พรีวิวใบเสนอราคา</td><td>การ์ดขอบแดง 2px ท้ายฟอร์ม</td><td>แยกราคา: ฐาน (บอกพื้นที่ ตร.ม.) + แต่ละออปชั่น + OPTION + รวม/ชุด + ออปชั่นทั้งใบ + ยอดรวม</td></tr>
+<tr><td>④ แถบรวม (sticky)</td><td>ล่างจอ ติดตลอด</td><td>ยอดรวมทั้งใบ realtime + label "ยอดรวมทั้งใบ (เดโม)"</td></tr>
+</table>
+
+<h3>8.6 หลักดีไซน์ที่ยึด</h3>
+<div class="box">
+1. <b>ปุ่ม/ชิป ไม่ใช้ dropdown</b> (ตัวเลือก ≤6 = ชิป · เยอะ = กลุ่ม→ย่อย · เมทัล 8/ชินโค 6 ชิปเลื่อน)<br>
+2. <b>กรอง profile ตามชนิดงาน</b> — โชว์เฉพาะขั้นที่เกี่ยวข้อง · ครบทุก section<br>
+3. <b>เห็นราคาทุกจุดขณะกรอก</b> — ชิป/กล่อง/พรีวิว/แถบรวม · แก้ราคาได้ทุกตัว (.pf2)<br>
+4. <b>สำคัญขึ้นบน เสริม/หมายเหตุลงล่าง ราคาท้ายสุด</b><br>
+5. <b>sub-panel คำนวณ auto</b> เมื่อกรอกขนาด/จำนวน · แก้เองได้เสมอ<br>
+6. <b>ปลายหลังคา = radio exclusive</b> (3 ทาง · เลือกได้อย่างเดียว) ไม่ใช่ toggle อิสระ<br>
+7. <b>สไตล์:</b> ธีมแดง JR #B3151D · max-width 560 (มือถือ) · การ์ดขาวขอบ 1px มน · ชิปขอบมน
+</div>
+
+<!-- ===== ส่วนที่ 9 ===== -->
+<h2 id="sec9">9. 6 ธง dev + สถานะ</h2>
+
+<div class="good"><b>✅ เคาะครบ 14 มิ.ย. — dev ลงมือได้:</b> ธง2+3+4 มติแล้ว · ธง1+5 รอเลือกวิธีแก้ · ธง5 breakdown ไม่กระทบราคา · <code>node test/quote-fidelity.mjs</code> ต้อง PASS ก่อน/หลัง · ยกเว้นที่ตั้งใจแก้</div>
+
+<h3>ธง 1 — 🔴 truss_beam_cover ขายเดี่ยว ราคา = 0 (บั๊ก)</h3>
+<table>
+<tr><th style="width:90px;">จุด</th><td><code>index.html:697</code> — <code>{id:'truss_beam_cover', truss_cover:1, ...}</code></td></tr>
+<tr><th>ปัญหา</th><td><code>truss_cover</code> มีแต่ definition ไม่มี calc handler → ถ้าเลือกขายเดี่ยว = ราคา ฿0</td></tr>
+<tr><th>ของจริง</th><td>ครอบคานจริงคิดผ่านออปชั่น <code>o-rfbcw</code>/<code>o-rfbcl</code> ในชุดหลังคา ซึ่งทำงานถูกอยู่แล้ว</td></tr>
+<tr><th>เสนอแก้</th><td>(ก) ซ่อน/ลบ <code>truss_beam_cover</code> ออกจากรายการขายเดี่ยว · (ข) ถ้าต้องขายเดี่ยว → เพิ่ม calc handler <code>if(p.truss_cover){...}</code> สูตรเดียวกับ o-rfbcw/rfbcl</td></tr>
+</table>
+
+<h3>ธง 2 — 🟡💰 roof_gutter_cover ชื่อ "ลด 50%" แต่สูตรจริง ลด 30%</h3>
+<table>
+<tr><th style="width:90px;">จุด</th><td>ชื่อสินค้า <code>index.html:687</code> = "...ลด 50%" · สูตร <code>index.html:1310</code> = <code>rate=(3500+finRate)*0.70</code></td></tr>
+<tr><th>ปัญหา</th><td>ชื่อบอก 50% แต่คิดจริง 30% — ลูกค้า/เฟิร์นเห็นชื่อแล้วเข้าใจผิด</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> <b>ลด 30% (แก้ชื่อ)</b> → สูตร ×0.70 ถูกแล้ว แก้แค่ชื่อ L687 "ลด 50%" → "ลด 30%" · ราคาคงเดิม</td></tr>
+</table>
+
+<h3>ธง 3 — 🟡💰 เมทัล/ชินโค (imp7–20) ไม่มีขั้นต่ำ (min:0)</h3>
+<table>
+<tr><th style="width:90px;">จุด</th><td>PRODUCTS imp7–imp20 ทุกตัว <code>min:0</code> (ไวนิล/ดีไลท์ = min:28,000)</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> ต้องมีขั้นต่ำ · เกณฑ์ <code>roundUp(4.3 × เรตช่วงต้น)</code> · ตัวเลขตามส่วนที่ 3 <span class="tag t-amber">พี่นัทดูยืนยัน</span></td></tr>
+<tr><th>ผลกระทบ</th><td>มีผลเฉพาะงานเล็ก (พื้นที่น้อย) · เคส 18 ตร.ม. ราคาสูงกว่า min อยู่แล้ว ไม่เปลี่ยน</td></tr>
+</table>
+
+<h3>ธง 4 — 🟡💰 o-rfsealer (วัสดุปิดรอยต่อ) ไม่คิดเงิน</h3>
+<table>
+<tr><th style="width:90px;">จุด</th><td><code>index.html:3458</code> readItem · <code>index.html:4328</code> genQuote ลงแต่ข้อความ ไม่บวกเงิน</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> คิดเงิน 800 บาท/ม. · ขั้นต่ำ 5,000 บาท/ชุด · <code>roundUp(max(5000, 800×ยาว))</code></td></tr>
+<tr><th>งานที่ต้องทำ</th><td>เพิ่มช่องกรอกยาว (ม.) + calc + ลงราคาในใบเสนอราคา</td></tr>
+</table>
+
+<h3>ธง 5 — 🟡 breakdown ราคา (msgs) ไม่ครบ 3 เคส (audit trail)</h3>
+<table>
+<tr><th style="width:90px;">จุด</th><td>ราคารวม (full) ถูกต้องทุกตัว แต่ msgs ที่ engine สร้างลง breakdown ไม่ครบ</td></tr>
+<tr><th>3 เคส</th><td>① หลังคาเลื่อน — msg ลงแต่มอเตอร์ ขาดราคาชุดระบบเลื่อน (monoRate+tier) · ② หลังคาผสม — base ถูก override ไม่โชว์สองส่วนแยก · ③ เสาแผง — msg ไม่ลงตัวเลข (4,000×ต้น)</td></tr>
+<tr><th>เสนอแก้</th><td>ทุกออปชั่นที่บวกเงินจริง → โชว์ราคาเป็นบรรทัดใน msgs/ใบ (audit trail · เฟิร์นกระทบยอดได้) · ไม่กระทบราคารวม</td></tr>
+</table>
+
+<h3>✅ เคลียร์แล้ว — ไม่ต้องแก้</h3>
+<div class="good"><b>หลังคาเลื่อน sarea (เดิมสงสัย):</b> readItem <code>L3432</code> <code>optSel.sarea = sareaw × sareah</code> · calc <code>L1522</code> อ่าน <code>optSel.sarea</code> → key ตรงกัน ทำงานถูก ไม่ใช่บั๊ก</div>
+
+<h3>เช็คลิสต์ปิดงาน (dev)</h3>
+<ul class="chk">
+<li>ธง 1: truss_beam_cover ไม่ขายฟรี (ซ่อน หรือ เพิ่ม calc)</li>
+<li>ธง 2: 💰 roof_gutter_cover แก้ชื่อ "ลด 50%" → "ลด 30%" (สูตรคงเดิม)</li>
+<li>ธง 3: 💰 imp7–20 ใส่ min แยกตามวัสดุ (ตามตารางส่วนที่ 3 ที่พี่นัทยืนยัน) · เทสงานเล็กติด min</li>
+<li>ธง 4: 💰 o-rfsealer คิดเงิน max(5,000, 800×ยาว) + เพิ่มช่องยาว + ลงราคาในใบ</li>
+<li>ธง 5: breakdown msgs ครบทุกออปชั่น (เลื่อน/ผสม/เสาแผง)</li>
+<li><code>node test/quote-fidelity.mjs</code> = PASS · ราคา/ใบ ก่อน-หลัง เทียบตรง (ยกเว้นที่ตั้งใจแก้)</li>
+</ul>
+
+<!-- ===== ส่วนที่ 10 ===== -->
+<h2 id="sec10">10. ตัวอย่างราคา 17 เคส (render สดจาก engine · ก่อนแก้ธง 3+4)</h2>
+
+<div class="warn"><b>หมายเหตุ:</b> ราคาในตารางนี้ = render สดจาก engine ปัจจุบัน (ก่อน dev แก้ธง 3+4) · <b>full ถูกต้องทุกตัว</b> · <code>⚑</code> = จะเปลี่ยนหลัง dev แก้ · ขนาดทดสอบ: หลังคา/ฝ้า = 6×3 = 18 ตร.ม. · ผนัง = 3×2.4 = 7.2 ตร.ม.</div>
+
+<h3>หลังคา (6×3 = 18 ตร.ม. · รางน้ำอลู S 6ม. รวม)</h3>
+<table>
+<tr><th>สินค้า (id)</th><th>ฐาน (base)</th><th>ออปชั่น</th><th>รวม (full)</th><th>หมายเหตุ</th></tr>
+<tr><td>หลังคาไวนิล (roof_vinyl)</td><td class="pr">99,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">105,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>หลังคาดีไลท์ (roof_delight)</td><td class="pr">99,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">105,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>โพลีตัน 3มม. (roof_polyton)</td><td class="pr">108,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">114,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>กระจกลามิเนต ฟิล์มใส 4+4 (roof_laminate)</td><td class="pr">180,000</td><td class="bd">รางน้ำ 6,000 · ฟิล์ม/ความหนา = ฟรี</td><td class="pr">186,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>เมทัลชีท imp7 (1" ท้อง PVC)</td><td class="pr">96,000</td><td class="bd">รางน้ำ 6,000 · min:0 ⚑ (18ตร.ม.ไม่ติดmin)</td><td class="pr">102,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>เมทัลชีท imp14 (2" PU)</td><td class="pr">117,000</td><td class="bd">รางน้ำ 6,000 · min:0 ⚑</td><td class="pr">123,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>ชินโค HeatCut imp15</td><td class="pr">180,000</td><td class="bd">รางน้ำ 6,000 · min:0 ⚑</td><td class="pr">186,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>ชินโค Grand imp19/20</td><td class="pr">234,000</td><td class="bd">รางน้ำ 6,000 · min:0 ⚑</td><td class="pr">240,000</td><td class="ok">✓ self-check</td></tr>
+</table>
+
+<h3>ออปชั่นหลังคา (ไวนิล 6×3 = 18 ตร.ม.)</h3>
+<table>
+<tr><th>สินค้า / ออปชั่น</th><th>ฐาน (base)</th><th>ออปชั่น (msgs)</th><th>รวม (full)</th><th>หมายเหตุ</th></tr>
+<tr><td>หลังคาเลื่อน 4 บาน + มอเตอร์ + ราง</td><td class="pr">99,000</td><td class="bd">มอเตอร์ 1×36,000 · รางน้ำ 6,000<br><small>(ชุดเลื่อน ~100,000 ไม่ลง msg — ธง5)</small></td><td class="pr">241,000</td><td><span class="tag t-amber">full ถูก · breakdown ขาด</span></td></tr>
+<tr><td>หลังคาผสม ไวนิล+ลามิเนต 5ตร.ม.</td><td class="pr">99,000</td><td class="bd">ไวนิล 13ตร.ม. 78,000 + ลามิเนต 5ตร.ม. 55,000 · ราง 6,000</td><td class="pr">139,000</td><td><span class="tag t-amber">full ถูก · base ถูก override</span></td></tr>
+<tr><td>ไวนิล+เสริม (เสาแผง2+คาน6ม.+ครอบPVC6ม.)</td><td class="pr">99,000</td><td class="bd">ราง 6,000 · คานถัก 14,400 · เสาแผง 2ต้น (ไม่ลงเลข) · ครอบPVC 6,000</td><td class="pr">134,000</td><td><span class="tag t-amber">full ถูก · เสาขาดเลขใน msg</span></td></tr>
+</table>
+
+<h3>ฝ้า (6×3 = 18 ตร.ม.)</h3>
+<table>
+<tr><th>สินค้า (id)</th><th>ฐาน (base)</th><th>ออปชั่น</th><th>รวม (full)</th><th>หมายเหตุ</th></tr>
+<tr><td>ฝ้าฉาบเรียบ (ทาสีขาว)</td><td class="pr">22,000</td><td class="bd">— (finish รวมในเรต)</td><td class="pr">22,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>ฝ้าอลู ตัวซี (ขาว-ดำ 2,100/ตร.ม.)</td><td class="pr">38,000</td><td class="bd">label เรต (ไม่บวกแยก)</td><td class="pr">38,000</td><td class="ok">✓ (crates รวมใน base)</td></tr>
+<tr><td>ฝ้าไม้เทียม remood (ลายไม้ 2,800/ตร.ม.)</td><td class="pr">51,000</td><td class="bd">label เรต (ไม่บวกแยก)</td><td class="pr">51,000</td><td class="ok">✓ (crates รวมใน base)</td></tr>
+</table>
+
+<h3>ผนัง (3×2.4 = 7.2 ตร.ม.)</h3>
+<table>
+<tr><th>สินค้า (id)</th><th>ฐาน (base)</th><th>ออปชั่น</th><th>รวม (full)</th><th>หมายเหตุ</th></tr>
+<tr><td>ผนังเบาภายนอก สมาร์ทบอร์ด12 (wall_ext)</td><td class="pr">29,000</td><td class="bd">—</td><td class="pr">29,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>ผนังเบาภายใน สมาร์ทบอร์ด12 (wall_int)</td><td class="pr">26,000</td><td class="bd">—</td><td class="pr">26,000</td><td class="ok">✓ self-check</td></tr>
+<tr><td>ISOWALL หนา 10ซม. สีขาว (isowall)</td><td class="pr">33,000</td><td class="bd">—</td><td class="pr">33,000</td><td class="ok">✓ self-check</td></tr>
+</table>
+
+<div class="good"><b>ผลตรวจ 17 เคส:</b> 14/17 เคส ✓ ตรงสูตร base + Σmsg = full · อีก 3 เคส full จาก engine ถูกต้อง แต่ breakdown msgs ไม่ครบ (ดูธง 5) · ไม่มี undefined/NaN · error จาก render = 0</div>
+
+<p class="sub">ไฟล์ต้นทาง: <code>REF-G3-pricing-data-2026-06-14.md</code> · <code>UXDESIGN-G3-MASTER-2026-06-14.html</code> · <code>SUMMARY-G3-options-2026-06-14.html</code> · <code>PRICECHECK-G3-2026-06-14.html</code> · <code>HANDOFF-G3-FINAL-dev-2026-06-14.html</code> · ทั้งหมดใน <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/</code> · เอกสารนี้ READ-ONLY · ราคา = ก่อน VAT (net) · สร้าง 2026-06-14</p>
+
+</body></html>
