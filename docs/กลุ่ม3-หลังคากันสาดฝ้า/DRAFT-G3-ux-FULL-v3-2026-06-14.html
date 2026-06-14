@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G3 v3 — หลังคา/ฝ้า · แก้ 4 จุด · 2026-06-14</title>
+<style>
+:root{--red:#B3151D;--gray:#6B7280;--line:#E5E7EB;--amber:#BA7517;--info:#185FA5;--green:#15803D;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,'Leelawadee UI',sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 110px;}
+.demo{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;padding:7px 12px;font-size:12px;margin-bottom:10px;}
+/* card */
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:11px;}
+.et{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.no{width:22px;height:22px;border-radius:50%;background:#fbe9ea;color:var(--red);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;font-weight:700;}
+.bc{font-size:11px;color:var(--gray);font-weight:400;}
+.secprice{margin-left:auto;font-size:12.5px;color:var(--red);font-weight:700;white-space:nowrap;}
+/* กลุ่มงาน */
+.gbtnrow{display:flex;flex-wrap:wrap;gap:7px;}
+.gbtn{min-height:40px;padding:0 16px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;transition:.15s;}
+.gbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+/* ปุ่มหลัก grid การ์ด */
+.prodgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;}
+.prodbtn{min-height:64px;border:1.5px solid var(--line);border-radius:11px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12.5px;font-weight:600;color:#374151;font-family:inherit;padding:9px 6px;transition:.15s;}
+.prodbtn .ic{font-size:20px;}
+.prodbtn .nm{text-align:center;line-height:1.3;}
+.prodbtn .sub{font-size:10px;font-weight:400;color:var(--gray);text-align:center;}
+.prodbtn.on{background:#E0F2FE;color:var(--info);border-color:var(--info);}
+.prodbtn.on .sub{color:#0369A1;}
+/* หัวกลุ่มวัสดุ */
+.mathead{font-size:13.5px;color:var(--red);font-weight:700;display:flex;align-items:center;gap:7px;margin:14px 0 7px;padding-bottom:4px;border-bottom:2px solid #fbe9ea;}
+.mathead:first-child{margin-top:4px;}
+.mathead .cnt{margin-left:auto;font-size:11px;color:var(--gray);font-weight:600;}
+/* ชิป */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{min-height:38px;padding:0 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;transition:.15s;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.info{min-height:36px;padding:0 12px;}
+.chip.info.on{background:#E0F2FE;color:var(--info);border-color:var(--info);}
+.chip.green.on{background:#15803D;color:#fff;border-color:#15803D;}
+/* แถวฟิลด์ */
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:9px;}
+.row:last-child{margin-bottom:0;}
+.fld{display:flex;flex-direction:column;gap:2px;}
+.fld label{font-size:10.5px;color:var(--gray);font-weight:700;}
+.fld input{height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 9px;font-size:14px;font-family:inherit;}
+.fld input.w60{width:68px;}.fld input.w80{width:84px;}.fld input.wauto{width:90px;}
+select.sel{height:40px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;padding:0 9px;background:#fff;max-width:100%;}
+/* sub-panel */
+.subpanel{border:1px solid #d1fae5;background:#F0FDF4;border-radius:10px;padding:10px 12px;margin-top:8px;}
+.subpanel.amber{border-color:#fde68a;background:#FFFBEF;}
+.subpanel.blue{border-color:#BFDBFE;background:#EFF6FF;}
+.subpanel.ceil{border-color:#C4B5FD;background:#F5F3FF;}
+.sphead{font-size:12px;font-weight:700;color:#166534;margin-bottom:7px;}
+.sphead.amber{color:#92400E;}
+.sphead.blue{color:#1E40AF;}
+.sphead.ceil{color:#6D28D9;}
+/* slidebox */
+.slidebox{background:#EAF3FF;border:1px solid #9DBCE0;border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;flex-direction:column;gap:9px;}
+/* stepper */
+.stepper{display:inline-flex;align-items:center;gap:5px;}
+.stepbtn{min-width:40px;min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:18px;display:inline-flex;align-items:center;justify-content:center;}
+.stepval{width:52px;height:40px;text-align:center;border:1.5px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;}
+/* panel chips */
+.panelchips{display:flex;flex-wrap:wrap;gap:5px;}
+.pchip{min-width:40px;min-height:40px;border:1.5px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:15px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+.pchip.on{background:var(--info);color:#fff;border-color:var(--info);}
+/* label */
+.lbl{font-size:11.5px;color:var(--gray);font-weight:700;display:block;margin-bottom:4px;}
+.note{font-size:11px;color:var(--gray);margin-top:3px;}
+/* ราคา */
+.priceline{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #eee;gap:10px;}
+.pricesum{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--red);margin-top:7px;padding-top:7px;border-top:2px solid #f0d2d4;}
+/* OC row */
+.ocrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;}
+.ocrow select,.ocrow input{height:36px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:12.5px;padding:0 7px;background:#fff;}
+.ocrow input[type=text]{flex:1;min-width:120px;}
+.ocrow input[type=number]{width:90px;}
+.delbtn{min-height:36px;min-width:36px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;color:var(--red);font-size:15px;}
+/* bottom bar */
+.pbar{position:fixed;left:0;right:0;bottom:0;background:var(--red);color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;}
+.pbar .big{font-size:20px;font-weight:700;}
+/* remark */
+textarea.ta{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:13px;font-family:inherit;min-height:70px;}
+.hidden{display:none;}
+.warn{font-size:11px;color:#c0392b;font-weight:700;}
+.auto-hint{font-size:11.5px;color:var(--green);font-weight:700;}
+/* ฝ้า section */
+.ceil-modebar{display:flex;gap:7px;margin-bottom:10px;}
+.ceil-modebtn{flex:1;min-height:44px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:12.5px;font-weight:700;cursor:pointer;color:#374151;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;}
+.ceil-modebtn .ic{font-size:16px;}
+.ceil-modebtn.on{background:#F5F3FF;color:#6D28D9;border-color:#C4B5FD;}
+.ceil-typegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-bottom:9px;}
+.ceil-typebtn{min-height:58px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;color:#374151;font-family:inherit;padding:8px 5px;}
+.ceil-typebtn .ic{font-size:18px;}
+.ceil-typebtn .sub{font-size:10px;font-weight:400;color:var(--gray);}
+.ceil-typebtn.on{background:#F5F3FF;color:#6D28D9;border-color:#C4B5FD;}
+/* divider */
+.divider{height:1px;background:var(--line);margin:14px 0;}
+</style></head>
+<body>
+<div class="banner">DRAFT G3 v3 · หลังคา/ฝ้า · แก้ 4 จุดพี่นัทสั่ง · เรตจริง · เดโม</div>
+<div class="page">
+<div class="demo">ราคาเดโม · เรตจริงจาก index.html (ROOF_STD/POLY/LAM/IMP7-20/CEILING) · กดเล่นได้ทุกช่อง</div>
+
+<!-- 1 กลุ่มงาน -->
+<div class="card">
+  <div class="et"><span class="no">1</span>กลุ่มงาน</div>
+  <div class="gbtnrow">
+    <button class="gbtn" onclick="grpPick(this)" data-g="G1">G1 บาน</button>
+    <button class="gbtn" onclick="grpPick(this)" data-g="G2">G2 รั้ว/ระแนง</button>
+    <button class="gbtn on" onclick="grpPick(this)" data-g="G3">G3 หลังคา/ฝ้า</button>
+    <button class="gbtn" onclick="grpPick(this)" data-g="G4">G4 ตู้อลู</button>
+    <button class="gbtn" onclick="grpPick(this)" data-g="G5">G5 มุ้ง</button>
+    <button class="gbtn" onclick="grpPick(this)" data-g="G6">G6 กั้นห้อง</button>
+    <button class="gbtn" onclick="grpPick(this)" data-g="G7">G7 อื่นๆ</button>
+  </div>
+</div>
+
+<!-- 2 ชนิดงาน — แก้จุด 1: หัวข้อหลักต่อชนิดหลังคา แยกกัน + แก้จุด 2: ตัดผนังเบาทิ้ง -->
+<div class="card">
+  <div class="et"><span class="no">2</span>ชนิดงาน <span class="bc" id="bc2">เลือกสินค้า</span></div>
+
+  <!-- หัวข้อ 1: ไวนิล -->
+  <div class="mathead">🏠 ไวนิล <span class="cnt">1 รุ่น · ขั้นต่ำ 28,000</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn on" data-pid="roof_vinyl" onclick="prodPick(this)">
+      <span class="ic">🏠</span><span class="nm">ไวนิล<br><small style="font-size:10px;">Snow Roof Pro</small></span>
+      <span class="sub">ROOF_STD · min 28,000</span>
+    </button>
+  </div>
+
+  <!-- หัวข้อ 2: ดีไลท์ -->
+  <div class="mathead">🔵 ดีไลท์ <span class="cnt">1 รุ่น · ขั้นต่ำ 28,000</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn" data-pid="roof_delight" onclick="prodPick(this)">
+      <span class="ic">🔵</span><span class="nm">ดีไลท์<br><small style="font-size:10px;">D-LITE</small></span>
+      <span class="sub">ROOF_STD · min 28,000</span>
+    </button>
+  </div>
+
+  <!-- หัวข้อ 3: โพลีตัน -->
+  <div class="mathead">🟢 โพลีตัน <span class="cnt">1 รุ่น · ขั้นต่ำ 30,000</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn" data-pid="roof_polyton" onclick="prodPick(this)">
+      <span class="ic">🟢</span><span class="nm">โพลีตัน 3มม.</span>
+      <span class="sub">ROOF_POLY · min 30,000</span>
+    </button>
+  </div>
+
+  <!-- หัวข้อ 4: กระจกลามิเนต -->
+  <div class="mathead">🔲 กระจกลามิเนต <span class="cnt">1 รุ่น · ขั้นต่ำ 45,000</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn" data-pid="roof_laminate" onclick="prodPick(this)">
+      <span class="ic">🔲</span><span class="nm">กระจกลามิเนต</span>
+      <span class="sub">ROOF_LAM · min 45,000</span>
+    </button>
+  </div>
+
+  <!-- หัวข้อ 5: เมทัลชีท (8 รุ่นย่อยเป็นชิป/การ์ด) -->
+  <div class="mathead">⬛ เมทัลชีท <span class="cnt">8 รุ่น</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn" data-pid="imp7" onclick="prodPick(this)"><span class="ic">⬛</span><span class="nm">1นิ้ว ท้อง PVC EPS</span><span class="sub">IMP7</span></button>
+    <button class="prodbtn" data-pid="imp8" onclick="prodPick(this)"><span class="ic">⬛</span><span class="nm">2นิ้ว ท้อง PVC EPS</span><span class="sub">IMP8</span></button>
+    <button class="prodbtn" data-pid="imp9" onclick="prodPick(this)"><span class="ic">🟫</span><span class="nm">1นิ้ว ท้องเหล็ก EPS</span><span class="sub">IMP9</span></button>
+    <button class="prodbtn" data-pid="imp10" onclick="prodPick(this)"><span class="ic">🟫</span><span class="nm">2นิ้ว ท้องเหล็ก EPS</span><span class="sub">IMP10</span></button>
+    <button class="prodbtn" data-pid="imp11" onclick="prodPick(this)"><span class="ic">🟨</span><span class="nm">1นิ้ว ท้องฟอยล์ PU</span><span class="sub">IMP11</span></button>
+    <button class="prodbtn" data-pid="imp12" onclick="prodPick(this)"><span class="ic">🟨</span><span class="nm">2นิ้ว ท้องฟอยล์ PU</span><span class="sub">IMP12</span></button>
+    <button class="prodbtn" data-pid="imp13" onclick="prodPick(this)"><span class="ic">🟧</span><span class="nm">1นิ้ว ท้องเหล็ก PU</span><span class="sub">IMP13</span></button>
+    <button class="prodbtn" data-pid="imp14" onclick="prodPick(this)"><span class="ic">🟧</span><span class="nm">2นิ้ว ท้องเหล็ก PU</span><span class="sub">IMP14</span></button>
+  </div>
+
+  <!-- หัวข้อ 6: ชินโคไลท์ (6 รุ่นย่อย) -->
+  <div class="mathead">✨ ชินโคไลท์ <span class="cnt">6 รุ่น</span></div>
+  <div class="prodgrid">
+    <button class="prodbtn" data-pid="imp15" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">6มม. Heat Cut</span><span class="sub">IMP15 · min 28,000</span></button>
+    <button class="prodbtn" data-pid="imp16" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">6มม. Superior</span><span class="sub">IMP16 · min 28,000</span></button>
+    <button class="prodbtn" data-pid="imp17" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">6มม. Nature</span><span class="sub">IMP17 · min 29,000</span></button>
+    <button class="prodbtn" data-pid="imp18" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">4มม. Shade</span><span class="sub">IMP18 · min 29,000</span></button>
+    <button class="prodbtn" data-pid="imp19" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">10มม. Prime</span><span class="sub">IMP19 · min 32,000</span></button>
+    <button class="prodbtn" data-pid="imp20" onclick="prodPick(this)"><span class="ic">✨</span><span class="nm">10มม. Grand</span><span class="sub">IMP20 · min 33,000</span></button>
+  </div>
+
+  <!-- หัวข้อ 7: ฝ้า (แก้จุด 3: ฝ้าเป็นออปชั่นในหลังคา + เลือกเดี่ยวได้) -->
+  <div class="mathead" style="border-bottom-color:#C4B5FD;">▭ ฝ้า (เลือกเดี่ยว หรือเพิ่มในหลังคา) <span class="cnt">3 รุ่น</span></div>
+  <div class="ceil-typegrid">
+    <button class="ceil-typebtn" data-pid="ceil_cshape" onclick="ceilStandalonePick(this)">
+      <span class="ic">▭</span><span class="nm" style="text-align:center;">ฝ้าอลูมิเนียม ไทยทิพย์<br><small style="font-size:9px;">ตัวซี 15ซม.</small></span>
+      <span class="sub">2,100–2,700/ตร.ม. · min 10ตร.ม.</span>
+    </button>
+    <button class="ceil-typebtn" data-pid="ceil_bsc" onclick="ceilStandalonePick(this)">
+      <span class="ic">🪵</span><span class="nm" style="text-align:center;">ฝ้าไม้เทียม remood<br><small style="font-size:9px;">แผ่นเรียบ 12ซม.</small></span>
+      <span class="sub">2,600–2,800/ตร.ม. · min 10ตร.ม.</span>
+    </button>
+    <button class="ceil-typebtn" data-pid="ceiling_smooth" onclick="ceilStandalonePick(this)">
+      <span class="ic">⬜</span><span class="nm" style="text-align:center;">ฝ้าฉาบเรียบ</span>
+      <span class="sub">1,200/ตร.ม. · min 12,000</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===== ฟอร์มหลัก (โชว์หลังเลือกสินค้า) ===== -->
+<div id="main-form">
+
+  <!-- 3 ขนาด -->
+  <div class="card">
+    <div class="et"><span class="no">3</span>ขนาด <span class="bc" id="size-label">กว้าง × ยาว (ม.)</span> <span class="secprice" id="base-price">฿—</span></div>
+    <div class="row">
+      <div class="fld"><label>กว้าง (ม.)</label><input type="number" id="pw" class="w80" step="0.1" min="0" placeholder="0.0" oninput="calc()"></div>
+      <div style="align-self:center;font-size:18px;color:var(--gray);padding-top:14px;">×</div>
+      <div class="fld"><label>ยาว (ม.)</label><input type="number" id="ph" class="w80" step="0.1" min="0" placeholder="0.0" oninput="calc()"></div>
+      <div class="fld"><label>พื้นที่ (ตร.ม.)</label><input type="number" id="parea" class="w80" readonly style="background:#f9fafb;color:var(--gray);" placeholder="auto"></div>
+      <div class="fld"><label>จำนวนชุด</label>
+        <div class="stepper">
+          <button class="stepbtn" onclick="step('pqty',-1,1)">−</button>
+          <input type="number" id="pqty" class="stepval" value="1" min="1" oninput="calc()">
+          <button class="stepbtn" onclick="step('pqty',1,1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="note" id="rate-hint">เรต: —</div>
+  </div>
+
+  <!-- 4 วัสดุมุง/สี (cascade ตามชนิด) -->
+  <div class="card" id="card-color">
+    <div class="et"><span class="no">4</span>วัสดุมุง / สี</div>
+    <!-- ไวนิล -->
+    <div id="col-vinyl">
+      <div class="lbl">สีวัสดุมุง (ไวนิล — ทุกสีราคาเท่ากัน)</div>
+      <div class="chips">
+        <button class="chip on" data-val="สีขาว" onclick="chipPick(this,'roofcolor')">สีขาว</button>
+        <button class="chip" data-val="สีเทา" onclick="chipPick(this,'roofcolor')">สีเทา</button>
+        <button class="chip" data-val="สีน้ำตาล" onclick="chipPick(this,'roofcolor')">สีน้ำตาล</button>
+      </div>
+    </div>
+    <!-- ดีไลท์ -->
+    <div id="col-delight" class="hidden">
+      <div class="lbl">สีวัสดุมุง (ดีไลท์)</div>
+      <div class="chips">
+        <button class="chip on" data-val="DG-2 สีฟ้าคราม" onclick="chipPick(this,'roofcolor')">DG-2 สีฟ้าคราม</button>
+        <button class="chip" data-val="DG-4 สีเทาโซล่าร์" onclick="chipPick(this,'roofcolor')">DG-4 สีเทาโซล่าร์</button>
+      </div>
+    </div>
+    <!-- โพลีตัน -->
+    <div id="col-poly" class="hidden">
+      <div class="lbl">สีวัสดุมุง (โพลีตัน)</div>
+      <select class="sel" id="roofcolor-poly" onchange="calc()" style="width:100%;max-width:340px;">
+        <option>Clear 101 สีใส (แสงผ่าน 83%)</option>
+        <option selected>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option>
+        <option>Bronze 107 สีชาใส (แสงผ่าน 30%)</option>
+        <option>Green 109 สีเขียวใส (แสงผ่าน 45%)</option>
+        <option>Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option>
+        <option>Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option>
+        <option>Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option>
+        <option>Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option>
+      </select>
+    </div>
+    <!-- ลามิเนต -->
+    <div id="col-lam" class="hidden">
+      <div class="lbl">ชนิดฟิล์ม</div>
+      <div class="chips">
+        <button class="chip on" data-val="กันร้อน" onclick="chipPick(this,'lamfilm')">ฟิล์มกันร้อน</button>
+        <button class="chip" data-val="ใส" onclick="chipPick(this,'lamfilm')">ลามิเนตใส</button>
+        <button class="chip" data-val="เขียว" onclick="chipPick(this,'lamfilm')">ลามิเนตเขียว</button>
+      </div>
+      <div class="lbl" style="margin-top:8px;">ความหนากระจก</div>
+      <div class="chips">
+        <button class="chip on" data-val="4+4" onclick="chipPick(this,'lamthick')">4+4 มม.</button>
+        <button class="chip" data-val="5+5" onclick="chipPick(this,'lamthick')">5+5 มม.</button>
+      </div>
+    </div>
+    <!-- เมทัลชีท -->
+    <div id="col-metal" class="hidden">
+      <div class="lbl">สีเมทัลชีท (ทุกสีราคาเท่ากัน)</div>
+      <div class="chips">
+        <button class="chip on" data-val="" onclick="chipPick(this,'roofcolor')">— ระบุสี —</button>
+        <button class="chip" data-val="สีน้ำตาล" onclick="chipPick(this,'roofcolor')">สีน้ำตาล</button>
+        <button class="chip" data-val="สีขาว" onclick="chipPick(this,'roofcolor')">สีขาว</button>
+        <button class="chip" data-val="สีเทา" onclick="chipPick(this,'roofcolor')">สีเทา</button>
+      </div>
+    </div>
+    <!-- ชินโคไลท์ -->
+    <div id="col-shinko" class="hidden">
+      <div class="lbl">สีชินโคไลท์</div>
+      <div class="chips">
+        <button class="chip on" data-val="" onclick="chipPick(this,'roofcolor')">— ระบุสี —</button>
+        <button class="chip" data-val="Light Grey" onclick="chipPick(this,'roofcolor')">Light Grey</button>
+        <button class="chip" data-val="Modern Grey" onclick="chipPick(this,'roofcolor')">Modern Grey</button>
+      </div>
+    </div>
+    <!-- ฝ้า -->
+    <div id="col-ceil" class="hidden">
+      <div class="lbl" id="ceil-color-lbl">สี / รุ่นฝ้า</div>
+      <div class="chips" id="ceil-color-chips"></div>
+    </div>
+    <input type="hidden" id="roofcolor" value="สีขาว">
+    <input type="hidden" id="lamfilm" value="กันร้อน">
+    <input type="hidden" id="lamthick" value="4+4">
+  </div>
+
+  <!-- 5 แป / โครงสร้าง (ซ่อนเมื่อเลือกฝ้าเดี่ยว) -->
+  <div class="card" id="card-frame">
+    <div class="et"><span class="no">5</span>แป / โครงสร้าง</div>
+    <div class="lbl">แป</div>
+    <div class="chips">
+      <button class="chip on" data-val="แปคู่" onclick="chipPick(this,'batten')">แปคู่</button>
+      <button class="chip" data-val="แปเดี่ยว" onclick="chipPick(this,'batten')">แปเดี่ยว</button>
+    </div>
+    <input type="hidden" id="batten" value="แปคู่">
+    <div class="lbl" style="margin-top:9px;">โครงสร้าง</div>
+    <div class="chips">
+      <button class="chip on" data-val="โครงอลูมิเนียม" onclick="chipPick(this,'frame')">โครงอลูมิเนียม</button>
+      <button class="chip" data-val="โครงเหล็กชุบซิงค์" onclick="chipPick(this,'frame');frameWarn(this)">โครงเหล็กชุบซิงค์</button>
+    </div>
+    <input type="hidden" id="frame" value="โครงอลูมิเนียม">
+    <div id="frame-warn" class="warn hidden">โครงเหล็กชุบซิงค์ — ราคาเท่าโครงอลู · เช็คราคาเหล็กชุบภายหลัง</div>
+  </div>
+
+  <!-- ===== แก้จุด 3: ฝ้าเป็นออปชั่นในหลังคา (แบบ G6) ===== -->
+  <!-- แสดงเมื่อเลือกหลังคา (ไม่ใช่ฝ้าเดี่ยว) -->
+  <div class="card" id="card-ceil-option">
+    <div class="et"><span class="no">6</span>ฝ้า (ออปชั่น) <span class="bc">เพิ่มในงานหลังคา หรือแยกรายการ</span> <span class="secprice" id="ceil-price">฿0</span></div>
+
+    <!-- โหมดฝ้า -->
+    <div class="ceil-modebar">
+      <button class="ceil-modebtn on" id="ceil-mode-none" onclick="ceilModePick('none')">
+        <span class="ic">—</span><span>ไม่มีฝ้า</span>
+      </button>
+      <button class="ceil-modebtn" id="ceil-mode-in" onclick="ceilModePick('in')">
+        <span class="ic">✅</span><span>รวมในหลังคา</span>
+      </button>
+      <button class="ceil-modebtn" id="ceil-mode-sep" onclick="ceilModePick('sep')">
+        <span class="ic">📋</span><span>แยกรายการ</span>
+      </button>
+    </div>
+
+    <!-- เนื้อหาฝ้า (โผล่เมื่อเลือก in หรือ sep) -->
+    <div id="ceil-body" class="hidden">
+      <div class="subpanel ceil">
+        <div class="sphead ceil">วัสดุฝ้า</div>
+
+        <!-- ชนิดฝ้า -->
+        <div class="lbl">ชนิดฝ้า</div>
+        <div class="ceil-typegrid" style="margin-bottom:9px;">
+          <button class="ceil-typebtn" data-cid="ceil_cshape" onclick="ceilTypePick(this)">
+            <span class="ic">▭</span><span style="font-size:11px;font-weight:600;text-align:center;">ฝ้าอลูมิเนียม ไทยทิพย์<br><small style="font-size:9px;">ตัวซี 15ซม.</small></span>
+          </button>
+          <button class="ceil-typebtn" data-cid="ceil_bsc" onclick="ceilTypePick(this)">
+            <span class="ic">🪵</span><span style="font-size:11px;font-weight:600;text-align:center;">ฝ้าไม้เทียม remood<br><small style="font-size:9px;">แผ่นเรียบ 12ซม.</small></span>
+          </button>
+          <button class="ceil-typebtn" data-cid="ceiling_smooth" onclick="ceilTypePick(this)">
+            <span class="ic">⬜</span><span style="font-size:11px;font-weight:600;text-align:center;">ฝ้าฉาบเรียบ</span>
+          </button>
+        </div>
+
+        <!-- สี/รุ่น (cascade) -->
+        <div id="ceil-opt-cshape" class="hidden">
+          <div class="lbl">สี (ฝ้าอลูมิเนียม ไทยทิพย์)</div>
+          <div class="chips">
+            <button class="chip on" data-val="ขาว-ดำ" onclick="chipPick(this,'ceil-ckolor')">ขาว-ดำ <span style="color:var(--green);font-size:11px;">2,100/ตร.ม.</span></button>
+            <button class="chip" data-val="ลายไม้" onclick="chipPick(this,'ceil-ckolor')">ลายไม้ <span style="color:var(--green);font-size:11px;">2,700/ตร.ม.</span></button>
+          </div>
+          <input type="hidden" id="ceil-ckolor" value="ขาว-ดำ">
+        </div>
+        <div id="ceil-opt-bsc" class="hidden">
+          <div class="lbl">รุ่น (ฝ้าไม้เทียม remood)</div>
+          <div class="chips">
+            <button class="chip on" data-val="มาตรฐาน(ขาว-ซิลเวอร์)" onclick="chipPick(this,'ceil-ckolor')">มาตรฐาน ขาว-ซิลเวอร์ <span style="color:var(--green);font-size:11px;">2,600/ตร.ม.</span></button>
+            <button class="chip" data-val="ลายไม้/สีอื่น" onclick="chipPick(this,'ceil-ckolor')">ลายไม้ / สีอื่น <span style="color:var(--green);font-size:11px;">2,800/ตร.ม.</span></button>
+          </div>
+          <input type="hidden" id="ceil-ckolor" value="มาตรฐาน(ขาว-ซิลเวอร์)">
+        </div>
+        <div id="ceil-opt-smooth" class="hidden">
+          <div class="note" style="margin-bottom:6px;">ฝ้าฉาบเรียบ — CEILING 1,200/ตร.ม. (min 12,000) · คิด max(12, พื้นที่)</div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="ceil-smooth-slope" onchange="calc()" style="width:16px;height:16px;">
+            ฝ้าเฉียงตามแนวหลังคา (ระบุในใบ)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px;">
+            <input type="checkbox" id="ceil-insul" onchange="calc()" style="width:16px;height:16px;">
+            ฉนวนกันความร้อน/กันเสียง หนา 3" (+600/ตร.ม.)
+          </label>
+        </div>
+
+        <!-- พื้นที่ฝ้า -->
+        <div style="margin-top:10px;border-top:1px dashed #C4B5FD;padding-top:10px;">
+          <div class="lbl">พื้นที่ฝ้า (ตร.ม.) <span class="auto-hint" id="ceil-area-auto"></span></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="number" id="ceil-area" class="w80" style="height:40px;border:1.5px solid var(--line);border-radius:9px;padding:0 9px;font-size:14px;" step="0.1" min="0" placeholder="= พื้นที่หลังคา" oninput="calc()">
+            <span style="font-size:12px;color:var(--gray);">ตร.ม.</span>
+            <span class="note">เว้นว่าง = ใช้พื้นที่หลังคา (auto)</span>
+          </div>
+        </div>
+
+        <!-- ตำแหน่ง -->
+        <div style="margin-top:9px;">
+          <div class="lbl">ตำแหน่งฝ้า</div>
+          <div class="chips">
+            <button class="chip on" data-val="นอก" onclick="chipPick(this,'ceil-pos')">ฝ้านอก</button>
+            <button class="chip" data-val="ใน" onclick="chipPick(this,'ceil-pos')">ฝ้าใน</button>
+          </div>
+          <input type="hidden" id="ceil-pos" value="นอก">
+        </div>
+
+        <!-- แนว -->
+        <div style="margin-top:9px;">
+          <div class="lbl">แนวฝ้า</div>
+          <div class="chips">
+            <button class="chip on" data-val="ตรง" onclick="chipPick(this,'ceil-dir')">ตรง</button>
+            <button class="chip" data-val="เฉียง" onclick="chipPick(this,'ceil-dir')">เฉียงตามหลังคา</button>
+          </div>
+          <input type="hidden" id="ceil-dir" value="ตรง">
+        </div>
+
+        <!-- แสดงราคาฝ้า -->
+        <div id="ceil-pricerow" style="margin-top:9px;padding:7px 10px;background:#EDE9FE;border-radius:8px;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#6D28D9;">
+          <span>ฝ้า (เดโม)</span><span id="ceil-priceval">฿—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- separator ก่อนหัวข้อ 7 -->
+    <div class="note" style="margin-top:8px;">หลังคาเลื่อน · ต่อปลายวัสดุ · ปลายหลังคา อยู่ส่วนถัดไป</div>
+  </div>
+
+  <!-- 7 หลังคาเลื่อน -->
+  <div class="card" id="card-slide">
+    <div class="et"><span class="no">7</span>หลังคาเลื่อน <span class="bc">(ออปชั่น)</span></div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px;font-weight:600;">
+      <input type="checkbox" id="slide-toggle" onchange="slideToggle()" style="width:18px;height:18px;"> ทำเป็นหลังคาเลื่อน
+    </label>
+    <div id="slide-wrap" class="hidden">
+      <div class="slidebox">
+        <!-- ① ชนิดเลื่อน -->
+        <div>
+          <div class="lbl">① ชนิดเลื่อน</div>
+          <div class="chips">
+            <button class="chip on" data-val="เลื่อนยื่น" onclick="chipPick(this,'slidetype')">เลื่อนยื่น</button>
+            <button class="chip" data-val="เลื่อนข้าง" onclick="chipPick(this,'slidetype')">เลื่อนข้าง</button>
+          </div>
+          <input type="hidden" id="slidetype" value="เลื่อนยื่น">
+        </div>
+        <!-- ② จำนวนบานเลื่อน -->
+        <div>
+          <div class="lbl">② จำนวนบานเลื่อน</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="panelchips" id="spanelchips">
+              <button class="pchip on" data-n="2" onclick="setSpanels(2)">2</button>
+              <button class="pchip" data-n="3" onclick="setSpanels(3)">3</button>
+              <button class="pchip" data-n="4" onclick="setSpanels(4)">4</button>
+              <button class="pchip" data-n="6" onclick="setSpanels(6)">6</button>
+            </div>
+            <div class="stepper">
+              <button class="stepbtn" onclick="step('spanels',-1,2);slideFill()">−</button>
+              <input type="number" id="spanels" class="stepval" value="2" min="2" oninput="slideFill();calc()">
+              <button class="stepbtn" onclick="step('spanels',1,2);slideFill()">+</button>
+            </div>
+          </div>
+        </div>
+        <!-- ③ บานติดตาย -->
+        <div>
+          <div class="lbl">③ บานติดตาย</div>
+          <div class="stepper">
+            <button class="stepbtn" onclick="step('sfixed',-1,0)">−</button>
+            <input type="number" id="sfixed" class="stepval" value="0" min="0" oninput="calc()">
+            <button class="stepbtn" onclick="step('sfixed',1,0)">+</button>
+          </div><span style="font-size:13px;color:var(--gray);margin-left:6px;">บาน</span>
+        </div>
+        <!-- ④ พื้นที่เลื่อน -->
+        <div>
+          <div class="lbl">④ พื้นที่เลื่อน <span style="font-size:11px;color:var(--gray);">(ว่าง = auto)</span></div>
+          <div class="row" style="margin-bottom:0;">
+            <div class="fld"><label>ยาว (ม.)</label><input type="number" id="sareaw" class="w60" step="0.1" min="0" placeholder="auto" oninput="slideFill();calc()"></div>
+            <div style="align-self:center;font-size:18px;color:var(--gray);padding-top:14px;">×</div>
+            <div class="fld"><label>ยื่น (ม.)</label><input type="number" id="sareah" class="w60" step="0.1" min="0" placeholder="auto" oninput="slideFill();calc()"></div>
+            <div class="fld"><label>พื้นที่เลื่อน</label><input type="number" id="sarea-calc" class="w60" readonly style="background:#f9fafb;color:var(--gray);" placeholder="auto"></div>
+          </div>
+        </div>
+        <!-- ⑤ มอเตอร์ -->
+        <div>
+          <div class="lbl">⑤ มอเตอร์</div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div class="stepper">
+              <button class="stepbtn" onclick="step('smotorqty',-1,1);slideFill()">−</button>
+              <input type="number" id="smotorqty" class="stepval" value="1" min="1" oninput="slideFill();calc()">
+              <button class="stepbtn" onclick="step('smotorqty',1,1);slideFill()">+</button>
+            </div>
+            <span style="font-size:13px;color:var(--gray);">ตัว</span>
+            <span class="auto-hint" id="smotor-auto"></span>
+            <a id="smotor-edit-link" onclick="showMotorEdit()" style="font-size:12px;color:var(--info);text-decoration:underline;cursor:pointer;">แก้ราคา</a>
+          </div>
+          <div id="smotor-edit-wrap" class="hidden" style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:var(--gray);">× ราคา/ตัว</span>
+            <input type="number" id="smotorprice" class="w80" style="height:40px;" step="1000" min="0" value="0" oninput="calc()">
+            <span style="font-size:12px;color:var(--gray);">บาท</span>
+          </div>
+        </div>
+      </div>
+      <div class="note" id="slide-ratehint" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- 8 ต่อปลายวัสดุที่ 2 -->
+  <div class="card" id="card-roof2">
+    <div class="et"><span class="no">8</span>ต่อปลายวัสดุที่ 2 <span class="bc">(ผสม 2 วัสดุ)</span></div>
+    <div class="row">
+      <div class="fld" style="flex:1;">
+        <label>วัสดุส่วนที่ 2</label>
+        <select class="sel" id="roof2" onchange="calc()" style="width:100%;"></select>
+      </div>
+      <div class="fld">
+        <label>พื้นที่ส่วนที่ 2 (ตร.ม.)</label>
+        <input type="number" id="roof2area" class="w80" step="0.1" min="0" value="0" oninput="calc()">
+      </div>
+    </div>
+    <div class="note">เรตแยกตามวัสดุที่เลือก · คิดพื้นที่แยก</div>
+  </div>
+
+  <!-- 9 ปลายหลังคา / รางน้ำ -->
+  <div class="card" id="card-roof2">
+    <div class="et"><span class="no">9</span>ปลายหลังคา <span class="secprice" id="gutter-price">฿0</span></div>
+    <div class="lbl">เลือก 1 อย่าง</div>
+    <div class="chips">
+      <button class="chip on" data-val="ปล่อย" onclick="roofEndPick(this)">ปล่อย</button>
+      <button class="chip" data-val="รางน้ำ" onclick="roofEndPick(this)">มีรางน้ำ</button>
+      <button class="chip" data-val="ปิดปลาย" onclick="roofEndPick(this)">ปิดปลายกันน้ำกระเด็น</button>
+    </div>
+    <input type="hidden" id="roofend" value="ปล่อย">
+    <!-- cascade: รางน้ำ -->
+    <div id="gutter-wrap" class="hidden">
+      <div class="subpanel" style="margin-top:10px;">
+        <div class="sphead">รางน้ำ</div>
+        <div class="lbl">ชนิดราง</div>
+        <div class="chips">
+          <button class="chip info on" data-val="1000" onclick="chipPick(this,'rfgut')">อลู S 1,000/ม.</button>
+          <button class="chip info" data-val="2000" onclick="chipPick(this,'rfgut')">อลูมิเนียม M 2,000/ม.</button>
+          <button class="chip info" data-val="3000" onclick="chipPick(this,'rfgut')">สแตนเลส L 3,000/ม.</button>
+        </div>
+        <input type="hidden" id="rfgut" value="1000">
+        <div class="row" style="margin-top:8px;margin-bottom:0;">
+          <div class="fld"><label>ยาวราง (ม.) <span class="auto-hint" id="gutlen-auto"></span></label>
+            <input type="number" id="rfgutlen" class="w80" step="0.1" min="0" placeholder="=กว้างหลังคา" oninput="calc()">
+          </div>
+        </div>
+        <div class="note">เว้นว่าง = ใช้ความกว้างหลังคา (auto)</div>
+        <div style="margin-top:10px;border-top:1px dashed #a7f3d0;padding-top:10px;">
+          <div class="lbl">ระบบระบาย</div>
+          <div class="chips">
+            <button class="chip on" data-val="ท่อ" onclick="drainPick(this)">ท่อ</button>
+            <button class="chip" data-val="โซ่" onclick="drainPick(this)">โซ่</button>
+          </div>
+          <input type="hidden" id="guttersys" value="ท่อ">
+          <div id="pipe-wrap" style="margin-top:7px;">
+            <div class="lbl">สีท่อ</div>
+            <div class="chips">
+              <button class="chip on" data-val="ขาว" onclick="chipPick(this,'pipecolor')">ขาว</button>
+              <button class="chip" data-val="ดำ" onclick="chipPick(this,'pipecolor')">ดำ</button>
+            </div>
+            <input type="hidden" id="pipecolor" value="ขาว">
+          </div>
+          <div id="chain-wrap" class="hidden" style="margin-top:7px;">
+            <div class="lbl">ลาย</div>
+            <div class="chips">
+              <button class="chip on" data-val="ทิวลิป" onclick="chipPick(this,'chainpat')">ทิวลิป</button>
+              <button class="chip" data-val="โลตัส" onclick="chipPick(this,'chainpat')">โลตัส</button>
+            </div>
+            <input type="hidden" id="chainpat" value="ทิวลิป">
+            <div class="lbl" style="margin-top:7px;">สีโซ่</div>
+            <div class="chips">
+              <button class="chip on" data-val="ขาว" onclick="chipPick(this,'chaincolor')">ขาว</button>
+              <button class="chip" data-val="น้ำตาล" onclick="chipPick(this,'chaincolor')">น้ำตาล</button>
+            </div>
+            <input type="hidden" id="chaincolor" value="ขาว">
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px dashed #a7f3d0;padding-top:10px;display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="rfleaf" checked style="width:16px;height:16px;">
+            ตะแกรงพลาสติกกันใบไม้ สีดำ <span style="color:var(--green);font-size:11px;font-weight:700;">(รวมในราคา)</span>
+          </label>
+          <div>
+            <div class="lbl">ท่อน้ำทิ้ง PVC 2.5″</div>
+            <div class="chips">
+              <button class="chip info on" data-val="ดำ" onclick="chipPick(this,'rfdrain')">สีดำ</button>
+              <button class="chip info" data-val="ขาว" onclick="chipPick(this,'rfdrain')">สีขาว</button>
+              <button class="chip info" data-val="เทา" onclick="chipPick(this,'rfdrain')">สีเทา</button>
+              <button class="chip info" data-val="" onclick="chipPick(this,'rfdrain')">ไม่มี</button>
+            </div>
+            <input type="hidden" id="rfdrain" value="ดำ">
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- cascade: ปิดปลาย -->
+    <div id="eave-wrap" class="hidden">
+      <div class="subpanel amber" style="margin-top:10px;">
+        <div class="sphead amber">ปิดปลายกันน้ำกระเด็น (1,000/ม.)</div>
+        <div class="row" style="margin-bottom:0;">
+          <div class="fld"><label>ยาว (ม.) <span class="auto-hint" id="eave-auto"></span></label>
+            <input type="number" id="rfeave" class="w80" step="0.1" min="0" placeholder="=ยาวหลังคา" oninput="calc()">
+          </div>
+        </div>
+        <div class="note">เว้นว่าง = ใช้ความยาวหลังคา · ราคา = ยาว × 1,000</div>
+        <div class="auto-hint" id="eave-price" style="margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 อุปกรณ์เสริมหลังคา -->
+  <div class="card" id="card-extras">
+    <div class="et"><span class="no">10</span>อุปกรณ์เสริมหลังคา <span class="secprice" id="extras-price">฿0</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <!-- โครงรับ -->
+      <div>
+        <div class="lbl">โครงรับ</div>
+        <div class="row" style="margin-bottom:0;">
+          <div class="fld"><label>เสาแผง (4,000/ต้น)</label>
+            <div class="stepper"><button class="stepbtn" onclick="step('rfpolep',-1,0);calc()">−</button><input type="number" id="rfpolep" class="stepval" value="0" min="0" oninput="calc()"><button class="stepbtn" onclick="step('rfpolep',1,0);calc()">+</button></div>
+          </div>
+          <div class="fld"><label>เสา 4"x8" (2,000/ต้น)</label>
+            <div class="stepper"><button class="stepbtn" onclick="step('rfpole4',-1,0);calc()">−</button><input type="number" id="rfpole4" class="stepval" value="0" min="0" oninput="calc()"><button class="stepbtn" onclick="step('rfpole4',1,0);calc()">+</button></div>
+          </div>
+        </div>
+      </div>
+      <!-- คานเหล็กถัก -->
+      <div>
+        <div class="lbl">คานเหล็กถัก</div>
+        <div class="chips" style="margin-bottom:7px;">
+          <button class="chip on" data-val="0" onclick="chipPick(this,'rfbeam')">ไม่มี</button>
+          <button class="chip" data-val="2400" onclick="chipPick(this,'rfbeam')">รุ่น1 2,400/ม.</button>
+          <button class="chip" data-val="3600" onclick="chipPick(this,'rfbeam')">รุ่น2 3,600/ม.</button>
+          <button class="chip" data-val="4400" onclick="chipPick(this,'rfbeam')">รุ่น3 4,400/ม.</button>
+        </div>
+        <input type="hidden" id="rfbeam" value="0">
+        <div class="row" style="margin-bottom:0;">
+          <div class="fld"><label>ยาวคาน (ม.)</label><input type="number" id="rfbeamlen" class="w80" step="0.1" min="0" value="0" oninput="calc()"></div>
+        </div>
+      </div>
+      <!-- เพลท + เหล็กดึง -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="rfplate" oninput="calc()" style="width:16px;height:16px;">เสริมเพลทเหล็กล่าง (รับล่าง) <span class="note" style="margin-left:4px;">[ฟรี]</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="rfpull" oninput="calc()" style="width:16px;height:16px;">เหล็กดึงด้านบน <span class="note" style="margin-left:4px;">[ฟรี]</span>
+        </label>
+      </div>
+      <!-- ซ่อนสโลป -->
+      <div>
+        <div class="lbl">ซ่อนสโลป</div>
+        <div class="chips" style="margin-bottom:7px;">
+          <button class="chip on" data-val="0" onclick="chipPick(this,'rfhs')">ไม่มี</button>
+          <button class="chip" data-val="comp" onclick="chipPick(this,'rfhs');toggleHsFields(this)">คอมโพสิต 3มม. 3,500/ตร.ม.</button>
+          <button class="chip" data-val="smart" onclick="chipPick(this,'rfhs');toggleHsFields(this)">สมาร์ทบอร์ด 6มม. 4,000/ตร.ม.</button>
+        </div>
+        <input type="hidden" id="rfhs" value="0">
+        <div id="rfhs-fields" class="hidden">
+          <div class="row" style="margin-bottom:0;">
+            <div class="fld"><label>สูง (ม.)</label><input type="number" id="rfhsh" class="w60" step="0.05" min="0" value="0" oninput="calc()"></div>
+            <div class="fld"><label>ยาว/ด้าน (ม.)</label><input type="number" id="rfhsl" class="w60" step="0.1" min="0" value="0" oninput="calc()"></div>
+            <div class="fld"><label>จำนวนด้าน</label><input type="number" id="rfhsn" class="w60" step="1" min="1" value="1" oninput="calc()"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ปิดซ่อนราง -->
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="rfgc-toggle" onchange="document.getElementById('rfgc-reveal').style.display=this.checked?'flex':'none';calc()" style="width:16px;height:16px;">มีงานปิดซ่อนราง
+        </label>
+        <div id="rfgc-reveal" style="display:none;flex-wrap:wrap;gap:8px;margin-top:7px;">
+          <div class="fld"><label>กว้างราง (ซม.)</label><input type="number" id="rfgcw" class="w60" step="1" min="0" value="0" oninput="calc()"></div>
+          <div class="fld"><label>สูง (ซม.)</label><input type="number" id="rfgch" class="w60" step="1" min="0" value="10" oninput="calc()"></div>
+          <div class="fld"><label>ยาวรวม (ม.)</label><input type="number" id="rfgcl" class="w60" step="0.1" min="0" value="0" oninput="calc()"></div>
+        </div>
+      </div>
+      <!-- ครอบคาน -->
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="rfbc-toggle" onchange="document.getElementById('rfbc-reveal').style.display=this.checked?'flex':'none';calc()" style="width:16px;height:16px;">มีงานครอบคาน <span class="note" style="margin-left:4px;">(ลูกฟูก 1 หน้า ลด 40%)</span>
+        </label>
+        <div id="rfbc-reveal" style="display:none;flex-wrap:wrap;gap:8px;margin-top:7px;">
+          <div class="fld"><label>กว้างห่อ (ม.)</label><input type="number" id="rfbcw" class="w60" step="0.05" min="0" value="0" oninput="calc()"></div>
+          <div class="fld"><label>ยาวคาน (ม.)</label><input type="number" id="rfbcl" class="w60" step="0.1" min="0" value="0" oninput="calc()"></div>
+        </div>
+      </div>
+      <!-- วัสดุปิดรอยต่อ -->
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px;">
+          <input type="checkbox" id="rfsealer" onchange="calc()" style="width:16px;height:16px;">วัสดุปิดรอยต่อแผ่นหลังคา
+        </label>
+        <div class="lbl">สี</div>
+        <div class="chips">
+          <button class="chip info on" data-val="ขาว" onclick="chipPick(this,'rfsealercolor')">ขาว</button>
+          <button class="chip info" data-val="ดำ" onclick="chipPick(this,'rfsealercolor')">ดำ</button>
+          <button class="chip info" data-val="เทา" onclick="chipPick(this,'rfsealercolor')">เทา</button>
+        </div>
+        <input type="hidden" id="rfsealercolor" value="ขาว">
+      </div>
+      <!-- โซ่รางน้ำ -->
+      <div>
+        <div class="lbl">โซ่รางน้ำ (3,000/เส้น)</div>
+        <div class="stepper">
+          <button class="stepbtn" onclick="step('rfchain',-1,0);calc()">−</button>
+          <input type="number" id="rfchain" class="stepval" value="0" min="0" oninput="calc()">
+          <button class="stepbtn" onclick="step('rfchain',1,0);calc()">+</button>
+        </div><span style="font-size:12px;color:var(--gray);margin-left:6px;">เส้น</span>
+      </div>
+      <!-- ครอบท่อ PVC -->
+      <div>
+        <div class="lbl">ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว (ม.)</div>
+        <input type="number" id="rfpvc" class="w80" style="height:40px;border:1.5px solid var(--line);border-radius:9px;padding:0 9px;font-size:14px;" step="0.1" min="0" value="0" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 OPTION ลูกค้า -->
+  <div class="card">
+    <div class="et"><span class="no">11</span>OPTION ทางเลือกลูกค้า <span class="bc">(เปลี่ยนสีอลู / วัสดุมุง / อื่นๆ)</span></div>
+    <div id="oc-list"></div>
+    <button onclick="ocAdd()" style="min-height:38px;padding:0 16px;border:1.5px dashed var(--red);border-radius:9px;background:#fff;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;">+ เพิ่ม OPTION ลูกค้า</button>
+    <div class="note" style="margin-top:6px;">หมวดหลังคา: เปลี่ยนสีอลู / เปลี่ยนหลังคา / อื่นๆ</div>
+  </div>
+
+  <!-- 12 หมายเหตุ -->
+  <div class="card">
+    <div class="et"><span class="no">12</span>หมายเหตุ</div>
+    <select class="sel" id="remark-add" onchange="addRemark(this)" style="width:100%;margin-bottom:8px;color:var(--red);">
+      <option value="">+ เพิ่มหมายเหตุมาตรฐาน (เลือกทีละข้อ)</option>
+      <optgroup label="รวมในราคา">
+        <option value="ราคาที่เสนอรวมงานรื้อของเดิม">รวมงานรื้อของเดิม</option>
+        <option value="ราคาที่เสนอรวมงานดรอปพื้น">รวมงานดรอปพื้น</option>
+        <option value="ราคาที่เสนอรวมงานนั่งร้าน และโพรเทคฟิล์มฟ้าบริเวณกระจก">รวมงานนั่งร้าน + โพรเทคฟิล์ม</option>
+      </optgroup>
+      <optgroup label="ไม่รวมในราคา">
+        <option value="ราคาที่เสนอไม่รวมงานดรอปพื้น">ไม่รวมงานดรอปพื้น</option>
+        <option value="ราคาที่เสนอไม่รวมงาน รื้อพื้นเดิม / รื้อกระเบื้อง / รื้อหลังคาเดิม / งานเดินไฟ / งานสี">ไม่รวมรื้อพื้น/หลังคา/ไฟ/สี</option>
+      </optgroup>
+      <optgroup label="เงื่อนไข">
+        <option value="จำนวนและราคาอาจมีการเปลี่ยนแปลงเมื่อช่างเข้าวัดหน้างานจริง">จำนวน/ราคาอาจเปลี่ยนหลังวัดจริง</option>
+        <option value="ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม">ยังไม่รวม VAT</option>
+      </optgroup>
+    </select>
+    <textarea id="note-ta" class="ta" placeholder="หมายเหตุเพิ่มเติม..." oninput="calc()"></textarea>
+  </div>
+
+  <!-- 13 ออปชั่นทั้งใบ -->
+  <div class="card">
+    <div class="et"><span class="no">13</span>ออปชั่นทั้งใบ</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="demo-tear" onchange="calc()" style="width:16px;height:16px;">
+        รื้อหลังคาเดิม +5,000/ชุด &nbsp; จำนวน <input type="number" id="tear-qty" value="1" min="1" style="width:52px;height:32px;border:1px solid var(--line);border-radius:7px;padding:0 6px;font-size:13px;font-family:inherit;" oninput="calc()"> ชุด
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="discount" onchange="calc()" style="width:16px;height:16px;">
+        ส่วนลด <input type="number" id="discount-val" value="0" min="0" style="width:90px;height:32px;border:1px solid var(--line);border-radius:7px;padding:0 6px;font-size:13px;font-family:inherit;" oninput="calc()"> บาท
+      </label>
+    </div>
+  </div>
+
+  <!-- สรุปราคา -->
+  <div class="card" style="border-color:var(--red);border-width:2px;">
+    <div class="et" style="margin-bottom:6px;"><span class="no">สรุป</span>ราคา (เดโม)</div>
+    <div id="qlines"></div>
+  </div>
+
+</div><!-- /main-form -->
+</div><!-- /page -->
+
+<div class="pbar" id="pbar" style="display:none;">
+  <span>ยอดรวม (เดโม)</span>
+  <span class="big" id="ptotal">฿0</span>
+</div>
+
+<script>
+// ── เรตจริง ──
+var RATES={
+  ROOF_STD:[[5,10,6500],[10,15,6000],[15,30,5500],[30,1e9,5000]],
+  ROOF_POLY:[[5,10,7500],[10,15,6500],[15,30,6000],[30,1e9,5700]],
+  ROOF_LAM:[[5,10,11000],[10,15,10500],[15,1e9,10000]],
+  ROOF_SLIDE:[[5,10,5000],[10,15,4700],[15,20,4400],[20,25,4100],[25,30,3800],[30,1e9,3500]],
+  IMP7:[[0,10,6300],[10,15,5800],[15,30,5300],[30,1e9,4800]],
+  IMP8:[[0,10,6400],[10,15,5900],[15,30,5400],[30,1e9,4900]],
+  IMP9:[[0,10,6600],[10,15,6100],[15,30,5600],[30,1e9,5100]],
+  IMP10:[[0,10,6700],[10,15,6200],[15,30,5700],[30,1e9,5200]],
+  IMP11:[[0,10,6300],[10,15,5800],[15,30,5300],[30,1e9,4800]],
+  IMP12:[[0,10,6600],[10,15,6100],[15,30,5600],[30,1e9,5100]],
+  IMP13:[[0,10,7300],[10,15,6800],[15,30,6300],[30,1e9,5800]],
+  IMP14:[[0,10,7500],[10,15,7000],[15,30,6500],[30,1e9,6000]],
+  IMP15:[[0,10,11000],[10,15,10500],[15,1e9,10000]],
+  IMP16:[[0,10,10600],[10,15,10000],[15,1e9,9600]],
+  IMP17:[[0,10,10800],[10,15,10200],[15,1e9,9800]],
+  IMP18:[[0,10,10100],[10,15,9500],[15,1e9,9100]],
+  IMP19:[[0,10,14000],[10,15,13500],[15,1e9,13000]],
+  IMP20:[[0,10,14000],[10,15,13500],[15,1e9,13000]],
+  CEILING:[[10,20,1200],[20,1e9,1150]]
+};
+
+// ── สินค้าหลัก ──
+var PRODS={
+  roof_vinyl:{name:'หลังคา ไวนิล',rates:'ROOF_STD',min:28000,cat:'roof'},
+  roof_delight:{name:'หลังคา ดีไลท์',rates:'ROOF_STD',min:28000,cat:'roof'},
+  roof_polyton:{name:'หลังคา โพลีตัน 3มม.',rates:'ROOF_POLY',min:30000,cat:'roof'},
+  roof_laminate:{name:'หลังคา กระจกลามิเนต',rates:'ROOF_LAM',min:45000,cat:'roof'},
+  imp7:{name:'เมทัลชีท IMP7 1นิ้ว ท้อง PVC EPS',rates:'IMP7',min:28000,cat:'roof'},
+  imp8:{name:'เมทัลชีท IMP8 2นิ้ว ท้อง PVC EPS',rates:'IMP8',min:28000,cat:'roof'},
+  imp9:{name:'เมทัลชีท IMP9 1นิ้ว ท้องเหล็ก EPS',rates:'IMP9',min:29000,cat:'roof'},
+  imp10:{name:'เมทัลชีท IMP10 2นิ้ว ท้องเหล็ก EPS',rates:'IMP10',min:29000,cat:'roof'},
+  imp11:{name:'เมทัลชีท IMP11 1นิ้ว ท้องฟอยล์ PU',rates:'IMP11',min:28000,cat:'roof'},
+  imp12:{name:'เมทัลชีท IMP12 2นิ้ว ท้องฟอยล์ PU',rates:'IMP12',min:28000,cat:'roof'},
+  imp13:{name:'เมทัลชีท IMP13 1นิ้ว ท้องเหล็ก PU',rates:'IMP13',min:32000,cat:'roof'},
+  imp14:{name:'เมทัลชีท IMP14 2นิ้ว ท้องเหล็ก PU',rates:'IMP14',min:33000,cat:'roof'},
+  imp15:{name:'ชินโคไลท์ IMP15 6มม. Heat Cut',rates:'IMP15',min:28000,cat:'roof'},
+  imp16:{name:'ชินโคไลท์ IMP16 6มม. Superior',rates:'IMP16',min:28000,cat:'roof'},
+  imp17:{name:'ชินโคไลท์ IMP17 6มม. Nature',rates:'IMP17',min:29000,cat:'roof'},
+  imp18:{name:'ชินโคไลท์ IMP18 4มม. Shade',rates:'IMP18',min:29000,cat:'roof'},
+  imp19:{name:'ชินโคไลท์ IMP19 10มม. Prime',rates:'IMP19',min:32000,cat:'roof'},
+  imp20:{name:'ชินโคไลท์ IMP20 10มม. Grand',rates:'IMP20',min:33000,cat:'roof'},
+  // ฝ้าเดี่ยว
+  ceil_cshape:{name:'ฝ้าอลูมิเนียม ไทยทิพย์ ตัวซี 15ซม.',crates:{'ขาว-ดำ':2100,'ลายไม้':2700},min:0,cat:'ceil'},
+  ceil_bsc:{name:'ฝ้าไม้เทียม remood แผ่นเรียบ 12ซม.',crates:{'มาตรฐาน(ขาว-ซิลเวอร์)':2600,'ลายไม้/สีอื่น':2800},min:0,cat:'ceil'},
+  ceiling_smooth:{name:'ฝ้าฉาบเรียบ',rates:'CEILING',min:12000,cat:'ceil'}
+};
+
+// ── state ──
+var prodId='roof_vinyl';
+var ceilMode='none'; // none | in | sep
+var ceilTypeId='ceil_cshape';
+var isCeilStandalone=false; // เลือกฝ้าเดี่ยวจากกริด
+
+function fmt(n){return Math.round(n).toLocaleString();}
+function rateOf(area,key){
+  var t=RATES[key]; if(!t)return 0;
+  for(var i=0;i<t.length;i++){if(area>=t[i][0]&&area<t[i][1])return t[i][2];}
+  return t[t.length-1][2];
+}
+function val(id){return parseFloat(document.getElementById(id).value)||0;}
+function int(id){return parseInt(document.getElementById(id).value)||0;}
+function step(id,d,min){
+  min=min===undefined?0:min;
+  var el=document.getElementById(id); if(!el)return;
+  el.value=Math.max(min,(parseInt(el.value)||0)+d); calc();
+}
+
+// กลุ่มงาน
+function grpPick(btn){
+  document.querySelectorAll('.gbtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+}
+
+// เลือกหลังคา
+function prodPick(btn){
+  isCeilStandalone=false;
+  document.querySelectorAll('.prodbtn').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.ceil-typebtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  prodId=btn.dataset.pid;
+  document.getElementById('bc2').textContent=PRODS[prodId]?PRODS[prodId].name:'';
+  updateColorSection();
+  updateRoof2();
+  updateCardVisibility();
+  // reset ฝ้า mode
+  if(ceilMode==='none') ceilMode='none';
+  renderCeilModeBar();
+  calc();
+}
+
+// เลือกฝ้าเดี่ยว
+function ceilStandalonePick(btn){
+  isCeilStandalone=true;
+  document.querySelectorAll('.prodbtn').forEach(function(b){b.classList.remove('on');});
+  document.querySelectorAll('.ceil-typebtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  prodId=btn.dataset.pid;
+  document.getElementById('bc2').textContent=PRODS[prodId]?PRODS[prodId].name:'';
+  updateColorSection();
+  updateCardVisibility();
+  calc();
+}
+
+function updateCardVisibility(){
+  var isCeil=isCeilStandalone;
+  // ซ่อน/โชว์การ์ดที่ไม่เกี่ยว
+  var frameCard=document.getElementById('card-frame');
+  var ceilOptCard=document.getElementById('card-ceil-option');
+  var slideCard=document.getElementById('card-slide');
+  var roof2Card=document.getElementById('card-roof2');
+  var extrasCard=document.getElementById('card-extras');
+  if(frameCard) frameCard.style.display=isCeil?'none':'block';
+  if(ceilOptCard) ceilOptCard.style.display=isCeil?'none':'block';
+  if(slideCard) slideCard.style.display=isCeil?'none':'block';
+  // roof2: ซ่อนเมื่อฝ้าเดี่ยว
+  document.querySelectorAll('#card-roof2').forEach(function(c){c.style.display=isCeil?'none':'block';});
+  // size label
+  var sl=document.getElementById('size-label');
+  if(sl) sl.textContent=isCeil?'พื้นที่ฝ้า (ตร.ม.)':'กว้าง × ยาว (ม.)';
+}
+
+// section สี
+function updateColorSection(){
+  var pid=prodId;
+  ['vinyl','delight','poly','lam','metal','shinko','ceil'].forEach(function(s){
+    var el=document.getElementById('col-'+s); if(el) el.classList.add('hidden');
+  });
+  if(pid==='roof_vinyl') show('col-vinyl');
+  else if(pid==='roof_delight') show('col-delight');
+  else if(pid==='roof_polyton') show('col-poly');
+  else if(pid==='roof_laminate') show('col-lam');
+  else if(/^imp(7|8|9|1[0-4])$/.test(pid)) show('col-metal');
+  else if(/^imp(1[5-9]|20)$/.test(pid)) show('col-shinko');
+  else if(pid==='ceil_cshape'||pid==='ceil_bsc'||pid==='ceiling_smooth') buildCeilColorSection(pid);
+}
+
+function buildCeilColorSection(pid){
+  show('col-ceil');
+  var p=PRODS[pid];
+  var lbl=document.getElementById('ceil-color-lbl');
+  var chips=document.getElementById('ceil-color-chips');
+  if(!p){chips.innerHTML='';return;}
+  if(p.crates){
+    lbl.textContent='สี / รุ่น — '+p.name;
+    var html='';
+    var keys=Object.keys(p.crates);
+    keys.forEach(function(k,i){
+      html+='<button class="chip'+(i===0?' on':'')+'" data-val="'+k+'" onclick="chipPick(this,\'roofcolor\')">'+k+' <span style="color:var(--green);font-size:11px;">'+fmt(p.crates[k])+'/ตร.ม.</span></button>';
+    });
+    chips.innerHTML=html;
+  } else {
+    lbl.textContent='ฝ้าฉาบเรียบ — 1,200/ตร.ม. (min 12,000)';
+    chips.innerHTML='';
+  }
+}
+
+function show(id){var el=document.getElementById(id);if(el)el.classList.remove('hidden');}
+
+// ฝ้า mode (ในหลังคา)
+function ceilModePick(mode){
+  ceilMode=mode;
+  renderCeilModeBar();
+  var body=document.getElementById('ceil-body');
+  if(body) body.classList.toggle('hidden', mode==='none');
+  calc();
+}
+function renderCeilModeBar(){
+  ['none','in','sep'].forEach(function(m){
+    var btn=document.getElementById('ceil-mode-'+m);
+    if(btn) btn.classList.toggle('on', ceilMode===m);
+  });
+}
+
+// ชนิดฝ้า (ในออปชั่นหลังคา)
+function ceilTypePick(btn){
+  document.querySelectorAll('#card-ceil-option .ceil-typebtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  ceilTypeId=btn.dataset.cid;
+  // cascade
+  ['cshape','bsc','smooth'].forEach(function(x){
+    var el=document.getElementById('ceil-opt-'+x); if(el) el.classList.add('hidden');
+  });
+  if(ceilTypeId==='ceil_cshape') show('ceil-opt-cshape');
+  else if(ceilTypeId==='ceil_bsc') show('ceil-opt-bsc');
+  else if(ceilTypeId==='ceiling_smooth') show('ceil-opt-smooth');
+  calc();
+}
+
+// auto-fill roof2
+function updateRoof2(){
+  var sel=document.getElementById('roof2'); if(!sel)return;
+  var html='<option value="">— ไม่มี —</option>';
+  Object.keys(PRODS).forEach(function(pid){
+    if(pid!==prodId && PRODS[pid].cat==='roof'){
+      html+='<option value="'+pid+'">'+PRODS[pid].name.replace(/^หลังคา\s*/,'')+'</option>';
+    }
+  });
+  sel.innerHTML=html;
+}
+
+// ชิป
+function chipPick(btn,hid){
+  var p=btn.parentElement;
+  p.querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var h=document.getElementById(hid); if(h) h.value=btn.dataset.val;
+  if(hid==='rfhs'){
+    var f=document.getElementById('rfhs-fields'); if(f) f.classList.toggle('hidden',btn.dataset.val==='0');
+  }
+  calc();
+}
+
+function toggleHsFields(btn){
+  var f=document.getElementById('rfhs-fields'); if(f) f.classList.toggle('hidden',btn.dataset.val==='0');
+}
+
+// โครงสร้าง warn
+function frameWarn(btn){
+  var w=document.getElementById('frame-warn'); if(w) w.classList.toggle('hidden',btn.dataset.val!=='โครงเหล็กชุบซิงค์');
+}
+
+// หลังคาเลื่อน
+function slideToggle(){
+  var on=document.getElementById('slide-toggle').checked;
+  document.getElementById('slide-wrap').classList.toggle('hidden',!on);
+  if(on) slideFill(); calc();
+}
+function setSpanels(n){
+  document.getElementById('spanels').value=n;
+  document.querySelectorAll('.pchip').forEach(function(c){c.classList.toggle('on',parseInt(c.dataset.n)===n);});
+  slideFill(); calc();
+}
+function slideFill(){
+  var W=val('pw'), H=val('ph'), area=W*H;
+  var N=Math.max(2,int('spanels'));
+  var sw=val('sareaw'), sh=val('sareah');
+  var sa=(sw>0&&sh>0)?sw*sh:0;
+  var marea=sa>0?sa:(area*N/(N+1));
+  var sac=document.getElementById('sarea-calc'); if(sac) sac.value=sa>0?sa.toFixed(2):'';
+  var auto=marea<=3.5?18000:marea<=14?28000:marea<=40?36000:72000;
+  var mpe=document.getElementById('smotorprice'); if(mpe&&!mpe.dataset.edited) mpe.value=auto;
+  var mq=Math.max(1,int('smotorqty'));
+  var hint=document.getElementById('smotor-auto'); if(hint) hint.textContent='auto ฿'+fmt(auto)+(mq>1?' × '+mq:'');
+  document.querySelectorAll('.pchip').forEach(function(c){c.classList.toggle('on',parseInt(c.dataset.n)===N);});
+}
+function showMotorEdit(){
+  show('smotor-edit-wrap');
+  document.getElementById('smotor-edit-link').style.display='none';
+}
+
+// ปลายหลังคา
+function roofEndPick(btn){
+  document.querySelectorAll('.chip[onclick*="roofEndPick"]').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var v=btn.dataset.val;
+  document.getElementById('roofend').value=v;
+  document.getElementById('gutter-wrap').classList.toggle('hidden',v!=='รางน้ำ');
+  document.getElementById('eave-wrap').classList.toggle('hidden',v!=='ปิดปลาย');
+  var W=val('pw'), H=val('ph');
+  if(v==='รางน้ำ'){var gl=document.getElementById('rfgutlen');if(gl&&!gl.value)gl.value=W||'';document.getElementById('gutlen-auto').textContent=W?'auto='+W+'ม.':'';}
+  if(v==='ปิดปลาย'){var ev=document.getElementById('rfeave');if(ev&&!ev.value)ev.value=H||'';document.getElementById('eave-auto').textContent=H?'auto='+H+'ม.':'';}
+  calc();
+}
+
+// ท่อ/โซ่
+function drainPick(btn){
+  document.querySelectorAll('.chip[onclick*="drainPick"]').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var v=btn.dataset.val; document.getElementById('guttersys').value=v;
+  document.getElementById('pipe-wrap').style.display=(v==='ท่อ'?'block':'none');
+  document.getElementById('chain-wrap').style.display=(v==='โซ่'?'block':'none');
+  calc();
+}
+
+// OPTION ลูกค้า
+var OC_CATS=[{id:'color',label:'เปลี่ยนสีอลู'},{id:'roof',label:'เปลี่ยนหลังคา'},{id:'other',label:'อื่นๆ (พิมพ์เอง)'}];
+function ocAdd(){
+  var list=document.getElementById('oc-list');
+  var row=document.createElement('div'); row.className='ocrow';
+  var roofOpts=Object.keys(PRODS).filter(function(p){return PRODS[p].cat==='roof';}).map(function(p){return '<option value="'+p+'">'+PRODS[p].name+'</option>';}).join('');
+  row.innerHTML='<select class="oc-cat-sel" onchange="ocCat(this)" style="height:36px;font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:0 7px;background:#fff;"><option value="">— หมวด —</option>'+OC_CATS.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>';}).join('')+'</select>'
+    +'<select class="oc-item-sel" style="display:none;height:36px;font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:0 7px;max-width:160px;background:#fff;" onchange="ocItem(this)"><option value="">— รายการ —</option>'+roofOpts+'</select>'
+    +'<input type="text" class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calc()" style="height:36px;flex:1;min-width:100px;">'
+    +'<input type="number" class="oc-delta" placeholder="±บาท" oninput="calc()" style="width:80px;height:36px;border:1px solid var(--line);border-radius:7px;padding:0 7px;">'
+    +'<button class="delbtn" onclick="this.closest(\'.ocrow\').remove();calc()">✕</button>';
+  list.appendChild(row);
+}
+function ocCat(sel){
+  var row=sel.closest('.ocrow'); if(!row)return;
+  var it=row.querySelector('.oc-item-sel');
+  if(sel.value==='roof'){it.style.display='';}else{it.style.display='none';}
+  calc();
+}
+function ocItem(sel){
+  var row=sel.closest('.ocrow'); if(!row)return;
+  var cat=row.querySelector('.oc-cat-sel').value;
+  var tx=row.querySelector('.oc-text'), dl=row.querySelector('.oc-delta');
+  if(cat==='roof'&&sel.value){
+    tx.value='เปลี่ยนเป็น '+(PRODS[sel.value]?PRODS[sel.value].name:'');
+    var area=val('pw')*val('ph');
+    var p=PRODS[sel.value]; if(p&&p.rates&&area>0) dl.value=Math.round(Math.max(p.min||0,rateOf(area,p.rates)*area));
+  }
+  calc();
+}
+
+// หมายเหตุ
+function addRemark(sel){
+  if(!sel.value)return;
+  var ta=document.getElementById('note-ta');
+  ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+sel.value;
+  sel.value=''; calc();
+}
+
+// ── คำนวณหลัก ──
+function calc(){
+  var W=val('pw'), H=val('ph'), qty=Math.max(1,int('pqty'));
+  var area=W*H;
+  var areaEl=document.getElementById('parea'); if(areaEl) areaEl.value=area>0?area.toFixed(2):'';
+
+  var p=PRODS[prodId];
+  var basePrice=0, ceilBasePrice=0;
+
+  if(isCeilStandalone){
+    // ── โหมดฝ้าเดี่ยว ──
+    var carea=area; // พื้นที่จากกว้าง×ยาว
+    if(p.crates){
+      var ck=document.getElementById('roofcolor')&&document.getElementById('roofcolor').value||Object.keys(p.crates)[0];
+      var crate=p.crates[ck]||Object.values(p.crates)[0];
+      var effArea=Math.max(10,carea);
+      basePrice=Math.round(effArea*crate);
+    } else if(p.rates){
+      var crate2=rateOf(Math.max(12,carea),p.rates);
+      basePrice=Math.max(p.min||0,Math.round(Math.max(12,carea)*crate2));
+    }
+    var rh=document.getElementById('rate-hint'); if(rh) rh.textContent='คิดพื้นที่: max(10, '+carea.toFixed(2)+') = '+(Math.max(10,carea)).toFixed(2)+' ตร.ม.';
+    document.getElementById('base-price').textContent=basePrice>0?'฿'+fmt(basePrice):'฿—';
+    // update summary
+    var lines=[]; if(basePrice>0) lines.push([p.name,basePrice]);
+    renderLines(lines); return;
+  }
+
+  // ── โหมดหลังคาปกติ ──
+  var rk=p?p.rates:null;
+  var rate=rk?rateOf(area,rk):0;
+  basePrice=rk?Math.max(p.min||0,rate*area)*qty:0;
+  var rh=document.getElementById('rate-hint');
+  if(rh) rh.textContent=rk?('เรต: '+fmt(rate)+' บาท/ตร.ม. ('+rk+') · ขั้นต่ำ '+fmt(p.min||0)):'เรต: —';
+  document.getElementById('base-price').textContent=basePrice>0?'฿'+fmt(basePrice):'฿—';
+
+  // ── ฝ้า (ออปชั่น) ──
+  var ceilAdd=0;
+  if(ceilMode!=='none'){
+    var careaInput=val('ceil-area');
+    var carea2=careaInput>0?careaInput:area;
+    var cid=ceilTypeId;
+    var cp=PRODS[cid];
+    if(cp){
+      if(cp.crates){
+        var ck2=document.getElementById('ceil-ckolor')&&document.getElementById('ceil-ckolor').value||Object.keys(cp.crates)[0];
+        var crate3=cp.crates[ck2]||Object.values(cp.crates)[0];
+        var effA=Math.max(10,carea2);
+        ceilAdd=Math.round(effA*crate3);
+      } else if(cp.rates){
+        var effA2=Math.max(12,carea2);
+        var cr=rateOf(effA2,cp.rates);
+        ceilAdd=Math.max(cp.min||0,Math.round(effA2*cr));
+        // ฉนวน
+        var insulChk=document.getElementById('ceil-insul'); if(insulChk&&insulChk.checked) ceilAdd+=Math.round(600*effA2);
+      }
+    }
+    var cpv=document.getElementById('ceil-priceval'); if(cpv) cpv.textContent='฿'+fmt(ceilAdd);
+    var cauto=document.getElementById('ceil-area-auto'); if(cauto) cauto.textContent=careaInput>0?'':'auto='+area.toFixed(2)+' ตร.ม.';
+  } else {
+    var cpv=document.getElementById('ceil-priceval'); if(cpv) cpv.textContent='฿—';
+  }
+  var ceilPriceEl=document.getElementById('ceil-price'); if(ceilPriceEl) ceilPriceEl.textContent='฿'+fmt(ceilAdd);
+
+  // ── หลังคาเลื่อน ──
+  var slideAdd=0;
+  if(document.getElementById('slide-toggle').checked){
+    var N=Math.max(2,int('spanels'));
+    var sw=val('sareaw'), sh2=val('sareah');
+    var sa=(sw>0&&sh2>0)?sw*sh2:(area*N/(N+1));
+    var slideRate=rateOf(sa,'ROOF_SLIDE');
+    var mpp=val('smotorprice'), mq=Math.max(1,int('smotorqty'));
+    slideAdd=Math.round((slideRate-rate)*sa*qty)+mpp*mq;
+    var srhint=document.getElementById('slide-ratehint'); if(srhint) srhint.textContent='เรตเลื่อน: '+fmt(slideRate)+'/ตร.ม. · เลื่อน '+sa.toFixed(2)+' ตร.ม. · มอเตอร์ ฿'+fmt(mpp*mq);
+  }
+
+  // ── ต่อปลายวัสดุที่ 2 ──
+  var roof2Add=0;
+  var r2pid=document.getElementById('roof2').value;
+  if(r2pid){var r2p=PRODS[r2pid]; var r2a=val('roof2area'); if(r2p&&r2p.rates&&r2a>0){var r2r=rateOf(r2a,r2p.rates); roof2Add=Math.max(r2p.min||0,Math.round(r2r*r2a));}}
+
+  // ── ปลายหลังคา ──
+  var gutterTotal=0;
+  var rend=document.getElementById('roofend').value;
+  if(rend==='รางน้ำ'){var gr=parseInt(document.getElementById('rfgut').value)||1000; var gl=val('rfgutlen')||W; gutterTotal+=gr*gl;}
+  else if(rend==='ปิดปลาย'){var el=val('rfeave')||H; gutterTotal+=1000*el; var ep=document.getElementById('eave-price'); if(ep) ep.textContent='= ฿'+fmt(1000*el);}
+  document.getElementById('gutter-price').textContent='฿'+fmt(gutterTotal);
+
+  // ── อุปกรณ์เสริม ──
+  var extras=0;
+  extras+=val('rfpolep')*4000; extras+=val('rfpole4')*2000;
+  var br=parseInt(document.getElementById('rfbeam').value)||0; extras+=br*val('rfbeamlen');
+  var hs=document.getElementById('rfhs').value;
+  if(hs==='comp') extras+=3500*val('rfhsh')*val('rfhsl')*val('rfhsn');
+  else if(hs==='smart') extras+=4000*val('rfhsh')*val('rfhsl')*val('rfhsn');
+  if(document.getElementById('rfgc-toggle').checked){var gcw=val('rfgcw')/100,gch2=val('rfgch')/100,gcl=val('rfgcl'); var gcA=(gcw+gch2)*2*gcl; extras+=Math.round(rateOf(gcA,'ROOF_POLY')*gcA*0.6);}
+  if(document.getElementById('rfbc-toggle').checked){var bcw=val('rfbcw'),bcl=val('rfbcl'); var bcA=bcw*2*bcl; extras+=Math.round(rateOf(bcA,'ROOF_POLY')*bcA*0.6);}
+  extras+=val('rfchain')*3000; extras+=Math.ceil(val('rfpvc')/1.5)*1500;
+  document.getElementById('extras-price').textContent='฿'+fmt(extras);
+
+  // OPTION ลูกค้า
+  var ocTotal=0; document.querySelectorAll('#oc-list .oc-delta').forEach(function(e){ocTotal+=parseFloat(e.value)||0;});
+
+  // ออปชั่นทั้งใบ
+  var tearAdd=document.getElementById('demo-tear').checked?5000*(int('tear-qty')||1):0;
+  var disc=document.getElementById('discount').checked?val('discount-val'):0;
+
+  // รวม (ฝ้า: ถ้า mode=in บวกรวม, mode=sep แสดงแยกบรรทัด)
+  var ceilInTotal=ceilMode==='in'?ceilAdd:0;
+  var ceilSepTotal=ceilMode==='sep'?ceilAdd:0;
+  var grand=basePrice+ceilInTotal+slideAdd+roof2Add+gutterTotal+extras+ocTotal+ceilSepTotal+tearAdd-disc;
+
+  var lines=[];
+  if(basePrice>0) lines.push(['หลังคา '+p.name+(ceilMode==='in'?' + ฝ้า (รวม)':'')+(area>0?' ('+area.toFixed(2)+' ตร.ม.)':''),basePrice+(ceilMode==='in'?ceilAdd:0)]);
+  if(ceilMode==='sep'&&ceilAdd>0) lines.push(['ฝ้า '+(PRODS[ceilTypeId]?PRODS[ceilTypeId].name:'')+' (แยกรายการ)',ceilAdd]);
+  if(slideAdd) lines.push(['เพิ่มหลังคาเลื่อน',slideAdd]);
+  if(roof2Add) lines.push(['ต่อปลายวัสดุที่ 2',roof2Add]);
+  if(gutterTotal) lines.push([rend==='รางน้ำ'?'รางน้ำ':'ปิดปลายกันน้ำ',gutterTotal]);
+  if(extras) lines.push(['อุปกรณ์เสริม',extras]);
+  if(ocTotal) lines.push(['OPTION ลูกค้า',ocTotal]);
+  if(tearAdd) lines.push(['รื้อหลังคาเดิม',tearAdd]);
+  if(disc) lines.push(['ส่วนลด',-disc]);
+  renderLines(lines);
+}
+
+function renderLines(lines){
+  var html='';
+  lines.forEach(function(l){html+='<div class="priceline"><span>'+l[0]+'</span><span>฿'+fmt(l[1])+'</span></div>';});
+  var grand=lines.reduce(function(a,l){return a+l[1];},0);
+  html+='<div class="pricesum"><span>ยอดรวม (เดโม)</span><span>฿'+fmt(grand)+'</span></div>';
+  document.getElementById('qlines').innerHTML=html;
+  document.getElementById('ptotal').textContent='฿'+fmt(grand);
+  document.getElementById('pbar').style.display=grand>0?'flex':'none';
+}
+
+// init
+updateColorSection(); updateRoof2(); updateCardVisibility(); calc();
+</script>
+</body></html>
