@@ -58,6 +58,27 @@ want('④ กลุ่ม 6 มี wall_ext', g6list.indexOf('wall_ext') >= 0);
 want('④ กลุ่ม 6 มี wall_int', g6list.indexOf('wall_int') >= 0);
 want('④ กลุ่ม 6 มี isowall', g6list.indexOf('isowall') >= 0);
 
+// ===== ธง⑥③ เฟี้ยม เปิดซ้าย/ขวา (label-only) =====
+const dfd = add('1', 'folding'); sf(dfd, '.i-w', '2'); sf(dfd, '.i-h', '2');
+const fdChips = dfd.querySelectorAll('.chip[onclick*="o-folddir"]');
+want('⑥③ เฟี้ยม มีชิปทิศเปิด (3 ตัว)', fdChips.length === 3, 'n=' + fdChips.length);
+const sellFd0 = w.readItem(dfd).r.sell;
+const cL = [].find.call(fdChips, c => c.dataset.val === 'เปิดซ้าย'); if (cL) cL.click();
+want('⑥③ เลือกเปิดซ้าย → folddir=เปิดซ้าย', w.readItem(dfd).optSel.folddir === 'เปิดซ้าย');
+want('⑥③ ทิศเปิด ไม่กระทบราคา (label-only)', w.readItem(dfd).r.sell === sellFd0, '0=' + sellFd0 + ' after=' + w.readItem(dfd).r.sell);
+w.genQuote(); want('⑥③ ใบมี "เปิดซ้าย"', /เปิดซ้าย/.test(doc.querySelector('#quoteContent').textContent));
+want('⑥③ บานเลื่อน ไม่มีทิศเปิดเฟี้ยม', !add('1', 'sliding_euro').querySelector('.o-folddir'));
+
+// ===== ธง② นิรภัย/กันแมว/กันหนู = ผ้ามุ้ง ไม่ใช่ชนิด addon =====
+const dm = add('1', 'casement_euro');
+const mqSel = dm.querySelector('.o-mosq');
+const mqIds = mqSel ? [].map.call(mqSel.options, o => o.value) : [];
+want('② เมนูมุ้งชนิด (addon) ไม่มี imp31(นิรภัย)/imp33(กันแมว)/imp35(กันหนู)', !mqIds.includes('imp31') && !mqIds.includes('imp33') && !mqIds.includes('imp35'), mqIds.join(','));
+sf(dm, '.o-mosq', 'imp21'); // เลือกมุ้งสักตัวให้ผ้าโผล่
+const fabSel = dm.querySelector('.o-mosqfabric');
+const fabVals = fabSel ? [].map.call(fabSel.options, o => o.value) : [];
+want('② ผ้ามุ้งมี กันแมว(anti_pet)/กันหนู(stainless)/นิรภัย(safety08)', fabVals.includes('anti_pet') && fabVals.includes('stainless') && fabVals.includes('safety08'), fabVals.join(','));
+
 want('ไม่มี JS error', errs.length === 0, errs.slice(0, 2).join(' / '));
 
 let pass = 0;

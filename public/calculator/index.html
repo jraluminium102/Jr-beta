@@ -2887,6 +2887,8 @@ function buildItemOpts(d){
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
     h+='<label class="opt" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
+    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม (label-only · แสดงในใบ · ไม่กระทบราคา) เปิดซ้าย/ขวา/แยกกลาง
+    h+='<label class="opt" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
@@ -3369,7 +3371,7 @@ function readItem(d){
   // Pass2-A: ธรณี บานเปิด
   if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
   // Pass2-A: ธรณี บานเฟี้ยม
-  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; }
+  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; const _fd=d.querySelector('.o-folddir'); optSel.folddir=_fd?_fd.value:''; } // ธง⑥③: ทิศเปิดเฟี้ยม
   // shower config
   if(p.id==='shower'){
     const _st=d.querySelector('.o-shtype'); optSel.shtype=_st?_st.value:'door_fixed';
@@ -4079,6 +4081,8 @@ function genQuote(keepNo){
       const _thfLabel = it.optSel.threshf==='inner' ? 'ธรณีหลังเต่าภายใน' : 'ธรณีกันน้ำภายนอก';
       _parts.push(_thfLabel);
     }
+    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม (แสดงในใบเมื่อระบุ · ไม่กระทบราคา)
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ _parts.push(it.optSel.folddir); }
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
       _parts.push('ติดบานเดิม');
