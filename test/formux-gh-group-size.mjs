@@ -11,14 +11,13 @@ const w = dom.window, doc = w.document;
 const checks = []; const want = (n, ok, d) => checks.push({ n, ok: !!ok, d: d || "" });
 function fire(el, t) { el.dispatchEvent(new w.Event(t, { bubbles: true })); }
 
-// ===== บั๊ก 1: กดกั้นห้อง (GH side) → ชิปกลุ่มงานต้องยังอยู่ (เดิมซ่อน .full ที่มีชิป) =====
+// ===== บั๊ก 1 (A4 · ระบบ room ใหม่): กั้นห้อง = ไอเทมกลุ่ม 6 (room) · ชิปกลุ่มงานยังอยู่ (สลับกลับได้) =====
 doc.getElementById("items").innerHTML = "";
-const box = w.addGlasshouseSet();
-const gch = box.querySelector(".set-parts .ch");
+const gch = w.addGlasshouseSet(); // ตอนนี้คืน .ch room (เลิก setbox)
+want("GH room: เป็นไอเทมโหมดห้อง (.g6room)", gch && gch.classList.contains("g6room"));
 const gGroupChip = gch.querySelector('.chip[onclick*="i-group"]');
-want("GH side: ชิปกลุ่มงานยังมีอยู่ (ไม่ถูก remove)", !!gGroupChip);
-const gWrap = gch.querySelector(".i-group").closest(".full");
-want("GH side: แถวกลุ่มงานไม่ถูกซ่อน (display ไม่ none)", gWrap && gWrap.style.display !== "none", gWrap ? "disp=" + gWrap.style.display : "no wrap");
+want("GH room: ชิปกลุ่มงานยังมีอยู่ (สลับกลับได้)", !!gGroupChip);
+want("GH room: builder render (มี wall mixer)", gch.querySelectorAll(".g6r-wall .pane").length >= 1);
 
 // ===== บั๊ก 2: selector ไม่ซ้อน — กดสลับชนิดบานหลายรอบ fam-prodsel ต้อง = 1 =====
 doc.getElementById("items").innerHTML = "";

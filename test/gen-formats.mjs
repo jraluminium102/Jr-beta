@@ -355,39 +355,16 @@ const formats = [
     cust: "คุณศิริพร / ต่อเติมหลังบ้าน",
     fill: "กั้นห้องกระจกพร้อมหลังคา · 3 ด้าน + หลังคาไวนิล · คิดราคา auto ตามสูตรจริง (ไม่มีค่าทำชุดแล้ว 2026-06-08)",
     build() {
-      // ระบบชุดใหม่: addGlasshouseSet + เพิ่มด้าน B + หลังคา
-      const sb = w.addGlasshouseSet();
-      const sn = sb.querySelector(".set-name");
-      if (sn) { sn.value = "กั้นห้องกระจก (ห้องอเนกประสงค์)"; fire(sn, "input"); fire(sn, "change"); }
-      const parts = sb.querySelector(".set-parts");
-      // ด้าน A: sliding_euro 3.6×2.4
-      let chs = parts.querySelectorAll(".ch");
-      const ch0 = chs[0];
-      const ps0 = ch0.querySelector(".i-prod");
-      if (ps0 && !ps0.querySelector('option[value="sliding_euro"]')) ps0.innerHTML = w.prodOptionsG6("6");
-      if (ps0) { ps0.value = "sliding_euro"; fire(ps0, "change"); }
-      setField(ch0, ".i-w", 3.6); setField(ch0, ".i-h", 2.4);
-      const pA = ch0.querySelector(".i-position");
-      if (pA) { pA.value = "ด้าน A"; fire(pA, "input"); fire(pA, "change"); }
-      // ด้าน B: fixed_glass 2.4×2.4
-      const addBtn = sb.querySelector(".set-addpart");
-      if (addBtn) fire(addBtn, "click");
-      chs = parts.querySelectorAll(".ch");
-      const ch1 = chs[chs.length - 1];
-      const ps1 = ch1.querySelector(".i-prod");
-      if (ps1 && !ps1.querySelector('option[value="fixed_glass"]')) ps1.innerHTML = w.prodOptionsG6("6");
-      if (ps1) { ps1.value = "fixed_glass"; fire(ps1, "change"); }
-      setField(ch1, ".i-w", 2.4); setField(ch1, ".i-h", 2.4);
-      const pB = ch1.querySelector(".i-position");
-      if (pB) { pB.value = "ด้าน B"; fire(pB, "input"); fire(pB, "change"); }
+      // HANDOFF-G6 A4: ห้องต่อเติม (paged room builder · เลิก setbox) — กรอก state ตรงๆ
+      const d = w.addGlasshouseSet();
+      const st = d.__g6state;
+      // ด้าน A: บานเลื่อน 3.6×2.4
+      st.sides[0].cols = [{ pcs: [{ cat: "บานเลื่อน", id: "sliding_euro", w: 3.6, h: 2.4, opt: {} }] }];
+      // ด้าน B: ติดตาย 2.4×2.4
+      st.sides.push({ type: "glass", cols: [{ pcs: [{ cat: "ติดตาย", id: "fixed_glass", w: 2.4, h: 2.4, opt: {} }] }] });
       // หลังคาไวนิล 9×3.5
-      const roofBtn = sb.querySelector(".set-addroof");
-      if (roofBtn) fire(roofBtn, "click");
-      chs = parts.querySelectorAll(".ch");
-      const roofCh = chs[chs.length - 1];
-      const psr = roofCh.querySelector(".i-prod");
-      if (psr) { psr.value = "roof_vinyl"; fire(psr, "change"); }
-      setField(roofCh, ".i-w", 9.0); setField(roofCh, ".i-h", 3.5);
+      st.roof = { on: 1, matId: "roof_vinyl", w: 9.0, l: 3.5, frame: "โครงอลูมิเนียม", gut: 0, gutlen: 0, eave: 0, ex: {} };
+      w.calcQuote();
     },
     explain(items) {
       // items[] จาก readItem ของ ch ทุกตัวในชุด

@@ -2198,20 +2198,16 @@ function ghSideLabel(ch){
 //   - ส่วนที่ 1: กลุ่ม 6 (กั้นห้องกระจก) · i-position = "ด้าน A"
 //   - ปุ่ม "เพิ่มบาน" auto-label ด้าน B/C/D... ตามลำดับ
 //   - ปุ่ม "เพิ่มหลังคา" → i-group=3 · i-position="หลังคา"
+// HANDOFF-G6 A4 (มติพี่นัท 2026-06-14): เลิก setbox เดิม → "+ กั้นห้องกระจก" = เพิ่มไอเทมกลุ่ม 6 = ห้องต่อเติม (paged builder)
+//   ด้าน/หลังคา/ฝ้า/ไฟ อยู่ในตัว builder แล้ว (ไม่ต้อง setbox หลาย .ch)
 function addGlasshouseSet(){
-  const box = addSet();
-  const nameEl = box.querySelector('.set-name');
-  if(nameEl){ nameEl.value='กั้นห้องกระจก (ห้อง...)'; nameEl.dispatchEvent(new Event('input',{bubbles:true})); }
-  const firstPart = box.querySelector('.set-parts .ch');
-  if(firstPart){
-    const grp = firstPart.querySelector('.i-group');
-    if(grp && grp.value !== '6'){ grp.value='6'; grp.dispatchEvent(new Event('change',{bubbles:true})); }
-    const pos = firstPart.querySelector('.i-position');
-    if(pos && !pos.value.trim()){ pos.value=ghSideLabel(firstPart); pos.dispatchEvent(new Event('input',{bubbles:true})); }
-  }
-  // ปุ่ม "+ เพิ่มบาน" + "+ เพิ่มหลังคา" จัดการโดย refreshSet (โผล่ทุกชุดกั้นห้อง ไม่ว่าสร้างทางไหน)
-  refreshSet(box); calcQuote();
-  return box;
+  addItem();
+  const chs = document.querySelectorAll('#items .ch'); const d = chs[chs.length-1];
+  const grp = d.querySelector('.i-group');
+  if(grp){ grp.value='6'; grp.dispatchEvent(new Event('change',{bubbles:true})); }
+  if(!d.classList.contains('collapsed')){} else d.classList.remove('collapsed');
+  calcQuote();
+  return d;
 }
 // dead code ลบแล้ว (2026-06-09): addFixedToSet (ปุ่มถูกตัด) · OPT_PRESETS/optPresetOptions/addOptPreset
 // dead code ลบแล้ว (formtop R3.10 · 2026-06-12): SET_OPT_PRESETS/setOptPresetOptions/addSetOptPreset
@@ -2855,6 +2851,12 @@ function buildItemOpts(d){
   let h='';
   // G1G6-B: การ์ดตระกูล+ปุ่มรุ่น กลุ่ม 1/2/6 (เหนือ cascade เฉพาะ) · famOther=โหมด "อื่นๆ" โชว์ dropdown เดิม
   var _famGrp=(d.querySelector('.i-group')||{}).value||'1'; var _famOther=d.dataset.famOther==='1';
+  // HANDOFF-G6 A4: กลุ่ม 6 = ห้องต่อเติม (paged builder แทนฟอร์มบานปกติ) · guard box null กัน crash
+  d.classList.remove('g6room');
+  if(_famGrp==='6'){
+    if(box){ d.classList.add('g6room'); box.innerHTML='<div class="g6r-mount"></div>'; if(window.g6rMount){ window.g6rMount(d, function(){ calcQuote(); }); } }
+    return; // ไม่สร้างฟอร์มบานปกติ
+  }
   // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · แต่กลุ่ม 6 ผนังเบา (ฝ้า-ผนัง) ให้ใช้ family chips เดิม (ALLG-v2) ไม่ใช่ g3
   var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6';
   if(_isG3sel) h+=g3SelectorHTML(p);
@@ -3365,6 +3367,21 @@ function buildItemOpts(d){
   if(p.cabinet){ const _ct=box.querySelector('.o-cabtype'); if(_ct)_ct.addEventListener('change',()=>{ const ih=d.querySelector('.i-h'), dp=box.querySelector('.o-depth'); if(_ct.value==='shoe'){ if(ih)ih.value=2.0; if(dp)dp.value=0.4; } else { if(ih)ih.value=2.4; if(dp)dp.value=0.6; } calcQuote(); }); }
 }
 function readItem(d){
+  // HANDOFF-G6 A4: ไอเทมกลุ่ม 6 = ห้องต่อเติม (paged builder) → ราคา = roomTotal (lumpsum)
+  if(d.classList.contains('g6room') && window.g6rRoomTotal){
+    var _rt=window.g6rRoomTotal(d);
+    var _rlines=window.g6rRoomSummary?window.g6rRoomSummary(d):[];
+    var _rbreak=_rlines.map(function(l){ return l[0]+' = '+Math.round(l[1]).toLocaleString(); }).join('\n'); // breakdown ด้าน A/B/หลังคา/ไฟ ลงใบ
+    var _userNote=(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'';
+    return { p:{name:'ห้องต่อเติม (กั้นห้องกระจก)', cat:'กั้นห้องกระจก'},
+      r:{a:0, sell:_rt, cost:0, addonLines:[], msgs:[], addonLabel:''},
+      qty:1, gi:0, ci:0, finLabel:'', optSel:{}, subItems:[],
+      w:'', h:'', name:'ห้องต่อเติม', ship:false, itype:'door',
+      groupName:'', groupLabel:'', groupOptText:'', groupOptDelta:0,
+      itemOptDelta:0, lumpsum:true, position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
+      note:[_rbreak,_userNote].filter(Boolean).join('\n'),
+      room:true, roomLines:_rlines, div:d };
+  }
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
   const optSel={};
   if(p.opts)p.opts.forEach(o=>{ const c=d.querySelector('.o-'+o.id); if(!c){ optSel[o.id]=(o.type==='select')?String(o.defaults||0):false; return; } optSel[o.id]=(o.type==='select')?c.value:c.checked; });
@@ -4856,6 +4873,9 @@ window.addEventListener('load',ckRefresh);
   .g6r-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-top:1px solid #EEE;background:#fff;position:sticky;bottom:0;}
   .g6r-foot .nav button{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;}
   .g6r-foot .grand{font-size:18px;font-weight:700;color:#B3151D;}
+  /* A4: กลุ่ม 6 = ห้องต่อเติม → ซ่อนฟอร์มบานปกติ เหลือชิปกลุ่ม + builder */
+  .ch.g6room .size-row, .ch.g6room .fam-prodsel, .ch.g6room .rn-prodsel, .ch.g6room .g3-prodsel, .ch.g6room .mosq-prodsel, .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint{ display:none!important; }
+  .ch.g6room .full:has(> .i-prod){ display:none!important; }
 </style>
 <script>
 (function(){
@@ -4898,8 +4918,8 @@ window.addEventListener('load',ckRefresh);
     var b='<div class="g6r-wrap"><div class="g6r-top"><b>🏗️ ห้องต่อเติม (กั้นห้องกระจก)</b><span class="g6r-pos">'+pageName(G6R.cur)+' · '+(G6R.cur+1)+'/'+np()+'</span></div>'
       +'<div class="g6r-tabs">'+tabsHTML()+'</div><div class="g6r-body" id="g6r-bodyc"></div>'
       +'<div class="g6r-foot"><span class="nav"><button onclick="G6Rnav(-1)">◀ ย้อน</button> <button onclick="G6Rnav(1)">ถัดไป ▶</button></span><span class="grand">'+fmt(roomTotal())+'</span></div></div>';
-    mountEl().innerHTML=b;
-    var bc=mountEl().querySelector('#g6r-bodyc');
+    var mEl=mountEl(); if(!mEl)return; mEl.innerHTML=b;
+    var bc=mEl.querySelector('#g6r-bodyc'); if(!bc)return;
     if(G6R.cur<G6R.sides.length) sidePage(bc); else { var o=G6R.cur-G6R.sides.length; if(o===0)roofPage(bc); else if(o===1)elecPage(bc); else sumPage(bc); }
   }
   function sidePage(bc){ var s=G6R.sides[G6R.cur];
@@ -5013,10 +5033,10 @@ window.addEventListener('load',ckRefresh);
   window.g6rDev=function(){ host().style.display='block'; if(!host().__g6state)host().__g6state=freshState(); G6R=host().__g6state; G6MOUNT=host(); G6BOUND=null; render(); host().scrollIntoView({behavior:'smooth'}); };
   window.G6R_STATE=G6R;
   // ===== A4 public API : mount ห้องในไอเทมกลุ่ม 6 + ดึงราคา/สรุปให้ readItem/genQuote =====
-  window.g6rMount=function(itemEl, onChange){ if(!itemEl)return; if(!itemEl.__g6state)itemEl.__g6state=freshState();
-    var mt=itemEl.querySelector('.g6r-mount')||itemEl;
+  window.g6rMount=function(itemEl, onChange){ if(!itemEl)return; var mt=itemEl.querySelector('.g6r-mount'); if(!mt)return; // mount เฉพาะเมื่อมี .g6r-mount จริง (กัน render ทำลายไอเทม)
+    if(!itemEl.__g6state)itemEl.__g6state=freshState();
     G6R=itemEl.__g6state; G6MOUNT=mt; G6BOUND=onChange||null;
-    if(!itemEl.__g6hook){ itemEl.__g6hook=1; ['click','input','change'].forEach(function(ev){ itemEl.addEventListener(ev,function(){ if(itemEl.__g6state){ G6R=itemEl.__g6state; G6MOUNT=itemEl.querySelector('.g6r-mount')||itemEl; G6BOUND=onChange||null; } },true); }); }
+    if(!itemEl.__g6hook){ itemEl.__g6hook=1; ['click','input','change'].forEach(function(ev){ itemEl.addEventListener(ev,function(){ var m=itemEl.querySelector('.g6r-mount'); if(itemEl.__g6state && m){ G6R=itemEl.__g6state; G6MOUNT=m; G6BOUND=onChange||null; } },true); }); }
     render(); };
   window.g6rRoomTotal=function(itemEl){ if(!itemEl||!itemEl.__g6state)return 0; var sv=G6R; G6R=itemEl.__g6state; var t=roomTotal(); G6R=sv; return t; };
   window.g6rRoomSummary=function(itemEl){ if(!itemEl||!itemEl.__g6state)return []; var sv=G6R; G6R=itemEl.__g6state; var lines=[];

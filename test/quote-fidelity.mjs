@@ -117,63 +117,19 @@ function addItem(it) {
 // addGlasshouseSet2 — ชุดกั้นห้องกระจก (flow เหมือน gen-quotes-full)
 // ============================================================
 function addGlasshouseSet2(cfg) {
-  const sb = w.addGlasshouseSet();
-  const sn = sb.querySelector(".set-name");
-  if (sn) { sn.value = cfg.name || "กั้นห้องกระจก"; fire(sn, "input"); fire(sn, "change"); }
-  const parts = sb.querySelector(".set-parts");
-  let chs = parts.querySelectorAll(".ch");
+  // A4: ห้องต่อเติม (paged room · เลิก setbox) — กรอก state ตรงๆ จาก cfg
+  const d = w.addGlasshouseSet();
+  const st = d.__g6state;
   const sides = cfg.sides || [];
-  if (sides.length > 0) {
-    const s0 = sides[0];
-    const ch0 = chs[0];
-    if (s0.prod) {
-      const ps = ch0.querySelector(".i-prod");
-      if (ps && !ps.querySelector('option[value="' + s0.prod + '"]')) ps.innerHTML = w.prodOptionsG6("6");
-      if (ps) { ps.value = s0.prod; fire(ps, "change"); }
-    }
-    if (s0.w != null) setF(ch0, ".i-w", s0.w);
-    if (s0.h != null) setF(ch0, ".i-h", s0.h);
-    const pA = ch0.querySelector(".i-position");
-    if (pA) { pA.value = s0.pos || "ด้าน A"; fire(pA, "input"); fire(pA, "change"); }
-    const c0 = ch0.querySelector(".i-color");
-    if (c0 && c0.options.length > 1) { c0.value = c0.options[1].value; fire(c0, "change"); }
-    const g0 = ch0.querySelector(".i-glass");
-    if (g0 && g0.options.length > 1) { g0.value = g0.options[1].value; fire(g0, "change"); }
-  }
-  for (let i = 1; i < sides.length; i++) {
-    const addBtn = sb.querySelector(".set-addpart");
-    if (addBtn) fire(addBtn, "click");
-    chs = parts.querySelectorAll(".ch");
-    const chN = chs[chs.length - 1];
-    const sN = sides[i];
-    if (sN.prod) {
-      const ps = chN.querySelector(".i-prod");
-      if (ps && !ps.querySelector('option[value="' + sN.prod + '"]')) ps.innerHTML = w.prodOptionsG6("6");
-      if (ps) { ps.value = sN.prod; fire(ps, "change"); }
-    }
-    if (sN.w != null) setF(chN, ".i-w", sN.w);
-    if (sN.h != null) setF(chN, ".i-h", sN.h);
-    const pN = chN.querySelector(".i-position");
-    if (pN) { pN.value = sN.pos || ("ด้าน " + String.fromCharCode(64 + i + 1)); fire(pN, "input"); fire(pN, "change"); }
-    const cN = chN.querySelector(".i-color");
-    if (cN && cN.options.length > 1) { cN.value = cN.options[1].value; fire(cN, "change"); }
-    const gN = chN.querySelector(".i-glass");
-    if (gN && gN.options.length > 1) { gN.value = gN.options[1].value; fire(gN, "change"); }
+  const catOf = (id) => (w.PBYID && w.PBYID[id] ? w.PBYID[id].cat : "บาน");
+  if (sides.length) {
+    st.sides = sides.map((s) => ({ type: "glass", cols: [{ pcs: [{ cat: catOf(s.prod), id: s.prod || "casement_euro", w: s.w != null ? s.w : 1, h: s.h != null ? s.h : 2.4, opt: {} }] }] }));
   }
   if (cfg.roof) {
-    const roofBtn = sb.querySelector(".set-addroof");
-    if (roofBtn) fire(roofBtn, "click");
-    chs = parts.querySelectorAll(".ch");
-    const roofCh = chs[chs.length - 1];
-    const r = cfg.roof;
-    if (r.prod) {
-      const ps = roofCh.querySelector(".i-prod");
-      if (ps) { ps.value = r.prod; fire(ps, "change"); }
-    }
-    if (r.w != null) setF(roofCh, ".i-w", r.w);
-    if (r.h != null) setF(roofCh, ".i-h", r.h);
+    st.roof = { on: 1, matId: cfg.roof.prod || "roof_vinyl", w: cfg.roof.w != null ? cfg.roof.w : 3, l: cfg.roof.h != null ? cfg.roof.h : 3, frame: "โครงอลูมิเนียม", gut: 0, gutlen: 0, eave: 0, ex: {} };
   }
-  return sb;
+  w.calcQuote();
+  return d;
 }
 
 // ============================================================

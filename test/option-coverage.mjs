@@ -494,62 +494,17 @@ function check(optName, setup, expected, detail) {
 {
   clearAll();
 
+  // A4: ห้องต่อเติม (paged room · เลิก setbox) — กรอก state ตรงๆ
   const sb = w.addGlasshouseSet();
-
-  if (sb) {
-    // ตั้งชื่อชุด
-    const sn = sb.querySelector(".set-name");
-    if (sn) { sn.value = "กั้นห้องกระจก ทดสอบ"; fire(sn, "input"); fire(sn, "change"); }
-
-    const parts = sb.querySelector(".set-parts");
-    let chs = parts ? parts.querySelectorAll(".ch") : [];
-
-    // ด้าน A: sliding_euro
-    if (chs.length >= 1) {
-      const ch0 = chs[0];
-      const ps = ch0.querySelector(".i-prod");
-      if (ps && !ps.querySelector('option[value="sliding_euro"]')) ps.innerHTML = w.prodOptionsG6("6");
-      if (ps) { ps.value = "sliding_euro"; fire(ps, "change"); }
-      setF(ch0, ".i-w", 3.0); setF(ch0, ".i-h", 2.4);
-      const pA = ch0.querySelector(".i-position");
-      if (pA) { pA.value = "ด้าน A"; fire(pA, "input"); fire(pA, "change"); }
-    }
-
-    // เพิ่มด้าน B
-    const addBtn = sb.querySelector(".set-addpart");
-    if (addBtn) fire(addBtn, "click");
-    chs = parts ? parts.querySelectorAll(".ch") : [];
-    if (chs.length >= 2) {
-      const ch1 = chs[chs.length - 1];
-      const ps = ch1.querySelector(".i-prod");
-      if (ps && !ps.querySelector('option[value="fixed_glass"]')) ps.innerHTML = w.prodOptionsG6("6");
-      if (ps) { ps.value = "fixed_glass"; fire(ps, "change"); }
-      setF(ch1, ".i-w", 2.0); setF(ch1, ".i-h", 2.4);
-      const pB = ch1.querySelector(".i-position");
-      if (pB) { pB.value = "ด้าน B"; fire(pB, "input"); fire(pB, "change"); }
-    }
-
-    // เพิ่มหลังคา
-    const roofBtn = sb.querySelector(".set-addroof");
-    if (roofBtn) fire(roofBtn, "click");
-    chs = parts ? parts.querySelectorAll(".ch") : [];
-    if (chs.length >= 3) {
-      const roofCh = chs[chs.length - 1];
-      const ps = roofCh.querySelector(".i-prod");
-      if (ps) { ps.value = "roof_std"; fire(ps, "change"); }
-      setF(roofCh, ".i-w", 6.0); setF(roofCh, ".i-h", 2.5);
-    }
-  }
+  const st = sb.__g6state;
+  st.sides[0].cols = [{ pcs: [{ cat: "บานเลื่อน", id: "sliding_euro", w: 3.0, h: 2.4, opt: {} }] }]; // ด้าน A
+  st.sides.push({ type: "glass", cols: [{ pcs: [{ cat: "ติดตาย", id: "fixed_glass", w: 2.0, h: 2.4, opt: {} }] }] }); // ด้าน B
+  st.roof = { on: 1, matId: "roof_vinyl", w: 6.0, l: 2.5, frame: "โครงอลูมิเนียม", gut: 0, gutlen: 0, eave: 0, ex: {} }; // หลังคา
 
   w.calcQuote();
 
-  // อ่านราคาแต่ละส่วนจาก ch ใน setbox
-  const allChs = sb ? [...sb.querySelectorAll(".ch")] : [];
-  const partPrices = allChs.map((ch) => {
-    const ri = w.readItem && w.readItem(ch);
-    return ri && ri.r ? (ri.r.sell || 0) : 0;
-  }).filter((v) => v > 0);
-  const sumParts = partPrices.reduce((a, b) => a + b, 0);
+  // ราคาห้อง = roomTotal (engine จริง · ไอเทมเดียว)
+  const sumParts = (w.readItem(sb).r.sell) || 0;
 
   w.genQuote();
   const qt = getQuoteText();

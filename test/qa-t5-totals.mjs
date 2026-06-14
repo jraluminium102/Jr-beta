@@ -44,37 +44,15 @@ const clearItems = () => { doc.getElementById("items").innerHTML = ""; };
 // ============================================================
 {
   clearItems();
-  const _fire = (el, t) => el.dispatchEvent(new w.Event(t, { bubbles: true }));
+  // A4: ห้องต่อเติม (paged room · เลิก setbox) — กรอก state ตรงๆ · 2 ด้าน ไม่มีหลังคา
   const sb = w.addGlasshouseSet();
-  const sn = sb.querySelector(".set-name");
-  if (sn) { sn.value = "กั้นห้องกระจก (ห้องอเนกประสงค์)"; _fire(sn, "input"); _fire(sn, "change"); }
-  const parts = sb.querySelector(".set-parts");
-  // ด้าน A: sliding_euro 3.0×2.4
-  let chs = parts.querySelectorAll(".ch");
-  const ch0 = chs[0];
-  const ps0 = ch0.querySelector(".i-prod");
-  if (ps0 && !ps0.querySelector('option[value="sliding_euro"]')) ps0.innerHTML = w.prodOptionsG6("6");
-  if (ps0) { ps0.value = "sliding_euro"; _fire(ps0, "change"); }
-  setField(ch0, ".i-w", "3.0"); setField(ch0, ".i-h", "2.4");
-  const pA = ch0.querySelector(".i-position");
-  if (pA) { pA.value = "ด้าน A"; _fire(pA, "input"); _fire(pA, "change"); }
-  // ด้าน B: fixed_glass 2.0×2.4
-  const addBtn = sb.querySelector(".set-addpart");
-  if (addBtn) _fire(addBtn, "click");
-  chs = parts.querySelectorAll(".ch");
-  const ch1 = chs[chs.length - 1];
-  const ps1 = ch1.querySelector(".i-prod");
-  if (ps1 && !ps1.querySelector('option[value="fixed_glass"]')) ps1.innerHTML = w.prodOptionsG6("6");
-  if (ps1) { ps1.value = "fixed_glass"; _fire(ps1, "change"); }
-  setField(ch1, ".i-w", "2.0"); setField(ch1, ".i-h", "2.4");
-  const pB = ch1.querySelector(".i-position");
-  if (pB) { pB.value = "ด้าน B"; _fire(pB, "input"); _fire(pB, "change"); }
+  const st = sb.__g6state;
+  st.sides[0].cols = [{ pcs: [{ cat: "บานเลื่อน", id: "sliding_euro", w: 3.0, h: 2.4, opt: {} }] }]; // ด้าน A
+  st.sides.push({ type: "glass", cols: [{ pcs: [{ cat: "ติดตาย", id: "fixed_glass", w: 2.0, h: 2.4, opt: {} }] }] }); // ด้าน B
 
-  // อ่านราคาแต่ละส่วนจาก readItem
+  // ราคาห้อง = roomTotal (engine จริง · ไอเทมเดียว)
   w.calcQuote();
-  const chArr = [...parts.querySelectorAll(".ch")];
-  const partSells = chArr.map(ch => { const ri = w.readItem && w.readItem(ch); return ri ? (ri.r ? ri.r.sell : 0) : 0; });
-  const sumPartsTC1 = partSells.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+  const sumPartsTC1 = (w.readItem(sb).r.sell) || 0;
   const expectedSubTC1 = sumPartsTC1; // ไม่มี +5000 แล้ว (ยกเลิกค่าทำชุด 2026-06-08)
   rec("TC1a", "ชุดกั้นห้องกระจก readItem ราคาส่วน > 0", "group=6, 2ด้าน",
     "sumParts > 0", "sumParts=" + sumPartsTC1, sumPartsTC1 > 0);

@@ -80,15 +80,13 @@ function mk(group, prodId, W, H){ doc.getElementById("items").innerHTML=""; w.ad
   doc.getElementById("discFlat").value="0"; fire(doc.getElementById("discFlat"),"input");
 }
 
-// ===== ข้อ7: กั้นห้องกระจก ป้ายด้าน auto A/B/C =====
+// ===== ข้อ7: กั้นห้องกระจก ระบบ room ใหม่ (A4) — แท็บด้าน auto A/B/C ใน builder =====
 {
   doc.getElementById("items").innerHTML="";
-  const box = w.addGlasshouseSet();
-  // เพิ่มบานที่ 2, 3 ผ่านปุ่ม + เพิ่มบาน (set-addpart)
-  const addBtn = box.querySelector(".set-addpart");
-  if(addBtn){ addBtn.click(); addBtn.click(); }
-  const sides = [...box.querySelectorAll(".set-parts .ch")].map(ch=>(ch.querySelector(".i-position")||{}).value);
-  want("ข้อ7 ป้ายด้าน auto = A, B, C (ไม่ซ้ำ A ทุกบาน)", sides[0]==="ด้าน A" && sides[1]==="ด้าน B" && sides[2]==="ด้าน C", "ได้ "+JSON.stringify(sides));
+  const d = w.addGlasshouseSet(); // ห้องต่อเติม (paged room · เลิก setbox เดิม)
+  if(w.G6RaddSide){ w.G6RaddSide(); w.G6RaddSide(); } // เพิ่มด้าน B, C ใน builder
+  const tabs = [...d.querySelectorAll(".g6r-tabs .tab")].map(b=>(b.textContent||"").trim()).filter(t=>/^ด้าน /.test(t));
+  want("ข้อ7 ห้อง: แท็บด้าน auto A/B/C ใน builder (ไม่ซ้ำ)", tabs[0]==="ด้าน A" && tabs[1]==="ด้าน B" && tabs[2]==="ด้าน C", "ได้ "+JSON.stringify(tabs));
 }
 
 // ===== UX checklist รอบ 2 (P1-P3) =====
