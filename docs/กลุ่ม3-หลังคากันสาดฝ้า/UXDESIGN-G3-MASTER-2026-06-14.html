@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fcd34d;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.flow{counter-reset:s;margin:4px 0;}
+.flow .st{display:flex;gap:8px;align-items:flex-start;margin:3px 0;font-size:10.5px;}
+.flow .n{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:#fbe9ea;color:#B3151D;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;}
+.tag{display:inline-block;font-size:9px;padding:0 5px;border-radius:8px;margin-left:3px;}
+.t-blue{background:#E6F1FB;color:#185FA5;}.t-amber{background:#FAEEDA;color:#BA7517;}.t-green{background:#EAF3DE;color:#3B6D11;}
+.t-red{background:#fbe9ea;color:#B3151D;}
+</style></head><body>
+
+<h1>UX DESIGN MASTER — ฟอร์มกรอกงานหลังคา/ฝ้า/ผนัง G3</h1>
+<p class="sub">2026-06-14 · สรุปหน้าตา/แนวคิดดีไซน์ UX + การโชว์ราคา · ใช้ซ้ำ/ขยาย/ส่ง dev · คู่ดราฟกดเล่น <code>DRAFT-G3-ux-FULL-2026-06-14.html</code> · ยึดแม่แบบ <code>UXDESIGN-G1-MASTER-2026-06-14.html</code></p>
+
+<div class="good"><b>สรุปสั้น:</b> ฟอร์ม 1 รายการงาน G3 · มือถือ-กรอกไว · เลือกชนิดงาน 6 ปุ่ม (ไวนิล/โพลี/เมทัล/ชินโค/ฝ้า/ผนัง) → รุ่นย่อย → ออปชั่นกรองตาม profile 3 ชุด → <b>เห็นราคาทุกจุดขณะกรอก</b> → พรีวิวใบเสนอราคาแยกราคาท้ายฟอร์ม · ธีมแดง JR</div>
+
+<h2>1) ลำดับฟอร์ม (บน → ล่าง) · 10 ขั้น</h2>
+
+<h3>Profile A — หลังคา (roof / rooflam) · ใช้มากสุด</h3>
+<div class="flow">
+<div class="st"><span class="n">1</span><span><b>กลุ่มงาน</b> — ปุ่ม G1–G7 (G3 active)</span></div>
+<div class="st"><span class="n">2</span><span><b>ชนิดงาน</b> — ปุ่มการ์ด 6 กลุ่มหลัก (ไวนิล/ดีไลท์ · โพลีตัน/กระจก · เมทัลชีท · ชินโคไลท์ · ฝ้า · ผนังเบา) → ชิปรุ่นย่อย (เช่น ไวนิล/ดีไลท์ 2 รุ่น · เมทัล 8 รุ่น · ชินโค 6 รุ่น)</span></div>
+<div class="st"><span class="n">3</span><span><b>ขนาด</b> — ยาว (ม.) × ยื่น (ม.) · จำนวนชุด <span class="tag t-blue">label: ยาว×ยื่น</span></span></div>
+<div class="st"><span class="n">4</span><span><b>วัสดุมุง · สี</b> — ชิปสีวัสดุ (ฟรี · label เท่านั้น) · ลามิเนต = ฟิล์ม 3 ตัว + ความหนา 2 ตัว</span></div>
+<div class="st"><span class="n">5</span><span><b>โครงสร้าง</b> — แป (แปคู่/แปเดี่ยว) + โครง (อลู/เหล็กชุบ) <span class="tag t-green">ฟรี · label</span></span></div>
+<div class="st"><span class="n">6</span><span><b>ออปชั่นหลัก</b> — หลังคาเลื่อน (toggle → sub-panel) · ต่อปลายวัสดุที่ 2 (toggle → sub-panel)</span></div>
+<div class="st"><span class="n">7</span><span><b>ปลายหลังคา</b> — ปล่อย / มีรางน้ำ (→ sub-panel ชนิดราง+ยาว) / ปิดปลาย (→ กรอกยาว) <span class="tag t-amber">เลือกได้อย่างเดียว</span></span></div>
+<div class="st"><span class="n">8</span><span><b>อุปกรณ์เสริมหลังคา</b> — ดรอปดาวเดียว (toggle chip+sub-panel): รางน้ำ · ปิดปลายกันน้ำ · ครอบท่อ PVC · คานเหล็กถัก · เสาแผง · เสา 4"×8" · รื้อของเดิม</span></div>
+<div class="st"><span class="n">9</span><span><b>OPTION ลูกค้า (ต่อชุดนี้)</b> — เลือกหมวด → รายการย่อย → กดเติม · แก้/ลบ/กรอกเองได้</span></div>
+<div class="st"><span class="n">10</span><span><b>ตำแหน่ง / หมายเหตุ</b></span></div>
+<div class="st"><span class="n">11</span><span><b>ออปชั่นทั้งใบ</b> (ท้ายสุด · หมวดเหมือนข้อ 9 · ±/ชุด คิดทีเดียว)</span></div>
+<div class="st"><span class="n">฿</span><span><b>แถบราคารวม</b> ติดล่างตลอด (sticky)</span></div>
+</div>
+
+<h3>Profile B — ฝ้า (ceil / ceilalu) · ช่องน้อยกว่า</h3>
+<div class="flow">
+<div class="st"><span class="n">1–2</span><span>เลือกกลุ่ม → ชิปรุ่น: ฝ้าฉาบเรียบ / ฝ้าอลู ตัวซี 15ซม. / ฝ้าไม้เทียม remood</span></div>
+<div class="st"><span class="n">3</span><span><b>ขนาด</b> — กว้าง × สูง (ม.) <span class="tag t-blue">label: กว้าง×สูง</span></span></div>
+<div class="st"><span class="n">4</span><span><b>สี/รุ่น</b> — ฝ้าอลู: ขาว-ดำ (2,100) / ลายไม้ (2,700) · ฝ้าไม้เทียม: มาตรฐาน (2,600) / ลายไม้ (2,800) · ฝ้าฉาบเรียบ: ฉาบเรียบมาตรฐาน</span></div>
+<div class="st"><span class="n">5</span><span><b>โครงสร้าง</b> — อลู / เหล็กชุบ <span class="tag t-green">ฟรี</span></span></div>
+<div class="st"><span class="n">6</span><span><b>ออปชั่นหลัก</b> — ฉนวนกันร้อน/เสียง (+600/ตร.ม.) · ทาสี (กรอกเอง)</span></div>
+<div class="st"><span class="n">7</span><span><b>อุปกรณ์เสริม</b> — ครอบวงกบ · รื้อของเดิม</span></div>
+<div class="st"><span class="n">8–11</span><span>OPTION ลูกค้า → ตำแหน่ง/หมายเหตุ → ออปชั่นทั้งใบ → แถบราคา (เหมือน profile A)</span></div>
+</div>
+
+<h3>Profile C — ผนังเบา (wall) · คล้าย G1</h3>
+<div class="flow">
+<div class="st"><span class="n">1–2</span><span>เลือกกลุ่ม → ชิปรุ่น: ผนังเบาภายนอก / ผนังเบาภายใน / ISOWALL</span></div>
+<div class="st"><span class="n">3</span><span><b>ขนาด</b> — กว้าง × สูง (ม.)</span></div>
+<div class="st"><span class="n">4</span><span><b>รุ่น/ความหนา</b> — สมาร์ทบอร์ด 12มม. / สมาร์ทบอร์ด 20มม. / เวเทอร์บล็อค 9มม. (ISOWALL: ความหนา+สี)</span></div>
+<div class="st"><span class="n">5</span><span><b>โครงสร้าง</b> — อลู / เหล็กชุบ</span></div>
+<div class="st"><span class="n">6</span><span><b>ออปชั่นหลัก</b> — ฉนวนกันร้อน/เสียง · ทาสี (กรอกเอง)</span></div>
+<div class="st"><span class="n">7</span><span><b>อุปกรณ์เสริม</b> — ครอบวงกบ · รื้อของเดิม (เหมือน G1)</span></div>
+<div class="st"><span class="n">8–11</span><span>OPTION ลูกค้า → ตำแหน่ง/หมายเหตุ → ออปชั่นทั้งใบ → แถบราคา</span></div>
+</div>
+
+<h2>2) การโชว์ราคา — 4 ระดับ (หัวใจของดีไซน์)</h2>
+<table>
+<tr><th>ระดับ</th><th>โชว์ที่ไหน</th><th>ทำอะไร</th></tr>
+<tr><td>① บนชิป</td><td>ทุกออปชั่นที่กดติด</td><td>ขึ้น ฿ ตรงชิปทันที · อุปกรณ์เสริมที่มี sub-panel โชว์ยอด sub-panel</td></tr>
+<tr><td>② ต่อกล่อง</td><td>มุมขวาหัวข้อทุก section (.secsum)</td><td>subtotal ของกล่องนั้น โชว์เสมอ (แม้ ฿0)</td></tr>
+<tr><td>③ พรีวิวใบเสนอราคา</td><td>การ์ดขอบแดง 2px ท้ายฟอร์ม</td><td>แยกราคา: ฐาน (บอกพื้นที่ ตร.ม.) + แต่ละออปชั่น + OPTION + รวม/ชุด + ออปชั่นทั้งใบ + ยอดรวม</td></tr>
+<tr><td>④ แถบรวม</td><td>ล่างจอ sticky</td><td>ยอดรวมทั้งใบ realtime + label "ยอดรวมทั้งใบ (เดโม)"</td></tr>
+</table>
+<div class="box"><b>กฎราคา G3:</b>
+<span style="color:#3B6D11">คำนวณได้ทันที</span> = ฐานบาน (bucket: max(min, monoRate(พื้นที่, RATES[key]))) · หลังคาเลื่อน (สูตรขั้นบันได+tier+มอเตอร์) · รางน้ำ (เรต/ม.×ยาว) · คานเหล็กถัก (เรตรุ่น×ยาว) · เสา (จำนวน×เรต) · ครอบท่อ (⌈ยาว/1.5⌉×1,500) · ปิดปลาย (1,000/ม.) · ต่อปลายวัสดุ 2 (monoRate เฉพาะส่วน) ·
+<span style="color:#BA7517">ฟรี (label)</span> = สีวัสดุมุง / แป / โครง / ฉาบเรียบรุ่น / รุ่นผนัง ·
+ทุกช่องราคา <b>แก้ได้</b></div>
+
+<h2>3) รุ่นย่อยทั้งหมด (ชิปหลังเลือกกลุ่ม)</h2>
+<table>
+<tr><th>ปุ่มกลุ่ม</th><th>ไอคอน</th><th>รุ่นย่อย (ชิป)</th><th>rates key</th><th>min</th></tr>
+<tr><td>ไวนิล/ดีไลท์</td><td>⌂</td><td>หลังคาไวนิล · หลังคาดีไลท์</td><td>ROOF_STD</td><td>28,000</td></tr>
+<tr><td>โพลีตัน/กระจก</td><td>▦</td><td>โพลีตัน 3มม. · กระจกลามิเนต</td><td>ROOF_POLY / ROOF_LAM</td><td>30,000 / 45,000</td></tr>
+<tr><td>เมทัลชีท</td><td>▤</td><td>8 รุ่น (1"/2" · ท้องPVC/เหล็ก/ฟอยล์ EPS/PU)</td><td>IMP7–IMP14</td><td>0</td></tr>
+<tr><td>ชินโคไลท์</td><td>☀</td><td>6 รุ่น (HeatCut/Superior/Nature/Shade/Prime/Grand)</td><td>IMP15–IMP19</td><td>0</td></tr>
+<tr><td>ฝ้า</td><td>▭</td><td>ฝ้าฉาบเรียบ · ฝ้าอลู ตัวซี 15ซม. · ฝ้าไม้เทียม remood</td><td>CEILING / crates</td><td>12,000 / —</td></tr>
+<tr><td>ผนังเบา</td><td>▥</td><td>ผนังเบาภายนอก · ผนังเบาภายใน · ISOWALL</td><td>WALL_EXT / WALL_INT / ISOWALL</td><td>13,500 / 7,000</td></tr>
+</table>
+
+<h2>4) ออปชั่นสำคัญ — ต่างจาก G1</h2>
+<table>
+<tr><th>ออปชั่น</th><th>ประเภท</th><th>รายละเอียด</th><th>ราคา</th></tr>
+<tr><td>หลังคาเลื่อน</td><td>toggle → sub-panel</td><td>จำนวนบานเลื่อน (2/3/4/6) + บานติดตาย + มอเตอร์ (ตัว)</td><td>สูตรขั้นบันได ROOF_SLIDE + tier/บาน + มอเตอร์ auto</td></tr>
+<tr><td>ต่อปลายวัสดุที่ 2</td><td>toggle → sub-panel</td><td>วัสดุ2 (ไวนิล/โพลี/ลามิเนต/ชินโค) + พื้นที่ 2 (ตร.ม.)</td><td>monoRate(พื้นที่ 2, rates) · พื้นหลัก = รวม − ส่วน2</td></tr>
+<tr><td>ปลายหลังคา (ปล่อย)</td><td>radio 3 ทาง</td><td>ไม่มีรางน้ำ / ไม่ปิดปลาย</td><td>฿0</td></tr>
+<tr><td>ปลายหลังคา (รางน้ำ)</td><td>radio → sub-panel</td><td>ชนิดราง (อลู S/M/สแตนเลส) + ยาว (ม.) · ระบบท่อ/โซ่ · ตะแกรงกันใบไม้ (ฟรี) · ท่อทิ้ง PVC (ฟรี)</td><td>เรต/ม. × ยาว: S=1,000 / M=2,000 / สแตนเลส=3,000</td></tr>
+<tr><td>ปลายหลังคา (ปิดปลาย)</td><td>radio → กรอกยาว</td><td>ยาว (ม.)</td><td>1,000/ม.</td></tr>
+<tr><td>รางน้ำ (เสริม)</td><td>toggle chip → sub-panel</td><td>ชนิด + ยาว</td><td>เรต/ม. × ยาว</td></tr>
+<tr><td>ปิดปลายกันน้ำ</td><td>toggle chip → กรอกยาว</td><td>ยาว (ม.)</td><td>1,000/ม.</td></tr>
+<tr><td>ครอบท่อ PVC</td><td>toggle chip → กรอกยาว</td><td>ยาว (ม.)</td><td>⌈ยาว/1.5⌉ × 1,500</td></tr>
+<tr><td>คานเหล็กถัก</td><td>toggle chip → sub-panel</td><td>รุ่น (สูง 20/30/50ซม.) + ยาว (ม.)</td><td>2,400 / 3,600 / 4,400 ต่อเมตร</td></tr>
+<tr><td>เสาแผง</td><td>toggle chip → กรอกจำนวน</td><td>จำนวนต้น</td><td>4,000/ต้น</td></tr>
+<tr><td>เสา 4"×8"</td><td>toggle chip → กรอกจำนวน</td><td>จำนวนต้น</td><td>2,000/ต้น</td></tr>
+<tr><td>รื้อของเดิม</td><td>toggle chip</td><td>ทุก profile</td><td>กรอกเอง (default 1,000)</td></tr>
+<tr><td>ฉนวนกันร้อน/เสียง</td><td>toggle chip (ฝ้า/ผนัง)</td><td>บวกต่อพื้นที่</td><td>+600 ×พื้นที่ (ตร.ม.)</td></tr>
+<tr><td>ครอบวงกบ</td><td>toggle chip (ฝ้า/ผนัง)</td><td>เหมือน G1</td><td>กรอกเอง (default 2,000)</td></tr>
+</table>
+
+<h2>5) ฟีเจอร์ดีไซน์สำคัญ</h2>
+<table>
+<tr><th>ฟีเจอร์</th><th>รายละเอียด</th></tr>
+<tr><td>ปุ่ม 6 กลุ่ม → ชิปรุ่น</td><td>การ์ดไอคอน+ชื่อ+จำนวนรุ่น (grid 3 คอลัมน์) · ตัวเลือก=พื้นแดง · ชิปรุ่นโผล่ข้างล่างทันที · เมทัล/ชินโคมีชิปรุ่นเยอะ (8/6 รุ่น) เลื่อนได้</td></tr>
+<tr><td>กรอง profile ตามชนิดงาน</td><td>roof/rooflam = ฟอร์มหลังคาเต็ม · ceil/ceilalu = ฝ้า (ตัดแป/หลังคาเลื่อน/ปลายหลังคา) · wall = ผนัง (ตัดแป/หลังคาเลื่อน) · ครบ 10+ ขั้นเสมอ แต่โชว์เฉพาะที่เกี่ยว</td></tr>
+<tr><td>sub-panel ออปชั่นหลังคา</td><td>กด toggle chip → กล่องย่อยโผล่: หลังคาเลื่อน(จำนวนบาน/มอเตอร์) · รางน้ำ(ชนิด/ยาว) · คาน(รุ่น/ยาว) · เสา(จำนวน) · ปิดปลาย(ยาว) · ราคา auto คำนวณในแผง แก้ได้</td></tr>
+<tr><td>ปลายหลังคา 3 ทาง exclusive</td><td>เลือกได้ทีละอย่าง (radio-style) · ปล่อย / รางน้ำ / ปิดปลาย · ที่เหลือ clear · ต่างจาก chip อื่นที่ toggle อิสระ</td></tr>
+<tr><td>ต่อปลายวัสดุที่ 2</td><td>toggle → เลือกวัสดุ2 + กรอกพื้นที่ส่วนที่2 · ราคาคิดแยก (monoRate ส่วน2) · พื้นที่หลัก = รวม − ส่วน2 (auto)</td></tr>
+<tr><td>หลังคาเลื่อน auto</td><td>กดติด → sarea ดึงจากขนาดหลัก (ยาว×ยื่น) · มอเตอร์ auto qty จากพื้นที่ (≤3.5→18k / ≤14→28k / ≤40→36k / >40→72k)</td></tr>
+<tr><td>ลามิเนต sub-option</td><td>cfg='rooflam' → โชว์ฟิล์ม (ใส/เขียว/กันร้อน) + ความหนา (4+4 / 5+5) แทนชิปสีปกติ</td></tr>
+<tr><td>OPTION แบบหมวด</td><td>เลือกหมวด 6 หมวด (สี/วัสดุ · กันร้อน · รางน้ำ/ระบาย · งานเหล็ก/โครง · งานเพิ่ม · ส่วนลด) → รายการย่อย → กดเติม แก้/ลบ/กรอกเอง</td></tr>
+<tr><td>ฝ้าอลู/ไม้เทียม crate</td><td>ราคา = max(10, พื้นที่) × crates[สี] · ไม่ใช้ bucket · min = ขั้นต่ำ 10 ตร.ม. auto</td></tr>
+</table>
+
+<h2>6) สไตล์ / ภาพ</h2>
+<table>
+<tr><td>ธีม</td><td>แดง JR #B3151D · การ์ดขาว ขอบ 1px มน · มือถือ max-width 560</td></tr>
+<tr><td>ปุ่มกลุ่มหลัก</td><td>grid 3 คอลัมน์ (.btngrid) · ไอคอนบน-ชื่อกลาง-จำนวนรุ่นล่าง · เลือก=พื้นแดง</td></tr>
+<tr><td>ชิปรุ่นย่อย</td><td>.sc ขอบมน 9px · เลือก=แดง · แถว flex-wrap</td></tr>
+<tr><td>ชิปออปชั่น (toggle)</td><td>.a ขอบมน 21px (กลม) · กดติด=แดง · แสดงราคา/ยอดใน .cp</td></tr>
+<tr><td>sub-panel</td><td>พื้นครีม #FFFBEF ขอบ #eadfc2 · หัวสีน้ำตาลทอง · ช่องราคา .pf2 แก้ได้</td></tr>
+<tr><td>ราคา</td><td>tabular-nums · .secsum มุมขวาสีแดง · พรีวิวใบ=การ์ดขอบแดง 2px · แถบรวม=แถบแดงล่าง</td></tr>
+<tr><td>label "ฟรี"</td><td>สีเทา .bc ในหัว section · ไม่บวกราคา ไม่มีตัวเลขบนชิป</td></tr>
+</table>
+
+<h2>7) หลักดีไซน์ที่ยึด (เอาไปใช้กลุ่มอื่น)</h2>
+<div class="box">
+1. <b>ปุ่ม/ชิป ไม่ใช้ dropdown</b> (ตัวเลือก ≤6 = ชิป · เยอะ = กลุ่ม→ย่อย เช่น เมทัล 8/ชินโค 6 ใช้ชิปเลื่อน)<br>
+2. <b>กรอง profile ตามชนิดงาน</b> โชว์เฉพาะขั้นที่เกี่ยว · ครบทุก section (ที่ไม่เกี่ยวโชว์ "ไม่มี")<br>
+3. <b>เห็นราคาทุกจุดขณะกรอก</b> (ชิป/กล่อง/พรีวิว/แถบรวม) · แก้ราคาได้ทุกตัว<br>
+4. <b>สำคัญขึ้นบน เสริม/หมายเหตุลงล่าง ราคาท้ายสุด</b> · ออปชั่นทั้งใบอยู่หลังสุดก่อน preview<br>
+5. <b>sub-panel คำนวณ auto</b> เมื่อกรอกขนาด/จำนวน · แก้เองได้เสมอ (.pf2)<br>
+6. <b>ปลายหลังคา = radio exclusive</b> (3 ทางเลือกอย่างเดียว) ไม่ใช่ toggle อิสระ
+</div>
+
+<h2>8) เรตราคาฐาน (ย่อ · ยึด REF)</h2>
+<table>
+<tr><th>key</th><th>ขั้นบันได (ตร.ม./บาท)</th><th>min</th></tr>
+<tr><td>ROOF_STD</td><td>5–10: 6,500 / 10–15: 6,000 / 15–30: 5,500 / 30+: 5,000</td><td>28,000</td></tr>
+<tr><td>ROOF_POLY</td><td>5–10: 7,500 / 10–15: 6,500 / 15–30: 6,000 / 30+: 5,700</td><td>30,000</td></tr>
+<tr><td>ROOF_LAM</td><td>5–10: 11,000 / 10–15: 10,500 / 15+: 10,000</td><td>45,000</td></tr>
+<tr><td>IMP7–IMP14</td><td>0–10: 6,300–7,500 / 10–15: 5,800–7,000 / 15–30: 5,300–6,500 / 30+: 4,800–6,000</td><td>0</td></tr>
+<tr><td>IMP15–IMP19</td><td>0–10: 10,100–14,000 / 10–15: 9,500–13,500 / 15+: 9,100–13,000</td><td>0</td></tr>
+<tr><td>CEILING</td><td>10–20: 1,200 / 20+: 1,150</td><td>12,000</td></tr>
+<tr><td>ISOWALL</td><td>1–1.5: 7,000 / 1.5–2: 6,500 … 3.5+: 4,500</td><td>7,000</td></tr>
+<tr><td>WALL_EXT</td><td>3–4.5: 4,500 / 4.5–6: 4,200 / 6–7.5: 3,900 / 7.5+: 3,600</td><td>13,500</td></tr>
+<tr><td>WALL_INT</td><td>3–4.5: 4,100 / 4.5–6: 3,800 / 6–7.5: 3,500 / 7.5+: 3,200</td><td>13,500</td></tr>
+<tr><td>ฝ้าอลู/ไม้เทียม (crates)</td><td>ตัวซี: ขาว-ดำ 2,100 / ลายไม้ 2,700 · ไม้เทียม: มาตรฐาน 2,600 / ลายไม้ 2,800</td><td>×max(10,A)</td></tr>
+</table>
+
+<h2>9) จุดเช็คซ้ำ (ส่ง dev/พี่นัท)</h2>
+<div class="warn">
+🔴 <b>truss_beam_cover</b> (ครอบคาน product cat เสริม L697) — ไม่มี calc handler → ราคา 0 ใช้ไม่ได้ · ควรใช้ออปชั่น o-rfbcw/rfbcl ในชุดหลังคาแทน<br>
+🟡 <b>roof_gutter_cover</b> — ชื่อ "ลด 50%" แต่สูตร ×0.70 (ลด 30%) · เช็คซ้ำตั้งใจหรือเปล่า<br>
+🟡 <b>IMP7–IMP20 min:0</b> — เมทัล/ชินโคไม่มีขั้นต่ำ ต่างจากไวนิล/ดีไลท์ (min 28,000) · ตั้งใจ?<br>
+🟡 <b>หลังคาเลื่อน sarea</b> — calc อ่าน optSel.sarea · readItem set จาก sareaw×sareah · ยืนยัน key ตรง<br>
+🟡 <b>o-rfsealer</b> (วัสดุปิดรอยต่อ) — ไม่บวกเงิน → cosmetic label เฉยๆ ยืนยัน
+</div>
+
+<p class="sub">ไฟล์คู่: <code>DRAFT-G3-ux-FULL-2026-06-14.html</code> (ดราฟกดเล่น) · <code>REF-G3-pricing-data-2026-06-14.md</code> (เรตดิบ dev) · ทั้งหมดอยู่ <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/</code></p>
+</body></html>

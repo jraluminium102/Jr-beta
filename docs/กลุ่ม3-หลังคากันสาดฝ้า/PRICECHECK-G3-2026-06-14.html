@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<title>ตรวจราคา G3 — หลังคา/ฝ้า/ผนัง (เฟิร์น+พี่นัทเช็ควิธีคิด)</title>
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.45;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.ex{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:6px 9px;margin:4px 0;font-size:10px;}
+.ex b{color:#065f46;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10px;}
+.flag{background:#fef2f2;border:1.5px solid #fca5a5;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10.5px;}
+.flag b{color:#B3151D;}
+.chk{color:#92400e;font-weight:700;}
+.pr{font-family:Consolas,monospace;font-weight:700;color:#B3151D;white-space:nowrap;text-align:right;}
+.bd{font-family:Consolas,monospace;font-size:9.5px;color:#374151;}
+.ok{color:#15803d;font-weight:700;}
+.no{color:#b45309;font-weight:700;}
+.grp td{background:#fce8ea;color:#B3151D;font-weight:700;font-size:10.5px;}
+.tot{color:#B3151D;font-weight:700;}
+small{color:#6b7280;}
+</style></head><body>
+
+<h1>ตรวจราคา — งาน G3 หลังคา / ฝ้า / ผนัง (สำหรับเฟิร์น + พี่นัท เช็ควิธีคิดราคา)</h1>
+<p class="sub">14 มิ.ย. 2026 · ราคาทุกตัว <b>render สดจาก engine ปัจจุบัน</b> (<code>public/calculator/index.html</code> ผ่าน jsdom → <code>scripts/pricecheck-g3-data.json</code>) · 17 เคส · <b>ขนาดทดสอบ: หลังคา/ฝ้า = 6×3 = 18 ตร.ม. · ผนัง = 3×2.4 = 7.2 ตร.ม.</b> · ทุกตัวเลขในเอกสารนี้คัดจาก JSON ตรงๆ ไม่คำนวณเพิ่ม · self-check ฐาน+ออปชั่น = ราคารวม ทุกเคส · จุดต้องยืนยันติดป้าย (เช็คซ้ำ)</p>
+
+<div class="flag"><b>⚑ ราคาที่กำลังจะเปลี่ยน (มติพี่นัท 14 มิ.ย. — dev ยังไม่แก้ในระบบ) — ตัวเลขในตารางนี้คือ "ก่อนแก้":</b>
+<ol style="margin:3px 0 0;padding-left:18px;">
+<li><b>เมทัลชีท / ชินโคไลท์ (imp7–imp20)</b> ตอนนี้ <code>min:0</code> (ไม่มีขั้นต่ำ) → พี่นัทสั่ง <b>ต้องมีขั้นต่ำ</b> (ตัวเลขรอเคาะ) · ต่างจากไวนิล/ดีไลท์ที่ min 28,000 · <b>หมายเหตุ:</b> เคสเมทัล/ชินโคในตารางนี้ขนาด 18 ตร.ม. <b>ไม่ติด min อยู่แล้ว</b> เพราะราคาฐานสูงกว่าขั้นต่ำมาก → min จะมีผลเฉพาะงานพื้นที่เล็ก (ราคาในตารางนี้จึงยังไม่เปลี่ยนจากเรื่อง min)</li>
+<li><b>วัสดุปิดรอยต่อ</b> (<code>o-rfsealer</code>) ตอนนี้ = 0 (cosmetic) → พี่นัทสั่ง <b>ต้องคิดเงิน</b> (เรตรอเคาะ)</li>
+<li><b>ปิดซ่อนราง</b> (<code>roof_gutter_cover</code>) ชื่อในระบบบอก "ลด 50%" แต่สูตร render จริง ×0.70 (<b>ลด 30%</b>) → รอเคาะว่าจะลด 30% หรือ 50%</li>
+</ol></div>
+
+<h2>1) หลักการคิดราคา G3 (ทุกตัวใช้ร่วม)</h2>
+<table>
+<tr><th>ขั้น</th><th>วิธี</th></tr>
+<tr><td>พื้นที่</td><td>กว้าง × สูง (หลังคา label = ยาว × ยื่น)</td></tr>
+<tr><td>1. เรต/ตร.ม.</td><td><code>rateOf(พื้นที่)</code> = หาเรตจาก tier ตามพื้นที่ (ต่ำกว่า tier แรก = ใช้เรต tier แรก)</td></tr>
+<tr><td>2. ฐานพื้นที่</td><td><b>หลังคา/ผนัง (bucket):</b> <code>max(min, monoRate(พื้นที่))</code> · monoRate กันราคาช่วง (พื้นที่มากยอดไม่ต่ำกว่าขอบ tier ก่อน)</td></tr>
+<tr><td></td><td><b>ฝ้าอลู (ceiling crates):</b> <code>roundUp( max(10, พื้นที่) × เรตตามสี )</code> — คิดขั้นต่ำ 10 ตร.ม.</td></tr>
+<tr><td>3. ออปชั่น</td><td>+ รางน้ำ / ปิดปลาย / ของเสริม / หลังคาเลื่อน / หลังคาผสม / ฉนวน ฯลฯ</td></tr>
+<tr><td>4. ราคาขาย</td><td><code>roundUp(ฐาน + ออปชั่น)</code> = ปัดขึ้นพัน · ยอดนี้ = ยอดก่อน VAT (net)</td></tr>
+</table>
+
+<h2>2) ตารางเรต RATES (tier: ช่วงพื้นที่ → เรต/ตร.ม.) · min</h2>
+<table>
+<tr><th>รุ่น</th><th>tiers (ตร.ม. → บาท/ตร.ม.)</th><th>min</th></tr>
+<tr><td>ไวนิล / ดีไลท์ (ROOF_STD)</td><td>5–10:6,500 / 10–15:6,000 / 15–30:5,500 / 30+:5,000</td><td>28,000</td></tr>
+<tr><td>โพลีตัน 3มม. (ROOF_POLY)</td><td>5–10:7,500 / 10–15:6,500 / 15–30:6,000 / 30+:5,700</td><td>30,000</td></tr>
+<tr><td>กระจกลามิเนต (ROOF_LAM)</td><td>5–10:11,000 / 10–15:10,500 / 15+:10,000</td><td>45,000</td></tr>
+<tr><td>เมทัลชีท imp7–14 (8 รุ่น)</td><td>0–10 / 10–15 / 15–30 / 30+ · imp7 6,300/5,800/5,300/4,800 … imp14 7,500/7,000/6,500/6,000</td><td class="tot">0 ⚑</td></tr>
+<tr><td>ชินโคไลท์ imp15–20 (6 รุ่น)</td><td>0–10 / 10–15 / 15+ · imp15 11,000/10,500/10,000 … imp19,20 14,000/13,500/13,000</td><td class="tot">0 ⚑</td></tr>
+<tr><td>หลังคาเลื่อน (ROOF_SLIDE)</td><td>5–10:5,000 / 10–15:4,700 / 15–20:4,400 / 20–25:4,100 / 25–30:3,800 / 30+:3,500</td><td>—</td></tr>
+<tr><td>ฝ้าฉาบเรียบ (CEILING)</td><td>10–20:1,200 / 20+:1,150</td><td>12,000</td></tr>
+<tr><td>ฝ้าอลู ตัวซี (crates × max(10,A))</td><td>ขาว-ดำ 2,100 / ลายไม้ 2,700</td><td>—</td></tr>
+<tr><td>ฝ้าไม้เทียม remood (crates × max(10,A))</td><td>มาตรฐาน 2,600 / ลายไม้-สีอื่น 2,800</td><td>—</td></tr>
+<tr><td>ISOWALL</td><td>1–1.5:7,000 / 1.5–2:6,500 / 2–2.5:6,000 / 2.5–3:5,500 / 3–3.5:5,000 / 3.5+:4,500</td><td>7,000</td></tr>
+<tr><td>ผนังเบาภายนอก (WALL_EXT)</td><td>3–4.5:4,500 / 4.5–6:4,200 / 6–7.5:3,900 / 7.5+:3,600</td><td>13,500</td></tr>
+<tr><td>ผนังเบาภายใน (WALL_INT)</td><td>3–4.5:4,100 / 4.5–6:3,800 / 6–7.5:3,500 / 7.5+:3,200</td><td>13,500</td></tr>
+</table>
+<p><b>ออปชั่นหลังคา:</b> รางน้ำ (อลู S 1,000 / M 2,000 / สแตนเลส L 3,000)/ม. × ยาว(auto=กว้าง) · ปิดปลายกันน้ำ 1,000/ม. · ปิดปลายโซ่/ตะแกรง = ฟรี · เสาแผง 4,000/ต้น · เสา 4"×8" 2,000/ต้น · คานเหล็กถัก (2,400/3,600/4,400)/ม. · ครอบ PVC ⌈ยาว/1.5⌉×1,500 · โซ่รางน้ำ 3,000/เส้น · ซ่อนสโลป (comp (2สูง+0.1)×ด้าน×ยาว×3,500 / smart สูง×ด้าน×ยาว×4,000) · ปิดซ่อนราง (กว้าง+สูง)/100×ยาว×3,500×<b>0.70</b> · ครอบคาน 3,500×0.6×กว้าง×ยาว · หลังคาเลื่อน <code>monoRate(SLIDE)+(N−1)×tier+มอเตอร์</code> · หลังคาผสม base=monoRate(พื้นหลัก)+monoRate(พื้นที่2)</p>
+<p><b>ออปชั่นฝ้า-ผนัง:</b> ฉนวน +600×พื้นที่ · ทาสี (กรอกเอง) · รุ่น/ความหนา (label) · โครง อลู/เหล็กชุบ (ฟรี) · สีวัสดุมุง/ฟิล์มลามิเนต = cosmetic ฟรี</p>
+
+<h2>3) เคสตรวจราคา (render สดจาก engine · 17 เคส · ครอบทุก profile)</h2>
+<p class="sub">คอลัมน์ "ราคารวม (full)" = ดึงจาก engine โดยตรง (<code>JSON.full</code>) · "ออปชั่น" = breakdown <code>msgs</code> ที่ engine สร้าง · self-check ✓ = <code>base + Σ(เลขใน msgs) = full</code> (ปัดขึ้นพัน)</p>
+
+<h3>หลังคา — ยาว 6 × ยื่น 3 = 18 ตร.ม. (รางน้ำท่อ PVC แบบงานจริง)</h3>
+<table>
+<tr><th style="width:22%">รายการ (id)</th><th style="width:9%">ขนาด · ตร.ม.</th><th style="width:14%">ราคาฐาน (base)</th><th style="width:30%">ออปชั่น (msgs)</th><th style="width:13%">ราคารวม (full)</th><th style="width:12%">self-check</th></tr>
+<tr><td>หลังคาไวนิล</td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿99,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">฿105,000</td><td class="ok">✓ 99,000+6,000<br>=105,000</td></tr>
+<tr><td>หลังคาดีไลท์</td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿99,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">฿105,000</td><td class="ok">✓ 99,000+6,000<br>=105,000</td></tr>
+<tr><td>หลังคาโพลีตัน 3มม.</td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿108,000</td><td class="bd">รางน้ำ 6,000</td><td class="pr">฿114,000</td><td class="ok">✓ 108,000+6,000<br>=114,000</td></tr>
+<tr><td>หลังคากระจกลามิเนต<br><small>(ฟิล์มใส 4+4)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿180,000</td><td class="bd">รางน้ำ 6,000<br><small>ฟิล์ม/ความหนา = cosmetic ฟรี</small></td><td class="pr">฿186,000</td><td class="ok">✓ 180,000+6,000<br>=186,000</td></tr>
+<tr><td>เมทัลชีท imp7 <small>(1" ท้องPVC)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿96,000</td><td class="bd">รางน้ำ 6,000<br><b class="tot">min:0 ⚑ (18 ตร.ม. ไม่ติด min)</b></td><td class="pr">฿102,000</td><td class="ok">✓ 96,000+6,000<br>=102,000</td></tr>
+<tr><td>เมทัลชีท imp14 <small>(2" PU)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿117,000</td><td class="bd">รางน้ำ 6,000<br><b class="tot">min:0 ⚑ (18 ตร.ม. ไม่ติด min)</b></td><td class="pr">฿123,000</td><td class="ok">✓ 117,000+6,000<br>=123,000</td></tr>
+<tr><td>ชินโคไลท์ imp15 <small>(HeatCut)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿180,000</td><td class="bd">รางน้ำ 6,000<br><b class="tot">min:0 ⚑ (18 ตร.ม. ไม่ติด min)</b></td><td class="pr">฿186,000</td><td class="ok">✓ 180,000+6,000<br>=186,000</td></tr>
+<tr><td>ชินโคไลท์ imp19 <small>(Grand)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿234,000</td><td class="bd">รางน้ำ 6,000<br><b class="tot">min:0 ⚑ (18 ตร.ม. ไม่ติด min)</b></td><td class="pr">฿240,000</td><td class="ok">✓ 234,000+6,000<br>=240,000</td></tr>
+</table>
+
+<h3>ออปชั่นหลังคา — ไวนิล ยาว 6 × ยื่น 3 = 18 ตร.ม.</h3>
+<table>
+<tr><th style="width:22%">รายการ (id)</th><th style="width:9%">ขนาด · ตร.ม.</th><th style="width:14%">ราคาฐาน (base)</th><th style="width:30%">ออปชั่น (msgs)</th><th style="width:13%">ราคารวม (full)</th><th style="width:12%">self-check</th></tr>
+<tr><td>หลังคาเลื่อน 4 บาน <small>(ไวนิล)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿99,000</td><td class="bd">หลังคาเลื่อน 4 บาน · มอเตอร์ 1×36,000<br>รางน้ำ 6,000</td><td class="pr">฿241,000</td><td class="no">✗ ดูหมายเหตุ A<br><small>99,000+36,000+6,000<br>=141,000 ≠ 241,000</small></td></tr>
+<tr><td>หลังคาผสม<br>ไวนิล + ลามิเนต 5 ตร.ม.</td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿99,000</td><td class="bd">หลังคาผสม: ไวนิล 13.0 ตร.ม. (78,000) + กระจกลามิเนต 5.0 ตร.ม. (55,000)<br>รางน้ำ 6,000</td><td class="pr">฿139,000</td><td class="no">✗ ดูหมายเหตุ B<br><small>78,000+55,000+6,000<br>=139,000 = full ✓*</small></td></tr>
+<tr><td>ไวนิล + เสริม<br><small>(เสาแผง2 + คานถัก6ม. + ครอบPVC6ม.)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿99,000</td><td class="bd">รางน้ำ 6,000<br>คานเหล็กถัก 14,400<br>เสาแผง 2 ต้น<br>ครอบ PVC 6,000</td><td class="pr">฿134,000</td><td class="no">✗ ดูหมายเหตุ C<br><small>99,000+6,000+14,400+6,000<br>=125,400 (ขาดเสาแผง 8,000)<br>→ +8,000 = 133,400→134,000</small></td></tr>
+</table>
+<div class="warn" style="font-size:9.5px"><b class="chk">หมายเหตุ self-check 3 เคสออปชั่นพิเศษ (engine ลง breakdown ไม่ครบทุกตัวเลข — full ถูกต้องจาก engine):</b>
+<ul style="margin:3px 0;padding-left:16px;">
+<li><b>A — หลังคาเลื่อน 4 บาน:</b> msg ลงเฉพาะ "มอเตอร์ 36,000" แต่ <b>ราคาชุดระบบเลื่อน 4 บาน</b> (monoRate(SLIDE)+3×tier ≈ 100,000) ไม่ได้พิมพ์เป็นบรรทัด msg แยก → ทำให้ Σmsgs ขาดไป 100,000 · <code>full=241,000</code> จาก engine ถูกต้อง (99,000 base ถูกแทนด้วยฐานเลื่อน + มอเตอร์ + ราง) → <b>ติดป้าย (เช็คซ้ำ) ให้ dev ทำให้ msg แสดงราคาชุดเลื่อนแยกบรรทัด</b></li>
+<li><b>B — หลังคาผสม:</b> ราคาผสม <b>แทนที่ base</b> ไม่ใช่บวกเพิ่ม → base 99,000 (ไวนิลเต็มผืน) ถูกแทนด้วย 78,000+55,000 · ถ้าเอา msgs (78,000+55,000+6,000)=139,000 = full พอดี → ตัวเลขถูก แต่สูตร "base+Σmsgs" ไม่ใช้กับเคสผสมเพราะ base ถูก override → <b>ถือว่าตรง (✓*) ในเชิงตัวเลข</b></li>
+<li><b>C — ไวนิล+เสริม:</b> msg "เสาแผง 2 ต้น" <b>ไม่ลงตัวเลข</b> (เรต 4,000×2 = 8,000) → Σmsgs ขาด 8,000 · 99,000+6,000+14,400+6,000+8,000 = 133,400 → ปัดขึ้นพัน = 134,000 = full ✓ · <code>full</code> จาก engine ถูกต้อง → <b>ติดป้าย (เช็คซ้ำ) ให้ dev ใส่ตัวเลขเสาแผงใน msg</b></li>
+</ul></div>
+
+<h3>ฝ้า — ยาว 6 × กว้าง 3 = 18 ตร.ม.</h3>
+<table>
+<tr><th style="width:22%">รายการ (id)</th><th style="width:9%">ขนาด · ตร.ม.</th><th style="width:14%">ราคาฐาน (base)</th><th style="width:30%">ออปชั่น (msgs)</th><th style="width:13%">ราคารวม (full)</th><th style="width:12%">self-check</th></tr>
+<tr><td>ฝ้าฉาบเรียบ <small>(ทาสีขาว)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿22,000</td><td class="bd">— (ทาสีขาว = finish รวมในเรต)</td><td class="pr">฿22,000</td><td class="ok">✓ 22,000+0<br>=22,000</td></tr>
+<tr><td>ฝ้าอลู ตัวซี 15ซม. <small>(ขาว-ดำ)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿38,000</td><td class="bd">ขาว-ดำ 2,100/ตร.ม. <small>(label เรตที่ใช้คิด base แล้ว)</small></td><td class="pr">฿38,000</td><td class="ok">✓ 38,000+0<br>=38,000</td></tr>
+<tr><td>ฝ้าไม้เทียม remood <small>(ลายไม้/สีอื่น)</small></td><td>6×3<br>18 ตร.ม.</td><td class="pr">฿51,000</td><td class="bd">ลายไม้/สีอื่น 2,800/ตร.ม. <small>(label เรตที่ใช้คิด base แล้ว)</small></td><td class="pr">฿51,000</td><td class="ok">✓ 51,000+0<br>=51,000</td></tr>
+</table>
+<p class="sub" style="font-size:9px">* ฝ้าอลู/ไม้เทียม: บรรทัด msg "x,xxx/ตร.ม." เป็น <b>label บอกเรตที่ใช้คิด base ไปแล้ว</b> ไม่ใช่ยอดบวกเพิ่ม → Σ เพื่อ self-check = 0 (ราคาทั้งหมดอยู่ใน base)</p>
+
+<h3>ผนัง — กว้าง 3 × สูง 2.4 = 7.2 ตร.ม.</h3>
+<table>
+<tr><th style="width:22%">รายการ (id)</th><th style="width:9%">ขนาด · ตร.ม.</th><th style="width:14%">ราคาฐาน (base)</th><th style="width:30%">ออปชั่น (msgs)</th><th style="width:13%">ราคารวม (full)</th><th style="width:12%">self-check</th></tr>
+<tr><td>ผนังเบาภายนอก <small>(สมาร์ทบอร์ด12)</small></td><td>3×2.4<br>7.2 ตร.ม.</td><td class="pr">฿29,000</td><td class="bd">— (ทาสีขาว = finish)</td><td class="pr">฿29,000</td><td class="ok">✓ 29,000+0<br>=29,000</td></tr>
+<tr><td>ผนังเบาภายใน <small>(สมาร์ทบอร์ด12)</small></td><td>3×2.4<br>7.2 ตร.ม.</td><td class="pr">฿26,000</td><td class="bd">—</td><td class="pr">฿26,000</td><td class="ok">✓ 26,000+0<br>=26,000</td></tr>
+<tr><td>ISOWALL หนา 10ซม. <small>(สีขาว)</small></td><td>3×2.4<br>7.2 ตร.ม.</td><td class="pr">฿33,000</td><td class="bd">—</td><td class="pr">฿33,000</td><td class="ok">✓ 33,000+0<br>=33,000</td></tr>
+</table>
+
+<h2>4) self-check รวม</h2>
+<div class="box"><b>ผลตรวจ: 14/17 เคส ✓ ตรงสูตร <code>base + Σmsgs = full</code> (ปัดขึ้นพัน)</b><br>
+อีก <b>3 เคส</b> (หลังคาเลื่อน / หลังคาผสม / ไวนิล+เสริม) — <b>ราคารวม (full) จาก engine ถูกต้องทุกตัว</b> แต่ <code>msgs</code> ที่ engine สร้าง <b>ลง breakdown ไม่ครบทุกตัวเลข</b> (ขาดราคาชุดเลื่อน / เสาแผงไม่มีเลข / ผสม override base) → ทำให้สูตร Σmsgs ไม่เท่ากับ full พอดี (ดูหมายเหตุ A/B/C) · ไม่ใช่ราคาผิด แต่เป็นเรื่อง <b>การแสดง breakdown</b> ที่ควรให้ dev เติมตัวเลขให้ครบ<br>
+<small>ไม่มี undefined/NaN · errs จาก render = 0 · ราคาทุกตัวคัดจาก <code>scripts/pricecheck-g3-data.json</code> (render สด) ไม่ใช่ราคาเก่า</small></div>
+
+<h2>5) จุดต้องเฟิร์น/พี่นัทยืนยัน (เช็คซ้ำ)</h2>
+<div class="warn"><b class="chk">⚑ เปิดอยู่ — รอ dev แก้ตามมติพี่นัท 14 มิ.ย.:</b>
+<ol style="margin:3px 0;padding-left:18px;">
+<li><b>เมทัล/ชินโค (imp7–20) min:0</b> — ตอนนี้ไม่มีขั้นต่ำ (ต่างจากไวนิล/ดีไลท์ min 28,000) → พี่นัทสั่งใส่ขั้นต่ำ · <b>เคสในตารางนี้ (18 ตร.ม.) ไม่ติด min</b> เพราะราคาฐานสูงกว่าอยู่แล้ว → ราคา 102,000–240,000 จะไม่เปลี่ยนจากเรื่อง min · min มีผลเฉพาะงานพื้นที่เล็ก → <b>ยืนยันตัวเลข min ที่จะใช้</b></li>
+<li><b>วัสดุปิดรอยต่อ (o-rfsealer)</b> = 0 ตอนนี้ → พี่นัทสั่งคิดเงิน → <b>ยืนยันเรต</b></li>
+<li><b>ปิดซ่อนราง "ลด 50%"</b> — ชื่อในระบบบอกลด 50% แต่สูตร render ×0.70 (<b>ลด 30%</b>) → <b>ยืนยันว่าจะลด 30% หรือ 50%</b></li>
+</ol></div>
+<div class="warn"><b class="chk">ข้อสังเกตทางบัญชี (control):</b>
+<ol style="margin:3px 0;padding-left:18px;">
+<li>ราคาทุกเคสปัดขึ้นพัน (roundUp) สม่ำเสมอ — สอดคล้องกับ G1/G2 · ไม่มีเศษบาท/สตางค์หลุดในยอดขาย</li>
+<li><b>breakdown ออปชั่นไม่ครบ 3 เคส</b> (หลังคาเลื่อน/ผสม/เสาแผง) — ยอดรวมถูก แต่ลูกค้า/พนักงานออกใบเสนอราคาจะ <b>กระทบยอด msgs กับ full ไม่ได้</b> → เสี่ยงเข้าใจผิดว่าราคาผิด → ควรให้ dev ทำให้ msg แสดงราคาทุกบรรทัดที่บวกจริง (audit trail ของราคา)</li>
+<li>ฝ้าอลู (crates) ไม่มี monoRate กันราคาช่วง — งานพื้นที่เล็ก &lt;10 ตร.ม. คิดขั้นต่ำ 10 ตร.ม. · งานใหญ่เรตคงที่ต่อ ตร.ม. → <b>ยืนยันว่าตั้งใจไม่มีส่วนลดพื้นที่ใหญ่</b></li>
+<li>ทาสีผนัง/ฝ้า "ทาสีขาว/รองพื้น" = finish รวมในเรต (ไม่บวกแยก) · "ทาสี (กรอกเอง)" คือ field ราคากำหนดเอง → ใบเสนอราคาควรระบุชัดรวม/ไม่รวมสีอะไร กันลูกค้าเข้าใจผิด</li>
+</ol></div>
+<p class="sub">* เรต/สูตรทั้งหมด render สดจาก index.html (engine) ผ่าน jsdom → <code>scripts/pricecheck-g3-data.json</code> · ถ้าเฟิร์น/พี่นัทเจอเรตที่ควรอัปเดต = แก้ใน index.html (engine) แล้ว run render ใหม่ → เอกสารอัปตาม · ราคาในเอกสารนี้เป็น "ยอดก่อน VAT" (net) — VAT 7% + total คำนวณตอนออกใบเสนอราคา</p>
+</body></html>

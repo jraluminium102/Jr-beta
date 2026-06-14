@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;color:#B3151D;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.crit{background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.money{background:#fefce8;border:1px solid #fde047;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.tag{display:inline-block;font-size:9px;padding:0 6px;border-radius:8px;font-weight:700;}
+.t-red{background:#fee2e2;color:#991b1b;}.t-amber{background:#fef3c7;color:#92400e;}.t-green{background:#dcfce7;color:#166534;}
+.chk{list-style:none;padding-left:2px;}.chk li{margin:2px 0;}.chk li:before{content:"\2610 ";font-weight:700;color:#B3151D;}
+</style></head><body>
+
+<h1>HANDOFF G3 → dev (แชท B) — ธงแก้ index.html</h1>
+<p class="sub">2026-06-14 · กลุ่ม 3 หลังคา/ฝ้า/ผนัง · verify จากโค้ดจริง + render สด + เบราว์เซอร์ (ไวนิล 6×3=99,000 ตรง) · คู่กับ UXDESIGN-G3 / SUMMARY-G3 / PRICECHECK-G3 / REF-G3</p>
+
+<div class="good"><b>สรุป:</b> งาน UX หลังคา round2 (ชิป/ปลายหลังคา 3 ปุ่ม/รุ่น M อลูมิเนียม/จัดกล่อง) <b>แก้+ตรวจผ่านแล้ว</b> · เอกสารนี้รวม <b>6 ธงที่เหลือ</b> (จากการขุด engine + มติพี่นัท 14 มิ.ย.) ให้ dev แก้ · 💰 = แตะราคา ต้อง verify <code>node test/quote-fidelity.mjs</code> + ราคาก่อน/หลัง</div>
+
+<h2>ธง 1 — 🔴 truss_beam_cover ขายเดี่ยว ราคา = 0 (บั๊ก)</h2>
+<table>
+<tr><th style="width:90px;">จุด</th><td><code>index.html:697</code> — <code>{id:'truss_beam_cover', truss_cover:1, ...}</code></td></tr>
+<tr><th>ปัญหา</th><td><code>truss_cover</code> มีแต่ definition <b>ไม่มี calc handler</b> (grep ทั้งไฟล์เจอแค่ L697) → ถ้าเลือกขายเป็นสินค้าเดี่ยว = ราคา ฿0 (ขายฟรี)</td></tr>
+<tr><th>ของจริง</th><td>ครอบคานจริงคิดผ่านออปชั่นในชุดหลังคา <code>o-rfbcw</code>/<code>o-rfbcl</code> (ครอบคาน ลูกฟูก 1 หน้า ×0.6) ซึ่งทำงานถูกอยู่แล้ว</td></tr>
+<tr><th>เสนอแก้</th><td>เลือก 1 ใน 2: <b>(ก)</b> ซ่อน/ลบสินค้า <code>truss_beam_cover</code> ออกจากรายการขายเดี่ยว (กันเลือกแล้วได้ 0) · <b>(ข)</b> ถ้าต้องขายเดี่ยว → เพิ่ม calc handler <code>if(p.truss_cover){...}</code> ใช้สูตรเดียวกับ <code>o-rfbcw/rfbcl</code></td></tr>
+</table>
+
+<h2>ธง 2 — 🟡💰 roof_gutter_cover ชื่อ "ลด 50%" แต่สูตรจริง ลด 30%</h2>
+<table>
+<tr><th style="width:90px;">จุด</th><td>ชื่อสินค้า <code>index.html:687</code> = "...ลูกฟูก 1 ทาง · <b>ลด 50%</b>" · สูตร <code>index.html:1310</code> = <code>rate=(3500+finRate)*0.70</code> (คอมเมนต์ "ลด 30%")</td></tr>
+<tr><th>ปัญหา</th><td>ชื่อบอก 50% แต่คิดจริง 30% — ลูกค้า/เฟิร์นเห็นชื่อแล้วเข้าใจผิด</td></tr>
+<tr><th>รอเคาะ</th><td><span class="tag t-amber">พี่นัทเคาะ</span> จริงๆ ต้องลดกี่ % → <b>30%</b> (แก้ชื่อเป็น "ลด 30%") หรือ <b>50%</b> (แก้สูตรเป็น <code>×0.50</code>) — ดู PRICECHECK-G3 เคสปิดซ่อนราง</td></tr>
+</table>
+
+<h2>ธง 3 — 🟡💰 เมทัล/ชินโค (imp7-20) ไม่มีขั้นต่ำ (min:0)</h2>
+<table>
+<tr><th style="width:90px;">จุด</th><td><code>index.html</code> PRODUCTS imp7–imp20 ทุกตัว <code>min:0</code> (ไวนิล/ดีไลท์ = <code>min:28,000</code> · โพลีตัน 30,000 · ลามิเนต 45,000)</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">ยืนยัน 14 มิ.ย.</span> <b>ต้องมีขั้นต่ำเหมือนกัน</b></td></tr>
+<tr><th>รอเคาะ</th><td><span class="tag t-amber">พี่นัทเคาะตัวเลข</span> min เมทัล/ชินโค = ? บาท (เท่าไวนิล/ดีไลท์ 28,000? หรือแยกตามวัสดุ?) — <b>ห้ามเดา</b></td></tr>
+<tr><th>ผลกระทบ</th><td>มีผลเฉพาะงานเล็ก (พื้นที่น้อย) · เคสตัวอย่าง 18 ตร.ม. ราคาสูงกว่า min อยู่แล้ว ไม่เปลี่ยน</td></tr>
+</table>
+
+<h2>ธง 4 — 🟡💰 o-rfsealer (วัสดุปิดรอยต่อ) ไม่คิดเงิน</h2>
+<table>
+<tr><th style="width:90px;">จุด</th><td><code>index.html:3458</code> readItem เก็บ <code>optSel.rfsealer</code> · <code>L4328</code> genQuote ลงแต่ <b>ข้อความในใบ</b> ไม่บวกเงิน</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">ยืนยัน 14 มิ.ย.</span> <b>ต้องคิดเงิน</b></td></tr>
+<tr><th>รอเคาะ</th><td><span class="tag t-amber">พี่นัทเคาะ</span> เรต+หน่วย = ? (ต่อเมตร? ต่อตร.ม.? เหมา?) — <b>ห้ามเดา</b> · dev เพิ่ม calc ตามเรตที่เคาะ + ลงราคาในใบ</td></tr>
+</table>
+
+<h2>ธง 5 — 🟡 breakdown ราคา (msgs) ไม่ครบบางออปชั่น (audit trail)</h2>
+<table>
+<tr><th style="width:90px;">จุด</th><td>render สดพบ 3 เคส msgs ลงราคาไม่ครบทุกบรรทัด (ราคารวม <code>full</code> ถูก แต่ breakdown ขาด):</td></tr>
+<tr><th>เคส</th><td>① <b>หลังคาเลื่อน</b> — msg ลงแต่มอเตอร์ ขาดราคาชุดเลื่อน · ② <b>หลังคาผสม</b> — base ถูก override ไม่โชว์แยก · ③ <b>เสาแผง</b> — ไม่ลงตัวเลขในใบ</td></tr>
+<tr><th>เสนอแก้</th><td>ทำให้ทุกออปชั่นที่บวกเงินจริง <b>โชว์ราคาเป็นบรรทัดใน msgs/ใบเสนอราคา</b> (เป็น audit trail · เฟิร์นตรวจยอดได้) · <b>ไม่กระทบราคารวม</b> แค่การแสดงผล</td></tr>
+</table>
+
+<h2>✅ เคลียร์แล้ว — ไม่ต้องแก้</h2>
+<div class="good"><b>หลังคาเลื่อน sarea (เดิมสงสัย):</b> readItem <code>L3432</code> <code>optSel.sarea=sareaw×sareah</code> · calc <code>L1522</code> อ่าน <code>optSel.sarea</code> → <b>key ตรงกัน ทำงานถูก</b> ไม่ใช่บั๊ก</div>
+
+<h2>เช็คลิสต์ปิดงาน (dev)</h2>
+<ul class="chk">
+<li>ธง 1: truss_beam_cover ไม่ขายฟรี (ซ่อน หรือ เพิ่ม calc)</li>
+<li>ธง 2: 💰 roof_gutter_cover ชื่อ-สูตร ตรงกัน (ตาม % ที่พี่นัทเคาะ)</li>
+<li>ธง 3: 💰 imp7-20 ใส่ min (ตามตัวเลขที่พี่นัทเคาะ) · เทสงานเล็กติด min</li>
+<li>ธง 4: 💰 o-rfsealer คิดเงิน (ตามเรตที่พี่นัทเคาะ) + ลงราคาในใบ</li>
+<li>ธง 5: breakdown msgs ครบทุกออปชั่น (เลื่อน/ผสม/เสา)</li>
+<li><code>node test/quote-fidelity.mjs</code> = PASS · ราคา/ใบ ก่อน-หลัง เทียบตรง (ยกเว้นที่ตั้งใจแก้)</li>
+</ul>
+
+<div class="warn"><b>⚠️ 3 ตัวเลขที่ต้องรอพี่นัทเคาะก่อน dev ลงมือ (ห้ามเดาราคา):</b> (ธง2) gutter_cover 30% หรือ 50% · (ธง3) min เมทัล/ชินโค = ? · (ธง4) เรต o-rfsealer = ?</div>
+
+<p class="sub">verify โดย: ขุด engine (grep/read index.html) + render สด <code>scripts/pricecheck-g3-render.mjs</code> + เบราว์เซอร์จริง (ไวนิล 6×3=99,000 ตรง jsdom) · READ-ONLY ไม่แตะ index.html · ไฟล์คู่ใน <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/</code></p>
+</body></html>
