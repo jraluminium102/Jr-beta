@@ -963,7 +963,8 @@ function colorPrice(ci,a,series){
   if(!rates) return min;
   return Math.max(min, a*rateOf(a,rates));
 }
-const NO_COLOR_CATS=['บานเปลือย','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
+// B2 (2026-06-15 · พี่นัทเคาะ): เอา 'บานเปลือย' ออก → โชว์สีเฟรม + คิดราคาตามสี (default อบขาว ci=0 = ฟรี · golden ไม่ขยับ)
+const NO_COLOR_CATS=['ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
 const COMMON_OPTS=[{id:'soft_close',label:'Soft Close (สลักหน่วงบาน)',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'ฝังรางยู (U-Track)',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3)
 // SLIDING_RAIL: metadata ราง ต่อรุ่น — ใช้ใน buildItemOpts + itemDetail
 const SLIDING_RAIL={
