@@ -105,6 +105,14 @@ const cv = room('ดัดโค้ง','curved_single',1.5,2.2,{});
 want("บานหมุน pivot คิดราคา >0", pv>0, "pivot="+pv);
 want("ดัดโค้ง curved_single คิดราคา >0", cv>0, "curve="+cv);
 
+// ===== restructure ดราฟ FULL: ลูกฟูก/คอมโพ + Cmech (engine จริง) =====
+const slBase = room('บานเปิด','casement_euro',1,2,{});
+const sl = room('บานเปิด','casement_euro',1,2,{solidlower:'corrugated',solidlowerW:1,solidlowerH:1});
+want("ลูกฟูกล่าง 1 ตร.ม. → +3,500 (ใส่กลับตามดราฟ)", sl-slBase===3500, "Δ="+(sl-slBase));
+
+const cm = room('บานเปิด','casement_euro',1,2,{cmech:'embed',cmechcolor:'black'});
+want("มือจับ Cmech ฝัง ดำ → คิดราคา >0", cm-slBase>0, "Δ="+(cm-slBase));
+
 // ===== parity กับ G1: บานเปิด 1×1 + ครอบวงกบ 4 = g6rPrice เท่ากัน =====
 w.addItem(); const chs = doc.querySelectorAll('#items .ch'); const g1 = chs[chs.length - 1];
 sf(g1, '.i-group', '1'); sf(g1, '.i-prod', 'casement_euro'); sf(g1, '.i-w', '1'); sf(g1, '.i-h', '1');
