@@ -3139,7 +3139,17 @@ function buildItemOpts(d){
     h+='<label class="opt" style="width:100%;"><b>มุ้ง</b> <span style="font-size:11px;color:#1565C0;">(ราคาคิดตามพื้นที่บาน)</span>';
     h+='<div class="mosq-wrap" style="background:#E3F2FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 12px;margin-top:4px;">';
     h+='<div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:8px;">เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนรายละเอียดทั้งหมด</div>';
-    h+='<select class="o-mosq" style="height:44px;width:100%;max-width:300px;" onchange="mosqGroupToggle(this); calcQuote();"><option value="">ไม่ใส่</option>'+MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;}).map(function(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}).join('')+'</select>';
+    h+='<select class="o-mosq" style="height:44px;width:100%;max-width:300px;" onchange="mosqGroupToggle(this); calcQuote();"><option value="">ไม่ใส่</option>'+(function(){
+      // B5: จัด o-mosq 3 กลุ่ม (เฟรม/จีบ/ม้วน) ด้วย optgroup — option value เดิม (engine ไม่กระทบ) · กรอง itype ก่อน
+      var avail=MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;});
+      var byId={}; avail.forEach(function(m){byId[m.id]=m;});
+      function optFor(m){var _lbl=m.frame?(m.name+' (เฟรม · คิดตามขนาดบาน)'):(m.name+' ('+fmt(m.rate)+'/ตร.ม. min '+fmt(m.min)+')');return '<option value="'+m.id+'">'+_lbl+'</option>';}
+      var GL={frame:'เฟรม',pleat:'จีบ',roll:'ม้วน'}; var out=''; var seen={};
+      ['frame','pleat','roll'].forEach(function(g){ var ids=((typeof MOSQ_GRP_PRODS!=='undefined'&&MOSQ_GRP_PRODS[g])||[]).map(function(x){return x[0];}).filter(function(id){return byId[id];});
+        if(ids.length){ out+='<optgroup label="'+GL[g]+'">'+ids.map(function(id){seen[id]=1;return optFor(byId[id]);}).join('')+'</optgroup>'; } });
+      var rest=avail.filter(function(m){return !seen[m.id];}); if(rest.length){ out+='<optgroup label="อื่นๆ">'+rest.map(optFor).join('')+'</optgroup>'; }
+      return out;
+    })()+'</select>';
     h+='<div class="mosq-detail-group" style="display:none;margin-top:10px;border-top:1px solid #90CAF9;padding-top:10px;">';
     // ── [mosq-r2] จำนวนบานมุ้ง: ชิป auto/1..N (N=i-panels, cap ที่ N) + fallback stepper (N>5, ยัง cap ที่ N) ──
     h+='<div class="mosq-panels-bar">';
