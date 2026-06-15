@@ -640,8 +640,8 @@ const PRODUCTS=[
  {id:'ceil_bsc',cat:'ฝ้า-ผนัง',name:'ฝ้าไม้เทียม remood (แผ่นเรียบ หน้า 12 ซม.)',ceiling:1,crates:{'มาตรฐาน(ขาว-ซิลเวอร์)':2600,'ลายไม้/สีอื่น':2800},cost:null},
  {id:'inner_bottom_sms',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง SMS',method:'area_rate_addon',rates:'INBOT_SMS',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:16000,4:22000}}},
  {id:'inner_bottom_euro',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง ยูโร',method:'area_rate_addon',rates:'INBOT_EURO',cost:null,addon:{kind:'sliding',amounts:{1:4400,2:11000,3:17600,4:24200}}},
- {id:'lift_sms',cat:'บานยก',name:'บานยก SMS',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1},
- {id:'lift_aluinch',cat:'บานยก',name:'บานยก aluinch',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
+ {id:'lift_sms',cat:'บานยก',name:'บานยก SMS สลิม (ชุดเล็ก)',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1},
+ {id:'lift_aluinch',cat:'บานยก',name:'บานยก เซมิยูโร (บานใหญ่)',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
  {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000)
  {id:'frameless_fixed',cat:'บานเปลือย',name:'บานเปลือยติดตาย',method:'bucket',min:7000,rates:'FRAMELESS',cost:null},
  {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,cost:null},
@@ -4988,7 +4988,7 @@ window.addEventListener('load',ckRefresh);
     {k:'fold',n:'บานเฟี้ยม',ic:'▥',models:[['folding_euro','ยูโร','fold'],['folding','เซมิยูโร','fold'],['folding_xseries','X-series','foldX']]},
     {k:'fix',n:'ติดตาย/ทึบ',ic:'▢',models:[['fixed_glass','กระจกติดตาย','fix'],['frameless_fixed','เปลือยติดตาย','frfix'],['frameless_door','สวิง/เลื่อนเปลือย','frame'],['wall_ext','ผนังเบาภายนอก','solid'],['wall_int','ผนังเบาภายใน','solid'],['isowall','Isowall','solid']]},
     {k:'curve',n:'ดัดโค้ง',ic:'◗',models:[['curved_double','บานคู่','curve'],['curved_single','บานเดี่ยว','curve'],['curved_fixed','ติดตายโค้ง','fix'],['curved_slim','สลิม','curve']]},
-    {k:'other',n:'อื่นๆ/พิเศษ',ic:'⋯',models:[['shower','ฉากกั้นอาบน้ำ','shower'],['lift_sms','บานยก SMS','lift'],['lift_aluinch','บานยก aluinch','lift'],['pc_door_2','PC Door 2','pc'],['pc_door_4','PC Door 4','pc'],['ykk_vent','YKK ระบายอากาศ','ykk']]}
+    {k:'other',n:'อื่นๆ/พิเศษ',ic:'⋯',models:[['shower','ฉากกั้นอาบน้ำ','shower'],['lift_sms','บานยก SMS สลิม','lift'],['lift_aluinch','บานยก เซมิยูโร','lift'],['pc_door_2','PC Door 2','pc'],['pc_door_4','PC Door 4','pc'],['ykk_vent','YKK ระบายอากาศ','ykk']]}
   ];
   // profile: main=[{label,key,opts:[[value,disp]...]}] · key=optSel จริงที่ calcUnit อ่าน · flags handle/handleX/handleSt/handleAwn/lock/framecolor/paint/mosq/glass · ex=pill อุปกรณ์เสริม
   var G6PROF={
