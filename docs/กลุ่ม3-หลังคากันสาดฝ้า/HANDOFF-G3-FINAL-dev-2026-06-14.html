@@ -46,7 +46,7 @@ code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,mon
 <tr><th style="width:90px;">จุด</th><td><code>index.html</code> PRODUCTS imp7–imp20 ทุกตัว <code>min:0</code> (ไวนิล/ดีไลท์ = <code>min:28,000</code> · โพลีตัน 30,000 · ลามิเนต 45,000)</td></tr>
 <tr><th>มติพี่นัท</th><td><span class="tag t-green">ยืนยัน 14 มิ.ย.</span> <b>ต้องมีขั้นต่ำเหมือนกัน</b></td></tr>
 <tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> มี min · แยกตามวัสดุ · <b>เกณฑ์:</b> ไวนิล 28,000÷เรตช่วงต้น 6,500 = พื้นที่ขั้นต่ำรับงาน <b>≈ 4.3 ตร.ม.</b> → ทุกวัสดุ <code>min = roundUp(4.3 × เรตช่วงต้น[0-10])</code></td></tr>
-<tr><th>min เสนอ <span class="tag t-amber">พี่นัทยืนยัน</span></th><td>
+<tr><th>min <span class="tag t-green">ยืนยัน 15 มิ.ย.</span></th><td><b>พี่นัทเคาะแล้ว — ใช้ตามตารางนี้ dev ใส่ได้เลย</b> (เกณฑ์: ขั้นต่ำรับงาน ~5 ตร.ม.):<br>
 imp7 28,000 · imp8 28,000 · imp9 29,000 · imp10 29,000 · imp11 28,000 · imp12 29,000 · imp13 32,000 · imp14 33,000 · <b>|</b> imp15 48,000 · imp16 46,000 · imp17 47,000 · imp18 44,000 · imp19/20 61,000<br>
 <span style="color:#6b7280;">(เรตช่วงต้น 0-10ตร.ม. จาก RATES index.html L509-521 · ปัดขึ้นพัน · สอดคล้องไวนิล/ดีไลท์ 28,000)</span></td></tr>
 <tr><th>ผลกระทบ</th><td>มีผลเฉพาะงานเล็ก (พื้นที่น้อย) · เคสตัวอย่าง 18 ตร.ม. ราคาสูงกว่า min อยู่แล้ว ไม่เปลี่ยน</td></tr>
@@ -80,7 +80,7 @@ imp7 28,000 · imp8 28,000 · imp9 29,000 · imp10 29,000 · imp11 28,000 · imp
 <li><code>node test/quote-fidelity.mjs</code> = PASS · ราคา/ใบ ก่อน-หลัง เทียบตรง (ยกเว้นที่ตั้งใจแก้)</li>
 </ul>
 
-<div class="good"><b>✅ เคาะครบ 14 มิ.ย. — dev ลงมือได้:</b> ธง2 = แก้ชื่อ "ลด 30%" · ธง3 = min imp7-20 ตามตารางเสนอ (อิงไวนิล 4.3 ตร.ม. × เรตช่วงต้น) · ธง4 = sealer <code>max(5000, 800×ยาว)</code> · <span class="tag t-amber">min imp = ตัวเลขเสนอ พี่นัทดูยืนยันได้ ถ้าโอเคใช้ตามนี้</span></div>
+<div class="good"><b>✅ เคาะครบทุกตัวเลข — dev ลงมือได้เลย (ไม่มีค้าง):</b> ธง2 = แก้ชื่อ "ลด 30%" · ธง3 = <b>min imp7-20 ยืนยันแล้ว 15 มิ.ย.</b> (ตามตาราง · ขั้นต่ำรับงาน ~5 ตร.ม.) · ธง4 = sealer <code>max(5000, 800×ยาว)</code></div>
 
 <p class="sub">verify โดย: ขุด engine (grep/read index.html) + render สด <code>scripts/pricecheck-g3-render.mjs</code> + เบราว์เซอร์จริง (ไวนิล 6×3=99,000 ตรง jsdom) · READ-ONLY ไม่แตะ index.html · ไฟล์คู่ใน <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/</code></p>
 </body></html>
