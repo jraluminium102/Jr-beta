@@ -2548,8 +2548,10 @@ function famSelectorHTML(p,grp,famOther){
 // ALLG-v2.1 "อื่นๆ" = บานที่เหลือ: cat ในกลุ่ม (reuse prodOptionsG6 membership) ที่ไม่ได้อยู่ในปุ่มหลัก FAM_CATS[grp]
 function prodsInGroup(g){ var s=document.createElement('select'); s.innerHTML=prodOptionsG6(String(g));
   return [].map.call(s.querySelectorAll('option'),function(o){return PBYID[o.value];}).filter(Boolean); }
+// cat ที่เป็น "ออปชั่น/อุปกรณ์เสริม" ไม่ใช่ชนิดบาน — ห้ามโผล่ในปุ่มเลือกบาน "บานอื่นๆ ที่เหลือ" (ตามดราฟ: ครอบวงกบ=o-fcsides · คาดตาราง=o-gridmark เป็นออปชั่นบนบานอยู่แล้ว)
+var NON_BANA_REST_CATS=['เสริม','เส้นคาด'];
 function famRestCats(grp){ var main=FAM_CATS[grp]||[]; var seen={}, rest=[];
-  prodsInGroup(grp).forEach(function(q){ if(q && main.indexOf(q.cat)<0 && !seen[q.cat]){ seen[q.cat]=1; rest.push(q.cat); } });
+  prodsInGroup(grp).forEach(function(q){ if(q && main.indexOf(q.cat)<0 && NON_BANA_REST_CATS.indexOf(q.cat)<0 && !seen[q.cat]){ seen[q.cat]=1; rest.push(q.cat); } });
   return rest; }
 // กดบานที่เหลือ → คง famOther เปิดไว้ (ให้แผงบานที่เหลือ + รุ่นย่อยยังโชว์) แล้ว set product = default ของ cat
 function famPickOtherCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset.famOther='1'; ch.dataset.rnStep='1'; var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
