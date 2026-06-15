@@ -373,12 +373,11 @@ textarea.ta{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:
 <div class="card" id="card-roof2">
   <div class="et"><span class="no">8</span>ต่อปลายวัสดุที่ 2 <span class="bc">(ผสม 2 วัสดุ)</span> <span class="secprice" id="roof2-price">฿0</span></div>
 
-  <!-- เลือกวัสดุที่ 2 -->
-  <div class="row" style="margin-bottom:10px;">
-    <div class="fld" style="flex:1;">
-      <label>วัสดุส่วนที่ 2</label>
-      <select class="sel" id="roof2" onchange="onRoof2Change()" style="width:100%;"></select>
-    </div>
+  <!-- เลือกวัสดุที่ 2 (ชิปจัดกลุ่ม · เลิกดรอปดาวน์ยาว) -->
+  <div style="margin-bottom:10px;">
+    <label class="lbl">วัสดุส่วนที่ 2</label>
+    <input type="hidden" id="roof2" value="">
+    <div id="roof2-picker"></div>
   </div>
 
   <!-- body ที่ 2 (โชว์เมื่อเลือกวัสดุ) -->
@@ -1046,18 +1045,49 @@ function drainPick(btn){
 
 // ── วัสดุที่ 2: เติม dropdown ──
 function updateRoof2(){
-  var sel=document.getElementById('roof2'); if(!sel)return;
-  var html='<option value="">— ไม่มี —</option>';
-  Object.keys(PRODS).forEach(function(pid){
-    if(pid!==prodId && PRODS[pid].cat==='roof'){
-      html+='<option value="'+pid+'">'+PRODS[pid].name.replace(/^หลังคา\s*/,'')+'</option>';
-    }
+  var pick=document.getElementById('roof2-picker'); if(!pick)return;
+  document.getElementById('roof2').value='';
+  var html='<div class="chips" id="roof2-fam"><button class="chip on" onclick="roof2FamPick(this,null)">— ไม่มี —</button>';
+  FAM.forEach(function(f){
+    if(f.k==='ceil')return; // ฝ้าไม่ใช่วัสดุต่อปลายหลังคา
+    html+='<button class="chip" onclick="roof2FamPick(this,\''+f.k+'\')">'+f.n+'</button>';
   });
-  sel.innerHTML=html;
-  // reset body
+  html+='</div><div id="roof2-sub" class="hidden" style="margin-top:7px;"></div>';
+  pick.innerHTML=html;
   hide('roof2-body');
   setEl('roof2-price','฿0');
   setEl('roof2-priceval','฿—');
+}
+// roof2: เลือกชนิด → ถ้าเมทัล/ชินโค โผล่ชิปจัดกลุ่มหัวความหนา → เลือกรุ่น
+function roof2FamPick(btn,fk){
+  document.querySelectorAll('#roof2-fam .chip').forEach(function(x){x.classList.remove('on');});
+  btn.classList.add('on');
+  var sub=document.getElementById('roof2-sub');
+  if(!fk){ sub.classList.add('hidden'); sub.innerHTML=''; setRoof2(''); return; }
+  var f=FAM.find(function(x){return x.k===fk;});
+  if(f.subg){
+    sub.classList.remove('hidden');
+    var h='';
+    f.subg.forEach(function(g){
+      h+='<div class="lbl" style="margin:5px 0 3px;color:var(--info);">ความหนา '+g[0]+'</div><div class="chips">';
+      g[1].forEach(function(s){h+='<button class="chip" onclick="roof2SubPick(this,\''+s[1]+'\')">'+s[0]+'</button>';});
+      h+='</div>';
+    });
+    sub.innerHTML=h;
+    setRoof2(''); // ยังไม่เลือกรุ่น
+  } else {
+    sub.classList.add('hidden'); sub.innerHTML='';
+    setRoof2(f.sub[0][1]);
+  }
+}
+function roof2SubPick(btn,id){
+  document.querySelectorAll('#roof2-sub .chip').forEach(function(x){x.classList.remove('on');});
+  btn.classList.add('on');
+  setRoof2(id);
+}
+function setRoof2(id){
+  document.getElementById('roof2').value=id;
+  onRoof2Change();
 }
 
 // เมื่อเปลี่ยนวัสดุที่ 2
