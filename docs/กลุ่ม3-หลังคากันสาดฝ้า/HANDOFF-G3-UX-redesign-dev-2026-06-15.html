@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:10mm 10mm;}
+*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.55;background:#fff;}
+h1{color:#B3151D;font-size:17px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:10.5px;margin:0 0 8px;}
+h2{color:#fff;background:#B3151D;font-size:12px;margin:12px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:11.5px;margin:8px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;white-space:nowrap;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;color:#B3151D;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.crit{background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.money{background:#fefce8;border:1px solid #fde047;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.plan{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:7px;padding:8px 11px;margin:6px 0;font-size:10.5px;}
+.tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;vertical-align:middle;}
+.t-red{background:#fee2e2;color:#991b1b;}
+.t-amber{background:#fef3c7;color:#92400e;}
+.t-green{background:#dcfce7;color:#166534;}
+.t-blue{background:#dbeafe;color:#1e40af;}
+.t-purple{background:#ede9fe;color:#5b21b6;}
+.chk{list-style:none;padding-left:2px;margin:0;}.chk li{margin:2px 0;}.chk li:before{content:"\2610 ";font-weight:700;color:#B3151D;}
+.dod{background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:5px 9px;font-size:10px;margin-top:4px;}
+.flag-tbl td:first-child{font-weight:700;color:#B3151D;width:28px;text-align:center;font-size:13px;}
+.flag-tbl td:nth-child(2){width:90px;}
+.no-break{page-break-inside:avoid;}
+</style></head><body>
+
+<h1>HANDOFF G3 UX Redesign → dev</h1>
+<p class="sub">2026-06-15 · ไฟล์นี้รวม <b>ธง UX ใหม่ A–H (8 ธง)</b> + <b>ธงเดิม 1–5 (carry-over จาก HANDOFF-G3-FINAL 2026-06-14)</b> = <b>13 ธงรวม</b><br>
+เป้าหมาย: แก้ <code>public/calculator/index.html</code> ให้ form G3 ตรง <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-ux-FULL-v6-2026-06-14.html</code><br>
+อ้างอิงหลัก: ดราฟ v6 · HANDOFF-G3-FINAL-dev-2026-06-14 · REF-G3-pricing-data-2026-06-14.md</p>
+
+<div class="crit"><b>READ-ONLY สำหรับแชทนี้</b> — แชท dev (แชท B) แก้ index.html · แชทนี้ออกเอกสารอย่างเดียว</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     แผนไม่พัง ทำได้ไว
+═══════════════════════════════════════════════════════ -->
+<h2>แผน "แก้ไม่พัง ทำได้ไว" (อ่านก่อนเริ่ม)</h2>
+<div class="plan">
+<b>ก่อนแก้ครั้งแรก:</b> รัน <code>node scripts/golden-snapshot.mjs</code> บันทึก baseline (143 เคสทอง) — ถ้าไม่ผ่าน = ยังมีบั๊กอยู่ก่อนแตะ ต้องแก้ก่อน<br><br>
+<b>ลำดับทำ:</b> เรียง <b>A → B → C → D → E → F → G → H → ธง1 → ธง2 → ธง3 → ธง4 → ธง5</b><br>
+&nbsp;&nbsp;• <b>ทำทีละธง → เทสในเบราว์เซอร์จริง → commit</b> (1 ธง = 1 commit, message: <code>feat(G3): ธงX — …</code>)<br>
+&nbsp;&nbsp;• ธงที่ <span class="tag t-amber">💰 แตะราคา</span> (E, H, ธง2, ธง3, ธง4) → รัน fidelity + snapshot หลังแก้ทุกครั้ง — ราคาต้องไม่เพี้ยนนอกจากที่ตั้งใจ<br>
+&nbsp;&nbsp;• ธงที่ <b>ไม่แตะราคา</b> (A, B, C, D, F, G, ธง5) → เทสเบราว์เซอร์พอ<br><br>
+<b>หลังครบทุกธง:</b><br>
+&nbsp;&nbsp;① <code>node scripts/golden-snapshot.mjs</code> เทียบ baseline → ต่างเฉพาะที่ตั้งใจ (H: shinko min เพิ่ม, ธง3: imp7-20 min เพิ่ม, ธง4: sealer บวกเงิน)<br>
+&nbsp;&nbsp;② เทสเบราว์เซอร์จริง checklist: drill-down กด 7 กลุ่ม → รุ่นย่อยโผล่ · ฝ้า 3 โหมด · เลื่อน stepper · roof2 สี+ขนาด+ราคาหัว · ทุกกล่องโชว์฿<br>
+&nbsp;&nbsp;③ ทำ mirror สด (ไฟล์ตรวจ HTML offline) เฉพาะ G3 ส่ง BA ตรวจก่อน push<br><br>
+<b>จุดระวังพัง (สำคัญมาก):</b><br>
+&nbsp;&nbsp;• ธง A: อย่าลบ <code>RF_GRP_PRODS</code> หรือ <code>g3SelectorHTML</code> — ให้ <b>เพิ่ม</b> layer บนสุด ซ่อน element เดิมไม่ลบ (กัน rollback ง่าย)<br>
+&nbsp;&nbsp;• ธง B: ลบ isowall/wall_ext/wall_int ออกจาก <b>รายการแสดงผล</b> (G3_WALL_PRODS) เท่านั้น — อย่าลบออกจาก PRODUCTS[] (กัน G1 พัง)<br>
+&nbsp;&nbsp;• ธง C: ฝ้าเป็น <b>ออปชั่น</b> — engine calc ceiling ยังต้องรองรับทั้ง standalone (cat='ฝ้า-ผนัง') และ addon ในหลังคา<br>
+&nbsp;&nbsp;• ธง E: <code>o-roof2area</code> → เพิ่มช่องสีและช่อง ยาว×ยื่น → คำนวณ area auto ก่อนส่งเข้า calc — key <code>o-roof2area</code> ต้องยังอยู่ (FIX-12 เดิมอ่านตรงนี้)<br>
+&nbsp;&nbsp;• ธง H: เพิ่ม <code>min</code> ใน PRODUCTS imp7–imp20 ใน index.html จริง — ตรวจ grep <code>imp7.*min</code> ยืนยันก่อน/หลัง
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ตารางธง UX ใหม่
+═══════════════════════════════════════════════════════ -->
+<h2>ธง UX ใหม่ A–H (เปลี่ยน form G3 ให้เหมือนดราฟ v6)</h2>
+
+<div class="no-break">
+<h3>ธง A — ชนิดงาน = drill-down (ปุ่มกลุ่ม → รุ่นย่อย)</h3>
+<span class="tag t-red">UX หลัก</span> <span class="tag t-blue">ไม่แตะราคา</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>product picker G3 = dropdown ยาว (isowall/wall_ext ปนกัน) · เมทัล/ชินโค รุ่นย่อยยาว ไม่มีหัวกลุ่ม</td></tr>
+<tr><th>เป้าหมาย</th><td>ดราฟ v6 กล่อง 2 "ชนิดงาน" = <b>7 ปุ่มกลุ่ม</b>: ไวนิล · ดีไลท์ · โพลีตัน · กระจกลามิเนต · เมทัลชีท · ชินโคไลท์ · ฝ้า<br>กด "เมทัลชีท" → รุ่นย่อยโผล่ จัดกลุ่ม ความหนา "1 นิ้ว / 2 นิ้ว" (chip ไม่ใช่ dropdown)<br>กด "ชินโคไลท์" → รุ่นย่อยโผล่ จัดกลุ่ม ความหนา "6 มม. / 4 มม. / 10 มม."<br>กด "ฝ้า" → รุ่นย่อย 3 ปุ่ม (ฝ้าอลูมิเนียม/ไม้เทียม/ฉาบเรียบ)</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  <b>engine จริงมี <code>RF_GRP_PRODS</code> (L2332) + <code>g3SelectorHTML()</code> (L2345) อยู่แล้ว</b> — เป็น drill-down แต่ยังซ่อนอยู่ใน buildItemOpts<br>
+  งาน: <b>ยกฟังก์ชันขึ้น top-level</b> — เมื่อ user กด G3 ใน .grp-btn → render 7 ปุ่มกลุ่มแทน dropdown เดิม<br>
+  ใช้ <code>RF_GRP_PRODS</code> (L2332) เพิ่ม key "ceil" = 3 รุ่นฝ้า (ไม่มี isowall/wall_ext/wall_int)<br>
+  เมทัล/ชินโค → subgrouped chip (แบบดราฟ v6 บล็อก <code>FAM[].subg</code>) · ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต → กดแล้ว set <code>.i-prod</code> ทันที<br>
+  ให้ <code>g3SyncProd(ch, prodId)</code> เป็น single source of truth — ซ่อน <code>.i-prod</code> select (ยังมีอยู่ในDOM)
+</td></tr>
+</table>
+<div class="dod"><b>DoD A:</b> กด G3 → เห็น 7 ปุ่มกลุ่ม · กด "เมทัลชีท" → chip รุ่นย่อยโผล่ (8 รุ่น จัดกลุ่ม 1"/2") · กด "ชินโคไลท์" → chip 6 รุ่ม (6/4/10มม.) · ไม่มี dropdown ยาว · <code>.i-prod.value</code> ตรงรุ่นที่เลือก · ราคาคำนวณถูกเหมือนเดิม (golden pass)</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง B — ตัดผนังเบา (isowall/wall_ext/wall_int) ออกจากตัวเลือก G3</h3>
+<span class="tag t-red">UX</span> <span class="tag t-blue">ไม่แตะราคา</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td><code>G3_WALL_PRODS</code> (L2339) รวม isowall/wall_ext/wall_int — ผู้ใช้กด G3 เจอ "ผนังเบา" ปนกับฝ้า ไม่ใช่หน้าที่ G3</td></tr>
+<tr><th>มติพี่นัท</th><td>ผนังเบา = G1 (ออปชั่นบานทึบ) ไม่ใช่ G3 · G3 มีแค่ หลังคา + ฝ้า</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  <code>L2339</code> <code>G3_WALL_PRODS</code>: ลบ <code>['isowall','ISOWALL']</code>, <code>['wall_ext','ผนังเบาภายนอก']</code>, <code>['wall_int','ผนังเบาภายใน']</code> ออก<br>
+  เหลือแค่: <code>[['ceil_cshape','ฝ้าอลู ตัวซี'],['ceil_bsc','ฝ้าไม้เทียม remood'],['ceiling_smooth','ฝ้าฉาบเรียบ']]</code><br>
+  <b>ห้ามลบ</b> isowall/wall_ext/wall_int จาก <code>PRODUCTS[]</code> (G1 ยังใช้)
+</td></tr>
+</table>
+<div class="dod"><b>DoD B:</b> กด G3 → ไม่เห็น "ISOWALL / ผนังเบา" · ยังคลิก G1 → ผนังเบายังอยู่ใน FAM_DEFAULT/G1 · golden pass</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง C — ฝ้าเป็นออปชั่น (ไม่มี/รวมในหลังคา/แยกรายการ)</h3>
+<span class="tag t-red">UX หลัก</span> <span class="tag t-blue">ไม่แตะราคาเดิม</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>ฝ้าเป็นสินค้าแยก (cat='ฝ้า-ผนัง') ต้องเปิดชุดใหม่ · ไม่มีทาง "รวมในหลังคา" ใน 1 ชุด</td></tr>
+<tr><th>เป้าหมาย</th><td>ดราฟ v6 กล่อง 6 "ฝ้า (ออปชั่น)" — 3 ปุ่มโหมด:<br>
+  <b>— ไม่มีฝ้า</b> (default · ไม่แสดง sub-panel)<br>
+  <b>✅ รวมในหลังคา</b> → เลือกชนิดฝ้า + พื้นที่ → รวมในใบเดียวกัน<br>
+  <b>📋 แยกรายการ</b> → เหมือน "รวม" แต่ออกเป็นบรรทัดแยกในใบ<br>
+  ทั้งสองโหมดเลือกได้: ฝ้าอลู ไทยทิพย์ · ฝ้าไม้เทียม remood · ฝ้าฉาบเรียบ + พื้นที่ฝ้า (เว้นว่าง=auto พื้นที่หลังคา)<br>
+  โหมด "รวมในหลังคา" → ราคาฝ้าบวกใน opt (แสดง secprice กล่อง 6) · โหมด "แยก" → บรรทัดแยกในใบ</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  เพิ่ม <code>o-ceilmode</code> (none/in/sep) ใน buildItemOpts ส่วน <code>p.cat==='หลังคา'</code><br>
+  เพิ่ม sub-panel: เลือกชนิดฝ้า (chip: ceil_cshape/ceil_bsc/ceiling_smooth) + สี + พื้นที่ฝ้า + ตำแหน่ง + แนวฝ้า<br>
+  calc: ถ้า ceilmode=in หรือ sep → คำนวณราคาฝ้าจาก <code>ceilCalc()</code> แล้วบวกเข้า opt (แสดงบรรทัดแยกใน msgs)<br>
+  ฝ้า standalone (กด G3 → ฝ้า) ยังรองรับเดิม — ไม่แตะ path นั้น<br>
+  ชนิดฝ้า ceiling_smooth calc: <code>monoRate(max(10, ceilArea), RATES.CEILING)</code> + ฉนวน +600/ตร.ม. ถ้าติ๊ก
+</td></tr>
+</table>
+<div class="dod"><b>DoD C:</b> เลือกหลังคาแล้ว → เห็นกล่อง "ฝ้า" · โหมด "ไม่มี" = 0 · โหมด "รวม" → เลือกชนิด+กรอกพื้นที่ → ราคาฝ้าโชว์หัวกล่อง · msgs มีบรรทัดฝ้า · golden ไม่เพี้ยนเคสที่ไม่มีฝ้า</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง D — หลังคาเลื่อน: ลำดับ + stepper จำนวนบาน</h3>
+<span class="tag t-amber">UX ลำดับ</span> <span class="tag t-blue">ไม่แตะราคา</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>ลำดับ field เลื่อนใน engine = ชนิดเลื่อน → จำนวนบาน (chip 2/3/4/6) → บานติดตาย → พื้นที่ → มอเตอร์ · ดราฟ v6 เปลี่ยนลำดับ + ชิป→stepper</td></tr>
+<tr><th>เป้าหมาย</th><td>ดราฟ v6 ลำดับ: ① ชนิดเลื่อน → ② พื้นที่เลื่อน (ยาว×ยื่น) → ③ จำนวนบานเลื่อน (<b>stepper ± ไม่ใช่ chip 2/3/4/6</b>) → ④ บานติดตาย → ⑤ มอเตอร์</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  ใน <code>buildItemOpts</code> ส่วน <code>p.optSlide</code> (L3040–3064):<br>
+  ① เรียง label ใหม่: ชนิดเลื่อน → พื้นที่ (o-sareaw×o-sareah) → จำนวนบาน → บานติดตาย → มอเตอร์<br>
+  ② จำนวนบาน: แทนที่ chip [2][3][4][6] ด้วย stepper (button − · input o-spanels · button +) · min=2 · value default=2<br>
+  ③ logic <code>rfSetSpanels/rfStepSpanels</code> (ถ้ามี) ให้แก้ให้ sync กับ stepper แทน chip<br>
+  ④ <b>readItem</b> ยังอ่าน <code>o-spanels</code> เหมือนเดิม — ไม่แตะ calc
+</td></tr>
+</table>
+<div class="dod"><b>DoD D:</b> เปิด slide wrap → เห็นลำดับ 5 ข้อตรงดราฟ · จำนวนบาน = stepper (ไม่ใช่ chip) · กด +/- ได้ · default 2 · ราคาเลื่อนเท่าเดิม</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง E — ต่อปลายวัสดุที่ 2: เพิ่มสีวัสดุ2 + ขนาดยาว×ยื่น + ราคาในหัวกล่อง</h3>
+<span class="tag t-amber">💰 แตะ UX + เพิ่ม display</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>engine L3087: <code>o-roof2</code> (วัสดุ2) + <code>o-roof2area</code> (กรอกตร.ม.เอง) · ไม่มีช่องสี · ไม่มีช่อง ยาว×ยื่น · ไม่โชว์ราคาวัสดุ2 ในหัวกล่อง</td></tr>
+<tr><th>เป้าหมาย</th><td>ดราฟ v6 กล่อง 8: เลือกวัสดุ2 → โชว์ sub-panel :<br>
+  • <b>สีวัสดุมุงที่ 2</b> (cascade ตามวัสดุ2 เหมือนกล่อง 4 หลัก — ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต/เมทัล/ชินโค)<br>
+  • <b>ขนาด ยาว×ยื่น → พื้นที่ (ตร.ม.) auto</b> (ไม่ใช่กรอก area เอง)<br>
+  • <b>ราคาวัสดุ2 (monoRate)</b> โชว์ใน sub-panel + หัวกล่อง secprice</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  L3087 เพิ่มใน label ของ <code>o-roof2</code>:<br>
+  ① เพิ่มกล่อง cascade สี (ใช้ <code>rfChips</code> เหมือน pass2-D L3069-3085) ตาม product ที่เลือกเป็น roof2<br>
+  ② เปลี่ยนช่อง area: แทน <code>o-roof2area</code> เป็น 2 ช่อง <code>o-r2w</code> (ยาว) × <code>o-r2h</code> (ยื่น) → คำนวณ auto แล้ว set <code>o-roof2area</code> (key เดิมยังต้องอยู่ — FIX-12 อ่าน)<br>
+  ③ เพิ่ม display ราคาวัสดุ2: <code>monoRate(roof2area, RATES[mat2.rates])</code> โชว์ใน span (read-only · ไม่เข้า calc หลัก ราคาวัสดุ2 calc ใน FIX-12 L1404 อยู่แล้ว)<br>
+  ④ หัวกล่อง: เพิ่ม <code>secprice</code> id="roof2-headprice" โชว์ฝั่งขวา (อัพเดทใน calcQuote)<br>
+  <b>Key เดิมที่ต้องรักษา:</b> <code>.o-roof2</code> (select วัสดุ2) · <code>.o-roof2area</code> (input area · อาจซ่อนแล้ว set ด้วย JS)
+</td></tr>
+</table>
+<div class="dod"><b>DoD E:</b> เลือก roof2 → เห็นช่องสี cascade ถูกประเภท · กรอก ยาว×ยื่น → พื้นที่ auto · โชว์ราคาวัสดุ2 (monoRate) ถูกสูตร · หัวกล่องโชว์ฝ · golden ราคารวมเท่าเดิม (เพราะ FIX-12 ยังอ่าน o-roof2area เดิม)</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง F — ซ่อนสโลป: เพิ่มช่องสี (กรอกเอง · label)</h3>
+<span class="tag t-blue">UX เล็ก · ไม่แตะราคา</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>engine L3119: ซ่อนสโลป มีแค่ chip วัสดุ + สูง/ยาว/ด้าน · ไม่มีช่องกรอกสี</td></tr>
+<tr><th>เป้าหมาย</th><td>ดราฟ v6: เพิ่มช่อง <code>input type="text"</code> label "สี (กรอกเอง)" placeholder "เช่น เทา/ลายไม้" — display only ไม่กระทบราคา · ลงใบว่า "สีคอมโพสิต/สมาร์ทบอร์ด: ___"</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  L3119 หลัง <code>o-rfhsn</code> (จำนวนด้าน): เพิ่ม <code>&lt;input type="text" class="o-rfhscolor" placeholder="เช่น เทา/ลายไม้" style="width:90px;height:30px;"&gt;</code><br>
+  readItem (L~3420 ส่วน rfhs): เพิ่ม <code>optSel.rfhscolor = d.querySelector('.o-rfhscolor')?.value || ''</code><br>
+  genQuote: ถ้า rfhscolor มีค่า → ลงใบ "ซ่อนสโลป สี ___" · ไม่บวกเงิน
+</td></tr>
+</table>
+<div class="dod"><b>DoD F:</b> เลือกซ่อนสโลปแล้วกรอกสี → ใบเสนอราคาโชว์สี · ราคาไม่เปลี่ยน</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง G — ทุกกล่องโชว์ราคา (secprice มุมขวาหัวกล่อง แม้ ฿0)</h3>
+<span class="tag t-blue">UX display · ไม่แตะราคา</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>กล่องในดราฟ v6 ทุกกล่องมี <code>.secprice</code> โชว์ subtotal มุมขวาหัวกล่อง — engine ปัจจุบันไม่มีในทุกกล่อง G3</td></tr>
+<tr><th>เป้าหมาย</th><td>ทุกกล่อง G3 (ขนาด/สี/แป/ฝ้า/เลื่อน/roof2/ปลายหลังคา/เสริม) มี <code>secprice</code> — อัพเดทใน calcQuote<br>
+  กล่องที่ไม่มีราคา (cosmetic/display) = โชว์ <code style="color:gray;">฿—</code> หรือ label "(รวมในราคาหลัก)"<br>
+  กล่องที่มีราคา = โชว์ <code>฿X,XXX</code> สีแดง (แม้ 0 = "฿0")</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  ใน <code>buildItemOpts</code> ส่วน G3: เพิ่ม <code>id</code> ให้หัว label แต่ละกล่อง (เช่น <code>g3-base-price</code>, <code>g3-slide-price</code>, <code>g3-ceil-price</code>)<br>
+  ใน <code>calcQuote</code> หลัง calc แต่ละก้อน: set innerHTML/textContent ของ id นั้น<br>
+  <b>ลำดับ: ก ดูดราฟ v6 ว่าแต่ละกล่องโชว์อะไร แล้ว map มา engine</b>
+</td></tr>
+</table>
+<div class="dod"><b>DoD G:</b> กรอกขนาดหลังคา → กล่อง "ขนาด" โชว์ฝ · เปิดเลื่อน → กล่อง "เลื่อน" โชว์ฝ · เลือก roof2 → กล่อง "วัสดุ2" โชว์ฝ · ทุกกล่องมี ฝ (แม้ 0)</div>
+</div>
+
+<div class="no-break" style="margin-top:8px;">
+<h3>ธง H — 💰 shinko (imp15-20) และ metal min รอบสุดท้าย (ยืนยันแล้ว)</h3>
+<span class="tag t-red">💰 แตะราคา</span> <span class="tag t-green">เคาะแล้ว 15 มิ.ย.</span>
+<table class="flag-tbl">
+<tr><th>ปัญหาเดิม</th><td>ดราฟ v6 PRODS ใส่ min imp15-20 ครบแล้ว (imp15=48k/imp16=46k/imp17=47k/imp18=44k/imp19=61k/imp20=61k) · <b>แต่ใน index.html จริง imp15-20 ยังไม่มี min (min:0)</b> · imp7-14 ใน index.html จริง: ดราฟ v6 ใส่ไว้ถูกแล้ว (min:28k-33k) — ต้อง grep ยืนยัน</td></tr>
+<tr><th>min ที่ตั้งใจ (เคาะ 14-15 มิ.ย.)</th><td>
+  <b>เมทัลชีท:</b> imp7=28,000 · imp8=28,000 · imp9=29,000 · imp10=29,000 · imp11=28,000 · imp12=28,000 · imp13=32,000 · imp14=33,000<br>
+  <b>ชินโคไลท์:</b> imp15=48,000 · imp16=46,000 · imp17=47,000 · imp18=44,000 · imp19=61,000 · imp20=61,000<br>
+  เกณฑ์: ขั้นต่ำรับงาน ~5 ตร.ม. × เรตช่วงต้น (ปัดขึ้นพัน)
+</td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  grep <code>imp15.*min</code> ใน index.html — ถ้าเจอ <code>min:0</code> → แก้ทุกตัว imp15-20<br>
+  <b>ยืนยันก่อน:</b> <code>grep -n "id:'imp15'" public/calculator/index.html</code> → ดู min ปัจจุบัน<br>
+  แก้ PRODUCTS[] ส่วน imp15 ถึง imp20 เพิ่ม <code>min:48000</code> ฯลฯ ตามตาราง<br>
+  <b>imp7-14:</b> ดราฟ v6 ใส่ min ไว้แล้ว → grep ยืนยันว่า index.html จริงตรงหรือยัง (ถ้าตรงแล้วไม่ต้องแก้)
+</td></tr>
+</table>
+<div class="money"><b>ผลกระทบ:</b> มีผลเฉพาะงานเล็ก (&lt;5 ตร.ม.) · งาน 18 ตร.ม.+ ราคาสูงกว่า min อยู่แล้ว ไม่กระทบ · ต้องรัน fidelity + snapshot หลังแก้</div>
+<div class="dod"><b>DoD H:</b> grep imp15 ใน index.html → <code>min:48000</code> · ทดสอบ imp15 พื้นที่ 3 ตร.ม. → ราคา = 48,000 · พื้นที่ 6 ตร.ม. → ราคา = 6×11,000=66,000 (สูงกว่า min ไม่ติด) · golden pass (เคสทองล้วน &gt;5 ตร.ม.)</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ธงเดิม carry-over
+═══════════════════════════════════════════════════════ -->
+<h2>ธงเดิม 1–5 (carry-over จาก HANDOFF-G3-FINAL 2026-06-14)</h2>
+
+<div class="no-break">
+<h3>ธง 1 — 🔴 truss_beam_cover ขายเดี่ยว ราคา = 0 (บั๊ก)</h3>
+<span class="tag t-red">บั๊กราคา</span>
+<table class="flag-tbl">
+<tr><th>จุด</th><td><code>index.html:697</code> — <code>{id:'truss_beam_cover', truss_cover:1, ...}</code> · ไม่มี calc handler → ราคา ฿0</td></tr>
+<tr><th>เสนอแก้</th><td><b>(ก)</b> ซ่อน/ลบออกจากรายการขายเดี่ยว — calc ผ่าน <code>o-rfbcw/rfbcl</code> ที่ทำงานอยู่แล้ว · <b>หรือ (ข)</b> เพิ่ม calc handler ถ้าต้องขายเดี่ยว</td></tr>
+</table>
+<div class="dod"><b>DoD 1:</b> ไม่มีทาง select truss_beam_cover แล้วได้ ฿0 · ถ้าซ่อน → กดไม่ได้ · ถ้าเพิ่ม calc → ราคาถูกสูตร</div>
+</div>
+
+<div class="no-break" style="margin-top:6px;">
+<h3>ธง 2 — 🟡 roof_gutter_cover ชื่อ "ลด 50%" แต่สูตรจริง ลด 30%</h3>
+<span class="tag t-amber">ชื่อผิด</span>
+<table class="flag-tbl">
+<tr><th>จุด</th><td><code>index.html:687</code> ชื่อสินค้า "...ลูกฟูก 1 ทาง · ลด 50%" · สูตร L1310 = <code>×0.70</code> (ลด 30%)</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> <b>แก้ชื่อ "ลด 50%" → "ลด 30%"</b> · สูตร ×0.70 ถูกแล้ว ไม่แตะ</td></tr>
+</table>
+<div class="dod"><b>DoD 2:</b> ชื่อสินค้า L687 = "...ลด 30%" · สูตรยัง ×0.70 · golden pass</div>
+</div>
+
+<div class="no-break" style="margin-top:6px;">
+<h3>ธง 3 — 🟡💰 เมทัล/ชินโค (imp7-20) ไม่มีขั้นต่ำ — ใส่ min</h3>
+<span class="tag t-red">💰 แตะราคา</span> <span class="tag t-green">เคาะ 14-15 มิ.ย.</span>
+<table class="flag-tbl">
+<tr><th>จุด</th><td>PRODUCTS imp7–imp20 ใน index.html จริง ตอนนี้ <code>min:0</code> (ไวนิล/ดีไลท์ = min:28,000 · โพลีตัน 30,000 · ลามิเนต 45,000)</td></tr>
+<tr><th>min ที่ตั้งใจ</th><td>ดูตารางในธง H ด้านบน (เหมือนกัน — ธง 3 และ H อาจรวมในการแก้เดียวกัน)</td></tr>
+</table>
+<div class="dod"><b>DoD 3:</b> รวมกับ DoD H · imp7-20 ทุกตัวมี min ถูกต้อง</div>
+</div>
+
+<div class="no-break" style="margin-top:6px;">
+<h3>ธง 4 — 🟡💰 o-rfsealer ไม่คิดเงิน — เพิ่ม calc + ช่องยาว</h3>
+<span class="tag t-red">💰 บั๊กการเงิน</span> <span class="tag t-green">เคาะ 14 มิ.ย.</span>
+<table class="flag-tbl">
+<tr><th>จุด</th><td><code>index.html:3498</code> readItem เก็บ <code>optSel.rfsealer</code> · <code>L4370</code> genQuote ลงแต่ข้อความ <b>ไม่บวกเงิน</b> · calc ใน L1529 ไม่มี sealer</td></tr>
+<tr><th>มติพี่นัท</th><td><span class="tag t-green">เคาะ 14 มิ.ย.</span> คิดเงิน <b>800 บ./ม. · ขั้นต่ำ 5,000 บ./ชุด</b><br>สูตร: <code>sealer_sell = Math.max(5000, 800 × ยาว_ม.)</code></td></tr>
+<tr><th>จุดแก้ index.html</th><td>
+  ① เพิ่มช่อง <code>o-rfsealer-len</code> (ยาวม.) ใน label rfsealer (โชว์เมื่อติ๊ก)<br>
+  ② readItem L~3498 เพิ่ม: <code>optSel.rfsealerlen = d.querySelector('.o-rfsealer-len')?.value || 0</code><br>
+  ③ calc L1529 (ส่วน <code>p.cat==='หลังคา'</code>) เพิ่ม:<br>
+  <code>if(optSel.rfsealer){ const _sl = Math.max(5000, 800*(parseFloat(optSel.rfsealerlen)||0)); opt+=_sl; msgs.push('วัสดุปิดรอยต่อ '+fmt(_sl)); }</code><br>
+  ④ genQuote L4370: เพิ่มบรรทัดราคา (ไม่ใช่แค่ข้อความ)
+</td></tr>
+</table>
+<div class="dod"><b>DoD 4:</b> ติ๊ก rfsealer + กรอกยาว 10 ม. → ราคา 8,000 · ยาว 4 ม. → ราคา 5,000 (min) · ลงใบเป็นตัวเลข · golden pass (เคสทองไม่เคยติ๊ก rfsealer = ไม่กระทบ)</div>
+</div>
+
+<div class="no-break" style="margin-top:6px;">
+<h3>ธง 5 — 🟡 breakdown ราคา (msgs) ไม่ครบบางออปชั่น</h3>
+<span class="tag t-blue">display audit trail</span>
+<table class="flag-tbl">
+<tr><th>จุด</th><td>3 เคส msgs ขาด: ① หลังคาเลื่อน ขาดราคาชุดเลื่อน (มีแต่มอเตอร์) · ② หลังคาผสม ขาด base ของแต่ละฝ่าย · ③ เสาแผง ไม่ลงตัวเลข</td></tr>
+<tr><th>เสนอแก้</th><td>
+  ① L1527-28 เลื่อน: เพิ่ม <code>msgs.push('ชุดเลื่อน ('+_N+' บาน) '+fmt(monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier))</code> แยกมอเตอร์<br>
+  ② L1411 ผสม: ใส่ดีกว่า เช่น "หลักXตร.ม.=XXXXX · วัสดุ2 Yตร.ม.=YYYYY" — ยังอยู่แล้วบางส่วน ตรวจ format<br>
+  ③ L1529 pp: <code>if(pp>0) msgs.push('เสาแผง '+…+' ต้น × 4,000 = '+fmt(pp))</code>
+</td></tr>
+</table>
+<div class="dod"><b>DoD 5:</b> เลือกเลื่อน → msgs มีบรรทัด "ชุดเลื่อน" และ "มอเตอร์" แยกกัน · เสาแผง 2 ต้น → msgs "เสาแผง 2 ต้น × 4,000 = 8,000"</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     เช็คลิสต์ปิดงาน
+═══════════════════════════════════════════════════════ -->
+<h2>เช็คลิสต์ DoD รวม (ปิดงานเมื่อครบทุกข้อ)</h2>
+<ul class="chk">
+<li>A: drill-down 7 กลุ่ม · chip รุ่นย่อย (เมทัล 1"/2" · ชินโค 6/4/10มม.) · .i-prod set ถูก · ไม่มี dropdown ยาว</li>
+<li>B: ไม่เห็น isowall/wall_ext/wall_int ใน G3 · G1 ยังมีผนังเบา · golden pass</li>
+<li>C: กล่องฝ้า 3 โหมด (none/in/sep) · เลือกชนิด+พื้นที่+ราคา · msgs มีบรรทัดฝ้า</li>
+<li>D: เลื่อนลำดับ ①②③④⑤ · จำนวนบาน = stepper · default 2 · ราคาเท่าเดิม</li>
+<li>E: roof2 มีช่องสี cascade · ยาว×ยื่น→area auto · secprice หัวกล่องโชว์ราคาวัสดุ2 · golden pass</li>
+<li>F: ซ่อนสโลปมีช่องสี (กรอกเอง) · ลงใบ · ราคาไม่เปลี่ยน</li>
+<li>G: ทุกกล่อง G3 มี secprice · โชว์แม้ ฿0</li>
+<li>H: imp15=48,000 · imp16=46,000 · imp17=47,000 · imp18=44,000 · imp19=imp20=61,000 · พื้นที่เล็ก &lt;5ตร.ม. ติด min</li>
+<li>ธง 1: truss_beam_cover ไม่ขายฟรี (ซ่อน หรือ มี calc)</li>
+<li>ธง 2: ชื่อ roof_gutter_cover = "ลด 30%" · สูตร ×0.70 คงเดิม</li>
+<li>ธง 3: imp7-20 ทุกตัวมี min ถูกต้อง (รวม H)</li>
+<li>ธง 4: rfsealer คิดเงิน max(5000, 800×ยาว) · ลงใบราคา</li>
+<li>ธง 5: msgs breakdown ครบ (เลื่อน/ผสม/เสาแผง)</li>
+<li><code>node scripts/golden-snapshot.mjs</code> = PASS · ต่างเฉพาะที่ตั้งใจ (imp min · sealer)</li>
+<li>เทสเบราว์เซอร์จริง: กด 7 กลุ่ม/รุ่นย่อย · ฝ้า 3 โหมด · เลื่อน stepper · roof2 cascade</li>
+<li>mirror สด ส่ง BA ตรวจก่อน push</li>
+</ul>
+
+<div class="good"><b>สรุปธง:</b> ธง UX ใหม่ A–H (8 ธง) + ธงเดิม 1–5 (5 ธง) = <b>13 ธงรวม</b> · เรียงลำดับ A→H→1→5 · ทำ 1 ธง 1 commit · ธง H+3 รวมแก้ได้ใน commit เดียว (จุดเดียวกัน PRODUCTS imp7-20)</div>
+
+<h2>ไฟล์ที่เกี่ยวข้อง (อ้างอิง)</h2>
+<table>
+<tr><th>ไฟล์</th><th>ใช้ทำอะไร</th></tr>
+<tr><td><code>public/calculator/index.html</code></td><td>แก้ทุกอย่าง (dev แชท B)</td></tr>
+<tr><td><code>docs/กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-ux-FULL-v6-2026-06-14.html</code></td><td>UX เป้าหมาย — เปิดในเบราว์เซอร์เทียบ</td></tr>
+<tr><td><code>docs/กลุ่ม3-หลังคากันสาดฝ้า/HANDOFF-G3-FINAL-dev-2026-06-14.html</code></td><td>รายละเอียดธง 1-5 (แหล่งอ้างอิงเพิ่มเติม)</td></tr>
+<tr><td><code>docs/กลุ่ม3-หลังคากันสาดฝ้า/REF-G3-pricing-data-2026-06-14.md</code></td><td>ราคา/เรต/สูตรอ้างอิงครบ</td></tr>
+<tr><td><code>scripts/golden-snapshot.mjs</code></td><td>รันก่อน/หลังแก้ธงราคา</td></tr>
+<tr><td><code>test/quote-fidelity.mjs</code></td><td>fidelity test (ตัวเลือก)</td></tr>
+</table>
+
+<p class="sub" style="margin-top:10px;">ออกโดย BA แชท A · 2026-06-15 · verify จากโค้ดจริง index.html (grep + read) + ดราฟ v6 ครบทุกกล่อง · READ-ONLY ไม่แตะ index.html</p>
+</body></html>

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<title>สรุป G3 — ราคา/ออปชั่น/อุปกรณ์เสริม (FINAL 2026-06-15)</title>
+<style>
+@page{size:A4;margin:13mm 11mm;}
+*{font-family:"Noto Sans Thai","Leelawadee UI","Tahoma",sans-serif;box-sizing:border-box;}
+body{color:#1f2937;font-size:13px;line-height:1.65;margin:0;background:#fff;}
+h1{color:#B3151D;font-size:22px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:12px;margin:0 0 18px;}
+.sec{margin:20px 0 0;}
+.sec>h2{font-size:15px;color:#fff;background:#B3151D;padding:7px 14px;border-radius:8px;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+.sec>h2 .ic{font-size:17px;}
+h3{font-size:13.5px;color:#B3151D;margin:12px 0 5px;font-weight:700;}
+table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12.5px;}
+th{background:#fbe9ea;color:#B3151D;padding:7px 10px;text-align:left;border-bottom:2px solid #B3151D;}
+td{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:top;}
+tr:nth-child(even) td{background:#fafafa;}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.b{font-weight:700;}
+.indent{padding-left:20px;font-size:12px;color:#4b5563;}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:11px;white-space:nowrap;}
+.free{background:#dcfce7;color:#166534;}
+.pay{background:#fef3c7;color:#92400e;}
+.new{background:#dbeafe;color:#1d4ed8;}
+.warn{background:#fee2e2;color:#991b1b;}
+.note{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:9px 13px;margin:8px 0;font-size:12px;}
+.formula{background:#f8fafc;border-left:4px solid #B3151D;padding:8px 14px;margin:8px 0;font-size:12px;border-radius:0 8px 8px 0;}
+.formula code{background:#fff;padding:1px 6px;border-radius:4px;color:#B3151D;font-family:Consolas,monospace;font-size:11.5px;}
+.ex{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 13px;margin:8px 0;font-size:12px;}
+.ex strong{color:#15803d;}
+.dbox{background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:9px 13px;margin:8px 0;font-size:12px;}
+.dbox strong{color:#c2410c;}
+.tworow td:first-child{width:44%;font-weight:700;}
+.mono{font-family:Consolas,monospace;font-size:11.5px;}
+.foot{margin-top:22px;font-size:11px;color:#9ca3af;border-top:1px solid #eee;padding-top:10px;}
+hr{border:none;border-top:1.5px dashed #e5e7eb;margin:16px 0;}
+</style></head>
+<body>
+
+<h1>สรุปราคา · ออปชั่น · อุปกรณ์เสริม — งานหลังคา/กันสาด/ฝ้า (G3)</h1>
+<p class="sub">FINAL · 15 มิ.ย. 2026 · เรตจริงจากระบบ (RATES index.html v6) · สำหรับพี่นัท/เฟิร์นตรวจ · ยังไม่รวม VAT</p>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">🏠</span>1. ราคาฐานหลังคา — วิธีคิด</h2>
+<div class="formula">
+  <b>สูตรหลัก (bucket):</b><br>
+  <code>ราคา = roundUp( max(ขั้นต่ำ,  monoRate(พื้นที่, RATE)) × จำนวนชุด , พัน)</code><br>
+  <span style="color:#6b7280;">พื้นที่ = ยาว × ยื่น (ตร.ม.) · monoRate = area × เรตช่วงนั้น (ปกป้องขั้น) · roundUp = ปัดขึ้นพัน</span>
+</div>
+
+<h3>1.1 หลังคาทั่วไป (ไวนิล / ดีไลท์ / โพลีตัน / ลามิเนต)</h3>
+<table>
+<tr><th>ชนิดหลังคา</th><th class="r">เรต ≤5 ตร.ม.</th><th class="r">เรต 5–10</th><th class="r">เรต 10–15</th><th class="r">เรต 15–30</th><th class="r">เรต 30+</th><th class="r">ขั้นต่ำ</th></tr>
+<tr><td class="b">ไวนิล Snow Roof Pro</td><td class="r">—</td><td class="r">6,500</td><td class="r">6,000</td><td class="r">5,500</td><td class="r">5,000</td><td class="r b">28,000</td></tr>
+<tr><td class="b">ดีไลท์ D-LITE</td><td class="r">—</td><td class="r">6,500</td><td class="r">6,000</td><td class="r">5,500</td><td class="r">5,000</td><td class="r b">28,000</td></tr>
+<tr><td class="b">โพลีตัน 3มม.</td><td class="r">—</td><td class="r">7,500</td><td class="r">6,500</td><td class="r">6,000</td><td class="r">5,700</td><td class="r b">30,000</td></tr>
+<tr><td class="b">กระจกลามิเนต</td><td class="r">—</td><td class="r">11,000</td><td class="r">10,500</td><td class="r">10,000</td><td class="r">—</td><td class="r b">45,000</td></tr>
+</table>
+<div class="note">ไวนิล/ดีไลท์ ใช้เรตเดียวกัน (ROOF_STD) · กระจกลามิเนต มี 3 ช่วง (5–10 / 10–15 / 15+)</div>
+
+<h3>1.2 เมทัลชีท (8 รุ่น)</h3>
+<table>
+<tr><th>รุ่น (id)</th><th>รายละเอียด</th><th class="r">เรต 0–10</th><th class="r">เรต 10–15</th><th class="r">เรต 15–30</th><th class="r">เรต 30+</th><th class="r">ขั้นต่ำ</th></tr>
+<tr><td class="b">IMP7</td><td>1 นิ้ว ท้อง PVC EPS</td><td class="r">6,300</td><td class="r">5,800</td><td class="r">5,300</td><td class="r">4,800</td><td class="r b">28,000</td></tr>
+<tr><td class="b">IMP8</td><td>2 นิ้ว ท้อง PVC EPS</td><td class="r">6,400</td><td class="r">5,900</td><td class="r">5,400</td><td class="r">4,900</td><td class="r b">28,000</td></tr>
+<tr><td class="b">IMP9</td><td>1 นิ้ว ท้องเหล็ก EPS</td><td class="r">6,600</td><td class="r">6,100</td><td class="r">5,600</td><td class="r">5,100</td><td class="r b">29,000</td></tr>
+<tr><td class="b">IMP10</td><td>2 นิ้ว ท้องเหล็ก EPS</td><td class="r">6,700</td><td class="r">6,200</td><td class="r">5,700</td><td class="r">5,200</td><td class="r b">29,000</td></tr>
+<tr><td class="b">IMP11</td><td>1 นิ้ว ท้องฟอยล์ PU</td><td class="r">6,300</td><td class="r">5,800</td><td class="r">5,300</td><td class="r">4,800</td><td class="r b">28,000</td></tr>
+<tr><td class="b">IMP12</td><td>2 นิ้ว ท้องฟอยล์ PU</td><td class="r">6,600</td><td class="r">6,100</td><td class="r">5,600</td><td class="r">5,100</td><td class="r b">28,000</td></tr>
+<tr><td class="b">IMP13</td><td>1 นิ้ว ท้องเหล็ก PU</td><td class="r">7,300</td><td class="r">6,800</td><td class="r">6,300</td><td class="r">5,800</td><td class="r b">32,000</td></tr>
+<tr><td class="b">IMP14</td><td>2 นิ้ว ท้องเหล็ก PU</td><td class="r">7,500</td><td class="r">7,000</td><td class="r">6,500</td><td class="r">6,000</td><td class="r b">33,000</td></tr>
+</table>
+<div class="note"><span class="badge new">ขั้นต่ำใหม่</span> IMP7–8/11–12 = 28,000 · IMP9–10 = 29,000 · IMP12 = 28,000 · IMP13 = 32,000 · IMP14 = 33,000 (อิงเรตช่วงต้น × ~4.3 ตร.ม.)</div>
+
+<h3>1.3 ชินโคไลท์ โปร่งแสง (6 รุ่น)</h3>
+<table>
+<tr><th>รุ่น (id)</th><th>รายละเอียด</th><th class="r">เรต 0–10</th><th class="r">เรต 10–15</th><th class="r">เรต 15+</th><th class="r">ขั้นต่ำ</th></tr>
+<tr><td class="b">IMP15</td><td>6มม. Heat Cut</td><td class="r">11,000</td><td class="r">10,500</td><td class="r">10,000</td><td class="r b">48,000</td></tr>
+<tr><td class="b">IMP16</td><td>6มม. Superior</td><td class="r">10,600</td><td class="r">10,000</td><td class="r">9,600</td><td class="r b">46,000</td></tr>
+<tr><td class="b">IMP17</td><td>6มม. Nature</td><td class="r">10,800</td><td class="r">10,200</td><td class="r">9,800</td><td class="r b">47,000</td></tr>
+<tr><td class="b">IMP18</td><td>4มม. Shade</td><td class="r">10,100</td><td class="r">9,500</td><td class="r">9,100</td><td class="r b">44,000</td></tr>
+<tr><td class="b">IMP19</td><td>10มม. Prime</td><td class="r">14,000</td><td class="r">13,500</td><td class="r">13,000</td><td class="r b">61,000</td></tr>
+<tr><td class="b">IMP20</td><td>10มม. Grand (ใช้เรต IMP19)</td><td class="r">14,000</td><td class="r">13,500</td><td class="r">13,000</td><td class="r b">61,000</td></tr>
+</table>
+<div class="note"><span class="badge new">ขั้นต่ำใหม่</span> ชินโคทุกรุ่นตั้งขั้นต่ำใหม่ตามมติพี่นัท (~4.3 ตร.ม. × เรตช่วงต้น) · IMP20 ใช้ RATES เดียวกับ IMP19</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">▭</span>2. ฝ้า (3 ชนิด)</h2>
+<div class="note">ฝ้าทำได้ 3 โหมด: (1) รวมในหลังคา (คิดบวกเพิ่มในรายการเดียวกัน) · (2) แยกรายการ (เพิ่มบรรทัดใบเสนอ) · (3) สั่งเดี่ยวไม่มีหลังคา (เหมือน G6)</div>
+
+<table>
+<tr><th>ชนิดฝ้า</th><th>เรต / หน่วย</th><th class="r">สี/รุ่น</th><th class="r">ขั้นต่ำ</th><th>ออปชั่น</th></tr>
+<tr>
+  <td class="b">ฝ้าอลูมิเนียม ไทยทิพย์ ตัวซี 15ซม.<br><span class="indent">ceil_cshape</span></td>
+  <td>crates × max(10, พื้นที่)</td>
+  <td class="r">ขาว-ดำ 2,100/ตร.ม.<br>ลายไม้ 2,700/ตร.ม.</td>
+  <td class="r">— (min 10 ตร.ม.)</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td class="b">ฝ้าไม้เทียม remood แผ่นเรียบ 12ซม.<br><span class="indent">ceil_bsc</span></td>
+  <td>crates × max(10, พื้นที่)</td>
+  <td class="r">มาตรฐาน ขาว-ซิลเวอร์ 2,600/ตร.ม.<br>ลายไม้/สีอื่น 2,800/ตร.ม.</td>
+  <td class="r">— (min 10 ตร.ม.)</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td class="b">ฝ้าฉาบเรียบ<br><span class="indent">ceiling_smooth</span></td>
+  <td>CEILING × max(12, พื้นที่)<br><span class="indent">10–20: 1,200/ตร.ม.</span><br><span class="indent">20+: 1,150/ตร.ม.</span></td>
+  <td class="r">—<br>(ทาสี/รองพื้น/ไม่ทา)</td>
+  <td class="r">12,000</td>
+  <td>+ ฉนวน 600/ตร.ม.<br>+ ฝ้าเฉียงตามหลังคา (ระบุในใบ)</td>
+</tr>
+</table>
+
+<div class="formula">
+  <b>ฝ้าอลู/ไม้เทียม:</b> <code>ราคา = max(10, พื้นที่) × crates[สี]</code><br>
+  <b>ฝ้าฉาบเรียบ:</b> <code>ราคา = max(12,000 , max(12, พื้นที่) × CEILING[เรต]) + ฉนวน×600</code>
+</div>
+
+<div class="note"><span class="badge warn">ตัดออก</span> ผนังเบา (wall_ext / wall_int / isowall) ย้ายไปกลุ่ม G1 ตามมติพี่นัท — ไม่มีใน G3 แล้ว</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">🎨</span>3. ออปชั่นหลังคา</h2>
+
+<h3>3.1 สีวัสดุมุง (cosmetic — ฟรี)</h3>
+<table>
+<tr><th>วัสดุหลัก</th><th>ตัวเลือกสี</th><th class="r">ราคา</th></tr>
+<tr><td class="b">ไวนิล Snow Roof Pro</td><td>ขาว · เทา · น้ำตาล</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">ดีไลท์ D-LITE</td><td>DG-2 สีฟ้าคราม · DG-4 สีเทาโซล่าร์</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">โพลีตัน</td><td>Clear 101 · Opal 103 · Bronze 107 · Green 109 · Australian Grey 108 · Silver 501 · Bronze Metallic 503 · Green Metallic 504 (8 สี)</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">กระจกลามิเนต</td><td>ฟิล์ม: กันร้อน / ใส / เขียว · ความหนา: 4+4 มม. / 5+5 มม.</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">เมทัลชีท (IMP7–14)</td><td>น้ำตาล · ขาว · เทา (หรือระบุเอง)</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">ชินโคไลท์ (IMP15–20)</td><td>Light Grey · Modern Grey (หรือระบุเอง)</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+</table>
+
+<h3>3.2 แป / โครงสร้าง (ฟรี)</h3>
+<table class="tworow">
+<tr><td>แป</td><td>แปเดี่ยว / แปคู่ <span class="badge free">ฟรี</span></td></tr>
+<tr><td>โครงสร้าง</td><td>โครงอลูมิเนียม / โครงเหล็กชุบซิงค์ <span class="badge free">ฟรี</span> <span class="badge warn">! เช็คราคาเหล็กชุบภายหลัง</span></td></tr>
+</table>
+
+<h3>3.3 หลังคาเลื่อน (optSlide)</h3>
+<div class="formula">
+  <b>สูตร:</b> <code>เพิ่ม = (เรตเลื่อน − เรตหลัก) × พื้นที่เลื่อน + มอเตอร์</code><br>
+  เรตเลื่อน ROOF_SLIDE: ≤5: 5,000 / ≤10: 4,700 / ≤15: 4,400 / ≤20: 4,100 / ≤25: 3,800 / 25+: 3,500 บาท/ตร.ม.
+</div>
+<table>
+<tr><th>ตัวเลือก</th><th>รายละเอียด</th><th class="r">ราคา</th></tr>
+<tr><td class="b">ชนิดเลื่อน</td><td>เลื่อนยื่น / เลื่อนข้าง</td><td class="r">ตามสูตร</td></tr>
+<tr><td class="b">จำนวนบานเลื่อน</td><td>2, 3, 4, 6 บาน (ขั้นต่ำ 2)</td><td class="r">ตามสูตร</td></tr>
+<tr><td class="b">บานติดตาย</td><td>กรอกจำนวน (ไม่คิดเพิ่ม)</td><td class="r">—</td></tr>
+<tr><td class="b">มอเตอร์ (auto)</td><td>พื้นที่เลื่อน ≤3.5 ตร.ม. → 18,000 · ≤14 → 28,000 · ≤40 → 36,000 · 40+ → 72,000/ตัว</td><td class="r"><span class="badge pay">คิดเงิน</span></td></tr>
+</table>
+
+<h3>3.4 ต่อปลายวัสดุที่ 2 (หลังคาผสม 2 วัสดุ)</h3>
+<div class="formula">
+  <b>สูตร:</b><br>
+  <code>ราคารวม = max(min₁, monoRate(พื้นที่หลัก, RATE₁) + monoRate(พื้นที่₂, RATE₂))</code><br>
+  พื้นที่หลัก = พื้นที่รวม − พื้นที่₂ · พื้นที่₂ = ยาว₂ × ยื่น₂ (กรอกในกล่อง)
+</div>
+<div class="note">เลือกวัสดุที่ 2 ได้ทุกรุ่น (ไม่ซ้ำวัสดุหลัก) · แต่ละวัสดุมีสีแยกกัน (cascade เหมือนวัสดุหลัก) · ราคารวมแสดงในบรรทัดเดียว + บรรทัดย่อยแสดงค่าวัสดุที่ 2</div>
+
+<h3>3.5 ปลายหลังคา (เลือก 1 อย่าง)</h3>
+<table>
+<tr><th>ตัวเลือก</th><th>รายละเอียด</th><th class="r">ราคา</th></tr>
+<tr><td class="b">ปล่อย</td><td>ไม่ทำปลาย</td><td class="r"><span class="badge free">฿0</span></td></tr>
+<tr><td class="b">มีรางน้ำ</td><td>
+  อลูมิเนียม S × ยาวราง<br>
+  อลูมิเนียม M × ยาวราง<br>
+  สแตนเลส L × ยาวราง<br>
+  <span style="color:#6b7280;font-size:11.5px;">ยาวราง: เว้นว่าง = ใช้ความกว้างหลังคา (auto)</span>
+</td><td class="r">
+  1,000/ม.<br>
+  2,000/ม.<br>
+  3,000/ม.
+</td></tr>
+<tr><td class="b">ระบบระบาย (ใต้ราง)</td><td>ท่อ PVC 2.5″ (เลือกสีขาว/ดำ) หรือ โซ่ (เลือกลาย ทิวลิป/โลตัส + สีขาว/น้ำตาล)</td><td class="r"><span class="badge free">รวมในราคาราง</span></td></tr>
+<tr><td class="b">ตะแกรงพลาสติกกันใบไม้</td><td>สีดำ พ่วงพร้อมรางน้ำ</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">ท่อน้ำทิ้ง PVC 2.5″</td><td>สีดำ / ขาว / เทา / ไม่มี (เลือกได้)</td><td class="r"><span class="badge free">ฟรี</span></td></tr>
+<tr><td class="b">ปิดปลายกันน้ำกระเด็น</td><td>ยาว × 1,000 บาท/ม. · เว้นว่าง = ใช้ความยาวหลังคา (auto)</td><td class="r">1,000/ม. <span class="badge pay">คิดเงิน</span></td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">🔩</span>4. อุปกรณ์เสริมหลังคา</h2>
+<table>
+<tr><th>รายการ</th><th>สูตร / วิธีคิด</th><th class="r">ราคา/หน่วย</th><th class="r">สถานะ</th></tr>
+<tr>
+  <td class="b">เสาแผง</td>
+  <td>4,000 × จำนวนต้น</td>
+  <td class="r">4,000/ต้น</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">เสา 4″×8″</td>
+  <td>2,000 × จำนวนต้น</td>
+  <td class="r">2,000/ต้น</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">คานเหล็กถัก</td>
+  <td>เรตรุ่น × ยาวคาน (ม.)<br>
+  <span class="indent">รุ่น 1 = 2,400/ม.</span><br>
+  <span class="indent">รุ่น 2 = 3,600/ม.</span><br>
+  <span class="indent">รุ่น 3 = 4,400/ม.</span></td>
+  <td class="r">2,400–4,400/ม.</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">เพลทเหล็กล่าง (รับล่าง)</td>
+  <td>พ่วงในงาน</td>
+  <td class="r">—</td>
+  <td class="r"><span class="badge free">ฟรี</span></td>
+</tr>
+<tr>
+  <td class="b">เหล็กดึงด้านบน</td>
+  <td>พ่วงในงาน</td>
+  <td class="r">—</td>
+  <td class="r"><span class="badge free">ฟรี</span></td>
+</tr>
+<tr>
+  <td class="b">ซ่อนสโลป</td>
+  <td>
+    คอมโพสิต 3มม.:<br>
+    <code class="mono">3,500 × สูง × ยาว/ด้าน × จำนวนด้าน</code><br>
+    สมาร์ทบอร์ด 6มม.:<br>
+    <code class="mono">4,000 × สูง × ยาว/ด้าน × จำนวนด้าน</code><br>
+    <span style="color:#6b7280;font-size:11px;">สี: กรอกเองในช่อง (ไม่กระทบราคา)</span>
+  </td>
+  <td class="r">3,500/ตร.ม.<br>หรือ<br>4,000/ตร.ม.</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">ปิดซ่อนราง<br><span class="indent">(roof_gutter_cover)</span></td>
+  <td>
+    <code class="mono">((กว้าง+สูง ซม.)/100 × ยาวรวม ม.) = พื้นที่<br>
+    ราคา = พื้นที่ × (3,500 + ค่าสี) × 0.70</code><br>
+    <span style="color:#6b7280;font-size:11px;">ลูกฟูก 1 ทาง ฐาน 3,500/ตร.ม. · ลด 30% (engine L1310) · พี่นัทเคาะแก้ชื่อ "ลด 50%"→"ลด 30%"</span>
+  </td>
+  <td class="r">ลด 30%<br>(×0.70)</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">ครอบคาน<br><span class="indent">(ลูกฟูก 1 หน้า ลด 40%)</span></td>
+  <td>
+    <code class="mono">monoRate(กว้างห่อ×2×ยาวคาน, ROOF_POLY) × 0.60</code>
+  </td>
+  <td class="r">~ลด 40%<br>จากเรต</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">วัสดุปิดรอยต่อแผ่นหลังคา<br><span class="indent">(o-rfsealer)</span></td>
+  <td>
+    <code class="mono">ราคา = roundUp( max(5,000 , 800 × ยาวหลังคา) )</code><br>
+    <span class="indent">ยาว ≤6.25ม. → 5,000 (ขั้นต่ำ)</span><br>
+    <span class="indent">ยาว 10ม. → 8,000</span><br>
+    เลือกสี: ขาว / ดำ / เทา
+  </td>
+  <td class="r">min 5,000<br>(800/ม.)</td>
+  <td class="r"><span class="badge new">คิดเงินใหม่</span></td>
+</tr>
+<tr>
+  <td class="b">โซ่รางน้ำ</td>
+  <td>3,000 × จำนวนเส้น</td>
+  <td class="r">3,000/เส้น</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">ครอบท่อ PVC</td>
+  <td><code class="mono">⌈ยาว ÷ 1.5⌉ × 1,500</code><br>ปัดขึ้นท่อนละ 1.5ม.</td>
+  <td class="r">1,500/1.5ม.</td>
+  <td class="r"><span class="badge pay">คิดเงิน</span></td>
+</tr>
+<tr>
+  <td class="b">ตะแกรงกันใบไม้ · ท่อทิ้ง PVC</td>
+  <td>พ่วงพร้อมรางน้ำ</td>
+  <td class="r">—</td>
+  <td class="r"><span class="badge free">ฟรี</span></td>
+</tr>
+</table>
+
+<div class="dbox"><strong>จุดเช็คซ้ำ (dev):</strong>
+<ul style="margin:6px 0 0 18px;padding:0;line-height:1.9;">
+  <li><span class="badge ok">เคาะแล้ว</span> <b>ปิดซ่อนราง</b> — ชื่อเดิม "ลด 50%" แต่โค้ดจริง ×0.70 (= ลด 30%) · พี่นัทเคาะ: <b>แก้ชื่อเป็น "ลด 30%"</b> (สูตรถูกแล้ว)</li>
+  <li><span class="badge warn">รอยืนยัน</span> <b>ครอบท่อ PVC</b> — คำนวณ ⌈ยาว/1.5⌉ × 1,500 ตรงในดราฟ แต่ truss_beam_cover (product) ยังไม่มี handler → ราคา 0</li>
+  <li><span class="badge new">เพิ่งแก้</span> <b>sealer</b> — เดิม cosmetic (฿0) ตอนนี้คิดเงิน max(5,000, 800×ยาว) ตามมติพี่นัท</li>
+</ul>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">📐</span>5. ตัวอย่างราคาจริง</h2>
+
+<h3>5.1 งาน 6 × 3 ม. = 18 ตร.ม. (ตัวอย่างหลัก)</h3>
+<table>
+<tr><th>ชนิดหลังคา</th><th>เรตที่ใช้ (18 ตร.ม.)</th><th class="r">ราคาฐาน</th><th>+ ตัวอย่างออปชั่น</th><th class="r">รวม</th></tr>
+<tr><td class="b">ไวนิล / ดีไลท์</td><td>5,500/ตร.ม.</td><td class="r">99,000</td><td>+ รางน้ำอลู S 6ม.</td><td class="r b">105,000</td></tr>
+<tr><td class="b">โพลีตัน</td><td>6,000/ตร.ม.</td><td class="r">108,000</td><td>+ รางน้ำอลู S</td><td class="r b">114,000</td></tr>
+<tr><td class="b">กระจกลามิเนต</td><td>10,000/ตร.ม.</td><td class="r">180,000</td><td>+ รางน้ำ</td><td class="r b">186,000</td></tr>
+<tr><td class="b">เมทัลชีท IMP7 (1″ PVC)</td><td>5,300/ตร.ม.</td><td class="r">96,000</td><td>—</td><td class="r b">96,000</td></tr>
+<tr><td class="b">เมทัลชีท IMP13 (1″ PU)</td><td>6,300/ตร.ม.</td><td class="r">114,000</td><td>—</td><td class="r b">114,000</td></tr>
+<tr><td class="b">ชินโคไลท์ Grand (IMP20)</td><td>13,000/ตร.ม.</td><td class="r">234,000</td><td>—</td><td class="r b">234,000</td></tr>
+</table>
+
+<h3>5.2 ตัวอย่างหลังคาเลื่อน (6×3 ม. · 4 บาน เลื่อน)</h3>
+<div class="ex">
+  <strong>ฐาน ไวนิล 18 ตร.ม. = 99,000</strong><br>
+  บาน 4 บาน → พื้นที่เลื่อน auto = 18 × 4/(4+1) = 14.4 ตร.ม. → ROOF_SLIDE เรต 4,700/ตร.ม.<br>
+  เพิ่มหลังคาเลื่อน = (4,700 − 5,500) × 14.4 = −11,520 → (ตัดส่วนเลื่อนจากฐาน + คิดเรตเลื่อน)<br>
+  + มอเตอร์ 14.4 ตร.ม. → tier 28,000/ตัว<br>
+  รวมประมาณ 99,000 + ส่วนต่าง + 28,000 ≈ <strong>~127,000–141,000</strong> (ขึ้นกับ input จริง)
+</div>
+
+<h3>5.3 ตัวอย่างหลังคาผสม (ไวนิล + เมทัล IMP8)</h3>
+<div class="ex">
+  <strong>ไวนิล 13 ตร.ม. + เมทัล IMP8 5 ตร.ม. (รวม 18 ตร.ม.)</strong><br>
+  ส่วนไวนิล: monoRate(13, ROOF_STD) = 13 × 5,500 = 71,500<br>
+  ส่วน IMP8: monoRate(5, IMP8) = max(28,000 ฐาน, 5 × 6,400) = 32,000 → ใช้ monoRate จริง<br>
+  รวม = max(28,000, 71,500 + 32,000) = <strong>103,500 → ปัดขึ้นพัน = 104,000</strong>
+</div>
+
+<h3>5.4 ตัวอย่างฝ้าเพิ่ม (18 ตร.ม.)</h3>
+<table>
+<tr><th>ฝ้า</th><th>สี/รุ่น</th><th class="r">ราคา (18 ตร.ม.)</th></tr>
+<tr><td class="b">ฝ้าอลูมิเนียม ตัวซี</td><td>ขาว-ดำ 2,100/ตร.ม.</td><td class="r">37,800</td></tr>
+<tr><td class="b">ฝ้าอลูมิเนียม ตัวซี</td><td>ลายไม้ 2,700/ตร.ม.</td><td class="r">48,600</td></tr>
+<tr><td class="b">ฝ้าไม้เทียม remood</td><td>มาตรฐาน 2,600/ตร.ม.</td><td class="r">46,800</td></tr>
+<tr><td class="b">ฝ้าฉาบเรียบ</td><td>1,200/ตร.ม. (18 ตร.ม. &gt; 12,000)</td><td class="r">21,600</td></tr>
+<tr><td class="b">ฝ้าฉาบเรียบ + ฉนวน</td><td>1,200 + 600 = 1,800/ตร.ม.</td><td class="r">32,400</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec">
+<h2><span class="ic">⚑</span>6. ธงสำหรับ Dev (จุดพิเศษ)</h2>
+<table>
+<tr><th>หัวข้อ</th><th>พฤติกรรมปัจจุบัน</th><th>สถานะ</th></tr>
+<tr>
+  <td class="b">truss_beam_cover (product)</td>
+  <td>ไม่มี calc handler → ราคา = 0 ทุกกรณี · ใช้ครอบคานผ่านออปชั่น o-rfbcw/rfbcl ในชุดหลังคาแทน</td>
+  <td><span class="badge warn">บั๊ก</span></td>
+</tr>
+<tr>
+  <td class="b">roof_gutter_cover ลด 30%</td>
+  <td>ชื่อแสดง "ลด 50%" แต่โค้ดจริง ×0.70 (ลด 30%) → พี่นัทเคาะ: แก้ชื่อเป็น "ลด 30%" (สูตรถูกแล้ว)</td>
+  <td><span class="badge warn">ขัดแย้ง</span></td>
+</tr>
+<tr>
+  <td class="b">sealer (วัสดุปิดรอยต่อ)</td>
+  <td>v6: max(5,000, 800×ยาว) — คิดเงินแล้ว · เดิม v5: cosmetic (฿0)</td>
+  <td><span class="badge new">เปลี่ยนใหม่</span></td>
+</tr>
+<tr>
+  <td class="b">เมทัล/ชินโค min ใหม่</td>
+  <td>เดิม min:0 → ตอนนี้ตั้งขั้นต่ำตามมติพี่นัท (ดูตารางส่วน 1.2–1.3) ยืนยันก่อน dev ลงจริง</td>
+  <td><span class="badge new">รอยืนยัน dev</span></td>
+</tr>
+<tr>
+  <td class="b">ผนังเบา (wall_ext/int/isowall)</td>
+  <td>ตัดออกจาก G3 แล้ว ย้ายไป G1</td>
+  <td><span class="badge warn">ตัดแล้ว</span></td>
+</tr>
+<tr>
+  <td class="b">IMP20 ใช้เรต IMP19</td>
+  <td>imp20 → RATES['IMP20'] = RATES['IMP19'] (ตั้งใจ)</td>
+  <td><span class="badge free">ตั้งใจ</span></td>
+</tr>
+</table>
+</div>
+
+<div class="foot">
+เรตยืนยันจาก RATES ใน DRAFT-G3-ux-FULL-v6-2026-06-14.html + REF-G3-pricing-data-2026-06-14.md ·
+ขั้นต่ำเมทัล/ชินโค + sealer = มติพี่นัท รอยืนยันก่อน dev ลงระบบจริง (index.html) ·
+ราคาทั้งหมดยังไม่รวม VAT
+</div>
+</body></html>
