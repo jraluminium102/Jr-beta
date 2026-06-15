@@ -172,7 +172,7 @@ export default function ProductionPage() {
                       const n = daysSinceDeposit(r.job?.deposit_date);
                       return (
                         <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>
-                          มัดจำ: {thDate(r.job.deposit_date)}{n !== null ? <span className="ml-1 opacity-70">(รอ {n} วัน)</span> : null}
+                          มัดจำ: {thDate(r.job.deposit_date)}{n !== null ? <span className="ml-1 opacity-70">{n >= 0 ? `(รอ ${n} วัน)` : `(อีก ${-n} วัน)`}</span> : null}
                         </span>
                       );
                     })()}
