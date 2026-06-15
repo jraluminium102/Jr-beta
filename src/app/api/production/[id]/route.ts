@@ -5,6 +5,14 @@ import { ok, err } from "@/lib/bff/response";
 
 type Params = { params: { id: string } };
 
+// "" → null เพื่อกัน empty string ลง date/uuid columns แล้ว Postgres cast พัง
+// (เลียนแบบ src/app/api/queue/route.ts)
+function clean(o: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(o).map(([k, v]) => [k, v === "" ? null : v])
+  );
+}
+
 // ลำดับ happy-path (ห้ามข้าม/ถอยหลัง)
 const PROD_FLOW = ["PENDING_MEASURE","MEASURED","PENDING_MEETING","REVISING","PENDING_CONFIRM","QUEUED","MANUFACTURING","QC","READY"] as const;
 type ProdFlowStatus = typeof PROD_FLOW[number];
@@ -34,7 +42,7 @@ const schema = z.object({
 
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requirePermission("production", "write");
-  const body = schema.parse(await req.json());
+  const body = schema.parse(clean(await req.json()));
 
   // Guard: ห้ามข้ามขั้น / ห้าม rollback จาก READY
   if (body.status && body.status !== "ISSUE") {
