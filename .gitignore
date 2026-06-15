@@ -29,3 +29,4 @@ scripts/seedgen.mjs
 # ข้อมูลลูกค้าจริง (PII) — ห้าม commit ขึ้น git
 supabase/scripts/import-customers.sql
 supabase/scripts/wipe-customer-data.sql
+public/review/
