@@ -6,7 +6,7 @@ import { PROD_STATUS, INST_STATUS } from "@/lib/constants";
 import { baht, thDate } from "@/lib/format";
 import { calcFinancials } from "@/lib/finance";
 import { Chip, Tag, Spinner } from "@/components/ui/primitives";
-import { X, ShieldCheck, TriangleAlert } from "@/components/ui/icons";
+import { X, ShieldCheck, TriangleAlert, Banknote } from "@/components/ui/icons";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
 import { QcPanel } from "@/components/jobs/QcPanel";
@@ -26,6 +26,7 @@ type Detail = Job & {
 export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = false, onClose, onChanged }: { jobId: string; canFinance: boolean; canWriteProd?: boolean; readOnly?: boolean; onClose: () => void; onChanged: () => void }) {
   const [tab, setTab] = useState<"overview" | "production" | "materials" | "installation" | "finance" | "documents">("overview");
   const [depOpen, setDepOpen] = useState(false);
+  const [depAmtOpen, setDepAmtOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const issuePhase: IssuePhase = tab === "production" ? "PRODUCTION" : tab === "installation" ? "INSTALLATION" : "SALES";
 
@@ -146,6 +147,28 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                       </div>
                     </div>
                   )}
+                  {/* มัดจำเบา: status=DEPOSITED แต่ deposit_amount ยังไม่ได้ใส่ → แสดงแถบแจ้งเตือน + ปุ่มใส่ยอด */}
+                  {canFinance && job.status === "DEPOSITED" && job.deposit_amount == null && !depAmtOpen && (
+                    <div className="mt-3 flex items-center justify-between gap-3 bg-amber-500/15 border border-amber-300/25 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Banknote size={16} className="text-amber-200 shrink-0" />
+                        <span className="text-[13px] text-amber-100">มัดจำแล้ว · ยังไม่ใส่ยอด</span>
+                      </div>
+                      <button
+                        onClick={() => setDepAmtOpen(true)}
+                        className="focusable pressable shrink-0 text-[12px] bg-amber-500/30 border border-amber-300/30 text-amber-100 rounded-lg px-3 py-1.5 min-h-[36px] hover:bg-amber-500/40"
+                      >
+                        ใส่ยอดมัดจำ
+                      </button>
+                    </div>
+                  )}
+                  {depAmtOpen && (
+                    <DepositAmountForm
+                      jobId={jobId}
+                      onDone={() => { setDepAmtOpen(false); refetch(); onChanged(); }}
+                      onCancel={() => setDepAmtOpen(false)}
+                    />
+                  )}
                   {depOpen && <DepositForm jobId={jobId} onDone={() => { setDepOpen(false); refetch(); onChanged(); }} onCancel={() => setDepOpen(false)} />}
                 </div>
               )}
@@ -253,6 +276,105 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
       <div className="flex gap-2 mt-3">
         <button onClick={onCancel} className="focusable pressable flex-1 glass-card text-white rounded-lg px-3 py-2 text-sm min-h-[40px]">ยกเลิก</button>
         <button onClick={save} disabled={saving || !amount} className="focusable pressable flex-1 bg-emerald-500/90 hover:bg-emerald-500 text-white rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px]">ยืนยันมัดจำ</button>
+      </div>
+    </div>
+  );
+}
+
+// ── ฟอร์มใส่ยอดมัดจำย้อนหลัง (มัดจำเบา: status=DEPOSITED แต่ deposit_amount=null) ──
+// POST /api/jobs/[id]/deposit-amount → อัปเดต jobs + สร้าง finance_entry (DEPOSIT)
+function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () => void; onCancel: () => void }) {
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [method, setMethod] = useState<"TRANSFER" | "CASH" | "CHEQUE">("TRANSFER");
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setErrMsg(null);
+    const amt = Number(amount);
+    if (!amt || amt <= 0 || !Number.isInteger(amt)) {
+      setErrMsg("ระบุยอดมัดจำเป็นจำนวนเต็มบวก (บาท)");
+      return;
+    }
+    if (!date) { setErrMsg("ระบุวันมัดจำ"); return; }
+    setSaving(true);
+    try {
+      await api.post(`/jobs/${jobId}/deposit-amount`, { amount: amt, date, method });
+      onDone();
+    } catch (e) {
+      setErrMsg(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const methodOptions: { value: "TRANSFER" | "CASH" | "CHEQUE"; label: string }[] = [
+    { value: "TRANSFER", label: "โอนเงิน" },
+    { value: "CASH", label: "เงินสด" },
+    { value: "CHEQUE", label: "เช็ค" },
+  ];
+
+  return (
+    <div className="mt-3 glass-card rounded-xl p-4">
+      <div className="text-sm font-semibold text-white mb-0.5">ใส่ยอดมัดจำ</div>
+      <p className="text-[11px] mb-3" style={{ color: "var(--t-low)" }}>บันทึกยอด + สร้างรายการการเงิน (DEPOSIT) อัตโนมัติ</p>
+      <div className="space-y-3">
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (฿) <span className="text-rose-300">*</span></label>
+          <input
+            inputMode="numeric"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="เช่น 5000"
+            className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] placeholder-white/40"
+          />
+        </div>
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันมัดจำ <span className="text-rose-300">*</span></label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] [&::-webkit-calendar-picker-indicator]:invert"
+          />
+        </div>
+        <div>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วิธีชำระ</label>
+          <div className="flex gap-2">
+            {methodOptions.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setMethod(o.value)}
+                className={`focusable pressable flex-1 rounded-lg px-2 py-2 text-[12px] font-medium min-h-[40px] border transition-colors ${
+                  method === o.value
+                    ? "bg-white/20 border-white/40 text-white"
+                    : "bg-transparent border-white/15 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {errMsg && <p role="alert" className="mt-2.5 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{errMsg}</p>}
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={onCancel}
+          className="focusable pressable flex-1 glass-card text-white rounded-lg px-3 py-2 text-sm min-h-[40px]"
+        >
+          ยกเลิก
+        </button>
+        <button
+          onClick={save}
+          disabled={saving || !amount}
+          className="focusable pressable flex-1 bg-amber-500/90 hover:bg-amber-500 text-white rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px] flex items-center justify-center gap-2"
+        >
+          {saving && <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
+          บันทึกยอดมัดจำ
+        </button>
       </div>
     </div>
   );
