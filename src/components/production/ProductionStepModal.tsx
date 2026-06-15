@@ -221,6 +221,9 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
   // (glass ancestor มี backdrop-filter → สร้าง stacking context ทำให้ fixed ถูก contain)
   if (typeof document === "undefined") return null;
   return createPortal(
+    // ครอบ app-bg: ให้ ".app-bg .glass" (กระจกมืดโซน OMS) มีผล — portal ไป body หลุด scope
+    // ทำให้ .glass กลายเป็นพื้นขาว + text-white = อ่านไม่ออก · background โปร่งใสกัน gradient แดงทับ scrim
+    <div className="app-bg" style={{ background: "transparent", minHeight: 0 }}>
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`อัปเดตงาน ${prod.job?.job_code}`}>
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
       <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] overflow-y-auto">
@@ -501,6 +504,7 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
           </>
         )}
       </div>
+    </div>
     </div>,
     document.body,
   );
