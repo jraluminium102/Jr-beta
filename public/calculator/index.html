@@ -2549,7 +2549,7 @@ function famSelectorHTML(p,grp,famOther){
 function prodsInGroup(g){ var s=document.createElement('select'); s.innerHTML=prodOptionsG6(String(g));
   return [].map.call(s.querySelectorAll('option'),function(o){return PBYID[o.value];}).filter(Boolean); }
 // cat ที่เป็น "ออปชั่น/อุปกรณ์เสริม" ไม่ใช่ชนิดบาน — ห้ามโผล่ในปุ่มเลือกบาน "บานอื่นๆ ที่เหลือ" (ตามดราฟ: ครอบวงกบ=o-fcsides · คาดตาราง=o-gridmark เป็นออปชั่นบนบานอยู่แล้ว)
-var NON_BANA_REST_CATS=['เสริม','เส้นคาด'];
+var NON_BANA_REST_CATS=['เสริม','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'];
 function famRestCats(grp){ var main=FAM_CATS[grp]||[]; var seen={}, rest=[];
   prodsInGroup(grp).forEach(function(q){ if(q && main.indexOf(q.cat)<0 && NON_BANA_REST_CATS.indexOf(q.cat)<0 && !seen[q.cat]){ seen[q.cat]=1; rest.push(q.cat); } });
   return rest; }
@@ -3029,6 +3029,13 @@ function buildItemOpts(d){
     h+='<label class="opt">เส้นตั้ง <input type="number" class="o-gm-nv" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
     h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
     h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='</span>';
+    // ลูกฟูก/คอมโพ ล่าง (เสริมกระจก) — ใส่กลับ G1 ตามดราฟ (มติพี่นัท 2026-06-15 · เหมือน G6) · classes เดิม reconnect calcUnit L1552/readItem L3573
+    h+='<label class="opt">แผ่นทึบล่าง (ลูกฟูก/คอมโพ) <select class="o-solidlower" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-sl-wrap\'); if(w)w.style.display=this.value?\'flex\':\'none\'; calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก 3,500/ตร.ม.</option><option value="composite">คอมโพสิท 3,300/ตร.ม.</option></select></label>';
+    h+='<span class="o-sl-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
+    h+='<label class="opt">กว้าง <input type="number" class="o-sl-w" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
+    h+='<label class="opt">สูง <input type="number" class="o-sl-h" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
+    h+='<label class="opt">สีลูกฟูก <input type="number" class="o-sl-color" step="100" min="0" value="0" style="width:70px;height:30px;" oninput="calcQuote()"><span class="u">+/ตร.ม.</span></label>';
     h+='</span>';
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
