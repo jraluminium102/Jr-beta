@@ -15,6 +15,12 @@ type Row = ProdRow & {
   producer_note: string | null;
 };
 
+// จำนวนวันนับจาก deposit_date ถึงวันนี้ (วัดความด่วน)
+function daysSinceDeposit(depositDate: string | null | undefined): number | null {
+  if (!depositDate) return null;
+  return Math.floor((Date.now() - new Date(depositDate).getTime()) / 86400000);
+}
+
 function BoqBadge({ boq }: { boq: BoqSummary | null }) {
   if (!boq) return (
     <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-300/25 text-amber-200">
@@ -162,6 +168,14 @@ export default function ProductionPage() {
                     <BoqBadge boq={r.boq_summary} />
                     {r.production_queued && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
                     {r.production_done && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>เสร็จ: {thDate(r.production_done)}</span>}
+                    {r.job?.deposit_date && (() => {
+                      const n = daysSinceDeposit(r.job?.deposit_date);
+                      return (
+                        <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>
+                          มัดจำ: {thDate(r.job.deposit_date)}{n !== null ? <span className="ml-1 opacity-70">(รอ {n} วัน)</span> : null}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <span className="shrink-0 inline-flex items-center gap-1 bg-white/90 text-[#1F4E78] rounded-xl px-3 py-2.5 text-sm font-semibold min-h-[44px]">อัปเดต <ChevronRight size={16} /></span>

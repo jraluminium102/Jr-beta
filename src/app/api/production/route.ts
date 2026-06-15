@@ -9,7 +9,7 @@ export const GET = withRoute(async () => {
   const { data, error } = await ctx.supabase
     .from("productions")
     .select(`id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_time, measurer_id, measurer_name, production_queued, production_done, qc_result, qc_date, qc_note, producer_note, notes,
-      job:job_id(job_code, customer_name, customer_area, status,
+      job:job_id(job_code, customer_name, customer_area, status, deposit_date,
         boqs(id, status, boq_items(id))
       )`)
     .order("created_at", { ascending: false });

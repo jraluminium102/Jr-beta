@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
@@ -20,7 +21,7 @@ export type ProdRow = {
   production_queued: string | null; production_done: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
-  job: { job_code: string; customer_name: string; customer_area: string | null } | null;
+  job: { job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null } | null;
   boq_summary: BoqSummary | null;
 };
 
@@ -139,6 +140,13 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
+  // ล็อก body scroll ขณะโมดอลเปิด
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const patch = async (body: Record<string, unknown>) => {
     setErr(null); setSaving(true);
     try { await api.patch(`/production/${prod.id}`, body); onSaved(); }
@@ -209,7 +217,10 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 
   const big = "min-h-[54px] rounded-2xl text-base font-semibold";
 
-  return (
+  // Portal ออก document.body เพื่อให้ fixed inset-0 อ้างอิง viewport จริง
+  // (glass ancestor มี backdrop-filter → สร้าง stacking context ทำให้ fixed ถูก contain)
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`อัปเดตงาน ${prod.job?.job_code}`}>
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
       <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] overflow-y-auto">
@@ -490,6 +501,7 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
