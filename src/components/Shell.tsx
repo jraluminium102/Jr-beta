@@ -27,17 +27,18 @@ const DOC_NAV: NavItem[] = [
 
 // กลุ่มปฏิบัติงาน (ฝั่ง OMS) — กรองตาม role ผ่าน menusFor()
 const OMS_NAV: Record<string, NavItem> = {
-  dashboard:    { href: "/operations", icon: "dashboard", label: "ภาพรวมงาน" },
-  followup:     { href: "/follow-up", icon: "track", label: "ติดตามงาน" },
-  production:   { href: "/production", icon: "factory", label: "ผลิต" },
-  prodqueue:    { href: "/production-schedule", icon: "calendar", label: "ตารางผลิต (ช่าง)" },
-  designer:     { href: "/designer", icon: "ruler", label: "งานเขียนแบบ" },
-  installation: { href: "/installation", icon: "wrench", label: "ติดตั้ง" },
-  issues:       { href: "/issues", icon: "warn", label: "ปัญหางาน (Track)" },
-  sales_closure:{ href: "/sales-closure", icon: "track", label: "รอปิดการขาย" },
-  boq:          { href: "/boq", icon: "clipboard", label: "BOQ ตัดอลู" },
-  finance:      { href: "/finance", icon: "banknote", label: "การเงิน" },
-  settings:     { href: "/settings", icon: "gear", label: "ตั้งค่า" },
+  dashboard:       { href: "/operations", icon: "dashboard", label: "ภาพรวมงาน" },
+  followup:        { href: "/follow-up", icon: "track", label: "ติดตามงาน" },
+  production:      { href: "/production", icon: "factory", label: "ผลิต" },
+  prodqueue:       { href: "/production-schedule", icon: "calendar", label: "ตารางผลิต (ช่าง)" },
+  measure_schedule:{ href: "/measure-schedule", icon: "ruler", label: "นัดวัดจริง" },
+  designer:        { href: "/designer", icon: "ruler", label: "งานเขียนแบบ" },
+  installation:    { href: "/installation", icon: "wrench", label: "ติดตั้ง" },
+  issues:          { href: "/issues", icon: "warn", label: "ปัญหางาน (Track)" },
+  sales_closure:   { href: "/sales-closure", icon: "track", label: "รอปิดการขาย" },
+  boq:             { href: "/boq", icon: "clipboard", label: "BOQ ตัดอลู" },
+  finance:         { href: "/finance", icon: "banknote", label: "การเงิน" },
+  settings:        { href: "/settings", icon: "gear", label: "ตั้งค่า" },
 };
 
 function NavLink({ n, active, onNav }: { n: NavItem; active: boolean; onNav?: () => void }) {

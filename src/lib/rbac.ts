@@ -56,10 +56,11 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 }
 
 export function menusFor(role: Role): string[] {
-  const all = ["dashboard", "followup", "production", "prodqueue", "designer", "installation", "issues", "sales_closure", "boq", "finance", "settings"];
+  const all = ["dashboard", "followup", "production", "prodqueue", "measure_schedule", "designer", "installation", "issues", "sales_closure", "boq", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", production: "production",
     prodqueue: "production",
+    measure_schedule: "production",
     designer: "designer", installation: "installation", issues: "issues",
     sales_closure: "sales_closure", boq: "boq",
     finance: "finance", settings: "settings",

@@ -7,6 +7,8 @@ import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
 import type { ProdStatus } from "@/lib/database.types";
 
+type Measurer = { id: string; full_name: string };
+
 export type BoqSummary = {
   id: number;
   status: "draft" | "confirmed" | "ordered";
@@ -16,6 +18,7 @@ export type BoqSummary = {
 export type ProdRow = {
   id: string; job_id: string; status: ProdStatus;
   measure_scheduled: string | null; measure_actual: string | null; planned_install_date: string | null;
+  measure_time: string | null; measurer_id: string | null;
   production_queued: string | null; production_done: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
@@ -121,6 +124,9 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
 
   // นัดวัด (เฉพาะตอน PENDING_MEASURE) — บันทึกได้โดยไม่เลื่อนสถานะ
   const [sched, setSched] = useState(prod.measure_scheduled ?? today());
+  const [schedTime, setSchedTime] = useState(prod.measure_time ?? "");
+  const [measurerId, setMeasurerId] = useState(prod.measurer_id ?? "");
+  const [measurers, setMeasurers] = useState<Measurer[]>([]);
   // วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น (ลูกค้ารู้ตั้งแต่ก่อนมัดจำ) ใช้วางเดดไลน์
   const [installDate, setInstallDate] = useState(prod.planned_install_date ?? "");
 
@@ -135,6 +141,12 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
+
+  // โหลดรายชื่อช่างวัด (เฉพาะตอน PENDING_MEASURE)
+  useEffect(() => {
+    if (prod.status !== "PENDING_MEASURE") return;
+    api.get<Measurer[]>("/measurers").then((r) => setMeasurers(r.data ?? [])).catch(() => {/* graceful */});
+  }, [prod.status]);
 
   const patch = async (body: Record<string, unknown>) => {
     setErr(null); setSaving(true);
@@ -231,15 +243,51 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
           <>
             {/* นัดวัดล่วงหน้า (เฉพาะรอวัด) — บันทึกได้โดยงานยังอยู่ "รอวัด" */}
             {prod.status === "PENDING_MEASURE" && (
-              <div className="mt-4 glass-card rounded-2xl p-4 border border-sky-300/20">
-                <label className="block text-[13px] mb-1.5 font-medium text-sky-100">นัดวัดหน้างานวันที่ (จองคิวล่วงหน้าได้)</label>
+              <div className="mt-4 glass-card rounded-2xl p-4 border border-sky-300/20 space-y-3">
+                <div className="text-[13px] font-semibold text-sky-100">นัดวัดหน้างาน (จองคิวล่วงหน้าได้)</div>
+
+                {/* วันที่ + เวลา */}
                 <div className="flex gap-2">
-                  <input type="date" value={sched} onChange={e => setSched(e.target.value)} aria-label="วันนัดวัด"
-                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
-                  <button onClick={() => patch({ measure_scheduled: sched })} disabled={saving}
-                    className="focusable pressable px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold min-h-[52px] disabled:opacity-60">บันทึกนัด</button>
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>วันที่</label>
+                    <input type="date" value={sched} onChange={e => setSched(e.target.value)} aria-label="วันนัดวัด"
+                      className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none tnum min-h-[48px] [&::-webkit-calendar-picker-indicator]:invert" />
+                  </div>
+                  <div className="w-32 shrink-0">
+                    <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลา</label>
+                    <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} aria-label="เวลานัดวัด"
+                      className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none tnum min-h-[48px] [&::-webkit-calendar-picker-indicator]:invert" />
+                  </div>
                 </div>
-                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ยังอยู่ขั้น "รอวัด" — กดปุ่มเขียวด้านล่างเมื่อวัดจริงเสร็จแล้ว</p>
+
+                {/* ช่างที่วัด */}
+                <div>
+                  <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ช่างที่วัด</label>
+                  <select
+                    value={measurerId}
+                    onChange={e => setMeasurerId(e.target.value)}
+                    aria-label="ช่างที่วัด"
+                    className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px] bg-transparent"
+                  >
+                    <option value="">— ยังไม่ระบุช่าง —</option>
+                    {measurers.map((m) => (
+                      <option key={m.id} value={m.id}>{m.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => patch({
+                    measure_scheduled: sched,
+                    measure_time: schedTime || null,
+                    measurer_id: measurerId || null,
+                  })}
+                  disabled={saving}
+                  className="focusable pressable w-full px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold min-h-[48px] disabled:opacity-60"
+                >
+                  บันทึกนัดวัด
+                </button>
+                <p className="text-[11px]" style={{ color: "var(--t-low)" }}>ยังอยู่ขั้น "รอวัด" — กดปุ่มเขียวด้านล่างเมื่อวัดจริงเสร็จแล้ว</p>
               </div>
             )}
 
@@ -424,7 +472,9 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
             {/* ประวัติการทำงาน */}
             {(prod.measure_scheduled || prod.measure_actual || prod.planned_install_date || prod.production_queued || prod.production_done || prod.qc_result) && (
               <div className="mt-4 text-[12px] space-y-1" style={{ color: "var(--t-low)" }}>
-                {prod.measure_scheduled && <div>นัดวัด: <span className="tnum text-white/80">{thDate(prod.measure_scheduled)}</span></div>}
+                {prod.measure_scheduled && (
+                  <div>นัดวัด: <span className="tnum text-white/80">{thDate(prod.measure_scheduled)}{prod.measure_time ? ` เวลา ${prod.measure_time.slice(0, 5)}` : ""}</span></div>
+                )}
                 {prod.measure_actual   && <div>วัดจริง: <span className="tnum text-white/80">{thDate(prod.measure_actual)}</span></div>}
                 {prod.planned_install_date && <div>นัดติดตั้ง: <span className="tnum text-white/80">{thDate(prod.planned_install_date)}</span></div>}
                 {prod.production_queued && <div>เริ่มผลิต: <span className="tnum text-white/80">{thDate(prod.production_queued)}</span></div>}
