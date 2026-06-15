@@ -3381,6 +3381,7 @@ function readItem(d){
     var _rt=window.g6rRoomTotal(d);
     var _rlines=window.g6rRoomSummary?window.g6rRoomSummary(d):[];
     var _rbreak=_rlines.map(function(l){ return l[0]+' = '+Math.round(l[1]).toLocaleString(); }).join('\n'); // breakdown ด้าน A/B/หลังคา/ไฟ ลงใบ
+    var _rdetail=(window.g6rRoomDetail&&window.g6rRoomDetail(d))||_rbreak; // แตกรายบาน (ชนิด/ขนาด/ออปชั่น) เหมือนเก่า
     var _userNote=(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'';
     return { p:{name:'ห้องต่อเติม (กั้นห้องกระจก)', cat:'กั้นห้องกระจก'},
       r:{a:0, sell:_rt, cost:0, addonLines:[], msgs:[], addonLabel:''},
@@ -3388,7 +3389,7 @@ function readItem(d){
       w:'', h:'', name:'ห้องต่อเติม', ship:false, itype:'door',
       groupName:'', groupLabel:'', groupOptText:'', groupOptDelta:0,
       itemOptDelta:0, lumpsum:true, position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
-      note:[_rbreak,_userNote].filter(Boolean).join('\n'),
+      note:[_rdetail,_userNote].filter(Boolean).join('\n'),
       room:true, roomLines:_rlines, div:d };
   }
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
@@ -5183,6 +5184,43 @@ window.addEventListener('load',ckRefresh);
     if(!itemEl.__g6hook){ itemEl.__g6hook=1; ['click','input','change'].forEach(function(ev){ itemEl.addEventListener(ev,function(){ var m=itemEl.querySelector('.g6r-mount'); if(itemEl.__g6state && m){ G6R=itemEl.__g6state; G6MOUNT=m; G6BOUND=onChange||null; } },true); }); }
     render(); };
   window.g6rRoomTotal=function(itemEl){ if(!itemEl||!itemEl.__g6state)return 0; var sv=G6R; G6R=itemEl.__g6state; var t=roomTotal(); G6R=sv; return t; };
+  // สรุปออปชั่นย่อต่อบาน (ลงรายละเอียดในใบเสนอราคา)
+  function g6rPcOpts(pc){ var o=pc.opt||{}; var t=[];
+    if(o.thresh==='turtle')t.push('ธรณีหลังเต่า');
+    if(o.threshf==='inner')t.push('ธรณีภายใน');
+    if(o.folddir&&o.folddir!=='เปิดขวา')t.push(o.folddir);
+    if(o.closer>0)t.push('โช๊คอัพ');
+    if(o.awn_mode==='2')t.push('Tilt&Turn');
+    if(o.motor)t.push('มอเตอร์ '+o.motor+'กก.');
+    if(o.track==='ซ่อนราง')t.push('ซ่อนราง');
+    if(o.mosq)t.push('มุ้ง'+g6rMosqName(o.mosqId||'mj_sd_basic').replace(/^มุ้ง/,''));
+    if(o.gridmark)t.push('คาดตาราง');
+    if(o.solidlower)t.push(o.solidlower==='composite'?'แผ่นคอมโพล่าง':'แผ่นลูกฟูกล่าง');
+    if(o.fcsides>0)t.push('ครอบวงกบ '+o.fcsides+' ด้าน');
+    if(o.dfOn&&o.dfm>0)t.push('ดรอปพื้น '+o.dfm+' ม.');
+    if(o.fullgrid)t.push('ตารางเต็มบาน');
+    if(o.insul)t.push('ฉนวน');
+    if(o.paintOn)t.push('ทาสีผนัง');
+    try{ if(o.digi!=null&&o.digi!==''&&DIGI[o.digi])t.push('มือจับดิจิตอล '+DIGI[o.digi].n); }catch(e){}
+    try{ if(o.stainless!=null&&o.stainless!==''&&HANDLE_STAINLESS[o.stainless])t.push('มือจับสแตนเลส '+HANDLE_STAINLESS[o.stainless].n); }catch(e){}
+    if(o.handleprice>0)t.push('มือจับ '+(o.handlename||'พิเศษ'));
+    if(o.cmech)t.push('มือจับ Cmech');
+    if(o.slidelock==='ไม่มีกุญแจ')t.push('ล็อกไม่มีกุญแจ');
+    if(o.qty>1)t.push('จำนวน '+o.qty+' บาน');
+    return t; }
+  // รายละเอียดเต็มต่อบาน (ด้าน → ชนิด/ขนาด/ออปชั่น) ลงใบเสนอราคา — แตกรายการเหมือนเก่า
+  window.g6rRoomDetail=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
+    G6R.sides.forEach(function(s,i){
+      if(s.type==='glass'){ var nb=s.cols.reduce(function(a,c){return a+c.pcs.length;},0);
+        out.push('ด้าน '+L(i)+' ('+s.cols.length+' ช่อง · '+nb+' บาน) = '+Math.round(sideTotal(s)).toLocaleString());
+        s.cols.forEach(function(c){ c.pcs.forEach(function(pc){ var op=g6rPcOpts(pc);
+          var _cat=pc.cat||'', _nm=g6ModelName(pc.id); var _lbl=(_cat&&_cat!=='ติดตาย'&&_nm.indexOf(_cat)<0)?(_cat+' '+_nm):_nm; // ใส่ชนิดบานนำหน้ารุ่น กัน "ยูโร" ซ้ำ (บานเปิด/บานเลื่อน)
+          out.push('• '+_lbl+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?' · '+op.join(', '):'')); }); });
+      } else if(s.type==='wall'){ out.push('ด้าน '+L(i)+' · ผนังเบา ('+(s.aw||3)+'×'+(s.ah||2.6)+' ม.) = '+Math.round(sideTotal(s)).toLocaleString()); }
+    });
+    var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')):''; out.push('หลังคา/ฝ้า'+rn+' ('+(R.w||1)+'×'+(R.l||1)+' ม.) = '+Math.round(rf).toLocaleString()); }
+    var el=elecTotalReal(); if(el>0){ var E=G6R.elec; out.push('งานไฟ'+(E.down?' · ดาวน์ไลท์ '+E.down+' ดวง':'')+(E.sw?' · สวิตช์ '+E.sw+' จุด':'')+' = '+Math.round(el).toLocaleString()); }
+    G6R=sv; return out.join('\n'); };
   window.g6rRoomSummary=function(itemEl){ if(!itemEl||!itemEl.__g6state)return []; var sv=G6R; G6R=itemEl.__g6state; var lines=[];
     G6R.sides.forEach(function(s,i){ var pr=sideTotal(s); if(pr>0||s.type!=='open'){ var desc=s.type==='glass'?(s.cols.length+' ช่อง · '+s.cols.reduce(function(a,c){return a+c.pcs.length;},0)+' บาน'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); lines.push(['ด้าน '+L(i)+' · '+desc, pr]); } });
     if(roofTotalReal()>0)lines.push(['หลังคา/ฝ้า', roofTotalReal()]);
