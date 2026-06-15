@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 // Stages that represent the quoting/negotiation window (5=ทำใบเสนอราคา, 6=เจรจาราคา, 7=ส่งใบเสนอให้ลูกค้า)
 const CLOSURE_STAGES = [5, 6, 7] as const;
+// Statuses that mean the job has moved past deposit — exclude from closure view
+const POST_DEPOSIT_STATUSES = ["DEPOSITED", "IN_PRODUCTION", "INSTALLING", "COMPLETED", "CANCELLED"] as const;
 
 // Shape of each row returned to the client
 export type ClosureRow = {
@@ -36,7 +38,9 @@ export const GET = withRoute(async () => {
   const ctx = await requirePermission("sales_closure", "read");
   const sb = ctx.supabase as { from: (t: string) => any };
 
-  // Fetch jobs at closure stages with their latest linked quotation
+  // Fetch jobs at closure stages OR with quote_sent_date set (safety net for stage drift)
+  // PostgREST or(): current_stage in (5,6,7) OR quote_sent_date is not null
+  // Then exclude post-deposit statuses in JS (DEPOSITED/IN_PRODUCTION/INSTALLING/COMPLETED/CANCELLED)
   const { data: jobs, error } = await sb
     .from("jobs")
     .select(
@@ -55,8 +59,8 @@ export const GET = withRoute(async () => {
         "quotations!quotations_job_id_fkey(id, code, net, created_at)",
       ].join(",")
     )
-    .in("current_stage", CLOSURE_STAGES)
-    .neq("status", "CANCELLED")
+    .or(`current_stage.in.(${CLOSURE_STAGES.join(",")}),quote_sent_date.not.is.null`)
+    .not("status", "in", `(${POST_DEPOSIT_STATUSES.join(",")})`)
     .order("year", { ascending: false })
     .order("sequence", { ascending: false });
 

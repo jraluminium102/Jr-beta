@@ -78,7 +78,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     // กันย้อนสถานะหลังมัดจำ → กัน ghost Production/Finance record
     const { data: current } = await ctx.supabase
       .from("jobs").select("status, estimator_id").eq("id", params.id).single();
-    const PRE_DEPOSIT = ["PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
+    const PRE_DEPOSIT = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
     if (current && ["DEPOSITED", "COMPLETED"].includes(current.status) && PRE_DEPOSIT.includes(payload.status)) {
       return err("ย้อนสถานะกลับก่อนมัดจำไม่ได้ (งานมี Production/บัญชีผูกอยู่แล้ว)", 409);
     }

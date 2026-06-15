@@ -57,7 +57,9 @@ export default function SalesClosurePage() {
   const total = rows.length;
   const stage5 = rows.filter((r) => r.current_stage === 5).length;
   const stage6 = rows.filter((r) => r.current_stage === 6).length;
-  const stage7 = rows.filter((r) => r.current_stage === 7).length;
+  // "ส่งใบเสนอแล้ว" ใช้ quote_sent_date เป็น single source of truth
+  // กันกรณี current_stage ยัง drift (trigger 0037 fix ไปแล้วแต่ safety net ไว้)
+  const sentQuote = rows.filter((r) => r.quote_sent_date != null).length;
   const withQuote = rows.filter((r) => r.quotation_id !== null).length;
 
   return (
@@ -75,7 +77,7 @@ export default function SalesClosurePage() {
         <StatCard label="ทั้งหมด" value={total} sub="งานรอปิด" />
         <StatCard label="ทำใบเสนอราคา" value={stage5} sub="ขั้น 5" accent="text-sky-300" />
         <StatCard label="เจรจาราคา" value={stage6} sub="ขั้น 6" accent="text-amber-300" />
-        <StatCard label="ส่งใบเสนอแล้ว" value={stage7} sub="ขั้น 7" accent="text-violet-300" />
+        <StatCard label="ส่งใบเสนอแล้ว" value={sentQuote} sub="มี quote_sent_date" accent="text-violet-300" />
       </div>
 
       {isLoading ? (
