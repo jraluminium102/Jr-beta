@@ -45,7 +45,8 @@ export interface Production {
   id: string; job_id: string; status: ProdStatus;
   planned_install_date: string | null; measure_scheduled: string | null; measure_actual: string | null;
   measure_time: string | null;  // (0039) เวลานัดวัด "HH:MM"
-  measurer_id: string | null; meeting_after_measure: string | null; design_revision_done: string | null;
+  measurer_id: string | null; measurer_name: string | null;  // (0040) ชื่อช่างวัดแบบข้อความ
+  meeting_after_measure: string | null; design_revision_done: string | null;
   quote_revision_done: string | null; customer_confirmed: string | null; production_queued: string | null;
   alum_order_date: string | null; glass_order_date: string | null; production_done: string | null;
   qc_result: QcResult | null; qc_date: string | null; qc_note: string | null;

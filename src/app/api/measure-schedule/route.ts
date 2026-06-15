@@ -19,6 +19,7 @@ export const GET = withRoute(async () => {
       measure_time,
       measure_actual,
       measurer_id,
+      measurer_name,
       job:job_id(job_code, customer_name, customer_area, customer_tel, status),
       measurer:measurer_id(full_name)
     `)
@@ -44,6 +45,8 @@ export const GET = withRoute(async () => {
     .map((p) => {
       const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string | null; customer_tel?: string | null } | null;
       const measurer = p.measurer as { full_name?: string | null } | null;
+      // ใช้ measurer_name (free-text 0040) เป็นหลัก — fallback ชื่อจาก profile
+      const displayMeasurerName = (p.measurer_name as string | null) ?? measurer?.full_name ?? null;
       return {
         production_id: p.id,
         job_id: p.job_id,
@@ -54,7 +57,7 @@ export const GET = withRoute(async () => {
         measure_scheduled: p.measure_scheduled,
         measure_time: p.measure_time ?? null,
         measure_actual: p.measure_actual ?? null,
-        measurer_name: measurer?.full_name ?? null,
+        measurer_name: displayMeasurerName,
         measurer_id: p.measurer_id,
         status: p.status,
         // สถานะเลยนัดแล้วยังไม่วัด

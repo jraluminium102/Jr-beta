@@ -7,8 +7,6 @@ import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
 import type { ProdStatus } from "@/lib/database.types";
 
-type Measurer = { id: string; full_name: string };
-
 export type BoqSummary = {
   id: number;
   status: "draft" | "confirmed" | "ordered";
@@ -18,7 +16,7 @@ export type BoqSummary = {
 export type ProdRow = {
   id: string; job_id: string; status: ProdStatus;
   measure_scheduled: string | null; measure_actual: string | null; planned_install_date: string | null;
-  measure_time: string | null; measurer_id: string | null;
+  measure_time: string | null; measurer_id: string | null; measurer_name: string | null;
   production_queued: string | null; production_done: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
@@ -125,8 +123,7 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
   // นัดวัด (เฉพาะตอน PENDING_MEASURE) — บันทึกได้โดยไม่เลื่อนสถานะ
   const [sched, setSched] = useState(prod.measure_scheduled ?? today());
   const [schedTime, setSchedTime] = useState(prod.measure_time ?? "");
-  const [measurerId, setMeasurerId] = useState(prod.measurer_id ?? "");
-  const [measurers, setMeasurers] = useState<Measurer[]>([]);
+  const [measurerName, setMeasurerName] = useState(prod.measurer_name ?? "");
   // วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น (ลูกค้ารู้ตั้งแต่ก่อนมัดจำ) ใช้วางเดดไลน์
   const [installDate, setInstallDate] = useState(prod.planned_install_date ?? "");
 
@@ -141,12 +138,6 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
-
-  // โหลดรายชื่อช่างวัด (เฉพาะตอน PENDING_MEASURE)
-  useEffect(() => {
-    if (prod.status !== "PENDING_MEASURE") return;
-    api.get<Measurer[]>("/measurers").then((r) => setMeasurers(r.data ?? [])).catch(() => {/* graceful */});
-  }, [prod.status]);
 
   const patch = async (body: Record<string, unknown>) => {
     setErr(null); setSaving(true);
@@ -260,27 +251,29 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
                   </div>
                 </div>
 
-                {/* ช่างที่วัด */}
+                {/* ช่างที่วัด (free-text — ช่างวัดไม่มี user account) */}
                 <div>
                   <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ช่างที่วัด</label>
-                  <select
-                    value={measurerId}
-                    onChange={e => setMeasurerId(e.target.value)}
+                  <input
+                    type="text"
+                    list="measurer-suggestions"
+                    value={measurerName}
+                    onChange={e => setMeasurerName(e.target.value)}
+                    placeholder="เช่น เป, เนียน"
                     aria-label="ช่างที่วัด"
-                    className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px] bg-transparent"
-                  >
-                    <option value="">— ยังไม่ระบุช่าง —</option>
-                    {measurers.map((m) => (
-                      <option key={m.id} value={m.id}>{m.full_name}</option>
-                    ))}
-                  </select>
+                    className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px] placeholder-white/35"
+                  />
+                  <datalist id="measurer-suggestions">
+                    <option value="เป" />
+                    <option value="เนียน" />
+                  </datalist>
                 </div>
 
                 <button
                   onClick={() => patch({
                     measure_scheduled: sched,
                     measure_time: schedTime || null,
-                    measurer_id: measurerId || null,
+                    measurer_name: measurerName || null,
                   })}
                   disabled={saving}
                   className="focusable pressable w-full px-4 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold min-h-[48px] disabled:opacity-60"
@@ -470,11 +463,12 @@ export function ProductionStepModal({ prod, canWrite, onClose, onSaved }: {
             ))}
 
             {/* ประวัติการทำงาน */}
-            {(prod.measure_scheduled || prod.measure_actual || prod.planned_install_date || prod.production_queued || prod.production_done || prod.qc_result) && (
+            {(prod.measure_scheduled || prod.measure_actual || prod.measurer_name || prod.planned_install_date || prod.production_queued || prod.production_done || prod.qc_result) && (
               <div className="mt-4 text-[12px] space-y-1" style={{ color: "var(--t-low)" }}>
                 {prod.measure_scheduled && (
                   <div>นัดวัด: <span className="tnum text-white/80">{thDate(prod.measure_scheduled)}{prod.measure_time ? ` เวลา ${prod.measure_time.slice(0, 5)}` : ""}</span></div>
                 )}
+                {prod.measurer_name && <div>ช่างวัด: <span className="text-white/80">{prod.measurer_name}</span></div>}
                 {prod.measure_actual   && <div>วัดจริง: <span className="tnum text-white/80">{thDate(prod.measure_actual)}</span></div>}
                 {prod.planned_install_date && <div>นัดติดตั้ง: <span className="tnum text-white/80">{thDate(prod.planned_install_date)}</span></div>}
                 {prod.production_queued && <div>เริ่มผลิต: <span className="tnum text-white/80">{thDate(prod.production_queued)}</span></div>}
