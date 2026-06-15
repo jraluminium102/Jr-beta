@@ -2361,13 +2361,14 @@ function g3SelectorHTML(p){
   }
   return h+'</div>';
 }
-// G5-G (HANDOFF-G5-FINAL จุดG): drill-down มุ้ง 3 หมวด (เฟรม/จีบ/ม้วน) · imp30→เฟรม · imp33/imp35 ไม่อยู่ในชิป (ซ่อนจากเมนู · เก็บ PRODUCTS/เรต) · ใช้ g3SyncProd/g3PickProd ร่วม
+// G5-G: drill-down มุ้ง 4 หมวด (เฟรม/จีบ/จีบม่านรังผึ้ง/ม้วน · มติพี่นัท 15 มิ.ย.) · imp30→เฟรม · จีบนิรภัย=mj_screen_safety ตัวเดียว · ซ่อนจากชิป: imp31/imp32/imp33/imp35 (เก็บ PRODUCTS/เรต · ใบเก่าเปิดได้) · ใช้ g3SyncProd/g3PickProd ร่วม
 var MOSQ_GRP_PRODS={
   frame:[['imp21','เฟรมเล็ก'],['imp22','เฟรมเล็กติดตาย'],['imp23','เฟรมใหญ่'],['imp30','แม่เหล็กพับ']],
-  pleat:[['imp28','ตีนตะขาบ'],['mj_sd_basic','SD พื้นฐาน'],['mj_sd_twoway','SD ทูเวย์'],['mj_keep_twoway','ตีนตะขาบ ทูเวย์'],['mj_keep_honey','ตีนตะขาบ รังผึ้ง'],['mj_blackout','Blackout'],['imp31','นิรภัย 0.8'],['imp32','นิรภัย เสริมวงกบ'],['mj_screen_safety','จีบนิรภัย']],
+  pleat:[['imp28','ตีนตะขาบ'],['mj_sd_basic','SD พื้นฐาน'],['mj_screen_safety','จีบนิรภัย (ติดล้นนอกวงกบ)']],
+  honey:[['mj_blackout','Blackout'],['mj_sd_twoway','SD ทูเวย์'],['mj_keep_twoway','ตีนตะขาบ ทูเวย์'],['mj_keep_honey','ตีนตะขาบ รังผึ้ง']],
   roll:[['imp29','ม้วน'],['mj_kick_150','เตะ 150'],['mj_kick_300','เตะ 300'],['mj_kick_600','เตะ 600']]
 };
-var MOSQ_GRP_LABEL={frame:'เฟรม',pleat:'จีบ',roll:'ม้วน'};
+var MOSQ_GRP_LABEL={frame:'เฟรม',pleat:'จีบ',honey:'จีบม่านรังผึ้ง',roll:'ม้วน'};
 function mosqGrpOf(id){ for(var g in MOSQ_GRP_PRODS){ if(MOSQ_GRP_PRODS[g].some(function(x){return x[0]===id;})) return g; } return null; }
 function mosqPickGrp(btn){ var first=(MOSQ_GRP_PRODS[btn.dataset.grp]||[])[0]; if(first) g3SyncProd(btn.closest('.ch'), first[0]); }
 function mosqSelectorHTML(p){
