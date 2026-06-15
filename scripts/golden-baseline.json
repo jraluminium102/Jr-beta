@@ -1,0 +1,1186 @@
+{
+ "meta": {
+  "at": "baseline",
+  "catalog": 147,
+  "captured": 146,
+  "skipped": 1
+ },
+ "rows": [
+  {
+   "key": "1:sliding_sms",
+   "id": "sliding_sms",
+   "name": "บานเลื่อน เซมิยูโร",
+   "g": 1,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "1:sliding_euro",
+   "id": "sliding_euro",
+   "name": "บานเลื่อน ยูโร",
+   "g": 1,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "1:sliding_eseries",
+   "id": "sliding_eseries",
+   "name": "บานเลื่อน E-series aluinch (ยกเลิกขาย)",
+   "g": 1,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_euro",
+   "id": "casement_euro",
+   "name": "บานเปิด ยูโร",
+   "g": 1,
+   "total": 24075,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_dseries",
+   "id": "casement_dseries",
+   "name": "บานเปิด D-series (ยกเลิกขาย)",
+   "g": 1,
+   "total": 28890,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_xseries",
+   "id": "casement_xseries",
+   "name": "บานเปิด X-series (ใช้ภายใน ไม่กันน้ำ)",
+   "g": 1,
+   "total": 32100,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_velora",
+   "id": "casement_velora",
+   "name": "บานเปิด Velora (รวมเทมเปอร์6มม.)",
+   "g": 1,
+   "total": 24610,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_flush_solid",
+   "id": "casement_flush_solid",
+   "name": "ประตูบานเปิด โซลิด ทู (ลูกฟูกเสมอกรอบ · แข็งแรงกว่า)",
+   "g": 1,
+   "total": 44940,
+   "status": "ok"
+  },
+  {
+   "key": "1:casement_inset_solid",
+   "id": "casement_inset_solid",
+   "name": "ประตูบานเปิด โซลิด วัน (ลูกฟูกกลางบาน)",
+   "g": 1,
+   "total": 34240,
+   "status": "ok"
+  },
+  {
+   "key": "1:fixed_glass",
+   "id": "fixed_glass",
+   "name": "กระจกติดตาย",
+   "g": 1,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "1:folding",
+   "id": "folding",
+   "name": "บานเฟี้ยม เซมิยูโร",
+   "g": 1,
+   "total": 28890,
+   "status": "ok"
+  },
+  {
+   "key": "1:folding_euro",
+   "id": "folding_euro",
+   "name": "บานเฟี้ยม ยูโร",
+   "g": 1,
+   "total": 28890,
+   "status": "ok"
+  },
+  {
+   "key": "1:folding_xseries",
+   "id": "folding_xseries",
+   "name": "บานเฟี้ยม X-series (ใช้ภายใน ไม่กันน้ำ)",
+   "g": 1,
+   "total": 38520,
+   "status": "ok"
+  },
+  {
+   "key": "1:awning_euro",
+   "id": "awning_euro",
+   "name": "บานกระทุ้ง ยูโร",
+   "g": 1,
+   "total": 24610,
+   "status": "ok"
+  },
+  {
+   "key": "1:awning_aluinch",
+   "id": "awning_aluinch",
+   "name": "บานกระทุ้ง aluinch (ยกเลิกขาย)",
+   "g": 1,
+   "total": 24610,
+   "status": "ok"
+  },
+  {
+   "key": "1:isowall",
+   "id": "isowall",
+   "name": "ISOWALL",
+   "g": 1,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "1:wall_ext",
+   "id": "wall_ext",
+   "name": "ผนังเบาภายนอก",
+   "g": 1,
+   "total": 14980,
+   "status": "ok"
+  },
+  {
+   "key": "1:wall_int",
+   "id": "wall_int",
+   "name": "ผนังเบาภายใน",
+   "g": 1,
+   "total": 14980,
+   "status": "ok"
+  },
+  {
+   "key": "1:inner_top_stack",
+   "id": "inner_top_stack",
+   "name": "เลื่อนภายในรางบน (ซ้อน)",
+   "g": 1,
+   "total": 20330,
+   "status": "ok"
+  },
+  {
+   "key": "1:inner_top_slimlux",
+   "id": "inner_top_slimlux",
+   "name": "เลื่อนภายในรางบน SlimLux (รวม soft close+สลิงลากเปิดพร้อมกัน+เทมเปอร์6มม.) (ใช้ภายใน ไม่กันน้ำ)",
+   "g": 1,
+   "total": 28890,
+   "status": "ok"
+  },
+  {
+   "key": "1:inner_top_xseries",
+   "id": "inner_top_xseries",
+   "name": "เลื่อนภายในรางบน X-series (เลื่อนซ้อน) (ใช้ภายใน ไม่กันน้ำ)",
+   "g": 1,
+   "total": 28890,
+   "status": "ok"
+  },
+  {
+   "key": "1:grid_bars",
+   "id": "grid_bars",
+   "name": "เส้นคาดตาราง",
+   "g": 1,
+   "total": 0,
+   "status": "ok"
+  },
+  {
+   "key": "1:rn89",
+   "id": "rn89",
+   "name": "ลูกฟูกเรียบ 1 ทาง ไม่โครง",
+   "g": 1,
+   "total": 11770,
+   "status": "ok"
+  },
+  {
+   "key": "1:rn90",
+   "id": "rn90",
+   "name": "ลูกฟูกเรียบ 2 ทาง ไม่โครง",
+   "g": 1,
+   "total": 11770,
+   "status": "ok"
+  },
+  {
+   "key": "1:rn91",
+   "id": "rn91",
+   "name": "คอมโพสิต 3 มม.",
+   "g": 1,
+   "total": 10700,
+   "status": "ok"
+  },
+  {
+   "key": "1:rn92",
+   "id": "rn92",
+   "name": "คอมโพสิต 4 มม.",
+   "g": 1,
+   "total": 12840,
+   "status": "ok"
+  },
+  {
+   "key": "1:pc_door_2",
+   "id": "pc_door_2",
+   "name": "PC Door 2 บาน",
+   "g": 1,
+   "total": 38520,
+   "status": "ok"
+  },
+  {
+   "key": "1:pc_door_4",
+   "id": "pc_door_4",
+   "name": "PC Door 4 บาน",
+   "g": 1,
+   "total": 49220,
+   "status": "ok"
+  },
+  {
+   "key": "1:frameless_fixed",
+   "id": "frameless_fixed",
+   "name": "บานเปลือยติดตาย",
+   "g": 1,
+   "total": 22470,
+   "status": "ok"
+  },
+  {
+   "key": "1:frameless_door",
+   "id": "frameless_door",
+   "name": "ประตูสวิง/เลื่อน บานเปลือย",
+   "g": 1,
+   "total": 31030,
+   "status": "ok"
+  },
+  {
+   "key": "1:shower",
+   "id": "shower",
+   "name": "shower กั้นห้องอาบน้ำ",
+   "g": 1,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "1:lift_sms",
+   "id": "lift_sms",
+   "name": "บานยก SMS",
+   "g": 1,
+   "total": 27820,
+   "status": "ok"
+  },
+  {
+   "key": "1:lift_aluinch",
+   "id": "lift_aluinch",
+   "name": "บานยก aluinch",
+   "g": 1,
+   "total": 27820,
+   "status": "ok"
+  },
+  {
+   "key": "1:ykk_vent",
+   "id": "ykk_vent",
+   "name": "ประตู Ventilation YKK",
+   "g": 1,
+   "total": 56710,
+   "status": "ok"
+  },
+  {
+   "key": "1:ykk_exhido",
+   "id": "ykk_exhido",
+   "name": "ประตู Exhido YKK (ช่องเปิดเต็ม)",
+   "g": 1,
+   "total": 128400,
+   "status": "ok"
+  },
+  {
+   "key": "1:tostem_a01",
+   "id": "tostem_a01",
+   "name": "Tostem Airflow A01 (ลายไม้ หน้าบ้าน)",
+   "g": 1,
+   "total": 56710,
+   "status": "ok"
+  },
+  {
+   "key": "1:pivot",
+   "id": "pivot",
+   "name": "บานหมุนเมืองทอง",
+   "g": 1,
+   "total": 41730,
+   "status": "ok"
+  },
+  {
+   "key": "1:pivot_aluinch",
+   "id": "pivot_aluinch",
+   "name": "บานหมุน aluinch (ยกเลิกขาย)",
+   "g": 1,
+   "total": 41730,
+   "status": "ok"
+  },
+  {
+   "key": "1:curved_double",
+   "id": "curved_double",
+   "name": "ประตูดัดโค้งบานคู่",
+   "g": 1,
+   "total": 78110,
+   "status": "ok"
+  },
+  {
+   "key": "1:curved_single",
+   "id": "curved_single",
+   "name": "ประตูดัดโค้งบานเดี่ยว",
+   "g": 1,
+   "total": 71690,
+   "status": "ok"
+  },
+  {
+   "key": "1:curved_fixed",
+   "id": "curved_fixed",
+   "name": "บานติดตายดัดโค้ง",
+   "g": 1,
+   "total": 46010,
+   "status": "ok"
+  },
+  {
+   "key": "1:curved_slim",
+   "id": "curved_slim",
+   "name": "บานดัดโค้งสลิม",
+   "g": 1,
+   "total": 88810,
+   "status": "ok"
+  },
+  {
+   "key": "1:glass_replace",
+   "id": "glass_replace",
+   "name": "คำนวณกระจกใหม่ (ที่ไม่มีในตาราง) — กรอกทุน + กำไร%",
+   "g": 1,
+   "total": 0,
+   "status": "ok"
+  },
+  {
+   "key": "1:awning_brace",
+   "id": "awning_brace",
+   "name": "เสริมแขนค้ำ (เฉพาะบานกระทุ้งเปิดล่าง) — +500/ชุด",
+   "g": 1,
+   "total": 535,
+   "status": "ok"
+  },
+  {
+   "key": "2:steel_mesh",
+   "id": "steel_mesh",
+   "name": "ตะแกรงเหล็กสาน",
+   "g": 2,
+   "total": 8560,
+   "status": "ok"
+  },
+  {
+   "key": "2:custom_item",
+   "id": "custom_item",
+   "name": "➕ รายการกรอกเอง (free-form)",
+   "g": 2,
+   "total": 0,
+   "status": "ok"
+  },
+  {
+   "key": "2:fence_gate",
+   "id": "fence_gate",
+   "name": "ประตูรั้วระแนง",
+   "g": 2,
+   "total": 62060,
+   "status": "ok"
+  },
+  {
+   "key": "2:bar_grid_z",
+   "id": "bar_grid_z",
+   "name": "ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (ข้อ 38.1)",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:bar_slide",
+   "id": "bar_slide",
+   "name": "ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)",
+   "g": 2,
+   "total": 14980,
+   "status": "ok"
+  },
+  {
+   "key": "2:bar_openclose",
+   "id": "bar_openclose",
+   "name": "ระแนงเปิด-ปิด (กล่อง 1\"x4\" โชว์ 4\" · ข้อ 38.3)",
+   "g": 2,
+   "total": 26750,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp1",
+   "id": "imp1",
+   "name": "ราวกันตกกระจกเฉียง หมุดแปะข้าง",
+   "g": 2,
+   "total": 23540,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp2",
+   "id": "imp2",
+   "name": "ราวกันตกกระจกเฉียง วางยูเหล็ก ครอบอลูรับกระจกล่าง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp3",
+   "id": "imp3",
+   "name": "ราวกันตกกระจกเฉียง เสาตั้งและราวจับบนอลูมิเนียม",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp4",
+   "id": "imp4",
+   "name": "ราวกันตกกระจกตรง หมุดแปะข้าง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp5",
+   "id": "imp5",
+   "name": "ราวกันตกกระจกตรง วางยูเหล็ก ครอบอลูรับกระจกล่าง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:imp6",
+   "id": "imp6",
+   "name": "ราวกันตกกระจกตรง เสาตั้งและราวจับบนอลูมิเนียม",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn2",
+   "id": "rn2",
+   "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm. 5cm. รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn4",
+   "id": "rn4",
+   "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm. 3cm. รวมโครง",
+   "g": 2,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn6",
+   "id": "rn6",
+   "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm. 2cm. รวมโครง",
+   "g": 2,
+   "total": 23540,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn8",
+   "id": "rn8",
+   "name": "บังตาผนังระแนง 1x5 cm.โชว์ 5cm. 5cm. รวมโครง",
+   "g": 2,
+   "total": 14980,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn10",
+   "id": "rn10",
+   "name": "บังตาผนังระแนง 1x5 cm.โชว์ 5cm. 3cm. รวมโครง",
+   "g": 2,
+   "total": 16050,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn12",
+   "id": "rn12",
+   "name": "บังตาผนังระแนง 1x5 cm.โชว์ 5cm. 2cm. รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn14",
+   "id": "rn14",
+   "name": "บังตาผนังระแนง 1”x1.6” โชว์ 1” 5cm. รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn16",
+   "id": "rn16",
+   "name": "บังตาผนังระแนง 1”x1.6” โชว์ 1” 3cm. รวมโครง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn18",
+   "id": "rn18",
+   "name": "บังตาผนังระแนง 1”x1.6” โชว์ 1” 2cm. รวมโครง",
+   "g": 2,
+   "total": 22470,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn20",
+   "id": "rn20",
+   "name": "บังตาผนังระแนง 1”x1” โชว์ 1” 5cm. รวมโครง",
+   "g": 2,
+   "total": 16050,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn22",
+   "id": "rn22",
+   "name": "บังตาผนังระแนง 1”x1” โชว์ 1” 3cm. รวมโครง",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn24",
+   "id": "rn24",
+   "name": "บังตาผนังระแนง 1”x1” โชว์ 1” 2cm. รวมโครง",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn26",
+   "id": "rn26",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1” 5cm. รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn28",
+   "id": "rn28",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1” 3cm. รวมโครง",
+   "g": 2,
+   "total": 20330,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn30",
+   "id": "rn30",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1” 2cm. รวมโครง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn32",
+   "id": "rn32",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1½” 5cm. รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn34",
+   "id": "rn34",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1½” 3cm. รวมโครง",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn36",
+   "id": "rn36",
+   "name": "บังตาผนังระแนง 1”x1½” โชว์ 1½” 2cm. รวมโครง",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn44",
+   "id": "rn44",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 1” 5cm. รวมโครง",
+   "g": 2,
+   "total": 26750,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn46",
+   "id": "rn46",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 1” 3cm. รวมโครง",
+   "g": 2,
+   "total": 33170,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn48",
+   "id": "rn48",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 1” 2cm. รวมโครง",
+   "g": 2,
+   "total": 35310,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn50",
+   "id": "rn50",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 4” 5cm. รวมโครง",
+   "g": 2,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn52",
+   "id": "rn52",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 4” 3cm. รวมโครง",
+   "g": 2,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn54",
+   "id": "rn54",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 4” 2cm. รวมโครง",
+   "g": 2,
+   "total": 22470,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn56",
+   "id": "rn56",
+   "name": "บังตาผนังระแนง 1”x4” โชว์ 4” แบบทึบ รวมโครง",
+   "g": 2,
+   "total": 22470,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn58",
+   "id": "rn58",
+   "name": "บังตาผนังระแนง 1.6”x1.6” โชว์ 1.6” 5cm. รวมโครง",
+   "g": 2,
+   "total": 18190,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn60",
+   "id": "rn60",
+   "name": "บังตาผนังระแนง 1.6”x1.6” โชว์ 1.6” 3cm. รวมโครง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn62",
+   "id": "rn62",
+   "name": "บังตาผนังระแนง 1.6”x1.6” โชว์ 1.6” 2cm. รวมโครง",
+   "g": 2,
+   "total": 23540,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn64",
+   "id": "rn64",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 1.6” 5cm. รวมโครง",
+   "g": 2,
+   "total": 25680,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn66",
+   "id": "rn66",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 1.6” 3cm. รวมโครง",
+   "g": 2,
+   "total": 29960,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn68",
+   "id": "rn68",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 1.6” 2cm. รวมโครง",
+   "g": 2,
+   "total": 34240,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn70",
+   "id": "rn70",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 4” 5cm. รวมโครง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn72",
+   "id": "rn72",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 4” 3cm. รวมโครง",
+   "g": 2,
+   "total": 21400,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn74",
+   "id": "rn74",
+   "name": "บังตาผนังระแนง 1.6”x4” โชว์ 4” 2cm. รวมโครง",
+   "g": 2,
+   "total": 25680,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn76",
+   "id": "rn76",
+   "name": "บังตาผนังระแนง 4”x4” โชว์ 4” 5cm. รวมโครง",
+   "g": 2,
+   "total": 31030,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn78",
+   "id": "rn78",
+   "name": "บังตาผนังระแนง 4”x4” โชว์ 4” 3cm. รวมโครง",
+   "g": 2,
+   "total": 31030,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn80",
+   "id": "rn80",
+   "name": "บังตาผนังระแนง 4”x4” โชว์ 4” 2cm. รวมโครง",
+   "g": 2,
+   "total": 38520,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn82",
+   "id": "rn82",
+   "name": "บังตาผนังระแนงสลับ 5ต่อ3 โชว์ 1.6”ต่อ4” 2cm. รวมโครง",
+   "g": 2,
+   "total": 25680,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn38",
+   "id": "rn38",
+   "name": "ระแนงผนัง 1”x1.6” โชว์ 1.6” 5cm.รวมโครง",
+   "g": 2,
+   "total": 16050,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn40",
+   "id": "rn40",
+   "name": "ระแนงผนัง 1”x1.6” โชว์ 1.6” 3cm.รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn42",
+   "id": "rn42",
+   "name": "ระแนงผนัง 1”x1.6” โชว์ 1.6” 2cm.รวมโครง",
+   "g": 2,
+   "total": 19260,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn84",
+   "id": "rn84",
+   "name": "เกล็ด Z 1” รวมโครง",
+   "g": 2,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn86",
+   "id": "rn86",
+   "name": "เกล็ด Z 1.6” รวมโครง",
+   "g": 2,
+   "total": 22470,
+   "status": "ok"
+  },
+  {
+   "key": "2:rn88",
+   "id": "rn88",
+   "name": "เกล็ด Z 4” รวมโครง",
+   "g": 2,
+   "total": 25680,
+   "status": "ok"
+  },
+  {
+   "key": "3:roof_vinyl",
+   "id": "roof_vinyl",
+   "name": "หลังคา ไวนิล",
+   "g": 3,
+   "total": 77040,
+   "status": "ok"
+  },
+  {
+   "key": "3:roof_delight",
+   "id": "roof_delight",
+   "name": "หลังคา ดีไลท์",
+   "g": 3,
+   "total": 77040,
+   "status": "ok"
+  },
+  {
+   "key": "3:roof_polyton",
+   "id": "roof_polyton",
+   "name": "หลังคา โพลีตัน 3มม.",
+   "g": 3,
+   "total": 83460,
+   "status": "ok"
+  },
+  {
+   "key": "3:roof_laminate",
+   "id": "roof_laminate",
+   "name": "หลังคา กระจกลามิเนต",
+   "g": 3,
+   "total": 134820,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp7",
+   "id": "imp7",
+   "name": "เมทัลชีท 1 นิ้ว ท้องPVC EPS",
+   "g": 3,
+   "total": 74900,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp8",
+   "id": "imp8",
+   "name": "เมทัลชีท 2 นิ้ว ท้องPVC EPS",
+   "g": 3,
+   "total": 75970,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp9",
+   "id": "imp9",
+   "name": "เมทัลชีท 1 นิ้ว ท้องเหล็ก EPS",
+   "g": 3,
+   "total": 79180,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp10",
+   "id": "imp10",
+   "name": "เมทัลชีท 2 นิ้ว ท้องเหล็ก EPS",
+   "g": 3,
+   "total": 80250,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp11",
+   "id": "imp11",
+   "name": "เมทัลชีท 1 นิ้ว ท้องฟอยล์ PU",
+   "g": 3,
+   "total": 74900,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp12",
+   "id": "imp12",
+   "name": "เมทัลชีท 2 นิ้ว ท้องฟอยล์ PU",
+   "g": 3,
+   "total": 79180,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp13",
+   "id": "imp13",
+   "name": "เมทัลชีท 1 นิ้ว ท้องเหล็ก PU",
+   "g": 3,
+   "total": 87740,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp14",
+   "id": "imp14",
+   "name": "เมทัลชีท 2 นิ้ว ท้องเหล็ก PU",
+   "g": 3,
+   "total": 89880,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp15",
+   "id": "imp15",
+   "name": "ชินโคไลท์ 6 มม. รุ่น Heat Cut",
+   "g": 3,
+   "total": 134820,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp16",
+   "id": "imp16",
+   "name": "ชินโคไลท์ 6 มม. รุ่น Superior",
+   "g": 3,
+   "total": 128400,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp17",
+   "id": "imp17",
+   "name": "ชินโคไลท์ 6 มม. รุ่น Nature",
+   "g": 3,
+   "total": 131610,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp18",
+   "id": "imp18",
+   "name": "ชินโคไลท์ 4 มม. รุ่น Shade",
+   "g": 3,
+   "total": 121980,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp19",
+   "id": "imp19",
+   "name": "ชินโคไลท์ 10 มม. รุ่น Prime",
+   "g": 3,
+   "total": 173340,
+   "status": "ok"
+  },
+  {
+   "key": "3:imp20",
+   "id": "imp20",
+   "name": "ชินโคไลท์ 10 มม. รุ่น Grand",
+   "g": 3,
+   "total": 173340,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceil_cshape",
+   "id": "ceil_cshape",
+   "name": "ฝ้าอลูมิเนียม ไทยทิพย์ (ตัวซี หน้า 15 ซม.)",
+   "g": 3,
+   "total": 27820,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceil_bsc",
+   "id": "ceil_bsc",
+   "name": "ฝ้าไม้เทียม remood (แผ่นเรียบ หน้า 12 ซม.)",
+   "g": 3,
+   "total": 34240,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceiling_smooth",
+   "id": "ceiling_smooth",
+   "name": "ฝ้าฉาบเรียบ",
+   "g": 3,
+   "total": 16050,
+   "status": "ok"
+  },
+  {
+   "key": "3:isowall",
+   "id": "isowall",
+   "name": "ISOWALL",
+   "g": 3,
+   "total": 57780,
+   "status": "ok"
+  },
+  {
+   "key": "3:wall_ext",
+   "id": "wall_ext",
+   "name": "ผนังเบาภายนอก",
+   "g": 3,
+   "total": 47080,
+   "status": "ok"
+  },
+  {
+   "key": "3:wall_int",
+   "id": "wall_int",
+   "name": "ผนังเบาภายใน",
+   "g": 3,
+   "total": 41730,
+   "status": "ok"
+  },
+  {
+   "key": "3:truss_beam_cover",
+   "id": "truss_beam_cover",
+   "name": "แผ่นปิดครอบซ่อนคานเหล็กถัก (ลูกฟูก 1 หน้า × 0.6 × พื้นที่ × ยาวคาน)",
+   "g": 3,
+   "total": null,
+   "status": "js-error"
+  },
+  {
+   "key": "4:future_tech",
+   "id": "future_tech",
+   "name": "ฝาตู้ Future Tech (/บาน, max 3 บาน/ชุด)",
+   "g": 4,
+   "total": 13910,
+   "status": "ok"
+  },
+  {
+   "key": "4:cabinet_alu",
+   "id": "cabinet_alu",
+   "name": "ตู้อลูมิเนียม",
+   "g": 4,
+   "total": 41730,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp21",
+   "id": "imp21",
+   "name": "มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์ (บานเปิด/เลื่อน/กระทุ้ง/ยก) ห้าม PC",
+   "g": 5,
+   "total": 4280,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp22",
+   "id": "imp22",
+   "name": "มุ้งเฟรมเล็กติดตาย ผ้ามุ้งไฟเบอร์",
+   "g": 5,
+   "total": 2140,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp23",
+   "id": "imp23",
+   "name": "มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก · ตัด PC)",
+   "g": 5,
+   "total": 8560,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp28",
+   "id": "imp28",
+   "name": "มุ้งจีบ ตีนตะขาบ รุ่งรางเตี้ยแบบพิเศษ ผ้ามุ้งไฟเบอร์",
+   "g": 5,
+   "total": 9630,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp29",
+   "id": "imp29",
+   "name": "มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก)",
+   "g": 5,
+   "total": 6420,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp30",
+   "id": "imp30",
+   "name": "มุ้งแม่เหล็ก พับเปิดได้",
+   "g": 5,
+   "total": 3210,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp31",
+   "id": "imp31",
+   "name": "มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",
+   "g": 5,
+   "total": 7490,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp32",
+   "id": "imp32",
+   "name": "มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ",
+   "g": 5,
+   "total": 10700,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp33",
+   "id": "imp33",
+   "name": "มุ้งกันแมว หมา",
+   "g": 5,
+   "total": 2140,
+   "status": "ok"
+  },
+  {
+   "key": "5:imp35",
+   "id": "imp35",
+   "name": "มุ้งสแตนเลส 0.3มม. กันหนู",
+   "g": 5,
+   "total": 3210,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_blackout",
+   "id": "mj_blackout",
+   "name": "มุ้งจีบ Blackout รังผึ้งทึบแสง",
+   "g": 5,
+   "total": 5350,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_sd_twoway",
+   "id": "mj_sd_twoway",
+   "name": "มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง",
+   "g": 5,
+   "total": 8560,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_keep_twoway",
+   "id": "mj_keep_twoway",
+   "name": "มุ้งจีบ ตีนตะขาบ + ทูเวย์ ม่านรังผึ้ง",
+   "g": 5,
+   "total": 12840,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_keep_honey",
+   "id": "mj_keep_honey",
+   "name": "มุ้งจีบ ตีนตะขาบ + ม่านรังผึ้งอย่างเดียว",
+   "g": 5,
+   "total": 9630,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_kick_150",
+   "id": "mj_kick_150",
+   "name": "มุ้งม้วนเก็บข้างเตะได้ รุ่น 150 (กว้าง≤150 / แยกกลาง≤300)",
+   "g": 5,
+   "total": 16050,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_kick_300",
+   "id": "mj_kick_300",
+   "name": "มุ้งม้วนเก็บข้างเตะได้ รุ่น 300 (กว้าง 151-300 / แยกกลาง ≤600)",
+   "g": 5,
+   "total": 40660,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_kick_600",
+   "id": "mj_kick_600",
+   "name": "มุ้งม้วนเก็บข้างเตะได้ รุ่น 600 (กว้าง 301-600 / แยกกลาง ≤1200)",
+   "g": 5,
+   "total": 72760,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_sd_basic",
+   "id": "mj_sd_basic",
+   "name": "มุ้งจีบ SD พื้นฐาน (สีขาว/ดำ)",
+   "g": 5,
+   "total": 5350,
+   "status": "ok"
+  },
+  {
+   "key": "5:mj_screen_safety",
+   "id": "mj_screen_safety",
+   "name": "มุ้งจีบนิรภัย (สีขาว/ดำ/เทา · ผ้านิรภัยสีดำ/เทา)",
+   "g": 5,
+   "total": 10700,
+   "status": "ok"
+  },
+  {
+   "key": "7:zipscreen",
+   "id": "zipscreen",
+   "name": "ม่านซิป (zipscreen) ม่านม้วนกันลม",
+   "g": 7,
+   "total": 16692,
+   "status": "ok"
+  }
+ ]
+}

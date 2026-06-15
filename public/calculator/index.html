@@ -907,8 +907,8 @@ function prodOptionsG(g){
 function prodOptionsG6(g){
   const _GM={'1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],'2':['ประตูรั้ว','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได'],'3':['หลังคา','ฝ้า-ผนัง'],'4':['ตู้อลู','ฝาตู้'],'5':['มุ้ง'],'6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door','หลังคา','ฝ้า-ผนัง'],'7':['ม่านซิป']}; // UX-ALL G6: ตัด shower/ระแนง×4/ราวบันได (ไม่เกี่ยวงานกั้นห้อง)
   const cats=_GM[g]||_GM['1']; const gi=parseInt(g);
-  // B6 (guarded): ผนังเบาทึบ 3 ตัวเข้ากลุ่ม 1 (เฉพาะ id · ไม่ดึงฝ้าเพดาน) เมื่อ window.G1_WALLSOLID=true · default off → โผล่ใต้ "อื่นๆ → ผนังเบา"
-  const inG=p=>(p.cat!=='เสริม'&&cats.includes(p.cat))||p.g===gi||(g==='1'&&(typeof window!=='undefined'&&window.G1_WALLSOLID)&&(p.id==='wall_ext'||p.id==='wall_int'||p.id==='isowall'));
+  // B6 (เปิดแล้ว · พี่นัทเคาะ 2026-06-15): ผนังเบาทึบ 3 ตัวเข้ากลุ่ม 1 (เฉพาะ id · ไม่ดึงฝ้าเพดาน) · default on · ปิด rollback ด้วย window.G1_WALLSOLID=false · โผล่ใต้ "อื่นๆ → ผนังเบา"
+  const inG=p=>(p.cat!=='เสริม'&&cats.includes(p.cat))||p.g===gi||(g==='1'&&(typeof window==='undefined'||window.G1_WALLSOLID!==false)&&(p.id==='wall_ext'||p.id==='wall_int'||p.id==='isowall'));
   const byCat={}; PRODUCTS.forEach(p=>{ if(inG(p) && !(g==='2'&&_hideRanaeSolo(p)) && !_hideInnerBottom(p)){ (byCat[p.cat]=byCat[p.cat]||[]).push(p); } }); // R2-2: กรองไม่โครงออกจากขายเดี่ยว (group 2) · ธง⑤: ซ่อนเลื่อนรางล่าง
   return CATS.filter(c=>byCat[c]).map(c=>`<optgroup label="${c}">`+byCat[c].map(p=>`<option value="${p.id}">${p.name}</option>`).join('')+`</optgroup>`).join('');
 }
