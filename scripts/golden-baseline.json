@@ -1,9 +1,9 @@
 {
  "meta": {
   "at": "baseline",
-  "catalog": 147,
+  "catalog": 146,
   "captured": 146,
-  "skipped": 1
+  "skipped": 0
  },
  "rows": [
   {
@@ -257,7 +257,7 @@
   {
    "key": "1:lift_sms",
    "id": "lift_sms",
-   "name": "บานยก SMS",
+   "name": "บานยก SMS สลิม (ชุดเล็ก)",
    "g": 1,
    "total": 27820,
    "status": "ok"
@@ -265,7 +265,7 @@
   {
    "key": "1:lift_aluinch",
    "id": "lift_aluinch",
-   "name": "บานยก aluinch",
+   "name": "บานยก เซมิยูโร (บานใหญ่)",
    "g": 1,
    "total": 27820,
    "status": "ok"
@@ -997,14 +997,6 @@
    "g": 3,
    "total": 41730,
    "status": "ok"
-  },
-  {
-   "key": "3:truss_beam_cover",
-   "id": "truss_beam_cover",
-   "name": "แผ่นปิดครอบซ่อนคานเหล็กถัก (ลูกฟูก 1 หน้า × 0.6 × พื้นที่ × ยาวคาน)",
-   "g": 3,
-   "total": null,
-   "status": "js-error"
   },
   {
    "key": "4:future_tech",
