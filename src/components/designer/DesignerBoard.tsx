@@ -39,6 +39,7 @@ type Job = {
   design_end: string | null;
   design_revise_count: number;
   current_stage: number;
+  assess_date: string | null;
   overdue: boolean;
 };
 type Kpi = {
@@ -259,6 +260,8 @@ export default function DesignerBoard({
       }
       map[j.design_state]?.push(j);
     }
+    // ช่อง "เสร็จแล้ว": เรียงตามวันเสร็จจากเก่า→ใหม่ → งานที่กดเสร็จล่าสุดอยู่ล่างสุด
+    map.DONE.sort((a, b) => (a.design_end ?? "").localeCompare(b.design_end ?? ""));
     return map;
   }, [jobs, cardSearch]);
 
@@ -426,7 +429,7 @@ function BoardView({
   onDesignerAdded: () => Promise<void>;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
         return (
@@ -527,10 +530,18 @@ function JobCard({
     const val = receivedDateVal;
     if (val === (job.design_received_date ?? "")) return;
     await onReceivedDate(job, val);
+    // คำนวณกำหนดเสร็จ = ได้รับแบบ + 2 วัน (เฉพาะตอนยังไม่มีกำหนด · แก้ทีหลังได้)
+    if (val && !(job.design_due_date ?? "") && !dueDateVal) {
+      const d = new Date(val + "T00:00:00");
+      d.setDate(d.getDate() + 2);
+      const due2 = d.toISOString().slice(0, 10);
+      setDueDateVal(due2);
+      await onDueDate(job, due2);
+    }
   }
 
   return (
-    <div className="glass-soft rounded-xl p-3 text-sm">
+    <div className="glass-soft rounded-xl p-3 text-sm w-full min-w-0">
       {/* job_code + ปุ่มดูงาน (#26) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -572,27 +583,15 @@ function JobCard({
             onDesignerAdded={onDesignerAdded}
           />
 
-          {/* design_due_date date input — editable (#37: confirm อดีต + toast) */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
-            <DateField
-              value={dueDateVal}
-              onChange={(iso) => { setDueDateVal(iso); }}
-              disabled={assigning}
-              onBlur={handleDueBlur}
-              aria-label="กำหนดส่งแบบ"
-              className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
-                job.overdue ? "text-brand font-semibold" : "text-ink-2"
-              }`}
-            />
-            {dueSaved ? (
-              <span className="text-[10px] text-emerald-600 font-semibold shrink-0">บันทึกแล้ว</span>
-            ) : job.overdue ? (
-              <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
-            ) : null}
-          </div>
+          {/* เข้าประเมิน (read-only · ฟิกวันจากหน้าคิวงาน) */}
+          {job.assess_date && (
+            <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
+              <span className="shrink-0">เข้าประเมิน:</span>
+              <span className="tnum">{thDate(job.assess_date)}</span>
+            </div>
+          )}
 
-          {/* (0032) วันได้รับแบบ — editable */}
+          {/* วันได้รับแบบ — editable (ขึ้นก่อนกำหนดเสร็จ) */}
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
             <DateField
@@ -601,8 +600,28 @@ function JobCard({
               disabled={assigning}
               onBlur={handleReceivedBlur}
               aria-label="วันได้รับแบบ"
-              className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
+              className="flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
             />
+          </div>
+
+          {/* กำหนดเสร็จ = ได้รับแบบ + 2 วัน (auto-คำนวณ · แก้ทีหลังได้) — #37 confirm อดีต + toast */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-ink-3 shrink-0">กำหนดเสร็จ:</span>
+            <DateField
+              value={dueDateVal}
+              onChange={(iso) => { setDueDateVal(iso); }}
+              disabled={assigning}
+              onBlur={handleDueBlur}
+              aria-label="กำหนดเสร็จ"
+              className={`flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
+                job.overdue ? "text-brand font-semibold" : "text-ink-2"
+              }`}
+            />
+            {dueSaved ? (
+              <span className="text-[10px] text-emerald-600 font-semibold shrink-0">บันทึกแล้ว</span>
+            ) : job.overdue ? (
+              <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
+            ) : null}
           </div>
 
           {/* design_start → design_end (read-only แสดงไทม์ไลน์ทำแบบ) */}
@@ -632,7 +651,7 @@ function JobCard({
           <div
             className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}
           >
-            กำหนด: {thDate(job.design_due_date)}
+            กำหนดเสร็จ: {thDate(job.design_due_date)}
             {job.overdue && " · เลยกำหนด"}
           </div>
           <div
