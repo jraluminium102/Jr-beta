@@ -22,6 +22,8 @@ const schema = z.object({
   planned_install_date: z.string().nullish(),
   measure_scheduled:    z.string().nullish(),
   measure_actual:       z.string().nullish(),
+  measure_actual_time:  z.string().nullish(),
+  measured_by_name:     z.string().nullish(),
   measure_time:         z.string().nullish(),
   measurer_id:          z.string().uuid().nullish(),
   measurer_name:        z.string().nullish(),

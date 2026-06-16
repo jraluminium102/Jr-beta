@@ -18,6 +18,7 @@ export type ProdRow = {
   id: string; job_id: string; status: ProdStatus;
   measure_scheduled: string | null; measure_actual: string | null; planned_install_date: string | null;
   measure_time: string | null; measurer_id: string | null; measurer_name: string | null;
+  measure_actual_time: string | null; measured_by_name: string | null;
   production_queued: string | null; production_done: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
@@ -25,7 +26,7 @@ export type ProdRow = {
   boq_summary: BoqSummary | null;
 };
 
-type StepField = { field: string; label: string; type?: "date" | "note"; optional?: boolean };
+type StepField = { field: string; label: string; type?: "date" | "note" | "time" | "text"; optional?: boolean };
 type Tone = "go" | "warn" | "wait";
 type Action = {
   to: ProdStatus;
@@ -44,7 +45,11 @@ const TRANSITIONS: Record<ProdStatus, Action[]> = {
   // รอวัด: นัดวัดล่วงหน้าได้ (อาจเป็นเดือน) — บันทึกนัดวัดแยกด้านบน, ปุ่มนี้คือ "วัดเสร็จแล้ว"
   PENDING_MEASURE: [
     { to: "PENDING_MEETING", label: "วัดหน้างานเสร็จ → เข้าขั้นประชุมแบบ", tone: "go",
-      fields: [{ field: "measure_actual", label: "วันที่วัดจริง" }] },
+      fields: [
+        { field: "measure_actual",      label: "วันที่วัดจริง",           type: "date" },
+        { field: "measure_actual_time", label: "เวลาที่วัด (ถ้ามี)",       type: "time", optional: true },
+        { field: "measured_by_name",    label: "ใครวัด",                  type: "text", optional: true },
+      ] },
   ],
   MEASURED: [
     { to: "PENDING_MEETING", label: "เข้าสู่ขั้นประชุมสรุปแบบ", tone: "go" },
@@ -125,6 +130,13 @@ function SummaryChips({ row }: { row: ProdRow }) {
     label: "นัดวัด",
     value: thDate(row.measure_scheduled) + (row.measure_time ? ` ${normalizeTime(row.measure_time).slice(0, 5)}` : ""),
     cls: "bg-sky-500/20 border-sky-300/25 text-sky-100",
+  });
+  if (row.measure_actual) chips.push({
+    label: "วัดจริง",
+    value: thDate(row.measure_actual)
+      + (row.measure_actual_time ? ` ${normalizeTime(row.measure_actual_time).slice(0, 5)}` : "")
+      + (row.measured_by_name ? ` โดย ${row.measured_by_name}` : ""),
+    cls: "bg-teal-500/20 border-teal-300/25 text-teal-100",
   });
   if (row.planned_install_date) chips.push({
     label: "ติดตั้ง",
@@ -269,6 +281,28 @@ export function ProductionStepModal({
   const needsMfgConfirm = (a: Action): boolean =>
     a.to === "MANUFACTURING" && boqStatus !== "ordered";
 
+  // สร้าง prefill เริ่มต้นสำหรับ action (รวม default ของฟีเจอร์ "ใครวัด + กี่โมง")
+  const buildInitVals = (a: Action): Record<string, string> => {
+    const init: Record<string, string> = {};
+    a.fields?.forEach(f => {
+      if (!f.type || f.type === "date") {
+        init[f.field] = today();
+      } else if (f.type === "time") {
+        // prefill เวลาจากเวลานัด (measure_time) เป็นค่าเริ่มต้น
+        if (f.field === "measure_actual_time") {
+          const t = normalizeTime(row.measure_time);
+          if (t) init[f.field] = t;
+        }
+      } else if (f.type === "text") {
+        // prefill ชื่อช่างจากที่นัดไว้ (measurer_name)
+        if (f.field === "measured_by_name" && row.measurer_name) {
+          init[f.field] = row.measurer_name;
+        }
+      }
+    });
+    return init;
+  };
+
   // คลิก action: ถ้าไม่มีฟอร์ม → ทำเลย, ถ้ามีฟอร์ม → กางฟอร์ม (กรอกแล้วกดยืนยัน)
   const clickAction = (a: Action) => {
     if (needsMfgConfirm(a)) { setMfgConfirmPending(a); return; }
@@ -279,9 +313,7 @@ export function ProductionStepModal({
       return;
     }
     if (armed === a.to) { setArmed(null); return; }
-    const init: Record<string, string> = {};
-    a.fields.forEach(f => { if (!f.type || f.type === "date") init[f.field] = today(); });
-    setVals(init); setArmed(a.to); setErr(null);
+    setVals(buildInitVals(a)); setArmed(a.to); setErr(null);
   };
 
   const confirmAction = (a: Action) => {
@@ -303,9 +335,7 @@ export function ProductionStepModal({
       patch(body, { close: true });
       return;
     }
-    const init: Record<string, string> = {};
-    a.fields.forEach(f => { if (!f.type || f.type === "date") init[f.field] = today(); });
-    setVals(init); setArmed(a.to); setErr(null);
+    setVals(buildInitVals(a)); setArmed(a.to); setErr(null);
   };
 
   // บันทึกนัดวัด + วันติดตั้ง (dirty fields) แล้วดำเนิน action เลื่อนขั้น — ใน 1 patch
@@ -413,11 +443,27 @@ export function ProductionStepModal({
                         )}
                         {a.fields.map(f => (
                           <div key={f.field}>
-                            <label className="block text-[13px] mb-1.5 font-medium text-white">{f.label}</label>
+                            <label className="block text-[13px] mb-1.5 font-medium text-white">
+                              {f.label}
+                              {f.optional && <span className="ml-1 font-normal text-white/45 text-[11px]">(ไม่บังคับ)</span>}
+                            </label>
                             {f.type === "note" ? (
                               <textarea value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} rows={2}
                                 placeholder="ระบุหมายเหตุ (ถ้ามี)" aria-label={f.label}
                                 className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none resize-none placeholder-white/40" />
+                            ) : f.type === "time" ? (
+                              <input type="time" step={60} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}
+                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                            ) : f.type === "text" ? (
+                              <>
+                                <input type="text" list={`field-list-${f.field}`} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}
+                                  placeholder="เช่น เป, เนียน"
+                                  className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px] placeholder-white/35" />
+                                <datalist id={`field-list-${f.field}`}>
+                                  <option value="เป" />
+                                  <option value="เนียน" />
+                                </datalist>
+                              </>
                             ) : (
                               <input type="date" value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}
                                 className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
@@ -659,7 +705,7 @@ export function ProductionStepModal({
             </div>
 
             {/* ── ข้อ 8: ประวัติการทำงาน — collapsible ล่างสุด ── */}
-            {(row.measure_scheduled || row.measure_actual || row.measurer_name || row.planned_install_date || row.production_queued || row.production_done || row.qc_result) && (
+            {(row.measure_scheduled || row.measure_actual || row.measure_actual_time || row.measured_by_name || row.measurer_name || row.planned_install_date || row.production_queued || row.production_done || row.qc_result) && (
               <div className="mt-4">
                 <button
                   onClick={() => setHistOpen((v) => !v)}
@@ -675,7 +721,13 @@ export function ProductionStepModal({
                       <div>นัดวัด: <span className="tnum text-white/80">{thDate(row.measure_scheduled)}{row.measure_time ? ` เวลา ${normalizeTime(row.measure_time).slice(0, 5)}` : ""}</span></div>
                     )}
                     {row.measurer_name && <div>ช่างวัด: <span className="text-white/80">{row.measurer_name}</span></div>}
-                    {row.measure_actual   && <div>วัดจริง: <span className="tnum text-white/80">{thDate(row.measure_actual)}</span></div>}
+                    {row.measure_actual && (
+                      <div>วัดจริง:{" "}
+                        <span className="tnum text-white/80">{thDate(row.measure_actual)}</span>
+                        {row.measure_actual_time && <span className="tnum text-white/70 ml-1">{normalizeTime(row.measure_actual_time)}</span>}
+                        {row.measured_by_name && <span className="text-white/70 ml-1">โดย {row.measured_by_name}</span>}
+                      </div>
+                    )}
                     {row.planned_install_date && <div>นัดติดตั้ง: <span className="tnum text-white/80">{thDate(row.planned_install_date)}</span></div>}
                     {row.production_queued && <div>เริ่มผลิต: <span className="tnum text-white/80">{thDate(row.production_queued)}</span></div>}
                     {row.production_done  && <div>ผลิตเสร็จ: <span className="tnum text-white/80">{thDate(row.production_done)}</span></div>}

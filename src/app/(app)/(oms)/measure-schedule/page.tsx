@@ -20,6 +20,8 @@ type MeasureEntry = {
   measure_scheduled: string | null;
   measure_time: string | null;
   measure_actual: string | null;
+  measure_actual_time: string | null;
+  measured_by_name: string | null;
   measurer_name: string | null;
   measurer_id: string | null;
   status: "PENDING_MEASURE" | "MEASURED";
@@ -417,11 +419,13 @@ export default function MeasureSchedulePage() {
                       {e.customer_area && <span className="text-[11px]" style={{ color: "var(--t-low)" }}>{e.customer_area}</span>}
                       <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-400/20 border border-emerald-300/25 text-emerald-200">
                         <Icon name="check" size={9} /> วัดแล้ว {thDate(e.measure_actual)}
+                        {e.measure_actual_time && <span className="tabular-nums ml-0.5">{fmtTime(e.measure_actual_time)}</span>}
                       </span>
                     </div>
-                    {e.measurer_name && (
+                    {(e.measured_by_name || e.measurer_name) && (
                       <div className="text-[12px] mt-0.5 flex items-center gap-1" style={{ color: "var(--t-low)" }}>
-                        <Icon name="wrench" size={11} /> ช่าง: {e.measurer_name}
+                        <Icon name="wrench" size={11} />
+                        วัดโดย: {e.measured_by_name ?? e.measurer_name}
                       </div>
                     )}
                   </div>

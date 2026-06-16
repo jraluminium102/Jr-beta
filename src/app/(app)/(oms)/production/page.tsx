@@ -67,7 +67,6 @@ const GROUPS: { key: string; label: string; statuses: ProdStatus[]; tone: string
   { key: "issue", label: "มีปัญหา", statuses: ["ISSUE"], tone: "text-rose-300" },
 ];
 const FLOW_ORDER: Record<string, number> = { ISSUE: 0, PENDING_MEASURE: 1, MEASURED: 2, PENDING_MEETING: 3, REVISING: 4, PENDING_CONFIRM: 5, QUEUED: 6, MANUFACTURING: 7, QC: 8, READY: 99 };
-const KANBAN: ProdStatus[] = ["PENDING_MEASURE", "MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "MANUFACTURING", "QC", "READY", "ISSUE"];
 
 const in3days = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
 
@@ -283,14 +282,17 @@ export default function ProductionPage() {
           {filtered.length === 0 && <EmptyState title="ไม่มีงานในกลุ่มนี้" />}
         </div>
       ) : (
-        /* ── บอร์ด kanban ── */
+        /* ── บอร์ด (กลุ่ม 6 คอลัมน์ ตาม GROUPS) ── */
         <div className="flex gap-3 overflow-x-auto pb-4 snap-x">
-          {KANBAN.map((col) => {
-            const items = rows.filter((r) => r.status === col);
+          {GROUPS.map((g) => {
+            const items = rows.filter((r) => g.statuses.includes(r.status));
+            // ซ่อนคอลัมน์ที่ไม่มีงานเลย ยกเว้นคอลัมน์ที่ 0 เสมอ (สองคอลัมน์แรกและ issue แสดงเสมอ)
+            const alwaysShow = g.key === "measure" || g.key === "prep" || g.key === "issue";
+            if (items.length === 0 && !alwaysShow) return null;
             return (
-              <div key={col} className="glass-card rounded-2xl p-3 min-w-[200px] flex-shrink-0 snap-start">
+              <div key={g.key} className="glass-card rounded-2xl p-3 min-w-[210px] flex-shrink-0 snap-start">
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <span className="text-white text-sm font-semibold">{PROD_STATUS[col]}</span>
+                  <span className={`text-sm font-semibold ${g.tone}`}>{g.label}</span>
                   <span className="text-[12px] tnum px-1.5 py-0.5 rounded-md bg-white/10" style={{ color: "var(--t-mid)" }}>{items.length}</span>
                 </div>
                 <div className="space-y-2">
@@ -298,6 +300,7 @@ export default function ProductionPage() {
                     <button key={r.id} onClick={() => setOpen(r)} className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
                       <div className="text-white text-sm font-medium tnum">{r.job?.job_code}</div>
                       <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</div>
+                      <div className="mt-1 text-[11px]" style={{ color: "var(--t-low)" }}>{PROD_STATUS[r.status]}</div>
                       <div className="mt-1.5"><BoqBadge boq={r.boq_summary} /></div>
                     </button>
                   ))}
