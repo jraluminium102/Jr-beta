@@ -29,7 +29,7 @@ want("ตู้: ชิปชนิดชั้น (3)", dc.querySelectorAll('.c
 // 6 ช่องอยู่ใน �็ box
 const pkg = boxOf(dc, /รายละเอียดตู้/);
 const pkgText = pkg ? pkg.textContent : "";
-want("ตู้: 6 ช่องอยู่ในกล่อง 📦", /ประเภทตู้/.test(pkgText) && /จำนวนบานหน้าตู้/.test(pkgText) && /ชนิดชั้น/.test(pkgText) && /ลึก/.test(pkgText) && /จำนวนชั้น/.test(pkgText) && /ผนังหลัง/.test(pkgText));
+want("ตู้: 6 ช่องอยู่ในกล่อง 📦 (ผนังตู้ 3 ด้าน · G4 wall-sides)", /ประเภทตู้/.test(pkgText) && /จำนวนบานหน้าตู้/.test(pkgText) && /ชนิดชั้น/.test(pkgText) && /ลึก/.test(pkgText) && /จำนวนชั้น/.test(pkgText) && /ผนังตู้/.test(pkgText));
 // label ประเภทตู้ (ไม่ใช่ "ประเภท" เปล่า)
 want("ตู้: label = 'ประเภทตู้'", /ประเภทตู้/.test(pkgText));
 // ตัด 3 ออปชั่น
