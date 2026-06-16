@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { thDate } from "@/lib/format";
 import { Spinner } from "@/components/ui/primitives";
 import { ChevronRight, Check } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 import {
   PHASE_TH, TYPE_TH, STATUS_TH, SEVERITY_TH, dueBadge, type IssueTrackRow,
 } from "@/components/issues/IssueTrackTable";
@@ -125,7 +126,7 @@ function AssignPanel({ issue, owners, onSaved }: { issue: IssueTrackRow; owners:
         </div>
         <div>
           <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="due">ครบกำหนด</label>
-          <input id="due" type="date" value={due} onChange={(e) => setDue(e.target.value)} className={`${fieldCls} tnum`} />
+          <DateField id="due" value={due} onChange={(iso) => setDue(iso)} className={fieldCls} aria-label="ครบกำหนด" />
         </div>
         <div>
           <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="pri">ลำดับความสำคัญ</label>

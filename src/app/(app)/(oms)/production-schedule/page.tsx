@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { Plus, X, Check, Trash2, CalendarDays } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
 
 type SchedRow = {
@@ -138,7 +139,7 @@ export default function ProductionSchedulePage() {
     finally { setSavingId((s) => (s === r.id ? null : s)); }
   };
 
-  const dateCls = "glass-card rounded-lg px-2 py-1.5 text-[13px] text-white outline-none tnum min-h-[40px] [&::-webkit-calendar-picker-indicator]:invert disabled:opacity-50";
+  const dateCls = "glass-card rounded-lg px-2 py-1.5 text-[13px] text-white outline-none min-h-[40px] disabled:opacity-50";
   const txtCls = "glass-card rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none placeholder-white/35 min-h-[40px] disabled:opacity-50";
 
   // datalist id
@@ -237,16 +238,17 @@ export default function ProductionSchedulePage() {
                       {/* วันผลิต */}
                       <label className="block">
                         <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
-                        <input
-                          type="date"
+                        <DateField
                           disabled={!canWrite || savingId === r.id}
                           value={v(r, "produce_date")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: val } }));
-                            if (val && val !== (r.produce_date ?? "")) debounceSave(r, { produce_date: val } as Partial<SchedRow>);
+                          onChange={(iso) => {
+                            setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], produce_date: iso } }));
+                            if (iso && iso !== (r.produce_date ?? "")) debounceSave(r, { produce_date: iso } as Partial<SchedRow>);
                           }}
-                          onBlur={(e) => { if (e.target.value !== (r.produce_date ?? "")) save(r, { produce_date: e.target.value } as Partial<SchedRow>); }}
+                          onBlur={() => {
+                            const cur = v(r, "produce_date");
+                            if (cur !== (r.produce_date ?? "")) save(r, { produce_date: cur } as Partial<SchedRow>);
+                          }}
                           className={`${dateCls} w-full`}
                           aria-label={`วันผลิต ${r.title}`}
                         />
@@ -354,7 +356,7 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
   };
 
   const inp = "w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none placeholder-white/40 min-h-[48px]";
-  const dinp = `${inp} tnum [&::-webkit-calendar-picker-indicator]:invert`;
+  const dinp = inp;
 
   // ปิด modal ด้วยปุ่ม Esc
   useEffect(() => {
@@ -399,9 +401,9 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
                 <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="เช่น ซ่อมบานเลื่อน / งานด่วน" className={inp} /></div>
               <div className="grid grid-cols-2 gap-2">
                 <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
-                  <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
+                  <DateField value={pdate} onChange={(iso) => setPdate(iso)} className={dinp} aria-label="วันผลิต" /></div>
                 <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง/ส่ง</label>
-                  <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
+                  <DateField value={idate} onChange={(iso) => setIdate(iso)} className={dinp} aria-label="วันติดตั้ง/ส่ง" /></div>
               </div>
               <div>
                 <label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
@@ -424,9 +426,9 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
                 {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่วัดแล้วและยังไม่ลงคิว — งานที่ยังรอวัด (PENDING_MEASURE) ต้องวัดหน้างานก่อน</p>}</div>
               <div className="grid grid-cols-2 gap-2">
                 <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
-                  <input type="date" value={pdate} onChange={(e) => setPdate(e.target.value)} className={dinp} /></div>
+                  <DateField value={pdate} onChange={(iso) => setPdate(iso)} className={dinp} aria-label="วันผลิต" /></div>
                 <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง</label>
-                  <input type="date" value={idate} onChange={(e) => setIdate(e.target.value)} className={dinp} /></div>
+                  <DateField value={idate} onChange={(iso) => setIdate(iso)} className={dinp} aria-label="วันติดตั้ง" /></div>
               </div>
               <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ "ลงคิวผลิต" + ใส่วันให้</p>
             </div>

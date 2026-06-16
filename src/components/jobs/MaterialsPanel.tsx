@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { thDate } from "@/lib/format";
 import { Spinner } from "@/components/ui/primitives";
+import DateField from "@/components/ui/DateField";
 
 type PO = {
   id: string; job_id: string; material: string; title: string; status: "PENDING" | "ORDERED" | "RECEIVED";
@@ -59,7 +60,7 @@ export function MaterialsPanel({ jobId }: { jobId: string }) {
         <div className="glass-card rounded-xl p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <select value={material} onChange={(e) => setMaterial(e.target.value)} className={fld}>{Object.entries(MAT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            <input value={expected} onChange={(e) => setExpected(e.target.value)} type="date" aria-label="กำหนดของเข้า" className={`${fld} [&::-webkit-calendar-picker-indicator]:invert`} />
+            <DateField value={expected} onChange={(iso) => setExpected(iso)} aria-label="กำหนดของเข้า" className={fld} />
           </div>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="รายละเอียด (เช่น เส้นอลู 2 นิ้ว 20 เส้น)" className={fld} />
           <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="ร้าน/ซัพพลายเออร์" className={fld} />

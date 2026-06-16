@@ -20,6 +20,7 @@ import {
   useMemo, useState, useRef, useCallback,
 } from "react";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import type { DesignState } from "@/lib/database.types";
 
@@ -582,22 +583,22 @@ function BarPopover({
           <div className="space-y-2">
             <label className="block">
               <span className="text-[12px] text-ink-2 font-medium">วันเริ่ม</span>
-              <input
-                type="date"
+              <DateField
                 value={startVal}
-                onChange={(e) => setStartVal(e.target.value)}
+                onChange={(iso) => setStartVal(iso)}
                 disabled={busy}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+                aria-label="วันเริ่ม"
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
               />
             </label>
             <label className="block">
               <span className="text-[12px] text-ink-2 font-medium">วันสิ้นสุดงาน (ช่างเขียนแบบ)</span>
-              <input
-                type="date"
+              <DateField
                 value={endVal}
-                onChange={(e) => setEndVal(e.target.value)}
+                onChange={(iso) => setEndVal(iso)}
                 disabled={busy}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+                aria-label="วันสิ้นสุดงาน"
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
               />
             </label>
           </div>

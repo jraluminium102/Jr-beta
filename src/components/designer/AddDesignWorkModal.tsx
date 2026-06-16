@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 
@@ -169,12 +170,12 @@ function AssignFields({
 
       <div>
         <label className={lblCls}>วันกำหนดส่งแบบ</label>
-        <input
-          type="date"
+        <DateField
           value={dueDate}
-          onChange={(e) => onDueDateChange(e.target.value)}
+          onChange={onDueDateChange}
           disabled={saving}
-          className={`${fieldCls} tnum`}
+          className={fieldCls}
+          aria-label="วันกำหนดส่งแบบ"
         />
       </div>
 

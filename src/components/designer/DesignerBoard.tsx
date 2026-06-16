@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Card } from "@/components/ui";
+import DateField from "@/components/ui/DateField";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
@@ -574,14 +575,13 @@ function JobCard({
           {/* design_due_date date input — editable (#37: confirm อดีต + toast) */}
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
-            <input
-              type="date"
+            <DateField
               value={dueDateVal}
-              onChange={(e) => setDueDateVal(e.target.value)}
+              onChange={(iso) => { setDueDateVal(iso); }}
               disabled={assigning}
               onBlur={handleDueBlur}
               aria-label="กำหนดส่งแบบ"
-              className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum ${
+              className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
                 job.overdue ? "text-brand font-semibold" : "text-ink-2"
               }`}
             />
@@ -595,14 +595,13 @@ function JobCard({
           {/* (0032) วันได้รับแบบ — editable */}
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
-            <input
-              type="date"
+            <DateField
               value={receivedDateVal}
-              onChange={(e) => setReceivedDateVal(e.target.value)}
+              onChange={(iso) => setReceivedDateVal(iso)}
               disabled={assigning}
               onBlur={handleReceivedBlur}
               aria-label="วันได้รับแบบ"
-              className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum text-ink-2"
+              className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
             />
           </div>
 

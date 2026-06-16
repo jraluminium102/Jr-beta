@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS, INST_STATUS } from "@/lib/constants";
 import { baht, thDate } from "@/lib/format";
+import DateField from "@/components/ui/DateField";
 import { calcFinancials } from "@/lib/finance";
 import { Chip, Tag, Spinner } from "@/components/ui/primitives";
 import { X, ShieldCheck, TriangleAlert, Banknote } from "@/components/ui/icons";
@@ -270,7 +271,7 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
       <div className="text-sm font-semibold text-white mb-3">บันทึกมัดจำ → สร้าง Production + บัญชี อัตโนมัติ</div>
       <div className="grid grid-cols-2 gap-3">
         <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (฿)</label><input inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px]" /></div>
-        <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันมัดจำ</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] [&::-webkit-calendar-picker-indicator]:invert" /></div>
+        <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันมัดจำ</label><DateField value={date} onChange={(iso) => setDate(iso)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none min-h-[44px]" aria-label="วันมัดจำ" /></div>
       </div>
       {err && <p role="alert" className="mt-2 text-[12px] text-rose-200">{err}</p>}
       <div className="flex gap-2 mt-3">
@@ -332,11 +333,11 @@ function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone:
         </div>
         <div>
           <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันมัดจำ <span className="text-rose-300">*</span></label>
-          <input
-            type="date"
+          <DateField
             value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] [&::-webkit-calendar-picker-indicator]:invert"
+            onChange={(iso) => setDate(iso)}
+            className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none min-h-[44px]"
+            aria-label="วันมัดจำ"
           />
         </div>
         <div>
@@ -436,7 +437,7 @@ function ProductionDatesForm({ jobId, prod, onSaved }: { jobId: string; prod: Pr
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const fldDate = "focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px] [&::-webkit-calendar-picker-indicator]:invert";
+  const fldDate = "focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none min-h-[44px]";
 
   const save = async () => {
     setErr(null); setSaving(true);
@@ -461,15 +462,15 @@ function ProductionDatesForm({ jobId, prod, onSaved }: { jobId: string; prod: Pr
       <div className="space-y-3">
         <div>
           <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันวัดกำหนด</label>
-          <input type="date" value={measure} onChange={(e) => setMeasure(e.target.value)} className={fldDate} />
+          <DateField value={measure} onChange={(iso) => setMeasure(iso)} className={fldDate} aria-label="วันวัดกำหนด" />
         </div>
         <div>
           <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันผลิตกำหนด</label>
-          <input type="date" value={prodDue} onChange={(e) => setProdDue(e.target.value)} className={fldDate} />
+          <DateField value={prodDue} onChange={(iso) => setProdDue(iso)} className={fldDate} aria-label="วันผลิตกำหนด" />
         </div>
         <div>
           <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันติดตั้งกำหนด</label>
-          <input type="date" value={install} onChange={(e) => setInstall(e.target.value)} className={fldDate} />
+          <DateField value={install} onChange={(iso) => setInstall(iso)} className={fldDate} aria-label="วันติดตั้งกำหนด" />
         </div>
       </div>
       {err && <p role="alert" className="mt-2 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{err}</p>}
@@ -496,7 +497,7 @@ function HandoverForm({ inst, onSaved }: { inst: Installation; onSaved: () => vo
   const [photo, setPhoto] = useState(inst.handover_photo_url ?? "");
   const [saving, setSaving] = useState(false);
   const fldBase = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40";
-  const fldDate = `${fldBase} [&::-webkit-calendar-picker-indicator]:invert`;
+  const fldDate = fldBase;
   const save = async () => {
     setSaving(true);
     try { await api.patch(`/installation/${inst.id}`, { handover_date: date || null, handover_signoff_url: signoff || null, handover_photo_url: photo || null }); onSaved(); }
@@ -507,7 +508,7 @@ function HandoverForm({ inst, onSaved }: { inst: Installation; onSaved: () => vo
       <div className="text-[12px] mb-2" style={{ color: "var(--t-low)" }}>หลักฐานรับงาน (ส่งงาน)</div>
       <div className="space-y-2">
         <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>วันรับงาน</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={fldDate} /></label>
+          <DateField value={date} onChange={(iso) => setDate(iso)} className={fldBase} aria-label="วันรับงาน" /></label>
         <input value={signoff} onChange={(e) => setSignoff(e.target.value)} placeholder="ลิงก์ใบรับงาน/ลายเซ็นลูกค้า" className={fldBase} />
         <input value={photo} onChange={(e) => setPhoto(e.target.value)} placeholder="ลิงก์รูปหลังติดตั้ง" className={fldBase} />
         <button onClick={save} disabled={saving} className="focusable pressable w-full bg-white text-[#1F4E78] rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px]">{saving ? "กำลังบันทึก…" : "บันทึกหลักฐานรับงาน"}</button>

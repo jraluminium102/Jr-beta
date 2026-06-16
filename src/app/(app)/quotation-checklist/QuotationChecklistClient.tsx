@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import { Card, Badge } from "@/components/ui";
 import { api } from "@/lib/api";
 import { baht } from "@/lib/money";
+import DateField from "@/components/ui/DateField";
 import type { ChecklistData, ChecklistItem, ChecklistQuotation } from "@/app/api/quotation-checklist/route";
 
 // ---------- types ----------
@@ -80,7 +81,7 @@ function Modal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrMsg("");
-    const t = parseFloat(total);
+    const t = Math.round(parseFloat(total) * 100) / 100; // รองรับทศนิยม 2 ตำแหน่ง (สตางค์)
     if (!t || t <= 0) { setErrMsg("กรุณากรอกยอดรวมที่ถูกต้อง"); return; }
 
     setSaving(true);
@@ -132,7 +133,7 @@ function Modal({
             </label>
             <input
               ref={totalRef}
-              type="number" step="1" min="1" required
+              type="number" step="0.01" min="0.01" inputMode="decimal" required
               value={total}
               onChange={(e) => setTotal(e.target.value)}
               placeholder="เช่น 120000"
@@ -140,8 +141,9 @@ function Modal({
             />
             {total && parseFloat(total) > 0 && (() => {
               const t = parseFloat(total);
-              const vatAmt  = noVat ? 0 : Math.round((t * 7) / 107);
-              const beforeVat = t - vatAmt;
+              // ถอด VAT inclusive (round2 = 2 ตำแหน่ง ตรงกับ API) — preview เท่านั้น ไม่กระทบการบันทึก
+              const vatAmt  = noVat ? 0 : Math.round((t * 7) / 107 * 100) / 100;
+              const beforeVat = Math.round((t - vatAmt) * 100) / 100;
               return (
                 <p className="text-[11px] text-white/50 mt-1 tabular-nums">
                   ก่อน VAT ฿{baht(beforeVat)}
@@ -196,11 +198,11 @@ function Modal({
           {mode === "step2" && (
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-white/85">วันที่ส่งใบเสนอ</label>
-              <input
-                type="date"
+              <DateField
                 value={issueDate}
-                onChange={(e) => setIssueDate(e.target.value)}
-                className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white outline-none focus:border-white/50 focus:bg-white/15 tabular-nums"
+                onChange={(iso) => setIssueDate(iso)}
+                className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white outline-none focus:border-white/50 focus:bg-white/15"
+                aria-label="วันที่ส่งใบเสนอ"
               />
             </div>
           )}
@@ -310,10 +312,10 @@ function JobCard({
         <div className="flex gap-2 pt-0.5">
           {!q && (
             <button
-              onClick={() => onAction(item, "step1", null)}
+              onClick={() => onAction(item, "step2", null)}
               className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white shadow-brand min-h-[44px]">
               <Icon name="check" size={15} />
-              ทำใบเสนอแล้ว
+              ทำใบเสนอ · ส่งแล้ว
             </button>
           )}
           {q?.status === "draft" && (
@@ -433,19 +435,24 @@ export default function QuotationChecklistClient() {
         </button>
       </div>
 
-      {/* Metric bar */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "รอทำใบเสนอ",        count: pending.length, color: "text-amber-700  bg-amber-50  border-amber-200" },
-          { label: "ทำแล้ว · รอส่ง",    count: drafted.length, color: "text-sky-700    bg-sky-50    border-sky-200" },
-          { label: "ส่งแล้ว · รอมัดจำ", count: sent.length,   color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-        ].map((m) => (
-          <div key={m.label} className={`rounded-2xl border px-4 py-3 ${m.color}`}>
-            <div className={`text-2xl font-extrabold tabular-nums`}>{m.count}</div>
-            <div className="text-xs font-medium mt-0.5 leading-tight">{m.label}</div>
+      {/* Metric bar — ตัด "ทำแล้ว·รอส่ง" ออก (กดเสร็จ→ส่งแล้วเลย) · โชว์เฉพาะถ้ามีของเก่าค้าง */}
+      {(() => {
+        const metrics = [
+          { label: "รอทำใบเสนอ", count: pending.length, color: "text-amber-700  bg-amber-50  border-amber-200" },
+          ...(drafted.length > 0 ? [{ label: "ทำแล้ว · รอส่ง (เก่า)", count: drafted.length, color: "text-sky-700 bg-sky-50 border-sky-200" }] : []),
+          { label: "ส่งแล้ว · รอมัดจำ", count: sent.length, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+        ];
+        return (
+          <div className={`grid gap-3 ${metrics.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+            {metrics.map((m) => (
+              <div key={m.label} className={`rounded-2xl border px-4 py-3 ${m.color}`}>
+                <div className="text-2xl font-extrabold tabular-nums">{m.count}</div>
+                <div className="text-xs font-medium mt-0.5 leading-tight">{m.label}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Error */}
       {errMsg && (
@@ -462,18 +469,20 @@ export default function QuotationChecklistClient() {
 
       {/* 3-lane board */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className={`grid grid-cols-1 gap-5 ${drafted.length > 0 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
           <Lane title="รอทำใบเสนอ" tone="bg-amber-50 border border-amber-200 text-amber-800" icon="clipboard" items={pending}>
             {pending.map((item) => (
               <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
             ))}
           </Lane>
 
-          <Lane title="ทำแล้ว · รอส่ง" tone="bg-sky-50 border border-sky-200 text-sky-800" icon="file" items={drafted}>
-            {drafted.map((item) => (
-              <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
-            ))}
-          </Lane>
+          {drafted.length > 0 && (
+            <Lane title="ทำแล้ว · รอส่ง (เก่า)" tone="bg-sky-50 border border-sky-200 text-sky-800" icon="file" items={drafted}>
+              {drafted.map((item) => (
+                <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
+              ))}
+            </Lane>
+          )}
 
           <Lane title="ส่งแล้ว · รอมัดจำ" tone="bg-emerald-50 border border-emerald-200 text-emerald-800" icon="check" items={sent}>
             {sent.map((item) => (

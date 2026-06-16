@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api";
 import { baht, thDate } from "@/lib/format";
 import { Check, ExternalLink, ShieldCheck, ClipboardList, FileText, FileCheck, FilePlus, Banknote } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/primitives";
+import DateField from "@/components/ui/DateField";
 import type { JobDocument } from "@/lib/database.types";
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ function StatusBadge({ map, status }: { map: Record<string, { th: string; cls: s
 // ─── sub-component: DocRow ───────────────────────────────────────────────────
 
 const FLD      = "focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none min-h-[40px] placeholder-white/40";
-const FLD_DATE = `${FLD} [&::-webkit-calendar-picker-indicator]:invert`;
+// FLD_DATE deprecated — use DateField component instead
 
 type DocRowProps = {
   label:        string;
@@ -215,11 +216,11 @@ function DocRow({ label, icon, jobId, docType, doc, onSaved, showWarranty }: Doc
 
         <div>
           <label className="text-[11px] block mb-1" style={{ color: "var(--t-low)" }}>วันที่เอกสาร</label>
-          <input
-            type="date"
+          <DateField
             value={s.doc_date}
-            onChange={(e) => set("doc_date", e.target.value)}
-            className={FLD_DATE}
+            onChange={(iso) => set("doc_date", iso)}
+            className={FLD}
+            aria-label="วันที่เอกสาร"
           />
         </div>
 
@@ -227,11 +228,11 @@ function DocRow({ label, icon, jobId, docType, doc, onSaved, showWarranty }: Doc
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[11px] block mb-1" style={{ color: "var(--t-low)" }}>วันเริ่มรับประกัน</label>
-              <input
-                type="date"
+              <DateField
                 value={s.w_start}
-                onChange={(e) => set("w_start", e.target.value)}
-                className={FLD_DATE}
+                onChange={(iso) => set("w_start", iso)}
+                className={FLD}
+                aria-label="วันเริ่มรับประกัน"
               />
             </div>
             <div>

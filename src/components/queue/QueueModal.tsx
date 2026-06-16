@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
+import DateField from "@/components/ui/DateField";
 import {
   FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
@@ -724,7 +725,7 @@ export function QueueModal({
           )}
 
           <Field label="วันที่นัด">
-            <input type="date" value={f.queue_date} onChange={(e) => set("queue_date", e.target.value)} className={inp} />
+            <DateField value={f.queue_date} onChange={(iso) => set("queue_date", iso)} className={inp} />
           </Field>
           <Field label="เวลา (slot)">
             <div className="space-y-1.5">

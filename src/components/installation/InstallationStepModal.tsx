@@ -5,6 +5,7 @@ import { INST_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, ShieldCheck } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 import type { InstStatus } from "@/lib/database.types";
 
 export type InstRow = {
@@ -269,14 +270,13 @@ export function InstallationStepModal({
                                 className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none resize-none placeholder-white/40"
                               />
                             ) : (
-                              <input
-                                type="date"
+                              <DateField
                                 value={vals[f.field] ?? ""}
-                                onChange={(e) =>
-                                  setVals((v) => ({ ...v, [f.field]: e.target.value }))
+                                onChange={(iso) =>
+                                  setVals((v) => ({ ...v, [f.field]: iso }))
                                 }
                                 aria-label={f.label}
-                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert"
+                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]"
                               />
                             )}
                           </div>
