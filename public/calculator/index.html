@@ -3081,6 +3081,30 @@ function rfChips(cls, items, defVal, twoUp){
 // sync สถานะ 'on' ของชิป ให้ตรง value ของ select (ใช้เมื่อโค้ดตั้งค่า select เอง) + lock/unlock ชิป (กันแก้)
 function rfChipSync(ch,cls){ var sel=ch.querySelector('.'+cls); if(!sel)return; ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.classList.toggle('on', c.dataset.val===sel.value); }); }
 function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.style.pointerEvents=on?'none':''; c.style.opacity=on?'0.45':''; }); }
+// ออปชั่นดรอปดาวน์ตัวเลือกน้อย (≤6) → ชิป อัตโนมัติ (พี่นัท 17 มิ.ย.) · อ่าน option จริงจาก select · ขับด้วย selectedIndex
+// (กันค่าชน เช่น o-closer/o-finish ที่หลาย option ใช้ value เดียวกัน + อ่าน data-n ผ่าน selectedIndex) · fire input+change = sync onchange/delegated เดิม · ราคา/readItem ไม่แตะ
+// ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
+var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor'];
+function chipifySelect(sel){
+  if(!sel || sel.dataset.chipped==='1') return;
+  var n=sel.options.length; if(n<2||n>7) return;            // ≤7 = ชิป (o-finish/o-bsdoor บางระแนง=7 · ให้เหมือนกันทุกสินค้า) · เกิน 7 คงดรอปดาวน์
+  sel.dataset.chipped='1'; sel.style.display='none';
+  var grp=document.createElement('div'); grp.className='chip-group chip-sm chip-auto'; grp.style.marginTop='4px';
+  Array.prototype.forEach.call(sel.options,function(o,i){
+    var b=document.createElement('button'); b.type='button';
+    b.className='chip'+(i===sel.selectedIndex?' on':''); b.dataset.idx=String(i);
+    b.textContent=(o.textContent||'').trim();
+    b.addEventListener('click',function(){
+      grp.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+      b.classList.add('on'); sel.selectedIndex=i;
+      sel.dispatchEvent(new Event('input',{bubbles:true}));
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+    grp.appendChild(b);
+  });
+  if(sel.parentNode) sel.parentNode.insertBefore(grp, sel.nextSibling);
+}
+function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) chipifySelect(s); }); }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
@@ -4364,6 +4388,8 @@ function buildItemOpts(d){
       var _fs=d.querySelector('.o-finish'); if(_fs && !_fs.dataset.hmHook){ _fs.dataset.hmHook='1'; _fs.addEventListener('change',function(){ rnHmodeCompare(d); }); }
       var _dt=d.querySelector('.o-doortype'); if(_dt && !_dt.dataset.hmHook){ _dt.dataset.hmHook='1'; _dt.addEventListener('change',function(){ rnDoorSwitch(d); rnHmodeCompare(d); }); }
   } }
+  // พี่นัท 17 มิ.ย.: ออปชั่นดรอปดาวน์ตัวเลือกน้อย → ชิป (หลัง groupGHOpts + hooks ครบ · ไม่แตะ G7)
+  chipifyItem(d);
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
   if(_mpat){
@@ -5818,15 +5844,42 @@ function toggleGroupSplit(idx){
   else window.qSplitGroups[gn] = true;
   genQuote(true);
 }
+/* quickmode-v2: แปลงรายการคิดเร็ว 1 ชุด → row ใบเสนอราคา (dispatch ต่อกลุ่ม) */
+function qiQuoteRow(d,g){
+  var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
+  var H=parseFloat((d.querySelector('.qi-h')||{}).value)||0;
+  var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
+  var r,prod='',size=W+'×'+H+' ม.',detail='';
+  try{
+    if(g==='3'){ r=qiCalcG3(d); var p3=PBYID[d.dataset.qiProd||'imp7']; prod=p3?p3.name:'หลังคา/ฝ้า'; detail=(r&&r.msgs&&r.msgs[0])||''; }
+    else if(g==='4'){ r=qiCalcG4(d); var t4=d.dataset.qiG4type||'cabinet'; var p4=PBYID[t4==='cabinet'?'cabinet_alu':'future_tech']; prod=(p4?p4.name:'ตู้')+(d.dataset.qiG4color==='1'?' · สีพิเศษ':''); size=(t4==='cabinet')?(W+'×'+H+' ลึก'+((d.querySelector('.qi-g4depth')||{}).value||0.6)+' ม. · '+(d.dataset.qiG4doors||2)+' บานหน้า'):(W+'×'+H+'/บาน · '+(d.dataset.qiG4ftpanel||2)+' บาน'); }
+    else if(g==='5'){ r=qiCalcG5(d); var p5=PBYID[d.dataset.qiProd||'imp21']; prod=p5?p5.name:'มุ้ง'; var pn=parseInt((d.querySelector('.qi-panels')||{}).value)||1; if(pn>1)size+=' · '+pn+' บาน'; var fb=d.dataset.qiG5fab; if(fb&&fb!=='free')detail='ผ้า'+(fb==='cat'?'กันแมว/หมา':fb==='rat'?'กันหนูสแตน':fb==='safety'?'นิรภัย 304':fb); }
+    else if(g==='6'){ r=qiCalcG6(d); var st6=qiG6GetState(d); var reach=parseFloat((d.querySelector('.qi-w')||{}).value)||0; var len=parseFloat((d.querySelector('.qi-h')||{}).value)||0; var hgt=parseFloat((d.querySelector('.qi-g6hgt')||{}).value)||2.8; prod='กั้นห้องกระจก '+st6.shape+' ด้าน'; size='ยื่น'+reach+'×ยาว'+len+'×สูง'+hgt+' ม.'; var rk=QIG6_ROOF[st6.roof]&&QIG6_ROOF[st6.roof][1]; detail='บานต่อด้าน'+(rk?(' · หลังคา '+QIG6_ROOF[st6.roof][0]):''); }
+    else if(g==='7'){ r=qiCalcG7(d); var ml=({auto:'auto',Z100:'JR-Z100',Z120:'JR-Z120',Z145D:'JR-Z145D 2ชั้น',Z120W:'JR-Z120W'})[d.dataset.qiZ7model||'auto']; prod='ม่านซิป '+ml; detail='ผ้า '+(d.dataset.qiZ7fab||'5')+'% · '+(d.dataset.qiZ7grp==='project'?'โครงการ':'ปลีก'); }
+    else if(g==='2'){ r=qiCalcG2(d); var cat=d.dataset.qiG2cat||'gate';
+      if(cat==='gate'){ prod='ประตูรั้วบานเลื่อน'+(d.dataset.qiG2gtype==='โค้ง'?'โค้ง':'ตรง'); detail='ลายระแนง '+(d.dataset.qiG2gprof||'')+' '+(d.dataset.qiG2gspac||'')+' · มอเตอร์ '+(d.dataset.qiG2gmotor||1)+' ตัว'; }
+      else if(cat==='ranae'){ prod='ระแนง'+(d.dataset.qiG2rbox?(' '+d.dataset.qiG2rbox):''); detail=[(d.dataset.qiG2rface||''),(d.dataset.qiG2rgap||''),(d.dataset.qiG2rframe||'')].join(' ').trim(); }
+      else if(cat==='rail'){ prod='ราวกันตกกระจก'; detail=(d.dataset.qiG2railshape||'')+' '+(d.dataset.qiG2railmount||''); }
+      else { var sp=PBYID[d.dataset.qiG2spid||'bar_openclose']; prod=sp?sp.name:'ระแนงพิเศษ'; } }
+    else { return null; }
+  }catch(e){ return null; }
+  if(!r||!(r.sell>0)) return null;
+  return {prod:prod, size:size, detail:detail, qty:r.qty||qty, sell:r.sell};
+}
 function genQuoteQuick(){
-  const list=[...document.querySelectorAll('#q-items .ch')].map(readQuickItem).filter(it=>it&&it.u.a>0);
-  if(!list.length){ alert('ยังไม่มีรายการที่กรอกขนาด'); return; }
-  let subtotal=0, rows='';
-  list.forEach((it,i)=>{
-    const line=it.u.sell*it.qty; subtotal+=line;
-    const label=it.p.name+(it.panels>1?(' ('+it.panels+' บาน)'):'');
-    rows+=qrow(i+1, 'ชุดที่ '+(i+1), label, it.w+'×'+it.h+' ม.', 'กระจกเขียว/ใส 6 มม.', it.qty, it.u.sell, line);
+  var items=[].slice.call(document.querySelectorAll('#q-items .ch'));
+  if(!items.length){ alert('ยังไม่มีรายการ'); return; }
+  var subtotal=0, rows='', n=0;
+  items.forEach(function(d){
+    var g=(d.querySelector('.qi-group')||{}).value||d.dataset.qiGrp||'1';
+    var row=null;
+    if(g==='1'){
+      var it=null; try{ it=readQuickItem(d); }catch(e){}
+      if(it&&it.u&&it.u.a>0){ row={prod:it.p.name+(it.panels>1?(' ('+it.panels+' บาน)'):''), size:it.w+'×'+it.h+' ม.', detail:(typeof GLASS!=='undefined'&&GLASS[it.gi]?GLASS[it.gi].n:'')+(it.ci>0&&typeof COLORS!=='undefined'&&COLORS[it.ci]?(' · '+COLORS[it.ci].n):''), qty:it.qty, sell:it.u.sell}; }
+    } else { row=qiQuoteRow(d,g); }
+    if(row&&row.sell>0){ n++; var line=row.sell*row.qty; subtotal+=line; rows+=qrow(n,'รายการที่ '+n, row.prod, row.size, row.detail, row.qty, row.sell, line); }
   });
+  if(!n){ alert('ยังไม่ได้กรอกขนาด/เลือกสินค้าให้ครบ'); return; }
   buildQuoteDoc(rows, subtotal, 0, document.getElementById('q-cust').value||'-', today());
 }
 
