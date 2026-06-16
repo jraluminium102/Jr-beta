@@ -4718,7 +4718,8 @@ function genQuote(keepNo){
           const _mfLblSl = _mfMapSl[_mfSl]||'ผ้าไฟเบอร์ดำ';
           const _mosqAddonSl = (it.r && it.r.addonLines||[]).find(function(al){return al.mosqArea!==undefined;});
           const _szTxt = _mosqAddonSl ? (' — ขนาด ~'+_mosqAddonSl.mosqArea.toFixed(1)+' ตร.ม.') : '';
-          const _msNameSl = _mscSl.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s*\(สีขาว\/ดำ\)/g,'').replace(/\s+/g,' ').trim();  // C1: ตัด SD พื้นฐาน
+          let _msNameSl = _mscSl.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s*\(สีขาว\/ดำ\)/g,'').replace(/\s*\([^)]*·\s*ตัด PC[^)]*\)/g,'').replace(/\s*\(เลื่อน\/[^)]+\)/g,'').replace(/\s*\(บาน[^)]+\)/g,'').replace(/\s+ห้าม\s+PC\s*$/,'').replace(/\s*ผ้ามุ้งไฟเบอร์\s*/g,' ').replace(/\s+/g,' ').trim();  // C1 + G1 มุ้งบนใบ: ตัด SD/วงเล็บรวม technical
+          if((it.optSel.mosqId==='imp21'||it.optSel.mosqId==='imp23') && it.optSel.mosqOpenStyle) _msNameSl += ' บาน'+it.optSel.mosqOpenStyle; // G1 มุ้งบนใบ: ระบุลักษณะการเปิดที่เลือก แทนวงเล็บรวม
           var _frcSl=COLORS[it.ci||0]; var _frNameSl=_frcSl?(_frcSl.quoteName||_frcSl.n).replace(/[★⚠]/g,'').trim():'';
           // ข้อ13(G1): สีกรอบมุ้ง — special โชว์สีนั้น · ว่าง=ตามสีบาน
           var _mqcMapSl={sahara:'เทาซาฮาร่า',kl_special:'เคแอลอบพิเศษ',kl_wood:'เคแอลลายไม้'};
@@ -4822,7 +4823,8 @@ function genQuote(keepNo){
           const mf = (it.optSel.mosqFabric)||'fiber_gray';
           const mfLabel = fabricMapM[mf]||'ผ้าไฟเบอร์ดำ';
           // C1: ตัด "SD พื้นฐาน" ทิ้ง → รายละเอียดเหลือ "มุ้งจีบ {ผ้า}" (ชนิดอื่นเช่นตีนตะขาบยังคงไว้)
-          const msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s+/g,' ').trim();
+          let msName = mscreen.name.replace(/\s*SD พื้นฐาน\s*/g,' ').replace(/\s*\(สีขาว\/ดำ\)/g,'').replace(/\s*\([^)]*·\s*ตัด PC[^)]*\)/g,'').replace(/\s*\(เลื่อน\/[^)]+\)/g,'').replace(/\s*\(บาน[^)]+\)/g,'').replace(/\s+ห้าม\s+PC\s*$/,'').replace(/\s*ผ้ามุ้งไฟเบอร์\s*/g,' ').replace(/\s+/g,' ').trim(); // C1 + G1 มุ้งบนใบ
+          if((it.optSel.mosqId==='imp21'||it.optSel.mosqId==='imp23') && it.optSel.mosqOpenStyle) msName += ' บาน'+it.optSel.mosqOpenStyle; // G1 มุ้งบนใบ: ระบุลักษณะการเปิดที่เลือก
           var _frc=COLORS[it.ci||0]; var _frName=_frc?(_frc.quoteName||_frc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim():'';
           // ข้อ13(G1): สีกรอบมุ้ง — special เลือกไว้โชว์สีนั้น · ว่าง=ตามสีบาน (มีชื่อสีเสมอ)
           var _mqcMap={sahara:'เทาซาฮาร่า',kl_special:'เคแอลอบพิเศษ',kl_wood:'เคแอลลายไม้'};
