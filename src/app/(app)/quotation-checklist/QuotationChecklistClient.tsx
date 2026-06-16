@@ -290,7 +290,9 @@ function JobCard({
         <div className="rounded-xl bg-gray-50/80 border border-gray-200/70 px-3 py-2 space-y-1">
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-brand-dark font-semibold">{q.code}</span>
-            <span className="tabular-nums text-sm font-bold text-ink">฿{baht(q.net)}</span>
+            {Number(q.net) > 0
+              ? <span className="tabular-nums text-sm font-bold text-ink">฿{baht(q.net)}</span>
+              : <span className="text-xs font-semibold text-amber-600">รอใส่ยอด</span>}
           </div>
           {parsed?.ext_ref && (
             <div className="text-xs text-ink-3">
@@ -334,12 +336,20 @@ function JobCard({
             </>
           )}
           {(q?.status === "sent" || q?.status === "approved") && (
-            <Link
-              href={`/billing-notes/new?quotation=${q.id}`}
-              className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand/5 min-h-[44px]">
-              <Icon name="banknote" size={15} />
-              วางบิล
-            </Link>
+            <>
+              <button
+                onClick={() => onAction(item, "step2", q)}
+                title="แก้ยอด/รายละเอียดใบเสนอ"
+                className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px] min-w-[44px]">
+                <Icon name="pencil" size={15} />
+              </button>
+              <Link
+                href={`/billing-notes/new?quotation=${q.id}`}
+                className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand/5 min-h-[44px]">
+                <Icon name="banknote" size={15} />
+                วางบิล
+              </Link>
+            </>
           )}
         </div>
       )}

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const schema = z.object({
   job_id:     z.string().uuid("job_id ต้องเป็น UUID"),
-  total:      z.number().positive("ยอดรวมต้องมากกว่า 0"),  // รองรับทศนิยม (สตางค์)
+  total:      z.number().min(0, "ยอดรวมต้องไม่ติดลบ"),  // รองรับทศนิยม (สตางค์) · 0 = mark ส่งแล้วโดยยังไม่ระบุยอด
   ext_ref:    z.string().optional(),
   ext_link:   z.string().optional(),
   issue_date: z.string().optional(),
@@ -219,14 +219,18 @@ export const POST = withRoute(async (req: Request) => {
     // net_amount = subtotal เท่านั้น — trigger tg_calc_financials จะคิด vat_amount/total_amount ให้เอง
     // ต้องส่ง vat_rate ด้วยเสมอ เพราะ trigger ใหม่ยิงเมื่อ vat_rate เปลี่ยนด้วย
     // (ห้ามส่ง total/total_amount เพราะ total รวม VAT แล้ว → trigger จะบวก VAT ซ้ำ ทำให้ stats เพี้ยน)
+    // total=0 (mark ส่งแล้วโดยยังไม่ระบุยอด) → ไม่เซ็ต net_amount/vat_rate (กันเขียนทับ/ใส่ 0) ใส่ทีหลังตอนแก้ยอด
+    const jobUpdate: Record<string, unknown> = {
+      quote_sent_date: issue_date || today,
+      status: "QUOTE_SENT",
+    };
+    if (total > 0) {
+      jobUpdate.net_amount = subtotal;
+      jobUpdate.vat_rate = vat_rate;
+    }
     const { error: jUpErr } = await sb
       .from("jobs")
-      .update({
-        quote_sent_date: issue_date || today,
-        status: "QUOTE_SENT",
-        net_amount: subtotal,
-        vat_rate,
-      })
+      .update(jobUpdate)
       .eq("id", job_id);
     if (jUpErr) {
       console.warn("[quotations/quick] job update failed (non-fatal):", jUpErr.message);
