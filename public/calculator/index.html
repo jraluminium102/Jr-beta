@@ -5653,7 +5653,7 @@ function genQuote(keepNo){
           var _asx='';
           if(_aci>0 && _ac.hasCode){ var _acEl=it.div?it.div.querySelector('.i-colorcode'):null; var _acd=_acEl?(_acEl.value||'').trim():''; _asx=_acd?(' · รหัส '+_acd):' · ⚠ ต้องระบุรหัสสี'; }
           if(_ac.sampleConfirm){ var _ascEl=it.div?it.div.querySelector('.i-sampleconfirm'):null; _asx+=(_ascEl&&_ascEl.checked)?' · ลูกค้ายืนยันตัวอย่างแล้ว':' · ⚠ ยังไม่ยืนยันตัวอย่าง'; }
-          _aluSpec='สีอลู: '+_anm+_asx;
+          _aluSpec='สีอลูมิเนียม: '+_anm+_asx; // คงคำ "อลูมิเนียม" (ตรงใบจริง + ผ่าน quote-fidelity) · label สเปกตามมติใบ 5 บล็อก
         }
       }
       det.split('\n').forEach(function(L){ L=(L||'').replace(/^-\s+/,'').trim(); if(!L||L==='-')return;
