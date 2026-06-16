@@ -2543,40 +2543,49 @@ function mosqFabricColors(fabBtn){
 // G2 (HANDOFF-G2-formux · DRAFT-G2-ux อนุมัติ 2026-06-12): drill-down ระแนง cascade
 //   parse ชื่อรุ่น → tree (rate ดึงจาก PRODUCTS ไม่ embed กันdrift) · ซ่อน .i-prod · ใช้ g3SyncProd ร่วม
 //   บังตา: ขนาดเส้น(profile)→ระยะโชว์(spacing)→โครง · ผนัง: ระยะโชว์→โครง · เกล็ด: ขนาด→โครง
-function rnCatKey(p){ return p.cat==='ระแนง-บังตา'?'bangta':(p.cat==='ระแนง-ผนัง'?'phanang':(p.cat==='ระแนง-เกล็ด'?'gleed':null)); }
-function rnParse(p){ // → {profile,spacing,frame}(บังตา) | {spacing,frame}(ผนัง) | {size,frame}(เกล็ด)
+// ===== ระแนง cascade ใหม่ (G2-B 15มิ.ย.): กล่อง → หน้าโชว์ → ระยะห่าง → โครง (รวม บังตา+ผนัง) =====
+function rnCatKey(p){ return (p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง')?'box':(p.cat==='ระแนง-เกล็ด'?'gleed':null); }
+function rnParse(p){ // → {box,face,gap,frame}(กล่อง) | {size,frame}(เกล็ด)
   var nm=p.name||'', frame=/รวมโครง/.test(nm)?'รวมโครง':'ไม่โครง';
   if(p.cat==='ระแนง-เกล็ด'){ return {size:nm.replace(/^เกล็ด\s*Z\s*/,'').replace(/(ไม่|รวม)โครง\s*$/,'').trim(), frame:frame}; }
   var body=nm.replace(/^บังตาผนังระแนง/,'').replace(/^ระแนงผนัง\s*/,'').replace(/(ไม่|รวม)โครง\s*$/,'').trim();
-  var parts=body.split(/โชว์/); var profile=(parts[0]||'').trim(), spacing=(parts[1]||'').trim();
-  if(p.cat==='ระแนง-ผนัง') return {spacing:spacing, frame:frame};
-  return {profile:profile, spacing:spacing, frame:frame};
+  var parts=body.split(/โชว์/); var box=(parts[0]||'').trim(), sp=(parts[1]||'').trim();
+  var fp=sp.split(/\s+/); var face=fp[0]||'', gap=fp.slice(1).join(' ')||'ทึบ';
+  return {box:box, face:face, gap:gap, frame:frame};
 }
-var RN_TREE={bangta:{},phanang:{},gleed:{}};
+var RN_TREE={box:{}, gleed:{}}, RN_BOX_ORDER=[];
 PRODUCTS.forEach(function(p){ var ck=rnCatKey(p); if(!ck)return; var d=rnParse(p);
-  if(ck==='bangta'){ (RN_TREE.bangta[d.profile]=RN_TREE.bangta[d.profile]||{}); (RN_TREE.bangta[d.profile][d.spacing]=RN_TREE.bangta[d.profile][d.spacing]||{})[d.frame]=p.id; }
-  else if(ck==='phanang'){ (RN_TREE.phanang[d.spacing]=RN_TREE.phanang[d.spacing]||{})[d.frame]=p.id; }
-  else { (RN_TREE.gleed[d.size]=RN_TREE.gleed[d.size]||{})[d.frame]=p.id; }
+  if(ck==='box'){
+    if(!RN_TREE.box[d.box]){ RN_TREE.box[d.box]={}; RN_BOX_ORDER.push(d.box); }
+    (RN_TREE.box[d.box][d.face]=RN_TREE.box[d.box][d.face]||{});
+    (RN_TREE.box[d.box][d.face][d.gap]=RN_TREE.box[d.box][d.face][d.gap]||{})[d.frame]=p.id;
+  } else { (RN_TREE.gleed[d.size]=RN_TREE.gleed[d.size]||{})[d.frame]=p.id; }
 });
 function rnRate(id){ var p=PBYID[id]; return p?p.rate:0; }
-function rnResolve(ck,k1,k2,frame){ // k1=profile/spacing/size · k2=spacing(บังตาเท่านั้น)
-  var node;
-  if(ck==='bangta'){ var n=RN_TREE.bangta[k1]; if(!n)return''; if(!n[k2])k2=Object.keys(n)[0]; node=n[k2]; }
-  else if(ck==='phanang'){ if(!RN_TREE.phanang[k1])k1=Object.keys(RN_TREE.phanang)[0]; node=RN_TREE.phanang[k1]; }
-  else { if(!RN_TREE.gleed[k1])k1=Object.keys(RN_TREE.gleed)[0]; node=RN_TREE.gleed[k1]; }
-  if(!node)return''; return node[frame]||node['ไม่โครง']||node[Object.keys(node)[0]]||'';
+function rnResolve(ck,k1,k2,k3,frame){ // box: k1=กล่อง k2=หน้าโชว์ k3=ระยะ · gleed: k1=ขนาด
+  if(ck==='gleed'){ var g=RN_TREE.gleed[k1]; if(!g)return''; return g[frame]||g['ไม่โครง']||g[Object.keys(g)[0]]||''; }
+  var b=RN_TREE.box[k1]; if(!b)return''; if(!b[k2])k2=Object.keys(b)[0]; var fc=b[k2]; if(!fc)return'';
+  if(!fc[k3])k3=Object.keys(fc)[0]; var node=fc[k3]; if(!node)return'';
+  return node[frame]||node['รวมโครง']||node['ไม่โครง']||node[Object.keys(node)[0]]||'';
 }
 function rnPick(btn,dim){
   var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p)return;
   var ck=rnCatKey(p); if(!ck)return; var d=rnParse(p), v=btn.dataset.val;
-  var k1=(ck==='bangta')?d.profile:(ck==='gleed'?d.size:d.spacing), k2=d.spacing, frame=d.frame;
-  if(dim==='profile'){ k1=v; var n=RN_TREE.bangta[v]; k2=Object.keys(n)[0]; frame='ไม่โครง'; ch.dataset.rnStep='2'; }      // บังตา เลือกขนาดเส้น → เปิดระยะโชว์
-  else if(dim==='k1'){ k1=v; frame=d.frame||'ไม่โครง'; ch.dataset.rnStep='2'; }      // ผนัง/เกล็ด: เลือกระดับ1 → เปิดโครง
-  else if(dim==='spacing'){ k2=v; frame=d.frame||'ไม่โครง'; ch.dataset.rnStep='3'; }  // บังตา: เลือกระยะโชว์ → เปิดโครง
-  else if(dim==='frame'){ frame=v; }
-  var id=rnResolve(ck,k1,k2,frame); var cur=ch.querySelector('.i-prod').value;
+  var k1,k2,k3,frame;
+  if(ck==='box'){
+    k1=d.box; k2=d.face; k3=d.gap; frame=d.frame;
+    if(dim==='box'){ k1=v; var b=RN_TREE.box[v]; k2=Object.keys(b)[0]; k3=Object.keys(b[k2])[0]; frame='รวมโครง'; ch.dataset.rnStep='2'; }   // เลือกกล่อง → เปิดหน้าโชว์ · ★default รวมโครง
+    else if(dim==='face'){ k2=v; k3=Object.keys(RN_TREE.box[k1][v])[0]; frame='รวมโครง'; ch.dataset.rnStep='3'; }  // เลือกหน้าโชว์ → เปิดระยะ
+    else if(dim==='gap'){ k3=v; frame='รวมโครง'; ch.dataset.rnStep='4'; }  // เลือกระยะ → เปิดโครง
+    else if(dim==='frame'){ frame=v; }
+  } else {
+    k1=d.size; frame=d.frame;
+    if(dim==='k1'){ k1=v; frame='รวมโครง'; ch.dataset.rnStep='2'; }
+    else if(dim==='frame'){ frame=v; }
+  }
+  var id=rnResolve(ck,k1,k2,k3,frame); var cur=ch.querySelector('.i-prod').value;
   if(id && id!==cur) g3SyncProd(ch,id);
-  else { buildItemOpts(ch); calcQuote(); } // ALLG-v2: เลือกค่าเดิม (product ไม่เปลี่ยน) แต่ step เพิ่ม → re-render เพื่อโผล่ขั้นถัดไป
+  else { buildItemOpts(ch); calcQuote(); } // ALLG-v2: เลือกค่าเดิม → re-render โผล่ขั้นถัดไป
 }
 function rnChips(opts,curVal,dim,cb){ cb=cb||'rnPick'; var h='<div class="chip-grid">'; opts.forEach(function(o){ var v=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; h+='<button type="button" class="chip'+(v===curVal?' on':'')+'" data-val="'+String(v).replace(/"/g,'&quot;')+'" onclick="'+cb+'(this,\''+dim+'\')">'+t+'</button>'; }); return h+'</div>'; }
 // ALLG-v2: progressive reveal — โผล่ทีละขั้น (เลือกขั้นบนก่อน ขั้นล่างค่อยโผล่) · step เก็บใน ch.dataset.rnStep
@@ -2587,31 +2596,25 @@ function rnSelectorHTML(p, ch){
   var step=parseInt((ch&&ch.dataset.rnStep)||'1')||1;
   var h='<div class="opt rn-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   var more=false;
-  if(ck==='bangta'){
-    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดเส้นระแนง '+rnChips(Object.keys(RN_TREE.bangta),d.profile,'profile')+'</label>';
-    if(step>=2){
-      var sps=RN_TREE.bangta[d.profile]?Object.keys(RN_TREE.bangta[d.profile]):[];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> ระยะโชว์ '+rnChips(sps,d.spacing,'spacing')+'</label>';
+  if(ck==='box'){
+    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดกล่อง '+rnChips(RN_BOX_ORDER.filter(function(b){return RN_TREE.box[b];}),d.box,'box')+'</label>';
+    if(step>=2){ var faces=RN_TREE.box[d.box]?Object.keys(RN_TREE.box[d.box]):[];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> หน้าโชว์ '+(faces.length>1?'<span style="font-size:10px;color:#0369A1;">('+faces.length+' หน้า)</span> ':'')+rnChips(faces,d.face,'face')+'</label>';
     } else more=true;
-    if(step>=3){
-      var frs=(RN_TREE.bangta[d.profile]&&RN_TREE.bangta[d.profile][d.spacing])?Object.keys(RN_TREE.bangta[d.profile][d.spacing]):['ไม่โครง','รวมโครง'];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">③</b> โครง '+rnChips(frs,d.frame,'frame')+'</label>';
+    if(step>=3){ var gaps=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face])?Object.keys(RN_TREE.box[d.box][d.face]):[];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">③</b> ระยะห่าง '+rnChips(gaps,d.gap,'gap')+'</label>';
     } else if(step>=2) more=true;
-  } else if(ck==='phanang'){
-    h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ระยะโชว์ '+rnChips(Object.keys(RN_TREE.phanang),d.spacing,'k1')+'</label>';
-    if(step>=2){
-      var frp=RN_TREE.phanang[d.spacing]?Object.keys(RN_TREE.phanang[d.spacing]):['ไม่โครง','รวมโครง'];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frp,d.frame,'frame')+'</label>';
-    } else more=true;
+    if(step>=4){ var frs=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face]&&RN_TREE.box[d.box][d.face][d.gap])?Object.keys(RN_TREE.box[d.box][d.face][d.gap]):['ไม่โครง','รวมโครง'];
+      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">④</b> โครง '+rnChips(frs,d.frame,'frame')+'</label>';
+    } else if(step>=3) more=true;
   } else {
     h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดเกล็ด '+rnChips(Object.keys(RN_TREE.gleed),d.size,'k1')+'</label>';
-    if(step>=2){
-      var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
+    if(step>=2){ var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
       h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frg,d.frame,'frame')+'</label>';
     } else more=true;
   }
   if(more) h+=_rnStepHint();
-  else h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+p.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
+  else h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+(p.name||'').replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
   return h+'</div>';
 }
 // G2 เฟส3 "ทำเป็นบาน": เลือกชนิดบาน → switch ระแนง→ไม่โครง อัตโนมัติ (บานให้โครงเอง · กันคิดโครงซ้ำ +12k)
@@ -2623,9 +2626,8 @@ function rnDoorSwitch(ch){
   if(!doortype) return; // ไม่ทำบาน → ไม่ยุ่ง frame
   var ck=rnCatKey(p), d=rnParse(p);
   if(d.frame==='ไม่โครง') return; // ไม่โครงอยู่แล้ว
-  var k1=(ck==='bangta')?d.profile:(ck==='gleed'?d.size:d.spacing);
-  var newId=rnResolve(ck,k1,d.spacing,'ไม่โครง');
-  if(newId && newId!==p.id) g3SyncProd(ch,newId); // rebuild · doortype restore ผ่าน dataset (buildItemOpts)
+  var newId=(ck==='box')?rnResolve(ck,d.box,d.face,d.gap,'ไม่โครง'):rnResolve(ck,d.size,null,null,'ไม่โครง');
+  if(newId && newId!==p.id) g3SyncProd(ch,newId); // rebuild · doortype restore ผ่าน dataset
 }
 // G2 เฟส4 ราวกันตก (imp1-6 cat ราวบันได): cascade ทรง(เฉียง/ตรง)→ระบบยึด(หมุด/ยู/เสา)→imp auto · ใช้ g3SyncProd ร่วม
 function railParse(p){ var nm=p.name||''; return { shape:/เฉียง/.test(nm)?'เฉียง':'ตรง', mount:/หมุด/.test(nm)?'หมุด':(/วางยู|ยูเหล็ก/.test(nm)?'ยู':'เสา') }; }
@@ -2703,21 +2705,24 @@ function famRestCats(grp){ var main=FAM_CATS[grp]||[]; var seen={}, rest=[];
 // กดบานที่เหลือ → คง famOther เปิดไว้ (ให้แผงบานที่เหลือ + รุ่นย่อยยังโชว์) แล้ว set product = default ของ cat
 function famPickOtherCat(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset.famOther='1'; ch.dataset.rnStep='1'; var id=famDefaultProd(btn.dataset.cat); if(id) g3SyncProd(ch,id); }
 // G2 เฟส4b ประตูรั้ว: ลายระแนง cascade (บังตา ไม่โครง · ขนาดเส้น→ระยะโชว์) ขับ hidden .o-gatern (re-render ในที่ · ไม่ rebuild ทั้งฟอร์ม)
-function gateRnParse(id){ var p=PBYID[id]; if(!p||p.cat!=='ระแนง-บังตา')return{profile:Object.keys(RN_TREE.bangta)[0],spacing:''}; var d=rnParse(p); return {profile:d.profile,spacing:d.spacing}; }
-function gateRnResolve(profile,spacing){ var n=RN_TREE.bangta[profile]; if(!n)return''; if(!n[spacing])spacing=Object.keys(n)[0]; var f=n[spacing]; return (f&&f['ไม่โครง'])||''; }
+function gateRnParse(id){ var p=PBYID[id]; if(!p||rnCatKey(p)!=='box')return{box:RN_BOX_ORDER[0],face:'',gap:''}; var d=rnParse(p); return {box:d.box,face:d.face,gap:d.gap}; }
+function gateRnResolve(box,face,gap){ var b=RN_TREE.box[box]; if(!b)return''; if(!b[face])face=Object.keys(b)[0]; var fc=b[face]; if(!fc)return''; if(!fc[gap])gap=Object.keys(fc)[0]; var node=fc[gap]; return (node&&node['ไม่โครง'])||''; }
 function gateRnChipsHTML(curId){ var d=gateRnParse(curId);
-  var sps=RN_TREE.bangta[d.profile]?Object.keys(RN_TREE.bangta[d.profile]):[];
-  var rid=gateRnResolve(d.profile,d.spacing), rp=rid?PBYID[rid]:null;
+  var b=RN_TREE.box[d.box]||{}; var faces=Object.keys(b); var fc=b[d.face]||{}; var gaps=Object.keys(fc);
+  var rid=gateRnResolve(d.box,d.face,d.gap), rp=rid?PBYID[rid]:null;
   var h='<div class="gate-rn-casc" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:7px 9px;background:#FAFAFA;margin:4px 0;">';
-  h+='<label class="opt" style="width:100%;margin:0;font-size:12px;">ลายระแนง · ขนาดเส้น '+rnChips(Object.keys(RN_TREE.bangta),d.profile,'profile','gateRnPick')+'</label>';
-  h+='<label class="opt" style="width:100%;margin:5px 0 0;font-size:12px;">ระยะโชว์ '+rnChips(sps,d.spacing,'spacing','gateRnPick')+'</label>';
-  h+='<div style="font-size:11px;color:#0369A1;margin-top:5px;">'+(rp?(rp.name.replace(/^บังตาผนังระแนง\s*/,'').replace(' ไม่โครง','')+' · เรต '+(rp.rate||0).toLocaleString()):'เลือกลาย')+'</div></div>';
+  h+='<label class="opt" style="width:100%;margin:0;font-size:12px;">ลายระแนง · ขนาดกล่อง '+rnChips(RN_BOX_ORDER.filter(function(x){return RN_TREE.box[x];}),d.box,'box','gateRnPick')+'</label>';
+  h+='<label class="opt" style="width:100%;margin:5px 0 0;font-size:12px;">หน้าโชว์ '+rnChips(faces,d.face,'face','gateRnPick')+'</label>';
+  h+='<label class="opt" style="width:100%;margin:5px 0 0;font-size:12px;">ระยะห่าง '+rnChips(gaps,d.gap,'gap','gateRnPick')+'</label>';
+  h+='<div style="font-size:11px;color:#0369A1;margin-top:5px;">'+(rp?(rp.name.replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'').replace(' ไม่โครง','')+' · เรต '+(rp.rate||0).toLocaleString()):'เลือกลาย')+'</div></div>';
   return h;
 }
 function gateRnPick(btn,dim){ var ch=btn.closest('.ch'); if(!ch)return; var sel=ch.querySelector('.o-gatern'); if(!sel)return;
-  var cur=gateRnParse(sel.value), v=btn.dataset.val, profile=cur.profile, spacing=cur.spacing;
-  if(dim==='profile'){ profile=v; spacing=Object.keys(RN_TREE.bangta[v])[0]; } else spacing=v;
-  var id=gateRnResolve(profile,spacing); if(!id)return;
+  var cur=gateRnParse(sel.value), v=btn.dataset.val, box=cur.box, face=cur.face, gap=cur.gap;
+  if(dim==='box'){ box=v; var b=RN_TREE.box[v]; face=Object.keys(b)[0]; gap=Object.keys(b[face])[0]; }
+  else if(dim==='face'){ face=v; gap=Object.keys(RN_TREE.box[box][v])[0]; }
+  else gap=v;
+  var id=gateRnResolve(box,face,gap); if(!id)return;
   if(!sel.querySelector('option[value="'+id+'"]')){ var o=document.createElement('option'); o.value=id; sel.appendChild(o); }
   sel.value=id;
   var cont=ch.querySelector('.gate-rn-casc'); if(cont){ cont.outerHTML=gateRnChipsHTML(id); }
