@@ -1796,11 +1796,25 @@ function qiGroupChips(cur){ return '<div class="chip-grid cg4">'+QI_GROUPS.map(f
 // ALLG-v2: คิดเร็ว กลุ่มที่ไม่มี FAM_CATS (3 หลังคา/ฝ้า · 5 มุ้ง) → ใช้ cat เป็นปุ่มแทน dropdown เปล่า
 var QI_EXTRA_CATS={'3':['หลังคา','ฝ้า-ผนัง'],'5':['มุ้ง']};
 function qiCatsOf(grp){ return FAM_CATS[grp]||QI_EXTRA_CATS[grp]||null; }
-function qiFamChips(grp,curId){ var cats=qiCatsOf(grp); var curCat=(PBYID[curId]||{}).cat;
+function qiFamChips(grp,curId){
+  if(grp==='5'){ return qiMosqChips(curId); } // มุ้ง: ปุ่มหมวด(เฟรม/จีบ/จีบรังผึ้ง/ม้วน)→รุ่น เหมือนหน้าเต็ม mosqSelectorHTML · ไม่ใช้ dropdown
+  var cats=qiCatsOf(grp); var curCat=(PBYID[curId]||{}).cat;
   if(!cats) return ''; // กลุ่มไม่มี family → ใช้ dropdown
   var h='<div class="chip-grid">';
   cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===curCat?' on':'')+'" data-cat="'+c+'" onclick="qiPickFam(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
   h+='<button type="button" class="chip" style="border-style:dashed;" onclick="qiOther(this)">อื่นๆ ▾</button></div>'; return h; }
+// คิดเร็ว มุ้ง: drill-down หมวด→รุ่น (ใช้ MOSQ_GRP_PRODS เดียวกับหน้าเต็ม) · เขียน .qi-prod (ซ่อน) แล้ว fire change → calcQuickAll
+function qiMosqChips(curId){
+  var grp=mosqGrpOf(curId)||'frame'; var gk;
+  var h='<div class="chip-grid">';
+  for(gk in MOSQ_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-mgrp="'+gk+'" onclick="qiPickMosqGrp(this)">'+MOSQ_GRP_LABEL[gk]+'</button>'; }
+  h+='</div><div class="chip-grid" style="margin-top:5px;">';
+  MOSQ_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===curId?' on':'')+'" data-id="'+x[0]+'" onclick="qiPickMosqProd(this)">'+x[1]+'</button>'; });
+  return h+'</div>';
+}
+function qiSetProd(d,id){ var sel=d.querySelector('.qi-prod'); if(!sel)return; if(!sel.querySelector('option[value="'+id+'"]')){ var o=document.createElement('option'); o.value=id; o.textContent=id; sel.appendChild(o); } delete d.dataset.qiOther; sel.value=id; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+function qiPickMosqGrp(btn){ var first=(MOSQ_GRP_PRODS[btn.dataset.mgrp]||[])[0]; if(first) qiSetProd(btn.closest('.ch'), first[0]); } // กดหมวด → รุ่นแรกของหมวด
+function qiPickMosqProd(btn){ qiSetProd(btn.closest('.ch'), btn.dataset.id); }
 function qiRebuild(d){ var g=d.querySelector('.qi-group').value; var gc=d.querySelector('.qi-groupchips'); if(gc) gc.innerHTML=qiGroupChips(g);
   var fc=d.querySelector('.qi-famchips'); if(fc){ fc.innerHTML=qiFamChips(g,d.querySelector('.qi-prod').value); }
   var ps=d.querySelector('.qi-prod'); var hasFam=!!qiCatsOf(g); if(ps&&!d.dataset.qiOther) ps.style.display=hasFam?'none':''; }
@@ -1808,7 +1822,9 @@ function qiPickGroup(btn){ var d=btn.closest('.ch'); var sel=d.querySelector('.q
 function qiPickFam(btn){ var d=btn.closest('.ch'); var id=famDefaultProd(btn.dataset.cat); var sel=d.querySelector('.qi-prod');
   if(id && sel.querySelector('option[value="'+id+'"]')){ sel.value=id; } delete d.dataset.qiOther; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 function qiOther(btn){ var d=btn.closest('.ch'); d.dataset.qiOther='1'; d.querySelector('.qi-prod').style.display=''; btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); }
-function qiSyncFamOn(d){ var fc=d.querySelector('.qi-famchips'); if(!fc||d.dataset.qiOther)return; var cat=(PBYID[d.querySelector('.qi-prod').value]||{}).cat; fc.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); }); }
+function qiSyncFamOn(d){ var fc=d.querySelector('.qi-famchips'); if(!fc||d.dataset.qiOther)return;
+  if(d.querySelector('.qi-group').value==='5'){ fc.innerHTML=qiFamChips('5', d.querySelector('.qi-prod').value); return; } // มุ้ง: re-render drill-down ให้ active หมวด+รุ่นตามที่เลือก
+  var cat=(PBYID[d.querySelector('.qi-prod').value]||{}).cat; fc.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); }); }
 function addQuickItem(){
   qSeq++;
   const d=document.createElement('div'); d.className='ch'; d.dataset.id=qSeq;
