@@ -20,13 +20,10 @@ function spliceBetween(html, startAnchor, endAnchor, replacement){
 const fragCab = readFileSync(join(__dirname,"_frag-cabinet.txt"),"utf8");
 const fragQrow = readFileSync(join(__dirname,"_frag-qrow.txt"),"utf8");
 
+// NOTE (16มิ.ย.): fragments ถูก apply เข้า index.html จริง + qrow restructure ต่อ (ใบ 5 บล็อก)
+// → เลิก splice (จะทับโค้ดใหม่) · ทดสอบไฟล์จริงตรงๆ · ราคา regression คุมด้วย golden-snapshot
 let patched = orig;
-// 1) cabinet branch
-patched = spliceBetween(patched, "    else if(it.p.cabinet){", "    else if(it.p.future_tech){", fragCab);
-// 2) qrow det block
-patched = spliceBetween(patched, "  if (glass && glass !== '-') {", "  if(optText){ content +=", fragQrow);
-// 3) _sz override cabinet
-patched = patched.replace("    if(it.lumpsum) _sz='(เหมา)';", "    if(it.lumpsum) _sz='(เหมา)';\n    else if(it.p.cabinet) _sz='';");
+void spliceBetween; void fragCab; void fragQrow;
 
 const TMP = join(__dirname,"_tmp-g4quote.html");
 writeFileSync(TMP, patched, "utf8");

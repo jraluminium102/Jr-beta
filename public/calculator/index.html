@@ -5341,27 +5341,25 @@ function genQuote(keepNo){
       det = [_zModelTxt, _zFabTxt, 'ระบบควบคุม: '+_zCtrlTxt].join('\n');
     }
     else if(it.p.cat==='มุ้ง'){
-      // G5 (5-block 16มิ.ย.): หัว=ชื่อ+ลักษณะเปิด+ขนาด · รายการ=ผ้ามุ้ง · รายละเอียด=สีกรอบ(เมื่อมีสีพิเศษ)
+      // G5 (5-block 16มิ.ย.): หัว=ชื่อ+ลักษณะเปิด+ขนาด · รายละเอียด(หัวแดง)=สีกรอบก่อน→ผ้าหลัง
       var _mo=it.optSel||{};
       var _fabMap={fiber:'ผ้าไฟเบอร์',fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',cat:'ผ้ากันแมว/หมา',rat:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.',safety:'ผ้าสแตนนิรภัย 0.8มม.'};
-      // ── รายการ (รูปแบบงาน · ผ้ามุ้ง ← ไม่ซ้ำหัวรายการที่มีชื่อ+ลักษณะเปิดแล้ว) ──
-      var _mWork=[];
+      // ── รายละเอียด: สีกรอบก่อน (เมื่อมีสีพิเศษ) · ตามด้วยผ้า (เมื่อมีการเลือกผ้าจริง) ──
+      var _mSpec=[];
+      var _mciM=parseInt(_mo.mscolor);
+      if(!isNaN(_mciM)&&_mciM>0&&COLORS[_mciM]) _mSpec.push('สีกรอบมุ้ง '+(COLORS[_mciM].quoteName||COLORS[_mciM].n).replace(/[★⚠🔖🔒]/g,'').trim());
       var _sfM=_mo.screenFabric||'';
       if(_sfM){
         // screen_addon (imp21/22/23): ผ้า+สีผ้าจาก DOM .o-screenfabriccolor
         var _sfcElM=it.div?it.div.querySelector('.o-screenfabriccolor'):null;
         var _sfcColorM=_sfcElM?_sfcElM.value:'ดำ';
-        _mWork.push((_sfM==='fiber')?('ผ้าไฟเบอร์'+_sfcColorM):(_sfM==='rat')?('ผ้าสแตนกันหนู'+_sfcColorM):(_fabMap[_sfM]||'ผ้าไฟเบอร์'));
+        _mSpec.push((_sfM==='fiber')?('ผ้าไฟเบอร์'+_sfcColorM):(_sfM==='rat')?('ผ้าสแตนกันหนู'+_sfcColorM):(_fabMap[_sfM]||'ผ้าไฟเบอร์'));
       } else if(_mo.mosqFabric) {
-        // non-screen standalone มุ้ง ที่มี mosqFabric option เลือกได้ (imp28/29/30)
-        _mWork.push(_fabMap[_mo.mosqFabric]||'ผ้าไฟเบอร์');
+        // non-screen ที่มี mosqFabric เลือกได้ (imp28/29/30)
+        _mSpec.push(_fabMap[_mo.mosqFabric]||'ผ้าไฟเบอร์');
       }
       // mj_* ไม่มี screenfabric/mosqFabric → ผ้าอยู่ในชื่อสินค้าแล้ว ไม่ push ซ้ำ
-      // ── รายละเอียด (สเปค · สีกรอบมุ้ง · โชว์เมื่อมีสีพิเศษ ไม่ใช่ตามสีบาน) ──
-      var _mSpec=[];
-      var _mciM=parseInt(_mo.mscolor);
-      if(!isNaN(_mciM)&&_mciM>0&&COLORS[_mciM]) _mSpec.push('สีกรอบมุ้ง '+(COLORS[_mciM].quoteName||COLORS[_mciM].n).replace(/[★⚠🔖🔒]/g,'').trim());
-      det=_mWork.join('\n')+'\n###รายละเอียด###\n'+_mSpec.join('\n');
+      det='\n###รายละเอียด###\n'+_mSpec.join('\n');
     }
     else if(it.p.id==='shower'){
       // Pass2-C: shower — ประกอบข้อความจากชนิดบาน + ประเภทประตู → "กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส"
@@ -5659,7 +5657,7 @@ function genQuote(keepNo){
         }
       }
       det.split('\n').forEach(function(L){ L=(L||'').replace(/^-\s+/,'').trim(); if(!L||L==='-')return;
-        if(/^อลูมิเนียม\b/.test(L)){ if(_aluSpec && _g1Spec.indexOf(_aluSpec)<0) _g1Spec.push(_aluSpec); } // สีอลู → สเปค (recompute)
+        if(/^อลูมิเนียม/.test(L)){ if(_aluSpec && _g1Spec.indexOf(_aluSpec)<0) _g1Spec.push(_aluSpec); } // สีอลู → สเปค (recompute) · ไม่ใช้ \b (ไทยไม่ใช่ \w)
         else if(/^กระจก/.test(L)){ _g1Spec.push(L); }                                                      // กระจก → สเปค
         else if(/^มุ้ง/.test(L)){ var m=L.match(/^(.*?)\s*\(เฟรม(.*?)\s*\/\s*([^)]*)\)\s*$/);                // มุ้ง → ชื่อ(งาน) + ผ้า/เฟรม(สเปค)
           if(m){ _g1Work.push(m[1].trim()); _g1Spec.push('ผ้ามุ้ง: '+m[3].trim()+' · เฟรม: '+m[2].trim()); }
