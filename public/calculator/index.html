@@ -3451,6 +3451,10 @@ function buildItemOpts(d){
       +'</div><select class="o-screenfabric" style="display:none;" onchange="calcQuote();"><option value="fiber">ไฟเบอร์ เทา/ดำ</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>'+(p.rates==='IMP23'?'<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>':'')+'</select></label>';
     // G5-FINAL E: สีผ้า → chipwrap (mosqFabricColors rebuild ตามผ้า) · select ซ่อน value: ดำ/เทา/ขาว/เงิน
     h+='<label class="opt" style="width:100%;">สีผ้า <div class="o-sfc-chipwrap chip-group chip-sm" style="display:inline-flex;"></div><select class="o-screenfabriccolor" style="display:none;" onchange="calcQuote();"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option><option value="เงิน">เงิน</option></select></label>';
+    // G5 (มติพี่นัท 16 มิ.ย.): ลักษณะการเปิดมุ้งเฟรมขายเดี่ยว — imp21 เฟรมเล็ก / imp23 เฟรมใหญ่ เท่านั้น (imp22 ติดตายไม่มี · imp30 แม่เหล็กพับไม่ใช่ screen_addon) · label-only ไม่กระทบราคา · readItem อ่าน .o-mosqopenstyle อยู่แล้ว (L3711)
+    if(p.rates==='IMP21'||p.rates==='IMP23'){
+      h+='<label class="opt mosq-openstyle-row" style="width:100%;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">ขึ้นใบ</span> <div class="chip-group chip-sm" style="display:inline-flex;"><button type="button" class="chip on" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button><button type="button" class="chip" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button></div><input type="hidden" class="o-mosqopenstyle" value="เลื่อน"></label>';
+    }
     h+='<span class="opt" style="color:#666;font-size:12px;width:100%;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
   // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
@@ -3720,7 +3724,7 @@ function readItem(d){
   if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; }
   if(p.bar_grid){ const _bd=d.querySelector('.o-bgdir'); optSel.bgdir=_bd?_bd.value:'v'; }
   if(p.handrail){ const _hr=d.querySelector('.o-handrail'); optSel.handrail=_hr?_hr.value:''; const _rg=d.querySelector('.o-railglass'); optSel.railglass=_rg?_rg.value:'10'; const _rac=d.querySelector('.o-railalucolor'); if(_rac)optSel.railalucolor=_rac.value; } // R3-4
-  if(p.screen_addon){ const _sf=d.querySelector('.o-screenfabric'); optSel.screenFabric=_sf?_sf.value:'fiber'; }
+  if(p.screen_addon){ const _sf=d.querySelector('.o-screenfabric'); optSel.screenFabric=_sf?_sf.value:'fiber'; const _mos=d.querySelector('.o-mosqopenstyle'); optSel.mosqOpenStyle=_mos?_mos.value:''; } // G5: มุ้งเฟรมขายเดี่ยว imp21/imp23 อ่านลักษณะการเปิด (label-only)
   if(p.bar_slide){
     const _bd=d.querySelector('.o-bsdoor'); optSel.bsDoor=_bd?_bd.value:'';
     const _bdp=d.querySelector('.o-bsdoorprice'); optSel.bsDoorPrice=_bdp?_bdp.value:'0';
@@ -4280,6 +4284,11 @@ function genQuote(keepNo){
       // ก้อน5(G1 formux): imp21/imp23 ต่อท้ายลักษณะการเปิด (label-only · ไม่กระทบราคา) เช่น "พร้อมมุ้งเฟรมเล็ก บานเลื่อน"
       if((it.optSel.mosqId==='imp21'||it.optSel.mosqId==='imp23') && it.optSel.mosqOpenStyle){ _mosqNm += ' บาน'+it.optSel.mosqOpenStyle; }
       prodName += ' '+_mosqNm+_mqDim;
+    }
+    // G5 (มติพี่นัท 16 มิ.ย.): มุ้งเฟรมขายเดี่ยว imp21/imp23 — ต่อท้ายลักษณะการเปิดที่เลือก (label-only) · ตัดวงเล็บตัวเลือกรกในชื่อออก เหลือเฉพาะที่เลือก
+    if(it.p.screen_addon && (it.p.id==='imp21'||it.p.id==='imp23') && it.optSel && it.optSel.mosqOpenStyle){
+      // chain replace ด้านบน (L4204-4208) ตัดวงเล็บตัวเลือก technical ออกแล้ว → prodName="มุ้งเฟรมเล็ก"/"มุ้งเฟรมใหญ่" · เติมที่เลือกจริง
+      prodName += ' บาน'+it.optSel.mosqOpenStyle;
     }
     // คาดตาราง generic — ต่อท้ายชื่อทุก cat (ยกเว้น p.grid เป็น grid_bars เอง)
     if(!it.p.grid && it.optSel && it.optSel.gridmark){
