@@ -426,11 +426,11 @@ function BoardView({
   onDesignerAdded: () => Promise<void>;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
         return (
-          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-h-[120px] xl:max-h-[calc(100dvh-250px)]">
+          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-w-0 min-h-[120px] lg:max-h-[calc(100dvh-250px)]">
             <div className="flex items-center justify-between mb-2.5 px-1 shrink-0">
               <span className="text-sm font-semibold text-brand-dark flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
@@ -438,7 +438,7 @@ function BoardView({
               </span>
               <span className="text-xs text-ink-3 tnum">{items.length}</span>
             </div>
-            <div className="space-y-2 overflow-y-auto xl:flex-1 xl:min-h-0 pr-0.5">
+            <div className="space-y-2 overflow-y-auto lg:flex-1 lg:min-h-0 pr-0.5">
               {items.length === 0 ? (
                 <p className="text-[12px] text-ink-3 px-1 py-3 text-center">— ไม่มีงาน —</p>
               ) : (
