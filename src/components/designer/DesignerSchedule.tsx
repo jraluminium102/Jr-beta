@@ -964,7 +964,7 @@ export default function DesignerSchedule({
         <div className="flex items-center gap-2 px-1">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
             <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-            งานยังไม่มอบหมาย {unassignedActive.length} งาน — แสดงที่ด้านบน Gantt
+            งานยังไม่มอบหมาย {unassignedActive.length} งาน — แสดงท้ายตาราง
           </span>
         </div>
       )}
@@ -982,19 +982,6 @@ export default function DesignerSchedule({
               </div>
             ) : (
               <>
-                {/* Lane ยังไม่มอบหมาย บนสุด (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่างและมีงาน */}
-                {!designerFilter && jobsByDesigner["0"] && jobsByDesigner["0"].length > 0 && (
-                  <GanttLane
-                    key="unassigned"
-                    designer={UNASSIGNED_DESIGNER}
-                    jobs={jobsByDesigner["0"]}
-                    rangeStart={rangeStart}
-                    today={today}
-                    days={days}
-                    canWrite={canWrite}
-                    onSave={handleSave}
-                  />
-                )}
                 {visibleDesigners.map((d) => (
                   <GanttLane
                     key={d.id}
@@ -1007,6 +994,19 @@ export default function DesignerSchedule({
                     onSave={handleSave}
                   />
                 ))}
+                {/* Lane ยังไม่มอบหมาย ท้ายสุด (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่างและมีงาน */}
+                {!designerFilter && jobsByDesigner["0"] && jobsByDesigner["0"].length > 0 && (
+                  <GanttLane
+                    key="unassigned"
+                    designer={UNASSIGNED_DESIGNER}
+                    jobs={jobsByDesigner["0"]}
+                    rangeStart={rangeStart}
+                    today={today}
+                    days={days}
+                    canWrite={canWrite}
+                    onSave={handleSave}
+                  />
+                )}
               </>
             )}
           </div>

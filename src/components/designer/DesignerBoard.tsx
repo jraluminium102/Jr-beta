@@ -430,15 +430,15 @@ function BoardView({
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
         return (
-          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-h-[120px]">
-            <div className="flex items-center justify-between mb-2.5 px-1">
+          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-h-[120px] xl:max-h-[calc(100dvh-250px)]">
+            <div className="flex items-center justify-between mb-2.5 px-1 shrink-0">
               <span className="text-sm font-semibold text-brand-dark flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
                 {col.th}
               </span>
               <span className="text-xs text-ink-3 tnum">{items.length}</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto xl:flex-1 xl:min-h-0 pr-0.5">
               {items.length === 0 ? (
                 <p className="text-[12px] text-ink-3 px-1 py-3 text-center">— ไม่มีงาน —</p>
               ) : (
