@@ -116,8 +116,10 @@ export const GET = withRoute(async (req: Request) => {
     };
   });
 
+  // ปิดการขาย = stage 3–8 เท่านั้น (safety-net quote_sent_date อาจดึง stage 9+ ที่ status ยังไม่ post-deposit → ตัดออก)
+  const inWindow = rows.filter((r) => r.current_stage >= 3 && r.current_stage <= 8);
   // กรอง stage เดียวถ้าส่ง ?stage=
-  const filtered = stageF ? rows.filter((r) => r.current_stage === Number(stageF)) : rows;
+  const filtered = stageF ? inWindow.filter((r) => r.current_stage === Number(stageF)) : inWindow;
 
   const netSum = filtered.reduce((s, r) => s + (r.net ?? 0), 0);
   const waiting7 = filtered.filter((r) => (r.days_waiting ?? 0) > 7).length;
