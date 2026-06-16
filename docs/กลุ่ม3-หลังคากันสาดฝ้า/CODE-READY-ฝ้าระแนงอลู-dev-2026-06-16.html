@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE-READY — ฝ้าระแนงอลู (สั่ง Chat B แก้ index.html)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;margin:0;background:#F3F4F6;color:#1F2937;padding:18px;line-height:1.6;}
+  .wrap{max-width:880px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 2px;}
+  h2{font-size:16px;margin:22px 0 8px;color:#6D28D9;border-bottom:2px solid #DDD6FE;padding-bottom:4px;}
+  .sub{font-size:13px;color:#6B7280;margin-bottom:6px;}
+  .box{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:14px 16px;margin-bottom:14px;}
+  .warn{background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:10px 13px;font-size:13px;}
+  .ok{background:#D1FAE5;border:1px solid #6EE7B7;border-radius:8px;padding:10px 13px;font-size:13px;}
+  code,pre{font-family:'Consolas','Courier New',monospace;}
+  pre{background:#1E293B;color:#E2E8F0;border-radius:8px;padding:13px 15px;font-size:12.5px;overflow-x:auto;white-space:pre;}
+  pre .c{color:#94A3B8;}
+  pre .k{color:#FBBF24;}
+  pre .s{color:#86EFAC;}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0;}
+  th,td{border:1px solid #E5E7EB;padding:6px 9px;text-align:left;}
+  th{background:#F5F3FF;color:#5B21B6;}
+  .step{display:inline-block;background:#6D28D9;color:#fff;border-radius:6px;padding:1px 9px;font-size:13px;font-weight:700;margin-right:6px;}
+  .anchor{background:#EDE9FE;border-radius:5px;padding:1px 6px;font-size:12px;color:#5B21B6;font-weight:600;}
+  .tag{display:inline-block;background:#DDD6FE;color:#5B21B6;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪵 CODE-READY — ฝ้าระแนงอลู (เพิ่มในฝ้า G3)</h1>
+  <div class="sub">วันที่ 16 มิ.ย. 2026 · สำหรับ <b>Chat B</b> (คนแก้ index.html คนเดียว) · Chat A = READ-ONLY ไม่แตะไฟล์</div>
+
+  <div class="ok">
+    <b>✅ v1 นี้ไม่ต้องแตะ engine เลย</b> — แค่เพิ่ม 3 product + 3 ชิป + 3 entry ในเมนู ·
+    <code>calcUnit</code> รองรับ <code>per_sqm</code> อยู่แล้ว (<a href="#">L1010</a>: <code>max(min, area×rate)</code>) ·
+    <code>ceilCalc</code> เรียก calcUnit ตรงๆ → ราคาฝ้าระแนงคิดถูกทันที · <b>golden 146 ไม่กระทบ</b> (product ใหม่ ไม่อยู่ใน snapshot)
+  </div>
+
+  <div class="warn" style="margin-top:10px;">
+    <b>⚠️ หาตำแหน่งด้วย "ข้อความ anchor" ไม่ใช่เลขบรรทัด</b> — เลขบรรทัดอาจขยับเพราะ Chat B แก้ G3 อื่นอยู่ ·
+    ใช้ search หาข้อความที่ให้ไว้ในแต่ละจุด
+  </div>
+
+  <h2>ของที่จะเพิ่ม — 3 รุ่น (เรตล็อกจากระแนง ไม่มีโครง · พี่นัทเคาะ 16 มิ.ย.)</h2>
+  <table>
+    <tr><th>id</th><th>รุ่น</th><th>เรต/ตร.ม.</th><th>อ้างจาก</th></tr>
+    <tr><td>ceil_ranae_1x5</td><td>ฝ้าระแนงอลู 1x5 ซม. (โชว์ 1 ซม. เว้น 5 ซม.)</td><td>3,300</td><td>rn1</td></tr>
+    <tr><td>ceil_ranae_16_5</td><td>ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 5 ซม.)</td><td>3,700</td><td>rn13</td></tr>
+    <tr><td>ceil_ranae_16_2</td><td>ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 2 ซม.)</td><td>4,800</td><td>rn17</td></tr>
+  </table>
+  <div class="sub">วิธีคิด: <code>per_sqm × พื้นที่ฝ้า</code> · <code>min:0</code> (ไม่มีขั้นต่ำ ตามต้นทางระแนง) · ราคาจริง roundUp พันตามเครื่อง</div>
+
+  <h2><span class="step">จุด 1</span> เพิ่ม 3 product (ในบล็อกฝ้า)</h2>
+  <div class="box">
+    <div class="sub">หา anchor: <span class="anchor">{id:'ceil_bsc',cat:'ฝ้า-ผนัง',name:'ฝ้าไม้เทียม remood</span> → วางต่อ <b>ใต้บรรทัดนั้น</b> (ก่อน <code>ceil_cshape</code>/<code>ceil_bsc</code> ที่อยู่ใกล้กัน ~L639-640)</div>
+<pre><span class="c">// ฝ้าระแนงอลู (เรตจากระแนง ไม่มีโครง · ฝ้าใช้เรตไม่มีโครงอย่างเดียว · มติ 16 มิ.ย.)</span>
+{id:<span class="s">'ceil_ranae_1x5'</span>,cat:<span class="s">'ฝ้า-ผนัง'</span>,name:<span class="s">'ฝ้าระแนงอลู 1x5 ซม. (โชว์ 1 ซม. เว้น 5 ซม.)'</span>,ceiling:<span class="k">1</span>,method:<span class="s">'per_sqm'</span>,rate:<span class="k">3300</span>,min:<span class="k">0</span>,cost:<span class="k">null</span>},
+{id:<span class="s">'ceil_ranae_16_5'</span>,cat:<span class="s">'ฝ้า-ผนัง'</span>,name:<span class="s">'ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 5 ซม.)'</span>,ceiling:<span class="k">1</span>,method:<span class="s">'per_sqm'</span>,rate:<span class="k">3700</span>,min:<span class="k">0</span>,cost:<span class="k">null</span>},
+{id:<span class="s">'ceil_ranae_16_2'</span>,cat:<span class="s">'ฝ้า-ผนัง'</span>,name:<span class="s">'ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 2 ซม.)'</span>,ceiling:<span class="k">1</span>,method:<span class="s">'per_sqm'</span>,rate:<span class="k">4800</span>,min:<span class="k">0</span>,cost:<span class="k">null</span>},</pre>
+    <div class="sub">หมายเหตุ: <b>ไม่ใส่ <code>fin</code></b> (= สีอลูมาตรฐานอย่างเดียว) · <code>ceiling:1</code> ให้ระบบรู้ว่าเป็นฝ้า · ไม่ใส่ <code>crates</code> → g3CeilColorFill โชว์ select ว่าง (ไม่มีชิปสี = ถูกต้อง v1)</div>
+  </div>
+
+  <h2><span class="step">จุด 2</span> เพิ่ม 3 ชิป ในตัวเลือกชนิดฝ้า (ธงC กล่องฝ้าออปชั่น)</h2>
+  <div class="box">
+    <div class="sub">หา anchor: <span class="anchor">onclick="g3CeilTypePick(this)">ฝ้าฉาบเรียบ</button></div></span> (~L3313) → เติม 3 ปุ่ม <b>ก่อน</b> <code>&lt;/div&gt;</code> ปิด chip-group</div>
+<pre><span class="c">// เดิม: ...ฝ้าฉาบเรียบ&lt;/button&gt;&lt;/div&gt;  → เติมก่อน &lt;/div&gt;</span>
+&lt;button type=<span class="s">"button"</span> class=<span class="s">"chip"</span> data-cid=<span class="s">"ceil_ranae_1x5"</span> onclick=<span class="s">"g3CeilTypePick(this)"</span>&gt;ฝ้าระแนงอลู 1x5ซม.&lt;/button&gt;
+&lt;button type=<span class="s">"button"</span> class=<span class="s">"chip"</span> data-cid=<span class="s">"ceil_ranae_16_5"</span> onclick=<span class="s">"g3CeilTypePick(this)"</span>&gt;ฝ้าระแนงอลู 1"x1.6" เว้น 5ซม.&lt;/button&gt;
+&lt;button type=<span class="s">"button"</span> class=<span class="s">"chip"</span> data-cid=<span class="s">"ceil_ranae_16_2"</span> onclick=<span class="s">"g3CeilTypePick(this)"</span>&gt;ฝ้าระแนงอลู 1"x1.6" เว้น 2ซม.&lt;/button&gt;</pre>
+    <div class="sub">แล้วเติม <code>&lt;option&gt;</code> ใน hidden select ใต้บรรทัดถัดมา (<span class="anchor">&lt;select class="o-ceiltype"</span>):</div>
+<pre>&lt;option value=<span class="s">"ceil_ranae_1x5"</span>&gt;ceil_ranae_1x5&lt;/option&gt;
+&lt;option value=<span class="s">"ceil_ranae_16_5"</span>&gt;ceil_ranae_16_5&lt;/option&gt;
+&lt;option value=<span class="s">"ceil_ranae_16_2"</span>&gt;ceil_ranae_16_2&lt;/option&gt;</pre>
+  </div>
+
+  <h2><span class="step">จุด 3</span> เพิ่มในเมนูแท็บ "ฝ้า-ผนัง" (เลือกเป็นรายการเดี่ยวได้)</h2>
+  <div class="box">
+    <div class="sub">หา anchor: <span class="anchor">var G3_WALL_PRODS=[['ceil_cshape',...</span> (~L2389) → เติม 3 entry ต่อท้าย array</div>
+<pre>var G3_WALL_PRODS=[
+  [<span class="s">'ceil_cshape'</span>,<span class="s">'ฝ้าอลู ตัวซี'</span>],
+  [<span class="s">'ceil_bsc'</span>,<span class="s">'ฝ้าไม้เทียม remood'</span>],
+  [<span class="s">'ceiling_smooth'</span>,<span class="s">'ฝ้าฉาบเรียบ'</span>],
+  [<span class="s">'ceil_ranae_1x5'</span>,<span class="s">'ฝ้าระแนงอลู 1x5ซม.'</span>],     <span class="c">// + ใหม่</span>
+  [<span class="s">'ceil_ranae_16_5'</span>,<span class="s">'ฝ้าระแนงอลู 1"x1.6" เว้น 5ซม.'</span>], <span class="c">// + ใหม่</span>
+  [<span class="s">'ceil_ranae_16_2'</span>,<span class="s">'ฝ้าระแนงอลู 1"x1.6" เว้น 2ซม.'</span>]  <span class="c">// + ใหม่</span>
+];</pre>
+  </div>
+
+  <h2>✅ เทสก่อนปิดงาน (Chat B รันเอง)</h2>
+  <div class="box">
+    <table>
+      <tr><th>เคส</th><th>ทำ</th><th>คาดหวัง</th></tr>
+      <tr><td>1</td><td>หลังคา → ฝ้า(ออปชั่น) "รวมในหลังคา" → เลือก "ฝ้าระแนงอลู 1x5ซม." พื้นที่ 10</td><td>ราคาฝ้า = <b>33,000</b></td></tr>
+      <tr><td>2</td><td>เลือก 1"x1.6" เว้น 5ซม. พื้นที่ 12</td><td><b>44,400</b></td></tr>
+      <tr><td>3</td><td>เลือก 1"x1.6" เว้น 2ซม. พื้นที่ 10</td><td><b>48,000</b></td></tr>
+      <tr><td>4</td><td>แท็บ "ฝ้า-ผนัง" → เลือกฝ้าระแนงอลู เป็นรายการเดี่ยว</td><td>โผล่ในเมนู + คิดราคา per_sqm</td></tr>
+      <tr><td>5</td><td><code>node scripts/golden-snapshot.mjs</code></td><td><b>146 ตรง</b> (ไม่กระทบของเดิม)</td></tr>
+      <tr><td>6</td><td>ใบเสนอราคา</td><td>ขึ้น "ฝ้า ระแนงอลู ... X ตร.ม. = ฿…"</td></tr>
+    </table>
+    <div class="sub">ราคาจริงอาจ roundUp เป็นพัน (เช่น 12.5 ตร.ม. × 3,700 = 46,250 → 47,000) = ปกติของเครื่อง ไม่ใช่บั๊ก</div>
+  </div>
+
+  <h2>🟡 v2 (ทำต่อถ้าพี่นัทอยากได้สีพิเศษ — ยังไม่ต้องทำตอนนี้)</h2>
+  <div class="box" style="font-size:13px;">
+    ต้นทางระแนงมีสี <b>อบสีพิเศษ / อบสีลายไม้</b> (คิด +บาท/ตร.ม.) แต่ <b>v1 นี้ตัดออก</b> ใช้สีอลูมาตรฐานอย่างเดียว<br>
+    ถ้าจะเพิ่มสีพิเศษ ต้องทำ 3 อย่าง (แยกธง กันพังของเดิม):
+    <ol style="margin:6px 0;">
+      <li>ใส่ <code>fin:{...}</code> ใน 3 product (ยกค่าจาก rn1/rn13/rn17)</li>
+      <li>ทำ UI เลือกสีในกล่องฝ้าธงC (ตอนนี้ใช้ <code>.o-ceilcolor</code> แบบ crates — fin ใช้ <code>.o-finish</code> คนละกลไก)</li>
+      <li>แก้ <code>ceilCalc</code> ให้ส่ง <code>optC.finish</code> เข้า calcUnit (ตอนนี้ส่งแค่ ckolor/insul) — engine บวกที่ <a href="#">L1539</a> <code>opt += finish×area</code></li>
+    </ol>
+    <b>แนะนำ:</b> ปล่อย v1 (สีมาตรฐาน) ขึ้นก่อน · v2 ค่อยทำเป็นธงแยกตอนพี่นัทเคาะว่าต้องการสีพิเศษจริง
+  </div>
+
+  <div class="ok" style="margin-top:10px;">
+    <b>สรุปสั่ง Chat B:</b> แก้ 3 จุด (product / ชิป / G3_WALL_PRODS) · ไม่แตะ engine · เทส 6 เคส · golden 146 · 1 commit จบ
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟ ฝ้าระแนงอลู (G3) — กดเล่น</title>
+<style>
+  *{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+  body{margin:0;background:#F3F4F6;color:#1F2937;padding:16px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:18px;margin:0 0 4px;}
+  .sub{font-size:12.5px;color:#6B7280;margin-bottom:14px;}
+  .card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px;}
+  .ceilbox{background:#F5F3FF;border:1px solid #C4B5FD;border-radius:10px;padding:12px 14px;}
+  .ceilbox b{color:#6D28D9;font-size:14px;}
+  .secttl{font-size:11.5px;font-weight:700;color:#6D28D9;margin:10px 0 5px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{border:1.5px solid #D1D5DB;background:#fff;border-radius:999px;padding:7px 13px;font-size:12.5px;cursor:pointer;transition:.12s;line-height:1.3;}
+  .chip:hover{border-color:#A78BFA;}
+  .chip.on{background:#6D28D9;border-color:#6D28D9;color:#fff;font-weight:600;}
+  .chip.ranae{border-style:dashed;}
+  .chip.ranae.on{background:#7C3AED;border-color:#7C3AED;}
+  .tag{display:inline-block;background:#DDD6FE;color:#5B21B6;font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;margin-left:5px;vertical-align:middle;}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .row label{font-size:13px;font-weight:600;}
+  input[type=number]{width:100px;height:38px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 10px;font-size:15px;text-align:right;}
+  .pricecard{margin-top:14px;background:#1F2937;color:#fff;border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+  .pricecard .lbl{font-size:12px;color:#9CA3AF;}
+  .pricecard .big{font-size:26px;font-weight:800;color:#A78BFA;}
+  .formula{margin-top:8px;font-size:12px;color:#6D28D9;background:#EDE9FE;border-radius:8px;padding:8px 11px;line-height:1.55;}
+  .note{font-size:11.5px;color:#6B7280;margin-top:6px;line-height:1.5;}
+  .legend{font-size:11.5px;color:#6B7280;margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;}
+  .legend b{color:#5B21B6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪵 ดราฟ — ฝ้าระแนงอลู (เพิ่มในฝ้า G3)</h1>
+  <div class="sub">กดเลือกชนิดฝ้า → ใส่พื้นที่ → ดูราคาวิ่งจริง · เรตจากระแนง (ไม่มีโครง) · ดราฟดูก่อน ยังไม่แตะ index.html</div>
+
+  <div class="card">
+    <div class="ceilbox">
+      <b>ฝ้า (ออปชั่น)</b><span style="float:right;font-size:13px;color:#6D28D9;font-weight:700;" id="hdr">฿0</span>
+
+      <div class="secttl">ชนิดฝ้า</div>
+      <div class="chips" id="typechips">
+        <button class="chip on" data-cid="ceil_cshape"   data-method="crate" data-rate="2100" data-nm="ฝ้าอลู ไทยทิพย์ ตัวซี">ฝ้าอลู ไทยทิพย์</button>
+        <button class="chip"    data-cid="ceil_bsc"       data-method="crate" data-rate="2600" data-nm="ฝ้าไม้เทียม remood">ฝ้าไม้เทียม remood</button>
+        <button class="chip"    data-cid="ceiling_smooth" data-method="bucket" data-rate="0" data-nm="ฝ้าฉาบเรียบ">ฝ้าฉาบเรียบ</button>
+        <button class="chip ranae" data-cid="ceil_ranae1"  data-method="sqm" data-rate="3300" data-nm="ฝ้าระแนงอลู 1x5cm (โชว์ 1ซม. เว้น 5ซม.)">ฝ้าระแนงอลู 1x5cm <span class="tag">ใหม่</span></button>
+        <button class="chip ranae" data-cid="ceil_ranae2"  data-method="sqm" data-rate="3700" data-nm='ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 5ซม.)'>ฝ้าระแนงอลู 1"x1.6" เว้น 5ซม. <span class="tag">ใหม่</span></button>
+        <button class="chip ranae" data-cid="ceil_ranae3"  data-method="sqm" data-rate="4800" data-nm='ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 2ซม.)'>ฝ้าระแนงอลู 1"x1.6" เว้น 2ซม. <span class="tag">ใหม่</span></button>
+      </div>
+
+      <div id="ranae-detail" style="display:none;">
+        <div class="secttl">สี/ผิว <span style="font-weight:400;color:#6B7280;">(เช็คซ้ำ — ยกมาจากระแนงหรือฝ้าเรียบ?)</span></div>
+        <div class="chips" id="finchips">
+          <button class="chip on" data-add="0">อลูสีมาตรฐาน (เทา/ขาว)</button>
+          <button class="chip" data-add="1700">อบสีพิเศษ (+1,700)</button>
+          <button class="chip" data-add="2400">อบสีลายไม้ (+2,400)</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>พื้นที่ฝ้า (ตร.ม.)</label>
+        <input type="number" id="area" min="0" step="0.1" value="12" placeholder="= พื้นที่หลังคา">
+        <span class="note" style="margin:0;">(ว่าง = auto พื้นที่หลังคา)</span>
+      </div>
+
+      <div class="formula" id="formula"></div>
+
+      <div class="pricecard">
+        <div><div class="lbl">ราคาฝ้า (ขาย)</div><div style="font-size:12px;color:#D1D5DB;" id="pname">—</div></div>
+        <div class="big" id="price">฿0</div>
+      </div>
+
+      <div class="legend">
+        <b>ฝ้าระแนงอลู (3 ตัวใหม่):</b> คิด <b>per_sqm × พื้นที่</b> · ไม่มีขั้นต่ำ (เหมือนต้นทางระแนง min:0) · เรตไม่มีโครง<br>
+        · 1x5cm = 3,300 (rn1) &nbsp;·&nbsp; 1"x1.6" เว้น 5ซม. = 3,700 (rn13) &nbsp;·&nbsp; 1"x1.6" เว้น 2ซม. = 4,800 (rn17)
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="font-size:12.5px;color:#4B5563;">
+    <b style="color:#6D28D9;">หมายเหตุดราฟ</b> — ตัวฝ้าเดิม 3 ตัว (ไทยทิพย์/remood/ฉาบเรียบ) โชว์ราคาคร่าวๆ พอให้เทียบ ·
+    โฟกัสคือ <b>3 ปุ่มเส้นประ "ฝ้าระแนงอลู"</b> ที่เพิ่มใหม่ · ถ้าพี่นัทโอเค layout + ราคานี้ → เขียนโค้ดสั่ง Chat B แก้ index.html ทีเดียว
+  </div>
+</div>
+
+<script>
+  function fmt(n){return '฿'+Math.round(n).toLocaleString('en-US');}
+  var sel={method:'crate',rate:2100,nm:'ฝ้าอลู ไทยทิพย์ ตัวซี',cid:'ceil_cshape'};
+  var finAdd=0;
+
+  function calc(){
+    var a=parseFloat(document.getElementById('area').value)||0;
+    var isRanae=sel.method==='sqm';
+    document.getElementById('ranae-detail').style.display=isRanae?'block':'none';
+    var rate=sel.rate+(isRanae?finAdd:0);
+    var price=0,f='';
+    if(sel.method==='sqm'){
+      price=rate*a;
+      f='สูตร: '+sel.rate.toLocaleString()+(finAdd?(' + '+finAdd.toLocaleString()+'(สี)'):'')+' × '+a+' ตร.ม. = <b>'+fmt(price)+'</b>  <span style="color:#9CA3AF;">(ไม่มีขั้นต่ำ)</span>';
+    } else if(sel.method==='crate'){
+      price=rate*a;
+      f='สูตร(คร่าว): '+sel.rate.toLocaleString()+' × '+a+' ตร.ม. = '+fmt(price)+'  <span style="color:#9CA3AF;">(ฝ้าเดิม — แค่เทียบ)</span>';
+    } else {
+      price=Math.max(12000,1200*a);
+      f='สูตร(คร่าว): max(12,000, 1,200×'+a+') = '+fmt(price)+'  <span style="color:#9CA3AF;">(ฝ้าฉาบ — แค่เทียบ)</span>';
+    }
+    document.getElementById('formula').innerHTML=f;
+    document.getElementById('price').textContent=fmt(price);
+    document.getElementById('hdr').textContent=fmt(price);
+    document.getElementById('pname').textContent=sel.nm;
+  }
+
+  document.querySelectorAll('#typechips .chip').forEach(function(c){
+    c.onclick=function(){
+      document.querySelectorAll('#typechips .chip').forEach(function(x){x.classList.remove('on');});
+      c.classList.add('on');
+      sel={method:c.dataset.method,rate:+c.dataset.rate,nm:c.dataset.nm,cid:c.dataset.cid};
+      finAdd=0;
+      document.querySelectorAll('#finchips .chip').forEach(function(x,i){x.classList.toggle('on',i===0);});
+      calc();
+    };
+  });
+  document.querySelectorAll('#finchips .chip').forEach(function(c){
+    c.onclick=function(){
+      document.querySelectorAll('#finchips .chip').forEach(function(x){x.classList.remove('on');});
+      c.classList.add('on');
+      finAdd=+c.dataset.add;
+      calc();
+    };
+  });
+  document.getElementById('area').oninput=calc;
+  calc();
+</script>
+</body>
+</html>
