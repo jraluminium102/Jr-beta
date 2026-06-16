@@ -254,7 +254,7 @@ export default function ProductionPage() {
                     })()}
                   </div>
                   {/* ข้อ 7: inline date chips */}
-                  {(showMeasureSched || r.planned_install_date) && (
+                  {(showMeasureSched || r.status === "PENDING_MEASURE" || r.planned_install_date) && (
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {showMeasureSched && (
                         <span className="text-[12px] tnum inline-flex items-center gap-1" style={{ color: "var(--t-low)" }}>
