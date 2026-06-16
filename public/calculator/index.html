@@ -1401,6 +1401,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       const _ceRaw=15000+Math.max(0,_paneA-1.2)*4166.67; const _ceP=Math.ceil(Math.round(_ceRaw)/100)*100; base=_ceP*_ceN;
       msgs.push('บานเปิดยูโร '+_paneA.toFixed(2)+' ตร.ม./บาน ('+fmt(_ceP)+') × '+_ceN+' บาน = '+fmt(base));
       if(((parseFloat(w)||0)/_ceN)>1.5||(parseFloat(h)||0)>3.0) msgs.push('⚠ บานเปิดยูโรเกินขนาด (กว้าง/บาน≤1.5 · สูง≤3.0 ม.)'); }
+  let _g3box={roofend:0,extras:0,slide:0,roof2:0,ceil:0}; // ธงG: breakdown ราคาต่อกล่อง (display เติมใน calcQuote · ตรง engine)
   // FIX-12(G3): หลังคาผสม 2 วัสดุ — base = วัสดุหลัก×(พื้นที่รวม−พื้นที่2) + วัสดุ2×พื้นที่2 (เรตแยกตาม ตร.ม.)
   if(p.cat==='หลังคา' && optSel && optSel.roof2 && PBYID[optSel.roof2]){
     const _a2=Math.min(Math.max(0,parseFloat(optSel.roof2area)||0), a);
@@ -1408,6 +1409,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       const _m2=PBYID[optSel.roof2]; const _mainA=Math.max(0,a-_a2);
       const _mainCost=_mainA>0?monoRate(_mainA,RATES[p.rates]):0;
       const _mat2Cost=_m2.rates?monoRate(_a2,RATES[_m2.rates]):0;
+      _g3box.roof2=_mat2Cost;
       base=Math.max(p.min||0, _mainCost+_mat2Cost);
       msgs.push('หลังคาผสม: '+(p.name||'').replace(/^หลังคา\s*/,'')+' '+_mainA.toFixed(1)+' ตร.ม. ('+fmt(_mainCost)+') + '+(_m2.name||'').replace(/^หลังคา\s*/,'')+' '+_a2.toFixed(1)+' ตร.ม. ('+fmt(_mat2Cost)+')');
     }
@@ -1525,14 +1527,15 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _autoMotor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000;
     const _mPrice=(parseFloat(optSel.smotorprice)>0)?parseFloat(optSel.smotorprice):_autoMotor;
     const _mQty=Math.max(1,parseInt(optSel.smotorqty)||1);
-    opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_mPrice*_mQty;
+    _g3box.slide=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_mPrice*_mQty;
+    opt+=_g3box.slide;
     msgs.push('หลังคาเลื่อน '+_N+' บาน · มอเตอร์ '+_mQty+'×'+fmt(_mPrice)); }
-  if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } let sl=0; if(optSel.rfsealer){ sl=Math.max(5000, 800*(parseFloat(optSel.rfsealerlen)||0)); } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc+sl; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); if(sl>0)msgs.push('วัสดุปิดรอยต่อ ('+(optSel.rfsealerlen||0)+' ม.) '+fmt(sl)); }
+  if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } let sl=0; if(optSel.rfsealer){ sl=Math.max(5000, 800*(parseFloat(optSel.rfsealerlen)||0)); } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc+sl; _g3box.roofend=gr+ev; _g3box.extras=br+pp+p4+ch+pv+hs+gc+bc+sl; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); if(sl>0)msgs.push('วัสดุปิดรอยต่อ ('+(optSel.rfsealerlen||0)+' ม.) '+fmt(sl)); }
     // ธงC: ฝ้าออปชั่นในหลังคา — addon ราคา = ฝ้า standalone (ceilCalc reuse calcUnit) · auto=พื้นที่หลังคา (a)
     if(optSel.ceilmode && optSel.ceilmode!=='none'){
       const _ceilA=parseFloat(optSel.ceilarea)||a;
       const _ceilR=ceilCalc(optSel.ceiltype||'ceil_cshape', _ceilA, optSel.ceilcolor, optSel.ceilinsul);
-      if(_ceilR.sell>0){ opt+=_ceilR.sell; msgs.push((optSel.ceilmode==='sep'?'[แยกรายการ] ':'')+_ceilR.msg+(optSel.ceilpos?(' · ฝ้า'+optSel.ceilpos):'')+(optSel.ceildir==='เฉียง'?' เฉียงตามหลังคา':'')); }
+      if(_ceilR.sell>0){ opt+=_ceilR.sell; _g3box.ceil=_ceilR.sell; msgs.push((optSel.ceilmode==='sep'?'[แยกรายการ] ':'')+_ceilR.msg+(optSel.ceilpos?(' · ฝ้า'+optSel.ceilpos):'')+(optSel.ceildir==='เฉียง'?' เฉียงตามหลังคา':'')); }
     }
     // options ใหม่: แป / โครงสร้าง / ปลายหลังคา / ระบบรางน้ำ
     const _rfend = optSel.rfend || 'ปล่อย';
@@ -1691,7 +1694,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       msgs.push(mosqMsg);
     }
   }
-  return {a, sell, cost, addonLabel:ad.label, msgs, addonLines};
+  return {a, sell, cost, addonLabel:ad.label, msgs, addonLines, g3box:_g3box};
 }
 
 /* ============ UI ============ */
@@ -1901,8 +1904,8 @@ function groupGHOpts(ch){
   var CATS = isRoof ? [
     {key:'🏠 วัสดุมุง · โครง', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','แป ','โครงสร้าง','ชนิดฟิล์ม','ความหนากระจก']}, // G3-round2 B①: ตัด "สี" (กันสับสนกับสีอลู)
     {key:'🔄 หลังคาเลื่อน', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์']}, // G3-round2 B②
-    {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, kw:['ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
-    {key:'🔩 ของเสริมหลังคา', open:false, kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, // G3-round2 D: เอา 'ปิดปลาย' ออก (ย้ายไปกล่องปลายหลังคา C)
+    {key:'🌧️ ปลายหลังคา · รางน้ำ', open:true, pk:'roofend', kw:['ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
+    {key:'🔩 ของเสริมหลังคา', open:false, pk:'extras', kw:['เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, // G3-round2 D: เอา 'ปิดปลาย' ออก (ย้ายไปกล่องปลายหลังคา C)
     {key:'➕ หลังคาผสม (วัสดุที่ 2)', open:false, kw:['ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2']}, // G3-round2 B⑤
     {key:'📝 งานพิเศษ · รื้อของเดิม', open:false, kw:[]} // G3-round2 B⑥
   ] : [
@@ -1950,6 +1953,7 @@ function groupGHOpts(ch){
     var sm=document.createElement('summary');
     sm.style.cssText='font-weight:700;color:#B3151D;font-size:12px;cursor:pointer;padding:6px 2px;min-height:44px;display:flex;align-items:center;';
     sm.textContent=c.key+' ('+buckets[i].length+')';
+    if(c.pk){ var _pp=document.createElement('span'); _pp.className='gh-cat-price'; _pp.setAttribute('data-pk',c.pk); _pp.style.cssText='margin-left:auto;font-size:12px;color:#B3151D;font-weight:700;'; _pp.textContent='฿0'; sm.appendChild(_pp); } // ธงG: ราคารวมกล่อง
     det.appendChild(sm);
     buckets[i].forEach(function(k){ det.appendChild(k); });
     box.appendChild(det);
@@ -3822,6 +3826,16 @@ function jobServices(net, totalArea){
   }
   return {amt:lines.reduce((x,l)=>x+l[1],0), lines, notes};
 }
+// ธงG: เติมราคาทุกกล่อง G3 จาก breakdown ที่ calcUnit ส่งมา (display === engine · ไม่ re-derive สูตร)
+function g3UpdateBoxPrices(d, box){
+  if(!d||!box) return;
+  var setEl=function(sel,v){ var e=d.querySelector(sel); if(e) e.textContent='฿'+fmt(v||0); };
+  setEl('#g3-slide-price', box.slide);
+  setEl('#g3-roof2-head-price', box.roof2);
+  setEl('#g3-ceil-addon-price', box.ceil);
+  Array.prototype.forEach.call(d.querySelectorAll('.gh-cat-price[data-pk="roofend"]'), function(e){ e.textContent='฿'+fmt(box.roofend||0); });
+  Array.prototype.forEach.call(d.querySelectorAll('.gh-cat-price[data-pk="extras"]'), function(e){ e.textContent='฿'+fmt(box.extras||0); });
+}
 function calcQuote(){
   const divs=[...document.querySelectorAll('#items .ch')];
   let subtotal=0, totCost=0, totalArea=0, costMissing=false, warns=[];
@@ -3833,6 +3847,7 @@ function calcQuote(){
     let msg=[...it.r.msgs];
     if(it.r.addonLabel) msg.unshift(it.r.addonLabel);
     d.querySelector('.i-msg').innerHTML = msg.length?('<span style="color:var(--red-dark);font-size:14px;font-weight:600">'+msg.join(' · ')+'</span>'):'';
+    if(it.r.g3box) g3UpdateBoxPrices(d, it.r.g3box); // ธงG: เติมราคาทุกกล่อง G3 (display ตรง engine)
     if(it.r.a>0||it.r.sell>0){ subtotal+=lineSell; totalArea+=it.r.a*it.qty;
       if(it.r.cost===null){ costMissing=true; } else { totCost+=it.r.cost*it.qty; }
     }
