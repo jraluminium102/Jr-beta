@@ -3139,6 +3139,16 @@ function g3SelectorHTML(p){
   }
   return h+'</div>';
 }
+// ธง4 (มติ 16มิ.ย.): G1 ผนังเบา profile solid — เลือกผนังนอก/ใน/isowall เท่านั้น (allowlist 3 ตัว · ไม่มี หลังคา/ฝ้าหลังคา/ฉาบเรียบ/กระจก) · ฉนวน+600/ทาสี render แยกใน buildItemOpts
+var G1_WALL_IDS=['wall_ext','wall_int','isowall'];
+function g1WallSelectorHTML(p){
+  var walls=G1_WALL_IDS.map(function(id){return PBYID[id];}).filter(Boolean);
+  var h='<div class="opt g1-wallsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
+  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">รุ่นผนังเบา</b><div class="chip-grid">';
+  walls.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name+'</button>'; });
+  h+='</div></label></div>';
+  return h;
+}
 // ══ ธงE (G3 2026-06-15): roof2 ต่อปลายวัสดุที่ 2 — chip กลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคา preview ══
 // (display only · FIX-12 calc L1405 อ่าน optSel.roof2/roof2area เดิม — ราคาไม่เปลี่ยน)
 var _R2COLOR_GROUPS={
@@ -3784,9 +3794,11 @@ function buildItemOpts(d){
   }
   // ออกจากโหมดห้อง (สลับไปกลุ่มอื่น) → ลบพื้นที่ builder ที่ค้าง
   { var _ra=d.querySelector('.g6r-room-area'); if(_ra) _ra.remove(); }
-  // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · แต่กลุ่ม 6 ผนังเบา (ฝ้า-ผนัง) ให้ใช้ family chips เดิม (ALLG-v2) ไม่ใช่ g3
-  var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6';
+  // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · กลุ่ม 6 (ห้อง) + กลุ่ม 1 (ผนังเบา) ใช้ selector เฉพาะ ไม่ใช่ g3
+  var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6' && _famGrp!=='1';
   if(_isG3sel) h+=g3SelectorHTML(p);
+  // ธง4 (มติ 16มิ.ย.): G1 ผนังเบา — ไม่ลากฝ้าหลังคา/selector G3 · โชว์เฉพาะผนังเบา 3 ตัว (wall_ext/wall_int/isowall) profile solid
+  else if(_famGrp==='1' && p.cat==='ฝ้า-ผนัง') h+=g1WallSelectorHTML(p);
   if(p.cat==='มุ้ง') h+=mosqSelectorHTML(p); // G5-G: drill-down หมวดมุ้ง บนสุด
   if(FAM_CATS[_famGrp] && !_isG3sel) h+=famSelectorHTML(p,_famGrp,_famOther);
   if(p.cat==='ระแนง-บังตา'||p.cat==='ระแนง-ผนัง'||p.cat==='ระแนง-เกล็ด') h+=rnSelectorHTML(p,d); // G2: drill-down ระแนง cascade บนสุด (progressive · อ่าน d.dataset.rnStep)
