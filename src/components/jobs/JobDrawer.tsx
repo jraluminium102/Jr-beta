@@ -266,6 +266,14 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
       onDone();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); } finally { setSaving(false); }
   };
+  // มัดจำเบา: ยังไม่รู้ยอด → ผลักเข้า production เลย (ใส่ยอดทีหลัง)
+  const markLight = async () => {
+    setErr(null); setSaving(true);
+    try {
+      await api.post(`/jobs/${jobId}/mark-deposited`, { date });
+      onDone();
+    } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); } finally { setSaving(false); }
+  };
   return (
     <div className="mt-4 glass-card rounded-xl p-4">
       <div className="text-sm font-semibold text-white mb-3">บันทึกมัดจำ → สร้าง Production + บัญชี อัตโนมัติ</div>
@@ -278,6 +286,10 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
         <button onClick={onCancel} className="focusable pressable flex-1 glass-card text-white rounded-lg px-3 py-2 text-sm min-h-[40px]">ยกเลิก</button>
         <button onClick={save} disabled={saving || !amount} className="focusable pressable flex-1 bg-emerald-500/90 hover:bg-emerald-500 text-white rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px]">ยืนยันมัดจำ</button>
       </div>
+      <button onClick={markLight} disabled={saving}
+        className="focusable pressable w-full mt-2 text-[12px] text-amber-100 bg-amber-500/15 border border-amber-300/25 rounded-lg px-3 py-2 min-h-[40px] hover:bg-amber-500/25 disabled:opacity-50">
+        ยังไม่รู้ยอด → ผลักเข้างานผลิตเลย (มัดจำเบา · ใส่ยอดทีหลัง)
+      </button>
     </div>
   );
 }
