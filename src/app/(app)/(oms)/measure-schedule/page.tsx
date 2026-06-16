@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -61,10 +61,13 @@ function dayLabel(iso: string, today: string): { label: string; extra: string; i
   return { label: thaiDateFull(iso), extra, isToday, isTomorrow, isOverdue };
 }
 
+/** แปลง "9.30"→"09:30", "10.00"→"10:00", "09:30"→"09:30" กัน import จุดทำโชว์เพี้ยน */
 function fmtTime(t: string | null): string {
   if (!t) return "—";
-  // "HH:MM" → แสดงตรงๆ (รองรับ 09:30, 14:00)
-  return t.slice(0, 5);
+  const s = t.trim().replace(".", ":");
+  const [h, m] = s.split(":");
+  if (!h) return "—";
+  return `${h.padStart(2, "0")}:${(m ?? "00").padStart(2, "0")}`;
 }
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -139,6 +142,11 @@ function EntryRow({ entry }: { entry: MeasureEntry }) {
 
 export default function MeasureSchedulePage() {
   const [showMeasured, setShowMeasured] = useState(false);
+  // ข้อ 6: filter ช่าง
+  const [measurerFilter, setMeasurerFilter] = useState<string | null>(null);
+  // ข้อ 6: filter card active
+  const [cardFilter, setCardFilter] = useState<"overdue" | "unscheduled" | null>(null);
+  const unscheduledRef = useRef<HTMLDivElement | null>(null);
 
   const { data: res, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["measure-schedule"],
@@ -149,22 +157,57 @@ export default function MeasureSchedulePage() {
   const apiData = res?.data;
   const today = apiData?.today ?? new Date().toISOString().slice(0, 10);
 
+  // distinct ช่างจาก scheduled + unscheduled
+  const allMeasurers = useMemo(() => {
+    const set = new Set<string>();
+    [...(apiData?.scheduled ?? []), ...(apiData?.unscheduled ?? [])].forEach((e) => {
+      if (e.measurer_name) set.add(e.measurer_name);
+    });
+    return [...set].sort();
+  }, [apiData]);
+
+  // กรองด้วย measurerFilter (scheduled + unscheduled)
+  const scheduledFiltered = useMemo(() => {
+    let list = apiData?.scheduled ?? [];
+    if (measurerFilter) list = list.filter((e) => e.measurer_name === measurerFilter);
+    if (cardFilter === "overdue") list = list.filter((e) => e.is_overdue);
+    return list;
+  }, [apiData?.scheduled, measurerFilter, cardFilter]);
+
+  const unscheduledFiltered = useMemo(() => {
+    let list = apiData?.unscheduled ?? [];
+    if (measurerFilter) list = list.filter((e) => e.measurer_name === measurerFilter);
+    return list;
+  }, [apiData?.unscheduled, measurerFilter]);
+
   // จัดกลุ่ม scheduled ตามวัน
   const byDay = useMemo(() => {
     const map = new Map<string, MeasureEntry[]>();
-    (apiData?.scheduled ?? []).forEach((e) => {
+    scheduledFiltered.forEach((e) => {
       const d = e.measure_scheduled!;
       if (!map.has(d)) map.set(d, []);
       map.get(d)!.push(e);
     });
     return map;
-  }, [apiData?.scheduled]);
+  }, [scheduledFiltered]);
 
   const days = useMemo(() => [...byDay.keys()].sort(), [byDay]);
 
   const totalScheduled = apiData?.scheduled.length ?? 0;
   const totalUnscheduled = apiData?.unscheduled.length ?? 0;
   const totalOverdue = (apiData?.scheduled ?? []).filter((e) => e.is_overdue).length;
+
+  // ปุ่ม "วันนี้" — ตรวจว่ามีงานวันนี้ไหม
+  const hasTodayJob = days.includes(today);
+
+  const scrollToToday = () => {
+    const el = document.getElementById(`day-${today}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const scrollToUnscheduled = () => {
+    unscheduledRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
@@ -188,43 +231,100 @@ export default function MeasureSchedulePage() {
           </span>
           นัดวัดจริง
         </h1>
+        <div className="flex items-center gap-2">
+          {/* ข้อ 6: ปุ่ม "วันนี้" */}
+          <button
+            onClick={scrollToToday}
+            disabled={!hasTodayJob}
+            className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl glass-card border border-white/15 text-white text-sm font-medium min-h-[44px] disabled:opacity-40 disabled:cursor-not-allowed"
+            title={hasTodayJob ? "ไปวันนี้" : "ไม่มีนัดวันนี้"}
+          >
+            <Icon name="calendar" size={15} /> วันนี้
+          </button>
+          <button
+            onClick={handleRefresh}
+            disabled={isFetching}
+            className="focusable pressable inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl glass-card border border-white/15 text-white text-sm font-medium min-h-[44px] disabled:opacity-60"
+          >
+            <Icon name="refresh" size={15} className={isFetching ? "animate-spin" : ""} />
+            รีเฟรช
+          </button>
+        </div>
+      </div>
+
+      {/* Summary bar — ข้อ 6: การ์ดคลิกได้ */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {/* นัดแล้ว → ล้าง filter */}
         <button
-          onClick={handleRefresh}
-          disabled={isFetching}
-          className="focusable pressable inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl glass-card border border-white/15 text-white text-sm font-medium min-h-[44px] disabled:opacity-60"
+          onClick={() => { setCardFilter(null); setMeasurerFilter(null); }}
+          className={`glass-card rounded-2xl p-4 border text-left focusable pressable transition-all ${cardFilter === null && !measurerFilter ? "border-white/40 ring-1 ring-white/25" : "border-white/10"}`}
         >
-          <Icon name="refresh" size={15} className={isFetching ? "animate-spin" : ""} />
-          รีเฟรช
+          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>นัดแล้ว (รอวัด)</div>
+          <div className="text-2xl font-bold tabular-nums text-white">{totalScheduled}</div>
+        </button>
+        {/* เลยนัด → กรองเฉพาะ overdue */}
+        <button
+          onClick={() => setCardFilter(cardFilter === "overdue" ? null : "overdue")}
+          className={`glass-card rounded-2xl p-4 border text-left focusable pressable transition-all ${
+            totalOverdue > 0 ? "border-rose-300/35 bg-rose-500/12" : "border-white/10"
+          } ${cardFilter === "overdue" ? "ring-1 ring-rose-300/50" : ""}`}
+        >
+          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>เลยนัดแล้วยังไม่วัด</div>
+          <div className={`text-2xl font-bold tabular-nums ${totalOverdue > 0 ? "text-rose-200" : "text-white"}`}>{totalOverdue}</div>
+        </button>
+        {/* รอนัดวัด → scroll ไปบล็อก unscheduled */}
+        <button
+          onClick={() => { setCardFilter(cardFilter === "unscheduled" ? null : "unscheduled"); scrollToUnscheduled(); }}
+          className={`glass-card rounded-2xl p-4 border col-span-2 sm:col-span-1 text-left focusable pressable transition-all ${
+            totalUnscheduled > 0 ? "border-amber-300/35 bg-amber-500/10" : "border-white/10"
+          } ${cardFilter === "unscheduled" ? "ring-1 ring-amber-300/50" : ""}`}
+        >
+          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>รอนัดวัด</div>
+          <div className={`text-2xl font-bold tabular-nums ${totalUnscheduled > 0 ? "text-amber-200" : "text-white"}`}>{totalUnscheduled}</div>
         </button>
       </div>
 
-      {/* Summary bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="glass-card rounded-2xl p-4 border border-white/10">
-          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>นัดแล้ว (รอวัด)</div>
-          <div className="text-2xl font-bold tabular-nums text-white">{totalScheduled}</div>
+      {/* ข้อ 6: chip filter ช่าง */}
+      {allMeasurers.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setMeasurerFilter(null)}
+            className={`focusable pressable px-3 py-1.5 rounded-xl text-[13px] font-medium min-h-[36px] border transition-colors ${
+              measurerFilter === null
+                ? "bg-white text-[#1F4E78] border-white"
+                : "glass-card border-white/15 text-white/80"
+            }`}
+          >
+            ทั้งหมด
+          </button>
+          {allMeasurers.map((name) => (
+            <button
+              key={name}
+              onClick={() => setMeasurerFilter(measurerFilter === name ? null : name)}
+              className={`focusable pressable px-3 py-1.5 rounded-xl text-[13px] font-medium min-h-[36px] border transition-colors ${
+                measurerFilter === name
+                  ? "bg-white text-[#1F4E78] border-white"
+                  : "glass-card border-white/15 text-white/80"
+              }`}
+            >
+              <Icon name="wrench" size={12} className="inline mr-1 opacity-70" />
+              {name}
+            </button>
+          ))}
         </div>
-        <div className={`glass-card rounded-2xl p-4 border ${totalOverdue > 0 ? "border-rose-300/35 bg-rose-500/12" : "border-white/10"}`}>
-          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>เลยนัดแล้วยังไม่วัด</div>
-          <div className={`text-2xl font-bold tabular-nums ${totalOverdue > 0 ? "text-rose-200" : "text-white"}`}>{totalOverdue}</div>
-        </div>
-        <div className={`glass-card rounded-2xl p-4 border col-span-2 sm:col-span-1 ${totalUnscheduled > 0 ? "border-amber-300/35 bg-amber-500/10" : "border-white/10"}`}>
-          <div className="text-[11px] font-medium mb-1" style={{ color: "var(--t-low)" }}>รอนัดวัด</div>
-          <div className={`text-2xl font-bold tabular-nums ${totalUnscheduled > 0 ? "text-amber-200" : "text-white"}`}>{totalUnscheduled}</div>
-        </div>
-      </div>
+      )}
 
       {/* งานรอนัด */}
-      {totalUnscheduled > 0 && (
-        <div className="glass-card rounded-2xl p-4 border border-amber-300/25">
+      {(totalUnscheduled > 0 || cardFilter === "unscheduled") && (
+        <div ref={unscheduledRef} className="glass-card rounded-2xl p-4 border border-amber-300/25">
           <div className="flex items-center gap-2 mb-3">
             <Icon name="warn" size={15} className="text-amber-300 shrink-0" />
             <span className="font-semibold text-amber-100 text-sm">
-              รอนัดวัด {totalUnscheduled} งาน — ยังไม่ได้ตั้งวันนัด
+              รอนัดวัด {unscheduledFiltered.length} งาน — ยังไม่ได้ตั้งวันนัด
             </span>
           </div>
           <div className="space-y-2">
-            {(apiData?.unscheduled ?? []).map((e) => (
+            {unscheduledFiltered.length > 0 ? unscheduledFiltered.map((e) => (
               <div key={e.production_id}
                 className="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 bg-amber-500/10 border border-amber-300/20"
               >
@@ -232,6 +332,7 @@ export default function MeasureSchedulePage() {
                   <span className="font-medium text-white text-sm">{e.customer_name ?? "—"}</span>
                   {e.customer_area && <span className="ml-2 text-[12px]" style={{ color: "var(--t-low)" }}>{e.customer_area}</span>}
                   {e.job_code && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>{e.job_code}</span>}
+                  {e.measurer_name && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>ช่าง: {e.measurer_name}</span>}
                 </div>
                 <Link
                   href={`/production?open=${e.production_id}`}
@@ -240,13 +341,15 @@ export default function MeasureSchedulePage() {
                   <Icon name="external" size={12} /> เปิดงาน
                 </Link>
               </div>
-            ))}
+            )) : (
+              <div className="text-[13px] text-center py-3" style={{ color: "var(--t-low)" }}>ไม่มีงานในเงื่อนไขนี้</div>
+            )}
           </div>
         </div>
       )}
 
       {/* นัดวัดตามวัน */}
-      {days.length === 0 && totalUnscheduled === 0 ? (
+      {days.length === 0 && unscheduledFiltered.length === 0 && cardFilter !== "unscheduled" ? (
         <EmptyState title="ยังไม่มีนัดวัด" sub="งานที่อยู่ในขั้น รอวัดจริง จะแสดงที่นี่เมื่อตั้งนัดแล้ว" />
       ) : (
         <div className="space-y-4">
@@ -261,7 +364,8 @@ export default function MeasureSchedulePage() {
               ? "bg-rose-500/20 border-rose-300/30 text-rose-100"
               : "bg-white/8 border-white/12 text-white/85";
             return (
-              <div key={d}>
+              // ข้อ 6: id สำหรับ scroll วันนี้
+              <div key={d} id={`day-${d}`}>
                 {/* Day header */}
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${headerCls}`}>
                   <Icon name="calendar" size={14} className="shrink-0" />
