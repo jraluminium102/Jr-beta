@@ -58,6 +58,7 @@ type FormState = {
   sales_id: string;
   assistant_id: string;
   line_contact: string;
+  contact_channel: string;
   customer_name: string;
   tel: string;
   address: string;
@@ -81,6 +82,7 @@ function initForm(e?: QueueEntry | null): FormState {
     sales_id: e?.sales_id ?? "",
     assistant_id: e?.assistant_id ?? "",
     line_contact: e?.line_contact ?? "",
+    contact_channel: e?.contact_channel ?? "LINE",
     customer_name: e?.customer_name ?? "",
     tel: e?.tel ?? "",
     address: e?.address ?? "",
@@ -518,6 +520,7 @@ export function QueueModal({
       sales_id: f.sales_id || null,
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
+      contact_channel: f.contact_channel || "LINE",
       customer_name: f.customer_name.trim(),
       tel: telNormalized,
       address: f.address || null,
@@ -777,8 +780,16 @@ export function QueueModal({
             </div>
           )}
 
-          <Field label="LINE ติดต่อลูกค้า">
-            <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)} className={inp} />
+          <Field label="ช่องทางติดต่อลูกค้า">
+            <div className="flex gap-1.5">
+              <select value={f.contact_channel} onChange={(e) => set("contact_channel", e.target.value)}
+                className="glass-soft rounded-lg px-2 py-2 text-sm outline-none shrink-0">
+                <option value="LINE">Line</option>
+                <option value="FB">FB</option>
+              </select>
+              <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)}
+                placeholder={f.contact_channel === "FB" ? "ชื่อ/ลิงก์ FB" : "ชื่อ/ID Line"} className={`${inp} flex-1`} />
+            </div>
           </Field>
           <Field label="เบอร์โทร">
             <input value={f.tel} onChange={(e) => set("tel", e.target.value)} className={inp} />

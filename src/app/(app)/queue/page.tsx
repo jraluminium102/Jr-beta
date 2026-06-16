@@ -26,7 +26,8 @@ const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"
 // ---- copy ฟอร์มคิวรายวัน/รายเซลล์ (ไว้ส่งต่อทาง Line) ------------------------
 const copyVerb = (jobType: string | null) => {
   const v = (jobType ?? "").trim();
-  return v === "" || v === "ประเมินหน้างาน" || v === "ประเมิน" ? "เข้าประเมิน" : "เข้าเสนองาน";
+  // ประเมินหน้างาน → "เข้าประเมิน" · ประเภทอื่น/กรอกเอง → "เข้า<ประเภทที่กรอก>" (ไม่ force เสนองาน)
+  return v === "" || v === "ประเมินหน้างาน" || v === "ประเมิน" ? "เข้าประเมิน" : `เข้า${v}`;
 };
 const copyTime = (t: string | null) => {
   const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/);
@@ -44,7 +45,7 @@ function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[
     return [
       `${copyTime(e.queue_time)} น. ${copyVerb(e.job_type)}${e.customer_name}`,
       "",
-      `( Line: ${e.line_contact?.trim() || "-"} )`,
+      `( ${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact?.trim() || "-"} )`,
       "",
       `${e.customer_name} ${e.tel?.trim() || "-"}`,
       e.address?.trim() || "-",
@@ -862,7 +863,7 @@ const QueueTableHead = () => (
       <th className="px-2 py-2 font-semibold">ประเภท</th>
       <th className="px-2 py-2 font-semibold">เซลล์</th>
       <th className="px-2 py-2 font-semibold">ผู้ช่วย</th>
-      <th className="px-2 py-2 font-semibold">LINE</th>
+      <th className="px-2 py-2 font-semibold">ติดต่อ</th>
       <th className="px-2 py-2 font-semibold">ชื่อ</th>
       <th className="px-2 py-2 font-semibold">เบอร์</th>
       <th className="px-2 py-2 font-semibold">ที่อยู่</th>
@@ -897,7 +898,7 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
       <td className="px-2 py-2.5 text-ink-2">{e.job_type || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2">{e.line_contact || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2">{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
       <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 max-w-[220px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>

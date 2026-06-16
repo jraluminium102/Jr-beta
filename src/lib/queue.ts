@@ -42,6 +42,7 @@ export type QueueEntry = {
   assistant_id: string | null;  // (0019) ผู้ช่วยเซลล์ที่ไปด้วย
   assistant?: { id: string; name: string; code: string } | null;
   line_contact: string | null;
+  contact_channel: string;        // (0043) LINE | FB
   customer_name: string;
   tel: string | null;
   address: string | null;

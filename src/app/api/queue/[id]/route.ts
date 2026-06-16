@@ -23,6 +23,7 @@ const patchSchema = z.object({
   sales_id: z.string().uuid().nullish(),
   assistant_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
+  contact_channel: z.enum(["LINE", "FB"]).optional(),
   customer_name: z.string().min(1).optional(),
   tel: z.string().nullish(),
   address: z.string().nullish(),
