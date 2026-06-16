@@ -1528,6 +1528,12 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_mPrice*_mQty;
     msgs.push('หลังคาเลื่อน '+_N+' บาน · มอเตอร์ '+_mQty+'×'+fmt(_mPrice)); }
   if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } let sl=0; if(optSel.rfsealer){ sl=Math.max(5000, 800*(parseFloat(optSel.rfsealerlen)||0)); } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc+sl; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); if(sl>0)msgs.push('วัสดุปิดรอยต่อ ('+(optSel.rfsealerlen||0)+' ม.) '+fmt(sl)); }
+    // ธงC: ฝ้าออปชั่นในหลังคา — addon ราคา = ฝ้า standalone (ceilCalc reuse calcUnit) · auto=พื้นที่หลังคา (a)
+    if(optSel.ceilmode && optSel.ceilmode!=='none'){
+      const _ceilA=parseFloat(optSel.ceilarea)||a;
+      const _ceilR=ceilCalc(optSel.ceiltype||'ceil_cshape', _ceilA, optSel.ceilcolor, optSel.ceilinsul);
+      if(_ceilR.sell>0){ opt+=_ceilR.sell; msgs.push((optSel.ceilmode==='sep'?'[แยกรายการ] ':'')+_ceilR.msg+(optSel.ceilpos?(' · ฝ้า'+optSel.ceilpos):'')+(optSel.ceildir==='เฉียง'?' เฉียงตามหลังคา':'')); }
+    }
     // options ใหม่: แป / โครงสร้าง / ปลายหลังคา / ระบบรางน้ำ
     const _rfend = optSel.rfend || 'ปล่อย';
     // ข้อ8: ลบ calc "ปิดปลาย" (auto กว้าง) — ใช้ "ปิดปลายกันน้ำ" o-rfeave (กรอกยาวเอง) ที่คิดใน radd แทน กันคิดซ้ำ
@@ -2417,6 +2423,49 @@ function g3CalcR2Area(ch){
   if(pv) pv.textContent=_pr>0?('฿'+fmt(_pr)):'฿—';
   if(hpr) hpr.textContent=_pr>0?('฿'+fmt(_pr)):'฿0';
 }
+// ══ ธงC (G3 2026-06-15): ฝ้าเป็นออปชั่นในหลังคา (none/รวม/แยก) ══
+// ceilCalc reuse calcUnit → ราคาฝ้า addon = ฝ้า standalone ที่พื้นที่เดียวกันเป๊ะ (กันราคาเพี้ยน)
+function ceilCalc(ceilTypeId, ceilAreaSqm, ceilColor, ceilInsul){
+  var p=PBYID[ceilTypeId]; if(!p) return {sell:0,msg:''};
+  var A=Math.max(parseFloat(ceilAreaSqm)||0,0);
+  if(A<=0) return {sell:0,msg:''};
+  var optC={};
+  if(p.ceiling) optC.ckolor=ceilColor||'';
+  if(p.optInsul && ceilInsul) optC.insul=true;
+  var r; try{ r=calcUnit(p,A,1,0,0,1,optC,false); }catch(e){ return {sell:0,msg:''}; }
+  var nm=(p.name||'').replace(/\s*\([^)]*\)/g,'').replace(/^ฝ้า\s*/,'').trim();
+  var msg='ฝ้า '+nm+(p.ceiling&&ceilColor?(' สี'+ceilColor):'')+(ceilInsul&&p.optInsul?' +ฉนวน 3"':'')+' '+A.toFixed(1)+' ตร.ม. = '+fmt(r.sell||0);
+  return {sell:r.sell||0, msg:msg};
+}
+function g3CeilMode(btn,mode){
+  var ch=btn.closest('.ch');
+  btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var sel=ch.querySelector('.o-ceilmode'); if(sel)sel.value=mode;
+  var sp=ch.querySelector('.o-ceil-subpanel'); if(sp)sp.style.display=(mode==='none'?'none':'block');
+  calcQuote();
+}
+function g3CeilTypePick(btn){
+  var ch=btn.closest('.ch');
+  btn.closest('.chip-group').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var cid=btn.dataset.cid;
+  var sel=ch.querySelector('.o-ceiltype'); if(sel)sel.value=cid;
+  g3CeilColorFill(ch, cid);
+  var io=ch.querySelector('.o-ceil-insul-wrap'); if(io){ var p=PBYID[cid]; io.style.display=(p&&p.optInsul?'block':'none'); }
+  calcQuote();
+}
+// สร้างชิปสี/ลาย ตาม crates ของฝ้า (ว่างถ้าไม่มี เช่น ฝ้าฉาบเรียบ)
+function g3CeilColorFill(ch, cid){
+  var p=PBYID[cid]; var cw=ch.querySelector('.o-ceilcolor-wrap'); if(!cw)return;
+  if(p&&p.crates){
+    var cols=Object.keys(p.crates);
+    var chtml='<div style="font-size:11px;font-weight:700;color:#6D28D9;margin:4px 0;">สี/ลาย</div><div class="chip-group chip-sm">';
+    cols.forEach(function(c,i){chtml+='<button type="button" class="chip'+(i===0?' on':'')+'" data-val="'+c+'" onclick="chSetChip(this,\'o-ceilcolor\')">'+c+' ('+fmt(p.crates[c])+'/ตร.ม.)</button>';});
+    cw.innerHTML=chtml+'</div><select class="o-ceilcolor" style="display:none;" onchange="calcQuote();"><option value="'+cols[0]+'" selected>'+cols[0]+'</option>'+cols.slice(1).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select>';
+  } else { cw.innerHTML='<select class="o-ceilcolor" style="display:none;"><option value="" selected></option></select>'; }
+}
+// ══ จบ helpers ธงC ══
 // G5-G: drill-down มุ้ง 4 หมวด (เฟรม/จีบ/จีบม่านรังผึ้ง/ม้วน · มติพี่นัท 15 มิ.ย.) · imp30→เฟรม · จีบนิรภัย=mj_screen_safety ตัวเดียว · ซ่อนจากชิป: imp31/imp32/imp33/imp35 (เก็บ PRODUCTS/เรต · ใบเก่าเปิดได้) · ใช้ g3SyncProd/g3PickProd ร่วม
 var MOSQ_GRP_PRODS={
   frame:[['imp21','เฟรมเล็ก'],['imp22','เฟรมเล็กติดตาย'],['imp23','เฟรมใหญ่'],['imp30','แม่เหล็กพับ']],
@@ -3167,6 +3216,23 @@ function buildItemOpts(d){
     h+='<div class="o-r2-pricerow" style="margin-top:7px;padding:5px 8px;background:#DBEAFE;border-radius:7px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#1E40AF;"><span>ราคาวัสดุที่ 2 (เรตแยก ตร.ม.)</span><span class="o-r2-priceval">฿—</span></div>';
     h+='</div>';
     h+='</div>';
+    // ══ ธงC: กล่องฝ้า (ออปชั่น) — none/รวมในหลังคา/แยกรายการ · ราคา reuse ceilCalc(=standalone) ══
+    h+='<div class="opt" style="width:100%;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:8px;padding:8px 10px;">';
+    h+='<b style="color:#6D28D9;">ฝ้า (ออปชั่น)</b><span id="g3-ceil-addon-price" style="float:right;font-size:12px;color:#6D28D9;font-weight:700;">฿0</span>';
+    h+='<div class="chip-group chip-sm" style="margin-top:5px;"><button type="button" class="chip on" data-val="none" onclick="g3CeilMode(this,\'none\')">— ไม่มีฝ้า</button><button type="button" class="chip" data-val="in" onclick="g3CeilMode(this,\'in\')">รวมในหลังคา</button><button type="button" class="chip" data-val="sep" onclick="g3CeilMode(this,\'sep\')">แยกรายการ</button></div>';
+    h+='<select class="o-ceilmode" style="display:none;"><option value="none" selected>none</option><option value="in">in</option><option value="sep">sep</option></select>';
+    h+='<div class="o-ceil-subpanel" style="display:none;margin-top:8px;padding:9px 10px;background:#EDE9FE;border-radius:8px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#6D28D9;margin-bottom:5px;">ชนิดฝ้า</div>';
+    h+='<div class="chip-group chip-sm"><button type="button" class="chip on" data-cid="ceil_cshape" onclick="g3CeilTypePick(this)">ฝ้าอลู ไทยทิพย์</button><button type="button" class="chip" data-cid="ceil_bsc" onclick="g3CeilTypePick(this)">ฝ้าไม้เทียม remood</button><button type="button" class="chip" data-cid="ceiling_smooth" onclick="g3CeilTypePick(this)">ฝ้าฉาบเรียบ</button></div>';
+    h+='<select class="o-ceiltype" style="display:none;"><option value="ceil_cshape" selected>ceil_cshape</option><option value="ceil_bsc">ceil_bsc</option><option value="ceiling_smooth">ceiling_smooth</option></select>';
+    h+='<div class="o-ceilcolor-wrap" style="margin-top:4px;">'+(function(){var _pc=PBYID['ceil_cshape'];var cols=Object.keys(_pc.crates);var s='<div style="font-size:11px;font-weight:700;color:#6D28D9;margin:4px 0;">สี/ลาย</div><div class="chip-group chip-sm">';cols.forEach(function(c,i){s+='<button type="button" class="chip'+(i===0?' on':'')+'" data-val="'+c+'" onclick="chSetChip(this,\'o-ceilcolor\')">'+c+' ('+fmt(_pc.crates[c])+'/ตร.ม.)</button>';});return s+'</div><select class="o-ceilcolor" style="display:none;" onchange="calcQuote();"><option value="'+cols[0]+'" selected>'+cols[0]+'</option>'+cols.slice(1).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select>';})()+'</div>';
+    h+='<div class="o-ceil-insul-wrap" style="display:none;margin-top:5px;"><label><input type="checkbox" class="o-ceilinsul" onchange="calcQuote();"> ฉนวนกันร้อน/กันเสียง หนา 3" (+600/ตร.ม.)</label></div>';
+    h+='<label class="opt" style="margin-top:7px;width:100%;">พื้นที่ฝ้า (ตร.ม.) <input type="number" class="o-ceilarea" min="0" step="0.1" value="" placeholder="= พื้นที่หลังคา" style="width:90px;height:34px;" oninput="calcQuote();"> <span style="font-size:10.5px;color:#6B7280;">(ว่าง = auto พื้นที่หลังคา)</span></label>';
+    h+='<label class="opt" style="margin-top:5px;width:100%;">ตำแหน่ง <select class="o-ceilpos" style="height:30px;" onchange="calcQuote();"><option value="นอก" selected>ฝ้านอก</option><option value="ใน">ฝ้าใน</option></select> &nbsp; แนว <select class="o-ceildir" style="height:30px;" onchange="calcQuote();"><option value="ตรง" selected>ตรง</option><option value="เฉียง">เฉียงตามหลังคา</option></select></label>';
+    h+='<div class="o-ceil-preview" style="margin-top:6px;font-size:11px;color:#6D28D9;font-weight:600;"></div>';
+    h+='</div>';
+    h+='</div>';
+    // ══ จบ UI ฝ้า ธงC ══
     // A: แป
     h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปคู่',true)+'</label>';
     // B: โครงสร้าง (ชิป · onchange เดิม warn เหล็กชุบ)
@@ -3577,6 +3643,14 @@ function readItem(d){
     // FIX-12(G3): หลังคาผสม 2 วัสดุ
     const _r2=d.querySelector('.o-roof2'); optSel.roof2=_r2?_r2.value:'';
     const _r2a=d.querySelector('.o-roof2area'); optSel.roof2area=_r2a?_r2a.value:'0';
+    // ธงC: ฝ้าออปชั่นในหลังคา
+    const _cm=d.querySelector('.o-ceilmode');   optSel.ceilmode=_cm?_cm.value:'none';
+    const _ct=d.querySelector('.o-ceiltype');   optSel.ceiltype=_ct?_ct.value:'ceil_cshape';
+    const _cc=d.querySelector('.o-ceilcolor');  optSel.ceilcolor=_cc?_cc.value:'';
+    const _ca=d.querySelector('.o-ceilarea');   optSel.ceilarea=_ca?_ca.value:'';
+    const _ci=d.querySelector('.o-ceilinsul');  optSel.ceilinsul=_ci?_ci.checked:false;
+    const _cp=d.querySelector('.o-ceilpos');    optSel.ceilpos=_cp?_cp.value:'นอก';
+    const _cd=d.querySelector('.o-ceildir');    optSel.ceildir=_cd?_cd.value:'ตรง';
     // options ใหม่: แป / โครง / ปลายหลังคา / ระบบรางน้ำ
     const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปคู่'; // H3: fallback ตรงกับ UI default (แปคู่)
     const _rf=d.querySelector('.o-roofframe'); optSel.rfframe=_rf?_rf.value:'โครงอลูมิเนียม';
