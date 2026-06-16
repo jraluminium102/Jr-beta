@@ -3177,13 +3177,7 @@ function buildItemOpts(d){
     h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
     h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
     h+='</span>';
-    // ลูกฟูก/คอมโพ ล่าง (เสริมกระจก) — ใส่กลับ G1 ตามดราฟ (มติพี่นัท 2026-06-15 · เหมือน G6) · classes เดิม reconnect calcUnit L1552/readItem L3573
-    h+='<label class="opt">แผ่นทึบล่าง (ลูกฟูก/คอมโพ) <select class="o-solidlower" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-sl-wrap\'); if(w)w.style.display=this.value?\'flex\':\'none\'; calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก 3,500/ตร.ม.</option><option value="composite">คอมโพสิท 3,300/ตร.ม.</option></select></label>';
-    h+='<span class="o-sl-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
-    h+='<label class="opt">กว้าง <input type="number" class="o-sl-w" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
-    h+='<label class="opt">สูง <input type="number" class="o-sl-h" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
-    h+='<label class="opt">สีลูกฟูก <input type="number" class="o-sl-color" step="100" min="0" value="0" style="width:70px;height:30px;" oninput="calcQuote()"><span class="u">+/ตร.ม.</span></label>';
-    h+='</span>';
+    // ธง1 (มติพี่นัท 15 มิ.ย. รอบตรวจ): ตัด render แผ่นทึบล่าง o-solidlower ทิ้ง (เดิม leak ทุกบาน G1 รวม ykk_vent) — ลูกฟูกใช้สินค้า rn89-92 (cat ลูกฟูก+คอมโพสิททึบ) เลือกเป็นบานแยกแทน · logic ราคา dormant (readItem L~3786 หา DOM ไม่เจอ → optSel.solidlower='')
   }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
