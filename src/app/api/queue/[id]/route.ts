@@ -75,6 +75,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null; error: { message: string } | null }>;
     }).rpc("promote_queue_to_job", { p_queue_id: params.id });
     if (pErr) throw dbError(pErr);   // ให้รู้ทันทีว่า carry-forward ไม่สำเร็จ (idempotent ลองใหม่ได้)
+
+    // คืนชีพงานที่ผูกอยู่ ถ้าเคยถูกยกเลิกแบบ "ยังไม่เริ่มงานเลย" (เช่น โดนเคลียร์ข้อมูล)
+    // promote เป็น idempotent → ถ้าคิวเคย promote แล้วงานโดน cancel จะคืน job เดิม(cancelled) ไม่สร้างใหม่
+    // → กด DONE จะไม่เด้งเข้า flow แบบ · เงื่อนไขเข้ม: NOT_STARTED + stage<=2 (กันคืนชีพงานที่ยกเลิกจริงหลังทำไปแล้ว)
+    if (jobId) {
+      const { data: jrow } = await sb.from("jobs")
+        .select("status, design_state, current_stage").eq("id", jobId).maybeSingle();
+      const jr = jrow as { status?: string; design_state?: string; current_stage?: number } | null;
+      if (jr && jr.status === "CANCELLED" && jr.design_state === "NOT_STARTED" && (jr.current_stage ?? 0) <= 2) {
+        await sb.from("jobs").update({ status: "LEAD" }).eq("id", jobId);
+      }
+    }
     return ok(data, { job_id: jobId });
   }
   return ok(data);
