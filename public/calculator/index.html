@@ -3342,8 +3342,14 @@ function buildItemOpts(d){
       _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
     }
   }
-  // G3-round2 A: หัวข้อ OPTION ทางเลือกลูกค้า — หลังคาใช้คำเฉพาะ (เปลี่ยนสี/วัสดุมุง/หลังคา) · อื่นๆ คำเดิม
-  { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){ _ocSum.textContent = (p.cat==='หลังคา') ? '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)' : '＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)'; } }
+  // ALLG: หัวข้อ OPTION ทางเลือกลูกค้า — สร้างตามหมวดที่ "มีจริง" (ocCatOptions) ไม่ hardcode · กันโชว์ "กระจก/มือจับ/หลังคา" ที่สินค้านั้นไม่มี (เช่น มุ้ง = แค่ ระบุเอง)
+  { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){
+      if(p.cat==='หลังคา'){ _ocSum.textContent='＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)'; }
+      else { var _ocLb={glass:'กระจก',mosq:'ผ้ามุ้ง',color:'สี',handle:'มือจับ',roof:'หลังคา'};
+        var _ocL=(ocCatOptions(d).match(/value="(glass|mosq|color|handle|roof)"/g)||[]).map(function(_x){return _ocLb[_x.replace(/value="|"/g,'')];});
+        _ocSum.textContent='＋ OPTION ทางเลือกลูกค้า'+(_ocL.length?' (เปลี่ยน'+_ocL.join('/')+' · คิดราคาให้)':' (ระบุเอง · คิดราคาให้)');
+      }
+  } }
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
