@@ -6,8 +6,8 @@ import { can } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
-// Stages that represent the quoting/negotiation window (5=ทำใบเสนอราคา, 6=เจรจาราคา, 7=ส่งใบเสนอให้ลูกค้า)
-const CLOSURE_STAGES = [5, 6, 7] as const;
+// Stages 3-8: ตั้งแต่ฝ่ายแบบวาดแบบ → ลูกค้ามัดจำ (ขยายจาก 5-7 เพื่อ hub ติดตามงาน)
+const CLOSURE_STAGES = [3, 4, 5, 6, 7, 8] as const;
 // Statuses that mean the job has moved past deposit — exclude from closure view
 const POST_DEPOSIT_STATUSES = ["DEPOSITED", "IN_PRODUCTION", "INSTALLING", "COMPLETED", "CANCELLED"] as const;
 
@@ -33,15 +33,18 @@ export type ClosureRow = {
   can_revise: boolean;
 };
 
-// GET /api/sales-closure — jobs รอปิดการขาย (stage 5/6/7) พร้อม quotation ล่าสุด
-export const GET = withRoute(async () => {
+// GET /api/sales-closure — jobs ปิดการขาย (stage 3-8) พร้อม quotation ล่าสุด
+// query: ?stage=N (กรองขั้นเดียว), ?my=1 (เฉพาะของฉัน), ?q= (ค้นชื่อ/job_code)
+export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("sales_closure", "read");
   const sb = ctx.supabase as { from: (t: string) => any };
+  const url = new URL(req.url);
+  const stageF = url.searchParams.get("stage");
+  const q = url.searchParams.get("q");
+  const myOnly = url.searchParams.get("my") === "1";
 
   // Fetch jobs at closure stages OR with quote_sent_date set (safety net for stage drift)
-  // PostgREST or(): current_stage in (5,6,7) OR quote_sent_date is not null
-  // Then exclude post-deposit statuses in JS (DEPOSITED/IN_PRODUCTION/INSTALLING/COMPLETED/CANCELLED)
-  const { data: jobs, error } = await sb
+  let query = sb
     .from("jobs")
     .select(
       [
@@ -54,7 +57,7 @@ export const GET = withRoute(async () => {
         "design_state",
         "remark",
         "quote_sent_date",
-        "estimator:estimator_id(full_name)",
+        "estimator:estimator_id(id,full_name)",
         // PostgREST: embed ผ่าน FK quotations.job_id ให้ชัด (ไม่งั้นใบเสนอ job_id=null resolve ไม่เจอ ขึ้น '—')
         "quotations!quotations_job_id_fkey(id, code, net, created_at)",
       ].join(",")
@@ -64,6 +67,10 @@ export const GET = withRoute(async () => {
     .order("year", { ascending: false })
     .order("sequence", { ascending: false });
 
+  if (q) query = query.or(`customer_name.ilike.%${q}%,job_code.ilike.%${q}%`);
+  if (myOnly) query = query.eq("estimator_id", ctx.user.id);
+
+  const { data: jobs, error } = await query;
   if (error) throw new Error(error.message);
 
   // Determine whether the caller has write permission (for showing action buttons)
@@ -86,7 +93,7 @@ export const GET = withRoute(async () => {
     const daysWaiting = qsd
       ? Math.max(0, Math.floor((Date.now() - new Date(qsd).getTime()) / 86400000))
       : null;
-    const est = j.estimator as { full_name: string | null } | null;
+    const est = j.estimator as { id: string | null; full_name: string | null } | null;
 
     return {
       id: j.id as string,
@@ -109,6 +116,11 @@ export const GET = withRoute(async () => {
     };
   });
 
-  return ok(rows, { can_write: canWrite });
+  // กรอง stage เดียวถ้าส่ง ?stage=
+  const filtered = stageF ? rows.filter((r) => r.current_stage === Number(stageF)) : rows;
+
+  const netSum = filtered.reduce((s, r) => s + (r.net ?? 0), 0);
+  const waiting7 = filtered.filter((r) => (r.days_waiting ?? 0) > 7).length;
+  return ok(filtered, { can_write: canWrite, net_sum: netSum, waiting_7: waiting7 });
 });
 

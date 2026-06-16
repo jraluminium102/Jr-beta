@@ -56,13 +56,14 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 }
 
 export function menusFor(role: Role): string[] {
-  const all = ["dashboard", "followup", "production", "prodqueue", "measure_schedule", "designer", "installation", "issues", "sales_closure", "boq", "finance", "settings"];
+  // issues + sales_closure ยุบเข้า followup แล้ว — ไม่ปรากฏในเมนูแยก
+  const all = ["dashboard", "followup", "production", "prodqueue", "measure_schedule", "designer", "installation", "boq", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", production: "production",
     prodqueue: "production",
     measure_schedule: "production",
-    designer: "designer", installation: "installation", issues: "issues",
-    sales_closure: "sales_closure", boq: "boq",
+    designer: "designer", installation: "installation",
+    boq: "boq",
     finance: "finance", settings: "settings",
   };
   return all.filter((m) => can(role, map[m], "read"));
