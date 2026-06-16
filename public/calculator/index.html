@@ -2653,6 +2653,20 @@ function railPick(btn,dim){ var ch=btn.closest('.ch'); if(!ch)return; var ps=ch.
 // ALLG-v2 (มติพี่นัท 13 มิ.ย.): โชว์เฉพาะ "ใช้บ่อย" เป็นปุ่ม (≤10) · ที่เหลือซ่อนใน "อื่นๆ ▾" (dropdown 154)
 // G1: ตัด บานเปลือย/shower/บานหมุน ลงอื่นๆ · ดึง YKK/บานยก ขึ้น · ตัด เส้นคาด/ลูกฟูก ออกจากปุ่มแบบ (เป็นออปชั่น · ยังอยู่ในอื่นๆ)
 // G6: เพิ่ม ผนังเบา (ฝ้า-ผนัง · ใช้บ่อยในงานกั้นห้อง) แทน shower/ดัดโค้ง
+// ธง3 (มติ 15มิ.ย. · ใช้ G6GROUPS ร่วม): G1 จัด 10 cat → 6 ปุ่มกลุ่มแบบ G6 (G6GROUPS อยู่ใน IIFE · global ตัวนี้ mirror โครง 6 กลุ่มที่ระดับ cat)
+var G1GROUPS=[
+  {k:'slide',n:'บานเลื่อน',ic:'⬌',cats:['บานเลื่อน','เลื่อนภายใน']},
+  {k:'swing',n:'บานเปิด',ic:'🚪',cats:['บานเปิด','บานกระทุ้ง','บานหมุน']},
+  {k:'fold',n:'บานเฟี้ยม',ic:'▥',cats:['บานเฟี้ยม']},
+  {k:'fix',n:'ติดตาย/ทึบ',ic:'▢',cats:['ติดตาย','บานเปลือย','ฝ้า-ผนัง']},
+  {k:'curve',n:'ดัดโค้ง',ic:'◗',cats:['ดัดโค้ง']},
+  {k:'other',n:'อื่นๆ/พิเศษ',ic:'⋯',cats:['PC Door','YKK','บานยก','shower']}
+];
+function g1GrpObj(k){ for(var i=0;i<G1GROUPS.length;i++) if(G1GROUPS[i].k===k) return G1GROUPS[i]; return G1GROUPS[G1GROUPS.length-1]; }
+function g1GrpOfCat(cat){ for(var i=0;i<G1GROUPS.length;i++) if(G1GROUPS[i].cats.indexOf(cat)>=0) return G1GROUPS[i].k; return 'other'; }
+// cat ในกลุ่มที่มีสินค้าจริงใน group 1 (กันปุ่มกลุ่มที่ไม่มีของ)
+function g1AvailCats(grpK){ var g=g1GrpObj(grpK); var inG1={}; prodsInGroup('1').forEach(function(q){ if(q)inG1[q.cat]=1; }); return g.cats.filter(function(c){ return inG1[c]; }); }
+function famPickG1Grp(btn){ var ch=btn.closest('.ch'); if(!ch)return; var avail=g1AvailCats(btn.dataset.g1grp); var cat=avail[0]; if(!cat)return; delete ch.dataset.famOther; ch.dataset.rnStep='1'; var id=famDefaultProd(cat); if(id) g3SyncProd(ch,id); }
 var FAM_CATS={
   '1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','YKK','บานยก','ดัดโค้ง'],
   '2':['ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได','ประตูรั้ว','ระแนง'],
@@ -2675,10 +2689,21 @@ function famSelectorHTML(p,grp,famOther){
   var h='<div class="opt rn-prodsel fam-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   var _famHead={'1':'เลือกรูปแบบบาน','2':'เลือกประเภทงาน','4':'เลือกตู้ / ฝาตู้','6':'เลือกรูปแบบบาน','7':'ม่านซิป'}[grp]||'เลือกรูปแบบ';
   var _famGridCls=(cats.length+(_hasRest?1:0))<=3?' cg'+(cats.length+(_hasRest?1:0)):''; // UX: กลุ่มปุ่มน้อย → คอลัมน์คงที่ ไม่เล็กชิดซ้าย
-  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b><div class="chip-grid'+_famGridCls+'">'; // ALLG-v2: grid ปุ่มเท่ากัน
-  cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
-  if(_hasRest) h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button>';
-  h+='</div></label>';
+  h+='<label class="opt" style="width:100%;margin:0;"><b style="font-size:14px;color:#B3151D;">'+_famHead+'</b>';
+  if(grp==='1'){ // ธง3: G1 = 6 ปุ่มกลุ่มแบบ G6 → ชนิดในกลุ่ม (cascade/รุ่นย่อยด้านล่างคงเดิม)
+    var _curG1=g1GrpOfCat(cur);
+    h+='<div class="chip-grid cg3">';
+    G1GROUPS.forEach(function(g){ if(!g1AvailCats(g.k).length)return; h+='<button type="button" class="chip'+(g.k===_curG1&&!famOther?' on':'')+'" data-g1grp="'+g.k+'" onclick="famPickG1Grp(this)">'+g.ic+' '+g.n+'</button>'; });
+    h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div>';
+    if(!famOther){ var _gc=g1AvailCats(_curG1); if(_gc.length>1){ h+='<div class="chip-grid" style="margin-top:6px;">';
+      _gc.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; }); h+='</div>'; } }
+    h+='</label>';
+  } else {
+    h+='<div class="chip-grid'+_famGridCls+'">'; // ALLG-v2: grid ปุ่มเท่ากัน
+    cats.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur&&!famOther?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; });
+    if(_hasRest) h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button>';
+    h+='</div></label>';
+  }
   if(famOther){ // ALLG-v2.1: "อื่นๆ" = บานที่เหลือ (cat ในกลุ่มที่ไม่ได้อยู่ปุ่มหลัก) เป็นชิป — ไม่ใช่ช่องค้นหา (มติพี่นัท 2026-06-13)
     var _restCats=famRestCats(grp);
     if(_restCats.length){
