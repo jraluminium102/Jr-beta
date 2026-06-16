@@ -3049,26 +3049,24 @@ function buildItemOpts(d){
   }
   // หลังคาเลื่อน — ทำเลื่อน → 3 ช่อง: จำนวนบาน / พื้นที่เลื่อน(auto) / มอเตอร์(จำนวน×ราคา auto แก้ได้) · รางน้ำย้ายไปของเสริม
   if(p.optSlide){
-    h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน</label>';
-    h+='<span class="o-slide-wrap" style="display:none;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:6px 10px;">';
-    // FIX C① (G3): ชนิดเลื่อน (เลื่อนยื่น/เลื่อนข้าง) — มติพี่นัทราคาเท่ากัน = label only (ไม่แตะ calc)
-    h+='<label class="opt" style="width:100%;">ชนิดเลื่อน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เลื่อนยื่น" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนยื่น</button><button type="button" class="chip" data-val="เลื่อนข้าง" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนข้าง</button></div><select class="o-slidetype" style="display:none;" onchange="calcQuote();"><option value="เลื่อนยื่น" selected>เลื่อนยื่น</option><option value="เลื่อนข้าง">เลื่อนข้าง</option></select> <span style="font-size:11px;color:#666;">(ราคาเท่ากัน · ระบุในใบ)</span></label>';
-    // P2: จำนวนบานเลื่อน = ชิป [2][3][4][6] + stepper (input number ยังเป็น source of truth · readItem เดิมไม่ต้องแก้)
-    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">จำนวนบานเลื่อน '
-      +'<span style="display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;">'
-      +[2,3,4,6].map(function(n){return '<button type="button" class="spanel-chip" data-n="'+n+'" onclick="rfSetSpanels(this,'+n+')" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:15px;">'+n+'</button>';}).join('')
-      +'</span>'
-      +'<span style="display:inline-flex;gap:4px;align-items:center;vertical-align:middle;margin-left:10px;">'
+    // ธงD (2026-06-15): เรียงลำดับ ①ชนิด→②พื้นที่→③จำนวน(stepper เท่านั้น)→④ติดตาย→⑤มอเตอร์ + id ราคา (ธงG)
+    h+='<label class="opt"><input type="checkbox" class="o-slide" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-slide-wrap\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; if(this.checked)rfSlideMotorFill(this.closest(\'.ch\')); calcQuote();"> ทำเป็นหลังคาเลื่อน<span id="g3-slide-price" style="float:right;font-size:12px;color:#B3151D;font-weight:700;">฿0</span></label>';
+    h+='<span class="o-slide-wrap" style="display:none;flex-direction:column;gap:8px;align-items:stretch;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:8px 10px;width:100%;">';
+    // ① ชนิดเลื่อน (เลื่อนยื่น/เลื่อนข้าง) — ราคาเท่ากัน = label only (ไม่แตะ calc)
+    h+='<label class="opt" style="width:100%;">① ชนิดเลื่อน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เลื่อนยื่น" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนยื่น</button><button type="button" class="chip" data-val="เลื่อนข้าง" onclick="chSetChip(this,\'o-slidetype\')">เลื่อนข้าง</button></div><select class="o-slidetype" style="display:none;" onchange="calcQuote();"><option value="เลื่อนยื่น" selected>เลื่อนยื่น</option><option value="เลื่อนข้าง">เลื่อนข้าง</option></select> <span style="font-size:11px;color:#666;">(ราคาเท่ากัน · ระบุในใบ)</span></label>';
+    // ② พื้นที่เลื่อน = ยาว × ยื่น (readItem คูณเป็น sarea เดิม · ว่าง=auto · calc ไม่แตะ)
+    h+='<label class="opt" style="width:100%;">② พื้นที่เลื่อน ยาว <input type="number" class="o-sareaw" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> × ยื่น <input type="number" class="o-sareah" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ม. <span style="font-size:11px;color:#666;">(เว้นว่าง = auto)</span></label>';
+    // ③ จำนวนบานเลื่อน — stepper เท่านั้น (เลิกชิป 2/3/4/6 ตามดราฟ · input number = source of truth · readItem เดิมไม่ต้องแก้)
+    h+='<label class="opt" style="width:100%;">③ จำนวนบานเลื่อน '
+      +'<span style="display:inline-flex;gap:4px;align-items:center;margin-left:6px;">'
       +'<button type="button" onclick="rfStepSpanels(this,-1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">−</button>'
       +'<input type="number" class="o-spanels" step="1" min="2" value="2" style="width:52px;height:44px;text-align:center;" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();">'
       +'<button type="button" onclick="rfStepSpanels(this,1)" style="min-width:44px;min-height:44px;border:1px solid #9DBCE0;border-radius:8px;background:#fff;cursor:pointer;font-size:18px;">+</button>'
-      +'</span></label>';
-    // FIX C③ (G3): บานติดตาย (ส่วนไม่เลื่อน) — ระบุในใบ (พื้นที่รวมในหลังคาแล้ว = label · ไม่แตะ calc)
-    h+='<label class="opt">บานติดตาย <input type="number" class="o-sfixed" step="1" min="0" value="0" style="width:52px;height:44px;text-align:center;" oninput="calcQuote();"> บาน <span style="font-size:11px;color:#666;">(ส่วนไม่เลื่อน · ระบุในใบ)</span></label>';
-    // FIX C② (G3): พื้นที่เลื่อน = ยาว × ยื่น (2 ช่อง · readItem คูณเป็น sarea เดิม · ว่าง=auto · calc L1445 ไม่แตะ)
-    h+='<label class="opt">พื้นที่เลื่อน ยาว <input type="number" class="o-sareaw" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> × ยื่น <input type="number" class="o-sareah" step="0.1" min="0" placeholder="auto" style="width:60px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ม. <span style="font-size:11px;color:#666;">เว้นว่าง=auto</span></label>';
-    // P4: มอเตอร์ — โชว์ราคา auto เป็น helper อ่านอย่างเดียว · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์ (เคสปกติ 0 การพิมพ์)
-    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:52px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ตัว '
+      +'</span><span style="font-size:13px;color:#666;margin-left:6px;">บาน (min 2)</span></label>';
+    // ④ บานติดตาย (ส่วนไม่เลื่อน) — ระบุในใบ (พื้นที่รวมในหลังคาแล้ว = label · ไม่แตะ calc)
+    h+='<label class="opt">④ บานติดตาย <input type="number" class="o-sfixed" step="1" min="0" value="0" style="width:52px;height:44px;text-align:center;" oninput="calcQuote();"> บาน <span style="font-size:11px;color:#666;">(ส่วนไม่เลื่อน · ระบุในใบ)</span></label>';
+    // ⑤ มอเตอร์ — โชว์ราคา auto · กด "แก้ราคา" ค่อยเปิดช่องพิมพ์
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">⑤ มอเตอร์ <input type="number" class="o-smotorqty" step="1" min="1" value="1" style="width:52px;height:44px" oninput="rfSlideMotorFill(this.closest(\'.ch\'));calcQuote();"> ตัว '
       +'<span class="o-smotor-auto" style="font-size:12px;color:#2E7D32;font-weight:600;"></span> '
       +'<a class="o-smotor-edit" onclick="var w=this.closest(\'label\').querySelector(\'.o-smotorprice-wrap\'); if(w){w.style.display=\'inline\';} this.style.display=\'none\';" style="font-size:12px;color:#1976D2;text-decoration:underline;cursor:pointer;">แก้ราคา</a>'
       +'<span class="o-smotorprice-wrap" style="display:none;"> × <input type="number" class="o-smotorprice" step="1000" min="0" value="0" style="width:84px;height:44px" oninput="this.dataset.edited=1;calcQuote();"> บาท/ตัว</span></label>';
