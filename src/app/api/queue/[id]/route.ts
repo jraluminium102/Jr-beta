@@ -34,6 +34,7 @@ const patchSchema = z.object({
   assess_fee: z.number().nullish(),
   payment: z.string().nullish(),
   receipt_done: z.boolean().optional(),
+  fee_paid: z.boolean().optional(),
   note_admin: z.string().nullish(),
   note_ai: z.string().nullish(),
 });

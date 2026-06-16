@@ -63,11 +63,11 @@ type FormState = {
   address: string;
   location_url: string;
   job_size: "" | JobSize;
-  job_count: string;
   assess_fee: string;
   feeCustom: boolean;
   payment: string;
   receipt_done: boolean;
+  fee_paid: boolean;
   note_admin: string;
 };
 
@@ -86,17 +86,17 @@ function initForm(e?: QueueEntry | null): FormState {
     address: e?.address ?? "",
     location_url: e?.location_url ?? "",
     job_size: (e?.job_size ?? "") as "" | JobSize,
-    job_count: e?.job_count != null ? String(e.job_count) : "",
     assess_fee: fee != null ? String(fee) : "",
     feeCustom: fee != null && !FEE_OPTIONS.includes(fee),
     payment: e?.payment ?? "",
     receipt_done: e?.receipt_done ?? false,
+    fee_paid: e?.fee_paid ?? false,
     note_admin: e?.note_admin ?? "",
   };
 }
 
 export function QueueModal({
-  entry, preset, salesList, onClose, onSaved, readOnly = false,
+  entry, preset, salesList, onClose, onSaved, readOnly = false, contextMonth,
 }: {
   entry?: QueueEntry | null;
   preset?: { queue_date?: string; queue_time?: string; sales_id?: string };
@@ -104,6 +104,7 @@ export function QueueModal({
   onClose: () => void;
   onSaved: () => void;
   readOnly?: boolean;
+  contextMonth?: string; // เดือนที่ผู้ใช้ดูอยู่ (YYYY-MM) → ใช้เป็น from_date hint ใน suggest
 }) {
   const editing = !!entry;
   const [f, setF] = useState<FormState>(() => {
@@ -303,6 +304,20 @@ export function QueueModal({
     // timeout 10 วินาที
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
+      // คำนวณ from_date: ถ้าแก้คิวที่มี queue_date อยู่แล้ว → ใช้เดือนของ queue_date นั้น
+      // ถ้าเพิ่มใหม่ → ใช้ contextMonth จาก page (เดือนที่ผู้ใช้ดูอยู่)
+      // max(today, วันที่ 1 ของเดือนนั้น) — ป้องกันเสนอวันผ่านไปแล้ว
+      let fromDate: string | null = null;
+      const refMonth = f.queue_date ? f.queue_date.slice(0, 7) : (contextMonth ?? null);
+      if (refMonth) {
+        const firstDay = `${refMonth}-01`;
+        const todayStr = (() => {
+          const n = new Date();
+          return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+        })();
+        fromDate = firstDay >= todayStr ? firstDay : todayStr;
+      }
+
       const r = await api.post<{
         queue_date: string; queue_time: string;
         sales_id: string; sales_name: string; reason: string;
@@ -313,6 +328,7 @@ export function QueueModal({
         location_url: f.location_url || null,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
+        from_date: fromDate,
       });
       clearTimeout(timeoutId);
       if (controller.signal.aborted) return;
@@ -509,10 +525,10 @@ export function QueueModal({
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       job_size: f.job_size || null,
-      job_count: f.job_count ? Number(f.job_count) : null,
       assess_fee: f.assess_fee && Number.isFinite(Number(f.assess_fee)) ? Number(f.assess_fee) : null,
       payment: f.payment || null,
       receipt_done: f.receipt_done,
+      fee_paid: f.fee_paid,
       note_admin: f.note_admin || null,
     };
     try {
@@ -802,10 +818,6 @@ export function QueueModal({
               ))}
             </select>
           </Field>
-          <Field label="จำนวนงาน/จุด">
-            <input type="number" min={0} value={f.job_count}
-              onChange={(e) => set("job_count", e.target.value)} className={inp} />
-          </Field>
 
           <Field label="ค่าประเมิน">
             {f.feeCustom ? (
@@ -834,6 +846,14 @@ export function QueueModal({
             <select value={f.status} onChange={(e) => set("status", e.target.value as QueueStatus)} className={inp}>
               {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].th}</option>)}
             </select>
+          </Field>
+          <Field label="ชำระค่าประเมิน">
+            <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+              <input type="checkbox" checked={f.fee_paid}
+                onChange={(e) => set("fee_paid", e.target.checked)}
+                className="w-4 h-4 accent-emerald-600" />
+              <span className="text-ink-2">ชำระค่าประเมินแล้ว</span>
+            </label>
           </Field>
           <Field label="ใบเสร็จ">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">

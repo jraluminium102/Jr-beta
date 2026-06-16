@@ -20,6 +20,7 @@ const schema = z.object({
   location_url: z.string().nullish(),
   lat: z.number().nullish(),
   lng: z.number().nullish(),
+  from_date: z.string().nullish(), // (0042) วันเริ่มหา slot — ถ้าไม่ส่งมา = today+1
 });
 
 // POST /api/queue/suggest — propose earliest available slot based on queue rules
@@ -81,6 +82,20 @@ export const POST = withRoute(async (req: Request) => {
 
   const today = iso(new Date());
 
+  // คำนวณ base วันเริ่มหา slot — ถ้าส่ง from_date มา ใช้ max(today, from_date-1) เพื่อเริ่มจากวันแรกของเดือนที่ดูอยู่
+  let base: Date;
+  if (body.from_date) {
+    const fromDay = new Date(body.from_date + "T00:00:00Z");
+    const todayDay = new Date();
+    todayDay.setUTCHours(0, 0, 0, 0);
+    // ถ้า from_date อยู่ในอนาคต → เริ่มจาก from_date-1 (loop d=1 จะเป็นวันแรก)
+    // ถ้า from_date ผ่านไปแล้ว → เริ่มจาก today (ไม่เสนอย้อนหลัง)
+    base = fromDay > todayDay ? new Date(fromDay.getTime() - 86400000) : todayDay;
+  } else {
+    base = new Date();
+    base.setUTCHours(0, 0, 0, 0);
+  }
+
   // Load existing bookings: include lat/lng for R-45min check
   const { data: entriesRaw } = await sb
     .from("queue_entries")
@@ -113,9 +128,6 @@ export const POST = withRoute(async (req: Request) => {
   entries.forEach((e) => {
     if (e.sales_id) load[e.sales_id] = (load[e.sales_id] ?? 0) + 1;
   });
-
-  const base = new Date();
-  base.setUTCHours(0, 0, 0, 0);
 
   for (let d = 1; d <= 70; d++) {
     const day = new Date(base.getTime() + d * 86400000);

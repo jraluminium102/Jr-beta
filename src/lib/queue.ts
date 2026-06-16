@@ -53,6 +53,7 @@ export type QueueEntry = {
   assess_fee: number | null;
   payment: string | null;
   receipt_done: boolean;
+  fee_paid: boolean;            // (0042) ชำระค่าประเมินแล้ว
   note_admin: string | null;
   note_ai: string | null;
   created_at: string;
