@@ -5715,7 +5715,17 @@ function genQuote(keepNo){
     else if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
     else if(!_isGH && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
     // งาน5: item-level optDelta ส่งเป็น optDelta ใน qrow · note ส่งเป็น optText (ข้อความ)
-    rows += qrow(rowIdx, (it.position||it.name||('จุดที่ '+rowIdx)), d.prodName+(it.ship?' (ผลิตส่ง)':''), _sz, d.det, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, it.note, (it.div?it.div.dataset.id:''));
+    // จุด N (มติ 16มิ.ย.): ไม่ใส่ตำแหน่ง/ชื่อ → เอาชื่อสินค้า(บรรทัดแรก)+ขนาด ขึ้นหัวข้อ "จุดที่ N {ชื่อ}" แทน "จุดที่ N" เปล่า (กันชื่อซ้ำ 2 ที่)
+    let _qHdr=(it.position||it.name||'').trim();
+    let _qProd=d.prodName+(it.ship?' (ผลิตส่ง)':'');
+    let _qSz=_sz;
+    if(!_qHdr){
+      const _pl=String(_qProd).split('\n');
+      _qHdr='จุดที่ '+rowIdx+' '+_pl[0]+(_qSz?(' '+_qSz):'');
+      _qProd=_pl.slice(1).join('\n'); // เหลือบานย่อย (ถ้ามี) เป็น bullet ใต้หัว
+      _qSz='';
+    }
+    rows += qrow(rowIdx, _qHdr, _qProd, _qSz, d.det, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, it.note, (it.div?it.div.dataset.id:''));
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
