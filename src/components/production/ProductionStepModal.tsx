@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
@@ -111,6 +112,71 @@ function normalizeTime(t: string | null | undefined): string {
   return `${hh}:${mm}`;
 }
 
+// ── P0-1A: Clash detection types + helpers ────────────────────────────────────
+
+type ScheduledEntry = {
+  production_id: string;
+  customer_name: string | null;
+  customer_area: string | null;
+  measure_scheduled: string | null;
+  measure_time: string | null;
+  measurer_name: string | null;
+};
+
+type ClashResult = {
+  entry: ScheduledEntry;
+  diffMin: number | null; // null = วันเดียวกันแต่ไม่มีเวลา (เตือนเบา)
+};
+
+/** แปลงเวลา HH:MM (หรือ "10.00") → นาที */
+function timeToMin(t: string | null | undefined): number | null {
+  const n = normalizeTime(t);
+  if (!n) return null;
+  const [h, m] = n.split(":").map(Number);
+  return h * 60 + (m ?? 0);
+}
+
+/**
+ * หา entry นัดวัดที่ช่าง (measurerName) มีในวัน (sched) แล้วอาจชนกับเวลา schedTime
+ * ข้าม selfId (production ปัจจุบัน)
+ */
+function computeClashes(
+  scheduled: ScheduledEntry[],
+  sched: string,
+  schedTime: string,
+  measurerName: string,
+  selfId: string,
+): ClashResult[] {
+  if (!sched || !measurerName.trim()) return [];
+  const nameA = measurerName.trim();
+  const minA = timeToMin(schedTime);
+
+  const candidates = scheduled.filter(
+    (e) =>
+      e.production_id !== selfId &&
+      e.measure_scheduled === sched &&
+      (e.measurer_name ?? "").trim() === nameA,
+  );
+
+  return candidates
+    .map((e): ClashResult => {
+      const minB = timeToMin(e.measure_time);
+      if (minA !== null && minB !== null) {
+        return { entry: e, diffMin: Math.abs(minA - minB) };
+      }
+      // ไม่มีเวลาฝั่งใดฝั่งหนึ่ง → เตือนเบา (diffMin null)
+      return { entry: e, diffMin: null };
+    })
+    // กรองเฉพาะที่ชน (|diff|<90) หรือเตือนเบา (null)
+    .filter((c) => c.diffMin === null || c.diffMin < 90)
+    .sort((a, b) => {
+      if (a.diffMin === null && b.diffMin === null) return 0;
+      if (a.diffMin === null) return 1;
+      if (b.diffMin === null) return -1;
+      return a.diffMin - b.diffMin;
+    });
+}
+
 const TONE_BTN: Record<Tone, string> = {
   go:   "bg-emerald-500 hover:bg-emerald-400 border-emerald-400 text-white",
   warn: "bg-amber-500 hover:bg-amber-400 border-amber-400 text-white",
@@ -210,6 +276,21 @@ export function ProductionStepModal({
 
   // collapsible ประวัติ
   const [histOpen, setHistOpen] = useState(false);
+
+  // ── P0-1A: ดึง schedule เฉพาะตอน PENDING_MEASURE (React Query dedupe กับหน้า measure-schedule) ──
+  const { data: scheduleRes } = useQuery({
+    queryKey: ["measure-schedule"],
+    queryFn: () => api.get<{ scheduled: ScheduledEntry[] }>("/measure-schedule"),
+    staleTime: 30_000,
+    enabled: prod.status === "PENDING_MEASURE",
+  });
+
+  // คำนวณ clashes แบบ live ตาม sched/schedTime/measurerName
+  const clashes = useMemo<ClashResult[]>(() => {
+    if (prod.status !== "PENDING_MEASURE") return [];
+    const scheduled = scheduleRes?.data?.scheduled ?? [];
+    return computeClashes(scheduled, sched, schedTime, measurerName, prod.id);
+  }, [scheduleRes, sched, schedTime, measurerName, prod.id, prod.status]);
 
   const actions = TRANSITIONS[prod.status] ?? [];
 
@@ -578,6 +659,42 @@ export function ProductionStepModal({
                     <option value="เนียน" />
                   </datalist>
                 </div>
+
+                {/* P0-1A: Clash warning — แสดงเมื่อกรอกครบ (วัน+ช่าง) และมีนัดชน */}
+                {clashes.length > 0 && sched && measurerName.trim() && (
+                  <div className="rounded-2xl border border-yellow-300/35 bg-yellow-500/15 p-3.5 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <TriangleAlert size={15} className="shrink-0 mt-0.5 text-yellow-300" />
+                      <div className="text-[13px] text-yellow-100 font-semibold">
+                        นัดอาจชน — {measurerName.trim()} มีนัดใกล้กัน
+                        {sched !== new Date().toISOString().slice(0, 10) && (
+                          <span className="font-normal"> วัน {thDate(sched)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <ul className="space-y-1 pl-1">
+                      {clashes.slice(0, 3).map((c) => (
+                        <li key={c.entry.production_id} className="text-[12px] text-yellow-200/90">
+                          {c.entry.measure_time
+                            ? <span className="tnum font-semibold">{normalizeTime(c.entry.measure_time).slice(0, 5)}</span>
+                            : null
+                          }{c.entry.measure_time ? " " : ""}
+                          {c.entry.customer_name ?? "—"}
+                          {c.entry.customer_area ? <span className="text-yellow-200/60 ml-1">({c.entry.customer_area})</span> : null}
+                          {" — "}
+                          {c.diffMin !== null
+                            ? <span className="tnum">ห่าง {c.diffMin} นาที</span>
+                            : <span>ไม่ระบุเวลา</span>
+                          }
+                        </li>
+                      ))}
+                      {clashes.length > 3 && (
+                        <li className="text-[12px] text-yellow-200/60">และอีก {clashes.length - 3} งาน</li>
+                      )}
+                    </ul>
+                    <p className="text-[11px] text-yellow-200/55">ไม่บล็อก — บันทึกได้ถ้าจัดเวลาเองไหว</p>
+                  </div>
+                )}
 
                 <button
                   onClick={() => {

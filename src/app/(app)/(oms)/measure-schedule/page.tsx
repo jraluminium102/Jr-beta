@@ -41,7 +41,6 @@ const TH_DOW = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 const TH_MON = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
 function thaiDateFull(iso: string): string {
-  // "YYYY-MM-DD" → "จ. 16 มิ.ย. 2568"
   try {
     const [y, m, d] = iso.split("-").map(Number);
     const dow = new Date(y, m - 1, d).getDay();
@@ -140,13 +139,240 @@ function EntryRow({ entry }: { entry: MeasureEntry }) {
   );
 }
 
+// ── P2-1B: ปฏิทินช่าง — Desktop matrix ──────────────────────────────────────
+
+/** บล็อกนัดวัดในปฏิทิน */
+function CalendarBlock({ entry, today }: { entry: MeasureEntry; today: string }) {
+  const d = entry.measure_scheduled ?? "";
+  const isOverdue = d < today && d !== "";
+  const isToday = d === today;
+  const bgCls = isOverdue
+    ? "bg-rose-500/25 border-rose-300/35 text-rose-100"
+    : isToday
+    ? "bg-sky-500/25 border-sky-300/35 text-sky-100"
+    : "glass-card border-white/15 text-white";
+
+  return (
+    <Link
+      href={`/production?open=${entry.production_id}`}
+      className={`focusable pressable block rounded-xl px-2.5 py-2 border text-left transition-colors hover:opacity-80 ${bgCls}`}
+    >
+      {entry.measure_time && (
+        <div className="text-[11px] font-bold tabular-nums mb-0.5">{fmtTime(entry.measure_time)}</div>
+      )}
+      <div className="text-[12px] font-semibold leading-tight truncate">{entry.customer_name ?? "—"}</div>
+      {entry.customer_area && (
+        <div className="text-[11px] opacity-70 truncate">{entry.customer_area}</div>
+      )}
+    </Link>
+  );
+}
+
+/** Desktop matrix: วัน × ช่าง */
+function CalendarMatrixDesktop({
+  scheduled,
+  days,
+  measurers,
+  today,
+  measurerFilter,
+}: {
+  scheduled: MeasureEntry[];
+  days: string[];
+  measurers: string[]; // ช่างทั้งหมด (จาก allMeasurers)
+  today: string;
+  measurerFilter: string | null;
+}) {
+  // คอลัมน์ = ช่างที่กรองแล้ว + "ยังไม่ระบุ"
+  const cols = measurerFilter
+    ? [measurerFilter, ""]   // "" = ยังไม่ระบุ
+    : [...measurers, ""];    // "" = ยังไม่ระบุ
+
+  const colLabels = cols.map((c) => c || "ยังไม่ระบุช่าง");
+
+  return (
+    <div className="overflow-x-auto pb-2">
+      <table className="w-full border-separate border-spacing-1.5 min-w-[500px]">
+        <thead>
+          <tr>
+            <th className="text-left text-[11px] font-semibold px-2 py-1.5 rounded-lg glass-card border border-white/10 text-white/70 w-36 shrink-0">
+              วัน
+            </th>
+            {colLabels.map((label, i) => (
+              <th
+                key={cols[i]}
+                className="text-left text-[12px] font-semibold px-2.5 py-1.5 rounded-lg glass-card border border-white/10 text-white min-w-[160px]"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Icon name="wrench" size={12} className="opacity-60 shrink-0" />
+                  {label}
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((d) => {
+            const { label, extra, isToday, isTomorrow, isOverdue } = dayLabel(d, today);
+            const dayEntries = scheduled.filter((e) => e.measure_scheduled === d);
+
+            const rowHeaderCls = isToday
+              ? "bg-sky-400/20 border-sky-300/25 text-sky-100"
+              : isTomorrow
+              ? "bg-white/10 border-white/15 text-white"
+              : isOverdue
+              ? "bg-rose-500/20 border-rose-300/25 text-rose-100"
+              : "glass-card border-white/10 text-white/80";
+
+            return (
+              <tr key={d} id={`cal-day-${d}`}>
+                {/* Day header cell */}
+                <td className={`align-top text-left rounded-xl px-2.5 py-2 border text-[12px] font-semibold ${rowHeaderCls}`}>
+                  <div>{label}</div>
+                  {extra && (
+                    <div className={`text-[10px] font-semibold mt-0.5 ${
+                      isToday ? "text-sky-200" : isTomorrow ? "text-white/70" : isOverdue ? "text-rose-200" : "text-white/50"
+                    }`}>
+                      {extra}
+                    </div>
+                  )}
+                </td>
+                {/* Entry cells per measurer */}
+                {cols.map((col) => {
+                  const cellEntries = dayEntries.filter((e) =>
+                    col === ""
+                      ? !e.measurer_name || e.measurer_name.trim() === ""
+                      : (e.measurer_name ?? "").trim() === col,
+                  );
+                  return (
+                    <td key={col} className="align-top">
+                      {cellEntries.length === 0 ? (
+                        <div className="text-center text-white/20 text-[13px] py-2">—</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {cellEntries.map((e) => (
+                            <CalendarBlock key={e.production_id} entry={e} today={today} />
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Mobile calendar: เลือกช่าง → timeline วัน/เวลา */
+function CalendarMobile({
+  scheduledFiltered,
+  byDay,
+  days,
+  today,
+  measurerFilter,
+  allMeasurers,
+  setMeasurerFilter,
+}: {
+  scheduledFiltered: MeasureEntry[];
+  byDay: Map<string, MeasureEntry[]>;
+  days: string[];
+  today: string;
+  measurerFilter: string | null;
+  allMeasurers: string[];
+  setMeasurerFilter: (v: string | null) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* chip filter ช่าง */}
+      {allMeasurers.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setMeasurerFilter(null)}
+            className={`focusable pressable px-3 py-1.5 rounded-xl text-[13px] font-medium min-h-[36px] border transition-colors ${
+              measurerFilter === null
+                ? "bg-white text-[#1F4E78] border-white"
+                : "glass-card border-white/15 text-white/80"
+            }`}
+          >
+            ทั้งหมด
+          </button>
+          {allMeasurers.map((name) => (
+            <button
+              key={name}
+              onClick={() => setMeasurerFilter(measurerFilter === name ? null : name)}
+              className={`focusable pressable px-3 py-1.5 rounded-xl text-[13px] font-medium min-h-[36px] border transition-colors ${
+                measurerFilter === name
+                  ? "bg-white text-[#1F4E78] border-white"
+                  : "glass-card border-white/15 text-white/80"
+              }`}
+            >
+              <Icon name="wrench" size={12} className="inline mr-1 opacity-70" />
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* timeline */}
+      {days.length === 0 ? (
+        <EmptyState title="ไม่มีนัดในเงื่อนไขนี้" sub="เลือกช่างหรือเปลี่ยน filter" />
+      ) : (
+        <div className="space-y-4">
+          {days.map((d) => {
+            const entries = byDay.get(d) ?? [];
+            const { label, extra, isToday, isTomorrow, isOverdue } = dayLabel(d, today);
+            const headerCls = isToday
+              ? "bg-sky-400/20 border-sky-300/30 text-sky-100"
+              : isTomorrow
+              ? "bg-white/10 border-white/15 text-white"
+              : isOverdue
+              ? "bg-rose-500/20 border-rose-300/30 text-rose-100"
+              : "bg-white/8 border-white/12 text-white/85";
+            return (
+              <div key={d} id={`cal-mob-day-${d}`}>
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${headerCls}`}>
+                  <Icon name="calendar" size={14} className="shrink-0" />
+                  <span className="font-semibold text-sm">{label}</span>
+                  {extra && (
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1 ${
+                      isToday ? "bg-sky-300/25" :
+                      isTomorrow ? "bg-white/15" :
+                      isOverdue ? "bg-rose-300/25" :
+                      "bg-white/10"
+                    }`}>
+                      {extra}
+                    </span>
+                  )}
+                  <span className="ml-auto text-[11px] tabular-nums opacity-70">{entries.length} นัด</span>
+                </div>
+                <div className="space-y-2">
+                  {entries.map((e) => (
+                    <EntryRow key={e.production_id} entry={e} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {scheduledFiltered.length === 0 && days.length === 0 && (
+        <EmptyState title="ยังไม่มีนัดวัด" sub="งานที่อยู่ในขั้น รอวัดจริง จะแสดงที่นี่เมื่อตั้งนัดแล้ว" />
+      )}
+    </div>
+  );
+}
+
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function MeasureSchedulePage() {
   const [showMeasured, setShowMeasured] = useState(false);
-  // ข้อ 6: filter ช่าง
+  // P2-1B: toggle view
+  const [view, setView] = useState<"list" | "calendar">("list");
+  // filter ช่าง
   const [measurerFilter, setMeasurerFilter] = useState<string | null>(null);
-  // ข้อ 6: filter card active
+  // filter card active
   const [cardFilter, setCardFilter] = useState<"overdue" | "unscheduled" | null>(null);
   const unscheduledRef = useRef<HTMLDivElement | null>(null);
 
@@ -199,11 +425,24 @@ export default function MeasureSchedulePage() {
   const totalUnscheduled = apiData?.unscheduled.length ?? 0;
   const totalOverdue = (apiData?.scheduled ?? []).filter((e) => e.is_overdue).length;
 
-  // ปุ่ม "วันนี้" — ตรวจว่ามีงานวันนี้ไหม
+  // P2-1B: วันทั้งหมดสำหรับ calendar (ไม่ขึ้นกับ filter card overdue)
+  const calendarDays = useMemo(() => {
+    const set = new Set<string>();
+    scheduledFiltered.forEach((e) => { if (e.measure_scheduled) set.add(e.measure_scheduled); });
+    // overdue บนสุด + อนาคต
+    return [...set].sort((a, b) => {
+      const ao = a < today, bo = b < today;
+      if (ao && !bo) return -1;
+      if (!ao && bo) return 1;
+      return a.localeCompare(b);
+    });
+  }, [scheduledFiltered, today]);
+
+  // ปุ่ม "วันนี้"
   const hasTodayJob = days.includes(today);
 
   const scrollToToday = () => {
-    const el = document.getElementById(`day-${today}`);
+    const el = document.getElementById(view === "calendar" ? `cal-day-${today}` : `day-${today}`);
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -233,8 +472,29 @@ export default function MeasureSchedulePage() {
           </span>
           นัดวัดจริง
         </h1>
-        <div className="flex items-center gap-2">
-          {/* ข้อ 6: ปุ่ม "วันนี้" */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* P2-1B: toggle view */}
+          <div className="flex gap-1 glass-card rounded-xl p-1 border border-white/10">
+            <button
+              onClick={() => setView("list")}
+              className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-medium min-h-[36px] transition-colors ${
+                view === "list" ? "bg-white text-[#1F4E78]" : "text-white/70 hover:text-white"
+              }`}
+            >
+              <Icon name="file" size={13} className="inline mr-1 -mt-0.5" />
+              รายการ
+            </button>
+            <button
+              onClick={() => setView("calendar")}
+              className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-medium min-h-[36px] transition-colors ${
+                view === "calendar" ? "bg-white text-[#1F4E78]" : "text-white/70 hover:text-white"
+              }`}
+            >
+              <Icon name="calendar" size={13} className="inline mr-1 -mt-0.5" />
+              ปฏิทินช่าง
+            </button>
+          </div>
+          {/* ปุ่ม "วันนี้" */}
           <button
             onClick={scrollToToday}
             disabled={!hasTodayJob}
@@ -254,7 +514,7 @@ export default function MeasureSchedulePage() {
         </div>
       </div>
 
-      {/* Summary bar — ข้อ 6: การ์ดคลิกได้ */}
+      {/* Summary bar — การ์ดคลิกได้ */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {/* นัดแล้ว → ล้าง filter */}
         <button
@@ -286,8 +546,8 @@ export default function MeasureSchedulePage() {
         </button>
       </div>
 
-      {/* ข้อ 6: chip filter ช่าง */}
-      {allMeasurers.length > 0 && (
+      {/* chip filter ช่าง (มุมมองรายการ) */}
+      {view === "list" && allMeasurers.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setMeasurerFilter(null)}
@@ -350,50 +610,88 @@ export default function MeasureSchedulePage() {
         </div>
       )}
 
-      {/* นัดวัดตามวัน */}
-      {days.length === 0 && unscheduledFiltered.length === 0 && cardFilter !== "unscheduled" ? (
-        <EmptyState title="ยังไม่มีนัดวัด" sub="งานที่อยู่ในขั้น รอวัดจริง จะแสดงที่นี่เมื่อตั้งนัดแล้ว" />
-      ) : (
+      {/* ── P2-1B: มุมมองปฏิทินช่าง ── */}
+      {view === "calendar" && (
         <div className="space-y-4">
-          {days.map((d) => {
-            const entries = byDay.get(d) ?? [];
-            const { label, extra, isToday, isTomorrow, isOverdue } = dayLabel(d, today);
-            const headerCls = isToday
-              ? "bg-sky-400/20 border-sky-300/30 text-sky-100"
-              : isTomorrow
-              ? "bg-white/10 border-white/15 text-white"
-              : isOverdue
-              ? "bg-rose-500/20 border-rose-300/30 text-rose-100"
-              : "bg-white/8 border-white/12 text-white/85";
-            return (
-              // ข้อ 6: id สำหรับ scroll วันนี้
-              <div key={d} id={`day-${d}`}>
-                {/* Day header */}
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${headerCls}`}>
-                  <Icon name="calendar" size={14} className="shrink-0" />
-                  <span className="font-semibold text-sm">{label}</span>
-                  {extra && (
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1 ${
-                      isToday ? "bg-sky-300/25" :
-                      isTomorrow ? "bg-white/15" :
-                      isOverdue ? "bg-rose-300/25" :
-                      "bg-white/10"
-                    }`}>
-                      {extra}
-                    </span>
-                  )}
-                  <span className="ml-auto text-[11px] tabular-nums opacity-70">{entries.length} นัด</span>
-                </div>
-                {/* Entries */}
-                <div className="space-y-2">
-                  {entries.map((e) => (
-                    <EntryRow key={e.production_id} entry={e} />
-                  ))}
-                </div>
+          {calendarDays.length === 0 ? (
+            <EmptyState title="ยังไม่มีนัดวัด" sub="งานที่อยู่ในขั้น รอวัดจริง จะแสดงที่นี่เมื่อตั้งนัดแล้ว" />
+          ) : (
+            <>
+              {/* Desktop: matrix */}
+              <div className="hidden md:block">
+                <CalendarMatrixDesktop
+                  scheduled={scheduledFiltered}
+                  days={calendarDays}
+                  measurers={allMeasurers}
+                  today={today}
+                  measurerFilter={measurerFilter}
+                />
               </div>
-            );
-          })}
+              {/* Mobile: timeline พร้อม filter ช่าง */}
+              <div className="md:hidden">
+                <CalendarMobile
+                  scheduledFiltered={scheduledFiltered}
+                  byDay={byDay}
+                  days={days}
+                  today={today}
+                  measurerFilter={measurerFilter}
+                  allMeasurers={allMeasurers}
+                  setMeasurerFilter={setMeasurerFilter}
+                />
+              </div>
+            </>
+          )}
         </div>
+      )}
+
+      {/* ── มุมมองรายการ (เดิม) ── */}
+      {view === "list" && (
+        <>
+          {/* นัดวัดตามวัน */}
+          {days.length === 0 && unscheduledFiltered.length === 0 && cardFilter !== "unscheduled" ? (
+            <EmptyState title="ยังไม่มีนัดวัด" sub="งานที่อยู่ในขั้น รอวัดจริง จะแสดงที่นี่เมื่อตั้งนัดแล้ว" />
+          ) : (
+            <div className="space-y-4">
+              {days.map((d) => {
+                const entries = byDay.get(d) ?? [];
+                const { label, extra, isToday, isTomorrow, isOverdue } = dayLabel(d, today);
+                const headerCls = isToday
+                  ? "bg-sky-400/20 border-sky-300/30 text-sky-100"
+                  : isTomorrow
+                  ? "bg-white/10 border-white/15 text-white"
+                  : isOverdue
+                  ? "bg-rose-500/20 border-rose-300/30 text-rose-100"
+                  : "bg-white/8 border-white/12 text-white/85";
+                return (
+                  <div key={d} id={`day-${d}`}>
+                    {/* Day header */}
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border mb-2 ${headerCls}`}>
+                      <Icon name="calendar" size={14} className="shrink-0" />
+                      <span className="font-semibold text-sm">{label}</span>
+                      {extra && (
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1 ${
+                          isToday ? "bg-sky-300/25" :
+                          isTomorrow ? "bg-white/15" :
+                          isOverdue ? "bg-rose-300/25" :
+                          "bg-white/10"
+                        }`}>
+                          {extra}
+                        </span>
+                      )}
+                      <span className="ml-auto text-[11px] tabular-nums opacity-70">{entries.length} นัด</span>
+                    </div>
+                    {/* Entries */}
+                    <div className="space-y-2">
+                      {entries.map((e) => (
+                        <EntryRow key={e.production_id} entry={e} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* วัดแล้วล่าสุด (toggle) */}

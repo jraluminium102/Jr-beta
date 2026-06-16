@@ -8,6 +8,7 @@ import { signOut } from "@/app/login/actions";
 import { ROLE_LABEL, type Profile } from "@/lib/types";
 import { menusFor, can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
+import { OverdueBadge, OverdueWidget } from "./OverdueWidget";
 
 type NavItem = { href: string; icon: string; label: string };
 
@@ -41,7 +42,7 @@ const OMS_NAV: Record<string, NavItem> = {
   settings:        { href: "/settings", icon: "gear", label: "ตั้งค่า" },
 };
 
-function NavLink({ n, active, onNav }: { n: NavItem; active: boolean; onNav?: () => void }) {
+function NavLink({ n, active, onNav, badge }: { n: NavItem; active: boolean; onNav?: () => void; badge?: React.ReactNode }) {
   return (
     <Link
       href={n.href} onClick={onNav} aria-current={active ? "page" : undefined}
@@ -50,6 +51,7 @@ function NavLink({ n, active, onNav }: { n: NavItem; active: boolean; onNav?: ()
       }`}
     >
       <Icon name={n.icon} size={18} /> {n.label}
+      {badge}
     </Link>
   );
 }
@@ -59,12 +61,12 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const [open, setOpen] = useState(false);
   const active = (href: string) => path === href || path.startsWith(href + "/");
 
-  const omsKeys = menusFor(profile.role as Role);
+  const role = profile.role as Role;
+  const omsKeys = menusFor(role);
   const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
   // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
   // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
-  const role = profile.role as Role;
   const docItems = DOC_NAV.filter((n) => {
     if (n.href === "/queue")                  return can(role, "queue",      "read");
     if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
@@ -85,7 +87,15 @@ export default function Shell({ profile, children }: { profile: Profile; childre
         {omsItems.length > 0 && (
           <div className="text-[10px] uppercase tracking-wider text-red-100/50 px-3 pt-3 pb-1.5">ปฏิบัติงาน</div>
         )}
-        {omsItems.map((n) => <NavLink key={n.href} n={n} active={active(n.href)} onNav={onNav} />)}
+        {omsItems.map((n) => (
+          <NavLink
+            key={n.href}
+            n={n}
+            active={active(n.href)}
+            onNav={onNav}
+            badge={n.href === "/measure-schedule" ? <OverdueBadge role={role} /> : undefined}
+          />
+        ))}
       </nav>
       <div className="border-t border-white/15 pt-3 mt-2">
         <div className="text-sm font-semibold truncate">{profile.full_name || "ผู้ใช้"}</div>
@@ -121,16 +131,32 @@ export default function Shell({ profile, children }: { profile: Profile; childre
         <main className="flex-1 min-w-0 p-4 md:pr-6">
           {/* mobile top bar */}
           <div className="md:hidden flex items-center gap-2 mb-4 glass rounded-2xl px-3 py-2 no-print">
-            <button aria-label="เปิดเมนู" onClick={() => setOpen(true)}
-              className="press w-10 h-10 rounded-xl inline-flex items-center justify-center glass-soft text-brand-dark">
-              <Icon name="dashboard" size={18} />
-            </button>
+            {/* ปุ่มเปิด drawer มือถือ: จุดแดงเล็กมุมบน-ขวาเมื่อมี overdue */}
+            <div className="relative">
+              <button aria-label="เปิดเมนู" onClick={() => setOpen(true)}
+                className="press w-10 h-10 rounded-xl inline-flex items-center justify-center glass-soft text-brand-dark">
+                <Icon name="dashboard" size={18} />
+              </button>
+              <MobileOverdueDot role={role} />
+            </div>
             <div className="text-sm font-semibold text-brand-dark">JR Beta</div>
             <span className="ml-auto text-[11px] text-ink-3">{ROLE_LABEL[profile.role] ?? profile.role}</span>
           </div>
+          {/* P0-2A: OverdueBanner — แสดงเหนือ content */}
+          <OverdueWidget role={role} />
           {children}
         </main>
       </div>
+    </div>
+  );
+}
+
+// จุดแดงเล็กมุมบน-ขวาบนปุ่มเมนูมือถือ — ใช้ OverdueBadge ซ้อน (shared shellQueryClient)
+function MobileOverdueDot({ role }: { role: Role }) {
+  if (!can(role, "production", "read")) return null;
+  return (
+    <div className="absolute -top-0.5 -right-0.5 pointer-events-none" aria-hidden="true">
+      <OverdueBadge role={role} />
     </div>
   );
 }

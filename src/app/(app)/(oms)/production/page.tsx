@@ -127,6 +127,7 @@ export default function ProductionPage() {
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["production"] });
     queryClient.invalidateQueries({ queryKey: ["measure-schedule"] });
+    queryClient.invalidateQueries({ queryKey: ["overdue-count"] });
   };
 
   const counts = useMemo(() => {
