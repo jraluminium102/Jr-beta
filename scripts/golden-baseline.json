@@ -1,8 +1,8 @@
 {
  "meta": {
   "at": "baseline",
-  "catalog": 146,
-  "captured": 146,
+  "catalog": 149,
+  "captured": 149,
   "skipped": 0
  },
  "rows": [
@@ -964,6 +964,30 @@
    "name": "ฝ้าไม้เทียม remood (แผ่นเรียบ หน้า 12 ซม.)",
    "g": 3,
    "total": 34240,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceil_ranae_1x5",
+   "id": "ceil_ranae_1x5",
+   "name": "ฝ้าระแนงอลู 1x5 ซม. (โชว์ 1 ซม. เว้น 5 ซม.)",
+   "g": 3,
+   "total": 42800,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceil_ranae_16_5",
+   "id": "ceil_ranae_16_5",
+   "name": "ฝ้าระแนงอลู 1\"x1.6\" (โชว์ 1\" เว้น 5 ซม.)",
+   "g": 3,
+   "total": 48150,
+   "status": "ok"
+  },
+  {
+   "key": "3:ceil_ranae_16_2",
+   "id": "ceil_ranae_16_2",
+   "name": "ฝ้าระแนงอลู 1\"x1.6\" (โชว์ 1\" เว้น 2 ซม.)",
+   "g": 3,
+   "total": 62060,
    "status": "ok"
   },
   {
