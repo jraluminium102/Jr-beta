@@ -1527,7 +1527,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _mQty=Math.max(1,parseInt(optSel.smotorqty)||1);
     opt+=monoRate(a,RATES.ROOF_SLIDE)+(_N-1)*_tier+_mPrice*_mQty;
     msgs.push('หลังคาเลื่อน '+_N+' บาน · มอเตอร์ '+_mQty+'×'+fmt(_mPrice)); }
-  if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); }
+  if(p.cat==='หลังคา'&&optSel){ const gr=(parseFloat(optSel.rfgut)||0)*(parseFloat(optSel.rfgutlen)||0); const br=(parseFloat(optSel.rfbeam)||0)*(parseFloat(optSel.rfbeamlen)||0); const pp=(parseFloat(optSel.rfpolep)||0)*4000; const p4=(parseFloat(optSel.rfpole4)||0)*2000; const ch=(parseFloat(optSel.rfchain)||0)*3000; const ev=(parseFloat(optSel.rfeave)||0)*1000; const _pvl=parseFloat(optSel.rfpvc)||0; const pv=_pvl>0?Math.ceil(_pvl/1.5)*1500:0; let hs=0; if(optSel.rfhs==='comp'||optSel.rfhs==='smart'){ const _hh=parseFloat(optSel.rfhsh)||0,_ll=parseFloat(optSel.rfhsl)||0,_nn=parseInt(optSel.rfhsn)||1; if(_hh>0&&_ll>0){ const _Ahs=optSel.rfhs==='comp'?(2*_hh+0.1)*_nn*_ll:_hh*_nn*_ll; hs=_Ahs*(optSel.rfhs==='comp'?3500:4000); } } let gc=0; { const _gw=(parseFloat(optSel.rfgcw)||0)/100,_gh=(parseFloat(optSel.rfgch)||0)/100,_gll=parseFloat(optSel.rfgcl)||0; if((_gw+_gh)>0&&_gll>0){ gc=(_gw+_gh)*_gll*3500*0.7; } } let bc=0; { const _bcw=parseFloat(optSel.rfbcw)||0,_bcl=parseFloat(optSel.rfbcl)||0; if(_bcw>0&&_bcl>0){ bc=3500*0.6*_bcw*_bcl; } } let sl=0; if(optSel.rfsealer){ sl=Math.max(5000, 800*(parseFloat(optSel.rfsealerlen)||0)); } const radd=gr+br+pp+p4+ch+ev+pv+hs+gc+bc+sl; if(radd>0){ opt+=radd; if(gr>0)msgs.push('รางน้ำ '+fmt(gr)); if(br>0)msgs.push('คานเหล็กถัก '+fmt(br)); if(pp>0)msgs.push('เสาแผง '+(parseFloat(optSel.rfpolep)||0)+' ต้น'); if(p4>0)msgs.push('เสา 4x8 '+(parseFloat(optSel.rfpole4)||0)+' ต้น'); if(ch>0)msgs.push('โซ่รางน้ำ '+fmt(ch)); if(ev>0)msgs.push('ปิดปลาย '+fmt(ev)); if(pv>0)msgs.push('ครอบ PVC '+fmt(pv)); if(hs>0)msgs.push('ซ่อนสโลป '+fmt(hs)); if(gc>0)msgs.push('ปิดซ่อนราง '+fmt(gc)); if(bc>0)msgs.push('ครอบคาน '+fmt(bc)); if(sl>0)msgs.push('วัสดุปิดรอยต่อ ('+(optSel.rfsealerlen||0)+' ม.) '+fmt(sl)); }
     // options ใหม่: แป / โครงสร้าง / ปลายหลังคา / ระบบรางน้ำ
     const _rfend = optSel.rfend || 'ปล่อย';
     // ข้อ8: ลบ calc "ปิดปลาย" (auto กว้าง) — ใช้ "ปิดปลายกันน้ำ" o-rfeave (กรอกยาวเอง) ที่คิดใน radd แทน กันคิดซ้ำ
@@ -3135,7 +3135,15 @@ function buildItemOpts(d){
     // G3-v5 จุด3: ครอบคาน checkbox-reveal
     h+='<div class="opt o-rfbc-wrap" style="width:100%;"><label class="opt"><input type="checkbox" class="o-rfbc-toggle" onchange="var r=this.closest(\'.ch\').querySelector(\'.o-rfbc-reveal\'); if(r)r.style.display=this.checked?\'inline-flex\':\'none\'; calcQuote();"> มีงานครอบคาน <span style="font-size:11px;color:#6B7280;">(ลูกฟูก 1 หน้า ลด 40%)</span></label><span class="o-rfbc-reveal" style="display:none;flex-wrap:wrap;gap:4px 10px;align-items:center;"> กว้างห่อ(ม.) <input type="number" class="o-rfbcw" min="0" step="0.05" value="0" style="width:55px;height:30px;" oninput="calcQuote();"> ยาวคาน(ม.) <input type="number" class="o-rfbcl" min="0" step="0.1" value="0" style="width:55px;height:30px;" oninput="calcQuote();"></span></div>';
     // 7. วัสดุปิดรอยต่อ + สี (ชิป)
-    h+='<label class="opt" style="width:100%;"><input type="checkbox" class="o-rfsealer" onchange="calcQuote();"> วัสดุปิดรอยต่อแผ่นหลังคา สี <select class="o-rfsealercolor" style="display:none;" onchange="calcQuote();"><option value="ขาว" selected>ขาว</option><option value="ดำ">ดำ</option><option value="เทา">เทา</option></select>'+rfChips('o-rfsealercolor',[['ขาว','ขาว'],['ดำ','ดำ'],['เทา','เทา']],'ขาว')+'</label>';
+    h+='<label class="opt" style="width:100%;flex-wrap:wrap;">'
+      +'<span style="width:100%;"><input type="checkbox" class="o-rfsealer" onchange="var w=this.closest(\'label\').querySelector(\'.o-rfsealer-detail\'); if(w)w.style.display=this.checked?\'flex\':\'none\'; calcQuote();"> วัสดุปิดรอยต่อแผ่นหลังคา</span>'
+      +'<span class="o-rfsealer-detail" style="display:none;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;width:100%;">'
+      +'ยาว (ม.) <input type="number" class="o-rfsealer-len" min="0" step="0.5" value="0" style="width:70px;height:34px;" oninput="calcQuote();"> '
+      +'สี <select class="o-rfsealercolor" style="display:none;" onchange="calcQuote();"><option value="ขาว" selected>ขาว</option><option value="ดำ">ดำ</option><option value="เทา">เทา</option></select>'
+      +rfChips('o-rfsealercolor',[['ขาว','ขาว'],['ดำ','ดำ'],['เทา','เทา']],'ขาว')
+      +' <span style="font-size:11px;color:#92400e;">(ขั้นต่ำ 5,000 · 800/ม.)</span>'
+      +'</span>'
+      +'</label>';
     // 8. โซ่รางน้ำ
     h+='<label class="opt">โซ่รางน้ำ (3,000/เส้น) <input type="number" class="o-rfchain" min="0" step="1" value="0" style="width:55px;height:30px;"></label>';
     // 9. ครอบท่อ PVC
@@ -3514,6 +3522,7 @@ function readItem(d){
     // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา
     const _rfsl=d.querySelector('.o-rfsealer'); optSel.rfsealer=_rfsl?_rfsl.checked:false;
     const _rfslc=d.querySelector('.o-rfsealercolor'); optSel.rfsealercolor=_rfslc?_rfslc.value:'ขาว';
+    const _rfsll=d.querySelector('.o-rfsealer-len'); optSel.rfsealerlen=_rfsll?_rfsll.value:'0';
     // H1/H2: สเปกพ่วงรางน้ำ — ตะแกรงกันใบไม้ + ท่อน้ำทิ้ง PVC (ฟรี ลงใบ)
     const _rfl=d.querySelector('.o-rfleaf'); optSel.rfleaf=_rfl?_rfl.checked:true;
     const _rfd=d.querySelector('.o-rfdrain'); optSel.rfdrain=_rfd?_rfd.value:'ดำ';
@@ -4384,7 +4393,7 @@ function genQuote(keepNo){
         _rfExtra += '\nต่อปลาย '+_m2n+' (พื้นที่ '+(parseFloat(_os.roof2area)||0).toFixed(1)+' ตร.ม.)';
       }
       // FIX-7(G3): วัสดุปิดรอยต่อแผ่นหลังคา
-      if(_os.rfsealer) _rfExtra += '\nวัสดุปิดรอยต่อแผ่นหลังคา สี'+(_os.rfsealercolor||'ขาว');
+      if(_os.rfsealer){ var _sl3=Math.max(5000, 800*(parseFloat(_os.rfsealerlen)||0)); _rfExtra += '\nวัสดุปิดรอยต่อแผ่นหลังคา สี'+(_os.rfsealercolor||'ขาว')+' '+fmt(_sl3)+' บาท'; }
       // FIX-3(G3): ปลายปล่อย = ระบุ "ปล่อยปลาย/ไม่มีรางน้ำ" ลงใบ (เดิมเงียบ)
       if(_rfend === 'ปล่อย') _rfExtra += '\nปล่อยปลาย/ไม่มีรางน้ำ';
       // G3-S1: หลังคาเลื่อน — ออกข้อมูลบานเลื่อน + มอเตอร์ ลงใบ (เดิมอ่านใบไม่รู้ว่าเลื่อน)
