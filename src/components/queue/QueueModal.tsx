@@ -362,9 +362,15 @@ export function QueueModal({
   const custSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // loading state สำหรับดึงข้อมูลไซต์เดิม (existing_site)
   const [siteInfoBusy, setSiteInfoBusy] = useState(false);
+  // ลูกค้านี้ไม่มีงานในระบบ (existing_site auto-load คืน 0 งาน)
+  const [noJobsForCust, setNoJobsForCust] = useState(false);
+  // กำลังเปลี่ยนไซต์ (กด [เปลี่ยนไซต์] หลัง auto-pick) → โชว์ job search
+  const [changingSite, setChangingSite] = useState(false);
+  // เก็บงานที่ auto-pick ล่าสุด (ใช้กดยกเลิกเปลี่ยนไซต์กลับมา)
+  const lastAutoJobRef = useRef<JobSearchResult | null>(null);
 
-  // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม)
-  const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site");
+  // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม + กำลังเปลี่ยนไซต์)
+  const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && changingSite);
   useEffect(() => {
     if (!needsJobSearch) return;
     if (!jobSearch.trim()) { setJobSearchResults([]); return; }
@@ -425,6 +431,7 @@ export function QueueModal({
 
     // ลูกค้าเก่า หน้างานเดิม → ดึง site-info auto-fill แทนการผูก target_job_id
     if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && selectedCust) {
+      setChangingSite(false); // ปิด search box หลังเลือกงาน
       setSiteInfoBusy(true);
       try {
         const r = await api.get<{
@@ -493,21 +500,21 @@ export function QueueModal({
   }
 
   function clearTargetJob() {
-    setSelectedJob(null);
-    // ถ้าอยู่ใน existing_site mode ต้องล้าง auto-fill ด้วย (เพื่อให้เลือกใหม่ได้)
+    // ถ้าอยู่ใน existing_site mode → เปิด search box ให้เลือกไซต์ใหม่ (คงค่า address/location ไว้)
     if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site") {
-      setResolved(null);
+      // บันทึกงานเดิมไว้ให้ [ยกเลิก] กู้คืน
+      if (selectedJob) lastAutoJobRef.current = selectedJob;
+      setSelectedJob(null);
+      setChangingSite(true);
+      setJobSearch("");
+      setJobSearchResults([]);
       setF((s) => ({
         ...s,
         target_job_id: null,
-        target_customer_id: null,
-        customer_name: selectedCust?.name ?? "",
-        tel: selectedCust?.phone ? formatThaiPhone(selectedCust.phone) : "",
-        address: selectedCust?.address ?? "",
-        location_url: "",
-        line_contact: selectedCust?.line_id ?? s.line_contact,
+        target_customer_id: null, // จะถูก set ใหม่ตอนเลือกงาน
       }));
     } else {
+      setSelectedJob(null);
       setF((s) => ({ ...s, target_job_id: null, customer_name: "", tel: "" }));
     }
   }
@@ -517,19 +524,24 @@ export function QueueModal({
     setSelectedCust(c);
     setCustSearch("");
     setCustSearchResults([]);
-    // auto-fill ชื่อ+เบอร์จากลูกค้า (ยังแก้ได้สำหรับหน้างานใหม่)
+    // auto-fill ชื่อ+เบอร์+ที่อยู่+line จากลูกค้า (เติมเบื้องต้นก่อน fetch ไซต์)
     setF((s) => ({
       ...s,
       customer_name: c.name,
       tel: c.phone ? formatThaiPhone(c.phone) : s.tel,
+      address: c.address ?? s.address,
+      line_contact: c.line_id ?? s.line_contact,
       target_customer_id: null,    // reset จนกว่าจะเลือก mode หน้างาน
       target_job_id: null,
       oldCustomerMode: "",         // reset mode เผื่อเปลี่ยนลูกค้า
     }));
-    // reset job picker ถ้าเปลี่ยนลูกค้า
+    // reset job picker + flags ถ้าเปลี่ยนลูกค้า
     setSelectedJob(null);
     setJobSearch("");
     setJobSearchResults([]);
+    setNoJobsForCust(false);
+    setChangingSite(false);
+    lastAutoJobRef.current = null;
   }
 
   function clearCustomer() {
@@ -537,10 +549,15 @@ export function QueueModal({
     setSelectedJob(null);
     setJobSearch("");
     setJobSearchResults([]);
+    setNoJobsForCust(false);
+    setChangingSite(false);
+    lastAutoJobRef.current = null;
     setF((s) => ({
       ...s,
       customer_name: "",
       tel: "",
+      address: "",
+      line_contact: "",
       target_customer_id: null,
       target_job_id: null,
       oldCustomerMode: "",
@@ -557,12 +574,93 @@ export function QueueModal({
       target_customer_id: mode === "new_site" ? selectedCust.id : null,
       target_job_id: null, // ทั้ง 2 mode เคลียร์ target_job_id (เคลียร์แบบเท่านั้นที่ใช้ target_job_id)
     }));
-    // existing_site → reset job picker ให้เลือกใหม่ (เพื่อ copy ข้อมูลไซต์)
+    // existing_site → reset job picker + auto-load งานล่าสุดของลูกค้า
     if (mode === "existing_site") {
       setSelectedJob(null);
       setJobSearch("");
       setJobSearchResults([]);
       setResolved(null);
+      setNoJobsForCust(false);
+      setChangingSite(false);
+      lastAutoJobRef.current = null;
+      // auto-load งานล่าสุด
+      autoLoadLatestJob(selectedCust.id);
+    }
+  }
+
+  // auto-load งานล่าสุดของลูกค้า → autoFillFromJob ถ้ามี
+  async function autoLoadLatestJob(customerId: number) {
+    setSiteInfoBusy(true);
+    try {
+      const r = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
+      const jobs = r.data ?? [];
+      if (jobs.length > 0) {
+        await autoFillFromJob(jobs[0], customerId);
+      } else {
+        // ไม่มีงาน → set target_customer_id ให้สร้างงานใหม่ใต้ลูกค้าได้
+        setNoJobsForCust(true);
+        setF((s) => ({ ...s, target_customer_id: customerId }));
+      }
+    } catch {
+      // best-effort: ถ้า fetch พัง ปล่อยให้ user ค้นเอง
+      setChangingSite(true);
+    } finally {
+      setSiteInfoBusy(false);
+    }
+  }
+
+  // auto-fill ข้อมูลไซต์จากงาน j — caller รับผิดชอบ siteInfoBusy
+  // snapshot custId เพื่อหลีกเลี่ยง stale closure
+  async function autoFillFromJob(j: JobSearchResult, custId: number) {
+    setSelectedJob(j);
+    lastAutoJobRef.current = j;
+    setChangingSite(false);
+    try {
+      const r = await api.get<{
+        customer_name: string;
+        tel: string | null;
+        address: string | null;
+        location_url: string | null;
+        lat: number | null;
+        lng: number | null;
+        line_contact: string | null;
+        contact_channel: string;
+      }>(`/jobs/${j.id}/site-info`);
+      const info = r.data;
+      if (info) {
+        setF((s) => ({
+          ...s,
+          customer_name: info.customer_name || j.customer_name,
+          tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
+          address: info.address ?? s.address,
+          location_url: info.location_url ?? s.location_url,
+          line_contact: info.line_contact ?? s.line_contact,
+          contact_channel: info.contact_channel || s.contact_channel,
+          target_customer_id: custId,
+          target_job_id: null,
+        }));
+        if (info.lat != null && info.lng != null) {
+          setResolved({ lat: info.lat, lng: info.lng });
+        }
+      } else {
+        setF((s) => ({
+          ...s,
+          customer_name: j.customer_name,
+          tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+          address: j.customer_area ?? s.address,
+          target_customer_id: custId,
+          target_job_id: null,
+        }));
+      }
+    } catch {
+      setF((s) => ({
+        ...s,
+        customer_name: j.customer_name,
+        tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+        address: j.customer_area ?? s.address,
+        target_customer_id: custId,
+        target_job_id: null,
+      }));
     }
   }
 
@@ -742,10 +840,11 @@ export function QueueModal({
       const hasRestoredTarget = editing && !selectedCust && (f.target_customer_id != null || f.target_job_id != null);
       if (!selectedCust && !hasRestoredTarget) { setErr("กรุณาค้นและเลือกลูกค้าเดิมก่อน"); return; }
       if (f.oldCustomerMode === "") { setErr("กรุณาเลือก: หน้างานเดิม หรือ หน้างานใหม่"); return; }
-      // existing_site: ต้องมี target_customer_id (set ตอนเลือกงาน)
+      // existing_site: ต้องมี target_customer_id (set ตอนเลือกงาน หรือ auto-pick หรือ 0-jobs)
       // ถ้า edit + hasRestoredTarget → ผ่านได้ (ข้อมูลเดิมมีครบแล้ว)
+      // ถ้า noJobsForCust → target_customer_id set แล้ว (สร้างงานใหม่ใต้ลูกค้า)
       const hasRestoredSite = editing && !selectedJob && f.target_customer_id != null;
-      if (f.oldCustomerMode === "existing_site" && !hasRestoredSite && (!selectedJob || f.target_customer_id == null)) {
+      if (f.oldCustomerMode === "existing_site" && !hasRestoredSite && !noJobsForCust && (!selectedJob || f.target_customer_id == null)) {
         setErr("กรุณาเลือกงาน/ไซต์เดิมก่อน");
         return;
       }
@@ -1239,11 +1338,21 @@ export function QueueModal({
                     </div>
                   )}
 
-                  {/* ค้นงานเดิม (เมื่อเลือก หน้างานเดิม) — เลือกเพื่อ copy ข้อมูลไซต์ ไม่ใช่ผูก */}
+                  {/* ไซต์อ้างอิง (เมื่อเลือก หน้างานเดิม) — auto-pick งานล่าสุด, เปลี่ยนได้ */}
                   {selectedCust && f.oldCustomerMode === "existing_site" && (
                     <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-ink-2">เลือกไซต์อ้างอิง (งานเดิม) *</p>
-                      {selectedJob ? (
+                      <p className="text-xs font-medium text-ink-2">ไซต์อ้างอิง</p>
+
+                      {/* กำลังโหลด auto */}
+                      {siteInfoBusy && !selectedJob && (
+                        <div className="glass-soft rounded-xl px-3 py-2.5 flex items-center gap-2 text-sky-600">
+                          <Icon name="refresh" size={14} className="animate-spin shrink-0" />
+                          <span className="text-xs">กำลังโหลดไซต์ล่าสุด…</span>
+                        </div>
+                      )}
+
+                      {/* auto-picked แล้ว — โชว์การ์ด */}
+                      {selectedJob && !changingSite && (
                         <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2.5">
                           {siteInfoBusy && (
                             <span className="shrink-0 text-sky-500 mt-0.5">
@@ -1252,7 +1361,7 @@ export function QueueModal({
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-brand-dark text-sm">
-                              อ้างอิงไซต์: {selectedJob.job_code ?? "—"} · {selectedJob.customer_area ?? selectedJob.customer_name}
+                              ไซต์อ้างอิง: {selectedJob.job_code ?? "—"} · {selectedJob.customer_area ?? selectedJob.customer_name}
                             </div>
                             <div className="text-xs text-ink-3 mt-0.5">
                               {selectedJob.customer_name}
@@ -1262,12 +1371,25 @@ export function QueueModal({
                           <button
                             type="button"
                             onClick={clearTargetJob}
-                            className="press shrink-0 text-xs text-ink-3 hover:text-red-600 px-1.5 py-1 rounded-lg"
+                            className="press shrink-0 text-xs text-ink-3 hover:text-sky-600 px-1.5 py-1 rounded-lg"
                           >
-                            [เปลี่ยน]
+                            [เปลี่ยนไซต์]
                           </button>
                         </div>
-                      ) : (
+                      )}
+
+                      {/* ไม่มีงานเลย — โน้ต + ให้กรอกเอง */}
+                      {noJobsForCust && !selectedJob && !siteInfoBusy && (
+                        <div className="glass-soft rounded-xl px-3 py-2 flex items-start gap-2 border border-amber-200">
+                          <Icon name="info" size={13} className="shrink-0 mt-0.5 text-amber-600" />
+                          <p className="text-xs text-amber-700">
+                            ลูกค้านี้ยังไม่มีงานเดิมในระบบ — กรอกที่อยู่/โลเคชั่นเองด้านล่าง
+                          </p>
+                        </div>
+                      )}
+
+                      {/* search box — แสดงเมื่อกำลังเปลี่ยนไซต์ */}
+                      {changingSite && (
                         <div className="space-y-1.5">
                           <div className="relative">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none">
@@ -1309,6 +1431,21 @@ export function QueueModal({
                           {jobSearch.trim() && !jobSearchBusy && jobSearchResults.length === 0 && (
                             <p className="text-xs text-ink-3">ไม่พบงาน — ลองค้นด้วยชื่อหรือเบอร์อื่น</p>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChangingSite(false);
+                              setJobSearch("");
+                              setJobSearchResults([]);
+                              // กู้งานที่ auto-pick ไว้ก่อนหน้า (ถ้ามี)
+                              if (lastAutoJobRef.current) {
+                                setSelectedJob(lastAutoJobRef.current);
+                              }
+                            }}
+                            className="press text-xs text-ink-3 hover:text-ink-1 px-1.5 py-1 rounded-lg"
+                          >
+                            [ยกเลิก]
+                          </button>
                         </div>
                       )}
                     </div>

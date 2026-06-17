@@ -6,16 +6,37 @@ import { normalizePhone } from "@/lib/phone";
 export const dynamic = "force-dynamic";
 
 // GET /api/jobs/search?q=<text>
+// GET /api/jobs/search?customer_id=<N>  → งานทั้งหมดของลูกค้า เรียงล่าสุดก่อน
 // ค้นงานด้วยชื่อลูกค้า หรือเบอร์โทร (รองรับมีขีด/ไม่มีขีด)
 // ใช้สำหรับหน้าคิวงาน "เคลียร์แบบ" — เลือกงานเดิมที่จะผูก
+// และ "ลูกค้าเก่าหน้างานเดิม" — auto-load งานล่าสุดของลูกค้า
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("jobs", "read");
 
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
+  const customerIdRaw = url.searchParams.get("customer_id");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = ctx.supabase as unknown as { from: (t: string) => any };
+
+  // customer_id filter: ดึงงานทั้งหมดของลูกค้านั้น เรียงล่าสุดก่อน
+  if (customerIdRaw) {
+    const customerId = Number(customerIdRaw);
+    if (!Number.isFinite(customerId) || customerId <= 0) {
+      return ok<JobSearchResult[]>([]);
+    }
+    const { data, error } = await sb
+      .from("jobs")
+      .select("id, job_code, customer_name, customer_tel, design_state, status, current_stage, customer_area")
+      .eq("customer_id", customerId)
+      .neq("status", "CANCELLED")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw new Error(error.message);
+    return ok<JobSearchResult[]>((data ?? []) as JobSearchResult[]);
+  }
 
   if (!q) {
     return ok<JobSearchResult[]>([]);
