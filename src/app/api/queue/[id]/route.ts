@@ -137,12 +137,8 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     }
 
     // ─── path ประเมินหน้างาน ──────────────────────────────────────────────
-    // ลูกค้าเก่าหน้างานเดิม (target_job_id ถูกส่งมา) → บันทึก assess_date ใหม่ (best-effort)
-    // อ่าน queue_date จาก row ที่เซฟแล้ว (data) ไม่ใช่ rawBody — กันกรณี PATCH ไม่ได้ส่ง queue_date มาด้วย
-    const existing = data as { target_job_id?: string | null; queue_date?: string | null };
-    if (existing.target_job_id && existing.queue_date) {
-      await sb.from("jobs").update({ assess_date: existing.queue_date }).eq("id", jobId);
-    }
+    // assess_date มาจาก promote (queue_date) ผ่าน trigger อยู่แล้ว — ไม่ต้องอัปเดตซ้ำ
+    // (เดิม: target_job_id → บันทึก assess_date ใต้งานเดิม ซึ่งผิด เพราะสร้างงานใหม่แล้ว)
 
     // คืนชีพงานที่ถูก cancel ก่อนเริ่มจริง (idempotent) — เฉพาะงานใหม่/งานเดิมที่ cancel เร็ว
     const { data: jrow2 } = await sb.from("jobs")

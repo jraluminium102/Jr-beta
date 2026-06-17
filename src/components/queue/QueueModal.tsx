@@ -111,6 +111,8 @@ function initForm(e?: QueueEntry | null): FormState {
 
   // derive custMode / oldCustomerMode จาก entry ที่มีอยู่จริง
   // เฉพาะ ประเมินหน้างาน เท่านั้น (เคลียร์แบบ ใช้ target_job_id แต่ custMode ไม่เกี่ยว)
+  // หลัง fix: existing_site ใช้ target_customer_id (เหมือน new_site) + target_job_id=null
+  //   → ข้อมูลเก่าที่บันทึก target_job_id สำหรับ existing_site ยังรองรับด้วย fallback เดิม
   const jt = e?.job_type;
   const isAssess = !e || isAssessJobType(jt); // entry ใหม่ default เป็น assess
   let initCustMode: CustMode = "new";
@@ -118,10 +120,12 @@ function initForm(e?: QueueEntry | null): FormState {
   if (e && isAssess) {
     if (e.target_customer_id != null || e.target_job_id != null) {
       initCustMode = "old";
-      if (e.target_customer_id != null) {
-        initOldCustomerMode = "new_site";
-      } else if (e.target_job_id != null) {
+      // ข้อมูลเก่า: target_job_id ที่ไม่ใช่เคลียร์แบบ = existing_site (backward compat)
+      if (e.target_job_id != null && isAssessJobType(e.job_type)) {
         initOldCustomerMode = "existing_site";
+      } else if (e.target_customer_id != null) {
+        // new_site หรือ existing_site ใหม่ → แสดงเป็น new_site (ข้อมูลในฟอร์มมีครบแล้ว)
+        initOldCustomerMode = "new_site";
       }
     }
   }
@@ -356,6 +360,8 @@ export function QueueModal({
   const [selectedCust, setSelectedCust] = useState<CustomerSearchResult | null>(null);
   const custSearchAbortRef = useRef<AbortController | null>(null);
   const custSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // loading state สำหรับดึงข้อมูลไซต์เดิม (existing_site)
+  const [siteInfoBusy, setSiteInfoBusy] = useState(false);
 
   // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม)
   const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site");
@@ -412,22 +418,98 @@ export function QueueModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [custSearch, f.custMode, jobCat]);
 
-  function selectTargetJob(j: JobSearchResult) {
+  async function selectTargetJob(j: JobSearchResult) {
     setSelectedJob(j);
     setJobSearch("");
     setJobSearchResults([]);
+
+    // ลูกค้าเก่า หน้างานเดิม → ดึง site-info auto-fill แทนการผูก target_job_id
+    if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && selectedCust) {
+      setSiteInfoBusy(true);
+      try {
+        const r = await api.get<{
+          customer_name: string;
+          tel: string | null;
+          address: string | null;
+          location_url: string | null;
+          lat: number | null;
+          lng: number | null;
+          line_contact: string | null;
+          contact_channel: string;
+        }>(`/jobs/${j.id}/site-info`);
+        const info = r.data;
+        if (info) {
+          setF((s) => ({
+            ...s,
+            customer_name: info.customer_name || j.customer_name,
+            tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
+            address: info.address ?? s.address,
+            location_url: info.location_url ?? s.location_url,
+            line_contact: info.line_contact ?? s.line_contact,
+            contact_channel: info.contact_channel || s.contact_channel,
+            // สร้างงานใหม่ใต้ลูกค้าเดิม → target_customer_id, target_job_id=null
+            target_customer_id: selectedCust.id,
+            target_job_id: null,
+          }));
+          // อัปเดต resolved coords ถ้ามี lat/lng
+          if (info.lat != null && info.lng != null) {
+            setResolved({ lat: info.lat, lng: info.lng });
+          }
+        } else {
+          // fallback: auto-fill จาก job row เลย
+          setF((s) => ({
+            ...s,
+            customer_name: j.customer_name,
+            tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+            address: j.customer_area ?? s.address,
+            target_customer_id: selectedCust.id,
+            target_job_id: null,
+          }));
+        }
+      } catch {
+        // best-effort: ถ้า fetch พัง ใช้ข้อมูลจาก job row
+        setF((s) => ({
+          ...s,
+          customer_name: j.customer_name,
+          tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+          address: j.customer_area ?? s.address,
+          target_customer_id: selectedCust.id,
+          target_job_id: null,
+        }));
+      } finally {
+        setSiteInfoBusy(false);
+      }
+      return;
+    }
+
+    // เคลียร์แบบ → คงเดิม (set target_job_id link)
     setF((s) => ({
       ...s,
       customer_name: j.customer_name,
       tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
       target_job_id: j.id,
-      target_customer_id: null, // (0045) เลือกงานเดิม → เคลียร์ target_customer_id
+      target_customer_id: null,
     }));
   }
 
   function clearTargetJob() {
     setSelectedJob(null);
-    setF((s) => ({ ...s, target_job_id: null, customer_name: "", tel: "" }));
+    // ถ้าอยู่ใน existing_site mode ต้องล้าง auto-fill ด้วย (เพื่อให้เลือกใหม่ได้)
+    if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site") {
+      setResolved(null);
+      setF((s) => ({
+        ...s,
+        target_job_id: null,
+        target_customer_id: null,
+        customer_name: selectedCust?.name ?? "",
+        tel: selectedCust?.phone ? formatThaiPhone(selectedCust.phone) : "",
+        address: selectedCust?.address ?? "",
+        location_url: "",
+        line_contact: selectedCust?.line_id ?? s.line_contact,
+      }));
+    } else {
+      setF((s) => ({ ...s, target_job_id: null, customer_name: "", tel: "" }));
+    }
   }
 
   // ---- (0045) เลือก / ล้างลูกค้าเดิม ----
@@ -470,15 +552,17 @@ export function QueueModal({
     setF((s) => ({
       ...s,
       oldCustomerMode: mode,
-      // หน้างานใหม่ → set target_customer_id, เคลียร์ target_job_id
+      // หน้างานใหม่ → set target_customer_id ทันที, เคลียร์ target_job_id
+      // หน้างานเดิม → target_customer_id จะถูก set ตอนเลือกงาน (selectTargetJob), ต้องเป็น null ก่อน
       target_customer_id: mode === "new_site" ? selectedCust.id : null,
-      target_job_id: mode === "new_site" ? null : s.target_job_id,
+      target_job_id: null, // ทั้ง 2 mode เคลียร์ target_job_id (เคลียร์แบบเท่านั้นที่ใช้ target_job_id)
     }));
-    // ถ้าเปลี่ยนกลับมา existing_site → reset job picker ให้เลือกใหม่
+    // existing_site → reset job picker ให้เลือกใหม่ (เพื่อ copy ข้อมูลไซต์)
     if (mode === "existing_site") {
       setSelectedJob(null);
       setJobSearch("");
       setJobSearchResults([]);
+      setResolved(null);
     }
   }
 
@@ -658,8 +742,11 @@ export function QueueModal({
       const hasRestoredTarget = editing && !selectedCust && (f.target_customer_id != null || f.target_job_id != null);
       if (!selectedCust && !hasRestoredTarget) { setErr("กรุณาค้นและเลือกลูกค้าเดิมก่อน"); return; }
       if (f.oldCustomerMode === "") { setErr("กรุณาเลือก: หน้างานเดิม หรือ หน้างานใหม่"); return; }
-      if (f.oldCustomerMode === "existing_site" && !f.target_job_id) {
-        setErr("กรุณาเลือกงานเดิมของลูกค้านี้ก่อน");
+      // existing_site: ต้องมี target_customer_id (set ตอนเลือกงาน)
+      // ถ้า edit + hasRestoredTarget → ผ่านได้ (ข้อมูลเดิมมีครบแล้ว)
+      const hasRestoredSite = editing && !selectedJob && f.target_customer_id != null;
+      if (f.oldCustomerMode === "existing_site" && !hasRestoredSite && (!selectedJob || f.target_customer_id == null)) {
+        setErr("กรุณาเลือกงาน/ไซต์เดิมก่อน");
         return;
       }
       if (f.oldCustomerMode === "new_site" && !f.target_customer_id) {
@@ -684,7 +771,7 @@ export function QueueModal({
 
         let confirmMsg: string;
         if (f.custMode === "old" && f.oldCustomerMode === "existing_site") {
-          confirmMsg = `ยืนยันประเมินเสร็จ? (ลูกค้าเก่า — ผูกงาน${selectedJob ? ` "${selectedJob.job_code ?? selectedJob.customer_name}"` : "เดิม"} อัปเดต assess_date)`;
+          confirmMsg = `ยืนยันประเมินเสร็จ? สร้างงานใหม่ที่ไซต์เดิมของ "${selectedCust?.name ?? f.customer_name}"${selectedJob ? ` (อ้างอิงไซต์: ${selectedJob.job_code ?? selectedJob.customer_name})` : ""}`;
         } else if (f.custMode === "old" && f.oldCustomerMode === "new_site") {
           confirmMsg = `ยืนยันประเมินเสร็จ? (ลูกค้าเก่า "${selectedCust?.name ?? f.customer_name}" — สร้างงานใหม่ใต้ลูกค้านี้)`;
         } else {
@@ -760,9 +847,9 @@ export function QueueModal({
       receipt_done: f.receipt_done,
       fee_paid: f.fee_paid,
       note_admin: f.note_admin || null,
-      target_job_id: f.target_job_id || null,        // (0044/0045) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
+      target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
       clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
-      target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่
+      target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่ + หน้างานเดิม
     };
     try {
       if (editing) {
@@ -1140,7 +1227,7 @@ export function QueueModal({
                       {f.oldCustomerMode === "existing_site" && (
                         <p className="text-[11px] text-sky-700 bg-sky-50 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
                           <Icon name="info" size={12} />
-                          ผูกงานเดิม + อัปเดต assess_date — ไม่สร้างงานใหม่
+                          สร้างงานใหม่ที่ไซต์เดิม (ดึงที่อยู่/โลเคชั่น/คอนแทคเดิมมาให้)
                         </p>
                       )}
                       {f.oldCustomerMode === "new_site" && (
@@ -1152,18 +1239,23 @@ export function QueueModal({
                     </div>
                   )}
 
-                  {/* ค้นงานเดิม (เมื่อเลือก หน้างานเดิม) */}
+                  {/* ค้นงานเดิม (เมื่อเลือก หน้างานเดิม) — เลือกเพื่อ copy ข้อมูลไซต์ ไม่ใช่ผูก */}
                   {selectedCust && f.oldCustomerMode === "existing_site" && (
                     <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-ink-2">เลือกงานเดิม *</p>
+                      <p className="text-xs font-medium text-ink-2">เลือกไซต์อ้างอิง (งานเดิม) *</p>
                       {selectedJob ? (
                         <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2.5">
+                          {siteInfoBusy && (
+                            <span className="shrink-0 text-sky-500 mt-0.5">
+                              <Icon name="refresh" size={14} className="animate-spin" />
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-brand-dark text-sm">
-                              {selectedJob.job_code ?? "—"} · {selectedJob.customer_name}
+                              อ้างอิงไซต์: {selectedJob.job_code ?? "—"} · {selectedJob.customer_area ?? selectedJob.customer_name}
                             </div>
                             <div className="text-xs text-ink-3 mt-0.5">
-                              แบบ: {DESIGN_STATE_LABEL[selectedJob.design_state] ?? selectedJob.design_state}
+                              {selectedJob.customer_name}
                               {selectedJob.customer_tel && ` · ${selectedJob.customer_tel}`}
                             </div>
                           </div>
