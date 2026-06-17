@@ -3311,10 +3311,12 @@ function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]')
 // ออปชั่นดรอปดาวน์ตัวเลือกน้อย (≤6) → ชิป อัตโนมัติ (พี่นัท 17 มิ.ย.) · อ่าน option จริงจาก select · ขับด้วย selectedIndex
 // (กันค่าชน เช่น o-closer/o-finish ที่หลาย option ใช้ value เดียวกัน + อ่าน data-n ผ่าน selectedIndex) · fire input+change = sync onchange/delegated เดิม · ราคา/readItem ไม่แตะ
 // ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
-var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor'];
-function chipifySelect(sel){
+var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gfin','o-bsfinish','o-bocfinish'];
+// G2-สลับตรวจ (คิวกลาง): สี/ผิวระแนง 3 ตัว → ชิป · o-bsfinish/o-bocfinish = 10 ตัวเลือก value=ราคา (มีซ้ำ) → chipify ผ่าน selectedIndex = ราคาตรงเป๊ะ · ปลด cap 7 เฉพาะ 2 ตัวนี้
+var CHIPIFY_BIG=['o-bsfinish','o-bocfinish'];
+function chipifySelect(sel,big){
   if(!sel || sel.dataset.chipped==='1') return;
-  var n=sel.options.length; if(n<2||n>7) return;            // ≤7 = ชิป (o-finish/o-bsdoor บางระแนง=7 · ให้เหมือนกันทุกสินค้า) · เกิน 7 คงดรอปดาวน์
+  var n=sel.options.length; if(n<2||(n>7&&!big)) return;     // ≤7 = ชิป · เกิน 7 คงดรอปดาวน์ ยกเว้น big (o-bsfinish/bocfinish สี 10 ตัว ผ่าน selectedIndex)
   sel.dataset.chipped='1'; sel.style.display='none';
   var grp=document.createElement('div'); grp.className='chip-group chip-sm chip-auto'; grp.style.marginTop='4px';
   Array.prototype.forEach.call(sel.options,function(o,i){
@@ -3331,7 +3333,7 @@ function chipifySelect(sel){
   });
   if(sel.parentNode) sel.parentNode.insertBefore(grp, sel.nextSibling);
 }
-function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) chipifySelect(s); }); }
+function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) chipifySelect(s, CHIPIFY_BIG.indexOf(cls)>=0); }); }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
