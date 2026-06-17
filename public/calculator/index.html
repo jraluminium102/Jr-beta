@@ -494,6 +494,7 @@
 
 <!-- quote modal -->
 <div id="quoteBox">
+  <div id="qEditBanner" class="no-print" style="display:none;background:#FEF3C7;border:1px solid #F0C040;border-radius:8px;padding:7px 12px;margin-bottom:8px;font-size:12.5px;color:#92400e;">✏️ โหมดแก้: แก้/เพิ่ม/ลบ แถวได้ทุกช่อง · <b>การแก้เฉพาะใบนี้ ไม่บันทึกถาวร</b> · เริ่มใบใหม่/ล้างฟอร์ม = ล้างหมด</div>
   <div class="quote" id="quoteContent"></div>
   <div class="qbtns">
     <button type="button" class="btn-sec" onclick="document.getElementById('quoteBox').style.display='none'">ปิด</button>
@@ -501,6 +502,7 @@
     <button type="button" class="btn-prim" onclick="exportQuoteExcel()" style="background:#10803a;">Export Excel</button>
     <button type="button" class="btn-sec" onclick="toggleSplit()" id="splitBtn">แยกราคาแต่ละส่วน</button>
     <button type="button" class="btn-sec" onclick="toggleQuoteEdit()" id="editBtn">✎ แก้ทุกข้อความ</button>
+    <button type="button" class="btn-sec" onclick="startBlankQuote()" id="blankQuoteBtn">📄 เริ่มใบเปล่า</button>
     <button type="button" class="btn-sec" onclick="resetQText()" id="qResetBtn" style="display:none;">↺ คืนข้อความเดิม</button>
     <button type="button" class="btn-sec" onclick="toggleWatermark()" id="wmBtn">+ ฉบับร่าง</button>
     <button type="button" class="btn-sec" onclick="aiReviewQuote()" id="aiReviewBtn" style="background:#1f2937;color:#fff;">🤖 AI ตรวจใบเสนอ</button>
@@ -5059,6 +5061,9 @@ function resetQuote(){
     if(e.type==='checkbox'){ e.checked=(e.id==='svc-protect'); }
     else if(e.type==='number'){ e.value=(e.id==='svc-floors'||e.id==='svc-ship-trucks')?'1':'0'; }
   });
+  if(typeof clearQuoteOverrides==='function') clearQuoteOverrides(); // Group C #3: ล้าง edit/แถวเพิ่ม/ใบเปล่า — กันติดใบลูกค้าใหม่
+  var _eb=document.getElementById('editBtn'); if(_eb){ _eb.textContent='✎ แก้ทุกข้อความ'; _eb.style.background=''; _eb.style.color=''; }
+  var _bn=document.getElementById('qEditBanner'); if(_bn)_bn.style.display='none'; var _rb2=document.getElementById('qResetBtn'); if(_rb2)_rb2.style.display='none';
   addSet(); calcQuote();
 }
 
@@ -5139,9 +5144,16 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
 }
 // งาน4: โหมดแก้ราคา/ข้อความในใบ
 window.qEdit=false; window._nameOv=window._nameOv||{}; window._detOv=window._detOv||{};
+// คิว B รอบ2 Group C: ใบแก้ได้ทั้งใบ + ใบเปล่า — แถวเพิ่มชั่วคราว (ไม่บันทึกถาวร · ล้างเมื่อขึ้นใบใหม่)
+window._extraRows=window._extraRows||[]; window._blankQuote=window._blankQuote||false;
+function clearQuoteOverrides(){ window._nameOv={}; window._detOv={}; window._extraRows=[]; window._blankQuote=false; window.qEdit=false; } // #3: เรียกตอนล้าง/ลูกค้าใหม่ — กัน edit ติดรอบหน้า
+function addQuoteRow(){ window.qEdit=true; window._extraRows.push({name:'',det:'',qty:'1',price:''}); genQuote(true); }
+function delQuoteRow(i){ if(window._extraRows[i]!=null){ window._extraRows.splice(i,1); genQuote(true); } }
+function setXRow(i,k,el){ if(!window._extraRows[i])return; var v=((el.innerText!=null?el.innerText:el.value)||'').replace(/ /g,' ').trim(); if(k==='price'||k==='qty'){ v=v.replace(/,/g,''); window._extraRows[i][k]=v; genQuote(true); } else { window._extraRows[i][k]=v; } } // ตัด comma กัน parseFloat พัง · name/det ไม่ re-render (ไม่กระทบยอด)
+function startBlankQuote(){ if(!confirm('เริ่มใบเปล่า? (ล้างรายการในฟอร์ม + เริ่มกรอกมือ)'))return; var it=document.getElementById('items'); if(it)it.innerHTML=''; if(typeof itemSeq!=='undefined')itemSeq=0; clearQuoteOverrides(); window._blankQuote=true; window.qEdit=true; window._extraRows=[{name:'',det:'',qty:'1',price:''}]; genQuote(true); var b=document.getElementById('editBtn'); if(b){b.textContent='✓ เสร็จการแก้';b.style.background='#B3151D';b.style.color='#fff';} var rb=document.getElementById('qResetBtn'); if(rb)rb.style.display=''; var bn=document.getElementById('qEditBanner'); if(bn)bn.style.display=''; }
 // R2-4: เก็บ override รายละเอียดงานที่เซลล์แก้ (ทั้งก้อน) · ว่าง=กลับใช้อัตโนมัติ
 function setRowDet(id,el){ var t=(el.innerText||'').replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').trim(); if(t) window._detOv[id]=t; else delete window._detOv[id]; genQuote(true); }
-function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElementById('editBtn'); if(b){ b.textContent=window.qEdit?'✓ เสร็จการแก้':'✎ แก้ทุกข้อความ'; b.style.background=window.qEdit?'#B3151D':''; b.style.color=window.qEdit?'#fff':''; } var rb=document.getElementById('qResetBtn'); if(rb) rb.style.display=window.qEdit?'':'none'; genQuote(true); }
+function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElementById('editBtn'); if(b){ b.textContent=window.qEdit?'✓ เสร็จการแก้':'✎ แก้ทุกข้อความ'; b.style.background=window.qEdit?'#B3151D':''; b.style.color=window.qEdit?'#fff':''; } var rb=document.getElementById('qResetBtn'); if(rb) rb.style.display=window.qEdit?'':'none'; var bn=document.getElementById('qEditBanner'); if(bn) bn.style.display=window.qEdit?'':'none'; genQuote(true); }
 // ===== แก้ทุกข้อความในใบเสนอราคา (เฟิร์นแก้เองได้ · จำใน localStorage · ราคายังคิดอัตโนมัติ) =====
 // qET = ป้าย/ข้อความสั้น (เก็บ text) · q-block = บล็อกใหญ่ (เงื่อนไข/หัวบริษัท · เก็บ HTML แก้อิสระ ใน qApplyEdit)
 window._qTextOv = (function(){ try{ return JSON.parse(localStorage.getItem('jr_qtext')||'{}')||{}; }catch(e){ return {}; } })();
@@ -5166,6 +5178,19 @@ function qApplyEdit(){
 function setRowName(id,el){ var t=(el.innerText||'').replace(/^-\s*/,'').trim(); if(t) window._nameOv[id]=t; else delete window._nameOv[id]; genQuote(true); }
 function setRowPrice(id,el){ var v=parseFloat((el.innerText||'').replace(/[^0-9.]/g,'')); var ch=document.querySelector('#items .ch[data-id="'+id+'"]'); if(ch){ var ov=ch.querySelector('.i-override'); if(ov){ ov.value=(isNaN(v)?'':v); ov.dispatchEvent(new Event('input',{bubbles:true})); } calcQuote(); genQuote(true); } }
 function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepNo){
+  // Group C: แถวเพิ่มชั่วคราว (contenteditable) — บวกเข้า subtotal ที่ชั้น display (ไม่แตะ engine) · ปุ่ม +เพิ่มแถว/🗑 เฉพาะโหมดแก้
+  var _xrSum=0, _xrHtml='', _qed=!!window.qEdit;
+  (window._extraRows||[]).forEach(function(r,i){ var _p=parseFloat(r.price)||0, _q=parseFloat(r.qty)||1; _xrSum+=_p*_q;
+    var _ce=_qed?' contenteditable="true"':''; var _eo=_qed?'outline:1px dashed #d8b4b4;border-radius:4px;padding:1px 3px;':'';
+    _xrHtml+='<tr>'
+      +'<td style="text-align:center;vertical-align:top;">'+(_qed?'<button type="button" onclick="delQuoteRow('+i+')" style="border:none;background:none;color:#B3151D;cursor:pointer;font-size:14px;line-height:1;">🗑</button>':'•')+'</td>'
+      +'<td style="vertical-align:top;text-align:left;padding:8px;"><div'+_ce+' onblur="setXRow('+i+',\'name\',this)" style="font-weight:600;'+_eo+'">'+(r.name||(_qed?'':'-'))+'</div>'+((r.det||_qed)?('<div'+_ce+' onblur="setXRow('+i+',\'det\',this)" style="font-size:12px;color:#555;margin-top:2px;'+_eo+'">'+(r.det||'')+'</div>'):'')+'</td>'
+      +'<td class="r" style="vertical-align:top;"><span'+_ce+' onblur="setXRow('+i+',\'qty\',this)" style="'+_eo+'">'+(r.qty||'1')+'</span> ชุด</td>'
+      +'<td class="r" style="vertical-align:top;"><span'+_ce+' onblur="setXRow('+i+',\'price\',this)" style="'+_eo+'">'+(_p?fmt(_p):'0')+'</span></td>'
+      +'<td class="r" style="vertical-align:top;">'+fmt(_p*_q)+'</td></tr>';
+  });
+  if(_qed){ _xrHtml+='<tr class="no-print"><td colspan="5" style="text-align:center;padding:6px;"><button type="button" onclick="addQuoteRow()" style="border:1px dashed #B3151D;color:#B3151D;background:#fff;border-radius:6px;padding:4px 16px;cursor:pointer;font-size:12px;">+ เพิ่มแถว</button></td></tr>'; }
+  subtotal += _xrSum; // บวกแถวเพิ่มเข้ายอด (display layer · golden ไม่กระทบ เพราะ _extraRows ว่างตอนเทส)
   const discAmt=subtotal*discPct/100; discFlat=parseFloat(discFlat)||0; const net=Math.max(0,subtotal-discAmt-discFlat); // ข้อ13: กันยอดติดลบ
   const svcAmt=svc?svc.amt:0;
   const svcLines=(svc&&svc.lines?svc.lines.filter(l=>l[1]>0):[]);
@@ -5202,7 +5227,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
      `<div><span style="color:var(--muted);">${qET('l_phone','เบอร์โทร')} </span>${_phone}</div>`+
    `</div></div></div>`+
    `<div class="qmeta"><div><b style="color:var(--red-dark);">${qET('l_cust','ลูกค้า')}</b><br>${cust}${_address?('<br>'+_address):''}</div></div>`+
-   `<table class="qt"><thead><tr><th style="width:5%;">#</th><th style="width:55%;text-align:left;">${qET('th_detail','รายละเอียด')}</th><th class="r" style="width:10%;">${qET('th_qty','จำนวน')}</th><th class="r" style="width:15%;">${qET('th_unit','ราคาต่อหน่วย')}</th><th class="r" style="width:15%;">${qET('th_total','ยอดรวม')}</th></tr></thead><tbody>${rows}</tbody></table>`+
+   `<table class="qt"><thead><tr><th style="width:5%;">#</th><th style="width:55%;text-align:left;">${qET('th_detail','รายละเอียด')}</th><th class="r" style="width:10%;">${qET('th_qty','จำนวน')}</th><th class="r" style="width:15%;">${qET('th_unit','ราคาต่อหน่วย')}</th><th class="r" style="width:15%;">${qET('th_total','ยอดรวม')}</th></tr></thead><tbody>${rows}${_xrHtml}</tbody></table>`+
    `<div class="qsubtotal" style="margin-top:10px;color:var(--red-dark);">(${bahtText(withVat)})</div>`+
    `<div class="qtot">`+
      `<div class="l"><span>${qET('t_subtotal','รวมเป็นเงิน')}</span><span>${q2(subtotal)} บาท</span></div>`+
