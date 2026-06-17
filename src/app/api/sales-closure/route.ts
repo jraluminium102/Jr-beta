@@ -6,44 +6,68 @@ import { can } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
-// Stages 3-8: ตั้งแต่ฝ่ายแบบวาดแบบ → ลูกค้ามัดจำ (ขยายจาก 5-7 เพื่อ hub ติดตามงาน)
-const CLOSURE_STAGES = [3, 4, 5, 6, 7, 8] as const;
 // Statuses that mean the job has moved past deposit — exclude from closure view
-const POST_DEPOSIT_STATUSES = ["DEPOSITED", "IN_PRODUCTION", "INSTALLING", "COMPLETED", "CANCELLED"] as const;
+const POST_DEPOSIT_STATUSES = [
+  "DEPOSITED",
+  "IN_PRODUCTION",
+  "INSTALLING",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
+
+// ปรับ closure_stage จาก design_state + quote_sent_date (priority order)
+// 1. REVISING  → 'revising'
+// 2. quote_sent_date != null → 'sent'
+// 3. else → 'await'
+type ClosureStage = "await" | "sent" | "revising";
+
+function classifyStage(designState: string, quoteSentDate: string | null): ClosureStage {
+  if (designState === "REVISING") return "revising";
+  if (quoteSentDate != null) return "sent";
+  return "await";
+}
 
 // Shape of each row returned to the client
 export type ClosureRow = {
   id: string;
   job_code: string | null;
   customer_name: string;
-  customer_tel: string | null;       // ไว้ไล่โทรปิดการขาย
+  customer_tel: string | null;
   current_stage: number;
   stage_name: string;
   status: string;
   design_state: string;
-  remark: string | null;             // โน้ตเซลล์ / สถานะติดตามคร่าวๆ
-  quote_sent_date: string | null;    // วันส่งใบเสนอ
-  days_waiting: number | null;       // กี่วันแล้วที่รอ (จากวันส่งใบเสนอ)
-  estimator_name: string | null;     // ผู้รับผิดชอบ
+  remark: string | null;
+  quote_sent_date: string | null;
+  days_waiting: number | null;
+  estimator_name: string | null;
   /** Latest quotation linked to this job */
   quotation_id: number | null;
   quotation_code: string | null;
   net: number | null;
-  /** Allowed to send back to designer revision (เฉพาะ stage 5/6) */
+  /** New: closure stage derived from design_state + quote_sent_date */
+  closure_stage: ClosureStage;
+  /** New: number of design revisions */
+  design_revise_count: number;
+  /** New: status of the latest quotation (draft/sent/approved/null) */
+  quotation_status: string | null;
+  /** New: whether a quotation exists at all */
+  has_quotation: boolean;
+  /** Allowed to send back to designer revision (closure_stage === 'sent') */
   can_revise: boolean;
 };
 
-// GET /api/sales-closure — jobs ปิดการขาย (stage 3-8) พร้อม quotation ล่าสุด
-// query: ?stage=N (กรองขั้นเดียว), ?my=1 (เฉพาะของฉัน), ?q= (ค้นชื่อ/job_code)
+// GET /api/sales-closure — งานที่ยังไม่ post-deposit พร้อม quotation ล่าสุด
+// query: ?stage=await|sent|revising (กรองสเตจ), ?my=1 (เฉพาะของฉัน), ?q= (ค้นชื่อ/job_code)
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("sales_closure", "read");
   const sb = ctx.supabase as { from: (t: string) => any };
   const url = new URL(req.url);
-  const stageF = url.searchParams.get("stage");
+  const stageF = url.searchParams.get("stage") as ClosureStage | null; // 'await'|'sent'|'revising'|null
   const q = url.searchParams.get("q");
   const myOnly = url.searchParams.get("my") === "1";
 
-  // Fetch jobs at closure stages OR with quote_sent_date set (safety net for stage drift)
+  // ดึง jobs ที่ยังไม่ผ่าน deposit — กรอง status ออก POST_DEPOSIT_STATUSES
   let query = sb
     .from("jobs")
     .select(
@@ -55,14 +79,13 @@ export const GET = withRoute(async (req: Request) => {
         "current_stage",
         "status",
         "design_state",
+        "design_revise_count",
         "remark",
         "quote_sent_date",
         "estimator:estimator_id(id,full_name)",
-        // PostgREST: embed ผ่าน FK quotations.job_id ให้ชัด (ไม่งั้นใบเสนอ job_id=null resolve ไม่เจอ ขึ้น '—')
-        "quotations!quotations_job_id_fkey(id, code, net, created_at)",
+        "quotations!quotations_job_id_fkey(id, code, net, status, created_at)",
       ].join(",")
     )
-    .or(`current_stage.in.(${CLOSURE_STAGES.join(",")}),quote_sent_date.not.is.null`)
     .not("status", "in", `(${POST_DEPOSIT_STATUSES.join(",")})`)
     .order("year", { ascending: false })
     .order("sequence", { ascending: false });
@@ -73,15 +96,14 @@ export const GET = withRoute(async (req: Request) => {
   const { data: jobs, error } = await query;
   if (error) throw new Error(error.message);
 
-  // Determine whether the caller has write permission (for showing action buttons)
   const canWrite = can(ctx.role, "sales_closure", "write");
 
   const rows: ClosureRow[] = (jobs ?? []).map((j: Record<string, unknown>) => {
     // PostgREST returns embedded rows as array; pick the latest by created_at
     const quotes = Array.isArray(j.quotations)
-      ? (j.quotations as { id: number; code: string; net: number | null; created_at: string }[])
+      ? (j.quotations as { id: number; code: string; net: number | null; status: string; created_at: string }[])
       : j.quotations
-      ? [j.quotations as { id: number; code: string; net: number | null; created_at: string }]
+      ? [j.quotations as { id: number; code: string; net: number | null; status: string; created_at: string }]
       : [];
 
     const latestQ = quotes.sort(
@@ -90,10 +112,12 @@ export const GET = withRoute(async (req: Request) => {
 
     const stage = Number(j.current_stage);
     const qsd = (j.quote_sent_date as string | null) ?? null;
+    const designState = (j.design_state as string) ?? "NOT_STARTED";
     const daysWaiting = qsd
       ? Math.max(0, Math.floor((Date.now() - new Date(qsd).getTime()) / 86400000))
       : null;
     const est = j.estimator as { id: string | null; full_name: string | null } | null;
+    const closureStage = classifyStage(designState, qsd);
 
     return {
       id: j.id as string,
@@ -103,27 +127,42 @@ export const GET = withRoute(async (req: Request) => {
       current_stage: stage,
       stage_name: STAGE_NAMES[stage] ?? `ขั้น ${stage}`,
       status: j.status as string,
-      design_state: j.design_state as string,
+      design_state: designState,
+      design_revise_count: (j.design_revise_count as number) ?? 0,
       remark: (j.remark as string | null) ?? null,
       quote_sent_date: qsd,
       days_waiting: daysWaiting,
       estimator_name: est?.full_name ?? null,
       quotation_id: latestQ?.id ?? null,
       quotation_code: latestQ?.code ?? null,
+      quotation_status: latestQ?.status ?? null,
+      has_quotation: latestQ != null,
       net: latestQ?.net ?? null,
-      // ส่งแก้แบบเฉพาะ stage 5/6 (stage 7 ส่งใบเสนอแล้ว + RPC ไม่มี loop 7→x)
-      can_revise: canWrite && (stage === 5 || stage === 6),
+      closure_stage: closureStage,
+      // can_revise เฉพาะ sent (quote ส่งแล้ว, ไม่ใช่ revising แล้ว)
+      can_revise: canWrite && closureStage === "sent",
     };
   });
 
-  // ปิดการขาย = stage 3–8 เท่านั้น (safety-net quote_sent_date อาจดึง stage 9+ ที่ status ยังไม่ post-deposit → ตัดออก)
-  // ปิดการขาย = stage 5–8 (ทำใบเสนอ→มัดจำ) เท่านั้น · ขั้น 3-4 (วาดแบบ/ตรวจแบบ) ยังอยู่หน้าเขียนแบบ ไม่ปนที่นี่
-  const inWindow = rows.filter((r) => r.current_stage >= 5 && r.current_stage <= 8);
-  // กรอง stage เดียวถ้าส่ง ?stage=
-  const filtered = stageF ? inWindow.filter((r) => r.current_stage === Number(stageF)) : inWindow;
+  // คำนวณ counts จากทุกงาน (ก่อนกรอง ?stage) เพื่อให้ chip โชว์เลขครบ
+  const counts: Record<ClosureStage, number> = {
+    await: rows.filter((r) => r.closure_stage === "await").length,
+    sent: rows.filter((r) => r.closure_stage === "sent").length,
+    revising: rows.filter((r) => r.closure_stage === "revising").length,
+  };
 
-  const netSum = filtered.reduce((s, r) => s + (r.net ?? 0), 0);
-  const waiting7 = filtered.filter((r) => (r.days_waiting ?? 0) > 7).length;
-  return ok(filtered, { can_write: canWrite, net_sum: netSum, waiting_7: waiting7 });
+  // กรองตาม ?stage ถ้ามี
+  const filtered = stageF ? rows.filter((r) => r.closure_stage === stageF) : rows;
+
+  // net_sum และ waiting_7 จาก 'sent' เท่านั้น (ตาม SDD)
+  const sentRows = rows.filter((r) => r.closure_stage === "sent");
+  const netSum = sentRows.reduce((s, r) => s + (r.net ?? 0), 0);
+  const waiting7 = sentRows.filter((r) => (r.days_waiting ?? 0) > 7).length;
+
+  return ok(filtered, {
+    can_write: canWrite,
+    counts,
+    net_sum: netSum,
+    waiting_7: waiting7,
+  });
 });
-

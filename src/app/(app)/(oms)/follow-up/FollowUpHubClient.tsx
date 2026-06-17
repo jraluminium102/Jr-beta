@@ -1,7 +1,7 @@
 "use client";
 /**
  * FollowUpHubClient — หน้า "ติดตามงาน" รวม 4 แท็บ
- *   1. ปิดการขาย (default)  — stage 3-8  → /api/sales-closure
+ *   1. ปิดการขาย (default)  — 3 closure_stage → /api/sales-closure
  *   2. ผลิต                  — stage 9-19 → /api/followup?group=production
  *   3. ติดตั้ง               — stage 20-24→ /api/followup?group=install
  *   4. ปัญหา                 — open_issues>0 ทุก stage 3-24 → /api/issues
@@ -13,7 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { cn, baht, thDate } from "@/lib/format";
 import { PHASE_META, type PhaseKey } from "@/lib/followup";
-import { STAGE_NAMES } from "@/lib/stages";
 import { Spinner, StatCard, EmptyState } from "@/components/ui/primitives";
 import { Search, Clock, TriangleAlert, ChevronRight, Phone, Plus } from "@/components/ui/icons";
 import { JobDrawer } from "@/components/jobs/JobDrawer";
@@ -35,25 +34,68 @@ type TrackRow = {
 };
 
 type Tab = "closure" | "production" | "install" | "issues";
+type ClosureStage = "await" | "sent" | "revising";
 
 // ────────────────────────────────────────────────────────────────────────────
-// stage chip colours — ขยายจาก StageBadge ใน sales-closure/page.tsx
+// design_state badge — mapping ตรงกับ DesignerBoard COLUMNS
 // ────────────────────────────────────────────────────────────────────────────
-const STAGE_CHIP: Record<number, string> = {
-  3: "bg-slate-500/20 text-slate-100 border-slate-300/25",
-  4: "bg-sky-400/20 text-sky-100 border-sky-300/25",
-  5: "bg-sky-500/20 text-sky-100 border-sky-300/25",
-  6: "bg-amber-500/20 text-amber-100 border-amber-300/25",
-  7: "bg-violet-500/20 text-violet-100 border-violet-300/25",
-  8: "bg-emerald-500/20 text-emerald-100 border-emerald-300/25",
+const DESIGN_CHIP: Record<string, string> = {
+  NOT_STARTED:      "bg-slate-500/20 text-slate-100 border-slate-300/25",
+  DRAWING:          "bg-sky-500/20 text-sky-100 border-sky-300/25",
+  PENDING_CUSTOMER: "bg-teal-500/20 text-teal-100 border-teal-300/25",
+  REVISING:         "bg-amber-500/20 text-amber-100 border-amber-300/25",
+  DONE:             "bg-emerald-500/20 text-emerald-100 border-emerald-300/25",
+};
+const DESIGN_TH: Record<string, string> = {
+  NOT_STARTED:      "ยังไม่เริ่ม",
+  DRAWING:          "กำลังเขียนแบบ",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
+  REVISING:         "กำลังแก้ไข",
+  DONE:             "เสร็จแล้ว",
 };
 
-function StageBadge({ stage }: { stage: number }) {
-  const name = STAGE_NAMES[stage] ?? `ขั้น ${stage}`;
-  const cls = STAGE_CHIP[stage] ?? "bg-white/10 text-white/80 border-white/20";
+function DesignBadge({ state, reviseCount }: { state: string; reviseCount?: number }) {
   return (
-    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border tnum whitespace-nowrap", cls)}>
-      {stage} · {name}
+    <span className={cn(
+      "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap",
+      DESIGN_CHIP[state] ?? "bg-white/10 text-white/80 border-white/20"
+    )}>
+      {DESIGN_TH[state] ?? state}
+      {reviseCount != null && reviseCount > 0 && (
+        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400/30 text-amber-200 text-[10px] font-semibold tnum">
+          แก้ {reviseCount}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// quotation_status badge สำหรับแท็บ await
+const QUOTE_STATUS_CHIP: Record<string, { cls: string; label: string }> = {
+  draft:    { cls: "bg-sky-400/20 text-sky-100 border-sky-300/25",     label: "ร่างแล้ว" },
+  sent:     { cls: "bg-violet-400/20 text-violet-100 border-violet-300/25", label: "ส่งแล้ว" },
+  approved: { cls: "bg-emerald-400/20 text-emerald-100 border-emerald-300/25", label: "อนุมัติ" },
+};
+
+function QuoteBadge({ hasQuotation, quotationStatus }: { hasQuotation: boolean; quotationStatus: string | null }) {
+  if (!hasQuotation) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-white/8 text-white/50 border-white/15 whitespace-nowrap">
+        ยังไม่ทำ
+      </span>
+    );
+  }
+  if (quotationStatus && QUOTE_STATUS_CHIP[quotationStatus]) {
+    const { cls, label } = QUOTE_STATUS_CHIP[quotationStatus];
+    return (
+      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border whitespace-nowrap", cls)}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-white/12 text-white/70 border-white/20 whitespace-nowrap">
+      มีใบเสนอ
     </span>
   );
 }
@@ -114,20 +156,22 @@ function TabBar({ active, tabs, onChange }: { active: Tab; tabs: TabMeta[]; onCh
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Filter bar (shared)
+// Filter bar (shared — ไม่มี stage dropdown สำหรับ closure แล้ว)
 // ────────────────────────────────────────────────────────────────────────────
 type FilterState = {
-  q: string; onlyOverdue: boolean; onlyIssue: boolean; my: boolean;
-  stageFilter: string; // เฉพาะแท็บ closure
+  q: string;
+  onlyOverdue: boolean;
+  onlyIssue: boolean;
+  my: boolean;
+  stageFilter: ClosureStage; // 'await'|'sent'|'revising'
 };
 
 function FilterBar({
-  state, onChange, isSales, showStageFilter,
+  state, onChange, isSales,
 }: {
   state: FilterState;
   onChange: (s: Partial<FilterState>) => void;
   isSales: boolean;
-  showStageFilter: boolean;
 }) {
   return (
     <div className="flex flex-wrap gap-2 mb-4">
@@ -142,21 +186,6 @@ function FilterBar({
           className="bg-transparent outline-none text-sm text-white placeholder-white/45 w-full"
         />
       </label>
-
-      {/* sub-filter stage dropdown เฉพาะแท็บปิดการขาย */}
-      {showStageFilter && (
-        <select
-          value={state.stageFilter}
-          onChange={(e) => onChange({ stageFilter: e.target.value })}
-          aria-label="กรองตามขั้น"
-          className="focusable glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none min-h-[44px] [&>option]:text-gray-800"
-        >
-          <option value="">ทุกขั้น (5-8)</option>
-          {[5, 6, 7, 8].map((s) => (
-            <option key={s} value={String(s)}>{s} · {STAGE_NAMES[s]}</option>
-          ))}
-        </select>
-      )}
 
       {/* toggle ค้างนาน */}
       <button
@@ -200,17 +229,369 @@ function FilterBar({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// แท็บ "ปิดการขาย" — reuse ClosureActions
+// SegmentedChips — sub-filter 3 สเตจใน ClosureTab
 // ────────────────────────────────────────────────────────────────────────────
-function ClosureTab({ isSales, filters }: {
+const CLOSURE_STAGE_META: Record<ClosureStage, { label: string; chip: string; activeChip: string }> = {
+  await: {
+    label: "รอส่งแบบและใบเสนอราคา",
+    chip: "glass-card text-white/75 border-white/15 hover:bg-white/12",
+    activeChip: "bg-slate-400/30 text-white border-slate-300/40",
+  },
+  sent: {
+    label: "ส่งแบบแล้ว",
+    chip: "glass-card text-white/75 border-white/15 hover:bg-white/12",
+    activeChip: "bg-violet-400/30 text-violet-100 border-violet-300/40",
+  },
+  revising: {
+    label: "แก้แบบ",
+    chip: "glass-card text-white/75 border-white/15 hover:bg-white/12",
+    activeChip: "bg-amber-400/30 text-amber-100 border-amber-300/40",
+  },
+};
+
+function SegmentedChips({
+  active,
+  counts,
+  onChange,
+}: {
+  active: ClosureStage;
+  counts: Record<ClosureStage, number>;
+  onChange: (s: ClosureStage) => void;
+}) {
+  const stages: ClosureStage[] = ["await", "sent", "revising"];
+  return (
+    <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="กรองสเตจปิดการขาย">
+      {stages.map((s) => {
+        const meta = CLOSURE_STAGE_META[s];
+        const isActive = active === s;
+        return (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onChange(s)}
+            aria-pressed={isActive}
+            className={cn(
+              "focusable pressable inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] border transition-all whitespace-nowrap",
+              isActive ? meta.activeChip : meta.chip
+            )}
+          >
+            {meta.label}
+            <span className={cn(
+              "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold tnum",
+              isActive ? "bg-white/25 text-white" : "bg-white/15 text-white/70"
+            )}>
+              {counts[s]}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ClosureTab helpers: row tables per stage
+// ────────────────────────────────────────────────────────────────────────────
+
+// Job/ลูกค้า cell (ใช้ร่วมทุก stage)
+function JobCell({ row }: { row: ClosureRow }) {
+  return (
+    <div className="flex items-center gap-2">
+      {row.customer_tel && (
+        <a
+          href={`tel:${row.customer_tel}`}
+          aria-label={`โทร ${row.customer_tel}`}
+          className="focusable inline-flex items-center justify-center w-9 h-9 rounded-xl bg-sky-400/15 text-sky-200 hover:bg-sky-400/30 shrink-0 min-h-[44px] min-w-[36px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Phone size={15} />
+        </a>
+      )}
+      <div className="min-w-0">
+        <div className="text-white font-medium tnum">{row.job_code ?? "—"}</div>
+        <div className="text-white/90">{row.customer_name}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── await table ─────────────────────────────────────────────────────────────
+function AwaitTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="ไม่มีงานรอส่งแบบ"
+        sub="เมื่องานมีใบเสนอพร้อมส่ง หรือยังอยู่ระหว่างวาดแบบ จะปรากฏที่นี่"
+      />
+    );
+  }
+  return (
+    <>
+      <p className="text-[12px] mb-3" style={{ color: "var(--t-low)" }}>
+        เช็คสถานะเผื่อลูกค้าทวงงาน — ยืนยันกับช่างแล้วค่อยส่งใบเสนอให้ลูกค้า
+      </p>
+      {/* Desktop */}
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[12px] border-b border-white/12" style={{ color: "var(--t-mid)" }}>
+                <th className="text-left font-medium px-4 py-3">Job / ลูกค้า</th>
+                <th className="text-left font-medium px-4 py-3">เฟสแบบ</th>
+                <th className="text-left font-medium px-4 py-3">ใบเสนอในระบบ</th>
+                <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
+                {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-white/6 hover:bg-white/8 transition-colors">
+                  <td className="px-4 py-3"><JobCell row={row} /></td>
+                  <td className="px-4 py-3">
+                    <DesignBadge state={row.design_state} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <QuoteBadge hasQuotation={row.has_quotation} quotationStatus={row.quotation_status} />
+                  </td>
+                  <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-center">
+                      <ClosureActions job={row} onRevised={onRefetch} />
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        {rows.map((row) => (
+          <div key={row.id} className="glass-card rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
+                <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
+              </div>
+              <DesignBadge state={row.design_state} />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {row.customer_tel && (
+                <a href={`tel:${row.customer_tel}`}
+                  className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-400/15 text-sky-200 border border-sky-300/20 text-[12px] min-h-[40px]">
+                  <Phone size={14} /> {row.customer_tel}
+                </a>
+              )}
+              <QuoteBadge hasQuotation={row.has_quotation} quotationStatus={row.quotation_status} />
+            </div>
+            <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
+            {row.remark && (
+              <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
+            )}
+            {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── sent table ───────────────────────────────────────────────────────────────
+function SentTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="ไม่มีงานที่ส่งแบบแล้ว"
+        sub="เมื่องานส่งใบเสนอราคาให้ลูกค้าแล้ว จะปรากฏที่นี่"
+      />
+    );
+  }
+  return (
+    <>
+      {/* Desktop */}
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[12px] border-b border-white/12" style={{ color: "var(--t-mid)" }}>
+                <th className="text-left font-medium px-4 py-3">Job / ลูกค้า</th>
+                <th className="text-right font-medium px-4 py-3">ยอดสุทธิ</th>
+                <th className="text-left font-medium px-4 py-3">รอ / โน้ต</th>
+                <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
+                {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const overdue7 = (row.days_waiting ?? 0) > 7;
+                return (
+                  <tr key={row.id} className={cn(
+                    "border-b border-white/6 hover:bg-white/8 transition-colors",
+                    overdue7 && "border-l-2 border-l-rose-400"
+                  )}>
+                    <td className="px-4 py-3"><JobCell row={row} /></td>
+                    <td className="px-4 py-3 text-right tnum text-white/90">
+                      {row.net != null ? `${baht(row.net)} ฿` : <span style={{ color: "var(--t-low)" }}>—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.days_waiting != null && (
+                        <div className={cn("text-[12px] tnum mb-1", overdue7 ? "text-rose-300 font-semibold" : "text-white/60")}>
+                          รอ {row.days_waiting} วัน
+                        </div>
+                      )}
+                      {row.remark && (
+                        <div className="text-[11px] italic max-w-[200px] truncate" style={{ color: "var(--t-mid)" }}>
+                          {row.remark}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
+                    {canWrite && (
+                      <td className="px-4 py-3 text-center">
+                        <ClosureActions job={row} onRevised={onRefetch} />
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        {rows.map((row) => {
+          const overdue7 = (row.days_waiting ?? 0) > 7;
+          return (
+            <div key={row.id} className={cn(
+              "glass-card rounded-2xl p-4 space-y-2.5",
+              overdue7 && "border-l-2 border-l-rose-400"
+            )}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
+                  <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
+                </div>
+                {row.net != null && (
+                  <span className="text-[13px] tnum text-white/90 shrink-0">{baht(row.net)} ฿</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {row.customer_tel && (
+                  <a href={`tel:${row.customer_tel}`}
+                    className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-400/15 text-sky-200 border border-sky-300/20 text-[12px] min-h-[40px]">
+                    <Phone size={14} /> {row.customer_tel}
+                  </a>
+                )}
+                {row.days_waiting != null && (
+                  <span className={cn("text-[12px] tnum", overdue7 ? "text-rose-300 font-semibold" : "text-white/60")}>
+                    รอ {row.days_waiting} วัน
+                  </span>
+                )}
+              </div>
+              {row.remark && (
+                <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
+              )}
+              <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
+              {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ─── revising table ───────────────────────────────────────────────────────────
+function RevisingTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="ไม่มีงานที่อยู่ระหว่างแก้แบบ"
+        sub="เมื่อเซลล์ส่งแก้แบบ งานจะปรากฏที่นี่จนกว่าช่างจะกดเสร็จ"
+      />
+    );
+  }
+  return (
+    <>
+      {/* Desktop */}
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[12px] border-b border-white/12" style={{ color: "var(--t-mid)" }}>
+                <th className="text-left font-medium px-4 py-3">Job / ลูกค้า</th>
+                <th className="text-left font-medium px-4 py-3">เฟสแบบ</th>
+                <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
+                {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-white/6 hover:bg-white/8 transition-colors">
+                  <td className="px-4 py-3"><JobCell row={row} /></td>
+                  <td className="px-4 py-3">
+                    <DesignBadge state={row.design_state} reviseCount={row.design_revise_count} />
+                  </td>
+                  <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-center">
+                      <ClosureActions job={row} onRevised={onRefetch} />
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        {rows.map((row) => (
+          <div key={row.id} className="glass-card rounded-2xl p-4 space-y-2.5 border-l-2 border-l-amber-400">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
+                <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
+              </div>
+              <DesignBadge state={row.design_state} reviseCount={row.design_revise_count} />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {row.customer_tel && (
+                <a href={`tel:${row.customer_tel}`}
+                  className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-400/15 text-sky-200 border border-sky-300/20 text-[12px] min-h-[40px]">
+                  <Phone size={14} /> {row.customer_tel}
+                </a>
+              )}
+            </div>
+            <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
+            {row.remark && (
+              <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
+            )}
+            {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// แท็บ "ปิดการขาย" — 3 closure_stage, segmented chips
+// ────────────────────────────────────────────────────────────────────────────
+function ClosureTab({ isSales, filters, onFilterChange }: {
   isSales: boolean;
   filters: FilterState;
+  onFilterChange: (s: Partial<FilterState>) => void;
 }) {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
+  // ส่ง ?stage= ไปที่ API เพื่อให้ filter server-side
   if (filters.stageFilter) params.set("stage", filters.stageFilter);
   if (filters.my || isSales) params.set("my", "1");
 
+  // queryKey รวม stageFilter → เปลี่ยน chip แล้ว refetch อัตโนมัติ
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["sales-closure-hub", filters.q, filters.stageFilter, filters.my, isSales],
     queryFn: () => api.get<ClosureRow[]>(`/sales-closure?${params}`),
@@ -219,164 +600,50 @@ function ClosureTab({ isSales, filters }: {
 
   const allRows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
-  const netSum = (data?.meta?.net_sum as number) ?? allRows.reduce((s, r) => s + (r.net ?? 0), 0);
-  const waiting7 = (data?.meta?.waiting_7 as number) ?? allRows.filter((r) => (r.days_waiting ?? 0) > 7).length;
+  const metaCounts = data?.meta?.counts as Record<ClosureStage, number> | undefined;
+  const netSum = (data?.meta?.net_sum as number) ?? 0;
+  const waiting7 = (data?.meta?.waiting_7 as number) ?? 0;
 
-  // client-side overdue+issue filter (closure API ไม่มี param เหล่านี้)
+  // counts จาก meta (นับก่อนกรอง — server ส่งมาจาก rows ทั้งหมด)
+  // ถ้า meta ไม่มี (กรณี loading/error) fallback เป็น 0
+  const counts: Record<ClosureStage, number> = metaCounts ?? { await: 0, sent: 0, revising: 0 };
+
+  // client-side overdue+issue filter
   let rows = allRows;
   if (filters.onlyOverdue) rows = rows.filter((r) => (r.days_waiting ?? 0) > 7);
   if (filters.onlyIssue) rows = rows.filter((r) => r.remark != null && r.remark !== "");
 
-  // Stats
-  const total = allRows.length;
+  const activeStage = filters.stageFilter;
 
   return (
     <>
       {/* stats strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <StatCard label="รอปิดการขาย" value={total} sub="ขั้น 3-8" />
-        <StatCard label="ค้างนาน >7 วัน" value={waiting7} accent="text-amber-300" />
-        <StatCard label="ยอดรวมใบเสนอ" value={`${baht(netSum)} ฿`} accent="text-sky-200" />
-        <StatCard label="รอ >7 วัน" value={allRows.filter((r) => (r.days_waiting ?? 0) > 7).length} sub="จากวันส่งใบเสนอ" accent="text-rose-300" />
+        <StatCard label="รอส่งแบบ" value={counts.await} sub="ยังไม่ส่งใบเสนอ" />
+        <StatCard label="ส่งแบบแล้ว" value={counts.sent} sub="รอลูกค้าตัดสินใจ" accent="text-violet-200" />
+        <StatCard label="แก้แบบ" value={counts.revising} sub="อยู่บอร์ดช่าง" accent="text-amber-300" />
+        <StatCard label="รอ >7 วัน" value={waiting7} sub="จากวันส่งใบเสนอ" accent="text-rose-300" />
       </div>
 
-      {isLoading ? <Spinner /> : rows.length === 0 ? (
-        <EmptyState title="ไม่มีงานรอปิดการขาย" sub="เมื่องานเข้าขั้น 3-8 จะปรากฏที่นี่" />
-      ) : (
+      {/* segmented chips */}
+      <SegmentedChips
+        active={activeStage}
+        counts={counts}
+        onChange={(s) => onFilterChange({ stageFilter: s })}
+      />
+
+      {/* ยอดรวม (เฉพาะ sent) */}
+      {activeStage === "sent" && netSum > 0 && (
+        <p className="text-[12px] mb-3 tnum" style={{ color: "var(--t-low)" }}>
+          ยอดรวมใบเสนอราคา: <span className="text-sky-200 font-semibold">{baht(netSum)} ฿</span>
+        </p>
+      )}
+
+      {isLoading ? <Spinner /> : (
         <>
-          {/* Desktop */}
-          <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-[12px] border-b border-white/12" style={{ color: "var(--t-mid)" }}>
-                    <th className="text-left font-medium px-4 py-3">Job / ลูกค้า</th>
-                    <th className="text-left font-medium px-4 py-3">ขั้น</th>
-                    <th className="text-right font-medium px-4 py-3">ยอดสุทธิ</th>
-                    <th className="text-left font-medium px-4 py-3">รอ / โน้ต</th>
-                    <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
-                    {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const overdue7 = (row.days_waiting ?? 0) > 7;
-                    return (
-                      <tr
-                        key={row.id}
-                        className={cn(
-                          "border-b border-white/6 hover:bg-white/8 transition-colors",
-                          row.current_stage === 8 && "border-l-2 border-l-emerald-400"
-                        )}
-                      >
-                        {/* Job / ลูกค้า */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {row.customer_tel && (
-                              <a href={`tel:${row.customer_tel}`}
-                                aria-label={`โทร ${row.customer_tel}`}
-                                className="focusable inline-flex items-center justify-center w-9 h-9 rounded-xl bg-sky-400/15 text-sky-200 hover:bg-sky-400/30 shrink-0 min-h-[44px] min-w-[36px]"
-                                onClick={(e) => e.stopPropagation()}>
-                                <Phone size={15} />
-                              </a>
-                            )}
-                            <div className="min-w-0">
-                              <div className="text-white font-medium tnum">{row.job_code ?? "—"}</div>
-                              <div className="text-white/90">{row.customer_name}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <StageBadge stage={row.current_stage} />
-                          {/* stage 8: ปุ่มรับมัดจำ */}
-                          {row.current_stage === 8 && (
-                            <a href={`/jobs?open=${row.id}`}
-                              className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-emerald-500/20 text-emerald-100 border border-emerald-300/30 hover:bg-emerald-500/35 transition">
-                              รับมัดจำ
-                            </a>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right tnum text-white/90">
-                          {row.net != null ? `${baht(row.net)} ฿` : <span style={{ color: "var(--t-low)" }}>—</span>}
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.days_waiting != null && (
-                            <div className={cn("text-[12px] tnum mb-1", overdue7 ? "text-rose-300 font-semibold" : "text-white/60")}>
-                              รอ {row.days_waiting} วัน
-                            </div>
-                          )}
-                          {row.remark && (
-                            <div className="text-[11px] italic max-w-[200px] truncate" style={{ color: "var(--t-mid)" }}>
-                              {row.remark}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
-                        {canWrite && (
-                          <td className="px-4 py-3 text-center">
-                            <ClosureActions job={row} onRevised={refetch} />
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Mobile */}
-          <div className="md:hidden space-y-3">
-            {rows.map((row) => {
-              const overdue7 = (row.days_waiting ?? 0) > 7;
-              return (
-                <div key={row.id} className={cn(
-                  "glass-card rounded-2xl p-4 space-y-2.5",
-                  row.current_stage === 8 && "border-l-2 border-emerald-400"
-                )}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
-                      <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
-                    </div>
-                    <StageBadge stage={row.current_stage} />
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {row.customer_tel && (
-                      <a href={`tel:${row.customer_tel}`}
-                        className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-400/15 text-sky-200 border border-sky-300/20 text-[12px] min-h-[40px]">
-                        <Phone size={14} /> {row.customer_tel}
-                      </a>
-                    )}
-                    {row.net != null && (
-                      <span className="text-[12px] tnum ml-auto" style={{ color: "var(--t-mid)" }}>{baht(row.net)} ฿</span>
-                    )}
-                  </div>
-
-                  {(row.days_waiting != null || row.remark) && (
-                    <div className="text-[12px] space-y-0.5">
-                      {row.days_waiting != null && (
-                        <div className={cn("tnum", overdue7 ? "text-rose-300 font-semibold" : "text-white/60")}>
-                          รอ {row.days_waiting} วัน
-                        </div>
-                      )}
-                      {row.remark && <div className="italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>}
-                    </div>
-                  )}
-
-                  {row.current_stage === 8 && (
-                    <a href={`/jobs?open=${row.id}`}
-                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[12px] font-semibold bg-emerald-500/20 text-emerald-100 border border-emerald-300/30">
-                      รับมัดจำ
-                    </a>
-                  )}
-
-                  {canWrite && <ClosureActions job={row} onRevised={refetch} />}
-                </div>
-              );
-            })}
-          </div>
+          {activeStage === "await" && <AwaitTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
+          {activeStage === "sent" && <SentTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
+          {activeStage === "revising" && <RevisingTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
         </>
       )}
     </>
@@ -597,13 +864,9 @@ function IssuesTab({ filters, canWrite }: { filters: FilterState; canWrite: bool
   const [creating, setCreating] = useState(false);
 
   const params = new URLSearchParams();
-  // ดึงเฉพาะที่ยังไม่ปิด (OPEN + IN_PROGRESS)
   if (filters.q) params.set("q", filters.q);
   if (filters.onlyOverdue) params.set("overdue", "1");
-  // ค่า default: ไม่ดึง CLOSED (แสดงเฉพาะ open)
-  // ไม่กรอง status ให้ IssuesPage ทำหน้าที่เต็มแทน — ที่นี่แสดง open เป็นหลัก
 
-  // ใช้ /api/issues (ไม่กรอง closed = แสดงทั้งหมด แต่ sort ด้วย priority)
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["issues-hub", filters.q, filters.onlyOverdue],
     queryFn: () => api.get<IssueTrackRow[]>(`/issues${params.toString() ? `?${params}` : ""}`),
@@ -611,7 +874,6 @@ function IssuesTab({ filters, canWrite }: { filters: FilterState; canWrite: bool
 
   const rows = data?.data ?? [];
   const agg = data?.meta?.aggregate as { total: number; open: number; overdue: number; urgent: number; oldest_days: number } | undefined;
-  const hasHigh = rows.some((r) => r.severity === "HIGH" && r.status !== "CLOSED");
 
   // client-side filter: ซ่อน CLOSED
   const openRows = rows.filter((r) => r.status !== "CLOSED");
@@ -666,14 +928,15 @@ export default function FollowUpHubClient({
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("closure");
   const [filters, setFilters] = useState<FilterState>({
-    q: "", onlyOverdue: false, onlyIssue: false, my: isSales, stageFilter: "",
+    q: "",
+    onlyOverdue: false,
+    onlyIssue: false,
+    my: isSales,
+    stageFilter: "sent", // ดีฟอลต์เลือก 'sent' (ส่งแบบแล้ว)
   });
 
   const patchFilter = (s: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...s }));
-
-  // Badge counts: โหลด lazy ผ่านแต่ละแท็บ query — ค่า count จาก meta
-  // (ใช้ queries ที่แต่ละแท็บโหลดแล้ว ไม่โหลดซ้ำ)
 
   const tabs: TabMeta[] = [
     { key: "closure", label: "ปิดการขาย" },
@@ -697,12 +960,11 @@ export default function FollowUpHubClient({
       {/* TabBar */}
       <TabBar active={activeTab} tabs={tabs} onChange={(t) => setActiveTab(t)} />
 
-      {/* Filter bar (ร่วมทุกแท็บ) */}
+      {/* Filter bar (ร่วมทุกแท็บ — ไม่มี stage dropdown แล้ว) */}
       <FilterBar
         state={filters}
         onChange={patchFilter}
         isSales={isSales}
-        showStageFilter={activeTab === "closure"}
       />
 
       {/* Tab content */}
@@ -710,6 +972,7 @@ export default function FollowUpHubClient({
         <ClosureTab
           isSales={isSales}
           filters={filters}
+          onFilterChange={patchFilter}
         />
       )}
       {activeTab === "production" && (
