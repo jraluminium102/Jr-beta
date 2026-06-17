@@ -1759,9 +1759,16 @@ function glassOpts(){ return GLASS.map((g,i)=>`<option value="${i}">${g.n}</opti
 // R3.9: หมายเหตุมาตรฐานต่อรายการ — dropdown จัดกลุ่ม (เลือกแล้วเพิ่มเข้า .i-note · ไหลลงใบเอง) · ยกคำจากใบจริง
 const REMARK_PRESETS=[
  {g:'รวมในราคา',items:[
-   'ราคาที่เสนอรวมงานรื้อของเดิม กรณีเกิดความเสียหายจากการทำงานมีบริการเปลี่ยน/เก็บงานให้ฟรี แต่ไม่รวมวัสดุ (ลูกค้าเตรียมให้)',
-   'ราคาที่เสนอรวมงานดรอปพื้น',
-   'ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู แต่ไม่รวมความเสียหายที่เกิดจากการดรอปพื้น เช่น กระเบื้องแตก งานเก็บสี',
+   'ราคาที่เสนอรวมงานรื้อประตูเดิม ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงานดรอปพื้น ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น กระเบื้องพื้นแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น กระเบื้องพื้นแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)',
+   'ราคาที่เสนอรวมค่าตั้งนั่งร้านเหล็กเพื่อขนของขึ้นพร้อมติดตั้ง',
+   'ราคาที่เสนอรวมงานรื้อราวกันตก ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น งานเก็บปูนแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงานรื้อหลังคาเดิม ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น โครงเดิมเป็นรอย วัสดุมุงหลังคาเดิมแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงานกรีดฝ้าเพื่อซ่อนคานซ่อนราง ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น วัสดุเดิมเป็นรอย งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอรวมงานทาสีจริงผนังเบากรุสมาร์ทบอร์ด (ลูกค้าดำเนินการจัดเตรียมสีให้บริษัท)',
+   'ราคาที่เสนอรวมงานเดินไฟดาวน์ไลท์แบบท่อลอย .. ดวง (ไม่รวมชุดดวงโคม ลูกค้าดำเนินการจัดเตรียมชุดดวงโคม) ใช้สวิตช์ไฟเดิม / พร้อมสวิตช์ไฟ .. จุด และปลั๊กไฟ .. จุด และไม่รวมงานเดินไฟเข้าตู้เมนหลัก',
    'ราคาที่เสนอรวมงานนั่งร้าน และโพรเทคฟิล์มฟ้าบริเวณกระจกเพื่อกันสิ่งสกปรก แต่ไม่รวมงานทำความสะอาด Big cleaning',
    'ราคาที่เสนอรวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม' ]},
  {g:'ไม่รวมในราคา',items:[
@@ -1772,18 +1779,45 @@ const REMARK_PRESETS=[
    'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูน / งานดรอปพื้น',
    'ราคาที่เสนอไม่รวมงาน รื้อพื้นเดิม / รื้อกระเบื้อง / รื้อหลังคาเดิม / งานเดินไฟ / งานสี',
    'ราคาที่เสนอไม่รวมงาน ย้ายกล้องวงจรปิด / ย้ายแอร์ (ลูกค้าดำเนินการเอง)',
-   'ราคาที่เสนอไม่รวมงาน ถอดรางน้ำเดิม / งานทาสี / งานเดินไฟ' ]},
+   'ราคาที่เสนอไม่รวมงาน ถอดรางน้ำเดิม / งานทาสี / งานเดินไฟ',
+   'งานเดินไฟสำหรับมอเตอร์ (พ่วงปลั๊กบริเวณใกล้เคียง ระยะเดินสายไฟมอเตอร์ไม่เกิน 10 เมตร) และไม่รวมงานเดินไฟเข้าตู้เมนหลัก' ]},
  {g:'เงื่อนไข / วัสดุ',items:[
    'วัสดุและอุปกรณ์ตามแบบมาตรฐานผู้ผลิต',
    'จำนวนและราคาอาจมีการเปลี่ยนแปลงเมื่อช่างเข้าวัดหน้างานจริง',
    'วัสดุ Sealant ภายนอก-ภายใน ใช้ PU / MS สีขาว (สำหรับทาสีได้), ใช้ซิลิโคนใสสำหรับยิงกระจก',
    'ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม' ]},
 ];
-function remarkSelectHTML(){ var o='<option value="">＋ เพิ่มหมายเหตุมาตรฐาน (เลือกทีละข้อ · ขึ้นในใบ)</option>';
- REMARK_PRESETS.forEach(function(grp){ o+='<optgroup label="'+grp.g+'">'+grp.items.map(function(t){return '<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>';}).join('')+'</optgroup>'; });
- return '<select class="o-remark-add" onchange="addRemark(this)" style="width:100%;height:34px;font-size:12px;margin-bottom:4px;border:1px solid var(--line);border-radius:6px;color:#B3151D;background:#FFF9F9;">'+o+'</select>'; }
-function addRemark(sel){ if(!sel.value)return; var ch=sel.closest('.ch'); var n=ch?ch.querySelector('.i-note'):null;
- if(n){ n.value=(n.value.trim()?n.value.trim()+'\n':'')+sel.value; } sel.value=''; if(typeof calcQuote==='function')calcQuote(); }
+// 17 มิ.ย. (Region 1): หมายเหตุมาตรฐาน = กล่องพับ (▶) + แถวติ๊กหลายข้อ (แทน dropdown เลือกทีละข้อ) · ไหลลง .i-note เหมือนเดิม (genQuote ไม่เปลี่ยน)
+function remarkSelectHTML(){
+  var h='<details class="rk-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;">'
+    +'<summary style="cursor:pointer;font-size:13px;color:#B3151D;font-weight:600;">＋ เพิ่มหมายเหตุมาตรฐาน (ติ๊กได้หลายข้อ · ขึ้นในใบ)</summary>'
+    +'<div class="rk-list" style="margin-top:6px;">';
+  REMARK_PRESETS.forEach(function(grp){
+    h+='<div style="font-size:12px;font-weight:700;color:#7f1d1d;margin:7px 2px 2px;">'+grp.g+'</div>';
+    grp.items.forEach(function(t){
+      var esc=t.replace(/"/g,'&quot;');
+      h+='<label class="rk-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 6px;font-size:12.5px;cursor:pointer;border-radius:6px;">'
+        +'<input type="checkbox" class="rk-cb" data-t="'+esc+'" onchange="rkToggle(this)" style="width:16px;height:16px;margin-top:2px;flex:none;">'
+        +'<span>'+t+'</span></label>';
+    });
+  });
+  return h+'</div></details>';
+}
+// ติ๊ก = เพิ่มบรรทัดลง .i-note · ติ๊กออก = ลบบรรทัดนั้น (เทียบ trim เป๊ะ · คงบรรทัดที่พิมพ์เอง)
+function rkToggle(cb){
+  var ch=cb.closest('.ch'); var n=ch?ch.querySelector('.i-note'):null; if(!n)return;
+  var t=cb.dataset.t, arr=n.value.split('\n'), idx=-1;
+  for(var i=0;i<arr.length;i++){ if(arr[i].trim()===t){ idx=i; break; } }
+  if(cb.checked){ if(idx<0){ var base=n.value.replace(/\s+$/,''); n.value=(base?base+'\n':'')+t; } }
+  else if(idx>=0){ arr.splice(idx,1); n.value=arr.join('\n').replace(/\n{2,}/g,'\n').replace(/^\n+|\n+$/g,''); }
+  if(typeof calcQuote==='function')calcQuote();
+}
+// sync ติ๊กจากเนื้อ .i-note (เผื่อ note ถูกตั้งค่า/พิมพ์เอง) — เรียกหลังสร้างรายการ
+function rkSync(ch){
+  if(!ch)return; var n=ch.querySelector('.i-note'); if(!n)return;
+  var has={}; n.value.split('\n').forEach(function(s){ has[s.trim()]=1; });
+  ch.querySelectorAll('.rk-cb').forEach(function(cb){ cb.checked=!!has[cb.dataset.t]; });
+}
 const CHECKLIST={
 'ทั่วไป / ก่อนวัดขนาด':['งานภายนอก หรือ ภายใน','จับเซี้ยม/งานพื้นเสร็จก่อนวัดขนาดผลิต','มีงานรื้อไหม → ตีราคาเผื่อรื้อ','ดูงบลูกค้า → เชียร์งานแพง/ถูก','อธิบายกันน้ำ: บานสวิงไม่กัน / บานเปิดกัน','ต้องการกระจกนิรภัย (เทมเปอร์) ไหม','ต้องการอลูอบสีพิเศษ/ลายไม้ไหม (หลังมัดจำแก้ไม่ได้)','ไม่กรีดพื้น/ไม่มีรางล่าง/ไม่มีธรณี — รับข้อเสียได้ไหม','ระบุวัสดุ/กระจกหนาต่างกันในแบบ (ช่วยคนถอดของ)','เผื่อผ้าใบ Protect พื้น/สระน้ำ'],
 'งานรื้อ / กันเสียง':['แจ้งลูกค้า ไม่รวมความเสียหายจากการรื้อ','ลูกค้าเตรียมสีเก็บเอง (หรือบริษัททาเฉพาะจุด)','งานกันเสียง = บานเปิด/ติดตายเท่านั้น + มีธรณีล่าง','ช่างผลิต: ใส่ PU Foam + ยางแทนสักหลาด'],
@@ -3701,6 +3735,7 @@ function addItem(container){
   { var _gc=document.getElementById('global-color'); var _gg=document.getElementById('global-glass');
     if(_gc && _gc.value!==''){ var _ci=d.querySelector('.i-color'); if(_ci) _ci.value=_gc.value; }
     if(_gg && _gg.value!==''){ var _gi=d.querySelector('.i-glass'); if(_gi) _gi.value=_gg.value; } }
+  try{ rkSync(d); }catch(e){}  // Region 1: sync ติ๊กหมายเหตุให้ตรงเนื้อ .i-note (ปกติว่าง = no-op · กันเคส note โหลดมามีค่า)
   d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d);
     // ข้อ2: ราวกันตก default กระจกเทมเปอร์ใส 10 มม. (glassDef) — เลือก 12 มม.ได้จาก dropdown · ราคาไม่ขึ้นกับกระจก
     { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
