@@ -1170,21 +1170,21 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const W=parseFloat(w)||0, H=parseFloat(h)||0;
     const A = W*H;
     if(A<=0) return {a:0, sell:0, cost:null, msgs:['กรอกขนาด'], addonLabel:''};
-    // หา rate ตาม tier
-    const rate = rateOf(A, RATES[p.rates]);
-    const baseSell = A * rate;
     // min ตาม itype
     let itype = 'door';
     try{ const tEl = d && d.querySelector ? d.querySelector('.i-type') : null; if(tEl) itype = tEl.value||'door'; }catch(e){}
     const panelN = parseInt(panels)||1;
     const minPerPanel = (itype==='window') ? (p.min_window||0) : (p.min_door||0);
-    const totalMin = minPerPanel * panelN;
-    let sell = Math.max(totalMin, baseSell);
+    // G5 (17มิ.ย.): มุ้งเฟรมคิดต่อบาน — พื้นที่/บาน → rate ต่อบาน → ×จำนวนบาน (เดิมใช้พื้นที่รวม = 2 บานราคาเท่า 1 บาน · panelN=1 ให้ค่าเดิม golden ไม่เพี้ยน)
+    const aPer = A / panelN;
+    const rate = rateOf(aPer, RATES[p.rates]);
+    const perPanel = Math.max(minPerPanel, aPer * rate);
+    let sell = perPanel * panelN;
     const msgs = [];
-    msgs.push('เฟรมมุ้ง: '+A.toFixed(2)+' ตร.ม. × '+fmt(rate)+' = '+fmt(baseSell)+(totalMin>baseSell?(' (ใช้ min '+(itype==='window'?'หน้าต่าง':'ประตู')+' '+fmt(minPerPanel)+'×'+panelN+' = '+fmt(totalMin)+')'):''));
+    msgs.push('เฟรมมุ้ง: '+aPer.toFixed(2)+' ตร.ม./บาน × '+fmt(rate)+(panelN>1?(' × '+panelN+' บาน'):'')+' = '+fmt(sell)+(perPanel<=minPerPanel?(' (min '+(itype==='window'?'หน้าต่าง':'ประตู')+' '+fmt(minPerPanel)+'/บาน)'):''));
     // Option ผ้ามุ้ง add-on
     const screen = (optSel && optSel.screenFabric) || 'fiber';
-    if(screen==='cat') { sell += A * 800; msgs.push('ผ้ามุ้ง: กันแมว/หมา (สีขาว) +'+fmt(A*800)); }
+    if(screen==='cat') { sell += A * 800; msgs.push('ผ้ามุ้ง: กันแมว (สีขาว) +'+fmt(A*800)); }
     else if(screen==='rat') { sell += A * 1200; msgs.push('ผ้ามุ้ง: สแตน 0.33มม. กันหนู +'+fmt(A*1200)); }
     else if(screen==='safety' && p.rates==='IMP23') {
       const sRate = rateOf(A, RATES.IMP31);
@@ -2240,7 +2240,7 @@ var QIG5_FAM=[
   {k:'roll',n:'มุ้งม้วน',items:[
     {id:'imp29',n:'ม้วนไฟเบอร์'},{id:'mj_kick_150',n:'ม้วนเตะ 150'},{id:'mj_kick_300',n:'ม้วนเตะ 300'},{id:'mj_kick_600',n:'ม้วนเตะ 600'}]}
 ];
-var QIG5_FABRIC=[{k:'free',n:'ไฟเบอร์ (เทา/ดำ)'},{k:'cat',n:'กันแมว/หมา +800'},{k:'rat',n:'กันหนูสแตน +1,200'},{k:'safety',n:'ผ้านิรภัย 304'}];
+var QIG5_FABRIC=[{k:'free',n:'ไฟเบอร์ (เทา/ดำ)'},{k:'cat',n:'กันแมว +800'},{k:'rat',n:'กันหนูสแตน +1,200'},{k:'safety',n:'ผ้านิรภัย 304'}];
 function qiG5FamOf(id){ for(var i=0;i<QIG5_FAM.length;i++){ for(var j=0;j<QIG5_FAM[i].items.length;j++){ if(QIG5_FAM[i].items[j].id===id)return i; } } return 0; }
 function qiG5ItemOf(id){ for(var i=0;i<QIG5_FAM.length;i++){ for(var j=0;j<QIG5_FAM[i].items.length;j++){ if(QIG5_FAM[i].items[j].id===id)return QIG5_FAM[i].items[j]; } } return null; }
 function qiRenderG5(d){
@@ -4370,7 +4370,7 @@ function buildItemOpts(d){
     // G5-FINAL D: ผ้ามุ้ง → ชิป (chSetChip + mosqFabricColors ผูกสีผ้า) · ซ่อน select เดิม (logic อ่าน .o-screenfabric value เดิม)
     h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <div class="chip-group chip-sm">'
       +'<button type="button" class="chip on" data-val="fiber" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">ไฟเบอร์ เทา/ดำ</button>'
-      +'<button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">กันแมว/หมา ขาว +800</button>'
+      +'<button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">กันแมว ขาว +800</button>'
       +'<button type="button" class="chip" data-val="rat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">สแตนกันหนู +1,200</button>'
       +(p.rates==='IMP23'?'<button type="button" class="chip" data-val="safety" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">นิรภัยสแตน 304 ดำ</button>':'')
       +'</div><select class="o-screenfabric" style="display:none;" onchange="calcQuote();"><option value="fiber">ไฟเบอร์ เทา/ดำ</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>'+(p.rates==='IMP23'?'<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>':'')+'</select></label>';
@@ -5467,7 +5467,7 @@ function genQuote(keepNo){
     else if(it.p.cat==='มุ้ง'){
       // G5 (5-block 16มิ.ย.): หัว=ชื่อ+ลักษณะเปิด+ขนาด · รายละเอียด(หัวแดง)=สีกรอบก่อน→ผ้าหลัง
       var _mo=it.optSel||{};
-      var _fabMap={fiber:'ผ้าไฟเบอร์',fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',cat:'ผ้ากันแมว/หมา',rat:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.',safety:'ผ้าสแตนนิรภัย 0.8มม.'};
+      var _fabMap={fiber:'ผ้าไฟเบอร์',fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',cat:'ผ้ากันแมว',rat:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.',safety:'ผ้าสแตนนิรภัย 0.8มม.'};
       // ── รายละเอียด: สีกรอบก่อน (เมื่อมีสีพิเศษ) · ตามด้วยผ้า (เมื่อมีการเลือกผ้าจริง) ──
       var _mSpec=[];
       var _mciM=parseInt(_mo.mscolor);
@@ -5483,7 +5483,13 @@ function genQuote(keepNo){
         _mSpec.push(_fabMap[_mo.mosqFabric]||'ผ้าไฟเบอร์');
       }
       // mj_* ไม่มี screenfabric/mosqFabric → ผ้าอยู่ในชื่อสินค้าแล้ว ไม่ push ซ้ำ
-      det='\n###รายละเอียด###\n'+_mSpec.join('\n');
+      // #3 G5 (17มิ.ย.): เพิ่มรายการ(งาน) บน — ชื่อมุ้ง+ลักษณะเปิด+จำนวนบาน (เดิมว่าง · ทำเต็มเหมือน G1)
+      var _mWork=[];
+      var _mqNm=(it.p.name||'มุ้ง').replace(/\s*\([^)]*\)/g,'').replace(/\s*·\s*ข้อ\s*[\d.]+/g,'').replace(/\s+/g,' ').trim();
+      if(_mo.mosqOpenStyle) _mqNm+=' บาน'+_mo.mosqOpenStyle;
+      var _mqPnl=parseInt((it.div&&it.div.querySelector('.i-panels')||{}).value)||1;
+      _mWork.push(_mqNm+(_mqPnl>1?(' '+_mqPnl+' บาน'):''));
+      det=_mWork.join('\n')+(_mSpec.length?('\n###รายละเอียด###\n'+_mSpec.join('\n')):'');
     }
     else if(it.p.id==='shower'){
       // Pass2-C: shower — ประกอบข้อความจากชนิดบาน + ประเภทประตู → "กระจกเทมเปอร์ใส 10 มม. + ราวสแตนเลส"
