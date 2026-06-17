@@ -117,7 +117,8 @@ export const GET = withRoute(async (req: Request) => {
   });
 
   // ปิดการขาย = stage 3–8 เท่านั้น (safety-net quote_sent_date อาจดึง stage 9+ ที่ status ยังไม่ post-deposit → ตัดออก)
-  const inWindow = rows.filter((r) => r.current_stage >= 3 && r.current_stage <= 8);
+  // ปิดการขาย = stage 5–8 (ทำใบเสนอ→มัดจำ) เท่านั้น · ขั้น 3-4 (วาดแบบ/ตรวจแบบ) ยังอยู่หน้าเขียนแบบ ไม่ปนที่นี่
+  const inWindow = rows.filter((r) => r.current_stage >= 5 && r.current_stage <= 8);
   // กรอง stage เดียวถ้าส่ง ?stage=
   const filtered = stageF ? inWindow.filter((r) => r.current_stage === Number(stageF)) : inWindow;
 

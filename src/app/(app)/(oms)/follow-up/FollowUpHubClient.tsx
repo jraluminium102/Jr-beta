@@ -151,8 +151,8 @@ function FilterBar({
           aria-label="กรองตามขั้น"
           className="focusable glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none min-h-[44px] [&>option]:text-gray-800"
         >
-          <option value="">ทุกขั้น (3-8)</option>
-          {[3, 4, 5, 6, 7, 8].map((s) => (
+          <option value="">ทุกขั้น (5-8)</option>
+          {[5, 6, 7, 8].map((s) => (
             <option key={s} value={String(s)}>{s} · {STAGE_NAMES[s]}</option>
           ))}
         </select>
