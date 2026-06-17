@@ -275,8 +275,8 @@
   /* ① สีอลู drill-down: จุดสีกลมในชิป ([[chip-color-swatch-style]]) */
   .cdot{ display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.28); vertical-align:middle; flex:0 0 auto; background-size:cover; }
   .chip.on .cdot{ border-color:rgba(255,255,255,.7); }
-  .color-cat-row .chip, .glass-cat-row .chip{ font-weight:700; }
-  .color-drill, .glass-drill{ margin-top:4px; }
+  .color-cat-row .chip, .glass-cat-row .chip, .mosq-cat-row .chip{ font-weight:700; }
+  .color-drill, .glass-drill, .mosq-drill{ margin-top:4px; }
   /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
   /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
   label.opt:has(> .chip-grid){ display:block; }
@@ -1082,6 +1082,35 @@ function glassDrillRender(sel){
 function glassDrillCat(btn){ var sel=_glassDrillSel(btn); if(!sel)return; sel.dataset.glCat=btn.dataset.cat; glassDrillRender(sel); }
 function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
+
+// ===== ④ มุ้ง drill-down (HANDOFF-redesign จุด④ · มติพี่นัท 17มิ.ย.) =====
+//   o-mosq(โดน hide) → ชิปชนิด(ไม่ใส่+optgroup เฟรม/จีบ/ม้วน/อื่นๆ)→ชิปรุ่น · ขับ value=product id (string · เดิม) · ผ้ามุ้ง=ชิป o-mosqfabric เดิม
+//   อ่านโครงสร้างจาก optgroup ของ select → adapt itype filter อัตโนมัติ · fire input+change (mosqGroupToggle/calcQuote เดิม)
+function _mosqGroups(sel){ var groups=[]; Array.prototype.forEach.call(sel.children,function(node){ if(node.tagName==='OPTGROUP'){ var g={label:node.label,opts:[]}; Array.prototype.forEach.call(node.children,function(o){ g.opts.push({v:o.value,t:(o.textContent||'').trim()}); }); groups.push(g); } }); return groups; }
+function _mosqDrillSel(el){ var dr=el.closest('.mosq-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s&&s.tagName!=='SELECT')s=s.previousElementSibling; return s; }
+function mosqDrillRender(sel){
+  if(!sel) return;
+  var groups=_mosqGroups(sel); var cur=sel.value;
+  var curCat=(cur==='')?'__none':(function(){ for(var i=0;i<groups.length;i++){ if(groups[i].opts.some(function(o){return o.v===cur;})) return groups[i].label; } return '__none'; })();
+  var actCat=sel.dataset.mqCat || curCat;
+  if(actCat!=='__none' && !groups.some(function(g){return g.label===actCat;})) actCat=curCat;
+  var wrap=null; if(sel.nextSibling && sel.nextSibling.classList && sel.nextSibling.classList.contains('mosq-drill')) wrap=sel.nextSibling;
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='mosq-drill'; sel.parentNode.insertBefore(wrap,sel.nextSibling); sel.style.display='none'; }
+  var html='<div class="chip-group chip-sm mosq-cat-row">';
+  html+='<button type="button" class="chip'+(actCat==='__none'?' on':'')+'" data-cat="__none" onclick="mosqDrillNone(this)">ไม่ใส่</button>';
+  groups.forEach(function(g){ html+='<button type="button" class="chip'+(g.label===actCat?' on':'')+'" data-cat="'+g.label.replace(/"/g,'&quot;')+'" onclick="mosqDrillCat(this)">'+g.label+'</button>'; });
+  html+='</div>';
+  if(actCat!=='__none'){ var ag=groups.filter(function(g){return g.label===actCat;})[0];
+    html+='<div class="chip-group chip-sm mosq-sw-row" style="margin-top:6px;">';
+    if(ag) ag.opts.forEach(function(o){ var short=o.t.split(' (')[0]; html+='<button type="button" class="chip mosq-chip'+(o.v===cur?' on':'')+'" data-val="'+o.v.replace(/"/g,'&quot;')+'" onclick="mosqDrillPick(this)">'+short+'</button>'; });
+    html+='</div>';
+  }
+  wrap.innerHTML=html;
+}
+function mosqDrillCat(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.dataset.mqCat=btn.dataset.cat; mosqDrillRender(sel); }  // เปลี่ยนชนิด (ยังไม่ commit · รอเลือกรุ่น)
+function mosqDrillNone(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.dataset.mqCat='__none'; sel.value=''; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); mosqDrillRender(sel); }
+function mosqDrillPick(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.value=btn.dataset.val; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); mosqDrillRender(sel); }
+function mosqDrillify(d){ if(!d)return; var s=d.querySelector('.o-mosq'); if(s) mosqDrillRender(s); }
 // SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
 function rn90FinRate(ci){
   if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
@@ -4567,6 +4596,7 @@ function buildItemOpts(d){
   } }
   // พี่นัท 17 มิ.ย.: ออปชั่นดรอปดาวน์ตัวเลือกน้อย → ชิป (หลัง groupGHOpts + hooks ครบ · ไม่แตะ G7)
   chipifyItem(d);
+  try{ mosqDrillify(d); }catch(e){}  // ④ มุ้ง drill-down (o-mosq → ชนิด→รุ่น)
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
   if(_mpat){
