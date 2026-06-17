@@ -2025,8 +2025,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   var _gg=document.getElementById('global-glass');
   if(_gc) _gc.innerHTML=colorOpts();
   if(_gg) _gg.innerHTML=glassOpts();
-  if(_gc){ colorDrillRender(_gc); }  // ① สีอลู drill-down (ทั้งใบ)
-  if(_gg){ glassDrillRender(_gg); }  // ② กระจก drill-down (ทั้งใบ)
+  // ก้อนรวม#6 (พี่นัทเคาะ 17มิ.ย.): revert สี/กระจก "ทั้งใบ" → ดรอปดาวน์ปกติ (เลิก drill-down เฉพาะตัวทั้งใบ) · รายบาน .i-color/.i-glass ยังเป็น drill-down
+  // (เดิม: colorDrillRender(_gc) / glassDrillRender(_gg) — ปิดไว้ ให้ #global-color/#global-glass คงเป็น select)
   if(_gc) _gc.addEventListener('change',syncGlobalColorGlass);
   if(_gg) _gg.addEventListener('change',syncGlobalColorGlass);
   addQuickItem();
