@@ -138,9 +138,10 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
 
     // ─── path ประเมินหน้างาน ──────────────────────────────────────────────
     // ลูกค้าเก่าหน้างานเดิม (target_job_id ถูกส่งมา) → บันทึก assess_date ใหม่ (best-effort)
-    const isExistingSite = !!(data as { target_job_id?: string | null }).target_job_id;
-    if (isExistingSite && rawBody.queue_date) {
-      await sb.from("jobs").update({ assess_date: rawBody.queue_date }).eq("id", jobId);
+    // อ่าน queue_date จาก row ที่เซฟแล้ว (data) ไม่ใช่ rawBody — กันกรณี PATCH ไม่ได้ส่ง queue_date มาด้วย
+    const existing = data as { target_job_id?: string | null; queue_date?: string | null };
+    if (existing.target_job_id && existing.queue_date) {
+      await sb.from("jobs").update({ assess_date: existing.queue_date }).eq("id", jobId);
     }
 
     // คืนชีพงานที่ถูก cancel ก่อนเริ่มจริง (idempotent) — เฉพาะงานใหม่/งานเดิมที่ cancel เร็ว
