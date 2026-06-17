@@ -45,19 +45,29 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
     .order("created_at", { ascending: false });
   const jobRows = (jobs ?? []) as { customer_area: string | null; queue_entry_id: string | null }[];
 
-  // queue entries ของงานเหล่านั้น (ล่าสุดก่อน)
+  // queue entries ของลูกค้า — จับด้วย (1) เบอร์โทร (หลาย format) + (2) งานที่ลิงก์ queue_entry_id
+  // **สำคัญ**: งาน import ไม่ลิงก์ queue_entry_id → ต้องจับด้วยเบอร์ด้วย ไม่งั้น location (ที่อยู่ใน queue) หาย
   const qIds = jobRows.map((j) => j.queue_entry_id).filter(Boolean);
+  const cdigits = String(c.phone ?? "").replace(/[^0-9]/g, "");
+  const phoneCandidates = Array.from(new Set([c.phone, cdigits].filter((v) => v && v !== ""))) as string[];
+  const QF = "id, tel, address, location_url, lat, lng, line_contact, contact_channel, created_at";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let queues: Record<string, any>[] = [];
-  if (qIds.length) {
-    const { data: qe } = await sb
-      .from("queue_entries")
-      .select("tel, address, location_url, lat, lng, line_contact, contact_channel, created_at")
-      .in("id", qIds)
-      .order("created_at", { ascending: false });
+  if (phoneCandidates.length) {
+    const { data } = await sb.from("queue_entries").select(QF).in("tel", phoneCandidates);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queues = (qe ?? []) as Record<string, any>[];
+    queues = queues.concat((data ?? []) as Record<string, any>[]);
   }
+  if (qIds.length) {
+    const { data } = await sb.from("queue_entries").select(QF).in("id", qIds);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queues = queues.concat((data ?? []) as Record<string, any>[]);
+  }
+  // dedupe by id + เรียงล่าสุดก่อน (ใช้ค่าที่ใหม่สุดต่อ field)
+  const seenQ = new Set<unknown>();
+  queues = queues
+    .filter((q) => { if (seenQ.has(q.id)) return false; seenQ.add(q.id); return true; })
+    .sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
 
   const firstQ = (key: string) => {
     const f = queues.find((q) => q[key] != null && q[key] !== "");
