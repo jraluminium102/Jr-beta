@@ -9,7 +9,11 @@ const HTML = readFileSync("public/calculator/index.html", "utf8");
 // ── รายการงาน: name=ชื่องาน · marker=คำที่จะมีใน index.html "เมื่อ Chat B แก้เสร็จ" · doc=คำในชื่อไฟล์ CODE-READY (docs/) ──
 const TASKS = [
   { name: "G3 ฝ้าระแนงอลู 3 รุ่น",      marker: /ceil_ranae_1x5/,    doc: "ฝ้าระแนงอลู" },
-  { name: "G3 ใบ 5 บล็อก (หลังคา/ฝ้า)", marker: /สีหลังคา:/,         doc: "ใบ5บล็อก" },
+  { name: "G3-A1 ใบ 5 บล็อก (หลังคา/ฝ้า)", marker: /สีหลังคา:/,      doc: "ใบสั่งงาน-G3-A" },
+  { name: "G3-A2 ชินโคสีครบรหัส",       marker: /N828/,              doc: "ใบสั่งงาน-G3-A" },
+  { name: "G3-A3 ดีไลท์ DG7",          marker: /DG7/,               doc: "ใบสั่งงาน-G3-A" },
+  { name: "G3-B1 ปุ่มโพลีตันชิป(แบบค)", marker: /ใส 83%/,            doc: "ใบสั่งงาน-G3-B" },
+  { name: "G3-B2 ปุ่มฝ้าชิป",          marker: /'o-ceildir','o-ceilpos'/, doc: "ใบสั่งงาน-G3-B" }, // auto chipify (CHIPIFY_SELECTS) · verify browser: chipped=1 ทั้งคู่
   { name: "G1 ใบ 5 บล็อก",             marker: /สีอลูมิเนียม:/,     doc: null },
   { name: "G4 ใบ 5 บล็อก (ตู้)",        marker: /บานหน้า Future Tech /, doc: null },
   // เพิ่มงานใหม่ที่นี่:  { name:"...", marker:/คำในโค้ด/, doc:"คำในชื่อไฟล์" },
