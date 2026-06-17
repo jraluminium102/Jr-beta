@@ -428,8 +428,8 @@ function BoardView({
   onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
 }) {
+  // auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก)
   return (
-    {/* auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก) */}
     <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
