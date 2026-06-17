@@ -1340,7 +1340,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     }
     // BUG2 fix (doc-option-auditor): โหมด B ค่าเสริมกล่อง/ราง — screen_addon (เฟรม imp21/22/23) return ก่อนถึง L1460 → บวกที่นี่ (เดิมคิดขาด)
     if(optSel && optSel.screen_existing){ const sx=parseFloat(optSel.screen_extra)||0; if(sx>0){ sell+=sx; msgs.push('🔧 ติดบานเดิม + ค่าเสริมกล่อง/ราง +'+fmt(sx)); } else { msgs.push('🔧 ติดบานเดิม (ไม่เสริมกล่อง/ราง)'); } }
-    msgs.push('⚠ ไม่รวมเสริมวงกบ/เสริมราง — คิดเพิ่มภายหลัง');
+    // BUG1 (ก้อนรวม 17มิ.ย.): ค่าทำสีกรอบมุ้งเฟรม — เดิม return ก่อนถึง mscolor block (L1465) = ไม่คิด · คิด colorPrice×0.5 เหมือนมุ้ง non-screen (imp28) · default '' = ไม่บวก (golden นิ่ง)
+    if(p.mscolor && optSel && optSel.mscolor){ const _mci=parseInt(optSel.mscolor); if(!isNaN(_mci)&&_mci>0&&COLORS[_mci]){ const _cAdd=colorPrice(_mci,A,'')*0.5; if(_cAdd>0){ sell+=_cAdd; const _lb=(COLORS[_mci].quoteName||COLORS[_mci].n).replace(/[★⚠🔖🔒]/g,'').trim(); msgs.push('สีกรอบ '+_lb+' (×0.5) +'+fmt(Math.round(_cAdd))); } } }
+    // BUG2 (ก้อนรวม 17มิ.ย.): ครอบวงกบมุ้งเฟรม — เดิม return ก่อนถึง L1727/1729 = Δ0 · คิดเรตตามสี (ci) เหมือนงานบาน · default fcsides=0/fcm=0 = ไม่บวก (golden นิ่ง)
+    if(optSel){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700)))));
+      const _fcm=parseFloat(optSel.fcm)||0; if(_fcm>0){ sell+=_fr*_fcm; msgs.push('ครอบวงกบ '+_fcm.toFixed(2)+'ม.×'+_fr+' = '+fmt(_fr*_fcm)); }
+      const _fcs=parseInt(optSel.fcsides)||0; if(_fcs===3||_fcs===4){ const _flen=_fcs===3?(W+2*H):2*(W+H); if(_flen>0){ sell+=_fr*_flen; msgs.push('ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×'+_fr+' = '+fmt(_fr*_flen)); } } }
+    msgs.push('⚠ ไม่รวมเสริมราง — คิดเพิ่มภายหลัง');
     return {a:A, sell:roundUp(sell), cost:null, addonLabel:'', msgs:[msgs.join(' · ')]};
   }
     if(p.bar_grid){
