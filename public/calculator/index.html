@@ -4223,7 +4223,7 @@ function buildItemOpts(d){
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
   // R3.9: เลิก "เสริมคาน รุ่น1/2/3" (o-beamm · บานเลื่อน/เปิด/PC) — เสริมคานเหลือเฉพาะเลื่อนภายใน+บานเฟี้ยม ผ่าน "เสริมคานซัพพอร์ท" (COMMON_OPTS) · บานเลื่อนรางล่าง/เปิด/PC ไม่มีเสริมคาน
-  if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ h+=`<label class="opt"><input type="checkbox" class="o-insul" onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
+  if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ const _insChk=['isowall','wall_ext','wall_int'].includes(p.id)?' checked':''; h+=`<label class="opt"><input type="checkbox" class="o-insul"${_insChk} onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; } // ก้อนรวม#5: default ติ๊กเฉพาะผนังเบา 3 ตัว (สเปกเฟิร์ม · ลูกค้าติ๊กออกได้) · ฝ้าฉาบเรียบ/optInsul อื่นไม่ติ๊ก
   // G3 ข้อ2 (มติพี่นัท ข): ฝ้า-ผนัง — รุ่น/ความหนา (ระบุในใบ) + ทาสี (กรอกราคาเอง)
   if(p.cat==='ฝ้า-ผนัง'){
     h+='<label class="opt" style="width:100%;">รุ่น/ความหนา <select class="o-wallmodel" style="width:auto;height:32px;max-width:340px;" onchange="calcQuote();"><option value="">ไม่ระบุ</option><option value="สมาร์ทบอร์ด หนา 12 มม.">สมาร์ทบอร์ด หนา 12 มม.</option><option value="เวเทอร์บล็อค ตราช้าง หนา 9 มม. เสริมฟอยล์กันร้อน/น้ำ/รา">เวเทอร์บล็อค ตราช้าง 9 มม. (ฟอยล์ กันร้อน/น้ำ/รา)</option></select> <span style="font-size:11px;color:#666;">(ระบุในใบ · ราคาตามวัสดุ รอเรต)</span></label>';
@@ -4506,7 +4506,7 @@ function buildItemOpts(d){
   if(p.ceiling && p.crates){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; } // ฝ้าระแนงอลู ไม่มี crates → ไม่โชว์สี (v1 สีมาตรฐาน)
   // สเปก rev2: ฝ้า-ผนัง — ฟิลด์รายละเอียดวัสดุ (โครง/สมาร์ทบอร์ด/ISOWALL/ฝ้าฉาบ)
   if(p.cat==='ฝ้า-ผนัง'){
-    h+='<label class="opt" style="width:100%;">โครง <select class="o-wallframe" style="display:none;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ">โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select>'+rfChips('o-wallframe',[['','อลูมิเนียม'],['เหล็กชุบ','เหล็กชุบซิงค์ (ไร้สนิม)']],'',true)+'</label>';
+    h+='<label class="opt" style="width:100%;">โครง <select class="o-wallframe" style="display:none;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ" selected>โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select>'+rfChips('o-wallframe',[['','อลูมิเนียม'],['เหล็กชุบ','เหล็กชุบซิงค์ (ไร้สนิม)']],'เหล็กชุบ',true)+'</label>'; // ก้อนรวม#5: default เหล็กชุบ (สเปกเฟิร์ม · ราคาเท่าอลู +0)
     if(p.id==='isowall'){
       h+='<label class="opt" style="width:100%;">ความหนา ISOWALL <select class="o-isothick" style="display:none;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select>'+rfChips('o-isothick',[['10','10 ซม.'],['5','5 ซม.'],['7.5','7.5 ซม.']],'10')+'</label>';
       h+='<label class="opt">สี <input type="text" class="o-isocolor" placeholder="เช่น ขาว" style="width:auto;min-width:90px;height:32px;" oninput="calcQuote();"></label>';
@@ -5522,7 +5522,7 @@ function genQuote(keepNo){
     else if(it.p.cat==='ฝ้า-ผนัง'){
       // G3 ใบ 5 บล็อก (CODE-READY จุด C · merge #8): รายการ(งาน)=แผ่น+โครง+ฉนวน · รายละเอียด=สี (ถ้ามี)
       var _os=it.optSel||{}, _work=[], _spec=[];
-      var _frame = _os.wallframe==='เหล็กชุบ' ? 'โครงเหล็กชุบซิงค์ (ไร้สนิม)' : 'โครงอลูมิเนียม';
+      var _frame = _os.wallframe==='เหล็กชุบ' ? 'โครงเหล็กชุบซิงค์ (ไร้สนิม) หนา 1.2 มม.' : 'โครงอลูมิเนียม'; // ก้อนรวม#5: เติมความหนา 1.2 มม.
       if(it.p.id==='isowall'){ _work.push('แผ่น ISOWALL หนา '+(_os.isothick||'10')+' ซม.'); _work.push(_frame);
         if(_os.isocolor) _spec.push('สี ISOWALL: '+_os.isocolor); }
       else if(it.p.id==='ceiling_smooth'){ _work.push('ฝ้าฉาบเรียบ'+(_os.ceilfinish?(' พร้อม'+_os.ceilfinish):'')); if(_os.ceilslope) _work.push('ฝ้าเฉียงตามแนวหลังคา'); }
