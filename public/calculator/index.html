@@ -5462,7 +5462,10 @@ function genQuote(keepNo){
       const _zCtrl = _zo.zctrl||'aok220';
       const _zCtrlTxt = (ZIP.CTRL_LABEL&&ZIP.CTRL_LABEL[_zCtrl])||_zCtrl;
       const _zFabTxt = ZIP_FAB_LABEL[zfab]||('ผ้าโปร่ง '+zfab+'%');
-      det = [_zModelTxt, _zFabTxt, 'ระบบควบคุม: '+_zCtrlTxt].join('\n');
+      // G7 ใบ 5 บล็อก (17มิ.ย. · best-guess รอ ref ใบจริง G7): รายการ=ม่านซิป+ประเภทควบคุม · รายละเอียด=รุ่น/ผ้า/ระบบควบคุม
+      var _zWork=[(_zCtrl==='manual'?'ม่านซิปมือดึง':'ม่านซิปมอเตอร์')+' กันแดด/กันฝน'];
+      var _zSpec=['รุ่น '+_zModelTxt, _zFabTxt, 'ระบบควบคุม: '+_zCtrlTxt];
+      det=_zWork.join('\n')+'\n###รายละเอียด###\n'+_zSpec.join('\n');
     }
     else if(it.p.cat==='มุ้ง'){
       // G5 (5-block 16มิ.ย.): หัว=ชื่อ+ลักษณะเปิด+ขนาด · รายละเอียด(หัวแดง)=สีกรอบก่อน→ผ้าหลัง
