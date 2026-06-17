@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 import type { ChecklistData, ChecklistItem, ChecklistQuotation } from "@/app/api/quotation-checklist/route";
+import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ---------- types ----------
 
@@ -326,12 +327,13 @@ function SentJobCard({
 // ---------- Active Table Row (desktop) ----------
 
 function ActiveTableRow({
-  item, todayStr, onAction, canWrite,
+  item, todayStr, onAction, canWrite, onHold,
 }: {
   item: ChecklistItem;
   todayStr: string;
   onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
   canWrite: boolean;
+  onHold?: (item: ChecklistItem) => void;
 }) {
   const q = item.quotation;
   const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
@@ -446,6 +448,16 @@ function ActiveTableRow({
                 </button>
               </>
             )}
+            {/* ปุ่ม พักงาน (ทุก stage active) */}
+            {onHold && (
+              <button
+                onClick={() => onHold(item)}
+                className="press inline-flex items-center gap-1 rounded-lg border border-amber-300/80 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 min-h-[36px]"
+                aria-label={`พักงาน ${item.job_code ?? ""}`}
+              >
+                พักงาน
+              </button>
+            )}
           </div>
         )}
       </td>
@@ -456,12 +468,13 @@ function ActiveTableRow({
 // ---------- Active Mobile Card ----------
 
 function ActiveMobileCard({
-  item, todayStr, onAction, canWrite,
+  item, todayStr, onAction, canWrite, onHold,
 }: {
   item: ChecklistItem;
   todayStr: string;
   onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
   canWrite: boolean;
+  onHold?: (item: ChecklistItem) => void;
 }) {
   const q = item.quotation;
   const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
@@ -561,6 +574,16 @@ function ActiveMobileCard({
               </button>
             </>
           )}
+          {/* ปุ่ม พักงาน (ทุก stage active) */}
+          {onHold && (
+            <button
+              onClick={() => onHold(item)}
+              className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/80 px-3 py-2.5 text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 min-h-[44px]"
+              aria-label={`พักงาน ${item.job_code ?? ""}`}
+            >
+              พักงาน
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -575,9 +598,12 @@ export default function QuotationChecklistClient() {
   const [errMsg,    setErrMsg]    = useState("");
   const [canWrite,  setCanWrite]  = useState(false);
   const [modal,     setModal]     = useState<ModalState | null>(null);
+  const [holdJob,   setHoldJob]   = useState<ChecklistItem | null>(null);
   const [sentOpen,  setSentOpen]  = useState(false);
+  const [heldOpen,  setHeldOpen]  = useState(false);
+  const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
   const [meta,      setMeta]      = useState<{
-    counts: { in_design: number; pending: number; drafted: number; sent: number };
+    counts: { in_design: number; pending: number; drafted: number; sent: number; held: number };
     overdue: number;
     due_soon: number;
   } | null>(null);
@@ -592,7 +618,7 @@ export default function QuotationChecklistClient() {
       setCanWrite(res.meta?.can_write === true);
       if (res.meta) {
         setMeta({
-          counts: (res.meta.counts as { in_design: number; pending: number; drafted: number; sent: number }) ?? { in_design: 0, pending: 0, drafted: 0, sent: 0 },
+          counts: (res.meta.counts as { in_design: number; pending: number; drafted: number; sent: number; held: number }) ?? { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 },
           overdue:  Number(res.meta.overdue  ?? 0),
           due_soon: Number(res.meta.due_soon ?? 0),
         });
@@ -614,9 +640,25 @@ export default function QuotationChecklistClient() {
     load();
   }
 
+  async function unholdItem(item: ChecklistItem) {
+    setUnholdBusy(item.job_id);
+    try {
+      const res = await fetch(`/api/jobs/${item.job_id}/unhold`, { method: "POST" });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "ดึงงานกลับไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      // show via reload errMsg
+      setErrMsg(e instanceof Error ? e.message : "ดึงงานกลับไม่สำเร็จ");
+    } finally {
+      setUnholdBusy(null);
+    }
+  }
+
   const active = data?.active ?? [];
   const sent   = data?.sent   ?? [];
-  const counts = meta?.counts ?? { in_design: 0, pending: 0, drafted: 0, sent: 0 };
+  const held   = data?.held   ?? [];
+  const counts = meta?.counts ?? { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 };
   const overdue  = meta?.overdue  ?? 0;
   const dueSoon  = meta?.due_soon ?? 0;
 
@@ -728,6 +770,7 @@ export default function QuotationChecklistClient() {
                         todayStr={today}
                         onAction={openModal}
                         canWrite={canWrite}
+                        onHold={canWrite ? (i) => setHoldJob(i) : undefined}
                       />
                     ))}
                   </tbody>
@@ -743,6 +786,7 @@ export default function QuotationChecklistClient() {
                     todayStr={today}
                     onAction={openModal}
                     canWrite={canWrite}
+                    onHold={canWrite ? (i) => setHoldJob(i) : undefined}
                   />
                 ))}
               </div>
@@ -786,9 +830,85 @@ export default function QuotationChecklistClient() {
         </div>
       )}
 
+      {/* ── Section พัก (HOLD) ── */}
+      {data && held.length > 0 && (
+        <div className="space-y-3">
+          <button
+            onClick={() => setHeldOpen((v) => !v)}
+            className="press w-full flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm font-semibold hover:bg-amber-100 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+            aria-expanded={heldOpen}
+          >
+            <Icon name="warn" size={15} />
+            <span>พัก (HOLD)</span>
+            <span className="tabular-nums text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">
+              {held.length}
+            </span>
+            <span className="ml-auto">
+              <Icon name={heldOpen ? "chevron-up" : "chevron-down"} size={16} />
+            </span>
+          </button>
+
+          {heldOpen && (
+            <div className="glass rounded-2xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-amber-50/60 border-b border-amber-100">
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">Job / ลูกค้า</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">เหตุผล</th>
+                    {canWrite && <th className="px-4 py-2.5" />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {held.map((item) => (
+                    <tr key={item.job_id} className="border-b border-gray-100 last:border-0 hover:bg-amber-50/40 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-ink tnum text-sm">{item.job_code ?? "—"}</div>
+                        <div className="text-xs text-ink-2 mt-0.5">{item.customer_name}</div>
+                        {item.customer_area && (
+                          <div className="text-xs text-ink-3 flex items-center gap-1 mt-0.5">
+                            <Icon name="pin" size={10} />{item.customer_area}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-ink-3 max-w-[200px]">
+                        {item.on_hold_reason ?? "—"}
+                      </td>
+                      {canWrite && (
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => unholdItem(item)}
+                            disabled={unholdBusy === item.job_id}
+                            className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold bg-brand text-white shadow-brand hover:bg-brand/90 min-h-[36px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                            aria-label={`เอางาน ${item.job_code ?? ""} กลับมาทำ`}
+                          >
+                            {unholdBusy === item.job_id ? "กำลังดึงกลับ…" : "เอากลับมาทำ"}
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Modal */}
       {modal && (
         <Modal state={modal} onClose={() => setModal(null)} onSaved={handleSaved} />
+      )}
+
+      {/* HoldModal */}
+      {holdJob && (
+        <HoldModal
+          jobId={holdJob.job_id}
+          jobCode={holdJob.job_code}
+          customerName={holdJob.customer_name}
+          zone="light"
+          onDone={async () => { setHoldJob(null); await load(); }}
+          onClose={() => setHoldJob(null)}
+        />
       )}
     </div>
   );

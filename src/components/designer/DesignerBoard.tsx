@@ -8,6 +8,7 @@ import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
 import DesignerSchedule from "@/components/designer/DesignerSchedule";
+import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
@@ -41,6 +42,8 @@ type Job = {
   current_stage: number;
   assess_date: string | null;
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
+  on_hold: boolean;
+  on_hold_reason: string | null;
   overdue: boolean;
 };
 type Kpi = {
@@ -92,6 +95,8 @@ export default function DesignerBoard({
   const [err, setErr] = useState("");
   const [moving, setMoving] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [holdModal, setHoldModal] = useState<Job | null>(null);
+  const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -236,6 +241,22 @@ export default function DesignerBoard({
     }
   }
 
+  // unhold: ดึงงานกลับมาทำ
+  async function unholdJob(job: Job) {
+    setUnholdBusy(job.id);
+    setErr("");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/unhold`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "ดึงงานกลับไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "ดึงงานกลับไม่สำเร็จ");
+    } finally {
+      setUnholdBusy(null);
+    }
+  }
+
   const byColumn = useMemo(() => {
     const map: Record<DesignState, Job[]> = {
       NOT_STARTED: [],
@@ -255,6 +276,8 @@ export default function DesignerBoard({
       : jobs;
     const cutoff = doneCutoff();
     for (const j of filtered) {
+      // งาน on_hold ไม่เข้าคอลัมน์
+      if (j.on_hold) continue;
       if (j.design_state === "DONE") {
         // Board DONE column: show only recent completions (design_end within last 45 days)
         if (!j.design_end || j.design_end < cutoff) continue;
@@ -264,6 +287,18 @@ export default function DesignerBoard({
     // ช่อง "เสร็จแล้ว": เรียงตามวันเสร็จจากเก่า→ใหม่ → งานที่กดเสร็จล่าสุดอยู่ล่างสุด
     map.DONE.sort((a, b) => (a.design_end ?? "").localeCompare(b.design_end ?? ""));
     return map;
+  }, [jobs, cardSearch]);
+
+  // งาน on_hold (filter ตาม cardSearch ด้วย)
+  const heldJobs = useMemo(() => {
+    const q = cardSearch.trim().toLowerCase();
+    return jobs.filter(
+      (j) =>
+        j.on_hold &&
+        (q === "" ||
+          j.customer_name.toLowerCase().includes(q) ||
+          (j.job_code ?? "").toLowerCase().includes(q)),
+    );
   }, [jobs, cardSearch]);
 
   // Total DONE count across all visible cards
@@ -362,18 +397,28 @@ export default function DesignerBoard({
       {loading ? (
         <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>
       ) : tab === "board" ? (
-        <BoardView
-          byColumn={byColumn}
-          canWrite={canWrite}
-          moving={moving}
-          assigning={assigning}
-          designers={designers}
-          onMove={moveTo}
-          onAssign={assignDesigner}
-          onDueDate={updateDueDate}
-          onReceivedDate={updateReceivedDate}
-          onDesignerAdded={reloadDesigners}
-        />
+        <>
+          <BoardView
+            byColumn={byColumn}
+            canWrite={canWrite}
+            moving={moving}
+            assigning={assigning}
+            designers={designers}
+            onMove={moveTo}
+            onAssign={assignDesigner}
+            onDueDate={updateDueDate}
+            onReceivedDate={updateReceivedDate}
+            onDesignerAdded={reloadDesigners}
+            onHold={canWrite ? (job) => setHoldModal(job) : undefined}
+          />
+          {/* ── Section พัก (HOLD) ── */}
+          <HoldSection
+            jobs={heldJobs}
+            canWrite={canWrite}
+            unholdBusy={unholdBusy}
+            onUnhold={unholdJob}
+          />
+        </>
       ) : (
         <DesignerSchedule
           jobs={jobs}
@@ -390,6 +435,18 @@ export default function DesignerBoard({
           designers={designers}
           onClose={() => setShowAddModal(false)}
           onAdded={async () => { await load(); }}
+        />
+      )}
+
+      {/* ── HoldModal ── */}
+      {holdModal && (
+        <HoldModal
+          jobId={holdModal.id}
+          jobCode={holdModal.job_code}
+          customerName={holdModal.customer_name}
+          zone="light"
+          onDone={async () => { setHoldModal(null); await load(); }}
+          onClose={() => setHoldModal(null)}
         />
       )}
     </div>
@@ -417,6 +474,7 @@ function BoardView({
   onDueDate,
   onReceivedDate,
   onDesignerAdded,
+  onHold,
 }: {
   byColumn: Record<DesignState, Job[]>;
   canWrite: boolean;
@@ -428,6 +486,7 @@ function BoardView({
   onDueDate: (job: Job, date: string) => void;
   onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
+  onHold?: (job: Job) => void;
 }) {
   // auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก)
   return (
@@ -460,6 +519,7 @@ function BoardView({
                     onDueDate={onDueDate}
                     onReceivedDate={onReceivedDate}
                     onDesignerAdded={onDesignerAdded}
+                    onHold={onHold}
                   />
                 ))
               )}
@@ -483,6 +543,7 @@ function JobCard({
   onDueDate,
   onReceivedDate,
   onDesignerAdded,
+  onHold,
 }: {
   job: Job;
   canWrite: boolean;
@@ -494,6 +555,7 @@ function JobCard({
   onDueDate: (job: Job, date: string) => void;
   onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
+  onHold?: (job: Job) => void;
 }) {
   // toast feedback สำหรับ #37 (บันทึกกำหนดส่ง)
   const [dueSaved, setDueSaved] = useState(false);
@@ -646,6 +708,18 @@ function JobCard({
               </option>
             ))}
           </select>
+
+          {/* ปุ่ม พักงาน */}
+          {onHold && (
+            <button
+              type="button"
+              onClick={() => onHold(job)}
+              className="w-full press rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 min-h-[36px] transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+              aria-label={`พักงาน ${job.job_code ?? ""}`}
+            >
+              พักงาน
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -662,6 +736,82 @@ function JobCard({
             ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ─── Hold Section ─────────────────────────────────────────────────────────────
+function HoldSection({
+  jobs,
+  canWrite,
+  unholdBusy,
+  onUnhold,
+}: {
+  jobs: Job[];
+  canWrite: boolean;
+  unholdBusy: string | null;
+  onUnhold: (job: Job) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (jobs.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="press w-full flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm font-semibold hover:bg-amber-100 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+        aria-expanded={open}
+      >
+        <Icon name="warn" size={15} />
+        <span>พัก (HOLD)</span>
+        <span className="tnum text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">
+          {jobs.length}
+        </span>
+        <span className="ml-auto">
+          <Icon name={open ? "chevron-up" : "chevron-down"} size={16} />
+        </span>
+      </button>
+
+      {open && (
+        <div className="glass rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-amber-50/60 border-b border-amber-100">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">Job / ลูกค้า</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">เหตุผล</th>
+                {canWrite && <th className="px-4 py-2.5" />}
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((j) => (
+                <tr key={j.id} className="border-b border-gray-100 last:border-0 hover:bg-amber-50/40 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-ink tnum text-sm">{j.job_code ?? "—"}</div>
+                    <div className="text-xs text-ink-2 mt-0.5 truncate max-w-[180px]">{j.customer_name}</div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-ink-3 max-w-[200px]">
+                    {j.on_hold_reason ?? "—"}
+                  </td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onUnhold(j)}
+                        disabled={unholdBusy === j.id}
+                        className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold bg-brand text-white shadow-brand hover:bg-brand/90 min-h-[36px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                        aria-label={`เอางาน ${j.job_code ?? ""} กลับมาทำ`}
+                      >
+                        {unholdBusy === j.id ? "กำลังดึงกลับ…" : "เอากลับมาทำ"}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

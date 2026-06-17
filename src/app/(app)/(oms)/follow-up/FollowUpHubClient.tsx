@@ -19,6 +19,7 @@ import { JobDrawer } from "@/components/jobs/JobDrawer";
 import { ClosureActions } from "@/components/sales-closure/ClosureActions";
 import { IssueTrackTable, type IssueTrackRow } from "@/components/issues/IssueTrackTable";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
+import { HoldModal } from "@/components/jobs/HoldModal";
 import type { ClosureRow } from "@/app/api/sales-closure/route";
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ type TrackRow = {
 };
 
 type Tab = "closure" | "production" | "install" | "issues";
-type ClosureStage = "await" | "sent" | "revising";
+type ClosureStage = "await" | "sent" | "revising" | "hold";
 
 // ────────────────────────────────────────────────────────────────────────────
 // design_state badge — mapping ตรงกับ DesignerBoard COLUMNS
@@ -247,6 +248,11 @@ const CLOSURE_STAGE_META: Record<ClosureStage, { label: string; chip: string; ac
     chip: "glass-card text-white/75 border-white/15 hover:bg-white/12",
     activeChip: "bg-amber-400/30 text-amber-100 border-amber-300/40",
   },
+  hold: {
+    label: "พัก (HOLD)",
+    chip: "glass-card text-white/75 border-white/15 hover:bg-white/12",
+    activeChip: "bg-amber-600/30 text-amber-200 border-amber-500/40",
+  },
 };
 
 function SegmentedChips({
@@ -258,7 +264,7 @@ function SegmentedChips({
   counts: Record<ClosureStage, number>;
   onChange: (s: ClosureStage) => void;
 }) {
-  const stages: ClosureStage[] = ["await", "sent", "revising"];
+  const stages: ClosureStage[] = ["await", "sent", "revising", "hold"];
   return (
     <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="กรองสเตจปิดการขาย">
       {stages.map((s) => {
@@ -316,7 +322,7 @@ function JobCell({ row }: { row: ClosureRow }) {
 }
 
 // ─── await table ─────────────────────────────────────────────────────────────
-function AwaitTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+function AwaitTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void; onHold?: (row: ClosureRow) => void }) {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -356,7 +362,15 @@ function AwaitTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrit
                   <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
                   {canWrite && (
                     <td className="px-4 py-3 text-center">
-                      <ClosureActions job={row} onRevised={onRefetch} />
+                      <div className="inline-flex flex-col gap-1 items-center">
+                        <ClosureActions job={row} onRevised={onRefetch} />
+                        {onHold && (
+                          <button type="button" onClick={() => onHold(row)}
+                            className="focusable pressable inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[36px] transition">
+                            พักงาน
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -389,7 +403,17 @@ function AwaitTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrit
             {row.remark && (
               <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
             )}
-            {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+            {canWrite && (
+              <div className="space-y-1.5">
+                <ClosureActions job={row} onRevised={onRefetch} />
+                {onHold && (
+                  <button type="button" onClick={() => onHold(row)}
+                    className="focusable pressable w-full rounded-xl py-2.5 text-sm font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[44px]">
+                    พักงาน
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -398,7 +422,7 @@ function AwaitTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrit
 }
 
 // ─── sent table ───────────────────────────────────────────────────────────────
-function SentTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void; onHold?: (row: ClosureRow) => void }) {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -449,7 +473,15 @@ function SentTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite
                     <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
                     {canWrite && (
                       <td className="px-4 py-3 text-center">
-                        <ClosureActions job={row} onRevised={onRefetch} />
+                        <div className="inline-flex flex-col gap-1 items-center">
+                          <ClosureActions job={row} onRevised={onRefetch} />
+                          {onHold && (
+                            <button type="button" onClick={() => onHold(row)}
+                              className="focusable pressable inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[36px] transition">
+                              พักงาน
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -494,7 +526,17 @@ function SentTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite
                 <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
               )}
               <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
-              {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+              {canWrite && (
+                <div className="space-y-1.5">
+                  <ClosureActions job={row} onRevised={onRefetch} />
+                  {onHold && (
+                    <button type="button" onClick={() => onHold(row)}
+                      className="focusable pressable w-full rounded-xl py-2.5 text-sm font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[44px]">
+                      พักงาน
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -504,7 +546,7 @@ function SentTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite
 }
 
 // ─── revising table ───────────────────────────────────────────────────────────
-function RevisingTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+function RevisingTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void; onHold?: (row: ClosureRow) => void }) {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -537,7 +579,15 @@ function RevisingTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canW
                   <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
                   {canWrite && (
                     <td className="px-4 py-3 text-center">
-                      <ClosureActions job={row} onRevised={onRefetch} />
+                      <div className="inline-flex flex-col gap-1 items-center">
+                        <ClosureActions job={row} onRevised={onRefetch} />
+                        {onHold && (
+                          <button type="button" onClick={() => onHold(row)}
+                            className="focusable pressable inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[36px] transition">
+                            พักงาน
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -569,7 +619,17 @@ function RevisingTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canW
             {row.remark && (
               <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
             )}
-            {canWrite && <ClosureActions job={row} onRevised={onRefetch} />}
+            {canWrite && (
+              <div className="space-y-1.5">
+                <ClosureActions job={row} onRevised={onRefetch} />
+                {onHold && (
+                  <button type="button" onClick={() => onHold(row)}
+                    className="focusable pressable w-full rounded-xl py-2.5 text-sm font-medium bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border border-amber-300/20 min-h-[44px]">
+                    พักงาน
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -578,13 +638,123 @@ function RevisingTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canW
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// แท็บ "ปิดการขาย" — 3 closure_stage, segmented chips
+// แท็บ "ปิดการขาย" — 4 closure_stage, segmented chips
 // ────────────────────────────────────────────────────────────────────────────
+// ─── hold table ───────────────────────────────────────────────────────────────
+function HoldTable({ rows, canWrite, onRefetch }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void }) {
+  const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+
+  async function doUnhold(row: ClosureRow) {
+    setUnholdBusy(row.id);
+    setErrMsg(null);
+    try {
+      const res = await fetch(`/api/jobs/${row.id}/unhold`, { method: "POST" });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "ดึงงานกลับไม่สำเร็จ");
+      onRefetch();
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "ดึงงานกลับไม่สำเร็จ");
+      setUnholdBusy(null);
+    }
+  }
+
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="ไม่มีงานที่พักอยู่"
+        sub="เมื่อพักงานจากหน้าใดก็ตาม งานจะปรากฏที่นี่"
+      />
+    );
+  }
+
+  return (
+    <>
+      {errMsg && (
+        <div className="mb-3 rounded-xl bg-rose-500/20 border border-rose-300/30 px-4 py-2.5 text-sm text-rose-200">
+          {errMsg}
+        </div>
+      )}
+      <p className="text-[12px] mb-3" style={{ color: "var(--t-low)" }}>
+        งานพักชั่วคราว — ข้อมูลและใบเสนอครบถ้วน กด "เอากลับมาทำ" เพื่อคืนงานเข้า active
+      </p>
+      {/* Desktop */}
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[12px] border-b border-white/12" style={{ color: "var(--t-mid)" }}>
+                <th className="text-left font-medium px-4 py-3">Job / ลูกค้า</th>
+                <th className="text-left font-medium px-4 py-3">เหตุผลพัก</th>
+                <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
+                {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-white/6 hover:bg-white/8 transition-colors">
+                  <td className="px-4 py-3"><JobCell row={row} /></td>
+                  <td className="px-4 py-3 text-[12px]" style={{ color: "var(--t-mid)" }}>
+                    {row.on_hold_reason ?? "—"}
+                  </td>
+                  <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => doUnhold(row)}
+                        disabled={unholdBusy === row.id}
+                        className="focusable pressable inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[12px] font-semibold bg-brand text-white hover:bg-brand/90 min-h-[36px] disabled:opacity-60"
+                        aria-label={`เอางาน ${row.job_code ?? ""} กลับมาทำ`}
+                      >
+                        {unholdBusy === row.id ? "กำลังดึงกลับ…" : "เอากลับมาทำ"}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {/* Mobile */}
+      <div className="md:hidden space-y-3">
+        {rows.map((row) => (
+          <div key={row.id} className="glass-card rounded-2xl p-4 space-y-2.5 border-l-2 border-l-amber-400">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-white font-semibold tnum text-sm">{row.job_code ?? "—"}</div>
+                <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
+              </div>
+            </div>
+            <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>
+              เหตุผล: {row.on_hold_reason ?? "—"}
+            </div>
+            <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
+            {canWrite && (
+              <button
+                type="button"
+                onClick={() => doUnhold(row)}
+                disabled={unholdBusy === row.id}
+                className="focusable pressable w-full rounded-xl py-2.5 text-sm font-semibold bg-brand text-white hover:bg-brand/90 min-h-[44px] disabled:opacity-60"
+              >
+                {unholdBusy === row.id ? "กำลังดึงกลับ…" : "เอากลับมาทำ"}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function ClosureTab({ isSales, filters, onFilterChange }: {
   isSales: boolean;
   filters: FilterState;
   onFilterChange: (s: Partial<FilterState>) => void;
 }) {
+  const [holdModal, setHoldModal] = useState<ClosureRow | null>(null);
+
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   // ส่ง ?stage= ไปที่ API เพื่อให้ filter server-side
@@ -606,7 +776,7 @@ function ClosureTab({ isSales, filters, onFilterChange }: {
 
   // counts จาก meta (นับก่อนกรอง — server ส่งมาจาก rows ทั้งหมด)
   // ถ้า meta ไม่มี (กรณี loading/error) fallback เป็น 0
-  const counts: Record<ClosureStage, number> = metaCounts ?? { await: 0, sent: 0, revising: 0 };
+  const counts: Record<ClosureStage, number> = metaCounts ?? { await: 0, sent: 0, revising: 0, hold: 0 };
 
   // client-side overdue+issue filter
   let rows = allRows;
@@ -641,10 +811,44 @@ function ClosureTab({ isSales, filters, onFilterChange }: {
 
       {isLoading ? <Spinner /> : (
         <>
-          {activeStage === "await" && <AwaitTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
-          {activeStage === "sent" && <SentTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
-          {activeStage === "revising" && <RevisingTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
+          {activeStage === "await" && (
+            <AwaitTable
+              rows={rows}
+              canWrite={canWrite}
+              onRefetch={refetch}
+              onHold={canWrite ? (row) => setHoldModal(row) : undefined}
+            />
+          )}
+          {activeStage === "sent" && (
+            <SentTable
+              rows={rows}
+              canWrite={canWrite}
+              onRefetch={refetch}
+              onHold={canWrite ? (row) => setHoldModal(row) : undefined}
+            />
+          )}
+          {activeStage === "revising" && (
+            <RevisingTable
+              rows={rows}
+              canWrite={canWrite}
+              onRefetch={refetch}
+              onHold={canWrite ? (row) => setHoldModal(row) : undefined}
+            />
+          )}
+          {activeStage === "hold" && <HoldTable rows={rows} canWrite={canWrite} onRefetch={refetch} />}
         </>
+      )}
+
+      {/* HoldModal */}
+      {holdModal && (
+        <HoldModal
+          jobId={holdModal.id}
+          jobCode={holdModal.job_code}
+          customerName={holdModal.customer_name}
+          zone="dark"
+          onDone={() => { setHoldModal(null); refetch(); }}
+          onClose={() => setHoldModal(null)}
+        />
       )}
     </>
   );

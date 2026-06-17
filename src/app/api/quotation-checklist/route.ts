@@ -35,11 +35,14 @@ export type ChecklistItem = {
   estimator_name: string | null;
   quote_sent_date: string | null;
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน · ด่วน
+  on_hold: boolean;
+  on_hold_reason: string | null;
 };
 
 export type ChecklistData = {
   active: ChecklistItem[];
   sent:   ChecklistItem[];
+  held:   ChecklistItem[];
 };
 
 // ---------- helpers ----------
@@ -84,7 +87,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, onsite_deposit, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -109,6 +112,8 @@ export const GET = withRoute(async () => {
     designer_ref: number | null;
     quote_sent_date: string | null;
     onsite_deposit: boolean; // (0044)
+    on_hold: boolean;
+    on_hold_reason: string | null;
     estimator: EstimatorJoin;
     designer_lookup: DesignerJoin;
   };
@@ -117,8 +122,8 @@ export const GET = withRoute(async () => {
 
   if (jobRows.length === 0) {
     return ok<ChecklistData>(
-      { active: [], sent: [] },
-      { can_write: canWrite, counts: { in_design: 0, pending: 0, drafted: 0, sent: 0 }, overdue: 0, due_soon: 0 }
+      { active: [], sent: [], held: [] },
+      { can_write: canWrite, counts: { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 }, overdue: 0, due_soon: 0 }
     );
   }
 
@@ -157,7 +162,8 @@ export const GET = withRoute(async () => {
 
   const active: ChecklistItem[] = [];
   const sent:   ChecklistItem[] = [];
-  let countInDesign = 0, countPending = 0, countDrafted = 0, countSent = 0;
+  const held:   ChecklistItem[] = [];
+  let countInDesign = 0, countPending = 0, countDrafted = 0, countSent = 0, countHeld = 0;
   let overdue = 0, dueSoon = 0;
 
   for (const j of jobRows) {
@@ -171,6 +177,37 @@ export const GET = withRoute(async () => {
     // ชื่อนักออกแบบ / เซลล์
     const designer_name  = (j.designer_lookup as DesignerJoin)?.name  ?? null;
     const estimator_name = (j.estimator as EstimatorJoin)?.full_name   ?? null;
+
+    // งาน on_hold → ใส่ held ข้ามทุก stage
+    if (j.on_hold) {
+      // ใช้ stage ปัจจุบัน (คำนวณเดิม) เพื่อ context ตอน unhold
+      let heldStage: ChecklistStage = "pending";
+      if (j.design_state !== "DONE" && !j.quote_sent_date) heldStage = "in_design";
+      else if (q && ["sent", "approved"].includes(q.status)) heldStage = "sent";
+      else if (q && q.status === "draft") heldStage = "drafted";
+
+      held.push({
+        job_id:        j.id,
+        job_code:      j.job_code,
+        customer_name: j.customer_name,
+        customer_area: j.customer_area,
+        assess_date:   j.assess_date,
+        design_state:  j.design_state,
+        design_end:    j.design_end,
+        job_status:    j.status,
+        quotation:     q,
+        stage:         heldStage,
+        delivery_due,
+        designer_name,
+        estimator_name,
+        quote_sent_date: j.quote_sent_date,
+        onsite_deposit: j.onsite_deposit ?? false,
+        on_hold: true,
+        on_hold_reason: j.on_hold_reason ?? null,
+      });
+      countHeld++;
+      continue;
+    }
 
     // จัด stage
     let stage: ChecklistStage;
@@ -206,6 +243,8 @@ export const GET = withRoute(async () => {
       estimator_name,
       quote_sent_date: j.quote_sent_date,
       onsite_deposit: j.onsite_deposit ?? false, // (0044)
+      on_hold: false,
+      on_hold_reason: null,
     };
 
     if (stage === "sent") {
@@ -242,10 +281,10 @@ export const GET = withRoute(async () => {
   });
 
   return ok<ChecklistData>(
-    { active, sent },
+    { active, sent, held },
     {
       can_write: canWrite,
-      counts: { in_design: countInDesign, pending: countPending, drafted: countDrafted, sent: countSent },
+      counts: { in_design: countInDesign, pending: countPending, drafted: countDrafted, sent: countSent, held: countHeld },
       overdue,
       due_soon: dueSoon,
     }

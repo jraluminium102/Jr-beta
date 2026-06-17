@@ -16,12 +16,14 @@ const POST_DEPOSIT_STATUSES = [
 ] as const;
 
 // ปรับ closure_stage จาก design_state + quote_sent_date (priority order)
-// 1. REVISING  → 'revising'
-// 2. quote_sent_date != null → 'sent'
-// 3. else → 'await'
-type ClosureStage = "await" | "sent" | "revising";
+// 1. on_hold    → 'hold'
+// 2. REVISING   → 'revising'
+// 3. quote_sent_date != null → 'sent'
+// 4. else → 'await'
+type ClosureStage = "await" | "sent" | "revising" | "hold";
 
-function classifyStage(designState: string, quoteSentDate: string | null): ClosureStage {
+function classifyStage(designState: string, quoteSentDate: string | null, onHold: boolean): ClosureStage {
+  if (onHold) return "hold";
   if (designState === "REVISING") return "revising";
   if (quoteSentDate != null) return "sent";
   return "await";
@@ -55,6 +57,9 @@ export type ClosureRow = {
   has_quotation: boolean;
   /** Allowed to send back to designer revision (closure_stage === 'sent') */
   can_revise: boolean;
+  /** พักงาน */
+  on_hold: boolean;
+  on_hold_reason: string | null;
 };
 
 // GET /api/sales-closure — งานที่ยังไม่ post-deposit พร้อม quotation ล่าสุด
@@ -82,6 +87,8 @@ export const GET = withRoute(async (req: Request) => {
         "design_revise_count",
         "remark",
         "quote_sent_date",
+        "on_hold",
+        "on_hold_reason",
         "estimator:estimator_id(id,full_name)",
         "quotations!quotations_job_id_fkey(id, code, net, status, created_at)",
       ].join(",")
@@ -113,11 +120,13 @@ export const GET = withRoute(async (req: Request) => {
     const stage = Number(j.current_stage);
     const qsd = (j.quote_sent_date as string | null) ?? null;
     const designState = (j.design_state as string) ?? "NOT_STARTED";
+    const onHold = (j.on_hold as boolean) ?? false;
+    const onHoldReason = (j.on_hold_reason as string | null) ?? null;
     const daysWaiting = qsd
       ? Math.max(0, Math.floor((Date.now() - new Date(qsd).getTime()) / 86400000))
       : null;
     const est = j.estimator as { id: string | null; full_name: string | null } | null;
-    const closureStage = classifyStage(designState, qsd);
+    const closureStage = classifyStage(designState, qsd, onHold);
 
     return {
       id: j.id as string,
@@ -141,6 +150,8 @@ export const GET = withRoute(async (req: Request) => {
       closure_stage: closureStage,
       // can_revise เฉพาะ sent (quote ส่งแล้ว, ไม่ใช่ revising แล้ว)
       can_revise: canWrite && closureStage === "sent",
+      on_hold: onHold,
+      on_hold_reason: onHoldReason,
     };
   });
 
@@ -149,6 +160,7 @@ export const GET = withRoute(async (req: Request) => {
     await: rows.filter((r) => r.closure_stage === "await").length,
     sent: rows.filter((r) => r.closure_stage === "sent").length,
     revising: rows.filter((r) => r.closure_stage === "revising").length,
+    hold: rows.filter((r) => r.closure_stage === "hold").length,
   };
 
   // กรองตาม ?stage ถ้ามี
