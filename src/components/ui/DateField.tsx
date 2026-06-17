@@ -155,7 +155,7 @@ export default function DateField({
   }
 
   return (
-    <span className="relative inline-flex items-center w-full">
+    <span className="relative inline-flex items-center w-full min-w-0">
       {/* text input แสดง DD/MM/YYYY */}
       <input
         type="text"

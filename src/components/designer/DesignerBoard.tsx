@@ -542,7 +542,7 @@ function JobCard({
   }
 
   return (
-    <div className="glass-soft rounded-xl p-3 text-sm w-full min-w-0">
+    <div className="glass-soft rounded-xl p-3 text-sm w-full min-w-0 overflow-hidden">
       {/* job_code + ปุ่มดูงาน (#26) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
