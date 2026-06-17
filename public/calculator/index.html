@@ -272,6 +272,11 @@
   .chip-2up{ }
   .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
   .chip-sm .chip{ min-height:44px; padding:6px 12px; font-size:13px; } /* UX-substeps: ≥44px แตะง่ายมือถือ (เดิม 40) */
+  /* ① สีอลู drill-down: จุดสีกลมในชิป ([[chip-color-swatch-style]]) */
+  .cdot{ display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.28); vertical-align:middle; flex:0 0 auto; background-size:cover; }
+  .chip.on .cdot{ border-color:rgba(255,255,255,.7); }
+  .color-cat-row .chip{ font-weight:700; }
+  .color-drill{ margin-top:4px; }
   /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
   /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
   label.opt:has(> .chip-grid){ display:block; }
@@ -988,7 +993,52 @@ const COLORS=[
 ];
 function colorOpts(series){ return COLORS.map((c,i)=>{ const sOk=!series||!c.series||c.series.indexOf(series)>=0; return sOk?`<option value="${i}"${i===0?' selected':''}>${c.n}${c.note?(' — '+c.note):''}</option>`:''; }).join(''); }  // R3.8: default = สีอบขาว
 // อัปเดต dropdown สีตาม series ของผลิตภัณฑ์ที่เลือก
-function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; }  // R3.9: default = สีอบขาว (index 0)
+function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; colorDrillRender(sel); }  // R3.9: default = สีอบขาว (index 0)
+// ===== ① สีอลู drill-down (HANDOFF-redesign-ปุ่มใหญ่ 17มิ.ย. · มติพี่นัท) =====
+//   select(โดน hide) → ชิปหมวด(4) → ชิปสี+จุดสีกลม · ขับด้วย value=COLORS index · ไม่แตะ value/logic/ราคา · sync fire input+change
+//   ใช้กับ .i-color (รายการ) + #global-color (ทั้งใบ) · qi-color/gh-color-sel = คนละจอ ไม่แตะรอบนี้
+var COLOR_CATS=[
+  {key:'std',     label:'มาตรฐาน',         idx:[0,1]},
+  {key:'sahara',  label:'ซาฮาร่า/เมทัล',   idx:[2,3,4]},
+  {key:'wood',    label:'ลายไม้',          idx:[5,6,7,8,9,11]},
+  {key:'special', label:'อบพิเศษ (มีรหัส)', idx:[10,12]}
+];
+// จุดสี (โดยประมาณ — ป้ายชื่อคือความจริง · gradient = ลายไม้/เมทัล/ชุบ)
+var COLOR_SWATCH={
+  0:'#ffffff', 1:'#1b1b1b', 2:'#6f7173', 3:'#2c2d2f', 4:'#8b8e90',
+  5:'linear-gradient(135deg,#b07c3a,#7d501f)', 6:'linear-gradient(135deg,#6a3322,#411d12)',
+  7:'linear-gradient(135deg,#dcc9a6,#b69a6e)', 8:'linear-gradient(135deg,#cda06a,#9a6f3c)',
+  9:'linear-gradient(135deg,#5a3826,#321d12)', 10:'linear-gradient(135deg,#cfd2d6,#9aa0a6)',
+  11:'linear-gradient(135deg,#b07d40,#7e5326)', 12:'linear-gradient(135deg,#dde0e3,#a7acb1,#dde0e3)'
+};
+function colorCatOf(idx){ for(var i=0;i<COLOR_CATS.length;i++){ if(COLOR_CATS[i].idx.indexOf(idx)>=0) return COLOR_CATS[i].key; } return 'std'; }
+function colorSwStyle(idx){ var s=COLOR_SWATCH[idx]||'#ccc'; return (/gradient/.test(s)?'background-image:'+s:'background:'+s)+';'; }
+function _colorDrillSel(el){ var dr=el.closest('.color-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s && s.tagName!=='SELECT') s=s.previousElementSibling; return s; }
+function colorDrillRender(sel){
+  if(!sel) return;
+  var present={}; // COLORS index → label (เฉพาะ option ที่มีจริงหลัง filter series)
+  Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
+  var curIdx=parseInt(sel.value)||0;
+  var actCat=sel.dataset.colCat || colorCatOf(curIdx);
+  var wrap=null; if(sel.nextSibling && sel.nextSibling.classList && sel.nextSibling.classList.contains('color-drill')) wrap=sel.nextSibling;
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='color-drill'; sel.parentNode.insertBefore(wrap, sel.nextSibling); sel.style.display='none'; }
+  var cats=COLOR_CATS.filter(function(c){ return c.idx.some(function(i){return present[i]!=null;}); });
+  if(!cats.some(function(c){return c.key===actCat;})) actCat=colorCatOf(curIdx);
+  var html='<div class="chip-group chip-sm color-cat-row">';
+  cats.forEach(function(c){ html+='<button type="button" class="chip'+(c.key===actCat?' on':'')+'" data-cat="'+c.key+'" onclick="colorDrillCat(this)">'+c.label+'</button>'; });
+  html+='</div><div class="chip-group chip-sm color-sw-row" style="margin-top:6px;">';
+  var actIdxs=(COLOR_CATS.filter(function(c){return c.key===actCat;})[0]||{idx:[]}).idx;
+  actIdxs.forEach(function(i){ if(present[i]==null) return;
+    var raw=(COLORS[i]&&COLORS[i].n)||present[i];   // ใช้ชื่อดิบจาก COLORS (เลี่ยง note ที่ colorOpts ต่อท้าย) แล้วล้างคำเตือน/วงเล็บ
+    var nm=raw.replace(/\s*[★⚠]/g,'').replace(/\s*—\s*เช็ค[^)]*(?=\))/g,'').replace(/\s+\)/g,')').replace(/\s+/g,' ').trim();
+    html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+nm+'</button>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+function colorDrillCat(btn){ var sel=_colorDrillSel(btn); if(!sel)return; sel.dataset.colCat=btn.dataset.cat; colorDrillRender(sel); }  // เปลี่ยนหมวด (ยังไม่ commit ค่า)
+function colorDrillPick(btn){ var sel=_colorDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.colCat=colorCatOf(i);
+  sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); colorDrillRender(sel); }
 // SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
 function rn90FinRate(ci){
   if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
@@ -1872,6 +1922,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   var _gg=document.getElementById('global-glass');
   if(_gc) _gc.innerHTML=colorOpts();
   if(_gg) _gg.innerHTML=glassOpts();
+  if(_gc){ colorDrillRender(_gc); }  // ① สีอลู drill-down (ทั้งใบ)
   if(_gc) _gc.addEventListener('change',syncGlobalColorGlass);
   if(_gg) _gg.addEventListener('change',syncGlobalColorGlass);
   addQuickItem();
@@ -3819,7 +3870,9 @@ function addItem(container){
     var c=COLORS[v];
     d.querySelector('.i-colorcode-wrap').style.display=(c&&c.hasCode)?'block':'none';
     var sc=d.querySelector('.i-sampleconfirm-wrap'); if(sc) sc.style.display=(c&&c.sampleConfirm)?'block':'none';
+    this.dataset.colCat=colorCatOf(v); colorDrillRender(this);  // ① sync ชิป drill-down เมื่อค่าเปลี่ยน (รวมกรณีโค้ดตั้งค่า/global sync)
   });
+  try{ colorDrillRender(d.querySelector('.i-color')); }catch(e){}  // ① render ครั้งแรก
   // งาน9: โหมดเหมา — toggle wrap
   { var _ls=d.querySelector('.o-lumpsum'); if(_ls){ _ls.addEventListener('change',function(){ var _w=d.querySelector('.o-lumpsum-wrap'); if(_w)_w.style.display=this.checked?'block':'none'; calcQuote(); }); } }
   buildItemOpts(d);
