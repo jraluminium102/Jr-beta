@@ -3272,8 +3272,12 @@ function rfChips(cls, items, defVal, twoUp){
 }
 // G3-B1: ชิปย่อ + จุดสี (แบบ ค · สี/วัสดุ ≥6 ชื่อยาว) · items=[[valueเต็ม,ชื่อย่อ,hex],...] · ค่าเต็มลงใบ ชิปแค่ label · ใช้ chSetChip เดิม (fire input+change)
 function rfChipsSw(cls, items, defVal){
-  return '<div class="chip-group chip-sm">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')"><span class="cdot" style="background:'+it[2]+';"></span>'+it[1]+'</button>'; }).join('')+'</div>';
+  return '<div class="chip-group chip-sm">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')">'+(it[2]?'<span class="cdot" style="background:'+it[2]+';"></span>':'')+it[1]+'</button>'; }).join('')+'</div>';
 }
+// B3: palette สีชินโคไลท์ (เสนอจากชื่อสี · พี่นัทปรับ hex ได้) — key = string สีเต็มใน SHINCO_COLORS
+var SHINCO_SW={'HC-N828 Modern Grey':'#8a8d8f','HC-B703 Royal Blue':'#26408b','HC-570 Classic Brown':'#6b4a2f','HC-N590 Noble Green':'#2f5d43','SP-NB00 ขาวขุ่น':'#efece4','SP-NB30 Foggy Brown':'#8a7a68','SP-B857 Marine Blue':'#3a6e88','SP-NC95 Light Brown':'#a98b63','NT-001 ใส':'#e9f1f1','NT-332 เทาอ่อน':'#c2c4c2','Prime 562 Brownish Green':'#5a6347','Shade-430S Pearl White':'#f4f2ec'};
+// B3: ชื่อย่อชินโค = ตัดรหัสนำหน้า เหลือชื่อสี (อังกฤษ/ไทย) เช่น "HC-N828 Modern Grey"→"Modern Grey" · "SP-NB00 ขาวขุ่น"→"ขาวขุ่น"
+function shincoShort(full){ var m=String(full).match(/^[A-Za-z]+[-\s]?[\w]*\s+(.+)$/); return (m&&m[1])?m[1].trim():full; }
 // sync สถานะ 'on' ของชิป ให้ตรง value ของ select (ใช้เมื่อโค้ดตั้งค่า select เอง) + lock/unlock ชิป (กันแก้)
 function rfChipSync(ch,cls){ var sel=ch.querySelector('.'+cls); if(!sel)return; ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.classList.toggle('on', c.dataset.val===sel.value); }); }
 function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]').forEach(function(c){ c.style.pointerEvents=on?'none':''; c.style.opacity=on?'0.45':''; }); }
@@ -4274,7 +4278,9 @@ function buildItemOpts(d){
       // #6 (17มิ.ย.): ชินโคไลท์ — สี+รหัสครบทุกรุ่น (SHINCO_COLORS ต่อ id) · display · value="สี ..." ตรงใบจริง
       var _shc=(typeof SHINCO_COLORS!=='undefined'&&SHINCO_COLORS[p.id])||[];
       var _shPairs=[['','— ระบุสี —']].concat(_shc.map(function(c){return ['สี '+c, c];}));
-      h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <select class="o-roofcolor" style="display:none;" onchange="calcQuote();">'+_shPairs.map(function(_p,_i){return '<option value="'+_p[0]+'"'+(_i===0?' selected':'')+'>'+_p[1]+'</option>';}).join('')+'</select>'+rfChips('o-roofcolor',_shPairs,'')+'</label>';
+      // B3 (ก้อนรวม 17มิ.ย.): ชิปแบบ ค — ชื่อย่อ (อังกฤษ/ไทย) + จุดสี · value เต็ม+รหัสคงเดิม (ลงใบ "สี HC-N828 Modern Grey")
+      var _shTri=[['','— ระบุสี —','']].concat(_shc.map(function(c){return ['สี '+c, shincoShort(c), SHINCO_SW[c]||'#ccc'];}));
+      h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <span style="font-weight:400;color:var(--muted);font-size:11px;">(ชื่อเต็ม+รหัสลงใบ)</span> <select class="o-roofcolor" style="display:none;" onchange="calcQuote();">'+_shPairs.map(function(_p,_i){return '<option value="'+_p[0]+'"'+(_i===0?' selected':'')+'>'+_p[1]+'</option>';}).join('')+'</select>'+rfChipsSw('o-roofcolor',_shTri,'')+'</label>';
     }
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
