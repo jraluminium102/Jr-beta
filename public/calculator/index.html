@@ -4488,16 +4488,22 @@ function readItem(d){
   if(d.classList.contains('g6room') && window.g6rRoomTotal){
     var _rt=window.g6rRoomTotal(d);
     var _rlines=window.g6rRoomSummary?window.g6rRoomSummary(d):[];
-    var _rbreak=_rlines.map(function(l){ return l[0]+' = '+Math.round(l[1]).toLocaleString(); }).join('\n'); // breakdown ด้าน A/B/หลังคา/ไฟ ลงใบ
-    var _rdetail=(window.g6rRoomDetail&&window.g6rRoomDetail(d))||_rbreak; // แตกรายบาน (ชนิด/ขนาด/ออปชั่น) เหมือนเก่า
+    var _rbreak=_rlines.map(function(l){ return l[0]+' = '+Math.round(l[1]).toLocaleString(); }).join('\n');
+    var _rwork=(window.g6rRoomDetail&&window.g6rRoomDetail(d))||_rbreak; // CODE-G6 จุด2: รายการ(งาน) แตกรายบาน → work (เดิมไปกองใน note)
+    var _rspec=(window.g6rRoomSpec&&window.g6rRoomSpec(d))||'';          // สเปควัสดุ → spec
     var _userNote=(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'';
+    var _notes=[];
+    if(/งานปูพื้น/.test(_rwork)) _notes.push('ไม่รับประกันพื้นแอ่น/ยวบ'); // หมายเหตุงานพื้น (Protection price-line คงเดิม · จุด4 รอเคาะ)
+    if(_userNote) _notes.push(_userNote);
     return { p:{name:'ห้องต่อเติม (กั้นห้องกระจก)', cat:'กั้นห้องกระจก'},
       r:{a:0, sell:_rt, cost:0, addonLines:[], msgs:[], addonLabel:''},
       qty:1, gi:0, ci:0, finLabel:'', optSel:{}, subItems:[],
       w:'', h:'', name:'ห้องต่อเติม', ship:false, itype:'door',
       groupName:'', groupLabel:'', groupOptText:'', groupOptDelta:0,
       itemOptDelta:0, lumpsum:true, position:(d.querySelector('.i-position')&&d.querySelector('.i-position').value)||'',
-      note:[_rdetail,_userNote].filter(Boolean).join('\n'),
+      work:_rwork.split('\n').map(function(s){return s.replace(/^[•\-]\s*/,'').trim();}).filter(Boolean), // ② รายการ (qrow ใส่ "- " ให้)
+      spec:_rspec.split('\n').map(function(s){return s.trim();}).filter(Boolean),                          // ⑤ สเปค
+      note:_notes.join('\n'),                                                                              // ④ หมายเหตุ
       room:true, roomLines:_rlines, div:d };
   }
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return null;
@@ -5147,6 +5153,8 @@ function genQuote(keepNo){
   let subtotal=0, rows='', rowIdx=0;
   // Helper to format an item detail (single row)
   function itemDetail(it){
+    // CODE-G6 จุด3: ห้องต่อเติม G6 — ใช้ work/spec ที่ readItem เตรียมไว้ (genQuote ประกอบ marker เอง) · ไม่ parse det
+    if(it.room){ return {prodName:'ห้องต่อเติม (กั้นห้องกระจก)', det:'', work:it.work||[], spec:it.spec||[]}; }
     const naType = ITYPE_NA.indexOf(it.p.cat)>=0;
     // หมวดที่ไม่ใส่ prefix: หลัก ITYPE_NA + shower/ม่านซิป/กั้นห้องกระจก/บานเปลือย (ชื่อสื่อตัวเอง)
     const noPrefix = naType || ['shower','ม่านซิป','กั้นห้องกระจก','บานเปลือย','ติดตาย'].indexOf(it.p.cat)>=0;
@@ -6566,6 +6574,12 @@ window.addEventListener('load',ckRefresh);
     if(o.qty>1)t.push('จำนวน '+o.qty+' บาน');
     return t; }
   // รายละเอียดเต็มต่อบาน (ด้าน → ชนิด/ขนาด/ออปชั่น) ลงใบเสนอราคา — แตกรายการเหมือนเก่า
+  // G6 ใบ 5 บล็อก (CODE-G6 จุด1): สเปควัสดุห้อง → รายละเอียด(ล่าง) · G6R ไม่เก็บสีต่อบาน → ใช้มาตรฐาน (TODO: state สีต่อบาน)
+  window.g6rRoomSpec=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
+    out.push('อลูมิเนียม สีมาตรฐาน (ขาว/ดำ)');
+    out.push('กระจกเขียว/ใส หนา 6 มม.');
+    if(G6R.sides.some(function(s){return s.type==='wall';})) out.push('ผนังเบา (ISOWALL/สมาร์ทบอร์ด)');
+    G6R=sv; return out.join('\n'); };
   window.g6rRoomDetail=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
     G6R.sides.forEach(function(s,i){
       if(s.type==='glass'){ var nb=s.cols.reduce(function(a,c){return a+c.pcs.length;},0);
