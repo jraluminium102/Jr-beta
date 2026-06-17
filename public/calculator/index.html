@@ -3173,22 +3173,43 @@ const OC_CATS=[{id:'glass',label:'เปลี่ยนกระจก'},{id:'mo
 // มือจับเหมา/ชุด (ตารางข้อ4 · ไม่ ×พื้นที่)
 const OC_HANDLES=[{n:'Cmech ฝัง ประตู ธรรมดา',p:1050},{n:'Cmech ฝัง ประตู พิเศษชุบ',p:1470},{n:'Cmech ฝัง หน้าต่าง ธรรมดา',p:350},{n:'Cmech ฝัง หน้าต่าง พิเศษชุบ',p:490},{n:'Cmech เมโทร ประตู ธรรมดา',p:1000},{n:'Cmech เมโทร ประตู พิเศษชุบ',p:1400},{n:'Cmech เมโทร หน้าต่าง ธรรมดา',p:600},{n:'Cmech เมโทร หน้าต่าง พิเศษชุบ',p:840}];
 // ALLG-v2 (พี่นัท): OPTION ทางเลือกลูกค้า กรองตาม control ที่สินค้านั้น "มีจริง" — ติดตายไม่มีมุ้ง/มือจับ ฯลฯ
-function ocCatOptions(ch){
+// ก้อนรวม#7: แยกคำนวณ "หมวดที่สินค้านี้มีจริง" ออกมาใช้ร่วม (dropdown เดิม + ชิปใหม่)
+function ocCatIds(ch){
   // เช็ค "มองเห็น" แบบไม่พึ่ง offsetParent (jsdom ใช้ไม่ได้) — ไล่ parent หา inline display:none
   var has=function(sel){ var e=ch&&ch.querySelector(sel); if(!e)return false; for(var n=e;n&&n!==ch;n=n.parentElement){ if(n.style&&n.style.display==='none')return false; } return true; };
   var hasEl=function(sel){ return !!(ch&&ch.querySelector(sel)); };
-  var ids;
-  if(hasEl('.o-roofend')){ ids=['color','roof','other']; } // หลังคา
-  else {
-    ids=[];
-    if(has('.i-glass-wrap')) ids.push('glass');                 // มีช่องกระจก
-    if(hasEl('.o-mosq')) ids.push('mosq');                      // มีมุ้ง
-    if(has('.i-color-wrap')||hasEl('.o-finish')) ids.push('color'); // สีอลู (บาน) หรือ ผิว/สี (ระแนง)
-    if(hasEl('.o-cmech')||hasEl('.o-digi')||hasEl('.o-xhandle')||hasEl('.o-cmechawn')) ids.push('handle'); // มีมือจับ
-    ids.push('other');
-  }
+  if(hasEl('.o-roofend')){ return ['color','roof','other']; } // หลังคา
+  var ids=[];
+  if(has('.i-glass-wrap')) ids.push('glass');                 // มีช่องกระจก
+  if(hasEl('.o-mosq')) ids.push('mosq');                      // มีมุ้ง
+  if(has('.i-color-wrap')||hasEl('.o-finish')) ids.push('color'); // สีอลู (บาน) หรือ ผิว/สี (ระแนง)
+  if(hasEl('.o-cmech')||hasEl('.o-digi')||hasEl('.o-xhandle')||hasEl('.o-cmechawn')) ids.push('handle'); // มีมือจับ
+  ids.push('other');
+  return ids;
+}
+function ocCatOptions(ch){
   var byId={}; OC_CATS.forEach(function(c){byId[c.id]=c;});
-  return '<option value="">— เลือกหมวด —</option>'+ids.filter(function(i){return byId[i];}).map(function(i){return '<option value="'+i+'">'+byId[i].label+'</option>';}).join('');
+  return '<option value="">— เลือกหมวด —</option>'+ocCatIds(ch).filter(function(i){return byId[i];}).map(function(i){return '<option value="'+i+'">'+byId[i].label+'</option>';}).join('');
+}
+// ก้อนรวม#7 (พี่นัทเคาะ 17มิ.ย.): OPTION ทางเลือกลูกค้า = ชิปประเภท (single-select · default "— ไม่มี —") → กด→เผยตัวเลือก→auto-price (ocPick เดิม)
+function ocCatChips(ch){
+  var byId={}; OC_CATS.forEach(function(c){byId[c.id]=c;});
+  var h='<button type="button" class="chip on" data-cat="" onclick="ocChipPick(this)">— ไม่มี —</button>';
+  return h+ocCatIds(ch).filter(function(i){return byId[i];}).map(function(i){return '<button type="button" class="chip" data-cat="'+i+'" onclick="ocChipPick(this)">'+byId[i].label+'</button>';}).join('');
+}
+function ocRowHTML(cat){
+  var _st='height:32px;font-size:12px;border:1px solid var(--line);border-radius:6px;';
+  var itHtml=(cat==='other')?'':('<select class="oc-item" onchange="ocPick(this)" style="'+_st+'max-width:220px;"><option value="">— เลือกรายการ —</option>'+ocItemOptions(cat)+'</select>');
+  return '<div class="oc-row" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:5px;"><input type="hidden" class="oc-cat" value="'+cat+'">'+itHtml
+    +'<input class="oc-text" placeholder="ข้อความ (auto · แก้ได้)" oninput="calcQuote()" style="'+_st+'flex:1;min-width:130px;padding:0 6px;">'
+    +'<input type="number" class="oc-delta" placeholder="±บาท" oninput="calcQuote()" style="'+_st+'width:90px;padding:0 6px;"></div>';
+}
+function ocChipPick(btn){
+  var block=btn.closest('.oc-block'); if(!block)return;
+  block.querySelectorAll('.oc-catchips .chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var cat=btn.dataset.cat||''; var list=block.querySelector('.oc-list');
+  list.innerHTML = cat ? ocRowHTML(cat) : '';   // "— ไม่มี —" = เคลียร์ (ไม่มี OPTION)
+  calcQuote();
 }
 function ocItemOptions(cat){
   if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
@@ -3923,7 +3944,7 @@ function addItem(container){
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
      `<div class="full note-opt-group">`+
        `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
-       `<details class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;"><summary style="cursor:pointer;font-size:13px;color:var(--red);font-weight:600;">＋ OPTION ทางเลือกลูกค้า (เปลี่ยนกระจก/มุ้ง/สี/มือจับ/หลังคา · คิดราคาให้)</summary><div class="oc-list" style="margin-top:6px;"></div><button type="button" class="oc-add" onclick="ocAddRow(this)" style="font-size:12px;padding:3px 10px;border:1px dashed var(--red);color:var(--red);background:#fff;border-radius:6px;cursor:pointer;">＋ เพิ่ม OPTION</button></details>`+
+       `<div class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;"><div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:5px;">＋ OPTION ทางเลือกลูกค้า <span style="font-weight:400;color:var(--muted);font-size:11px;">(เปลี่ยนวัสดุ คิดราคาให้ · กดได้เลย)</span></div><div class="oc-catchips chip-group chip-sm"></div><div class="oc-list" style="margin-top:6px;"></div></div>`+
        remarkSelectHTML()+
        `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
        `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
@@ -4593,14 +4614,8 @@ function buildItemOpts(d){
       _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
     }
   }
-  // ALLG: หัวข้อ OPTION ทางเลือกลูกค้า — สร้างตามหมวดที่ "มีจริง" (ocCatOptions) ไม่ hardcode · กันโชว์ "กระจก/มือจับ/หลังคา" ที่สินค้านั้นไม่มี (เช่น มุ้ง = แค่ ระบุเอง)
-  { var _ocSum=d.querySelector('.oc-block summary'); if(_ocSum){
-      if(p.cat==='หลังคา'){ _ocSum.textContent='＋ OPTION ทางเลือกลูกค้า (เปลี่ยนสี / วัสดุมุง / หลังคา · คิดราคาให้)'; }
-      else { var _ocLb={glass:'กระจก',mosq:'ผ้ามุ้ง',color:'สี',handle:'มือจับ',roof:'หลังคา'};
-        var _ocL=(ocCatOptions(d).match(/value="(glass|mosq|color|handle|roof)"/g)||[]).map(function(_x){return _ocLb[_x.replace(/value="|"/g,'')];});
-        _ocSum.textContent='＋ OPTION ทางเลือกลูกค้า'+(_ocL.length?' (เปลี่ยน'+_ocL.join('/')+' · คิดราคาให้)':' (ระบุเอง · คิดราคาให้)');
-      }
-  } }
+  // ก้อนรวม#7: OPTION ทางเลือกลูกค้า → ชิปประเภท (single-select · กรองตามหมวดที่สินค้านี้มีจริง · default "— ไม่มี —")
+  { var _ocCh=d.querySelector('.oc-catchips'); if(_ocCh){ _ocCh.innerHTML=ocCatChips(d); } }
   // G5-FINAL E: populate ชิปสีผ้า ครั้งแรกตาม default (fiber → ดำ/เทา)
   if(p.screen_addon){ var _fc=d.querySelector('.chip.on[onclick*="o-screenfabric"]'); if(_fc) mosqFabricColors(_fc); }
   // G3-v5 จุด1: ซ่อน dropdown .i-prod เมื่อกลุ่ม 3 (ใช้แท็บ+ชิป g3-prodsel แทน) · กลุ่มอื่นโชว์ปกติ
