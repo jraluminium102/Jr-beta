@@ -767,10 +767,10 @@ const PRODUCTS=[
  {id:'imp18',cat:'หลังคา',name:"ชินโคไลท์ 4 มม. รุ่น Shade",method:'bucket',min:44000,rates:'IMP18',cost:null,optSlide:true},
  {id:'imp19',cat:'หลังคา',name:"ชินโคไลท์ 10 มม. รุ่น Prime",method:'bucket',min:61000,rates:'IMP19',cost:null,optSlide:true},
  {id:'imp20',cat:'หลังคา',name:"ชินโคไลท์ 10 มม. รุ่น Grand",method:'bucket',min:61000,rates:'IMP19',cost:null,optSlide:true}, // FIX-5: Grang→Grand + ราคา=Prime (IMP19) มติพี่นัท
- {id:'imp21',cat:'มุ้ง',name:"มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์ (บานเปิด/เลื่อน/กระทุ้ง/ยก) ห้าม PC",method:'bucket',min:0,rates:'IMP21',cost:null,min_door:2400,min_window:1200,screen_addon:1,mscolor:true,deny_with:['pc_door_2','pc_door_4']},
+ {id:'imp21',cat:'มุ้ง',name:"มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์ (บานเปิด/เลื่อน/กระทุ้ง/ยก)",method:'bucket',min:0,rates:'IMP21',cost:null,min_door:2400,min_window:1200,screen_addon:1,mscolor:true,deny_with:['pc_door_2','pc_door_4']},
  {id:'imp22',cat:'มุ้ง',name:"มุ้งเฟรมเล็กติดตาย ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP22',cost:null,min_door:1500,min_window:800,screen_addon:1,mscolor:true},
  {id:'imp23',cat:'มุ้ง',name:"มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก · ตัด PC)",method:'bucket',min:0,rates:'IMP23',cost:null,min_door:7200,min_window:4800,screen_addon:1,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
- {id:'imp28',cat:'มุ้ง',name:"มุ้งจีบ ตีนตะขาบ รุ่งรางเตี้ยแบบพิเศษ ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP28',cost:null,mscolor:true},
+ {id:'imp28',cat:'มุ้ง',name:"มุ้งจีบ ตีนตะขาบ รุ่นรางเตี้ยแบบพิเศษ ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP28',cost:null,mscolor:true},
  {id:'imp29',cat:'มุ้ง',name:"มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก)",method:'bucket',min:0,rates:'IMP29',cost:null,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
  {id:'imp30',cat:'มุ้ง',name:"มุ้งแม่เหล็ก พับเปิดได้",method:'bucket',min:0,rates:'IMP30',cost:null},
  {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
@@ -1863,7 +1863,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       mosqBase = Math.max(_minPP*_mqPanels, mosqArea*_mqRate);
       const fabric = (optSel.mosqFabric)||'fiber_gray';
       const fabricExtra = (fabric==='anti_pet'?800:(fabric==='stainless'?1200:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
-      const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
+      const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
       // ข้อ10: ค่าทำสีกรอบมุ้ง addon (×0.5) — เดิมอยู่ใน if(false) ดับ → ย้ายมา block ที่ใช้จริง
       let _mosqColorUp=0, _mosqColorLbl='';
       if(mscreen.mscolor && optSel.mosqColor){
@@ -4403,7 +4403,7 @@ function buildItemOpts(d){
     // ก้อน5: ชิปลักษณะการเปิด (.o-mosqopenstyle · ห้ามชน .o-mosqopen dead code) — โผล่เฉพาะ imp21/imp23 · label-only
     h+='<div class="mosq-openstyle-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #90CAF9;"><div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button><button type="button" class="chip" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button><button type="button" class="chip" data-val="กระทุ้ง" onclick="mosqOpenStylePick(this)">กระทุ้ง</button><button type="button" class="chip" data-val="ยก" onclick="mosqOpenStylePick(this)">ยก</button></div><input type="hidden" class="o-mosqopenstyle" value="เปิด"><div style="margin-top:5px;font-size:11px;color:#6B7280;">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา</div></div>';
     // UX P2 (ux-designer): ผ้ามุ้งใน-บาน → ชิป (สม่ำเสมอกับ G5 standalone · ราคาอ่าน o-mosqfabric value เดิม)
-    h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <select class="o-mosqfabric" style="display:none;" onchange="calcQuote()"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว/หมา +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select>'+rfChips('o-mosqfabric',[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว/หมา +800'],['stainless','สแตนกันหนู +1,200'],['safety08','สแตนนิรภัย 0.8']],'fiber_gray')+'</label>';
+    h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <select class="o-mosqfabric" style="display:none;" onchange="calcQuote()"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select>'+rfChips('o-mosqfabric',[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว +800'],['stainless','สแตนกันหนู +1,200'],['safety08','สแตนนิรภัย 0.8']],'fiber_gray')+'</label>';
     // ข้อ10: สีกรอบมุ้ง → ชิป 4 (value ตรงกับ calc · o-mosqcolor ซ่อน)
     h+='<label class="opt" style="width:100%;">สีกรอบมุ้ง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-mosqcolor\')">ตามสีบาน</button><button type="button" class="chip" data-val="sahara" onclick="chSetChip(this,\'o-mosqcolor\')">เทาซาฮาร่า</button><button type="button" class="chip" data-val="kl_special" onclick="chSetChip(this,\'o-mosqcolor\')">KL พิเศษ</button><button type="button" class="chip" data-val="kl_wood" onclick="chSetChip(this,\'o-mosqcolor\')">KL ลายไม้</button></div><select class="o-mosqcolor" style="display:none;" onchange="calcQuote()"><option value="">ตามสีบาน (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
     h+='</div></div></label>';
@@ -4536,7 +4536,7 @@ function buildItemOpts(d){
       +'<button type="button" class="chip" data-val="cat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">กันแมว ขาว +800</button>'
       +'<button type="button" class="chip" data-val="rat" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">สแตนกันหนู +1,200</button>'
       +(p.rates==='IMP23'?'<button type="button" class="chip" data-val="safety" onclick="chSetChip(this,\'o-screenfabric\');mosqFabricColors(this)">นิรภัยสแตน 304 ดำ</button>':'')
-      +'</div><select class="o-screenfabric" style="display:none;" onchange="calcQuote();"><option value="fiber">ไฟเบอร์ เทา/ดำ</option><option value="cat">กันแมว/หมา สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>'+(p.rates==='IMP23'?'<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>':'')+'</select></label>';
+      +'</div><select class="o-screenfabric" style="display:none;" onchange="calcQuote();"><option value="fiber">ไฟเบอร์ เทา/ดำ</option><option value="cat">กันแมว สีขาว +800/ตร.ม.</option><option value="rat">สแตน 0.33มม. กันหนู (เงิน/ดำ) +1,200/ตร.ม.</option>'+(p.rates==='IMP23'?'<option value="safety">นิรภัยสแตน 304 สีดำ 0.8มม. (tier 3,500-3,000)</option>':'')+'</select></label>';
     // G5-FINAL E: สีผ้า → chipwrap (mosqFabricColors rebuild ตามผ้า) · select ซ่อน value: ดำ/เทา/ขาว/เงิน
     h+='<label class="opt" style="width:100%;">สีผ้า <div class="o-sfc-chipwrap chip-group chip-sm" style="display:inline-flex;"></div><select class="o-screenfabriccolor" style="display:none;" onchange="calcQuote();"><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="ขาว">ขาว</option><option value="เงิน">เงิน</option></select></label>';
     // G5 (มติพี่นัท 16 มิ.ย.): ลักษณะการเปิดมุ้งเฟรมขายเดี่ยว — imp21 เฟรมเล็ก / imp23 เฟรมใหญ่ เท่านั้น (imp22 ติดตายไม่มี · imp30 แม่เหล็กพับไม่ใช่ screen_addon) · label-only ไม่กระทบราคา · readItem อ่าน .o-mosqopenstyle อยู่แล้ว (L3711)
@@ -5822,7 +5822,7 @@ function genQuote(keepNo){
       if(it.p.mosquito && it.optSel && it.optSel.mosqId){
         const _mscSl = MOSQUITO_SCREENS.find(function(m){return m.id===it.optSel.mosqId;});
         if(_mscSl){
-          const _mfMapSl={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
+          const _mfMapSl={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
           const _mfSl = (it.optSel.mosqFabric)||'fiber_gray';
           const _mfLblSl = _mfMapSl[_mfSl]||'ผ้าไฟเบอร์ดำ';
           const _mosqAddonSl = (it.r && it.r.addonLines||[]).find(function(al){return al.mosqArea!==undefined;});
@@ -5934,7 +5934,7 @@ function genQuote(keepNo){
       if(it.p.mosquito && it.optSel && it.optSel.mosqId){
         const mscreen = MOSQUITO_SCREENS.find(m=>m.id===it.optSel.mosqId);
         if(mscreen){
-          const fabricMapM={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว/หมา',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
+          const fabricMapM={fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',fiber_white:'ผ้าไฟเบอร์ขาว',fiber:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'};
           const mf = (it.optSel.mosqFabric)||'fiber_gray';
           const mfLabel = fabricMapM[mf]||'ผ้าไฟเบอร์ดำ';
           // C1: ตัด "SD พื้นฐาน" ทิ้ง → รายละเอียดเหลือ "มุ้งจีบ {ผ้า}" (ชนิดอื่นเช่นตีนตะขาบยังคงไว้)
@@ -6157,7 +6157,7 @@ function qiQuoteRow(d,g){
   try{
     if(g==='3'){ r=qiCalcG3(d); var p3=PBYID[d.dataset.qiProd||'imp7']; prod=p3?p3.name:'หลังคา/ฝ้า'; detail=(r&&r.msgs&&r.msgs[0])||''; }
     else if(g==='4'){ r=qiCalcG4(d); var t4=d.dataset.qiG4type||'cabinet'; var p4=PBYID[t4==='cabinet'?'cabinet_alu':'future_tech']; prod=(p4?p4.name:'ตู้')+(d.dataset.qiG4color==='1'?' · สีพิเศษ':''); size=(t4==='cabinet')?(W+'×'+H+' ลึก'+((d.querySelector('.qi-g4depth')||{}).value||0.6)+' ม. · '+(d.dataset.qiG4doors||2)+' บานหน้า'):(W+'×'+H+'/บาน · '+(d.dataset.qiG4ftpanel||2)+' บาน'); }
-    else if(g==='5'){ r=qiCalcG5(d); var p5=PBYID[d.dataset.qiProd||'imp21']; prod=p5?p5.name:'มุ้ง'; var pn=parseInt((d.querySelector('.qi-panels')||{}).value)||1; if(pn>1)size+=' · '+pn+' บาน'; var fb=d.dataset.qiG5fab; if(fb&&fb!=='free')detail='ผ้า'+(fb==='cat'?'กันแมว/หมา':fb==='rat'?'กันหนูสแตน':fb==='safety'?'นิรภัย 304':fb); }
+    else if(g==='5'){ r=qiCalcG5(d); var p5=PBYID[d.dataset.qiProd||'imp21']; prod=p5?p5.name:'มุ้ง'; var pn=parseInt((d.querySelector('.qi-panels')||{}).value)||1; if(pn>1)size+=' · '+pn+' บาน'; var fb=d.dataset.qiG5fab; if(fb&&fb!=='free')detail='ผ้า'+(fb==='cat'?'กันแมว':fb==='rat'?'กันหนูสแตน':fb==='safety'?'นิรภัย 304':fb); }
     else if(g==='6'){ r=qiCalcG6(d); var st6=qiG6GetState(d); var reach=parseFloat((d.querySelector('.qi-w')||{}).value)||0; var len=parseFloat((d.querySelector('.qi-h')||{}).value)||0; var hgt=parseFloat((d.querySelector('.qi-g6hgt')||{}).value)||2.8; prod='กั้นห้องกระจก '+st6.shape+' ด้าน'; size='ยื่น'+reach+'×ยาว'+len+'×สูง'+hgt+' ม.'; var rk=QIG6_ROOF[st6.roof]&&QIG6_ROOF[st6.roof][1]; detail='บานต่อด้าน'+(rk?(' · หลังคา '+QIG6_ROOF[st6.roof][0]):''); }
     else if(g==='7'){ r=qiCalcG7(d); var ml=({auto:'auto',Z100:'JR-Z100',Z120:'JR-Z120',Z145D:'JR-Z145D 2ชั้น',Z120W:'JR-Z120W'})[d.dataset.qiZ7model||'auto']; prod='ม่านซิป '+ml; detail='ผ้า '+(d.dataset.qiZ7fab||'5')+'% · '+(d.dataset.qiZ7grp==='project'?'โครงการ':'ปลีก'); }
     else if(g==='2'){ r=qiCalcG2(d); var cat=d.dataset.qiG2cat||'gate';
