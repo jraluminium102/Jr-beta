@@ -15,6 +15,7 @@ const TASKS = [
   { name: "G3-B1 ปุ่มโพลีตันชิป(แบบค)", marker: /ใส 83%/,            doc: "ใบสั่งงาน-G3-B" },
   { name: "G3-B2 ปุ่มฝ้าชิป",          marker: /'o-ceildir','o-ceilpos'/, doc: "ใบสั่งงาน-G3-B" }, // auto chipify (CHIPIFY_SELECTS) · verify browser: chipped=1 ทั้งคู่
   { name: "G3-C1 รวมเพลท+เหล็กดึง",     marker: /\(รับล่าง\) \+ เหล็กดึงด้านบน/, doc: "ใบสั่งงาน-G3-C" },
+  { name: "G2 สีระแนง 3 ชนิด→ชิป (สลับตรวจ)", marker: /'o-bsfinish'/, doc: "ใบสั่งงาน-G2-สลับตรวจ" },
   { name: "G1 ใบ 5 บล็อก",             marker: /สีอลูมิเนียม:/,     doc: null },
   { name: "G4 ใบ 5 บล็อก (ตู้)",        marker: /บานหน้า Future Tech /, doc: null },
   // เพิ่มงานใหม่ที่นี่:  { name:"...", marker:/คำในโค้ด/, doc:"คำในชื่อไฟล์" },
