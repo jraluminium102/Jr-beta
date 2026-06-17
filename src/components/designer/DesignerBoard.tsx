@@ -13,14 +13,14 @@ import DesignerSchedule from "@/components/designer/DesignerSchedule";
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
   { state: "NOT_STARTED",      th: "ยังไม่เริ่ม",       dot: "#94a3b8" },
   { state: "DRAWING",          th: "กำลังเขียนแบบ",     dot: "#2563eb" },
-  { state: "PENDING_CUSTOMER", th: "รอลูกค้า",          dot: "#d97706" },
+  { state: "PENDING_CUSTOMER", th: "รอเซลล์ตรวจแบบ",          dot: "#d97706" },
   { state: "REVISING",         th: "กำลังแก้ไข",        dot: "#B3151D" },
   { state: "DONE",             th: "เสร็จแล้ว",         dot: "#059669" },
 ];
 const STATE_TH: Record<DesignState, string> = {
   NOT_STARTED:      "ยังไม่เริ่ม",
   DRAWING:          "กำลังเขียนแบบ",
-  PENDING_CUSTOMER: "รอลูกค้า",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
   REVISING:         "กำลังแก้ไข",
   DONE:             "เสร็จแล้ว",
 };

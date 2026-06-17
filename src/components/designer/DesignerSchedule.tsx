@@ -67,7 +67,7 @@ const STATE_COLOR: Record<DesignState, {
 const STATE_TH: Record<DesignState, string> = {
   NOT_STARTED: "ยังไม่เริ่ม",
   DRAWING: "กำลังเขียนแบบ",
-  PENDING_CUSTOMER: "รอลูกค้า",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
   REVISING: "กำลังแก้ไข",
   DONE: "เสร็จแล้ว",
 };
@@ -1019,7 +1019,7 @@ export default function DesignerSchedule({
           [
             ["NOT_STARTED", "ยังไม่เริ่ม"],
             ["DRAWING", "กำลังเขียนแบบ"],
-            ["PENDING_CUSTOMER", "รอลูกค้า"],
+            ["PENDING_CUSTOMER", "รอเซลล์ตรวจแบบ"],
             ["REVISING", "กำลังแก้ไข"],
           ] as [DesignState, string][]
         ).map(([st, label]) => (
