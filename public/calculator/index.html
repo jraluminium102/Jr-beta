@@ -2799,13 +2799,15 @@ function qiRenderG1(d){
       if(p){ var ao=AREA_CATS.includes(p.cat);
         var cw=d.querySelector('.qi-color-wrap'); if(cw) cw.style.display=(p.cabinet||!(ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))?'':'none';
         var gw=d.querySelector('.qi-glass-wrap'); if(gw) gw.style.display=(!(ao||p.zipscreen||p.cat==='มุ้ง'))?'':'none';
-        var cs=d.querySelector('.qi-color'); if(cs){ var cv=cs.value; cs.innerHTML=colorOpts(p.series||''); if(cv&&cs.querySelector('option[value="'+cv+'"]'))cs.value=cv; else cs.value='0'; } }
+        var cs=d.querySelector('.qi-color'); if(cs){ var cv=cs.value; cs.innerHTML=colorOpts(p.series||''); if(cv&&cs.querySelector('option[value="'+cv+'"]'))cs.value=cv; else cs.value='0'; try{cs.dataset.colCat=colorCatOf(parseInt(cs.value)||0); colorDrillRender(cs);}catch(e){} } } // ก้อนรวม#8: drill-down สีคิดเร็ว (rebuild ชิปตามสินค้า)
       qiSyncFamOn(d); calcQuickAll();
     });
     // trigger once to sync display
     ps.dispatchEvent(new Event('change'));
   }
   d.querySelectorAll('.qi-color,.qi-glass,.qi-finish').forEach(function(e){ e.addEventListener('change',calcQuickAll); });
+  // ก้อนรวม#8: drill-down กระจกคิดเร็ว (สีคิดเร็ว render ใน ps change handler แล้ว) · glass ไม่ rebuild → render ครั้งเดียว
+  try{ var _qgD=d.querySelector('.qi-glass'); if(_qgD){ _qgD.dataset.glCat=glassCatOf(parseInt(_qgD.value)||0); glassDrillRender(_qgD); } }catch(e){}
   qiRebuild(d);
 }
 function qiCalcG1(d){
@@ -2978,6 +2980,8 @@ function refreshSet(box){
       };
       ghColorRow.querySelector('.gh-color-sel').addEventListener('change', syncGHColor);
       ghColorRow.querySelector('.gh-glass-sel').addEventListener('change', syncGHColor);
+      // ก้อนรวม#8: drill-down สี/กระจก หน้ากั้นห้องกระจก (reuse colorDrillRender/glassDrillRender · render ครั้งเดียวตอนสร้าง row)
+      try{ var _ghc=ghColorRow.querySelector('.gh-color-sel'); _ghc.dataset.colCat=colorCatOf(parseInt(_ghc.value)||0); colorDrillRender(_ghc); var _ghg=ghColorRow.querySelector('.gh-glass-sel'); _ghg.dataset.glCat=glassCatOf(parseInt(_ghg.value)||0); glassDrillRender(_ghg); }catch(e){}
     }
     // ---- [4] ซ่อนช่องสี/กระจกในแต่ละ ch กลุ่ม 6 + sync ค่า ----
     var masterColor = ghColorRow.querySelector('.gh-color-sel').value;
