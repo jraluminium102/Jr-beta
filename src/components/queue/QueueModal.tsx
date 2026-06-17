@@ -592,75 +592,44 @@ export function QueueModal({
   async function autoLoadLatestJob(customerId: number) {
     setSiteInfoBusy(true);
     try {
-      const r = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
-      const jobs = r.data ?? [];
+      // (1) งานล่าสุด — โชว์เป็นไซต์อ้างอิง (เปลี่ยนไซต์เฉพาะได้)
+      const jr = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
+      const jobs = jr.data ?? [];
       if (jobs.length > 0) {
-        await autoFillFromJob(jobs[0], customerId);
+        setSelectedJob(jobs[0]);
+        lastAutoJobRef.current = jobs[0];
+        setChangingSite(false);
       } else {
-        // ไม่มีงาน → set target_customer_id ให้สร้างงานใหม่ใต้ลูกค้าได้
         setNoJobsForCust(true);
-        setF((s) => ({ ...s, target_customer_id: customerId }));
       }
-    } catch {
-      // best-effort: ถ้า fetch พัง ปล่อยให้ user ค้นเอง
-      setChangingSite(true);
-    } finally {
-      setSiteInfoBusy(false);
-    }
-  }
-
-  // auto-fill ข้อมูลไซต์จากงาน j — caller รับผิดชอบ siteInfoBusy
-  // snapshot custId เพื่อหลีกเลี่ยง stale closure
-  async function autoFillFromJob(j: JobSearchResult, custId: number) {
-    setSelectedJob(j);
-    lastAutoJobRef.current = j;
-    setChangingSite(false);
-    try {
-      const r = await api.get<{
-        customer_name: string;
-        tel: string | null;
-        address: string | null;
-        location_url: string | null;
-        lat: number | null;
-        lng: number | null;
-        line_contact: string | null;
-        contact_channel: string;
-      }>(`/jobs/${j.id}/site-info`);
-      const info = r.data;
+      // (2) เติมจาก "ไซต์รวมของลูกค้า" (ครบสุด — ดึง location จากงานใดก็ได้ที่มีแผนที่)
+      const cr = await api.get<{
+        customer_name: string; tel: string | null; address: string | null;
+        location_url: string | null; lat: number | null; lng: number | null;
+        line_contact: string | null; contact_channel: string;
+      }>(`/customers/${customerId}/site-info`);
+      const info = cr.data;
       if (info) {
         setF((s) => ({
           ...s,
-          customer_name: info.customer_name || j.customer_name,
+          customer_name: info.customer_name || s.customer_name,
           tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
           address: info.address ?? s.address,
           location_url: info.location_url ?? s.location_url,
           line_contact: info.line_contact ?? s.line_contact,
           contact_channel: info.contact_channel || s.contact_channel,
-          target_customer_id: custId,
+          target_customer_id: customerId,
           target_job_id: null,
         }));
-        if (info.lat != null && info.lng != null) {
-          setResolved({ lat: info.lat, lng: info.lng });
-        }
+        if (info.lat != null && info.lng != null) setResolved({ lat: info.lat, lng: info.lng });
       } else {
-        setF((s) => ({
-          ...s,
-          customer_name: j.customer_name,
-          tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
-          address: j.customer_area ?? s.address,
-          target_customer_id: custId,
-          target_job_id: null,
-        }));
+        setF((s) => ({ ...s, target_customer_id: customerId }));
       }
     } catch {
-      setF((s) => ({
-        ...s,
-        customer_name: j.customer_name,
-        tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
-        address: j.customer_area ?? s.address,
-        target_customer_id: custId,
-        target_job_id: null,
-      }));
+      // best-effort: ยังให้สร้างงานใหม่ใต้ลูกค้าได้
+      setF((s) => ({ ...s, target_customer_id: customerId }));
+    } finally {
+      setSiteInfoBusy(false);
     }
   }
 
