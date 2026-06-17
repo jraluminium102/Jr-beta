@@ -3350,7 +3350,7 @@ var RF_SUBG={
 };
 function rfSubgOf(grp,id){ var s=RF_SUBG[grp]; if(!s)return null; for(var i=0;i<s.length;i++){ if(s[i][1].indexOf(id)>=0) return s[i][0]; } return s[0][0]; }
 function g3PickSubg(btn){ var ch=btn.closest('.ch'),grp=btn.dataset.grp,th=btn.dataset.th; var sg=(RF_SUBG[grp]||[]).filter(function(x){return x[0]===th;})[0]; if(sg&&sg[1][0]) g3SyncProd(ch, sg[1][0]); }
-var G3_WALL_PRODS=[['ceil_cshape','ฝ้าอลู ตัวซี'],['ceil_bsc','ฝ้าไม้เทียม remood'],['ceiling_smooth','ฝ้าฉาบเรียบ'],['ceil_ranae_1x5','ฝ้าระแนงอลู 1x5ซม.'],['ceil_ranae_16_5','ฝ้าระแนงอลู 1"x1.6" เว้น 5ซม.'],['ceil_ranae_16_2','ฝ้าระแนงอลู 1"x1.6" เว้น 2ซม.']]; // ธงB: เอา isowall ออก · +ฝ้าระแนงอลู 16มิ.ย.
+var G3_WALL_PRODS=[['ceil_cshape','ฝ้าอลู ไทยทิพย์'],['ceil_bsc','ฝ้าไม้เทียม remood'],['ceiling_smooth','ฝ้าฉาบเรียบ'],['ceil_ranae_1x5','ฝ้าระแนง 1×5'],['ceil_ranae_16_5','ฝ้าระแนง 1.6 เว้น5'],['ceil_ranae_16_2','ฝ้าระแนง 1.6 เว้น2']]; // AUDIT-ปุ่มชื่อยาว: label สั้น (name เต็มลงใบ) // ธงB: เอา isowall ออก · +ฝ้าระแนงอลู 16มิ.ย.
 function rfGrpOf(id){ for(var g in RF_GRP_PRODS){ if(RF_GRP_PRODS[g].some(function(x){return x[0]===id;})) return g; } return null; }
 function g3SyncProd(ch,prodId){ var sel=ch.querySelector('.i-prod'); if(!sel)return; if(!sel.querySelector('option[value="'+prodId+'"]')){ var o=document.createElement('option'); o.value=prodId; o.textContent=prodId; sel.appendChild(o); } if(sel.value===prodId)return; sel.value=prodId; sel.dispatchEvent(new Event('change',{bubbles:true})); }
 function g3PickProd(btn){ g3SyncProd(btn.closest('.ch'), btn.dataset.id); }
@@ -3685,6 +3685,14 @@ function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset
   // ALLG-v2 fix (บั๊ก "กดอื่นๆแล้วค้าง"): ไม่เปิด native dropdown 154 รายการ → re-render เป็นช่องค้นหา+ชิปแทน
   buildItemOpts(ch);
   var inp=ch.querySelector('.fam-search'); if(inp){ try{ inp.focus(); }catch(e){} } }
+// AUDIT-ปุ่มชื่อยาว (พี่นัทเคาะ 17มิ.ย.): ชื่อสั้นโชว์บนปุ่ม "รุ่น" · ชื่อเต็ม (name) ยังลงใบ + title hover เหมือนเดิม · value/ราคา/logic ไม่แตะ
+var BTN_SHORT={
+  sliding_eseries:'E-series (เลิกขาย)',
+  casement_flush_solid:'โซลิด ทู', casement_inset_solid:'โซลิด วัน',
+  inner_top_slimlux:'SlimLux (ภายใน)', inner_top_xseries:'X-series (ภายใน)'
+};
+function btnShort(q,cur){ return (q&&BTN_SHORT[q.id])||((q&&q.name||'').replace(cur||'','').trim()); }
+function btnTitle(q){ return (q&&q.name||'').replace(/"/g,'&quot;'); }
 function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
   var _hasRest=famRestCats(grp).length>0; // ซ่อนปุ่ม "อื่นๆ" เมื่อไม่มีบานเหลือ (เช่น G4 ตู้/ฝาตู้, G7 ม่านซิป) — กัน dead-end
@@ -3729,7 +3737,7 @@ function famSelectorHTML(p,grp,famOther){
       // รุ่นย่อยของ cat ที่เลือก (ถ้ามี >1 รุ่น)
       if(_restCats.indexOf(cur)>=0){ var _rm=prodsInGroup(grp).filter(function(q){return q.cat===cur;});
         if(_rm.length>1){ h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
-          _rm.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name.replace(cur,'').trim()+'</button>'; });
+          _rm.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
           h+='</div></label>'; }
       }
     }
@@ -3739,7 +3747,7 @@ function famSelectorHTML(p,grp,famOther){
     var models=PRODUCTS.filter(function(q){return q.cat===cur && !_hideInnerBottom(q);}); // ธง⑤: ไม่โชว์เลื่อนรางล่างเป็นรุ่นเลือก
     if(models.length>1){
       h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
-      models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" onclick="g3PickProd(this)">'+q.name.replace(cur,'').trim()+'</button>'; });
+      models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
       h+='</div></label>';
     }
   }
