@@ -1111,6 +1111,31 @@ function mosqDrillCat(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.data
 function mosqDrillNone(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.dataset.mqCat='__none'; sel.value=''; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); mosqDrillRender(sel); }
 function mosqDrillPick(btn){ var sel=_mosqDrillSel(btn); if(!sel)return; sel.value=btn.dataset.val; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); mosqDrillRender(sel); }
 function mosqDrillify(d){ if(!d)return; var s=d.querySelector('.o-mosq'); if(s) mosqDrillRender(s); }
+
+// ===== ③ มือจับ un-nest (HANDOFF-redesign จุด③ · พี่นัทเคาะ 17มิ.ย.: ดรอปดาวน์ย่อย→ชิปหมด) =====
+//   ชั้นย่อยที่ยังเป็น select (สี Cmech/หลบมุ้ง · ขนาดสแตนอร่าม · รุ่นดิจิตอล) → ชิป (สี = +จุดสี [[chip-color-swatch-style]])
+//   ขับด้วย selectedIndex (ค่า/value ไม่แตะ) · fire input+change · select ถูก rebuild ทุก buildItemOpts → chipify ใหม่ทุกครั้ง (DOM เก่าโดนล้าง)
+var HANDLE_COLOR_SW={black:'#1c1c1c',white:'#f0f0f0',silver:'#c9ccce',champagne:'#e6d3a3',gold:'#d4af37',bronze:'#8c6b3f',copper:'#b46a3c'};
+function _handleChipifySel(sel, swatch){
+  if(!sel || sel.dataset.hchipped==='1') return;
+  sel.dataset.hchipped='1'; sel.style.display='none';
+  var grp=document.createElement('div'); grp.className='chip-group chip-sm handle-chips'; grp.style.marginTop='6px';
+  Array.prototype.forEach.call(sel.options,function(o,i){
+    var b=document.createElement('button'); b.type='button'; b.className='chip'+(i===sel.selectedIndex?' on':'');
+    var label=(o.textContent||'').trim();
+    if(swatch && o.value && HANDLE_COLOR_SW[o.value]) b.innerHTML='<span class="cdot" style="background:'+HANDLE_COLOR_SW[o.value]+';"></span>'+label;
+    else b.textContent=label;
+    b.addEventListener('click',function(){ grp.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); sel.selectedIndex=i; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); });
+    grp.appendChild(b);
+  });
+  if(sel.parentNode) sel.parentNode.insertBefore(grp, sel.nextSibling);
+}
+function handleChipify(d){ if(!d)return;
+  _handleChipifySel(d.querySelector('.o-cmechcolor'), true);   // สี Cmech (7 · +จุดสี)
+  _handleChipifySel(d.querySelector('.o-cmechawn'), true);     // สี Cmech หลบมุ้ง (+จุดสี)
+  _handleChipifySel(d.querySelector('.o-stainless'), false);   // ขนาดสแตนอร่าม (6)
+  _handleChipifySel(d.querySelector('.o-digi'), false);        // รุ่นดิจิตอล (11)
+}
 // SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
 function rn90FinRate(ci){
   if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
@@ -4597,6 +4622,7 @@ function buildItemOpts(d){
   // พี่นัท 17 มิ.ย.: ออปชั่นดรอปดาวน์ตัวเลือกน้อย → ชิป (หลัง groupGHOpts + hooks ครบ · ไม่แตะ G7)
   chipifyItem(d);
   try{ mosqDrillify(d); }catch(e){}  // ④ มุ้ง drill-down (o-mosq → ชนิด→รุ่น)
+  try{ handleChipify(d); }catch(e){}  // ③ มือจับ ชั้นย่อย dropdown → ชิป
   // มุ้ง pattern dropdown — show/hide custom inputs
   const _mpat = box.querySelector('.o-mosqpat');
   if(_mpat){
