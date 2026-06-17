@@ -1766,7 +1766,6 @@ const REMARK_PRESETS=[
    'ราคาที่เสนอรวมงานรื้อประตูเดิม ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น วัสดุเดิมเป็นรอย กระจกแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
    'ราคาที่เสนอรวมงานดรอปพื้น ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น กระเบื้องพื้นแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
    'ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น กระเบื้องพื้นแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
-   'ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)',
    'ราคาที่เสนอรวมค่าตั้งนั่งร้านเหล็กเพื่อขนของขึ้นพร้อมติดตั้ง',
    'ราคาที่เสนอรวมงานรื้อราวกันตก ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น งานเก็บปูนแตก งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
    'ราคาที่เสนอรวมงานรื้อหลังคาเดิม ในกรณีที่เกิดความเสียหายจากการทำงาน เช่น โครงเดิมเป็นรอย วัสดุมุงหลังคาเดิมแตกร้าว งานเก็บสี จะมีบริการเปลี่ยนใหม่และเก็บงานให้โดยไม่มีค่าใช้จ่าย แต่ไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
@@ -4749,10 +4748,13 @@ function svcNum(id){ const e=document.getElementById(id); return e?(parseFloat(e
 function svcChk(id){ const e=document.getElementById(id); return e?e.checked:false; }
 function jobServices(net, totalArea){
   const lines=[];
-  // 3-1 Protection: ขั้นต่ำ 2,000 + เพิ่ม 1,000/จุด
+  const notes=[];          // CODE-G6 จุด4 (17มิ.ย.): ย้ายขึ้นบนสุด เพื่อให้ Protection push หมายเหตุได้
+  let _hidden=0;           // ยอดบวกเข้าใบแต่ไม่แตกบรรทัดราคา (Protection)
+  // 3-1 Protection: ขั้นต่ำ 2,000 + เพิ่ม 1,000/จุด · มติ 17มิ.ย.: เลิกบรรทัดราคาอังกฤษ → หมายเหตุไทย (เงินยังบวกเท่าเดิม)
   if(svcChk('svc-protect')){
     const pts=Math.max(0, Math.round(svcNum('svc-protect-points'))||0);
-    lines.push(['Protection พื้น/ผนัง', 2000 + pts*1000]);
+    _hidden += 2000 + pts*1000;
+    notes.push('ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)');
   }
   const floors=Math.max(1, Math.round(svcNum('svc-floors'))||1);
   // 44.1 ค่านั่งร้าน: max(0, ชั้น-1) × 5,000
@@ -4772,8 +4774,7 @@ function jobServices(net, totalArea){
     const sw=Math.max(0,Math.round(svcNum('svc-elec-sw'))||0); if(sw>0) lines.push(['งานไฟ — สวิตซ์ใหม่ '+sw+' จุด', sw*1000]);
     const pl=Math.max(0,Math.round(svcNum('svc-elec-plug'))||0); if(pl>0) lines.push(['งานไฟ — ปลั๊กไฟ '+pl+' จุด', pl*1000]); // #1 (17มิ.ย.): ปลั๊กไฟ ×1,000
   }
-  // Q15 งานรื้อของเดิม
-  const notes=[];
+  // Q15 งานรื้อของเดิม (notes ประกาศบนสุดแล้ว · CODE-G6 จุด4)
   if(svcChk('svc-demo')){
     let _demoTotal=0;
     if(svcChk('svc-demo-roof')){ const qty=Math.max(1,Math.round(svcNum('svc-demo-roof-qty'))||1); _demoTotal+=5000*qty; notes.push('รวมงานรื้อหลังคาเดิม'); }
@@ -4782,7 +4783,7 @@ function jobServices(net, totalArea){
     if(svcChk('svc-demo-door')){ const amt=Math.max(0,svcNum('svc-demo-door-amt')||0); _demoTotal+=amt; notes.push('รวมงานรื้อประตู-หน้าต่างเดิม'); }
     if(_demoTotal>0) lines.push(['งานรื้อของเดิม', _demoTotal]);
   }
-  return {amt:lines.reduce((x,l)=>x+l[1],0), lines, notes};
+  return {amt:lines.reduce((x,l)=>x+l[1],0)+_hidden, lines, notes};
 }
 // ธงG: เติมราคาทุกกล่อง G3 จาก breakdown ที่ calcUnit ส่งมา (display === engine · ไม่ re-derive สูตร)
 function g3UpdateBoxPrices(d, box){
