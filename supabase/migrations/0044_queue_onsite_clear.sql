@@ -40,11 +40,13 @@ begin
   end if;
 
   -- ─── path เคลียร์แบบ: ผูกงานเดิม ไม่สร้างลูกค้า/งานใหม่ ───────────────
+  -- หมายเหตุ: ห้าม set queue_entries.job_id = target — เพราะงานเดิมผูกคิวเดิมอยู่แล้ว
+  --   และ job_id มี unique constraint (queue_job_uidx) → จะชน duplicate key.
+  --   เคลียร์แบบใช้ target_job_id เป็นตัวเชื่อมแทน (job_id ปล่อย null = คิวนี้ไม่ได้สร้างงาน)
   if coalesce(q.job_type, '') = 'เคลียร์แบบ' then
     if q.target_job_id is null then
       raise exception 'เคลียร์แบบ: ต้องระบุ target_job_id (งานเดิม) ก่อนปิดงาน';
     end if;
-    update public.queue_entries set job_id = q.target_job_id where id = q.id;
     return q.target_job_id;
   end if;
 

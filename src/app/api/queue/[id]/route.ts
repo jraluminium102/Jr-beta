@@ -38,8 +38,9 @@ const patchSchema = z.object({
   fee_paid: z.boolean().optional(),
   note_admin: z.string().nullish(),
   note_ai: z.string().nullish(),
-  target_job_id: z.string().uuid().nullish(), // (0044) เคลียร์แบบ
-  clear_revise: z.boolean().optional(),       // (0044) toggle "มีแก้ใบเสนอ+แบบ" — ไม่ใช่คอลัมน์ DB
+  target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
+  target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
+  clear_revise: z.boolean().optional(),            // (0044) toggle "มีแก้ใบเสนอ+แบบ" — ไม่ใช่คอลัมน์ DB
 });
 
 const PRE_DEPOSIT = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
@@ -136,7 +137,13 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     }
 
     // ─── path ประเมินหน้างาน ──────────────────────────────────────────────
-    // คืนชีพงานที่ถูก cancel ก่อนเริ่มจริง (idempotent)
+    // ลูกค้าเก่าหน้างานเดิม (target_job_id ถูกส่งมา) → บันทึก assess_date ใหม่ (best-effort)
+    const isExistingSite = !!(data as { target_job_id?: string | null }).target_job_id;
+    if (isExistingSite && rawBody.queue_date) {
+      await sb.from("jobs").update({ assess_date: rawBody.queue_date }).eq("id", jobId);
+    }
+
+    // คืนชีพงานที่ถูก cancel ก่อนเริ่มจริง (idempotent) — เฉพาะงานใหม่/งานเดิมที่ cancel เร็ว
     const { data: jrow2 } = await sb.from("jobs")
       .select("status, design_state, current_stage").eq("id", jobId).maybeSingle();
     const jr2 = jrow2 as { status?: string; design_state?: string; current_stage?: number } | null;

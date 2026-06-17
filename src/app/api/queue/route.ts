@@ -44,7 +44,8 @@ const entrySchema = z.object({
   fee_paid: z.boolean().optional(),
   note_admin: z.string().nullish(),
   note_ai: z.string().nullish(),
-  target_job_id: z.string().uuid().nullish(), // (0044) เคลียร์แบบ: uuid งานเดิม
+  target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
+  target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
 });
 
 // GET /api/queue — list entries + sales dropdown
