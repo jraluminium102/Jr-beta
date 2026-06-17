@@ -275,8 +275,8 @@
   /* ① สีอลู drill-down: จุดสีกลมในชิป ([[chip-color-swatch-style]]) */
   .cdot{ display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.28); vertical-align:middle; flex:0 0 auto; background-size:cover; }
   .chip.on .cdot{ border-color:rgba(255,255,255,.7); }
-  .color-cat-row .chip{ font-weight:700; }
-  .color-drill{ margin-top:4px; }
+  .color-cat-row .chip, .glass-cat-row .chip{ font-weight:700; }
+  .color-drill, .glass-drill{ margin-top:4px; }
   /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
   /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
   label.opt:has(> .chip-grid){ display:block; }
@@ -1039,6 +1039,49 @@ function colorDrillRender(sel){
 function colorDrillCat(btn){ var sel=_colorDrillSel(btn); if(!sel)return; sel.dataset.colCat=btn.dataset.cat; colorDrillRender(sel); }  // เปลี่ยนหมวด (ยังไม่ commit ค่า)
 function colorDrillPick(btn){ var sel=_colorDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.colCat=colorCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); colorDrillRender(sel); }
+
+// ===== ② กระจก drill-down (HANDOFF-redesign จุด② · มติพี่นัท 17มิ.ย.) =====
+//   select(โดน hide) → ชิปชนิด(5 · keyword)→ชิปรุ่น/หนา · ขับด้วย value=GLASS index · ไม่แตะ value/logic/ราคา · sync fire input+change
+//   ใช้กับ .i-glass (รายการ) + #global-glass (ทั้งใบ) · qi-glass/gh-glass-sel = คนละจอ ไม่แตะรอบนี้
+var GLASS_CATS=[
+  {key:'general', label:'ทั่วไป (เขียว/ใส)'},
+  {key:'temper',  label:'เทมเปอร์'},
+  {key:'lam',     label:'ลามิเนต'},
+  {key:'insu',    label:'อินซูเลท'},
+  {key:'special', label:'พิเศษ'}
+];
+function glassCatOf(idx){ var n=(GLASS[idx]&&GLASS[idx].n)||'';   // ลำดับสำคัญ: เทมเปอร์/ลามิเนต ชนะคำอื่น (เช่น เทมเปอร์ยูโรเกรย์ → เทมเปอร์)
+  if(/อินซู/.test(n)) return 'insu';
+  if(/เทมเปอร์/.test(n)) return 'temper';
+  if(/ลามิเนต/.test(n)) return 'lam';
+  if(/ยูโรเกรย์|ยูโรบรอนซ์|reflective|ดัดโค้ง|เงา|ลอนแก้ว|ชาดำ|ฝ้า|ลายผ้า|คริสตัล/.test(n)) return 'special';
+  return 'general';  // เขียว/ใส/เคลือบ
+}
+function glassShortLabel(idx){ var n=(GLASS[idx]&&GLASS[idx].n)||''; return n.replace(/^★\s*/,'').replace(/^กระจก/,'').trim()||n; }
+function _glassDrillSel(el){ var dr=el.closest('.glass-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s && s.tagName!=='SELECT') s=s.previousElementSibling; return s; }
+function glassDrillRender(sel){
+  if(!sel) return;
+  var present={}; Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=true; });
+  var curIdx=parseInt(sel.value)||0;
+  var actCat=sel.dataset.glCat || glassCatOf(curIdx);
+  var wrap=null; if(sel.nextSibling && sel.nextSibling.classList && sel.nextSibling.classList.contains('glass-drill')) wrap=sel.nextSibling;
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='glass-drill'; sel.parentNode.insertBefore(wrap, sel.nextSibling); sel.style.display='none'; }
+  // หมวดที่มีรุ่นอย่างน้อย 1
+  var has={}; Object.keys(present).forEach(function(i){ has[glassCatOf(parseInt(i))]=true; });
+  var cats=GLASS_CATS.filter(function(c){ return has[c.key]; });
+  if(!cats.some(function(c){return c.key===actCat;})) actCat=glassCatOf(curIdx);
+  var html='<div class="chip-group chip-sm glass-cat-row">';
+  cats.forEach(function(c){ html+='<button type="button" class="chip'+(c.key===actCat?' on':'')+'" data-cat="'+c.key+'" onclick="glassDrillCat(this)">'+c.label+'</button>'; });
+  html+='</div><div class="chip-group chip-sm glass-sw-row" style="margin-top:6px;">';
+  Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ if(glassCatOf(i)!==actCat) return;
+    html+='<button type="button" class="chip glass-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="glassDrillPick(this)">'+glassShortLabel(i)+'</button>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+function glassDrillCat(btn){ var sel=_glassDrillSel(btn); if(!sel)return; sel.dataset.glCat=btn.dataset.cat; glassDrillRender(sel); }
+function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
+  sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
 // SPEC-G4-color-pricing: ค่าสีอลูทึบ (โครงตู้ · no-min) map สีหลัก ci→1ใน4ระดับ rn90 fin · ⚠ default ตามชื่อสี รอพี่นัทเช็คซ้ำ (Aztec idx4)
 function rn90FinRate(ci){
   if(ci===2||ci===3) return 400;            // ซาฮารา เทา/ดำ
@@ -1923,6 +1966,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(_gc) _gc.innerHTML=colorOpts();
   if(_gg) _gg.innerHTML=glassOpts();
   if(_gc){ colorDrillRender(_gc); }  // ① สีอลู drill-down (ทั้งใบ)
+  if(_gg){ glassDrillRender(_gg); }  // ② กระจก drill-down (ทั้งใบ)
   if(_gc) _gc.addEventListener('change',syncGlobalColorGlass);
   if(_gg) _gg.addEventListener('change',syncGlobalColorGlass);
   addQuickItem();
@@ -3829,7 +3873,7 @@ function addItem(container){
   try{ rkSync(d); }catch(e){}  // Region 1: sync ติ๊กหมายเหตุให้ตรงเนื้อ .i-note (ปกติว่าง = no-op · กันเคส note โหลดมามีค่า)
   d.querySelector('.i-prod').addEventListener('change',()=>{ buildItemOpts(d); refreshColorByProduct(d); refreshItype(d);
     // ข้อ2: ราวกันตก default กระจกเทมเปอร์ใส 10 มม. (glassDef) — เลือก 12 มม.ได้จาก dropdown · ราคาไม่ขึ้นกับกระจก
-    { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')) _gi.value=String(_pp.glassDef); } }
+    { const _pp=PBYID[d.querySelector('.i-prod').value]; if(_pp&&_pp.glassDef!=null){ const _gi=d.querySelector('.i-glass'); if(_gi&&_gi.querySelector('option[value="'+_pp.glassDef+'"]')){ _gi.value=String(_pp.glassDef); _gi.dataset.glCat=glassCatOf(_pp.glassDef); try{glassDrillRender(_gi);}catch(e){} } } }
     calcQuote(); const _sb=d.closest('.setbox'); if(_sb) refreshSet(_sb); });
   d.querySelector('.i-group').addEventListener('change',()=>{ d.querySelector('.i-prod').innerHTML=prodOptionsG6(d.querySelector('.i-group').value);
     // G1G6-B: เปลี่ยนกลุ่ม → default รุ่น = ตระกูลแรกของกลุ่ม (กันตกที่ cat "เสริม" เช่น กลุ่ม 2 → rn2 ระแนงบังตา) + เคลียร์โหมด "อื่นๆ"
@@ -3872,7 +3916,10 @@ function addItem(container){
     var sc=d.querySelector('.i-sampleconfirm-wrap'); if(sc) sc.style.display=(c&&c.sampleConfirm)?'block':'none';
     this.dataset.colCat=colorCatOf(v); colorDrillRender(this);  // ① sync ชิป drill-down เมื่อค่าเปลี่ยน (รวมกรณีโค้ดตั้งค่า/global sync)
   });
+  // ② กระจก drill-down: sync ชิปเมื่อค่าเปลี่ยน (รวม global sync/glassDef)
+  { var _gi0=d.querySelector('.i-glass'); if(_gi0) _gi0.addEventListener('change',function(){ this.dataset.glCat=glassCatOf(parseInt(this.value)||0); glassDrillRender(this); }); }
   try{ colorDrillRender(d.querySelector('.i-color')); }catch(e){}  // ① render ครั้งแรก
+  try{ glassDrillRender(d.querySelector('.i-glass')); }catch(e){}  // ② render ครั้งแรก
   // งาน9: โหมดเหมา — toggle wrap
   { var _ls=d.querySelector('.o-lumpsum'); if(_ls){ _ls.addEventListener('change',function(){ var _w=d.querySelector('.o-lumpsum-wrap'); if(_w)_w.style.display=this.checked?'block':'none'; calcQuote(); }); } }
   buildItemOpts(d);
