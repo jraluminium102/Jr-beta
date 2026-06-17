@@ -40,6 +40,7 @@ export interface Job {
   design_due_date: string | null; design_state: DesignState; design_revise_count: number; // designer board (0016)
   designer_ref: number | null; designer_note?: string | null;  // designers lookup (0019)
   design_received_date: string | null;                          // วันได้รับแบบ (0032)
+  onsite_deposit: boolean;                                       // มัดจำหน้างาน (0044)
 }
 export interface Production {
   id: string; job_id: string; status: ProdStatus;

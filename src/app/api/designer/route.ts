@@ -21,6 +21,7 @@ type DesignerRow = {
   design_revise_count: number;
   current_stage: number;
   assess_date: string | null;
+  onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
   designer_lookup: { name: string } | null; // join on designer_ref → designers(name)
 };
 
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
     // safety cap: เก็บงานล่าสุดสุด 3000 รายการ (กัน payload บานปลายเมื่อสะสมหลายปี)
@@ -124,6 +125,7 @@ export async function GET(req: Request) {
     design_revise_count: r.design_revise_count,
     current_stage: r.current_stage,
     assess_date: r.assess_date,
+    onsite_deposit: r.onsite_deposit ?? false, // (0044)
     overdue: r.design_state !== "DONE" && !!r.design_due_date && r.design_due_date < today,
   }));
 

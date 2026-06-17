@@ -34,6 +34,7 @@ export type ChecklistItem = {
   designer_name: string | null;
   estimator_name: string | null;
   quote_sent_date: string | null;
+  onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน · ด่วน
 };
 
 export type ChecklistData = {
@@ -78,13 +79,17 @@ export const GET = withRoute(async () => {
   const canWrite = can(ctx.role, "jobs", "write");
   const today = new Date().toISOString().slice(0, 10);
 
-  // โหลดทุกงาน pre-deposit (ไม่รวม DEPOSITED ขึ้นไป)
+  // โหลดงาน pre-deposit (ไม่รวม DEPOSITED ขึ้นไป)
+  // ข้อยกเว้น (0044): งาน onsite_deposit ที่ยังไม่ส่งใบเสนอ → ดึงกลับเข้ามาแม้ status = DEPOSITED
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, onsite_deposit, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
-    .not("status", "in", "(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)")
+    .or(
+      "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
+      "and(onsite_deposit.eq.true,quote_sent_date.is.null)"
+    )
     .order("assess_date", { ascending: false })
     .limit(500);
   if (jErr) throw new Error(jErr.message);
@@ -103,6 +108,7 @@ export const GET = withRoute(async () => {
     status: string;
     designer_ref: number | null;
     quote_sent_date: string | null;
+    onsite_deposit: boolean; // (0044)
     estimator: EstimatorJoin;
     designer_lookup: DesignerJoin;
   };
@@ -199,6 +205,7 @@ export const GET = withRoute(async () => {
       designer_name,
       estimator_name,
       quote_sent_date: j.quote_sent_date,
+      onsite_deposit: j.onsite_deposit ?? false, // (0044)
     };
 
     if (stage === "sent") {

@@ -364,6 +364,13 @@ function ActiveTableRow({
         {item.job_code && (
           <div className="text-xs text-ink-3 font-mono">{item.job_code}</div>
         )}
+        {/* (0044) ป้ายมัดจำหน้างาน · ด่วน */}
+        {item.onsite_deposit && (
+          <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            <Icon name="warn" size={10} />
+            มัดจำหน้างาน · ด่วน
+          </div>
+        )}
         {item.estimator_name && (
           <div className="text-xs text-ink-3 mt-0.5 flex items-center gap-1">
             <Icon name="user" size={10} />{item.estimator_name}
@@ -467,6 +474,13 @@ function ActiveMobileCard({
           <div className="font-semibold text-ink truncate">{item.customer_name}</div>
           {item.job_code && (
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
+          )}
+          {/* (0044) ป้ายมัดจำหน้างาน · ด่วน */}
+          {item.onsite_deposit && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <Icon name="warn" size={10} />
+              มัดจำหน้างาน · ด่วน
+            </div>
           )}
         </div>
         {/* stage badge */}

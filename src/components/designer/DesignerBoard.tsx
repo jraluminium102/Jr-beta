@@ -40,6 +40,7 @@ type Job = {
   design_revise_count: number;
   current_stage: number;
   assess_date: string | null;
+  onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
   overdue: boolean;
 };
 type Kpi = {
@@ -566,6 +567,13 @@ function JobCard({
       <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
         {job.customer_name}
       </div>
+      {/* (0044) ป้ายมัดจำหน้างาน · ด่วน — แสดงเฉพาะงานที่ยังไม่เสร็จแบบ */}
+      {job.onsite_deposit && job.design_state !== "DONE" && (
+        <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+          <Icon name="warn" size={11} />
+          มัดจำหน้างาน · ด่วน
+        </div>
+      )}
 
       {canWrite ? (
         <div className="mt-2 space-y-1.5">

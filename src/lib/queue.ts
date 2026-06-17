@@ -57,6 +57,7 @@ export type QueueEntry = {
   fee_paid: boolean;            // (0042) ชำระค่าประเมินแล้ว
   note_admin: string | null;
   note_ai: string | null;
+  target_job_id: string | null;  // (0044) เคลียร์แบบ: uuid งานเดิม
   created_at: string;
   updated_at: string;
 };
