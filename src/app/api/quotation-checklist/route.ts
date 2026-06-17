@@ -16,6 +16,8 @@ export type ChecklistQuotation = {
   vat_rate: number;
 };
 
+export type ChecklistStage = "in_design" | "pending" | "drafted" | "sent";
+
 export type ChecklistItem = {
   job_id: string;
   job_code: string | null;
@@ -26,43 +28,69 @@ export type ChecklistItem = {
   design_end: string | null;
   job_status: string;
   quotation: ChecklistQuotation | null;
+  // ฟิลด์ใหม่
+  stage: ChecklistStage;
+  delivery_due: string | null;
+  designer_name: string | null;
+  estimator_name: string | null;
+  quote_sent_date: string | null;
 };
 
 export type ChecklistData = {
-  pending:  ChecklistItem[];
-  drafted:  ChecklistItem[];
-  sent:     ChecklistItem[];
+  active: ChecklistItem[];
+  sent:   ChecklistItem[];
 };
+
+// ---------- helpers ----------
+
+/**
+ * คำนวณวันทำการ n วัน (ข้ามเฉพาะอาทิตย์) นับจากวันถัดจาก isoStart
+ * เสาร์นับเป็นวันทำการ
+ * ใช้ UTC ตลอดเพื่อกัน timezone offset ทำให้ toISOString() ผิดวัน
+ */
+function addWorkingDaysSkipSunday(isoStart: string, n: number): string {
+  const [y, m, day] = isoStart.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1, day));
+  let added = 0;
+  while (added < n) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (d.getUTCDay() !== 0) added++; // 0 = Sunday
+  }
+  return d.toISOString().slice(0, 10);
+}
 
 /**
  * GET /api/quotation-checklist
  *
- * คืน 3 เลน:
- *  pending  — design_state=DONE, status in (LEAD,PENDING_QUOTE), ยังไม่มีใบเช็คลิสต์ active
- *  drafted  — มีใบเช็คลิสต์ status='draft'
- *  sent     — มีใบเช็คลิสต์ status in ('sent','approved')
+ * คืน 2 กลุ่ม:
+ *  active — งานในไปป์ไลน์ก่อนส่ง (in_design + pending + drafted) เรียงตาม delivery_due asc, null ท้าย
+ *  sent   — ส่งใบเสนอแล้ว รอมัดจำ (stage = sent)
+ *
+ * ดึงทุกงาน pre-deposit (ตัด DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED ออก)
  */
 export const GET = withRoute(async () => {
-  // ตรวจสิทธิ์ก่อน (jobs:read = ทุก role ยกเว้น VIEWER ที่ไม่มี jobs write)
   const ctx = await requirePermission("jobs", "read");
 
-  // ใช้ createClient() ตรงๆ (untyped) เพราะ Database type ไม่มี quotations/customers
+  // ใช้ createClient() untyped เพราะ Database type ไม่มี quotations/customers/profiles join
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = createClient() as any;
 
-  // BUG-06: คำนวณ can_write จาก role จริง (ADMIN/SALES/DESIGNER มี jobs:write)
-  // ส่งกลับใน meta เพื่อให้ client ใช้ตัดสิน แทนการ set canWrite=true เสมอ
   const canWrite = can(ctx.role, "jobs", "write");
+  const today = new Date().toISOString().slice(0, 10);
 
-  // โหลด jobs ที่ design_state=DONE และ status ไม่ใช่ COMPLETED/CANCELLED
+  // โหลดทุกงาน pre-deposit (ไม่รวม DEPOSITED ขึ้นไป)
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
-    .select("id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status")
-    .eq("design_state", "DONE")
-    .not("status", "in", "(COMPLETED,CANCELLED)")
+    .select(
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+    )
+    .not("status", "in", "(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)")
     .order("assess_date", { ascending: false })
     .limit(500);
   if (jErr) throw new Error(jErr.message);
+
+  type EstimatorJoin = { full_name: string } | null;
+  type DesignerJoin  = { name: string } | null;
 
   type JobRow = {
     id: string;
@@ -73,17 +101,24 @@ export const GET = withRoute(async () => {
     design_state: string;
     design_end: string | null;
     status: string;
+    designer_ref: number | null;
+    quote_sent_date: string | null;
+    estimator: EstimatorJoin;
+    designer_lookup: DesignerJoin;
   };
 
   const jobRows = (jobs ?? []) as JobRow[];
 
   if (jobRows.length === 0) {
-    return ok<ChecklistData>({ pending: [], drafted: [], sent: [] }, { can_write: canWrite });
+    return ok<ChecklistData>(
+      { active: [], sent: [] },
+      { can_write: canWrite, counts: { in_design: 0, pending: 0, drafted: 0, sent: 0 }, overdue: 0, due_soon: 0 }
+    );
   }
 
   const jobIds = jobRows.map((j) => j.id);
 
-  // โหลดใบเสนอราคาที่มี marker ทั้งหมดของ jobs เหล่านี้ (ยกเว้น cancelled)
+  // โหลดใบเสนอราคาที่มี marker (ยกเว้น cancelled)
   const { data: quotations, error: qErr } = await sb
     .from("quotations")
     .select("id, code, net, status, note, job_id, vat_rate")
@@ -95,20 +130,60 @@ export const GET = withRoute(async () => {
 
   type QuotRow = { id: number; code: string; net: number; status: string; note: string; job_id: string; vat_rate: number };
 
-  // map: job_id → ใบเช็คลิสต์ล่าสุด (เรียง created_at desc แล้ว → ตัวแรกของแต่ละ job_id)
+  // map: job_id → ใบเช็คลิสต์ล่าสุด
   const qMap = new Map<string, ChecklistQuotation>();
   for (const q of (quotations ?? []) as QuotRow[]) {
     if (!qMap.has(q.job_id)) {
-      qMap.set(q.job_id, { id: q.id, code: q.code, net: q.net, status: q.status, note: q.note, vat_rate: Number(q.vat_rate ?? 7) });
+      qMap.set(q.job_id, {
+        id: q.id, code: q.code, net: q.net, status: q.status, note: q.note,
+        vat_rate: Number(q.vat_rate ?? 7),
+      });
     }
   }
 
-  const pending:  ChecklistItem[] = [];
-  const drafted:  ChecklistItem[] = [];
-  const sent:     ChecklistItem[] = [];
+  // วันถัดไป 2 วัน (calendar) สำหรับ due_soon — ใช้ UTC กัน timezone offset
+  const dueSoonEnd = (() => {
+    const [y, m, day] = today.split("-").map(Number);
+    const d = new Date(Date.UTC(y, m - 1, day));
+    d.setUTCDate(d.getUTCDate() + 2);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const active: ChecklistItem[] = [];
+  const sent:   ChecklistItem[] = [];
+  let countInDesign = 0, countPending = 0, countDrafted = 0, countSent = 0;
+  let overdue = 0, dueSoon = 0;
 
   for (const j of jobRows) {
     const q = qMap.get(j.id) ?? null;
+
+    // คำนวณ delivery_due
+    const delivery_due = j.assess_date
+      ? addWorkingDaysSkipSunday(j.assess_date, 5)
+      : null;
+
+    // ชื่อนักออกแบบ / เซลล์
+    const designer_name  = (j.designer_lookup as DesignerJoin)?.name  ?? null;
+    const estimator_name = (j.estimator as EstimatorJoin)?.full_name   ?? null;
+
+    // จัด stage
+    let stage: ChecklistStage;
+    if (j.design_state !== "DONE" && !j.quote_sent_date) {
+      // รอแบบ — งานที่แบบยังไม่เสร็จและยังไม่เคยส่งใบเสนอ
+      stage = "in_design";
+    } else if (q && ["sent", "approved"].includes(q.status)) {
+      stage = "sent";
+    } else if (q && q.status === "draft") {
+      stage = "drafted";
+    } else if (
+      ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"].includes(j.status)
+    ) {
+      stage = "pending";
+    } else {
+      // ไม่เข้าเงื่อนไขใด (edge case เช่น status ที่ไม่ตรงกับ pre-deposit แต่ผ่าน filter มาได้)
+      continue;
+    }
+
     const item: ChecklistItem = {
       job_id:        j.id,
       job_code:      j.job_code,
@@ -119,20 +194,53 @@ export const GET = withRoute(async () => {
       design_end:    j.design_end,
       job_status:    j.status,
       quotation:     q,
+      stage,
+      delivery_due,
+      designer_name,
+      estimator_name,
+      quote_sent_date: j.quote_sent_date,
     };
 
-    if (!q) {
-      // ไม่มีใบเช็คลิสต์ active → pending (LEAD / PENDING_QUOTE / QUOTE_SENT ที่ยังไม่มีใบในระบบ)
-      // กรณี QUOTE_SENT แต่ไม่มีใบในระบบ → ต้องทำใบเพื่อวางบิล
-      if (["LEAD", "PENDING_QUOTE", "QUOTE_SENT"].includes(j.status)) {
-        pending.push(item);
-      }
-    } else if (q.status === "draft") {
-      drafted.push(item);
-    } else if (["sent", "approved"].includes(q.status)) {
+    if (stage === "sent") {
       sent.push(item);
+      countSent++;
+    } else {
+      active.push(item);
+      if (stage === "in_design") countInDesign++;
+      else if (stage === "pending") countPending++;
+      else if (stage === "drafted") countDrafted++;
+
+      // นับ overdue / due_soon สำหรับ active
+      if (delivery_due) {
+        if (delivery_due < today) overdue++;
+        else if (delivery_due <= dueSoonEnd) dueSoon++;
+      }
     }
   }
 
-  return ok<ChecklistData>({ pending, drafted, sent }, { can_write: canWrite });
+  // เรียง active ตาม delivery_due asc, null ไปท้ายสุด
+  active.sort((a, b) => {
+    if (!a.delivery_due && !b.delivery_due) return 0;
+    if (!a.delivery_due) return 1;
+    if (!b.delivery_due) return -1;
+    return a.delivery_due.localeCompare(b.delivery_due);
+  });
+
+  // เรียง sent ตาม delivery_due asc เช่นกัน
+  sent.sort((a, b) => {
+    if (!a.delivery_due && !b.delivery_due) return 0;
+    if (!a.delivery_due) return 1;
+    if (!b.delivery_due) return -1;
+    return a.delivery_due.localeCompare(b.delivery_due);
+  });
+
+  return ok<ChecklistData>(
+    { active, sent },
+    {
+      can_write: canWrite,
+      counts: { in_design: countInDesign, pending: countPending, drafted: countDrafted, sent: countSent },
+      overdue,
+      due_soon: dueSoon,
+    }
+  );
 });

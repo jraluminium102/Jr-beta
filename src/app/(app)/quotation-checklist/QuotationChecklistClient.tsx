@@ -25,8 +25,11 @@ type PostBody = {
 // ---------- helpers ----------
 
 const DESIGN_STATE_LABEL: Record<string, string> = {
-  NOT_STARTED: "ยังไม่เริ่ม", DRAWING: "กำลังเขียน",
-  PENDING_CUSTOMER: "รอลูกค้า", REVISING: "แก้ไข", DONE: "เสร็จแล้ว",
+  NOT_STARTED:      "ยังไม่เริ่ม",
+  DRAWING:          "กำลังเขียนแบบ",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
+  REVISING:         "กำลังแก้ไข",
+  DONE:             "เสร็จแล้ว",
 };
 
 function thaiDate(iso: string | null | undefined) {
@@ -45,6 +48,30 @@ function parseNoteExt(note: string) {
   };
 }
 
+/** คำนวณจำนวนวัน (calendar days) จาก delivery_due - วันนี้ — ใช้ UTC กัน timezone offset */
+function daysRemaining(deliveryDue: string | null, todayIso: string): number | null {
+  if (!deliveryDue) return null;
+  const parseUTC = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  const diff = Math.round((parseUTC(deliveryDue) - parseUTC(todayIso)) / 86400000);
+  return diff;
+}
+
+function DaysRemainingBadge({ deliveryDue, todayIso }: { deliveryDue: string | null; todayIso: string }) {
+  const diff = daysRemaining(deliveryDue, todayIso);
+  if (diff === null) return <span className="text-ink-3">—</span>;
+  if (diff < 0)  return <span className="font-bold text-red-600 tabular-nums">เลย {Math.abs(diff)} วัน</span>;
+  if (diff === 0) return <span className="font-bold text-red-600">วันนี้</span>;
+  if (diff <= 2) return <span className="font-semibold text-orange-600 tabular-nums">เหลือ {diff} วัน</span>;
+  return <span className="text-ink-2 tabular-nums">เหลือ {diff} วัน</span>;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 // ---------- Modal ----------
 
 type ModalMode = "step1" | "step2";
@@ -61,8 +88,6 @@ function Modal({
   const parsed = q ? parseNoteExt(q.note) : { ext_ref: "", ext_link: "" };
 
   const [total,      setTotal]    = useState(q ? String(q.net) : "");
-  // restore noVat จาก quotation ที่เปิดแก้ (vat_rate===0 → noVat=true)
-  // กัน: เปิดใบ no-VAT แล้ว toggle เด้งกลับมามี VAT
   const [noVat,      setNoVat]    = useState(q != null ? q.vat_rate === 0 : false);
   const [extRef,     setExtRef]   = useState(parsed.ext_ref);
   const [extLink,    setExtLink]  = useState(parsed.ext_link);
@@ -72,7 +97,6 @@ function Modal({
   const totalRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { totalRef.current?.focus(); }, []);
-  // กัน scroll ขณะ modal เปิด
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -81,7 +105,7 @@ function Modal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrMsg("");
-    const t = Math.round(parseFloat(total) * 100) / 100; // รองรับทศนิยม 2 ตำแหน่ง (สตางค์)
+    const t = Math.round(parseFloat(total) * 100) / 100;
     if (!t || t <= 0) { setErrMsg("กรุณากรอกยอดรวมที่ถูกต้อง"); return; }
 
     setSaving(true);
@@ -104,10 +128,7 @@ function Modal({
 
   const modal = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      {/* backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-
-      {/* panel */}
       <div className="glass-dark relative w-full max-w-md rounded-2xl p-6 text-white shadow-2xl">
         <button
           onClick={onClose} aria-label="ปิด"
@@ -125,7 +146,6 @@ function Modal({
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ยอดรวม */}
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-white/85">
               {noVat ? "ยอดรวม (ไม่มี VAT)" : "ยอดรวม (รวม VAT แล้ว)"}
@@ -141,8 +161,7 @@ function Modal({
             />
             {total && parseFloat(total) > 0 && (() => {
               const t = parseFloat(total);
-              // ถอด VAT inclusive (round2 = 2 ตำแหน่ง ตรงกับ API) — preview เท่านั้น ไม่กระทบการบันทึก
-              const vatAmt  = noVat ? 0 : Math.round((t * 7) / 107 * 100) / 100;
+              const vatAmt   = noVat ? 0 : Math.round((t * 7) / 107 * 100) / 100;
               const beforeVat = Math.round((t - vatAmt) * 100) / 100;
               return (
                 <p className="text-[11px] text-white/50 mt-1 tabular-nums">
@@ -154,17 +173,11 @@ function Modal({
             })()}
           </div>
 
-          {/* ไม่คิด VAT */}
           <label className="flex items-center gap-2.5 cursor-pointer select-none group">
             <div className={`relative w-10 h-6 rounded-full transition-colors ${noVat ? "bg-amber-500" : "bg-white/20"}`}>
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${noVat ? "translate-x-5" : "translate-x-1"}`} />
-              <input
-                type="checkbox"
-                checked={noVat}
-                onChange={(e) => setNoVat(e.target.checked)}
-                className="sr-only"
-                aria-label="ไม่คิด VAT"
-              />
+              <input type="checkbox" checked={noVat} onChange={(e) => setNoVat(e.target.checked)}
+                className="sr-only" aria-label="ไม่คิด VAT" />
             </div>
             <span className="text-sm font-semibold text-white/85">
               ไม่คิด VAT
@@ -172,38 +185,26 @@ function Modal({
             </span>
           </label>
 
-          {/* เลขใบเสนอนอกระบบ */}
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-white/85">เลขใบเสนอ (นอกระบบ)</label>
-            <input
-              type="text"
-              value={extRef} onChange={(e) => setExtRef(e.target.value)}
+            <input type="text" value={extRef} onChange={(e) => setExtRef(e.target.value)}
               placeholder="เช่น QT2025-001"
-              className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15"
-            />
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15" />
           </div>
 
-          {/* ลิงก์ไฟล์ */}
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-white/85">ลิงก์ไฟล์ใบเสนอ</label>
-            <input
-              type="url"
-              value={extLink} onChange={(e) => setExtLink(e.target.value)}
+            <input type="url" value={extLink} onChange={(e) => setExtLink(e.target.value)}
               placeholder="https://drive.google.com/..."
-              className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15"
-            />
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15" />
           </div>
 
-          {/* วันที่ส่ง (step 2) */}
           {mode === "step2" && (
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-white/85">วันที่ส่งใบเสนอ</label>
-              <DateField
-                value={issueDate}
-                onChange={(iso) => setIssueDate(iso)}
+              <DateField value={issueDate} onChange={(iso) => setIssueDate(iso)}
                 className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white outline-none focus:border-white/50 focus:bg-white/15"
-                aria-label="วันที่ส่งใบเสนอ"
-              />
+                aria-label="วันที่ส่งใบเสนอ" />
             </div>
           )}
 
@@ -235,9 +236,9 @@ function Modal({
     : null;
 }
 
-// ---------- Job Card ----------
+// ---------- Sent Job Card (ส่งแล้ว รอมัดจำ) ----------
 
-function JobCard({
+function SentJobCard({
   item, onAction, canWrite,
 }: {
   item: ChecklistItem;
@@ -256,36 +257,27 @@ function JobCard({
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}
         </div>
-        {q ? (
-          <Badge tone={q.status === "draft" ? "gray" : q.status === "sent" ? "sky" : "emerald"}>
-            {q.status === "draft" ? "ร่าง" : q.status === "sent" ? "ส่งแล้ว" : "อนุมัติ"}
-          </Badge>
-        ) : item.job_status === "QUOTE_SENT" ? (
-          <Badge tone="amber">ส่งแล้ว—ยังไม่มีใบในระบบ</Badge>
-        ) : null}
+        <Badge tone="sky">ส่งแล้ว</Badge>
       </div>
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
         {item.customer_area && (
           <span className="inline-flex items-center gap-1">
-            <Icon name="pin" size={11} />
-            {item.customer_area}
+            <Icon name="pin" size={11} />{item.customer_area}
           </span>
         )}
         {item.assess_date && (
           <span className="inline-flex items-center gap-1">
-            <Icon name="calendar" size={11} />
-            {thaiDate(item.assess_date)}
+            <Icon name="calendar" size={11} />{thaiDate(item.assess_date)}
           </span>
         )}
-        <span className="inline-flex items-center gap-1">
-          <Icon name="ruler" size={11} />
-          {DESIGN_STATE_LABEL[item.design_state] ?? item.design_state}
-          {item.design_end ? ` (${thaiDate(item.design_end)})` : ""}
-        </span>
+        {item.estimator_name && (
+          <span className="inline-flex items-center gap-1">
+            <Icon name="user" size={11} />{item.estimator_name}
+          </span>
+        )}
       </div>
 
-      {/* ข้อมูลใบเสนอ */}
       {q && (
         <div className="rounded-xl bg-gray-50/80 border border-gray-200/70 px-3 py-2 space-y-1">
           <div className="flex items-center justify-between gap-2">
@@ -309,10 +301,230 @@ function JobCard({
         </div>
       )}
 
+      {canWrite && (
+        <div className="flex gap-2 pt-0.5">
+          <button
+            onClick={() => onAction(item, "step2", q ?? null)}
+            title="แก้ยอด/รายละเอียดใบเสนอ"
+            className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px] min-w-[44px]">
+            <Icon name="pencil" size={15} />
+          </button>
+          {q && (
+            <Link
+              href={`/billing-notes/new?quotation=${q.id}`}
+              className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand/5 min-h-[44px]">
+              <Icon name="banknote" size={15} />
+              วางบิล
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Active Table Row (desktop) ----------
+
+function ActiveTableRow({
+  item, todayStr, onAction, canWrite,
+}: {
+  item: ChecklistItem;
+  todayStr: string;
+  onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
+  canWrite: boolean;
+}) {
+  const q = item.quotation;
+  const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
+
+  // badge สถานะใบเสนอ
+  let quoteBadge: React.ReactNode;
+  if (item.stage === "in_design") {
+    quoteBadge = <Badge tone="gray">รอแบบ</Badge>;
+  } else if (item.stage === "pending") {
+    quoteBadge = <Badge tone="amber">ยังไม่ทำ</Badge>;
+  } else {
+    // drafted
+    quoteBadge = (
+      <div className="space-y-0.5">
+        <Badge tone="sky">ร่าง</Badge>
+        {q && (
+          <div className="text-[11px] text-ink-3 tabular-nums">
+            {q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <tr className="border-b border-gray-100 hover:bg-white/60 transition-colors">
+      {/* ลูกค้า/เซลล์ */}
+      <td className="px-3 py-3 align-top">
+        <div className="font-semibold text-ink text-sm leading-snug">{item.customer_name}</div>
+        {item.job_code && (
+          <div className="text-xs text-ink-3 font-mono">{item.job_code}</div>
+        )}
+        {item.estimator_name && (
+          <div className="text-xs text-ink-3 mt-0.5 flex items-center gap-1">
+            <Icon name="user" size={10} />{item.estimator_name}
+          </div>
+        )}
+        {item.customer_area && (
+          <div className="text-xs text-ink-3 flex items-center gap-1">
+            <Icon name="pin" size={10} />{item.customer_area}
+          </div>
+        )}
+      </td>
+
+      {/* วันประเมิน */}
+      <td className="px-3 py-3 align-top text-sm text-ink-2 tabular-nums whitespace-nowrap">
+        {thaiDate(item.assess_date)}
+      </td>
+
+      {/* กำหนดส่งลูกค้า */}
+      <td className="px-3 py-3 align-top text-sm text-ink-2 tabular-nums whitespace-nowrap">
+        {thaiDate(item.delivery_due)}
+      </td>
+
+      {/* เหลือ */}
+      <td className="px-3 py-3 align-top text-sm whitespace-nowrap">
+        <DaysRemainingBadge deliveryDue={item.delivery_due} todayIso={todayStr} />
+      </td>
+
+      {/* สถานะแบบ + ผู้ออกแบบ */}
+      <td className="px-3 py-3 align-top">
+        <div className="text-xs font-medium text-ink-2">{designLabel}</div>
+        <div className="text-xs text-ink-3 mt-0.5">
+          {item.designer_name ?? "ยังไม่มอบหมาย"}
+        </div>
+      </td>
+
+      {/* ใบเสนอ */}
+      <td className="px-3 py-3 align-top">
+        {quoteBadge}
+      </td>
+
+      {/* ดำเนินการ */}
+      <td className="px-3 py-3 align-top">
+        {canWrite && (
+          <div className="flex gap-1.5 flex-wrap">
+            {item.stage === "in_design" && (
+              <Link
+                href="/designer"
+                className="press inline-flex items-center gap-1 rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px]">
+                <Icon name="ruler" size={12} />
+                ดูบอร์ดแบบ
+              </Link>
+            )}
+            {item.stage === "pending" && (
+              <button
+                onClick={() => onAction(item, "step2", null)}
+                className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
+                <Icon name="check" size={12} />
+                ทำใบเสนอ·ส่งแล้ว
+              </button>
+            )}
+            {item.stage === "drafted" && q && (
+              <>
+                <button
+                  onClick={() => onAction(item, "step1", q)}
+                  className="press inline-flex items-center justify-center rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px] min-w-[36px]">
+                  <Icon name="pencil" size={12} />
+                </button>
+                <button
+                  onClick={() => onAction(item, "step2", q)}
+                  className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
+                  <Icon name="external" size={12} />
+                  ส่งแล้ว
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ---------- Active Mobile Card ----------
+
+function ActiveMobileCard({
+  item, todayStr, onAction, canWrite,
+}: {
+  item: ChecklistItem;
+  todayStr: string;
+  onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
+  canWrite: boolean;
+}) {
+  const q = item.quotation;
+  const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
+
+  return (
+    <div className="glass rounded-2xl p-4 space-y-2.5">
+      {/* Header */}
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-ink truncate">{item.customer_name}</div>
+          {item.job_code && (
+            <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
+          )}
+        </div>
+        {/* stage badge */}
+        {item.stage === "in_design" && <Badge tone="gray">รอแบบ</Badge>}
+        {item.stage === "pending"   && <Badge tone="amber">ยังไม่ทำใบเสนอ</Badge>}
+        {item.stage === "drafted"   && <Badge tone="sky">ร่างใบเสนอ</Badge>}
+      </div>
+
+      {/* เดดไลน์ (เด่น) */}
+      <div className="flex items-center justify-between rounded-xl bg-gray-50/70 border border-gray-200/60 px-3 py-2">
+        <div className="text-xs text-ink-3">กำหนดส่งลูกค้า</div>
+        <div className="text-right">
+          <div className="text-sm font-semibold text-ink tabular-nums">{thaiDate(item.delivery_due)}</div>
+          <div className="text-xs mt-0.5">
+            <DaysRemainingBadge deliveryDue={item.delivery_due} todayIso={todayStr} />
+          </div>
+        </div>
+      </div>
+
+      {/* meta */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
+        {item.customer_area && (
+          <span className="inline-flex items-center gap-1"><Icon name="pin" size={11} />{item.customer_area}</span>
+        )}
+        {item.assess_date && (
+          <span className="inline-flex items-center gap-1"><Icon name="calendar" size={11} />ประเมิน {thaiDate(item.assess_date)}</span>
+        )}
+        {item.estimator_name && (
+          <span className="inline-flex items-center gap-1"><Icon name="user" size={11} />{item.estimator_name}</span>
+        )}
+        <span className="inline-flex items-center gap-1">
+          <Icon name="ruler" size={11} />{designLabel} · {item.designer_name ?? "ยังไม่มอบหมาย"}
+        </span>
+      </div>
+
+      {/* ใบเสนอ (ถ้ามี) */}
+      {q && (
+        <div className="rounded-xl bg-gray-50/80 border border-gray-200/70 px-3 py-2 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-xs text-brand-dark font-semibold">{q.code}</span>
+            {Number(q.net) > 0
+              ? <span className="tabular-nums text-sm font-bold text-ink">฿{baht(q.net)}</span>
+              : <span className="text-xs font-semibold text-amber-600">รอใส่ยอด</span>}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       {canWrite && (
         <div className="flex gap-2 pt-0.5">
-          {!q && (
+          {item.stage === "in_design" && (
+            <Link href="/designer"
+              className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px]">
+              <Icon name="ruler" size={15} />
+              ดูบอร์ดแบบ
+            </Link>
+          )}
+          {item.stage === "pending" && (
             <button
               onClick={() => onAction(item, "step2", null)}
               className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white shadow-brand min-h-[44px]">
@@ -320,7 +532,7 @@ function JobCard({
               ทำใบเสนอ · ส่งแล้ว
             </button>
           )}
-          {q?.status === "draft" && (
+          {item.stage === "drafted" && q && (
             <>
               <button
                 onClick={() => onAction(item, "step1", q)}
@@ -335,53 +547,8 @@ function JobCard({
               </button>
             </>
           )}
-          {(q?.status === "sent" || q?.status === "approved") && (
-            <>
-              <button
-                onClick={() => onAction(item, "step2", q)}
-                title="แก้ยอด/รายละเอียดใบเสนอ"
-                className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px] min-w-[44px]">
-                <Icon name="pencil" size={15} />
-              </button>
-              <Link
-                href={`/billing-notes/new?quotation=${q.id}`}
-                className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand/5 min-h-[44px]">
-                <Icon name="banknote" size={15} />
-                วางบิล
-              </Link>
-            </>
-          )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ---------- Lane ----------
-
-function Lane({
-  title, tone, icon, items, children,
-}: {
-  title: string;
-  tone: string;
-  icon: string;
-  items: ChecklistItem[];
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${tone}`}>
-        <Icon name={icon} size={15} />
-        <span className="font-semibold text-sm">{title}</span>
-        <span className="tabular-nums text-xs font-bold ml-auto bg-white/40 rounded-md px-1.5 py-0.5">
-          {items.length}
-        </span>
-      </div>
-      <div className="space-y-3">
-        {items.length === 0 ? (
-          <p className="text-center text-ink-3 text-sm py-8">ไม่มีรายการ</p>
-        ) : children}
-      </div>
     </div>
   );
 }
@@ -389,20 +556,33 @@ function Lane({
 // ---------- Main Component ----------
 
 export default function QuotationChecklistClient() {
-  const [data,     setData]     = useState<ChecklistData | null>(null);
-  const [loading,  setLoading]  = useState(true);
-  const [errMsg,   setErrMsg]   = useState("");
-  const [canWrite, setCanWrite] = useState(false);
-  const [modal,    setModal]    = useState<ModalState | null>(null);
+  const [data,      setData]      = useState<ChecklistData | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [errMsg,    setErrMsg]    = useState("");
+  const [canWrite,  setCanWrite]  = useState(false);
+  const [modal,     setModal]     = useState<ModalState | null>(null);
+  const [sentOpen,  setSentOpen]  = useState(false);
+  const [meta,      setMeta]      = useState<{
+    counts: { in_design: number; pending: number; drafted: number; sent: number };
+    overdue: number;
+    due_soon: number;
+  } | null>(null);
+
+  const today = todayIso();
 
   const load = useCallback(async () => {
     setLoading(true); setErrMsg("");
     try {
       const res = await api.get<ChecklistData>("/quotation-checklist");
       setData(res.data);
-      // BUG-06: ใช้ can_write จาก meta ที่ server คำนวณจาก role จริง
-      // (ADMIN/SALES/DESIGNER มี jobs:write → เห็นปุ่ม; PRODUCTION/INSTALLER/VIEWER ไม่เห็น)
       setCanWrite(res.meta?.can_write === true);
+      if (res.meta) {
+        setMeta({
+          counts: (res.meta.counts as { in_design: number; pending: number; drafted: number; sent: number }) ?? { in_design: 0, pending: 0, drafted: 0, sent: 0 },
+          overdue:  Number(res.meta.overdue  ?? 0),
+          due_soon: Number(res.meta.due_soon ?? 0),
+        });
+      }
     } catch (e) {
       setErrMsg(e instanceof Error ? e.message : "โหลดข้อมูลไม่สำเร็จ");
     } finally {
@@ -415,15 +595,16 @@ export default function QuotationChecklistClient() {
   function openModal(job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) {
     setModal({ job, mode, q });
   }
-
   function handleSaved() {
     setModal(null);
     load();
   }
 
-  const pending = data?.pending ?? [];
-  const drafted = data?.drafted ?? [];
-  const sent    = data?.sent    ?? [];
+  const active = data?.active ?? [];
+  const sent   = data?.sent   ?? [];
+  const counts = meta?.counts ?? { in_design: 0, pending: 0, drafted: 0, sent: 0 };
+  const overdue  = meta?.overdue  ?? 0;
+  const dueSoon  = meta?.due_soon ?? 0;
 
   return (
     <div className="space-y-5">
@@ -445,24 +626,45 @@ export default function QuotationChecklistClient() {
         </button>
       </div>
 
-      {/* Metric bar — ตัด "ทำแล้ว·รอส่ง" ออก (กดเสร็จ→ส่งแล้วเลย) · โชว์เฉพาะถ้ามีของเก่าค้าง */}
-      {(() => {
-        const metrics = [
-          { label: "รอทำใบเสนอ", count: pending.length, color: "text-amber-700  bg-amber-50  border-amber-200" },
-          ...(drafted.length > 0 ? [{ label: "ทำแล้ว · รอส่ง (เก่า)", count: drafted.length, color: "text-sky-700 bg-sky-50 border-sky-200" }] : []),
-          { label: "ส่งแล้ว · รอมัดจำ", count: sent.length, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
-        ];
-        return (
-          <div className={`grid gap-3 ${metrics.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
-            {metrics.map((m) => (
-              <div key={m.label} className={`rounded-2xl border px-4 py-3 ${m.color}`}>
-                <div className="text-2xl font-extrabold tabular-nums">{m.count}</div>
-                <div className="text-xs font-medium mt-0.5 leading-tight">{m.label}</div>
-              </div>
-            ))}
+      {/* แถบเตือนเดดไลน์ */}
+      {(overdue > 0 || dueSoon > 0) && (
+        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold ${
+          overdue > 0
+            ? "bg-red-50 border-red-200 text-red-700"
+            : "bg-orange-50 border-orange-200 text-orange-700"
+        }`}>
+          <Icon name="warn" size={16} className="shrink-0" />
+          <span>
+            {overdue > 0 && <span>เลยกำหนดส่ง <span className="tabular-nums font-bold">{overdue}</span> งาน</span>}
+            {overdue > 0 && dueSoon > 0 && <span className="mx-1.5 opacity-40">·</span>}
+            {dueSoon > 0 && <span>ใกล้ครบกำหนด (≤2 วัน) <span className="tabular-nums font-bold">{dueSoon}</span> งาน</span>}
+          </span>
+        </div>
+      )}
+
+      {/* Metric bar */}
+      {data && (
+        <div className={`grid gap-3 ${counts.drafted > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
+          <div className="rounded-2xl border px-4 py-3 bg-purple-50 border-purple-200 text-purple-800">
+            <div className="text-2xl font-extrabold tabular-nums">{counts.in_design}</div>
+            <div className="text-xs font-medium mt-0.5 leading-tight">รอแบบ</div>
           </div>
-        );
-      })()}
+          <div className="rounded-2xl border px-4 py-3 bg-amber-50 border-amber-200 text-amber-800">
+            <div className="text-2xl font-extrabold tabular-nums">{counts.pending}</div>
+            <div className="text-xs font-medium mt-0.5 leading-tight">รอทำใบเสนอ</div>
+          </div>
+          {counts.drafted > 0 && (
+            <div className="rounded-2xl border px-4 py-3 bg-sky-50 border-sky-200 text-sky-800">
+              <div className="text-2xl font-extrabold tabular-nums">{counts.drafted}</div>
+              <div className="text-xs font-medium mt-0.5 leading-tight">ร่าง</div>
+            </div>
+          )}
+          <div className="rounded-2xl border px-4 py-3 bg-emerald-50 border-emerald-200 text-emerald-800">
+            <div className="text-2xl font-extrabold tabular-nums">{counts.sent}</div>
+            <div className="text-xs font-medium mt-0.5 leading-tight">ส่งแล้ว · รอมัดจำ</div>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {errMsg && (
@@ -477,28 +679,96 @@ export default function QuotationChecklistClient() {
         <Card className="p-12 text-center text-ink-3">กำลังโหลด…</Card>
       )}
 
-      {/* 3-lane board */}
+      {/* ตารางหลัก "งานก่อนส่งลูกค้า" */}
       {data && (
-        <div className={`grid grid-cols-1 gap-5 ${drafted.length > 0 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-          <Lane title="รอทำใบเสนอ" tone="bg-amber-50 border border-amber-200 text-amber-800" icon="clipboard" items={pending}>
-            {pending.map((item) => (
-              <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
-            ))}
-          </Lane>
+        <div className="space-y-3">
+          <h2 className="text-base font-bold text-ink flex items-center gap-2">
+            <Icon name="track" size={16} className="text-brand" />
+            งานก่อนส่งลูกค้า
+            <span className="tabular-nums text-sm font-normal text-ink-3">({active.length} รายการ)</span>
+          </h2>
 
-          {drafted.length > 0 && (
-            <Lane title="ทำแล้ว · รอส่ง (เก่า)" tone="bg-sky-50 border border-sky-200 text-sky-800" icon="file" items={drafted}>
-              {drafted.map((item) => (
-                <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
-              ))}
-            </Lane>
+          {active.length === 0 ? (
+            <Card className="p-10 text-center text-ink-3 text-sm">ไม่มีงานในไปป์ไลน์</Card>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block glass rounded-2xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-white/50 border-b border-gray-100">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">ลูกค้า / เซลล์</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide whitespace-nowrap">วันประเมิน</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide whitespace-nowrap">กำหนดส่งลูกค้า</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">เหลือ</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide whitespace-nowrap">สถานะแบบ / ผู้ออกแบบ</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">ใบเสนอ</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">ดำเนินการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {active.map((item) => (
+                      <ActiveTableRow
+                        key={item.job_id}
+                        item={item}
+                        todayStr={today}
+                        onAction={openModal}
+                        canWrite={canWrite}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
+                {active.map((item) => (
+                  <ActiveMobileCard
+                    key={item.job_id}
+                    item={item}
+                    todayStr={today}
+                    onAction={openModal}
+                    canWrite={canWrite}
+                  />
+                ))}
+              </div>
+            </>
           )}
+        </div>
+      )}
 
-          <Lane title="ส่งแล้ว · รอมัดจำ" tone="bg-emerald-50 border border-emerald-200 text-emerald-800" icon="check" items={sent}>
-            {sent.map((item) => (
-              <JobCard key={item.job_id} item={item} onAction={openModal} canWrite={canWrite} />
-            ))}
-          </Lane>
+      {/* ส่งแล้ว · รอมัดจำ (collapsible) */}
+      {data && (
+        <div className="space-y-3">
+          <button
+            onClick={() => setSentOpen((v) => !v)}
+            className="press w-full flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm font-semibold hover:bg-emerald-100 transition-colors min-h-[44px]">
+            <Icon name="check" size={15} />
+            <span>ส่งแล้ว · รอมัดจำ</span>
+            <span className="tabular-nums text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">
+              {sent.length}
+            </span>
+            <span className="ml-auto">
+              <Icon name={sentOpen ? "chevron-up" : "chevron-down"} size={16} />
+            </span>
+          </button>
+
+          {sentOpen && (
+            <div className="space-y-3">
+              {sent.length === 0 ? (
+                <Card className="p-8 text-center text-ink-3 text-sm">ไม่มีรายการ</Card>
+              ) : (
+                sent.map((item) => (
+                  <SentJobCard
+                    key={item.job_id}
+                    item={item}
+                    onAction={openModal}
+                    canWrite={canWrite}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
