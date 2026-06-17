@@ -429,74 +429,58 @@ export function QueueModal({
     setJobSearch("");
     setJobSearchResults([]);
 
-    // ลูกค้าเก่า หน้างานเดิม → ดึง site-info auto-fill แทนการผูก target_job_id
-    if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && selectedCust) {
-      setChangingSite(false); // ปิด search box หลังเลือกงาน
-      setSiteInfoBusy(true);
-      try {
-        const r = await api.get<{
-          customer_name: string;
-          tel: string | null;
-          address: string | null;
-          location_url: string | null;
-          lat: number | null;
-          lng: number | null;
-          line_contact: string | null;
-          contact_channel: string;
-        }>(`/jobs/${j.id}/site-info`);
-        const info = r.data;
-        if (info) {
-          setF((s) => ({
-            ...s,
-            customer_name: info.customer_name || j.customer_name,
-            tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
-            address: info.address ?? s.address,
-            location_url: info.location_url ?? s.location_url,
-            line_contact: info.line_contact ?? s.line_contact,
-            contact_channel: info.contact_channel || s.contact_channel,
-            // สร้างงานใหม่ใต้ลูกค้าเดิม → target_customer_id, target_job_id=null
-            target_customer_id: selectedCust.id,
-            target_job_id: null,
-          }));
-          // อัปเดต resolved coords ถ้ามี lat/lng
-          if (info.lat != null && info.lng != null) {
-            setResolved({ lat: info.lat, lng: info.lng });
-          }
-        } else {
-          // fallback: auto-fill จาก job row เลย
-          setF((s) => ({
-            ...s,
-            customer_name: j.customer_name,
-            tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
-            address: j.customer_area ?? s.address,
-            target_customer_id: selectedCust.id,
-            target_job_id: null,
-          }));
-        }
-      } catch {
-        // best-effort: ถ้า fetch พัง ใช้ข้อมูลจาก job row
+    // โหมด: เคลียร์แบบ (ผูกงานเดิม target_job_id) vs ประเมินหน้างานเดิม (สร้างงานใหม่ target_customer_id)
+    const isClearDesign = jobCat === "เคลียร์แบบ";
+    const isExistingSite =
+      jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && !!selectedCust;
+    if (isExistingSite) setChangingSite(false);
+
+    // ทั้ง 2 โหมด: ดึง site-info ของงานนั้นมา auto-fill ให้ครบ (ที่อยู่/โลเคชั่น/เบอร์/Line)
+    setSiteInfoBusy(true);
+    try {
+      const r = await api.get<{
+        customer_name: string; tel: string | null; address: string | null;
+        location_url: string | null; lat: number | null; lng: number | null;
+        line_contact: string | null; contact_channel: string;
+      }>(`/jobs/${j.id}/site-info`);
+      const info = r.data;
+      const target = {
+        target_job_id: isClearDesign ? j.id : null,
+        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+      };
+      if (info) {
+        setF((s) => ({
+          ...s,
+          customer_name: info.customer_name || j.customer_name,
+          tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
+          address: info.address ?? s.address,
+          location_url: info.location_url ?? s.location_url,
+          line_contact: info.line_contact ?? s.line_contact,
+          contact_channel: info.contact_channel || s.contact_channel,
+          ...target,
+        }));
+        if (info.lat != null && info.lng != null) setResolved({ lat: info.lat, lng: info.lng });
+      } else {
         setF((s) => ({
           ...s,
           customer_name: j.customer_name,
           tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
           address: j.customer_area ?? s.address,
-          target_customer_id: selectedCust.id,
-          target_job_id: null,
+          ...target,
         }));
-      } finally {
-        setSiteInfoBusy(false);
       }
-      return;
+    } catch {
+      setF((s) => ({
+        ...s,
+        customer_name: j.customer_name,
+        tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+        address: j.customer_area ?? s.address,
+        target_job_id: isClearDesign ? j.id : null,
+        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+      }));
+    } finally {
+      setSiteInfoBusy(false);
     }
-
-    // เคลียร์แบบ → คงเดิม (set target_job_id link)
-    setF((s) => ({
-      ...s,
-      customer_name: j.customer_name,
-      tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
-      target_job_id: j.id,
-      target_customer_id: null,
-    }));
   }
 
   function clearTargetJob() {
@@ -573,7 +557,15 @@ export function QueueModal({
       // หน้างานเดิม → target_customer_id จะถูก set ตอนเลือกงาน (selectTargetJob), ต้องเป็น null ก่อน
       target_customer_id: mode === "new_site" ? selectedCust.id : null,
       target_job_id: null, // ทั้ง 2 mode เคลียร์ target_job_id (เคลียร์แบบเท่านั้นที่ใช้ target_job_id)
+      // หน้างานใหม่ = ไซต์ใหม่ → ล้างที่อยู่/โลเคชั่นของไซต์เก่า (เก็บชื่อ/เบอร์/Line ของลูกค้าไว้)
+      ...(mode === "new_site" ? { address: "", location_url: "" } : {}),
     }));
+    if (mode === "new_site") {
+      setResolved(null);
+      setSelectedJob(null);
+      setNoJobsForCust(false);
+      setChangingSite(false);
+    }
     // existing_site → reset job picker + auto-load งานล่าสุดของลูกค้า
     if (mode === "existing_site") {
       setSelectedJob(null);
