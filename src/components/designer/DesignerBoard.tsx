@@ -509,31 +509,25 @@ function JobCard({
     setReceivedDateVal(job.design_received_date ?? "");
   }, [job.design_received_date]);
 
-  async function handleDueBlur() {
-    const val = dueDateVal;
-    if (!val || val === (job.design_due_date ?? "")) return;
-    // ถ้าวันที่กรอกเป็นอดีต — ยืนยันก่อน (#37)
-    if (val < TODAY) {
-      const ok = window.confirm(
-        `กำหนดส่งที่กรอก (${val}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`
-      );
-      if (!ok) {
-        setDueDateVal(job.design_due_date ?? "");
-        return;
-      }
+  // บันทึกทันทีเมื่อเลือก/พิมพ์วัน (รองรับทั้งปฏิทิน+พิมพ์มือ) · ใช้ค่า iso ตรงๆ กัน state ค้าง
+  // ทำงานทุกสถานะรวม "ยังไม่เริ่ม" (วางแผนล่วงหน้าได้)
+  async function saveDue(iso: string) {
+    if (iso === (job.design_due_date ?? "")) return;
+    if (iso && iso < TODAY) {
+      const ok = window.confirm(`กำหนดเสร็จที่เลือก (${iso}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`);
+      if (!ok) { setDueDateVal(job.design_due_date ?? ""); return; }
     }
-    await onDueDate(job, val);
+    await onDueDate(job, iso);
     setDueSaved(true);
     setTimeout(() => setDueSaved(false), 2000);
   }
 
-  async function handleReceivedBlur() {
-    const val = receivedDateVal;
-    if (val === (job.design_received_date ?? "")) return;
-    await onReceivedDate(job, val);
-    // คำนวณกำหนดเสร็จ = ได้รับแบบ + 2 วัน (เฉพาะตอนยังไม่มีกำหนด · แก้ทีหลังได้)
-    if (val && !(job.design_due_date ?? "") && !dueDateVal) {
-      const d = new Date(val + "T00:00:00");
+  async function saveReceived(iso: string) {
+    if (iso === (job.design_received_date ?? "")) return;
+    await onReceivedDate(job, iso);
+    // auto กำหนดเสร็จ = ได้รับแบบ + 2 วัน (ถ้ายังไม่เคยตั้งกำหนด · แก้ทีหลังได้)
+    if (iso && !(job.design_due_date ?? "")) {
+      const d = new Date(iso + "T00:00:00");
       d.setDate(d.getDate() + 2);
       const due2 = d.toISOString().slice(0, 10);
       setDueDateVal(due2);
@@ -597,9 +591,8 @@ function JobCard({
             <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
             <DateField
               value={receivedDateVal}
-              onChange={(iso) => setReceivedDateVal(iso)}
+              onChange={(iso) => { setReceivedDateVal(iso); saveReceived(iso); }}
               disabled={assigning}
-              onBlur={handleReceivedBlur}
               aria-label="วันได้รับแบบ"
               className="flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
             />
@@ -610,9 +603,8 @@ function JobCard({
             <span className="text-[11px] text-ink-3 shrink-0">กำหนดเสร็จ:</span>
             <DateField
               value={dueDateVal}
-              onChange={(iso) => { setDueDateVal(iso); }}
+              onChange={(iso) => { setDueDateVal(iso); saveDue(iso); }}
               disabled={assigning}
-              onBlur={handleDueBlur}
               aria-label="กำหนดเสร็จ"
               className={`flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
                 job.overdue ? "text-brand font-semibold" : "text-ink-2"
