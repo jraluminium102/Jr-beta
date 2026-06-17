@@ -284,6 +284,8 @@
   .chip-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin-top:4px; width:100%; } /* auto-fill = ปุ่มกว้างเท่ากันทุกจำนวน เรียงเต็มแถวไม่เละ */
   .chip-grid.cg3{ grid-template-columns:repeat(3,1fr); }
   .chip-grid.cg4{ grid-template-columns:repeat(4,1fr); }
+  .qi-groupchips{ grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
+  .qi-groupchips .chip{ white-space:nowrap; padding:7px 6px; font-size:12.5px; }
   .chip-grid.cg2{ grid-template-columns:repeat(2,1fr); }
   .chip-grid .chip{ width:100%; min-height:44px; padding:6px 4px; font-size:12px; line-height:1.2; word-break:keep-all; overflow-wrap:anywhere; }
   @media(max-width:560px){ .chip-grid{ grid-template-columns:repeat(3,1fr); } .chip-grid.cg4,.chip-grid.cg2{ grid-template-columns:repeat(2,1fr); } }
@@ -402,9 +404,10 @@
       <label class="chk" style="margin-top:8px;display:block;"><input type="checkbox" id="svc-bkk" onchange="calcQuote()"> ในกทม.+ปริมณฑล (ฟรีถ้ายอด>20,000)</label>
       <label class="chk mt"><input type="checkbox" id="svc-elec" onchange="calcQuote()"> งานไฟ</label>
       <div id="svc-elec-box" class="hide mt" style="padding-left:16px;">
-        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟดาวน์ไลท์ (+1,500/ดวง)</label>
+        <label class="chk"><input type="checkbox" id="svc-elec-run" onchange="calcQuote()"> เดินไฟดาวน์ไลท์ (+1,500/ดวง · ขั้นต่ำ 3,000)</label>
         <div class="mt"><label>จำนวนดาวน์ไลท์ (ดวง)</label><input type="number" id="svc-elec-run-qty" min="1" step="1" value="2" oninput="calcQuote()" style="max-width:120px;"></div>
         <div class="mt"><label>สวิตซ์ใหม่ (จุด) +1,000/จุด</label><input type="number" id="svc-elec-sw" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
+        <div class="mt"><label>ปลั๊กไฟ (จุด) +1,000/จุด</label><input type="number" id="svc-elec-plug" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
       </div>
       <label class="chk mt"><input type="checkbox" id="svc-demo" onchange="calcQuote()"> งานรื้อของเดิม</label>
       <div id="svc-demo-box" class="hide mt" style="padding-left:16px;">
@@ -728,6 +731,7 @@ const PRODUCTS=[
  {id:'roof_pole_4x8',cat:'เสริม',name:'เพิ่ม เสา 4"x8" — 2,000/ต้น',unit:'piece',rate:2000,cost:null},
  // จุด3: ลบ product ซ่อนสโลปซ้ำ (roof_hide_composite/smartboard) — ใช้ option .o-rfhs ในชุดหลังคาแทน (ราคาเท่ากัน comp 3,500/smart 4,000)
  {id:'roof_chain',cat:'เสริม',name:'เพิ่ม โซ่รางน้ำ ลายดอกทิวลิป — 3,000/เส้น',unit:'piece',rate:3000,cost:null},
+ {id:'roof_chain_lotus',cat:'เสริม',name:'เพิ่ม โซ่รางน้ำ ลายดอกโลตัส — 3,000/เส้น',unit:'piece',rate:3000,cost:null},
  {id:'roof_pvc_cover',cat:'เสริม',name:'เพิ่ม ครอบท่อ PVC — 1,500 บ./1.5 ม. (ปัดขึ้น)',pvc_cover:1,rate:1500,cost:null},
  // R3 2026-05-30: คานเหล็กถัก 3 รุ่น + แผ่นปิดครอบ (จากไฟล์ในโฟลเดอร์ "เหล็กถัก")
  {id:'truss_beam_1',cat:'เสริม',name:'คานเหล็กถัก รุ่น 1 (สูง 20 ซม. · เมทัล 3-4ม. / กระจก 2.5-3ม.) — 2,400/ม.',unit:'meter',rate:2400,cost:null},
@@ -1881,7 +1885,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 let qSeq=0;
 // ALLG-v2: คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอราคา (กลุ่ม 7 ชิป + รูปแบบบาน common chips + อื่นๆ ▾ dropdown) · ออปชั่นแค่สี/กระจก
 var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 หลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
-function qiGroupChips(cur){ return '<div class="chip-grid cg4 qi-groupchips">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
+function qiGroupChips(cur){ return '<div class="chip-grid qi-groupchips">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
 // ALLG-v2: คิดเร็ว กลุ่มที่ไม่มี FAM_CATS (3 หลังคา/ฝ้า · 5 มุ้ง) → ใช้ cat เป็นปุ่มแทน dropdown เปล่า
 var QI_EXTRA_CATS={'3':['หลังคา','ฝ้า-ผนัง'],'5':['มุ้ง']};
 function qiCatsOf(grp){ return FAM_CATS[grp]||QI_EXTRA_CATS[grp]||null; }
@@ -3211,11 +3215,20 @@ function g1WallSelectorHTML(p){
 // (display only · FIX-12 calc L1405 อ่าน optSel.roof2/roof2area เดิม — ราคาไม่เปลี่ยน)
 var _R2COLOR_GROUPS={
   roof_vinyl:['สีขาว','สีเทา','สีน้ำตาล'],
-  roof_delight:['DG-2 สีฟ้าคราม','DG-4 สีเทาโซล่าร์'],
+  roof_delight:['DG-2 สีฟ้าคราม','DG7 สีเทาโมเดิร์น'],
   roof_polyton:['Clear 101 สีใส','Opal 103 สีขาวขุ่น','Bronze 107 สีชาใส','Green 109 สีเขียวใส','Silver 501 สีซิลเวอร์'],
   roof_laminate:['ฟิล์มกันร้อน','ลามิเนตใส','ลามิเนตเขียว'],
   _metal:['— ระบุสี —','สีน้ำตาล','สีขาว','สีเทา'],
   _shinco:['— ระบุสี —','Light Grey','Modern Grey']
+};
+// #6 (17มิ.ย.): สีชินโคไลท์ครบทุกรุ่น (display · ทุกสีราคาเท่ากัน) · imp15 HeatCut · imp16 Superior · imp17 Nature · imp18 Shade · imp19 Prime · imp20 Grand
+var SHINCO_COLORS={
+  imp15:['HC-N828 Modern Grey','HC-B703 Royal Blue','HC-570 Classic Brown','HC-N590 Noble Green'],
+  imp16:['SP-NB00 ขาวขุ่น','SP-NB30 Foggy Brown','SP-B857 Marine Blue','SP-NC95 Light Brown'],
+  imp17:['NT-001 ใส','NT-332 เทาอ่อน'],
+  imp18:['Shade-430S Pearl White'],
+  imp19:['Prime 562 Brownish Green'],
+  imp20:[]
 };
 function _r2ColorGroup(id){
   if(/^imp(7|8|9|10|11|12|13|14)$/.test(id)) return '_metal';
@@ -3882,7 +3895,7 @@ function buildItemOpts(d){
   // R2-6: ลบ banner "ประตูบานเปิด — เลือกมือจับ 1 ใน 4" (ข้อความเฉยๆ · dropdown มือจับยังอยู่ครบ)
   if(p.cat==='บานเปิด'){
     // Pass2-A: ธรณี บานเปิด
-    h+='<label class="opt" style="width:100%;">ธรณี <select class="o-thresh" style="display:none;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option></select>'+rfChips('o-thresh',[['std','กันน้ำ (มาตรฐาน)'],['turtle','หลังเต่า+Drop Seal +1,000']],'std',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
+    h+='<label class="opt" style="width:100%;">ธรณี <select class="o-thresh" style="display:none;" onchange="calcQuote();"><option value="std" selected>ธรณีกันน้ำ (มาตรฐาน)</option><option value="turtle">ธรณีหลังเต่า + Drop Seal (+1,000)</option><option value="turtle_felt">ธรณีหลังเต่า + สักหลาดด้านล่าง</option><option value="none">ไม่มีธรณี</option></select>'+rfChips('o-thresh',[['std','กันน้ำ (มาตรฐาน)'],['turtle','หลังเต่า+Drop Seal +1,000'],['turtle_felt','หลังเต่า+สักหลาด'],['none','ไม่มีธรณี']],'std',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก · #9(17มิ.ย.): หลังเต่า+สักหลาด/ไม่มีธรณี ฟรี +0
   }
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
@@ -4056,7 +4069,7 @@ function buildItemOpts(d){
     if(p.id==='roof_vinyl'){
       h+='<label class="opt" style="width:100%;">สีวัสดุมุง (ไวนิล) <select class="o-roofcolor" style="display:none;"><option value="สีเทา">สีเทา</option><option value="สีขาว" selected>สีขาว</option><option value="สีน้ำตาล">สีน้ำตาล</option></select>'+rfChips('o-roofcolor',[['สีเทา','สีเทา'],['สีขาว','สีขาว'],['สีน้ำตาล','สีน้ำตาล']],'สีขาว')+'</label>';
     } else if(p.id==='roof_delight'){
-      h+='<label class="opt" style="width:100%;">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="display:none;"><option value="DG-2 สีฟ้าคราม" selected>DG-2 สีฟ้าคราม</option><option value="DG-4 สีเทาโซล่าร์">DG-4 สีเทาโซล่าร์</option></select>'+rfChips('o-roofcolor',[['DG-2 สีฟ้าคราม','DG-2 สีฟ้าคราม'],['DG-4 สีเทาโซล่าร์','DG-4 สีเทาโซล่าร์']],'DG-2 สีฟ้าคราม',true)+'</label>';
+      h+='<label class="opt" style="width:100%;">สีวัสดุมุง (ดีไลท์) <select class="o-roofcolor" style="display:none;"><option value="DG-2 สีฟ้าคราม" selected>DG-2 สีฟ้าคราม</option><option value="DG7 สีเทาโมเดิร์น">DG7 สีเทาโมเดิร์น</option></select>'+rfChips('o-roofcolor',[['DG-2 สีฟ้าคราม','DG-2 สีฟ้าคราม'],['DG7 สีเทาโมเดิร์น','DG7 สีเทาโมเดิร์น']],'DG-2 สีฟ้าคราม',true)+'</label>';
     } else if(p.id==='roof_polyton'){
       h+='<label class="opt">สีวัสดุมุง (โพลีตัน) <select class="o-roofcolor" style="width:auto;height:32px;"><option value="Clear 101 สีใส (แสงผ่าน 83%)">Clear 101 สีใส (แสงผ่าน 83%)</option><option value="Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" selected>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option><option value="Bronze 107 สีชาใส (แสงผ่าน 30%)">Bronze 107 สีชาใส (แสงผ่าน 30%)</option><option value="Green 109 สีเขียวใส (แสงผ่าน 45%)">Green 109 สีเขียวใส (แสงผ่าน 45%)</option><option value="Australian Grey 108 สีเทาออส (แสงผ่าน 40%)">Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option><option value="Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)">Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option><option value="Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)">Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option><option value="Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)">Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option></select></label>';
     } else if(p.id==='roof_laminate'){
@@ -4067,8 +4080,10 @@ function buildItemOpts(d){
       // FIX-5(G3): เมทัลชีท — สี (starter list · พี่นัทเติมได้) · display
       h+='<label class="opt" style="width:100%;">สีเมทัลชีท <select class="o-roofcolor" style="display:none;" onchange="calcQuote();"><option value="" selected>— ระบุสี —</option><option value="สีน้ำตาล">สีน้ำตาล</option><option value="สีขาว">สีขาว</option><option value="สีเทา">สีเทา</option></select>'+rfChips('o-roofcolor',[['','— ระบุสี —'],['สีน้ำตาล','สีน้ำตาล'],['สีขาว','สีขาว'],['สีเทา','สีเทา']],'')+'</label>';
     } else if(/^imp(1[5-9]|20)$/.test(p.id)){
-      // FIX-5(G3): ชินโคไลท์ — สี (starter list) · display
-      h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <select class="o-roofcolor" style="display:none;" onchange="calcQuote();"><option value="" selected>— ระบุสี —</option><option value="สี Light Grey">Light Grey</option><option value="สี Modern Grey">Modern Grey</option></select>'+rfChips('o-roofcolor',[['','— ระบุสี —'],['สี Light Grey','Light Grey'],['สี Modern Grey','Modern Grey']],'')+'</label>'; // FIX-5: value "สี ..." ตรงใบจริง
+      // #6 (17มิ.ย.): ชินโคไลท์ — สี+รหัสครบทุกรุ่น (SHINCO_COLORS ต่อ id) · display · value="สี ..." ตรงใบจริง
+      var _shc=(typeof SHINCO_COLORS!=='undefined'&&SHINCO_COLORS[p.id])||[];
+      var _shPairs=[['','— ระบุสี —']].concat(_shc.map(function(c){return ['สี '+c, c];}));
+      h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <select class="o-roofcolor" style="display:none;" onchange="calcQuote();">'+_shPairs.map(function(_p,_i){return '<option value="'+_p[0]+'"'+(_i===0?' selected':'')+'>'+_p[1]+'</option>';}).join('')+'</select>'+rfChips('o-roofcolor',_shPairs,'')+'</label>';
     }
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
@@ -4718,8 +4733,10 @@ function jobServices(net, totalArea){
   if(svcChk('svc-ship')){ const km=Math.max(0,svcNum('svc-ship-km')); const trucks=Math.max(1,Math.round(svcNum('svc-ship-trucks'))||1); const bkk=svcChk('svc-bkk'); let v=0; if(km>0&&!(bkk&&net>20000)){ const rate=km<=100?23:(km<=200?18:16); v=Math.round(km*rate*trucks); } lines.push(['ค่าขนส่ง ตจว. × '+trucks+' คัน', v]); }
   // Q14 งานไฟ
   if(svcChk('svc-elec')){
-    if(svcChk('svc-elec-run')){ const _dl=Math.max(1,Math.round(svcNum('svc-elec-run-qty'))||2); lines.push(['งานไฟ — เดินไฟดาวน์ไลท์ '+_dl+' ดวง', _dl*1500]); }
+    // #2 (17มิ.ย.): เดินไฟดาวน์ไลท์ ขั้นต่ำ 3,000 (น้อยกว่า=คิด 3,000)
+    if(svcChk('svc-elec-run')){ const _dl=Math.max(1,Math.round(svcNum('svc-elec-run-qty'))||2); const _dlp=Math.max(3000,_dl*1500); lines.push(['งานไฟ — เดินไฟดาวน์ไลท์ '+_dl+' ดวง'+(_dl*1500<3000?' (ขั้นต่ำ 3,000)':''), _dlp]); }
     const sw=Math.max(0,Math.round(svcNum('svc-elec-sw'))||0); if(sw>0) lines.push(['งานไฟ — สวิตซ์ใหม่ '+sw+' จุด', sw*1000]);
+    const pl=Math.max(0,Math.round(svcNum('svc-elec-plug'))||0); if(pl>0) lines.push(['งานไฟ — ปลั๊กไฟ '+pl+' จุด', pl*1000]); // #1 (17มิ.ย.): ปลั๊กไฟ ×1,000
   }
   // Q15 งานรื้อของเดิม
   const notes=[];
@@ -5238,8 +5255,12 @@ function genQuote(keepNo){
     // ข้อ8(G1) FIX: ฝังรางยู priority — ถ้าติ๊กรางยู ไม่ให้หลังเต่าโผล่ (กันขัดแย้ง + กันรางยูหาย)
     var _hasUchannel = !!(it.optSel && it.optSel.uchannel);
     // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
-    if(it.p.cat==='บานเปิด' && it.optSel && it.optSel.thresh==='turtle' && !_hasUchannel){
-      _parts.push('ธรณีหลังเต่า + Drop Seal');
+    if(it.p.cat==='บานเปิด' && it.optSel && !_hasUchannel){
+      // #9 (17มิ.ย.): ธรณีบานเปิด 4 ตัวเลือก · turtle(+1,000) · turtle_felt/none ฟรี +0 · std=ไม่ขึ้นบรรทัด (มาตรฐาน)
+      var _thV=it.optSel.thresh;
+      if(_thV==='turtle') _parts.push('ธรณีหลังเต่า + Drop Seal');
+      else if(_thV==='turtle_felt') _parts.push('ธรณีหลังเต่า + สักหลาดด้านล่าง');
+      else if(_thV==='none') _parts.push('ไม่มีธรณี');
     }
     // Pass2-A: ธรณี บานเฟี้ยม — แสดงชนิดธรณีที่เลือก (ทั้งคู่ +0) · รางยู priority
     if(it.p.cat==='บานเฟี้ยม' && it.optSel && !(_hasUchannel && it.optSel.threshf==='inner')){
@@ -5299,7 +5320,8 @@ function genQuote(keepNo){
       if(it.p.id==='isowall'){ _wl.push('แผ่น ISOWALL หนา '+(_os.isothick||'10')+' ซม.'+(_os.isocolor?(' สี'+_os.isocolor):'')); _wl.push(_frame); }
       else if(it.p.id==='ceiling_smooth'){ _wl.push('ฝ้าฉาบเรียบ'+(_os.ceilfinish?(' พร้อม'+_os.ceilfinish):'')); if(_os.ceilslope) _wl.push('ฝ้าเฉียงตามแนวหลังคา'); }
       else if(it.p.ceiling){ _wl.push(it.p.name.replace(/\s*\([^)]*\)/g,'').trim()+(_os.ckolor?(' สี'+_os.ckolor):'')); }
-      else { _wl.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _wl.push(_frame); }
+      // #8 (17มิ.ย.): ภายใน=ยิปซั่ม · ภายนอก=สมาร์ทบอร์ด · + โครงคร่าวซี-ไลน์เสริมแรง (ฉนวน/โครง = ตาม option ที่เลือก · รอเคาะข้อความ marketing เต็ม)
+      else { _wl.push((it.p.id==='wall_int'?'แผ่นยิปซั่ม':('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'))+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _wl.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
       if(_os.insul) _wl.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');
       det = _wl.join('\n') || '-';
     }
