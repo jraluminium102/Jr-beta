@@ -429,7 +429,8 @@ function BoardView({
   onDesignerAdded: () => Promise<void>;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+    {/* auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก) */}
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
         return (
