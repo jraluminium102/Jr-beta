@@ -5810,8 +5810,10 @@ function genQuote(keepNo){
       const _roofHead = _roofTypeTxt + ' ยื่นปลาย'+_battenSuffix;
       // ข้อ3.2: ของเสริมหลังคา ฟรี (ดันเข้ารายละเอียดงาน ไม่บวกเงิน)
       let _rfExtra = '';
-      if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
-      if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
+      // G3-C1 (ก้อนกลาง 17มิ.ย.): ติ๊กทั้ง 2 → รวม 1 บรรทัด ตรงใบจริง (นก) · ติ๊กตัวเดียว = เหมือนเดิม
+      if(_os.rfplate && _os.rfpull) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง) + เหล็กดึงด้านบน';
+      else if(_os.rfplate) _rfExtra += '\nเสริมเพลทเหล็กล่าง (รับล่าง)';
+      else if(_os.rfpull)  _rfExtra += '\nเหล็กดึงด้านบน';
       // FIX-1(G3): ของเสริมหลังคาที่ "คิดเงินใน calc แล้ว" ต้องลงใบด้วย (เดิมลงแต่ของฟรี) · คำตามใบจริง
       { const _n=function(v){return parseInt(_os[v])||0;}, _f=function(v){return parseFloat(_os[v])||0;};
         if(_n('rfpolep')>0) _rfExtra += '\nเสาแผง (เสริมเหล็กภายใน) จำนวน '+_n('rfpolep')+' ต้น';
