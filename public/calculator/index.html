@@ -5750,6 +5750,7 @@ function genQuote(keepNo){
       // #3 G5 (17มิ.ย.): เพิ่มรายการ(งาน) บน — ชื่อมุ้ง+ลักษณะเปิด+จำนวนบาน (เดิมว่าง · ทำเต็มเหมือน G1)
       var _mWork=[];
       var _mqNm=(it.p.name||'มุ้ง').replace(/\s*\([^)]*\)/g,'').replace(/\s*·\s*ข้อ\s*[\d.]+/g,'').replace(/\s+/g,' ').trim();
+      if(_sfM) _mqNm=_mqNm.replace(/\s*ผ้ามุ้ง\S*\s*/g,' ').replace(/\s+/g,' ').trim();  // B1 (18มิ.ย.): screen_addon เลือกผ้าแล้ว → ตัด "ผ้ามุ้ง..." ออกจากรายการ (ผ้าโชว์ที่ det ที่เดียว · imp28/29 ใช้ mosqFabric ไม่กระทบ)
       if(_mo.mosqOpenStyle) _mqNm+=' บาน'+_mo.mosqOpenStyle;
       var _mqPnl=parseInt((it.div&&it.div.querySelector('.i-panels')||{}).value)||1;
       _mWork.push(_mqNm+(_mqPnl>1?(' '+_mqPnl+' บาน'):''));
@@ -6833,6 +6834,7 @@ window.addEventListener('load',ckRefresh);
     out.push('อลูมิเนียม สีมาตรฐาน (ขาว/ดำ)');
     out.push('กระจกเขียว/ใส หนา 6 มม.');
     if(G6R.sides.some(function(s){return s.type==='wall';})) out.push('ผนังเบา (ISOWALL/สมาร์ทบอร์ด)');
+    var _rfS=roofTotalReal(); if(_rfS>0){ var _Rs=G6R.roof; var _rns=(_Rs.matId&&PBYID[_Rs.matId])?PBYID[_Rs.matId].name.replace(/^หลังคา\s*/,''):'เมทัลชีท'; out.push('หลังคา: '+_rns+(_Rs.frame?(' · '+_Rs.frame):'')); }  // C2 (18มิ.ย.): มีหลังคา → ใส่ชนิดหลังคาในรายละเอียด
     G6R=sv; return out.join('\n'); };
   window.g6rRoomDetail=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
     G6R.sides.forEach(function(s,i){
