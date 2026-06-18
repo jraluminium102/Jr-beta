@@ -4321,17 +4321,6 @@ function buildItemOpts(d){
     h+='<span class="smb-panels-slot"></span>';
     h+='</div>';
   }
-  // คาดตาราง (generic) · UX-ALL: ตัดจาก shower/มุ้ง/หลังคา/ฝ้า · HANDOFF-G6 ธง⑥②: เปิดให้ ติดตาย/บานเปลือย (บานกระจกคาดตารางได้) · เก็บ ดัดโค้ง+บานหมุน
-  if(!p.grid && !p.handrail && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){
-    h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\'); if(this.checked){ var nv=c.querySelector(\'.o-gm-nv\'); var pn=parseInt((c.querySelector(\'.i-panels\')||{}).value)||0; if(nv && !(parseInt(nv.value)>0) && pn>0) nv.value=pn; } calcQuote();"> มีคาดตาราง (คิดตามสูตร)</label>'; // ข้อ14(G1): เส้นตั้ง auto=จำนวนบาน
-    h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
-    h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
-    h+='<label class="opt">เส้นตั้ง <input type="number" class="o-gm-nv" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
-    h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
-    h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
-    h+='</span>';
-    // ธง1 (มติพี่นัท 15 มิ.ย. รอบตรวจ): ตัด render แผ่นทึบล่าง o-solidlower ทิ้ง (เดิม leak ทุกบาน G1 รวม ykk_vent) — ลูกฟูกใช้สินค้า rn89-92 (cat ลูกฟูก+คอมโพสิททึบ) เลือกเป็นบานแยกแทน · logic ราคา dormant (readItem L~3786 หา DOM ไม่เจอ → optSel.solidlower='')
-  }
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
   // R3.9: เลิก "เสริมคาน รุ่น1/2/3" (o-beamm · บานเลื่อน/เปิด/PC) — เสริมคานเหลือเฉพาะเลื่อนภายใน+บานเฟี้ยม ผ่าน "เสริมคานซัพพอร์ท" (COMMON_OPTS) · บานเลื่อนรางล่าง/เปิด/PC ไม่มีเสริมคาน
@@ -4521,6 +4510,18 @@ function buildItemOpts(d){
     // ข้อ10: สีกรอบมุ้ง → ชิป 4 (value ตรงกับ calc · o-mosqcolor ซ่อน)
     h+='<label class="opt" style="width:100%;">สีกรอบมุ้ง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-mosqcolor\')">ตามสีบาน</button><button type="button" class="chip" data-val="sahara" onclick="chSetChip(this,\'o-mosqcolor\')">เทาซาฮาร่า</button><button type="button" class="chip" data-val="kl_special" onclick="chSetChip(this,\'o-mosqcolor\')">KL พิเศษ</button><button type="button" class="chip" data-val="kl_wood" onclick="chSetChip(this,\'o-mosqcolor\')">KL ลายไม้</button></div><select class="o-mosqcolor" style="display:none;" onchange="calcQuote()"><option value="">ตามสีบาน (ฟรี)</option><option value="sahara">เทาซาฮาร่า (×0.5)</option><option value="kl_special">เคแอลอบพิเศษ (×0.5)</option><option value="kl_wood">เคแอลลายไม้ (×0.5)</option></select></label>';
     h+='</div></div></label>';
+  }
+  // v7A ข้อ1 (18มิ.ย.): ย้ายคาดตารางมาใต้มุ้ง (ใช้บ่อย)
+  // คาดตาราง (generic) · UX-ALL: ตัดจาก shower/มุ้ง/หลังคา/ฝ้า · HANDOFF-G6 ธง⑥②: เปิดให้ ติดตาย/บานเปลือย (บานกระจกคาดตารางได้) · เก็บ ดัดโค้ง+บานหมุน
+  if(!p.grid && !p.handrail && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){
+    h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\'); if(this.checked){ var nv=c.querySelector(\'.o-gm-nv\'); var pn=parseInt((c.querySelector(\'.i-panels\')||{}).value)||0; if(nv && !(parseInt(nv.value)>0) && pn>0) nv.value=pn; } calcQuote();"> มีคาดตาราง (คิดตามสูตร)</label>'; // ข้อ14(G1): เส้นตั้ง auto=จำนวนบาน
+    h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
+    h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='<label class="opt">เส้นตั้ง <input type="number" class="o-gm-nv" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
+    h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
+    h+='</span>';
+    // ธง1 (มติพี่นัท 15 มิ.ย. รอบตรวจ): ตัด render แผ่นทึบล่าง o-solidlower ทิ้ง (เดิม leak ทุกบาน G1 รวม ykk_vent) — ลูกฟูกใช้สินค้า rn89-92 (cat ลูกฟูก+คอมโพสิททึบ) เลือกเป็นบานแยกแทน · logic ราคา dormant (readItem L~3786 หา DOM ไม่เจอ → optSel.solidlower='')
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
