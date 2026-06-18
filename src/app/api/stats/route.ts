@@ -25,7 +25,7 @@ export const GET = withRoute(async (req: Request) => {
     sb.from("jobs").select("status, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
     sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
     sb.from("issues").select("phase, severity, status, created_at"),
-    sb.from("quotation_items").select("name, qty, quotation:quotation_id(issue_date)"),
+    sb.from("quotation_items").select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))"),
   ]);
 
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [];
@@ -85,6 +85,25 @@ export const GET = withRoute(async (req: Request) => {
   });
   const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 10);
 
+  // สินค้าขายดีตามหมวด (0046) — แยก "เสนอราคา" (ทุกใบไม่ยกเลิก) vs "ขายได้" (งาน status=WON)
+  // นับงาน = distinct quotation_id · ยอด = sum(line_total) · เฉพาะรายการที่มี category
+  type CatAgg = { category: string; quoted_revenue: number; sold_revenue: number; _q: Set<unknown>; _s: Set<unknown> };
+  const catMap: Record<string, CatAgg> = {};
+  let uncategorized = 0;
+  QI.forEach((it: any) => {
+    const q = it.quotation;
+    if (!q || q.status === "cancelled" || !inRange(q.issue_date)) return;
+    const cat = (it.category ?? "").trim();
+    if (!cat) { uncategorized++; return; }
+    const lt = num(it.line_total);
+    const m = (catMap[cat] ??= { category: cat, quoted_revenue: 0, sold_revenue: 0, _q: new Set(), _s: new Set() });
+    m.quoted_revenue += lt; m._q.add(it.quotation_id);
+    if (q.job && WON.includes(q.job.status)) { m.sold_revenue += lt; m._s.add(it.quotation_id); }
+  });
+  const byCategory = Object.values(catMap)
+    .map((m) => ({ category: m.category, quoted_revenue: m.quoted_revenue, quoted_jobs: m._q.size, sold_revenue: m.sold_revenue, sold_jobs: m._s.size }))
+    .sort((a, b) => b.sold_revenue - a.sold_revenue || b.quoted_revenue - a.quoted_revenue);
+
   // ปัญหา แยกเฟส/ความรุนแรง (ในช่วง)
   const inIssues = I.filter((i: any) => inRange(i.created_at));
   const issuesByPhase: Record<string, number> = {};
@@ -97,6 +116,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     range: { from, to },
     summary, byMonth, bySales, funnel, byChannel, topItems,
+    byCategory, uncategorizedItems: uncategorized,
     issues: {
       total: inIssues.length,
       open: inIssues.filter((i: any) => i.status !== "CLOSED").length,
