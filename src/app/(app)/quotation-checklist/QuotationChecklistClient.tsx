@@ -375,11 +375,11 @@ function ActiveTableRow({
             มัดจำหน้างาน · ด่วน
           </div>
         )}
-        {/* หมายเหตุ "มาจากแก้แบบ" — งานที่ถูกส่งกลับแก้ */}
-        {item.design_state === "REVISING" && (
+        {/* หมายเหตุ "มาจากแก้แบบ" — งานที่ถูกส่งกลับแก้ (รวมที่แก้เสร็จแล้วรอทำใบเสนอใหม่) */}
+        {item.revised && (
           <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-100 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
             <Icon name="refresh" size={10} />
-            มาจากแก้แบบ
+            มาจากแก้แบบ{item.revise_count > 0 ? ` · รอบ ${item.revise_count}` : ""}
           </div>
         )}
         {item.estimator_name && (
@@ -510,10 +510,10 @@ function ActiveMobileCard({
             </div>
           )}
           {/* หมายเหตุ "มาจากแก้แบบ" */}
-          {item.design_state === "REVISING" && (
+          {item.revised && (
             <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-100 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
               <Icon name="refresh" size={10} />
-              มาจากแก้แบบ
+              มาจากแก้แบบ{item.revise_count > 0 ? ` · รอบ ${item.revise_count}` : ""}
             </div>
           )}
         </div>

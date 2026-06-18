@@ -37,6 +37,8 @@ export type ChecklistItem = {
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน · ด่วน
   on_hold: boolean;
   on_hold_reason: string | null;
+  revised: boolean;       // มาจากการแก้แบบ (อยู่ใน active เพราะถูกแก้)
+  revise_count: number;   // จำนวนรอบแก้แบบ
 };
 
 export type ChecklistData = {
@@ -87,7 +89,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -108,6 +110,7 @@ export const GET = withRoute(async () => {
     assess_date: string | null;
     design_state: string;
     design_end: string | null;
+    design_revise_count: number | null;
     status: string;
     designer_ref: number | null;
     quote_sent_date: string | null;
@@ -202,6 +205,8 @@ export const GET = withRoute(async () => {
         estimator_name,
         quote_sent_date: j.quote_sent_date,
         onsite_deposit: j.onsite_deposit ?? false,
+        revised: j.design_state === "REVISING",
+        revise_count: j.design_revise_count ?? 0,
         on_hold: true,
         on_hold_reason: j.on_hold_reason ?? null,
       });
@@ -209,15 +214,30 @@ export const GET = withRoute(async () => {
       continue;
     }
 
+    // ── ตรวจ "แก้แบบ" ───────────────────────────────────────────────
+    // design_revise_count +1 ทุกครั้งที่เข้า REVISING · design_end = วันที่กด DONE ล่าสุด
+    const reviseCount = j.design_revise_count ?? 0;
+    // แบบถูกแก้ แล้วยัง "ค้าง" ต้องทำใบเสนอใหม่ เมื่อ:
+    //   (ก) แก้แล้วยังไม่เคยส่งใบเสนอ  หรือ
+    //   (ข) แบบเสร็จใหม่ (design_end) ช้ากว่าวันส่งใบเสนอ → ใบเสนอเก่า ต้องรีเควต
+    const needsRequote =
+      reviseCount > 0 &&
+      (!j.quote_sent_date ||
+        (!!j.design_end && j.design_end > j.quote_sent_date));
+    // ป้าย "มาจากแก้แบบ" — โผล่ใน active เพราะกำลังแก้ หรือแบบแก้แล้วรอทำใบเสนอใหม่
+    const revised = j.design_state === "REVISING" || needsRequote;
+
     // จัด stage
     let stage: ChecklistStage;
     if (j.design_state === "REVISING") {
-      // แก้แบบ — ดึงกลับเข้าไปป์ไลน์ active เสมอ แม้เคยส่งใบเสนอแล้ว
-      // (ลูกค้าขอแก้ → ต้องเขียนแบบ + ทำใบเสนอใหม่ จึงต้องโผล่ในเช็คลิสต์)
+      // กำลังแก้แบบ — ดึงกลับเข้าไปป์ไลน์ active เสมอ แม้เคยส่งใบเสนอแล้ว
       stage = "in_design";
     } else if (j.design_state !== "DONE" && !j.quote_sent_date) {
       // รอแบบ — งานที่แบบยังไม่เสร็จและยังไม่เคยส่งใบเสนอ
       stage = "in_design";
+    } else if (needsRequote) {
+      // แบบแก้เสร็จแล้ว แต่ใบเสนอเก่า/ยังไม่มี → ต้องทำใบเสนอใหม่ (กลับเข้า active)
+      stage = q ? "drafted" : "pending";
     } else if (q && ["sent", "approved"].includes(q.status)) {
       stage = "sent";
     } else if (q && q.status === "draft") {
@@ -247,6 +267,8 @@ export const GET = withRoute(async () => {
       estimator_name,
       quote_sent_date: j.quote_sent_date,
       onsite_deposit: j.onsite_deposit ?? false, // (0044)
+      revised,
+      revise_count: reviseCount,
       on_hold: false,
       on_hold_reason: null,
     };
