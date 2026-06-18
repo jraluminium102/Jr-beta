@@ -5390,7 +5390,8 @@ function sendToQuotation(){
   const items=list.map(it=>{
     const detail=[it.r.addonLabel, ...(it.r.msgs||[])].filter(Boolean).join(' · ');
     return { name: it.name||'รายการ', detail: detail, qty: it.qty||1,
-             unit_price: Math.round(it.r.sell), line_total: Math.round(it.r.sell*(it.qty||1)) };
+             unit_price: Math.round(it.r.sell), line_total: Math.round(it.r.sell*(it.qty||1)),
+             category: (it.p&&it.p.cat)||'', product_id: (it.p&&it.p.id)||'' }; // สถิติสินค้าขายดี (0046)
   });
   const customer = (document.getElementById('custName')||{}).value || '';
   const payload={ type:'JR_QUOTE_ITEMS', items: items, customer: customer };
