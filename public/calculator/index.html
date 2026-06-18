@@ -735,7 +735,7 @@ const PRODUCTS=[
  {id:'glass_replace',g:1,cat:'เสริม',name:'คำนวณกระจกใหม่ (ที่ไม่มีในตาราง) — กรอกทุน + กำไร%',glass_replace:1,cost:null},
  {id:'roof_eave_cover',cat:'เสริม',name:'เพิ่ม โครงปิดปลาย กันน้ำกระเด็น — 1,000/ม.',unit:'meter',rate:1000,cost:null},
  // ข้อ9: ลบ roof_gutter_s/ss_m/ss_l (ราคาตรงกับตัวเลือก o-rfgut ในชุดหลังคาเป๊ะ — ซ้ำซ้อน) · เก็บ o-rfgut + ปิดซ่อนราง(cover)
- {id:'roof_gutter_cover',cat:'เสริม',name:'เพิ่ม ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง · ลด 30%) — กรอกขนาดรางและความยาว',gutter_cover:1,cost:null},
+ {id:'roof_gutter_cover',cat:'เสริม',g:3,name:'เพิ่ม ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง · ลด 30%) — กรอกขนาดรางและความยาว',gutter_cover:1,cost:null},  // รอบ3 ข้อ2: g:3 = โผล่ใน G3 (หลังคา · escape hatch p.g===gi · เดิม orphan เลือกไม่ได้)
  {id:'roof_pole_panel',cat:'เสริม',name:'เพิ่ม เสาแผงหลังคา — 4,000/ต้น',unit:'piece',rate:4000,cost:null},
  {id:'roof_pole_4x8',cat:'เสริม',name:'เพิ่ม เสา 4"x8" — 2,000/ต้น',unit:'piece',rate:2000,cost:null},
  // จุด3: ลบ product ซ่อนสโลปซ้ำ (roof_hide_composite/smartboard) — ใช้ option .o-rfhs ในชุดหลังคาแทน (ราคาเท่ากัน comp 3,500/smart 4,000)
@@ -1540,14 +1540,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     return {a:A, sell:roundUp(sell), cost:null, addonLabel:'',
       msgs:['(ราง '+(presetW*100).toFixed(0)+'+'+(presetH*100).toFixed(0)+' ซม. = '+(dim*100).toFixed(0)+' ซม.) × '+lenTotal+' ม. = '+A.toFixed(2)+' ตร.ม. × '+fmt(rate)+' (ลูกฟูก 1 ทาง '+(3500+finRate)+finLbl+' ลด 30%)']};
   }
-    if(p.gutter_cover){
-    h+='<label class="opt"><b style="color:var(--red-dark)">⚠ ใช้ช่อง "กว้าง" = "ยาวรวม" (ม.) = จำนวนด้าน × ยาว/ด้าน</b></label>';
-    h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
-    h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" style="width:80px;height:32px;"></label>';
-    h+='<label class="opt">สูงราง (ซม.) <input type="number" class="o-gcheight" min="0" step="1" value="10" style="width:80px;height:32px;"></label>';
-    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮาร่า +700/ตร.ม.</option><option value="700">สีดำซาฮาร่า +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
-  }
     // dead code ลบแล้ว (2026-06-09): p.hide_slope calc block — ไม่มี product นิยาม property นี้
+    // dead code ลบแล้ว (รอบ3 ข้อ2 · 18มิ.ย.): บล็อก h+= ออปชั่น gutter_cover (กว้าง/สูง/สีอบ) อยู่หลัง return → ไม่เคยรัน · ย้ายไป render จริงใน buildItemOpts แล้ว
     if(p.custom_item){
     // กรอกเอง — ชื่อ + ราคา/ตร.ม. (หรือ /หน่วย) + รายละเอียด
     const customRate = (optSel && parseFloat(optSel.customRate)) || 0;
@@ -3341,10 +3335,10 @@ function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]')
 // ออปชั่นดรอปดาวน์ตัวเลือกน้อย (≤6) → ชิป อัตโนมัติ (พี่นัท 17 มิ.ย.) · อ่าน option จริงจาก select · ขับด้วย selectedIndex
 // (กันค่าชน เช่น o-closer/o-finish ที่หลาย option ใช้ value เดียวกัน + อ่าน data-n ผ่าน selectedIndex) · fire input+change = sync onchange/delegated เดิม · ราคา/readItem ไม่แตะ
 // ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
-var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gfin','o-bsfinish','o-bocfinish'];
-// G2-สลับตรวจ (คิวกลาง): สี/ผิวระแนง 3 ตัว → ชิป · o-bsfinish/o-bocfinish = 10 ตัวเลือก value=ราคา (มีซ้ำ) → chipify ผ่าน selectedIndex = ราคาตรงเป๊ะ · ปลด cap 7 เฉพาะ 2 ตัวนี้
-// A3 (18มิ.ย.): o-gcfinish (สีอบปิดราง) ยังไม่เพิ่ม — ตรวจแล้ว select L1537 เป็น dead code (อยู่หลัง return ของ gutter_cover ใน calcUnit · ไม่เคย render · optSel.gcFinish ไม่ถูก set) → chipify ไม่มีผล รอแก้ render ก่อน (flag คิวกลาง)
-var CHIPIFY_BIG=['o-bsfinish','o-bocfinish'];
+var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gfin','o-bsfinish','o-bocfinish','o-gcfinish'];
+// G2-สลับตรวจ (คิวกลาง): สี/ผิวระแนง 3 ตัว → ชิป · o-bsfinish/o-bocfinish/o-gcfinish = 8-10 ตัวเลือก value=ราคา (มีซ้ำ) → chipify ผ่าน selectedIndex = ราคาตรงเป๊ะ · ปลด cap 7
+// รอบ3 ข้อ2 (18มิ.ย.): o-gcfinish render จริงแล้ว (buildItemOpts) → เพิ่ม chipify ได้
+var CHIPIFY_BIG=['o-bsfinish','o-bocfinish','o-gcfinish'];
 function chipifySelect(sel,big){
   if(!sel || sel.dataset.chipped==='1') return;
   var n=sel.options.length; if(n<2||(n>7&&!big)) return;     // ≤7 = ชิป · เกิน 7 คงดรอปดาวน์ ยกเว้น big (o-bsfinish/bocfinish สี 10 ตัว ผ่าน selectedIndex)
@@ -4599,6 +4593,12 @@ function buildItemOpts(d){
     // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
     h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
     h+='<label class="opt cab-detail" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; h+='<label class="opt cab-detail" style="flex:1 1 100%;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label>'; }
+  if(p.gutter_cover){  // รอบ3 ข้อ2 (18มิ.ย.): ย้ายออปชั่นปิดซ่อนรางน้ำมา render จริง (เดิม dead → ราคา ฿0/เลือกสีไม่ได้)
+    h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" onchange="calcQuote();" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
+    h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" oninput="calcQuote();" style="width:80px;height:32px;"></label>';
+    h+='<label class="opt">สูงราง (ซม.) <input type="number" class="o-gcheight" min="0" step="1" value="10" oninput="calcQuote();" style="width:80px;height:32px;"></label>';
+    h+='<label class="opt">สีอบ ปิดราง (ลูกฟูก 1 ทาง) <select class="o-gcfinish" onchange="calcQuote();" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="700">สีเทาซาฮาร่า +700/ตร.ม.</option><option value="700">สีดำซาฮาร่า +700/ตร.ม.</option><option value="2500">สีลายไม้สต๊อก +2,500/ตร.ม.</option><option value="2500">สีอบพิเศษ +2,500/ตร.ม.</option><option value="3500">สีลายไม้อบพิเศษ +3,500/ตร.ม.</option></select></label>';
+  }
   if(p.handrail){
     h+='<label class="opt" style="width:100%;">ความหนากระจก <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="10" onclick="chSetChip(this,\'o-railglass\')">10 มม.</button><button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-railglass\')">12 มม.</button></div><select class="o-railglass" style="display:none;" onchange="calcQuote();"><option value="10" selected>เทมเปอร์ใส 10 มม. (default)</option><option value="12">เทมเปอร์ใส 12 มม.</option></select> <span style="font-size:11px;color:#666;">ราคาไม่ขึ้นกับความหนา</span></label>'; // G2-10 · ชิป
     h+='<label class="opt" style="width:100%;">ราวมือจับด้านบน (option) <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-handrail\')">ไม่มี</button><button type="button" class="chip" data-val="u5" onclick="chSetChip(this,\'o-handrail\')">ยู อลูมิเนียม +500/ม.</button><button type="button" class="chip" data-val="box" onclick="chSetChip(this,\'o-handrail\')">กล่อง 1"x2" +600/ม.</button></div><select class="o-handrail" style="display:none;" onchange="calcQuote();"><option value="" selected>ไม่มี</option><option value="u5">ยู อลูมิเนียม +500/ม.</option><option value="box">กล่อง 1"x2" +600/ม.</option></select></label>'; // R3-4: ราวมือจับด้านบน (ชิป)
@@ -4909,6 +4909,13 @@ function readItem(d){
   }
   if(p.mscolor){ const _msc=d.querySelector('.o-mscolor'); optSel.mscolor=_msc?_msc.value:''; }
   if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; const _ftcc=d.querySelector('.o-ftcolorcode'); optSel.ftcolorcode=_ftcc?_ftcc.value:''; }  // รอบ2 G4: รหัสสีฝาตู้
+  if(p.gutter_cover){  // รอบ3 ข้อ2: อ่านขนาดราง+สีอบ (เดิม dead → ไม่เคยอ่าน → ราคา ฿0)
+    const _gcw=d.querySelector('.o-gcwidth'); const _gcwSel=_gcw?parseFloat(_gcw.value)||0:0;
+    const _gcwc=d.querySelector('.o-gcwidth-custom'); const _gcwCustom=_gcwc?(parseFloat(_gcwc.value)||0)/100:0;
+    optSel.gcWidth=_gcwSel>0?_gcwSel:_gcwCustom;                                  // เมตร (select=ม. · custom=ซม./100)
+    const _gch=d.querySelector('.o-gcheight'); optSel.gcHeight=_gch?(parseFloat(_gch.value)||0)/100:0;  // ซม./100=ม.
+    const _gcf=d.querySelector('.o-gcfinish'); optSel.gcFinish=_gcf?_gcf.value:0;  // ราคาสีอบ/ตร.ม.
+  }
   if(p.bar_grid){ const _bd=d.querySelector('.o-bgdir'); optSel.bgdir=_bd?_bd.value:'v'; const _bgd=d.querySelector('.o-bsdoor'); optSel.bsDoor=_bgd?_bgd.value:''; const _bgdp=d.querySelector('.o-bsdoorprice'); optSel.bsDoorPrice=_bgdp?_bgdp.value:'0'; } // G2 B2/B4: ระแนงเกล็ด ทำบานได้
   if(p.handrail){ const _hr=d.querySelector('.o-handrail'); optSel.handrail=_hr?_hr.value:''; const _rg=d.querySelector('.o-railglass'); optSel.railglass=_rg?_rg.value:'10'; const _rac=d.querySelector('.o-railalucolor'); if(_rac)optSel.railalucolor=_rac.value; } // R3-4
   if(p.screen_addon){ const _sf=d.querySelector('.o-screenfabric'); optSel.screenFabric=_sf?_sf.value:'fiber'; const _mos=d.querySelector('.o-mosqopenstyle'); optSel.mosqOpenStyle=_mos?_mos.value:''; } // G5: มุ้งเฟรมขายเดี่ยว imp21/imp23 อ่านลักษณะการเปิด (label-only)

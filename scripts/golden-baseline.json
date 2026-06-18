@@ -1,8 +1,8 @@
 {
  "meta": {
   "at": "baseline",
-  "catalog": 149,
-  "captured": 149,
+  "catalog": 150,
+  "captured": 150,
   "skipped": 0
  },
  "rows": [
@@ -401,7 +401,7 @@
   {
    "key": "2:bar_openclose",
    "id": "bar_openclose",
-   "name": "ระแนงเปิด-ปิด (กล่อง 1\"x4\" โชว์ 4\" · ข้อ 38.3)",
+   "name": "ระแนงหมุนเปิด-ปิด (กล่อง 1\"x4\" โชว์ 4\" · ข้อ 38.3)",
    "g": 2,
    "total": 26750,
    "status": "ok"
@@ -1020,6 +1020,14 @@
    "name": "ผนังเบาภายใน",
    "g": 3,
    "total": 49220,
+   "status": "ok"
+  },
+  {
+   "key": "3:roof_gutter_cover",
+   "id": "roof_gutter_cover",
+   "name": "เพิ่ม ปิดซ่อนรางน้ำ (ลูกฟูก 1 ทาง · ลด 30%) — กรอกขนาดรางและความยาว",
+   "g": 3,
+   "total": 3210,
    "status": "ok"
   },
   {
