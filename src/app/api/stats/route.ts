@@ -22,7 +22,7 @@ export const GET = withRoute(async (req: Request) => {
   const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
 
   const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }] = await Promise.all([
-    sb.from("jobs").select("status, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
+    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
     sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
     sb.from("issues").select("phase, severity, status, created_at"),
     sb.from("quotation_items").select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))"),
@@ -40,7 +40,7 @@ export const GET = withRoute(async (req: Request) => {
     jobs: inJobs.length,
     won: wonJobs.length,
     close_rate: inJobs.length ? Math.round((wonJobs.length / inJobs.length) * 100) : 0,
-    revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.net_amount), 0), // net = ก่อน VAT (ยอดขายจริง) ให้ตรง byCategory
     collected: F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0),
   };
 
@@ -50,8 +50,8 @@ export const GET = withRoute(async (req: Request) => {
   const mk = (s?: string | null) => (s ? s.slice(0, 7) : "");
   const byMonth = monthKeys.map((m) => ({
     month: m,
-    quoted: J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.total_amount), 0),
-    closed: J.filter((j: any) => mk(j.deposit_date) === m).reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    quoted: J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0),
+    closed: J.filter((j: any) => mk(j.deposit_date) === m).reduce((s: number, j: any) => s + num(j.net_amount), 0),
     collected: F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0),
   }));
 
@@ -62,7 +62,7 @@ export const GET = withRoute(async (req: Request) => {
     const name = j.estimator?.full_name ?? "ไม่ระบุ";
     salesMap[key] ??= { name, jobs: 0, won: 0, revenue: 0 };
     salesMap[key].jobs++;
-    if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.total_amount); }
+    if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.net_amount); }
   });
   const bySales = Object.values(salesMap).map((s) => ({ ...s, close_rate: s.jobs ? Math.round((s.won / s.jobs) * 100) : 0 }))
     .sort((a, b) => b.revenue - a.revenue);
@@ -79,7 +79,7 @@ export const GET = withRoute(async (req: Request) => {
 
   // ประเภทงานนิยม (จากรายการในใบเสนอราคา ในช่วง) top 10
   const itemMap: Record<string, number> = {};
-  QI.filter((it: any) => inRange(it.quotation?.issue_date)).forEach((it: any) => {
+  QI.filter((it: any) => inRange(it.quotation?.issue_date) && it.quotation?.status !== "cancelled").forEach((it: any) => {
     const name = (it.name ?? "").trim(); if (!name) return;
     itemMap[name] = (itemMap[name] ?? 0) + num(it.qty);
   });
