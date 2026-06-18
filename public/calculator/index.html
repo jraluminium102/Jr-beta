@@ -4767,7 +4767,10 @@ function buildItemOpts(d){
     if(_cgr) _cgr.style.display=(_showCw||_showGw)?'flex':'none'; }
   // v7A ข้อ2 (18มิ.ย.): ย้ายบล็อกมือจับละเอียด (Cmech/ดิจิตอล/สแตน/รุ่นอื่น) → กล่อง OPTION ทางเลือกลูกค้า (oc-block · นอก .i-opts)
   // คงราคาเดิม (calcUnit อ่าน .o-cmech/.o-digi ฯลฯ ตาม class ตำแหน่งไม่กระทบ · controls มี inline onchange/oninput อยู่แล้ว) · ย้ายก่อน groupGHOpts = นับจำนวนกล่องไม่ผิด
-  { var _hbw=box.querySelector('.handle-brand-wrap'); var _ocb=d.querySelector('.oc-block');
+  { var _ocb=d.querySelector('.oc-block');
+    // FIX (18มิ.ย.): ลบมือจับเก่าที่ค้างใน oc-block ก่อน — oc-block อยู่นอก .i-opts ไม่ถูกล้างตอน rebuild → ทุก buildItemOpts จะ append ซ้ำสะสม (เจอ 3 อัน)
+    if(_ocb){ _ocb.querySelectorAll('.handle-brand-wrap').forEach(function(w){ var l=w.closest('label')||w.parentNode; if(l && l.parentNode) l.parentNode.removeChild(l); }); }
+    var _hbw=box.querySelector('.handle-brand-wrap');
     if(_hbw && _ocb){ var _hl=_hbw.closest('label')||_hbw.parentNode; if(_hl && _hl!==_ocb) _ocb.appendChild(_hl); } }
   // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
   { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
