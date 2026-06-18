@@ -71,7 +71,7 @@ export default function AddDesignWorkModal({
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative w-full sm:max-w-lg glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] flex flex-col">
+      <div className="relative w-full sm:max-w-lg glass-dark rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 shrink-0">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
