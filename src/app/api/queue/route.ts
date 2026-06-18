@@ -15,9 +15,19 @@ const SELECT = "*, sales:sales_id(id,name,code,team), assistant:assistant_id(id,
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 // "" -> null (prevent date/uuid/number blanks from breaking DB)
+// normalize queue_time format เก่า → HH:MM (จุด→โคลอน, ตัดวินาที) กัน import "10.00"/"9:30:00" เด้ง
+function normTime(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const s = v.trim();
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})[:.](\d{2})/);
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
+}
+
 function clean(o: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(o).map(([k, v]) => [k, v === "" ? null : v])
+    Object.entries(o).map(([k, v]) =>
+      [k, k === "queue_time" ? normTime(v) : (v === "" ? null : v)])
   );
 }
 

@@ -11,8 +11,19 @@ type Sb = { from: (t: string) => any };
 const SELECT = "*, sales:sales_id(id,name,code,team), assistant:assistant_id(id,name,code)";
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
+// normalize queue_time format เก่า → HH:MM (จุด→โคลอน, ตัดวินาที/ส่วนเกิน)
+// กัน entry import เก่า ("10.00"/"9:30:00") กดเสร็จไม่ได้เพราะ TIME_RE เข้ม
+function normTime(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const s = v.trim();
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})[:.](\d{2})/);
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : s;
+}
+
 function clean(o: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v === "" ? null : v]));
+  return Object.fromEntries(Object.entries(o).map(([k, v]) =>
+    [k, k === "queue_time" ? normTime(v) : (v === "" ? null : v)]));
 }
 
 const patchSchema = z.object({
