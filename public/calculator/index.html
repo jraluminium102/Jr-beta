@@ -3308,6 +3308,16 @@ function rfChips(cls, items, defVal, twoUp){
 function rfChipsSw(cls, items, defVal){
   return '<div class="chip-group chip-sm">'+items.map(function(it){ return '<button type="button" class="chip'+(it[0]===defVal?' on':'')+'" data-val="'+it[0]+'" onclick="chSetChip(this,\''+cls+'\')">'+(it[2]?'<span class="cdot" style="background:'+it[2]+';"></span>':'')+it[1]+'</button>'; }).join('')+'</div>';
 }
+// Z4 A1/A2 (18มิ.ย.): สีกรอบมุ้ง (o-mscolor) + สีฝาตู้ (o-ftcolor) → ชิป+จุดสี แบบ ค ชุดเดียวกัน
+// คง value = COLORS index เดิม (ชิปแรก = freeVal) · ชื่อเต็มลงใบเหมือนเดิม (อ่าน optSel.mscolor/ftcolor ไม่แตะ) · จุดสี = colorSwStyle รองรับ gradient
+function msftColorChips(cls, defVal, freeVal, freeLabel){
+  var h='<div class="chip-group chip-sm"><button type="button" class="chip'+(freeVal===defVal?' on':'')+'" data-val="'+freeVal+'" onclick="chSetChip(this,\''+cls+'\')">'+freeLabel+'</button>';
+  COLORS.forEach(function(c,i){ if(i<2) return;
+    var nm=(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim();
+    h+='<button type="button" class="chip'+(String(i)===defVal?' on':'')+'" data-val="'+i+'" onclick="chSetChip(this,\''+cls+'\')"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+nm+'</button>';
+  });
+  return h+'</div>';
+}
 // B3: palette สีชินโคไลท์ (เสนอจากชื่อสี · พี่นัทปรับ hex ได้) — key = string สีเต็มใน SHINCO_COLORS
 var SHINCO_SW={'HC-N828 Modern Grey':'#8a8d8f','HC-B703 Royal Blue':'#26408b','HC-570 Classic Brown':'#6b4a2f','HC-N590 Noble Green':'#2f5d43','SP-NB00 ขาวขุ่น':'#efece4','SP-NB30 Foggy Brown':'#8a7a68','SP-B857 Marine Blue':'#3a6e88','SP-NC95 Light Brown':'#a98b63','NT-001 ใส':'#e9f1f1','NT-332 เทาอ่อน':'#c2c4c2','Prime 562 Brownish Green':'#5a6347','Shade-430S Pearl White':'#f4f2ec'};
 // B3: ชื่อย่อชินโค = ตัดรหัสนำหน้า เหลือชื่อสี (อังกฤษ/ไทย) เช่น "HC-N828 Modern Grey"→"Modern Grey" · "SP-NB00 ขาวขุ่น"→"ขาวขุ่น"
@@ -3320,6 +3330,7 @@ function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]')
 // ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
 var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gfin','o-bsfinish','o-bocfinish'];
 // G2-สลับตรวจ (คิวกลาง): สี/ผิวระแนง 3 ตัว → ชิป · o-bsfinish/o-bocfinish = 10 ตัวเลือก value=ราคา (มีซ้ำ) → chipify ผ่าน selectedIndex = ราคาตรงเป๊ะ · ปลด cap 7 เฉพาะ 2 ตัวนี้
+// A3 (18มิ.ย.): o-gcfinish (สีอบปิดราง) ยังไม่เพิ่ม — ตรวจแล้ว select L1537 เป็น dead code (อยู่หลัง return ของ gutter_cover ใน calcUnit · ไม่เคย render · optSel.gcFinish ไม่ถูก set) → chipify ไม่มีผล รอแก้ render ก่อน (flag คิวกลาง)
 var CHIPIFY_BIG=['o-bsfinish','o-bocfinish'];
 function chipifySelect(sel,big){
   if(!sel || sel.dataset.chipped==='1') return;
@@ -4538,7 +4549,7 @@ function buildItemOpts(d){
     h+='<label class="opt">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-bsdoorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(กรอก &gt;0 = แทนราคารุ่น)</span></label>'; } // G2-5: สี display
   if(p.cat==='ระแนง-เกล็ด'){ h+='<label class="opt" style="width:100%;">ทิศติดตั้ง <select class="o-grdir" style="display:none;" onchange="calcQuote();"><option value="">— ระบุ —</option><option value="แนวตั้ง">แนวตั้ง</option><option value="แนวนอน">แนวนอน</option></select>'+rfChips('o-grdir',[['','— ระบุ —'],['แนวตั้ง','แนวตั้ง'],['แนวนอน','แนวนอน']],'')+'</label>'; } // G2-9: ทิศเกล็ด Z display
   // ดรอปดาวน์สีกรอบมุ้ง (กฎใหม่ 2026-05-28: ค่าทำสี × 0.5)
-  if(p.mscolor){ h+='<label class="opt">สีกรอบมุ้ง <select class="o-mscolor" style="width:auto;height:32px;max-width:250px;"><option value="">ตามสีบาน (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select></label>'; }
+  if(p.mscolor){ h+='<label class="opt" style="flex:1 1 100%;">สีกรอบมุ้ง <select class="o-mscolor" style="display:none;"><option value="">ตามสีบาน (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+' (ค่าทำสี×0.5)</option>'):'';}).join('')+'</select>'+msftColorChips('o-mscolor','','','ตามสีบาน')+'</label>'; }
   if(p.bar_slide){
     const doorOpts = ['sliding_sms','sliding_euro','casement_euro','casement_dseries','folding','folding_xseries'] // G2-4: ตัด fence_gate (เลือกแล้วแครช TypeError — gate ไม่มี method/rates)
       .filter(id => PBYID[id])
@@ -4572,7 +4583,7 @@ function buildItemOpts(d){
   if(p.future_tech){
     // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
     h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
-    h+='<label class="opt cab-detail" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="width:auto;height:32px;max-width:240px;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select> <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
+    h+='<label class="opt cab-detail" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; }
   if(p.handrail){
     h+='<label class="opt" style="width:100%;">ความหนากระจก <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="10" onclick="chSetChip(this,\'o-railglass\')">10 มม.</button><button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-railglass\')">12 มม.</button></div><select class="o-railglass" style="display:none;" onchange="calcQuote();"><option value="10" selected>เทมเปอร์ใส 10 มม. (default)</option><option value="12">เทมเปอร์ใส 12 มม.</option></select> <span style="font-size:11px;color:#666;">ราคาไม่ขึ้นกับความหนา</span></label>'; // G2-10 · ชิป
     h+='<label class="opt" style="width:100%;">ราวมือจับด้านบน (option) <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-handrail\')">ไม่มี</button><button type="button" class="chip" data-val="u5" onclick="chSetChip(this,\'o-handrail\')">ยู อลูมิเนียม +500/ม.</button><button type="button" class="chip" data-val="box" onclick="chSetChip(this,\'o-handrail\')">กล่อง 1"x2" +600/ม.</button></div><select class="o-handrail" style="display:none;" onchange="calcQuote();"><option value="" selected>ไม่มี</option><option value="u5">ยู อลูมิเนียม +500/ม.</option><option value="box">กล่อง 1"x2" +600/ม.</option></select></label>'; // R3-4: ราวมือจับด้านบน (ชิป)
