@@ -1062,6 +1062,11 @@ function glassCatOf(idx){ var n=(GLASS[idx]&&GLASS[idx].n)||'';   // ลำด�
   return 'general';  // เขียว/ใส/เคลือบ
 }
 function glassShortLabel(idx){ var n=(GLASS[idx]&&GLASS[idx].n)||''; return n.replace(/^★\s*/,'').replace(/^กระจก/,'').trim()||n; }
+// รอบ3 ข้อ1ข (18มิ.ย.): ชื่อกระจกลงใบ (รวม helper · เดิมกระจาย 4 จุด) · ถ้าชื่อมี "เขียว/ใส" + ลูกค้าเลือก (เขียว/ใส) → แทนคำให้ชัด · ไม่แตะ gi/ราคา/golden
+function glQuoteName(gi, colorPick){ var g=GLASS[gi]; if(!g)return ''; var n=g.n.replace(/^[★⚠\s]+/,'').trim();
+  if(colorPick && /เขียว\/ใส/.test(n)) n=n.replace(/เขียว\/ใส/g, colorPick);
+  if(n.indexOf('หนา')<0) n=n.replace(/(\s)(\d)/,'$1หนา $2');
+  if(!n.startsWith('กระจก')) n='กระจก'+n; return n; }
 function _glassDrillSel(el){ var dr=el.closest('.glass-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s && s.tagName!=='SELECT') s=s.previousElementSibling; return s; }
 function glassDrillRender(sel){
   if(!sel) return;
@@ -1087,8 +1092,14 @@ function glassDrillRender(sel){
     _glIdxs.forEach(function(i){ html+='<button type="button" class="chip glass-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="glassDrillPick(this)">'+glassShortLabel(i)+'</button>'; });
     html+='</div>';
   }
+  // รอบ3 ข้อ1ข (18มิ.ย.): กระจกที่ชื่อมี "เขียว/ใส" → ปุ่มย่อยเลือก เขียว หรือ ใส (เปลี่ยนแค่ชื่อบนใบ · ไม่แตะ gi/ราคา)
+  if(/เขียว\/ใส/.test((GLASS[curIdx]&&GLASS[curIdx].n)||'')){ var _gcp=sel.dataset.glColor||'เขียว';
+    html+='<div class="chip-group chip-sm" style="margin-top:5px;"><span style="font-size:11px;color:#6B7280;align-self:center;margin-right:2px;">ระบุบนใบ:</span>'
+      +['เขียว','ใส'].map(function(c){ return '<button type="button" class="chip'+(_gcp===c?' on':'')+'" onclick="glassColorPick(this,\''+c+'\')">'+c+'</button>'; }).join('')+'</div>';
+  }
   wrap.innerHTML=html;
 }
+function glassColorPick(btn,c){ var sel=_glassDrillSel(btn); if(!sel)return; sel.dataset.glColor=c; glassDrillRender(sel); }  // รอบ3 ข้อ1ข: เก็บสีที่เลือก (label ใบ) · ไม่แตะราคา
 function glassDrillCat(btn){ var sel=_glassDrillSel(btn); if(!sel)return; sel.dataset.glCat=btn.dataset.cat; glassDrillRender(sel); }
 function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
@@ -4975,6 +4986,7 @@ function readItem(d){
   const _odEl=d.querySelector('.o-optdelta'); const _itemOptDelta=parseFloat((_odEl&&_odEl.value)||'0')||0;
   const _lsEl=d.querySelector('.o-lumpsum'); const _isLumpsum=!!(_lsEl&&_lsEl.checked);
   return {p, r, qty, gi, ci, finLabel, optSel, subItems,
+    glassColor:(d.querySelector('.i-glass')||{}).dataset?(d.querySelector('.i-glass').dataset.glColor||''):'',  // รอบ3 ข้อ1ข: เขียว/ใส ที่เลือก (label ใบ)
     w:d.querySelector('.i-w').value, h:d.querySelector('.i-h').value,
     name:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'', ship:d.querySelector('.i-ship').checked,
     itype:(d.querySelector('.i-type')&&d.querySelector('.i-type').value)||'door',
@@ -5793,7 +5805,7 @@ function genQuote(keepNo){
       // ข้อ10(G1): กระจก ตามที่เลือกจริง — default (gi=0) = เทมเปอร์ใส 10 (มาตรฐานรวมในราคา) · เลือกอื่นโชว์ตามนั้น
       let _shGlass='กระจกเทมเปอร์ใส 10 มม.';
       // เลือกกระจก premium (s>0 เช่น ลามิเนต/เทมเปอร์พิเศษ) → โชว์ตามเลือก · กระจกฐาน (s=0) คงเทมเปอร์ 10 มาตรฐาน
-      if((it.gi||0)>0 && GLASS[it.gi] && GLASS[it.gi].s>0){ let _gn=GLASS[it.gi].n.replace(/^[★⚠\s]+/,'').trim(); if(_gn.indexOf('หนา')<0)_gn=_gn.replace(/(\s)(\d)/,'$1หนา $2'); if(!_gn.startsWith('กระจก'))_gn='กระจก'+_gn; _shGlass=_gn; }
+      if((it.gi||0)>0 && GLASS[it.gi] && GLASS[it.gi].s>0){ _shGlass=glQuoteName(it.gi, it.glassColor); }
       // ข้อ10(G1): สีอุปกรณ์ (เงิน/ดำ+4,000/ทอง+6,000) — คิดเงินต้องออกในใบ
       const _shHw=parseInt(it.optSel&&it.optSel.showerhw)||0;
       const _shHwTxt=['ราวสแตนเลส (สีเงิน)','อุปกรณ์สีดำ','อุปกรณ์สีทอง'][_shHw]||'ราวสแตนเลส';
@@ -5919,13 +5931,7 @@ function genQuote(keepNo){
       if(it.p.id==='inner_top_slimlux'){
         _slLines.push('กระจกเทมเปอร์ใส หนา 6 มม.');
       } else {
-        const _gObjSl = GLASS[it.gi];
-        if(_gObjSl){
-          let _gn = _gObjSl.n.replace(/^[★⚠\s]+/,'').trim();
-          if(_gn.indexOf('หนา')<0) _gn = _gn.replace(/(\s)(\d)/,'$1หนา $2');
-          if(!_gn.startsWith('กระจก')) _gn = 'กระจก'+_gn;
-          _slLines.push(_gn);
-        }
+        if(GLASS[it.gi]){ _slLines.push(glQuoteName(it.gi, it.glassColor)); }
       }
       // มุ้ง + ขนาด (ดึงจาก addonLines ที่มี mosqArea)
       if(it.p.mosquito && it.optSel && it.optSel.mosqId){
@@ -6017,27 +6023,13 @@ function genQuote(keepNo){
         lines.push('บานทึบลูกฟูกเรียบ 2 หน้า '+_sideTxt);
         const _lA = parseFloat(it.optSel&&it.optSel.solidlight)||0;
         if(_lA>0){
-          const _gO=GLASS[it.gi];
-          let _gnm=_gO?_gO.n.replace(/^[★⚠\s]+/,'').trim():'';
-          if(_gnm.indexOf('หนา')<0)_gnm=_gnm.replace(/(\s)(\d)/,'$1หนา $2');
-          if(_gnm&&!_gnm.startsWith('กระจก'))_gnm='กระจก'+_gnm;
+          const _gnm=glQuoteName(it.gi, it.glassColor);
           lines.push('ช่องแสง '+_lA.toFixed(2)+' ตร.ม.'+(_gnm?(' ('+_gnm+')'):''));
         }
       } else if(it.p.id==='casement_velora' || it.p.id==='inner_top_slimlux'){
         lines.push('กระจกเทมเปอร์ใส หนา 6 มม.');  // ข้อ9/18: ตัด "(รวมในราคา)" ออก
       } else {
-        const glassObj = GLASS[it.gi];
-        if(glassObj){
-          // แปลงชื่อกระจกให้อยู่ในรูป "กระจก{ชนิด} หนา X มม."
-          let gn = glassObj.n;
-          // ตัด prefix พิเศษ (★) ออกก่อน
-          gn = gn.replace(/^[★⚠\s]+/, '').trim();
-          // เพิ่มคำว่า "หนา" ก่อนตัวเลขแรก เช่น "กระจกเขียว 6 มม." → "กระจกเขียว หนา 6 มม."
-          if(gn.indexOf('หนา')<0) gn = gn.replace(/(\s)(\d)/, '$1หนา $2');
-          // ถ้าชื่อยังไม่ขึ้นต้นด้วย "กระจก" ให้เติม (เช่น เทมเปอร์, ลามิเนต, อินซูเลท)
-          if(!gn.startsWith('กระจก')) gn = 'กระจก' + gn;
-          lines.push(gn);
-        }
+        if(GLASS[it.gi]){ lines.push(glQuoteName(it.gi, it.glassColor)); }  // รอบ3 ข้อ1ข: helper ร่วม + เขียว/ใส
       }
       // บรรทัด 3: มุ้ง (ถ้า product มี mosquito addon ที่เลือกไว้)
       if(it.p.mosquito && it.optSel && it.optSel.mosqId){
