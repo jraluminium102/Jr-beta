@@ -5677,9 +5677,11 @@ function genQuote(keepNo){
       else if(it.p.id==='ceiling_smooth'){ _work.push('ฝ้าฉาบเรียบ'+(_os.ceilfinish?(' พร้อม'+_os.ceilfinish):'')); if(_os.ceilslope) _work.push('ฝ้าเฉียงตามแนวหลังคา'); }
       else if(it.p.ceiling){ _work.push(it.p.name.replace(/\s*\([^)]*\)/g,'').trim()); // ฝ้าระแนงอลู/ตัวซี/remood
         if(_os.ckolor) _spec.push('สี/ลายฝ้า: '+_os.ckolor); }
-      // #8 (17มิ.ย.): ภายใน=ยิปซั่ม · ภายนอก=สมาร์ทบอร์ด · + โครงคร่าวซี-ไลน์เสริมแรง (ฉนวน/โครง = ตาม option · ข้อความ marketing เต็มรอเคาะ)
-      else { _work.push((it.p.id==='wall_int'?'แผ่นยิปซั่ม':('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'))+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
-      if(_os.insul) _work.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');
+      // v7A ข้อ7 (18มิ.ย. · registry #8): สเปกผนังเต็ม — ภายนอก=สมาร์ทบอร์ด+ฉนวน+เหล็กชุบ · ภายใน=ยิปซั่ม+ฉนวน+โครงคร่าวซี-ไลน์
+      else if(it.p.id==='wall_int'){ _work.push('ผนังยิปซั่มพร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push('โครงคร่าวซี-ไลน์เสริมแรง'); }
+      else if(it.p.id==='wall_ext'){ _work.push('ผนังสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม. พร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
+      else { _work.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
+      if(_os.insul && it.p.id!=='wall_int' && it.p.id!=='wall_ext') _work.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');  // ผนังเบา v7A: ฉนวนรวมในสเปกแล้ว (กันซ้ำ)
       det = _work.join('\n')+(_spec.length?('\n###รายละเอียด###\n'+_spec.join('\n')):'');
       if(!det.trim()) det='-';
     }
