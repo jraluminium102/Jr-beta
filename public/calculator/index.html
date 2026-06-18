@@ -402,6 +402,7 @@
       <div class="mt"><label>VAT (%)</label><select id="vat-pct" onchange="calcQuote()" style="max-width:120px;"><option value="0">0% (ไม่มีใบกำกับ)</option><option value="7" selected>7%</option></select></div>
       <label class="chk mt"><input type="checkbox" id="svc-protect"  onchange="calcQuote()" checked> Protection พื้น/ผนัง (default ติ๊กไว้ · 2,000 ขั้นต่ำ + 1,000/จุด เพิ่ม)</label>
       <div id="svc-protect-box" class="mt"><label>จำนวนจุดเพิ่ม (เกินขั้นต่ำ)</label><input type="number" id="svc-protect-points" min="0" step="1" value="0" oninput="calcQuote()" style="max-width:120px;"></div>
+      <label class="chk mt"><input type="checkbox" id="svc-itemize" onchange="calcQuote()"> แยกราคางาน Protection เป็นบรรทัดในใบ</label>
       <label class="chk mt"><input type="checkbox" id="svc-lift" onchange="calcQuote()"> ค่าขนของขึ้นบันได (กรณีของเข้าลิฟต์ไม่ได้)</label>
       <div id="svc-lift-box" class="hide mt row2"><div><label>ชั้นปลายทาง (≤10)</label><input type="number" id="svc-lift-floor" min="0" step="1" value="0" oninput="calcQuote()"></div><div><label>ค่าเหมาเพิ่ม (เมื่อเกิน 12,000 หรือเกิน 10 ชั้น)</label><input type="number" id="svc-lift-extra" min="0" step="100" value="0" oninput="calcQuote()"></div></div>
       <label class="chk mt"><input type="checkbox" id="svc-travel" onchange="calcQuote()"> ค่าเดินทาง (ต่างจังหวัด)</label>
@@ -5123,11 +5124,11 @@ function svcChk(id){ const e=document.getElementById(id); return e?e.checked:fal
 function jobServices(net, totalArea){
   const lines=[];
   const notes=[];          // CODE-G6 จุด4 (17มิ.ย.): ย้ายขึ้นบนสุด เพื่อให้ Protection push หมายเหตุได้
-  let _hidden=0;           // ยอดบวกเข้าใบแต่ไม่แตกบรรทัดราคา (Protection)
+  const foldable=[];       // service พับเข้าราคา (default) · แยกออกเมื่อ svc-itemize ติ๊ก
   // 3-1 Protection: ขั้นต่ำ 2,000 + เพิ่ม 1,000/จุด · มติ 17มิ.ย.: เลิกบรรทัดราคาอังกฤษ → หมายเหตุไทย (เงินยังบวกเท่าเดิม)
   if(svcChk('svc-protect')){
     const pts=Math.max(0, Math.round(svcNum('svc-protect-points'))||0);
-    _hidden += 2000 + pts*1000;
+    foldable.push(['งาน Protection (เฉพาะแนวติดตั้ง)', 2000 + pts*1000]);
     notes.push('ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)');
   }
   const floors=Math.max(1, Math.round(svcNum('svc-floors'))||1);
@@ -5157,7 +5158,8 @@ function jobServices(net, totalArea){
     if(svcChk('svc-demo-door')){ const amt=Math.max(0,svcNum('svc-demo-door-amt')||0); _demoTotal+=amt; notes.push('รวมงานรื้อประตู-หน้าต่างเดิม'); }
     if(_demoTotal>0) lines.push(['งานรื้อของเดิม', _demoTotal]);
   }
-  return {amt:lines.reduce((x,l)=>x+l[1],0)+_hidden, lines, notes};
+  const foldAmt=foldable.reduce((x,l)=>x+l[1],0);
+  return {amt:lines.reduce((x,l)=>x+l[1],0)+foldAmt, lines, notes, foldable, foldAmt};
 }
 // ธงG: เติมราคาทุกกล่อง G3 จาก breakdown ที่ calcUnit ส่งมา (display === engine · ไม่ re-derive สูตร)
 function g3UpdateBoxPrices(d, box){
@@ -5368,6 +5370,9 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
   const svcAmt=svc?svc.amt:0;
   const svcLines=(svc&&svc.lines?svc.lines.filter(l=>l[1]>0):[]);
   const svcNotes=(svc&&svc.notes&&svc.notes.length?svc.notes:[]);
+  const foldable=(svc&&svc.foldable)||[];
+  const foldAmt=(svc&&svc.foldAmt)||0;
+  const itemize=!!(document.getElementById('svc-itemize')||{}).checked;
   const vatPctEl=document.getElementById('vat-pct'); const vatPct=vatPctEl?(parseFloat(vatPctEl.value)||0):7;
   // R4.2: ฟิลด์หัวบิลเพิ่มเติม (ผู้ขาย/ผู้ติดต่อ/เบอร์โทร/ที่อยู่ลูกค้า)
   const _gv=(id)=>{const e=document.getElementById(id);return e?(e.value||'').trim():'';};
@@ -5403,9 +5408,10 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
    `<table class="qt"><thead><tr><th style="width:5%;">#</th><th style="width:55%;text-align:left;">${qET('th_detail','รายละเอียด')}</th><th class="r" style="width:10%;">${qET('th_qty','จำนวน')}</th><th class="r" style="width:15%;">${qET('th_unit','ราคาต่อหน่วย')}</th><th class="r" style="width:15%;">${qET('th_total','ยอดรวม')}</th></tr></thead><tbody>${rows}${_xrHtml}</tbody></table>`+
    `<div class="qsubtotal" style="margin-top:10px;color:var(--red-dark);">(${bahtText(withVat)})</div>`+
    `<div class="qtot">`+
-     `<div class="l"><span>${qET('t_subtotal','รวมเป็นเงิน')}</span><span>${q2(subtotal)} บาท</span></div>`+
+     `<div class="l"><span>${qET('t_subtotal','รวมเป็นเงิน')}</span><span>${q2(itemize?subtotal:subtotal+foldAmt)} บาท</span></div>`+
      ((discAmt+discFlat>0)?`<div class="l disc"><span>${qET('t_disc','ส่วนลด')}</span><span>${q2(discAmt+discFlat)} บาท</span></div>`+
-       `<div class="l"><span>${qET('t_net','จำนวนเงินหลังหักส่วนลด')}</span><span>${q2(net)} บาท</span></div>`:'')+
+       `<div class="l"><span>${qET('t_net','จำนวนเงินหลังหักส่วนลด')}</span><span>${q2(itemize?net:net+foldAmt)} บาท</span></div>`:'')+
+     (itemize?foldable.map(l=>`<div class="l"><span>${l[0]}</span><span>${q2(l[1])} บาท</span></div>`).join(''):'')+
      svcLines.map(l=>`<div class="l"><span>${l[0]}</span><span>${q2(l[1])} บาท</span></div>`).join('')+
      `<div class="l"><span>${qET('t_vat','ภาษีมูลค่าเพิ่ม')} ${vatPct}%</span><span>${q2(vat)} บาท</span></div>`+
      `<div class="g"><span>${qET('t_grand','จำนวนเงินรวมทั้งสิ้น')}</span><span>${q2(withVat)} บาท</span></div></div>`+
@@ -6457,6 +6463,7 @@ function exportQuoteExcel(){
   if(discPct>0) data.push(['','','','','','','ส่วนลดพิเศษ '+discPct+'%', -discAmt]);
   if(discFlat>0) data.push(['','','','','','','ส่วนลดค่าประเมินหน้างาน', -discFlat]);
   data.push(['','','','','','','สุทธิ', net]);
+  if(svc.foldable) svc.foldable.forEach(l=>{ data.push(['','','','','','',l[0], l[1]]); });
   if(svc.lines) svc.lines.forEach(l=>{ if(l[1]>0) data.push(['','','','','','',l[0], l[1]]); });
   if(vat>0) data.push(['','','','','','','VAT '+vatPct+'%', vat]);
   data.push(['','','','','','','รวมทั้งสิ้น', total]);
