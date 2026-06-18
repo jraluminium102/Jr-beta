@@ -6479,6 +6479,14 @@ window.addEventListener('load',ckRefresh);
   .g6r-tag.glass{background:#E0ECFB;color:#1E5AA8;}
   .g6r-tag.ex{background:#E6F5EC;color:#1B7A43;}
   .g6r-rev{background:#FAFAFA;border:1px solid #EEE;border-radius:8px;padding:6px 9px;margin:3px 0 2px;}
+  /* B1-G6 (18มิ.ย.): กล่อง "ใช้บ่อย" + กล่องพับ "เพิ่มเติม" */
+  .g6r-sl.freq{color:#B3151D;border-top:2px solid #F0C0C0;}
+  details.g6r-more{margin-top:8px;border:1px solid #E5E7EB;border-radius:8px;background:#FCFCFD;}
+  details.g6r-more>summary{cursor:pointer;list-style:none;margin:0;padding:9px 11px;border-top:none;color:#6B7280;}
+  details.g6r-more>summary::-webkit-details-marker{display:none;}
+  details.g6r-more>summary::after{content:' ▾';color:#9CA3AF;}
+  details.g6r-more[open]>summary::after{content:' ▴';}
+  details.g6r-more[open]{padding:0 10px 8px;}
   .g6r-mvrow button{border:1px solid #D1D5DB;background:#fff;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:3px;}
   .g6r-mvrow button.danger{color:#A32D2D;border-color:#F0C0C0;}
   .g6r-banaPr{display:flex;justify-content:space-between;align-items:center;background:#FFF7ED;border:1px solid #F0C070;border-radius:7px;padding:6px 10px;margin-top:8px;font-size:12px;}
@@ -6666,42 +6674,46 @@ window.addEventListener('load',ckRefresh);
     oh+='</div>';
     // main options (profile)
     if(pf.main) pf.main.forEach(function(op){ oh+=pick(op.label,op.key,op.opts,o[op.key],op.opts[0][0]); });
+    // B1-G6 (18มิ.ย.): จัดกลุ่ม freq=🔧ใช้บ่อย · more=กล่องพับ · แค่ลำดับ section ไม่แตะ logic/ราคา
+    var freq='', more='';
     // มือจับ (ชิปแบรนด์ → กดแล้วเผยตัวเลือกจริง + ราคา engine)
     if(pf.handle){ var hm=o.handleMode||'';
-      oh+='<div class="fl">มือจับ (หลายแบรนด์)</div><div class="chips">'+[['cmech','Cmech (ฟรี)'],['digi','ดิจิตอล 10,000+'],['stainless','สแตนเลส 1,500+'],['other','รุ่นอื่น (กรอก)']].map(function(x){ return '<button class="c'+(hm===x[0]?' on':'')+'" onclick="G6RsetHandleMode(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>';
-      if(hm==='cmech'){ oh+='<div class="g6r-rev">'+pick('แบบ Cmech','cmech',[['embed','ฝัง'],['metro','เมโทร']],o.cmech,'embed')
+      freq+='<div class="fl">มือจับ (หลายแบรนด์)</div><div class="chips">'+[['cmech','Cmech (ฟรี)'],['digi','ดิจิตอล 10,000+'],['stainless','สแตนเลส 1,500+'],['other','รุ่นอื่น (กรอก)']].map(function(x){ return '<button class="c'+(hm===x[0]?' on':'')+'" onclick="G6RsetHandleMode(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>';
+      if(hm==='cmech'){ freq+='<div class="g6r-rev">'+pick('แบบ Cmech','cmech',[['embed','ฝัง'],['metro','เมโทร']],o.cmech,'embed')
         +'<div class="fl">สีมือจับ</div><div class="chips">'+[['black','ดำ'],['white','ขาว'],['silver','ชุบเงิน +พิเศษ'],['gold','ชุบทอง +พิเศษ']].map(function(c){ return '<button class="c'+((o.cmechcolor||'black')===c[0]?' on':'')+'" onclick="G6RsetOpt2(\'cmechcolor\',\''+c[0]+'\')">'+c[1]+'</button>'; }).join('')+'</div></div>'; }
-      else if(hm==='digi') oh+='<div class="g6r-rev"><div class="row"><span class="rl">รุ่น</span><select onchange="G6RsetOpt2(\'digi\',this.value)" '+SS+'><option value="">— เลือกรุ่น —</option>'+(typeof DIGI!=='undefined'?DIGI:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.digi)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+(d.jr?' (ยูโร/โซลิด)':'')+'</option>';}).join('')+'</select></div></div>';
-      else if(hm==='stainless') oh+='<div class="g6r-rev"><div class="row"><span class="rl">รุ่น</span><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— เลือกรุ่น —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div></div>';
-      else if(hm==='other') oh+='<div class="g6r-rev"><div class="row"><span class="rl">กรอกราคา</span><input type="number" value="'+(o.handleprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'handleprice\',this.value)"><span class="u">บาท</span></div></div>'; }
-    if(pf.handleX) oh+=pick('มือจับ X (ฟรี)','xhandle',[['X-J','X-J'],['XO','XO'],['XT','XT']],o.xhandle,'X-J');
-    if(pf.handleSt) oh+='<div class="fl">มือจับสแตนเลส</div><div class="chips"><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— ไม่ใส่ —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div>';
-    if(pf.handleAwn) oh+='<div class="fl">มือจับกระทุ้ง</div><div class="chips"><button class="c on">มาตรฐาน</button></div>';
-    if(pf.lock) oh+=pick('ชุดล็อก','slidelock',[['มีกุญแจ','มีกุญแจ'],['ไม่มีกุญแจ','ไม่มี']],o.slidelock,'มีกุญแจ');
-    if(pf.framecolor) oh+=pick('สีเฟรม','framecolor',[['ขาว','ขาว'],['ดำ','ดำ'],['เทา','เทา']],o.framecolor,'ขาว');
-    if(pf.paint){ oh+='<div class="fl">ทาสี / ฉนวน</div><div class="chips"><button class="c'+(o.paintOn?' on':'')+'" onclick="G6RtogOpt(\'paintOn\')">'+(o.paintOn?'ทาสีผนัง ✓':'＋ ทาสีผนัง')+'</button><button class="c'+(o.insul?' on':'')+'" onclick="G6RtogOpt(\'insul\')">'+(o.insul?'ฉนวน +600/ตร.ม. ✓':'＋ ฉนวนกันร้อน')+'</button></div>';
-      if(o.paintOn) oh+='<div class="g6r-rev"><div class="row"><span class="rl">ราคาทาสี</span><input type="number" value="'+(o.wallpaintprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'wallpaintprice\',this.value)"><span class="u">บาท</span></div></div>'; }
+      else if(hm==='digi') freq+='<div class="g6r-rev"><div class="row"><span class="rl">รุ่น</span><select onchange="G6RsetOpt2(\'digi\',this.value)" '+SS+'><option value="">— เลือกรุ่น —</option>'+(typeof DIGI!=='undefined'?DIGI:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.digi)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+(d.jr?' (ยูโร/โซลิด)':'')+'</option>';}).join('')+'</select></div></div>';
+      else if(hm==='stainless') freq+='<div class="g6r-rev"><div class="row"><span class="rl">รุ่น</span><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— เลือกรุ่น —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div></div>';
+      else if(hm==='other') freq+='<div class="g6r-rev"><div class="row"><span class="rl">กรอกราคา</span><input type="number" value="'+(o.handleprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'handleprice\',this.value)"><span class="u">บาท</span></div></div>'; }
+    if(pf.handleX) freq+=pick('มือจับ X (ฟรี)','xhandle',[['X-J','X-J'],['XO','XO'],['XT','XT']],o.xhandle,'X-J');
+    if(pf.handleSt) freq+='<div class="fl">มือจับสแตนเลส</div><div class="chips"><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— ไม่ใส่ —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div>';
+    if(pf.handleAwn) freq+='<div class="fl">มือจับกระทุ้ง</div><div class="chips"><button class="c on">มาตรฐาน</button></div>';
+    if(pf.lock) freq+=pick('ชุดล็อก','slidelock',[['มีกุญแจ','มีกุญแจ'],['ไม่มีกุญแจ','ไม่มี']],o.slidelock,'มีกุญแจ');
+    if(pf.framecolor) more+=pick('สีเฟรม','framecolor',[['ขาว','ขาว'],['ดำ','ดำ'],['เทา','เทา']],o.framecolor,'ขาว');
+    if(pf.paint){ more+='<div class="fl">ทาสี / ฉนวน</div><div class="chips"><button class="c'+(o.paintOn?' on':'')+'" onclick="G6RtogOpt(\'paintOn\')">'+(o.paintOn?'ทาสีผนัง ✓':'＋ ทาสีผนัง')+'</button><button class="c'+(o.insul?' on':'')+'" onclick="G6RtogOpt(\'insul\')">'+(o.insul?'ฉนวน +600/ตร.ม. ✓':'＋ ฉนวนกันร้อน')+'</button></div>';
+      if(o.paintOn) more+='<div class="g6r-rev"><div class="row"><span class="rl">ราคาทาสี</span><input type="number" value="'+(o.wallpaintprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'wallpaintprice\',this.value)"><span class="u">บาท</span></div></div>'; }
     // มุ้ง (toggle → reveal 3 หมวด/รุ่น/ผ้า)
-    if(pf.mosq){ oh+='<div class="fl">มุ้ง</div><div class="chips"><button class="c'+(o.mosq?' on':'')+'" onclick="G6RtogMosq()">'+(o.mosq?'มีมุ้ง ✓':'＋ ใส่มุ้ง (จาก 3,500)')+'</button></div>';
+    if(pf.mosq){ freq+='<div class="fl">มุ้ง</div><div class="chips"><button class="c'+(o.mosq?' on':'')+'" onclick="G6RtogMosq()">'+(o.mosq?'มีมุ้ง ✓':'＋ ใส่มุ้ง (จาก 3,500)')+'</button></div>';
       if(o.mosq){ var _mid=o.mosqId||'mj_sd_basic', _grps=g6rMosqGroups(), _cg=g6rMosqGrpOf(_mid), _GL={frame:'เฟรม',pleat:'จีบ',roll:'ม้วน'};
-        oh+='<div class="g6r-rev"><div class="chips"><span class="rl">หมวด</span>'+['frame','pleat','roll'].map(function(g){ return '<button class="c'+(g===_cg?' on':'')+'" onclick="G6RsetMosqGrp(\''+g+'\')">'+_GL[g]+'</button>'; }).join('')+'</div>'
+        freq+='<div class="g6r-rev"><div class="chips"><span class="rl">หมวด</span>'+['frame','pleat','roll'].map(function(g){ return '<button class="c'+(g===_cg?' on':'')+'" onclick="G6RsetMosqGrp(\''+g+'\')">'+_GL[g]+'</button>'; }).join('')+'</div>'
           +'<div class="chips"><span class="rl">รุ่น</span>'+(_grps[_cg]||[]).map(function(x){ return '<button class="c'+(x[0]===_mid?' on':'')+'" onclick="G6RsetOpt2(\'mosqId\',\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>'
           +'<div class="chips"><span class="rl">ผ้า</span>'+[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว'],['stainless','สแตนกันหนู'],['safety08','นิรภัย0.8']].map(function(f){return '<button class="c'+((o.mosqFabric||'fiber_gray')===f[0]?' on':'')+'" onclick="G6RsetOpt2(\'mosqFabric\',\''+f[0]+'\')">'+f[1]+'</button>';}).join('')+'</div></div>'; }
     }
     // เสริมกระจก [ยกเว้น shower] — คาดตาราง + ลูกฟูก/คอมโพ (ใส่กลับตามดราฟ)
-    if(pf.glass){ oh+='<div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'คาดตาราง ✓':'＋ คาดตาราง (200/ม.)')+'</button><button class="c'+(o.solidlower?' on':'')+'" onclick="G6RtogSolidlower()">'+(o.solidlower?'ลูกฟูก/คอมโพ ✓':'＋ ลูกฟูก/คอมโพ (3,500/ตร.ม.)')+'</button></div>';
-      if(o.gridmark) oh+='<div class="g6r-rev"><div class="row"><span class="rl">คาดตาราง</span><input type="number" value="'+(o.gmNh||0)+'" min="0" step="1" oninput="G6RsetOpt(\'gmNh\',this.value)"><span class="u">นอน</span><input type="number" value="'+(o.gmNv!=null?o.gmNv:(o.qty||1))+'" min="0" step="1" oninput="G6RsetOpt(\'gmNv\',this.value)"><span class="u">ตั้ง ×200/ม.</span></div></div>';
-      if(o.solidlower) oh+='<div class="g6r-rev">'+pick('ชนิดแผ่นล่าง','solidlower',[['corrugated','ลูกฟูก 3,500/ตร.ม.'],['composite','คอมโพสิต 3,300/ตร.ม.']],o.solidlower,'corrugated')+'<div class="row"><span class="rl">ขนาดแผ่น</span><input type="number" value="'+(o.solidlowerW||p.w||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerW\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+(o.solidlowerH||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerH\',this.value)"><span class="u">สูง ม.</span></div></div>'; }
+    if(pf.glass){ freq+='<div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'คาดตาราง ✓':'＋ คาดตาราง (200/ม.)')+'</button><button class="c'+(o.solidlower?' on':'')+'" onclick="G6RtogSolidlower()">'+(o.solidlower?'ลูกฟูก/คอมโพ ✓':'＋ ลูกฟูก/คอมโพ (3,500/ตร.ม.)')+'</button></div>';
+      if(o.gridmark) freq+='<div class="g6r-rev"><div class="row"><span class="rl">คาดตาราง</span><input type="number" value="'+(o.gmNh||0)+'" min="0" step="1" oninput="G6RsetOpt(\'gmNh\',this.value)"><span class="u">นอน</span><input type="number" value="'+(o.gmNv!=null?o.gmNv:(o.qty||1))+'" min="0" step="1" oninput="G6RsetOpt(\'gmNv\',this.value)"><span class="u">ตั้ง ×200/ม.</span></div></div>';
+      if(o.solidlower) freq+='<div class="g6r-rev">'+pick('ชนิดแผ่นล่าง','solidlower',[['corrugated','ลูกฟูก 3,500/ตร.ม.'],['composite','คอมโพสิต 3,300/ตร.ม.']],o.solidlower,'corrugated')+'<div class="row"><span class="rl">ขนาดแผ่น</span><input type="number" value="'+(o.solidlowerW||p.w||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerW\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+(o.solidlowerH||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerH\',this.value)"><span class="u">สูง ม.</span></div></div>'; }
     // อุปกรณ์เสริม [หมวดเดียว] — pill
-    oh+='<div class="g6r-sl">อุปกรณ์เสริม <span class="g6r-tag ex">หมวดเดียว</span></div><div class="chips">'+pf.ex.map(function(ek){
+    more+='<div class="g6r-sl">อุปกรณ์เสริม <span class="g6r-tag ex">หมวดเดียว</span></div><div class="chips">'+pf.ex.map(function(ek){
         if(ek==='cf') return '<button class="c pill'+(o.fcsides>0?' on':'')+'" onclick="G6RtogCf()">'+(o.fcsides>0?'ครอบวงกบ ✓':'ครอบวงกบ (700+/ม.)')+'</button>';
         if(ek==='df') return '<button class="c pill'+(o.dfOn?' on':'')+'" onclick="G6RtogOpt(\'dfOn\')">'+(o.dfOn?'ดรอปพื้น ✓':'ดรอปพื้น (5,000+)')+'</button>';
         return '<button class="c pill'+(o['ex_'+ek]?' on':'')+'" onclick="G6RtogOpt(\'ex_'+ek+'\')">'+(o['ex_'+ek]?G6EX[ek]+' ✓':G6EX[ek])+'</button>';
       }).join('')+'</div>';
-    if(o.fcsides>0) oh+='<div class="g6r-rev">'+pick('ครอบวงกบ','fcsides',[['3','3 ด้าน'],['4','4 ด้าน']],String(o.fcsides),'4')+'</div>';
-    if(o.dfOn) oh+='<div class="g6r-rev"><div class="row"><span class="rl">ดรอปพื้น</span><input type="number" value="'+(o.dfm||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'dfm\',this.value)"><span class="u">ม. (5,000 + เกิน 7ม.)</span></div></div>';
-    if(pf.note) oh+='<div class="g6r-wtot" style="color:#92400e;">ℹ '+pf.note+'</div>';
-    return oh;
+    if(o.fcsides>0) more+='<div class="g6r-rev">'+pick('ครอบวงกบ','fcsides',[['3','3 ด้าน'],['4','4 ด้าน']],String(o.fcsides),'4')+'</div>';
+    if(o.dfOn) more+='<div class="g6r-rev"><div class="row"><span class="rl">ดรอปพื้น</span><input type="number" value="'+(o.dfm||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'dfm\',this.value)"><span class="u">ม. (5,000 + เกิน 7ม.)</span></div></div>';
+    if(pf.note) more+='<div class="g6r-wtot" style="color:#92400e;">ℹ '+pf.note+'</div>';
+    var _fb = freq ? ('<div class="g6r-sl freq">🔧 ใช้บ่อย <span class="g6r-tag main">มือจับ·ล็อก·มุ้ง·คาด·ลูกฟูก</span></div>'+freq) : '';
+    var _mb = more ? ('<details class="g6r-more"'+(window._g6moreOpen?' open':'')+'><summary class="g6r-sl" onclick="setTimeout(function(){var d=document.querySelector(String.fromCharCode(46)+String.fromCharCode(103,54,114,45,109,111,114,101));if(d)window._g6moreOpen=d.open;},0)">⚙ ตัวเลือกเพิ่มเติม (สีเฟรม · ทาสี · ครอบวงกบ · ดรอปพื้น)</summary>'+more+'</details>') : '';
+    return oh + _fb + _mb;
   }
   function roofPage(bc){ var R=G6R.roof;
     var h='<div class="ph">🏠 หลังคา / ฝ้า</div>'
