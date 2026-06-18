@@ -421,8 +421,48 @@ function AwaitTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[];
   );
 }
 
+// ── ติดตามฟีดแบค 3 ครั้ง (0048) — ติ๊ก=ลงวันนี้ · กดซ้ำ=ยกเลิก ──
+function fuDone(r: ClosureRow): boolean {
+  return !!(r.followup_1 && r.followup_2 && r.followup_3); // ครบ 3 = เลิกตาม
+}
+function FollowupCells({ row, canWrite, onRefetch }: { row: ClosureRow; canWrite: boolean; onRefetch: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const dates = [row.followup_1, row.followup_2, row.followup_3];
+  async function toggle(slot: number, isSet: boolean) {
+    if (!canWrite || busy) return;
+    setBusy(true);
+    try { await api.post(`/jobs/${row.id}/followup`, { slot, set: !isSet }); onRefetch(); }
+    catch { /* ignore */ }
+    finally { setBusy(false); }
+  }
+  return (
+    <div className="inline-flex gap-1">
+      {dates.map((d, i) => {
+        const slot = i + 1;
+        const isSet = !!d;
+        return (
+          <button key={slot} type="button" disabled={!canWrite || busy}
+            onClick={() => toggle(slot, isSet)}
+            title={isSet ? `ตามครั้งที่ ${slot}: ${thDate(d!)} — กดเพื่อยกเลิก` : `ติ๊กว่าตามครั้งที่ ${slot} แล้ว (ลงวันนี้)`}
+            className={cn(
+              "min-w-[42px] px-1.5 py-1 rounded-lg text-[11px] tnum border transition focusable",
+              isSet
+                ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/35 font-semibold"
+                : "bg-white/5 text-white/45 border-white/15 hover:bg-white/10",
+              (!canWrite || busy) && "opacity-60 cursor-default"
+            )}>
+            {isSet ? `${d!.slice(8, 10)}/${d!.slice(5, 7)}` : `ครั้ง${slot}`}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── sent table ───────────────────────────────────────────────────────────────
 function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; canWrite: boolean; onRefetch: () => void; onHold?: (row: ClosureRow) => void }) {
+  // ครบ 3 ครั้ง → เด้งไปบรรทัดล่างสุด (ไม่เอาออกจากเฟส) · ที่เหลือคงลำดับเดิม
+  const sorted = [...rows].sort((a, b) => (fuDone(a) ? 1 : 0) - (fuDone(b) ? 1 : 0));
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -443,11 +483,12 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
                 <th className="text-right font-medium px-4 py-3">ยอดสุทธิ</th>
                 <th className="text-left font-medium px-4 py-3">รอ / โน้ต</th>
                 <th className="text-left font-medium px-4 py-3">ผู้ดูแล</th>
+                <th className="text-center font-medium px-4 py-3">ติดตามฟีดแบค</th>
                 {canWrite && <th className="text-center font-medium px-4 py-3">ดำเนินการ</th>}
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {sorted.map((row) => {
                 const overdue7 = (row.days_waiting ?? 0) > 7;
                 return (
                   <tr key={row.id} className={cn(
@@ -471,6 +512,9 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
                       )}
                     </td>
                     <td className="px-4 py-3" style={{ color: "var(--t-mid)" }}>{row.estimator_name ?? "—"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <FollowupCells row={row} canWrite={canWrite} onRefetch={onRefetch} />
+                    </td>
                     {canWrite && (
                       <td className="px-4 py-3 text-center">
                         <div className="inline-flex flex-col gap-1 items-center">
@@ -493,7 +537,7 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
       </div>
       {/* Mobile */}
       <div className="md:hidden space-y-3">
-        {rows.map((row) => {
+        {sorted.map((row) => {
           const overdue7 = (row.days_waiting ?? 0) > 7;
           return (
             <div key={row.id} className={cn(
@@ -526,6 +570,10 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
                 <div className="text-[12px] italic" style={{ color: "var(--t-mid)" }}>{row.remark}</div>
               )}
               <div className="text-[12px]" style={{ color: "var(--t-low)" }}>ผู้ดูแล: {row.estimator_name ?? "—"}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[12px]" style={{ color: "var(--t-low)" }}>ติดตามฟีดแบค:</span>
+                <FollowupCells row={row} canWrite={canWrite} onRefetch={onRefetch} />
+              </div>
               {canWrite && (
                 <div className="space-y-1.5">
                   <ClosureActions job={row} onRevised={onRefetch} />

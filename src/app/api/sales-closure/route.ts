@@ -60,6 +60,10 @@ export type ClosureRow = {
   /** พักงาน */
   on_hold: boolean;
   on_hold_reason: string | null;
+  /** วันที่ตามฟีดแบคลูกค้า 3 ครั้ง (0048) — ครบ 3 = เลิกตาม เด้งล่างสุด */
+  followup_1: string | null;
+  followup_2: string | null;
+  followup_3: string | null;
 };
 
 // GET /api/sales-closure — งานที่ยังไม่ post-deposit พร้อม quotation ล่าสุด
@@ -89,6 +93,9 @@ export const GET = withRoute(async (req: Request) => {
         "quote_sent_date",
         "on_hold",
         "on_hold_reason",
+        "followup_1",
+        "followup_2",
+        "followup_3",
         "estimator:estimator_id(id,full_name)",
         "quotations!quotations_job_id_fkey(id, code, net, status, created_at)",
       ].join(",")
@@ -152,6 +159,9 @@ export const GET = withRoute(async (req: Request) => {
       can_revise: canWrite && closureStage === "sent",
       on_hold: onHold,
       on_hold_reason: onHoldReason,
+      followup_1: (j.followup_1 as string | null) ?? null,
+      followup_2: (j.followup_2 as string | null) ?? null,
+      followup_3: (j.followup_3 as string | null) ?? null,
     };
   });
 
