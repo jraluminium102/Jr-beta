@@ -4816,7 +4816,8 @@ function buildItemOpts(d){
     }
   }
   // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
-  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length)); }
+  // v9: เพิ่ม _hasOpenCat — ถ้า groupGHOpts สร้าง section ที่ open:true ไว้ใน .i-opts ให้เปิด optbox ด้วย (กัน ล็อค/มุ้ง/คาดตาราง ซ่อนอยู่ใน optbox พับ)
+  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
