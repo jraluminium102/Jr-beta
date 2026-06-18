@@ -341,7 +341,9 @@ function ActiveTableRow({
   // badge สถานะใบเสนอ
   let quoteBadge: React.ReactNode;
   if (item.stage === "in_design") {
-    quoteBadge = <Badge tone="gray">รอแบบ</Badge>;
+    quoteBadge = item.design_state === "REVISING"
+      ? <Badge tone="red">แก้แบบ</Badge>
+      : <Badge tone="gray">รอแบบ</Badge>;
   } else if (item.stage === "pending") {
     quoteBadge = <Badge tone="amber">ยังไม่ทำ</Badge>;
   } else {
@@ -371,6 +373,13 @@ function ActiveTableRow({
           <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
             <Icon name="warn" size={10} />
             มัดจำหน้างาน · ด่วน
+          </div>
+        )}
+        {/* หมายเหตุ "มาจากแก้แบบ" — งานที่ถูกส่งกลับแก้ */}
+        {item.design_state === "REVISING" && (
+          <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-100 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+            <Icon name="refresh" size={10} />
+            มาจากแก้แบบ
           </div>
         )}
         {item.estimator_name && (
@@ -500,9 +509,18 @@ function ActiveMobileCard({
               มัดจำหน้างาน · ด่วน
             </div>
           )}
+          {/* หมายเหตุ "มาจากแก้แบบ" */}
+          {item.design_state === "REVISING" && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-100 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+              <Icon name="refresh" size={10} />
+              มาจากแก้แบบ
+            </div>
+          )}
         </div>
         {/* stage badge */}
-        {item.stage === "in_design" && <Badge tone="gray">รอแบบ</Badge>}
+        {item.stage === "in_design" && (item.design_state === "REVISING"
+          ? <Badge tone="red">แก้แบบ</Badge>
+          : <Badge tone="gray">รอแบบ</Badge>)}
         {item.stage === "pending"   && <Badge tone="amber">ยังไม่ทำใบเสนอ</Badge>}
         {item.stage === "drafted"   && <Badge tone="sky">ร่างใบเสนอ</Badge>}
       </div>

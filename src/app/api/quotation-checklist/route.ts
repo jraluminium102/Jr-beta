@@ -182,7 +182,7 @@ export const GET = withRoute(async () => {
     if (j.on_hold) {
       // ใช้ stage ปัจจุบัน (คำนวณเดิม) เพื่อ context ตอน unhold
       let heldStage: ChecklistStage = "pending";
-      if (j.design_state !== "DONE" && !j.quote_sent_date) heldStage = "in_design";
+      if (j.design_state === "REVISING" || (j.design_state !== "DONE" && !j.quote_sent_date)) heldStage = "in_design";
       else if (q && ["sent", "approved"].includes(q.status)) heldStage = "sent";
       else if (q && q.status === "draft") heldStage = "drafted";
 
@@ -211,7 +211,11 @@ export const GET = withRoute(async () => {
 
     // จัด stage
     let stage: ChecklistStage;
-    if (j.design_state !== "DONE" && !j.quote_sent_date) {
+    if (j.design_state === "REVISING") {
+      // แก้แบบ — ดึงกลับเข้าไปป์ไลน์ active เสมอ แม้เคยส่งใบเสนอแล้ว
+      // (ลูกค้าขอแก้ → ต้องเขียนแบบ + ทำใบเสนอใหม่ จึงต้องโผล่ในเช็คลิสต์)
+      stage = "in_design";
+    } else if (j.design_state !== "DONE" && !j.quote_sent_date) {
       // รอแบบ — งานที่แบบยังไม่เสร็จและยังไม่เคยส่งใบเสนอ
       stage = "in_design";
     } else if (q && ["sent", "approved"].includes(q.status)) {
