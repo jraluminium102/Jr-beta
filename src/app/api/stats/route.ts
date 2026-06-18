@@ -21,14 +21,22 @@ export const GET = withRoute(async (req: Request) => {
   const toT = new Date(to + "T23:59:59").getTime();
   const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
 
-  const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }] = await Promise.all([
-    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
+  const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }, { data: qentries }, { data: qsales }] = await Promise.all([
+    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), queue_entry_id, productions(status), installations(status)"),
     sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
     sb.from("issues").select("phase, severity, status, created_at"),
     sb.from("quotation_items").select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))"),
+    sb.from("queue_entries").select("id, sales_id"),
+    sb.from("queue_sales").select("id, name"),
   ]);
 
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [];
+  // map: queue_entry_id → ชื่อเซลล์ที่เข้าหน้างาน (เลี่ยง nested embed ที่ ambiguous)
+  const salesIdToName = new Map<string, string>((qsales ?? []).map((s: any) => [s.id, s.name]));
+  const qeToSalesName = new Map<string, string>(
+    (qentries ?? []).filter((q: any) => q.sales_id && salesIdToName.has(q.sales_id))
+      .map((q: any) => [q.id, salesIdToName.get(q.sales_id) as string])
+  );
   const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
 
   // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก
@@ -55,11 +63,13 @@ export const GET = withRoute(async (req: Request) => {
     collected: F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0),
   }));
 
-  // ปิดการขายต่อเซลล์ (estimator)
+  // ปิดการขายต่อเซลล์ — ใช้ estimator ถ้ามี, ไม่งั้น fallback เซลล์ที่เข้าหน้างานจากคิว (queue_entries.sales)
   const salesMap: Record<string, { name: string; jobs: number; won: number; revenue: number }> = {};
   inJobs.forEach((j: any) => {
-    const key = j.estimator_id ?? "none";
-    const name = j.estimator?.full_name ?? "ไม่ระบุ";
+    const estName = j.estimator?.full_name ?? null;
+    const queueName = j.queue_entry_id ? (qeToSalesName.get(j.queue_entry_id) ?? null) : null; // เซลล์ที่เข้าประเมินหน้างาน (จากคิว)
+    const key = j.estimator_id ? `e:${j.estimator_id}` : queueName ? `q:${queueName}` : "none";
+    const name = estName ?? queueName ?? "ไม่ระบุ";
     salesMap[key] ??= { name, jobs: 0, won: 0, revenue: 0 };
     salesMap[key].jobs++;
     if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.net_amount); }
