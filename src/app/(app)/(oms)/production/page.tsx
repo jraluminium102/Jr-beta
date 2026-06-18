@@ -120,7 +120,6 @@ function DeepLinkHandler({ rows, setOpen, setFilterKey }: {
 }
 
 export default function ProductionPage() {
-  const [view, setView] = useState<"table" | "board">("table");
   const [filterKey, setFilterKey] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Row | null>(null);
@@ -174,12 +173,6 @@ export default function ProductionPage() {
             <Icon name="ruler" size={14} />
             นัดวัดจริง
           </Link>
-          <div className="flex gap-1.5 glass-card rounded-xl p-1">
-            {[["table", "ตาราง"], ["board", "บอร์ด"]].map(([v, l]) => (
-              <button key={v} onClick={() => setView(v as "table" | "board")}
-                className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-medium min-h-[36px] ${view === v ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
-            ))}
-          </div>
         </div>
       </div>
       <p className="text-sm mb-4" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
@@ -230,8 +223,8 @@ export default function ProductionPage() {
         )}
       </div>
 
-      {isLoading ? <Spinner /> : rows.length === 0 ? <EmptyState title="ยังไม่มีงานผลิต" sub="งานจะเข้ามาเมื่อลูกค้ามัดจำแล้ว" /> : view === "table" ? (
-        /* ── ตารางงานช่าง (default) ── */
+      {isLoading ? <Spinner /> : rows.length === 0 ? <EmptyState title="ยังไม่มีงานผลิต" sub="งานจะเข้ามาเมื่อลูกค้ามัดจำแล้ว" /> : (
+        /* ── ตารางงานช่าง ── */
         <div className="space-y-2.5">
           {filtered.map((r) => {
             const stale = r.status !== "READY" && daysSince(r.status_updated_at, r.created_at) >= 5;
@@ -289,35 +282,6 @@ export default function ProductionPage() {
             );
           })}
           {filtered.length === 0 && <EmptyState title="ไม่มีงานในกลุ่มนี้" />}
-        </div>
-      ) : (
-        /* ── บอร์ด (กลุ่ม 6 คอลัมน์ ตาม GROUPS) ── */
-        <div className="flex gap-3 overflow-x-auto pb-4 snap-x">
-          {GROUPS.map((g) => {
-            const items = rows.filter((r) => g.match(r));
-            // ซ่อนคอลัมน์ที่ไม่มีงานเลย ยกเว้นคอลัมน์ที่ 0 เสมอ (สองคอลัมน์แรกและ issue แสดงเสมอ)
-            const alwaysShow = g.key === "queue_wait" || g.key === "measure" || g.key === "prep" || g.key === "issue";
-            if (items.length === 0 && !alwaysShow) return null;
-            return (
-              <div key={g.key} className="glass-card rounded-2xl p-3 min-w-[210px] flex-shrink-0 snap-start">
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <span className={`text-sm font-semibold ${g.tone}`}>{g.label}</span>
-                  <span className="text-[12px] tnum px-1.5 py-0.5 rounded-md bg-white/10" style={{ color: "var(--t-mid)" }}>{items.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {items.map((r) => (
-                    <button key={r.id} onClick={() => setOpen(r)} className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
-                      <div className="text-white text-sm font-medium tnum">{r.job?.job_code}</div>
-                      <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</div>
-                      <div className="mt-1 text-[11px]" style={{ color: "var(--t-low)" }}>{phaseLabel(r)}</div>
-                      <div className="mt-1.5"><BoqBadge boq={r.boq_summary} /></div>
-                    </button>
-                  ))}
-                  {items.length === 0 && <div className="text-[12px] text-center py-4" style={{ color: "rgba(255,255,255,0.35)" }}>—</div>}
-                </div>
-              </div>
-            );
-          })}
         </div>
       )}
 
