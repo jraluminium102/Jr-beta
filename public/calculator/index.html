@@ -3346,10 +3346,9 @@ function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]')
 // ออปชั่นดรอปดาวน์ตัวเลือกน้อย (≤6) → ชิป อัตโนมัติ (พี่นัท 17 มิ.ย.) · อ่าน option จริงจาก select · ขับด้วย selectedIndex
 // (กันค่าชน เช่น o-closer/o-finish ที่หลาย option ใช้ value เดียวกัน + อ่าน data-n ผ่าน selectedIndex) · fire input+change = sync onchange/delegated เดิม · ราคา/readItem ไม่แตะ
 // ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
-var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-finish','o-bgcolor','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gfin','o-bsfinish','o-bocfinish','o-gcfinish'];
-// G2-สลับตรวจ (คิวกลาง): สี/ผิวระแนง 3 ตัว → ชิป · o-bsfinish/o-bocfinish/o-gcfinish = 8-10 ตัวเลือก value=ราคา (มีซ้ำ) → chipify ผ่าน selectedIndex = ราคาตรงเป๊ะ · ปลด cap 7
-// รอบ3 ข้อ2 (18มิ.ย.): o-gcfinish render จริงแล้ว (buildItemOpts) → เพิ่ม chipify ได้
-var CHIPIFY_BIG=['o-bsfinish','o-bocfinish','o-gcfinish'];
+var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gcfinish'];
+// รอบ3 ข้อ4 (18มิ.ย.): ย้าย o-gfin/o-finish/o-bgcolor/o-bsfinish/o-bocfinish ออก → ใช้ g2FinDrill (drill 4 หมวดแบบงานบาน) แทนชิปเรียงยาว · o-gcfinish คงชิป (สีอบปิดราง 8 ตัว)
+var CHIPIFY_BIG=['o-gcfinish'];
 function chipifySelect(sel,big){
   if(!sel || sel.dataset.chipped==='1') return;
   var n=sel.options.length; if(n<2||(n>7&&!big)) return;     // ≤7 = ชิป · เกิน 7 คงดรอปดาวน์ ยกเว้น big (o-bsfinish/bocfinish สี 10 ตัว ผ่าน selectedIndex)
@@ -3369,7 +3368,35 @@ function chipifySelect(sel,big){
   });
   if(sel.parentNode) sel.parentNode.insertBefore(grp, sel.nextSibling);
 }
-function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) chipifySelect(s, CHIPIFY_BIG.indexOf(cls)>=0); }); }
+function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) chipifySelect(s, CHIPIFY_BIG.indexOf(cls)>=0); });
+  G2FIN_SELECTS.forEach(function(cls){ var s=d.querySelector('.'+cls); if(s) g2FinDrill(s); }); }  // รอบ3 ข้อ4: สีอบ G2 = drill 4 หมวด (แทนชิปเรียงยาว)
+// ===== รอบ3 ข้อ4 (18มิ.ย.): สีอบ G2 เลือกแบบงานบาน — drill 4 หมวด · อ่าน option จริงของ select · คง selectedIndex = ราคาตรงเป๊ะ (ปลอดภัยการเงิน เหมือน chipify) =====
+var G2FIN_SELECTS=['o-gfin','o-finish','o-bgcolor','o-bsfinish','o-bocfinish'];
+function g2FinLabel(o){ return ((o&&(o.getAttribute('data-n')||o.textContent))||'').trim(); }
+function g2FinCat(lbl){ if(/พิเศษ|Fuji/i.test(lbl))return'special'; if(/ซาฮาร่า|Aztec/i.test(lbl))return'sahara'; if(/ลายไม้สต๊อก/.test(lbl))return'wood'; return'std'; } // priority: อบพิเศษ/Fuji → ซาฮาร่า/Aztec → ลายไม้สต๊อก → มาตรฐาน
+var G2FIN_CATS=[['std','มาตรฐาน'],['sahara','ซาฮาร่า'],['wood','ลายไม้สต๊อก'],['special','อบพิเศษ']];
+function g2FinDrill(sel){ if(!sel||sel.dataset.chipped==='1')return; if(sel.options.length<2)return;
+  sel.dataset.chipped='1'; sel.style.display='none';
+  var wrap=document.createElement('div'); wrap.className='g2fin-wrap'; wrap.style.marginTop='4px';
+  sel.parentNode.insertBefore(wrap, sel.nextSibling); g2FinRender(sel,wrap); }
+function g2FinRender(sel,wrap){ if(!wrap){ var n=sel.nextSibling; while(n&&!(n.classList&&n.classList.contains('g2fin-wrap')))n=n.nextSibling; wrap=n; } if(!wrap)return;
+  var byCat={std:[],sahara:[],wood:[],special:[]};
+  Array.prototype.forEach.call(sel.options,function(o,i){ byCat[g2FinCat(g2FinLabel(o))].push({i:i,lbl:g2FinLabel(o)}); });
+  var curIdx=sel.selectedIndex; var curCat=g2FinCat(g2FinLabel(sel.options[curIdx]));
+  var actCat=sel.dataset.g2cat||curCat; if(!byCat[actCat]||!byCat[actCat].length)actCat=curCat;
+  var html='<div class="chip-group chip-sm">';
+  G2FIN_CATS.forEach(function(c){ var items=byCat[c[0]]; if(!items.length)return;
+    if(items.length===1){ html+='<button type="button" class="chip'+(items[0].i===curIdx?' on':'')+'" onclick="g2FinPick(this,'+items[0].i+')">'+items[0].lbl+'</button>'; }
+    else { var sel2=items.some(function(x){return x.i===curIdx;}); html+='<button type="button" class="chip'+((c[0]===actCat||sel2)?' on':'')+'" onclick="g2FinCatPick(this,\''+c[0]+'\')">'+c[1]+' ▾</button>'; }
+  });
+  html+='</div>';
+  if(byCat[actCat]&&byCat[actCat].length>1){ html+='<div class="chip-group chip-sm" style="margin-top:4px;">';
+    byCat[actCat].forEach(function(it){ html+='<button type="button" class="chip'+(it.i===curIdx?' on':'')+'" onclick="g2FinPick(this,'+it.i+')">'+it.lbl+'</button>'; });
+    html+='</div>'; }
+  wrap.innerHTML=html; }
+function g2FinSel(btn){ var w=btn.closest('.g2fin-wrap'); if(!w)return null; var s=w.previousElementSibling; while(s&&s.tagName!=='SELECT')s=s.previousElementSibling; return s; }
+function g2FinPick(btn,i){ var sel=g2FinSel(btn); if(!sel)return; sel.selectedIndex=i; sel.dataset.g2cat=g2FinCat(g2FinLabel(sel.options[i])); sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); g2FinRender(sel); }
+function g2FinCatPick(btn,cat){ var sel=g2FinSel(btn); if(!sel)return; sel.dataset.g2cat=cat; g2FinRender(sel); }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
