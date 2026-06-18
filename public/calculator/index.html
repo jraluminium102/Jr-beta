@@ -2880,7 +2880,7 @@ function groupGHOpts(ch){
     // ALLG-v2 (มติพี่นัท): รวม 7 หมวด → 4 (+ตู้) · array = ลำดับ match (เฉพาะเจาะจงก่อน) · disp = ลำดับแสดง
     // มือจับ·มุ้ง·คาด ต้อง match ก่อน ธรณี (o-mosq มีคำ 'ติดตาย' ในออปชั่น) · disp ให้ธรณีแสดงก่อน
     {key:'📦 รายละเอียดตู้', open:true, disp:0, kw:['cab-detail','ประเภทตู้','จำนวนบานหน้าตู้','ชนิดชั้น','ลึก(ม.)','จำนวนชั้น','ผนังหลัง','สีฝาตู้','วัสดุผนัง']}, // G4 เฉพาะตู้
-    {key:'🔧 มือจับ · ล็อค · มุ้ง · คาดตาราง', open:true, disp:2, kw:[ // B = รวม มือจับ+มุ้ง+คาดตาราง · match ก่อน ธรณี · ก้อนรวม#10: เปิด default (ใช้บ่อย)
+    {key:'🔧 ล็อค · มุ้ง · คาดตาราง', open:true, disp:2, kw:[ // B = ล็อค+มุ้ง+คาดตาราง (v7A ข้อ2: มือจับละเอียดย้ายไป OPTION) · match ก่อน ธรณี · เปิด default (ใช้บ่อย)
       'มือจับ','Cmech','โช้ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
       'มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง',
       'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง','เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง'
@@ -4232,6 +4232,10 @@ function buildItemOpts(d){
     h+='<label class="opt" style="width:100%;">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="display:none;" onchange="calcQuote();"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select>'+rfChips('o-framecolor',[['ขาว','ขาว'],['ดำ','ดำ'],['บรอนซ์','บรอนซ์'],['แชมเปญ','แชมเปญ'],['เทาซาฮาร่า','เทาซาฮาร่า'],['สีอบพิเศษ','สีอบพิเศษ']],'ขาว')+'</label>';
   }
   if(p.closer){ h+='<label class="opt">โช้คอัพประตู <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช้ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช้ค">บานพับ +5,000</option></select></label>'; }
+  // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน (บานเลื่อน/PC มี "ชุดล็อค" แล้ว → กันซ้ำ)
+  if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน'].includes(p.cat)){
+    h+='<label class="opt" style="width:100%;">ล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี" selected>ไม่มีล็อค</option><option value="มีล็อค">มีล็อค</option><option value="มีล็อค+กุญแจ">มีล็อค + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีล็อค'],['มีล็อค','มีล็อค'],['มีล็อค+กุญแจ','มีล็อค + กุญแจ']],'ไม่มี',true)+'</label>';
+  }
   // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
   { var _cmechOK=(p.cat==='บานเลื่อน'||p.cat==='บานเปิด'), _xOK=/xseries|slimlux/.test(p.id), _awnOK=(p.cat==='บานกระทุ้ง');
     if(p.digihandle||_cmechOK||_xOK||_awnOK){
@@ -4696,6 +4700,10 @@ function buildItemOpts(d){
     if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
     if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
     if(_cgr) _cgr.style.display=(_showCw||_showGw)?'flex':'none'; }
+  // v7A ข้อ2 (18มิ.ย.): ย้ายบล็อกมือจับละเอียด (Cmech/ดิจิตอล/สแตน/รุ่นอื่น) → กล่อง OPTION ทางเลือกลูกค้า (oc-block · นอก .i-opts)
+  // คงราคาเดิม (calcUnit อ่าน .o-cmech/.o-digi ฯลฯ ตาม class ตำแหน่งไม่กระทบ · controls มี inline onchange/oninput อยู่แล้ว) · ย้ายก่อน groupGHOpts = นับจำนวนกล่องไม่ผิด
+  { var _hbw=box.querySelector('.handle-brand-wrap'); var _ocb=d.querySelector('.oc-block');
+    if(_hbw && _ocb){ var _hl=_hbw.closest('label')||_hbw.parentNode; if(_hl && _hl!==_ocb) _ocb.appendChild(_hl); } }
   // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
   { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
     if(_smb && _pw && _pw.parentNode){
@@ -4834,6 +4842,8 @@ function readItem(d){
   }
   // ข้อ4(G1): อ่านชุดล็อคแบบ generic (PC Door ฯลฯ ที่ไม่ใช่ sliding) — ถ้ายังไม่ได้อ่านข้างบน
   if(optSel.slidelock===undefined){ const _sl2=d.querySelector('.o-slidelock'); if(_sl2) optSel.slidelock=_sl2.value; }
+  // v7A ข้อ2: ล็อค (สเปค · ไม่คิดเงิน) — บานเปิด/เฟี้ยม/กระทุ้ง/หมุน
+  { const _lk2=d.querySelector('.o-lock'); if(_lk2) optSel.lock=_lk2.value; }
   // คาดตาราง generic (ทุก cat ยกเว้น p.grid)
   if(!p.grid){
     const _gm=d.querySelector('.o-gridmark'); optSel.gridmark=_gm?_gm.checked:false;
@@ -5605,6 +5615,8 @@ function genQuote(keepNo){
       if(_dnh>0 || _dnv>0){ _parts.push('คาดตาราง แนวนอน '+_dnh+' เส้น แนวตั้ง '+_dnv+' เส้น'); }
       else { _parts.push('มีคาดตาราง'); }
     }
+    // v7A ข้อ2 (18มิ.ย.): ล็อค (สเปค · ไม่คิดเงิน) → รายการงาน เมื่อไม่ใช่ "ไม่มี"
+    if(it.optSel && it.optSel.lock && it.optSel.lock!=='ไม่มี'){ _parts.push('ล็อค: '+(it.optSel.lock==='มีล็อค+กุญแจ'?'มีล็อค + กุญแจ':it.optSel.lock)); }
     // ข้อ8(G1) FIX: ฝังรางยู priority — ถ้าติ๊กรางยู ไม่ให้หลังเต่าโผล่ (กันขัดแย้ง + กันรางยูหาย)
     var _hasUchannel = !!(it.optSel && it.optSel.uchannel);
     // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
