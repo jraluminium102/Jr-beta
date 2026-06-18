@@ -3211,7 +3211,8 @@ function ocCatIds(ch){
   if(has('.i-glass-wrap')) ids.push('glass');                 // มีช่องกระจก
   if(hasEl('.o-mosq')) ids.push('mosq');                      // มีมุ้ง
   if(has('.i-color-wrap')||hasEl('.o-finish')) ids.push('color'); // สีอลู (บาน) หรือ ผิว/สี (ระแนง)
-  if(hasEl('.o-cmech')||hasEl('.o-digi')||hasEl('.o-xhandle')||hasEl('.o-cmechawn')) ids.push('handle'); // มีมือจับ
+  // v7B ข้อ3 (ดีดัพ 18มิ.ย.): เลิกชิป "เปลี่ยนมือจับ" (OC_HANDLES) — v7A ย้ายบล็อกมือจับ calcUnit เข้า oc-block แล้ว = มือจับเหลือที่เดียว (เลือกจริงในบล็อก · คงราคา calcUnit) · OC_HANDLES dormant
+  // (เดิม: if(hasEl('.o-cmech')||...) ids.push('handle'))
   ids.push('other');
   return ids;
 }
