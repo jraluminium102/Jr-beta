@@ -1566,7 +1566,7 @@ export function QueueModal({
               {/* กรอกเวลาเอง — ไม่ล็อกแค่ 10:00/14:00 */}
               <label className="flex items-center gap-2 text-xs text-ink-3">
                 หรือกรอกเวลาเอง
-                <input type="time" value={f.queue_time} onChange={(e) => set("queue_time", e.target.value)}
+                <input type="time" step={60} value={f.queue_time} onChange={(e) => set("queue_time", e.target.value.slice(0, 5))}
                   className="glass-soft rounded-lg px-2.5 py-1.5 text-sm outline-none tabular-nums" />
               </label>
             </div>
