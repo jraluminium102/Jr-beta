@@ -1076,15 +1076,24 @@ function glassDrillRender(sel){
   if(!cats.some(function(c){return c.key===actCat;})) actCat=glassCatOf(curIdx);
   var html='<div class="chip-group chip-sm glass-cat-row">';
   cats.forEach(function(c){ html+='<button type="button" class="chip'+(c.key===actCat?' on':'')+'" data-cat="'+c.key+'" onclick="glassDrillCat(this)">'+c.label+'</button>'; });
-  html+='</div><div class="chip-group chip-sm glass-sw-row" style="margin-top:6px;">';
-  Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ if(glassCatOf(i)!==actCat) return;
-    html+='<button type="button" class="chip glass-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="glassDrillPick(this)">'+glassShortLabel(i)+'</button>';
-  });
   html+='</div>';
+  var _glIdxs=Object.keys(present).map(Number).sort(function(a,b){return a-b;}).filter(function(i){return glassCatOf(i)===actCat;});
+  if(actCat==='temper'||actCat==='lam'){  // #9 (18มิ.ย.): หมวดยาว เทมเปอร์/ลามิเนต รุ่นย่อยเยอะ → dropdown (ชิปลากยาว) · หมวดสั้นคงชิป · ราคา/value ไม่แตะ
+    html+='<select class="glass-drill-sel" onchange="glassDrillPickSel(this)" style="width:100%;max-width:340px;height:36px;border:1px solid #D1D5DB;border-radius:6px;margin-top:6px;padding:0 6px;">';
+    _glIdxs.forEach(function(i){ html+='<option value="'+i+'"'+(i===curIdx?' selected':'')+'>'+glassShortLabel(i)+'</option>'; });
+    html+='</select>';
+  } else {
+    html+='<div class="chip-group chip-sm glass-sw-row" style="margin-top:6px;">';
+    _glIdxs.forEach(function(i){ html+='<button type="button" class="chip glass-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="glassDrillPick(this)">'+glassShortLabel(i)+'</button>'; });
+    html+='</div>';
+  }
   wrap.innerHTML=html;
 }
 function glassDrillCat(btn){ var sel=_glassDrillSel(btn); if(!sel)return; sel.dataset.glCat=btn.dataset.cat; glassDrillRender(sel); }
 function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i=parseInt(btn.dataset.idx)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
+  sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
+// #9: dropdown รุ่นย่อยกระจกหมวดยาว (เทมเปอร์/ลามิเนต) → set select หลักเหมือน glassDrillPick (ราคา/value ไม่แตะ)
+function glassDrillPickSel(selEl){ var sel=_glassDrillSel(selEl); if(!sel)return; var i=parseInt(selEl.value)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
 
 // ===== ④ มุ้ง drill-down (HANDOFF-redesign จุด④ · มติพี่นัท 17มิ.ย.) =====
