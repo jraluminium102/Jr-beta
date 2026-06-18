@@ -62,7 +62,7 @@ export const POST = withRoute(async (req: Request) => {
   // 1) โหลด job — ต้อง active
   const { data: job, error: jErr } = await sb
     .from("jobs")
-    .select("id, status, customer_id, customer_name, customer_area")
+    .select("id, status, customer_id, customer_name, customer_area, design_revise_count")
     .eq("id", job_id)
     .maybeSingle();
   if (jErr || !job) return err("ไม่พบงาน", 404);
@@ -223,6 +223,9 @@ export const POST = withRoute(async (req: Request) => {
     const jobUpdate: Record<string, unknown> = {
       quote_sent_date: issue_date || today,
       status: "QUOTE_SENT",
+      // snapshot รอบแก้แบบ ณ ตอนส่งใบเสนอ — ใช้ตรวจ "แก้แบบหลังเสนอ" แบบแม่นยำ (0047)
+      // ส่งใบใหม่หลังแก้ → ค่านี้ตามทัน design_revise_count → งานหลุดออกจากเช็คลิสต์เอง
+      quoted_revise_count: (job as { design_revise_count: number | null }).design_revise_count ?? 0,
     };
     if (total > 0) {
       jobUpdate.net_amount = subtotal;

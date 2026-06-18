@@ -89,7 +89,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -111,6 +111,7 @@ export const GET = withRoute(async () => {
     design_state: string;
     design_end: string | null;
     design_revise_count: number | null;
+    quoted_revise_count: number | null;
     status: string;
     designer_ref: number | null;
     quote_sent_date: string | null;
@@ -215,15 +216,12 @@ export const GET = withRoute(async () => {
     }
 
     // ── ตรวจ "แก้แบบ" ───────────────────────────────────────────────
-    // design_revise_count +1 ทุกครั้งที่เข้า REVISING · design_end = วันที่กด DONE ล่าสุด
+    // design_revise_count +1 ทุกครั้งที่เข้า REVISING
+    // quoted_revise_count = ค่า ณ ตอนส่งใบเสนอล่าสุด (0047) — snapshot ไม่อิงวันที่
+    // แบบถูกแก้ "หลัง" ส่งใบเสนอ → ต้องทำใบเสนอใหม่ → กลับเข้า active
+    // (กันเคส same-day ที่เทียบ design_end > quote_sent_date ไม่ได้ เช่น JR2026-159)
     const reviseCount = j.design_revise_count ?? 0;
-    // แบบถูกแก้ แล้วยัง "ค้าง" ต้องทำใบเสนอใหม่ เมื่อ:
-    //   (ก) แก้แล้วยังไม่เคยส่งใบเสนอ  หรือ
-    //   (ข) แบบเสร็จใหม่ (design_end) ช้ากว่าวันส่งใบเสนอ → ใบเสนอเก่า ต้องรีเควต
-    const needsRequote =
-      reviseCount > 0 &&
-      (!j.quote_sent_date ||
-        (!!j.design_end && j.design_end > j.quote_sent_date));
+    const needsRequote = reviseCount > (j.quoted_revise_count ?? 0);
     // ป้าย "มาจากแก้แบบ" — โผล่ใน active เพราะกำลังแก้ หรือแบบแก้แล้วรอทำใบเสนอใหม่
     const revised = j.design_state === "REVISING" || needsRequote;
 
