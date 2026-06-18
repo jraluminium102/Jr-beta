@@ -10,7 +10,6 @@ import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { TriangleAlert, Clock, ChevronRight, Package, PackageCheck, Search } from "@/components/ui/icons";
 import Icon from "@/components/Icon";
 import { ProductionStepModal, type ProdRow, type BoqSummary } from "@/components/production/ProductionStepModal";
-import type { ProdStatus } from "@/lib/database.types";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -58,14 +57,21 @@ function normalizeTime(t: string | null | undefined): string {
 
 const todayStr = new Date().toISOString().slice(0, 10);
 // กลุ่มสรุปสำหรับ dashboard ช่าง
-const GROUPS: { key: string; label: string; statuses: ProdStatus[]; tone: string }[] = [
-  { key: "measure", label: "รอวัดจริง", statuses: ["PENDING_MEASURE"], tone: "text-sky-300" },
-  { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", statuses: ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"], tone: "text-cyan-300" },
-  { key: "producing", label: "กำลังผลิต", statuses: ["QUEUED", "MANUFACTURING"], tone: "text-orange-300" },
-  { key: "qc", label: "รอ QC", statuses: ["QC"], tone: "text-violet-300" },
-  { key: "ready", label: "พร้อมติดตั้ง", statuses: ["READY"], tone: "text-emerald-300" },
-  { key: "issue", label: "มีปัญหา", statuses: ["ISSUE"], tone: "text-rose-300" },
+// แยกเฟส "รอวัด" เป็น 2 ตามว่าได้คิว(วัน)แล้วหรือยัง — มัดจำแล้วยังไม่นัด = รอจัดคิว · นัดแล้ว = รอวัดจริง
+const GROUPS: { key: string; label: string; match: (r: Row) => boolean; tone: string }[] = [
+  { key: "queue_wait", label: "รอจัดคิววัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !r.measure_scheduled, tone: "text-amber-300" },
+  { key: "measure", label: "รอวัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !!r.measure_scheduled, tone: "text-sky-300" },
+  { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", match: (r) => ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"].includes(r.status), tone: "text-cyan-300" },
+  { key: "producing", label: "กำลังผลิต", match: (r) => ["QUEUED", "MANUFACTURING"].includes(r.status), tone: "text-orange-300" },
+  { key: "qc", label: "รอ QC", match: (r) => r.status === "QC", tone: "text-violet-300" },
+  { key: "ready", label: "พร้อมติดตั้ง", match: (r) => r.status === "READY", tone: "text-emerald-300" },
+  { key: "issue", label: "มีปัญหา", match: (r) => r.status === "ISSUE", tone: "text-rose-300" },
 ];
+// label เฟสย่อยสำหรับชิป (PENDING_MEASURE แยก 2 · อื่นๆ ใช้ PROD_STATUS เดิม)
+function phaseLabel(r: Row): string {
+  if (r.status === "PENDING_MEASURE") return r.measure_scheduled ? "รอวัดจริง" : "รอจัดคิววัดจริง";
+  return PROD_STATUS[r.status];
+}
 const FLOW_ORDER: Record<string, number> = { ISSUE: 0, PENDING_MEASURE: 1, MEASURED: 2, PENDING_MEETING: 3, REVISING: 4, PENDING_CONFIRM: 5, QUEUED: 6, MANUFACTURING: 7, QC: 8, READY: 99 };
 
 const in3days = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
@@ -132,7 +138,7 @@ export default function ProductionPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    GROUPS.forEach((g) => { c[g.key] = rows.filter((r) => g.statuses.includes(r.status)).length; });
+    GROUPS.forEach((g) => { c[g.key] = rows.filter((r) => g.match(r)).length; });
     return c;
   }, [rows]);
 
@@ -143,13 +149,15 @@ export default function ProductionPage() {
 
   const filtered = useMemo(() => {
     const g = GROUPS.find((x) => x.key === filterKey);
-    let list = g ? rows.filter((r) => g.statuses.includes(r.status)) : rows;
+    let list = g ? rows.filter((r) => g.match(r)) : rows;
     const term = q.trim().toLowerCase();
     if (term) list = list.filter((r) =>
       (r.job?.job_code ?? "").toLowerCase().includes(term) ||
       (r.job?.customer_name ?? "").toLowerCase().includes(term) ||
       (r.job?.customer_area ?? "").toLowerCase().includes(term));
-    return [...list].sort((a, b) => (FLOW_ORDER[a.status] - FLOW_ORDER[b.status]) || (daysSince(b.status_updated_at, b.created_at) - daysSince(a.status_updated_at, a.created_at)));
+    // ภายใน PENDING_MEASURE: รอจัดคิว (ยังไม่นัด) มาก่อน รอวัดจริง (นัดแล้ว)
+    const schedRank = (r: Row) => (r.status === "PENDING_MEASURE" && r.measure_scheduled ? 1 : 0);
+    return [...list].sort((a, b) => (FLOW_ORDER[a.status] - FLOW_ORDER[b.status]) || (schedRank(a) - schedRank(b)) || (daysSince(b.status_updated_at, b.created_at) - daysSince(a.status_updated_at, a.created_at)));
   }, [rows, filterKey, q]);
 
   return (
@@ -240,7 +248,7 @@ export default function ProductionPage() {
                     {stale && <span className="text-[11px] text-rose-200 flex items-center gap-0.5"><Clock size={11} /> ค้าง {daysSince(r.status_updated_at, r.created_at)} วัน</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <Chip>{PROD_STATUS[r.status]}</Chip>
+                    <Chip>{phaseLabel(r)}</Chip>
                     <BoqBadge boq={r.boq_summary} />
                     {r.production_queued && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
                     {r.production_done && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>เสร็จ: {thDate(r.production_done)}</span>}
@@ -286,9 +294,9 @@ export default function ProductionPage() {
         /* ── บอร์ด (กลุ่ม 6 คอลัมน์ ตาม GROUPS) ── */
         <div className="flex gap-3 overflow-x-auto pb-4 snap-x">
           {GROUPS.map((g) => {
-            const items = rows.filter((r) => g.statuses.includes(r.status));
+            const items = rows.filter((r) => g.match(r));
             // ซ่อนคอลัมน์ที่ไม่มีงานเลย ยกเว้นคอลัมน์ที่ 0 เสมอ (สองคอลัมน์แรกและ issue แสดงเสมอ)
-            const alwaysShow = g.key === "measure" || g.key === "prep" || g.key === "issue";
+            const alwaysShow = g.key === "queue_wait" || g.key === "measure" || g.key === "prep" || g.key === "issue";
             if (items.length === 0 && !alwaysShow) return null;
             return (
               <div key={g.key} className="glass-card rounded-2xl p-3 min-w-[210px] flex-shrink-0 snap-start">
@@ -301,7 +309,7 @@ export default function ProductionPage() {
                     <button key={r.id} onClick={() => setOpen(r)} className="focusable pressable w-full text-left bg-white/9 hover:bg-white/16 border border-white/10 rounded-xl p-3">
                       <div className="text-white text-sm font-medium tnum">{r.job?.job_code}</div>
                       <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</div>
-                      <div className="mt-1 text-[11px]" style={{ color: "var(--t-low)" }}>{PROD_STATUS[r.status]}</div>
+                      <div className="mt-1 text-[11px]" style={{ color: "var(--t-low)" }}>{phaseLabel(r)}</div>
                       <div className="mt-1.5"><BoqBadge boq={r.boq_summary} /></div>
                     </button>
                   ))}
