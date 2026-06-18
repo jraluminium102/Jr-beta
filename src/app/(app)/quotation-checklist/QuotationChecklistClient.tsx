@@ -403,6 +403,11 @@ function ActiveTableRow({
       {/* สถานะแบบ + ผู้ออกแบบ */}
       <td className="px-3 py-3 align-top">
         <div className="text-xs font-medium text-ink-2">{designLabel}</div>
+        {item.design_state === "DONE" && item.design_end && (
+          <div className="text-[11px] text-emerald-600 tabular-nums mt-0.5">
+            เสร็จ {thaiDate(item.design_end)}
+          </div>
+        )}
         <div className="text-xs text-ink-3 mt-0.5">
           {item.designer_name ?? "ยังไม่มอบหมาย"}
         </div>
@@ -526,6 +531,9 @@ function ActiveMobileCard({
         )}
         <span className="inline-flex items-center gap-1">
           <Icon name="ruler" size={11} />{designLabel} · {item.designer_name ?? "ยังไม่มอบหมาย"}
+          {item.design_state === "DONE" && item.design_end && (
+            <span className="text-emerald-600 tabular-nums">· เสร็จ {thaiDate(item.design_end)}</span>
+          )}
         </span>
       </div>
 
