@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#FAEEDA;border:1px solid #f3d39b;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.tag{display:inline-block;font-size:9px;padding:0 5px;border-radius:8px;margin-left:3px;}
+.t-blue{background:#E6F1FB;color:#185FA5;}.t-amber{background:#FAEEDA;color:#BA7517;}.t-green{background:#EAF3DE;color:#3B6D11;}.t-gray{background:#eee;color:#666;}
+</style></head><body>
+
+<h1>SUMMARY — ออปชั่นมุ้ง G5 (จัดหมวด)</h1>
+<p class="sub">2026-06-14 · สรุปออปชั่นต่อชนิดมุ้ง สำหรับเซลล์/เฟิร์น · คู่ <code>UXDESIGN-G5-MASTER</code> + <code>PRICECHECK-G5</code> · เรตดิบใน <code>REF-G5-pricing-data.md</code></p>
+
+<h2>1) ชนิดมุ้ง — 5 ปุ่ม · 17 รุ่นโชว์</h2>
+<table>
+<tr><th>ปุ่มชนิด</th><th>รุ่น (id)</th><th>ผ้ามุ้ง?</th><th>สีกรอบ?</th><th>หมายเหตุ</th></tr>
+<tr><td><b>มุ้งเฟรม</b></td><td>imp21 เฟรมเล็กไฟเบอร์ · imp22 เฟรมเล็กติดตาย · imp23 เฟรมใหญ่ · imp30 แม่เหล็กพับ</td><td>✓ (21/22/23)</td><td>✓ <span class="tag t-amber">ไม่คิดเงิน*</span></td><td>min ต่อบาน (ประตู/หน้าต่าง) · นิรภัยเฉพาะ imp23</td></tr>
+<tr><td><b>มุ้งจีบ</b></td><td>imp28 ตีนตะขาบไฟเบอร์ · mj_sd_basic จีบ SD พื้นฐาน</td><td>✗</td><td>✓</td><td>imp28 min 0 · sd_basic min 3,500</td></tr>
+<tr><td><b>จีบ ม่านรังผึ้ง</b></td><td>mj_blackout · mj_sd_twoway · mj_keep_twoway · mj_keep_honey</td><td>✗</td><td>✓</td><td>min 3,500–6,000</td></tr>
+<tr><td><b>มุ้งม้วน</b></td><td>imp29 ไฟเบอร์ · mj_kick_150/300/600 (เตะได้)</td><td>✗</td><td>✓</td><td>เตะ: maxWidth 1.5/3.0/6.0 ม. · min 15k/37.5k/67.5k</td></tr>
+<tr><td><b>มุ้งนิรภัย</b></td><td>imp31 สแตน 0.8 · imp32 เสริมวงกบ · mj_screen_safety</td><td>✗</td><td>✗</td><td>กรอบทำสีไม่ได้ (screen_safety)</td></tr>
+</table>
+<div class="warn"><b>ซ่อนจากเมนู (มติพี่นัท):</b> <code>imp33</code> กันแมว/หมา · <code>imp35</code> กันหนู — เป็นชนิดผ้า ไม่ใช่รุ่น · ลูกค้าได้ผ่าน <b>ผ้ามุ้งบนเฟรม</b> · เก็บเรตในระบบไว้ (ห้ามลบ)</div>
+
+<h2>2) ผ้ามุ้ง (add-on · เฉพาะมุ้งเฟรม imp21/22/23)</h2>
+<table>
+<tr><th>ผ้า</th><th>ราคาเพิ่ม</th><th>สีผ้า</th><th>ใช้กับ</th></tr>
+<tr><td>ไฟเบอร์ (เทา/ดำ)</td><td><b>ฟรี</b> (default)</td><td>ดำ / เทา</td><td>เฟรมทุกตัว</td></tr>
+<tr><td>กันแมว/หมา (สีขาว)</td><td>+ พื้นที่ × <b>800</b></td><td>ขาว</td><td>เฟรมทุกตัว</td></tr>
+<tr><td>กันหนู สแตน 0.33มม.</td><td>+ พื้นที่ × <b>1,200</b></td><td>เงิน / ดำ</td><td>เฟรมทุกตัว</td></tr>
+<tr><td>นิรภัย สแตน 304 0.8มม.</td><td>+ พื้นที่ × <b>rateOf(IMP31)</b> (3,500/3,200/3,000)</td><td>ดำ</td><td><b>เฉพาะ imp23</b> (เฟรมใหญ่)</td></tr>
+</table>
+<p class="sub">สีผ้า = cosmetic (ไม่กระทบราคา) · ดราฟ: เลือกผ้า→สีผ้าควรเปลี่ยนชุดตามผ้า (ดู HANDOFF)</p>
+
+<h2>3) สีกรอบมุ้ง (mscolor · เฉพาะที่มี ✓)</h2>
+<div class="box">ตามสีบาน = <b>ฟรี</b> · สีพิเศษ/ลายไม้ = <code>colorPrice(idx, พื้นที่) × 0.5</code> (ลด 50%) · 12 ตัวเลือก (ตามสีบาน + 11 สีพิเศษ) · dev ดึง COLORS/colorPrice จริง<br>
+<span class="tag t-amber">เช็คซ้ำ #2</span> เฟรม (imp21/22/23) มี <code>mscolor:true</code> แต่ branch เฟรม return ก่อนถึง mscolor block → <b>กรอกสีกรอบเฟรมไม่คิดเงิน</b> (ตั้งใจ? หรือควรคิด — ฝากเคาะ)</div>
+
+<h2>4) การติดตั้ง / เสริม</h2>
+<table>
+<tr><th>ออปชั่น</th><th>ราคา</th><th>หมายเหตุ</th></tr>
+<tr><td>ติดมุ้งบานเดิม (โหมด B)</td><td>เรต/ตร.ม. เท่าโหมด A + <b>ค่าเสริมกล่อง/ราง (กรอกเอง)</b></td><td>ลูกค้าเก่ามาเพิ่มมุ้งบานที่มีอยู่ · default ค่าเสริม 0</td></tr>
+<tr><td>เสริมวงกบ</td><td>กรอกเอง</td><td>imp32 = จีบนิรภัยเสริมวงกบในตัว (รุ่นแยก)</td></tr>
+<tr><td>รื้อมุ้งเดิม</td><td>1,000 (default · แก้ได้)</td><td>—</td></tr>
+</table>
+
+<h2>5) OPTION ลูกค้า (เลือกหมวด → เติม แก้/ลบ)</h2>
+<table>
+<tr><th>หมวด</th><th>รายการย่อย</th></tr>
+<tr><td>ผ้า/มุ้งพิเศษ</td><td>อัปเกรดผ้ากันแมว/หมา · ผ้ากันหนูสแตน · ผ้านิรภัย 304</td></tr>
+<tr><td>สี/กรอบ</td><td>สีกรอบพิเศษ (ทำสี ลด 50%) · สีลายไม้</td></tr>
+<tr><td>ติดตั้ง/ราง</td><td>ติดบานเดิม (เสริมกล่อง/ราง) · เสริมวงกบ · รื้อมุ้งเดิม</td></tr>
+<tr><td>งานเพิ่ม / ส่วนลด</td><td>กรอกข้อความ + ราคา (± ได้)</td></tr>
+</table>
+
+<h2>6) ธงให้ dev (รวมใน HANDOFF-G5)</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>สถานะ</th></tr>
+<tr><td>1</td><td><code>MJ_SD_SAHARA</code> (3,200) เรตค้าง ไม่มีสินค้าใช้</td><td><span class="tag t-green">มติ: ลบทิ้ง (dead)</span></td></tr>
+<tr><td>2</td><td>สีกรอบเฟรมไม่คิดเงิน (branch return ก่อน mscolor)</td><td><span class="tag t-green">มติ: ต้องคิดเงิน (เพิ่ม logic)</span></td></tr>
+<tr><td>3</td><td>imp28/imp29/imp30 min 0 (flat tier เริ่ม 1.0)</td><td><span class="tag t-green">มติ: ขั้นต่ำ 1 ตร.ม. ทั้ง 3 (4,500/3,000/1,500)</span></td></tr>
+<tr><td>4</td><td>ม้วนเตะ maxWidth ไม่มี guard ตอนขายเดี่ยว</td><td><span class="tag t-amber">ดราฟใส่ soft-warn</span></td></tr>
+<tr><td>5</td><td>ผ้านิรภัย add-on เฉพาะ imp23</td><td><span class="tag t-blue">ยืนยันตั้งใจ</span></td></tr>
+<tr><td>6</td><td>imp33/imp35 → <b>ซ่อนจากเมนู</b> (เก็บเรต)</td><td><span class="tag t-green">เคาะแล้ว</span></td></tr>
+<tr><td>7</td><td>IMP34 ลบแล้ว tier ค้าง</td><td><span class="tag t-gray">dead ไม่กระทบ</span></td></tr>
+</table>
+
+</body></html>

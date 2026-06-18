@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟ G6↔G1 ชนิดบานไม่ตรงกัน + วิธีแก้ · 18 มิ.ย.</title>
+<style>
+  :root{--jr:#c0282d;--bg:#f4f4f6;--card:#fff;--line:#e3e3e8;--muted:#777;--ok:#2e7d32;--warn:#e8a200;--bad:#c0282d}
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);margin:0;color:#222;font-size:15px;line-height:1.55}
+  .wrap{max-width:880px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:8px 0 2px}
+  h2{font-size:16px;margin:18px 0 6px;color:var(--jr)}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:#fafafb}
+  .y{color:var(--ok);font-weight:700}
+  .n{color:var(--bad);font-weight:700}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;margin-right:4px}
+  .pill.g1{background:#fde8e8;color:#a01e22}
+  .pill.g6{background:#e6f0fb;color:#1c5aa6}
+  .src{background:#fff8e6;border-left:3px solid var(--warn);padding:9px 12px;border-radius:6px;font-size:13px;margin-top:10px}
+  .fix{background:#eef7ee;border-left:3px solid var(--ok);padding:9px 12px;border-radius:6px;font-size:13px;margin-top:10px}
+  .ask{background:#fdeee8;border:1px solid #f3c4ad;border-radius:8px;padding:11px 13px;margin-top:10px;font-size:13.5px}
+  .ask b{color:var(--jr)}
+  code{background:#f0f0f3;padding:1px 5px;border-radius:4px;font-size:12px}
+  .q{display:block;margin:7px 0;padding-left:18px;position:relative}
+  .q:before{content:"❓";position:absolute;left:0}
+  .legend{font-size:12px;color:var(--muted);margin-top:6px}
+  .foot{font-size:12px;color:var(--muted);text-align:center;margin:20px 0 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔁 ดราฟ: G6 (ห้อง) ↔ G1 (บานเดี่ยว) "ชนิดบานไม่ตรงกัน"</h1>
+  <div class="sub">สลับตรวจ A-G1 · 18 มิ.ย. · ทั้งคู่ใช้บานชุดเดียวกัน (engine/calcUnit ร่วม) แต่ "ลิสต์ชนิดบานที่ให้เลือก" คนละแหล่ง → drift · <b>เช็คของจริง</b> (render jsdom · <code>scripts/_probe-g6-shared.mjs</code>) ไม่เดา · ⛔ ไม่แก้เอง ส่งคิวกลาง</div>
+
+  <!-- ปัญหา 1 -->
+  <div class="card">
+    <h2>① G1 "คิดเร็ว" เลือกบานหมุน/shower ไม่ได้ (แต่ฟอร์มเต็มได้)</h2>
+    <p style="margin:4px 0;font-size:13.5px">กลุ่ม 1 <b>มีสินค้าจริง</b> ทุกชนิด แต่ <code>FAM_CATS['1']</code> (ลิสต์ที่ขับ "ชิปคิดเร็ว" + ค่าเริ่มต้น) ตกหล่นบางชนิด → โหมดคิดเร็วเข้าไม่ถึง</p>
+    <table>
+      <tr><th>ชนิดบาน (กลุ่ม 1)</th><th>มีสินค้าจริง</th><th>ฟอร์มเต็ม (G1GROUPS)</th><th>คิดเร็ว (FAM_CATS['1'])</th></tr>
+      <tr><td>บานเลื่อน / เปิด / เฟี้ยม / ติดตาย / กระทุ้ง / เลื่อนภายใน / PC Door / YKK / บานยก / ดัดโค้ง</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+      <tr><td><b>บานหมุน</b> (pivot)</td><td class="y">✓</td><td class="y">✓ (กลุ่มบานเปิด)</td><td class="n">✗ ตกหล่น</td></tr>
+      <tr><td><b>shower</b> (ฉากกั้นอาบน้ำ)</td><td class="y">✓</td><td class="y">✓ (กลุ่มอื่นๆ)</td><td class="n">✗ ตกหล่น</td></tr>
+      <tr><td>ฝ้า-ผนัง / บานเปลือย</td><td class="y">✓</td><td class="y">✓ (กลุ่มติดตาย/ทึบ)</td><td class="n">✗ ตกหล่น</td></tr>
+    </table>
+    <div class="legend">หมายเหตุ: เส้นคาด / ลูกฟูก / "เสริม" = ออปชั่น ไม่ใช่ชนิดบาน → ตกหล่นถูกแล้ว (ไม่นับ)</div>
+    <div class="fix">✅ <b>แก้:</b> เติม <code>บานหมุน</code>, <code>shower</code> (และถ้าต้องการ ฝ้า-ผนัง/บานเปลือย) เข้า <code>FAM_CATS['1']</code> ให้ตรงกับ G1GROUPS · ขับ chip/คิดเร็วเดิม ไม่แตะราคา</div>
+  </div>
+
+  <!-- ปัญหา 2 -->
+  <div class="card">
+    <h2>② บานชนิดเดียวกัน เลือกได้คนละชุด ระหว่างบานเดี่ยว(G1) vs ห้อง(G6)</h2>
+    <table>
+      <tr><th>ชนิดบาน</th><th><span class="pill g1">G1</span>FAM_CATS['1']</th><th><span class="pill g6">G6</span>FAM_CATS['6']</th><th>ควรเป็น?</th></tr>
+      <tr><td>YKK ระบายอากาศ</td><td class="y">มี</td><td class="n">ไม่มี</td><td>ห้องน่าจะมีได้</td></tr>
+      <tr><td>ดัดโค้ง</td><td class="y">มี</td><td class="n">ไม่มี*</td><td>ห้องน่าจะมีได้</td></tr>
+      <tr><td>ฝ้า-ผนัง (ผนังเบา)</td><td class="n">ไม่มี</td><td class="y">มี</td><td>บานเดี่ยวควรมีไหม?</td></tr>
+      <tr><td>บานเปลือย (frameless)</td><td class="n">ไม่มี</td><td class="y">มี</td><td>บานเดี่ยวควรมีไหม?</td></tr>
+    </table>
+    <div class="legend">*ดัดโค้ง: G6 room builder ดึงกลับมาผ่าน <code>FCATS()</code>/<code>G6GROUPS</code> แล้ว แต่ <code>FAM_CATS['6']</code> ในโค้ดยังไม่มี (ถ้ามีจุดอื่นอ่าน FAM_CATS['6'] ตรงๆ จะตกหล่น)</div>
+    <div class="ask">
+      <b>❓ ต้องเคาะก่อนแก้ (ไม่เดาให้):</b>
+      <span class="q">บานเดี่ยว G1 ควรเลือก <b>ฝ้า-ผนัง / บานเปลือย</b> ได้ไหม (หรือเป็นของห้องอย่างเดียว)?</span>
+      <span class="q">ห้อง G6 ควรเลือก <b>YKK / ดัดโค้ง</b> ได้ไหม?</span>
+      <span class="q">ถ้า "ใช่ทั้งหมด" → รวมเป็นชุดบานเดียวกันทั้ง G1+G6 (ง่ายสุด ไม่ต้องจำว่ากลุ่มไหนมีอะไร)</span>
+    </div>
+  </div>
+
+  <!-- ปัญหา 3 -->
+  <div class="card">
+    <h2>③ ต้นเหตุ: มี 2 แหล่งนิยาม "ชนิดบาน" ที่ต้อง sync มือ</h2>
+    <table>
+      <tr><th>แหล่ง</th><th>อยู่ที่</th><th>ขับอะไร</th></tr>
+      <tr><td><code>G6GROUPS</code> (ระดับ model)</td><td>L6538 · ใน IIFE (เข้าถึงจากนอกไม่ได้)</td><td>room builder G6</td></tr>
+      <tr><td><code>G1GROUPS</code> (ระดับ cat · mirror)</td><td>L3649 · global</td><td>ปุ่ม 6 กลุ่ม ฟอร์มเต็ม G1</td></tr>
+      <tr><td><code>FAM_CATS['1']</code> / <code>['6']</code></td><td>L3677/3679</td><td>คิดเร็ว + ค่าเริ่มต้น + ซ่อนสินค้า</td></tr>
+    </table>
+    <div class="src">⚠️ โค้ดเขียนเองที่ L3648 ว่า "G6GROUPS อยู่ใน IIFE · global ตัวนี้ mirror" → <b>3 ลิสต์ต้องตรงกันด้วยมือ</b> เพิ่ม/ลดบาน 1 ชนิดต้องแก้ 3 ที่ ลืมที่ใดที่หนึ่ง = ไม่ตรงกัน (ที่เจอข้อ ①②)</div>
+    <div class="fix">✅ <b>แก้ระยะยาว (ให้ dev/คิวกลางพิจารณา):</b> ย้าย <code>G6GROUPS</code> ออกจาก IIFE เป็น global ตัวเดียว แล้วให้ G1 ดึงจากตัวเดียวกัน (map model→cat) · เลิก mirror · เพิ่มบานทีเดียวจบ · <b>แก้ระยะสั้น:</b> sync 3 ลิสต์ให้ตรงตามที่เคาะข้อ ② + เติมข้อ ①</div>
+  </div>
+
+  <div class="card" style="background:#fafafb">
+    <b>สรุปส่งคิวกลาง</b>
+    <table style="margin-top:6px">
+      <tr><th>#</th><th>จุด</th><th>ระดับ</th><th>ทำอะไร</th></tr>
+      <tr><td>①</td><td>FAM_CATS['1'] ตกหล่น บานหมุน/shower</td><td class="n">🟡 แก้ได้เลย</td><td>เติม cat (ไม่ต้องถาม)</td></tr>
+      <tr><td>②</td><td>G1↔G6 ชนิดบานไม่ตรง (ฝ้า/เปลือย/YKK/ดัดโค้ง)</td><td class="n">🟡 ต้องเคาะ</td><td>ถามพี่นัท 2 ข้อ</td></tr>
+      <tr><td>③</td><td>2 แหล่งนิยามซ้อน (drift risk)</td><td>🟢 ปรับโครง</td><td>dev พิจารณารวมแหล่ง</td></tr>
+    </table>
+  </div>
+
+  <div class="foot">⚠️ ไฟล์ดราฟภายใน — ห้ามอัปสาธารณะ · เขียนลงไฟล์คิวกลางแล้ว · ทั้งหมดไม่แตะสูตรราคา (แตะแค่ "ลิสต์ชนิดบานที่โชว์")</div>
+</div>
+</body>
+</html>

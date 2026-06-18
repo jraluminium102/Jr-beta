@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G5 UX v2 — มุ้ง (เดโม)</title>
+<style>
+:root{
+  --red:#B3151D;--red-lt:#FFF0F0;
+  --blue:#1565C0;--blue-lt:#E3F2FD;--blue-bd:#90CAF9;
+  --orange:#E65100;--orange-lt:#FFF3E0;--orange-bd:#FF9800;
+  --green:#2E7D32;--green-lt:#E8F5E9;
+  --gray:#6B7280;--border:#E5E7EB;--bg:#F3F4F6;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans Thai",Sarabun,sans-serif;font-size:15px;background:var(--bg);color:#111;}
+
+/* demo banner */
+.demo-banner{background:var(--red);color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:100;}
+
+.page{max-width:600px;margin:0 auto;padding:12px 12px 80px;}
+
+/* card */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title .badge{font-size:11px;background:var(--red-lt);color:var(--red);border-radius:4px;padding:1px 7px;font-weight:700;}
+.card-title .sub{font-size:11px;color:var(--gray);font-weight:400;}
+
+/* mode B card */
+.card-modeB{background:var(--orange-lt);border:2px solid var(--orange-bd);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;}
+.modeB-head{font-size:14px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:8px;cursor:pointer;}
+.modeB-head input[type=checkbox]{width:20px;height:20px;cursor:pointer;accent-color:var(--orange);}
+.modeB-body{margin-top:10px;padding-top:10px;border-top:1px dashed var(--orange-bd);display:none;}
+.modeB-body.open{display:block;}
+
+/* chip */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{min-height:44px;min-width:64px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:14px;font-family:inherit;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;transition:.12s;font-weight:600;line-height:1.2;text-align:center;}
+.chip:hover{border-color:var(--blue);color:var(--blue);}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chips.sm .chip{min-height:44px;min-width:48px;padding:0 10px;font-size:13px;}
+
+/* stepper */
+.stepper{display:inline-flex;align-items:center;gap:4px;}
+.step-btn{width:44px;height:44px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;}
+.step-btn:hover{background:var(--blue-lt);border-color:var(--blue);}
+.step-val{width:56px;height:44px;text-align:center;border:1.5px solid var(--border);border-radius:8px;
+  font-size:16px;font-weight:700;font-family:inherit;background:#fff;outline:none;}
+
+/* field */
+.field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:8px;}
+.field:last-child{margin-bottom:0;}
+.lbl{font-size:13px;color:#374151;min-width:60px;}
+.field input[type=number]{height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:15px;font-family:inherit;color:#111;background:#fff;width:80px;outline:none;transition:.12s;}
+.field input[type=number]:focus{border-color:var(--blue);}
+.unit{font-size:12px;color:var(--gray);}
+.hint{font-size:11px;color:var(--gray);margin-top:3px;}
+.auto-tag{font-size:11px;font-weight:700;color:var(--green);background:var(--green-lt);padding:1px 6px;border-radius:4px;}
+
+/* mosq type cascade */
+.mosq-section-head{font-size:12px;font-weight:700;color:#374151;margin:10px 0 5px;letter-spacing:.3px;}
+.mosq-card{border:2px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:.12s;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;}
+.mosq-card:hover{border-color:var(--blue);}
+.mosq-card.on{border-color:var(--blue);background:var(--blue-lt);}
+.mosq-card .mc-icon{font-size:20px;margin-top:2px;}
+.mosq-card .mc-body{flex:1;}
+.mosq-card .mc-name{font-size:14px;font-weight:700;}
+.mosq-card .mc-desc{font-size:11px;color:var(--gray);margin-top:1px;line-height:1.4;}
+.mosq-card .mc-price{font-size:13px;font-weight:700;color:var(--red);margin-top:4px;}
+
+/* accordion extras */
+.accordion-btn{width:100%;text-align:left;background:none;border:none;font-family:inherit;font-size:13px;
+  font-weight:700;color:var(--red);cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:6px;}
+.accordion-body{display:none;margin-top:8px;}
+.accordion-body.open{display:block;}
+.arr{transition:.2s;display:inline-block;}
+.arr.open{transform:rotate(90deg);}
+
+/* fabric & color chips — special highlight */
+.fabric-chip-label{font-size:13px;font-weight:700;color:#374151;margin-bottom:5px;}
+
+/* price bar */
+.price-bar{position:fixed;bottom:0;left:0;right:0;background:var(--red);color:#fff;
+  padding:10px 16px;display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 -2px 8px rgba(0,0,0,.15);}
+.price-bar .plbl{font-size:12px;opacity:.85;}
+.price-bar .pval{font-size:22px;font-weight:700;}
+.price-bar .pdemo{font-size:10px;background:rgba(255,255,255,.25);padding:2px 7px;border-radius:4px;margin-left:6px;}
+
+/* hidden select (sync target) */
+.hidden-sel{display:none!important;}
+
+/* note box */
+.note{font-size:12px;background:#F9FAFB;border-left:3px solid #D1D5DB;padding:5px 9px;border-radius:4px;margin-top:6px;color:#555;}
+.note.blue{border-left-color:var(--blue-bd);background:var(--blue-lt);color:#1565C0;}
+
+/* show/hide helpers */
+.show{display:block!important;}.hide{display:none!important;}
+
+select.visible-sel{height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:14px;font-family:inherit;background:#fff;outline:none;max-width:260px;}
+input.txt-input{height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:14px;font-family:inherit;background:#fff;outline:none;min-width:160px;}
+</style>
+</head>
+<body>
+
+<div class="demo-banner">DRAFT / เดโม G5 v2 — ราคาตัวอย่าง · dev ดึง RATES จริงจาก engine</div>
+
+<div class="page">
+  <h2 style="font-size:17px;font-weight:700;color:var(--red);margin:10px 0 4px;">กลุ่ม G5 — มุ้ง (UX ใหม่ v2 · crosscheck 2026-06-13)</h2>
+  <div class="hint" style="margin-bottom:10px;">ฟอร์มนี้ = มุ้งขายเดี่ยว 17 รายการ (ซ่อน imp33/imp35 ตามมติ) · มุ้งต่อบาน G1 อยู่ในฟอร์ม G1 แล้ว</div>
+
+  <!-- ======= STEP 0: โหมด B — บนสุดเสมอ ======= -->
+  <div class="card-modeB" id="modeB-card">
+    <label class="modeB-head" onclick="toggleModeB()">
+      <input type="checkbox" id="chk-modeB" onclick="event.stopPropagation();toggleModeB()">
+      ติดมุ้งบานเดิม (โหมด B)
+      <span style="font-size:12px;color:#BF360C;background:#FFCCBC;padding:1px 7px;border-radius:4px;font-weight:700;">ลูกค้าเก่ามาเพิ่มมุ้ง</span>
+    </label>
+    <div class="modeB-body" id="modeB-body">
+      <div class="hint" style="margin-bottom:8px;">ราคา/ตร.ม. เท่าโหมด A · กรอกค่าเสริมถ้ารางเดิมใช้ไม่ได้</div>
+      <div class="field">
+        <span class="lbl">ค่าเสริม<br>กล่อง/ราง</span>
+        <input type="number" id="extra-cost" min="0" step="500" value="0" placeholder="0 = ไม่เสริม" style="width:120px;" oninput="calcMosq()">
+        <span class="unit">บาท</span>
+      </div>
+      <div class="note">0 = ไม่มีค่าเสริม · กรอก >0 เมื่อรางเดิมชำรุดหรือต้องเปลี่ยนกล่อง</div>
+    </div>
+  </div>
+
+  <!-- ======= STEP 1: เลือกชนิดมุ้ง ======= -->
+  <div class="card">
+    <div class="card-title">เลือกชนิดมุ้ง <span class="badge">17 รายการ</span> <span class="sub">เฟรม 4 · จีบ 9 · ม้วน 4</span></div>
+
+    <!-- หมวด A: มุ้งเฟรม (4 รุ่น · รวม imp30 แม่เหล็กพับตามมติ) -->
+    <div class="mosq-section-head">มุ้งเฟรม (เฟรมอลู · ติดตั้งนอกบาน)</div>
+
+    <div class="mosq-card on" data-id="imp21" data-has-fabric="1" data-has-open="1" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🔵</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งเฟรมเล็ก</div>
+        <div class="mc-desc">ผ้าไฟเบอร์ · บานเปิด/เลื่อน/กระทุ้ง/ยก (ห้าม PC)</div>
+        <div class="mc-price" id="mp-imp21">IMP21 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="imp22" data-has-fabric="1" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🔵</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งเฟรมเล็กติดตาย</div>
+        <div class="mc-desc">ผ้าไฟเบอร์ · ติดตาย (ไม่เลื่อน/เปิด)</div>
+        <div class="mc-price">IMP22 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="imp23" data-has-fabric="1" data-has-open="1" data-mscolor="1" data-has-safety="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🔵</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งเฟรมใหญ่</div>
+        <div class="mc-desc">ผ้าไฟเบอร์ · เลื่อน/เปิด/กระทุ้ง/ยก (ตัด PC)</div>
+        <div class="mc-price">IMP23 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <!-- imp30 ย้ายจาก "อื่นๆ" → เฟรม ตามมติ HANDOFF-G5-FINAL จุด G -->
+    <div class="mosq-card" data-id="imp30" data-has-fabric="0" data-has-open="0" data-mscolor="0" onclick="selectMosq(this)">
+      <div class="mc-icon">🔘</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งแม่เหล็ก พับเปิดได้</div>
+        <div class="mc-desc">ไม่มีเฟรมแข็ง · พับเปิดด้วยแม่เหล็ก</div>
+        <div class="mc-price">IMP30 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <!-- หมวด B: มุ้งจีบ -->
+    <div class="mosq-section-head" style="margin-top:12px;">มุ้งจีบ</div>
+
+    <div class="mosq-card" data-id="imp28" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ ตีนตะขาบ รุ่งรางเตี้ย</div>
+        <div class="mc-desc">ผ้าไฟเบอร์ · ใช้กับบานรางเตี้ยแบบพิเศษ</div>
+        <div class="mc-price">IMP28 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_sd_basic" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ SD พื้นฐาน</div>
+        <div class="mc-desc">สีขาว/ดำ · min 3,500</div>
+        <div class="mc-price">MJ_SD_BASIC — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_blackout" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ Blackout รังผึ้งทึบแสง</div>
+        <div class="mc-desc">ทึบ 100% · ป้องกันแสงและยุง · min 3,500</div>
+        <div class="mc-price">MJ_BLACKOUT — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_sd_twoway" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง</div>
+        <div class="mc-desc">SD + ม่านรังผึ้งใน 1 ชุด · min 4,000</div>
+        <div class="mc-price">MJ_SD_TWOWAY — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_screen_safety" data-has-fabric="0" data-has-open="0" data-mscolor="0" onclick="selectMosq(this)">
+      <div class="mc-icon">🔴</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบนิรภัย</div>
+        <div class="mc-desc">สีขาว/ดำ/เทา · ผ้านิรภัยสีดำ/เทา · min 5,000</div>
+        <div class="mc-price">MJ_SCREEN_SAFETY — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_keep_twoway" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ ตีนตะขาบ + ทูเวย์</div>
+        <div class="mc-desc">ตีนตะขาบ + ม่านรังผึ้ง · เฉพาะประตู · min 6,000</div>
+        <div class="mc-price">MJ_KEEPRAIL_TWOWAY — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_keep_honey" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">🟤</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งจีบ ตีนตะขาบ + ม่านรังผึ้ง</div>
+        <div class="mc-desc">ตีนตะขาบ + ม่านรังผึ้งอย่างเดียว · min 4,500</div>
+        <div class="mc-price">MJ_KEEPRAIL_HONEY — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <!-- imp31/imp32 อยู่ในหมวดจีบ ตามมติ MOSQ_GRP_PRODS.pleat ใน index.html -->
+    <div class="mosq-card" data-id="imp31" data-has-fabric="0" data-has-open="0" data-mscolor="0" onclick="selectMosq(this)">
+      <div class="mc-icon">🔴</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งนิรภัย สแตนเลส 0.8 มม.</div>
+        <div class="mc-desc">กรอบสำเร็จ · รวม PC · ติดล้นนอกวงกบ</div>
+        <div class="mc-price">IMP31 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="imp32" data-has-fabric="0" data-has-open="0" data-mscolor="0" onclick="selectMosq(this)">
+      <div class="mc-icon">🔴</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งนิรภัย สแตนเลส เสริมวงกบ</div>
+        <div class="mc-desc">ขอบวงกบอลูพิเศษ · ติดล้นนอกวงกบ</div>
+        <div class="mc-price">IMP32 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <!-- หมวด C: มุ้งม้วน (4 รุ่น) — imp29 + mj_kick 3 รุ่น -->
+    <div class="mosq-section-head" style="margin-top:12px;">มุ้งม้วน</div>
+
+    <div class="mosq-card" data-id="imp29" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">⚪</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งม้วน</div>
+        <div class="mc-desc">ผ้าไฟเบอร์ · เลื่อน/กระทุ้ง/ยก</div>
+        <div class="mc-price">IMP29 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_kick_150" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">⚪</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งม้วนเก็บข้างเตะได้ รุ่น 150</div>
+        <div class="mc-desc">กว้าง ≤150 ซม. · min 15,000 · ติดล้นนอกวงกบ</div>
+        <div class="mc-price">MJ_KICK_150 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_kick_300" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">⚪</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งม้วนเก็บข้างเตะได้ รุ่น 300</div>
+        <div class="mc-desc">กว้าง 151–300 ซม. · min 37,500 · ติดล้นนอกวงกบ</div>
+        <div class="mc-price">MJ_KICK_300 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <div class="mosq-card" data-id="mj_kick_600" data-has-fabric="0" data-has-open="0" data-mscolor="1" onclick="selectMosq(this)">
+      <div class="mc-icon">⚪</div>
+      <div class="mc-body">
+        <div class="mc-name">มุ้งม้วนเก็บข้างเตะได้ รุ่น 600</div>
+        <div class="mc-desc">กว้าง 301–600 ซม. · min 67,500 · ติดล้นนอกวงกบ</div>
+        <div class="mc-price">MJ_KICK_600 — dev ดึงจาก RATES</div>
+      </div>
+    </div>
+
+    <!-- หมายเหตุ: imp31/imp32 อยู่ในหมวดจีบตามมติ HANDOFF-G5-FINAL จุด G (MOSQ_GRP_PRODS.pleat) -->
+    <!-- หมายเหตุ: imp33/imp35 ซ่อนจากเมนู ตามมติ — ยังมีเรต/PRODUCTS อยู่ใน engine -->
+  </div>
+
+  <!-- ======= STEP 2: ประเภทบาน ======= -->
+  <div class="card">
+    <div class="card-title">ประเภทบาน <span class="sub">(มีผลต่อ min)</span></div>
+    <div class="chips">
+      <button class="chip on" data-val="door" onclick="chipPick(this,'itype');calcMosq()">ประตู</button>
+      <button class="chip" data-val="window" onclick="chipPick(this,'itype');calcMosq()">หน้าต่าง</button>
+    </div>
+    <input type="hidden" id="h-itype" value="door">
+  </div>
+
+  <!-- ======= STEP 3: ขนาด + จำนวน ======= -->
+  <div class="card">
+    <div class="card-title">ขนาด + จำนวน</div>
+    <div class="field">
+      <span class="lbl">กว้าง</span>
+      <input type="number" id="mosq-w" min="0.3" step="0.1" value="1.20" oninput="calcMosq()">
+      <span class="unit">ม.</span>
+      <span class="unit">×</span>
+      <span class="lbl" style="min-width:0;">สูง</span>
+      <input type="number" id="mosq-h" min="0.3" step="0.1" value="2.00" oninput="calcMosq()">
+      <span class="unit">ม.</span>
+    </div>
+    <div class="field" style="margin-top:4px;">
+      <span class="lbl">จำนวน</span>
+      <div class="stepper">
+        <button class="step-btn" onclick="step('mosq-qty',-1);calcMosq()">−</button>
+        <input type="number" class="step-val" id="mosq-qty" value="1" min="1" oninput="calcMosq()">
+        <button class="step-btn" onclick="step('mosq-qty',1);calcMosq()">+</button>
+      </div>
+      <span class="unit">ชิ้น/บาน</span>
+    </div>
+    <div class="note blue" id="size-note">พื้นที่: 2.40 ตร.ม. (× 1 บาน)</div>
+  </div>
+
+  <!-- ======= STEP 4: ผ้ามุ้ง + สีผ้า (ผูกผ้า) + ลักษณะการเปิด (เฉพาะ screen_addon: imp21/22/23) ======= -->
+  <!-- ลำดับตาม HANDOFF-G5-FINAL ข้อ 4: "ผ้ามุ้ง + สีผ้า (ผูกผ้า) + ลักษณะการเปิด — ชิปหลัก เฉพาะ screen_addon" -->
+  <!-- ลักษณะการเปิด ไม่ใช่ card แยก — รวมอยู่ใน card นี้ โผล่เฉพาะ imp21/imp23 -->
+  <div class="card hide" id="card-fabric">
+    <div class="card-title">ผ้ามุ้ง <span class="badge">สำคัญ · มีผลต่อราคา</span></div>
+    <div class="fabric-chip-label">ชนิดผ้า</div>
+    <div class="chips sm" id="chips-fabric">
+      <button class="chip on" data-val="fiber" onclick="chipPick(this,'fabric');rebuildFabricColor('fiber');calcMosq()">ไฟเบอร์ เทา/ดำ</button>
+      <button class="chip" data-val="cat" onclick="chipPick(this,'fabric');rebuildFabricColor('cat');calcMosq()">กันแมว/หมา ขาว <span style="color:var(--red)">+800</span></button>
+      <button class="chip" data-val="rat" onclick="chipPick(this,'fabric');rebuildFabricColor('rat');calcMosq()">สแตนกันหนู <span style="color:var(--red)">+1,200</span></button>
+      <!-- safety เพิ่มด้วย JS เฉพาะ imp23 (onclick เรียก rebuildFabricColor('safety') ด้วย) -->
+    </div>
+    <input type="hidden" id="h-fabric" value="fiber">
+
+    <!-- สีผ้า: ผูกกับชนิดผ้า — rebuild ด้วย rebuildFabricColor() -->
+    <!-- ตาราง: fiber=ดำ/เทา · cat=ขาว(เดียว) · rat=เงิน/ดำ · safety=ดำ(เดียว) -->
+    <div style="margin-top:10px;" id="section-fabriccolor">
+      <div class="fabric-chip-label">สีผ้า</div>
+      <div class="chips sm" id="chips-fabriccolor">
+        <!-- JS rebuild เมื่อเปลี่ยนชนิดผ้า — default fiber = ดำ on / เทา -->
+        <button class="chip on" data-val="ดำ" onclick="chipPick(this,'fabriccolor');calcMosq()">ดำ</button>
+        <button class="chip" data-val="เทา" onclick="chipPick(this,'fabriccolor');calcMosq()">เทา</button>
+      </div>
+      <input type="hidden" id="h-fabriccolor" value="ดำ">
+      <div class="hint" id="hint-fabriccolor" style="margin-top:3px;"></div>
+    </div>
+
+    <!-- ลักษณะการเปิด: รวมในการ์ดผ้า — โผล่เฉพาะ imp21/imp23 -->
+    <!-- label-only = ไม่กระทบราคา ต่อท้ายชื่อในใบเท่านั้น -->
+    <div class="hide" id="section-openstyle" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
+      <div class="fabric-chip-label">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div>
+      <div class="chips sm" style="margin-top:6px;">
+        <button class="chip on" data-val="เปิด" onclick="chipPick(this,'openstyle')">เปิด</button>
+        <button class="chip" data-val="เลื่อน" onclick="chipPick(this,'openstyle')">เลื่อน</button>
+        <button class="chip" data-val="กระทุ้ง" onclick="chipPick(this,'openstyle')">กระทุ้ง</button>
+        <button class="chip" data-val="ยก" onclick="chipPick(this,'openstyle')">ยก</button>
+      </div>
+      <input type="hidden" id="h-openstyle" value="เปิด">
+      <div class="note">ต่อท้ายชื่อในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" · ไม่บวกเงิน</div>
+    </div>
+  </div>
+
+  <!-- ======= STEP 6: ครอบวงกบอลู ======= -->
+  <div class="card">
+    <div class="card-title">ครอบวงกบอลู</div>
+    <div class="chips sm">
+      <button class="chip on" data-val="0" onclick="chipPick(this,'fcsides');calcMosq()">ไม่มี</button>
+      <button class="chip" data-val="3" onclick="chipPick(this,'fcsides');calcMosq()">3 ด้าน</button>
+      <button class="chip" data-val="4" onclick="chipPick(this,'fcsides');calcMosq()">4 ด้าน</button>
+    </div>
+    <input type="hidden" id="h-fcsides" value="0">
+  </div>
+
+  <!-- ======= Accordion: อุปกรณ์เสริม ======= -->
+  <div class="card">
+    <button class="accordion-btn" onclick="toggleAccordion(this)">
+      <span class="arr" id="acc-arr">▶</span> อุปกรณ์เสริม / รายละเอียดเพิ่มเติม
+    </button>
+    <div class="accordion-body" id="acc-body">
+
+      <!-- สีกรอบมุ้ง (เฉพาะ mscolor=1 = มุ้งที่กรอบทำสีได้) -->
+      <!-- index.html: .o-mscolor select — options ดึงจาก COLORS array (สีที่ i>=2) = ~12 สี -->
+      <!-- ดราฟนี้ใส่ตัวอย่าง 3 สี — dev ดึงครบจาก COLORS (เหมือน index บรรทัด 3159) -->
+      <div id="section-mscolor">
+        <div style="font-size:13px;font-weight:700;margin:10px 0 6px;">สีกรอบมุ้ง</div>
+        <select class="visible-sel" id="sel-mscolor" onchange="calcMosq()">
+          <option value="">ตามสีบาน (ฟรี)</option>
+          <option value="sahara">เทาซาฮาร่า (ค่าทำสี ×0.5)</option>
+          <option value="kl_special">KL อบพิเศษ (ค่าทำสี ×0.5)</option>
+          <option value="kl_wood">KL ลายไม้ (ค่าทำสี ×0.5)</option>
+          <!-- dev: เพิ่มสีอื่นๆ จาก COLORS array (i>=2) ครบทุกรายการ -->
+        </select>
+        <div class="note" style="margin-top:5px;">ตามสีบาน = ฟรี · สีพิเศษ = dev คิด colorPrice() ×0.5 · ไม่โชว์สำหรับ imp30/imp31/imp32/mj_screen_safety (mscolor=false)</div>
+      </div>
+
+      <!-- งานเสริม -->
+      <div style="margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px;">งานเสริม/วิศวกรรม</div>
+        <input type="text" class="txt-input" id="extra-work" placeholder="ระบุถ้ามี" oninput="calcMosq()">
+      </div>
+
+      <!-- รื้อของเดิม -->
+      <div style="margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+          <input type="checkbox" id="chk-removeold" style="width:20px;height:20px;" onchange="calcMosq()">
+          รื้อของเดิม (รายการนี้)
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ======= Price bar ======= -->
+<div class="price-bar">
+  <div>
+    <div class="plbl" id="price-label">มุ้งเฟรมเล็ก · 1.20×2.00 ม. · 1 บาน</div>
+    <div class="plbl" id="price-breakdown" style="font-size:10px;opacity:.7;margin-top:1px;"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <span class="pval" id="price-total">฿0</span>
+    <span class="pdemo">เดโม</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+var S = {
+  mosqId: 'imp21',
+  itype: 'door',
+  fabric: 'fiber',
+  fabriccolor: 'ดำ',
+  openstyle: 'เปิด',
+  fcsides: '0',
+  mscolor: '',
+  modeB: false,
+  extraCost: 0,
+};
+
+// DEMO rates (dev ดึงจาก RATES จริง)
+var DEMO = {
+  imp21: {name:'มุ้งเฟรมเล็ก', rate:700, minDoor:2400, minWin:1200, hasFabric:true, hasOpen:true, mscolor:true},
+  imp22: {name:'มุ้งเฟรมเล็กติดตาย', rate:600, minDoor:1500, minWin:800, hasFabric:true, hasOpen:false, mscolor:true},
+  imp23: {name:'มุ้งเฟรมใหญ่', rate:1200, minDoor:7200, minWin:4800, hasFabric:true, hasOpen:true, hasSafety:true, mscolor:true},
+  imp28: {name:'มุ้งจีบ ตีนตะขาบ', rate:800, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  imp29: {name:'มุ้งม้วน', rate:700, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  imp30: {name:'มุ้งแม่เหล็ก', rate:500, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:false},
+  imp31: {name:'มุ้งนิรภัย สแตน 0.8มม.', rate:1100, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:false},
+  imp32: {name:'มุ้งนิรภัย เสริมวงกบ', rate:1300, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:false},
+  imp33: {name:'มุ้งกันแมว/หมา', rate:1500, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:false},
+  imp35: {name:'มุ้งสแตน 0.3มม. กันหนู', rate:1800, minDoor:0, minWin:0, hasFabric:false, hasOpen:false, mscolor:false},
+  mj_sd_basic: {name:'มุ้งจีบ SD', rate:2500, minDoor:3500, minWin:3500, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_blackout: {name:'มุ้งจีบ Blackout', rate:2500, minDoor:3500, minWin:3500, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_sd_twoway: {name:'มุ้งจีบ SD + ทูเวย์', rate:4000, minDoor:4000, minWin:4000, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_screen_safety: {name:'มุ้งจีบนิรภัย', rate:3000, minDoor:5000, minWin:5000, hasFabric:false, hasOpen:false, mscolor:false},
+  mj_keep_twoway: {name:'มุ้งจีบ ตีนตะขาบ + ทูเวย์', rate:6000, minDoor:6000, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_keep_honey: {name:'มุ้งจีบ ตีนตะขาบ + รังผึ้ง', rate:4500, minDoor:4500, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_kick_150: {name:'มุ้งม้วนเตะได้ รุ่น150', rate:3000, minDoor:15000, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_kick_300: {name:'มุ้งม้วนเตะได้ รุ่น300', rate:3500, minDoor:37500, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+  mj_kick_600: {name:'มุ้งม้วนเตะได้ รุ่น600', rate:4000, minDoor:67500, minWin:0, hasFabric:false, hasOpen:false, mscolor:true},
+};
+
+function fmt(n){ return Math.round(n).toLocaleString('th-TH'); }
+
+// ============================================================
+// SELECT MOSQ
+// ============================================================
+function selectMosq(card){
+  document.querySelectorAll('.mosq-card').forEach(function(c){ c.classList.remove('on'); });
+  card.classList.add('on');
+  S.mosqId = card.dataset.id;
+
+  var d = DEMO[S.mosqId] || {};
+
+  // ผ้ามุ้ง card (screen_addon: imp21/22/23 เท่านั้น)
+  var cardFab = document.getElementById('card-fabric');
+  if(d.hasFabric){
+    cardFab.classList.remove('hide');
+    // ปุ่ม safety เฉพาะ imp23
+    var chips = document.getElementById('chips-fabric');
+    var existingSafety = chips.querySelector('[data-val="safety"]');
+    if(d.hasSafety && !existingSafety){
+      var btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.dataset.val = 'safety';
+      btn.innerHTML = 'นิรภัยสแตน 304 ดำ <span style="color:var(--red)">tier</span>';
+      btn.onclick = function(){ chipPick(this,'fabric'); rebuildFabricColor('safety'); calcMosq(); };
+      chips.appendChild(btn);
+    } else if(!d.hasSafety && existingSafety){
+      existingSafety.remove();
+      if(S.fabric === 'safety'){ S.fabric = 'fiber'; syncChips('chips-fabric','h-fabric','fiber'); rebuildFabricColor('fiber'); }
+    }
+    // rebuild สีผ้าตามผ้าปัจจุบัน (กันสีเดิมค้างหลังเปลี่ยนรุ่น)
+    rebuildFabricColor(S.fabric);
+  } else {
+    cardFab.classList.add('hide');
+  }
+
+  // ลักษณะการเปิด — อยู่ใน card-fabric (section-openstyle) ไม่ใช่ card แยก
+  var secOpen = document.getElementById('section-openstyle');
+  if(secOpen){
+    if(d.hasOpen) secOpen.classList.remove('hide');
+    else secOpen.classList.add('hide');
+  }
+
+  // สีกรอบ section (accordion)
+  var secMs = document.getElementById('section-mscolor');
+  if(secMs){
+    if(d.mscolor) secMs.classList.remove('hide');
+    else secMs.classList.add('hide');
+  }
+
+  calcMosq();
+}
+
+// ============================================================
+// CHIP PICK (generic)
+// ============================================================
+function chipPick(btn, group){
+  var parent = btn.parentElement;
+  parent.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  S[group.replace(/-/g,'')] = btn.dataset.val || '';
+  var hidden = document.getElementById('h-' + group);
+  if(hidden) hidden.value = btn.dataset.val || '';
+}
+
+function syncChips(chipsId, hiddenId, val){
+  var chips = document.getElementById(chipsId);
+  if(!chips) return;
+  chips.querySelectorAll('.chip').forEach(function(c){
+    c.classList.toggle('on', c.dataset.val === val);
+  });
+  var hidden = document.getElementById(hiddenId);
+  if(hidden) hidden.value = val;
+}
+
+// ============================================================
+// REBUILD FABRIC COLOR (ผูกสีผ้ากับชนิดผ้า — ตามมติ HANDOFF-G5-FINAL จุด E)
+// ============================================================
+// ตาราง: fiber=ดำ/เทา · cat=ขาว(เดียว) · rat=เงิน/ดำ · safety=ดำ(เดียว)
+// สีเดียว = ชิปติดตาย + ป้าย "สีเดียว" (disabled)
+var FABRIC_COLOR_MAP = {
+  fiber: ['ดำ','เทา'],
+  cat: ['ขาว'],
+  rat: ['เงิน','ดำ'],
+  safety: ['ดำ']
+};
+function rebuildFabricColor(fab){
+  var wrap = document.getElementById('chips-fabriccolor');
+  var hidden = document.getElementById('h-fabriccolor');
+  var hint = document.getElementById('hint-fabriccolor');
+  if(!wrap) return;
+  var cols = FABRIC_COLOR_MAP[fab] || ['ดำ'];
+  var fixed = cols.length === 1;
+  var html = cols.map(function(c,i){
+    if(fixed){
+      return '<button class="chip on" style="opacity:.7;cursor:default;" disabled>'+c+'</button>';
+    }
+    return '<button class="chip'+(i===0?' on':'')+'" data-val="'+c+'" onclick="chipPick(this,\'fabriccolor\');calcMosq()">'+c+'</button>';
+  }).join('');
+  if(fixed){ html += '<span style="font-size:11px;color:#0369A1;padding:0 6px;align-self:center;">สีเดียว</span>'; }
+  wrap.innerHTML = html;
+  if(hidden){ hidden.value = cols[0]; S.fabriccolor = cols[0]; }
+  if(hint){ hint.textContent = fixed ? '' : ''; }
+}
+
+// ============================================================
+// STEPPER
+// ============================================================
+function step(id, delta){
+  var el = document.getElementById(id);
+  if(!el) return;
+  var v = parseInt(el.value) || 1;
+  var min = parseInt(el.min) || 1;
+  el.value = Math.max(min, v + delta);
+}
+
+// ============================================================
+// MODE B toggle
+// ============================================================
+function toggleModeB(){
+  var chk = document.getElementById('chk-modeB');
+  var body = document.getElementById('modeB-body');
+  var card = document.getElementById('modeB-card');
+  // Let checkbox state lead
+  S.modeB = chk.checked;
+  if(S.modeB){
+    body.classList.add('open');
+    card.style.borderWidth = '3px';
+  } else {
+    body.classList.remove('open');
+    card.style.borderWidth = '2px';
+  }
+  calcMosq();
+}
+
+// ============================================================
+// ACCORDION
+// ============================================================
+function toggleAccordion(btn){
+  var body = document.getElementById('acc-body');
+  var arr = document.getElementById('acc-arr');
+  body.classList.toggle('open');
+  arr.classList.toggle('open');
+}
+
+// ============================================================
+// CALC (demo — dev ดึง engine จริง)
+// ============================================================
+function calcMosq(){
+  var d = DEMO[S.mosqId];
+  if(!d){ document.getElementById('price-total').textContent = '—'; return; }
+
+  var W = parseFloat(document.getElementById('mosq-w').value) || 0;
+  var H = parseFloat(document.getElementById('mosq-h').value) || 0;
+  var qty = parseInt(document.getElementById('mosq-qty').value) || 1;
+  var itype = document.getElementById('h-itype').value || 'door';
+  var fabric = document.getElementById('h-fabric') ? document.getElementById('h-fabric').value : 'fiber';
+
+  var A = W * H;
+  document.getElementById('size-note').textContent = 'พื้นที่: ' + (A).toFixed(2) + ' ตร.ม. (× ' + qty + ' บาน)';
+
+  // ราคาฐาน
+  var rate = d.rate;
+  if(fabric === 'cat') rate += 800;
+  else if(fabric === 'rat') rate += 1200;
+  else if(fabric === 'safety') rate += 3500;  // demo tier
+
+  var base = A * rate;
+  var minV = itype === 'door' ? d.minDoor : d.minWin;
+  base = Math.max(base, minV);
+  var total = base * qty;
+
+  // ค่าเสริมกล่อง/ราง (โหมด B)
+  S.modeB = document.getElementById('chk-modeB').checked;
+  var extra = S.modeB ? (parseFloat(document.getElementById('extra-cost').value) || 0) : 0;
+  total += extra;
+
+  // price bar
+  var msgs = [];
+  msgs.push(d.name + ' ' + W.toFixed(2) + '×' + H.toFixed(2) + ' ม. ×' + qty);
+  if(fabric && fabric !== 'fiber') msgs.push('ผ้า ' + fabric);
+  if(extra > 0) msgs.push('ค่าเสริม +' + fmt(extra));
+
+  document.getElementById('price-label').textContent = d.name + ' · ' + W.toFixed(2) + '×' + H.toFixed(2) + ' ม. × ' + qty + ' บาน';
+  document.getElementById('price-breakdown').textContent = (minV > 0 && base <= minV * qty / qty) ? 'min ' + fmt(minV) + '/บาน' : (rate + '/ตร.ม.');
+  document.getElementById('price-total').textContent = '฿' + fmt(total);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+rebuildFabricColor('fiber'); // populate สีผ้า default (fiber = ดำ/เทา)
+calcMosq();
+</script>
+</body>
+</html>

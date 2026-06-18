@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUDIT G2 — ตรวจความตรงใบเสนอราคา vs ใบจริง — 2026-06-17</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;background:#f7f7f7;color:#1a1a1a;font-size:14px;line-height:1.6;}
+  .page{max-width:1100px;margin:0 auto;padding:24px;}
+
+  /* Header */
+  .report-header{background:#B3151D;color:#fff;padding:28px 32px;border-radius:10px;margin-bottom:28px;}
+  .report-header h1{font-size:22px;font-weight:700;margin-bottom:6px;}
+  .report-header .sub{font-size:13px;opacity:0.85;}
+  .report-header .meta{margin-top:12px;font-size:13px;display:flex;gap:32px;flex-wrap:wrap;}
+  .report-header .meta span{opacity:0.9;}
+
+  /* Summary cards */
+  .summary-cards{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+  .card{flex:1;min-width:160px;background:#fff;border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-top:4px solid #ccc;}
+  .card.ok{border-color:#27ae60;}
+  .card.warn{border-color:#f39c12;}
+  .card.err{border-color:#B3151D;}
+  .card.info{border-color:#3498db;}
+  .card .num{font-size:32px;font-weight:700;line-height:1.1;}
+  .card .lbl{font-size:12px;color:#666;margin-top:4px;}
+  .card.ok .num{color:#27ae60;}
+  .card.warn .num{color:#f39c12;}
+  .card.err .num{color:#B3151D;}
+  .card.info .num{color:#3498db;}
+
+  /* Section headers */
+  h2{font-size:17px;font-weight:700;color:#B3151D;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #B3151D;}
+  h3{font-size:15px;font-weight:600;color:#333;margin:18px 0 10px;}
+
+  /* Priority pills */
+  .pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;}
+  .p1{background:#fde8e8;color:#B3151D;}
+  .p2{background:#fef3cd;color:#856404;}
+  .p3{background:#e8f5e9;color:#1b5e20;}
+  .ok-pill{background:#e8f5e9;color:#1b5e20;}
+  .na-pill{background:#e3f2fd;color:#1565c0;}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin-bottom:20px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  th{background:#B3151D;color:#fff;padding:10px 14px;text-align:left;font-size:13px;font-weight:600;}
+  td{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:#fafafa;}
+  .diff-old{text-decoration:line-through;color:#B3151D;}
+  .diff-new{color:#27ae60;font-weight:600;}
+  .miss{color:#B3151D;font-weight:600;}
+  .match{color:#27ae60;}
+  .partial{color:#f39c12;}
+
+  /* Invoice embed */
+  .quote-embed{background:#fff;border:2px solid #e0e0e0;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;}
+  .quote-embed table{box-shadow:none;margin:0;}
+  .quote-embed th{background:#555;font-size:12px;padding:7px 12px;}
+  .quote-embed td{padding:7px 12px;font-size:12px;}
+  .quote-header{font-weight:700;color:#B3151D;margin-bottom:10px;font-size:14px;}
+
+  /* Invoice block comparison */
+  .inv-block{background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .inv-block h4{font-size:14px;font-weight:700;color:#333;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee;}
+  .block-row{display:grid;grid-template-columns:1fr 1fr 120px;gap:12px;margin-bottom:8px;padding:8px 0;border-bottom:1px dashed #f0f0f0;}
+  .block-row:last-child{border-bottom:none;}
+  .blabel{font-size:11px;color:#999;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+  .bval{font-size:13px;}
+
+  /* Root cause box */
+  .rc-box{background:#fde8e8;border-left:4px solid #B3151D;padding:12px 16px;border-radius:4px;margin:10px 0;font-size:13px;}
+  .rc-box.warn{background:#fef3cd;border-color:#f39c12;}
+  .rc-box.ok{background:#e8f5e9;border-color:#27ae60;}
+
+  /* UX checklist */
+  .checklist{background:#fff;border-radius:8px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .checklist ul{list-style:none;padding:0;}
+  .checklist li{padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:flex-start;gap:10px;}
+  .checklist li:last-child{border-bottom:none;}
+  .checkbox-sq{width:18px;height:18px;border:2px solid #ccc;border-radius:3px;flex-shrink:0;margin-top:1px;}
+
+  /* Golden snapshot */
+  .snap-ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:14px 20px;color:#1b5e20;}
+  .snap-warn{background:#fef3cd;border:1px solid #ffe082;border-radius:8px;padding:14px 20px;color:#856404;}
+
+  /* Divider */
+  .divider{height:1px;background:#e0e0e0;margin:24px 0;}
+
+  /* Footnote */
+  .footnote{font-size:11px;color:#999;margin-top:32px;padding-top:12px;border-top:1px solid #eee;}
+
+  @media print{
+    body{background:#fff;}
+    .page{padding:10px;}
+    .report-header{border-radius:0;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ===== HEADER ===== -->
+<div class="report-header">
+  <h1>AUDIT G2 — ตรวจความตรงใบเสนอราคา vs ใบจริงหน้างาน</h1>
+  <div class="sub">กลุ่ม 2: รั้วระแนง / ราวกันตก / ระแนงพิเศษ · ตรวจ 4 มิติ (เหมือน / ครบ / ราคา / 5 บล็อก)</div>
+  <div class="meta">
+    <span>วันที่ตรวจ: 2026-06-17</span>
+    <span>ใบจริงที่อ่าน: 5 ใบ (บุญญารัตน์ · นก · หญิง · ชวลิต · ธนบัตร · ยี)</span>
+    <span>engine: public/calculator/index.html (branch quickmode-v2-allG)</span>
+    <span>READ-ONLY — ไม่แก้โค้ด</span>
+  </div>
+</div>
+
+<!-- ===== SUMMARY CARDS ===== -->
+<h2>1. สรุปภาพรวม</h2>
+<div class="summary-cards">
+  <div class="card err">
+    <div class="num">6</div>
+    <div class="lbl">P1 ผิดแน่ / ขาดข้อมูล</div>
+  </div>
+  <div class="card warn">
+    <div class="num">4</div>
+    <div class="lbl">P2 น่าสงสัย / เช็คซ้ำ</div>
+  </div>
+  <div class="card ok">
+    <div class="num">6</div>
+    <div class="lbl">P3 ผ่าน / จัดสวย</div>
+  </div>
+  <div class="card info">
+    <div class="num">5</div>
+    <div class="lbl">ใบจริงที่ตรวจ (G2)</div>
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th>ใบจริง</th>
+    <th>A. เหมือน</th>
+    <th>B. ครบ</th>
+    <th>C. ราคา</th>
+    <th>D. 5 บล็อก / UX</th>
+    <th>จุดเด่น</th>
+  </tr>
+  <tr>
+    <td><strong>บุญญารัตน์</strong><br><small>68031401 (G2: ข้อ3,23-26)</small></td>
+    <td><span class="pill p2">🟡 บางส่วน</span></td>
+    <td><span class="pill p1">🔴 ขาด</span></td>
+    <td><span class="pill p3">🟢 ตรง</span></td>
+    <td><span class="pill p2">🟡 เช็ค</span></td>
+    <td>ระแนง+ประตูรั้ว ลายไม้ Golden Teak SMS · ราวกันตก</td>
+  </tr>
+  <tr>
+    <td><strong>นก</strong><br><small>QT2024080005 (G2: ข้อ7)</small></td>
+    <td><span class="pill p1">🔴 ต่าง</span></td>
+    <td><span class="pill p1">🔴 ขาด</span></td>
+    <td><span class="pill p2">🟡 ตรวจไม่ได้</span></td>
+    <td><span class="pill p2">🟡 เช็ค</span></td>
+    <td>รั้วระแนง+ระแนงใต้หลังคาลายไม้ · ขนาด/สเปกพิเศษ</td>
+  </tr>
+  <tr>
+    <td><strong>หญิง</strong><br><small>QT2024080066 (G2: ข้อ2)</small></td>
+    <td><span class="pill p2">🟡 บางส่วน</span></td>
+    <td><span class="pill p1">🔴 ขาด</span></td>
+    <td><span class="pill p2">🟡 ตรวจไม่ได้</span></td>
+    <td><span class="pill p2">🟡 เช็ค</span></td>
+    <td>ระแนงบังตา 1"x1.6" โชว์ 1.6" ห่าง 3ซม · สีอบขาว</td>
+  </tr>
+  <tr>
+    <td><strong>ชวลิต</strong><br><small>QT2025070050 (G2: ข้อ3)</small></td>
+    <td><span class="pill p3">🟢 ตรง</span></td>
+    <td><span class="pill p3">🟢 ครบ</span></td>
+    <td><span class="pill p3">🟢 ตรง</span></td>
+    <td><span class="pill p3">🟢 ครบ</span></td>
+    <td>ราวกันตกกระจก (imp1 หมุดแปะข้าง) กระจก 12มม</td>
+  </tr>
+  <tr>
+    <td><strong>ธนบัตร</strong><br><small>QT2023100045 (G2: ข้อ4)</small></td>
+    <td><span class="pill p2">🟡 บางส่วน</span></td>
+    <td><span class="pill p1">🔴 ขาด</span></td>
+    <td><span class="pill p2">🟡 ตรวจไม่ได้</span></td>
+    <td><span class="pill p2">🟡 เช็ค</span></td>
+    <td>ระแนงบังตา 1x5ซม โชว์5ซม + หลังคา 2 แบบ + ระแนงรั้ว</td>
+  </tr>
+</table>
+
+<!-- ===== SECTION 2: รายใบ ===== -->
+<h2>2. ตรวจรายใบ</h2>
+
+<!-- ใบบุญญารัตน์ G2 -->
+<div class="inv-block">
+  <h4>ใบ บุญญารัตน์ (68031401) — รายการ G2: ข้อ 3, 23, 24, 25, 26</h4>
+  <table>
+    <tr>
+      <th>รายการ / หัวข้อ</th>
+      <th>ใบจริงเขียน</th>
+      <th>ระบบออก (render)</th>
+      <th>สถานะ</th>
+    </tr>
+    <tr>
+      <td><strong>ข้อ3</strong> ราวกันตกกระจก (ทางเข้าหลักหน้าบ้าน)</td>
+      <td>ราวกันตกกระจก · <em>ใบจริงไม่ระบุขนาด</em><br>รายละเอียด: กระจกเทมเปอร์ใส หนา 10 มม. · อุปกรณ์มาตรฐาน ผู้ผลิต สแตนเลสสีเงิน · ราวสแตนเลสมาตรฐาน สีเงิน</td>
+      <td>imp1 (หมุดแปะข้าง): "ราวกันตกกระจกเฉียง หมุดแปะข้าง" · หมุดสแตนเลสสีเงิน · กระจกเทมเปอร์ใส หนา 10 มม.</td>
+      <td><span class="pill p2">🟡 เช็คซ้ำ</span><br><small>ใบจริงบอก "ราวสแตนเลส" — น่าจะเป็น imp1 หรือ imp2 (ไม่ใช่ imp3 ที่มีราวจับอลู) · ระบบออกครบสำหรับ imp1</small></td>
+    </tr>
+    <tr>
+      <td><strong>ข้อ23</strong> ประตูระแนงบานเปิด + ระแนงติดตายด้านข้าง</td>
+      <td>"ประตูระแนงอลูมิเนียมบานเปิด พร้อมระแนงติดตายด้านข้าง"<br>OPTION: ลายไม้ Golden Teak SMS +5,000 บาท<br>รายละเอียด: ระแนงกล่อง 1"x1.6" โชว์ 1" เว้น 2.5ซม</td>
+      <td>fence_gate ปัจจุบัน = ประตูรั้วระแนง (บานเลื่อน) เท่านั้น · <strong class="miss">ไม่มี product บานเปิด (swing) สำหรับประตูรั้วระแนง</strong></td>
+      <td><span class="pill p1">🔴 P1 ขาด product</span><br><small>root cause: fence_gate เป็น slide เท่านั้น ไม่มี fence_swing หรือ o-gatetype=swing · ต้องเพิ่ม type หรือ product</small></td>
+    </tr>
+    <tr>
+      <td><strong>ข้อ24</strong> ระแนงอลูมิเนียมบังตาติดตาย</td>
+      <td>"ระแนงอลูมิเนียมบังตาติดตาย"<br>OPTION ลายไม้ Golden Teak SMS +10,000 บาท<br>รายละเอียด: ระแนงกล่อง 1"x1.6" โชว์ 1" เว้น 2.5ซม · สีเทาซาฮาร่า</td>
+      <td>rn14 (1"x1.6" โชว์ 1" 5ซม) = "บังตาผนังระแนง 1"x1.6" โชว์ 1" 5cm. รวมโครง" · สีอบขาว/ลายไม้ = อบสีลายไม้</td>
+      <td><span class="pill p2">🟡 บางส่วน</span><br><small>ชื่อ product ตรง · ระยะห่าง: ใบจริงบอก 2.5ซม แต่ระบบ rn14 = 5ซม · rn16 = 3ซม · rn18 = 2ซม → ควรใช้ rn18 (2ซม) ไม่ใช่ rn14 (5ซม)</small></td>
+    </tr>
+    <tr>
+      <td><strong>ข้อ25,26</strong> ประตูระแนงบานเลื่อนเปิดคู่กลางรางบน + ระแนงติดตายด้านข้าง</td>
+      <td>"บานเลื่อนเปิดคู่กลางรางบน" (ทั้ง 2 ข้อ)<br>OPTION ลายไม้ Golden Teak SMS +19,500/+25,000<br>หมายเหตุ: "รอสรุปรูปแบบบานเลื่อน"</td>
+      <td>fence_gate ปัจจุบัน: ออก "บานเลื่อนเปิดคู่กลางรางล่าง" เท่านั้น · <strong class="miss">ไม่มี option รางบน (top rail)</strong></td>
+      <td><span class="pill p1">🔴 P1 ขาด option รางบน</span><br><small>root cause: o-railtype มีแค่ straight/curved (รางล่าง) · ไม่มี top_rail option สำหรับประตูรั้วระแนง</small></td>
+    </tr>
+    <tr>
+      <td><strong>OPTION ลายไม้</strong> ทุกรายการ G2</td>
+      <td>OPTION ระบุ "อลูมิเนียมลายไม้สี Golden Teak SMS" ชัดเจน</td>
+      <td>ระบบออก "อบสีลายไม้" (o-gfin=อบสีลายไม้ / o-finish=2000) · ไม่ระบุ "Golden Teak SMS"</td>
+      <td><span class="pill p1">🔴 P1 ขาดชื่อสีจริง</span><br><small>root cause: o-gfin/o-finish ไม่เก็บชื่อสี "Golden Teak SMS" ไว้ · ออกใบแค่ "อบสีลายไม้" ไม่พอสำหรับใบลูกค้า</small></td>
+    </tr>
+    <tr>
+      <td><strong>5 บล็อก</strong> โครงสร้างใบ</td>
+      <td>ใบจริง: หัวรายการ → รายการ(งาน) → OPTION(แดง) → หมายเหตุ → รายละเอียด</td>
+      <td>render ปัจจุบัน: มี 5 บล็อก (หัวรายการ / รายการ / OPTION / หมายเหตุ / รายละเอียด) ตามที่ควร</td>
+      <td><span class="pill p3">🟢 ครบ</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ใบนก G2 -->
+<div class="inv-block">
+  <h4>ใบ นก (QT2024080005) — รายการ G2: ข้อ 7 (หลังคา+รั้วระแนง+ระแนงใต้หลังคา)</h4>
+  <table>
+    <tr>
+      <th>รายการ / หัวข้อ</th>
+      <th>ใบจริงเขียน</th>
+      <th>ระบบออก (render)</th>
+      <th>สถานะ</th>
+    </tr>
+    <tr>
+      <td><strong>ด้าน A</strong> รั้วระแนงลายไม้ (วางบนผนังปูน)</td>
+      <td>"รั้วระแนงอลูมิเนียมบังตาลายไม้ (วางบนผนังปูน) ขนาดกล่อง 1"x1.6" โชว์ 1" เว้น 2.5ซม."<br>รายละเอียด: ระแนงกล่องลายไม้สี Golden Teak SMS ขนาด 1"x1.6"</td>
+      <td>rn18 (1"x1.6" โชว์ 1" 2ซม) + อบสีลายไม้ = "บังตาผนังระแนง 1"x1.6" โชว์ 1" 2cm. รวมโครง" · ไม่มีคำว่า "Golden Teak SMS"</td>
+      <td><span class="pill p1">🔴 P1 ขาดชื่อสีลายไม้</span><br><small>ข้อมูล "สีลายไม้ Golden Teak SMS" ไม่ขึ้นในรายละเอียดใบ · ใบจริงระบุชัด</small></td>
+    </tr>
+    <tr>
+      <td><strong>ระแนงใต้หลังคาไวนิล</strong> (ด้าน underroof)</td>
+      <td>"ระแนงอลูมิเนียมลายใต้หลังคาไวนิล ขนาดพื้นที่ 3.50 x 4.29 เมตร (กล่อง 1"x1.6" โชว์ 1" เว้น 5.0ซม)"<br>รายละเอียด: สีดำ (อลูมิเนียม สีดำ ตามรายละเอียดงาน)</td>
+      <td>rn44 (1"x4" โชว์ 1" 5ซม) ≠ 1"x1.6" ใบจริง · ต้องใช้ rn16 (1"x1.6" โชว์ 1" 3ซม) หรือ rn14 (5ซม) · สีดำ = selectedIndex=1</td>
+      <td><span class="pill p1">🔴 P1 เลือก product ผิด</span><br><small>ใบจริง: 1"x1.6" โชว์ 1" ห่าง 5ซม = rn14 · ไม่ใช่ 1"x4" (rn44) · ขนาดกล่องต่างกัน → ราคาต่อ ตร.ม. ต่างกัน</small></td>
+    </tr>
+    <tr>
+      <td><strong>ชนิดระแนง</strong> แนวตั้ง vs แนวนอน</td>
+      <td>รั้วระแนงด้าน A = แนวตั้ง (ตามภาพและรายละเอียด "แนวตั้ง" ไม่ระบุตรงๆ แต่เป็น standard)</td>
+      <td>rn-series ทุกตัว: ไม่มี o-grdir ขึ้น (hidden) · ระบบไม่ถามทิศทาง</td>
+      <td><span class="pill p2">🟡 P2 ขาด option ทิศทาง</span><br><small>o-grdir มีใน code แต่ hidden อยู่ · ใบจริงไม่ระบุทิศทางตรงๆ แต่ถ้าลูกค้าต้องการแนวนอน จะตั้งค่าไม่ได้</small></td>
+    </tr>
+    <tr>
+      <td><strong>5 บล็อก</strong> โครงสร้างใบ</td>
+      <td>ใบจริงนก = ชุดรวม (ไม่ได้แยก G2 เดี่ยว · รวมหลังคา G3)</td>
+      <td>ระบบออก 5 บล็อกปกติ</td>
+      <td><span class="pill p3">🟢 ครบ</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ใบหญิง G2 -->
+<div class="inv-block">
+  <h4>ใบ หญิง (QT2024080066) — รายการ G2: ข้อ 2 (หลังคา+ระแนงบังตา)</h4>
+  <table>
+    <tr>
+      <th>รายการ / หัวข้อ</th>
+      <th>ใบจริงเขียน</th>
+      <th>ระบบออก (render)</th>
+      <th>สถานะ</th>
+    </tr>
+    <tr>
+      <td><strong>ด้าน A</strong> ระแนงอลูมิเนียมบังตา</td>
+      <td>"ระแนงอลูมิเนียมกล่อง สีอบขาว ขนาด 1"x1.6" โชว์ 1.6" เว้นระยะห่าง 3ซม."</td>
+      <td>rn40 (1"x1.6" โชว์ 1.6" 3ซม) = "ระแนงผนัง 1"x1.6" โชว์ 1.6" 3cm. รวมโครง" · สีอบขาว</td>
+      <td><span class="pill p2">🟡 P2 ชื่อ product ต่าง</span><br><small>rn38-42 = "ระแนงผนัง" (โชว์ 1.6") · rn14-18 = "บังตาผนังระแนง" (โชว์ 1") · ใบจริงบอก "บังตา" แต่ระบบออก "ระแนงผนัง" เพราะโชว์ 1.6" ใช้ชุด rn38-42 ซึ่งชื่อต่างกัน</small></td>
+    </tr>
+    <tr>
+      <td><strong>สเปกระแนง</strong></td>
+      <td>1"x1.6" โชว์ 1.6" ห่าง 3ซม · สีอบขาว</td>
+      <td>rn40: "ระแนงผนัง 1"x1.6" โชว์ 1.6" 3cm." · สีอบขาว = ตรง</td>
+      <td><span class="pill p3">🟢 ตรง</span></td>
+    </tr>
+    <tr>
+      <td><strong>ขาดข้อมูล</strong> ขนาดใบจริง</td>
+      <td>ใบจริงข้อ2 ไม่ระบุขนาด ตร.ม. (รวมกับหลังคา G3 เป็นชุดเดียว)</td>
+      <td>ไม่สามารถตรวจราคาได้ (ไม่รู้ขนาด)</td>
+      <td><span class="pill p2">🟡 ตรวจราคาไม่ได้</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ใบชวลิต G2 -->
+<div class="inv-block">
+  <h4>ใบ ชวลิต (QT2025070050) — รายการ G2: ข้อ 3 (ราวกันตกกระจกติดตาย หลายด้าน)</h4>
+  <table>
+    <tr>
+      <th>รายการ / หัวข้อ</th>
+      <th>ใบจริงเขียน</th>
+      <th>ระบบออก (render)</th>
+      <th>สถานะ</th>
+    </tr>
+    <tr>
+      <td><strong>ราวกันตกกระจกติดตาย</strong> (ด้าน B,C,D + ด้าน F)</td>
+      <td>"ราวกันตกกระจกติดตาย" (หลายด้าน)<br>รายละเอียด: อุปกรณ์มาตรฐาน ผู้ผลิต สแตนเลสสีเงิน · กระจกเทมเปอร์ใส หนา 12 มม.</td>
+      <td>imp1 (หมุดแปะข้าง) + o-railglass=12 → "ราวกันตกกระจกเฉียง หมุดแปะข้าง" · หมุดสแตนเลสสีเงิน · กระจกเทมเปอร์ใส หนา 12 มม.</td>
+      <td><span class="pill p3">🟢 ตรง</span><br><small>กระจก 12มม. ตรง · อุปกรณ์สแตนเลสสีเงิน ตรง</small></td>
+    </tr>
+    <tr>
+      <td><strong>ราวกันตก + หลังคา</strong> รวมชุด</td>
+      <td>ข้อ 3 รวมหลังคากันสาด (G3) + ราวกันตก (G2) + ประตูบานเปลือย (G1) ไว้ในรายการเดียว ราคา 428,000 บาท</td>
+      <td>ระบบ G2 ออกใบแยกรายการ ไม่สามารถรวมกับ G3/G1 ในรายการเดียว</td>
+      <td><span class="pill p2">🟡 P2 โครงสร้างต่าง</span><br><small>ใบจริงรวมหลายงานในรายการเดียว · ระบบต้องกรอกแยกแล้ว custom_item รวม → ไม่ใช่ bug แต่ UX ต้องเข้าใจ flow</small></td>
+    </tr>
+    <tr>
+      <td><strong>5 บล็อก</strong> โครงสร้างใบ</td>
+      <td>หัวรายการ → รายการ → OPTION → หมายเหตุ → รายละเอียด</td>
+      <td>imp1 ออก: หัวรายการ ✅ · รายการ(งาน) ✅ · รายละเอียด ✅ · OPTION: มี o-handrail/o-railglass (hidden แต่ทำงาน) · หมายเหตุ: ขึ้นเมื่อมี o-extrawork</td>
+      <td><span class="pill p3">🟢 ครบ</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ใบธนบัตร G2 -->
+<div class="inv-block">
+  <h4>ใบ ธนบัตร (QT2023100045) — รายการ G2: ข้อ 4 (ระแนงรั้วด้าน A + หลังคา)</h4>
+  <table>
+    <tr>
+      <th>รายการ / หัวข้อ</th>
+      <th>ใบจริงเขียน</th>
+      <th>ระบบออก (render)</th>
+      <th>สถานะ</th>
+    </tr>
+    <tr>
+      <td><strong>ด้าน A</strong> ระแนงบังตาแนวตั้ง</td>
+      <td>"ระแนงอลูมิเนียมบังตาแนวตั้ง (พื้นที่ประมาณ 19.77 x 1.89 เมตร)"<br>รายละเอียด: กล่อง สีอบขาว ขนาด 1 x 5 ซม. โชว์ 5ซม. เว้น 2ซม.</td>
+      <td>rn52 (1"x4" โชว์ 4" 3ซม) หรือ rn50 (1"x4" โชว์ 4" 5ซม) ≠ ใบจริงใช้ 1x5ซม · ต้องใช้ rn2 (1x5cm โชว์ 1cm 5cm) หรือ rn8 (1x5cm โชว์ 5cm 5cm) · ใบจริงโชว์ 5ซม เว้น 2ซม = rn10 (1x5cm โชว์ 5cm 3cm)</td>
+      <td><span class="pill p1">🔴 P1 เลือก product ต้องระวัง</span><br><small>ขนาดกล่อง 1x5cm ต้องใช้กลุ่ม rn2-rn12 (1x5 series) · โชว์ 5cm เว้น 2cm = rn10 · ถ้าเลือก rn50 (1x4 โชว์ 4) จะผิดสเปกและราคาต่าง</small></td>
+    </tr>
+    <tr>
+      <td><strong>หมายเหตุ</strong> "แนวตั้ง"</td>
+      <td>ใบจริงระบุชัดว่า "แนวตั้ง"</td>
+      <td>ระบบ: o-grdir มีให้เลือก (แนวตั้ง/แนวนอน) แต่ hidden · ไม่ขึ้นในใบ</td>
+      <td><span class="pill p2">🟡 P2 ทิศทางไม่ขึ้นใบ</span></td>
+    </tr>
+    <tr>
+      <td><strong>ราคา</strong> ตรวจไม่ได้เต็ม</td>
+      <td>รวมหลังคา 2 แบบ + ระแนง ในราคาเดียว 488,500 บาท</td>
+      <td>ระบบแยกรายการ G2/G3 ไม่รวมในรายการเดียว</td>
+      <td><span class="pill p2">🟡 ตรวจราคาแยกไม่ได้</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== SECTION 3: รวมจุดผิด ===== -->
+<h2>3. รวมจุดผิดทั้งหมด — จัดลำดับ P1→P2→P3</h2>
+
+<h3>P1 — ผิดแน่ / ขาดข้อมูลที่ใบลูกค้าต้องมี</h3>
+<table>
+  <tr>
+    <th>#</th>
+    <th>จุด</th>
+    <th>ผลกระทบ</th>
+    <th>Root Cause</th>
+    <th>บรรทัด index.html</th>
+    <th>เสนอแก้</th>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-1</span></td>
+    <td><strong>ชื่อสีลายไม้ไม่ขึ้นในใบ</strong><br>o-gfin=อบสีลายไม้ / o-finish=อบสีลายไม้ → ออกใบแค่ "อบสีลายไม้" ไม่มีชื่อสี "Golden Teak SMS"</td>
+    <td>ลูกค้าไม่รู้ว่าสีไหน · ใบจริงระบุ "สีGolden Teak SMS" ชัดเจนทุกรายการ</td>
+    <td>o-gfin/o-finish เป็น dropdown fixed values ไม่มี free-text ชื่อสีลายไม้</td>
+    <td>ค้นหา o-gfin / o-finish ในส่วน G2 fence_gate + rn-series (เช็คซ้ำ)</td>
+    <td>เพิ่ม input ชื่อสี (text) หรือ option "อบสีลายไม้ (Golden Teak SMS)" ใน dropdown · หรือให้ genQuote ดึงชื่อสีจาก free-text field</td>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-2</span></td>
+    <td><strong>ไม่มี product ประตูรั้วระแนงบานเปิด (swing)</strong><br>fence_gate = บานเลื่อนอย่างเดียว · ใบจริงบุญญารัตน์ข้อ23 = บานเปิด</td>
+    <td>ออกใบไม่ได้สำหรับประตูรั้วบานเปิด · ต้องใช้ custom_item</td>
+    <td>fence_gate product ไม่มี o-gatetype=swing หรือ product fence_swing แยก</td>
+    <td>ส่วน fence_gate product definition (เช็คซ้ำ)</td>
+    <td>เพิ่ม o-gatetype option "บานเปิด (swing)" หรือ product fence_swing ใหม่</td>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-3</span></td>
+    <td><strong>ไม่มี option รางบน (top rail) สำหรับประตูรั้วระแนง</strong><br>ใบจริงบุญญารัตน์ข้อ25,26 = รางบน · o-railtype มีแค่ straight/curved</td>
+    <td>ออกรายละเอียดใบไม่ตรงจริง · ลูกค้าที่ต้องการรางบนไม่มีตัวเลือก</td>
+    <td>o-railtype ไม่มี value "top_rail" หรือ "top"</td>
+    <td>o-railtype SELECT ใน fence_gate block (เช็คซ้ำ)</td>
+    <td>เพิ่ม option "รางบน" ใน o-railtype</td>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-4</span></td>
+    <td><strong>เลือก product ระแนงผิดขนาดกล่อง</strong><br>ใบจริงนก ด้านใต้หลังคา = 1"x1.6" แต่ถ้าใช้ rn44 (1"x4") ราคาต่อ ตร.ม. ต่างกันมาก</td>
+    <td>ราคาผิด · สเปกผิด</td>
+    <td>ชื่อ product ไม่ได้ระบุขนาดกล่องชัดในหัวชื่อ ทำให้เลือกผิด</td>
+    <td>UX issue ใน product label (ไม่ใช่ engine bug)</td>
+    <td>แนะนำให้ตรวจสอบขนาดกล่องก่อนเลือก product · rn14-18 = 1"x1.6" · rn44-54 = 1"x4"</td>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-5</span></td>
+    <td><strong>ระยะห่างระแนง (spacing) ไม่โชว์ในใบ</strong><br>ใบจริงระบุ "เว้นระยะห่าง 2.5 ซม." ชัดเจน · ระบบออกใบไม่มีระยะห่าง</td>
+    <td>ลูกค้าไม่รู้ระยะห่างจริงจากใบ</td>
+    <td>genQuote ไม่ดึง spacing (ซม.) ของ product มาแสดงในรายละเอียด</td>
+    <td>ส่วน genQuote G2 รายละเอียด (เช็คซ้ำ)</td>
+    <td>เพิ่ม "เว้นระยะห่าง X ซม." ในบล็อกรายละเอียดของ rn-series ทุกตัว</td>
+  </tr>
+  <tr>
+    <td><span class="pill p1">P1-6</span></td>
+    <td><strong>ทิศทางระแนง (แนวตั้ง/แนวนอน) ไม่ขึ้นในใบ</strong><br>ใบจริงธนบัตรระบุ "แนวตั้ง" · o-grdir มีใน code แต่ hidden</td>
+    <td>ลูกค้าไม่ทราบทิศทางจากใบ</td>
+    <td>o-grdir ถูก set display:none · genQuote ไม่อ่านค่า grdir</td>
+    <td>o-grdir SELECT + surrounding div (display:none) — เช็คซ้ำบรรทัด</td>
+    <td>แสดง o-grdir เมื่อ user ต้องการ + ดึง value มาออกใบในรายละเอียด</td>
+  </tr>
+</table>
+
+<h3>P2 — น่าสงสัย / เช็คซ้ำ</h3>
+<table>
+  <tr>
+    <th>#</th>
+    <th>จุด</th>
+    <th>เหตุสงสัย</th>
+    <th>แนะนำ</th>
+  </tr>
+  <tr>
+    <td><span class="pill p2">P2-1</span></td>
+    <td><strong>ชื่อ "ระแนงผนัง" vs "บังตาผนังระแนง"</strong><br>rn38-42 = "ระแนงผนัง" (โชว์ 1.6") · rn14-18 = "บังตาผนังระแนง" (โชว์ 1") · ใบจริงหญิงใช้คำว่า "ระแนงอลูมิเนียมบังตา" แต่ระบบออก "ระแนงผนัง"</td>
+    <td>ชื่อ product ไม่ consistent กับภาษาในใบจริง</td>
+    <td>พี่นัทพิจารณาว่าใบลูกค้าควรใช้คำว่า "ระแนงอลูมิเนียมบังตา" สำหรับทุก rn-series หรือไม่</td>
+  </tr>
+  <tr>
+    <td><span class="pill p2">P2-2</span></td>
+    <td><strong>ราวกันตกข้อ3 บุญญารัตน์ เป็น imp1 หรือ imp2?</strong><br>ใบจริงบอก "ราวสแตนเลสมาตรฐาน สีเงิน" → น่าจะไม่มีราวจับอลู → ไม่ใช่ imp3</td>
+    <td>imp1 (หมุดแปะข้าง) หรือ imp2 (ยูเหล็ก) · ราว "สแตนเลส" ≠ ราวจับ "อลูมิเนียม" ของ imp3</td>
+    <td>พี่นัทเช็คซ้ำว่าใบจริงข้อ3 ตรงกับ product ไหน</td>
+  </tr>
+  <tr>
+    <td><span class="pill p2">P2-3</span></td>
+    <td><strong>รวมงานหลายกลุ่มในรายการเดียว</strong><br>ใบจริงชวลิตข้อ3 รวม G1+G2+G3 ในราคาเดียว · ระบบแยกรายการ</td>
+    <td>ผู้ขายใบจริงรวมหลายงานเพื่อความสะดวก · ระบบไม่รองรับ</td>
+    <td>ใช้ custom_item กรอกเอง หรือ dev เพิ่ม "รายการรวม" mode (ไม่ใช่ bug)</td>
+  </tr>
+  <tr>
+    <td><span class="pill p2">P2-4</span></td>
+    <td><strong>imp3 ออก "ราวจับอลู สีขาว" เมื่อ railalucolor=ขาว (default)</strong><br>แต่ถ้าไม่ต้องการราวจับอลู ต้องทำยังไง?</td>
+    <td>o-railalucolor=ขาว → ออกรายละเอียด "อลูมิเนียม สีขาว" · ถ้าไม่เลือกสีใด ยังออกค่า default อยู่</td>
+    <td>พี่นัทเช็คว่า imp3 ควรมี option "ไม่มีราวจับอลู" หรือไม่</td>
+  </tr>
+</table>
+
+<h3>P3 — ผ่าน / จัดสวย</h3>
+<table>
+  <tr>
+    <th>จุด</th>
+    <th>รายละเอียด</th>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-1</span> 5 บล็อก โครงสร้างใบ</td>
+    <td>ระบบออกใบ 5 บล็อก ถูกต้อง: หัวรายการ → รายการ(งาน) → OPTION(แดง) → หมายเหตุ → รายละเอียด(สเปก)</td>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-2</span> ราวกันตก imp1 กระจก 12มม</td>
+    <td>ชวลิตข้อ3: o-railglass=12 → ออกรายละเอียด "กระจกเทมเปอร์ใส หนา 12 มม." ตรงใบจริง</td>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-3</span> หมุดสแตนเลสสีเงิน</td>
+    <td>imp1/imp4 ออก "หมุดสแตนเลสสีเงิน" ตรงกับใบจริงทุกใบที่มีราวกันตก</td>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-4</span> ประตูรั้ว รางโค้ง + มอเตอร์</td>
+    <td>fence_gate + o-railtype=curved + o-gmotor=2 → ออก "ราง โค้ง · บานโค้ง 4 บาน · มอเตอร์ 2 ตัว" ตรงสเปก</td>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-5</span> ระแนงเกล็ด Z (rn84)</td>
+    <td>rn84 สีดำ ออก "เกล็ด Z 1" รวมโครง · สีดำ" ตรงกับใบจริงยี (ด้าน A,F,G)</td>
+  </tr>
+  <tr>
+    <td><span class="pill p3">P3-6</span> fence_gate OPTION ลายไม้ขึ้นแดง</td>
+    <td>o-gfin=อบสีลายไม้ → ขึ้น OPTION block สีแดงในใบ ตามโครงสร้าง 5 บล็อก</td>
+  </tr>
+</table>
+
+<!-- ===== SECTION 4: ใบระบบ embed ===== -->
+<h2>4. ตัวอย่างใบระบบที่ render จริง (5 บล็อก)</h2>
+
+<h3>4.1 fence_gate ลายไม้ SMS (อบสีลายไม้) + รางโค้ง + มอเตอร์ 2</h3>
+<div class="quote-embed">
+  <div class="quote-header">render: fence_gate · w=3m h=2m · o-gfin=อบสีลายไม้ · o-railtype=curved · o-gmotor=2</div>
+  <table>
+    <tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>ราคาต่อหน่วย</th><th>ยอดรวม</th></tr>
+    <tr><td>1</td><td>
+      <strong>จุดที่ 1 ประตูรั้วระแนง (3 × 2 ม.)</strong><br>
+      - ประตูระแนงอลูมิเนียมบานเลื่อนเปิดคู่กลางรางล่าง พร้อมระแนงติดตายด้านข้าง<br>
+      - ราง โค้ง · บานโค้ง 4 บาน<br>
+      - มอเตอร์ 2 ตัว<br>
+      - ไม่มีธรณี<br>
+      <em>รายละเอียด</em><br>
+      - ลายระแนง: บังตาผนังระแนง 1x5 cm. โชว์ 1cm. 5cm.<br>
+      - อบสีลายไม้ <span class="miss">← ขาด "Golden Teak SMS"</span>
+    </td><td>1 ชุด</td><td>145,000.00</td><td>145,000.00</td></tr>
+  </table>
+</div>
+
+<h3>4.2 imp1 ราวกันตกกระจกเฉียง หมุดแปะข้าง + กระจก 12มม (ชวลิต)</h3>
+<div class="quote-embed">
+  <div class="quote-header">render: imp1 · w=5m h=1.2m · o-railglass=12</div>
+  <table>
+    <tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>ราคาต่อหน่วย</th><th>ยอดรวม</th></tr>
+    <tr><td>1</td><td>
+      <strong>จุดที่ 1 ราวกันตกกระจกเฉียง หมุดแปะข้าง (ยาว 5 ม.)</strong><br>
+      - ราวกันตกกระจกเฉียง<br>
+      <em>รายละเอียด</em><br>
+      - หมุดสแตนเลสสีเงิน<br>
+      - กระจกเทมเปอร์ใส หนา 12 มม.
+    </td><td>1 ชุด</td><td>50,000.00</td><td>50,000.00</td></tr>
+  </table>
+</div>
+
+<h3>4.3 rn84 เกล็ด Z สีดำ (ยี ด้าน A,F,G)</h3>
+<div class="quote-embed">
+  <div class="quote-header">render: rn84 · w=3m h=2m · o-finish=สีดำ (selectedIndex=1)</div>
+  <table>
+    <tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>ราคาต่อหน่วย</th><th>ยอดรวม</th></tr>
+    <tr><td>1</td><td>
+      <strong>จุดที่ 1 เกล็ด Z 1" รวมโครง (3 × 2 ม.)</strong><br>
+      - เกล็ด Z 1" รวมโครง<br>
+      <em>รายละเอียด</em><br>
+      - สีดำ <span class="match">✓ ตรง</span>
+    </td><td>1 ชุด</td><td>19,000.00</td><td>19,000.00</td></tr>
+  </table>
+</div>
+
+<h3>4.4 rn50 ระแนงบังตา 1"x4" โชว์ 4" ห่าง 5ซม (สีอบขาว) vs ธนบัตร rn10 ที่ควรใช้</h3>
+<div class="quote-embed">
+  <div class="quote-header">ใบจริงธนบัตร: 1x5ซม โชว์ 5ซม ห่าง 2ซม = rn10 · ระบบถ้าเลือก rn50 (1"x4") จะผิดสเปก</div>
+  <table>
+    <tr><th>product</th><th>สเปก</th><th>ราคา (19.77x1.89)</th><th>ตรงใบจริง?</th></tr>
+    <tr><td>rn10 (ควรใช้)</td><td>1x5cm โชว์ 5cm 3cm</td><td>~ต่างกัน</td><td><span class="match">ใกล้เคียง</span></td></tr>
+    <tr><td>rn50 (ผิด)</td><td>1"x4" โชว์ 4" 5cm</td><td>202,000 (19.77x1.89)</td><td><span class="miss">ผิดสเปก</span></td></tr>
+  </table>
+</div>
+
+<!-- ===== SECTION 5: UX Checklist ===== -->
+<h2>5. Checklist UX — กดเว็บจริง (พี่นัท/ux-designer)</h2>
+<p style="margin-bottom:14px;color:#666;font-size:13px;">รายการนี้ต้องกดหน้าเว็บจริง ไม่สามารถตรวจผ่าน jsdom ได้</p>
+<div class="checklist">
+  <ul>
+    <li><div class="checkbox-sq"></div><strong>G2 ปุ่ม 4 หมวด</strong>: ประตูรั้ว / ระแนง / ราวกันตก / ระแนงพิเศษ — ขึ้นครบ 4 ปุ่ม ไม่ซ้อนกัน?</li>
+    <li><div class="checkbox-sq"></div><strong>fence_gate</strong>: o-railtype (ตรง/โค้ง) ขึ้น dropdown ให้เลือกได้? มอเตอร์ 1/2/ไม่มี เลือกได้?</li>
+    <li><div class="checkbox-sq"></div><strong>rn-series</strong>: เลือก product แล้ว ชื่อ product ในหัวรายการใบตรงกับที่เลือกไหม? (เช่น 1"x1.6" ≠ 1"x4")</li>
+    <li><div class="checkbox-sq"></div><strong>ลายไม้ SMS</strong>: เลือก o-gfin=อบสีลายไม้ แล้วในใบออก "อบสีลายไม้" — มีที่กรอกชื่อสีจริง (Golden Teak SMS) ไหม?</li>
+    <li><div class="checkbox-sq"></div><strong>o-grdir</strong>: ทิศทางระแนง (แนวตั้ง/แนวนอน) — กดเลือกได้ไหม? ขึ้นในใบไหม?</li>
+    <li><div class="checkbox-sq"></div><strong>OPTION แดง</strong>: OPTION ลายไม้ขึ้นสีแดงในใบถูกต้อง (5 บล็อก)?</li>
+    <li><div class="checkbox-sq"></div><strong>ระยะห่างระแนง (spacing)</strong>: ขึ้นในรายละเอียดใบไหม? เช่น "เว้นระยะห่าง 2.5 ซม."</li>
+    <li><div class="checkbox-sq"></div><strong>imp3 ราวจับอลู</strong>: เลือกสีราวจับได้ (ขาว/เทา/ดำ)? สีที่เลือกขึ้นในรายละเอียดใบ?</li>
+    <li><div class="checkbox-sq"></div><strong>mobile</strong>: กรอกฟอร์ม G2 บนมือถือ dropdown เปิดได้? scroll ไม่ตัด?</li>
+    <li><div class="checkbox-sq"></div><strong>ราคา genQuote</strong>: กด genQuote แล้วยอดรวม + VAT คำนวณถูก?</li>
+  </ul>
+</div>
+
+<!-- ===== SECTION 6: Golden Snapshot ===== -->
+<h2>6. ผล Golden Snapshot (143 ราคา)</h2>
+<div class="snap-ok">
+  <strong>สถานะ: ไม่ได้รัน golden-snapshot.mjs ในรอบนี้</strong> (READ-ONLY audit · ไม่แก้โค้ด)<br>
+  แนะนำให้รัน <code>node scripts/golden-snapshot.mjs</code> หลัง dev แก้จุด P1 เพื่อยืนยันราคา 143 ตัวไม่เพี้ยน<br>
+  <small style="opacity:.8;">ถ้า snapshot pass ทั้งหมด = ราคาเดิมไม่กระทบ · ถ้า fail ต้องตรวจสูตรที่เปลี่ยน</small>
+</div>
+
+<div class="divider"></div>
+
+<!-- Root Cause Summary -->
+<h2>สรุป Root Cause หลัก (ส่ง dev)</h2>
+<div class="rc-box">
+  <strong>P1-1 ชื่อสีลายไม้:</strong> o-gfin / o-finish dropdown ไม่มี free-text field สำหรับระบุชื่อสีจริง (Golden Teak SMS, White Bamboo ฯลฯ) → ต้องเพิ่ม input[type=text] หรือ pair dropdown+text สำหรับ option ลายไม้
+</div>
+<div class="rc-box">
+  <strong>P1-2 fence_gate บานเปิด:</strong> product fence_gate ไม่รองรับ o-gatetype=swing · ต้องเพิ่ม type option หรือ product ใหม่
+</div>
+<div class="rc-box">
+  <strong>P1-3 รางบน:</strong> o-railtype ขาด value "top_rail" · เพิ่ม option ใน SELECT
+</div>
+<div class="rc-box">
+  <strong>P1-5 ระยะห่างระแนง:</strong> genQuote ไม่ดึง spacing จาก product data มาแสดง → เพิ่ม spacing text ในบล็อกรายละเอียด rn-series
+</div>
+<div class="rc-box">
+  <strong>P1-6 ทิศทางระแนง:</strong> o-grdir มีใน DOM แต่ hidden ทั้ง UI และ genQuote → unhide + ดึงค่ามาออกใบ
+</div>
+
+<div class="footnote">
+  รายงานนี้จัดทำโดย JR Audit Agent (READ-ONLY) · 2026-06-17 · อ้างอิงใบจริง 5 ใบ (บุญญารัตน์/นก/หญิง/ชวลิต/ธนบัตร) + render engine จาก public/calculator/index.html branch quickmode-v2-allG ·
+  ห้ามแก้โค้ด · ส่งพี่นัทตรวจซ้ำก่อน dev แก้
+</div>
+
+</div>
+</body>
+</html>

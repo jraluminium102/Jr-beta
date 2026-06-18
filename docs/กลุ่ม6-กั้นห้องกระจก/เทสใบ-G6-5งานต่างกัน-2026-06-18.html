@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เทส 5 ใบ G6 งานต่างกัน — 18 มิ.ย. 2026</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;background:#F3F4F6;color:#111827;padding:16px;line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:3px}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:16px}
+  .bug{background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px;padding:14px;margin-bottom:18px}
+  .bug h2{font-size:15px;color:#B91C1C;margin-bottom:8px}
+  .bug table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px;background:#fff;border-radius:8px;overflow:hidden}
+  .bug th,.bug td{padding:6px 8px;border:1px solid #FECACA;text-align:right}
+  .bug th{background:#FEE2E2;color:#991B1B;font-weight:700}
+  .bug td:first-child,.bug th:first-child{text-align:left}
+  .bug .bad{color:#DC2626;font-weight:700}
+  .bug .ok{color:#15803D}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.cards{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:13px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card.full{grid-column:1/-1}
+  .ch{font-size:14px;font-weight:700;color:#1D4ED8;margin-bottom:2px}
+  .cno{font-size:11px;color:#9CA3AF;font-family:monospace;margin-bottom:8px}
+  .detail{font-size:12.5px;white-space:pre-wrap;background:#F9FAFB;border:1px solid #F0F0F0;border-radius:8px;padding:9px;margin-bottom:8px}
+  .detail b{color:#0F766E}
+  .tot{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-top:1px dashed #E5E7EB}
+  .tot.grand{font-weight:800;color:#15803D;font-size:15px;border-top:2px solid #E5E7EB;padding-top:5px;margin-top:3px}
+  .tot .vatbad{color:#DC2626;font-size:11px}
+  .note{font-size:11px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:5px 8px;margin-top:7px}
+  .legend{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;margin-top:16px;font-size:13px}
+  .legend h3{font-size:14px;margin-bottom:7px}
+  .pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px}
+  .p-ok{background:#DCFCE7;color:#15803D}.p-bug{background:#FEE2E2;color:#B91C1C}.p-warn{background:#FEF3C7;color:#B45309}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>เทส 5 ใบ G6 — งานกั้นห้องกระจกต่างกัน (ออกใบจริงบนเครื่องคิดราคา)</h1>
+  <div class="sub">รันบนเครื่องคิดราคาจริง (localhost = vercis ยืนยันโค้ดเดียวกัน) · กดกรอก→ออกใบจริง→ดึงข้อมูลใบ · 18 มิ.ย. 2026</div>
+
+  <!-- ===== บั๊กการเงิน ===== -->
+  <div class="bug">
+    <h2>🔴 บั๊กการเงิน (เจอเหมือนกันทั้ง 5 ใบ) — "รวมเป็นเงิน" ไม่ตรงฐาน VAT</h2>
+    <div style="font-size:12.5px;color:#7F1D1D;">
+      Protection (2,000 บาท) ถูก<b>บวกเข้าฐาน VAT + ยอดรวมทั้งสิ้น</b> แต่<b>ไม่โชว์ใน "รวมเป็นเงิน"</b> และไม่มีบรรทัดรายการ →
+      ลูกค้าคำนวณ VAT 7% จาก "รวมเป็นเงิน" จะไม่ตรงกับเลขในใบ (ต่างกัน 140 = 7%×2,000 ทุกใบ)
+    </div>
+    <table>
+      <tr><th>ใบ</th><th>รวมเป็นเงิน (โชว์)</th><th>VAT 7% ที่ควรเป็น</th><th>VAT ในใบ</th><th>ฐาน VAT จริง</th><th>รวมทั้งสิ้น</th></tr>
+      <tr><td>1 พื้นฐาน</td><td>20,000</td><td class="ok">1,400</td><td class="bad">1,540</td><td>22,000</td><td>23,540</td></tr>
+      <tr><td>2 เทมเปอร์+สักทอง+มุ้ง</td><td>31,500</td><td class="ok">2,205</td><td class="bad">2,345</td><td>33,500</td><td>35,845</td></tr>
+      <tr><td>3 ลามิเนต+ดำ+คาด+2บาน</td><td>36,300</td><td class="ok">2,541</td><td class="bad">2,681</td><td>38,300</td><td>40,981</td></tr>
+      <tr><td>4 อินซูเลท+อบพิเศษ</td><td>39,600</td><td class="ok">2,772</td><td class="bad">2,912</td><td>41,600</td><td>44,512</td></tr>
+      <tr><td>5 2ด้าน กระจก+ผนังเบา</td><td>31,900</td><td class="ok">2,233</td><td class="bad">2,373</td><td>33,900</td><td>36,273</td></tr>
+    </table>
+    <div style="font-size:12px;color:#7F1D1D;margin-top:8px;">
+      <b>วิธีแก้ที่เป็นไปได้ (ให้คิวกลาง/B เคาะ):</b> (ก) ให้ "รวมเป็นเงิน" รวม Protection (= ฐาน VAT) ให้ตรงกัน · หรือ (ข) โชว์ Protection เป็นบรรทัดรายการ · หรือ (ค) ถ้า Protection ไม่ควรคิด VAT → คิด VAT จาก 20,000 (1,400)
+      <br>⚠ น่าจะมาจาก fix จุด4 (ย้าย Protection จากบรรทัด→หมายเหตุ · เงินยังบวก แต่ซับโทเทิลเลยไม่รวม) · <b>(เช็คซ้ำ — อาจกระทบทุกใบทั้งระบบ ไม่เฉพาะ G6)</b>
+    </div>
+  </div>
+
+  <!-- ===== 5 ใบ ===== -->
+  <div class="cards">
+    <div class="card">
+      <div class="ch">ใบ 1 · ห้องพื้นฐาน</div><div class="cno">JR18_06_69_001</div>
+      <div class="detail">ด้าน A · ห้องต่อเติม (กั้นห้องกระจก) · 1 ช่อง 1 บาน = 20,000
+บานเปิด ยูโร (1×2.4 ม.)
+<b>อลูมิเนียม สีอบขาว · กระจก เขียว 6 มม.</b></div>
+      <div class="tot"><span>รวมเป็นเงิน</span><span>20,000.00</span></div>
+      <div class="tot"><span>VAT 7% <span class="vatbad">(ควร 1,400)</span></span><span>1,540.00</span></div>
+      <div class="tot grand"><span>รวมทั้งสิ้น</span><span>23,540.00</span></div>
+    </div>
+
+    <div class="card">
+      <div class="ch">ใบ 2 · เทมเปอร์ + สีลายไม้ + มุ้ง</div><div class="cno">JR18_06_69_002</div>
+      <div class="detail">ด้าน A · 1 ช่อง 1 บาน = 31,440
+บานเปิด ยูโร (1×2.4 ม.) · มุ้งจีบ SD
+<b>อลูมิเนียม สีลายไม้สต๊อก สักทอง · กระจก เทมเปอร์เขียว/ใส 6 มม.</b></div>
+      <div class="tot"><span>รวมเป็นเงิน</span><span>31,500.00</span></div>
+      <div class="tot"><span>VAT 7% <span class="vatbad">(ควร 2,205)</span></span><span>2,345.00</span></div>
+      <div class="tot grand"><span>รวมทั้งสิ้น</span><span>35,845.00</span></div>
+    </div>
+
+    <div class="card">
+      <div class="ch">ใบ 3 · ลามิเนต + สีดำ + คาดตาราง + 2 บาน</div><div class="cno">JR18_06_69_003</div>
+      <div class="detail">ด้าน A · 1 ช่อง = 36,240
+บานเปิด ยูโร (1×2.4 ม.) · คาดตาราง · จำนวน 2 บาน
+<b>อลูมิเนียม สีดำ · กระจก ลามิเนต 4+4 มม. ฟิล์มเขียว/ใส 0.38</b></div>
+      <div class="tot"><span>รวมเป็นเงิน</span><span>36,300.00</span></div>
+      <div class="tot"><span>VAT 7% <span class="vatbad">(ควร 2,541)</span></span><span>2,681.00</span></div>
+      <div class="tot grand"><span>รวมทั้งสิ้น</span><span>40,981.00</span></div>
+    </div>
+
+    <div class="card">
+      <div class="ch">ใบ 4 · อินซูเลท + สีอบพิเศษ (มีรหัส)</div><div class="cno">JR18_06_69_004</div>
+      <div class="detail">ด้าน A · 1 ช่อง 1 บาน = 39,600
+บานเปิด ยูโร (1×2.4 ม.)
+<b>อลูมิเนียม สีอบพิเศษ · กระจก อินซูเลทเขียว/ใส 6+6+6 มม.</b></div>
+      <div class="note">🟡 "สีอบพิเศษ" เป็นสีที่ควรมี <b>รหัสสี</b> แต่ใบโชว์แค่ชื่อ ไม่มีช่อง/รหัส (ต่างจาก G1) — เช็คซ้ำ</div>
+      <div class="tot"><span>รวมเป็นเงิน</span><span>39,600.00</span></div>
+      <div class="tot"><span>VAT 7% <span class="vatbad">(ควร 2,772)</span></span><span>2,912.00</span></div>
+      <div class="tot grand"><span>รวมทั้งสิ้น</span><span>44,512.00</span></div>
+    </div>
+
+    <div class="card full">
+      <div class="ch">ใบ 5 · 2 ด้าน (กระจก + ผนังเบา)</div><div class="cno">JR18_06_69_005</div>
+      <div class="detail">ด้าน A · กระจก = 21,296 — บานเปิด ยูโร (1×2.4 ม.) · สีอลู เทาซาฮาร่า
+ด้าน B · ผนังเบา (3×2.6 ม.) = 10,530
+<b>อลูมิเนียม สีเทาซาฮาร่า · กระจก เขียว 6 มม. · ผนังเบา (ISOWALL/สมาร์ทบอร์ด)</b></div>
+      <div class="tot"><span>รวมเป็นเงิน</span><span>31,900.00</span></div>
+      <div class="tot"><span>VAT 7% <span class="vatbad">(ควร 2,233)</span></span><span>2,373.00</span></div>
+      <div class="tot grand"><span>รวมทั้งสิ้น</span><span>36,273.00</span></div>
+    </div>
+  </div>
+
+  <!-- ===== สรุป ===== -->
+  <div class="legend">
+    <h3>📌 สรุปผลเทส 5 ใบ</h3>
+    <div style="margin:4px 0;"><span class="pill p-ok">ผ่าน</span> สเปคไดนามิกถูกทุกใบ — สี/กระจกขึ้นชื่อจริงต่อช่อง (อบขาว/สักทอง/ดำ/อบพิเศษ/เทาซาฮาร่า · เขียว6/เทมเปอร์/ลามิเนต/อินซูเลท) ไม่ hardcode</div>
+    <div style="margin:4px 0;"><span class="pill p-ok">ผ่าน</span> ราคาขยับตามกระจก/สี/มุ้ง/คาดตาราง/จำนวนบาน · ใบ 5 บล็อก (รายการ+รายละเอียด) ครบ · multi-ด้าน (กระจก+ผนังเบา) รวมในใบเดียวถูก</div>
+    <div style="margin:4px 0;"><span class="pill p-bug">บั๊ก</span> "รวมเป็นเงิน" ไม่รวม Protection 2,000 แต่ VAT+ยอดรวมคิดรวม → ตัวเลขในใบไม่ consistent (ทั้ง 5 ใบ · น่าจะทั้งระบบ)</div>
+    <div style="margin:4px 0;"><span class="pill p-warn">เช็คซ้ำ</span> สีมีรหัส (อบพิเศษ/ชุบ) ในห้อง ไม่มีช่องกรอกรหัส + ใบไม่โชว์รหัส (ต่างจาก G1)</div>
+  </div>
+</div>
+</body>
+</html>

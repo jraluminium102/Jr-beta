@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.55;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 11px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:10px 0 3px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10.5px;}
+th,td{border:1px solid #d1d5db;padding:4px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:10px;}
+pre{background:#0f172a;color:#e2e8f0;padding:9px 11px;border-radius:7px;font-size:10px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.dod{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:8px 12px;margin:7px 0;font-size:11.5px;}
+.r{color:#B3151D;font-weight:700;}
+.tag{display:inline-block;background:#fee2e2;color:#991b1b;font-size:9px;padding:0 5px;border-radius:8px;margin-left:4px;}
+</style></head><body>
+
+<h1>HANDOFF — โครงปุ่มเลือกชนิดงาน 6 ปุ่ม (2 ชั้น) · ใช้ทั้ง G1 + กั้นห้อง</h1>
+<p class="sub">มติพี่นัท 2026-06-13 · ไฟล์ <code>public/calculator/index.html</code> · ตรวจ READ-ONLY · <b>ขั้นนี้ทำแค่ "โครงปุ่ม" ยังไม่ใส่ออปชั่น/อุปกรณ์เสริม</b> (ขั้น 2-3 ตามมาทีหลัง)</p>
+
+<div class="box"><b>เป้าหมายขั้นนี้:</b> เปลี่ยนการเลือก "ชนิดบาน" จาก dropdown ยาว → <b>ปุ่มการ์ด 6 ปุ่มหลัก กดแล้วเลือกรุ่นย่อย (drill-down 2 ชั้น)</b> · ใช้ตำแหน่งเดียวกัน 2 ที่: (1) ฟอร์ม G1 ปกติ (2) <b>ทุก "ด้าน" ของชุดกั้นห้องกระจก (G6)</b> เพราะกั้นห้องเลือกบานจาก product ปกติอยู่แล้ว (ดู <code>docs/handoff-glasshouse-redesign.md</code>)</div>
+
+<div class="warn"><b>⚠ ขอบเขตขั้นนี้ (อย่าเกิน):</b> ทำแค่ <b>ปุ่มหลัก → รุ่นย่อย → set product</b> ให้ถูกตัวเท่านั้น · <b>ห้ามแตะ engine/ราคา/ออปชั่น</b> · ออปชั่น (กรองตามชนิด) + อุปกรณ์เสริม (ดรอปดาวเดียว) + แยกราคา = <b>ขั้น 2-3 คนละ handoff</b> · ทำโครงให้นิ่งก่อน พี่นัทตรวจผ่านแล้วค่อยลงของ</div>
+
+<h2>1) โครงปุ่ม 6 ปุ่มหลัก (จัดจากสินค้าจริงใน index.html)</h2>
+<p>กด "ปุ่มหลัก" → แสดง "ชิปรุ่นย่อย" ข้างล่าง → กดชิป = เลือก product จริง · รุ่น <span class="tag">ยกเลิกขาย</span> โชว์ท้ายสุด สีจาง ติดป้าย ban</p>
+
+<h3>ปุ่ม 1 — บานเลื่อน <code>ti-arrows-horizontal</code></h3>
+<table>
+<tr><th>รุ่นย่อย (ชื่อโชว์)</th><th>product id (ที่ set)</th></tr>
+<tr><td>บานเลื่อน ยูโร</td><td><code>sliding_euro</code></td></tr>
+<tr><td>บานเลื่อน เซมิยูโร</td><td><code>sliding_sms</code></td></tr>
+<tr><td>เลื่อนภายในรางบน (ซ้อน)</td><td><code>inner_top_stack</code></td></tr>
+<tr><td>เลื่อนภายในรางบน SlimLux</td><td><code>inner_top_slimlux</code></td></tr>
+<tr><td>เลื่อนภายในรางบน X-series</td><td><code>inner_top_xseries</code></td></tr>
+<tr><td>เลื่อนภายในรางล่าง SMS</td><td><code>inner_bottom_sms</code></td></tr>
+<tr><td>เลื่อนภายในรางล่าง ยูโร</td><td><code>inner_bottom_euro</code></td></tr>
+<tr><td>บานยก SMS</td><td><code>lift_sms</code></td></tr>
+<tr><td>บานยก aluinch</td><td><code>lift_aluinch</code></td></tr>
+<tr><td>PC Door 2 บาน</td><td><code>pc_door_2</code></td></tr>
+<tr><td>PC Door 4 บาน</td><td><code>pc_door_4</code></td></tr>
+<tr><td>บานเลื่อน E-series <span class="tag">ยกเลิกขาย</span></td><td><code>sliding_eseries</code></td></tr>
+</table>
+
+<h3>ปุ่ม 2 — บานเปิด <code>ti-door</code></h3>
+<table>
+<tr><th>รุ่นย่อย</th><th>product id</th></tr>
+<tr><td>บานเปิด ยูโร</td><td><code>casement_euro</code></td></tr>
+<tr><td>บานเปิด X-series</td><td><code>casement_xseries</code></td></tr>
+<tr><td>บานเปิด Velora</td><td><code>casement_velora</code></td></tr>
+<tr><td>ประตูบานเปิด โซลิด ทู</td><td><code>casement_flush_solid</code></td></tr>
+<tr><td>ประตูบานเปิด โซลิด วัน</td><td><code>casement_inset_solid</code></td></tr>
+<tr><td>บานกระทุ้ง ยูโร</td><td><code>awning_euro</code></td></tr>
+<tr><td>บานหมุนเมืองทอง</td><td><code>pivot</code></td></tr>
+<tr><td>บานเปิด D-series <span class="tag">ยกเลิกขาย</span></td><td><code>casement_dseries</code></td></tr>
+<tr><td>บานกระทุ้ง aluinch <span class="tag">ยกเลิกขาย</span></td><td><code>awning_aluinch</code></td></tr>
+<tr><td>บานหมุน aluinch <span class="tag">ยกเลิกขาย</span></td><td><code>pivot_aluinch</code></td></tr>
+</table>
+
+<h3>ปุ่ม 3 — บานเฟี้ยม <code>ti-layout-columns</code></h3>
+<table>
+<tr><th>รุ่นย่อย</th><th>product id</th></tr>
+<tr><td>บานเฟี้ยม ยูโร</td><td><code>folding_euro</code></td></tr>
+<tr><td>บานเฟี้ยม เซมิยูโร</td><td><code>folding</code></td></tr>
+<tr><td>บานเฟี้ยม X-series</td><td><code>folding_xseries</code></td></tr>
+</table>
+
+<h3>ปุ่ม 4 — กระจกติดตาย <code>ti-window</code></h3>
+<table>
+<tr><th>รุ่นย่อย</th><th>product id</th></tr>
+<tr><td>กระจกติดตาย</td><td><code>fixed_glass</code></td></tr>
+<tr><td>บานเปลือยติดตาย</td><td><code>frameless_fixed</code></td></tr>
+<tr><td>ประตูสวิง/เลื่อน บานเปลือย</td><td><code>frameless_door</code></td></tr>
+<tr><td>เส้นคาดตาราง</td><td><code>grid_bars</code></td></tr>
+</table>
+
+<h3>ปุ่ม 5 — ดัดโค้ง <code>ti-arc</code></h3>
+<table>
+<tr><th>รุ่นย่อย</th><th>product id</th></tr>
+<tr><td>ประตูดัดโค้งบานคู่</td><td><code>curved_double</code></td></tr>
+<tr><td>ประตูดัดโค้งบานเดี่ยว</td><td><code>curved_single</code></td></tr>
+<tr><td>บานติดตายดัดโค้ง</td><td><code>curved_fixed</code></td></tr>
+<tr><td>บานดัดโค้งสลิม</td><td><code>curved_slim</code></td></tr>
+</table>
+
+<h3>ปุ่ม 6 — อื่นๆ <code>ti-dots</code></h3>
+<table>
+<tr><th>รุ่นย่อย</th><th>product id</th></tr>
+<tr><td>shower กั้นห้องอาบน้ำ</td><td><code>shower</code></td></tr>
+<tr><td>ลูกฟูกเรียบ 1 ทาง ไม่โครง</td><td><code>rn89</code></td></tr>
+<tr><td>ลูกฟูกเรียบ 2 ทาง ไม่โครง</td><td><code>rn90</code></td></tr>
+<tr><td>คอมโพสิต 3 มม.</td><td><code>rn91</code></td></tr>
+<tr><td>คอมโพสิต 4 มม.</td><td><code>rn92</code></td></tr>
+</table>
+
+<h2>2) สไตล์ปุ่ม (มาตรฐานพี่นัทเคาะ — ใช้เหมือนเดิม)</h2>
+<ul>
+<li>ปุ่มหลัก = การ์ด grid <code>repeat(auto-fit,minmax(105-120px,1fr))</code> · ไอคอน Tabler บน + ชื่อล่าง + นับ "N รุ่น" · สูง ≥60px · ตัวที่เลือก = พื้น info (แดง/น้ำเงินตามธีม)</li>
+<li>รุ่นย่อย = ชิป wrap หลายแถว (ไม่ใช่ dropdown) · ตัวที่เลือก = พื้น info เข้ม</li>
+<li>รุ่นยกเลิกขาย = สีจาง + ป้าย ban อยู่ท้ายสุดของชิป (ยังเลือกได้ เผื่อแก้ใบเก่า)</li>
+<li>มี breadcrumb เล็ก "บานเลื่อน › บานเลื่อน ยูโร" ให้รู้ว่าเลือกอะไรอยู่</li>
+</ul>
+<div class="box">ต้นแบบกดเล่น: widget <code>g1_door_family_6btn</code> (ในแชท Chat A) — โครง/สไตล์/พฤติกรรมตามนั้นเป๊ะ</div>
+
+<h2>3) จุดต่อโค้ด (non-breaking — ห้ามแก้ logic ที่อ่านค่า)</h2>
+<div class="good"><b>หลักการ:</b> ปุ่ม/ชิป เป็นแค่ "ตัวเลือกหน้าบ้าน" → เมื่อกดชิป ให้ <b>เซ็ตค่า product เดิม (<code>.i-prod</code>) = id ที่แมป + ยิง <code>Event('change')</code></b> → engine/readItem/calc/genQuote เดิมทำงานต่อเองเหมือนไม่มีอะไรเปลี่ยน · <b>ห้ามเปลี่ยนชื่อ id/value ที่ logic อ่าน</b></div>
+<table>
+<tr><th>ที่</th><th>ทำอะไร</th></tr>
+<tr><td>ฟอร์ม G1 ปกติ (ที่เคยมี dropdown product)</td><td>เรนเดอร์ 6 ปุ่ม + ชิปแทน/คู่กับ dropdown · กดชิป → <code>iprod.value=id; iprod.dispatchEvent(new Event('change'))</code></td></tr>
+<tr><td>ชุดกั้นห้อง (G6) — แต่ละ <code>.ch</code> group6 (ด้าน)</td><td>ใช้ปุ่ม 6 ปุ่มชุดเดียวกันเลือกบานของด้านนั้น → เซ็ต <code>.i-prod</code> ของ ch นั้น + change · <code>refreshSet</code> เดิมจัดการ position/หัวด้านต่อ</td></tr>
+<tr><td><code>_GM['1']</code> / filter product ตามกลุ่ม</td><td>ใช้ id เดิมทั้งหมด — 6 ปุ่มเป็นแค่การ "จัดกลุ่มการแสดงผล" ของ product ชุดเดิม ไม่เพิ่ม/ลบ product</td></tr>
+</table>
+<pre>// แมปกลุ่ม → รุ่น (ใช้ id จริงด้านบน) — dev ก็อปลงไฟล์ได้เลย
+const G1_FAMILIES = [
+  {k:'slide', name:'บานเลื่อน',     icon:'ti-arrows-horizontal',
+   ids:['sliding_euro','sliding_sms','inner_top_stack','inner_top_slimlux','inner_top_xseries','inner_bottom_sms','inner_bottom_euro','lift_sms','lift_aluinch','pc_door_2','pc_door_4','sliding_eseries']},
+  {k:'swing', name:'บานเปิด',       icon:'ti-door',
+   ids:['casement_euro','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','pivot','casement_dseries','awning_aluinch','pivot_aluinch']},
+  {k:'fold',  name:'บานเฟี้ยม',     icon:'ti-layout-columns',
+   ids:['folding_euro','folding','folding_xseries']},
+  {k:'fix',   name:'กระจกติดตาย',   icon:'ti-window',
+   ids:['fixed_glass','frameless_fixed','frameless_door','grid_bars']},
+  {k:'curve', name:'ดัดโค้ง',       icon:'ti-arc',
+   ids:['curved_double','curved_single','curved_fixed','curved_slim']},
+  {k:'other', name:'อื่นๆ',         icon:'ti-dots',
+   ids:['shower','rn89','rn90','rn91','rn92']},
+];
+// ชื่อโชว์ + flag ยกเลิกขาย ให้ดึงจาก PRODUCTS เดิม (p.name) — อย่า hardcode ชื่อซ้ำ
+// ยกเลิกขาย = ชื่อมี 'ยกเลิกขาย' → เรียงท้าย + style จาง</pre>
+
+<h2>4) Definition of Done (ขั้นนี้)</h2>
+<div class="dod"><ol style="margin:3px 0;">
+<li>ฟอร์ม G1: เห็น 6 ปุ่มหลัก · กดปุ่ม → ชิปรุ่นย่อยโผล่ · กดชิป → product ถูกเซ็ตถูกตัว (เช็คชื่อในใบ/ราคาออกตรงรุ่น)</li>
+<li>ชุดกั้นห้อง: เพิ่มด้าน → เลือกชนิดบานของด้านนั้นด้วย 6 ปุ่มชุดเดียวกัน → product ของด้านนั้นถูกเซ็ต · refreshSet เดิมไม่พัง (position/หัวด้านยังทำงาน)</li>
+<li>รุ่นครบทุกตัวตามตารางข้อ 1 (12+10+3+4+4+5 = 38 รุ่น) · ยกเลิกขายอยู่ท้าย สีจาง</li>
+<li>กดง่ายบนมือถือ (ปุ่ม ≥44px) · ไม่ต้องกดซ้อนเกิน 2 ชั้น</li>
+<li><b>ยอดเงิน/ใบเสนอราคา/เทสเดิม ไม่เพี้ยน</b> (เพราะแค่เปลี่ยนวิธีเลือก ไม่แตะ engine) · gate เขียว</li>
+<li>พี่นัทเปิดเบราว์เซอร์จริง กดเองครบทั้ง G1 + กั้นห้อง แล้วโอเค</li>
+</ol>
+เสร็จกลับให้ Chat A verify (เปิดเบราว์เซอร์จริง กดทุกปุ่ม/ชิป + เช็ค product ที่เซ็ต)</div>
+
+<p class="sub">ถัดไป (ยังไม่ทำตอนนี้): ขั้น 2 = ออปชั่นกรองตามชนิด · ขั้น 3 = อุปกรณ์เสริมดรอปดาวเดียวแบบ G6 · ขั้น 4 = แยกราคาครบทุกรายการ (ดู HANDOFF-price-breakdown-2026-06-12)</p>
+</body></html>

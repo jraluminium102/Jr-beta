@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปงานค้าง + ผลตรวจเว็บจริง · 18 มิ.ย.</title>
+<style>
+  :root{--jr:#B3151D;--bg:#f4f4f6;--card:#fff;--line:#e3e3e8;--mut:#6b7280;--ok:#16a34a;--wait:#d97706;--ask:#c0282d}
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;background:var(--bg);margin:0;color:#1f2937;line-height:1.5;font-size:14px}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 16px 50px}
+  h1{font-size:21px;color:var(--jr);margin:2px 0}
+  .sub{color:var(--mut);font-size:12.5px;margin-bottom:6px}
+  .where{background:#eef2ff;border:1px solid #c7d2fe;border-radius:9px;padding:9px 13px;font-size:12.5px;margin:10px 0 16px}
+  .where b{color:#3730a3}
+  .where code{background:#fff;padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .col{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px}
+  .col h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:7px}
+  .col .cnt{font-size:11px;color:var(--mut);font-weight:400}
+  .col.done{border-top:4px solid var(--ok)}
+  .col.wait{border-top:4px solid var(--wait)}
+  .col.ask{border-top:4px solid var(--ask)}
+  .col h2.done{color:var(--ok)} .col h2.wait{color:var(--wait)} .col h2.ask{color:var(--ask)}
+  ul{margin:8px 0 0;padding-left:0;list-style:none}
+  li{padding:7px 0;border-top:1px dashed var(--line);font-size:13px}
+  li:first-child{border-top:none}
+  li b{color:#111}
+  .z{display:inline-block;font-size:10px;font-weight:700;border-radius:5px;padding:0 6px;margin-right:5px;color:#fff;vertical-align:middle}
+  .z1{background:#2563eb}.z2{background:#16a34a}.z3{background:#d97706}.z4{background:#9333ea}.zg1{background:#B3151D}
+  .tag{font-size:10.5px;color:var(--mut)}
+  .hot{color:var(--ask);font-weight:700}
+  .foot{font-size:11.5px;color:var(--mut);margin-top:18px;text-align:center}
+  .legend{font-size:11.5px;color:var(--mut);margin:4px 0 0}
+  .legend span{margin-right:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📊 สรุปงานค้าง + ผลตรวจเว็บจริง (jr-beta-azure)</h1>
+  <div class="sub">18 มิ.ย. 2026 · ตรวจจากโค้ดที่รันจริงบนเว็บ + คิวกลาง · Live = repo sync กัน (ไม่มี deploy ค้าง · ไม่พบบั๊ก)</div>
+  <div class="legend"><span>🟦 โซน1 หมายเหตุ</span><span>🟩 โซน2 ราคา/สเปก</span><span>🟧 โซน3 ใบ5บล็อก</span><span>🟪 โซน4 ปุ่ม/ชิป/สี</span><span>🟥 G1 ฟอร์มใหม่</span></div>
+
+  <div class="where">
+    <b>📁 ไฟล์อยู่ที่ไหน:</b>
+    ดราฟ G1 ล่าสุด = <code>docs/กลุ่ม1-งานบาน-เลื่อนเปิดเฟี้ยม/DRAFT-G1-ux-v9-2026-06-18.html</code> ·
+    ผลตรวจเว็บจริง = <code>docs/ตรวจเว็บจริง-G1-เทียบv9-2026-06-18.md</code> ·
+    คิวงานรวม = <code>docs/คิวงาน-dev-master-2026-06-17.md</code> ·
+    ดราฟสลับตรวจ = <code>docs/DRAFT-สลับตรวจ-*.html</code>
+  </div>
+
+  <div class="cols">
+    <!-- DONE -->
+    <div class="col done">
+      <h2 class="done">✅ เสร็จ + ขึ้นเว็บแล้ว <span class="cnt">(verify live)</span></h2>
+      <ul>
+        <li><span class="z zg1">G1/G6</span><b>รวมชุดบาน G1+G6</b> — FAM 14/12 ครบ (รวม ฝ้า-ผนัง/บานเปลือย/บานหมุน/shower/YKK/ดัดโค้ง)</li>
+        <li><span class="z zg1">G1</span><b>ลักษณะการเปิดบานเลื่อน + ธรณีบานเปิด</b> — มีจริง</li>
+        <li><span class="z z2">G5</span><b>รอบ2 #4–#8</b> — สีกรอบเฟรมคิดเงิน · ครอบวงกบเฟรม · "ห้าม PC" ออกจากใบ · typo รุ่ง→รุ่น · กันแมว</li>
+      </ul>
+    </div>
+
+    <!-- WAIT FOR B -->
+    <div class="col wait">
+      <h2 class="wait">⏳ เคาะแล้ว · รอ Chat B แก้ <span class="cnt">(B พัก "รอตรวจรวบ")</span></h2>
+      <ul>
+        <li><span class="z z1">1</span><b>หมายเหตุติ๊กหลายข้อ</b> + ข้อความ 12+4 + นั่งร้าน</li>
+        <li><span class="z z2">2</span><b>ราคา/สเปก 9 ข้อ</b> — ปลั๊ก1,000 · ไฟ3,000 · โซ่/โลตัส · PVCสี · ชินโคสีครบ · ดีไลท์ DG7 · ผนังเบา · ธรณีบานเปิด</li>
+        <li><span class="z z2">2</span><b>G5 imp33 ชื่อ</b> "มุ้งกันแมว หมา"→"มุ้งกันแมว"</li>
+        <li><span class="z z2">2</span><b>G1 แผ่นทึบล่าง</b> (ลูกฟูก/คอมโพสิต) เอากลับ + ล็อกเฉพาะบานกระจก <span class="tag">เพิ่งเคาะวันนี้</span></li>
+        <li><span class="z z3">3</span><b>G3 ใบ 5 บล็อก</b> + <b>G5 #10 ผ้าซ้ำ</b> imp21</li>
+        <li><span class="z z4">4</span><b>redesign ปุ่มใหญ่</b> drill-down + ป้ายชื่อ</li>
+        <li><span class="z z4">4</span><b>G5 สีกรอบมุ้ง</b> → ชิป+จุดสี (ดราฟพร้อม)</li>
+        <li><span class="z z4">4</span><b>G4 สีฝาตู้</b> → ชิป+จุดสี <span class="hot">⚠ มีผลราคา เทียบ golden</span></li>
+        <li><span class="z z4">4</span><b>G4 วัสดุฝาตู้</b> 2 ตัว → ชิป · <b>G3 รางน้ำ</b> → ชิป</li>
+        <li><span class="z z4">4</span><b>⭐ G2 สีอบ drill-down + ชื่อสีพิเศษ</b> (ครอบงาน G2 จุดสี · ก้อนใหญ่)</li>
+        <li><span class="z zg1">G1</span><b>มือจับ→ล็อค</b> (ย้ายมือจับละเอียดไป OPTION)</li>
+        <li><span class="z zg1">G1</span><b>จัดลำดับ v9</b> — ของไม่บ่อยพับ · OPTION โชว์เลย · ธรณีต่อจากกระจก</li>
+        <li><span class="z zg1">G1</span><b>ผสมบานคิดราคาตามชนิด</b> (อัปเกรด engine · เสี่ยงสุด)</li>
+      </ul>
+    </div>
+
+    <!-- NEED DECISION -->
+    <div class="col ask">
+      <h2 class="ask">❓ ยังต้องเคาะ (พี่นัทตัดสิน)</h2>
+      <ul>
+        <li><b>1. ปล่อย Chat B เริ่มแก้เมื่อไหร่?</b> — ตอนนี้พี่สั่ง "รอตรวจรวบ ยังไม่ปล่อย" → งานกองในคิวเยอะแล้ว จะให้เริ่มทีละโซนได้ยัง</li>
+        <li><b>2. ปรับโครงรวมแหล่งนิยามบาน</b> (G6GROUPS+G1GROUPS ซ้อนกัน · drift risk) — ทำเลย หรือเก็บไว้ทีหลัง (ตอนนี้ใช้งานได้ แค่เสี่ยงลืม sync)</li>
+        <li><b>3. shower / YKK ใน G6</b> โผล่ใน room builder แต่ไม่ใช่สินค้ากลุ่ม 6 — ตั้งใจให้เลือกในห้องไหม (ใช้งานได้ ราคาถูก) หรือตัด</li>
+        <li><b>4. ลำดับทำ G1 ฟอร์มใหม่</b> — "ผสมบานคิดตามชนิด" เสี่ยงราคาสุด · จะทำก่อนหรือหลังงานจัดลำดับ (ปลอดภัยกว่า)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot">⚠ ไฟล์ภายใน — ห้ามอัปสาธารณะ · เทสจากโค้ดจริง (Claude in Chrome เข้า iframe /calculator/index.html) ไม่เดา</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>เทียบ G6 ก่อน → หลัง (5 บล็อก)</title>
+<style>
+  @page{size:A4;margin:10mm 9mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.42;margin:0;}
+  h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 9px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:4px 0 9px;font-size:9.8px;}
+  th,td{border:1px solid #d8c9c9;padding:4px 7px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.c{text-align:center;white-space:nowrap;}
+  .ok{color:#15803D;font-weight:700;}
+  .wait{color:#B45309;font-weight:700;}
+  .bad{color:#B3151D;font-weight:700;}
+  code{background:#eef2f7;padding:0 3px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:7px 10px;margin:6px 0;background:#fffafa;font-size:10px;}
+  .b-ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .b-wait{background:#fff4e5;border:1px solid #f0c070;}
+  .b-bad{background:#fef2f2;border:1px solid #fca5a5;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-bottom:4px;}
+  .stat{background:#fff;border-radius:8px;padding:8px;border:1px solid #eee;}
+  .stat .n{font-size:24px;font-weight:800;}
+  .stat .l{font-size:10px;color:#666;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .inv{background:#fff;border:1px solid #ccc;border-radius:6px;padding:9px 11px;font-size:9.3px;line-height:1.55;}
+  .inv .hd{font-weight:700;color:#1F2937;}
+  .inv .bk{color:#B3151D;font-weight:700;font-size:9px;margin-top:5px;border-top:1px dashed #ddd;padding-top:3px;}
+  .inv .sp{color:#374151;margin-left:6px;}
+  .x{color:#c00;}
+  .g{color:#15803D;}
+  ul{margin:3px 0;padding-left:16px;}li{margin:2px 0;}
+  .lg{font-size:9px;color:#666;}
+  .pgbreak{page-break-before:always;}
+</style>
+</head>
+<body>
+
+<h1>เทียบ G6 (กั้นห้องกระจก) — ก่อนแก้ → หลังแก้</h1>
+<div class="meta">17 มิ.ย. 2026 · dev แชท B แก้เสร็จ commit <code>e3adf96</code> · ตรวจจากโค้ดจริง + golden + เทส 4 ชุด + ออกใบจริง</div>
+
+<div class="grid3">
+<div class="stat"><div class="n ok">3/4</div><div class="l">จุดแก้ใบ 5 บล็อก เสร็จ ✅</div></div>
+<div class="stat"><div class="n ok">149</div><div class="l">golden ตรง · เงินไม่เพี้ยน ✅</div></div>
+<div class="stat"><div class="n wait">1</div><div class="l">Protection รอพี่นัทเคาะ 🟡</div></div>
+</div>
+
+<h2>① หัวใจที่แก้ — ใบ G6 จากพัง → 5 บล็อก</h2>
+<div class="box b-bad" style="margin-bottom:4px"><b>ปัญหาเดิม:</b> แชท G1 เปลี่ยนใบทั้งระบบเป็น 5 บล็อก (รายการงานขึ้นบน · สเปคลงล่าง) แต่ G6 ตกขบวน — <code>readItem</code> ส่งรายการงานทั้งก้อนเป็น <b>note</b> → รายการงาน (ด้าน/บาน/หลังคา/ไฟ) ไปกองใต้หัวข้อ <b>"หมายเหตุ"</b> และสเปควัสดุเด้งขึ้นไปอยู่บนสุด → ใบอ่านไม่รู้เรื่อง</div>
+
+<div class="grid2">
+<div>
+<div style="font-size:10px;color:#c00;margin-bottom:3px;">❌ ก่อนแก้ (ใบพัง)</div>
+<div class="inv">
+<div class="hd">ห้องต่อเติม (กั้นห้องกระจก)</div>
+<div class="sp x">- อลูมิเนียม สีอบขาว <span style="font-size:8px">(สเปคเด้งขึ้นบน)</span></div>
+<div class="bk x">หมายเหตุ</div>
+<div class="sp x">- ด้าน A (3 ช่อง·3 บาน) = 98,100</div>
+<div class="sp x">- บานเปิด/กระจก/บานเลื่อน</div>
+<div class="sp x">- ผนังเบา/หลังคา/งานไฟ</div>
+<div class="sp x" style="font-size:8px">(รายการงานทั้งหมดกองใต้หมายเหตุ!)</div>
+<div class="bk">รายละเอียด</div>
+<div class="sp">- กระจกเขียว 6มม.</div>
+</div>
+</div>
+<div>
+<div style="font-size:10px;color:#15803D;margin-bottom:3px;">✅ หลังแก้ (5 บล็อก · ออกจากใบจริง)</div>
+<div class="inv">
+<div class="hd">ห้องต่อเติม (กั้นห้องกระจก) · เหมา</div>
+<div class="sp g" style="margin-top:3px">- ด้าน A (3 ช่อง · 3 บาน) = 98,100</div>
+<div class="sp g">- บานเปิด ยูโร · ธรณีหลังเต่า, มุ้งจีบ SD, ครอบวงกบ 4 ด้าน</div>
+<div class="sp g">- กระจกติดตาย · บานเลื่อน ยูโร · มุ้งจีบ, มือจับ A300</div>
+<div class="sp g">- ด้าน B · ผนังเบา = 8,775</div>
+<div class="sp g">- หลังคา/ฝ้า ไวนิล = 95,000 · งานไฟ = 5,500</div>
+<div class="bk">รายละเอียด (สเปค)</div>
+<div class="sp">- อลูมิเนียม สีมาตรฐาน (ขาว/ดำ)</div>
+<div class="sp">- กระจกเขียว/ใส หนา 6 มม. · ผนังเบา (ISOWALL/สมาร์ทบอร์ด)</div>
+</div>
+</div>
+</div>
+<div class="lg" style="margin-top:6px">เลขราคา/VAT/total <b>ไม่เปลี่ยน</b> (golden 149 ตรง) — แก้แค่ลำดับ/ที่อยู่ของข้อความ · รายการงานขึ้นบล็อกบน · สเปคลงบล็อกล่าง</div>
+
+<h2>② โค้ดที่ B แก้จริง (commit e3adf96 · ตรวจในไฟล์แล้ว)</h2>
+<table>
+<tr><th>จุด</th><th>แก้อะไร</th><th class="c">ที่</th><th class="c">สถานะ</th></tr>
+<tr><td>จุด 1</td><td>เพิ่ม <code>g6rRoomSpec()</code> — ออกสเปควัสดุห้อง (อลู/กระจก/ผนังเบา)</td><td class="c">L6578</td><td class="c ok">✅</td></tr>
+<tr><td>จุด 2</td><td><code>readItem</code> ส่งรายการงาน → <code>work</code> (เลิกส่งเป็น note) + สเปค → <code>spec</code></td><td class="c">L4492-4506</td><td class="c ok">✅</td></tr>
+<tr><td>จุด 3</td><td><code>itemDetail</code> เพิ่ม branch <code>it.room</code> → คืน work/spec ให้ genQuote ประกอบ 5 บล็อก</td><td class="c">L5157</td><td class="c ok">✅</td></tr>
+<tr><td>+</td><td>งานพื้น → หมายเหตุ "ไม่รับประกันพื้นแอ่น/ยวบ" อัตโนมัติ</td><td class="c">L4496</td><td class="c ok">✅</td></tr>
+<tr><td class="bad">จุด 4</td><td><b>Protection</b> — เอาบรรทัดราคาอังกฤษออก เปลี่ยนเป็นหมายเหตุไทย</td><td class="c">L4755</td><td class="c wait">🟡 รอเคาะ</td></tr>
+</table>
+
+<h2>③ ผลตรวจ (ผมรันเอง 17 มิ.ย.)</h2>
+<table>
+<tr><th>เช็ค</th><th class="c">ผล</th></tr>
+<tr><td>golden-snapshot (กันราคาเพี้ยน 149 ตัว)</td><td class="c ok">✅ 149/149 ตรง baseline</td></tr>
+<tr><td>g6-room-quote-detail (ใบแตกรายบาน)</td><td class="c ok">✅ 16/16</td></tr>
+<tr><td>g6-room-options (ออปชั่นบาน + parity G1)</td><td class="c ok">✅ 24/24</td></tr>
+<tr><td>g6-floor-fan (งานพื้น/พัดลม)</td><td class="c ok">✅ 9/9</td></tr>
+<tr><td>g6-phaseB-flags (มุ้ง +2 / ผ้ามุ้ง)</td><td class="c ok">✅ 28/28</td></tr>
+<tr><td>ออกใบจริง (gen-g6-sample-invoice)</td><td class="c ok">✅ รายการงานขึ้นบน · สเปคลงล่าง · ไม่กองใต้หมายเหตุ</td></tr>
+</table>
+
+<h2>④ 🟡 จุดเดียวที่ต้องพี่นัทเคาะ — Protection</h2>
+<div class="box b-wait">
+<b>สถานะตอนนี้:</b> B ทำ 5 บล็อกหลักเสร็จแล้ว แต่ <b>จงใจเว้นจุด 4 ไว้รอเคาะ</b> (เพราะแตะ jobServices เสี่ยง golden เพี้ยน). ตอนนี้ Protection มี 2 ทาง:
+<ul>
+<li>🔴 <b>บรรทัดราคาอังกฤษ</b> <code>Protection พื้น/ผนัง 2,000</code> — ยังโผล่ในใบ (L4755) เวลาติ๊ก checkbox</li>
+<li>🟢 <b>หมายเหตุไทย</b> "ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)" — แชทกลางใส่ใน <code>REMARK_PRESETS</code> (L1769) แล้ว · เซลล์ติ๊กเลือกได้</li>
+</ul>
+<b>คำถามพี่นัท:</b> เอาบรรทัดราคาอังกฤษออก (เงินยังบวก 2,000 เงียบๆ) ให้เหลือแต่หมายเหตุไทยใช่ไหม?
+ถ้าใช่ → ผมส่ง dev แก้จุด 4 (ลบ <code>lines.push(['Protection พื้น/ผนัง'...])</code> → ใช้ตัวสะสมยอดเงียบ · golden ต้องยัง 149)
+</div>
+
+<div class="box b-ok"><b>สรุป:</b> งานหลัก G6 ใบ 5 บล็อก <b>เสร็จและปลอดภัยแล้ว</b> (เงินไม่เพี้ยน เทสผ่านหมด ใบเรียงถูก) · เหลือเรื่องเดียว = Protection จะให้โชว์เป็นหมายเหตุไทยล้วนไหม รอพี่นัทเคาะ 1 คำตอบ</div>
+
+</body>
+</html>

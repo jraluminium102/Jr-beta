@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT G2 UX — รั้ว/ระแนง/ราวกันตก (กดเล่นได้ · ราคาเดโม)</title>
+<style>
+:root{
+  --red:#B3151D; --red-dk:#7F1D1D; --red-bg:#FEF2F2;
+  --blue:#1565C0; --blue-bg:#EAF3FF; --blue-bd:#9DBCE0;
+  --green:#065F46; --green-bg:#ECFDF5;
+  --amber:#92400E; --amber-bg:#FFF7ED;
+  --gray:#6B7280; --border:#E5E7EB; --bg:#F3F4F6; --ink:#1F2937;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;font-size:14px;background:var(--bg);color:var(--ink);}
+.demobar{background:#FFF7ED;border-bottom:2px solid #FCD34D;padding:7px 14px;text-align:center;font-size:12px;font-weight:700;color:var(--amber);}
+.page{max-width:580px;margin:0 auto;padding:12px 12px 90px;}
+h1{font-size:17px;color:var(--red);margin:0 0 2px;}
+.sub{color:var(--gray);font-size:11px;margin-bottom:12px;}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.card-h{font-size:12.5px;font-weight:700;color:var(--red);margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+.step{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+
+/* Group buttons — card grid */
+.g2-groups{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.gbtn{min-height:60px;padding:6px 8px;border:1.5px solid var(--border);border-radius:10px;background:#fff;
+  cursor:pointer;font-size:12px;font-weight:700;color:#374151;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  transition:.12s;font-family:inherit;text-align:center;line-height:1.2;}
+.gbtn .ic{font-size:20px;}
+.gbtn:active{transform:scale(.96);}
+.gbtn.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);border-width:2px;}
+
+/* Ranae sub buttons */
+.sub-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+.stab{min-height:44px;padding:5px 10px;border:1.5px solid var(--border);border-radius:9px;background:#fff;
+  cursor:pointer;font-size:12.5px;font-weight:700;color:#374151;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  transition:.12s;font-family:inherit;text-align:center;line-height:1.2;}
+.stab .ss{font-size:10px;font-weight:400;color:var(--gray);}
+.stab.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);border-width:2px;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{min-height:44px;padding:0 13px;border:1.5px solid var(--border);border-radius:9px;background:#fff;
+  font-size:13px;font-weight:600;color:#374151;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  transition:.12s;font-family:inherit;white-space:nowrap;}
+.chip:active{transform:scale(.96);}
+.chip.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+.chip.on.red{background:var(--red);color:#fff;border-color:var(--red);}
+.chips.sm .chip{min-height:38px;font-size:12px;padding:0 10px;}
+
+/* Label */
+.lbl{font-size:12px;font-weight:700;color:#374151;margin:10px 0 6px;}
+.lbl:first-child{margin-top:0;}
+.lbl .hint{font-weight:400;color:var(--gray);font-size:11px;}
+
+/* Size row */
+.sz-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;}
+.sz-fld{display:flex;flex-direction:column;gap:3px;}
+.sz-fld span{font-size:11px;color:var(--gray);font-weight:700;}
+.sz-fld input{height:44px;border:1.5px solid var(--border);border-radius:9px;
+  padding:0 10px;font-size:16px;font-family:inherit;color:var(--ink);width:80px;
+  font-variant-numeric:tabular-nums;}
+.sz-fld input:focus{outline:none;border-color:var(--blue);}
+.sz-fld input.w100{width:100px;}
+
+/* Cascade block */
+.casc{width:100%;border:1px solid #E5E7EB;border-radius:9px;padding:9px 11px;background:#FAFAFA;margin:4px 0;}
+.casc-row{margin-bottom:8px;}
+.casc-row:last-child{margin-bottom:0;}
+.casc-num{background:var(--red);color:#fff;font-size:10px;min-width:18px;height:18px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;flex:none;margin-right:5px;}
+.reveal-hint{font-size:11px;color:#9CA3AF;margin-top:6px;}
+
+/* Product name badge */
+.prod-badge{font-size:11.5px;color:var(--green);font-weight:700;background:var(--green-bg);
+  border-radius:7px;padding:5px 9px;margin-top:7px;display:flex;align-items:center;gap:5px;}
+.prod-badge .rate{color:var(--blue);margin-left:auto;font-size:11px;}
+
+/* Extras (พับ) */
+details{border-top:1px dashed var(--border);margin-top:10px;padding-top:8px;}
+summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--blue);list-style:none;padding:4px 0;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:"+ ";}
+details[open] summary::before{content:"- ";}
+
+/* Toggle checkbox row */
+.trow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed #f0f0f0;min-height:38px;}
+.trow:last-child{border-bottom:0;}
+.trow input[type=checkbox]{width:18px;height:18px;flex:none;}
+.trow label{flex:1;font-size:13px;cursor:pointer;}
+.trow .tval{color:var(--gray);font-size:11px;margin-left:auto;white-space:nowrap;}
+
+/* Text / number input inline */
+.inp-sm{height:38px;border:1.5px solid var(--border);border-radius:8px;padding:0 9px;
+  font-size:14px;font-family:inherit;color:var(--ink);}
+.inp-sm:focus{outline:none;border-color:var(--blue);}
+
+/* Pricebar */
+.pbar{position:fixed;left:0;right:0;bottom:0;
+  background:linear-gradient(135deg,var(--red),var(--red-dk));color:#fff;
+  padding:10px 16px;display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 -3px 12px rgba(0,0,0,.18);}
+.pbar .pt{font-size:11.5px;opacity:.85;max-width:280px;line-height:1.3;}
+.pbar .pv{font-size:24px;font-weight:800;white-space:nowrap;}
+
+/* Hidden */
+.hidden{display:none;}
+
+/* Note */
+.note{font-size:11px;color:var(--amber);background:var(--amber-bg);border-radius:7px;padding:5px 9px;margin-top:6px;}
+
+/* Remark presets */
+.rmk-list{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.rmk-check{display:flex;align-items:flex-start;gap:8px;padding:4px 0;}
+.rmk-check input{width:16px;height:16px;flex:none;margin-top:1px;}
+.rmk-check label{font-size:12.5px;color:#374151;cursor:pointer;line-height:1.4;}
+textarea.rmk-txt{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;
+  font-size:13px;font-family:inherit;margin-top:6px;resize:vertical;height:60px;}
+
+/* o-doortype select-as-chip */
+select.hidden-sel{display:none;}
+</style>
+</head>
+<body>
+<div class="demobar">ดราฟ UX · ราคาเป็น <b>เดโม (dev ดึงเรตจริง)</b> · กดเล่นได้จริง · 17 มิ.ย. 2026</div>
+<div class="page">
+  <h1>G2 รั้ว / ระแนง / ราวกันตก</h1>
+  <p class="sub">เลือกประเภทงาน → ฟอร์มโผล่ตามที่เลือก · ปุ่ม ≥44px มือถือ</p>
+
+  <!-- Step 1: กลุ่มงาน -->
+  <div class="card">
+    <div class="card-h"><span class="step">1</span>ประเภทงาน</div>
+    <div class="g2-groups" id="grpBtns">
+      <button class="gbtn on" data-g="gate" onclick="pickG2(this)">
+        <span class="ic">📕</span>ประตูรั้ว
+      </button>
+      <button class="gbtn" data-g="ranae" onclick="pickG2(this)">
+        <span class="ic">📘</span>ระแนง
+      </button>
+      <button class="gbtn" data-g="rail" onclick="pickG2(this)">
+        <span class="ic">🛡</span>ราวกันตก
+      </button>
+      <button class="gbtn" data-g="special" onclick="pickG2(this)">
+        <span class="ic">⚙</span>ระแนงพิเศษ
+      </button>
+    </div>
+  </div>
+
+  <!-- Form area (rendered per group) -->
+  <div id="formArea"></div>
+
+  <!-- Price bar -->
+  <div class="pbar">
+    <div class="pt" id="pTitle">เลือกประเภทงานก่อน</div>
+    <div class="pv" id="pVal">฿0</div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA (dummy rates · dev ดึงจริง) =====================
+var DEMO_RATES = {
+  // ราวกันตก (per_length_tier)
+  IMP1:[[0,5,10700],[5,10,10000],[10,15,9700],[15,9999,9400]],   // เฉียง หมุด
+  IMP2:[[0,5,11200],[5,10,10500],[10,15,10200],[15,9999,9900]],  // เฉียง ยู
+  IMP3:[[0,5,11200],[5,10,10500],[10,15,10200],[15,9999,9900]],  // เฉียง เสา
+  IMP4:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],     // ตรง หมุด
+  IMP5:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]],     // ตรง ยู
+  IMP6:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]],     // ตรง เสา
+  // ระแนง (per_sqm · ตัวแทน rn2 box ไม่โครง → รวมโครง)
+  ranaeBox_noframe: 3300, ranaeBox_withframe: 5200,
+  ranaeGleed_noframe: 3600, ranaeGleed_withframe: 5200,
+  // ประตูรั้ว base
+  gate_motor: 25000, gate_motor_curved_add: 8000,
+  gate_motor_straight: 1500, gate_motor_curved: 2500,
+  // bar products
+  bar_grid_z: 12000, bar_openclose: 15000, bar_slide: 18000
+};
+var BOC_FIN=[['0','สีอบขาว/ดำ (ฟรี)'],['500','เทาซาฮาร่า +500/ตร.ม.'],['1050','Aztec gray +1,050/ตร.ม.'],['1600','ลายไม้สต๊อก +1,600/ตร.ม.'],['3000','อบสีพิเศษ +3,000/ตร.ม.'],['4300','ลายไม้อบพิเศษ +4,300/ตร.ม.']];
+var SLIDE_FIN=[['0','สีอบขาว/ดำ (ฟรี)'],['400','เทาซาฮาร่า +400/ตร.ม.'],['950','Aztec +950/ตร.ม.'],['1500','ลายไม้สต๊อก +1,500/ตร.ม.'],['1600','อบสีพิเศษ +1,600/ตร.ม.'],['2200','ลายไม้อบพิเศษ +2,200/ตร.ม.']];
+var GATE_FIN=[['สีอบขาว','สีอบขาว (default)'],['สีดำ','สีดำ'],['','ไม่อบสี'],['สีเทาซาฮาร่า','เทาซาฮาร่า'],['สีลายไม้สต๊อก','ลายไม้สต๊อก'],['อบสีพิเศษ','อบสีพิเศษ'],['อบสีลายไม้','ลายไม้อบพิเศษ']];
+var RANAE_FIN=[['0','สีอบขาว'],['0','สีดำ'],['0','ไม่อบสี'],['szr','เทาซาฮาร่า'],['spe','อบสีพิเศษ'],['wood','ลายไม้สต๊อก'],['woodsp','ลายไม้อบพิเศษ']];
+var RAIL_ALU_COLOR=[['ขาว','ขาว'],['เทา','เทา'],['ดำ','ดำ']];
+var RAIL_HANDRAIL=[['','ไม่มี'],['u5','ยู อลูมิเนียม +500/ม.'],['box','กล่อง 1"x2" +600/ม.']];
+// Ranae cascade data (ดึงจาก RN_TREE จริง · demo ใช้ key ที่รู้จริงจากข้อมูล)
+var RN_BOX_SIZES=['1x5 cm.','1"x1"','1"x1.6"','1"x1½"','1"x4"','1.6"x1.6"','1.6"x4"','4"x4"','สลับ 5ต่อ3'];
+var RN_GLEED_SIZES=['1"','1.6"','4"'];
+var RN_PHANANG_GAPS=['1.6" 5cm.','1.6" 3cm.','1.6" 2cm.'];
+
+// Door types for ranae ทำเป็นบาน
+var DOOR_OPTS=[['','ไม่มี (ระแนงเปล่า/ติดตาย)'],['sliding_sms','บานเลื่อนเซมิ'],['sliding_euro','บานเลื่อนยูโร'],['casement_euro','บานเปิดยูโร'],['folding','บานเฟี้ยมเซมิ'],['folding_xseries','บานเฟี้ยม Xseries']];
+var SLIDE_DOOR_OPTS=[['','ไม่มี (ติดตาย)'],['sliding_sms','บานเลื่อนเซมิ'],['sliding_euro','บานเลื่อนยูโร'],['casement_euro','บานเปิดยูโร'],['casement_dseries','บานเปิด D-Series'],['folding','บานเฟี้ยมเซมิ'],['folding_xseries','บานเฟี้ยม Xseries']];
+
+// ===================== State =====================
+var state = {
+  g2: 'gate',       // gate | ranae | rail | special
+  ranaeSub: 'box',  // box | gleed | slide
+  specialSub: 'bar_openclose', // bar_openclose | bar_grid_z | bar_slide
+  // ranae box cascade step
+  rnStep: 1, rnBox:'1x5 cm.', rnFace:'1cm.', rnGap:'5cm.', rnFrame:'ไม่โครง',
+  // ranae gleed
+  rnGleedSize:'1"', rnGleedFrame:'ไม่โครง',
+  // rail
+  railShape:'เฉียง', railMount:'หมุด',
+  railGlass: 10, railHandrail:'', railAluColor:'ขาว',
+  // gate
+  gateRnBox:'1x5 cm.', gateRnFace:'1cm.', gateRnGap:'5cm.',
+  gateType:'slide_bottom', gateMotor:1, gateRailType:'straight', gateFinish:'สีอบขาว', gateThresh:false, gateWood:0,
+  // bar_openclose
+  bocDir:'v', bocMotor:false, bocFin:0,
+  // bar_grid_z
+  bgzDir:'v', bgzBsdoor:'', bgzBsdoorprice:0, bgzColor:'',
+  // bar_slide
+  bsDir:'v', bsBsdoor:'', bsBsdoorprice:0, bsFin:0,
+};
+
+// ===================== Helpers =====================
+function fmt(n){return '฿'+(Math.round(n)).toLocaleString();}
+function rateOf(len,tbl){for(var i=0;i<tbl.length;i++){if(len>=tbl[i][0]&&len<tbl[i][1])return tbl[i][2];}return tbl[tbl.length-1][2];}
+
+function chipsHtml(opts,cur,fn,group){
+  var h='<div class="chips'+(group?(' '+group):'')+'">';
+  opts.forEach(function(o){
+    var v=Array.isArray(o)?o[0]:o;
+    var t=Array.isArray(o)?o[1]:o;
+    h+='<button type="button" class="chip'+(String(v)===String(cur)?' on':'')+'" data-v="'+String(v).replace(/"/g,'&quot;')+'" onclick="'+fn+'(this)">'+t+'</button>';
+  });
+  return h+'</div>';
+}
+
+// ===================== Pick functions =====================
+function pickG2(btn){
+  document.querySelectorAll('#grpBtns .gbtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.g2=btn.dataset.g;
+  state.rnStep=1;
+  renderForm();
+  calcPrice();
+}
+function pickRanaeSub(btn){
+  document.querySelectorAll('.ranaeSubs .stab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.ranaeSub=btn.dataset.rs;
+  state.rnStep=1;
+  renderRanaeInner();
+  calcPrice();
+}
+function pickSpecialSub(btn){
+  document.querySelectorAll('.specialSubs .chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.specialSub=btn.dataset.ss;
+  renderSpecialInner();
+  calcPrice();
+}
+function pickChip(btn,key){
+  var parent=btn.closest('.chips');
+  parent.querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state[key]=btn.dataset.v;
+  // cascade steps
+  if(key==='rnBox'){state.rnStep=2; state.rnFace=getRnFaces(state.rnBox)[0]||''; state.rnGap=getRnGaps(state.rnBox,state.rnFace)[0]||'';}
+  else if(key==='rnFace'){state.rnStep=3; state.rnGap=getRnGaps(state.rnBox,state.rnFace)[0]||'';}
+  else if(key==='rnGap'){state.rnStep=4;}
+  else if(key==='rnFrame'){state.rnStep=4;}
+  else if(key==='rnGleedSize'){state.rnStep=2;}
+  else if(key==='rnGleedFrame'){state.rnStep=2;}
+  else if(key==='railShape'||key==='railMount'){state.railShape=key==='railShape'?btn.dataset.v:state.railShape; state.railMount=key==='railMount'?btn.dataset.v:state.railMount;}
+  renderFormSection(key);
+  calcPrice();
+}
+function pickBool(btn,key){
+  var parent=btn.closest('.chips');
+  parent.querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state[key]=btn.dataset.v==='1'||btn.dataset.v==='true';
+  calcPrice();
+}
+function pickVal(btn,key){
+  var parent=btn.closest('.chips');
+  parent.querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state[key]=btn.dataset.v;
+  calcPrice();
+}
+function onInput(sel,key){
+  state[key]=sel.value||sel.type==='checkbox'?sel.checked:sel.value;
+  calcPrice();
+}
+function onNumInput(inp,key){
+  state[key]=parseFloat(inp.value)||0;
+  calcPrice();
+}
+function onCheckbox(cb,key){
+  state[key]=cb.checked;
+  calcPrice();
+}
+
+// ===================== Ranae tree helpers (demo approximation) =====================
+function getRnFaces(box){
+  // approximation based on real data: ผนัง (ระแนงผนัง) has only 1.6" face · บังตา has multiple
+  if(box==='สลับ 5ต่อ3') return ['1.6"ต่อ4"'];
+  if(box==='1x5 cm.') return ['1cm.','5cm.'];
+  if(box==='1"x1"') return ['1"'];
+  if(box==='1"x1.6"') return ['1"'];
+  if(box==='1"x1½"') return ['1"','1½"'];
+  if(box==='1"x4"') return ['1"','4"'];
+  if(box==='1.6"x1.6"') return ['1.6"'];
+  if(box==='1.6"x4"') return ['1.6"','4"'];
+  if(box==='4"x4"') return ['4"'];
+  return ['—'];
+}
+function getRnGaps(box,face){
+  if(box==='1"x4"'&&face==='4"') return ['5cm.','3cm.','2cm.','ทึบ'];
+  if(face==='ทึบ'||face==='4"') return ['ทึบ','5cm.','3cm.','2cm.'];
+  return ['5cm.','3cm.','2cm.'];
+}
+function getRnPhanangGaps(){ return ['5cm.','3cm.','2cm.']; }
+
+// ===================== Render =====================
+function renderForm(){
+  var g=state.g2;
+  var area=document.getElementById('formArea');
+  if(g==='gate') area.innerHTML=buildGateForm();
+  else if(g==='ranae') area.innerHTML=buildRanaeForm();
+  else if(g==='rail') area.innerHTML=buildRailForm();
+  else if(g==='special') area.innerHTML=buildSpecialForm();
+}
+function renderFormSection(key){
+  // re-render only inner cascade / sub sections
+  if(state.g2==='ranae'){
+    var inner=document.getElementById('ranaeInner');
+    if(inner) inner.innerHTML=buildRanaeInnerHtml();
+  } else if(state.g2==='rail'){
+    var ri=document.getElementById('railInner');
+    if(ri) ri.innerHTML=buildRailInnerHtml();
+  } else if(state.g2==='gate'){
+    var gi=document.getElementById('gateRnCasc');
+    if(gi) gi.innerHTML=buildGateRnCascHtml();
+  }
+}
+function renderRanaeInner(){
+  var inner=document.getElementById('ranaeInner');
+  if(inner){ inner.innerHTML=buildRanaeInnerHtml(); }
+}
+function renderSpecialInner(){
+  var inner=document.getElementById('specialInner');
+  if(inner){ inner.innerHTML=buildSpecialInnerHtml(); }
+}
+
+// ===================== GATE form =====================
+function buildGateForm(){
+  var h='<div class="card">';
+  h+='<div class="card-h"><span class="step">2</span>ประตูรั้ว</div>';
+  // ลักษณะการเปิด
+  h+='<div class="lbl">ลักษณะการเปิด</div>';
+  h+=chipsHtml([['slide_bottom','บานเลื่อน']],'slide_bottom','pickVal_','gateType');
+  // ลายระแนง cascade
+  h+='<div class="lbl">ลายระแนง <span class="hint">cascade: ขนาดเส้น → หน้าโชว์ → ระยะห่าง</span></div>';
+  h+='<div id="gateRnCasc">'+buildGateRnCascHtml()+'</div>';
+  // มอเตอร์ + ชนิดราง แถวเดียว
+  h+='<div class="lbl">จำนวนมอเตอร์</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;">';
+  h+='<input type="number" class="inp-sm w100" id="gateMotorInp" min="0" step="1" value="'+state.gateMotor+'" oninput="state.gateMotor=parseInt(this.value)||0;calcPrice();" style="width:80px;"> ตัว</div>';
+  h+='<div class="lbl">ชนิดราง</div>';
+  h+=chipsHtml([['straight','ตรง (+1,500/ม.)'],['curved','โค้ง (+2,500/ม. +บานโค้ง)']],state.gateRailType,'pickGateRailType','sm');
+  // อบสี
+  h+='<div class="lbl">อบสี/ผิว</div>';
+  h+=chipsHtml(GATE_FIN,state.gateFinish,'pickGateFinish','sm');
+  // ธรณี + ลายไม้
+  h+='<details><summary>ออปชั่นเพิ่มเติม</summary>';
+  h+='<div style="padding-top:6px;">';
+  h+='<div class="trow"><input type="checkbox" id="gateThreshCb" '+(state.gateThresh?'checked':'')+' onchange="state.gateThresh=this.checked;calcPrice();"><label for="gateThreshCb">มีธรณี (+รวมในราคา)</label></div>';
+  h+='<div class="trow" style="flex-wrap:wrap;gap:6px;">';
+  h+='<label style="font-size:13px;flex:1;min-width:150px;">OPTION ลายไม้ Golden Teak SMS <span style="font-size:11px;color:var(--gray);">(กรอกราคาเพิ่มเอง)</span></label>';
+  h+='<input type="number" class="inp-sm" style="width:100px;" min="0" step="500" value="'+state.gateWood+'" placeholder="บาท" oninput="state.gateWood=parseFloat(this.value)||0;calcPrice();">';
+  h+='</div>';
+  h+=buildCommonExtras('gate');
+  h+='</div></details>';
+  // ขนาด
+  h+=buildSizeRow('ม.ยาวรวม','ม.สูง','ชุด');
+  h+='</div>';
+  return h;
+}
+function buildGateRnCascHtml(){
+  var h='<div class="casc">';
+  var faces=getRnFaces(state.gateRnBox);
+  var gaps=getRnGaps(state.gateRnBox,state.gateRnFace);
+  h+='<div class="casc-row"><span class="casc-num">①</span><b style="font-size:12px;">ขนาดกล่อง</b> ';
+  h+='<div class="chips sm" style="margin-top:5px;">';
+  RN_BOX_SIZES.forEach(function(s){
+    h+='<button type="button" class="chip'+(s===state.gateRnBox?' on':'')+'" data-v="'+s+'" onclick="state.gateRnBox=this.dataset.v;state.gateRnFace=getRnFaces(state.gateRnBox)[0];state.gateRnGap=getRnGaps(state.gateRnBox,state.gateRnFace)[0];document.getElementById(\'gateRnCasc\').innerHTML=buildGateRnCascHtml();calcPrice();">'+s+'</button>';
+  });
+  h+='</div></div>';
+  h+='<div class="casc-row"><span class="casc-num">②</span><b style="font-size:12px;">หน้าโชว์</b> ';
+  h+='<div class="chips sm" style="margin-top:5px;">';
+  faces.forEach(function(f){
+    h+='<button type="button" class="chip'+(f===state.gateRnFace?' on':'')+'" data-v="'+f+'" onclick="state.gateRnFace=this.dataset.v;state.gateRnGap=getRnGaps(state.gateRnBox,state.gateRnFace)[0];document.getElementById(\'gateRnCasc\').innerHTML=buildGateRnCascHtml();calcPrice();">'+f+'</button>';
+  });
+  h+='</div></div>';
+  h+='<div class="casc-row"><span class="casc-num">③</span><b style="font-size:12px;">ระยะห่าง</b> ';
+  h+='<div class="chips sm" style="margin-top:5px;">';
+  gaps.forEach(function(g){
+    h+='<button type="button" class="chip'+(g===state.gateRnGap?' on':'')+'" data-v="'+g+'" onclick="state.gateRnGap=this.dataset.v;document.getElementById(\'gateRnCasc\').innerHTML=buildGateRnCascHtml();calcPrice();">'+g+'</button>';
+  });
+  h+='</div></div>';
+  var selName='ลาย '+state.gateRnBox+' โชว์ '+state.gateRnFace+' ระยะ '+state.gateRnGap+' (ไม่โครง)';
+  h+='<div class="prod-badge">'+selName+'</div>';
+  h+='</div>';
+  return h;
+}
+function pickGateRailType(btn){
+  document.querySelectorAll('.chips .chip').forEach(function(b){if(b.closest('.chips')===btn.closest('.chips'))b.classList.remove('on');});
+  btn.classList.add('on');
+  state.gateRailType=btn.dataset.v;
+  calcPrice();
+}
+function pickGateFinish(btn){
+  document.querySelectorAll('.chips .chip').forEach(function(b){if(b.closest('.chips')===btn.closest('.chips'))b.classList.remove('on');});
+  btn.classList.add('on');
+  state.gateFinish=btn.dataset.v;
+  calcPrice();
+}
+function pickVal_(btn){
+  var parent=btn.closest('.chips');
+  parent.querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  calcPrice();
+}
+
+// ===================== RANAE form =====================
+function buildRanaeForm(){
+  var h='<div class="card">';
+  h+='<div class="card-h"><span class="step">2</span>ระแนง — เลือกชนิด</div>';
+  // sub tabs
+  h+='<div class="sub-tabs ranaeSubs">';
+  h+='<button class="stab'+(state.ranaeSub==='box'?' on':'')+'" data-rs="box" onclick="pickRanaeSub(this)">กล่อง<span class="ss">บังตา/ผนัง</span></button>';
+  h+='<button class="stab'+(state.ranaeSub==='gleed'?' on':'')+'" data-rs="gleed" onclick="pickRanaeSub(this)">เกล็ด Z<span class="ss">ปรับทิศ</span></button>';
+  h+='<button class="stab'+(state.ranaeSub==='slide'?' on':'')+'" data-rs="slide" onclick="pickRanaeSub(this)">เลื่อน<span class="ss">ลูกฟูก 2 ทาง</span></button>';
+  h+='</div>';
+  // inner section
+  h+='<div id="ranaeInner">'+buildRanaeInnerHtml()+'</div>';
+  h+='</div>';
+  return h;
+}
+function buildRanaeInnerHtml(){
+  if(state.ranaeSub==='box') return buildRanaeBoxHtml();
+  if(state.ranaeSub==='gleed') return buildRanaeGleedHtml();
+  if(state.ranaeSub==='slide') return buildRanaeSlideHtml();
+  return '';
+}
+function buildRanaeBoxHtml(){
+  var h='';
+  var faces=getRnFaces(state.rnBox);
+  var gaps=getRnGaps(state.rnBox,state.rnFace);
+  var frames=['ไม่โครง','รวมโครง'];
+  h+='<div class="casc" style="margin-top:8px;">';
+  // ① ขนาดกล่อง
+  h+='<div class="casc-row"><span class="casc-num">①</span><b style="font-size:12px;">ขนาดกล่อง</b>';
+  h+='<div class="chips sm" style="margin-top:5px;">';
+  RN_BOX_SIZES.forEach(function(s){
+    h+='<button type="button" class="chip'+(s===state.rnBox?' on':'')+'" data-v="'+s+'" onclick="state.rnBox=this.dataset.v;state.rnStep=2;state.rnFace=getRnFaces(state.rnBox)[0]||state.rnFace;state.rnGap=getRnGaps(state.rnBox,state.rnFace)[0]||state.rnGap;document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">'+s+'</button>';
+  });
+  h+='</div></div>';
+  // ② หน้าโชว์
+  if(state.rnStep>=2){
+    h+='<div class="casc-row"><span class="casc-num">②</span><b style="font-size:12px;">หน้าโชว์</b> <span style="font-size:10px;color:var(--blue);">('+faces.length+' ตัวเลือก)</span>';
+    h+='<div class="chips sm" style="margin-top:5px;">';
+    faces.forEach(function(f){
+      h+='<button type="button" class="chip'+(f===state.rnFace?' on':'')+'" data-v="'+f+'" onclick="state.rnFace=this.dataset.v;state.rnStep=3;state.rnGap=getRnGaps(state.rnBox,state.rnFace)[0];document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">'+f+'</button>';
+    });
+    h+='</div></div>';
+  } else { h+='<div class="reveal-hint">↓ เลือกขนาดกล่องก่อน แล้วหน้าโชว์จะโผล่</div>'; }
+  // ③ ระยะห่าง
+  if(state.rnStep>=3){
+    h+='<div class="casc-row"><span class="casc-num">③</span><b style="font-size:12px;">ระยะห่าง</b>';
+    h+='<div class="chips sm" style="margin-top:5px;">';
+    gaps.forEach(function(g){
+      h+='<button type="button" class="chip'+(g===state.rnGap?' on':'')+'" data-v="'+g+'" onclick="state.rnGap=this.dataset.v;state.rnStep=4;document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">'+g+'</button>';
+    });
+    h+='</div></div>';
+  } else if(state.rnStep>=2){ h+='<div class="reveal-hint">↓ เลือกหน้าโชว์ก่อน</div>'; }
+  // ④ โครง
+  if(state.rnStep>=4){
+    h+='<div class="casc-row"><span class="casc-num">④</span><b style="font-size:12px;">โครง</b>';
+    h+='<div class="chips sm" style="margin-top:5px;">';
+    frames.forEach(function(f){
+      h+='<button type="button" class="chip'+(f===state.rnFrame?' on':'')+'" data-v="'+f+'" onclick="state.rnFrame=this.dataset.v;document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">'+f+'</button>';
+    });
+    h+='</div></div>';
+  } else if(state.rnStep>=3){ h+='<div class="reveal-hint">↓ เลือกระยะห่างก่อน</div>'; }
+  h+='</div>';
+  // product badge
+  if(state.rnStep>=4){
+    h+='<div class="prod-badge">บังตาผนังระแนง '+state.rnBox+' โชว์ '+state.rnFace+' '+state.rnGap+' '+state.rnFrame+'<span class="rate">เดโม ×ตร.ม.</span></div>';
+  }
+  // ผิว/สี (o-finish)
+  h+='<div class="lbl" style="margin-top:10px;">ผิว/สี ระแนง</div>';
+  var finOpts=[['0','อบขาว (default)'],['0','สีดำ'],['0','ไม่อบสี'],['szr','เทาซาฮาร่า (+ราคา)'],['spe','อบสีพิเศษ (+ราคา)'],['wood','ลายไม้สต๊อก (+ราคา)'],['woodsp','ลายไม้อบพิเศษ (+ราคา)']];
+  h+='<div class="chips sm">';
+  finOpts.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // ทำเป็นบาน (o-doortype)
+  h+='<div class="lbl" style="margin-top:10px;">ทำเป็นบาน <span class="hint">(เลือกรุ่น — ราวถ้ามี)</span></div>';
+  h+='<div class="chips sm">';
+  DOOR_OPTS.forEach(function(o){
+    h+='<button type="button" class="chip'+(o[0]===''?' on':'')+'" data-v="'+o[0]+'" onclick="state.rnDoor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+=buildRanaeExtras();
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+function buildRanaeGleedHtml(){
+  var h='';
+  var frames=['ไม่โครง','รวมโครง'];
+  h+='<div class="casc" style="margin-top:8px;">';
+  // ① ขนาดเกล็ด
+  h+='<div class="casc-row"><span class="casc-num">①</span><b style="font-size:12px;">ขนาดเกล็ด</b>';
+  h+='<div class="chips sm" style="margin-top:5px;">';
+  RN_GLEED_SIZES.forEach(function(s){
+    h+='<button type="button" class="chip'+(s===state.rnGleedSize?' on':'')+'" data-v="'+s+'" onclick="state.rnGleedSize=this.dataset.v;state.rnStep=2;document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">เกล็ด Z '+s+'</button>';
+  });
+  h+='</div></div>';
+  // ② โครง
+  if(state.rnStep>=2){
+    h+='<div class="casc-row"><span class="casc-num">②</span><b style="font-size:12px;">โครง</b>';
+    h+='<div class="chips sm" style="margin-top:5px;">';
+    frames.forEach(function(f){
+      h+='<button type="button" class="chip'+(f===state.rnGleedFrame?' on':'')+'" data-v="'+f+'" onclick="state.rnGleedFrame=this.dataset.v;document.getElementById(\'ranaeInner\').innerHTML=buildRanaeInnerHtml();calcPrice();">'+f+'</button>';
+    });
+    h+='</div></div>';
+  } else { h+='<div class="reveal-hint">↓ เลือกขนาดเกล็ดก่อน</div>'; }
+  h+='</div>';
+  if(state.rnStep>=2){
+    h+='<div class="prod-badge">เกล็ด Z '+state.rnGleedSize+' '+state.rnGleedFrame+'<span class="rate">เดโม ×ตร.ม.</span></div>';
+  }
+  // ทิศติดตั้ง (o-grdir)
+  h+='<div class="lbl" style="margin-top:10px;">ทิศติดตั้ง</div>';
+  h+=chipsHtml([['','— ระบุ —'],['แนวตั้ง','แนวตั้ง'],['แนวนอน','แนวนอน']],'','pickSimple','sm');
+  // ผิว/สี
+  h+='<div class="lbl" style="margin-top:10px;">ผิว/สี ระแนง</div>';
+  var finOpts=[['0','อบขาว (default)'],['0','สีดำ'],['0','ไม่อบสี'],['szr','เทาซาฮาร่า (+ราคา)'],['spe','อบสีพิเศษ (+ราคา)'],['wood','ลายไม้สต๊อก (+ราคา)'],['woodsp','ลายไม้อบพิเศษ (+ราคา)']];
+  h+='<div class="chips sm">';
+  finOpts.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // ทำเป็นบาน
+  h+='<div class="lbl" style="margin-top:10px;">ทำเป็นบาน <span class="hint">(เกล็ด Z 38.1 ทำเป็นบานได้)</span></div>';
+  h+='<div class="chips sm">';
+  DOOR_OPTS.forEach(function(o){
+    h+='<button type="button" class="chip'+(o[0]===''?' on':'')+'" data-v="'+o[0]+'" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+=buildRanaeExtras();
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+function buildRanaeSlideHtml(){
+  var h='';
+  h+='<div class="note" style="margin-top:8px;">ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2) — ราคาคิดตามบาน G1 ที่เลือก</div>';
+  // ทำเป็นบาน (o-bsdoor)
+  h+='<div class="lbl" style="margin-top:10px;">เลือกรุ่นบาน (ทำเป็นบาน)</div>';
+  h+='<div class="chips sm">';
+  SLIDE_DOOR_OPTS.forEach(function(o){
+    h+='<button type="button" class="chip'+(o[0]===state.bsBsdoor?' on':'')+'" data-v="'+o[0]+'" onclick="state.bsBsdoor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // ราคาประตูกรอกเอง
+  h+='<div class="lbl" style="margin-top:10px;">ราคาประตู (กรอกเอง · ว่าง = auto)</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;">';
+  h+='<input type="number" class="inp-sm" style="width:110px;" min="0" step="500" value="0" placeholder="บาท"> ';
+  h+='<span style="font-size:11px;color:var(--gray);">กรอก &gt;0 = ใช้แทนราคารุ่น</span></div>';
+  // สีอบ (o-bsfinish)
+  h+='<div class="lbl" style="margin-top:10px;">สีอบ ลูกฟูกเรียบ 2 ทาง</div>';
+  h+='<div class="chips sm">';
+  SLIDE_FIN.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="state.bsFin=parseFloat(this.dataset.v)||0;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+=buildRanaeExtras();
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+function buildRanaeExtras(){
+  var h='<details><summary>ของเสริม / หมายเหตุ</summary><div style="padding-top:6px;">';
+  h+=buildCommonExtras('ranae');
+  h+='</div></details>';
+  return h;
+}
+
+// ===================== RAIL form =====================
+function buildRailForm(){
+  var h='<div class="card">';
+  h+='<div class="card-h"><span class="step">2</span>ราวกันตก (กรอก "ความยาว" ในช่องกว้าง)</div>';
+  h+='<div id="railInner">'+buildRailInnerHtml()+'</div>';
+  h+='</div>';
+  return h;
+}
+function buildRailInnerHtml(){
+  var imp=getRailImp();
+  var impName={
+    imp1:'ราวกันตกกระจกเฉียง หมุดแปะข้าง',
+    imp2:'ราวกันตกกระจกเฉียง วางยูเหล็ก ครอบอลูรับกระจกล่าง',
+    imp3:'ราวกันตกกระจกเฉียง เสาตั้งและราวจับบนอลูมิเนียม',
+    imp4:'ราวกันตกกระจกตรง หมุดแปะข้าง',
+    imp5:'ราวกันตกกระจกตรง วางยูเหล็ก ครอบอลูรับกระจกล่าง',
+    imp6:'ราวกันตกกระจกตรง เสาตั้งและราวจับบนอลูมิเนียม'
+  };
+  var hasAlu = imp==='imp2'||imp==='imp3'||imp==='imp5'||imp==='imp6';
+  var h='';
+  // ทรงราว
+  h+='<div class="lbl">ทรงราว</div>';
+  h+='<div class="chips">';
+  [['เฉียง','กระจกเฉียง'],['ตรง','กระจกตรง']].forEach(function(o){
+    h+='<button type="button" class="chip'+(state.railShape===o[0]?' on':'')+'" data-v="'+o[0]+'" onclick="state.railShape=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');document.getElementById(\'railInner\').innerHTML=buildRailInnerHtml();calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // ระบบยึด
+  h+='<div class="lbl">ระบบยึด</div>';
+  var mounts=[['หมุด','หมุดแปะข้าง'],['ยู','ยูเหล็ก + ครอบอลู'],['เสา','เสาตั้ง + ราวจับอลู']];
+  h+='<div class="chips">';
+  mounts.forEach(function(o){
+    h+='<button type="button" class="chip'+(state.railMount===o[0]?' on':'')+'" data-v="'+o[0]+'" onclick="state.railMount=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');document.getElementById(\'railInner\').innerHTML=buildRailInnerHtml();calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // product badge
+  h+='<div class="prod-badge">'+impName[imp]+'<span class="rate">เดโม /ม.</span></div>';
+  // ความหนากระจก
+  h+='<div class="lbl" style="margin-top:10px;">ความหนากระจก</div>';
+  h+='<div class="chips sm"><button type="button" class="chip on" data-v="10">10 มม.</button><button type="button" class="chip" data-v="12" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');">12 มม.</button></div>';
+  h+='<span style="font-size:11px;color:var(--gray);">ราคาไม่ขึ้นกับความหนา</span>';
+  // ราวมือจับด้านบน
+  h+='<div class="lbl" style="margin-top:10px;">ราวมือจับด้านบน (option)</div>';
+  h+='<div class="chips sm">';
+  RAIL_HANDRAIL.forEach(function(o){
+    h+='<button type="button" class="chip'+(state.railHandrail===o[0]?' on':'')+'" data-v="'+o[0]+'" onclick="state.railHandrail=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  // สีอลู (เฉพาะ imp2/3/5/6)
+  if(hasAlu){
+    h+='<div class="lbl" style="margin-top:10px;">สีอลูมิเนียม</div>';
+    h+='<div class="chips sm">';
+    RAIL_ALU_COLOR.forEach(function(o){
+      h+='<button type="button" class="chip'+(state.railAluColor===o[0]?' on':'')+'" data-v="'+o[0]+'" onclick="state.railAluColor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+    });
+    h+='</div>';
+    h+='<span style="font-size:11px;color:var(--gray);">ระบุในใบ · ไม่กระทบราคา</span>';
+  }
+  h+='<details><summary>ของเสริม / หมายเหตุ</summary><div style="padding-top:6px;">'+buildCommonExtras('rail')+'</div></details>';
+  h+=buildSizeRow('ความยาว(ม.)','','ชุด');
+  return h;
+}
+function getRailImp(){
+  var sh=state.railShape, mo=state.railMount;
+  if(sh==='เฉียง'&&mo==='หมุด') return 'imp1';
+  if(sh==='เฉียง'&&mo==='ยู') return 'imp2';
+  if(sh==='เฉียง'&&mo==='เสา') return 'imp3';
+  if(sh==='ตรง'&&mo==='หมุด') return 'imp4';
+  if(sh==='ตรง'&&mo==='ยู') return 'imp5';
+  if(sh==='ตรง'&&mo==='เสา') return 'imp6';
+  return 'imp1';
+}
+
+// ===================== SPECIAL form =====================
+function buildSpecialForm(){
+  var h='<div class="card">';
+  h+='<div class="card-h"><span class="step">2</span>ระแนงพิเศษ — เลือกชนิด</div>';
+  h+='<div class="chips specialSubs">';
+  h+='<button class="chip'+(state.specialSub==='bar_openclose'?' on':'')+'" data-ss="bar_openclose" onclick="pickSpecialSub(this)">หมุนเปิด-ปิด<br><span style="font-size:10px;font-weight:400;">กล่อง 1"x4" โชว์ 4"</span></button>';
+  h+='<button class="chip'+(state.specialSub==='bar_grid_z'?' on':'')+'" data-ss="bar_grid_z" onclick="pickSpecialSub(this)">บานเกล็ดอลู<br><span style="font-size:10px;font-weight:400;">ลูกฟูกเรียบ 2 หน้า</span></button>';
+  h+='<button class="chip'+(state.specialSub==='bar_slide'?' on':'')+'" data-ss="bar_slide" onclick="pickSpecialSub(this)">ระแนงเลื่อน<br><span style="font-size:10px;font-weight:400;">Inception</span></button>';
+  h+='</div>';
+  h+='<div id="specialInner" style="margin-top:10px;">'+buildSpecialInnerHtml()+'</div>';
+  h+='</div>';
+  return h;
+}
+function buildSpecialInnerHtml(){
+  if(state.specialSub==='bar_openclose') return buildBocHtml();
+  if(state.specialSub==='bar_grid_z') return buildBgzHtml();
+  if(state.specialSub==='bar_slide') return buildBsHtml();
+  return '';
+}
+function buildBocHtml(){
+  var h='<div class="prod-badge">ระแนงหมุนเปิด-ปิด (กล่อง 1"x4" โชว์ 4" · ข้อ 38.3)<span class="rate">เดโม</span></div>';
+  // ทิศระแนง (o-bocdir)
+  h+='<div class="lbl" style="margin-top:10px;">ทิศระแนง</div>';
+  h+=chipsHtml([['v','แนวตั้ง (default)'],['h','แนวนอน']],state.bocDir,'pickBocDir','sm');
+  // มอเตอร์ (o-bocmotor)
+  h+='<div class="lbl" style="margin-top:10px;">การควบคุม</div>';
+  h+=chipsHtml([[false,'เปิด-ปิดด้วยมือ'],[true,'เอามอเตอร์']],state.bocMotor,'pickBocMotor','sm');
+  // สีอบ (o-bocfinish)
+  h+='<div class="lbl" style="margin-top:10px;">สีอบ</div>';
+  h+='<div class="chips sm">';
+  BOC_FIN.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="state.bocFin=parseFloat(this.dataset.v)||0;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<details><summary>ของเสริม / หมายเหตุ</summary><div style="padding-top:6px;">'+buildCommonExtras('bar')+'</div></details>';
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+function buildBgzHtml(){
+  var h='<div class="prod-badge">ระแนงบานเกล็ดอลู ลูกฟูกเรียบ 2 หน้า (ข้อ 38.1)<span class="rate">เดโม</span></div>';
+  // ทิศระแนง (o-bgdir)
+  h+='<div class="lbl" style="margin-top:10px;">ทิศระแนง</div>';
+  h+=chipsHtml([['v','ตั้ง (D=สูง)'],['h','นอน (D=กว้าง)']],state.bgzDir,'pickBgzDir','sm');
+  // ทำเป็นบาน (o-bsdoor)
+  h+='<div class="lbl" style="margin-top:10px;">ทำเป็นบาน · ค่าประตู (เลือกรุ่น)</div>';
+  h+='<div class="chips sm">';
+  DOOR_OPTS.forEach(function(o){
+    h+='<button type="button" class="chip'+(o[0]===state.bgzBsdoor?' on':'')+'" data-v="'+o[0]+'" onclick="state.bgzBsdoor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<div class="lbl" style="margin-top:8px;">ราคาประตู (กรอกเอง · ว่าง = auto)</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;"><input type="number" class="inp-sm" style="width:110px;" min="0" step="500" value="0" placeholder="บาท" oninput="state.bgzBsdoorprice=parseFloat(this.value)||0;calcPrice();"> <span style="font-size:11px;color:var(--gray);">กรอก &gt;0 = แทนราคารุ่น</span></div>';
+  // สีอบ (o-bgcolor)
+  h+='<div class="lbl" style="margin-top:10px;">สี (แสดงในใบ)</div>';
+  var bgzColorOpts=[['','อบขาว (default)'],['สีดำ','สีดำ'],['สีเทาซาฮาร่า','เทาซาฮาร่า'],['สีลายไม้สต๊อก','ลายไม้สต๊อก'],['สีอบพิเศษ','อบสีพิเศษ'],['สีลายไม้อบพิเศษ','ลายไม้อบพิเศษ']];
+  h+='<div class="chips sm">';
+  bgzColorOpts.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="state.bgzColor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<details><summary>ของเสริม / หมายเหตุ</summary><div style="padding-top:6px;">'+buildCommonExtras('bar')+'</div></details>';
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+function buildBsHtml(){
+  var h='<div class="prod-badge">ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2) — Inception<span class="rate">เดโม</span></div>';
+  // เลือกรุ่นบาน (o-bsdoor)
+  h+='<div class="lbl" style="margin-top:10px;">เลือกรุ่นบาน (ทำเป็นบาน)</div>';
+  h+='<div class="chips sm">';
+  SLIDE_DOOR_OPTS.forEach(function(o){
+    h+='<button type="button" class="chip'+(o[0]===state.bsBsdoor?' on':'')+'" data-v="'+o[0]+'" onclick="state.bsBsdoor=this.dataset.v;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<div class="lbl" style="margin-top:8px;">ราคาประตู (กรอกเอง · ว่าง = auto)</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;"><input type="number" class="inp-sm" style="width:110px;" min="0" step="500" value="0" placeholder="บาท" oninput="state.bsBsdoorprice=parseFloat(this.value)||0;calcPrice();"> <span style="font-size:11px;color:var(--gray);">กรอก &gt;0 = ใช้แทนราคารุ่น</span></div>';
+  // สีอบ (o-bsfinish)
+  h+='<div class="lbl" style="margin-top:10px;">สีอบ</div>';
+  h+='<div class="chips sm">';
+  SLIDE_FIN.forEach(function(o,i){
+    h+='<button type="button" class="chip'+(i===0?' on':'')+'" data-v="'+o[0]+'" onclick="state.bsFin=parseFloat(this.dataset.v)||0;var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');calcPrice();">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<details><summary>ของเสริม / หมายเหตุ</summary><div style="padding-top:6px;">'+buildCommonExtras('bar')+'</div></details>';
+  h+=buildSizeRow('กว้าง(ม.)','สูง(ม.)','ชุด');
+  return h;
+}
+
+function pickBocDir(btn){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.bocDir=btn.dataset.v;
+  calcPrice();
+}
+function pickBocMotor(btn){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.bocMotor=btn.dataset.v==='true';
+  calcPrice();
+}
+function pickBgzDir(btn){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  state.bgzDir=btn.dataset.v;
+  calcPrice();
+}
+function pickSimple(btn){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  calcPrice();
+}
+
+// ===================== Common extras =====================
+function buildCommonExtras(type){
+  var h='';
+  // ครอบวงกบ (for ranae/gate: ม. text input · for others: chip 0/3/4)
+  if(type==='ranae'||type==='gate'){
+    h+='<div class="trow"><label>ครอบวงกบ (ม.)</label><input type="number" class="inp-sm" style="width:80px;margin-left:auto;" min="0" step="0.1" value="0" placeholder="ม."></div>';
+  } else if(type!=='rail'){
+    h+='<div class="lbl">ครอบวงกบอลู</div>';
+    h+='<div class="chips sm"><button type="button" class="chip on" data-v="0">ไม่มี</button><button type="button" class="chip" data-v="3" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');">3 ด้าน</button><button type="button" class="chip" data-v="4" onclick="var p=this.closest(\'.chips\');p.querySelectorAll(\'.chip\').forEach(function(b){b.classList.remove(\'on\');});this.classList.add(\'on\');">4 ด้าน</button></div>';
+    h+='<span style="font-size:11px;color:var(--gray);">หรือระบุ(ม.) <input type="number" class="inp-sm" style="width:70px;" min="0" step="0.1" value="0"></span>';
+  }
+  // ดรอปพื้น (ไม่ใช่ for rail/ranae/gate)
+  if(type!=='rail'&&type!=='ranae'&&type!=='gate'){
+    h+='<div class="trow"><label>ดรอปพื้น (ม.)</label><input type="number" class="inp-sm" style="width:80px;margin-left:auto;" min="0" step="0.1" value="0" placeholder="ม."></div>';
+  }
+  // งานเสริม/วิศวกรรม
+  h+='<div class="trow"><label>งานเสริม/วิศวกรรม</label><input type="text" class="inp-sm" style="width:140px;margin-left:auto;" placeholder="ระบุถ้ามี"></div>';
+  // รื้อของเดิม
+  h+='<div class="trow"><input type="checkbox" id="removeOld_'+type+'"><label for="removeOld_'+type+'">รื้อของเดิม (รายการนี้)</label></div>';
+  // ตำแหน่ง/หมายเหตุ
+  h+='<div style="margin-top:8px;"><div class="lbl">ตำแหน่ง</div>';
+  h+='<input type="text" class="inp-sm" style="width:100%;" placeholder="เช่น ริมรั้วด้านหน้า ห้องนอน 1"></div>';
+  h+='<div style="margin-top:6px;"><div class="lbl">หมายเหตุ (ติ๊กหรือพิมพ์)</div>';
+  h+='<div class="rmk-list">';
+  var presets=['ราคายังไม่รวมวัสดุจัดหา','รอยืนยันขนาดจริงก่อนผลิต','ลูกค้าจัดการรื้อถอนเอง'];
+  presets.forEach(function(r,i){
+    h+='<div class="rmk-check"><input type="checkbox" id="rmk_'+type+'_'+i+'"><label for="rmk_'+type+'_'+i+'">'+r+'</label></div>';
+  });
+  h+='</div>';
+  h+='<textarea class="rmk-txt" placeholder="พิมพ์เพิ่มเติม..."></textarea></div>';
+  return h;
+}
+
+// ===================== Size row =====================
+function buildSizeRow(lbl1,lbl2,lbl3){
+  var h='<div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;">';
+  h+='<div class="sz-row">';
+  if(lbl1){h+='<div class="sz-fld"><span>'+lbl1+'</span><input type="number" class="w100" min="0" step="0.1" value="3.0" oninput="calcPrice();"></div>';}
+  if(lbl2){h+='<div class="sz-fld"><span>'+lbl2+'</span><input type="number" class="w100" min="0" step="0.1" value="2.0" oninput="calcPrice();"></div>';}
+  if(lbl3){h+='<div class="sz-fld"><span>'+lbl3+'</span><input type="number" min="1" step="1" value="1" style="width:60px;height:44px;border:1.5px solid var(--border);border-radius:9px;padding:0 10px;font-size:16px;font-family:inherit;" oninput="calcPrice();"></div>';}
+  h+='</div></div>';
+  return h;
+}
+
+// ===================== Calc (demo) =====================
+function calcPrice(){
+  var g=state.g2;
+  var w=3.0, h=2.0, qty=1;
+  // Try to get values from inputs
+  var inps=document.querySelectorAll('#formArea .sz-row input');
+  if(inps[0]) w=parseFloat(inps[0].value)||3.0;
+  if(inps[1]) h2=parseFloat(inps[1]?inps[1].value:'')||2.0;
+  else h2=2.0;
+  var h2Actual=h2||2.0;
+  if(inps[2]) qty=parseInt(inps[2].value)||1;
+
+  var price=0, desc='';
+  if(g==='gate'){
+    // demo: ประตูรั้ว = motor base + per-length * w
+    var rType=state.gateRailType==='curved'?DEMO_RATES.gate_motor_curved:DEMO_RATES.gate_motor_straight;
+    price=(DEMO_RATES.gate_motor*state.gateMotor + rType*w*(state.gateMotor||1)) * qty;
+    desc='ประตูรั้ว '+w+'ม. × '+qty+' ชุด';
+  } else if(g==='ranae'){
+    var area=w*h2Actual*qty;
+    var rateR=state.rnFrame==='รวมโครง'?DEMO_RATES.ranaeBox_withframe:DEMO_RATES.ranaeBox_noframe;
+    if(state.ranaeSub==='gleed') rateR=state.rnGleedFrame==='รวมโครง'?DEMO_RATES.ranaeGleed_withframe:DEMO_RATES.ranaeGleed_noframe;
+    if(state.ranaeSub==='slide') rateR=DEMO_RATES.bar_slide/(w*h2Actual||6);
+    price=Math.round(rateR*area/100)*100;
+    desc='ระแนง '+w+'×'+h2Actual+'ม. = '+area.toFixed(2)+'ตร.ม.';
+  } else if(g==='rail'){
+    var imp=getRailImp();
+    var rateKey='IMP'+imp.replace('imp','');
+    var tbl=DEMO_RATES[rateKey]||DEMO_RATES.IMP1;
+    var rawR=rateOf(w,tbl);
+    price=Math.ceil((w*rawR)/1000)*1000*qty;
+    if(state.railHandrail==='u5') price+=500*w*qty;
+    if(state.railHandrail==='box') price+=600*w*qty;
+    desc='ราวกันตก '+imp+' '+w+'ม. × '+qty+' ชุด';
+  } else if(g==='special'){
+    var spRate={bar_openclose:DEMO_RATES.bar_openclose, bar_grid_z:DEMO_RATES.bar_grid_z, bar_slide:DEMO_RATES.bar_slide}[state.specialSub]||15000;
+    var spArea=w*h2Actual*qty;
+    price=Math.round(spRate*spArea/100)*100;
+    desc='ระแนงพิเศษ '+state.specialSub+' '+w+'×'+h2Actual+'ม.';
+  }
+
+  document.getElementById('pVal').textContent=fmt(price);
+  document.getElementById('pTitle').textContent=desc;
+}
+
+// ===================== Init =====================
+renderForm();
+calcPrice();
+</script>
+</body>
+</html>

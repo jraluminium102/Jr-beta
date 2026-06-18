@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>CHECK G6 vs ดราฟ — 2026-06-17</title><style>
+*{font-family:"Leelawadee UI","Tahoma",sans-serif;box-sizing:border-box}body{color:#1a1a1a;font-size:13px;margin:0;padding:18px;background:#f5f5f7}
+.wrap{max-width:960px;margin:0 auto}h1{color:#B3151D;font-size:22px;margin:0 0 2px}.meta{color:#666;font-size:12px;margin:0 0 14px}
+h2{color:#fff;background:#B3151D;font-size:15px;margin:16px 0 6px;padding:5px 11px;border-radius:6px}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12.5px;margin-bottom:8px}
+th,td{border:1px solid #e0d5d5;padding:6px 9px;text-align:left;vertical-align:top}th{background:#fbeeee;color:#B3151D}
+td.c{text-align:center;white-space:nowrap}.mono{font-family:Consolas,monospace;font-size:11px;color:#444}.lg{font-size:11px;color:#777;margin-top:2px}
+.banner{padding:10px 14px;border-radius:8px;font-weight:700;font-size:15px;margin-bottom:12px}
+.b-ok{background:#F0FDF4;color:#15803D;border:1px solid #86EFAC}.b-bad{background:#fef2f2;color:#B3151D;border:1px solid #fca5a5}
+ul{margin:4px 0;padding-left:18px}li{margin:3px 0}</style></head><body><div class="wrap">
+<h1>CHECK G6 (กั้นห้องกระจก) เทียบดราฟ/มติ</h1>
+<div class="meta">2026-06-17 · meta-runner เฉพาะ room builder (.g6room) · READ-ONLY · แชท G6</div>
+<div class="banner b-ok">✅ 6 มิติผ่านครบ — เงินไม่เพี้ยน · ออปชั่น/ใบ/เทสราคา OK</div>
+<h2>ผลรัน 6 มิติ (รันสด · หลักฐานจริง)</h2>
+<table><tr><th></th><th>มิติ (สิ่งที่ตรวจ)</th><th class="c">ผล</th><th>หลักฐาน</th></tr><tr><td>🟢</td><td><b>มิติ 3 · ราคา (กันเพี้ยนทั้งระบบ)</b><div class="lg">golden baseline 149 ตัว — แก้ engine ร่วมแล้วราคาไม่ขยับ</div></td><td class="c">ผ่าน</td><td class="mono">✅ ไม่มีความเปลี่ยนแปลง — ยอดทุกตัวตรง baseline (ปลอดภัย)</td></tr><tr><td>🟢</td><td><b>มิติ 1+2 · ปุ่ม/ออปชั่นบาน + parity ราคา G1</b><div class="lg">ชนิดบาน/รุ่น/มือจับ/ครอบวงกบ/ธรณี ในห้อง = เท่า G1</div></td><td class="c">ผ่าน</td><td class="mono">สรุป: ผ่าน 24/24</td></tr><tr><td>🟢</td><td><b>มิติ 5 · ใบแตกรายบาน (รายการงาน)</b><div class="lg">ด้าน/บาน/ออปชั่น แตกบรรทัดถูก ขึ้น work block</div></td><td class="c">ผ่าน</td><td class="mono">สรุป: ผ่าน 16/16</td></tr><tr><td>🟢</td><td><b>มิติ 4+6 · อุปกรณ์เสริม + เทสราคาขยับ</b><div class="lg">งานพื้น 5,000/ตร.ม. ลด10% · พัดลม custom · กดแล้วราคาขยับจริง</div></td><td class="c">ผ่าน</td><td class="mono">9/9 ผ่าน</td></tr><tr><td>🟢</td><td><b>มิติ 2 · มุ้ง + ผ้ามุ้ง (เฟส B)</b><div class="lg">มุ้งเฟรม/จีบ/ม้วน + กันแมว/หนู/นิรภัย = ผ้ามุ้ง</div></td><td class="c">ผ่าน</td><td class="mono">สรุป: ผ่าน 28/28</td></tr></table>
+<h2>จุดเทียบใบจริง (audit · เช็คโค้ดซ้ำแล้ว · 🔴 ส่งคิวกลาง)</h2>
+<table><tr><th class="c">ระดับ</th><th>จุด</th><th>รายละเอียด/มติ</th></tr><tr><td class="c">🔴</td><td><b>สเปคสีอลู/กระจกในใบ = ค่ามาตรฐานตายตัว (D1/D2)</b></td><td>g6rRoomSpec L6735 hardcode → มติ ทาง2 เพิ่ม roomColor/roomGlass · ดราฟ DRAFT-G6-สเปคสีกระจกรวมห้อง</td></tr><tr><td class="c">🟡</td><td><b>ขาดข้อความ disclaimer งานห้อง (D4)</b></td><td>ไม่รวมย้ายแอร์/ผนัง/ระบบน้ำ/เทพื้น → เพิ่ม REMARK_PRESETS</td></tr><tr><td class="c">🟡</td><td><b>สี/รหัสหลังคาไม่อยู่บล็อกรายละเอียด (D5)</b></td><td>หลังคาขึ้นรายการงานแล้ว · สเปคสีหลังคายังไม่ push</td></tr><tr><td class="c">✅</td><td><b>ระแนง/ราวกันตก (D7)</b></td><td>เคาะ: ระแนง=item G2 แยก (รองรับแล้ว) · ราวเหล็ก=ไม่ทำ → ปิด</td></tr></table>
+<div class="lg">⚠ audit ของ agent over-flag 2 จุด — กรองแล้ว: D3 VAT 0% (มีจริง L400) · D4 (มี preset · ขาดแค่ข้อความ) · ใบคิวกลาง: เข้าคิวกลาง-จากG6-audit-2026-06-17.md</div>
+<h2>✅ แก้แล้วถูก (commit 17 มิ.ย.)</h2><ul><li>Protection→หมายเหตุไทย (ไม่มีบรรทัดราคาอังกฤษ · ไม่ซ้ำ REMARK)</li><li>พัดลม+ฝาครอบขึ้นรายการงาน</li><li>"ไม่รับประกันพื้นแอ่น" auto เมื่อมีงานพื้น</li><li>ใบ 5 บล็อก: รายการงานขึ้นบน · สเปคลงล่าง</li></ul>
+</div></body></html>

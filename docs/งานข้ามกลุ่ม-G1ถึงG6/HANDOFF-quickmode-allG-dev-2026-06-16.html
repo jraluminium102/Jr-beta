@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ใบสั่ง dev — คิดเร็ว v2 ครบ 7 กลุ่ม (drill-down + การ์ดราคาขวา)</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;background:#F7F8FA;color:#1F2937;max-width:920px;margin:0 auto;padding:18px;line-height:1.65;font-size:15px;}
+  h1{color:#B3151D;font-size:22px;margin:0 0 4px;}
+  h2{color:#B3151D;font-size:17px;margin:26px 0 8px;border-bottom:2px solid #F0C0C0;padding-bottom:4px;}
+  h3{font-size:15px;margin:16px 0 6px;color:#0C447C;}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:14px;}
+  .box{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px 16px;margin:10px 0;}
+  .gold{background:#FEF9C3;border:1px solid #FDE047;border-radius:10px;padding:12px 16px;margin:12px 0;}
+  .gold b{color:#92400e;}
+  .danger{background:#FCEBEB;border:1px solid #F09595;border-radius:10px;padding:12px 16px;margin:12px 0;}
+  .danger b{color:#A32D2D;}
+  .ok{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:12px 16px;margin:12px 0;}
+  code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:13px;font-family:Consolas,monospace;}
+  pre{background:#2C2C2A;color:#E1F5EE;padding:11px 13px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;background:#fff;}
+  th{background:#B3151D;color:#fff;padding:7px 9px;text-align:left;font-weight:600;}
+  td{border:1px solid #E5E7EB;padding:6px 9px;vertical-align:top;}
+  tr:nth-child(even) td{background:#FAFBFD;}
+  .tag{display:inline-block;background:#EFF6FF;color:#0C447C;font-size:11px;padding:1px 8px;border-radius:9px;font-weight:600;}
+  ul{margin:6px 0;padding-left:22px;} li{margin:3px 0;}
+  .chk{color:#1E7E45;font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>ใบสั่ง dev — โหมดคิดเร็ว v2 (ครบ 7 กลุ่ม)</h1>
+<div class="sub">16 มิ.ย. 2026 · UI = drill-down ชิป + การ์ดราคาขวา · ราคา = calcUnit เดิม · ดราฟต้นฉบับ verify แล้ว 7 ไฟล์</div>
+
+<div class="gold">
+<b>🎯 หลักเหล็ก 3 ข้อ (ทำตามนี้ = ไม่ผิด + เหมือนดราฟ 100%)</b>
+<ol style="margin:6px 0;">
+<li><b>UI ลอกจากดราฟ</b> — ไฟล์ <code>public/review/DRAFT-quickmode-*.html</code> คือสเปกตัวจริง (โครงชิป/ลำดับ/การ์ดราคาขวา/ข้อความ) · ลอกโครง+ฟังก์ชัน render อย่าตีความใหม่</li>
+<li><b>ราคาเรียก <code>calcUnit()</code> เสมอ — ห้ามเขียนสูตรราคาใหม่เด็ดขาด</b> · ทุกสินค้ามีใน calcUnit แล้ว · ดราฟที่ "ฝังสูตร" (G2/G5/G7) แค่ก๊อปสิ่งที่ calcUnit ทำ → ในระบบจริงเรียก calcUnit ตรงๆ = ตรง engine แน่นอน</li>
+<li><b>ของเดิมไม่แตะ</b> — โหมดใบเสนอราคา/เทียบ/เช็คลิสต์ + PRODUCTS/RATES/calcUnit ไม่แก้ · แก้แค่ส่วน <code>m-quick</code> (qi-*)</li>
+</ol>
+</div>
+
+<div class="danger">
+<b>⚠ กับดักห้ามพลาด</b>
+<ul>
+<li>มีแชทอื่นแก้ index.html (G2 cascade) — <b>ห้ามแก้ index.html 2 แชทพร้อมกัน</b> · เช็คก่อนเริ่ม</li>
+<li>ห้ามก๊อปเลข "เดโม" จากดราฟ G1 (ราคาฐานในดราฟ G1 เป็น dummy เพื่อโชว์เลย์เอาท์) → ราคาจริงมาจาก calcUnit</li>
+<li>รัน golden-snapshot ก่อน-หลัง (กันราคาใบเสนอราคาเดิมเพี้ยน)</li>
+</ul>
+</div>
+
+<h2>1. ของเดิมที่มีอยู่ (reuse — ไม่ต้องสร้างใหม่)</h2>
+<table>
+<tr><th>ของเดิม</th><th>ที่อยู่ (index.html)</th><th>ใช้ทำอะไร</th></tr>
+<tr><td>โครงคิดเร็ว (แท็บ + list ชุด + ยอดรวม)</td><td><code>&lt;section id="m-quick"&gt;</code> ~L276 · <code>addQuickItem()</code> ~L1828 · <code>calcQuickAll()</code> ~L1891 · <code>renumberItems()</code></td><td>เก็บโครง list หลายชุด + ยอดรวม + ปุ่ม "+ เพิ่มชุด" ไว้ · แก้แค่ "ฟอร์มในแต่ละชุด"</td></tr>
+<tr><td>engine ราคา</td><td><code>calcUnit(p,w,h,gi,ci,panels,optSel,shipOnly)</code> ~L1080</td><td>คืน <code>{a, sell, msgs}</code> · เรียกตัวนี้ทุกกลุ่ม ห้ามเขียนใหม่</td></tr>
+<tr><td>สินค้า/เรต</td><td><code>PRODUCTS</code>/<code>PBYID</code> · <code>RATES</code>/<code>GLASS</code>/<code>COLORS</code>/<code>ZIP</code></td><td>ดึง product object จาก <code>PBYID[id]</code> ส่งเข้า calcUnit</td></tr>
+</table>
+
+<div class="box">
+<b>สถาปัตยกรรม v2 (1 "ชุด" = 1 กลุ่ม):</b>
+<pre>addQuickItem() สร้าง 1 การ์ด:
+  ├ เลือกกลุ่มงาน (ชิป 1-7)         → กำหนด renderer ของกลุ่ม
+  ├ ฟอร์มเฉพาะกลุ่ม (จากดราฟกลุ่มนั้น)  → เก็บ input
+  ├ readQuickItem(การ์ด) → สร้าง (product, w, h, gi, ci, panels, optSel)
+  │                       → เรียก calcUnit() → sell
+  └ การ์ดราคาขวา (โชว์ breakdown จาก calcUnit.msgs + sell)
+calcQuickAll() = Σ sell ของทุกการ์ด → ยอดรวม</pre>
+<span class="tag">การ์ดราคา</span> ดราฟวางขวา (จอกว้าง) / บน (มือถือ) — ลอก CSS <code>.pricecard</code> จากดราฟ
+</div>
+
+<h2>2. ต่อกลุ่ม — UI จากดราฟ + map ส่งเข้า calcUnit</h2>
+<div class="sub">ทุกกลุ่ม: เก็บ input ตามดราฟ → ประกอบ args → <code>calcUnit(PBYID[id], w, h, gi, ci, panels, optSel)</code> · เลข <code>gi/ci</code> = index จริงใน GLASS/COLORS · breakdown โชว์จาก <code>u.msgs</code></div>
+
+<table>
+<tr><th>กลุ่ม</th><th>ดราฟ (UI)</th><th>product id</th><th>args เข้า calcUnit</th></tr>
+<tr><td><b>G1 บาน</b></td><td>DRAFT-quickmode-ux</td><td>ตามแบบที่เลือก</td><td>เดิมทำถูกแล้ว (<code>readQuickItem</code>) · งานคือ <b>เปลี่ยน UI สี/กระจกจาก dropdown → ชิป drill-down</b> (สี: หมวด→swatch · กระจก: หมวด→ชนิดย่อย→รุ่น) · ราคาใช้ของเดิม</td></tr>
+<tr><td><b>G2 ระแนง/รั้ว/ราว</b></td><td>DRAFT-quickmode-G2-ux</td><td>fence_gate · rn* · imp1-6 · bar_grid_z/bar_openclose</td><td>โครง 4 หมวด + cascade ลอกจาก <code>DRAFT-G2-ux-2026-06-15</code> (RTREE/resolve) · <b>optSel ตาม CODEREADY-G2 + engine จริง</b> (gate: gatern/gfin/gmotor/railtype · ระแนง: finish/cut/mode · ราว: hr/alu/glass) · <span class="tag">ดูข้อ 3</span></td></tr>
+<tr><td><b>G3 หลังคา/ฝ้า</b></td><td>DRAFT-quickmode-G3-ux <span class="tag">มิเรอร์</span></td><td>imp7-20 · roof_* · ceil_* · isowall · wall_*</td><td><code>calcUnit(p, กว้าง, ยาว, 0,0,1, {})</code> ตรงๆ (ฝ้า crates ใช้ default ckolor) · มิเรอร์เรียก calcUnit อยู่แล้ว — ลอกได้เลย</td></tr>
+<tr><td><b>G4 ตู้/ฝาตู้</b></td><td>DRAFT-quickmode-G4-ux <span class="tag">มิเรอร์</span></td><td>cabinet_alu · future_tech</td><td>ตู้: <code>calcUnit(cabinet_alu, W,H,0,ci,1,{depth,cabtype,cabDoors})</code> · ฝาตู้: <code>calcUnit(future_tech, W,H,0,0,panels,{ftcolor})</code> · ci&gt;0 = สีพิเศษ</td></tr>
+<tr><td><b>G5 มุ้ง</b></td><td>DRAFT-quickmode-G5-ux</td><td>imp21/22/23/28/29/30 · mj_*</td><td>เลือกรุ่น+ขนาด+ผ้า → <code>calcUnit(PBYID[id], W,H, 0,0, panels, {itype, mosqFabric})</code> · ตรวจ optSel มุ้งกับ engine (min ประตู/หน้าต่าง × บาน + ผ้า add) · ดราฟฝัง baseRaw=สิ่งที่ calcUnit ทำ → ใช้ calcUnit แทน</td></tr>
+<tr><td><b>G6 กั้นห้อง</b></td><td>DRAFT-quickmode-G6-room-REAL <span class="tag">มิเรอร์</span></td><td>บาน G1 + roof/ceil + มุ้ง</td><td><b>คิดทั้งห้อง</b>: เส้นรอบ×สูง → แต่ละด้านเรียก calcUnit(บานที่เลือก, ยาวด้าน, สูง) · หลังคา/ฝ้า calcUnit(ยื่น,ยาว) · มุ้ง+งานไฟ ตามดราฟ · index.html มี <code>G6R</code> room builder (โหมดใบ) อยู่แล้ว — เอา logic มาทำหน้าคิดเร็วย่อ</td></tr>
+<tr><td><b>G7 ม่านซิป</b></td><td>DRAFT-quickmode-G7-ux</td><td>zipscreen</td><td><code>calcUnit(zipscreen, W,H,0,0,1,{zmodel,zfab,zctrl,zgrp})</code> · ดราฟฝัง ZIP=สิ่งที่ calcUnit ทำ → ใช้ calcUnit แทน</td></tr>
+</table>
+
+<h2>3. G2 = กลุ่มเสี่ยงสุด (เช็ค optSel ละเอียด)</h2>
+<div class="box">
+G2 ราคาเชิงโครงสร้างซับซ้อน (ต่อเมตร/ต่อ ตร.ม. ปนกัน + cascade 88 รุ่น) · <b>ทำ G2 ต่อจากงาน CODEREADY-G2 ที่ handoff ไปแล้ว</b> (<code>docs/กลุ่ม2-รั้วระแนงราวกันตก/CODEREADY-G2-B-cascade-2026-06-15.html</code>) — RTREE/resolve/optSel มีครบ · คิดเร็ว G2 = เอา UI cascade นั้น + การ์ดราคาขวา · <b>ราคาให้เรียก calcUnit(PBYID[rnId]/fence_gate/imp/bar_*) ด้วย optSel ที่ engine รับจริง</b> (ดู <code>if(p.gate)</code> L1267 · ระแนง per_sqm · imp per_length_tier L702+)
+</div>
+
+<h2>4. เคสตรวจรับ (Acceptance — ราคาต้องตรงเป๊ะ)</h2>
+<div class="sub">ทุกเคส verify กับ calcUnit จริงแล้วในรอบออกแบบ · ถ้า dev ทำเสร็จได้เลขเดียวกัน = ไม่ผิด</div>
+<table>
+<tr><th>กลุ่ม</th><th>เคส</th><th>ราคาที่ถูก</th></tr>
+<tr><td>G2 ประตูรั้ว</td><td>ลาย rn1(1x5 ไม่โครง) · มอเตอร์1 · รางตรง · 3×1.8</td><td>฿79,000</td></tr>
+<tr><td>G2 ประตูรั้วโค้ง</td><td>เคสบน + บานเลื่อนโค้ง (ราง2500 + บานโค้ง ⌈3/0.75⌉×4000)</td><td>฿101,000</td></tr>
+<tr><td>G2 ระแนงกล่อง</td><td>1x5 หน้า1cm ระยะ3cm · รวมโครง(rn4)=฿36,000 · ไม่โครง(rn3)=฿26,000 · 3×2</td><td>36,000 / 26,000</td></tr>
+<tr><td>G2 ระแนงทำเป็นบาน</td><td>rn3 ไม่โครง + บานเลื่อนเซมิ · 3×2</td><td>฿54,000</td></tr>
+<tr><td>G2 ราวกันตก</td><td>เฉียง หมุด 3 ม. (โครงราว · กระจกแยก)</td><td>฿33,000</td></tr>
+<tr><td>G2 ระแนงพิเศษ</td><td>หมุนเปิด-ปิด 3×1.8 (มือ)</td><td>฿44,000</td></tr>
+<tr><td>G3 หลังคา</td><td>เมทัล imp7 4×3=฿70,000 · ชินโค Prime 4×3=฿162,000</td><td>70,000 / 162,000</td></tr>
+<tr><td>G3 ฝ้า</td><td>ฝ้าฉาบเรียบ 4×3 (ขั้นต่ำ 10 ตร.ม.)</td><td>฿15,000</td></tr>
+<tr><td>G4 ตู้</td><td>ตู้เสื้อผ้า 2×2.4×0.6 · 2 บานหน้า · มาตรฐาน=฿43,000 · สีพิเศษ=฿57,000</td><td>43,000 / 57,000</td></tr>
+<tr><td>G4 ฝาตู้</td><td>Future Tech 0.8×1.2 · 2 บาน</td><td>฿21,000</td></tr>
+<tr><td>G5 มุ้ง</td><td>เฟรมเล็กไฟเบอร์ 1×2 ประตู=฿4,000 · +ผ้ากันแมว=฿5,000 · ม้วนเตะ150=฿15,000</td><td>4,000 / 5,000 / 15,000</td></tr>
+<tr><td>G6 ห้อง</td><td>3 ด้าน 2×4×2.8 · หน้าเลื่อน·ข้างติดตาย + หลังคาไวนิล</td><td>฿156,000</td></tr>
+<tr><td>G7 ม่านซิป</td><td>auto 5% AOK220 ปลีก 3×2.5=฿21,000 · Z145D 2ชั้น มือดึง=฿39,100 · โครงการ=฿34,200</td><td>21,000 / 39,100 / 34,200</td></tr>
+</table>
+
+<h2>5. ลำดับทำ + Definition of Done</h2>
+<div class="box">
+<b>เฟส (ทำไว = ทำดิสแพตเชอร์ก่อน แล้วเสียบทีละกลุ่ม):</b>
+<ol>
+<li><b>P0 โครง</b> — แปลง addQuickItem ให้ dispatch ตามกลุ่ม + ฝังการ์ดราคาขวา (CSS <code>.pricecard</code>) + readQuickItem→calcUnit→msgs · <b>เทสด้วย G3 ก่อน</b> (ง่ายสุด เรียก calcUnit ตรงๆ)</li>
+<li><b>P1</b> G3 · G4 · G7 (เรียก calcUnit ตรง — เร็ว)</li>
+<li><b>P2</b> G1 (เปลี่ยน UI สี/กระจกเป็นชิป) · G5 (มุ้ง families)</li>
+<li><b>P3</b> G6 (ห้อง — เอา G6R logic) · G2 (cascade — ต่อจาก CODEREADY-G2)</li>
+</ol>
+<b class="chk">DoD ต่อกลุ่ม:</b> ① UI ตรงดราฟ (ชิป/ลำดับ/การ์ดขวา) ② เคสตรวจรับได้เลขตรง ③ golden-snapshot ใบเดิมไม่เพี้ยน ④ ไม่มี dropdown ⑤ เปิดเบราว์เซอร์จริงกดผ่าน
+</div>
+
+<div class="ok">
+<b>สรุปสั้นให้ dev:</b> "เอา UI จากดราฟ 7 ไฟล์ · ราคาเรียก calcUnit เสมอ · แก้แค่ m-quick · เช็คเคสตรวจรับ · ไม่แตะ engine/โหมดอื่น" → ทำงานไว ไม่ผิด เหมือนดราฟ
+</div>
+
+</body>
+</html>

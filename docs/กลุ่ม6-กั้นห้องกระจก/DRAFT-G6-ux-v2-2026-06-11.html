@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G6 UX v2 — กั้นห้องกระจก (เดโม)</title>
+<style>
+:root{
+  --red:#B3151D;--red-light:#FFF0F0;--red-mid:#F87171;
+  --blue:#1565C0;--blue-light:#EAF3FF;--blue-border:#9DBCE0;
+  --green:#15803D;--green-light:#F0FDF4;--green-border:#86EFAC;
+  --amber:#D97706;--amber-light:#FFFBEB;--amber-border:#FCD34D;
+  --gray:#6B7280;--border:#E5E7EB;--radius:10px;
+  --ink:#111827;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:var(--ink);}
+
+/* ── Banner ── */
+.demo-banner{background:var(--red);color:#fff;text-align:center;padding:8px 12px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:99;}
+.page{max-width:640px;margin:0 auto;padding:12px 12px 80px;}
+
+/* ── Card ── */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title .badge{font-size:11px;background:var(--red-light);color:var(--red);border-radius:4px;padding:1px 7px;font-weight:700;}
+.card-title .badge-auto{font-size:11px;background:#EFF6FF;color:var(--blue);border-radius:4px;padding:1px 7px;font-weight:700;}
+
+/* ── Field ── */
+.field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:10px;}
+.field:last-child{margin-bottom:0;}
+.field-lbl{font-size:13px;color:#374151;min-width:60px;flex-shrink:0;}
+.field input[type=number],.field input[type=text]{
+  height:44px;border:1.5px solid var(--border);border-radius:8px;
+  padding:0 10px;font-size:15px;font-family:inherit;color:var(--ink);background:#fff;min-width:0;outline:none;transition:.15s;}
+.field input[type=number]{width:76px;}
+.field input:focus{border-color:var(--blue);}
+.unit{font-size:12px;color:var(--gray);}
+.hint{font-size:12px;color:var(--gray);margin-top:2px;}
+.auto-badge{font-size:11px;background:#EFF6FF;color:var(--blue);border-radius:4px;padding:1px 7px;font-weight:700;display:inline-block;}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{height:44px;min-width:64px;padding:0 14px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:14px;font-family:inherit;color:#374151;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:.15s;font-weight:600;line-height:1.2;text-align:center;}
+.chip:hover{border-color:var(--blue);color:var(--blue);}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.chips.sm .chip{height:38px;min-width:52px;padding:0 10px;font-size:13px;}
+.chips.xs .chip{height:34px;min-width:44px;padding:0 8px;font-size:12px;}
+
+/* ── Stepper ── */
+.stepper{display:inline-flex;align-items:center;gap:4px;}
+.step-btn{width:44px;height:44px;border:1.5px solid var(--border);border-radius:8px;
+  background:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;line-height:1;}
+.step-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.step-val{width:48px;height:44px;text-align:center;border:1.5px solid var(--border);border-radius:8px;
+  font-size:16px;font-weight:700;font-family:inherit;background:#fff;display:flex;align-items:center;justify-content:center;}
+
+/* ── Room header (master สีและกระจก) ── */
+.master-card{background:#FFF8E1;border:1.5px solid var(--amber-border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;}
+.master-title{font-size:13px;font-weight:700;color:#92400E;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.master-title svg{flex-shrink:0;}
+
+/* ── การ์ดด้าน/บาน ── */
+.side-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.side-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:.15s;}
+.side-card.open{border-color:var(--blue);}
+.side-head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;}
+.side-head:hover{background:#F9FAFB;}
+.side-badge{width:34px;height:34px;border-radius:8px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.side-badge.roof{background:var(--green);}
+.side-info{flex:1;min-width:0;}
+.side-name{font-size:14px;font-weight:700;color:var(--ink);}
+.side-sub{font-size:11px;color:var(--gray);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.side-price-badge{font-size:12px;font-weight:700;color:var(--red);background:var(--red-light);border-radius:6px;padding:3px 8px;flex-shrink:0;}
+.side-del{border:none;background:none;cursor:pointer;color:var(--gray);font-size:18px;padding:4px 6px;border-radius:6px;flex-shrink:0;line-height:1;}
+.side-del:hover{color:var(--red);background:var(--red-light);}
+.side-body{display:none;padding:10px 12px 12px;border-top:1px solid var(--border);background:#FAFBFF;}
+.side-body.open{display:block;}
+
+/* ── ชนิดบาน chip grid (4 per row) ── */
+.prod-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.prod-chip{height:52px;border:1.5px solid var(--border);border-radius:8px;background:#fff;
+  font-size:12px;font-family:inherit;color:#374151;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:.15s;font-weight:600;text-align:center;padding:4px;}
+.prod-chip:hover{border-color:var(--blue);color:var(--blue);}
+.prod-chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.prod-chip .prod-icon{font-size:18px;line-height:1;margin-bottom:2px;}
+
+/* ── sync badge (แสดงค่า master ที่ sync แล้ว) ── */
+.sync-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.sync-chip{font-size:11px;background:#EFF6FF;color:var(--blue);border:1px solid #BFDBFE;border-radius:5px;padding:3px 8px;display:flex;align-items:center;gap:4px;}
+.sync-chip .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+
+/* ── ราคาด้าน ── */
+.side-price-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.side-price-lbl{font-size:12px;color:var(--gray);}
+.side-price-val{font-size:15px;font-weight:700;color:var(--red);}
+
+/* ── ปุ่มเพิ่ม ── */
+.btn-add{width:100%;height:48px;border-radius:9px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;margin-bottom:8px;}
+.btn-add-side{border:1.5px dashed var(--blue);color:var(--blue);}
+.btn-add-side:hover{background:var(--blue-light);}
+.btn-add-roof{border:1.5px dashed var(--green);color:var(--green);}
+.btn-add-roof:hover{background:var(--green-light);}
+
+/* ── ยอดรวมห้อง ── */
+.room-total{background:var(--blue-light);border:1.5px solid var(--blue-border);border-radius:8px;
+  padding:12px 14px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;}
+.room-total .rt-lbl{font-size:13px;color:var(--blue);font-weight:700;}
+.room-total .rt-val{font-size:19px;font-weight:700;color:var(--red);}
+
+/* ── งานเสริม/หมายเหตุ ── */
+details.extra{border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:0;}
+details.extra>summary{padding:10px 12px;cursor:pointer;font-size:13px;color:var(--green);font-weight:700;display:flex;align-items:center;gap:6px;min-height:44px;}
+details.extra>summary::-webkit-details-marker{display:none;}
+details.extra>.extra-body{padding:10px 12px 12px;}
+.opt-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.opt-row:last-child{border-bottom:none;}
+.opt-row label{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;flex:1;}
+.opt-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--red);flex-shrink:0;}
+.opt-note{font-size:11px;color:var(--gray);margin-left:28px;margin-top:2px;}
+
+/* ── Price bar ── */
+.price-bar{position:fixed;bottom:0;left:0;right:0;background:var(--red);color:#fff;padding:10px 16px;
+  display:flex;justify-content:space-between;align-items:center;z-index:50;}
+.price-bar .plbl{font-size:12px;opacity:.8;}
+.price-bar .pval{font-size:21px;font-weight:700;}
+.price-bar .pdemo{font-size:10px;background:rgba(255,255,255,.25);padding:2px 7px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+
+/* ── ชื่อห้อง ── */
+.room-name-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.room-name-row input{flex:1;height:44px;border:1.5px solid var(--border);border-radius:8px;padding:0 12px;font-size:15px;font-family:inherit;color:var(--ink);}
+.room-name-row input:focus{border-color:var(--blue);outline:none;}
+
+/* ── Separator ── */
+.sep{height:1px;background:var(--border);margin:10px 0;}
+
+@media(max-width:440px){
+  .prod-chips{grid-template-columns:repeat(2,1fr);}
+  .page{padding:10px 10px 76px;}
+  .card{padding:12px 10px;}
+}
+</style>
+</head>
+<body>
+<div class="demo-banner">DRAFT G6 UX v2 crosscheck 2026-06-13 / เดโม — ราคาเป็นตัวอย่าง dev ต้องดึง RATES จริงจาก engine</div>
+<div class="page">
+  <h2 style="font-size:17px;font-weight:700;color:var(--red);margin:10px 0 4px;">G6 — กั้นห้องกระจก (UX v2)</h2>
+  <div class="hint" style="margin-bottom:12px;">มติ 2026-06-07 · บานหลัก + บานย่อยเดิม · สี/กระจกแชร์ทั้งห้อง · crosscheck 2026-06-13</div>
+
+  <!-- ชื่อห้อง -->
+  <div class="card">
+    <div class="card-title">ชื่อห้อง / ตำแหน่ง</div>
+    <div class="room-name-row">
+      <input type="text" id="room-name" placeholder="เช่น ห้องนั่งเล่น · ชั้น 1" oninput="calcGH()">
+    </div>
+  </div>
+
+  <!-- สีอลู + กระจก (master ทั้งห้อง) -->
+  <div class="master-card" id="master-card">
+    <div class="master-title">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#92400E" stroke-width="1.5"/><path d="M8 4v4l3 1.5" stroke="#92400E" stroke-width="1.5" stroke-linecap="round"/></svg>
+      สี + กระจก (ทั้งห้อง)
+      <span class="auto-badge">ใช้กับทุกด้าน</span>
+    </div>
+
+    <div class="field">
+      <span class="field-lbl">สีอลู</span>
+      <div class="chips sm" id="color-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'gh-color');calcGH()">ขาว / ดำ</button>
+        <button class="chip" data-val="1" onclick="chipPick(this,'gh-color');calcGH()">ซาฮาร่า</button>
+        <button class="chip" data-val="2" onclick="chipPick(this,'gh-color');calcGH()">ลายไม้สต๊อก</button>
+        <button class="chip" data-val="3" onclick="chipPick(this,'gh-color');calcGH()">อบพิเศษ</button>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0;">
+      <span class="field-lbl">กระจก</span>
+      <div class="chips sm" id="glass-chips">
+        <button class="chip on" data-val="0" onclick="chipPick(this,'gh-glass');calcGH()">ใส 6 มม.</button>
+        <button class="chip" data-val="1" onclick="chipPick(this,'gh-glass');calcGH()">เขียว 6 มม.</button>
+        <button class="chip" data-val="2" onclick="chipPick(this,'gh-glass');calcGH()">เทมเปอร์ 6 มม.</button>
+        <button class="chip" data-val="3" onclick="chipPick(this,'gh-glass');calcGH()">เทมเปอร์ 10 มม.</button>
+        <button class="chip" data-val="4" onclick="chipPick(this,'gh-glass');calcGH()">ลามิเนต 4+4 มม.</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- รายการด้าน -->
+  <div class="side-list" id="side-list"></div>
+
+  <button class="btn-add btn-add-side" onclick="addSide('บาน')">
+    <span style="font-size:20px;line-height:1;">+</span> เพิ่มด้าน / บาน
+  </button>
+  <button class="btn-add btn-add-roof" onclick="addSide('หลังคา')">
+    <span style="font-size:20px;line-height:1;">+</span> เพิ่มหลังคา
+  </button>
+  <button class="btn-add" onclick="addSide('ผนัง')"
+    style="border:1.5px dashed var(--green);color:var(--green);">
+    <span style="font-size:20px;line-height:1;">+</span> เพิ่มผนังเบา / ฝ้า-ผนัง
+  </button>
+
+  <!-- ยอดรวมห้อง -->
+  <div class="room-total">
+    <span class="rt-lbl">รวมทั้งห้อง <span style="font-size:11px;font-weight:400;opacity:.7;" id="side-count">(0 ด้าน)</span></span>
+    <span class="rt-val" id="room-total">฿0</span>
+  </div>
+
+  <!-- งานเสริม / หมายเหตุห้อง -->
+  <details class="extra">
+    <summary>
+      <span style="font-size:16px;">+</span> งานเสริม / หมายเหตุห้อง
+    </summary>
+    <div class="extra-body">
+      <div class="opt-row">
+        <label>
+          <input type="checkbox" id="gh-drop" onchange="calcGH()">
+          <span>มีดรอปพื้น</span>
+        </label>
+      </div>
+      <!-- engine: o-dfm (กรอกตัวเลข ม.) ต่อบาน — dev ต้องเปลี่ยนจาก checkbox เป็น number input + คิดราคา 5,000+750/ม. -->
+      <div class="opt-note">ทำธรณีลึก / ปาดพื้น — engine: <code>o-dfm</code> (กรอกระยะ ม. ต่อบาน)</div>
+
+      <div class="opt-row" style="margin-top:4px;">
+        <label>
+          <input type="checkbox" id="gh-slope" onchange="calcGH()">
+          <span>ปิดซ่อนสโลปเดิม (คอมโพสิต / สมาร์ทบอร์ด)</span>
+        </label>
+      </div>
+      <!-- engine: o-rfhs (option ในบานหลังคา · comp=3,500/ตร.ม. · smart=4,000/ตร.ม.) — dev เพิ่มเฉพาะด้านที่เป็นหลังคา -->
+      <div class="opt-note">คีย์เพิ่มในบาน "หลังคา" — engine: <code>o-rfhs</code> (comp/smart · ราคาต่อ ตร.ม.)</div>
+
+      <div class="opt-row" style="margin-top:4px;">
+        <label>
+          <input type="checkbox" id="gh-airbeam" onchange="calcGH()">
+          <span>เพิ่มอลูทึบ (ติดแอร์ / คาน)</span>
+        </label>
+      </div>
+      <!-- engine: ไม่มี field เฉพาะ — เพิ่มเป็น set ใหม่กลุ่ม 1 (ฝ้า-ผนัง / เสริม) แยกรายการ -->
+      <div class="opt-note">เพิ่มเป็นรายการแยก (ฝ้า-ผนัง/เสริม) — ระบุตำแหน่ง + ขนาดในหมายเหตุ</div>
+
+      <div class="sep"></div>
+      <div class="field" style="margin-bottom:0;">
+        <span class="field-lbl" style="min-width:70px;">หมายเหตุ</span>
+        <input type="text" placeholder="หมายเหตุเพิ่มเติม..." style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:14px;font-family:inherit;">
+      </div>
+    </div>
+  </details>
+
+</div><!-- /page -->
+
+<!-- Price bar -->
+<div class="price-bar">
+  <div>
+    <div class="plbl">กั้นห้องกระจก</div>
+    <div class="plbl" id="price-label" style="font-size:10px;opacity:.65;">ยังไม่มีด้าน</div>
+  </div>
+  <div style="display:flex;align-items:center;">
+    <span class="pval" id="price-total">฿0</span>
+    <span class="pdemo">เดโม</span>
+  </div>
+</div>
+
+<script>
+/* ─── State ─── */
+var state = {'gh-color':'0','gh-glass':'0'};
+var sides = [];
+var sideSeq = 0;
+var LABELS = ['A','B','C','D','E','F','G','H'];
+
+/* ─── Dummy rates (dev ดึง engine จริง) ─── */
+var GH_RATES = {
+  sliding_euro:  {min:7500,  rate:4500},
+  sliding_sms:   {min:6500,  rate:3800},
+  casement_euro: {min:18000, rate:5500},
+  fixed_glass:   {min:5000,  rate:2800},
+  folding:       {min:15000, rate:4000},
+  folding_euro:  {min:15000, rate:4000},
+  curved_double: {min:47000, rate:6000},
+  curved_single: {min:32000, rate:5500},
+  curved_fixed:  {min:10000, rate:3500},
+  pivot:         {min:26000, rate:5500},
+  wall_ext:      {min:13500, rate:2500}, // ผนังเบาภายนอก (engine min=13,500)
+  roof_polyton:  {min:30000, rate:1500},
+  roof_vinyl:    {min:28000, rate:1300},
+  roof_metal:    {min:25000, rate:1200},
+};
+var COLOR_EXTRA = [0,400,1000,1800];   // ต่อ ตร.ม.
+var GLASS_EXTRA = [0,0,600,1200,2200]; // ต่อ ตร.ม.
+var COLOR_NAMES = ['ขาว/ดำ','ซาฮาร่า','ลายไม้สต๊อก','อบพิเศษ'];
+var GLASS_NAMES = ['ใส 6mm','เขียว 6mm','เทมเปอร์ 6mm','เทมเปอร์ 10mm','ลามิเนต 4+4mm'];
+
+/* ─── ชนิดบาน สำหรับ grid chip ─── */
+/* มติ 2026-06-07: ตัด shower/ระแนง×4/ราวบันได · เก็บ บานหมุน/ดัดโค้ง/ฝ้า-ผนัง */
+var PROD_DEFS = [
+  /* ── บาน/กระจก ── */
+  {id:'sliding_euro',  icon:'⬜', label:'บานเลื่อน\nยูโร',      type:'บาน'},
+  {id:'sliding_sms',   icon:'⬜', label:'บานเลื่อน\nSMS',       type:'บาน'},
+  {id:'casement_euro', icon:'◧',  label:'บานเปิด\nยูโร',        type:'บาน'},
+  {id:'fixed_glass',   icon:'▪',  label:'ติดตาย',               type:'บาน'},
+  {id:'folding',       icon:'⬛', label:'บานเฟี้ยม\nเซมิยูโร',   type:'บาน'},
+  {id:'folding_euro',  icon:'⬛', label:'บานเฟี้ยม\nยูโร',       type:'บาน'},
+  {id:'curved_double', icon:'◑',  label:'ดัดโค้ง\nบานคู่',       type:'บาน'},
+  {id:'curved_single', icon:'◑',  label:'ดัดโค้ง\nบานเดี่ยว',    type:'บาน'},
+  {id:'curved_fixed',  icon:'◑',  label:'ดัดโค้ง\nติดตาย',       type:'บาน'},
+  {id:'pivot',         icon:'↕',  label:'บานหมุน\nเมืองทอง',     type:'บาน'},
+  /* ── ฝ้า-ผนังเบา ── */
+  {id:'wall_ext',      icon:'▭',  label:'ผนังเบา\n(ฝ้า-ผนัง)',   type:'ผนัง'},
+  /* ── หลังคา ── */
+  {id:'roof_polyton',  icon:'△',  label:'โพลีตัน\n3มม.',         type:'หลังคา'},
+  {id:'roof_vinyl',    icon:'△',  label:'ไวนิล',                  type:'หลังคา'},
+  {id:'roof_metal',    icon:'△',  label:'เมทัลชีท',               type:'หลังคา'},
+];
+
+/* ─── Helpers ─── */
+function fmt(n){ return Math.round(n).toLocaleString('th-TH'); }
+
+function chipPick(btn,group){
+  btn.parentElement.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+  state[group] = btn.dataset.val||'0';
+  renderSyncBadges();
+}
+
+function getMasterLabels(){
+  var ci=parseInt(state['gh-color'])||0;
+  var gi=parseInt(state['gh-glass'])||0;
+  return {
+    color: COLOR_NAMES[ci]||'ขาว/ดำ',
+    glass: GLASS_NAMES[gi]||'ใส 6mm'
+  };
+}
+
+/* ─── Sync badge ─── */
+function renderSyncBadges(){
+  document.querySelectorAll('.sync-row').forEach(function(row){
+    var m = getMasterLabels();
+    row.innerHTML =
+      '<div class="sync-chip"><span class="sync-dot"></span>สี: '+m.color+'</div>'+
+      '<div class="sync-chip"><span class="sync-dot"></span>กระจก: '+m.glass+'</div>';
+  });
+}
+
+/* ─── เพิ่มด้าน ─── */
+/* preset: 'บาน' | 'หลังคา' | 'ผนัง' */
+function addSide(preset){
+  sideSeq++;
+  var banCount  = sides.filter(function(s){ return s.type==='บาน'; }).length;
+  var roofCount = sides.filter(function(s){ return s.type==='หลังคา'; }).length;
+  var wallCount = sides.filter(function(s){ return s.type==='ผนัง'; }).length;
+  var label, defProd;
+  if(preset==='หลังคา'){
+    label = roofCount===0 ? 'หลังคา' : 'หลังคา '+(roofCount+1);
+    defProd = 'roof_polyton';
+  } else if(preset==='ผนัง'){
+    label = wallCount===0 ? 'ผนังเบา' : 'ผนังเบา '+(wallCount+1);
+    defProd = 'wall_ext';
+  } else {
+    label = 'ด้าน '+LABELS[Math.min(banCount,7)];
+    defProd = 'sliding_euro';
+  }
+  sides.push({id:sideSeq, label:label, type:preset||'บาน', prod:defProd, w:1.80, h:2.40, panels:1, open:true});
+  renderSides();
+  calcGH();
+  // scroll ไปการ์ดใหม่
+  setTimeout(function(){
+    var el=document.getElementById('side-'+sideSeq);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },80);
+}
+
+function removeSide(id){
+  sides = sides.filter(function(s){ return s.id!==id; });
+  renderSides();
+  calcGH();
+}
+
+function toggleSide(id){
+  var s=sides.find(function(x){ return x.id===id; });
+  if(s){ s.open=!s.open; renderSides(); }
+}
+
+function updateSide(id,field,val){
+  var s=sides.find(function(x){ return x.id===id; }); if(!s)return;
+  s[field]=val; calcGH();
+  // re-render summary ไม่ rebuild ทั้งหมด
+  var el=document.getElementById('side-sum-'+id);
+  if(el) el.textContent=getSideSummary(s);
+  var pe=document.getElementById('side-price-'+id);
+  if(pe) pe.textContent='฿'+fmt(calcSidePrice(s));
+  var ph=document.getElementById('side-head-price-'+id);
+  if(ph) ph.textContent='฿'+fmt(calcSidePrice(s));
+}
+
+function updateSideStep(id,d){
+  var s=sides.find(function(x){ return x.id===id; }); if(!s)return;
+  s.panels=Math.max(1,Math.min(12,(s.panels||1)+d));
+  var el=document.getElementById('step-val-'+id);
+  if(el) el.textContent=s.panels;
+  updateSide(id,'panels',s.panels);
+}
+
+function pickProd(id,prodId){
+  var s=sides.find(function(x){ return x.id===id; }); if(!s)return;
+  s.prod=prodId;
+  // อัปเดต chip on/off
+  var box=document.getElementById('prod-chips-'+id);
+  if(box) box.querySelectorAll('.prod-chip').forEach(function(c){
+    c.classList.toggle('on', c.dataset.prod===prodId);
+  });
+  // ซ่อน/โชว์ช่อง panels (หลังคา/ผนังไม่มีจำนวนบาน)
+  var prow=document.getElementById('panels-row-'+id);
+  var def=PROD_DEFS.find(function(p){ return p.id===prodId; });
+  var noPanel=def&&(def.type==='หลังคา'||def.type==='ผนัง');
+  if(prow) prow.style.display=noPanel?'none':'';
+  updateSide(id,'prod',prodId);
+}
+
+/* ─── สร้าง HTML prod chip สำหรับ type ─── */
+/* บาน → โชว์ทุก type ยกเว้น หลังคา (บาน+ผนังรวมกัน)
+   หลังคา → โชว์เฉพาะ หลังคา */
+function buildProdChips(s){
+  var isRoof=s.type==='หลังคา';
+  var defs;
+  if(isRoof){
+    defs=PROD_DEFS.filter(function(p){ return p.type==='หลังคา'; });
+  } else {
+    // บาน + ผนัง โชว์รวมในด้านเดียวกัน (เพิ่ม/เปลี่ยนเองได้)
+    defs=PROD_DEFS.filter(function(p){ return p.type!=='หลังคา'; });
+  }
+  return defs.map(function(p){
+    return '<button type="button" class="prod-chip'+(s.prod===p.id?' on':'')+'"'+
+      ' data-prod="'+p.id+'"'+
+      ' onclick="pickProd('+s.id+',\''+p.id+'\')"'+
+      '><span class="prod-icon">'+p.icon+'</span>'+
+      p.label.replace('\n','<br>')+'</button>';
+  }).join('');
+}
+
+function getSideSummary(s){
+  var pname=(PROD_DEFS.find(function(p){return p.id===s.prod;})||{}).label||s.prod;
+  pname=pname.replace('\n',' ');
+  var sz=s.w+'×'+s.h+' ม.';
+  var noPanel=(s.type==='หลังคา'||s.type==='ผนัง');
+  var panels=!noPanel&&s.panels>1?' · '+s.panels+' บาน':'';
+  return pname+' · '+sz+panels;
+}
+
+/* ─── Render ทั้ง list ─── */
+function renderSides(){
+  var list=document.getElementById('side-list'); if(!list)return;
+  list.innerHTML='';
+  sides.forEach(function(s){
+    var isRoof=(s.type==='หลังคา');
+    var isWall=(s.type==='ผนัง');
+    var noPanel=(isRoof||isWall);
+    var price=calcSidePrice(s);
+    var el=document.createElement('div');
+    el.className='side-card'+(s.open?' open':'');
+    el.id='side-'+s.id;
+
+    // badge: บาน→A/B/C..., หลังคา→R, ผนัง→W
+    var badge;
+    if(isRoof){ badge='R'; }
+    else if(isWall){ badge='W'; }
+    else { badge=LABELS[sides.filter(function(x){return x.type==='บาน'&&x.id<=s.id}).length-1]||'?'; }
+
+    var m=getMasterLabels();
+    // ผนังเบา (ฝ้า-ผนัง) ไม่ใช้กระจกจาก master → ซ่อน sync-chip กระจก
+    var syncHtml=isWall
+      ? '<div class="sync-chip"><span class="sync-dot"></span>สี: '+m.color+'</div>'
+      : '<div class="sync-chip"><span class="sync-dot"></span>สี: '+m.color+'</div>'+
+        '<div class="sync-chip"><span class="sync-dot"></span>กระจก: '+m.glass+'</div>';
+
+    // label ช่องขนาด
+    var wLbl=isRoof?'ยาว':'กว้าง';
+    var hLbl=isRoof?'ยื่น':'สูง';
+
+    el.innerHTML=
+      '<div class="side-head" onclick="toggleSide('+s.id+')">' +
+        '<div class="side-badge'+(isRoof?' roof':(isWall?' roof':' '))+'" style="'+(isWall?'background:var(--green)':'')+'">'+badge+'</div>'+
+        '<div class="side-info">'+
+          '<div class="side-name">'+s.label+'</div>'+
+          '<div class="side-sub" id="side-sum-'+s.id+'">'+getSideSummary(s)+'</div>'+
+        '</div>'+
+        '<div class="side-price-badge" id="side-head-price-'+s.id+'">฿'+fmt(price)+'</div>'+
+        '<button type="button" class="side-del" onclick="event.stopPropagation();removeSide('+s.id+')" title="ลบด้านนี้">✕</button>'+
+      '</div>'+
+      '<div class="side-body'+(s.open?' open':'')+'" id="side-body-'+s.id+'">'+
+        // sync badge
+        '<div class="sync-row" style="margin-bottom:10px;">'+syncHtml+'</div>'+
+        // ชนิดบาน chip grid
+        '<div style="font-size:12px;color:var(--gray);margin-bottom:6px;">ชนิด</div>'+
+        '<div class="prod-chips" id="prod-chips-'+s.id+'">'+buildProdChips(s)+'</div>'+
+        // ขนาด
+        '<div class="field">'+
+          '<span class="field-lbl">'+wLbl+'</span>'+
+          '<input type="number" value="'+s.w+'" min="0.3" step="0.1" style="width:72px;" '+
+            'oninput="updateSide('+s.id+',\'w\',parseFloat(this.value)||0)">'+
+          '<span class="unit">ม.</span>'+
+          '<span class="unit" style="padding:0 4px;">×</span>'+
+          '<span class="field-lbl" style="min-width:0">'+hLbl+'</span>'+
+          '<input type="number" value="'+s.h+'" min="0.3" step="0.1" style="width:72px;" '+
+            'oninput="updateSide('+s.id+',\'h\',parseFloat(this.value)||0)">'+
+          '<span class="unit">ม.</span>'+
+        '</div>'+
+        // จำนวนบาน (ซ่อนถ้าหลังคา/ผนัง)
+        '<div class="field" id="panels-row-'+s.id+'"'+(noPanel?' style="display:none;"':'')+'>'+
+          '<span class="field-lbl">จำนวนบาน</span>'+
+          '<div class="stepper">'+
+            '<button type="button" class="step-btn" onclick="updateSideStep('+s.id+',-1)">−</button>'+
+            '<div class="step-val" id="step-val-'+s.id+'">'+s.panels+'</div>'+
+            '<button type="button" class="step-btn" onclick="updateSideStep('+s.id+',1)">+</button>'+
+          '</div>'+
+        '</div>'+
+        // ราคาด้านนี้
+        '<div class="side-price-row">'+
+          '<span class="side-price-lbl">ราคาด้านนี้ (เดโม)</span>'+
+          '<span class="side-price-val" id="side-price-'+s.id+'">฿'+fmt(price)+'</span>'+
+        '</div>'+
+      '</div>';
+
+    list.appendChild(el);
+  });
+  renderSyncBadges();
+}
+
+/* ─── คำนวณราคา ─── */
+function calcSidePrice(s){
+  var ci=parseInt(state['gh-color'])||0;
+  var gi=parseInt(state['gh-glass'])||0;
+  var r=GH_RATES[s.prod]||{min:8000,rate:4500};
+  var a=s.w*s.h;
+  var base=Math.max(r.min, r.rate*a);
+  // ฝ้า-ผนัง (type=ผนัง) ไม่คิดค่าสีกระจก engine: NO_COLOR_CATS/AREA_CATS
+  var noGlass=(s.type==='หลังคา'||s.type==='ผนัง');
+  var colorAdd=(COLOR_EXTRA[ci]||0)*a;
+  var glassAdd=noGlass?0:(GLASS_EXTRA[gi]||0)*a;
+  // panels เฉพาะ type=บาน
+  var noPanel=(s.type==='หลังคา'||s.type==='ผนัง');
+  var panelAdd=!noPanel&&(s.panels||1)>1?((s.panels-1)*5000):0;
+  return base+colorAdd+glassAdd+panelAdd;
+}
+
+function calcGH(){
+  var total=0;
+  sides.forEach(function(s){ total+=calcSidePrice(s); });
+  document.getElementById('room-total').textContent='฿'+fmt(total);
+  document.getElementById('price-total').textContent='฿'+fmt(total);
+  var cnt=sides.length;
+  document.getElementById('side-count').textContent='('+cnt+(cnt===1?' ด้าน':' ด้าน')+')';
+  var name=document.getElementById('room-name').value.trim();
+  var lbl=name||(cnt?sides.map(function(s){return s.label+' '+s.w+'×'+s.h;}).join(' + '):'ยังไม่มีด้าน');
+  document.getElementById('price-label').textContent=lbl;
+  // อัปเดต price badge ทุกด้าน
+  sides.forEach(function(s){
+    var p=calcSidePrice(s);
+    var ph=document.getElementById('side-head-price-'+s.id);
+    var pv=document.getElementById('side-price-'+s.id);
+    if(ph) ph.textContent='฿'+fmt(p);
+    if(pv) pv.textContent='฿'+fmt(p);
+  });
+}
+
+/* ─── Init ─── */
+addSide('บาน');
+addSide('บาน');
+calcGH();
+</script>
+</body>
+</html>

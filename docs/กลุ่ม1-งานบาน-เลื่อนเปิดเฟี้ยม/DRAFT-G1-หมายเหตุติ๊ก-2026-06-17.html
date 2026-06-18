@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟ: หมายเหตุมาตรฐาน ดรอปดาวน์ → ติ๊กหลายข้อ</title>
+<style>
+  :root{ --red:#B3151D; --red2:#7f1d1d; --line:#e5e7eb; --bg:#f3f4f6; --mut:#6b7280; --ok:#16a34a; }
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:#1f2937;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+  h1{font-size:19px;color:var(--red2);margin:6px 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+  .cmp{display:grid;grid-template-columns:1fr;gap:16px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .panel.bad{border-color:#fca5a5}
+  .panel.good{border:2px solid var(--ok)}
+  .ph{font-size:13px;font-weight:700;margin-bottom:10px}
+  .bad .ph{color:#b91c1c}.good .ph{color:var(--ok)}
+  /* current dropdown */
+  select.cur{width:100%;height:36px;font-size:12.5px;border:1px solid var(--line);border-radius:6px;color:var(--red);background:#FFF9F9;padding:0 8px}
+  .hint{font-size:12px;color:var(--mut);margin-top:8px}
+  /* new: accordion + tick rows */
+  .acc{border:1px solid #f0c8ca;border-radius:9px;overflow:hidden}
+  .acc>summary{list-style:none;cursor:pointer;padding:10px 12px;font-weight:700;color:var(--red);background:#FFF9F9;font-size:13.5px;display:flex;justify-content:space-between;align-items:center}
+  .acc>summary::-webkit-details-marker{display:none}
+  .acc[open]>summary{border-bottom:1px solid #f0c8ca}
+  .acc .body{padding:6px 6px 10px}
+  .grp{margin:8px 4px 2px;font-size:12px;font-weight:700;color:var(--red2);letter-spacing:.3px}
+  .grp.inc{color:#166534}.grp.exc{color:#b45309}.grp.cond{color:#3730a3}
+  .rk{display:flex;gap:9px;align-items:flex-start;padding:8px 9px;margin:3px 2px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:12.5px;background:#fff;transition:.12s}
+  .rk:hover{background:#f9fafb}
+  .rk.on{background:#fef2f2;border-color:var(--red)}
+  .rk .bx{width:18px;height:18px;border:2px solid #cbd5e1;border-radius:5px;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:900}
+  .rk.on .bx{background:var(--red);border-color:var(--red)}
+  .note{margin-top:12px}
+  .note label{font-size:12px;color:var(--mut);font-weight:700}
+  textarea.note-ta{width:100%;min-height:84px;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12.5px;font-family:inherit;margin-top:4px;resize:vertical}
+  .count{font-size:11.5px;color:var(--ok);font-weight:700;margin-left:6px}
+  .legend{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;margin-top:18px}
+  .legend b{color:var(--red)}
+  .tag{display:inline-block;background:#fee2e2;color:#7f1d1d;border-radius:5px;padding:0 7px;font-size:11px;font-weight:700;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>หมายเหตุมาตรฐาน: ดรอปดาวน์ → ติ๊กหลายข้อในที</h1>
+  <div class="sub">กล่อง "หมายเหตุ / OPTION" ในฟอร์ม · ลองกดเล่นได้จริง (ติ๊กแล้วไหลลงช่องล่าง)</div>
+
+  <div class="cmp">
+    <!-- BEFORE -->
+    <div class="panel bad">
+      <div class="ph">❌ ของเดิม — ดรอปดาวน์ (เลือกได้ทีละข้อ · เปิด-ปิดทุกครั้ง)</div>
+      <select class="cur" id="curSel" onchange="curPick()">
+        <option value="">＋ เพิ่มหมายเหตุมาตรฐาน (เลือกทีละข้อ · ขึ้นในใบ)</option>
+      </select>
+      <div class="hint">กดเลือก 1 ข้อ → เด้งลงช่องหมายเหตุ → ถ้าจะเอาอีกข้อต้องเปิดดรอปดาวน์ใหม่ · บนมือถือกดยาก เลื่อนหาเหนื่อย</div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="panel good">
+      <div class="ph">✅ แบบใหม่ — กล่องพับ กดขยาย → ติ๊กกี่ข้อก็ได้รวดเดียว <span id="cnt" class="count"></span></div>
+      <details class="acc" open>
+        <summary><span>＋ เพิ่มหมายเหตุมาตรฐาน (ติ๊กได้หลายข้อ · ขึ้นในใบ)</span><span>▾</span></summary>
+        <div class="body" id="rkBody"></div>
+      </details>
+      <div class="hint">เห็นทุกข้อในที · ติ๊ก/เอาออกได้เลย · จัดหมวด รวมในราคา / ไม่รวม / เงื่อนไข</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <label>หมายเหตุ / สเปกพิเศษ (ที่จะขึ้นในใบเสนอราคา) — พิมพ์เพิ่มเองได้</label>
+    <textarea class="note-ta" id="noteTA" placeholder="เช่น รวมงานรื้อบานเดิม ·"></textarea>
+  </div>
+
+  <div class="legend">
+    <b>ทำไมแบบนี้ดีกว่า:</b>
+    <ul style="margin:6px 0 0;padding-left:20px">
+      <li>เห็นหมายเหตุทุกข้อในที ติ๊กรวดเดียวหลายข้อ (เดิมดรอปดาวน์ต้องเปิด-เลือก-ปิด ซ้ำทุกข้อ)</li>
+      <li>ติ๊กออกได้ = แก้ง่าย (เดิมเลือกผิดต้องไปลบในช่องเอง)</li>
+      <li>ยังพิมพ์เพิ่มเองในช่องหมายเหตุได้ปกติ · "ออปชั่นทางเลือกลูกค้า" คนละตัว ไม่กระทบ</li>
+      <li>ใช้แม่แบบ <span class="tag">renderChecklist L1801</span> ที่มีในโค้ดอยู่แล้ว (details + แถวติ๊ก) → dev ก็อปแนวได้เลย</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const PRESETS=[
+ {g:'รวมในราคา',cls:'inc',items:[
+   'ราคาที่เสนอรวมงานรื้อของเดิม กรณีเกิดความเสียหายจากการทำงานมีบริการเปลี่ยน/เก็บงานให้ฟรี แต่ไม่รวมวัสดุ (ลูกค้าเตรียมให้)',
+   'ราคาที่เสนอรวมงานดรอปพื้น',
+   'ราคาที่เสนอรวมงานกรีดพื้นเพื่อฝังรางยู แต่ไม่รวมความเสียหายที่เกิดจากการดรอปพื้น เช่น กระเบื้องแตก งานเก็บสี',
+   'ราคาที่เสนอรวมงานนั่งร้าน และโพรเทคฟิล์มฟ้าบริเวณกระจกเพื่อกันสิ่งสกปรก แต่ไม่รวมงานทำความสะอาด Big cleaning',
+   'ราคาที่เสนอรวมโครงยึดเข้าตัวบ้านพร้อมครอบอลูมิเนียม']},
+ {g:'ไม่รวมในราคา',cls:'exc',items:[
+   'ราคาที่เสนอไม่รวมงานดรอปพื้น',
+   'ราคาที่เสนอไม่รวมวัสดุ (ลูกค้าดำเนินการเตรียมวัสดุให้)',
+   'ราคาที่เสนอไม่รวมเจาะเสาบานสำหรับใส่มือจับ Digital Door Lock และงานติดตั้งมือจับ Digital Door Lock (ลูกค้าดำเนินการเอง)',
+   'ราคาที่เสนอไม่รวมงานรื้อบานประตูเดิมและทุบปูนเดิม (ลูกค้าดำเนินการเอง)',
+   'ราคาที่เสนอไม่รวมงาน ลงเข็ม / เทพื้น / ปูกระเบื้อง / งานไฟ / งานก่อผนังปูน / งานดรอปพื้น',
+   'ราคาที่เสนอไม่รวมงาน รื้อพื้นเดิม / รื้อกระเบื้อง / รื้อหลังคาเดิม / งานเดินไฟ / งานสี',
+   'ราคาที่เสนอไม่รวมงาน ย้ายกล้องวงจรปิด / ย้ายแอร์ (ลูกค้าดำเนินการเอง)',
+   'ราคาที่เสนอไม่รวมงาน ถอดรางน้ำเดิม / งานทาสี / งานเดินไฟ']},
+ {g:'เงื่อนไข / วัสดุ',cls:'cond',items:[
+   'วัสดุและอุปกรณ์ตามแบบมาตรฐานผู้ผลิต',
+   'จำนวนและราคาอาจมีการเปลี่ยนแปลงเมื่อช่างเข้าวัดหน้างานจริง',
+   'วัสดุ Sealant ภายนอก-ภายใน ใช้ PU / MS สีขาว (สำหรับทาสีได้), ใช้ซิลิโคนใสสำหรับยิงกระจก',
+   'ราคาที่เสนอยังไม่รวมภาษีมูลค่าเพิ่ม']},
+];
+// current dropdown fill
+(function(){var s=document.getElementById('curSel');PRESETS.forEach(function(grp){var og=document.createElement('optgroup');og.label=grp.g;grp.items.forEach(function(t){var o=document.createElement('option');o.value=t;o.textContent=t;og.appendChild(o);});s.appendChild(og);});})();
+function curPick(){var s=document.getElementById('curSel');if(!s.value)return;addLine(s.value);s.value='';}
+// new tick rows
+(function(){var b=document.getElementById('rkBody');var h='';PRESETS.forEach(function(grp){h+='<div class="grp '+grp.cls+'">'+grp.g+'</div>';grp.items.forEach(function(t){h+='<div class="rk" data-t="'+t.replace(/"/g,'&quot;')+'" onclick="toggleRk(this)"><span class="bx"></span><span>'+t+'</span></div>';});});b.innerHTML=h;})();
+function curLines(){return document.getElementById('noteTA').value.split('\n').map(s=>s.trim()).filter(Boolean);}
+function setLines(arr){document.getElementById('noteTA').value=arr.join('\n');}
+function addLine(t){var L=curLines();if(L.indexOf(t)<0){L.push(t);setLines(L);}syncRows();}
+function toggleRk(el){var t=el.dataset.t;var L=curLines();var i=L.indexOf(t);if(i>=0){L.splice(i,1);}else{L.push(t);}setLines(L);syncRows();}
+function syncRows(){var L=curLines();var n=0;document.querySelectorAll('.rk').forEach(function(r){var on=L.indexOf(r.dataset.t)>=0;r.classList.toggle('on',on);r.querySelector('.bx').textContent=on?'✓':'';if(on)n++;});document.getElementById('cnt').textContent=n?('ติ๊กแล้ว '+n+' ข้อ'):'';}
+document.getElementById('noteTA').addEventListener('input',syncRows);
+syncRows();
+</script>
+</body>
+</html>

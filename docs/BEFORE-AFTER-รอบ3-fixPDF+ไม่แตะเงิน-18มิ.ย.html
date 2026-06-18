@@ -1,0 +1,55 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Before → After · รอบ 3 (fix PDF + ไม่แตะเงิน)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f4f4f5;color:#1a1a1a;padding:20px;line-height:1.5}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:22px;color:#B3151D;margin-bottom:2px}.sub{font-size:13px;color:#666;margin-bottom:12px}
+.tagpdf{display:inline-block;background:#fff3cd;border:1px solid #f0d070;color:#8a6d00;font-size:11px;padding:1px 8px;border-radius:20px;margin-left:6px}
+.card{border:1px solid #e5e5e5;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#fff}
+.card-t{font-weight:700;font-size:14px;padding:9px 13px;background:#fafafa;border-bottom:1px solid #eee}
+.ba{display:grid;grid-template-columns:1fr 34px 1fr;align-items:stretch}
+.col{padding:11px 13px;font-size:13px}.before{background:#fff5f5}.after{background:#f0faf2}
+.col .lbl{font-size:11px;font-weight:700;margin-bottom:5px}.before .lbl{color:#c0392b}.after .lbl{color:#2E7D32}
+.arrow{display:flex;align-items:center;justify-content:center;font-size:18px;color:#B3151D;background:#fff}
+.box{border:1px dashed #ccc;border-radius:6px;padding:6px 8px;background:#fff;font-size:12px;margin-top:3px}
+.chip{display:inline-block;border:1px solid #B3151D;color:#B3151D;border-radius:13px;padding:1px 7px;font-size:10.5px;margin:1px;background:#fff}.chip.on{background:#B3151D;color:#fff}
+.dd{display:inline-block;border:1px solid #bbb;border-radius:5px;padding:3px 20px 3px 8px;font-size:12px;background:#fff}
+.note{font-size:11.5px;color:#777;padding:7px 13px;border-top:1px dashed #eee;background:#fcfcfc}.note b{color:#444}
+.ref{margin-top:14px;border:1px dashed #ccc;border-radius:8px;padding:10px 14px;background:#fff;font-size:12.5px}
+.ref h2{font-size:14px;color:#B3151D;margin-bottom:5px}.ref .r{margin:3px 0;padding-left:14px;position:relative}.ref .r:before{content:"▸";position:absolute;left:0;color:#B3151D}
+.foot{margin-top:8px;font-size:12px;color:#888;text-align:center}
+</style></head><body><div class="wrap">
+<h1>📦 Before → After · รอบ 3 — fix จาก PDF + งานไม่แตะเงิน</h1>
+<div class="sub">golden 149 นิ่งทุกข้อ · 2 จุดแรก = แก้ตามรูปที่พี่ส่ง ("แก้งานแล้วแต่ไม่ครบ")</div>
+
+<div class="card">
+ <div class="card-t">① กระจก "พิเศษ" ยังลากยาว <span class="tagpdf">จาก PDF</span></div>
+ <div class="ba">
+  <div class="col before"><div class="lbl">ตอนนี้</div>หมวดพิเศษ (13 ตัว) ยังเป็นชิป<div class="box"><span class="chip on">ยูโรเกรย์6</span><span class="chip">ยูโรเกรย์8</span><span class="chip">บรอนซ์6</span><span class="chip">reflectiveเทา</span><span class="chip">เขียว</span><span class="chip">ฟ้า</span>... <span style="color:#c0392b">ลากยาว</span></div></div>
+  <div class="arrow">→</div>
+  <div class="col after"><div class="lbl">จะเป็น</div>หมวดพิเศษ → dropdown<div class="box"><span class="dd">— เลือกกระจกพิเศษ —</span></div></div>
+ </div>
+ <div class="note"><b>เหตุ:</b> ลำดับ 6 B ทำ dropdown แค่ เทมเปอร์/ลามิเนต · ลืม "พิเศษ" → เติม 1 บรรทัด (||special)</div>
+</div>
+
+<div class="card">
+ <div class="card-t">② สีอบปิดรางน้ำ (gcfinish) เลือกไม่ได้เลย <span class="tagpdf">dead code</span></div>
+ <div class="ba">
+  <div class="col before"><div class="lbl">ตอนนี้</div>ช่อง "สีอบ ปิดราง" <span style="color:#c0392b">ไม่ขึ้นในฟอร์ม</span> (select อยู่หลัง return → ไม่ render)</div>
+  <div class="arrow">→</div>
+  <div class="col after"><div class="lbl">จะเป็น</div>ขึ้นช่องเลือกสีอบปิดราง (ชิป) <div class="box">เลือกได้จริง · เข้าราคา</div></div>
+ </div>
+ <div class="note">⚠ ถ้าทำให้ราคาปิดรางขยับ (เดิมไม่เคยคิดสี) → B แจ้งกลับ อาจ re-baseline</div>
+</div>
+
+<div class="ref">
+ <h2>+ รวมงานไม่แตะเงินที่ค้าง (มีใบสั่งละเอียดแล้ว)</h2>
+ <div class="r"><b>รอบ 2 G4</b> — รหัสสีฝาตู้ + ชิปราคาย่อ "อลูทึบ +4,000" + ปุ่มรอง <a href="BEFORE-AFTER-รอบ2-G4-ชิปราคา-18มิ.ย.html">(ดู →)</a></div>
+ <div class="r"><b>G2 สีอบ drill</b> — 5 ช่อง → drill 4 หมวดแบบงานบาน + อบพิเศษกรอกชื่อ</div>
+ <div class="r"><b>G1/G6 รวมชุดบาน</b> — ลิสต์ชนิดบาน 2 กลุ่มให้ตรงกัน</div>
+</div>
+
+<div class="foot">ใบสั่ง file:line → docs/ORDER-B-รอบ3-รวมไม่แตะเงิน+fixPDF-18มิ.ย.md · แตะเงิน (A2/G1 v7) = แยกรอบ · G2 ระแนงพิเศษ "3 รุ่น" รอพี่ยืนยัน</div>
+</div></body></html>

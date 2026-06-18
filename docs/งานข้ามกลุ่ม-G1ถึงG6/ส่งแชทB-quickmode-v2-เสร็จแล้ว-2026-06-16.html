@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ส่งแชท B — คิดเร็ว v2 เสร็จแล้ว (7 กลุ่ม + ปุ่มส่งใบ)</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:#F7F8FA;color:#1F2937;max-width:900px;margin:0 auto;padding:18px;line-height:1.65;font-size:15px;}
+  h1{color:#B3151D;font-size:22px;margin:0 0 4px;} h2{color:#B3151D;font-size:17px;margin:24px 0 8px;border-bottom:2px solid #F0C0C0;padding-bottom:4px;}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:14px;}
+  .ok{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:12px 16px;margin:12px 0;} .ok b{color:#065F46;}
+  .gold{background:#FEF9C3;border:1px solid #FDE047;border-radius:10px;padding:12px 16px;margin:12px 0;} .gold b{color:#92400e;}
+  code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:13px;font-family:Consolas,monospace;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;background:#fff;}
+  th{background:#B3151D;color:#fff;padding:7px 9px;text-align:left;} td{border:1px solid #E5E7EB;padding:6px 9px;}
+  tr:nth-child(even) td{background:#FAFBFD;} ul{margin:6px 0;padding-left:22px;} li{margin:3px 0;}
+  .chk{color:#1E7E45;font-weight:700;}
+</style>
+</head>
+<body>
+<h1>ส่งแชท B — โหมดคิดเร็ว v2 เสร็จแล้ว ✅</h1>
+<div class="sub">16 มิ.ย. 2026 · จากแชท A (ออกแบบ+เทส) · งานอยู่ใน index.html แล้ว · แชท B แค่ตรวจ/finalize</div>
+
+<div class="ok">
+<b>สถานะ: เสร็จ + เทสกดจริงในเบราว์เซอร์ทุกกลุ่ม + golden 149 ปลอดภัย (ของเดิมไม่พัง)</b><br>
+โหมดคิดเร็วเปลี่ยนเป็น v2 = เลือกกลุ่ม → ฟอร์ม drill-down เฉพาะกลุ่ม (ไม่มี dropdown) + การ์ดราคาขวา · ราคาเรียก <code>calcUnit()</code> เดิม · ปุ่มส่งใบเสนอราคา (genQuoteQuick) ทำงานครบ 7 กลุ่ม
+</div>
+
+<h2>1. งานอยู่ที่ไหน</h2>
+<ul>
+<li><b>โค้ดอยู่ใน <code>public/calculator/index.html</code> แล้ว</b> — แชท B commit รวมไปกับงานตัวเองโดยบังเอิญใน <code>9a74245</code> (commit เรื่อง G4 ใบเสนอราคา · working tree แชร์กัน)</li>
+<li>diff คิดเร็วล้วน (1,228 บรรทัด · <b>ไม่แตะ PRODUCTS/RATES/GLASS/COLORS/calcUnit เลย</b>): <code>docs/งานข้ามกลุ่ม-G1ถึงG6/PATCH-quickmode-v2-allG-2026-06-16.patch</code></li>
+<li>snapshot ไฟล์เต็ม (กันหาย): <code>public/calculator/index.snapshot-quickmode-v2-DONE-2026-06-16.html</code></li>
+<li>ดราฟ UI ต้นฉบับ 7 ไฟล์ (สเปก): <code>public/review/DRAFT-quickmode-*.html</code></li>
+<li>ใบสั่งละเอียด: <code>HANDOFF-quickmode-allG-dev-2026-06-16.html</code></li>
+</ul>
+
+<h2>2. เคสตรวจรับ (เทสแล้ว ราคาตรงเป๊ะ — แชท B รันซ้ำยืนยันได้)</h2>
+<table>
+<tr><th>กลุ่ม</th><th>เคส</th><th>ราคา</th></tr>
+<tr><td>G2</td><td>ประตูรั้วตรง ลาย rn1(1x5) มอเตอร์1 3×1.8 · โค้ง</td><td>79,000 / 101,000</td></tr>
+<tr><td>G2</td><td>ระแนงกล่อง rn4 รวมโครง 3×2 · ราวกันตก imp1 3ม. · พิเศษ bar_openclose 3×1.8</td><td>36,000 / 33,000 / 44,000</td></tr>
+<tr><td>G3</td><td>เมทัล imp7 4×3 · ชินโค Prime · ฝ้าฉาบเรียบ</td><td>70,000 / 162,000 / 15,000</td></tr>
+<tr><td>G4</td><td>ตู้ 2×2.4×0.6 2บาน มาตรฐาน/สีพิเศษ · ฝาตู้ FT 0.8×1.2 2บาน</td><td>43,000 / 57,000 / 21,000</td></tr>
+<tr><td>G5</td><td>เฟรมเล็ก 1×2 ประตู · +ผ้ากันแมว · ม้วนเตะ150</td><td>4,000 / 5,000 / 15,000</td></tr>
+<tr><td>G6</td><td>ห้อง 3ด้าน 2×4×2.8 หน้าเลื่อน·ข้างติดตาย + หลังคาไวนิล</td><td>156,000</td></tr>
+<tr><td>G7</td><td>ม่านซิป auto 5% AOK220 3×2.5 · Z145D 2ชั้น · โครงการ</td><td>21,000 / 39,100 / 34,200</td></tr>
+</table>
+<p>ปุ่มส่งใบ: G3 → ใบออก "เมทัลชีท... 4×3 ม. · 70,000" · G6 → "กั้นห้องกระจก 3 ด้าน ยื่น2×ยาว4×สูง2.8 · 156,000" ✅</p>
+
+<h2>3. จุดที่แชท B ควรดู / finalize</h2>
+<ul>
+<li><b>G2 ราคา</b> ใช้สูตรฝังในฟังก์ชัน <code>qiCalcG2</code> (ตรง engine แล้ว · มี <code>// TODO เปลี่ยนเป็น calcUnit</code>) — กลุ่มอื่นเรียก calcUnit ตรง · ถ้าจะให้ G2 ผ่าน calcUnit ด้วย ต้อง map optSel (gate/ranae/imp) ตาม <code>CODEREADY-G2-B-cascade</code></li>
+<li><b>ราวกันตก (G2 rail)</b> คิดค่าโครงราว · ค่ากระจก/สีอลู ยังเป็นโน้ต (เหมือนดราฟ) — ต่อ calcUnit(imp1-6) ถ้าอยากครบ</li>
+<li>ฟังก์ชันคิดเร็ว v2 = <code>qiDispatch · qiRenderG1-G7 · qiCalcG1-G7 · qiQuoteRow · genQuoteQuick</code> (ใหม่) · helper <code>qiPcRow/qiChips</code> · CSS <code>.qi-flex/.qi-pricecard</code></li>
+<li>บั๊กที่แก้แล้ว: "พื้นที่ ฿NaN" (qiPcRow แยก number→฿ / string→ตรงๆ)</li>
+</ul>
+
+<div class="gold">
+<b>กฎเหล็ก (เหมือนเดิม):</b> ราคาเรียก calcUnit เสมอ · ห้ามแตะ engine/PRODUCTS/RATES · รัน <code>node scripts/golden-snapshot.mjs</code> ก่อน-หลังทุกแก้ (ต้อง "ปลอดภัย" 149)
+</div>
+
+<div class="ok"><b class="chk">สรุปให้แชท B:</b> คิดเร็ว v2 เสร็จ+เทสแล้ว อยู่ใน index.html · ตรวจเคสรับ 13 เคส · ดูจุด G2 (สูตรฝัง vs calcUnit) · golden ต้องคงปลอดภัย</div>
+</body>
+</html>

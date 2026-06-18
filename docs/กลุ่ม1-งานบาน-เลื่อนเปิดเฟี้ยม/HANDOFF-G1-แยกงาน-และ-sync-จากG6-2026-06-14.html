@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G1 — แยกงานเป็นก้อน + sync จากแชท G6</title>
+<style>
+  @page{size:A4;margin:11mm 10mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.5;margin:0;}
+  h1{color:#B3151D;font-size:18px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 10px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 6px;padding:5px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10px;}
+  th,td{border:1px solid #d8c9c9;padding:4px 8px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.pr{color:#15803D;font-weight:700;white-space:nowrap;}
+  code{background:#eef2f7;padding:0 4px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;color:#1e3a5f;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:8px 11px;margin:7px 0;background:#fffafa;font-size:10.5px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  ul{margin:3px 0;padding-left:18px;}li{margin:2px 0;}
+  .k{background:#B3151D;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:5px;}
+  .copy{background:#fff;border:1px dashed #94a3b8;border-radius:5px;padding:7px 9px;font-family:Consolas,monospace;font-size:9.3px;line-height:1.55;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G1 — แยกงานเป็นก้อน + งาน sync ค้าง (จากแชท G6)</h1>
+<div class="meta">2026-06-14 · ส่งแชท G1 · จาก [[g1-options-extras-master]] + มติรอบแชท G6 · แก้ <code>public/calculator/index.html</code></div>
+
+<div class="box warn"><b>📌 บทเรียนจาก G6:</b> handoff G6 รวบงานทีเดียว (UX ใหญ่ + engine) → dev ต้องทำ UI ใหม่เสร็จก่อนถึงได้ใช้ = นาน · <b>G1 ให้แยกส่งเป็นก้อน:</b> engine fixes (เล็ก เร็ว เห็นผลในฟอร์มปัจจุบัน) ส่งก่อน → UX ใหญ่ตามทีหลัง · อย่ารวบ</div>
+
+<h2><span class="k">1</span>ก้อนที่ 1 — engine fixes (ส่งก่อน · งานเล็ก · เห็นผลทันที)</h2>
+<div class="box ok">แก้ในฟอร์มที่มีอยู่ ไม่ต้องสร้าง UI ใหม่ · เป็น <b>มติ sync จากแชท G6</b> (product/option เดียวกัน แก้ที่เดียวใช้ทั้ง G1+G6)</div>
+<table>
+<tr><th>#</th><th>แก้อะไร</th><th>โค้ด/วิธี</th></tr>
+<tr><td><b>1</b></td><td><b>เพิ่ม "ผนังเบาทึบ" เป็นชนิดบาน G1 กลุ่ม 4</b> (ติดตาย/ทึบ) ให้เหมือน G6</td><td>ใช้ของจริง <code>wall_ext</code>/<code>wall_int</code> (cat <code>ฝ้า-ผนัง</code> · min <span class="pr">13,500</span>) + <code>isowall</code> · ใส่ใน <code>FAM_CATS['4']</code> ของ G1 เหมือน <code>FAM_CATS['6']</code> · profile: วัสดุ+ทาสี/ฉนวน(+600) ไม่มีกระจก · <b>guard</b> cat ฝ้า-ผนัง อย่าเด้งไป g3 tab (<code>_isG3sel</code>)</td></tr>
+<tr><td><b>2</b></td><td><b>เพิ่มมุ้ง 2 แบบเข้าบาน</b> (12→14)</td><td><code>imp28</code> ตีนตะขาบเดี่ยว(<span class="pr">4,500</span>)→กลุ่มจีบ · <code>imp30</code> แม่เหล็กพับ(<span class="pr">1,500</span>)→กลุ่มเฟรม เข้า <code>o-mosq</code> (~L858) · เรตมีแล้ว</td></tr>
+<tr><td><b>3</b></td><td><b>มุ้ง 3 กลุ่ม</b> เฟรม/จีบ/ม้วน</td><td><code>MOSQ_GRP_PRODS</code> เดิม ✓ · กันแมว/หนู/นิรภัย=ผ้า (ไม่ใช่ชนิด)</td></tr>
+<tr><td><b>4</b></td><td><b>เฟี้ยม X-series ตัดมุ้ง</b></td><td><code>folding_xseries</code> เอา o-mosq ออก</td></tr>
+<tr><td><b>5</b></td><td><b>3 ธงเดิม</b></td><td>เอา <code>o-solidlight</code> ออก · คาดตาราง <code>o-gridmark</code> เปิดบานกระจก (ตัด exclude ~L3002) · เฟี้ยม เพิ่มเปิดซ้าย/ขวา</td></tr>
+</table>
+
+<h2><span class="k">2</span>ก้อนที่ 2 — UX form redesign (ตามทีหลัง · งานใหญ่)</h2>
+<div class="box">ส่วน form-ux ที่ค้างของ G1 (จาก [[g1g6-formux-progress]]): <b>F</b> = GH สีซ้ำ 2 ชั้น · quick-mode มุ้ง drill-down เฟรม/จีบ/ม้วน · ระแนงคิดเร็ว "ทำเป็นบาน" · พวกนี้เป็น UI/polish — <b>ทำหลังก้อน 1 จบ</b> · ไม่บล็อกการใช้งานหลัก</div>
+
+<h2>📋 ข้อความสำหรับวางในแชท G1 (ก๊อปได้เลย)</h2>
+<div class="copy">
+[จากแชท G6 · 14 มิ.ย.] งาน G1 ขอแยกส่ง dev เป็นก้อน อย่ารวบทีเดียว (G6 รวบแล้วนาน):<br><br>
+<b>ก้อน 1 — engine fixes (ส่งก่อน เห็นผลไว):</b><br>
+1. เพิ่มผนังเบาทึบใน G1 กลุ่ม 4 = wall_ext/wall_int/isowall (cat ฝ้า-ผนัง min 13,500 +ฉนวน600) ใส่ FAM_CATS['4'] · guard อย่าเด้ง g3<br>
+2. เพิ่มมุ้ง imp28(ตีนตะขาบเดี่ยว→จีบ) + imp30(แม่เหล็ก→เฟรม) เข้า o-mosq (12→14)<br>
+3. มุ้ง 3 กลุ่ม (MOSQ_GRP_PRODS เดิม) · กันแมว/หนู/นิรภัย=ผ้า<br>
+4. เฟี้ยม X-series (folding_xseries) ตัด o-mosq<br>
+5. เอา o-solidlight ออก · คาดตาราง เปิดบานกระจก · เฟี้ยม เพิ่มเปิดซ้าย/ขวา<br><br>
+<b>ก้อน 2 — form-ux ที่เหลือ (ตามทีหลัง):</b> F สีซ้ำ GH · quick มุ้ง drill-down · ระแนงทำเป็นบาน<br><br>
+อ้างอิง: docs/งานข้ามกลุ่ม-G1ถึงG6/COMPARE-G1-vs-G6-bana-2026-06-14 · docs/กลุ่ม5-มุ้ง/สรุปงานมุ้ง-G1G6-2026-06-14 · memory g1-options-extras-master
+</div>
+
+<div class="box ok"><b>สรุป:</b> ก้อน 1 = 5 จุด engine (sync จาก G6) ส่งก่อน dev ทำเสร็จไว · ก้อน 2 = UX polish ตามทีหลัง · บานทุกชนิดราคาต้องตรง G6 (engine เดียวกัน)</div>
+
+</body>
+</html>

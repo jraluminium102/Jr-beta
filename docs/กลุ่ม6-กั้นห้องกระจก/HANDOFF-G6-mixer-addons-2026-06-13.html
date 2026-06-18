@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G6 — ผสมบาน + อุปกรณ์เสริมหมวดเดียว + บั๊กออปชั่น</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI","Leelawadee UI",Tahoma,sans-serif;color:#1a1a1a;max-width:900px;margin:0 auto;padding:26px;line-height:1.55;font-size:13.5px;}
+  h1{color:#B3151D;font-size:22px;margin:0 0 4px;}
+  h2{color:#fff;background:#B3151D;font-size:15px;margin:22px 0 8px;padding:5px 11px;border-radius:6px;}
+  h3{font-size:14px;margin:14px 0 5px;color:#B3151D;}
+  .sub{color:#666;font-size:12px;margin:0 0 14px;}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin:8px 0;}
+  th,td{border:1px solid #d8c9c9;padding:6px 8px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;}
+  code{background:#f3f0f0;padding:1px 5px;border-radius:4px;font-size:11.5px;font-family:Consolas,monospace;}
+  pre{background:#0f172a;color:#e2e8f0;padding:10px 12px;border-radius:7px;font-size:11px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:12.5px;}
+  .ok-box{background:#F0FDF4;border:2px solid #16A34A;border-radius:8px;padding:10px 13px;margin:10px 0;}
+  .q{background:#EAF3FF;border:1px solid #9DBCE0;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:12.5px;}
+  ul{margin:5px 0;padding-left:20px;}li{margin:3px 0;}
+  .ok{color:#15803D;font-weight:700;}.bad{color:#B3151D;font-weight:700;}
+  .pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:9px;font-weight:700;color:#fff;}
+  .gh{background:#15803D;}.both{background:#1565C0;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — กั้นห้อง G6 ผสมบาน + อุปกรณ์เสริมหมวดเดียว + บั๊กออปชั่น</h1>
+<p class="sub">ส่ง dev · ไฟล์ <code>public/calculator/index.html</code> · พี่นัทเคาะ 2026-06-13 · ดราฟกดเล่น: <code>docs/DRAFT-G6-ux-FINAL-2026-06-13.html</code><br>
+ต่อจาก: <code>HANDOFF-G1G6-6btn-selector</code> (ปุ่มชนิด 6 ปุ่ม — ใช้ซ้ำในงานนี้) · <code>HANDOFF-G1G6-formux-FINAL</code></p>
+
+<div class="warn"><b>หลักการเดียว (ห้ามพลาด):</b> UI เท่านั้น · ทุกปุ่ม/ชิป sync ค่ากลับ control เดิม + <code>dispatchEvent('change')</code> · ห้ามแตะ engine/ราคา/genQuote · ห้ามเปลี่ยน value/class ที่ readItem อ่าน · ออปชั่นครบ 71 (ไม่ตัด)</div>
+
+<h2>งาน 1 — แก้บั๊กออปชั่นตกหมวดผิด (จาก crosscheck render จริง)</h2>
+<p>หมวดปัจจุบัน <code>groupGHOpts</code> (~L1883, non-roof) ยุบเหลือ 4 หมวด · keyword "first-match by array order" ทำให้ออปชั่นบานกระทุ้งตกผิด:</p>
+<table>
+<tr><th>#</th><th>ออปชั่น</th><th>ตอนนี้ตก</th><th>ที่ถูก</th><th>วิธีแก้ keyword</th></tr>
+<tr><td>1</td><td class="bad">o-awn_mode (แบบเปิด: ล่าง/ข้าง/tilt)</td><td>➕ งานเสริม (catch-all)</td><td>🏗️ โครงสร้าง หรือ surface</td><td>เพิ่ม <code>'แบบเปิด'</code> ใน kw หมวด 🏗️</td></tr>
+<tr><td>2</td><td class="bad">o-combo_awn_inside + o-combo_price</td><td>แตก 2 หมวด (ตัวเลือก→มุ้ง · ราคา→งานเสริม)</td><td>รวมหมวดเดียว (🏗️)</td><td>ให้ <code>'combo บาน'</code> match ก่อน <code>'มุ้ง'</code> (ย้าย kw ขึ้นก่อน หรือ exclude มุ้ง)</td></tr>
+<tr><td>3<br><span style="font-weight:400">(เช็คซ้ำ)</span></td><td>o-uchannel (ฝังรางยู ในพื้น)</td><td>🚪 ธรณี (label มีคำ "ธรณีหลัง")</td><td>🏗️ ราง (ถ้าพี่นัทเห็นด้วย)</td><td>ปรับ match ให้ราง/รางยู มาก่อน ธรณี</td></tr>
+</table>
+<p>หลักฐาน: render <code>awning_euro</code>/<code>casement_euro</code> ใน G6 → <code>awn_mode</code> ลงถัง catch-all · <code>combo_awn_inside</code> ลงมุ้ง · <code>combo_price</code> ลงงานเสริม (ดูดราฟ <code>DRAFT-G6-ux-2026-06-13.html</code>)</p>
+
+<h2>งาน 2 — อุปกรณ์เสริม 4 หมวด → หมวดเดียว ปุ่มกระชับ <span class="pill both">G1+G6</span></h2>
+<div class="ok-box"><b>มติพี่นัท:</b> เลิก 4 กล่อง <code>&lt;details&gt;</code> พับซ้อน → รวมเป็น <b>1 กล่อง "อุปกรณ์เสริม"</b> · ข้างในเป็น <b>ปุ่มกลม (chip) ทุกออปชั่นเห็นหมดในจอเดียว</b> · กดปุ่มไหน → รายละเอียดของมันโผล่ใต้แถบ (reveal) · เลือกหลายอันพร้อมกันได้</div>
+<ul>
+<li>ปุ่ม chip ≈ 13 ตัว (เท่าออปชั่นที่สินค้านั้นมีจริง — กรองตาม control ที่ render): ครอบวงกบ · ธรณี · ดรอปพื้น · มือจับ · ชุดล็อค · มุ้ง · คาดตาราง · เสริมคาน · ซ่อนราง · ฝังรางยู · แผ่นทึบล่าง · รื้อของเดิม · งานเสริม</li>
+<li>กดปุ่ม on (พื้นแดง) → reveal detail (ชิป/ช่องกรอก) ใต้แถบ · ปิด = ซ่อน detail (ค่าคงเดิม)</li>
+<li><b>ทำที่ <code>groupGHOpts</code>:</b> แทน 4 <code>&lt;details&gt;</code> ด้วย 1 กล่อง + แถบปุ่ม toggle ที่คุม display ของ control เดิมแต่ละตัว · control เดิม (.o-*) ยังอยู่ครบ แค่ซ่อน/โชว์ตามปุ่ม</li>
+<li><b>ปุ่ม = "ติ๊กได้หลายอัน" ตัวใหญ่</b> (ไม่ใช้ checkbox — แตะยาก/ยาวกว่า · มติพี่นัท)</li>
+<li>ของเฉพาะสินค้า (shower/มอเตอร์/ระแนง) ยัง inline ใต้ช่องเลือกรุ่นเหมือนเดิม (ไม่เข้ากล่องนี้)</li>
+</ul>
+
+<h2>งาน 3 — กั้นห้อง "ผสมบาน" เป็นภาพผนัง <span class="pill gh">G6 เท่านั้น</span></h2>
+<div class="ok-box"><b>มติพี่นัท:</b> แต่ละ "ด้าน" ของกั้นห้อง = <b>แถบผนังเห็นเป็นภาพจริง</b> · บานเรียงข้างกัน (ช่อง) กว้างตามสัดส่วน · แต่ละช่อง <b>ซ้อนได้หลายชั้น</b> (บน-กลาง-ล่าง) · <b>ทุกชั้นเลือกชนิดบานอิสระ</b> (ผสมได้ทุกแบบ)</div>
+<h3>โครงสร้าง UI</h3>
+<ul>
+<li><b>ช่อง (column)</b> = เรียงนอนตามตำแหน่ง · กว้างตามสัดส่วน · ＋ ท้ายแถบ = เพิ่มช่อง</li>
+<li><b>ชั้น (layer)</b> = ซ้อนในช่อง (บน→ล่าง) · ＋บน/＋ล่าง เพิ่มชั้น · สูงต่อชั้นปรับได้ · ช่องแสงบน/ล่าง = แค่ "ชั้น" ที่เป็นกระจกติดตาย (ไม่ใช่ field พิเศษ)</li>
+<li><b>เลือกชนิดต่อชั้น = ปุ่ม 6 ปุ่มหลัก → รุ่นย่อย</b> (ตาม <code>HANDOFF-G1G6-6btn-selector</code> เป๊ะ · ใช้ FAMILIES ชุดเดียวกัน)</li>
+<li><b>ปุ่มควบคุม 1 บรรทัด:</b> สลับ = <code>◀ ซ้าย · ▶ ขวา · ▲ ขึ้น · ▼ ลง</code> (ซ้าย/ขวา=สลับช่อง · ขึ้น/ลง=สลับชั้น) · อีกแถว = ＋บน · ＋ล่าง · ลบ</li>
+<li>อุปกรณ์เสริม (งาน 2) = ของ "ชั้นที่เลือก"</li>
+</ul>
+<h3>โครงข้อมูล (map เข้าระบบเดิม — สำคัญ)</h3>
+<div class="q"><b>❓ ต้องเคาะกับพี่นัท/dev:</b> ระบบเดิมเก็บ "หลายชิ้นต่อด้าน" เป็น <b>บานย่อย (subitems)</b> ใน <code>.ch</code> group6 (มีแล้วจาก commit <code>e7bcda5</code>) — เป็น list แบน · ส่วน "ช่อง × ชั้น + กว้าง/สูง/ลำดับ" เป็นมิติ 2D ใหม่</div>
+<ul>
+<li><b>MVP (แนะนำ):</b> แต่ละ "ชั้น" = 1 บานย่อย (subitem) เดิม · เก็บ product(6btn) + กว้าง + สูง + ออปชั่น · "ช่อง/ลำดับ/ซ้อน" = <b>ตัวช่วยกรอกเชิงภาพ</b> (input aid) · เรียง = เรียง subitem · ราคา/ใบ = รวมบานย่อยเหมือนเดิม ไม่ต้องแตะ engine</li>
+<li><b>ถ้าต้องใช้ภาพผนังในใบ/แบบ drawing</b> → เก็บ geometry (col index, layer index, w, h) เพิ่มเป็น phase 2 · <b>ขั้นนี้ทำ input aid ก่อน</b></li>
+<li>ไม่ต้องเพิ่ม/ลบ product · 6btn เป็นแค่การจัดกลุ่มแสดงผลของ product เดิม</li>
+</ul>
+
+<h2>จุดในโค้ด</h2>
+<table>
+<tr><th>งาน</th><th>ที่</th></tr>
+<tr><td>บั๊กออปชั่น (1)</td><td><code>groupGHOpts</code> ~L1883 — แก้ keyword: +'แบบเปิด' หมวด 🏗️ · 'combo บาน' ก่อน 'มุ้ง'</td></tr>
+<tr><td>อุปกรณ์เสริมหมวดเดียว (2)</td><td><code>groupGHOpts</code> — แทน 4 details ด้วย 1 กล่อง + ปุ่ม toggle คุม display control เดิม</td></tr>
+<tr><td>ผสมบาน (3)</td><td><code>refreshSet</code> สาขา GH + บานย่อย (subitem) เดิม · 6btn ใช้ FAMILIES จาก 6btn-handoff</td></tr>
+</table>
+
+<h2>QA — ตัวแทน</h2>
+<table>
+<tr><th>#</th><th>เคส</th><th>เช็ค</th></tr>
+<tr><td>1</td><td>บานกระทุ้ง (G1 + ในกั้นห้อง)</td><td>awn_mode อยู่หมวดถูก (ไม่ใช่งานเสริม) · combo 2 ช่องอยู่ด้วยกัน · ราคาตรง</td></tr>
+<tr><td>2</td><td>อุปกรณ์เสริม กล่องเดียว</td><td>ปุ่มครบตามที่สินค้ามี · กด→detail โผล่ · ปิด→ซ่อน · ค่าไม่หาย · ราคาตรง</td></tr>
+<tr><td>3</td><td>ด้าน A: ช่อง1(3ชั้น: กระทุ้ง+ติดตาย+ลูกฟูก) + ช่อง2(บานเปิด)</td><td>เลือกชนิดต่อชั้นด้วย 6btn · เรียง ◀▶▲▼ ได้ · ราคารวมบานย่อยถูก</td></tr>
+<tr><td>4</td><td>genQuote ชุดกั้นห้องผสมบาน</td><td>ออกใบครบทุกชิ้น · ยอดรวมตรง · หัวข้อ "กั้นห้องกระจก"</td></tr>
+<tr><td>5</td><td>G1 regression</td><td>บานเดี่ยวราคาเดิม · ของ GH (ผสมบาน) ไม่หลุดเข้า G1</td></tr>
+</table>
+
+<h2>Definition of Done</h2>
+<ul>
+<li><span class="ok">☐</span> บั๊ก awn_mode + combo แก้แล้ว (อยู่หมวดถูก)</li>
+<li><span class="ok">☐</span> อุปกรณ์เสริม = 1 กล่อง ปุ่ม chip · เลือกหลายอันได้ · detail reveal · control เดิมครบ 71</li>
+<li><span class="ok">☐</span> กั้นห้องผสมบาน: ช่อง×ชั้น · 6btn ต่อชั้น · ◀▶▲▼ บรรทัดเดียว · ＋บน/ล่าง</li>
+<li><span class="ok">☐</span> <code>node test/quote-fidelity.mjs</code> PASS · ราคา/ใบ G1+G6 ไม่เพี้ยน</li>
+<li><span class="ok">☐</span> พี่นัทเปิดเบราว์เซอร์จริง กดครบ แล้วโอเค (ตรงดราฟ FINAL)</li>
+</ul>
+
+<div class="q"><b>เคาะก่อน dev ลงมือ:</b> (ก) โครงข้อมูลผสมบาน = MVP "ชั้น=บานย่อย + ภาพเป็น input aid" โอเคไหม หรือต้องเก็บ geometry ลงใบ/แบบ? (ข) uchannel ย้ายออกจากธรณีไหม (จุดเช็คซ้ำ)</div>
+
+</body>
+</html>

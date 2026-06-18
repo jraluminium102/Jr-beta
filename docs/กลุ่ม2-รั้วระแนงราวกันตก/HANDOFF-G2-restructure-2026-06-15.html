@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HANDOFF G2 — จัดหมวดใหม่ครบ (ส่ง dev · 15 มิ.ย. 2026)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm;}*{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:14px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#B3151D;}
+  h2.ok{background:#166534;}h2.b{background:#1D4ED8;}h2.y{background:#B45309;}
+  table{width:100%;border-collapse:collapse;margin:4px 0 8px;}
+  th,td{border:1px solid #D1D5DB;padding:5px 7px;vertical-align:top;text-align:left;font-size:10px;}
+  th{background:#F3F4F6;}td.c{text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  code{font-family:Consolas,monospace;font-size:9px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:8px 11px;margin:7px 0;border-left:4px solid #B3151D;}
+  .box.b{border-left-color:#1D4ED8;background:#EFF6FF;}
+  .good{background:#ECFDF5;border:1px solid #6EE7B7;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:10px;}
+  .leak{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:7px 0;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  b.hl{color:#B3151D;}.x{color:#B3151D;font-weight:700;}.ok2{color:#166534;font-weight:700;}
+  .foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G2 — จัดหมวด "รั้ว/ระแนง/ราวกันตก" ใหม่ครบ</h1>
+<div class="sub">ส่งแชทที่แก้ <code>public/calculator/index.html</code> · พี่นัทเคาะ UX จากดราฟ (เทสเบราว์เซอร์จริง ราคาตรง engine) · 15 มิ.ย. 2026 · READ-ONLY (ผู้ตรวจไม่แตะโค้ด)</div>
+
+<div class="good">
+<b>ดราฟต้นแบบ (พี่นัทกดเล่นอนุมัติ · ราคา verify ตรง engine ทุกหมวด):</b> <code>docs/กลุ่ม2-รั้วระแนงราวกันตก/DRAFT-G2-ux-2026-06-15.html</code><br>
+<b>หมายเหตุ:</b> ราคาทุกสูตรด้านล่าง <b>มีใน engine (<code>calcUnit</code>) อยู่แล้ว</b> — งาน dev หลัก = <b>จัดหมวด/UX + ตัด 2 leak + ประตูรั้วเหลือบานเลื่อน</b> · เรียก engine เดิม ไม่ต้องเขียนสูตรใหม่
+</div>
+
+<h2>1) โครงหมวดใหม่ = 4 หมวด (เดิมกระจาย 6)</h2>
+<table>
+<tr><th style="width:20%;">หมวด</th><th>วิธีเลือก (ชิป cascade)</th></tr>
+<tr><td><b>🚪 ประตูรั้ว</b></td><td><b class="hl">บานเลื่อนเท่านั้น</b> (ตัดสวิง/บานเปิด/เลื่อนล่าง-บน) → ลายระแนง (ขนาดเส้น→หน้าโชว์·ระยะ ไม่โครง) → ขนาด → สีอบ → ชนิดราง(ตรง/โค้ง) → มอเตอร์(stepper) → ธรณี</td></tr>
+<tr><td><b>🪟 ระแนง</b> (3 ชนิด)</td><td>ชิปชนิด: <b>กล่อง</b> / <b>เกล็ด Z</b> / <b>เลื่อน Inception</b><br>• <b>กล่อง:</b> ขนาดกล่อง → <b class="hl">หน้าโชว์</b> → <b class="hl">ระยะห่าง</b> → ทำเป็นอะไร(ติดตาย/ทำบาน) → โครง<br>• <b>เกล็ด Z:</b> ขนาด(1"/1.6"/4") → ทำเป็นอะไร → โครง<br>• <b>เลื่อน Inception:</b> ขนาด → เลือกบาน G1/ติดตาย → สีอบ</td></tr>
+<tr><td><b>🛡️ ราวกันตก</b></td><td>ทรง(เฉียง/ตรง) → ระบบยึด(หมุด/ยู/เสา) → ยาว → ความหนากระจก → ราวมือจับ → (ยู/เสา) สีอลู</td></tr>
+<tr><td><b>⚙️ ระแนงพิเศษ</b> (2)</td><td>ระแนงหมุนเปิด-ปิด / บานเกล็ดอลู → ขนาด → ทิศ(ตั้ง/นอน) → (เปิด-ปิด) มอเตอร์+สีอบ</td></tr>
+</table>
+<div class="box"><b>หมายเหตุโครง:</b> <b>ประตูบ้านปกติ (บานเปิด/เลื่อน) = อยู่ G1</b> ไม่เอามา G2 · ระแนงพิเศษเหลือ 2 ตัว (เลื่อน=Inception ย้ายเป็นชนิดระแนง · ตัดออกจากพิเศษ)</div>
+
+<h2 class="y">2) 🔴 ระแนงกล่อง — จัดกลุ่ม "ขนาดกล่อง → หน้าโชว์ → ระยะ" (รวมบังตา+ผนัง)</h2>
+<div class="box">
+<b>ปัญหาเดิม:</b> 1"x1.6" โชว์หน้าเดียว (บังตา=หน้า 1" · ผนัง=หน้า 1.6" แยกคนละหมวด) · cascade รวมหน้าโชว์+ระยะเป็นปุ่มเดียว<br>
+<b class="ok2">แก้:</b> รวม <code>ระแนง-บังตา</code> (76) + <code>ระแนง-ผนัง</code> (6) เป็น "กล่อง" เดียว แล้วแยกชั้น <b>ขนาดกล่อง → หน้าโชว์ → ระยะห่าง → โครง</b><br>
+<b>ผลลัพธ์ (กล่อง→หน้าโชว์):</b>
+<ul>
+<li>1x5 cm. → หน้า [1cm., 5cm.] · 1"x1.6" → หน้า <b>[1", 1.6"]</b> (รวมบังตา+ผนัง) · 1"x4" → [1", 4", 4"ทึบ] · 1.6"x4" → [1.6", 4"]</li>
+<li>กล่องจัตุรัส (1"x1", 1.6"x1.6", 4"x4") → หน้าเดียว (ถูกต้อง)</li>
+<li>รวม <b>82 รุ่นกล่อง</b> (76 บังตา + 6 ผนัง) + <b>6 เกล็ด Z</b> = 88 ครบ</li>
+</ul>
+<b>ราคา (per_sqm · เรต+สูตรใน engine เดิม):</b> <code>roundUp( (a×rate + a×fin×[ทำบาน?0.85:1])×(1−ranaeDisc) + ค่าทำบาน )</code> · a=กว้าง×ranaeH(สูง) · ทำเป็นบาน=ระแนงไม่โครง+ค่าทำบาน(basePrice G1)
+</div>
+
+<h2 class="b">3) 🚪 ประตูรั้ว — บานเลื่อน + ราคาจริง (engine L1246)</h2>
+<div class="box b">
+<code>roundUp( พื้นที่×mk + พื้นที่×rnRate×(1−disc) + มอเตอร์×30,000 + 2×กว้าง×railr [+บานโค้ง] )</code><br>
+mk (ค่าทำ/ตร.ม.): พื้นที่ ≤6=4,000 · ≤8=3,500 · ≤10=3,000 · &gt;10=2,500 · railr: ตรง 1,500 / โค้ง 2,500 · บานโค้ง ⌈กว้าง/0.75⌉×4,000 · rnRate=ลายระแนงบังตา <b>ไม่โครง</b><br>
+<b class="x">เปลี่ยน:</b> <code>o-gatetype</code> เหลือ "บานเลื่อน" อย่างเดียว (เดิม swing/casement/slide_bottom/slide_top — พี่นัทบอกผิด)
+</div>
+
+<h2 class="b">4) 🚪 ระแนงเลื่อน Inception (bar_slide · ลูกฟูกเรียบ 2 ทาง · engine L1166)</h2>
+<div class="box b">
+<b>ชนิดที่ 3 ในกลุ่มระแนง</b> (พี่นัท: "เพิ่มระแนงเลื่อนลูกฟูกเรียบ 2 ทาง เข้าไป เลือกบานหรือติดตายได้")<br>
+<code>roundUp( ค่าประตู + max(3,000, พื้นที่×1,000) + max(3,500, กว้าง×Hร×3,500) + finRate×พื้นที่ )</code><br>
+ค่าประตู = basePrice บาน G1 ที่เลือก (เลื่อนเซมิ/ยูโร·เฟี้ยมเซมิ/ยูโร·เปิดยูโร) <b>หรือ 0 ถ้าติดตาย</b> · ลูกฟูกเรียบ 2 ทาง: Hร=ปัด 1/1.5/2/3 ม.
+</div>
+
+<h2 class="b">5) ⚙️ ระแนงพิเศษ 2 ตัว — คิดราคา (engine L1146/L1203)</h2>
+<div class="box b">
+<b>ระแนงหมุนเปิด-ปิด (bar_openclose):</b> <code>roundUp( ns×max(20,700, A/ns×6,900) + ns×D×2,000 + [มอเตอร์] ns×⌈D/3⌉×10,000 + finRate×A )</code> · ns=min(3,⌈Dขนาน/3⌉)<br>
+<b>บานเกล็ดอลู (bar_grid_z):</b> <code>roundUp( max(5,500, A×5,500) + (ns−1)×(max(500, A/ns×1,500)+1,000) )</code> · ns=⌈D/1.5⌉ · <b class="x">⚠ มอเตอร์ 38.1 ไม่บวก</b> — engine return ที่ L1164 ก่อนถึงโค้ดมอเตอร์ L1497 (latent bug · dev ตรวจว่าตั้งใจหรือไม่)
+</div>
+
+<h2 class="leak" style="color:#fff;background:#B3151D;border-radius:5px;padding:5px 9px;font-size:13.5px;margin:14px 0 5px;">6) 🔴 ตัด 2 ออปชั่น leak (โผล่ผิดบนระแนง/ประตูรั้ว)</h2>
+<div class="leak">
+<b class="x">จุด 1 — คาดตาราง (<code>o-gridmark</code>) · L~2993:</b> เติมหมวดเข้า exclude list →<br>
+<code>!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ติดตาย','มุ้ง',<b>'ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'</b>].includes(p.cat)</code><br><br>
+<b class="x">จุด 2 — ฝังรางยู (<code>o-uchannel</code>) · L~3266:</b> เติมหมวดเดียวกันเข้า exclude list<br>
+<span style="font-size:10px;color:#666;">(ราวกันตก imp* ตัดอยู่แล้วผ่าน <code>!p.handrail</code> · ครอบวงกบบนระแนง/ประตูรั้ว = ตั้งใจ เก็บไว้)</span>
+</div>
+
+<h2 class="ok">✅ ราคา verified (กดดราฟจริง = engine)</h2>
+<table>
+<tr><th>เคส</th><th>ราคา</th><th>เคส</th><th>ราคา</th></tr>
+<tr><td>กล่อง rn2 (1x5·1cm5cm·รวมโครง) 3×2</td><td class="c">32,000</td><td>ประตูรั้ว rn1 3×2 มอเตอร์1</td><td class="c">83,000</td></tr>
+<tr><td>กล่อง 1"x1.6" หน้า1.6" 5cm รวมโครง(rn38) 3×2</td><td class="c">30,000</td><td>ประตูรั้ว มอเตอร์0 / รางโค้ง</td><td class="c">53,000 / 75,000</td></tr>
+<tr><td>กล่อง ทำเป็นบาน rn1+เลื่อนเซมิ 3×2</td><td class="c">48,000</td><td>ราวกันตก imp1 ยาว5 / +ราวยู</td><td class="c">50,000 / 53,000</td></tr>
+<tr><td>เกล็ด Z rn83 3×2</td><td class="c">22,000</td><td>ระแนงพิเศษ เปิด-ปิด 3×2 มือ/มอเตอร์</td><td class="c">48,000 / 58,000</td></tr>
+<tr><td>Inception ติดตาย / +เลื่อนเซมิ 3×2</td><td class="c">27,000 / 56,000</td><td>ระแนงพิเศษ บานเกล็ดอลู 3×2</td><td class="c">39,000</td></tr>
+</table>
+
+<h2 class="ok">✅ ยืนยัน (พี่นัทเคาะ)</h2>
+<ul>
+<li>4 หมวด · ระแนง 3 ชนิด (กล่อง box→หน้าโชว์→ระยะ · เกล็ด Z · เลื่อน Inception ลูกฟูกเรียบ 2 ทาง)</li>
+<li>ติดตายผนัง = default <b>รวมโครง</b> · ทำเป็นบาน = ไม่โครงอัตโนมัติ + ค่าทำบาน auto (แก้/override ได้)</li>
+<li>ประตูรั้ว = บานเลื่อนเท่านั้น · ระแนงพิเศษ 2 ตัวมอเตอร์</li>
+<li>ตัด leak คาดตาราง + ฝังรางยู จากระแนง/ประตูรั้ว</li>
+</ul>
+
+<div class="foot">
+ดราฟ verified เบราว์เซอร์จริง (กดเอง · ราคาตรง engine · console 0) · ค่าทำบาน auto = basePrice (เลื่อน max(min,monoRate) · เฟี้ยม max(a×9000,15000) · เปิดยูโร ceLinear) · READ-ONLY ไม่แตะ index.html · 15 มิ.ย. 2026
+</div>
+
+</body>
+</html>

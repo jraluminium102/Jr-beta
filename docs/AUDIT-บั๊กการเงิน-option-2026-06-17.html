@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<title>AUDIT บั๊กการเงิน option ทุกกลุ่ม — 2026-06-17</title>
+<style>
+body{font-family:'Leelawadee UI',Tahoma,sans-serif;font-size:13px;color:#1f2937;max-width:1200px;margin:0 auto;padding:16px;background:#f9fafb;}
+h1{color:#B3151D;font-size:20px;border-bottom:3px solid #B3151D;padding-bottom:6px;}
+h2{color:#B3151D;font-size:15px;margin-top:20px;}
+table{border-collapse:collapse;width:100%;background:#fff;margin:8px 0;font-size:12px;}
+th,td{border:1px solid #e5e7eb;padding:5px 7px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+tr.bug{background:#fff5f5;}
+tr.warn{background:#fffbeb;}
+tr.ok{background:#f0fdf4;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-size:11px;}
+.summary{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin:12px 0;}
+pre{background:#1e293b;color:#e2e8f0;padding:10px;border-radius:8px;overflow-x:auto;font-size:11px;line-height:1.5;}
+</style></head><body>
+<h1>AUDIT บั๊กการเงิน — option โผล่ในใบแต่ไม่บวกยอด ทุกกลุ่ม G1-G7</h1>
+<p>render <code>index.html</code> ด้วย jsdom · วัด Δsell ก่อน-หลัง toggle option · 2026-06-17</p>
+
+<div class="summary">
+  <b>สรุป:</b> ตรวจ 57 option &nbsp;|&nbsp;
+  <span style="color:#B3151D">🔴 บั๊ก 11 รายการ</span> &nbsp;|&nbsp;
+  <span style="color:#d97706">🟡 สงสัย 25 รายการ</span> &nbsp;|&nbsp;
+  <span style="color:#15803d">✅ ปกติ 21 รายการ</span>
+</div>
+
+<h2>ตารางเทียบ (เรียง 🔴 ก่อน)</h2>
+<table>
+<tr>
+  <th>กลุ่ม</th><th>รุ่น</th><th>option</th>
+  <th>ก่อน (บาท)</th><th>หลัง (บาท)</th><th>Δ</th>
+  <th>โผล่ใบ</th><th>สถานะ</th><th>หมายเหตุ</th>
+</tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: กระจก upgrade (gi=1 laminate)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 500)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: ซ่อนราง +5,000 (track=ซ่อนราง)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 5,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: มุ้ง addon (mosq = mj_pleated)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 2,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: แผ่นทึบล่าง ลูกฟูก (solidlower)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 1,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>awning_euro</code></td>
+    <td>G1: tilt&turn บานกระทุ้ง +5,000</td>
+    <td style="text-align:right">16,000</td>
+    <td style="text-align:right">16,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 5,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: มอเตอร์ 80 กก. +18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 10,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G3</td>
+    <td><code>ceil_cshape</code></td>
+    <td>G3: ฝ้า + insulation +600/ตร.ม.</td>
+    <td style="text-align:right">26,000</td>
+    <td style="text-align:right">26,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 3,000)</td>
+  </tr>
+<tr class="bug">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: สีกรอบ imp21 (mscolor=2 Sahara)</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 200)</td>
+  </tr>
+<tr class="bug">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: ผ้ากันแมว +800/ตร.ม. imp21</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">5,000</td>
+    <td style="text-align:right;font-weight:700">+1,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=1,000 (คาดอย่างน้อย 1,500)</td>
+  </tr>
+<tr class="bug">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: โหมด B ติดบานเดิม (screen_existing)</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>Δ=0 ไม่บวกเงิน (สงสัยบั๊ก)</td>
+  </tr>
+<tr class="bug">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>COMMON: เสริมคาน (beamM=500 × beamMlen=3)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#B3151D;font-weight:700">🔴ยืนยันบั๊ก</span></td>
+    <td>บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 1,000)</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>handrail_std</code></td>
+    <td>G2: ราวจับยู 5 หุน +500/ม.</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>handrail_std</code></td>
+    <td>G2: ราวจับกล่อง +600/ม.</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>ranae_openclose</code></td>
+    <td>G2: ระแนงเปิด-ปิด มอเตอร์</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>ranae_bargrid</code></td>
+    <td>G2: ระแนงเกล็ด มอเตอร์ (bg_motor)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>gate_slide</code></td>
+    <td>G2: ประตูรั้ว มอเตอร์ 1 ตัว +30,000</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>gate_slide</code></td>
+    <td>G2: ประตูรั้ว รางโค้ง (railtype=curved)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>ranae_barslide</code></td>
+    <td>G2: ระแนงเลื่อน ค่าสี finish</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G2</td>
+    <td><code>ranae_openclose</code></td>
+    <td>G2: ระแนงเปิด-ปิด ค่าสี finish</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ชุดเลื่อนหลังคา (slide)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: รางน้ำ (rfgut=800/ม. × rfgutlen=4)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ปิดปลาย (rfeave=4ม. × 1,000/ม.)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: เสาแผง (rfpolep=2 × 4,000)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ฝ้าออปชั่น ceilmode=with</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ฝ้า + insulation</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: วัสดุปิดรอยต่อ sealer (rfsealer, len=6)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ซ่อนสโลป (rfhs=comp)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ปิดซ่อนราง (rfgcw=15, rfgch=10, rfgcl=4)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>roof_polycarbonate</code></td>
+    <td>G3: ครอบคาน (rfbcw=0.3, rfbcl=4)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G5</td>
+    <td><code>mj_pleated</code></td>
+    <td>G5: มุ้งจีบ สีกรอบ Sahara</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G5</td>
+    <td><code>mj_roller_fiber</code></td>
+    <td>G5: ผ้ากันแมว addon มุ้งม้วน</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G6</td>
+    <td><code>g6room_builder</code></td>
+    <td>G6: room builder</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>เลือก G6 ไม่ได้ (อาจเป็น paged UI ต่างออกไป)</td>
+  </tr>
+<tr class="warn">
+    <td>G7</td>
+    <td><code>zipscreen_z100</code></td>
+    <td>G7: ม่านซิป กลุ่มโครงการ (zgrp=project · markup ต่างกัน)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G7</td>
+    <td><code>zipscreen_z100</code></td>
+    <td>G7: ม่านซิป เปลี่ยนผ้า (zfab=3)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G7</td>
+    <td><code>zipscreen_z100</code></td>
+    <td>G7: ม่านซิป ระบบควบคุม (zctrl=remote220)</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="warn">
+    <td>G3</td>
+    <td><code>wall_smartboard</code></td>
+    <td>COMMON: insulation ฝ้า/ผนัง +600/ตร.ม.</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right">-</td>
+    <td style="text-align:right;font-weight:700">-</td>
+    <td>-</td>
+    <td><span style="color:#d97706;font-weight:700">🟡สงสัย/เช็คซ้ำ</span></td>
+    <td>⚠ เลือกรุ่นไม่ได้</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: สีพิเศษ Sahara (ci=2)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">20,000</td>
+    <td style="text-align:right;font-weight:700">+2,000</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+2,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: มือจับดิจิตอล (digi=1)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">29,200</td>
+    <td style="text-align:right;font-weight:700">+10,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+10,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: ครอบวงกบ fcm=3 ม.</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">21,000</td>
+    <td style="text-align:right;font-weight:700">+3,000</td>
+    <td>ไม่โผล่</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+3,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: ครอบวงกบ 3 ด้าน (fcsides=3)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">22,980</td>
+    <td style="text-align:right;font-weight:700">+3,780</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+3,780 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: ครอบวงกบ 4 ด้าน (fcsides=4)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">23,680</td>
+    <td style="text-align:right;font-weight:700">+4,480</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+4,480 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: มือจับ Cmech ฝัง (ประตู)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">20,250</td>
+    <td style="text-align:right;font-weight:700">+1,050</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+1,050 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: มือจับ Cmech เมโทร (ประตู)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">20,200</td>
+    <td style="text-align:right;font-weight:700">+1,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+1,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>G1: คาดตาราง (gridmark 2นอน×200)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">19,000</td>
+    <td style="text-align:right;font-weight:700">+1,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+1,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_euro</code></td>
+    <td>G1: ธรณีหลังเต่า +1,000 (thresh=turtle)</td>
+    <td style="text-align:right">19,200</td>
+    <td style="text-align:right">20,200</td>
+    <td style="text-align:right;font-weight:700">+1,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+1,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>casement_flush_solid</code></td>
+    <td>G1: โซลิดลูกฟูก (side=2 ทู)</td>
+    <td style="text-align:right">32,000</td>
+    <td style="text-align:right">32,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>ไม่คิดเงิน (ถูก)</td>
+  </tr>
+<tr class="ok">
+    <td>G3</td>
+    <td><code>ceil_cshape</code></td>
+    <td>G3: ฝ้า C-Shape ค่าสี (ckolor)</td>
+    <td style="text-align:right">26,000</td>
+    <td style="text-align:right">33,000</td>
+    <td style="text-align:right;font-weight:700">+7,000</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+7,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G4</td>
+    <td><code>cabinet_alu</code></td>
+    <td>G4: สีโครงตู้ (ci=2 Sahara)</td>
+    <td style="text-align:right">35,000</td>
+    <td style="text-align:right">41,000</td>
+    <td style="text-align:right;font-weight:700">+6,000</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+6,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G4</td>
+    <td><code>cabinet_alu</code></td>
+    <td>G4: ผนังซ้าย อลูทึบ</td>
+    <td style="text-align:right">35,000</td>
+    <td style="text-align:right">40,000</td>
+    <td style="text-align:right;font-weight:700">+5,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+5,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G4</td>
+    <td><code>cabinet_alu</code></td>
+    <td>G4: ผนังหลัง กระจก</td>
+    <td style="text-align:right">35,000</td>
+    <td style="text-align:right">42,000</td>
+    <td style="text-align:right;font-weight:700">+7,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+7,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: ผ้าสแตนกันหนู +1,200/ตร.ม. imp21</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">6,000</td>
+    <td style="text-align:right;font-weight:700">+2,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+2,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G5</td>
+    <td><code>imp23</code></td>
+    <td>G5: ผ้านิรภัย (screenFabric=safety) imp23</td>
+    <td style="text-align:right">8,000</td>
+    <td style="text-align:right">14,000</td>
+    <td style="text-align:right;font-weight:700">+6,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+6,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: ครอบวงกบมุ้ง 3 ด้าน (fcsides=3)</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">7,000</td>
+    <td style="text-align:right;font-weight:700">+3,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+3,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: ครอบวงกบมุ้ง 4 ด้าน (fcsides=4)</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">8,000</td>
+    <td style="text-align:right;font-weight:700">+4,000</td>
+    <td>โผล่ใบ</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>+4,000 (บวกเงินแล้ว)</td>
+  </tr>
+<tr class="ok">
+    <td>G5</td>
+    <td><code>imp21</code></td>
+    <td>G5: ลักษณะเปิดมุ้ง (label-only · expectZero)</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right">4,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>ไม่คิดเงิน (ถูก)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>COMMON: ฝัง U-Channel (label-only)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>ไม่คิดเงิน (ถูก)</td>
+  </tr>
+<tr class="ok">
+    <td>G1</td>
+    <td><code>sliding_sms</code></td>
+    <td>COMMON: รื้อของเดิม (label-only)</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right">18,000</td>
+    <td style="text-align:right;font-weight:700">+0</td>
+    <td>-</td>
+    <td><span style="color:#15803d;font-weight:700">✅ปกติ</span></td>
+    <td>ไม่คิดเงิน (ถูก)</td>
+  </tr>
+</table>
+
+<h2>log</h2>
+<pre>===== AUDIT: option บวกยอดจริงไหม ทุกกลุ่ม G1-G7 =====
+
+--- G1 บาน ---
+[G1|sliding_sms] G1: สีพิเศษ Sahara (ci=2): 18,000 → 20,000 Δ2,000 → +2,000 (บวกเงินแล้ว)
+[G1|sliding_sms] G1: กระจก upgrade (gi=1 laminate): 18,000 → 18,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 500)
+[G1|casement_euro] G1: มือจับดิจิตอล (digi=1): 19,200 → 29,200 Δ10,000 → +10,000 (บวกเงินแล้ว)
+[G1|sliding_sms] G1: ครอบวงกบ fcm=3 ม.: 18,000 → 21,000 Δ3,000 → +3,000 (บวกเงินแล้ว)
+[G1|casement_euro] G1: ครอบวงกบ 3 ด้าน (fcsides=3): 19,200 → 22,980 Δ3,780 → +3,780 (บวกเงินแล้ว)
+[G1|casement_euro] G1: ครอบวงกบ 4 ด้าน (fcsides=4): 19,200 → 23,680 Δ4,480 → +4,480 (บวกเงินแล้ว)
+[G1|sliding_sms] G1: ซ่อนราง +5,000 (track=ซ่อนราง): 18,000 → 18,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 5,000)
+[G1|casement_euro] G1: มือจับ Cmech ฝัง (ประตู): 19,200 → 20,250 Δ1,050 → +1,050 (บวกเงินแล้ว)
+[G1|casement_euro] G1: มือจับ Cmech เมโทร (ประตู): 19,200 → 20,200 Δ1,000 → +1,000 (บวกเงินแล้ว)
+[G1|sliding_sms] G1: คาดตาราง (gridmark 2นอน×200): 18,000 → 19,000 Δ1,000 → +1,000 (บวกเงินแล้ว)
+[G1|sliding_sms] G1: มุ้ง addon (mosq = mj_pleated): 18,000 → 18,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 2,000)
+[G1|casement_euro] G1: ธรณีหลังเต่า +1,000 (thresh=turtle): 19,200 → 20,200 Δ1,000 → +1,000 (บวกเงินแล้ว)
+[G1|casement_flush_solid] G1: โซลิดลูกฟูก (side=2 ทู): 32,000 → 32,000 Δ0 → ไม่คิดเงิน (ถูก)
+[G1|casement_euro] G1: แผ่นทึบล่าง ลูกฟูก (solidlower): 19,200 → 19,200 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 1,000)
+[G1|awning_euro] G1: tilt&amp;turn บานกระทุ้ง +5,000: 16,000 → 16,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 5,000)
+[G1|sliding_sms] G1: มอเตอร์ 80 กก. +18,000: 18,000 → 18,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 10,000)
+
+--- G2 ระแนง/ราวกันตก ---
+
+--- G3 หลังคา/ฝ้า ---
+[G3|ceil_cshape] G3: ฝ้า C-Shape ค่าสี (ckolor): 26,000 → 33,000 Δ7,000 → +7,000 (บวกเงินแล้ว)
+[G3|ceil_cshape] G3: ฝ้า + insulation +600/ตร.ม.: 26,000 → 26,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 3,000)
+
+--- G4 ตู้ ---
+[G4|cabinet_alu] G4: สีโครงตู้ (ci=2 Sahara): 35,000 → 41,000 Δ6,000 → +6,000 (บวกเงินแล้ว)
+[G4|cabinet_alu] G4: ผนังซ้าย อลูทึบ: 35,000 → 40,000 Δ5,000 → +5,000 (บวกเงินแล้ว)
+[G4|cabinet_alu] G4: ผนังหลัง กระจก: 35,000 → 42,000 Δ7,000 → +7,000 (บวกเงินแล้ว)
+
+--- G5 มุ้งเฟรม ---
+[G5|imp21] G5: สีกรอบ imp21 (mscolor=2 Sahara): 4,000 → 4,000 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 200)
+[G5|imp21] G5: ผ้ากันแมว +800/ตร.ม. imp21: 4,000 → 5,000 Δ1,000 → บวกน้อยกว่าที่ควร Δ=1,000 (คาดอย่างน้อย 1,500)
+[G5|imp21] G5: ผ้าสแตนกันหนู +1,200/ตร.ม. imp21: 4,000 → 6,000 Δ2,000 → +2,000 (บวกเงินแล้ว)
+[G5|imp23] G5: ผ้านิรภัย (screenFabric=safety) imp23: 8,000 → 14,000 Δ6,000 → +6,000 (บวกเงินแล้ว)
+[G5|imp21] G5: ครอบวงกบมุ้ง 3 ด้าน (fcsides=3): 4,000 → 7,000 Δ3,000 → +3,000 (บวกเงินแล้ว)
+[G5|imp21] G5: ครอบวงกบมุ้ง 4 ด้าน (fcsides=4): 4,000 → 8,000 Δ4,000 → +4,000 (บวกเงินแล้ว)
+[G5|imp21] G5: โหมด B ติดบานเดิม (screen_existing): 4,000 → 4,000 Δ0 → Δ=0 ไม่บวกเงิน (สงสัยบั๊ก)
+[G5|imp21] G5: ลักษณะเปิดมุ้ง (label-only · expectZero): 4,000 → 4,000 Δ0 → ไม่คิดเงิน (ถูก)
+
+--- G6 กั้นห้อง (room builder) ---
+
+--- G7 ม่านซิป ---
+
+--- COMMON OPTIONS (ทุก cat) ---
+[G1|sliding_sms] COMMON: ฝัง U-Channel (label-only): 18,000 → 18,000 Δ0 → ไม่คิดเงิน (ถูก)
+[G1|casement_euro] COMMON: เสริมคาน (beamM=500 × beamMlen=3): 19,200 → 19,200 Δ0 → บวกน้อยกว่าที่ควร Δ=0 (คาดอย่างน้อย 1,000)
+[G1|sliding_sms] COMMON: รื้อของเดิม (label-only): 18,000 → 18,000 Δ0 → ไม่คิดเงิน (ถูก)
+
+===== เสร็จสิ้น =====</pre>
+
+</body></html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G6 — ออปชั่น+ของเสริม 6 กลุ่ม (เหมือนจริง)</title>
+<style>
+:root{--red:#B3151D;--blue:#1565C0;--green:#15803D;--gray:#6B7280;--line:#E5E7EB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 50px;}
+h2.pg{font-size:16px;font-weight:700;color:var(--red);margin:6px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:12px;}
+.grp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:11px;}
+.gb{min-height:52px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:700;color:#374151;font-family:inherit;}
+.gb .ic{font-size:17px;}.gb .cnt{font-size:10px;font-weight:400;color:var(--gray);}
+.gb.on{background:var(--red);color:#fff;border-color:var(--red);}.gb.on .cnt{color:rgba(255,255,255,.8);}
+.models{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.md{min-height:38px;padding:0 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;}
+.md.on{background:var(--red);color:#fff;border-color:var(--red);}.md.ban{opacity:.5;}
+.bc{font-size:12px;color:var(--gray);margin-bottom:8px;}.bc b{color:var(--red);}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;}
+.sec{margin-bottom:13px;}.sec:last-child{margin-bottom:0;}
+.sl{font-size:11px;font-weight:700;color:var(--gray);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.sl .tg{font-size:9px;border-radius:5px;padding:1px 7px;font-weight:700;}
+.tg.main{background:#FEE2E2;color:#991b1b;}.tg.glass{background:#DBEAFE;color:#1E40AF;}.tg.ex{background:#DCFCE7;color:#15803D;}
+.fl{font-size:12px;color:#374151;font-weight:600;margin:7px 0 5px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.c{min-height:40px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;}
+.c.on{background:var(--red);color:#fff;border-color:var(--red);}.c.pill{border-radius:20px;}
+.divider{height:1px;background:var(--line);margin:13px 0;}
+.none{font-size:11px;color:var(--gray);font-style:italic;}
+.note{font-size:11px;color:var(--gray);margin-top:5px;}
+.hint{font-size:11px;color:var(--gray);margin-top:11px;}
+</style>
+</head>
+<body>
+<div class="banner">DRAFT G6 · ออปชั่น + ของเสริม · 6 กลุ่ม (ตามแชทกั้นห้อง)</div>
+<div class="page">
+  <h2 class="pg">ออปชั่น + ของเสริม ต่อชนิดบาน</h2>
+  <div class="sub">เฉพาะออปชั่น/ของเสริม · กดกลุ่ม → รุ่น → ออปชั่นปรับตามชนิด · ฟอร์มชุดเดียวใช้ในกั้นห้องทุกด้าน</div>
+  <div class="grp" id="grp"></div>
+  <div class="bc" id="bc"></div>
+  <div class="models" id="models"></div>
+  <div class="card" id="form"></div>
+  <p class="hint">เสริมกระจก = คาดตาราง/ลูกฟูก (ทุกบานกระจก ยกเว้น shower) · อุปกรณ์เสริม = ปุ่มหมวดเดียว กดที่ใช้ · ราคาจากมติ G1 master</p>
+</div>
+<script>
+var GROUPS=[
+  {k:'slide',n:'บานเลื่อน',ic:'⬌',models:[
+    {id:'sliding_euro',nm:'ยูโร',p:'slide'},{id:'sliding_sms',nm:'เซมิยูโร',p:'slide'},
+    {id:'inner_top_stack',nm:'เลื่อนภายในบน (ซ้อน)',p:'inner'},{id:'inner_top_slimlux',nm:'SlimLux',p:'innerX'},
+    {id:'inner_bottom_sms',nm:'เลื่อนภายในล่าง SMS',p:'inner'},{id:'sliding_eseries',nm:'E-series',p:'slide',ban:1}]},
+  {k:'swing',n:'บานเปิด',ic:'🚪',models:[
+    {id:'casement_euro',nm:'ยูโร',p:'swing'},{id:'casement_xseries',nm:'X-series',p:'swingX'},
+    {id:'casement_velora',nm:'Velora',p:'swingV'},{id:'casement_flush_solid',nm:'โซลิด ทู',p:'swing'},
+    {id:'casement_inset_solid',nm:'โซลิด วัน',p:'swing'},{id:'awning_euro',nm:'บานกระทุ้ง',p:'awning'},
+    {id:'pivot',nm:'บานหมุน',p:'pivot'}]},
+  {k:'fold',n:'บานเฟี้ยม',ic:'▥',models:[
+    {id:'folding_euro',nm:'ยูโร',p:'fold'},{id:'folding',nm:'เซมิยูโร',p:'fold'},{id:'folding_xseries',nm:'X-series',p:'foldX'}]},
+  {k:'fix',n:'ติดตาย/เปลือย',ic:'▢',models:[
+    {id:'fixed_glass',nm:'กระจกติดตาย',p:'fix'},{id:'frameless_fixed',nm:'เปลือยติดตาย',p:'frfix'},
+    {id:'frameless_door',nm:'สวิง/เลื่อนเปลือย',p:'frame'}]},
+  {k:'curve',n:'ดัดโค้ง',ic:'◗',models:[
+    {id:'curved_double',nm:'บานคู่',p:'curve'},{id:'curved_single',nm:'บานเดี่ยว',p:'curve'},
+    {id:'curved_fixed',nm:'ติดตายโค้ง',p:'fix'},{id:'curved_slim',nm:'สลิม',p:'curve'}]},
+  {k:'other',n:'อื่นๆ/พิเศษ',ic:'⋯',models:[
+    {id:'shower',nm:'shower',p:'shower'},{id:'lift_sms',nm:'บานยก SMS',p:'lift'},{id:'lift_aluinch',nm:'บานยก aluinch',p:'lift'},
+    {id:'pc_door_2',nm:'PC Door 2',p:'pc'},{id:'pc_door_4',nm:'PC Door 4',p:'pc'},{id:'ykk_vent',nm:'YKK ระบายอากาศ',p:'ykk'}]}
+];
+var EX={cf:'ครอบวงกบ',df:'ดรอปพื้น',rm:'รื้อของเดิม',br:'แขนค้ำ (เปิดล่าง)'};
+// profile = ออปชั่นที่โชว์
+var P={
+  slide:{main:[['ลักษณะการเปิด',['เลื่อน','สลับ','คู่กลาง','ลากจูง']],['ราง',['รางกันน้ำ','รางเตี้ย 7มม.']]],handle:1,lock:1,mosq:1,glass:1,ex:['cf','df','rm']},
+  inner:{main:[['ลักษณะการเปิด',['เลื่อน','สลับ','คู่กลาง']],['ราง',['โชว์ราง','ซ่อนราง +5,000']]],lock:1,glass:1,ex:['cf','rm'],note:'เลื่อนภายใน — ไม่มีมุ้ง'},
+  innerX:{main:[['ลักษณะการเปิด',['เลื่อน','สลับ']],['ราง',['โชว์ราง','ซ่อนราง +5,000']]],lock:1,handleX:1,glass:1,ex:['cf','rm'],note:'SlimLux/X — มือจับ X ฟรี · ไม่มีมุ้ง'},
+  swing:{main:[['ธรณี',['กันน้ำ','หลังเต่า +1,000']],['โช้คอัพ',['ไม่มี','มี +5,000']]],handle:1,mosq:1,glass:1,ex:['cf','df','rm']},
+  swingX:{main:[['ธรณี',['กันน้ำ','หลังเต่า +1,000']],['โช้คอัพ',['ไม่มี','มี +5,000']]],handle:1,handleX:1,mosq:1,glass:1,ex:['cf','df','rm']},
+  swingV:{main:[['ธรณี',['กันน้ำ','หลังเต่า +1,000']]],handle:1,mosq:1,glass:1,ex:['cf','df','rm'],note:'Velora — รวมเทมเปอร์ · ไม่มีโช้ค'},
+  awning:{main:[['ลักษณะการเปิด',['เปิดล่าง','เปิดข้าง','Tilt&Turn +5,000/บาน']]],handleAwn:1,mosq:1,glass:1,ex:['cf','df','br','rm']},
+  pivot:{handle:1,glass:1,ex:['cf','rm'],note:'บานหมุน — ตัดมุ้ง · ไม่มีดรอปพื้น'},
+  fold:{main:[['ทิศเปิด (ต่อบาน)',['เปิดขวา','เปิดซ้าย']],['ธรณี',['ธรณีเฟี้ยม']]],mosq:1,glass:1,ex:['cf','df','rm']},
+  foldX:{main:[['ทิศเปิด (ต่อบาน)',['เปิดขวา','เปิดซ้าย']],['ธรณี',['ธรณีเฟี้ยม']]],handleX:1,mosq:1,glass:1,ex:['cf','df','rm'],note:'X-series — มือจับ X ฟรี'},
+  fix:{glass:1,ex:['cf','rm'],note:'ติดตาย — เฉพาะขนาด (ตัดมือจับ/มุ้ง)'},
+  frfix:{glass:1,ex:['rm'],note:'เปลือยติดตาย — สีเฟรม · เฉพาะขนาด'},
+  frame:{main:[['ประเภท',['สวิง','เลื่อน']]],handleSt:1,framecolor:1,glass:1,ex:['rm']},
+  curve:{handle:1,glass:1,ex:['cf','df','rm'],note:'ดัดโค้ง — ตัดมุ้ง'},
+  lift:{main:[['มอเตอร์',['ไม่มี','80กก. +18,000','300กก. +28,000']]],mosq:1,glass:1,ex:['cf','rm'],note:'บานยก — ไม่มีดรอปพื้น'},
+  pc:{lock:1,handle:1,mosq:1,glass:1,ex:['cf','df','rm']},
+  shower:{main:[['รูปแบบ',['ประตู+ติดตาย','ติดตาย','ประตู']],['อุปกรณ์',['เงิน','ดำ +4,000','ทอง +6,000']]],handleSt:1,glass:0,ex:['rm'],note:'shower — ไม่มีเสริมกระจก/ครอบ/ดรอป'},
+  ykk:{main:[['โช้คอัพ',['ไม่มี','มี +5,000']]],glass:0,ex:['df','rm'],note:'YKK ระบายอากาศ'}
+};
+var gi=0,mi=0;
+function render(){
+  var g=document.getElementById('grp');g.innerHTML='';
+  GROUPS.forEach(function(G,i){var b=document.createElement('button');b.className='gb'+(i===gi?' on':'');b.innerHTML='<span class="ic">'+G.ic+'</span>'+G.n+'<span class="cnt">'+G.models.length+' รุ่น</span>';b.onclick=function(){gi=i;mi=0;render();};g.appendChild(b);});
+  var G=GROUPS[gi];
+  var md=document.getElementById('models');md.innerHTML='';
+  G.models.forEach(function(m,i){var b=document.createElement('button');b.className='md'+(i===mi?' on':'')+(m.ban?' ban':'');b.textContent=m.nm+(m.ban?' ⊘':'');b.onclick=function(){mi=i;render();};md.appendChild(b);});
+  var m=G.models[mi];document.getElementById('bc').innerHTML='<b>'+G.n+'</b> › '+m.nm;
+  var pf=P[m.p],f=document.getElementById('form'),h='';
+  // ออปชั่นหลัก
+  var main='';
+  if(pf.main)pf.main.forEach(function(o){main+='<div class="fl">'+o[0]+'</div><div class="chips">'+o[1].map(function(s,i){return '<button class="c'+(i===0?' on':'')+'" onclick="pk(this)">'+s+'</button>';}).join('')+'</div>';});
+  if(pf.handle)main+='<div class="fl">มือจับ (ติ๊กหลายแบรนด์)</div><div class="chips"><button class="c" onclick="tg(this)">Cmech</button><button class="c" onclick="tg(this)">ดิจิตอล</button><button class="c" onclick="tg(this)">สแตนเลส</button></div>';
+  if(pf.handleX)main+='<div class="fl">มือจับ X-series <span style="color:var(--green);font-size:10px;">(ฟรี)</span></div><div class="chips"><button class="c on" onclick="pk(this)">X-J</button><button class="c" onclick="pk(this)">XO</button><button class="c" onclick="pk(this)">XT</button></div>';
+  if(pf.handleSt)main+='<div class="fl">มือจับสแตนเลส (กรอกชื่อเอง)</div><div class="chips"><button class="c" onclick="tg(this)">แบบ A</button><button class="c" onclick="tg(this)">แบบ B</button></div>';
+  if(pf.handleAwn)main+='<div class="fl">มือจับกระทุ้ง</div><div class="chips"><button class="c on" onclick="pk(this)">มาตรฐาน</button><button class="c" onclick="pk(this)">อื่นๆ</button></div>';
+  if(pf.lock)main+='<div class="fl">ชุดล็อกเลื่อน</div><div class="chips"><button class="c on" onclick="pk(this)">มีกุญแจ</button><button class="c" onclick="pk(this)">ไม่มี</button></div>';
+  if(pf.framecolor)main+='<div class="fl">สีเฟรมอลู</div><div class="chips"><button class="c on" onclick="pk(this)">ขาว</button><button class="c" onclick="pk(this)">ดำ</button><button class="c" onclick="pk(this)">เงิน</button></div>';
+  if(pf.mosq)main+='<div class="fl">มุ้ง</div><div class="chips"><button class="c on" onclick="pk(this)">ไม่ใส่</button><button class="c" onclick="pk(this)">เฟรมเล็ก</button><button class="c" onclick="pk(this)">ม้วน</button><button class="c" onclick="pk(this)">จีบ</button></div>';
+  h+='<div class="sec"><div class="sl">ออปชั่นหลัก (ตามชนิด) <span class="tg main">เฉพาะบาน</span></div>'+(main||'<div class="none">— เฉพาะขนาด ไม่มีออปชั่นหลัก —</div>')+'</div>';
+  h+='<div class="divider"></div>';
+  // เสริมกระจก
+  if(pf.glass)h+='<div class="sec"><div class="sl">เสริมบานกระจก <span class="tg glass">ทุกบานกระจก</span></div><div class="chips"><button class="c" onclick="tg(this)">คาดตาราง</button><button class="c" onclick="tg(this)">ลูกฟูก/คอมโพสิททึบ</button></div></div>';
+  else h+='<div class="sec"><div class="sl">เสริมบานกระจก <span class="tg glass">—</span></div><div class="none">— ชนิดนี้ไม่มีเสริมกระจก —</div></div>';
+  // อุปกรณ์เสริม หมวดเดียว
+  h+='<div class="sec"><div class="sl">อุปกรณ์เสริม (กดที่ใช้) <span class="tg ex">หมวดเดียว</span></div><div class="chips">'+pf.ex.map(function(e){return '<button class="c pill" onclick="tg(this)">'+EX[e]+'</button>';}).join('')+'</div></div>';
+  if(pf.note)h+='<div class="note">ℹ '+pf.note+'</div>';
+  f.innerHTML=h;
+}
+function pk(b){var x=b.closest('.chips');[].forEach.call(x.querySelectorAll('.c'),function(c){c.classList.remove('on');});b.classList.add('on');}
+function tg(b){b.classList.toggle('on');}
+render();
+</script>
+</body>
+</html>

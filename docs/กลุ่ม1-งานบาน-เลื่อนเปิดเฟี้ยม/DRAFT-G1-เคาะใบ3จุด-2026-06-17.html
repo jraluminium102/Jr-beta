@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟเคาะใบ G1 — 3 จุด (เทียบใบจริงปณต)</title>
+<style>
+  :root{--red:#B3151D;--red2:#7f1d1d;--line:#e5e7eb;--bg:#f3f4f6;--mut:#6b7280;--ok:#16a34a;--warn:#dc2626}
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:#1f2937;line-height:1.55}
+  .wrap{max-width:840px;margin:0 auto;padding:16px 14px 60px}
+  h1{font-size:20px;color:var(--red2);margin:4px 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .q{font-weight:700;color:var(--red);font-size:14px;margin-bottom:8px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{border:1.5px solid var(--line);border-radius:9px;padding:8px 12px;cursor:pointer;font-size:13px;background:#fff;transition:.12s;flex:1;min-width:200px}
+  .opt:hover{background:#f9fafb}
+  .opt.on{border-color:var(--red);background:#fff2f2}
+  .opt .t{font-weight:700;display:block;margin-bottom:2px}
+  .opt .ex{font-size:11.5px;color:var(--mut)}
+  .opt.on .ex{color:var(--red2)}
+  .real{font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;margin-top:7px;display:inline-block}
+  /* invoice preview */
+  .inv{background:#fff;border:2px solid var(--ok);border-radius:12px;overflow:hidden;font-size:13.5px;margin-top:6px}
+  .inv-head{background:var(--red);color:#fff;font-weight:700;font-size:12.5px;display:grid;grid-template-columns:34px 1fr 84px;}
+  .inv-head>div{padding:7px 9px}
+  .inv-body{display:grid;grid-template-columns:34px 1fr 84px}
+  .cell{padding:11px 9px;border-right:1px solid var(--line)}
+  .cell:last-child{border-right:none}
+  .amt{text-align:right;font-variant-numeric:tabular-nums}
+  .ttl{font-weight:700;color:#1F2937}
+  .rk{margin:1px 0 0 8px}
+  .sec-t{font-weight:700;margin-top:8px}
+  .opt-red{color:var(--red)}.note-c{color:#3730a3}.spec-c{color:var(--red)}
+  .warnv{color:var(--warn);font-weight:700}
+  .tot{padding:8px 10px;font-size:12.5px;color:var(--mut);text-align:right;background:#fafafa}
+  .tot b{color:#1f2937;font-size:14px}
+  .hint{font-size:12px;color:var(--mut);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>เคาะหน้าตาใบ G1 — 3 จุด (เทียบใบจริง "ปณต")</h1>
+  <div class="sub">กดเลือกแต่ละจุด → ใบตัวอย่างด้านล่างเปลี่ยนทันที · ตัวอย่าง = ประตูบานเปิด สีอบพิเศษ · ราคา engine จริง 41,000</div>
+
+  <div class="panel">
+    <div class="q">จุด ก — หัวข้อก้อนสเปค</div>
+    <div class="opts" id="qA">
+      <div class="opt" data-v="งาน"><span class="t">"รายละเอียดงาน"</span><span class="ex">ตามใบจริง (ปณต ใช้คำนี้)</span></div>
+      <div class="opt" data-v="สั้น"><span class="t">"รายละเอียด"</span><span class="ex">สั้นกว่า · ตามมติ 16 มิ.ย.</span></div>
+    </div>
+    <div class="real">ใบจริงปณต: เขียน "รายละเอียดงาน"</div>
+  </div>
+
+  <div class="panel">
+    <div class="q">จุด ข — ขนาดในหัวรายการ</div>
+    <div class="opts" id="qB">
+      <div class="opt" data-v="มี"><span class="t">ใส่ขนาดในหัว</span><span class="ex">…· 1.2 × 2.2 ม. · 1 ชุด (รู้ขนาดทุกชิ้น)</span></div>
+      <div class="opt" data-v="ไม่"><span class="t">ไม่ใส่ขนาดในหัว</span><span class="ex">หัวสั้น · ขนาดอยู่ในแบบ (ตามใบจริง)</span></div>
+    </div>
+    <div class="real">ใบจริงปณต: หัวไม่มี "ม." — บานเลื่อนใช้ "แบ่ง N บาน" · บานเปิดไม่ระบุขนาด</div>
+  </div>
+
+  <div class="panel">
+    <div class="q">จุด ค — สีอบพิเศษ</div>
+    <div class="opts" id="qC">
+      <div class="opt" data-v="เต็ม"><span class="t">ชื่อบรรยาย + รหัส</span><span class="ex">อบพิเศษ สี Grey RAL7022 (KL10232A) — แบบใบจริง</span></div>
+      <div class="opt" data-v="รหัส"><span class="t">รหัสเดียว</span><span class="ex">อบพิเศษ · รหัส KL10232A (ช่องกรอกปัจจุบัน)</span></div>
+    </div>
+    <div class="real">ใบจริงปณต: "อลูมิเนียม สีอบพิเศษ สี Grey RAL7022 ( KL10232A )" · ถ้าเอาแบบเต็ม = ต้องเพิ่มช่องกรอก "ชื่อสี" แยกจากรหัส</div>
+  </div>
+
+  <h1 style="font-size:15px;margin:20px 0 4px">👁 ใบตัวอย่าง (เปลี่ยนตามที่เลือก)</h1>
+  <div class="inv">
+    <div class="inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+    <div class="inv-body">
+      <div class="cell">1</div>
+      <div class="cell">
+        <div class="ttl" id="pHead"></div>
+        <div class="rk">- บานเปิด</div>
+        <div class="rk">- มุ้งเฟรมใหญ่ (บานเปิด)</div>
+        <div class="rk">- ครอบวงกบอลู 4 ด้าน</div>
+        <div class="sec-t opt-red">OPTION</div>
+        <div class="rk opt-red">- เปลี่ยนเป็นกระจกเทมเปอร์ใส 6 มม. ราคาเพิ่ม 6,000 บาท</div>
+        <div class="sec-t note-c">หมายเหตุ</div>
+        <div class="rk note-c">- ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)</div>
+        <div class="sec-t spec-c" id="pSpecHead">รายละเอียดงาน</div>
+        <div class="rk" id="pColor"></div>
+        <div class="rk">- กระจกเขียว หนา 6 มม.</div>
+        <div class="rk">- ผ้ามุ้ง: ไฟเบอร์ เทา · เฟรม: ตามสีบาน</div>
+      </div>
+      <div class="cell amt">41,000.00</div>
+    </div>
+    <div class="tot">รวมทั้งสิ้น (VAT 7%) <b>43,870.00</b></div>
+  </div>
+  <div class="hint">เลือกครบ 3 จุด → บอกผม (เช่น "ก=งาน ข=ไม่ ค=รหัส") เดี๋ยวรวมเข้าใบสั่งคิวกลางส่ง Chat B รอบเดียว</div>
+</div>
+
+<script>
+var sel={A:'งาน',B:'มี',C:'รหัส'};
+function render(){
+  // ก: spec heading
+  document.getElementById('pSpecHead').textContent = (sel.A==='งาน')?'รายละเอียดงาน':'รายละเอียด';
+  // ข: header size
+  var base='จุดที่ 1 · ประตูบานเปิด (รุ่น L ยูโร)';
+  document.getElementById('pHead').textContent = base + (sel.B==='มี' ? ' · 1.2 × 2.2 ม. · 1 ชุด' : ' · 1 ชุด');
+  // ค: color line
+  var c = (sel.C==='เต็ม')
+    ? '- สีอลูมิเนียม: อบพิเศษ สี Grey RAL7022 (KL10232A)'
+    : '- สีอลูมิเนียม: อบพิเศษ · รหัส KL10232A';
+  document.getElementById('pColor').textContent = c;
+}
+function bind(id,key){ var box=document.getElementById(id); box.querySelectorAll('.opt').forEach(function(o){
+  o.addEventListener('click',function(){ box.querySelectorAll('.opt').forEach(function(x){x.classList.remove('on');}); o.classList.add('on'); sel[key]=o.dataset.v; render(); });
+}); }
+bind('qA','A'); bind('qB','B'); bind('qC','C');
+// default selections
+document.querySelector('#qA .opt[data-v="งาน"]').classList.add('on');
+document.querySelector('#qB .opt[data-v="มี"]').classList.add('on');
+document.querySelector('#qC .opt[data-v="รหัส"]').classList.add('on');
+render();
+</script>
+</body>
+</html>

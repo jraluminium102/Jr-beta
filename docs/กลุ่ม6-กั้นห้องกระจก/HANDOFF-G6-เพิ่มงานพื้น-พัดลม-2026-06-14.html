@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G6 — เพิ่มงานพื้น + พัดลมดูดอากาศ</title>
+<style>
+  @page{size:A4;margin:11mm 10mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.5;margin:0;}
+  h1{color:#B3151D;font-size:18px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 10px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 6px;padding:5px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10px;}
+  th,td{border:1px solid #d8c9c9;padding:4px 8px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.pr{color:#15803D;font-weight:700;white-space:nowrap;}
+  code{background:#eef2f7;padding:0 4px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;color:#1e3a5f;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:8px 11px;margin:7px 0;background:#fffafa;font-size:10.5px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  .bad{background:#fef2f2;border:1px solid #fca5a5;}
+  ul{margin:3px 0;padding-left:18px;}li{margin:2px 0;}
+  .k{background:#B3151D;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:5px;}
+  .ac{font-size:9.5px;color:#444;background:#f0f6ff;border-left:3px solid #1565C0;padding:3px 8px;margin:3px 0;border-radius:0 4px 4px 0;}
+  .ac b{color:#1565C0;}
+  .hl{background:#fff3cd;padding:0 3px;border-radius:3px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G6 — เพิ่ม 2 อย่าง: งานปูพื้น + พัดลมดูดอากาศ</h1>
+<div class="meta">2026-06-14 · ส่ง dev แชท B · จากตรวจใบจริง 11 ใบกั้นห้อง (ใบยี/ใบเฟริล) · แก้ <code>public/calculator/index.html</code></div>
+
+<div class="box ok"><b>ที่มา:</b> ตรวจใบจริงเจอ 3 จุดที่ใบกั้นห้องมีบ่อยแต่ระบบยังไม่มี → <b>พี่นัทเคาะ:</b> ราวกันตกเหล็ก <b>ไม่ทำ</b> (ใช้ราวกันตกกระจกที่มี) · <b>งานปูพื้น + พัดลมดูดอากาศ = ทำเพิ่ม</b></div>
+
+<div class="box" style="background:#eef6ff;border:1px solid #9cc3f0"><b>📍 ตำแหน่ง UI (มติพี่นัท 16 มิ.ย.):</b> <b>ทั้งงานพื้น + พัดลม อยู่ในหัวข้อ "อุปกรณ์เสริม" ที่เดียว</b> (รวมกับ ไฟ/รื้อ/ขนส่ง เดิม) ในหน้า <b>"ระดับห้อง"</b> (accordion ต่อจากหลังคา/ฝ้า) · <b>หน้าระดับห้องเหลือ 2 หัวข้อพับ:</b> ① หลังคา+ฝ้า · ② อุปกรณ์เสริม(ไฟ+พื้น+พัดลม+รื้อ) — เปิดทีละหัวข้อ ไม่รก · <b>ไม่แทรกในแต่ละด้าน A–M</b> (พื้น/พัดลมเป็นของทั้งห้อง) · ดราฟกดเล่น: <code>docs/กลุ่ม6-กั้นห้องกระจก/DRAFT-G6-งานพื้น-พัดลม-ux-2026-06-16.html</code></div>
+
+<!-- ===== 1 พัดลม ===== -->
+<h2><span class="k">1</span>พัดลมดูดอากาศ + ฝาครอบกันแมลง <span style="font-size:10px;font-weight:400;float:right">ง่าย — มีโครงอยู่แล้ว</span></h2>
+<div class="box">
+<b>ใช้ <code>custom_item</code> ที่มีอยู่แล้ว</b> (L683 · <code>{id:'custom_item',cat:'เสริม',custom_item:1}</code> · รายการกรอกเอง free-form) — ของซื้อมาติด ไม่ต้องมีสูตรราคา
+<ul>
+<li><b>dev:</b> เพิ่ม "ปุ่มลัด/preset" ในหน้า G6 (ส่วนอุปกรณ์เสริมห้อง) ชื่อ <b>"พัดลมดูดอากาศ + ฝาครอบกันแมลง"</b> → กดแล้ว prefill <code>custom_item</code> ตั้งชื่อให้ + เปิดช่องกรอก <b>ขนาด(นิ้ว) · จำนวน(ตัว) · ราคา</b></li>
+<li>จากใบจริง: "พัดลมดูดอากาศ สีขาว 8" จำนวน 1 ตัว + ฝาครอบกันแมลง สีขาว 8" จำนวน 1 ตัว"</li>
+<li>ราคา = กรอกเอง (ของซื้อ ราคาตามจริง) — ไม่ต้องเรตสำเร็จ</li>
+</ul>
+</div>
+<div class="ac"><b>AC:</b> กด "พัดลมดูดอากาศ" ในหน้า G6 → กรอกขนาด/จำนวน/ราคา → ขึ้นใบเป็นบรรทัด "พัดลมดูดอากาศ 8" + ฝาครอบกันแมลง" + ราคา · เข้ายอดรวม</div>
+
+<!-- ===== 2 งานพื้น ===== -->
+<h2><span class="k">2</span>งานปูพื้น <span style="font-size:10px;font-weight:400;float:right">product ใหม่ · ระดับห้อง</span></h2>
+<div class="box">
+<b>เพิ่มส่วน "พื้น" ในหน้า G6 room</b> (ระดับห้อง เหมือนหลังคา/ฝ้า/ไฟ) · method <code>per_sqm</code> (เหมือน <code>steel_mesh</code> L662 / ระแนง L742)
+<table>
+<tr><th>วัสดุพื้น</th><th>ตำแหน่ง</th><th>เรต/ตร.ม.</th><th>ขั้นต่ำ</th></tr>
+<tr><td>สมาร์ทบอร์ด 20มม. + โครงเหล็กกัลวาไนซ์</td><td>พื้นในห้อง</td><td class="pr">5,000</td><td>5 ตร.ม.</td></tr>
+<tr><td>ไม้เทียม + โครงเหล็กกัลวาไนซ์</td><td>พื้นนอกห้อง</td><td class="pr">5,000</td><td>5 ตร.ม.</td></tr>
+<tr><td>ลามิเนต / SPC (ปูทับ)</td><td>เสริมบนพื้น</td><td class="pr">กรอกเอง/ตร.ม.</td><td>—</td></tr>
+</table>
+<ul>
+<li>UI: เลือกวัสดุ → เลือก พื้นในห้อง/นอกห้อง → กรอกพื้นที่ (ตร.ม.) → ราคา = พื้นที่ × 5,000 (ถ้า &lt;5 ตร.ม. คิด 5 ตร.ม. = 25,000)</li>
+<li><b>โครงเหล็ก = เหล็กกัลวาไนซ์</b> (กันสนิม · รวมในเรต) → ระบุในใบ "โครงเหล็กกัลวาไนซ์"</li>
+<li><b>ลามิเนต/SPC</b> = ปูทับบนพื้น · กรอกราคาเอง/ตร.ม. (รอราคาช่าง)</li>
+<li><b>note อัตโนมัติในใบ:</b> "ไม่รับประกันพื้นแอ่นหรือยวบ"</li>
+</ul>
+</div>
+<div class="box warn"><b>🏷️ ส่วนลดงานใหญ่ (กะเกณฑ์ตั้งต้น · ปรับได้):</b> <b>พื้นที่ ≥ 20 ตร.ม. → ลด 10%</b> (default) · <b>+ เว้นช่องกรอก % เอง</b> ให้เซลล์ปรับตามจริง · เหตุผล: งานใหญ่ต้นทุน/หน่วยลด (โครง/แรงเฉลี่ย) · <b>dev:</b> ทำช่อง "ส่วนลดงานใหญ่ %" auto-fill 10% เมื่อ ≥20 ตร.ม. · แก้เลขเองได้</div>
+<div class="box" style="background:#fffbe6;border:1px solid #f0d070;font-size:9.5px"><b>หมายเหตุราคา:</b> เรต 5,000 = ต้นทุน × 2 (กำไร 100% · มติพี่นัท) · <b>ราคาทุนยังไม่ได้เช็คแน่นอน</b> → 5,000 เป็นค่าตั้งต้น อาจปรับเมื่อได้ทุนจริง · reference ตลาด มิ.ย.69: ไม้เทียม WPC รวมติดตั้ง 1,650–3,600 · โครงกัลวาไนซ์ 800–1,200</div>
+<div class="ac"><b>AC:</b> เลือกวัสดุพื้น + พื้นที่ → ขึ้นใบ "ปูพื้นสมาร์ทบอร์ด 20มม. โครงเหล็กกัลวาไนซ์ (พื้นในห้อง)" + ราคา 5,000/ตร.ม. (min 5) · ≥20 ตร.ม. ลด 10% (แก้ได้) · note ไม่รับประกันแอ่น · เข้ายอดรวมห้อง</div>
+
+<!-- ===== ไม่ทำ ===== -->
+<h2><span class="k">✕</span>ราวกันตกเหล็ก — ไม่ทำ (มติพี่นัท)</h2>
+<div class="box bad">ใบจริงบางใบมี "ราวกันตกเหล็ก" (แป๊ปกลม/ตันกลม) แต่ <b>พี่นัทเคาะไม่ทำ</b> — ใช้ราวกันตก<b>กระจก</b>ที่มีอยู่ (imp1-6) แทน · dev ไม่ต้องเพิ่ม</div>
+
+<!-- ===== DoD ===== -->
+<h2><span class="k">✓</span>Definition of Done</h2>
+<div class="box">
+☐ พัดลมดูดอากาศ: กดเพิ่มใน G6 → กรอกขนาด/จำนวน/ราคา → ขึ้นใบ + เข้ายอด<br>
+☐ งานพื้น: เลือกวัสดุ+พื้นที่ → ขึ้นใบ + ราคา 5,000/ตร.ม. (min 5) + note ไม่รับประกันแอ่น · โครงกัลวาไนซ์<br>
+☐ ส่วนลดงานใหญ่: ≥20 ตร.ม. auto 10% + แก้ % เองได้<br>
+☐ ลามิเนต/SPC: กรอกราคาเอง/ตร.ม.<br>
+☐ ทั้ง 2 เข้ายอดรวมห้องถูกต้อง · golden-snapshot 143 ตัวไม่เพี้ยน<br>
+☐ verify เบราว์เซอร์จริง (ไม่เคลมจาก jsdom)
+</div>
+
+<div class="box ok"><b>อ้างอิง:</b> <code>docs/รายงานตรวจสอบaudit/AUDIT-ใบจริง-vs-ระบบ-2026-06-14.pdf</code> (วิเคราะห์เต็ม 14 ใบ) · <code>docs/รายงานตรวจสอบaudit/ใบเทียบ-จริงvsระบบ-เห็นเป็นใบ-2026-06-14.pdf</code> (ใบยี=งานพื้น · ใบเฟริล=พัดลม)</div>
+
+</body>
+</html>

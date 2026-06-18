@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>สรุปงานแก้ เครื่องคิดราคา JR — 17 มิ.ย. 2026</title>
+<style>
+  @page{ size:A4; margin:14mm 12mm; }
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","TH Sarabun New","Segoe UI",Tahoma,sans-serif;color:#1f2937;line-height:1.5;font-size:13px;margin:0}
+  h1{font-size:21px;color:#7f1d1d;margin:0 0 2px}
+  .date{color:#6b7280;font-size:12px;margin-bottom:12px}
+  h2{font-size:15.5px;color:#b91c1c;border-left:4px solid #b91c1c;padding-left:9px;margin:20px 0 8px}
+  .legend{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:8px}
+  .pill{display:inline-block;border-radius:5px;padding:1px 7px;font-weight:700;font-size:11.5px;margin-right:4px}
+  .done{background:#dcfce7;color:#166534}.wait{background:#fef3c7;color:#92400e}.todo{background:#fee2e2;color:#b91c1c}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+  th,td{border:1px solid #e5e7eb;padding:5px 8px;text-align:left;vertical-align:top}
+  th{background:#fef2f2;color:#7f1d1d;font-size:11.5px}
+  td.c{text-align:center;white-space:nowrap}
+  .grp{font-weight:700;color:#374151}
+  .note{font-size:11.5px;color:#6b7280;margin:4px 0 0}
+  .vis-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;page-break-inside:avoid}
+  .inv{border:1px solid #e5e7eb;border-radius:8px;padding:9px;font-size:11.5px;background:#fff}
+  .inv.bad{border-color:#fca5a5}.inv.good{border:2px solid #16a34a}
+  .inv-h{font-size:11px;font-weight:700;margin-bottom:5px}
+  .bad .inv-h{color:#b91c1c}.good .inv-h{color:#16a34a}
+  .ttl{font-weight:700}
+  .mess{background:#fff7ed;color:#9a3412;border-radius:3px;padding:0 2px}
+  .row{margin:1px 0 0 6px}
+  .hd{font-weight:700;color:#b91c1c;margin-top:5px}
+  .warn{color:#dc2626;font-weight:700}
+  .tick{display:flex;gap:6px;align-items:flex-start;margin:2px 0;font-size:11.5px}
+  .bx{width:13px;height:13px;border:2px solid #b91c1c;border-radius:3px;flex:none;margin-top:1px;background:#b91c1c;color:#fff;font-size:10px;font-weight:900;text-align:center;line-height:11px}
+  .pgbreak{page-break-before:always}
+  .foot{margin-top:18px;font-size:11px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:8px}
+</style>
+</head>
+<body>
+  <h1>สรุปงานแก้ — เครื่องคิดราคา JR</h1>
+  <div class="date">สถานะ ณ 17 มิ.ย. 2026 · เช็คจากโค้ดจริง (commit + grep + render) · branch quickmode-v2-allG</div>
+
+  <div class="legend">
+    <span class="pill done">✅ เสร็จ</span> แก้แล้ว ขึ้นเว็บ (commit ลงแล้ว) &nbsp;
+    <span class="pill wait">🟡 รอ Chat B</span> สั่งแล้ว มีโค้ด/สเปก รอแก้ &nbsp;
+    <span class="pill todo">🔴 ยังไม่เริ่ม</span> รอเตรียม/รอเคาะ
+  </div>
+
+  <h2>① สั่งแก้ไปแล้ว + เสร็จ (ขึ้นเว็บแล้ว)</h2>
+  <table>
+    <tr><th style="width:38%">งาน</th><th style="width:16%">กลุ่ม</th><th style="width:18%">commit</th><th>หลักฐานเช็คจริง</th></tr>
+    <tr><td>หมายเหตุมาตรฐาน ดรอปดาวน์ → <b>ติ๊กหลายข้อ</b></td><td>ทุกกลุ่ม</td><td class="c">0c86e73</td><td>rkToggle ในโค้ด (=2)</td></tr>
+    <tr><td>ข้อความหมายเหตุชุดใหม่ <b>12 + 9 + 4 ข้อ</b> (นั่งร้าน 2 แถว)</td><td>ทุกกลุ่ม</td><td class="c">0c86e73</td><td>พบข้อความ "Protection เฉพาะบริเวณ"</td></tr>
+    <tr><td>ราคา/สเปก registry ส่วน B <b>7 ข้อ</b> (งานไฟ/โซ่รางน้ำ/สีชินโค ฯลฯ)</td><td>หลายกลุ่ม</td><td class="c">63fabcf</td><td>commit Region 2</td></tr>
+    <tr><td>ธรณีบานเปิด <b>4 ตัวเลือก</b> (หลังเต่า+สักหลาด / ไม่มีธรณี = +0)</td><td>G1</td><td class="c">63fabcf</td><td>turtle_felt ในโค้ด (=3)</td></tr>
+    <tr><td>ใบเสนอราคา <b>5 บล็อก</b> (โครงสร้าง + สีพิเศษรหัส/⚠)</td><td>G1</td><td class="c">d92087a / 74ebc7f</td><td>itemDetail คืน work/spec</td></tr>
+    <tr><td>ใบเสนอราคา 5 บล็อก</td><td>G2 (รั้ว/ระแนง)</td><td class="c">a6d754b</td><td>+ 4 ปุ่มจัดหมวด</td></tr>
+    <tr><td>ใบเสนอราคา 5 บล็อก</td><td>G3 (หลังคา/ฝ้า)</td><td class="c">9a34f5e</td><td>merge #8</td></tr>
+    <tr><td>ใบเสนอราคา 5 บล็อก</td><td>G4 (ตู้)</td><td class="c">9a74245</td><td>ต้นแบบ work/spec</td></tr>
+    <tr><td>ใบเสนอราคา 5 บล็อก</td><td>G5 (มุ้ง)</td><td class="c">defc112 / 322a010</td><td>ผ้าไม่ซ้ำในรายการ</td></tr>
+    <tr><td>ผนังเบาไม่ลากฝ้าหลังคา (ธง4)</td><td>G1</td><td class="c">7b65bd3</td><td>g1WallSelectorHTML</td></tr>
+    <tr><td>ดรอปดาวน์ตัวเลือกน้อย → ชิป (13 ตัว)</td><td>G1/G2/G3</td><td class="c">cd9ea5c</td><td>chipifySelect</td></tr>
+    <tr><td>G3 ฝ้าระแนงอลู 3 รุ่น</td><td>G3</td><td class="c">42db876</td><td>ceil_ranae</td></tr>
+  </table>
+  <div class="note">รวม ✅ <b>12 งานหลัก</b> ขึ้นเว็บแล้ว (ส่วนใหญ่เป็นรอบ "4 Region" ที่ Chat B เพิ่งเก็บเข้ามา)</div>
+
+  <h2>② ค้าง — ต้องแก้ต่อ (ลิสต์)</h2>
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:34%">งาน</th><th style="width:14%">กลุ่ม</th><th style="width:13%">สถานะ</th><th>ใบสั่ง / หมายเหตุ</th></tr>
+    <tr><td class="c">1</td><td><b>เก็บหัวใบ 5 บล็อก G1</b> — เอา "มุ้ง+ขนาด" ออกจากหัว (ตอนนี้ซ้ำ 2 รอบ) + เพิ่มบานหลักในรายการ</td><td>G1</td><td><span class="pill wait">🟡 รอ B</span></td><td>HANDOFF-G1-รวมก้อน งาน 3</td></tr>
+    <tr><td class="c">2</td><td><b>ผนังเบา ภายใน = "ยิปซั่ม"</b> (ตอนนี้เขียนสมาร์ทบอร์ดทั้งนอก-ใน ผิด) + สเปกเต็ม</td><td>G1/G3</td><td><span class="pill todo">🔴</span></td><td>registry #8 (เช็ค: "ยิปซั่ม"=0)</td></tr>
+    <tr><td class="c">3</td><td><b>ปุ่ม/label จัดสวย</b> ให้สม่ำเสมอทั้งระบบ (Region 4)</td><td>ทุกกลุ่ม</td><td><span class="pill wait">🟡 รอ B</span></td><td>HANDOFF-ปุ่ม-label-จัดสวย</td></tr>
+    <tr><td class="c">4</td><td><b>ใบ 5 บล็อก + ทำใบทุกรุ่นให้พี่ตรวจ</b> (ไม่เคยขายจริง · ไม่มีใบอ้างอิง)</td><td>G7 ม่านซิป</td><td><span class="pill todo">🔴</span></td><td>HANDOFF-ใบ5บล็อก-G2G5G7</td></tr>
+    <tr><td class="c">5</td><td><b>3 จุดมุ้ง</b>: engine คิดต่อบาน · ป้ายกันแมว · ใบ 5 บล็อกทำเต็มเหมือน G1</td><td>G5</td><td><span class="pill todo">🔴</span></td><td>รอรวมส่ง (พี่สั่งตรวจจบก่อน)</td></tr>
+  </table>
+  <div class="note">Backlog ระยะยาว (ยังไม่เร่ง): G3 หลังคา A/B/F/1/5 · G6 ห้อง A3c (ออปชั่นบานเพิ่ม/ฝ้า/จัดซื้อ) — บันทึกไว้ในความจำแล้ว</div>
+
+  <h2>③ ทะเบียนใบสั่ง dev ที่ออกไป (อ้างอิง)</h2>
+  <table>
+    <tr><th style="width:48%">ใบสั่ง (handoff)</th><th>เรื่อง</th></tr>
+    <tr><td>HANDOFF-G1-รวมก้อน-หมายเหตุ+ใบ5บล็อก-2026-06-17</td><td>G1 5 งานรวด (หมายเหตุ/ข้อความ/หัว5บล็อก/ผนังเบา/ธรณี)</td></tr>
+    <tr><td>HANDOFF-ใบเสนอราคา-ข้อความ+สเปก-2026-06-17</td><td>registry เฟิร์น: หมายเหตุ + ราคา/สเปก 9 ข้อ</td></tr>
+    <tr><td>HANDOFF-หมายเหตุติ๊ก-ทุกG-2026-06-17</td><td>ดรอปดาวน์ → ติ๊ก (ทุกกลุ่ม)</td></tr>
+    <tr><td>HANDOFF-ปุ่ม-label-จัดสวย-2026-06-17</td><td>Region 4: label สม่ำเสมอ</td></tr>
+    <tr><td>HANDOFF-ใบ5บล็อก-G2G5G7 / -ทุกG-2026-06-16</td><td>ขยายใบ 5 บล็อกให้ครบทุกกลุ่ม</td></tr>
+    <tr><td>HANDOFF-G1-ใบ5บล็อก / -รอบตรวจ-2026-06-1x</td><td>G1 ใบ 5 บล็อก + 4 ธง (ตรวจเก่า)</td></tr>
+  </table>
+
+  <div class="vis-wrap pgbreak">
+    <div style="grid-column:1/-1"><h2 style="margin-top:0">④ ภาพที่จะออกมา — ใบเสนอราคา G1 (5 บล็อก)</h2></div>
+    <div class="inv bad">
+      <div class="inv-h">❌ ตอนนี้ (หัวยังรก — งานค้าง #1)</div>
+      <div class="ttl">จุดที่ 1 ประตูบานเปิด (รุ่น L ยูโร) <span class="mess">พร้อมมุ้งเฟรมใหญ่ บานเปิด ขนาด 1.2×2.2 ม.</span> (1.2 × 2.2 ม.)</div>
+      <div class="row">- มุ้งเฟรมใหญ่ บานเปิด</div>
+      <div class="hd" style="color:#374151">รายละเอียด</div>
+      <div class="row">- สีอลูมิเนียม: อบพิเศษ · <span class="warn">⚠ ต้องระบุรหัสสี</span></div>
+      <div class="row">- กระจกเขียว หนา 6 มม.</div>
+      <div class="row">- ผ้ามุ้ง: ไฟเบอร์ เทา · เฟรม: ตามสีบาน</div>
+      <div class="note">ปัญหา: ขนาดซ้ำ 2 รอบ · มุ้งโผล่ในหัว · บานหลักไม่ขึ้นรายการ</div>
+    </div>
+    <div class="inv good">
+      <div class="inv-h">✅ เป้าหมาย (หลังเก็บหัว)</div>
+      <div class="ttl">จุดที่ 1 · ประตูบานเปิด (รุ่น L ยูโร) · 1.2 × 2.2 ม. · 1 ชุด</div>
+      <div class="row">- บานเปิด</div>
+      <div class="row">- มุ้งเฟรมใหญ่ (บานเปิด)</div>
+      <div class="hd">OPTION <span style="font-weight:400;color:#6b7280">(โชว์เมื่อมี)</span></div>
+      <div class="hd" style="color:#3730a3">หมายเหตุ <span style="font-weight:400;color:#6b7280">(โชว์เมื่อมี)</span></div>
+      <div class="hd">รายละเอียด</div>
+      <div class="row">- สีอลูมิเนียม: อบสีพิเศษ · <span class="warn">⚠ ต้องระบุรหัสสี</span></div>
+      <div class="row">- กระจก: เขียว หนา 6 มม.</div>
+      <div class="row">- ผ้ามุ้ง: ไฟเบอร์ เทา · เฟรม: ตามสีบาน</div>
+    </div>
+  </div>
+
+  <div style="page-break-inside:avoid">
+    <h2>⑤ ภาพที่จะออกมา — หมายเหตุมาตรฐาน (✅ เสร็จแล้ว)</h2>
+    <div class="inv good" style="max-width:430px">
+      <div class="inv-h">＋ เพิ่มหมายเหตุมาตรฐาน (ติ๊กได้หลายข้อ · ขึ้นในใบ) ▾</div>
+      <div style="font-weight:700;color:#166534;font-size:11px;margin:4px 0 2px">รวมในราคา</div>
+      <div class="tick"><span class="bx">✓</span><span>ราคาที่เสนอรวมงานรื้อประตูเดิม ในกรณีที่เกิดความเสียหาย… (เปลี่ยน/เก็บงานให้ฟรี · ไม่รวมวัสดุ)</span></div>
+      <div class="tick"><span class="bx" style="background:#fff;color:#fff">&nbsp;</span><span>ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง</span></div>
+      <div class="tick"><span class="bx" style="background:#fff;color:#fff">&nbsp;</span><span>ราคาที่เสนอรวมค่าตั้งนั่งร้านเหล็กเพื่อขนของขึ้นพร้อมติดตั้ง</span></div>
+      <div class="note">เดิม: ดรอปดาวน์ เลือกทีละข้อ เปิด-ปิดทุกครั้ง · ใหม่: เห็นครบ ติ๊กรวดเดียวหลายข้อ → ไหลลงช่องหมายเหตุ</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    เช็คของจริงจากโค้ด ไม่ได้เดา · งานตรวจละเอียด (verify เบราว์เซอร์จริงทุกจุด + ราคาไม่เพี้ยน) จะทำหลัง Chat B แก้ครบ แล้วออกไฟล์สรุปผลตรวจให้อีกที<br>
+    ไฟล์เครื่องคิดราคา = public/calculator/index.html · ห้ามอัปขึ้นเว็บสาธารณะ (มีเรตภายใน)
+  </div>
+</body>
+</html>

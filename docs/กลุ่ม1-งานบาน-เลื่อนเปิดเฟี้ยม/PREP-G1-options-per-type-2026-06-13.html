@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:12mm 11mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11.5px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 11px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px;margin:7px 0;font-size:11px;}
+.q{color:#92400e;font-weight:700;}
+</style></head><body>
+
+<h1>PREP (เตรียมขั้น 3) — ออปชั่น + อุปกรณ์เสริม ต่อชนิดบาน G1</h1>
+<p class="sub">เตรียม 2026-06-13 · <b>ดึงจาก ground truth จริง</b> (<code>coverage-dump.mjs 1</code> → <code>test/_coverage-G1.json</code> 41 สินค้า) · decode label จาก <code>buildItemOpts</code> · ใช้ตอนขั้น 3 หลังโครงปุ่มผ่าน</p>
+
+<div class="box"><b>คีย์สำคัญที่ decode ได้:</b>
+<ul style="margin:3px 0;">
+<li><code>fcsides</code> = <b>ครอบวงกบอลู</b> (control ในบาน 30 ตัว · L1514 คิดราคา ครอบ 3/4 ด้าน) → พี่นัทขอย้ายไป <b>หมวดอุปกรณ์เสริม</b></li>
+<li><code>o-dfm</code> = <b>ดรอปพื้น</b> (number ม. · L3280 — เฉพาะงานบานพื้น · <b>ตัด</b> เลื่อนภายใน/บานหมุน/ติดตาย/มุ้ง/ตู้)</li>
+<li><code>o-removeold</code> = <b>รื้อของเดิม (รายการนี้)</b> (checkbox · L3272 — มีทุกรายการ)</li>
+</ul>
+→ <b>3 ตัวนี้ = "อุปกรณ์เสริม" ยุบเป็นดรอปดาวเดียวแบบ G6</b> · ที่เหลือ = ออปชั่นหลัก (ชิป/กล่อง เห็นชัด)</div>
+
+<h2>ตารางออปชั่นต่อชนิด (ฐานความจริง = render จริง)</h2>
+<table>
+<tr><th>ชนิด</th><th>ออปชั่นหลัก (โชว์ชิป)</th><th>อุปกรณ์เสริม (ดรอปดาวเดียว)</th><th>ฐาน</th></tr>
+<tr><td>บานเลื่อน ยูโร/เซมิ</td><td>ทิศเลื่อน · รางล่าง · มือจับ · ล็อกเลื่อน · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>เลื่อนภายในรางบน</td><td>ทิศเลื่อน · ราง · ล็อกเลื่อน (+มือจับX สลิม/X)</td><td>ครอบวงกบ · รื้อของเดิม <i>(ไม่มีดรอปพื้น)</i></td><td>สี+กระจก</td></tr>
+<tr><td>เลื่อนภายในรางล่าง</td><td>ทิศเลื่อน · รางล่าง · ล็อกเลื่อน</td><td>ครอบวงกบ · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานยก</td><td>มอเตอร์ · มุ้ง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>PC Door 2/4</td><td>ล็อกเลื่อน · มือจับ · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานเปิด ยูโร/โซลิด</td><td>ธรณี · โช้คอัพ · มือจับ · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานเปิด X-series</td><td>ธรณี · โช้คอัพ · มือจับ(+X) · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานเปิด Velora</td><td>ธรณี · มือจับ · มุ้ง · แผ่นทึบล่าง <i>(ไม่มีโช้ค)</i></td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานกระทุ้ง</td><td>โหมดกระทุ้ง · มือจับกระทุ้ง · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานหมุนเมืองทอง</td><td>มือจับ</td><td>ครอบวงกบ · รื้อของเดิม <i>(ไม่มีดรอปพื้น)</i></td><td>สี+กระจก</td></tr>
+<tr><td>บานเฟี้ยม ยูโร/เซมิ</td><td>ธรณีเฟี้ยม · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานเฟี้ยม X-series</td><td>ธรณีเฟี้ยม · มือจับX · มุ้ง · แผ่นทึบล่าง</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>กระจกติดตาย</td><td>แผ่นทึบล่าง <i>(ตัด มือจับ/มุ้ง)</i></td><td>ครอบวงกบ · รื้อของเดิม <i>(ไม่มีดรอปพื้น)</i></td><td>สี+กระจก</td></tr>
+<tr><td>บานเปลือยติดตาย</td><td>— เฉพาะขนาด —</td><td>รื้อของเดิม</td><td>กระจก <span class="q">(เช็คซ้ำ)</span></td></tr>
+<tr><td>ประตูสวิง/เลื่อน บานเปลือย</td><td>ประเภทบานเปลือย · สีเฟรม</td><td>รื้อของเดิม</td><td>กระจก</td></tr>
+<tr><td>เส้นคาดตาราง</td><td>สีเส้นคาด</td><td>รื้อของเดิม</td><td>— (ไม่มีสี/กระจกแยก)</td></tr>
+<tr><td>ดัดโค้ง คู่/เดี่ยว/สลิม</td><td>มือจับ <i>(ตัดมุ้ง)</i></td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>บานติดตายดัดโค้ง</td><td>— เฉพาะขนาด —</td><td>ครอบวงกบ · ดรอปพื้น · รื้อของเดิม</td><td>สี+กระจก</td></tr>
+<tr><td>shower</td><td>อุปกรณ์ shower · ชนิด shower · ประเภทประตู shower</td><td>ดรอปพื้น · รื้อของเดิม <i>(ไม่มีครอบวงกบ)</i></td><td>— <span class="q">(เช็คซ้ำ สี/กระจก)</span></td></tr>
+<tr><td>YKK Vent/Exhido/Tostem</td><td>โช้คอัพ</td><td>รื้อของเดิม <i>(ไม่มีครอบวงกบ)</i></td><td>สี+กระจก <span class="q">(เช็คซ้ำ)</span></td></tr>
+<tr><td>ลูกฟูก 1/2 ทาง</td><td>ชนิดประตู · สีผิว</td><td>รื้อของเดิม</td><td>— (per_sqm)</td></tr>
+<tr><td>คอมโพสิต 3/4 มม.</td><td>ชนิดประตู</td><td>รื้อของเดิม</td><td>— (per_sqm)</td></tr>
+</table>
+
+<div class="warn"><b>จุดต้อง <span class="q">เช็คซ้ำ</span> ก่อนส่ง dev (อย่าเดา):</b>
+<ol style="margin:3px 0;">
+<li><b>ครอบวงกบ (fcsides)</b> ตอนนี้อยู่ inline ในบาน → ยืนยันย้ายเข้าดรอปดาวอุปกรณ์เสริม (ราคายังคิดเหมือนเดิม L1514 · แค่ย้ายที่แสดง)</li>
+<li><b>โซลิด ทู/วัน "ช่องแสง"</b> — coverage ไม่เจอ control <code>o-solidlight</code> (เคยจำว่ามี) → ต้องเปิด index.html ยืนยันว่ามี/ไม่มี</li>
+<li><b>สี/กระจก ของ shower · บานเปลือย · YKK</b> — ยังไม่ชัวร์ว่าโชว์ช่องสีอลู/กระจกไหม (NO_COLOR_CATS มี บานเปลือย) → ยืนยันรายตัว</li>
+<li><b>ดรอปพื้น (dfm)</b> โผล่กับ shower/ลูกฟูก/YKK ไหม — โค้ดตัดเฉพาะ เลื่อนใน/หมุน/ติดตาย/มุ้ง/ตู้ ที่เหลือโชว์หมด → ยืนยันว่าต้องการให้โชว์จริงไหม</li>
+</ol>
+ก่อนส่งจริง: รัน <code>coverage-dump.mjs 1</code> ซ้ำ + เปิด index.html ยืนยัน 4 ข้อนี้</div>
+
+<h2>ค่าเริ่มต้น (พี่นัทเคาะ)</h2>
+<ul>
+<li>แผ่นทึบล่าง: ค่าเริ่มต้น <b>กว้าง = ขนาดบาน</b></li>
+<li>คาดตาราง: เส้นตั้ง <b>= จำนวนบาน</b></li>
+<li>ทุกออปชั่น: โชว์ ±ราคา + แก้ข้อความ/ราคาได้ · แยกราคาครบทุกรายการ (ดู HANDOFF-price-breakdown)</li>
+</ul>
+</body></html>

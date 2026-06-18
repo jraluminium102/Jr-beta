@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.flow{counter-reset:s;margin:4px 0;}
+.flow .st{display:flex;gap:8px;align-items:flex-start;margin:3px 0;font-size:10.5px;}
+.flow .n{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:#fbe9ea;color:#B3151D;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;}
+.tag{display:inline-block;font-size:9px;padding:0 5px;border-radius:8px;margin-left:3px;}
+.t-blue{background:#E6F1FB;color:#185FA5;}.t-amber{background:#FAEEDA;color:#BA7517;}.t-green{background:#EAF3DE;color:#3B6D11;}
+</style></head><body>
+
+<h1>UX DESIGN MASTER — ฟอร์มกรอกงานบาน G1 (แม่แบบดีไซน์)</h1>
+<p class="sub">2026-06-14 · สรุปหน้าตา/แนวคิดดีไซน์ UX + การโชว์ราคา · ไว้ใช้ซ้ำ/ขยายไปกลุ่มอื่น/ส่ง dev · คู่ดราฟกดเล่น <code>DRAFT-G1-ux-FULL-2026-06-13.html</code></p>
+
+<div class="good"><b>สรุปสั้น:</b> ฟอร์ม 1 รายการบาน · มือถือ-เฟิร์นกรอกไว · เลือกแบบเป็นปุ่ม 6 กลุ่ม → ออปชั่นกรองตามแบบ → <b>เห็นราคาทุกจุดขณะกรอก</b> → พรีวิวใบเสนอราคาแยกราคาท้ายฟอร์ม · ธีมแดง JR</p></div>
+
+<h2>1) ลำดับฟอร์ม (บน → ล่าง) · 11 ขั้น</h2>
+<div class="flow">
+<div class="st"><span class="n">1</span><span><b>กลุ่มงาน</b> — ปุ่ม G1–G7</span></div>
+<div class="st"><span class="n">2</span><span><b>ชนิดบาน</b> — ปุ่มการ์ด 6 กลุ่มหลัก (เลื่อน/เปิด/เฟี้ยม/ติดตาย-เปลือย/ดัดโค้ง/อื่นๆ-พิเศษ) → ชิปรุ่นย่อย</span></div>
+<div class="st"><span class="n">3</span><span><b>ลักษณะการเปิด</b> — ชิป (กรองตามแบบ · เลื่อน/สลับ/คู่กลาง · กระทุ้ง เปิดล่าง/ข้าง/Tilt&Turn)</span></div>
+<div class="st"><span class="n">4</span><span><b>ขนาด &amp; จำนวน</b> — กว้าง·สูง·จำนวนบาน·<b>บานเปิด→บานติดตาย(auto)</b>·จำนวนชุด</span></div>
+<div class="st"><span class="n">+</span><span><b>ผสมบาน (บานย่อย)</b> — list: ชนิด(รวมอลูทึบ)+ขนาด+ราคา · กด ⚙ เพิ่มออปชั่น/เสริมในตัวแต่ละบาน</span></div>
+<div class="st"><span class="n">5</span><span><b>สี &amp; กระจก</b> — สีอลู 13 · กระจก 6 กลุ่ม→ความหนา (ฐาน)</span></div>
+<div class="st"><span class="n">6</span><span><b>ออปชั่นหลัก</b> — ธรณี/โช๊ค/ราง/มอเตอร์ (กรองตามแบบ)</span></div>
+<div class="st"><span class="n">7</span><span><b>เสริมบานกระจก</b> — มือจับ/มุ้ง/ล็อก + คาดตาราง/ลูกฟูก <span class="tag t-amber">มี sub-panel กรอกย่อย</span></span></div>
+<div class="st"><span class="n">8</span><span><b>อุปกรณ์เสริม</b> — ดรอปดาวเดียว (ครอบวงกบ/ดรอปพื้น/รื้อ)</span></div>
+<div class="st"><span class="n">9</span><span><b>OPTION ลูกค้า</b> — เลือกหมวด → รายการย่อย · กดเติม แก้/ลบ/กรอกเองได้</span></div>
+<div class="st"><span class="n">10</span><span><b>ตำแหน่ง / หมายเหตุ</b></span></div>
+<div class="st"><span class="n">11</span><span><b>ออปชั่นทั้งใบ</b> (ท้ายสุด · หมวดเหมือนข้อ 9 · ปรับทุกชุด ±/ชุด คิดทีเดียว)</span></div>
+<div class="st"><span class="n">฿</span><span><b>แถบราคารวม</b> ติดล่างตลอด (sticky)</span></div>
+</div>
+
+<h2>2) การโชว์ราคา — 4 ระดับ (หัวใจของดีไซน์)</h2>
+<table>
+<tr><th>ระดับ</th><th>โชว์ที่ไหน</th><th>ทำอะไร</th></tr>
+<tr><td>① บนชิป</td><td>ทุกออปชั่นที่กดติด</td><td>ขึ้น ฿ ตรงชิปทันที (·เรต = ตามเรตจริง)</td></tr>
+<tr><td>② ต่อกล่อง</td><td>มุมขวาหัวข้อทุก section</td><td>subtotal ของกล่องนั้น โชว์เสมอ (แม้ ฿0)</td></tr>
+<tr><td>③ พรีวิวใบเสนอราคา</td><td>การ์ดท้ายฟอร์ม</td><td>แยกราคาทุกรายการ (ฐานบาน+ออปชั่น+บานย่อย+OPTION) + รวม/ชุด + ออปชั่นทั้งใบ + ยอดรวม</td></tr>
+<tr><td>④ แถบรวม</td><td>ล่างจอ sticky</td><td>ยอดรวมทั้งใบ realtime</td></tr>
+</table>
+<div class="box"><b>กฎราคา:</b> <span style="color:#3B6D11">ตัวเลขจริง</span> = กระจก(s×พื้นที่)/ลูกฟูก/อลูทึบ(พื้นที่×เรต)/มือจับ/โช๊ค/มอเตอร์/คาดตาราง/ดรอปพื้น · <span style="color:#BA7517">"ตามเรตจริง"</span> (ขั้นบันได dev คำนวณ) = สีอลู/มุ้ง/ครอบวงกบ · ทุกช่องราคา <b>แก้ได้</b></div>
+
+<h2>3) ฟีเจอร์ดีไซน์สำคัญ</h2>
+<table>
+<tr><th>ฟีเจอร์</th><th>รายละเอียด</th></tr>
+<tr><td>ปุ่ม 6 กลุ่ม → รุ่นย่อย</td><td>การ์ดไอคอน+ชื่อ (grid) · ตัวเลือก = พื้นแดง · รุ่นยกเลิกขายสีจาง ⊘</td></tr>
+<tr><td>กรองออปชั่นตามแบบ</td><td>แต่ละแบบโชว์เฉพาะออปชั่นที่มีจริง · ที่ไม่มีโชว์ "— ไม่มีสำหรับแบบนี้ —" (ครบ 11 ขั้นเสมอ)</td></tr>
+<tr><td>กลุ่มย่อยกรอก (sub-panel)</td><td>กดออปชั่น → กล่องย่อยโผล่ให้กรอกรายละเอียด + ราคา (เช่น คาดตาราง เส้นนอน/ตั้ง · มือจับ เลือกรุ่น · กระจก 6กลุ่ม→ความหนา)</td></tr>
+<tr><td>ผสมบาน (บานย่อย)</td><td>list เพิ่มแถว: ชนิด(+อลูทึบ)+กว้าง×สูง+ราคา auto · กด ⚙ เพิ่มออปชั่น/เสริมในตัวบานย่อย → แยกราคาเป็นบรรทัด "↳"</td></tr>
+<tr><td>OPTION แบบหมวด</td><td>เลือกหมวด (สี/กระจก·ความหนา/กระจก·ชนิด/มือจับ/มุ้ง/งานเพิ่ม/ส่วนลด) → รายการย่อย → กดเติม แก้/ลบ/กรอกเอง</td></tr>
+<tr><td>auto บานติดตาย</td><td>กรอกบานเปิด → ติดตาย = จำนวนบาน − เปิด (อัตโนมัติ)</td></tr>
+<tr><td>ลูกฟูก/อลูทึบ กรอกขนาดเอง</td><td>default = ขนาดบาน · แก้ได้ · โชว์สูตร กว้าง×สูง×เรต</td></tr>
+</table>
+
+<h2>4) สไตล์ / ภาพ</h2>
+<table>
+<tr><td>ธีม</td><td>แดง JR #B3151D · การ์ดขาว ขอบ 1px มน · มือถือ max-width 560</td></tr>
+<tr><td>ปุ่มหลัก</td><td>grid 3 คอลัมน์ · ไอคอนบน-ชื่อล่าง · เลือก=พื้นแดง</td></tr>
+<tr><td>ชิป/ออปชั่น</td><td>ชิปกลม (.a) กดติด=แดง · เสริมบานกระจก=เหลือง(amber) · sub-panel พื้นครีม</td></tr>
+<tr><td>ราคา</td><td>tabular-nums · พรีวิวใบ = การ์ดขอบแดง 2px · แถบรวม = แถบแดงล่าง</td></tr>
+</table>
+
+<h2>5) หลักดีไซน์ที่ยึด (เอาไปใช้กลุ่มอื่น)</h2>
+<div class="box">
+1. <b>เน้นปุ่ม/ชิป ไม่เน้นดรอปดาวน์</b> (ตัวเลือก ≤5 = ชิป · เยอะ = กลุ่ม→ย่อย)<br>
+2. <b>กรองตามแบบ</b> โชว์เฉพาะที่มีจริง · ครบทุกขั้นเสมอ (ขั้นไม่เกี่ยวโชว์ "ไม่มี")<br>
+3. <b>เห็นราคาทุกจุดขณะกรอก</b> (ชิป/กล่อง/พรีวิว/แถบรวม) · แก้ราคา/ข้อความได้ทุกตัว<br>
+4. <b>สำคัญขึ้นบน เสริม/หมายเหตุลงล่าง ราคาท้ายสุด</b><br>
+5. <b>กรอกง่าย ≤2 แตะ</b> · ผสมบาน/OPTION = list เพิ่มแถว ลบได้
+</div>
+
+<p class="sub">ไฟล์คู่: <code>SUMMARY-G1-options-extras-MASTER.pdf</code> (ออปชั่น) · <code>PRICECHECK-G1-2026-06-13.pdf</code> (ราคา เฟิร์น) · <code>REF-G1-pricing-data.md</code> (เรตดิบ dev) · ทั้งหมดอยู่ <code>docs/กลุ่ม1-งานบาน-เลื่อนเปิดเฟี้ยม/</code></p>
+</body></html>

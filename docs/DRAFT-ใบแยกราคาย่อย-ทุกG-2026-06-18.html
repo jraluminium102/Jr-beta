@@ -1,0 +1,84 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ — ใบเสนอราคาแยกราคาย่อย (ทุก G)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f4f4f5;color:#1a1a1a;padding:18px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:21px;color:#B3151D;margin-bottom:2px}.sub{font-size:13px;color:#666;margin-bottom:12px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.tg{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid #B3151D;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;color:#B3151D;cursor:pointer}
+.tg.on{background:#B3151D;color:#fff}
+.note{font-size:12px;color:#777}
+.paper{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.1);overflow:hidden;border:1px solid #e5e5e5;margin-bottom:14px}
+.ph{background:#B3151D;color:#fff;padding:8px 14px;font-weight:700;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:6px 14px;vertical-align:top}
+.it{border-top:1px solid #eee}
+.iname{font-weight:700}
+.num{text-align:right;white-space:nowrap}
+.sub-line td{padding:2px 14px 2px 30px;font-size:12.5px;color:#666;border:none}
+.sub-line .num{color:#444}
+.plus{color:#1f7a34}
+.tot td{border-top:2px solid #B3151D;font-weight:700;padding-top:8px}
+.lbl-mode{font-size:11px;background:#eef;border:1px solid #ccd;border-radius:20px;padding:1px 8px;color:#3d4db3;margin-left:6px}
+.legend{font-size:12px;color:#555;background:#fff;border:1px solid #eee;border-radius:8px;padding:8px 12px;margin-bottom:14px}
+.foot{margin-top:8px;font-size:12px;color:#888}
+.feas{background:#eefaf0;border:1px solid #9bd7a8;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1f5b2e;margin-top:14px}
+.feas b{color:#176a2a}
+</style></head><body><div class="wrap">
+<h1>🧾 ดราฟ — ใบเสนอราคา "แยกราคาย่อย" ทุกกลุ่ม</h1>
+<div class="sub">เผื่อลูกค้าอยากเห็นที่มาราคา · ต่อยอดปุ่ม "แยกราคา" เดิม (ที่ตอนนี้แยกได้แค่ระดับชุด) → เพิ่มระดับ "ส่วนประกอบ"</div>
+
+<div class="bar">
+ <span class="tg">รวมราคา (ปกติ)</span>
+ <span class="tg on">＋ แสดงราคาย่อย ✓</span>
+ <span class="note">← ปุ่มสลับบนหัวใบ · default = รวมราคา (สะอาด) · ลูกค้าอยากเห็น = กดแยก</span>
+</div>
+
+<div class="legend">เปรียบเทียบ: <b>ซ้าย/บน = ตอนนี้</b> (1 ราคา/รายการ) · <b>ขวา/ล่าง = กดแยกราคาย่อย</b> (เห็นที่มา)</div>
+
+<!-- G1 ตัวอย่าง -->
+<div class="paper">
+ <div class="ph">G1 บานเลื่อน <span class="lbl-mode">โหมดแยกราคาย่อย</span></div>
+ <table>
+  <tr class="it"><td class="iname">ประตูบานเลื่อน 4 บาน (3.0 × 2.4 ม.)</td><td class="num">47,000.00</td></tr>
+  <tr class="sub-line"><td>• ตัวบาน + กระจกเขียว 6 มม. (ฐาน)</td><td class="num">38,000.00</td></tr>
+  <tr class="sub-line"><td>• อัพเกรดกระจก เทมเปอร์ 10 มม.</td><td class="num plus">+3,500.00</td></tr>
+  <tr class="sub-line"><td>• สีอบ เทาซาฮาร่า</td><td class="num plus">+1,500.00</td></tr>
+  <tr class="sub-line"><td>• มุ้งจีบ ผ้าไฟเบอร์</td><td class="num plus">+4,000.00</td></tr>
+ </table>
+</div>
+
+<!-- G3 ตัวอย่าง -->
+<div class="paper">
+ <div class="ph">G3 หลังคา <span class="lbl-mode">โหมดแยกราคาย่อย</span></div>
+ <table>
+  <tr class="it"><td class="iname">หลังคา โพลีคาร์บอเนต (4.0 × 3.0 ม.)</td><td class="num">52,000.00</td></tr>
+  <tr class="sub-line"><td>• โครงอลู + แผ่นมุง (ฐาน)</td><td class="num">42,000.00</td></tr>
+  <tr class="sub-line"><td>• รางน้ำ + ปิดปลาย</td><td class="num plus">+6,000.00</td></tr>
+  <tr class="sub-line"><td>• คานเหล็กถัก</td><td class="num plus">+4,000.00</td></tr>
+ </table>
+ <div class="foot" style="padding:0 14px 8px;">(G3 มีโครงราคาย่อยอยู่แล้ว = g3box → ดึงมาโชว์ได้เลย)</div>
+</div>
+
+<!-- G6 ตัวอย่าง -->
+<div class="paper">
+ <div class="ph">G6 กั้นห้องกระจก <span class="lbl-mode">แยก 2 ชั้น: ชุด → ส่วนประกอบ</span></div>
+ <table>
+  <tr class="it"><td class="iname">ห้องกระจก ด้าน A — บานเลื่อน 4 บาน</td><td class="num">45,000.00</td></tr>
+  <tr class="sub-line"><td>• ตัวบาน + กระจก + สีอลู</td><td class="num">45,000.00</td></tr>
+  <tr class="it"><td class="iname">ด้าน B — บานเปิด 2 บาน</td><td class="num">28,000.00</td></tr>
+  <tr class="it"><td class="iname">หลังคา/ฝ้า</td><td class="num">35,000.00</td></tr>
+  <tr class="tot"><td>รวมห้อง</td><td class="num">108,000.00</td></tr>
+ </table>
+ <div class="foot" style="padding:0 14px 8px;">(ชุด = แยกแต่ละด้านได้แล้ว · เพิ่มแยกส่วนประกอบในแต่ละด้าน)</div>
+</div>
+
+<div class="feas">
+ ✅ <b>ทำได้ทุก G1-G6</b> — engine คิดแยกอยู่แล้ว: <b>ตัวบาน(base) · กระจก(glassUp) · สี(colorUp) · ออปชั่น/มุ้ง(opt+addonLines)</b> · G3 มี g3box · G6 แยกชุดได้แล้ว
+ <br>→ งานของ B = เปิดค่าย่อยพวกนี้เป็น "บรรทัดราคา" + ทำปุ่มสลับ (ต่อจาก qSplit เดิม) · <b>ราคารวมเท่าเดิม ไม่แตะ engine คิดเงิน</b> (แค่โชว์ที่มา)
+</div>
+
+<div class="foot" style="margin-top:10px;">💡 default = "รวมราคา" (ใบสะอาดเหมือนเดิม) · ลูกค้าอยากเห็นที่มา = กด "แสดงราคาย่อย" · พิมพ์/PDF ได้ทั้ง 2 แบบ</div>
+</div></body></html>

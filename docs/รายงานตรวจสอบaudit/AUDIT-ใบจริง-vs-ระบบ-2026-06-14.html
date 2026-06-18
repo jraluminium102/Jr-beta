@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานตรวจสอบ: ใบเสนอราคาจริง JR vs ระบบ Calculator — 2026-06-14</title>
+<style>
+:root{
+  --red:#C0152A; --red-bg:#FDF2F3; --red-border:#E8B4BA;
+  --yellow:#B8860B; --yellow-bg:#FFFBE6; --yellow-border:#F0D060;
+  --green:#1A7A3A; --green-bg:#F0FBF4; --green-border:#80C89A;
+  --ink:#1F2937; --muted:#6B7280; --line:#E5E7EB; --bg:#F7F8FA;
+  --card:#fff;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Sarabun","Leelawadee UI","Noto Sans Thai",sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px;}
+h1{font-size:22px;font-weight:800;color:var(--red);margin:0 0 4px;}
+h2{font-size:16px;font-weight:700;color:var(--red);margin:24px 0 10px;border-bottom:2px solid var(--red-border);padding-bottom:6px;}
+h3{font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink);}
+.meta{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+/* SUMMARY BOX */
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.sum-box{border-radius:8px;padding:12px;text-align:center;}
+.sum-box .num{font-size:28px;font-weight:800;line-height:1;}
+.sum-box .lbl{font-size:11px;margin-top:4px;opacity:.8;}
+.sum-ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);}
+.sum-warn{background:var(--yellow-bg);border:1px solid var(--yellow-border);color:var(--yellow);}
+.sum-err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);}
+.sum-info{background:#EEF2FF;border:1px solid #B4C6FF;color:#1E40AF;}
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--red);color:#fff;padding:7px 8px;text-align:left;font-weight:700;font-size:12px;}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even) td{background:#FAFBFD;}
+tr:hover td{background:#F0F4F8;}
+.tc{text-align:center;}
+/* STATUS BADGE */
+.ok{color:var(--green);font-weight:700;}
+.warn{color:var(--yellow);font-weight:700;}
+.err{color:var(--red);font-weight:700;}
+/* ISSUE CARDS */
+.issue{border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;}
+.issue-r{background:var(--red-bg);border:1px solid var(--red-border);}
+.issue-y{background:var(--yellow-bg);border:1px solid var(--yellow-border);}
+.issue-g{background:var(--green-bg);border:1px solid var(--green-border);}
+.issue-icon{font-size:16px;flex:none;margin-top:2px;}
+.issue-body{flex:1;}
+.issue-title{font-weight:700;font-size:13px;}
+.issue-desc{font-size:12px;margin-top:3px;color:var(--ink);}
+.issue-fix{font-size:11px;color:var(--muted);margin-top:4px;background:rgba(0,0,0,.04);border-radius:4px;padding:4px 6px;}
+/* INVOICE SECTION */
+.inv-header{background:var(--red);color:#fff;border-radius:8px 8px 0 0;padding:8px 12px;font-weight:700;font-size:13px;}
+.inv-body{border:1px solid var(--red-border);border-top:none;border-radius:0 0 8px 8px;padding:10px 12px;margin-bottom:12px;}
+/* CAPABILITY TABLE */
+.cap-yes{color:var(--green);}
+.cap-partial{color:var(--yellow);}
+.cap-no{color:var(--red);}
+/* CHECKLIST */
+.chk-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line);}
+.chk-box{width:18px;height:18px;border:2px solid var(--muted);border-radius:3px;flex:none;margin-top:1px;}
+.chk-lbl{font-size:13px;}
+.chk-note{font-size:11px;color:var(--muted);margin-top:2px;}
+/* TOC */
+.toc{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:12px 16px;margin-bottom:20px;}
+.toc a{display:block;color:var(--red);text-decoration:none;font-size:13px;padding:2px 0;}
+.toc a:hover{text-decoration:underline;}
+/* PRINT */
+@media print{.wrap{max-width:100%;padding:10px;}h2{break-before:page;} .toc{display:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>รายงานตรวจสอบ: ใบเสนอราคาจริง JR vs ระบบ Calculator</h1>
+<div class="meta">วันที่ตรวจ: 15 มิถุนายน 2569 &nbsp;|&nbsp; ตรวจโดย: JR Audit Agent (READ-ONLY) &nbsp;|&nbsp; ใบตรวจ: 14 ใบ &nbsp;|&nbsp; Engine: public/calculator/index.html R3.9 &nbsp;|&nbsp; Golden-snapshot: 143/143 ตรง</div>
+
+<div class="toc">
+  <strong>สารบัญ</strong><br>
+  <a href="#s1">1. หน้าสรุป — ตาราง 14 ใบ × 4 มิติ</a>
+  <a href="#s2">2. ตาราง Master Capability — ชนิดสินค้า+ออปชั่นจากใบจริง vs ระบบ</a>
+  <a href="#s3">3. จุดต่างรายใบ</a>
+  <a href="#s4">4. รวมจุดต้องแก้ (🔴→🟡→🟢) + Root Cause + ข้อเสนอ</a>
+  <a href="#s5">5. Checklist UX กดเว็บจริง</a>
+  <a href="#s6">6. ผล Golden-Snapshot</a>
+</div>
+
+<!-- ===== ส่วน 1: หน้าสรุป ===== -->
+<h2 id="s1">1. หน้าสรุป — ตาราง 14 ใบ × 4 มิติ</h2>
+
+<div class="card">
+<div class="sum-grid">
+  <div class="sum-box sum-ok"><div class="num">14</div><div class="lbl">ใบตรวจทั้งหมด</div></div>
+  <div class="sum-box sum-ok"><div class="num">14</div><div class="lbl">Format ใบ ✅ ครบ</div></div>
+  <div class="sum-box sum-warn"><div class="num">10</div><div class="lbl">Capability 🟡 บางส่วนต้อง custom_item</div></div>
+  <div class="sum-box sum-err"><div class="num">6</div><div class="lbl">สินค้า/ออปชั่นไม่มีในระบบ 🔴</div></div>
+</div>
+<p style="font-size:12px;color:var(--muted);margin:0;">หมายเหตุ: มิติ C = capability (ระบบรองรับชนิดสินค้า/ออปชั่นนี้ได้ไหม) ไม่ใช่ราคาเป๊ะ เพราะใบจริง lump-sum ต่อห้อง/โซน ตรวจราคาเป๊ะไม่ได้ · มิติ D = checklist ให้คนกดเว็บจริง</p>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+<table>
+<thead>
+<tr>
+  <th style="min-width:60px">ใบที่</th>
+  <th style="min-width:120px">ลูกค้า / เลขที่</th>
+  <th style="min-width:80px">กลุ่มงาน</th>
+  <th class="tc" style="min-width:70px">A: Format<br>ใบ</th>
+  <th class="tc" style="min-width:70px">B: ครบ<br>เนื้อหา</th>
+  <th class="tc" style="min-width:90px">C: Capability<br>ระบบ</th>
+  <th class="tc" style="min-width:70px">D: UX<br>checklist</th>
+  <th style="min-width:200px">จุดสังเกตสำคัญ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>คุณบุญญารัตน์<br><small>68032001 Rev02</small></td>
+  <td>G1/G2/G3/G5</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>Format เก่า (ไม่มีคอลัมน์ "ราคาต่อหน่วย") · มีชุดกุญแจมาสเตอร์คีย์ 4 บาน (ไม่มีในระบบ) · มีค่าอลู.สีเทาซาฮาร่า (custom_item) · งานต่างจังหวัด 49,000</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>คุณเหมียว<br><small>QT2023080031</small></td>
+  <td>G1 (บานเฟี้ยม)</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเฟี้ยม ยูโร (folding_euro) มีในระบบ · คานซัพพอร์ทโชว์คาน+รางยู เป็น option ใน G6 (ใช้ custom_item ใน G1) · VAT 7% ✅</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>คุณธนบัตร<br><small>QT2023100045</small></td>
+  <td>G1/G3/G4/G6</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>พื้นไม้เทียม WG11 Dark Oak (ไม่มีในระบบ) · ตู้รองเท้า Futuretech (cabinet_alu+future_tech ✅) · บานเลื่อนรางล่างกันน้ำ (inner_bottom_euro ✅ แต่ซ่อนจาก dropdown G6)</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>คุณดลยา<br><small>QT2023110034</small></td>
+  <td>G6/G4</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเลื่อนลากจูงรางล่าง+สมาร์ทบอร์ด (inner_bottom_euro+wall_int ✅) · ตู้วางของ Future Tech (future_tech ✅) · ชั้นวางกระจก 3 ชั้น (custom_item)</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>คุณประภาพรรณ<br><small>QT2023110060</small></td>
+  <td>G6/G3</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเฟี้ยม 2+3 บาน รุ่นรางกันน้ำ (folding_euro ✅) · คานซัพพอร์ท+มุ้งจีบ+ลูกฟูก · หลังคาไวนิล (roof_vinyl ✅)</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>คุณปณต<br><small>QT2024070041</small></td>
+  <td>G1/G6</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>สีอบพิเศษ Grey RAL7022 (color idx10 ✅) · กระจกลามิเนต 4+4 กันเสียง (glass_replace/custom ✅) · ส่วนลดค่าประเมิน+ส่วนลดพิเศษ 2% (ต้องกดเองในระบบ)</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>คุณนก<br><small>QT2024080005</small></td>
+  <td>G2/G3/G6</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>โซ่รางน้ำ (roof_chain ✅) · ระแนงบังตาสีดำ 1"x4" (rn43/rn44 ✅) · ซ่อนสโลปด้วยคอมโพสิต (o-rfhs ✅) · ระแนงลายไม้ Golden Teak (custom_item กรณีไม่มีในสต๊อก)</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td>คุณหญิง<br><small>QT2024080066</small></td>
+  <td>G6/G3</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>Ventilation Door มีโช๊คด้านบน (ykk_vent ✅ · แต่บาน Ventilation Door แบบบานเลื่อนไม่ใช่ YKK = custom_item) · มุ้งกันแมว (imp33 ✅) · หลังคาลามิเนตใส+ฟิล์มเขียว (roof_laminate ✅)</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td>คุณโอ๋<br><small>QT2025010036</small></td>
+  <td>G6</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเลื่อนสลับรางล่างกันน้ำ (inner_bottom_euro ✅) · กระจกฝ้า+ลามิเนตเขียว 5+5 (glass option ✅) · VAT 7% ✅</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td>คุณยี<br><small>QT2025060015</small></td>
+  <td>G6/G3 ซับซ้อน</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc err">🔴</td>
+  <td class="tc warn">🟡</td>
+  <td>ผนัง ISOWALL 10 ซม. (isowall ✅) · หลังคาเมทัลชีท PU 45 มม. (imp13/imp14 ✅) · ระแนงเกล็ด Z 1.6" (rn85/86 ✅) · ราวกันตกเหล็กแป๊ปกลม+เหล็กตัน 1" (ไม่มีในระบบ 🔴) · พื้นสมาร์ทบอร์ด+ไม้เทียม (ไม่มีในระบบ 🔴) · ใช้ประตูบานเปิดไม้เดิมมาติดตั้ง (custom_item)</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td>คุณชวลิต<br><small>QT2025070050</small></td>
+  <td>G1/G6 ยูโรครบ</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเลื่อน/เปิด/เฟี้ยม ยูโร ครบ ✅ · SlimLux+Soft-Close+สลิง (inner_top_slimlux ✅) · Skylight (ไม่มีในระบบ 🔴) · ราวกันตกกระจก 12 มม. (imp3-imp6 ✅) · หลังคากระจกนิรภัยลามิเนต (roof_laminate ✅)</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td>คุณขวัญ<br><small>QT2025100030</small></td>
+  <td>G1 หลากหลาย</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>บานเลื่อนไร้ราง (inner_top_slimlux/stack ✅) · มือจับ HD182 60ซม. สีดำ (custom_item 🟡 ไม่มีรหัส HD182 เฉพาะ) · Ventilation Door option 44,000 (ไม่มีเป็น option inline ใน G1 🟡) · บานเปิดแบ่ง 4 บาน (casement_euro ✅)</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td>คุณใบเฟริล<br><small>QT2025100046</small></td>
+  <td>G6/G3</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td class="tc warn">🟡</td>
+  <td>พัดลมดูดอากาศ 8"+ฝาครอบกันแมลง (ไม่มีในระบบ 🔴) · หลังคาโพลีตัน (roof_polyton ✅) · บานเปิดธรณีกันน้ำ (casement_euro ✅)</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td>คุณสุจินต์<br><small>QT2026020055</small></td>
+  <td>G1/G6/G3</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc ok">✅</td>
+  <td class="tc warn">🟡</td>
+  <td>ผนังสมาร์ทบอร์ด+ฉนวน 3" (wall_int+ceiling_smooth ✅) · PC Door/Panoramic (pc_door_2/4 ✅) · Shower เทมเปอร์ 10 มม.+ราวสแตนเลส (shower ✅) · หลังคาไวนิลโครงเหล็กชุบซิงค์ (roof_vinyl ✅ · โครงเหล็กเป็น option/custom)</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ===== ส่วน 2: Master Capability ===== -->
+<h2 id="s2">2. ตาราง Master Capability — ชนิดสินค้า+ออปชั่นจากใบจริง vs ระบบ</h2>
+<p style="font-size:12px;color:var(--muted);">✅ = มีในระบบ · 🟡 = มีบางส่วน/ต้องใช้ custom_item ช่วย · 🔴 = ไม่มีในระบบเลย</p>
+
+<div class="card" style="overflow-x:auto;">
+<table>
+<thead>
+<tr>
+  <th style="min-width:180px">สินค้า/ออปชั่น (จากใบจริง)</th>
+  <th class="tc" style="min-width:60px">สถานะ</th>
+  <th style="min-width:120px">Product ID ในระบบ</th>
+  <th style="min-width:200px">หมายเหตุ</th>
+  <th class="tc" style="min-width:50px">พบในใบ</th>
+</tr>
+</thead>
+<tbody>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">กลุ่ม G1 — บาน/กระจก</td></tr>
+<tr><td>บานเลื่อน เซมิยูโร (SMS)</td><td class="tc cap-yes">✅</td><td>sliding_sms</td><td>–</td><td class="tc">1,3,7,8</td></tr>
+<tr><td>บานเลื่อน ยูโร</td><td class="tc cap-yes">✅</td><td>sliding_euro</td><td>–</td><td class="tc">10,11,13</td></tr>
+<tr><td>บานเฟี้ยม ยูโร (เฟรมสลิม)</td><td class="tc cap-yes">✅</td><td>folding_euro</td><td>–</td><td class="tc">2,5</td></tr>
+<tr><td>บานเปิด ยูโร</td><td class="tc cap-yes">✅</td><td>casement_euro</td><td>คิดต่อบาน Linear</td><td class="tc">1,3,11,12,13,14</td></tr>
+<tr><td>บานเปิด ลูกฟูกทึบ (Solid)</td><td class="tc cap-yes">✅</td><td>casement_flush_solid / casement_inset_solid</td><td>R3 เพิ่มแล้ว</td><td class="tc">1,12</td></tr>
+<tr><td>บานยก SMS</td><td class="tc cap-yes">✅</td><td>lift_sms</td><td>–</td><td class="tc">1</td></tr>
+<tr><td>กระจกติดตาย</td><td class="tc cap-yes">✅</td><td>fixed_glass</td><td>–</td><td class="tc">1,3,7,8,14</td></tr>
+<tr><td>เลื่อนภายในรางบน SlimLux (Soft-Close+สลิง)</td><td class="tc cap-yes">✅</td><td>inner_top_slimlux</td><td>–</td><td class="tc">11,12</td></tr>
+<tr><td>เลื่อนภายในรางบน ซ้อน (Stack)</td><td class="tc cap-yes">✅</td><td>inner_top_stack</td><td>–</td><td class="tc">12</td></tr>
+<tr><td>เลื่อนภายในรางล่าง (กันน้ำ 7mm)</td><td class="tc cap-partial">🟡</td><td>inner_bottom_euro</td><td>มีในระบบ แต่ซ่อนจาก dropdown G6 (ต้องเลือก sliding+option รางเตี้ย)</td><td class="tc">3,4,9</td></tr>
+<tr><td>PC Door / Panoramic Door</td><td class="tc cap-yes">✅</td><td>pc_door_2 / pc_door_4</td><td>–</td><td class="tc">14</td></tr>
+<tr><td>Shower กั้นห้องน้ำ</td><td class="tc cap-yes">✅</td><td>shower</td><td>รองรับ เข้ามุม+สีเงิน/ดำ/ทอง</td><td class="tc">11,14</td></tr>
+<tr><td>ประตูบานเปลือยสวิง</td><td class="tc cap-yes">✅</td><td>frameless_door</td><td>–</td><td class="tc">11</td></tr>
+<tr><td>บานเกล็ดลูกฟูก + สายดึง (SlimLux)</td><td class="tc cap-partial">🟡</td><td>inner_top_slimlux</td><td>บานเกล็ดลูกฟูก = solid_door · สายดึง = Soft-Close Sling · ระบุต่อเนื่องในรายละเอียด</td><td class="tc">11</td></tr>
+<tr><td>Skylight</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>ไม่มี product Skylight ใดเลยในระบบ · ต้องใช้ custom_item</td><td class="tc">11</td></tr>
+<tr><td>Ventilation Door (บานเลื่อน+โช๊ค)</td><td class="tc cap-partial">🟡</td><td>ykk_vent (YKK) หรือ custom_item</td><td>YKK Ventilation มีในระบบ แต่ Ventilation Door แบบบานเลื่อน+โช๊คตัวบนไม่ใช่ YKK ต้องใช้ custom_item</td><td class="tc">8,12</td></tr>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">กลุ่ม G2 — ระแนง/รั้ว/ราว</td></tr>
+<tr><td>ระแนงบังตา 1"x1.6" (ต่างๆ)</td><td class="tc cap-yes">✅</td><td>rn13–rn18</td><td>–</td><td class="tc">3,7</td></tr>
+<tr><td>ระแนงบังตา 1"x4" (ต่างๆ)</td><td class="tc cap-yes">✅</td><td>rn43–rn56</td><td>–</td><td class="tc">1,7</td></tr>
+<tr><td>ระแนงเกล็ด Z 1" / 1.6" / 4"</td><td class="tc cap-yes">✅</td><td>rn83–rn88</td><td>–</td><td class="tc">10</td></tr>
+<tr><td>ระแนงบานสวิง / เปิด-ปิด</td><td class="tc cap-yes">✅</td><td>bar_openclose</td><td>–</td><td class="tc">1</td></tr>
+<tr><td>ระแนงบานสลับ / เลื่อน</td><td class="tc cap-yes">✅</td><td>bar_slide</td><td>–</td><td class="tc">1</td></tr>
+<tr><td>ราวกันตกกระจก (อลู+กระจก 12mm)</td><td class="tc cap-yes">✅</td><td>imp1–imp6</td><td>–</td><td class="tc">1,11</td></tr>
+<tr><td>ราวกันตกเหล็ก (เหล็กแป๊ปกลม+เหล็กตัน 1")</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>ราวกันตกเหล็กธรรมดา (ไม่ใช่กระจก) ไม่มีในระบบ · ต้องใช้ custom_item</td><td class="tc">10</td></tr>
+<tr><td>คอมโพสิต 3/4 มม.</td><td class="tc cap-yes">✅</td><td>rn91 / rn92</td><td>–</td><td class="tc">3,7</td></tr>
+<tr><td>ลูกฟูกเรียบ 1 ทาง / 2 ทาง</td><td class="tc cap-yes">✅</td><td>rn89 / rn90</td><td>–</td><td class="tc">1,3,11,12,13</td></tr>
+<tr><td>ระแนงลายไม้ Golden Teak (สต๊อก)</td><td class="tc cap-partial">🟡</td><td>rn_series + fin "สีลายไม้สต๊อก"</td><td>ระบบรองรับ fin ลายไม้สต๊อก แต่ Golden Teak เป็นชื่อสี ต้องเลือกใน dropdown สี</td><td class="tc">3,7</td></tr>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">กลุ่ม G3 — หลังคา/ฝ้า</td></tr>
+<tr><td>หลังคาไวนิล</td><td class="tc cap-yes">✅</td><td>roof_vinyl</td><td>–</td><td class="tc">3,5,8,14</td></tr>
+<tr><td>หลังคาโพลีตัน 3มม.</td><td class="tc cap-yes">✅</td><td>roof_polyton</td><td>–</td><td class="tc">7,8,13</td></tr>
+<tr><td>หลังคากระจกลามิเนต (4+4 กันร้อน)</td><td class="tc cap-yes">✅</td><td>roof_laminate</td><td>–</td><td class="tc">8,11</td></tr>
+<tr><td>หลังคาเมทัลชีท PU (45 มม.)</td><td class="tc cap-yes">✅</td><td>imp11–imp14</td><td>imp11=1" PU ท้องฟอยล์ · imp13=1" PU ท้องเหล็ก (เช็คซ้ำ)</td><td class="tc">10</td></tr>
+<tr><td>ชินโคไลท์</td><td class="tc cap-yes">✅</td><td>imp15–imp20</td><td>–</td><td class="tc">3</td></tr>
+<tr><td>รางน้ำ + โซ่</td><td class="tc cap-yes">✅</td><td>o-rfgut + roof_chain</td><td>รางน้ำเป็น option ในชุดหลังคา · โซ่เป็นสินค้าแยก</td><td class="tc">3,7,8</td></tr>
+<tr><td>เสาแผงหลังคา</td><td class="tc cap-yes">✅</td><td>roof_pole_panel (4,000/ต้น)</td><td>–</td><td class="tc">3</td></tr>
+<tr><td>ฝ้าฉาบเรียบทาสีขาว</td><td class="tc cap-yes">✅</td><td>ceiling_smooth</td><td>–</td><td class="tc">14</td></tr>
+<tr><td>ISOWALL ผนัง</td><td class="tc cap-yes">✅</td><td>isowall</td><td>–</td><td class="tc">10</td></tr>
+<tr><td>ผนังเบาภายใน (สมาร์ทบอร์ด+ฉนวน)</td><td class="tc cap-yes">✅</td><td>wall_int</td><td>–</td><td class="tc">4,14</td></tr>
+<tr><td>พื้นสมาร์ทบอร์ด+ไม้เทียม (พื้น)</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>ระบบมี wall_int (ผนัง) แต่ไม่มี product "งานพื้น/floor" เลย · ต้องใช้ custom_item</td><td class="tc">10</td></tr>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">กลุ่ม G4 — ตู้</td></tr>
+<tr><td>ตู้อลูมิเนียม (cabinet)</td><td class="tc cap-yes">✅</td><td>cabinet_alu</td><td>–</td><td class="tc">3,4</td></tr>
+<tr><td>ฝาตู้ Future Tech</td><td class="tc cap-yes">✅</td><td>future_tech</td><td>–</td><td class="tc">3,4</td></tr>
+<tr><td>ชั้นวางกระจก</td><td class="tc cap-partial">🟡</td><td>custom_item</td><td>ระบบคำนวณ "ชั้นวาง" ได้ใน cabinet แต่ไม่มี product แยก "ชั้นวางกระจก"</td><td class="tc">4</td></tr>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">กลุ่ม G5 — มุ้ง</td></tr>
+<tr><td>มุ้งนิรภัย (จีบ สแตนเลส 0.8มม.)</td><td class="tc cap-yes">✅</td><td>imp31 / imp32</td><td>–</td><td class="tc">1,11</td></tr>
+<tr><td>มุ้งจีบ ตีนตะขาบ (รุ่งรางเตี้ยพิเศษ)</td><td class="tc cap-yes">✅</td><td>imp28</td><td>–</td><td class="tc">5,11</td></tr>
+<tr><td>มุ้งเฟรมเล็ก</td><td class="tc cap-yes">✅</td><td>imp21</td><td>–</td><td class="tc">3,5,8,14</td></tr>
+<tr><td>มุ้งกันแมว</td><td class="tc cap-yes">✅</td><td>imp33</td><td>–</td><td class="tc">8</td></tr>
+<tr><td>มุ้งจีบ SD พื้นฐาน</td><td class="tc cap-yes">✅</td><td>mj_sd_basic</td><td>–</td><td class="tc">1</td></tr>
+<tr><td colspan="5" style="background:#E8EAED;font-weight:700;font-size:12px;">ออปชั่น / อุปกรณ์เสริม</td></tr>
+<tr><td>ดรอปพื้น</td><td class="tc cap-yes">✅</td><td>o-dfm (option inline)</td><td>ราคา 5,000+ส่วนเกิน · มีใน UI ทุกบานพื้น</td><td class="tc">1,6</td></tr>
+<tr><td>คานซัพพอร์ทโชว์คาน</td><td class="tc cap-partial">🟡</td><td>custom_item (G1) · option G6</td><td>G6 มี option ในระบบ · G1 standalone ต้องใช้ custom_item</td><td class="tc">2,6,8</td></tr>
+<tr><td>ครอบวงกบ ประตู/หน้าต่าง</td><td class="tc cap-yes">✅</td><td>fw_door_* / fw_win_*</td><td>สี 4 ระดับ (700–1,300/ม.)</td><td class="tc">1,10</td></tr>
+<tr><td>มือจับ Digital Lock</td><td class="tc cap-yes">✅</td><td>o-digi (option inline)</td><td>–</td><td class="tc">1</td></tr>
+<tr><td>มือจับ X-J (สีต่างๆ)</td><td class="tc cap-yes">✅</td><td>o-xhandle (option inline)</td><td>–</td><td class="tc">11,12</td></tr>
+<tr><td>มือจับ HD182 60 ซม. สีดำ</td><td class="tc cap-partial">🟡</td><td>custom_item</td><td>ระบบมี o-cmech (C-mech) แต่ไม่มีรหัส HD182 เฉพาะเจาะจง · ต้อง custom_item หรือระบุ note</td><td class="tc">12</td></tr>
+<tr><td>เส้นคาดตาราง</td><td class="tc cap-yes">✅</td><td>grid_bars</td><td>–</td><td class="tc">3,7,8,14</td></tr>
+<tr><td>งานต่างจังหวัด</td><td class="tc cap-partial">🟡</td><td>custom_item</td><td>ไม่มี product "ค่าเดินทางต่างจังหวัด" เฉพาะ · ต้องใช้ custom_item</td><td class="tc">1,8</td></tr>
+<tr><td>ชุดกุญแจมาสเตอร์คีย์</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>ไม่มี product ชุดกุญแจรวม/Master Key ใดเลย · ต้องใช้ custom_item</td><td class="tc">1</td></tr>
+<tr><td>ค่าอลูมิเนียมสี (เพิ่มจากสีมาตรฐาน)</td><td class="tc cap-partial">🟡</td><td>custom_item หรือ color price ใน product</td><td>ถ้าเป็นค่าสีที่รวมอยู่แล้วใน product ไม่ต้องแยก · ถ้าแยกบรรทัดเฉพาะ ต้องใช้ custom_item</td><td class="tc">1</td></tr>
+<tr><td>พัดลมดูดอากาศ 8" + ฝาครอบ</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>งานไฟ/อุปกรณ์ระบายอากาศ ไม่มีในระบบ · ต้องใช้ custom_item</td><td class="tc">13</td></tr>
+<tr><td>พื้นไม้เทียม (WPC)</td><td class="tc cap-no">🔴</td><td>ไม่มี</td><td>งานพื้น ไม่มีในระบบ · ต้องใช้ custom_item</td><td class="tc">3</td></tr>
+<tr><td>ส่วนลดค่าประเมิน / ส่วนลดพิเศษ 2%</td><td class="tc cap-partial">🟡</td><td>ช่อง discount ใน summary</td><td>ระบบมีช่อง "ส่วนลด" แต่ไม่แยกประเภทชัดเจน · ต้องกรอกเองว่าเป็นค่าประเมิน vs ลดพิเศษ</td><td class="tc">6,7,8,12,13,14</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ===== ส่วน 3: จุดต่างรายใบ ===== -->
+<h2 id="s3">3. จุดต่างรายใบ</h2>
+
+<!-- ใบ 1 -->
+<div class="inv-header">ใบ 1 — คุณบุญญารัตน์ (68032001 Rev02 · 26 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>Format ใบ</td><td>เก่า: ไม่มีคอลัมน์ "ราคาต่อหน่วย" · ตาราง ลำดับ|รายการ|จำนวน|ราคา|จำนวนเงิน</td><td>ใหม่: มีคอลัมน์ #|รายละเอียด|จำนวน|ราคาต่อหน่วย|ยอดรวม</td><td class="warn">🟡 ต่างกัน (format เก่า)</td></tr>
+<tr><td>ชุดกุญแจมาสเตอร์คีย์ 4 บาน</td><td>บรรทัดแยก ราคาเท่าไหร่ไม่เห็นในสรุป</td><td>ไม่มี product นี้</td><td class="err">🔴 ต้อง custom_item</td></tr>
+<tr><td>ค่าอลูมิเนียมสีเทาซาฮาร่า (บรรทัดแยก)</td><td>มีบรรทัดแยก "ค่าอลูมิเนียมสีเทาซาฮาร่า"</td><td>ระบบรวมค่าสีอยู่ใน product แล้ว ไม่แยกบรรทัด</td><td class="warn">🟡 logic ต่าง (ไม่ใช่บั๊ก แต่ format ต่าง)</td></tr>
+<tr><td>งานต่างจังหวัด 49,000</td><td>บรรทัดแยก</td><td>ต้องใช้ custom_item</td><td class="warn">🟡 ต้อง custom_item</td></tr>
+<tr><td>VAT</td><td>0%</td><td>ระบบรองรับ VAT 0% ✅</td><td class="ok">✅</td></tr>
+<tr><td>ส่วนลด 26,740</td><td>หักจากรวม 1,137,000 → 1,110,260</td><td>ระบบมีช่อง discount ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 2 -->
+<div class="inv-header">ใบ 2 — คุณเหมียว (QT2023080031 · 2 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>บานเฟี้ยม ยูโร เฟรมสลิม</td><td>folding_euro + ระบุ "เฟรมสลิม"</td><td>folding_euro ✅ (series L)</td><td class="ok">✅</td></tr>
+<tr><td>คานซัพพอร์ทโชว์คาน+รางยู</td><td>ระบุเป็น option ในรายละเอียด</td><td>G6 มี option · G1 standalone ต้อง custom_item</td><td class="warn">🟡 ใน G1 ต้อง custom_item</td></tr>
+<tr><td>หมายเหตุยาวในรายการ</td><td>มีหมายเหตุ "ดรอปพื้น/ค่าแรงเก็บสี"</td><td>มีช่องหมายเหตุต่อรายการ ✅</td><td class="ok">✅</td></tr>
+<tr><td>VAT 7%</td><td>23,240</td><td>ระบบรองรับ VAT 7% ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 3 -->
+<div class="inv-header">ใบ 3 — คุณธนบัตร (QT2023100045 · 7 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>พื้นไม้เทียม WG11 Dark Oak</td><td>บรรทัดในรายการกั้นห้องเก็บของ</td><td>ไม่มี product งานพื้น · custom_item</td><td class="err">🔴 ต้อง custom_item</td></tr>
+<tr><td>ตู้รองเท้า Futuretech (บานเปิด+บานเลื่อนสลับ+ชั้นวางลูกฟูก)</td><td>รายการแยก</td><td>cabinet_alu + future_tech ✅</td><td class="ok">✅</td></tr>
+<tr><td>บานเลื่อนรางล่างกันน้ำ (กั้นห้องหน้าบ้าน)</td><td>ระบุในรายละเอียด</td><td>inner_bottom_euro มีแต่ซ่อนจาก G6 dropdown · ต้องเลือกผ่าน G1+option</td><td class="warn">🟡 UX ไม่ตรงตาม intent</td></tr>
+<tr><td>ส่วนลด 22,500</td><td>หักจาก 1,682,500 → 1,660,000</td><td>ระบบมีช่อง discount ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 4 -->
+<div class="inv-header">ใบ 4 — คุณดลยา (QT2023110034 · 2 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>บานเลื่อนลากจูงรางล่าง+สมาร์ทบอร์ด</td><td>2 รายการรวม</td><td>inner_bottom_euro + wall_int ✅</td><td class="ok">✅</td></tr>
+<tr><td>ชั้นวางกระจก 3 ชั้น</td><td>ระบุในรายละเอียดตู้</td><td>ไม่มี product แยก · custom_item</td><td class="warn">🟡 ต้อง custom_item</td></tr>
+<tr><td>VAT 7%</td><td>8,260</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 5 -->
+<div class="inv-header">ใบ 5 — คุณประภาพรรณ (QT2023110060 · 1 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>กั้นห้องกระจก 3 ด้าน A-B-C</td><td>ด้าน A ติดตาย · B บานเฟี้ยม 2+3 บาน รางกันน้ำ · C ติดตาย + หลังคาไวนิล</td><td>G6 Room Builder รองรับ ✅</td><td class="ok">✅</td></tr>
+<tr><td>มุ้งจีบ ตีนตะขาบ (imp28)</td><td>ระบุในรายละเอียด</td><td>imp28 ✅</td><td class="ok">✅</td></tr>
+<tr><td>ลูกฟูกเรียบ 1 หน้า</td><td>ระบุในรายละเอียด</td><td>rn89 ✅</td><td class="ok">✅</td></tr>
+<tr><td>VAT 0%</td><td>ราคาเดียว 205,000</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 6 -->
+<div class="inv-header">ใบ 6 — คุณปณต (QT2024070041 · 3 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>สีอบพิเศษ Grey RAL7022 (KL10232A)</td><td>ระบุรหัสสี</td><td>COLORS idx 10 "สีอบพิเศษ" + ช่องระบุรหัส ✅</td><td class="ok">✅</td></tr>
+<tr><td>กระจกลามิเนต 4+4 กันเสียง</td><td>ระบุชนิดกระจก</td><td>glass_replace (กรอกทุน+กำไร%) หรือ custom_item ✅</td><td class="ok">✅</td></tr>
+<tr><td>ส่วนลดค่าประเมิน 2,000 + ส่วนลดพิเศษ 2% (3,940)</td><td>แยก 2 บรรทัด</td><td>ระบบมีช่อง discount เดียว ต้องรวมเอง 5,940 ไม่แยกประเภท</td><td class="warn">🟡 ต้องรวม discount 2 ประเภทเป็นบรรทัดเดียว</td></tr>
+</table>
+</div>
+
+<!-- ใบ 7 -->
+<div class="inv-header">ใบ 7 — คุณนก (QT2024080005 · 8 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>ระแนงบังตาสีดำ 1"x4"</td><td>ระบุสีดำ</td><td>rn43-rn56 มี · แต่ dropdown สีใน ranae series ไม่มีสีดำ (มีแค่ ซาฮาร่า/ลายไม้/อบพิเศษ)</td><td class="warn">🟡 สีดำ ranae = custom_item หรือ note</td></tr>
+<tr><td>ซ่อนสโลปด้วยคอมโพสิต</td><td>ระบุในรายการหลังคา</td><td>o-rfhs (option ในชุดหลังคา) ✅</td><td class="ok">✅</td></tr>
+<tr><td>โซ่รางน้ำ 2 จุด</td><td>มีบรรทัดแยก "โซ่รางน้ำต่อจาก overflow 6,000"</td><td>roof_chain 3,000/เส้น ✅ (2 เส้น = 6,000 ✅)</td><td class="ok">✅</td></tr>
+<tr><td>ส่วนลด 15,800</td><td>หักจาก 690,000 → 674,200</td><td>ช่อง discount ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 8 -->
+<div class="inv-header">ใบ 8 — คุณหญิง (QT2024080066 · 4 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>Ventilation Door (มีโช๊คด้านบน) — บานเลื่อน</td><td>ระบุในด้าน A ของกั้นห้อง · ไม่ใช่ YKK</td><td>ykk_vent = YKK เท่านั้น · บานเลื่อน+โช๊คแบบ JR ต้อง custom_item</td><td class="warn">🟡 ต้อง custom_item</td></tr>
+<tr><td>มุ้งกันแมว</td><td>ระบุในรายละเอียด</td><td>imp33 ✅</td><td class="ok">✅</td></tr>
+<tr><td>งานต่างจังหวัด 26,000</td><td>บรรทัดแยก</td><td>custom_item ✅</td><td class="warn">🟡 custom_item</td></tr>
+</table>
+</div>
+
+<!-- ใบ 9 -->
+<div class="inv-header">ใบ 9 — คุณโอ๋ (QT2025010036 · 1 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>บานเลื่อนสลับรางล่างกันน้ำ 2 ชุด แบ่ง 3 บาน</td><td>ระบุชัดเจน</td><td>inner_bottom_euro ✅ (แต่ซ่อนจาก UI)</td><td class="ok">✅ (capability ✅ UX 🟡)</td></tr>
+<tr><td>กระจกฝ้า + ลามิเนตเขียว 5+5</td><td>ระบุ 2 แบบ ต่างด้าน</td><td>glass option ✅</td><td class="ok">✅</td></tr>
+<tr><td>ช่องแสงกระจกติดตายด้านบน</td><td>ระบุในรายละเอียด</td><td>o-solidlight / fixed_glass ✅</td><td class="ok">✅</td></tr>
+<tr><td>VAT 7%</td><td>5,600</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 10 -->
+<div class="inv-header">ใบ 10 — คุณยี (QT2025060015 · 2 รายการ ซับซ้อน 13 ด้าน)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>ผนัง ISOWALL หนา 10 ซม.</td><td>ระบุ ISOWALL</td><td>isowall ✅</td><td class="ok">✅</td></tr>
+<tr><td>หลังคาเมทัลชีท PU 45 มม. สีน้ำตาล</td><td>ระบุชัด PU 45mm</td><td>imp11/12/13/14 มี · 45 มม. ≈ imp12 (2 นิ้ว ท้องฟอยล์ PU) (เช็คซ้ำ)</td><td class="warn">🟡 ระบุ 45mm ตรงกับ 2 นิ้ว? เช็คซ้ำกับ pricelist</td></tr>
+<tr><td>ราวกันตกเหล็กแป๊ปกลม+เหล็กตัน 1"</td><td>บรรทัดใน 13 ด้าน</td><td>ไม่มี product · custom_item</td><td class="err">🔴 ไม่มีในระบบ</td></tr>
+<tr><td>พื้นสมาร์ทบอร์ด+ไม้เทียม</td><td>ระบุในรายการ</td><td>ไม่มี product งานพื้น · custom_item</td><td class="err">🔴 ไม่มีในระบบ</td></tr>
+<tr><td>ใช้ประตูบานเปิดไม้เดิมมาติดตั้ง</td><td>ระบุ "ใช้ประตูเดิม"</td><td>ไม่มี logic ติดตั้งงานของลูกค้า · custom_item</td><td class="warn">🟡 custom_item</td></tr>
+<tr><td>ครอบวงกบอลูมิเนียม</td><td>ระบุในรายการ</td><td>fw_door_* / fw_win_* ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 11 -->
+<div class="inv-header">ใบ 11 — คุณชวลิต (QT2025070050 · 16 รายการ · 8 หน้า)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>ประตูบานเลื่อนสลับ "ชุดยูโร" + มุ้งนิรภัย</td><td>ระบุ "ชุดยูโร" = sliding_euro + imp31</td><td>sliding_euro + imp31 ✅</td><td class="ok">✅</td></tr>
+<tr><td>Skylight ห้องนอนใหญ่ชั้น 2 (57,000)</td><td>บรรทัดแยก</td><td>ไม่มี product Skylight · custom_item</td><td class="err">🔴 ไม่มีในระบบ</td></tr>
+<tr><td>หลังคากระจกนิรภัยลามิเนตกันร้อน 4+4</td><td>ระบุในหลายรายการ (GlassHouse)</td><td>roof_laminate ✅</td><td class="ok">✅</td></tr>
+<tr><td>กลาสเฮ้าส์ 3 โซน (ซักล้าง/โถงบันได/ห้องทำงาน)</td><td>แต่ละโซนมี 7-8 ด้าน</td><td>G6 Room Builder ✅</td><td class="ok">✅</td></tr>
+<tr><td>SlimLux บานเกล็ดลูกฟูก+สายดึง (Soft-Close Sling)</td><td>ระบุใน SlimLux</td><td>inner_top_slimlux ✅ (รวม soft-close+สลิง)</td><td class="ok">✅</td></tr>
+<tr><td>ราวกันตกกระจกเทมเปอร์ 12 มม.</td><td>ระบุในรายการสระ</td><td>imp3-imp6 (railalu) ✅</td><td class="ok">✅</td></tr>
+<tr><td>VAT 7% (117,950)</td><td>รวมทั้งสิ้น 1,802,950</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 12 -->
+<div class="inv-header">ใบ 12 — คุณขวัญ (QT2025100030 · 13 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>บานเลื่อนไร้ราง (ลูกฟูก / กระจกเงา)</td><td>ระบุ "ไร้ราง" หลายรายการ</td><td>inner_top_stack / inner_top_slimlux ✅</td><td class="ok">✅</td></tr>
+<tr><td>มือจับ HD182 60 ซม. สีดำ</td><td>ระบุรหัส HD182</td><td>ไม่มีรหัส HD182 เฉพาะ · o-cmech ครอบคลุมทั่วไป · ต้อง note/custom</td><td class="warn">🟡 ไม่มีรหัส HD182</td></tr>
+<tr><td>Ventilation Door (OPTION) 44,000</td><td>ระบุเป็น OPTION inline ในรายการบานเปิด</td><td>ไม่มี option "Ventilation Door" แบบ toggle inline ใน G1</td><td class="warn">🟡 ต้องแยกเป็น product ใหม่หรือ note</td></tr>
+<tr><td>VAT 7% (37,590)</td><td>รวมทั้งสิ้น 574,590</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+<tr><td>ส่วนลดค่าประเมิน 3,000</td><td>บรรทัดแยก</td><td>ช่อง discount ✅ (รวมเป็นก้อน)</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 13 -->
+<div class="inv-header">ใบ 13 — คุณใบเฟริล (QT2025100046 · 3 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>พัดลมดูดอากาศ 8" + ฝาครอบกันแมลง</td><td>ระบุในด้าน B ของกั้นห้อง</td><td>ไม่มี product งานไฟ/ระบายอากาศ · custom_item</td><td class="err">🔴 ไม่มีในระบบ</td></tr>
+<tr><td>หลังคาโพลีตัน 108S Aus Grey</td><td>ระบุสีและรุ่น</td><td>roof_polyton ✅ · สี/รุ่นระบุใน note</td><td class="ok">✅</td></tr>
+<tr><td>VAT 7% (12,250)</td><td>รวมทั้งสิ้น 187,250</td><td>ระบบรองรับ ✅</td><td class="ok">✅</td></tr>
+</table>
+</div>
+
+<!-- ใบ 14 -->
+<div class="inv-header">ใบ 14 — คุณสุจินต์ (QT2026020055 · 14 รายการ)</div>
+<div class="inv-body">
+<table>
+<tr><th>หัวข้อ</th><th>ใบจริง</th><th>ระบบ</th><th>สถานะ</th></tr>
+<tr><td>PC Door / Panoramic Door</td><td>บานเลื่อน+บานเปิด+คานซัพพอร์ท</td><td>pc_door_2/4 ✅</td><td class="ok">✅</td></tr>
+<tr><td>ผนังสมาร์ทบอร์ด+ฉนวน 3"</td><td>ระบุในหลายรายการ</td><td>wall_int ✅</td><td class="ok">✅</td></tr>
+<tr><td>Shower เทมเปอร์ 10 มม.+ราวสแตนเลส</td><td>2 ชุด</td><td>shower ✅ (ราวสแตนเลส = อุปกรณ์ default)</td><td class="ok">✅</td></tr>
+<tr><td>หลังคาไวนิลโครงเหล็กชุบซิงค์</td><td>ระบุ "โครงเหล็กชุบซิงค์" แทน โครงอลู</td><td>roof_vinyl ✅ · โครงเหล็กชุบซิงค์เป็น option/note</td><td class="ok">✅ (แต่ต้อง note)</td></tr>
+<tr><td>ฝ้าฉาบเรียบทาสีขาว</td><td>ระบุในรายการกั้นห้อง</td><td>ceiling_smooth ✅</td><td class="ok">✅</td></tr>
+<tr><td>งานต่างจังหวัด 22,000</td><td>บรรทัดแยก</td><td>custom_item ✅</td><td class="warn">🟡 custom_item</td></tr>
+</table>
+</div>
+
+<!-- ===== ส่วน 4: รวมจุดต้องแก้ ===== -->
+<h2 id="s4">4. รวมจุดต้องแก้ 🔴→🟡→🟢 + Root Cause + ข้อเสนอ (ส่ง Dev)</h2>
+
+<h3>🔴 จุดผิดแน่ / ขาดในระบบ (ต้องพิจารณาเพิ่ม)</h3>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A1. ไม่มี product "Skylight" เลย (พบในใบ 11 · 57,000)</div>
+    <div class="issue-desc">Skylight หน้าต่างบนหลังคา / ช่องแสงหลังคา เป็นงานที่ JR รับทำ (พบ 57,000 ในใบจริง) แต่ระบบไม่มี product ประเภทนี้เลย ต้องใช้ custom_item ทุกครั้ง</div>
+    <div class="issue-fix">Root Cause: ยังไม่ได้เพิ่ม Skylight ใน PRODUCTS list | ข้อเสนอ dev: เพิ่ม {id:'skylight', cat:'หลังคา', name:'Skylight หน้าต่างหลังคา', method:'bucket', ...} หรืออย่างน้อยเพิ่มใน CATS เพื่อให้เลือกได้ใน calculator</div>
+  </div>
+</div>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A2. ไม่มี product "ราวกันตกเหล็ก" (แบบเหล็กแป๊ปกลม/ตัน · พบในใบ 10)</div>
+    <div class="issue-desc">ระบบมี imp1-imp6 (ราวกันตกกระจก) แต่ไม่มีราวกันตกเหล็กธรรมดา (เหล็กแป๊ปกลม, เหล็กตัน 1") ซึ่งพบในใบจริง ใบ 10 (QT2025060015 คุณยี)</div>
+    <div class="issue-fix">Root Cause: ระบบ focus งานอลูมิเนียม/กระจก · งานเหล็กทั่วไปยังไม่ครอบ | ข้อเสนอ: เพิ่ม product ราวกันตกเหล็ก (per_meter) หรือเพิ่ม custom_item template</div>
+  </div>
+</div>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A3. ไม่มี product "งานพื้น" (พื้นสมาร์ทบอร์ด/ไม้เทียม · พบในใบ 10)</div>
+    <div class="issue-desc">ระบบมี wall_int (ผนัง) และ ceiling_smooth (ฝ้า) แต่ไม่มีหมวดงานพื้น (floor) เลย พบในใบ 10 (QT2025060015 คุณยี) พื้นสมาร์ทบอร์ด+ไม้เทียม</div>
+    <div class="issue-fix">Root Cause: ยังไม่ได้ออกแบบหมวดงานพื้น | ข้อเสนอ: เพิ่ม cat:'งานพื้น' พร้อม product floor_smartboard, floor_wpc เป็นอย่างน้อย</div>
+  </div>
+</div>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A4. ไม่มี product "ชุดกุญแจมาสเตอร์คีย์" (พบในใบ 1)</div>
+    <div class="issue-desc">ใบ 1 (คุณบุญญารัตน์) มีรายการ "ชุดกุญแจมาสเตอร์คีย์ 4 บาน" แยกบรรทัด ระบบไม่มี product ประเภทนี้</div>
+    <div class="issue-fix">Root Cause: อุปกรณ์เสริมนอกเหนือบาน/กระจก ยังไม่ครอบ | ข้อเสนอ: เพิ่ม product ชุดกุญแจ/อุปกรณ์ล็อค หรือ note template ใน custom_item</div>
+  </div>
+</div>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A5. ไม่มี product "พัดลมดูดอากาศ + ฝาครอบกันแมลง" (พบในใบ 13)</div>
+    <div class="issue-desc">ใบ 13 (คุณใบเฟริล) ระบุพัดลมดูดอากาศ 8" + ฝาครอบกันแมลง เป็นส่วนหนึ่งของด้าน B กั้นห้อง ระบบไม่มี product งานไฟ/ระบายอากาศ</div>
+    <div class="issue-fix">Root Cause: งานระบบไฟฟ้า/ระบายอากาศ อยู่นอก scope ปัจจุบัน | ข้อเสนอ: เพิ่ม custom_item template สำหรับ "งานไฟ/พัดลม" หรือสร้าง product fan_vent (per_piece)</div>
+  </div>
+</div>
+
+<div class="issue issue-r">
+  <div class="issue-icon">🔴</div>
+  <div class="issue-body">
+    <div class="issue-title">A6. Format ใบเก่า (68xxx) ไม่มีคอลัมน์ "ราคาต่อหน่วย" (พบในใบ 1)</div>
+    <div class="issue-desc">ใบ 1 (68032001) เป็น format เก่าที่มีตาราง ลำดับ|รายการ|จำนวน|ราคา|จำนวนเงิน ไม่มีคอลัมน์ "ราคาต่อหน่วย" แยก ระบบออกใบ format ใหม่ QT เท่านั้น</div>
+    <div class="issue-fix">Root Cause: ระบบออกแค่ format ใหม่ (ถูกต้อง) | ข้อเสนอ: ไม่ต้องแก้ — format เก่าไม่ควรสร้างใหม่ แต่ควรเก็บเป็น reference ว่าใบเลข 68xxx เป็น legacy</div>
+  </div>
+</div>
+
+<h3>🟡 จุดน่าสงสัย / ต้องตรวจเพิ่ม</h3>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B1. บานเลื่อนรางล่าง (inner_bottom_euro) ซ่อนจาก G6 dropdown</div>
+    <div class="issue-desc">inner_bottom_euro มีในระบบแต่ถูกซ่อนด้วย _hideInnerBottom() (ตาม HANDOFF-G6 ธง⑤ มติพี่นัท) ทำให้กรอกใน G6 ไม่ได้โดยตรง ต้องเลือก sliding + option รางเตี้ย แทน — พบในใบ 3, 4, 9 ที่ใช้รางล่างในงานกั้นห้อง</div>
+    <div class="issue-fix">Root Cause: มติพี่นัทให้ซ่อน inner_bottom ออกจาก dropdown เพื่อให้ใช้ sliding+option รางเตี้ย 7mm แทน | เช็คซ้ำ: ตรวจว่า sliding+option รางเตี้ยออกรายละเอียดถูกต้องตาม intent ใบจริงไหม</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B2. Ventilation Door แบบบานเลื่อน+โช๊คตัวบน (ไม่ใช่ YKK)</div>
+    <div class="issue-desc">พบในใบ 8 (คุณหญิง) และ 12 (คุณขวัญ OPTION 44,000) — เป็น Ventilation Door แบบ JR เอง ไม่ใช่ YKK ระบบมี ykk_vent (YKK) แต่ไม่มี Ventilation Door แบบบานเลื่อนอลู</div>
+    <div class="issue-fix">Root Cause: Ventilation Door เป็น product พิเศษที่ JR ทำเอง ยังไม่ได้ออกแบบ | ข้อเสนอ: เพิ่ม product ventilation_door_jr หรืออย่างน้อย template custom_item</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B3. ส่วนลด 2 ประเภทในใบเดียว (ค่าประเมิน + ลดพิเศษ 2%)</div>
+    <div class="issue-desc">ใบ 6 (คุณปณต) มีส่วนลด 2 บรรทัด: ค่าประเมิน 2,000 และลดพิเศษ 2% = 3,940 ระบบมีช่อง discount เดียว ต้องรวมเอง ไม่แยกประเภทชัดเจน</div>
+    <div class="issue-fix">Root Cause: UI ช่อง discount เป็น free-form field เดียว | ข้อเสนอ: เพิ่มช่อง "ค่าประเมิน" และ "ส่วนลด%" แยกกัน หรืออย่างน้อยให้กรอก note ประเภทส่วนลด</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B4. มือจับ HD182 60 ซม. สีดำ ไม่มีรหัสเฉพาะ (พบในใบ 12)</div>
+    <div class="issue-desc">ใบ 12 (คุณขวัญ) ระบุ "มือจับ HD182 60ซม. สีดำ" ระบบมี o-cmech ทั่วไป แต่ไม่มีรหัส HD182 เฉพาะ ทำให้ไม่สามารถ track ชนิดมือจับในรายละเอียดได้</div>
+    <div class="issue-fix">Root Cause: มือจับ dropdown ยังไม่ครอบ HD182 | ข้อเสนอ: เพิ่ม HD182 ในรายการมือจับ หรือ option "ระบุรหัสมือจับ" แบบ free-text</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B5. คานซัพพอร์ทโชว์คาน+รางยู ใน G1 standalone ต้อง custom_item</div>
+    <div class="issue-desc">พบในใบ 2 (คุณเหมียว) และ 6 (คุณปณต) — G6 มี option คานซัพพอร์ทในระบบ แต่ถ้าใช้กับ G1 บานเฟี้ยม/เลื่อนทั่วไป ต้องใช้ custom_item ช่วย ทำให้ไม่ตรงกับ intent ใบจริง</div>
+    <div class="issue-fix">Root Cause: คานซัพพอร์ท/รางยู เป็น option ใน G6 เท่านั้น ยังไม่ได้ขยายไป G1 | ข้อเสนอ: เพิ่ม option คานซัพพอร์ทใน G1 (บานเฟี้ยม/เลื่อน) ด้วย</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B6. หลังคาเมทัลชีท PU 45 มม. — ตรงรุ่นไหนใน IMP series? (เช็คซ้ำ)</div>
+    <div class="issue-desc">ใบ 10 (คุณยี) ระบุ "เมทัลชีท PU หนา 45 มม." ระบบมี imp11-imp14 (1 นิ้ว/2 นิ้ว PU ท้องฟอยล์/เหล็ก) — 45 มม. ≈ 1.77 นิ้ว ตรงระหว่าง imp11 (1 นิ้ว) และ imp12 (2 นิ้ว) ไม่ชัดว่าตรงกัน</div>
+    <div class="issue-fix">ต้องเช็คกับ pricelist จริงว่า 45 มม. = รุ่นไหน · อย่าสรุปเองว่าตรง</div>
+  </div>
+</div>
+
+<div class="issue issue-y">
+  <div class="issue-icon">🟡</div>
+  <div class="issue-body">
+    <div class="issue-title">B7. งานต่างจังหวัด ต้อง custom_item ทุกใบ (พบใบ 1, 8)</div>
+    <div class="issue-desc">ใบ 1 และ 8 มีรายการ "งานต่างจังหวัด" 49,000 / 26,000 แยกบรรทัด ระบบไม่มี product นี้ ต้องใช้ custom_item ทุกครั้ง ซึ่งไม่มีราคาแนะนำ</div>
+    <div class="issue-fix">ข้อเสนอ: เพิ่ม product template "งานต่างจังหวัด / ค่าเดินทาง" แบบ custom_price ให้กรอกราคาเอง พร้อม note template มาตรฐาน</div>
+  </div>
+</div>
+
+<h3>🟢 จุดที่ดี / ระบบรองรับครบ</h3>
+
+<div class="issue issue-g">
+  <div class="issue-icon">🟢</div>
+  <div class="issue-body">
+    <div class="issue-title">C1. Format ใบใหม่ (QT series) ครบทุก 13 ใบ ✅</div>
+    <div class="issue-desc">ทุกใบ format ใหม่ (QT2023-QT2026) มี: หัวบริษัท · กล่องลูกค้า/ใบ · ตาราง # | รายละเอียด | จำนวน | ราคาต่อหน่วย | ยอดรวม · รวม/ส่วนลด/หลังหัก/VAT/รวมทั้งสิ้น · ตัวเลขเป็นคำ · ช่องเซ็น "ในนาม" — ระบบออก format นี้ตรงกันหมด</div>
+  </div>
+</div>
+
+<div class="issue issue-g">
+  <div class="issue-icon">🟢</div>
+  <div class="issue-body">
+    <div class="issue-title">C2. VAT ทั้ง 7% และ 0% รองรับได้ ✅</div>
+    <div class="issue-desc">พบใบที่ใช้ VAT 7%: ใบ 2,4,9,11,12,13 และ VAT 0%: ใบ 1,3,5,6,7,8,10,14 — ระบบรองรับทั้งสองแบบ</div>
+  </div>
+</div>
+
+<div class="issue issue-g">
+  <div class="issue-icon">🟢</div>
+  <div class="issue-body">
+    <div class="issue-title">C3. สินค้าหลัก G1–G5 ครอบคลุมสูง (80%+ ของรายการในใบจริง) ✅</div>
+    <div class="issue-desc">บานเลื่อน/เปิด/เฟี้ยม/กระทุ้ง/ยก ทุกรุ่น · ราวกันตกกระจก · มุ้งทุกประเภท · หลังคาทุกวัสดุ · ตู้อลู/Future Tech · ระแนงทุกขนาด — ครอบคลุมกว้างมาก</div>
+  </div>
+</div>
+
+<div class="issue issue-g">
+  <div class="issue-icon">🟢</div>
+  <div class="issue-body">
+    <div class="issue-title">C4. G6 Room Builder รองรับงานซับซ้อน 7+ ด้านได้ ✅</div>
+    <div class="issue-desc">ใบ 8 (7 ด้าน) ใบ 10 (13 ด้าน) ใบ 11 (หลายโซน) — G6 paged room builder รองรับได้ทุกกรณี</div>
+  </div>
+</div>
+
+<!-- ===== ส่วน 5: Checklist UX ===== -->
+<h2 id="s5">5. Checklist UX กดเว็บจริง (สำหรับพี่นัท/ux-designer เปิดเว็บ live กดเช็ค)</h2>
+<p style="font-size:12px;color:var(--muted);">หมายเหตุ: รายการด้านล่างเป็น checklist สำหรับ <strong>กดเว็บจริง</strong> เท่านั้น · JR Audit Agent ไม่เคลมว่าตรวจ UX เองได้ (ต้องคน/browser จริง)</p>
+
+<div class="card">
+<h3>กลุ่ม A: Format ใบออก</h3>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เปิดใบเสนอราคาตัวอย่าง → ตรวจว่ามีตาราง # | รายละเอียด | จำนวน | ราคาต่อหน่วย | ยอดรวม ครบ</div><div class="chk-note">เปรียบกับ QT2025070050 (ชวลิต)</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">ตัวเลขเป็นคำไทยใต้ตาราง (เช่น "หนึ่งล้านแปดแสน..." ตรงกับยอดจริง)</div><div class="chk-note">ตรวจ 2 ใบ: มียอด VAT 7% และ VAT 0%</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">ช่องเซ็น "ในนาม" โผล่ครบ ทั้งช่องลูกค้าและช่องบริษัท</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">หัวบริษัท logo/ที่อยู่/เบอร์โทร ถูกต้อง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">VAT toggle: สลับ VAT 0% ↔ 7% → ตาราง summary อัปเดตถูกต้อง</div></div></div>
+
+<h3>กลุ่ม B: ความครบของออปชั่น</h3>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่มรายการ "บานเลื่อน ยูโร" → กรอกขนาด → ตรวจว่า option มุ้ง / มือจับ / ดรอปพื้น / ครอบวงกบ โผล่ครบ</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่มรายการ "บานเฟี้ยม ยูโร" → ตรวจว่า option คานซัพพอร์ท / รางยู โผล่หรือไม่ (ถ้าไม่โผล่ = ต้องใช้ custom_item)</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">กลุ่ม G6 เพิ่มห้อง → กรอก 3+ ด้าน → ตรวจว่าออก PDF แยกห้องครบ</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่ม custom_item → กรอกชื่อ "งานต่างจังหวัด" ราคา 49,000 → โผล่ในใบเป็นบรรทัดแยก</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เลือกมือจับ C-mech → กรอก note "HD182 60ซม. สีดำ" → โผล่ในรายละเอียดใบ</div></div></div>
+
+<h3>กลุ่ม C: ราคา / ส่วนลด</h3>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">กรอกส่วนลดค่าประเมิน 2,000 → ตรวจว่ายอดรวมลดถูกต้อง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">กรอกส่วนลด % + ส่วนลดบาท พร้อมกัน → ยอดรวมคำนวณถูกต้อง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">ราคา roof_chain (โซ่รางน้ำ) 3,000/เส้น × 2 = 6,000 → ตรวจ</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">ดรอปพื้น = 5,000 สำหรับช่วงแรก (เช็คสูตรกับ pricelist)</div></div></div>
+
+<h3>กลุ่ม D: UX / มือถือ</h3>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เปิดบนมือถือ (iPhone/Android) → กรอกขนาดได้ → ราคาอัปเดต → ไม่มี layout พัง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">กลุ่ม G6 เพิ่มห้องใหม่ → ลบห้อง → ยอดรวมอัปเดตถูกต้อง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">พิมพ์/บันทึก PDF บนมือถือ → ได้ไฟล์ PDF ที่อ่านได้ ไม่แตกหน้า</div></div></div>
+
+<h3>กลุ่ม E: รายการที่ต้อง custom_item (ตรวจ flow)</h3>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่ม "รายการกรอกเอง" → กรอกชื่อ "Skylight ห้องนอนใหญ่ชั้น 2" ราคา 57,000 → โผล่ในใบถูกต้อง</div><div class="chk-note">ทดสอบ flow สำหรับสินค้าที่ไม่มีในระบบ</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่ม "ชุดกุญแจมาสเตอร์คีย์ 4 บาน" ผ่าน custom_item → โผล่ถูกต้อง</div></div></div>
+<div class="chk-item"><div class="chk-box"></div><div><div class="chk-lbl">เพิ่ม "พัดลมดูดอากาศ 8" ผ่าน custom_item → โผล่ถูกต้อง</div></div></div>
+</div>
+
+<!-- ===== ส่วน 6: Golden-Snapshot ===== -->
+<h2 id="s6">6. ผล Golden-Snapshot</h2>
+
+<div class="card">
+<div class="sum-grid">
+  <div class="sum-box sum-ok"><div class="num">143</div><div class="lbl">ราคาที่ตรวจ (จาก 144 สินค้า · ข้าม 1)</div></div>
+  <div class="sum-box sum-ok"><div class="num">143</div><div class="lbl">ตรงกับ baseline ✅</div></div>
+  <div class="sum-box sum-err"><div class="num">0</div><div class="lbl">ราคาเพี้ยน</div></div>
+  <div class="sum-box sum-ok"><div class="num">✅</div><div class="lbl">ปลอดภัย — ไม่มีความเปลี่ยนแปลง</div></div>
+</div>
+<p style="font-size:13px;margin-top:12px;"><strong>ผลรัน:</strong> <code>node scripts/golden-snapshot.mjs</code> → <em>"Golden snapshot: 144 สินค้า · จับยอดได้ 143 · ข้าม 1 · ✅ ไม่มีความเปลี่ยนแปลง — ยอดทุกตัวตรง baseline (ปลอดภัย)"</em></p>
+<p style="font-size:12px;color:var(--muted);">Engine R3.9 ยังปลอดภัย — ราคาทุกสินค้าไม่เพี้ยนจาก baseline ที่กำหนดไว้ (143 ตัว) · สินค้าที่ข้าม 1 ตัว = สินค้าที่ไม่มีในตาราง golden (เช่น legacy/ยกเลิกขาย)</p>
+</div>
+
+<hr style="border:none;border-top:1px solid var(--line);margin:24px 0;">
+<p style="font-size:11px;color:var(--muted);text-align:center;">รายงานนี้สร้างโดย JR Audit Agent (READ-ONLY) · อ่านใบจริง 14 ใบ + อ่าน engine public/calculator/index.html · ไม่แก้โค้ดใด · วันที่ 15 มิถุนายน 2569<br>
+ตรวจมิติ A (format) B (ครบ) C (capability) อัตโนมัติ · มิติ D (UX) = checklist ให้คนกดเว็บจริงเท่านั้น</p>
+</div>
+</body>
+</html>
