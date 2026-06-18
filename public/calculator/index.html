@@ -3393,10 +3393,15 @@ function g2FinRender(sel,wrap){ if(!wrap){ var n=sel.nextSibling; while(n&&!(n.c
   if(byCat[actCat]&&byCat[actCat].length>1){ html+='<div class="chip-group chip-sm" style="margin-top:4px;">';
     byCat[actCat].forEach(function(it){ html+='<button type="button" class="chip'+(it.i===curIdx?' on':'')+'" onclick="g2FinPick(this,'+it.i+')">'+it.lbl+'</button>'; });
     html+='</div>'; }
+  // เฟส2: หมวดอบพิเศษ/Fuji → ช่องกรอกชื่อสี (ขึ้นใบ · ไม่กระทบราคา)
+  if(curCat==='special'){ html+='<div style="margin-top:4px;"><input type="text" class="g2fin-name" placeholder="ระบุชื่อสีอบ เช่น Golden Teak SMS" value="'+(sel.dataset.g2name||'').replace(/"/g,'&quot;')+'" oninput="g2FinName(this)" style="width:240px;max-width:100%;height:30px;font-size:12.5px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;"></div>'; }
   wrap.innerHTML=html; }
 function g2FinSel(btn){ var w=btn.closest('.g2fin-wrap'); if(!w)return null; var s=w.previousElementSibling; while(s&&s.tagName!=='SELECT')s=s.previousElementSibling; return s; }
 function g2FinPick(btn,i){ var sel=g2FinSel(btn); if(!sel)return; sel.selectedIndex=i; sel.dataset.g2cat=g2FinCat(g2FinLabel(sel.options[i])); sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); g2FinRender(sel); }
 function g2FinCatPick(btn,cat){ var sel=g2FinSel(btn); if(!sel)return; sel.dataset.g2cat=cat; g2FinRender(sel); }
+function g2FinName(inp){ var w=inp.closest('.g2fin-wrap'); if(!w)return; var s=w.previousElementSibling; while(s&&s.tagName!=='SELECT')s=s.previousElementSibling; if(!s)return; s.dataset.g2name=inp.value; s.dispatchEvent(new Event('change',{bubbles:true})); }  // เฟส2: เก็บชื่อสีพิเศษ (ไม่ re-render กัน focus หลุด · ไม่กระทบราคา)
+// เฟส2: ชื่อสีพิเศษที่จะลงใบ — special + กรอกชื่อ → "(ชื่อ)" · special + ไม่กรอก → "· ⚠ ระบุชื่อสี"
+function g2FinNameSuffix(sel){ if(!sel)return ''; var o=sel.options[sel.selectedIndex]; if(!o||g2FinCat(g2FinLabel(o))!=='special')return ''; var nm=(sel.dataset.g2name||'').trim(); return nm?(' ('+nm+')'):' · ⚠ ระบุชื่อสี'; }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
@@ -4891,7 +4896,7 @@ function readItem(d){
     const fcs=d.querySelector('.o-fcsides'); if(fcs)optSel.fcsides=fcs.value; }
   // o-extradesc ถูกลบแล้ว (รวมเข้า i-note) — ไม่ต้อง read อีก
   let finLabel='';
-  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
+  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); } } }
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
     // G4 wall-sides: อ่านผนัง 3 ด้าน
@@ -4930,7 +4935,7 @@ function readItem(d){
     const _cr=d.querySelector('.o-customrate'); optSel.customRate=_cr?_cr.value:'0';
     const _cd=d.querySelector('.o-customdesc'); optSel.customDesc=_cd?_cd.value:'';
   }
-    if(p.gate){ const _gr=d.querySelector('.o-gatern'); optSel.gatern=_gr?_gr.value:''; const _gm=d.querySelector('.o-gmotor'); optSel.gmotor=_gm?_gm.value:'0'; const _rt=d.querySelector('.o-railtype'); optSel.railtype=_rt?_rt.value:'straight'; const _gf=d.querySelector('.o-gfin'); optSel.gfin=_gf?_gf.value:''; const _gt=d.querySelector('.o-gatetype'); optSel.gatetype=_gt?_gt.value:'slide_bottom'; const _gw=d.querySelector('.o-gatewood'); optSel.gatewood=_gw?_gw.value:'0'; const _gth=d.querySelector('.o-gatethresh'); optSel.gatethresh=_gth?_gth.checked:false; }
+    if(p.gate){ const _gr=d.querySelector('.o-gatern'); optSel.gatern=_gr?_gr.value:''; const _gm=d.querySelector('.o-gmotor'); optSel.gmotor=_gm?_gm.value:'0'; const _rt=d.querySelector('.o-railtype'); optSel.railtype=_rt?_rt.value:'straight'; const _gf=d.querySelector('.o-gfin'); optSel.gfin=(_gf?_gf.value:'')+g2FinNameSuffix(_gf); const _gt=d.querySelector('.o-gatetype'); optSel.gatetype=_gt?_gt.value:'slide_bottom'; const _gw=d.querySelector('.o-gatewood'); optSel.gatewood=_gw?_gw.value:'0'; const _gth=d.querySelector('.o-gatethresh'); optSel.gatethresh=_gth?_gth.checked:false; }
   if(p.grid){ const _nh=d.querySelector('.o-nh'); optSel.nh=_nh?_nh.value:'0'; const _nv=d.querySelector('.o-nv'); optSel.nv=_nv?_nv.value:'0'; const _gc=d.querySelector('.o-gridcolor'); optSel.gridcolor=_gc?_gc.value:'200'; const _nc=d.querySelector('.o-nc'); optSel.nc=_nc?_nc.value:'0'; }
   if(p.mosquito){
     const _m=d.querySelector('.o-mosq'); optSel.mosqId=_m?_m.value:'';
@@ -4961,15 +4966,15 @@ function readItem(d){
     const _bd=d.querySelector('.o-bsdoor'); optSel.bsDoor=_bd?_bd.value:'';
     const _bdp=d.querySelector('.o-bsdoorprice'); optSel.bsDoorPrice=_bdp?_bdp.value:'0';
     const _bf=d.querySelector('.o-bsfinish'); optSel.bsFinish=_bf?_bf.value:'0';
-    if(_bf&&_bf.selectedIndex>=0) optSel.bsFinishLbl=_bf.options[_bf.selectedIndex].getAttribute('data-n')||_bf.options[_bf.selectedIndex].textContent.replace(/\s*\+.*$/,'').trim(); // G2-7
+    if(_bf&&_bf.selectedIndex>=0) optSel.bsFinishLbl=(_bf.options[_bf.selectedIndex].getAttribute('data-n')||_bf.options[_bf.selectedIndex].textContent.replace(/\s*\+.*$/,'').trim())+g2FinNameSuffix(_bf); // G2-7 + รอบ3ข้อ4 ชื่อสีพิเศษ
   }
   if(p.bar_openclose){
     const _bd=d.querySelector('.o-bocdir'); optSel.bocDir=_bd?_bd.value:'v';
     const _bm=d.querySelector('.o-bocmotor'); optSel.bocMotor=_bm?_bm.checked:false;
     const _bf=d.querySelector('.o-bocfinish'); optSel.bocFinish=_bf?_bf.value:'0';
-    if(_bf&&_bf.selectedIndex>=0) optSel.bocFinishLbl=_bf.options[_bf.selectedIndex].getAttribute('data-n')||_bf.options[_bf.selectedIndex].textContent.replace(/\s*\+.*$/,'').trim(); // G2-7
+    if(_bf&&_bf.selectedIndex>=0) optSel.bocFinishLbl=(_bf.options[_bf.selectedIndex].getAttribute('data-n')||_bf.options[_bf.selectedIndex].textContent.replace(/\s*\+.*$/,'').trim())+g2FinNameSuffix(_bf); // G2-7 + รอบ3ข้อ4 ชื่อสีพิเศษ
   }
-  if(p.bar_grid){ const _bgc=d.querySelector('.o-bgcolor'); optSel.bgColor=_bgc?_bgc.value:''; } // G2-5
+  if(p.bar_grid){ const _bgc=d.querySelector('.o-bgcolor'); optSel.bgColor=(_bgc?_bgc.value:'')+g2FinNameSuffix(_bgc); } // G2-5 + รอบ3ข้อ4 ชื่อสีพิเศษ
   if(p.cat==='ระแนง-เกล็ด'){ const _gzd=d.querySelector('.o-grdir'); optSel.grDir=_gzd?_gzd.value:''; } // G2-9
   if(p.ceiling){ const _ck=d.querySelector('.o-ckolor'); optSel.ckolor=_ck?_ck.value:''; }
   // งาน6: ฝังรางยู / งานเสริม / รื้อของเดิม (ข้อความ, ไม่บวกราคา)
