@@ -272,6 +272,8 @@
   .chip-2up{ }
   .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
   .chip-sm .chip{ min-height:36px; padding:5px 10px; font-size:12.5px; } /* คิว B รอบ2: compact (เดิม 44/6-12/13) */
+  .chip.chip-discont{ opacity:.55; } /* ลำดับ3: รุ่นยกเลิกขาย ทำจาง แต่กดได้/ขายได้ปกติ */
+  .chip.chip-discont.on{ opacity:1; } /* เลือกแล้วเต็มสี */
   /* ① สีอลู drill-down: จุดสีกลมในชิป ([[chip-color-swatch-style]]) */
   .cdot{ display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.28); vertical-align:middle; flex:0 0 auto; background-size:cover; }
   .chip.on .cdot{ border-color:rgba(255,255,255,.7); }
@@ -3709,11 +3711,13 @@ function famPickOther(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.dataset
   var inp=ch.querySelector('.fam-search'); if(inp){ try{ inp.focus(); }catch(e){} } }
 // AUDIT-ปุ่มชื่อยาว (พี่นัทเคาะ 17มิ.ย.): ชื่อสั้นโชว์บนปุ่ม "รุ่น" · ชื่อเต็ม (name) ยังลงใบ + title hover เหมือนเดิม · value/ราคา/logic ไม่แตะ
 var BTN_SHORT={
-  sliding_eseries:'E-series (เลิกขาย)',
+  sliding_eseries:'E-series',
   casement_flush_solid:'โซลิด ทู', casement_inset_solid:'โซลิด วัน',
   inner_top_slimlux:'SlimLux (ภายใน)', inner_top_xseries:'X-series (ภายใน)'
 };
-function btnShort(q,cur){ return (q&&BTN_SHORT[q.id])||((q&&q.name||'').replace(cur||'','').trim()); }
+// ลำดับ3 (18มิ.ย.): ปุ่มเลือกรุ่น ตัดคำ "(ยกเลิกขาย)/(เลิกขาย)" ออกจาก label (สถานะภายใน ไม่ขึ้นปุ่ม) · ยังกดได้/ขายได้ · ทำจางด้วย class chip-discont
+function btnShort(q,cur){ return ((q&&BTN_SHORT[q.id])||((q&&q.name||'').replace(cur||'','').trim())).replace(/\s*\((?:ยกเลิก|เลิก)ขาย\)/g,'').trim(); }
+function discCls(q){ return (q&&/ยกเลิกขาย/.test(q.name||''))?' chip-discont':''; }
 function btnTitle(q){ return (q&&q.name||'').replace(/"/g,'&quot;'); }
 function famSelectorHTML(p,grp,famOther){
   var cats=FAM_CATS[grp]; if(!cats)return''; var cur=p.cat;
@@ -3759,7 +3763,7 @@ function famSelectorHTML(p,grp,famOther){
       // รุ่นย่อยของ cat ที่เลือก (ถ้ามี >1 รุ่น)
       if(_restCats.indexOf(cur)>=0){ var _rm=prodsInGroup(grp).filter(function(q){return q.cat===cur;});
         if(_rm.length>1){ h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
-          _rm.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
+          _rm.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===(p&&p.id)?' on':'')+discCls(q)+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
           h+='</div></label>'; }
       }
     }
@@ -3769,7 +3773,7 @@ function famSelectorHTML(p,grp,famOther){
     var models=PRODUCTS.filter(function(q){return q.cat===cur && !_hideInnerBottom(q);}); // ธง⑤: ไม่โชว์เลื่อนรางล่างเป็นรุ่นเลือก
     if(models.length>1){
       h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
-      models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
+      models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+discCls(q)+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
       h+='</div></label>';
     }
   }
@@ -5443,7 +5447,7 @@ function genQuote(keepNo){
       .trim();
     // ถ้าเป็นสินค้า ยกเลิกขาย — ต่อท้ายชื่อ (ยกเลิกขาย)
     const isDiscontinued = it.p.name.includes('(ยกเลิกขาย)') || it.p.name.includes('ยกเลิกขาย');
-    const discontinuedSuffix = isDiscontinued ? ' (ยกเลิกขาย)' : '';
+    const discontinuedSuffix = '';  // ลำดับ3 (18มิ.ย.): ไม่โชว์สถานะภายใน "(ยกเลิกขาย)" ในใบลูกค้า · ยังเลือก/คิดราคาได้ปกติ (L5419 ตัดจากชื่ออยู่แล้ว)
     // เพิ่ม series tag ท้ายชื่อ (M/L/S) ตาม spec: "(รุ่น M เซมิยูโร)" "(รุ่น L ยูโร)" "(รุ่น S สลิม)"
     // ตัดคำซ้ำในชื่อก่อนใส่ tag: เซมิยูโร/SMS → ตัดออก, ยูโร → ตัดออก, สลิม → ตัดออก
     // โมเดล (X-series/Velora/SlimLux) คงไว้
