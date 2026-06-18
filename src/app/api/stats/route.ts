@@ -22,21 +22,33 @@ export const GET = withRoute(async (req: Request) => {
   const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
 
   const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }, { data: qentries }, { data: qsales }] = await Promise.all([
-    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), queue_entry_id, productions(status), installations(status)"),
+    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, customer_name, estimator_id, estimator:estimator_id(full_name), queue_entry_id, productions(status), installations(status)"),
     sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
     sb.from("issues").select("phase, severity, status, created_at"),
     sb.from("quotation_items").select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))"),
-    sb.from("queue_entries").select("id, sales_id"),
+    sb.from("queue_entries").select("id, job_id, customer_name, sales_id"),
     sb.from("queue_sales").select("id, name"),
   ]);
 
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [];
-  // map: queue_entry_id → ชื่อเซลล์ที่เข้าหน้างาน (เลี่ยง nested embed ที่ ambiguous)
+  // หาเซลล์ที่เข้าหน้างานจากคิว — งาน import ผูกคิวคนละทาง (บางอันมี jobs.queue_entry_id,
+  // บางอันมีแค่ queue_entries.job_id ย้อนกลับ, บางอัน FK ขาดเลย) → map 3 ชั้น (เลี่ยง nested embed ambiguous)
   const salesIdToName = new Map<string, string>((qsales ?? []).map((s: any) => [s.id, s.name]));
-  const qeToSalesName = new Map<string, string>(
-    (qentries ?? []).filter((q: any) => q.sales_id && salesIdToName.has(q.sales_id))
-      .map((q: any) => [q.id, salesIdToName.get(q.sales_id) as string])
-  );
+  const qeFwd = new Map<string, string>();   // queue_entries.id → เซลล์ (jobs.queue_entry_id)
+  const qeByJob = new Map<string, string>(); // queue_entries.job_id → เซลล์ (FK ย้อนกลับ)
+  const qeByName = new Map<string, string>(); // customer_name → เซลล์ (fallback ชื่อลูกค้า เมื่อ FK ขาด)
+  (qentries ?? []).forEach((q: any) => {
+    const nm = q.sales_id ? salesIdToName.get(q.sales_id) : undefined;
+    if (!nm) return;
+    qeFwd.set(q.id, nm);
+    if (q.job_id) qeByJob.set(q.job_id, nm);
+    if (q.customer_name) qeByName.set(String(q.customer_name).trim(), nm);
+  });
+  const queueSalesOf = (j: any): string | null =>
+    qeByJob.get(j.id)
+    ?? (j.queue_entry_id ? qeFwd.get(j.queue_entry_id) : undefined)
+    ?? (j.customer_name ? qeByName.get(String(j.customer_name).trim()) : undefined)
+    ?? null;
   const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
 
   // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก
@@ -67,7 +79,7 @@ export const GET = withRoute(async (req: Request) => {
   const salesMap: Record<string, { name: string; jobs: number; won: number; revenue: number }> = {};
   inJobs.forEach((j: any) => {
     const estName = j.estimator?.full_name ?? null;
-    const queueName = j.queue_entry_id ? (qeToSalesName.get(j.queue_entry_id) ?? null) : null; // เซลล์ที่เข้าประเมินหน้างาน (จากคิว)
+    const queueName = queueSalesOf(j);                    // เซลล์ที่เข้าประเมินหน้างาน (จากคิว — 3 ชั้น)
     const key = j.estimator_id ? `e:${j.estimator_id}` : queueName ? `q:${queueName}` : "none";
     const name = estName ?? queueName ?? "ไม่ระบุ";
     salesMap[key] ??= { name, jobs: 0, won: 0, revenue: 0 };
