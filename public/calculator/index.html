@@ -2139,6 +2139,9 @@ function readQuickItem(d){
   // ALLG-v2: ระแนง finish (สีอลู เรต/ตร.ม.) → optSel.finish · งานบานปกติไม่มี qi-finish
   var _fw2=d.querySelector('.qi-finish-wrap'); var _finV=(_fw2&&_fw2.style.display!=='none')?(parseFloat((d.querySelector('.qi-finish')||{}).value)||0):0;
   var _opt=_finV>0?{finish:_finV}:{};
+  // R3.19 (20มิ.ย. · มติพี่นัท): คาดตาราง + ลูกฟูก โหมดคิดเร็ว → ป้อน optSel · calcUnit คิดราคา (สีลูกฟูก=rn90FinRate(ci) auto)
+  { var _qgm=d.querySelector('.qi-gridmark'); if(_qgm&&_qgm.value==='1'){ _opt.gridmark=true; _opt.gmNh=parseInt((d.querySelector('.qi-gnh')||{}).value)||0; _opt.gmNv=parseInt((d.querySelector('.qi-gnv')||{}).value)||0; _opt.gmRate=parseFloat((d.querySelector('.qi-grate')||{}).value)||200; _opt.gmCurve=0; }
+    var _qsl=d.querySelector('.qi-solidlower'); if(_qsl&&_qsl.value){ _opt.solidlower=_qsl.value; _opt.solidlowerW=parseFloat((d.querySelector('.qi-slw')||{}).value)||0; _opt.solidlowerH=parseFloat((d.querySelector('.qi-slh')||{}).value)||0; } }
   const u=calcUnit(p, w, h, gi, ci, panels, _opt, false);
   // เทียบราคา vs มาตรฐาน (ขาว/กระจกแรก/ไม่อบสี) — ให้เซลล์บอกลูกค้าว่าสี/กระจก/สีระแนง เพิ่มเท่าไร
   var stdSell=calcUnit(p, w, h, 0, 0, panels, {}, false).sell;
@@ -2892,6 +2895,29 @@ function qiRenderG1(d){
      '<div class="qi-panels-wrap"><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนบาน</label><div style="display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="qi-panels" type="number" step="1" min="1" value="1" style="flex:1;min-width:0;border:0;text-align:center;height:44px;font-size:15px;" oninput="qiPanelsOnInput(this)"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>'+
      '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+QTY+'" style="flex:1;min-width:0;border:0;text-align:center;height:44px;font-size:15px;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>'+
    '</div>'+
+   '<div class="full qi-gridsolid" style="margin-top:10px;display:none;border-top:1px dashed var(--line);padding-top:10px;">'+
+     '<label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">▦ คาดตาราง</label>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+       '<button type="button" class="chip on qi-grid-chip" data-v="0" onclick="qiGridPick(this)">ไม่มี</button>'+
+       '<button type="button" class="chip qi-grid-chip" data-v="1" onclick="qiGridPick(this)">▦ มีคาดตาราง</button>'+
+     '</div><input type="hidden" class="qi-gridmark" value="0">'+
+     '<div class="qi-grid-row" style="display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'+
+       '<div><label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">เส้นนอน</label><input class="qi-gnh" type="number" min="0" step="1" value="0" style="width:64px;height:40px;border:1.5px solid var(--line);border-radius:9px;text-align:center;font-size:15px;font-family:inherit;" oninput="calcQuickAll()"></div>'+
+       '<div><label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">เส้นตั้ง</label><input class="qi-gnv" type="number" min="0" step="1" value="0" style="width:64px;height:40px;border:1.5px solid var(--line);border-radius:9px;text-align:center;font-size:15px;font-family:inherit;" oninput="calcQuickAll()"></div>'+
+       '<div><label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">ราคา/ม.</label><input class="qi-grate" type="number" min="0" step="10" value="200" style="width:74px;height:40px;border:1.5px solid var(--line);border-radius:9px;text-align:center;font-size:15px;font-family:inherit;" oninput="calcQuickAll()"></div>'+
+     '</div>'+
+     '<label class="qi-sl-label" style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin:12px 0 6px;">▤ แผ่นทึบล่าง (ลูกฟูก/คอมโพ)</label>'+
+     '<div class="qi-sl-chips" style="display:flex;gap:8px;flex-wrap:wrap;">'+
+       '<button type="button" class="chip on qi-sl-chip" data-v="" onclick="qiSolidPick(this)">ไม่มี</button>'+
+       '<button type="button" class="chip qi-sl-chip" data-v="corrugated" onclick="qiSolidPick(this)">▤ อลูลูกฟูก</button>'+
+       '<button type="button" class="chip qi-sl-chip" data-v="composite" onclick="qiSolidPick(this)">▦ คอมโพสิท</button>'+
+     '</div><input type="hidden" class="qi-solidlower" value="">'+
+     '<div class="qi-sl-row" style="display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">'+
+       '<div><label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">กว้าง(ม.)</label><input class="qi-slw" type="number" min="0" step="0.1" value="0" style="width:74px;height:40px;border:1.5px solid var(--line);border-radius:9px;text-align:center;font-size:15px;font-family:inherit;" oninput="calcQuickAll()"></div>'+
+       '<div><label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">สูง(ม.)</label><input class="qi-slh" type="number" min="0" step="0.1" value="0" style="width:74px;height:40px;border:1.5px solid var(--line);border-radius:9px;text-align:center;font-size:15px;font-family:inherit;" oninput="calcQuickAll()"></div>'+
+       '<span style="font-size:11px;color:#0369A1;align-self:center;">สีลูกฟูก: ตามสีอลูอัตโนมัติ</span>'+
+     '</div>'+
+   '</div>'+
    '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · สี/กระจก เพิ่มจากมาตรฐาน</div></div></div>';
   // rebind prod change
   var ps=d.querySelector('.qi-prod');
@@ -2904,7 +2930,10 @@ function qiRenderG1(d){
       if(p){ var ao=AREA_CATS.includes(p.cat);
         var cw=d.querySelector('.qi-color-wrap'); if(cw) cw.style.display=(p.cabinet||!(ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))?'':'none';
         var gw=d.querySelector('.qi-glass-wrap'); if(gw) gw.style.display=(!(ao||p.zipscreen||p.cat==='มุ้ง'))?'':'none';
-        var cs=d.querySelector('.qi-color'); if(cs){ var cv=cs.value; cs.innerHTML=colorOpts(p.series||''); if(cv&&cs.querySelector('option[value="'+cv+'"]'))cs.value=cv; else cs.value='0'; try{cs.dataset.colCat=colorCatOf(parseInt(cs.value)||0); colorDrillRender(cs);}catch(e){} } } // ก้อนรวม#8: drill-down สีคิดเร็ว (rebuild ชิปตามสินค้า)
+        var cs=d.querySelector('.qi-color'); if(cs){ var cv=cs.value; cs.innerHTML=colorOpts(p.series||''); if(cv&&cs.querySelector('option[value="'+cv+'"]'))cs.value=cv; else cs.value='0'; try{cs.dataset.colCat=colorCatOf(parseInt(cs.value)||0); colorDrillRender(cs);}catch(e){} }
+        // R3.19: คาดตาราง+ลูกฟูก โชว์เฉพาะงานบานกระจก (ตัด areaOnly/มุ้ง/ระแนง/ตู้) · ลูกฟูกตัดบานโซลิด
+        var gs=d.querySelector('.qi-gridsolid'); if(gs){ var showGS=!(ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'||p.grid||p.handrail||p.zipscreen||p.cabinet||p.future_tech); gs.style.display=showGS?'':'none';
+          var showSL=showGS&&!p.solid_door; ['.qi-sl-label','.qi-sl-chips'].forEach(function(sel){ var e=gs.querySelector(sel); if(e)e.style.display=showSL?'':'none'; }); if(!showSL){ var _slr=gs.querySelector('.qi-sl-row'); if(_slr)_slr.style.display='none'; } } } // ก้อนรวม#8: drill-down สีคิดเร็ว (rebuild ชิปตามสินค้า)
       var _qfo=d.querySelector('.qi-fold-opts'); if(_qfo) _qfo.style.display=(p&&p.cat==='บานเฟี้ยม')?'':'none';
       qiSyncFamOn(d); calcQuickAll();
     });
@@ -2928,6 +2957,17 @@ function qiFoldPick(v,btn){
   }
   calcQuickAll();
 }
+// คิดเร็ว R3.19: ปุ่มคาดตาราง + ลูกฟูก
+function qiGridPick(btn){ var root=btn.closest('.qi-gridsolid'); if(!root)return; root.querySelectorAll('.qi-grid-chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var on=btn.dataset.v==='1'; var hid=root.querySelector('.qi-gridmark'); if(hid)hid.value=on?'1':'0';
+  var row=root.querySelector('.qi-grid-row'); if(row)row.style.display=on?'flex':'none';
+  if(on){ var nv=root.querySelector('.qi-gnv'); var ch=btn.closest('.ch'); var pn=ch?parseInt((ch.querySelector('.qi-panels')||{}).value)||0:0; if(nv&&!(parseInt(nv.value)>0)&&pn>0)nv.value=pn; }
+  calcQuickAll(); }
+function qiSolidPick(btn){ var root=btn.closest('.qi-gridsolid'); if(!root)return; root.querySelectorAll('.qi-sl-chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var v=btn.dataset.v||''; var hid=root.querySelector('.qi-solidlower'); if(hid)hid.value=v;
+  var row=root.querySelector('.qi-sl-row'); if(row)row.style.display=v?'flex':'none';
+  if(v){ var ch=btn.closest('.ch'); var slw=root.querySelector('.qi-slw'), slh=root.querySelector('.qi-slh'); if(slw&&!(parseFloat(slw.value)>0)&&ch)slw.value=ch.querySelector('.qi-w').value; if(slh&&!(parseFloat(slh.value)>0))slh.value='0.4'; }
+  calcQuickAll(); }
 function fullFoldSync(inp){
   var d=inp.closest('.ch'); if(!d)return;
   var panels=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
