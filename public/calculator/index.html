@@ -3270,8 +3270,8 @@ function addSet(){
   setSeq++;
   const sid='S'+setSeq+'_'+Math.random().toString(36).slice(2,7);
   const box=document.createElement('div'); box.className='setbox'; box.dataset.sid=sid;
-  // formtop R3.12 (มติพี่นัท 2026-06-19): ตัด addzone ออก · คง set-addpart ปุ่มเดียว
-  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-parts"></div><div class="set-btns set-btns-top"><button type="button" class="set-addpart">＋ เพิ่มส่วน</button></div>';
+  // R3.20 (20มิ.ย. · มติพี่นัท): ตัด "+ เพิ่มส่วน" ทิ้ง (ซ้ำกับ "ผสมบาน") · เพิ่มบานในชุด = ใช้ผสมบาน
+  box.innerHTML='<div class="set-head"><span class="set-badge">ชุด</span><input class="set-name" placeholder="ชื่อชุด/ตำแหน่ง (เว้นว่าง=ชุดเดี่ยว)"><button type="button" class="set-del">ลบชุด ✕</button></div><div class="set-parts"></div>';
   // formtop R3.11 (มติพี่นัท 2026-06-12): ตัด OPTION ระดับชุด (.set-opt-det / .set-opttext+.set-optdelta) ออก
   //   — ซ้ำกับ OPTION ต่อบาน (.oc-block) ซึ่งเลือกหมวด+คิดราคาให้+แก้เองได้ ดีกว่าทุกอย่าง
   //   — readItem (groupOptText/groupOptDelta) มี null-guard อยู่แล้ว → ค่าเป็น ''/0 ปลอดภัย
@@ -4164,14 +4164,14 @@ function renumberItems(){
   // q-items (คิดเร็ว): .ch เป็นลูกตรง → "ชุดที่ N"
   { var cq=document.getElementById('q-items'); if(cq){ var nq=0; Array.from(cq.children).forEach(function(el){ if(el.classList && el.classList.contains('ch')){ nq++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent='ชุดที่ '+nq; } }); } }
   // items (ใบเสนอ): .ch อยู่ใน .setbox > .set-parts → ไล่ทั้งหมดตามลำดับเอกสาร เลขต่อเนื่อง (R3.17 20มิ.ย.: ลบชุดแล้วเรียงใหม่ · เดิม c.children ไม่ถึง .ch ในชุด)
-  { var ci=document.getElementById('items'); if(ci){ var n=0; ci.querySelectorAll('.ch').forEach(function(el){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent='ส่วนที่ '+n; }); } }
+  { var ci=document.getElementById('items'); if(ci){ var n=0; ci.querySelectorAll('.ch').forEach(function(el){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent='ชุดที่ '+n; }); } }
 }
 function addItem(container){
   itemSeq++;
   const id=itemSeq;
   const d=document.createElement('div'); d.className='ch'; d.dataset.id=id;
   d.innerHTML=
-   `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
+   `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ชุดที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
      /* G1G6-A: กลุ่มงาน = การ์ดชิป 7 ปุ่ม (select ซ่อนให้ logic เดิมอ่าน · chSetChip set+fire change) */
      `<div class="full"><label>กลุ่มงาน</label><select class="i-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select>`+rfChips('i-group',[['1','🪟 บาน/กระจก'],['2','🚪 ระแนง·รั้ว·ราว'],['3','🏠 งานหลังคา'],['4','📦 ตู้อลู'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้องกระจก'],['7','🎐 ม่านซิป']],'1')+`</div>`+
@@ -6607,7 +6607,7 @@ function genQuote(keepNo){
     let _qSz=_sz;
     if(!_qHdr){
       const _pl=String(_qProd).split('\n');
-      _qHdr='จุดที่ '+rowIdx+' '+_pl[0]+(_qSz?(' '+_qSz):'');
+      _qHdr='ชุดที่ '+rowIdx+' '+_pl[0]+(_qSz?(' '+_qSz):'');
       _qProd=_pl.slice(1).join('\n'); // เหลือบานย่อย (ถ้ามี) เป็น bullet ใต้หัว
       _qSz='';
     }
@@ -6730,7 +6730,7 @@ function exportQuoteExcel(){
       if(it.r.addonLabel) glass += ' · ' + it.r.addonLabel;
       if(it.r.msgs && it.r.msgs.length) glass += ' · ' + it.r.msgs.join(', ');
     }
-    data.push([i+1, it.name||('จุดที่ '+(i+1)), prodName+(it.ship?' (ผลิตส่ง)':''), it.w+'×'+it.h+' ม.', glass, it.qty, it.r.sell, line]);
+    data.push([i+1, it.name||('ชุดที่ '+(i+1)), prodName+(it.ship?' (ผลิตส่ง)':''), it.w+'×'+it.h+' ม.', glass, it.qty, it.r.sell, line]);
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
