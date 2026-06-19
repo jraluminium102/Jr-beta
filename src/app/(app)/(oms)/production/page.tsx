@@ -173,6 +173,13 @@ export default function ProductionPage() {
             <Icon name="ruler" size={14} />
             นัดวัดจริง
           </Link>
+          <Link
+            href="/production-plan"
+            className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card border border-white/15 text-white text-[13px] font-medium min-h-[40px]"
+          >
+            <Icon name="clipboard" size={14} />
+            แผนผลิต
+          </Link>
         </div>
       </div>
       <p className="text-sm mb-4" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
