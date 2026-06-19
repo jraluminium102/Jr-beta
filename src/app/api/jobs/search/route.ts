@@ -1,0 +1,80 @@
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok } from "@/lib/bff/response";
+import { normalizePhone } from "@/lib/phone";
+
+export const dynamic = "force-dynamic";
+
+// GET /api/jobs/search?q=<text>
+// GET /api/jobs/search?customer_id=<N>  → งานทั้งหมดของลูกค้า เรียงล่าสุดก่อน
+// ค้นงานด้วยชื่อลูกค้า หรือเบอร์โทร (รองรับมีขีด/ไม่มีขีด)
+// ใช้สำหรับหน้าคิวงาน "เคลียร์แบบ" — เลือกงานเดิมที่จะผูก
+// และ "ลูกค้าเก่าหน้างานเดิม" — auto-load งานล่าสุดของลูกค้า
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("jobs", "read");
+
+  const url = new URL(req.url);
+  const q = (url.searchParams.get("q") ?? "").trim();
+  const customerIdRaw = url.searchParams.get("customer_id");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = ctx.supabase as unknown as { from: (t: string) => any };
+
+  // customer_id filter: ดึงงานทั้งหมดของลูกค้านั้น เรียงล่าสุดก่อน
+  if (customerIdRaw) {
+    const customerId = Number(customerIdRaw);
+    if (!Number.isFinite(customerId) || customerId <= 0) {
+      return ok<JobSearchResult[]>([]);
+    }
+    const { data, error } = await sb
+      .from("jobs")
+      .select("id, job_code, customer_name, customer_tel, design_state, status, current_stage, customer_area")
+      .eq("customer_id", customerId)
+      .neq("status", "CANCELLED")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw new Error(error.message);
+    return ok<JobSearchResult[]>((data ?? []) as JobSearchResult[]);
+  }
+
+  if (!q) {
+    return ok<JobSearchResult[]>([]);
+  }
+
+  // ค้นชื่อ ilike หรือ เบอร์ ilike ทั้ง raw และ digits-only
+  const qDigits = normalizePhone(q);
+
+  // build or filter: ค้นชื่อ + เบอร์ raw + เบอร์ digits
+  // customer_tel อาจเก็บแบบมีขีดหรือไม่มีขีด — ค้นทั้งคู่
+  const orParts: string[] = [
+    `customer_name.ilike.%${q}%`,
+    `customer_tel.ilike.%${q}%`,
+  ];
+  if (qDigits && qDigits !== q) {
+    orParts.push(`customer_tel.ilike.%${qDigits}%`);
+  }
+
+  const { data, error } = await sb
+    .from("jobs")
+    .select("id, job_code, customer_name, customer_tel, design_state, status, current_stage, customer_area")
+    .neq("status", "CANCELLED")
+    .or(orParts.join(","))
+    .order("assess_date", { ascending: false })
+    .limit(20);
+
+  if (error) throw new Error(error.message);
+
+  return ok<JobSearchResult[]>((data ?? []) as JobSearchResult[]);
+});
+
+export type JobSearchResult = {
+  id: string;
+  job_code: string | null;
+  customer_name: string;
+  customer_tel: string | null;
+  design_state: string;
+  status: string;
+  current_stage: number;
+  customer_area: string | null;
+};

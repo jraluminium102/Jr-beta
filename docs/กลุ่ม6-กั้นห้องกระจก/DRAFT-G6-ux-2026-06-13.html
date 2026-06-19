@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G6 — กั้นห้องกระจก · ออปชั่นจัดถูก (เรตจริง)</title>
+<style>
+:root{--red:#B3151D;--blue:#1565C0;--blue-l:#EAF3FF;--blue-b:#9DBCE0;--green:#15803D;--green-l:#F0FDF4;--green-b:#86EFAC;
+  --amber-l:#FFF7ED;--amber-b:#FCD34D;--gray:#6B7280;--line:#E5E7EB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:640px;margin:0 auto;padding:14px 14px 80px;}
+h2.pg{font-size:17px;font-weight:700;color:var(--red);margin:8px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:14px;}
+.lbl{font-size:11px;font-weight:700;color:var(--gray);margin:16px 2px 7px;}
+.lbl:first-child{margin-top:0;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.gc,.fc{min-height:46px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;text-align:left;color:#374151;font-family:inherit;}
+.gc.on,.fc.on{background:var(--red);color:#fff;border-color:var(--red);}
+.fc .fn{display:block;font-size:11px;font-weight:400;color:var(--gray);}
+.fc.on .fn{color:rgba(255,255,255,.8);}
+.fc.alt{border-style:dashed;color:var(--gray);font-weight:600;}
+.modelchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.mchip{min-height:42px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;cursor:pointer;color:#374151;display:flex;align-items:center;font-weight:600;}
+.mchip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.card{background:#fff;border-radius:12px;border:1px solid var(--line);padding:14px;margin-bottom:10px;}
+.field{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:9px;}
+.field:last-child{margin-bottom:0;}
+.fl{font-size:13px;color:#374151;min-width:74px;font-weight:600;}
+input[type=number],select{height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:14px;font-family:inherit;background:#fff;}
+input[type=number]{width:78px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.ch{min-height:42px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;cursor:pointer;color:#374151;display:flex;align-items:center;font-weight:600;}
+.ch.on{background:var(--red);color:#fff;border-color:var(--red);}
+.ch.b.on{background:var(--blue);border-color:var(--blue);}
+.prodbox{background:var(--amber-l);border:1px solid var(--amber-b);border-radius:10px;padding:11px;margin:10px 0;}
+.prodbox .pt{font-size:12px;font-weight:700;color:#92400E;margin-bottom:8px;}
+.surf{background:var(--blue-l);border:1px solid var(--blue-b);border-radius:10px;padding:11px;margin:10px 0;}
+.surf .st{font-size:12px;font-weight:700;color:#1E5AA8;margin-bottom:8px;}
+details.cat{border:1px solid #EBD7D7;border-radius:10px;margin-bottom:8px;background:#fff;}
+details.cat>summary{padding:12px 14px;cursor:pointer;font-size:13px;font-weight:700;color:var(--red);min-height:46px;display:flex;align-items:center;gap:8px;list-style:none;}
+details.cat>summary::-webkit-details-marker{display:none;}
+details.cat>summary::before{content:'▶';font-size:10px;transition:.2s;}
+details.cat[open]>summary::before{transform:rotate(90deg);}
+details.cat>div{padding:4px 14px 14px;}
+.fix-tag{font-size:10px;background:#DCFCE7;color:var(--green);border-radius:5px;padding:1px 7px;font-weight:700;margin-left:6px;}
+.fixbox{background:var(--green-l);border:1px solid var(--green-b);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--green);margin:6px 0;}
+.price-bar{position:sticky;bottom:0;background:var(--red);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:11px 11px 0 0;margin:14px -14px -14px;}
+.price-bar .pv{font-size:20px;font-weight:700;}
+.note{font-size:11px;color:var(--gray);margin-top:5px;}
+</style>
+</head>
+<body>
+<div class="banner">DRAFT G6 · เรตจริง · ออปชั่นจัดถูกแล้ว (4 หมวด + แก้ 2 จุดบานกระทุ้ง)</div>
+<div class="page">
+  <h2 class="pg">กั้นห้องกระจก — อุปกรณ์เสริม/ออปชั่น (เวอร์ชันถูกต้องล่าสุด)</h2>
+  <div class="sub">อ่านจาก index.html ล่าสุด · 4 หมวด (dev ยุบ 7→4) · ชี้ + แก้ 2 จุดที่ตกหมวดผิด</div>
+
+  <div class="lbl">กลุ่มงาน (การ์ด)</div>
+  <div class="grid2">
+    <button class="gc" onclick="gp(this)">1 บาน/กระจก</button><button class="gc on" onclick="gp(this)">6 กั้นห้องกระจก</button>
+  </div>
+
+  <div class="lbl">เลือกชนิด (ลองสลับ — ออปชั่นเฉพาะตัวเปลี่ยนตาม)</div>
+  <div class="grid2" id="fg">
+    <button class="fc on" data-t="slide" onclick="fp(this)">บานเลื่อน<span class="fn">เซมิยูโร · 5 รุ่น</span></button>
+    <button class="fc" data-t="casement" onclick="fp(this)">บานเปิด<span class="fn">มี combo</span></button>
+    <button class="fc" data-t="awning" onclick="fp(this)">บานกระทุ้ง<span class="fn">★ จุดแก้</span></button>
+    <button class="fc" data-t="fixed" onclick="fp(this)">กระจกติดตาย<span class="fn">ช่องแสง</span></button>
+  </div>
+  <div class="modelchips" id="mc"></div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="field"><span class="fl">ขนาด</span><input type="number" id="w" value="3.0" step="0.1" oninput="calc()"> × <input type="number" id="h" value="2.4" step="0.1" oninput="calc()"> ม.</div>
+
+    <!-- ออปชั่นเฉพาะสินค้า inline (ถูกแล้วใน index.html) -->
+    <div class="surf" id="sAwn" style="display:none;">
+      <div class="st">⚡ ของบานกระทุ้ง — ดันขึ้นเห็นทันที <span class="fix-tag">✅ แก้จุดที่ 1</span></div>
+      <div class="field"><span class="fl">แบบเปิด</span><div class="chips"><button class="ch b on" onclick="p1(this)">เปิดล่าง</button><button class="ch b" onclick="p1(this)">เปิดข้าง</button><button class="ch b" onclick="p1(this)">tilt&turn</button></div></div>
+      <div class="fixbox">เดิม <code>awn_mode</code> ตกถัง "งานเสริม" (catch-all) · ที่ถูก = ออปชั่นหลักของบานกระทุ้ง ต้องเห็นเด่น</div>
+    </div>
+
+    <!-- 4 หมวดทั่วไป (ตามจริง dev) -->
+    <div class="lbl" style="margin-top:6px;">อุปกรณ์เสริม — 4 หมวด</div>
+    <details class="cat" open><summary>🚪 ธรณี · ครอบวงกบ · ช่องแสง</summary><div>
+      <div class="field"><span class="fl">ครอบวงกบ</span><div class="chips"><button class="ch on" onclick="p1(this)">ไม่มี</button><button class="ch" onclick="p1(this)">3 ด้าน</button><button class="ch" onclick="p1(this)">4 ด้าน</button></div></div>
+      <div class="field"><span class="fl">ดรอปพื้น</span><input type="number" placeholder="ม." style="width:84px;"></div>
+    </div></details>
+    <details class="cat"><summary>🔧 มือจับ · ล็อค · มุ้ง · คาดตาราง</summary><div>
+      <div class="field"><span class="fl" style="width:100%;">มือจับ (ติ๊กหลายแบรนด์)</span></div>
+      <div class="chips"><button class="ch" onclick="tg(this)">Cmech</button><button class="ch" onclick="tg(this)">ดิจิตอล</button><button class="ch" onclick="tg(this)">สแตนเลส</button></div>
+      <div class="field" style="margin-top:8px;"><span class="fl">ชุดล็อค</span><div class="chips"><button class="ch on" onclick="p1(this)">มีกุญแจ</button><button class="ch" onclick="p1(this)">ไม่มี</button></div></div>
+      <div class="field"><span class="fl">มุ้ง</span><div class="chips"><button class="ch on" onclick="p1(this)">ไม่ใส่</button><button class="ch" onclick="p1(this)">เฟรมเล็ก</button><button class="ch" onclick="p1(this)">ม้วน</button></div></div>
+    </div></details>
+    <details class="cat"><summary>🏗️ โครงสร้าง · แผ่นทึบ · ราง</summary><div>
+      <div class="field"><span class="fl">ชนิดการเปิด</span><div class="chips"><button class="ch on" onclick="p1(this)">เลื่อนปกติ</button><button class="ch" onclick="p1(this)">สลับ</button></div></div>
+      <div class="chips"><button class="ch" onclick="tg(this)">เสริมคาน</button><button class="ch" onclick="tg(this)">ซ่อนราง</button><button class="ch" onclick="tg(this)">แผ่นทึบล่าง</button></div>
+      <div class="fixbox" id="comboFix" style="display:none;">✅ <b>แก้จุดที่ 2:</b> <code>combo บานกระทุ้งเข้าใน</code> + <code>ราคา combo</code> ย้ายมา<b>อยู่ด้วยกันที่นี่</b> · เดิม combo แตก 2 หมวด (ตัวเลือกไปอยู่ "มุ้ง" · ราคาไปอยู่ "งานเสริม")</div>
+      <div class="field" id="comboRow" style="display:none;margin-top:8px;"><span class="fl">combo</span><label style="font-size:13px;"><input type="checkbox"> บานกระทุ้งเข้าใน + มุ้งจีบ</label><input type="number" placeholder="ราคา combo" style="width:110px;"></div>
+    </div></details>
+    <details class="cat"><summary>➕ งานเสริม · หมายเหตุ</summary><div>
+      <div class="field" style="margin-bottom:0;"><label style="font-size:13px;"><input type="checkbox"> รื้อของเดิม</label><input type="number" placeholder="งานเสริม" style="width:120px;margin-left:8px;"></div>
+    </div></details>
+  </div>
+
+  <div class="price-bar"><span>ราคาด้านนี้ (เรตจริง)</span><span class="pv" id="price">฿37,000</span></div>
+  <p class="note">ราคาจริงจาก engine: บานเลื่อน 3×2.4=฿37,000 · บานเปิด 1.8×2.2=฿26,500 · ติดตาย 2×2.5=฿25,000 · บานกระทุ้ง 1.2×0.6=฿13,000</p>
+</div>
+<script>
+var RATE={slide:{nm:['บานเลื่อน เซมิยูโร','บานเลื่อน ยูโร','รางบนซ้อน','SlimLux','บานยก SMS'],p:37000,w:3,h:2.4},
+  casement:{nm:['บานเปิด เซมิยูโร','บานเปิด ยูโร','Velora','โซลิด ทู'],p:26500,w:1.8,h:2.2},
+  awning:{nm:['บานกระทุ้ง ยูโร','บานกระทุ้ง aluinch'],p:13000,w:1.2,h:0.6},
+  fixed:{nm:['กระจกติดตาย'],p:25000,w:2,h:2.5}};
+var CUR='slide';
+function gp(b){[].forEach.call(document.querySelectorAll('.gc'),c=>c.classList.remove('on'));b.classList.add('on');}
+function fp(b){[].forEach.call(document.querySelectorAll('#fg .fc'),c=>c.classList.remove('on'));b.classList.add('on');CUR=b.dataset.t;
+  var r=RATE[CUR],wrap=document.getElementById('mc');wrap.innerHTML='';
+  r.nm.forEach((n,i)=>{var x=document.createElement('button');x.className='mchip'+(i===0?' on':'');x.textContent=n;x.onclick=function(){[].forEach.call(wrap.querySelectorAll('.mchip'),c=>c.classList.remove('on'));x.classList.add('on');};wrap.appendChild(x);});
+  document.getElementById('w').value=r.w;document.getElementById('h').value=r.h;
+  document.getElementById('sAwn').style.display=(CUR==='awning')?'block':'none';
+  var hasCombo=(CUR==='casement'||CUR==='awning');
+  document.getElementById('comboFix').style.display=hasCombo?'block':'none';
+  document.getElementById('comboRow').style.display=hasCombo?'flex':'none';
+  document.getElementById('price').textContent='฿'+r.p.toLocaleString();
+}
+function p1(b){var x=b.closest('.chips');[].forEach.call(x.querySelectorAll('.ch'),c=>c.classList.remove('on'));b.classList.add('on');}
+function tg(b){b.classList.toggle('on');}
+function calc(){var r=RATE[CUR];document.getElementById('price').textContent='฿'+r.p.toLocaleString();}
+fp(document.querySelector('#fg .fc.on'));
+</script>
+</body>
+</html>

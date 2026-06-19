@@ -21,14 +21,34 @@ export const GET = withRoute(async (req: Request) => {
   const toT = new Date(to + "T23:59:59").getTime();
   const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
 
-  const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }] = await Promise.all([
-    sb.from("jobs").select("status, total_amount, deposit_date, assess_date, channel, estimator_id, estimator:estimator_id(full_name), productions(status), installations(status)"),
+  const [{ data: jobs }, { data: fin }, { data: issues }, { data: qitems }, { data: qentries }, { data: qsales }] = await Promise.all([
+    sb.from("jobs").select("status, net_amount, total_amount, deposit_date, assess_date, channel, customer_name, estimator_id, estimator:estimator_id(full_name), queue_entry_id, productions(status), installations(status)"),
     sb.from("finance_entries").select("amount, payment_date").eq("is_voided", false),
     sb.from("issues").select("phase, severity, status, created_at"),
-    sb.from("quotation_items").select("name, qty, quotation:quotation_id(issue_date)"),
+    sb.from("quotation_items").select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))"),
+    sb.from("queue_entries").select("id, job_id, customer_name, sales_id"),
+    sb.from("queue_sales").select("id, name"),
   ]);
 
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [];
+  // หาเซลล์ที่เข้าหน้างานจากคิว — งาน import ผูกคิวคนละทาง (บางอันมี jobs.queue_entry_id,
+  // บางอันมีแค่ queue_entries.job_id ย้อนกลับ, บางอัน FK ขาดเลย) → map 3 ชั้น (เลี่ยง nested embed ambiguous)
+  const salesIdToName = new Map<string, string>((qsales ?? []).map((s: any) => [s.id, s.name]));
+  const qeFwd = new Map<string, string>();   // queue_entries.id → เซลล์ (jobs.queue_entry_id)
+  const qeByJob = new Map<string, string>(); // queue_entries.job_id → เซลล์ (FK ย้อนกลับ)
+  const qeByName = new Map<string, string>(); // customer_name → เซลล์ (fallback ชื่อลูกค้า เมื่อ FK ขาด)
+  (qentries ?? []).forEach((q: any) => {
+    const nm = q.sales_id ? salesIdToName.get(q.sales_id) : undefined;
+    if (!nm) return;
+    qeFwd.set(q.id, nm);
+    if (q.job_id) qeByJob.set(q.job_id, nm);
+    if (q.customer_name) qeByName.set(String(q.customer_name).trim(), nm);
+  });
+  const queueSalesOf = (j: any): string | null =>
+    qeByJob.get(j.id)
+    ?? (j.queue_entry_id ? qeFwd.get(j.queue_entry_id) : undefined)
+    ?? (j.customer_name ? qeByName.get(String(j.customer_name).trim()) : undefined)
+    ?? null;
   const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
 
   // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก
@@ -40,7 +60,7 @@ export const GET = withRoute(async (req: Request) => {
     jobs: inJobs.length,
     won: wonJobs.length,
     close_rate: inJobs.length ? Math.round((wonJobs.length / inJobs.length) * 100) : 0,
-    revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    revenue_closed: wonJobs.reduce((s: number, j: any) => s + num(j.net_amount), 0), // net = ก่อน VAT (ยอดขายจริง) ให้ตรง byCategory
     collected: F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0),
   };
 
@@ -50,19 +70,21 @@ export const GET = withRoute(async (req: Request) => {
   const mk = (s?: string | null) => (s ? s.slice(0, 7) : "");
   const byMonth = monthKeys.map((m) => ({
     month: m,
-    quoted: J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.total_amount), 0),
-    closed: J.filter((j: any) => mk(j.deposit_date) === m).reduce((s: number, j: any) => s + num(j.total_amount), 0),
+    quoted: J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0),
+    closed: J.filter((j: any) => mk(j.deposit_date) === m).reduce((s: number, j: any) => s + num(j.net_amount), 0),
     collected: F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0),
   }));
 
-  // ปิดการขายต่อเซลล์ (estimator)
+  // ปิดการขายต่อเซลล์ — ใช้ estimator ถ้ามี, ไม่งั้น fallback เซลล์ที่เข้าหน้างานจากคิว (queue_entries.sales)
   const salesMap: Record<string, { name: string; jobs: number; won: number; revenue: number }> = {};
   inJobs.forEach((j: any) => {
-    const key = j.estimator_id ?? "none";
-    const name = j.estimator?.full_name ?? "ไม่ระบุ";
+    const estName = j.estimator?.full_name ?? null;
+    const queueName = queueSalesOf(j);                    // เซลล์ที่เข้าประเมินหน้างาน (จากคิว — 3 ชั้น)
+    const key = j.estimator_id ? `e:${j.estimator_id}` : queueName ? `q:${queueName}` : "none";
+    const name = estName ?? queueName ?? "ไม่ระบุ";
     salesMap[key] ??= { name, jobs: 0, won: 0, revenue: 0 };
     salesMap[key].jobs++;
-    if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.total_amount); }
+    if (WON.includes(j.status)) { salesMap[key].won++; salesMap[key].revenue += num(j.net_amount); }
   });
   const bySales = Object.values(salesMap).map((s) => ({ ...s, close_rate: s.jobs ? Math.round((s.won / s.jobs) * 100) : 0 }))
     .sort((a, b) => b.revenue - a.revenue);
@@ -79,11 +101,30 @@ export const GET = withRoute(async (req: Request) => {
 
   // ประเภทงานนิยม (จากรายการในใบเสนอราคา ในช่วง) top 10
   const itemMap: Record<string, number> = {};
-  QI.filter((it: any) => inRange(it.quotation?.issue_date)).forEach((it: any) => {
+  QI.filter((it: any) => inRange(it.quotation?.issue_date) && it.quotation?.status !== "cancelled").forEach((it: any) => {
     const name = (it.name ?? "").trim(); if (!name) return;
     itemMap[name] = (itemMap[name] ?? 0) + num(it.qty);
   });
   const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 10);
+
+  // สินค้าขายดีตามหมวด (0046) — แยก "เสนอราคา" (ทุกใบไม่ยกเลิก) vs "ขายได้" (งาน status=WON)
+  // นับงาน = distinct quotation_id · ยอด = sum(line_total) · เฉพาะรายการที่มี category
+  type CatAgg = { category: string; quoted_revenue: number; sold_revenue: number; _q: Set<unknown>; _s: Set<unknown> };
+  const catMap: Record<string, CatAgg> = {};
+  let uncategorized = 0;
+  QI.forEach((it: any) => {
+    const q = it.quotation;
+    if (!q || q.status === "cancelled" || !inRange(q.issue_date)) return;
+    const cat = (it.category ?? "").trim();
+    if (!cat) { uncategorized++; return; }
+    const lt = num(it.line_total);
+    const m = (catMap[cat] ??= { category: cat, quoted_revenue: 0, sold_revenue: 0, _q: new Set(), _s: new Set() });
+    m.quoted_revenue += lt; m._q.add(it.quotation_id);
+    if (q.job && WON.includes(q.job.status)) { m.sold_revenue += lt; m._s.add(it.quotation_id); }
+  });
+  const byCategory = Object.values(catMap)
+    .map((m) => ({ category: m.category, quoted_revenue: m.quoted_revenue, quoted_jobs: m._q.size, sold_revenue: m.sold_revenue, sold_jobs: m._s.size }))
+    .sort((a, b) => b.sold_revenue - a.sold_revenue || b.quoted_revenue - a.quoted_revenue);
 
   // ปัญหา แยกเฟส/ความรุนแรง (ในช่วง)
   const inIssues = I.filter((i: any) => inRange(i.created_at));
@@ -97,6 +138,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     range: { from, to },
     summary, byMonth, bySales, funnel, byChannel, topItems,
+    byCategory, uncategorizedItems: uncategorized,
     issues: {
       total: inIssues.length,
       open: inIssues.filter((i: any) => i.status !== "CLOSED").length,

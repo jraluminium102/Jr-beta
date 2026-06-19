@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { CHANNEL } from "@/lib/constants";
 import { X } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 
 export function CreateJobModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({ customer_name: "", customer_tel: "", customer_area: "", channel: "LINE", assess_date: new Date().toISOString().slice(0, 10) });
@@ -56,7 +57,7 @@ export function CreateJobModal({ onClose, onCreated }: { onClose: () => void; on
                 {Object.entries(CHANNEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
-            <div><label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="ad">วันเข้าประเมิน</label><input id="ad" type="date" value={form.assess_date} onChange={(e) => set("assess_date", e.target.value)} className={`${field} tnum`} /></div>
+            <div><label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="ad">วันเข้าประเมิน</label><DateField id="ad" value={form.assess_date} onChange={(iso) => set("assess_date", iso)} className={field} aria-label="วันเข้าประเมิน" /></div>
           </div>
         </div>
 

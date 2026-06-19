@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>สรุปราคา G6 ทั้งหมด — ฝ่ายใบเสนอราคาตรวจ</title>
+<style>
+  @page{size:A4;margin:10mm 9mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.4;margin:0;}
+  h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 9px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+  h2 .s{font-size:9.5px;font-weight:400;opacity:.9;float:right;}
+  table{border-collapse:collapse;width:100%;margin:4px 0 9px;font-size:10px;}
+  th,td{border:1px solid #d8c9c9;padding:3px 7px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.pr{color:#15803D;font-weight:700;white-space:nowrap;text-align:right;}
+  td.c{text-align:center;}
+  td.ck{text-align:center;width:26px;color:#B3151D;font-size:12px;}
+  th.ck{width:26px;text-align:center;}
+  .free{color:#888;font-weight:400;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:7px 10px;margin:6px 0;background:#fffafa;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  code{background:#f3f0f0;padding:0 3px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;}
+  .pgbreak{page-break-before:always;}
+  .legend{font-size:9px;color:#666;margin:1px 0 7px;}
+  .grp{background:#fbeeee;font-weight:700;color:#B3151D;}
+  .x{color:#aaa;font-size:9px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin:1px 0;}
+</style>
+</head>
+<body>
+
+<h1>สรุปราคา G6 ทั้งหมด — สำหรับฝ่ายใบเสนอราคาตรวจ</h1>
+<div class="meta">2026-06-14 · ทุกราคาดึงจาก engine จริง <code>public/calculator/index.html</code> (render 41 ชนิด) · <span class="pr" style="text-align:left">เขียว</span>=ราคา · <span class="free">เทา</span>=ฟรี/รวมแล้ว · ☐=ช่องติ๊กว่าตรวจแล้วถูก · ☒=แก้</div>
+
+<div class="box warn"><b>อ่านก่อนตรวจ:</b> ① <b>"ราคาขั้นต่ำ/ชุด"</b> = ถ้าคิดตามขนาดได้ต่ำกว่านี้ คิดเท่าขั้นต่ำ (ไม่ใช่เรต/ตร.ม. — เรต/ตร.ม. ฐานเป็นสูตรลับในระบบ ไม่โชว์) · ② ราคา <b>+เลข</b> = บวกเพิ่มจากราคาบาน · ③ ☐ ทุกช่อง = ติ๊กเมื่อตรวจกับใบจริงแล้วตรง · ผิดให้เขียนราคาถูกข้างๆ</div>
+
+<!-- ===== 1. ราคาขั้นต่ำต่อชนิด ===== -->
+<h2>① ราคาขั้นต่ำต่อชนิดบาน (min/ชุด) <span class="s">ถ้าคิดตามขนาดต่ำกว่านี้ = คิดเท่านี้</span></h2>
+<div class="grid2">
+<div>
+<table>
+<tr><th>ชนิดบาน</th><th>ขั้นต่ำ/ชุด</th><th class="ck">☐</th></tr>
+<tr><td class="grp" colspan="3">เลื่อน (SLIDE)</td></tr>
+<tr><td>บานเลื่อน เซมิยูโร</td><td class="pr">6,500</td><td class="ck">☐</td></tr>
+<tr><td>บานเลื่อน ยูโร</td><td class="pr">7,500</td><td class="ck">☐</td></tr>
+<tr><td>เลื่อนภายในรางบน (Stack/SlimLux/X)</td><td class="free">addon บนบานเลื่อน</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="3">เปิด (SWING)</td></tr>
+<tr><td>บานเปิด ยูโร</td><td class="pr">18,000</td><td class="ck">☐</td></tr>
+<tr><td>บานเปิด X-series</td><td class="pr">28,000</td><td class="ck">☐</td></tr>
+<tr><td>บานเปิด Velora</td><td class="pr">19,000</td><td class="ck">☐</td></tr>
+<tr><td>บานเปิด โซลิด ทู / โซลิด วัน</td><td class="pr">18,000</td><td class="ck">☐</td></tr>
+<tr><td>บานกระทุ้ง ยูโร</td><td class="pr">10,000</td><td class="ck">☐</td></tr>
+<tr><td>บานหมุน (pivot)</td><td class="pr">26,000</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="3">เฟี้ยม (FOLD)</td></tr>
+<tr><td>เฟี้ยม เซมิยูโร / ยูโร</td><td class="free">คิดตามขนาด</td><td class="ck">☐</td></tr>
+<tr><td>เฟี้ยม X-series (ภายใน)</td><td class="pr">36,000</td><td class="ck">☐</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><th>ชนิดบาน</th><th>ขั้นต่ำ/ชุด</th><th class="ck">☐</th></tr>
+<tr><td class="grp" colspan="3">ติดตาย / ทึบ (FIX)</td></tr>
+<tr><td>กระจกติดตาย</td><td class="pr">5,000</td><td class="ck">☐</td></tr>
+<tr><td>ผนังเบาทึบ (สมาร์ท/คอมโพ/Isowall)</td><td class="free">ตามวัสดุ+พื้นที่</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="3">ดัดโค้ง (CURVE)</td></tr>
+<tr><td>ดัดโค้ง บานคู่</td><td class="pr">47,000</td><td class="ck">☐</td></tr>
+<tr><td>ดัดโค้ง บานเดี่ยว</td><td class="pr">32,000</td><td class="ck">☐</td></tr>
+<tr><td>ดัดโค้ง ติดตาย</td><td class="pr">10,000</td><td class="ck">☐</td></tr>
+<tr><td>ดัดโค้ง สลิม</td><td class="pr">50,000</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="3">อื่นๆ (OTHER)</td></tr>
+<tr><td>PC Door 2 บาน / 4 บาน</td><td class="pr">36,000 / 46,000</td><td class="ck">☐</td></tr>
+<tr><td>shower กั้นอาบน้ำ</td><td class="pr">12,000</td><td class="ck">☐</td></tr>
+<tr><td>บานเปลือยติดตาย</td><td class="pr">7,000</td><td class="ck">☐</td></tr>
+<tr><td>YKK Ventilation / Exhido</td><td class="pr">30,000 / 120,000</td><td class="ck">☐</td></tr>
+<tr><td>Tostem Airflow A01</td><td class="pr">34,000</td><td class="ck">☐</td></tr>
+</table>
+</div>
+</div>
+<div class="legend">บานยก (lift_sms/aluinch) = คิดด้วยสูตร lift เฉพาะ · บานเลื่อน E-series / บานเปิด D-series / กระทุ้ง aluinch / บานหมุน aluinch = <b>ยกเลิกขายแล้ว</b> (ไม่ต้องตรวจ)</div>
+
+<!-- ===== 2. มือจับ ===== -->
+<h2 class="pgbreak">② มือจับ <span class="s">บวกเพิ่มจากราคาบาน · Cmech ฝัง/เมโทร = ฟรี</span></h2>
+<div class="grid2">
+<div>
+<table>
+<tr><th>มือจับดิจิตอล (o-digi)</th><th>+ราคา</th><th class="ck">☐</th></tr>
+<tr><td>S1 ก้านโยก</td><td class="pr">+10,000</td><td class="ck">☐</td></tr>
+<tr><td>S1 ลูกบิด</td><td class="pr">+10,000</td><td class="ck">☐</td></tr>
+<tr><td>A300</td><td class="pr">+10,000</td><td class="ck">☐</td></tr>
+<tr><td>C300</td><td class="pr">+11,000</td><td class="ck">☐</td></tr>
+<tr><td>L900</td><td class="pr">+13,000</td><td class="ck">☐</td></tr>
+<tr><td>X1</td><td class="pr">+13,000</td><td class="ck">☐</td></tr>
+<tr><td>S3</td><td class="pr">+18,000</td><td class="ck">☐</td></tr>
+<tr><td>S4</td><td class="pr">+18,000</td><td class="ck">☐</td></tr>
+<tr><td>X2</td><td class="pr">+20,000</td><td class="ck">☐</td></tr>
+<tr><td>L600</td><td class="pr">+24,000</td><td class="ck">☐</td></tr>
+<tr><td>JR Prime</td><td class="pr">+24,900</td><td class="ck">☐</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><th>มือจับสแตนเลส (o-stainless)</th><th>+ราคา</th><th class="ck">☐</th></tr>
+<tr><td>30.5 ซม.</td><td class="pr">+1,500</td><td class="ck">☐</td></tr>
+<tr><td>45 ซม.</td><td class="pr">+2,000</td><td class="ck">☐</td></tr>
+<tr><td>60 ซม.</td><td class="pr">+2,000</td><td class="ck">☐</td></tr>
+<tr><td>80 ซม.</td><td class="pr">+2,500</td><td class="ck">☐</td></tr>
+<tr><td>100 ซม.</td><td class="pr">+3,000</td><td class="ck">☐</td></tr>
+<tr><td>120 ซม.</td><td class="pr">+3,200</td><td class="ck">☐</td></tr>
+</table>
+<div class="box ok" style="font-size:9.5px"><b>มือจับ X-series (ฟรี):</b> X-J · XO · XT — มากับเลื่อนรางบน X / เปิด X / เฟี้ยม X<br><b>shower / บานเปลือยสวิง-เลื่อน:</b> ใช้มือจับสแตนเลสเท่านั้น<br><b>รุ่นอื่น ✎:</b> กรอกชื่อ+ราคาเองได้</div>
+</div>
+</div>
+
+<!-- ===== 3. มุ้ง ===== -->
+<h2>③ มุ้ง (o-mosq) <span class="s">3 กลุ่ม: จีบ / ม้วน / เฟรม · เรต/ตร.ม. · min = ขั้นต่ำ/ชุด</span></h2>
+<table>
+<tr><th>ชนิดมุ้ง</th><th>เรต/ตร.ม.</th><th>ขั้นต่ำ/ชุด</th><th>ใช้กับ</th><th class="ck">☐</th></tr>
+<tr><td class="grp" colspan="5">กลุ่ม จีบ (pleat) · 7 แบบ</td></tr>
+<tr><td>มุ้งจีบ SD พื้นฐาน</td><td class="pr">2,500</td><td class="pr">3,500</td><td>ประตู+หน้าต่าง</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง</td><td class="pr">4,000</td><td class="pr">4,000</td><td>ประตู+หน้าต่าง</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งจีบ Blackout รังผึ้งทึบแสง</td><td class="pr">2,500</td><td class="pr">3,500</td><td>ประตู+หน้าต่าง</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งจีบ ตีนตะขาบ + รังผึ้ง</td><td class="pr">4,500</td><td class="pr">4,500</td><td>ประตู</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งจีบ ตีนตะขาบ + ทูเวย์</td><td class="pr">6,000</td><td class="pr">6,000</td><td>ประตู</td><td class="ck">☐</td></tr>
+<tr style="background:#fffbe6"><td>มุ้งจีบ ตีนตะขาบเดี่ยว <b style="color:#B45309">✚เพิ่มเข้าบาน</b></td><td class="pr">4,500</td><td class="free">—</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งจีบนิรภัย (กรอบทำสีไม่ได้)</td><td class="pr">5,000</td><td class="pr">5,000</td><td>ทั้งคู่ · ติดล้นนอกวงกบ</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="5">กลุ่ม ม้วน (roll) · 3 แบบ</td></tr>
+<tr><td>ม้วนเตะได้ 150 (ติดล้นนอกวงกบ)</td><td class="pr">7,500</td><td class="pr">15,000</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td>ม้วนเตะได้ 300 (ติดล้นนอกวงกบ)</td><td class="pr">7,500</td><td class="pr">37,500</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td>ม้วนเตะได้ 600 (ติดล้นนอกวงกบ)</td><td class="pr">7,500</td><td class="pr">67,500</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td class="grp" colspan="5">กลุ่ม เฟรม (frame) · 4 แบบ</td></tr>
+<tr><td>มุ้งเฟรมเล็ก (เปิด/เลื่อน/กระทุ้ง/ยก)</td><td class="pr">2,200→1,500</td><td class="pr">ประตู 2,400 / หน้าต่าง 1,200</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งเฟรมเล็กติดตาย</td><td class="free">เฟรม</td><td class="pr">ประตู 1,500 / หน้าต่าง 800</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr><td>มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก)</td><td class="pr">4,500→3,500</td><td class="pr">ประตู 7,200 / หน้าต่าง 4,800</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+<tr style="background:#fffbe6"><td>มุ้งแม่เหล็กพับ <b style="color:#B45309">✚เพิ่มเข้าบาน</b></td><td class="pr">1,500</td><td class="free">—</td><td>ทั้งคู่</td><td class="ck">☐</td></tr>
+</table>
+<div class="grid2">
+<table>
+<tr><th>ผ้ามุ้ง (o-mosqfabric)</th><th>+ราคา</th><th class="ck">☐</th></tr>
+<tr><td>ไฟเบอร์เทา (ค่าเริ่มต้น)</td><td class="free">รวมแล้ว</td><td class="ck">☐</td></tr>
+<tr><td>ไฟเบอร์ดำ</td><td class="free">รวมแล้ว</td><td class="ck">☐</td></tr>
+<tr><td>สแตนเลส กันแมว/หมา</td><td class="pr">+800</td><td class="ck">☐</td></tr>
+<tr><td>สแตนเลส กันหนู</td><td class="pr">+1,200</td><td class="ck">☐</td></tr>
+<tr><td>สแตนเลส นิรภัย 0.8 มม.</td><td class="free">ตามจริง</td><td class="ck">☐</td></tr>
+</table>
+<table>
+<tr><th>สีกรอบมุ้ง (o-mosqcolor)</th><th>+ราคา</th><th class="ck">☐</th></tr>
+<tr><td>ตามสีบาน</td><td class="free">ฟรี</td><td class="ck">☐</td></tr>
+<tr><td>เทาซาฮาร่า</td><td class="free">ตามจริง</td><td class="ck">☐</td></tr>
+<tr><td>KL พิเศษ</td><td class="free">ตามจริง</td><td class="ck">☐</td></tr>
+<tr><td>KL ลายไม้</td><td class="free">ตามจริง</td><td class="ck">☐</td></tr>
+</table>
+</div>
+<div class="legend"><b>มุ้งมีในชนิด:</b> เลื่อนเซมิ/ยูโร · บานเปิดทุกรุ่น · กระทุ้ง · เฟี้ยมเซมิ/ยูโร · บานยก · PC Door · <b>ไม่มีมุ้ง:</b> เลื่อนรางบนซ้อน · เฟี้ยม X-series (มติตัด) · ดัดโค้ง · ติดตาย · shower · YKK · บานเปลือย</div>
+
+<!-- ===== 4. เสริมกระจก ===== -->
+<h2 class="pgbreak">④ เสริมกระจก (คาดตาราง · ลูกฟูก)</h2>
+<div class="grid2">
+<div>
+<table>
+<tr><th>คาดตาราง (o-gridmark)</th><th>ราคา</th><th class="ck">☐</th></tr>
+<tr><td>เส้นนอน × เส้นตั้ง × ราคา/ม. (+เส้นโค้ง)</td><td class="free">กรอกตามสูตร</td><td class="ck">☐</td></tr>
+</table>
+<div class="legend">คิดตามจำนวนเส้น × ราคา/ม. ที่กรอก — เปิดให้บานกระจกทุกชนิดใช้ (ยกเว้น shower/ผนังเบา)</div>
+</div>
+<div>
+<table>
+<tr><th>แผ่นทึบล่าง / ลูกฟูก (o-solidlower)</th><th>เรต/ตร.ม.</th><th class="ck">☐</th></tr>
+<tr><td>อลูลูกฟูก</td><td class="pr">3,500</td><td class="ck">☐</td></tr>
+<tr><td>คอมโพสิท</td><td class="pr">3,300</td><td class="ck">☐</td></tr>
+</table>
+<table>
+<tr><th>สีลูกฟูก (o-sl-color)</th><th>+ราคา</th><th class="ck">☐</th></tr>
+<tr><td>ดำ / ขาว / ซาฮาร่าธรรมดา</td><td class="free">+0</td><td class="ck">☐</td></tr>
+<tr><td>ซาฮาร่า</td><td class="pr">+400</td><td class="ck">☐</td></tr>
+<tr><td>ลายไม้สต๊อก</td><td class="pr">+1,500</td><td class="ck">☐</td></tr>
+<tr><td>อบพิเศษ</td><td class="pr">+1,600</td><td class="ck">☐</td></tr>
+<tr><td>ลายไม้อบพิเศษ</td><td class="pr">+2,200</td><td class="ck">☐</td></tr>
+</table>
+</div>
+</div>
+
+<!-- ===== 5. โครงสร้าง/คาน ===== -->
+<h2>⑤ โครงสร้าง / คาน / ราง (COMMON_OPTS) <span class="s">คิดตามความยาว(ม.)</span></h2>
+<table>
+<tr><th>รายการ</th><th>ราคา</th><th>เงื่อนไข</th><th>ใช้กับชนิด</th><th class="ck">☐</th></tr>
+<tr><td>Soft Close (สลักหน่วงบาน)</td><td class="pr">+4,000</td><td>ต่อชุด</td><td>เลื่อนรางบน Stack/X</td><td class="ck">☐</td></tr>
+<tr><td>สลิงเปิดซ้อน</td><td class="pr">+2,000</td><td>ต่อบาน</td><td>เลื่อนรางบน Stack/X</td><td class="ck">☐</td></tr>
+<tr><td>ซ่อนคาน</td><td class="pr">4,000</td><td>≤3ม. · เกิน +500/ม.</td><td>รางบน · เฟี้ยมเซมิ/X</td><td class="ck">☐</td></tr>
+<tr><td>ซ่อนราง</td><td class="pr">4,000</td><td>≤3ม. · เกิน +500/ม.</td><td>เฟี้ยมเซมิ/X</td><td class="ck">☐</td></tr>
+<tr><td>ฝังรางยู (U-Track)</td><td class="pr">4,000</td><td>≤2ม. · เกิน +500/ม.</td><td>เฟี้ยมเซมิ/X · SlimLux/X</td><td class="ck">☐</td></tr>
+<tr><td>เสริมคานซัพพอร์ท</td><td class="pr">4,000</td><td>≤3ม. · เกิน +500/ม.</td><td>รางบน · เฟี้ยมทุกรุ่น · PC</td><td class="ck">☐</td></tr>
+<tr><td>ราง รุ่นซ่อน (เลื่อนรางบน)</td><td class="pr">+5,000</td><td>เทียบรางโชว์</td><td>เลื่อนรางบนซ้อน</td><td class="ck">☐</td></tr>
+</table>
+
+<!-- ===== 6. อุปกรณ์ประตู ===== -->
+<h2>⑥ อุปกรณ์เฉพาะประตู</h2>
+<table>
+<tr><th>รายการ</th><th>ตัวเลือก / ราคา</th><th>ใช้กับ</th><th class="ck">☐</th></tr>
+<tr><td>ธรณี</td><td>กันน้ำภายนอก <span class="free">(ฟรี)</span> · หลังเต่าภายใน <span class="pr">+1,000</span></td><td>บานเปิด · เฟี้ยม</td><td class="ck">☐</td></tr>
+<tr><td>โช๊คบานเปิด</td><td>แขนยื่น / รางเลื่อน <span class="free">(ฟรี)</span> · บานพับ <span class="pr">+5,000</span></td><td>บานเปิด (ยกเว้น Velora)</td><td class="ck">☐</td></tr>
+<tr><td>กระทุ้ง tilt&turn</td><td><span class="pr">+5,000</span> ต่อบาน</td><td>กระทุ้ง</td><td class="ck">☐</td></tr>
+<tr><td>โช๊ค YKK</td><td><span class="pr">+5,000</span></td><td>YKK Vent/Exhido/Tostem</td><td class="ck">☐</td></tr>
+<tr><td>มอเตอร์บานยก</td><td>80 กก. <span class="pr">+18,000</span> · 300 กก. <span class="pr">+28,000</span></td><td>บานยก</td><td class="ck">☐</td></tr>
+<tr><td>shower สีอุปกรณ์</td><td>เงิน <span class="free">(ฟรี)</span> · ดำ <span class="pr">+4,000</span> · ทอง <span class="pr">+6,000</span></td><td>shower</td><td class="ck">☐</td></tr>
+<tr><td>ชุดล็อค</td><td>มีกุญแจ <span class="free">(ฟรี)</span> · ไม่มีกุญแจ</td><td>เลื่อน · PC</td><td class="ck">☐</td></tr>
+<tr><td>รางล่างบานเลื่อน</td><td>กันน้ำ <span class="free">(ฟรี)</span> · รางเตี้ย 7มม. <b>(งานภายใน)</b></td><td>เลื่อนเซมิ/ยูโร</td><td class="ck">☐</td></tr>
+</table>
+
+<!-- ===== 7. ครอบวงกบ + ดรอป ===== -->
+<h2 class="pgbreak">⑦ ครอบวงกบ · ดรอปพื้น · รื้อ</h2>
+<div class="grid2">
+<table>
+<tr><th>ครอบวงกบ (o-fcsides · ตามสี)</th><th>เรต/ม.</th><th class="ck">☐</th></tr>
+<tr><td>สีดำ / ขาว / ซาฮาร่า</td><td class="pr">700</td><td class="ck">☐</td></tr>
+<tr><td>สีอื่นๆ สต๊อก</td><td class="pr">800</td><td class="ck">☐</td></tr>
+<tr><td>สีอบพิเศษ</td><td class="pr">1,200</td><td class="ck">☐</td></tr>
+<tr><td>ลายไม้อบพิเศษ</td><td class="pr">1,300</td><td class="ck">☐</td></tr>
+</table>
+<table>
+<tr><th>อื่นๆ</th><th>ราคา</th><th class="ck">☐</th></tr>
+<tr><td>ดรอปพื้น (o-dfm)</td><td class="free">กรอกความยาว(ม.)</td><td class="ck">☐</td></tr>
+<tr><td>รื้อของเดิม (o-removeold)</td><td class="free">ตามรายการ</td><td class="ck">☐</td></tr>
+<tr><td>งานเสริม/วิศวกรรม (o-extrawork)</td><td class="free">กรอกเอง</td><td class="ck">☐</td></tr>
+</table>
+</div>
+<div class="legend">ครอบวงกบ = เลือก 3 ด้าน / 4 ด้าน หรือระบุความยาว(ม.) · ราคาตามสีบาน (ตรงกับ fw_* product จริง)</div>
+
+<!-- ===== 8. ระดับห้อง ===== -->
+<h2>⑧ ระดับห้อง — หลังคา / ฝ้า / งานไฟ</h2>
+<div class="grid2">
+<div>
+<table>
+<tr><th>🏠 หลังคา</th><th>ราคา</th><th class="ck">☐</th></tr>
+<tr><td>รางน้ำ อลู S</td><td class="pr">1,000/ม.</td><td class="ck">☐</td></tr>
+<tr><td>รางน้ำ อลู M</td><td class="pr">2,000/ม.</td><td class="ck">☐</td></tr>
+<tr><td>รางน้ำ สแตนเลส L</td><td class="pr">3,000/ม.</td><td class="ck">☐</td></tr>
+<tr><td>ปิดปลายกันน้ำกระเด็น</td><td class="pr">1,000/ม.</td><td class="ck">☐</td></tr>
+<tr><td>โซ่รางน้ำ</td><td class="pr">3,000/เส้น</td><td class="ck">☐</td></tr>
+<tr><td>คานเหล็กถัก (3 ขนาด)</td><td class="pr">2,400 / 3,600 / 4,400 /ม.</td><td class="ck">☐</td></tr>
+<tr><td>เสาแผง</td><td class="pr">4,000/ต้น</td><td class="ck">☐</td></tr>
+<tr><td>ซ่อนสโลป คอมโพ</td><td class="pr">3,500/ตร.ม.</td><td class="ck">☐</td></tr>
+<tr><td>ซ่อนสโลป สมาร์ทบอร์ด</td><td class="pr">4,000/ตร.ม.</td><td class="ck">☐</td></tr>
+<tr><td>ครอบท่อ PVC</td><td class="pr">1,500/1.5ม.</td><td class="ck">☐</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><th>▭ ฝ้า (อยู่ในหน้าหลังคา)</th><th>ราคา</th><th class="ck">☐</th></tr>
+<tr><td>วัสดุ/สี ขาว-ดำ</td><td class="pr">2,100/ตร.ม.</td><td class="ck">☐</td></tr>
+<tr><td>วัสดุ/สี ลายไม้</td><td class="pr">2,700/ตร.ม.</td><td class="ck">☐</td></tr>
+<tr><td>ทาสี</td><td class="free">กรอกราคา</td><td class="ck">☐</td></tr>
+<tr><td>โครงฝ้า อลู / เหล็กชุบซิงค์</td><td class="free">ตามจริง</td><td class="ck">☐</td></tr>
+</table>
+<table>
+<tr><th>⚡ งานไฟ / บริการ</th><th>ราคา</th><th class="ck">☐</th></tr>
+<tr><td>เดินไฟดาวน์ไลท์</td><td class="pr">+1,500/ดวง</td><td class="ck">☐</td></tr>
+<tr><td>สวิตช์ใหม่</td><td class="pr">+1,000/จุด</td><td class="ck">☐</td></tr>
+<tr><td>ปลั๊ก/โคม/พัดลมระบาย</td><td class="free">จัดซื้อ+ติดตั้ง</td><td class="ck">☐</td></tr>
+<tr><td>รื้อ · ขนส่งตจว. · แบบ 3D</td><td class="free">svc-* เดิม</td><td class="ck">☐</td></tr>
+</table>
+</div>
+</div>
+
+<div class="box warn"><b>สรุปการตรวจ:</b> ☐ ราคาขั้นต่ำ 8 หมวด ☐ มือจับดิจิตอล 11 + สแตนเลส 6 ☐ มุ้ง 12 ชนิด+เรต+min ☐ ผ้า/สีกรอบมุ้ง ☐ ลูกฟูก+สี ☐ โครงสร้าง 7 ☐ อุปกรณ์ประตู 8 ☐ ครอบวงกบ 4 สี ☐ หลังคา/ฝ้า/ไฟ · <b>ฉบับเต็ม 41 ชนิด:</b> <code>docs/_g6-option-detail.md</code> · <b>คู่ตรวจออปชั่น (จัดกลุ่ม):</b> <code>REVIEW-G6-GROUPED-2026-06-14</code></div>
+
+</body>
+</html>

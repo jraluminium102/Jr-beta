@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟเคาะ v7A — ข้อ5 หัวใบ (2 แบบ) + ข้อ2 ล็อค/มือจับเข้า OPTION</title>
+<style>
+  :root{--red:#B3151D;--red2:#7f1d1d;--line:#e5e7eb;--bg:#f3f4f6;--mut:#6b7280;--ok:#16a34a;--blue:#1e40af;--amber:#92400e}
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:#1f2937;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:14px 12px 80px}
+  h1{font-size:19px;color:var(--red2);margin:4px 0 2px}
+  h2{font-size:15px;color:var(--red);margin:22px 0 6px;border-bottom:2px solid #fde68a;padding-bottom:4px}
+  .sub{color:var(--mut);font-size:12.5px;margin-bottom:12px}
+  .chg{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;font-size:12px;color:var(--amber);margin-bottom:14px}
+  .chg b{color:var(--red2)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:11px}
+  .opt-h{font-size:13px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  .pick{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 7px}
+  .pickA{background:#dbeafe;color:#1e40af}.pickB{background:#dcfce7;color:#166534}
+  /* quote doc mock */
+  .q{border:1px solid #d1d5db;border-radius:8px;overflow:hidden;font-size:12px}
+  .q .qhead{background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:7px 9px;font-weight:800;color:#111827}
+  .q .qhead .dim{font-weight:600;color:#374151;font-size:11.5px}
+  .q .qbody{padding:8px 9px}
+  .q .row{margin:1px 0 0 6px;color:#1f2937}
+  .q .det-h{margin-top:7px;font-weight:700;color:var(--red);font-size:11.5px}
+  .q .main{color:#111827;font-weight:700}
+  .hl{background:#fef9c3;border-radius:3px;padding:0 2px}
+  .gone{color:#9ca3af;text-decoration:line-through}
+  .note{font-size:11.5px;color:var(--mut);margin-top:8px}
+  .note b{color:var(--red2)}
+  /* form mock */
+  .lbl{font-size:12.5px;font-weight:700;color:#374151;margin:11px 0 5px}.lbl:first-child{margin-top:0}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1.5px solid var(--line);border-radius:9px;padding:7px 11px;font-size:12.5px;background:#fff;display:inline-flex;align-items:center;gap:5px}
+  .chip.on{border-color:var(--red);background:#fff2f2;color:var(--red2);font-weight:700}
+  .chip.sm{padding:4px 9px;font-size:11.5px}
+  .acc{border:1px dashed #bcd0ee;border-radius:10px;background:#f7faff;padding:9px 11px;margin-top:8px}
+  .acc-h{font-weight:700;font-size:12.5px;color:var(--blue);display:flex;justify-content:space-between}
+  .acc-b{margin-top:8px;border-top:1px dashed #bcd0ee;padding-top:8px}
+  .ybox{background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:9px 11px;margin-top:5px}
+  .ybox .t{font-size:11px;font-weight:700;color:#E65100;margin-bottom:7px}
+  .tag{display:inline-block;background:#fee2e2;color:#991b1b;border-radius:5px;padding:0 6px;font-size:10px;font-weight:700}
+  .tagok{background:#dcfce7;color:#166534}
+  .arrow{text-align:center;font-size:18px;color:var(--mut);margin:2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>เคาะ 2 จุด ก่อนแก้ฟอร์ม G1 จริง (v7A · 18 มิ.ย.)</h1>
+  <div class="sub">กดดูเทียบ → บอกผมว่าเอาแบบไหน · ตัวอย่างใช้งานจริง: <b>ประตูบานเลื่อนรางล่าง 4 บาน · มีมุ้งจีบ · คาดตาราง · กระจกเขียว 6 มม. · สีดำ</b></div>
+
+  <h2>① ข้อ 5 — หัวใบเสนอราคา: "ชนิดบานหลัก" โชว์ตรงไหน?</h2>
+  <div class="chg">ปัญหาตอนนี้: หัวใบยัด <b>ชนิดบาน + มุ้ง + ขนาด</b> รวมกันยาว · ส่วน "รายการ" ข้างล่างมีแต่ <b>มุ้ง/คาดตาราง</b> — <b>ไม่มีตัวบานหลัก</b> เลย</div>
+
+  <div class="card" style="background:#fafafa">
+    <div class="opt-h">🔴 ตอนนี้ (ก่อนแก้)</div>
+    <div class="q">
+      <div class="qhead">ประตูบานเลื่อนรางล่าง แบ่ง 4 บาน <span class="hl">พร้อมมุ้งจีบ ขนาด 3.00×2.20 ม.</span></div>
+      <div class="qbody">
+        <div class="row">- มุ้งจีบ</div>
+        <div class="row">- มีคาดตาราง</div>
+        <div class="det-h">รายละเอียด</div>
+        <div class="row">- สีอลูมิเนียม: ดำ</div>
+        <div class="row">- กระจกเขียว หนา 6 มม.</div>
+        <div class="row">- ผ้ามุ้ง: ไฟเบอร์ดำ · เฟรม: ตามสีบาน ดำ</div>
+      </div>
+    </div>
+    <div class="note"><b>เพี้ยน:</b> มุ้ง+ขนาด เกาะหัวจนรก · รายการไม่มี "ตัวบาน" (อ่านแล้วงงว่าขายบานอะไร)</div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="opt-h"><span class="pick pickA">แบบ A</span> หัวสะอาด · ไม่ซ้ำในรายการ</div>
+      <div class="q">
+        <div class="qhead">ประตูบานเลื่อนรางล่าง <span class="dim">· แบ่ง 4 บาน · 3.00×2.20 ม.</span></div>
+        <div class="qbody">
+          <div class="row">- มุ้งจีบ</div>
+          <div class="row">- มีคาดตาราง</div>
+          <div class="det-h">รายละเอียด</div>
+          <div class="row">- สีอลูมิเนียม: ดำ</div>
+          <div class="row">- กระจกเขียว หนา 6 มม.</div>
+          <div class="row">- ผ้ามุ้ง: ไฟเบอร์ดำ · เฟรม: ตามสีบาน ดำ</div>
+        </div>
+      </div>
+      <div class="note">หัวบอกชนิดบาน+ขนาดครบ · เอามุ้ง/ขนาดออกจากหัว · <b>รายการไม่ย้ำตัวบาน</b> (เพราะหัวบอกแล้ว) · ตรงคำสั่ง "ไม่เพิ่มบานหลักซ้ำ"</div>
+    </div>
+
+    <div class="card">
+      <div class="opt-h"><span class="pick pickB">แบบ B</span> บานหลักเป็นบรรทัดแรกของรายการ</div>
+      <div class="q">
+        <div class="qhead">ประตูบานเลื่อนรางล่าง <span class="dim">· แบ่ง 4 บาน · 3.00×2.20 ม.</span></div>
+        <div class="qbody">
+          <div class="row main">- บานเลื่อนรางล่าง 4 บาน</div>
+          <div class="row">- มุ้งจีบ</div>
+          <div class="row">- มีคาดตาราง</div>
+          <div class="det-h">รายละเอียด</div>
+          <div class="row">- สีอลูมิเนียม: ดำ</div>
+          <div class="row">- กระจกเขียว หนา 6 มม.</div>
+          <div class="row">- ผ้ามุ้ง: ไฟเบอร์ดำ · เฟรม: ตามสีบาน ดำ</div>
+        </div>
+      </div>
+      <div class="note">หัวบอกชนิดบาน + <b>รายการบรรทัดแรกย้ำ "ตัวบาน" อีกที</b> แล้วตามด้วยมุ้ง/คาด · เห็นชัดว่าขายบานอะไร แต่ชื่อบานโผล่ 2 ที่</div>
+    </div>
+  </div>
+
+  <h2>② ข้อ 2 — มือจับ → "ล็อค" (สเปคเฉยๆ ไม่คิดเงิน) + มือจับละเอียดเข้ากล่อง OPTION</h2>
+  <div class="chg">พี่นัทเคาะแล้ว: <b>ล็อค = สเปค ไม่คิดเงิน</b> · มือจับละเอียด (Cmech/ดิจิตอล/สแตน) <b>คงราคาเดิม</b> แค่ย้ายที่ → กล่อง OPTION · นี่คือหน้าตาที่จะเป็น (เคาะ layout)</div>
+
+  <div class="two">
+    <div class="card" style="background:#fafafa">
+      <div class="opt-h">🔴 ตอนนี้</div>
+      <div class="lbl">มือจับ <span class="tag">เด่นในฟอร์มหลัก</span></div>
+      <div class="ybox">
+        <div class="t">ติ๊กแบรนด์ที่ใช้ (ติ๊กได้หลายอัน)</div>
+        <div class="chips"><span class="chip sm">Cmech</span><span class="chip sm">ดิจิตอล</span><span class="chip sm">สแตนอร่าม</span><span class="chip sm">รุ่นอื่น ✎</span></div>
+      </div>
+      <div class="note">มือจับเด่นมาก ทั้งที่ลูกค้าส่วนใหญ่ใช้มาตรฐาน · ไม่มีช่อง "ล็อค" ให้ระบุง่ายๆ</div>
+    </div>
+
+    <div class="card">
+      <div class="opt-h"><span class="pick pickB">จะเป็น</span> ล็อคเด่น · มือจับเข้า OPTION</div>
+      <div class="lbl">ล็อค <span class="tagok tag">สเปค · ไม่คิดเงิน</span></div>
+      <div class="chips"><span class="chip on">ไม่มีล็อค</span><span class="chip">มีล็อค</span><span class="chip">มีล็อค + กุญแจ</span></div>
+      <div class="acc">
+        <div class="acc-h">＋ OPTION ทางเลือกลูกค้า (+ราคา · ขึ้นใบ) <span>▾</span></div>
+        <div class="acc-b">
+          <div class="note" style="margin-top:0">เปลี่ยนกระจก / มุ้ง / สีอลู / <b>มือจับ</b> · มือจับละเอียดอยู่ตรงนี้ (ราคาเดิม)</div>
+          <div class="ybox" style="margin-top:7px">
+            <div class="t">มือจับ — ติ๊กแบรนด์ (ราคาเดิม Cmech/ดิจิตอล/สแตน)</div>
+            <div class="chips"><span class="chip sm">Cmech</span><span class="chip sm">ดิจิตอล</span><span class="chip sm">สแตนอร่าม</span><span class="chip sm">รุ่นอื่น ✎</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>หมายเหตุ:</b> บานเลื่อนมี "ชุดล็อค" ของเดิมอยู่แล้ว → ชิป "ล็อค" ใหม่ผมจะใส่เฉพาะบานที่<b>ยังไม่มี</b>ช่องล็อค (กันซ้ำ) · ถ้าอยากให้ทุกบานมี บอกได้</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px;background:#f0f9ff;border-color:#bae6fd">
+    <b style="color:var(--blue)">สรุปสิ่งที่ผมรอพี่เคาะ:</b>
+    <div style="margin-top:6px;font-size:12.5px">
+      1️⃣ <b>ข้อ 5 หัวใบ</b> → เอา <b>แบบ A</b> (หัวสะอาด ไม่ซ้ำ) หรือ <b>แบบ B</b> (มีบานหลักในรายการ)?<br>
+      2️⃣ <b>ข้อ 2 ล็อค</b> → layout นี้โอเคไหม · ชิปล็อคใส่เฉพาะบานที่ยังไม่มีช่องล็อค (กันซ้ำกับ "ชุดล็อค" บานเลื่อน) โอเคไหม?
+    </div>
+  </div>
+</div>
+</body>
+</html>

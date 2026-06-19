@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>งานค้าง คิดเร็ว — G1 สี/กระจก + ปุ่มกลุ่ม (ส่งแชท B แก้)</title>
+<style>
+body{font-family:-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:#F7F8FA;color:#1F2937;max-width:880px;margin:0 auto;padding:18px;line-height:1.65;font-size:15px;}
+h1{color:#B3151D;font-size:21px;margin:0 0 4px;} h2{color:#B3151D;font-size:16px;margin:22px 0 8px;border-bottom:2px solid #F0C0C0;padding-bottom:4px;}
+.sub{color:#6B7280;font-size:13px;margin-bottom:14px;}
+code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:13px;font-family:Consolas,monospace;}
+pre{background:#2C2C2A;color:#E1F5EE;padding:11px 13px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.5;}
+.gold{background:#FEF9C3;border:1px solid #FDE047;border-radius:10px;padding:12px 16px;margin:12px 0;} .gold b{color:#92400e;}
+.ok{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:12px 16px;margin:12px 0;} .ok b{color:#065F46;}
+ul{margin:6px 0;padding-left:22px;} li{margin:4px 0;}
+</style></head><body>
+<h1>งานค้างโหมดคิดเร็ว — เหลือ G1 (บาน) 2 จุด</h1>
+<div class="sub">17 มิ.ย. 2026 · ส่งแชท B (เพราะแชท B ถือ index.html) · อีก 6 กลุ่ม (G2-G7) เป็น drill-down ครบแล้ว · ราคาทุกกลุ่มถูก</div>
+
+<div class="gold"><b>อาการ (พี่นัทเจอในรูป):</b> แท็บคิดเร็ว กลุ่มบาน (G1) — (1) <b>สีอลู/กระจก ยังเป็น dropdown</b> ไม่ใช่ชิป drill-down ตามดราฟ · (2) <b>ปุ่มกลุ่มงานบีบ</b> ตัวหนังสือแตกแนวตั้ง ("ระ แนง·ร าว")</div>
+
+<h2>FIX 1 — ปุ่มกลุ่มงานบีบ (ง่าย · CSS)</h2>
+<p>ปุ่มกลุ่มใช้ <code>chip-grid cg4</code> = 4 คอลัมน์ตายตัว · ในฟอร์ม v2 ที่แคบลง (มีการ์ดราคาขวา) เลยบีบ</p>
+<ul>
+<li>ฟังก์ชัน <code>qiGroupChips</code> (~L1884): เอา <code>cg4</code> ออก → <pre>'&lt;div class="chip-grid qi-groupchips"&gt;'  // เดิม "chip-grid cg4 qi-groupchips"</pre></li>
+<li>เพิ่ม CSS:<pre>.qi-groupchips{ grid-template-columns:repeat(auto-fill,minmax(94px,1fr)); }
+.qi-groupchips .chip{ white-space:nowrap; padding:6px 8px; }</pre></li>
+</ul>
+
+<h2>FIX 2 — G1 สี/กระจก: dropdown → drill-down chips (ตามดราฟ)</h2>
+<p>ใน <code>qiRenderG1</code> (~L2587-2589) ตอนนี้ใช้ <code>&lt;select class="qi-color"&gt;</code> + <code>&lt;select class="qi-glass"&gt;</code> (dropdown). ดราฟ G1 ทำเป็น drill-down: <b>สี = หมวด→swatch สีจริง · กระจก = หมวด→ชนิดย่อย→รุ่น (3 ชั้น)</b></p>
+<div class="ok"><b>โค้ด drill-down พร้อมใช้อยู่ในดราฟแล้ว:</b> <code>public/review/DRAFT-quickmode-ux-2026-06-16.html</code> — ก๊อป logic <code>COLOR_CATS</code> (swatch หมวด→สี) + <code>glassCat/glassSub</code> (กระจก 3 ชั้น) มาใส่ qiRenderG1</div>
+<b>วิธีต่อให้ราคาไม่พัง (สำคัญ):</b>
+<ul>
+<li><b>เก็บ <code>&lt;select class="qi-color"&gt;</code> + <code>&lt;select class="qi-glass"&gt;</code> ไว้ (ซ่อน <code>display:none</code>)</b> — เพราะ <code>readQuickItem</code> อ่าน 2 ตัวนี้คิดราคา (ห้ามแตะ readQuickItem/calcUnit)</li>
+<li>เพิ่มชิป drill-down ข้างบน · กดชิป → set <code>select.value = index</code> แล้ว <code>select.dispatchEvent(new Event('change'))</code> → ราคาคิดเหมือนเดิม (gi/ci เป๊ะ)</li>
+<li>map: ชิปสี → index ใน <code>COLORS</code> (ci) · ชิปกระจก → index ใน <code>GLASS</code> (gi) · ทั้งคู่ global อยู่แล้ว</li>
+<li>โชว์สี/กระจก เฉพาะสินค้าที่ใส่ได้ (เงื่อนไขเดิมใน qiRenderG1: <code>NO_COLOR_CATS / zipscreen / มุ้ง</code>)</li>
+</ul>
+
+<div class="gold"><b>กฎเหล็ก:</b> ห้ามแตะ readQuickItem/calcUnit/PRODUCTS/GLASS/COLORS · ชิปแค่ set ค่า select · รัน <code>node scripts/golden-snapshot.mjs</code> ก่อน-หลัง (ต้อง 149 ปลอดภัย) · เทส G1 บานเลื่อน 1.8×2.0 + เลือกสี/กระจก → ราคาขยับเท่าเดิมตอนเป็น dropdown</div>
+
+<div class="ok"><b>เช็คเสร็จ:</b> G1 สี/กระจก เป็นชิป drill-down เหมือน G2-G7 · ปุ่มกลุ่มไม่บีบ · ราคา G1 ไม่เปลี่ยน · golden ปลอดภัย → คิดเร็ว v2 เหมือนดราฟครบ 7 กลุ่ม</div>
+</body></html>

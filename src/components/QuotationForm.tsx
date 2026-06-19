@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { Card } from "./ui";
 import Icon from "./Icon";
 import { computeTotals, baht } from "@/lib/money";
+import DateField from "@/components/ui/DateField";
 import type { Customer } from "@/lib/types";
 
 type ActiveJob = { id: string; job_code: string | null; current_stage: number; status: string; created_at: string };
 
-type Item = { name: string; detail: string; qty: number; unit_price: number };
-const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0 });
+type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string };
+const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "" });
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number }>; customer?: string; customer_id?: number | null };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string }>; customer?: string; customer_id?: number | null };
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -55,6 +56,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           detail: String(it.detail ?? ""),
           qty: Number(it.qty) || 1,
           unit_price: Number(it.unit_price) || 0,
+          category: String(it.category ?? ""),     // หมวดสินค้าจากเครื่องคิดราคา → สถิติ (0046)
+          product_id: String(it.product_id ?? ""),
         }));
       if (bridged.length) setItems(bridged);
       // ลูกค้าจากเครื่องคิดราคา: ใช้ customer_id (เลือกจากทะเบียนแล้ว) ก่อน — แม่นยำสุด
@@ -205,7 +208,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
               </label>
               <label className="block">
                 <span className="text-xs font-medium text-ink-3">วันที่</span>
-                <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                <DateField value={issueDate} onChange={(iso) => setIssueDate(iso)} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" aria-label="วันที่" />
               </label>
             </div>
             {customers.length === 0 && (

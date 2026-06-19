@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G6 — สร้าง UX กั้นห้องกระจกใหม่ (ส่ง dev แชท B)</title>
+<style>
+  @page{size:A4;margin:11mm 10mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.45;margin:0;}
+  h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 10px;}
+  h2{color:#fff;background:#B3151D;font-size:13.5px;margin:15px 0 6px;padding:5px 10px;border-radius:5px;}
+  h2 .s{font-size:9.5px;font-weight:400;opacity:.9;float:right;}
+  h3{color:#B3151D;font-size:11.5px;margin:10px 0 3px;border-bottom:1.5px solid #f0c9c9;padding-bottom:2px;}
+  table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:9.8px;}
+  th,td{border:1px solid #d8c9c9;padding:3px 7px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.pr{color:#15803D;font-weight:700;white-space:nowrap;}
+  code{background:#eef2f7;padding:0 4px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;color:#1e3a5f;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:7px 10px;margin:6px 0;background:#fffafa;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  .bad{background:#fef2f2;border:1px solid #fca5a5;}
+  ul{margin:3px 0;padding-left:17px;}li{margin:2px 0;}
+  .phase{background:#B3151D;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:5px;}
+  .pgbreak{page-break-before:always;}
+  .dod input{margin-right:5px;}
+  .ac{font-size:9.3px;color:#444;background:#f0f6ff;border-left:3px solid #1565C0;padding:3px 8px;margin:3px 0;border-radius:0 4px 4px 0;}
+  .ac b{color:#1565C0;}
+  .lg{font-size:9px;color:#666;margin:1px 0 6px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G6 — สร้าง UX กั้นห้องกระจกใหม่ทั้งหมด</h1>
+<div class="meta">2026-06-14 · ส่ง dev แชท B แก้ <code>public/calculator/index.html</code> · เคาะกับพี่นัทครบ · <b>ขอบเขต: G6 ทั้งกลุ่ม (UX + ออปชั่น + ราคา) ทีเดียว</b></div>
+
+<div class="box ok"><b>🎯 เป้าหมาย:</b> สร้างหน้ากรอก "กั้นห้องกระจก (G6)" ใหม่ทั้งหมด — <b>เปิดทีละหน้า</b> (ด้าน→หลังคา/ฝ้า→ไฟ→สรุป) + <b>wall mixer</b> (ผสมชนิดบานในด้านเดียว ซ้อนชั้นได้) + <b>ออปชั่น/ราคาบาน = ชุดเดียวกับ G1</b> (engine เดียว) + <b>ระดับห้อง</b> (หลังคา/ฝ้า/ไฟ) · ราคารวมเด้งสดทุกหน้า</div>
+
+<div class="box warn"><b>📐 UX target = ดราฟกดเล่นจริง:</b> <code>docs/กลุ่ม6-กั้นห้องกระจก/DRAFT-G6-ux-REAL-2026-06-13.html</code> — เปิดดูหน้าตา/flow/wall mixer ที่ต้องได้ · <b>⚠ แต่ห้ามก๊อปสูตรราคา (RATE) จากดราฟ</b> ดราฟใช้เรตสมมติเดโม — ต้องเรียก engine จริง (ดูเฟส B ข้อ 7)</div>
+
+<h3>โครง 4 ระดับ + flow</h3>
+<table>
+<tr><th>ระดับ</th><th>คือ</th><th>ใช้โค้ด</th></tr>
+<tr><td>① ห้อง</td><td>1 ชุด (setbox) = หลายด้าน + หลังคา + ฝ้า + ไฟ</td><td>setbox <code>.ch i-group=6</code> · <code>refreshSet</code></td></tr>
+<tr><td>② ด้าน</td><td>แถบผนัง 1 ด้าน · ผสมหลายชนิดบาน</td><td>บานย่อย (subitem) · sub-addbtn</td></tr>
+<tr><td>③ บาน/ชั้น</td><td>6 ปุ่มชนิด→รุ่น · ซ้อนชั้น · กว้างต่อชั้นต่างได้</td><td>การ์ด G1 reuse · <code>FAM_CATS['6']</code></td></tr>
+<tr><td>④ ออปชั่น</td><td>ฟอร์มออปชั่นเดียวกับ G1</td><td><code>buildItemOpts</code> · <code>prodOptionsG6</code></td></tr>
+</table>
+<div class="lg"><b>flow หน้า:</b> ด้าน A → B → … → หลังคา/ฝ้า → ไฟ → สรุป(ราคารวมห้อง) · pricebar sticky ตลอด</div>
+
+<!-- ========== เฟส A ========== -->
+<h2><span class="phase">A</span>โครงหน้า UX (เปิดทีละหน้า + wall mixer)</h2>
+<ul>
+<li><b>Pager:</b> หลายด้าน → หลังคา/ฝ้า → ไฟ → สรุป · ปุ่มถัดไป/ย้อน · แถบราคารวมห้อง sticky</li>
+<li><b>แต่ละด้าน:</b> 6 ปุ่มชนิด (เลื่อน · เปิด · เฟี้ยม · ติดตาย/ทึบ · ดัดโค้ง · อื่นๆ) → กดแล้วโชว์รุ่นย่อย → เลือกแล้วออปชั่นโผล่</li>
+<li><b>Wall mixer:</b> คอลัมน์ × ชั้นซ้อน · ผสมชนิดบานในด้านเดียวได้ · <b>กว้างแต่ละชั้นต่างกันได้ (default = เท่ากัน)</b> · ภาพบานเรียงให้เห็น</li>
+<li><b>"เพิ่มชิ้นในด้านนี้"</b> = sub-addbtn (มีแล้ว commit e7bcda5) · <code>collapseOthers</code> ต้อง guard grp6 ไม่ให้พับอัตโนมัติ</li>
+</ul>
+<div class="ac"><b>AC:</b> กดเพิ่มด้าน/ชิ้นได้ · เลือกชนิด→รุ่น→ออปชั่นครบทุกด้าน · กว้างต่อชั้นต่างกันได้ · ราคารวมห้องถูกต้องสดทุกหน้า · มือถือกรอกได้ (ปุ่มใหญ่)</div>
+
+<!-- ========== เฟส B ========== -->
+<h2 class="pgbreak"><span class="phase">B</span>ระดับบาน — ใช้ engine G1 + 7 ธง dev ที่เคาะแล้ว</h2>
+<div class="lg">บานทุกชนิด = product/option เดียวกับ G1 (ราคาต้องตรง G1 เป๊ะ) · 7 จุดนี้ต้องแก้ engine ให้ตรงมติ (กระทบทั้ง G1+G6 = แก้ที่เดียวใช้ร่วม)</div>
+<table>
+<tr><th>#</th><th>แก้อะไร</th><th>โค้ด/วิธี</th></tr>
+<tr><td><b>1</b></td><td><b>เพิ่มมุ้ง 2 แบบให้เลือกติดบาน</b> (ตอนนี้ 12→14)</td><td>เพิ่ม <code>imp28</code>(ตีนตะขาบเดี่ยว <span class="pr">4,500/ตร.ม.</span>)→กลุ่มจีบ · <code>imp30</code>(แม่เหล็กพับ <span class="pr">1,500/ตร.ม.</span>)→กลุ่มเฟรม เข้าลิสต์ <code>o-mosq</code> ของบาน (MOSQ list ~L858) · เรต IMP28/IMP30 มีใน RATES แล้ว</td></tr>
+<tr><td><b>2</b></td><td><b>มุ้งจัด 3 กลุ่ม</b> เฟรม/จีบ/ม้วน</td><td>ใช้ <code>MOSQ_GRP_PRODS</code> (~L2362) เดิม — imp30 อยู่ frame, imp28 อยู่ pleat แล้ว ✓ · กันแมว(imp33)/กันหนู(imp35)/นิรภัย0.8 = <b>ผ้ามุ้ง</b> (o-mosqfabric) ไม่ใช่ชนิด — engine ซ่อนจากเมนูแล้ว</td></tr>
+<tr><td><b>3</b></td><td><b>เฟี้ยม X-series ตัดมุ้ง</b></td><td><code>folding_xseries</code> (~L810) เอา <code>o-mosq</code> ออก (engine ใส่มาผิด · ตัดทั้ง G1+G6 เพราะ product เดียวกัน)</td></tr>
+<tr><td><b>4</b></td><td><b>ผนังเบาทึบ ในกลุ่ม 4</b></td><td><b>ใช้ของจริง:</b> <code>wall_ext</code> "ผนังเบาภายนอก" / <code>wall_int</code> "ผนังเบาภายใน" (cat <code>ฝ้า-ผนัง</code> · min <span class="pr">13,500</span>) + <code>isowall</code> · <b>ไม่ใช่</b> wall_smartboard (ดราฟเขียนผิด) · มีใน <code>FAM_CATS['6']</code> แล้ว · ฉนวน +600/ตร.ม. (o-insul) · <b>ระวัง:</b> cat ฝ้า-ผนัง ปกติ route ไป g3 tab → G6 ต้องใช้ family chips (guard <code>_isG3sel</code> ~L2853)</td></tr>
+<tr><td><b>5</b></td><td><b>ตัด "เลื่อนรางล่าง SMS" จากปุ่มเลือก</b></td><td>เอา <code>inner_bottom_sms</code> (~L641) ออกจากปุ่ม FAM_CATS บานเลื่อน → ใช้ <code>sliding_sms</code>/<code>sliding_euro</code> + ตัวเลือกราง <code>o-bottomrail</code> "รางเตี้ย 7มม." · <b>เมื่อเลือกรางเตี้ย → ใบเสนอราคาต้องต่อ "(งานภายใน)"</b> (รางเตี้ย=ภายใน ไม่กันน้ำ)</td></tr>
+<tr><td><b>6</b></td><td><b>3 ธงร่วม G1</b></td><td>① เอา <code>o-solidlight</code> ออก (โซลิดผสมบาน) · ② คาดตาราง <code>o-gridmark</code> เปิดให้บานกระจกใช้ (ตัดจาก exclude 'ติดตาย'/'บานเปลือย' ~L3002) · ③ เฟี้ยม เพิ่ม เปิดซ้าย/เปิดขวา</td></tr>
+<tr><td><b>7</b></td><td><b>ราคา G6 = engine จริง</b></td><td>เรียกสูตรราคาเดียวกับ G1 (<code>calcUnit</code>/<code>readItem</code>/<code>calcQuote</code>) · <b>ห้ามฮาร์ดโค้ด RATE เดโมจากดราฟ REAL</b> · บานเดียวกัน G1↔G6 ราคาต้องตรงกัน</td></tr>
+</table>
+<div class="ac"><b>AC เฟส B:</b> มุ้งเลือกได้ 14 แบบใน 3 กลุ่ม + ผ้า · เฟี้ยม X ไม่มีมุ้ง · ผนังเบาเลือกได้ในกลุ่ม4 + ฉนวน · เลื่อนรางเตี้ยขึ้น "(งานภายใน)" · ราคาทุกบานตรงกับ G1 (เทียบ COMPARE)</div>
+
+<!-- ========== เฟส C ========== -->
+<h2><span class="phase">C</span>ระดับห้อง — หลังคา / ฝ้า / ไฟ</h2>
+<table>
+<tr><th>ส่วน</th><th>รายละเอียด (ราคา = ดู PRICELIST-G6 ⑧)</th></tr>
+<tr><td><b>หลังคา</b></td><td>วัสดุมุง · <b>โครงสร้าง อลู/เหล็กชุบซิงค์</b> · แป เดี่ยว/คู่ · รางน้ำ(ชนิด+ความยาว) · ปิดปลายกันน้ำ · โซ่รางน้ำ · คานเหล็กถัก · เสาแผง · ซ่อนสโลป · ครอบท่อ · ระแนงใต้หลังคา (ใช้ G3 เดิม)</td></tr>
+<tr><td><b>ฝ้า</b></td><td><b>อยู่ในหน้าหลังคา</b> (ไม่แยกแท็บ) · พื้นที่: เท่าหลังคา / ใต้หลังคาเดิม / ใหญ่กว่า-ต่อเพิ่ม(กรอกพื้นที่) · <b>รวม/แยกราคา</b> · โครงเหล็กชุบซิงค์ไร้สนิม · วัสดุ/สี · ฉนวน 3"</td></tr>
+<tr><td><b>ไฟ/บริการ</b></td><td><code>svc-elec</code> เดิม: ดาวน์ไลท์ <span class="pr">+1,500/ดวง</span> · สวิตช์ <span class="pr">+1,000/จุด</span> · จัดซื้อปลั๊ก/โคม/พัดลม · รื้อ(<code>svc-demo</code>)/ขนส่ง(<code>svc-ship</code>)/3D เดิม — ดึงมาโชว์ในหน้าสรุป</td></tr>
+</table>
+<div class="ac"><b>AC เฟส C:</b> หลังคาเลือกโครงเหล็กชุบซิงค์ได้ · ฝ้าเลือกพื้นที่+รวม/แยกราคาได้ · ไฟ/รื้อ/ขนส่งเข้ายอดรวมห้อง</div>
+
+<!-- ========== ราคา ========== -->
+<h2><span class="phase">฿</span>ราคา — ใช้ catalog เดียวกับ G1 ทั้งหมด</h2>
+<div class="box"><b>ตรวจ/อ้างราคาเต็ม:</b> <code>docs/กลุ่ม6-กั้นห้องกระจก/PRICELIST-G6-ALL-2026-06-14.pdf</code> (ฝ่ายใบเสนอราคาตรวจ ☐ แล้ว) · มือจับ ดิจิตอล 11+สแตนเลส 6 · มุ้ง 14 แบบ+ผ้า · ลูกฟูก 3,500/3,300 · โครงสร้าง 7 · อุปกรณ์ประตู 8 · ครอบวงกบ 4 สี · ระดับห้องครบ — <b>ทุกตัวใช้ค่าจาก engine จริง</b></div>
+
+<!-- ========== DoD ========== -->
+<h2 class="pgbreak"><span class="phase">✓</span>Definition of Done (เช็คก่อนปิดงาน)</h2>
+<div class="box dod">
+<input type="checkbox"> ทุกด้านกรอกได้ + ผสมบาน + ซ้อนชั้น (กว้างต่างได้) — ตามดราฟ REAL<br>
+<input type="checkbox"> ราคารวมห้องเด้งสดทุกหน้า · ใช้สูตร engine จริง (ไม่ใช่ RATE เดโม)<br>
+<input type="checkbox"> เฟส B ครบ 7 ธง (มุ้ง+2/3กลุ่ม/เฟี้ยมXตัด/ผนังเบา/SMSรางเตี้ย/solidlight-คาด-เฟี้ยมเปิด/เรตจริง)<br>
+<input type="checkbox"> หลังคา/ฝ้า(ในหลังคา)/ไฟ ครบ + เข้ายอดรวม<br>
+<input type="checkbox"> <b>เทียบ G1:</b> บานชนิด+ออปชั่นเดียวกัน ราคาตรงกันเป๊ะ (ดู COMPARE)<br>
+<input type="checkbox"> verify เบราว์เซอร์จริง (preview 5599 · ไม่เคลมผ่านจาก jsdom)<br>
+<input type="checkbox"> full sweep test เขียว ก่อน push (งานแตะ genQuote ต้อง sweep ครบ)<br>
+</div>
+
+<div class="box bad"><b>⚠ จุดพลาดที่เคยเจอ (กันซ้ำ):</b> ① grid ปุ่มเละ → ต้องวัดความกว้างจริง+นับ element ไม่ใช่แค่ display:grid · ② relocate selector ออกจาก .i-opts ต้องลบตัวเก่า (orphan ซ้อน) · ③ cat 'ฝ้า-ผนัง' เด้งไป g3 tab → ต้อง guard <code>_isG3sel && grp!=='6'</code> · ④ chSetChip fire ทั้ง input+change (ไม่งั้นชิปกดแล้วราคาไม่อัป)</div>
+
+<h3>ไฟล์อ้างอิง (path ไทยใหม่ · ดู docs/INDEX.md)</h3>
+<table>
+<tr><th>ไฟล์</th><th>ใช้</th></tr>
+<tr><td><code>กลุ่ม6-กั้นห้องกระจก/DRAFT-G6-ux-REAL-2026-06-13.html</code></td><td>UX target (กดเล่น)</td></tr>
+<tr><td><code>กลุ่ม6-กั้นห้องกระจก/REVIEW-G6-GROUPED-2026-06-14.pdf</code></td><td>ออปชั่นต่อชนิด (จัดกลุ่ม)</td></tr>
+<tr><td><code>กลุ่ม6-กั้นห้องกระจก/PRICELIST-G6-ALL-2026-06-14.pdf</code></td><td>ราคาทั้งหมด</td></tr>
+<tr><td><code>กลุ่ม5-มุ้ง/สรุปงานมุ้ง-G1G6-2026-06-14.pdf</code></td><td>มุ้ง 3 กลุ่ม+ผ้า</td></tr>
+<tr><td><code>งานข้ามกลุ่ม-G1ถึงG6/COMPARE-G1-vs-G6-bana-2026-06-14.pdf</code></td><td>จุดต้องตรงกับ G1</td></tr>
+<tr><td><code>_g6-option-detail.md</code> (ในกลุ่ม6)</td><td>ออปชั่น 41 ชนิดเต็ม (เรตจริง)</td></tr>
+</table>
+
+<div class="box ok"><b>ลำดับแนะนำ:</b> เฟส B (แก้ engine 7 ธง · งานเล็ก เห็นผลในฟอร์มปัจจุบันทันที) → เฟส C (ระดับห้อง) → เฟส A (UX paged + wall mixer · งานใหญ่สุด) · แต่ละเฟส verify เบราว์เซอร์ + sweep ก่อนไปต่อ</div>
+
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟ UX G1 v2 — มือจับ→ล็อค · คาดตารางขึ้นใต้มุ้ง</title>
+<style>
+  :root{--red:#B3151D;--red2:#7f1d1d;--line:#e5e7eb;--bg:#f3f4f6;--mut:#6b7280;--ok:#16a34a;--blue:#1e40af;--amber:#92400e}
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:#1f2937;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:14px 12px 80px}
+  h1{font-size:19px;color:var(--red2);margin:4px 0 2px}
+  .sub{color:var(--mut);font-size:12.5px;margin-bottom:12px}
+  .chg{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;font-size:12px;color:var(--amber);margin-bottom:14px}
+  .chg b{color:var(--red2)}
+  .flex{display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start}
+  @media(max-width:760px){.flex{grid-template-columns:1fr}.pricecard{position:static!important;order:-1}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:11px}
+  .step{font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:20px;padding:1px 9px;margin-right:6px}
+  .lbl{font-size:12.5px;font-weight:700;color:#374151;margin:12px 0 5px;display:flex;align-items:center}
+  .lbl:first-child{margin-top:0}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1.5px solid var(--line);border-radius:9px;padding:9px 13px;font-size:13px;background:#fff;min-height:44px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;transition:.12s;user-select:none}
+  .chip:hover{background:#f9fafb}
+  .chip.on{border-color:var(--red);background:#fff2f2;color:var(--red2);font-weight:700}
+  .chip.dash{border-style:dashed;color:var(--red)}
+  .sw{width:13px;height:13px;border-radius:50%;border:1px solid #00000022;flex:none}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+  @media(max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+  .fld{border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;background:#fff;text-align:center}
+  .fld .k{font-size:10px;color:var(--mut);display:block;margin-bottom:2px}
+  .fld input{border:none;outline:none;width:100%;text-align:center;font-size:15px;font-family:inherit;background:transparent}
+  .hide{display:none}
+  .gridmk{display:flex;gap:7px;margin-top:6px}
+  .gridmk .fld{flex:1}
+  .acc{border:1px solid var(--line);border-radius:10px;margin-bottom:9px;overflow:hidden;background:#fff}
+  .acc-h{padding:11px 14px;font-weight:700;font-size:13px;color:#374151;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .acc-b{padding:0 14px 12px;display:none}
+  .acc.open .acc-b{display:block}
+  .acc.open .acc-h{border-bottom:1px solid var(--line);margin-bottom:8px}
+  .dot{font-size:11px;color:var(--mut);font-weight:400}
+  .submix{margin-top:8px}
+  .subrow{display:flex;gap:7px;align-items:center;background:#fff7f7;border:1px dashed var(--red);border-radius:9px;padding:7px 9px;margin-bottom:6px;font-size:12.5px}
+  .subrow .nm{flex:1;font-weight:700;color:var(--red2)}
+  .subrow input{width:58px;border:1px solid var(--line);border-radius:6px;padding:5px;text-align:center;font-family:inherit}
+  .subrow .x{cursor:pointer;color:var(--red);font-weight:900;padding:0 4px}
+  .pricecard{position:sticky;top:12px;background:#fff;border:2px solid var(--red);border-radius:14px;padding:15px}
+  .pc-h{font-size:12px;color:var(--mut)}
+  .pc-big{font-size:27px;font-weight:800;color:var(--red);margin:3px 0}
+  .pc-demo{font-size:10.5px;color:var(--amber);background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 7px;margin-top:6px}
+  .pc-li{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-top:1px dashed var(--line);color:#374151}
+  .note{font-size:11.5px;color:var(--mut);margin-top:7px}
+  .badge{display:inline-block;background:#dcfce7;color:#166534;border-radius:5px;padding:0 6px;font-size:10.5px;font-weight:700;margin-left:6px}
+  .badge.nw{background:#fef3c7;color:#92400e}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ฟอร์มกรอกงานบาน (G1) — ดราฟ UX v2</h1>
+  <div class="sub">กดเล่นได้ · ราคาเดโม (dev ดึงเรตจริง)</div>
+  <div class="chg">
+    <b>แก้จาก v1:</b> ① มือจับ → เหลือแค่ <b>"ล็อค"</b> (มี/มี+กุญแจ) · มือจับแบบละเอียดไปเลือกในกล่อง OPTION &nbsp; ② <b>คาดตาราง</b> ย้ายขึ้นมาใต้มุ้ง (ใช้บ่อย · ออกจากกล่องพับ)
+  </div>
+
+  <div class="flex">
+    <div class="left">
+      <div class="card">
+        <div class="lbl"><span class="step">1</span> ชนิดบาน</div>
+        <div class="chips" id="typeChips">
+          <div class="chip" data-t="slide">⬌ บานเลื่อน</div>
+          <div class="chip on" data-t="open">🚪 บานเปิด</div>
+          <div class="chip" data-t="fold">▥ บานเฟี้ยม</div>
+          <div class="chip" data-t="fix">▢ ติดตาย/ทึบ</div>
+          <div class="chip" data-t="curve">◗ ดัดโค้ง</div>
+          <div class="chip" data-t="more">⋯ อื่นๆ/พิเศษ</div>
+        </div>
+        <div class="lbl">รุ่น</div>
+        <div class="chips" id="modelChips"></div>
+      </div>
+
+      <div class="card">
+        <div class="lbl"><span class="step">2</span> ขนาด</div>
+        <div class="row3">
+          <div class="fld"><span class="k">กว้างรวม (ม.)</span><input id="w" value="1.2" oninput="calc()"></div>
+          <div class="fld"><span class="k">สูง (ม.)</span><input id="h" value="2.2" oninput="calc()"></div>
+          <div class="fld"><span class="k">ชุด</span><input id="qty" value="1" oninput="calc()"></div>
+          <div class="fld"><span class="k">จำนวนบาน</span><input id="pan" value="1" oninput="calc()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lbl"><span class="step">3</span> สีอลูมิเนียม <span class="badge">ที่เดียว</span></div>
+        <div class="chips" id="colorChips">
+          <div class="chip on" data-c="อบขาว"><span class="sw" style="background:#fff"></span>อบขาว</div>
+          <div class="chip" data-c="ดำ"><span class="sw" style="background:#222"></span>ดำ</div>
+          <div class="chip" data-c="เทาซาฮาร่า"><span class="sw" style="background:#8a8d8f"></span>เทาซาฮาร่า</div>
+          <div class="chip" data-c="ลายไม้"><span class="sw" style="background:#9b6b3a"></span>ลายไม้</div>
+          <div class="chip" data-c="อบพิเศษ"><span class="sw" style="background:linear-gradient(45deg,#b91c1c,#1e40af)"></span>อบพิเศษ ●</div>
+        </div>
+        <div id="codeWrap" class="hide" style="margin-top:7px">
+          <div class="fld" style="text-align:left"><span class="k">รหัสสี / ชื่อสี (อบพิเศษ)</span><input id="code" placeholder="เช่น KL10232A · Grey RAL7022" style="text-align:left"></div>
+        </div>
+
+        <div class="lbl">กระจก</div>
+        <div class="chips" id="glassChips">
+          <div class="chip on" data-g="เขียว 6มม.">เขียว 6มม.</div>
+          <div class="chip" data-g="ใส 6มม.">ใส 6มม.</div>
+          <div class="chip" data-g="เทมเปอร์ใส 6มม.">เทมเปอร์ใส 6มม.</div>
+          <div class="chip" data-g="ลามิเนต 4+4">ลามิเนต 4+4 มม.</div>
+        </div>
+
+        <div class="lbl">มุ้ง <span class="badge">รวมที่เดียว</span></div>
+        <div class="chips" id="mosqChips">
+          <div class="chip on" data-m="ไม่ใส่">ไม่ใส่</div>
+          <div class="chip" data-m="เฟรม">เฟรม</div>
+          <div class="chip" data-m="จีบ">จีบ</div>
+          <div class="chip" data-m="ม้วน">ม้วน</div>
+        </div>
+
+        <div class="lbl">คาดตาราง <span class="badge nw">ย้ายขึ้นมา · ใช้บ่อย</span></div>
+        <div class="chips" id="gridChips">
+          <div class="chip on" data-gm="ไม่มี">ไม่มี</div>
+          <div class="chip" data-gm="มี">มีคาดตาราง</div>
+        </div>
+        <div id="gridWrap" class="hide gridmk">
+          <div class="fld"><span class="k">เส้นนอน</span><input id="gh" value="0" oninput="calc()"></div>
+          <div class="fld"><span class="k">เส้นตั้ง</span><input id="gv" value="1" oninput="calc()"></div>
+        </div>
+
+        <div class="lbl">ล็อค <span class="badge nw">เหลือเท่านี้</span></div>
+        <div class="chips" id="lockChips">
+          <div class="chip on" data-lk="ไม่มี">ไม่มีล็อค</div>
+          <div class="chip" data-lk="มีล็อค">มีล็อค</div>
+          <div class="chip" data-lk="มีล็อค+กุญแจ">มีล็อค + กุญแจ</div>
+        </div>
+        <div class="note">มือจับแบบละเอียด (สแตนเลส/ฝัง HYDA/Metro) → เลือกในกล่อง "OPTION ทางเลือกลูกค้า" ด้านล่าง (เลือกนานๆครั้ง)</div>
+      </div>
+
+      <div class="card">
+        <div class="lbl"><span class="step">4</span> ผสมบาน — เพิ่มช่องแสง/บานติดตายในชุดเดียว</div>
+        <div class="chips">
+          <div class="chip dash" onclick="addSub('ช่องแสงบนติดตาย',1.2,0.4)">＋ ช่องแสงบน</div>
+          <div class="chip dash" onclick="addSub('บานข้างติดตาย',0.6,2.2)">＋ บานข้างติดตาย</div>
+          <div class="chip dash" onclick="addSub('ช่องแสงติดตาย',1.0,0.5)">＋ ช่องแสงติดตาย</div>
+        </div>
+        <div class="submix" id="subList"></div>
+        <div class="note">แต่ละชิ้นกรอกขนาดเอง · บนใบ: หัว=บานหลัก · บานย่อยโชว์ขนาดของตัวเอง</div>
+      </div>
+
+      <div class="acc" id="accOpt">
+        <div class="acc-h" onclick="this.parentNode.classList.toggle('open')">＋ เสนอ OPTION ทางเลือกให้ลูกค้า (+ราคา · ขึ้นในใบ) <span class="dot">▾</span></div>
+        <div class="acc-b">
+          <div class="note" style="margin-top:0">เลือก "เปลี่ยนอะไร" + ราคาเพิ่ม → ขึ้นใบเป็น "OPTION : ..." · <b>มือจับแบบละเอียดอยู่ตรงนี้</b></div>
+          <div class="chips" style="margin-top:7px">
+            <div class="chip">เปลี่ยนกระจก</div><div class="chip">เปลี่ยนมุ้ง</div><div class="chip">เปลี่ยนสีอลู</div><div class="chip">เปลี่ยนมือจับ (สแตนเลส/HYDA/Metro)</div><div class="chip dash">พิมพ์เอง</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="acc" id="accExtra">
+        <div class="acc-h" onclick="this.parentNode.classList.toggle('open')">＋ อุปกรณ์เสริม (ใช้ไม่บ่อย) <span class="dot">▾</span></div>
+        <div class="acc-b">
+          <div class="lbl" style="margin-top:4px">ครอบวงกบอลู</div>
+          <div class="chips"><div class="chip on">ไม่มี</div><div class="chip">3 ด้าน</div><div class="chip">4 ด้าน</div></div>
+          <div class="lbl">ธรณี (บานเปิด)</div>
+          <div class="chips"><div class="chip on">กันน้ำ</div><div class="chip">หลังเต่า+Drop Seal</div><div class="chip">หลังเต่า+สักหลาด</div><div class="chip">ไม่มี</div></div>
+          <div class="lbl">งานพื้น/รื้อ</div>
+          <div class="chips"><div class="chip">ฝังรางยู (กรีดพื้น)</div><div class="chip">ดรอปพื้น</div><div class="chip">เสริมคาน</div><div class="chip">รื้อของเดิม</div></div>
+          <div class="note">คาดตารางย้ายขึ้นไปด้านบนแล้ว (ใช้บ่อย)</div>
+        </div>
+      </div>
+
+      <div class="acc" id="accNote">
+        <div class="acc-h" onclick="this.parentNode.classList.toggle('open')">＋ หมายเหตุมาตรฐาน (ติ๊กหลายข้อ) <span class="dot">▾ ✅ ทำแล้ว</span></div>
+        <div class="acc-b">
+          <label style="display:flex;gap:8px;font-size:12.5px;margin-top:6px"><input type="checkbox"> รวมงานรื้อประตูเดิม (ความเสียหายเปลี่ยน/เก็บงานฟรี ไม่รวมวัสดุ)</label>
+          <label style="display:flex;gap:8px;font-size:12.5px;margin-top:4px"><input type="checkbox"> รวมงาน Protection เฉพาะบริเวณแนวติดตั้ง</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="pricecard">
+      <div class="pc-h">ราคาโดยประมาณ (ต่อชุด)</div>
+      <div class="pc-big" id="price">฿41,000</div>
+      <div class="pc-li"><span id="sumType">ประตูบานเปิด ยูโร</span><span></span></div>
+      <div class="pc-li"><span>ขนาด</span><span id="sumSize">1.2×2.2 ม.</span></div>
+      <div class="pc-li"><span>สี / กระจก</span><span id="sumCG">อบขาว · เขียว 6มม.</span></div>
+      <div class="pc-li"><span id="sumExtra">มุ้ง: ไม่ใส่ · ล็อค: ไม่มี</span><span></span></div>
+      <div class="pc-li" id="sumSubLi" style="display:none"><span id="sumSub"></span><span></span></div>
+      <div class="pc-demo">⚠ ราคาเดโม — dev ต่อ engine จริง</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var MODELS={
+  open:[['ยูโร',1],['เซมิยูโร',1],['Velora (รวมเทมเปอร์)',1],['โซลิด ทึบ',1]],
+  slide:[['เซมิยูโร M',1],['ยูโร L',1],['สลิม S',1],['ไร้ราง',1]],
+  fold:[['เฟรมปกติ',1],['เฟรมสลิม',1]],
+  fix:[['กระจกติดตาย',1],['ลูกฟูกทึบ',1],['คอมโพสิตทึบ',1]],
+  curve:[['ดัดโค้ง',1]],
+  more:[['บานกระทุ้ง',1],['บานยก',1],['บานหมุน',1],['PC Door',1],['shower',1]]
+};
+var TYPE_NAME={open:'ประตูบานเปิด',slide:'ประตูบานเลื่อน',fold:'ประตูบานเฟี้ยม',fix:'กระจกติดตาย',curve:'บานดัดโค้ง',more:'บานพิเศษ'};
+var st={type:'open',model:'ยูโร',color:'อบขาว',glass:'เขียว 6มม.',mosq:'ไม่ใส่',grid:'ไม่มี',lock:'ไม่มี',subs:[]};
+var DEMO={open:41000,slide:38000,fold:45000,fix:23000,curve:60000,more:30000};
+
+function renderModels(){
+  var box=document.getElementById('modelChips');var list=MODELS[st.type]||[];
+  if(!list.some(function(x){return x[0]===st.model})) st.model=list[0][0];
+  box.innerHTML=list.map(function(m){return '<div class="chip'+(m[0]===st.model?' on':'')+'" data-mo="'+m[0]+'">'+m[0]+'</div>';}).join('');
+  box.querySelectorAll('.chip').forEach(function(c){c.onclick=function(){box.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on');});c.classList.add('on');st.model=c.dataset.mo;calc();};});
+}
+function pickGroup(box,key,attr,after){document.getElementById(box).querySelectorAll('.chip').forEach(function(c){c.onclick=function(){document.getElementById(box).querySelectorAll('.chip').forEach(function(x){x.classList.remove('on');});c.classList.add('on');st[key]=c.dataset[attr];if(after)after();calc();};});}
+document.getElementById('typeChips').querySelectorAll('.chip').forEach(function(c){c.onclick=function(){document.getElementById('typeChips').querySelectorAll('.chip').forEach(function(x){x.classList.remove('on');});c.classList.add('on');st.type=c.dataset.t;renderModels();calc();};});
+pickGroup('colorChips','color','c',function(){document.getElementById('codeWrap').classList.toggle('hide',st.color!=='อบพิเศษ');});
+pickGroup('glassChips','glass','g');
+pickGroup('mosqChips','mosq','m');
+pickGroup('gridChips','grid','gm',function(){document.getElementById('gridWrap').classList.toggle('hide',st.grid!=='มี');});
+pickGroup('lockChips','lock','lk');
+
+function addSub(name,w,h){st.subs.push({name:name,w:w,h:h});renderSubs();calc();}
+function renderSubs(){
+  var box=document.getElementById('subList');
+  box.innerHTML=st.subs.map(function(s,i){return '<div class="subrow"><span class="nm">'+s.name+'</span><input value="'+s.w+'" onchange="st.subs['+i+'].w=this.value;calc()"> × <input value="'+s.h+'" onchange="st.subs['+i+'].h=this.value;calc()"> ม.<span class="x" onclick="st.subs.splice('+i+',1);renderSubs();calc()">×</span></div>';}).join('');
+}
+function calc(){
+  var w=document.getElementById('w').value,h=document.getElementById('h').value,qty=parseInt(document.getElementById('qty').value)||1;
+  var base=DEMO[st.type]||30000; var extra=(st.mosq!=='ไม่ใส่'?5000:0)+(st.color==='อบพิเศษ'?8000:0)+(st.grid==='มี'?2000:0)+(st.lock!=='ไม่มี'?1500:0)+st.subs.length*4000;
+  document.getElementById('price').textContent='฿'+((base+extra)*qty).toLocaleString();
+  document.getElementById('sumType').textContent=TYPE_NAME[st.type]+' '+st.model;
+  document.getElementById('sumSize').textContent=w+'×'+h+' ม.'+(qty>1?(' · '+qty+' ชุด'):'');
+  document.getElementById('sumCG').textContent=st.color+(st.color==='อบพิเศษ'&&document.getElementById('code').value?(' ('+document.getElementById('code').value+')'):'')+' · '+st.glass;
+  var ex='มุ้ง: '+st.mosq+' · ล็อค: '+st.lock;
+  if(st.grid==='มี')ex+=' · คาดตาราง '+document.getElementById('gh').value+'/'+document.getElementById('gv').value;
+  document.getElementById('sumExtra').textContent=ex;
+  var sl=document.getElementById('sumSubLi');
+  if(st.subs.length){sl.style.display='';document.getElementById('sumSub').textContent='ผสม: '+st.subs.map(function(s){return s.name+' '+s.w+'×'+s.h;}).join(' · ');}else sl.style.display='none';
+}
+renderModels();calc();
+</script>
+</body>
+</html>

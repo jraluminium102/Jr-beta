@@ -42,6 +42,7 @@ export type QueueEntry = {
   assistant_id: string | null;  // (0019) ผู้ช่วยเซลล์ที่ไปด้วย
   assistant?: { id: string; name: string; code: string } | null;
   line_contact: string | null;
+  contact_channel: string;        // (0043) LINE | FB
   customer_name: string;
   tel: string | null;
   address: string | null;
@@ -53,8 +54,11 @@ export type QueueEntry = {
   assess_fee: number | null;
   payment: string | null;
   receipt_done: boolean;
+  fee_paid: boolean;            // (0042) ชำระค่าประเมินแล้ว
   note_admin: string | null;
   note_ai: string | null;
+  target_job_id: string | null;      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
+  target_customer_id: number | null; // (0045) ลูกค้าเก่าหน้างานใหม่: customer_id เดิม
   created_at: string;
   updated_at: string;
 };

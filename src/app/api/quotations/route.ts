@@ -123,6 +123,8 @@ export async function POST(req: Request) {
     unit_price: Number(it.unit_price) || 0,
     line_total: lineTotal(Number(it.qty) || 0, Number(it.unit_price) || 0),
     sort_order: i,
+    category: String(it.category ?? ""),     // หมวดสินค้า → สถิติขายดี (0046)
+    product_id: String(it.product_id ?? ""),
   }));
   const { error: iErr } = await supabase.from("quotation_items").insert(rows);
   if (iErr) {

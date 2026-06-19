@@ -1,0 +1,270 @@
+{
+  "DIGI": [
+    {
+      "n": "S1 ก้านโยก",
+      "p": 10000
+    },
+    {
+      "n": "S1 ลูกบิด",
+      "p": 10000
+    },
+    {
+      "n": "S3",
+      "p": 18000,
+      "nc": 1
+    },
+    {
+      "n": "S4",
+      "p": 18000,
+      "nc": 1
+    },
+    {
+      "n": "L600",
+      "p": 24000,
+      "nc": 1
+    },
+    {
+      "n": "A300",
+      "p": 10000
+    },
+    {
+      "n": "L900",
+      "p": 13000
+    },
+    {
+      "n": "C300",
+      "p": 11000
+    },
+    {
+      "n": "X1",
+      "p": 13000
+    },
+    {
+      "n": "X2",
+      "p": 20000,
+      "nc": 1
+    },
+    {
+      "n": "JR Prime",
+      "p": 24900,
+      "nc": 1,
+      "jr": 1
+    }
+  ],
+  "HANDLE_STAINLESS": [
+    {
+      "n": "30.5 ซม.",
+      "p": 1500
+    },
+    {
+      "n": "45 ซม.",
+      "p": 2000
+    },
+    {
+      "n": "60 ซม.",
+      "p": 2000
+    },
+    {
+      "n": "80 ซม.",
+      "p": 2500
+    },
+    {
+      "n": "100 ซม.",
+      "p": 3000
+    },
+    {
+      "n": "120 ซม.",
+      "p": 3200
+    }
+  ],
+  "MOSQUITO_SCREENS": [
+    {
+      "id": "mj_sd_basic",
+      "name": "มุ้งจีบ SD พื้นฐาน",
+      "rate": 2500,
+      "min": 3500,
+      "itype": "both",
+      "mscolor": true
+    },
+    {
+      "id": "mj_sd_twoway",
+      "name": "มุ้งจีบ SD + ทูเวย์ ม่านรังผึ้ง",
+      "rate": 4000,
+      "min": 4000,
+      "itype": "both",
+      "mscolor": true
+    },
+    {
+      "id": "mj_blackout",
+      "name": "มุ้งจีบ Blackout รังผึ้งทึบแสง",
+      "rate": 2500,
+      "min": 3500,
+      "itype": "both",
+      "mscolor": true
+    },
+    {
+      "id": "mj_keep_twoway",
+      "name": "มุ้งจีบ ตีนตะขาบ + ทูเวย์",
+      "rate": 6000,
+      "min": 6000,
+      "itype": "door",
+      "mscolor": true
+    },
+    {
+      "id": "mj_keep_honey",
+      "name": "มุ้งจีบ ตีนตะขาบ + รังผึ้ง",
+      "rate": 4500,
+      "min": 4500,
+      "itype": "door",
+      "mscolor": true
+    },
+    {
+      "id": "mj_kick_150",
+      "name": "ม้วนเตะได้ 150 (ติดล้นนอกวงกบ)",
+      "rate": 7500,
+      "min": 15000,
+      "itype": "both",
+      "overhang": true,
+      "maxWidth": 1.5,
+      "mscolor": true
+    },
+    {
+      "id": "mj_kick_300",
+      "name": "ม้วนเตะได้ 300 (ติดล้นนอกวงกบ)",
+      "rate": 7500,
+      "min": 37500,
+      "itype": "both",
+      "overhang": true,
+      "maxWidth": 3,
+      "mscolor": true
+    },
+    {
+      "id": "mj_kick_600",
+      "name": "ม้วนเตะได้ 600 (ติดล้นนอกวงกบ)",
+      "rate": 7500,
+      "min": 67500,
+      "itype": "both",
+      "overhang": true,
+      "maxWidth": 6,
+      "mscolor": true
+    },
+    {
+      "id": "mj_screen_safety",
+      "name": "มุ้งจีบนิรภัย (ติดล้นนอกวงกบ · กรอบทำสีไม่ได้)",
+      "rate": 5000,
+      "min": 5000,
+      "itype": "both",
+      "overhang": true
+    },
+    {
+      "id": "imp21",
+      "name": "มุ้งเฟรมเล็ก (เปิด/เลื่อน/กระทุ้ง/ยก)",
+      "frame": true,
+      "rates": "IMP21",
+      "min_door": 2400,
+      "min_window": 1200,
+      "itype": "both",
+      "mscolor": true
+    },
+    {
+      "id": "imp22",
+      "name": "มุ้งเฟรมเล็กติดตาย",
+      "frame": true,
+      "rates": "IMP22",
+      "min_door": 1500,
+      "min_window": 800,
+      "itype": "both",
+      "mscolor": true
+    },
+    {
+      "id": "imp23",
+      "name": "มุ้งเฟรมใหญ่ (เลื่อน/เปิด/กระทุ้ง/ยก)",
+      "frame": true,
+      "rates": "IMP23",
+      "min_door": 7200,
+      "min_window": 4800,
+      "itype": "both",
+      "mscolor": true
+    }
+  ],
+  "COMMON_OPTS": [
+    {
+      "id": "soft_close",
+      "label": "Soft Close (สลักหน่วงบาน)",
+      "price": 4000,
+      "ids": [
+        "inner_top_stack",
+        "inner_top_xseries"
+      ]
+    },
+    {
+      "id": "sling",
+      "label": "สลิงเปิดซ้อน(×บาน)",
+      "price": 2000,
+      "perPanel": true,
+      "ids": [
+        "inner_top_stack",
+        "inner_top_xseries"
+      ]
+    },
+    {
+      "id": "hide_beam",
+      "label": "ซ่อนคาน (base 4,000)",
+      "perLen": true,
+      "base": 4000,
+      "freeLen": 3,
+      "lenRate": 500,
+      "ids": [
+        "inner_top_stack",
+        "inner_top_slimlux",
+        "inner_top_xseries",
+        "folding",
+        "folding_xseries"
+      ]
+    },
+    {
+      "id": "hide_track",
+      "label": "ซ่อนราง (base 4,000)",
+      "perLen": true,
+      "base": 4000,
+      "freeLen": 3,
+      "lenRate": 500,
+      "ids": [
+        "folding",
+        "folding_xseries"
+      ]
+    },
+    {
+      "id": "u_track",
+      "label": "ฝังรางยู (U-Track)",
+      "perLen": true,
+      "base": 4000,
+      "freeLen": 2,
+      "lenRate": 500,
+      "ids": [
+        "folding",
+        "folding_xseries",
+        "inner_top_slimlux",
+        "inner_top_xseries"
+      ]
+    },
+    {
+      "id": "beam_support",
+      "label": "เสริมคานซัพพอร์ท",
+      "perLen": true,
+      "base": 4000,
+      "freeLen": 3,
+      "lenRate": 500,
+      "ids": [
+        "inner_top_stack",
+        "inner_top_slimlux",
+        "inner_top_xseries",
+        "folding",
+        "folding_euro",
+        "folding_xseries",
+        "pc_door_2",
+        "pc_door_4"
+      ]
+    }
+  ]
+}

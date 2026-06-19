@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAFT G6 — จัดกลุ่มออปชั่นในห้อง (ข้อ 9) ก่อน→หลัง</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;background:#F3F4F6;color:#111827;padding:16px;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:18px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .ptag{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+  .before .ptag{background:#FEE2E2;color:#B91C1C}
+  .after .ptag{background:#DCFCE7;color:#15803D}
+  .fl{font-size:13px;font-weight:600;margin:10px 0 5px;color:#374151}
+  .fl.first{margin-top:0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+  .c{font-size:13px;padding:6px 11px;border:1px solid #D1D5DB;border-radius:8px;background:#fff;cursor:pointer;transition:.12s}
+  .c.on{background:#2563EB;color:#fff;border-color:#2563EB}
+  .c.pill{border-radius:999px;font-size:12px;color:#6B7280}
+  .c.pill.on{background:#374151;color:#fff;border-color:#374151}
+  .box{border:1.5px solid #2563EB;border-radius:10px;padding:10px;margin:8px 0;background:#EFF6FF}
+  .box .boxh{font-size:13px;font-weight:700;color:#1D4ED8;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .scatter{border-left:3px solid #FCA5A5;padding-left:10px;margin:7px 0}
+  .scatter .note{font-size:11px;color:#DC2626}
+  .fold{border:1px dashed #D1D5DB;border-radius:8px;padding:8px 10px;margin-top:8px;background:#FAFAFA}
+  .fold summary{font-size:12px;font-weight:600;color:#6B7280;cursor:pointer;list-style:none}
+  .fold summary::-webkit-details-marker{display:none}
+  .fold[open] summary{margin-bottom:8px}
+  .mini{font-size:11px;color:#9CA3AF;margin-top:2px}
+  .legend{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;margin-top:16px;font-size:13px}
+  .legend h3{font-size:14px;margin-bottom:8px}
+  .legend li{margin:4px 0 4px 18px}
+  .gap{height:1px;background:#F3F4F6;margin:10px 0}
+  .codref{font-family:monospace;font-size:11px;background:#F3F4F6;padding:1px 5px;border-radius:4px;color:#6B7280}
+  .arrow{text-align:center;font-size:22px;color:#9CA3AF;margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DRAFT G6 — จัดกลุ่มออปชั่นในห้อง (ข้อ 9)</h1>
+  <div class="sub">เทียบ <b>ก่อน→หลัง</b> หน้ากรอกแต่ละบานในห้องกั้นกระจก (ฟังก์ชัน <span class="codref">g6rRenderOpt</span> L6635-6680) · เป้า = ให้เหมือน G1 ที่รวบ "มือจับ·ล็อค·มุ้ง·คาดตาราง" เป็นกล่องเดียว · 18 มิ.ย. 2026</div>
+
+  <div class="cols">
+    <!-- BEFORE -->
+    <div class="panel before">
+      <span class="ptag">ก่อน — แบนกระจาย</span>
+
+      <div class="fl first">ชนิดบาน + ขนาด</div>
+      <div class="chips"><span class="c on">บานเปิด</span><span class="c">บานเลื่อน</span><span class="c">ติดตาย</span></div>
+
+      <div class="scatter">
+        <div class="fl first">มือจับ (หลายแบรนด์)</div>
+        <div class="chips"><span class="c on">Cmech (ฟรี)</span><span class="c">ดิจิตอล</span><span class="c">สแตนเลส</span></div>
+      </div>
+
+      <div class="scatter">
+        <div class="fl first">สีเฟรม <span class="note">← คั่นกลาง</span></div>
+        <div class="chips"><span class="c on">ขาว</span><span class="c">ดำ</span><span class="c">เทา</span></div>
+      </div>
+
+      <div class="scatter">
+        <div class="fl first">ทาสี / ฉนวน <span class="note">← คั่นกลาง</span></div>
+        <div class="chips"><span class="c">＋ ทาสีผนัง</span><span class="c">＋ ฉนวน</span></div>
+      </div>
+
+      <div class="scatter">
+        <div class="fl first">มุ้ง <span class="note">← หลุดจากมือจับ</span></div>
+        <div class="chips"><span class="c">＋ ใส่มุ้ง</span></div>
+      </div>
+
+      <div class="scatter">
+        <div class="fl first">เสริมกระจก</div>
+        <div class="chips"><span class="c">＋ คาดตาราง <span class="note">(แยกหัวข้อ)</span></span><span class="c">＋ ลูกฟูก</span></div>
+      </div>
+
+      <div class="fl">อุปกรณ์เสริม</div>
+      <div class="chips"><span class="c pill">ครอบวงกบ</span><span class="c pill">ดรอปพื้น</span></div>
+
+      <div class="mini">⚠ มือจับ / ชุดล็อก / มุ้ง / คาดตาราง = ใช้บ่อยทุกตัว แต่ถูก สีเฟรม·ทาสี คั่น → ลูกค้าต้องเลื่อนหา</div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="panel after">
+      <span class="ptag">หลัง — รวบกล่องใช้บ่อย</span>
+
+      <div class="fl first">1. ชนิดบาน + ขนาด</div>
+      <div class="chips"><span class="c on">บานเปิด</span><span class="c">บานเลื่อน</span><span class="c">ติดตาย</span></div>
+
+      <div class="fl">2. สี / กระจก <span class="codref">audit-A</span></div>
+      <div class="chips"><span class="c on">อบขาว</span><span class="c">ดำ</span><span class="c">เทาซาฮาร่า…</span></div>
+      <div class="chips"><span class="c on">เขียว 6</span><span class="c">เทมเปอร์…</span></div>
+      <div class="mini">(งานเลือกกระจก/สีเต็ม = คิว audit ข้อ A · ดราฟแยก v2)</div>
+
+      <div class="box">
+        <div class="boxh">🔧 ใช้บ่อย — มือจับ · ล็อก · มุ้ง · คาดตาราง</div>
+        <div class="fl first">มือจับ (หลายแบรนด์)</div>
+        <div class="chips"><span class="c on">Cmech (ฟรี)</span><span class="c">ดิจิตอล</span><span class="c">สแตนเลส</span></div>
+        <div class="fl">ชุดล็อก</div>
+        <div class="chips"><span class="c on">มีกุญแจ</span><span class="c">ไม่มี</span></div>
+        <div class="fl">มุ้ง</div>
+        <div class="chips"><span class="c">＋ ใส่มุ้ง (จาก 3,500)</span></div>
+        <div class="fl">คาดตาราง</div>
+        <div class="chips"><span class="c">＋ คาดตาราง (200/ม.)</span><span class="c">＋ ลูกฟูก/คอมโพ</span></div>
+      </div>
+
+      <details class="fold">
+        <summary>⚙ ตัวเลือกใช้น้อย (กดถ้าต้องใช้) — สีเฟรม · ทาสี/ฉนวน · ครอบวงกบ · ดรอปพื้น</summary>
+        <div class="fl first">สีเฟรม</div>
+        <div class="chips"><span class="c on">ขาว</span><span class="c">ดำ</span><span class="c">เทา</span></div>
+        <div class="fl">ทาสี / ฉนวน</div>
+        <div class="chips"><span class="c">＋ ทาสีผนัง</span><span class="c">＋ ฉนวน</span></div>
+        <div class="fl">อุปกรณ์เสริม</div>
+        <div class="chips"><span class="c pill">ครอบวงกบ</span><span class="c pill">ดรอปพื้น</span></div>
+      </details>
+
+      <div class="mini">✓ ใช้บ่อยรวมกล่องเดียว เห็นครบในจอเดียว · ใช้น้อยพับลง = ตรงแม่แบบ PART 3 ข้อ 4-5</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h3>สรุปต้องแก้อะไร (ส่งคิวกลาง — ไม่แก้เอง)</h3>
+    <ul>
+      <li><b>ข้อ 9 (ดราฟนี้):</b> ในห้อง รวบ <b>มือจับ · ชุดล็อก · มุ้ง · คาดตาราง</b> เป็นกล่องเดียว "ใช้บ่อย" (เหมือน G1 L2858) · ย้าย <b>สีเฟรม · ทาสี/ฉนวน · ครอบวงกบ · ดรอปพื้น</b> ลงกล่องพับ "ใช้น้อย" — แก้ลำดับใน <span class="codref">g6rRenderOpt</span> L6635-6680 (จัด section ใหม่ ไม่แตะ logic/ราคา)</li>
+      <li><b>ข้อ 8 / audit-A (มีดราฟแยก):</b> เพิ่มเลือก "สี/กระจก เต็ม" ต่อช่อง (ขึ้นบนสุดตามแม่แบบ ข้อ 3) → ดราฟ <span class="codref">DRAFT-G6-UX-เลือกกระจกสี-v2</span></li>
+      <li><b>แก้คำรายงานเดิม:</b> ข้อ 10 "OPTION accordion พับ" = <b>เช็คผิด</b> · ห้องไม่มี accordion (แบนหมด) และไม่มีฟีเจอร์ OPTION-cascade แบบงานบาน — ไม่ใช่จุดบั๊ก แค่ฟีเจอร์ที่ห้องไม่มี (ถ้าต้องการให้ลูกค้าเลือก OPTION ทางเลือกในห้องด้วย = งานเพิ่มแยก ขอพี่นัทเคาะ)</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

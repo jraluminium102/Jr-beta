@@ -4,10 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
+import DateField from "@/components/ui/DateField";
+import { formatThaiPhone } from "@/lib/phone";
 import {
   FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
+import type { JobSearchResult } from "@/app/api/jobs/search/route";
+
+// ---- ชนิดลูกค้าที่ค้นมา ----
+type CustomerSearchResult = {
+  id: number;
+  name: string;
+  phone: string | null;
+  line_id: string | null;
+  address: string | null;
+};
 
 // ---- helpers ----------------------------------------------------------------
 
@@ -26,6 +38,17 @@ export function isAssessJobType(jt: string | null | undefined): boolean {
   const v = (jt ?? "").trim();
   return v === "" || v === ASSESS_JOB_TYPE || v === "ประเมิน";
 }
+
+const DESIGN_STATE_LABEL: Record<string, string> = {
+  NOT_STARTED:      "ยังไม่เริ่ม",
+  DRAWING:          "กำลังเขียนแบบ",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
+  REVISING:         "กำลังแก้ไข",
+  DONE:             "เสร็จแล้ว",
+};
+
+// ตัวเลือกการชำระ (ฟีเจอร์ A)
+const PAYMENT_OPTIONS = ["โอน", "จ่ายสด", "ลูกค้าเก่า", "มัดจำหน้างาน"] as const;
 
 // ---- slot-conflict helpers --------------------------------------------------
 
@@ -50,6 +73,12 @@ type ExistingSlot = {
   customer_name: string;
 };
 
+// ประเภทงาน: หมวด
+type JobCat = "ประเมินหน้างาน" | "โชว์รูม" | "เคลียร์แบบ" | "อื่นๆ";
+
+type CustMode = "new" | "old";
+type OldCustomerMode = "" | "existing_site" | "new_site";
+
 type FormState = {
   status: QueueStatus;
   queue_date: string;
@@ -58,21 +87,49 @@ type FormState = {
   sales_id: string;
   assistant_id: string;
   line_contact: string;
+  contact_channel: string;
   customer_name: string;
   tel: string;
   address: string;
   location_url: string;
   job_size: "" | JobSize;
-  job_count: string;
   assess_fee: string;
   feeCustom: boolean;
   payment: string;
   receipt_done: boolean;
+  fee_paid: boolean;
   note_admin: string;
+  target_job_id: string | null;      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
+  clear_revise: boolean;             // (0044) toggle "มีแก้ใบเสนอ+แบบ"
+  target_customer_id: number | null; // (0045) ลูกค้าเก่าหน้างานใหม่
+  custMode: CustMode;                // (0045) ลูกค้าใหม่ / ลูกค้าเก่า
+  oldCustomerMode: OldCustomerMode;  // (0045) หน้างานเดิม / หน้างานใหม่
 };
 
 function initForm(e?: QueueEntry | null): FormState {
   const fee = e?.assess_fee ?? null;
+
+  // derive custMode / oldCustomerMode จาก entry ที่มีอยู่จริง
+  // เฉพาะ ประเมินหน้างาน เท่านั้น (เคลียร์แบบ ใช้ target_job_id แต่ custMode ไม่เกี่ยว)
+  // หลัง fix: existing_site ใช้ target_customer_id (เหมือน new_site) + target_job_id=null
+  //   → ข้อมูลเก่าที่บันทึก target_job_id สำหรับ existing_site ยังรองรับด้วย fallback เดิม
+  const jt = e?.job_type;
+  const isAssess = !e || isAssessJobType(jt); // entry ใหม่ default เป็น assess
+  let initCustMode: CustMode = "new";
+  let initOldCustomerMode: OldCustomerMode = "";
+  if (e && isAssess) {
+    if (e.target_customer_id != null || e.target_job_id != null) {
+      initCustMode = "old";
+      // ข้อมูลเก่า: target_job_id ที่ไม่ใช่เคลียร์แบบ = existing_site (backward compat)
+      if (e.target_job_id != null && isAssessJobType(e.job_type)) {
+        initOldCustomerMode = "existing_site";
+      } else if (e.target_customer_id != null) {
+        // new_site หรือ existing_site ใหม่ → แสดงเป็น new_site (ข้อมูลในฟอร์มมีครบแล้ว)
+        initOldCustomerMode = "new_site";
+      }
+    }
+  }
+
   return {
     status: e?.status ?? "PENDING",
     queue_date: e?.queue_date ?? "",
@@ -81,22 +138,28 @@ function initForm(e?: QueueEntry | null): FormState {
     sales_id: e?.sales_id ?? "",
     assistant_id: e?.assistant_id ?? "",
     line_contact: e?.line_contact ?? "",
+    contact_channel: e?.contact_channel ?? "LINE",
     customer_name: e?.customer_name ?? "",
     tel: e?.tel ?? "",
     address: e?.address ?? "",
     location_url: e?.location_url ?? "",
     job_size: (e?.job_size ?? "") as "" | JobSize,
-    job_count: e?.job_count != null ? String(e.job_count) : "",
     assess_fee: fee != null ? String(fee) : "",
     feeCustom: fee != null && !FEE_OPTIONS.includes(fee),
     payment: e?.payment ?? "",
     receipt_done: e?.receipt_done ?? false,
+    fee_paid: e?.fee_paid ?? false,
     note_admin: e?.note_admin ?? "",
+    target_job_id: e?.target_job_id ?? null,      // (BUG-1) restore จาก entry จริง
+    clear_revise: true,
+    target_customer_id: e?.target_customer_id ?? null, // (BUG-1) restore จาก entry จริง
+    custMode: initCustMode,
+    oldCustomerMode: initOldCustomerMode,
   };
 }
 
 export function QueueModal({
-  entry, preset, salesList, onClose, onSaved, readOnly = false,
+  entry, preset, salesList, onClose, onSaved, readOnly = false, contextMonth,
 }: {
   entry?: QueueEntry | null;
   preset?: { queue_date?: string; queue_time?: string; sales_id?: string };
@@ -104,6 +167,7 @@ export function QueueModal({
   onClose: () => void;
   onSaved: () => void;
   readOnly?: boolean;
+  contextMonth?: string; // เดือนที่ผู้ใช้ดูอยู่ (YYYY-MM) → ใช้เป็น from_date hint ใน suggest
 }) {
   const editing = !!entry;
   const [f, setF] = useState<FormState>(() => {
@@ -272,13 +336,294 @@ export function QueueModal({
   const [addSalesBusy, setAddSalesBusy] = useState(false);
   const [addSalesErr, setAddSalesErr] = useState("");
 
-  // ประเภทงาน: หมวด (ประเมินหน้างาน/โชว์รูม/อื่นๆ) — "อื่นๆ" เก็บข้อความอิสระใน f.job_type
-  const [jobCat, setJobCat] = useState<"ประเมินหน้างาน" | "โชว์รูม" | "อื่นๆ">(() => {
+  // ประเภทงาน: หมวด (0044 เพิ่ม "เคลียร์แบบ")
+  const [jobCat, setJobCat] = useState<JobCat>(() => {
     const jt = entry?.job_type;
     if (isAssessJobType(jt)) return "ประเมินหน้างาน";
     if (jt === "โชว์รูม") return "โชว์รูม";
+    if (jt === "เคลียร์แบบ") return "เคลียร์แบบ";
     return "อื่นๆ";
   });
+
+  // ---- (0044) ค้นงานเดิม (เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม) ----
+  const [jobSearch, setJobSearch] = useState("");
+  const [jobSearchResults, setJobSearchResults] = useState<JobSearchResult[]>([]);
+  const [jobSearchBusy, setJobSearchBusy] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobSearchResult | null>(null);
+  const jobSearchAbortRef = useRef<AbortController | null>(null);
+  const jobSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ---- (0045) ค้นลูกค้าเดิม (ประเมินลูกค้าเก่า) ----
+  const [custSearch, setCustSearch] = useState("");
+  const [custSearchResults, setCustSearchResults] = useState<CustomerSearchResult[]>([]);
+  const [custSearchBusy, setCustSearchBusy] = useState(false);
+  const [selectedCust, setSelectedCust] = useState<CustomerSearchResult | null>(null);
+  const custSearchAbortRef = useRef<AbortController | null>(null);
+  const custSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // loading state สำหรับดึงข้อมูลไซต์เดิม (existing_site)
+  const [siteInfoBusy, setSiteInfoBusy] = useState(false);
+  // ลูกค้านี้ไม่มีงานในระบบ (existing_site auto-load คืน 0 งาน)
+  const [noJobsForCust, setNoJobsForCust] = useState(false);
+  // กำลังเปลี่ยนไซต์ (กด [เปลี่ยนไซต์] หลัง auto-pick) → โชว์ job search
+  const [changingSite, setChangingSite] = useState(false);
+  // เก็บงานที่ auto-pick ล่าสุด (ใช้กดยกเลิกเปลี่ยนไซต์กลับมา)
+  const lastAutoJobRef = useRef<JobSearchResult | null>(null);
+
+  // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม + กำลังเปลี่ยนไซต์)
+  const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && changingSite);
+  useEffect(() => {
+    if (!needsJobSearch) return;
+    if (!jobSearch.trim()) { setJobSearchResults([]); return; }
+
+    if (jobSearchTimerRef.current) clearTimeout(jobSearchTimerRef.current);
+    jobSearchTimerRef.current = setTimeout(async () => {
+      jobSearchAbortRef.current?.abort();
+      const ctrl = new AbortController();
+      jobSearchAbortRef.current = ctrl;
+      setJobSearchBusy(true);
+      try {
+        const r = await api.get<JobSearchResult[]>(`/jobs/search?q=${encodeURIComponent(jobSearch.trim())}`);
+        if (!ctrl.signal.aborted) setJobSearchResults(r.data ?? []);
+      } catch {
+        if (!ctrl.signal.aborted) setJobSearchResults([]);
+      } finally {
+        if (!ctrl.signal.aborted) setJobSearchBusy(false);
+      }
+    }, 350);
+
+    return () => {
+      if (jobSearchTimerRef.current) clearTimeout(jobSearchTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobSearch, needsJobSearch]);
+
+  // debounce ค้นลูกค้าเดิม (0045)
+  useEffect(() => {
+    if (jobCat !== "ประเมินหน้างาน" || f.custMode !== "old") return;
+    if (!custSearch.trim()) { setCustSearchResults([]); return; }
+
+    if (custSearchTimerRef.current) clearTimeout(custSearchTimerRef.current);
+    custSearchTimerRef.current = setTimeout(async () => {
+      custSearchAbortRef.current?.abort();
+      const ctrl = new AbortController();
+      custSearchAbortRef.current = ctrl;
+      setCustSearchBusy(true);
+      try {
+        const r = await api.get<CustomerSearchResult[]>(`/customers?q=${encodeURIComponent(custSearch.trim())}`);
+        if (!ctrl.signal.aborted) setCustSearchResults(r.data ?? []);
+      } catch {
+        if (!ctrl.signal.aborted) setCustSearchResults([]);
+      } finally {
+        if (!ctrl.signal.aborted) setCustSearchBusy(false);
+      }
+    }, 350);
+
+    return () => {
+      if (custSearchTimerRef.current) clearTimeout(custSearchTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [custSearch, f.custMode, jobCat]);
+
+  async function selectTargetJob(j: JobSearchResult) {
+    setSelectedJob(j);
+    setJobSearch("");
+    setJobSearchResults([]);
+
+    // โหมด: เคลียร์แบบ (ผูกงานเดิม target_job_id) vs ประเมินหน้างานเดิม (สร้างงานใหม่ target_customer_id)
+    const isClearDesign = jobCat === "เคลียร์แบบ";
+    const isExistingSite =
+      jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && !!selectedCust;
+    if (isExistingSite) setChangingSite(false);
+
+    // ทั้ง 2 โหมด: ดึง site-info ของงานนั้นมา auto-fill ให้ครบ (ที่อยู่/โลเคชั่น/เบอร์/Line)
+    setSiteInfoBusy(true);
+    try {
+      const r = await api.get<{
+        customer_name: string; tel: string | null; address: string | null;
+        location_url: string | null; lat: number | null; lng: number | null;
+        line_contact: string | null; contact_channel: string;
+      }>(`/jobs/${j.id}/site-info`);
+      const info = r.data;
+      const target = {
+        target_job_id: isClearDesign ? j.id : null,
+        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+      };
+      if (info) {
+        setF((s) => ({
+          ...s,
+          customer_name: info.customer_name || j.customer_name,
+          tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
+          address: info.address ?? s.address,
+          location_url: info.location_url ?? s.location_url,
+          line_contact: info.line_contact ?? s.line_contact,
+          contact_channel: info.contact_channel || s.contact_channel,
+          ...target,
+        }));
+        if (info.lat != null && info.lng != null) setResolved({ lat: info.lat, lng: info.lng });
+      } else {
+        setF((s) => ({
+          ...s,
+          customer_name: j.customer_name,
+          tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+          address: j.customer_area ?? s.address,
+          ...target,
+        }));
+      }
+    } catch {
+      setF((s) => ({
+        ...s,
+        customer_name: j.customer_name,
+        tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
+        address: j.customer_area ?? s.address,
+        target_job_id: isClearDesign ? j.id : null,
+        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+      }));
+    } finally {
+      setSiteInfoBusy(false);
+    }
+  }
+
+  function clearTargetJob() {
+    // ถ้าอยู่ใน existing_site mode → เปิด search box ให้เลือกไซต์ใหม่ (คงค่า address/location ไว้)
+    if (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site") {
+      // บันทึกงานเดิมไว้ให้ [ยกเลิก] กู้คืน
+      if (selectedJob) lastAutoJobRef.current = selectedJob;
+      setSelectedJob(null);
+      setChangingSite(true);
+      setJobSearch("");
+      setJobSearchResults([]);
+      setF((s) => ({
+        ...s,
+        target_job_id: null,
+        target_customer_id: null, // จะถูก set ใหม่ตอนเลือกงาน
+      }));
+    } else {
+      setSelectedJob(null);
+      setF((s) => ({ ...s, target_job_id: null, customer_name: "", tel: "" }));
+    }
+  }
+
+  // ---- (0045) เลือก / ล้างลูกค้าเดิม ----
+  function selectCustomer(c: CustomerSearchResult) {
+    setSelectedCust(c);
+    setCustSearch("");
+    setCustSearchResults([]);
+    // auto-fill ชื่อ+เบอร์+ที่อยู่+line จากลูกค้า (เติมเบื้องต้นก่อน fetch ไซต์)
+    setF((s) => ({
+      ...s,
+      customer_name: c.name,
+      tel: c.phone ? formatThaiPhone(c.phone) : s.tel,
+      address: c.address ?? s.address,
+      line_contact: c.line_id ?? s.line_contact,
+      target_customer_id: null,    // reset จนกว่าจะเลือก mode หน้างาน
+      target_job_id: null,
+      oldCustomerMode: "",         // reset mode เผื่อเปลี่ยนลูกค้า
+    }));
+    // reset job picker + flags ถ้าเปลี่ยนลูกค้า
+    setSelectedJob(null);
+    setJobSearch("");
+    setJobSearchResults([]);
+    setNoJobsForCust(false);
+    setChangingSite(false);
+    lastAutoJobRef.current = null;
+  }
+
+  function clearCustomer() {
+    setSelectedCust(null);
+    setSelectedJob(null);
+    setJobSearch("");
+    setJobSearchResults([]);
+    setNoJobsForCust(false);
+    setChangingSite(false);
+    lastAutoJobRef.current = null;
+    setF((s) => ({
+      ...s,
+      customer_name: "",
+      tel: "",
+      address: "",
+      line_contact: "",
+      target_customer_id: null,
+      target_job_id: null,
+      oldCustomerMode: "",
+    }));
+  }
+
+  function selectOldCustomerMode(mode: OldCustomerMode) {
+    if (!selectedCust) return;
+    setF((s) => ({
+      ...s,
+      oldCustomerMode: mode,
+      // หน้างานใหม่ → set target_customer_id ทันที, เคลียร์ target_job_id
+      // หน้างานเดิม → target_customer_id จะถูก set ตอนเลือกงาน (selectTargetJob), ต้องเป็น null ก่อน
+      target_customer_id: mode === "new_site" ? selectedCust.id : null,
+      target_job_id: null, // ทั้ง 2 mode เคลียร์ target_job_id (เคลียร์แบบเท่านั้นที่ใช้ target_job_id)
+      // หน้างานใหม่ = ไซต์ใหม่ → ล้างที่อยู่/โลเคชั่นของไซต์เก่า (เก็บชื่อ/เบอร์/Line ของลูกค้าไว้)
+      ...(mode === "new_site" ? { address: "", location_url: "" } : {}),
+    }));
+    if (mode === "new_site") {
+      setResolved(null);
+      setSelectedJob(null);
+      setNoJobsForCust(false);
+      setChangingSite(false);
+    }
+    // existing_site → reset job picker + auto-load งานล่าสุดของลูกค้า
+    if (mode === "existing_site") {
+      setSelectedJob(null);
+      setJobSearch("");
+      setJobSearchResults([]);
+      setResolved(null);
+      setNoJobsForCust(false);
+      setChangingSite(false);
+      lastAutoJobRef.current = null;
+      // auto-load งานล่าสุด
+      autoLoadLatestJob(selectedCust.id);
+    }
+  }
+
+  // auto-load งานล่าสุดของลูกค้า → autoFillFromJob ถ้ามี
+  async function autoLoadLatestJob(customerId: number) {
+    setSiteInfoBusy(true);
+    try {
+      // (1) งานล่าสุด — โชว์เป็นไซต์อ้างอิง (เปลี่ยนไซต์เฉพาะได้)
+      const jr = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
+      const jobs = jr.data ?? [];
+      if (jobs.length > 0) {
+        setSelectedJob(jobs[0]);
+        lastAutoJobRef.current = jobs[0];
+        setChangingSite(false);
+      } else {
+        setNoJobsForCust(true);
+      }
+      // (2) เติมจาก "ไซต์รวมของลูกค้า" (ครบสุด — ดึง location จากงานใดก็ได้ที่มีแผนที่)
+      const cr = await api.get<{
+        customer_name: string; tel: string | null; address: string | null;
+        location_url: string | null; lat: number | null; lng: number | null;
+        line_contact: string | null; contact_channel: string;
+      }>(`/customers/${customerId}/site-info`);
+      const info = cr.data;
+      if (info) {
+        setF((s) => ({
+          ...s,
+          customer_name: info.customer_name || s.customer_name,
+          tel: info.tel ? formatThaiPhone(info.tel) : s.tel,
+          address: info.address ?? s.address,
+          location_url: info.location_url ?? s.location_url,
+          line_contact: info.line_contact ?? s.line_contact,
+          contact_channel: info.contact_channel || s.contact_channel,
+          target_customer_id: customerId,
+          target_job_id: null,
+        }));
+        if (info.lat != null && info.lng != null) setResolved({ lat: info.lat, lng: info.lng });
+      } else {
+        setF((s) => ({ ...s, target_customer_id: customerId }));
+      }
+    } catch {
+      // best-effort: ยังให้สร้างงานใหม่ใต้ลูกค้าได้
+      setF((s) => ({ ...s, target_customer_id: customerId }));
+    } finally {
+      setSiteInfoBusy(false);
+    }
+  }
 
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
@@ -303,6 +648,17 @@ export function QueueModal({
     // timeout 10 วินาที
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
+      let fromDate: string | null = null;
+      const refMonth = f.queue_date ? f.queue_date.slice(0, 7) : (contextMonth ?? null);
+      if (refMonth) {
+        const firstDay = `${refMonth}-01`;
+        const todayStr = (() => {
+          const n = new Date();
+          return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+        })();
+        fromDate = firstDay >= todayStr ? firstDay : todayStr;
+      }
+
       const r = await api.post<{
         queue_date: string; queue_time: string;
         sales_id: string; sales_name: string; reason: string;
@@ -313,6 +669,7 @@ export function QueueModal({
         location_url: f.location_url || null,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
+        from_date: fromDate,
       });
       clearTimeout(timeoutId);
       if (controller.signal.aborted) return;
@@ -435,23 +792,57 @@ export function QueueModal({
 
   async function save() {
     if (savingRef.current) return; // กันกดบันทึกรัว/ดับเบิลแท็ป
-    if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
+
+    // ---- validation ----
+    if (jobCat === "เคลียร์แบบ") {
+      if (!f.target_job_id) { setErr("กรุณาเลือกงานเดิม"); return; }
+    } else if (jobCat === "ประเมินหน้างาน" && f.custMode === "old") {
+      // ลูกค้าเก่า: ถ้า edit + ยังไม่ได้ค้นใหม่ แต่มี target อยู่แล้ว → ผ่าน validation selectedCust
+      const hasRestoredTarget = editing && !selectedCust && (f.target_customer_id != null || f.target_job_id != null);
+      if (!selectedCust && !hasRestoredTarget) { setErr("กรุณาค้นและเลือกลูกค้าเดิมก่อน"); return; }
+      if (f.oldCustomerMode === "") { setErr("กรุณาเลือก: หน้างานเดิม หรือ หน้างานใหม่"); return; }
+      // existing_site: ต้องมี target_customer_id (set ตอนเลือกงาน หรือ auto-pick หรือ 0-jobs)
+      // ถ้า edit + hasRestoredTarget → ผ่านได้ (ข้อมูลเดิมมีครบแล้ว)
+      // ถ้า noJobsForCust → target_customer_id set แล้ว (สร้างงานใหม่ใต้ลูกค้า)
+      const hasRestoredSite = editing && !selectedJob && f.target_customer_id != null;
+      if (f.oldCustomerMode === "existing_site" && !hasRestoredSite && !noJobsForCust && (!selectedJob || f.target_customer_id == null)) {
+        setErr("กรุณาเลือกงาน/ไซต์เดิมก่อน");
+        return;
+      }
+      if (f.oldCustomerMode === "new_site" && !f.target_customer_id) {
+        setErr("เกิดข้อผิดพลาด: target_customer_id หายไป — กรุณาเลือกลูกค้าใหม่");
+        return;
+      }
+      if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
+    } else {
+      if (!f.customer_name.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); return; }
+    }
 
     // ---- ข้อ 1: ตรวจ/ยืนยันก่อนเปลี่ยนสถานะเป็น DONE ----
-    // เฉพาะ "ประเมินหน้างาน" เท่านั้นที่เข้า flow ลูกค้า (สร้างลูกค้า+งาน) · โชว์รูม/อื่นๆ = ปิดคิวเฉยๆ
     if (f.status === "DONE") {
-      if (isAssessJobType(f.job_type)) {
+      if (jobCat === "เคลียร์แบบ") {
+        const ok = window.confirm(
+          `ยืนยันปิดคิวเคลียร์แบบ?\nระบบจะผูกงาน${selectedJob ? ` "${selectedJob.job_code ?? selectedJob.customer_name}"` : "เดิม"}${f.clear_revise ? " และตั้ง design_state = REVISING" : ""}`
+        );
+        if (!ok) return;
+      } else if (isAssessJobType(f.job_type)) {
         if (!f.queue_date) { setErr("กรุณาระบุวันที่นัดก่อนยืนยันประเมินเสร็จ"); return; }
         if (!f.sales_id) { setErr("กรุณาเลือกเซลล์ก่อนยืนยันประเมินเสร็จ"); return; }
 
-        const confirmed = window.confirm(
-          "ยืนยันว่าประเมินเสร็จ? ระบบจะสร้างลูกค้า + งานจริงทันที และย้อนกลับยาก"
-        );
+        let confirmMsg: string;
+        if (f.custMode === "old" && f.oldCustomerMode === "existing_site") {
+          confirmMsg = `ยืนยันประเมินเสร็จ? สร้างงานใหม่ที่ไซต์เดิมของ "${selectedCust?.name ?? f.customer_name}"${selectedJob ? ` (อ้างอิงไซต์: ${selectedJob.job_code ?? selectedJob.customer_name})` : ""}`;
+        } else if (f.custMode === "old" && f.oldCustomerMode === "new_site") {
+          confirmMsg = `ยืนยันประเมินเสร็จ? (ลูกค้าเก่า "${selectedCust?.name ?? f.customer_name}" — สร้างงานใหม่ใต้ลูกค้านี้)`;
+        } else {
+          confirmMsg = "ยืนยันว่าประเมินเสร็จ? ระบบจะสร้างลูกค้า + งานจริงทันที และย้อนกลับยาก";
+        }
+        const confirmed = window.confirm(confirmMsg);
         if (!confirmed) return;
 
-        // เตือนถ้าไม่มีเบอร์โทร
+        // เตือนถ้าไม่มีเบอร์โทร (เฉพาะลูกค้าใหม่ เพราะลูกค้าเก่าอาจไม่มีเบอร์ใหม่)
         const telRaw = f.tel.trim();
-        if (!telRaw) {
+        if (!telRaw && f.custMode === "new") {
           const telOk = window.confirm(
             "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
           );
@@ -466,13 +857,11 @@ export function QueueModal({
     }
 
     // ---- ข้อ 2: ตรวจ conflict ร้าย (leave / full) ก่อน save ----
-    // leave → block ทันที (ห้ามทับ)
     const leaveConflicts = conflicts.filter((c) => c.kind === "leave");
     if (leaveConflicts.length > 0) {
       setErr("เซลล์ลาวันนี้ เปลี่ยนวัน/เซลล์ก่อน");
       return;
     }
-    // full → confirm ก่อน
     const fullConflicts = conflicts.filter((c) => c.kind === "full");
     if (fullConflicts.length > 0) {
       const reason = fullConflicts.map((c) => c.msg).join(" / ");
@@ -488,11 +877,14 @@ export function QueueModal({
     savingRef.current = true;
     setBusy(true); setErr("");
 
-    // ---- ข้อ 1: normalize เบอร์โทร (ตัดช่องว่าง/ขีด/วงเล็บ) ----
-    const telNormalized = f.tel.replace(/[\s\-()]/g, "").trim() || null;
+    // ---- format เบอร์โทรก่อน save (ฟีเจอร์ C) ----
+    const telFormatted = f.tel.trim() ? formatThaiPhone(f.tel) || null : null;
 
     // กัน edge: เลือก "อื่นๆ" แต่ไม่พิมพ์ → job_type="" จะถูกตีเป็นประเมิน เลย default เป็น "อื่นๆ"
-    const jobTypeOut = jobCat === "อื่นๆ" && !f.job_type.trim() ? "อื่นๆ" : (f.job_type || null);
+    const jobTypeOut =
+      jobCat === "เคลียร์แบบ" ? "เคลียร์แบบ" :
+      jobCat === "อื่นๆ" && !f.job_type.trim() ? "อื่นๆ" :
+      (f.job_type || null);
 
     const payload = {
       status: f.status,
@@ -502,29 +894,53 @@ export function QueueModal({
       sales_id: f.sales_id || null,
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
+      contact_channel: f.contact_channel || "LINE",
       customer_name: f.customer_name.trim(),
-      tel: telNormalized,
+      tel: telFormatted,
       address: f.address || null,
       location_url: f.location_url || null,
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       job_size: f.job_size || null,
-      job_count: f.job_count ? Number(f.job_count) : null,
       assess_fee: f.assess_fee && Number.isFinite(Number(f.assess_fee)) ? Number(f.assess_fee) : null,
       payment: f.payment || null,
       receipt_done: f.receipt_done,
+      fee_paid: f.fee_paid,
       note_admin: f.note_admin || null,
+      target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
+      clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
+      target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่ + หน้างานเดิม
     };
     try {
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
-        if (payload.status === "DONE" && isAssessJobType(payload.job_type)) {
-          if (r.meta?.job_id) {
-            alert(
-              "✓ เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
-            );
-          } else {
-            alert("เข้าประเมินเสร็จแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
+        if (payload.status === "DONE") {
+          if (jobCat === "เคลียร์แบบ") {
+            if (r.meta?.job_id) {
+              alert(
+                `ปิดคิวเคลียร์แบบแล้ว${f.clear_revise ? " — ตั้งสถานะแบบ: กำลังแก้ไข" : ""}\nงาน: ${selectedJob?.job_code ?? "(ไม่ทราบ code)"}`
+              );
+            } else {
+              alert("ปิดคิวแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
+            }
+          } else if (isAssessJobType(payload.job_type)) {
+            if (r.meta?.job_id) {
+              if (f.custMode === "old" && f.oldCustomerMode === "existing_site") {
+                alert(
+                  `ประเมินเสร็จ — ผูกงานเดิม${selectedJob ? ` "${selectedJob.job_code ?? selectedJob.customer_name}"` : ""} + อัปเดต assess_date แล้ว`
+                );
+              } else if (f.custMode === "old" && f.oldCustomerMode === "new_site") {
+                alert(
+                  `ประเมินเสร็จ — สร้างงานใหม่ใต้ลูกค้า "${selectedCust?.name ?? f.customer_name}" (ลูกค้าเดิม ไม่เพิ่มซ้ำ)\nดูต่อได้ที่หน้า "ติดตามงาน"`
+                );
+              } else {
+                alert(
+                  "เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
+                );
+              }
+            } else {
+              alert("เข้าประเมินเสร็จแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
+            }
           }
         }
       } else {
@@ -551,6 +967,9 @@ export function QueueModal({
     }
   }
 
+  // ตรวจว่า payment ที่บันทึกอยู่ไม่ตรงกับ 4 ตัวเลือก → เพิ่มเป็น option แรก (กันข้อมูลหาย)
+  const paymentNotInList = f.payment && !(PAYMENT_OPTIONS as readonly string[]).includes(f.payment);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 scrim" onClick={onClose} />
@@ -565,12 +984,458 @@ export function QueueModal({
           </button>
         </div>
 
-        {/* ---- ข้อ 4: grid-cols-1 sm:grid-cols-2 แทน grid-cols-2 hardcode ---- */}
         <fieldset disabled={readOnly} className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
-          <Field label="ชื่อลูกค้า *" wide>
-            <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)}
-              placeholder="คุณ…" className={inp} />
+
+          {/* ---- ประเภทงาน (ย้ายขึ้นก่อน เพื่อ jobCat เคลียร์แบบ เปลี่ยน UI ลูกค้า) ---- */}
+          <Field label="ประเภทงาน">
+            <div className="space-y-1.5">
+              <select
+                value={jobCat}
+                onChange={(e) => {
+                  const cat = e.target.value as JobCat;
+                  setJobCat(cat);
+                  // reset customer / job pickers เมื่อเปลี่ยน category
+                  setSelectedJob(null);
+                  setJobSearch("");
+                  setJobSearchResults([]);
+                  setSelectedCust(null);
+                  setCustSearch("");
+                  setCustSearchResults([]);
+                  if (cat === "ประเมินหน้างาน") {
+                    setF((s) => ({
+                      ...s, job_type: ASSESS_JOB_TYPE,
+                      custMode: "new", oldCustomerMode: "",
+                      target_job_id: null, target_customer_id: null,
+                    }));
+                  } else if (cat === "โชว์รูม") {
+                    setF((s) => ({
+                      ...s, job_type: "โชว์รูม",
+                      custMode: "new", oldCustomerMode: "",
+                      target_job_id: null, target_customer_id: null,
+                    }));
+                  } else if (cat === "เคลียร์แบบ") {
+                    setF((s) => ({
+                      ...s, job_type: "เคลียร์แบบ",
+                      custMode: "new", oldCustomerMode: "",
+                      target_job_id: null, target_customer_id: null,
+                      customer_name: "", tel: "",
+                    }));
+                  } else {
+                    setF((s) => ({
+                      ...s, job_type: "",
+                      custMode: "new", oldCustomerMode: "",
+                      target_job_id: null, target_customer_id: null,
+                    }));
+                  }
+                }}
+                className={inp}>
+                <option value="ประเมินหน้างาน">ประเมินหน้างาน</option>
+                <option value="โชว์รูม">โชว์รูม</option>
+                <option value="เคลียร์แบบ">เคลียร์แบบ</option>
+                <option value="อื่นๆ">อื่นๆ (พิมพ์เอง)</option>
+              </select>
+              {jobCat === "อื่นๆ" && (
+                <input
+                  value={f.job_type}
+                  onChange={(e) => set("job_type", e.target.value)}
+                  placeholder="ระบุประเภทงาน เช่น วัดพื้นที่"
+                  className={inp}
+                />
+              )}
+              {jobCat !== "ประเมินหน้างาน" && jobCat !== "เคลียร์แบบ" && (
+                <p className="text-[11px] text-ink-3">ℹ️ ประเภทนี้ไม่เข้าระบบลูกค้า (ไม่สร้างใบเสนอ/แบบตอนปิดงาน)</p>
+              )}
+            </div>
           </Field>
+
+          {/* ---- ชื่อลูกค้า หรือ ค้นงานเดิม (เคลียร์แบบ) ---- */}
+          {jobCat === "เคลียร์แบบ" ? (
+            <Field label="ค้นงานเดิม *" wide>
+              {/* (BUG-1) แจ้งเมื่อ edit แล้วมี target_job_id อยู่แล้ว แต่ยังไม่ได้ค้นใหม่ */}
+              {editing && f.target_job_id && !selectedJob && (
+                <div className="mb-2 glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2 border border-sky-200">
+                  <Icon name="info" size={14} className="shrink-0 mt-0.5 text-sky-600" />
+                  <p className="text-xs text-sky-700">
+                    ผูกงานเดิมไว้แล้ว — กดเปลี่ยนโหมดถ้าต้องการแก้ (ไม่แตะ = คงค่าเดิม)
+                  </p>
+                </div>
+              )}
+              {selectedJob ? (
+                /* การ์ดงานที่เลือกแล้ว */
+                <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-brand-dark text-sm">
+                      {selectedJob.job_code ?? "—"} · {selectedJob.customer_name}
+                    </div>
+                    <div className="text-xs text-ink-3 mt-0.5">
+                      แบบ: {DESIGN_STATE_LABEL[selectedJob.design_state] ?? selectedJob.design_state}
+                      {selectedJob.customer_tel && ` · ${selectedJob.customer_tel}`}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearTargetJob}
+                    className="press shrink-0 text-xs text-ink-3 hover:text-red-600 px-1.5 py-1 rounded-lg"
+                  >
+                    [เปลี่ยน]
+                  </button>
+                </div>
+              ) : (
+                /* ช่องค้นหา */
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none">
+                      <Icon name="search" size={14} />
+                    </span>
+                    <input
+                      value={jobSearch}
+                      onChange={(e) => setJobSearch(e.target.value)}
+                      placeholder="พิมพ์ชื่อลูกค้า หรือเบอร์โทร…"
+                      className={`${inp} pl-8`}
+                    />
+                    {jobSearchBusy && (
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3">
+                        <Icon name="refresh" size={13} className="animate-spin" />
+                      </span>
+                    )}
+                  </div>
+                  {jobSearchResults.length > 0 && (
+                    <div className="glass-soft rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                      {jobSearchResults.map((j) => (
+                        <button
+                          key={j.id}
+                          type="button"
+                          onClick={() => selectTargetJob(j)}
+                          className="w-full text-left px-3 py-2.5 hover:bg-white/60 border-b border-gray-100 last:border-0 transition-colors"
+                        >
+                          <div className="font-semibold text-sm text-brand-dark">
+                            {j.job_code ?? "—"} · {j.customer_name}
+                          </div>
+                          <div className="text-xs text-ink-3 mt-0.5">
+                            แบบ: {DESIGN_STATE_LABEL[j.design_state] ?? j.design_state}
+                            {j.customer_tel && ` · ${j.customer_tel}`}
+                            {j.customer_area && ` · ${j.customer_area}`}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {jobSearch.trim() && !jobSearchBusy && jobSearchResults.length === 0 && (
+                    <p className="text-xs text-ink-3">ไม่พบงาน — ลองค้นด้วยชื่อหรือเบอร์อื่น</p>
+                  )}
+                </div>
+              )}
+              {/* toggle มีแก้ใบเสนอ + แบบ */}
+              <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={f.clear_revise}
+                  onChange={(e) => set("clear_revise", e.target.checked)}
+                  className="w-4 h-4 accent-brand"
+                />
+                <span className="text-xs text-ink-2">มีแก้ใบเสนอ + แบบ (ตั้ง REVISING อัตโนมัติตอนปิดคิว)</span>
+              </label>
+            </Field>
+          ) : jobCat === "ประเมินหน้างาน" ? (
+            /* ---- ประเมินหน้างาน: ลูกค้าใหม่ / ลูกค้าเก่า ---- */
+            <Field label="ลูกค้า *" wide>
+              {/* toggle ลูกค้าใหม่ / ลูกค้าเก่า */}
+              <div className="flex gap-2 mb-2">
+                {(["new", "old"] as CustMode[]).map((mode) => {
+                  const isActive = f.custMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => {
+                        if (f.custMode === mode) return;
+                        setF((s) => ({
+                          ...s,
+                          custMode: mode,
+                          oldCustomerMode: "",
+                          customer_name: "",
+                          tel: "",
+                          target_job_id: null,
+                          target_customer_id: null,
+                        }));
+                        setSelectedCust(null);
+                        setSelectedJob(null);
+                        setCustSearch("");
+                        setCustSearchResults([]);
+                        setJobSearch("");
+                        setJobSearchResults([]);
+                      }}
+                      className={`press flex-1 rounded-lg px-3 py-2 text-sm font-semibold border transition-colors min-h-[44px]
+                        ${isActive
+                          ? "bg-brand text-white border-brand"
+                          : "glass-soft text-ink-2 hover:bg-white/60"
+                        }`}
+                    >
+                      {mode === "new" ? "ลูกค้าใหม่" : "ลูกค้าเก่า"}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {f.custMode === "new" ? (
+                /* ลูกค้าใหม่ — พิมพ์ชื่อเอง */
+                <input
+                  value={f.customer_name}
+                  onChange={(e) => set("customer_name", e.target.value)}
+                  placeholder="คุณ…"
+                  className={inp}
+                />
+              ) : (
+                /* ลูกค้าเก่า — ค้น → เลือก → เลือก mode หน้างาน */
+                <div className="space-y-2.5">
+                  {/* (BUG-1) แจ้งเมื่อ edit แล้วมี target อยู่แล้ว แต่ยังไม่ได้ค้นใหม่ */}
+                  {editing && !selectedCust && (f.target_customer_id != null || f.target_job_id != null) && (
+                    <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2 border border-sky-200">
+                      <Icon name="info" size={14} className="shrink-0 mt-0.5 text-sky-600" />
+                      <p className="text-xs text-sky-700">
+                        {f.target_customer_id != null
+                          ? "ผูกลูกค้าเดิม (หน้างานใหม่) ไว้แล้ว — กดเปลี่ยนโหมดถ้าต้องการแก้ (ไม่แตะ = คงค่าเดิม)"
+                          : "ผูกงานเดิม (หน้างานเดิม) ไว้แล้ว — กดเปลี่ยนโหมดถ้าต้องการแก้ (ไม่แตะ = คงค่าเดิม)"}
+                      </p>
+                    </div>
+                  )}
+                  {/* ค้นลูกค้า */}
+                  {!selectedCust ? (
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none">
+                          <Icon name="search" size={14} />
+                        </span>
+                        <input
+                          value={custSearch}
+                          onChange={(e) => setCustSearch(e.target.value)}
+                          placeholder="พิมพ์ชื่อลูกค้า หรือเบอร์โทร…"
+                          className={`${inp} pl-8`}
+                        />
+                        {custSearchBusy && (
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3">
+                            <Icon name="refresh" size={13} className="animate-spin" />
+                          </span>
+                        )}
+                      </div>
+                      {custSearchResults.length > 0 && (
+                        <div className="glass-soft rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                          {custSearchResults.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => selectCustomer(c)}
+                              className="w-full text-left px-3 py-2.5 hover:bg-white/60 border-b border-gray-100 last:border-0 transition-colors"
+                            >
+                              <div className="font-semibold text-sm text-brand-dark">{c.name}</div>
+                              <div className="text-xs text-ink-3 mt-0.5">
+                                {c.phone && `โทร: ${c.phone}`}
+                                {c.address && ` · ${c.address}`}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {custSearch.trim() && !custSearchBusy && custSearchResults.length === 0 && (
+                        <p className="text-xs text-ink-3">ไม่พบลูกค้า — ลองค้นด้วยชื่อหรือเบอร์อื่น</p>
+                      )}
+                    </div>
+                  ) : (
+                    /* การ์ดลูกค้าที่เลือกแล้ว */
+                    <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-brand-dark text-sm">{selectedCust.name}</div>
+                        <div className="text-xs text-ink-3 mt-0.5">
+                          {selectedCust.phone && `โทร: ${selectedCust.phone}`}
+                          {selectedCust.address && ` · ${selectedCust.address}`}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearCustomer}
+                        className="press shrink-0 text-xs text-ink-3 hover:text-red-600 px-1.5 py-1 rounded-lg"
+                      >
+                        [เปลี่ยน]
+                      </button>
+                    </div>
+                  )}
+
+                  {/* เลือก mode หน้างาน (แสดงเมื่อเลือกลูกค้าแล้ว) */}
+                  {selectedCust && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-ink-2">เลือกหน้างาน:</p>
+                      <div className="flex gap-2">
+                        {(["existing_site", "new_site"] as OldCustomerMode[]).map((mode) => {
+                          if (!mode) return null;
+                          const isActive = f.oldCustomerMode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => selectOldCustomerMode(mode)}
+                              className={`press flex-1 rounded-lg px-2 py-2 text-sm font-semibold border transition-colors min-h-[44px]
+                                ${isActive
+                                  ? "bg-sky-600 text-white border-sky-600"
+                                  : "glass-soft text-ink-2 hover:bg-white/60"
+                                }`}
+                            >
+                              {mode === "existing_site" ? "หน้างานเดิม" : "หน้างานใหม่"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {f.oldCustomerMode === "existing_site" && (
+                        <p className="text-[11px] text-sky-700 bg-sky-50 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                          <Icon name="info" size={12} />
+                          สร้างงานใหม่ที่ไซต์เดิม (ดึงที่อยู่/โลเคชั่น/คอนแทคเดิมมาให้)
+                        </p>
+                      )}
+                      {f.oldCustomerMode === "new_site" && (
+                        <p className="text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                          <Icon name="info" size={12} />
+                          สร้างงานใหม่ใต้ลูกค้าเดิม — ลูกค้าไม่เพิ่มซ้ำ
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ไซต์อ้างอิง (เมื่อเลือก หน้างานเดิม) — auto-pick งานล่าสุด, เปลี่ยนได้ */}
+                  {selectedCust && f.oldCustomerMode === "existing_site" && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium text-ink-2">ไซต์อ้างอิง</p>
+
+                      {/* กำลังโหลด auto */}
+                      {siteInfoBusy && !selectedJob && (
+                        <div className="glass-soft rounded-xl px-3 py-2.5 flex items-center gap-2 text-sky-600">
+                          <Icon name="refresh" size={14} className="animate-spin shrink-0" />
+                          <span className="text-xs">กำลังโหลดไซต์ล่าสุด…</span>
+                        </div>
+                      )}
+
+                      {/* auto-picked แล้ว — โชว์การ์ด */}
+                      {selectedJob && !changingSite && (
+                        <div className="glass-soft rounded-xl px-3 py-2.5 flex items-start gap-2.5">
+                          {siteInfoBusy && (
+                            <span className="shrink-0 text-sky-500 mt-0.5">
+                              <Icon name="refresh" size={14} className="animate-spin" />
+                            </span>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-brand-dark text-sm">
+                              ไซต์อ้างอิง: {selectedJob.job_code ?? "—"} · {selectedJob.customer_area ?? selectedJob.customer_name}
+                            </div>
+                            <div className="text-xs text-ink-3 mt-0.5">
+                              {selectedJob.customer_name}
+                              {selectedJob.customer_tel && ` · ${selectedJob.customer_tel}`}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={clearTargetJob}
+                            className="press shrink-0 text-xs text-ink-3 hover:text-sky-600 px-1.5 py-1 rounded-lg"
+                          >
+                            [เปลี่ยนไซต์]
+                          </button>
+                        </div>
+                      )}
+
+                      {/* ไม่มีงานเลย — โน้ต + ให้กรอกเอง */}
+                      {noJobsForCust && !selectedJob && !siteInfoBusy && (
+                        <div className="glass-soft rounded-xl px-3 py-2 flex items-start gap-2 border border-amber-200">
+                          <Icon name="info" size={13} className="shrink-0 mt-0.5 text-amber-600" />
+                          <p className="text-xs text-amber-700">
+                            ลูกค้านี้ยังไม่มีงานเดิมในระบบ — กรอกที่อยู่/โลเคชั่นเองด้านล่าง
+                          </p>
+                        </div>
+                      )}
+
+                      {/* search box — แสดงเมื่อกำลังเปลี่ยนไซต์ */}
+                      {changingSite && (
+                        <div className="space-y-1.5">
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none">
+                              <Icon name="search" size={14} />
+                            </span>
+                            <input
+                              value={jobSearch}
+                              onChange={(e) => setJobSearch(e.target.value)}
+                              placeholder="พิมพ์ชื่อลูกค้า หรือเบอร์โทร…"
+                              className={`${inp} pl-8`}
+                            />
+                            {jobSearchBusy && (
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3">
+                                <Icon name="refresh" size={13} className="animate-spin" />
+                              </span>
+                            )}
+                          </div>
+                          {jobSearchResults.length > 0 && (
+                            <div className="glass-soft rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                              {jobSearchResults.map((j) => (
+                                <button
+                                  key={j.id}
+                                  type="button"
+                                  onClick={() => selectTargetJob(j)}
+                                  className="w-full text-left px-3 py-2.5 hover:bg-white/60 border-b border-gray-100 last:border-0 transition-colors"
+                                >
+                                  <div className="font-semibold text-sm text-brand-dark">
+                                    {j.job_code ?? "—"} · {j.customer_name}
+                                  </div>
+                                  <div className="text-xs text-ink-3 mt-0.5">
+                                    แบบ: {DESIGN_STATE_LABEL[j.design_state] ?? j.design_state}
+                                    {j.customer_tel && ` · ${j.customer_tel}`}
+                                    {j.customer_area && ` · ${j.customer_area}`}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {jobSearch.trim() && !jobSearchBusy && jobSearchResults.length === 0 && (
+                            <p className="text-xs text-ink-3">ไม่พบงาน — ลองค้นด้วยชื่อหรือเบอร์อื่น</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChangingSite(false);
+                              setJobSearch("");
+                              setJobSearchResults([]);
+                              // กู้งานที่ auto-pick ไว้ก่อนหน้า (ถ้ามี)
+                              if (lastAutoJobRef.current) {
+                                setSelectedJob(lastAutoJobRef.current);
+                              }
+                            }}
+                            className="press text-xs text-ink-3 hover:text-ink-1 px-1.5 py-1 rounded-lg"
+                          >
+                            [ยกเลิก]
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ชื่อลูกค้า (auto-fill จากลูกค้าเดิม แต่แก้ได้) */}
+                  {selectedCust && (
+                    <div>
+                      <p className="text-xs font-medium text-ink-2 mb-1">
+                        {f.oldCustomerMode === "new_site" ? "ชื่อลูกค้า (แก้ได้ถ้าต่าง)" : "ชื่อลูกค้า"}
+                      </p>
+                      <input
+                        value={f.customer_name}
+                        onChange={(e) => set("customer_name", e.target.value)}
+                        placeholder="คุณ…"
+                        className={inp}
+                        readOnly={f.oldCustomerMode === "existing_site" && !!selectedJob}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </Field>
+          ) : (
+            <Field label="ชื่อลูกค้า *" wide>
+              <input value={f.customer_name} onChange={(e) => set("customer_name", e.target.value)}
+                placeholder="คุณ…" className={inp} />
+            </Field>
+          )}
 
           {/* Main sales rep (role=MAIN only) — เพิ่มเซลล์ใหม่เองได้ */}
           <Field label="เซลล์">
@@ -620,7 +1485,7 @@ export function QueueModal({
             )}
           </Field>
 
-          {/* Assistant (role=ASSISTANT) — ใช้ localAssistants แทน prop โดยตรง */}
+          {/* Assistant (role=ASSISTANT) */}
           <Field label="ผู้ช่วยเซลล์">
             {addingAssistant ? (
               <div className="space-y-1.5">
@@ -662,36 +1527,6 @@ export function QueueModal({
             )}
           </Field>
 
-          <Field label="ประเภทงาน">
-            <div className="space-y-1.5">
-              <select
-                value={jobCat}
-                onChange={(e) => {
-                  const cat = e.target.value as "ประเมินหน้างาน" | "โชว์รูม" | "อื่นๆ";
-                  setJobCat(cat);
-                  if (cat === "ประเมินหน้างาน") set("job_type", ASSESS_JOB_TYPE);
-                  else if (cat === "โชว์รูม") set("job_type", "โชว์รูม");
-                  else set("job_type", ""); // อื่นๆ → ให้พิมพ์เอง
-                }}
-                className={inp}>
-                <option value="ประเมินหน้างาน">ประเมินหน้างาน</option>
-                <option value="โชว์รูม">โชว์รูม</option>
-                <option value="อื่นๆ">อื่นๆ (พิมพ์เอง)</option>
-              </select>
-              {jobCat === "อื่นๆ" && (
-                <input
-                  value={f.job_type}
-                  onChange={(e) => set("job_type", e.target.value)}
-                  placeholder="ระบุประเภทงาน เช่น เคลียร์แบบ, วัดพื้นที่"
-                  className={inp}
-                />
-              )}
-              {jobCat !== "ประเมินหน้างาน" && (
-                <p className="text-[11px] text-ink-3">ℹ️ ประเภทนี้ไม่เข้าระบบลูกค้า (ไม่สร้างใบเสนอ/แบบตอนปิดงาน)</p>
-              )}
-            </div>
-          </Field>
-
           {!readOnly && (
             <Field label="จัดวันอัตโนมัติ (เสนอวันว่างเร็วสุดตามกฎ)" wide>
               <button type="button" onClick={suggestAuto} disabled={suggesting}
@@ -705,7 +1540,7 @@ export function QueueModal({
           )}
 
           <Field label="วันที่นัด">
-            <input type="date" value={f.queue_date} onChange={(e) => set("queue_date", e.target.value)} className={inp} />
+            <DateField value={f.queue_date} onChange={(iso) => set("queue_date", iso)} className={inp} />
           </Field>
           <Field label="เวลา (slot)">
             <div className="space-y-1.5">
@@ -731,7 +1566,7 @@ export function QueueModal({
               {/* กรอกเวลาเอง — ไม่ล็อกแค่ 10:00/14:00 */}
               <label className="flex items-center gap-2 text-xs text-ink-3">
                 หรือกรอกเวลาเอง
-                <input type="time" value={f.queue_time} onChange={(e) => set("queue_time", e.target.value)}
+                <input type="time" step={60} value={f.queue_time} onChange={(e) => set("queue_time", e.target.value.slice(0, 5))}
                   className="glass-soft rounded-lg px-2.5 py-1.5 text-sm outline-none tabular-nums" />
               </label>
             </div>
@@ -761,38 +1596,67 @@ export function QueueModal({
             </div>
           )}
 
-          <Field label="LINE ติดต่อลูกค้า">
-            <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)} className={inp} />
+          <Field label="ช่องทางติดต่อลูกค้า">
+            <div className="flex gap-1.5">
+              <select value={f.contact_channel} onChange={(e) => set("contact_channel", e.target.value)}
+                className="glass-soft rounded-lg px-2 py-2 text-sm outline-none shrink-0">
+                <option value="LINE">Line</option>
+                <option value="FB">FB</option>
+              </select>
+              <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)}
+                placeholder={f.contact_channel === "FB" ? "ชื่อ/ลิงก์ FB" : "ชื่อ/ID Line"} className={`${inp} flex-1`} />
+            </div>
           </Field>
+
+          {/* เบอร์โทร — onBlur format ใส่ขีด (ฟีเจอร์ C) */}
           <Field label="เบอร์โทร">
-            <input value={f.tel} onChange={(e) => set("tel", e.target.value)} className={inp} />
+            <input
+              value={f.tel}
+              onChange={(e) => set("tel", e.target.value)}
+              onBlur={(e) => {
+                set("tel", formatThaiPhone(e.target.value));
+              }}
+              placeholder="085-691-9545"
+              className={inp}
+              inputMode="tel"
+              // readonly ถ้าเคลียร์แบบ + เลือกงานแล้ว หรือ ลูกค้าเก่าหน้างานเดิม + เลือกงานแล้ว
+              readOnly={
+                (jobCat === "เคลียร์แบบ" && !!selectedJob) ||
+                (jobCat === "ประเมินหน้างาน" && f.custMode === "old" && f.oldCustomerMode === "existing_site" && !!selectedJob)
+              }
+            />
           </Field>
 
-          <Field label="ที่อยู่" wide>
-            <textarea value={f.address} onChange={(e) => set("address", e.target.value)} rows={2}
-              className={`${inp} resize-none`} />
-          </Field>
+          {/* ที่อยู่ / โลเคชั่น: ซ่อนใน mode เคลียร์แบบ (ไม่จำเป็น) */}
+          {jobCat !== "เคลียร์แบบ" && (
+            <>
+              <Field label="ที่อยู่" wide>
+                <textarea value={f.address} onChange={(e) => set("address", e.target.value)} rows={2}
+                  className={`${inp} resize-none`} />
+              </Field>
 
-          <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
-            <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); }}
-              onBlur={resolveLink}
-              placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
-            <span className="text-[11px] mt-1 block">
-              {resolving ? (
-                <span className="text-ink-3">⏳ กำลังอ่านพิกัดจากลิงก์…</span>
-              ) : coords ? (
-                <span className="text-emerald-700">
-                  ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{resolved ? " (จากลิงก์)" : ""}
+              <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
+                <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); }}
+                  onBlur={resolveLink}
+                  placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
+                <span className="text-[11px] mt-1 block">
+                  {resolving ? (
+                    <span className="text-ink-3">กำลังอ่านพิกัดจากลิงก์…</span>
+                  ) : coords ? (
+                    <span className="text-emerald-700">
+                      ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{resolved ? " (จากลิงก์)" : ""}
+                    </span>
+                  ) : f.location_url ? (
+                    <span className="text-amber-700">
+                      อ่านพิกัดจากลิงก์ไม่ได้ — ลองวางลิงก์ Google Maps แบบเต็ม หรือพิมพ์ "lat, lng" ตรง ๆ
+                    </span>
+                  ) : (
+                    <span className="text-ink-3">ใส่พิกัดเพื่อใช้ตรวจกฎ R-45min อัตโนมัติ</span>
+                  )}
                 </span>
-              ) : f.location_url ? (
-                <span className="text-amber-700">
-                  อ่านพิกัดจากลิงก์ไม่ได้ — ลองวางลิงก์ Google Maps แบบเต็ม หรือพิมพ์ "lat, lng" ตรง ๆ
-                </span>
-              ) : (
-                <span className="text-ink-3">ใส่พิกัดเพื่อใช้ตรวจกฎ R-45min อัตโนมัติ</span>
-              )}
-            </span>
-          </Field>
+              </Field>
+            </>
+          )}
 
           <Field label="ขนาดงาน">
             <select value={f.job_size} onChange={(e) => set("job_size", e.target.value as "" | JobSize)} className={inp}>
@@ -801,10 +1665,6 @@ export function QueueModal({
                 <option key={k} value={k}>{JOB_SIZE_META[k]}</option>
               ))}
             </select>
-          </Field>
-          <Field label="จำนวนงาน/จุด">
-            <input type="number" min={0} value={f.job_count}
-              onChange={(e) => set("job_count", e.target.value)} className={inp} />
           </Field>
 
           <Field label="ค่าประเมิน">
@@ -826,14 +1686,46 @@ export function QueueModal({
               </select>
             )}
           </Field>
+
+          {/* ---- การชำระ — dropdown (ฟีเจอร์ A) ---- */}
           <Field label="การชำระ">
-            <input value={f.payment} onChange={(e) => set("payment", e.target.value)} className={inp} />
+            <div className="space-y-1.5">
+              <select
+                value={f.payment}
+                onChange={(e) => set("payment", e.target.value)}
+                className={inp}
+              >
+                {/* ถ้าค่าเดิมไม่ตรง 4 ตัวเลือก → แสดงเป็น option แรก กันข้อมูลหาย */}
+                {paymentNotInList && (
+                  <option value={f.payment}>{f.payment}</option>
+                )}
+                <option value="">— ยังไม่ระบุ —</option>
+                {PAYMENT_OPTIONS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              {/* hint มัดจำหน้างาน */}
+              {f.payment === "มัดจำหน้างาน" && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 flex items-start gap-1.5">
+                  <Icon name="warn" size={12} className="shrink-0 mt-0.5" />
+                  ปิดคิวแล้วจะมัดจำอัตโนมัติ เข้าผลิตทันที (ไม่รอแบบ) + ติดป้ายด่วน
+                </p>
+              )}
+            </div>
           </Field>
 
           <Field label="สถานะ">
             <select value={f.status} onChange={(e) => set("status", e.target.value as QueueStatus)} className={inp}>
               {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].th}</option>)}
             </select>
+          </Field>
+          <Field label="ชำระค่าประเมิน">
+            <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+              <input type="checkbox" checked={f.fee_paid}
+                onChange={(e) => set("fee_paid", e.target.checked)}
+                className="w-4 h-4 accent-emerald-600" />
+              <span className="text-ink-2">ชำระค่าประเมินแล้ว</span>
+            </label>
           </Field>
           <Field label="ใบเสร็จ">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">

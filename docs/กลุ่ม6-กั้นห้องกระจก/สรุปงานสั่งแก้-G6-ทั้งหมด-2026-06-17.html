@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>สรุปงานสั่งแก้ G6 ทั้งหมด</title>
+<style>
+  @page{size:A4;margin:10mm 9mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.42;margin:0;}
+  h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 9px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 5px;padding:4px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:4px 0 9px;font-size:9.8px;}
+  th,td{border:1px solid #d8c9c9;padding:4px 7px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  td.c{text-align:center;white-space:nowrap;}
+  .ok{color:#15803D;font-weight:700;}
+  .wait{color:#B45309;font-weight:700;}
+  .bad{color:#B3151D;font-weight:700;}
+  code{background:#eef2f7;padding:0 3px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:7px 10px;margin:6px 0;background:#fffafa;font-size:10px;}
+  .b-ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .b-wait{background:#fff4e5;border:1px solid #f0c070;}
+  .b-bad{background:#fef2f2;border:1px solid #fca5a5;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;}
+  .stat{background:#fff;border-radius:8px;padding:8px;border:1px solid #eee;}
+  .stat .n{font-size:24px;font-weight:800;}
+  .stat .l{font-size:10px;color:#666;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .inv{background:#fff;border:1px solid #ccc;border-radius:6px;padding:9px 11px;font-size:9.5px;line-height:1.6;}
+  .inv .hd{font-weight:700;color:#1F2937;}
+  .inv .bk{color:#B3151D;font-weight:700;font-size:9px;margin-top:4px;}
+  .inv .sp{color:#374151;margin-left:6px;}
+  .x{color:#c00;}
+  ul{margin:3px 0;padding-left:16px;}li{margin:2px 0;}
+  .lg{font-size:9px;color:#666;}
+</style>
+</head>
+<body>
+
+<h1>สรุปงานสั่งแก้ G6 (กั้นห้องกระจก) — ทั้งหมด</h1>
+<div class="meta">17 มิ.ย. 2026 · แชท G6 (READ-ONLY เตรียม code/ตรวจ · dev แชท B แก้) · เช็คจากโค้ดจริง + เทส</div>
+
+<div class="grid3">
+<div class="stat"><div class="n ok">5</div><div class="l">สั่งแก้ + dev ทำเสร็จ ✅</div></div>
+<div class="stat"><div class="n bad">1</div><div class="l">code พร้อม รอ B 🔴</div></div>
+<div class="stat"><div class="n wait">3</div><div class="l">ค้างเล็ก/เช็คซ้ำ 🟡</div></div>
+</div>
+
+<h2>① สั่งแก้แล้ว + dev ทำเสร็จ (✅ เทสผ่าน อยู่บนเว็บ)</h2>
+<table>
+<tr><th>งาน</th><th>แก้อะไร</th><th class="c">เทส</th></tr>
+<tr><td><b>มุ้ง +2 แบบ</b></td><td>เพิ่มตีนตะขาบเดี่ยว(imp28→จีบ) + แม่เหล็กพับ(imp30→เฟรม) เลือกติดบานได้ · เฟี้ยม X ตัดมุ้ง</td><td class="c ok">g6-phaseB<br>28/28</td></tr>
+<tr><td><b>ผนังเบา + SMS</b></td><td>ผนังเบา wall_ext/int/isowall เข้ากลุ่ม 6 · ตัดเลื่อนรางล่าง SMS → เซมิ+รางเตี้ย "(งานภายใน)"</td><td class="c ok">✓</td></tr>
+<tr><td><b>งานปูพื้น</b></td><td>สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. (min 5) · ≥20 ตร.ม. ลด 10% · ลามิเนต/SPC กรอกเอง · โครงกัลวาไนซ์</td><td class="c ok">g6-floor-fan<br>9/9</td></tr>
+<tr><td><b>พัดลมดูดอากาศ</b></td><td>custom กรอกขนาด/จำนวน/ราคา + ฝาครอบกันแมลง</td><td class="c ok">9/9</td></tr>
+<tr><td><b>ออปชั่นบาน + ใบแตกรายบาน</b></td><td>มือจับ 17 รุ่น · ธรณี/โช๊ค/คาดตาราง/ลูกฟูก/โครงสร้าง · ใบแตกราย ด้าน/บาน/ออปชั่น</td><td class="c ok">room-options 24<br>quote-detail 16</td></tr>
+</table>
+
+<h2>② code พร้อม รอ dev B แก้ (🔴 ด่วน — ใบพังอยู่)</h2>
+<div class="box b-bad"><b>ใบเสนอราคา 5 บล็อก + Protection</b> — <code>docs/กลุ่ม6-กั้นห้องกระจก/CODE-G6-ใบ5บล็อก-ส่งdev-2026-06-16.md</code>
+<ul>
+<li>จัดใบ G6 เป็น <b>5 บล็อก</b> (หัว → รายการงาน → OPTION → หมายเหตุ → รายละเอียด/สเปค) เหมือน G1/G4</li>
+<li><b>Protection</b> → เอาบรรทัดราคาออก รวมยอด → หมายเหตุเฟิร์น 17: "ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)"</li>
+<li>โค้ดจริง 4 จุด: <code>readItem</code> L4396 ส่ง work/spec (เลิกส่งรายการเป็น note) · <code>g6rRoomDetail</code>→work · <code>g6rRoomSpec</code> ใหม่→spec · <code>Protection</code> L4671</li>
+<li><b class="x">⚠ ใบ G6 ตอนนี้พังบนเว็บ</b> — รายการงาน(ด้าน/บาน/หลังคา)ไปกองใต้หัวข้อ "หมายเหตุ" เพราะแชท G1 ทำ 5บล็อก/qrow มาก่อน · G6 ยังส่ง note แบบเก่า ตกขบวน</li>
+</ul></div>
+
+<h2>③ ค้างเล็ก + เช็คซ้ำ (🟡)</h2>
+<table>
+<tr><th>เรื่อง</th><th>รายละเอียด</th></tr>
+<tr><td>🟡 ทิศเฟี้ยม</td><td>บานเฟี้ยมเลือก "เปิดซ้าย/เปิดขวา" ยังไม่ได้ (label-only · ไม่กระทบราคา)</td></tr>
+<tr><td>🟡 label มุ้ง</td><td>เช็คเมนูมุ้งกันแมว/กันหนู ว่าโชว์เป็น "ผ้ามุ้ง" ไม่ใช่ชนิด (น่าจะแก้แล้ว · ควรกดดู)</td></tr>
+<tr><td>⚠ dev-status</td><td><code>scripts/dev-status.mjs</code> ไม่ track G6 → ควรเพิ่ม (กันลืมว่าส่ง dev หรือยัง)</td></tr>
+<tr><td>⚠ Protection ซ้ำ</td><td><b>เช็คซ้ำ:</b> Protection มี 2 ที่ — auto ในใบ G6 (CODE) + ติ๊ก REMARK_PRESETS (แชทกลางทำแล้ว) → อาจขึ้นซ้ำ 2 บรรทัด · dev เคลียร์ว่าใช้ตัวไหน</td></tr>
+</table>
+
+<h2>④ หมายเหตุเฟิร์น 17 มิ.ย. — แชทกลางทำครบแล้ว (G6 ไม่ต้องเพิ่ม)</h2>
+<div class="box b-ok">ทุกหมายเหตุเฟิร์นใหม่อยู่ใน <code>REMARK_PRESETS</code> (L1764) แล้ว — เซลล์ติ๊กเลือกได้ทุก G รวม G6: Protection เฉพาะแนวติดตั้ง · ค่าตั้งนั่งร้านเหล็ก · รื้อหลังคาเดิม · รื้อราวกันตก · กรีดฝ้าซ่อนคาน · ทาสีผนังเบา · เดินไฟดาวน์ไลท์ · ไม่รวมลงเข็ม/เทพื้น</div>
+
+<h2 class="pgbreak">⑤ ภาพ: ใบ G6 ก่อน → หลัง (5 บล็อก)</h2>
+<div class="grid2">
+<div>
+<div style="font-size:10px;color:#c00;margin-bottom:3px;">❌ ตอนนี้ (พัง · รายการใต้หมายเหตุ)</div>
+<div class="inv">
+<div class="hd">ห้องต่อเติม (กั้นห้องกระจก)</div>
+<div class="sp"><span class="x">- อลูมิเนียม สีอบขาว</span> <span style="font-size:8px;color:#c00">(สเปคขึ้นบน)</span></div>
+<div class="bk x">หมายเหตุ</div>
+<div class="sp"><span class="x">- ด้าน A (3 ช่อง·3 บาน) = 98,100</span></div>
+<div class="sp"><span class="x">- บานเปิด/กระจก/บานเลื่อน</span></div>
+<div class="sp"><span class="x">- ผนังเบา/หลังคา/ไฟ</span> <span style="font-size:8px;color:#c00">(รายการงานกองใต้หมายเหตุ!)</span></div>
+<div class="bk">รายละเอียด</div>
+<div class="sp">- กระจกเขียว 6มม.</div>
+</div>
+</div>
+<div>
+<div style="font-size:10px;color:#15803D;margin-bottom:3px;">✅ หลังแก้ (5 บล็อกถูก)</div>
+<div class="inv">
+<div class="hd">① ห้องต่อเติม (กั้นห้องกระจก) · 1 ชุด</div>
+<div class="sp" style="margin-top:3px">- ด้าน A (3 ช่อง · 3 บาน)</div>
+<div class="sp">- บานเปิด ยูโร · ธรณีหลังเต่า, มุ้งจีบ SD, ครอบวงกบ 4 ด้าน</div>
+<div class="sp">- กระจกติดตาย · บานเลื่อน ยูโร · มุ้ง, มือจับ A300</div>
+<div class="sp">- ผนังเบา · หลังคาไวนิล · งานไฟ · งานพื้น · พัดลม</div>
+<div class="bk">หมายเหตุ</div>
+<div class="sp">- ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)</div>
+<div class="bk">รายละเอียด</div>
+<div class="sp">- อลูมิเนียม สีอบขาว · กระจกเขียว หนา 6 มม.</div>
+</div>
+</div>
+</div>
+<div class="lg" style="margin-top:6px">เลขราคา/VAT/total ไม่เปลี่ยน (golden กัน) — แก้แค่ "ลำดับ/ข้อความ" ให้รายการงานขึ้นบน · สเปคลงล่าง · Protection เป็นหมายเหตุ</div>
+
+<div class="box b-wait"><b>ขั้นต่อไป:</b> dev B แก้ตามคิว (code พร้อม) → ผมตรวจ (golden + ออกใบดู 5 บล็อกเรียงถูก + Protection ไม่ซ้ำ) → ทำไฟล์สรุปผลตรวจให้ดู · <b>รอ B แก้ก่อน</b></div>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>HANDOFF G6 — ใบเสนอราคา 5 บล็อก</title>
+<style>
+  @page{size:A4;margin:11mm 10mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.5;margin:0;}
+  h1{color:#B3151D;font-size:18px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 10px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:14px 0 6px;padding:5px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:5px 0 9px;font-size:10px;}
+  th,td{border:1px solid #d8c9c9;padding:4px 8px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;font-weight:700;}
+  code{background:#eef2f7;padding:0 4px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;color:#1e3a5f;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:8px 11px;margin:7px 0;background:#fffafa;font-size:10.5px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  ul{margin:3px 0;padding-left:18px;}li{margin:2px 0;}
+  .k{background:#B3151D;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:5px;}
+  .inv{background:#fff;border:1px solid #ccc;border-radius:6px;padding:9px 12px;font-size:10px;line-height:1.6;}
+  .inv .hd{font-weight:700;color:#1F2937;}
+  .inv .bk{color:#B3151D;font-weight:700;font-size:9.5px;margin-top:5px;}
+  .inv .bul{margin-left:8px;color:#374151;}
+  .inv .spec{color:#374151;margin-left:8px;}
+  .warn-c{color:#B3151D;font-weight:700;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G6 — ใบเสนอราคา "5 บล็อก" (มติพี่นัท 16 มิ.ย.)</h1>
+<div class="meta">ส่ง dev แชท B · แก้ <code>public/calculator/index.html</code> เฉพาะ G6 (กั้นห้องกระจก) · รวมเรื่อง Protection→หมายเหตุ ในนี้ด้วย</div>
+
+<div class="box ok"><b>🎯 เป้าหมาย:</b> ใบ G6 (ห้องต่อเติม) จัดเป็น <b>5 บล็อก เรียงบน→ล่าง</b> ให้เหมือนต้นแบบ G4 ตู้ (ที่ทำแล้ว) · <b>ข้อความบนใบล้วน — ห้ามแตะราคา</b></div>
+
+<h2>5 บล็อก (เรียงในแต่ละรายการของใบ)</h2>
+<table>
+<tr><th>#</th><th>บล็อก</th><th>เนื้อหา</th><th>หัวข้อ</th></tr>
+<tr><td>1</td><td><b>หัวรายการ</b> (เข้ม)</td><td>ชื่อ + รุ่น + ขนาด + จำนวนชุด</td><td>—</td></tr>
+<tr><td>2</td><td><b>รายการ</b> (รูปแบบงาน)</td><td>bullet ชิ้นงานที่ทำ · ตัดสเปควัสดุออก</td><td>ไม่มีหัวข้อ</td></tr>
+<tr><td>3</td><td><b>OPTION</b></td><td>OPTION ลูกค้าต่อชิ้น · โชว์เมื่อมี</td><td>"OPTION" (แดง)</td></tr>
+<tr><td>4</td><td><b>หมายเหตุ</b></td><td>Protection / ไม่รับประกันพื้น ฯลฯ · โชว์เมื่อมี</td><td>"หมายเหตุ"</td></tr>
+<tr><td>5</td><td><b>รายละเอียด</b> (สเปค)</td><td>สี+รหัส · กระจก · วัสดุ</td><td>"รายละเอียด" (แดง)</td></tr>
+</table>
+<div class="box ok"><b>📦 ข่าวดี — qrow รองรับ 5 บล็อกแล้ว (ไม่ต้องแก้ qrow):</b>
+<ul>
+<li><b>marker</b> <code>###รายละเอียด###</code> (qrow L4773): แยก รายการ(บน·ไม่มีหัวข้อ) / รายละเอียด(ล่าง·หัวข้อแดง "รายละเอียด")</li>
+<li><b>note</b> (qrow L4766): บรรทัดขึ้นต้น "OPTION" = แดง · อื่น = เทา (หมายเหตุ) → ใส่ระหว่างรายการ↔รายละเอียด</li>
+</ul></div>
+
+<h2><span class="k">A</span>ต้นแบบ G4 ตู้ (ก๊อปโครง · ทำแล้ว)</h2>
+<div class="box">
+<code>itemDetail</code> L5220-5257 (<code>it.p.cabinet</code>):
+<ul>
+<li><b>_work[]</b> = รายการงาน (บานหน้า/ชั้นวาง/ผนัง) · <b>_spec[]</b> = สเปค (สีโครง+รหัส/กระจก)</li>
+<li>รวม: <code>det=_work.join('\n')+'\n###รายละเอียด###\n'+_spec.join('\n')</code> (L5257)</li>
+<li><b>สีพิเศษเตือน</b> (L5248-5252): ถ้า <code>_cc.hasCode</code> และมีรหัส → "รหัส XXX" · ไม่กรอก → <span class="warn-c">"⚠ ต้องระบุรหัสสี"</span></li>
+</ul></div>
+
+<h2><span class="k">B</span>G6 ต้องทำ — refactor <code>g6rRoomDetail</code> (L6319) + <code>g6rPcOpts</code> (L6295)</h2>
+<div class="box">
+G6 เป็น room (lumpsum) → ตอนนี้ <code>g6rRoomDetail</code> ออก breakdown ผสม (ด้าน+บาน+ราคา) บรรทัดเดียว · <b>ต้องแยกเป็น _work + marker + _spec + note</b>
+<table>
+<tr><th>บล็อก</th><th>G6 ใส่อะไร (จาก state)</th></tr>
+<tr><td><b>2 รายการ(งาน)</b><br>= _work</td><td>ทุกด้าน/บาน/ส่วน (ชื่อชิ้นงาน+ขนาด+<b>ออปชั่นงาน</b>) · <b>ตัดสเปควัสดุ(สี/กระจก)ออก</b><br>• ด้าน A (3 ช่อง·3 บาน) → บานเปิด/กระจกติดตาย/บานเลื่อน + ธรณี/มุ้ง/ครอบวงกบ/ล็อค (จาก <code>g6rPcOpts</code>)<br>• ผนังเบา · หลังคา/ฝ้า · งานไฟ · <b>งานปูพื้น · พัดลม</b><br><span style="color:#888">(bullet ปัจจุบันเกือบถูกแล้ว — มีชื่อ+ขนาด+ออปชั่นงาน ไม่มีสเปควัสดุปน)</span></td></tr>
+<tr><td><b>5 รายละเอียด(สเปค)</b><br>= _spec</td><td>สเปควัสดุที่ตอนนี้โชว์เป็น "รายละเอียดงาน" ท้ายใบ → ย้ายมาบล็อกนี้:<br>• อลูมิเนียม สี___ <b>+ รหัส (ถ้าสีพิเศษ)</b> · ไม่กรอก → <span class="warn-c">⚠ ต้องระบุรหัสสี</span><br>• กระจก___ หนา __ มม. · วัสดุผนัง (ISOWALL/สมาร์ทบอร์ด)</td></tr>
+<tr><td><b>3 OPTION</b><br>= note</td><td>OPTION ต่อชิ้น (เช่น "เปลี่ยนหลังคาชินโคไลท์ +17,000") · ขึ้นต้น "OPTION" → qrow ทำแดงเอง</td></tr>
+<tr><td><b>4 หมายเหตุ</b><br>= note</td><td><b>"ราคาที่เสนอรวมงาน Protection พื้นภายในบริเวณที่ติดตั้ง ไม่รวมเฟอร์นิเจอร์"</b> + "ไม่รับประกันพื้นแอ่น/ยวบ" (ถ้ามีงานพื้น)</td></tr>
+</table>
+<b>ส่ง qrow:</b> <code>det = _work.join('\n')+'\n###รายละเอียด###\n'+_spec.join('\n')</code> (เป็น glass param) · <code>note</code> = OPTION+หมายเหตุ (param แยก)
+</div>
+
+<h2><span class="k">C</span>Protection — เปลี่ยนเป็นหมายเหตุ (ทำในนี้ด้วย)</h2>
+<div class="box warn"><b>เดิม</b> (L3923): บรรทัดราคา "Protection พื้น/ผนัง 2,000" แยกหลังรวมเป็นเงิน (คำอังกฤษ) → <b>ใหม่:</b> เอาบรรทัดราคาออก · ราคา 2,000 รวมเข้ายอด (total เท่าเดิม) · ใส่ข้อความเป็น <b>หมายเหตุ</b> (บล็อก 4) แทน · default ติ๊กทุกงาน (ถูกแล้ว)</div>
+
+<h2>ตัวอย่าง before → after (ใบ G6)</h2>
+<div class="grid2">
+<div>
+<div style="font-size:10px;color:#888;margin-bottom:3px;">เดิม (ผสม · ราคาในข้อความ)</div>
+<div class="inv">
+<div class="hd">ด้าน A</div>
+<div class="bul">- ห้องต่อเติม (กั้นห้องกระจก) (เหมา)</div>
+<div class="bul">ด้าน A (3 ช่อง · 3 บาน) = 98,100</div>
+<div class="bul">• บานเปิด ยูโร (0.9×2.1) · ธรณีหลังเต่า, มุ้ง, ครอบวงกบ</div>
+<div class="bul">• กระจกติดตาย · บานเลื่อน ยูโร...</div>
+<div class="bk">รายละเอียดงาน</div>
+<div class="spec">- อลูมิเนียม สีอบขาว · กระจกเขียว 6มม.</div>
+<div style="margin-top:5px;color:#B3151D;">Protection พื้น/ผนัง 2,000</div>
+</div>
+</div>
+<div>
+<div style="font-size:10px;color:#15803D;margin-bottom:3px;">ใหม่ (5 บล็อก)</div>
+<div class="inv">
+<div class="hd">① ห้องต่อเติม (กั้นห้องกระจก) · 1 ชุด</div>
+<div class="bul" style="margin-top:4px;">- ด้าน A (3 ช่อง · 3 บาน)</div>
+<div class="bul">- บานเปิด ยูโร · ธรณีหลังเต่า, มุ้งจีบ SD, ครอบวงกบ 4 ด้าน</div>
+<div class="bul">- กระจกติดตาย · บานเลื่อน ยูโร · มุ้ง, มือจับ A300</div>
+<div class="bul">- ผนังเบา · หลังคาไวนิล · งานไฟ · งานปูพื้น · พัดลม</div>
+<div class="bk">หมายเหตุ</div>
+<div class="spec">- ราคาที่เสนอรวมงาน Protection พื้นภายในบริเวณที่ติดตั้ง ไม่รวมเฟอร์นิเจอร์</div>
+<div class="spec">- ไม่รับประกันพื้นแอ่น/ยวบ</div>
+<div class="bk">รายละเอียด</div>
+<div class="spec">- อลูมิเนียม สีอบขาว</div>
+<div class="spec">- กระจกเขียว หนา 6 มม.</div>
+</div>
+</div>
+</div>
+
+<h2>กฎเหล็ก + จุดเคาะ</h2>
+<div class="box">
+<b>กฎ:</b> ☐ ข้อความบนใบล้วน — <b>ห้ามแตะราคา</b> · ☐ <code>node scripts/golden-snapshot.mjs</code> 146 ตัวไม่เพี้ยน · ☐ verify เบราว์เซอร์จริง (กด genQuote เห็น 5 บล็อก) · ☐ ทำ G6 เท่านั้น (ไม่แตะ G1-G5/G7) · ☐ contenteditable แก้ในใบยังทำงาน (qrow _ed รองรับ marker แล้ว L4779)
+</div>
+<div class="box warn"><b>จุดเคาะ (dev เจอตอนทำ → ถ้าไม่ชัดถามพี่นัท):</b>
+<ul>
+<li><b>ราคาต่อด้าน (98,100):</b> เก็บไว้ในรายการงาน (default · ไม่แตะราคา) — ถ้าพี่นัทอยากให้ไปคอลัมน์ขวา = คนละงาน (รอสกิลแก้ราคา)</li>
+<li><b>สีต่อบาน:</b> ถ้าทุกบานในห้องสีเดียว → สเปครวม 1 ชุด (ตามใบ sample) · ถ้าบานสีต่างกัน → แตกสเปคต่อบาน</li>
+</ul></div>
+
+<div class="box ok"><b>อ้างอิง:</b> ต้นแบบ G4 <code>itemDetail</code> L5220-5257 · qrow marker L4773 · note L4766 · G6 <code>g6rRoomDetail</code> L6319 + <code>g6rPcOpts</code> L6295 · readItem room L4382</div>
+
+</body>
+</html>

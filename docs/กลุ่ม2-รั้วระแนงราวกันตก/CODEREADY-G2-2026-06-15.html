@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CODE-READY G2 — โค้ดพร้อมวาง ส่งแชท B (15 มิ.ย. 2026)</title>
+<style>
+  @page{size:A4;margin:12mm 11mm;}*{box-sizing:border-box;}
+  body{font-family:"Leelawadee UI","Tahoma",sans-serif;color:#1F2937;font-size:11px;line-height:1.5;margin:0;}
+  h1{font-size:18px;color:#B3151D;margin:0 0 2px;}
+  .sub{color:#6B7280;font-size:10px;margin-bottom:9px;}
+  h2{font-size:13.5px;margin:14px 0 5px;padding:5px 9px;border-radius:5px;color:#fff;background:#166534;}
+  h2.b{background:#1D4ED8;}h2.y{background:#B45309;}
+  pre{background:#0F172A;color:#E2E8F0;border-radius:7px;padding:9px 11px;font-family:Consolas,monospace;font-size:9.5px;line-height:1.45;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:5px 0;}
+  pre .old{color:#FCA5A5;}pre .new{color:#86EFAC;}
+  code{font-family:Consolas,monospace;font-size:9.5px;background:#F3F4F6;padding:0 3px;border-radius:3px;color:#B3151D;}
+  .box{border:1px solid #E5E7EB;border-radius:7px;padding:8px 11px;margin:7px 0;border-left:4px solid #166534;}
+  .warn{background:#FEF2F2;border:1px solid #FCA5A5;border-radius:7px;padding:8px 11px;margin:7px 0;}
+  .step-n{display:inline-block;background:#166534;color:#fff;font-size:10px;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;margin-right:5px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin-bottom:3px;}
+  b.hl{color:#B3151D;}.foot{margin-top:12px;font-size:9px;color:#9CA3AF;border-top:1px solid #E5E7EB;padding-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>CODE-READY G2 — โค้ดพร้อมวาง (ส่งแชท B)</h1>
+<div class="sub">ผู้ตรวจ READ-ONLY (ไม่แตะ index.html) · แชท B = คน copy โค้ดไปวาง · 15 มิ.ย. 2026 · อ้าง index.html ปัจจุบัน</div>
+
+<div class="warn">
+<b class="hl">⚠ index.html กำลังถูกแก้สด</b> — ตอนเขียนนี้พบ exclude list คาดตารางเปลี่ยนไปแล้ว (หาย 'บานเปลือย'/'ติดตาย') · <b>แชท B โปรดเทียบ "ของเดิม (ค้นด้วย anchor)" ก่อนวาง</b> ถ้าไม่ตรง = มีคนแก้เพิ่ม ให้ดู logic แล้วเติม cat ตามเจตนา (ไม่ต้อง replace ทั้งบรรทัด)
+</div>
+
+<h2><span class="step-n">A</span>แก้ทันที — วางได้เลย ความเสี่ยงต่ำ (ตัด 2 leak + ประตูรั้ว)</h2>
+
+<div class="box">
+<b>A1 · ตัด "คาดตาราง" (o-gridmark) ออกจากระแนง/ประตูรั้ว</b><br>
+<b>ค้นใน <code>buildItemOpts</code>:</b> เงื่อนไขก่อน checkbox <code>class="o-gridmark"</code> (คอมเมนต์ "คาดตาราง (generic)")<br>
+<b>เดิม (ปัจจุบัน):</b>
+<pre><span class="old">if(!p.grid && !p.handrail && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง'].includes(p.cat)){</span></pre>
+<b>แก้เป็น (เติม 5 cat):</b>
+<pre><span class="new">if(!p.grid && !p.handrail && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){</span></pre>
+<span style="font-size:10px;color:#666;">(ราวกันตก imp* ตัดอยู่แล้วผ่าน <code>!p.handrail</code>)</span>
+</div>
+
+<div class="box">
+<b>A2 · ตัด "ฝังรางยู" (o-uchannel) ออกจากระแนง/ประตูรั้ว</b><br>
+<b>ค้นใน <code>buildItemOpts</code>:</b> เงื่อนไขก่อน checkbox <code>class="o-uchannel"</code> (คอมเมนต์ "งาน6: ฝังรางยู")<br>
+<b>เดิม (ปัจจุบัน):</b>
+<pre><span class="old">if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){</span></pre>
+<b>แก้เป็น (เติม 5 cat):</b>
+<pre><span class="new">if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail){</span></pre>
+</div>
+
+<div class="box">
+<b>A3 · ประตูรั้ว = บานเลื่อนเท่านั้น (o-gatetype)</b><br>
+<b>ค้นใน <code>buildItemOpts</code> (block <code>if(p.gate)</code>):</b> <code>class="o-gatetype"</code><br>
+<b>เดิม:</b>
+<pre><span class="old">h+='&lt;label class="opt" style="width:100%;"&gt;ลักษณะการเปิด &lt;select class="o-gatetype" style="display:none;" onchange="calcQuote();"&gt;&lt;option value="swing"&gt;บานสวิง&lt;/option&gt;&lt;option value="casement"&gt;บานเปิด&lt;/option&gt;&lt;option value="slide_bottom" selected&gt;บานเลื่อนเปิดคู่กลางรางล่าง&lt;/option&gt;&lt;option value="slide_top"&gt;บานเลื่อนเปิดคู่กลางรางบน&lt;/option&gt;&lt;/select&gt;'+rfChips('o-gatetype',[['swing','บานสวิง'],['casement','บานเปิด'],['slide_bottom','เลื่อนคู่กลาง รางล่าง'],['slide_top','เลื่อนคู่กลาง รางบน']],'slide_bottom')+'&lt;/label&gt;';</span></pre>
+<b>แก้เป็น (เหลือบานเลื่อน):</b>
+<pre><span class="new">h+='&lt;label class="opt" style="width:100%;"&gt;ลักษณะการเปิด &lt;select class="o-gatetype" style="display:none;" onchange="calcQuote();"&gt;&lt;option value="slide_bottom" selected&gt;บานเลื่อน&lt;/option&gt;&lt;/select&gt;'+rfChips('o-gatetype',[['slide_bottom','บานเลื่อน']],'slide_bottom')+'&lt;/label&gt;';</span></pre>
+<span style="font-size:10px;color:#666;">ราคาประตูรั้วไม่ขึ้นกับ gatetype (engine คิด ค่าทำ+ระแนง+มอเตอร์+ราง เหมือนเดิม) · <code>readItem</code>/<code>itemDetail</code> ยังอ่าน optSel.gatetype='slide_bottom' ได้ปกติ — เช็คว่าใบไม่โชว์คำแปลกๆ</span>
+</div>
+
+<h2 class="y"><span class="step-n">B</span>ของใหญ่ — ทำตามดราฟ+handoff (refactor หลายฟังก์ชัน · ไม่ใช่ paste จุดเดียว)</h2>
+<div class="box" style="border-left-color:#B45309;">
+ส่วนนี้แตะหลายฟังก์ชันที่เชื่อมกัน (<code>RN_TREE · rnParse · rnSelectorHTML · rnPick · rnResolve · rnDoorSwitch · readItem · itemDetail</code>) → <b>แชท B implement ตาม reference ในดราฟ</b> ไม่เหมาะ paste บอด:
+<ul>
+<li><b>B1 · ระแนง cascade ใหม่:</b> รวม <code>ระแนง-บังตา</code>+<code>ระแนง-ผนัง</code> เป็น "กล่อง" · เปลี่ยน RN_TREE เป็น <b>box → หน้าโชว์ → ระยะห่าง → frame</b> (แยก "หน้าโชว์" กับ "ระยะ" จากเดิมที่รวมใน spacing) → กล่อง 1"x1.6" โชว์ 2 หน้า [1", 1.6"] · ดู logic <code>parseSp/rAdd/RTREE</code> ในดราฟ</li>
+<li><b>B2 · ระแนงเลื่อน Inception:</b> เพิ่ม <code>bar_slide</code> (ลูกฟูกเรียบ 2 ทาง) เป็น "ชนิดที่ 3" ในกลุ่มระแนง (subtab box/เกล็ด/Inception) · เลือกบาน G1 หรือ ติดตาย · ราคา engine L1166 มีแล้ว</li>
+<li><b>B3 · ติดตายผนัง default = รวมโครง</b> (เดิม ไม่โครง) · ทำเป็นบาน = ไม่โครงอัตโนมัติ (เดิมถูกแล้ว)</li>
+<li><b>B4 · ระแนงพิเศษ:</b> จัดเหลือ 2 ตัว (หมุนเปิด-ปิด + เกล็ดอลู) · เลื่อนย้ายเป็น Inception (B2) · ราคา engine L1146/L1203 มีแล้ว</li>
+</ul>
+<b>อ้างอิง:</b> ดราฟ <code>DRAFT-G2-ux-2026-06-15.html</code> (reference impl กดเล่นได้ ราคาตรง engine) + <code>HANDOFF-G2-restructure-2026-06-15.html</code> (สูตร+ตาราง verify)
+</div>
+
+<h2 class="b">ลำดับแนะนำ</h2>
+<div class="box" style="border-left-color:#1D4ED8;">
+ทำ <b>A1 → A2 → A3</b> ก่อน (ชนะไว · ความเสี่ยงต่ำ · ตัด leak ที่ผิดชัด) → ทดสอบ → แล้วค่อย B (UX refactor ตามดราฟ) · ทุกอย่างราคาดึง engine เดิม ไม่ต้องเขียนสูตรใหม่
+</div>
+
+<div class="foot">
+READ-ONLY: ผู้ตรวจไม่แตะ index.html (กันชนกับแชท B) · โค้ดอิง anchor (className/comment) เพราะ index.html ขยับบรรทัดสด · verify ดราฟเบราว์เซอร์จริง · 15 มิ.ย. 2026
+</div>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ม็อกอัป สีโพลีตัน — ดรอปดาวน์ vs ชิป</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;margin:0;background:#F3F4F6;color:#1F2937;padding:18px;}
+  .wrap{max-width:560px;margin:0 auto;}
+  h1{font-size:18px;margin:0 0 4px;}
+  .sub{font-size:12.5px;color:#6B7280;margin-bottom:14px;}
+  .card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 9px;margin-bottom:9px;}
+  .ta{background:#DBEAFE;color:#1E40AF;} .tb{background:#FEE2E2;color:#B3151D;} .tc{background:#D1FAE5;color:#065F46;}
+  label{font-size:13px;font-weight:600;display:block;margin-bottom:6px;}
+  select{height:36px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 10px;font-size:13px;max-width:100%;width:100%;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #D1D5DB;background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;cursor:pointer;line-height:1.2;}
+  .chip.on{background:#B3151D;border-color:#B3151D;color:#fff;font-weight:600;}
+  .sw{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.2);flex:0 0 13px;}
+  .verdict{font-size:12px;margin-top:9px;padding:7px 10px;border-radius:8px;}
+  .good{background:#ECFDF5;color:#065F46;} .bad{background:#FEF2F2;color:#991B1B;} .ok{background:#FFFBEB;color:#92400E;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎨 ม็อกอัป — สีวัสดุมุง โพลีตัน (8 สี)</h1>
+  <div class="sub">เทียบ 3 แบบ ดูแล้วเลือกได้เลย · ชื่อสีจริงจากระบบ</div>
+
+  <!-- A: ดรอปดาวน์เดิม -->
+  <div class="card">
+    <span class="tag ta">แบบ ก — ดรอปดาวน์เดิม (ตอนนี้)</span>
+    <label>สีวัสดุมุง (โพลีตัน)</label>
+    <select>
+      <option>Clear 101 สีใส (แสงผ่าน 83%)</option>
+      <option selected>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</option>
+      <option>Bronze 107 สีชาใส (แสงผ่าน 30%)</option>
+      <option>Green 109 สีเขียวใส (แสงผ่าน 45%)</option>
+      <option>Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</option>
+      <option>Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</option>
+      <option>Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</option>
+      <option>Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</option>
+    </select>
+    <div class="verdict good">✓ กะทัดรัด เห็นทีละสี ชื่อเต็มชัด · เสีย: ต้องกด 2 จังหวะ (เปิด→เลือก)</div>
+  </div>
+
+  <!-- B: ชิปชื่อเต็ม -->
+  <div class="card">
+    <span class="tag tb">แบบ ข — ชิปชื่อเต็ม</span>
+    <label>สีวัสดุมุง (โพลีตัน)</label>
+    <div class="chips">
+      <span class="chip"><span class="sw" style="background:#eef6ff;"></span>Clear 101 สีใส (แสงผ่าน 83%)</span>
+      <span class="chip on"><span class="sw" style="background:#f1f1f1;"></span>Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</span>
+      <span class="chip"><span class="sw" style="background:#caa472;"></span>Bronze 107 สีชาใส (แสงผ่าน 30%)</span>
+      <span class="chip"><span class="sw" style="background:#bfe3c2;"></span>Green 109 สีเขียวใส (แสงผ่าน 45%)</span>
+      <span class="chip"><span class="sw" style="background:#b9bdc0;"></span>Australian Grey 108 สีเทาออส (แสงผ่าน 40%)</span>
+      <span class="chip"><span class="sw" style="background:#c0c4c8;"></span>Silver 501 สีซิลเวอร์ (แสงผ่าน 4.80%)</span>
+      <span class="chip"><span class="sw" style="background:#7a5c3e;"></span>Bronze Metallic 503 สีชาเมทัลลิค (แสงผ่าน 1%)</span>
+      <span class="chip"><span class="sw" style="background:#3f6b46;"></span>Green Metallic 504 สีเขียวเมทัลลิค (แสงผ่าน 13.90%)</span>
+    </div>
+    <div class="verdict bad">✗ ชื่อยาว 8 ปุ่ม = กินพื้นที่เยอะ ดูแน่น/เละ บนมือถือยิ่งล้น</div>
+  </div>
+
+  <!-- C: ชิปย่อ -->
+  <div class="card">
+    <span class="tag tc">แบบ ค — ชิปย่อชื่อ (+ จุดสี)</span>
+    <label>สีวัสดุมุง (โพลีตัน) <span style="font-weight:400;color:#6B7280;font-size:11px;">(ชื่อเต็มลงใบ)</span></label>
+    <div class="chips">
+      <span class="chip"><span class="sw" style="background:#eef6ff;"></span>ใส 83%</span>
+      <span class="chip on"><span class="sw" style="background:#f1f1f1;"></span>ขุ่น 20%</span>
+      <span class="chip"><span class="sw" style="background:#caa472;"></span>ชาใส 30%</span>
+      <span class="chip"><span class="sw" style="background:#bfe3c2;"></span>เขียวใส 45%</span>
+      <span class="chip"><span class="sw" style="background:#b9bdc0;"></span>เทาออส 40%</span>
+      <span class="chip"><span class="sw" style="background:#c0c4c8;"></span>ซิลเวอร์ 4.8%</span>
+      <span class="chip"><span class="sw" style="background:#7a5c3e;"></span>ชาเมทัลลิค 1%</span>
+      <span class="chip"><span class="sw" style="background:#3f6b46;"></span>เขียวเมทัลลิค 14%</span>
+    </div>
+    <div class="verdict ok">~ ติ๊กง่ายจังหวะเดียว + จุดสีช่วยมอง · เสี่ยง: ชื่อย่อต้อง map กลับชื่อเต็มตอนลงใบ (ต้องเทสว่าใบถูก)</div>
+  </div>
+
+  <div class="card" style="font-size:12.5px;color:#4B5563;">
+    <b>สรุปสั้น:</b> 8 สีชื่อยาว → <b>แบบ ก (ดรอปดาวน์)</b> สะอาดสุด · <b>แบบ ค (ชิปย่อ+จุดสี)</b> ติ๊กไวสุดแต่ต้องเทส map ชื่อ · <b>แบบ ข</b> ไม่แนะนำ (เละ)
+  </div>
+</div>
+</body>
+</html>

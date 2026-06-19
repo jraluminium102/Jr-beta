@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#FAEEDA;border:1px solid #f3d39b;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.flow{counter-reset:s;margin:4px 0;}
+.flow .st{display:flex;gap:8px;align-items:flex-start;margin:3px 0;font-size:10.5px;}
+.flow .n{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:#fbe9ea;color:#B3151D;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;}
+.tag{display:inline-block;font-size:9px;padding:0 5px;border-radius:8px;margin-left:3px;}
+.t-blue{background:#E6F1FB;color:#185FA5;}.t-amber{background:#FAEEDA;color:#BA7517;}.t-green{background:#EAF3DE;color:#3B6D11;}
+</style></head><body>
+
+<h1>UX DESIGN MASTER — ฟอร์มกรอกมุ้ง G5</h1>
+<p class="sub">2026-06-14 · สรุปหน้าตา/แนวคิด UX + การโชว์ราคา · ยึดแม่แบบ <code>UXDESIGN-G1-MASTER</code> · คู่ดราฟกดเล่น <code>DRAFT-G5-ux-FULL-2026-06-14.html</code></p>
+
+<div class="good"><b>สรุปสั้น:</b> ฟอร์ม 1 รายการมุ้ง · มือถือ-เฟิร์นกรอกไว · เลือกชนิดมุ้งเป็น <b>5 ปุ่ม</b> → รุ่นย่อย → ออปชั่นกรองตามชนิด → <b>เห็นราคาทุกจุดขณะกรอก</b> → พรีวิวใบเสนอราคาแยกราคาท้ายฟอร์ม · ธีมแดง JR · <b>เรตจริง (เทสเบราว์เซอร์ 13 เคสตรง engine)</b></p></div>
+
+<h2>1) ลำดับฟอร์ม (บน → ล่าง) · 10 ขั้น</h2>
+<div class="flow">
+<div class="st"><span class="n">1</span><span><b>กลุ่มงาน</b> — ปุ่ม G1–G7 (เลือก 🦟 มุ้ง)</span></div>
+<div class="st"><span class="n">2</span><span><b>ชนิดมุ้ง</b> — ปุ่มการ์ด <b>5 กลุ่ม</b> (เฟรม / จีบ / จีบรังผึ้ง / ม้วน / นิรภัย) → ชิปรุ่นย่อย</span></div>
+<div class="st"><span class="n">3</span><span><b>ติดกับ</b> — ชิป ประตู/หน้าต่าง (มีผลต่อ min · เฉพาะเฟรม) + <b>จำนวนบาน</b></span></div>
+<div class="st"><span class="n">4</span><span><b>ขนาด &amp; จำนวน</b> — กว้าง·สูง·จำนวนชุด · <span class="tag t-amber">ม้วนเตะ: เตือนถ้ากว้างเกินรุ่น (maxWidth)</span></span></div>
+<div class="st"><span class="n">5</span><span><b>ผ้ามุ้ง</b> <span class="tag t-blue">เฉพาะเฟรม</span> — ชิป: ไฟเบอร์(ฟรี)/กันแมว+800/กันหนู+1,200/นิรภัย(เฉพาะเฟรมใหญ่) + สีผ้า(ดำ/เทา/ขาว/เงิน)</span></div>
+<div class="st"><span class="n">6</span><span><b>สีกรอบมุ้ง</b> (mscolor) — ตามสีบาน(ฟรี) / สีพิเศษ(ทำสี ×0.5) <span class="tag t-green">เฟรมก็คิดเงิน (มติ 06-14 · dev เพิ่ม logic)</span></span></div>
+<div class="st"><span class="n">7</span><span><b>การติดตั้ง / เสริม</b> — ติดมุ้งบานเดิม(โหมด B + ค่าเสริมกล่อง/ราง) · เสริมวงกบ · รื้อมุ้งเดิม</span></div>
+<div class="st"><span class="n">8</span><span><b>OPTION ลูกค้า</b> — เลือกหมวด → รายการย่อย · กดเติม แก้/ลบ/กรอกเอง</span></div>
+<div class="st"><span class="n">9</span><span><b>ตำแหน่ง / หมายเหตุ</b></span></div>
+<div class="st"><span class="n">10</span><span><b>ออปชั่นทั้งใบ</b> (ท้ายสุด · หมวดเหมือนข้อ 8 · ปรับทุกชุด ±/ชุด)</span></div>
+<div class="st"><span class="n">฿</span><span><b>แถบราคารวม</b> ติดล่างตลอด (sticky)</span></div>
+</div>
+
+<h2>2) การโชว์ราคา — 4 ระดับ (เหมือน G1)</h2>
+<table>
+<tr><th>ระดับ</th><th>โชว์ที่ไหน</th><th>ทำอะไร</th></tr>
+<tr><td>① บนชิป</td><td>ทุกออปชั่นที่กดติด</td><td>ขึ้น ฿ ตรงชิปทันที (ผ้ามุ้ง = พื้นที่×เรต)</td></tr>
+<tr><td>② ต่อกล่อง</td><td>มุมขวาหัวข้อทุก section</td><td>subtotal กล่องนั้น (secsum) โชว์เสมอ</td></tr>
+<tr><td>③ พรีวิวใบเสนอราคา</td><td>การ์ดท้ายฟอร์ม</td><td>แยกราคา (ฐานมุ้ง + ผ้า + OPTION) + รวม/ชุด + ออปชั่นทั้งใบ + ยอดรวม</td></tr>
+<tr><td>④ แถบรวม</td><td>ล่างจอ sticky</td><td>ยอดรวมทั้งใบ realtime</td></tr>
+</table>
+
+<h2>3) สูตรราคามุ้ง (ตรง engine · REF §0)</h2>
+<div class="box">
+<b>มุ้งเฟรม (imp21/22/23 · screen_addon):</b><br>
+<code>sell = ปัดพัน( max(min_door|win × จำนวนบาน, พื้นที่ × rateOf) + ผ้ามุ้ง )</code><br>
+· ผ้ามุ้ง/ตร.ม.: ไฟเบอร์ 0 · กันแมว 800 · กันหนู 1,200 · นิรภัย rateOf(A,IMP31) <b>เฉพาะ imp23</b><br>
+<b>มุ้งอื่น (generic):</b> <code>sell = ปัดพัน( max(min, พื้นที่ × rateOf) )</code> + (สีกรอบ ×0.5 ถ้าเลือก)<br>
+<span style="color:#6b7280">rateOf: area &lt; ขั้นต่ำ tier → คืนเรต tier แรก · roundUp = ปัดขึ้นพัน</span>
+</div>
+<div class="box"><b>กฎราคา:</b> <span style="color:#3B6D11">ตัวเลขจริง</span> = ฐานมุ้ง(พื้นที่×เรต) · ผ้ามุ้ง(กันแมว/หนู/นิรภัย) · โหมด B(ค่าเสริมกรอกเอง) · <span style="color:#BA7517">"ตามเรตจริง"</span> (dev ดึง colorPrice) = สีกรอบพิเศษ · ทุกช่องราคา <b>แก้ได้</b></div>
+
+<h2>4) ฟีเจอร์ดีไซน์สำคัญ (ปรับจาก G1 ให้เหมาะมุ้ง)</h2>
+<table>
+<tr><th>ฟีเจอร์</th><th>รายละเอียด</th></tr>
+<tr><td>5 ปุ่มชนิด → รุ่นย่อย</td><td>เฟรม(imp21/22/23/30) · จีบ(imp28/sd_basic) · จีบรังผึ้ง(blackout/sd_twoway/keep×2) · ม้วน(imp29/kick150/300/600) · นิรภัย(imp31/32/screen_safety)</td></tr>
+<tr><td>ผ้ามุ้งโผล่เฉพาะเฟรม</td><td>imp21/22/23 เท่านั้น (screen_addon) · ผ้านิรภัยโผล่เฉพาะ imp23 (เฟรมใหญ่)</td></tr>
+<tr><td>ติดกับ ประตู/หน้าต่าง</td><td>มีผลต่อ min (เฉพาะเฟรม) · door = min สูงกว่า window</td></tr>
+<tr><td>maxWidth warn (ม้วนเตะ)</td><td>kick 150/300/600 · กรอกกว้างเกินรุ่น → เตือน soft (เช็คซ้ำ #3: ไม่มี guard ตอนขายเดี่ยว)</td></tr>
+<tr><td>โหมด B ติดบานเดิม</td><td>checkbox + ช่องค่าเสริมกล่อง/ราง (กรอกเอง · default 0)</td></tr>
+<tr><td>OPTION แบบหมวด</td><td>เลือกหมวด (ผ้า·สี/กรอบ·ติดตั้ง/ราง·งานเพิ่ม·ส่วนลด) → รายการย่อย → เติม แก้/ลบ/กรอกเอง</td></tr>
+</table>
+
+<div class="warn"><b>imp33 (กันแมว/หมา) + imp35 (กันหนู) = ซ่อนจากเมนูชนิด</b> (มติพี่นัท 2026-06-12, ยืนยัน 06-14) — เป็นชนิดผ้า ไม่ใช่รุ่น · ลูกค้าได้กันแมว/หนูผ่าน <b>ผ้ามุ้งบนเฟรม</b> (cat +800 / rat +1,200) · เก็บสินค้า/เรตในระบบไว้ (เผื่อใบเก่า) แค่ไม่โชว์ในเมนู</div>
+
+<h2>5) สไตล์ / หลักดีไซน์ (ยึดเหมือน G1)</h2>
+<div class="box">
+1. <b>เน้นปุ่ม/ชิป ไม่เน้นดรอปดาวน์</b> · 2. <b>กรองตามชนิด</b> โชว์เฉพาะที่มีจริง (ผ้ามุ้ง=เฉพาะเฟรม) · 3. <b>เห็นราคาทุกจุด</b> (ชิป/กล่อง/พรีวิว/แถบรวม) แก้ได้ · 4. <b>สำคัญขึ้นบน เสริม/หมายเหตุล่าง ราคาท้าย</b> · 5. <b>กรอกง่าย ≤2 แตะ</b> · ธีมแดง JR #B3151D การ์ดขาว มือถือ max-width 560
+</div>
+
+<p class="sub">ไฟล์คู่: <code>SUMMARY-G5-options.pdf</code> (ออปชั่น) · <code>PRICECHECK-G5.pdf</code> (ราคา เฟิร์น) · <code>REF-G5-pricing-data.md</code> (เรตดิบ dev) · <code>HANDOFF-G5-FINAL-dev.pdf</code> (ส่ง dev) · ทั้งหมดอยู่ <code>docs/กลุ่ม5-มุ้ง/</code></p>
+</body></html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>AUDIT G6 — 5 บล็อก vs ใบจริง (17 มิ.ย. 69)</title>
+<style>
+  :root { --red:#E61E28; --rd:#B3151D; --bg:#F7F8FA; --line:#E5E7EB; --ink:#1F2937; --muted:#6B7280; }
+  @page { size:A4; margin:12mm; }
+  body { font-family:"Sarabun","Noto Sans Thai","Leelawadee UI",sans-serif; font-size:13px; background:#fff; color:var(--ink); margin:0; padding:16px 20px 40px; line-height:1.55; }
+  h1 { font-size:20px; color:var(--rd); border-bottom:3px solid var(--red); padding-bottom:8px; margin-bottom:4px; }
+  h2 { font-size:15px; color:var(--rd); margin:20px 0 6px; border-left:4px solid var(--red); padding-left:8px; }
+  h3 { font-size:13px; color:#374151; margin:14px 0 4px; }
+  .meta { font-size:11px; color:var(--muted); margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:14px; }
+  th { background:var(--red); color:#fff; padding:6px 8px; text-align:left; font-weight:700; font-size:11px; }
+  td { padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:nth-child(even) { background:#FAFBFD; }
+  .ok  { color:#15803D; font-weight:700; }
+  .warn{ color:#B45309; font-weight:700; }
+  .err { color:var(--rd); font-weight:700; }
+  .tag { display:inline-block; padding:1px 7px; border-radius:10px; font-size:11px; font-weight:700; margin:1px 2px; }
+  .tag-ok  { background:#DCFCE7; color:#166534; }
+  .tag-warn{ background:#FEF9C3; color:#713F12; }
+  .tag-err { background:#FEE2E2; color:#991B1B; }
+  .section { background:#FDECEC; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; margin-bottom:12px; }
+  .section-ok { background:#F0FDF4; border-color:#BBF7D0; }
+  .section-warn { background:#FEFCE8; border-color:#FDE68A; }
+  .box { border:1px solid var(--line); border-radius:6px; padding:8px 12px; margin-bottom:8px; font-size:12px; }
+  .invoice-col { width:30%; }
+  .sys-col { width:30%; }
+  .stat-col { width:10%; text-align:center; }
+  .note-col { width:30%; font-size:11px; color:#374151; }
+  .grand-summary { background:var(--red); color:#fff; border-radius:8px; padding:12px 16px; margin:16px 0; }
+  .grand-summary h2 { color:#fff; border-color:#fff; margin:0 0 10px; }
+  .score-row { display:flex; gap:16px; margin-top:8px; }
+  .score-box { background:rgba(255,255,255,.15); border-radius:6px; padding:6px 12px; text-align:center; }
+  .score-box .n { font-size:22px; font-weight:800; }
+  .score-box .l { font-size:10px; opacity:.85; }
+  ul { margin:4px 0 4px 18px; padding:0; }
+  li { margin-bottom:3px; }
+  .root-cause { background:#FFF7ED; border-left:3px solid #F59E0B; padding:6px 10px; font-size:12px; margin:4px 0; border-radius:0 4px 4px 0; }
+  .fix-req { background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; font-size:12px; margin:4px 0; border-radius:0 4px 4px 0; }
+  .checklist li { list-style:none; margin-left:-12px; }
+  .checklist li::before { content:"☐ "; color:var(--rd); font-weight:700; }
+  .priority { font-size:10px; font-weight:700; border-radius:3px; padding:1px 5px; margin-right:4px; }
+  .p1 { background:#FEE2E2; color:#991B1B; }
+  .p2 { background:#FEF9C3; color:#713F12; }
+  .p3 { background:#DCFCE7; color:#166534; }
+  hr { border:none; border-top:1px solid var(--line); margin:16px 0; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .snapshot-ok { background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px 14px; margin:8px 0; font-size:12px; }
+</style>
+</head>
+<body>
+
+<h1>AUDIT รายงานตรวจสอบ G6 กั้นห้องกระจก/ห้องต่อเติม</h1>
+<div class="meta">
+  วันตรวจ: 17 มิ.ย. 2569 &nbsp;|&nbsp; ระบบ: commit e3adf96 + 50657df (5 บล็อก) &nbsp;|&nbsp; อ่านโดย: JR READ-ONLY agent<br>
+  ใบจริงที่ใช้เทียบ: 3 ใบ (โอ๋ QT2025010036 · ยี QT2025060015 · ใบเฟริล QT2025100046)<br>
+  <b>ข้อควรระวัง:</b> ใบจริงมีชื่อลูกค้า/ราคา — รายงานนี้เก็บในเครื่อง ห้ามอัปสาธารณะ
+</div>
+
+<!-- ==================== สรุปหน้าแรก ==================== -->
+<div class="grand-summary">
+  <h2>สรุปผลการตรวจ 3 ใบ × 4 มิติ</h2>
+  <div class="score-row">
+    <div class="score-box"><div class="n">2</div><div class="l">ใบที่ผ่าน (ส่วนใหญ่)</div></div>
+    <div class="score-box"><div class="n">1</div><div class="l">ใบที่มีปัญหาหลัก</div></div>
+    <div class="score-box"><div class="n">5</div><div class="l">จุด 🔴 ผิด/ขาด</div></div>
+    <div class="score-box"><div class="n">6</div><div class="l">จุด 🟡 น่าสงสัย</div></div>
+    <div class="score-box"><div class="n">3</div><div class="l">จุด 🟢 จัดสวย/ข้อสังเกต</div></div>
+  </div>
+</div>
+
+<table>
+  <thead><tr>
+    <th>ใบ</th>
+    <th>A. เหมือนไหม</th>
+    <th>B. ครบไหม</th>
+    <th>C. ราคาตรงไหม</th>
+    <th>D. UX ใช้ได้</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td><b>โอ๋</b><br><span style="font-size:10px;color:#6B7280;">QT2025010036</span></td>
+      <td><span class="tag tag-warn">🟡 ต่างบางส่วน</span></td>
+      <td><span class="tag tag-err">🔴 ขาดหลายจุด</span></td>
+      <td><span class="tag tag-warn">🟡 คิดเหมา≠ระบบ</span></td>
+      <td><span class="tag tag-warn">🟡 กรอกมือ</span></td>
+    </tr>
+    <tr>
+      <td><b>ยี</b><br><span style="font-size:10px;color:#6B7280;">QT2025060015</span></td>
+      <td><span class="tag tag-warn">🟡 ต่างบางส่วน</span></td>
+      <td><span class="tag tag-err">🔴 ขาดหลายจุด</span></td>
+      <td><span class="tag tag-warn">🟡 2 รายการ≠1 รายการ</span></td>
+      <td><span class="tag tag-err">🔴 ทำไม่ได้</span></td>
+    </tr>
+    <tr>
+      <td><b>ใบเฟริล</b><br><span style="font-size:10px;color:#6B7280;">QT2025100046</span></td>
+      <td><span class="tag tag-ok">✅ ใกล้เคียง</span></td>
+      <td><span class="tag tag-warn">🟡 ขาดบางจุด</span></td>
+      <td><span class="tag tag-ok">✅ logic ตรง</span></td>
+      <td><span class="tag tag-warn">🟡 OPTION ต้องกรอกมือ</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ==================== ใบที่ 1: โอ๋ ==================== -->
+<h2>ใบที่ 1 — คุณโอ๋ (QT2025010036)</h2>
+<div class="meta" style="margin:0 0 8px;">เคส: ประตูบานเลื่อนสลับ 3 บาน + ช่องแสงกระจกติดตายด้านบน · กระจกลามิเนต 5+5 ฟิล์มเขียว · กระจกฝ้า · ดรอปพื้นฝังธรณี · ราคาเหมา 80,000 บาท (VAT 7% = 85,600)</div>
+
+<h3>A. เหมือนไหม — โครง 5 บล็อก</h3>
+<table>
+  <thead><tr><th class="invoice-col">ใบจริง</th><th class="sys-col">ระบบออก</th><th class="stat-col">สถานะ</th><th class="note-col">หมายเหตุ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>① หัวรายการ: "กั้นห้องกระจก 1 ชุด"</td>
+      <td>① "ด้าน A — ห้องต่อเติม (กั้นห้องกระจก) (เหมา)" 1 ชุด</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>ระบบใส่ "ด้าน A" นำหน้า + "(เหมา)" ต่อท้าย ≠ ใบจริงที่ชื่อสั้นกว่า (เช็คซ้ำ)</td>
+    </tr>
+    <tr>
+      <td>② รายการงาน: "ประตูบานเลื่อนสลับรางล่าง (รุ่นกันน้ำา) แบ่ง 3 บาน + ช่องแสงกระจกติดตายด้านบน"</td>
+      <td>② "บานเลื่อน ยูโร (3.2×2.1 ม.) · ธรณีหลังเต่า" + "กระจกติดตาย (3.2×0.5 ม.)"</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>ระบบไม่ระบุ "3 บาน" ในชื่อ + ไม่มีคำ "รุ่นกันน้ำา" + ตำแหน่งติดตาย "ด้านบน" ใบจริงแต่ระบบขึ้นเป็น 2 บรรทัดแยก ยังเข้าใจได้</td>
+    </tr>
+    <tr>
+      <td>③ OPTION: (ใบจริงไม่มี OPTION section แยก)</td>
+      <td>③ (ว่าง — ไม่มี OPTION ในเคสนี้)</td>
+      <td class="stat-col"><span class="tag tag-ok">✅</span></td>
+      <td>ตรง</td>
+    </tr>
+    <tr>
+      <td>④ หมายเหตุ: "รวมงานรื้อมุ้งเดิม แต่ไม่รวม... / งานเก็บสีเฉพาะ... / ไม่รวมงานย้ายแอร์/ผนังสมาร์ทบอร์ด"</td>
+      <td>④ "ราคาที่เสนอรวมงาน Protection เฉพาะบริเวณแนวติดตั้ง (ไม่รวมเฟอร์นิเจอร์)"</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ระบบออก Protection note เท่านั้น ≠ ใบจริงมีหมายเหตุ 3 ข้อเฉพาะงาน (รื้อมุ้ง/เก็บสี/ไม่รวมย้ายแอร์) — ต้องกรอกมือทุกครั้ง</td>
+    </tr>
+    <tr>
+      <td>⑤ รายละเอียด: "อลูมิเนียม สีดำา · กระจกฝ้า (ด้านเรียบไว้ด้านนอก) · กระจกลามิเนตใส ฟิล์มเขียว หนา 5+5 มม."</td>
+      <td>⑤ "อลูมิเนียม สีมาตรฐาน (ขาว/ดำ) · กระจกเขียว/ใส หนา 6 มม."</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ระบบไม่ออก: (1) กระจกลามิเนต 5+5 มม. (2) กระจกฝ้า (3) สีอลูมิเนียมระบุชัด (ดำ) — spec ใบจริงละเอียดกว่ามาก</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>B. ครบไหม</h3>
+<div class="section">
+  <b class="err">🔴 ขาด 3 จุดสำคัญ:</b>
+  <ul>
+    <li><span class="priority p1">ขาด</span> <b>กระจกลามิเนต 5+5 มม. ฟิล์มเขียว</b> — ใบจริงระบุชัด ระบบออกแค่ "กระจกเขียว/ใส หนา 6 มม." (ข้อมูลผิด + ราคาต่างกันมาก)</li>
+    <li><span class="priority p1">ขาด</span> <b>กระจกฝ้า (ด้านเรียบไว้ด้านนอก)</b> — ประตูบานเลื่อนในใบจริงใช้กระจกฝ้า ระบบไม่มีตัวเลือก</li>
+    <li><span class="priority p1">ขาด</span> <b>สีอลูมิเนียม "สีดำ" ระบุชัด</b> — ระบบออก "สีมาตรฐาน (ขาว/ดำ)" เท่านั้น ≠ ใบจริงบอก "สีดำ" ชัดเจน</li>
+  </ul>
+</div>
+
+<h3>C. ราคาตรงไหม</h3>
+<table>
+  <thead><tr><th>รายการ</th><th>ใบจริง</th><th>ระบบออก</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>ยอดก่อน VAT</td><td class="tnum">80,000</td><td class="tnum">47,000 (ทดสอบขนาดต่าง)</td><td><span class="tag tag-warn">🟡 เทียบไม่ได้โดยตรง</span></td></tr>
+    <tr><td>VAT 7%</td><td class="tnum">5,600</td><td class="tnum">3,290 (คิด 7% ถูก)</td><td><span class="tag tag-ok">✅ logic ถูก</span></td></tr>
+    <tr><td>รวมทั้งสิ้น</td><td class="tnum">85,600</td><td class="tnum">50,290 (ทดสอบ)</td><td><span class="tag tag-warn">🟡 ขนาด/spec ต่าง → เทียบไม่ได้</span></td></tr>
+    <tr><td>ตัวเลขเป็นคำ</td><td>"แปดหมื่นห้าพันหกร้อยบาทถ้วน"</td><td>"ห้าหมื่นสองพันสี่ร้อยสามสิบบาทถ้วน" (ทดสอบ)</td><td><span class="tag tag-warn">🟡 ฟังก์ชันทำงาน แต่ตัวเลขต่าง (ขนาดต่าง)</span></td></tr>
+    <tr><td>Protection บวกเข้าราคา</td><td>(ไม่มีแยกบรรทัด)</td><td>บวกเข้า net (hidden) ✅</td><td><span class="tag tag-ok">✅ ถูก — เลิกแสดงบรรทัดภาษาอังกฤษ</span></td></tr>
+  </tbody>
+</table>
+<div class="root-cause">Root cause: ราคาทดสอบต่างเพราะขนาดบานต่าง (ใบจริงไม่ระบุขนาดชัด) — logic คิดราคา G6 เหมา ตรงกับแนวทางใบจริง (เหมาต่อห้อง) ✅</div>
+
+<hr>
+
+<!-- ==================== ใบที่ 2: ยี ==================== -->
+<h2>ใบที่ 2 — คุณยี (QT2025060015)</h2>
+<div class="meta" style="margin:0 0 8px;">เคส: ห้องชั้น 2 ขนาดใหญ่ (รายการ 1: 13 ด้าน · ISOWALL · ระแนงเกล็ด Z · หลังคาเมทัลชีท · ปูพื้นสมาร์ทบอร์ด+ไม้เทียม) + รายการ 2: ทางเข้าบ้านชั้น 2 · ราคา 1,045,000 + 140,000 = 1,185,000 (VAT 0%)</div>
+
+<h3>A. เหมือนไหม — โครง 5 บล็อก</h3>
+<table>
+  <thead><tr><th class="invoice-col">ใบจริง</th><th class="sys-col">ระบบออก</th><th class="stat-col">สถานะ</th><th class="note-col">หมายเหตุ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>2 รายการแยก (รายการ 1 / รายการ 2)</td>
+      <td>1 รายการ (ห้องเดียว)</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ใบจริงมี 2 ชุดห้อง แต่ระบบสร้างได้ 1 ห้องต่อ 1 รายการ — ต้องกด "+ กั้นห้องกระจก" 2 ครั้ง</td>
+    </tr>
+    <tr>
+      <td>ด้านหลายด้าน (A-M = 13 ด้าน)</td>
+      <td>ด้าน A, B ฯลฯ ตามที่กด</td>
+      <td class="stat-col"><span class="tag tag-ok">✅</span></td>
+      <td>ระบบรองรับหลายด้านได้ ✅</td>
+    </tr>
+    <tr>
+      <td>ระแนงเกล็ด Z อยู่ใน "ด้าน A / ด้าน F / ด้าน G" ร่วมกับบานอื่น</td>
+      <td>ระแนงยังเป็น G2 items (ไม่ได้ผสมในด้าน G6)</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ใบจริง "ระแนงเกล็ด Z" อยู่รวมในด้านเดียวกับบานอลู — ระบบปัจจุบัน G6 room ยังไม่มี field ระแนงต่อด้าน (ต้องเพิ่มเป็น item แยก G2 หรือ inline)</td>
+    </tr>
+    <tr>
+      <td>ราวกันตกเหล็ก (ด้าน E, F)</td>
+      <td>ไม่มี</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ใบจริงมี "ราวกันตกเหล็ก" ในห้องชุดเดียวกัน — ระบบ G6 ไม่มี field นี้ ต้องเป็น item G2 แยก</td>
+    </tr>
+    <tr>
+      <td>④ หมายเหตุ: "ไม่รับประกันพื้นแอ่น / ไม่รวมงานระบบสุขาภิบาล..."</td>
+      <td>④ Protection note + "ไม่รับประกันพื้นแอ่น/ยวบ" (auto ถ้ามีพื้น)</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>"ไม่รับประกันพื้นแอ่น" ระบบออกอัตโนมัติ ✅ แต่หมายเหตุ "ไม่รวมงานระบบสุขาภิบาล..." ต้องกรอกมือ</td>
+    </tr>
+    <tr>
+      <td>⑤ รายละเอียด: อลูมิเนียมสีดำ · กระจกเขียว 6มม. · มุ้งเฟรมเล็กผ้าไฟเบอร์ดำ · วงกบอลู สีดำ · อลูทึบ สีดำ · ISOWALL หนา 10ซม. · ระแนงเกล็ด Z หนา 1.6" สีดำ · เหล็กแป๊ปกลม 1"2มม. · เหล็กตันกลม 1"2มม. · เมทัลชีท PU 45มม.สีน้ำตาล · เหล็กกล่อง 4"×4" / 2"×6" / 1.5"×1.5" · สมาร์ทบอร์ด 20มม. · ไม้เทียม Desk-140 สีTeak</td>
+      <td>⑤ "อลูมิเนียม สีมาตรฐาน (ขาว/ดำ) · กระจกเขียว/ใส หนา 6 มม. · ผนังเบา (ISOWALL/สมาร์ทบอร์ด)"</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ระบบออกสเปคน้อยมาก (3 บรรทัด) ≠ ใบจริง 14 บรรทัด — ขาด: มุ้ง, วงกบ, สีจำเพาะ, ISOWALL หนา, ระแนงสเปก, เหล็กโครง, ไม้เทียมรุ่น/สี</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>B. ครบไหม</h3>
+<div class="section">
+  <b class="err">🔴 ขาดมาก (เคสซับซ้อน):</b>
+  <ul>
+    <li><span class="priority p1">ขาด</span> <b>ราวกันตกเหล็ก</b> — G6 ไม่มี item ประเภทนี้</li>
+    <li><span class="priority p1">ขาด</span> <b>ระแนงเกล็ด Z inline กับด้าน</b> — ต้องเป็น G2 item แยก</li>
+    <li><span class="priority p1">ขาด</span> <b>ครอบวงกบไม้เดิม 3/4 ด้าน</b> — ใบจริง "ใช้ประตูบานเปิดไม้เดิม + ครอบวงกบ" ระบบไม่มี field</li>
+    <li><span class="priority p1">ขาด</span> <b>พื้นไม้เทียม (ภายนอกห้อง)</b> — ระบบมีไม้เทียมในพื้น แต่ทดสอบ state.floor ≠ 2 ชนิดพร้อมกัน</li>
+    <li><span class="priority p1">ขาด</span> <b>VAT 0%</b> — ใบจริงใช้ VAT 0% (งานใหญ่บางเคส) ระบบไม่มี toggle VAT</li>
+    <li><span class="priority p2">น่าสงสัย</span> <b>สเปคเหล็กโครง</b> (เหล็กกล่อง/แป๊ปกลม/ตันกลม ขนาด/หนา) — ระบบไม่ออก</li>
+  </ul>
+</div>
+
+<h3>C. ราคาตรงไหม</h3>
+<table>
+  <thead><tr><th>รายการ</th><th>ใบจริง</th><th>ระบบออก</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>รายการ 1 (ห้องชั้น 2)</td><td class="tnum">1,045,000</td><td>ทำได้ 1 ห้อง ≈ 176,400 (เคสทดสอบย่อ)</td><td><span class="tag tag-warn">🟡</span></td></tr>
+    <tr><td>รายการ 2 (ทางเข้า)</td><td class="tnum">140,000</td><td>ต้องกด "+ กั้นห้องกระจก" รายการ 2</td><td><span class="tag tag-warn">🟡 ทำได้ถ้าสร้าง 2 ห้อง</span></td></tr>
+    <tr><td>VAT</td><td class="tnum">0% (0 บาท)</td><td>7% (default)</td><td><span class="tag tag-err">🔴 ไม่มี toggle VAT 0%</span></td></tr>
+    <tr><td>รวมทั้งสิ้น</td><td class="tnum">1,185,000</td><td>ยังทำไม่ได้ครบ</td><td><span class="tag tag-err">🔴</span></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ==================== ใบที่ 3: ใบเฟริล ==================== -->
+<h2>ใบที่ 3 — คุณใบเฟริล (QT2025100046)</h2>
+<div class="meta" style="margin:0 0 8px;">เคส: (1) กั้นห้อง 3 ด้าน + หลังคาโพลีตัน + พัดลมดูดอากาศ 8" = 111,000 บาท (2) หลังคากันสาด + รางน้ำา + ตะแกรงกันใบไม้ = 66,000 บาท (3) ส่วนลด 2,000 · รวม 175,000 + VAT 7% = 187,250</div>
+
+<h3>A. เหมือนไหม — โครง 5 บล็อก</h3>
+<table>
+  <thead><tr><th class="invoice-col">ใบจริง</th><th class="sys-col">ระบบออก</th><th class="stat-col">สถานะ</th><th class="note-col">หมายเหตุ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>① หัวรายการ: "กั้นห้องกระจก พร้อมหลังคา (ข้างบ้าน)"</td>
+      <td>① "ด้าน A — ห้องต่อเติม (กั้นห้องกระจก) (เหมา)"</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>ใบจริงใส่รายละเอียดเพิ่ม "(ข้างบ้าน)" ซึ่งระบุตำแหน่ง — ระบบไม่มี field ตำแหน่ง</td>
+    </tr>
+    <tr>
+      <td>② รายการงาน: "ด้าน A/B/C · พัดลมดูดอากาศพร้อมฝาครอบ · หลังคาโพลีตัน"</td>
+      <td>② ด้าน A/B/C + หลังคา/ฝ้า ไวนิล + พัดลมดูดอากาศ 8" 1 ตัว</td>
+      <td class="stat-col"><span class="tag tag-ok">✅</span></td>
+      <td>ลำดับตรง · ระบบออกพัดลม + หลังคาครบ ✅</td>
+    </tr>
+    <tr>
+      <td>③ OPTION: "หากลูกค้าต้องการเปลี่ยนหลังคาชินโคไลท์ รุ่น HC-N828 สี Modern Grey ราคาเพิ่ม 17,000 บาท"</td>
+      <td>③ ยังไม่มี (ต้องกรอก OPTION ทางเลือกลูกค้าเอง)</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>OPTION ชินโคไลท์เป็น preset ที่เห็นบ่อย — ระบบมี OPTION field แต่ต้องพิมพ์เอง ไม่มี preset หลังคา</td>
+    </tr>
+    <tr>
+      <td>④ หมายเหตุ: "ไม่รวมเทพื้น / ปูกระเบื้อง / ทาสี / งานไฟ / ย้ายไฟกริ่ง / ก่อผนัง / รื้อประตูเดิม / ปิดช่อง Hood"</td>
+      <td>④ Protection note เท่านั้น</td>
+      <td class="stat-col"><span class="tag tag-warn">🟡</span></td>
+      <td>หมายเหตุ "ไม่รวม" เหล่านี้ต้องกรอกมือ — ไม่มี preset</td>
+    </tr>
+    <tr>
+      <td>⑤ รายละเอียด: "อลูมิเนียมสีเทาซาฮาร่า · กระจกใส 6มม. · อลูทึบ สีเทาซาฮาร่า · พัดลม 8" สีขาว · ฝาครอบ 8" สีขาว · โพลีตัน 3มม. สีออสเกรย์"</td>
+      <td>⑤ "อลูมิเนียม สีมาตรฐาน (ขาว/ดำ) · กระจกเขียว/ใส หนา 6 มม."</td>
+      <td class="stat-col"><span class="tag tag-err">🔴</span></td>
+      <td>ขาด: (1) สีอลูมิเนียมระบุ "เทาซาฮาร่า" (2) สีหลังคาโพลีตัน "108S Aus Grey" (3) ขนาด+สีพัดลม (4) อลูทึบสี</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>B. ครบไหม</h3>
+<div class="section section-warn">
+  <b class="warn">🟡 ขาดบางจุด:</b>
+  <ul>
+    <li><span class="priority p1">ขาด</span> <b>สีอลูมิเนียมระบุจำเพาะ "เทาซาฮาร่า"</b> ในสเปค G6 — ระบบออก "สีมาตรฐาน" เท่านั้น</li>
+    <li><span class="priority p1">ขาด</span> <b>สีหลังคาในสเปค</b> — ระบบออกรายละเอียดหลังคาใน รายการงาน แต่ไม่ออกสี/รหัสสีในสเปค</li>
+    <li><span class="priority p2">น่าสงสัย</span> <b>รายการที่ 2 หลังคากันสาด</b> — ต้องสร้างเป็น G3 item แยก (ไม่ใช่ G6) ระบบไม่มี field "กันสาดแยก" ใน room</li>
+    <li><span class="priority p2">น่าสงสัย</span> <b>ส่วนลด 2,000</b> — ระบบมี field ส่วนลด (ตัวเลข) แต่ไม่มี field ระบุ "ค่าประเมินหน้างาน"</li>
+  </ul>
+</div>
+
+<h3>C. ราคาตรงไหม</h3>
+<table>
+  <thead><tr><th>รายการ</th><th>ใบจริง</th><th>ระบบออก (เคสใกล้เคียง)</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>กั้นห้อง + หลังคา + พัดลม</td><td class="tnum">111,000</td><td class="tnum">162,400 (ขนาดต่าง)</td><td><span class="tag tag-warn">🟡 logic ตรง — ขนาดต่างทำให้เลขต่าง</span></td></tr>
+    <tr><td>หลังคากันสาด</td><td class="tnum">66,000</td><td>ต้องเป็น G3 item แยก</td><td><span class="tag tag-warn">🟡 ทำได้แต่ต้องกด G3</span></td></tr>
+    <tr><td>ส่วนลด</td><td class="tnum">-2,000</td><td>ต้องกรอก field ส่วนลด</td><td><span class="tag tag-warn">🟡 ทำได้แต่ไม่ auto</span></td></tr>
+    <tr><td>VAT 7%</td><td class="tnum">12,250 (ของ 175,000)</td><td class="tnum">11,508 (ของ 164,400)</td><td><span class="tag tag-ok">✅ logic ถูก</span></td></tr>
+    <tr><td>ตัวเลขเป็นคำ</td><td>"หนึ่งแสนแปดหมื่นเจ็ดพันสองร้อยห้าสิบ"</td><td>ออกตรงตามยอด ✅</td><td><span class="tag tag-ok">✅</span></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ==================== รวมจุดผิดทั้งหมด ==================== -->
+<h2>รวมจุดผิด/ขาด ทั้งหมด (เรียง 🔴→🟡→🟢)</h2>
+
+<h3>🔴 ผิด/ขาดแน่ (ต้องส่ง dev แก้)</h3>
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:28%">จุดที่ผิด/ขาด</th><th style="width:20%">กระทบใบไหน</th><th style="width:22%">Root Cause</th><th style="width:25%">ข้อเสนอแก้</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><b>สเปคสีอลูมิเนียมคงที่ "สีมาตรฐาน (ขาว/ดำ)"</b> ใน g6rRoomSpec — ใบจริงออกสีจำเพาะ เช่น "สีดำ" / "สีเทาซาฮาร่า"</td>
+      <td>โอ๋ + ใบเฟริล + ยี (ทุกใบ)</td>
+      <td>g6rRoomSpec (L6736) hardcode "สีมาตรฐาน (ขาว/ดำ)" ไม่ใช้ state สีของแต่ละด้าน</td>
+      <td>เพิ่ม field สีอลูมิเนียม (color chip) ใน G6R.color → g6rRoomSpec อ่าน G6R.color ออกสีจริง</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><b>สเปคกระจก "เขียว/ใส หนา 6 มม."</b> hardcode — ใบจริงมีกระจกลามิเนต 5+5 / กระจกฝ้า / กระจกเขียว 6 มม.</td>
+      <td>โอ๋ (ลามิเนต+ฝ้า) + ใบเฟริล (ใส 6มม. ถูก)</td>
+      <td>g6rRoomSpec (L6737) hardcode "กระจกเขียว/ใส หนา 6 มม." — ไม่อ่าน option กระจกต่อบาน</td>
+      <td>เพิ่ม state กระจกต่อด้าน/บาน → g6rRoomSpec รวม spec กระจกจริง (หรืออย่างน้อยออก "ดูรายการงาน" ถ้าหลายชนิด)</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><b>สเปคหลังคา/สีหลังคา ไม่ออกใน "รายละเอียด"</b> บล็อก — ออกแค่ในบล็อกรายการงาน</td>
+      <td>ใบเฟริล + ทุกเคสมีหลังคา</td>
+      <td>g6rRoomSpec ไม่ push หลังคา/สี — g6rRoomDetail push แค่ "หลังคา/ฝ้า ไวนิล (WxL) = ราคา" ไม่มีสี</td>
+      <td>เพิ่ม push สีหลังคา+รหัสสีใน g6rRoomSpec (หรือเพิ่มใน g6rRoomDetail ต่อท้ายบรรทัดหลังคา)</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><b>ไม่มี toggle VAT 0%</b> — ใบยีใช้ VAT 0% (งานไม่มี VAT)</td>
+      <td>ยี (กระทบทุกงานที่ไม่มี VAT)</td>
+      <td>ระบบ hardcode VAT 7% — ไม่มี field สลับ VAT rate</td>
+      <td>เพิ่ม dropdown/chip VAT 0%/7% ในส่วน summary · default 7%</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><b>หมายเหตุงานเฉพาะ ต้องพิมพ์เองทุกครั้ง</b> — ใบจริงมีหมายเหตุ 2-5 ข้อต่อใบ (ไม่รวมงาน/เงื่อนไขเฉพาะ) แต่ระบบออกแค่ Protection note</td>
+      <td>ทุกใบ</td>
+      <td>genQuote G6 สร้าง note อัตโนมัติแค่ "Protection" + "ไม่รับประกันพื้นแอ่น" — หมายเหตุงาน (รื้อ/ไม่รวม/ดรอปพื้น) ไม่มี preset</td>
+      <td>เพิ่ม preset หมายเหตุ G6 ในกล่องติ๊ก (ใช้ระบบ o-remark ที่มีอยู่) เช่น: "รวมงานรื้อบานเดิม" / "ไม่รวมงานย้ายแอร์" / "ไม่รวมงานระบบสุขาภิบาล" / "ไม่รวมเทพื้น"</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>🟡 น่าสงสัย / ต้องเคาะ</h3>
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:30%">จุด</th><th style="width:20%">กระทบ</th><th style="width:45%">หมายเหตุ + ข้อเสนอ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>6</td>
+      <td><b>หัวรายการ "ด้าน A — ห้องต่อเติม (กั้นห้องกระจก) (เหมา)"</b> — ระบุ "ด้าน A" นำหน้าทุกครั้ง</td>
+      <td>ทุกใบ</td>
+      <td>ใบจริงไม่มี "ด้าน A" นำหน้า — เพิ่ม field "ชื่องาน" ให้กรอกเอง เช่น "กั้นห้องกระจก พร้อมหลังคา (ข้างบ้าน)" (เช็คซ้ำ)</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><b>ระแนงเกล็ด Z + ราวกันตกเหล็ก</b> ไม่สามารถอยู่ใน G6 room ได้ — ต้องเป็น G2 item แยก</td>
+      <td>ยี</td>
+      <td>ใบจริงรวมอยู่ในรายการเดียว แต่ใบระบบต้องแยก items → หมายเลขรายการต่างกัน เข้าใจยาก (เช็คซ้ำ — ถามพี่นัทว่ายอมรับแยก item ได้ไหม)</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><b>พื้น 2 ชนิดพร้อมกัน</b> (สมาร์ทบอร์ดในห้อง + ไม้เทียมภายนอก)</td>
+      <td>ยี</td>
+      <td>state.floor มี 1 ชนิด — ต้องเพิ่ม field "พื้นภายนอก" แยก หรือ OPTION พื้นเพิ่ม</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><b>OPTION หลังคาชินโคไลท์</b> ไม่มี preset — ต้องพิมพ์เอง</td>
+      <td>ใบเฟริล</td>
+      <td>OPTION หลังคาเปลี่ยน (vinyl→ชินโค, vinyl→เมทัล) เป็นเคสบ่อย — ควรมี OPTION preset หรือ cascade ชนิดหลังคา</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><b>ครอบวงกบไม้เดิม / ติดตั้งบานไม้เดิม</b></td>
+      <td>ยี</td>
+      <td>ใบจริง "ใช้ประตูบานเปิดไม้เดิมมาติดตั้ง + ครอบวงกบ" — ระบบไม่มี item ประเภทนี้ใน G6 (เช็คซ้ำ — ควรเป็น item เสริมหรือ note?)</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><b>ส่วนลดค่าประเมินหน้างาน</b> — ระบบมี field ส่วนลด แต่ไม่มี label "ค่าประเมินหน้างาน"</td>
+      <td>ใบเฟริล</td>
+      <td>ใบจริงมีรายการ "ส่วนลด 1 ชุด = 0.00 · ส่วนลดค่าประเมิน = 2,000" — ระบบออก "ส่วนลด 2,000" แต่ไม่มีคำอธิบาย</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>🟢 ข้อสังเกต / จัดสวย</h3>
+<table>
+  <thead><tr><th>#</th><th>จุด</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>12</td><td><b>Protection เปลี่ยนเป็นหมายเหตุไทย</b> (commit 17 มิ.ย.) — ✅ ถูกต้อง เลิกบรรทัดภาษาอังกฤษ</td><td class="ok">✅ แก้แล้วตรง</td></tr>
+    <tr><td>13</td><td><b>พัดลมดูดอากาศ + ฝาครอบ</b> ออกในรายการงานได้ ✅ — ข้อความ ตรงกับใบจริง</td><td class="ok">✅</td></tr>
+    <tr><td>14</td><td><b>ไม่รับประกันพื้นแอ่น/ยวบ</b> — ออกอัตโนมัติถ้ามีงานพื้น ✅</td><td class="ok">✅ auto ถูก</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<!-- ==================== Checklist กดเว็บจริง ==================== -->
+<h2>Checklist กดเว็บจริง (ให้พี่นัท/ux-designer เปิดเว็บกดเอง)</h2>
+<div class="meta">เปิด localhost หรือ live site → กด "+ กั้นห้องกระจก" → ทำตามรายการ</div>
+
+<ul class="checklist">
+  <li>สร้างห้อง → เพิ่มด้าน A "บานเลื่อน" + ด้าน B "ผนังเบา" → กด "ออกใบ" → ตรวจว่าโครง 5 บล็อก (หัว/รายการ/OPTION/หมายเหตุ/สเปค) โชว์ครบไหม</li>
+  <li>ใส่ OPTION ทางเลือก (เช่น เปลี่ยนหลังคา) → ตรวจว่า OPTION ขึ้นระหว่างรายการ↔สเปค (ไม่ปนในสเปค)</li>
+  <li>เปิด field พัดลม → กรอก qty+ราคา → ตรวจว่า "พัดลมดูดอากาศ + ฝาครอบกันแมลง X" ขึ้นในรายการงาน</li>
+  <li>เปิด field พื้น → เลือก "สมาร์ทบอร์ด" → ตรวจว่า "งานปูพื้น สมาร์ทบอร์ด 20มม. (โครงเหล็กกัลวาไนซ์) X ตร.ม." ขึ้น + "ไม่รับประกันพื้นแอ่น/ยวบ" อยู่ในหมายเหตุ</li>
+  <li>กดเพิ่มหมายเหตุมาตรฐาน (กล่องติ๊ก) → ตรวจว่ามีข้อความงานกั้นห้อง (รื้อ/ไม่รวม/ดรอปพื้น) หรือยัง</li>
+  <li>สร้างห้อง 2 ชุด (กด "+ กั้นห้องกระจก" 2 ครั้ง) → ตรวจว่าออก 2 รายการในใบเดียวได้</li>
+  <li>กด "ออกใบ" → ตรวจ "ตัวเลขเป็นคำ" ถูกไหม (เช่น 187,250 = "หนึ่งแสนแปดหมื่นเจ็ดพัน...")</li>
+  <li>บนมือถือ: กรอก field กว้าง/สูงบาน → keyboard ไม่บัง field ไหม</li>
+  <li>สีอลูมิเนียม: ระบบมี field สีไหม? ถ้าไม่มี → หมายเหตุว่าขาด (จุด #1 ด้านบน)</li>
+</ul>
+
+<hr>
+
+<!-- ==================== Golden Snapshot ==================== -->
+<h2>ผล Golden Snapshot (143/149 ตัว)</h2>
+<div class="snapshot-ok">
+  ✅ รัน <code>node scripts/golden-snapshot.mjs</code> — <b>149 สินค้า · ข้าม 0 · ไม่มีความเปลี่ยนแปลง</b><br>
+  ยอดราคาทุกตัวตรง baseline ปลอดภัย — การแก้ 5 บล็อก (e3adf96/50657df) ไม่ทำให้ราคาพังที่อื่น
+</div>
+
+<hr>
+
+<!-- ==================== สรุปส่ง dev ==================== -->
+<h2>สรุปจุดส่ง dev (เรียงลำดับความสำคัญ)</h2>
+<table>
+  <thead><tr><th>#</th><th>งาน</th><th>ความสำคัญ</th><th>ไฟล์/บรรทัด</th></tr></thead>
+  <tbody>
+    <tr><td>D1</td><td>เพิ่ม field <b>สีอลูมิเนียม G6</b> (color chip) → g6rRoomSpec อ่านออกสีจริง</td><td class="err">🔴 สำคัญมาก</td><td>L6735–6739 (g6rRoomSpec) + G6R state</td></tr>
+    <tr><td>D2</td><td>เพิ่ม field <b>กระจกชนิด/หนา</b> ต่อบาน G6 (หรืออย่างน้อยออก "ดูรายการงาน" ถ้าต่างชนิด)</td><td class="err">🔴 สำคัญมาก</td><td>L6737 (g6rRoomSpec) + g6rRoomDetail บาน</td></tr>
+    <tr><td>D3</td><td>เพิ่ม <b>toggle VAT 0% / 7%</b> ในส่วน summary</td><td class="err">🔴 ขาดสำหรับงานใหญ่</td><td>calcQuote / genQuote VAT section</td></tr>
+    <tr><td>D4</td><td>เพิ่ม <b>preset หมายเหตุ G6</b> ในกล่องติ๊ก o-remark: "รวมงานรื้อบานเดิม" / "ไม่รวมงานย้ายแอร์" / "ไม่รวมระบบสุขาภิบาล" / "ไม่รวมเทพื้น/ปูกระเบื้อง"</td><td class="err">🔴 ต้องพิมพ์ทุกใบ</td><td>L1940+ (rkPresets G6 group)</td></tr>
+    <tr><td>D5</td><td>เพิ่ม <b>สีหลังคา</b> ใน g6rRoomSpec (หรือ g6rRoomDetail ต่อท้ายบรรทัดหลังคา)</td><td class="warn">🟡 น่าสงสัย</td><td>L6749 (g6rRoomDetail roof line)</td></tr>
+    <tr><td>D6</td><td>เพิ่ม field <b>"ชื่องาน/ตำแหน่ง"</b> ใน G6 room set → ขึ้นในหัวรายการ เช่น "(ข้างบ้าน)"</td><td class="warn">🟡 UX</td><td>addGlasshouseSet / set-head render</td></tr>
+    <tr><td>D7</td><td>เพิ่ม <b>พื้นภายนอก</b> แยก (ชนิด 2 เป็น wood) หรือ option เพิ่มพื้น</td><td class="warn">🟡 เฉพาะเคสซับซ้อน</td><td>G6R.floor → extend หรือ G6R.floor2</td></tr>
+    <tr><td>D8</td><td>label ส่วนลด: เพิ่ม field <b>"เหตุผลส่วนลด"</b> (เช่น "ค่าประเมินหน้างาน") ขึ้นในใบ</td><td class="warn">🟡 UX</td><td>discount section genQuote</td></tr>
+  </tbody>
+</table>
+
+<div style="margin-top:20px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;">
+  รายงานนี้จัดทำโดย JR READ-ONLY agent · ข้อมูลใบจริงเก็บเป็นความลับ · ห้ามอัปโหลดสาธารณะ<br>
+  Engine version: commit e3adf96 + 50657df (17 มิ.ย. 2569) · Golden snapshot: 149 ตัว ✅
+</div>
+</body>
+</html>

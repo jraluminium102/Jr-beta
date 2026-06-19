@@ -20,6 +20,7 @@ import {
   useMemo, useState, useRef, useCallback,
 } from "react";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import type { DesignState } from "@/lib/database.types";
 
@@ -66,7 +67,7 @@ const STATE_COLOR: Record<DesignState, {
 const STATE_TH: Record<DesignState, string> = {
   NOT_STARTED: "ยังไม่เริ่ม",
   DRAWING: "กำลังเขียนแบบ",
-  PENDING_CUSTOMER: "รอลูกค้า",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
   REVISING: "กำลังแก้ไข",
   DONE: "เสร็จแล้ว",
 };
@@ -582,22 +583,22 @@ function BarPopover({
           <div className="space-y-2">
             <label className="block">
               <span className="text-[12px] text-ink-2 font-medium">วันเริ่ม</span>
-              <input
-                type="date"
+              <DateField
                 value={startVal}
-                onChange={(e) => setStartVal(e.target.value)}
+                onChange={(iso) => setStartVal(iso)}
                 disabled={busy}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+                aria-label="วันเริ่ม"
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
               />
             </label>
             <label className="block">
               <span className="text-[12px] text-ink-2 font-medium">วันสิ้นสุดงาน (ช่างเขียนแบบ)</span>
-              <input
-                type="date"
+              <DateField
                 value={endVal}
-                onChange={(e) => setEndVal(e.target.value)}
+                onChange={(iso) => setEndVal(iso)}
                 disabled={busy}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 tnum disabled:opacity-60"
+                aria-label="วันสิ้นสุดงาน"
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
               />
             </label>
           </div>
@@ -963,7 +964,7 @@ export default function DesignerSchedule({
         <div className="flex items-center gap-2 px-1">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
             <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-            งานยังไม่มอบหมาย {unassignedActive.length} งาน — แสดงที่ด้านบน Gantt
+            งานยังไม่มอบหมาย {unassignedActive.length} งาน — แสดงท้ายตาราง
           </span>
         </div>
       )}
@@ -981,19 +982,6 @@ export default function DesignerSchedule({
               </div>
             ) : (
               <>
-                {/* Lane ยังไม่มอบหมาย บนสุด (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่างและมีงาน */}
-                {!designerFilter && jobsByDesigner["0"] && jobsByDesigner["0"].length > 0 && (
-                  <GanttLane
-                    key="unassigned"
-                    designer={UNASSIGNED_DESIGNER}
-                    jobs={jobsByDesigner["0"]}
-                    rangeStart={rangeStart}
-                    today={today}
-                    days={days}
-                    canWrite={canWrite}
-                    onSave={handleSave}
-                  />
-                )}
                 {visibleDesigners.map((d) => (
                   <GanttLane
                     key={d.id}
@@ -1006,6 +994,19 @@ export default function DesignerSchedule({
                     onSave={handleSave}
                   />
                 ))}
+                {/* Lane ยังไม่มอบหมาย ท้ายสุด (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่างและมีงาน */}
+                {!designerFilter && jobsByDesigner["0"] && jobsByDesigner["0"].length > 0 && (
+                  <GanttLane
+                    key="unassigned"
+                    designer={UNASSIGNED_DESIGNER}
+                    jobs={jobsByDesigner["0"]}
+                    rangeStart={rangeStart}
+                    today={today}
+                    days={days}
+                    canWrite={canWrite}
+                    onSave={handleSave}
+                  />
+                )}
               </>
             )}
           </div>
@@ -1018,7 +1019,7 @@ export default function DesignerSchedule({
           [
             ["NOT_STARTED", "ยังไม่เริ่ม"],
             ["DRAWING", "กำลังเขียนแบบ"],
-            ["PENDING_CUSTOMER", "รอลูกค้า"],
+            ["PENDING_CUSTOMER", "รอเซลล์ตรวจแบบ"],
             ["REVISING", "กำลังแก้ไข"],
           ] as [DesignState, string][]
         ).map(([st, label]) => (

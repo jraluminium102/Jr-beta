@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>เทียบ G1 ↔ G6 (เฉพาะงานบาน) — รอบ 2 หลังเคาะ</title>
+<style>
+  @page{size:A4;margin:10mm 9mm;}
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:11px;line-height:1.42;margin:0;}
+  h1{color:#B3151D;font-size:19px;margin:0 0 2px;}
+  .meta{color:#666;font-size:10px;margin:0 0 9px;}
+  h2{color:#fff;background:#B3151D;font-size:13px;margin:15px 0 5px;padding:4px 10px;border-radius:5px;}
+  table{border-collapse:collapse;width:100%;margin:4px 0 9px;font-size:9.8px;}
+  th,td{border:1px solid #d8c9c9;padding:3px 7px;text-align:left;vertical-align:top;}
+  td.c{text-align:center;}
+  td.ck{text-align:center;width:24px;color:#B3151D;font-size:12px;}
+  th.ck{width:24px;text-align:center;}
+  .same{color:#15803D;font-weight:700;}
+  .diffd{color:#B45309;font-weight:700;}
+  .err{color:#B3151D;font-weight:700;}
+  .pr{color:#15803D;font-weight:700;}
+  code{background:#f3f0f0;padding:0 3px;border-radius:3px;font-size:9px;font-family:Consolas,monospace;}
+  .box{border:1px solid #d8c9c9;border-radius:6px;padding:7px 10px;margin:6px 0;background:#fffafa;font-size:10px;}
+  .ok{background:#F0FDF4;border:1px solid #86EFAC;}
+  .warn{background:#fff4e5;border:1px solid #f0c070;}
+  .bad{background:#fef2f2;border:1px solid #fca5a5;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  ul{margin:3px 0;padding-left:16px;}li{margin:2px 0;}
+  .lg{font-size:9px;color:#666;margin:1px 0 7px;}
+  .tag{font-size:8.5px;border-radius:7px;padding:1px 6px;font-weight:700;}
+  .t-same{background:#dcfce7;color:#15803D;}
+  .t-diff{background:#fef3c7;color:#92400e;}
+  .t-err{background:#fee2e2;color:#991b1b;}
+  .t-done{background:#dbeafe;color:#1e40af;}
+  .fnum{display:inline-block;background:#B3151D;color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px;font-size:10px;font-weight:700;margin-right:4px;}
+  .fdone{background:#15803D;}
+  .pgbreak{page-break-before:always;}
+</style>
+</head>
+<body>
+
+<h1>เทียบ G1 ↔ G6 — เฉพาะงานบาน (รอบ 2 · หลังพี่นัทเคาะ)</h1>
+<div class="meta">2026-06-14 · ตัดงานหลังคา/ฝ้า/ไฟ/บริการออก · <span class="tag t-same">เหมือน/เท่ากัน</span> <span class="tag t-done">เคาะแล้ว→งาน dev</span> <span class="tag t-err">ต้องส่งแชท G1</span> · เทียบจาก engine จริง + มติ 14 มิ.ย.</div>
+
+<div class="box ok"><b>หลักการ:</b> G1/G6 ใช้โค้ดชุดเดียวกัน (<code>buildItemOpts</code>/<code>PRODUCTS</code>/<code>readItem</code>/สูตรราคา) → ตัวบานต้องเท่ากันเป๊ะ · <b>รอบนี้:</b> 4 จุดที่เคยต่าง <b>เคาะหมดแล้ว</b> เหลือแค่ "งาน dev ลงให้ตรง" + "ส่งข้อความผนังเบาเข้าแชท G1"</div>
+
+<!-- ===== A: ชนิดบาน ===== -->
+<h2>① ชนิดบาน</h2>
+<table>
+<tr><th>ชนิดบาน</th><th class="c">G1</th><th class="c">G6</th><th>สถานะ</th><th class="ck">☐</th></tr>
+<tr><td>เลื่อน · เลื่อนรางบน · เปิด · กระทุ้ง · เฟี้ยม · ติดตาย · ดัดโค้ง · บานยก · PC · shower · YKK · เปลือย · หมุน</td><td class="c same">✓</td><td class="c same">✓</td><td><span class="tag t-same">เหมือนทั้งหมด</span></td><td class="ck">☐</td></tr>
+<tr><td>เลื่อนรางล่าง SMS (inner_bottom_sms)</td><td class="c diffd">ตัด→เซมิ+รางเตี้ย</td><td class="c diffd">ตัด→เซมิ+รางเตี้ย</td><td><span class="tag t-same">ตัดตรงกัน</span></td><td class="ck">☐</td></tr>
+<tr style="background:#fef2f2"><td><b>ผนังเบาทึบ</b> (สมาร์ท/คอมโพ/Isowall)</td><td class="c err">ยังไม่มี → <b>ต้องเพิ่ม</b></td><td class="c same">✓ กลุ่มติดตาย/ทึบ</td><td><span class="tag t-err">มติใหม่: ต้องมีใน G1 ด้วย</span></td><td class="ck">☐</td></tr>
+</table>
+<div class="lg"><b>เปลี่ยนจากรอบ 1:</b> เดิมผนังเบา "มีเฉพาะ G6 (OK)" → <b>พี่นัทเคาะใหม่: ต้องมีใน G1 ด้วย เหมือน G6 เป๊ะ</b> → ส่งข้อความเข้าแชท G1 (ดูข้อ ④)</div>
+
+<!-- ===== B: ออปชั่น ===== -->
+<h2>② ออปชั่น + ราคา ต่อหมวด</h2>
+<table>
+<tr><th>หมวด</th><th>สถานะ G1 ↔ G6</th><th class="ck">☐</th></tr>
+<tr><td>มือจับ ดิจิตอล 11 + สแตนเลส 6</td><td class="same">เท่ากัน (catalog เดียว)</td><td class="ck">☐</td></tr>
+<tr><td>คาดตาราง · ลูกฟูก/คอมโพ + สี</td><td class="same">เท่ากัน</td><td class="ck">☐</td></tr>
+<tr><td>ธรณี · โช๊ค · ล็อค · มอเตอร์ · tilt&turn</td><td class="same">เท่ากัน</td><td class="ck">☐</td></tr>
+<tr><td>โครงสร้าง/คาน (ซ่อนคาน/ราง/รางยู/เสริมคาน)</td><td class="same">เท่ากัน</td><td class="ck">☐</td></tr>
+<tr><td>ครอบวงกบ · ดรอปพื้น · รื้อ</td><td class="same">เท่ากัน</td><td class="ck">☐</td></tr>
+<tr style="background:#eff6ff"><td><b>มุ้ง</b></td><td><b>เคาะแล้ว 14 มิ.ย.:</b> 3 กลุ่ม (เฟรม/จีบ/ม้วน) · เพิ่มแม่เหล็ก→เฟรม + ตีนตะขาบเดี่ยว→จีบ · กันแมว/หนู/นิรภัย=ผ้า · เฟี้ยม X ตัด → <b>ใช้ชุดเดียวกันทั้ง G1+G6</b></td><td class="ck">☐</td></tr>
+</table>
+<div class="lg">รายละเอียดมุ้งเต็ม → <code>SUMMARY-MOSQ-G1G6-2026-06-14</code></div>
+
+<!-- ===== C: จุดที่เคยเสี่ยง — เคาะแล้ว ===== -->
+<h2 class="pgbreak">③ 4 จุดที่เคยต่าง — เคาะหมดแล้ว (เหลืองาน dev)</h2>
+
+<div class="box ok">
+<b><span class="fnum fdone">1</span>มุ้ง จัดกลุ่ม</b> <span class="tag t-done">เคาะ→dev</span><br>
+<b>เคาะ: 3 กลุ่ม (เฟรม/จีบ/ม้วน) ตาม engine</b> (ไม่แยกกลุ่มแม่เหล็ก) · กันแมว/กันหนู/นิรภัย0.8 = ผ้ามุ้ง (วัสดุ) ✓ engine ทำไว้แล้ว (imp33/35 ซ่อนจากชนิด)<br>
+<b>dev:</b> ใช้ <code>MOSQ_GRP_PRODS</code> เดิม — มีการจัด 3 กลุ่มอยู่แล้ว ไม่ต้องแก้
+</div>
+
+<div class="box ok">
+<b><span class="fnum fdone">2</span>มุ้งแม่เหล็ก + ตีนตะขาบเดี่ยว</b> <span class="tag t-done">เคาะ→dev</span><br>
+<b>มีจริงใน engine</b> (<code>imp30</code> แม่เหล็ก 1,500/ตร.ม. · <code>imp28</code> ตีนตะขาบ 4,500/ตร.ม.) แต่เลือกติดบานไม่ได้ (มีแค่ 12 แบบ)<br>
+<b>เคาะ: เพิ่มให้เลือกติดบานได้</b> — แม่เหล็ก→กลุ่มเฟรม · ตีนตะขาบเดี่ยว→กลุ่มจีบ (12→14 แบบ) · <b>dev:</b> เพิ่ม 2 id เข้า o-mosq ของบาน
+</div>
+
+<div class="box warn">
+<b><span class="fnum">3</span>เฟี้ยม X-series ตัดมุ้ง</b> <span class="tag t-done">เคาะ→dev (ทั้ง 2 กลุ่ม)</span><br>
+<code>folding_xseries</code> เป็น product เดียวกันทั้ง G1/G6 · <b>dev: เอา o-mosq ออกทั้ง 2 กลุ่ม</b> (ไม่งั้น G1 ยังโชว์มุ้ง = ขัดกัน)
+</div>
+
+<div class="box warn">
+<b><span class="fnum">4</span>เรตราคา G6</b> <span class="tag t-done">เตือน dev</span><br>
+ดราฟ G6 ใช้ RATE เดโม · <b>dev: ตอนสร้างจริงต้องเรียกสูตรราคา engine เดียวกับ G1</b> ห้ามฮาร์ดโค้ด → บานเดียวกันราคาตรงกัน
+</div>
+
+<!-- ===== D: ผนังเบา handoff ===== -->
+<h2>④ จุดใหม่ที่ต้องส่งแชท G1</h2>
+<div class="box bad">
+<b><span class="fnum">5</span>ผนังเบาทึบ — ต้องเพิ่มเข้า G1</b> <span class="tag t-err">ส่งแชท G1</span><br>
+มติใหม่พี่นัท: <b>ผนังเบา (สมาร์ทบอร์ด/คอมโพสิต/Isowall) ต้องมีใน G1 ด้วย เหมือน G6 เป๊ะ</b> (โปรไฟล์ solid: วัสดุ+ทาสี/ฉนวน ไม่มีกระจก · อยู่กลุ่ม 4 ติดตาย/ทึบ)
+</div>
+<div class="box" style="background:#f8fafc;border:1px dashed #94a3b8;">
+<b>📋 ข้อความสำหรับแชท G1 (ก๊อปไปวางได้เลย):</b><br>
+<span style="font-family:Consolas,monospace;font-size:9.3px;display:block;margin-top:4px;background:#fff;padding:6px;border-radius:4px;">
+[มติ 14 มิ.ย. · จากแชท G6] เพิ่ม "ผนังเบาทึบ" เป็นชนิดบานใน G1 กลุ่ม 4 (ติดตาย/ทึบ) ให้เหมือน G6 เป๊ะ:<br>
+- 3 วัสดุ: สมาร์ทบอร์ด / คอมโพสิต / Isowall<br>
+- โปรไฟล์ solid: เลือกวัสดุ + ทาสี/ฉนวน · ไม่มีกระจก/คาดตาราง/ลูกฟูก<br>
+- ขนาด: กว้าง·สูง · อุปกรณ์เสริม: ครอบวงกบ + รื้อ<br>
+- FAM_CATS['4'] ของ G1 ต้องมีผนังเบาเหมือน FAM_CATS['6'] · ใช้ profile solid ตัวเดียวกัน<br>
+อ้างอิง: docs/G6/REVIEW-G6-GROUPED-2026-06-14 + memory glasshouse-options-catalog
+</span>
+</div>
+
+<!-- ===== E: สรุป ===== -->
+<h2>⑤ สรุป — ของน่าจะถูกต้อง</h2>
+<div class="grid2">
+<div class="box ok"><b>✅ ตรงกันแล้ว (ตัวบาน)</b><ul>
+<li>ชนิดบานทั้งหมด (รวม SMS ตัดตรงกัน)</li>
+<li>มือจับ · คาดตาราง · ลูกฟูก+สี — เท่ากัน</li>
+<li>ธรณี · โช๊ค · ล็อค · มอเตอร์ · tilt&turn</li>
+<li>โครงสร้าง/คาน · ครอบวงกบ · ดรอป · รื้อ</li>
+<li><b>มุ้ง — เคาะให้ใช้ชุดเดียวกันแล้ว</b> (3 กลุ่ม +2 แบบ +ผ้า)</li>
+<li>ธง dev solidlight/คาดตาราง/เฟี้ยมเปิด — ตรงกัน</li>
+</ul></div>
+<div class="box warn"><b>⏳ เหลือทำ (ลงให้ตรง · ไม่ใช่ตรรกะผิด)</b><ul>
+<li><b>dev:</b> เพิ่มมุ้ง 2 แบบเข้าบาน (imp28→จีบ · imp30→เฟรม)</li>
+<li><b>dev:</b> เฟี้ยม X ตัดมุ้ง (ทั้ง G1+G6)</li>
+<li><b>dev:</b> G6 ใช้สูตรราคา engine จริง (ไม่ใช่ RATE เดโม)</li>
+<li><b>แชท G1:</b> เพิ่มผนังเบาทึบ (ข้อความข้อ ④)</li>
+</ul></div>
+</div>
+
+<div class="box ok"><b>คำตัดสินรวม:</b> "ตัวบาน" G1/G6 <b>ถูกต้องตรงกัน ~95%</b> · 4 จุดที่เคยต่างเคาะหมดแล้ว เหลือเป็น "งานลงโค้ด" 3 จุด (dev) + "เพิ่มผนังเบาที่ G1" 1 จุด (แชท G1) · <b>ไม่มีตรรกะราคาผิด</b> ทุกอย่างเป็นเรื่อง sync มติให้ลงตรงกัน · ทำ 4 จุดนี้ = งานบาน G1/G6 ตรงกัน 100%</div>
+
+</body>
+</html>

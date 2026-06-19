@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
+import DateField from "@/components/ui/DateField";
 import type { QueueSales } from "@/lib/queue";
 
 type AvailKind = "LEAVE_FULL" | "LEAVE_HALF" | "OFFICE_HALF" | "HOLIDAY";
@@ -112,11 +113,11 @@ export function LeaveModal({
           <label className="block">
             <span className="text-xs font-medium text-ink-3">วันที่ *</span>
             <div className="mt-1">
-              <input
-                type="date"
+              <DateField
                 value={f.date}
-                onChange={(e) => set("date", e.target.value)}
+                onChange={(iso) => set("date", iso)}
                 className={inp}
+                aria-label="วันที่"
               />
             </div>
           </label>

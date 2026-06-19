@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบตัวอย่าง 5 บล็อก — G1 (แม่แบบส่งทุกแชท)</title>
+<style>
+  :root{ --red:#b91c1c; --red2:#7f1d1d; --ink:#1f2937; --mut:#6b7280; --line:#e5e7eb; --bg:#f3f4f6; --ok:#16a34a; --warn:#dc2626; }
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:18px 16px 60px}
+  h1{font-size:21px;margin:8px 0 2px;color:var(--red2)}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:18px}
+  .legend{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:22px;font-size:13.5px}
+  .legend b{color:var(--red)}
+  .blk{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;margin-right:6px}
+  .b1{background:#fee2e2;color:#7f1d1d}.b2{background:#dbeafe;color:#1e40af}.b3{background:#fef3c7;color:#92400e}.b4{background:#e0e7ff;color:#3730a3}.b5{background:#dcfce7;color:#166534}
+  .case{margin:26px 0}
+  .case-h{font-size:15px;font-weight:700;color:var(--red2);margin-bottom:10px;border-left:4px solid var(--red);padding-left:10px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:740px){.cmp{grid-template-columns:1fr}}
+  .col-h{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .col-old .col-h{color:var(--mut)}
+  .col-new .col-h{color:var(--ok)}
+  .inv{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13.5px}
+  .col-new .inv{border:2px solid var(--ok)}
+  .inv-row{display:grid;grid-template-columns:38px 1fr 92px;border-bottom:1px solid var(--line)}
+  .inv-head{background:var(--red);color:#fff;font-weight:700;font-size:12.5px}
+  .inv-head>div{padding:7px 9px}
+  .cell{padding:10px 9px;border-right:1px solid var(--line)}
+  .cell:last-child{border-right:none}
+  .amt{text-align:right;font-variant-numeric:tabular-nums}
+  /* detail blocks */
+  .ttl{font-weight:700;color:var(--ink);margin-bottom:3px}
+  .work{margin:2px 0 0;padding-left:0;list-style:none}
+  .work li{position:relative;padding-left:14px;margin:1px 0}
+  .work li:before{content:"–";position:absolute;left:0;color:var(--mut)}
+  .sec{margin-top:9px}
+  .sec-t{font-weight:700;font-size:12.5px;display:inline-block;border-radius:4px;padding:0 7px;margin-bottom:2px}
+  .sec-opt .sec-t{background:#fef3c7;color:#92400e}
+  .sec-note .sec-t{background:#e0e7ff;color:#3730a3}
+  .sec-spec .sec-t{background:#fee2e2;color:#b91c1c}
+  .warnv{color:var(--warn);font-weight:700}
+  .flat{color:#374151}
+  .old-blob{color:#374151}
+  .old-blob .mess{background:#fff7ed;border-radius:4px;padding:0 3px;color:#9a3412}
+  .tot{padding:8px 10px;font-size:12.5px;color:var(--mut);text-align:right;background:#fafafa}
+  .tot b{color:var(--ink);font-size:14px}
+  .note-foot{font-size:12px;color:var(--mut);margin-top:6px}
+  .pill{font-size:11px;background:#f3f4f6;border:1px solid var(--line);border-radius:20px;padding:2px 9px;color:var(--mut)}
+  .demo-opt{opacity:.85}
+  .demo-tag{font-size:10.5px;background:#ede9fe;color:#5b21b6;border-radius:4px;padding:0 5px;margin-left:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ใบตัวอย่าง "5 บล็อก" — กลุ่ม G1 งานบาน</h1>
+  <div class="sub">แม่แบบให้ทุกแชทกลุ่มทำตาม · ซ้าย = ของเดิม (กองรวม) · ขวา = 5 บล็อก (เป้าหมาย) · ราคา/สเปคดึงจาก engine จริง ไม่เดา</div>
+
+  <div class="legend">
+    <div style="margin-bottom:8px"><b>5 บล็อก เรียงบน→ล่าง:</b></div>
+    <span class="blk b1">① หัว</span> ชื่อ+รุ่น+ขนาด+จำนวนชุด &nbsp;
+    <span class="blk b2">② รายการ(งาน)</span> bullet ไม่มีหัวข้อ · ชิ้นงานที่ทำ &nbsp;
+    <span class="blk b3">③ OPTION</span> หัวข้อแดง · โชว์เมื่อมี &nbsp;
+    <span class="blk b4">④ หมายเหตุ</span> โชว์เมื่อมี &nbsp;
+    <span class="blk b5">⑤ รายละเอียด</span> สเปค (สี/กระจก/ผ้ามุ้ง)
+    <div class="note-foot">กฎ: สเปคที่อยู่ในวงเล็บของหัว → ย้ายลงรายการ/รายละเอียด · สีพิเศษไม่กรอกรหัส = <span class="warnv">⚠ ต้องระบุรหัสสี</span> · OPTION/หมายเหตุ ว่าง = ซ่อนหัวข้อ</div>
+  </div>
+
+  <!-- ===== CASE 1 ===== -->
+  <div class="case">
+    <div class="case-h">เคส 1 · ประตูบานเปิด ยูโร + สีอบพิเศษ + กระจก + มุ้ง &nbsp;<span class="pill">รวม 43,870 (VAT แล้ว)</span></div>
+    <div class="cmp">
+      <div class="col-old">
+        <div class="col-h">❌ ของเดิม (กองรวม)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell old-blob">
+              <div class="ttl">จุดที่ 1 ประตูบานเปิด (รุ่น L ยูโร) <span class="mess">พร้อมมุ้งเฟรมใหญ่ บานเปิด ขนาด 1.2×2.2 ม.</span> (1.2 × 2.2 ม.)</div>
+              <div>- มุ้งเฟรมใหญ่ บานเปิด</div>
+              <div class="ttl" style="margin-top:6px">รายละเอียด</div>
+              <div>- สีอลู: อบพิเศษ · <span class="warnv">⚠ ต้องระบุรหัสสี</span></div>
+              <div>- กระจกเขียว หนา 6 มม.</div>
+              <div>- ผ้ามุ้ง: ผ้าไฟเบอร์เทา · เฟรม: ตามสีบาน <span class="mess">สีอบพิเศษ</span></div>
+            </div>
+            <div class="cell amt">41,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>43,870.00</b></div>
+        </div>
+        <div class="note-foot">ปัญหา: ขนาดซ้ำ 2 รอบ · "พร้อมมุ้ง..." ยัดในหัว · "สีอบพิเศษ" ห้อยท้ายมั่ว · ไม่มีบานหลักในรายการ</div>
+      </div>
+
+      <div class="col-new">
+        <div class="col-h">✅ 5 บล็อก (เป้าหมาย)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell">
+              <div class="ttl">จุดที่ 1 · ประตูบานเปิด (รุ่น L ยูโร) · 1.2 × 2.2 ม. · 1 ชุด</div>
+              <ul class="work">
+                <li>บานเปิด</li>
+                <li>มุ้งเฟรมใหญ่ (บานเปิด)</li>
+              </ul>
+              <div class="sec sec-opt demo-opt">
+                <span class="sec-t">OPTION</span><span class="demo-tag">ตัวอย่าง — โชว์เมื่อมี</span>
+                <div class="work"><ul class="work"><li>(ถ้าลูกค้าเลือกออปชั่นต่อชิ้น เช่น เปลี่ยนรางบนโชว์ราง จะขึ้นตรงนี้)</li></ul></div>
+              </div>
+              <div class="sec sec-note demo-opt">
+                <span class="sec-t">หมายเหตุ</span><span class="demo-tag">ตัวอย่าง — โชว์เมื่อมี</span>
+                <div class="work"><ul class="work"><li>(ข้อความเฉพาะงานที่พิมพ์ในช่องหมายเหตุ จะขึ้นตรงนี้)</li></ul></div>
+              </div>
+              <div class="sec sec-spec">
+                <span class="sec-t">รายละเอียด</span>
+                <ul class="work">
+                  <li>สีอลู: อบสีพิเศษ · <span class="warnv">⚠ ต้องระบุรหัสสี</span></li>
+                  <li>กระจก: เขียว หนา 6 มม.</li>
+                  <li>ผ้ามุ้ง: ไฟเบอร์ เทา · เฟรม: ตามสีบาน</li>
+                </ul>
+              </div>
+            </div>
+            <div class="cell amt">41,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>43,870.00</b></div>
+        </div>
+        <div class="note-foot">หัวสั้น ขนาดครั้งเดียว · บานหลักขึ้นรายการ · สเปคแยกล่าง · OPTION/หมายเหตุ มีที่อยู่ชัด</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CASE 2 ===== -->
+  <div class="case">
+    <div class="case-h">เคส 2 · บานเลื่อนเซมิยูโร + มุ้งจีบ + ครอบวงกบ + ล็อค &nbsp;<span class="pill">รวม 52,430 (VAT แล้ว)</span></div>
+    <div class="cmp">
+      <div class="col-old">
+        <div class="col-h">❌ ของเดิม (กองรวม)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell old-blob">
+              <div class="ttl">จุดที่ 1 ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) <span class="mess">(มีมุ้งจีบ)</span> (รุ่น M เซมิยูโร) (2.4 × 2.2 ม.)</div>
+              <div>- มุ้งจีบ</div>
+              <div>- ชุดล็อค (มีกุญแจ)</div>
+              <div>- ครอบวงกบอลู 4 ด้าน</div>
+              <div class="ttl" style="margin-top:6px">รายละเอียด</div>
+              <div>- สีอลู: เทาซาฮาร่า</div>
+              <div>- กระจกเขียว หนา 6 มม.</div>
+              <div>- ผ้ามุ้ง: ผ้าไฟเบอร์เทา · เฟรม: ตามสีบาน <span class="mess">สีเทาซาฮาร่า</span></div>
+            </div>
+            <div class="cell amt">49,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>52,430.00</b></div>
+        </div>
+      </div>
+
+      <div class="col-new">
+        <div class="col-h">✅ 5 บล็อก (เป้าหมาย)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell">
+              <div class="ttl">จุดที่ 1 · ประตูบานเลื่อนรางล่าง (รุ่น M เซมิยูโร · กันน้ำ) · 2.4 × 2.2 ม. · 1 ชุด</div>
+              <ul class="work">
+                <li>บานเลื่อนรางล่าง</li>
+                <li>มุ้งจีบ</li>
+                <li>ชุดล็อค (มีกุญแจ)</li>
+                <li>ครอบวงกบอลู 4 ด้าน</li>
+              </ul>
+              <div class="sec sec-spec">
+                <span class="sec-t">รายละเอียด</span>
+                <ul class="work">
+                  <li>สีอลู: เทาซาฮาร่า</li>
+                  <li>กระจก: เขียว หนา 6 มม.</li>
+                  <li>ผ้ามุ้ง: ไฟเบอร์ เทา · เฟรม: ตามสีบาน</li>
+                </ul>
+              </div>
+              <div class="note-foot">OPTION/หมายเหตุ ว่าง = ซ่อนหัวข้อ (ไม่ขึ้นหัวข้อเปล่า)</div>
+            </div>
+            <div class="cell amt">49,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>52,430.00</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CASE 3 ===== -->
+  <div class="case">
+    <div class="case-h">เคส 3 · กระจกติดตาย + สีลายไม้ + คาดตาราง &nbsp;<span class="pill">รวม 24,610 (VAT แล้ว)</span></div>
+    <div class="cmp">
+      <div class="col-old">
+        <div class="col-h">❌ ของเดิม (กองรวม)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell old-blob">
+              <div class="ttl">จุดที่ 1 กระจกติดตาย <span class="mess">(คาดตาราง แนวนอน 0 เส้น แนวตั้ง 1 เส้น)</span> (1.5 × 2 ม.)</div>
+              <div class="ttl" style="margin-top:6px">รายละเอียด</div>
+              <div>- สีอลู: ลายไม้สต๊อก สักทอง</div>
+              <div>- กระจกเขียว หนา 6 มม.</div>
+            </div>
+            <div class="cell amt">23,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>24,610.00</b></div>
+        </div>
+        <div class="note-foot">ปัญหา: "คาดตาราง..." เป็นงาน แต่ไปกองในหัว (ควรอยู่รายการ)</div>
+      </div>
+
+      <div class="col-new">
+        <div class="col-h">✅ 5 บล็อก (เป้าหมาย)</div>
+        <div class="inv">
+          <div class="inv-row inv-head"><div>#</div><div>รายละเอียด</div><div class="amt">ยอดรวม</div></div>
+          <div class="inv-row">
+            <div class="cell">1</div>
+            <div class="cell">
+              <div class="ttl">จุดที่ 1 · กระจกติดตาย · 1.5 × 2.0 ม. · 1 ชุด</div>
+              <ul class="work">
+                <li>กระจกติดตาย</li>
+                <li>คาดตาราง (แนวตั้ง 1 เส้น)</li>
+              </ul>
+              <div class="sec sec-spec">
+                <span class="sec-t">รายละเอียด</span>
+                <ul class="work">
+                  <li>สีอลู: ลายไม้สต๊อก สักทอง</li>
+                  <li>กระจก: เขียว หนา 6 มม.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="cell amt">23,000.00</div>
+          </div>
+          <div class="tot">รวมทั้งสิ้น <b>24,610.00</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend" style="margin-top:30px">
+    <b>หมายเหตุการทำ (ทุกแชทอ่าน):</b>
+    <ul style="margin:6px 0 0;padding-left:20px">
+      <li>ราคาทุกใบ = engine จริง (ไม่แตะ) · งานนี้แค่ "จัดข้อความ" ใหม่</li>
+      <li>"ออปชั่นทั้งใบ" (ส่วนลด/บริการเสริมทั้งใบ) ยังไว้ท้ายใบเหมือนเดิม · บล็อก OPTION ในรายการ = OPTION ลูกค้าต่อชิ้นเท่านั้น</li>
+      <li>ทำใบตัวอย่างแบบนี้ของกลุ่มตัวเองมาก่อน → พี่นัทเคาะ → ค่อยเขียนโค้ด itemDetail จริง</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

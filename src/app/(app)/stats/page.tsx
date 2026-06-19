@@ -15,6 +15,8 @@ type Stats = {
   funnel: { phase: PhaseKey; count: number }[];
   byChannel: { channel: string; count: number }[];
   topItems: { name: string; qty: number }[];
+  byCategory: { category: string; quoted_revenue: number; quoted_jobs: number; sold_revenue: number; sold_jobs: number }[];
+  uncategorizedItems: number;
   issues: { total: number; open: number; byPhase: Record<string, number>; bySeverity: Record<string, number> };
 };
 
@@ -118,6 +120,39 @@ export default function StatsPage() {
                   </div>
                 ))}
                 {data.topItems.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
+              </div>
+            </Card>
+
+            {/* สินค้าขายดีตามหมวด — เสนอราคา vs ขายได้จริง (0046) */}
+            <Card className="p-5 lg:col-span-2">
+              <div className="flex items-baseline justify-between mb-3">
+                <h3 className="font-bold text-brand-dark">สินค้าขายดี (ตามหมวด)</h3>
+                {data.uncategorizedItems > 0 && (
+                  <span className="text-[11px] text-amber-600">ยังไม่จัดหมวด {data.uncategorizedItems.toLocaleString()} รายการ (ใบเบา/นำเข้า)</span>
+                )}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
+                    <th className="py-2 font-semibold">หมวดสินค้า</th>
+                    <th className="font-semibold text-center">เสนอ (งาน)</th>
+                    <th className="font-semibold text-right">ยอดเสนอ (฿)</th>
+                    <th className="font-semibold text-center text-emerald-700">ขาย (งาน)</th>
+                    <th className="font-semibold text-right text-emerald-700">ยอดขาย (฿)</th>
+                  </tr></thead>
+                  <tbody>
+                    {data.byCategory.map((c) => (
+                      <tr key={c.category} className="border-b border-gray-100">
+                        <td className="py-2 font-medium text-ink-2">{c.category}</td>
+                        <td className="text-center tabular-nums text-ink-3">{c.quoted_jobs.toLocaleString()}</td>
+                        <td className="text-right tabular-nums text-ink-3">{baht(c.quoted_revenue)}</td>
+                        <td className="text-center tabular-nums font-semibold text-emerald-700">{c.sold_jobs.toLocaleString()}</td>
+                        <td className="text-right tabular-nums font-semibold text-emerald-700">{baht(c.sold_revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {data.byCategory.length === 0 && <p className="text-ink-3 text-sm py-2">ยังไม่มีข้อมูลหมวด — ใบที่คิดผ่านเครื่องคิดราคาจะเริ่มสะสมหมวดให้เอง</p>}
               </div>
             </Card>
 

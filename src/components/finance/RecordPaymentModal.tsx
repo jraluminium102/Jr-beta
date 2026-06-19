@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { baht } from "@/lib/format";
 import { Search, X } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 import type { PaymentType, PaymentChannel } from "@/lib/database.types";
 
 type JobOpt = { id: string; job_code: string; customer_name: string; total_amount?: number | null; status: string };
@@ -119,7 +120,7 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
             </div>
             <div>
               <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="dt">วันที่รับ</label>
-              <input id="dt" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${field} tnum [&::-webkit-calendar-picker-indicator]:invert`} />
+              <DateField id="dt" value={date} onChange={(iso) => setDate(iso)} className={field} aria-label="วันที่รับ" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

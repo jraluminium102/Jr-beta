@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { baht } from "@/lib/money";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 
 // ─────────────────────────────────────────────
 // Edit billing total dialog
@@ -364,10 +365,9 @@ export function InstallmentEditor({
                   placeholder="ยอด"
                   className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2 disabled:bg-gray-50 disabled:text-gray-400"
                 />
-                <input
-                  type="date"
+                <DateField
                   value={row.due_date ?? ""}
-                  onChange={(e) => updateRow(idx, "due_date", e.target.value || null)}
+                  onChange={(iso) => updateRow(idx, "due_date", iso || null)}
                   className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2"
                 />
                 <button

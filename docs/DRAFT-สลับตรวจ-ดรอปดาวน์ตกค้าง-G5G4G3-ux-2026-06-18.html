@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟแก้ดรอปดาวน์ตกค้าง — สลับตรวจ G5/G4/G3 · 18 มิ.ย.</title>
+<style>
+  :root{--jr:#c0282d;--jr2:#e23b41;--bg:#f4f4f6;--card:#fff;--line:#e3e3e8;--muted:#777;--ok:#2e7d32;--warn:#e8a200}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);margin:0;color:#222;font-size:15px;line-height:1.5}
+  .wrap{max-width:860px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:8px 0 2px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .case{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:#fff3cd;color:#8a6d00;border:1px solid #ffe08a;margin-bottom:6px}
+  .tag.g5{background:#fde8e8;color:#a01e22;border-color:#f3b6b8}
+  .tag.g4{background:#e6f0fb;color:#1c5aa6;border-color:#b9d4f0}
+  .tag.g3{background:#eaf3ea;color:#2e7d32;border-color:#bcdcbe}
+  .case h2{font-size:16px;margin:4px 0 2px}
+  .where{font-size:12px;color:var(--muted);font-family:monospace;margin-bottom:12px}
+  .cols{display:flex;gap:12px;flex-wrap:wrap}
+  .col{flex:1;min-width:260px;border:1px dashed var(--line);border-radius:10px;padding:12px;background:#fafafb}
+  .col.after{border:1.5px solid var(--jr);background:#fffafa}
+  .lab{font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:8px;color:var(--muted)}
+  .col.after .lab{color:var(--jr)}
+  .optlabel{font-size:13px;font-weight:600;margin-bottom:6px;display:block}
+  select{height:38px;border:1px solid #bbb;border-radius:8px;padding:0 8px;font-size:14px;width:100%;max-width:300px;background:#fff}
+  .chip-group{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{min-height:38px;padding:7px 12px;border:1.5px solid #d6d6db;background:#fff;border-radius:9px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.12s}
+  .chip:hover{border-color:var(--jr2)}
+  .chip.on{border-color:var(--jr);background:var(--jr);color:#fff;font-weight:600}
+  .cdot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.25);display:inline-block;flex:none}
+  .cat-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .cat{padding:6px 12px;border:1.5px solid #d6d6db;background:#fff;border-radius:9px;font-size:13px;cursor:pointer}
+  .cat.on{border-color:var(--jr);background:#fff0f0;color:var(--jr);font-weight:700}
+  .note{font-size:12px;color:var(--muted);margin-top:8px}
+  .pick{font-size:12px;color:var(--ok);margin-top:8px;min-height:16px;font-weight:600}
+  .why{background:#fff8e6;border-left:3px solid var(--warn);padding:8px 12px;border-radius:6px;font-size:13px;margin-top:12px}
+  .foot{font-size:12px;color:var(--muted);text-align:center;margin:20px 0 8px}
+  .summary{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:18px}
+  .summary table{width:100%;border-collapse:collapse;font-size:13px}
+  .summary th,.summary td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .summary th{color:var(--muted);font-weight:600}
+  .x{color:#999;text-decoration:line-through}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔁 ดราฟแก้ "ดรอปดาวน์ตกค้าง" — สลับตรวจ</h1>
+  <div class="sub">Chat A-G1 ตรวจสุ่มทุกกลุ่มตามแม่แบบข้อ 6+8 (ดรอปดาวน์ ≤6 → ชิป · ลิสต์สียาว → ชิป+จุดสี) · เทียบของจริง <code>index.html</code> · chipify รอบที่แล้วทำแค่ G1/G2/G3 · ⛔ ไม่แก้เอง — ดราฟให้ดูแบบที่ควรแก้</div>
+
+  <div class="summary">
+    <table>
+      <tr><th>กลุ่ม</th><th>จุด (control)</th><th>ตอนนี้</th><th>ควรเป็น</th><th>ข้อ</th></tr>
+      <tr><td><b>G5 มุ้ง</b></td><td>สีกรอบมุ้ง <code>o-mscolor</code></td><td class="x">ดรอปดาวน์ ~13 สี</td><td>ชิปหมวด→สี + จุดสี</td><td>6,8</td></tr>
+      <tr><td><b>G4 ตู้อลู</b></td><td>วัสดุฝาตู้ <code>o-cabwall-*-mat</code></td><td class="x">ดรอปดาวน์ 2 ตัว</td><td>ชิป 2 ปุ่ม</td><td>6</td></tr>
+      <tr><td><b>G3 หลังคา</b></td><td>ขนาดรางน้ำ <code>o-gcwidth</code></td><td class="x">ดรอปดาวน์ 3 ตัว</td><td>ชิป + "กรอกเอง"</td><td>6 <i>(เช็คซ้ำ)</i></td></tr>
+    </table>
+  </div>
+
+  <!-- ===== G5 ===== -->
+  <div class="case">
+    <span class="tag g5">🟡 G5 มุ้ง · ข้อ 6+8</span>
+    <h2>สีกรอบมุ้ง — ดรอปดาวน์สียาว → ชิปหมวด + จุดสี</h2>
+    <div class="where">o-mscolor · index.html L4534 · value = COLORS index (ไม่แตะ value/ราคา)</div>
+    <div class="cols">
+      <div class="col">
+        <div class="lab">ตอนนี้ (ดรอปดาวน์)</div>
+        <span class="optlabel">สีกรอบมุ้ง</span>
+        <select>
+          <option>ตามสีบาน (ฟรี)</option>
+          <option>สีเทาซาฮาร่า (ค่าทำสี×0.5)</option>
+          <option>สีดำซาฮาร่า (ค่าทำสี×0.5)</option>
+          <option>สี Aztec gray (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้สต๊อก สักทอง (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้สต๊อก มะฮอกกานี (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้สต๊อก ไวท์โอ๊ค (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้ Oak (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้ Makha (ค่าทำสี×0.5)</option>
+          <option>สีอบพิเศษ (ค่าทำสี×0.5)</option>
+          <option>สีลายไม้อบพิเศษ (ค่าทำสี×0.5)</option>
+          <option>สีชุบ (ค่าทำสี×0.5)</option>
+        </select>
+        <div class="note">กดยากบนมือถือ · เลื่อนหา · ไม่เห็นสี</div>
+      </div>
+      <div class="col after">
+        <div class="lab">เสนอแก้ (ชิปหมวด → สี + จุดสี)</div>
+        <span class="optlabel">สีกรอบมุ้ง</span>
+        <div class="cat-row" id="g5cats"></div>
+        <div class="chip-group" id="g5chips"></div>
+        <div class="pick" id="g5pick">เลือก: ตามสีบาน (ฟรี)</div>
+        <div class="note">แบบเดียวกับสีอลูบาน (.i-color) ที่ทำแล้ว · ค่าเต็มยังลงใบ · จุดสีช่วยมองเร็ว</div>
+      </div>
+    </div>
+    <div class="why">⚙️ <b>วิธีแก้ปลอดภัย:</b> เอา <code>o-mscolor</code> ใส่กลไก drill หมวด+จุดสีเดียวกับ <code>.i-color</code> (COLOR_CATS L1002) หรือใช้ <code>rfChipsSw</code> (L3301 มี <code>.cdot</code> อยู่แล้ว) · ขับด้วย value=COLORS index เดิม → ราคาไม่เพี้ยน</div>
+  </div>
+
+  <!-- ===== G4 ===== -->
+  <div class="case">
+    <span class="tag g4">🟡 G4 ตู้อลู · ข้อ 6</span>
+    <h2>วัสดุฝาตู้ (อลูทึบ/กระจก) — ดรอปดาวน์ 2 ตัว → ชิป</h2>
+    <div class="where">o-cabwall-&lt;ด้าน&gt;-mat · index.html L4511 · 2 ตัวเลือก = ควรเป็นชิปตามมาตรฐาน ≤6</div>
+    <div class="cols">
+      <div class="col">
+        <div class="lab">ตอนนี้ (ดรอปดาวน์)</div>
+        <span class="optlabel">ผนังด้านหน้า</span>
+        <select><option>อลูทึบ</option><option>กระจก</option></select>
+        <div class="note">2 ตัวเลือกแต่ต้องกดเปิด · ช้ากว่าชิป</div>
+      </div>
+      <div class="col after">
+        <div class="lab">เสนอแก้ (ชิป)</div>
+        <span class="optlabel">ผนังด้านหน้า</span>
+        <div class="chip-group" id="g4chips">
+          <button class="chip on" data-v="alu" onclick="g4pick(this)">อลูทึบ</button>
+          <button class="chip" data-v="glass" onclick="g4pick(this)">กระจก</button>
+        </div>
+        <div class="pick" id="g4pick">เลือก: อลูทึบ</div>
+        <div class="note">กดทีเดียวเห็นทั้ง 2 · ใช้ <code>chipifySelect</code> generic ที่มีอยู่ (เพิ่ม <code>o-cabwall-*-mat</code> เข้า CHIPIFY list)</div>
+      </div>
+    </div>
+    <div class="why">⚙️ <b>วิธีแก้ปลอดภัยสุด:</b> เพิ่ม class นี้เข้า <code>CHIPIFY_SELECTS</code> (L3314) — กลไก generic ขับด้วย selectedIndex อยู่แล้ว ราคาไม่เพี้ยน (ระวัง class มี <code>-ด้าน-</code> dynamic ต้อง match ด้วย prefix)</div>
+  </div>
+
+  <!-- ===== G3 ===== -->
+  <div class="case">
+    <span class="tag g3">🟢 G3 หลังคา · ข้อ 6 (เช็คซ้ำ)</span>
+    <h2>ขนาดรางน้ำ — ดรอปดาวน์ 3 ตัว → ชิป + "กรอกเอง"</h2>
+    <div class="where">o-gcwidth · index.html L1534 · 15 ซม. / 30 ซม. / กรอกเอง</div>
+    <div class="cols">
+      <div class="col">
+        <div class="lab">ตอนนี้ (ดรอปดาวน์)</div>
+        <span class="optlabel">ขนาดราง (กว้าง)</span>
+        <select><option>15 ซม. (M)</option><option>30 ซม. (L)</option><option>กรอกเอง...</option></select>
+      </div>
+      <div class="col after">
+        <div class="lab">เสนอแก้ (ชิป)</div>
+        <span class="optlabel">ขนาดราง (กว้าง)</span>
+        <div class="chip-group" id="g3chips">
+          <button class="chip on" data-v="0.15" onclick="g3pick(this)">15 ซม. (M)</button>
+          <button class="chip" data-v="0.30" onclick="g3pick(this)">30 ซม. (L)</button>
+          <button class="chip" data-v="0" onclick="g3pick(this)">กรอกเอง</button>
+        </div>
+        <div class="pick" id="g3pick">เลือก: 15 ซม. (M)</div>
+      </div>
+    </div>
+    <div class="why">🔎 <b>เช็คซ้ำ:</b> "กรอกเอง" ต้องโชว์ช่องกรอกตัวเลขเพิ่มเมื่อกด — generic chipify รองรับ (fire change เดิม) แต่ต้องเทสว่าช่องกรอกเด้งจริง · ถ้าซับซ้อนเก็บเป็นดรอปดาวน์ได้ (priority ต่ำ)</div>
+  </div>
+
+  <div class="foot">⚠️ ไฟล์ดราฟภายใน — ห้ามอัปสาธารณะ · ⛔ ส่งคิวกลางก่อน ไม่ส่ง Chat B ตรง · G5/G4 = แจ้งแชทเจ้าของกลุ่มยืนยัน</div>
+</div>
+
+<script>
+// ---- G5 drill หมวด → สี + จุดสี (เลียน COLOR_CATS ของจริง) ----
+var G5={
+  'มาตรฐาน':[['ตามสีบาน (ฟรี)','#dddddd']],
+  'ซาฮาร่า/เมทัล':[['สีเทาซาฮาร่า','#6e6f71'],['สีดำซาฮาร่า','#2b2b2b'],['สี Aztec gray','#8a8d90']],
+  'ลายไม้':[['สักทอง','#b5793a'],['มะฮอกกานี','#5a2d1f'],['ไวท์โอ๊ค','#c9a877'],['Oak โอ๊ค','#b88a55'],['Makha มะค่า','#6b4226'],['ลายไม้อบพิเศษ','#8a5a30']],
+  'อบพิเศษ (มีรหัส)':[['สีอบพิเศษ','#9aa0a6'],['สีชุบ','#c0a062']]
+};
+var g5cur='มาตรฐาน';
+function g5render(){
+  var cr=document.getElementById('g5cats'); cr.innerHTML='';
+  Object.keys(G5).forEach(function(k){
+    var b=document.createElement('button'); b.className='cat'+(k===g5cur?' on':''); b.textContent=k;
+    b.onclick=function(){g5cur=k; g5render();}; cr.appendChild(b);
+  });
+  var ch=document.getElementById('g5chips'); ch.innerHTML='';
+  G5[g5cur].forEach(function(it){
+    var b=document.createElement('button'); b.className='chip';
+    b.innerHTML='<span class="cdot" style="background:'+it[1]+'"></span>'+it[0];
+    b.onclick=function(){ ch.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); document.getElementById('g5pick').textContent='เลือก: '+it[0]; };
+    ch.appendChild(b);
+  });
+}
+g5render();
+// ---- G4 / G3 simple ----
+function g4pick(b){ document.querySelectorAll('#g4chips .chip').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); document.getElementById('g4pick').textContent='เลือก: '+b.textContent; }
+function g3pick(b){ document.querySelectorAll('#g3chips .chip').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); document.getElementById('g3pick').textContent='เลือก: '+b.textContent; }
+</script>
+</body>
+</html>

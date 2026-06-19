@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ UX G6 — กล่องสเปควัสดุห้อง (ก่อน→หลัง)</title>
+<style>
+  *{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;box-sizing:border-box;}
+  body{color:#1a1a1a;font-size:14px;line-height:1.5;margin:0;background:#eef0f3;padding:18px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{color:#B3151D;font-size:21px;margin:0 0 2px;}
+  .meta{color:#666;font-size:12px;margin:0 0 6px;}
+  .lead{font-size:13px;color:#444;background:#fff;border-left:4px solid #B3151D;padding:9px 13px;border-radius:0 8px 8px 0;margin-bottom:16px;}
+  h2{color:#fff;background:#B3151D;font-size:15px;margin:18px 0 8px;padding:5px 11px;border-radius:6px;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  /* จำลองหน้าฟอร์มห้องจริง */
+  .phone{background:#fff;border-radius:14px;border:1px solid #d8d8de;padding:0;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+  .phone-top{font-size:11px;color:#888;text-align:center;padding:5px;background:#f7f7f9;border-bottom:1px solid #eee;}
+  .ph{font-weight:700;color:#1F2937;font-size:15px;padding:11px 14px;background:#f4f5f7;border-bottom:1px solid #eee;}
+  .body{padding:12px 14px;}
+  .row{display:flex;align-items:center;gap:9px;margin:9px 0;flex-wrap:wrap;font-size:13px;}
+  .rl{min-width:88px;font-weight:600;color:#444;}
+  .inp{border:1px solid #cfcfd6;border-radius:7px;padding:5px 9px;width:62px;font-size:13px;background:#fafafa;}
+  .u{color:#888;font-size:12px;}
+  .sel{border:1px solid #cfcfd6;border-radius:7px;padding:5px 9px;font-size:13px;background:#fafafa;}
+  .chk{display:flex;align-items:center;gap:7px;font-weight:600;color:#333;border-top:1px dashed #ddd;padding-top:9px;margin-top:9px;}
+  .pr{display:flex;justify-content:space-between;background:#fff7f7;border:1px solid #f3d6d6;border-radius:7px;padding:6px 11px;margin-top:8px;font-size:13px;}
+  .pr b{color:#B3151D;}
+  .newbox{border:2px solid #15803D;border-radius:10px;padding:10px 12px;margin:6px 0 12px;background:#f3fdf6;}
+  .newbox .nh{font-weight:700;color:#15803D;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .tag-new{background:#15803D;color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:18px;border:1.5px solid #ccc;background:#fff;cursor:pointer;font-size:12.5px;user-select:none;transition:.12s;}
+  .chip:hover{border-color:#15803D;}
+  .chip.on{background:#15803D;color:#fff;border-color:#15803D;}
+  .dot{width:12px;height:12px;border-radius:50%;border:1px solid #999;display:inline-block;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .dim{opacity:.45;}
+  .arrow{text-align:center;font-size:28px;color:#15803D;align-self:center;}
+  /* preview ใบ */
+  .invbox{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:13px 16px;margin-top:14px;font-size:13px;line-height:1.7;}
+  .invbox .lbl{color:#fca5a5;font-weight:700;font-size:12px;}
+  .invbox .bk{color:#fca5a5;font-weight:700;margin-top:7px;}
+  .note{font-size:12px;color:#92400E;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 12px;margin-top:6px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px;background:#fff;}
+  th,td{border:1px solid #ddd;padding:7px 10px;text-align:left;vertical-align:top;}
+  th{background:#fbeeee;color:#B3151D;}
+  .q{background:#fff;border:1px solid #f0c070;border-radius:8px;padding:6px 11px;margin:6px 0;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>ดราฟ UX G6 — กล่อง "สเปควัสดุห้อง" (สี/กระจก)</h1>
+<div class="meta">17 มิ.ย. 2026 · ทาง 2 (แก้กลาง) · เลียนหน้าฟอร์มจริง · แชท G6 (READ-ONLY ส่งคิวกลาง)</div>
+<div class="lead"><b>จุดที่วาง:</b> หน้า <b>"⚡ อุปกรณ์เสริม (ทั้งห้อง)"</b> (หน้าที่ 3 ของห้อง · `elecPage` · ที่เดียวกับงานพื้น/พัดลม/ไฟ) — เพิ่มกล่องสเปคไว้ <b>บนสุด</b> เลือกครั้งเดียวใช้ทั้งห้อง</div>
+
+<h2>① หน้า "อุปกรณ์เสริม" — ก่อน → หลัง</h2>
+<div class="cols">
+  <!-- ก่อน -->
+  <div>
+    <div style="font-size:12px;color:#c00;font-weight:700;margin-bottom:5px;">❌ ก่อน (ตอนนี้)</div>
+    <div class="phone">
+      <div class="phone-top">หน้า 3/4 · ห้องต่อเติม</div>
+      <div class="ph">⚡ อุปกรณ์เสริม (ทั้งห้อง)</div>
+      <div class="body">
+        <div class="row"><span class="rl">ดาวน์ไลท์</span><span class="inp">0</span><span class="u">ดวง ×1,500</span></div>
+        <div class="row"><span class="rl">สวิตช์</span><span class="inp">0</span><span class="u">จุด ×1,000</span></div>
+        <div class="chk"><input type="checkbox"> 🟫 งานปูพื้น</div>
+        <div class="chk"><input type="checkbox"> 🌀 พัดลมดูดอากาศ + ฝาครอบ</div>
+      </div>
+    </div>
+    <div class="note">ไม่มีที่เลือก <b>สีอลู</b> กับ <b>กระจกหลัก</b> เลย → ใบออกสเปค "สีมาตรฐาน/กระจก 6มม." ตายตัวทุกใบ</div>
+  </div>
+  <!-- หลัง -->
+  <div>
+    <div style="font-size:12px;color:#15803D;font-weight:700;margin-bottom:5px;">✅ หลัง (เพิ่มกล่องสเปค)</div>
+    <div class="phone">
+      <div class="phone-top">หน้า 3/4 · ห้องต่อเติม</div>
+      <div class="ph">⚡ อุปกรณ์เสริม (ทั้งห้อง)</div>
+      <div class="body">
+        <div class="newbox">
+          <div class="nh">🎨 สเปควัสดุห้อง <span class="tag-new">เพิ่มใหม่</span></div>
+          <div class="row"><span class="rl">สีอลู</span>
+            <div class="chips" id="c-color">
+              <span class="chip on" data-v="ดำ"><span class="dot" style="background:#111"></span>ดำ</span>
+              <span class="chip" data-v="ขาว"><span class="dot" style="background:#fff"></span>ขาว</span>
+              <span class="chip" data-v="เทาซาฮาร่า"><span class="dot" style="background:#8a8275"></span>เทาซาฮาร่า</span>
+              <span class="chip" data-v="ชา"><span class="dot" style="background:#5b4636"></span>ชา</span>
+              <span class="chip" data-v="ลายไม้"><span class="dot" style="background:#a9712f"></span>ลายไม้</span>
+            </div>
+          </div>
+          <div class="row"><span class="rl">กระจกหลัก</span>
+            <div class="chips" id="c-glass">
+              <span class="chip on" data-v="ลามิเนตใส ฟิล์มเขียว 5+5 มม.">ลามิเนต 5+5</span>
+              <span class="chip" data-v="เขียวตัดแสง หนา 6 มม.">เขียว 6มม.</span>
+              <span class="chip" data-v="ใส หนา 6 มม.">ใส 6มม.</span>
+              <span class="chip" data-v="ฝ้า หนา 6 มม.">ฝ้า 6มม.</span>
+              <span class="chip" data-v="เทมเปอร์ใส หนา 8 มม.">เทมเปอร์ 8มม.</span>
+            </div>
+          </div>
+        </div>
+        <div class="row dim"><span class="rl">ดาวน์ไลท์</span><span class="inp">0</span><span class="u">ดวง ×1,500</span></div>
+        <div class="row dim"><span class="rl">สวิตช์</span><span class="inp">0</span><span class="u">จุด ×1,000</span></div>
+        <div class="chk dim"><input type="checkbox"> 🟫 งานปูพื้น</div>
+        <div class="chk dim"><input type="checkbox"> 🌀 พัดลมดูดอากาศ + ฝาครอบ</div>
+      </div>
+    </div>
+    <div class="note">เลือกครั้งเดียว → สเปคสี/กระจกขึ้นในใบจริงตามที่เลือก (กดชิปดูใบเปลี่ยนสด ↓)</div>
+  </div>
+</div>
+
+<h2>② ใบเสนอราคา — บล็อก "รายละเอียด" เปลี่ยนสดตามที่เลือก</h2>
+<div class="invbox">
+  <div class="lbl">ห้องต่อเติม (กั้นห้องกระจก) · 1 ชุด</div>
+  <div>- ด้าน A · บานเลื่อน ยูโร · ช่องแสงติดตาย</div>
+  <div class="bk">รายละเอียด</div>
+  <div id="o1" style="margin-left:4px;">- อลูมิเนียม สีดำ</div>
+  <div id="o2" style="margin-left:4px;">- กระจกลามิเนตใส ฟิล์มเขียว 5+5 มม.</div>
+</div>
+
+<h2>③ จุดต่าง / ต้องเคาะ (เทียบทาง 2 vs ของจริง)</h2>
+<table>
+<tr><th>เรื่อง</th><th>ดราฟนี้เสนอ</th><th>หมายเหตุ</th></tr>
+<tr><td>ตำแหน่งวาง</td><td>บนสุดหน้า "อุปกรณ์เสริม (ทั้งห้อง)"</td><td>ที่เดียวกับพื้น/พัดลม/ไฟ · ไม่แทรกรายด้าน (เลือกครั้งเดียว)</td></tr>
+<tr><td>รูปแบบ control</td><td>ชิป + จุดสี (แบบที่พี่นัทชอบ)</td><td>ถ้ารุ่นสีเยอะขึ้น → เปลี่ยนเป็นดรอปดาวน์ได้ · ตอนนี้ 5 ตัวพอดีชิป</td></tr>
+<tr><td>ค่าเริ่มต้น (default)</td><td>ถ้าไม่เลือก = "สีมาตรฐาน / กระจก 6มม." (เดิม)</td><td>ใบเก่าไม่พัง · golden ไม่เพี้ยน</td></tr>
+<tr><td>ผูกราคาไหม</td><td>❌ ไม่ผูก — เป็นแค่ข้อความสเปค</td><td>ราคากระจก/สี คิดในระดับบานอยู่แล้ว · กล่องนี้แค่ทำให้ "ใบเขียนตรง"</td></tr>
+</table>
+<div class="q">🟡 <b>เคาะ 1:</b> รายการสี/กระจกในชิป — เอาตามนี้ หรือเพิ่ม/ตัดรุ่นไหน? (ตอนนี้ใส่ตัวที่เจอบ่อยในใบจริง)</div>
+<div class="q">🟡 <b>เคาะ 2:</b> เคสมีกระจก 2 ชนิด (เช่นใบโอ๋ ฝ้า+ลามิเนต) — ทาง 2 ออกกระจกหลักตัวเดียว · ตัวที่ 2 ให้เซลล์พิมพ์เสริมในหมายเหตุ โอเคไหม (หรืออยากได้ช่อง "กระจกรอง" เพิ่ม)</div>
+
+</div>
+<script>
+(function(){
+  var sel={color:'ดำ',glass:'ลามิเนตใส ฟิล์มเขียว 5+5 มม.'};
+  function bind(boxId,key,outId,prefix){
+    document.querySelectorAll('#'+boxId+' .chip').forEach(function(c){
+      c.addEventListener('click',function(){
+        document.querySelectorAll('#'+boxId+' .chip').forEach(function(x){x.classList.remove('on');});
+        c.classList.add('on'); sel[key]=c.dataset.v;
+        document.getElementById(outId).textContent='- '+prefix+sel[key];
+      });
+    });
+  }
+  bind('c-color','color','o1','อลูมิเนียม สี');
+  bind('c-glass','glass','o2','กระจก');
+})();
+</script>
+</body>
+</html>

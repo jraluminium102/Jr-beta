@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ UX G2 — สีอบแบบงานบาน + ชื่อสีพิเศษ (18 มิ.ย. · เคาะแล้ว)</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.55}
+  .wrap{max-width:680px;margin:0 auto;padding:16px 14px 60px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .hd h1{margin:0 0 4px;font-size:19px;font-weight:700}
+  .hd p{margin:0;font-size:13px;opacity:.92}
+  .legend{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#374151}
+  .legend b{color:#b3122a}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px 15px;margin-bottom:13px}
+  .card.fire{border-color:#b3122a;box-shadow:0 0 0 1px #b3122a inset}
+  .ctitle{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:3px}
+  .badge{font-size:11px;font-weight:600;background:#fdecef;color:#b3122a;border-radius:20px;padding:2px 9px}
+  .sub{font-size:12px;color:#6b7280;margin:0 0 11px}
+  .rlabel{font-size:12.5px;color:#6b7280;margin-bottom:7px;font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:0 14px;border:1.5px solid #d1d5db;border-radius:11px;background:#fff;font-size:13.5px;font-weight:600;color:#374151;cursor:pointer;transition:.12s}
+  .chip:hover{border-color:#b3122a99}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .chip.on.sp{background:#b3122a;color:#fff}
+  .dot{width:15px;height:15px;border-radius:50%;border:1px solid #00000022;flex:0 0 auto}
+  .caret{font-size:11px;opacity:.6;margin-left:1px}
+  .sp-mark{font-size:11px;font-weight:700;background:#fff3cd;color:#9a6b00;border-radius:5px;padding:1px 5px;margin-left:2px}
+  .chip.on.sp .sp-mark{background:#ffffff33;color:#fff}
+  .subwrap{display:none;margin-top:10px;padding:10px 11px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px}
+  .subwrap .rlabel{margin-bottom:6px;color:#475569}
+  .subchip{min-height:38px;font-size:13px}
+  .namewrap{display:none;margin-top:12px;padding:11px;background:#fff7f8;border:1px solid #f3c4cd;border-radius:10px}
+  .namewrap label{display:block;color:#b3122a;font-size:12.5px;font-weight:600;margin-bottom:5px}
+  .namewrap input{width:100%;height:42px;border:1px solid #d1d5db;border-radius:9px;padding:0 11px;font-size:14px;font-family:inherit}
+  .namewrap input:focus{outline:none;border-color:#b3122a;box-shadow:0 0 0 3px #b3122a22}
+  .bill{margin-top:12px;background:#0f172a;color:#e2e8f0;border-radius:9px;padding:10px 12px;font-family:"SFMono-Regular",Consolas,"Courier New",monospace;font-size:13px;min-height:20px}
+  .bill .cap{display:block;color:#64748b;font-size:11px;margin-bottom:4px;font-family:inherit}
+  .bill .ok{color:#fff}.bill .nm{color:#fca5a5;font-weight:700}.bill .warn{color:#fbbf24;font-weight:700}.bill .dim{color:#94a3b8}
+  .foot{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 15px;font-size:13px;color:#374151;margin-top:6px}
+  .foot h3{margin:0 0 7px;font-size:14px;color:#b3122a}
+  .foot ul{margin:0;padding-left:18px}.foot li{margin-bottom:5px}
+  code{background:#f1f5f9;border-radius:5px;padding:1px 5px;font-size:12px;color:#b3122a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>สีอบ G2 — เลือกแบบงานบาน (เท่าที่แต่ละจุดมีจริง) + ชื่อสีพิเศษ</h1>
+    <p>มติ 18 มิ.ย.: ตัวเดียว = กดจบ · มี ≥2 = กดเลือกต่อ (เกิดแค่ซาฮาร่าของเลื่อน/เปิด-ปิด) · อบพิเศษ+Fuji = กรอกชื่อสี</p>
+  </div>
+
+  <div class="legend">
+    👉 ตัวเลือกสี <b>รายจุด = เท่าที่ select นั้นมีจริง</b> (ไม่เติมให้ครบเหมือนบาน) · ตัด “เมทัล” แล้ว · <b>เลื่อน/เปิด-ปิด</b> กด <b>ซาฮาร่า</b> ถึงจะมีให้เลือกต่อ (เทา/ดำ/Aztec) · กด <b>อบพิเศษ / Fuji</b> = ช่องกรอกชื่อสีโผล่
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="foot">
+    <h3>กติกา (อ่านตัวเลือกจริงจาก index.html · ไม่เดา)</h3>
+    <ul>
+      <li>4 หมวดตามงานบาน: มาตรฐาน (ขาว/ดำ/ไม่อบสี) · ซาฮาร่า · ลายไม้สต๊อก · อบพิเศษ (COLOR_CATS L1004)</li>
+      <li><b>ในหมวดมีตัวเดียว → โชว์ชิปตัวจริงเลย กดจบ</b> · มี ≥2 → ชิปหมวด กดแล้วเลือกต่อ</li>
+      <li>ช่องกรอกชื่อสีโผล่เฉพาะ: สีอบพิเศษ · สีลายไม้อบพิเศษ · <b>Fuji</b> (มติ 18 มิ.ย.)</li>
+      <li>เป็นวิธีเลือก+ข้อความ <b>ไม่แตะสูตรราคา</b> — เรตคิดเท่าเดิม (golden 149 ยืนยัน)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ตัวเลือกจริงรายจุด (index.html L4527/4564/4528/4541/4546) · sub=กดเลือกต่อ(≥2) · sp=กรอกชื่อ
+var WHITE='#ffffff',BLACK='#222',NONE='#c4c6c8',SAH='#6b6e70',WOOD='#a9712f',SPC='#b3122a',WSPC='#7a4a1e',FUJI='#5b3a1e';
+var SAH_SUB=[['สีเทาซาฮาร่า','#6b6e70'],['สีดำซาฮาร่า','#3a3c3e'],['สี Aztec gray','#8a8d8f']];
+var CprodSP=[{nm:'สีอบขาว',dot:WHITE},{nm:'สีดำ',dot:BLACK},{nm:'ไม่อบสี',dot:NONE},
+  {nm:'สีเทาซาฮาร่า',dot:SAH},{nm:'สีลายไม้สต๊อก',dot:WOOD},
+  {nm:'สีอบพิเศษ',dot:SPC,special:1},{nm:'สีลายไม้อบพิเศษ',dot:WSPC,special:1}];
+var POINTS=[
+  {icon:'🚪',title:'ประตูรั้ว',cls:'o-gfin',note:'ข้อความล้วน (ไม่มีเรต)',chips:CprodSP},
+  {icon:'🪵',title:'ระแนง (บังตา/ผนัง)',cls:'o-finish',note:'ตัวเลือกตามรุ่น (p.fin) · บางรุ่นไม่มีลายไม้สต๊อก',chips:CprodSP},
+  {icon:'🌿',title:'ระแนงพิเศษ · เกล็ดอลู',cls:'o-bgcolor',note:'ไม่มี “ไม่อบสี”',
+    chips:[{nm:'สีอบขาว',dot:WHITE},{nm:'สีดำ',dot:BLACK},{nm:'สีเทาซาฮาร่า',dot:SAH},{nm:'สีลายไม้สต๊อก',dot:WOOD},
+      {nm:'สีอบพิเศษ',dot:SPC,special:1},{nm:'สีลายไม้อบพิเศษ',dot:WSPC,special:1}]},
+  {icon:'↔️',title:'ระแนงพิเศษ · เลื่อน / หมุนเปิด-ปิด',cls:'o-bsfinish · o-bocfinish',note:'หมวดซาฮาร่ามี 3 ตัว → กดเลือกต่อ · มี Fuji',
+    chips:[{nm:'สีอบขาว',dot:WHITE},{nm:'สีดำ',dot:BLACK},{nm:'ไม่อบสี',dot:NONE},
+      {nm:'ซาฮาร่า',dot:SAH,sub:SAH_SUB},{nm:'สีลายไม้สต๊อก',dot:WOOD},
+      {nm:'สีอบพิเศษ',dot:SPC,special:1},{nm:'Fuji',dot:FUJI,special:1},{nm:'สีลายไม้อบพิเศษ',dot:WSPC,special:1}]}
+];
+var box=document.getElementById('cards');
+POINTS.forEach(function(p,i){
+  var main=p.chips.map(function(c,ci){
+    var sp=!!c.special, sub=!!c.sub;
+    return '<button type="button" class="chip'+(ci===0?' on':'')+(sp?' sp':'')+'" data-i="'+i+'" data-ci="'+ci+'">'+
+      '<span class="dot" style="background:'+c.dot+'"></span>'+c.nm+
+      (sub?'<span class="caret">▾</span>':'')+(sp?'<span class="sp-mark">พิเศษ</span>':'')+'</button>';
+  }).join('');
+  var c=document.createElement('div'); c.className='card';
+  c.innerHTML=
+    '<div class="ctitle"><span>'+p.icon+'</span>'+p.title+' <span class="badge">'+p.cls+'</span></div>'+
+    '<p class="sub">'+p.note+'</p>'+
+    '<div class="rlabel">สีอบ / ผิว</div><div class="chips main">'+main+'</div>'+
+    '<div class="subwrap" data-sub="'+i+'"><div class="rlabel">เลือกตัวจริง</div><div class="chips subrow"></div></div>'+
+    '<div class="namewrap" data-name="'+i+'"><label>🎨 ระบุชื่อสี / รหัส (ขึ้นบนใบเสนอราคา)</label><input type="text" data-name-in="'+i+'" placeholder="เช่น Golden Teak SMS"></div>'+
+    '<div class="bill" data-bill="'+i+'"><span class="cap">บรรทัดในใบเสนอราคา (บล็อกรายละเอียด)</span><span class="dim">— สีอบขาว</span></div>';
+  box.appendChild(c);
+});
+var STATE={};
+function render(i){
+  var card=box.children[i], st=STATE[i], chip=POINTS[i].chips[st.ci];
+  var subwrap=card.querySelector('[data-sub]'), subrow=card.querySelector('.subrow');
+  var namewrap=card.querySelector('[data-name]'), inp=card.querySelector('[data-name-in]'), bill=card.querySelector('[data-bill]');
+  card.classList.toggle('fire',!!chip.special);
+  if(chip.sub){ subwrap.style.display='block';
+    subrow.innerHTML=chip.sub.map(function(s,si){return '<button type="button" class="chip subchip'+(st.sub===si?' on':'')+'" data-i="'+i+'" data-si="'+si+'"><span class="dot" style="background:'+s[1]+'"></span>'+s[0]+'</button>';}).join('');
+  } else subwrap.style.display='none';
+  if(chip.special) namewrap.style.display='block'; else { namewrap.style.display='none'; inp.value=''; }
+  var cap='<span class="cap">บรรทัดในใบเสนอราคา (บล็อกรายละเอียด)</span>',out;
+  if(chip.special){ var nm=inp.value.trim();
+    out=nm?('<span class="ok">— '+chip.nm+' (<span class="nm">'+nm.replace(/</g,'&lt;')+'</span>)</span>'):('<span class="warn">⚠ — '+chip.nm+' · ระบุชื่อสี</span>');
+  } else if(chip.sub){ out=(st.sub==null)?('<span class="warn">⚠ — '+chip.nm+' · เลือกตัวจริง</span>'):('<span class="ok">— '+chip.sub[st.sub][0]+'</span>');
+  } else out='<span class="dim">— '+chip.nm+'</span>';
+  bill.innerHTML=cap+out;
+}
+box.addEventListener('click',function(e){ var b=e.target.closest('.chip'); if(!b)return; var i=+b.dataset.i;
+  if(b.dataset.ci!==undefined){ STATE[i]={ci:+b.dataset.ci,sub:null}; box.children[i].querySelectorAll('.main .chip').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); }
+  else if(b.dataset.si!==undefined){ STATE[i].sub=+b.dataset.si; box.children[i].querySelectorAll('.subrow .chip').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); }
+  render(i);
+});
+box.addEventListener('input',function(e){ if(e.target.dataset.nameIn!==undefined) render(+e.target.dataset.nameIn); });
+for(var i=0;i<POINTS.length;i++){ STATE[i]={ci:0,sub:null}; render(i); }
+</script>
+</body>
+</html>

@@ -5,6 +5,9 @@ import Icon from "@/components/Icon";
 import { thaiDate, dayLabel, type QueueSales } from "@/lib/queue";
 import type { AvailRow } from "@/components/queue/QueueCalendarView";
 
+// สถานะการลบรายการ (deletingId = id ที่กำลัง DELETE อยู่)
+
+
 const KIND_META: Record<string, { th: string; cls: string; isLeave: boolean }> = {
   LEAVE_FULL:  { th: "ลาทั้งวัน", cls: "bg-red-50 text-red-700 border-red-200", isLeave: true },
   LEAVE_HALF:  { th: "ลาครึ่งวัน", cls: "bg-orange-50 text-orange-700 border-orange-200", isLeave: true },
@@ -25,14 +28,16 @@ function monthLabel(m: string): string {
 }
 
 export function LeaveSummaryModal({
-  salesList, avail, month: initialMonth, onClose,
+  salesList, avail, month: initialMonth, onClose, onDelete,
 }: {
   salesList: QueueSales[];
   avail: AvailRow[];
   month: string;
   onClose: () => void;
+  onDelete?: (id: string) => Promise<void>;
 }) {
   const [month, setMonth] = useState(initialMonth);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const nameOf = (id: string) => salesList.find((s) => s.id === id)?.name ?? "—";
 
   const rows = useMemo(() =>
@@ -100,12 +105,31 @@ export function LeaveSummaryModal({
             {rows.map((a) => {
               const k = KIND_META[a.kind] ?? { th: a.kind, cls: "bg-gray-100 text-gray-600 border-gray-200" };
               const half = a.kind === "LEAVE_HALF" && a.half ? (a.half === "AM" ? " เช้า" : " บ่าย") : "";
+              const isDeleting = deletingId === a.id;
               return (
                 <div key={a.id} className="flex items-center gap-2 text-sm py-1 border-b border-gray-100 last:border-0">
                   <span className="tabular-nums text-ink-2 w-28 shrink-0">{dayLabel(a.date)} {thaiDate(a.date)}</span>
                   <span className="font-semibold text-ink">{nameOf(a.sales_id)}</span>
-                  <span className={`ml-auto inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] ${k.cls}`}>{k.th}{half}</span>
-                  {a.note && <span className="text-xs text-ink-3 max-w-[120px] truncate" title={a.note}>{a.note}</span>}
+                  <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] ${k.cls}`}>{k.th}{half}</span>
+                  {a.note && <span className="text-xs text-ink-3 max-w-[100px] truncate" title={a.note}>{a.note}</span>}
+                  {onDelete && (
+                    <button
+                      disabled={isDeleting}
+                      onClick={async () => {
+                        if (!window.confirm(`ลบรายการ "${k.th}${half}" ของ ${nameOf(a.sales_id)} (${thaiDate(a.date)}) ?`)) return;
+                        setDeletingId(a.id);
+                        try {
+                          await onDelete(a.id);
+                        } finally {
+                          setDeletingId(null);
+                        }
+                      }}
+                      className="ml-auto press rounded-lg p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      aria-label="ลบรายการวันลานี้"
+                    >
+                      {isDeleting ? <Icon name="refresh" size={13} className="animate-spin" /> : <Icon name="trash" size={13} />}
+                    </button>
+                  )}
                 </div>
               );
             })}

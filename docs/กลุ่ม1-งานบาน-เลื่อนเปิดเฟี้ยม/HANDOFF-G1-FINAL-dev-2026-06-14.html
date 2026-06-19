@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+pre{background:#0f172a;color:#e2e8f0;padding:8px 10px;border-radius:6px;font-size:9.5px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.r{color:#B3151D;font-weight:700;}.f{color:#92400e;font-weight:700;}
+</style></head><body>
+
+<h1>HANDOFF G1 → แชท B (แก้ index.html) · ฉบับสมบูรณ์</h1>
+<p class="sub">2026-06-14 · ไฟล์ <code>public/calculator/index.html</code> · งานออกแบบ G1 เสร็จแล้ว → implement ฟอร์ม + แก้ engine ตามนี้ · ห้ามเดาราคา ยึด REF</p>
+
+<div class="box"><b>เป้าหมาย:</b> ทำฟอร์มกรอกงานบาน G1 ตามดราฟ <code>DRAFT-G1-ux-FULL-2026-06-13.html</code> ลงใน index.html — 6 ปุ่มชนิด · 11 ขั้น · ออปชั่นกรองตามแบบ · โชว์ราคาทุกจุด · ผสมบาน · OPTION หมวด · + แก้ engine 6 จุด<br>
+<b>ไฟล์อ้างอิง (โฟลเดอร์ docs/กลุ่ม1-งานบาน-เลื่อนเปิดเฟี้ยม/):</b> ดราฟ UX = <code>DRAFT-G1-ux-FULL</code> · ดีไซน์ = <code>UXDESIGN-G1-MASTER</code> · ออปชั่น = <code>SUMMARY-...MASTER</code> · ราคา = <code>PRICECHECK-G1</code> · เรตดิบ = <code>REF-G1-pricing-data</code></div>
+
+<h2>1) หลักการ (สำคัญสุด — ห้ามพัง engine)</h2>
+<div class="good"><b>Non-breaking:</b> UI ใหม่ (ปุ่ม/ชิป/กล่องย่อย) เป็น "หน้าบ้าน" — เมื่อเลือก ให้ <b>เซ็ตค่า control เดิม (<code>.i-prod</code> / <code>.o-*</code> / <code>.i-w</code>…) + ยิง <code>Event('change')</code></b> → readItem/calcUnit/genQuote เดิมทำงานต่อเอง · <b>ห้ามเปลี่ยน id/value ที่ logic อ่าน</b> · แก้ engine เฉพาะ 6 จุดในข้อ 4</div>
+
+<h2>2) โครงฟอร์ม 11 ขั้น (บน→ล่าง)</h2>
+<table>
+<tr><th>ขั้น</th><th>ทำ</th></tr>
+<tr><td>1 กลุ่มงาน</td><td>ปุ่ม G1–G7 (มีอยู่แล้ว)</td></tr>
+<tr><td>2 ชนิดบาน</td><td><b>ปุ่มการ์ด 6 กลุ่ม</b> → ชิปรุ่นย่อย (ดูข้อ 3) → set <code>.i-prod</code>+change</td></tr>
+<tr><td>3 ลักษณะการเปิด</td><td>ชิป (กรองตามแบบ · บานเลื่อน opentype · กระทุ้ง awn_mode) — control เดิม</td></tr>
+<tr><td>4 ขนาด&จำนวน</td><td>กว้าง·สูง·จำนวนบาน·<b>บานเปิด→ติดตาย(auto = บาน−เปิด)</b>·จำนวนชุด</td></tr>
+<tr><td>+ ผสมบาน</td><td>list บานย่อย (ดูข้อ 5) — ใช้ระบบ subitem/บานย่อยเดิม (เหมือนกั้นห้อง)</td></tr>
+<tr><td>5 สี&กระจก</td><td>สีอลู (i-color 13) · กระจก 6 กลุ่ม→ความหนา (i-glass จัดกลุ่ม)</td></tr>
+<tr><td>6 ออปชั่นหลัก</td><td>ธรณี/โช๊ค/ราง/มอเตอร์ (choice เดิม กรองตามแบบ)</td></tr>
+<tr><td>7 เสริมบานกระจก</td><td><b>มือจับ/มุ้ง/ล็อก + คาดตาราง/ลูกฟูก</b> (ย้ายมือจับ/มุ้งมารวมที่นี่ · กล่องย่อยกรอก)</td></tr>
+<tr><td>8 อุปกรณ์เสริม</td><td>ดรอปดาวเดียว (ครอบวงกบ/ดรอปพื้น/รื้อ) — ย้าย o-fcsides มาที่นี่</td></tr>
+<tr><td>9 OPTION ลูกค้า</td><td>เลือกหมวด→รายการย่อย กดเติม แก้/ลบ/กรอกเอง (ดูข้อ 6)</td></tr>
+<tr><td>10 ตำแหน่ง/หมายเหตุ</td><td>i-position · i-note</td></tr>
+<tr><td>11 ออปชั่นทั้งใบ</td><td>ท้ายสุด · หมวดเหมือนข้อ 9 · ±/ชุด (groupOptText/groupOptDelta เดิม)</td></tr>
+</table>
+
+<h2>3) ปุ่ม 6 กลุ่ม → รุ่นย่อย (ยึดดราฟ G6 FULL เป๊ะ)</h2>
+<table>
+<tr><th>ปุ่ม</th><th>รุ่น (id)</th></tr>
+<tr><td>บานเลื่อน</td><td>sliding_euro · sliding_sms · inner_top_stack · inner_top_slimlux · sliding_eseries(ยกเลิก) <span class="f">— ตัด inner_bottom_sms ออก (ใช้เซมิยูโร+รางเตี้ย)</span></td></tr>
+<tr><td>บานเปิด</td><td>casement_euro · casement_xseries · casement_velora · casement_flush_solid · casement_inset_solid · awning_euro · pivot</td></tr>
+<tr><td>บานเฟี้ยม</td><td>folding_euro · folding · folding_xseries</td></tr>
+<tr><td>ติดตาย/เปลือย</td><td>fixed_glass · frameless_fixed · frameless_door · <b>+ ผนังเบาทึบ (ข้อ 4.6)</b></td></tr>
+<tr><td>ดัดโค้ง</td><td>curved_double · curved_single · curved_fixed · curved_slim</td></tr>
+<tr><td>อื่นๆ/พิเศษ</td><td>shower · lift_sms · lift_aluinch · pc_door_2 · pc_door_4 · ykk_vent/exhido/tostem</td></tr>
+</table>
+<p class="sub">เส้นคาด/ลูกฟูก/คอมโพสิท <b>ไม่อยู่ในปุ่ม</b> แล้ว → เป็นออปชั่นบนบาน (คาดตาราง o-gridmark · ลูกฟูก/อลูทึบ = แผ่นทึบ)</p>
+
+<h2>4) แก้ engine — 6 จุด (ธง dev)</h2>
+<table>
+<tr><th>#</th><th>จุด</th><th>แก้</th></tr>
+<tr><td class="r">1</td><td>โซลิด <code>o-solidlight</code> (L2943)</td><td>เอาช่องแสงออก → โซลิดใช้ "ผสมบาน" แทน (ตามมติ)</td></tr>
+<tr><td class="r">2</td><td>คาดตาราง <code>o-gridmark</code> (L3002)</td><td>เอา 'ติดตาย' + 'บานเปลือย' ออกจาก exclude list → เปิดให้คาดตารางใช้ได้ (ยกเว้น shower)</td></tr>
+<tr><td class="r">3</td><td>บานเฟี้ยม</td><td>เพิ่มช่อง <b>เปิดขวา/เปิดซ้าย</b> (ปัจจุบันมีแค่จำนวนบาน)</td></tr>
+<tr><td class="r">4</td><td>มุ้ง 3 กลุ่ม</td><td>จัด o-mosq เป็น 3 กลุ่ม (เฟรม/จีบ/ม้วน) · <b>เพิ่ม imp28(ตีนตะขาบ)+imp30(แม่เหล็ก) เข้า o-mosq ของบาน</b> (12→14) · imp33/35 = ผ้ามุ้ง (ซ่อนจากชนิด) · <b>folding_xseries ตัดมุ้ง</b></td></tr>
+<tr><td class="r">5</td><td>บานเปลือย NO_COLOR_CATS (L960)</td><td>ถ้าจะโชว์สีเฟรม → เอา 'บานเปลือย' ออกจาก list (ใช้ framecolor)</td></tr>
+<tr><td class="r">6</td><td>ผนังเบา FAM_CATS['4']</td><td>เพิ่มผนังเบาทึบเข้ากลุ่มติดตาย G1 เหมือน FAM_CATS['6'] (ดูข้อ 4.6)</td></tr>
+</table>
+<div class="warn"><b>เลิกใช้:</b> แผ่นทึบล่าง (o-solidlower+sl-color) = ซ้ำกับลูกฟูก → ตัด/รวมเป็นออปชั่นลูกฟูก · เส้นคาด(grid_bars)/ลูกฟูก(rn89-92)/คอมโพสิท เลิกเป็น product เดี่ยว → เป็นออปชั่นบนบาน</div>
+
+<h3>4.6 ผนังเบาทึบ (profile solid · เหมือน G6 เป๊ะ)</h3>
+<div class="box">3 วัสดุ: <b>สมาร์ทบอร์ด / คอมโพสิต / Isowall</b> · เลือกวัสดุ + ทาสี(กรอกราคา) + ฉนวน(+600/ตร.ม.) · <b>ไม่มีกระจก/คาดตาราง/ลูกฟูก</b> · ขนาด กว้าง·สูง · อุปกรณ์เสริม ครอบวงกบ+รื้อ · ฐาน WALL_EXT/INT/ISOWALL (REF) · อ้างอิง <code>docs/งานข้ามกลุ่ม-G1ถึงG6/COMPARE-G1-vs-G6</code></div>
+
+<h2>5) ผสมบาน (บานย่อย) — ใช้ระบบบานย่อย/ชุดเดิม</h2>
+<div class="box">list เพิ่มแถว: <b>ชนิด</b> (ติดตาย/เลื่อน/เปิด/เฟี้ยม/กระทุ้ง/<b>อลูทึบ-ลูกฟูก</b>) + กว้าง×สูง → ราคาคิดออโต้ (เรตชนิด×พื้นที่) แก้ได้ · <b>แต่ละบานย่อยกด ⚙ เพิ่มออปชั่น/อุปกรณ์เสริมในตัวได้</b> (มุ้ง/มือจับ/ครอบวงกบ/คาดตาราง/รื้อ) · ใบเสนอราคาแตกเป็นบรรทัด "บานย่อย: X" + "↳ ออปชั่น" · ใช้ addSubItem/SUBITEM_TYPES + grouped render เดิม</div>
+
+<h2>6) OPTION หมวด (ข้อ 9) + ออปชั่นทั้งใบ (ข้อ 11)</h2>
+<div class="box">เลือก <b>หมวด</b> (สี/ผิว · กระจก·ความหนา · กระจก·ชนิด · มือจับ/ล็อก · มุ้ง · งานเพิ่ม · ส่วนลด) → <b>รายการย่อยเยอะ</b> (มีกระจกความหนาครบ) → กดเติม → row แก้ชื่อ+ราคา/ลบได้ · ข้อ 11 ใช้หมวดเดียวกัน แต่ ±/ชุด คิดทีเดียวท้ายใบ (groupOptDelta) · เก็บ remark preset เดิมได้</div>
+
+<h2>7) การโชว์ราคา 4 ระดับ (หัวใจ — ทำให้ครบ)</h2>
+<table>
+<tr><td>① บนชิป</td><td>ออปชั่นที่กดติด ขึ้น ฿ ตรงชิป (·เรต=ขั้นบันได)</td></tr>
+<tr><td>② ต่อกล่อง</td><td>subtotal มุมขวาหัวข้อทุก section (โชว์เสมอ)</td></tr>
+<tr><td>③ พรีวิวใบ</td><td>แยกราคาทุกรายการ + รวม/ชุด + ออปชั่นทั้งใบ + ยอดรวม</td></tr>
+<tr><td>④ แถบล่าง</td><td>ยอดรวม sticky</td></tr>
+</table>
+<p class="sub">ราคาจริง=กระจก(s×พื้นที่)/ลูกฟูก/อลูทึบ/มือจับ/โช๊ค/มอเตอร์/คาดตาราง/ดรอปพื้น · "ตามเรตจริง"(engine คิด)=สีอลู/มุ้ง/ครอบวงกบ · <b>ทุกช่องราคาแก้ได้</b></p>
+
+<h2>8) Definition of Done</h2>
+<div class="good"><ol style="margin:3px 0;">
+<li>เลือกชนิดจาก 6 ปุ่ม→รุ่น → product ถูกตัว · ฟอร์ม 11 ขั้นครบ · ออปชั่นกรองตามแบบ (ที่ไม่มีโชว์ "ไม่มี")</li>
+<li>มือจับ/มุ้ง อยู่เสริมบานกระจก · มุ้ง 3 กลุ่ม (เฟรมเล็ก/ใหญ่อยู่ครบ) · ครอบวงกบอยู่อุปกรณ์เสริม</li>
+<li>ผสมบาน + ออปชั่นในบานย่อย + อลูทึบ ทำงาน · OPTION หมวดครบ(มีกระจกความหนา) · ออปชั่นทั้งใบท้ายสุด</li>
+<li>ผนังเบาทึบ 3 วัสดุในกลุ่มติดตาย · บานเปิดยูโร auto ติดตาย · ลูกฟูกกรอกขนาดเอง</li>
+<li>โชว์ราคา 4 ระดับครบ · แยกราคาทุกรายการ · Σ = ยอดรวม เป๊ะ</li>
+<li>แก้ engine 6 จุด · <b>ยอดเงิน/เทสเดิมไม่เพี้ยน · gate เขียว</b></li>
+<li>เปิดเบราว์เซอร์จริง กดเองครบ (ไม่เคลมผ่านจาก jsdom)</li>
+</ol>
+เสร็จกลับให้ Chat A verify (เปิด preview จริง)</div>
+
+<p class="sub">ทำทีละส่วนได้ (UX ก่อน → engine 6 จุด) · ส่ง Chat A ตรวจแต่ละรอบ · G2–G5 จะตามมาใช้แม่แบบ UXDESIGN เดียวกัน</p>
+</body></html>

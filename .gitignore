@@ -30,3 +30,6 @@ scripts/seedgen.mjs
 supabase/scripts/import-customers.sql
 supabase/scripts/wipe-customer-data.sql
 public/review/
+
+# ไฟล์ชั่วคราว/PII — ห้าม commit
+tmp/

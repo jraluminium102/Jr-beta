@@ -100,12 +100,16 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   if (error || !data) throw new Error(error?.message ?? "Update failed");
 
   // แก้แบบหลังวัด → เด้งงานกลับหน้าเขียนแบบ (ตั้ง design_state=REVISING + นับรอบแก้)
+  // นับ +1 เฉพาะตอนเพิ่งเข้า REVISING (กันนับซ้ำกับ send-revise/กดซ้ำ — guard เดียวกับ send-revise route)
   if (body.status === "REVISING" && data.job_id) {
     const { data: jobRow } = await ctx.supabase
-      .from("jobs").select("design_revise_count").eq("id", data.job_id).single();
+      .from("jobs").select("design_state, design_revise_count").eq("id", data.job_id).single();
+    const alreadyRevising = jobRow?.design_state === "REVISING";
     await ctx.supabase.from("jobs").update({
       design_state: "REVISING",
-      design_revise_count: (jobRow?.design_revise_count ?? 0) + 1,
+      design_revise_count: alreadyRevising
+        ? (jobRow?.design_revise_count ?? 0)
+        : (jobRow?.design_revise_count ?? 0) + 1,
     }).eq("id", data.job_id);
   }
 

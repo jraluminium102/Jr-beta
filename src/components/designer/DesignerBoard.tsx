@@ -3,23 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { Card } from "@/components/ui";
+import DateField from "@/components/ui/DateField";
 import type { DesignState } from "@/lib/database.types";
 import type { DesignerOption } from "@/app/(app)/designer/page";
 import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
 import DesignerSchedule from "@/components/designer/DesignerSchedule";
+import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
   { state: "NOT_STARTED",      th: "ยังไม่เริ่ม",       dot: "#94a3b8" },
   { state: "DRAWING",          th: "กำลังเขียนแบบ",     dot: "#2563eb" },
-  { state: "PENDING_CUSTOMER", th: "รอลูกค้า",          dot: "#d97706" },
+  { state: "PENDING_CUSTOMER", th: "รอเซลล์ตรวจแบบ",          dot: "#d97706" },
   { state: "REVISING",         th: "กำลังแก้ไข",        dot: "#B3151D" },
   { state: "DONE",             th: "เสร็จแล้ว",         dot: "#059669" },
 ];
 const STATE_TH: Record<DesignState, string> = {
   NOT_STARTED:      "ยังไม่เริ่ม",
   DRAWING:          "กำลังเขียนแบบ",
-  PENDING_CUSTOMER: "รอลูกค้า",
+  PENDING_CUSTOMER: "รอเซลล์ตรวจแบบ",
   REVISING:         "กำลังแก้ไข",
   DONE:             "เสร็จแล้ว",
 };
@@ -38,6 +40,10 @@ type Job = {
   design_end: string | null;
   design_revise_count: number;
   current_stage: number;
+  assess_date: string | null;
+  onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
+  on_hold: boolean;
+  on_hold_reason: string | null;
   overdue: boolean;
 };
 type Kpi = {
@@ -89,6 +95,8 @@ export default function DesignerBoard({
   const [err, setErr] = useState("");
   const [moving, setMoving] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [holdModal, setHoldModal] = useState<Job | null>(null);
+  const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -233,6 +241,22 @@ export default function DesignerBoard({
     }
   }
 
+  // unhold: ดึงงานกลับมาทำ
+  async function unholdJob(job: Job) {
+    setUnholdBusy(job.id);
+    setErr("");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/unhold`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "ดึงงานกลับไม่สำเร็จ");
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "ดึงงานกลับไม่สำเร็จ");
+    } finally {
+      setUnholdBusy(null);
+    }
+  }
+
   const byColumn = useMemo(() => {
     const map: Record<DesignState, Job[]> = {
       NOT_STARTED: [],
@@ -252,13 +276,29 @@ export default function DesignerBoard({
       : jobs;
     const cutoff = doneCutoff();
     for (const j of filtered) {
+      // งาน on_hold ไม่เข้าคอลัมน์
+      if (j.on_hold) continue;
       if (j.design_state === "DONE") {
         // Board DONE column: show only recent completions (design_end within last 45 days)
         if (!j.design_end || j.design_end < cutoff) continue;
       }
       map[j.design_state]?.push(j);
     }
+    // ช่อง "เสร็จแล้ว": เรียงตามวันเสร็จจากเก่า→ใหม่ → งานที่กดเสร็จล่าสุดอยู่ล่างสุด
+    map.DONE.sort((a, b) => (a.design_end ?? "").localeCompare(b.design_end ?? ""));
     return map;
+  }, [jobs, cardSearch]);
+
+  // งาน on_hold (filter ตาม cardSearch ด้วย)
+  const heldJobs = useMemo(() => {
+    const q = cardSearch.trim().toLowerCase();
+    return jobs.filter(
+      (j) =>
+        j.on_hold &&
+        (q === "" ||
+          j.customer_name.toLowerCase().includes(q) ||
+          (j.job_code ?? "").toLowerCase().includes(q)),
+    );
   }, [jobs, cardSearch]);
 
   // Total DONE count across all visible cards
@@ -357,18 +397,28 @@ export default function DesignerBoard({
       {loading ? (
         <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>
       ) : tab === "board" ? (
-        <BoardView
-          byColumn={byColumn}
-          canWrite={canWrite}
-          moving={moving}
-          assigning={assigning}
-          designers={designers}
-          onMove={moveTo}
-          onAssign={assignDesigner}
-          onDueDate={updateDueDate}
-          onReceivedDate={updateReceivedDate}
-          onDesignerAdded={reloadDesigners}
-        />
+        <>
+          <BoardView
+            byColumn={byColumn}
+            canWrite={canWrite}
+            moving={moving}
+            assigning={assigning}
+            designers={designers}
+            onMove={moveTo}
+            onAssign={assignDesigner}
+            onDueDate={updateDueDate}
+            onReceivedDate={updateReceivedDate}
+            onDesignerAdded={reloadDesigners}
+            onHold={canWrite ? (job) => setHoldModal(job) : undefined}
+          />
+          {/* ── Section พัก (HOLD) ── */}
+          <HoldSection
+            jobs={heldJobs}
+            canWrite={canWrite}
+            unholdBusy={unholdBusy}
+            onUnhold={unholdJob}
+          />
+        </>
       ) : (
         <DesignerSchedule
           jobs={jobs}
@@ -385,6 +435,18 @@ export default function DesignerBoard({
           designers={designers}
           onClose={() => setShowAddModal(false)}
           onAdded={async () => { await load(); }}
+        />
+      )}
+
+      {/* ── HoldModal ── */}
+      {holdModal && (
+        <HoldModal
+          jobId={holdModal.id}
+          jobCode={holdModal.job_code}
+          customerName={holdModal.customer_name}
+          zone="light"
+          onDone={async () => { setHoldModal(null); await load(); }}
+          onClose={() => setHoldModal(null)}
         />
       )}
     </div>
@@ -412,6 +474,7 @@ function BoardView({
   onDueDate,
   onReceivedDate,
   onDesignerAdded,
+  onHold,
 }: {
   byColumn: Record<DesignState, Job[]>;
   canWrite: boolean;
@@ -423,21 +486,23 @@ function BoardView({
   onDueDate: (job: Job, date: string) => void;
   onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
+  onHold?: (job: Job) => void;
 }) {
+  // auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
       {COLUMNS.map((col) => {
         const items = byColumn[col.state] ?? [];
         return (
-          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-h-[120px]">
-            <div className="flex items-center justify-between mb-2.5 px-1">
+          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-w-0 min-h-[120px] lg:max-h-[calc(100dvh-250px)]">
+            <div className="flex items-center justify-between mb-2.5 px-1 shrink-0">
               <span className="text-sm font-semibold text-brand-dark flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
                 {col.th}
               </span>
               <span className="text-xs text-ink-3 tnum">{items.length}</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto lg:flex-1 lg:min-h-0 pr-0.5">
               {items.length === 0 ? (
                 <p className="text-[12px] text-ink-3 px-1 py-3 text-center">— ไม่มีงาน —</p>
               ) : (
@@ -454,6 +519,7 @@ function BoardView({
                     onDueDate={onDueDate}
                     onReceivedDate={onReceivedDate}
                     onDesignerAdded={onDesignerAdded}
+                    onHold={onHold}
                   />
                 ))
               )}
@@ -477,6 +543,7 @@ function JobCard({
   onDueDate,
   onReceivedDate,
   onDesignerAdded,
+  onHold,
 }: {
   job: Job;
   canWrite: boolean;
@@ -488,6 +555,7 @@ function JobCard({
   onDueDate: (job: Job, date: string) => void;
   onReceivedDate: (job: Job, date: string) => void;
   onDesignerAdded: () => Promise<void>;
+  onHold?: (job: Job) => void;
 }) {
   // toast feedback สำหรับ #37 (บันทึกกำหนดส่ง)
   const [dueSaved, setDueSaved] = useState(false);
@@ -504,32 +572,34 @@ function JobCard({
     setReceivedDateVal(job.design_received_date ?? "");
   }, [job.design_received_date]);
 
-  async function handleDueBlur() {
-    const val = dueDateVal;
-    if (!val || val === (job.design_due_date ?? "")) return;
-    // ถ้าวันที่กรอกเป็นอดีต — ยืนยันก่อน (#37)
-    if (val < TODAY) {
-      const ok = window.confirm(
-        `กำหนดส่งที่กรอก (${val}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`
-      );
-      if (!ok) {
-        setDueDateVal(job.design_due_date ?? "");
-        return;
-      }
+  // บันทึกทันทีเมื่อเลือก/พิมพ์วัน (รองรับทั้งปฏิทิน+พิมพ์มือ) · ใช้ค่า iso ตรงๆ กัน state ค้าง
+  // ทำงานทุกสถานะรวม "ยังไม่เริ่ม" (วางแผนล่วงหน้าได้)
+  async function saveDue(iso: string) {
+    if (iso === (job.design_due_date ?? "")) return;
+    if (iso && iso < TODAY) {
+      const ok = window.confirm(`กำหนดเสร็จที่เลือก (${iso}) เป็นวันในอดีต\nยืนยันบันทึกหรือไม่?`);
+      if (!ok) { setDueDateVal(job.design_due_date ?? ""); return; }
     }
-    await onDueDate(job, val);
+    await onDueDate(job, iso);
     setDueSaved(true);
     setTimeout(() => setDueSaved(false), 2000);
   }
 
-  async function handleReceivedBlur() {
-    const val = receivedDateVal;
-    if (val === (job.design_received_date ?? "")) return;
-    await onReceivedDate(job, val);
+  async function saveReceived(iso: string) {
+    if (iso === (job.design_received_date ?? "")) return;
+    await onReceivedDate(job, iso);
+    // auto กำหนดเสร็จ = ได้รับแบบ + 2 วัน (ถ้ายังไม่เคยตั้งกำหนด · แก้ทีหลังได้)
+    if (iso && !(job.design_due_date ?? "")) {
+      const d = new Date(iso + "T00:00:00");
+      d.setDate(d.getDate() + 2);
+      const due2 = d.toISOString().slice(0, 10);
+      setDueDateVal(due2);
+      await onDueDate(job, due2);
+    }
   }
 
   return (
-    <div className="glass-soft rounded-xl p-3 text-sm">
+    <div className="glass-soft rounded-xl p-3 text-sm w-full min-w-0 overflow-hidden">
       {/* job_code + ปุ่มดูงาน (#26) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -559,6 +629,13 @@ function JobCard({
       <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
         {job.customer_name}
       </div>
+      {/* (0044) ป้ายมัดจำหน้างาน · ด่วน — แสดงเฉพาะงานที่ยังไม่เสร็จแบบ */}
+      {job.onsite_deposit && job.design_state !== "DONE" && (
+        <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+          <Icon name="warn" size={11} />
+          มัดจำหน้างาน · ด่วน
+        </div>
+      )}
 
       {canWrite ? (
         <div className="mt-2 space-y-1.5">
@@ -571,17 +648,35 @@ function JobCard({
             onDesignerAdded={onDesignerAdded}
           />
 
-          {/* design_due_date date input — editable (#37: confirm อดีต + toast) */}
+          {/* เข้าประเมิน (read-only · ฟิกวันจากหน้าคิวงาน) */}
+          {job.assess_date && (
+            <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
+              <span className="shrink-0">เข้าประเมิน:</span>
+              <span className="tnum">{thDate(job.assess_date)}</span>
+            </div>
+          )}
+
+          {/* วันได้รับแบบ — editable (ขึ้นก่อนกำหนดเสร็จ) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-ink-3 shrink-0">กำหนด:</span>
-            <input
-              type="date"
-              value={dueDateVal}
-              onChange={(e) => setDueDateVal(e.target.value)}
+            <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
+            <DateField
+              value={receivedDateVal}
+              onChange={(iso) => { setReceivedDateVal(iso); saveReceived(iso); }}
               disabled={assigning}
-              onBlur={handleDueBlur}
-              aria-label="กำหนดส่งแบบ"
-              className={`flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum ${
+              aria-label="วันได้รับแบบ"
+              className="flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
+            />
+          </div>
+
+          {/* กำหนดเสร็จ = ได้รับแบบ + 2 วัน (auto-คำนวณ · แก้ทีหลังได้) — #37 confirm อดีต + toast */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-ink-3 shrink-0">กำหนดเสร็จ:</span>
+            <DateField
+              value={dueDateVal}
+              onChange={(iso) => { setDueDateVal(iso); saveDue(iso); }}
+              disabled={assigning}
+              aria-label="กำหนดเสร็จ"
+              className={`flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
                 job.overdue ? "text-brand font-semibold" : "text-ink-2"
               }`}
             />
@@ -590,20 +685,6 @@ function JobCard({
             ) : job.overdue ? (
               <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
             ) : null}
-          </div>
-
-          {/* (0032) วันได้รับแบบ — editable */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
-            <input
-              type="date"
-              value={receivedDateVal}
-              onChange={(e) => setReceivedDateVal(e.target.value)}
-              disabled={assigning}
-              onBlur={handleReceivedBlur}
-              aria-label="วันได้รับแบบ"
-              className="flex-1 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 tnum text-ink-2"
-            />
           </div>
 
           {/* design_start → design_end (read-only แสดงไทม์ไลน์ทำแบบ) */}
@@ -627,13 +708,25 @@ function JobCard({
               </option>
             ))}
           </select>
+
+          {/* ปุ่ม พักงาน */}
+          {onHold && (
+            <button
+              type="button"
+              onClick={() => onHold(job)}
+              className="w-full press rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 min-h-[36px] transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+              aria-label={`พักงาน ${job.job_code ?? ""}`}
+            >
+              พักงาน
+            </button>
+          )}
         </div>
       ) : (
         <>
           <div
             className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}
           >
-            กำหนด: {thDate(job.design_due_date)}
+            กำหนดเสร็จ: {thDate(job.design_due_date)}
             {job.overdue && " · เลยกำหนด"}
           </div>
           <div
@@ -643,6 +736,82 @@ function JobCard({
             ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ─── Hold Section ─────────────────────────────────────────────────────────────
+function HoldSection({
+  jobs,
+  canWrite,
+  unholdBusy,
+  onUnhold,
+}: {
+  jobs: Job[];
+  canWrite: boolean;
+  unholdBusy: string | null;
+  onUnhold: (job: Job) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (jobs.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="press w-full flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm font-semibold hover:bg-amber-100 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+        aria-expanded={open}
+      >
+        <Icon name="warn" size={15} />
+        <span>พัก (HOLD)</span>
+        <span className="tnum text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">
+          {jobs.length}
+        </span>
+        <span className="ml-auto">
+          <Icon name={open ? "chevron-up" : "chevron-down"} size={16} />
+        </span>
+      </button>
+
+      {open && (
+        <div className="glass rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-amber-50/60 border-b border-amber-100">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">Job / ลูกค้า</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-800">เหตุผล</th>
+                {canWrite && <th className="px-4 py-2.5" />}
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((j) => (
+                <tr key={j.id} className="border-b border-gray-100 last:border-0 hover:bg-amber-50/40 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-ink tnum text-sm">{j.job_code ?? "—"}</div>
+                    <div className="text-xs text-ink-2 mt-0.5 truncate max-w-[180px]">{j.customer_name}</div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-ink-3 max-w-[200px]">
+                    {j.on_hold_reason ?? "—"}
+                  </td>
+                  {canWrite && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onUnhold(j)}
+                        disabled={unholdBusy === j.id}
+                        className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold bg-brand text-white shadow-brand hover:bg-brand/90 min-h-[36px] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand/40"
+                        aria-label={`เอางาน ${j.job_code ?? ""} กลับมาทำ`}
+                      >
+                        {unholdBusy === j.id ? "กำลังดึงกลับ…" : "เอากลับมาทำ"}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

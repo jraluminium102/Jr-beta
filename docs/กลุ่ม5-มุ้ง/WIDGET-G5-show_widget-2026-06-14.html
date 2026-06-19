@@ -1,0 +1,375 @@
+<!-- ======================================================
+  WIDGET G5 มุ้ง — show_widget fragment
+  ใช้: วาง style+content+script ตรงนี้ ไม่มี doctype/html/head/body
+  .pbar ใช้ position:sticky (ไม่ใช่ fixed)
+  2026-06-14
+====================================================== -->
+
+<style>
+/* ===== G5 Widget: ฟอร์มกรอกงานมุ้ง ===== */
+:root{--red:#B3151D;--gray:#6B7280;--line:#E5E7EB;--amber:#BA7517;--info:#185FA5;}
+*{box-sizing:border-box;margin:0;padding:0;}
+.g5w-body{font-family:'Noto Sans Thai',Sarabun,'Leelawadee UI',sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.g5w-banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.g5w-page{max-width:560px;margin:0 auto;padding:14px 14px 24px;}
+.g5w-pg{font-size:17px;font-weight:700;color:var(--red);margin:6px 0 2px;}
+.g5w-sub{color:var(--gray);font-size:12px;margin-bottom:6px;}
+.g5w-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:11px;}
+.g5w-et{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.g5w-et .no{width:20px;height:20px;border-radius:50%;background:#fbe9ea;color:var(--red);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;}
+.g5w-et .bc{font-size:11px;color:var(--gray);font-weight:400;}
+.g5w-secsum{margin-left:auto;font-size:12.5px;color:var(--red);font-weight:700;white-space:nowrap;}
+.g5w-grow{display:flex;flex-wrap:wrap;gap:7px;}
+.g5w-gbtn{min-height:34px;padding:0 13px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.g5w-gbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+.g5w-btngrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.g5w-mainbtn{min-height:58px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12.5px;font-weight:600;color:#374151;font-family:inherit;}
+.g5w-mainbtn .ic{font-size:20px;}.g5w-mainbtn .cnt{font-size:10px;font-weight:400;color:var(--gray);}
+.g5w-mainbtn.on{background:var(--red);color:#fff;border-color:var(--red);}.g5w-mainbtn.on .cnt{color:#f3c6c9;}
+.g5w-subchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.g5w-sc{min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;}
+.g5w-sc.on{background:var(--red);color:#fff;border-color:var(--red);}
+.g5w-brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}.g5w-brow:last-child{margin-bottom:0;}
+.g5w-rl{font-size:12px;color:var(--gray);min-width:62px;font-weight:600;flex:0 0 62px;}
+.g5w-bgrp{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.g5w-bgrp .opt{min-height:36px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.g5w-bgrp .opt.on{background:var(--red);color:#fff;border-color:var(--red);}
+.g5w-szwrap{display:flex;flex-wrap:wrap;gap:8px;}
+.g5w-fld{display:flex;flex-direction:column;gap:2px;}.g5w-fld label{font-size:10.5px;color:var(--gray);font-weight:600;}
+.g5w-fld input{height:40px;width:74px;border:1.5px solid var(--line);border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;}
+.g5w-a{min-height:40px;padding:0 13px;border:1.5px solid var(--line);border-radius:21px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+.g5w-a.on{background:var(--red);color:#fff;border-color:var(--red);}
+.g5w-a .cp{font-size:11px;opacity:.9;}
+.g5w-subwrap{margin-top:8px;display:flex;flex-direction:column;gap:7px;}
+.g5w-subpanel{border:1px solid #eadfc2;background:#FFFBEF;border-radius:10px;padding:9px 11px;}
+.g5w-sphead{font-size:12px;font-weight:700;color:#92660b;margin-bottom:7px;}
+.g5w-spfields{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;}
+.g5w-spfields .g5w-fld input{height:34px;width:64px;}
+.g5w-pf2{height:34px;width:90px;border:1.5px solid #d6c290;border-radius:8px;padding:0 7px;font-size:13px;text-align:right;font-family:inherit;background:#fff;}
+.g5w-txt{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:13px;font-family:inherit;}
+.g5w-warn{background:#fff7ed;border-left:3px solid #fb923c;padding:5px 9px;font-size:11px;color:#9a3412;border-radius:0 7px 7px 0;margin-top:7px;display:none;}
+.g5w-info-tag{background:#e0f0ff;border-left:3px solid #3b82f6;padding:5px 9px;font-size:11px;color:#1e40af;border-radius:0 7px 7px 0;margin-top:7px;}
+.g5w-qcard{background:#fff;border:2px solid var(--red);border-radius:12px;padding:13px;margin-top:11px;}
+.g5w-qline{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #eee;gap:10px;}
+.g5w-qline.base{font-weight:700;}.g5w-qline span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;}
+.g5w-qsum{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--red);margin-top:7px;padding-top:7px;border-top:2px solid #f0d2d4;}
+.g5w-demo{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;padding:6px 11px;font-size:11.5px;margin-bottom:8px;}
+/* pbar: sticky ตามมาตรฐาน G1 — ไม่ใช่ fixed */
+.g5w-pbar{position:sticky;left:0;right:0;bottom:0;background:var(--red);color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;}
+.g5w-pbar .big{font-size:20px;font-weight:700;}
+.g5w-hidden{display:none;}
+</style>
+
+<!-- ===== CONTENT ===== -->
+<div class="g5w-body">
+<div class="g5w-banner">DRAFT G5 FULL · มุ้ง · แม่แบบ G1 (โชว์ราคาทุกกล่อง) · เรตจริง</div>
+<div class="g5w-page">
+  <h2 class="g5w-pg">ฟอร์มกรอกงานมุ้ง — G5</h2>
+  <div class="g5w-sub">เลือกชนิดมุ้ง → รุ่นย่อย · ผ้ามุ้ง/สีกรอบกรองตามรุ่น · โชว์ราคาทุกจุด</div>
+  <div class="g5w-demo">⚠ เรตฐาน + ผ้ามุ้ง(กันแมว+800/ม. / กันหนู+1,200/ม. / นิรภัย) = จริง · สีกรอบ = แก้ได้ · กดเล่นได้</div>
+  <div class="g5w-card"><div class="g5w-et"><span class="no">1</span>กลุ่มงาน</div><div class="g5w-grow" id="g5w-groups"></div></div>
+  <div class="g5w-card">
+    <div class="g5w-et"><span class="no">2</span>ชนิดมุ้ง <span class="bc" id="g5w-bc2"></span></div>
+    <div class="g5w-btngrid" id="g5w-fam"></div>
+    <div class="g5w-subchips g5w-hidden" id="g5w-vars"></div>
+  </div>
+  <div id="g5w-form" class="g5w-hidden"></div>
+  <div id="g5w-quote" class="g5w-hidden"></div>
+</div>
+<div class="g5w-pbar g5w-hidden" id="g5w-pbar">
+  <span>ยอดรวมทั้งใบ (เดโม)</span><span class="big" id="g5w-ptotal">฿0</span>
+</div>
+</div>
+
+<!-- ===== SCRIPT ===== -->
+<script>
+(function(){
+// ===== เรตจริงมุ้ง (index.html L523-548) =====
+var RATES={
+ IMP21:[[0.0,1.5,2200],[1.5,2.5,1700],[2.5,9999,1500]],
+ IMP22:[[0.0,1.5,1200],[1.5,2.5,1000],[2.5,9999,850]],
+ IMP23:[[0.0,1.5,4500],[1.5,3.0,3700],[3.0,9999,3500]],
+ IMP28:[[1.0,9999,4500]],IMP29:[[1.0,9999,3000]],IMP30:[[1.0,9999,1500]],
+ IMP31:[[0.0,1.5,3500],[1.5,3.0,3200],[3.0,9999,3000]],
+ IMP32:[[0.01,9999,5000]],
+ MJ_BLACKOUT:[[0.01,9999,2500]],MJ_SD_TWOWAY:[[0.01,9999,4000]],
+ MJ_KEEPRAIL_TWOWAY:[[0.01,9999,6000]],MJ_KEEPRAIL_HONEY:[[0.01,9999,4500]],
+ MJ_SD_BASIC:[[0.01,9999,2500]],MJ_SCREEN_SAFETY:[[0.01,9999,5000]],
+ MJ_KICK_150:[[0.01,9999,7500]],MJ_KICK_300:[[0.01,9999,7500]],MJ_KICK_600:[[0.01,9999,7500]]
+};
+function rateOf(a,k){var t=RATES[k];if(!t)return 0;if(a<t[0][0])return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];}return t[t.length-1][2];}
+function roundUp(x){return Math.ceil(x/1000)*1000;}
+
+// FAM: frame:1 = โชว์ Section 3+5 · mscolor:1 = โชว์ Section 6 · flatMin:1 = clamp A≥1
+var FAM=[
+ {k:'frame',n:'มุ้งเฟรม',ic:'▣',items:[
+   {id:'imp21',n:'เฟรมเล็ก ไฟเบอร์',rates:'IMP21',frame:1,mscolor:1,min_door:2400,min_window:1200},
+   {id:'imp22',n:'เฉพาะเฟรมเล็ก ติดตาย',rates:'IMP22',frame:1,mscolor:1,min_door:1500,min_window:800},
+   {id:'imp23',n:'เฟรมใหญ่ (รับผ้านิรภัย)',rates:'IMP23',frame:1,mscolor:1,min_door:7200,min_window:4800,safety:1},
+   {id:'imp30',n:'แม่เหล็ก พับเปิดได้',rates:'IMP30',min:0,flatMin:1}]},
+ {k:'pleat',n:'มุ้งจีบ',ic:'〰',items:[
+   {id:'imp28',n:'จีบ ตีนตะขาบ ไฟเบอร์',rates:'IMP28',min:0,mscolor:1,flatMin:1},
+   {id:'mj_sd_basic',n:'จีบ SD พื้นฐาน (ขาว/ดำ)',rates:'MJ_SD_BASIC',min:3500,mscolor:1}]},
+ {k:'honey',n:'จีบ ม่านรังผึ้ง',ic:'▦',items:[
+   {id:'mj_blackout',n:'Blackout รังผึ้งทึบแสง',rates:'MJ_BLACKOUT',min:3500,mscolor:1},
+   {id:'mj_sd_twoway',n:'SD + ทูเวย์',rates:'MJ_SD_TWOWAY',min:4000,mscolor:1},
+   {id:'mj_keep_twoway',n:'ตีนตะขาบ + ทูเวย์',rates:'MJ_KEEPRAIL_TWOWAY',min:6000,mscolor:1},
+   {id:'mj_keep_honey',n:'ตีนตะขาบ + รังผึ้ง',rates:'MJ_KEEPRAIL_HONEY',min:4500,mscolor:1}]},
+ {k:'roll',n:'มุ้งม้วน',ic:'⊞',items:[
+   {id:'imp29',n:'ม้วน ไฟเบอร์',rates:'IMP29',min:0,mscolor:1,flatMin:1},
+   {id:'mj_kick_150',n:'ม้วนเตะ 150 (กว้าง≤1.5)',rates:'MJ_KICK_150',min:15000,mscolor:1,maxW:1.5},
+   {id:'mj_kick_300',n:'ม้วนเตะ 300 (1.5-3.0)',rates:'MJ_KICK_300',min:37500,mscolor:1,maxW:3.0},
+   {id:'mj_kick_600',n:'ม้วนเตะ 600 (3.0-6.0)',rates:'MJ_KICK_600',min:67500,mscolor:1,maxW:6.0}]},
+ {k:'safety',n:'มุ้งนิรภัย',ic:'🛡',items:[
+   {id:'imp31',n:'จีบนิรภัย สแตน 0.8มม.',rates:'IMP31',min:0},
+   {id:'imp32',n:'จีบนิรภัย 0.8 เสริมวงกบ',rates:'IMP32',min:0},
+   {id:'mj_screen_safety',n:'จีบนิรภัย (กรอบทำสีไม่ได้)',rates:'MJ_SCREEN_SAFETY',min:5000}]}
+];
+var FABRIC=[
+ {k:'fiber',n:'ไฟเบอร์ (เทา/ดำ)',mode:'free'},
+ {k:'cat',n:'กันแมว/หมา +800/ตร.ม.',mode:'cat'},
+ {k:'rat',n:'กันหนูสแตน +1,200/ตร.ม.',mode:'rat'},
+ {k:'safety',n:'นิรภัยสแตน 304 (เฉพาะเฟรมใหญ่)',mode:'safety'}
+];
+var DEFP={'ติดบานเดิม (เสริมกล่อง/ราง)':0,'รื้อมุ้งเดิม':1000,'เสริมวงกบ':0};
+var OPT_CAT={
+ 'ผ้า/มุ้งพิเศษ':[['อัปเกรดผ้ากันแมว/หมา (+800/ตร.ม.)',0],['ผ้ากันหนูสแตน (+1,200/ตร.ม.)',0],['ผ้านิรภัย 304',0]],
+ 'สี/กรอบ':[['สีกรอบพิเศษ (ทำสี ลด 50%)',0],['สีลายไม้ (ลด 50%)',0]],
+ 'ติดตั้ง/ราง':[['ติดบานเดิม (เสริมกล่อง/ราง)',0],['เสริมวงกบ',0],['รื้อมุ้งเดิม',1000]],
+ 'งานเพิ่ม':[['ติดตั้งที่สูง',1500],['ขนส่งพิเศษ',1000]],
+ 'ส่วนลด/อื่นๆ':[['ส่วนลดพิเศษ',-1000],['อื่นๆ (กรอกเอง)',0]]
+};
+
+var fmt=function(n){return '฿'+Math.round(n).toLocaleString();};
+var g=function(id){return document.getElementById(id);};
+var W=function(){return +(g('g5w-fw')||{}).value||0;};
+var Hh=function(){return +(g('g5w-fh')||{}).value||0;};
+var panelN=function(){return Math.max(1,+(g('g5w-fpanel')||{}).value||1);};
+var getItype=function(){var s=document.querySelector('[data-g5itype] .opt.on');return s?(s.textContent.indexOf('หน้าต่าง')>=0?'window':'door'):'door';};
+
+var groupsEl=g('g5w-groups'),famEl=g('g5w-fam'),varsEl=g('g5w-vars'),
+    formEl=g('g5w-form'),quoteEl=g('g5w-quote'),
+    pbar=g('g5w-pbar'),ptotal=g('g5w-ptotal'),bc2=g('g5w-bc2');
+var curItem=null;
+
+['ก1','ก2','ก3','ก4','ก5','ก6','ก7'].forEach(function(g2,i){
+  var b=document.createElement('button');
+  b.className='g5w-gbtn'+(i===4?' on':'');
+  b.textContent='G'+(i+1);
+  b.onclick=function(){[].forEach.call(groupsEl.children,function(x){x.className='g5w-gbtn';});b.className='g5w-gbtn on';};
+  groupsEl.appendChild(b);
+});
+FAM.forEach(function(f){
+  var b=document.createElement('button');
+  b.className='g5w-mainbtn';
+  b.innerHTML='<span class="ic">'+f.ic+'</span>'+f.n+'<span class="cnt">'+f.items.length+' รุ่น</span>';
+  b.onclick=function(){[].forEach.call(famEl.children,function(x){x.className='g5w-mainbtn';});b.className='g5w-mainbtn on';showVars(f);};
+  famEl.appendChild(b);
+});
+
+function showVars(f,auto){
+  varsEl.innerHTML='';varsEl.classList.remove('g5w-hidden');bc2.textContent=f.n;
+  f.items.forEach(function(it,si){
+    var c=document.createElement('button');c.className='g5w-sc';c.textContent=it.n;
+    c.onclick=function(){[].forEach.call(varsEl.children,function(x){x.className='g5w-sc';});c.className='g5w-sc on';bc2.textContent=f.n+' › '+it.n;buildForm(it);};
+    varsEl.appendChild(c);
+    if(auto&&si===0){c.className='g5w-sc on';bc2.textContent=f.n+' › '+it.n;buildForm(it);}
+  });
+}
+
+function scGroup(label,opts,attr){
+  return '<div class="g5w-brow"><span class="g5w-rl">'+label+'</span><div class="g5w-bgrp" '+(attr||'')+'>'+
+    opts.map(function(o,i){return '<button class="opt'+(i===0?' on':'')+'" onclick="g5pick(this)">'+o+'</button>';}).join('')+
+    '</div></div>';
+}
+window.g5pick=function(b){[].forEach.call(b.parentNode.children,function(x){x.className='opt';});b.className='opt on';g5calc();};
+function sec(no,title,bc,body){
+  return '<div class="g5w-card"><div class="g5w-et"><span class="no">'+no+'</span>'+title+
+    (bc?'<span class="bc">'+bc+'</span>':'')+
+    '<span class="g5w-secsum"></span></div>'+body+'</div>';
+}
+function optSection(items){
+  return '<div class="g5w-grow">'+
+    items.map(function(o){return '<button class="g5w-a" data-opt="'+o+'" onclick="g5tog(this)">'+o+' <span class="cp">+</span></button>';}).join('')+
+    '</div><div class="g5w-subwrap"></div>';
+}
+function subPanelHTML(name){
+  var inner='';
+  if(name==='ติดบานเดิม (เสริมกล่อง/ราง)')
+    inner='<div class="g5w-fld"><label>ค่าเสริมกล่อง/ราง</label><input class="g5w-pf2" type="number" value="0" oninput="g5calc()"></div>';
+  else if(name==='สีกรอบพิเศษ (ทำสี ลด 50%)'||name==='สีลายไม้ (ลด 50%)')
+    inner='<div class="g5w-fld" style="flex:1;min-width:150px"><label>ราคา (ค่าทำสี\xd70.5 · dev ดึง colorPrice จริง)</label><input class="g5w-pf2" type="number" value="0" oninput="g5calc()" style="width:110px"></div>';
+  else
+    inner='<div class="g5w-fld"><label>ราคา (แก้ได้)</label><input class="g5w-pf2" type="number" value="'+(DEFP[name]||0)+'" oninput="g5calc()"></div>';
+  return '<div class="g5w-subpanel" data-opt="'+name+'"><div class="g5w-sphead">'+name+'</div><div class="g5w-spfields">'+inner+'</div></div>';
+}
+window.g5tog=function(b){
+  var name=b.dataset.opt,sw=b.parentNode.nextElementSibling;
+  if(b.classList.toggle('on')){sw.insertAdjacentHTML('beforeend',subPanelHTML(name));}
+  else{var ex=sw.querySelector('[data-opt="'+name+'"]');if(ex)ex.remove();}
+  g5calc();
+};
+function optCatHTML(listId){
+  var cats=Object.keys(OPT_CAT);
+  return '<div class="g5w-grow" data-catbar="'+listId+'" style="margin-bottom:6px;">'+
+    cats.map(function(c,i){return '<button class="g5w-a'+(i===0?' on':'')+'" onclick="g5PickCat(this,\''+listId+'\')">'+c+'</button>';}).join('')+
+    '</div><div class="g5w-grow" id="'+listId+'pre" style="margin-bottom:7px;"></div><div id="'+listId+'"></div>';
+}
+window.g5PickCat=function(b,listId){[].forEach.call(b.parentNode.children,function(x){x.className='g5w-a';});b.className='g5w-a on';fillOptPre(b.textContent,listId);};
+function fillOptPre(cat,listId){
+  var pre=g(listId+'pre');if(!pre)return;
+  var fn=(listId==='g5w-qoptlist')?'g5AddQOpt':'g5AddOpt';
+  pre.innerHTML=(OPT_CAT[cat]||[]).map(function(o){
+    return '<button class="g5w-a" onclick="'+fn+'(\''+o[0].replace(/'/g,"\\'")+'\','+o[1]+')">'+o[0]+' +</button>';
+  }).join('');
+}
+window.g5AddOpt=function(nm,p){
+  var l=g('g5w-optlist');var d=document.createElement('div');d.className='g5w-brow';
+  d.innerHTML='<input class="g5w-txt g5w-optt" style="flex:1;" placeholder="ชื่อ OPTION" value="'+(nm||'')+'" oninput="g5calc()"><input type="number" class="g5w-optp" style="width:90px" value="'+(p||0)+'" oninput="g5calc()"><button class="g5w-gbtn" onclick="this.parentNode.remove();g5calc();">✕</button>';
+  l.appendChild(d);g5calc();
+};
+window.g5AddQOpt=function(nm,p){
+  var l=g('g5w-qoptlist');var d=document.createElement('div');d.className='g5w-brow';
+  d.innerHTML='<input class="g5w-txt g5w-qoptt" style="flex:1;" placeholder="ออปชั่นทั้งใบ" value="'+(nm||'')+'" oninput="g5calc()"><input type="number" class="g5w-qoptp" style="width:100px" value="'+(p||0)+'" oninput="g5calc()"><button class="g5w-gbtn" onclick="this.parentNode.remove();g5calc();">✕</button>';
+  l.appendChild(d);g5calc();
+};
+
+function buildForm(it){
+  curItem=it;var h='';
+  // Section 3: เฉพาะ frame:1
+  if(it.frame){
+    h+=sec(3,'ติดกับ · จำนวนบาน','min ต่างตามประตู/หน้าต่าง \xd7 จำนวนบาน',
+      scGroup('ติดกับ',['ประตู','หน้าต่าง'],'data-g5itype')+
+      '<div class="g5w-brow"><span class="g5w-rl">จำนวนบาน</span><div class="g5w-bgrp"><input type="number" id="g5w-fpanel" value="1" min="1" style="height:36px;width:70px;border:1.5px solid #E5E7EB;border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;" oninput="g5calc()"></div></div>');
+  }
+  // Section 4: ขนาด
+  var flatNote=it.flatMin?'<div class="g5w-info-tag">รุ่นนี้คิดขั้นต่ำ 1 ตร.ม. — พื้นที่น้อยกว่า 1 ตร.ม. ใช้เรตเท่ากับ 1 ตร.ม.</div>':'';
+  var maxWarn=it.maxW?'<div class="g5w-warn" id="g5w-maxwarn">⚠ รุ่นนี้รับกว้าง ≤ '+it.maxW.toFixed(1)+' ม. — เกินต้องเปลี่ยนรุ่นใหญ่กว่า</div>':'';
+  h+=sec(4,'ขนาด','กว้าง\xd7สูง \xd7 จำนวนชุด',
+    '<div class="g5w-szwrap">'+
+    '<div class="g5w-fld"><label>กว้าง (ม.)</label><input type="number" id="g5w-fw" value="1" step="0.1" oninput="g5calc()"></div>'+
+    '<div class="g5w-fld"><label>สูง (ม.)</label><input type="number" id="g5w-fh" value="2" step="0.1" oninput="g5calc()"></div>'+
+    '<div class="g5w-fld"><label>จำนวนชุด</label><input type="number" id="g5w-fset" value="1" oninput="g5calc()"></div>'+
+    '</div>'+maxWarn+flatNote);
+  // Section 5: ผ้า (frame เท่านั้น)
+  if(it.frame){
+    var fab=FABRIC.filter(function(f){return f.k!=='safety'||it.safety;});
+    h+=sec(5,'ผ้ามุ้ง','เฉพาะมุ้งเฟรม (imp21/22/23)',
+      '<div class="g5w-brow"><span class="g5w-rl">ผ้า</span><div class="g5w-bgrp" data-g5fabric>'+
+      fab.map(function(f,i){return '<button class="opt'+(i===0?' on':'')+'" data-fab="'+f.mode+'" onclick="g5pick(this)">'+f.n+'</button>';}).join('')+
+      '</div></div>'+
+      '<div class="g5w-brow"><span class="g5w-rl">สีผ้า</span><div class="g5w-bgrp">'+
+      '<button class="opt on" onclick="g5pick(this)">ดำ</button>'+
+      '<button class="opt" onclick="g5pick(this)">เทา</button>'+
+      '<button class="opt" onclick="g5pick(this)">ขาว</button>'+
+      '<button class="opt" onclick="g5pick(this)">เงิน</button>'+
+      '</div></div>');
+  }
+  // Section 6: สีกรอบ (mscolor)
+  if(it.mscolor){
+    h+=sec(6,'สีกรอบมุ้ง','ตามสีบาน ฟรี · พิเศษ/ลายไม้ คิด\xd70.5',
+      optSection(['สีกรอบพิเศษ (ทำสี ลด 50%)','สีลายไม้ (ลด 50%)']));
+  }
+  // Section 7: ติดตั้ง/อุปกรณ์เสริม
+  h+=sec(7,'การติดตั้ง / อุปกรณ์เสริม','กดที่ใช้',
+    optSection(['ติดบานเดิม (เสริมกล่อง/ราง)','เสริมวงกบ','รื้อมุ้งเดิม']));
+  // Section 8: OPTION ลูกค้า
+  h+=sec(8,'OPTION ลูกค้า (ต่อชุดนี้)','เลือกหมวด→กดเติม แก้/ลบ',optCatHTML('g5w-optlist'));
+  // Section 9: ตำแหน่ง
+  h+=sec(9,'ตำแหน่ง / หมายเหตุ',' ',
+    '<input class="g5w-txt" placeholder="ตำแหน่ง เช่น ห้องนอน 1" style="margin-bottom:8px;">'+
+    '<textarea class="g5w-txt" rows="2" placeholder="หมายเหตุ"></textarea>');
+  // Section 10: ออปชั่นทั้งใบ
+  h+=sec(10,'ออปชั่นทั้งใบเสนอราคา (ท้ายสุด)','หมวดเหมือนข้อ 8 · \xb1/ชุด',optCatHTML('g5w-qoptlist'));
+  formEl.innerHTML=h;
+  formEl.classList.remove('g5w-hidden');
+  quoteEl.classList.remove('g5w-hidden');
+  pbar.classList.remove('g5w-hidden');
+  fillOptPre(Object.keys(OPT_CAT)[0],'g5w-optlist');
+  fillOptPre(Object.keys(OPT_CAT)[0],'g5w-qoptlist');
+  g5calc();
+}
+
+function baseRaw(){
+  if(!curItem)return 0;
+  var Aw=W()*Hh();
+  var A=curItem.flatMin?Math.max(1,Aw):Aw;
+  var rate=rateOf(A,curItem.rates);
+  if(curItem.frame){
+    var minPer=getItype()==='window'?(curItem.min_window||0):(curItem.min_door||0);
+    return Math.max(minPer*panelN(),A*rate);
+  }
+  return Math.max(curItem.min||0,A*rate);
+}
+function fabricLine(){
+  if(!curItem||!curItem.frame)return null;
+  var Aw=W()*Hh();
+  var s=formEl.querySelector('[data-g5fabric] .opt.on');if(!s)return null;
+  var m=s.dataset.fab;
+  if(m==='cat')return {n:'ผ้ากันแมว/หมา (+800/ตร.ม.)',p:Aw*800};
+  if(m==='rat')return {n:'ผ้ากันหนูสแตน (+1,200/ตร.ม.)',p:Aw*1200};
+  if(m==='safety')return {n:'ผ้านิรภัยสแตน 304 0.8มม.',p:Aw*rateOf(Aw,'IMP31')};
+  return null;
+}
+window.g5calc=function g5calc(){
+  if(!curItem)return;
+  var Aw=W()*Hh(),set=+(g('g5w-fset')||{}).value||1;
+  var mw=g('g5w-maxwarn');if(mw)mw.style.display=(curItem.maxW&&W()>curItem.maxW)?'block':'none';
+  var rb=baseRaw(),fl=fabricLine(),flp=(fl&&fl.p>0)?fl.p:0;
+  var Adisp=curItem.flatMin?Math.max(1,Aw):Aw;
+  var rate=rateOf(Adisp,curItem.rates);
+  var base=roundUp(rb+flp);
+  var areaStr=Aw.toFixed(2)+(curItem.flatMin&&Aw<1?' (ขั้นต่ำ 1 ตร.ม.)':'');
+  var panelStr=curItem.frame?(' · '+panelN()+' บาน'):'';
+  var baseLabel='ฐาน '+areaStr+' ตร.ม. \xd7 '+fmt(rate)+panelStr+(flp>0?(' + '+fl.n+' '+fmt(flp)):'')+' → ปัดขึ้น';
+  var lines=[{n:baseLabel,p:base,base:1}];
+  formEl.querySelectorAll('.g5w-a.on[data-opt]').forEach(function(a2){
+    var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('[data-opt="'+nm+'"]');
+    var p=pn?(+(pn.querySelector('.g5w-pf2')||{}).value||0):(DEFP[nm]||0);
+    lines.push({n:nm,p:p});
+  });
+  formEl.querySelectorAll('#g5w-optlist .g5w-brow').forEach(function(r){
+    var t=(r.querySelector('.g5w-optt')||{}).value||'',p=+(r.querySelector('.g5w-optp')||{}).value||0;
+    if(t||p)lines.push({n:'OPTION: '+(t||'-'),p:p});
+  });
+  var per=lines.reduce(function(s,l){return s+(l.p||0);},0),itemTotal=per*set;
+  var qadj=0,qlines=[];
+  formEl.querySelectorAll('#g5w-qoptlist .g5w-brow').forEach(function(r){
+    var t=(r.querySelector('.g5w-qoptt')||{}).value||'',p=+(r.querySelector('.g5w-qoptp')||{}).value||0;
+    if(t||p){qadj+=p;qlines.push({n:t||'-',p:p});}
+  });
+  var grand=itemTotal+qadj*set;
+  ptotal.textContent=fmt(grand);
+  formEl.querySelectorAll('.g5w-a[data-opt]').forEach(function(a2){
+    var cp=a2.querySelector('.cp');if(!cp)return;
+    if(a2.classList.contains('on')){
+      var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('[data-opt="'+nm+'"]');
+      var p=pn?(+(pn.querySelector('.g5w-pf2')||{}).value||0):(DEFP[nm]||0);
+      cp.textContent=p?fmt(p):'✓';
+    }else cp.textContent='+';
+  });
+  formEl.querySelectorAll('.g5w-card').forEach(function(card){
+    var n=0;if(card.querySelector('#g5w-fw'))n+=base;
+    card.querySelectorAll('.g5w-a.on[data-opt]').forEach(function(a2){
+      var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('[data-opt="'+nm+'"]');
+      n+=pn?(+(pn.querySelector('.g5w-pf2')||{}).value||0):(DEFP[nm]||0);
+    });
+    card.querySelectorAll('.g5w-optp,.g5w-qoptp').forEach(function(o){n+=+o.value||0;});
+    var ss=card.querySelector('.g5w-secsum');if(ss)ss.textContent=fmt(n);
+  });
+  var panelTag=curItem.frame?(' · '+panelN()+' บาน'):'';
+  var q='<div class="g5w-qcard"><div class="g5w-et" style="margin-bottom:8px;">พรีวิวใบเสนอราคา (แยกราคา)</div>'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">'+curItem.n+' · '+W().toFixed(2)+'\xd7'+Hh().toFixed(2)+' ม.'+panelTag+(set>1?' · '+set+' ชุด':'')+'</div>';
+  q+=lines.map(function(l){return '<div class="g5w-qline'+(l.base?' base':'')+'"><span>'+(l.base?'':'• ')+l.n+'</span><span>'+fmt(l.p)+'</span></div>';}).join('');
+  q+='<div class="g5w-qsum"><span>รวม/ชุด'+(set>1?' \xd7 '+set+' ชุด':'')+'</span><span>'+fmt(itemTotal)+'</span></div>';
+  if(qlines.length){
+    q+='<div style="margin-top:7px;border-top:1px dashed #ccc;padding-top:5px;font-size:12px;font-weight:700;color:#B3151D;">ออปชั่นทั้งใบ (\xd7 '+set+' ชุด)</div>'+
+      qlines.map(function(l){return '<div class="g5w-qline"><span>• '+l.n+'</span><span>'+(l.p>=0?'+':'')+fmt(l.p*set)+'</span></div>';}).join('')+
+      '<div class="g5w-qsum"><span>ยอดรวมทั้งใบ</span><span>'+fmt(grand)+'</span></div>';
+  }
+  q+='</div>';quoteEl.innerHTML=q;
+};
+
+famEl.children[0].className='g5w-mainbtn on';showVars(FAM[0],true);
+})();
+</script>

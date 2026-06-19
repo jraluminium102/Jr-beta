@@ -1,0 +1,39 @@
+    else if(it.p.cabinet){
+      // G4 (โครงสร้างใบใหม่ 16มิ.ย.): หัว=ชื่อ+ขนาด+ลึก · รายการ(บน) + ###รายละเอียด### + สเปค(ล่าง)
+      var _co=it.optSel||{};
+      var _cTypeTxt=(_co.cabtype==='shoe')?'ตู้รองเท้า':'ตู้เสื้อผ้า';
+      var _cDoors=parseInt(_co.cabDoors)||2;
+      var _cDepth=_co.depth||'0.6';
+      var _cShelfN=parseInt(_co.shelves)||0;
+      var _cShelfGlass=(_co.shelfmat==='glass');
+      var _cShelfMat=_cShelfGlass?'กระจก':'อลูมิเนียม';
+      // หัวรายการ: ชื่อ+ประเภท+ขนาด+ลึก (คง suffix คาดตารางถ้ามี · _sz ถูกปิดใน genQuote)
+      var _gridSuf=(prodName.match(/\s*\((?:มี)?คาดตาราง[^)]*\)/)||[''])[0];
+      prodName='ตู้อลูมิเนียม ('+_cTypeTxt+') ขนาด '+it.w+' × '+it.h+' ม. ลึก '+_cDepth+' ม.'+_gridSuf;
+      // ── รายการ (รูปแบบงาน · บน · ไม่มีหัวข้อ) ──
+      var _work=[];
+      _work.push('บานหน้า Future Tech '+_cDoors+' บาน');
+      if(_cShelfN>0) _work.push('ชั้นวาง'+_cShelfMat+' '+_cShelfN+' ชั้น');
+      var _wOn=['left','right','back'].filter(function(k){return _co['cabwall_'+k+'_on'];});
+      var _wLab={left:'ซ้าย',right:'ขวา',back:'หลัง'};
+      if(_wOn.length){
+        _work.push('ผนังตู้ '+_wOn.length+' ด้าน ('+_wOn.map(function(k){return _wLab[k];}).join(' / ')+')');
+        _work.push('ผนัง: '+_wOn.map(function(k){return _wLab[k]+' '+(_co['cabwall_'+k+'_mat']==='glass'?'กระจก':'อลูทึบ');}).join(' · '));
+      } else { _work.push('ผนัง: ไม่ติ๊ก (ทุกด้านชนผนังปูน)'); }
+      // ── รายละเอียด (สเปค · ล่าง · หัวข้อ "รายละเอียด") ──
+      var _spec=[];
+      var _ci=it.ci||0, _cc=COLORS[_ci];
+      var _cName=_cc?(_cc.quoteName||_cc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim():'';
+      var _cNameShort=_cName.replace(/^สี/,'');
+      if(_cc){
+        if(_ci>0 && _cc.hasCode){
+          var _codeEl=it.div?it.div.querySelector('.i-colorcode'):null;
+          var _code=_codeEl?(_codeEl.value||'').trim():'';
+          _spec.push('สีโครง: '+_cNameShort+(_code?(' · รหัส '+_code):' · ⚠ ต้องระบุรหัสสี'));
+        } else { _spec.push('สีโครง: '+_cNameShort); }
+      }
+      if(_cShelfN>0 && !_cShelfGlass && _cc) _spec.push('ชั้นอลูมิเนียม: '+_cNameShort);
+      var _gWalls=_wOn.filter(function(k){return _co['cabwall_'+k+'_mat']==='glass';});
+      if(_gWalls.length) _spec.push('กระจก (ผนัง'+_gWalls.map(function(k){return _wLab[k];}).join(', ')+'): กระจกใส/ใสเขียว หนา 5–6 มม.');
+      det=_work.join('\n')+'\n###รายละเอียด###\n'+_spec.join('\n');
+    }

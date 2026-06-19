@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<style>
+@page{size:A4;margin:11mm 10mm;}*{font-family:"Leelawadee UI","Tahoma",sans-serif;}
+body{color:#1f2937;font-size:11px;line-height:1.5;}
+h1{color:#B3151D;font-size:18px;border-bottom:3px solid #B3151D;padding-bottom:5px;margin:0 0 3px;}
+.sub{color:#6b7280;font-size:11px;margin:0 0 10px;}
+h2{color:#fff;background:#B3151D;font-size:13px;margin:13px 0 5px;padding:4px 10px;border-radius:5px;}
+h3{color:#B3151D;font-size:12px;margin:9px 0 3px;border-left:3px solid #B3151D;padding-left:6px;}
+table{border-collapse:collapse;width:100%;margin:4px 0 8px;font-size:10px;}
+th,td{border:1px solid #d1d5db;padding:3px 6px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+code{background:#f3f4f6;padding:0 3px;border-radius:3px;font-family:Consolas,monospace;font-size:9.5px;}
+.box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.good{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.warn{background:#FAEEDA;border:1px solid #f3d39b;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.flag{background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:7px 10px;margin:6px 0;font-size:10.5px;}
+.tag{display:inline-block;font-size:9px;padding:0 5px;border-radius:8px;margin-left:3px;font-weight:700;}
+.t-do{background:#EAF3DE;color:#3B6D11;}.t-ask{background:#FAEEDA;color:#BA7517;}.t-dead{background:#eee;color:#666;}
+</style></head><body>
+
+<h1>HANDOFF G5 มุ้ง → dev (แก้ index.html)</h1>
+<p class="sub">2026-06-14 · ส่งแชท B · ไฟล์ <code>public/calculator/index.html</code> · ยึดดราฟ <code>DRAFT-G5-ux-FULL-2026-06-14.html</code> + <code>REF-G5-pricing-data.md</code> · งาน UI/จัดหมวด — สูตรราคาเดิมถูก (13 เคสตรง engine) ยกเว้นธงที่ระบุ</p>
+
+<div class="good"><b>เป้าหมาย:</b> ปรับฟอร์มมุ้งใน index.html ให้ UX ตามดราฟ (5 ปุ่มชนิด → รุ่น → ออปชั่นกรองตามชนิด · ผ้ามุ้งผูกผ้า · โหมด B เด่น · เห็นราคาทุกจุด) · <b>ไม่แตะสูตรราคา</b> (cross-check ตรง engine) ยกเว้น 1-2 ธงที่พี่นัทเคาะ</div>
+
+<h2>1) งาน UI หลัก (ทำได้เลย)</h2>
+<table>
+<tr><th>#</th><th>แก้</th><th>จุดโค้ด (REF)</th></tr>
+<tr><td>1</td><td><b>5 ปุ่มชนิดมุ้ง → รุ่นย่อย</b> (เฟรม/จีบ/จีบรังผึ้ง/ม้วน/นิรภัย) แทน dropdown ยาว · เฉพาะ cat='มุ้ง'</td><td>จัดจาก MOSQ_GRP_PRODS L2367</td></tr>
+<tr><td>2</td><td><b>ผ้ามุ้ง → ชิป + ผูกกับชนิดผ้า</b> (เลือกผ้า→สีผ้าเปลี่ยนชุด: ไฟเบอร์ ดำ/เทา · กันแมว ขาว · กันหนู เงิน/ดำ · นิรภัย ดำ) · เฉพาะเฟรม imp21/22/23 · ผ้านิรภัยเฉพาะ imp23</td><td>L1131-1137 (add-on)</td></tr>
+<tr><td>3</td><td><b>โหมด B (ติดบานเดิม) ดึงขึ้นเด่น</b> — checkbox + ค่าเสริมกล่อง/ราง</td><td>screen_existing L1140, 1488</td></tr>
+<tr><td>4</td><td><b>ซ่อน imp33 + imp35 จากเมนูชนิด</b> <span class="tag t-do">เคาะแล้ว</span> — เก็บสินค้า/เรตในระบบ (ห้ามลบ) · ลูกค้าได้กันแมว/หนูผ่านผ้ามุ้งบนเฟรม</td><td>L732-733 (PRODUCTS)</td></tr>
+<tr><td>5</td><td><b>maxWidth soft-warn (ม้วนเตะ)</b> ตอนขายเดี่ยว — กรอกกว้างเกินรุ่น (1.5/3.0/6.0) → เตือน</td><td>guard เดิม L1600 (เฉพาะ option ในบาน)</td></tr>
+<tr><td>6</td><td><b>เห็นราคา 4 ระดับ</b> (ชิป/กล่อง/พรีวิวใบ/แถบรวม) ตามแม่แบบ G1</td><td>ดูดราฟ</td></tr>
+</table>
+
+<h2>2) สูตรราคา — ยืนยันแล้ว ไม่ต้องแก้</h2>
+<div class="box">
+<b>เฟรม:</b> <code>roundUp( max(min_door|win × บาน, พื้นที่×rateOf) + ผ้ามุ้ง )</code> · <b>generic:</b> <code>roundUp( max(min, พื้นที่×rateOf) )</code><br>
+ผ้ามุ้ง/ตร.ม.: กันแมว 800 · กันหนู 1,200 · นิรภัย rateOf(IMP31) เฉพาะ imp23 · <span style="color:#6b7280">เทส 13 เคสตรง engine 100%</span>
+</div>
+
+<h2>3) 🚩 ธงเช็คซ้ำ — เคาะแล้ว (คำสั่ง dev)</h2>
+<div class="flag">
+<b>1. 🔴 MJ_SD_SAHARA (3,200) เรตค้าง</b> <span class="tag t-do">มติ: ลบทิ้ง (dead)</span> — ไม่มี product/rates ชี้มา (L544) · <b>dev ลบ key MJ_SD_SAHARA เก็บกวาด</b> (ไม่กระทบราคา)<br><br>
+<b>2. 🟡 สีกรอบเฟรมไม่คิดเงิน</b> <span class="tag t-do">มติ: ต้องคิดเงิน</span> — เฟรม imp21/22/23 มี <code>mscolor:true</code> แต่ branch เฟรม return ก่อน mscolor block (L1257-1264) · <b>dev ย้าย/เพิ่ม mscolor block ให้เฟรมคิดสีกรอบด้วย</b> (สูตรเดียวกับ generic: <code>colorPrice(idx, พื้นที่) × 0.5</code>) → ⚠ บวกก่อน roundUp · เทสว่าราคาเฟรม+สีกรอบขึ้นถูก<br><br>
+<b>3. 🟡 ขั้นต่ำ 1 ตร.ม. (imp28 + imp29 + imp30)</b> <span class="tag t-do">มติ: ขั้นต่ำ 1 ตร.ม. ทั้ง 3 ตัว</span> — flat-rate มุ้งที่ tier เริ่ม area≥1.0 + min=0 · <b>พื้นที่ &lt; 1 ตร.ม. คิดเท่า 1 ตร.ม.</b> · วิธี dev: clamp <code>A_eff = max(1, A)</code> ก่อนคูณเรต (หรือ set min = 1×เรต):<br>
+&nbsp;&nbsp;• <code>imp28</code> จีบตีนตะขาบ → min 1×4,500 = <b>4,500</b><br>
+&nbsp;&nbsp;• <code>imp29</code> ม้วนไฟเบอร์ → min 1×3,000 = <b>3,000</b><br>
+&nbsp;&nbsp;• <code>imp30</code> แม่เหล็กพับ → min 1×1,500 = <b>1,500</b><br><br>
+<b>4. 🟡 ผ้านิรภัย add-on เฉพาะ imp23</b> <span class="tag t-do">ยืนยันตั้งใจ</span> — imp21/22 (เฟรมเล็ก) รับผ้านิรภัยไม่ได้ (L1134) · คงเดิม<br><br>
+<b>5. 🟢 IMP34 tier ค้าง (L536)</b> <span class="tag t-dead">dead</span> — imp34 ลบแล้ว · ลบ tier เก็บกวาดได้ (ไม่กระทบ)
+</div>
+
+<h2>4) เชื่อมกับ "มุ้งเป็น option ในบาน" (G1/G6)</h2>
+<div class="box">
+มุ้งใช้ 2 ที่: (ก) ขายเดี่ยว cat='มุ้ง' (งานนี้) · (ข) เป็น option ในบาน G1/G6 (<code>MOSQUITO_SCREENS</code> L854-873 · <code>MOSQ_GRP_PRODS</code> L2367) — <b>เรตเดียวกัน</b><br>
+⚠ ถ้าแก้ logic เรต/ผ้ามุ้ง ต้องกระทบทั้ง 2 ที่ให้ตรงกัน · imp33/35 ไม่อยู่ MOSQ_GRP_PRODS (สอดคล้องกับซ่อนจากเมนู)
+</div>
+
+<h2>5) Definition of Done</h2>
+<table>
+<tr><td>✅</td><td><b>รัน golden-snapshot ก่อน-หลังแก้</b> (<code>test/golden-snapshot.mjs</code> ตาข่าย 143 ตัว) — มุ้งที่ตั้งใจเปลี่ยน (สีกรอบเฟรม/imp28 min) diff ต้องตรงมติ · ตัวอื่นห้ามเพี้ยน</td></tr>
+<tr><td>✅</td><td><code>node test/quote-fidelity.mjs</code> + <code>test/calc-mosq-frame.mjs</code> PASS</td></tr>
+<tr><td>✅</td><td>เปิดเบราว์เซอร์จริง: 5 ปุ่มชนิด→รุ่น · ผ้ามุ้งผูกผ้าถูก · โหมด B/ราคา 4 ระดับเห็นทันที</td></tr>
+<tr><td>✅</td><td>imp33/35 ไม่อยู่ในเมนู (แต่เรตเดิมอยู่ · ใบเก่าเปิดได้)</td></tr>
+<tr><td>✅</td><td>ผ้านิรภัยโผล่เฉพาะ imp23 · ม้วนเตะ warn maxWidth · ธง 1-3 เคาะ+แก้ตามมติ</td></tr>
+<tr><td>✅</td><td>มุ้ง option ในบาน (G1/G6) ยังตรง — เรตเดียวกัน</td></tr>
+</table>
+
+<p class="sub">คู่มือ: <code>UXDESIGN-G5-MASTER</code> (ดีไซน์) · <code>SUMMARY-G5-options</code> (ออปชั่น) · <code>PRICECHECK-G5</code> (ราคา) · <code>REF-G5-pricing-data.md</code> (เรตดิบ+line) · ดราฟกดเล่น <code>DRAFT-G5-ux-FULL-2026-06-14.html</code> · ทั้งหมดใน <code>docs/กลุ่ม5-มุ้ง/</code></p>
+</body></html>

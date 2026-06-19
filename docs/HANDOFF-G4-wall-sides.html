@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF G4 — ผนังตู้ 3 ด้าน + วัสดุต่อด้าน (ส่ง dev แชท B) · v2 ละเอียด 16 มิ.ย. 2026</title>
+<style>
+  body{ font-family:'Segoe UI',Tahoma,sans-serif; color:#1F2937; max-width:980px; margin:0 auto; padding:24px; line-height:1.6; }
+  h1{ color:#B3151D; font-size:22px; margin-bottom:2px; }
+  h2{ color:#B3151D; font-size:16px; margin-top:28px; border-bottom:2px solid #FCA5A5; padding-bottom:4px; }
+  h3{ font-size:14px; margin:16px 0 6px; color:#374151; }
+  .sub{ color:#6B7280; font-size:13px; margin-bottom:6px; }
+  code{ background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:12.5px; color:#B3151D; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+  th,td{ border:1px solid #D1D5DB; padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:#FEE2E2; color:#7F1D1D; }
+  tr:nth-child(even) td{ background:#FAFAFA; }
+  pre{ background:#0F172A; color:#E2E8F0; padding:14px 16px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.55; white-space:pre; }
+  pre .c{ color:#64748B; }
+  pre .hi{ color:#86EFAC; font-weight:700; }
+  pre .del{ color:#F87171; text-decoration:line-through; opacity:0.7; }
+  .box{ background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .warn{ background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .ok{ background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .info{ background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .phase{ background:#F5F3FF; border:1px solid #C4B5FD; border-radius:8px; padding:10px 14px; margin:10px 0; }
+  .phase b{ color:#5B21B6; }
+  ul,ol{ margin:6px 0; padding-left:22px; } li{ margin:3px 0; }
+  .flag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 7px; border-radius:5px; background:#EDE9FE; color:#6D28D9; }
+  .tag-new{ background:#D1FAE5; color:#065F46; border-radius:4px; padding:0 5px; font-size:11px; font-weight:700; }
+  .tag-del{ background:#FEE2E2; color:#7F1D1D; border-radius:4px; padding:0 5px; font-size:11px; font-weight:700; }
+  .tag-keep{ background:#FEF9C3; color:#713F12; border-radius:4px; padding:0 5px; font-size:11px; font-weight:700; }
+  .ln{ color:#64748B; font-size:11px; }
+</style>
+</head>
+<body>
+
+<h1>HANDOFF G4 — ผนังตู้ติ๊กเลือกด้าน + วัสดุต่อด้าน (ละเอียดสุด · ก็อปวางได้เลย)</h1>
+<p class="sub">ส่ง dev แชท B แก้ <code>public/calculator/index.html</code> · อัปเดต 16 มิ.ย. 2026 · <b>ฟีเจอร์ใหม่ · แตะ logic ราคา</b></p>
+<p class="sub">อ้างอิง: ดราฟ <code>docs/DRAFT-G4-ux-2026-06-12.html</code> (พี่นัทอนุมัติ) · ตรวจ index.html จริง 2026-06-16</p>
+
+<div class="ok">
+<b>ผลตรวจ G4 ปัจจุบัน (render จาก index.html จริง · jsdom 16 มิ.ย. 2026):</b><br>
+เทส <code>test/g4-color-pricing.mjs</code> ผ่าน 10/10 · <code>test/g4-cabinet-formux.mjs</code> ผ่าน 24/24 · ราคา engine ยืนยันตรง 12 เคส · <b>ออปชั่น/กลุ่ม/ราคาเดิมครบถูกทุกข้อ</b> · <b>ฟีเจอร์ผนัง 3 ด้านยังไม่มี</b> — นั่นคืองานในหนังสือนี้
+</div>
+
+<!-- ==================== SECTION 0 ==================== -->
+<h2>0. ผลตรวจ G4 ครบ (ยืนยันก่อนแก้)</h2>
+
+<h3>0A. ออปชั่นที่ render จริงต่อสินค้า</h3>
+<table>
+<tr><th>Class / Control</th><th>cabinet_alu</th><th>future_tech</th><th>หมายเหตุ / บรรทัด</th></tr>
+<tr><td><code>o-cabtype</code> (ประเภทตู้)</td><td>ชิป 2 ปุ่ม + select ซ่อน</td><td>—</td><td>L3367 · cab-detail → หมวด 📦</td></tr>
+<tr><td><code>o-cabdoors</code> (จำนวนบาน)</td><td>ชิป 3 ปุ่ม (1/2/3) + select ซ่อน</td><td>—</td><td>L3369 · cab-detail</td></tr>
+<tr><td><code>o-cabwallmat</code> (วัสดุผนัง)</td><td>ชิป 2 ปุ่ม (อลู/กระจก) + select ซ่อน</td><td>—</td><td>L3372 · cab-detail</td></tr>
+<tr><td><code>o-shelfmat</code> (ชนิดชั้น)</td><td>ชิป 3 ปุ่ม + select ซ่อน</td><td>—</td><td>L3373 · cascade: ชั้นกระจก→ไม่คิดค่าสี</td></tr>
+<tr><td><code>o-depth</code> (ลึก)</td><td>input number · default 0.6</td><td>—</td><td>L3380 · badge "auto"</td></tr>
+<tr><td><code>o-shelves</code> (จำนวนชั้น)</td><td>input number · placeholder auto</td><td>—</td><td>L3381 · auto=H/0.4 หรือ H/0.2(รองเท้า)</td></tr>
+<tr><td><code>o-backwall</code> (ผนังหลัง)</td><td>checkbox tap zone ≥44px</td><td>—</td><td>L3384 · ติ๊ก = บวกผนัง W×H</td></tr>
+<tr><td><code>o-ftcolor</code> (สีฝาตู้)</td><td>—</td><td>dropdown 12 option (COLORS)</td><td>L3433 · NO_COLOR_CATS ปิดสี · ftcolor เปิดเฉพาะ ft</td></tr>
+<tr><td><code>i-color</code> (สีอลู)</td><td>แสดง (areaOnly แต่ cabinet ปลด force ci=0)</td><td>ซ่อน (ฝาตู้อยู่ใน NO_COLOR_CATS)</td><td>L3473/L3745 · G4 bug fix: cabinet ปลด force</td></tr>
+<tr><td><code>o-gridmark</code> (คาดตาราง)</td><td>มี (ตู้อลู cat='ตู้อลู' ไม่อยู่ใน exclusion list)</td><td>มี (เช่นกัน)</td><td>L3130–3144 · condition: !p.grid &amp;&amp; !p.handrail &amp;&amp; !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง'].includes(p.cat)</td></tr>
+<tr><td><code>o-fcsides</code> (ครอบวงกบ)</td><td><b>ไม่มี</b></td><td><b>ไม่มี</b></td><td>L3459 · condition: !areaOnly — แต่ ตู้อลู/ฝาตู้ อยู่ใน AREA_CATS (L890) → areaOnly=true → ตัดออก ✓</td></tr>
+<tr><td><code>o-dfm</code> (ดรอปพื้น)</td><td><b>ไม่มี</b></td><td><b>ไม่มี</b></td><td>L3460 · condition: !p.cabinet &amp;&amp; !p.future_tech → ตัด ✓</td></tr>
+<tr><td><code>o-uchannel</code> (ฝังรางยู)</td><td><b>ไม่มี</b></td><td><b>ไม่มี</b></td><td>L3453 · condition: !p.cabinet &amp;&amp; !p.future_tech → ตัด ✓</td></tr>
+<tr><td><code>o-extrawork</code></td><td>มี</td><td>มี</td><td>L3456 · ทุกสินค้า</td></tr>
+<tr><td><code>o-removeold</code> (รื้อของเดิม)</td><td>มี</td><td>มี</td><td>L3457 · ทุกสินค้า</td></tr>
+<tr><td><code>i-type</code> (ประตู/หน้าต่าง)</td><td>ซ่อน (itype-seg display:none)</td><td>ซ่อน</td><td>L1831 · cabinet ซ่อน แต่คงอยู่ DOM</td></tr>
+</table>
+
+<div class="warn">
+<b>ยืนยันจุดเคยพลาด:</b><br>
+- ครอบวงกบ (o-fcsides) = <b>ไม่มีจริง</b> ✓ เหตุ: AREA_CATS รวม 'ตู้อลู' (L890) → areaOnly=true → condition L3459 false<br>
+- คาดตาราง (o-gridmark) = <b>มีจริง</b> ✓ เหตุ: condition L3130 ไม่ exclude cat='ตู้อลู'<br>
+- ฝังรางยู / ดรอปพื้น / i-type = <b>ไม่มีจริง</b> ✓ เหตุ: condition L3453/3460 ตัดออกโดยตรง
+</div>
+
+<h3>0B. กลุ่มออปชั่นในหมวด 📦</h3>
+<div class="info">
+cabinet_alu มีหมวด "📦 รายละเอียดตู้" อยู่บนสุด รวม: สินค้า (ชิปตู้อลู/ฝาตู้) · ประเภทตู้ · จำนวนบาน · วัสดุผนัง+ชนิดชั้น (บล็อกเดียวกัน) · hint สี · ลึก+จำนวนชั้น · ผนังหลัง · hint "สีกระทบโครง"
+</div>
+
+<h3>0C. ราคา engine ยืนยัน (render จริง · 16 มิ.ย. 2026)</h3>
+<table>
+<tr><th>เคส</th><th>ขนาด (กว้าง×สูง)</th><th>opt หลัก</th><th>ราคาจริง (บาท)</th><th>ยืนยัน</th></tr>
+<tr><td>ตู้ขาว default</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ไม่มีหลัง · สีขาว</td><td><b>46,000</b></td><td>บานหน้า25,500+ผนัง11,520+พื้น2,880+ชั้น6,000=45,900→46k</td></tr>
+<tr><td>ตู้ซาฮาร่า</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ไม่มีหลัง · ci=2(400/m²)</td><td><b>53,000</b></td><td>+ค่าสีโครง(aWall2.88+fl0.72+shelf5×0.72)×400=4,608→+5k→53k</td></tr>
+<tr><td>ตู้ Aztec950</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ไม่มีหลัง · ci=4(950/m²)</td><td><b>57,000</b></td><td>ค่าสีโครง≈10,944+ขาว46k→57k ✓</td></tr>
+<tr><td>ตู้อบพิเศษ</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ไม่มีหลัง · ci=10(1600/m²)</td><td><b>62,000</b></td><td>ค่าสีโครง≈18,432+ขาว46k→62k ✓</td></tr>
+<tr><td>ตู้ผนังกระจก</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังกระจก · ไม่มีหลัง · สีขาว</td><td><b>47,000</b></td><td>กระจก: max(5000,2.88×rateOf)×0.7 ต่างจากอลู11,520</td></tr>
+<tr><td>ตู้ชั้นกระจก</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ชั้นกระจก · สีขาว</td><td><b>45,000</b></td><td>ชั้นอลู6k→ชั้นกระจก5k(-1k)+ค่าสีชั้น=0 →45k ✓</td></tr>
+<tr><td>ตู้+ผนังหลัง</td><td>1.2×2.4 · ลึก0.6 · 2บาน · 5ชั้นอลู</td><td>ผนังอลู · ติ๊กผนังหลัง · สีขาว</td><td><b>58,000</b></td><td>aWall=2.88+2.88=5.76 · wall=23,040+25,500+2,880+6k=57,420→58k ✓</td></tr>
+<tr><td>ฝาตู้ 1 บาน ขาว</td><td>0.8×1.2 (ต่อบาน)</td><td>1 บาน · สีขาว/ดำ</td><td><b>8,000</b></td><td>aPerDoor=0.96 → tier[0.5,1.0]=7,500 → roundUp(7,500)=8,000 ✓</td></tr>
+<tr><td>ฝาตู้ 2 บาน ขาว</td><td>0.8×1.2</td><td>2 บาน · สีขาว/ดำ</td><td><b>21,000</b></td><td>7,500×2+5,500=20,500→21,000 ✓</td></tr>
+<tr><td>ฝาตู้ 3 บาน ขาว</td><td>0.8×1.2</td><td>3 บาน · สีขาว/ดำ</td><td><b>34,000</b></td><td>7,500×3+11,000=33,500→34,000 ✓</td></tr>
+<tr><td>ฝาตู้ 1 บาน สีพิเศษ</td><td>0.8×1.2</td><td>1 บาน · ci=10</td><td><b>9,000</b></td><td>ftRate(0.96,[0.5,1.0,1,500])=1,500+7,500=9,000→9,000 ✓</td></tr>
+<tr><td>ฝาตู้ 2 บาน สีพิเศษ</td><td>1.0×1.4</td><td>2 บาน · ci=10</td><td><b>30,000</b></td><td>aPerDoor=1.4 → tier[1.0,1.5]=10,000+2,000=12,000 · 2บาน+5,500=29,500→30,000 ✓</td></tr>
+</table>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2>1. มติพี่นัท (เคาะแล้ว · ฟีเจอร์ใหม่)</h2>
+<table>
+<tr><th>ด้านผนัง</th><th>พื้นที่ (min 1 ตร.ม.)</th><th>กระจก</th><th>อลูทึบ</th></tr>
+<tr><td>ซ้าย / ขวา (ติ๊กเลือกอิสระ)</td><td>max(1, ลึก×สูง)</td><td>area × <b>3,000</b> (ไม่มีค่าสี)</td><td>area × <b>4,000</b> + ค่าสี <code>rn90FinRate(ci)</code></td></tr>
+<tr><td>หลัง (ติ๊กเลือกอิสระ)</td><td>max(1, กว้าง×สูง)</td><td>area × 3,000</td><td>area × 4,000 + ค่าสี</td></tr>
+</table>
+<ul>
+  <li>กระจกผนัง <b>3,000/ตร.ม. คงที่</b> — รวมกระจก+เฟรม — <b>ไม่มีค่าสีแยก</b></li>
+  <li>อลูทึบผนัง <b>4,000/ตร.ม.</b> + <code>rn90FinRate(ci)</code> (ขาว/ดำ=0 · ซาฮาร่า=400 · Aztec=950 · ลายไม้สต๊อก=1,500 · อบพิเศษ/สีชุบ=1,600 · ลายไม้อบ=2,200)</li>
+  <li>ทุกด้าน <b>min 1 ตร.ม. = max(1, area)</b> — ด้านชนผนังปูน = ไม่ติ๊ก = ไม่คิด</li>
+  <li>ปรับขนาดต่อด้านได้ (ลิงก์ ✎ ซ่อน default · กรอก w/h → override auto)</li>
+  <li>ราคาผนังรวมเข้ายอดตู้ (_sell)</li>
+</ul>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2>2. สูตรโค้ด calcUnit cabinet (before → after เต็ม)</h2>
+<p class="sub">บรรทัดจริงใน index.html: <span class="ln">L1080–L1113</span> · ดูบรรทัดที่แน่ชัดด้วย grep: <code>if(p.cabinet){</code></p>
+
+<h3>BEFORE (โค้ดเดิม L1080–L1113 ที่ต้องแทน)</h3>
+<pre>
+<span class="c">// ── ตัดออก / แทนทั้งบล็อก ──</span>
+<span class="del">    const wmat=(optSel&&optSel.cabwallmat)||'alu';
+    const aWall=2*D*H + (_bw ? W*H : 0);
+    const aFloor=W*D;
+    const nShelfAlu=(sg==='glass')?0:nsh;
+    const aShelfAlu=aFloor*nShelfAlu;
+    const wall=(wmat==='glass') ? Math.max(5000, aWall*rateOf(aWall, RATES.FIX))*0.7 : aWall*4000;
+    const cWall=(wmat==='glass') ? colorPrice(ci,aWall,p.series||'') : aWall*rn90FinRate(ci);
+    const cFloor=aFloor*rn90FinRate(ci);
+    const cShelf=aShelfAlu*rn90FinRate(ci);
+    const colorStruct=Math.round(cWall+cFloor+cShelf);
+    const fl=aFloor*4000, shc=nsh*srate;
+    const _sell=roundUp(front+wall+fl+shc+colorStruct);</span>
+</pre>
+
+<h3>AFTER (โค้ดใหม่ — ก็อปวางแทน block เดิม L1098–L1112)</h3>
+<pre>
+    <span class="c">// ── ผนังตู้ 3 ด้าน · วัสดุต่อด้าน · min 1 ตร.ม. (ใหม่) ──────────────────</span>
+    <span class="hi">const SIDES=[{k:'left',auto:D*H},{k:'right',auto:D*H},{k:'back',auto:W*H}];
+    let wall=0, cWall=0;
+    for(const s of SIDES){
+      const on = optSel && optSel['cabwall_'+s.k+'_on'];
+      if(!on) continue;                               // ไม่ติ๊ก = ไม่คิด
+      const ovw=parseFloat(optSel&&optSel['cabwall_'+s.k+'_w'])||0;
+      const ovh=parseFloat(optSel&&optSel['cabwall_'+s.k+'_h'])||0;
+      const rawA = (ovw&&ovh) ? ovw*ovh : s.auto;   // ปรับขนาดเอง หรือ auto
+      const area = Math.max(1, rawA);                // min 1 ตร.ม.
+      const mat = (optSel&&optSel['cabwall_'+s.k+'_mat']) || 'alu';
+      if(mat==='glass'){
+        wall += area * 3000;                          // กระจก 3,000 · ไม่คิดค่าสี
+      } else {
+        wall += area * 4000;                          // อลูทึบ 4,000
+        cWall += area * rn90FinRate(ci);              // + ค่าสีโครงผนัง
+      }
+    }</span>
+    <span class="c">// พื้น / ชั้น / สีโครง (คงเดิม) ─────────────────────────────────────────────</span>
+    const aFloor=W*D;
+    const nShelfAlu=(sg==='glass')?0:nsh;
+    const aShelfAlu=aFloor*nShelfAlu;
+    const cFloor=aFloor*rn90FinRate(ci);
+    const cShelf=aShelfAlu*rn90FinRate(ci);
+    const colorStruct=Math.round(cWall+cFloor+cShelf);
+    const fl=aFloor*4000, shc=nsh*srate;
+    const _sell=roundUp(front+wall+fl+shc+colorStruct);
+    <span class="c">// หมายเหตุ: ตัด _bw/o-backwall (backwall กลายเป็นด้าน 'back' ข้างบน)</span>
+</pre>
+
+<div class="warn">
+<b>ลบ/เลิกใช้ใน calc:</b><br>
+- <code>const _bw=(optSel&amp;&amp;optSel.backwall);</code> (L1098 เดิม) — ลบทิ้ง (backwall รวมเป็นด้าน "back" แล้ว)<br>
+- <code>const wmat=...</code> · <code>aWall=2*D*H...</code> · สูตรกระจก <code>rateOf(aWall,RATES.FIX)*0.7</code> — ทั้งหมดแทนด้วย SIDES loop ข้างบน<br>
+- <b>ไม่ลบ</b> <code>o-backwall</code> DOM (ยังใช้ backward compat) — readItem เปลี่ยน logic อ่านแทน
+</div>
+
+<div class="box">
+<b>backward compat (ใบเก่า):</b> ถ้า readItem อ่านได้ <code>optSel.backwall=true</code> (ใบเก่าที่บันทึกก่อนแก้) แต่ไม่มี <code>cabwall_*_on</code> → ราคาผนัง=0 (wall ไม่บวก) — ใบเก่าราคาเบากว่าเดิม ⚠<br>
+<b>วิธีจัดการ backward compat ที่แนะนำ:</b> ใน readItem สำหรับ cabinet เพิ่ม fallback:<br>
+<pre style="margin:6px 0;">
+<span class="c">// backward compat: ใบเก่า (cabwallmat + backwall เดิม) → แปลงเป็น 3 ด้านอัตโนมัติ</span>
+<span class="hi">if(optSel.cabwall_left_on===undefined && _cwm){
+  const _oldMat = optSel.cabwallmat || 'alu';
+  optSel.cabwall_left_on  = true;
+  optSel.cabwall_left_mat = _oldMat;
+  optSel.cabwall_right_on = true;
+  optSel.cabwall_right_mat= _oldMat;
+  if(optSel.backwall){
+    optSel.cabwall_back_on  = true;
+    optSel.cabwall_back_mat = _oldMat;
+  }
+}</span>
+</pre>
+เพิ่มบล็อกนี้ใน readItem cabinet ก่อน return · <b>พี่นัทเช็คซ้ำก่อน commit</b>
+</div>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2>3. ตาราง control class ใหม่ทั้งหมด</h2>
+<table>
+<tr><th>Class</th><th>ชนิด</th><th>default</th><th>optSel key</th><th>auto (เมื่อว่าง)</th></tr>
+<tr><td><code>o-cabwall-left-on</code></td><td>checkbox</td><td>unchecked</td><td><code>cabwall_left_on</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-left-mat</code></td><td>select/chip (อลู/กระจก)</td><td>'alu'</td><td><code>cabwall_left_mat</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-left-w</code></td><td>input number (ซ่อนเริ่มต้น)</td><td>0 / ว่าง</td><td><code>cabwall_left_w</code></td><td>D (ลึก)</td></tr>
+<tr><td><code>o-cabwall-left-h</code></td><td>input number (ซ่อนเริ่มต้น)</td><td>0 / ว่าง</td><td><code>cabwall_left_h</code></td><td>H (สูง)</td></tr>
+<tr><td><code>o-cabwall-right-on</code></td><td>checkbox</td><td>unchecked</td><td><code>cabwall_right_on</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-right-mat</code></td><td>select/chip</td><td>'alu'</td><td><code>cabwall_right_mat</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-right-w</code></td><td>input number (ซ่อน)</td><td>0 / ว่าง</td><td><code>cabwall_right_w</code></td><td>D</td></tr>
+<tr><td><code>o-cabwall-right-h</code></td><td>input number (ซ่อน)</td><td>0 / ว่าง</td><td><code>cabwall_right_h</code></td><td>H</td></tr>
+<tr><td><code>o-cabwall-back-on</code></td><td>checkbox</td><td>unchecked</td><td><code>cabwall_back_on</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-back-mat</code></td><td>select/chip</td><td>'alu'</td><td><code>cabwall_back_mat</code></td><td>—</td></tr>
+<tr><td><code>o-cabwall-back-w</code></td><td>input number (ซ่อน)</td><td>0 / ว่าง</td><td><code>cabwall_back_w</code></td><td>W (กว้าง)</td></tr>
+<tr><td><code>o-cabwall-back-h</code></td><td>input number (ซ่อน)</td><td>0 / ว่าง</td><td><code>cabwall_back_h</code></td><td>H</td></tr>
+</table>
+<p class="sub">class เดิมที่ <b>เลิกใช้:</b> <code>o-cabwallmat</code> · <code>o-backwall</code> (ลบออกจาก buildItemOpts · ยังอ่านได้ใน readItem backward compat)</p>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2>4. UI — buildItemOpts cabinet (HTML เต็ม · ก็อปวางแทนบล็อกเดิม)</h2>
+<p class="sub">แทนบล็อก "B1 วัสดุผนัง + B6 ผนังหลัง" เดิม (L3371–L3384) ด้วย HTML นี้:</p>
+
+<pre>
+    <span class="c">// ── B1-NEW: ผนังตู้ 3 ด้าน (แทน o-cabwallmat + o-backwall เดิม) ────────────</span>
+    h += `&lt;div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;"&gt;
+      &lt;div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;"&gt;ผนังตู้ (ติ๊กด้านที่ต้องการ)
+        &lt;span style="font-size:11px;font-weight:400;color:#6B7280;"&gt;— ด้านชนผนังปูน ไม่ต้องติ๊ก&lt;/span&gt;
+      &lt;/div&gt;`;
+    <span class="c">// วนทั้ง 3 ด้าน</span>
+    const _wallDefs = [
+      { key:'left',  label:'ด้านซ้าย',  autoLabel:'D×H auto' },
+      { key:'right', label:'ด้านขวา',  autoLabel:'D×H auto' },
+      { key:'back',  label:'ด้านหลัง', autoLabel:'W×H auto' }
+    ];
+    _wallDefs.forEach(function(wd){
+      h += `&lt;div class="cab-wall-row" style="border-top:1px solid #E5E7EB;padding-top:6px;margin-top:6px;"&gt;
+        &lt;label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px;"&gt;
+          &lt;input type="checkbox" class="o-cabwall-${wd.key}-on"
+            style="width:20px;height:20px;flex-shrink:0;"
+            onchange="cabWallToggle(this,'${wd.key}');calcQuote();"&gt;
+          &lt;span style="font-weight:600;"&gt;${wd.label}&lt;/span&gt;
+          &lt;span style="font-size:11px;color:#6B7280;"&gt;(${wd.autoLabel} · min 1 ตร.ม.)&lt;/span&gt;
+        &lt;/label&gt;
+        &lt;div class="cab-wall-detail-${wd.key}" style="display:none;padding:6px 0 0 28px;"&gt;
+          &lt;div class="chip-group chip-sm" style="margin-bottom:6px;"&gt;
+            &lt;button type="button" class="chip on" data-val="alu"
+              onclick="chSetChip(this,'o-cabwall-${wd.key}-mat');calcQuote();"&gt;
+              อลูทึบ (+4,000/ม.²+ค่าสี)&lt;/button&gt;
+            &lt;button type="button" class="chip" data-val="glass"
+              onclick="chSetChip(this,'o-cabwall-${wd.key}-mat');calcQuote();"&gt;
+              กระจก (+3,000/ม.² ไม่มีค่าสี)&lt;/button&gt;
+          &lt;/div&gt;
+          &lt;select class="o-cabwall-${wd.key}-mat" style="display:none;" onchange="calcQuote();"&gt;
+            &lt;option value="alu" selected&gt;อลูทึบ&lt;/option&gt;
+            &lt;option value="glass"&gt;กระจก&lt;/option&gt;
+          &lt;/select&gt;
+          &lt;span style="font-size:11px;color:#059669;"&gt;auto (${wd.autoLabel})&lt;/span&gt;
+          &lt;a href="#" style="font-size:11px;color:#1D4ED8;margin-left:8px;"
+            onclick="event.preventDefault();
+              var w=this.closest('.cab-wall-detail-${wd.key}').querySelector('.cab-wall-size-${wd.key}');
+              w.style.display=w.style.display==='none'?'flex':'none';"&gt;
+            ✎ ปรับขนาดเอง&lt;/a&gt;
+          &lt;span class="cab-wall-size-${wd.key}" style="display:none;flex-wrap:wrap;gap:4px 10px;margin-top:4px;"&gt;
+            กว้าง &lt;input type="number" class="o-cabwall-${wd.key}-w"
+              step="0.01" min="0" placeholder="auto"
+              style="width:60px;height:32px;" oninput="calcQuote();"&gt; ม.
+            สูง &lt;input type="number" class="o-cabwall-${wd.key}-h"
+              step="0.01" min="0" placeholder="auto"
+              style="width:60px;height:32px;" oninput="calcQuote();"&gt; ม.
+            &lt;span style="font-size:11px;color:#6B7280;"&gt;(ว่าง = auto)&lt;/span&gt;
+          &lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;`;
+    });
+    h += `&lt;/div&gt;`;
+    <span class="c">// ── B2: hint สี (คงเดิม) ────────────────────────────────────────────────────</span>
+</pre>
+
+<h3>JS helper ใหม่ cabWallToggle (เพิ่มใน script)</h3>
+<pre>
+<span class="hi">function cabWallToggle(chk, key){
+  var ch = chk.closest('.ch');
+  var det = ch.querySelector('.cab-wall-detail-' + key);
+  if(det) det.style.display = chk.checked ? 'block' : 'none';
+}</span>
+</pre>
+<p class="sub">เพิ่มใกล้ <code>cabUpdateHints</code> (ค้นหาด้วย <code>function cabUpdateHints</code>)</p>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2>5. readItem cabinet (เพิ่ม/แก้)</h2>
+<p class="sub">บรรทัดเดิม L3682 · แก้ทั้ง if(p.cabinet){...} block:</p>
+
+<pre>
+  if(p.cabinet){
+    const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2';
+    const _dp=d.querySelector('.o-depth');    optSel.depth=_dp?_dp.value:'';
+    const _ct=d.querySelector('.o-cabtype');  optSel.cabtype=_ct?_ct.value:'wardrobe';
+    const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:'';
+    const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
+    <span class="c">// ── ผนัง 3 ด้านใหม่ ────────────────────────────────────────────────────────</span>
+    <span class="hi">['left','right','back'].forEach(function(k){
+      const _on  = d.querySelector('.o-cabwall-'+k+'-on');
+      const _mat = d.querySelector('.o-cabwall-'+k+'-mat');
+      const _w   = d.querySelector('.o-cabwall-'+k+'-w');
+      const _h   = d.querySelector('.o-cabwall-'+k+'-h');
+      optSel['cabwall_'+k+'_on']  = _on  ? _on.checked   : false;
+      optSel['cabwall_'+k+'_mat'] = _mat ? _mat.value     : 'alu';
+      optSel['cabwall_'+k+'_w']   = _w   ? _w.value       : '';
+      optSel['cabwall_'+k+'_h']   = _h   ? _h.value       : '';
+    });
+    // backward compat: ใบเก่า (cabwallmat + backwall) → แปลงเป็น 3 ด้าน
+    const _cwm = d.querySelector('.o-cabwallmat');
+    const _bwOld = d.querySelector('.o-backwall');
+    if(optSel.cabwall_left_on===false && optSel.cabwall_right_on===false &&
+       optSel.cabwall_back_on===false && _cwm){
+      // หากยังไม่มีด้านไหน on แต่มี o-cabwallmat เดิม → แปลง
+      const _oldMat = _cwm.value || 'alu';
+      optSel.cabwall_left_on   = true;  optSel.cabwall_left_mat  = _oldMat;
+      optSel.cabwall_right_on  = true;  optSel.cabwall_right_mat = _oldMat;
+      if(_bwOld && _bwOld.checked){
+        optSel.cabwall_back_on   = true; optSel.cabwall_back_mat  = _oldMat;
+      }
+    }</span>
+    <span class="c">// เก็บ legacy keys ไว้อ่าน (ไม่ลบ — กัน crash)</span>
+    const _cwmLeg=d.querySelector('.o-cabwallmat'); if(_cwmLeg)optSel.cabwallmat=_cwmLeg.value;
+    const _bwLeg=d.querySelector('.o-backwall'); optSel.backwall=_bwLeg?_bwLeg.checked:false;
+  }
+</pre>
+
+<!-- ==================== SECTION 6 ==================== -->
+<h2>6. itemDetail / genQuote cabinet (เพิ่มผนังต่อด้าน)</h2>
+<p class="sub">บรรทัดเดิม L4349–L4362 · แก้ block <code>else if(it.p.cabinet){...}</code>:</p>
+
+<pre>
+    else if(it.p.cabinet){
+      var _co=it.optSel||{};
+      var _cTypeTxt = (_co.cabtype==='shoe') ? 'ตู้รองเท้า' : 'ตู้เสื้อผ้า';
+      var _cDoors = parseInt(_co.cabDoors)||2;
+      var _cDepth = _co.depth || '0.6';
+      var _cShelfN = parseInt(_co.shelves)||0;
+      var _cShelfMat = (_co.shelfmat==='glass') ? 'กระจก' : 'อลูมิเนียม';
+      var _cLines = ['ตู้อลูมิเนียม ('+_cTypeTxt+')'];
+      _cLines.push('บานหน้า Future Tech '+_cDoors+' บาน · ลึก '+_cDepth+' ม.');
+      if(_cShelfN>0) _cLines.push('ชั้นวาง '+_cShelfN+' ชั้น ('+_cShelfMat+')');
+      <span class="c">// ผนังต่อด้าน (ใหม่)</span>
+      <span class="hi">var _wallLabels={'left':'ซ้าย','right':'ขวา','back':'หลัง'};
+      ['left','right','back'].forEach(function(k){
+        if(!_co['cabwall_'+k+'_on']) return;
+        var _mat = _co['cabwall_'+k+'_mat']==='glass' ? 'กระจก' : 'อลูทึบ';
+        var _wStr='';
+        if(_co['cabwall_'+k+'_w'] && _co['cabwall_'+k+'_h']){
+          _wStr = ' ('+_co['cabwall_'+k+'_w']+'×'+_co['cabwall_'+k+'_h']+' ม.)';
+        }
+        _cLines.push('ผนัง'+_wallLabels[k]+' '+_mat+_wStr);
+      });
+      if(!['left','right','back'].some(function(k){return _co['cabwall_'+k+'_on'];})){
+        _cLines.push('ผนัง: ไม่ติ๊ก (ทุกด้านชนผนังปูน)');
+      }</span>
+      det = _cLines.join('\n');
+    }
+</pre>
+
+<!-- ==================== SECTION 7 ==================== -->
+<h2>7. เทสเคสจริง (test/g4-wall-sides.mjs · โครง + expect)</h2>
+<p class="sub">สร้างไฟล์ใหม่ <code>test/g4-wall-sides.mjs</code> — ก็อปวางได้เลย</p>
+
+<pre>
+// test/g4-wall-sides.mjs — ผนังตู้ 3 ด้าน (เฟส A ใหม่)
+import { JSDOM, VirtualConsole } from 'jsdom';
+import { readFileSync } from 'node:fs';
+const html = readFileSync(new URL('../public/calculator/index.html', import.meta.url), 'utf8');
+const vc = new VirtualConsole();
+const errors = [];
+vc.on('jsdomError', e=>{ if(!/Not implemented:|scrollIntoView/.test(e.message)) errors.push(e.message); });
+const dom = new JSDOM(html, { runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc, url:'http://localhost/calculator/index.html' });
+await new Promise(r=>{ if(dom.window.document.readyState==='complete')r(); else dom.window.addEventListener('load',r); setTimeout(r,1500); });
+const w=dom.window, doc=w.document;
+const checks=[];
+const want=(n,ok,d)=>checks.push({n,ok:!!ok,d:d||''});
+
+function sf(d,s,v){ const e=d.querySelector(s); if(!e)return; e.value=String(v); e.dispatchEvent(new w.Event('change',{bubbles:true})); e.dispatchEvent(new w.Event('input',{bubbles:true})); }
+function chk(d,s,on){ const e=d.querySelector(s); if(!e)return; e.checked=!!on; e.dispatchEvent(new w.Event('change',{bubbles:true})); }
+function cab(W,H,opts={}){
+  w.addItem();
+  const d=doc.querySelectorAll('#items .ch')[doc.querySelectorAll('#items .ch').length-1];
+  sf(d,'.i-group','4'); sf(d,'.i-prod','cabinet_alu'); sf(d,'.i-w',W); sf(d,'.i-h',H);
+  sf(d,'.o-depth', opts.D||'0.6'); sf(d,'.o-cabdoors', opts.doors||'2'); sf(d,'.o-shelves', opts.shelves||'5');
+  sf(d,'.i-color', opts.ci||'0');
+  // ผนัง 3 ด้านใหม่
+  if(opts.left)  { chk(d,'.o-cabwall-left-on',true);  sf(d,'.o-cabwall-left-mat', opts.leftMat||'alu'); }
+  if(opts.right) { chk(d,'.o-cabwall-right-on',true); sf(d,'.o-cabwall-right-mat',opts.rightMat||'alu'); }
+  if(opts.back)  { chk(d,'.o-cabwall-back-on',true);  sf(d,'.o-cabwall-back-mat', opts.backMat||'alu'); }
+  if(opts.leftW)  sf(d,'.o-cabwall-left-w',  opts.leftW);
+  if(opts.leftH)  sf(d,'.o-cabwall-left-h',  opts.leftH);
+  return w.readItem(d);
+}
+
+// ── เทส 1: ไม่ติ๊กด้านใด → wall=0 ─────────────────────────────────────────
+const r0 = cab(1.2,2.4);
+want('ไม่ติ๊กด้านใด: wall=0 (ไม่คิดผนัง)', r0.r.sell > 0, 'sell='+r0.r.sell);
+// ราคาไม่มีผนัง = บาน+พื้น+ชั้น เท่านั้น
+// baseline: front=25,500 · fl=2,880 · shc=6,000 → 34,380 → 35,000
+want('ไม่ติ๊กด้านใด: sell=35,000 (baseline ไม่มีผนัง)', r0.r.sell===35000, 'sell='+r0.r.sell);
+
+// ── เทส 2: ซ้ายอลูขาว (D=0.6 H=2.4 auto area=1.44 ≥1) ─────────────────────
+const r1 = cab(1.2,2.4,{left:true,leftMat:'alu',ci:'0'});
+// wall = max(1,0.6×2.4)×4000 = 1.44×4000 = 5,760
+// sell = 35,000 + 5,760 → roundUp(40,760) = 41,000
+want('ซ้ายอลูขาว: sell=41,000', r1.r.sell===41000, 'sell='+r1.r.sell);
+
+// ── เทส 3: ขวากระจก (area=1.44 · 3,000 · ไม่คิดค่าสี) ──────────────────────
+const r2 = cab(1.2,2.4,{right:true,rightMat:'glass',ci:'0'});
+// wall = max(1,1.44)×3000 = 4,320
+// sell = roundUp(35,000+4,320) → roundUp(39,320)=40,000
+want('ขวากระจก: sell=40,000', r2.r.sell===40000, 'sell='+r2.r.sell);
+
+// ── เทส 4: หลังอลูขาว (W=1.2 H=2.4 auto area=2.88) ─────────────────────────
+const r3 = cab(1.2,2.4,{back:true,backMat:'alu',ci:'0'});
+// wall = max(1,2.88)×4000 = 11,520
+// sell = roundUp(35,000+11,520) = roundUp(46,520) = 47,000
+want('หลังอลูขาว: sell=47,000', r3.r.sell===47000, 'sell='+r3.r.sell);
+
+// ── เทส 5: 3 ด้านอลูขาว (ซ้าย+ขวา+หลัง) ────────────────────────────────────
+const r4 = cab(1.2,2.4,{left:true,right:true,back:true,ci:'0'});
+// wall = 1.44×4000 + 1.44×4000 + 2.88×4000 = 5760+5760+11520 = 23,040
+// sell = roundUp(35,000+23,040) = roundUp(58,040) = 59,000
+want('3 ด้านอลูขาว: sell=59,000', r4.r.sell===59000, 'sell='+r4.r.sell);
+
+// ── เทส 6: ด้านเล็ก (<1 ตร.ม.) → min 1 ตร.ม. ─────────────────────────────
+// ซ้ายปรับขนาดเอง 0.4×0.5=0.2 < 1 → area=max(1,0.2)=1 → wall=1×4000=4000
+const r5 = cab(1.2,2.4,{left:true,leftMat:'alu',leftW:'0.4',leftH:'0.5'});
+// sell = roundUp(35,000+4,000) = 39,000
+want('ด้านเล็ก <1m² → min 1m²: sell=39,000', r5.r.sell===39000, 'sell='+r5.r.sell);
+
+// ── เทส 7: กระจกสีพิเศษ → ไม่บวกค่าสีผนัง ──────────────────────────────────
+const r6glass_sp = cab(1.2,2.4,{right:true,rightMat:'glass',ci:'10'});
+const r6alu_sp   = cab(1.2,2.4,{right:true,rightMat:'alu',  ci:'10'});
+want('กระจกสีพิเศษ ≤ อลูสีพิเศษ (กระจกไม่คิดค่าสีผนัง)', r6glass_sp.r.sell <= r6alu_sp.r.sell,
+  'glass='+r6glass_sp.r.sell+' alu='+r6alu_sp.r.sell);
+
+// ── เทส 8: อลูซาฮาร่า (ci=2 · 400/m²) บวกค่าสีผนัง ────────────────────────
+const r7 = cab(1.2,2.4,{left:true,leftMat:'alu',ci:'2'});
+// cWall = 1.44×400 = 576
+// sell = roundUp(35,000 + 5,760 + 576 + cFloor + cShelf) — ค่าสีพื้น/ชั้นก็บวกด้วย
+want('อลูซาฮาร่า: sell > ขาว (บวกค่าสีผนัง)', r7.r.sell > r1.r.sell, 'sahara='+r7.r.sell+' white='+r1.r.sell);
+
+// ── เทส 9: optSel อ่านครบ 3 ด้าน ────────────────────────────────────────────
+const r8 = cab(1.2,2.4,{left:true,right:true,back:true});
+want('optSel cabwall_left_on=true',  r8.optSel.cabwall_left_on===true);
+want('optSel cabwall_right_on=true', r8.optSel.cabwall_right_on===true);
+want('optSel cabwall_back_on=true',  r8.optSel.cabwall_back_on===true);
+want('optSel cabwall_left_mat=alu',  r8.optSel.cabwall_left_mat==='alu');
+
+// ── เทส 10: regression — ตู้ default ไม่พัง ────────────────────────────────
+want('ไม่มี JS error', errors.length===0, errors.slice(0,2).join(' / '));
+
+let pass=0;
+console.log('\n=== G4 ผนังตู้ 3 ด้าน (เฟส A) ===');
+for(const c of checks){ console.log((c.ok?'  ✓ ':'  ✗ ')+c.n+(c.d?'  ['+c.d+']':'')); if(c.ok)pass++; }
+console.log('\nสรุป: ผ่าน '+pass+'/'+checks.length);
+process.exit(pass===checks.length?0:1);
+</pre>
+
+<div class="warn">
+<b>หมายเหตุ expect:</b> ตัวเลข sell ในเทสข้างบนคำนวณจาก "baseline ไม่มีผนัง = 35,000" — <b>หลังแก้ code จริงแล้ว run เทสเพื่อ calibrate baseline ก่อน</b> ถ้า baseline ต่างให้แก้ expect ตาม (front/พื้น/ชั้น ไม่เปลี่ยน แต่ default ชั้น auto อาจต่างถ้า nsh auto เปลี่ยน)
+</div>
+
+<!-- ==================== SECTION 8 ==================== -->
+<h2>8. คำสั่ง golden-snapshot จริง + ขั้นตอน</h2>
+
+<h3>8A. ก่อนแก้ (เก็บ baseline)</h3>
+<pre>
+cd public/calculator
+<span class="hi">node ../../scripts/golden-snapshot.mjs</span>
+<span class="c"># ผลจะบันทึกไว้ใน scripts/golden-snapshot.json (หรือ path ที่ script กำหนด)
+# ดูจำนวน: ควรได้ 143+ ตัว</span>
+</pre>
+
+<h3>8B. หลังแก้เฟส A (engine calc)</h3>
+<pre>
+<span class="hi">node ../../scripts/golden-snapshot.mjs</span>
+<span class="c"># ตรวจ diff — ตู้ค่า default จะเปลี่ยน (ผนัง=0 ถ้าไม่ติ๊ก) ← ต้องอัปเดต expected ตู้
+# สินค้าอื่น G1/G2/G3/G5/G6 ต้องไม่เพี้ยน (0 diff)
+node ../../test/g4-wall-sides.mjs    # เทสใหม่ — คาดผ่าน
+node ../../test/g4-color-pricing.mjs # regression ตู้สี — คาดผ่าน
+node ../../test/g4-cabinet-formux.mjs # regression ตู้ formux — คาดผ่าน
+node ../../test/quote-fidelity.mjs   # ใบเสนอราคา — คาดผ่าน</span>
+</pre>
+
+<h3>8C. หลังแก้เฟส B (UI)</h3>
+<pre>
+<span class="hi">node ../../scripts/golden-snapshot.mjs   # ไม่มี diff เพิ่ม (UI ไม่แตะ calc)
+node ../../scripts/review-link.mjs       # เปิด localhost เพื่อ verify browser จริง</span>
+</pre>
+
+<h3>8D. อัปเดต golden-snapshot สำหรับตู้ default</h3>
+<pre>
+<span class="c"># ตู้ default (ไม่มีผนัง) จะราคาลดลงจากเดิม (ไม่นับผนัง 2 ข้าง)
+# ต้องรัน snapshot แล้ว accept ค่าใหม่สำหรับรายการ cabinet_alu เท่านั้น
+# กัน regression: ต้องตรวจ G1/G2/G3/G5/G6 ไม่เปลี่ยน</span>
+node ../../scripts/golden-snapshot.mjs --update-key cabinet_alu
+<span class="c"># (หรือแก้ expected ใน JSON ด้วยมือ ตามที่ script รองรับ)</span>
+</pre>
+
+<!-- ==================== SECTION 9 ==================== -->
+<h2>9. แผนแก้ 3 เฟส (ทำไม่พัง)</h2>
+<div class="phase"><b>เฟส A — engine calc</b> <span class="flag">ก่อน</span>
+<ul>
+  <li>golden-snapshot ก่อน (เก็บ baseline)</li>
+  <li>แก้ calcUnit cabinet (ข้อ 2): แทน SIDES loop · ลบ <code>_bw/aWall/wmat</code> เดิม</li>
+  <li>สร้าง <code>test/g4-wall-sides.mjs</code> (ข้อ 7): เทส 10 เคส</li>
+  <li>เทส PASS + golden-snapshot สินค้าอื่นไม่เพี้ยน → commit</li>
+  <li>อัปเดต expected ตู้ใน snapshot (ค่า default เปลี่ยน)</li>
+</ul></div>
+
+<div class="phase"><b>เฟส B — UI form</b>
+<ul>
+  <li>แก้ buildItemOpts cabinet (ข้อ 4): กล่อง 3 ด้าน + chip วัสดุ + ✎ ปรับขนาด</li>
+  <li>เพิ่ม <code>cabWallToggle()</code> helper (ข้อ 4)</li>
+  <li>แก้ readItem cabinet (ข้อ 5): อ่าน 3 ด้าน + backward compat</li>
+  <li>verify browser จริง: ติ๊ก→วัสดุโผล่ · เปลี่ยนวัสดุ→ราคาขยับ · ✎→ช่องปรับ→ราคาเปลี่ยน · ว่าง→auto</li>
+</ul></div>
+
+<div class="phase"><b>เฟส C — ใบเสนอราคา</b>
+<ul>
+  <li>แก้ itemDetail/genQuote cabinet (ข้อ 6): ระบุผนังต่อด้าน</li>
+  <li>verify ใบออก "ผนังซ้าย กระจก · ผนังขวา อลูทึบ · ผนังหลัง อลูทึบ" ถูกต้อง</li>
+  <li>เทสใบ + golden-snapshot รอบสุดท้าย</li>
+</ul></div>
+
+<!-- ==================== SECTION 10 ==================== -->
+<h2>10. ตาข่ายกันพัง (บังคับ)</h2>
+<ul>
+  <li><b>golden-snapshot ก่อน-หลัง</b> ทุกเฟส — G1/G2/G3/G5/G6 ต้องไม่เพี้ยน</li>
+  <li><code>node test/g4-wall-sides.mjs</code> PASS (เฟส A)</li>
+  <li><code>node test/g4-color-pricing.mjs</code> PASS (regression ค่าสีโครง)</li>
+  <li><code>node test/g4-cabinet-formux.mjs</code> PASS (regression formux)</li>
+  <li><code>node test/quote-fidelity.mjs</code> PASS</li>
+  <li>verify browser จริง (review-link) ก่อน push ทุกเฟส</li>
+  <li><b>backward compat:</b> ใบเก่า (<code>cabwallmat</code> + <code>backwall</code>) → readItem แปลงเป็น 3 ด้านอัตโนมัติ (ข้อ 5) — <b>พี่นัทเช็คซ้ำ default กรณีใบเก่าไม่มี cabwall_*_on</b></li>
+  <li>regression: G1-G3/G5/G6 ไม่กระทบ (แก้เฉพาะ p.cabinet)</li>
+</ul>
+
+<!-- ==================== SECTION 11 ==================== -->
+<h2>11. Definition of Done</h2>
+<ul>
+  <li>UI: ผนัง 3 ด้าน ติ๊กอิสระ + วัสดุต่อด้าน (อลู/กระจก) + ✎ ปรับขนาด ทำงานครบ</li>
+  <li>ราคา: กระจก 3,000 (ไม่คิดค่าสี) · อลู 4,000+rn90 · min 1 ตร.ม. · รวมเข้ายอดตู้</li>
+  <li>ใบออกผนังต่อด้านถูก (ซ้าย/ขวา/หลัง + วัสดุ + ขนาดถ้ากรอกเอง)</li>
+  <li>เทส g4-wall-sides + g4-color-pricing + g4-cabinet-formux + quote-fidelity PASS</li>
+  <li>golden-snapshot G1-G6 ไม่เพี้ยน · backward compat ใบเก่าไม่ crash</li>
+</ul>
+
+<div class="warn">
+<b>เตือน dev:</b><br>
+- นี่แตะ logic ราคา (calcUnit cabinet) — <b>ทำเฟส A ก่อน + snapshot</b><br>
+- อย่าแก้ UI/calc/ใบพร้อมกัน (กลับยาก)<br>
+- กระจกผนัง <b>ไม่มีค่าสีแยก</b> (3,000 รวมหมด) — ต่างจากอลูทึบที่บวก rn90<br>
+- ค่าสีโครงอลู (rn90) คิด: ผนังอลูทึบ + พื้น + ชั้นอลู (ชั้นกระจก = 0)<br>
+- บานหน้า/พื้น/ชั้น <b>ไม่แตะ</b><br>
+- <code>o-backwall</code> (checkbox เดิม) ยังคงอยู่ใน DOM ได้ (backward compat) แต่ buildItemOpts ไม่วาดใหม่ → ซ่อนไปเอง<br>
+- baseline ราคาตู้ default จะลดลง (ไม่ติ๊กด้านใด = ไม่คิดผนัง) — ต้องอัปเดต golden expected
+</div>
+
+</body>
+</html>

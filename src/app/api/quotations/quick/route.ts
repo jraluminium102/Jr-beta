@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const schema = z.object({
   job_id:     z.string().uuid("job_id ต้องเป็น UUID"),
-  total:      z.number().int("ยอดรวมต้องเป็นจำนวนเต็มบาท").positive("ยอดรวมต้องมากกว่า 0"),
+  total:      z.number().min(0, "ยอดรวมต้องไม่ติดลบ"),  // รองรับทศนิยม (สตางค์) · 0 = mark ส่งแล้วโดยยังไม่ระบุยอด
   ext_ref:    z.string().optional(),
   ext_link:   z.string().optional(),
   issue_date: z.string().optional(),
@@ -24,21 +24,22 @@ const schema = z.object({
  * สร้าง "ใบเสนอราคาแบบเบา" (checklist flow) ที่ไม่ผ่าน calculator
  *
  * กฎเงิน (accountant ตรวจแล้ว):
- *   ผู้ใช้กรอก total = ราคาที่ลูกค้าเห็น (จำนวนเต็มบาท บังคับ .int())
+ *   ผู้ใช้กรอก total = ราคาที่ลูกค้าเห็น รองรับทศนิยม 2 ตำแหน่ง (สตางค์)
  *
  *   กรณี VAT 7% (vat_rate=7, default):
- *     total = ยอดรวม VAT แล้ว
- *     vat_amt  = Math.round(total * 7 / 107)  ← ถอด VAT ออกจากยอด inclusive
- *     subtotal = total - vat_amt              ← ฐานก่อน VAT (subtotal+vat=total เป๊ะ)
+ *     total = ยอดรวม VAT แล้ว (inclusive)
+ *     vat_amt  = round2(total * 7 / 107)  ← ถอด VAT ออกจากยอด inclusive
+ *     subtotal = round2(total - vat_amt)   ← ฐานก่อน VAT (subtotal + vat_amt = total เป๊ะ)
  *
  *   กรณีไม่คิด VAT (vat_rate=0):
  *     total = ยอดที่ลูกค้าจ่าย (ไม่มี VAT)
  *     vat_amt  = 0
- *     subtotal = total                        ← ฐาน = ยอดทั้งหมด
+ *     subtotal = total                      ← ฐาน = ยอดทั้งหมด
  *
- *   การ map ลง jobs: net_amount = subtotal + vat_rate
+ *   การ map ลง jobs: ส่ง net_amount = subtotal (ฐานก่อน VAT) + ส่ง vat_rate แยกเป็น field
  *     trigger tg_calc_financials จะคิด vat_amount/total_amount เอง
- *     ต้องส่ง vat_rate ไปด้วยเสมอ ไม่งั้น no-VAT โดน trigger บวก 7% ซ้ำ
+ *     ต้องส่ง vat_rate ด้วยเสมอ ไม่งั้น no-VAT โดน trigger บวก 7% ซ้ำ
+ *     (ห้ามส่ง total ลง net_amount เพราะ total รวม VAT แล้ว → trigger จะบวกซ้ำ)
  *   - wht=0, discount=0
  *   computeTotals ไม่ใช้ใน flow นี้ (net ต้อง = ยอดกรอกเป๊ะเพื่อลูกโซ่วางบิล)
  */
@@ -53,14 +54,15 @@ export const POST = withRoute(async (req: Request) => {
   const userId = ctx.user.id;
 
   const body = schema.parse(await req.json());
-  const { job_id, total, ext_ref, ext_link, step, vat_rate } = body;
+  const { job_id, ext_ref, ext_link, step, vat_rate } = body;
+  const total = Math.round(body.total * 100) / 100; // ปัดทศนิยม 2 ตำแหน่ง (สตางค์) กัน float artifact
   const issue_date = body.issue_date || new Date().toISOString().slice(0, 10);
   const today = new Date().toISOString().slice(0, 10);
 
   // 1) โหลด job — ต้อง active
   const { data: job, error: jErr } = await sb
     .from("jobs")
-    .select("id, status, customer_id, customer_name, customer_area")
+    .select("id, status, customer_id, customer_name, customer_area, design_revise_count")
     .eq("id", job_id)
     .maybeSingle();
   if (jErr || !job) return err("ไม่พบงาน", 404);
@@ -93,8 +95,8 @@ export const POST = withRoute(async (req: Request) => {
   // 4) คำนวณยอด (ดูคอมเมนต์กฎเงินด้านบน — ห้ามเปลี่ยนโดยไม่แจ้ง accountant)
   // VAT 7%: ถอด VAT จากยอด inclusive → subtotal+vat_amt = total เป๊ะ
   // no-VAT (vat_rate=0): vat_amt=0, subtotal=total
-  const vat_amt  = vat_rate > 0 ? Math.round((total * vat_rate) / (100 + vat_rate)) : 0;
-  const subtotal = total - vat_amt;
+  const vat_amt  = vat_rate > 0 ? Math.round((total * vat_rate) / (100 + vat_rate) * 100) / 100 : 0;
+  const subtotal = Math.round((total - vat_amt) * 100) / 100; // 2 ตำแหน่ง · subtotal+vat=total เป๊ะ
 
   // 5) idempotent — หาใบเช็คลิสต์ active ของงานนี้
   const { data: existing } = await sb
@@ -217,14 +219,21 @@ export const POST = withRoute(async (req: Request) => {
     // net_amount = subtotal เท่านั้น — trigger tg_calc_financials จะคิด vat_amount/total_amount ให้เอง
     // ต้องส่ง vat_rate ด้วยเสมอ เพราะ trigger ใหม่ยิงเมื่อ vat_rate เปลี่ยนด้วย
     // (ห้ามส่ง total/total_amount เพราะ total รวม VAT แล้ว → trigger จะบวก VAT ซ้ำ ทำให้ stats เพี้ยน)
+    // total=0 (mark ส่งแล้วโดยยังไม่ระบุยอด) → ไม่เซ็ต net_amount/vat_rate (กันเขียนทับ/ใส่ 0) ใส่ทีหลังตอนแก้ยอด
+    const jobUpdate: Record<string, unknown> = {
+      quote_sent_date: issue_date || today,
+      status: "QUOTE_SENT",
+      // snapshot รอบแก้แบบ ณ ตอนส่งใบเสนอ — ใช้ตรวจ "แก้แบบหลังเสนอ" แบบแม่นยำ (0047)
+      // ส่งใบใหม่หลังแก้ → ค่านี้ตามทัน design_revise_count → งานหลุดออกจากเช็คลิสต์เอง
+      quoted_revise_count: (job as { design_revise_count: number | null }).design_revise_count ?? 0,
+    };
+    if (total > 0) {
+      jobUpdate.net_amount = subtotal;
+      jobUpdate.vat_rate = vat_rate;
+    }
     const { error: jUpErr } = await sb
       .from("jobs")
-      .update({
-        quote_sent_date: issue_date || today,
-        status: "QUOTE_SENT",
-        net_amount: subtotal,
-        vat_rate,
-      })
+      .update(jobUpdate)
       .eq("id", job_id);
     if (jUpErr) {
       console.warn("[quotations/quick] job update failed (non-fatal):", jUpErr.message);

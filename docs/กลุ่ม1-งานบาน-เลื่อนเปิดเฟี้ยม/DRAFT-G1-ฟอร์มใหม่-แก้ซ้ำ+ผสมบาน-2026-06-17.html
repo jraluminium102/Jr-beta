@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟฟอร์ม G1 ใหม่ — แก้ออปชั่นซ้ำ + ผสมบาน + จัดของไม่บ่อย</title>
+<style>
+  :root{--red:#B3151D;--red2:#7f1d1d;--line:#e5e7eb;--bg:#f3f4f6;--mut:#6b7280;--ok:#16a34a;--warn:#dc2626;--blue:#1e40af}
+  *{box-sizing:border-box}
+  body{font-family:"Sarabun","Segoe UI",Tahoma,sans-serif;margin:0;background:var(--bg);color:#1f2937;line-height:1.5}
+  .wrap{max-width:880px;margin:0 auto;padding:16px 14px 60px}
+  h1{font-size:20px;color:var(--red2);margin:4px 0 2px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+  h2{font-size:15px;color:var(--red);margin:22px 0 8px;border-left:4px solid var(--red);padding-left:9px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .lbl{font-size:12px;font-weight:700;color:#374151;margin:10px 0 4px}
+  .lbl:first-child{margin-top:0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1.5px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12.5px;background:#fff;min-height:38px;display:inline-flex;align-items:center;gap:4px}
+  .chip.on{border-color:var(--red);background:#fff2f2;color:var(--red2);font-weight:700}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+  .fld{border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;background:#fff}
+  .fld .k{font-size:10px;color:var(--mut);display:block}
+  .acc{border:1px solid var(--line);border-radius:9px;margin-top:8px;overflow:hidden}
+  .acc-h{background:#fafafa;padding:9px 12px;font-weight:700;font-size:13px;color:#374151;cursor:pointer;display:flex;justify-content:space-between}
+  .acc-b{padding:10px 12px;display:none}
+  .acc.open .acc-b{display:block}
+  .acc.open .acc-h{border-bottom:1px solid var(--line)}
+  .dot{font-size:11px;color:var(--mut);font-weight:400}
+  /* before/after */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.ba{grid-template-columns:1fr}.row3{grid-template-columns:1fr 1fr}}
+  .box{border-radius:10px;padding:11px;font-size:12.5px}
+  .bad{background:#fef2f2;border:1px solid #fca5a5}
+  .good{background:#f0fdf4;border:2px solid var(--ok)}
+  .bh{font-weight:700;font-size:12px;margin-bottom:7px}
+  .bad .bh{color:var(--warn)}.good .bh{color:var(--ok)}
+  .dup{background:#fde8ea;color:var(--red);border-radius:4px;padding:0 5px;font-size:11.5px;font-weight:700}
+  .note{font-size:12px;color:var(--mut);margin-top:8px}
+  .tag{display:inline-block;background:#fef3c7;color:#92400e;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700}
+  .arrow{text-align:center;color:var(--mut);font-size:12px;margin:4px 0}
+  ul{margin:4px 0;padding-left:20px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ฟอร์มกรอก G1 — ออกแบบใหม่ (แก้ออปชั่นซ้ำ + จัดของไม่บ่อย + ผสมบาน)</h1>
+  <div class="sub">เสนอ "โครงฟอร์ม" ใหม่ · ของหลักโชว์เลย · ของไม่บ่อยพับ · ตัดของซ้ำ — ราคา/สูตร engine ไม่แตะ</div>
+
+  <!-- ===== ปัญหาที่เจอ ===== -->
+  <h2>① ปัญหาที่เจอตอนนี้ (สแกนของจริง)</h2>
+  <div class="ba">
+    <div class="box bad">
+      <div class="bh">❌ ออปชั่นซ้ำ 4 ตัว</div>
+      ช่องหลักมี <b>มุ้ง · มือจับ · กระจก · สีอลู</b> อยู่แล้ว<br>
+      แต่ "OPTION ทางเลือกลูกค้า" มีปุ่มซ้ำอีก:<br>
+      <span class="dup">เปลี่ยนกระจก</span> <span class="dup">เปลี่ยนผ้ามุ้ง</span> <span class="dup">เปลี่ยนสีอลู</span> <span class="dup">เปลี่ยนมือจับ</span>
+      <div class="note">→ คนกรอกงง "ต้องกรอกตรงไหน" · ชื่อซ้ำ 2 ที่</div>
+    </div>
+    <div class="box bad">
+      <div class="bh">❌ ของไม่บ่อยปนกัน</div>
+      ครอบวงกบ · ฝังรางยู/กรีดพื้น · ดรอปพื้น · ธรณี · คาดตาราง · เสริมคาน · รื้อ<br>
+      <div class="note">→ ใช้นานๆครั้ง แต่กองรวมใน "อุปกรณ์เสริม" — ควรจัดให้ของบ่อยเด่น ของไม่บ่อยพับลึก</div>
+    </div>
+  </div>
+
+  <!-- ===== ฟอร์มใหม่ ===== -->
+  <h2>② ฟอร์มใหม่ที่เสนอ (กดเล่นได้)</h2>
+
+  <div class="card">
+    <div class="lbl">① ชนิดบาน → รุ่น (ชิป)</div>
+    <div class="chips"><span class="chip">⬌ บานเลื่อน</span><span class="chip on">🚪 บานเปิด</span><span class="chip">▥ บานเฟี้ยม</span><span class="chip">▢ ติดตาย</span><span class="chip">◗ ดัดโค้ง</span><span class="chip">⋯ อื่นๆ</span></div>
+    <div class="chips" style="margin-top:6px"><span class="chip on">ยูโร</span><span class="chip">เซมิยูโร</span><span class="chip">Velora</span></div>
+
+    <div class="lbl">② ขนาด</div>
+    <div class="row3"><span class="fld"><span class="k">กว้าง (ม.)</span>1.2</span><span class="fld"><span class="k">สูง (ม.)</span>2.2</span><span class="fld"><span class="k">ชุด</span>1</span><span class="fld"><span class="k">บาน</span>1</span></div>
+
+    <div class="lbl">③ สีอลู + รหัส · กระจก (ชิป)</div>
+    <div class="chips"><span class="chip on">อบขาว</span><span class="chip">ดำ</span><span class="chip">เทาซาฮาร่า</span><span class="chip">อบพิเศษ ●</span></div>
+    <div class="chips" style="margin-top:6px"><span class="chip on">เขียว 6มม.</span><span class="chip">ใส 6มม.</span><span class="chip">เทมเปอร์ 6มม.</span></div>
+
+    <div class="lbl">④ มุ้ง (ชิป · ที่เดียว)</div>
+    <div class="chips"><span class="chip on">ไม่ใส่</span><span class="chip">เฟรม</span><span class="chip">จีบ</span><span class="chip">ม้วน</span></div>
+
+    <div class="lbl">⑤ มือจับ (ชิป · ที่เดียว)</div>
+    <div class="chips"><span class="chip on">ตามรุ่น</span><span class="chip">สแตนเลส</span><span class="chip">ฝัง HYDA</span><span class="chip">Metro</span></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">⑥ ผสมบาน — เพิ่มบานย่อย (ช่องแสง/ติดตายในชุดเดียว · แต่ละชิ้นมีขนาดเอง)</div>
+    <div class="chips"><span class="chip" style="border-style:dashed">＋ ช่องแสงบน</span><span class="chip" style="border-style:dashed">＋ บานข้างติดตาย</span><span class="chip" style="border-style:dashed">＋ ช่องแสงติดตาย</span></div>
+    <div class="note">ตัวอย่างเมื่อเพิ่มแล้ว: <b>ช่องแสงบน 1.2×0.4 ม.</b> · <b>บานข้างติดตาย 0.6×2.2 ม.</b> (กรอกขนาดต่อชิ้น)</div>
+  </div>
+
+  <div class="acc" id="acc1">
+    <div class="acc-h" onclick="document.getElementById('acc1').classList.toggle('open')">＋ เสนอ OPTION ให้ลูกค้า (ทางเลือก +ราคา · ขึ้นในใบ) <span class="dot">▾ พับไว้</span></div>
+    <div class="acc-b">
+      <div class="note" style="margin-top:0">เลือก "เปลี่ยนอะไร" จากสเปคด้านบน (ไม่ต้องตั้งชื่อใหม่) + ใส่ราคาเพิ่ม → ขึ้นใบเป็น "OPTION : ..."</div>
+      <div class="chips" style="margin-top:6px"><span class="chip">เปลี่ยนกระจก</span><span class="chip">เปลี่ยนมุ้ง</span><span class="chip">เปลี่ยนสีอลู</span><span class="chip">เปลี่ยนมือจับ</span><span class="chip">พิมพ์เอง</span></div>
+      <div class="note"><span class="tag">แก้ซ้ำ</span> ของเดิม "เปลี่ยน X" ปนอยู่กับสเปคหลัก → ย้ายมารวมในกล่องนี้กล่องเดียว (สเปคหลักด้านบนเหลือที่เดียว ไม่ซ้ำ)</div>
+    </div>
+  </div>
+
+  <div class="acc" id="acc2">
+    <div class="acc-h" onclick="document.getElementById('acc2').classList.toggle('open')">＋ อุปกรณ์เสริม (ใช้ไม่บ่อย) <span class="dot">▾ พับไว้</span></div>
+    <div class="acc-b">
+      <ul>
+        <li>ครอบวงกบอลู (ไม่มี / 3 ด้าน / 4 ด้าน)</li>
+        <li>ฝังรางยู (กรีดพื้น) · ดรอปพื้น (ม.)</li>
+        <li>ธรณี (กันน้ำ / หลังเต่า+Drop Seal / หลังเต่า+สักหลาด / ไม่มี)</li>
+        <li>คาดตาราง (เส้นนอน/ตั้ง/โค้ง) · เสริมคานซัพพอร์ท</li>
+        <li>รื้อของเดิม</li>
+      </ul>
+      <div class="note"><span class="tag">จัดใหม่</span> ของนานๆใช้ มารวมในกล่องพับนี้ — ฟอร์มหลักโล่ง กรอกเร็ว</div>
+    </div>
+  </div>
+
+  <div class="acc" id="acc3">
+    <div class="acc-h" onclick="document.getElementById('acc3').classList.toggle('open')">＋ หมายเหตุ (ติ๊กมาตรฐาน + พิมพ์เอง) <span class="dot">▾ พับไว้</span></div>
+    <div class="acc-b"><div class="note" style="margin-top:0">ติ๊กหลายข้อ (รวมในราคา/ไม่รวม/เงื่อนไข) — ตามที่ทำไปแล้ว ✅</div></div>
+  </div>
+
+  <!-- ===== สรุป ===== -->
+  <h2>③ สรุปสิ่งที่เปลี่ยน</h2>
+  <div class="card">
+    <ul>
+      <li><b>แก้ซ้ำ 4 ตัว:</b> มุ้ง/มือจับ/กระจก/สีอลู เหลือ <b>ที่เดียว</b> (สเปคหลัก) · "เปลี่ยน X" ย้ายไปรวมในกล่อง "เสนอ OPTION ให้ลูกค้า" กล่องเดียว</li>
+      <li><b>ของไม่บ่อยพับ:</b> ครอบวงกบ/ฝังรางยู/ดรอปพื้น/ธรณี/คาดตาราง/เสริมคาน/รื้อ → กล่องพับ "อุปกรณ์เสริม"</li>
+      <li><b>ผสมบาน:</b> ปุ่มเพิ่มบานย่อยเป็นชิป (ช่องแสงบน/บานข้างติดตาย/...) · แต่ละชิ้นกรอกขนาดเอง (ขนาดออกใบถูกแล้ว)</li>
+      <li><b>ลำดับ:</b> ชนิด→รุ่น→ขนาด→สี/กระจก→มุ้ง→มือจับ → ผสมบาน → (พับ) OPTION ลูกค้า / อุปกรณ์เสริม / หมายเหตุ</li>
+      <li>ราคา/สูตร engine ไม่แตะ — งานจัดวาง/รวมปุ่มล้วน</li>
+    </ul>
+    <div class="note">⚠ จุดที่ต้องเคาะ: การ "เปลี่ยน X" (OPTION ลูกค้า) ตอนนี้ผูกกับการคิดราคาอัตโนมัติบางตัว — ถ้าย้ายรวมกล่องเดียว ต้องเช็คว่ายังคิดราคาถูก · เป็นงานที่ต้องคุยกับ dev (แชทกลาง)</div>
+  </div>
+</div>
+</body>
+</html>

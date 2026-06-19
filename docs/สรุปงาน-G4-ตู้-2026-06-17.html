@@ -1,0 +1,99 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<title>สรุปงาน G4 ตู้อลู/ฝาตู้ — 17 มิ.ย. 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;color:#1a1a1a;background:#f4f4f5;line-height:1.55;padding:24px}
+.wrap{max-width:900px;margin:0 auto}
+h1{color:#B3151D;font-size:25px;margin-bottom:4px}
+.sub{color:#666;font-size:14px;margin-bottom:18px}
+.zone{background:#fff;border-radius:12px;padding:18px 22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:5px solid #ccc}
+.zone.done{border-left-color:#2E7D32}.zone.wait{border-left-color:#F9A825}.zone.info{border-left-color:#1565C0}
+.zh{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;margin-bottom:8px;flex-wrap:wrap}
+.badge{font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;color:#fff}
+.b-done{background:#2E7D32}.b-wait{background:#F9A825}.b-info{background:#1565C0}
+.zone h3{font-size:13.5px;color:#B3151D;margin:13px 0 5px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:5px 0}
+th,td{border:1px solid #e3e3e3;padding:6px 9px;text-align:left;vertical-align:top}
+th{background:#FDECEA;color:#B3151D;font-weight:600}
+.chip{display:inline-block;background:#fff;border:1.5px solid #B3151D;color:#B3151D;border-radius:18px;padding:3px 12px;margin:2px;font-size:12.5px;font-weight:600}
+.chip.on{background:#B3151D;color:#fff}
+.bill{border:1.5px solid #B3151D;border-radius:8px;overflow:hidden;margin:8px 0;font-size:13px}
+.bill .head{display:flex;background:#FDECEA;font-size:11.5px;color:#B3151D;font-weight:700}
+.bill .head>div{padding:6px 9px}
+.bill .row{display:flex;border-top:1px solid #eee}
+.bill .row>div{padding:8px 9px}
+.bill .hd{font-weight:700;font-size:13.5px}
+.bill .lab{font-weight:700;color:#B3151D;margin-top:7px;font-size:12.5px}
+.bill .dim{color:#666}
+.ba{display:flex;gap:12px;flex-wrap:wrap}.ba>div{flex:1;min-width:250px}
+.lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.flat{background:#FAFAFA;border:1px dashed #ccc;border-radius:6px;padding:9px 11px;font-size:12.5px;color:#555}
+.ok{color:#2E7D32;font-weight:600}
+ul{margin:4px 0 4px 18px}li{margin:2px 0;font-size:13px}
+.note{font-size:12px;color:#777;margin-top:6px}
+@media print{body{background:#fff;padding:0}.zone{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid}}
+</style></head><body><div class="wrap">
+
+<h1>สรุปงาน G4 — ตู้อลู / ฝาตู้</h1>
+<div class="sub">แชท A (G4) · 17 มิ.ย. 2026 · เน้น "ภาพใบจริงที่ออกมา" · พิสูจน์ด้วย engine จริง (golden 149 = 0 เพี้ยน) · ภาพรวมทั้งระบบดู "สรุปงานแก้ใบเสนอราคา-2026-06-17"</div>
+
+<!-- เสร็จ 1: ผนัง 3 ด้าน -->
+<div class="zone done">
+<div class="zh">✅ งานเสร็จ 1 — ผนังตู้ 3 ด้าน ติ๊กเลือกอิสระ <span class="badge b-done">เสร็จ · commit 71cb45a</span></div>
+<b>แก้อะไร:</b> เดิมตู้คิดผนัง 2 ข้างเสมอ → ใหม่ <b>ติ๊กเลือกด้าน (ซ้าย/ขวา/หลัง) อิสระ + เลือกวัสดุต่อด้าน (อลู/กระจก) + ปรับขนาดเอง</b> · ด้านชนผนังปูน = ไม่ติ๊ก = ไม่คิดเงิน
+<h3>ภาพที่ออกมา — ฟอร์มผนัง</h3>
+<div class="flat">☑ ด้านซ้าย &nbsp; <span class="chip on">อลูทึบ</span><span class="chip">กระจก</span> &nbsp; ✎ ปรับขนาดเอง<br>☑ ด้านขวา &nbsp; <span class="chip">อลูทึบ</span><span class="chip on">กระจก</span><br>☐ ด้านหลัง (ชนผนังปูน — ไม่ติ๊ก)</div>
+<div class="note ok">ราคา: ซ้ายอลู 41,000 · ขวากระจก 39,000 · หลังอลู 46,000 · 3 ด้าน 58,000 (ก่อน VAT) — ตรงสูตร · เทส g4-wall-sides 12/12 ✓</div>
+</div>
+
+<!-- เสร็จ 2: ใบ 5 บล็อก -->
+<div class="zone done">
+<div class="zh">✅ งานเสร็จ 2 — ใบเสนอราคา "5 บล็อก" <span class="badge b-done">เสร็จ · commit 9a74245 + 5block</span></div>
+<b>แก้อะไร:</b> เดิมกองทุกอย่างเป็น bullet เดียว ไม่สมดุล → ใหม่แยก <b>5 บล็อก: หัว → รายการ → OPTION → หมายเหตุ → รายละเอียด</b> · สีพิเศษบังคับรหัส (ไม่กรอก→⚠แดง) · กระจกระบุชนิด+หนา+สี
+<h3>ภาพที่ออกมา — เทียบใบเก่า/ใหม่ (ตู้อลู)</h3>
+<div class="ba">
+<div><div class="lbl">เดิม (กองรวม)</div>
+<div class="flat">จุดที่ 1 · ตู้อลูมิเนียม (1.2×2.4 ม.)<br><b>รายละเอียดงาน</b><br>- ตู้อลูมิเนียม (ตู้เสื้อผ้า)<br>- บานหน้า Future Tech 2 บาน<br>- ลึก 0.6 ม.<br>- ชั้นวาง 5 ชั้น (อลูมิเนียม)<br>- ผนังซ้าย อลูทึบ<br>- ผนังขวา กระจก<br>- ผนังหลัง อลูทึบ</div></div>
+<div><div class="lbl">ใหม่ (5 บล็อก)</div>
+<div class="bill">
+<div class="row"><div style="flex:1">
+<div class="hd">ตู้อลูมิเนียม (ตู้เสื้อผ้า) ขนาด 1.2 × 2.4 ม. ลึก 0.6 ม.</div>
+<div>- บานหน้า Future Tech 2 บาน<br>- ชั้นวางอลูมิเนียม 5 ชั้น<br>- ผนังตู้ 3 ด้าน (ซ้าย / ขวา / หลัง)<br>- ผนัง: ซ้าย อลูทึบ · ขวา กระจก · หลัง อลูทึบ</div>
+<div class="lab">OPTION</div><div style="color:#B3151D">- เปลี่ยนรางพิเศษ</div>
+<div class="lab" style="color:#444">หมายเหตุ</div><div class="dim">- จัดส่งภายใน 30 วัน</div>
+<div class="lab">รายละเอียด</div>
+<div class="dim">- สีโครง: อบพิเศษ · รหัส KL10232A<br>- ชั้นอลูมิเนียม: อบพิเศษ<br>- กระจก (ผนังขวา): กระจกใส/ใสเขียว หนา 5–6 มม.</div>
+</div><div style="width:90px;text-align:right;border-left:1px solid #eee">1 ชุด<br><b>74,000</b></div></div>
+</div></div>
+</div>
+<div class="note ok">พิสูจน์ของจริง: golden 149 = 0 เพี้ยน · verify โครงสร้าง 18/18 · ลำดับ 5 บล็อก 11/11 · ราคา 79,180 (รวม VAT) ไม่ขยับ · OPTION/หมายเหตุ ว่าง = ซ่อนอัตโนมัติ</div>
+</div>
+
+<!-- งานค้าง -->
+<div class="zone wait">
+<div class="zh">🟡 งานค้าง <span class="badge b-wait">รอ Chat B / คิวกลาง</span></div>
+<h3>เฉพาะ G4</h3>
+<div class="flat ok">— ไม่มีงานค้างเฉพาะกลุ่ม (ใบ 5 บล็อก + ผนัง 3 ด้าน เสร็จ verified แล้ว) —</div>
+<h3>ระบบ (แตะ G4 ด้วยตอนทำ · เป็นงานรวมทุก G ไม่ใช่ G4 เดี่ยว)</h3>
+<table><tr><th>งาน</th><th>สถานะ</th></tr>
+<tr><td>ใบ 5 บล็อก กลุ่มอื่น (G3 / G5 / G7)</td><td>G3 เตรียมโค้ดแล้ว รอ Chat B · G5/G7 ยังไม่แยก</td></tr>
+<tr><td>หมายเหตุ ส่วน A (อัปข้อความ REMARK_PRESETS)</td><td>รวมทุก G · G4 ใช้ของรวม (ไม่มีข้อความตู้เฉพาะ)</td></tr>
+<tr><td>ราคา/สเปก ส่วน B (งานไฟ/โซ่/PVC/ชินโคไลท์/ผนังเบา/ธรณี)</td><td>ของ G1/G3/หลังคา · <b>ไม่มี cabinet</b></td></tr>
+</table>
+</div>
+
+<!-- ปุ่ม UX รายงาน -->
+<div class="zone info">
+<div class="zh">🔵 รายงานปุ่ม/ป้าย cabinet (ส่งคิวกลางจัดให้เหมือนทั้งระบบ) <span class="badge b-info">รายงานเฉยๆ ไม่แก้เอง</span></div>
+<ul>
+<li>🟡 ลิงก์ <b>"✎ ปรับขนาดเอง" เล็กมาก (11px)</b> — แตะยากบนมือถือ (เป้าแตะ &lt; 44px) · มี 3 ที่</li>
+<li>🟡 <b>ชิปวัสดุผนังข้อความยาว</b> "อลูทึบ (+4,000/ม.²+ค่าสี)" — ล้น/ตัดบนจอแคบได้ · "ม.²" เสี่ยงเพี้ยน</li>
+<li>🟡 <b>ไอคอน 📦 มีแค่ชิป "ตู้อลู"</b> · "ฝาตู้" ไม่มี → ป้ายไม่สมดุล</li>
+<li>🟡 ชิป <b>"ตามประเภท"</b> (ชนิดชั้น) — ชื่อกำกวม (= ชั้นตามชนิดตู้ ทั่วไป 40 / รองเท้า 20 ซม.)</li>
+<li>🟢 checkbox ผนัง 3 ด้าน (44px) + ชิป chip-sm = แตะง่าย ดีอยู่แล้ว</li>
+</ul>
+</div>
+
+<div style="text-align:center;color:#999;font-size:12px;margin-top:8px">G4 verified ครบ ณ 17 มิ.ย. · จะตรวจ+อัปเดตอีกรอบหลัง Chat B แก้งานทุกแชทเสร็จ (ตามที่พี่นัทสั่ง)</div>
+</div></body></html>

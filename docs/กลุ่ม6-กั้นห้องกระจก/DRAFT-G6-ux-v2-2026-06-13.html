@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G6 v2 — อุปกรณ์เสริมหมวดเดียว + ผสมบาน</title>
+<style>
+:root{--red:#B3151D;--green:#15803D;--gray:#6B7280;--line:#E5E7EB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 50px;}
+h2.pg{font-size:17px;font-weight:700;color:var(--red);margin:8px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:12px;}
+.lbl{font-size:11px;font-weight:700;color:var(--gray);margin:18px 2px 8px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;}
+/* strip ผสมบาน */
+.strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:5px;}
+.pc{flex:0 0 auto;min-width:104px;border:1.5px solid var(--line);border-radius:11px;padding:9px 11px;background:#fff;cursor:pointer;position:relative;}
+.pc.on{border-color:var(--red);background:#FFF5F5;}
+.pc .pn{font-size:14px;font-weight:700;color:#111;}
+.pc .ps{font-size:11px;color:var(--gray);margin-top:2px;}
+.pc .px{position:absolute;top:4px;right:6px;font-size:14px;color:#A32D2D;border:none;background:none;cursor:pointer;}
+.pcadd{flex:0 0 auto;min-width:78px;border:1.5px dashed var(--red);border-radius:11px;padding:9px;background:#fff;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.pcadd .pi{font-size:20px;}
+.fampick{display:none;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:9px;padding:11px;background:#F6F7F9;border-radius:11px;}
+.fampick.open{display:grid;}
+.fc{min-height:46px;padding:8px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#374151;}
+/* combined add-ons */
+.achips{display:flex;flex-wrap:wrap;gap:7px;}
+.a{min-height:42px;padding:0 14px;border:1.5px solid var(--line);border-radius:21px;background:#fff;font-size:13px;cursor:pointer;color:#374151;display:flex;align-items:center;font-weight:600;}
+.a.on{background:var(--red);color:#fff;border-color:var(--red);}
+.detail{margin-top:11px;display:flex;flex-direction:column;gap:7px;}
+.drow{background:#F6F7F9;border-radius:10px;padding:9px 11px;}
+.drow .dt{font-weight:700;color:var(--red);margin-bottom:6px;font-size:13px;}
+.dsub{display:flex;flex-wrap:wrap;gap:6px;}
+.s{min-height:38px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;cursor:pointer;color:#374151;font-weight:600;}
+.s.on{background:var(--red);color:#fff;border-color:var(--red);}
+.dinp{height:38px;width:110px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:13px;}
+.empty{font-size:12px;color:var(--gray);padding:5px 2px;}
+.hint{font-size:11px;color:var(--gray);margin-top:11px;}
+</style>
+</head>
+<body>
+<div class="banner">DRAFT G6 v2 · อุปกรณ์เสริมรวมหมวดเดียว + ผสมบานง่าย</div>
+<div class="page">
+  <h2 class="pg">กั้นห้องกระจก — ออกแบบใหม่ 2 จุด</h2>
+  <div class="sub">(A) อุปกรณ์เสริม 4 หมวด → หมวดเดียว ปุ่มกระชับ · (B) ด้านหนึ่งผสมบานหลายชนิดง่าย</div>
+
+  <div class="lbl">B · ด้าน A — ผสมบานหลายชนิด (แตะการ์ดแก้ · แตะ + เพิ่มชนิด)</div>
+  <div class="card">
+    <div class="strip" id="strip">
+      <div class="pc on"><button class="px" onclick="rmPc(event)">✕</button><div class="pn">ระแนงบังตา</div><div class="ps">3.0×2.4 ม.</div></div>
+      <div class="pc"><button class="px" onclick="rmPc(event)">✕</button><div class="pn">บานเลื่อน</div><div class="ps">1.2×2.4 ม.</div></div>
+      <button class="pcadd" onclick="togFam()"><span class="pi">＋</span>เพิ่มชนิด</button>
+    </div>
+    <div class="fampick" id="fampick">
+      <button class="fc" onclick="addPc('บานเลื่อน')">บานเลื่อน</button>
+      <button class="fc" onclick="addPc('บานเปิด')">บานเปิด</button>
+      <button class="fc" onclick="addPc('ติดตาย')">กระจกติดตาย</button>
+      <button class="fc" onclick="addPc('ระแนงบังตา')">ระแนงบังตา</button>
+      <button class="fc" onclick="addPc('บานเฟี้ยม')">บานเฟี้ยม</button>
+      <button class="fc" onclick="addPc('ผนังเบา')">ผนังเบา</button>
+    </div>
+  </div>
+
+  <div class="lbl">A · อุปกรณ์เสริม — รวมหมวดเดียว กดที่ใช้ (เห็นหมดในจอเดียว · เลือกหลายอันได้)</div>
+  <div class="card">
+    <div class="achips" id="achips"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+  <p class="hint">เดิม 4 กล่องพับซ้อน ต้องเปิดทีละกล่อง เลื่อนลึก · ใหม่ = ปุ่มกลมกระชับเห็นหมด กดอันไหนรายละเอียดโผล่ใต้แถบ (ไม่กระจาย ไม่เลื่อนลึก)</p>
+</div>
+<script>
+var ADDONS=[
+  ['frame','ครอบวงกบ'],['thresh','ธรณี'],['drop','ดรอปพื้น'],['handle','มือจับ'],['lock','ชุดล็อค'],
+  ['mosq','มุ้ง'],['grid','คาดตาราง'],['beam','เสริมคาน'],['hidetrack','ซ่อนราง'],['uchan','ฝังรางยู'],
+  ['solid','แผ่นทึบล่าง'],['remove','รื้อของเดิม'],['extra','งานเสริม']
+];
+var DET={
+  frame:{t:'ครอบวงกบ',sub:['ไม่มี','3 ด้าน','4 ด้าน']},
+  thresh:{t:'ธรณี',sub:['กันน้ำ','หลังเต่า+ดรอป']},
+  drop:{t:'ดรอปพื้น (ม.)',input:1},
+  handle:{t:'มือจับ — ติ๊กได้หลายแบรนด์',multi:['Cmech','ดิจิตอล','สแตนเลส']},
+  lock:{t:'ชุดล็อค',sub:['มีกุญแจ','ไม่มี']},
+  mosq:{t:'มุ้ง',sub:['ไม่ใส่','เฟรมเล็ก','ม้วน','จีบนิรภัย']},
+  grid:{t:'คาดตาราง — สีเส้น (กรอกจำนวนเส้นเพิ่ม)',sub:['อบขาว','ดำ','ลายไม้']},
+  beam:{t:'เสริมคาน — กรอกความยาว (ม.)',input:1},
+  hidetrack:{t:'ซ่อนราง — กรอกความยาว (ม.)',input:1},
+  uchan:{t:'ฝังรางยู',sub:['ในพื้น']},
+  solid:{t:'แผ่นทึบล่าง',sub:['ไม่มี','อลูลูกฟูก','คอมโพสิต']},
+  remove:{t:'รื้อของเดิม',sub:['รื้อ']},
+  extra:{t:'งานเสริม/วิศวกรรม (บาท)',input:1}
+};
+var ON={};
+var chipBox=document.getElementById('achips');
+ADDONS.forEach(function(a){var b=document.createElement('button');b.className='a';b.dataset.k=a[0];b.textContent=a[1];b.onclick=function(){tA(b);};chipBox.appendChild(b);});
+function render(){
+  var box=document.getElementById('detail');box.innerHTML='';
+  var keys=ADDONS.map(function(a){return a[0];}).filter(function(k){return ON[k];});
+  if(!keys.length){box.innerHTML='<div class="empty">ยังไม่ได้เลือก — กดปุ่มที่ต้องใช้ รายละเอียดจะโผล่ตรงนี้</div>';return;}
+  keys.forEach(function(k){
+    var d=DET[k],row=document.createElement('div');row.className='drow';
+    var h='<div class="dt">'+d.t+'</div>';
+    if(d.input)h+='<input type="number" class="dinp" placeholder="กรอก">';
+    else if(d.multi)h+='<div class="dsub">'+d.multi.map(function(s){return '<button class="s" onclick="this.classList.toggle(\'on\')">'+s+'</button>';}).join('')+'</div>';
+    else if(d.sub)h+='<div class="dsub">'+d.sub.map(function(s,i){return '<button class="s'+(i===0?' on':'')+'" onclick="var p=this.parentElement;[].forEach.call(p.children,function(c){c.classList.remove(\'on\');});this.classList.add(\'on\');">'+s+'</button>';}).join('')+'</div>';
+    row.innerHTML=h;box.appendChild(row);
+  });
+}
+function tA(b){var k=b.dataset.k;ON[k]=!ON[k];b.classList.toggle('on',ON[k]);render();}
+function togFam(){document.getElementById('fampick').classList.toggle('open');}
+function addPc(name){var strip=document.getElementById('strip');var add=strip.querySelector('.pcadd');var pc=document.createElement('div');pc.className='pc';pc.innerHTML='<button class="px" onclick="rmPc(event)">✕</button><div class="pn">'+name+'</div><div class="ps">3.0×2.4 ม.</div>';strip.insertBefore(pc,add);document.getElementById('fampick').classList.remove('open');}
+function rmPc(e){e.stopPropagation();e.target.parentElement.remove();}
+render();
+</script>
+</body>
+</html>

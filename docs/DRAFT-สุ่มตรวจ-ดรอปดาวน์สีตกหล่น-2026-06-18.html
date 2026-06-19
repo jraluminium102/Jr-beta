@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ดราฟ สุ่มตรวจ — ดรอปดาวน์สีที่ยังไม่เป็นชิป (G1/G4)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;margin:0;background:#F3F4F6;color:#1F2937;padding:18px;line-height:1.55;}
+  .wrap{max-width:820px;margin:0 auto;}
+  h1{font-size:19px;margin:0 0 4px;}
+  .sub{font-size:12.5px;color:#6B7280;margin-bottom:16px;}
+  .head-note{background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:10px 13px;font-size:13px;margin-bottom:16px;}
+  .item{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px;}
+  .qid{display:inline-block;background:#FEE2E2;color:#991B1B;font-size:11px;font-weight:700;border-radius:6px;padding:2px 9px;margin-bottom:8px;}
+  .grp{display:inline-block;background:#E0E7FF;color:#3730A3;font-size:11px;font-weight:700;border-radius:6px;padding:2px 9px;margin-left:5px;}
+  .qtitle{font-weight:700;font-size:14.5px;margin:6px 0 10px;}
+  .row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed #EEE;}
+  .row:first-of-type{border-top:none;}
+  .lbl{flex:0 0 88px;font-size:12px;font-weight:700;padding-top:4px;}
+  .l-now{color:#B91C1C;} .l-fix{color:#047857;}
+  .box{flex:1;font-size:13px;border-radius:7px;padding:8px 10px;}
+  .b-now{background:#FEF2F2;}
+  .b-fix{background:#ECFDF5;}
+  select.demo{height:34px;border:1px solid #C7D7F0;border-radius:7px;font-size:13px;padding:0 6px;background:#fff;max-width:240px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #CBD5E1;background:#fff;border-radius:18px;padding:4px 11px;font-size:12.5px;cursor:default;}
+  .chip.on{border-color:#2563EB;background:#EFF6FF;color:#1E40AF;font-weight:600;}
+  .sw{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.25);display:inline-block;}
+  .price{color:#B45309;font-size:11.5px;font-weight:600;margin-left:2px;}
+  .fixhow{background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:8px 11px;font-size:12.5px;margin-top:10px;}
+  .fixhow code{background:#DCFCE7;border-radius:4px;padding:1px 5px;font-size:12px;}
+  .flag{font-size:11.5px;color:#6B7280;margin-top:8px;}
+  .ask{background:#EFF6FF;border:1px solid #93C5FD;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎲 ดราฟ สุ่มตรวจเพิ่ม — ดรอปดาวน์ "สี" ที่ยังไม่เป็นชิป</h1>
+  <div class="sub">18 มิ.ย. · ตรวจโดย A-G3 (มุมคนนอก) · แม่แบบตรวจร่วม ข้อ 6/8 · เจอ 3 จุด · ทั้งหมดเป็น UX ไม่กระทบสูตรราคา</div>
+
+  <div class="head-note" style="background:#ECFDF5;border-color:#6EE7B7;">
+    ✅ <b>อัปเดตหลังเช็คโค้ดจริง (18มิ.ย.):</b> จาก 3 จุดที่สงสัย — <b>จุด 1+2 (สีมือจับ Cmech) ทำชิป+จุดสีเสร็จแล้ว</b> ในโค้ด (กลไก <code>handleChipify</code> L1136-7) = false positive · <b>เหลือจุด 3 (สีฝาตู้ G4) จุดเดียวที่ของจริง</b> และ <b>อยู่ในคิวกลางอยู่แล้ว</b> (โซนงาน 4) — ไม่มีงานใหม่ต้องสั่ง
+  </div>
+
+  <!-- 1 -->
+  <div class="item">
+    <span class="qid">จุด 1</span><span class="grp">G1 มือจับ</span>
+    <div class="qtitle">สีชุบมือจับ Cmech (<code>o-cmechcolor</code> · L4175) — 7 สี</div>
+    <div class="row"><div class="lbl l-now">ตอนนี้</div><div class="box b-now">
+      ชนิด: <span class="chip on">ฝัง</span> <span class="chip">เมโทร</span> &nbsp;←เป็นชิปแล้ว<br><br>
+      สี:&nbsp;
+      <select class="demo"><option>สีดำ</option><option>สีขาว</option><option>Silver (ชุบ)</option><option>Champagne (ชุบ)</option><option>Gold (ชุบ)</option><option>Bronze (ชุบ)</option><option>Copper (ชุบ)</option></select>
+      &nbsp;←ยังเป็นดรอปดาวน์
+    </div></div>
+    <div class="row"><div class="lbl l-fix">เสนอแก้</div><div class="box b-fix">
+      สี:&nbsp;
+      <span class="chips">
+        <span class="chip on"><span class="sw" style="background:#1F2937;"></span>ดำ</span>
+        <span class="chip"><span class="sw" style="background:#fff;"></span>ขาว</span>
+        <span class="chip"><span class="sw" style="background:#C0C0C0;"></span>Silver</span>
+        <span class="chip"><span class="sw" style="background:#E8D5A8;"></span>Champagne</span>
+        <span class="chip"><span class="sw" style="background:#D4AF37;"></span>Gold</span>
+        <span class="chip"><span class="sw" style="background:#7B5B3A;"></span>Bronze</span>
+        <span class="chip"><span class="sw" style="background:#9C5A2E;"></span>Copper</span>
+      </span>
+    </div></div>
+    <div class="fixhow">⚙️ <b>วิธีแก้:</b> เพิ่ม <code>'o-cmechcolor'</code> เข้า <code>CHIPIFY_SELECTS</code> (L3314) — 7 ตัวเลือกอยู่ในลิมิต ≤7 chipify อัตโนมัติได้เลย · จุดสีใส่ผ่าน data-swatch (ถ้า generic รองรับ) หรือชิปธรรมดาก่อนก็ได้</div>
+    <div class="flag">🚩 value=ข้อความสี (black/white/silver...) ไม่ใช่ราคา → chipify generic ผ่าน selectedIndex ปลอดภัย · golden 149 ต้องตรง</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="item">
+    <span class="qid">จุด 2</span><span class="grp">G1 มือจับ</span>
+    <div class="qtitle">สีชุบ Cmech หลบมุ้ง (<code>o-cmechawn</code> · L4183) — 8 สี <b>มีราคา</b></div>
+    <div class="row"><div class="lbl l-now">ตอนนี้</div><div class="box b-now">
+      <select class="demo" style="max-width:280px;"><option>ไม่ใส่</option><option>สีดำ +600</option><option>สีขาว +600</option><option>Silver ชุบ +840</option><option>Champagne ชุบ +840</option><option>Gold ชุบ +840</option><option>Bronze ชุบ +840</option><option>Copper ชุบ +840</option></select>
+      &nbsp;←ดรอปดาวน์ 8 ตัว
+    </div></div>
+    <div class="row"><div class="lbl l-fix">เสนอแก้</div><div class="box b-fix">
+      <span class="chips">
+        <span class="chip on">ไม่ใส่</span>
+        <span class="chip"><span class="sw" style="background:#1F2937;"></span>ดำ<span class="price">+600</span></span>
+        <span class="chip"><span class="sw" style="background:#fff;"></span>ขาว<span class="price">+600</span></span>
+        <span class="chip"><span class="sw" style="background:#C0C0C0;"></span>Silver<span class="price">+840</span></span>
+        <span class="chip"><span class="sw" style="background:#E8D5A8;"></span>Champagne<span class="price">+840</span></span>
+        <span class="chip"><span class="sw" style="background:#D4AF37;"></span>Gold<span class="price">+840</span></span>
+        <span class="chip"><span class="sw" style="background:#7B5B3A;"></span>Bronze<span class="price">+840</span></span>
+        <span class="chip"><span class="sw" style="background:#9C5A2E;"></span>Copper<span class="price">+840</span></span>
+      </span>
+    </div></div>
+    <div class="fixhow">⚙️ <b>วิธีแก้:</b> 8 ตัว = เกินลิมิต 7 → ใส่ทั้งใน <code>CHIPIFY_SELECTS</code> <b>และ</b> <code>CHIPIFY_BIG</code> (L3316) เหมือน o-bsfinish/bocfinish ที่เพิ่งทำ · <b>ราคา +600/+840 ต้องคงโชว์</b>บนชิป</div>
+    <div class="flag">🚩 value=ข้อความ (black/white...) ราคาคิดจากชนิดสีที่อื่น → chipify selectedIndex ปลอดภัย · ⚠️ ต้องเทียบ golden ก่อน-หลัง (สีมีราคา = บั๊กการเงินข้อ 1 แม่แบบ)</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="item">
+    <span class="qid">จุด 3</span><span class="grp">G4 ตู้</span>
+    <div class="qtitle">สีฝาตู้ (<code>o-ftcolor</code> · L4568) — ดรอปดาวน์สีทั้งหมด</div>
+    <div class="row"><div class="lbl l-now">ตอนนี้</div><div class="box b-now">
+      ประเภทตู้ <span class="chip on">ตู้ทั่วไป</span> · จำนวนบาน <span class="chip on">2 บาน</span> · ชนิดชั้น <span class="chip on">ตามประเภท</span> &nbsp;←ชิปหมดแล้ว<br><br>
+      สีฝาตู้:&nbsp;
+      <select class="demo" style="max-width:200px;"><option>ขาว/ดำ (ฟรี)</option><option>… สีทั้งหมด ~20 สี …</option></select>
+      &nbsp;←ตัวเดียวที่ยังเป็นดรอปดาวน์
+    </div></div>
+    <div class="row"><div class="lbl l-fix">เสนอแก้</div><div class="box b-fix">
+      สีฝาตู้: เลือกทีละชั้น + จุดสี (แบบเดียวกับสีบานกระจก/โพลีตัน)<br>
+      <span class="chips" style="margin-top:6px;">
+        <span class="chip on"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#1F2937 50%);"></span>ขาว/ดำ ฟรี</span>
+        <span class="chip"><span class="sw" style="background:#8B5A2B;"></span>ลายไม้ <span class="price">…</span></span>
+        <span class="chip"><span class="sw" style="background:#6B7280;"></span>ซาฮาร่า <span class="price">…</span></span>
+        <span class="chip">+ อีก ~17 สี</span>
+      </span>
+    </div></div>
+    <div class="fixhow">⚙️ <b>วิธีแก้:</b> สีเยอะ (~20) → ตัดสินใจ 2 ทาง: (ก) drill-down + จุดสี เหมือนสีบานกระจก หรือ (ข) ถ้าจะใช้ชิปแถวเดียว ต้องใส่ <code>CHIPIFY_BIG</code> · <b>เจ้าของ G4 เคาะ</b> — เพราะ value=index สี (เชื่อม COLORS[] + ราคา) ต้องไม่ทำราคาเพี้ยน</div>
+    <div class="flag">🚩 เป็นสีที่บางตัวมีราคา (colorPrice) → ต้องเทียบ golden · จุดนี้ "เลือกได้" ว่าจะแก้รอบนี้หรือคงไว้ (ไม่ผิด แค่ไม่ครบ pattern)</div>
+  </div>
+
+  <div class="ask">
+    <b>❓ ขอพี่นัทเคาะ ก่อนรวมส่งคิวกลาง:</b><br>
+    1. จุด 1+2 (สีมือจับ G1) — ทำเป็นชิป+จุดสีเลยไหม? (เป็นสีชุบ ภาพช่วยเลือกง่าย)<br>
+    2. จุด 3 (สีฝาตู้ G4) — เอารอบนี้ หรือข้ามไปก่อน? (สีเยอะ ต้องเคาะรูปแบบ drill vs ชิปยาว)<br>
+    3. จุดสี (swatch) — ใช้แบบ ค (ย่อชื่อ+จุดสี) เหมือนมาตรฐานที่เคาะไว้ ใช่ไหม
+  </div>
+
+  <div class="item" style="font-size:12.5px;color:#4B5563;">
+    <b>หมายเหตุ:</b> ทั้ง 3 จุดเป็น <b>UX ล้วน</b> (ดรอปดาวน์→ชิป) ไม่แตะสูตรราคา · ส่วน <code>o-digi</code>/<code>o-stainless</code> (รุ่นมือจับดิจิตอล/สแตนเลส) เป็น "รายการรุ่น" ไม่ใช่สี — คงเป็นดรอปดาวน์ได้ ไม่นับเป็นจุดแก้
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G1 — ฟอร์มงานบาน (6 กลุ่มเหมือน G6)</title>
+<style>
+:root{--red:#B3151D;--gray:#6B7280;--line:#E5E7EB;--amber:#BA7517;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,'Leelawadee UI',sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 80px;}
+h2.pg{font-size:17px;font-weight:700;color:var(--red);margin:6px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:6px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:11px;}
+.et{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.et .no{width:20px;height:20px;border-radius:50%;background:#fbe9ea;color:var(--red);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;}
+.et .bc{margin-left:auto;font-size:11px;color:var(--gray);font-weight:400;}
+.grow{display:flex;flex-wrap:wrap;gap:7px;}
+.na{font-size:12px;color:var(--gray);font-style:italic;}
+.gbtn{min-height:34px;padding:0 13px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.gbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+.btngrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.mainbtn{min-height:58px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12.5px;font-weight:600;color:#374151;font-family:inherit;}
+.mainbtn .ic{font-size:20px;}
+.mainbtn .cnt{font-size:10px;font-weight:400;color:var(--gray);}
+.mainbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+.mainbtn.on .cnt{color:#f3c6c9;}
+.subchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.sc{min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;}
+.sc.on{background:var(--red);color:#fff;border-color:var(--red);}
+.sc.ban{opacity:.45;}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.brow:last-child{margin-bottom:0;}
+.rl{font-size:12px;color:var(--gray);min-width:62px;font-weight:600;flex:0 0 62px;}
+.bgrp{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.bgrp .opt{min-height:38px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.bgrp .opt.on{background:var(--red);color:#fff;border-color:var(--red);}
+.szwrap{display:flex;flex-wrap:wrap;gap:8px;}
+.fld{display:flex;flex-direction:column;gap:2px;}
+.fld label{font-size:10.5px;color:var(--gray);font-weight:600;}
+.fld input{height:40px;width:74px;border:1.5px solid var(--line);border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;}
+.a{min-height:40px;padding:0 13px;border:1.5px solid var(--line);border-radius:21px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:7px;}
+.a.on{background:var(--red);color:#fff;border-color:var(--red);}
+.a.glass.on{background:var(--amber);border-color:var(--amber);color:#fff;}
+.a .pr{font-size:11px;opacity:.85;}
+.a .pf{width:74px;height:26px;border:1px solid #ccc;border-radius:6px;font-size:11px;padding:0 5px;text-align:right;font-family:inherit;}
+.txt{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:13px;font-family:inherit;}
+.flag{background:#fffbeb;border-left:3px solid #f59e0b;padding:5px 9px;font-size:11px;color:#92400e;border-radius:0 7px 7px 0;margin-top:9px;}
+.note{background:#f1f5f9;border-left:3px solid #94a3b8;padding:5px 9px;font-size:11px;color:#475569;border-radius:0 7px 7px 0;margin-top:9px;}
+.pbar{position:fixed;left:0;right:0;bottom:0;background:var(--red);color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;}
+.pbar .no{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:11px;margin-right:6px;}
+.pbar .big{font-size:21px;font-weight:700;}
+.demo{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;padding:6px 11px;font-size:11.5px;margin-bottom:8px;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="banner">DRAFT G1 · ฟอร์มงานบาน — 6 กลุ่มเหมือน G6 เป๊ะ · 11 ขั้นบน→ล่าง</div>
+<div class="page">
+  <h2 class="pg">ฟอร์มกรอกงานบาน — G1</h2>
+  <div class="sub">เลือกแบบ → ออปชั่นกรองตามแบบ · สำคัญขึ้นบน · เสริม/หมายเหตุลงล่าง · ราคาท้ายสุด</div>
+  <div class="demo">⚠ ราคา <b>เดโม</b> (dev ดึงเรตจริง) · กดเล่นได้จริง · 6 กลุ่มบานตรงกับดราฟ G6</div>
+
+  <div class="card">
+    <div class="et"><span class="no">1</span>กลุ่มงาน</div>
+    <div class="grow" id="groups"></div>
+  </div>
+
+  <div class="card">
+    <div class="et"><span class="no">2</span>ชนิดบาน <span class="bc" id="bc2"></span></div>
+    <div class="btngrid" id="fam"></div>
+    <div class="subchips hidden" id="vars"></div>
+  </div>
+
+  <div id="form" class="hidden"></div>
+</div>
+
+<div class="pbar hidden" id="pbar"><span><span class="no">11</span>ราคารวม (เดโม)</span><span class="big" id="ptotal">฿0</span></div>
+
+<script>
+var GLASS=[{n:'คาดตาราง',p:1200},{n:'ลูกฟูก/คอมโพสิททึบ',p:3500}];
+var EXF=[{n:'ครอบวงกบ',p:2000},{n:'ดรอปพื้น',p:1500},{n:'รื้อของเดิม',p:1000}];
+var EXN=[{n:'ครอบวงกบ',p:2000},{n:'รื้อของเดิม',p:1000}];
+var EXA=[{n:'ครอบวงกบ',p:2000},{n:'ดรอปพื้น',p:1500},{n:'แขนค้ำ (เปิดล่าง)',p:500},{n:'รื้อของเดิม',p:1000}];
+var HANDLE={n:'มือจับ',p:10000};
+var MOSQ={n:'มุ้ง',p:5000};
+var CFG={
+ slide_out:{rate:8000,open:['เลื่อน (ระบุติดตาย)','สลับ','เปิดคู่กลาง','ลากจูง'],panel:'slidefixed',choice:[{l:'รางล่าง',o:['กันน้ำ','รางเตี้ย (งานภายใน)']}],color:1,tog:[HANDLE,{n:'ล็อกเลื่อน',p:0},MOSQ],glass:1,ex:EXF},
+ inner:{rate:6000,open:['เลื่อน','สลับ','เปิดคู่กลาง','ลากจูง'],panel:'slidefixed',choice:[{l:'ราง',o:['โชว์ราง','ซ่อนราง +5,000']}],color:1,tog:[{n:'ล็อกเลื่อน',p:0}],glass:1,ex:EXN,note:'ภายใน · ไม่มีมุ้ง'},
+ inner_x:{rate:6500,open:['เลื่อน','สลับ','เปิดคู่กลาง','ลากจูง'],panel:'slidefixed',choice:[{l:'ราง',o:['โชว์ราง','ซ่อนราง +5,000']}],color:1,tog:[{n:'มือจับ X-series (ฟรี)',p:0},{n:'ล็อกเลื่อน',p:0}],glass:1,ex:EXN,note:'ภายใน · ไม่มีมุ้ง'},
+ lift:{rate:12000,panel:'panels',choice:[{l:'มอเตอร์',o:['ไม่มี','80กก. +18,000','300กก. +28,000']}],color:1,tog:[MOSQ],glass:1,ex:EXN,note:'ไม่มีดรอปพื้น'},
+ pc:{rate:11000,panel:'panels',choice:[],color:1,tog:[{n:'ล็อกเลื่อน',p:0},HANDLE,MOSQ],glass:1,ex:EXF},
+ swing_std:{rate:9000,panel:'panels',choice:[{l:'ธรณี',o:['กันน้ำ','หลังเต่า +1,000']},{l:'โช้คอัพ',o:['ไม่มี','แขนยื่น/รางเลื่อน/บานพับ +5,000']}],color:1,tog:[HANDLE,MOSQ],glass:1,ex:EXF,note:'X:+มือจับX ฟรี · Velora:ไม่มีโช้ค · โซลิด:ผสมบานได้ (เอา o-solidlight ออก)'},
+ awning:{rate:8000,open:['เปิดล่าง','เปิดข้าง','Tilt & Turn +5,000/บาน'],panel:'panels',choice:[],color:1,tog:[{n:'มือจับกระทุ้ง',p:600},MOSQ],glass:1,ex:EXA},
+ folding:{rate:9000,panel:'foldlr',choice:[{l:'ธรณีเฟี้ยม',o:['กันน้ำภายนอก','หลังเต่าภายใน']}],color:1,tog:[MOSQ],glass:1,ex:EXF,flag:'เปิดซ้าย/เปิดขวา ยังไม่มีในโค้ด → dev เพิ่ม'},
+ folding_x:{rate:12000,panel:'foldlr',choice:[{l:'ธรณีเฟี้ยม',o:['กันน้ำภายนอก','หลังเต่าภายใน']}],color:1,tog:[{n:'มือจับ X-series (ฟรี)',p:0},MOSQ],glass:1,ex:EXF,flag:'เปิดซ้าย/เปิดขวา ยังไม่มีในโค้ด → dev เพิ่ม'},
+ pivotcurve:{rate:30000,panel:'panels',choice:[],color:1,tog:[HANDLE],glass:1,ex:EXF,note:'ตัดมุ้ง · บานหมุน:ไม่มีดรอปพื้น'},
+ fixed:{rate:5000,panel:'sets',choice:[],color:1,tog:[],glass:1,ex:EXN,note:'เฉพาะขนาด (ตัดมือจับ/มุ้ง)',flag:'เปิดคาดตารางให้ติดตาย (L3002)'},
+ frameless:{rate:7000,panel:'sets',choice:[{l:'ประเภท',o:['สวิง','เลื่อน']}],color:1,tog:[{n:'มือจับสแตนเลส (30.5–120ซม.)',p:2000},{n:'สีเฟรม (เห็นน้อย)',p:0}],glass:1,ex:[{n:'รื้อของเดิม',p:1000}],note:'ฐาน: กระจก + สีเฟรม',flag:'เปิดคาดตารางให้บานเปลือย (L3002)'},
+ shower:{rate:12000,panel:'sets',choice:[{l:'รูปแบบ',o:['ประตู+ติดตาย','ติดตายเดี่ยว','ประตูเดี่ยว']},{l:'ประเภทประตู',o:['เปิด','เลื่อน']},{l:'อุปกรณ์',o:['เงิน','ดำ +4,000','ทอง +6,000']}],color:1,tog:[{n:'มือจับสแตนเลส (กรอกชื่อเอง · 2 แบบ)',p:0,name:1}],glass:0,ex:[{n:'รื้อของเดิม',p:1000}],note:'ไม่มีคาดตาราง/ลูกฟูก/ครอบวงกบ/ดรอปพื้น'},
+ ykk:{rate:9000,panel:'panels',choice:[{l:'โช้คอัพ',o:['ไม่มี','แขนยื่น/รางเลื่อน/บานพับ +5,000']}],color:1,tog:[],glass:0,ex:[{n:'ดรอปพื้น',p:1500},{n:'รื้อของเดิม',p:1000}],note:'มีสี+กระจก · ไม่มีคาดตาราง/ลูกฟูก/ครอบวงกบ'},
+ grid:{rate:1200,panel:'sets',choice:[{l:'สีเส้นคาด',o:['ดำ','ขาว','บรอนซ์','ชุบ +']}],color:0,tog:[],glass:0,ex:[{n:'รื้อของเดิม',p:1000}],note:'เส้นคาดตกแต่ง (มติล่าสุด = ปกติเป็นออปชั่นบนบานกระจก — ใส่ที่นี่ตามดราฟ G6)'},
+ panel:{rate:3500,panel:'sets',choice:[{l:'ชนิดประตู',o:['สวิง','เลื่อน','ติดตาย','บานคู่','เดี่ยว']},{l:'สีผิว',o:['ซาฮาร่า','ลายไม้สต๊อก','อบพิเศษ +','ลายไม้อบ +']}],color:0,tog:[],glass:0,ex:[{n:'ครอบวงกบ',p:2000},{n:'รื้อของเดิม',p:1000}],note:'แผ่นทึบ ลูกฟูก/คอมโพสิท (มติล่าสุด = ปกติเป็นออปชั่นบนบานกระจก — ใส่ที่นี่ตามดราฟ G6)'}
+};
+// 6 กลุ่ม = ตรงดราฟ G6 FULL เป๊ะ (บานยก/PC Door อยู่ "อื่นๆ/พิเศษ" · เส้นคาด/ลูกฟูก = ออปชั่น ไม่ใช่แบบ)
+var FAM=[
+ {k:'slide',n:'บานเลื่อน',ic:'⬌',sub:[['ยูโร','slide_out'],['เซมิยูโร','slide_out'],['รางบนซ้อน','inner'],['SlimLux','inner_x'],['E-series','slide_out',1]]},
+ {k:'swing',n:'บานเปิด',ic:'🚪',sub:[['ยูโร','swing_std'],['X-series','swing_std'],['Velora','swing_std'],['โซลิด ทู','swing_std'],['โซลิด วัน','swing_std'],['บานกระทุ้ง','awning'],['บานหมุน','pivotcurve']]},
+ {k:'fold',n:'บานเฟี้ยม',ic:'▥',sub:[['ยูโร','folding'],['เซมิยูโร','folding'],['X-series','folding_x']]},
+ {k:'fix',n:'ติดตาย/เปลือย',ic:'▢',sub:[['กระจกติดตาย','fixed'],['เปลือยติดตาย','frameless'],['สวิง/เลื่อนเปลือย','frameless']]},
+ {k:'curve',n:'ดัดโค้ง',ic:'◗',sub:[['บานคู่','pivotcurve'],['บานเดี่ยว','pivotcurve'],['ติดตายโค้ง','fixed'],['สลิม','pivotcurve']]},
+ {k:'other',n:'อื่นๆ/พิเศษ',ic:'⋯',sub:[['shower','shower'],['บานยก SMS','lift'],['บานยก aluinch','lift'],['PC Door 2','pc'],['PC Door 4','pc'],['YKK ระบายอากาศ','ykk']]}
+];
+var fmt=function(n){return '฿'+Math.round(n).toLocaleString();};
+var pickPrice=function(s){var m=String(s).replace(/,/g,'').match(/\+(\d+)/);return m?parseInt(m[1]):0;};
+var groupsEl=document.getElementById('groups'),famEl=document.getElementById('fam'),varsEl=document.getElementById('vars'),
+    formEl=document.getElementById('form'),pbar=document.getElementById('pbar'),ptotal=document.getElementById('ptotal'),bc2=document.getElementById('bc2');
+var curCfg=null;
+
+['G1','G2','G3','G4','G5','G6','G7'].forEach(function(g,i){var b=document.createElement('button');b.className='gbtn'+(i===0?' on':'');b.textContent=g;b.onclick=function(){Array.prototype.forEach.call(groupsEl.children,function(x){x.className='gbtn';});b.className='gbtn on';};groupsEl.appendChild(b);});
+
+FAM.forEach(function(f,fi){var b=document.createElement('button');b.className='mainbtn';var n=f.sub.filter(function(s){return !s[2];}).length;
+  b.innerHTML='<span class="ic">'+f.ic+'</span>'+f.n+'<span class="cnt">'+n+' รุ่น</span>';
+  b.onclick=function(){Array.prototype.forEach.call(famEl.children,function(x){x.className='mainbtn';});b.className='mainbtn on';showVars(f);};
+  famEl.appendChild(b);});
+
+function showVars(f,autoFirst){varsEl.innerHTML='';varsEl.classList.remove('hidden');bc2.textContent=f.n;
+  f.sub.forEach(function(s,si){var c=document.createElement('button');c.className='sc'+(s[2]?' ban':'');c.textContent=s[0]+(s[2]?' ⊘':'');
+    c.onclick=function(){Array.prototype.forEach.call(varsEl.children,function(x){x.className=x.className.replace(' on','');});c.className+=' on';bc2.textContent=f.n+' › '+s[0];buildForm(s[0],s[1]);};
+    varsEl.appendChild(c);
+    if(autoFirst&&si===0){c.className+=' on';bc2.textContent=f.n+' › '+s[0];buildForm(s[0],s[1]);}
+  });
+}
+
+function scGroup(label,opts){
+  var h='<div class="brow"><span class="rl">'+label+'</span><div class="bgrp" data-pick>';
+  h+=opts.map(function(o,i){return '<button class="opt'+(i===0?' on':'')+'" data-price="'+pickPrice(o)+'" onclick="pick(this)">'+o+'</button>';}).join('');
+  return h+'</div></div>';
+}
+function pick(b){var sib=b.parentNode.children;Array.prototype.forEach.call(sib,function(x){x.className='opt';});b.className='opt on';calc();}
+function pick2(b){var sib=b.parentNode.children;Array.prototype.forEach.call(sib,function(x){x.className='sc';});b.className='sc on';calc();}
+function togChip(b){b.classList.toggle('on');calc();}
+function aChip(o,glass){
+  var nm=o.name?'<input class="txt" style="width:140px;height:28px;padding:4px 8px;" placeholder="ชื่อมือจับ" onclick="event.stopPropagation()">':o.n;
+  var pr=o.p?'<span class="pr">+<input class="pf" value="'+o.p+'" onclick="event.stopPropagation()" oninput="calc()"></span>':'';
+  return '<button class="a'+(glass?' glass':'')+'" onclick="togChip(this)">'+nm+pr+'</button>';
+}
+function sec(no,title,bc,body){return '<div class="card"><div class="et"><span class="no">'+no+'</span>'+title+(bc?'<span class="bc">'+bc+'</span>':'')+'</div>'+body+'</div>';}
+function na(t){return '<div class="na">— '+t+' —</div>';}
+
+function buildForm(name,cfgKey){
+  var c=CFG[cfgKey];curCfg=c;var h='';
+  // 3 ลักษณะการเปิด
+  h+=sec(3,'ลักษณะการเปิด','', c.open?('<div class="grow" data-pick>'+c.open.map(function(o,i){return '<button class="sc'+(i===0?' on':'')+'" data-price="'+pickPrice(o)+'" onclick="pick2(this)">'+o+'</button>';}).join('')+'</div>'):na('แบบนี้ไม่ต้องเลือกลักษณะการเปิด'));
+  // 4 ขนาด & จำนวน
+  var sz='<div class="szwrap"><div class="fld"><label>กว้าง (ม.)</label><input type="number" id="fw" value="1.8" step="0.1" oninput="calc()"></div><div class="fld"><label>สูง (ม.)</label><input type="number" id="fh" value="2.1" step="0.1" oninput="calc()"></div>';
+  if(c.panel==='slidefixed') sz+='<div class="fld"><label>จำนวนบาน</label><input type="number" id="fp" value="4" oninput="calc()"></div><div class="fld"><label>บานเปิด</label><input type="number" value="2"></div><div class="fld"><label>บานติดตาย</label><input type="number" value="2"></div>';
+  else if(c.panel==='foldlr') sz+='<div class="fld"><label>จำนวนบาน</label><input type="number" id="fp" value="4" oninput="calc()"></div><div class="fld"><label>เปิดขวา</label><input type="number" value="2"></div><div class="fld"><label>เปิดซ้าย</label><input type="number" value="2"></div>';
+  else if(c.panel==='panels') sz+='<div class="fld"><label>จำนวนบาน</label><input type="number" id="fp" value="2" oninput="calc()"></div>';
+  sz+='<div class="fld"><label>จำนวนชุด</label><input type="number" id="fset" value="1" oninput="calc()"></div></div>'+(c.flag?'<div class="flag">🚩 '+c.flag+'</div>':'');
+  h+=sec(4,'ขนาด &amp; จำนวน','',sz);
+  // 5 สี & กระจก
+  h+=sec(5,'สี &amp; กระจก',c.color?'ฐาน':'', c.color?(scGroup('สีอลู',['อบขาว','ดำ','บรอนซ์','ลายไม้ +'])+scGroup('กระจก',['เขียว 6มม.','ใส 6มม.','เทมเปอร์ +','ลามิเนต +'])):na('แบบนี้ไม่มีสีอลู/กระจกแยก'));
+  // 6 ออปชั่นหลัก
+  var o6='';if(c.choice)c.choice.forEach(function(ch){o6+=scGroup(ch.l,ch.o);});
+  if(c.tog&&c.tog.length)o6+='<div class="grow" style="margin-top:4px;">'+c.tog.map(function(o){return aChip(o);}).join('')+'</div>';
+  h+=sec(6,'ออปชั่นหลัก','', o6||na('แบบนี้ไม่มีออปชั่นหลักเพิ่ม (เฉพาะขนาด)'));
+  // 7 เสริมบานกระจก
+  h+=sec(7,'เสริมบานกระจก','', c.glass?('<div class="grow">'+GLASS.map(function(o){return aChip(o,1);}).join('')+'</div>'):na('แบบนี้ไม่มีคาดตาราง/ลูกฟูก'));
+  // 8 อุปกรณ์เสริม
+  h+=sec(8,'อุปกรณ์เสริม','หมวดเดียว กดที่ใช้','<div class="grow">'+c.ex.map(function(o){return aChip(o);}).join('')+'</div>');
+  // 9 OPTION + 10 ตำแหน่ง/หมายเหตุ
+  h+=sec(9,'OPTION ลูกค้า','','<div class="grow"><button class="gbtn">+ เพิ่ม OPTION</button></div>');
+  h+=sec(10,'ตำแหน่ง / หมายเหตุ','','<input class="txt" placeholder="ตำแหน่งติดตั้ง เช่น ห้องนอน 1" style="margin-bottom:8px;"><textarea class="txt" rows="2" placeholder="หมายเหตุพิเศษ"></textarea>');
+  if(c.note) h+='<div class="note">ℹ '+c.note+'</div>';
+  formEl.innerHTML=h;formEl.classList.remove('hidden');pbar.classList.remove('hidden');calc();
+}
+function calc(){
+  if(!curCfg)return;
+  var w=parseFloat((document.getElementById('fw')||{}).value)||0,hh=parseFloat((document.getElementById('fh')||{}).value)||0;
+  var set=parseInt((document.getElementById('fset')||{}).value)||1;
+  var base=Math.round(w*hh*(curCfg.rate||7000)),add=0;
+  formEl.querySelectorAll('[data-pick] .opt.on, [data-pick] .sc.on').forEach(function(o){add+=parseInt(o.dataset.price||0)||0;});
+  formEl.querySelectorAll('.a.on').forEach(function(a){var pf=a.querySelector('.pf');add+=pf?(parseFloat(pf.value)||0):0;});
+  ptotal.textContent=fmt((base+add)*set);
+}
+// auto-select บานเลื่อน → ยูโร ให้เห็นครบ 11 ขั้นทันที
+famEl.children[0].className='mainbtn on';showVars(FAM[0],true);
+</script>
+</body>
+</html>

@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import type { Customer } from "@/lib/types";
+
+// หน้างานของลูกค้า (จาก /api/jobs/search?customer_id=)
+type CustJob = {
+  id: string; job_code: string | null; customer_area: string | null;
+  status: string; current_stage: number; design_state: string;
+};
 
 const EMPTY = { name: "", job: "", address: "", tax_id: "", line_id: "", phone: "", contact_person: "" };
 
@@ -16,6 +22,21 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  // หน้างานของลูกค้าที่เลือก
+  const [custJobs, setCustJobs] = useState<CustJob[]>([]);
+  const [jobsBusy, setJobsBusy] = useState(false);
+
+  useEffect(() => {
+    if (!sel) { setCustJobs([]); return; }
+    let cancelled = false;
+    setJobsBusy(true);
+    fetch(`/api/jobs/search?customer_id=${sel.id}`, { headers: { accept: "application/json" } })
+      .then((r) => r.json())
+      .then((j) => { if (!cancelled) setCustJobs((j.data ?? []) as CustJob[]); })
+      .catch(() => { if (!cancelled) setCustJobs([]); })
+      .finally(() => { if (!cancelled) setJobsBusy(false); });
+    return () => { cancelled = true; };
+  }, [sel]);
 
   const filtered = list.filter((c) =>
     [c.name, c.job, c.phone, c.line_id].join(" ").toLowerCase().includes(q.toLowerCase())
@@ -131,6 +152,34 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
               <div className="mt-5 glass-soft rounded-xl p-3.5 text-sm flex gap-2 text-ink-2">
                 <span className="shrink-0 mt-0.5 text-sky-700"><Icon name="info" size={16} /></span>
                 <span>เมื่อสร้างใบเสนอราคา ข้อมูลชุดนี้จะถูกคัดลอกไปฝัง (snapshot) ในเอกสาร — แก้ทะเบียนทีหลังไม่กระทบเอกสารเก่า</span>
+              </div>
+
+              {/* หน้างานของลูกค้า — เห็นว่ามีหลายหน้างานใต้ชื่อเดียว (ลูกค้าเก่า หน้างานใหม่) */}
+              <div className="mt-5">
+                <div className="text-sm font-semibold text-brand-dark mb-2 flex items-center gap-1.5">
+                  <Icon name="building" size={15} /> หน้างานของลูกค้า ({custJobs.length})
+                </div>
+                {jobsBusy ? (
+                  <p className="text-sm text-ink-3">กำลังโหลด…</p>
+                ) : custJobs.length === 0 ? (
+                  <p className="text-sm text-ink-3 glass-soft rounded-lg px-3 py-2">ยังไม่มีหน้างาน</p>
+                ) : (
+                  <div className="space-y-2">
+                    {custJobs.map((j) => (
+                      <a
+                        key={j.id}
+                        href={`/jobs?open=${j.id}`}
+                        className="press flex items-center justify-between gap-2 glass-soft rounded-lg px-3 py-2.5 text-sm hover:bg-white/60"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
+                          <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
+                        </div>
+                        <Badge tone="sky">ขั้น {j.current_stage}</Badge>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ) : (

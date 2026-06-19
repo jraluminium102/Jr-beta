@@ -33,26 +33,28 @@ const TESTS = [
 ];
 
 const EXPECTED = {
-  "o-digi": "มือจับ", "o-stainless": "มือจับ", "o-handlename": "มือจับ",
-  "o-handleprice": "มือจับ", "o-cmech": "มือจับ", "o-cmechcolor": "มือจับ",
-  "o-closer": "มือจับ", "o-cmechawn": "มือจับ", "o-xhandle": "มือจับ",
-  "o-thresh": "ธรณี", "o-threshf": "ธรณี", "o-fcsides": "ธรณี", "o-fcm": "ธรณี",
-  "o-uchannel": "ธรณี", "o-dfm": "ธรณี", "o-solidlight": "ธรณี", "o-fullgrid": "ธรณี",
+  "o-digi": "ล็อค", "o-stainless": "ล็อค", "o-handlename": "ล็อค",
+  "o-handleprice": "ล็อค", "o-cmech": "ล็อค", "o-cmechcolor": "ล็อค",
+  "o-closer": "ล็อค", "o-cmechawn": "ล็อค", "o-xhandle": "ล็อค",
+  // v7A: ธรณี/ครอบวงกบ/รางยู ย้ายไป "อุปกรณ์เสริม (ใช้ไม่บ่อย)" แล้ว
+  "o-thresh": "อุปกรณ์เสริม", "o-threshf": "อุปกรณ์เสริม", "o-fcsides": "อุปกรณ์เสริม", "o-fcm": "อุปกรณ์เสริม",
+  "o-uchannel": "อุปกรณ์เสริม", "o-dfm": "อุปกรณ์เสริม", "o-solidlight": "ติดตาย", "o-fullgrid": "ติดตาย",
   "o-mosq": "มุ้ง", "o-mosqfabric": "มุ้ง", "o-mosqcolor": "มุ้ง",
   "o-mosqpanels-stepper": "มุ้ง", "o-mosqw": "มุ้ง", "o-mosqh": "มุ้ง",
   "o-mosqpanels": "มุ้ง", "o-mosqopenstyle": "มุ้ง",
   "o-gridmark": "คาดตาราง", "o-gm-nh": "คาดตาราง", "o-gm-nv": "คาดตาราง",
   "o-gm-rate": "คาดตาราง", "o-gm-curve": "คาดตาราง",
   "o-gridcolor": "คาดตาราง", "o-nh": "คาดตาราง", "o-nv": "คาดตาราง", "o-nc": "คาดตาราง",
-  "o-beam_support": "โครงสร้าง", "o-beam_support-len": "โครงสร้าง",
+  // v7A: เสริมคาน/รางยู ย้ายไป "อุปกรณ์เสริม (ใช้ไม่บ่อย)" · ซ่อนคาน/ซ่อนราง/Soft Close/สลิง ยังอยู่ "โครงสร้าง"
+  "o-beam_support": "อุปกรณ์เสริม", "o-beam_support-len": "อุปกรณ์เสริม",
   "o-hide_beam": "โครงสร้าง", "o-hide_beam-len": "โครงสร้าง",
   "o-hide_track": "โครงสร้าง", "o-hide_track-len": "โครงสร้าง",
-  "o-u_track": "โครงสร้าง", "o-u_track-len": "โครงสร้าง",
+  "o-u_track": "อุปกรณ์เสริม", "o-u_track-len": "อุปกรณ์เสริม",
   "o-soft_close": "โครงสร้าง", "o-sling": "โครงสร้าง",
   "o-hmode": "โครงสร้าง", "o-doortype": "โครงสร้าง", "o-doorprice": "โครงสร้าง",
   "o-solidlower": "แผ่นทึบ", "o-sl-w": "แผ่นทึบ", "o-sl-h": "แผ่นทึบ", "o-sl-color": "แผ่นทึบ",
   "o-remark-add": "งานเสริม", "o-extrawork": "งานเสริม",
-  "o-removeold": "งานเสริม", "o-optdelta": "งานเสริม",
+  "o-removeold": "อุปกรณ์เสริม", "o-optdelta": "งานเสริม", // v7A: รื้อของเดิม ย้ายไป "อุปกรณ์เสริม"
   "o-roofcolor": "วัสดุมุง", "o-roofbatten": "วัสดุมุง", "o-roofframe": "วัสดุมุง",
   "o-lamfilm": "วัสดุมุง", "o-lamthick": "วัสดุมุง",
   "o-roofend": "ปลายหลังคา", "o-rfgut": "ปลายหลังคา",
@@ -135,6 +137,9 @@ for (const [grp, prod, itype, wv, hv, panels] of TESTS) {
     buckets[key] = clsList;
   });
 
+  // G5/มุ้ง: groupGHOpts ไม่ถูกเรียก (L4807) → ไม่มี accordion → skip accordion check
+  if (Object.keys(buckets).length === 0) continue;
+
   const allInBox = new Set();
   box.querySelectorAll("[class]").forEach((el) => el.classList.forEach((c) => { if (c.startsWith("o-")) allInBox.add(c); }));
 
@@ -148,8 +153,8 @@ for (const [grp, prod, itype, wv, hv, panels] of TESTS) {
       if (bv.includes(cls)) { found = bk; break; }
     }
     const actualBucket = found || "(ไม่อยู่ใน acc)";
-    // roof ใช้ catch-all "📝 งานพิเศษ · รื้อของเดิม" แทน "งานเสริม" ของ G1 → ยอมรับเทียบเท่า
-    const ok = found ? (found.includes(expKw) || (expKw === "งานเสริม" && /งานพิเศษ|รื้อของเดิม/.test(found))) : false;
+    // roof ใช้ catch-all "📝 งานพิเศษ · รื้อของเดิม" แทน "งานเสริม"/"อุปกรณ์เสริม" ของ G1 → ยอมรับเทียบเท่า
+    const ok = found ? (found.includes(expKw) || ((expKw === "งานเสริม" || expKw === "อุปกรณ์เสริม") && /งานพิเศษ|รื้อของเดิม/.test(found))) : false;
     results.push({ grp: `G${grp}`, prod, cls, expKw, actualBucket, ok });
   }
 

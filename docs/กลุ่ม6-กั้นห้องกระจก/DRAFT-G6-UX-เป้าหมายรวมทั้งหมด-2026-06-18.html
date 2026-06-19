@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAFT G6 — เป้าหมายรวมทั้งหมด (หน้ากรอกแต่ละบานในห้อง)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;background:#F3F4F6;color:#111827;padding:14px;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:19px;margin-bottom:3px}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:14px}
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+  @media(max-width:780px){.layout{grid-template-columns:1fr}}
+  .form{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .sec{border:1px solid #E5E7EB;border-radius:10px;padding:11px;margin-bottom:10px}
+  .sec.hot{border-color:#2563EB;background:#EFF6FF}
+  .sech{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;justify-content:space-between}
+  .sech .L{display:flex;align-items:center;gap:6px}
+  .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+  .b-new{background:#DCFCE7;color:#15803D}
+  .b-done{background:#E0E7FF;color:#4338CA}
+  .b-fix{background:#FEF3C7;color:#B45309}
+  .fl{font-size:12px;font-weight:600;margin:8px 0 4px;color:#374151}
+  .fl:first-child{margin-top:0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:3px}
+  .c{font-size:13px;padding:6px 11px;border:1px solid #D1D5DB;border-radius:8px;background:#fff;cursor:pointer;transition:.1s;display:inline-flex;align-items:center;gap:6px}
+  .c:hover{border-color:#9CA3AF}
+  .c.on{background:#2563EB;color:#fff;border-color:#2563EB}
+  .c.pill{border-radius:999px;font-size:12px}
+  .c.dim{opacity:.5}
+  .sw{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.2);display:inline-block}
+  .rev{margin-top:6px;padding:8px;background:#F9FAFB;border:1px dashed #D1D5DB;border-radius:8px}
+  .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0}
+  .row .rl{font-size:12px;color:#6B7280;min-width:62px}
+  input[type=number]{width:78px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;font-size:13px}
+  .u{font-size:12px;color:#9CA3AF}
+  .fold{border:1px dashed #D1D5DB;border-radius:9px;margin-bottom:10px;background:#FAFAFA}
+  .fold>summary{font-size:12px;font-weight:600;color:#6B7280;cursor:pointer;list-style:none;padding:10px 11px}
+  .fold>summary::-webkit-details-marker{display:none}
+  .fold[open]>summary{border-bottom:1px dashed #E5E7EB}
+  .fold .inn{padding:11px}
+  .note{font-size:10px;color:#DC2626;font-weight:400}
+  .pricecard{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:13px;position:sticky;top:14px}
+  .pc-h{font-size:12px;color:#6B7280;margin-bottom:2px}
+  .pc-amt{font-size:26px;font-weight:800;color:#15803D;margin-bottom:10px}
+  .pc-spec{font-size:11px;color:#374151;border-top:1px dashed #E5E7EB;padding-top:9px}
+  .pc-spec .t{font-weight:700;font-size:11px;color:#6B7280;margin:7px 0 3px}
+  .pc-spec .ln{padding:1px 0}
+  .legend{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:13px;margin-top:14px;font-size:13px}
+  .legend h3{font-size:14px;margin-bottom:7px}
+  .legend table{width:100%;border-collapse:collapse;font-size:12px}
+  .legend td{padding:5px 6px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+  .codref{font-family:monospace;font-size:10px;background:#F3F4F6;padding:1px 5px;border-radius:4px;color:#6B7280}
+  .hint{font-size:11px;color:#9CA3AF;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DRAFT G6 — เป้าหมายรวม "หน้ากรอกแต่ละบานในห้อง"</h1>
+  <div class="sub">ภาพรวม <b>ที่ควรเป็น</b> หลังแก้ครบทุกจุด · ฟังก์ชันจริง = <span class="codref">g6rRenderOpt</span> L6635-6680 + <span class="codref">g6rRoomSpec</span> L6735 · กดชิป/drill ดูได้ · 18 มิ.ย. 2026</div>
+
+  <div class="layout">
+    <!-- ===== FORM ===== -->
+    <div class="form">
+
+      <!-- 1. ชนิดบาน -->
+      <div class="sec">
+        <div class="sech"><span class="L">1 · ชนิดบานชั้นนี้</span><span class="badge b-done">มีแล้ว</span></div>
+        <div class="chips">
+          <span class="c on">🚪 บานเปิด</span><span class="c">↔ บานเลื่อน</span><span class="c">▱ ติดตาย</span><span class="c">🪟 กระทุ้ง</span><span class="c">🚿 shower</span>
+        </div>
+        <div class="fl">รุ่น</div>
+        <div class="chips"><span class="c on">บานเปิด euro</span><span class="c">บานเปิด D-series</span></div>
+        <div class="fl">ชนิดการเปิด <span class="note">(เคยเป็น dropdown → ต้องเป็นชิป)</span></div>
+        <div class="chips"><span class="c on">เปิดเดี่ยว</span><span class="c">เปิดคู่</span><span class="c">เปิด-ติดตาย</span></div>
+      </div>
+
+      <!-- 2. ขนาด -->
+      <div class="sec">
+        <div class="sech"><span class="L">2 · ขนาด</span><span class="badge b-done">มีแล้ว</span></div>
+        <div class="row"><span class="rl">ขนาดบาน</span><input type="number" value="1"><span class="u">กว้าง ม. ×</span><input type="number" value="2.4"><span class="u">สูง ม.</span></div>
+        <div class="row"><span class="rl">จำนวน</span><input type="number" value="1"><span class="u">บาน</span></div>
+      </div>
+
+      <!-- 3. สี + กระจก (A2) -->
+      <div class="sec hot">
+        <div class="sech"><span class="L">3 · สี + กระจก (ต่อช่อง)</span><span class="badge b-new">ต้องเพิ่ม · A2</span></div>
+
+        <div class="fl">สีอลู — เลือกหมวด</div>
+        <div class="chips" id="colcat">
+          <span class="c on" onclick="colCat(this,'std')">มาตรฐาน</span>
+          <span class="c" onclick="colCat(this,'sah')">ซาฮาร่า/เทา</span>
+          <span class="c" onclick="colCat(this,'wood')">ลายไม้</span>
+          <span class="c" onclick="colCat(this,'sp')">พิเศษ/ชุบ (มีรหัส)</span>
+        </div>
+        <div class="rev" id="colrev">
+          <div class="chips">
+            <span class="c on"><span class="sw" style="background:#fff"></span>สีอบขาว</span>
+            <span class="c"><span class="sw" style="background:#1f2937"></span>สีดำ</span>
+          </div>
+          <div class="hint">ค่าสีพิเศษ reuse <span class="codref">colorPrice L1148</span> · สีมีรหัส → ใบโชว์ช่องรหัส</div>
+        </div>
+
+        <div class="fl" style="margin-top:10px">กระจก — เลือกหมวด</div>
+        <div class="chips" id="glcat">
+          <span class="c on" onclick="glCat(this,'gen')">ทั่วไป (เขียว/ใส)</span>
+          <span class="c" onclick="glCat(this,'temper')">เทมเปอร์</span>
+          <span class="c" onclick="glCat(this,'lam')">ลามิเนต</span>
+          <span class="c" onclick="glCat(this,'insu')">อินซูเลท</span>
+          <span class="c" onclick="glCat(this,'sp')">พิเศษ</span>
+        </div>
+        <div class="rev" id="glrev">
+          <div class="chips">
+            <span class="c on">เขียว 6 มม.</span><span class="c">ใส 6 มม.</span><span class="c">ใส 8 มม.</span>
+          </div>
+          <div class="hint">ราคาขยับตาม <span class="codref">GLASS.s/ตร.ม. L603</span> · drill ชนิด→หนา (reuse GLASS_CATS L1050)</div>
+        </div>
+      </div>
+
+      <!-- 4. ออปชั่นใช้บ่อย (B1) -->
+      <div class="sec hot">
+        <div class="sech"><span class="L">4 · 🔧 ออปชั่นใช้บ่อย (กล่องเดียว)</span><span class="badge b-fix">ต้องรวบ · B1</span></div>
+
+        <div class="fl">มือจับ</div>
+        <div class="chips"><span class="c on" onclick="rev(this,'h')">Cmech (ฟรี)</span><span class="c" onclick="rev(this,'h')">ดิจิตอล 10,000+</span><span class="c" onclick="rev(this,'h')">สแตนเลส 1,500+</span><span class="c" onclick="rev(this,'h')">รุ่นอื่น</span></div>
+        <div class="rev" id="rev-h"><div class="chips"><span class="c on">ฝัง</span><span class="c">เมโทร</span></div><div class="chips" style="margin-top:5px"><span class="c on"><span class="sw" style="background:#1f2937"></span>ดำ</span><span class="c"><span class="sw" style="background:#fff"></span>ขาว</span><span class="c"><span class="sw" style="background:#d4d4d4"></span>ชุบเงิน +</span></div></div>
+
+        <div class="fl">ชุดล็อก</div>
+        <div class="chips"><span class="c on">มีกุญแจ</span><span class="c">ไม่มี</span></div>
+
+        <div class="fl">มุ้ง</div>
+        <div class="chips"><span class="c" onclick="rev(this,'m')">＋ ใส่มุ้ง (จาก 3,500)</span></div>
+        <div class="rev" id="rev-m" style="display:none"><div class="chips"><span class="rl">หมวด</span><span class="c on">เฟรม</span><span class="c">จีบ</span><span class="c">ม้วน</span></div><div class="chips" style="margin-top:5px"><span class="rl">ผ้า</span><span class="c on">ไฟเบอร์เทา</span><span class="c">กันแมว</span><span class="c">สแตนกันหนู</span></div></div>
+
+        <div class="fl">คาดตาราง</div>
+        <div class="chips"><span class="c" onclick="rev(this,'g')">＋ คาดตาราง (200/ม.)</span></div>
+        <div class="rev" id="rev-g" style="display:none"><div class="row"><span class="rl">คาด</span><input type="number" value="0"><span class="u">นอน</span><input type="number" value="1"><span class="u">ตั้ง ×200/ม.</span></div></div>
+
+        <div class="fl">แผ่นล่าง</div>
+        <div class="chips"><span class="c" onclick="rev(this,'sl')">＋ ลูกฟูก 3,500/ตร.ม.</span><span class="c" onclick="rev(this,'sl')">＋ คอมโพสิต 3,300</span></div>
+        <div class="rev" id="rev-sl" style="display:none"><div class="row"><span class="rl">ขนาดแผ่น</span><input type="number" value="1"><span class="u">กว้าง ×</span><input type="number" value="0.5"><span class="u">สูง ม.</span></div></div>
+      </div>
+
+      <!-- 5. ใช้น้อย (พับ) -->
+      <details class="fold">
+        <summary>5 · ⚙ ตัวเลือกใช้น้อย (กดถ้าต้องใช้) — ทาสี/ฉนวน · ลูกฟูก · ครอบวงกบ · ดรอปพื้น · อุปกรณ์เสริม</summary>
+        <div class="inn">
+          <div class="fl">ทาสี / ฉนวน (เฉพาะผนังเบา)</div>
+          <div class="chips"><span class="c">＋ ทาสีผนัง</span><span class="c">＋ ฉนวน +600/ตร.ม.</span></div>
+          <div class="fl">อุปกรณ์เสริม (หมวดเดียว)</div>
+          <div class="chips"><span class="c pill">ครอบวงกบ (700+/ม.)</span><span class="c pill">ดรอปพื้น (5,000+)</span></div>
+        </div>
+      </details>
+
+      <div class="hint">💡 ลำดับนี้ตรง "แม่แบบฟอร์มมาตรฐาน PART 3" : ชนิด→ขนาด→สี/กระจก→ใช้บ่อย→ใช้น้อย(พับ)</div>
+    </div>
+
+    <!-- ===== PRICE CARD ===== -->
+    <div>
+      <div class="pricecard">
+        <div class="pc-h">ราคาบานนี้ (engine จริง)</div>
+        <div class="pc-amt">฿18,400</div>
+        <div class="pc-spec">
+          <div class="t">📋 รายการงาน (บล็อกบน)</div>
+          <div class="ln">บานเปิด euro 1.00×2.40 ม.</div>
+          <div class="t">🔧 รายละเอียด (บล็อกล่าง)</div>
+          <div class="ln">• อลูมิเนียม <b>สีอบขาว</b></div>
+          <div class="ln">• กระจก <b>เขียว หนา 6 มม.</b></div>
+          <div class="ln">• มือจับ Cmech ฝัง สีดำ</div>
+          <div class="ln">• ชุดล็อกมีกุญแจ</div>
+          <div class="hint" style="margin-top:7px">↑ A2 ทำให้ สี/กระจก ขึ้นใบจริง (เดิม g6rRoomSpec พิมพ์ "เขียว/ใส 6มม." ตายตัว ทุกใบเหมือนกันหมด)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LEGEND ===== -->
+  <div class="legend">
+    <h3>📌 สรุปทุกจุดที่สั่งแก้ใน G6 — เทียบสถานะ B</h3>
+    <table>
+      <tr><td><span class="badge b-new">A2</span></td><td><b>สี + กระจก เลือกเต็ม ต่อช่อง + ราคาขยับ</b><br><span class="hint">ตอนนี้: ห้องไม่มีช่องเลือกกระจกเลย · สีเฟรมมีแค่ ขาว/ดำ/เทา · spec พิมพ์ตายตัว</span></td><td>reuse GLASS L603 + COLORS L970 + colorPrice L1148 · เก็บ index ต่อ column · <b>แตะราคา→golden ห้อง</b></td></tr>
+      <tr><td><span class="badge b-fix">B1</span></td><td><b>รวบ "มือจับ·ล็อก·มุ้ง·คาดตาราง·แผ่นล่าง(ลูกฟูก/คอมโพ)" เป็นกล่องเดียว</b><br><span class="hint">ตอนนี้: เรียงแบน มี สีเฟรม/ทาสี คั่นกลาง · คาดตาราง/ลูกฟูกแยกหัวข้อ · ลูกฟูก/คอมโพ = ใช้บ่อย (ขึ้นกล่องใช้บ่อย ไม่พับ)</span></td><td>จัดลำดับ section ใน g6rRenderOpt · ย้ายใช้น้อยลงพับ · <b>ไม่แตะ logic/ราคา</b></td></tr>
+      <tr><td><span class="badge b-fix">B2</span></td><td><b>"ชนิดการเปิด" dropdown → ชิป</b></td><td>chipify (chipifySelect generic)</td></tr>
+      <tr><td><span class="badge b-new">C2</span></td><td><b>สี/รหัสหลังคา ลงบล็อกรายละเอียด</b></td><td>g6rRoomSpec push ชนิด+สีหลังคา</td></tr>
+    </table>
+    <div class="hint" style="margin-top:8px">✅ เสร็จแล้ว (B ทำ): ใบ 5 บล็อก · Protection→หมายเหตุไทย · พัดลม/พื้นขึ้นรายการ · golden 149 · เทส 77 — ไม่อยู่ในดราฟนี้ (ดราฟนี้โชว์เฉพาะที่ยัง "ไม่เหมือน")</div>
+  </div>
+</div>
+
+<script>
+  function colCat(el,k){document.querySelectorAll('#colcat .c').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+    var m={std:'<div class="chips"><span class="c on"><span class="sw" style="background:#fff"></span>สีอบขาว</span><span class="c"><span class="sw" style="background:#1f2937"></span>สีดำ</span></div>',
+      sah:'<div class="chips"><span class="c on"><span class="sw" style="background:#6b7280"></span>สีเทาซาฮาร่า</span><span class="c"><span class="sw" style="background:#374151"></span>สีดำซาฮาร่า</span><span class="c"><span class="sw" style="background:#9ca3af"></span>Aztec gray +4,000</span></div>',
+      wood:'<div class="chips"><span class="c on"><span class="sw" style="background:#a16207"></span>สักทอง</span><span class="c"><span class="sw" style="background:#7c2d12"></span>มะฮอกกานี ⚠KC</span><span class="c"><span class="sw" style="background:#d6c7a1"></span>ไวท์โอ๊ค ⚠KC</span><span class="c"><span class="sw" style="background:#92400e"></span>Fuji โอ๊ค/มะค่า</span></div>',
+      sp:'<div class="chips"><span class="c on">สีอบพิเศษ (รหัส___)</span><span class="c">ลายไม้อบพิเศษ (รหัส___)</span><span class="c">สีชุบ (ชื่อ+ยืนยันตัวอย่าง)</span></div><div class="hint">สีมีรหัส → ใบเสนอราคาโชว์ช่องรหัสสี (hasCode)</div>'};
+    document.getElementById('colrev').innerHTML=m[k]+'<div class="hint">ค่าสีพิเศษ reuse colorPrice L1148</div>';}
+  function glCat(el,k){document.querySelectorAll('#glcat .c').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+    var m={gen:'เขียว 6·ใส 6·ใส 8·เขียวตัดแสง',temper:'เทมเปอร์ใส 6·เทมเปอร์ฝ้า 8·เทมเปอร์เขียว 10',lam:'ลามิเนตใส 5+5·ลามิเนตฟิล์มเขียว 5+5·ลามิเนตขุ่น 6+6',insu:'อินซูเลท 5+A+5·อินซูเลทเขียว 6+A+6',sp:'ฝ้า·ลอนแก้ว·ชาดำ·คริสตัล·reflective'};
+    var arr=m[k].split('·');
+    document.getElementById('glrev').innerHTML='<div class="chips">'+arr.map((x,i)=>'<span class="c'+(i==0?' on':'')+'">'+x+'</span>').join('')+'</div><div class="hint">ราคาขยับตาม GLASS.s/ตร.ม.</div>';}
+  function rev(el,id){var p=el.parentElement;p.querySelectorAll('.c').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+    var r=document.getElementById('rev-'+id);if(r){var on=el.textContent.indexOf('＋')<0||r.style.display==='none';r.style.display=(el.textContent.indexOf('＋')>=0)?(r.style.display==='none'?'block':'none'):'block';}}
+</script>
+</body>
+</html>

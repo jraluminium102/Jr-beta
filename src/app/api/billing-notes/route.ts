@@ -66,9 +66,9 @@ export async function POST(req: Request) {
   const net = Number(q.net) || 0;
   if (net <= 0) return fail("ยอดสุทธิของใบเสนอต้องมากกว่า 0 จึงวางบิลได้", 400);
 
-  // [🔴#2] total ต้อง = ผลรวมงวด (suggestInstallments ปัด Math.round(net) เป็นบาทเต็ม)
-  // ถ้าใช้ total = net (มีเศษสตางค์) constraint tg_check_installment_sum (tol 0.01) จะเด้ง
-  // → insert งวดล้ม → ลบหัวบิลทิ้ง → ลูกค้าวางบิลใบนั้นไม่ได้เลย
+  // suggestInstallments รับ net (มีสตางค์) คืนงวดที่ผลรวม = net เป๊ะ (round2, 2 ตำแหน่ง)
+  // งวด "ส่วนที่เหลือ" อุ้มเศษสตางค์ → billTotal = net เป๊ะ
+  // constraint tg_check_installment_sum (tol 0.01) ผ่านแน่นอน
   const plan = suggestInstallments(net);
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 

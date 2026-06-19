@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G4 FULL — ตู้อลู/ฝาตู้ (แม่แบบ G1)</title>
+<style>
+:root{--red:#B3151D;--gray:#6B7280;--line:#E5E7EB;--amber:#BA7517;--info:#185FA5;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,'Leelawadee UI',sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 92px;}
+h2.pg{font-size:17px;font-weight:700;color:var(--red);margin:6px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:6px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:11px;}
+.et{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.et .no{width:20px;height:20px;border-radius:50%;background:#fbe9ea;color:var(--red);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;}
+.et .bc{font-size:11px;color:var(--gray);font-weight:400;}
+.secsum{margin-left:auto;font-size:12.5px;color:var(--red);font-weight:700;white-space:nowrap;}
+.grow{display:flex;flex-wrap:wrap;gap:7px;}
+.gbtn{min-height:34px;padding:0 13px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.gbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+.btngrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mainbtn{min-height:58px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;font-weight:600;color:#374151;font-family:inherit;}
+.mainbtn .ic{font-size:20px;}.mainbtn .cnt{font-size:10px;font-weight:400;color:var(--gray);}
+.mainbtn.on{background:var(--red);color:#fff;border-color:var(--red);}.mainbtn.on .cnt{color:#f3c6c9;}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}.brow:last-child{margin-bottom:0;}
+.rl{font-size:12px;color:var(--gray);min-width:70px;font-weight:600;flex:0 0 70px;}
+.bgrp{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.bgrp .opt{min-height:36px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.bgrp .opt.on{background:var(--red);color:#fff;border-color:var(--red);}
+.szwrap{display:flex;flex-wrap:wrap;gap:8px;}
+.fld{display:flex;flex-direction:column;gap:2px;}.fld label{font-size:10.5px;color:var(--gray);font-weight:600;}
+.fld input{height:40px;width:74px;border:1.5px solid var(--line);border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;}
+select{height:40px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;padding:0 8px;max-width:100%;background:#fff;}
+.a{min-height:40px;padding:0 13px;border:1.5px solid var(--line);border-radius:21px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+.a.on{background:var(--red);color:#fff;border-color:var(--red);}
+.a .cp{font-size:11px;opacity:.9;}
+.txt{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:13px;font-family:inherit;}
+.note{background:#f1f5f9;border-left:3px solid #94a3b8;padding:5px 9px;font-size:11px;color:#475569;border-radius:0 7px 7px 0;margin-top:9px;}
+.warn{background:#fff7ed;border-left:3px solid #fb923c;padding:5px 9px;font-size:11px;color:#9a3412;border-radius:0 7px 7px 0;margin-top:7px;display:none;}
+.qcard{background:#fff;border:2px solid var(--red);border-radius:12px;padding:13px;margin-top:11px;}
+.qline{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #eee;gap:10px;}
+.qline.base{font-weight:700;}.qline span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;}
+.qsum{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--red);margin-top:7px;padding-top:7px;border-top:2px solid #f0d2d4;}
+.pbar{position:fixed;left:0;right:0;bottom:0;background:var(--red);color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;}
+.pbar .big{font-size:20px;font-weight:700;}
+.demo{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;padding:6px 11px;font-size:11.5px;margin-bottom:8px;}
+.hidden{display:none;}
+</style></head>
+<body>
+<div class="banner">DRAFT G4 FULL · ตู้อลู/ฝาตู้ · แม่แบบ G1 (โชว์ราคาทุกกล่อง) · เรตจริง</div>
+<div class="page">
+  <h2 class="pg">ฟอร์มกรอกงานตู้ — G4</h2>
+  <div class="sub">เลือกชนิด → กรอกขนาด/บาน/ผนัง/ชั้น/สี · โชว์ราคาแยกทุกส่วน (บานหน้า/ผนัง/พื้น/ชั้น/สีโครง)</div>
+  <div class="demo">⚠ เรตจริง · มติ 14 มิ.ย.: บานเพิ่ม +5,500/บาน · สีผนังกระจก "ไม่มี min" · สีชุบ 16,000 คงที่(กระจก)/1,600 ตร.ม.(อลู)</div>
+  <div class="card"><div class="et"><span class="no">1</span>กลุ่มงาน</div><div class="grow" id="groups"></div></div>
+  <div class="card"><div class="et"><span class="no">2</span>ชนิดงานตู้</div><div class="btngrid" id="fam"></div></div>
+  <div id="form" class="hidden"></div>
+  <div id="quote" class="hidden"></div>
+</div>
+<div class="pbar hidden" id="pbar"><span>ยอดรวมทั้งใบ (เดโม)</span><span class="big" id="ptotal">฿0</span></div>
+
+<script>
+// ===== เรตจริง (index.html) =====
+var FT_BASE=[[0.5,1.0,7500],[1.0,1.5,10000],[1.5,1.7,12500]];               // ฐานบานหน้า/บาน (ตามพื้นที่ต่อบาน)
+var FT_COLOR=[[0.5,1.0,1500],[1.0,1.5,2000],[1.5,2.0,2500],[2.0,2.5,3000],[2.5,3.0,3500]]; // สีบาน (เมื่อเลือกสี>0)
+var FIX=[[0.5,1,8000],[1,1.5,7500],[1.5,2,7000],[2,2.5,6500],[2.5,3,6000],[3,3.5,5000],[3.5,9999,5000]];
+// COLORS (เฉพาะที่ใช้ · n/min/rates) — index ตรง index.html
+var COLORS=[
+ {n:'สีอบขาว',min:0,rates:null},{n:'สีอบดำ',min:0,rates:null},
+ {n:'สีเทาซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]]},
+ {n:'สีดำซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]]},
+ {n:'สี Aztec gray',min:4000,rates:[[7,10,700],[10,20,650],[20,9999,600]]},
+ {n:'ลายไม้สต๊อก สักทอง',min:4000,rates:[[7,10,850],[10,9999,750]]},
+ {n:'ลายไม้สต๊อก มะฮอกกานี',min:4000,rates:[[7,10,850],[10,9999,750]]},
+ {n:'ลายไม้สต๊อก ไวท์โอ๊ค',min:4000,rates:[[7,10,850],[10,9999,750]]},
+ {n:'ลายไม้อบ Fuji โอ๊ค',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]]},
+ {n:'ลายไม้อบ Fuji มะค่า',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]]},
+ {n:'สีอบพิเศษ',min:10000,rates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]]},
+ {n:'ลายไม้อบพิเศษ',min:15000,rates:[[7,10,2900],[10,15,2600],[15,20,2350],[20,9999,2200]]},
+ {n:'สีชุบ (ต้องดูตัวอย่างจริง)',min:16000,rates:null}
+];
+function ftR(a,t){if(a<=0)return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<=t[i][1])return t[i][2];}if(a<t[0][0])return t[0][2];return t[t.length-1][2];}
+function rateOf(a,t){if(!t)return 0;if(a<t[0][0])return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];}return t[t.length-1][2];}
+function roundUp(x){return Math.ceil(x/1000)*1000;}
+// ค่าสีอลูทึบ (โครงตู้ · rn90FinRate · ต่อ ตร.ม. · no-min)
+function rn90(ci){if(ci===2||ci===3)return 400;if(ci===4)return 950;if(ci>=5&&ci<=7)return 1500;if(ci===8||ci===9||ci===11)return 2200;if(ci===10||ci===12)return 1600;return 0;}
+// ค่าสีผนังตู้ "กระจก" — มติ 14มิ.ย.: ไม่มี min (สีที่มีเรต) · สีชุบ(rates null)=16,000 คงที่
+function cabGlassColor(ci,a){var c=COLORS[ci];if(!c)return 0;if(!c.rates)return c.min||0;return a*rateOf(a,c.rates);}
+
+var FAM=[
+ {k:'cabinet',n:'ตู้อลูมิเนียม',ic:'🗄'},
+ {k:'futuretech',n:'ฝาตู้ Future Tech',ic:'🚪'}
+];
+var OPT_CAT={
+ 'สี/ผิว':[['อัปเกรดสีพิเศษ',0],['สีชุบ (ดูตัวอย่าง)',0]],
+ 'ภายในตู้':[['ราวแขวน',0],['ลิ้นชัก',0],['ไฟ LED ในตู้',0],['กระจกเงา',0]],
+ 'อุปกรณ์':[['บานพับ soft-close',0],['มือจับเพิ่ม',0]],
+ 'งานเพิ่ม':[['ติดตั้งที่สูง',1500],['ขนส่งพิเศษ',1000],['รื้อตู้เดิม',1000]],
+ 'ส่วนลด/อื่นๆ':[['ส่วนลดพิเศษ',-1000],['อื่นๆ (กรอกเอง)',0]]
+};
+var fmt=function(n){return '฿'+Math.round(n).toLocaleString();};
+var V=function(id){return +(document.getElementById(id)||{}).value||0;};
+var groupsEl=document.getElementById('groups'),famEl=document.getElementById('fam'),
+    formEl=document.getElementById('form'),quoteEl=document.getElementById('quote'),pbar=document.getElementById('pbar'),ptotal=document.getElementById('ptotal');
+var curFam=null;
+
+['G1','G2','G3','G4','G5','G6','G7'].forEach(function(g){var b=document.createElement('button');b.className='gbtn'+(g==='G4'?' on':'');b.textContent=g;b.onclick=function(){Array.prototype.forEach.call(groupsEl.children,function(x){x.className='gbtn';});b.className='gbtn on';};groupsEl.appendChild(b);});
+FAM.forEach(function(f){var b=document.createElement('button');b.className='mainbtn';b.innerHTML='<span class="ic">'+f.ic+'</span>'+f.n;b.onclick=function(){Array.prototype.forEach.call(famEl.children,function(x){x.className='mainbtn';});b.className='mainbtn on';buildForm(f.k);};famEl.appendChild(b);});
+
+function colorOpts(){return COLORS.map(function(c,i){return '<option value="'+i+'">'+c.n+'</option>';}).join('');}
+function scGroup(label,opts,attr){return '<div class="brow"><span class="rl">'+label+'</span><div class="bgrp" '+(attr||'')+'>'+opts.map(function(o,i){return '<button class="opt'+(i===0?' on':'')+'" data-v="'+(o.v||o)+'" onclick="pick(this)">'+(o.n||o)+'</button>';}).join('')+'</div></div>';}
+function pick(b){var s=b.parentNode.children;Array.prototype.forEach.call(s,function(x){x.className='opt';});b.className='opt on';calc();}
+function pickv(sel){var e=document.querySelector('[data-pick="'+sel+'"] .opt.on');return e?e.dataset.v:'';}
+function sec(no,title,bc,body){return '<div class="card"><div class="et"><span class="no">'+no+'</span>'+title+(bc?'<span class="bc">'+bc+'</span>':'')+'<span class="secsum"></span></div>'+body+'</div>';}
+function optCatHTML(listId){var cats=Object.keys(OPT_CAT);return '<div class="grow" style="margin-bottom:6px;">'+cats.map(function(c,i){return '<button class="a'+(i===0?' on':'')+'" onclick="pickOptCat(this,\''+listId+'\')">'+c+'</button>';}).join('')+'</div><div class="grow" id="'+listId+'pre" style="margin-bottom:7px;"></div><div id="'+listId+'"></div>';}
+function pickOptCat(b,listId){var s=b.parentNode.children;Array.prototype.forEach.call(s,function(x){x.className='a';});b.className='a on';var pre=document.getElementById(listId+'pre');var fn=(listId==='qoptlist')?'addQOpt':'addOpt';pre.innerHTML=(OPT_CAT[b.textContent]||[]).map(function(o){return '<button class="a" onclick="'+fn+'(\''+o[0].replace(/'/g,"\\'")+'\','+o[1]+')">'+o[0]+' +</button>';}).join('');}
+function addOpt(nm,p){var l=document.getElementById('optlist');var d=document.createElement('div');d.className='brow';d.innerHTML='<input class="txt optt" style="flex:1;" value="'+(nm||'')+'" oninput="calc()"><input type="number" class="optp" style="width:90px" value="'+(p||0)+'" oninput="calc()"><button class="gbtn" onclick="this.parentNode.remove();calc();">✕</button>';l.appendChild(d);calc();}
+function addQOpt(nm,p){var l=document.getElementById('qoptlist');var d=document.createElement('div');d.className='brow';d.innerHTML='<input class="txt qoptt" style="flex:1;" value="'+(nm||'')+'" oninput="calc()"><input type="number" class="qoptp" style="width:100px" value="'+(p||0)+'" oninput="calc()"><button class="gbtn" onclick="this.parentNode.remove();calc();">✕</button>';l.appendChild(d);calc();}
+function optSel(label,id,opts,sel){return '<div class="brow"><span class="rl">'+label+'</span><select id="'+id+'" onchange="calc()">'+opts.map(function(o){return '<option value="'+(o.v!==undefined?o.v:o)+'"'+((sel!==undefined&&(o.v!==undefined?o.v:o)==sel)?' selected':'')+'>'+(o.n||o)+'</option>';}).join('')+'</select></div>';}
+
+function buildForm(k){curFam=k;var h='';
+ if(k==='cabinet'){
+   h+=sec(3,'ประเภทตู้',' ',scGroup('ประเภท',[{n:'ตู้เสื้อผ้า',v:'wardrobe'},{n:'ตู้รองเท้า',v:'shoe'}],'data-pick="cabtype"'));
+   h+=sec(4,'ขนาด','กว้าง×สูง×ลึก','<div class="szwrap"><div class="fld"><label>กว้าง (ม.)</label><input type="number" id="fw" value="1.2" step="0.1" oninput="calc()"></div><div class="fld"><label>สูง (ม.)</label><input type="number" id="fh" value="2.4" step="0.1" oninput="calc()"></div><div class="fld"><label>ลึก (ม.)</label><input type="number" id="fd" value="0.6" step="0.05" oninput="calc()"></div></div>');
+   h+=sec(5,'บานหน้า','+5,500/บานเพิ่ม',scGroup('จำนวนบาน',[{n:'1',v:1},{n:'2',v:2},{n:'3',v:3},{n:'4',v:4}],'data-pick="cabdoors"'));
+   h+=sec(6,'ผนังตู้','เลือกวัสดุ',scGroup('วัสดุผนัง',[{n:'อลูทึบ',v:'alu'},{n:'กระจก',v:'glass'}],'data-pick="cabwall"')+scGroup('ผนังหลัง',[{n:'หลังปูน (ไม่มีหลัง)',v:'0'},{n:'+ ผนังหลัง',v:'1'}],'data-pick="backwall"'));
+   h+=sec(7,'ชั้นวาง',' ',scGroup('ชนิดชั้น',[{n:'อลู (1,200/ชั้น)',v:'alu'},{n:'กระจก (1,000/ชั้น)',v:'glass'}],'data-pick="shelfmat"')+'<div class="brow"><span class="rl">จำนวนชั้น</span><div class="bgrp"><input type="number" id="fshelf" placeholder="auto" style="height:36px;width:80px;border:1.5px solid #E5E7EB;border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;" oninput="calc()"><span style="font-size:11px;color:#6B7280;align-self:center;">เว้นว่าง = auto ตามสูง</span></div></div>');
+   h+=sec(8,'สีโครงตู้','โชว์ราคา',optSel('สี','fcolor',COLORS.map(function(c,i){return {v:i,n:c.n};}),0));
+ } else {
+   h+=sec(3,'ขนาดต่อบาน','กว้าง×สูง (1 บาน)','<div class="szwrap"><div class="fld"><label>กว้าง (ม.)</label><input type="number" id="fw" value="0.6" step="0.1" oninput="calc()"></div><div class="fld"><label>สูง (ม.)</label><input type="number" id="fh" value="2.0" step="0.1" oninput="calc()"></div></div><div class="warn" id="bigwarn">⚠ บานใหญ่เกิน 2.8 ตร.ม. — เช็คการผลิต</div>');
+   h+=sec(4,'จำนวนบาน','max 3 บาน/ชุด · +5,500/บานเพิ่ม',scGroup('บาน',[{n:'1',v:1},{n:'2',v:2},{n:'3',v:3}],'data-pick="ftpanel"'));
+   h+=sec(5,'สีฝาตู้','โชว์ราคา',optSel('สี','fcolor',COLORS.map(function(c,i){return {v:i,n:c.n};}),0));
+ }
+ h+=sec(9,'OPTION ลูกค้า','เลือกหมวด→เติม แก้/ลบ',optCatHTML('optlist'));
+ h+=sec(10,'ตำแหน่ง / หมายเหตุ',' ','<input class="txt" placeholder="ตำแหน่ง เช่น ห้องนอน" style="margin-bottom:8px;"><textarea class="txt" rows="2" placeholder="หมายเหตุ"></textarea>');
+ h+=sec(11,'ออปชั่นทั้งใบ (ท้ายสุด)','หมวดเหมือนข้อ 9',optCatHTML('qoptlist'));
+ formEl.innerHTML=h;formEl.classList.remove('hidden');quoteEl.classList.remove('hidden');pbar.classList.remove('hidden');
+ calc();
+}
+
+function calcCabinet(){
+ var W=V('fw'),H=V('fh'),D=V('fd')||0.6,ci=V('fcolor');
+ var stype=pickv('cabtype')||'wardrobe',spacing=stype==='shoe'?0.2:0.4;
+ var nsh=V('fshelf');if(!(nsh>=1))nsh=Math.max(2,Math.round(H/spacing));
+ var sg=pickv('shelfmat')||(stype==='shoe'?'glass':'alu'),srate=sg==='glass'?1000:1200;
+ var nDoors=+(pickv('cabdoors')||2);
+ var aPerDoor=(W*H)/nDoors;
+ var perDoor=ftR(aPerDoor,FT_BASE)+(ci>0?ftR(aPerDoor,FT_COLOR):0);
+ var front=perDoor*nDoors+(nDoors>=2?(nDoors-1)*5500:0);
+ var bw=pickv('backwall')==='1',wmat=pickv('cabwall')||'alu';
+ var aWall=2*D*H+(bw?W*H:0),aFloor=W*D;
+ var wall=(wmat==='glass')?Math.max(5000,aWall*rateOf(aWall,FIX))*0.7:aWall*4000;
+ var nShelfAlu=(sg==='glass')?0:nsh,aShelfAlu=aFloor*nShelfAlu;
+ var cWall=(wmat==='glass')?cabGlassColor(ci,aWall):aWall*rn90(ci);
+ var cFloor=aFloor*rn90(ci),cShelf=aShelfAlu*rn90(ci);
+ var colorStruct=Math.round(cWall+cFloor+cShelf);
+ var fl=aFloor*4000,shc=nsh*srate;
+ var sell=roundUp(front+wall+fl+shc+colorStruct);
+ return {sell:sell,lines:[
+   {n:'บานหน้า '+nDoors+' บาน × '+fmt(perDoor)+(nDoors>=2?(' + เพิ่ม '+(nDoors-1)+'×5,500'):''),p:front,base:1},
+   {n:'ผนัง'+(wmat==='glass'?'กระจก':'อลูทึบ')+(bw?'+หลัง':' (หลังปูน)')+' '+aWall.toFixed(2)+' ตร.ม.',p:Math.round(wall)},
+   {n:'พื้น '+aFloor.toFixed(2)+' ตร.ม. × 4,000',p:Math.round(fl)},
+   {n:'ชั้น '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+' × '+fmt(srate),p:shc},
+   {n:'ค่าสีโครง ('+COLORS[ci].n+')'+(ci>0&&wmat==='glass'&&COLORS[ci].rates?' · กระจกไม่มี min':''),p:colorStruct}
+ ]};
+}
+function calcFuture(){
+ var W=V('fw'),H=V('fh'),ci=V('fcolor');
+ var aPerDoor=W*H,panelN=Math.max(1,Math.min(3,+(pickv('ftpanel')||1)));
+ var perDoor=ftR(aPerDoor,FT_BASE)+(ci>0?ftR(aPerDoor,FT_COLOR):0);
+ var extra=panelN>=2?(panelN-1)*5500:0;
+ var sell=roundUp(perDoor*panelN+extra);
+ var bw=document.getElementById('bigwarn');if(bw)bw.style.display=aPerDoor>2.8?'block':'none';
+ return {sell:sell,lines:[
+   {n:'ฝาตู้ '+panelN+' บาน × '+fmt(perDoor)+' ('+aPerDoor.toFixed(2)+' ตร.ม./บาน, '+COLORS[ci].n+')'+(extra?(' + เพิ่ม '+(panelN-1)+'×5,500'):''),p:perDoor*panelN+extra,base:1}
+ ]};
+}
+
+function calc(){if(!curFam)return;
+ var r=(curFam==='cabinet')?calcCabinet():calcFuture();
+ var lines=r.lines.slice();
+ document.querySelectorAll('#optlist .brow').forEach(function(row){var t=(row.querySelector('.optt')||{}).value||'',p=+(row.querySelector('.optp')||{}).value||0;if(t||p)lines.push({n:'OPTION: '+(t||'-'),p:p});});
+ var per=r.sell+lines.filter(function(l){return !l.base&&l.n.indexOf('OPTION')===0;}).reduce(function(s,l){return s+l.p;},0);
+ // หมายเหตุ: r.sell = ปัดรวมแล้ว (บานหน้า+ผนัง+พื้น+ชั้น+สี) · OPTION บวกเพิ่มนอกการปัด
+ var optSum=lines.filter(function(l){return l.n.indexOf('OPTION')===0;}).reduce(function(s,l){return s+l.p;},0);
+ var itemTotal=r.sell+optSum;
+ var qadj=0,qlines=[];document.querySelectorAll('#qoptlist .brow').forEach(function(row){var t=(row.querySelector('.qoptt')||{}).value||'',p=+(row.querySelector('.qoptp')||{}).value||0;if(t||p){qadj+=p;qlines.push({n:t||'-',p:p});}});
+ var grand=itemTotal+qadj;ptotal.textContent=fmt(grand);
+ // secsum ต่อกล่อง (รวมทั้งตู้โชว์ที่กล่องขนาด)
+ document.querySelectorAll('.card').forEach(function(card){var n=0;if(card.querySelector('#fw'))n=r.sell;card.querySelectorAll('.optp,.qoptp').forEach(function(o){n+=+o.value||0;});var ss=card.querySelector('.secsum');if(ss&&n)ss.textContent=fmt(n);});
+ // พรีวิว
+ var ttl=(curFam==='cabinet')?'ตู้อลูมิเนียม':'ฝาตู้ Future Tech';
+ var q='<div class="qcard"><div class="et" style="margin-bottom:8px;">📋 พรีวิวใบเสนอราคา (แยกราคา)</div><div style="font-size:13px;font-weight:700;margin-bottom:6px;">'+ttl+'</div>';
+ q+=lines.map(function(l){return '<div class="qline'+(l.base?' base':'')+'"><span>'+(l.base?'':'• ')+l.n+'</span><span>'+fmt(l.p)+'</span></div>';}).join('');
+ q+='<div class="qline" style="color:#6B7280"><span>ปัดขึ้นพัน (บานหน้า+ผนัง+พื้น+ชั้น+สี)</span><span>= '+fmt(r.sell)+'</span></div>';
+ q+='<div class="qsum"><span>รวม/ชุด</span><span>'+fmt(itemTotal)+'</span></div>';
+ if(qlines.length){q+='<div style="margin-top:7px;border-top:1px dashed #ccc;padding-top:5px;font-size:12px;font-weight:700;color:#B3151D;">ออปชั่นทั้งใบ</div>'+qlines.map(function(l){return '<div class="qline"><span>• '+l.n+'</span><span>'+(l.p>=0?'+':'')+fmt(l.p)+'</span></div>';}).join('')+'<div class="qsum"><span>ยอดรวมทั้งใบ</span><span>'+fmt(grand)+'</span></div>';}
+ q+='</div>';quoteEl.innerHTML=q;
+}
+famEl.children[0].className='mainbtn on';buildForm('cabinet');

@@ -1,0 +1,47 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Before → After · G1 ฟอร์มใหม่ v7</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f4f4f5;color:#1a1a1a;padding:20px;line-height:1.5}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:22px;color:#B3151D;margin-bottom:2px}.sub{font-size:13px;color:#666;margin-bottom:10px}
+.verdict{background:#eefaf0;border:1px solid #9bd7a8;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#1f5b2e;margin-bottom:14px}
+.verdict b{color:#176a2a}
+.sec{font-weight:700;font-size:15px;margin:14px 0 6px;padding:5px 12px;border-radius:6px}
+.sec.a{background:#e8f5e9;color:#2E7D32}.sec.b{background:#f3e8ff;color:#7c3aed}
+.card{border:1px solid #e5e5e5;border-radius:8px;overflow:hidden;margin-bottom:10px;background:#fff}
+.card-t{font-weight:700;font-size:13.5px;padding:8px 12px;background:#fafafa;border-bottom:1px solid #eee}
+.ba{display:grid;grid-template-columns:1fr 30px 1fr;align-items:stretch}
+.col{padding:9px 12px;font-size:12.5px}.before{background:#fff5f5}.after{background:#f0faf2}
+.col .lbl{font-size:10.5px;font-weight:700;margin-bottom:4px}.before .lbl{color:#c0392b}.after .lbl{color:#2E7D32}
+.arrow{display:flex;align-items:center;justify-content:center;font-size:17px;color:#B3151D;background:#fff}
+.box{border:1px dashed #ccc;border-radius:6px;padding:5px 8px;background:#fff;font-size:11.5px;margin-top:3px}
+.note{font-size:11px;color:#777;padding:6px 12px;border-top:1px dashed #eee;background:#fcfcfc}.note b{color:#444}
+.foot{margin-top:8px;font-size:12px;color:#888;text-align:center}
+</style></head><body><div class="wrap">
+<h1>📐 Before → After · G1 ฟอร์มใหม่ v7 (ตรวจโดยแชทกลาง)</h1>
+<div class="sub">ดราฟผ่านแล้ว (พี่นัท 17มิ.ย.) · แชทกลางตรวจใบ/ราคาก่อนส่ง B</div>
+<div class="verdict">✅ <b>ผลตรวจแชทกลาง:</b> งานปลอดภัย (A) ส่ง B ได้เลย · งานแตะ engine (B) — <b>golden 149 ไม่มีเคสบานผสม → แก้ undercharge ไม่ทำราคาเดิมเพี้ยน</b> (เพิ่มเคสผสมใหม่อย่างเดียว) · ความเสี่ยงต่ำกว่าที่คิด แต่ต้องเทสบานผสมทุกชนิดให้ครบ</div>
+
+<div class="sec a">🟢 กลุ่ม A — จัดวาง/ข้อความ (ปลอดภัย · ส่งก่อน)</div>
+<div class="card"><div class="card-t">มือจับ + คาดตาราง + ขนาด</div>
+ <div class="ba"><div class="col before"><div class="lbl">ตอนนี้</div>มือจับละเอียด (สแตนเลส/HYDA/Metro) ปนในฟอร์ม · คาดตารางอยู่กล่องพับ · ขนาด = กว้าง/สูง/ชุด</div><div class="arrow">→</div><div class="col after"><div class="lbl">จะเป็น</div>มือจับ→ <b>"ล็อค"</b> (ไม่มี/มี/มี+กุญแจ) · ละเอียดไป OPTION · คาดตารางขึ้นใต้มุ้ง · ขนาด = กว้าง/สูง/<b>บาน</b>/ชุด</div></div>
+</div>
+<div class="card"><div class="card-t">ของไม่บ่อย + ใบ 5 บล็อก + ผนังเบาภายใน</div>
+ <div class="ba"><div class="col before"><div class="lbl">ตอนนี้</div>ครอบวงกบ/รางยู/ดรอปพื้น/ธรณีลอย · ใบ: ชื่อมีมุ้ง+ขนาด · ผนังในยังไม่ระบุยิปซั่ม</div><div class="arrow">→</div><div class="col after"><div class="lbl">จะเป็น</div>ยุบกล่องพับ "อุปกรณ์เสริม" · ใบเก็บหัว (ขนาดในหัว · ไม่ซ้ำบานหลัก) · ผนังใน=<b>ยิปซั่ม</b>+ฉนวน+ซี-ไลน์</div></div>
+ <div class="note">ไม่แตะราคา · golden นิ่ง</div>
+</div>
+
+<div class="sec b">🔴 กลุ่ม B — แตะ engine (ราคา · ทำหลัง + golden)</div>
+<div class="card"><div class="card-t">⭐ บานผสม คิดราคาผิด (undercharge) — จุดสำคัญ</div>
+ <div class="ba"><div class="col before"><div class="lbl">ตอนนี้</div>บานย่อยทุกชนิดคิดเป็น <b style="color:#c0392b">กระจกติดตายเสมอ</b> (calcSubItemPrice) → ผสมบานเปิด/เลื่อน <b style="color:#c0392b">ราคาถูกเกิน (เก็บเงินขาด)</b></div><div class="arrow">→</div><div class="col after"><div class="lbl">จะเป็น</div>คิดตาม<b>ชนิดจริง</b>ของบานย่อย (เปิด/เลื่อน/เฟี้ยม/กระทุ้ง/ติดตาย) ผ่าน calcUnit · custom กรอกราคาเอง · คาดตารางบานย่อยคิดเงิน</div></div>
+ <div class="note"><b>golden:</b> เคสเดิมไม่มีผสมบาน → ไม่เพี้ยน · เพิ่มเคสผสมใหม่ + เทสทุกชนิดเทียบ calcUnit</div>
+</div>
+<div class="card"><div class="card-t">ดีดัพ OPTION ซ้ำ 4 ตัว</div>
+ <div class="ba"><div class="col before"><div class="lbl">ตอนนี้</div>มุ้ง/มือจับ/กระจก/สีอลู มีหลายที่ซ้ำ</div><div class="arrow">→</div><div class="col after"><div class="lbl">จะเป็น</div>เหลือที่เดียว · "เปลี่ยน X" รวมในกล่อง OPTION</div></div>
+ <div class="note">เทสว่าราคา OPTION ยังถูก</div>
+</div>
+
+<div class="foot">ใบสั่ง file:line → docs/กลุ่ม1.../ORDER-G1-ฟอร์มใหม่+ใบ5บล็อก-ส่งคิวกลาง · ดราฟ DRAFT-G1-ux-v7 · A ส่งก่อน · B ทำทีละข้อ+golden</div>
+</div></body></html>

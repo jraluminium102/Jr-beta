@@ -7,6 +7,7 @@ import { PROD_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
+import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
 
 export type BoqSummary = {
@@ -533,7 +534,7 @@ export function ProductionStepModal({
                                 placeholder="ระบุหมายเหตุ (ถ้ามี)" aria-label={f.label}
                                 className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none resize-none placeholder-white/40" />
                             ) : f.type === "time" ? (
-                              <input type="time" step={60} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}
+                              <input type="time" step={60} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value.slice(0, 5) }))} aria-label={f.label}
                                 className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
                             ) : f.type === "text" ? (
                               <>
@@ -546,8 +547,8 @@ export function ProductionStepModal({
                                 </datalist>
                               </>
                             ) : (
-                              <input type="date" value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}
-                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                              <DateField value={vals[f.field] ?? ""} onChange={(iso) => setVals(v => ({ ...v, [f.field]: iso }))} aria-label={f.label}
+                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
                             )}
                           </div>
                         ))}
@@ -631,12 +632,12 @@ export function ProductionStepModal({
                 <div className="flex gap-2">
                   <div className="flex-1 min-w-0">
                     <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>วันที่</label>
-                    <input type="date" value={sched} onChange={e => setSched(e.target.value)} aria-label="วันนัดวัด"
-                      className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none tnum min-h-[48px] [&::-webkit-calendar-picker-indicator]:invert" />
+                    <DateField value={sched} onChange={(iso) => setSched(iso)} aria-label="วันนัดวัด"
+                      className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px]" />
                   </div>
                   <div className="w-32 shrink-0">
                     <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลา</label>
-                    <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value)} aria-label="เวลานัดวัด"
+                    <input type="time" value={schedTime} onChange={e => setSchedTime(e.target.value.slice(0, 5))} aria-label="เวลานัดวัด"
                       step={60}
                       className="focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none tnum min-h-[48px] [&::-webkit-calendar-picker-indicator]:invert" />
                   </div>
@@ -728,8 +729,8 @@ export function ProductionStepModal({
               <div className="mt-3 glass-card rounded-2xl p-4 border border-emerald-300/20">
                 <label className="block text-[13px] mb-1.5 font-medium text-emerald-100">วันติดตั้งที่กำหนด (นัดลูกค้า)</label>
                 <div className="flex gap-2">
-                  <input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} aria-label="วันติดตั้งที่กำหนด"
-                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                  <DateField value={installDate} onChange={(iso) => setInstallDate(iso)} aria-label="วันติดตั้งที่กำหนด"
+                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
                   <button
                     onClick={() => patch({ planned_install_date: installDate || null }, { close: false, feedbackKey: "install" })}
                     disabled={saving}

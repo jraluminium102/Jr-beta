@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { baht } from "@/lib/money";
+import DateField from "@/components/ui/DateField";
 
 export default function BillingActions({
   billingNoteId, installmentId, amount,
@@ -41,7 +42,7 @@ export default function BillingActions({
       <input type="number" inputMode="decimal" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)}
         placeholder={baht(amount)} aria-label="ยอดรับชำระ"
         className="glass-soft rounded-lg px-2 py-1.5 text-xs w-24 text-right tabular-nums outline-none" />
-      <input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} aria-label="วันที่รับชำระ"
+      <DateField value={paidDate} onChange={(iso) => setPaidDate(iso)} aria-label="วันที่รับชำระ"
         className="glass-soft rounded-lg px-2 py-1.5 text-xs outline-none" />
       <button onClick={submit} disabled={busy}
         className="press rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-brand shadow-brand disabled:opacity-60">

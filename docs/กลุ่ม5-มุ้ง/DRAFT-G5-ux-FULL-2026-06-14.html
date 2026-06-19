@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G5 FULL — มุ้ง (แม่แบบ G1)</title>
+<style>
+:root{--red:#B3151D;--gray:#6B7280;--line:#E5E7EB;--amber:#BA7517;--info:#185FA5;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans Thai',Sarabun,'Leelawadee UI',sans-serif;font-size:15px;background:#F3F4F6;color:#111;line-height:1.5;}
+.banner{background:var(--red);color:#fff;text-align:center;padding:9px;font-size:13px;font-weight:700;}
+.page{max-width:560px;margin:0 auto;padding:14px 14px 24px;}
+h2.pg{font-size:17px;font-weight:700;color:var(--red);margin:6px 0 2px;}
+.sub{color:var(--gray);font-size:12px;margin-bottom:6px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:11px;}
+.et{font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.et .no{width:20px;height:20px;border-radius:50%;background:#fbe9ea;color:var(--red);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto;}
+.et .bc{font-size:11px;color:var(--gray);font-weight:400;}
+.secsum{margin-left:auto;font-size:12.5px;color:var(--red);font-weight:700;white-space:nowrap;}
+.grow{display:flex;flex-wrap:wrap;gap:7px;}
+.na{font-size:12px;color:var(--gray);font-style:italic;}
+.gbtn{min-height:34px;padding:0 13px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.gbtn.on{background:var(--red);color:#fff;border-color:var(--red);}
+.btngrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.mainbtn{min-height:58px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12.5px;font-weight:600;color:#374151;font-family:inherit;}
+.mainbtn .ic{font-size:20px;}.mainbtn .cnt{font-size:10px;font-weight:400;color:var(--gray);}
+.mainbtn.on{background:var(--red);color:#fff;border-color:var(--red);}.mainbtn.on .cnt{color:#f3c6c9;}
+.subchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.sc{min-height:38px;padding:0 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;}
+.sc.on{background:var(--red);color:#fff;border-color:var(--red);}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}.brow:last-child{margin-bottom:0;}
+.rl{font-size:12px;color:var(--gray);min-width:62px;font-weight:600;flex:0 0 62px;}
+.bgrp{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.bgrp .opt{min-height:36px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#374151;font-family:inherit;}
+.bgrp .opt.on{background:var(--red);color:#fff;border-color:var(--red);}
+.szwrap{display:flex;flex-wrap:wrap;gap:8px;}
+.fld{display:flex;flex-direction:column;gap:2px;}.fld label{font-size:10.5px;color:var(--gray);font-weight:600;}
+.fld input{height:40px;width:74px;border:1.5px solid var(--line);border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;}
+select{height:40px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px;padding:0 8px;max-width:100%;background:#fff;}
+.a{min-height:40px;padding:0 13px;border:1.5px solid var(--line);border-radius:21px;background:#fff;font-size:12.5px;cursor:pointer;color:#374151;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+.a.on{background:var(--red);color:#fff;border-color:var(--red);}
+.a .cp{font-size:11px;opacity:.9;}
+.subwrap{margin-top:8px;display:flex;flex-direction:column;gap:7px;}
+.subpanel{border:1px solid #eadfc2;background:#FFFBEF;border-radius:10px;padding:9px 11px;}
+.sphead{font-size:12px;font-weight:700;color:#92660b;margin-bottom:7px;}
+.spfields{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;}
+.spfields .fld input{height:34px;width:64px;}.spfields select{height:34px;font-size:12px;max-width:200px;}
+.pf2{height:34px;width:90px;border:1.5px solid #d6c290;border-radius:8px;padding:0 7px;font-size:13px;text-align:right;font-family:inherit;background:#fff;}
+.txt{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:13px;font-family:inherit;}
+.note{background:#f1f5f9;border-left:3px solid #94a3b8;padding:5px 9px;font-size:11px;color:#475569;border-radius:0 7px 7px 0;margin-top:9px;}
+.warn{background:#fff7ed;border-left:3px solid #fb923c;padding:5px 9px;font-size:11px;color:#9a3412;border-radius:0 7px 7px 0;margin-top:7px;display:none;}
+.info-tag{background:#e0f0ff;border-left:3px solid #3b82f6;padding:5px 9px;font-size:11px;color:#1e40af;border-radius:0 7px 7px 0;margin-top:7px;}
+.qcard{background:#fff;border:2px solid var(--red);border-radius:12px;padding:13px;margin-top:11px;}
+.qline{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #eee;gap:10px;}
+.qline.base{font-weight:700;}.qline span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;}
+.qsum{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--red);margin-top:7px;padding-top:7px;border-top:2px solid #f0d2d4;}
+/* pbar: sticky ไม่ใช่ fixed (ตามมาตรฐาน G1) */
+.pbar{position:sticky;left:0;right:0;bottom:0;background:var(--red);color:#fff;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;max-width:560px;margin:0 auto;}
+.pbar .big{font-size:20px;font-weight:700;}
+.demo{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;padding:6px 11px;font-size:11.5px;margin-bottom:8px;}
+.hidden{display:none;}
+</style></head>
+<body>
+<div class="banner">DRAFT G5 FULL · มุ้ง · แม่แบบ G1 (โชว์ราคาทุกกล่อง) · เรตจริง</div>
+<div class="page">
+  <h2 class="pg">ฟอร์มกรอกงานมุ้ง — G5</h2>
+  <div class="sub">เลือกชนิดมุ้ง → รุ่นย่อย · ผ้ามุ้ง/สีกรอบกรองตามรุ่น · โชว์ราคาทุกจุด · ปรับจาก G1 (ตัดบาน/กระจก · เพิ่มผ้ามุ้ง/สีกรอบ/ติดบานเดิม)</div>
+  <div class="demo">⚠ เรตฐาน + ผ้ามุ้ง(กันแมว+800 / กันหนู+1,200 / นิรภัย) = จริง · สีกรอบ/ผ้าสี = แก้ได้ (dev ดึง colorPrice จริง) · กดเล่นได้</div>
+  <div class="card"><div class="et"><span class="no">1</span>กลุ่มงาน</div><div class="grow" id="groups"></div></div>
+  <div class="card"><div class="et"><span class="no">2</span>ชนิดมุ้ง <span class="bc" id="bc2"></span></div>
+    <div class="btngrid" id="fam"></div><div class="subchips hidden" id="vars"></div></div>
+  <div id="form" class="hidden"></div>
+  <div id="quote" class="hidden"></div>
+</div>
+<div class="pbar hidden" id="pbar"><span>ยอดรวมทั้งใบ (เดโม)</span><span class="big" id="ptotal">฿0</span></div>
+
+<script>
+// ===== เรตจริงมุ้ง (index.html L523-548) — [area≥, area<, บาท/ตร.ม.] =====
+var RATES={
+ IMP21:[[0.0,1.5,2200],[1.5,2.5,1700],[2.5,9999,1500]],
+ IMP22:[[0.0,1.5,1200],[1.5,2.5,1000],[2.5,9999,850]],
+ IMP23:[[0.0,1.5,4500],[1.5,3.0,3700],[3.0,9999,3500]],
+ IMP28:[[1.0,9999,4500]],IMP29:[[1.0,9999,3000]],IMP30:[[1.0,9999,1500]],
+ IMP31:[[0.0,1.5,3500],[1.5,3.0,3200],[3.0,9999,3000]],
+ IMP32:[[0.01,9999,5000]],IMP33:[[0.01,9999,800]],IMP35:[[0.01,9999,1200]],
+ MJ_BLACKOUT:[[0.01,9999,2500]],MJ_SD_TWOWAY:[[0.01,9999,4000]],
+ MJ_KEEPRAIL_TWOWAY:[[0.01,9999,6000]],MJ_KEEPRAIL_HONEY:[[0.01,9999,4500]],
+ MJ_SD_BASIC:[[0.01,9999,2500]],MJ_SCREEN_SAFETY:[[0.01,9999,5000]],
+ MJ_KICK_150:[[0.01,9999,7500]],MJ_KICK_300:[[0.01,9999,7500]],MJ_KICK_600:[[0.01,9999,7500]]
+};
+// rateOf จริง (index.html L989): area<ขั้นต่ำ → คืนเรต tier แรก (ไม่ใช่ 0)
+function rateOf(a,k){var t=RATES[k];if(!t)return 0;if(a<t[0][0])return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];}return t[t.length-1][2];}
+function roundUp(x){return Math.ceil(x/1000)*1000;}
+
+// flat-min IDs: IMP28/IMP29/IMP30 มี tier เริ่มที่ area≥1.0 — clamp A≥1 ก่อนคิดราคา (ขั้นต่ำ 1 ตร.ม.)
+var FLAT_MIN_IDS={'IMP28':1,'IMP29':1,'IMP30':1};
+
+// ===== 5 ชนิดมุ้งหลัก =====
+// หมายเหตุ: imp33/35 (กันสัตว์) ซ่อน — คิดเป็นผ้า option บนเฟรม ตามมติพี่นัท
+// frame:1 = โชว์ Section 3 (ติดกับ/จำนวนบาน) + Section 5 (ผ้ามุ้ง)
+// mscolor:1 = โชว์ Section 6 (สีกรอบ) — ตาม flag จริงของสินค้า
+var FAM=[
+ {k:'frame',n:'มุ้งเฟรม',ic:'▣',items:[
+   {id:'imp21',n:'เฟรมเล็ก ไฟเบอร์',rates:'IMP21',frame:1,mscolor:1,min_door:2400,min_window:1200},
+   {id:'imp22',n:'เฟรมเล็ก ติดตาย',rates:'IMP22',frame:1,mscolor:1,min_door:1500,min_window:800},
+   {id:'imp23',n:'เฟรมใหญ่ (รับผ้านิรภัย)',rates:'IMP23',frame:1,mscolor:1,min_door:7200,min_window:4800,safety:1},
+   // imp30: แม่เหล็ก — ไม่มี frame/mscolor flag (ไม่มีผ้า/สีกรอบ · min=0 flat)
+   {id:'imp30',n:'แม่เหล็ก พับเปิดได้',rates:'IMP30',min:0,flatMin:1}]},
+ {k:'pleat',n:'มุ้งจีบ',ic:'〰',items:[
+   {id:'imp28',n:'จีบ ตีนตะขาบ ไฟเบอร์',rates:'IMP28',min:0,mscolor:1,flatMin:1},
+   {id:'mj_sd_basic',n:'จีบ SD พื้นฐาน (ขาว/ดำ)',rates:'MJ_SD_BASIC',min:3500,mscolor:1},
+   {id:'mj_screen_safety',n:'จีบนิรภัย (ติดล้นนอกวงกบ)',rates:'MJ_SCREEN_SAFETY',min:5000}]},
+   // ซ่อน imp31/imp32 จากเมนู (เก็บเรต IMP31/IMP32 ในระบบ เผื่อใบเก่า) · มุ้งจีบนิรภัยใช้ mj_screen_safety ตัวเดียว (มติพี่นัท 15 มิ.ย.)
+ {k:'honey',n:'จีบ ม่านรังผึ้ง',ic:'▦',items:[
+   {id:'mj_blackout',n:'Blackout รังผึ้งทึบแสง',rates:'MJ_BLACKOUT',min:3500,mscolor:1},
+   {id:'mj_sd_twoway',n:'SD + ทูเวย์',rates:'MJ_SD_TWOWAY',min:4000,mscolor:1},
+   {id:'mj_keep_twoway',n:'ตีนตะขาบ + ทูเวย์',rates:'MJ_KEEPRAIL_TWOWAY',min:6000,mscolor:1},
+   {id:'mj_keep_honey',n:'ตีนตะขาบ + รังผึ้ง',rates:'MJ_KEEPRAIL_HONEY',min:4500,mscolor:1}]},
+ {k:'roll',n:'มุ้งม้วน',ic:'⊞',items:[
+   {id:'imp29',n:'ม้วน ไฟเบอร์',rates:'IMP29',min:0,mscolor:1,flatMin:1},
+   {id:'mj_kick_150',n:'ม้วนเตะ 150 (กว้าง≤1.5)',rates:'MJ_KICK_150',min:15000,mscolor:1,maxW:1.5},
+   {id:'mj_kick_300',n:'ม้วนเตะ 300 (1.5-3.0)',rates:'MJ_KICK_300',min:37500,mscolor:1,maxW:3.0},
+   {id:'mj_kick_600',n:'ม้วนเตะ 600 (3.0-6.0)',rates:'MJ_KICK_600',min:67500,mscolor:1,maxW:6.0}]}
+];
+// ผ้ามุ้ง add-on (เฉพาะเฟรม imp21/22/23 · index.html L1131-1137)
+var FABRIC=[
+ {k:'fiber',n:'ไฟเบอร์ (เทา/ดำ)',mode:'free'},
+ {k:'cat',n:'กันแมว/หมา +800/ตร.ม.',mode:'cat'},
+ {k:'rat',n:'กันหนูสแตน +1,200/ตร.ม.',mode:'rat'},
+ {k:'safety',n:'นิรภัยสแตน 304 (เฉพาะเฟรมใหญ่)',mode:'safety'}
+];
+var DEFP={'ติดบานเดิม (เสริมกล่อง/ราง)':0,'รื้อมุ้งเดิม':1000,'เสริมวงกบ':0,'สีกรอบพิเศษ (ทำสี ลด 50%)':0};
+var OPT_CAT={
+ 'ผ้า/มุ้งพิเศษ':[['อัปเกรดผ้ากันแมว/หมา (+800/ตร.ม.)',0],['ผ้ากันหนูสแตน (+1,200/ตร.ม.)',0],['ผ้านิรภัย 304',0]],
+ 'สี/กรอบ':[['สีกรอบพิเศษ (ทำสี ลด 50%)',0],['สีลายไม้ (ลด 50%)',0]],
+ 'ติดตั้ง/ราง':[['ติดบานเดิม (เสริมกล่อง/ราง)',0],['เสริมวงกบ',0],['รื้อมุ้งเดิม',1000]],
+ 'งานเพิ่ม':[['ติดตั้งที่สูง',1500],['ขนส่งพิเศษ',1000]],
+ 'ส่วนลด/อื่นๆ':[['ส่วนลดพิเศษ',-1000],['อื่นๆ (กรอกเอง)',0]]
+};
+var fmt=function(n){return '฿'+Math.round(n).toLocaleString();};
+var W=function(){return +(document.getElementById('fw')||{}).value||0;};
+var Hh=function(){return +(document.getElementById('fh')||{}).value||0;};
+var panelN=function(){return Math.max(1,+(document.getElementById('fpanel')||{}).value||1);};
+var getItype=function(){var s=document.querySelector('[data-itype] .opt.on');return s?(s.textContent.indexOf('หน้าต่าง')>=0?'window':'door'):'door';};
+
+var groupsEl=document.getElementById('groups'),famEl=document.getElementById('fam'),varsEl=document.getElementById('vars'),
+    formEl=document.getElementById('form'),quoteEl=document.getElementById('quote'),pbar=document.getElementById('pbar'),ptotal=document.getElementById('ptotal'),bc2=document.getElementById('bc2');
+var curItem=null;
+
+['G1','G2','G3','G4','G5','G6','G7'].forEach(function(g){var b=document.createElement('button');b.className='gbtn'+(g==='G5'?' on':'');b.textContent=g;b.onclick=function(){Array.prototype.forEach.call(groupsEl.children,function(x){x.className='gbtn';});b.className='gbtn on';};groupsEl.appendChild(b);});
+FAM.forEach(function(f){var b=document.createElement('button');b.className='mainbtn';b.innerHTML='<span class="ic">'+f.ic+'</span>'+f.n+'<span class="cnt">'+f.items.length+' รุ่น</span>';b.onclick=function(){Array.prototype.forEach.call(famEl.children,function(x){x.className='mainbtn';});b.className='mainbtn on';showVars(f);};famEl.appendChild(b);});
+function showVars(f,auto){varsEl.innerHTML='';varsEl.classList.remove('hidden');bc2.textContent=f.n;f.items.forEach(function(it,si){var c=document.createElement('button');c.className='sc';c.textContent=it.n;c.onclick=function(){Array.prototype.forEach.call(varsEl.children,function(x){x.className='sc';});c.className='sc on';bc2.textContent=f.n+' › '+it.n;buildForm(it);};varsEl.appendChild(c);if(auto&&si===0){c.className='sc on';bc2.textContent=f.n+' › '+it.n;buildForm(it);}});}
+
+function scGroup(label,opts,attr){return '<div class="brow"><span class="rl">'+label+'</span><div class="bgrp" '+(attr||'')+'>'+opts.map(function(o,i){return '<button class="opt'+(i===0?' on':'')+'" onclick="pick(this)">'+o+'</button>';}).join('')+'</div></div>';}
+function pick(b){var s=b.parentNode.children;Array.prototype.forEach.call(s,function(x){x.className='opt';});b.className='opt on';calc();}
+// G5: สีผ้าตามชนิดผ้า (ตรง engine mosqFabricColors L2383) — ผ้าสีเดียวล็อกปุ่มเดียว
+var FABCOL={free:['ดำ','เทา'],cat:['ขาว'],rat:['เงิน','ดำ'],safety:['ดำ']};
+function renderFabCol(mode){var w=document.getElementById('sfcwrap');if(!w)return;var cols=FABCOL[mode]||['ดำ'];var fixed=cols.length===1;w.innerHTML=cols.map(function(c,i){return fixed?'<button class="opt on" disabled style="opacity:1;cursor:default;">'+c+'</button>':'<button class="opt'+(i===0?' on':'')+'" onclick="pick(this)">'+c+'</button>';}).join('')+(fixed?'<span style="font-size:11px;color:#0369A1;align-self:center;margin-left:5px;">สีเดียว</span>':'');}
+function pickFab(b){pick(b);renderFabCol(b.dataset.fab);}
+function pickFc(b){var s=b.parentNode.children;[].forEach.call(s,function(x){x.className='opt';});b.className='opt on';calc();}
+function sec(no,title,bc,body){return '<div class="card"><div class="et"><span class="no">'+no+'</span>'+title+(bc?'<span class="bc">'+bc+'</span>':'')+'<span class="secsum"></span></div>'+body+'</div>';}
+function optSection(items){return '<div class="grow">'+items.map(function(o){return '<button class="a" data-opt="'+o+'" onclick="togChip(this)">'+o+' <span class="cp">+</span></button>';}).join('')+'</div><div class="subwrap"></div>';}
+function subPanelHTML(name){
+  var inner='';
+  if(name==='ติดบานเดิม (เสริมกล่อง/ราง)')inner='<div class="fld"><label>ค่าเสริมกล่อง/ราง</label><input class="pf2" type="number" value="0" oninput="calc()"></div>';
+  else if(name==='สีกรอบพิเศษ (ทำสี ลด 50%)'||name==='สีลายไม้ (ลด 50%)')inner='<div class="fld" style="flex:1;min-width:150px"><label>ราคา (ค่าทำสี×0.5 · dev ดึง colorPrice จริง)</label><input class="pf2" type="number" value="0" oninput="calc()" style="width:110px"></div>';
+  else inner='<div class="fld"><label>ราคา (แก้ได้)</label><input class="pf2" type="number" value="'+(DEFP[name]||0)+'" oninput="calc()"></div>';
+  return '<div class="subpanel" data-opt="'+name+'"><div class="sphead">'+name+'</div><div class="spfields">'+inner+'</div></div>';
+}
+function togChip(b){var name=b.dataset.opt,sw=b.parentNode.nextElementSibling;if(b.classList.toggle('on')){sw.insertAdjacentHTML('beforeend',subPanelHTML(name));}else{var ex=sw.querySelector('.subpanel[data-opt="'+name+'"]');if(ex)ex.remove();}calc();}
+function optCatHTML(listId){var cats=Object.keys(OPT_CAT);return '<div class="grow" data-catbar="'+listId+'" style="margin-bottom:6px;">'+cats.map(function(c,i){return '<button class="a'+(i===0?' on':'')+'" onclick="pickOptCat(this,\''+listId+'\')">'+c+'</button>';}).join('')+'</div><div class="grow" id="'+listId+'pre" style="margin-bottom:7px;"></div><div id="'+listId+'"></div>';}
+function pickOptCat(b,listId){var s=b.parentNode.children;Array.prototype.forEach.call(s,function(x){x.className='a';});b.className='a on';fillOptPre(b.textContent,listId);}
+function fillOptPre(cat,listId){var pre=document.getElementById(listId+'pre');if(!pre)return;var fn=(listId==='qoptlist')?'addQOpt':'addOpt';pre.innerHTML=(OPT_CAT[cat]||[]).map(function(o){return '<button class="a" onclick="'+fn+'(\''+o[0].replace(/'/g,"\\'")+'\','+o[1]+')">'+o[0]+' +</button>';}).join('');}
+function addOpt(nm,p){var l=document.getElementById('optlist');var d=document.createElement('div');d.className='brow';d.innerHTML='<input class="txt optt" style="flex:1;" placeholder="ชื่อ OPTION" value="'+(nm||'')+'" oninput="calc()"><input type="number" class="optp" style="width:90px" value="'+(p||0)+'" oninput="calc()"><button class="gbtn" onclick="this.parentNode.remove();calc();">✕</button>';l.appendChild(d);calc();}
+function addQOpt(nm,p){var l=document.getElementById('qoptlist');var d=document.createElement('div');d.className='brow';d.innerHTML='<input class="txt qoptt" style="flex:1;" placeholder="ออปชั่นทั้งใบ" value="'+(nm||'')+'" oninput="calc()"><input type="number" class="qoptp" style="width:100px" value="'+(p||0)+'" oninput="calc()"><button class="gbtn" onclick="this.parentNode.remove();calc();">✕</button>';l.appendChild(d);calc();}
+
+function buildForm(it){curItem=it;var h='';
+  // ===== Section 3: ติดกับ + จำนวนบาน =====
+  // โผล่เฉพาะ frame:1 (imp21/22/23) เท่านั้น
+  // non-frame: logic ใช้ max(p.min, A×rate) ไม่มีผล panelN/itype เลย → ซ่อน
+  if(it.frame){
+    h+=sec(3,'ติดกับ · จำนวนบาน','min ต่างตามประตู/หน้าต่าง × จำนวนบาน',
+      scGroup('ติดกับ',['ประตู','หน้าต่าง'],'data-itype')+
+      '<div class="brow"><span class="rl">จำนวนบาน</span><div class="bgrp"><input type="number" id="fpanel" value="1" min="1" style="height:36px;width:70px;border:1.5px solid #E5E7EB;border-radius:9px;padding:0 8px;font-size:14px;font-family:inherit;" oninput="calc()"></div></div>');
+  }
+
+  // ===== Section 4: ขนาด =====
+  // imp30/imp28/imp29 มีขั้นต่ำ 1 ตร.ม. (tier เริ่ม area≥1.0) — แสดง note ให้ผู้ใช้รู้
+  var flatMinNote=it.flatMin?'<div class="info-tag">รุ่นนี้คิดขั้นต่ำ 1 ตร.ม. (tier เริ่ม 1.0 ตร.ม.) — พื้นที่น้อยกว่า 1 ตร.ม. ใช้เรตเท่ากับ 1 ตร.ม.</div>':'';
+  // maxW warn (เฉพาะม้วนเตะ)
+  var maxWarnHTML=it.maxW?'<div class="warn" id="maxwarn">⚠ รุ่นนี้รับกว้าง ≤ '+it.maxW.toFixed(1)+' ม. — เกินต้องเปลี่ยนรุ่นใหญ่กว่า</div>':'';
+  h+=sec(4,'ขนาด','กว้าง×สูง × จำนวนชุด',
+    '<div class="szwrap"><div class="fld"><label>กว้าง (ม.)</label><input type="number" id="fw" value="1" step="0.1" oninput="calc()"></div>'+
+    '<div class="fld"><label>สูง (ม.)</label><input type="number" id="fh" value="2" step="0.1" oninput="calc()"></div>'+
+    '<div class="fld"><label>จำนวนชุด</label><input type="number" id="fset" value="1" oninput="calc()"></div></div>'+
+    maxWarnHTML+flatMinNote);
+
+  // ===== Section 5: ผ้ามุ้ง — เฉพาะ frame:1 (imp21/22/23) =====
+  // imp30 ไม่มี frame flag → ไม่โผล่ผ้ามุ้ง (ถูกต้อง)
+  if(it.frame){
+    var fab=FABRIC.filter(function(f){return f.k!=='safety'||it.safety;});
+    h+=sec(5,'ผ้ามุ้ง','เฉพาะมุ้งเฟรม (imp21/22/23)',
+      '<div class="brow"><span class="rl">ผ้า</span><div class="bgrp" data-fabric>'+
+      fab.map(function(f,i){return '<button class="opt'+(i===0?' on':'')+'" data-fab="'+f.mode+'" onclick="pickFab(this)">'+f.n+'</button>';}).join('')+
+      '</div></div>'+
+      '<div class="brow"><span class="rl">สีผ้า</span><div class="bgrp" id="sfcwrap"></div></div>');
+  }
+
+  // ===== Section 6: สีกรอบมุ้ง — เฉพาะ mscolor:1 =====
+  // เฟรม imp21/22/23: mscolor แต่ engine return ก่อน mscolor block → (เช็คซ้ำ) ใส่ช่องให้แก้ราคาได้
+  // imp30: ไม่มี mscolor → ไม่โผล่
+  if(it.mscolor){
+    h+=sec(6,'สีกรอบมุ้ง','ตามสีบาน ฟรี · พิเศษ/ลายไม้ คิด×0.5',
+      optSection(['สีกรอบพิเศษ (ทำสี ลด 50%)','สีลายไม้ (ลด 50%)']));
+  }
+
+  // ===== Section 7: การติดตั้ง / อุปกรณ์เสริม =====
+  h+=sec(7,'การติดตั้ง / อุปกรณ์เสริม','กดที่ใช้',
+    '<div class="brow"><span class="rl">ครอบวงกบ</span><div class="bgrp" data-fcsides><button class="opt on" data-fc="0" onclick="pickFc(this)">ไม่มี</button><button class="opt" data-fc="3" onclick="pickFc(this)">3 ด้าน</button><button class="opt" data-fc="4" onclick="pickFc(this)">4 ด้าน</button></div></div>'+
+    '<div class="brow"><span class="rl">งานเสริม</span><input class="txt" placeholder="งานเสริม/วิศวกรรม (ระบุถ้ามี · ไม่กระทบราคา)" style="flex:1;font-size:12px;"></div>'+
+    optSection(['ติดบานเดิม (เสริมกล่อง/ราง)','รื้อมุ้งเดิม']));
+
+  // ===== Section 8: OPTION ลูกค้า =====
+  h+=sec(8,'OPTION ลูกค้า (ต่อชุดนี้)','เลือกหมวด→กดเติม แก้/ลบ',optCatHTML('optlist'));
+
+  // ===== Section 9: ตำแหน่ง/หมายเหตุ =====
+  h+=sec(9,'ตำแหน่ง / หมายเหตุ',' ',
+    '<input class="txt" placeholder="ตำแหน่ง เช่น ห้องนอน 1" style="margin-bottom:8px;">'+
+    '<textarea class="txt" rows="2" placeholder="หมายเหตุ"></textarea>');
+
+  // ===== Section 10: ออปชั่นทั้งใบ =====
+  h+=sec(10,'ออปชั่นทั้งใบเสนอราคา (ท้ายสุด)','หมวดเหมือนข้อ 8 · ±/ชุด',optCatHTML('qoptlist'));
+
+  formEl.innerHTML=h;formEl.classList.remove('hidden');quoteEl.classList.remove('hidden');pbar.classList.remove('hidden');
+  fillOptPre(Object.keys(OPT_CAT)[0],'optlist');
+  fillOptPre(Object.keys(OPT_CAT)[0],'qoptlist');
+  if(it.frame)renderFabCol((FABRIC[0]&&FABRIC[0].mode)||'free'); // สีผ้าตามผ้า default (fiber→ดำ/เทา)
+  calc();
+}
+
+// ===== baseRaw: คิดราคาฐานก่อนปัดขึ้น =====
+// flat-min (imp28/29/30): clamp A≥1 ก่อนคิดเรต (tier เริ่ม 1.0 ตร.ม. — ขั้นต่ำ 1 ตร.ม.)
+function baseRaw(){
+  if(!curItem)return 0;
+  var Aw=W()*Hh();
+  var it=curItem;
+  // clamp area สำหรับ flat-min items (imp28/29/30)
+  var A=it.flatMin?Math.max(1,Aw):Aw;
+  var rate=rateOf(A,it.rates);
+  if(it.frame){
+    // เฟรม: min ต่างตามประตู/หน้าต่าง × จำนวนบาน
+    var minPer=getItype()==='window'?(it.min_window||0):(it.min_door||0);
+    var totalMin=minPer*panelN();
+    return Math.max(totalMin,A*rate);
+  }
+  return Math.max(it.min||0,A*rate);
+}
+
+function fabricLine(){
+  if(!curItem||!curItem.frame)return null;
+  var Aw=W()*Hh();
+  var s=formEl.querySelector('[data-fabric] .opt.on');
+  if(!s)return null;
+  var m=s.dataset.fab;
+  if(m==='cat')return {n:'ผ้ากันแมว/หมา (+800/ตร.ม.)',p:Aw*800};
+  if(m==='rat')return {n:'ผ้ากันหนูสแตน (+1,200/ตร.ม.)',p:Aw*1200};
+  if(m==='safety')return {n:'ผ้านิรภัยสแตน 304 0.8มม.',p:Aw*rateOf(Aw,'IMP31')};
+  return null;
+}
+
+function calc(){
+  if(!curItem)return;
+  var Aw=W()*Hh();
+  var set=+(document.getElementById('fset')||{}).value||1;
+  // maxW warn (ม้วนเตะ)
+  var mw=document.getElementById('maxwarn');
+  if(mw)mw.style.display=(curItem.maxW&&W()>curItem.maxW)?'block':'none';
+  // คิดราคาฐาน
+  var rb=baseRaw();
+  var fl=fabricLine();
+  var flp=(fl&&fl.p>0)?fl.p:0;
+  // rate สำหรับแสดงป้าย (ใช้ A จริงหรือ clamp ตามชนิด)
+  var Adisp=curItem.flatMin?Math.max(1,Aw):Aw;
+  var rate=rateOf(Adisp,curItem.rates);
+  var base=roundUp(rb+flp);
+  // label ฐาน: โชว์พื้นที่จริง + ป้าย clamp ถ้า flatMin และ Aw<1
+  var areaStr=Aw.toFixed(2)+(curItem.flatMin&&Aw<1?' (คิดขั้นต่ำ 1 ตร.ม.)':'');
+  // จำนวนบาน: โชว์เฉพาะ frame
+  var panelStr=curItem.frame?(' · '+panelN()+' บาน'):'';
+  var baseLabel='ฐาน '+areaStr+' ตร.ม. × '+fmt(rate)+panelStr+(flp>0?(' + '+fl.n+' '+fmt(flp)):'')+' → ปัดขึ้น';
+  var lines=[{n:baseLabel,p:base,base:1}];
+  // ครอบวงกบอลู (engine L1518: 3ด้าน=W+2H · 4ด้าน=2(W+H) × เรตสี default 700)
+  var _fcEl=formEl.querySelector('[data-fcsides] .opt.on');var _fcs=_fcEl?(parseInt(_fcEl.dataset.fc)||0):0;
+  if(_fcs===3||_fcs===4){var _fw=W(),_fh=Hh();var _flen=_fcs===3?(_fw+2*_fh):2*(_fw+_fh);var _fp=Math.round(_flen*700);if(_fp>0)lines.push({n:'ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×700',p:_fp});}
+  formEl.querySelectorAll('.a.on[data-opt]').forEach(function(a2){
+    var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('.subpanel[data-opt="'+nm+'"]');
+    var p=pn?(+(pn.querySelector('.pf2')||{}).value||0):(DEFP[nm]||0);
+    lines.push({n:nm,p:p});
+  });
+  formEl.querySelectorAll('#optlist .brow').forEach(function(r){
+    var t=(r.querySelector('.optt')||{}).value||'',p=+(r.querySelector('.optp')||{}).value||0;
+    if(t||p)lines.push({n:'OPTION: '+(t||'-'),p:p});
+  });
+  var per=lines.reduce(function(s,l){return s+(l.p||0);},0),itemTotal=per*set;
+  var qadj=0,qlines=[];
+  formEl.querySelectorAll('#qoptlist .brow').forEach(function(r){
+    var t=(r.querySelector('.qoptt')||{}).value||'',p=+(r.querySelector('.qoptp')||{}).value||0;
+    if(t||p){qadj+=p;qlines.push({n:t||'-',p:p});}
+  });
+  var grand=itemTotal+qadj*set;
+  ptotal.textContent=fmt(grand);
+  // ราคาบนชิปออปชั่น
+  formEl.querySelectorAll('.a[data-opt]').forEach(function(a2){
+    var cp=a2.querySelector('.cp');if(!cp)return;
+    if(a2.classList.contains('on')){
+      var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('.subpanel[data-opt="'+nm+'"]');
+      var p=pn?(+(pn.querySelector('.pf2')||{}).value||0):(DEFP[nm]||0);
+      cp.textContent=p?fmt(p):'✓';
+    }else cp.textContent='+';
+  });
+  // secsum ต่อกล่อง
+  formEl.querySelectorAll('.card').forEach(function(card){
+    var n=0;
+    if(card.querySelector('#fw'))n+=base;
+    card.querySelectorAll('.a.on[data-opt]').forEach(function(a2){
+      var nm=a2.dataset.opt,pn=a2.parentNode.nextElementSibling.querySelector('.subpanel[data-opt="'+nm+'"]');
+      n+=pn?(+(pn.querySelector('.pf2')||{}).value||0):(DEFP[nm]||0);
+    });
+    card.querySelectorAll('.optp,.qoptp').forEach(function(o){n+=+o.value||0;});
+    var ss=card.querySelector('.secsum');if(ss)ss.textContent=fmt(n);
+  });
+  // พรีวิวใบเสนอราคา
+  var panelTag=curItem.frame?(' · '+panelN()+' บาน'):'';
+  var q='<div class="qcard"><div class="et" style="margin-bottom:8px;">พรีวิวใบเสนอราคา (แยกราคา)</div>'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:6px;">'+curItem.n+' · '+W().toFixed(2)+'×'+Hh().toFixed(2)+' ม.'+panelTag+(set>1?' · '+set+' ชุด':'')+'</div>';
+  q+=lines.map(function(l){return '<div class="qline'+(l.base?' base':'')+'"><span>'+(l.base?'':'• ')+l.n+'</span><span>'+fmt(l.p)+'</span></div>';}).join('');
+  q+='<div class="qsum"><span>รวม/ชุด'+(set>1?' × '+set+' ชุด':'')+'</span><span>'+fmt(itemTotal)+'</span></div>';
+  if(qlines.length){
+    q+='<div style="margin-top:7px;border-top:1px dashed #ccc;padding-top:5px;font-size:12px;font-weight:700;color:#B3151D;">ออปชั่นทั้งใบ (× '+set+' ชุด)</div>'+
+      qlines.map(function(l){return '<div class="qline"><span>• '+l.n+'</span><span>'+(l.p>=0?'+':'')+fmt(l.p*set)+'</span></div>';}).join('')+
+      '<div class="qsum"><span>ยอดรวมทั้งใบ</span><span>'+fmt(grand)+'</span></div>';
+  }
+  q+='</div>';
+  quoteEl.innerHTML=q;
+}
+famEl.children[0].className='mainbtn on';showVars(FAM[0],true);
+</script>
+</body></html>

@@ -7,7 +7,10 @@ import { Tag, Spinner, EmptyState } from "@/components/ui/primitives";
 import { Download, Plus, X } from "@/components/ui/icons";
 import { RecordPaymentModal } from "@/components/finance/RecordPaymentModal";
 import { VoidDialog } from "@/components/finance/VoidDialog";
+import { JobDrawer } from "@/components/jobs/JobDrawer";
 import type { PaymentType, PaymentChannel } from "@/lib/database.types";
+
+type OnsiteRow = { job_id: string; job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null };
 
 type Row = {
   id: string; payment_date: string; amount: number; type: PaymentType; channel: PaymentChannel; is_auto_created: boolean;
@@ -22,9 +25,12 @@ export default function FinancePage() {
   const [creating, setCreating] = useState(false);
   const [presetJob, setPresetJob] = useState<string | undefined>(undefined);
   const [voiding, setVoiding] = useState<Row | null>(null);
+  const [onsiteJobId, setOnsiteJobId] = useState<string | null>(null);
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ["finance"], queryFn: () => api.get<Row[]>("/finance") });
   const out = useQuery({ queryKey: ["finance", "outstanding"], queryFn: () => api.get<OutRow[]>("/finance/outstanding"), enabled: view === "outstanding" });
+  const onsite = useQuery({ queryKey: ["finance", "onsite-pending"], queryFn: () => api.get<OnsiteRow[]>("/finance/onsite-pending") });
+  const onsiteRows = onsite.data?.data ?? [];
 
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
@@ -59,6 +65,25 @@ export default function FinancePage() {
           )}
         </div>
       </div>
+
+      {/* เตือน: มัดจำหน้างานที่ยังไม่กรอกยอด → เงินยังไม่ลงบัญชี */}
+      {onsiteRows.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-amber-300/30 bg-amber-500/12 p-3.5">
+          <div className="text-[13px] font-semibold text-amber-100 mb-2">
+            ⚠️ มัดจำหน้างานยังไม่กรอกยอด {onsiteRows.length} ราย — เงินรับจริงยังไม่ลงบัญชี (กดเพื่อกรอกยอด)
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {onsiteRows.map((r) => (
+              <button key={r.job_id} type="button" onClick={() => setOnsiteJobId(r.job_id)}
+                className="focusable pressable inline-flex items-center gap-2 rounded-xl bg-white/8 hover:bg-white/15 border border-amber-300/25 px-3 py-2 text-[12px] text-amber-50 min-h-[40px]">
+                <span className="font-medium">{r.customer_name}</span>
+                {r.job_code && <span className="tnum text-amber-200/70">{r.job_code}</span>}
+                {r.deposit_date && <span className="text-amber-200/60">{thDate(r.deposit_date)}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-4">
         <Tab id="ledger" label="รับเงิน" />
@@ -138,6 +163,14 @@ export default function FinancePage() {
         onClose={() => setVoiding(null)}
         onVoided={() => { setVoiding(null); refetch(); out.refetch(); }}
       />}
+      {onsiteJobId && (
+        <JobDrawer
+          jobId={onsiteJobId}
+          canFinance={canWrite}
+          onClose={() => setOnsiteJobId(null)}
+          onChanged={() => { onsite.refetch(); refetch(); out.refetch(); }}
+        />
+      )}
     </div>
   );
 }

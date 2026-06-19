@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>HANDOFF — โครงสร้างรายการในใบเสนอราคา (รายการบน / รายละเอียดล่าง) · ทุก G · 16 มิ.ย. 2026</title>
+<style>
+  body{ font-family:'Segoe UI','Leelawadee UI',Tahoma,sans-serif; color:#1F2937; max-width:980px; margin:0 auto; padding:24px; line-height:1.65; }
+  h1{ color:#B3151D; font-size:22px; margin-bottom:2px; }
+  h2{ color:#B3151D; font-size:16px; margin-top:26px; border-bottom:2px solid #FCA5A5; padding-bottom:4px; }
+  h3{ font-size:14px; margin:14px 0 6px; color:#374151; }
+  .sub{ color:#6B7280; font-size:13px; margin-bottom:6px; }
+  code{ background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 5px; font-family:Consolas,monospace; font-size:12.5px; color:#B3151D; }
+  table{ border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+  th,td{ border:1px solid #D1D5DB; padding:6px 9px; text-align:left; vertical-align:top; }
+  th{ background:#FEE2E2; color:#7F1D1D; }
+  tr:nth-child(even) td{ background:#FAFAFA; }
+  .box{ background:#FFF7ED; border:1px solid #FDBA74; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .warn{ background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .ok{ background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:13px; }
+  .quote{ border:1px solid #D1D5DB; border-radius:8px; overflow:hidden; margin:10px 0; }
+  .qhead{ display:flex; background:#FBE9EA; font-size:12px; color:#B3151D; font-weight:700; }
+  .qrow{ display:flex; font-size:13px; border-top:1px solid #E5E7EB; }
+  .qc-hdr{ font-weight:700; font-size:14px; }
+  .qc-lab{ font-weight:700; color:#B3151D; font-size:12.5px; margin-top:8px; }
+  .qc-dim{ color:#6B7280; }
+  ul,ol{ margin:6px 0; padding-left:22px; } li{ margin:3px 0; }
+  .tag-new{ background:#D1FAE5; color:#065F46; border-radius:4px; padding:0 5px; font-size:11px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<h1>HANDOFF — โครงสร้างรายการในใบเสนอราคา "รายการบน / รายละเอียดล่าง"</h1>
+<p class="sub">ส่ง dev แชท B แก้ <code>public/calculator/index.html</code> · 16 มิ.ย. 2026 · <b>กระทบใบเสนอราคาทุกกลุ่ม G1–G7</b> · แก้จุดเดียว (itemDetail + ตัวประกอบแถว) ได้ผลทุกกลุ่ม</p>
+<p class="sub">มติพี่นัท: ใบเดิมเอาทุกอย่างกองใน "รายละเอียดงาน" เป็น bullet เดียว → ช่องซ้ายบวมไม่สมดุล · ต้องแยกเป็น 2 ก้อนแบบใบจริง</p>
+
+<div class="ok">
+<b>เป้าหมาย (พี่นัทเคาะ "เอาแบบนี้" 16 มิ.ย.):</b> แต่ละรายการในใบแบ่ง 2 ส่วนซ้อนกัน —
+<b>"รายการ" (รูปแบบงาน) อยู่บน</b> ขึ้น bullet ใต้ชื่อสินค้าเลย (ไม่มีหัวข้อ) ·
+<b>"รายละเอียด" (สเปคที่ต้องระบุค่า) อยู่ล่าง</b> มีหัวข้อ "รายละเอียด"
+</div>
+
+<!-- ============ 1. ตัวอย่างเป้าหมาย ============ -->
+<h2>1. ตัวอย่างเป้าหมาย (ตู้อลู — ที่พี่นัทพิมพ์มาเป๊ะ)</h2>
+<div class="quote">
+<div class="qhead"><div style="width:26px;padding:7px 8px;text-align:center;">#</div><div style="flex:1;padding:7px 10px;">รายละเอียด</div><div style="width:60px;padding:7px 8px;text-align:right;">จำนวน</div><div style="width:85px;padding:7px 10px;text-align:right;">ยอดรวม</div></div>
+<div class="qrow">
+<div style="width:26px;padding:10px 8px;text-align:center;color:#6B7280;">1</div>
+<div style="flex:1;padding:10px;line-height:1.7;">
+<div class="qc-hdr">ตู้อลูมิเนียม (ตู้เสื้อผ้า) ขนาด 1.2 × 2.4 ม. ลึก 0.6 ม.</div>
+<div style="margin-top:4px;">
+- บานหน้า Future Tech 2 บาน<br>
+- ชั้นวางอลูมิเนียม 5 ชั้น<br>
+- ผนังตู้ 3 ด้าน (ซ้าย / ขวา / หลัง)<br>
+- ผนัง: ซ้าย อลูทึบ · ขวา กระจก · หลัง อลูทึบ
+</div>
+<div class="qc-lab">รายละเอียด</div>
+<div class="qc-dim">
+- สีโครง: อบสีพิเศษ · รหัส KL10232A<br>
+- ชั้นอลูมิเนียม: สีอบขาว<br>
+- กระจก (ผนังขวา): เทมเปอร์ใส หนา 6 มม.
+</div>
+</div>
+<div style="width:60px;padding:10px 8px;text-align:right;color:#6B7280;">1 ชุด</div>
+<div style="width:85px;padding:10px;text-align:right;">74,000</div>
+</div>
+</div>
+
+<!-- ============ 2. กฎโครงสร้าง ============ -->
+<h2>2. กฎโครงสร้าง 3 ชั้น (ใช้ทุกกลุ่ม)</h2>
+<table>
+<tr><th>ชั้น</th><th>เนื้อหา</th><th>หัวข้อ?</th></tr>
+<tr><td><b>หัวรายการ</b> (ตัวเข้ม)</td><td>ชื่อสินค้า + ประเภท/รุ่น + <b>ขนาด กว้าง×สูง</b> + ลึก (ถ้ามี)</td><td>ไม่มี (เป็นชื่อ)</td></tr>
+<tr><td><b>รายการ</b> (รูปแบบงาน)</td><td>ชิ้นงานที่ "ติดตั้ง/ทำ" เป็น bullet — บานหน้า · ชั้น · ผนัง · มุ้ง · เสริมคาน · รื้อ · ฯลฯ · <b>วัสดุที่เป็นตัวงานอยู่ในชื่อ</b> (เช่น "ชั้นวาง<u>อลูมิเนียม</u> 5 ชั้น")</td><td><b>ไม่มีหัวข้อ</b> (ขึ้น bullet ใต้ชื่อเลย)</td></tr>
+<tr><td><b>รายละเอียด</b> (สเปค)</td><td>ค่าที่ต้องระบุชัด: <b>สี (+รหัส) · ความหนา · สีวัสดุย่อย · ชนิดกระจก</b></td><td><b>มีหัวข้อ "รายละเอียด"</b></td></tr>
+</table>
+
+<div class="box">
+<b>เส้นแบ่ง "รายการ" vs "รายละเอียด":</b><br>
+- เป็น <b>ชิ้นงาน/สิ่งที่ทำ</b> (นับเป็นบาน/ชั้น/ด้าน/เมตร ได้) → <b>รายการ</b><br>
+- เป็น <b>คุณสมบัติผิว/วัสดุที่ต้องเลือกค่า</b> (สีอะไร · รหัสอะไร · หนากี่มม. · กระจกชนิดไหน) → <b>รายละเอียด</b>
+</div>
+
+<!-- ============ 3. สเปคบังคับ ============ -->
+<h2>3. กฎ "ต้องระบุค่า" ในบล็อกรายละเอียด (พี่นัทเน้น)</h2>
+<table>
+<tr><th>สเปค</th><th>กฎ</th><th>ดึงจาก</th></tr>
+<tr><td>สีโครง / สีอลู</td><td>ระบุชื่อสี · <b>ถ้าเป็นสีพิเศษ (hasCode) บังคับมีรหัสสี</b> ต่อท้าย</td><td><code>.i-color</code> (ชื่อ) + <code>.i-colorcode</code> (รหัส)</td></tr>
+<tr><td>สีวัสดุย่อย (ชั้น/เกล็ด)</td><td>ระบุสีของวัสดุอลูแต่ละชิ้น</td><td>ดู <span class="tag-new">เช็คซ้ำ #1</span> (แยกจากโครงไหม)</td></tr>
+<tr><td>กระจก</td><td>ระบุ <b>ชนิด + ความหนา + สี</b> (ชื่อกระจกในระบบมีครบอยู่แล้ว)</td><td>แค็ตตาล็อกกระจก เช่น "เทมเปอร์เขียว/ใส 6 มม." (L561–589)</td></tr>
+<tr><td>ความหนาแผ่น/ฉนวน</td><td>สมาร์ทบอร์ด/ISOWALL/ฉนวน ระบุความหนา (มี "หนา X มม./ซม." อยู่แล้ว)</td><td><code>itemDetail</code> ฝ้า-ผนัง L4486–4490</td></tr>
+</table>
+
+<!-- ============ 4. mapping ทุกกลุ่ม ============ -->
+<h2>4. ตาราง mapping ต่อกลุ่ม (รายการ = อะไร · รายละเอียด = อะไร)</h2>
+<table>
+<tr><th>กลุ่ม</th><th>รายการ (บน · รูปแบบงาน)</th><th>รายละเอียด (ล่าง · สเปค)</th></tr>
+<tr><td>G1 งานบาน</td><td>บาน + ราง + แบ่งกี่บาน (เลื่อน/ติดตาย) · มุ้ง · เสริมคาน · ครอบวงกบ · รื้อของเดิม</td><td>กระจก (ชนิด+หนา+สี) · สีอลู (+รหัส) · ผ้ามุ้ง</td></tr>
+<tr><td>G2 รั้ว/ระแนง/ราว</td><td>ระแนง + ขนาดซี่ + ทิศ · ประตูรั้ว · ราวกันตก · รื้อ</td><td>สี (+รหัส) · (ราวกระจก: กระจกหนา+สี)</td></tr>
+<tr><td>G3 หลังคา/ฝ้า/ผนัง</td><td>แผ่นหลังคา/ผนัง + โครง · ฉนวน · รางน้ำ · ฝ้า</td><td>ความหนาแผ่น · สีแผ่น/สีเมทัลชีท · ชนิดโครง (อลู/เหล็กชุบ)</td></tr>
+<tr><td><b>G4 ตู้</b></td><td>บานหน้า · ชั้น (+วัสดุ) · ผนัง 3 ด้าน (+วัสดุต่อด้าน)</td><td>สีโครง (+รหัส) · สีชั้นอลู · กระจกผนัง (หนา+สี)</td></tr>
+<tr><td>G5 มุ้ง</td><td>มุ้ง + แบบเปิด (เลื่อน/เปิด)</td><td>ผ้ามุ้ง · สีกรอบ (+รหัส)</td></tr>
+<tr><td>G6 กั้นห้อง</td><td>แต่ละด้าน + บาน · หลังคา · ฝ้า · งานไฟ/แอร์</td><td>กระจก (หนา+สี) · สีอลู (+รหัส) · ความหนาแผ่นหลังคา/ฝ้า</td></tr>
+<tr><td>G7 ม่านซิป</td><td>ม่านซิป + ระบบเปิด</td><td>ผ้า/สีผ้า · สีกล่อง-ราง</td></tr>
+</table>
+<p class="sub">⚠ mapping นี้เป็นแนวทาง · dev ปรับตามข้อมูลจริงต่อ product ได้ · ของที่ยังไม่ชัด = <b>เช็คซ้ำ</b> ข้างล่าง</p>
+
+<!-- ============ 5. โค้ดที่ต้องแก้ ============ -->
+<h2>5. จุดแก้ในโค้ด (2 ที่)</h2>
+<h3>5A. <code>itemDetail(it)</code> — L4292 (คืน "รายการ" + "รายละเอียด" แยกกัน)</h3>
+<p class="sub">เดิมคืน <code>det</code> เป็นสตริงเดียว (ทุกบรรทัดปนกัน) · ใหม่ให้คืน 2 ส่วน เช่น <code>{ raykan:[...], detail:[...] }</code> หรือคั่นด้วย marker</p>
+<ul>
+  <li><b>raykan</b> (รายการ) = บรรทัดที่เป็นชิ้นงาน (เดิมอยู่ใน <code>_cLines</code>/prodName subItems) — บานหน้า/ชั้น/ผนัง/มุ้ง/เสริม/รื้อ</li>
+  <li><b>detail</b> (รายละเอียด) = บรรทัดสเปค — สี+รหัส (จาก <code>.i-color</code>/<code>.i-colorcode</code>) · กระจก (ชื่อเต็ม) · ความหนา</li>
+  <li>ต่อกลุ่ม: cabinet (L4493) · future_tech (L4515) · ฝ้า-ผนัง (L4482) · ระแนง/fin (L4469) · บานกระจก (block ถัดไป) — แยก line ไหนเข้า raykan ไหนเข้า detail ตาม mapping ข้อ 4</li>
+</ul>
+
+<h3>5B. ตัวประกอบแถวใบ — L4038–4071 (render 2 บล็อก)</h3>
+<p class="sub">เดิม: ชื่อ → note → addon → "รายละเอียดงาน" (glass) · ใหม่:</p>
+<ol>
+  <li>หัวรายการ (ชื่อ + ขนาด) — คงเดิม (L4038–4053)</li>
+  <li><b>บล็อก "รายการ"</b> — bullet จาก <code>raykan</code> <b>ไม่มีหัวข้อ</b> (ขึ้นใต้ชื่อเลย)</li>
+  <li><b>บล็อก "รายละเอียด"</b> — หัวข้อ <code>รายละเอียด</code> (ตัวเข้มแดง) + bullet จาก <code>detail</code></li>
+  <li>คง override ของเซลล์ (<code>_detOv</code>/contenteditable L4064–4067) ให้แก้ได้ทั้ง 2 บล็อก</li>
+</ol>
+
+<h3>5C. 🟢 โค้ดก็อปวางได้เลย — VERIFIED 18/18 · ราคาไม่เพี้ยน (ทำ cabinet ต้นแบบแล้ว)</h3>
+<div class="ok">
+<b>ผมเขียนโค้ด + ทดสอบในสำเนา index.html (sandbox) แล้ว — ผ่าน 18/18 · ใบออกตรง target เป๊ะ · ราคาเท่าเดิม 79,180 = 79,180 (text-only ไม่แตะ calc)</b><br>
+dev <b>ก็อปวางได้เลย</b> 3 จุด (เทคนิค "ตัวคั่น" <code>###รายละเอียด###</code> · render รองรับทุกกลุ่ม · กลุ่มยังไม่ทำ = ใช้ของเดิม ไม่พัง):
+</div>
+<ol>
+  <li><b>cabinet branch</b> (<code>itemDetail</code> · แทนบล็อก <code>else if(it.p.cabinet){...}</code>) → โค้ดเต็มในไฟล์ <code>scripts/_frag-cabinet.txt</code> (vetted) — set <code>prodName</code> (หัว ชื่อ+ขนาด+ลึก) + <code>det</code> = รายการ + <code>'\n###รายละเอียด###\n'</code> + สเปค</li>
+  <li><b>qrow render</b> (แทนบล็อก <code>if (glass &amp;&amp; glass !== '-') {...}</code> ก่อน <code>if(optText)</code>) → โค้ดเต็มในไฟล์ <code>scripts/_frag-qrow.txt</code> — ถ้า det มีตัวคั่น → render 2 บล็อก (รายการไม่มีหัวข้อ + "รายละเอียด") แยกบรรทัดด้วย <code>\n</code> เท่านั้น (คง <code>·</code> ในบรรทัด) · ไม่มีตัวคั่น = ของเดิม</li>
+  <li><b>_sz</b> (genQuote · L4956) → เพิ่ม 1 บรรทัด: <code>else if(it.p.cabinet) _sz='';</code> (ขนาด+ลึก อยู่ในหัวแล้ว กันซ้ำ)</li>
+</ol>
+<div class="box">
+<b>verify เอง:</b> <code>node scripts/_verify-g4quote.mjs</code> → splice โค้ดลงสำเนา + jsdom ออกใบ + เทียบ target + เทียบราคากับไฟล์เดิม (ต้องผ่าน 18/18) · <b>dev: หลังวางจริง รัน golden-snapshot + g4-wall-sides + quote-fidelity ให้ครบ</b>
+</div>
+
+<h3>5D. 🟢 อัปเป็น 5 บล็อก — VERIFIED 11/11 (มติพี่นัท 16 มิ.ย. · รอบสอง)</h3>
+<div class="ok">
+<b>สเปกอัป: 3 บล็อก → 5 บล็อก</b> เพิ่ม <b>OPTION + หมายเหตุ คั่นกลางระหว่างรายการ↔รายละเอียด</b><br>
+ลำดับใหม่: <b>หัว → รายการ → OPTION → หมายเหตุ → รายละเอียด</b> · OPTION/หมายเหตุ ว่าง = ซ่อน · ออปชั่นทั้งใบไว้ท้ายใบเหมือนเดิม<br>
+ทดสอบ sandbox แล้ว <b>ผ่าน 11/11 · ราคาไม่เพี้ยน 79,180 · ลำดับถูก · ว่าง=ซ่อน</b>
+</div>
+<ul>
+  <li>แก้ <b>เฉพาะ qrow</b> 1 จุด (block <code>// R4.2: หมายเหตุ/OPTION...</code> ถึงบรรทัด <code>if(optText){...}</code>) → แทนด้วยโค้ดในไฟล์ <code>scripts/_frag-qrow-5block.txt</code> (vetted) · <b>itemDetail/cabinet ไม่ต้องแก้ซ้ำ</b> (marker เดิมใช้ได้)</li>
+  <li>กลไก: ถ้า det มี marker + ไม่ใช่โหมดแก้ → ใช้ layout 5 บล็อก · render รายการ → OPTION (จาก <code>optText</code> + บรรทัด note ที่ขึ้นต้น "OPTION") → หมายเหตุ (note บรรทัดอื่น) → รายละเอียด · ปิด note/optText เดิม (กันซ้ำ) เฉพาะเคส marker</li>
+  <li>กลุ่มไม่มี marker = ของเดิม (fallback "รายละเอียดงาน") ไม่พัง · โหมดแก้ (qEdit) คงเดิม</li>
+  <li>verify: <code>node scripts/_verify-g4quote-5block.mjs</code> → ต้อง 11/11</li>
+</ul>
+<div class="box"><b>กลุ่มอื่น (รอบ 2-3):</b> แค่เขียน <code>itemDetail</code> ของกลุ่มตัวเอง (จัด <code>_work</code>/<code>_spec</code> + marker เลียน G4) · qrow 5 บล็อกข้างบนรองรับให้แล้ว ไม่ต้องแตะอีก · OPTION/หมายเหตุ มาจาก optText/i-note อัตโนมัติ</div>
+
+<!-- ============ 6. มติพี่นัท (เคาะแล้ว) ============ -->
+<h2>6. มติพี่นัท — เคาะครบแล้ว 16 มิ.ย. (dev ทำตามนี้)</h2>
+<table>
+<tr><th>ข้อ</th><th>มติ</th><th>dev ทำ</th></tr>
+<tr><td><b>#1 สีชั้นวาง</b></td><td><b>ใช้สีเดียวกับโครง</b> (ส่วนมากสีเดียวกัน · ถ้าต่างเซลล์แก้มือเอา)</td><td><b>ไม่เพิ่มช่องสีแยก</b> · บรรทัด "ชั้นอลูมิเนียม: [สีโครง]" ดึงค่าสีโครงมาแสดง · เซลล์แก้มือได้ (contenteditable)</td></tr>
+<tr><td><b>#2 รหัสสีพิเศษไม่กรอก</b></td><td><b>ขึ้นเตือน ⚠</b></td><td>สีพิเศษ (hasCode) + <code>.i-colorcode</code> ว่าง → ใบขึ้น "<b style="color:#B3151D;">⚠ ต้องระบุรหัสสี</b>" ตรงบรรทัดสี (สีแดง เห็นชัด)</td></tr>
+<tr><td><b>#3 กระจกผนังตู้</b></td><td><b>default เหมือนงานบานกระจก</b> = กระจกใส หรือ ใสเขียว <b>หนา 5–6 มม.</b></td><td>ตู้ผนังกระจก (ไม่มีช่องเลือกชนิด) → ใบ default "กระจกใส/ใสเขียว หนา 5–6 มม." · เซลล์แก้มือถ้าลูกค้าสั่งกระจกอื่น</td></tr>
+<tr><td><b>#4 คำหัวข้อ</b></td><td><b>ใช่</b> — มีแค่หัวข้อ "รายละเอียด" ก้อนเดียว</td><td>รายการ (รูปแบบงาน) ขึ้น bullet ใต้ชื่อเลย <b>ไม่มีหัวข้อ</b> · บล็อกล่างมีหัวข้อ "รายละเอียด"</td></tr>
+</table>
+
+<!-- ============ 7. ตาข่ายกันพัง ============ -->
+<h2>7. ตาข่ายกันพัง (บังคับ)</h2>
+<ul>
+  <li><code>node scripts/golden-snapshot.mjs</code> ก่อน-หลัง — <b>ราคาทุกกลุ่มต้องไม่เพี้ยน</b> (งานนี้แตะ "ข้อความบนใบ" ไม่แตะ calc · ราคาต้องเท่าเดิมเป๊ะ)</li>
+  <li>เทสใบเสนอราคา: <code>node test/quote-fidelity.mjs</code> + <code>check-g{N}</code> ของแต่ละกลุ่ม (ส่วนใบ #quoteContent)</li>
+  <li>verify browser จริง: ออกใบ 1 ตัวอย่าง/กลุ่ม → ดู "รายการบน · รายละเอียดล่าง" ขึ้นถูก · contenteditable แก้ได้</li>
+  <li>backward compat: <code>_detOv</code> (ใบที่เซลล์เคยแก้เอง) ยังเปิดได้ไม่ crash</li>
+  <li>ทำทีละกลุ่ม/ทีละเฟส: เฟส A โครง itemDetail+render (cabinet ก่อนเป็นต้นแบบ) → เทส → ค่อยไล่ G อื่น</li>
+</ul>
+
+<!-- ============ 8. DoD ============ -->
+<h2>8. Definition of Done</h2>
+<ul>
+  <li>ทุกใบ: รายการ (รูปแบบงาน) อยู่บน ไม่มีหัวข้อ · "รายละเอียด" (สเปค) อยู่ล่าง มีหัวข้อ</li>
+  <li>สีพิเศษมีรหัสสีบนใบ · กระจกระบุชนิด+หนา+สี · วัสดุระบุสี</li>
+  <li>golden-snapshot ทุกกลุ่มราคาไม่เพี้ยน · quote-fidelity + check-g{N} PASS</li>
+  <li>เซลล์แก้ข้อความได้ทั้ง 2 บล็อก (contenteditable)</li>
+</ul>
+
+<div class="warn">
+<b>เตือน dev:</b> งานนี้ = <b>ข้อความบนใบล้วน ห้ามแตะ calcUnit/ราคา</b> · golden-snapshot ต้อง 0 เพี้ยน · ทำ cabinet เป็นต้นแบบก่อน แล้วค่อยไล่กลุ่มอื่นตาม mapping ข้อ 4
+</div>
+
+</body>
+</html>

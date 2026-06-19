@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ใบสั่งแก้ → แชท B · คิดเร็ว+ใบเสนอราคา 5 จุด (18 มิ.ย.)</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:#F7F8FA;color:#1F2937;max-width:920px;margin:0 auto;padding:18px;line-height:1.6;font-size:15px;}
+  h1{color:#B3151D;font-size:22px;margin:0 0 4px;}
+  h2{color:#B3151D;font-size:16px;margin:22px 0 8px;border-bottom:2px solid #F0C0C0;padding-bottom:4px;}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:14px;}
+  code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace;}
+  pre{background:#2C2C2A;color:#E1F5EE;padding:11px 13px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.55;}
+  .pre-add{color:#7CFC9A;} .pre-del{color:#FCA5A5;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .card.hot{border:2px solid #B3151D;}
+  .pri{display:inline-block;font-size:12px;background:#B3151D;color:#fff;padding:2px 9px;border-radius:6px;margin-right:6px;}
+  .gold{background:#1F2937;color:#E5E7EB;border-radius:10px;padding:12px 15px;font-size:13px;margin-top:12px;}
+  .gold b{color:#FCD34D;}
+  .ok{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:8px 12px;font-size:13px;margin-top:8px;} .ok b{color:#065F46;}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px;background:#fff;}
+  th{background:#B3151D;color:#fff;padding:6px 8px;text-align:left;} td{border:1px solid #E5E7EB;padding:5px 8px;}
+  ul{margin:5px 0;padding-left:20px;} li{margin:3px 0;}
+  .test{font-size:12.5px;color:#3730A3;background:#EEF2FF;border-left:3px solid #6366F1;padding:6px 10px;margin-top:8px;border-radius:0 6px 6px 0;}
+</style></head><body>
+
+<h1>ใบสั่งแก้ → แชท B · โหมดคิดเร็ว + ใบเสนอราคา</h1>
+<div class="sub">18 มิ.ย. 2026 · จากแชท A · จากโน้ต OneNote พี่นัท · <b>ตรวจในเบราว์เซอร์จริงแล้ว (localhost) + พี่นัทเคาะมติครบ</b> · 5 จุด · B แก้ index.html ทีละจุด+snapshot</div>
+
+<!-- ===================== FIX 1 ===================== -->
+<h2>FIX 1 — กดชิปในคิดเร็วแล้ว "ราคาหาย" (บั๊กใหญ่ · กระทบ G2–G7)</h2>
+<div class="card hot">
+<span class="pri">ด่วนสุด</span><b>อาการพี่นัท:</b> กดปุ่มในคิดเร็ว (มุ้ง/หลังคา/ฝ้า G6 · ประตูรั้ว/ระแนง/ราว G2 ฯลฯ) แล้ว "ไม่มีข้อมูลให้เลือกต่อ / กดปุ่มอื่นไม่ได้" → จริงๆ คือ <b>การ์ดราคาขวากลายเป็นว่างเปล่า</b>
+<p><b>Root cause (ยืนยันจาก eval):</b> ปุ่มชิป G2–G7 เรียก <code>qiRenderGx(d)</code> วาดฟอร์มใหม่ (สร้าง <code>.qi-pc-body</code> เปล่า) แต่ <b>ไม่เรียก <code>calcQuickAll()</code> ต่อ</b> ราคาเลยไม่ถูกเติม · ต่างจาก <code>qiDispatch</code> (L2197) ที่เรียก calcQuickAll ปิดท้ายถูกแล้ว · และต่างจาก G1 ที่ recalc ผ่าน change-event</p>
+<b>แก้ (จุดเดียวต่อกลุ่ม · เติม 1 บรรทัด):</b> เติม <code>calcQuickAll();</code> ต่อท้ายบรรทัด <code>d.querySelector('.qi-body').innerHTML = h;</code> ใน 6 ฟังก์ชัน:
+<table>
+<tr><th>ฟังก์ชัน</th><th>บรรทัด innerHTML</th><th>ทำ</th></tr>
+<tr><td>qiRenderG3</td><td>L2230</td><td rowspan="6">เติม <code>calcQuickAll();</code> บรรทัดถัดไป</td></tr>
+<tr><td>qiRenderG4</td><td>L2294</td></tr>
+<tr><td>qiRenderG7</td><td>L2363</td></tr>
+<tr><td>qiRenderG5</td><td>L2433</td></tr>
+<tr><td>qiRenderG6</td><td>L2511</td></tr>
+<tr><td>qiRenderG2</td><td>L2686</td></tr>
+</table>
+<pre>  d.querySelector('.qi-body').innerHTML = h;
+<span class="pre-add">  calcQuickAll();   // ← เติมบรรทัดนี้ (กันราคาหายหลังกดชิป)</span>
+}</pre>
+<div class="ok"><b>G1 (qiRenderG1 L2772) ห้ามแตะ</b> — มันคิดราคาผ่าน <code>ps.dispatchEvent(change)</code>+<code>qiRebuild</code> อยู่แล้ว (ไม่มีอาการนี้)</div>
+<div class="test">🧪 เทส: ทุกกลุ่ม G2–G7 ในคิดเร็ว กดชิปทุกปุ่ม (เปลี่ยนหมวด/รุ่น/ออปชั่น) → การ์ดราคาขวาต้องมีตัวเลขเสมอ ห้ามว่าง</div>
+</div>
+
+<!-- ===================== FIX 2 ===================== -->
+<h2>FIX 2 — หลังคา G3: แยกปุ่ม "ไวนิล/ดีไลท์" ออกมาเอง <span style="font-size:13px;color:#16A34A;">(มติพี่นัท = ทาง A)</span></h2>
+<div class="card">
+<b>เดิม:</b> ไวนิล/ดีไลท์ ซ่อนในปุ่ม "หลังคาอื่น" ต้องกดเข้าไปก่อนถึงเห็น
+<p><code>QIG3_CATS</code> <b>L2207</b> เดิม:</p>
+<pre><span class="pre-del">  {c:'หลังคาอื่น',items:['roof_vinyl','roof_delight','roof_polyton','roof_laminate']},</span></pre>
+<b>แก้เป็น 2 บรรทัด:</b>
+<pre><span class="pre-add">  {c:'ไวนิล/ดีไลท์',items:['roof_vinyl','roof_delight']},
+  {c:'โพลีตัน/กระจก',items:['roof_polyton','roof_laminate']},</span></pre>
+<ul>
+<li>ผล: ประเภทงาน = เมทัลชีท · ชินโคไลท์ · <b>ไวนิล/ดีไลท์</b> · <b>โพลีตัน/กระจก</b> · ฝ้า/เพดาน · ผนังเบา (6 ปุ่ม wrap 2 แถวใน grid — โอเค)</li>
+<li>ชื่อปุ่มรุ่นใช้ได้เลย: <code>.replace('หลังคา ','')</code> (L2223) ทำให้ roof_vinyl→"ไวนิล", roof_delight→"ดีไลท์"</li>
+<li><code>qiG3CatOf</code> วนหา items ไม่อิง index → เพิ่มหมวดไม่พัง</li>
+</ul>
+<div class="test">🧪 เทส: คิดเร็ว G3 → เห็นปุ่ม "ไวนิล/ดีไลท์" ตรงประเภทงานเลย · กดไวนิล 4×3 = ฿28,000 (min) · golden imp7/ชินโค คงเดิม</div>
+</div>
+
+<!-- ===================== FIX 3 ===================== -->
+<h2>FIX 3 — ใบเสนอราคา: ตัดคำ "(ยกเลิกขาย)" ออกจากใบลูกค้า <span style="font-size:13px;color:#16A34A;">(มติพี่นัท = ตัดคำเฉยๆ)</span></h2>
+<div class="card">
+<b>อาการ:</b> ใบพิมพ์ "...รุ่นกันน้ำ <b>(ยกเลิกขาย)</b>" — สถานะภายในไม่ควรขึ้นใบ · <b>ยังเลือก/คิดราคาได้ปกติ</b> แค่ไม่โชว์คำ
+<p>จุด: <b>L5427-5428</b> สร้าง <code>discontinuedSuffix</code> · ใช้ที่ <b>L5446</b> (ชื่อหลัก) + <b>L5486</b> (_slideName)</p>
+<b>แก้:</b> ทำให้ <code>discontinuedSuffix</code> ว่างเสมอ (ไม่ต่อท้าย) — เช่น
+<pre><span class="pre-del">  const discontinuedSuffix = isDiscontinued ? ' (ยกเลิกขาย)' : '';</span>
+<span class="pre-add">  const discontinuedSuffix = '';  // พี่นัท: ไม่โชว์สถานะภายในในใบลูกค้า (18 มิ.ย.)</span></pre>
+<ul>
+<li>มีผล 4 รุ่น: E-series · บานกระทุ้ง aluinch · D-series · บานหมุน aluinch</li>
+<li>⚠️ L5401 มี <code>.replace(/\s+\(ยกเลิกขาย\)/g,'')</code> ตัดจากชื่ออยู่บางจุดแล้ว — B เช็คว่าหลังแก้ ทุก path (ชื่อหลัก + _slideName) ไม่มีคำนี้หลุด</li>
+</ul>
+<div class="test">🧪 เทส: ออกใบสินค้า 4 รุ่นนี้ → ชื่อในใบไม่มี "(ยกเลิกขาย)" · ราคายังออกเท่าเดิม</div>
+</div>
+
+<!-- ===================== FIX 4 ===================== -->
+<h2>FIX 4 — ย้ายแถบ 8 ปุ่มใบเสนอราคา ขึ้นบน</h2>
+<div class="card">
+<b>อาการ:</b> แถบ <code>.qbtns</code> (ปิด·พิมพ์/PDF·Export·แยกราคา·แก้ข้อความ·ใบเปล่า·ฉบับร่าง·AI ตรวจ) อยู่ <b>ใต้ใบทั้งใบ</b> (L499-509) ใบยาวต้องเลื่อนสุดถึงเจอ
+<p>โครงปัจจุบัน <code>#quoteBox</code> (L496-510): banner → <code>#quoteContent</code> (L498) → <code>.qbtns</code> (L499-509)</p>
+<b>แก้:</b> ย้าย block <code>&lt;div class="qbtns"&gt;…&lt;/div&gt;</code> ขึ้น <b>ก่อน</b> <code>&lt;div class="quote" id="quoteContent"&gt;</code> · หรือทำ <code>.qbtns{position:sticky;top:0;background:#fff;z-index:5;}</code> ให้ติดบนเลื่อนตามจอ (เลือกอย่างใดอย่างหนึ่ง — sticky ดีกว่าเพราะเห็นตลอด)
+<div class="test">🧪 เทส: เปิดใบหลายรายการ (ยาว) → ปุ่ม 8 ตัวเห็นทันที ไม่ต้องเลื่อนลงสุด · พิมพ์ PDF ปุ่มต้องไม่ติดมาในใบ (เช็ค class no-print ถ้าจำเป็น)</div>
+</div>
+
+<!-- ===================== FIX 5 ===================== -->
+<h2>FIX 5 — กระจก เทมเปอร์/ลามิเนต ชิปยาว → dropdown <span style="font-size:13px;color:#92400e;">(UX · ทำทีหลังได้)</span></h2>
+<div class="card">
+<b>อาการ:</b> ในตัวเลือกกระจก (รายการนี้) พอกดหมวด "เทมเปอร์" หรือ "ลามิเนต" รุ่นย่อย 10-15 ตัว ชิปลากยาวลงมาเยอะ
+<p><b>มติพี่นัท:</b> เฉพาะหมวดยาว (เทมเปอร์ · ลามิเนต) เปลี่ยนรุ่นย่อยเป็น <b>dropdown</b> · หมวดสั้น (ทั่วไป/อินซูเลท/พิเศษ) คงเป็นชิป</p>
+<ul><li>B หาจุดสร้างชิปกระจก cascade (chipify glass / <code>glassDrillRender</code>) · ความสำคัญต่ำสุด ทำหลัง FIX 1-4</li></ul>
+</div>
+
+<div class="gold">
+<b>กฎเหล็ก (แนบทุกการแก้):</b><br>
+• ห้ามแตะ <code>calcUnit / PRODUCTS / RATES / GLASS / COLORS</code> — FIX ทั้งหมดเป็น UI/render/ข้อความ ไม่แตะ engine<br>
+• รัน <code>node scripts/golden-snapshot.mjs</code> <b>ก่อน-หลัง</b> ทุกจุด → ต้อง "ปลอดภัย" 149 ตัว<br>
+• แก้ index.html ทีละจุด + snapshot ทุกจุด (working tree แชร์หลายแชท — ห้ามแก้ชนกัน)<br>
+• <b>หลังขึ้นเว็บ แคปรูปทุก FIX</b> ส่งกลับ (โดยเฉพาะ FIX 1: กดชิปทุกกลุ่มแล้วราคาขึ้น)
+</div>
+
+<div class="ok" style="margin-top:12px;"><b>ลำดับแนะนำ:</b> FIX 1 (บั๊กราคา · ด่วน) → FIX 3 (ตัดคำ) → FIX 4 (ย้ายปุ่ม) → FIX 2 (แยกไวนิล/ดีไลท์) → FIX 5 (กระจก dropdown · ทีหลัง) · ดราฟอ้างอิง: <code>docs/DRAFT-คิดเร็วใบเสนอ-แก้6จุด-2026-06-18.html</code></div>
+
+</body></html>

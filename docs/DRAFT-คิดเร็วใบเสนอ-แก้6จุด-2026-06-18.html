@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>คิดเร็ว + ใบเสนอราคา — สรุปแก้ 6 จุด (จาก OneNote 18 มิ.ย.)</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:#F7F8FA;color:#1F2937;max-width:920px;margin:0 auto;padding:18px;line-height:1.6;font-size:15px;}
+  h1{color:#B3151D;font-size:22px;margin:0 0 4px;}
+  h2{color:#B3151D;font-size:16px;margin:22px 0 8px;border-bottom:2px solid #F0C0C0;padding-bottom:4px;}
+  .sub{color:#6B7280;font-size:13px;margin-bottom:14px;}
+  code{background:#F1EFE8;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .card.big{border:2px solid #B3151D;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;vertical-align:middle;margin-left:6px;}
+  .t-bug{background:#FEE2E2;color:#B91C1C;} .t-ui{background:#FEF3C7;color:#92400e;} .t-data{background:#E0E7FF;color:#3730A3;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+  .ba>div{border-radius:8px;padding:9px 11px;font-size:13px;}
+  .before{background:#FEF2F2;border:1px solid #FCA5A5;} .after{background:#ECFDF5;border:1px solid #86EFAC;}
+  .before b{color:#B91C1C;} .after b{color:#065F46;}
+  .loc{font-size:12px;color:#6B7280;margin-top:6px;}
+  .q{background:#FEF9C3;border:1px solid #FDE047;border-radius:10px;padding:11px 14px;margin:10px 0;}
+  .q b{color:#92400e;}
+  .gold{background:#1F2937;color:#E5E7EB;border-radius:10px;padding:12px 15px;font-size:13px;}
+  .gold b{color:#FCD34D;}
+  ul{margin:5px 0;padding-left:20px;} li{margin:3px 0;}
+  .pill{font-size:12px;background:#B3151D;color:#fff;padding:2px 8px;border-radius:6px;}
+</style></head><body>
+
+<h1>โหมดคิดเร็ว + ใบเสนอราคา — สรุปแก้ 6 จุด</h1>
+<div class="sub">18 มิ.ย. 2026 · จากโน้ต OneNote พี่นัท · <b>ตรวจในเบราว์เซอร์จริงแล้ว</b> (localhost:5601) · READ-ONLY ยังไม่แก้ index.html · รอพี่เคาะ → รวบส่งแชท B</div>
+
+<div class="gold">
+<b>ข่าวดี:</b> จุด #1 (กดแล้วไม่มีข้อมูล) กับ #3 (กดปุ่มไม่ได้) = <b>บั๊กตัวเดียวกัน</b> แก้ครั้งเดียวหายทั้งคู่ทุกกลุ่ม · เหลือจุดแก้จริง 5 เรื่อง ทำไม่ยาก
+</div>
+
+<h2>🔴 จุดที่ 1+3 — กดชิปแล้วราคาหาย (บั๊กใหญ่ · 1 จุดแก้) <span class="tag t-bug">BUG</span></h2>
+<div class="card big">
+<b>อาการที่พี่เจอ:</b> กดปุ่มในคิดเร็ว (มุ้ง/หลังคา/ฝ้า ใน G6 · ประตูรั้ว/ระแนง/ราวกันตก ใน G2 ฯลฯ) แล้ว "ไม่มีข้อมูลให้เลือกต่อ / กดปุ่มอื่นไม่ได้"
+<div class="ba">
+<div class="before"><b>สาเหตุจริง (ตรวจแล้ว):</b><br>กดชิป → ฟอร์มวาดใหม่ (<code>qiRenderGx</code>) → การ์ดราคากลายเป็น <b>ว่างเปล่า</b> เพราะลืมสั่งคิดราคาซ้ำ → ดูเหมือนปุ่มเสีย/ตัน<br><span style="font-size:11.5px;">(หลักฐาน: หลังกดปุ่ม การ์ดราคา = "" ว่างจริง)</span></div>
+<div class="after"><b>วิธีแก้:</b><br>ให้ปุ่มชิป "วาดฟอร์มเสร็จ → คิดราคาต่อทันที" เหมือนตอนเปลี่ยนกลุ่มที่ทำถูกอยู่แล้ว (<code>qiDispatch</code> เรียก <code>calcQuickAll()</code> ปิดท้าย)<br><b>1 จุดแก้/กลุ่ม:</b> เติม <code>calcQuickAll();</code> ท้ายฟังก์ชัน <code>qiRenderG1…G7</code></div>
+</div>
+<div class="loc">📍 ฟังก์ชัน qiRenderG2 (L2686) · qiRenderG3 (L2230) · qiRenderG6 (L2511) · G4/G5/G7 เหมือนกัน — ทุกตัวจบด้วย <code>d.querySelector('.qi-body').innerHTML=h;</code> โดยไม่คิดราคาต่อ · ครอบทุกกลุ่มจบในจุดเดียว</div>
+</div>
+
+<h2>🟦 จุดที่ 4 — หลังคา "ไวนิล/ดีไลท์" หาไม่เจอ (G3) <span class="tag t-data">ข้อมูล</span></h2>
+<div class="card">
+<b>ความจริง:</b> ไม่ได้หาย — ซ่อนอยู่ในปุ่มหมวด <span class="pill">หลังคาอื่น</span> (รวมกับ โพลีตัน/กระจกลามิเนต) ต้องกดเข้าไปก่อนถึงเห็น
+<div class="ba">
+<div class="before"><b>ตอนนี้ (L2207):</b><br>ประเภทงาน: เมทัลชีท · ชินโคไลท์ · <b>หลังคาอื่น</b> · ฝ้า/เพดาน · ผนังเบา<br><span style="font-size:11.5px;">ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต อยู่ใน"หลังคาอื่น"</span></div>
+<div class="after"><b>เสนอ 2 ทาง (พี่เลือก):</b><br><b>ทาง A</b> — แยกปุ่ม "ไวนิล/ดีไลท์" ออกมาเป็นประเภทงานเอง (เหมือนโหมดใบจริง L3349 ที่มีกลุ่มนี้แยกอยู่แล้ว)<br><b>ทาง B</b> — แค่เปลี่ยนชื่อปุ่มเป็น "ไวนิล/ดีไลท์/อื่นๆ" (แก้คำเดียว ไวสุด)</div>
+</div>
+</div>
+
+<h2>🟦 จุดที่ 5 — ใบลูกค้าโชว์คำว่า "(ยกเลิกขาย)" <span class="tag t-data">ข้อมูล</span></h2>
+<div class="card">
+<b>อาการ:</b> ใบเสนอราคาพิมพ์ชื่อสินค้าต่อท้ายว่า "(ยกเลิกขาย)" เช่น "ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) <b>(ยกเลิกขาย)</b>" — คำภายในไม่ควรโชว์ลูกค้า
+<div class="ba">
+<div class="before"><b>ตอนนี้ (L5427-5446, L5486):</b><br>โค้ดตั้งใจเติม <code>discontinuedSuffix = " (ยกเลิกขาย)"</code> ต่อท้ายชื่อในใบ</div>
+<div class="after"><b>แก้:</b> ตัด <code>discontinuedSuffix</code> ออกจากใบลูกค้า — เป็นสถานะภายใน (ตรงหลัก "โน้ตภายในห้ามขึ้นใบ")<br><span style="font-size:11.5px;">มีผล 4 รุ่น: E-series · บานกระทุ้ง aluinch · D-series · บานหมุน aluinch</span></div>
+</div>
+<div class="q" style="margin-top:8px;"><b>เช็คซ้ำ:</b> ต้องการให้ "ตัดคำออกเฉยๆ" หรือ "ห้ามเลือกสินค้ายกเลิกขายในคิดเร็วเลย" ครับ? (ตอนนี้เสนอแค่ตัดคำในใบ)</div>
+</div>
+
+<h2>🟨 จุดที่ 6 — 8 ปุ่มอยู่ล่างสุด เลื่อนยาก <span class="tag t-ui">UI</span></h2>
+<div class="card">
+<div class="ba">
+<div class="before"><b>ตอนนี้ (L499-509):</b><br>แถบปุ่ม <code>.qbtns</code> (ปิด · พิมพ์/PDF · Export · แยกราคา · แก้ข้อความ · ใบเปล่า · ฉบับร่าง · AI ตรวจ) วางไว้ <b>ใต้</b>ใบทั้งใบ → ใบยาวต้องเลื่อนสุดถึงเจอ</div>
+<div class="after"><b>แก้:</b> ย้าย <code>.qbtns</code> ขึ้น <b>บนสุด</b> (ก่อน <code>#quoteContent</code>) หรือทำติดบน (sticky) เลื่อนตามจอ</div>
+</div>
+</div>
+
+<h2>🟨 จุดที่ 2 — ชิปกระจก เทมเปอร์/ลามิเนต ยาวมาก <span class="tag t-ui">UI</span></h2>
+<div class="card">
+<b>อาการ:</b> ในตัวเลือกกระจก (รายการนี้) พอกด "เทมเปอร์" หรือ "ลามิเนต" รุ่นย่อยมี 10-15 ตัว ชิปลากยาวลงมาเยอะ
+<div class="ba">
+<div class="before"><b>ตอนนี้:</b> ทุกหมวดเป็นชิป wrap หลายแถว (เทมเปอร์/ลามิเนตยาวสุด)</div>
+<div class="after"><b>พี่อนุญาตแล้ว:</b> เฉพาะหมวดที่ยาว (เทมเปอร์ · ลามิเนต) เปลี่ยนรุ่นย่อยเป็น <b>dropdown</b> · หมวดสั้น (ทั่วไป/อินซูเลท/พิเศษ) คงเป็นชิป</div>
+</div>
+<div class="loc">📍 จุดสร้างชิปกระจก cascade (chipify glass) — ให้ B หาตำแหน่ง · ความสำคัญต่ำสุด (ทำทีหลังได้)</div>
+</div>
+
+<h2 class="">สรุปคิวส่งแชท B</h2>
+<div class="card">
+<ul>
+<li><span class="pill">ด่วน 1</span> <b>#1+#3</b> เติม <code>calcQuickAll();</code> ท้าย qiRenderG1…G7 — บั๊กราคาหาย (กระทบทุกกลุ่ม)</li>
+<li><span class="pill">2</span> <b>#5</b> ตัด "(ยกเลิกขาย)" ออกจากใบ</li>
+<li><span class="pill">3</span> <b>#6</b> ย้าย 8 ปุ่มขึ้นบน</li>
+<li><span class="pill">4</span> <b>#4</b> ไวนิล/ดีไลท์ — ตามที่พี่เลือก (A แยกปุ่ม / B เปลี่ยนชื่อ)</li>
+<li><span class="pill">5</span> <b>#2</b> กระจกยาว→dropdown (UX · ทำทีหลังได้)</li>
+</ul>
+</div>
+
+<div class="gold" style="margin-top:14px;">
+<b>กฎเหล็กแนบไปกับ B:</b> ห้ามแตะ calcUnit/PRODUCTS/RATES/GLASS/COLORS · รัน <code>node scripts/golden-snapshot.mjs</code> ก่อน-หลัง (149 ต้อง "ปลอดภัย") · เทสกดจริงทุกกลุ่มในคิดเร็วว่าราคาขึ้นหลังกดปุ่ม
+</div>
+
+</body></html>

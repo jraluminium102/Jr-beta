@@ -23,6 +23,41 @@ import {
 const isMapUrl = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
 const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"));
 
+// ---- copy ฟอร์มคิวรายวัน/รายเซลล์ (ไว้ส่งต่อทาง Line) ------------------------
+const copyVerb = (jobType: string | null) => {
+  const v = (jobType ?? "").trim();
+  // ประเมินหน้างาน → "เข้าประเมิน" · ประเภทอื่น/กรอกเอง → "เข้า<ประเภทที่กรอก>" (ไม่ force เสนองาน)
+  return v === "" || v === "ประเมินหน้างาน" || v === "ประเมิน" ? "เข้าประเมิน" : `เข้า${v}`;
+};
+const copyTime = (t: string | null) => {
+  const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/);
+  return m ? `${m[1]}.${m[2]}` : "-";
+};
+const copyDateBE = (iso: string) => {
+  const [y, mo, da] = iso.split("-").map(Number);
+  return `${da}/${mo}/${y + 543}`;
+};
+// ฟอร์มตามที่เจ้าของกำหนด — ไม่มีข้อมูลส่วนไหนใส่ "-"
+function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[]): string {
+  const head = `คิวประเมิน ${dayLabel(date)} ${copyDateBE(date)} (${salesName})`;
+  const blocks = entries.map((e) => {
+    const fee = e.assess_fee != null ? `ค่าประเมิน ${e.assess_fee.toLocaleString("th-TH")} บาท` : "-";
+    return [
+      `${copyTime(e.queue_time)} น. ${copyVerb(e.job_type)}${e.customer_name}`,
+      "",
+      `( ${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact?.trim() || "-"} )`,
+      "",
+      `${e.customer_name} ${e.tel?.trim() || "-"}`,
+      e.address?.trim() || "-",
+      "",
+      e.location_url?.trim() || "-",
+      "",
+      fee,
+    ].join("\n");
+  });
+  return head + "\n\n" + blocks.join("\n\n\n");
+}
+
 // แปลงเวลาเป็นนาที — รองรับทั้ง "09:30", "9:30", "14.00", "9.30" (ข้อมูล import เก่าใช้ "." + ชม.หลักเดียว)
 // คืน 99999 ถ้าไม่มี/พาร์สไม่ได้ → คิวไม่ระบุเวลาตกท้ายเซลล์
 function timeToMin(t: string | null): number {
@@ -153,6 +188,11 @@ export default function QueuePage() {
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copySalesDay = async (key: string, text: string) => {
+    try { await navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 1500); }
+    catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
+  };
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -291,8 +331,13 @@ export default function QueuePage() {
       acc.push({ item: { kind: "leave", sales: s, av: a }, sRank: rankOf(s.id), tMin });
     });
 
-    // เรียงเวลาก่อน → เซลล์เป็น tiebreak (ลาทั้งวัน tMin=-1 ขึ้นบนสุด)
-    acc.sort((a, b) => a.tMin - b.tMin || a.sRank - b.sRank);
+    // เรียงเซลล์ก่อน → เวลา (ลาทั้งวัน tMin=-1 ขึ้นบนสุดเสมอ)
+    // sortKey: ลาทั้งวัน = -9999 · อื่น = sRank*100000 + tMin
+    acc.sort((a, b) => {
+      const ka = a.tMin === -1 ? -9999 : a.sRank * 100000 + a.tMin;
+      const kb = b.tMin === -1 ? -9999 : b.sRank * 100000 + b.tMin;
+      return ka - kb;
+    });
     return acc.map((x) => x.item);
   }, [byDay, sales, avail, salesRank]);
 
@@ -362,6 +407,20 @@ export default function QueuePage() {
 
   const mainSales = sales.filter((s) => s.role !== "ASSISTANT");
 
+  // เดือนที่ผู้ใช้กำลังดูอยู่ — ใช้เป็น from_date hint ให้ AI suggest
+  // list view → filterMonth · calendar view → เดือนของ Monday ของ filterWeek
+  const contextMonth = useMemo((): string => {
+    if (viewMode === "list") return filterMonth;
+    // parse ISO week → วันจันทร์ → ดึงเดือน
+    const m = filterWeek.match(/^(\d{4})-W(\d{2})$/);
+    if (!m) return filterMonth;
+    const [, yr, wk] = m;
+    const jan4 = new Date(Date.UTC(Number(yr), 0, 4));
+    const jan4Dow = jan4.getUTCDay() || 7;
+    const monday = new Date(jan4.getTime() - (jan4Dow - 1) * 86400000 + (Number(wk) - 1) * 7 * 86400000);
+    return `${monday.getUTCFullYear()}-${String(monday.getUTCMonth() + 1).padStart(2, "0")}`;
+  }, [viewMode, filterMonth, filterWeek]);
+
   // ---- toggle receipt ----
   async function toggleReceipt(e: QueueEntry, checked: boolean) {
     setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, receipt_done: checked } : r)));
@@ -370,6 +429,17 @@ export default function QueuePage() {
     } catch (err) {
       setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, receipt_done: !checked } : r)));
       alert(err instanceof Error ? err.message : "อัปเดตใบเสร็จไม่สำเร็จ");
+    }
+  }
+
+  // ---- toggle fee_paid (ชำระค่าประเมิน) ----
+  async function toggleFeePaid(e: QueueEntry, checked: boolean) {
+    setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, fee_paid: checked } : r)));
+    try {
+      await api.patch(`/queue/${e.id}`, { fee_paid: checked });
+    } catch (err) {
+      setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, fee_paid: !checked } : r)));
+      alert(err instanceof Error ? err.message : "อัปเดตค่าประเมินไม่สำเร็จ");
     }
   }
 
@@ -417,8 +487,9 @@ export default function QueuePage() {
   // ---- render ----
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      {/* Header — sticky top เพื่อให้ปุ่มและ title ลอยอยู่ด้านบนเมื่อ scroll */}
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm -mx-4 px-4 py-3 border-b border-gray-200/60">
+        <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
             <Icon name="calendar" size={18} />
@@ -465,6 +536,7 @@ export default function QueuePage() {
               </button>
             </>
           )}
+        </div>
         </div>
       </div>
 
@@ -637,11 +709,11 @@ export default function QueuePage() {
                 </div>
                 {/* mobile cards */}
                 <div className="xl:hidden space-y-2">
-                  {pendingRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} />)}
+                  {pendingRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
                 </div>
                 {/* desktop table */}
                 <div className="hidden xl:block overflow-x-auto rounded-xl border border-amber-100">
-                  <DesktopTable rows={pendingRows} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+                  <DesktopTable rows={pendingRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
                 </div>
               </div>
             )}
@@ -655,23 +727,54 @@ export default function QueuePage() {
                   const dayRows = byDay.get(d) ?? [];
                   const c = dayColor(d);
                   const label = `${dayLabel(d)} ${thaiDate(d)}`;
+                  // จัดกลุ่มคิวตามเซลล์ (เรียงเวลา) สำหรับปุ่มคัดลอกฟอร์มรายเซลล์
+                  const copyGroups = (() => {
+                    const m = new Map<string, { name: string; entries: QueueEntry[] }>();
+                    dayRows.forEach((e) => {
+                      if (!e.sales) return;
+                      const g = m.get(e.sales.id) ?? { name: e.sales.name, entries: [] };
+                      g.entries.push(e);
+                      m.set(e.sales.id, g);
+                    });
+                    return [...m.values()].map((g) => ({
+                      name: g.name,
+                      entries: [...g.entries].sort((a, b) => timeToMin(a.queue_time) - timeToMin(b.queue_time)),
+                    }));
+                  })();
                   return (
                     <div key={d}>
                       {/* Day header */}
-                      <div className={`flex items-center gap-2 mb-2 px-2 py-1.5 rounded-xl ${c?.chip ?? "bg-gray-100"}`}>
+                      <div className={`flex items-center gap-2 flex-wrap mb-2 px-2 py-1.5 rounded-xl ${c?.chip ?? "bg-gray-100"}`}>
                         <span className="w-2 h-2 rounded-full" style={{ background: c?.dot }} />
                         <span className="font-semibold text-sm">{label}</span>
                         <span className="tabular-nums text-xs opacity-70 ml-1">{dayRows.length} คิว</span>
+                        {copyGroups.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
+                            {copyGroups.map((g) => {
+                              const key = `${d}-${g.name}`;
+                              const done = copiedKey === key;
+                              return (
+                                <button key={key} type="button"
+                                  onClick={() => copySalesDay(key, buildSalesDayCopy(d, g.name, g.entries))}
+                                  title={`คัดลอกฟอร์มคิว ${g.name} ของวันนี้`}
+                                  className="press inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold bg-white/80 text-brand-dark border border-gray-200/70 hover:bg-white">
+                                  <Icon name={done ? "check" : "clipboard"} size={13} />
+                                  {done ? "คัดลอกแล้ว" : `คัดลอก ${g.name}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                       {/* mobile cards */}
                       <div className="xl:hidden space-y-2">
                         {items.map((it, i) => it.kind === "queue"
-                          ? <MobileCard key={it.entry.id} e={it.entry} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} />
+                          ? <MobileCard key={it.entry.id} e={it.entry} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />
                           : <MobileScheduleRow key={`s${i}`} it={it} />)}
                       </div>
                       {/* desktop table */}
                       <div className="hidden xl:block overflow-x-auto rounded-xl border border-gray-200/60">
-                        <DayTable items={items} onOpen={setModal} onToggleReceipt={toggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+                        <DayTable items={items} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
                       </div>
                     </div>
                   );
@@ -690,6 +793,7 @@ export default function QueuePage() {
           preset={modal.preset}
           salesList={sales}
           readOnly={!canWrite}
+          contextMonth={contextMonth}
           onClose={() => setModal(null)}
           onSaved={() => { setModal(null); load(); }}
         />
@@ -729,6 +833,11 @@ export default function QueuePage() {
           avail={avail}
           month={filterMonth}
           onClose={() => setSummaryOpen(false)}
+          onDelete={async (id) => {
+            await api.del(`/queue/availability?id=${id}`);
+            setAvail((prev) => prev.filter((a) => a.id !== id));
+            loadAvail();
+          }}
         />
       )}
     </div>
@@ -741,6 +850,7 @@ type TableProps = {
   rows: QueueEntry[];
   onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
+  onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
   canWrite: boolean;
   slotLabel: (t: string | null) => string;
 };
@@ -753,7 +863,7 @@ const QueueTableHead = () => (
       <th className="px-2 py-2 font-semibold">ประเภท</th>
       <th className="px-2 py-2 font-semibold">เซลล์</th>
       <th className="px-2 py-2 font-semibold">ผู้ช่วย</th>
-      <th className="px-2 py-2 font-semibold">LINE</th>
+      <th className="px-2 py-2 font-semibold">ติดต่อ</th>
       <th className="px-2 py-2 font-semibold">ชื่อ</th>
       <th className="px-2 py-2 font-semibold">เบอร์</th>
       <th className="px-2 py-2 font-semibold">ที่อยู่</th>
@@ -761,15 +871,18 @@ const QueueTableHead = () => (
       <th className="px-2 py-2 font-semibold">ขนาด</th>
       <th className="px-2 py-2 font-semibold text-right">ค่าประเมิน</th>
       <th className="px-2 py-2 font-semibold">ชำระ</th>
+      <th className="px-2 py-2 font-semibold text-center">ค่าประเมิน</th>
       <th className="px-2 py-2 font-semibold text-center">ใบเสร็จ</th>
       <th className="px-2 py-2 font-semibold">หมายเหตุ</th>
     </tr>
   </thead>
 );
 
-function QueueRow({ e, onOpen, onToggleReceipt, canWrite, slotLabel }: {
+function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotLabel }: {
   e: QueueEntry; onOpen: (s: { entry: QueueEntry }) => void;
-  onToggleReceipt: (e: QueueEntry, v: boolean) => void; canWrite: boolean; slotLabel: (t: string | null) => string;
+  onToggleReceipt: (e: QueueEntry, v: boolean) => void;
+  onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  canWrite: boolean; slotLabel: (t: string | null) => string;
 }) {
   const c = dayColor(e.queue_date);
   const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
@@ -785,7 +898,7 @@ function QueueRow({ e, onOpen, onToggleReceipt, canWrite, slotLabel }: {
       <td className="px-2 py-2.5 text-ink-2">{e.job_type || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2">{e.line_contact || "—"}</td>
+      <td className="px-2 py-2.5 text-ink-2">{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
       <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
       <td className="px-2 py-2.5 text-ink-2 max-w-[220px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
@@ -801,6 +914,12 @@ function QueueRow({ e, onOpen, onToggleReceipt, canWrite, slotLabel }: {
       <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
       <td className="px-2 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
       <td className="px-2 py-2.5 text-ink-2">{e.payment || "—"}</td>
+      <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+        <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
+          onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
+          className="w-4 h-4 accent-emerald-600"
+          title="ชำระค่าประเมินแล้ว" />
+      </td>
       <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
         <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
           onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
@@ -820,7 +939,7 @@ function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave
         <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${m.tagCls}`}>{m.tagText}</span>
       </td>
       <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">{m.timeText}</td>
-      <td className="px-2 py-2.5 text-ink-2" colSpan={13}>
+      <td className="px-2 py-2.5 text-ink-2" colSpan={14}>
         <span className="inline-flex items-center gap-1.5">
           <Icon name={it.kind === "office" ? "building" : "calendar"} size={13} /> {m.label}
         </span>
@@ -829,13 +948,13 @@ function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave
   );
 }
 
-function DesktopTable({ rows, onOpen, onToggleReceipt, canWrite, slotLabel }: TableProps) {
+function DesktopTable({ rows, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotLabel }: TableProps) {
   return (
     <table className="w-full text-sm">
       <QueueTableHead />
       <tbody>
         {rows.map((e) => (
-          <QueueRow key={e.id} e={e} onOpen={onOpen} onToggleReceipt={onToggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+          <QueueRow key={e.id} e={e} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
         ))}
       </tbody>
     </table>
@@ -843,16 +962,18 @@ function DesktopTable({ rows, onOpen, onToggleReceipt, canWrite, slotLabel }: Ta
 }
 
 // ตารางวัน — คิว + อยู่ออฟฟิศ + วันลา แทรกรวมกัน
-function DayTable({ items, onOpen, onToggleReceipt, canWrite, slotLabel }: {
+function DayTable({ items, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotLabel }: {
   items: DayItem[]; onOpen: (s: { entry: QueueEntry }) => void;
-  onToggleReceipt: (e: QueueEntry, v: boolean) => void; canWrite: boolean; slotLabel: (t: string | null) => string;
+  onToggleReceipt: (e: QueueEntry, v: boolean) => void;
+  onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  canWrite: boolean; slotLabel: (t: string | null) => string;
 }) {
   return (
     <table className="w-full text-sm">
       <QueueTableHead />
       <tbody>
         {items.map((it, i) => it.kind === "queue"
-          ? <QueueRow key={it.entry.id} e={it.entry} onOpen={onOpen} onToggleReceipt={onToggleReceipt} canWrite={canWrite} slotLabel={slotLabel} />
+          ? <QueueRow key={it.entry.id} e={it.entry} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
           : <OfficeLeaveRow key={`s${i}`} it={it} />)}
       </tbody>
     </table>
@@ -876,10 +997,11 @@ type CardProps = {
   e: QueueEntry;
   onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
+  onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
   canWrite: boolean;
 };
 
-function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
+function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite }: CardProps) {
   const c = dayColor(e.queue_date);
   const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
   const slotLabel = (t: string | null) => {
@@ -919,7 +1041,7 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
           {e.payment && <span>ชำระ {e.payment}</span>}
         </div>
       )}
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-2 gap-2">
         {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
           <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
             className="inline-flex items-center gap-1 text-brand font-medium hover:underline text-sm">
@@ -927,11 +1049,18 @@ function MobileCard({ e, onOpen, onToggleReceipt, canWrite }: CardProps) {
             {isMapUrlFn(e.location_url) ? "แผนที่" : "ลิงก์"}
           </a>
         ) : <span className="text-ink-3 text-sm">—</span>}
-        <label className="flex items-center gap-1.5 text-xs text-ink-2" onClick={(ev) => ev.stopPropagation()}>
-          <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
-            onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
-            className="w-4 h-4 accent-brand" /> ใบเสร็จ
-        </label>
+        <div className="flex items-center gap-3 ml-auto" onClick={(ev) => ev.stopPropagation()}>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
+            <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
+              onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
+              className="w-4 h-4 accent-emerald-600" /> ชำระแล้ว
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
+            <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
+              onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
+              className="w-4 h-4 accent-brand" /> ใบเสร็จ
+          </label>
+        </div>
       </div>
     </div>
   );

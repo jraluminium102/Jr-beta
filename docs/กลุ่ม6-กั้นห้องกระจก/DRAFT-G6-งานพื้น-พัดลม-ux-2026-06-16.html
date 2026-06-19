@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ UX — งานพื้น + พัดลม (G6)</title>
+<style>
+  *{box-sizing:border-box;font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:#f4f5f7;color:#1a1a1a;font-size:15px;line-height:1.5;padding-bottom:90px;}
+  .wrap{max-width:520px;margin:0 auto;padding:14px 12px 20px;}
+  h1{color:#B3151D;font-size:19px;margin:6px 0 2px;}
+  .sub{color:#777;font-size:12px;margin:0 0 14px;}
+  .card{background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px;margin:0 0 14px;}
+  .card h2{font-size:15px;color:#B3151D;margin:0 0 10px;display:flex;align-items:center;gap:7px;}
+  .lbl{font-size:13px;color:#555;font-weight:700;margin:12px 0 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{min-height:46px;padding:8px 16px;border:1.5px solid #ddd;border-radius:11px;background:#fff;font-size:14px;font-weight:600;color:#333;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.12s;}
+  .chip:hover{border-color:#e8a0a4;}
+  .chip.on{background:#B3151D;color:#fff;border-color:#B3151D;box-shadow:0 2px 8px rgba(179,21,29,.3);}
+  .chip small{font-size:11px;opacity:.85;font-weight:400;}
+  .sz{display:flex;gap:8px;}
+  .sz .f{flex:1;}
+  .sz label{font-size:11px;color:#888;display:block;margin-bottom:3px;}
+  input[type=number],input[type=text]{width:100%;height:46px;border:1.5px solid #ddd;border-radius:11px;padding:0 12px;font-size:15px;text-align:center;}
+  input:focus{outline:none;border-color:#B3151D;}
+  .reveal{max-height:0;overflow:hidden;transition:max-height .25s;}
+  .reveal.show{max-height:340px;}
+  .note{font-size:11.5px;color:#999;font-style:italic;margin-top:9px;padding-top:8px;border-top:1px dashed #eee;}
+  .hint{font-size:11px;color:#B45309;background:#fff8ec;border-radius:8px;padding:5px 9px;margin-top:7px;}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#555;margin:5px 0;}
+  .row b{color:#15803D;}
+  .addbtn{width:100%;height:48px;border:1.6px dashed #B3151D;border-radius:12px;background:#fff5f5;color:#B3151D;font-size:14px;font-weight:700;cursor:pointer;}
+  .fanrow{display:flex;gap:8px;margin-top:10px;align-items:flex-end;}
+  .fanrow .f{flex:1;}
+  .fanrow .f label{font-size:11px;color:#888;display:block;margin-bottom:3px;}
+  .rm{background:none;border:none;color:#c00;font-size:20px;cursor:pointer;padding:0 4px;}
+  .pricebar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #B3151D;box-shadow:0 -2px 12px rgba(0,0,0,.08);padding:12px 16px;z-index:50;}
+  .pricebar .in{max-width:520px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+  .pricebar .t{font-size:12px;color:#777;}
+  .pricebar .v{font-size:24px;font-weight:800;color:#B3151D;}
+  .pricebar .v small{font-size:12px;color:#999;font-weight:400;}
+  .demo{font-size:10.5px;color:#999;text-align:center;margin-top:14px;}
+  .strike{text-decoration:line-through;color:#bbb;font-size:13px;margin-right:5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>งานพื้น + พัดลม</h1>
+<p class="sub">ส่วนที่เพิ่มในหน้า "กั้นห้องกระจก" (ระดับห้อง · ต่อจากหลังคา/ฝ้า/ไฟ) · กดเล่นดูได้</p>
+
+<!-- ===== งานพื้น ===== -->
+<div class="card">
+<h2>🪵 งานปูพื้น</h2>
+
+<div class="lbl">วัสดุพื้น</div>
+<div class="chips" id="matChips">
+  <button class="chip on" data-mat="smart" data-rate="5000" onclick="pickMat(this)">สมาร์ทบอร์ด 20มม.<small>+โครงกัลวาไนซ์</small></button>
+  <button class="chip" data-mat="wpc" data-rate="5000" onclick="pickMat(this)">ไม้เทียม<small>+โครงกัลวาไนซ์</small></button>
+  <button class="chip" data-mat="lam" data-rate="0" onclick="pickMat(this)">ลามิเนต / SPC<small>กรอกราคาเอง</small></button>
+</div>
+
+<div class="lbl">ตำแหน่ง</div>
+<div class="chips" id="locChips">
+  <button class="chip on" data-loc="in" onclick="pickLoc(this)">พื้นในห้อง</button>
+  <button class="chip" data-loc="out" onclick="pickLoc(this)">พื้นนอกห้อง</button>
+</div>
+
+<div class="lbl">พื้นที่</div>
+<div class="sz">
+  <div class="f"><label>พื้นที่ (ตร.ม.)</label><input type="number" id="area" value="12" min="0" step="0.5" oninput="calc()"></div>
+  <div class="f"><label>ราคา/ตร.ม.</label><input type="number" id="rate" value="5000" oninput="calc()"></div>
+</div>
+<div class="hint" id="minHint">ขั้นต่ำ 5 ตร.ม. (ถ้าน้อยกว่าคิด 5 ตร.ม.)</div>
+
+<div class="lbl" id="lamLbl" style="display:none">ราคาลามิเนต/SPC (กรอกเอง /ตร.ม.)</div>
+<div class="reveal" id="lamBox"><input type="number" id="lamRate" value="0" placeholder="บาท/ตร.ม. (รอราคาช่าง)" oninput="calc()" style="margin-top:2px"></div>
+
+<div class="lbl">ส่วนลดงานใหญ่</div>
+<div class="chips">
+  <button class="chip on" id="discAuto" onclick="setDisc('auto')">อัตโนมัติ <small>≥20 ตร.ม. ลด 10%</small></button>
+  <button class="chip" id="discManual" onclick="setDisc('manual')">กรอกเอง</button>
+</div>
+<div class="reveal" id="discBox"><div style="margin-top:8px"><input type="number" id="discPct" value="0" min="0" max="100" placeholder="ส่วนลด %" oninput="calc()"></div></div>
+<div class="row" id="discRow" style="display:none"><span>ส่วนลดงานใหญ่</span><b id="discTxt">–</b></div>
+
+<div class="note">หมายเหตุในใบ: "ไม่รับประกันพื้นแอ่นหรือยวบ" · โครงเหล็กกัลวาไนซ์ (กันสนิม)</div>
+</div>
+
+<!-- ===== พัดลม ===== -->
+<div class="card">
+<h2>🌀 พัดลมดูดอากาศ <small style="font-size:11px;color:#999;font-weight:400">(ของเสริม · กดเพิ่มเมื่อมี)</small></h2>
+<div id="fanList"></div>
+<button class="addbtn" onclick="addFan()">+ เพิ่มพัดลมดูดอากาศ + ฝาครอบกันแมลง</button>
+</div>
+
+<div class="demo">ราคา 5,000/ตร.ม. = เรตที่เคาะ (กำไร 100% · ทุนยังไม่ confirm — ปรับได้) · ดราฟกดเล่น ก่อนส่ง dev</div>
+</div>
+
+<!-- ===== price bar ===== -->
+<div class="pricebar"><div class="in">
+  <div><div class="t">ราคารวมส่วนนี้</div><div class="v" id="total">฿0</div></div>
+  <div style="text-align:right;font-size:11px;color:#999" id="brk"></div>
+</div></div>
+
+<script>
+var mat='smart', loc='in', discMode='auto';
+
+function pickMat(b){
+  document.querySelectorAll('#matChips .chip').forEach(c=>c.classList.remove('on'));
+  b.classList.add('on'); mat=b.dataset.mat;
+  var isLam = mat==='lam';
+  document.getElementById('lamLbl').style.display = isLam?'block':'none';
+  document.getElementById('lamBox').classList.toggle('show', isLam);
+  document.getElementById('rate').value = isLam ? (document.getElementById('lamRate').value||0) : b.dataset.rate;
+  document.getElementById('rate').disabled = false;
+  calc();
+}
+function pickLoc(b){
+  document.querySelectorAll('#locChips .chip').forEach(c=>c.classList.remove('on'));
+  b.classList.add('on'); loc=b.dataset.loc; calc();
+}
+function setDisc(m){
+  discMode=m;
+  document.getElementById('discAuto').classList.toggle('on', m==='auto');
+  document.getElementById('discManual').classList.toggle('on', m==='manual');
+  document.getElementById('discBox').classList.toggle('show', m==='manual');
+  calc();
+}
+// พัดลม
+var fans=[];
+function addFan(){ fans.push({size:8,qty:1,price:0}); renderFans(); }
+function renderFans(){
+  var h='';
+  fans.forEach(function(f,i){
+    h+='<div class="fanrow">'
+      +'<div class="f"><label>ขนาด (นิ้ว)</label><input type="number" value="'+f.size+'" oninput="fans['+i+'].size=this.value;calc()"></div>'
+      +'<div class="f"><label>จำนวน (ตัว)</label><input type="number" value="'+f.qty+'" min="1" oninput="fans['+i+'].qty=this.value;calc()"></div>'
+      +'<div class="f"><label>ราคา/ตัว</label><input type="number" value="'+f.price+'" oninput="fans['+i+'].price=this.value;calc()"></div>'
+      +'<button class="rm" onclick="fans.splice('+i+',1);renderFans();calc()">✕</button></div>';
+  });
+  document.getElementById('fanList').innerHTML=h; calc();
+}
+
+function calc(){
+  if(mat==='lam') document.getElementById('rate').value = document.getElementById('lamRate').value||0;
+  var area=parseFloat(document.getElementById('area').value)||0;
+  var rate=parseFloat(document.getElementById('rate').value)||0;
+  var billArea = area<5 ? 5 : area;   // ขั้นต่ำ 5 ตร.ม.
+  var floor = billArea*rate;
+
+  // ส่วนลดงานใหญ่
+  var pct=0;
+  if(discMode==='auto'){ pct = area>=20 ? 10 : 0; }
+  else { pct=parseFloat(document.getElementById('discPct').value)||0; }
+  var disc = floor*pct/100;
+  var floorNet = floor-disc;
+
+  document.getElementById('minHint').textContent = area>0&&area<5
+    ? 'พื้นที่ '+area+' ตร.ม. < ขั้นต่ำ → คิด 5 ตร.ม. = '+(5*rate).toLocaleString()+' ฿'
+    : 'ขั้นต่ำ 5 ตร.ม. (ถ้าน้อยกว่าคิด 5 ตร.ม.)';
+
+  var dRow=document.getElementById('discRow');
+  if(pct>0){ dRow.style.display='flex';
+    document.getElementById('discTxt').textContent='−'+disc.toLocaleString()+' ฿ ('+pct+'%)'; }
+  else dRow.style.display='none';
+
+  // พัดลม
+  var fanSum=0; fans.forEach(function(f){ fanSum += (parseFloat(f.price)||0)*(parseFloat(f.qty)||0); });
+
+  var total=floorNet+fanSum;
+  document.getElementById('total').innerHTML = '฿'+Math.round(total).toLocaleString()
+    + (mat==='lam'&&rate===0 ? ' <small>(ใส่ราคาลามิเนต)</small>':'');
+  var brk='พื้น '+Math.round(floorNet).toLocaleString();
+  if(fanSum>0) brk+=' + พัดลม '+fanSum.toLocaleString();
+  document.getElementById('brk').textContent = brk;
+}
+calc();
+</script>
+</body>
+</html>

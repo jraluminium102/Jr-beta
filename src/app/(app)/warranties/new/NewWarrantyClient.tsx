@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 
 type WarrantyQuotation = {
   id: number;
@@ -90,8 +91,8 @@ export default function NewWarrantyClient({ quotations }: { quotations: Warranty
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="block text-sm">
                   <span className="text-xs font-medium text-ink-3">วันที่ออก</span>
-                  <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)}
-                    className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                  <DateField value={issueDate} onChange={(iso) => setIssueDate(iso)}
+                    className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" aria-label="วันที่ออก" />
                 </label>
                 <label className="block text-sm">
                   <span className="text-xs font-medium text-ink-3">ระยะประกัน (เดือน)</span>

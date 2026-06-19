@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การ์ดโพยคำสั่ง — JR (พี่นัท)</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:'Sarabun','Segoe UI',sans-serif;margin:0;background:#F3F4F6;color:#111827;padding:18px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 2px;text-align:center;}
+  .sub{font-size:13px;color:#6B7280;text-align:center;margin-bottom:16px;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:740px){.cols{grid-template-columns:1fr;}}
+  .card{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;}
+  .head{padding:12px 16px;color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .a .head{background:#6D28D9;} .b .head{background:#B3151D;}
+  .body{padding:8px 14px 14px;}
+  .step{display:flex;gap:10px;padding:10px 4px;border-bottom:1px dashed #E5E7EB;}
+  .step:last-child{border-bottom:none;}
+  .num{flex:0 0 26px;height:26px;border-radius:50%;background:#EDE9FE;color:#5B21B6;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:2px;}
+  .b .num{background:#FEE2E2;color:#B3151D;}
+  .say{font-size:16px;font-weight:700;color:#111827;}
+  .quote{color:#6D28D9;} .b .quote{color:#B3151D;}
+  .does{font-size:12.5px;color:#6B7280;margin-top:2px;}
+  .rule{background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;padding:12px 16px;margin-top:14px;font-size:14px;}
+  .rule b{color:#92400E;}
+  .check{background:#111827;color:#fff;border-radius:12px;padding:13px 16px;margin-top:14px;text-align:center;}
+  .check .big{font-size:18px;font-weight:800;color:#A78BFA;}
+  .flow{text-align:center;font-size:13px;color:#6B7280;margin-top:14px;line-height:2;}
+  .flow b{color:#6D28D9;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🗂️ การ์ดโพยคำสั่ง</h1>
+  <div class="sub">เปิดดูเวลาลืมว่าจะพิมพ์อะไร · พูดเป็นภาษาคนได้เลย ไม่ต้องเป๊ะ</div>
+
+  <div class="cols">
+    <!-- CHAT A -->
+    <div class="card a">
+      <div class="head">🅰️ แชท A — ตรวจ + เตรียมงาน</div>
+      <div class="body">
+        <div class="step"><div class="num">1</div><div>
+          <div class="say"><span class="quote">"เก็บเป็นก้อนก่อน ยังไม่ส่ง"</span></div>
+          <div class="does">→ แชทจดทุกอย่างที่เคาะไว้ ไม่ลืม</div>
+        </div></div>
+        <div class="step"><div class="num">2</div><div>
+          <div class="say"><span class="quote">"ในก้อนมีอะไรบ้าง"</span></div>
+          <div class="does">→ แชทโชว์รายการสะสม เช็คว่าครบ</div>
+        </div></div>
+        <div class="step"><div class="num">3</div><div>
+          <div class="say"><span class="quote">"รวมเป็นก้อนเดียว ส่ง Chat B"</span></div>
+          <div class="does">→ โชว์ checklist ให้เคาะ → ออกใบสั่ง 1 ใบ</div>
+        </div></div>
+        <div class="step"><div class="num">4</div><div>
+          <div class="say"><span class="quote">"ตรวจงาน G__ หน่อย"</span></div>
+          <div class="does">→ (หลัง Chat B เสร็จ) เทียบดราฟ + ใบจริง</div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- CHAT B -->
+    <div class="card b">
+      <div class="head">🅱️ แชท B — ช่างแก้โค้ด</div>
+      <div class="body">
+        <div class="step"><div class="num">1</div><div>
+          <div class="say"><span class="quote">"เช็คว่ามีงานอะไรรอทำ"</span></div>
+          <div class="does">→ เห็น 🔴 งานที่เตรียมไว้</div>
+        </div></div>
+        <div class="step"><div class="num">2</div><div>
+          <div class="say"><span class="quote">"ทำ [งาน] ตามที่เตรียมไว้"</span></div>
+          <div class="does">→ แชทเปิดใบสั่งทำเอง พี่ไม่ต้องเล่าซ้ำ</div>
+        </div></div>
+        <div class="step"><div class="num">3</div><div>
+          <div class="say"><span class="quote">"เทสกันเพี้ยน แล้วขึ้นเว็บ"</span></div>
+          <div class="does">→ เช็คราคา → ขึ้นเว็บ</div>
+        </div></div>
+        <div class="step"><div class="num">4</div><div>
+          <div class="say"><span class="quote">"แคปรูปทุกจุดที่แก้มาดู"</span></div>
+          <div class="does">→ ส่งรูปให้ พี่ไม่ต้องเข้าเว็บเอง</div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="check">
+    ลืมว่าส่งหรือยัง / เสร็จยัง? พิมพ์คำนี้กับแชทไหนก็ได้:<br>
+    <span class="big">"เช็คสถานะงาน dev"</span><br>
+    <span style="font-size:12.5px;color:#9CA3AF;">→ บอกทันที ✅เสร็จ / 🔴รอทำ / ⚪ยังไม่เตรียม (อ่านของจริง ไม่ใช่ความจำ)</span>
+  </div>
+
+  <div class="rule">
+    ⚠️ <b>กฎเดียวที่ต้องรู้:</b> "ช่างแก้โค้ดมีคนเดียว" — อย่าให้ 2 แชทแก้พร้อมกัน (ชนกันพัง) ·
+    แชท A หลายตัว = <b>เตรียม</b>พร้อมกันได้ · แชท B = <b>แก้</b>ทีละงาน
+  </div>
+
+  <div class="flow">
+    🅰️ เตรียม+รวมก้อน → ส่ง → 🅱️ แก้+ขึ้นเว็บ+แคปรูป → กลับ 🅰️ ตรวจ → <b>วนลูป</b>
+  </div>
+</div>
+</body>
+</html>
