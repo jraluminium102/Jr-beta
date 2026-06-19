@@ -68,13 +68,17 @@
   .chmsg{font-size:12px;margin-top:6px;}
   /* #2 2026-06-05: บานย่อยในชุด */
   .subitem-wrap{margin:6px 0 2px;}
-  .subitem-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
+  .subitem-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
   .subitem-row select,.subitem-row input{height:36px;font-size:14px;font-family:inherit;}
+  .subitem-row .s-detail input,.subitem-row .s-detail select{height:28px;font-size:12px;}
   .subitem-row .s-type{flex:2;min-width:0;}
   .subitem-row .s-w{width:72px;flex:none;}
   .subitem-row .s-h{width:72px;flex:none;}
   .subitem-row .s-tag{background:#fde8ea;color:#B3151D;font-size:11px;padding:2px 7px;border-radius:5px;font-weight:700;white-space:nowrap;flex:none;}
   .subitem-row .s-del{flex:none;width:30px;height:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--red);font-size:16px;cursor:pointer;line-height:1;}
+  .stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .stp button{border:none;background:#f3f4f6;width:28px;height:28px;font-size:16px;cursor:pointer;color:var(--red);padding:0;}
+  .stp span{min-width:26px;text-align:center;font-weight:700;font-size:14px;}
   .sub-addbtn{display:inline-flex;align-items:center;gap:6px;min-height:44px;border:1px dashed var(--red);color:var(--red-dark);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:2px;}
   .addbtn{width:100%;height:44px;border:1.5px dashed var(--red);border-radius:10px;background:#fff;
     color:var(--red-dark);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
@@ -2155,6 +2159,21 @@ function calcQuickAll(){
           if(parts.length&&area>0){_cmp.style.display='';_cmp.textContent='เทียบมาตรฐาน: '+parts.join(' · ');}
           else{_cmp.style.display='none';} }
         label=(it.u.addonLabel||'')+((it.p&&it.p.ranae&&it.u.msgs&&it.u.msgs.length)?' · '+it.u.msgs.join(', '):'');
+        // ทิศเปิดเฟี้ยม quick mode → ต่อท้าย label
+        var _qFo=d.querySelector('.qi-fold-opts');
+        if(_qFo&&_qFo.style.display!=='none'){
+          var _qFdC=_qFo.querySelector('.qi-fdir-chip.on');
+          var _qFdir=_qFdC?_qFdC.dataset.val:'เปิดขวา';
+          if(_qFdir!=='เปิดขวา'){
+            var _qFdLbl=_qFdir;
+            if(_qFdir==='เปิดแยกกลาง'){
+              var _qFl=(d.querySelector('.qi-fleft')||{}).value||'';
+              var _qFr=(d.querySelector('.qi-fright')||{}).value||'';
+              if(_qFl&&_qFr) _qFdLbl+=' (ซ้าย '+_qFl+' / ขวา '+_qFr+' ช่อง)';
+            }
+            label=(label?label+' · ':'')+_qFdLbl;
+          }
+        }
         var pc=d.querySelector('.qi-pc-body');
         if(pc&&sell>0){
           var html='';
@@ -2809,6 +2828,18 @@ function qiRenderG1(d){
      '<div class="qi-glass-wrap" style="flex:1;min-width:140px;"><label style="font-size:12px;color:var(--muted);font-weight:700;">กระจก</label><select class="qi-glass">'+glassOpts()+'</select></div>'+
    '</div>'+
    '<div class="full qi-cmp" style="display:none;font-size:12px;color:#0369A1;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:5px 9px;margin-top:6px;"></div>'+
+   '<div class="full qi-fold-opts" style="display:none;margin-top:8px;">'
+     +'<label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">ทิศเปิด</label>'
+     +'<div class="qi-chips">'
+       +'<button type="button" class="chip on qi-fdir-chip" data-val="เปิดขวา" onclick="qiFoldPick(\'เปิดขวา\',this)">เปิดขวา</button>'
+       +'<button type="button" class="chip qi-fdir-chip" data-val="เปิดซ้าย" onclick="qiFoldPick(\'เปิดซ้าย\',this)">เปิดซ้าย</button>'
+       +'<button type="button" class="chip qi-fdir-chip" data-val="เปิดแยกกลาง" onclick="qiFoldPick(\'เปิดแยกกลาง\',this)">แยกกลาง</button>'
+     +'</div>'
+     +'<div class="qi-fold-split" style="display:none;margin-top:6px;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap;">'
+       +'ซ้าย <input class="qi-fleft" type="number" min="1" value="2" style="width:48px;height:32px;border:1.5px solid var(--line);border-radius:8px;text-align:center;font-family:inherit;" oninput="calcQuickAll()"> ช่อง'
+       +' &nbsp;/ ขวา <input class="qi-fright" type="number" min="1" value="2" style="width:48px;height:32px;border:1.5px solid var(--line);border-radius:8px;text-align:center;font-family:inherit;" oninput="calcQuickAll()"> ช่อง'
+     +'</div>'
+   +'</div>'+
    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">'+
      '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+W+'" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="calcQuickAll()"></div>'+
      '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+H+'" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="calcQuickAll()"></div>'+
@@ -2828,6 +2859,7 @@ function qiRenderG1(d){
         var cw=d.querySelector('.qi-color-wrap'); if(cw) cw.style.display=(p.cabinet||!(ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))?'':'none';
         var gw=d.querySelector('.qi-glass-wrap'); if(gw) gw.style.display=(!(ao||p.zipscreen||p.cat==='มุ้ง'))?'':'none';
         var cs=d.querySelector('.qi-color'); if(cs){ var cv=cs.value; cs.innerHTML=colorOpts(p.series||''); if(cv&&cs.querySelector('option[value="'+cv+'"]'))cs.value=cv; else cs.value='0'; try{cs.dataset.colCat=colorCatOf(parseInt(cs.value)||0); colorDrillRender(cs);}catch(e){} } } // ก้อนรวม#8: drill-down สีคิดเร็ว (rebuild ชิปตามสินค้า)
+      var _qfo=d.querySelector('.qi-fold-opts'); if(_qfo) _qfo.style.display=(p&&p.cat==='บานเฟี้ยม')?'':'none';
       qiSyncFamOn(d); calcQuickAll();
     });
     // trigger once to sync display
@@ -2837,6 +2869,14 @@ function qiRenderG1(d){
   // ก้อนรวม#8: drill-down กระจกคิดเร็ว (สีคิดเร็ว render ใน ps change handler แล้ว) · glass ไม่ rebuild → render ครั้งเดียว
   try{ var _qgD=d.querySelector('.qi-glass'); if(_qgD){ _qgD.dataset.glCat=glassCatOf(parseInt(_qgD.value)||0); glassDrillRender(_qgD); } }catch(e){}
   qiRebuild(d);
+}
+function qiFoldPick(v,btn){
+  var root=btn.closest('.qi-fold-opts'); if(!root)return;
+  root.querySelectorAll('.qi-fdir-chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  var fs=root.querySelector('.qi-fold-split');
+  if(fs) fs.style.display=(v==='เปิดแยกกลาง')?'flex':'none';
+  calcQuickAll();
 }
 function qiCalcG1(d){
   var it = readQuickItem(d); if(!it||!it.u) return{sell:0,a:0,qty:1};
@@ -4156,47 +4196,102 @@ var SUBITEM_KINDS={
   custom:{pid:null,          label:'อื่นๆ'}
 };
 // v7B: เพิ่มบานย่อยตามชนิด (ชิป) — btn=ชิป, kind=ชนิด, label=ป้าย, w/h=ขนาดเริ่มต้น
+// v7B-ปรับ (19มิ.ย.): 3 ชั้น — ปรับ(แบ่งบาน/มุ้ง/หมายเหตุ) → จัดเต็ม(คาดตาราง/ราคา/ข้อความ)
 function addSub(btn, kind, label, w, h){
   const ch=btn.closest('.ch'); if(!ch) return;
   const list=ch.querySelector('.subitem-list'); if(!list) return;
   const kd=SUBITEM_KINDS[kind]||SUBITEM_KINDS.fix;
+  const hasWork=['open','slide','fold','awning'].includes(kind);
   const row=document.createElement('div'); row.className='subitem-row'; row.dataset.kind=kind;
-  row.innerHTML='<span class="s-tag">'+(label||kd.label)+'</span>'
+  var _lbl=label||kd.label;
+  // Level 2: แบ่งบาน (เฉพาะบานทำงาน)
+  var _workRow=hasWork
+    ?'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+      +'<span style="font-size:12px;font-weight:700;color:#374151;min-width:54px;">แบ่งบาน</span>'
+      +'เปิด <div class="stp"><button type="button" onclick="subBump(this,\'.s-open-ct\',-1)">−</button><span class="s-open-ct">1</span><button type="button" onclick="subBump(this,\'.s-open-ct\',1)">+</button></div>'
+      +' ติดตาย <div class="stp"><button type="button" onclick="subBump(this,\'.s-fix-ct\',-1)">−</button><span class="s-fix-ct">0</span><button type="button" onclick="subBump(this,\'.s-fix-ct\',1)">+</button></div>'
+      +'</div>'
+    :'';
+  // Level 2: หมายเหตุ (มุ้ง/วัสดุ ย้ายไปอยู่ใน จัดเต็ม ชั้น 3)
+  var _noteRow='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">'
+    +'<span style="font-size:12px;font-weight:700;color:#374151;min-width:54px;">หมายเหตุ</span>'
+    +'<input class="s-note" type="text" placeholder="เปิดออกนอก / ต่อเปลือยข้าง" style="flex:1;min-width:120px;height:30px;border:1px solid #e5e7eb;border-radius:7px;padding:0 8px;font-family:inherit;font-size:12px;">'
+    +'</div>';
+  // Level 3: จัดเต็ม (คาดตาราง/ข้อความ/ราคาแยก)
+  var _fullBox='<span class="s-full-tog" style="font-size:11.5px;color:#1e40af;cursor:pointer;border:1px dashed #bcd0ee;border-radius:7px;padding:3px 9px;display:inline-block;margin-bottom:6px;" onclick="var fb=this.nextElementSibling;var op=fb.style.display===\'block\';fb.style.display=op?\'none\':\'block\';this.textContent=op?\'＋ จัดเต็ม ▾ (มุ้ง/อลูทึบ · คาดตาราง/ราคา/ข้อความ)\':\'จัดเต็ม ▴\';">＋ จัดเต็ม ▾ (มุ้ง/อลูทึบ · คาดตาราง/ราคา/ข้อความ)</span>'
+    +'<div class="s-full-box" style="display:none;background:#f7faff;border:1px solid #d7e3f5;border-radius:8px;padding:8px 10px;">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'
+        +'<span style="font-size:12px;font-weight:700;color:#374151;min-width:72px;">มุ้ง/วัสดุ</span>'
+        +'<button type="button" class="chip chip-sm s-mat-chip" data-val="เฟรม" onclick="subMatPick(this)">เฟรม +3,000</button>'
+        +'<button type="button" class="chip chip-sm s-mat-chip" data-val="จีบ" onclick="subMatPick(this)">จีบ +3,000</button>'
+        +'<button type="button" class="chip chip-sm s-mat-chip" data-val="อลูทึบ" onclick="subMatPick(this)">อลูทึบ</button>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">'
+        +'<span style="font-size:12px;font-weight:700;color:#374151;min-width:72px;">คาดตาราง</span>'
+        +'<button type="button" class="chip chip-sm s-grid-chip on" data-val="ไม่มี" onclick="subGridPick(this)">ไม่มี</button>'
+        +'<button type="button" class="chip chip-sm s-grid-chip" data-val="มี" onclick="subGridPick(this)">มี +2,000</button>'
+        +'<div class="s-grid-dims" style="display:none;align-items:center;gap:6px;font-size:12px;">'
+          +'นอน <input class="s-gnh" type="number" min="0" value="0" style="width:40px;height:28px;text-align:center;border:1px solid #e5e7eb;border-radius:6px;font-family:inherit;"> '
+          +'ตั้ง <input class="s-gnv" type="number" min="1" value="1" style="width:40px;height:28px;text-align:center;border:1px solid #e5e7eb;border-radius:6px;font-family:inherit;">'
+        +'</div>'
+      +'</div>'
+      +'<label style="display:block;margin-bottom:5px;font-size:12px;">ข้อความบนใบ <input class="s-ftext" type="text" placeholder="'+_lbl+' (เว้น=อัตโนมัติ)" style="width:210px;height:28px;border:1px solid #e5e7eb;border-radius:7px;padding:0 8px;font-family:inherit;"></label>'
+      +'<label style="display:block;font-size:12px;">ราคาแยก <input class="s-fprice" type="number" min="0" step="100" value="0" style="width:110px;height:28px;border:1px solid #e5e7eb;border-radius:7px;padding:0 6px;font-family:inherit;"> บาท '
+        +(kind==='custom'?'<b style="color:#B3151D;">← จำเป็น</b>':'<span style="color:#6b7280;">เว้น 0 = คิดตามชนิด</span>')+'</label>'
+    +'</div>';
+  row.innerHTML='<span class="s-tag">'+_lbl+'</span>'
     +'<input class="s-w" type="number" step="0.1" min="0" value="'+w+'" title="กว้าง (ม.)">'
     +'<span style="font-size:12px;color:#6b7280;flex:none;">×</span>'
     +'<input class="s-h" type="number" step="0.1" min="0" value="'+h+'" title="สูง (ม.)">'
     +'<span style="font-size:12px;color:#6b7280;flex:none;">ม.</span>'
     +'<span class="s-pp" title="ราคาต่อชิ้น (ตามชนิด)" style="font-size:12px;color:#16a34a;font-weight:700;flex:none;min-width:54px;text-align:right;">฿0</span>'
-    +'<button type="button" class="s-more" title="จัดเต็ม (ราคาแยก/แก้ข้อความ)">⋯</button>'
+    +'<button type="button" class="s-more" style="flex:none;border:1px solid #e5e7eb;border-radius:7px;background:#f9fafb;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;">ปรับ ▾</button>'
     +'<button type="button" class="s-del" title="ลบบานย่อย">&times;</button>'
-    +'<div class="s-detail" style="display:none;flex-basis:100%;margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb;">'
-      +'<label style="display:block;margin-bottom:5px;font-size:12px;">แก้ข้อความบนใบ <input class="s-ftext" type="text" placeholder="'+(label||kd.label)+'" style="width:210px;height:28px;"></label>'
-      +'<label style="display:block;font-size:12px;">ราคาแยก (override) <input class="s-fprice" type="number" min="0" step="100" value="0" style="width:110px;height:28px;"> บาท '
-      +(kind==='custom'?'<b style="color:#B3151D;">← จำเป็น (ระบบไม่รู้ชนิด)</b>':'<span style="color:#6b7280;">เว้น 0 = คิดตามชนิด</span>')+'</label>'
+    +'<div class="s-detail" style="display:none;flex-basis:100%;margin-top:6px;padding:8px 0 4px;border-top:1px dashed #e5e7eb;">'
+      +_workRow+_noteRow+_fullBox
     +'</div>';
   row.querySelector('.s-del').addEventListener('click',function(){ row.remove(); calcQuote(); });
-  row.querySelector('.s-more').addEventListener('click',function(){ var dt=row.querySelector('.s-detail'); dt.style.display=(dt.style.display==='none')?'block':'none'; });
+  row.querySelector('.s-more').addEventListener('click',function(){
+    var dt=row.querySelector('.s-detail');
+    var isOpen=dt.style.display!=='none';
+    dt.style.display=isOpen?'none':'block';
+    this.textContent=isOpen?'ปรับ ▾':'ปรับ ▴';
+  });
   row.querySelectorAll('input').forEach(function(e){ e.addEventListener('input',calcQuote); e.addEventListener('change',calcQuote); });
   list.appendChild(row);
   calcQuote();
 }
+function subBump(btn,cls,delta){var row=btn.closest('.subitem-row');var sp=row.querySelector(cls);if(!sp)return;var v=Math.max(0,(parseInt(sp.textContent)||0)+delta);sp.textContent=v;calcQuote();}
+function subMosqPick(btn){btn.closest('.subitem-row').querySelectorAll('.s-mosq-chip').forEach(function(c){c.classList.remove('on');});btn.classList.add('on');calcQuote();}
+function subMatPick(btn){var row=btn.closest('.subitem-row');var wasOn=btn.classList.contains('on');row.querySelectorAll('.s-mat-chip').forEach(function(c){c.classList.remove('on');});if(!wasOn)btn.classList.add('on');calcQuote();}
+function subGridPick(btn){var row=btn.closest('.subitem-row');row.querySelectorAll('.s-grid-chip').forEach(function(c){c.classList.remove('on');});btn.classList.add('on');var dims=row.querySelector('.s-grid-dims');if(dims)dims.style.display=btn.dataset.val==='มี'?'flex':'none';calcQuote();}
 function readSubItems(ch){
-  // คืน array {kind, type(ป้าย), w, h, fprice, ftext, price} สำหรับ ch item หนึ่ง
+  // คืน array {kind, type(ป้าย), w, h, fprice, ftext, mosq, gridmark, note, openCt, fixCt, gnh, gnv, price}
   const rows=ch.querySelectorAll('.subitem-list .subitem-row');
   const out=[];
   rows.forEach(function(r){
     const kind=r.dataset.kind||'';
-    const oldType=(r.querySelector('.s-type')||{}).value||'';   // backward compat (แถวเก่า addSubItem)
+    const oldType=(r.querySelector('.s-type')||{}).value||'';
     const w=parseFloat((r.querySelector('.s-w')||{}).value)||0;
     const h=parseFloat((r.querySelector('.s-h')||{}).value)||0;
     const fprice=parseFloat((r.querySelector('.s-fprice')||{}).value)||0;
     const ftext=((r.querySelector('.s-ftext')||{}).value||'').trim();
     if(!kind && !oldType) return;
-    const k=kind||'fix';   // แถวเก่า (ไม่มี kind · เป็นกระจกติดตายทั้งหมด) → fix = ราคาเท่าเดิม
+    const k=kind||'fix';
     const kd=SUBITEM_KINDS[k]||SUBITEM_KINDS.fix;
     const tagEl=r.querySelector('.s-tag');
     const label=ftext || oldType || (tagEl?tagEl.textContent.trim():'') || kd.label;
-    const sub={kind:k, type:label, w:w, h:h, fprice:fprice, ftext:ftext};
+    // v7B-ปรับ: อ่านฟิลด์เพิ่ม
+    const matChip=r.querySelector('.s-mat-chip.on');
+    const mat=matChip?matChip.dataset.val:'ไม่ใส่';
+    const gridChip=r.querySelector('.s-grid-chip.on');
+    const gridmark=gridChip?gridChip.dataset.val:'ไม่มี';
+    const note=((r.querySelector('.s-note')||{}).value||'').trim();
+    const openCt=parseInt((r.querySelector('.s-open-ct')||{}).textContent)||0;
+    const fixCt=parseInt((r.querySelector('.s-fix-ct')||{}).textContent)||0;
+    const gnh=parseInt((r.querySelector('.s-gnh')||{}).value)||0;
+    const gnv=parseInt((r.querySelector('.s-gnv')||{}).value)||1;
+    const sub={kind:k, type:label, w:w, h:h, fprice:fprice, ftext:ftext, mat:mat, gridmark:gridmark, note:note, openCt:openCt, fixCt:fixCt, gnh:gnh, gnv:gnv};
     sub.price=calcSubItemPrice(sub);
     var pp=r.querySelector('.s-pp'); if(pp) pp.textContent='฿'+Math.round(sub.price).toLocaleString('en-US');
     out.push(sub);
@@ -4204,16 +4299,22 @@ function readSubItems(ch){
   return out;
 }
 // v7B: คิดราคาบานย่อยตามชนิด — ยึด engine (calcUnit) ห้ามแต่งเลข · fprice override > ชนิด > 0
+// v7B-ปรับ: บวก mosq +3,000 / gridmark มี +2,000
 function calcSubItemPrice(sub){
   if(sub && sub.fprice>0) return sub.fprice;                       // ราคาแยก override (custom จำเป็น)
   var kd=SUBITEM_KINDS[(sub&&sub.kind)||'fix']||SUBITEM_KINDS.fix;
   if(!kd.pid) return 0;                                            // custom ไม่กรอกราคา = 0
   var p=PBYID[kd.pid]; if(!p) return 0;
   if(sub.w<=0||sub.h<=0) return 0;
+  var base=0;
   try{
-    var r=calcUnit(p, sub.w, sub.h, 0, 0, 1, {}, false);          // ราคาต่อบานตามชนิดจริง (สี/กระจก default = ตามบานหลัก/ทั้งชุด)
-    return (r&&r.sell>0)?r.sell:0;
-  }catch(e){ return 0; }
+    var r=calcUnit(p, sub.w, sub.h, 0, 0, 1, {}, false);
+    base=(r&&r.sell>0)?r.sell:0;
+  }catch(e){ base=0; }
+  if(sub.mat==='เฟรม'||sub.mat==='จีบ') base+=3000;
+  else if(sub.mat==='อลูทึบ') base+=Math.round(sub.w*sub.h*3500/100)*100;
+  if(sub.gridmark==='มี') base+=2000;
+  return base;
 }
 function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
@@ -4276,8 +4377,9 @@ function buildItemOpts(d){
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
     h+='<label class="opt" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
-    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม (label-only · แสดงในใบ · ไม่กระทบราคา) เปิดซ้าย/ขวา/แยกกลาง
-    h+='<label class="opt" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
+    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม + v7B-ปรับ(19มิ.ย.): แยกกลาง → โชว์ช่องซ้าย/ขวา
+    h+='<label class="opt" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs)_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
+    h+='<div class="fold-split" style="display:none;align-items:center;gap:10px;margin:0 0 6px;padding:6px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;">ซ้าย <input class="o-fleft" type="number" min="1" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" onchange="calcQuote()"> ช่อง &nbsp; ขวา <input class="o-fright" type="number" min="1" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" onchange="calcQuote()"> ช่อง</div>';
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
@@ -4877,7 +4979,7 @@ function readItem(d){
   // Pass2-A: ธรณี บานเปิด
   if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
   // Pass2-A: ธรณี บานเฟี้ยม
-  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; const _fd=d.querySelector('.o-folddir'); optSel.folddir=_fd?_fd.value:''; } // ธง⑥③: ทิศเปิดเฟี้ยม
+  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; const _fd=d.querySelector('.o-folddir'); optSel.folddir=_fd?_fd.value:''; if(optSel.folddir==='เปิดแยกกลาง'){ const _fl=d.querySelector('.o-fleft'); const _fr=d.querySelector('.o-fright'); optSel.fleft=parseInt((_fl?_fl.value:'')||'1'); optSel.fright=parseInt((_fr?_fr.value:'')||'1'); } } // ธง⑥③+v7B: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวา
   // shower config
   if(p.id==='shower'){
     const _st=d.querySelector('.o-shtype'); optSel.shtype=_st?_st.value:'door_fixed';
@@ -5713,8 +5815,8 @@ function genQuote(keepNo){
       const _thfLabel = it.optSel.threshf==='inner' ? 'ธรณีหลังเต่าภายใน' : 'ธรณีกันน้ำภายนอก';
       _parts.push(_thfLabel);
     }
-    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม (แสดงในใบเมื่อระบุ · ไม่กระทบราคา)
-    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ _parts.push(it.optSel.folddir); }
+    // HANDOFF-G6 ธง⑥③+v7B: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวา (แสดงในใบ · ไม่กระทบราคา)
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ var _fdTxt=it.optSel.folddir; if(_fdTxt==='เปิดแยกกลาง' && it.optSel.fleft && it.optSel.fright){ _fdTxt+=' (ซ้าย '+it.optSel.fleft+' ช่อง / ขวา '+it.optSel.fright+' ช่อง)'; } _parts.push(_fdTxt); }
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
       _parts.push('ติดบานเดิม');
@@ -6196,7 +6298,15 @@ function genQuote(keepNo){
     // #2 2026-06-05: บานย่อย — เพิ่มบรรทัด "- {ชื่อบานย่อย}" ใต้บานหลัก (เหนือ "รายละเอียดงาน")
     // ใช้ multiline prodName เดียวกับ glasshouse (qrow แยก \n ได้แล้ว)
     if(it.subItems && it.subItems.length){
-      var subLines = it.subItems.map(function(s){ return '- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':''); }).join('\n');  // โชว์ขนาดบานย่อยด้วย (ตามที่พี่นัทขอ ให้ขนาดครบทุกบรรทัด)
+      var subLines = it.subItems.map(function(s){
+        var ln='- '+s.type+(s.w>0&&s.h>0?' ('+s.w+' × '+s.h+' ม.)':'');
+        var extras=[];
+        if(s.mat && s.mat!=='ไม่ใส่') extras.push(s.mat==='อลูทึบ'?'อลูทึบ':('มุ้ง'+s.mat));
+        if(s.gridmark==='มี') extras.push('คาดตาราง'+(s.gnh||s.gnv?(' '+s.gnh+'×'+s.gnv):''));
+        if(s.note) extras.push(s.note);
+        if(extras.length) ln+=' ['+extras.join(' · ')+']';
+        return ln;
+      }).join('\n');
       prodName += '\n' + subLines;
     }
     // งาน4: แก้ข้อความ inline → แทนบรรทัดแรก (ชื่อสินค้า) ด้วยข้อความที่เซลล์พิมพ์ในใบ
@@ -6833,6 +6943,17 @@ window.addEventListener('load',ckRefresh);
     oh+='</div>';
     // main options (profile)
     if(pf.main) pf.main.forEach(function(op){ oh+=pick(op.label,op.key,op.opts,o[op.key],op.opts[0][0]); });
+    // ① fold-split (แยกกลาง): โชว์ช่องซ้าย/ขวา เมื่อ folddir=แยกกลาง
+    if(pf.main&&pf.main.some(function(op){return op.key==='folddir';})&&o.folddir==='แยกกลาง'){
+      oh+='<div class="row g6r-fold-split">'
+        +'<span class="rl">ซ้าย</span>'
+        +'<input type="number" value="'+(o.fleft||2)+'" min="1" step="1" oninput="G6RsetOpt2(\'fleft\',this.value)" style="width:52px;">'
+        +'<span class="u">ช่อง</span>'
+        +'<span class="rl"> / ขวา</span>'
+        +'<input type="number" value="'+(o.fright||2)+'" min="1" step="1" oninput="G6RsetOpt2(\'fright\',this.value)" style="width:52px;">'
+        +'<span class="u">ช่อง</span>'
+        +'</div>';
+    }
     // B1-G6 (18มิ.ย.): จัดกลุ่ม freq=🔧ใช้บ่อย · more=กล่องพับ · แค่ลำดับ section ไม่แตะ logic/ราคา
     var freq='', more='';
     // มือจับ (ชิปแบรนด์ → กดแล้วเผยตัวเลือกจริง + ราคา engine)
@@ -6986,7 +7107,7 @@ window.addEventListener('load',ckRefresh);
     var _ci=parseInt(o.colorIdx)||0; if(_ci>0){ var _cc=COLORS[_ci]; if(_cc) t.push('สีอลู '+(_cc.quoteName||_cc.n).replace(/[★⚠🔖🔒]/g,'').replace(/^\s*สี/,'').trim()); }  // A2: สีอลูพิเศษ (มีรหัส ตาม quote-item-structure)
     if(o.thresh==='turtle')t.push('ธรณีหลังเต่า');
     if(o.threshf==='inner')t.push('ธรณีภายใน');
-    if(o.folddir&&o.folddir!=='เปิดขวา')t.push(o.folddir);
+    if(o.folddir&&o.folddir!=='เปิดขวา'){var _fdTxt6=o.folddir;if(o.folddir==='แยกกลาง'&&o.fleft&&o.fright)_fdTxt6+=' (ซ้าย '+o.fleft+' / ขวา '+o.fright+' ช่อง)';t.push(_fdTxt6);}
     if(o.closer>0)t.push('โช้คอัพ');
     if(o.awn_mode==='2')t.push('Tilt&Turn');
     if(o.motor)t.push('มอเตอร์ '+o.motor+'กก.');
