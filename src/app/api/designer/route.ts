@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { can } from "@/lib/rbac";
+import { buildSalesResolver } from "@/lib/sales-resolve";
 import type { DesignState } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ type DesignerRow = {
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
   on_hold: boolean;
   on_hold_reason: string | null;
+  queue_entry_id: string | null;
+  estimator: { full_name: string } | null;
   designer_lookup: { name: string } | null; // join on designer_ref → designers(name)
 };
 
@@ -45,7 +48,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, queue_entry_id, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
     // safety cap: เก็บงานล่าสุดสุด 3000 รายการ (กัน payload บานปลายเมื่อสะสมหลายปี)
@@ -115,6 +118,7 @@ export async function GET(req: Request) {
   };
 
   // Build card items — add overdue flag for the frontend
+  const salesOf = await buildSalesResolver(supabase as unknown as { from: (t: string) => any });
   const items = visibleRows.map((r) => ({
     id: r.id,
     job_code: r.job_code,
@@ -122,6 +126,7 @@ export async function GET(req: Request) {
     designer_id: r.designer_id,
     designer_ref: r.designer_ref,
     designer_name: (r.designer_lookup as { name: string } | null)?.name ?? null,
+    sales_name: salesOf({ id: r.id, queue_entry_id: r.queue_entry_id, customer_name: r.customer_name, estimator_name: (r.estimator as { full_name: string } | null)?.full_name ?? null }),
     design_state: r.design_state,
     design_due_date: r.design_due_date,
     design_received_date: r.design_received_date,

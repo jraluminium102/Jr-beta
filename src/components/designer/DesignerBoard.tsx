@@ -33,6 +33,7 @@ type Job = {
   designer_id: string | null;
   designer_ref: number | null;
   designer_name: string | null;
+  sales_name: string | null;   // เซลล์ที่ไปดูหน้างาน
   design_state: DesignState;
   design_due_date: string | null;
   design_received_date: string | null;
@@ -628,6 +629,7 @@ function JobCard({
       </div>
       <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
         {job.customer_name}
+        {job.sales_name && <span className="text-ink-3 font-normal"> · เซลล์ {job.sales_name}</span>}
       </div>
       {/* (0044) ป้ายมัดจำหน้างาน · ด่วน — แสดงเฉพาะงานที่ยังไม่เสร็จแบบ */}
       {job.onsite_deposit && job.design_state !== "DONE" && (

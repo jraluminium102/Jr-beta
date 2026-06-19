@@ -272,9 +272,9 @@ function SentJobCard({
             <Icon name="calendar" size={11} />{thaiDate(item.assess_date)}
           </span>
         )}
-        {item.estimator_name && (
+        {item.sales_name && (
           <span className="inline-flex items-center gap-1">
-            <Icon name="user" size={11} />{item.estimator_name}
+            <Icon name="user" size={11} />{item.sales_name}
           </span>
         )}
       </div>
@@ -382,9 +382,9 @@ function ActiveTableRow({
             มาจากแก้แบบ{item.revise_count > 0 ? ` · รอบ ${item.revise_count}` : ""}
           </div>
         )}
-        {item.estimator_name && (
+        {item.sales_name && (
           <div className="text-xs text-ink-3 mt-0.5 flex items-center gap-1">
-            <Icon name="user" size={10} />{item.estimator_name}
+            <Icon name="user" size={10} />{item.sales_name}
           </div>
         )}
         {item.customer_area && (
@@ -544,8 +544,8 @@ function ActiveMobileCard({
         {item.assess_date && (
           <span className="inline-flex items-center gap-1"><Icon name="calendar" size={11} />ประเมิน {thaiDate(item.assess_date)}</span>
         )}
-        {item.estimator_name && (
-          <span className="inline-flex items-center gap-1"><Icon name="user" size={11} />{item.estimator_name}</span>
+        {item.sales_name && (
+          <span className="inline-flex items-center gap-1"><Icon name="user" size={11} />{item.sales_name}</span>
         )}
         <span className="inline-flex items-center gap-1">
           <Icon name="ruler" size={11} />{designLabel} · {item.designer_name ?? "ยังไม่มอบหมาย"}

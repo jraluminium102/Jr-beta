@@ -4,6 +4,7 @@ import { ok } from "@/lib/bff/response";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/rbac";
 import { CHECKLIST_MARKER } from "@/lib/checklist-marker";
+import { buildSalesResolver } from "@/lib/sales-resolve";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export type ChecklistItem = {
   delivery_due: string | null;
   designer_name: string | null;
   estimator_name: string | null;
+  sales_name: string | null;   // เซลล์ที่ไปดูหน้างาน (estimator หรือ fallback จากคิว)
   quote_sent_date: string | null;
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน · ด่วน
   on_hold: boolean;
@@ -89,7 +91,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -115,6 +117,7 @@ export const GET = withRoute(async () => {
     status: string;
     designer_ref: number | null;
     quote_sent_date: string | null;
+    queue_entry_id: string | null;
     onsite_deposit: boolean; // (0044)
     on_hold: boolean;
     on_hold_reason: string | null;
@@ -123,6 +126,7 @@ export const GET = withRoute(async () => {
   };
 
   const jobRows = (jobs ?? []) as JobRow[];
+  const salesOf = await buildSalesResolver(sb);   // เซลล์ที่ไปดู (estimator → คิว)
 
   if (jobRows.length === 0) {
     return ok<ChecklistData>(
@@ -181,6 +185,7 @@ export const GET = withRoute(async () => {
     // ชื่อนักออกแบบ / เซลล์
     const designer_name  = (j.designer_lookup as DesignerJoin)?.name  ?? null;
     const estimator_name = (j.estimator as EstimatorJoin)?.full_name   ?? null;
+    const sales_name = salesOf({ id: j.id, queue_entry_id: j.queue_entry_id, customer_name: j.customer_name, estimator_name });
 
     // งาน on_hold → ใส่ held ข้ามทุก stage
     if (j.on_hold) {
@@ -204,6 +209,7 @@ export const GET = withRoute(async () => {
         delivery_due,
         designer_name,
         estimator_name,
+        sales_name,
         quote_sent_date: j.quote_sent_date,
         onsite_deposit: j.onsite_deposit ?? false,
         revised: j.design_state === "REVISING",
@@ -262,6 +268,7 @@ export const GET = withRoute(async () => {
       delivery_due,
       designer_name,
       estimator_name,
+      sales_name,
       quote_sent_date: j.quote_sent_date,
       onsite_deposit: j.onsite_deposit ?? false, // (0044)
       revised,
