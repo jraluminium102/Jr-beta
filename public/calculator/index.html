@@ -2279,7 +2279,7 @@ function qiRenderG3(d){
     h += '<button type="button" class="chip'+(!_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'0\')">ไม่เลื่อน</button>';
     h += '</div>';
   }
-  if(['wall_ext','wall_int'].includes(curId)){
+  if(['isowall','wall_ext','wall_int'].includes(curId)){
     var _insulOn = d.dataset.qiG3insul !== '0';
     h += '<div class="qi-lbl">ฉนวน</div><div class="qi-chips">';
     h += '<button type="button" class="chip'+(_insulOn?' on':'')+'" onclick="qiG3SetInsul(this,\'1\')">มีฉนวน <span style="font-size:11px;opacity:.8">+600/ตร.ม.</span></button>';
@@ -2308,7 +2308,7 @@ function qiCalcG3(d){
   var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
   var H=parseFloat((d.querySelector('.qi-h')||{}).value)||0;
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
-  var _insulOn=['wall_ext','wall_int'].includes(id) ? (d.dataset.qiG3insul!=='0') : false;
+  var _insulOn=['isowall','wall_ext','wall_int'].includes(id) ? (d.dataset.qiG3insul!=='0') : false;
   var _slideOn=(p&&p.optSlide) ? (d.dataset.qiG3slide==='1') : false;
   var u=calcUnit(p,W,H,0,0,1,{insul:_insulOn,slide:_slideOn,spanels:2,smotorqty:1},false);
   var pc=d.querySelector('.qi-pc-body'); if(!pc)return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
