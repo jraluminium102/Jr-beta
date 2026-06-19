@@ -1027,6 +1027,8 @@ function colorSwStyle(idx){ var s=COLOR_SWATCH[idx]||'#ccc'; return (/gradient/.
 function _colorDrillSel(el){ var dr=el.closest('.color-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s && s.tagName!=='SELECT') s=s.previousElementSibling; return s; }
 function colorDrillRender(sel){
   if(!sel) return;
+  // G1 Full mode: สีอลูใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
+  if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; } }
   var present={}; // COLORS index → label (เฉพาะ option ที่มีจริงหลัง filter series)
   Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
   var curIdx=parseInt(sel.value)||0;
@@ -1077,6 +1079,8 @@ function glQuoteName(gi, colorPick){ var g=GLASS[gi]; if(!g)return ''; var n=g.n
 function _glassDrillSel(el){ var dr=el.closest('.glass-drill'); if(!dr)return null; var s=dr.previousElementSibling; while(s && s.tagName!=='SELECT') s=s.previousElementSibling; return s; }
 function glassDrillRender(sel){
   if(!sel) return;
+  // G1 Full mode: กระจกใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
+  if(sel.classList.contains('i-glass')){ var _ch2=sel.closest('.ch'); if(_ch2 && (_ch2.querySelector('.i-group')||{}).value==='1'){ sel.style.display=''; var _w2=sel.nextSibling; if(_w2&&_w2.classList&&_w2.classList.contains('glass-drill')) _w2.parentNode.removeChild(_w2); return; } }
   var present={}; Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=true; });
   var curIdx=parseInt(sel.value)||0;
   var actCat=sel.dataset.glCat || glassCatOf(curIdx);
