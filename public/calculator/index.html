@@ -4034,7 +4034,7 @@ function mosqOpenStylePick(btn){
 function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod,.qi-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w,.qi-w')||{}).value, h=(ch.querySelector('.i-h,.qi-h')||{}).value; var ty=((ch.querySelector('.i-type,.qi-type')||{}).value||'')==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
 function setChCollapsed(ch, on){ if(!ch)return; ch.classList.toggle('collapsed', !!on); var sum=ch.querySelector('.ch-summary'); if(sum) sum.textContent = on ? ('· '+(chSummary(ch)||'รายการ')) : ''; }
 function toggleCh(ch){ setChCollapsed(ch, !ch.classList.contains('collapsed')); }
-function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach(function(ch){ if(ch!==active){ if((ch.querySelector('.i-group')||{}).value==='6') return; /* G1G6-G: การ์ดด้าน GH ไม่พับอัตโนมัติ (pilot) */ setChCollapsed(ch, true); } }); setChCollapsed(active, false); }
+function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach(function(ch){ if(ch!==active){ setChCollapsed(ch, true); } }); setChCollapsed(active, false); }
 function collapseOthersQuick(active){ document.querySelectorAll('#q-items .ch').forEach(function(ch){ setChCollapsed(ch, ch!==active); }); }
 // UX: ไล่เลขรายการใหม่ตามลำดับจริง (ลบแล้วเพิ่มไม่ข้ามเลข) — quote=ส่วนที่ · quick=ชุดที่
 function renumberItems(){
