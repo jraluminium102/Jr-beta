@@ -3905,7 +3905,7 @@ function famSelectorHTML(p,grp,famOther){
     var _curG1=g1GrpOfCat(cur);
     h+='<div class="chip-grid cg3">';
     G1GROUPS.forEach(function(g){ if(!g1AvailCats(g.k).length)return; h+='<button type="button" class="chip'+(g.k===_curG1&&!famOther?' on':'')+'" data-g1grp="'+g.k+'" onclick="famPickG1Grp(this)">'+g.ic+' '+g.n+'</button>'; });
-    h+='<button type="button" class="chip'+(famOther?' on':'')+'" onclick="famPickOther(this)">อื่นๆ ▾</button></div>';
+    h+='</div>'; // R3.13 (19มิ.ย.): ตัดปุ่ม "อื่นๆ ▾" ซ้ำ — กลุ่ม "⋯ อื่นๆ/พิเศษ" ครอบบานพิเศษครบแล้ว (famRestCats('1') ว่าง · ปุ่มเดิมกดแล้วโชว์ว่าง)
     if(!famOther){ var _gc=g1AvailCats(_curG1); if(_gc.length>1){ h+='<div class="chip-grid" style="margin-top:6px;">';
       _gc.forEach(function(c){ h+='<button type="button" class="chip'+(c===cur?' on':'')+'" data-cat="'+c+'" onclick="famPickCat(this)">'+(FAM_LABEL[c]||c)+'</button>'; }); h+='</div>'; } }
     h+='</label>';
@@ -4152,33 +4152,34 @@ function addItem(container){
      /* ALLG 2.4: จำนวนบาน+ชุด ย้ายขึ้นแถวขนาด (stepper) ด้านบนแล้ว */
      `<div class="full i-override-wrap" style="display:none;"><label>ราคากำหนดเอง (บาท · ใช้เฉพาะสินค้าที่กรอกราคาเอง)</label><input class="i-override" type="number" min="0" step="100" placeholder="ราคาต่อชุด (บาท)"></div>`+
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
+     /* R3.13 (19มิ.ย. · มติพี่นัท): จัดลำดับ G1 — ออปชั่น(ล็อก/คาดตาราง/อลูทึบ) + ผสมบาน ขึ้นบน · OPTION ทางเลือกลูกค้า + หมายเหตุ ลงล่าง (ใช้น้อยกว่า) · ไม่ใช้ JS ย้าย (กัน orphan) แค่สลับ template */
+     `<div class="full"><details class="optbox" style="margin:0;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details></div>`+
+     `<div class="full subitem-wrap"><div style="font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;">ผสมบาน — เพิ่มบานในชุดเดียว <span style="font-weight:400;color:#6b7280;font-size:11px;">(คิดราคาตามชนิด · กรอกขนาดต่อชิ้น · สี/กระจก ตามบานหลัก)</span></div>`+
+       `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:2px 0;">บานทำงาน</div>`+
+       `<div class="subkind-chips chip-group chip-sm">`+
+         `<button type="button" class="chip" onclick="addSub(this,'open','บานเปิด',0.9,2.2)">＋ บานเปิด</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'slide','บานเลื่อน',1.8,2.2)">＋ บานเลื่อน</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'fold','บานเฟี้ยม',2.4,2.2)">＋ บานเฟี้ยม</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'awning','บานกระทุ้ง',0.6,0.6)">＋ บานกระทุ้ง</button>`+
+       `</div>`+
+       `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:5px 0 2px;">ติดตาย / ช่องแสง</div>`+
+       `<div class="subkind-chips chip-group chip-sm">`+
+         `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงบนติดตาย',1.2,0.4)">＋ ช่องแสงบน</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'fix','บานข้างติดตาย',0.6,2.2)">＋ บานข้างติดตาย</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงติดตาย',1.0,0.5)">＋ ช่องแสงติดตาย</button>`+
+         `<button type="button" class="chip" onclick="addSub(this,'custom','อื่นๆ',1.0,1.0)">＋ อื่นๆ (กรอกราคา)</button>`+
+       `</div>`+
+       `<div class="subitem-list"></div></div>`+
      `<div class="full note-opt-group">`+
        `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
        `<div class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;"><div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:5px;">＋ OPTION ทางเลือกลูกค้า <span style="font-weight:400;color:var(--muted);font-size:11px;">(เปลี่ยนวัสดุ คิดราคาให้ · กดได้เลย)</span></div><div class="oc-catchips chip-group chip-sm"></div><div class="oc-list" style="margin-top:6px;"></div></div>`+
        remarkSelectHTML()+
        `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
-       `<details class="optbox" style="margin-top:6px;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details>`+
        `<input type="hidden" class="o-optdelta" value="0">`+
        /* E2: ลบ checkbox "คิดราคาเหมา" + ช่องราคาเหมา — ซ้ำซ้อน · ใช้แก้ราคาตรงในช่องราคา/หน่วย (โหมดแก้ไข ✎) แทน */
      `</div>`+
    `</div>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
-   `<div class="subitem-wrap"><div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px;">ผสมบาน — เพิ่มบานในชุดเดียว <span style="font-weight:400;color:#6b7280;font-size:11px;">(คิดราคาตามชนิด · กรอกขนาดต่อชิ้น · สี/กระจก ตามบานหลัก)</span></div>`+
-     `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:2px 0;">บานทำงาน</div>`+
-     `<div class="subkind-chips chip-group chip-sm">`+
-       `<button type="button" class="chip" onclick="addSub(this,'open','บานเปิด',0.9,2.2)">＋ บานเปิด</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'slide','บานเลื่อน',1.8,2.2)">＋ บานเลื่อน</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'fold','บานเฟี้ยม',2.4,2.2)">＋ บานเฟี้ยม</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'awning','บานกระทุ้ง',0.6,0.6)">＋ บานกระทุ้ง</button>`+
-     `</div>`+
-     `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:5px 0 2px;">ติดตาย / ช่องแสง</div>`+
-     `<div class="subkind-chips chip-group chip-sm">`+
-       `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงบนติดตาย',1.2,0.4)">＋ ช่องแสงบน</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'fix','บานข้างติดตาย',0.6,2.2)">＋ บานข้างติดตาย</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงติดตาย',1.0,0.5)">＋ ช่องแสงติดตาย</button>`+
-       `<button type="button" class="chip" onclick="addSub(this,'custom','อื่นๆ',1.0,1.0)">＋ อื่นๆ (กรอกราคา)</button>`+
-     `</div>`+
-     `<div class="subitem-list"></div></div>`+
    `<div class="g1-rare-section" style="display:none;margin-top:4px;border:1px dashed #D1D5DB;border-radius:8px;padding:6px 8px;"></div>`+
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
    `<div class="chmsg i-msg"></div>`;
