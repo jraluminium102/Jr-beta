@@ -6611,9 +6611,22 @@ function genQuote(keepNo){
       _qProd=_pl.slice(1).join('\n'); // เหลือบานย่อย (ถ้ามี) เป็น bullet ใต้หัว
       _qSz='';
     }
+    // R3.21 (มติพี่นัท 20มิ.ย.): ชุดมีหลายบาน (ผสมบาน) → อุปกรณ์ของบานหลัก ต่อท้ายชื่อบานหลัก (ไม่ลอยท้ายบานย่อย งงว่าของบานไหน)
+    //   ต่อท้าย = ทุก work ยกเว้น ครอบวงกบ/ฝังราง/รื้อ/งานเสริม (งานระดับชุด → คงเป็นบรรทัด)
+    var _workForDet = d.work;
+    if(it.subItems && it.subItems.length && d.work && d.work.length){
+      var _ew=((it.optSel&&it.optSel.extrawork)||'').trim();
+      var _banaAcc=[], _setWork=[];
+      d.work.forEach(function(L){ var t=(L||'').trim();
+        if(/ครอบวงกบ/.test(t) || t==='ฝังรางยู' || t==='รวมรื้อของเดิม' || (_ew&&t===_ew)) _setWork.push(L);
+        else if(t) _banaAcc.push(t);
+      });
+      if(_banaAcc.length) _qHdr += ' · ' + _banaAcc.join(' · ');
+      _workForDet = _setWork;
+    }
     // G1 ใบ 5 บล็อก: ถ้า itemDetail แยก work/spec → ประกอบ marker ###รายละเอียด### (qrow render รายการ→OPTION→หมายเหตุ→รายละเอียด) · อื่น=flat det
     let _qDet=d.det;
-    if(d.work && d.spec && (d.work.length||d.spec.length)){ _qDet=d.work.join('\n')+'\n###รายละเอียด###\n'+d.spec.join('\n'); }
+    if(d.work && d.spec && (d.work.length||d.spec.length)){ _qDet=_workForDet.join('\n')+(_workForDet.length?'\n':'')+'###รายละเอียด###\n'+d.spec.join('\n'); }
     // G2-12: ต่อ gateOptNote (OPTION ลายไม้) เข้า note → qrow render บล็อก OPTION (แดง) ระหว่างรายการ↔รายละเอียด
     const _itemNote = [it.note, d.gateOptNote].filter(Boolean).join('\n');
     rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, (it.div?it.div.dataset.id:''));
