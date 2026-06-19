@@ -2278,6 +2278,18 @@ function qiRenderG3(d){
     h += '<button type="button" class="chip'+(_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'1\')">ทำเลื่อน <span style="font-size:11px;opacity:.8">+ชุดเลื่อน+มอเตอร์</span></button>';
     h += '<button type="button" class="chip'+(!_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'0\')">ไม่เลื่อน</button>';
     h += '</div>';
+    if(_slideOn){
+      var _panels=Math.max(2,parseInt(d.dataset.qiG3panels)||2);
+      h += '<div class="qi-lbl">จำนวนแผงเลื่อน</div>';
+      h += '<div class="qi-row" style="align-items:center;gap:8px;">';
+      h += '<div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;">';
+      h += '<button type="button" onclick="qiG3StepPanels(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button>';
+      h += '<input class="qi-g3panels" type="number" step="1" min="2" value="'+_panels+'" style="width:44px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="this.closest(\'.ch\').dataset.qiG3panels=this.value;calcQuickAll()">';
+      h += '<button type="button" onclick="qiG3StepPanels(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button>';
+      h += '</div>';
+      h += '<span style="font-size:12px;color:var(--muted)">แผง (ขั้นต่ำ 2)</span>';
+      h += '</div>';
+    }
   }
   if(['isowall','wall_ext','wall_int'].includes(curId)){
     var _insulOn = d.dataset.qiG3insul !== '0';
@@ -2303,6 +2315,7 @@ function qiG3PickProd(btn,id){
 }
 function qiG3SetInsul(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3insul=String(v); qiRenderG3(d); }
 function qiG3SetSlide(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3slide=String(v); qiRenderG3(d); }
+function qiG3StepPanels(btn,delta){ var inp=btn.parentNode.querySelector('.qi-g3panels'); if(!inp)return; var v=Math.max(2,(parseInt(inp.value)||2)+delta); inp.value=v; btn.closest('.ch').dataset.qiG3panels=String(v); calcQuickAll(); }
 function qiCalcG3(d){
   var id=d.dataset.qiProd||'imp7'; var p=PBYID[id]; if(!p){ return {sell:0,a:0,msgs:[]}; }
   var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
@@ -2310,7 +2323,8 @@ function qiCalcG3(d){
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
   var _insulOn=['isowall','wall_ext','wall_int'].includes(id) ? (d.dataset.qiG3insul!=='0') : false;
   var _slideOn=(p&&p.optSlide) ? (d.dataset.qiG3slide==='1') : false;
-  var u=calcUnit(p,W,H,0,0,1,{insul:_insulOn,slide:_slideOn,spanels:2,smotorqty:1},false);
+  var _panels=_slideOn ? Math.max(2,parseInt((d.querySelector('.qi-g3panels')||{}).value)||parseInt(d.dataset.qiG3panels)||2) : 2;
+  var u=calcUnit(p,W,H,0,0,1,{insul:_insulOn,slide:_slideOn,spanels:_panels,smotorqty:1},false);
   var pc=d.querySelector('.qi-pc-body'); if(!pc)return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
   var bd='<div class="qi-pc-line" style="font-weight:700;font-size:12.5px;"><span class="n" style="color:#1F2937;">'+p.name+'</span></div>';
   bd += qiPcRow('พื้นที่',(u.a||W*H).toFixed(2)+' ตร.ม.');
@@ -2628,7 +2642,7 @@ function qiCalcG6(d){
    ใช้สูตรจากดราฟ (verify กับ engine แล้ว)
    TODO: เปลี่ยนเป็น calcUnit จริงเมื่อ optSel ชัดเจน
    ================================================================ */
-var QIG2_BANGTA_DATA=[["rn1",3300,"1x5 cm.","1cm. 5cm.","ไม่โครง"],["rn2",5200,"1x5 cm.","1cm. 5cm.","รวมโครง"],["rn3",4300,"1x5 cm.","1cm. 3cm.","ไม่โครง"],["rn4",6000,"1x5 cm.","1cm. 3cm.","รวมโครง"],["rn5",5000,"1x5 cm.","1cm. 2cm.","ไม่โครง"],["rn6",7200,"1x5 cm.","1cm. 2cm.","รวมโครง"],["rn7",2800,"1x5 cm.","5cm. 5cm.","ไม่โครง"],["rn8",4500,"1x5 cm.","5cm. 5cm.","รวมโครง"],["rn9",3200,"1x5 cm.","5cm. 3cm.","ไม่โครง"],["rn10",4800,"1x5 cm.","5cm. 3cm.","รวมโครง"],["rn11",3300,"1x5 cm.","5cm. 2cm.","ไม่โครง"],["rn12",5100,"1x5 cm.","5cm. 2cm.","รวมโครง"],["rn13",3700,"1\"x1.6\"","1\" 5cm.","ไม่โครง"],["rn14",5300,"1\"x1.6\"","1\" 5cm.","รวมโครง"],["rn15",4500,"1\"x1.6\"","1\" 3cm.","ไม่โครง"],["rn16",6400,"1\"x1.6\"","1\" 3cm.","รวมโครง"],["rn17",4800,"1\"x1.6\"","1\" 2cm.","ไม่โครง"],["rn18",6900,"1\"x1.6\"","1\" 2cm.","รวมโครง"],["rn19",3200,"1\"x1\"","1\" 5cm.","ไม่โครง"],["rn20",4700,"1\"x1\"","1\" 5cm.","รวมโครง"],["rn21",3700,"1\"x1\"","1\" 3cm.","ไม่โครง"],["rn22",5400,"1\"x1\"","1\" 3cm.","รวมโครง"],["rn23",3900,"1\"x1\"","1\" 2cm.","ไม่โครง"],["rn24",5600,"1\"x1\"","1\" 2cm.","รวมโครง"],["rn25",3300,"1\"x1½\"","1\" 5cm.","ไม่โครง"],["rn26",5200,"1\"x1½\"","1\" 5cm.","รวมโครง"],["rn27",4000,"1\"x1½\"","1\" 3cm.","ไม่โครง"],["rn28",6100,"1\"x1½\"","1\" 3cm.","รวมโครง"],["rn29",4300,"1\"x1½\"","1\" 2cm.","ไม่โครง"],["rn30",6500,"1\"x1½\"","1\" 2cm.","รวมโครง"],["rn43",5500,"1\"x4\"","1\" 5cm.","ไม่โครง"],["rn44",8100,"1\"x4\"","1\" 5cm.","รวมโครง"],["rn49",4000,"1\"x4\"","4\" 5cm.","ไม่โครง"],["rn50",6000,"1\"x4\"","4\" 5cm.","รวมโครง"],["rn37",3200,"1\"x1.6\"","1.6\" 5cm.","ไม่โครง"],["rn38",4900,"1\"x1.6\"","1.6\" 5cm.","รวมโครง"],["rn39",3700,"1\"x1.6\"","1.6\" 3cm.","ไม่โครง"],["rn40",5300,"1\"x1.6\"","1.6\" 3cm.","รวมโครง"],["rn41",4000,"1\"x1.6\"","1.6\" 2cm.","ไม่โครง"],["rn42",5800,"1\"x1.6\"","1.6\" 2cm.","รวมโครง"]];
+var QIG2_BANGTA_DATA=[["rn1",3300,"1x5 cm.","1cm. 5cm.","ไม่โครง"],["rn2",5200,"1x5 cm.","1cm. 5cm.","รวมโครง"],["rn3",4300,"1x5 cm.","1cm. 3cm.","ไม่โครง"],["rn4",6000,"1x5 cm.","1cm. 3cm.","รวมโครง"],["rn5",5000,"1x5 cm.","1cm. 2cm.","ไม่โครง"],["rn6",7200,"1x5 cm.","1cm. 2cm.","รวมโครง"],["rn7",2800,"1x5 cm.","5cm. 5cm.","ไม่โครง"],["rn8",4500,"1x5 cm.","5cm. 5cm.","รวมโครง"],["rn9",3200,"1x5 cm.","5cm. 3cm.","ไม่โครง"],["rn10",4800,"1x5 cm.","5cm. 3cm.","รวมโครง"],["rn11",3300,"1x5 cm.","5cm. 2cm.","ไม่โครง"],["rn12",5100,"1x5 cm.","5cm. 2cm.","รวมโครง"],["rn13",3700,"1\"x1.6\"","1\" 5cm.","ไม่โครง"],["rn14",5300,"1\"x1.6\"","1\" 5cm.","รวมโครง"],["rn15",4500,"1\"x1.6\"","1\" 3cm.","ไม่โครง"],["rn16",6400,"1\"x1.6\"","1\" 3cm.","รวมโครง"],["rn17",4800,"1\"x1.6\"","1\" 2cm.","ไม่โครง"],["rn18",6900,"1\"x1.6\"","1\" 2cm.","รวมโครง"],["rn19",3200,"1\"x1\"","1\" 5cm.","ไม่โครง"],["rn20",4700,"1\"x1\"","1\" 5cm.","รวมโครง"],["rn21",3700,"1\"x1\"","1\" 3cm.","ไม่โครง"],["rn22",5400,"1\"x1\"","1\" 3cm.","รวมโครง"],["rn23",3900,"1\"x1\"","1\" 2cm.","ไม่โครง"],["rn24",5600,"1\"x1\"","1\" 2cm.","รวมโครง"],["rn25",3300,"1\"x1½\"","1\" 5cm.","ไม่โครง"],["rn26",5200,"1\"x1½\"","1\" 5cm.","รวมโครง"],["rn27",4000,"1\"x1½\"","1\" 3cm.","ไม่โครง"],["rn28",6100,"1\"x1½\"","1\" 3cm.","รวมโครง"],["rn29",4300,"1\"x1½\"","1\" 2cm.","ไม่โครง"],["rn30",6500,"1\"x1½\"","1\" 2cm.","รวมโครง"],["rn31",3300,"1\"x1½\"","1½\" 5cm.","ไม่โครง"],["rn32",5200,"1\"x1½\"","1½\" 5cm.","รวมโครง"],["rn33",3700,"1\"x1½\"","1½\" 3cm.","ไม่โครง"],["rn34",5600,"1\"x1½\"","1½\" 3cm.","รวมโครง"],["rn35",3700,"1\"x1½\"","1½\" 2cm.","ไม่โครง"],["rn36",5600,"1\"x1½\"","1½\" 2cm.","รวมโครง"],["rn43",5500,"1\"x4\"","1\" 5cm.","ไม่โครง"],["rn44",8100,"1\"x4\"","1\" 5cm.","รวมโครง"],["rn49",4000,"1\"x4\"","4\" 5cm.","ไม่โครง"],["rn50",6000,"1\"x4\"","4\" 5cm.","รวมโครง"],["rn37",3200,"1\"x1.6\"","1.6\" 5cm.","ไม่โครง"],["rn38",4900,"1\"x1.6\"","1.6\" 5cm.","รวมโครง"],["rn39",3700,"1\"x1.6\"","1.6\" 3cm.","ไม่โครง"],["rn40",5300,"1\"x1.6\"","1.6\" 3cm.","รวมโครง"],["rn41",4000,"1\"x1.6\"","1.6\" 2cm.","ไม่โครง"],["rn42",5800,"1\"x1.6\"","1.6\" 2cm.","รวมโครง"]];
 var QIG2_GLEED=[["rn83",3600,"1\"","ไม่โครง"],["rn84",5200,"1\"","รวมโครง"],["rn85",4900,"1.6\"","ไม่โครง"],["rn86",6900,"1.6\"","รวมโครง"],["rn87",5300,"4\"","ไม่โครง"],["rn88",7700,"4\"","รวมโครง"]];
 var QIG2_IMP_RATES={IMP1:[[0,5,10700],[5,10,10000],[10,15,9700],[15,9999,9400]],IMP2:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],IMP3:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],IMP4:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],IMP5:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]],IMP6:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]]};
 var QIG2_RAILNAME={imp1:"เฉียง หมุด",imp2:"เฉียง ยู+ครอบอลู",imp3:"เฉียง เสาตั้ง+ราวบน",imp4:"ตรง หมุด",imp5:"ตรง ยู+ครอบอลู",imp6:"ตรง เสาตั้ง+ราวบน"};
