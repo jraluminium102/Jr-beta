@@ -2271,6 +2271,21 @@ function qiRenderG3(d){
     h += '<button type="button" class="chip'+(id===curId?' on':'')+'" onclick="qiG3PickProd(this,\''+id+'\')">'+label+'</button>';
   });
   h += '</div>';
+  var _curP=PBYID[curId];
+  if(_curP && _curP.optSlide){
+    var _slideOn = d.dataset.qiG3slide === '1';
+    h += '<div class="qi-lbl">หลังคาเลื่อน</div><div class="qi-chips">';
+    h += '<button type="button" class="chip'+(_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'1\')">ทำเลื่อน <span style="font-size:11px;opacity:.8">+ชุดเลื่อน+มอเตอร์</span></button>';
+    h += '<button type="button" class="chip'+(!_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'0\')">ไม่เลื่อน</button>';
+    h += '</div>';
+  }
+  if(['wall_ext','wall_int'].includes(curId)){
+    var _insulOn = d.dataset.qiG3insul !== '0';
+    h += '<div class="qi-lbl">ฉนวน</div><div class="qi-chips">';
+    h += '<button type="button" class="chip'+(_insulOn?' on':'')+'" onclick="qiG3SetInsul(this,\'1\')">มีฉนวน <span style="font-size:11px;opacity:.8">+600/ตร.ม.</span></button>';
+    h += '<button type="button" class="chip'+(!_insulOn?' on':'')+'" onclick="qiG3SetInsul(this,\'0\')">ไม่มีฉนวน</button>';
+    h += '</div>';
+  }
   h += '<div class="qi-lbl">ขนาด <span class="hint">(กว้าง × ยาว)</span></div>';
   h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ยาว (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน · ฝ้าขั้นต่ำ 10 ตร.ม.</div></div></div>';
@@ -2286,12 +2301,16 @@ function qiG3PickCat(btn,cat){
 function qiG3PickProd(btn,id){
   var d=btn.closest('.ch'); d.dataset.qiProd=id; qiSaveWH(d); qiRenderG3(d);
 }
+function qiG3SetInsul(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3insul=String(v); qiRenderG3(d); }
+function qiG3SetSlide(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3slide=String(v); qiRenderG3(d); }
 function qiCalcG3(d){
   var id=d.dataset.qiProd||'imp7'; var p=PBYID[id]; if(!p){ return {sell:0,a:0,msgs:[]}; }
   var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
   var H=parseFloat((d.querySelector('.qi-h')||{}).value)||0;
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
-  var u=calcUnit(p,W,H,0,0,1,{},false);
+  var _insulOn=['wall_ext','wall_int'].includes(id) ? (d.dataset.qiG3insul!=='0') : false;
+  var _slideOn=(p&&p.optSlide) ? (d.dataset.qiG3slide==='1') : false;
+  var u=calcUnit(p,W,H,0,0,1,{insul:_insulOn,slide:_slideOn,spanels:2,smotorqty:1},false);
   var pc=d.querySelector('.qi-pc-body'); if(!pc)return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
   var bd='<div class="qi-pc-line" style="font-weight:700;font-size:12.5px;"><span class="n" style="color:#1F2937;">'+p.name+'</span></div>';
   bd += qiPcRow('พื้นที่',(u.a||W*H).toFixed(2)+' ตร.ม.');
@@ -2677,14 +2696,14 @@ function qiRenderG2(d){
     h += '</div>';
     if(rtype==='box'){
       h += '<div class="qi-lbl">ขนาดกล่อง</div><div class="qi-chips">';
-      QIG2_BOX_ORDER.filter(function(b){return QIG2_RTREE[b];}).forEach(function(box){ h += '<button type="button" class="chip'+(rbox===box?' on':'')+'" onclick="qiG2PickBox(this,\''+box+'\')">'+box+'</button>'; });
+      QIG2_BOX_ORDER.filter(function(b){return QIG2_RTREE[b];}).forEach(function(box){ h += '<button type="button" class="chip'+(rbox===box?' on':'')+'" data-v="'+box.replace(/"/g,'&quot;')+'" onclick="qiG2PickBox(this,this.dataset.v)">'+box+'</button>'; });
       h += '</div>';
       if(rbox&&QIG2_RTREE[rbox]){
         var faces=Object.keys(QIG2_RTREE[rbox]);
-        h += '<div class="qi-lbl">หน้าโชว์</div><div class="qi-chips">'; faces.forEach(function(f){ h += '<button type="button" class="chip'+(rface===f?' on':'')+'" onclick="qiG2PickFace(this,\''+f.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+f+'</button>'; }); h += '</div>';
+        h += '<div class="qi-lbl">หน้าโชว์</div><div class="qi-chips">'; faces.forEach(function(f){ h += '<button type="button" class="chip'+(rface===f?' on':'')+'" data-v="'+f.replace(/"/g,'&quot;')+'" onclick="qiG2PickFace(this,this.dataset.v)">'+f+'</button>'; }); h += '</div>';
         if(rface&&QIG2_RTREE[rbox][rface]){
           var gaps=Object.keys(QIG2_RTREE[rbox][rface]);
-          h += '<div class="qi-lbl">ระยะห่าง</div><div class="qi-chips">'; gaps.forEach(function(g){ h += '<button type="button" class="chip'+(rgap===g?' on':'')+'" onclick="qiG2PickGap(this,\''+g.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+g+'</button>'; }); h += '</div>';
+          h += '<div class="qi-lbl">ระยะห่าง</div><div class="qi-chips">'; gaps.forEach(function(g){ h += '<button type="button" class="chip'+(rgap===g?' on':'')+'" data-v="'+g.replace(/"/g,'&quot;')+'" onclick="qiG2PickGap(this,this.dataset.v)">'+g+'</button>'; }); h += '</div>';
           if(rgap&&QIG2_RTREE[rbox][rface][rgap]){
             var frames=Object.keys(QIG2_RTREE[rbox][rface][rgap]);
             h += '<div class="qi-lbl">โครง</div><div class="qi-chips">'; frames.forEach(function(f){ h += '<button type="button" class="chip'+(rframe===f?' on':'')+'" onclick="qiG2PickFrame(this,\''+f.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+f+'</button>'; }); h += '</div>';
