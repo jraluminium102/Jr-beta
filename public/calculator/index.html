@@ -196,7 +196,7 @@
   .qi-lbl .hint{ font-weight:400; color:#9CA3AF; font-size:11px; }
   .qi-chips{ display:flex; flex-wrap:wrap; gap:6px; }
   .qi-chips .chip{ min-height:42px; font-size:12px; padding:6px 10px; }
-  .qi-row{ display:grid; grid-template-columns:1fr 1fr 90px; gap:8px; }
+  .qi-row{ display:grid; grid-template-columns:1fr 1fr 110px; gap:8px; }
   .qi-fld label,.qi-fld span{ font-size:11px; color:var(--muted); font-weight:700; display:block; margin-bottom:4px; }
   .qi-fld input{ width:100%; height:44px; border:1.5px solid var(--line); border-radius:9px; padding:0 10px; font-size:15px; font-family:inherit; text-align:center; font-variant-numeric:tabular-nums; background:#fff; }
   .qi-fld input:focus{ outline:none; border-color:var(--red); }
@@ -2031,8 +2031,14 @@ function syncGlobalColorGlass(){
   var ggSel=document.getElementById('global-glass');
   if(!gcSel||!ggSel) return;
   var colorVal=gcSel.value, glassVal=ggSel.value;
+  // G6 setbox: อัปเดต room-level selector → syncGHColor cascade ลงทุกบาน + re-render chips
+  document.querySelectorAll('#items .setbox .gh-set-color-row').forEach(function(row){
+    var cs=row.querySelector('.gh-color-sel');
+    var gs=row.querySelector('.gh-glass-sel');
+    if(cs){ cs.value=colorVal; cs.dispatchEvent(new Event('change',{bubbles:true})); try{colorDrillRender(cs);}catch(e){} }
+    if(gs){ gs.value=glassVal; gs.dispatchEvent(new Event('change',{bubbles:true})); try{glassDrillRender(gs);}catch(e){} }
+  });
   document.querySelectorAll('#items .ch').forEach(function(ch){
-    // GH master (group6 ใน setbox ที่มี .gh-set-color-row) → ให้ GH master win ไม่แตะ
     var grp=(ch.querySelector('.i-group')||{}).value;
     var sb=ch.closest('.setbox');
     if(grp==='6' && sb && sb.querySelector('.gh-set-color-row')) return;
@@ -2064,7 +2070,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 /* ---- QUICK ---- */
 let qSeq=0;
 // ALLG-v2: คิดเร็ว = ปุ่มเหมือนหน้าใบเสนอราคา (กลุ่ม 7 ชิป + รูปแบบบาน common chips + อื่นๆ ▾ dropdown) · ออปชั่นแค่สี/กระจก
-var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 หลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
+var QI_GROUPS=[['1','🪟 บาน'],['2','🚪 ระแนง·ราว'],['3','🏠 งานหลังคา'],['4','📦 ตู้'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้อง'],['7','🎐 ม่านซิป']];
 function qiGroupChips(cur){ return '<div class="qi-groupchips">'+QI_GROUPS.map(function(g){return '<button type="button" class="chip'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'" onclick="qiPickGroup(this)">'+g[1]+'</button>';}).join('')+'</div>'; }
 // ALLG-v2: คิดเร็ว กลุ่มที่ไม่มี FAM_CATS (3 หลังคา/ฝ้า · 5 มุ้ง) → ใช้ cat เป็นปุ่มแทน dropdown เปล่า
 var QI_EXTRA_CATS={'3':['หลังคา','ฝ้า-ผนัง'],'5':['มุ้ง']};
@@ -2217,7 +2223,7 @@ function qiPcTot(n,a){ return '<div class="qi-pc-tot"><span class="n">'+n+'</spa
 function qiChip(label,on,cls,onclick){ return '<button type="button" class="chip'+(cls?' '+cls:'')+(on?' on':'')+'" onclick="'+onclick+'">'+label+'</button>'; }
 function qiChips(opts,cur,cb,sm){
   return '<div class="qi-chips">'+ opts.map(function(o){ var v=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; return '<button type="button" class="chip'+(sm?' chip-sm':'')+(String(v)===String(cur)?' on':'')+'" onclick="'+cb+'(\''+String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\',' + 'this)">'+t+'</button>'; }).join('') + '</div>'; }
-function qiSzRow(d){ return '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="qiDispCalc(this)"></div><div class="qi-fld"><label>ยาว/ลึก (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="qiDispCalc(this)"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="qiDispCalc(this)"></div></div>'; }
+function qiSzRow(d){ return '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="qiDispCalc(this)"></div><div class="qi-fld"><label>ยาว/ลึก (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="qiDispCalc(this)"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="qiDispCalc(this)"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>'; }
 function qiDispCalc(el){ calcQuickAll(); }
 
 /* ================================================================
@@ -2246,7 +2252,7 @@ var QIG3_CATS=[
   {c:'ชินโคไลท์',items:['imp15','imp16','imp17','imp18','imp19','imp20']},
   {c:'ไวนิล/ดีไลท์',items:['roof_vinyl','roof_delight']},
   {c:'โพลีตัน/กระจก',items:['roof_polyton','roof_laminate']},
-  {c:'ฝ้า/เพดาน',items:['ceil_cshape','ceil_bsc','ceiling_smooth']},
+  {c:'ฝ้า/เพดาน',items:['ceil_cshape','ceil_bsc','ceiling_smooth','ceil_ranae_1x5','ceil_ranae_16_5','ceil_ranae_16_2']},
   {c:'ผนังเบา',items:['isowall','wall_ext','wall_int']}
 ];
 function qiG3CatOf(id){ for(var i=0;i<QIG3_CATS.length;i++){ if(QIG3_CATS[i].items.indexOf(id)>=0) return i; } return 0; }
@@ -2266,7 +2272,7 @@ function qiRenderG3(d){
   });
   h += '</div>';
   h += '<div class="qi-lbl">ขนาด <span class="hint">(กว้าง × ยาว)</span></div>';
-  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ยาว (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ยาว (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน · ฝ้าขั้นต่ำ 10 ตร.ม.</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
@@ -2331,7 +2337,7 @@ function qiRenderG4(d){
   h += '<button type="button" class="chip'+(color==='0'?' on':'')+'" onclick="qiG4SetColor(this,\'0\')">มาตรฐาน</button>';
   h += '<button type="button" class="chip'+(color==='1'?' on':'')+'" onclick="qiG4SetColor(this,\'1\')">สีพิเศษ (+ค่าสี)</button>';
   h += '</div>';
-  h += '<div class="qi-row" style="grid-template-columns:90px;"><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+  h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน · ผนัง 3 ด้านเพิ่มที่ใบจริง</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
@@ -2401,7 +2407,7 @@ function qiRenderG7(d){
   QIG7_GRPS.forEach(function(g){ h += '<button type="button" class="chip'+(grp===g[0]?' on':'')+'" onclick="qiG7Set(this,\'grp\',\''+g[0]+'\')">'+g[1]+'</button>'; });
   h += '</div>';
   h += '<div class="qi-lbl">ขนาด</div>';
-  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2.5)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2.5)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">เรต ZIP ตรง engine · ปัดร้อย · ค่าติดตั้งคิดที่ระดับใบ</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
@@ -2466,13 +2472,13 @@ function qiRenderG5(d){
     h += '<button type="button" class="chip'+(itype==='window'?' on':'')+'" onclick="qiG5SetItype(this,\'window\')">หน้าต่าง</button>';
     h += '</div>';
     h += '<div class="qi-lbl">จำนวนบาน</div>';
-    h += '<div class="qi-row" style="grid-template-columns:90px;"><div class="qi-fld"><input class="qi-panels" type="number" step="1" min="1" value="'+(d.dataset.qiG5panels||1)+'" oninput="calcQuickAll()"></div></div>';
+    h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-panels" type="number" step="1" min="1" value="'+(d.dataset.qiG5panels||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
     h += '<div class="qi-lbl">ผ้ามุ้ง</div><div class="qi-chips">';
     QIG5_FABRIC.forEach(function(f){ if(f.k==='safety'&&!hasSafety)return; h += '<button type="button" class="chip'+(fab===f.k?' on':'')+'" onclick="qiG5SetFab(this,\''+f.k+'\')">'+f.n+'</button>'; });
     h += '</div>';
   }
   h += '<div class="qi-lbl">ขนาด</div>';
-  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||1)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||1)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">เรต verify กับ engine · ปัดขึ้นพัน · มุ้งเฟรม: min ต่างประตู/หน้าต่าง</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
@@ -2551,7 +2557,7 @@ function qiRenderG6(d){
   h += '<div class="qi-lbl">ฝ้า</div><div class="qi-chips">';
   QIG6_CEIL.forEach(function(c,ci){ h += '<button type="button" class="chip'+(st.ceil===ci?' on':'')+'" onclick="qiG6SetCeil(this,'+ci+')">'+c[0]+'</button>'; });
   h += '</div>';
-  h += '<div class="qi-row" style="grid-template-columns:90px;"><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+  h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">ทุกบรรทัด = calcUnit จริง · บานต่อด้าน</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
@@ -2658,7 +2664,7 @@ function qiRenderG2(d){
       if(gsp.length){ h += '<div class="qi-lbl">หน้าโชว์ · ระยะ</div><div class="qi-chips">'; gsp.forEach(function(s){ h += '<button type="button" class="chip'+(gspac===s?' on':'')+'" onclick="qiG2SetGspac(this,\''+s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+s+'</button>'; }); h += '</div>'; }
     }
     h += '<div class="qi-lbl">ขนาด</div>';
-    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
     h += '<div class="qi-lbl">มอเตอร์ (ตัว)</div><div class="qi-chips">';
     [0,1,2].forEach(function(n){ h += '<button type="button" class="chip'+(gmotor===n?' on':'')+'" onclick="qiG2SetGmotor(this,'+n+')">'+n+' ตัว</button>'; });
     h += '</div>';
@@ -2697,7 +2703,7 @@ function qiRenderG2(d){
       }
     }
     h += '<div class="qi-lbl">ขนาด</div>';
-    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   }
   // ---- rail ----
   else if(cat==='rail'){
@@ -2711,7 +2717,7 @@ function qiRenderG2(d){
     [['none','ไม่มี'],['u','ยู +500/ม.'],['box','กล่อง +600/ม.']].forEach(function(hr){ h += '<button type="button" class="chip'+(railHr===hr[0]?' on':'')+'" onclick="qiG2SetRailHr(this,\''+hr[0]+'\')">'+hr[1]+'</button>'; });
     h += '</div>';
     h += '<div class="qi-lbl">ความยาว (ม.) · ชุด</div>';
-    h += '<div class="qi-row" style="grid-template-columns:1fr 90px;"><div class="qi-fld"><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+    h += '<div class="qi-row" style="grid-template-columns:1fr 110px;"><div class="qi-fld"><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   }
   // ---- special ----
   else if(cat==='special'){
@@ -2720,7 +2726,7 @@ function qiRenderG2(d){
     h += '<button type="button" class="chip'+(spId==='bar_grid_z'?' on':'')+'" onclick="qiG2SetSpid(this,\'bar_grid_z\')">บานเกล็ดอลู</button>';
     h += '</div>';
     h += '<div class="qi-lbl">ขนาด</div>';
-    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" oninput="calcQuickAll()"></div></div>';
+    h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
     if(spId==='bar_openclose'){
       h += '<div class="qi-lbl">ควบคุม</div><div class="qi-chips">';
       h += '<button type="button" class="chip'+(d.dataset.qiG2spmotor!=='1'?' on':'')+'" onclick="qiG2SetSpmotor(this,\'0\')">มือ</button>';
@@ -2846,8 +2852,8 @@ function qiRenderG1(d){
    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">'+
      '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+W+'" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="calcQuickAll()"></div>'+
      '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+H+'" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="calcQuickAll()"></div>'+
-     '<div class="qi-panels-wrap"><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนบาน</label><input class="qi-panels" type="number" step="1" min="1" value="1" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="qiPanelsOnInput(this)"></div>'+
-     '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+QTY+'" style="width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;" oninput="calcQuickAll()"></div>'+
+     '<div class="qi-panels-wrap"><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนบาน</label><div style="display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="qi-panels" type="number" step="1" min="1" value="1" style="flex:1;min-width:0;border:0;text-align:center;height:44px;font-size:15px;" oninput="qiPanelsOnInput(this)"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>'+
+     '<div><label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">จำนวนชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+QTY+'" style="flex:1;min-width:0;border:0;text-align:center;height:44px;font-size:15px;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>'+
    '</div>'+
    '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · สี/กระจก เพิ่มจากมาตรฐาน</div></div></div>';
   // rebind prod change
@@ -3515,7 +3521,7 @@ function g3PickTab(btn,tab){ var ch=btn.closest('.ch'); g3SyncProd(ch, tab==='wa
 function g3SelectorHTML(p){
   var isWall=(p.cat==='ฝ้า-ผนัง');
   var h='<div class="opt g3-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
-  h+='<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip'+(!isWall?' on':'')+'" onclick="g3PickTab(this,\'roof\')">หลังคา</button><button type="button" class="chip'+(isWall?' on':'')+'" onclick="g3PickTab(this,\'wall\')">ฝ้า-ผนัง</button></div>';
+  h+='<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip'+(!isWall?' on':'')+'" onclick="g3PickTab(this,\'roof\')">หลังคา</button><button type="button" class="chip'+(isWall?' on':'')+'" onclick="g3PickTab(this,\'wall\')">ฝ้า</button></div>';
   if(!isWall){
     var grp=rfGrpOf(p.id)||'metal'; var gk;
     h+='<label class="opt" style="width:100%;margin:0;">กลุ่มวัสดุ<div class="chip-grid">';
@@ -3538,7 +3544,7 @@ function g3SelectorHTML(p){
       h+='</div></label>';
     }
   } else {
-    h+='<label class="opt" style="width:100%;margin:0;">รุ่นฝ้า-ผนัง<div class="chip-grid">';
+    h+='<label class="opt" style="width:100%;margin:0;">รุ่นฝ้า<div class="chip-grid">';
     G3_WALL_PRODS.forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===p.id?' on':'')+'" data-id="'+x[0]+'" onclick="g3PickProd(this)">'+x[1]+'</button>'; });
     h+='</div></label>';
   }
@@ -4088,7 +4094,7 @@ function addItem(container){
    `<div class="top" onclick="if(this.contains(event.target)&&!event.target.closest('.del'))toggleCh(this.closest('.ch'));"><span style="flex:none;color:#888;font-size:13px;">ส่วนที่ ${id}</span><span class="ch-caret">▾</span><span class="ch-summary"></span><button type="button" class="del" title="ลบส่วนนี้" style="flex:none;">&times;</button></div>`+
    `<div class="chgrid">`+
      /* G1G6-A: กลุ่มงาน = การ์ดชิป 7 ปุ่ม (select ซ่อนให้ logic เดิมอ่าน · chSetChip set+fire change) */
-     `<div class="full"><label>กลุ่มงาน</label><select class="i-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select>`+rfChips('i-group',[['1','🪟 บาน/กระจก'],['2','🚪 ระแนง·รั้ว·ราว'],['3','🏠 หลังคา·ฝ้า-ผนัง'],['4','📦 ตู้อลู'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้องกระจก'],['7','🎐 ม่านซิป']],'1')+`</div>`+
+     `<div class="full"><label>กลุ่มงาน</label><select class="i-group" style="display:none;"><option value="1">1. บานกระจก (ประตู/หน้าต่าง)</option><option value="2">2. ระแนง/รั้ว/ราวกันตก</option><option value="3">3. หลังคา/ฝ้า-ผนัง</option><option value="4">4. ตู้อลู/ฝาตู้</option><option value="5">5. มุ้ง</option><option value="6">6. กั้นห้องกระจก</option><option value="7">7. ม่านซิป</option></select>`+rfChips('i-group',[['1','🪟 บาน/กระจก'],['2','🚪 ระแนง·รั้ว·ราว'],['3','🏠 งานหลังคา'],['4','📦 ตู้อลู'],['5','🦟 มุ้ง'],['6','🔲 กั้นห้องกระจก'],['7','🎐 ม่านซิป']],'1')+`</div>`+
      /* ก้อน1: แบบ (.i-prod) ขึ้น #2 ทันทีหลังกลุ่มงาน */
      `<div class="full"><label>แบบ</label><select class="i-prod">${prodOptionsG6('1')}</select></div>`+
      /* ALLG 2.2+2.4 (ดราฟเคาะ 13 มิ.ย.): ประเภท=ติ๊กเล็ก segment + กว้าง/สูง/บาน(stepper)/ชุด รวมแถวเดียว */
@@ -4098,7 +4104,7 @@ function addItem(container){
        `<div style="flex:0 0 92px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0" style="width:92px;height:40px;text-align:center;"></div>`+
        /* v7A ข้อ3 (18มิ.ย. · ใหม่กว่า ALLG-v2): กว้าง/สูง/บาน/ชุด → บาน-stepper ก่อน ชุด (บานมาก่อนชุด) */
        `<div class="i-panels-wrap" style="flex:0 0 auto;"><label>บาน</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-panels" type="number" step="1" min="1" value="1" style="width:46px;border:0;text-align:center;height:42px;"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
-       `<div style="flex:0 0 auto;"><label>ชุด</label><input class="i-qty" type="number" step="1" min="1" value="1" style="width:58px;height:40px;text-align:center;"></div>`+
+       `<div style="flex:0 0 auto;"><label>ชุด</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:36px;min-height:40px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-qty" type="number" step="1" min="1" value="1" style="width:40px;border:0;text-align:center;height:40px;"><button type="button" onclick="panelStep(this,1)" style="width:36px;min-height:40px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
      `</div>`+
      /* ALLG 2.3 (เคาะ A): แถบสี·กระจก (ทั้งใบ→ตามรายการ) ในการ์ด ใต้แถวขนาด — buildItemOpts ย้าย i-color-wrap/i-glass-wrap เข้าที่นี่ */
      `<div class="full cg-row" style="display:none;flex-wrap:wrap;gap:8px;background:#EAF3FF;border:1px solid #9DBCE0;border-radius:10px;padding:6px 10px;"></div>`+
@@ -4422,9 +4428,9 @@ function buildItemOpts(d){
   }
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
-    h+='<label class="opt" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
+    h+='<label class="opt fold-opt-row" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
     // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม + v7B-ปรับ(19มิ.ย.): แยกกลาง → โชว์ช่องซ้าย/ขวา
-    h+='<label class="opt" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs){_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';if(this.value===\'เปิดแยกกลาง\'){var _d2=this.closest(\'.ch\');var _fl2=_d2&&_d2.querySelector(\'.o-fleft\');if(_fl2){_fl2.value=Math.floor((parseInt((_d2.querySelector(\'.i-panels\')||{value:\'2\'}).value)||2)/2)||1;fullFoldSync(_fl2);}}}"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
+    h+='<label class="opt fold-opt-row" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs){_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';if(this.value===\'เปิดแยกกลาง\'){var _d2=this.closest(\'.ch\');var _fl2=_d2&&_d2.querySelector(\'.o-fleft\');if(_fl2){_fl2.value=Math.floor((parseInt((_d2.querySelector(\'.i-panels\')||{value:\'2\'}).value)||2)/2)||1;fullFoldSync(_fl2);}}}"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
     h+='<div class="fold-split" style="display:none;align-items:center;gap:10px;margin:0 0 6px;padding:6px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;flex-wrap:wrap;">ซ้าย <input class="o-fleft" type="number" min="1" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" oninput="fullFoldSync(this)"> ช่อง &nbsp;/ ขวา <span class="o-fright" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:30px;border:1px solid #e5e7eb;border-radius:7px;font-weight:700;color:#6B7280;background:#f9fafb;">1</span> ช่อง <span class="o-fold-total" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#065F46;">รวม 2/2 ✓</span></div>';
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
@@ -4915,6 +4921,8 @@ function buildItemOpts(d){
   var _showCw=!!(cw&&(p.cabinet||!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))); // UX-ALL G5: มุ้งไม่มีสีอลู · G4: cabinet โชว์สีได้ (calc colorPlus มีอยู่แล้ว L1050 · เดิม areaOnly ซ่อน→ci=0→ไม่บวกเงิน = บั๊กการเงิน)
   var _showGw=!!(gw&&!(areaOnly||p.zipscreen||p.cat==='มุ้ง')); // UX-ALL G5: มุ้งไม่มีกระจก
   box.innerHTML=h;
+  // บานเฟี้ยม: ย้าย fold opts ออกนอก optbox ให้โผล่ทันที (ไม่ต้อง expand details)
+  if(p.cat==='บานเฟี้ยม'){ var _ob=d.querySelector('.optbox'); if(_ob) box.querySelectorAll('.fold-opt-row,.fold-split').forEach(function(_f){ _ob.parentNode.insertBefore(_f,_ob); }); }
   // ALLG 2.3 (เคาะ A 13 มิ.ย.): สี/กระจก เข้าแถบฟ้า .cg-row ในการ์ด ใต้แถวขนาด (เดิมเข้า ⚙ อุปกรณ์เสริม) · ไม่มี cg-row (subitem/การ์ดเก่า) → fallback เดิม
   { var _cgr=d.querySelector('.cg-row');
     if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
