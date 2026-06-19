@@ -6924,6 +6924,8 @@ window.addEventListener('load',ckRefresh);
   .ch.g6room .size-row, .ch.g6room .fam-prodsel, .ch.g6room .rn-prodsel, .ch.g6room .g3-prodsel, .ch.g6room .mosq-prodsel,
   .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-colorcode-wrap, .ch.g6room .i-sampleconfirm-wrap,
   .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint, .ch.g6room .cg-row,
+  /* FIX 20มิ.ย.: บล็อกฟอร์มบาน G1 ที่ commit 53a222b/f93e23e ย้ายขึ้นฟอร์มหลัก (หลุดจาก .size-row/optbox ที่เคยซ่อน) → โผล่เหนือ builder ในการ์ดกั้นห้อง · ซ่อนใน g6room (กลุ่ม 6 ใช้ builder ต่อบานแทน · display เฉยๆ ไม่แตะ DOM/ราคา) */
+  .ch.g6room .sliding-main-block, .ch.g6room .g1-rare-section, .ch.g6room .g1-lockgrid-host,
   .ch.g6room .note-opt-group, .ch.g6room .subitem-wrap{ display:none!important; }
   .ch.g6room .full:has(> .i-prod), .ch.g6room .full:has(> .i-position){ display:none!important; }
   .ch.g6room .g6r-room-area{ display:block!important; margin-top:6px; }
