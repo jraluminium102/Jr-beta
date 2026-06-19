@@ -3009,7 +3009,8 @@ function groupGHOpts(ch){
     {key:'🔧 ล็อค · มุ้ง · คาดตาราง', open:true, disp:2, kw:[ // B = ล็อค+มุ้ง+คาดตาราง (v7A ข้อ2: มือจับละเอียดย้ายไป OPTION) · match ก่อน ธรณี · เปิด default (ใช้บ่อย)
       'มือจับ','Cmech','โช้ค','[Up','ชุดล็อค','กุญแจ','เลือกมือจับ',
       'มุ้ง','ผ้ามุ้ง','สีผ้า','สีกรอบมุ้ง',
-      'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง','เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง'
+      'คาดตาราง','เส้นนอน','เส้นตั้ง','ราคา/ม.','เส้นโค้ง','เส้นแนวนอน','เส้นแนวตั้ง','สีเส้น','มีคาดตาราง',
+      'แผ่นทึบล่าง','สีลูกฟูก' // ลูกฟูก/คอมโพล่าง (กู้กลับ 20มิ.ย.) → อยู่หมวดเดียวกับคาดตาราง (ใช้บ่อย · surface ขึ้น) · เจาะจงกัน misgroup
     ]},
     {key:'🚪 ติดตาย · ช่องแสง', open:true, disp:1, kw:['ติดตาย','ช่องแสง']}, // A (open) · 'ติดตายกี่บาน' o-fixed (มุ้งจับไปก่อนแล้ว) · v7A ข้อ4: ย้ายธรณี/ครอบวงกบ/ดรอปพื้น ไปกล่อง "อุปกรณ์เสริม"
     {key:'🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)', open:false, disp:4, kw:['ครอบวงกบ','ธรณี','ดรอปพื้น','รางยู','เสริมคาน','รื้อของเดิม']}, // v7A ข้อ4 (18มิ.ย.): ยุบของไม่บ่อยเป็นกล่องพับ default ปิด (ตรงดราฟ accExtra) · match ก่อน 🏗️ (รางยู/เสริมคาน) · ไม่แตะราคา
@@ -4791,7 +4792,15 @@ function buildItemOpts(d){
     h+='<label class="opt">ราคา/ม. <input type="number" class="o-gm-rate" step="10" min="0" value="200" style="width:65px;height:30px;"></label>';
     h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
     h+='</span>';
-    // ธง1 (มติพี่นัท 15 มิ.ย. รอบตรวจ): ตัด render แผ่นทึบล่าง o-solidlower ทิ้ง (เดิม leak ทุกบาน G1 รวม ykk_vent) — ลูกฟูกใช้สินค้า rn89-92 (cat ลูกฟูก+คอมโพสิททึบ) เลือกเป็นบานแยกแทน · logic ราคา dormant (readItem L~3786 หา DOM ไม่เจอ → optSel.solidlower='')
+    // ลูกฟูก/คอมโพ ล่าง (เสริมกระจกบนบาน) — กู้กลับ (มติพี่นัท 20มิ.ย.: ใช้บ่อย · ติดคาดตาราง · ตัดเฉพาะบานโซลิดที่ทึบ auto แล้ว) · classes เดิม reconnect calcUnit L1803/readItem L5291
+    if(!p.solid_door){
+      h+='<label class="opt">แผ่นทึบล่าง (ลูกฟูก/คอมโพ) <select class="o-solidlower" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-sl-wrap\'); if(w)w.style.display=this.value?\'flex\':\'none\'; calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก 3,500/ตร.ม.</option><option value="composite">คอมโพสิท 3,300/ตร.ม.</option></select></label>';
+      h+='<span class="o-sl-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
+      h+='<label class="opt">กว้าง <input type="number" class="o-sl-w" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
+      h+='<label class="opt">สูง <input type="number" class="o-sl-h" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
+      h+='<label class="opt">สีลูกฟูก <input type="number" class="o-sl-color" step="100" min="0" value="0" style="width:70px;height:30px;" oninput="calcQuote()"><span class="u">+/ตร.ม.</span></label>';
+      h+='</span>';
+    }
   }
   // R3.6: มุ้งโหมด B (ติดบานเดิม) — สำหรับลูกค้าที่มาเพิ่มมุ้งภายหลัง
   if(p.cat==='มุ้ง'){
