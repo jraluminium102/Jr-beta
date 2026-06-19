@@ -8,6 +8,7 @@ import { thDate } from "@/lib/format";
 import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
+import { ProductionSetsSection } from "@/components/production/ProductionSetsSection";
 import type { ProdStatus } from "@/lib/database.types";
 
 export type BoqSummary = {
@@ -746,6 +747,9 @@ export function ProductionStepModal({
                 <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ลูกค้ารู้วันติดตั้งตั้งแต่ก่อนมัดจำ — กรอกไว้เลยเพื่อกำหนดเดดไลน์ผลิต/วัด</p>
               </div>
             )}
+
+            {/* ── รายละเอียดผลิต (ชุดงาน) — แทน Excel ทีมผลิต ── */}
+            {prod.job_id && <ProductionSetsSection jobId={prod.job_id} canWrite={canWrite} />}
 
             {/* ── Panel วัสดุ (BOQ) ── */}
             <div className="mt-3 glass-card rounded-2xl p-4 border border-white/10">

@@ -11,13 +11,14 @@ type Sb = { from: (t: string) => any };
 const SELECT =
   "*, job:job_id(job_code, customer_name, customer_area, status, current_stage, planned_install_date)";
 
-// GET /api/production-sets — รายการชุดงานผลิตทั้งหมด (worksheet) + ข้อมูลงาน
-export const GET = withRoute(async () => {
+// GET /api/production-sets?job_id= — รายการชุดงานผลิต (กรองตามงานได้)
+export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("production", "read");
   const sb = ctx.supabase as unknown as Sb;
-  const { data, error } = await sb
-    .from("production_sets")
-    .select(SELECT)
+  const jobId = new URL(req.url).searchParams.get("job_id");
+  let qy = sb.from("production_sets").select(SELECT);
+  if (jobId) qy = qy.eq("job_id", jobId);
+  const { data, error } = await qy
     .order("seq", { ascending: true })
     .order("id", { ascending: true });
   if (error) throw dbError(error);
