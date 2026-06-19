@@ -4152,8 +4152,8 @@ function addItem(container){
      /* ALLG 2.4: จำนวนบาน+ชุด ย้ายขึ้นแถวขนาด (stepper) ด้านบนแล้ว */
      `<div class="full i-override-wrap" style="display:none;"><label>ราคากำหนดเอง (บาท · ใช้เฉพาะสินค้าที่กรอกราคาเอง)</label><input class="i-override" type="number" min="0" step="100" placeholder="ราคาต่อชุด (บาท)"></div>`+
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
-     /* R3.13 (19มิ.ย. · มติพี่นัท): จัดลำดับ G1 — ออปชั่น(ล็อก/คาดตาราง/อลูทึบ) + ผสมบาน ขึ้นบน · OPTION ทางเลือกลูกค้า + หมายเหตุ ลงล่าง (ใช้น้อยกว่า) · ไม่ใช้ JS ย้าย (กัน orphan) แค่สลับ template */
-     `<div class="full"><details class="optbox" style="margin:0;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details></div>`+
+     /* R3.14 (19มิ.ย. · มติพี่นัท): ดึงบล็อก "ล็อค·คาดตาราง" ออกจากกล่องอุปกรณ์เสริม โชว์เด่นเหนือผสมบาน (relocate ใน buildItemOpts · เคลียร์ host ทุก rebuild กัน orphan) · ลำดับ: host(ล็อค·คาดตาราง) → ผสมบาน → optbox(ที่เหลือ) → หมายเหตุ+OPTION */
+     `<div class="full g1-lockgrid-host" style="display:none;"></div>`+
      `<div class="full subitem-wrap"><div style="font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;">ผสมบาน — เพิ่มบานในชุดเดียว <span style="font-weight:400;color:#6b7280;font-size:11px;">(คิดราคาตามชนิด · กรอกขนาดต่อชิ้น · สี/กระจก ตามบานหลัก)</span></div>`+
        `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:2px 0;">บานทำงาน</div>`+
        `<div class="subkind-chips chip-group chip-sm">`+
@@ -4170,6 +4170,7 @@ function addItem(container){
          `<button type="button" class="chip" onclick="addSub(this,'custom','อื่นๆ',1.0,1.0)">＋ อื่นๆ (กรอกราคา)</button>`+
        `</div>`+
        `<div class="subitem-list"></div></div>`+
+     `<div class="full"><details class="optbox" style="margin:0;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details></div>`+
      `<div class="full note-opt-group">`+
        `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
        `<div class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;"><div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:5px;">＋ OPTION ทางเลือกลูกค้า <span style="font-weight:400;color:var(--muted);font-size:11px;">(เปลี่ยนวัสดุ คิดราคาให้ · กดได้เลย)</span></div><div class="oc-catchips chip-group chip-sm"></div><div class="oc-list" style="margin-top:6px;"></div></div>`+
@@ -4983,7 +4984,10 @@ function buildItemOpts(d){
   // UX: ย้ายบล็อกบานเลื่อน (กล่องฟ้า) ขึ้นฟอร์มหลัก + ดึง "จำนวนบานทั้งหมด" เข้าไปในกล่องฟ้าด้วย
   { var _smb=box.querySelector('.sliding-main-block'); var _pw=d.querySelector('.i-panels-wrap');
     if(_smb && _pw && _pw.parentNode){
-      _pw.parentNode.insertBefore(_smb, _pw.nextSibling);            // วางกล่องฟ้าหลังตำแหน่งเดิมของ panels
+      // FIX (19มิ.ย.): วางกล่องฟ้าหลัง "แถวขนาด" (เป็น chgrid child → .full=grid-column 1/-1 ทำงาน) — เดิมยัดใน size-row(flex) ทำ .full ไม่ทำงาน กล่องล้นขวา
+      var _sr=_pw.closest('.size-row');
+      if(_sr && _sr.parentNode){ _sr.parentNode.insertBefore(_smb, _sr.nextSibling); }
+      else { _pw.parentNode.insertBefore(_smb, _pw.nextSibling); }
       var _anchor=_smb.querySelector('.smb-panels-slot')||_smb.firstChild;
       _smb.insertBefore(_pw, _anchor && _anchor.nextSibling ? _anchor.nextSibling : null);  // ย้าย panels เข้ากล่องฟ้า
       _pw.style.display='';                                          // โชว์ จำนวนบาน ในกล่องฟ้าเสมอ (รวมติดตาย)
@@ -5024,6 +5028,18 @@ function buildItemOpts(d){
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
     if(_oh){ _oh.style.display=(!p.custom_price&&!p.custom_item)?'block':'none'; } }
   box.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calcQuote));
+  // R3.14 (19มิ.ย. · มติพี่นัท): G1 ดึงบล็อก "🔧 ล็อค·มุ้ง·คาดตาราง" ออกจากกล่องอุปกรณ์เสริม → โชว์เด่นเหนือผสมบาน
+  //   ทำหลัง binding (L5030) แล้ว → listener ติดบน element ก่อนย้าย node (ย้ายแล้ว listener คงอยู่) · เคลียร์ host ทุก rebuild กัน orphan
+  { var _lgHost=d.querySelector('.g1-lockgrid-host');
+    if(_lgHost){
+      _lgHost.innerHTML=''; _lgHost.style.display='none';
+      if((d.querySelector('.i-group')||{}).value==='1' && box){
+        var _lockSec=null;
+        box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
+        if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); _lgHost.style.display=''; }
+      }
+    }
+  }
   // UX (hmode): ระแนงขายเดี่ยว — อัปเดตการ์ดเทียบราคา ปัด/ต่อ เมื่อกรอกขนาด/เปลี่ยนสี
   { var _hb=d.querySelector('.o-hmode-block'); if(_hb){ rnHmodeCompare(d);
       ['.i-w','.i-h'].forEach(function(s){ var el=d.querySelector(s); if(el && !el.dataset.hmHook){ el.dataset.hmHook='1'; el.addEventListener('input',function(){ rnHmodeCompare(d); }); } });
