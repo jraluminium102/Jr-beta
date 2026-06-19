@@ -3251,7 +3251,7 @@ function addSet(){
       }
     });
   });
-  box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); calcQuote(); });
+  box.querySelector('.set-del').addEventListener('click',function(){ box.remove(); renumberItems(); calcQuote(); }); // R3.17: ลบชุด → เรียงเลขใหม่
   box.querySelectorAll('.set-addpart').forEach(function(b){ b.addEventListener('click',function(){
     const parts = box.querySelector('.set-parts');
     const hasGH = Array.from(box.querySelectorAll('.ch')).some(function(c){ return (c.querySelector('.i-group')||{}).value==='6'; });
@@ -3291,6 +3291,8 @@ function addSet(){
   box.querySelector('.set-name').addEventListener('input',calcQuote);
   addItem(box.querySelector('.set-parts'));
   refreshSet(box);
+  // R3.17 (20มิ.ย. · มติพี่นัท): เพิ่มชุด → เด้งไปชุดใหม่ที่ต้องกรอก
+  try{ box.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
   return box;
 }
 // ข้อ7: ป้ายด้าน auto A/B/C/D — คืน 'ด้าน X' ตามลำดับ ch กลุ่ม 6 ในชุดเดียวกัน (เลิก hardcode "ด้าน A" ทุกบาน)
@@ -4119,8 +4121,10 @@ function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach
 function collapseOthersQuick(active){ document.querySelectorAll('#q-items .ch').forEach(function(ch){ setChCollapsed(ch, ch!==active); }); }
 // UX: ไล่เลขรายการใหม่ตามลำดับจริง (ลบแล้วเพิ่มไม่ข้ามเลข) — quote=ส่วนที่ · quick=ชุดที่
 function renumberItems(){
-  ['items','q-items'].forEach(function(cid){ var c=document.getElementById(cid); if(!c)return; var n=0;
-    Array.from(c.children).forEach(function(el){ if(el.classList && el.classList.contains('ch')){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent=(cid==='items'?'ส่วนที่ ':'ชุดที่ ')+n; } }); });
+  // q-items (คิดเร็ว): .ch เป็นลูกตรง → "ชุดที่ N"
+  { var cq=document.getElementById('q-items'); if(cq){ var nq=0; Array.from(cq.children).forEach(function(el){ if(el.classList && el.classList.contains('ch')){ nq++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent='ชุดที่ '+nq; } }); } }
+  // items (ใบเสนอ): .ch อยู่ใน .setbox > .set-parts → ไล่ทั้งหมดตามลำดับเอกสาร เลขต่อเนื่อง (R3.17 20มิ.ย.: ลบชุดแล้วเรียงใหม่ · เดิม c.children ไม่ถึง .ch ในชุด)
+  { var ci=document.getElementById('items'); if(ci){ var n=0; ci.querySelectorAll('.ch').forEach(function(el){ n++; var sp=el.querySelector('.top span,.top b'); if(sp) sp.textContent='ส่วนที่ '+n; }); } }
 }
 function addItem(container){
   itemSeq++;
