@@ -1803,7 +1803,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _slA=(parseFloat(optSel.solidlowerW)||0)*(parseFloat(optSel.solidlowerH)||0);
     if(_slA>0){
       const _slRate=optSel.solidlower==='composite'?3300:3500;
-      const _slColor=optSel.solidlower==='corrugated'?(parseFloat(optSel.solidlowerColor)||0):0;
+      const _slColor=optSel.solidlower==='corrugated'?rn90FinRate(ci):0; // R3.18 (20มิ.ย. · มติพี่นัท): สีลูกฟูกคิดตามสีอลูที่เลือก (ci) อัตโนมัติ · คอมโพสิทไม่คิดสี
       const _slCost=_slA*_slRate + _slColor*_slA;
       opt+=_slCost;
       msgs.push((optSel.solidlower==='composite'?'แผ่นคอมโพสิทล่าง':'แผ่นลูกฟูกล่าง')+' '+_slA.toFixed(2)+' ตร.ม.×'+fmt(_slRate)+(_slColor>0?(' +สี '+fmt(_slColor)):'')+' = '+fmt(_slCost));
@@ -4801,7 +4801,7 @@ function buildItemOpts(d){
       h+='<span class="o-sl-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
       h+='<label class="opt">กว้าง <input type="number" class="o-sl-w" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
       h+='<label class="opt">สูง <input type="number" class="o-sl-h" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
-      h+='<label class="opt">สีลูกฟูก <input type="number" class="o-sl-color" step="100" min="0" value="0" style="width:70px;height:30px;" oninput="calcQuote()"><span class="u">+/ตร.ม.</span></label>';
+      h+='<label class="opt" style="color:#6b7280;font-size:12px;">สีลูกฟูก: คิดตามสีอลูที่เลือกอัตโนมัติ</label>'; // R3.18: ค่าสีลูกฟูก = rn90FinRate(ci) auto · เลิกกรอกเอง
       h+='</span>';
     }
   }
