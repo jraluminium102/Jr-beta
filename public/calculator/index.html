@@ -6523,7 +6523,8 @@ function genQuote(keepNo){
         const _raw = items.map(it => { const d=itemDetail(it); const pos=it.position?(' '+it.position):''; const an=(it.r.addonLines||[]).map(function(a){return a.n;}); return d.prodName+pos+(an.length?' (มี'+an.join(', ')+')':''); });
         const _coll=[]; _raw.forEach(function(nm){ var last=_coll[_coll.length-1]; if(last&&last.nm===nm) last.n++; else _coll.push({nm:nm,n:1}); });
         const names=_coll.map(function(x){ return x.n>1 ? (x.nm+' × '+x.n+' บาน') : x.nm; });
-        content += '<div style="margin:4px 0 0 8px;color:#1F2937;">- '+names.join(' พร้อม ')+'</div>';
+        // R3.16 (20มิ.ย. · มติพี่นัท): ผสมหลายแบบ → เว้นบรรทัด (แต่ละแบบ 1 บรรทัด · เดิม join "พร้อม" บรรทัดเดียวยาวรก) · ชนิดเดียวยังยุบ × N
+        content += names.map(function(nm){ return '<div style="margin:2px 0 0 8px;color:#1F2937;">- '+nm.replace(/\n/g,'<br>&nbsp;&nbsp;&nbsp;')+'</div>'; }).join('');
       }
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
         matLines.forEach(t => { content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">- '+t+'</div>'; }); }
