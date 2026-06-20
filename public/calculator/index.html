@@ -1901,9 +1901,11 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         else if(_mc==='kl_wood'){ _mosqColorUp=colorPrice(11,mosqArea,'')*0.5; _mosqColorLbl=' + เคแอลลายไม้'; }
       }
       // FIX: บวกราคามุ้งเข้า sell จริง (เดิม opt+= อยู่หลัง sell finalize → ตกหล่น ไม่เก็บเงิน)
-      const _mosqPrice = roundUp(mosqBase + fabricExtra + _mosqColorUp);
+      // ③ (20มิ.ย.): ราคามุ้ง override — กรอกเอง (mosqPrice>0) ใช้แทน auto · เว้น = คิดตามพื้นที่ (golden นิ่ง)
+      let _mosqPrice = roundUp(mosqBase + fabricExtra + _mosqColorUp);
+      if(parseFloat(optSel.mosqPrice)>0) _mosqPrice = Math.round(parseFloat(optSel.mosqPrice));
       sell += _mosqPrice;
-      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel+_mosqColorLbl, p:_mosqPrice, mosqArea:mosqArea});
+      addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel+_mosqColorLbl+(parseFloat(optSel.mosqPrice)>0?' (ราคากรอกเอง)':''), p:_mosqPrice, mosqArea:mosqArea});
     }
     if(false){
       const pat = OPENING_PATTERNS.find(p2 => p2.id===optSel.mosqPat) || OPENING_PATTERNS[0];
@@ -4096,23 +4098,12 @@ function rebuildMosqPanelChips(d){
   var fallback=bar.querySelector('.mosq-panels-fallback');
   var hiddenInp=d.querySelector('.o-mosqpanels');
   if(!chipWrap||!fallback||!hiddenInp)return;
-  var iPanels=parseInt((d.querySelector('.i-panels')||{}).value||'2')||2;
-  chipWrap.innerHTML='';
-  if(iPanels>5){
-    // fallback stepper — ยัง cap ที่ N (Q3)
-    chipWrap.style.display='none'; fallback.style.display='flex';
-    var stepper=fallback.querySelector('.o-mosqpanels-stepper');
-    if(stepper){
-      stepper.max=iPanels;
-      if(hiddenInp.value) stepper.value=Math.min(parseInt(hiddenInp.value)||1, iPanels);
-    }
-    return;
-  }
-  chipWrap.style.display='flex'; fallback.style.display='none';
+  // ① (20มิ.ย.): กรอกจำนวนมุ้งเองได้อิสระ — ปุ่ม auto + ช่องกรอกตัวเลข (stepper) เสมอ · ไม่ cap ที่จำนวนบาน (มุ้งเกิน/น้อยกว่าบานได้)
+  chipWrap.style.display='flex'; fallback.style.display='flex'; chipWrap.innerHTML='';
   chipWrap.appendChild(makeMosqChip('','auto',hiddenInp,d));
-  for(var i=1;i<=iPanels;i++) chipWrap.appendChild(makeMosqChip(String(i),i+' บาน',hiddenInp,d));
-  var cur=hiddenInp.value;
-  chipWrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val===cur); });
+  var stepper=fallback.querySelector('.o-mosqpanels-stepper');
+  if(stepper){ stepper.removeAttribute('max'); if(hiddenInp.value) stepper.value=parseInt(hiddenInp.value)||1; }
+  chipWrap.querySelectorAll('.mosq-panel-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.val===hiddenInp.value); });
 }
 function makeMosqChip(val,label,hiddenInp,d){
   var btn=document.createElement('button');
@@ -4129,10 +4120,10 @@ function makeMosqChip(val,label,hiddenInp,d){
 function syncMosqPanels(stepper){
   var d=stepper.closest('.ch'); if(!d)return;
   var hid=d.querySelector('.o-mosqpanels'); if(!hid)return;
-  // cap ที่ i-panels (Q3)
-  var iPanels=parseInt((d.querySelector('.i-panels')||{}).value||'2')||2;
-  var v=Math.min(parseInt(stepper.value)||1, iPanels);
+  // ① (20มิ.ย.): ไม่ cap — กรอกจำนวนมุ้งเกินจำนวนบานได้
+  var v=Math.max(1, parseInt(stepper.value)||1);
   if(stepper.value!=String(v)) stepper.value=v;
+  var ac=d.querySelector('.mosq-panel-chip[data-val=""]'); if(ac) ac.classList.remove('on'); // เลิกไฮไลต์ auto เมื่อพิมพ์จำนวนเอง
   hid.value=String(v); hid.dispatchEvent(new Event('input',{bubbles:true}));
 }
 // มุ้ง: โผล่/ซ่อนกลุ่มรายละเอียดตาม o-mosq + ชิปลักษณะการเปิด (เฉพาะ imp21/imp23)
@@ -4814,15 +4805,14 @@ function buildItemOpts(d){
     h+='<div class="mosq-panel-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>';
     h+='<div class="mosq-panels-fallback" style="display:none;align-items:center;gap:6px;font-size:13px;">จำนวนบาน: <input type="number" class="o-mosqpanels-stepper" min="1" step="1" style="width:60px;height:44px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:14px;" oninput="syncMosqPanels(this)"></div>';
     h+='</div>';
-    // ── ช่องขนาด: พับใน details ──
-    h+='<details class="mosq-size-details" style="margin-top:8px;">';
-    h+='<summary>กรอกขนาดมุ้งเอง (กรณีแต่ละบานไม่เท่ากัน)</summary>';
-    h+='<div style="padding:8px 0;"><span style="font-size:11px;color:#0369A1;">[เว้นว่าง=auto จากบาน]</span> กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:56px;height:36px;" oninput="calcQuote()"></div>';
-    h+='</details>';
+    // ③ (20มิ.ย.): กางช่องขนาดออก (เดิมพับ details) + เพิ่มช่องราคามุ้งกรอกเอง (override · เว้น=auto ตามพื้นที่)
+    h+='<div style="margin-top:8px;font-size:11px;font-weight:700;color:#1565C0;">ขนาดมุ้ง <span style="font-weight:400;color:#0369A1;">[เว้นว่าง=auto จากบาน]</span></div>';
+    h+='<div style="padding:4px 0;">กว้าง <input type="number" class="o-mosqw" min="0" step="0.1" value="" placeholder="ม." style="width:62px;height:38px;" oninput="calcQuote()"> × ยาว <input type="number" class="o-mosqh" min="0" step="0.1" value="" placeholder="ม." style="width:62px;height:38px;" oninput="calcQuote()"> ม.</div>';
+    h+='<div style="padding:4px 0;">ราคามุ้ง (กรอกเอง) <input type="number" class="o-mosqprice" min="0" step="100" value="" placeholder="บาท" style="width:96px;height:38px;" oninput="calcQuote()"> <span style="font-size:11px;color:#6B7280;">เว้น 0 = คิด auto ตามพื้นที่</span></div>';
     // .o-mosqpanels ยังอยู่ (hidden) — readItem อ่านค่าจาก field นี้
     h+='<input type="hidden" class="o-mosqpanels" value="">';
     // ก้อน5: ชิปลักษณะการเปิด (.o-mosqopenstyle · ห้ามชน .o-mosqopen dead code) — โผล่เฉพาะ imp21/imp23 · label-only
-    h+='<div class="mosq-openstyle-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #90CAF9;"><div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button><button type="button" class="chip" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button><button type="button" class="chip" data-val="กระทุ้ง" onclick="mosqOpenStylePick(this)">กระทุ้ง</button><button type="button" class="chip" data-val="ยก" onclick="mosqOpenStylePick(this)">ยก</button></div><input type="hidden" class="o-mosqopenstyle" value="เปิด"><div style="margin-top:5px;font-size:11px;color:#6B7280;">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา</div></div>';
+    h+='<div class="mosq-openstyle-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #90CAF9;"><div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;">ลักษณะการเปิด <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label-only</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="เปิด" onclick="mosqOpenStylePick(this)">เปิด</button><button type="button" class="chip" data-val="เลื่อน" onclick="mosqOpenStylePick(this)">เลื่อน</button></div><input type="hidden" class="o-mosqopenstyle" value="เปิด"><div style="margin-top:5px;font-size:11px;color:#6B7280;">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งเฟรมเล็ก บานเลื่อน" — ไม่กระทบราคา</div></div>';
     // UX P2 (ux-designer): ผ้ามุ้งใน-บาน → ชิป (สม่ำเสมอกับ G5 standalone · ราคาอ่าน o-mosqfabric value เดิม)
     h+='<label class="opt" style="width:100%;">ผ้ามุ้ง <select class="o-mosqfabric" style="display:none;" onchange="calcQuote()"><option value="fiber_gray" selected>ไฟเบอร์เทา (default)</option><option value="fiber_black">ไฟเบอร์ดำ</option><option value="anti_pet">กันแมว +800</option><option value="stainless">สแตนกันหนู +1,200</option><option value="safety08">สแตนนิรภัย 0.8มม. (+3,500-3,000/ตร.ม.)</option></select>'+rfChips('o-mosqfabric',[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว +800'],['stainless','สแตนกันหนู +1,200'],['safety08','สแตนนิรภัย 0.8']],'fiber_gray')+'</label>';
     // ข้อ10: สีกรอบมุ้ง → ชิป 4 (value ตรงกับ calc · o-mosqcolor ซ่อน)
@@ -5310,6 +5300,7 @@ function readItem(d){
     const _mqw=d.querySelector('.o-mosqw'); optSel.mosqW=_mqw?_mqw.value:'';
     const _mqh=d.querySelector('.o-mosqh'); optSel.mosqH=_mqh?_mqh.value:'';
     const _mqp=d.querySelector('.o-mosqpanels'); optSel.mosqPanels=_mqp?_mqp.value:'';
+    const _mqpr=d.querySelector('.o-mosqprice'); optSel.mosqPrice=_mqpr?_mqpr.value:''; // ③ (20มิ.ย.): ราคามุ้ง override
     const _mit=d.querySelector('.i-type'); optSel.itype=(_mit&&_mit.value)||'door'; // P1-2: เฟรมมุ้ง min ตาม ประตู/หน้าต่าง
   }
   if(p.mscolor){ const _msc=d.querySelector('.o-mscolor'); optSel.mscolor=_msc?_msc.value:''; }
@@ -6980,7 +6971,7 @@ window.addEventListener('load',ckRefresh);
   // ราคาบานต่อชิ้น = engine จริง (calcUnit) — base ตาม product/ขนาด/จำนวนบาน (opt เพิ่ม A3)
   // map opt ของบาน (paged) → optSel จริงที่ calcUnit อ่าน
   function g6rOptSel(pc){ var o=pc.opt||{}; var os={}; var prod=(typeof PBYID!=='undefined'&&PBYID[pc.id])||{};
-    if(o.mosq){ os.mosqId=o.mosqId||'mj_sd_basic'; os.mosqPanels=o.qty||1; os.mosqW=pc.w||0; os.mosqH=pc.h||0; os.mosqFabric=o.mosqFabric||'fiber_gray'; }
+    if(o.mosq){ os.mosqId=o.mosqId||'mj_sd_basic'; os.mosqPanels=o.mosqQty||o.qty||1; os.mosqW=parseFloat(o.mosqW2)>0?o.mosqW2:(pc.w||0); os.mosqH=parseFloat(o.mosqH2)>0?o.mosqH2:(pc.h||0); os.mosqFabric=o.mosqFabric||'fiber_gray'; os.mosqPrice=o.mosqPrice||''; } // ①③ (20มิ.ย.): จำนวน/ขนาด/ราคามุ้ง override (เว้น=auto ตามบาน)
     if(o.gridmark){ os.gridmark=true; os.gmNh=o.gmNh||0; os.gmNv=(o.gmNv!=null?o.gmNv:(o.qty||1)); os.gmRate=200; os.gmCurve=0; }
     if(o.fcsides) os.fcsides=o.fcsides;            // ครอบวงกบ 3/4 ด้าน (calcUnit auto len×เรตสี)
     if(o.dfm>0) os.dfm=o.dfm;                        // ดรอปพื้น (5000+ส่วนเกิน)
@@ -7177,7 +7168,11 @@ window.addEventListener('load',ckRefresh);
       if(o.mosq){ var _mid=o.mosqId||'mj_sd_basic', _grps=g6rMosqGroups(), _cg=g6rMosqGrpOf(_mid), _GL={frame:'เฟรม',pleat:'จีบ',roll:'ม้วน'};
         freq+='<div class="g6r-rev"><div class="chips"><span class="rl">หมวด</span>'+['frame','pleat','roll'].map(function(g){ return '<button class="c'+(g===_cg?' on':'')+'" onclick="G6RsetMosqGrp(\''+g+'\')">'+_GL[g]+'</button>'; }).join('')+'</div>'
           +'<div class="chips"><span class="rl">รุ่น</span>'+(_grps[_cg]||[]).map(function(x){ return '<button class="c'+(x[0]===_mid?' on':'')+'" onclick="G6RsetOpt2(\'mosqId\',\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>'
-          +'<div class="chips"><span class="rl">ผ้า</span>'+[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว'],['stainless','สแตนกันหนู'],['safety08','นิรภัย0.8']].map(function(f){return '<button class="c'+((o.mosqFabric||'fiber_gray')===f[0]?' on':'')+'" onclick="G6RsetOpt2(\'mosqFabric\',\''+f[0]+'\')">'+f[1]+'</button>';}).join('')+'</div></div>'; }
+          +'<div class="chips"><span class="rl">ผ้า</span>'+[['fiber_gray','ไฟเบอร์เทา'],['fiber_black','ไฟเบอร์ดำ'],['anti_pet','กันแมว'],['stainless','สแตนกันหนู'],['safety08','นิรภัย0.8']].map(function(f){return '<button class="c'+((o.mosqFabric||'fiber_gray')===f[0]?' on':'')+'" onclick="G6RsetOpt2(\'mosqFabric\',\''+f[0]+'\')">'+f[1]+'</button>';}).join('')+'</div>'
+          // ①③ (20มิ.ย.): จำนวน/ขนาด/ราคามุ้ง override ใน builder (onchange กัน re-render หลุด focus · เว้น=auto ตามบาน) — ตรงกับ G1
+          +'<div class="row"><span class="rl">จำนวนมุ้ง</span><input type="number" min="1" step="1" value="'+(o.mosqQty||'')+'" placeholder="'+(o.qty||1)+'" onchange="G6RsetOpt(\'mosqQty\',this.value)"><span class="u">บาน (เว้น=เท่าบาน)</span></div>'
+          +'<div class="row"><span class="rl">ขนาดมุ้ง</span><input type="number" min="0" step="0.1" value="'+(o.mosqW2||'')+'" placeholder="'+(p.w||0)+'" onchange="G6RsetOpt(\'mosqW2\',this.value)"><span class="u">ก ×</span><input type="number" min="0" step="0.1" value="'+(o.mosqH2||'')+'" placeholder="'+(p.h||0)+'" onchange="G6RsetOpt(\'mosqH2\',this.value)"><span class="u">ย (เว้น=ตามบาน)</span></div>'
+          +'<div class="row"><span class="rl">ราคามุ้ง</span><input type="number" min="0" step="100" value="'+(o.mosqPrice||'')+'" placeholder="auto" onchange="G6RsetOpt(\'mosqPrice\',this.value)"><span class="u">บาท (เว้น=auto)</span></div></div>'; }
     }
     // เสริมกระจก [ยกเว้น shower] — คาดตาราง + ลูกฟูก/คอมโพ (ใส่กลับตามดราฟ)
     if(pf.glass){ freq+='<div class="fl">ชนิดกระจก</div><select class="g6r-glass-sel" onchange="G6RsetOpt2(\'glassIdx\',this.value)" style="width:100%;max-width:340px;height:34px;border:1px solid #D1D5DB;border-radius:6px;margin-bottom:4px;padding:0 6px;">'+g6GlassOpts(o.glassIdx)+'</select>';  // A2 จุด1: เลือกชนิดกระจกต่อช่อง (reuse GLASS · default เขียว6มม.)

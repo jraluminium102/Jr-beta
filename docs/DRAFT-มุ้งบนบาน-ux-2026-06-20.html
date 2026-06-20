@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ UX มุ้งบนบาน — ①②③ (เทียบ G1) · 20 มิ.ย.</title>
+<style>
+  :root{--red:#B3151D;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f8f7f5;--blue:#1565C0;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:16px 12px 60px;line-height:1.5;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:19px;margin:0 0 3px;}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px;}
+  .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12.5px;border-radius:9px;padding:9px 12px;margin-bottom:16px;}
+  /* มุ้ง box mirror */
+  .mosq-wrap{background:#E3F2FD;border:1px solid #90CAF9;border-radius:10px;padding:12px 13px;margin-bottom:6px;}
+  .mosq-title{font-size:14px;font-weight:800;margin-bottom:2px;}
+  .mosq-title small{font-size:11px;color:var(--blue);font-weight:600;}
+  .seclbl{font-size:11.5px;font-weight:700;color:var(--blue);margin:12px 0 6px;display:flex;align-items:center;gap:6px;}
+  .tagnew{background:#16a34a;color:#fff;font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;}
+  .tagkeep{background:#6b7280;color:#fff;font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;}
+  .tagwait{background:#d97706;color:#fff;font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{border:1.5px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 13px;font-size:13px;cursor:pointer;min-height:40px;font-family:inherit;}
+  .chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+  .chip.sw{display:flex;align-items:center;gap:6px;}
+  .dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.2);display:inline-block;}
+  input[type=number]{height:40px;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 8px;font-size:14px;font-family:inherit;text-align:center;}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;}
+  .stepper{display:flex;align-items:center;gap:0;}
+  .stepper button{width:38px;height:40px;border:1.5px solid #cbd5e1;background:#fff;font-size:18px;cursor:pointer;}
+  .stepper button:first-child{border-radius:8px 0 0 8px;}
+  .stepper button:last-child{border-radius:0 8px 8px 0;}
+  .stepper input{width:56px;height:40px;border-left:0;border-right:0;border-radius:0;}
+  .hint{font-size:11px;color:#0369A1;margin-top:4px;}
+  .pricebar{background:#fff;border:1px dashed #90CAF9;border-radius:8px;padding:8px 11px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+  .pricebar b{color:var(--red);font-size:15px;}
+  /* annotation cards */
+  .ann{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:13px;}
+  .ann h3{font-size:14px;margin:0 0 7px;display:flex;align-items:center;gap:7px;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  @media(max-width:540px){.ba{grid-template-columns:1fr;}}
+  .box{border-radius:8px;padding:8px 10px;font-size:12.5px;}
+  .b-old{background:#fef2f2;border:1px solid #fecaca;}
+  .b-new{background:#f0fdf4;border:1px solid #bbf7d0;}
+  .box .l{font-size:10px;font-weight:800;letter-spacing:.4px;margin-bottom:4px;}
+  .b-old .l{color:#dc2626;} .b-new .l{color:#16a34a;}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:11.5px;}
+  .sumbar{background:var(--red);color:#fff;border-radius:12px;padding:15px 17px;margin-top:20px;font-size:13.5px;}
+  .sumbar h2{margin:0 0 8px;font-size:15px;color:#fff;}
+  .sumbar ul{margin:6px 0 0;padding-left:18px;}
+  .sumbar li{margin:3px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🦟 ดราฟ UX — มุ้งบนบาน (เทียบ G1)</h1>
+  <p class="sub">ปรับ ①②③ · ④ สีกรอบยังไม่เคาะ (คงเดิมไว้ก่อน) · กดเล่นได้ · 20 มิ.ย. 2026</p>
+
+  <div class="warn">⚠️ บล็อกมุ้งนี้ <b>ใช้ร่วมทุกกลุ่ม</b> (G1/G6/บานเลื่อน/เปิด…) — แก้ที่เดียวกระทบทุกที่ ตอนส่ง dev ต้องเทสรอบด้าน (G1+G6+คิดเร็ว)</div>
+
+  <!-- DEMO: หน้าตาใหม่ -->
+  <div class="mosq-wrap">
+    <div class="mosq-title">มุ้ง <small>(ราคาคิดตามพื้นที่บาน)</small></div>
+    <div style="font-size:11px;color:var(--blue);">เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนทั้งหมด · (เดโม: มุ้งจีบเฟรมเล็ก)</div>
+
+    <div class="seclbl">① จำนวนบานมุ้ง <span class="tagnew">ใหม่ — กรอกเองได้</span></div>
+    <div class="row">
+      <button class="chip" id="autoBtn" onclick="setAuto()">auto</button>
+      <div class="stepper">
+        <button onclick="bump(-1)">−</button>
+        <input type="number" id="qty" min="1" value="1" oninput="manual()">
+        <button onclick="bump(1)">＋</button>
+      </div>
+      <span style="font-size:12px;color:var(--muted);">บาน (กรอกเกินจำนวนบานได้)</span>
+    </div>
+
+    <div class="seclbl">② ลักษณะการเปิด <span class="tagnew">เหลือ เลื่อน/เปิด</span> <span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">label เฉยๆ</span></div>
+    <div class="chips" id="openRow">
+      <button class="chip on" data-v="เปิด" onclick="pick(this,'openRow')">เปิด</button>
+      <button class="chip" data-v="เลื่อน" onclick="pick(this,'openRow')">เลื่อน</button>
+    </div>
+    <div class="hint">ต่อท้ายชื่อมุ้งในใบ เช่น "มุ้งจีบ บานเลื่อน" — ไม่กระทบราคา</div>
+
+    <div class="seclbl">③ ขนาด + ราคามุ้ง <span class="tagnew">กางออก + ช่องราคาแยก</span></div>
+    <div class="row" style="margin-bottom:7px;">
+      <span style="color:#0369A1;font-size:11px;">[เว้นว่าง=auto จากบาน]</span>
+      กว้าง <input type="number" id="mw" min="0" step="0.1" placeholder="ม." style="width:62px;" oninput="calc()">
+      × ยาว <input type="number" id="mh" min="0" step="0.1" placeholder="ม." style="width:62px;" oninput="calc()"> ม.
+    </div>
+    <div class="row">
+      ราคามุ้ง (กรอกเอง) <input type="number" id="fprice" min="0" step="100" placeholder="บาท" style="width:96px;" oninput="calc()">
+      <span style="font-size:11px;color:var(--muted);">เว้น 0 = คิด auto ตามพื้นที่</span>
+    </div>
+
+    <div class="seclbl">ผ้ามุ้ง <span class="tagkeep">คงเดิม</span></div>
+    <div class="chips" id="fabRow">
+      <button class="chip on" data-v="fiber_gray" onclick="pick(this,'fabRow');calc()">ไฟเบอร์เทา</button>
+      <button class="chip" data-v="fiber_black" onclick="pick(this,'fabRow');calc()">ไฟเบอร์ดำ</button>
+      <button class="chip" data-v="anti_pet" onclick="pick(this,'fabRow');calc()">กันแมว +800/ตร.ม.</button>
+      <button class="chip" data-v="stainless" onclick="pick(this,'fabRow');calc()">สแตนกันหนู +1,200/ตร.ม.</button>
+      <button class="chip" data-v="safety08" onclick="pick(this,'fabRow');calc()">สแตนนิรภัย 0.8</button>
+    </div>
+
+    <div class="seclbl">④ สีกรอบมุ้ง <span class="tagwait">รอเคาะ — คงเดิม 4 พรีเซ็ต</span></div>
+    <div class="chips" id="colRow">
+      <button class="chip sw on" data-v="" onclick="pick(this,'colRow')"><span class="dot" style="background:#c9ccce;"></span>ตามสีบาน</button>
+      <button class="chip sw" data-v="sahara" onclick="pick(this,'colRow')"><span class="dot" style="background:#8a8f96;"></span>เทาซาฮาร่า</button>
+      <button class="chip sw" data-v="kl_special" onclick="pick(this,'colRow')"><span class="dot" style="background:#3a3a3a;"></span>KL พิเศษ</button>
+      <button class="chip sw" data-v="kl_wood" onclick="pick(this,'colRow')"><span class="dot" style="background:#9c6b3f;"></span>KL ลายไม้</button>
+    </div>
+    <div class="hint">④ จะปรับเป็นสีเต็มแบบ G1 หรือคงไว้ — รอพี่นัทเคาะ (ยังไม่แตะในดราฟนี้)</div>
+
+    <div class="pricebar"><span>ราคามุ้ง (เดโม · เรตจริงตอน dev)</span><b id="pout">฿0</b></div>
+  </div>
+
+  <!-- annotations -->
+  <div class="ann">
+    <h3>① จำนวนบานมุ้ง</h3>
+    <div class="ba">
+      <div class="box b-old"><div class="l">ตอนนี้</div>ชิป auto/1..N <b>ตันที่จำนวนบานหลัก</b> (บาน 1 → กรอกได้แค่ 1) · stepper โผล่เฉพาะ N&gt;5</div>
+      <div class="box b-new"><div class="l">จะแก้</div>มี stepper <b>กรอกจำนวนเองได้เสมอ</b> (เกินจำนวนบานได้) + ปุ่ม auto · <code>.o-mosqpanels</code> เดิม engine ไม่กระทบ</div>
+    </div>
+  </div>
+  <div class="ann">
+    <h3>② ลักษณะการเปิด</h3>
+    <div class="ba">
+      <div class="box b-old"><div class="l">ตอนนี้</div>เปิด / เลื่อน / <b>กระทุ้ง / ยก</b> (4 ตัว · label เฉยๆ)</div>
+      <div class="box b-new"><div class="l">จะแก้</div>เหลือ <b>เลื่อน / เปิด</b> · ตัดกระทุ้ง/ยก (ไม่กระทบราคา · แค่ข้อความใบ)</div>
+    </div>
+  </div>
+  <div class="ann">
+    <h3>③ ขนาด + ราคามุ้ง</h3>
+    <div class="ba">
+      <div class="box b-old"><div class="l">ตอนนี้</div>ช่องขนาด <b>ซ่อนในพับ</b> "กรอกขนาดมุ้งเอง" · <b>ไม่มีช่องราคา</b></div>
+      <div class="box b-new"><div class="l">จะแก้</div>กางช่องขนาด กว้าง×ยาว ออกมาเห็นเลย + เพิ่ม <b>"ราคามุ้ง (กรอกเอง)"</b> override (เว้น 0 = auto ตามพื้นที่)</div>
+    </div>
+  </div>
+  <div class="ann" style="border-color:#fde68a;">
+    <h3>④ สีกรอบมุ้ง <span class="tagwait">รอเคาะ</span></h3>
+    <div class="box b-old" style="margin:0;"><div class="l" style="color:#92400e;">ยังไม่ตัดสิน</div>ตอนนี้ 4 พรีเซ็ต (ตามบาน + ซาฮาร่า/KL×2 ×0.5) · ตัวเลือก: ใช้สีเต็มแบบ G1 (colorPrice) หรือคงเดิม — <b>ดราฟนี้คงเดิมไว้ก่อน</b></div>
+  </div>
+
+  <div class="sumbar">
+    <h2>📋 สรุป — ดราฟนี้แก้ ①②③ (④ คงเดิม)</h2>
+    <ul>
+      <li>① จำนวนบานมุ้ง → กรอกเองได้อิสระ (stepper + auto)</li>
+      <li>② ลักษณะการเปิด → เหลือ เลื่อน/เปิด</li>
+      <li>③ ขนาด → กางออก + ช่องราคาแยก (override)</li>
+      <li>④ สีกรอบ → คงเดิม (รอเคาะ ค่อยทำรอบหน้า)</li>
+    </ul>
+    <div style="margin-top:11px;border-top:1px solid rgba(255,255,255,.25);padding-top:9px;">
+      ⚠️ ก่อนส่ง dev: บล็อกนี้ใช้ร่วม G1/G6/ทุกบาน → เทส golden 150 + options 222 + กดจริง G1/G6/คิดเร็ว
+    </div>
+    <div style="margin-top:12px;">เอาตามนี้ไหมครับ? โอเคแล้วผมส่ง dev แก้ ①②③ (④ ค่อยว่ากัน)</div>
+  </div>
+</div>
+
+<script>
+  function pick(btn,row){document.getElementById(row).querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));btn.classList.add('on');}
+  function bump(d){var q=document.getElementById('qty');q.value=Math.max(1,(parseInt(q.value)||1)+d);manual();}
+  function manual(){document.getElementById('autoBtn').classList.remove('on');calc();}
+  function setAuto(){document.getElementById('autoBtn').classList.add('on');document.getElementById('qty').value=1;calc();}
+  function calc(){
+    // เดโมราคา (ไม่ใช่เรตจริง) — โชว์ว่า override/พื้นที่/ผ้า ทำงาน
+    var fp=parseFloat(document.getElementById('fprice').value)||0;
+    if(fp>0){document.getElementById('pout').textContent='฿'+fp.toLocaleString()+' (กรอกเอง)';return;}
+    var qty=parseInt(document.getElementById('qty').value)||1;
+    var w=parseFloat(document.getElementById('mw').value)||0.9, h=parseFloat(document.getElementById('mh').value)||2.0;
+    var area=w*h;
+    var base=qty*Math.max(3500, area*4500);
+    var fab=(document.querySelector('#fabRow .chip.on')||{}).dataset.v||'fiber_gray';
+    if(fab==='anti_pet')base+=800*area*qty; else if(fab==='stainless')base+=1200*area*qty; else if(fab==='safety08')base+=3000*area*qty;
+    document.getElementById('pout').textContent='฿'+Math.round(base).toLocaleString()+' (auto · เดโม)';
+  }
+  calc();
+</script>
+</body>
+</html>
