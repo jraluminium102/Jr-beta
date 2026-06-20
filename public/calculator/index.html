@@ -1292,6 +1292,21 @@ function bahtText(n){
 }
 function area(w,h){ return (parseFloat(w)||0)*(parseFloat(h)||0); }
 
+// ค่าทำสีบาน G2 (มติพี่นัท 20มิ.ย.): ชื่อสีที่เลือก → COLORS index (เรตสีอลู) · ขาว/ดำ/ไม่อบสี=0 ไม่คิด
+function g2DoorColorIdx(nm){ nm=(nm||'').trim(); if(!nm)return 0;
+  if(/ลายไม้อบพิเศษ|อบสีลายไม้/.test(nm)) return 11;
+  if(/Fuji|ฟูจิ/i.test(nm)) return 8;
+  if(/อบพิเศษ|อบสีพิเศษ/.test(nm)) return 10;
+  if(/ลายไม้สต๊อก/.test(nm)) return 5;
+  if(/Aztec/i.test(nm)) return 4;
+  if(/ดำซาฮาร่า/.test(nm)) return 3;
+  if(/ซาฮาร่า/.test(nm)) return 2;
+  return 0; }
+// ค่าทำสีบาน = colorPrice(สีที่เลือก) × พื้นที่ × (pct% · default 30) · สีบาน=สีเดียวกับงาน
+function g2DoorPaint(nm, a, optSel){ var idx=g2DoorColorIdx(nm); if(idx<=0)return {c:0,pct:0};
+  var pct=(optSel&&optSel.doorColorPct!=null&&optSel.doorColorPct!=='')?parseFloat(optSel.doorColorPct):30;
+  if(!(pct>0))return {c:0,pct:0}; return {c:Math.round(colorPrice(idx,a,'')*(pct/100)),pct:pct}; }
+
 /* คำนวณ 1 รายการ → {sell, cost, area, msgs} (ยังไม่คูณชุด) */
 function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   let a=area(w,h);
@@ -1436,12 +1451,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // ค่าสี — finish rate ต่อ ตร.ม. (ใช้ rate ของลูกฟูกเรียบ 2 ทาง)
     const finRate = (optSel && parseFloat(optSel.bsFinish)) || 0;
     const finCost = finRate * A;
-    const total = doorCost + slideCost + corrugateCost + finCost;
+    const _dp = g2DoorPaint(optSel && optSel.bsFinishLbl, A, optSel);   // ค่าทำสีบาน (มติ 20มิ.ย.) — สีอลู colorPrice × pct
+    const total = doorCost + slideCost + corrugateCost + finCost + _dp.c;
     const m = [];
     if(doorName) m.push('ค่าประตู ('+doorName+') '+fmt(doorCost));
     m.push('ค่าเลื่อน '+fmt(slideCost));
     m.push('ลูกฟูก '+H_round.toFixed(1)+' ม. '+fmt(corrugateCost));
     if(finCost>0) m.push('ค่าสี '+fmt(finCost));
+    if(_dp.c>0) m.push('ค่าทำสีบาน '+_dp.pct+'% '+fmt(_dp.c));
     if(H>3.0) m.push('⚠ สูงเกิน 3 ม. — ต้องเสริมโครงเหล็ก');
     return {a:A, sell:roundUp(total), cost:null, addonLabel:'', msgs:[m.join(' · ')]};
   }
@@ -1462,11 +1479,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const motorCost = motorOn ? (numSets * Math.ceil(D/3) * 10000) : 0;
     const finRate = (optSel && parseFloat(optSel.bocFinish)) || 0;
     const finCost = finRate * A;
-    const total = ranaeCost + openCloseCost + motorCost + finCost;
+    const _dp = g2DoorPaint(optSel && optSel.bocFinishLbl, A, optSel);   // ค่าทำสีบาน (มติ 20มิ.ย.)
+    const total = ranaeCost + openCloseCost + motorCost + finCost + _dp.c;
     const m = [(dir==='v'?'แนวตั้ง':'แนวนอน')+' · '+numSets+' ชุด',
       'ค่าระแนง '+fmt(ranaeCost), 'เปิด-ปิด '+fmt(openCloseCost)];
     if(motorCost>0) m.push('มอเตอร์ '+fmt(motorCost));
     if(finCost>0) m.push('ค่าสี '+fmt(finCost));
+    if(_dp.c>0) m.push('ค่าทำสีบาน '+_dp.pct+'% '+fmt(_dp.c));
     if(D_parallel>9) m.push('⚠ '+(dir==='v'?'สูง':'กว้าง')+'เกิน 9 ม. (สูงสุด 3 ชุด × 3 ม.)');
     return {a:A, sell:roundUp(total), cost:null, addonLabel:'', msgs:[m.join(' · ')]};
   }
@@ -1490,7 +1509,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if((parseInt(panels)||1) > 3) _msg += ' · ⚠ เกิน 3 บาน/ชุด — ให้แยกชุดใหม่';
     return {a:aPerDoor, sell:roundUp(_ft), cost:null, addonLabel:'', msgs:[_msg]};
   }
-  if(p.gate){ const W=parseFloat(w)||0,H=parseFloat(h)||0,A=W*H; const mk=A<=6?4000:A<=8?3500:A<=10?3000:2500; const makeC=A*mk; const rnp=(optSel&&optSel.gatern)?PBYID[optSel.gatern]:null; const rnr=rnp?rnp.rate:0; const rnC=rnr>0?A*rnr*(1-ranaeDisc(A)):0; const fkey=optSel&&optSel.gfin; const fup=(rnp&&fkey&&rnp.fin&&rnp.fin[fkey])?rnp.fin[fkey]:0; const finC=fup>0?Math.round(A*fup*(1-ranaeDisc(A))):0; const mt=parseInt(optSel&&optSel.gmotor)||0; const mtC=mt*30000; const rt=(optSel&&optSel.railtype)||'straight'; const railr=rt==='curved'?2500:1500; const railC=2*W*railr; let leaves=0,leafC=0; if(rt==='curved'){ leaves=Math.ceil(W/0.75); leafC=leaves*4000; } const woodC=parseFloat(optSel&&optSel.gatewood)||0; /* R2-1: ลายไม้ Golden Teak = OPTION/upsell (ไม่บวกในยอด · โชว์เป็นบรรทัด OPTION) */ const _g=roundUp(makeC+rnC+finC+mtC+railC+leafC); return {a:A, sell:_g, cost:null, addonLabel:'', msgs:['ค่าทำประตู '+fmt(makeC)+(rnp?(' · ระแนง'+fmt(Math.round(rnC))):'')+(finC>0?(' · อบสี '+fkey+' '+fmt(finC)):'')+(mt?(' · มอเตอร์ '+mt+' ตัว'):'')+' · ราง'+(rt==='curved'?'โค้ง':'ตรง')+'(2×กว้าง) '+fmt(railC)+(rt==='curved'?(' · บานโค้ง '+leaves+' บาน '+fmt(leafC)):'')+(woodC>0?(' · (OPTION ลายไม้ Golden Teak +'+fmt(woodC)+' — ไม่รวมในยอด)'):'')]}; }
+  if(p.gate){ const W=parseFloat(w)||0,H=parseFloat(h)||0,A=W*H; const mk=A<=6?4000:A<=8?3500:A<=10?3000:2500; const makeC=A*mk; const rnp=(optSel&&optSel.gatern)?PBYID[optSel.gatern]:null; const rnr=rnp?rnp.rate:0; const rnC=rnr>0?A*rnr*(1-ranaeDisc(A)):0; const fkey=optSel&&optSel.gfin; const fup=(rnp&&fkey&&rnp.fin&&rnp.fin[fkey])?rnp.fin[fkey]:0; const finC=fup>0?Math.round(A*fup*(1-ranaeDisc(A))):0; const mt=parseInt(optSel&&optSel.gmotor)||0; const mtC=mt*30000; const rt=(optSel&&optSel.railtype)||'straight'; const railr=rt==='curved'?2500:1500; const railC=2*W*railr; let leaves=0,leafC=0; if(rt==='curved'){ leaves=Math.ceil(W/0.75); leafC=leaves*4000; } const woodC=parseFloat(optSel&&optSel.gatewood)||0; /* R2-1: ลายไม้ Golden Teak = OPTION/upsell (ไม่บวกในยอด · โชว์เป็นบรรทัด OPTION) */ const _dpG=g2DoorPaint(optSel&&optSel.gfin, A, optSel); /* ค่าทำสีบาน (มติ 20มิ.ย.) — สีบานประตูรั้ว colorPrice × pct */ const _g=roundUp(makeC+rnC+finC+mtC+railC+leafC+_dpG.c); return {a:A, sell:_g, cost:null, addonLabel:'', msgs:['ค่าทำประตู '+fmt(makeC)+(rnp?(' · ระแนง'+fmt(Math.round(rnC))):'')+(finC>0?(' · อบสี '+fkey+' '+fmt(finC)):'')+(mt?(' · มอเตอร์ '+mt+' ตัว'):'')+' · ราง'+(rt==='curved'?'โค้ง':'ตรง')+'(2×กว้าง) '+fmt(railC)+(rt==='curved'?(' · บานโค้ง '+leaves+' บาน '+fmt(leafC)):'')+(woodC>0?(' · (OPTION ลายไม้ Golden Teak +'+fmt(woodC)+' — ไม่รวมในยอด)'):'')+(_dpG.c>0?(' · ค่าทำสีบาน '+_dpG.pct+'% '+fmt(_dpG.c)):'')]}; }
   if(p.grid){ const W=parseFloat(w)||0,H=parseFloat(h)||0; const nh=parseInt(optSel&&optSel.nh)||0, nv=parseInt(optSel&&optSel.nv)||0; const cr=parseFloat(optSel&&optSel.gridcolor)||200; const len=nh*W+nv*H; const nc=parseInt(optSel&&optSel.nc)||0; const curveC=nc*3000; const _gb=roundUp(len*cr+curveC); return {a:W*H, sell:_gb, cost:null, addonLabel:'', msgs:['เส้นคาด '+nh+'นอน+'+nv+'ตั้ง '+len.toFixed(1)+'ม.×'+cr+(nc>0?(' + โค้ง '+nc+' เส้น×3,000'):'')]}; }
   if(p.ceiling && p.crates){ const real=area(w,h); const A=Math.max(real,10); const keys=Object.keys(p.crates); const ck=(optSel&&optSel.ckolor&&p.crates[optSel.ckolor]!==undefined)?optSel.ckolor:keys[0]; const rate=p.crates[ck]; const _c=roundUp(A*rate); return {a:real, sell:_c, cost:null, addonLabel:'', msgs:[ck+' '+fmt(rate)+'/ตร.ม.'+(real<10?(' · คิดขั้นต่ำ 10 ตร.ม.'):'')]}; }
   // ฝ้าระแนงอลู: ceiling:1 แต่ไม่มี crates → ตกไปคิด method per_sqm (max(min, area×rate)) ด้านล่าง · มติ 16มิ.ย.
@@ -1761,7 +1780,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
   // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
   if(optSel){ const _fcs=parseInt(optSel.fcsides)||0; if(_fcs===3||_fcs===4){ const _fW=parseFloat(w)||0,_fH=parseFloat(h)||0; const _flen=_fcs===3?(_fW+2*_fH):2*(_fW+_fH); if(_flen>0){ const _ffr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_ffr*_flen; msgs.push('ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×'+_ffr+' = '+fmt(_ffr*_flen)); } } }
-  if(p.fin&&optSel&&optSel.finish){ opt+=(parseFloat(optSel.finish)||0)*a; }
+  if(p.fin&&optSel&&optSel.finish){ opt+=(parseFloat(optSel.finish)||0)*a;
+    if(optSel.doortype){ const _dp=g2DoorPaint(optSel.finishLbl, a, optSel); if(_dp.c>0){ opt+=_dp.c; msgs.push('ค่าทำสีบาน '+_dp.pct+'% '+fmt(_dp.c)); } } }   // ค่าทำสีบาน (มติ 20มิ.ย.) — ระแนงทำเป็นบาน
   if(p.optSlide&&optSel&&optSel.slide){ const _N=Math.max(2,parseInt(optSel.spanels)||2); const _tier=a<=10?4500:a<=20?6750:a<=30?9000:11250;
     const _sa=parseFloat(optSel.sarea)||0; const _marea=_sa>0?_sa:(a*_N/(_N+1));
     const _autoMotor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000;
@@ -5248,7 +5268,7 @@ function readItem(d){
     const fcs=d.querySelector('.o-fcsides'); if(fcs)optSel.fcsides=fcs.value; }
   // o-extradesc ถูกลบแล้ว (รวมเข้า i-note) — ไม่ต้อง read อีก
   let finLabel='';
-  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); } } }
+  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); optSel.finishLbl=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
     // G4 wall-sides: อ่านผนัง 3 ด้าน
