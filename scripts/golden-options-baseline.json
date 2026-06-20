@@ -1,0 +1,1342 @@
+{
+ "meta": {
+  "at": "baseline",
+  "cases": 222,
+  "ok": 222,
+  "bad": 0
+ },
+ "rows": [
+  {
+   "key": "F:1:sliding_sms:grid",
+   "total": 21400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:sliding_sms:solid",
+   "total": 19260,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:sliding_euro:grid",
+   "total": 23540,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:sliding_euro:solid",
+   "total": 21400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:sliding_eseries:grid",
+   "total": 22470,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:sliding_eseries:solid",
+   "total": 21400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_euro:grid",
+   "total": 25573,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_euro:solid",
+   "total": 24075,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_euro:thresh",
+   "total": 25145,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_euro:closer",
+   "total": 29425,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_dseries:grid",
+   "total": 31030,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_dseries:solid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_dseries:thresh",
+   "total": 29960,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_xseries:grid",
+   "total": 34240,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_xseries:solid",
+   "total": 32100,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_xseries:thresh",
+   "total": 33170,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_xseries:closer",
+   "total": 37450,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_velora:grid",
+   "total": 25680,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_velora:solid",
+   "total": 24610,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_velora:thresh",
+   "total": 25680,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_flush_solid:grid",
+   "total": 47080,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_flush_solid:thresh",
+   "total": 46010,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_flush_solid:fullgrid",
+   "total": 50290,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_flush_solid:closer",
+   "total": 50290,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_inset_solid:grid",
+   "total": 35310,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_inset_solid:thresh",
+   "total": 35310,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_inset_solid:fullgrid",
+   "total": 39590,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:casement_inset_solid:closer",
+   "total": 39590,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:fixed_glass:grid",
+   "total": 21400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:fixed_glass:solid",
+   "total": 19260,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding:grid",
+   "total": 31030,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding:solid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding_euro:grid",
+   "total": 31030,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding_euro:solid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding_xseries:grid",
+   "total": 40660,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:folding_xseries:solid",
+   "total": 38520,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:awning_euro:grid",
+   "total": 26750,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:awning_euro:solid",
+   "total": 24610,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:awning_aluinch:grid",
+   "total": 26750,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:awning_aluinch:solid",
+   "total": 24610,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_stack:grid",
+   "total": 21400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_stack:solid",
+   "total": 20330,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_stack:trackhide",
+   "total": 25680,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_slimlux:grid",
+   "total": 29960,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_slimlux:solid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_slimlux:trackhide",
+   "total": 34240,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_xseries:grid",
+   "total": 29960,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_xseries:solid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:inner_top_xseries:trackhide",
+   "total": 34240,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn89:grid",
+   "total": 12840,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn89:solid",
+   "total": 11770,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn90:grid",
+   "total": 12840,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn90:solid",
+   "total": 11770,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn91:grid",
+   "total": 12840,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn91:solid",
+   "total": 10700,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn92:grid",
+   "total": 14980,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:rn92:solid",
+   "total": 12840,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pc_door_2:grid",
+   "total": 40660,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pc_door_2:solid",
+   "total": 38520,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pc_door_4:grid",
+   "total": 51360,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pc_door_4:solid",
+   "total": 49220,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:frameless_fixed:grid",
+   "total": 23540,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:frameless_fixed:solid",
+   "total": 22470,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:frameless_door:grid",
+   "total": 32100,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:frameless_door:solid",
+   "total": 31030,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:lift_sms:grid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:lift_sms:solid",
+   "total": 27820,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:lift_aluinch:grid",
+   "total": 28890,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:lift_aluinch:solid",
+   "total": 27820,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_vent:grid",
+   "total": 57780,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_vent:solid",
+   "total": 56710,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_vent:closer",
+   "total": 62060,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_exhido:grid",
+   "total": 130540,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_exhido:solid",
+   "total": 128400,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:ykk_exhido:closer",
+   "total": 133750,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:tostem_a01:grid",
+   "total": 57780,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:tostem_a01:solid",
+   "total": 56710,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:tostem_a01:closer",
+   "total": 62060,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pivot:grid",
+   "total": 43870,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pivot:solid",
+   "total": 41730,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pivot_aluinch:grid",
+   "total": 43870,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:pivot_aluinch:solid",
+   "total": 41730,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_double:grid",
+   "total": 80250,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_double:solid",
+   "total": 78110,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_single:grid",
+   "total": 72760,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_single:solid",
+   "total": 71690,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_fixed:grid",
+   "total": 47080,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_fixed:solid",
+   "total": 46010,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_slim:grid",
+   "total": 90950,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "F:1:curved_slim:solid",
+   "total": 88810,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_sms:base",
+   "total": 18000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_sms:grid",
+   "total": 20000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_sms:solid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_euro:base",
+   "total": 20000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_euro:grid",
+   "total": 22000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_euro:solid",
+   "total": 31000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_eseries:base",
+   "total": 20000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_eseries:grid",
+   "total": 21000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:sliding_eseries:solid",
+   "total": 30000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_euro:base",
+   "total": 22500,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_euro:grid",
+   "total": 23900,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_euro:solid",
+   "total": 33000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_dseries:base",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_dseries:grid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_dseries:solid",
+   "total": 38000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_xseries:base",
+   "total": 30000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_xseries:grid",
+   "total": 32000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_xseries:solid",
+   "total": 41000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_velora:base",
+   "total": 23000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_velora:grid",
+   "total": 24000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_velora:solid",
+   "total": 33000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_flush_solid:base",
+   "total": 42000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_flush_solid:grid",
+   "total": 44000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_flush_solid:solid",
+   "total": 53000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_inset_solid:base",
+   "total": 32000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_inset_solid:grid",
+   "total": 33000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:casement_inset_solid:solid",
+   "total": 42000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:fixed_glass:base",
+   "total": 18000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:fixed_glass:grid",
+   "total": 20000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:fixed_glass:solid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding:base",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding:grid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding:solid",
+   "total": 38000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_euro:base",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_euro:grid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_euro:solid",
+   "total": 38000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_xseries:base",
+   "total": 36000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_xseries:grid",
+   "total": 38000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:folding_xseries:solid",
+   "total": 47000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_euro:base",
+   "total": 23000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_euro:grid",
+   "total": 25000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_euro:solid",
+   "total": 34000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_aluinch:base",
+   "total": 23000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_aluinch:grid",
+   "total": 25000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_aluinch:solid",
+   "total": 34000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:isowall:base",
+   "total": 17000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:isowall:grid",
+   "total": 18000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:isowall:solid",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_ext:base",
+   "total": 14000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_ext:grid",
+   "total": 15000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_ext:solid",
+   "total": 24000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_int:base",
+   "total": 14000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_int:grid",
+   "total": 15000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:wall_int:solid",
+   "total": 24000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_stack:base",
+   "total": 19000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_stack:grid",
+   "total": 20000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_stack:solid",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_slimlux:base",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_slimlux:grid",
+   "total": 28000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_slimlux:solid",
+   "total": 37000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_xseries:base",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_xseries:grid",
+   "total": 28000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:inner_top_xseries:solid",
+   "total": 37000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:grid_bars:base",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:grid_bars:grid",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:grid_bars:solid",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn89:base",
+   "total": 11000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn89:grid",
+   "total": 12000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn89:solid",
+   "total": 21000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn90:base",
+   "total": 11000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn90:grid",
+   "total": 12000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn90:solid",
+   "total": 21000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn91:base",
+   "total": 10000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn91:grid",
+   "total": 12000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn91:solid",
+   "total": 21000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn92:base",
+   "total": 12000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn92:grid",
+   "total": 14000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:rn92:solid",
+   "total": 23000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_2:base",
+   "total": 36000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_2:grid",
+   "total": 38000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_2:solid",
+   "total": 47000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_4:base",
+   "total": 46000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_4:grid",
+   "total": 48000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pc_door_4:solid",
+   "total": 57000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_fixed:base",
+   "total": 21000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_fixed:grid",
+   "total": 22000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_fixed:solid",
+   "total": 31000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_door:base",
+   "total": 29000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_door:grid",
+   "total": 30000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:frameless_door:solid",
+   "total": 39000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:shower:base",
+   "total": 17000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:shower:grid",
+   "total": 18000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:shower:solid",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_sms:base",
+   "total": 26000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_sms:grid",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_sms:solid",
+   "total": 36000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_aluinch:base",
+   "total": 26000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_aluinch:grid",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:lift_aluinch:solid",
+   "total": 36000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_vent:base",
+   "total": 53000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_vent:grid",
+   "total": 54000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_vent:solid",
+   "total": 63000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_exhido:base",
+   "total": 120000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_exhido:grid",
+   "total": 122000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:ykk_exhido:solid",
+   "total": 131000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:tostem_a01:base",
+   "total": 53000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:tostem_a01:grid",
+   "total": 54000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:tostem_a01:solid",
+   "total": 63000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot:base",
+   "total": 39000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot:grid",
+   "total": 41000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot:solid",
+   "total": 50000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot_aluinch:base",
+   "total": 39000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot_aluinch:grid",
+   "total": 41000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:pivot_aluinch:solid",
+   "total": 50000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_double:base",
+   "total": 47000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_double:grid",
+   "total": 49000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_double:solid",
+   "total": 58000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_single:base",
+   "total": 41000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_single:grid",
+   "total": 42000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_single:solid",
+   "total": 51000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_fixed:base",
+   "total": 17000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_fixed:grid",
+   "total": 18000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_fixed:solid",
+   "total": 27000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_slim:base",
+   "total": 57000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_slim:grid",
+   "total": 59000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:curved_slim:solid",
+   "total": 68000,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:glass_replace:base",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:glass_replace:grid",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:glass_replace:solid",
+   "total": 0,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_brace:base",
+   "total": 500,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_brace:grid",
+   "total": 500,
+   "status": "ok",
+   "note": ""
+  },
+  {
+   "key": "Q1:awning_brace:solid",
+   "total": 500,
+   "status": "ok",
+   "note": ""
+  }
+ ]
+}
