@@ -3852,29 +3852,23 @@ function rnChips(opts,curVal,dim,cb){ cb=cb||'rnPick'; var h='<div class="chip-g
 //   บังตา 3 ขั้น (ขนาดเส้น→ระยะโชว์→โครง) · ผนัง/เกล็ด 2 ขั้น (ระดับ1→โครง)
 function _rnStepHint(){ return '<div style="font-size:11px;color:#9CA3AF;margin-top:6px;">↓ เลือกด้านบนก่อน แล้วตัวเลือกถัดไปจะโผล่</div>'; }
 function rnSelectorHTML(p, ch){
+  // 21มิ.ย. (มติพี่นัท): โชว์ครบทุกขั้นเลย (เหมือนประตูรั้ว) ไม่ progressive — กดง่ายกว่า · อันไหนมีทึบ (gap/frame) ก็ขึ้นตามสูตรในต้นไม้ RN_TREE
   var ck=rnCatKey(p); if(!ck)return''; var d=rnParse(p);
-  var step=parseInt((ch&&ch.dataset.rnStep)||'1')||1;
   var h='<div class="opt rn-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
-  var more=false;
   if(ck==='box'){
     h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดกล่อง '+rnChips(RN_BOX_ORDER.filter(function(b){return RN_TREE.box[b];}),d.box,'box')+'</label>';
-    if(step>=2){ var faces=RN_TREE.box[d.box]?Object.keys(RN_TREE.box[d.box]):[];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> หน้าโชว์ '+(faces.length>1?'<span style="font-size:10px;color:#0369A1;">('+faces.length+' หน้า)</span> ':'')+rnChips(faces,d.face,'face')+'</label>';
-    } else more=true;
-    if(step>=3){ var gaps=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face])?Object.keys(RN_TREE.box[d.box][d.face]):[];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">③</b> ระยะห่าง '+rnChips(gaps,d.gap,'gap')+'</label>';
-    } else if(step>=2) more=true;
-    if(step>=4){ var frs=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face]&&RN_TREE.box[d.box][d.face][d.gap])?Object.keys(RN_TREE.box[d.box][d.face][d.gap]):['ไม่โครง','รวมโครง'];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">④</b> โครง '+rnChips(frs,d.frame,'frame')+'</label>';
-    } else if(step>=3) more=true;
+    var faces=RN_TREE.box[d.box]?Object.keys(RN_TREE.box[d.box]):[];
+    h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> หน้าโชว์ '+(faces.length>1?'<span style="font-size:10px;color:#0369A1;">('+faces.length+' หน้า)</span> ':'')+rnChips(faces,d.face,'face')+'</label>';
+    var gaps=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face])?Object.keys(RN_TREE.box[d.box][d.face]):[];
+    h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">③</b> ระยะห่าง '+rnChips(gaps,d.gap,'gap')+'</label>';
+    var frs=(RN_TREE.box[d.box]&&RN_TREE.box[d.box][d.face]&&RN_TREE.box[d.box][d.face][d.gap])?Object.keys(RN_TREE.box[d.box][d.face][d.gap]):['ไม่โครง','รวมโครง'];
+    h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">④</b> โครง '+rnChips(frs,d.frame,'frame')+'</label>';
   } else {
     h+='<label class="opt" style="width:100%;margin:0;"><b style="color:#B3151D;">①</b> ขนาดเกล็ด '+rnChips(Object.keys(RN_TREE.gleed),d.size,'k1')+'</label>';
-    if(step>=2){ var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
-      h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frg,d.frame,'frame')+'</label>';
-    } else more=true;
+    var frg=RN_TREE.gleed[d.size]?Object.keys(RN_TREE.gleed[d.size]):['ไม่โครง','รวมโครง'];
+    h+='<label class="opt" style="width:100%;margin:8px 0 0;"><b style="color:#B3151D;">②</b> โครง '+rnChips(frg,d.frame,'frame')+'</label>';
   }
-  if(more) h+=_rnStepHint();
-  else h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+(p.name||'').replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
+  h+='<div style="font-size:11px;color:#0369A1;margin-top:6px;">เลือก: '+(p.name||'').replace(/^บังตาผนังระแนง\s*/,'').replace(/^ระแนงผนัง\s*/,'')+' · เรต '+(p.rate||0).toLocaleString()+'/ตร.ม.</div>';
   return h+'</div>';
 }
 // G2 เฟส3 "ทำเป็นบาน": เลือกชนิดบาน → switch ระแนง→ไม่โครง อัตโนมัติ (บานให้โครงเอง · กันคิดโครงซ้ำ +12k)
@@ -5102,6 +5096,8 @@ function buildItemOpts(d){
   // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
   // v9: เพิ่ม _hasOpenCat — ถ้า groupGHOpts สร้าง section ที่ open:true ไว้ใน .i-opts ให้เปิด optbox ด้วย (กัน ล็อค/มุ้ง/คาดตาราง ซ่อนอยู่ใน optbox พับ)
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
+  // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
+  if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
