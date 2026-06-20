@@ -67,6 +67,16 @@
     padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
   .chfoot .price{font-weight:800;font-size:17px;color:var(--red-dark);}
   .chmsg{font-size:12px;margin-top:6px;}
+  /* C (21มิ.ย.): การ์ดราคา G2 ชิดขวา · อัปเดตทุกครั้งที่กด (float:right ฟอร์มไหลซ้าย · มือถือ stack บน) */
+  .ch-aside{display:none;}
+  .ch.ch-pcard .ch-aside{display:block;float:right;width:190px;margin:0 0 10px 14px;background:#0f172a;color:#e2e8f0;border-radius:12px;padding:11px 13px;box-shadow:0 4px 14px #0f172a26;}
+  .ch.ch-pcard .ch-aside .pcl{font-size:11px;color:#cbd5e1;font-weight:700;}
+  .ch.ch-pcard .ch-aside .pca{font-size:11.5px;color:#94a3b8;margin:4px 0 7px;line-height:1.45;}
+  .ch.ch-pcard .ch-aside .pcp{font-size:21px;font-weight:800;color:#fff;font-family:"SFMono-Regular",Consolas,monospace;}
+  .ch.ch-pcard .ch-aside.flash{animation:chpcfl .45s;}
+  @keyframes chpcfl{0%{background:#1e3a5f}100%{background:#0f172a}}
+  .ch.ch-pcard .chfoot{display:none;}
+  @media(max-width:640px){ .ch.ch-pcard .ch-aside{float:none;width:auto;margin:0 0 10px;} }
   /* #2 2026-06-05: บานย่อยในชุด */
   .subitem-wrap{margin:6px 0 2px;}
   .subitem-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
@@ -5112,6 +5122,14 @@ function buildItemOpts(d){
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
+  // C (21มิ.ย.): การ์ดราคา G2 ชิดขวา (เริ่ม G2 ก่อน · กลุ่มอื่นทำแชทอื่น) · ค่าราคาอัปเดตใน calcQuote
+  { var _isG2=((d.querySelector('.i-group')||{}).value)==='2';
+    var _aside=d.querySelector(':scope > .ch-aside');
+    if(_isG2){ d.classList.add('ch-pcard');
+      if(!_aside){ _aside=document.createElement('div'); _aside.className='ch-aside';
+        _aside.innerHTML='<div class="pcl">💰 ราคารายการนี้</div><div class="pca">—</div><div class="pcp">฿0</div>';
+        var _top=d.querySelector(':scope > .top'); if(_top&&_top.nextSibling) d.insertBefore(_aside,_top.nextSibling); else d.appendChild(_aside); }
+    } else { d.classList.remove('ch-pcard'); if(_aside) _aside.remove(); } }
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
@@ -5490,6 +5508,10 @@ function calcQuote(){
     const lineSell=it.r.sell*it.qty;
     d.querySelector('.i-area').textContent = it.r.a>0 ? (it.r.a.toFixed(2)+' ตร.ม. · /ชุด '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : (it.r.sell>0 ? ('เหมาทั้งชุด · '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : '—');
     d.querySelector('.i-price').textContent = bht(lineSell);
+    { var _as=d.querySelector(':scope > .ch-aside'); if(_as){ var _ap=_as.querySelector('.pcp'), _aa=_as.querySelector('.pca'); // C: การ์ดราคา G2 ขวา
+      if(_ap)_ap.textContent=bht(lineSell);
+      if(_aa)_aa.textContent= it.r.a>0 ? (it.r.a.toFixed(2)+' ตร.ม. · /ชุด '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : (it.r.sell>0 ? ('เหมาทั้งชุด · '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : '—');
+      _as.classList.remove('flash'); void _as.offsetWidth; _as.classList.add('flash'); } }
     let msg=[...it.r.msgs];
     if(it.r.addonLabel) msg.unshift(it.r.addonLabel);
     d.querySelector('.i-msg').innerHTML = msg.length?('<span style="color:var(--red-dark);font-size:14px;font-weight:600">'+msg.join(' · ')+'</span>'):'';
