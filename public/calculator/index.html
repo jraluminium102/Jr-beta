@@ -4198,34 +4198,38 @@ function addItem(container){
      `<div class="full i-override-hint" style="display:none;font-size:12px;color:var(--muted);margin-top:2px;">แก้ราคาได้ที่หน้าใบเสนอราคา (ปุ่ม &#x270E;)</div>`+
      /* R3.14 (19มิ.ย. · มติพี่นัท): ดึงบล็อก "ล็อค·คาดตาราง" ออกจากกล่องอุปกรณ์เสริม โชว์เด่นเหนือผสมบาน (relocate ใน buildItemOpts · เคลียร์ host ทุก rebuild กัน orphan) · ลำดับ: host(ล็อค·คาดตาราง) → ผสมบาน → optbox(ที่เหลือ) → หมายเหตุ+OPTION */
      `<div class="full g1-lockgrid-host" style="display:none;"></div>`+
-     `<div class="full subitem-wrap"><div style="font-size:12px;font-weight:700;color:#374151;margin:0 0 4px;">ผสมบาน — เพิ่มบานในชุดเดียว <span style="font-weight:400;color:#6b7280;font-size:11px;">(คิดราคาตามชนิด · กรอกขนาดต่อชิ้น · สี/กระจก ตามบานหลัก)</span></div>`+
-       `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:2px 0;">บานทำงาน</div>`+
-       `<div class="subkind-chips chip-group chip-sm">`+
-         `<button type="button" class="chip" onclick="addSub(this,'open','บานเปิด',0.9,2.2)">＋ บานเปิด</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'slide','บานเลื่อน',1.8,2.2)">＋ บานเลื่อน</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'fold','บานเฟี้ยม',2.4,2.2)">＋ บานเฟี้ยม</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'awning','บานกระทุ้ง',0.6,0.6)">＋ บานกระทุ้ง</button>`+
-       `</div>`+
-       `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:5px 0 2px;">ติดตาย / ช่องแสง</div>`+
-       `<div class="subkind-chips chip-group chip-sm">`+
-         `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงบนติดตาย',1.2,0.4)">＋ ช่องแสงบน</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'fix','บานข้างติดตาย',0.6,2.2)">＋ บานข้างติดตาย</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงติดตาย',1.0,0.5)">＋ ช่องแสงติดตาย</button>`+
-         `<button type="button" class="chip" onclick="addSub(this,'custom','อื่นๆ',1.0,1.0)">＋ อื่นๆ (กรอกราคา)</button>`+
-       `</div>`+
-       `<div class="subitem-list"></div></div>`+
+     /* R3.22 (20มิ.ย. · มติพี่นัท): ผสมบาน ย้ายไปล่างสุด (มีเส้นแบ่ง "คนละบาน") · เดิมคั่นกลางออปชั่นบานหลัก → งง */
      `<div class="full"><details class="optbox" style="margin:0;"><summary>อุปกรณ์เสริม / ออปชั่น</summary><div class="opts i-opts"></div></details></div>`+
+     /* R3.22: หมายเหตุ/OPTION พับเป็นปุ่ม (ใช้ไม่บ่อย) — reuse g1RareToggle · body flex-column */
      `<div class="full note-opt-group">`+
-       `<label>หมายเหตุ / OPTION (ขึ้นในใบเสนอราคา · เว้นว่างได้)</label>`+
-       `<div class="oc-block" style="margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;"><div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:5px;">＋ OPTION ทางเลือกลูกค้า <span style="font-weight:400;color:var(--muted);font-size:11px;">(เปลี่ยนวัสดุ คิดราคาให้ · กดได้เลย)</span></div><div class="oc-catchips chip-group chip-sm"></div><div class="oc-list" style="margin-top:6px;"></div></div>`+
-       remarkSelectHTML()+
-       `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ (OPTION ทางเลือกลูกค้า = ใช้ปุ่มด้านบน ไม่ต้องพิมพ์ OPTION : เอง)"></textarea>`+
-       `<input type="hidden" class="o-optdelta" value="0">`+
-       /* E2: ลบ checkbox "คิดราคาเหมา" + ช่องราคาเหมา — ซ้ำซ้อน · ใช้แก้ราคาตรงในช่องราคา/หน่วย (โหมดแก้ไข ✎) แทน */
+       `<button type="button" onclick="g1RareToggle(this)" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 0;font-size:12px;color:#6B7280;font-weight:700;display:flex;align-items:center;gap:6px;"><span class="g1-rare-arr" style="font-size:10px;display:inline-block;transition:transform .15s;">▶</span>📝 หมายเหตุ / OPTION ทางเลือกลูกค้า</button>`+
+       `<div style="display:none;flex-direction:column;gap:6px;padding-top:6px;">`+
+         `<div class="oc-block" style="border:1px solid var(--line);border-radius:6px;padding:6px 8px;"><div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:5px;">＋ OPTION ทางเลือกลูกค้า <span style="font-weight:400;color:var(--muted);font-size:11px;">(เปลี่ยนวัสดุ คิดราคาให้ · กดได้เลย)</span></div><div class="oc-catchips chip-group chip-sm"></div><div class="oc-list" style="margin-top:6px;"></div></div>`+
+         remarkSelectHTML()+
+         `<textarea class="i-note" rows="2" placeholder="หมายเหตุ / สเปกพิเศษ เช่น รวมงานรื้อบานเดิม · กระจกหนาพิเศษ"></textarea>`+
+         `<input type="hidden" class="o-optdelta" value="0">`+
+       `</div>`+
      `</div>`+
    `</div>`+
    `<label class="chk" style="font-size:13px;margin:4px 0;"><input type="checkbox" class="i-ship" style="width:18px;height:18px;"> ผลิตส่ง (ไม่ติดตั้ง)</label>`+
    `<div class="g1-rare-section" style="display:none;margin-top:4px;border:1px dashed #D1D5DB;border-radius:8px;padding:6px 8px;"></div>`+
+   /* R3.22 (มติพี่นัท): ผสมบาน ลงล่างสุด + เส้นแบ่งชัดว่า "คนละบาน" (ออปชั่นบานหลักอยู่บนหมด ไม่ถูกคั่น) */
+   `<div class="full subitem-wrap" style="margin-top:8px;border-top:2px dashed #E1B0B4;padding-top:8px;"><div style="font-size:12px;font-weight:700;color:var(--red,#B3151D);margin:0 0 4px;">＋ ผสมบาน — เพิ่ม "บานอื่น" ในชุด <span style="font-weight:400;color:#6b7280;font-size:11px;">(คนละบาน · คิดราคาตามชนิด · สี/กระจก ตามบานหลัก)</span></div>`+
+     `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:2px 0;">บานทำงาน</div>`+
+     `<div class="subkind-chips chip-group chip-sm">`+
+       `<button type="button" class="chip" onclick="addSub(this,'open','บานเปิด',0.9,2.2)">＋ บานเปิด</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'slide','บานเลื่อน',1.8,2.2)">＋ บานเลื่อน</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'fold','บานเฟี้ยม',2.4,2.2)">＋ บานเฟี้ยม</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'awning','บานกระทุ้ง',0.6,0.6)">＋ บานกระทุ้ง</button>`+
+     `</div>`+
+     `<div class="subkind-grp" style="font-size:11px;color:#6b7280;margin:5px 0 2px;">ติดตาย / ช่องแสง</div>`+
+     `<div class="subkind-chips chip-group chip-sm">`+
+       `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงบนติดตาย',1.2,0.4)">＋ ช่องแสงบน</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'fix','บานข้างติดตาย',0.6,2.2)">＋ บานข้างติดตาย</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'fix','ช่องแสงติดตาย',1.0,0.5)">＋ ช่องแสงติดตาย</button>`+
+       `<button type="button" class="chip" onclick="addSub(this,'custom','อื่นๆ',1.0,1.0)">＋ อื่นๆ (กรอกราคา)</button>`+
+     `</div>`+
+     `<div class="subitem-list"></div></div>`+
    `<div class="chfoot"><span class="i-area">—</span><span class="price i-price">฿0</span></div>`+
    `<div class="chmsg i-msg"></div>`;
   (container||document.getElementById('items')).appendChild(d);
@@ -7022,23 +7026,23 @@ window.addEventListener('load',ckRefresh);
   ];
   // profile: main=[{label,key,opts:[[value,disp]...]}] · key=optSel จริงที่ calcUnit อ่าน · flags handle/handleX/handleSt/handleAwn/lock/framecolor/paint/mosq/glass · ex=pill อุปกรณ์เสริม
   var G6PROF={
-    slide:{main:[{label:'ลักษณะการเปิด',key:'opentype',opts:[['บานเลื่อน','เลื่อน'],['บานเลื่อนสลับ','สลับ'],['เปิดคู่กลาง','คู่กลาง'],['ลากจูง','ลากจูง']]},{label:'ราง',key:'bottomrail',opts:[['กันน้ำ','กันน้ำ'],['รางเตี้ย','รางเตี้ย (งานใน)']]}],handle:1,lock:1,mosq:1,glass:1,ex:['cf','df','rm'],note:'เลือก "รางเตี้ย" = งานภายใน → ระบุในใบเสนอราคา'},
-    inner:{main:[{label:'ลักษณะการเปิด',key:'opentype',opts:[['บานเลื่อน','เลื่อน'],['บานเลื่อนสลับ','สลับ']]},{label:'ราง',key:'track',opts:[['โชว์ราง','โชว์ราง'],['ซ่อนราง','ซ่อนราง +5,000']]}],lock:1,glass:1,ex:['cf','rm'],note:'เลื่อนภายใน — ไม่มีมุ้ง'},
-    innerX:{main:[{label:'ราง',key:'track',opts:[['โชว์ราง','โชว์ราง'],['ซ่อนราง','ซ่อนราง +5,000']]}],lock:1,handleX:1,glass:1,ex:['cf','rm'],note:'SlimLux/X — มือจับ X ฟรี · ไม่มีมุ้ง'},
-    swing:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]},{label:'โช้คอัพ',key:'closer',opts:[['0','ไม่มี'],['5000','มี +5,000']]}],handle:1,mosq:1,glass:1,ex:['cf','df','rm']},
-    swingX:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]},{label:'โช้คอัพ',key:'closer',opts:[['0','ไม่มี'],['5000','มี +5,000']]}],handle:1,handleX:1,mosq:1,glass:1,ex:['cf','df','rm']},
-    swingV:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]}],handle:1,mosq:1,glass:1,ex:['cf','df','rm'],note:'Velora — ไม่มีโช้ค'},
-    awning:{main:[{label:'แบบเปิด',key:'awn_mode',opts:[['0','เปิดล่าง'],['1','เปิดข้าง'],['2','Tilt&Turn +5,000/บาน']]}],handleAwn:1,mosq:1,glass:1,ex:['cf','df','br','rm']},
-    pivot:{handle:1,glass:1,ex:['cf','rm'],note:'บานหมุน — ตัดมุ้ง'},
-    fold:{main:[{label:'ทิศเปิด',key:'folddir',opts:[['เปิดขวา','เปิดขวา'],['เปิดซ้าย','เปิดซ้าย'],['แยกกลาง','แยกกลาง']]},{label:'ธรณีเฟี้ยม',key:'threshf',opts:[['outer','กันน้ำ'],['inner','ภายใน']]}],mosq:1,glass:1,ex:['cf','df','rm']},
-    foldX:{main:[{label:'ทิศเปิด',key:'folddir',opts:[['เปิดขวา','เปิดขวา'],['เปิดซ้าย','เปิดซ้าย']]}],handleX:1,mosq:1,glass:1,ex:['cf','df','rm'],note:'X — มือจับ X ฟรี'},
+    slide:{main:[{label:'ลักษณะการเปิด',key:'opentype',opts:[['บานเลื่อน','เลื่อน'],['บานเลื่อนสลับ','สลับ'],['เปิดคู่กลาง','คู่กลาง'],['ลากจูง','ลากจูง']]},{label:'ราง',key:'bottomrail',opts:[['กันน้ำ','กันน้ำ'],['รางเตี้ย','รางเตี้ย (งานใน)']]}],handle:1,lock:1,lockDef:'มีกุญแจ',mosq:1,glass:1,ex:['cf','df','rm'],note:'เลือก "รางเตี้ย" = งานภายใน → ระบุในใบเสนอราคา'},
+    inner:{main:[{label:'ลักษณะการเปิด',key:'opentype',opts:[['บานเลื่อน','เลื่อน'],['บานเลื่อนสลับ','สลับ']]},{label:'ราง',key:'track',opts:[['โชว์ราง','โชว์ราง'],['ซ่อนราง','ซ่อนราง +5,000']]}],lock:1,lockDef:'มีกุญแจ',glass:1,ex:['cf','rm'],note:'เลื่อนภายใน — ไม่มีมุ้ง'},
+    innerX:{main:[{label:'ราง',key:'track',opts:[['โชว์ราง','โชว์ราง'],['ซ่อนราง','ซ่อนราง +5,000']]}],lock:1,lockDef:'มีกุญแจ',handleX:1,glass:1,ex:['cf','rm'],note:'SlimLux/X — มือจับ X ฟรี · ไม่มีมุ้ง'},
+    swing:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]},{label:'โช้คอัพ',key:'closer',opts:[['0','ไม่มี'],['5000','มี +5,000']]}],handle:1,lock:1,lockDef:'มีกุญแจ',mosq:1,glass:1,ex:['cf','df','rm']},
+    swingX:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]},{label:'โช้คอัพ',key:'closer',opts:[['0','ไม่มี'],['5000','มี +5,000']]}],handle:1,handleX:1,lock:1,lockDef:'ไม่มีล็อค',mosq:1,glass:1,ex:['cf','df','rm']},
+    swingV:{main:[{label:'ธรณี',key:'thresh',opts:[['std','กันน้ำ'],['turtle','หลังเต่า +1,000']]}],handle:1,lock:1,lockDef:'ไม่มีล็อค',mosq:1,glass:1,ex:['cf','df','rm'],note:'Velora — ไม่มีโช้ค'},
+    awning:{main:[{label:'แบบเปิด',key:'awn_mode',opts:[['0','เปิดล่าง'],['1','เปิดข้าง'],['2','Tilt&Turn +5,000/บาน']]}],handleAwn:1,lock:1,lockDef:'ไม่มีกุญแจ',mosq:1,glass:1,ex:['cf','df','br','rm']},
+    pivot:{handle:1,lock:1,lockDef:'ไม่มีล็อค',glass:1,ex:['cf','rm'],note:'บานหมุน — ตัดมุ้ง'},
+    fold:{main:[{label:'ทิศเปิด',key:'folddir',opts:[['เปิดขวา','เปิดขวา'],['เปิดซ้าย','เปิดซ้าย'],['แยกกลาง','แยกกลาง']]},{label:'ธรณีเฟี้ยม',key:'threshf',opts:[['outer','กันน้ำ'],['inner','ภายใน']]}],lock:1,lockDef:'มีกุญแจ',mosq:1,glass:1,ex:['cf','df','rm']},
+    foldX:{main:[{label:'ทิศเปิด',key:'folddir',opts:[['เปิดขวา','เปิดขวา'],['เปิดซ้าย','เปิดซ้าย']]}],handleX:1,lock:1,lockDef:'ไม่มีล็อค',mosq:1,glass:1,ex:['cf','df','rm'],note:'X — มือจับ X ฟรี'},
     fix:{glass:1,ex:['cf','rm'],note:'ติดตาย — เฉพาะขนาด'},
     solid:{paint:1,glass:0,ex:['cf','rm'],note:'ผนังเบาทึบ — ไม่มีกระจก · ทาสี/ฉนวนเลือกได้'},
     frfix:{glass:1,ex:['rm'],note:'เปลือยติดตาย — สีเฟรม'},
     frame:{main:[{label:'ประเภท',key:'frametype',opts:[['สวิง','สวิง'],['เลื่อน','เลื่อน']]}],handleSt:1,framecolor:1,glass:1,ex:['rm']},
     curve:{handle:1,glass:1,ex:['cf','df','rm'],note:'ดัดโค้ง — ตัดมุ้ง'},
     lift:{main:[{label:'มอเตอร์',key:'motor',opts:[['','ไม่มี'],['80','80กก. +18,000'],['300','300กก. +28,000']]}],mosq:1,glass:1,ex:['cf','rm'],note:'บานยก'},
-    pc:{lock:1,handle:1,mosq:1,glass:1,ex:['cf','df','rm']},
+    pc:{lock:1,lockDef:'มีกุญแจ',handle:1,mosq:1,glass:1,ex:['cf','df','rm']},
     shower:{main:[{label:'รูปแบบ',key:'showerstyle',opts:[['ประตู+ติดตาย','ประตู+ติดตาย'],['ติดตาย','ติดตาย'],['ประตู','ประตู']]},{label:'อุปกรณ์',key:'showerhw',opts:[['0','เงิน'],['1','ดำ +4,000'],['2','ทอง +6,000']]}],handleSt:1,glass:0,ex:['rm'],note:'shower — ไม่มีเสริมกระจก/ครอบ'},
     ykk:{main:[{label:'โช้คอัพ',key:'closer',opts:[['0','ไม่มี'],['5000','มี +5,000']]}],glass:0,ex:['df','rm'],note:'YKK'}
   };
@@ -7157,7 +7161,7 @@ window.addEventListener('load',ckRefresh);
     if(pf.handleX) freq+=pick('มือจับ X (ฟรี)','xhandle',[['X-J','X-J'],['XO','XO'],['XT','XT']],o.xhandle,'X-J');
     if(pf.handleSt) freq+='<div class="fl">มือจับสแตนเลส</div><div class="chips"><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— ไม่ใส่ —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div>';
     if(pf.handleAwn) freq+='<div class="fl">มือจับกระทุ้ง</div><div class="chips"><button class="c on">มาตรฐาน</button></div>';
-    if(pf.lock) freq+=pick('ชุดล็อก','slidelock',[['มีกุญแจ','มีกุญแจ'],['ไม่มีกุญแจ','ไม่มี']],o.slidelock,'มีกุญแจ');
+    if(pf.lock) freq+=pick('ชุดล็อก','slidelock',[['ไม่มีล็อค','ไม่มีล็อค'],['ไม่มีกุญแจ','มีล็อค'],['มีกุญแจ','มีล็อค+กุญแจ']],o.slidelock,pf.lockDef||'มีกุญแจ');
     if(pf.glass||pf.framecolor) more+='<div class="fl">สีอลู (เฟรม)</div>'+g6ColorChips(o.colorIdx);  // A2 จุด2 (18มิ.ย.): สีอลูเฟรม COLORS เต็ม + จุดสี · คิดค่าสีพิเศษ colorPrice (default อบขาว ci0 ฟรี)
     if(pf.paint){ more+='<div class="fl">ทาสี / ฉนวน</div><div class="chips"><button class="c'+(o.paintOn?' on':'')+'" onclick="G6RtogOpt(\'paintOn\')">'+(o.paintOn?'ทาสีผนัง ✓':'＋ ทาสีผนัง')+'</button><button class="c'+(o.insul?' on':'')+'" onclick="G6RtogOpt(\'insul\')">'+(o.insul?'ฉนวน +600 ✓':'＋ ฉนวนกันร้อน')+'</button></div>';
       if(o.paintOn) more+='<div class="g6r-rev"><div class="row"><span class="rl">ราคาทาสี</span><input type="number" value="'+(o.wallpaintprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'wallpaintprice\',this.value)"><span class="u">บาท</span></div></div>'; }
@@ -7170,7 +7174,7 @@ window.addEventListener('load',ckRefresh);
     }
     // เสริมกระจก [ยกเว้น shower] — คาดตาราง + ลูกฟูก/คอมโพ (ใส่กลับตามดราฟ)
     if(pf.glass){ freq+='<div class="fl">ชนิดกระจก</div><select class="g6r-glass-sel" onchange="G6RsetOpt2(\'glassIdx\',this.value)" style="width:100%;max-width:340px;height:34px;border:1px solid #D1D5DB;border-radius:6px;margin-bottom:4px;padding:0 6px;">'+g6GlassOpts(o.glassIdx)+'</select>';  // A2 จุด1: เลือกชนิดกระจกต่อช่อง (reuse GLASS · default เขียว6มม.)
-      freq+='<div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'คาดตาราง ✓':'＋ คาดตาราง +200')+'</button><button class="c'+(o.solidlower?' on':'')+'" onclick="G6RtogSolidlower()">'+(o.solidlower?'ลูกฟูก/คอมโพ ✓':'＋ ลูกฟูก/คอมโพ +3,500')+'</button></div>';
+      freq+='<div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'คาดตาราง ✓':'＋ คาดตาราง +200')+'</button>'+(prod.full_grid?('<button class="c'+(o.fullgrid?' on':'')+'" onclick="G6RtogOpt(\'fullgrid\')">'+(o.fullgrid?'ตารางเต็มบาน ✓':'＋ ตารางเต็มบาน +5,000')+'</button>'):'')+'<button class="c'+(o.solidlower?' on':'')+'" onclick="G6RtogSolidlower()">'+(o.solidlower?'ลูกฟูก/คอมโพ ✓':'＋ ลูกฟูก/คอมโพ +3,500')+'</button></div>';
       if(o.gridmark) freq+='<div class="g6r-rev"><div class="row"><span class="rl">คาดตาราง</span><input type="number" value="'+(o.gmNh||0)+'" min="0" step="1" oninput="G6RsetOpt(\'gmNh\',this.value)"><span class="u">นอน</span><input type="number" value="'+(o.gmNv!=null?o.gmNv:(o.qty||1))+'" min="0" step="1" oninput="G6RsetOpt(\'gmNv\',this.value)"><span class="u">ตั้ง ×200/ม.</span></div></div>';
       if(o.solidlower) freq+='<div class="g6r-rev">'+pick('ชนิดแผ่นล่าง','solidlower',[['corrugated','ลูกฟูก 3,500/ตร.ม.'],['composite','คอมโพสิต 3,300/ตร.ม.']],o.solidlower,'corrugated')+'<div class="row"><span class="rl">ขนาดแผ่น</span><input type="number" value="'+(o.solidlowerW||p.w||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerW\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+(o.solidlowerH||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerH\',this.value)"><span class="u">สูง ม.</span></div></div>'; }
     // อุปกรณ์เสริม [หมวดเดียว] — pill
