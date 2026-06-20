@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตรวจงานกั้นห้อง G6 จากเว็บสด — 5 บั๊ก + งานค้าง (20 มิ.ย.)</title>
+<style>
+  :root{--red:#B3151D;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f8f7f5;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:18px 14px 60px;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin-bottom:18px;}
+  .legend span{background:#fff;border:1px solid var(--line);border-radius:20px;padding:3px 11px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .card h2{font-size:15.5px;margin:0 0 3px;display:flex;align-items:center;gap:8px;}
+  .flag{font-size:11px;font-weight:800;border-radius:6px;padding:2px 8px;color:#fff;white-space:nowrap;}
+  .f-red{background:#dc2626;} .f-yel{background:#d97706;} .f-grn{background:#16a34a;} .f-gray{background:#6b7280;}
+  .where{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;margin:2px 0 10px;}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+  @media(max-width:560px){.ba{grid-template-columns:1fr;}}
+  .box{border-radius:9px;padding:10px 11px;font-size:13px;}
+  .before{background:#fef2f2;border:1px solid #fecaca;}
+  .after{background:#f0fdf4;border:1px solid #bbf7d0;}
+  .box .lbl{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+  .before .lbl{color:#dc2626;} .after .lbl{color:#16a34a;}
+  .why{font-size:12.5px;color:#374151;margin:9px 0 0;padding:8px 10px;background:#fafafa;border-left:3px solid var(--red);border-radius:0 6px 6px 0;}
+  .ask{background:#fffbeb;border:1px solid #fde68a;}
+  .ask h2{color:#b45309;}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px;}
+  .sumbar{background:var(--red);color:#fff;border-radius:13px;padding:16px 18px;margin-top:22px;}
+  .sumbar h2{margin:0 0 8px;font-size:16px;color:#fff;}
+  .sumbar ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;}
+  .sumbar li{margin:3px 0;}
+  .qbtn{display:inline-block;margin-top:14px;background:#fff;color:var(--red);font-weight:800;border-radius:9px;padding:10px 18px;font-size:14px;text-decoration:none;}
+  .pill{display:inline-block;font-size:11px;background:#f3f4f6;border-radius:6px;padding:1px 7px;color:#374151;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔲 ตรวจงานกั้นห้อง (G6) จากเว็บสด</h1>
+  <p class="sub">เจอ 5 บั๊กที่พี่นัทแคปมา + 1 งานค้าง · <b>ยังไม่แก้ — ทำดราฟให้ดูก่อน</b> · 20 มิ.ย. 2026</p>
+
+  <div class="legend">
+    <span>🔴 ผิดแน่ ต้องแก้</span>
+    <span>🟡 เช็คซ้ำ (ขอพี่นัทเคาะ)</span>
+    <span>⚪ งานค้างยังไม่ push</span>
+  </div>
+
+  <!-- BUG 4 root -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴 ต้นเหตุหลัก</span> ① เปลี่ยนชนิดบาน แล้วออปชั่นบานเก่าค้างมา</h2>
+    <div class="where">public/calculator/index.html : 7256 — <code>G6RsetSub()</code></div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้</div>
+        เลือก YKK (มีโช้ค +5,000) → กดเปลี่ยนเป็น "ติดตาย" → โช้ค·มุ้ง·มือจับของ YKK <b>ยังติดมาด้วย</b> → ราคาเพี้ยน
+      </div>
+      <div class="box after"><div class="lbl">จะแก้เป็น</div>
+        เปลี่ยนชนิดบาน = <b>ล้างออปชั่นเก่าทิ้ง</b> (เพิ่ม <code>p.opt={}</code>) → บานใหม่เริ่มสะอาดทุกครั้ง
+      </div>
+    </div>
+    <p class="why">🔑 นี่คือต้นเหตุของอาการ <b>#2 ติดตายราคาไม่ขึ้น</b> และ <b>#3 YKK แพงเว่อร์</b> ข้างล่าง — แก้จุดนี้จุดเดียว 2 อาการหายตาม</p>
+  </div>
+
+  <!-- BUG 1 -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴</span> ② ราคาบานติดตายไม่ขึ้น</h2>
+    <div class="where">อาการต่อเนื่องจากข้อ ① (ออปชั่นค้าง)</div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้ (รูปพี่นัท)</div>
+        บานติดตายในด้านกั้นห้อง ราคาไม่โชว์ / เพี้ยน เพราะรับออปชั่นบานก่อนหน้ามา
+      </div>
+      <div class="box after"><div class="lbl">จะแก้เป็น</div>
+        หลังแก้ข้อ ① บานติดตายคิดแค่ "กระจก × พื้นที่" ตามจริง ราคาขึ้นปกติ
+      </div>
+    </div>
+  </div>
+
+  <!-- BUG 2 -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴</span><span class="flag f-grn">✅ เคาะแล้ว</span> ③ YKK ราคาบานแพงเว่อร์</h2>
+    <div class="where">index.html : 719 — <code>ykk_vent ... min:30000</code> · ลิมิตขนาด L1826</div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้</div>
+        YKK บานเล็ก ก็โดน <b>ขั้นต่ำ 30,000/บาน</b> + ออปชั่นค้างจากข้อ ① ทับเข้าไปอีก = แพงเว่อร์
+      </div>
+      <div class="box after"><div class="lbl">สรุป (พี่นัทเคาะ)</div>
+        ✅ ขั้นต่ำ 30,000/บาน <b>ถูกตามเรตจริง</b><br>
+        ✅ ลิมิตขนาด YKK Vent: <b>กว้าง 0.6–0.9 · สูง 2.0–2.2 ม.</b><br>
+        เล็กสุด 0.6×2.0 = 1.2 ตร.ม. ×17,500 = 21,000 &lt; 30,000 → ขั้นต่ำมีผล (สมเหตุผล)<br>
+        🔴 "แพงเว่อร์" จริงมาจากข้อ ① opt ค้าง → แก้ ① จบ
+      </div>
+    </div>
+    <p class="why">💡 <b>เกินจาก 5 บั๊ก (ขอเคาะเพิ่ม):</b> builder กั้นห้อง <code>g6rPrice L7067</code> คิดราคาแต่<b>ทิ้งคำเตือน</b> → ใส่ขนาด YKK นอกสเปก (เช่น สูง 0.5 ม.) ก็เงียบ ไม่เตือน · ควรให้ builder โชว์ ⚠ คำเตือนขนาดด้วยไหม?</p>
+  </div>
+
+  <!-- BUG 3 -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴</span> ④ พับการ์ดแล้วหัวข้อไม่ขึ้นชื่อ "กั้นห้อง"</h2>
+    <div class="where">index.html : 4157 — <code>chSummary()</code> หา <code>.i-prod</code>/<code>w×h</code> ที่การ์ดห้องไม่มี → คืนค่าว่าง</div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้</div>
+        เพิ่มชุดกั้นห้อง → พับเก็บ → หัวข้อขึ้นแค่ "ชุดที่ 2 ·" <b>ว่างเปล่า</b> ไม่รู้ว่าชุดอะไร
+      </div>
+      <div class="box after"><div class="lbl">จะแก้เป็น</div>
+        การ์ดห้อง (g6room) พับแล้วโชว์ <b>"· กั้นห้อง (ชื่อห้อง/จำนวนด้าน)"</b> เห็นชัดว่าเป็นชุดไหน
+      </div>
+    </div>
+  </div>
+
+  <!-- BUG 5 -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴</span> ⑤ ช่องกรอกจำนวนเส้นคาดตาราง มองไม่เห็น</h2>
+    <div class="where">index.html : 7178 — input จำนวนเส้น (นอน/ตั้ง) ใน <code>.g6r-rev .row</code> ไม่มีกำหนดความกว้าง → หดจนแคบ</div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้</div>
+        เปิดคาดตาราง → ช่องกรอก "นอน / ตั้ง" แคบจนมองไม่เห็นตัวเลข กดยาก
+      </div>
+      <div class="box after"><div class="lbl">จะแก้เป็น</div>
+        ช่องกรอกกว้างพอ มีกรอบชัด + ป้าย "นอน / ตั้ง" อ่านง่าย แตะง่ายบนมือถือ
+      </div>
+    </div>
+  </div>
+
+  <!-- BUG มุ้ง -->
+  <div class="card">
+    <h2><span class="flag f-red">🔴</span><span class="flag f-grn">✅ เคาะแล้ว</span> ⑥ ราคามุ้ง กันแมว/กันหนู คิดผิด</h2>
+    <div class="where">index.html : 1893 — <code>fabricExtra</code></div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้ (คิดผิด)</div>
+        • กันแมว = <b>+800 คงที่</b> (ไม่คูณพื้นที่)<br>
+        • กันหนู (สแตน) = <b>+1,200 คงที่</b><br>
+        • นิรภัย 0.8 = ×พื้นที่ (ถูกอยู่แล้ว)
+      </div>
+      <div class="box after"><div class="lbl">จะแก้เป็น (พี่นัทเคาะ × พื้นที่)</div>
+        • กันแมว = <b>800 × พื้นที่มุ้ง</b><br>
+        • กันหนู = <b>1,200 × พื้นที่มุ้ง</b><br>
+        เติม <code>*mosqArea</code> ให้ 2 ตัวนี้ — บานใหญ่จ่ายมากขึ้นตามจริง
+      </div>
+    </div>
+    <p class="why">⚠️ บั๊กการเงิน: ตอนนี้มุ้งกันแมว/กันหนูบานใหญ่ <b>เก็บเงินขาด</b> (จ่ายเท่าบานเล็ก) → แก้แล้วเก็บครบ</p>
+  </div>
+
+  <!-- งานค้าง -->
+  <div class="card">
+    <h2><span class="flag f-gray">⚪ งานค้าง</span> ⑦ ซ่อนกล่อง "⚙ ตัวเลือกเพิ่มเติม" (.optbox) ที่โผล่ซ้ำในกั้นห้อง</h2>
+    <div class="where">index.html : 6945 — แก้แล้วในเครื่อง <b>ยังไม่ push</b> (รออนุมัติรวมรอบเดียว)</div>
+    <div class="ba">
+      <div class="box before"><div class="lbl">ตอนนี้</div>
+        การ์ดกั้นห้องมีกล่อง "⚙ ตัวเลือกเพิ่มเติม" ของ G1 โผล่ซ้ำซ้อน (builder มีออปชั่นต่อบานอยู่แล้ว)
+      </div>
+      <div class="box after"><div class="lbl">แก้แล้ว (ค้าง)</div>
+        ซ่อน <code>.optbox</code> ในการ์ด <code>g6room</code> ด้วย CSS (ไม่แตะ DOM/ราคา) — รอ push พร้อมก้อนนี้
+      </div>
+    </div>
+  </div>
+
+  <!-- สรุป -->
+  <div class="sumbar">
+    <h2>📋 สรุป — เคาะครบแล้ว · จะส่ง dev แก้ 6 จุด</h2>
+    <ul>
+      <li><b>① ออปชั่นค้าง</b> (L7256) → ล้าง <code>p.opt={}</code> เมื่อเปลี่ยนชนิดบาน <span class="pill">แก้ ② ③ หายตาม</span></li>
+      <li><b>④ หัวข้อพับ</b> (L4157) → การ์ดกั้นห้องโชว์ชื่อ "กั้นห้อง"</li>
+      <li><b>⑤ ช่องเส้นคาด</b> (L7178) → ขยายช่องกรอกให้เห็น/แตะง่าย</li>
+      <li><b>⑥ มุ้งกันแมว/กันหนู</b> (L1893) → คิด <b>× พื้นที่</b> (กันเก็บเงินขาด)</li>
+      <li><b>⑦ ซ่อน .optbox</b> (L6945) → push พร้อมกัน (แก้แล้วค้างอยู่)</li>
+      <li><b>⑧ คำเตือนใน builder</b> (g6rPrice L7067) → โชว์ ⚠ คำเตือนขนาด YKK/บานยก (เดิมทิ้ง r.msgs)</li>
+    </ul>
+    <div style="margin-top:12px;font-size:13px;border-top:1px solid rgba(255,255,255,.25);padding-top:10px;">
+      ✅ <b>เคาะแล้วทั้งหมด:</b> ③ YKK ขั้นต่ำ 30,000 ถูก (ลิมิต 0.6–0.9×2.0–2.2) · ⑥ มุ้ง = × พื้นที่ · ⑧ builder เตือนขนาดด้วย
+    </div>
+    <div style="margin-top:14px;font-size:13.5px;">พร้อมส่ง dev แก้ทั้ง 6 จุดรอบเดียว · golden snapshot + ทดสอบเว็บสดหลังแก้</div>
+  </div>
+
+</div>
+</body>
+</html>

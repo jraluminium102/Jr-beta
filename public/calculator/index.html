@@ -1890,7 +1890,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       // จำนวนบาน × max(min/บาน, พื้นที่ต่อบาน × เรท) = max(min×บาน, พื้นที่รวม×เรท)
       mosqBase = Math.max(_minPP*_mqPanels, mosqArea*_mqRate);
       const fabric = (optSel.mosqFabric)||'fiber_gray';
-      const fabricExtra = (fabric==='anti_pet'?800:(fabric==='stainless'?1200:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
+      const fabricExtra = (fabric==='anti_pet'?800*mosqArea:(fabric==='stainless'?1200*mosqArea:(fabric==='safety08'?((mosqArea<=1.5?3500:(mosqArea<=3?3200:3000))*mosqArea):0)));
       const fabricLabel = {fiber_gray:'ผ้าไฟเบอร์เทา',fiber_black:'ผ้าไฟเบอร์ดำ',anti_pet:'ผ้ากันแมว',stainless:'ผ้าสแตนกันหนู',safety08:'ผ้าสแตนนิรภัย 0.8มม.'}[fabric];
       // ข้อ10: ค่าทำสีกรอบมุ้ง addon (×0.5) — เดิมอยู่ใน if(false) ดับ → ย้ายมา block ที่ใช้จริง
       let _mosqColorUp=0, _mosqColorLbl='';
@@ -4154,7 +4154,7 @@ function mosqOpenStylePick(btn){
   var hid=wrap.querySelector('.o-mosqopenstyle'); if(hid)hid.value=btn.dataset.val;
 }
 // UX (C): พับเก็บรายการ (accordion) — ลดความยาวฟอร์ม · พับแล้วโชว์แค่ ส่วนที่ N + ชนิดบาน+ขนาด
-function chSummary(ch){ try{ var ps=ch.querySelector('.i-prod,.qi-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w,.qi-w')||{}).value, h=(ch.querySelector('.i-h,.qi-h')||{}).value; var ty=((ch.querySelector('.i-type,.qi-type')||{}).value||'')==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
+function chSummary(ch){ try{ var _g6=(ch.querySelector('.i-group,.qi-group')||{}).value; if(_g6==='6'||(ch.classList&&ch.classList.contains('g6room'))) return 'กั้นห้องกระจก'; var ps=ch.querySelector('.i-prod,.qi-prod'); var p=ps?PBYID[ps.value]:null; var w=(ch.querySelector('.i-w,.qi-w')||{}).value, h=(ch.querySelector('.i-h,.qi-h')||{}).value; var ty=((ch.querySelector('.i-type,.qi-type')||{}).value||'')==='window'?'หน้าต่าง':''; return (ty+(p?p.name:'')).trim()+((parseFloat(w)>0&&parseFloat(h)>0)?(' '+w+'×'+h+' ม.'):''); }catch(e){ return ''; } }
 function setChCollapsed(ch, on){ if(!ch)return; ch.classList.toggle('collapsed', !!on); var sum=ch.querySelector('.ch-summary'); if(sum) sum.textContent = on ? ('· '+(chSummary(ch)||'รายการ')) : ''; }
 function toggleCh(ch){ setChCollapsed(ch, !ch.classList.contains('collapsed')); }
 function collapseOthers(active){ document.querySelectorAll('#items .ch').forEach(function(ch){ if(ch!==active){ setChCollapsed(ch, true); } }); setChCollapsed(active, false); }
@@ -4370,8 +4370,8 @@ function addSub(btn, kind, label, w, h){
         +'<button type="button" class="chip chip-sm s-grid-chip on" data-val="ไม่มี" onclick="subGridPick(this)">ไม่มี</button>'
         +'<button type="button" class="chip chip-sm s-grid-chip" data-val="มี" onclick="subGridPick(this)">มี +2,000</button>'
         +'<div class="s-grid-dims" style="display:none;align-items:center;gap:6px;font-size:12px;">'
-          +'นอน <input class="s-gnh" type="number" min="0" value="0" style="width:40px;height:28px;text-align:center;border:1px solid #e5e7eb;border-radius:6px;font-family:inherit;"> '
-          +'ตั้ง <input class="s-gnv" type="number" min="1" value="1" style="width:40px;height:28px;text-align:center;border:1px solid #e5e7eb;border-radius:6px;font-family:inherit;">'
+          +'นอน <input class="s-gnh" type="number" min="0" value="0" style="width:58px;height:32px;text-align:center;border:1px solid #cbd5e1;border-radius:6px;font-family:inherit;font-size:14px;"> '
+          +'ตั้ง <input class="s-gnv" type="number" min="1" value="1" style="width:58px;height:32px;text-align:center;border:1px solid #cbd5e1;border-radius:6px;font-family:inherit;font-size:14px;">'
         +'</div>'
       +'</div>'
       +'<label style="display:block;margin-bottom:5px;font-size:12px;">ข้อความบนใบ <input class="s-ftext" type="text" placeholder="'+_lbl+' (เว้น=อัตโนมัติ)" style="width:210px;height:28px;border:1px solid #e5e7eb;border-radius:7px;padding:0 8px;font-family:inherit;"></label>'
@@ -6932,6 +6932,7 @@ window.addEventListener('load',ckRefresh);
   details.g6r-more[open]{padding:0 10px 8px;}
   .g6r-mvrow button{border:1px solid #D1D5DB;background:#fff;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:3px;}
   .g6r-mvrow button.danger{color:#A32D2D;border-color:#F0C0C0;}
+  .g6r-warn{background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;border-radius:7px;padding:7px 10px;margin-top:8px;font-size:12px;line-height:1.5;}
   .g6r-banaPr{display:flex;justify-content:space-between;align-items:center;background:#FFF7ED;border:1px solid #F0C070;border-radius:7px;padding:6px 10px;margin-top:8px;font-size:12px;}
   .g6r-banaPr b{color:#B3151D;font-size:14px;}
   .g6r-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-top:1px solid #EEE;background:#fff;position:sticky;bottom:0;}
@@ -6942,7 +6943,7 @@ window.addEventListener('load',ckRefresh);
   .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-colorcode-wrap, .ch.g6room .i-sampleconfirm-wrap,
   .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint, .ch.g6room .cg-row,
   /* FIX 20มิ.ย.: บล็อกฟอร์มบาน G1 ที่ commit 53a222b/f93e23e ย้ายขึ้นฟอร์มหลัก (หลุดจาก .size-row/optbox ที่เคยซ่อน) → โผล่เหนือ builder ในการ์ดกั้นห้อง · ซ่อนใน g6room (กลุ่ม 6 ใช้ builder ต่อบานแทน · display เฉยๆ ไม่แตะ DOM/ราคา) */
-  .ch.g6room .sliding-main-block, .ch.g6room .g1-rare-section, .ch.g6room .g1-lockgrid-host,
+  .ch.g6room .sliding-main-block, .ch.g6room .g1-rare-section, .ch.g6room .g1-lockgrid-host, .ch.g6room .optbox,
   .ch.g6room .note-opt-group, .ch.g6room .subitem-wrap{ display:none!important; }
   .ch.g6room .full:has(> .i-prod), .ch.g6room .full:has(> .i-position){ display:none!important; }
   .ch.g6room .g6r-room-area{ display:block!important; margin-top:6px; }
@@ -7065,6 +7066,11 @@ window.addEventListener('load',ckRefresh);
   function g6rPrice(pc){ try{ var p=PBYID[pc.id]; if(!p)return 0; var panels=(pc.opt&&pc.opt.qty)?pc.opt.qty:1;
     var _gi=(pc.opt&&parseInt(pc.opt.glassIdx))||0, _ci=(pc.opt&&parseInt(pc.opt.colorIdx))||0;  // A2 (18มิ.ย.): กระจก/สีอลู ต่อช่อง · default 0 = golden นิ่ง · engine คิด GLASS[gi].s + colorPrice(ci) เอง
     var r=calcUnit(p,pc.w||1,pc.h||1,_gi,_ci,panels,g6rOptSel(pc)); return (r&&r.sell)||0; }catch(e){ return 0; } }
+  // FIX 20มิ.ย. ⑧: builder โชว์คำเตือนขนาด (เดิม g6rPrice ทิ้ง r.msgs → ใส่ขนาดนอกสเปก YKK/บานยก ก็เงียบ)
+  function g6rWarn(pc){ try{ var p=PBYID[pc.id]; if(!p)return []; var panels=(pc.opt&&pc.opt.qty)?pc.opt.qty:1;
+    var _gi=(pc.opt&&parseInt(pc.opt.glassIdx))||0, _ci=(pc.opt&&parseInt(pc.opt.colorIdx))||0;
+    var r=calcUnit(p,pc.w||1,pc.h||1,_gi,_ci,panels,g6rOptSel(pc));
+    return (r&&r.msgs)?r.msgs.filter(function(m){return /⚠|🛑|❌/.test(m);}):[]; }catch(e){ return []; } }
   function L(i){return String.fromCharCode(65+i);}
   function np(){return G6R.sides.length+3;}
   function pageName(i){ if(i<G6R.sides.length)return 'ด้าน '+L(i); return ['หลังคา/ฝ้า','งานไฟ','สรุป'][i-G6R.sides.length]; }
@@ -7120,6 +7126,7 @@ window.addEventListener('load',ckRefresh);
       +'<div class="g6r-wtot">แต่ละบานที่ซ้อนกว้างไม่เท่ากันได้ · ค่าเริ่มต้น = เท่ากัน</div>'
       +'<div class="row g6r-mvrow"><span class="rl">จัดเรียง</span><button onclick="G6RmvCol(-1)">◀</button><button onclick="G6RmvCol(1)">▶</button><button onclick="G6RmvPc(-1)">▲</button><button onclick="G6RmvPc(1)">▼</button><button onclick="G6RaddPc(-1)">＋บน</button><button onclick="G6RaddPc(1)">＋ล่าง</button><button class="danger" onclick="G6RrmSel()">ลบ</button></div>'
       + g6rRenderOpt(p)
+      + (function(){ var _w=g6rWarn(p); return _w.length?('<div class="g6r-warn">'+_w.join('<br>')+'</div>'):''; })()
       +'<div class="g6r-banaPr"><span>ราคาบานนี้ ('+(p.w||1)+'×'+(p.h||0.5)+' ม. · engine จริง)</span><b>'+fmt(g6rPrice(p))+'</b></div>';
     e.innerHTML=h;
   }
@@ -7253,7 +7260,7 @@ window.addEventListener('load',ckRefresh);
   window.G6RsetType=function(t){ var s=G6R.sides[G6R.cur]; s.type=t; if(t==='glass'&&!s.cols.length)s.cols=[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]; G6R.sc=0;G6R.sp=0; render(); };
   window.G6RsetWall=function(k,v){ G6R.sides[G6R.cur][k]=parseFloat(v)||1; render(); };
   window.G6RopenF=function(c){ G6R.openFam=c; renderEdit(); };
-  window.G6RsetSub=function(id){ var p=G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp]; p.id=id; p.cat=(typeof PBYID!=='undefined'&&PBYID[id]&&PBYID[id].cat)||p.cat; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); };
+  window.G6RsetSub=function(id){ var p=G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp]; p.id=id; p.cat=(typeof PBYID!=='undefined'&&PBYID[id]&&PBYID[id].cat)||p.cat; p.opt={}; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); }; // FIX 20มิ.ย.: ล้าง opt บานเก่า กันออปชั่นค้างข้ามชนิดบาน (โช้ค/มุ้ง/closer ติดมา = ราคาเพี้ยน)
   window.G6RsetHandleMode=function(m){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.handleMode=(o.handleMode===m)?'':m; renderEdit(); refreshGrand(); }; // toggle reveal มือจับ
   window.G6RtogSolidlower=function(){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.solidlower=o.solidlower?'':'corrugated'; renderEdit(); refreshGrand(); }; // ลูกฟูก/คอมโพ (default ลูกฟูก)
   window.G6RtogCf=function(){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.fcsides=(o.fcsides>0)?0:4; renderEdit(); refreshGrand(); }; // ครอบวงกบ pill (default 4 ด้าน)
