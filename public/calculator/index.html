@@ -1436,12 +1436,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // ค่าสี — finish rate ต่อ ตร.ม. (ใช้ rate ของลูกฟูกเรียบ 2 ทาง)
     const finRate = (optSel && parseFloat(optSel.bsFinish)) || 0;
     const finCost = finRate * A;
-    const total = doorCost + slideCost + corrugateCost + finCost;
+    const doorFinCost = finRate * A * 0.5;   // ค่าทำสีบาน ลด 50% (มติพี่นัท 20มิ.ย.) — ระแนงเลื่อนทำเป็นบาน
+    const total = doorCost + slideCost + corrugateCost + finCost + doorFinCost;
     const m = [];
     if(doorName) m.push('ค่าประตู ('+doorName+') '+fmt(doorCost));
     m.push('ค่าเลื่อน '+fmt(slideCost));
     m.push('ลูกฟูก '+H_round.toFixed(1)+' ม. '+fmt(corrugateCost));
     if(finCost>0) m.push('ค่าสี '+fmt(finCost));
+    if(doorFinCost>0) m.push('ค่าทำสีบาน 50% '+fmt(doorFinCost));
     if(H>3.0) m.push('⚠ สูงเกิน 3 ม. — ต้องเสริมโครงเหล็ก');
     return {a:A, sell:roundUp(total), cost:null, addonLabel:'', msgs:[m.join(' · ')]};
   }
@@ -1462,11 +1464,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const motorCost = motorOn ? (numSets * Math.ceil(D/3) * 10000) : 0;
     const finRate = (optSel && parseFloat(optSel.bocFinish)) || 0;
     const finCost = finRate * A;
-    const total = ranaeCost + openCloseCost + motorCost + finCost;
+    const doorFinCost = finRate * A * 0.5;   // ค่าทำสีบาน ลด 50% (มติพี่นัท 20มิ.ย.) — ระแนงเปิด-ปิดทำเป็นบาน
+    const total = ranaeCost + openCloseCost + motorCost + finCost + doorFinCost;
     const m = [(dir==='v'?'แนวตั้ง':'แนวนอน')+' · '+numSets+' ชุด',
       'ค่าระแนง '+fmt(ranaeCost), 'เปิด-ปิด '+fmt(openCloseCost)];
     if(motorCost>0) m.push('มอเตอร์ '+fmt(motorCost));
     if(finCost>0) m.push('ค่าสี '+fmt(finCost));
+    if(doorFinCost>0) m.push('ค่าทำสีบาน 50% '+fmt(doorFinCost));
     if(D_parallel>9) m.push('⚠ '+(dir==='v'?'สูง':'กว้าง')+'เกิน 9 ม. (สูงสุด 3 ชุด × 3 ม.)');
     return {a:A, sell:roundUp(total), cost:null, addonLabel:'', msgs:[m.join(' · ')]};
   }
