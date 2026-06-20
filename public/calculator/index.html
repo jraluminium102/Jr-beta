@@ -1306,6 +1306,8 @@ function g2DoorColorIdx(nm){ nm=(nm||'').trim(); if(!nm)return 0;
 function g2DoorPaint(nm, a, optSel){ var idx=g2DoorColorIdx(nm); if(idx<=0)return {c:0,pct:0};
   var pct=(optSel&&optSel.doorColorPct!=null&&optSel.doorColorPct!=='')?parseFloat(optSel.doorColorPct):30;
   if(!(pct>0))return {c:0,pct:0}; return {c:Math.round(colorPrice(idx,a,'')*(pct/100)),pct:pct}; }
+// D (21มิ.ย.): บรรยาย "ทำเป็นบาน" — กี่บาน · เปิด/ติดตาย (ระบุในใบ · ราคาคิดตามจำนวนบานรวมแล้วใน basePrice) · ติดตาย ≤ บาน-1
+function g2DoorPanelDesc(panels, optSel){ var pn=Math.max(1,parseInt(panels)||1); var fx=Math.max(0,Math.min(pn-1,parseInt(optSel&&optSel.doorFixed)||0)); if(pn<=1&&fx<=0)return ' (1 บาน)'; return ' ('+pn+' บาน: เปิด '+(pn-fx)+(fx>0?(' · ติดตาย '+fx):'')+')'; }
 
 /* คำนวณ 1 รายการ → {sell, cost, area, msgs} (ยังไม่คูณชุด) */
 function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
@@ -1420,7 +1422,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _bgDoorId=optSel&&optSel.bsDoor; let _bgDoorCost=0, _bgDoorNm='';
     if(_bgDoorId && PBYID[_bgDoorId]){ _bgDoorCost=basePrice(PBYID[_bgDoorId],totalArea,panels)+addonCalc(PBYID[_bgDoorId],panels).amt; _bgDoorNm=PBYID[_bgDoorId].name; }
     const _bgDoorOvr=parseFloat(optSel&&optSel.bsDoorPrice)||0; if(_bgDoorOvr>0){ _bgDoorCost=_bgDoorOvr; _bgDoorNm=(_bgDoorNm||'ประตู')+' (ราคากำหนดเอง)'; }
-    if(_bgDoorCost>0){ _bgSell+=_bgDoorCost; _bgMsg='ค่าประตู ('+_bgDoorNm+') '+fmt(_bgDoorCost)+' · '+_bgMsg; }
+    if(_bgDoorCost>0){ _bgSell+=_bgDoorCost; _bgMsg='ค่าประตู ('+_bgDoorNm+')'+g2DoorPanelDesc(panels,optSel)+' '+fmt(_bgDoorCost)+' · '+_bgMsg; }
     return {a:totalArea, sell:roundUp(_bgSell), cost:null, addonLabel:'', msgs:[_bgMsg]};
   }
   if(p.bar_slide){
@@ -1454,7 +1456,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _dp = g2DoorPaint(optSel && optSel.bsFinishLbl, A, optSel);   // ค่าทำสีบาน (มติ 20มิ.ย.) — สีอลู colorPrice × pct
     const total = doorCost + slideCost + corrugateCost + finCost + _dp.c;
     const m = [];
-    if(doorName) m.push('ค่าประตู ('+doorName+') '+fmt(doorCost));
+    if(doorName) m.push('ค่าประตู ('+doorName+')'+g2DoorPanelDesc(panels,optSel)+' '+fmt(doorCost));
     m.push('ค่าเลื่อน '+fmt(slideCost));
     m.push('ลูกฟูก '+H_round.toFixed(1)+' ม. '+fmt(corrugateCost));
     if(finCost>0) m.push('ค่าสี '+fmt(finCost));
@@ -1835,7 +1837,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   const core=Math.max(base+ad.amt, floor);
   const extras=glassUp+colorUp+opt;
   let sell;
-  if(p.ranae){ const _d=ranaeDisc(a); if(_d>0)msgs.push('ส่วนลดพื้นที่ '+Math.round(_d*100)+'%'); let _door=0,_opt=opt; if(optSel&&optSel.doortype&&PBYID[optSel.doortype]){ const _dovr=parseFloat(optSel.doorprice)||0; _door=_dovr>0?_dovr:basePrice(PBYID[optSel.doortype],a,Math.max(1,panels)); /* R3-2: กรอกราคาเอง override basePrice */ if(opt>0){ _opt=opt*0.85; msgs.push('อบสีประตู -15%'); } msgs.push('ค่าทำบาน '+PBYID[optSel.doortype].name+(_dovr>0?' (ราคากำหนดเอง)':'')+' +'+fmt(_door)); } sell=roundUp((base+_opt)*(1-_d)+_door); }
+  if(p.ranae){ const _d=ranaeDisc(a); if(_d>0)msgs.push('ส่วนลดพื้นที่ '+Math.round(_d*100)+'%'); let _door=0,_opt=opt; if(optSel&&optSel.doortype&&PBYID[optSel.doortype]){ const _dovr=parseFloat(optSel.doorprice)||0; _door=_dovr>0?_dovr:basePrice(PBYID[optSel.doortype],a,Math.max(1,panels)); /* R3-2: กรอกราคาเอง override basePrice */ if(opt>0){ _opt=opt*0.85; msgs.push('อบสีประตู -15%'); } msgs.push('ค่าทำบาน '+PBYID[optSel.doortype].name+g2DoorPanelDesc(panels,optSel)+(_dovr>0?' (ราคากำหนดเอง)':'')+' +'+fmt(_door)); } sell=roundUp((base+_opt)*(1-_d)+_door); }
   else if(p.ceLinear){ sell=Math.round(core+extras); } // casement-euro: ฐานปัดร้อยแล้ว · ไม่ผ่าน roundUp พัน (กันเด้ง +1,000) · ออปชั่นเสริมบวกตามจริง
   else { sell=roundUp(core+extras); }
   const installRate=parseFloat(document.getElementById('installRate')?.value)||0;
@@ -3500,6 +3502,15 @@ function rnSetHmode(el,mode){ var ch=el.closest('.ch'); if(!ch)return; var hm=ch
 // ชิป → set .value ของ select/hidden ที่ซ่อน แล้ว fire change → readItem/calcQuote เดิมทำงาน
 // ALLG 2.4: stepper จำนวนบาน −/+ (sync input .i-panels เดิม + fire input/change ให้ logic เดิมทำงาน)
 function panelStep(btn,dlt){ var inp=btn.parentElement.querySelector('input'); if(!inp)return; inp.value=Math.max(1,(parseInt(inp.value)||1)+dlt); inp.dispatchEvent(new Event('input',{bubbles:true})); inp.dispatchEvent(new Event('change',{bubbles:true})); }
+// D (21มิ.ย.): ทำเป็นบาน ระแนง/ระแนงพิเศษ → โชว์ "จำนวนบาน" (ก่อนชุด) + "ติดตายกี่บาน" · เรียกจาก buildItemOpts (หลัง render) + calcQuote (กรณี o-bsdoor เปลี่ยนแบบไม่ rebuild)
+function g2SyncDoorFields(d){ if(!d)return; var ps=d.querySelector('.i-prod'); var p=ps?PBYID[ps.value]:null; if(!p)return;
+  var _pwD=d.querySelector('.i-panels-wrap'), _dfW=d.querySelector('.i-doorfixed-wrap'); if(!_dfW)return;
+  var _isG2rn=!!(p.ranae||p.bar_slide||p.bar_grid||p.bar_openclose);
+  var _doorOn=(p.ranae && (d.dataset.rnDoorType||'')) || ((p.bar_slide||p.bar_grid) && ((d.querySelector('.o-bsdoor')||{}).value||''));
+  if(_pwD){ if(_doorOn) _pwD.style.display=''; else if(_isG2rn && !usesPanels(p)) _pwD.style.display='none'; } // ระแนงไม่ทำบาน = ซ่อนจำนวนบานตามเดิม
+  _dfW.style.display=_doorOn?'':'none';
+  if(_doorOn){ var _dfi=_dfW.querySelector('.i-doorfixed'), _pi=_pwD&&_pwD.querySelector('.i-panels'); if(_dfi&&_pi){ var _mx=Math.max(0,(parseInt(_pi.value)||1)-1); if((parseInt(_dfi.value)||0)>_mx)_dfi.value=_mx; _dfi.max=_mx; } } // ติดตาย ≤ บาน-1 (เปิดได้อย่างน้อย 1)
+}
 function chSetChip(btn, selectClass){
   var ch=btn.closest('.ch'); if(!ch)return; var val=btn.dataset.val;
   // deselect ชิปพี่น้องที่คุม selectClass เดียวกัน (ผูกด้วย onclick ที่อ้าง selectClass)
@@ -4197,6 +4208,8 @@ function addItem(container){
        `<div style="flex:0 0 92px;"><label>สูง (ม.)</label><input class="i-h" type="number" step="0.1" min="0" value="2.0" style="width:92px;height:40px;text-align:center;"></div>`+
        /* v7A ข้อ3 (18มิ.ย. · ใหม่กว่า ALLG-v2): กว้าง/สูง/บาน/ชุด → บาน-stepper ก่อน ชุด (บานมาก่อนชุด) */
        `<div class="i-panels-wrap" style="flex:0 0 auto;"><label>บาน</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-panels" type="number" step="1" min="1" value="1" style="width:46px;border:0;text-align:center;height:42px;"><button type="button" onclick="panelStep(this,1)" style="width:40px;min-height:42px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
+       /* D (21มิ.ย.): ทำเป็นบาน (ระแนง/ระแนงพิเศษ) → ติดตายกี่บาน · default 0 · แก้ได้ · ระหว่าง บาน–ชุด · ระบุในใบ (ราคาตามจำนวนบานรวม) */
+       `<div class="i-doorfixed-wrap" style="display:none;flex:0 0 auto;"><label>ติดตาย(บาน)</label><input class="i-doorfixed" type="number" step="1" min="0" value="0" style="width:62px;height:40px;text-align:center;" oninput="calcQuote()"></div>`+
        `<div style="flex:0 0 auto;"><label>ชุด</label><div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:10px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:36px;min-height:40px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">−</button><input class="i-qty" type="number" step="1" min="1" value="1" style="width:40px;border:0;text-align:center;height:40px;"><button type="button" onclick="panelStep(this,1)" style="width:36px;min-height:40px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;">+</button></div></div>`+
      `</div>`+
      /* ALLG 2.3 (เคาะ A): แถบสี·กระจก (ทั้งใบ→ตามรายการ) ในการ์ด ใต้แถวขนาด — buildItemOpts ย้าย i-color-wrap/i-glass-wrap เข้าที่นี่ */
@@ -5098,6 +5111,7 @@ function buildItemOpts(d){
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
+  g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
   // B1: ราคากำหนดเอง — โชว์เฉพาะ custom_price · ซ่อน(ใส่ hint)ของปกติ
   { const _ow=d.querySelector('.i-override-wrap'); const _oh=d.querySelector('.i-override-hint');
     if(_ow){ _ow.style.display=p.custom_price?'':'none'; }
@@ -5363,7 +5377,8 @@ function readItem(d){
   { const _uc=d.querySelector('.o-uchannel'); optSel.uchannel=_uc?_uc.checked:false;
     const _ew=d.querySelector('.o-extrawork'); optSel.extrawork=(_ew?_ew.value:'').trim();
     const _ro=d.querySelector('.o-removeold'); optSel.removeold=_ro?_ro.checked:false;
-    const _dcp=d.querySelector('.o-doorcolorpct'); if(_dcp) optSel.doorColorPct=_dcp.value; }   // ค่าทำสีบาน % (มติ 20มิ.ย.)
+    const _dcp=d.querySelector('.o-doorcolorpct'); if(_dcp) optSel.doorColorPct=_dcp.value;   // ค่าทำสีบาน % (มติ 20มิ.ย.)
+    const _idf=d.querySelector('.i-doorfixed'); if(_idf) optSel.doorFixed=parseInt(_idf.value)||0; }   // D (21มิ.ย.): ติดตายกี่บาน (ระบุในใบ · ราคาตามจำนวนบานรวม)
   // แผ่นทึบล่าง (ลูกฟูก/คอมโพสิท) — คิดราคาจริง (insulglass/flooring ลบทิ้งแล้ว ใช้ OPTION ทางเลือกลูกค้าแทน)
   { const _sl=d.querySelector('.o-solidlower'); optSel.solidlower=_sl?_sl.value:'';
     const _slw=d.querySelector('.o-sl-w'); optSel.solidlowerW=_slw?(parseFloat(_slw.value)||0):0;
@@ -5470,6 +5485,7 @@ function calcQuote(){
   const divs=[...document.querySelectorAll('#items .ch')];
   let subtotal=0, totCost=0, totalArea=0, costMissing=false, warns=[];
   divs.forEach(d=>{
+    g2SyncDoorFields(d); // D: sync จำนวนบาน/ติดตาย เมื่อทำเป็นบาน (o-bsdoor เปลี่ยนแบบไม่ rebuild)
     const it=readItem(d); if(!it)return;
     const lineSell=it.r.sell*it.qty;
     d.querySelector('.i-area').textContent = it.r.a>0 ? (it.r.a.toFixed(2)+' ตร.ม. · /ชุด '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : (it.r.sell>0 ? ('เหมาทั้งชุด · '+bht(it.r.sell)+(it.qty>1?(' ×'+it.qty):'')) : '—');
