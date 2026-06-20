@@ -1765,8 +1765,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
   // ข้อ5: ครอบวงกบอลู ต่อบาน 3/4 ด้าน — auto ความยาวจากขนาดบาน (3=W+2H · 4=2(W+H)) × เรตตามสี (เหมือน o-fcm)
   if(optSel){ const _fcs=parseInt(optSel.fcsides)||0; if(_fcs===3||_fcs===4){ const _fW=parseFloat(w)||0,_fH=parseFloat(h)||0; const _flen=_fcs===3?(_fW+2*_fH):2*(_fW+_fH); if(_flen>0){ const _ffr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_ffr*_flen; msgs.push('ครอบวงกบอลู '+_fcs+' ด้าน '+_flen.toFixed(2)+'ม.×'+_ffr+' = '+fmt(_ffr*_flen)); } } }
-  if(p.fin&&optSel&&optSel.finish){ const _finSurf=(parseFloat(optSel.finish)||0)*a; opt+=_finSurf;
-    if(optSel.doortype&&_finSurf>0){ const _doorFin=_finSurf*0.5; opt+=_doorFin; msgs.push('ค่าทำสีบาน 50% '+fmt(Math.round(_doorFin))); } }   // ค่าทำสีบาน ลด 50% (มติพี่นัท 20มิ.ย.) — ระแนงทำเป็นบาน
+  if(p.fin&&optSel&&optSel.finish){ opt+=(parseFloat(optSel.finish)||0)*a; }
   if(p.optSlide&&optSel&&optSel.slide){ const _N=Math.max(2,parseInt(optSel.spanels)||2); const _tier=a<=10?4500:a<=20?6750:a<=30?9000:11250;
     const _sa=parseFloat(optSel.sarea)||0; const _marea=_sa>0?_sa:(a*_N/(_N+1));
     const _autoMotor=_marea<=3.5?18000:_marea<=14?28000:_marea<=40?36000:72000;
