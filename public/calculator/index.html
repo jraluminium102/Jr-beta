@@ -1249,6 +1249,18 @@ function basePrice(p,area,panels){
     default: return Math.max(q.min||0, monoRate(area,RATES[q.rates]));
   }
 }
+// G2 #3 (21มิ.ย.): ฐานราคา "ทำเป็นบาน" = สูตรบานจริงเหมือน G1 (= core ของ calcUnit: base+addon เทียบ floor) · บานเปิดยูโร(ceLinear) คิดต่อบาน Linear · บานเลื่อน/เฟี้ยม ผ่าน basePrice+floor+addon — กันบั๊ก basePrice เดิมที่ตก default (casement_euro ผิด · ไม่คูณบาน)
+function doorStructBase(dp, area, panels){
+  if(!dp) return 0;
+  const pn=Math.max(1, parseInt(panels)||1);
+  let base;
+  if(dp.ceLinear){ const paneA=area/pn; const ceRaw=15000+Math.max(0,paneA-1.2)*4166.67; base=Math.ceil(Math.round(ceRaw)/100)*100*pn; }
+  else base=basePrice(dp, area, pn);
+  const ad=addonCalc(dp, pn);
+  let floor=0;
+  if(pn>1 && usesPanels(dp) && !dp.ceLinear){ const q2=dp.method==='same_as'?PBYID[dp.ref]:dp; if(q2.rates){ const per=monoRate(area/pn, RATES[q2.rates]); floor=per*(1+0.67*(pn-1)); } }
+  return Math.max(base+ad.amt, floor);
+}
 function curRate(p,area){ return p.method==='lift'?null:rateOf(area,RATES[p.rates]); }
 function interpCost(key,area){
   if(!key||!COSTS[key])return null;
@@ -1445,7 +1457,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(D > numSets*1.5+0.01) _bgMsg += ' · ⚠ ตรวจขนาด';
     // G2 B2/B4 (มติ 16มิ.ย.): ระแนงเกล็ด 38.1 ทำเป็นบานได้ (เลือกรุ่นประตู · ราคาประตู + เกล็ด · เหมือน bar_slide)
     const _bgDoorId=optSel&&optSel.bsDoor; let _bgDoorCost=0, _bgDoorNm='';
-    if(_bgDoorId && PBYID[_bgDoorId]){ _bgDoorCost=basePrice(PBYID[_bgDoorId],totalArea,panels)+addonCalc(PBYID[_bgDoorId],panels).amt; _bgDoorNm=PBYID[_bgDoorId].name; }
+    if(_bgDoorId && PBYID[_bgDoorId]){ _bgDoorCost=doorStructBase(PBYID[_bgDoorId],totalArea,panels); _bgDoorNm=PBYID[_bgDoorId].name; } // #3: สูตรบานจริง (ceLinear/floor/addon)
     const _bgDoorOvr=parseFloat(optSel&&optSel.bsDoorPrice)||0; if(_bgDoorOvr>0){ _bgDoorCost=_bgDoorOvr; _bgDoorNm=(_bgDoorNm||'ประตู')+' (ราคากำหนดเอง)'; }
     if(_bgDoorCost>0){ _bgSell+=_bgDoorCost; _bgMsg='ค่าประตู ('+_bgDoorNm+')'+g2DoorPanelDesc(panels,optSel)+' '+fmt(_bgDoorCost)+' · '+_bgMsg; }
     var _mwBG=g2MotorWire(optSel); if(_mwBG.p>0){ _bgSell+=_mwBG.p; _bgMsg=_bgMsg+' · '+_mwBG.msg; }
@@ -1460,7 +1472,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const doorId = optSel && optSel.bsDoor;
     if(doorId && PBYID[doorId]){
       const dp = PBYID[doorId];
-      doorCost = basePrice(dp, A, panels) + addonCalc(dp, panels).amt;
+      doorCost = doorStructBase(dp, A, panels); // #3: สูตรบานจริง (ceLinear/floor/addon)
       doorName = dp.name;
     }
     // R3-2: กรอกราคาประตูเอง override (รอสูตรจำนวนบาน)
@@ -1865,7 +1877,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   const core=Math.max(base+ad.amt, floor);
   const extras=glassUp+colorUp+opt;
   let sell;
-  if(p.ranae){ const _d=ranaeDisc(a); if(_d>0)msgs.push('ส่วนลดพื้นที่ '+Math.round(_d*100)+'%'); let _door=0,_opt=opt; if(optSel&&optSel.doortype&&PBYID[optSel.doortype]){ const _dovr=parseFloat(optSel.doorprice)||0; _door=_dovr>0?_dovr:basePrice(PBYID[optSel.doortype],a,Math.max(1,panels)); /* R3-2: กรอกราคาเอง override basePrice */ if(opt>0){ _opt=opt*0.85; msgs.push('อบสีประตู -15%'); } msgs.push('ค่าทำบาน '+PBYID[optSel.doortype].name+g2DoorPanelDesc(panels,optSel)+(_dovr>0?' (ราคากำหนดเอง)':'')+' +'+fmt(_door)); } sell=roundUp((base+_opt)*(1-_d)+_door); }
+  if(p.ranae){ const _d=ranaeDisc(a); if(_d>0)msgs.push('ส่วนลดพื้นที่ '+Math.round(_d*100)+'%'); let _door=0,_opt=opt; if(optSel&&optSel.doortype&&PBYID[optSel.doortype]){ const _dovr=parseFloat(optSel.doorprice)||0; _door=_dovr>0?_dovr:doorStructBase(PBYID[optSel.doortype],a,panels); /* #3 (21มิ.ย.): สูตรบานจริงเหมือน G1 (ceLinear/floor/addon) · R3-2: กรอกราคาเอง override */ if(opt>0){ _opt=opt*0.85; msgs.push('อบสีประตู -15%'); } msgs.push('ค่าทำบาน '+PBYID[optSel.doortype].name+g2DoorPanelDesc(panels,optSel)+(_dovr>0?' (ราคากำหนดเอง)':'')+' +'+fmt(_door)); } sell=roundUp((base+_opt)*(1-_d)+_door); }
   else if(p.ceLinear){ sell=Math.round(core+extras); } // casement-euro: ฐานปัดร้อยแล้ว · ไม่ผ่าน roundUp พัน (กันเด้ง +1,000) · ออปชั่นเสริมบวกตามจริง
   else { sell=roundUp(core+extras); }
   const installRate=parseFloat(document.getElementById('installRate')?.value)||0;
@@ -5445,8 +5457,9 @@ function readItem(d){
   // งาน9: อ่านโหมดเหมา
   const _lsChk=d.querySelector('.o-lumpsum'); const _lsOn=_lsChk&&_lsChk.checked;
   const _lsPrice=parseFloat((d.querySelector('.o-lumpsumprice')||{}).value)||0;
+  const _panels=parseInt((d.querySelector('.i-panels')||{}).value||1)||1;
   const r=calcUnit(p, d.querySelector('.i-w').value, d.querySelector('.i-h').value,
-    gi, ci, parseInt(d.querySelector('.i-panels').value||1), optSel, d.querySelector('.i-ship').checked);
+    gi, ci, _panels, optSel, d.querySelector('.i-ship').checked);
   let qty=parseInt(d.querySelector('.i-qty').value||1); if(qty<1)qty=1;
   const _ov=parseFloat((d.querySelector('.i-override')||{}).value)||0; if(_ov>0&&r){ r.sell=_ov; r.overridden=true; }
   // งาน9: โหมดเหมา override ราคา (ความสำคัญสูงกว่า i-override ปกติ)
@@ -5471,7 +5484,7 @@ function readItem(d){
   const _sb=d.closest('.setbox'); const _multi=_sb?(_sb.querySelectorAll('.ch').length>1):false;
   const _odEl=d.querySelector('.o-optdelta'); const _itemOptDelta=parseFloat((_odEl&&_odEl.value)||'0')||0;
   const _lsEl=d.querySelector('.o-lumpsum'); const _isLumpsum=!!(_lsEl&&_lsEl.checked);
-  return {p, r, qty, gi, ci, finLabel, optSel, subItems,
+  return {p, r, qty, gi, ci, finLabel, optSel, subItems, panels:_panels,
     glassColor:(d.querySelector('.i-glass')||{}).dataset?(d.querySelector('.i-glass').dataset.glColor||''):'',  // รอบ3 ข้อ1ข: เขียว/ใส ที่เลือก (label ใบ)
     w:d.querySelector('.i-w').value, h:d.querySelector('.i-h').value,
     name:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'', ship:d.querySelector('.i-ship').checked,
@@ -6124,8 +6137,10 @@ function genQuote(keepNo){
       var _finColor=(it.finLabel||'ไม่อบสี');
       var _finColorTxt=(_finColor==='ไม่อบสี')?'ไม่อบสี':(/สี/.test(_finColor)?_finColor:'สี'+_finColor); // R2-4: กันคำซ้ำ "สีอบสีพิเศษ"
       if(/^ระแนง/.test(it.p.cat)){
-        // G2 ② ระแนง (21มิ.ย. · น่าอ่าน ตามใบจริง): รายการ=ลีดงาน+ทิศ+ซี่ระแนง(น่าอ่าน) · รายละเอียด=ระแนงอลูมิเนียมกล่อง+สี
-        var _rnLead=(it.p.cat==='ระแนง-เกล็ด')?'ระแนงอลูมิเนียมเกล็ด Z ติดตาย (ปิดสนิท · ไม่มีบานเปิด)':((it.p.cat==='ระแนง-ผนัง')?'ระแนงอลูมิเนียมบังตาผนัง ติดตาย (ไม่มีบานเปิด)':'ระแนงอลูมิเนียมบังตา ติดตาย (ไม่มีบานเปิด)');
+        // G2 ② ระแนง (21มิ.ย. · น่าอ่าน ตามใบจริง): รายการ=ลีดงาน+ทิศ+ซี่ระแนง(น่าอ่าน) · รายละเอียด=ระแนงอลูมิเนียมกล่อง+สี · ทำเป็นบาน → โชว์ชนิดบาน+จำนวนบาน (#3)
+        var _rnMat=(it.p.cat==='ระแนง-เกล็ด')?'ระแนงอลูมิเนียมเกล็ด Z':((it.p.cat==='ระแนง-ผนัง')?'ระแนงอลูมิเนียมบังตาผนัง':'ระแนงอลูมิเนียมบังตา');
+        var _rnDoorP=(it.optSel&&it.optSel.doortype)?PBYID[it.optSel.doortype]:null;
+        var _rnLead=_rnDoorP?(_rnMat+' ทำเป็นบาน — '+_rnDoorP.name.replace(/\s*\([^)]*\)/g,'').trim()+g2DoorPanelDesc(it.panels,it.optSel)):(_rnMat+((it.p.cat==='ระแนง-เกล็ด')?' ติดตาย (ปิดสนิท · ไม่มีบานเปิด)':' ติดตาย (ไม่มีบานเปิด)'));
         var _rnWork=[_rnLead];
         // เกล็ด Z — ทิศ (แนวตั้ง/แนวนอน) → รายการ
         if(it.p.cat==='ระแนง-เกล็ด' && it.optSel && it.optSel.grDir){ _rnWork.push('( '+it.optSel.grDir+' )'); }
@@ -6219,8 +6234,8 @@ function genQuote(keepNo){
       // ซี่เกล็ด — ดึงขนาดจากชื่อรุ่น (เช่น "กล่อง 1"x4" โชว์ 4"") · ปิดสนิท ไม่มีเว้นระยะ
       var _bSz=(it.p.name.match(/กล่อง\s*([\d.½”“"]+)\s*[x×]\s*([\d.½”“"]+)\s*โชว์\s*([\d.½”“"]+)/)||[]);
       if(_bSz[1]){ _bWork.push('ซี่เกล็ดกล่อง '+_bSz[1].replace(/[”“]/g,'"')+'×'+_bSz[2].replace(/[”“]/g,'"')+' โชว์หน้า '+_bSz[3].replace(/[”“]/g,'"')+' (ปิดสนิท · ไม่มีเว้นระยะ)'); }
-      // ประตู (bar_slide ทำเป็นบาน)
-      if(it.p.bar_slide && _bo.bsDoor && PBYID[_bo.bsDoor]) _bWork.push('พร้อมประตู '+PBYID[_bo.bsDoor].name.replace(/\s*\([^)]*\)/g,'').trim());
+      // ประตู (bar_slide/bar_grid ทำเป็นบาน) — โชว์ชนิด+จำนวนบาน (#3)
+      if((it.p.bar_slide||it.p.bar_grid) && _bo.bsDoor && PBYID[_bo.bsDoor]) _bWork.push('ทำเป็นบาน — '+PBYID[_bo.bsDoor].name.replace(/\s*\([^)]*\)/g,'').trim()+g2DoorPanelDesc(it.panels,it.optSel));
       // มอเตอร์ปรับมุม + งานสายไฟ (bar_openclose เลือกมอเตอร์)
       if(it.p.bar_openclose && _bo.bocMotor){ var _bwTxt=((_bo.motorWire)||'').trim(); _bWork.push('มอเตอร์ปรับมุม 1 ตัว'+(_bwTxt?(' · งานสายไฟมอเตอร์: '+_bwTxt):'')); }
       // รายละเอียด: สี (default สีอบขาว)

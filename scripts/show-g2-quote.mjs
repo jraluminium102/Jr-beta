@@ -39,6 +39,8 @@ const SAMPLES=[
   {t:"① ประตูรั้ว: รางโค้ง + มอเตอร์2 + OPTION ลายไม้ Golden Teak (gatewood 19500)", id:"fence_gate", w:3, h:2.4, opts:[["o-railtype","curved"],["o-gmotor","2"],["o-gfin","อบสีพิเศษ"],["o-gatewood","19500"]]},
   {t:"① ประตูรั้ว: รางตรง + ใช้รางเดิม (railC=0 · ราคาต้องลด 2×1.8×1500=5,400 → 73,600)", id:"fence_gate", w:1.8, h:2.7, opts:[["o-railtype","straight"],["o-gmotor","1"],["o-railreuse","reuse"]]},
   {t:"② ระแนงบังตา rn14 (นิ้ว) + สีเทาซาฮาร่า", id:"rn14", w:3, h:2, opts:[["o-gridcolor","x"]]},
+  {t:"② ระแนง rn2 ทำเป็นบานเปิดยูโร 2 บาน (#3 ราคาต้องคูณบาน + โชว์ในใบ)", id:"rn2", w:3, h:2.2, opts:[["o-doortype","casement_euro"],["i-panels","2"]]},
+  {t:"② ระแนง rn2 ทำเป็นบานเฟี้ยม 3 บาน", id:"rn2", w:3, h:2.2, opts:[["o-doortype","folding"],["i-panels","3"]]},
   {t:"② ระแนงผนัง rn37 (นิ้ว ไม่อบสี)", id:"rn37", w:3, h:2, opts:[]},
   {t:"② เกล็ด Z rn85 (1.6 นิ้ว) + ทิศแนวตั้ง", id:"rn85", w:3, h:2, opts:[["o-grdir","แนวตั้ง"]]},
   {t:"③ ราวกันตก imp3 (เสาตั้ง+ราวจับอลู)", id:"imp3", w:3, h:1.1, opts:[["o-railalucolor","สีดำ"]]},
