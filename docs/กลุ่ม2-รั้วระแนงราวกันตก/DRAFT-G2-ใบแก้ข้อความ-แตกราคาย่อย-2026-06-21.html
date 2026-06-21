@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ #6 — ใบเสนอราคา แก้ข้อความได้ทั้งหมด + แตกราคาย่อยในรายการ · 21 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.5}
+  .wrap{max-width:860px;margin:0 auto;padding:14px 12px 70px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:17px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.93}
+  .tag{background:#fff;color:#b3122a;border-radius:4px;padding:0 6px;font-weight:700;font-size:11px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .tg{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;padding:7px 13px;font-size:13px;font-weight:600;color:#374151;cursor:pointer}
+  .tg.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .tg .dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1}.tg.on .dot{background:#b3122a}
+  /* ใบ */
+  .quote{background:#fff;border:1px solid #e2c4c9;border-radius:12px;overflow:hidden}
+  .qh{background:#fff;border-bottom:2px solid #b3122a;padding:10px 14px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#b3122a}
+  .item{padding:11px 14px;border-bottom:1px dashed #eee}
+  .item:last-child{border-bottom:0}
+  .irow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .iname{font-weight:700;font-size:14px;flex:1}
+  .iprice{font-weight:700;font-size:14px;white-space:nowrap;text-align:right}
+  .sec{font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:.4px;margin:7px 0 2px;text-transform:uppercase}
+  .ln{padding:1px 0 1px 13px;position:relative;font-size:12.5px;color:#374151}
+  .ln:before{content:'–';position:absolute;left:1px;color:#9ca3af}
+  /* แตกราคาย่อย */
+  .bd{margin:7px 0 2px;border:1px solid #f1d6da;border-radius:9px;overflow:hidden;display:none}
+  .bd.show{display:block}
+  .bd-h{background:#fdf3f4;font-size:10.5px;font-weight:700;color:#b3122a;padding:4px 10px;letter-spacing:.3px}
+  .bd-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;border-top:1px solid #f6e6e9;font-size:12.5px}
+  .bd-row .lbl{flex:1;color:#374151}
+  .bd-row .amt{white-space:nowrap;font-weight:600;color:#1f2937}
+  .bd-row .amt:after{content:' ฿';color:#9ca3af;font-weight:400;font-size:11px}
+  .bd-sum{display:flex;justify-content:space-between;padding:6px 10px;border-top:2px solid #f1d6da;background:#fdf8f9;font-size:12.5px;font-weight:700;color:#b3122a}
+  .bd-sum .amt:after{content:' ฿';opacity:.6;font-weight:400}
+  .badd{font-size:11.5px;color:#2563eb;cursor:pointer;padding:4px 10px;display:none}
+  .badd.show{display:block}
+  /* edit mode */
+  [contenteditable="true"]{background:#fffbe9;border-radius:4px;padding:0 4px;outline:1px dashed #fcd34d;cursor:text}
+  [contenteditable="true"]:focus{outline:2px solid #f59e0b;background:#fff}
+  .totrow{display:flex;justify-content:space-between;padding:11px 14px;background:#fafafa;border-top:2px solid #b3122a;font-weight:800;font-size:15px;color:#111}
+  .totrow .amt:after{content:' บาท';font-size:12px;color:#6b7280;font-weight:400}
+  .note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:10px 13px;margin-top:12px;font-size:12.5px;color:#1e3a5f}
+  .note b{color:#b3122a}
+  .q{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:11px 13px;margin-top:11px;font-size:12.5px;color:#92722a}
+  .q b{color:#b45309}.q ul{margin:5px 0 0;padding-left:18px}.q li{margin:3px 0}
+  .hint{font-size:11px;color:#9ca3af;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>ใบเสนอราคา — แก้ข้อความได้ทั้งหมด + แตกราคาย่อยในรายการ</h1>
+    <p><span class="tag">ดราฟ #6 · 21 มิ.ย.</span> กดปุ่มด้านล่างลองเล่น · ของจริงดึง breakdown จาก engine (ค่าบาน/ระแนง/มอเตอร์) อัตโนมัติ</p></div>
+
+  <div class="bar">
+    <div class="tg" id="tgEdit" onclick="toggleEdit()"><span class="dot"></span> ✎ แก้ข้อความ</div>
+    <div class="tg" id="tgBd" onclick="toggleBd()"><span class="dot"></span> 🧾 แตกราคาย่อย</div>
+    <div class="tg" onclick="resetAll()" style="margin-left:auto;border-style:dashed;">↺ รีเซ็ต</div>
+  </div>
+
+  <div class="quote">
+    <div class="qh"><span>ใบเสนอราคา (ตัวอย่าง 2 รายการ)</span><span>JR Aluminium</span></div>
+
+    <!-- รายการ 1: ประตูรั้ว ทำเป็นบาน -->
+    <div class="item" data-tot="190200">
+      <div class="irow">
+        <div class="iname" data-ed>ชุดที่ 1 — ประตูรั้วระแนงอลูมิเนียม บานเลื่อน (ทำเป็นบานเปิดยูโร 2 บาน)</div>
+        <div class="iprice"><span class="ptxt">190,200</span></div>
+      </div>
+      <div class="sec">รายการ</div>
+      <div class="ln" data-ed>ซี่ระแนงกล่อง ขนาด 1"×1.6" โชว์หน้า 1" เว้นระยะห่าง 2.5 ซม.</div>
+      <div class="ln" data-ed>รางตรง พร้อมวางรางใหม่</div>
+      <div class="ln" data-ed>มอเตอร์ 1 ตัว · งานสายไฟมอเตอร์: เดินสายไฟจากตู้ควบคุม 15 ม.</div>
+
+      <!-- แตกราคาย่อย (auto จาก engine msgs) -->
+      <div class="bd">
+        <div class="bd-h">แตกราคาย่อย (รวม = ราคารายการ)</div>
+        <div class="bd-row"><span class="lbl" data-ed>ค่าทำบาน — บานเปิดยูโร 2 บาน</span><span class="amt" data-amt>40,400</span></div>
+        <div class="bd-row"><span class="lbl" data-ed>ค่าระแนงไม่โครง</span><span class="amt" data-amt>92,800</span></div>
+        <div class="bd-row"><span class="lbl" data-ed>มอเตอร์ 1 ตัว</span><span class="amt" data-amt>30,000</span></div>
+        <div class="bd-row"><span class="lbl" data-ed>ราง (วางใหม่ · 2×กว้าง)</span><span class="amt" data-amt>5,400</span></div>
+        <div class="bd-row"><span class="lbl" data-ed>งานสายไฟมอเตอร์</span><span class="amt" data-amt>8,000</span></div>
+        <div class="bd-row"><span class="lbl" data-ed>ค่าทำสีบาน 30%</span><span class="amt" data-amt>13,600</span></div>
+        <div class="bd-sum"><span>รวมรายการ</span><span class="amt" data-sum>190,200</span></div>
+      </div>
+      <div class="badd" onclick="addLine(this)">+ เพิ่มบรรทัดราคา</div>
+      <div class="sec">รายละเอียด</div>
+      <div class="ln" data-ed>ระแนงอลูมิเนียมกล่อง สีอบขาว</div>
+    </div>
+
+    <!-- รายการ 2: ระแนงบังตา -->
+    <div class="item" data-tot="32000">
+      <div class="irow">
+        <div class="iname" data-ed>ชุดที่ 2 — ระแนงอลูมิเนียมบังตา ติดตาย (ไม่มีบานเปิด)</div>
+        <div class="iprice"><span class="ptxt">32,000</span></div>
+      </div>
+      <div class="sec">รายการ</div>
+      <div class="ln" data-ed>ซี่ระแนงกล่อง ขนาด 1"×1.6" โชว์หน้า 1" เว้นระยะห่าง 5 ซม.</div>
+      <div class="bd">
+        <div class="bd-h">แตกราคาย่อย (รวม = ราคารายการ)</div>
+        <div class="bd-row"><span class="lbl" data-ed>ค่าระแนงรวมโครง (พื้นที่ × เรต)</span><span class="amt" data-amt>32,000</span></div>
+        <div class="bd-sum"><span>รวมรายการ</span><span class="amt" data-sum>32,000</span></div>
+      </div>
+      <div class="badd" onclick="addLine(this)">+ เพิ่มบรรทัดราคา</div>
+      <div class="sec">รายละเอียด</div>
+      <div class="ln" data-ed>ระแนงอลูมิเนียมกล่อง สีเทาซาฮาร่า</div>
+    </div>
+
+    <div class="totrow"><span>รวมทั้งสิ้น</span><span class="amt" id="grand">222,200</span></div>
+  </div>
+
+  <div class="note">📌 <b>หลักการ:</b> ① <b>แก้ข้อความ</b> = ทุกข้อความ (ชื่อชุด/รายการ/รายละเอียด/ป้ายราคาย่อย) แก้ได้ — รวม "ชุดที่จัดกลุ่ม" ที่เดิมแก้ไม่ได้ · ② <b>แตกราคาย่อย</b> = engine มี breakdown อยู่แล้ว (ค่าบาน/ระแนง/มอเตอร์/ราง/สายไฟ/สี) → โชว์เป็นบรรทัด · แก้ตัวเลขได้ · เพิ่ม/ลบบรรทัดได้ · <b>ผลรวม = ราคารายการ</b> (แก้ย่อยแล้วยอดบนอัปเดต) · บันทึกลง localStorage (เปิดใหม่ยังอยู่ · ปุ่มรีเซ็ตคืนค่า engine)</div>
+
+  <div class="q">
+    <b>⚠ ขอพี่เคาะ 3 จุด ก่อนลงโค้ดจริง (เน้นงานไม่พัง):</b>
+    <ul>
+      <li><b>แก้ราคาย่อยแล้ว ยอดรวมรายการเปลี่ยนตามไหม?</b> — ดราฟนี้: แก้บรรทัดย่อย → ผลรวม + ยอดบน + รวมทั้งสิ้น อัปเดตอัตโนมัติ (พี่คุมราคาได้เต็ม) · <i>เลือกแบบนี้ไหม</i></li>
+      <li><b>ทำทั้งระบบทุกกลุ่ม</b> (ใบ render โค้ดร่วม G1–G7) — แตกราคาใช้ <code>r.msgs</code> ที่ทุกกลุ่มมีอยู่แล้ว · ต้องเทส golden + ทุกกลุ่มไม่พัง</li>
+      <li><b>ค่าเริ่มต้น</b> = พับแตกราคาไว้ (กดเปิดเฉพาะตอนอยากดู/แก้) · ใบ default ยังเรียบเหมือนเดิม — โอเคไหม</li>
+    </ul>
+    ✅ ราคา engine ไม่แตะ · เพิ่มแค่ชั้น "โชว์/แก้ทับ" (override) ด้านบน + เก็บใน localStorage
+  </div>
+</div>
+
+<script>
+var editOn=false, bdOn=false;
+var fmt=function(n){ return (Math.round(n)||0).toLocaleString('en-US'); };
+function parseAmt(t){ return parseFloat(String(t).replace(/[^\d.-]/g,''))||0; }
+function toggleEdit(){ editOn=!editOn; document.getElementById('tgEdit').classList.toggle('on',editOn);
+  document.querySelectorAll('[data-ed],[data-amt]').forEach(function(e){ e.setAttribute('contenteditable',editOn?'true':'false'); });
+  if(editOn && !bdOn){ toggleBd(); } // เปิดแก้ → โชว์ราคาย่อยให้แก้ด้วย
+}
+function toggleBd(){ bdOn=!bdOn; document.getElementById('tgBd').classList.toggle('on',bdOn);
+  document.querySelectorAll('.bd').forEach(function(e){ e.classList.toggle('show',bdOn); });
+  document.querySelectorAll('.badd').forEach(function(e){ e.classList.toggle('show',bdOn&&editOn); });
+}
+function recalc(){
+  var grand=0;
+  document.querySelectorAll('.item').forEach(function(it){
+    var sum=0, rows=it.querySelectorAll('.bd-row .amt');
+    rows.forEach(function(a){ sum+=parseAmt(a.textContent); });
+    if(rows.length){ var s=it.querySelector('[data-sum]'); if(s)s.textContent=fmt(sum);
+      it.querySelector('.ptxt').textContent=fmt(sum); it.dataset.tot=sum; }
+    grand+=parseAmt(it.dataset.tot);
+  });
+  document.getElementById('grand').textContent=fmt(grand);
+}
+document.addEventListener('input',function(e){ if(e.target.hasAttribute('data-amt')) recalc(); });
+function addLine(btn){ var bd=btn.previousElementSibling; var sum=bd.querySelector('.bd-sum');
+  var row=document.createElement('div'); row.className='bd-row';
+  row.innerHTML='<span class="lbl" contenteditable="true" data-ed>รายการใหม่</span><span class="amt" contenteditable="true" data-amt>0</span>';
+  bd.insertBefore(row,sum); recalc();
+}
+function resetAll(){ location.reload(); }
+</script>
+</body>
+</html>
