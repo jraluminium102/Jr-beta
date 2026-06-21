@@ -1324,6 +1324,15 @@ function g2DoorPaint(nm, a, optSel){ var idx=g2DoorColorIdx(nm); if(idx<=0)retur
 function g2DoorPanelDesc(panels, optSel){ var pn=Math.max(1,parseInt(panels)||1); var fx=Math.max(0,Math.min(pn-1,parseInt(optSel&&optSel.doorFixed)||0)); if(pn<=1&&fx<=0)return ' (1 บาน)'; return ' ('+pn+' บาน: เปิด '+(pn-fx)+(fx>0?(' · ติดตาย '+fx):'')+')'; }
 // ③ (21มิ.ย.): งานสายไฟมอเตอร์ — กรอกราคาเอง + ข้อความ (เฉพาะข้อที่มีมอเตอร์: ประตูรั้ว/เกล็ดอลู/หมุนเปิด-ปิด)
 function g2MotorWire(optSel){ var p=parseFloat(optSel&&optSel.motorWirePrice)||0; var t=((optSel&&optSel.motorWire)||'').trim(); return {p:p>0?p:0, t:t, msg:(p>0?('งานสายไฟมอเตอร์'+(t?(' ('+t+')'):'')+' '+fmt(p)):'')}; }
+// G2 (21มิ.ย.): แปลงชื่อลายระแนง raw → บรรทัด "ซี่ระแนงกล่อง" น่าอ่าน (ใช้ร่วม ① ประตูรั้ว + ② ระแนง) · รองรับชื่อ 2 แบบ: นิ้ว (1"x1.6" โชว์ 1" 5cm.) / ซม. (1x5 cm. โชว์ 1cm. 5cm.)
+function g2RanaeSpec(rawName){
+  var s=String(rawName||'').replace(/\s*\([^)]*\)/g,'').replace(/\s*(ไม่โครง|รวมโครง)\s*$/,'').replace(/[”“]/g,'"').replace(/^\D*?(?=\d)/,'').trim();
+  var m=s.match(/^(.+?)\s*โชว์\s*([\d.½"]+(?:\s*cm\.?)?)\s*([\d.]+)\s*cm/);
+  if(!m) return 'ซี่ระแนงกล่อง '+s.replace(/\s*cm\.?/g,' ซม.').replace(/\s*[x×]\s*/i,'×').replace(/\s+/g,' ').trim();
+  var size=m[1].replace(/\s*cm\.?/g,' ซม.').replace(/\s*[x×]\s*/i,'×').replace(/\s+/g,' ').trim();
+  var face=m[2].replace(/\s*cm\.?/g,' ซม.').replace(/\s+/g,' ').trim();
+  return 'ซี่ระแนงกล่อง ขนาด '+size+' โชว์หน้า '+face+' เว้นระยะห่าง '+m[3]+' ซม.';
+}
 
 /* คำนวณ 1 รายการ → {sell, cost, area, msgs} (ยังไม่คูณชุด) */
 function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
@@ -6109,15 +6118,16 @@ function genQuote(keepNo){
       var _finColor=(it.finLabel||'ไม่อบสี');
       var _finColorTxt=(_finColor==='ไม่อบสี')?'ไม่อบสี':(/สี/.test(_finColor)?_finColor:'สี'+_finColor); // R2-4: กันคำซ้ำ "สีอบสีพิเศษ"
       if(/^ระแนง/.test(it.p.cat)){
-        // G2 ใบ 5 บล็อก: _work=ชื่อรุ่น+ทิศ · _spec=สี
-        var _specLine=it.p.name.replace(/\s*\([^)]*\)/g,'').replace(/\s*·\s*ข้อ\s*[\d.]+/g,'').replace(/\s+/g,' ').trim();
-        var _rnWork=[_specLine];
-        // G2-9: เกล็ด Z — ทิศ (แนวตั้ง/แนวนอน) → _work
+        // G2 ② ระแนง (21มิ.ย. · น่าอ่าน ตามใบจริง): รายการ=ลีดงาน+ทิศ+ซี่ระแนง(น่าอ่าน) · รายละเอียด=ระแนงอลูมิเนียมกล่อง+สี
+        var _rnLead=(it.p.cat==='ระแนง-เกล็ด')?'ระแนงอลูมิเนียมเกล็ด Z ติดตาย (ปิดสนิท · ไม่มีบานเปิด)':((it.p.cat==='ระแนง-ผนัง')?'ระแนงอลูมิเนียมบังตาผนัง ติดตาย (ไม่มีบานเปิด)':'ระแนงอลูมิเนียมบังตา ติดตาย (ไม่มีบานเปิด)');
+        var _rnWork=[_rnLead];
+        // เกล็ด Z — ทิศ (แนวตั้ง/แนวนอน) → รายการ
         if(it.p.cat==='ระแนง-เกล็ด' && it.optSel && it.optSel.grDir){ _rnWork.push('( '+it.optSel.grDir+' )'); }
-        var _rnSpec=_finColorTxt?[_finColorTxt]:[];
-        // ก้อนรวม#11: ระแนงกล่อง/บังตา — ดึงระยะห่างจากชื่อ ("โชว์ 1cm. 5cm.") ใส่ป้ายชัด "ระยะห่าง X ซม." (display เท่านั้น)
-        var _rnGap=(it.p.name.match(/โชว์\s*[\d.]+\s*cm\.?\s*([\d.]+)\s*cm/)||[])[1];
-        if(_rnGap) _rnSpec.push('ระยะห่าง '+_rnGap+' ซม.');
+        // ซี่ระแนง (น่าอ่าน) → รายการ · เกล็ด Z ปิดสนิท ไม่มีโชว์/ระยะ → โชว์ขนาดอย่างเดียว
+        if(it.p.cat==='ระแนง-เกล็ด'){ var _rnZ=(it.p.name.match(/Z\s*([\d.½”“"]+)/)||[])[1]; _rnWork.push('ซี่เกล็ดอลูมิเนียม'+(_rnZ?(' ขนาด '+_rnZ.replace(/[”“]/g,'"')):'')+' (ปิดสนิท)'); }
+        else { _rnWork.push(g2RanaeSpec(it.p.name)); }
+        // รายละเอียด: ระแนงอลูมิเนียมกล่อง + สี
+        var _rnSpec=['ระแนงอลูมิเนียมกล่อง'+((_finColor==='ไม่อบสี')?' (ไม่อบสี)':' '+_finColorTxt)];
         det=_rnWork.join('\n')+'\n###รายละเอียด###\n'+_rnSpec.join('\n');
       } else {
         det = _finColor;
@@ -6192,44 +6202,48 @@ function genQuote(keepNo){
       det = _fLines.join('\n');
     }
     else if(it.p.bar_grid || it.p.bar_slide || it.p.bar_openclose){
-      // G2 ใบ 5 บล็อก: _work=ชื่อระแนง+ประตู(รุ่น)+ทิศ · _spec=สีอบ (ถ้ามี)
+      // G2 ④ ระแนงพิเศษ (21มิ.ย. · ตามใบจริง): รายการ=ลีดงาน+ทิศ+พร้อมโครง · ซี่เกล็ด(ปิดสนิท ไม่มีเว้นระยะ) · มอเตอร์ปรับมุม+สายไฟ · รายละเอียด=สี
       var _bo=it.optSel||{};
-      var _bMat=it.p.bar_grid?'ระแนงอลูมิเนียมเกล็ด':(it.p.bar_slide?'ระแนงอลูมิเนียมเลื่อน (ลูกฟูกเรียบ 2 ทาง)':'ระแนงอลูมิเนียมหมุนเปิด-ปิด');
-      var _bWork=[_bMat];
-      // ทิศ (bar_grid: bgdir v/h · bar_openclose: bocDir v/h) → _work
       var _bDir=it.p.bar_grid?_bo.bgdir:(it.p.bar_openclose?_bo.bocDir:'');
-      if(_bDir==='v') _bWork.push('( แนวตั้ง )'); else if(_bDir==='h') _bWork.push('( แนวนอน )');
-      // ประตูในระแนงเลื่อน → _work (รุ่น)
+      var _bDirTxt=(_bDir==='v')?' แนวตั้ง':((_bDir==='h')?' แนวนอน':'');
+      var _bWork=[];
+      if(it.p.bar_openclose){ _bWork.push('ระแนงอลูมิเนียมเกล็ดหมุนปรับมุมได้ (เปิด-ปิด)'+_bDirTxt+' พร้อมโครง'); }
+      else if(it.p.bar_grid){ _bWork.push('ระแนงอลูมิเนียมเกล็ดลูกฟูกเรียบ 2 หน้า (ติดตาย)'+_bDirTxt+' พร้อมโครง'); }
+      else { _bWork.push('ระแนงอลูมิเนียมเลื่อน (ลูกฟูกเรียบ 2 ทาง) พร้อมโครง'); }
+      // ซี่เกล็ด — ดึงขนาดจากชื่อรุ่น (เช่น "กล่อง 1"x4" โชว์ 4"") · ปิดสนิท ไม่มีเว้นระยะ
+      var _bSz=(it.p.name.match(/กล่อง\s*([\d.½”“"]+)\s*[x×]\s*([\d.½”“"]+)\s*โชว์\s*([\d.½”“"]+)/)||[]);
+      if(_bSz[1]){ _bWork.push('ซี่เกล็ดกล่อง '+_bSz[1].replace(/[”“]/g,'"')+'×'+_bSz[2].replace(/[”“]/g,'"')+' โชว์หน้า '+_bSz[3].replace(/[”“]/g,'"')+' (ปิดสนิท · ไม่มีเว้นระยะ)'); }
+      // ประตู (bar_slide ทำเป็นบาน)
       if(it.p.bar_slide && _bo.bsDoor && PBYID[_bo.bsDoor]) _bWork.push('พร้อมประตู '+PBYID[_bo.bsDoor].name.replace(/\s*\([^)]*\)/g,'').trim());
-      // สีอบ → _spec
+      // มอเตอร์ปรับมุม + งานสายไฟ (bar_openclose เลือกมอเตอร์)
+      if(it.p.bar_openclose && _bo.bocMotor){ var _bwTxt=((_bo.motorWire)||'').trim(); _bWork.push('มอเตอร์ปรับมุม 1 ตัว'+(_bwTxt?(' · งานสายไฟมอเตอร์: '+_bwTxt):'')); }
+      // รายละเอียด: สี (default สีอบขาว)
       var _bColor=it.p.bar_grid?_bo.bgColor:(it.p.bar_slide?_bo.bsFinishLbl:_bo.bocFinishLbl);
-      var _bSpec=[];
-      if(_bColor && !/^(สีอบขาว|ไม่อบสี)/.test(_bColor)){ var _bc=String(_bColor); _bSpec.push(/สี/.test(_bc)?_bc:'สี'+_bc); } // R2-4: กันคำซ้ำ
+      var _bSpec=[(_bColor && !/^(สีอบขาว|ไม่อบสี)/.test(String(_bColor)))?(/สี/.test(String(_bColor))?String(_bColor):'สี'+_bColor):'สีอบขาว'];
       det=_bWork.join('\n')+'\n###รายละเอียด###\n'+_bSpec.join('\n');
     }
     else if(it.p.gate){
       // G2 ใบ 5 บล็อก: _work=ลักษณะเปิด+ระแนงติดตายข้าง+ราง+มอเตอร์+ธรณี · _spec=ลาย(_grnp)+สี(_gfin)
       // OPTION ลายไม้ Golden Teak คงขึ้นต้น "OPTION :" เป็น note (qrow จับ "OPTION" เอง)
       var _go=it.optSel||{};
-      var _gtMap={swing:'บานสวิง',casement:'บานเปิด',slide_bottom:'บานเลื่อนเปิดคู่กลางรางล่าง',slide_top:'บานเลื่อนเปิดคู่กลางรางบน'};
-      var _gtTxt=_gtMap[_go.gatetype]||'บานเลื่อนเปิดคู่กลางรางล่าง';
-      var _gWork=['ประตูระแนงอลูมิเนียม'+_gtTxt+' พร้อมระแนงติดตายด้านข้าง'];
-      // ราง ตรง/โค้ง (ดึงจาก optSel.railtype · reference L1302)
-      var _grt=_go.railtype||'straight';
-      if(_grt==='curved'){
-        var _gcLeaves=Math.ceil((parseFloat(it.w)||0)/0.75);
-        _gWork.push('ราง โค้ง'+((_gcLeaves>0)?(' · บานโค้ง '+_gcLeaves+' บาน'):''));
-      } else { _gWork.push('ราง ตรง'); }
-      // มอเตอร์
-      var _gmt=parseInt(_go.gmotor)||0; if(_gmt>0) _gWork.push('มอเตอร์ '+_gmt+' ตัว');
-      // ธรณี (G2-15)
-      if(_go.gatethresh) _gWork.push('มีธรณี'); else _gWork.push('ไม่มีธรณี');
-      // _spec: ลายระแนง (ซี่) + สี
+      // รายการ (บน): ประตูรั้วบานเลื่อน · ซี่ระแนง(น่าอ่าน) · ราง(วางใหม่/ใช้เดิม) · มอเตอร์+สายไฟ — (ตัด "ติดตายด้านข้าง"/ธรณี ออก 21มิ.ย. · ตามใบจริง)
+      var _gWork=['ประตูรั้วระแนงอลูมิเนียม บานเลื่อน'];
+      // ซี่ระแนง (น่าอ่าน · ตัวแปลงร่วม g2RanaeSpec) → รายการ
       var _grnp=_go.gatern?PBYID[_go.gatern]:null;
+      if(_grnp) _gWork.push(g2RanaeSpec(_grnp.name));
+      // ราง ตรง/โค้ง + วางรางใหม่/ใช้รางเดิม (railreuse: true=ใช้รางเดิม ไม่รวมราง · default วางใหม่)
+      var _grt=_go.railtype||'straight';
+      var _grLeaf='';
+      if(_grt==='curved'){ var _gcLeaves=Math.ceil((parseFloat(it.w)||0)/0.75); if(_gcLeaves>0) _grLeaf=' · บานโค้ง '+_gcLeaves+' บาน'; }
+      _gWork.push((_grt==='curved'?'รางโค้ง':'รางตรง')+' '+(_go.railreuse?'ใช้รางเดิม (ไม่รวมราง)':'พร้อมวางรางใหม่')+_grLeaf);
+      // มอเตอร์ + งานสายไฟมอเตอร์ (รวมบรรทัดเดียว · ข้อความสายไฟดึงจาก o-motorwire)
+      var _gmt=parseInt(_go.gmotor)||0;
+      if(_gmt>0){ var _gwTxt=((_go.motorWire)||'').trim(); _gWork.push('มอเตอร์ '+_gmt+' ตัว'+(_gwTxt?(' · งานสายไฟมอเตอร์: '+_gwTxt):'')); }
+      // รายละเอียด (ล่าง): ระแนงอลูมิเนียมกล่อง + สี
       var _gSpec=[];
-      if(_grnp){ _gSpec.push('ลายระแนง: '+_grnp.name.replace(' ไม่โครง','').replace(/\s*\(ข้อ[^)]*\)/g,'').trim()); }
-      var _gfinTxt=_go.gfin||'สีอบขาว'; if(_gfinTxt) _gSpec.push(/สี/.test(_gfinTxt)?_gfinTxt:'สี'+_gfinTxt); // R2-4: กันคำซ้ำ
-      // G2-12: OPTION ลายไม้ Golden Teak SMS — ส่งผ่าน gateOptNote → note (qrow จัดบล็อก OPTION แดง) ไม่ต่อท้าย spec หลัง marker
+      var _gfinTxt=_go.gfin||'สีอบขาว';
+      _gSpec.push('ระแนงอลูมิเนียมกล่อง '+(/สี/.test(_gfinTxt)?_gfinTxt:'สี'+_gfinTxt));
+      // OPTION ลายไม้ Golden Teak SMS → gateOptNote (qrow บล็อกแดง · ใต้รายการ เหนือหมายเหตุ)
       var _gwd=parseFloat(_go.gatewood)||0;
       if(_gwd>0) gateOptNote='OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS ราคาเพิ่ม '+fmt(_gwd)+' บาท';
       det=_gWork.join('\n')+'\n###รายละเอียด###\n'+_gSpec.join('\n');
