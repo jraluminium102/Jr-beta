@@ -1591,7 +1591,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     sell += handrailAdd;
     const msg = ['ยาว '+len+' ม. × '+fmt(rate)];
     if(handrailAdd>0) msg.push('ราวจับ '+(handrail==='u5'?'ยู 5 หุน':'กล่อง 1"x2"')+' +'+fmt(handrailAdd));
-    return {a:len, sell:roundUp(sell), cost:null, addonLabel:'', msgs:[msg.join(' · ')]};
+    var _hrBd=[{n:'ราวกันตกกระจก (ยาว '+len+' ม.)',p:Math.round(len*rate)}]; if(handrailAdd>0)_hrBd.push({n:'ราวจับด้านบน',p:Math.round(handrailAdd)}); /* #6 ราคาแยก G2 ราวกันตก */
+    return {a:len, sell:roundUp(sell), breakdown:(_hrBd.length>1?_hrBd:null), cost:null, addonLabel:'', msgs:[msg.join(' · ')]};
   }
     if(p.pvc_cover){
     // ครอบท่อ PVC · 1,500/1.5 ม. ปัดขึ้น (สูตรใหม่ 2026-05-29)
@@ -2002,6 +2003,14 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       msgs.push(mosqMsg);
     }
   }
+  // #6: breakdown generic — กลุ่มที่ใช้ return ร่วม (G1 บานกระจก / G3 หลังคา-ฝ้า / G5 มุ้ง / G7 ฯลฯ) · core+กระจก+สี+ออปชั่น+addon (มุ้ง) · reconcile ผลรวม=ราคารายการ ที่ชั้นใบ
+  if(_breakdown==null){ var _gb=[];
+    if(core>0)_gb.push({n:(p.cat==='หลังคา'?'ค่าหลังคา':(p.ceiling?'ค่าฝ้า':(p.cabinet?'ค่าตู้':'ค่างานหลัก'))),p:Math.round(core)});
+    if(glassUp>0)_gb.push({n:'กระจก',p:Math.round(glassUp)});
+    if(colorUp>0)_gb.push({n:'สีอลูมิเนียม (สีพิเศษ)',p:Math.round(colorUp)});
+    if(opt>0)_gb.push({n:'ออปชั่น/อุปกรณ์เสริม',p:Math.round(opt)});
+    (addonLines||[]).forEach(function(al){ if(al.p>0)_gb.push({n:al.n,p:Math.round(al.p)}); });
+    if(_gb.length>1)_breakdown=_gb; } // ≥2 ส่วนค่อยแตก (ชิ้นเดียว=ราคารายการอยู่แล้ว)
   return {a, sell, cost, addonLabel:ad.label, msgs, addonLines, breakdown:_breakdown, g3box:_g3box};
 }
 
@@ -5663,7 +5672,7 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
   if (note && !(_hasMark && !_ed)) { String(note).split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(!ln) return;
     const isOpt = ln.indexOf('OPTION')===0;
     content += `<div style="margin:4px 0 0 8px;font-size:13px;color:${isOpt?'#B3151D':'#6B7280'};">${ln}</div>`; }); }
-  if (addons && addons.length && window.qSplit){ addons.forEach(a => { content += `<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;color:#1F2937;font-size:13px;"><span>+ ${a.n}</span><span style="font-weight:600;">${fmt(a.p)}</span></div>`; }); }
+  if (addons && addons.length && window.qSplit && !bdHtml){ addons.forEach(a => { content += `<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;color:#1F2937;font-size:13px;"><span>+ ${a.n}</span><span style="font-weight:600;">${fmt(a.p)}</span></div>`; }); } // #6: ถ้ามี breakdown box (รวม addon แล้ว) ไม่โชว์ addon ซ้ำ
   // มุ้งโชว์ใน "รายละเอียดงาน" แล้ว — ตัดบรรทัด "(มี มุ้ง...)" ออก กันซ้ำซ้อน (พี่นัท 2026-06-05)
   // รายละเอียดงาน
   if (glass && glass !== '-') {
