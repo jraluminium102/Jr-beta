@@ -5721,13 +5721,17 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
 window.qEdit=false; window._nameOv=window._nameOv||{}; window._detOv=window._detOv||{};
 // คิว B รอบ2 Group C: ใบแก้ได้ทั้งใบ + ใบเปล่า — แถวเพิ่มชั่วคราว (ไม่บันทึกถาวร · ล้างเมื่อขึ้นใบใหม่)
 window._extraRows=window._extraRows||[]; window._blankQuote=window._blankQuote||false;
-function clearQuoteOverrides(){ window._nameOv={}; window._detOv={}; window._extraRows=[]; window._blankQuote=false; window.qEdit=false; window._bdOv={}; window._lastBd={}; } // #3: เรียกตอนล้าง/ลูกค้าใหม่ — กัน edit ติดรอบหน้า
+function clearQuoteOverrides(){ window._nameOv={}; window._detOv={}; window._extraRows=[]; window._blankQuote=false; window.qEdit=false; window._bdOv={}; window._lastBd={}; window._glOv={}; window._gDetOv={}; } // #3: เรียกตอนล้าง/ลูกค้าใหม่ — กัน edit ติดรอบหน้า
 function addQuoteRow(){ window.qEdit=true; window._extraRows.push({name:'',det:'',qty:'1',price:''}); genQuote(true); }
 function delQuoteRow(i){ if(window._extraRows[i]!=null){ window._extraRows.splice(i,1); genQuote(true); } }
 function setXRow(i,k,el){ if(!window._extraRows[i])return; var v=((el.innerText!=null?el.innerText:el.value)||'').replace(/ /g,' ').trim(); if(k==='price'||k==='qty'){ v=v.replace(/,/g,''); window._extraRows[i][k]=v; genQuote(true); } else { window._extraRows[i][k]=v; } } // ตัด comma กัน parseFloat พัง · name/det ไม่ re-render (ไม่กระทบยอด)
 function startBlankQuote(){ if(!confirm('เริ่มใบเปล่า? (ล้างรายการในฟอร์ม + เริ่มกรอกมือ)'))return; var it=document.getElementById('items'); if(it)it.innerHTML=''; if(typeof itemSeq!=='undefined')itemSeq=0; clearQuoteOverrides(); window._blankQuote=true; window.qEdit=true; window._extraRows=[{name:'',det:'',qty:'1',price:''}]; genQuote(true); var b=document.getElementById('editBtn'); if(b){b.textContent='✓ เสร็จการแก้';b.style.background='#B3151D';b.style.color='#fff';} var rb=document.getElementById('qResetBtn'); if(rb)rb.style.display=''; var bn=document.getElementById('qEditBanner'); if(bn)bn.style.display=''; }
 // R2-4: เก็บ override รายละเอียดงานที่เซลล์แก้ (ทั้งก้อน) · ว่าง=กลับใช้อัตโนมัติ
 function setRowDet(id,el){ var t=(el.innerText||'').replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').trim(); if(t) window._detOv[id]=t; else delete window._detOv[id]; genQuote(true); }
+// #6 ข้อ2: แก้ข้อความ "ชุดจัดกลุ่ม" — ป้ายชุด (_glOv) + รายละเอียดงานรวม (_gDetOv) · ชื่อบานในชุดใช้ setRowName เดิม (มี itemId)
+window._glOv = window._glOv||{}; window._gDetOv = window._gDetOv||{};
+function setGroupLabel(gn,el){ var t=(el.innerText||'').trim(); if(t) window._glOv[gn]=t; else delete window._glOv[gn]; genQuote(true); }
+function setGroupDet(gn,el){ var t=(el.innerText||'').replace(/[ \t]+\n/g,'\n').trim(); if(t) window._gDetOv[gn]=t; else delete window._gDetOv[gn]; genQuote(true); }
 function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElementById('editBtn'); if(b){ b.textContent=window.qEdit?'✓ เสร็จการแก้':'✎ แก้ทุกข้อความ'; b.style.background=window.qEdit?'#B3151D':''; b.style.color=window.qEdit?'#fff':''; } var rb=document.getElementById('qResetBtn'); if(rb) rb.style.display=window.qEdit?'':'none'; var bn=document.getElementById('qEditBanner'); if(bn) bn.style.display=window.qEdit?'':'none'; genQuote(true); }
 // === #6 (21มิ.ย.): แตกราคาย่อยต่อรายการ (ส่งลูกค้า · ต่อยอดปุ่ม "แยกราคาแต่ละส่วน" qSplit เดิม) ===
 // ดึง r.breakdown (engine ส่งราคาแยกจริง · G2 ครบ · กลุ่มอื่น null=ไม่โชว์ ค่อยเติม) · พับ default · แก้/เพิ่ม/ลบ · รวม=ราคารายการ (override → .i-override)
@@ -6686,7 +6690,7 @@ function genQuote(keepNo){
       if(p.cat==='ติดตาย') return 'บานกระจกติดตาย';
       if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','บานเฟี้ยม','บานกระทุ้ง','PC Door','บานยก','บานหมุน','ดัดโค้ง','บานเปลือย'].includes(p.cat)) return ty+p.cat;
       return p.name||p.cat||'ชุด'; }
-    const _gl=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':_shortGl(items[0]));
+    const _glRaw=(items[0]&&items[0].groupLabel&&items[0].groupLabel.trim())||(items.some(it=>it.position&&it.position.trim())?'กั้นห้องกระจก':_shortGl(items[0])); const _gl=(window._glOv&&window._glOv[gn]!=null&&window._glOv[gn]!=='')?window._glOv[gn]:_glRaw; // #6 ข้อ2: ป้ายชุด override
     items.forEach(it => { gTotal += it.r.sell*it.qty; });
     // ข้อ5: OPTION ระดับชุด (set-optdelta) — บวกเข้ายอดจริง ครั้งเดียว/ชุด (เดิมโชว์ "+N บาท" แต่ไม่บวก = ขายขาดทุน)
     const _gOptDelta=(items[0]&&items[0].groupOptDelta)||0; gTotal += _gOptDelta;
@@ -6696,7 +6700,7 @@ function genQuote(keepNo){
     // — บรรทัด OPTION / หมายเหตุ ห้าม dedupe/ห้ามรวม ให้คงไว้ตามเดิม
     const matLines=[]; const matSeen=new Set(); const specialLines=[];
     items.forEach(it => { const d=itemDetail(it); if(d.det&&d.det!=='-'){
-      d.det.split(/\n| · /).forEach(g => { const t=g.replace(/^- /,'').trim(); if(!t) return;
+      d.det.split(/\n| · /).forEach(g => { const t=g.replace(/^- /,'').trim(); if(!t||t.indexOf('###')>=0) return; // #6: ตัด marker ###รายละเอียด### ไม่ให้โผล่ในชุดจัดกลุ่ม
         if(t.startsWith('OPTION')||t.startsWith('หมายเหตุ')){ specialLines.push(t); }
         else if(!matSeen.has(t)){ matSeen.add(t); matLines.push(t); }
       });
@@ -6704,15 +6708,19 @@ function genQuote(keepNo){
       // F2: OPTION ทางเลือกลูกค้า ต่อด้าน (อยู่ใน it.note) — ดันเข้า specialLines ของชุดด้วย
       if(it.note){ it.note.split(/\n+/).forEach(function(ln){ ln=(ln||'').trim(); if(ln.startsWith('OPTION')||ln.startsWith('หมายเหตุ')) specialLines.push(ln); }); }
     });
-    let content = '<div style="font-weight:700;color:#1F2937;">'+_gl+'<button type="button" class="qtoggle-set" onclick="toggleGroupSplit('+gIdx+')" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #B3151D;color:#B3151D;background:#fff;border-radius:6px;cursor:pointer;">'+(isSplit?'รวมราคา':'แยกราคา')+'</button></div>';
+    var _glH=window.qEdit?('<span contenteditable="true" onblur="setGroupLabel(\''+gn+'\',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">'+_gl+'</span>'):_gl; // #6 ข้อ2: ป้ายชุดแก้ได้
+    let content = '<div style="font-weight:700;color:#1F2937;">'+_glH+'<button type="button" class="qtoggle-set no-print" onclick="toggleGroupSplit('+gIdx+')" style="margin-left:8px;font-size:11px;padding:1px 8px;border:1px solid #B3151D;color:#B3151D;background:#fff;border-radius:6px;cursor:pointer;">'+(isSplit?'รวมราคา':'แยกราคา')+'</button></div>';
     if(isSplit){
       items.forEach(it => { const d=itemDetail(it); const pos=it.position?(' ('+it.position+')'):''; const ov=it.r.overridden?' ✎':'';
         const _w=parseFloat(it.w)||0,_h=parseFloat(it.h)||0; const _sz=(_w>0&&_h>0)?(' ('+it.w+' × '+it.h+' ม.)'):'';  // R4.3: โชว์ขนาดเมื่อแยกราคา
-        content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+d.prodName+pos+_sz+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
+        var _iidG=(it.div?it.div.dataset.id:''); var _pnRaw=(_iidG&&window._nameOv&&window._nameOv[_iidG])||d.prodName; var _pnH=(window.qEdit&&_iidG)?('<span contenteditable="true" onblur="setRowName(\''+_iidG+'\',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">'+_pnRaw+'</span>'):_pnRaw; // #6 ข้อ2: ชื่อบานในชุดแก้ได้ (override _nameOv)
+        content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+_pnH+pos+_sz+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
         (it.r.addonLines||[]).forEach(function(a){ content += '<div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>· '+a.n+'</span><span>'+fmt(a.p)+'</span></div>'; }); });
       // ลบบรรทัดค่าทำชุดกั้นห้อง 5,000 — พี่นัทยกเลิกแล้ว
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
-        matLines.forEach(t => { content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">- '+t+'</div>'; }); }
+        var _gdOv=(window._gDetOv&&window._gDetOv[gn]!=null&&window._gDetOv[gn]!=='')?window._gDetOv[gn]:null; // #6 ข้อ2: รายละเอียดชุดแก้ได้
+        if(window.qEdit){ var _gdTxt=_gdOv!=null?_gdOv:matLines.map(function(t){return '- '+t;}).join('\n'); content += '<div contenteditable="true" onblur="setGroupDet(\''+gn+'\',this)" style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;white-space:pre-wrap;border:1px dashed #B3151D;outline:none;cursor:text;padding:2px 5px;border-radius:4px;">'+_gdTxt+'</div>'; }
+        else { var _gdLines=_gdOv!=null?_gdOv.split(/\n/):matLines.map(function(t){return '- '+t;}); _gdLines.forEach(function(t){ t=(t||'').trim(); if(t)content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">'+(t.charAt(0)==='-'?t:'- '+t)+'</div>'; }); } }
     } else {
       // กั้นห้อง/งานหลายด้าน: จัดกลุ่มตาม "ด้าน" → หัวด้านขึ้นก่อน บานเรียงใต้ (ตัด "พร้อม" ซ้ำ)
       const hasPos = items.some(it => it.position && it.position.trim());
@@ -6738,7 +6746,9 @@ function genQuote(keepNo){
         content += names.map(function(nm){ return '<div style="margin:2px 0 0 8px;color:#1F2937;">- '+nm.replace(/\n/g,'<br>&nbsp;&nbsp;&nbsp;')+'</div>'; }).join('');
       }
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
-        matLines.forEach(t => { content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">- '+t+'</div>'; }); }
+        var _gdOv=(window._gDetOv&&window._gDetOv[gn]!=null&&window._gDetOv[gn]!=='')?window._gDetOv[gn]:null; // #6 ข้อ2: รายละเอียดชุดแก้ได้
+        if(window.qEdit){ var _gdTxt=_gdOv!=null?_gdOv:matLines.map(function(t){return '- '+t;}).join('\n'); content += '<div contenteditable="true" onblur="setGroupDet(\''+gn+'\',this)" style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;white-space:pre-wrap;border:1px dashed #B3151D;outline:none;cursor:text;padding:2px 5px;border-radius:4px;">'+_gdTxt+'</div>'; }
+        else { var _gdLines=_gdOv!=null?_gdOv.split(/\n/):matLines.map(function(t){return '- '+t;}); _gdLines.forEach(function(t){ t=(t||'').trim(); if(t)content += '<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">'+(t.charAt(0)==='-'?t:'- '+t)+'</div>'; }); } }
       // ลบบรรทัดค่าทำชุดกั้นห้อง 5,000 — พี่นัทยกเลิกแล้ว
     }
     // OPTION / หมายเหตุ เฉพาะของแต่ละบาน (คงไว้ตามเดิม ไม่ dedupe)
