@@ -1070,15 +1070,16 @@ function colorDrillRenderL3(sel){ if(!sel)return;
   var curIdx=parseInt(sel.value)||0;
   var wrap=null; if(sel.nextSibling&&sel.nextSibling.classList&&sel.nextSibling.classList.contains('color-drill')) wrap=sel.nextSibling;
   if(!wrap){ wrap=document.createElement('div'); wrap.className='color-drill'; sel.parentNode.insertBefore(wrap,sel.nextSibling); sel.style.display='none'; }
-  function _nm(i){ var raw=(COLORS[i]&&COLORS[i].n)||present[i]||''; return raw.replace(/\s*[★⚠]/g,'').replace(/\s*—.*$/,'').replace(/\s+/g,' ').trim(); }
-  var base=[], special=[];
-  Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ if(g2FinCat((COLORS[i]&&COLORS[i].n)||'')==='special') special.push(i); else base.push(i); });
-  var html='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L2 — เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div><div class="chip-group chip-sm">';
-  base.forEach(function(i){ html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; });
-  html+='</div>';
-  if(special.length){ html+='<div style="margin-top:8px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">';
-    special.forEach(function(i){ html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; });
-    html+='</div></div>'; }
+  function _nm(i){ var raw=(COLORS[i]&&COLORS[i].n)||present[i]||''; return raw.replace(/\s*[★⚠]/g,'').replace(/\s*—\s*เช็ค[^)]*(?=\))/g,'').replace(/\s*—\s*เช็ค.*$/,'').replace(/\s+\)/g,')').replace(/\s+/g,' ').trim(); }
+  function _isSp(n){ return /พิเศษ|Fuji/i.test(n); }   // อบพิเศษ engine จริง → L3
+  function _l2cat(n){ if(/ซาฮาร่า|Aztec/i.test(n))return 'sahara'; if(/ลายไม้สต๊อก/.test(n))return 'wood'; return 'std'; } // L2 จัดหมวดตามดราฟ
+  var cats={std:[],sahara:[],wood:[]}, special=[];
+  Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ var n=(COLORS[i]&&COLORS[i].n)||''; if(_isSp(n)) special.push(i); else cats[_l2cat(n)].push(i); });
+  function _chips(arr){ return arr.map(function(i){ return '<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; }).join(''); }
+  var CATLBL={std:'มาตรฐาน',sahara:'ซาฮาร่า',wood:'ลายไม้สต๊อก'};
+  var html='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L2 — เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div>';
+  ['std','sahara','wood'].forEach(function(k){ if(!cats[k].length)return; html+='<div style="font-size:10.5px;color:#9ca3af;font-weight:700;margin:5px 0 3px;">'+CATLBL[k]+'</div><div class="chip-group chip-sm">'+_chips(cats[k])+'</div>'; });
+  if(special.length){ html+='<div style="margin-top:9px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">'+_chips(special)+'</div></div>'; }
   wrap.innerHTML=html;
 }
 function colorDrillCat(btn){ var sel=_colorDrillSel(btn); if(!sel)return; sel.dataset.colCat=btn.dataset.cat; colorDrillRender(sel); }  // เปลี่ยนหมวด (ยังไม่ commit ค่า)
