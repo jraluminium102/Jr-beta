@@ -1016,7 +1016,7 @@ const COLORS=[
 ];
 function colorOpts(series){ return COLORS.map((c,i)=>{ const sOk=!series||!c.series||c.series.indexOf(series)>=0; return sOk?`<option value="${i}"${i===0?' selected':''}>${c.n}${c.note?(' — '+c.note):''}</option>`:''; }).join(''); }  // R3.8: default = สีอบขาว
 // อัปเดต dropdown สีตาม series ของผลิตภัณฑ์ที่เลือก
-function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; if((d.querySelector('.i-group')||{}).value!=='1') colorDrillRender(sel); }  // R3.9: default = สีอบขาว (index 0) · G1 ใช้ dropdown ธรรมดา ไม่ผ่าน drill
+function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; if((d.querySelector('.i-group')||{}).value!=='1' || d.dataset.coOverride==='1') colorDrillRender(sel); }  // R3.9: default = สีอบขาว (index 0) · G1 dropdown ธรรมดา · #9: เปิด drill เมื่อ "ใช้สีต่างจากทั้งใบ"
 function g1RareToggle(btn){ var b=btn.nextElementSibling; var op=b.style.display==='none'; b.style.display=op?'flex':'none'; btn.querySelector('.g1-rare-arr').style.transform=op?'rotate(90deg)':''; }
 // ===== ① สีอลู drill-down (HANDOFF-redesign-ปุ่มใหญ่ 17มิ.ย. · มติพี่นัท) =====
 //   select(โดน hide) → ชิปหมวด(4) → ชิปสี+จุดสีกลม · ขับด้วย value=COLORS index · ไม่แตะ value/logic/ราคา · sync fire input+change
@@ -1041,7 +1041,7 @@ function _colorDrillSel(el){ var dr=el.closest('.color-drill'); if(!dr)return nu
 function colorDrillRender(sel){
   if(!sel) return;
   // G1 Full mode: สีอลูใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
-  if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; } }
+  if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1' && _ch1.dataset.coOverride!=='1'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; } }
   var present={}; // COLORS index → label (เฉพาะ option ที่มีจริงหลัง filter series)
   Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
   var curIdx=parseInt(sel.value)||0;
@@ -1093,7 +1093,7 @@ function _glassDrillSel(el){ var dr=el.closest('.glass-drill'); if(!dr)return nu
 function glassDrillRender(sel){
   if(!sel) return;
   // G1 Full mode: กระจกใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
-  if(sel.classList.contains('i-glass')){ var _ch2=sel.closest('.ch'); if(_ch2 && (_ch2.querySelector('.i-group')||{}).value==='1'){ sel.style.display=''; var _w2=sel.nextSibling; if(_w2&&_w2.classList&&_w2.classList.contains('glass-drill')) _w2.parentNode.removeChild(_w2); return; } }
+  if(sel.classList.contains('i-glass')){ var _ch2=sel.closest('.ch'); if(_ch2 && (_ch2.querySelector('.i-group')||{}).value==='1' && _ch2.dataset.coOverride!=='1'){ sel.style.display=''; var _w2=sel.nextSibling; if(_w2&&_w2.classList&&_w2.classList.contains('glass-drill')) _w2.parentNode.removeChild(_w2); return; } }
   var present={}; Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=true; });
   var curIdx=parseInt(sel.value)||0;
   var actCat=sel.dataset.glCat || glassCatOf(curIdx);
@@ -1130,6 +1130,26 @@ function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i
 // #9: dropdown รุ่นย่อยกระจกหมวดยาว (เทมเปอร์/ลามิเนต) → set select หลักเหมือน glassDrillPick (ราคา/value ไม่แตะ)
 function glassDrillPickSel(selEl){ var sel=_glassDrillSel(selEl); if(!sel)return; var i=parseInt(selEl.value)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
+
+// ===== #9 (มติพี่นัท 21-22มิ.ย.): กล่องสี/กระจกต่อบาน G1 — 3 ชั้น (ชั้น1 ตามทั้งใบ → ชั้น2 เปลี่ยนสี → ชั้น3 อบพิเศษในตัว drill) =====
+//   default = ตามทั้งใบ (picker ซ่อน · ค่า index 0/สีทั้งใบ · ราคาเท่าเดิม golden นิ่ง) · ติ๊ก "ใช้สีต่าง" = เปิด drill จริง (reuse colorDrill/glassDrill)
+function g1CoUpdateL1(d){ if(!d) return;
+  var gc=document.getElementById('global-color'), gg=document.getElementById('global-glass');
+  var l1c=d.querySelector('.g1co-l1c'); if(l1c){ var ci=(gc&&gc.value!=='')?parseInt(gc.value)||0:0; l1c.textContent=((COLORS[ci]&&COLORS[ci].n)||'สีอบขาว').replace(/\s*—.*$/,'').trim(); }
+  var l1g=d.querySelector('.g1co-l1g'); if(l1g){ var gi=(gg&&gg.value!=='')?parseInt(gg.value)||0:0; l1g.textContent=(((GLASS[gi]&&GLASS[gi].n)||'').replace(/^[★⚠\s]+/,'').trim())||'กระจกเขียว 6 มม.'; }
+}
+function g1CoToggle(btn){ var d=btn.closest('.ch'); if(!d) return;
+  var on=d.dataset.coOverride!=='1'; d.dataset.coOverride=on?'1':'0';
+  var body=d.querySelector('.g1-rare-section .g1-rare-body'); if(body) body.style.display=on?'flex':'none';
+  btn.classList.toggle('on',on); btn.textContent=(on?'✓ ':'＋ ')+'ใช้สี/กระจกต่างจากทั้งใบ (ข้อนี้)';
+  var ci=d.querySelector('.i-color'), gi=d.querySelector('.i-glass');
+  if(!on){ // กลับไปตามทั้งใบ: คืนค่าเป็นสีทั้งใบ (global) หรือ index 0
+    var gc=document.getElementById('global-color'), gg=document.getElementById('global-glass');
+    if(ci){ ci.value=(gc&&gc.value!=='')?gc.value:'0'; ci.dispatchEvent(new Event('change',{bubbles:true})); }
+    if(gi){ gi.value=(gg&&gg.value!=='')?gg.value:'0'; gi.dispatchEvent(new Event('change',{bubbles:true})); }
+  } else { try{ if(ci) colorDrillRender(ci); }catch(e){} try{ if(gi) glassDrillRender(gi); }catch(e){} }
+  g1CoUpdateL1(d); calcQuote();
+}
 
 // ===== ④ มุ้ง drill-down (HANDOFF-redesign จุด④ · มติพี่นัท 17มิ.ย.) =====
 //   o-mosq(โดน hide) → ชิปชนิด(ไม่ใส่+optgroup เฟรม/จีบ/ม้วน/อื่นๆ)→ชิปรุ่น · ขับ value=product id (string · เดิม) · ผ้ามุ้ง=ชิป o-mosqfabric เดิม
@@ -2129,10 +2149,12 @@ function syncGlobalColorGlass(){
     var grp=(ch.querySelector('.i-group')||{}).value;
     var sb=ch.closest('.setbox');
     if(grp==='6' && sb && sb.querySelector('.gh-set-color-row')) return;
+    if(ch.dataset.coOverride==='1'){ try{g1CoUpdateL1(ch);}catch(e){} return; } // #9: ข้อ "ใช้สีต่างจากทั้งใบ" ไม่ทับ · แค่อัปบรรทัดชั้น1
     var ci=ch.querySelector('.i-color');
     var gi=ch.querySelector('.i-glass');
     if(ci){ ci.value=colorVal; ci.dispatchEvent(new Event('change',{bubbles:true})); }
     if(gi){ gi.value=glassVal; gi.dispatchEvent(new Event('change',{bubbles:true})); }
+    try{g1CoUpdateL1(ch);}catch(e){}
   });
   calcQuote();
 }
@@ -5136,13 +5158,24 @@ function buildItemOpts(d){
     var _isG1=(d.querySelector('.i-group')||{}).value==='1';
     var _rareS=_isG1?d.querySelector('.g1-rare-section'):null;
     if(_isG1 && _rareS && !_rareS.querySelector('.g1-rare-body')){
-      _rareS.innerHTML='<button type="button" onclick="g1RareToggle(this)" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 0;font-size:12px;color:#6B7280;font-weight:700;display:flex;align-items:center;gap:6px;"><span class="g1-rare-arr" style="font-size:10px;display:inline-block;transition:transform .15s;">▶</span>ไม่ค่อยใช้บ่อย (สีอลู / กระจก)</button><div class="g1-rare-body" style="display:none;flex-wrap:wrap;gap:8px;padding-top:6px;"></div>';
+      // #9: กล่องสี/กระจกต่อบาน 3 ชั้น — หัว + ชั้น1(ตามทั้งใบ) + ปุ่มใช้สีต่าง + body(picker drill ซ่อนจนกดเปิด)
+      _rareS.innerHTML='<div style="font-size:12px;color:#374151;font-weight:700;margin-bottom:4px;">🎨 สี / กระจก (เฉพาะข้อนี้)</div>'
+        +'<div class="g1co-l1" style="font-size:12px;color:#4B5563;background:#F3F6FB;border:1px solid #E0E7F0;border-radius:6px;padding:5px 8px;margin-bottom:6px;">ชั้น 1 — ตามทั้งใบ: สีอลู <b class="g1co-l1c">สีอบขาว</b> · กระจก <b class="g1co-l1g">—</b></div>'
+        +'<button type="button" class="chip g1co-tog" onclick="g1CoToggle(this)" style="font-size:12px;">＋ ใช้สี/กระจกต่างจากทั้งใบ (ข้อนี้)</button>'
+        +'<div class="g1-rare-body" style="display:none;flex-direction:column;gap:8px;padding-top:8px;"></div>';
     }
     var _rareDest=_rareS?_rareS.querySelector('.g1-rare-body'):null;
     if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(cw); } else if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
     if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
     if(_cgr) _cgr.style.display=_isG1?'none':(_showCw||_showGw)?'flex':'none';
-    if(_rareS) _rareS.style.display=(_showCw||_showGw)?'':'none'; }
+    if(_rareS) _rareS.style.display=(_showCw||_showGw)?'':'none';
+    // #9: คืนสถานะ "ใช้สีต่าง" หลัง rebuild (dataset.coOverride คงบน .ch) — body โชว์/ซ่อน + ปุ่ม + drill
+    if(_isG1 && _rareS){ var _ov=d.dataset.coOverride==='1';
+      if(_rareDest) _rareDest.style.display=_ov?'flex':'none';
+      var _tog=_rareS.querySelector('.g1co-tog'); if(_tog){ _tog.classList.toggle('on',_ov); _tog.textContent=(_ov?'✓ ':'＋ ')+'ใช้สี/กระจกต่างจากทั้งใบ (ข้อนี้)'; }
+      if(_ov){ try{ if(cw){var _cc=cw.querySelector('.i-color'); if(_cc)colorDrillRender(_cc);} }catch(e){} try{ if(gw){var _gg3=gw.querySelector('.i-glass'); if(_gg3)glassDrillRender(_gg3);} }catch(e){} }
+      try{g1CoUpdateL1(d);}catch(e){}
+    } }
   // v7A ข้อ2 (18มิ.ย.): ย้ายบล็อกมือจับละเอียด (Cmech/ดิจิตอล/สแตน/รุ่นอื่น) → กล่อง OPTION ทางเลือกลูกค้า (oc-block · นอก .i-opts)
   // คงราคาเดิม (calcUnit อ่าน .o-cmech/.o-digi ฯลฯ ตาม class ตำแหน่งไม่กระทบ · controls มี inline onchange/oninput อยู่แล้ว) · ย้ายก่อน groupGHOpts = นับจำนวนกล่องไม่ผิด
   { var _ocb=d.querySelector('.oc-block');
