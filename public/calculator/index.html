@@ -4923,6 +4923,12 @@ function buildItemOpts(d){
       var _shTri=[['','— ระบุสี —','']].concat(_shc.map(function(c){return ['สี '+c, shincoShort(c), SHINCO_SW[c]||'#ccc'];}));
       h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <span style="font-weight:400;color:var(--muted);font-size:11px;">(ชื่อเต็ม+รหัสลงใบ)</span> <select class="o-roofcolor" style="display:none;" onchange="calcQuote();">'+_shPairs.map(function(_p,_i){return '<option value="'+_p[0]+'"'+(_i===0?' selected':'')+'>'+_p[1]+'</option>';}).join('')+'</select>'+rfChipsSw('o-roofcolor',_shTri,'')+'</label>';
     }
+    // ② (23มิ.ย.): สีโครงอลู — ออปชั่นเทียบราคา (เปลี่ยนสีโครงเป็น… → บรรทัด OPTION ในใบ · ไม่บวกยอด · ไม่แตะ calcUnit/.i-color) · L1=สีทั้งใบ/L2real=สีอลูรายการ มีอยู่แล้ว
+    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;">';
+    h+='<b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีโครงอลู</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span>';
+    h+='<div style="margin-top:6px;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="display:none;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+rfChips('o-rfcoopt',[['','— ไม่เทียบ —']].concat(COLORS.map(function(c,i){return i>=2?[String(i),(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()]:null;}).filter(Boolean)),'')+'</div>';
+    h+='<div style="margin-top:6px;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="display:none;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select>'+rfChips('o-rfmatopt',[['','— ไม่เทียบ —']].concat(PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return [q.id,q.name.replace(/^หลังคา\s*/,'')];})),'')+'</div>';
+    h+='</div>';
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
     h+='<div class="opt" style="width:100%;background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:8px 10px;">';
@@ -5522,6 +5528,8 @@ function readItem(d){
     const _rgcc=d.querySelector('.o-gutter-chaincolor'); optSel.rfgutchaincolor=_rgcc?_rgcc.value:'ขาว';
     // Pass2-D: สีวัสดุมุงหลังคา (cosmetic)
     const _rfc=d.querySelector('.o-roofcolor'); optSel.rfcolor=_rfc?_rfc.value:'';
+    const _rfco=d.querySelector('.o-rfcoopt'); optSel.rfcoopt=_rfco?_rfco.value:''; // ②: ออปชั่นเทียบราคาสีโครง (display · ไม่บวกยอด)
+    const _rfmo=d.querySelector('.o-rfmatopt'); optSel.rfmatopt=_rfmo?_rfmo.value:''; // ②: ออปชั่นเทียบราคาวัสดุมุง (display · ไม่บวกยอด)
     // ข้อ3.2: ของเสริมหลังคา ฟรี (ข้อความ)
     const _rfpl=d.querySelector('.o-rfplate'); optSel.rfplate=_rfpl?_rfpl.checked:false;
     const _rfpu=d.querySelector('.o-rfpull'); optSel.rfpull=_rfpu?_rfpu.checked:false;
@@ -6360,6 +6368,7 @@ function genQuote(keepNo){
     // extraDesc ถูกลบแล้ว — หมายเหตุ/สเปกพิเศษใช้ i-note แทน
     let det = '';
     let gateOptNote = ''; // G2-12: OPTION ลายไม้ Golden Teak SMS — ส่งผ่าน note ให้ qrow แสดงบล็อก OPTION (แดง) ไม่ใช่ spec
+    let roofOptNote = ''; // ② (23มิ.ย.): OPTION เทียบราคาสีโครงหลังคา (signed diff · noSum · ไม่บวกยอด)
     var _g1FB=false; // G1 ใบ 5 บล็อก: ตั้ง true ใน branch บานประตู/หน้าต่าง (slide+else) เท่านั้น → post-process แยก รายการ/รายละเอียด
     if(it.p.fin){
       var _finColor=(it.finLabel||'ไม่อบสี');
@@ -6672,6 +6681,17 @@ function genQuote(keepNo){
       }
       if(it.p.id==='roof_laminate') _spec.push('กระจกลามิเนตใส ฟิล์ม'+(_os.lamfilm||'กันร้อน')+' หนา '+(_os.lamthick||'4+4')+' มม.');
       det=_work.join('\n')+(_spec.length?('\n###รายละเอียด###\n'+_spec.join('\n')):'');
+      // ② (23มิ.ย.): ออปชั่นเทียบราคาสีโครง → บรรทัด OPTION (signed diff · ไม่บวกยอด)
+      if(_os.rfcoopt && _rfframe!=='โครงเหล็กชุบซิงค์'){ var _toI=parseInt(_os.rfcoopt)||0, _frI=it.ci||0;
+        if(_toI!==_frI && COLORS[_toI]){ var _rfA=it.r.a||0; var _z=Math.round(colorPrice(_toI,_rfA,'')-colorPrice(_frI,_rfA,''));
+          var _nm=function(i){return (COLORS[i].quoteName||COLORS[i].n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠🔖🔒]/g,'').trim();};
+          roofOptNote='OPTION : เปลี่ยนสีโครงอลูมิเนียม จาก'+_nm(_frI)+' เป็น'+_nm(_toI)+' ราคา'+(_z>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_z))+' บาท'; } }
+      // ② วัสดุมุง: เทียบราคาเปลี่ยนชนิดหลังคา (calcUnit อ่านอย่างเดียว · diff signed · ไม่บวกยอด)
+      if(_os.rfmatopt && PBYID[_os.rfmatopt]){ var _w3=parseFloat((it.div&&it.div.querySelector('.i-w')||{}).value)||0, _h3=parseFloat((it.div&&it.div.querySelector('.i-h')||{}).value)||0, _ci3=it.ci||0;
+        if(_w3>0&&_h3>0){ var _cur=calcUnit(it.p,_w3,_h3,0,_ci3,1,{},false).sell, _new=calcUnit(PBYID[_os.rfmatopt],_w3,_h3,0,_ci3,1,{},false).sell, _zm=Math.round(_new-_cur);
+          var _m1=(it.p.name||'').replace(/^หลังคา\s*/,''), _m2=(PBYID[_os.rfmatopt].name||'').replace(/^หลังคา\s*/,'');
+          var _matN='OPTION : เปลี่ยนวัสดุมุง จาก'+_m1+' เป็น'+_m2+' ราคา'+(_zm>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_zm))+' บาท';
+          roofOptNote = roofOptNote ? (roofOptNote+'\n'+_matN) : _matN; } }
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ
@@ -6857,7 +6877,7 @@ function genQuote(keepNo){
       });
       if(!_g1Work.length && !_g1Spec.length){ _g1Work=null; _g1Spec=null; }
     }
-    return {prodName, det, work:_g1Work, spec:_g1Spec, gateOptNote};
+    return {prodName, det, work:_g1Work, spec:_g1Spec, gateOptNote, roofOptNote};
   }
   // Render grouped (ชุดหลายส่วน) — default ประโยคเดียว / qSplit แยกราคา
   window._qGroupKeys = Object.keys(groups);
@@ -6986,7 +7006,7 @@ function genQuote(keepNo){
     let _qDet=d.det;
     if(d.work && d.spec && (d.work.length||d.spec.length)){ _qDet=_workForDet.join('\n')+(_workForDet.length?'\n':'')+'###รายละเอียด###\n'+d.spec.join('\n'); }
     // G2-12: ต่อ gateOptNote (OPTION ลายไม้) เข้า note → qrow render บล็อก OPTION (แดง) ระหว่างรายการ↔รายละเอียด
-    const _itemNote = [it.note, d.gateOptNote].filter(Boolean).join('\n');
+    const _itemNote = [it.note, d.gateOptNote, d.roofOptNote].filter(Boolean).join('\n');
     var _qIid=(it.div?it.div.dataset.id:''); if(_qIid && window._hdrOv && window._hdrOv[_qIid]) _qHdr=window._hdrOv[_qIid]; // #8: override หัวข้อ(bold)
     rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, _qIid, qBdHTML(it, _qIid, it.r.sell));
   });
