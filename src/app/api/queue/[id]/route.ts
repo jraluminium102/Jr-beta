@@ -81,6 +81,28 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   if (error) throw dbError(error);
   if (!data) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");
 
+  // แก้ชื่อลูกค้าจากหน้าคิว — ถ้าคิวผูกกับลูกค้าจริงแล้ว (promote แล้ว) ให้แก้ที่
+  // customers.name (single source of truth) → trigger 0051 กระจายไปทุกเฟส/เอกสาร
+  // (คิวที่ยังไม่ผูกลูกค้า = ชื่ออยู่ที่ queue_entries เฉยๆ ตาม update ด้านบนพอ)
+  if (typeof body.customer_name === "string") {
+    const cid = (data as { customer_id?: number | null }).customer_id ?? null;
+    if (cid != null) {
+      const { data: prev } = await sb.from("customers").select("name").eq("id", cid).maybeSingle();
+      const oldName = (prev as { name?: string } | null)?.name ?? null;
+      if (oldName !== body.customer_name) {
+        await sb.from("customers").update({ name: body.customer_name }).eq("id", cid);
+        await audit({
+          userId: ctx.user.id,
+          action: "CUSTOMER_RENAME",
+          table: "customers",
+          recordId: String(cid),
+          oldValue: { name: oldName },
+          newValue: { name: body.customer_name },
+        });
+      }
+    }
+  }
+
   // ─── DONE handling ──────────────────────────────────────────────────────────
   if (body.status === "DONE") {
     const jt: string = ((data as { job_type?: string | null }).job_type ?? "").trim();
