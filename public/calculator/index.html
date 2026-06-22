@@ -4650,6 +4650,10 @@ function buildItemOpts(d){
   if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน','บานยก'].includes(p.cat) || (p.cat==='ดัดโค้ง'&&p.id!=='curved_fixed') || p.id==='frameless_door'){ // 22มิ.ย.: เพิ่ม บานยก/ดัดโค้ง(เว้นติดตายโค้ง)/บานเปลือยประตู · คำ "ชุดล็อค" 3 แบบครบทุกบาน
     h+='<label class="opt" style="width:100%;">ชุดล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี" selected>ไม่มีชุดล็อก</option><option value="มีล็อค">มีชุดล็อก</option><option value="มีล็อค+กุญแจ">มีชุดล็อก + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีชุดล็อก'],['มีล็อค','มีชุดล็อก'],['มีล็อค+กุญแจ','มีชุดล็อก + กุญแจ']],'ไม่มี',true)+'</label>';
   }
+  // #1 (22มิ.ย.): เสริมแขนค้ำ บานกระทุ้ง — checkbox ต่อจากล็อค · default off (golden นิ่ง) · ติ๊กเอง +500/ชุด · แนะนำเมื่อบานใหญ่
+  if(p.cat==='บานกระทุ้ง'){
+    h+='<label class="opt"><input type="checkbox" class="o-awnbrace" onchange="calcQuote();"> เสริมแขนค้ำ +500 <span style="font-size:11px;color:#a16207;">(เปิดล่าง · แนะนำเมื่อบานใหญ่ กว้าง&gt;0.6 สูง&gt;1.2)</span></label>';
+  }
   // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
   { var _cmechOK=(p.cat==='บานเลื่อน'||p.cat==='บานเปิด'), _xOK=/xseries|slimlux/.test(p.id), _awnOK=(p.cat==='บานกระทุ้ง');
     if(p.digihandle||_cmechOK||_xOK||_awnOK){
@@ -5282,6 +5286,7 @@ function readItem(d){
     const _fc=d.querySelector('.o-framecolor'); optSel.framecolor=_fc?_fc.value:'ขาว';
   }
   if(p.closer){ const _c=d.querySelector('.o-closer'); if(_c){ optSel.closer=parseFloat(_c.value)||0; if(_c.value!=='0'&&_c.selectedIndex>=0)optSel.closerLabel=_c.options[_c.selectedIndex].getAttribute('data-n'); } }
+  { const _ab=d.querySelector('.o-awnbrace'); if(_ab) optSel.awnbrace=_ab.checked; } // #1: เสริมแขนค้ำ บานกระทุ้ง
   if(p.digihandle){ const _dg=d.querySelector('.o-digi'); optSel.digi=_dg?_dg.value:''; }
   if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
   if(p.digihandle){ const _hn=d.querySelector('.o-handlename'); optSel.handlename=_hn?_hn.value:''; const _hpp=d.querySelector('.o-handleprice'); optSel.handleprice=_hpp?_hpp.value:0; }
@@ -5480,6 +5485,8 @@ function readItem(d){
   const _panels=parseInt((d.querySelector('.i-panels')||{}).value||1)||1;
   const r=calcUnit(p, d.querySelector('.i-w').value, d.querySelector('.i-h').value,
     gi, ci, _panels, optSel, d.querySelector('.i-ship').checked);
+  // #1 (22มิ.ย.): เสริมแขนค้ำ บานกระทุ้ง +500/ชุด — บวกฝั่ง sell ตรงนี้ (หลัง markup · ×1 ตรงตัว · ไม่ผ่าน opt ที่โดน cost×markup) · default off → golden นิ่ง
+  if(r && optSel && optSel.awnbrace && p.cat==='บานกระทุ้ง'){ r.sell=(r.sell||0)+500; }
   let qty=parseInt(d.querySelector('.i-qty').value||1); if(qty<1)qty=1;
   const _ov=parseFloat((d.querySelector('.i-override')||{}).value)||0; if(_ov>0&&r){ r.sell=_ov; r.overridden=true; }
   // งาน9: โหมดเหมา override ราคา (ความสำคัญสูงกว่า i-override ปกติ)
@@ -6148,6 +6155,7 @@ function genQuote(keepNo){
     }
     // v7A ข้อ2 (18มิ.ย.): ล็อค (สเปค · ไม่คิดเงิน) → รายการงาน เมื่อไม่ใช่ "ไม่มี"
     if(it.optSel && it.optSel.lock && it.optSel.lock!=='ไม่มี'){ _parts.push(it.optSel.lock==='มีล็อค+กุญแจ'?'ชุดล็อค + กุญแจ':'ชุดล็อค'); }
+    if(it.optSel && it.optSel.awnbrace){ _parts.push('เสริมแขนค้ำ +500'); } // #1 (22มิ.ย.): บานกระทุ้ง เสริมแขนค้ำ ขึ้นใบ
     // ข้อ8(G1) FIX: ฝังรางยู priority — ถ้าติ๊กรางยู ไม่ให้หลังเต่าโผล่ (กันขัดแย้ง + กันรางยูหาย)
     var _hasUchannel = !!(it.optSel && it.optSel.uchannel);
     // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
