@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ หมายเหตุมาตรฐาน — แก้ข้อความได้ + เพิ่มเอง + คงค้างใช้ครั้งหน้า · 22 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.55}
+  .wrap{max-width:760px;margin:0 auto;padding:14px 12px 60px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:16px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.93}
+  .tag{background:#fff;color:#b3122a;border-radius:4px;padding:0 6px;font-weight:700;font-size:11px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 15px;margin-bottom:12px}
+  .ct{font-size:13.5px;font-weight:700;margin:0 0 9px;color:#374151}
+  .rm{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-top:1px solid #f3f4f6}
+  .rm:first-of-type{border-top:0}
+  .rm input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:#b3122a;flex:none}
+  .rm .txt{flex:1;font-size:13px;border:1px dashed transparent;border-radius:5px;padding:2px 5px;cursor:text;outline:none}
+  .rm .txt:hover{border-color:#e2c4c9;background:#fffdf7}
+  .rm .txt:focus{border-color:#f59e0b;border-style:solid;background:#fff}
+  .rm .del{flex:none;color:#cbd5e1;cursor:pointer;font-size:15px;border:0;background:none;padding:0 2px}
+  .rm .del:hover{color:#b91c1c}
+  .addrow{display:flex;gap:8px;margin-top:10px}
+  .addrow input{flex:1;height:34px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit}
+  .btn{height:34px;padding:0 14px;border:1.5px solid #b3122a;background:#b3122a;color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn.sec{background:#fff;color:#b3122a}
+  .save{font-size:11.5px;color:#166534;margin-top:8px;display:flex;align-items:center;gap:5px}
+  .prev{border:1px solid #e2c4c9;border-radius:10px;overflow:hidden}
+  .prevh{background:#fff;border-bottom:2px solid #b3122a;padding:8px 12px;font-size:12px;font-weight:700;color:#b3122a}
+  .prevb{padding:10px 12px;font-size:13px;min-height:40px}
+  .prevb .sec2{font-weight:600;color:#6b7280;margin-bottom:3px}
+  .prevb .ln{padding:1px 0 1px 12px;position:relative;color:#1f2937}
+  .prevb .ln:before{content:'–';position:absolute;left:0;color:#9ca3af}
+  .prevb .empty{color:#9ca3af;font-size:12px}
+  .note{font-size:12px;color:#1e3a5f;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;margin-top:10px}
+  .note b{color:#b3122a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>หมายเหตุมาตรฐาน — แก้ข้อความได้ + พิมพ์เพิ่มเอง + คงค้างใช้ครั้งหน้า</h1>
+    <p><span class="tag">ดราฟ · 22 มิ.ย.</span> ติ๊กข้อ → ขึ้นในใบ · คลิกข้อความเพื่อแก้ · เพิ่มเอง · ปิด-เปิดใหม่ยังอยู่ (ลองรีเฟรชหน้าดู)</p></div>
+
+  <div class="card">
+    <div class="ct">หมายเหตุมาตรฐาน (ติ๊กข้อที่จะขึ้นในใบ · คลิกข้อความเพื่อแก้)</div>
+    <div id="rmList"></div>
+    <div class="addrow">
+      <input id="newRm" placeholder="พิมพ์หมายเหตุใหม่… แล้วกดเพิ่ม" onkeydown="if(event.key==='Enter')addRm()">
+      <button class="btn" onclick="addRm()">+ เพิ่ม</button>
+    </div>
+    <div class="save"><span>💾</span> บันทึกอัตโนมัติ — ปิดแล้วเปิดใหม่ครั้งหน้า ข้อความ/ข้อที่เพิ่มยังอยู่</div>
+  </div>
+
+  <div class="card">
+    <div class="ct">ตัวอย่างในใบเสนอราคา</div>
+    <div class="prev"><div class="prevh">… (ส่วนบนของใบ)</div>
+      <div class="prevb"><div class="sec2">หมายเหตุ</div><div id="prev"></div></div>
+    </div>
+  </div>
+
+  <div class="note">📌 <b>3 อย่างที่เพิ่ม:</b> ① <b>แก้ข้อความ</b>ข้อมาตรฐานได้ (คลิกที่ข้อความ) · ② <b>เพิ่มข้อใหม่เอง</b> (ช่องล่าง) · ③ <b>คงค้าง</b> — บันทึก localStorage ครั้งหน้าเปิดมายังอยู่ (ลบ/แก้ได้) · ของเดิม (ติ๊กหลายข้อ→ขึ้นใบ) ทำงานเหมือนเดิม</div>
+</div>
+<script>
+var DEF=[
+  {t:'ราคานี้รวมค่าติดตั้งในเขตกรุงเทพฯ และปริมณฑล',on:true},
+  {t:'ยืนราคา 30 วัน นับจากวันที่เสนอราคา',on:true},
+  {t:'มัดจำ 50% ก่อนเริ่มงาน · ส่วนที่เหลือชำระวันติดตั้งเสร็จ',on:false},
+  {t:'รับประกันงาน 1 ปี (เฉพาะงานติดตั้ง)',on:false},
+  {t:'ราคานี้ไม่รวมงานไฟฟ้า / ประปา / งานปูน',on:false}
+];
+var rm=load();
+function load(){ try{ var s=localStorage.getItem('jr_remark_demo'); if(s)return JSON.parse(s); }catch(e){} return DEF.map(function(x){return {t:x.t,on:x.on};}); }
+function save(){ try{ localStorage.setItem('jr_remark_demo', JSON.stringify(rm)); }catch(e){} }
+function render(){
+  var h=''; rm.forEach(function(r,i){
+    h+='<div class="rm"><input type="checkbox" '+(r.on?'checked':'')+' onchange="rm['+i+'].on=this.checked;save();prev()">'+
+       '<span class="txt" contenteditable="true" onblur="rm['+i+'].t=this.innerText.trim();save();prev()">'+r.t+'</span>'+
+       '<button class="del" title="ลบ" onclick="rm.splice('+i+',1);save();render()">✕</button></div>';
+  });
+  document.getElementById('rmList').innerHTML=h; prev();
+}
+function addRm(){ var el=document.getElementById('newRm'); var v=(el.value||'').trim(); if(!v)return; rm.push({t:v,on:true}); el.value=''; save(); render(); }
+function prev(){
+  var on=rm.filter(function(r){return r.on && r.t;});
+  document.getElementById('prev').innerHTML = on.length? on.map(function(r){return '<div class="ln">'+r.t+'</div>';}).join('') : '<div class="empty">(ยังไม่ติ๊กข้อไหน)</div>';
+}
+render();
+</script>
+</body>
+</html>

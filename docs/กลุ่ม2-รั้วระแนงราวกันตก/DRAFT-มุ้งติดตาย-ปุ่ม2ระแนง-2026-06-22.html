@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ มุ้งติดตาย (ปุ่ม2 ระแนง) — กันยุงตามซี่ระแนง · 22 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.55}
+  .wrap{max-width:760px;margin:0 auto;padding:14px 12px 60px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:16px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.93}
+  .tag{background:#fff;color:#b3122a;border-radius:4px;padding:0 6px;font-weight:700;font-size:11px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 15px;margin-bottom:12px}
+  .ct{font-size:13.5px;font-weight:700;margin:0 0 4px;color:#374151}
+  .sub{font-size:11.5px;color:#6b7280;margin-bottom:9px}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;cursor:pointer;padding:9px 11px;border:1.5px solid #d1d5db;border-radius:10px}
+  .toggle.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .toggle input{width:18px;height:18px;accent-color:#b3122a}
+  .body{margin-top:11px;display:none}.body.on{display:block}
+  .lbl{font-size:11.5px;color:#6b7280;font-weight:700;margin:9px 0 4px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{min-height:32px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .dot{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
+  .wh{display:none;gap:8px;margin-top:8px;align-items:center}.wh.on{display:flex}
+  .wh input{width:72px;height:32px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 8px;font-size:13px;font-family:inherit}
+  .pricebox{margin-top:11px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:9px 12px;font-size:13px}
+  .pricebox .r{display:flex;justify-content:space-between;padding:2px 0}
+  .pricebox .tot{border-top:1px dashed #86efac;margin-top:4px;padding-top:5px;font-weight:700;color:#166534}
+  .prev{border:1px solid #e2c4c9;border-radius:10px;overflow:hidden;margin-top:6px}
+  .prevh{background:#fff;border-bottom:2px solid #b3122a;padding:7px 11px;font-size:12px;font-weight:700;color:#b3122a}
+  .prevb{padding:9px 11px;font-size:12.5px}
+  .prevb .ln{padding:1px 0 1px 12px;position:relative}.prevb .ln:before{content:'–';position:absolute;left:0;color:#9ca3af}
+  .prevb .add{color:#166534;font-weight:600}
+  .note{font-size:12px;color:#1e3a5f;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;margin-top:10px}
+  .note b{color:#b3122a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>มุ้งติดตาย (ปุ่ม2 งานระแนง) — กันยุงตามซี่ระแนง</h1>
+    <p><span class="tag">ดราฟ · 22 มิ.ย.</span> เป็นออปชั่นเสริมบนงานระแนง · ลองกดเปิด/เลือกขนาด/สีกรอบ → ดูราคา+บรรทัดในใบ</p></div>
+
+  <div class="card">
+    <div class="ct">ฟอร์มงานระแนง (ตัวอย่าง: บังตา 1.8 × 2.0 ม.)</div>
+    <div class="sub">↓ ออปชั่นใหม่ที่เพิ่ม</div>
+    <label class="toggle" id="tg" onclick="toggle()"><input type="checkbox" id="cb"> ➕ เพิ่มมุ้งติดตาย (กันยุงตามซี่ระแนง)</label>
+    <div class="body" id="body">
+      <div class="lbl">ขนาดมุ้ง</div>
+      <div class="chips" id="szChips">
+        <button class="chip on" data-v="auto" onclick="setSz(this)">เท่าระแนง (auto) 1.8×2.0</button>
+        <button class="chip" data-v="manual" onclick="setSz(this)">กรอกเอง</button>
+      </div>
+      <div class="wh" id="wh"><span style="font-size:12px;color:#6b7280">กว้าง</span><input id="mw" type="number" step="0.1" value="1.8"> ×
+        <span style="font-size:12px;color:#6b7280">สูง</span><input id="mh" type="number" step="0.1" value="2.0"><span style="font-size:12px;color:#6b7280">ม.</span></div>
+      <div class="lbl">สีกรอบมุ้ง (4 สี)</div>
+      <div class="chips" id="colChips">
+        <button class="chip on" data-v="white" data-add="0" onclick="setCol(this)"><span class="dot" style="background:#fff"></span>อบขาว</button>
+        <button class="chip" data-v="black" data-add="0" onclick="setCol(this)"><span class="dot" style="background:#222"></span>ดำ</button>
+        <button class="chip" data-v="sahara" data-add="1" onclick="setCol(this)"><span class="dot" style="background:#8a8175"></span>เทาซาฮาร่า</button>
+        <button class="chip" data-v="wood" data-add="1" onclick="setCol(this)"><span class="dot" style="background:#9c6b3f"></span>ลายไม้สต๊อก</button>
+      </div>
+      <div class="pricebox" id="pb"></div>
+      <div class="prev"><div class="prevh">ในใบเสนอราคา (รายการระแนง)</div>
+        <div class="prevb">
+          <div class="ln">ระแนงอลูมิเนียมบังตา ติดตาย (ไม่มีบานเปิด)</div>
+          <div class="ln">ซี่ระแนงกล่อง ขนาด 1"×1.6" โชว์หน้า 1" เว้นระยะห่าง 5 ซม.</div>
+          <div class="ln add" id="prevMosq"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">📌 <b>หลักการ:</b> มุ้งติดตาย = <b>ออปชั่นเสริม (addon) บวกเพิ่ม</b> ไม่แตะราคาระแนงเดิม (ปิด=ไม่กระทบ → golden ปลอดภัย) · ราคาใช้ <b>สูตรมุ้งติดตายเดิม (imp22 ผ้าไฟเบอร์)</b> ตามพื้นที่ · สีกรอบ ขาว/ดำ ฟรี · เทาซาฮาร่า/ลายไม้ +ค่าทำสีกรอบ (×0.5 ตามกฎมุ้งเดิม) · ขนาด auto=เท่าระแนง หรือกรอกเอง<br><span style="color:#92722a">ตัวเลขในดราฟเป็นค่าประมาณ — ของจริงดึงจาก engine (imp22)</span></div>
+</div>
+<script>
+var st={on:false,sz:'auto',col:'white',add:0};
+var RATE=650; // ประมาณ/ตร.ม. (ของจริง=imp22) · demo เท่านั้น
+function toggle(){ st.on=!st.on; document.getElementById('cb').checked=st.on; document.getElementById('tg').classList.toggle('on',st.on); document.getElementById('body').classList.toggle('on',st.on); calc(); }
+function setSz(b){ pick('szChips',b); st.sz=b.dataset.v; document.getElementById('wh').classList.toggle('on',st.sz==='manual'); calc(); }
+function setCol(b){ pick('colChips',b); st.col=b.dataset.v; st.add=parseInt(b.dataset.add)||0; calc(); }
+function pick(id,b){ document.getElementById(id).querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')}); b.classList.add('on'); }
+['mw','mh'].forEach(function(id){ document.addEventListener('input',function(e){ if(e.target.id===id)calc(); }); });
+function calc(){
+  if(!st.on)return;
+  var w=st.sz==='auto'?1.8:(parseFloat(document.getElementById('mw').value)||0);
+  var h=st.sz==='auto'?2.0:(parseFloat(document.getElementById('mh').value)||0);
+  var a=w*h; var base=Math.max(1500,Math.round(a*RATE)); // min_door 1500 (imp22)
+  var colName={white:'อบขาว',black:'ดำ',sahara:'เทาซาฮาร่า',wood:'ลายไม้สต๊อก'}[st.col];
+  var colCost=st.add? Math.round(a*700*0.5) : 0; // ค่าทำสีกรอบ ×0.5 (ประมาณ)
+  var tot=base+colCost;
+  document.getElementById('pb').innerHTML=
+    '<div class="r"><span>มุ้งติดตาย ผ้าไฟเบอร์ ('+w+'×'+h+' = '+a.toFixed(2)+' ตร.ม.)</span><span>'+base.toLocaleString()+'</span></div>'+
+    (colCost?('<div class="r"><span>สีกรอบ '+colName+' (+ค่าทำสี)</span><span>'+colCost.toLocaleString()+'</span></div>'):'')+
+    '<div class="r tot"><span>รวมมุ้งติดตาย (บวกเข้าราคาระแนง)</span><span>'+tot.toLocaleString()+' บาท</span></div>';
+  document.getElementById('prevMosq').innerHTML='มุ้งติดตาย กันยุง ('+w+'×'+h+' ม.) · กรอบสี'+colName+' — '+tot.toLocaleString()+' บาท';
+}
+</script>
+</body>
+</html>
