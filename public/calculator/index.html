@@ -6732,6 +6732,8 @@ function genQuote(keepNo){
         if(_bR>0&&_bL>0) lines.push('เสริมคานซัพพอร์ทรุ่น'+(_bR===2400?'1':_bR===3600?'2':'3')+' ยาว '+_bL+' ม.'); }
       // ข้อ4/7(G1): ชุดล็อค (PC Door ฯลฯ) ลงใบ · เมโทรมีกุญแจในตัว → ไม่เขียนซ้ำ
       { const _lk=(it.optSel&&it.optSel.slidelock)||''; if(_lk && _lk!=='ไม่มี' && !(it.optSel&&it.optSel.cmech==='metro')) lines.push(_lk==='มีกุญแจ'?'ชุดล็อค + กุญแจ':'ชุดล็อค'); }
+      // มือจับ (Cmech/สแตนเลสอร่าม/ดิจิตอล/รุ่นอื่น) — calcUnit คิดเงิน (L1818-1858) แต่ det บานไม่เคยใส่ → ลูกค้าจ่ายแต่ไม่เห็นในใบ · ดึงจาก msgs คำเดียวกัน (ตัดราคา +X ออก · ไม่เดาคำ)
+      if(it.r && it.r.msgs){ it.r.msgs.forEach(function(_m){ if(/^มือจับ/.test(String(_m))){ var _hl=String(_m).replace(/\s*\+[\d,]+\s*$/,'').trim(); if(lines.indexOf(_hl)<0) lines.push(_hl); } }); }
       // ข้อ8/18: "ใช้ภายใน ไม่กันน้ำ" เป็นคำเตือนเซลล์เท่านั้น (มีในชื่อสินค้าตอนเลือกแล้ว) — ไม่ลงรายละเอียดในใบลูกค้า
       det = lines.join('\n');
       if(!det.trim()) det = '-';
