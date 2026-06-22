@@ -5248,6 +5248,8 @@ function buildItemOpts(d){
   // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
   // v9: เพิ่ม _hasOpenCat — ถ้า groupGHOpts สร้าง section ที่ open:true ไว้ใน .i-opts ให้เปิด optbox ด้วย (กัน ล็อค/มุ้ง/คาดตาราง ซ่อนอยู่ใน optbox พับ)
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
+  // #1 (22มิ.ย. · ดราฟ z3): G1 กางกล่องอุปกรณ์เสริม + accordion ย่อย → โซนเสริมโชว์ (ครอบวงกบ/ดรอปพื้น/รื้อ/งานเสริม) เหมือนดราฟ · open state เท่านั้น ไม่กระทบราคา/golden
+  if((d.querySelector('.i-group')||{}).value==='1' && ob){ ob.open=true; box.querySelectorAll('.gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
@@ -5273,9 +5275,13 @@ function buildItemOpts(d){
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
         if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); }
-        // #มือจับ (22มิ.ย. · ดราฟ z1): ย้ายมือจับขึ้นใต้ล็อค (จาก oc-block) — calcUnit อ่าน .o-cmech/.o-digi/.o-stain ฯลฯ ตาม class · ตำแหน่งไม่กระทบราคา (เหมือนย้ายเข้า oc-block เดิม)
+        // #มือจับ (22มิ.ย. · ดราฟ z1): แทรกมือจับ "หลังชุดล็อค ก่อนมุ้ง" ในกล่องล็อค (จาก oc-block) — calcUnit อ่าน .o-cmech/.o-digi/.o-stainless ตาม class · ตำแหน่งไม่กระทบราคา
         var _hbwL=d.querySelector('.handle-brand-wrap'); var _hlL=_hbwL?(_hbwL.closest('label')||_hbwL.parentNode):null;
-        if(_hlL && _hlL!==_lgHost){ _lgHost.appendChild(_hlL); }
+        if(_hlL){
+          var _lkc=_lockSec?_lockSec.querySelector('.o-lock'):null; var _lkl=_lkc?(_lkc.closest('label')||_lkc.closest('.opt')):null;
+          if(_lkl && _lkl.parentNode){ _lkl.parentNode.insertBefore(_hlL,_lkl.nextSibling); }  // แทรกหลังชุดล็อค ก่อนมุ้ง
+          else if(_hlL!==_lgHost){ _lgHost.appendChild(_hlL); }                                // fallback: ไม่มี section ล็อค → ใต้ host
+        }
         if(_lockSec || _hlL) _lgHost.style.display='';
       }
     }
