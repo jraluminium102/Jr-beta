@@ -4580,7 +4580,7 @@ function buildItemOpts(d){
   // ซ่อนทุกกลุ่มอื่น (ระแนง/หลังคา/ตู้/มุ้ง/ม่านซิป) + ภายในกลุ่ม 1 ซ่อน cat ที่ไม่ใช่บานจริง (ผนัง/เส้นคาด/เสริม/ราวบันได/ลูกฟูกทึบ)
   // คงไว้ให้ ติดตาย/บานเปลือย (ผสมบานกระจก+บานเปิดได้จริง) · กันปุ่มไร้ความหมายโผล่ผิดที่ (audit 18มิ.ย.)
   { var _sw=d.querySelector('.subitem-wrap');
-    if(_sw){ var _noMix=(_famGrp!=='1') || p.grid || p.handrail || ['ฝ้า-ผนัง','เส้นคาด','เสริม','ลูกฟูก+คอมโพสิททึบ','ราวบันได','มุ้ง','ม่านซิป'].includes(p.cat);
+    if(_sw){ var _noMix=(_famGrp!=='1') || p.grid || p.handrail || ['ฝ้า-ผนัง','เส้นคาด','เสริม','ลูกฟูก+คอมโพสิททึบ','ราวบันได','มุ้ง','ม่านซิป','YKK','shower'].includes(p.cat);
       _sw.style.display=_noMix?'none':''; } }
   // G3-v5: กลุ่ม 3 (หลังคา/ฝ้า-ผนัง) → แท็บ g3 · กลุ่ม 6 (ห้อง) + กลุ่ม 1 (ผนังเบา) ใช้ selector เฉพาะ ไม่ใช่ g3
   var _isG3sel=(p.cat==='หลังคา'||p.cat==='ฝ้า-ผนัง') && _famGrp!=='6' && _famGrp!=='1';
@@ -4931,7 +4931,7 @@ function buildItemOpts(d){
   }
   // v7A ข้อ1 (18มิ.ย.): ย้ายคาดตารางมาใต้มุ้ง (ใช้บ่อย)
   // คาดตาราง (generic) · UX-ALL: ตัดจาก shower/มุ้ง/หลังคา/ฝ้า · HANDOFF-G6 ธง⑥②: เปิดให้ ติดตาย/บานเปลือย (บานกระจกคาดตารางได้) · เก็บ ดัดโค้ง+บานหมุน
-  if(!p.grid && !p.handrail && !p.zipscreen && !p.cabinet && !p.future_tech && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว','เสริม'].includes(p.cat)){
+  if(!p.grid && !p.handrail && !p.zipscreen && !p.cabinet && !p.future_tech && !['หลังคา','ฝ้า-ผนัง','shower','มุ้ง','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว','เสริม','YKK'].includes(p.cat)){
     h+='<label class="opt"><input type="checkbox" class="o-gridmark" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-gm-wrap\'); if(w) w.style.display=(this.checked?\'flex\':\'none\'); if(this.checked){ var nv=c.querySelector(\'.o-gm-nv\'); var pn=parseInt((c.querySelector(\'.i-panels\')||{}).value)||0; if(nv && !(parseInt(nv.value)>0) && pn>0) nv.value=pn; } calcQuote();"> มีคาดตาราง (คิดตามสูตร)</label>'; // ข้อ14(G1): เส้นตั้ง auto=จำนวนบาน
     h+='<span class="o-gm-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
     h+='<label class="opt">เส้นนอน <input type="number" class="o-gm-nh" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
@@ -5057,7 +5057,7 @@ function buildItemOpts(d){
   if(p.cat==='ฝ้า-ผนัง'){
     h+='<label class="opt" style="width:100%;">โครง <select class="o-wallframe" style="display:none;" onchange="calcQuote();"><option value="">โครงอลูมิเนียม</option><option value="เหล็กชุบ" selected>โครงเหล็กชุบซิงค์ (ไร้สนิม)</option></select>'+rfChips('o-wallframe',[['','อลูมิเนียม'],['เหล็กชุบ','เหล็กชุบซิงค์ (ไร้สนิม)']],'เหล็กชุบ',true)+'</label>'; // ก้อนรวม#5: default เหล็กชุบ (สเปกเฟิร์ม · ราคาเท่าอลู +0)
     if(p.id==='isowall'){
-      h+='<label class="opt" style="width:100%;">ความหนา ISOWALL <select class="o-isothick" style="display:none;" onchange="calcQuote();"><option value="10">10 ซม.</option><option value="5">5 ซม.</option><option value="7.5">7.5 ซม.</option></select>'+rfChips('o-isothick',[['10','10 ซม.'],['5','5 ซม.'],['7.5','7.5 ซม.']],'10')+'</label>';
+      h+='<label class="opt" style="width:100%;">ความหนา ISOWALL <select class="o-isothick" style="display:none;" onchange="calcQuote();"><option value="10">หนา 10 ซม.</option></select>'+rfChips('o-isothick',[['10','หนา 10 ซม.']],'10')+'</label>';
       h+='<label class="opt">สี <input type="text" class="o-isocolor" placeholder="เช่น ขาว" style="width:auto;min-width:90px;height:32px;" oninput="calcQuote();"></label>';
     } else if(p.id==='ceiling_smooth'){
       h+='<label class="opt" style="width:100%;">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select>'+rfChips('o-ceilfinish',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทาสี']],'ทาสีขาว')+'</label>';
@@ -5100,8 +5100,8 @@ function buildItemOpts(d){
     }
     h+='<span class="opt" style="color:#666;font-size:12px;width:100%;">⚠ ไม่รวมเสริมวงกบ/ราง</span>';
   }
-  // งาน6: ฝังรางยู — งานพื้นของบาน · ตัดออกจาก หลังคา/ฝ้า-ผนัง ตามสเปก rev2
-  if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว','เสริม','ม่านซิป'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail && !p.zipscreen){ // UX-ALL+folding: ฝังรางยูเฉพาะงานบานพื้น · บานเฟี้ยมใช้ u_track (COMMON_OPTS) แทน — ตัดกันซ้ำ
+  // งาน6 → มติพี่นัท 22มิ.ย.: ฝังรางยู (ในพื้น) = เฉพาะ "เลื่อนภายใน + บานเฟี้ยม" เท่านั้น (ทั้งคู่ใช้ u_track COMMON_OPTS อยู่แล้ว) · "ที่เหลือไม่ต้อง" → ปิด o-uchannel ทั้งหมด (เดิมโผล่ผิดที่ บานเลื่อน/เปิด/PC/YKK/ยก/ติดตาย)
+  if(false){ // o-uchannel ปิดถาวร — ฝังรางยูใช้ผ่าน u_track (COMMON_OPTS) ที่เลื่อนภายใน/เฟี้ยม เท่านั้น
     h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="toggleUChannel(this);"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → ล็อกชิปธรณีหลังเต่า
   }
   if(!p.gate) h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>'; // #9: รั้วไม่ต้องมีกล่องอุปกรณ์เสริม
