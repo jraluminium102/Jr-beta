@@ -1041,7 +1041,9 @@ function _colorDrillSel(el){ var dr=el.closest('.color-drill'); if(!dr)return nu
 function colorDrillRender(sel){
   if(!sel) return;
   // G1 Full mode: สีอลูใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
-  if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1' && _ch1.dataset.coOverride!=='1'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; } }
+  if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1'){
+    if(_ch1.dataset.coOverride!=='1'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; }
+    colorDrillRenderL3(sel); return; } }
   var present={}; // COLORS index → label (เฉพาะ option ที่มีจริงหลัง filter series)
   Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
   var curIdx=parseInt(sel.value)||0;
@@ -1060,6 +1062,23 @@ function colorDrillRender(sel){
     html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+nm+'</button>';
   });
   html+='</div>';
+  wrap.innerHTML=html;
+}
+// #9 (G1 · มติพี่นัท 22มิ.ย.): สี G1 ตอน "ใช้สีต่าง" = layout L2/L3 ซ้อน (เหมือน G2 g2FinDrill) — L2 สีฐาน · L3 ⬆อัปอบพิเศษ (เฉพาะหมวด special) · reuse g2FinCat + colorDrillPick (value/ราคา/รหัสสี เดิม)
+function colorDrillRenderL3(sel){ if(!sel)return;
+  var present={}; Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
+  var curIdx=parseInt(sel.value)||0;
+  var wrap=null; if(sel.nextSibling&&sel.nextSibling.classList&&sel.nextSibling.classList.contains('color-drill')) wrap=sel.nextSibling;
+  if(!wrap){ wrap=document.createElement('div'); wrap.className='color-drill'; sel.parentNode.insertBefore(wrap,sel.nextSibling); sel.style.display='none'; }
+  function _nm(i){ var raw=(COLORS[i]&&COLORS[i].n)||present[i]||''; return raw.replace(/\s*[★⚠]/g,'').replace(/\s*—.*$/,'').replace(/\s+/g,' ').trim(); }
+  var base=[], special=[];
+  Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ if(g2FinCat((COLORS[i]&&COLORS[i].n)||'')==='special') special.push(i); else base.push(i); });
+  var html='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L2 — เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div><div class="chip-group chip-sm">';
+  base.forEach(function(i){ html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; });
+  html+='</div>';
+  if(special.length){ html+='<div style="margin-top:8px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">';
+    special.forEach(function(i){ html+='<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; });
+    html+='</div></div>'; }
   wrap.innerHTML=html;
 }
 function colorDrillCat(btn){ var sel=_colorDrillSel(btn); if(!sel)return; sel.dataset.colCat=btn.dataset.cat; colorDrillRender(sel); }  // เปลี่ยนหมวด (ยังไม่ commit ค่า)
