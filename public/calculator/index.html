@@ -714,7 +714,7 @@ const PRODUCTS=[
  {id:'lift_aluinch',cat:'บานยก',name:'บานยก เซมิยูโร (บานใหญ่)',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
  {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000)
  {id:'frameless_fixed',cat:'บานเปลือย',name:'บานเปลือยติดตาย',method:'bucket',min:7000,rates:'FRAMELESS',cost:null},
- {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,cost:null},
+ {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,digihandle:1,cost:null},
  {id:'curved_double',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานคู่',method:'bucket',min:47000,rates:'CURVE_DBL',cost:null,digihandle:1,glassDef:60},
  {id:'curved_single',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานเดี่ยว',method:'bucket',min:32000,rates:'CURVE_SGL',cost:null,digihandle:1,glassDef:60},
  {id:'curved_fixed',cat:'ดัดโค้ง',name:'บานติดตายดัดโค้ง',method:'bucket',min:10000,rates:'CURVE_FIX',cost:null,glassDef:60},
