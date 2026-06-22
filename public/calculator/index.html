@@ -3828,12 +3828,13 @@ function g3SelectorHTML(p){
   var h='<div class="opt g3-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
   h+='<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip'+(!isWall?' on':'')+'" onclick="g3PickTab(this,\'roof\')">หลังคา</button><button type="button" class="chip'+(isWall?' on':'')+'" onclick="g3PickTab(this,\'wall\')">ฝ้า</button></div>';
   if(!isWall){
-    var grp=rfGrpOf(p.id)||'metal'; var gk;
+    var grp=rfGrpOf(p.id)||'metal';
+    var _gord=['vinyl','metal','chinco','poly']; // newstyle (ดราฟ 23มิ.ย.): เรียง ไวนิล→เมทัล→ชินโค→โพลีตัน
     h+='<label class="opt" style="width:100%;margin:0;">กลุ่มวัสดุ<div class="chip-grid">';
-    for(gk in RF_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="g3PickGrp(this)">'+RF_GRP_LABEL[gk]+'</button>'; }
+    _gord.forEach(function(gk){ if(!RF_GRP_PRODS[gk])return; h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-grp="'+gk+'" onclick="g3PickGrp(this)">'+RF_GRP_LABEL[gk]+'</button>'; });
     h+='</div></label>';
-    if(RF_SUBG[grp]){
-      // ธงA: เมทัล/ชินโค → เลือกความหนาก่อน แล้วค่อยรุ่นย่อย (ตัด prefix ความหนาออกจากชื่อรุ่น)
+    if(grp==='metal' && RF_SUBG[grp]){
+      // ดราฟ: เฉพาะเมทัลเลือกความหนา 1"/2" ก่อน → รุ่นย่อย (ชินโคล็อกหนากับรุ่น โชว์ 6 รุ่นตรงๆ)
       var curTh=rfSubgOf(grp,p.id);
       h+='<label class="opt" style="width:100%;margin:6px 0 0;">ความหนา<div class="chip-grid">';
       RF_SUBG[grp].forEach(function(sg){ h+='<button type="button" class="chip'+(sg[0]===curTh?' on':'')+'" data-grp="'+grp+'" data-th="'+sg[0]+'" onclick="g3PickSubg(this)">'+sg[0]+'</button>'; });
