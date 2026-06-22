@@ -4987,7 +4987,7 @@ function buildItemOpts(d){
     h+='<label class="opt">เส้นโค้ง <input type="number" class="o-gm-curve" step="1" min="0" value="0" style="width:55px;height:30px;"></label>';
     h+='</span>';
     // ลูกฟูก/คอมโพ ล่าง (เสริมกระจกบนบาน) — กู้กลับ (มติพี่นัท 20มิ.ย.: ใช้บ่อย · ติดคาดตาราง · ตัดเฉพาะบานโซลิดที่ทึบ auto แล้ว) · classes เดิม reconnect calcUnit L1803/readItem L5291
-    if(!p.solid_door){
+    if(!p.solid_door && p.cat!=='บานเปลือย'){  // #G (ดราฟ): บานเปลือยติดตาย/ประตู z2 = คาดตารางอย่างเดียว ไม่มีแผ่นทึบล่าง
       h+='<label class="opt">แผ่นทึบล่าง (ลูกฟูก/คอมโพ) <select class="o-solidlower" onchange="var c=this.closest(\'.ch\'); var w=c.querySelector(\'.o-sl-wrap\'); if(w)w.style.display=this.value?\'flex\':\'none\'; calcQuote();"><option value="">ไม่มี</option><option value="corrugated">อลูลูกฟูก 3,500/ตร.ม.</option><option value="composite">คอมโพสิท 3,300/ตร.ม.</option></select></label>';
       h+='<span class="o-sl-wrap" style="display:none;flex-wrap:wrap;gap:4px 12px;">';
       h+='<label class="opt">กว้าง <input type="number" class="o-sl-w" step="0.1" min="0" value="0" style="width:60px;height:30px;" oninput="calcQuote()"><span class="u">ม.</span></label>';
@@ -5253,6 +5253,15 @@ function buildItemOpts(d){
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
+  // #F (22มิ.ย. · ดราฟ): เก็บกวาดกล่องฟ้า sliding-main-block ที่ค้าง เมื่อสลับเป็นชนิด "ไม่ใช้บาน" (ติดตาย/เปลือย/ผนัง/shower/YKK) — ตัวเคลียร์ก่อน rebuild (L4639) ไม่ครอบ flow กดชิป · กู้บานกลับ size-row + ซ่อน + ลบกล่อง · ราคาไม่ขึ้นกับบาน (bucket) golden นิ่ง
+  if((d.querySelector('.i-group')||{}).value==='1' && !usesPanels(p)){
+    var _orphanSmb=d.querySelector('.sliding-main-block');
+    if(_orphanSmb){
+      var _pwO=_orphanSmb.querySelector('.i-panels-wrap');
+      if(_pwO){ var _qO=d.querySelector('.i-qty'); var _qwO=_qO?_qO.parentNode:null; if(_qwO&&_qwO.parentNode) _qwO.parentNode.insertBefore(_pwO,_qwO); _pwO.style.display='none'; }
+      _orphanSmb.remove();
+    }
+  }
   // C (21มิ.ย.): การ์ดราคา G2 ชิดขวา (เริ่ม G2 ก่อน · กลุ่มอื่นทำแชทอื่น) · ค่าราคาอัปเดตใน calcQuote
   { var _isG2=((d.querySelector('.i-group')||{}).value)==='2';
     var _aside=d.querySelector(':scope > .ch-aside');
@@ -6000,7 +6009,7 @@ function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepN
 /* ===== Item type prefix logic (ประตู/หน้าต่าง) ===== */
 const ITYPE_LOCK_DOOR = ['PC Door','YKK','บานเฟี้ยม','ประตูรั้ว','shower','บานเปลือย']; // ดัดโค้ง ปลดล็อก (22มิ.ย.) → เลือก ประตู/หน้าต่าง ได้
 const ITYPE_LOCK_WINDOW = ['บานกระทุ้ง','บานยก'];
-const ITYPE_NA = ['ติดตาย','หลังคา','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ราวบันได','ประตูรั้ว','มุ้ง','เลื่อนภายใน','ฝาตู้','ตู้อลู','ม่านซิป']; // ติดตาย: กระจกติดตาย ไม่มีประตู/หน้าต่าง (มติพี่นัท) · ประตูรั้ว: ไม่ต้องเลือกประตู/หน้าต่าง (เลือกบานเลื่อนตรง/โค้งแทน · มติ 21มิ.ย.) — ชื่อใบ "ประตูรั้วระแนง" R4.4 de-dupe อยู่แล้ว
+const ITYPE_NA = ['ติดตาย','บานเปลือย','หลังคา','ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ราวบันได','ประตูรั้ว','มุ้ง','เลื่อนภายใน','ฝาตู้','ตู้อลู','ม่านซิป']; // ติดตาย: กระจกติดตาย ไม่มีประตู/หน้าต่าง (มติพี่นัท) · ประตูรั้ว: ไม่ต้องเลือกประตู/หน้าต่าง (เลือกบานเลื่อนตรง/โค้งแทน · มติ 21มิ.ย.) — ชื่อใบ "ประตูรั้วระแนง" R4.4 de-dupe อยู่แล้ว
 function itypeFor(p){
   if(!p) return 'door';
   if(ITYPE_LOCK_DOOR.indexOf(p.cat)>=0) return 'door';
