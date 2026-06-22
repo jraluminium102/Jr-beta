@@ -5272,7 +5272,11 @@ function buildItemOpts(d){
       if((d.querySelector('.i-group')||{}).value==='1' && box){
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
-        if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); _lgHost.style.display=''; }
+        if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); }
+        // #มือจับ (22มิ.ย. · ดราฟ z1): ย้ายมือจับขึ้นใต้ล็อค (จาก oc-block) — calcUnit อ่าน .o-cmech/.o-digi/.o-stain ฯลฯ ตาม class · ตำแหน่งไม่กระทบราคา (เหมือนย้ายเข้า oc-block เดิม)
+        var _hbwL=d.querySelector('.handle-brand-wrap'); var _hlL=_hbwL?(_hbwL.closest('label')||_hbwL.parentNode):null;
+        if(_hlL && _hlL!==_lgHost){ _lgHost.appendChild(_hlL); }
+        if(_lockSec || _hlL) _lgHost.style.display='';
       }
     }
   }
