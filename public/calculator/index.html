@@ -2005,9 +2005,16 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   }
   // #6: breakdown generic — กลุ่มที่ใช้ return ร่วม (G1 บานกระจก / G3 หลังคา-ฝ้า / G5 มุ้ง / G7 ฯลฯ) · core+กระจก+สี+ออปชั่น+addon (มุ้ง) · reconcile ผลรวม=ราคารายการ ที่ชั้นใบ
   if(_breakdown==null){ var _gb=[];
-    if(core>0)_gb.push({n:(p.cat==='หลังคา'?'ค่าหลังคา':(p.ceiling?'ค่าฝ้า':(p.cabinet?'ค่าตู้':'ค่างานหลัก'))),p:Math.round(core)});
-    if(glassUp>0)_gb.push({n:'กระจก',p:Math.round(glassUp)});
-    if(colorUp>0)_gb.push({n:'สีอลูมิเนียม (สีพิเศษ)',p:Math.round(colorUp)});
+    var _isDoorBd = !p.cabinet && !p.handrail && !p.zipscreen && !p.ceiling && !p.ranae && p.cat!=='หลังคา' && p.cat!=='มุ้ง' && p.cat!=='เสริม' && !/^ระแนง/.test(p.cat||'') && AREA_CATS.indexOf(p.cat)<0; // #12: G1 บานกระจก → โชว์ ค่าบาน/กระจก/สี เสมอ (mosquito:1 = เพิ่มมุ้งได้ ไม่ตัด)
+    var _coreLbl = p.cat==='หลังคา'?'ค่าหลังคา':(p.ceiling?'ค่าฝ้า':(p.cabinet?'ค่าตู้':(_isDoorBd?'ค่าบาน (โครง+กระจกมาตรฐาน)':'ค่างานหลัก')));
+    if(core>0)_gb.push({n:_coreLbl,p:Math.round(core)});
+    if(_isDoorBd){ // โชว์ กระจก + สี เสมอ (default=0=รวมในราคา · qBdHTML แปลงเป็นคำ)
+      _gb.push({n:(GLASS[gi]?String(GLASS[gi].n).replace(/^[★⚠\s]+/,'').replace(/\s*\([^)]*\)/g,'').trim():'กระจก'),p:Math.round(glassUp)});
+      _gb.push({n:'สีอลูมิเนียม'+((ci>0&&COLORS[ci])?(' '+String(COLORS[ci].quoteName||COLORS[ci].n).replace(/[★⚠🔖🔒]/g,'').replace(/\s*\([^)]*\)/g,'').trim()):' (สีมาตรฐาน)'),p:Math.round(colorUp)});
+    } else {
+      if(glassUp>0)_gb.push({n:'กระจก',p:Math.round(glassUp)});
+      if(colorUp>0)_gb.push({n:'สีอลูมิเนียม (สีพิเศษ)',p:Math.round(colorUp)});
+    }
     if(opt>0)_gb.push({n:'ออปชั่น/อุปกรณ์เสริม',p:Math.round(opt)});
     (addonLines||[]).forEach(function(al){ if(al.p>0)_gb.push({n:al.n,p:Math.round(al.p)}); });
     if(_gb.length>1)_breakdown=_gb; } // ≥2 ส่วนค่อยแตก (ชิ้นเดียว=ราคารายการอยู่แล้ว)
@@ -5020,7 +5027,7 @@ function buildItemOpts(d){
       h+='<label class="opt">สี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></label>';
       h+='<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>';
       h+='<label class="opt" style="width:100%;">🔌 งานสายไฟมอเตอร์ <input type="text" class="o-motorwire" placeholder="รายละเอียด เช่น เดินสายไฟจากตู้ควบคุม" style="width:auto;min-width:190px;height:32px;" oninput="calcQuote();"> <input type="number" class="o-motorwireprice" min="0" step="100" value="0" placeholder="ราคา" style="width:90px;height:32px;" oninput="calcQuote();"> บาท <span style="font-size:11px;color:#666;">(กรอกราคาเอง)</span></label>';
-      h+='<label class="opt"><input type="checkbox" class="o-gatethresh" onchange="calcQuote();"> มีธรณี</label>';
+      /* #9 (21มิ.ย.): ตัด "มีธรณี" (o-gatethresh) ออกจากประตูรั้ว — รั้วไม่ต้องมีธรณี */
       h+='<label class="opt">ค่าทำสีบาน (%) <input type="number" class="o-doorcolorpct" min="0" max="100" step="5" value="30" style="width:56px;height:32px;" oninput="calcQuote();"> % <span style="font-size:11px;color:#666;">(สีบานคิด % นี้ของเรตสีอลู · default 30)</span></label>';
       h+='<label class="opt">OPTION ลายไม้ Golden Teak SMS (กรอกราคาเพิ่มเอง) <input type="number" class="o-gatewood" min="0" step="500" value="0" placeholder="บาท" style="width:90px;height:32px;" oninput="calcQuote();"> บาท</label>'; }
   if(p.bar_grid){ h+='<label class="opt" style="width:100%;">ทิศระแนง <select class="o-bgdir" style="display:none;"><option value="v">ตั้ง (D=สูง)</option><option value="h">นอน (D=กว้าง)</option></select>'+rfChips('o-bgdir',[['v','ตั้ง (D=สูง)'],['h','นอน (D=กว้าง)']],'v',true)+'</label>'; h+='<label class="opt">สี <select class="o-bgcolor" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="สีอบพิเศษ">สีอบพิเศษ</option><option value="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select> <span style="font-size:11px;color:#666;">(แสดงในใบ)</span></label>';
@@ -5097,12 +5104,12 @@ function buildItemOpts(d){
   if(!['หลังคา','ฝ้า-ผนัง','shower','บานเปลือย','ดัดโค้ง','บานหมุน','เลื่อนภายใน','มุ้ง','บานเฟี้ยม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว','เสริม','ม่านซิป'].includes(p.cat) && !p.cabinet && !p.future_tech && !p.handrail && !p.zipscreen){ // UX-ALL+folding: ฝังรางยูเฉพาะงานบานพื้น · บานเฟี้ยมใช้ u_track (COMMON_OPTS) แทน — ตัดกันซ้ำ
     h+='<label class="opt"><input type="checkbox" class="o-uchannel" onchange="toggleUChannel(this);"> ฝังรางยู (ในพื้น) <span style="font-size:11px;color:#666;">— ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้</span></label>'; // ข้อ8(G1): รางยู priority → ล็อกชิปธรณีหลังเต่า
   }
-  h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>';
-  h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
+  if(!p.gate) h+='<label class="opt">งานเสริม/วิศวกรรม <input type="text" class="o-extrawork" placeholder="ระบุถ้ามี" style="width:auto;min-width:160px;height:32px;" oninput="calcQuote();"></label>'; // #9: รั้วไม่ต้องมีกล่องอุปกรณ์เสริม
+  if(!p.gate) h+='<label class="opt"><input type="checkbox" class="o-removeold" onchange="calcQuote();"> รื้อของเดิม (รายการนี้)</label>';
   // HANDOFF-G6 ธง⑥① (2026-06-14 · มติพี่นัท): ตัดออปชั่น "แผ่นทึบล่าง ลูกฟูก/คอมโพสิททึบ" (o-solidlower) ออก — บาน solid ใช้ช่องแสง o-solidlight แทน (กรอกขนาดช่องกระจก/เว้น 0 = ทึบเต็ม) · logic ราคา solidlower คงไว้ dormant (select หาย → optSel.solidlower='')
-  if((!areaOnly || p.cat==='YKK') && !p.zipscreen && !p.handrail && !['shower','บานเปลือย'].includes(p.cat)){ h+=`<label class="opt" style="width:100%;">ครอบวงกบอลู <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,'o-fcsides')">ไม่มี</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,'o-fcsides')">3 ด้าน</button><button type="button" class="chip" data-val="4" onclick="chSetChip(this,'o-fcsides')">4 ด้าน</button></div><select class="o-fcsides" style="display:none;" onchange="calcQuote();"><option value="0">ไม่มี</option><option value="3">3 ด้าน</option><option value="4">4 ด้าน</option></select> หรือระบุ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; // UX-ALL: ตัดครอบวงกบจาก shower/บานเปลือย(frameless)/ราวกันตก
+  if((!areaOnly || p.cat==='YKK') && !p.zipscreen && !p.handrail && !p.gate && !['shower','บานเปลือย'].includes(p.cat)){ h+=`<label class="opt" style="width:100%;">ครอบวงกบอลู <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,'o-fcsides')">ไม่มี</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,'o-fcsides')">3 ด้าน</button><button type="button" class="chip" data-val="4" onclick="chSetChip(this,'o-fcsides')">4 ด้าน</button></div><select class="o-fcsides" style="display:none;" onchange="calcQuote();"><option value="0">ไม่มี</option><option value="3">3 ด้าน</option><option value="4">4 ด้าน</option></select> หรือระบุ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; // UX-ALL: ตัดครอบวงกบจาก shower/บานเปลือย(frameless)/ราวกันตก
     if(!p.cabinet && !p.future_tech && !['เลื่อนภายใน','บานหมุน','ติดตาย','มุ้ง'].includes(p.cat)){ h+=`<label class="opt">ดรอปพื้น(ม.) <input type="number" class="o-dfm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; } // UX-ALL: ดรอปพื้นเฉพาะงานบานพื้น (ตัด ตู้/เลื่อนใน/หมุน/ติดตาย/มุ้ง)
-  } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ประตูรั้ว'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
+  } else if(['ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด'].includes(p.cat)){ h+=`<label class="opt">ครอบวงกบ(ม.) <input type="number" class="o-fcm" step="0.1" min="0" value="0" style="width:58px;height:30px"></label>`; }
   const gw=d.querySelector('.i-glass-wrap'), pw=d.querySelector('.i-panels-wrap'), cw=d.querySelector('.i-color-wrap');
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
@@ -5650,7 +5657,7 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
   if(window._detOv && itemId && window._detOv[itemId]!=null && window._detOv[itemId]!=='') glass = window._detOv[itemId];
   const _MARK0='###รายละเอียด###';
   const _hasMark = !!(glass && String(glass).indexOf(_MARK0)>=0); // ใบ 5 บล็อก: note(OPTION/หมายเหตุ) ย้ายไประหว่างรายการ↔รายละเอียด
-  let content = `<div style="font-weight:700;color:#1F2937;">${name}</div>`;
+  let content = _ed ? `<div style="font-weight:700;color:#1F2937;"><span contenteditable="true" onblur="setRowHdr('${itemId}',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">${name}</span></div>` : `<div style="font-weight:700;color:#1F2937;">${name}</div>`; // #8: หัวข้อแก้ได้
   // R4.3: แนบขนาดท้ายชื่อสินค้า (size = "(กว้าง × สูง ม.)" หรือ "" ถ้าไม่มี เช่น กั้นห้องกระจก)
   // #4 2026-06-05: prod รองรับ multiline (\n) — บรรทัดแรกผูก size, บรรทัดถัดไปเป็นบรรยายด้าน A-H/หลังคา
   if (prod) {
@@ -5683,7 +5690,7 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
       const _rk=(_pp[0]||'').split(/\n/).map(g=>g.trim()).filter(Boolean);
       const _dt=(_pp[1]||'').split(/\n/).map(g=>g.trim()).filter(Boolean);
       if(_ed){
-        const _all=_rk.map(g=>g.startsWith('-')?g:'- '+g).concat(_dt.length?['รายละเอียด'].concat(_dt.map(g=>g.startsWith('-')?g:'- '+g)):[]).join('\n');
+        const _all=_rk.map(g=>g.startsWith('-')?g:'- '+g).concat(_dt.length?['รายละเอียดงาน'].concat(_dt.map(g=>g.startsWith('-')?g:'- '+g)):[]).join('\n'); // #11: ใช้ "รายละเอียดงาน" ตรงชื่อบล็อก
         content += `<div contenteditable="true" onblur="setRowDet('${itemId}',this)" style="margin:4px 0 0 8px;color:#1F2937;font-size:13px;white-space:pre-wrap;border:1px dashed #B3151D;outline:none;cursor:text;padding:2px 5px;border-radius:4px;">${_all}</div>`;
       } else {
         // ② รายการ (งาน · ไม่มีหัวข้อ)
@@ -5697,7 +5704,7 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
         }
         // ⑤ รายละเอียด (สเปค · หัวข้อแดง)
         if(_dt.length){
-          content += `<div style="margin-top:8px;font-weight:600;color:#B3151D;">รายละเอียด</div>`;
+          content += `<div style="margin-top:8px;font-weight:600;color:#B3151D;">รายละเอียดงาน</div>`; // #11: ตรงชื่อบล็อก (เดิม "รายละเอียด" งง)
           _dt.forEach(g=>{ content += `<div style="margin:1px 0 0 8px;color:#1F2937;font-size:13px;">${g.startsWith('-')?g:'- '+g}</div>`; });
         }
       }
@@ -5718,10 +5725,10 @@ function qrow(n,name,prod,size,glass,qty,unit,line,addons,optText,optDelta,note,
     `<td class="r" style="vertical-align:top;">${qty} ชุด</td><td class="r" style="vertical-align:top;">${unitCell}</td><td class="r" style="vertical-align:top;">${q2(line)}</td></tr>`;
 }
 // งาน4: โหมดแก้ราคา/ข้อความในใบ
-window.qEdit=false; window._nameOv=window._nameOv||{}; window._detOv=window._detOv||{};
+window.qEdit=false; window._nameOv=window._nameOv||{}; window._detOv=window._detOv||{}; window._hdrOv=window._hdrOv||{}; // _hdrOv = แก้หัวข้อ(bold)รายการ
 // คิว B รอบ2 Group C: ใบแก้ได้ทั้งใบ + ใบเปล่า — แถวเพิ่มชั่วคราว (ไม่บันทึกถาวร · ล้างเมื่อขึ้นใบใหม่)
 window._extraRows=window._extraRows||[]; window._blankQuote=window._blankQuote||false;
-function clearQuoteOverrides(){ window._nameOv={}; window._detOv={}; window._extraRows=[]; window._blankQuote=false; window.qEdit=false; window._bdOv={}; window._lastBd={}; window._glOv={}; window._gDetOv={}; } // #3: เรียกตอนล้าง/ลูกค้าใหม่ — กัน edit ติดรอบหน้า
+function clearQuoteOverrides(){ window._nameOv={}; window._detOv={}; window._extraRows=[]; window._blankQuote=false; window.qEdit=false; window._bdOv={}; window._lastBd={}; window._glOv={}; window._gDetOv={}; window._hdrOv={}; } // #3: เรียกตอนล้าง/ลูกค้าใหม่ — กัน edit ติดรอบหน้า
 function addQuoteRow(){ window.qEdit=true; window._extraRows.push({name:'',det:'',qty:'1',price:''}); genQuote(true); }
 function delQuoteRow(i){ if(window._extraRows[i]!=null){ window._extraRows.splice(i,1); genQuote(true); } }
 function setXRow(i,k,el){ if(!window._extraRows[i])return; var v=((el.innerText!=null?el.innerText:el.value)||'').replace(/ /g,' ').trim(); if(k==='price'||k==='qty'){ v=v.replace(/,/g,''); window._extraRows[i][k]=v; genQuote(true); } else { window._extraRows[i][k]=v; } } // ตัด comma กัน parseFloat พัง · name/det ไม่ re-render (ไม่กระทบยอด)
@@ -5738,9 +5745,16 @@ function toggleQuoteEdit(){ window.qEdit=!window.qEdit; var b=document.getElemen
 window._bdOv = window._bdOv||{}; window._lastBd = window._lastBd||{};
 function qBdGet(it, itemId, total){
   var ov = itemId && window._bdOv[itemId];
-  var lines = (ov && ov.length) ? ov.map(function(l){return {n:l.n,p:parseFloat(l.p)||0};}) : (((it&&it.r&&it.r.breakdown)||[]).map(function(l){return {n:l.n,p:Math.round(l.p)||0};}));
+  var lines;
+  if(ov && ov.length){ lines = ov.map(function(l){return {n:l.n,p:parseFloat(l.p)||0};}); }
+  else {
+    lines = ((it&&it.r&&it.r.breakdown)||[]).map(function(l){return {n:l.n,p:Math.round(l.p)||0};});
+    if(lines.length && it && it.subItems){ it.subItems.forEach(function(s){ if(s&&s.price>0) lines.push({n:(s.type||'บานย่อย'),p:Math.round(s.price)}); }); } // #7: บานย่อย(ผสมบาน)เป็นบรรทัด กันราคาไปกองมอเตอร์/บรรทัดใหญ่
+    if(!lines.length) return [];
+    var sum=lines.reduce(function(a,l){return a+l.p;},0); var diff=Math.round((total||0)-sum);
+    if(diff!==0){ if(Math.abs(diff)<=1500){ var mi=0; lines.forEach(function(l,i){ if(l.p>lines[mi].p)mi=i; }); lines[mi].p+=diff; } else { lines.push({n:'งานเสริม/อื่นๆ',p:diff}); } } // เศษ roundUp เล็ก→บรรทัดใหญ่ · ส่วนต่างใหญ่→บรรทัดแยก (ไม่ปลอม)
+  }
   if(!lines.length) return [];
-  if(!ov){ var sum=lines.reduce(function(a,l){return a+l.p;},0); var diff=Math.round((total||0)-sum); if(diff!==0){ var mi=0; lines.forEach(function(l,i){ if(l.p>lines[mi].p)mi=i; }); lines[mi].p+=diff; } } // reconcile: ผลรวม=ราคารายการ (ปัดเศษลงบรรทัดใหญ่สุด)
   if(itemId) window._lastBd[itemId]=lines.map(function(l){return {n:l.n,p:l.p};});
   return lines;
 }
@@ -5752,7 +5766,7 @@ function qBdHTML(it, itemId, total){
           '<div style="background:#fdf4f5;font-size:11px;font-weight:700;color:#B3151D;padding:3px 9px;">แยกราคา</div>';
   lines.forEach(function(l,i){
     var lbl=_ed?('<span contenteditable="true" onblur="setBdLine(\''+itemId+'\','+i+',\'n\',this)" style="outline:none;border-bottom:1px dashed #B3151D;cursor:text;">'+l.n+'</span>'):l.n;
-    var amt=_ed?('<span contenteditable="true" onblur="setBdLine(\''+itemId+'\','+i+',\'p\',this)" style="outline:none;border-bottom:1px dashed #B3151D;cursor:text;">'+fmt(l.p)+'</span>'):fmt(l.p);
+    var amt=_ed?('<span contenteditable="true" onblur="setBdLine(\''+itemId+'\','+i+',\'p\',this)" style="outline:none;border-bottom:1px dashed #B3151D;cursor:text;">'+fmt(l.p)+'</span>'):(l.p===0?'<span style="color:#999;">รวมในราคา</span>':fmt(l.p)); // #12: 0 = รวมในราคา (ไม่คิดเพิ่ม)
     var del=_ed?(' <span onclick="delBdLine(\''+itemId+'\','+i+')" style="cursor:pointer;color:#9ca3af;" class="no-print">🗑</span>'):'';
     h += '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 9px;border-top:1px solid #f6eaec;font-size:12.5px;"><span>'+lbl+'</span><span style="white-space:nowrap;">'+amt+del+'</span></div>';
   });
@@ -5786,6 +5800,7 @@ function qApplyEdit(){
   });
 }
 function setRowName(id,el){ var t=(el.innerText||'').replace(/^-\s*/,'').trim(); if(t) window._nameOv[id]=t; else delete window._nameOv[id]; genQuote(true); }
+function setRowHdr(id,el){ var t=(el.innerText||'').trim(); if(t) window._hdrOv[id]=t; else delete window._hdrOv[id]; genQuote(true); } // #8: หัวข้อ(bold)แก้ได้
 function setRowPrice(id,el){ var v=parseFloat((el.innerText||'').replace(/[^0-9.]/g,'')); var ch=document.querySelector('#items .ch[data-id="'+id+'"]'); if(ch){ var ov=ch.querySelector('.i-override'); if(ov){ ov.value=(isNaN(v)?'':v); ov.dispatchEvent(new Event('input',{bubbles:true})); } calcQuote(); genQuote(true); } }
 function buildQuoteDoc(rows, subtotal, discPct, cust, date, svc, discFlat, keepNo){
   // Group C: แถวเพิ่มชั่วคราว (contenteditable) — บวกเข้า subtotal ที่ชั้น display (ไม่แตะ engine) · ปุ่ม +เพิ่มแถว/🗑 เฉพาะโหมดแก้
@@ -6785,7 +6800,7 @@ function genQuote(keepNo){
     let _qSz=_sz;
     if(!_qHdr){
       const _pl=String(_qProd).split('\n');
-      _qHdr='ชุดที่ '+rowIdx+' '+_pl[0]+(_qSz?(' '+_qSz):'');
+      _qHdr=_pl[0]+(_qSz?(' '+_qSz):''); // #10: เอาเลข "ชุดที่ N" ออก (มีเลข # หน้าแถวแล้ว)
       _qProd=_pl.slice(1).join('\n'); // เหลือบานย่อย (ถ้ามี) เป็น bullet ใต้หัว
       _qSz='';
     }
@@ -6807,7 +6822,7 @@ function genQuote(keepNo){
     if(d.work && d.spec && (d.work.length||d.spec.length)){ _qDet=_workForDet.join('\n')+(_workForDet.length?'\n':'')+'###รายละเอียด###\n'+d.spec.join('\n'); }
     // G2-12: ต่อ gateOptNote (OPTION ลายไม้) เข้า note → qrow render บล็อก OPTION (แดง) ระหว่างรายการ↔รายละเอียด
     const _itemNote = [it.note, d.gateOptNote].filter(Boolean).join('\n');
-    var _qIid=(it.div?it.div.dataset.id:'');
+    var _qIid=(it.div?it.div.dataset.id:''); if(_qIid && window._hdrOv && window._hdrOv[_qIid]) _qHdr=window._hdrOv[_qIid]; // #8: override หัวข้อ(bold)
     rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, _qIid, qBdHTML(it, _qIid, it.r.sell));
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
