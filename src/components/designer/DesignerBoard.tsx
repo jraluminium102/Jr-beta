@@ -133,6 +133,9 @@ export default function DesignerBoard({
 
   useEffect(() => { load(); }, [load]);
 
+  // เปลี่ยนช่าง → reset toggle "ดูทั้งหมด" (กันค้างเห็นงานเสร็จทั้งหมดของช่างใหม่โดยไม่ตั้งใจ)
+  useEffect(() => { setShowAllDone(false); }, [designerFilter]);
+
   // Assign designer_ref — also triggers auto-deadline on first assignment
   async function assignDesigner(job: Job, designerRef: number | null) {
     if (designerRef === (job.designer_ref ?? null)) return;
@@ -289,8 +292,8 @@ export default function DesignerBoard({
       }
       map[j.design_state]?.push(j);
     }
-    // ช่อง "เสร็จแล้ว": เรียงตามวันเสร็จจากเก่า→ใหม่ → งานที่กดเสร็จล่าสุดอยู่ล่างสุด
-    map.DONE.sort((a, b) => (a.design_end ?? "").localeCompare(b.design_end ?? ""));
+    // ช่อง "เสร็จแล้ว": เรียงวันเสร็จใหม่→เก่า (งานเพิ่งเสร็จอยู่บนสุด · ตรงทิศกับ doneAll)
+    map.DONE.sort((a, b) => (b.design_end ?? "").localeCompare(a.design_end ?? ""));
     return map;
   }, [jobs, cardSearch]);
 
@@ -423,7 +426,7 @@ export default function DesignerBoard({
             byColumn={byColumn}
             doneAll={doneAll}
             activeState={activeState}
-            onTab={setActiveState}
+            onTab={(s) => { setActiveState(s); setShowAllDone(false); }}
             showAllDone={showAllDone}
             onToggleAllDone={() => setShowAllDone((v) => !v)}
             canWrite={canWrite}
@@ -596,7 +599,7 @@ function PhaseTabsView({
         >
           {showAllDone
             ? "แสดงเฉพาะงานเสร็จล่าสุด (45 วัน)"
-            : `ดูงานเสร็จเก่ากว่า 45 วัน (+${olderDoneCount})`}
+            : `ดูงานเสร็จทั้งหมด (+${olderDoneCount})`}
         </button>
       )}
     </div>
