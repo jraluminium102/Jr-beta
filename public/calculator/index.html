@@ -3654,7 +3654,7 @@ function rfChipLock(ch,cls,on){ ch.querySelectorAll('.chip[onclick*="'+cls+'"]')
 // ออปชั่นดรอปดาวน์ตัวเลือกน้อย (≤6) → ชิป อัตโนมัติ (พี่นัท 17 มิ.ย.) · อ่าน option จริงจาก select · ขับด้วย selectedIndex
 // (กันค่าชน เช่น o-closer/o-finish ที่หลาย option ใช้ value เดียวกัน + อ่าน data-n ผ่าน selectedIndex) · fire input+change = sync onchange/delegated เดิม · ราคา/readItem ไม่แตะ
 // ไม่รวม G7 ม่านซิป (o-zctrl/o-zmodel/o-zgrp) ตามมติพี่นัท
-var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-railreuse','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gcfinish'];
+var CHIPIFY_SELECTS=['o-closer','o-xhandle','o-wallmodel','o-gridcolor','o-awn_mode','o-showerhw','o-railtype','o-railreuse','o-bsdoor','o-ceildir','o-ceilpos','o-ckolor','o-gcfinish','o-solidlower'];
 // รอบ3 ข้อ4 (18มิ.ย.): ย้าย o-gfin/o-finish/o-bgcolor/o-bsfinish/o-bocfinish ออก → ใช้ g2FinDrill (drill 4 หมวดแบบงานบาน) แทนชิปเรียงยาว · o-gcfinish คงชิป (สีอบปิดราง 8 ตัว)
 var CHIPIFY_BIG=['o-gcfinish'];
 function chipifySelect(sel,big){
@@ -5195,6 +5195,9 @@ function buildItemOpts(d){
       var _tog=_rareS.querySelector('.g1co-tog'); if(_tog){ _tog.classList.toggle('on',_ov); _tog.textContent=(_ov?'✓ ':'＋ ')+'ใช้สี/กระจกต่างจากทั้งใบ (ข้อนี้)'; }
       if(_ov){ try{ if(cw){var _cc=cw.querySelector('.i-color'); if(_cc)colorDrillRender(_cc);} }catch(e){} try{ if(gw){var _gg3=gw.querySelector('.i-glass'); if(_gg3)glassDrillRender(_gg3);} }catch(e){} }
       try{g1CoUpdateL1(d);}catch(e){}
+      // #2 (22มิ.ย. · ทำเหมือนดราฟ z3): ย้ายกล่องสี/กระจก ขึ้นต้นโซนเสริม (ก่อน "อุปกรณ์เสริม/ออปชั่น") — เฉพาะ G1 · idempotent · ไม่แตะ DOM กลุ่มอื่น
+      try{ var _ob2=d.querySelector('.optbox'); var _optFull=_ob2&&_ob2.closest?_ob2.closest('.full'):null;
+        if(_optFull && _optFull.parentNode && _rareS!==_optFull.previousElementSibling){ _rareS.style.gridColumn='1 / -1'; _optFull.parentNode.insertBefore(_rareS,_optFull); } }catch(e){}
     } }
   // v7A ข้อ2 (18มิ.ย.): ย้ายบล็อกมือจับละเอียด (Cmech/ดิจิตอล/สแตน/รุ่นอื่น) → กล่อง OPTION ทางเลือกลูกค้า (oc-block · นอก .i-opts)
   // คงราคาเดิม (calcUnit อ่าน .o-cmech/.o-digi ฯลฯ ตาม class ตำแหน่งไม่กระทบ · controls มี inline onchange/oninput อยู่แล้ว) · ย้ายก่อน groupGHOpts = นับจำนวนกล่องไม่ผิด
