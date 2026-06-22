@@ -83,6 +83,10 @@ export default function DesignerBoard({
   canWrite: boolean;
 }) {
   const [tab, setTab] = useState<"board" | "schedule">("board");
+  // แท็บหัวข้อย่อยในหน้าบอร์ด (กดดูทีละสถานะ) — default "ยังไม่เริ่ม"
+  const [activeState, setActiveState] = useState<DesignState>("NOT_STARTED");
+  // แท็บ "เสร็จแล้ว": toggle ดูงานเก่ากว่า 45 วัน (กันงานเสร็จหายเงียบ)
+  const [showAllDone, setShowAllDone] = useState(false);
   const [designerFilter, setDesignerFilter] = useState("");
   // Client-side card search (by customer name / job code)
   const [cardSearch, setCardSearch] = useState("");
@@ -290,6 +294,22 @@ export default function DesignerBoard({
     return map;
   }, [jobs, cardSearch]);
 
+  // งาน DONE ทั้งหมด (ไม่ตัด 45 วัน) — ใช้ตอนกด "ดูงานเก่ากว่า 45 วัน" ในแท็บเสร็จแล้ว
+  // เรียงใหม่→เก่า (งานเพิ่งเสร็จอยู่บนสุด)
+  const doneAll = useMemo(() => {
+    const q = cardSearch.trim().toLowerCase();
+    return jobs
+      .filter(
+        (j) =>
+          !j.on_hold &&
+          j.design_state === "DONE" &&
+          (q === "" ||
+            j.customer_name.toLowerCase().includes(q) ||
+            (j.job_code ?? "").toLowerCase().includes(q)),
+      )
+      .sort((a, b) => (b.design_end ?? "").localeCompare(a.design_end ?? ""));
+  }, [jobs, cardSearch]);
+
   // งาน on_hold (filter ตาม cardSearch ด้วย)
   const heldJobs = useMemo(() => {
     const q = cardSearch.trim().toLowerCase();
@@ -399,8 +419,13 @@ export default function DesignerBoard({
         <Card className="p-10 text-center text-ink-3">กำลังโหลด…</Card>
       ) : tab === "board" ? (
         <>
-          <BoardView
+          <PhaseTabsView
             byColumn={byColumn}
+            doneAll={doneAll}
+            activeState={activeState}
+            onTab={setActiveState}
+            showAllDone={showAllDone}
+            onToggleAllDone={() => setShowAllDone((v) => !v)}
             canWrite={canWrite}
             moving={moving}
             assigning={assigning}
@@ -463,9 +488,14 @@ function KpiTile({ label, value, accent }: { label: string; value: number; accen
   );
 }
 
-// ─── Board ────────────────────────────────────────────────────────────────────
-function BoardView({
+// ─── Phase tabs + row list (แทนบอร์ดคอลัมน์เดิม — กดดูทีละหัวข้อ แถวเต็มความกว้าง) ──
+function PhaseTabsView({
   byColumn,
+  doneAll,
+  activeState,
+  onTab,
+  showAllDone,
+  onToggleAllDone,
   canWrite,
   moving,
   assigning,
@@ -478,6 +508,11 @@ function BoardView({
   onHold,
 }: {
   byColumn: Record<DesignState, Job[]>;
+  doneAll: Job[];
+  activeState: DesignState;
+  onTab: (s: DesignState) => void;
+  showAllDone: boolean;
+  onToggleAllDone: () => void;
   canWrite: boolean;
   moving: string | null;
   assigning: string | null;
@@ -489,51 +524,97 @@ function BoardView({
   onDesignerAdded: () => Promise<void>;
   onHold?: (job: Job) => void;
 }) {
-  // auto-fit: คอลัมน์กว้าง ≥240px เสมอ · จัดจำนวนคอลัมน์ให้พอดีจอเอง (ไม่ scroll ซ้ายขวา ไม่มีช่องเล็ก)
+  // รายการตามแท็บ — DONE: default ล่าสุด (45 วัน) · กดดูทั้งหมดได้ (กันงานเสร็จหายเงียบ)
+  const rows =
+    activeState === "DONE"
+      ? showAllDone
+        ? doneAll
+        : byColumn.DONE
+      : byColumn[activeState] ?? [];
+  // จำนวนงานเสร็จที่เก่ากว่า 45 วัน (ถูกซ่อนใน default view)
+  const olderDoneCount = Math.max(0, doneAll.length - byColumn.DONE.length);
+
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
-      {COLUMNS.map((col) => {
-        const items = byColumn[col.state] ?? [];
-        return (
-          <div key={col.state} className="glass-card rounded-2xl p-3 flex flex-col min-w-0 min-h-[120px] lg:max-h-[calc(100dvh-250px)]">
-            <div className="flex items-center justify-between mb-2.5 px-1 shrink-0">
-              <span className="text-sm font-semibold text-brand-dark flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
-                {col.th}
+    <div className="space-y-3">
+      {/* ── แท็บ 5 หัวข้อ (กดดูทีละหัวข้อ) ── */}
+      <div className="flex gap-2 flex-wrap" role="tablist" aria-label="หัวข้องานเขียนแบบ">
+        {COLUMNS.map((col) => {
+          const count = byColumn[col.state].length;
+          const on = col.state === activeState;
+          return (
+            <button
+              key={col.state}
+              role="tab"
+              aria-selected={on}
+              onClick={() => onTab(col.state)}
+              className={`press inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium min-h-[44px] border transition-colors ${
+                on
+                  ? "bg-brand/10 text-brand border-brand"
+                  : "glass-soft text-ink-2 border-transparent hover:bg-brand/5"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: col.dot }} />
+              {col.th}
+              <span className="tnum text-xs font-semibold rounded-md px-1.5 py-0.5 bg-black/5 text-ink-3">
+                {count}
               </span>
-              <span className="text-xs text-ink-3 tnum">{items.length}</span>
-            </div>
-            <div className="space-y-2 overflow-y-auto lg:flex-1 lg:min-h-0 pr-0.5">
-              {items.length === 0 ? (
-                <p className="text-[12px] text-ink-3 px-1 py-3 text-center">— ไม่มีงาน —</p>
-              ) : (
-                items.map((j) => (
-                  <JobCard
-                    key={j.id}
-                    job={j}
-                    canWrite={canWrite}
-                    moving={moving === j.id}
-                    assigning={assigning === j.id}
-                    designers={designers}
-                    onMove={onMove}
-                    onAssign={onAssign}
-                    onDueDate={onDueDate}
-                    onReceivedDate={onReceivedDate}
-                    onDesignerAdded={onDesignerAdded}
-                    onHold={onHold}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── แถวงานของหัวข้อที่เลือก ── */}
+      {rows.length === 0 ? (
+        <Card className="p-10 text-center text-ink-3 text-sm">— ไม่มีงานในหัวข้อนี้ —</Card>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((j) => (
+            <JobRow
+              key={j.id}
+              job={j}
+              canWrite={canWrite}
+              moving={moving === j.id}
+              assigning={assigning === j.id}
+              designers={designers}
+              onMove={onMove}
+              onAssign={onAssign}
+              onDueDate={onDueDate}
+              onReceivedDate={onReceivedDate}
+              onDesignerAdded={onDesignerAdded}
+              onHold={onHold}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ── ปุ่มดูงานเสร็จเก่ากว่า 45 วัน (เฉพาะแท็บเสร็จแล้ว) ── */}
+      {activeState === "DONE" && olderDoneCount > 0 && (
+        <button
+          type="button"
+          onClick={onToggleAllDone}
+          className="press w-full text-sm font-medium text-ink-2 glass-soft rounded-xl px-4 py-2.5 min-h-[44px] hover:bg-brand/5 transition-colors"
+        >
+          {showAllDone
+            ? "แสดงเฉพาะงานเสร็จล่าสุด (45 วัน)"
+            : `ดูงานเสร็จเก่ากว่า 45 วัน (+${olderDoneCount})`}
+        </button>
+      )}
     </div>
   );
 }
 
-// ─── Job Card ─────────────────────────────────────────────────────────────────
-function JobCard({
+// ─── Field — label เล็กบน + ค่า/อินพุตล่าง (ใช้ในแถวงาน) ──────────────────────────
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] text-ink-3 mb-0.5">{label}</div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+// ─── Job Row (แถวเต็มความกว้าง — แทนการ์ดคอลัมน์เดิม) ────────────────────────────
+function JobRow({
   job,
   canWrite,
   moving,
@@ -599,146 +680,152 @@ function JobCard({
     }
   }
 
+  const isDone = job.design_state === "DONE";
+
   return (
-    <div className="glass-soft rounded-xl p-3 text-sm w-full min-w-0 overflow-hidden">
-      {/* job_code + ปุ่มดูงาน (#26) */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <a
-            href={`/jobs?open=${job.id}`}
-            className="font-semibold text-brand-dark hover:underline focus:outline-none focus:ring-2 focus:ring-brand/40 rounded"
-            aria-label={`ดูงาน ${job.job_code ?? ""}`}
-          >
-            {job.job_code ?? "—"}
-          </a>
-          <a
-            href={`/jobs?open=${job.id}`}
-            className="inline-flex items-center gap-0.5 text-[10px] text-ink-3 hover:text-brand border border-ink-3/30 hover:border-brand/40 rounded px-1 py-0.5 min-h-[22px] focus:outline-none focus:ring-2 focus:ring-brand/40"
-            aria-label="ดูงาน"
-            tabIndex={0}
-          >
-            <Icon name="external" size={10} />
-            ดูงาน
-          </a>
+    <div className="glass-soft rounded-xl p-3 text-sm">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        {/* ── ซ้าย: job code + ลูกค้า + เซลล์ ── */}
+        <div className="sm:w-[210px] shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <a
+              href={`/jobs?open=${job.id}`}
+              className="font-semibold text-brand-dark hover:underline focus:outline-none focus:ring-2 focus:ring-brand/40 rounded tnum"
+              aria-label={`ดูงาน ${job.job_code ?? ""}`}
+            >
+              {job.job_code ?? "—"}
+            </a>
+            <a
+              href={`/jobs?open=${job.id}`}
+              className="inline-flex items-center gap-0.5 text-[10px] text-ink-3 hover:text-brand border border-ink-3/30 hover:border-brand/40 rounded px-1 py-0.5 min-h-[22px] focus:outline-none focus:ring-2 focus:ring-brand/40 shrink-0"
+              aria-label="ดูงาน"
+              tabIndex={0}
+            >
+              <Icon name="external" size={10} />
+              ดูงาน
+            </a>
+            {job.design_revise_count > 0 && (
+              <span className="text-[10px] font-medium text-white bg-brand rounded-full px-1.5 py-0.5 shrink-0">
+                แก้ {job.design_revise_count}
+              </span>
+            )}
+          </div>
+          <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
+            {job.customer_name}
+          </div>
+          <div className="text-[11px] text-ink-3 mt-0.5 truncate">
+            {job.sales_name ? `เซลล์ ${job.sales_name}` : "—"}
+          </div>
+          {/* (0044) ป้ายมัดจำหน้างาน · ด่วน — เฉพาะงานที่ยังไม่เสร็จแบบ */}
+          {job.onsite_deposit && !isDone && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+              <Icon name="warn" size={11} />
+              มัดจำหน้างาน · ด่วน
+            </div>
+          )}
         </div>
-        {job.design_revise_count > 0 && (
-          <span className="text-[11px] font-medium text-white bg-brand rounded-full px-1.5 py-0.5 shrink-0">
-            แก้ {job.design_revise_count}
-          </span>
+
+        {canWrite ? (
+          <>
+            {/* ── กลาง: ฟิลด์ (ผู้ออกแบบ/เข้าประเมิน/ได้รับแบบ/กำหนดเสร็จ) ── */}
+            <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-2 min-w-0">
+              <Field label="ผู้ออกแบบ">
+                <DesignerSelect
+                  job={job}
+                  designers={designers}
+                  assigning={assigning}
+                  onAssign={onAssign}
+                  onDesignerAdded={onDesignerAdded}
+                />
+              </Field>
+
+              <Field label="เข้าประเมิน">
+                <span className="text-[12px] tnum text-ink-2">{thDate(job.assess_date)}</span>
+              </Field>
+
+              <Field label="ได้รับแบบ">
+                <DateField
+                  value={receivedDateVal}
+                  onChange={(iso) => { setReceivedDateVal(iso); saveReceived(iso); }}
+                  disabled={assigning}
+                  aria-label="วันได้รับแบบ"
+                  className="w-full min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
+                />
+              </Field>
+
+              {isDone ? (
+                <Field label="วันเสร็จ">
+                  <span className="text-[12px] tnum text-emerald-700 font-semibold">{thDate(job.design_end)}</span>
+                </Field>
+              ) : (
+                <Field label="กำหนดเสร็จ">
+                  <div className="flex items-center gap-1">
+                    <DateField
+                      value={dueDateVal}
+                      onChange={(iso) => { setDueDateVal(iso); saveDue(iso); }}
+                      disabled={assigning}
+                      aria-label="กำหนดเสร็จ"
+                      className={`w-full min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
+                        job.overdue ? "text-brand font-semibold" : "text-ink-2"
+                      }`}
+                    />
+                    {dueSaved ? (
+                      <span className="text-[10px] text-emerald-600 font-semibold shrink-0">✓</span>
+                    ) : job.overdue ? (
+                      <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
+                    ) : null}
+                  </div>
+                </Field>
+              )}
+            </div>
+
+            {/* ── ขวา: ย้ายขั้น + พักงาน ── */}
+            <div className="sm:w-[168px] shrink-0 flex flex-col gap-1.5">
+              <select
+                value={job.design_state}
+                disabled={moving}
+                onChange={(e) => onMove(job, e.target.value as DesignState)}
+                aria-label="ขั้นตอนเขียนแบบ"
+                className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
+              >
+                {COLUMNS.map((c) => (
+                  <option key={c.state} value={c.state} disabled={c.state === job.design_state}>
+                    {c.state === job.design_state ? `[ปัจจุบัน] ${STATE_TH[c.state]}` : `ย้ายไป: ${STATE_TH[c.state]}`}
+                  </option>
+                ))}
+              </select>
+              {onHold && (
+                <button
+                  type="button"
+                  onClick={() => onHold(job)}
+                  className="w-full press rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 min-h-[36px] transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                  aria-label={`พักงาน ${job.job_code ?? ""}`}
+                >
+                  พักงาน
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          /* ── read-only (ไม่มีสิทธิ์แก้) ── */
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 min-w-0">
+            <Field label="ผู้ออกแบบ">
+              <span className="text-[12px] text-ink-2 truncate block" title={job.designer_name ?? "ยังไม่มอบหมาย"}>
+                {job.designer_name ?? "ยังไม่มอบหมาย"}
+              </span>
+            </Field>
+            <Field label="เข้าประเมิน">
+              <span className="text-[12px] tnum text-ink-2">{thDate(job.assess_date)}</span>
+            </Field>
+            <Field label={isDone ? "วันเสร็จ" : "กำหนดเสร็จ"}>
+              <span className={`text-[12px] tnum ${job.overdue ? "text-brand font-semibold" : "text-ink-2"}`}>
+                {isDone ? thDate(job.design_end) : thDate(job.design_due_date)}
+                {job.overdue && " · เลย"}
+              </span>
+            </Field>
+          </div>
         )}
       </div>
-      <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
-        {job.customer_name}
-        {job.sales_name && <span className="text-ink-3 font-normal"> · เซลล์ {job.sales_name}</span>}
-      </div>
-      {/* (0044) ป้ายมัดจำหน้างาน · ด่วน — แสดงเฉพาะงานที่ยังไม่เสร็จแบบ */}
-      {job.onsite_deposit && job.design_state !== "DONE" && (
-        <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
-          <Icon name="warn" size={11} />
-          มัดจำหน้างาน · ด่วน
-        </div>
-      )}
-
-      {canWrite ? (
-        <div className="mt-2 space-y-1.5">
-          {/* Assign designer from designers lookup table */}
-          <DesignerSelect
-            job={job}
-            designers={designers}
-            assigning={assigning}
-            onAssign={onAssign}
-            onDesignerAdded={onDesignerAdded}
-          />
-
-          {/* เข้าประเมิน (read-only · ฟิกวันจากหน้าคิวงาน) */}
-          {job.assess_date && (
-            <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
-              <span className="shrink-0">เข้าประเมิน:</span>
-              <span className="tnum">{thDate(job.assess_date)}</span>
-            </div>
-          )}
-
-          {/* วันได้รับแบบ — editable (ขึ้นก่อนกำหนดเสร็จ) */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-ink-3 shrink-0">ได้รับแบบ:</span>
-            <DateField
-              value={receivedDateVal}
-              onChange={(iso) => { setReceivedDateVal(iso); saveReceived(iso); }}
-              disabled={assigning}
-              aria-label="วันได้รับแบบ"
-              className="flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 text-ink-2"
-            />
-          </div>
-
-          {/* กำหนดเสร็จ = ได้รับแบบ + 2 วัน (auto-คำนวณ · แก้ทีหลังได้) — #37 confirm อดีต + toast */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-ink-3 shrink-0">กำหนดเสร็จ:</span>
-            <DateField
-              value={dueDateVal}
-              onChange={(iso) => { setDueDateVal(iso); saveDue(iso); }}
-              disabled={assigning}
-              aria-label="กำหนดเสร็จ"
-              className={`flex-1 min-w-0 glass-soft rounded-lg px-2 py-1 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60 ${
-                job.overdue ? "text-brand font-semibold" : "text-ink-2"
-              }`}
-            />
-            {dueSaved ? (
-              <span className="text-[10px] text-emerald-600 font-semibold shrink-0">บันทึกแล้ว</span>
-            ) : job.overdue ? (
-              <span className="text-[10px] text-brand font-semibold shrink-0">เลย!</span>
-            ) : null}
-          </div>
-
-          {/* design_start → design_end (read-only แสดงไทม์ไลน์ทำแบบ) */}
-          {(job.design_start || job.design_end) && (
-            <div className="text-[11px] text-ink-3 tnum">
-              ทำแบบ: {thDate(job.design_start)} → {thDate(job.design_end)}
-            </div>
-          )}
-
-          {/* Move design_state (#16: disable option ปัจจุบัน) */}
-          <select
-            value={job.design_state}
-            disabled={moving}
-            onChange={(e) => onMove(job, e.target.value as DesignState)}
-            aria-label="ขั้นตอนเขียนแบบ"
-            className="w-full glass-soft rounded-lg px-2 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand/40 disabled:opacity-60"
-          >
-            {COLUMNS.map((c) => (
-              <option key={c.state} value={c.state} disabled={c.state === job.design_state}>
-                {c.state === job.design_state ? `[ปัจจุบัน] ${STATE_TH[c.state]}` : `ย้ายไป: ${STATE_TH[c.state]}`}
-              </option>
-            ))}
-          </select>
-
-          {/* ปุ่ม พักงาน */}
-          {onHold && (
-            <button
-              type="button"
-              onClick={() => onHold(job)}
-              className="w-full press rounded-lg px-2 py-1.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 min-h-[36px] transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-              aria-label={`พักงาน ${job.job_code ?? ""}`}
-            >
-              พักงาน
-            </button>
-          )}
-        </div>
-      ) : (
-        <>
-          <div
-            className={`text-[12px] mt-1 ${job.overdue ? "text-brand font-semibold" : "text-ink-3"}`}
-          >
-            กำหนดเสร็จ: {thDate(job.design_due_date)}
-            {job.overdue && " · เลยกำหนด"}
-          </div>
-          <div
-            className="text-[12px] text-ink-3 mt-0.5 truncate"
-            title={job.designer_name ?? "ยังไม่มอบหมาย"}
-          >
-            ผู้ออกแบบ: {job.designer_name ?? "ยังไม่มอบหมาย"}
-          </div>
-        </>
-      )}
     </div>
   );
 }
