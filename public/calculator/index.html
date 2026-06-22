@@ -2388,83 +2388,160 @@ var QIG3_CATS=[
   {c:'ผนังเบา',items:['isowall','wall_ext','wall_int']}
 ];
 function qiG3CatOf(id){ for(var i=0;i<QIG3_CATS.length;i++){ if(QIG3_CATS[i].items.indexOf(id)>=0) return i; } return 0; }
+/* ===== G3 newstyle (22มิ.ย.): กลุ่มวัสดุ→รุ่น→หนา/ฟิล์ม/กระจก→สีวัสดุมุง→สีโครง L1/L2/L3→แป→โครงสร้าง→ขนาด · เรียก calcUnit/ceilCalc/colorPrice จริง (ไม่แก้นิยาม engine · golden นิ่ง) ===== */
+var QIG3_GROUPS={
+  vinyl:{label:'ไวนิล / ดีไลท์',models:[{v:'roof_vinyl',t:'ไวนิล VG',colors:['สีเทา','สีขาว','สีน้ำตาล']},{v:'roof_delight',t:'ดีไลท์',colors:['DG-2 สีฟ้าคราม','DG7 สีเทาโมเดิร์น']}]},
+  metal:{label:'เมทัลชีท',thicks:['1 นิ้ว','2 นิ้ว'],colors:['สีน้ำตาล','สีขาว','สีเทา'],modelsByThick:[
+    [{v:'imp7',t:'PVC EPS'},{v:'imp9',t:'เหล็ก EPS'},{v:'imp11',t:'ฟอยล์ PU'},{v:'imp13',t:'เหล็ก PU'}],
+    [{v:'imp8',t:'PVC EPS'},{v:'imp10',t:'เหล็ก EPS'},{v:'imp12',t:'ฟอยล์ PU'},{v:'imp14',t:'เหล็ก PU'}]]},
+  shinko:{label:'ชินโคไลท์',models:[
+    {v:'imp15',t:'Heat Cut (6มม.)',colors:['HC-N828 Modern Grey','HC-B703 Royal Blue','HC-570 Classic Brown','HC-N590 Noble Green']},
+    {v:'imp16',t:'Superior (6มม.)',colors:['SP-NB00 ขาวขุ่น','SP-NB30 Foggy Brown','SP-B857 Marine Blue','SP-NC95 Light Brown']},
+    {v:'imp17',t:'Nature (6มม.)',colors:['NT-001 ใส','NT-332 เทาอ่อน']},
+    {v:'imp18',t:'Shade (4มม.)',colors:['Shade-430S Pearl White']},
+    {v:'imp19',t:'Prime (10มม.)',colors:['Prime 562 Brownish Green']},
+    {v:'imp20',t:'Grand (10มม.)',colors:[]}]},
+  poly:{label:'โพลีตัน / กระจก',films:['ใส','เขียว','กันร้อน'],glass:['4+4','5+5'],models:[
+    {v:'roof_polyton',t:'โพลีตัน 3มม.',colors:['Clear 101 ใส','Opal 103 ขาวขุ่น','Bronze 107 ชาใส','Green 109 เขียวใส','Australian Grey 108','Silver 501','Bronze Metallic 503','Green Metallic 504']},
+    {v:'roof_laminate',t:'กระจกลามิเนต',colors:[]}]},
+  ceil:{label:'ฝ้า / เพดาน',simple:true,models:[{v:'ceil_cshape',t:'ฝ้าอลู ตัวซี'},{v:'ceil_bsc',t:'ฝ้าไม้เทียม remood'},{v:'ceiling_smooth',t:'ฝ้าฉาบเรียบ'},{v:'ceil_ranae_1x5',t:'ระแนงอลู 1×5'},{v:'ceil_ranae_16_5',t:'ระแนง 1.6 เว้น5'},{v:'ceil_ranae_16_2',t:'ระแนง 1.6 เว้น2'}]},
+  wall:{label:'ผนังเบา',simple:true,models:[{v:'isowall',t:'ISOWALL'},{v:'wall_ext',t:'สมาร์ทบอร์ด (นอก)'},{v:'wall_int',t:'ยิปซั่ม (ใน)'}]}};
+var QIG3_GORDER=['vinyl','metal','shinko','poly','ceil','wall'];
+var QIG3_FCCATS=[{key:'std',label:'มาตรฐาน',idx:[0,1]},{key:'sahara',label:'ซาฮาร่า',idx:[2,3,4]},{key:'wood',label:'ลายไม้',idx:[5,6,7,8,9,11]},{key:'special',label:'อบพิเศษ (รหัส)',idx:[10,12]}];
+function qiG3GrpOfModel(id){ for(var k in QIG3_GROUPS){ if(qiG3AllModels(QIG3_GROUPS[k]).some(function(m){return m.v===id;})) return k; } return 'vinyl'; }
+function qiG3AllModels(g){ return g.modelsByThick?g.modelsByThick.reduce(function(a,b){return a.concat(b);},[]):(g.models||[]); }
+function qiG3CurModels(s){ var g=QIG3_GROUPS[s.grp]; return g.modelsByThick?(g.modelsByThick[s.thick]||g.modelsByThick[0]):(g.models||[]); }
+function qiG3CurColors(s){ var m=qiG3CurModels(s).find(function(x){return x.v===s.model;}); return (m&&m.colors)||QIG3_GROUPS[s.grp].colors||[]; }
+function qiG3CName(i){ var c=COLORS[i]; if(!c)return ''; return (c.quoteName||c.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠🔖🔒]/g,'').trim(); }
+function qiG3st(d){ if(!d._g3){ d._g3={grp:'vinyl',model:'roof_vinyl',thick:0,film:0,glass:0,mcolor:0,gIdx:0,l2:false,l2cat:'sahara',l2idx:2,l2mode:'real',l3:false,l3kind:'color',l3cat:'special',l3idx:10,l3mat:'imp7',purlin:'single',frame:'alu',slide:false,slidetype:'เลื่อนยื่น',spanels:2,smotorqty:0,smotorprice:0,mix:false,mixModel:'imp7',mixArea:0}; } return d._g3; }
 function qiRenderG3(d){
-  var curId = d.dataset.qiProd || 'imp7';
-  var catIdx = qiG3CatOf(curId);
-  var h = '<div class="qi-flex"><div class="qi-form">';
-  h += '<div class="qi-lbl">กลุ่มงาน</div>' + qiGroupChips(d.querySelector('.qi-group').value);
-  h += '<div class="qi-lbl">ประเภทงาน</div><div class="qi-chips">';
-  QIG3_CATS.forEach(function(ct,i){ h += '<button type="button" class="chip'+(i===catIdx?' on':'')+'" onclick="qiG3PickCat(this,\''+ct.c+'\')">'+ct.c+'</button>'; });
-  h += '</div>';
-  h += '<div class="qi-lbl">รุ่น</div><div class="qi-chips">';
-  QIG3_CATS[catIdx].items.forEach(function(id){
-    var p=PBYID[id]; if(!p)return;
-    var label=p.name.replace('เมทัลชีท ','').replace('ชินโค ','').replace('หลังคา ','').replace('ฝ้า','').replace('ผนังเบา','').trim();
-    h += '<button type="button" class="chip'+(id===curId?' on':'')+'" onclick="qiG3PickProd(this,\''+id+'\')">'+label+'</button>';
-  });
-  h += '</div>';
-  var _curP=PBYID[curId];
-  if(_curP && _curP.optSlide){
-    var _slideOn = d.dataset.qiG3slide === '1';
-    h += '<div class="qi-lbl">หลังคาเลื่อน</div><div class="qi-chips">';
-    h += '<button type="button" class="chip'+(_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'1\')">ทำเลื่อน <span style="font-size:11px;opacity:.8">+ชุดเลื่อน+มอเตอร์</span></button>';
-    h += '<button type="button" class="chip'+(!_slideOn?' on':'')+'" onclick="qiG3SetSlide(this,\'0\')">ไม่เลื่อน</button>';
-    h += '</div>';
-    if(_slideOn){
-      var _panels=Math.max(2,parseInt(d.dataset.qiG3panels)||2);
-      h += '<div class="qi-lbl">จำนวนแผงเลื่อน</div>';
-      h += '<div class="qi-row" style="align-items:center;gap:8px;">';
-      h += '<div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;">';
-      h += '<button type="button" onclick="qiG3StepPanels(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button>';
-      h += '<input class="qi-g3panels" type="number" step="1" min="2" value="'+_panels+'" style="width:44px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="this.closest(\'.ch\').dataset.qiG3panels=this.value;calcQuickAll()">';
-      h += '<button type="button" onclick="qiG3StepPanels(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button>';
-      h += '</div>';
-      h += '<span style="font-size:12px;color:var(--muted)">แผง (ขั้นต่ำ 2)</span>';
-      h += '</div>';
+  var _w=d.querySelector('.qi-w'),_h=d.querySelector('.qi-h'),_q=d.querySelector('.qi-qty');
+  if(_w)d.dataset.qiW=_w.value; if(_h)d.dataset.qiH=_h.value; if(_q)d.dataset.qiQty=_q.value; // เก็บขนาด/ชุด ก่อน rebuild
+  var s=qiG3st(d);
+  if(!qiG3AllModels(QIG3_GROUPS[s.grp]).some(function(m){return m.v===s.model;})) s.model=qiG3CurModels(s)[0].v;
+  var g=QIG3_GROUPS[s.grp], models=qiG3CurModels(s), mcolors=qiG3CurColors(s), isLam=(s.model==='roof_laminate');
+  var h='<div class="qi-flex"><div class="qi-form">';
+  h+='<div class="full"><label style="font-size:12px;color:var(--muted);font-weight:700;">กลุ่มงาน</label>'+qiGroupChips('3')+'</div>';
+  h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:block;">กลุ่มวัสดุ</label><div class="qi-chips">';
+  QIG3_GORDER.forEach(function(k){ h+='<button type="button" class="chip'+(k===s.grp?' on':'')+'" onclick="qiG3PickGrp(this,\''+k+'\')">'+QIG3_GROUPS[k].label+'</button>'; });
+  h+='</div>';
+  if(g.thicks){ h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">ความหนา</label><div class="qi-chips">';
+    g.thicks.forEach(function(t,i){ h+='<button type="button" class="chip'+(i===s.thick?' on':'')+'" onclick="qiG3PickThick(this,'+i+')">'+t+'</button>'; }); h+='</div>'; }
+  h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">รุ่น</label><div class="qi-chips">';
+  models.forEach(function(m){ h+='<button type="button" class="chip'+(m.v===s.model?' on':'')+'" onclick="qiG3PickModel(this,\''+m.v+'\')">'+m.t+'</button>'; });
+  h+='</div>';
+  if(!g.simple){
+    if(isLam){ h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">ชนิดฟิล์ม</label><div class="qi-chips">';
+      g.films.forEach(function(f,i){ h+='<button type="button" class="chip'+(i===s.film?' on':'')+'" onclick="qiG3PickFilm(this,'+i+')">'+f+'</button>'; }); h+='</div>';
+      h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">ความหนากระจก</label><div class="qi-chips">';
+      g.glass.forEach(function(gg,i){ h+='<button type="button" class="chip'+(i===s.glass?' on':'')+'" onclick="qiG3PickGlass(this,'+i+')">'+gg+'</button>'; }); h+='</div>'; }
+    if(mcolors.length){ h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">สีวัสดุมุง</label><div class="qi-chips">';
+      mcolors.forEach(function(c,i){ h+='<button type="button" class="chip'+(i===s.mcolor?' on':'')+'" onclick="qiG3PickMColor(this,'+i+')">'+c+'</button>'; }); h+='</div>'; }
+    h+='<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:8px 9px;margin-top:10px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;">🎨 L1 · สีโครงทั้งใบ (บวกในยอด)</div>'+qiG3FcChips(d,'l1');
+    h+='<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:700;cursor:pointer;"><input type="checkbox" '+(s.l2?'checked':'')+' onclick="qiG3TogL2(this)" style="width:17px;height:17px;"> L2 · เปลี่ยนสีโครงเฉพาะหลังคานี้</label>';
+    if(s.l2){ h+='<div style="margin-top:6px;padding-left:6px;border-left:2px dashed #cbd5e1;">';
+      h+='<div style="font-size:11px;color:#374151;margin-bottom:3px;">หมวด / สี</div>'+qiG3FcChips(d,'l2');
+      h+='<div style="font-size:11px;color:#374151;margin:6px 0 3px;">โหมด</div><div class="qi-chips">';
+      h+='<button type="button" class="chip'+(s.l2mode==='real'?' on':'')+'" onclick="qiG3PickL2Mode(this,\'real\')">🟢 สีจริง (บวกยอด)</button>';
+      h+='<button type="button" class="chip'+(s.l2mode==='option'?' on':'')+'" onclick="qiG3PickL2Mode(this,\'option\')">🔵 ออปชั่น (ไม่บวก)</button></div>';
+      h+='<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:700;cursor:pointer;"><input type="checkbox" '+(s.l3?'checked':'')+' onclick="qiG3TogL3(this)" style="width:17px;height:17px;"> L3 · เปลี่ยนต่อจาก L2 (ออปชั่น · ไม่บวก)</label>';
+      if(s.l3){ h+='<div style="margin-top:6px;padding-left:6px;border-left:2px dashed #cbd5e1;"><div class="qi-chips">';
+        h+='<button type="button" class="chip'+(s.l3kind==='color'?' on':'')+'" onclick="qiG3PickL3Kind(this,\'color\')">สีโครง</button>';
+        h+='<button type="button" class="chip'+(s.l3kind==='mat'?' on':'')+'" onclick="qiG3PickL3Kind(this,\'mat\')">ชนิดวัสดุมุง</button></div>';
+        if(s.l3kind==='color'){ h+='<div style="margin-top:5px;">'+qiG3FcChips(d,'l3')+'</div>'; }
+        else { h+='<div style="font-size:11px;color:#374151;margin:5px 0 3px;">วัสดุมุงใหม่</div><div class="qi-chips">';
+          ['vinyl','metal','shinko','poly'].forEach(function(k){ qiG3AllModels(QIG3_GROUPS[k]).forEach(function(m){ h+='<button type="button" class="chip'+(m.v===s.l3mat?' on':'')+'" onclick="qiG3PickL3Mat(this,\''+m.v+'\')">'+m.t+'</button>'; }); }); h+='</div>'; }
+        h+='</div>'; }
+      h+='</div>'; }
+    h+='</div>';
+    // หลังคาเลื่อน (optSlide) + หลังคาผสม (roof2) — engine จริง
+    var _pmodel=PBYID[s.model];
+    var _niStyle='height:38px;width:100%;border:1.5px solid var(--line);border-radius:8px;text-align:center;font-family:inherit;font-size:14px;';
+    if(_pmodel && _pmodel.optSlide){
+      h+='<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid '+(s.slide?'#16a34a':'#e5e7eb')+';border-radius:9px;padding:7px 9px;background:'+(s.slide?'#f0fdf4':'#fff')+';"><input type="checkbox" '+(s.slide?'checked':'')+' onclick="qiG3TogSlide(this)" style="width:17px;height:17px;"> 🔁 ทำเป็นหลังคาเลื่อน (เปิด-ปิดได้)</label>';
+      if(s.slide){ h+='<div style="margin-top:6px;padding-left:6px;border-left:2px dashed #cbd5e1;">';
+        h+='<div style="font-size:11px;color:#374151;margin-bottom:3px;">ชนิดเลื่อน</div><div class="qi-chips"><button type="button" class="chip'+(s.slidetype==='เลื่อนยื่น'?' on':'')+'" onclick="qiG3SetSimple(this,\'slidetype\',\'เลื่อนยื่น\')">เลื่อนยื่น</button><button type="button" class="chip'+(s.slidetype==='เลื่อนข้าง'?' on':'')+'" onclick="qiG3SetSimple(this,\'slidetype\',\'เลื่อนข้าง\')">เลื่อนข้าง</button></div>';
+        h+='<div class="qi-row" style="margin-top:6px;"><div class="qi-fld"><label>บานเลื่อน (≥2)</label><input type="number" min="2" value="'+(s.spanels||2)+'" style="'+_niStyle+'" oninput="qiG3st(this.closest(\'.ch\')).spanels=this.value;calcQuickAll()"></div><div class="qi-fld"><label>มอเตอร์ (ตัว)</label><input type="number" min="0" value="'+(s.smotorqty||0)+'" style="'+_niStyle+'" oninput="qiG3st(this.closest(\'.ch\')).smotorqty=this.value;calcQuickAll()"></div><div class="qi-fld"><label>ราคามอเตอร์/ตัว</label><input type="number" min="0" placeholder="auto" value="'+(s.smotorprice||0)+'" style="'+_niStyle+'" oninput="qiG3st(this.closest(\'.ch\')).smotorprice=this.value;calcQuickAll()"></div></div>';
+        h+='</div>'; }
     }
+    h+='<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:700;cursor:pointer;border:1.5px solid '+(s.mix?'#16a34a':'#e5e7eb')+';border-radius:9px;padding:7px 9px;background:'+(s.mix?'#f0fdf4':'#fff')+';"><input type="checkbox" '+(s.mix?'checked':'')+' onclick="qiG3TogMix(this)" style="width:17px;height:17px;"> ➕ หลังคาผสม (วัสดุที่ 2)</label>';
+    if(s.mix){ h+='<div style="margin-top:6px;padding-left:6px;border-left:2px dashed #cbd5e1;"><div style="font-size:11px;color:#374151;margin-bottom:3px;">วัสดุที่ 2</div><div class="qi-chips">';
+      ['vinyl','metal','shinko','poly'].forEach(function(k){ qiG3AllModels(QIG3_GROUPS[k]).forEach(function(m){ h+='<button type="button" class="chip'+(m.v===s.mixModel?' on':'')+'" onclick="qiG3SetSimple(this,\'mixModel\',\''+m.v+'\')">'+m.t+'</button>'; }); });
+      h+='</div><div class="qi-row" style="margin-top:6px;"><div class="qi-fld"><label>พื้นที่วัสดุที่ 2 (ตร.ม.)</label><input type="number" min="0" value="'+(s.mixArea||0)+'" style="'+_niStyle+'" oninput="qiG3st(this.closest(\'.ch\')).mixArea=this.value;calcQuickAll()"></div></div><div style="font-size:10.5px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:5px 7px;margin-top:5px;">วัสดุที่ 1 คิดพื้นที่ส่วนที่เหลือ (รวม − วัสดุที่ 2)</div></div>'; }
+    h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:block;">แป</label><div class="qi-chips"><button type="button" class="chip'+(s.purlin==='single'?' on':'')+'" onclick="qiG3SetSimple(this,\'purlin\',\'single\')">แปเดี่ยว</button><button type="button" class="chip'+(s.purlin==='double'?' on':'')+'" onclick="qiG3SetSimple(this,\'purlin\',\'double\')">แปคู่</button></div>';
+    h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">โครงสร้าง</label><div class="qi-chips"><button type="button" class="chip'+(s.frame==='alu'?' on':'')+'" onclick="qiG3SetSimple(this,\'frame\',\'alu\')">โครงอลูมิเนียม</button><button type="button" class="chip'+(s.frame==='steel'?' on':'')+'" onclick="qiG3SetSimple(this,\'frame\',\'steel\')">โครงเหล็กชุบซิงค์</button></div>';
+  } else if(s.grp==='wall'){
+    var _ins=(s.insul!==false);
+    h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px;display:block;">ฉนวน</label><div class="qi-chips"><button type="button" class="chip'+(_ins?' on':'')+'" onclick="qiG3SetSimple(this,\'insul\',true)">มีฉนวน</button><button type="button" class="chip'+(!_ins?' on':'')+'" onclick="qiG3SetSimple(this,\'insul\',false)">ไม่มีฉนวน</button></div>';
   }
-  if(['isowall','wall_ext','wall_int'].includes(curId)){
-    var _insulOn = d.dataset.qiG3insul !== '0';
-    h += '<div class="qi-lbl">ฉนวน</div><div class="qi-chips">';
-    h += '<button type="button" class="chip'+(_insulOn?' on':'')+'" onclick="qiG3SetInsul(this,\'1\')">มีฉนวน <span style="font-size:11px;opacity:.8">+600/ตร.ม.</span></button>';
-    h += '<button type="button" class="chip'+(!_insulOn?' on':'')+'" onclick="qiG3SetInsul(this,\'0\')">ไม่มีฉนวน</button>';
-    h += '</div>';
-  }
-  h += '<div class="qi-lbl">ขนาด <span class="hint">(กว้าง × ยาว)</span></div>';
-  h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ยาว (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
-  h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน · ฝ้าขั้นต่ำ 10 ตร.ม.</div></div></div>';
-  d.querySelector('.qi-body').innerHTML = h;
-  calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
-  d.querySelector('.qi-group') && (d.querySelector('.qi-group').value = '3');
+  h+='<label style="font-size:12px;color:var(--muted);font-weight:700;margin-top:10px;display:block;">ขนาด '+(g.simple?'(กว้าง × ยาว)':'(ยาว × ยื่น)')+'</label>';
+  h+='<div class="qi-row"><div class="qi-fld"><label>'+(g.simple?'กว้าง':'ยาว')+' (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>'+(g.simple?'ยาว/ลึก':'ยื่น')+' (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
+  h+='</div><div class="qi-pricecard"><h4>💰 ราคา'+(g.simple?'':'หลังคา')+'</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน'+(g.simple?'':' · แป/เหล็กชุบ = ไม่คิดเงิน')+'</div></div></div>';
+  d.querySelector('.qi-body').innerHTML=h;
+  d.dataset.qiProd=s.model;
+  var grp=d.querySelector('.qi-group'); if(grp) grp.value='3';
+  calcQuickAll();
 }
-function qiG3PickCat(btn,cat){
-  var d=btn.closest('.ch'); var first=null;
-  for(var i=0;i<QIG3_CATS.length;i++){ if(QIG3_CATS[i].c===cat){ first=QIG3_CATS[i].items[0]; break; } }
-  if(first){ d.dataset.qiProd=first; qiSaveWH(d); qiRenderG3(d); }
+function qiG3D(b){ return b.closest('.ch'); }
+function qiG3FcChips(d,lvl){ var s=qiG3st(d);
+  var catKey=lvl==='l1'?(s.l1cat||'std'):(lvl==='l2'?s.l2cat:s.l3cat);
+  var sel=lvl==='l1'?s.gIdx:(lvl==='l2'?s.l2idx:s.l3idx);
+  var h='<div class="qi-chips">';
+  QIG3_FCCATS.forEach(function(c){ h+='<button type="button" class="chip'+(c.key===catKey?' on':'')+'" onclick="qiG3FcCat(this,\''+lvl+'\',\''+c.key+'\')">'+c.label+'</button>'; });
+  h+='</div><div class="qi-chips" style="margin-top:4px;">';
+  var cat=QIG3_FCCATS.find(function(c){return c.key===catKey;});
+  (cat?cat.idx:[]).forEach(function(i){ if(!COLORS[i])return; h+='<button type="button" class="chip'+(i===sel?' on':'')+'" onclick="qiG3FcPick(this,\''+lvl+'\','+i+')">'+qiG3CName(i)+'</button>'; });
+  return h+'</div>';
 }
-function qiG3PickProd(btn,id){
-  var d=btn.closest('.ch'); d.dataset.qiProd=id; qiSaveWH(d); qiRenderG3(d);
-}
-function qiG3SetInsul(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3insul=String(v); qiRenderG3(d); }
-function qiG3SetSlide(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG3slide=String(v); qiRenderG3(d); }
-function qiG3StepPanels(btn,delta){ var inp=btn.parentNode.querySelector('.qi-g3panels'); if(!inp)return; var v=Math.max(2,(parseInt(inp.value)||2)+delta); inp.value=v; btn.closest('.ch').dataset.qiG3panels=String(v); calcQuickAll(); }
+function qiG3PickGrp(b,g){ var d=qiG3D(b),s=qiG3st(d); s.grp=g; s.thick=0; s.model=qiG3CurModels(s)[0].v; s.mcolor=0; s.film=0; s.glass=0; qiRenderG3(d); }
+function qiG3PickThick(b,t){ var d=qiG3D(b),s=qiG3st(d); s.thick=t; s.model=qiG3CurModels(s)[0].v; s.mcolor=0; qiRenderG3(d); }
+function qiG3PickModel(b,id){ var d=qiG3D(b),s=qiG3st(d); s.model=id; s.mcolor=0; s.film=0; s.glass=0; qiRenderG3(d); }
+function qiG3PickMColor(b,i){ var d=qiG3D(b),s=qiG3st(d); s.mcolor=i; qiRenderG3(d); }
+function qiG3PickFilm(b,i){ var d=qiG3D(b),s=qiG3st(d); s.film=i; qiRenderG3(d); }
+function qiG3PickGlass(b,i){ var d=qiG3D(b),s=qiG3st(d); s.glass=i; qiRenderG3(d); }
+function qiG3FcCat(b,lvl,k){ var d=qiG3D(b),s=qiG3st(d); var f=QIG3_FCCATS.find(function(c){return c.key===k;}).idx[0]; if(lvl==='l1'){s.l1cat=k;s.gIdx=f;}else if(lvl==='l2'){s.l2cat=k;s.l2idx=f;}else{s.l3cat=k;s.l3idx=f;} qiRenderG3(d); }
+function qiG3FcPick(b,lvl,i){ var d=qiG3D(b),s=qiG3st(d); if(lvl==='l1')s.gIdx=i;else if(lvl==='l2')s.l2idx=i;else s.l3idx=i; qiRenderG3(d); }
+function qiG3TogL2(b){ var d=qiG3D(b),s=qiG3st(d); s.l2=!s.l2; qiRenderG3(d); }
+function qiG3TogL3(b){ var d=qiG3D(b),s=qiG3st(d); s.l3=!s.l3; qiRenderG3(d); }
+function qiG3PickL2Mode(b,m){ var d=qiG3D(b),s=qiG3st(d); s.l2mode=m; qiRenderG3(d); }
+function qiG3PickL3Kind(b,k){ var d=qiG3D(b),s=qiG3st(d); s.l3kind=k; qiRenderG3(d); }
+function qiG3PickL3Mat(b,id){ var d=qiG3D(b),s=qiG3st(d); s.l3mat=id; qiRenderG3(d); }
+function qiG3SetSimple(b,key,val){ var d=qiG3D(b),s=qiG3st(d); s[key]=val; qiRenderG3(d); }
+function qiG3TogSlide(b){ var d=qiG3D(b),s=qiG3st(d); s.slide=!s.slide; qiRenderG3(d); }
+function qiG3TogMix(b){ var d=qiG3D(b),s=qiG3st(d); s.mix=!s.mix; qiRenderG3(d); }
 function qiCalcG3(d){
-  var id=d.dataset.qiProd||'imp7'; var p=PBYID[id]; if(!p){ return {sell:0,a:0,msgs:[]}; }
+  var s=qiG3st(d); var p=PBYID[s.model]; if(!p){ return {sell:0,a:0,msgs:[],qty:1}; }
   var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
   var H=parseFloat((d.querySelector('.qi-h')||{}).value)||0;
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
-  var _insulOn=['isowall','wall_ext','wall_int'].includes(id) ? (d.dataset.qiG3insul!=='0') : false;
-  var _slideOn=(p&&p.optSlide) ? (d.dataset.qiG3slide==='1') : false;
-  var _panels=_slideOn ? Math.max(2,parseInt((d.querySelector('.qi-g3panels')||{}).value)||parseInt(d.dataset.qiG3panels)||2) : 2;
-  var u=calcUnit(p,W,H,0,0,1,{insul:_insulOn,slide:_slideOn,spanels:_panels,smotorqty:1},false);
-  var pc=d.querySelector('.qi-pc-body'); if(!pc)return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
-  var bd='<div class="qi-pc-line" style="font-weight:700;font-size:12.5px;"><span class="n" style="color:#1F2937;">'+p.name+'</span></div>';
-  bd += qiPcRow('พื้นที่',(u.a||W*H).toFixed(2)+' ตร.ม.');
-  if(u.msgs&&u.msgs[0]) bd += qiPcSub(u.msgs[0]);
-  bd += qiPcRow('ราคา/ชุด',u.sell);
-  bd += qiPcTot(qty>1?('รวม ×'+qty+' ชุด'):'/ชุด', u.sell*qty);
-  pc.innerHTML=bd;
-  return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
+  var area=W*H, g=QIG3_GROUPS[s.grp], pc=d.querySelector('.qi-pc-body');
+  if(g.simple){
+    var _ins=(s.grp==='wall')?(s.insul!==false):false;
+    var u=calcUnit(p,W,H,0,0,1,{insul:_ins},false);
+    if(pc){ var b='<div class="qi-pc-line" style="font-weight:700;"><span class="n" style="color:#1F2937;">'+p.name+'</span></div>'+qiPcRow('พื้นที่',(u.a||area).toFixed(2)+' ตร.ม.');
+      if(u.msgs&&u.msgs[0])b+=qiPcSub(u.msgs[0]); b+=qiPcRow('ราคา/ชุด',u.sell)+qiPcTot(qty>1?('รวม ×'+qty+' ชุด'):'/ชุด',u.sell*qty); pc.innerHTML=b; }
+    return {sell:u.sell,a:u.a,msgs:u.msgs,qty:qty};
+  }
+  var realCi=(s.l2&&s.l2mode==='real')?s.l2idx:s.gIdx;
+  var opt={};
+  if(s.slide && p.optSlide){ opt.slide=true; opt.spanels=Math.max(2,parseInt(s.spanels)||2); opt.slidetype=s.slidetype; opt.smotorqty=Math.max(0,parseInt(s.smotorqty)||0); if(parseFloat(s.smotorprice)>0)opt.smotorprice=s.smotorprice; }
+  if(s.mix && PBYID[s.mixModel]){ opt.roof2=s.mixModel; opt.roof2area=parseFloat(s.mixArea)||0; }
+  var u=calcUnit(p,W,H,0,realCi,1,opt,false), sell=u.sell;
+  var mdl=(qiG3CurModels(s).find(function(m){return m.v===s.model;})||{}).t||p.name;
+  var b='<div class="qi-pc-line" style="font-weight:700;"><span class="n" style="color:#1F2937;">'+g.label+' · '+mdl+(s.slide?' (เลื่อน)':'')+'</span></div>'+qiPcRow('พื้นที่',area.toFixed(2)+' ตร.ม.');
+  var _ms=qiG3CurColors(s)[s.mcolor]; if(_ms)b+=qiPcSub('สีวัสดุมุง: '+_ms);
+  b+=qiPcRow('ราคาหลังคา (รวมสีโครง '+qiG3CName(realCi)+')',sell);
+  if(u.msgs&&u.msgs[0])b+=qiPcSub(u.msgs[0]);
+  var opt='';
+  function sw(lbl,fi,ti){ var z=Math.round(colorPrice(ti,area,'')-colorPrice(fi,area,'')); return '<div class="qi-pc-line" style="color:#166534;"><span class="n">'+lbl+' '+qiG3CName(fi)+'→'+qiG3CName(ti)+' '+(z>=0?'เพิ่ม':'ลด')+'</span><span class="a">'+bht(Math.abs(z))+'</span></div>'; }
+  if(s.l2&&s.l2mode==='option') opt+=sw('สีโครง',s.gIdx,s.l2idx);
+  if(s.l2&&s.l3){ if(s.l3kind==='color'){ opt+=sw('สีโครง',s.l2idx,s.l3idx); }
+    else { var p2=PBYID[s.l3mat]; if(p2){ var z2=Math.round(calcUnit(p2,W,H,0,realCi,1,{},false).sell-sell); opt+='<div class="qi-pc-line" style="color:#166534;"><span class="n">วัสดุมุง '+p.name.replace(/\s*\([^)]*\)/g,'').trim()+'→'+p2.name.replace(/\s*\([^)]*\)/g,'').trim()+' '+(z2>=0?'เพิ่ม':'ลด')+'</span><span class="a">'+bht(Math.abs(z2))+'</span></div>'; } } }
+  if(opt) b+='<div style="margin-top:4px;border-top:1px dashed #ddd;padding-top:4px;font-size:10.5px;color:#166534;font-weight:700;">OPTION (ไม่รวมในยอด)</div>'+opt;
+  b+=qiPcTot(qty>1?('รวม ×'+qty+' ชุด'):'/ชุด',sell*qty);
+  if(pc)pc.innerHTML=b;
+  return {sell:sell,a:u.a,msgs:u.msgs,qty:qty};
 }
 
 /* ================================================================
