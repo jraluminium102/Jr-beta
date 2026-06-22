@@ -4647,8 +4647,8 @@ function buildItemOpts(d){
   }
   if(p.closer){ h+='<label class="opt">โช้คอัพประตู <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช้ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช้ค">บานพับ +5,000</option></select></label>'; }
   // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน (บานเลื่อน/PC มี "ชุดล็อค" แล้ว → กันซ้ำ)
-  if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน'].includes(p.cat)){
-    h+='<label class="opt" style="width:100%;">ล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี" selected>ไม่มีล็อค</option><option value="มีล็อค">มีล็อค</option><option value="มีล็อค+กุญแจ">มีล็อค + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีล็อค'],['มีล็อค','มีล็อค'],['มีล็อค+กุญแจ','มีล็อค + กุญแจ']],'ไม่มี',true)+'</label>';
+  if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน','บานยก'].includes(p.cat) || (p.cat==='ดัดโค้ง'&&p.id!=='curved_fixed') || p.id==='frameless_door'){ // 22มิ.ย.: เพิ่ม บานยก/ดัดโค้ง(เว้นติดตายโค้ง)/บานเปลือยประตู · คำ "ชุดล็อค" 3 แบบครบทุกบาน
+    h+='<label class="opt" style="width:100%;">ชุดล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี" selected>ไม่มีชุดล็อก</option><option value="มีล็อค">มีชุดล็อก</option><option value="มีล็อค+กุญแจ">มีชุดล็อก + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีชุดล็อก'],['มีล็อค','มีชุดล็อก'],['มีล็อค+กุญแจ','มีชุดล็อก + กุญแจ']],'ไม่มี',true)+'</label>';
   }
   // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
   { var _cmechOK=(p.cat==='บานเลื่อน'||p.cat==='บานเปิด'), _xOK=/xseries|slimlux/.test(p.id), _awnOK=(p.cat==='บานกระทุ้ง');
@@ -4723,7 +4723,7 @@ function buildItemOpts(d){
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
     if(_itypeNow === 'door'){
-      h+='<label class="opt" style="width:100%;">ชุดล็อค <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีกุญแจ</button><button type="button" class="chip" data-val="ไม่มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">ไม่มีกุญแจ</button></div><select class="o-slidelock" style="display:none;"><option value="มีกุญแจ" selected>มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
+      h+='<label class="opt" style="width:100%;">ชุดล็อค <div class="chip-group chip-sm"><button type="button" class="chip" data-val="ไม่มี" onclick="chSetChip(this,\'o-slidelock\')">ไม่มีชุดล็อก</button><button type="button" class="chip" data-val="ไม่มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีชุดล็อก</button><button type="button" class="chip on" data-val="มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีชุดล็อก + กุญแจ</button></div><select class="o-slidelock" style="display:none;"><option value="ไม่มี">ไม่มีชุดล็อก</option><option value="ไม่มีกุญแจ">มีชุดล็อก</option><option value="มีกุญแจ" selected>มีชุดล็อก + กุญแจ</option></select></label>';
     }
     // คาดตาราง (sliding-specific block ยังคงมี — เพื่อรักษา readItem branch เดิม)
   }
@@ -4731,7 +4731,7 @@ function buildItemOpts(d){
   if(p.cat==='PC Door'){
     const _itypePc=(d.querySelector('.i-type')||{}).value||'door';
     if(_itypePc==='door'){
-      h+='<label class="opt" style="width:100%;">ชุดล็อค <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีกุญแจ</button><button type="button" class="chip" data-val="ไม่มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">ไม่มีกุญแจ</button></div><select class="o-slidelock" style="display:none;"><option value="มีกุญแจ" selected>มีกุญแจ</option><option value="ไม่มีกุญแจ">ไม่มีกุญแจ</option></select></label>';
+      h+='<label class="opt" style="width:100%;">ชุดล็อค <div class="chip-group chip-sm"><button type="button" class="chip" data-val="ไม่มี" onclick="chSetChip(this,\'o-slidelock\')">ไม่มีชุดล็อก</button><button type="button" class="chip" data-val="ไม่มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีชุดล็อก</button><button type="button" class="chip on" data-val="มีกุญแจ" onclick="chSetChip(this,\'o-slidelock\')">มีชุดล็อก + กุญแจ</button></div><select class="o-slidelock" style="display:none;"><option value="ไม่มี">ไม่มีชุดล็อก</option><option value="ไม่มีกุญแจ">มีชุดล็อก</option><option value="มีกุญแจ" selected>มีชุดล็อก + กุญแจ</option></select></label>';
     }
   }
   // UX (พี่นัท): กล่องฟ้า "จำนวนบาน" สำหรับ บานเปิด/ติดตาย ด้วย — relocation logic ย้ายขึ้นฟอร์มหลัก + ดึง panels เข้ากล่อง
@@ -6147,7 +6147,7 @@ function genQuote(keepNo){
       else { _parts.push('มีคาดตาราง'); }
     }
     // v7A ข้อ2 (18มิ.ย.): ล็อค (สเปค · ไม่คิดเงิน) → รายการงาน เมื่อไม่ใช่ "ไม่มี"
-    if(it.optSel && it.optSel.lock && it.optSel.lock!=='ไม่มี'){ _parts.push('ล็อค: '+(it.optSel.lock==='มีล็อค+กุญแจ'?'มีล็อค + กุญแจ':it.optSel.lock)); }
+    if(it.optSel && it.optSel.lock && it.optSel.lock!=='ไม่มี'){ _parts.push(it.optSel.lock==='มีล็อค+กุญแจ'?'ชุดล็อค + กุญแจ':'ชุดล็อค'); }
     // ข้อ8(G1) FIX: ฝังรางยู priority — ถ้าติ๊กรางยู ไม่ให้หลังเต่าโผล่ (กันขัดแย้ง + กันรางยูหาย)
     var _hasUchannel = !!(it.optSel && it.optSel.uchannel);
     // Pass2-A: ธรณี บานเปิด — หลังเต่าต่อท้าย det (default มาตรฐาน=no-op)
@@ -6544,7 +6544,7 @@ function genQuote(keepNo){
       // ชุดล็อค (ถ้าเลือก)
       const _lockSl = (it.optSel && it.optSel.slidelock) || '';
       // ข้อ7(G1): เมโทรมีกุญแจในตัว → ไม่เขียน "ชุดล็อค (มีกุญแจ)" ซ้ำ
-      if(_lockSl && !(it.optSel && it.optSel.cmech==='metro')) _slLines.push('ชุดล็อค ('+_lockSl+')');
+      if(_lockSl && _lockSl!=='ไม่มี' && !(it.optSel && it.optSel.cmech==='metro')) _slLines.push(_lockSl==='มีกุญแจ'?'ชุดล็อค + กุญแจ':'ชุดล็อค');
       // มือจับ (digi/stainless/cmech — เฉพาะ digihandle)
       if(it.p.digihandle && it.optSel){
         const _dgSl = it.optSel.digi;
@@ -6643,7 +6643,7 @@ function genQuote(keepNo){
       { const _bR=parseFloat(it.optSel&&it.optSel.beamM)||0, _bL=parseFloat(it.optSel&&it.optSel.beamMlen)||0;
         if(_bR>0&&_bL>0) lines.push('เสริมคานซัพพอร์ทรุ่น'+(_bR===2400?'1':_bR===3600?'2':'3')+' ยาว '+_bL+' ม.'); }
       // ข้อ4/7(G1): ชุดล็อค (PC Door ฯลฯ) ลงใบ · เมโทรมีกุญแจในตัว → ไม่เขียนซ้ำ
-      { const _lk=(it.optSel&&it.optSel.slidelock)||''; if(_lk && !(it.optSel&&it.optSel.cmech==='metro')) lines.push('ชุดล็อค ('+_lk+')'); }
+      { const _lk=(it.optSel&&it.optSel.slidelock)||''; if(_lk && _lk!=='ไม่มี' && !(it.optSel&&it.optSel.cmech==='metro')) lines.push(_lk==='มีกุญแจ'?'ชุดล็อค + กุญแจ':'ชุดล็อค'); }
       // ข้อ8/18: "ใช้ภายใน ไม่กันน้ำ" เป็นคำเตือนเซลล์เท่านั้น (มีในชื่อสินค้าตอนเลือกแล้ว) — ไม่ลงรายละเอียดในใบลูกค้า
       det = lines.join('\n');
       if(!det.trim()) det = '-';
@@ -7359,7 +7359,7 @@ window.addEventListener('load',ckRefresh);
     if(pf.handleX) freq+=pick('มือจับ X (ฟรี)','xhandle',[['X-J','X-J'],['XO','XO'],['XT','XT']],o.xhandle,'X-J');
     if(pf.handleSt) freq+='<div class="fl">มือจับสแตนเลส</div><div class="chips"><select onchange="G6RsetOpt2(\'stainless\',this.value)" '+SS+'><option value="">— ไม่ใส่ —</option>'+(typeof HANDLE_STAINLESS!=='undefined'?HANDLE_STAINLESS:[]).map(function(d,i){return '<option value="'+i+'"'+(String(o.stainless)===String(i)?' selected':'')+'>'+d.n+' +'+d.p.toLocaleString()+'</option>';}).join('')+'</select></div>';
     if(pf.handleAwn) freq+='<div class="fl">มือจับกระทุ้ง</div><div class="chips"><button class="c on">มาตรฐาน</button></div>';
-    if(pf.lock) freq+=pick('ชุดล็อก','slidelock',[['ไม่มีล็อค','ไม่มีล็อค'],['ไม่มีกุญแจ','มีล็อค'],['มีกุญแจ','มีล็อค+กุญแจ']],o.slidelock,pf.lockDef||'มีกุญแจ');
+    if(pf.lock) freq+=pick('ชุดล็อค','slidelock',[['ไม่มีล็อค','ไม่มีชุดล็อก'],['ไม่มีกุญแจ','มีชุดล็อก'],['มีกุญแจ','มีชุดล็อก + กุญแจ']],o.slidelock,pf.lockDef||'มีกุญแจ');
     if(pf.glass||pf.framecolor) more+='<div class="fl">สีอลู (เฟรม)</div>'+g6ColorChips(o.colorIdx);  // A2 จุด2 (18มิ.ย.): สีอลูเฟรม COLORS เต็ม + จุดสี · คิดค่าสีพิเศษ colorPrice (default อบขาว ci0 ฟรี)
     if(pf.paint){ more+='<div class="fl">ทาสี / ฉนวน</div><div class="chips"><button class="c'+(o.paintOn?' on':'')+'" onclick="G6RtogOpt(\'paintOn\')">'+(o.paintOn?'ทาสีผนัง ✓':'＋ ทาสีผนัง')+'</button><button class="c'+(o.insul?' on':'')+'" onclick="G6RtogOpt(\'insul\')">'+(o.insul?'ฉนวน +600 ✓':'＋ ฉนวนกันร้อน')+'</button></div>';
       if(o.paintOn) more+='<div class="g6r-rev"><div class="row"><span class="rl">ราคาทาสี</span><input type="number" value="'+(o.wallpaintprice||0)+'" min="0" step="100" oninput="G6RsetOpt(\'wallpaintprice\',this.value)"><span class="u">บาท</span></div></div>'; }
