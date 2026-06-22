@@ -5198,7 +5198,9 @@ function buildItemOpts(d){
       h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
     }
   }
-  if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
+  if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>';
+    // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบ → บรรทัด OPTION ในใบ (ไม่บวกยอด · ไม่แตะ calcUnit) · โมเดล G2 ระแนง: finish×พื้นที่
+    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-rnfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' (+'+fmt(p.fin[k])+'/ตร.ม.)</option>';}).join('')+'</select></div></div>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
   if(p.future_tech){
     // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
     h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
@@ -5546,7 +5548,7 @@ function readItem(d){
     const fcs=d.querySelector('.o-fcsides'); if(fcs)optSel.fcsides=fcs.value; }
   // o-extradesc ถูกลบแล้ว (รวมเข้า i-note) — ไม่ต้อง read อีก
   let finLabel='';
-  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); optSel.finishLbl=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } }
+  if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); optSel.finishLbl=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } const _rfo=d.querySelector('.o-rnfinopt'); if(_rfo&&_rfo.selectedIndex>=0){ const _ro=_rfo.options[_rfo.selectedIndex]; optSel.rnfinopt=_ro.value; optSel.rnfinoptLbl=_ro.getAttribute('data-n')||''; } } // ④: ออปชั่นเทียบราคาสีอบ (display · ไม่บวกยอด)
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
     // G4 wall-sides: อ่านผนัง 3 ด้าน
@@ -6369,6 +6371,7 @@ function genQuote(keepNo){
     let det = '';
     let gateOptNote = ''; // G2-12: OPTION ลายไม้ Golden Teak SMS — ส่งผ่าน note ให้ qrow แสดงบล็อก OPTION (แดง) ไม่ใช่ spec
     let roofOptNote = ''; // ② (23มิ.ย.): OPTION เทียบราคาสีโครงหลังคา (signed diff · noSum · ไม่บวกยอด)
+    let ranaeOptNote = ''; // ④ (23มิ.ย.): OPTION เทียบราคาสีอบ ระแนง G2 (signed diff finish×พื้นที่ · noSum)
     var _g1FB=false; // G1 ใบ 5 บล็อก: ตั้ง true ใน branch บานประตู/หน้าต่าง (slide+else) เท่านั้น → post-process แยก รายการ/รายละเอียด
     if(it.p.fin){
       var _finColor=(it.finLabel||'ไม่อบสี');
@@ -6386,6 +6389,10 @@ function genQuote(keepNo){
         var _rnSpec=['ระแนงอลูมิเนียมกล่อง'+((_finColor==='ไม่อบสี')?' (ไม่อบสี)':' '+_finColorTxt)];
         _rnSpec.push('การจัดวาง: '+((it.optSel&&it.optSel.grDir)||'แนวตั้ง'));
         det=_rnWork.join('\n')+'\n###รายละเอียด###\n'+_rnSpec.join('\n');
+        // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบ → OPTION line · signed diff = (rateNew − rateCur) × พื้นที่ · ไม่บวกยอด
+        if(it.optSel && it.optSel.rnfinoptLbl){ var _toR=parseFloat(it.optSel.rnfinopt)||0, _frR=parseFloat(it.optSel.finish)||0, _toL=it.optSel.rnfinoptLbl;
+          if(_toL!==_finColor){ var _zr=Math.round((_toR-_frR)*(it.r.a||0));
+            ranaeOptNote='OPTION : เปลี่ยนสีอบ จาก'+_finColor+' เป็น'+_toL+' ราคา'+(_zr>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_zr))+' บาท'; } }
       } else {
         det = _finColor;
       }
@@ -6877,7 +6884,7 @@ function genQuote(keepNo){
       });
       if(!_g1Work.length && !_g1Spec.length){ _g1Work=null; _g1Spec=null; }
     }
-    return {prodName, det, work:_g1Work, spec:_g1Spec, gateOptNote, roofOptNote};
+    return {prodName, det, work:_g1Work, spec:_g1Spec, gateOptNote, roofOptNote, ranaeOptNote};
   }
   // Render grouped (ชุดหลายส่วน) — default ประโยคเดียว / qSplit แยกราคา
   window._qGroupKeys = Object.keys(groups);
@@ -7006,7 +7013,7 @@ function genQuote(keepNo){
     let _qDet=d.det;
     if(d.work && d.spec && (d.work.length||d.spec.length)){ _qDet=_workForDet.join('\n')+(_workForDet.length?'\n':'')+'###รายละเอียด###\n'+d.spec.join('\n'); }
     // G2-12: ต่อ gateOptNote (OPTION ลายไม้) เข้า note → qrow render บล็อก OPTION (แดง) ระหว่างรายการ↔รายละเอียด
-    const _itemNote = [it.note, d.gateOptNote, d.roofOptNote].filter(Boolean).join('\n');
+    const _itemNote = [it.note, d.gateOptNote, d.roofOptNote, d.ranaeOptNote].filter(Boolean).join('\n');
     var _qIid=(it.div?it.div.dataset.id:''); if(_qIid && window._hdrOv && window._hdrOv[_qIid]) _qHdr=window._hdrOv[_qIid]; // #8: override หัวข้อ(bold)
     rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, _qIid, qBdHTML(it, _qIid, it.r.sell));
   });
