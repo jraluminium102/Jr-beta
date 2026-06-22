@@ -5282,7 +5282,8 @@ function buildItemOpts(d){
       _lgHost.innerHTML=''; _lgHost.style.display='none';
       if((d.querySelector('.i-group')||{}).value==='1' && box){
         // #B/C/E (22มิ.ย. · ดราฟ z1): ดึงฟิลด์หลัก ทิศเปิด/แบบเปิด/ธรณี ขึ้นบนสุด (ก่อนล็อค) — calcUnit อ่าน class ตำแหน่งไม่กระทบราคา (เหมือนดึงล็อค)
-        ['.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
+        // ลำดับ list = ลำดับโชว์ z1→z2 (แต่ละชนิดมี subset ของตัวเอง) · ดราฟ: shower รูปแบบ→ประเภทประตู→อุปกรณ์→เข้ามุม · เปลือยประตู frametype · บานยก มอเตอร์ · ผนัง โครง→ความหนา · บาน ทิศเปิด/แบบเปิด/ธรณี
+        ['.o-shtype','.o-shdoortype','.o-showerhw','.o-corner','.o-frametype','.o-motor','.o-wallframe','.o-isothick','.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
         if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); }
