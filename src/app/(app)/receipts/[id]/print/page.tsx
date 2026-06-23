@@ -5,6 +5,7 @@ import { baht } from "@/lib/money";
 import type { Receipt } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
+import { PrintLetterhead } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
 
@@ -43,35 +44,16 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
 
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
-        <div className="flex justify-between items-start border-b-4 pb-4" style={{ borderColor: "#b3151d" }}>
-          <div>
-            <div className="text-3xl font-extrabold" style={{ color: "#b3151d" }}>JR <span className="text-gray-700">ALUMINIUM</span></div>
-            <div className="text-xs text-gray-500 mt-1 leading-relaxed">
-              บริษัท เจอาร์ อลูมิเนียม แอนด์ กลาส จำกัด<br />
-              13 พหลโยธิน 25 จตุจักร กรุงเทพฯ 10140 · โทร 02-xxx-9000<br />
-              เลขผู้เสียภาษี 0105xxxxxxxxx
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-xl font-bold" style={{ color: "#7d0f15" }}>ใบเสร็จรับเงิน / ใบกำกับภาษี</div>
-            <div className="text-xs text-gray-400">Receipt / Tax Invoice</div>
-            <table className="text-xs mt-2 ml-auto">
-              <tbody>
-                <tr><td className="text-gray-500 pr-3 text-left">เลขที่</td><td className="font-mono font-semibold">{rc.code}</td></tr>
-                <tr><td className="text-gray-500 pr-3 text-left">วันที่</td><td>{rc.issue_date}</td></tr>
-                {refCode && <tr><td className="text-gray-500 pr-3 text-left">อ้างอิงใบวางบิล</td><td className="font-mono">{refCode}</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="mt-4 text-sm">
-          <div className="text-gray-500 text-xs">ลูกค้า</div>
-          <div className="font-semibold">{c.name}{c.job ? ` · ${c.job}` : ""}</div>
-          <div className="text-xs text-gray-500">{c.address}</div>
-          {c.tax_id && <div className="text-xs text-gray-500">เลขผู้เสียภาษี: {c.tax_id}</div>}
-          <div className="text-xs text-gray-500">ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}</div>
-        </div>
+        <PrintLetterhead
+          docTitle="ใบเสร็จรับเงิน / ใบกำกับภาษี"
+          docSubtitle="Receipt / Tax Invoice"
+          infoRows={[
+            { label: "เลขที่", value: <span className="font-mono font-semibold">{rc.code}</span> },
+            { label: "วันที่", value: rc.issue_date },
+            ...(refCode ? [{ label: "อ้างอิงใบวางบิล", value: <span className="font-mono">{refCode}</span> }] : []),
+          ]}
+          customer={c}
+        />
 
         <table className="w-full text-sm mt-5 border-collapse">
           <thead>
