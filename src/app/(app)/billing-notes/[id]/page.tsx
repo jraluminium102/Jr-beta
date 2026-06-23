@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton } from "./BillingFinanceActions";
+import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
@@ -72,6 +73,9 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               initialInstallments={installments}
               hasAnyPayment={hasAnyPayment}
             />
+          )}
+          {writable && !isCancelled && (
+            <EditDocHeaderModal endpoint={`/api/billing-notes/${bn.id}/header`} snapshot={c} />
           )}
           {canVoid && !isCancelled && (
             <VoidBillingNoteButton billingNoteId={bn.id} />

@@ -6,6 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import VoidReceiptButton from "./VoidReceiptButton";
+import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import type { Receipt } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +60,9 @@ export default async function ReceiptDetail({ params }: { params: { id: string }
           <Link href={`/receipts/${rc.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
+          {writable && !rc.is_voided && (
+            <EditDocHeaderModal endpoint={`/api/receipts/${rc.id}/header`} snapshot={c} requireReason />
+          )}
           {writable && !rc.is_voided && (
             <VoidReceiptButton receiptId={rc.id} />
           )}
