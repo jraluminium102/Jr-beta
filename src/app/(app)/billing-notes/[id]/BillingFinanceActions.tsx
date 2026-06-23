@@ -252,40 +252,52 @@ export function InstallmentEditor({
   billingNoteId,
   total,
   initialInstallments,
-  hasAnyPayment,
 }: {
   billingNoteId: number;
   total: number;
   initialInstallments: InstallmentRow[];
-  hasAnyPayment: boolean;
+  hasAnyPayment?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  // ใช้ rid (stable id) เป็น React key — seq คำนวณจากลำดับตอน render/submit
-  // (เดิม key=seq + re-number ทำให้ key เปลี่ยนตอนลบ → React reconcile เพี้ยน ลบไม่ติด)
+
+  // แยกงวด: จ่ายเต็ม(ล็อก ไม่แตะ) / จ่ายบางส่วน(block) / ยังไม่จ่าย(แก้ได้)
+  const isFullyPaid = (i: InstallmentRow) =>
+    i.status === "paid" || (Number(i.paid_amount) || 0) >= i.amount;
+  const isPartial = (i: InstallmentRow) => {
+    const p = Number(i.paid_amount) || 0;
+    return p > 0 && p < i.amount;
+  };
+  const paidRows = initialInstallments.filter(isFullyPaid).slice().sort((a, b) => a.seq - b.seq);
+  const hasPartial = initialInstallments.some(isPartial);
+  const hasPaid = paidRows.length > 0;
+  const paidSum = round2(paidRows.reduce((s, i) => s + (Number(i.amount) || 0), 0));
+  const maxPaidSeq = paidRows.reduce((m, i) => Math.max(m, i.seq), 0);
+  // ยอดที่งวดที่ยังไม่จ่ายต้องรวมให้ได้ = ยอดบิล − งวดที่จ่ายแล้ว
+  const targetSum = round2(total - paidSum);
+
+  // rid stable key — แก้ได้เฉพาะงวดที่ยังไม่จ่าย
   const ridRef = useRef(0);
   type EditRow = { rid: number; label: string; amount: number; due_date: string | null };
   const [rows, setRows] = useState<EditRow[]>(() =>
-    initialInstallments.map((i) => ({
-      rid: ridRef.current++,
-      label: i.label,
-      amount: i.amount,
-      due_date: i.due_date,
-    }))
+    initialInstallments
+      .filter((i) => !isFullyPaid(i) && !isPartial(i))
+      .sort((a, b) => a.seq - b.seq)
+      .map((i) => ({ rid: ridRef.current++, label: i.label, amount: i.amount, due_date: i.due_date }))
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const sum = round2(rows.reduce((s, r) => s + (Number(r.amount) || 0), 0));
-  const diff = round2(Math.abs(sum - total));
+  const diff = round2(Math.abs(sum - targetSum));
   const sumOk = diff <= 0.01;
 
   function addRow() {
-    // เติมยอดที่เหลือ (total − ผลรวมปัจจุบัน) ให้งวดใหม่เลย → ผลรวมไม่เพี้ยน บันทึกได้ทันที
-    const remaining = round2(total - sum);
+    // เติมยอดที่เหลือ (targetSum − ผลรวมปัจจุบัน) ให้งวดใหม่ → ผลรวมไม่เพี้ยน บันทึกได้ทันที
+    const remaining = round2(targetSum - sum);
     setRows([
       ...rows,
-      { rid: ridRef.current++, label: `งวด ${rows.length + 1}`, amount: remaining > 0 ? remaining : 0, due_date: null },
+      { rid: ridRef.current++, label: `งวด ${maxPaidSeq + rows.length + 1}`, amount: remaining > 0 ? remaining : 0, due_date: null },
     ]);
   }
 
@@ -293,14 +305,14 @@ export function InstallmentEditor({
     setRows(rows.filter((_, i) => i !== idx));
   }
 
-  // เกลี่ยยอดเท่ากันทุกงวด — งวดสุดท้ายดูดเศษ (pattern เดียวกับ suggestInstallments)
+  // เกลี่ยยอดเท่ากันทุกงวด (เฉพาะที่ยังไม่จ่าย) — งวดสุดท้ายดูดเศษ
   function splitEven() {
     const n = rows.length;
     if (n === 0) return;
-    const per = round2(total / n);
+    const per = round2(targetSum / n);
     setRows(rows.map((r, i) => ({
       ...r,
-      amount: i === n - 1 ? round2(total - per * (n - 1)) : per,
+      amount: i === n - 1 ? round2(targetSum - per * (n - 1)) : per,
     })));
     setError("");
   }
@@ -310,9 +322,9 @@ export function InstallmentEditor({
     const n = rows.length;
     if (n === 0) return;
     const others = round2(rows.slice(0, n - 1).reduce((s, r) => s + (Number(r.amount) || 0), 0));
-    const last = round2(total - others);
+    const last = round2(targetSum - others);
     if (last <= 0) {
-      setError(`งวดอื่นรวม ${baht(others)} เกิน/เท่ายอดบิลแล้ว — ลดยอดงวดอื่นก่อน`);
+      setError(`งวดอื่นรวม ${baht(others)} เกิน/เท่ายอดที่เหลือแล้ว — ลดยอดงวดอื่นก่อน`);
       return;
     }
     setRows(rows.map((r, i) => (i === n - 1 ? { ...r, amount: last } : r)));
@@ -325,20 +337,25 @@ export function InstallmentEditor({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!sumOk) { setError(`ผลรวม ${baht(sum)} ต้องตรงกับยอดบิล ${baht(total)}`); return; }
+    if (!sumOk) {
+      setError(hasPaid
+        ? `ผลรวมงวดที่เหลือ ${baht(sum)} ต้องเท่ากับ ${baht(targetSum)} (ยอดบิล − ที่จ่ายแล้ว)`
+        : `ผลรวม ${baht(sum)} ต้องตรงกับยอดบิล ${baht(total)}`);
+      return;
+    }
     setBusy(true);
     setError("");
-    const res = await fetch(`/api/billing-notes/${billingNoteId}/installments`, {
+    // มีงวดจ่ายแล้ว → endpoint แก้เฉพาะงวดยังไม่จ่าย (เก็บงวด paid ไว้); ไม่มี → replace ทั้งชุด
+    const endpoint = hasPaid
+      ? `/api/billing-notes/${billingNoteId}/installments/unpaid`
+      : `/api/billing-notes/${billingNoteId}/installments`;
+    const payload = hasPaid
+      ? { installments: rows.map((r) => ({ label: r.label, amount: Number(r.amount) || 0, due_date: r.due_date ?? null })) }
+      : { installments: rows.map((r, idx) => ({ seq: idx + 1, label: r.label, amount: Number(r.amount) || 0, due_date: r.due_date ?? null })) };
+    const res = await fetch(endpoint, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        installments: rows.map((r, idx) => ({
-          seq: idx + 1,
-          label: r.label,
-          amount: Number(r.amount) || 0,
-          due_date: r.due_date ?? null,
-        })),
-      }),
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
     setBusy(false);
@@ -358,8 +375,8 @@ export function InstallmentEditor({
     );
   }
 
-  // บิลที่มีงวดชำระแล้ว → แก้งวดไม่ได้ (immutability เอกสารการเงิน) — โชว์ข้อความ + ชี้ไป void
-  if (hasAnyPayment) {
+  // งวดจ่ายบางส่วน → block (re-split งวดค้างจ่ายต้องคนตัดสิน) — ชี้ไป void
+  if (hasPartial) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แก้ไขงวดชำระ">
         <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
@@ -373,7 +390,7 @@ export function InstallmentEditor({
             </button>
           </div>
           <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-            ใบวางบิลนี้มีงวดที่ชำระแล้ว — <b>ปรับงวดไม่ได้</b> หากต้องแก้ ให้กด &quot;ยกเลิกใบวางบิล&quot; แล้วออกใหม่จากใบเสนอราคา
+            มีงวดที่จ่ายบางส่วน (ยังไม่เต็มงวด) — <b>ปรับงวดไม่ได้</b> ต้องเก็บงวดนั้นให้ครบ หรือ &quot;ยกเลิกใบวางบิล&quot; แล้วออกใหม่
           </div>
           <button type="button" onClick={() => setOpen(false)}
             className="press w-full border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
@@ -405,17 +422,40 @@ export function InstallmentEditor({
           </button>
         </div>
 
-        {/* ตัวเตือนผลรวม */}
+        {/* ตัวเตือนผลรวม — ปรับข้อความตามว่ามีงวดจ่ายแล้วไหม */}
         <div className={`text-sm px-3 py-2 rounded-xl border ${sumOk ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"}`}>
-          ผลรวมงวด: <b className="tabular-nums">{baht(sum)}</b>
-          {" "}/ ยอดบิล: <b className="tabular-nums">{baht(total)}</b>
+          {hasPaid ? (
+            <>
+              จ่ายแล้ว <b className="tabular-nums">{baht(paidSum)}</b>
+              {" · "}งวดที่เหลือต้องรวม <b className="tabular-nums">{baht(targetSum)}</b>
+              {" "}(ตอนนี้ <b className="tabular-nums">{baht(sum)}</b>)
+            </>
+          ) : (
+            <>
+              ผลรวมงวด: <b className="tabular-nums">{baht(sum)}</b>
+              {" "}/ ยอดบิล: <b className="tabular-nums">{baht(total)}</b>
+            </>
+          )}
           {!sumOk && <span className="ml-2">ต่างกัน {baht(diff)}</span>}
         </div>
 
+        {/* งวดที่จ่ายแล้ว (ล็อก แก้ไม่ได้) */}
+        {paidRows.map((p) => (
+          <div key={`paid-${p.id}`} className="grid grid-cols-12 gap-2 items-center bg-emerald-50/60 border border-emerald-100 rounded-lg px-1 py-1.5">
+            <div className="col-span-1 text-xs text-gray-400 text-center">{p.seq}</div>
+            <div className="col-span-4 text-sm text-ink-2 truncate px-1">{p.label}</div>
+            <div className="col-span-3 text-sm text-right tabular-nums font-medium px-1">฿{baht(p.amount)}</div>
+            <div className="col-span-4 text-xs text-emerald-700 font-medium text-center inline-flex items-center justify-center gap-1">
+              <Icon name="check" size={13} /> ชำระแล้ว
+            </div>
+          </div>
+        ))}
+
+        {/* งวดที่ยังไม่จ่าย (แก้ได้) */}
         <div className="space-y-2">
           {rows.map((row, idx) => (
             <div key={row.rid} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-1 text-xs text-gray-400 text-center">{idx + 1}</div>
+              <div className="col-span-1 text-xs text-gray-400 text-center">{maxPaidSeq + idx + 1}</div>
               <input
                 type="text"
                 value={row.label}
@@ -439,13 +479,16 @@ export function InstallmentEditor({
               <button
                 type="button"
                 onClick={() => removeRow(idx)}
-                aria-label={`ลบงวดที่ ${idx + 1}`}
+                aria-label={`ลบงวดที่ ${maxPaidSeq + idx + 1}`}
                 className="col-span-1 press w-9 h-9 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2"
               >
                 <Icon name="trash" size={16} />
               </button>
             </div>
           ))}
+          {rows.length === 0 && (
+            <p className="text-xs text-ink-3 text-center py-2">— ไม่มีงวดที่ยังไม่จ่าย (จ่ายครบยอดแล้ว) —</p>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -461,7 +504,7 @@ export function InstallmentEditor({
             onClick={splitEven}
             disabled={rows.length === 0}
             className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-brand-dark glass-soft hover:bg-brand/5 min-h-[44px] disabled:opacity-40 focus:outline-none focus-visible:ring-2"
-            title="แบ่งยอดบิลเท่ากันทุกงวด (งวดสุดท้ายดูดเศษ)"
+            title="แบ่งยอดที่เหลือเท่ากันทุกงวด (งวดสุดท้ายดูดเศษ)"
           >
             <Icon name="clipboard" size={15} /> เกลี่ยเท่ากัน
           </button>
@@ -470,7 +513,7 @@ export function InstallmentEditor({
             onClick={fillLast}
             disabled={rows.length === 0}
             className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-brand-dark glass-soft hover:bg-brand/5 min-h-[44px] disabled:opacity-40 focus:outline-none focus-visible:ring-2"
-            title="เติมส่วนต่างที่เหลือลงงวดสุดท้ายให้ครบยอดบิล"
+            title="เติมส่วนต่างที่เหลือลงงวดสุดท้ายให้ครบยอด"
           >
             <Icon name="plus" size={15} /> ใส่ส่วนต่างงวดสุดท้าย
           </button>
