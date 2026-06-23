@@ -3244,7 +3244,7 @@ function groupGHOpts(ch){
   var CATS = isRoof ? [
     // ดราฟ G3 newstyle (23มิ.ย. · ยุบ 6→3 กล่องตายตัว ตามดราฟ · ตัดลาก/ตัดราคาหัวกล่อง · ชิปสวยคงเดิม): ①สเปกหลัก+รางน้ำ ②ออปชั่นหลัก ③เสริม
     {key:'① สเปกหลัก · รางน้ำ', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','ชนิดฟิล์ม','ความหนากระจก','เทียบราคาสีโครง','แป ','โครงสร้าง','ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
-    {key:'② ออปชั่นหลัก (เลื่อน · ผสม · ของเสริม)', open:false, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์','ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2','เสาแผง','คานเหล็กถัก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
+    {key:'② ออปชั่นหลัก (เลื่อน · ผสม · เหล็ก · ฝ้า)', open:false, sub:{key:'🏗️ โครงเหล็กเสริม · ของเสริมหลังคา', kw:['เสาแผง','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์','ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2','ฝ้า','เสาแผง','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
     {key:'③ ออปชั่นเสริม · หมายเหตุ', open:false, kw:[]} // catch-all: งานพิเศษ · รื้อของเดิม
   ] : [
     // ALLG-v2 (มติพี่นัท): รวม 7 หมวด → 4 (+ตู้) · array = ลำดับ match (เฉพาะเจาะจงก่อน) · disp = ลำดับแสดง
@@ -3296,7 +3296,11 @@ function groupGHOpts(ch){
     sm.textContent=c.key+' ('+buckets[i].length+')';
     if(c.pk){ var _pp=document.createElement('span'); _pp.className='gh-cat-price'; _pp.setAttribute('data-pk',c.pk); _pp.style.cssText='margin-left:auto;font-size:12px;color:#B3151D;font-weight:700;'; _pp.textContent='฿0'; sm.appendChild(_pp); } // ธงG: ราคารวมกล่อง
     det.appendChild(sm);
-    buckets[i].forEach(function(k){ det.appendChild(k); });
+    if(c.sub){ // ดราฟ G3 (23มิ.ย.): ของเสริม → การ์ดพับซ้อนในกล่อง (กันแน่น)
+      var _subI=[],_dirI=[]; buckets[i].forEach(function(k){ var _t=(k.textContent||'')+(k.className||''); (c.sub.kw.some(function(w){return _t.indexOf(w)>=0;})?_subI:_dirI).push(k); });
+      _dirI.forEach(function(k){ det.appendChild(k); });
+      if(_subI.length){ var _sd=document.createElement('details'); _sd.style.cssText='margin:6px 0;border:1px dashed #d9c4c4;border-radius:6px;padding:0 8px;background:#fffdfa;'; var _ss=document.createElement('summary'); _ss.style.cssText='font-weight:700;color:#92400E;font-size:12px;cursor:pointer;padding:6px 2px;min-height:40px;display:flex;align-items:center;'; _ss.textContent=c.sub.key+' ('+_subI.length+')'; _sd.appendChild(_ss); _subI.forEach(function(k){ _sd.appendChild(k); }); det.appendChild(_sd); }
+    } else { buckets[i].forEach(function(k){ det.appendChild(k); }); }
     box.appendChild(det);
   });
 }
@@ -4922,11 +4926,12 @@ function buildItemOpts(d){
       h+='<label class="opt" style="width:100%;">สีชินโคไลท์ <span style="font-weight:400;color:var(--muted);font-size:11px;">(ชื่อเต็ม+รหัสลงใบ)</span> <select class="o-roofcolor" style="display:none;" onchange="calcQuote();">'+_shPairs.map(function(_p,_i){return '<option value="'+_p[0]+'"'+(_i===0?' selected':'')+'>'+_p[1]+'</option>';}).join('')+'</select>'+rfChipsSw('o-roofcolor',_shTri,'')+'</label>';
     }
     // ② (23มิ.ย.): สีโครงอลู — ออปชั่นเทียบราคา (เปลี่ยนสีโครงเป็น… → บรรทัด OPTION ในใบ · ไม่บวกยอด · ไม่แตะ calcUnit/.i-color) · L1=สีทั้งใบ/L2real=สีอลูรายการ มีอยู่แล้ว
-    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;">';
-    h+='<b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีโครงอลู</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span>';
-    h+='<div style="margin-top:6px;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="display:none;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+rfChips('o-rfcoopt',[['','— ไม่เทียบ —']].concat(COLORS.map(function(c,i){return i>=2?[String(i),(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()]:null;}).filter(Boolean)),'')+'</div>';
-    h+='<div style="margin-top:6px;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="display:none;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select>'+rfChips('o-rfmatopt',[['','— ไม่เทียบ —']].concat(PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return [q.id,q.name.replace(/^หลังคา\s*/,'')];})),'')+'</div>';
-    h+='</div>';
+    h+='<details class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:0 10px;">';
+    h+='<summary style="font-size:12.5px;font-weight:700;color:#1E40AF;cursor:pointer;padding:9px 2px;min-height:42px;display:flex;align-items:center;">🎨 ออปชั่นเทียบราคาสีโครง / วัสดุมุง <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:6px;">(กดดู · ไม่บวกยอด)</span></summary>';
+    h+='<div style="padding:2px 0 11px;display:flex;flex-direction:column;gap:9px;">';
+    h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select></label>';
+    h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select></label>';
+    h+='</div></details>';
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
     h+='<div class="opt" style="width:100%;background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:8px 10px;">';
