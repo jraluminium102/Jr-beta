@@ -316,6 +316,7 @@
   .chip-grid .chip{ width:100%; min-height:38px; padding:5px 4px; font-size:12px; line-height:1.2; word-break:keep-all; overflow-wrap:anywhere; } /* คิว B รอบ2: compact (เดิม 44) */
   @media(max-width:560px){ .chip-grid{ grid-template-columns:repeat(3,1fr); } .chip-grid.cg4,.chip-grid.cg2{ grid-template-columns:repeat(2,1fr); } }
   .field-label{ display:block; font-size:13px; color:var(--muted); margin-bottom:2px; }
+  .g1-zonehdr{ font-size:11px; font-weight:700; color:#9CA3AF; margin:9px 0 2px; letter-spacing:.3px; }
 </style>
 </head>
 <body>
@@ -5032,7 +5033,7 @@ function buildItemOpts(d){
       if(_awnOK) _hsub+='<div class="hsub hsub-cmechawn" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div style="font-size:11px;color:#666;margin-bottom:4px;">ⓘ บานกระทุ้งคู่/หลายบาน: ใส่ "จำนวนบานทั้งหมด" ด้านบน</div><select class="o-cmechawn" style="height:40px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="black">สีดำ +600</option><option value="white">สีขาว +600</option><option value="silver">Silver ชุบ +840</option><option value="champagne">Champagne ชุบ +840</option><option value="gold">Gold ชุบ +840</option><option value="bronze">Bronze ชุบ +840</option><option value="copper">Copper ชุบ +840</option></select></div>';
       // sub: รุ่นอื่น (กรอกเอง)
       if(p.digihandle) _hsub+='<div class="hsub hsub-other" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><input type="text" class="o-handlename" placeholder="ชื่อรุ่น เช่น HD182 / Berin" style="height:40px;width:100%;max-width:220px;margin-bottom:6px;" oninput="calcQuote()"> ราคา <input type="number" class="o-handleprice" min="0" step="100" value="0" style="width:110px;height:40px;" oninput="calcQuote()"> บาท</div>';
-      h+='<label class="opt" style="width:100%;"><b>มือจับ</b><div class="handle-brand-wrap" style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:10px 12px;margin-top:4px;"><div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:8px;">ติ๊กแบรนด์ที่ใช้ (ติ๊กได้หลายอัน · ยังไม่ติ๊ก = ซ่อนทุก sub)</div><div class="chip-group chip-sm">'+_btoggle+'</div>'+_hsub+'</div></label>';
+      h+='<label class="opt" style="width:100%;"><b>มือจับ</b><div class="handle-brand-wrap" style="margin-top:4px;"><div class="chip-group chip-sm">'+_btoggle+'</div>'+_hsub+'</div></label>';
     }
   }
   // R3.2: ตารางเต็มบาน 5,000 (เฉพาะ โซลิด วัน/ทู)
@@ -5276,8 +5277,7 @@ function buildItemOpts(d){
     const _itypeMosq = (d.querySelector('.i-type')||{}).value || 'door';
     // ก้อน4+5(G1 formux): รวบมุ้ง 4 ช่อง → กล่องเดียว (โผล่/ซ่อนตาม o-mosq) + ชิปลักษณะการเปิด (imp21/imp23)
     h+='<label class="opt" style="width:100%;"><b>มุ้ง</b> <span style="font-size:11px;color:#1565C0;">(ราคาคิดตามพื้นที่บาน)</span>';
-    h+='<div class="mosq-wrap" style="background:#E3F2FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 12px;margin-top:4px;">';
-    h+='<div style="font-size:11px;font-weight:700;color:#1565C0;margin-bottom:8px;">เลือกชนิดมุ้ง — "ไม่ใส่" = ซ่อนรายละเอียดทั้งหมด</div>';
+    h+='<div class="mosq-wrap" style="margin-top:4px;">';
     h+='<select class="o-mosq" style="height:44px;width:100%;max-width:300px;" onchange="mosqGroupToggle(this); calcQuote();"><option value="">ไม่ใส่</option>'+(function(){
       // B5: จัด o-mosq 3 กลุ่ม (เฟรม/จีบ/ม้วน) ด้วย optgroup — option value เดิม (engine ไม่กระทบ) · กรอง itype ก่อน
       var avail=MOSQUITO_SCREENS.filter(function(m){return !m.itype||m.itype==='both'||m.itype===_itypeMosq;});
@@ -5733,7 +5733,7 @@ function buildItemOpts(d){
         ['.o-shtype','.o-shdoortype','.o-showerhw','.o-corner','.o-frametype','.o-motor','.o-wallframe','.o-isothick','.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
-        if(_lockSec){ _lockSec.open=true; _lgHost.appendChild(_lockSec); }
+        if(_lockSec){ _lockSec.open=true; var _sm=_lockSec.querySelector('summary'); if(_sm) _sm.style.display='none'; var _zh=document.createElement('div'); _zh.className='g1-zonehdr'; _zh.textContent='โซน z2 — ใช้บ่อย'; _lgHost.appendChild(_zh); _lgHost.appendChild(_lockSec); }
         // #มือจับ (22มิ.ย. · ดราฟ z1): แทรกมือจับ "หลังชุดล็อค ก่อนมุ้ง" ในกล่องล็อค (จาก oc-block) — calcUnit อ่าน .o-cmech/.o-digi/.o-stainless ตาม class · ตำแหน่งไม่กระทบราคา
         var _hbwL=d.querySelector('.handle-brand-wrap'); var _hlL=_hbwL?(_hbwL.closest('label')||_hbwL.parentNode):null;
         if(_hlL){
