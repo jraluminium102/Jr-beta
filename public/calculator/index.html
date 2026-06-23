@@ -5287,6 +5287,7 @@ function buildItemOpts(d){
     if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
     if(_cgr) _cgr.style.display=_isG1?'none':(_showCw||_showGw)?'flex':'none';
     if(_rareS) _rareS.style.display=(_showCw||_showGw)?'':'none';
+    if(!_isG1){ var _rs9=d.querySelector('.g1-rare-section'); if(_rs9){ _rs9.innerHTML=''; _rs9.style.display='none'; } } // บั๊ก: กล่อง #9 (สี/กระจก G1) ค้างจาก render ตอนเป็น G1 → สลับไปหลังคา/กลุ่มอื่นแล้วยังโชว์ "กระจก" ผิดงาน · ล้างทิ้ง (cw/gw ย้ายไป .cg-row แล้วด้านบน)
     // #9: คืนสถานะ "ใช้สีต่าง" หลัง rebuild (dataset.coOverride คงบน .ch) — body โชว์/ซ่อน + ปุ่ม + drill
     if(_isG1 && _rareS){ var _ov=d.dataset.coOverride==='1';
       if(_rareDest) _rareDest.style.display=_ov?'flex':'none';
