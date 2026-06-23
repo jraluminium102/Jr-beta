@@ -4960,7 +4960,7 @@ function buildItemOpts(d){
   if(p.cat==='บานเฟี้ยม'){
     h+='<label class="opt fold-opt-row" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
     // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม + v7B-ปรับ(19มิ.ย.): แยกกลาง → โชว์ช่องซ้าย/ขวา
-    h+='<label class="opt fold-opt-row" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs){_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';if(this.value===\'เปิดแยกกลาง\'){var _d2=this.closest(\'.ch\');var _fl2=_d2&&_d2.querySelector(\'.o-fleft\');if(_fl2){_fl2.value=Math.floor((parseInt((_d2.querySelector(\'.i-panels\')||{value:\'2\'}).value)||2)/2)||1;fullFoldSync(_fl2);}}}"><option value="" selected>— ระบุ —</option><option value="เปิดซ้าย">เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'')+'</label>';
+    h+='<label class="opt fold-opt-row" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs){_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';if(this.value===\'เปิดแยกกลาง\'){var _d2=this.closest(\'.ch\');var _fl2=_d2&&_d2.querySelector(\'.o-fleft\');if(_fl2){_fl2.value=Math.floor((parseInt((_d2.querySelector(\'.i-panels\')||{value:\'2\'}).value)||2)/2)||1;fullFoldSync(_fl2);}}}"><option value="เปิดซ้าย" selected>เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'เปิดซ้าย')+'</label>';
     h+='<div class="fold-split" style="display:none;align-items:center;gap:10px;margin:0 0 6px;padding:6px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;flex-wrap:wrap;">ซ้าย <input class="o-fleft" type="number" min="1" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" oninput="fullFoldSync(this)"> ช่อง &nbsp;/ ขวา <span class="o-fright" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:30px;border:1px solid #e5e7eb;border-radius:7px;font-weight:700;color:#6B7280;background:#f9fafb;">1</span> ช่อง <span class="o-fold-total" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#065F46;">รวม 2/2 ✓</span></div>';
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
@@ -5586,8 +5586,10 @@ function buildItemOpts(d){
   // บันทึกค่าสี/กระจกปัจจุบันก่อน innerHTML= (กัน node หาย เมื่อ cw/gw อยู่ใน box อยู่แล้ว)
   var _savedColorVal=(cw&&cw.querySelector('.i-color'))?cw.querySelector('.i-color').value:'0';
   var _savedGlassVal=(gw&&gw.querySelector('.i-glass'))?gw.querySelector('.i-glass').value:'0';
-  var _showCw=!!(cw&&(p.cabinet||!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'))); // UX-ALL G5: มุ้งไม่มีสีอลู · G4: cabinet โชว์สีได้ (calc colorPlus มีอยู่แล้ว L1050 · เดิม areaOnly ซ่อน→ci=0→ไม่บวกเงิน = บั๊กการเงิน)
+  var _showCw=!!(cw&&(p.cabinet||!(areaOnly||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'||p.id==='shower'))); // UX-ALL G5: มุ้งไม่มีสีอลู · G4: cabinet โชว์สีได้ · จุด1(23มิ.ย.): shower มีสีอุปกรณ์เองแล้ว → ซ่อน colorWrap (เหลือแค่กระจก)
   var _showGw=!!(gw&&!(areaOnly||p.zipscreen||p.cat==='มุ้ง')); // UX-ALL G5: มุ้งไม่มีกระจก
+  // จุด2(23มิ.ย.): solid_door — โชว์กระจกเฉพาะเมื่อมีช่องแสง (o-solidlight > 0) · ยังไม่ render จึงต้องดึงจาก h string ไม่ได้ → ใช้ค่า 0 ตาม default ("ทึบล้วน")
+  if(p.solid_door){ _showGw=false; }
   box.innerHTML=h;
   // บานเฟี้ยม: ย้าย fold opts ออกนอก optbox ให้โผล่ทันที (ไม่ต้อง expand details)
   if(p.cat==='บานเฟี้ยม'){ var _ob=d.querySelector('.optbox'); if(_ob) box.querySelectorAll('.fold-opt-row,.fold-split').forEach(function(_f){ _ob.parentNode.insertBefore(_f,_ob); }); }
@@ -5769,6 +5771,15 @@ function buildItemOpts(d){
   const _itype = d.querySelector('.i-type');
   if(_itype){ _itype.addEventListener('change', function(){ buildItemOpts(d); calcQuote(); }); }
   if(p.cabinet){ const _ct=box.querySelector('.o-cabtype'); if(_ct)_ct.addEventListener('change',()=>{ const ih=d.querySelector('.i-h'), dp=box.querySelector('.o-depth'); if(_ct.value==='shoe'){ if(ih)ih.value=2.0; if(dp)dp.value=0.4; } else { if(ih)ih.value=2.4; if(dp)dp.value=0.6; } calcQuote(); }); }
+  // จุด2(23มิ.ย.): solid_door — listener o-solidlight → toggle glassWrap dynamic
+  if(p.solid_door){
+    var _slInput=box.querySelector('.o-solidlight');
+    if(_slInput&&gw){
+      var _toggleSolidGw=function(){ var _has=(parseFloat(_slInput.value)||0)>0; gw.style.display=_has?'':'none'; };
+      _slInput.addEventListener('input',_toggleSolidGw);
+      _toggleSolidGw(); // init (default 0 → ซ่อน)
+    }
+  }
 }
 function readItem(d){
   // HANDOFF-G6 A4: ไอเทมกลุ่ม 6 = ห้องต่อเติม (paged builder) → ราคา = roomTotal (lumpsum)
@@ -6513,7 +6524,10 @@ function refreshItype(d){
   if(ITYPE_NA.indexOf(p.cat)>=0){ wrap.style.display='none'; return; }
   wrap.style.display='';
   const locked=itypeFor(p);
-  if(locked){ sel.value=locked; sel.disabled=true; sel.style.opacity='0.6'; }
+  if(locked){ sel.value=locked; sel.disabled=true; sel.style.opacity='0.6';
+    // จุด3 (23มิ.ย.): sync chip ON ตาม select value — awning default=window ต้องให้ chip "หน้าต่าง" ON
+    var _itSeg=sel.closest('.itype-seg'); if(_itSeg){ _itSeg.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on',c.dataset.val===locked); }); }
+  }
   else { sel.disabled=false; sel.style.opacity='1'; }
   const optsBox=d.querySelector('.i-opts'); if(!optsBox) return;
   const isWin=(sel.value==='window');
