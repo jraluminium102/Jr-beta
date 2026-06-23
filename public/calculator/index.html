@@ -1853,7 +1853,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       msgs.push('มอเตอร์ระแนง 38.1 (D='+D+' ม. ทิศ'+(_bgDir==='v'?'ตั้ง':'นอน')+') → '+motorCount+' ตัว = '+fmt(motorCost));
     }
   }
-  if(p.digihandle&&optSel&&optSel.stainless!==''&&optSel.stainless!=null){ const st=HANDLE_STAINLESS[parseInt(optSel.stainless)]; if(st){ opt+=st.p; msgs.push('มือจับสแตนอร่าม '+st.n); } }
+  if(p.digihandle&&optSel&&optSel.stainless!==''&&optSel.stainless!=null){ const st=HANDLE_STAINLESS[parseInt(optSel.stainless)]; if(st){ opt+=st.p; const _stCol=(optSel.stainlessColor||'silver'); const _stOtherP=parseFloat(optSel.stainlessOtherPrice)||0; const _stOtherN=(optSel.stainlessOtherName||'').trim(); if(_stCol==='other'&&_stOtherP>0){ opt+=_stOtherP; msgs.push('มือจับสแตนเลส'+(_stOtherN?_stOtherN:'สีอื่น')+' '+st.n); } else { msgs.push('มือจับสแตนเลสสีเงิน '+st.n); } } } // เฟส B: แก้ชื่อ + บวกราคาสีอื่น
   // P3-3: มือจับรุ่นอื่น — เซลล์กรอกชื่อ+ราคาเอง (เช่น HD182/Berin ที่ยังไม่มีในลิสต์)
   if(p.digihandle&&optSel){ const _hp=parseFloat(optSel.handleprice)||0; if(_hp>0){ opt+=_hp; msgs.push('มือจับ '+((optSel.handlename||'').trim()||'รุ่นอื่น')+' +'+fmt(_hp)); } }
   if(p.motor&&optSel){ if(optSel.motor==='80'){ if(a<=3.5)opt+=18000; else msgs.push('มอเตอร์80กก. ใช้ได้ ≤3.5 ตร.ม.'); }
@@ -4822,7 +4822,7 @@ function buildItemOpts(d){
       // toggle แบรนด์ (เฉพาะที่ใช้ได้กับสินค้านี้)
       var _btoggle='';
       if(_cmechOK) _btoggle+='<button type="button" class="chip" data-hbrand="cmech" onclick="toggleHandleBrand(this)">Cmech</button>';
-      if(p.digihandle) _btoggle+='<button type="button" class="chip" data-hbrand="digital" onclick="toggleHandleBrand(this)">ดิจิตอล</button><button type="button" class="chip" data-hbrand="stainless" onclick="toggleHandleBrand(this)">สแตนอร่าม</button>';
+      if(p.digihandle) _btoggle+='<button type="button" class="chip" data-hbrand="digital" onclick="toggleHandleBrand(this)">ดิจิตอล</button><button type="button" class="chip" data-hbrand="stainless" onclick="toggleHandleBrand(this)">สแตนเลสสีเงิน</button>';
       if(_xOK) _btoggle+='<button type="button" class="chip" data-hbrand="xseries" onclick="toggleHandleBrand(this)">X-series (ฟรี)</button>';
       if(_awnOK) _btoggle+='<button type="button" class="chip" data-hbrand="cmechawn" onclick="toggleHandleBrand(this)">Cmech หลบมุ้ง</button>';
       if(p.digihandle) _btoggle+='<button type="button" class="chip" data-hbrand="other" onclick="toggleHandleBrand(this)">รุ่นอื่น ✎</button>';
@@ -4830,8 +4830,8 @@ function buildItemOpts(d){
       if(_cmechOK) _hsub+='<div class="hsub hsub-cmech" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="embed" onclick="cmechTypePick(this)">ฝัง</button><button type="button" class="chip" data-val="metro" onclick="cmechTypePick(this)">เมโทร</button></div><select class="o-cmech" style="display:none;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="embed">ฝัง</option><option value="metro">เมโทร</option></select><select class="o-cmechcolor" style="height:40px;margin-top:8px;" onchange="calcQuote();"><option value="black">สีดำ</option><option value="white">สีขาว</option><option value="silver">Silver (ชุบ)</option><option value="champagne">Champagne (ชุบ)</option><option value="gold">Gold (ชุบ)</option><option value="bronze">Bronze (ชุบ)</option><option value="copper">Copper (ชุบ)</option></select></div>';
       // sub: ดิจิตอล
       if(p.digihandle) _hsub+='<div class="hsub hsub-digital" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><select class="o-digi" style="height:44px;width:100%;max-width:260px;" onchange="calcQuote();"><option value="">ไม่ใส่</option>'+DIGI.map(function(d,i){return '<option value="'+i+'">'+d.n+' +'+fmt(d.p)+'</option>';}).join('')+'</select></div>';
-      // sub: สแตนอร่าม
-      if(p.digihandle) _hsub+='<div class="hsub hsub-stainless" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><select class="o-stainless" style="height:44px;width:100%;max-width:260px;" onchange="calcQuote();"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select></div>';
+      // sub: สแตนเลสสีเงิน (เฟส B: สีเงิน=default ไม่บวก · สีอื่น=กรอกราคาเอง)
+      if(p.digihandle) _hsub+='<div class="hsub hsub-stainless" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><select class="o-stainless" style="height:44px;width:100%;max-width:260px;" onchange="calcQuote();"><option value="">ไม่ใส่</option>'+HANDLE_STAINLESS.map(function(s,i){return '<option value="'+i+'">'+s.n+' +'+fmt(s.p)+'</option>';}).join('')+'</select>'+'<div style="margin-top:8px;font-size:12px;font-weight:700;color:#374151;">สี</div><div class="chip-group chip-sm" style="margin-top:4px;"><button type="button" class="chip on o-stcolor-btn" data-stcolor="silver" onclick="(function(b){b.closest(\'.hsub-stainless\').querySelectorAll(\'.o-stcolor-btn\').forEach(function(x){x.classList.remove(\'on\');});b.classList.add(\'on\');var inp=b.closest(\'.hsub-stainless\').querySelector(\'.o-stainless-color\');if(inp)inp.value=b.dataset.stcolor;var pw=b.closest(\'.hsub-stainless\').querySelector(\'.o-stainless-otherprice-wrap\');if(pw)pw.style.display=\'none\';calcQuote();})(this)">สีเงิน (ปกติ)</button><button type="button" class="chip o-stcolor-btn" data-stcolor="other" onclick="(function(b){b.closest(\'.hsub-stainless\').querySelectorAll(\'.o-stcolor-btn\').forEach(function(x){x.classList.remove(\'on\');});b.classList.add(\'on\');var inp=b.closest(\'.hsub-stainless\').querySelector(\'.o-stainless-color\');if(inp)inp.value=b.dataset.stcolor;var pw=b.closest(\'.hsub-stainless\').querySelector(\'.o-stainless-otherprice-wrap\');if(pw)pw.style.display=\'\';calcQuote();})(this)">สีอื่น (ดำ/ทอง)</button></div><input type="hidden" class="o-stainless-color" value="silver"><div class="o-stainless-otherprice-wrap" style="display:none;margin-top:8px;"><label style="font-size:12px;color:#374151;">ชื่อสี <input type="text" class="o-stainless-othername" placeholder="เช่น ดำ, ทอง" style="width:100px;height:32px;margin-left:4px;" oninput="calcQuote()"> ราคาเพิ่ม <input type="number" class="o-stainless-otherprice" min="0" step="100" value="0" style="width:90px;height:32px;margin-left:4px;" oninput="calcQuote()"> บาท</label></div></div>';
       // sub: X-series (ฟรี) — o-xhandle dropdown เดิม
       if(_xOK) _hsub+='<div class="hsub hsub-xseries" style="display:none;margin-top:10px;border-top:1px solid #FFD54F;padding-top:10px;"><div style="font-size:12px;color:#065F46;margin-bottom:4px;">มือจับ X-series (ฟรี · ไม่บวกราคา)</div><select class="o-xhandle" style="height:40px;" onchange="calcQuote();"><option value="">ไม่ใส่</option><option value="X-J">X-J</option><option value="XO">XO (ห้ามล็อค/กุญแจ)</option><option value="XT">XT (ห้ามล็อค/กุญแจ)</option></select></div>';
       // sub: Cmech หลบมุ้ง (บานกระทุ้ง) — o-cmechawn dropdown เดิม
@@ -4860,6 +4860,8 @@ function buildItemOpts(d){
     h+='<label class="opt" style="width:100%;">🔌 งานสายไฟมอเตอร์ <input type="text" class="o-motorwire" placeholder="รายละเอียด เช่น เดินสายไฟจากตู้ควบคุม" style="width:auto;min-width:190px;height:32px;" oninput="calcQuote();"> <input type="number" class="o-motorwireprice" min="0" step="100" value="0" placeholder="ราคา" style="width:90px;height:32px;" oninput="calcQuote();"> บาท <span style="font-size:11px;color:#666;">(กรอกราคาเอง)</span></label>';
   }
   if(p.motor){ h+='<label class="opt" style="width:100%;">มอเตอร์ <select class="o-motor" style="display:none;"><option value="0">ไม่มี</option><option value="80">80กก.+18,000</option><option value="300">300กก.+28,000</option></select>'+rfChips('o-motor',[['0','ไม่มี'],['80','80กก. +18,000'],['300','300กก. +28,000']],'0')+'</label>'; }
+  // เฟส A: บานยก — ลักษณะการยก (display เฉยๆ ไม่กระทบราคา · ใส่ใน prodName ใบ)
+  if(p.cat==='บานยก'){ h+='<label class="opt" style="width:100%;">ลักษณะการยก <select class="o-liftmode" style="display:none;" onchange="calcQuote();"><option value="top">ยกบานบน</option><option value="alt">ยกบานบน-ล่างสลับกัน</option></select>'+rfChips('o-liftmode',[['top','ยกบานบน'],['alt','ยกบานบน-ล่างสลับกัน']],'top')+'</label>'; }
   // R3.9: เลิก o-beam checkbox (บานเฟี้ยม) → ใช้ "เสริมคานซัพพอร์ท" (COMMON_OPTS · 4,000+500/ม. ตามความยาว) แทน
   // บานเลื่อน/เลื่อนภายใน — controls ใหม่ตาม SLIDING_RAIL
   if(['บานเลื่อน','เลื่อนภายใน'].includes(p.cat) && SLIDING_RAIL[p.id]){
@@ -5305,9 +5307,9 @@ function buildItemOpts(d){
   const q=p.method==='same_as'?PBYID[p.ref]:p;
   const pn=d.querySelector('.i-panels');
   if(q.addon&&q.addon.kind==='door'){ pn.max=2; }
-  else if(q.method==='lift'){ pn.max=2; }
+  else if(q.method==='lift'){ pn.max=2; pn.value=2; pn.disabled=true; pn.title='บานยกบังคับ 2 บาน'; } // เฟส A: บานยก lock 2 บาน
   else if(q.addon&&q.addon.kind==='sliding'){ pn.max=4; }
-  else { pn.removeAttribute('max'); }
+  else { pn.removeAttribute('max'); pn.disabled=false; pn.title=''; }
   // บันทึกค่าสี/กระจกปัจจุบันก่อน innerHTML= (กัน node หาย เมื่อ cw/gw อยู่ใน box อยู่แล้ว)
   var _savedColorVal=(cw&&cw.querySelector('.i-color'))?cw.querySelector('.i-color').value:'0';
   var _savedGlassVal=(gw&&gw.querySelector('.i-glass'))?gw.querySelector('.i-glass').value:'0';
@@ -5511,7 +5513,10 @@ function readItem(d){
   if(p.closer){ const _c=d.querySelector('.o-closer'); if(_c){ optSel.closer=parseFloat(_c.value)||0; if(_c.value!=='0'&&_c.selectedIndex>=0)optSel.closerLabel=_c.options[_c.selectedIndex].getAttribute('data-n'); } }
   { const _ab=d.querySelector('.o-awnbrace'); if(_ab) optSel.awnbrace=_ab.checked; } // #1: เสริมแขนค้ำ บานกระทุ้ง
   if(p.digihandle){ const _dg=d.querySelector('.o-digi'); optSel.digi=_dg?_dg.value:''; }
-  if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:''; }
+  if(p.digihandle){ const _st=d.querySelector('.o-stainless'); optSel.stainless=_st?_st.value:'';
+    const _stc=d.querySelector('.o-stainless-color'); optSel.stainlessColor=_stc?_stc.value:'silver'; // เฟส B: สี (silver=default/other=กรอกราคา)
+    const _ston=d.querySelector('.o-stainless-othername'); optSel.stainlessOtherName=_ston?_ston.value.trim():'';
+    const _stop=d.querySelector('.o-stainless-otherprice'); optSel.stainlessOtherPrice=_stop?parseFloat(_stop.value)||0:0; }
   if(p.digihandle){ const _hn=d.querySelector('.o-handlename'); optSel.handlename=_hn?_hn.value:''; const _hpp=d.querySelector('.o-handleprice'); optSel.handleprice=_hpp?_hpp.value:0; }
   // R3.2: read Cmech + ตารางเต็มบาน + combo กระทุ้งเข้าใน + มอเตอร์ระแนง 38.1
   { const _cm=d.querySelector('.o-cmech'); if(_cm) optSel.cmech=_cm.value;
@@ -5527,6 +5532,7 @@ function readItem(d){
     const _se=d.querySelector('.o-screen_existing'); if(_se) optSel.screen_existing=_se.checked;
     const _sx=d.querySelector('.o-screen_extra'); if(_sx) optSel.screen_extra=_sx.value; }
   if(p.motor){ const m=d.querySelector('.o-motor'); optSel.motor=m?m.value:'0'; }
+  if(p.cat==='บานยก'){ const _lm=d.querySelector('.o-liftmode'); optSel.liftmode=_lm?_lm.value:'top'; } // เฟส A: ลักษณะการยก
   if(p.optBeam){ const b=d.querySelector('.o-beam'); optSel.beam=b&&b.checked; }
   if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)){ const _bm=d.querySelector('.o-beamm'),_bml=d.querySelector('.o-beammlen'); optSel.beamM=_bm?_bm.value:'0'; optSel.beamMlen=_bml?_bml.value:'0'; }
   // บานเลื่อน/เลื่อนภายใน — options ใหม่
@@ -6188,7 +6194,7 @@ function refreshItype(d){
   const isWin=(sel.value==='window');
   optsBox.querySelectorAll('.opt').forEach(function(lbl){
     const t=lbl.textContent||'';
-    if(t.indexOf('มือจับดิจิตอล')>=0 || t.indexOf('มือจับสแตนอร่าม')>=0){
+    if(t.indexOf('มือจับดิจิตอล')>=0 || t.indexOf('มือจับสแตนเลส')>=0 || lbl.querySelector('.handle-brand-wrap')){
       lbl.style.display=isWin?'none':'';
       if(isWin){ const sel2=lbl.querySelector('select'); if(sel2) sel2.value=''; }
     }
@@ -6309,6 +6315,8 @@ function genQuote(keepNo){
     const seriesTag = it.p.series ? (' ('+SERIES_LABEL[it.p.series]+')') : '';
     // #2: ใช้ let เพราะต้องต่อ subItems ที่หลัง
     let prodName = ((prefix && !/^(ประตู|หน้าต่าง)/.test(rawName)) ? (prefix + rawName) : rawName) + seriesTag + discontinuedSuffix;
+    // เฟส A: บานยก — ต่อท้ายด้วยลักษณะการยก (display เฉยๆ ไม่กระทบราคา)
+    if(it.p.cat==='บานยก' && it.optSel){ const _lm=it.optSel.liftmode||'top'; if(_lm==='alt') prodName+=' ยกบานบน-ล่างสลับกัน'; else prodName+=' ยกบานบน'; }
     // บานเลื่อน/เลื่อนภายใน — ประกอบข้อความตาม vocabulary ใบจริง
     if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       const _sr = SLIDING_RAIL[it.p.id];
@@ -6818,7 +6826,7 @@ function genQuote(keepNo){
           if(_dgObj) _slLines.push('มือจับดิจิตอล '+_dgObj.n);
         } else if(_stSl !== '' && _stSl !== undefined && _stSl !== null){
           const _stObj = HANDLE_STAINLESS[parseInt(_stSl)];
-          if(_stObj) _slLines.push('มือจับสแตนเลสอร่าม '+_stObj.n);
+          if(_stObj){ const _stColSl=(it.optSel.stainlessColor||'silver'); const _stOtherNSl=(it.optSel.stainlessOtherName||'').trim(); const _stLblSl=(_stColSl==='other'&&_stOtherNSl)?('สแตนเลส'+_stOtherNSl):'สแตนเลสสีเงิน'; _slLines.push('มือจับ'+_stLblSl+' '+_stObj.n); } // เฟส B
         } else if(_cmSl==='embed' || _cmSl==='metro'){
           const _cmc=it.optSel.cmechcolor;
           const _cmNm=(_cmc && _cmc!=='normal')?(CMECH_SPECIAL[_cmc]||'ชุบ'):'ดำ/ขาว';
