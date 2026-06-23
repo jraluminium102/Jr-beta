@@ -3458,6 +3458,18 @@ function groupGHOpts(ch){
   });
   box.innerHTML='';
   skipEls.forEach(function(k){ box.appendChild(k); }); // คงไว้ด้านบนสุด ไม่เข้า accordion
+  // G4 (23มิ.ย.): ฟอร์มตู้/ฝาตู้ มี .g4-prebox 3 กล่องตายตัว → element ร่วม (รื้อ/งานเสริม/หมายเหตุ) เข้า Box ③ แทน accordion generic (ตรงดราฟ DRAFT-G4-ux)
+  var _g4b3 = box.querySelector('.g4-prebox .g4-b3 .g4-body');
+  if(_g4b3){
+    var _g4leftover=[];
+    buckets.forEach(function(bk){ bk.forEach(function(k){ _g4leftover.push(k); }); });
+    if(_g4leftover.length){
+      // ลบ hint placeholder เดิมใน Box ③ (ถ้ามี) แล้วใส่ของจริง
+      var _hint=_g4b3.querySelector('.g4-hint'); if(_hint) _hint.remove();
+      _g4leftover.forEach(function(k){ _g4b3.appendChild(k); });
+    }
+    return; // ไม่สร้าง accordion generic สำหรับ G4
+  }
   // G1G6-D: แสดงผลตาม disp (①-⑦) — ลำดับจับ keyword (array order) แยกจากลำดับแสดง
   CATS.map(function(c,i){return i;}).sort(function(a,b){return ((CATS[a].disp!=null?CATS[a].disp:a)-(CATS[b].disp!=null?CATS[b].disp:b));}).forEach(function(i){
     var c=CATS[i];
