@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { baht } from "@/lib/money";
 import Icon from "@/components/Icon";
@@ -261,9 +261,13 @@ export function InstallmentEditor({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [rows, setRows] = useState<Omit<InstallmentRow, "id" | "status" | "paid_amount">[]>(
+  // ใช้ rid (stable id) เป็น React key — seq คำนวณจากลำดับตอน render/submit
+  // (เดิม key=seq + re-number ทำให้ key เปลี่ยนตอนลบ → React reconcile เพี้ยน ลบไม่ติด)
+  const ridRef = useRef(0);
+  type EditRow = { rid: number; label: string; amount: number; due_date: string | null };
+  const [rows, setRows] = useState<EditRow[]>(() =>
     initialInstallments.map((i) => ({
-      seq: i.seq,
+      rid: ridRef.current++,
       label: i.label,
       amount: i.amount,
       due_date: i.due_date,
@@ -277,13 +281,16 @@ export function InstallmentEditor({
   const sumOk = diff <= 0.01;
 
   function addRow() {
-    const nextSeq = rows.length > 0 ? Math.max(...rows.map((r) => r.seq)) + 1 : 1;
-    setRows([...rows, { seq: nextSeq, label: `งวด ${nextSeq}`, amount: 0, due_date: null }]);
+    // เติมยอดที่เหลือ (total − ผลรวมปัจจุบัน) ให้งวดใหม่เลย → ผลรวมไม่เพี้ยน บันทึกได้ทันที
+    const remaining = round2(total - sum);
+    setRows([
+      ...rows,
+      { rid: ridRef.current++, label: `งวด ${rows.length + 1}`, amount: remaining > 0 ? remaining : 0, due_date: null },
+    ]);
   }
 
   function removeRow(idx: number) {
-    // re-number seq ให้ต่อเนื่อง 1..n หลังลบ (กัน label "งวด N" เพี้ยน + seq ต่อเนื่อง)
-    setRows(rows.filter((_, i) => i !== idx).map((r, i) => ({ ...r, seq: i + 1 })));
+    setRows(rows.filter((_, i) => i !== idx));
   }
 
   // เกลี่ยยอดเท่ากันทุกงวด — งวดสุดท้ายดูดเศษ (pattern เดียวกับ suggestInstallments)
@@ -324,7 +331,14 @@ export function InstallmentEditor({
     const res = await fetch(`/api/billing-notes/${billingNoteId}/installments`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ installments: rows.map((r) => ({ ...r, amount: Number(r.amount) || 0 })) }),
+      body: JSON.stringify({
+        installments: rows.map((r, idx) => ({
+          seq: idx + 1,
+          label: r.label,
+          amount: Number(r.amount) || 0,
+          due_date: r.due_date ?? null,
+        })),
+      }),
     });
     const json = await res.json();
     setBusy(false);
@@ -399,44 +413,39 @@ export function InstallmentEditor({
         </div>
 
         <div className="space-y-2">
-          {rows.map((row, idx) => {
-            const isPaid = initialInstallments.find((i) => i.seq === row.seq)?.status === "paid";
-            return (
-              <div key={row.seq} className="grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-1 text-xs text-gray-400 text-center">{row.seq}</div>
-                <input
-                  type="text"
-                  value={row.label}
-                  onChange={(e) => updateRow(idx, "label", e.target.value)}
-                  placeholder="รายละเอียดงวด"
-                  className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2"
-                />
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={row.amount}
-                  onChange={(e) => updateRow(idx, "amount", e.target.value === "" ? 0 : Number(e.target.value))}
-                  disabled={isPaid}
-                  placeholder="ยอด"
-                  className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2 disabled:bg-gray-50 disabled:text-gray-400"
-                />
-                <DateField
-                  value={row.due_date ?? ""}
-                  onChange={(iso) => updateRow(idx, "due_date", iso || null)}
-                  className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeRow(idx)}
-                  disabled={isPaid}
-                  aria-label={`ลบงวดที่ ${row.seq}`}
-                  className="col-span-1 press w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 focus:outline-none focus-visible:ring-2"
-                >
-                  <Icon name="trash" size={15} />
-                </button>
-              </div>
-            );
-          })}
+          {rows.map((row, idx) => (
+            <div key={row.rid} className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-1 text-xs text-gray-400 text-center">{idx + 1}</div>
+              <input
+                type="text"
+                value={row.label}
+                onChange={(e) => updateRow(idx, "label", e.target.value)}
+                placeholder="รายละเอียดงวด"
+                className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2"
+              />
+              <input
+                type="number"
+                inputMode="decimal"
+                value={row.amount}
+                onChange={(e) => updateRow(idx, "amount", e.target.value === "" ? 0 : Number(e.target.value))}
+                placeholder="ยอด"
+                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2"
+              />
+              <DateField
+                value={row.due_date ?? ""}
+                onChange={(iso) => updateRow(idx, "due_date", iso || null)}
+                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2"
+              />
+              <button
+                type="button"
+                onClick={() => removeRow(idx)}
+                aria-label={`ลบงวดที่ ${idx + 1}`}
+                className="col-span-1 press w-9 h-9 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2"
+              >
+                <Icon name="trash" size={16} />
+              </button>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-wrap gap-2">
