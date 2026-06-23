@@ -3,8 +3,9 @@ import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
-import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
+import { detectTeam, estimateMinutes } from "@/lib/queue";
 import { resolveMapLink } from "@/lib/queue-geo";
+import { drivingMinutes } from "@/lib/ors";
 
 export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
@@ -21,6 +22,7 @@ const schema = z.object({
   lat: z.number().nullish(),
   lng: z.number().nullish(),
   from_date: z.string().nullish(), // (0042) วันเริ่มหา slot — ถ้าไม่ส่งมา = today+1
+  fixed_time: z.enum(["10:00", "14:00"]).nullish(), // (ข้อ 12) ล็อกเวลาเอง → ระบบหาแค่วัน
 });
 
 // POST /api/queue/suggest — propose earliest available slot based on queue rules
@@ -129,6 +131,10 @@ export const POST = withRoute(async (req: Request) => {
     if (e.sales_id) load[e.sales_id] = (load[e.sales_id] ?? 0) + 1;
   });
 
+  // (ข้อ 10) cache ผลระยะขับรถต่อ request — newLat/newLng คงที่ทั้ง request, key ด้วยพิกัดงานเดิม
+  // กันยิง ORS ซ้ำ/เกินโควต้า/timeout เมื่อ loop หลายวัน
+  const driveCache = new Map<string, number | null>();
+
   for (let d = 1; d <= 70; d++) {
     const day = new Date(base.getTime() + d * 86400000);
     const dow = day.getUTCDay();
@@ -143,27 +149,48 @@ export const POST = withRoute(async (req: Request) => {
     );
 
     for (const s of ordered) {
-      // R-Leave: check availability restrictions for this date
+      // R-Leave: availability restrictions for this date
       const av = avail.filter((a) => a.sales_id === s.id && a.date === dateStr);
 
-      // Full day leave or holiday → skip entirely
-      if (av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"))
+      // ลาทั้งวัน / วันหยุด / (ข้อ 4) WFH ทำงานที่บ้าน (ไม่ออกหน้างาน) → ข้ามทั้งวัน
+      if (av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH"))
         continue;
 
-      // Determine available slots based on partial leave / office half
-      let slots = ["10:00", "14:00"];
-      if (av.some((a) => a.kind === "OFFICE_HALF")) slots = ["14:00"]; // morning in office
+      // (ข้อ 9/11) ตัด slot ที่ติด "วันอยู่ออฟฟิศ" — เดิม engine ไม่เช็ค office_slots/overrides เลยจัดทับ
+      const blocked = new Set<string>();
+      const half2slot = (h: unknown) => (h === "PM" ? "14:00" : "10:00");
+      // office_slots: วันอยู่ออฟฟิศประจำรายสัปดาห์ [{weekday,half}]
+      for (const o of Array.isArray(s.office_slots) ? s.office_slots : []) {
+        if (o && o.weekday === dow) blocked.add(half2slot(o.half));
+      }
+      // office_overrides: override รายวัน [{date,half,action}]
+      for (const o of Array.isArray(s.office_overrides) ? s.office_overrides : []) {
+        if (o && o.date === dateStr) {
+          if (o.action === "remove") blocked.delete(half2slot(o.half));
+          else blocked.add(half2slot(o.half));
+        }
+      }
+      // ลาครึ่งวัน / เช้าอยู่ออฟฟิศ (จาก sales_availability)
+      if (av.some((a) => a.kind === "OFFICE_HALF")) blocked.add("10:00"); // เช้าออฟฟิศ
       const halfLeave = av.find((a) => a.kind === "LEAVE_HALF");
-      if (halfLeave)
-        slots = halfLeave.half === "PM" ? ["10:00"] : ["14:00"]; // PM leave → only AM
+      if (halfLeave) blocked.add(half2slot(halfLeave.half));
 
-      // Existing bookings for this sales rep on this date
+      let slots = ["10:00", "14:00"].filter((t) => !blocked.has(t));
+      // (ข้อ 8) งานหลายจุด → จัดบ่ายก่อนอัตโนมัติ (comparator 2-arg ให้ stable)
+      if (body.job_size === "MULTI")
+        slots = [...slots].sort((a, b) => (a === "14:00" ? -1 : 1) - (b === "14:00" ? -1 : 1));
+      // (ข้อ 12) ล็อกเวลาเอง → เหลือเฉพาะ slot ที่เลือก (ไม่ใช้กับงานเต็มวันที่ต้องการ 2 slot)
+      if (body.fixed_time && body.job_size !== "FULLDAY")
+        slots = slots.filter((t) => t === body.fixed_time);
+      if (slots.length === 0) continue;
+
+      // คิวที่จองแล้วของเซลล์นี้ในวันนี้
       const dayEntries = entries.filter(
         (e) => e.sales_id === s.id && e.queue_date === dateStr
       );
       const usedTimes = dayEntries.map((e) => e.queue_time);
 
-      // FULLDAY: need both slots free
+      // FULLDAY: ต้องว่างทั้ง 2 slot (ไม่ติดออฟฟิศ/ลาครึ่งวัน)
       if (body.job_size === "FULLDAY") {
         if (usedTimes.length === 0 && slots.length === 2) {
           return ok({
@@ -177,31 +204,36 @@ export const POST = withRoute(async (req: Request) => {
         continue;
       }
 
-      // R-2slot: find first free slot
+      // R-2slot: slot ว่างแรก (ตามลำดับที่จัด — MULTI=บ่ายก่อน)
       const freeSlot = slots.find((t) => !usedTimes.includes(t));
-      if (!freeSlot) continue; // both slots taken
+      if (!freeSlot) continue;
 
-      // R-45min: if this would be the 2nd booking on that day, check travel time
-      // Only applies when there is exactly 1 existing booking already
+      // R-45min: ถ้าเป็นคิวที่ 2 ในวันเดียว → เช็คเวลาเดินทาง
+      // (ข้อ 10) ใช้ระยะ "ขับรถจริง" จาก ORS, fallback haversine ถ้าไม่มี key/พัง
       if (dayEntries.length === 1) {
         const existing = dayEntries[0];
         const newLat = body.lat ?? null;
         const newLng = body.lng ?? null;
-
-        // If either booking lacks coordinates → do NOT block (R-45min: skip check)
-        if (
-          existing.lat != null &&
-          existing.lng != null &&
-          newLat != null &&
-          newLng != null
-        ) {
-          const travelMin = estimateMinutes(
-            { lat: existing.lat, lng: existing.lng },
-            { lat: newLat, lng: newLng },
-            { avgSpeedKmh, detourFactor }
-          );
-          // R-45min: travel time exceeds max_pair_min → skip this slot
-          if (travelMin > maxPairMin) continue;
+        if (existing.lat != null && existing.lng != null && newLat != null && newLng != null) {
+          const ck = `${existing.lat},${existing.lng}`;
+          let travelMin: number | null;
+          if (driveCache.has(ck)) {
+            travelMin = driveCache.get(ck) ?? null;
+          } else {
+            travelMin = await drivingMinutes(
+              { lat: existing.lat, lng: existing.lng },
+              { lat: newLat, lng: newLng },
+            );
+            driveCache.set(ck, travelMin);
+          }
+          if (travelMin == null) {
+            travelMin = estimateMinutes(
+              { lat: existing.lat, lng: existing.lng },
+              { lat: newLat, lng: newLng },
+              { avgSpeedKmh, detourFactor }
+            );
+          }
+          if (travelMin > maxPairMin) continue; // ไกลเกิน → ข้าม slot นี้
         }
       }
 
@@ -210,7 +242,7 @@ export const POST = withRoute(async (req: Request) => {
         queue_time: freeSlot,
         sales_id: s.id,
         sales_name: s.name,
-        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot === "10:00" ? "(เช้า)" : "(บ่าย)"}`,
+        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}`,
       });
     }
   }

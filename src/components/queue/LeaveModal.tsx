@@ -6,13 +6,14 @@ import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
 import type { QueueSales } from "@/lib/queue";
 
-type AvailKind = "LEAVE_FULL" | "LEAVE_HALF" | "OFFICE_HALF" | "HOLIDAY";
+type AvailKind = "LEAVE_FULL" | "LEAVE_HALF" | "OFFICE_HALF" | "HOLIDAY" | "WFH";
 
 const KIND_META: Record<AvailKind, string> = {
   LEAVE_FULL:  "ลาทั้งวัน",
   LEAVE_HALF:  "ลาครึ่งวัน",
   OFFICE_HALF: "เช้าอยู่ออฟฟิศ (เลื่อนออกบ่าย)",
   HOLIDAY:     "วันหยุดพิเศษ",
+  WFH:         "WFH (ทำงานที่บ้าน — ไม่ออกหน้างาน)",
 };
 
 type FormState = {

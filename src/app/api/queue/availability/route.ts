@@ -12,7 +12,7 @@ const SELECT = "*, sales:sales_id(id,name,code,team,role)";
 const bodySchema = z.object({
   sales_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "วันที่ต้องอยู่ในรูปแบบ YYYY-MM-DD"),
-  kind: z.enum(["LEAVE_FULL", "LEAVE_HALF", "OFFICE_HALF", "HOLIDAY"]),
+  kind: z.enum(["LEAVE_FULL", "LEAVE_HALF", "OFFICE_HALF", "HOLIDAY", "WFH"]),
   half: z.enum(["AM", "PM"]).nullish(),
   note: z.string().nullish(),
 });

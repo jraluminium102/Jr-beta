@@ -245,11 +245,12 @@ export function QueueModal({
 
         // ตรวจวันลา
         const av = (availRes.data ?? []).filter((a) => a.sales_id === f.sales_id && a.date === date);
-        const isFullLeave = av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY");
+        const isFullLeave = av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH");
+        const isWfh = av.some((a) => a.kind === "WFH");
         const isAMLeave = av.some((a) => (a.kind === "LEAVE_HALF" && a.half === "AM") || a.kind === "OFFICE_HALF");
         const isPMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "PM");
 
-        if (isFullLeave) found.push({ kind: "leave", msg: "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
+        if (isFullLeave) found.push({ kind: "leave", msg: isWfh ? "เซลล์ WFH ทำงานที่บ้านวันนี้ (ปกติไม่ออกประเมิน)" : "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
         else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
         else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
 
@@ -670,6 +671,12 @@ export function QueueModal({
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
         from_date: fromDate,
+        // (ข้อ 12) ถ้าเลือกเวลาเอง (10:00/14:00) → ล็อกเวลานั้น ให้ระบบหาแค่วัน+โลเคชั่นใกล้
+        // ไม่ส่งกับงานหลายจุด/เต็มวัน (MULTI ต้องจัดบ่ายก่อน, FULLDAY ต้องใช้ 2 slot)
+        fixed_time:
+          f.job_size === "MULTI" || f.job_size === "FULLDAY"
+            ? null
+            : (((f.queue_time || "").slice(0, 5) || null) as "10:00" | "14:00" | null),
       });
       clearTimeout(timeoutId);
       if (controller.signal.aborted) return;
@@ -1558,7 +1565,10 @@ export function QueueModal({
                 <Icon name="calendar" size={15} />
                 {suggesting ? "กำลังหา…" : "เสนอวัน-เวลา-เซลล์ ที่ว่างเร็วสุด"}
               </button>
-              {suggestMsg && <p className="text-[11px] mt-1.5 text-ink-2">{suggestMsg}</p>}
+              <p className="text-[11px] mt-1.5 text-ink-3">
+                เลือกเซลล์/เวลาเองไว้ก่อนได้ → ระบบจะหาแค่วันที่ใกล้สุด · งานหลายจุดจะจัดบ่ายให้อัตโนมัติ
+              </p>
+              {suggestMsg && <p className="text-[11px] mt-1 text-ink-2">{suggestMsg}</p>}
             </Field>
           )}
 

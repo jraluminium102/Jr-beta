@@ -220,7 +220,7 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const dow = new Date(y, mo - 1, dd).getDay();
                 const isSun = dow === 0;
                 const av = availIndex[s.id]?.[d];
-                const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY");
+                const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY" || av.kind === "WFH");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
                 const isPMLeave = av && av.kind === "LEAVE_HALF" && av.half === "PM";
                 // (0030/0031) office มีผลไหม = pattern + override รายวัน · เฉพาะวันนี้เป็นต้นไป
@@ -361,6 +361,7 @@ function LeaveTag({ av, isSun }: { av?: AvailRow; isSun?: boolean }) {
     LEAVE_HALF:  "ลาครึ่ง",
     OFFICE_HALF: "อยู่ออฟ.",
     HOLIDAY:     "วันหยุด",
+    WFH:         "WFH",
   };
   return (
     <div className="h-8 flex items-center justify-center">

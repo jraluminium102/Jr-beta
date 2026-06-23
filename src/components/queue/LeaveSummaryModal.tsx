@@ -13,6 +13,7 @@ const KIND_META: Record<string, { th: string; cls: string; isLeave: boolean }> =
   LEAVE_HALF:  { th: "ลาครึ่งวัน", cls: "bg-orange-50 text-orange-700 border-orange-200", isLeave: true },
   HOLIDAY:     { th: "วันหยุด", cls: "bg-gray-100 text-gray-600 border-gray-200", isLeave: true },
   OFFICE_HALF: { th: "อยู่ออฟฟิศเช้า", cls: "bg-indigo-50 text-indigo-700 border-indigo-200", isLeave: false },
+  WFH:         { th: "WFH (ทำงานที่บ้าน)", cls: "bg-sky-50 text-sky-700 border-sky-200", isLeave: false },
 };
 
 // "YYYY-MM" + delta เดือน

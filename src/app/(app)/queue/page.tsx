@@ -152,11 +152,14 @@ function dayItemMeta(it: Extract<DayItem, { kind: "office" | "leave" }>): {
   }
   const a = it.av;
   const note = a.note ? ` · ${a.note}` : "";
-  if (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") {
+  if (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH") {
+    const isWfh = a.kind === "WFH";
     return {
       timeText: "ทั้งวัน",
-      label: `${it.sales.name} ${a.kind === "HOLIDAY" ? "วันหยุด" : "ลาทั้งวัน"}${note}`,
-      rowCls: "bg-red-50/50", tagCls: "bg-red-100 text-red-700", tagText: "ลา",
+      label: `${it.sales.name} ${a.kind === "HOLIDAY" ? "วันหยุด" : isWfh ? "WFH (ทำงานที่บ้าน)" : "ลาทั้งวัน"}${note}`,
+      rowCls: isWfh ? "bg-sky-50/50" : "bg-red-50/50",
+      tagCls: isWfh ? "bg-sky-100 text-sky-700" : "bg-red-100 text-red-700",
+      tagText: isWfh ? "WFH" : "ลา",
     };
   }
   if (a.kind === "OFFICE_HALF") {
@@ -340,7 +343,7 @@ export default function QueuePage() {
     // อยู่ออฟฟิศ (pattern + override รายวัน) — เฉพาะ d >= วันนี้ · ข้ามถ้าลาทั้งวัน หรือช่องนั้นมีคิวแล้ว
     if (d >= todayStr) {
       sales.filter((s) => s.role !== "ASSISTANT").forEach((s) => {
-        const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY"));
+        const fullLeave = avail.some((a) => a.sales_id === s.id && a.date === d && (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH"));
         if (fullLeave) return;
         (["AM", "PM"] as const).forEach((half) => {
           if (!isOfficeOn(s, d, wd, half)) return;
@@ -353,7 +356,7 @@ export default function QueuePage() {
     avail.filter((a) => a.date === d).forEach((a) => {
       const s = sales.find((x) => x.id === a.sales_id);
       if (!s) return;
-      const tMin = (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY") ? -1 : (a.kind === "LEAVE_HALF" && a.half === "PM") ? 840 : 600;
+      const tMin = (a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH") ? -1 : (a.kind === "LEAVE_HALF" && a.half === "PM") ? 840 : 600;
       acc.push({ item: { kind: "leave", sales: s, av: a }, sRank: rankOf(s.id), tMin });
     });
 
