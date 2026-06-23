@@ -70,6 +70,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               billingNoteId={bn.id}
               total={bn.total}
               initialInstallments={installments}
+              hasAnyPayment={hasAnyPayment}
             />
           )}
           {canVoid && !isCancelled && (

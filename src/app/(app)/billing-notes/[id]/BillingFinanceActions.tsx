@@ -252,10 +252,12 @@ export function InstallmentEditor({
   billingNoteId,
   total,
   initialInstallments,
+  hasAnyPayment,
 }: {
   billingNoteId: number;
   total: number;
   initialInstallments: InstallmentRow[];
+  hasAnyPayment: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -280,7 +282,34 @@ export function InstallmentEditor({
   }
 
   function removeRow(idx: number) {
-    setRows(rows.filter((_, i) => i !== idx));
+    // re-number seq ให้ต่อเนื่อง 1..n หลังลบ (กัน label "งวด N" เพี้ยน + seq ต่อเนื่อง)
+    setRows(rows.filter((_, i) => i !== idx).map((r, i) => ({ ...r, seq: i + 1 })));
+  }
+
+  // เกลี่ยยอดเท่ากันทุกงวด — งวดสุดท้ายดูดเศษ (pattern เดียวกับ suggestInstallments)
+  function splitEven() {
+    const n = rows.length;
+    if (n === 0) return;
+    const per = round2(total / n);
+    setRows(rows.map((r, i) => ({
+      ...r,
+      amount: i === n - 1 ? round2(total - per * (n - 1)) : per,
+    })));
+    setError("");
+  }
+
+  // ใส่ส่วนต่างที่เหลือลงงวดสุดท้าย — กัน ≤ 0 (API บังคับ amount > 0)
+  function fillLast() {
+    const n = rows.length;
+    if (n === 0) return;
+    const others = round2(rows.slice(0, n - 1).reduce((s, r) => s + (Number(r.amount) || 0), 0));
+    const last = round2(total - others);
+    if (last <= 0) {
+      setError(`งวดอื่นรวม ${baht(others)} เกิน/เท่ายอดบิลแล้ว — ลดยอดงวดอื่นก่อน`);
+      return;
+    }
+    setRows(rows.map((r, i) => (i === n - 1 ? { ...r, amount: last } : r)));
+    setError("");
   }
 
   function updateRow(idx: number, field: string, value: string | number | null) {
@@ -312,6 +341,32 @@ export function InstallmentEditor({
       >
         <Icon name="clipboard" size={16} /> แก้ไขงวด
       </button>
+    );
+  }
+
+  // บิลที่มีงวดชำระแล้ว → แก้งวดไม่ได้ (immutability เอกสารการเงิน) — โชว์ข้อความ + ชี้ไป void
+  if (hasAnyPayment) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แก้ไขงวดชำระ">
+        <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+              <Icon name="clipboard" size={18} /> แก้ไขงวดชำระ
+            </h2>
+            <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
+              className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
+              <Icon name="close" size={18} />
+            </button>
+          </div>
+          <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            ใบวางบิลนี้มีงวดที่ชำระแล้ว — <b>ปรับงวดไม่ได้</b> หากต้องแก้ ให้กด &quot;ยกเลิกใบวางบิล&quot; แล้วออกใหม่จากใบเสนอราคา
+          </div>
+          <button type="button" onClick={() => setOpen(false)}
+            className="press w-full border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
+            เข้าใจแล้ว
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -384,13 +439,33 @@ export function InstallmentEditor({
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={addRow}
-          className="press inline-flex items-center gap-1.5 border border-dashed border-gray-300 rounded-xl px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2"
-        >
-          <Icon name="plus" size={16} /> เพิ่มงวด
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={addRow}
+            className="press inline-flex items-center gap-1.5 border border-dashed border-gray-300 rounded-xl px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2"
+          >
+            <Icon name="plus" size={16} /> เพิ่มงวด
+          </button>
+          <button
+            type="button"
+            onClick={splitEven}
+            disabled={rows.length === 0}
+            className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-brand-dark glass-soft hover:bg-brand/5 min-h-[44px] disabled:opacity-40 focus:outline-none focus-visible:ring-2"
+            title="แบ่งยอดบิลเท่ากันทุกงวด (งวดสุดท้ายดูดเศษ)"
+          >
+            <Icon name="clipboard" size={15} /> เกลี่ยเท่ากัน
+          </button>
+          <button
+            type="button"
+            onClick={fillLast}
+            disabled={rows.length === 0}
+            className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-brand-dark glass-soft hover:bg-brand/5 min-h-[44px] disabled:opacity-40 focus:outline-none focus-visible:ring-2"
+            title="เติมส่วนต่างที่เหลือลงงวดสุดท้ายให้ครบยอดบิล"
+          >
+            <Icon name="plus" size={15} /> ใส่ส่วนต่างงวดสุดท้าย
+          </button>
+        </div>
 
         {error && (
           <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">

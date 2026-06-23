@@ -88,6 +88,7 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
     action: "UPDATE_INSTALLMENTS",
     table: "billing_installments",
     recordId: bnId,
+    oldValue: { installments: existingInst },
     newValue: { installments: newInst },
   });
 
