@@ -3243,7 +3243,7 @@ function groupGHOpts(ch){
   var isRoof = !!(ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten'));
   var CATS = isRoof ? [
     // ดราฟ G3 newstyle (23มิ.ย. · ยุบ 6→3 กล่องตายตัว ตามดราฟ · ตัดลาก/ตัดราคาหัวกล่อง · ชิปสวยคงเดิม): ①สเปกหลัก+รางน้ำ ②ออปชั่นหลัก ③เสริม
-    {key:'① สเปกหลัก · รางน้ำ', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','ชนิดฟิล์ม','ความหนากระจก','เทียบราคาสีโครง','แป ','โครงสร้าง','ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
+    {key:'① สเปกหลัก · รางน้ำ', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','ชนิดฟิล์ม','ความหนากระจก','เทียบราคาสีโครง','สีโครงอลู','แป ','โครงสร้าง','ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
     {key:'② ออปชั่นหลัก (เลื่อน · ผสม · เหล็ก · ฝ้า)', open:false, sub:{key:'🏗️ โครงเหล็กเสริม · ของเสริมหลังคา', kw:['เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์','ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2','ฝ้า','เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
     {key:'③ ออปชั่นเสริม · หมายเหตุ', open:false, kw:[]} // catch-all: งานพิเศษ · รื้อของเดิม
   ] : [
@@ -3825,6 +3825,9 @@ function g3SyncProd(ch,prodId){ var sel=ch.querySelector('.i-prod'); if(!sel)ret
 function g3PickProd(btn){ g3SyncProd(btn.closest('.ch'), btn.dataset.id); }
 function g3PickGrp(btn){ var first=(RF_GRP_PRODS[btn.dataset.grp]||[])[0]; if(first) g3SyncProd(btn.closest('.ch'), first[0]); }
 function g3PickTab(btn,tab){ var ch=btn.closest('.ch'); g3SyncProd(ch, tab==='wall'?G3_WALL_PRODS[0][0]:RF_GRP_PRODS.metal[0][0]); }
+// ② G3 สีโครง 3 ชั้น (23มิ.ย.): L1 ชิป = ตั้ง #global-color (สีทั้งใบ → syncGlobalColorGlass ลงทุกข้อ) · L2 toggle = coOverride กัน global ทับ (.i-color เฉพาะข้อ) · L3 = swap เดิม
+function rfSetGlobalColor(idx){ var gc=document.getElementById('global-color'); if(!gc)return; gc.value=String(idx); gc.dispatchEvent(new Event('change',{bubbles:true})); }
+function rfL2Toggle(det){ var ch=det.closest('.ch'); if(!ch)return; if(det.open){ ch.dataset.coOverride='1'; } else { ch.dataset.coOverride='0'; var ci=ch.querySelector('.i-color'), gc=document.getElementById('global-color'); if(ci&&gc){ ci.value=gc.value; ci.dispatchEvent(new Event('change',{bubbles:true})); } } if(window.calcQuote)calcQuote(); }
 function g3SelectorHTML(p){
   var isWall=(p.cat==='ฝ้า-ผนัง');
   var h='<div class="opt g3-prodsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
@@ -4929,12 +4932,18 @@ function buildItemOpts(d){
     }
     h+='</div>'; // /rf-matcolor-wrap (สีวัสดุมุง — ย้ายขึ้นต่อจากปุ่มรุ่น)
     // ② (23มิ.ย.): สีโครงอลู — ออปชั่นเทียบราคา (เปลี่ยนสีโครงเป็น… → บรรทัด OPTION ในใบ · ไม่บวกยอด · ไม่แตะ calcUnit/.i-color) · L1=สีทั้งใบ/L2real=สีอลูรายการ มีอยู่แล้ว
-    h+='<details class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:0 10px;">';
-    h+='<summary style="font-size:12.5px;font-weight:700;color:#1E40AF;cursor:pointer;padding:9px 2px;min-height:42px;display:flex;align-items:center;">🎨 ออปชั่นเทียบราคาสีโครง / วัสดุมุง <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:6px;">(กดดู · ไม่บวกยอด)</span></summary>';
-    h+='<div style="padding:2px 0 11px;display:flex;flex-direction:column;gap:9px;">';
+    // ② (23มิ.ย. · เคาะ "ทำ toggle เต็มในG3"): สีโครงอลู 3 ชั้น (L1 ทั้งใบ → L2 เฉพาะข้อ → L3 เทียบราคา) · ใช้กลไกสี G3 เอง (#global-color/.i-color/colorPrice) ไม่อิง G1 · L3 = swap เดิม (o-rfcoopt/o-rfmatopt → roofOptNote ไม่บวกยอด)
+    h+='<div class="opt rf-colorbox" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 11px;">';
+    h+='<div style="font-size:12.5px;font-weight:700;color:#1E40AF;margin-bottom:7px;">🎨 สีโครงอลูมิเนียม <span style="font-weight:400;font-size:11px;color:#6B7280;">(ระบบสีต่อข้อ 3 ชั้น)</span></div>';
+    h+='<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">L1 · สีโครงทั้งใบ <span style="font-weight:400;color:#6B7280;">(ใช้ทุกข้อ · บวกยอด)</span></div>';
+    var _gcv=parseInt((document.getElementById('global-color')||{}).value)||0;
+    h+='<div class="rf-l1chips chip-group chip-sm" style="margin-bottom:9px;">'+[0,1,2,3,4,5].map(function(i){var c=COLORS[i];return '<button type="button" class="chip'+(_gcv===i?' on':'')+'" onclick="rfSetGlobalColor('+i+')"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.2);background:'+c.sw+';margin-right:4px;vertical-align:-1px;"></span>'+(c.quoteName||c.n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()+'</button>';}).join('')+'</div>';
+    h+='<details class="opt rf-l2" ontoggle="rfL2Toggle(this)" style="margin:0 0 7px;background:#fff;border:1px solid #E0E7F0;border-radius:7px;padding:0 9px;"><summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#166534;padding:7px 0;min-height:40px;display:flex;align-items:center;">L2 · เปลี่ยนสีเฉพาะหลังคานี้ <span style="font-weight:400;font-size:10.5px;color:#6B7280;margin-left:5px;">(สีจริง · บวกยอด)</span></summary><div class="rf-l2-host" style="padding:2px 0 9px;"></div></details>';
+    h+='<details class="opt rf-l3" style="margin:0;background:#fff;border:1px solid #E0E7F0;border-radius:7px;padding:0 9px;"><summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#1E40AF;padding:7px 0;min-height:40px;display:flex;align-items:center;">L3 · เทียบราคา สี/วัสดุมุง <span style="font-weight:400;font-size:10.5px;color:#6B7280;margin-left:5px;">(ออปชั่น · ไม่บวกยอด)</span></summary><div style="padding:2px 0 9px;display:flex;flex-direction:column;gap:8px;">';
     h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select></label>';
     h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select></label>';
     h+='</div></details>';
+    h+='</div>';
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
     h+='<details class="opt" style="width:100%;background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:0 10px;">';
@@ -5331,6 +5340,8 @@ function buildItemOpts(d){
     if(_ipw) _ipw.style.display=_hideProd?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม · ข้าม G5 มุ้ง (mosq form ไม่ต้องจัดกลุ่ม)
   if(p.cat !== 'มุ้ง') groupGHOpts(d);
+  // ② G3 สีโครง 3 ชั้น: ย้าย .i-color (L2 = สีโครงรายการ) เข้า host ในกล่อง · ซ่อน .cg-row เดิม (หลังคาไม่มีกระจก · สีโครงอยู่ในกล่อง 3 ชั้นแล้ว)
+  if(p.cat==='หลังคา'){ var _l2h=d.querySelector('.rf-l2-host'), _cwR=d.querySelector('.i-color-wrap'); if(_l2h && _cwR && _cwR.parentNode!==_l2h){ _l2h.appendChild(_cwR); _cwR.style.display=''; } var _cgr3=d.querySelector('.cg-row'); if(_cgr3) _cgr3.style.display='none'; }
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
   rebuildMosqPanelChips(d);
   // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
@@ -5658,7 +5669,7 @@ function readItem(d){
     const _slh=d.querySelector('.o-sl-h'); optSel.solidlowerH=_slh?(parseFloat(_slh.value)||0):0;
     const _slc=d.querySelector('.o-sl-color'); optSel.solidlowerColor=_slc?(parseFloat(_slc.value)||0):0; }
   let gi=parseInt(d.querySelector('.i-glass').value||0); if(AREA_CATS.includes(p.cat))gi=0;
-  let ci=parseInt(d.querySelector('.i-color').value||0); if((AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat)) && !p.cabinet)ci=0; // UX-ALL G4: cabinet ปลด force ci=0 → เลือกสีจ่ายเพิ่มได้ (colorPlus คิดใน calc แล้ว)
+  let ci=parseInt(d.querySelector('.i-color').value||0); if((AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat)) && !p.cabinet && p.cat!=='หลังคา')ci=0; // UX-ALL G4: cabinet ปลด force ci=0 → เลือกสีจ่ายเพิ่มได้ (colorPlus คิดใน calc แล้ว) · 23มิ.ย.(เคาะ): หลังคาปลด force → สีโครงคิดเงิน colorPrice (colorUp L1777 บวกเข้า sell อยู่แล้ว · default อบขาว=0 golden นิ่ง)
   // งาน9: อ่านโหมดเหมา
   const _lsChk=d.querySelector('.o-lumpsum'); const _lsOn=_lsChk&&_lsChk.checked;
   const _lsPrice=parseFloat((d.querySelector('.o-lumpsumprice')||{}).value)||0;
