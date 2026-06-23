@@ -206,6 +206,7 @@ export default function QueuePage() {
   const [filterSales, setFilterSales] = useState("");
   const [filterTeam, setFilterTeam] = useState<QueueTeam | "">("");
   const [filterStatus, setFilterStatus] = useState<QueueStatus | "">("");
+  const [filterDow, setFilterDow] = useState<number | null>(null); // (ข้อ 6) กรองตามวันในสัปดาห์ 0-6
 
   // Availability (วันลา) สำหรับ calendar view
   const [avail, setAvail] = useState<AvailRow[]>([]);
@@ -272,14 +273,39 @@ export default function QueuePage() {
         }
         // status filter
         if (filterStatus && e.status !== filterStatus) return false;
+        // (ข้อ 6) กรองตามวันในสัปดาห์ — เฉพาะคิวที่มีวันนัด (รอจัดคิวไม่กระทบ)
+        if (filterDow != null && e.queue_date) {
+          if (new Date(e.queue_date + "T00:00:00").getDay() !== filterDow) return false;
+        }
         return true;
       })
       .sort(cmp);
-  }, [rows, q, filterTeam, filterStatus, salesRank]);
+  }, [rows, q, filterTeam, filterStatus, filterDow, salesRank]);
 
   // แยก "รอจัดคิว" (queue_date=null) ออกจากที่นัดแล้ว
   const pendingRows = useMemo(() => list.filter((e) => !e.queue_date), [list]);
   const scheduledRows = useMemo(() => list.filter((e) => !!e.queue_date), [list]);
+
+  // (ข้อ 3) จันทร์แต่ละสัปดาห์ของเดือนที่ดู (ไว้ทำปุ่มเลื่อน)
+  const weekMondays = useMemo(() => {
+    if (!filterMonth) return [] as string[];
+    const [y, m] = filterMonth.split("-").map(Number);
+    const out: string[] = [];
+    const d = new Date(y, m - 1, 1);
+    while (d.getDay() !== 1) d.setDate(d.getDate() + 1); // จันทร์แรกของเดือน
+    while (d.getMonth() === m - 1) {
+      out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+      d.setDate(d.getDate() + 7);
+    }
+    return out.slice(0, 5);
+  }, [filterMonth]);
+
+  // เลื่อนไปบล็อกวันแรกที่ >= จันทร์ของสัปดาห์นั้น
+  const jumpToWeek = useCallback((monday: string) => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>('[id^="qday-"]'));
+    const target = els.find((el) => el.id.slice(5) >= monday) ?? els[els.length - 1];
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   // จัดกลุ่มตามวัน
   const byDay = useMemo(() => {
@@ -476,13 +502,8 @@ export default function QueuePage() {
       </a>
     ) : <span className="text-ink-3">—</span>;
 
-  const slotLabel = (t: string | null) => {
-    if (!t) return "—";
-    const hh = t.slice(0, 5);
-    if (hh === "10:00") return "เช้า 10:00";
-    if (hh === "14:00") return "บ่าย 14:00";
-    return t;
-  };
+  // (ข้อ 5) เอา "เช้า/บ่าย" ออก — โชว์เวลาล้วน ไม่รก
+  const slotLabel = (t: string | null) => (t ? t.slice(0, 5) : "—");
 
   // ---- render ----
   return (
@@ -538,18 +559,35 @@ export default function QueuePage() {
           )}
         </div>
         </div>
+        {/* (ข้อ 2) ช่องค้นหาตรึงบนสุด — ค้นชื่อที่จัดคิวได้ตลอดแม้ scroll */}
+        {viewMode === "list" && (
+          <div className="relative mt-2">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3"><Icon name="search" size={16} /></span>
+            <input aria-label="ค้นหาคิว (ตรึงบน)" value={q} onChange={(e) => setQ(e.target.value)}
+              placeholder="ค้นหา ชื่อ / เซลล์ / ที่อยู่…"
+              className="w-full glass-soft rounded-xl pl-9 pr-3 py-2 text-sm outline-none" />
+          </div>
+        )}
       </div>
 
-      {/* แถบสีประจำวัน (คีย์สี) */}
-      <div className="flex flex-wrap gap-2 text-[11px]">
+      {/* แถบสีประจำวัน (คีย์สี) — (ข้อ 6) กดเพื่อกรองเฉพาะวันนั้น */}
+      <div className="flex flex-wrap items-center gap-2 text-[11px]">
         {["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"].map((d) => {
-          const c = dayColor(dowSample(d));
-          return c ? (
-            <span key={d} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${c.chip}`}>
+          const dow = dowSample(d);
+          const c = dayColor(dow);
+          if (!c) return null;
+          const active = filterDow === dow;
+          return (
+            <button key={d} type="button" onClick={() => setFilterDow(active ? null : dow)}
+              title={`กรองเฉพาะวัน${d}`}
+              className={`press inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${c.chip} ${active ? "ring-2 ring-brand ring-offset-1" : "opacity-80 hover:opacity-100"}`}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot }} />{d}
-            </span>
-          ) : null;
+            </button>
+          );
         })}
+        {filterDow != null && (
+          <button type="button" onClick={() => setFilterDow(null)} className="press text-ink-3 underline px-1">ล้างกรองวัน</button>
+        )}
       </div>
 
       <Card className="p-4">
@@ -697,6 +735,18 @@ export default function QueuePage() {
               </p>
             ) : (
               <>
+            {/* (ข้อ 3) ปุ่มเลื่อนไปจันทร์แต่ละสัปดาห์ — กันเลื่อนเยอะตาลาย */}
+            {weekMondays.length > 1 && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-4">
+                <span className="text-xs text-ink-3">ไปสัปดาห์:</span>
+                {weekMondays.map((mon, i) => (
+                  <button key={mon} type="button" onClick={() => jumpToWeek(mon)}
+                    className="press text-xs font-semibold glass-soft rounded-lg px-2.5 py-1.5 text-brand-dark hover:bg-brand/5">
+                    สัปดาห์ {i + 1} <span className="text-ink-3">(จ.{Number(mon.slice(8, 10))})</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {/* กล่อง "รอจัดคิว" */}
             {pendingRows.length > 0 && (
               <div className="mb-5">
@@ -742,7 +792,7 @@ export default function QueuePage() {
                     }));
                   })();
                   return (
-                    <div key={d}>
+                    <div key={d} id={`qday-${d}`} className="scroll-mt-28">
                       {/* Day header */}
                       <div className={`flex items-center gap-2 flex-wrap mb-2 px-2 py-1.5 rounded-xl ${c?.chip ?? "bg-gray-100"}`}>
                         <span className="w-2 h-2 rounded-full" style={{ background: c?.dot }} />
