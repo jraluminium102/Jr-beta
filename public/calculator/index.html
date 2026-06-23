@@ -5180,7 +5180,7 @@ function buildItemOpts(d){
     h+='<div class="rf-l1chips chip-group chip-sm" style="margin-bottom:9px;">'+[0,1,2,3,4,5].map(function(i){var c=COLORS[i];return '<button type="button" class="chip'+(_gcv===i?' on':'')+'" onclick="rfSetGlobalColor('+i+')"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.2);background:'+c.sw+';margin-right:4px;vertical-align:-1px;"></span>'+(c.quoteName||c.n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()+'</button>';}).join('')+'</div>';
     h+='<details class="opt rf-l2" ontoggle="rfL2Toggle(this)" style="margin:0 0 7px;background:#fff;border:1px solid #E0E7F0;border-radius:7px;padding:0 9px;"><summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#166534;padding:7px 0;min-height:40px;display:flex;align-items:center;">L2 · เปลี่ยนสีเฉพาะหลังคานี้ <span style="font-weight:400;font-size:10.5px;color:#6B7280;margin-left:5px;">(สีจริง · บวกยอด)</span></summary><div class="rf-l2-host" style="padding:2px 0 9px;"></div></details>';
     h+='<details class="opt rf-l3" style="margin:0;background:#fff;border:1px solid #E0E7F0;border-radius:7px;padding:0 9px;"><summary style="cursor:pointer;font-size:11.5px;font-weight:700;color:#1E40AF;padding:7px 0;min-height:40px;display:flex;align-items:center;">L3 · เทียบราคา สี/วัสดุมุง <span style="font-weight:400;font-size:10.5px;color:#6B7280;margin-left:5px;">(ออปชั่น · ไม่บวกยอด)</span></summary><div style="padding:2px 0 9px;display:flex;flex-direction:column;gap:8px;">';
-    h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select></label>';
+    h+='<label class="opt" style="margin:0;font-size:12px;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">เปลี่ยนสีโครงเป็น <select class="o-rfcoopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="var _rv=parseInt(this.value)||0,_hw=COLORS[_rv]&&COLORS[_rv].hasCode;var _cr=this.parentNode.querySelector(\'.l3coderow\');if(_cr)_cr.style.display=_hw?\'inline-flex\':\'none\';calcQuote();"><option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select><span class="l3coderow" style="display:none;align-items:center;gap:4px;font-size:12px;">รหัส <input type="text" class="o-rfcocode" maxlength="50" style="width:110px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น 1076-A" oninput="calcQuote()"></span></label>';
     h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select></label>';
     h+='</div></details>';
     h+='</div>';
@@ -7114,7 +7114,6 @@ function genQuote(keepNo){
       if(_gutterLine) _work.push(_gutterLine+_drainLine);
       _rfExtra.split('\n').map(function(s){return s.trim();}).filter(Boolean).forEach(function(l){ _work.push(l); });
       var _spec=[];
-      if(_rfColor) _spec.push('สีหลังคา: '+_rfColor);
       var _rci=it.ci||0, _rcc=COLORS[_rci];
       if(_rcc && _rfframe!=='โครงเหล็กชุบซิงค์'){
         var _rcN=(_rcc.quoteName||_rcc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim().replace(/^สี/,'');
@@ -7122,13 +7121,15 @@ function genQuote(keepNo){
           _spec.push('สีโครง: '+_rcN+(_cv?(' · รหัส '+_cv):' · ⚠ ต้องระบุรหัสสี')); }
         else _spec.push('สีโครง: '+_rcN);
       }
+      if(_rfColor) _spec.push('สีหลังคา: '+_rfColor);
       if(it.p.id==='roof_laminate') _spec.push('กระจกลามิเนตใส ฟิล์ม'+(_os.lamfilm||'กันร้อน')+' หนา '+(_os.lamthick||'4+4')+' มม.');
       det=_work.join('\n')+(_spec.length?('\n###รายละเอียด###\n'+_spec.join('\n')):'');
       // ② (23มิ.ย.): ออปชั่นเทียบราคาสีโครง → บรรทัด OPTION (signed diff · ไม่บวกยอด)
       if(_os.rfcoopt && _rfframe!=='โครงเหล็กชุบซิงค์'){ var _toI=parseInt(_os.rfcoopt)||0, _frI=it.ci||0;
         if(_toI!==_frI && COLORS[_toI]){ var _rfA=it.r.a||0; var _z=Math.round(colorPrice(_toI,_rfA,'')-colorPrice(_frI,_rfA,''));
           var _nm=function(i){return (COLORS[i].quoteName||COLORS[i].n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠🔖🔒]/g,'').trim();};
-          roofOptNote='OPTION : เปลี่ยนสีโครงอลูมิเนียม จาก'+_nm(_frI)+' เป็น'+_nm(_toI)+' ราคา'+(_z>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_z))+' บาท'; } }
+          var _l3code=''; try{var _l3el=it.div?it.div.querySelector('.o-rfcocode'):null;_l3code=(_l3el&&_l3el.value.trim())?' ('+_l3el.value.trim()+')':'';}catch(e){}
+          roofOptNote='OPTION : เปลี่ยนสีโครงอลูมิเนียม จาก'+_nm(_frI)+' เป็น'+_nm(_toI)+_l3code+' ราคา'+(_z>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_z))+' บาท'; } }
       // ② วัสดุมุง: เทียบราคาเปลี่ยนชนิดหลังคา (calcUnit อ่านอย่างเดียว · diff signed · ไม่บวกยอด)
       if(_os.rfmatopt && PBYID[_os.rfmatopt]){ var _w3=parseFloat((it.div&&it.div.querySelector('.i-w')||{}).value)||0, _h3=parseFloat((it.div&&it.div.querySelector('.i-h')||{}).value)||0, _ci3=it.ci||0;
         if(_w3>0&&_h3>0){ var _cur=calcUnit(it.p,_w3,_h3,0,_ci3,1,{},false).sell, _new=calcUnit(PBYID[_os.rfmatopt],_w3,_h3,0,_ci3,1,{},false).sell, _zm=Math.round(_new-_cur);
