@@ -248,6 +248,9 @@
   .note-opt-group{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
   .note-opt-group label{color:var(--ink);}
   .note-opt-group .optbox{background:#fff;margin-top:6px;margin-bottom:2px;}
+  /* G2 sec-div: เส้นคั่นหัวข้อระหว่าง block (มุ้งติดตาย / งานเสริม) */
+  .sec-div{display:flex;align-items:center;gap:8px;margin:12px 0 6px;color:#6B7280;font-size:11.5px;font-weight:700;}
+  .sec-div::before,.sec-div::after{content:'';flex:1;height:1px;background:#E5E7EB;}
   /* A: ข้อมูลลูกค้า card-details */
   .card-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0;}
   .card-details>summary::-webkit-details-marker{display:none;}
@@ -3427,7 +3430,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel')||k.classList.contains('rnmosq-block'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion · G2 มุ้งติดตาย (23มิ.ย.): rnmosq-block inline ก่อน "ทำเป็นบาน"
     // G1G6-C: ออปชั่น "เฉพาะสินค้า" inline ใต้ช่องเลือกรุ่น นอก accordion — Shower(shtype/shdoortype/corner/showerhw) · มอเตอร์-ดัดโค้ง-บานเปลือย(motor/frametype/framecolor) · ระแนง(finish/hmode/doortype/doorprice) · gate cascade
     if(!isRoof && k.querySelector && (k.querySelector('.o-shtype,.o-shdoortype,.o-corner,.o-showerhw,.o-motor,.o-frametype,.o-framecolor,.o-finish,.o-hmode,.o-doortype,.o-doorprice,.o-doorcolorpct,.o-railtype,.o-gfin,.o-gmotor,.o-grdir,.o-railglass,.o-handrail,.o-railalucolor,.o-bsdoor,.o-bsdoorprice,.o-bsfinish,.o-bocdir,.o-bocmotor,.o-bocfinish,.o-gatewood,.o-bgdir,.o-bgcolor,.o-bg_motor,.o-motorwireprice')||k.classList.contains('gate-rn-casc')||k.classList.contains('zipscreen-block'))){ skipEls.push(k); return; } // zipscreen-block: UX-substeps 🔴 G7 — กล่องม่านซิปอยู่บนสุด ไม่จมใน accordion · o-railtype/o-gfin/o-gmotor: ประตูรั้ว · o-grdir/o-railglass/o-handrail/o-railalucolor/o-bsdoor/o-bsdoorprice/o-bsfinish/o-bocdir/o-bocmotor/o-bocfinish: ระแนงเกล็ด/ราวกันตก/ระแนงเลื่อน/เปิด-ปิด · o-gatewood(OPTIONลายไม้)/o-bgdir/o-bgcolor/o-bg_motor(เกล็ดอลู ทิศ/สี/มอเตอร์) — สเปกหลัก inline · กล่อง 🏗️ โครงสร้างแผ่นทึบ หายเองสำหรับงานรั้ว/ระแนงพิเศษ (มติ 21มิ.ย. · ทุก class นี้ G2-only)
     var t=(k.textContent||'')+(k.className||'');
@@ -5390,14 +5393,15 @@ function buildItemOpts(d){
       +'</div>'
       +'<div style="font-size:10px;color:#9CA3AF;margin-top:3px;">กรอกขนาดให้ครบเพื่อดูราคาเทียบ · default = ปัดไม่ต่อ (เนียน)</div>'
     +'</div>';
-    // G2 มุ้งติดตาย (23มิ.ย.): checkbox o-rnmosq → โผล่ block rnmosq-wrap · independent จาก "ทำเป็นบาน" · class ขึ้นต้น rnmosq- กันชน G5 (o-mosq)
+    // G2 มุ้งติดตาย (23มิ.ย.): divider + checkbox o-rnmosq → โผล่ block rnmosq-wrap · independent จาก "ทำเป็นบาน" · class ขึ้นต้น rnmosq- กันชน G5 (o-mosq)
+    h+='<div class="opt sec-div" style="width:100%;">มุ้งติดตาย</div>';
     var _curRnMosq=d.querySelector('.o-rnmosq')?d.querySelector('.o-rnmosq').checked:false;
     var _curRnMosqFab=(d.querySelector('.o-rnmosqfab')||{}).value||'fiber';
     var _curRnMosqSz=(d.querySelector('.o-rnmosqsz')||{}).value||'auto';
     var _curRnMosqW=(d.querySelector('.o-rnmosqw')||{}).value||'';
     var _curRnMosqH=(d.querySelector('.o-rnmosqh')||{}).value||'';
     var _curRnMosqCol=(d.querySelector('.o-rnmosqcol')||{}).value||'white';
-    h+='<div class="opt" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;">'
+    h+='<div class="opt rnmosq-block" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;">'
       +'<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">'
       +'<input type="checkbox" class="o-rnmosq"'+(_curRnMosq?' checked':'')+' onchange="rnMosqToggle(this.closest(\'.ch\'));calcQuote();" style="width:16px;height:16px;"> <b>เพิ่มมุ้งติดตาย</b>'
       +'<span style="font-size:11px;color:#6B7280;">(กันยุงตามซี่ระแนง)</span>'
@@ -5421,6 +5425,8 @@ function buildItemOpts(d){
         +rfChips('o-rnmosqcol',[['white','ขาว (ฟรี)'],['black','ดำ (ฟรี)'],['sahara','ซาฮาร่า (+ค่าสี×0.5)'],['wood','ลายไม้ (+ค่าสี×0.5)']],_curRnMosqCol)
       +'</div>'
     +'</div>';
+    // G2 divider "งานเสริม" ก่อน block ทำเป็นบาน (23มิ.ย. ตามดราฟ)
+    h+='<div class="opt sec-div" style="width:100%;">งานเสริม</div>';
     // G2-formux: "ทำเป็นบาน" = โหมดในระแนง (ชิปเด่น) · เลือกชนิดบาน → ค่าทำบาน(door base)+ค่าระแนงไม่โครง (logic L1538 เดิม · R3-2)
     //   เฟส3: restore doortype จาก d.dataset.rnDoorType ข้าม rebuild (auto-switch ไม่โครงต้องไม่ทำให้บานหลุด)
     var _curDoor=(d.dataset.rnDoorType)||'';
