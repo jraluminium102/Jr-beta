@@ -1408,7 +1408,9 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const FT_COLOR_C = [[0.5,1.0,1500],[1.0,1.5,2000],[1.5,2.0,2500],[2.0,2.5,3000],[2.5,3.0,3500]];
     function ftR(a, t){ if(a<=0)return t[0][2]; for(const r of t){ if(a>=r[0]&&a<=r[1])return r[2]; } if(a<t[0][0])return t[0][2]; return t[t.length-1][2]; }
     const baseRate = ftR(aPerDoor, FT_BASE_C);
-    const useOther = ci && ci>0;
+    // เฟส A (23มิ.ย.): สีหน้าบาน (FT colorPlus) แยกจากสีโครง (ci) — อ่านจาก optSel.cabFrontColor · default=0=ฟรี · ci ยังคุมโครง+ผนังอลูเหมือนเดิม
+    const _cabFront = parseInt(optSel&&optSel.cabFrontColor)||0; // 0=ขาว/ดำ(ฟรี) 1=พิเศษ
+    const useOther = _cabFront > 0;
     const colorPlus = useOther ? ftR(aPerDoor, FT_COLOR_C) : 0;
     const perDoor = baseRate + colorPlus;
     const extraFee = nDoors>=2 ? (nDoors-1)*5500 : 0;
@@ -1595,11 +1597,18 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const baseRate = ftRate(aPerDoor, FT_BASE);
     const _ftc=parseInt(optSel&&optSel.ftcolor)||0; const useOther = _ftc>0;
     const colorPlus = useOther ? ftRate(aPerDoor, FT_COLOR_PLUS) : 0;
+    // เฟส B (23มิ.ย.): วัสดุหน้าบาน อลู/กระจก — อ่านจาก optSel.ftmat · default='alu'
+    const _ftmat = (optSel&&optSel.ftmat)||'alu';
+    // กระจกธรรมดา 6มม: ใส(+0)/ฝ้า(+500)/ชาดำ(+500) — spread × aPerDoor × panelN
+    const _ftGlassSpread = (_ftmat==='glass') ? (parseInt(optSel&&optSel.ftglasscolor)||0) : 0;
+    const ftGlassAdd = (_ftmat==='glass') ? Math.round(_ftGlassSpread * aPerDoor * panelN) : 0;
     // Total = sum(rates per door) + (n-1)*5000 (extra door fee)
-    const perDoor = baseRate + colorPlus;
+    // ถ้า glass: colorPlus=0 (FT base เดิม ไม่บวกสีอลู)
+    const _ftColorPlusAdj = (_ftmat==='glass') ? 0 : colorPlus;
+    const perDoor = baseRate + _ftColorPlusAdj;
     const extraFee = (panelN>=2) ? (panelN-1)*5500 : 0;
-    const _ft = perDoor*panelN + extraFee;
-    let _msg = panelN+' บาน × '+fmt(perDoor)+'/บาน'+(useOther?(' (รวมสีอื่น +'+fmt(colorPlus)+')'):'')+(extraFee>0?(' + บานเพิ่ม '+fmt(extraFee)):'');
+    const _ft = perDoor*panelN + extraFee + ftGlassAdd;
+    let _msg = (_ftmat==='glass'?'ฝาตู้กระจก ':'')+panelN+' บาน × '+fmt(perDoor)+'/บาน'+(_ftmat!=='glass'&&useOther?(' (รวมสีอื่น +'+fmt(colorPlus)+')'):'')+(extraFee>0?(' + บานเพิ่ม '+fmt(extraFee)):'')+(ftGlassAdd>0?(' + สีกระจก +'+fmt(ftGlassAdd)):'');
     if(aPerDoor > 2.8) _msg += ' · ⚠ ขนาด >2.8 ตร.ม./บาน ไม่แนะนำ';
     if((parseInt(panels)||1) > 3) _msg += ' · ⚠ เกิน 3 บาน/ชุด — ให้แยกชุดใหม่';
     return {a:aPerDoor, sell:roundUp(_ft), cost:null, addonLabel:'', msgs:[_msg]};
@@ -4346,6 +4355,16 @@ function cabWallGlassToggle(ch){
   var row=ch.querySelector('.cab-wallglass-row');
   if(row) row.style.display=hasGlassWall?'block':'none';
 }
+// เฟส B (23มิ.ย.): cascade วัสดุหน้าบานฝาตู้ — อลู→ซ่อนสีกระจก / กระจก→ซ่อนสีอลู เปิดสีกระจก
+function ftMatCascade(ch){
+  if(!ch) return;
+  var matEl=ch.querySelector('.o-ftmat');
+  var isGlass=matEl?matEl.value==='glass':false;
+  var aluRow=ch.querySelector('.ft-alucolor-row');
+  var glassRow=ch.querySelector('.ft-glasscolor-row');
+  if(aluRow) aluRow.style.display=isGlass?'none':'';
+  if(glassRow) glassRow.style.display=isGlass?'block':'none';
+}
 // มือจับ multi-toggle — แต่ละแบรนด์อิสระ (ไม่ clear แบรนด์อื่น)
 function toggleHandleBrand(btn){
   var brand=btn.dataset.hbrand; var isOn=btn.classList.contains('on');
@@ -5210,8 +5229,20 @@ function buildItemOpts(d){
       +'<select class="o-shelfglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="1200">ใส 8 มม.</option><option value="1200">ใส 10 มม.</option><option value="600">เทมเปอร์ 6 มม.</option><option value="1300">เทมเปอร์ 8 มม.</option><option value="2100">เทมเปอร์ 10 มม.</option></select>'
       +'</div>'
       +'</div>';
-    // B2: hint สี กระทบเฉพาะโครง (อัปเดตตามวัสดุผนัง · default อลูทึบ→rn90)
-    h+='<div class="opt cab-detail cab-color-hint" style="width:100%;font-size:11px;color:#1E40AF;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:5px 9px;">สีอลู (ช่องสีด้านบน) กระทบ <b>เฉพาะโครงตู้</b> ไม่ใช่บานหน้า · ผนังอลูทึบ → ค่าสีโครง (rn90)</div>';
+    // เฟส A (23มิ.ย.): สีหน้าบาน (FT colorPlus) — แยกจากสีโครง (ci เดิม) · default ขาว/ดำ = ฟรี
+    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
+      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">'
+      +'สีหน้าบาน (บานหน้าตู้ Future Tech) <span style="font-size:11px;font-weight:400;color:#6B7280;">— แยกจากสีโครง</span></div>'
+      +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
+      +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ซาฮาร่า</button>'
+      +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ลายไม้สต๊อก</button>'
+      +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">อบพิเศษ</button>'
+      +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">สีชุบ</button></div>'
+      +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select>'
+      +'<div style="font-size:11px;color:#1E40AF;margin-top:5px;">สีโครง (rn90) อยู่ในช่องสีด้านบน (สีทั้งใบ) · ผนังอลูทึบ → ค่าสีโครงด้วย</div>'
+      +'</div>'
+      // ยังรักษา cab-color-hint ไว้ด้วย class ซ่อน เพื่อ backward compat
+      +'<div class="opt cab-detail cab-color-hint" style="display:none;"></div>';
     // B3: ลึก + จำนวนชั้น แถวเดียว · badge auto ทั้งคู่
     h+='<div class="opt cab-detail" style="width:100%;display:flex;flex-wrap:wrap;gap:16px;align-items:center;">'
       +'<span style="display:inline-flex;align-items:center;gap:5px;">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:32px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span>'
@@ -5301,7 +5332,11 @@ function buildItemOpts(d){
   if(p.future_tech){
     // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
     h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
-    h+='<label class="opt cab-detail" style="flex:1 1 100%;">สีฝาตู้ <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[\u2605\u26a0\ud83d\udd16\ud83d\udd12]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">\u26a0 \u0e2a\u0e35\u0e40\u0e2a\u0e49\u0e19\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e14\u0e39\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07\u0e01\u0e48\u0e2d\u0e19</span></label>'; h+='<label class="opt cab-detail" style="flex:1 1 100%;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label>'; }
+    // เฟส B (23มิ.ย.): วัสดุหน้าบาน อลู/กระจก + cascade สีกระจก
+    h+='<label class="opt cab-detail" style="width:100%;">วัสดุหน้าบาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">อลู (FT)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">กระจก</button></div><select class="o-ftmat" style="display:none;" onchange="ftMatCascade(this.closest(\'.ch\'));calcQuote();"><option value="alu" selected>อลู (FT)</option><option value="glass">กระจก</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;">กระจก = ราคาฐาน FT เดิม + สีกระจก spread×พื้นที่/บาน · ไม่มีเทมป์/ลามิเนต</div></label>';
+    h+='<label class="opt cab-detail ft-alucolor-row" style="flex:1 1 100%;">สีฝาตู้ (อลู FT) <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน</span></label>';
+    h+='<div class="opt cab-detail ft-glasscolor-row" style="display:none;width:100%;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;">สีกระจก (ธรรมดา 6 มม.) <span style="font-size:11px;color:#6B7280;font-weight:400;">· ไม่มีเทมป์/ลามิเนต · เรต R3.9</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ใส (+0)</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ชาดำ +500</button></div><select class="o-ftglasscolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select></div>';
+    h+='<label class="opt cab-detail" style="flex:1 1 100%;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label>'; }
   if(p.gutter_cover){  // รอบ3 ข้อ2 (18มิ.ย.): ย้ายออปชั่นปิดซ่อนรางน้ำมา render จริง (เดิม dead → ราคา ฿0/เลือกสีไม่ได้)
     h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" onchange="calcQuote();" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
     h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" oninput="calcQuote();" style="width:80px;height:32px;"></label>';
@@ -5655,6 +5690,8 @@ function readItem(d){
   if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); optSel.finishLbl=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } const _rfo=d.querySelector('.o-rnfinopt'); if(_rfo&&_rfo.selectedIndex>=0){ const _ro=_rfo.options[_rfo.selectedIndex]; optSel.rnfinopt=_ro.value; optSel.rnfinoptLbl=_ro.getAttribute('data-n')||''; } } // ④: ออปชั่นเทียบราคาสีอบ (display · ไม่บวกยอด)
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
+    // เฟส A (23มิ.ย.): สีหน้าบาน แยกจากโครง — 0=ขาว/ดำ(ฟรี) 1=พิเศษ
+    const _cfc=d.querySelector('.o-cabfrontcolor'); optSel.cabFrontColor=_cfc?parseInt(_cfc.value)||0:0;
     // เฟส B: กระจกชั้น/ผนัง (spread เพิ่มจากเรตเดิม)
     const _sg=d.querySelector('.o-shelfglass'); optSel.shelfglass=_sg?parseInt(_sg.value)||0:0;
     const _wg=d.querySelector('.o-wallglass'); optSel.wallglass=_wg?parseInt(_wg.value)||0:0;
@@ -5711,7 +5748,11 @@ function readItem(d){
     const _mit=d.querySelector('.i-type'); optSel.itype=(_mit&&_mit.value)||'door'; // P1-2: เฟรมมุ้ง min ตาม ประตู/หน้าต่าง
   }
   if(p.mscolor){ const _msc=d.querySelector('.o-mscolor'); optSel.mscolor=_msc?_msc.value:''; }
-  if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; const _ftcc=d.querySelector('.o-ftcolorcode'); optSel.ftcolorcode=_ftcc?_ftcc.value:''; }  // รอบ2 G4: รหัสสีฝาตู้
+  if(p.future_tech){ const _ftc=d.querySelector('.o-ftcolor'); optSel.ftcolor=_ftc?_ftc.value:'0'; const _ftcc=d.querySelector('.o-ftcolorcode'); optSel.ftcolorcode=_ftcc?_ftcc.value:'';
+    // เฟส B (23มิ.ย.): วัสดุหน้าบาน + สีกระจก
+    const _ftm=d.querySelector('.o-ftmat'); optSel.ftmat=_ftm?_ftm.value:'alu';
+    const _ftgc=d.querySelector('.o-ftglasscolor'); optSel.ftglasscolor=_ftgc?parseInt(_ftgc.value)||0:0;
+  }  // รอบ2 G4: รหัสสีฝาตู้
   if(p.gutter_cover){  // รอบ3 ข้อ2: อ่านขนาดราง+สีอบ (เดิม dead → ไม่เคยอ่าน → ราคา ฿0)
     const _gcw=d.querySelector('.o-gcwidth'); const _gcwSel=_gcw?parseFloat(_gcw.value)||0:0;
     const _gcwc=d.querySelector('.o-gcwidth-custom'); const _gcwCustom=_gcwc?(parseFloat(_gcwc.value)||0)/100:0;
