@@ -451,39 +451,45 @@ export function InstallmentEditor({
           </div>
         ))}
 
-        {/* งวดที่ยังไม่จ่าย (แก้ได้) */}
-        <div className="space-y-2">
+        {/* งวดที่ยังไม่จ่าย (แก้ได้) — ปุ่มลบติดช่องยอด เห็นชัดเสมอ, วันที่อยู่บรรทัดล่าง */}
+        <div className="space-y-2.5">
           {rows.map((row, idx) => (
-            <div key={row.rid} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-1 text-xs text-gray-400 text-center">{maxPaidSeq + idx + 1}</div>
-              <input
-                type="text"
-                value={row.label}
-                onChange={(e) => updateRow(idx, "label", e.target.value)}
-                placeholder="รายละเอียดงวด"
-                className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2"
-              />
-              <input
-                type="number"
-                inputMode="decimal"
-                value={row.amount}
-                onChange={(e) => updateRow(idx, "amount", e.target.value === "" ? 0 : Number(e.target.value))}
-                placeholder="ยอด"
-                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2"
-              />
-              <DateField
-                value={row.due_date ?? ""}
-                onChange={(iso) => updateRow(idx, "due_date", iso || null)}
-                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2"
-              />
-              <button
-                type="button"
-                onClick={() => removeRow(idx)}
-                aria-label={`ลบงวดที่ ${maxPaidSeq + idx + 1}`}
-                className="col-span-1 press w-9 h-9 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2"
-              >
-                <Icon name="trash" size={16} />
-              </button>
+            <div key={row.rid} className="rounded-xl border border-gray-200 bg-gray-50/50 p-2.5">
+              <div className="flex items-center gap-2">
+                <span className="w-5 shrink-0 text-center text-xs text-gray-400">{maxPaidSeq + idx + 1}</span>
+                <input
+                  type="text"
+                  value={row.label}
+                  onChange={(e) => updateRow(idx, "label", e.target.value)}
+                  placeholder="รายละเอียดงวด"
+                  className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2"
+                />
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={row.amount}
+                  onChange={(e) => updateRow(idx, "amount", e.target.value === "" ? 0 : Number(e.target.value))}
+                  placeholder="ยอด"
+                  className="w-24 sm:w-28 shrink-0 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeRow(idx)}
+                  aria-label={`ลบงวดที่ ${maxPaidSeq + idx + 1}`}
+                  title="ลบงวดนี้"
+                  className="shrink-0 press w-9 h-9 inline-flex items-center justify-center rounded-lg text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                >
+                  <Icon name="trash" size={16} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 pl-7">
+                <span className="text-[11px] text-gray-400 shrink-0">กำหนดชำระ</span>
+                <DateField
+                  value={row.due_date ?? ""}
+                  onChange={(iso) => updateRow(idx, "due_date", iso || null)}
+                  className="border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus-visible:ring-2"
+                />
+              </div>
             </div>
           ))}
           {rows.length === 0 && (
