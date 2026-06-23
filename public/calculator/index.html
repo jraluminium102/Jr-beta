@@ -5213,6 +5213,10 @@ function buildItemOpts(d){
     h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select></label>';
     h+='</div>';
     h+='</div>';
+    // A: แป (ดราฟ 22มิ.ย.: อยู่หลังสีโครง ก่อนต่อปลายวัสดุที่ 2)
+    h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปคู่',true)+'</label>';
+    // B: โครงสร้าง (ชิป · onchange เดิม warn เหล็กชุบ)
+    h+='<label class="opt" style="width:100%;">โครงสร้าง <select class="o-roofframe" style="display:none;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม" selected>โครงอลูมิเนียม</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select>'+rfChips('o-roofframe',[['โครงอลูมิเนียม','โครงอลูมิเนียม'],['โครงเหล็กชุบซิงค์','โครงเหล็กชุบซิงค์']],'โครงอลูมิเนียม',true)+' <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
     // ธงE: ต่อปลายวัสดุที่ 2 — ชิปกลุ่มวัสดุ + สี cascade + ยาว×ยื่น auto + ราคาหัวกล่อง (calc FIX-12 อ่าน .o-roof2/.o-roof2area เดิม)
     h+='<details class="opt" style="width:100%;background:#FFF7ED;border:1px solid #F59E0B;border-radius:8px;padding:0 10px;">';
@@ -5249,10 +5253,6 @@ function buildItemOpts(d){
     h+='</div>';
     h+='</div>';
     // ══ จบ UI ฝ้า ธงC ══
-    // A: แป
-    h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปคู่',true)+'</label>';
-    // B: โครงสร้าง (ชิป · onchange เดิม warn เหล็กชุบ)
-    h+='<label class="opt" style="width:100%;">โครงสร้าง <select class="o-roofframe" style="display:none;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม" selected>โครงอลูมิเนียม</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select>'+rfChips('o-roofframe',[['โครงอลูมิเนียม','โครงอลูมิเนียม'],['โครงเหล็กชุบซิงค์','โครงเหล็กชุบซิงค์']],'โครงอลูมิเนียม',true)+' <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // C: ปลายหลังคา + chain D — option[1]=รางน้ำ (no-op) เพื่อให้ enableAllOpts ไม่คิดเงิน
     // ข้อ8: ตัดตัวเลือก "ปิดปลาย" (auto กว้าง) ออก — กันคิดซ้ำกับ "ปิดปลายกันน้ำ" (o-rfeave กรอกยาวเอง) ในของเสริม
     // G3-round2 C: ปลายหลังคา 3 ตัวเลือก single-select (ปล่อย / มีรางน้ำ / ปิดปลายกันน้ำกระเด็น) · ชิป (chSetChip fire change → onchange เดิมทำงาน)
