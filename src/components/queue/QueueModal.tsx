@@ -628,6 +628,7 @@ export function QueueModal({
 
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
+  const [managingAssist, setManagingAssist] = useState(false); // (ข้อ 1) โหมดลบรายชื่อผู้ช่วย
   const [newAssistantName, setNewAssistantName] = useState("");
   const [addAssistBusy, setAddAssistBusy] = useState(false);
   const [addAssistErr, setAddAssistErr] = useState("");
@@ -1526,6 +1527,26 @@ export function QueueModal({
                 </div>
                 {addAssistErr && <p className="text-[11px] text-red-600">{addAssistErr}</p>}
               </div>
+            ) : managingAssist ? (
+              /* (ข้อ 1) โหมดจัดการ — ลิสต์ชื่อผู้ช่วยทั้งหมด กดลบได้ทีละคน */
+              <div className="space-y-1.5">
+                {localAssistants.length === 0 ? (
+                  <p className="text-[11px] text-ink-3 px-1 py-1.5">ยังไม่มีผู้ช่วยในระบบ</p>
+                ) : (
+                  localAssistants.map((a) => (
+                    <div key={a.id} className="flex items-center gap-2 glass-soft rounded-lg px-2.5 py-1.5">
+                      <span className="flex-1 text-sm truncate">{a.name}</span>
+                      <button type="button" onClick={() => deleteAssistant(a.id, a.name)}
+                        className="press inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 shrink-0"
+                        title={`ลบ ${a.name}`}>
+                        <Icon name="trash" size={13} /> ลบ
+                      </button>
+                    </div>
+                  ))
+                )}
+                <button type="button" onClick={() => setManagingAssist(false)}
+                  className="press text-xs font-semibold text-brand-dark underline px-1 pt-0.5">เสร็จ</button>
+              </div>
             ) : (
               <div className="flex gap-1.5">
                 <select value={f.assistant_id} onChange={(e) => set("assistant_id", e.target.value)}
@@ -1535,14 +1556,10 @@ export function QueueModal({
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
-                {!readOnly && f.assistant_id && (
-                  <button type="button"
-                    onClick={() => {
-                      const a = localAssistants.find((x) => x.id === f.assistant_id);
-                      if (a) deleteAssistant(a.id, a.name);
-                    }}
+                {!readOnly && localAssistants.length > 0 && (
+                  <button type="button" onClick={() => setManagingAssist(true)}
                     className="press rounded-lg px-2.5 text-xs text-red-600 bg-red-50 border border-red-200 shrink-0"
-                    title="ลบผู้ช่วยคนนี้">
+                    title="จัดการ/ลบรายชื่อผู้ช่วย">
                     <Icon name="trash" size={14} />
                   </button>
                 )}
