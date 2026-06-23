@@ -391,8 +391,11 @@ export default function QueuePage() {
         if (officeWeekdays.has(new Date(yy, mm - 1, dd).getDay())) set.add(ds);
       }
     }
-    return [...set].sort();
-  }, [byDay, avail, sales, filterMonth]);
+    // (ข้อ 6) กดวันในสัปดาห์ → เหลือเฉพาะวันนั้น (กรองทั้งคิว+ลา+ออฟฟิศ)
+    return [...set].sort().filter(
+      (ds) => filterDow == null || new Date(ds + "T00:00:00").getDay() === filterDow
+    );
+  }, [byDay, avail, sales, filterMonth, filterDow]);
 
   // calendar: entries ในสัปดาห์ที่เลือก (queue_date มีค่า)
   const calEntries = useMemo(() => {
@@ -575,13 +578,13 @@ export default function QueuePage() {
 
       {/* แถบสีประจำวัน (คีย์สี) — (ข้อ 6) กดเพื่อกรองเฉพาะวันนั้น */}
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
-        {["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"].map((d) => {
-          const dow = dowSample(d);
-          const c = dayColor(dow);
+        {["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"].map((d, i) => {
+          const dowNum = (i + 1) % 7; // จันทร์=1 … เสาร์=6, อาทิตย์=0 (ตรงกับ getDay())
+          const c = dayColor(dowSample(d));
           if (!c) return null;
-          const active = filterDow === dow;
+          const active = filterDow === dowNum;
           return (
-            <button key={d} type="button" onClick={() => setFilterDow(active ? null : dow)}
+            <button key={d} type="button" onClick={() => setFilterDow(active ? null : dowNum)}
               title={`กรองเฉพาะวัน${d}`}
               className={`press inline-flex items-center gap-1 px-2 py-0.5 rounded-md ${c.chip} ${active ? "ring-2 ring-brand ring-offset-1" : "opacity-80 hover:opacity-100"}`}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot }} />{d}
@@ -732,9 +735,11 @@ export default function QueuePage() {
         ) : (
           /* ===== List View ===== */
           <>
-            {(scheduleDays.length === 0 && pendingRows.length === 0) ? (
+            {(scheduleDays.length === 0 && (filterDow != null || pendingRows.length === 0)) ? (
               <p className="text-center text-ink-3 py-12">
-                {q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
+                {filterDow != null
+                  ? 'ไม่มีคิว/วันลาในวันนี้ของเดือนนี้ — กด "ล้างกรองวัน" เพื่อดูทั้งหมด'
+                  : q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
               </p>
             ) : (
               <>
@@ -750,8 +755,8 @@ export default function QueuePage() {
                 ))}
               </div>
             )}
-            {/* กล่อง "รอจัดคิว" */}
-            {pendingRows.length > 0 && (
+            {/* กล่อง "รอจัดคิว" — ซ่อนตอนกรองวัน (ข้อ 6) เพราะรอจัดคิวยังไม่มีวันนัด */}
+            {pendingRows.length > 0 && filterDow == null && (
               <div className="mb-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-semibold">
