@@ -1151,7 +1151,7 @@ function glassDrillPick(btn){ var sel=_glassDrillSel(btn); if(!sel)return; var i
 function glassDrillPickSel(selEl){ var sel=_glassDrillSel(selEl); if(!sel)return; var i=parseInt(selEl.value)||0; sel.value=String(i); sel.dataset.glCat=glassCatOf(i);
   sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); glassDrillRender(sel); }
 
-// ===== #9 (มติพี่นัท 21-22มิ.ย.): กล่องสี/กระจกต่อบาน G1 — 3 ชั้น (ชั้น1 ตามทั้งใบ → ชั้น2 เปลี่ยนสี → ชั้น3 อบพิเศษในตัว drill) =====
+// ===== #9 (มติพี่นัท 21-22มิ.ย.): กล่องสี/กระจกต่อบาน G1 — 3 ชั้น (L1 ตามทั้งใบ → L2 เปลี่ยนสีเฉพาะข้อ:สีจริงบวก/ออปชั่นไม่บวก → L3 เทียบราคาออปชั่น ไม่บวกยอด) · ⚠ ทุกชั้นใช้สีอลูชุดเดียวกัน · L3 ≠ สีพิเศษ/อบพิเศษ =====
 //   default = ตามทั้งใบ (picker ซ่อน · ค่า index 0/สีทั้งใบ · ราคาเท่าเดิม golden นิ่ง) · ติ๊ก "ใช้สีต่าง" = เปิด drill จริง (reuse colorDrill/glassDrill)
 function g1CoUpdateL1(d){ if(!d) return;
   var gc=document.getElementById('global-color'), gg=document.getElementById('global-glass');
@@ -3767,7 +3767,7 @@ function g2FinDrill(sel){ if(!sel||sel.dataset.chipped==='1')return; if(sel.opti
   var wrap=document.createElement('div'); wrap.className='g2fin-wrap'; wrap.style.marginTop='4px';
   sel.parentNode.insertBefore(wrap, sel.nextSibling); g2FinRender(sel,wrap); }
 function g2FinRender(sel,wrap){ if(!wrap){ var n=sel.nextSibling; while(n&&!(n.classList&&n.classList.contains('g2fin-wrap')))n=n.nextSibling; wrap=n; } if(!wrap)return;
-  // ④ (21มิ.ย. · มติพี่นัท): กล่องสี 3 ชั้น — L1 ทั้งใบ(อบขาว ฟรี) → L2 เปลี่ยนสี(+เรต) → L3 อัปอบพิเศษ(+เรตอีก) · คง selectedIndex เดิม = ราคาตรงเป๊ะ (เหมือน [[g1-color-box-3level]])
+  // ④ (21มิ.ย. · มติพี่นัท): กล่องสี 3 ชั้น — L1 ทั้งใบ(อบขาว ฟรี) → L2 เปลี่ยนสีเฉพาะข้อ(+เรต) → L3 เทียบราคาออปชั่น(ไม่บวกยอด) · ⚠ ทุกชั้นใช้สีอลูชุดเดียวกัน · L3 ≠ สีพิเศษ · คง selectedIndex เดิม = ราคาตรงเป๊ะ (เหมือน [[g1-color-box-3level]])
   var byCat={std:[],sahara:[],wood:[],special:[]};
   Array.prototype.forEach.call(sel.options,function(o,i){ byCat[g2FinCat(g2FinLabel(o))].push({i:i,lbl:g2FinLabel(o)}); });
   var curIdx=sel.selectedIndex; var curCat=g2FinCat(g2FinLabel(sel.options[curIdx]));
