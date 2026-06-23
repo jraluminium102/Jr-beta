@@ -31,9 +31,17 @@ export function PrintLetterhead({
       {/* ===== Header — โลโก้ + บริษัท (ซ้าย) · ชื่อเอกสาร + เลขที่/วันที่ (ขวา) ===== */}
       <div className="flex justify-between items-start pb-4 mb-4" style={{ borderBottom: "4px solid #b3151d" }}>
         <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO_BASE64} alt="JR Aluminium" style={{ height: 22 }} />
-          <div className="mt-1 leading-relaxed" style={{ fontSize: 12 }}>
+          {/* โลโก้ PNG มีกราฟิก "JR." อยู่แค่ส่วน (173,16)-(599,116) ของแคนวาส 600×223 (ที่เหลือว่าง)
+              → crop ด้วย wrapper overflow-hidden ให้โชว์เฉพาะกราฟิก สูง 28px (ไม่งั้นย่อทั้งแคนวาสจะจิ๋วเหมือนเศษ) */}
+          <div style={{ width: 118, height: 28, overflow: "hidden", position: "relative" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={LOGO_BASE64}
+              alt="JR Aluminium"
+              style={{ position: "absolute", left: -48, top: -4, width: 166, maxWidth: "none", height: "auto" }}
+            />
+          </div>
+          <div className="mt-1.5 leading-relaxed" style={{ fontSize: 12 }}>
             <span className="font-semibold" style={{ color: "#b3151d" }}>
               {COMPANY.name}
             </span>{" "}
