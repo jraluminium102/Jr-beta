@@ -47,3 +47,20 @@ export const POST = withRoute(async (req: Request) => {
   if (!data) throw new HttpError(400, "สร้างรายชื่อเซลล์/ผู้ช่วยไม่สำเร็จ");
   return created(data);
 });
+
+// DELETE /api/queue/sales?id=... — (ข้อ 1) ลบผู้ช่วยเซลล์ = soft delete (active=false)
+// เก็บ FK queue_entries.assistant_id เดิม (ประวัติไม่หาย) · ลบได้เฉพาะ ASSISTANT
+export const DELETE = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("queue", "write");
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) throw new HttpError(400, "ต้องระบุ id");
+  const sb = ctx.supabase as unknown as Sb;
+
+  const { data: row } = await sb.from("queue_sales").select("id, role").eq("id", id).maybeSingle();
+  if (!row) throw new HttpError(404, "ไม่พบรายชื่อ");
+  if ((row as { role?: string }).role !== "ASSISTANT") throw new HttpError(400, "ลบได้เฉพาะผู้ช่วยเซลล์ (เซลล์หลักลบไม่ได้)");
+
+  const { error } = await sb.from("queue_sales").update({ active: false }).eq("id", id);
+  if (error) throw dbError(error);
+  return ok({ id });
+});

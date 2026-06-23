@@ -790,6 +790,18 @@ export function QueueModal({
     }
   }
 
+  // (ข้อ 1) ลบผู้ช่วยเซลล์ — soft delete (active=false) คิวเก่าที่ผูกไว้ยังอยู่
+  async function deleteAssistant(id: string, name: string) {
+    if (!window.confirm(`ลบผู้ช่วย "${name}"?\n(จะหายจากรายชื่อ แต่คิวเก่าที่เคยเลือกไว้ยังอยู่ครบ)`)) return;
+    try {
+      await api.del(`/queue/sales?id=${id}`);
+      setLocalAssistants((prev) => prev.filter((a) => a.id !== id));
+      setF((s) => (s.assistant_id === id ? { ...s, assistant_id: "" } : s));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "ลบผู้ช่วยไม่สำเร็จ");
+    }
+  }
+
   async function save() {
     if (savingRef.current) return; // กันกดบันทึกรัว/ดับเบิลแท็ป
 
@@ -1516,6 +1528,17 @@ export function QueueModal({
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
+                {!readOnly && f.assistant_id && (
+                  <button type="button"
+                    onClick={() => {
+                      const a = localAssistants.find((x) => x.id === f.assistant_id);
+                      if (a) deleteAssistant(a.id, a.name);
+                    }}
+                    className="press rounded-lg px-2.5 text-xs text-red-600 bg-red-50 border border-red-200 shrink-0"
+                    title="ลบผู้ช่วยคนนี้">
+                    <Icon name="trash" size={14} />
+                  </button>
+                )}
                 {!readOnly && (
                   <button type="button" onClick={() => setAddingAssistant(true)}
                     className="press glass-soft rounded-lg px-2.5 text-xs text-ink-2 shrink-0"
