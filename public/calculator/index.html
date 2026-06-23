@@ -87,6 +87,22 @@
   .cab-co-colgrid .chip-group.chip-sm .chip{padding:3px 8px;font-size:11.5px;}
   .cab-co-l3det>summary{list-style:none;}.cab-co-l3det>summary::-webkit-details-marker{display:none;}
   .cab-co-l3det[open]>summary{color:#B3151D;}
+  /* G4 3-box redesign (23มิ.ย.) */
+  .g4-prebox{width:100%;display:flex;flex-direction:column;gap:8px;padding:0;}
+  .g4-box{border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;background:#fff;width:100%;}
+  .g4-bh{padding:9px 12px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;list-style:none;margin:0;}
+  summary.g4-bh::-webkit-details-marker{display:none;}
+  .g4-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+  .g4-b1>.g4-bh{background:#FEF3F2;color:#B3151D;}
+  .g4-b2>.g4-bh{background:#EFF6FF;color:#1E5AA8;}
+  .g4-b3>.g4-bh{background:#F9FAFB;color:#374151;cursor:pointer;}
+  .g4-btag{font-size:10.5px;padding:1px 6px;border-radius:4px;font-weight:700;margin-left:auto;}
+  .g4-b1 .g4-btag{background:#B3151D;color:#fff;}
+  .g4-b2 .g4-btag{background:#1E5AA8;color:#fff;}
+  .g4-b3 .g4-btag{background:#6B7280;color:#fff;}
+  .g4-fld{display:flex;flex-direction:column;gap:3px;}
+  .g4-lbl{font-weight:700;color:#374151;font-size:12px;}
+  .g4-hint{font-size:11px;color:#6B7280;}
   /* #2 2026-06-05: บานย่อยในชุด */
   .subitem-wrap{margin:6px 0 2px;}
   .subitem-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
@@ -3430,7 +3446,7 @@ function groupGHOpts(ch){
   var skipEls=[]; // G3-round2 F: field กลาง (สีอลู .i-color-wrap / กระจก .i-glass-wrap) — ไม่จัดเข้ากล่องใด คงไว้นอก accordion (กันตกเข้ากล่อง "งานพิเศษ" ผิดหมวด)
   var buckets=CATS.map(function(){return [];});
   kids.forEach(function(k){
-    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel')||k.classList.contains('rnmosq-block'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion · G2 มุ้งติดตาย (23มิ.ย.): rnmosq-block inline ก่อน "ทำเป็นบาน"
+    if(k.classList && (k.classList.contains('i-color-wrap')||k.classList.contains('i-glass-wrap')||k.classList.contains('mosq-modeb')||k.classList.contains('g3-prodsel')||k.classList.contains('mosq-prodsel')||k.classList.contains('rn-prodsel')||k.classList.contains('rnmosq-block')||k.classList.contains('g4-prebox'))){ skipEls.push(k); return; } // G5-FINAL C / G3-v5 / G5-G: โหมด B + แท็บเลือกสินค้าหลังคา/มุ้ง คงไว้บนสุดนอก accordion · G2 มุ้งติดตาย (23มิ.ย.): rnmosq-block inline ก่อน "ทำเป็นบาน" · G4 (23มิ.ย.): g4-prebox 3-box layout ไม่เข้า accordion
     // G1G6-C: ออปชั่น "เฉพาะสินค้า" inline ใต้ช่องเลือกรุ่น นอก accordion — Shower(shtype/shdoortype/corner/showerhw) · มอเตอร์-ดัดโค้ง-บานเปลือย(motor/frametype/framecolor) · ระแนง(finish/hmode/doortype/doorprice) · gate cascade
     if(!isRoof && k.querySelector && (k.querySelector('.o-shtype,.o-shdoortype,.o-corner,.o-showerhw,.o-motor,.o-frametype,.o-framecolor,.o-finish,.o-hmode,.o-doortype,.o-doorprice,.o-doorcolorpct,.o-railtype,.o-gfin,.o-gmotor,.o-grdir,.o-railglass,.o-handrail,.o-railalucolor,.o-bsdoor,.o-bsdoorprice,.o-bsfinish,.o-bocdir,.o-bocmotor,.o-bocfinish,.o-gatewood,.o-bgdir,.o-bgcolor,.o-bg_motor,.o-motorwireprice')||k.classList.contains('gate-rn-casc')||k.classList.contains('zipscreen-block'))){ skipEls.push(k); return; } // zipscreen-block: UX-substeps 🔴 G7 — กล่องม่านซิปอยู่บนสุด ไม่จมใน accordion · o-railtype/o-gfin/o-gmotor: ประตูรั้ว · o-grdir/o-railglass/o-handrail/o-railalucolor/o-bsdoor/o-bsdoorprice/o-bsfinish/o-bocdir/o-bocmotor/o-bocfinish: ระแนงเกล็ด/ราวกันตก/ระแนงเลื่อน/เปิด-ปิด · o-gatewood(OPTIONลายไม้)/o-bgdir/o-bgcolor/o-bg_motor(เกล็ดอลู ทิศ/สี/มอเตอร์) — สเปกหลัก inline · กล่อง 🏗️ โครงสร้างแผ่นทึบ หายเองสำหรับงานรั้ว/ระแนงพิเศษ (มติ 21มิ.ย. · ทุก class นี้ G2-only)
     var t=(k.textContent||'')+(k.className||'');
@@ -5463,61 +5479,55 @@ function buildItemOpts(d){
       +'</div>';
     h+='<label class="opt" style="font-size:11.5px;">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ)</span></label>';
   }
-  if(p.cabinet){ // G4 (HANDOFF-G4-cabinet-next): UX 6 จุด · ทุก element มี class cab-detail → groupGHOpts จัดเข้า 📦 ตามลำดับ
-    // B4: ชิป switch สินค้า ตู้อลู/ฝาตู้ บนสุด (sync .i-prod)
-    h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip on" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div></label>';
-    h+='<label class="opt cab-detail" style="width:100%;">ประเภทตู้ <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้ทั่วไป</button><button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้รองเท้า</button></div><select class="o-cabtype" style="display:none;"><option value="wardrobe" selected>ตู้ทั่วไป (ชั้น~40ซม.)</option><option value="shoe">ตู้รองเท้า (ชั้น~20ซม.)</option></select></label>';
-    // B5: hint ใต้ จำนวนบาน
-    h+='<label class="opt cab-detail" style="width:100%;">จำนวนบานหน้าตู้ <div class="chip-group chip-sm"><button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')">1 บาน</button><button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')">2 บาน</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')">3 บาน</button></div><select class="o-cabdoors" style="display:none;"><option value="1">1 บาน</option><option value="2" selected>2 บาน</option><option value="3">3 บาน</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานลด</div></label>';
-    // B1: วัสดุผนัง + ชนิดชั้น = บล็อกเดียว (จับคู่ในกล่อง) + cascade ชั้นกระจกไม่คิดค่าสี
-    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
-      +'<label class="opt" style="width:100%;margin:0;">ชนิดชั้น <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select></label>'
-      +'<div class="cab-shelf-glass-hint" style="display:none;font-size:11px;color:#059669;font-weight:600;margin-top:4px;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง</div>'
-      // B เฟส B: ชิปกระจกชั้น — โผล่เมื่อ shelfmat=glass (ซ่อนตอนแรก · cabUpdateHints เปิด/ปิด)
-      +'<div class="cab-shelfglass-row" style="display:none;margin-top:7px;">'
-      +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สเปกกระจกชั้น (เจียริม · เรต R3.9) <span style="font-size:10.5px;color:#1E7E45;font-weight:400;">บวกเพิ่มจากค่าชั้น × จำนวนชั้น</span></div>'
-      +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-shelfglass\')">ใส 6 มม.</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 8 มม. +1,200</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 10 มม. +1,200</button><button type="button" class="chip" data-val="600" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 6 มม. +600</button><button type="button" class="chip" data-val="1300" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 8 มม. +1,300</button><button type="button" class="chip" data-val="2100" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 10 มม. +2,100</button></div>'
-      +'<select class="o-shelfglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="1200">ใส 8 มม.</option><option value="1200">ใส 10 มม.</option><option value="600">เทมเปอร์ 6 มม.</option><option value="1300">เทมเปอร์ 8 มม.</option><option value="2100">เทมเปอร์ 10 มม.</option></select>'
-      +'</div>'
-      +'</div>';
-    // G4 L1-L3 สีต่อข้อ (23มิ.ย.): ห่อกล่องสี 3 ชั้น · L1=checkbox ติ๊ก=ตามทั้งใบ (ci จากหัวใบ · selectors ซ่อน) · เอาออก=L2 real/opt
-    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
-      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">🎨 สี (โครงตู้ + หน้าบาน) — L1/L2/L3</div>'
-      // L1 checkbox
+  if(p.cabinet){
+    // G4 3-box layout (23มิ.ย. ตามดราฟ DRAFT-G4-ux-2026-06-23)
+    h+='<div class="g4-prebox">';
+    // Product switcher (นอกกล่อง — ด้านบนสุด)
+    h+='<label class="opt cab-detail g4-psw" style="width:100%;margin:0 0 2px;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip on" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div></label>';
+
+    // Box ① สเปกหลัก (red)
+    h+='<div class="g4-box g4-b1">';
+    h+='<div class="g4-bh">① สเปกหลัก <span class="g4-btag">บังคับ</span></div>';
+    h+='<div class="g4-body">';
+    // ประเภทตู้
+    h+='<div class="g4-fld"><div class="g4-lbl">ประเภทตู้</div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="wardrobe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้ทั่วไป (ชั้น~40ซม.)</button><button type="button" class="chip" data-val="shoe" onclick="chSetChip(this,\'o-cabtype\');cabUpdateHints(this.closest(\'.ch\'))">ตู้รองเท้า (ชั้น~20ซม.)</button></div><select class="o-cabtype" style="display:none;"><option value="wardrobe" selected>ตู้ทั่วไป (ชั้น~40ซม.)</option><option value="shoe">ตู้รองเท้า (ชั้น~20ซม.)</option></select></div>';
+    // จำนวนบานหน้าตู้
+    h+='<div class="g4-fld"><div class="g4-lbl">จำนวนบานหน้าตู้</div><div class="chip-group chip-sm"><button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabdoors\')">1 บาน</button><button type="button" class="chip on" data-val="2" onclick="chSetChip(this,\'o-cabdoors\')">2 บาน</button><button type="button" class="chip" data-val="3" onclick="chSetChip(this,\'o-cabdoors\')">3 บาน</button></div><select class="o-cabdoors" style="display:none;"><option value="1">1 บาน</option><option value="2" selected>2 บาน</option><option value="3">3 บาน</option></select><div class="g4-hint">ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานลด · บานที่ 2-3 +5,500/บาน</div></div>';
+    // ชนิดชั้น + กระจกชั้น (cascade)
+    h+='<div class="g4-fld"><div class="g4-lbl">ชนิดชั้น</div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select><div class="cab-shelf-glass-hint" style="display:none;font-size:11px;color:#059669;font-weight:600;margin-top:3px;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง</div><div class="cab-shelfglass-row" style="display:none;margin-top:7px;"><div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สเปกกระจกชั้น (เจียริม · เรต R3.9)</div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-shelfglass\')">ใส 6 มม.</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 8 มม. +1,200</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 10 มม. +1,200</button><button type="button" class="chip" data-val="600" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 6 มม. +600</button><button type="button" class="chip" data-val="1300" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 8 มม. +1,300</button><button type="button" class="chip" data-val="2100" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 10 มม. +2,100</button></div><select class="o-shelfglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="1200">ใส 8 มม.</option><option value="1200">ใส 10 มม.</option><option value="600">เทมเปอร์ 6 มม.</option><option value="1300">เทมเปอร์ 8 มม.</option><option value="2100">เทมเปอร์ 10 มม.</option></select></div></div>';
+    // ลึก + จำนวนชั้น
+    h+='<div class="g4-fld" style="flex-direction:row;gap:16px;flex-wrap:wrap;align-items:center;"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:32px;"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;">จำนวนชั้น <input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:32px;"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span></div>';
+    // สีตามทั้งใบ L1/L2/L3
+    h+='<div class="g4-fld" style="border:1px solid #F3D5D5;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
+      +'<div class="g4-lbl" style="margin-bottom:6px;">🎨 สี (โครงตู้ + หน้าบาน) — L1/L2/L3</div>'
       +'<label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;">'
       +'<input type="checkbox" class="o-cabcofollow" checked onchange="cabCoFollowTog(this);calcQuote();" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b>'
       +'<span style="font-size:11px;color:#6B7280;">(L1 · ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></label>'
-      // L2/L3 body ซ่อนเมื่อ L1 ติ๊ก
       +'<div class="cab-co-body" style="display:none;margin-top:7px;">'
-        // โหมด real/opt
         +'<div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:5px;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะตู้นี้ (🟢ใช้จริง=บวกยอด · 🔵ออปชั่น=OPTION line)</div>'
         +'<div class="chip-group chip-sm" style="margin-bottom:8px;">'
           +'<button type="button" class="chip on o-cabcomode-real" data-val="real" onclick="cabCoSetMode(this.closest(\'.ch\'),\'real\')">🟢 ใช้จริง</button>'
           +'<button type="button" class="chip o-cabcomode-opt" data-val="opt" onclick="cabCoSetMode(this.closest(\'.ch\'),\'opt\')">🔵 ออปชั่น</button>'
         +'</div>'
         +'<input type="hidden" class="o-cabcomode" value="real">'
-        // L2 ①② 2 คอลัมน์ (จุด1 23มิ.ย.)
         +'<div class="cab-co-colgrid">'
-        // L2 ① สีหน้าบาน (FT colorPlus)
-        +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat · แยกจากโครง)</span></div>'
-        +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
-        +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ซาฮาร่า</button>'
-        +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ลายไม้สต๊อก</button>'
-        +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">อบพิเศษ</button>'
-        +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">สีชุบ</button></div>'
-        +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select></div>'
-        // L2 ② สีโครงตู้ (rn90) — ci หัวใบเป็น default · ถ้าเลือก L2 จะ override
-        +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู · override สีหัวใบ)</span></div>'
-        +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ตามหัวใบ</button>'
-        +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ซาฮาร่า</button>'
-        +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">Aztec gray</button>'
-        +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้สต๊อก</button>'
-        +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">อบพิเศษ</button>'
-        +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้อบพิเศษ</button>'
-        +'<button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">สีชุบ</button></div>'
-        +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
+          +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat)</span></div>'
+          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ซาฮาร่า</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ลายไม้สต๊อก</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">สีชุบ</button></div>'
+          +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select></div>'
+          +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู)</span></div>'
+          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ตามหัวใบ</button>'
+          +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ซาฮาร่า</button>'
+          +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">Aztec gray</button>'
+          +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้สต๊อก</button>'
+          +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">สีชุบ</button></div>'
+          +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
         +'</div>'// end cab-co-colgrid
-        // L3 เทียบสีโครงอีก — พับใน details (จุด1 23มิ.ย.)
         +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีโครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
         +'<div style="padding-top:5px;">'
         +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">— ไม่เทียบ —</button>'
@@ -5531,16 +5541,16 @@ function buildItemOpts(d){
         +'</div></details>'
       +'</div>'// end cab-co-body
       +'<div style="font-size:11px;color:#1E40AF;background:#EFF6FF;border-radius:6px;padding:4px 8px;margin-top:6px;">สีกระทบ <b>โครงตู้ (rn90) + หน้าบาน (FT flat)</b> · ผนังกระจก/สมาร์ทบอร์ด → ไม่คิดค่าสี</div>'
-      +'</div>'
-      // ยังรักษา cab-color-hint ไว้ด้วย class ซ่อน เพื่อ backward compat
+      +'</div>'// end สีตามทั้งใบ fld
       +'<div class="opt cab-detail cab-color-hint" style="display:none;"></div>';
-    // B3: ลึก + จำนวนชั้น แถวเดียว · badge auto ทั้งคู่
-    h+='<div class="opt cab-detail" style="width:100%;display:flex;flex-wrap:wrap;gap:16px;align-items:center;">'
-      +'<span style="display:inline-flex;align-items:center;gap:5px;">ลึก(ม.) <input type="number" class="o-depth" step="0.1" min="0" value="0.6" style="width:60px;height:32px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span>'
-      +'<span style="display:inline-flex;align-items:center;gap:5px;">จำนวนชั้น <input type="number" class="o-shelves" step="1" min="0" placeholder="auto" style="width:60px;height:32px"> <span style="font-size:11px;color:#059669;font-weight:700;">auto</span></span>'
-      +'</div>';
-    // B6-NEW (G4 wall-sides 16มิ.ย.): ผนังตู้ 3 ด้าน ติ๊กเลือกอิสระ + วัสดุต่อด้าน + ✎ ปรับขนาด (แทน o-cabwallmat+o-backwall)
-    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">ผนังตู้ (ติ๊กด้านที่ต้องการ) <span style="font-size:11px;font-weight:400;color:#6B7280;">— ด้านชนผนังปูน ไม่ต้องติ๊ก</span></div>';
+    h+='</div></div>';  // close g4-body + g4-b1
+
+    // Box ② ออปชั่นหลัก (blue)
+    h+='<div class="g4-box g4-b2">';
+    h+='<div class="g4-bh">② ออปชั่นหลัก <span class="g4-btag">เลือกได้</span></div>';
+    h+='<div class="g4-body">';
+    // ผนังตู้ 3 ด้าน
+    h+='<div class="g4-fld"><div class="g4-lbl">ผนังตู้ (ติ๊กด้านที่ต้องการ) <span style="font-size:11px;font-weight:400;color:#6B7280;">— ด้านชนผนังปูน ไม่ต้องติ๊ก</span></div>';
     [['left','ด้านซ้าย','D×H auto'],['right','ด้านขวา','D×H auto'],['back','ด้านหลัง','W×H auto']].forEach(function(wd){ var k=wd[0];
       h+='<div class="cab-wall-row" style="border-top:1px solid #E5E7EB;padding-top:6px;margin-top:6px;">'
         +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px;"><input type="checkbox" class="o-cabwall-'+k+'-on" style="width:20px;height:20px;flex-shrink:0;" onchange="cabWallToggle(this,\''+k+'\');calcQuote();"><span style="font-weight:600;">'+wd[1]+'</span><span style="font-size:11px;color:#6B7280;">('+wd[2]+' · min 1 ตร.ม.)</span></label>'
@@ -5551,13 +5561,23 @@ function buildItemOpts(d){
         +'<span class="cab-wall-size-'+k+'" style="display:none;flex-wrap:wrap;gap:4px 10px;margin-top:4px;">กว้าง <input type="number" class="o-cabwall-'+k+'-w" step="0.01" min="0" placeholder="auto" style="width:60px;height:32px;" oninput="calcQuote();"> ม. สูง <input type="number" class="o-cabwall-'+k+'-h" step="0.01" min="0" placeholder="auto" style="width:60px;height:32px;" oninput="calcQuote();"> ม. <span style="font-size:11px;color:#6B7280;">(ว่าง = auto)</span></span>'
         +'</div></div>';
     });
-    // B เฟส B: ชิปกระจกผนัง — โผล่เมื่อมีผนัง=กระจก (ซ่อนตอนแรก · cabWallGlassToggle เปิด/ปิด)
+    // กระจกผนัง cascade
     h+='<div class="cab-wallglass-row" style="display:none;margin-top:8px;border-top:1px solid #E5E7EB;padding-top:7px;">'
-      +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สีกระจกผนัง (ธรรมดา 5-6 มม. · ไม่มีเทมป์/ลามิเนต) <span style="font-size:10.5px;color:#1E7E45;font-weight:400;">บวกเพิ่มจาก 3,000 เดิม × พื้นที่ผนังกระจกรวม</span></div>'
+      +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สีกระจกผนัง (ธรรมดา 5-6 มม.)</div>'
       +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-wallglass\')">ใส 5-6 มม.</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-wallglass\')">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-wallglass\')">ชาดำ +500</button></div>'
       +'<select class="o-wallglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 5-6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select>'
       +'</div>'
-      +'</div>'; }
+      +'</div>'// end ผนังตู้ fld
+    h+='</div></div>';  // close g4-body + g4-b2
+
+    // Box ③ ออปชั่นเสริม (gray collapsible)
+    h+='<details class="g4-box g4-b3">';
+    h+='<summary class="g4-bh">③ ออปชั่นเสริม <span style="font-size:11.5px;color:#6B7280;font-weight:400;margin-left:4px;">— นานๆใช้ · กดกาง</span> <span class="g4-btag">พับเก็บ</span></summary>';
+    h+='<div class="g4-body"><div class="g4-hint">หมายเหตุ · งานเสริม · รื้อของเดิม — (ใส่ในช่อง หมายเหตุ ด้านล่าง)</div></div>';
+    h+='</details>';
+
+    h+='</div>';  // close g4-prebox
+  }
   if(p.glass_replace){
     h+='<label class="opt">ทุนกระจก (บาท/ตร.ม.) <input type="number" class="o-glasscost" min="0" step="50" value="0" style="width:90px;height:32px;"></label>';
     // R3 2026-05-30: เพิ่ม auto กำไร 2 ขั้น — ขั้น1 ทุน→กำไร%, ขั้น2 พื้นที่รวม→ลดกำไร
@@ -5621,12 +5641,19 @@ function buildItemOpts(d){
     // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบ → บรรทัด OPTION ในใบ (ไม่บวกยอด · ไม่แตะ calcUnit) · โมเดล G2 ระแนง: finish×พื้นที่
     h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-rnfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' (+'+fmt(p.fin[k])+'/ตร.ม.)</option>';}).join('')+'</select></div></div>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
   if(p.future_tech){
-    // B4: ชิป switch สินค้า บนสุด (ฝาตู้ active) + B5 hint จำนวนบาน
-    h+='<label class="opt cab-detail" style="width:100%;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
-    // เฟส B (23มิ.ย.): วัสดุหน้าบาน อลู/กระจก + cascade สีกระจก
-    // G4 future_tech L1-L2 สีต่อข้อ (23มิ.ย.)
-    h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
-      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">🎨 สีฝาตู้ — L1/L2</div>'
+    // G4 ฝาตู้ 3-box layout (23มิ.ย.)
+    h+='<div class="g4-prebox">';
+    // Product switcher
+    h+='<label class="opt cab-detail g4-psw" style="width:100%;margin:0 0 2px;">สินค้า <div class="chip-group chip-sm"><button type="button" class="chip" onclick="cabProdSwitch(this,\'cabinet_alu\')">📦 ตู้อลู</button><button type="button" class="chip on" onclick="cabProdSwitch(this,\'future_tech\')">🚪 ฝาตู้</button></div><div style="font-size:11px;color:#6B7280;margin-top:3px;width:100%;">ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บาน (max 3)</div></label>';
+
+    // Box ① สเปกหลัก (red)
+    h+='<div class="g4-box g4-b1"><div class="g4-bh">① สเปกหลัก <span class="g4-btag">บังคับ</span></div><div class="g4-body">';
+    h+='<div class="g4-hint">กรอกขนาดในช่องหลัก (กว้าง = กว้าง/บาน · สูง = สูง)</div>';
+    h+='</div></div>';
+
+    // Box ② ออปชั่นหลัก (blue) — สีฝาตู้ L1/L2
+    h+='<div class="g4-box g4-b2"><div class="g4-bh">② ออปชั่นหลัก <span class="g4-btag">เลือกได้</span></div><div class="g4-body">';
+    h+='<div class="g4-fld"><div class="g4-lbl">🎨 สีฝาตู้ — L1/L2</div>'
       +'<label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;">'
       +'<input type="checkbox" class="o-ftcofollow" checked onchange="ftCoFollowTog(this);calcQuote();" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b>'
       +'<span style="font-size:11px;color:#6B7280;">(L1 · ค่าเริ่มต้น)</span></label>'
@@ -5637,12 +5664,21 @@ function buildItemOpts(d){
           +'<button type="button" class="chip o-ftcomode-opt" data-val="opt" onclick="ftCoSetMode(this.closest(\'.ch\'),\'opt\')">🔵 ออปชั่น</button>'
         +'</div>'
         +'<input type="hidden" class="o-ftcomode" value="real">'
-        +'<label style="width:100%;display:block;margin-bottom:5px;">วัสดุหน้าบาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">อลู (FT)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">กระจก</button></div><select class="o-ftmat" style="display:none;" onchange="ftMatCascade(this.closest(\'.ch\'));calcQuote();"><option value="alu" selected>อลู (FT)</option><option value="glass">กระจก</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;">กระจก = ราคาฐาน FT เดิม + สีกระจก spread×พื้นที่/บาน · ไม่มีเทมป์/ลามิเนต</div></label>'
+        +'<label style="width:100%;display:block;margin-bottom:5px;">วัสดุหน้าบาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">อลู (FT)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">กระจก</button></div><select class="o-ftmat" style="display:none;" onchange="ftMatCascade(this.closest(\'.ch\'));calcQuote();"><option value="alu" selected>อลู (FT)</option><option value="glass">กระจก</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;">กระจก = ราคาฐาน FT เดิม + สีกระจก spread×พื้นที่/บาน</div></label>'
         +'<div class="ft-alucolor-row" style="margin-bottom:5px;">สีฝาตู้ (อลู FT) <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน</span></div>'
-        +'<div class="ft-glasscolor-row" style="display:none;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;">สีกระจก (ธรรมดา 6 มม.) <span style="font-size:11px;color:#6B7280;font-weight:400;">· ไม่มีเทมป์/ลามิเนต · เรต R3.9</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ใส (+0)</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ชาดำ +500</button></div><select class="o-ftglasscolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select></div>'
+        +'<div class="ft-glasscolor-row" style="display:none;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;">สีกระจก (ธรรมดา 6 มม.) <span style="font-size:11px;color:#6B7280;font-weight:400;">เรต R3.9</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ใส (+0)</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ชาดำ +500</button></div><select class="o-ftglasscolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select></div>'
       +'</div>'// end ft-co-body
       +'</div>';
-    h+='<label class="opt cab-detail" style="flex:1 1 100%;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label>'; }
+    h+='<div class="g4-fld"><label class="g4-lbl" style="font-weight:400;font-size:13px;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label></div>';
+    h+='</div></div>';  // close g4-body + g4-b2
+
+    // Box ③ ออปชั่นเสริม (collapsible)
+    h+='<details class="g4-box g4-b3"><summary class="g4-bh">③ ออปชั่นเสริม <span style="font-size:11.5px;color:#6B7280;font-weight:400;margin-left:4px;">— นานๆใช้ · กดกาง</span> <span class="g4-btag">พับเก็บ</span></summary>';
+    h+='<div class="g4-body"><div class="g4-hint">หมายเหตุ · งานเสริม · รื้อของเดิม — (ใส่ในช่อง หมายเหตุ ด้านล่าง)</div></div>';
+    h+='</details>';
+
+    h+='</div>';  // close g4-prebox
+  }
   if(p.gutter_cover){  // รอบ3 ข้อ2 (18มิ.ย.): ย้ายออปชั่นปิดซ่อนรางน้ำมา render จริง (เดิม dead → ราคา ฿0/เลือกสีไม่ได้)
     h+='<label class="opt">ขนาดราง (กว้าง) <select class="o-gcwidth" onchange="calcQuote();" style="width:auto;height:32px;"><option value="0.15">15 ซม. (M)</option><option value="0.30">30 ซม. (L)</option><option value="0">กรอกเอง...</option></select></label>';
     h+='<label class="opt">หรือกรอก กว้าง (ซม.) <input type="number" class="o-gcwidth-custom" min="0" step="1" value="0" oninput="calcQuote();" style="width:80px;height:32px;"></label>';
