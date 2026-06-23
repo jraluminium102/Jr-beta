@@ -81,6 +81,12 @@
   @keyframes chpcfl{0%{background:#1e3a5f}100%{background:#0f172a}}
   .ch.ch-pcard .chfoot{display:none;}
   @media(max-width:640px){ .ch.ch-pcard .ch-aside{float:none;position:static;width:auto;margin:0 0 10px;} }
+  /* จุด1 23มิ.ย.: G4 สีตู้ 2 คอลัมน์ + L3 พับ */
+  .cab-co-colgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:4px;}
+  @media(max-width:560px){.cab-co-colgrid{grid-template-columns:1fr;}}
+  .cab-co-colgrid .chip-group.chip-sm .chip{padding:3px 8px;font-size:11.5px;}
+  .cab-co-l3det>summary{list-style:none;}.cab-co-l3det>summary::-webkit-details-marker{display:none;}
+  .cab-co-l3det[open]>summary{color:#B3151D;}
   /* #2 2026-06-05: บานย่อยในชุด */
   .subitem-wrap{margin:6px 0 2px;}
   .subitem-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
@@ -5395,16 +5401,18 @@ function buildItemOpts(d){
           +'<button type="button" class="chip o-cabcomode-opt" data-val="opt" onclick="cabCoSetMode(this.closest(\'.ch\'),\'opt\')">🔵 ออปชั่น</button>'
         +'</div>'
         +'<input type="hidden" class="o-cabcomode" value="real">'
+        // L2 ①② 2 คอลัมน์ (จุด1 23มิ.ย.)
+        +'<div class="cab-co-colgrid">'
         // L2 ① สีหน้าบาน (FT colorPlus)
-        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat · แยกจากโครง)</span></div>'
+        +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat · แยกจากโครง)</span></div>'
         +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
         +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ซาฮาร่า</button>'
         +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ลายไม้สต๊อก</button>'
         +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">อบพิเศษ</button>'
         +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">สีชุบ</button></div>'
-        +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select>'
+        +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select></div>'
         // L2 ② สีโครงตู้ (rn90) — ci หัวใบเป็น default · ถ้าเลือก L2 จะ override
-        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:7px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู · override สีหัวใบ)</span></div>'
+        +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู · override สีหัวใบ)</span></div>'
         +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ตามหัวใบ</button>'
         +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ซาฮาร่า</button>'
         +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">Aztec gray</button>'
@@ -5412,9 +5420,11 @@ function buildItemOpts(d){
         +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">อบพิเศษ</button>'
         +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้อบพิเศษ</button>'
         +'<button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">สีชุบ</button></div>'
-        +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select>'
-        // L3 เทียบสีโครงอีก (ออปชั่น ไม่บวกยอด)
-        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:7px 0 3px;">L3 — เทียบสีโครงอีก <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(ออปชั่น · ไม่บวกยอด)</span></div>'
+        +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
+        +'</div>'// end cab-co-colgrid
+        // L3 เทียบสีโครงอีก — พับใน details (จุด1 23มิ.ย.)
+        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีโครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
+        +'<div style="padding-top:5px;">'
         +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">— ไม่เทียบ —</button>'
         +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">ซาฮาร่า</button>'
         +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">Aztec gray</button>'
@@ -5423,6 +5433,7 @@ function buildItemOpts(d){
         +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">ลายไม้อบพิเศษ</button></div>'
         +'<select class="o-cabstructcolorL3" style="display:none;" onchange="calcQuote();"><option value="-1" selected>— ไม่เทียบ —</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option></select>'
         +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ L3 เทียบจาก baseline L2 ② → OPTION signed diff (ไม่บวกยอด)</div>'
+        +'</div></details>'
       +'</div>'// end cab-co-body
       +'<div style="font-size:11px;color:#1E40AF;background:#EFF6FF;border-radius:6px;padding:4px 8px;margin-top:6px;">สีกระทบ <b>โครงตู้ (rn90) + หน้าบาน (FT flat)</b> · ผนังกระจก/สมาร์ทบอร์ด → ไม่คิดค่าสี</div>'
       +'</div>'
@@ -5614,13 +5625,13 @@ function buildItemOpts(d){
           +'<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:3px 10px;"><input type="radio" class="g1co-l2mode" name="g1co-l2mode-SAMENAME" value="opt" onchange="g1L2ModeChange(this)"> <span>🔵 ออปชั่น (ไม่บวกยอด)</span></label>'
           +'</div>'
         +'</div>'
-        // L3 wrap (โชว์หลัง L2 เปิด) — select เทียบ baseline=L2
-        +'<div class="g1co-l3-wrap" style="display:none;flex-direction:column;gap:6px;border-top:1px dashed #D1D5DB;padding-top:6px;">'
-          +'<div style="font-size:11.5px;font-weight:700;color:#6B7280;">ตัวเลือกเปรียบเทียบเพิ่ม (L3) — OPTION ไม่บวกยอด</div>'
-          +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        // L3 wrap (โชว์หลัง L2 เปิด) — outer div ยังคงถูก toggle ด้วย JS · inner details พับ (จุด2 23มิ.ย.)
+        +'<div class="g1co-l3-wrap" style="display:none;flex-direction:column;gap:0;border-top:1px dashed #D1D5DB;padding-top:4px;">'
+          +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">＋ เทียบสี/กระจกอื่น (L3 OPTION · ไม่บวกยอด)</summary>'
+          +'<div style="padding-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'
           +'<label style="font-size:12px;">เทียบสีอลู: <select class="g1co-l3c" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="0">— ไม่เทียบ —</option>'+_l3CoOpts+'</select></label>'
           +'<label style="font-size:12px;">เทียบกระจก: <select class="g1co-l3g" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="0">— ไม่เทียบ —</option>'+_l3GlOpts+'</select></label>'
-          +'</div>'
+          +'</div></details>'
         +'</div>';
       // fix: ชื่อ radio name ต้องไม่ซ้ำกันระหว่างการ์ด — แทนด้วย unique id
       var _uid=d.dataset.id||Math.random().toString(36).slice(2);
@@ -5709,10 +5720,10 @@ function buildItemOpts(d){
       _orphanSmb.remove();
     }
   }
-  // C (21มิ.ย.): การ์ดราคา G2 ชิดขวา (เริ่ม G2 ก่อน · กลุ่มอื่นทำแชทอื่น) · ค่าราคาอัปเดตใน calcQuote
-  { var _isG2=((d.querySelector('.i-group')||{}).value)==='2';
+  // C (21มิ.ย.): การ์ดราคา G2 ชิดขวา · ขยาย G1+G4 (จุด3 23มิ.ย.) · ค่าราคาอัปเดตใน calcQuote (L6158 generic)
+  { var _grpVal=((d.querySelector('.i-group')||{}).value)||''; var _isG2=_grpVal==='2'; var _isG1=_grpVal==='1'; var _isG4=_grpVal==='4';
     var _aside=d.querySelector(':scope > .ch-aside');
-    if(_isG2){ d.classList.add('ch-pcard');
+    if(_isG2||_isG1||_isG4){ d.classList.add('ch-pcard');
       if(!_aside){ _aside=document.createElement('div'); _aside.className='ch-aside';
         _aside.innerHTML='<div class="pcl">💰 ราคารายการนี้</div><div class="pca">—</div><div class="pcbd"></div><div class="pcp">฿0</div>';
         var _top=d.querySelector(':scope > .top'); if(_top&&_top.nextSibling) d.insertBefore(_aside,_top.nextSibling); else d.appendChild(_aside); }
