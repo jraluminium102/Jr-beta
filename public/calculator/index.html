@@ -4279,6 +4279,29 @@ function cabProdSwitch(btn, prodId){
   var ps=ch.querySelector('.i-prod'); if(!ps || ps.value===prodId) return;
   ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true}));
 }
+// เฟส1 G1 บานเปลือย: ชิป switch ประเภท ติดตาย↔ประตูสวิง↔ประตูเลื่อน (model จาก cabProdSwitch)
+// ติดตาย = frameless_fixed · ประตูสวิง/เลื่อน = frameless_door (สลับแค่ product id · ราคาเดิมไม่แตะ)
+function framelessTypeSwitch(btn, prodId){
+  var ch=btn.closest('.ch'); if(!ch) return;
+  var ps=ch.querySelector('.i-prod'); if(!ps) return;
+  // บันทึก frametype (สวิง/เลื่อน) ก่อน switch เพื่อให้ rebuild อ่านได้
+  if(prodId==='frameless_door'){
+    var ft=btn.dataset.frametype||'swing';
+    // ถ้า product เดิมเป็น frameless_door อยู่แล้ว แต่เปลี่ยน สวิง↔เลื่อน → update dataset + sync o-frametype แล้ว rebuild
+    ch.dataset.framelessType=ft;
+    var ftSel=ch.querySelector('.o-frametype'); if(ftSel){ ftSel.value=ft; }
+    if(ps.value===prodId){
+      // product ไม่เปลี่ยน แค่ rebuild ฟอร์มเพื่อ update ปุ่มที่ active
+      if(window.buildItemOpts) buildItemOpts(ch);
+      if(window.calcQuote) calcQuote();
+      return;
+    }
+  } else {
+    delete ch.dataset.framelessType;
+    if(ps.value===prodId) return; // ติดตาย → ติดตาย ไม่ต้องทำ
+  }
+  ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true}));
+}
 // G4 (ข้อ1/2): อัปเดต hint cascade ในฟอร์มตู้ — สีกระทบเฉพาะโครง (rn90/colorPrice ตามผนัง) + ชั้นกระจกไม่คิดค่าสี
 // G4 wall-sides: ติ๊กด้านผนัง → โผล่/ซ่อนกล่องเลือกวัสดุ+ขนาดของด้านนั้น
 function cabWallToggle(chk, key){
@@ -4765,13 +4788,26 @@ function buildItemOpts(d){
     h+='<label class="opt" style="width:100%;">รูปแบบ shower <select class="o-shtype" style="display:none;" onchange="calcQuote();"><option value="door_fixed" selected>(ก) ประตู + กระจกติดตาย (มาตรฐาน)</option><option value="fixed_only">(ข) กระจกติดตายอย่างเดียว</option><option value="door_only">(ค) ประตูอย่างเดียว</option></select>'+rfChips('o-shtype',[['door_fixed','ประตู+กระจกติดตาย'],['fixed_only','ติดตายอย่างเดียว'],['door_only','ประตูอย่างเดียว']],'door_fixed')+'</label>';
     h+='<label class="opt" style="width:100%;">ประเภทประตู (ถ้ามี) <select class="o-shdoortype" style="display:none;" onchange="calcQuote();"><option value="swing" selected>บานเปิด (swing)</option><option value="sliding">บานเลื่อน</option></select>'+rfChips('o-shdoortype',[['swing','บานเปิด (swing)'],['sliding','บานเลื่อน']],'swing',true)+'</label>';
   }
-  // frameless_door — เลือกสีเฟรม + สวิง/เลื่อน
-  if(p.id==='frameless_door'){
-    h+='<label class="opt" style="width:100%;">ประเภทประตูบานเปลือย <select class="o-frametype" style="display:none;" onchange="calcQuote();"><option value="swing" selected>สวิง (บานเปิด)</option><option value="sliding">เลื่อน</option></select>'+rfChips('o-frametype',[['swing','สวิง (บานเปิด)'],['sliding','เลื่อน']],'swing',true)+'</label>';
+  // เฟส1 G1: บานเปลือย (ติดตาย + ประตู รวมชนิดเดียว) — ปุ่มประเภท 3 ตัว สลับ product ด้วย framelessTypeSwitch
+  // ติดตาย=frameless_fixed(bucket min 7000) · ประตูสวิง/เลื่อน=frameless_door(ref_plus_panel +8000/บาน)
+  if(p.cat==='บานเปลือย'){
+    var _flCurFixed=(p.id==='frameless_fixed');
+    var _flSavedType=(d.dataset&&d.dataset.framelessType)||'swing'; // ติดตามประเภทประตู (สวิง/เลื่อน) ผ่าน dataset
+    // ปุ่มประเภท: ติดตาย(default) / ประตู-สวิง / ประตู-เลื่อน
+    h+='<label class="opt" style="width:100%;">ประเภท<div class="chip-group chip-sm" style="margin-top:4px;">';
+    h+='<button type="button" class="chip'+(_flCurFixed?' on':'')+'" onclick="framelessTypeSwitch(this,\'frameless_fixed\')" data-frametype="fixed">ติดตาย</button>';
+    h+='<button type="button" class="chip'+((!_flCurFixed&&_flSavedType!=='sliding')?' on':'')+'" onclick="framelessTypeSwitch(this,\'frameless_door\')" data-frametype="swing">ประตู — สวิง</button>';
+    h+='<button type="button" class="chip'+((!_flCurFixed&&_flSavedType==='sliding')?' on':'')+'" onclick="framelessTypeSwitch(this,\'frameless_door\')" data-frametype="sliding">ประตู — เลื่อน</button>';
+    h+='</div></label>';
+    // สีเฟรม (ทุกประเภท · frameless มีเฟรมอลู)
     h+='<label class="opt" style="width:100%;">สีเฟรมอลูมิเนียม <select class="o-framecolor" style="display:none;" onchange="calcQuote();"><option value="ขาว" selected>ขาว (ด้าน/เงา)</option><option value="ดำ">ดำ (ด้าน/เงา)</option><option value="บรอนซ์">บรอนซ์</option><option value="แชมเปญ">แชมเปญ</option><option value="เทาซาฮาร่า">เทาซาฮาร่า</option><option value="สีอบพิเศษ">สีอบพิเศษ</option></select>'+rfChips('o-framecolor',[['ขาว','ขาว'],['ดำ','ดำ'],['บรอนซ์','บรอนซ์'],['แชมเปญ','แชมเปญ'],['เทาซาฮาร่า','เทาซาฮาร่า'],['สีอบพิเศษ','สีอบพิเศษ']],'ขาว')+'</label>';
+    // เก็บ o-frametype ซ่อนเพื่อ backward compat กับ calcUnit/itemDetail (frameless_door อ่าน frametype)
+    if(!_flCurFixed){
+      h+='<select class="o-frametype" style="display:none;" onchange="calcQuote();"><option value="swing"'+((_flSavedType!=='sliding')?' selected':'')+'>สวิง (บานเปิด)</option><option value="sliding"'+((_flSavedType==='sliding')?' selected':'')+'>เลื่อน</option></select>';
+    }
   }
   if(p.closer){ if(p.cat==='YKK'){ h+='<label class="opt">โช้คอัพ <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คอัพ">มี +5,000</option></select></label>'; } else { h+='<label class="opt">โช้คอัพประตู <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช้ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช้ค">บานพับ +5,000</option></select></label>'; } } // 22มิ.ย. #3-A: YKK โช๊คราคาเดียว มี/ไม่มี +5,000 · บานเปิดคง 4 ตัวเลือก
-  // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน (บานเลื่อน/PC มี "ชุดล็อค" แล้ว → กันซ้ำ)
+  // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน · เพิ่ม frameless_door (ประตูบานเปลือย เฉพาะประตู ไม่ใช่ติดตาย)
   if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน','บานยก'].includes(p.cat) || (p.cat==='ดัดโค้ง'&&p.id!=='curved_fixed') || p.id==='frameless_door'){ // 22มิ.ย.: เพิ่ม บานยก/ดัดโค้ง(เว้นติดตายโค้ง)/บานเปลือยประตู · คำ "ชุดล็อค" 3 แบบครบทุกบาน
     h+='<label class="opt" style="width:100%;">ชุดล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี" selected>ไม่มีชุดล็อก</option><option value="มีล็อค">มีชุดล็อก</option><option value="มีล็อค+กุญแจ">มีชุดล็อก + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีชุดล็อก'],['มีล็อค','มีชุดล็อก'],['มีล็อค+กุญแจ','มีชุดล็อก + กุญแจ']],'ไม่มี',true)+'</label>';
   }
