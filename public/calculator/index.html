@@ -1416,7 +1416,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     // ── G4 wall-sides (16มิ.ย. มติพี่นัท): ผนังตู้ 3 ด้าน ติ๊กเลือกอิสระ · วัสดุต่อด้าน · min 1 ตร.ม. ──
     // กระจก 3,000/ตร.ม. (ไม่คิดค่าสี) · อลูทึบ 4,000/ตร.ม. + ค่าสี rn90FinRate · ด้านชนผนังปูน=ไม่ติ๊ก=ไม่คิด
     const SIDES=[{k:'left',label:'ซ้าย',auto:D*H},{k:'right',label:'ขวา',auto:D*H},{k:'back',label:'หลัง',auto:W*H}];
-    let wall=0, cWall=0; const _wmsg=[];
+    let wall=0, cWall=0, glassWallArea=0; const _wmsg=[];
     for(const s of SIDES){
       const on = optSel && optSel['cabwall_'+s.k+'_on'];
       if(!on) continue;                                 // ไม่ติ๊ก = ไม่คิด
@@ -1425,7 +1425,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       const rawA=(ovw&&ovh)?ovw*ovh:s.auto;             // ปรับขนาดเอง หรือ auto
       const area=Math.max(1, rawA);                     // min 1 ตร.ม.
       const mat=(optSel&&optSel['cabwall_'+s.k+'_mat'])||'alu';
-      if(mat==='glass'){ wall+=area*3000; _wmsg.push(s.label+'กระจก'); }   // กระจก 3,000 ไม่คิดค่าสี
+      if(mat==='glass'){ wall+=area*3000; glassWallArea+=area; _wmsg.push(s.label+'กระจก'); }   // กระจก 3,000 ไม่คิดค่าสี · สะสมพื้นที่กระจกผนังสำหรับอัปเกรดสเปก
+      else if(mat==='smart'){ wall+=area*2500; _wmsg.push(s.label+'สมาร์ทบอร์ด'); }  // สมาร์ทบอร์ด 2,500 ไม่คิดค่าสี
       else { wall+=area*4000; cWall+=area*rn90FinRate(ci); _wmsg.push(s.label+'อลูทึบ'); }  // อลู 4,000 + ค่าสี
     }
     // พื้น / ชั้น / สีโครง (คงเดิม)
@@ -1436,8 +1437,17 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const cShelf=aShelfAlu*rn90FinRate(ci);
     const colorStruct=Math.round(cWall+cFloor+cShelf);
     const fl=aFloor*4000, shc=nsh*srate;
-    const _sell=roundUp(front+wall+fl+shc+colorStruct);
-    return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(_wmsg.length?(_wmsg.join('/')+' '+fmt(wall)):'ไม่มี (ชนผนังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')]};
+    // เฟส B: อัปเกรดกระจกชั้น (spread × aFloor × nsh · เฉพาะ shelfmat=glass)
+    const _shelfGlassSpread=(optSel&&optSel.shelfglass)||0;
+    const shelfGlassAdd=(sg==='glass' && _shelfGlassSpread>0) ? Math.round(_shelfGlassSpread*aFloor*nsh) : 0;
+    // เฟส B: อัปเกรดกระจกผนัง (spread × glassWallArea · เฉพาะเมื่อมีผนังกระจก)
+    const _wallGlassSpread=(optSel&&optSel.wallglass)||0;
+    const wallGlassAdd=(_wallGlassSpread>0 && glassWallArea>0) ? Math.round(_wallGlassSpread*glassWallArea) : 0;
+    const _sell=roundUp(front+wall+fl+shc+colorStruct+shelfGlassAdd+wallGlassAdd);
+    const _extraMsgs=[];
+    if(shelfGlassAdd>0) _extraMsgs.push('อัปเกรดกระจกชั้น +'+fmt(shelfGlassAdd));
+    if(wallGlassAdd>0) _extraMsgs.push('อัปเกรดกระจกผนัง +'+fmt(wallGlassAdd));
+    return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(_wmsg.length?(_wmsg.join('/')+' '+fmt(wall)):'ไม่มี (ชนผนังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')+(_extraMsgs.length?(' · '+_extraMsgs.join(' · ')):'')]};
   }
   if(p.frame_wrap){ const W=parseFloat(w)||0, H=parseFloat(h)||0; const perim = (p.frame_wrap==='door') ? (W + 2*H) : 2*(W+H); const _sell = Math.max(1500, perim * (p.rate||700)); return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['เส้นรอบวง '+perim.toFixed(2)+' ม. × '+(p.rate||700)+'/ม. (min 1,500)']}; }
     if(p.screen_addon){
@@ -4308,6 +4318,7 @@ function cabWallToggle(chk, key){
   var ch=chk.closest('.ch'); if(!ch)return;
   var det=ch.querySelector('.cab-wall-detail-'+key);
   if(det) det.style.display=chk.checked?'block':'none';
+  cabWallGlassToggle(ch); // เฟส B: cascade กระจกผนัง
 }
 function cabUpdateHints(ch){
   if(!ch) return;
@@ -4319,6 +4330,21 @@ function cabUpdateHints(ch){
   var shelfGlass=ch.querySelector('.cab-shelf-glass-hint');
   var isGlassShelf=(sm==='glass')||(sm===''&&ct==='shoe'); // ชั้นกระจกจริง: เลือกเอง หรือ ตู้รองเท้า(auto=กระจก)
   if(shelfGlass) shelfGlass.style.display=isGlassShelf?'block':'none';
+  // เฟส B: ชิปกระจกชั้น — โผล่เมื่อ isGlassShelf
+  var shelfGlassRow=ch.querySelector('.cab-shelfglass-row');
+  if(shelfGlassRow) shelfGlassRow.style.display=isGlassShelf?'block':'none';
+}
+function cabWallGlassToggle(ch){
+  // เรียกหลัง calcQuote เพื่อตรวจว่ามีผนังกระจกไหม → เปิด/ปิด cab-wallglass-row
+  if(!ch) return;
+  var hasGlassWall=false;
+  ['left','right','back'].forEach(function(k){
+    var onEl=ch.querySelector('.o-cabwall-'+k+'-on');
+    var matEl=ch.querySelector('.o-cabwall-'+k+'-mat');
+    if(onEl&&onEl.checked&&matEl&&matEl.value==='glass') hasGlassWall=true;
+  });
+  var row=ch.querySelector('.cab-wallglass-row');
+  if(row) row.style.display=hasGlassWall?'block':'none';
 }
 // มือจับ multi-toggle — แต่ละแบรนด์อิสระ (ไม่ clear แบรนด์อื่น)
 function toggleHandleBrand(btn){
@@ -5177,6 +5203,12 @@ function buildItemOpts(d){
     h+='<div class="opt cab-detail" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
       +'<label class="opt" style="width:100%;margin:0;">ชนิดชั้น <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select></label>'
       +'<div class="cab-shelf-glass-hint" style="display:none;font-size:11px;color:#059669;font-weight:600;margin-top:4px;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง</div>'
+      // B เฟส B: ชิปกระจกชั้น — โผล่เมื่อ shelfmat=glass (ซ่อนตอนแรก · cabUpdateHints เปิด/ปิด)
+      +'<div class="cab-shelfglass-row" style="display:none;margin-top:7px;">'
+      +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สเปกกระจกชั้น (เจียริม · เรต R3.9) <span style="font-size:10.5px;color:#1E7E45;font-weight:400;">บวกเพิ่มจากค่าชั้น × จำนวนชั้น</span></div>'
+      +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-shelfglass\')">ใส 6 มม.</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 8 มม. +1,200</button><button type="button" class="chip" data-val="1200" onclick="chSetChip(this,\'o-shelfglass\')">ใส 10 มม. +1,200</button><button type="button" class="chip" data-val="600" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 6 มม. +600</button><button type="button" class="chip" data-val="1300" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 8 มม. +1,300</button><button type="button" class="chip" data-val="2100" onclick="chSetChip(this,\'o-shelfglass\')">เทมเปอร์ 10 มม. +2,100</button></div>'
+      +'<select class="o-shelfglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="1200">ใส 8 มม.</option><option value="1200">ใส 10 มม.</option><option value="600">เทมเปอร์ 6 มม.</option><option value="1300">เทมเปอร์ 8 มม.</option><option value="2100">เทมเปอร์ 10 มม.</option></select>'
+      +'</div>'
       +'</div>';
     // B2: hint สี กระทบเฉพาะโครง (อัปเดตตามวัสดุผนัง · default อลูทึบ→rn90)
     h+='<div class="opt cab-detail cab-color-hint" style="width:100%;font-size:11px;color:#1E40AF;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:5px 9px;">สีอลู (ช่องสีด้านบน) กระทบ <b>เฉพาะโครงตู้</b> ไม่ใช่บานหน้า · ผนังอลูทึบ → ค่าสีโครง (rn90)</div>';
@@ -5191,13 +5223,19 @@ function buildItemOpts(d){
       h+='<div class="cab-wall-row" style="border-top:1px solid #E5E7EB;padding-top:6px;margin-top:6px;">'
         +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px;"><input type="checkbox" class="o-cabwall-'+k+'-on" style="width:20px;height:20px;flex-shrink:0;" onchange="cabWallToggle(this,\''+k+'\');calcQuote();"><span style="font-weight:600;">'+wd[1]+'</span><span style="font-size:11px;color:#6B7280;">('+wd[2]+' · min 1 ตร.ม.)</span></label>'
         +'<div class="cab-wall-detail-'+k+'" style="display:none;padding:6px 0 0 28px;">'
-        +'<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-cabwall-'+k+'-mat\');calcQuote();">อลูทึบ +4,000</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-cabwall-'+k+'-mat\');calcQuote();">กระจก +3,000</button></div>'
-        +'<select class="o-cabwall-'+k+'-mat" style="display:none;" onchange="calcQuote();"><option value="alu" selected>อลูทึบ</option><option value="glass">กระจก</option></select>'
+        +'<div class="chip-group chip-sm" style="margin-bottom:6px;"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-cabwall-'+k+'-mat\');cabWallGlassToggle(this.closest(\'.ch\'));calcQuote();">อลูทึบ +4,000</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-cabwall-'+k+'-mat\');cabWallGlassToggle(this.closest(\'.ch\'));calcQuote();">กระจก +3,000</button><button type="button" class="chip" data-val="smart" onclick="chSetChip(this,\'o-cabwall-'+k+'-mat\');cabWallGlassToggle(this.closest(\'.ch\'));calcQuote();">สมาร์ทบอร์ด +2,500</button></div>'
+        +'<select class="o-cabwall-'+k+'-mat" style="display:none;" onchange="calcQuote();"><option value="alu" selected>อลูทึบ</option><option value="glass">กระจก</option><option value="smart">สมาร์ทบอร์ด</option></select>'
         +'<a href="#" style="font-size:12.5px;color:#1D4ED8;display:inline-block;padding:9px 8px;" onclick="event.preventDefault();var w=this.closest(\'.cab-wall-detail-'+k+'\').querySelector(\'.cab-wall-size-'+k+'\');w.style.display=w.style.display===\'none\'?\'flex\':\'none\';">✎ ปรับขนาดเอง</a>'
         +'<span class="cab-wall-size-'+k+'" style="display:none;flex-wrap:wrap;gap:4px 10px;margin-top:4px;">กว้าง <input type="number" class="o-cabwall-'+k+'-w" step="0.01" min="0" placeholder="auto" style="width:60px;height:32px;" oninput="calcQuote();"> ม. สูง <input type="number" class="o-cabwall-'+k+'-h" step="0.01" min="0" placeholder="auto" style="width:60px;height:32px;" oninput="calcQuote();"> ม. <span style="font-size:11px;color:#6B7280;">(ว่าง = auto)</span></span>'
         +'</div></div>';
     });
-    h+='</div>'; }
+    // B เฟส B: ชิปกระจกผนัง — โผล่เมื่อมีผนัง=กระจก (ซ่อนตอนแรก · cabWallGlassToggle เปิด/ปิด)
+    h+='<div class="cab-wallglass-row" style="display:none;margin-top:8px;border-top:1px solid #E5E7EB;padding-top:7px;">'
+      +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">สีกระจกผนัง (ธรรมดา 5-6 มม. · ไม่มีเทมป์/ลามิเนต) <span style="font-size:10.5px;color:#1E7E45;font-weight:400;">บวกเพิ่มจาก 3,000 เดิม × พื้นที่ผนังกระจกรวม</span></div>'
+      +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-wallglass\')">ใส 5-6 มม.</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-wallglass\')">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-wallglass\')">ชาดำ +500</button></div>'
+      +'<select class="o-wallglass" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 5-6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select>'
+      +'</div>'
+      +'</div>'; }
   if(p.glass_replace){
     h+='<label class="opt">ทุนกระจก (บาท/ตร.ม.) <input type="number" class="o-glasscost" min="0" step="50" value="0" style="width:90px;height:32px;"></label>';
     // R3 2026-05-30: เพิ่ม auto กำไร 2 ขั้น — ขั้น1 ทุน→กำไร%, ขั้น2 พื้นที่รวม→ลดกำไร
@@ -5617,6 +5655,9 @@ function readItem(d){
   if(p.fin){ const fs=d.querySelector('.o-finish'); if(fs){ optSel.finish=parseFloat(fs.value)||0; if(fs.selectedIndex>=0){ finLabel=(fs.options[fs.selectedIndex].getAttribute('data-n')||'')+g2FinNameSuffix(fs); optSel.finishLbl=fs.options[fs.selectedIndex].getAttribute('data-n')||''; } } const _rfo=d.querySelector('.o-rnfinopt'); if(_rfo&&_rfo.selectedIndex>=0){ const _ro=_rfo.options[_rfo.selectedIndex]; optSel.rnfinopt=_ro.value; optSel.rnfinoptLbl=_ro.getAttribute('data-n')||''; } } // ④: ออปชั่นเทียบราคาสีอบ (display · ไม่บวกยอด)
   if(p.ranae){ const _hs=d.querySelector('.o-hmode'); if(_hs)optSel.hmode=_hs.value; const _dt=d.querySelector('.o-doortype'); if(_dt)optSel.doortype=_dt.value; const _dp=d.querySelector('.o-doorprice'); if(_dp)optSel.doorprice=_dp.value; }
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
+    // เฟส B: กระจกชั้น/ผนัง (spread เพิ่มจากเรตเดิม)
+    const _sg=d.querySelector('.o-shelfglass'); optSel.shelfglass=_sg?parseInt(_sg.value)||0:0;
+    const _wg=d.querySelector('.o-wallglass'); optSel.wallglass=_wg?parseInt(_wg.value)||0:0;
     // G4 wall-sides: อ่านผนัง 3 ด้าน
     ['left','right','back'].forEach(function(k){
       const _on=d.querySelector('.o-cabwall-'+k+'-on'), _mat=d.querySelector('.o-cabwall-'+k+'-mat'), _w=d.querySelector('.o-cabwall-'+k+'-w'), _h=d.querySelector('.o-cabwall-'+k+'-h');
