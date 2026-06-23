@@ -1030,9 +1030,9 @@ const COLORS=[
  // 7 สีลายไม้สต๊อก (ไวท์โอ๊ค) — เช็ค KC
  {n:'สีลายไม้สต๊อก (ไวท์โอ๊ค — เช็ค KC) ⚠',quoteName:'สีลายไม้สต๊อก ไวท์โอ๊ค',min:4000,rates:[[7,10,850],[10,9999,750]],series:'MLS',altFor:'MS',altRates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],altMin:11000},
  // 8 สีลายไม้อบพิเศษจาก Fuji - Oak (โอ๊ค)
- {n:'สีลายไม้อบพิเศษจาก Fuji - Oak (โอ๊ค)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],series:'MLS'},
+ {n:'สีลายไม้อบพิเศษจาก Fuji - Oak (โอ๊ค)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],series:'MLS',hasCode:1},
  // 9 สีลายไม้อบพิเศษจาก Fuji - Makha (มะค่า)
- {n:'สีลายไม้อบพิเศษจาก Fuji - Makha (มะค่า)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],series:'MLS'},
+ {n:'สีลายไม้อบพิเศษจาก Fuji - Makha (มะค่า)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],series:'MLS',hasCode:1},
  // 10 อบพิเศษ (ระบุรหัส)
  {n:'สีอบพิเศษ',min:10000,rates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]],series:'MLS',hasCode:1},
  // 11 ลายไม้อบพิเศษ (ระบุรหัส)
@@ -1588,7 +1588,16 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(shelfGlassAdd>0) _extraMsgs.push('อัปเกรดกระจกชั้น +'+fmt(shelfGlassAdd));
     if(wallGlassAdd>0) _extraMsgs.push('อัปเกรดกระจกผนัง +'+fmt(wallGlassAdd));
     if(_cabOptLines.length>0) _extraMsgs.push(..._cabOptLines); // ส่ง OPTION ออกไปใน msgs เพื่อให้ genQuote จับ
-    return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(_wmsg.length?(_wmsg.join('/')+' '+fmt(wall)):'ไม่มี (ชนผนังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')+(_extraMsgs.length?(' · '+_extraMsgs.join(' · ')):'')], cabOptLines:_cabOptLines};
+    // #6 breakdown G4 cabinet (display-only · ไม่กระทบ sell)
+    var _cabBd=[];
+    _cabBd.push({n:'บานหน้า Future Tech '+nDoors+' บาน',p:Math.round(front)});
+    if(fl>0) _cabBd.push({n:'พื้นตู้ ('+D+'×'+W.toFixed(2)+' ม.)',p:Math.round(fl)});
+    if(shc>0) _cabBd.push({n:'ชั้นวาง '+nsh+' ชั้น ('+(sg==='glass'?'กระจก':'อลู')+')',p:Math.round(shc)});
+    if(wall>0) _cabBd.push({n:'ผนัง ('+_wmsg.join('/')+' รวม)',p:Math.round(wall)});
+    if(colorStruct>0) _cabBd.push({n:'ค่าสีโครง',p:Math.round(colorStruct)});
+    if(shelfGlassAdd>0) _cabBd.push({n:'อัปเกรดกระจกชั้น',p:Math.round(shelfGlassAdd)});
+    if(wallGlassAdd>0) _cabBd.push({n:'อัปเกรดกระจกผนัง',p:Math.round(wallGlassAdd)});
+    return {a:W*H, sell:_sell, cost:null, addonLabel:'', breakdown:(_cabBd.length>=2?_cabBd:null), msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(_wmsg.length?(_wmsg.join('/')+' '+fmt(wall)):'ไม่มี (ชนผนังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')+(_extraMsgs.length?(' · '+_extraMsgs.join(' · ')):'')], cabOptLines:_cabOptLines};
   }
   if(p.frame_wrap){ const W=parseFloat(w)||0, H=parseFloat(h)||0; const perim = (p.frame_wrap==='door') ? (W + 2*H) : 2*(W+H); const _sell = Math.max(1500, perim * (p.rate||700)); return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['เส้นรอบวง '+perim.toFixed(2)+' ม. × '+(p.rate||700)+'/ม. (min 1,500)']}; }
     if(p.screen_addon){
@@ -1761,7 +1770,12 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     let _msg = (_ftmat==='glass'?'ฝาตู้กระจก ':'')+panelN+' บาน × '+fmt(perDoor)+'/บาน'+(colorPlus>0?(' (รวมสีพิเศษ +'+fmt(colorPlus)+')'):'')+(extraFee>0?(' + บานเพิ่ม '+fmt(extraFee)):'')+(ftGlassAdd>0?(' + สีกระจก +'+fmt(ftGlassAdd)):'')+(_ftOptLines.length>0?(' · '+_ftOptLines.join(' · ')):'');
     if(aPerDoor > 2.8) _msg += ' · ⚠ ขนาด >2.8 ตร.ม./บาน ไม่แนะนำ';
     if((parseInt(panels)||1) > 3) _msg += ' · ⚠ เกิน 3 บาน/ชุด — ให้แยกชุดใหม่';
-    return {a:aPerDoor, sell:roundUp(_ft), cost:null, addonLabel:'', msgs:[_msg], ftOptLines:_ftOptLines};
+    // #6 breakdown G4 future_tech (display-only · ไม่กระทบ sell)
+    var _ftBd=[];
+    _ftBd.push({n:(_ftmat==='glass'?'ฝาตู้กระจก':'ฝาตู้ Future Tech')+' '+panelN+' บาน × '+fmt(perDoor),p:Math.round(perDoor*panelN)});
+    if(extraFee>0) _ftBd.push({n:'บานเพิ่ม '+(panelN-1)+' บาน',p:Math.round(extraFee)});
+    if(ftGlassAdd>0) _ftBd.push({n:'อัปเกรดสีกระจก',p:Math.round(ftGlassAdd)});
+    return {a:aPerDoor, sell:roundUp(_ft), cost:null, addonLabel:'', breakdown:(_ftBd.length>=2?_ftBd:null), msgs:[_msg], ftOptLines:_ftOptLines};
   }
   if(p.gate){ const W=parseFloat(w)||0,H=parseFloat(h)||0,A=W*H; const mk=A<=6?4000:A<=8?3500:A<=10?3000:2500; const makeC=Math.max(15000,A*mk); /* #2 (22มิ.ย.): ค่าทำประตูขั้นต่ำ 15,000/บาน เหมือน doorStructBase — 0.9×2.0 เดิม 7,200 ถูกผิดปกติ */ const rnp=(optSel&&optSel.gatern)?PBYID[optSel.gatern]:null; const rnr=rnp?rnp.rate:0; const rnC=rnr>0?A*rnr*(1-ranaeDisc(A)):0; const fkey=optSel&&optSel.gfin; const fup=(rnp&&fkey&&rnp.fin&&rnp.fin[fkey])?rnp.fin[fkey]:0; const finC=fup>0?Math.round(A*fup*(1-ranaeDisc(A))):0; const mt=parseInt(optSel&&optSel.gmotor)||0; const mtC=mt*30000; const rt=(optSel&&optSel.railtype)||'straight'; const railr=rt==='curved'?2500:1500; const _rReuse=!!(optSel&&optSel.railreuse); const railC=_rReuse?0:2*W*railr; let leaves=0,leafC=0; if(rt==='curved'){ leaves=Math.ceil(W/0.75); leafC=leaves*4000; } const woodC=parseFloat(optSel&&optSel.gatewood)||0; /* R2-1: ลายไม้ Golden Teak = OPTION/upsell (ไม่บวกในยอด · โชว์เป็นบรรทัด OPTION) */ const _dpG=g2DoorPaint(optSel&&optSel.gfin, A, optSel); /* ค่าทำสีบาน (มติ 20มิ.ย.) — สีบานประตูรั้ว colorPrice × pct */ const _mwG=g2MotorWire(optSel); var _gBd=[]; /* #6: ราคาแยกจริง (ส่งลูกค้า) */ if(makeC>0)_gBd.push({n:'ค่าทำประตู',p:Math.round(makeC)}); if(rnC>0)_gBd.push({n:'ค่าระแนง',p:Math.round(rnC)}); if(finC>0)_gBd.push({n:'อบสี '+fkey,p:Math.round(finC)}); if(mt>0)_gBd.push({n:'มอเตอร์ '+mt+' ตัว',p:mtC}); if(railC>0)_gBd.push({n:'ราง'+(rt==='curved'?'โค้ง':'ตรง'),p:railC}); if(leafC>0)_gBd.push({n:'บานโค้ง '+leaves+' บาน',p:leafC}); if(_dpG.c>0)_gBd.push({n:'ค่าทำสีบาน',p:Math.round(_dpG.c)}); if(_mwG.p>0)_gBd.push({n:'งานสายไฟมอเตอร์',p:Math.round(_mwG.p)}); const _g=roundUp(makeC+rnC+finC+mtC+railC+leafC+_dpG.c+_mwG.p); return {a:A, sell:_g, breakdown:_gBd, cost:null, addonLabel:'', msgs:['ค่าทำประตู '+fmt(makeC)+(rnp?(' · ระแนง'+fmt(Math.round(rnC))):'')+(finC>0?(' · อบสี '+fkey+' '+fmt(finC)):'')+(mt?(' · มอเตอร์ '+mt+' ตัว'):'')+' · ราง'+(rt==='curved'?'โค้ง':'ตรง')+(_rReuse?' ใช้รางเดิม(ไม่รวมราง)':('(2×กว้าง) '+fmt(railC)))+(rt==='curved'?(' · บานโค้ง '+leaves+' บาน '+fmt(leafC)):'')+(woodC>0?(' · (OPTION ลายไม้ Golden Teak +'+fmt(woodC)+' — ไม่รวมในยอด)'):'')+(_dpG.c>0?(' · ค่าทำสีบาน '+_dpG.pct+'% '+fmt(_dpG.c)):'')+(_mwG.p>0?(' · '+_mwG.msg):'')]}; }
   if(p.grid){ const W=parseFloat(w)||0,H=parseFloat(h)||0; const nh=parseInt(optSel&&optSel.nh)||0, nv=parseInt(optSel&&optSel.nv)||0; const cr=parseFloat(optSel&&optSel.gridcolor)||200; const len=nh*W+nv*H; const nc=parseInt(optSel&&optSel.nc)||0; const curveC=nc*3000; const _gb=roundUp(len*cr+curveC); return {a:W*H, sell:_gb, cost:null, addonLabel:'', msgs:['เส้นคาด '+nh+'นอน+'+nv+'ตั้ง '+len.toFixed(1)+'ม.×'+cr+(nc>0?(' + โค้ง '+nc+' เส้น×3,000'):'')]}; }
@@ -2218,6 +2232,15 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       msgs.push(mosqMsg);
     }
   }
+  // #6-G3: breakdown หลังคา (display-only · ไม่กระทบ sell) — core + สีโครง + ออปชั่นแยกตาม _g3box
+  if(_breakdown==null && p.cat==='หลังคา'){ var _rfBd=[];
+    _rfBd.push({n:'ค่าหลังคา ('+p.name.replace(/^หลังคา\s*/,'')+')',p:Math.round(core)});
+    if(colorUp>0){ var _rfcN=ci>0&&COLORS[ci]?String(COLORS[ci].quoteName||COLORS[ci].n).replace(/[★⚠🔖🔒]/g,'').replace(/\s*\([^)]*\)/g,'').trim():'สีพิเศษ'; _rfBd.push({n:'สีโครง ('+_rfcN+')',p:Math.round(colorUp)}); }
+    if(_g3box.slide>0) _rfBd.push({n:'ระบบชุดเลื่อน+มอเตอร์',p:Math.round(_g3box.slide)});
+    if(_g3box.roofend>0) _rfBd.push({n:'รางน้ำ+ปิดปลาย',p:Math.round(_g3box.roofend)});
+    if(_g3box.extras>0) _rfBd.push({n:'ของเสริม (คาน/เสา/โซ่/ครอบ/ซ่อน)',p:Math.round(_g3box.extras)});
+    if(_g3box.ceil>0) _rfBd.push({n:'ฝ้า (addon)',p:Math.round(_g3box.ceil)});
+    if(_rfBd.length>=2) _breakdown=_rfBd; }
   // #6: breakdown generic — กลุ่มที่ใช้ return ร่วม (G1 บานกระจก / G3 หลังคา-ฝ้า / G5 มุ้ง / G7 ฯลฯ) · core+กระจก+สี+ออปชั่น+addon (มุ้ง) · reconcile ผลรวม=ราคารายการ ที่ชั้นใบ
   if(_breakdown==null){ var _gb=[];
     var _isDoorBd = !p.cabinet && !p.handrail && !p.zipscreen && !p.ceiling && !p.ranae && p.cat!=='หลังคา' && p.cat!=='มุ้ง' && p.cat!=='เสริม' && !/^ระแนง/.test(p.cat||'') && AREA_CATS.indexOf(p.cat)<0; // #12: G1 บานกระจก → โชว์ ค่าบาน/กระจก/สี เสมอ (mosquito:1 = เพิ่มมุ้งได้ ไม่ตัด)
@@ -5524,30 +5547,33 @@ function buildItemOpts(d){
         +'<input type="hidden" class="o-cabcomode" value="real">'
         +'<div class="cab-co-colgrid">'
           +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat)</span></div>'
-          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
-          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ซาฮาร่า</button>'
-          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">ลายไม้สต๊อก</button>'
-          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">อบพิเศษ</button>'
-          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');calcQuote();">สีชุบ</button></div>'
+          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabfrontcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ขาว/ดำ (ฟรี)</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabfrontcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ซาฮาร่า</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabfrontcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ลายไม้สต๊อก</button>'
+          +'<button type="button" class="chip" data-val="1" data-hascode="1" onclick="chSetChip(this,\'o-cabfrontcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabfrontcode-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="1" data-hascode="1" onclick="chSetChip(this,\'o-cabfrontcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabfrontcode-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">สีชุบ</button></div>'
+          +'<span class="o-cabfrontcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีหน้าบาน <input type="text" class="o-cabfrontcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'<select class="o-cabfrontcolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select></div>'
           +'<div><div style="font-size:11.5px;font-weight:700;color:#374151;margin:4px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู)</span></div>'
-          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ตามหัวใบ</button>'
-          +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ซาฮาร่า</button>'
-          +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">Aztec gray</button>'
-          +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้สต๊อก</button>'
-          +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">อบพิเศษ</button>'
-          +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">ลายไม้อบพิเศษ</button>'
-          +'<button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-cabstructcolor\');calcQuote();">สีชุบ</button></div>'
+          +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ตามหัวใบ</button>'
+          +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ซาฮาร่า</button>'
+          +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">Aztec gray</button>'
+          +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ลายไม้สต๊อก</button>'
+          +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">ลายไม้อบพิเศษ</button>'
+          +'<button type="button" class="chip" data-val="12" onclick="chSetChip(this,\'o-cabstructcolor\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcode-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">สีชุบ</button></div>'
+          +'<span class="o-cabstructcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง <input type="text" class="o-cabstructcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
         +'</div>'// end cab-co-colgrid
         +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีโครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
         +'<div style="padding-top:5px;">'
-        +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">— ไม่เทียบ —</button>'
-        +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">ซาฮาร่า</button>'
-        +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">Aztec gray</button>'
-        +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">ลายไม้สต๊อก</button>'
-        +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">อบพิเศษ</button>'
-        +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolorL3\');calcQuote();">ลายไม้อบพิเศษ</button></div>'
+        +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">— ไม่เทียบ —</button>'
+        +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ซาฮาร่า</button>'
+        +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">Aztec gray</button>'
+        +'<button type="button" class="chip" data-val="5" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ลายไม้สต๊อก</button>'
+        +'<button type="button" class="chip" data-val="10" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">อบพิเศษ</button>'
+        +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">ลายไม้อบพิเศษ</button></div>'
+        +'<span class="o-cabstructcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง (L3) <input type="text" class="o-cabstructcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
         +'<select class="o-cabstructcolorL3" style="display:none;" onchange="calcQuote();"><option value="-1" selected>— ไม่เทียบ —</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option></select>'
         +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ L3 เทียบจาก baseline L2 ② → OPTION signed diff (ไม่บวกยอด)</div>'
         +'</div></details>'
@@ -6095,10 +6121,13 @@ function readItem(d){
     const _ccm=d.querySelector('.o-cabcomode'); optSel.cabCoMode=_ccm?_ccm.value:'real'; // real/opt
     // สีหน้าบาน แยกจากโครง — 0=ขาว/ดำ(ฟรี) 1=พิเศษ
     const _cfc=d.querySelector('.o-cabfrontcolor'); optSel.cabFrontColor=_cfc?parseInt(_cfc.value)||0:0;
+    const _cfcode=d.querySelector('.o-cabfrontcode'); optSel.cabFrontCode=_cfcode?(_cfcode.value||'').trim():'';
     // สีโครงตู้ (ci override ต่อข้อ) — -1=ตามหัวใบ · else = COLORS index
     const _csc=d.querySelector('.o-cabstructcolor'); optSel.cabStructColor=_csc?parseInt(_csc.value):-1;
+    const _cscode=d.querySelector('.o-cabstructcode'); optSel.cabStructCode=_cscode?(_cscode.value||'').trim():'';
     // L3 เทียบสีโครง (ออปชั่น ไม่บวกยอด)
     const _csc3=d.querySelector('.o-cabstructcolorL3'); optSel.cabStructColorL3=_csc3?parseInt(_csc3.value):-1;
+    const _csc3code=d.querySelector('.o-cabstructcodeL3'); optSel.cabStructCodeL3=_csc3code?(_csc3code.value||'').trim():'';
     // เฟส B: กระจกชั้น/ผนัง (spread เพิ่มจากเรตเดิม)
     const _sg=d.querySelector('.o-shelfglass'); optSel.shelfglass=_sg?parseInt(_sg.value)||0:0;
     const _wg=d.querySelector('.o-wallglass'); optSel.wallglass=_wg?parseInt(_wg.value)||0:0;
@@ -7023,14 +7052,23 @@ function genQuote(keepNo){
       var _ci=it.ci||0, _cc=COLORS[_ci];
       var _cName=_cc?(_cc.quoteName||_cc.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim():'';
       var _cNameShort=_cName.replace(/^สี/,'');
-      if(_cc){
-        if(_ci>0 && _cc.hasCode){
-          var _codeEl=it.div?it.div.querySelector('.i-colorcode'):null;
-          var _code=_codeEl?(_codeEl.value||'').trim():'';
-          _spec.push('สีโครง: '+_cNameShort+(_code?(' · รหัส '+_code):' · ⚠ ต้องระบุรหัสสี'));
-        } else { _spec.push('สีโครง: '+_cNameShort); }
+      // สีโครง: L1=ตามหัวใบ / L2 override (real+opt)
+      var _cabSCIdx=(!_co.cabCoFollow&&(_co.cabStructColor>=0))?_co.cabStructColor:_ci;
+      var _cabSCC=COLORS[_cabSCIdx]||_cc;
+      var _cabSCN=_cabSCC?(_cabSCC.quoteName||_cabSCC.n).replace(/\s*\(Stock\)\s*/,'').replace(/[★⚠]/g,'').trim().replace(/^สี/,''):'';
+      if(_cabSCC){
+        if(_cabSCC.hasCode){
+          var _cscode=(_co.cabStructCode||'').trim();
+          _spec.push('สีโครง: '+_cabSCN+(_cscode?(' · รหัส '+_cscode):' · ⚠ ต้องระบุรหัสสี'));
+        } else { _spec.push('สีโครง: '+_cabSCN); }
       }
-      if(_cShelfN>0 && !_cShelfGlass && _cc) _spec.push('ชั้นอลูมิเนียม: '+_cNameShort);
+      // สีหน้าบาน L2 (FT) — ถ้าเลือกสีพิเศษ
+      if(!_co.cabCoFollow && _co.cabFrontColor>0){
+        var _cabFCode=(_co.cabFrontCode||'').trim();
+        var _frontLbl=(_co.cabFrontColor>0)?'สีพิเศษ':'ขาว/ดำ';
+        _spec.push('สีหน้าบาน (FT): '+_frontLbl+(_cabFCode?(' · รหัส '+_cabFCode):''));
+      }
+      if(_cShelfN>0 && !_cShelfGlass && _cabSCC) _spec.push('ชั้นอลูมิเนียม: '+_cabSCN);
       var _gWalls=_wOn.filter(function(k){return _co['cabwall_'+k+'_mat']==='glass';});
       if(_gWalls.length) _spec.push('กระจก (ผนัง'+_gWalls.map(function(k){return _wLab[k];}).join(', ')+'): กระจกใส/ใสเขียว หนา 5–6 มม.');
       det=_work.join('\n')+'\n###รายละเอียด###\n'+_spec.join('\n');
