@@ -55,15 +55,9 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
         >
           {/* Company block (left) */}
           <div>
-            {/* crop โชว์เฉพาะกราฟิก "JR." (อยู่แค่ส่วน (173,16)-(599,116) ของแคนวาส 600×223) สูง 28px */}
-            <div style={{ width: 129, height: 34, overflow: "hidden", position: "relative" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={LOGO_BASE64}
-                alt="JR Aluminium"
-                style={{ position: "absolute", left: -50, top: -3, width: 179, maxWidth: "none", height: "auto" }}
-              />
-            </div>
+            {/* โลโก้จริงจากไฟล์ /jr-logo.png (crop ขอบขาวออกแล้ว) */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/jr-logo.png" alt="JR Aluminium" style={{ height: 34 }} />
             <div className="mt-1.5 leading-relaxed" style={{ fontSize: 12 }}>
               <span className="font-semibold" style={{ color: "#b3151d" }}>
                 {COMPANY.name}

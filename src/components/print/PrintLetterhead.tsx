@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
-import { LOGO_BASE64 } from "@/app/(app)/quotations/[id]/print/page";
 
 // หัวเอกสารพิมพ์กลาง (โลโก้จริง + COMPANY + หัวเอกสาร + บล็อกลูกค้า)
 // ใช้ดีไซน์เดียวกับใบเสนอราคา — ใช้ร่วมใบวางบิล/ใบเสร็จ
@@ -31,16 +30,9 @@ export function PrintLetterhead({
       {/* ===== Header — โลโก้ + บริษัท (ซ้าย) · ชื่อเอกสาร + เลขที่/วันที่ (ขวา) ===== */}
       <div className="flex justify-between items-start pb-4 mb-4" style={{ borderBottom: "4px solid #b3151d" }}>
         <div>
-          {/* โลโก้ PNG มีกราฟิก "JR." อยู่แค่ส่วน (173,16)-(599,116) ของแคนวาส 600×223 (ที่เหลือว่าง)
-              → crop ด้วย wrapper overflow-hidden ให้โชว์เฉพาะกราฟิก สูง 28px (ไม่งั้นย่อทั้งแคนวาสจะจิ๋วเหมือนเศษ) */}
-          <div style={{ width: 129, height: 34, overflow: "hidden", position: "relative" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={LOGO_BASE64}
-              alt="JR Aluminium"
-              style={{ position: "absolute", left: -50, top: -3, width: 179, maxWidth: "none", height: "auto" }}
-            />
-          </div>
+          {/* โลโก้จริงจากไฟล์ /jr-logo.png (crop ขอบขาวออกแล้ว 980×345) — ใช้ตรงๆ ไม่ต้อง CSS-crop */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/jr-logo.png" alt="JR Aluminium" style={{ height: 34 }} />
           <div className="mt-1.5 leading-relaxed" style={{ fontSize: 12 }}>
             <span className="font-semibold" style={{ color: "#b3151d" }}>
               {COMPANY.name}
