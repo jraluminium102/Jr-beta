@@ -57,6 +57,7 @@ const V_DESIGN_UNDONE = "ยังไม่ได้รับแบบ";
 const V_GLASS_DONE = "ใส่แล้ว";
 const V_GLASS_UNDONE = "ยังไม่ใส่";
 const V_QC_PASS = "ผ่าน";
+const V_SCREEN_DONE = "ใส่แล้ว"; // ตรง SCREEN_INST ฝั่งออฟฟิศ (แยก constant กันพังเงียบ)
 
 // นับวันถึงเดดไลน์ (เทียบ ISO string ตรงๆ กัน bug DATE same-day)
 function deadlineInfo(must: string | null, done: boolean): { tone: string; text: string } {
@@ -80,6 +81,9 @@ export default function ProductionSchedulePage() {
   });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
+  // โหมดดู: "chang" = ช่างเช็คลิสต์ (ค่าเริ่มต้น ซ่อนปุ่มออฟฟิศ) · "office" = จัดการเต็ม
+  const [mode, setMode] = useState<"chang" | "office">("chang");
+  const officeMode = canWrite && mode === "office";
   const [addOpen, setAddOpen] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, Partial<SchedRow>>>({});
@@ -113,17 +117,17 @@ export default function ProductionSchedulePage() {
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
   // ── มาร์คเช็คลิสต์ช่าง (เขียนลง production_sets ช่องเดียว — ออฟฟิศเห็นทันที) ──
-  const [savingSetId, setSavingSetId] = useState<number | null>(null);
+  const [savingSetIds, setSavingSetIds] = useState<Set<number>>(new Set());
   const markSet = async (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => {
     if (confirmMsg && !confirm(confirmMsg)) return;
-    setSavingSetId(setId);
+    setSavingSetIds((p) => new Set(p).add(setId));
     try {
       await api.patch(`/production-sets/${setId}`, patch);
       await refetch();
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ — เช็คเน็ตแล้วลองอีกครั้ง");
     } finally {
-      setSavingSetId((s) => (s === setId ? null : s));
+      setSavingSetIds((p) => { const n = new Set(p); n.delete(setId); return n; });
     }
   };
 
@@ -200,6 +204,16 @@ export default function ProductionSchedulePage() {
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 mr-auto"><CalendarDays size={22} /> ตารางผลิต</h1>
 
+        {/* สลับโหมด ช่าง/ออฟฟิศ — เฉพาะคนที่แก้ได้ */}
+        {canWrite && (
+          <div className="flex gap-1 glass-card rounded-xl p-1">
+            {([["chang", "ช่าง"], ["office", "ออฟฟิศ"]] as const).map(([m, l]) => (
+              <button key={m} onClick={() => setMode(m)}
+                className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-semibold min-h-[36px] ${mode === m ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
+            ))}
+          </div>
+        )}
+
         {/* filter ช่าง */}
         <div className="flex items-center gap-1.5">
           <label htmlFor="producer-filter" className="text-[12px] shrink-0" style={{ color: "var(--t-low)" }}>ช่าง:</label>
@@ -256,18 +270,18 @@ export default function ProductionSchedulePage() {
                 <div className="space-y-2">
                   {items.map((r) => (
                     <div key={r.id} className="glass-card rounded-2xl p-3 space-y-3">
-                      <div className="grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center">
+                      <div className={officeMode ? "grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center" : ""}>
                       {/* งาน/ลูกค้า */}
                       <div className="col-span-2 lg:col-span-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-white font-semibold text-sm truncate">{r.title}</span>
+                          <span className="text-white font-semibold text-[15px] truncate">{r.title}</span>
                           {r.kind === "job" ? (
                             <span className="text-[10px] tnum bg-sky-500/20 text-sky-200 rounded px-1.5 py-0.5">{r.job_code}</span>
                           ) : (
                             <span className="text-[10px] bg-amber-500/20 text-amber-200 rounded px-1.5 py-0.5">จดเอง</span>
                           )}
-                          {/* ลิงก์พิมพ์ใบงาน — เฉพาะงานในระบบ */}
-                          {r.kind === "job" && (
+                          {/* ลิงก์พิมพ์ใบงาน — เฉพาะโหมดออฟฟิศ */}
+                          {r.kind === "job" && officeMode && (
                             <a
                               href={`/production/${r.id}/print`}
                               target="_blank"
@@ -280,11 +294,16 @@ export default function ProductionSchedulePage() {
                             </a>
                           )}
                         </div>
-                        {r.subtitle && (
-                          <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>{r.subtitle}</div>
+                        {(r.customer_area || r.subtitle) && (
+                          <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>📍 {r.customer_area || r.subtitle}</div>
+                        )}
+                        {/* วันติดตั้ง — โชว์ในโหมดช่างด้วย (read-only) */}
+                        {!officeMode && r.install_date && (
+                          <div className="text-[11px] tnum text-white/55">🔧 ติดตั้ง {thShort(r.install_date)}</div>
                         )}
                       </div>
 
+                      {officeMode && (<>
                       {/* วันผลิต */}
                       <label className="block">
                         <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
@@ -353,9 +372,10 @@ export default function ProductionSchedulePage() {
                           </span>
                         )}
                       </div>
+                      </>)}
                       </div>
                       {r.kind === "job" && r.sets && r.sets.length > 0 && (
-                        <ChangChecklist sets={r.sets} savingSetId={savingSetId} mark={markSet} canMark={canWrite} />
+                        <ChangChecklist sets={r.sets} savingSetIds={savingSetIds} mark={markSet} canMark={canWrite} />
                       )}
                       {r.kind === "job" && r.job_id && (!r.sets || r.sets.length === 0) && (
                         <p className="text-[12px] text-amber-200/90 bg-amber-500/10 border border-amber-300/20 rounded-xl px-3 py-2">⚠️ ยังไม่มีชุดงาน — ออฟฟิศลงรายละเอียดที่หน้า “ผลิต” (คลิกงานนี้) ก่อน ช่างถึงจะเห็นเช็คลิสต์</p>
@@ -375,15 +395,15 @@ export default function ProductionSchedulePage() {
 }
 
 // ════════ เช็คลิสต์ชุดงานสำหรับช่าง (มือถือ) ════════
-function ChangChecklist({ sets, savingSetId, mark, canMark }: {
+function ChangChecklist({ sets, savingSetIds, mark, canMark }: {
   sets: ProdSet[];
-  savingSetId: number | null;
+  savingSetIds: Set<number>;
   mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
   canMark: boolean;
 }) {
   return (
     <div className="space-y-2 border-t border-white/10 pt-2.5">
-      {sets.map((s) => <SetCard key={s.id} s={s} saving={savingSetId === s.id} mark={mark} canMark={canMark} />)}
+      {sets.map((s) => <SetCard key={s.id} s={s} saving={savingSetIds.has(s.id)} mark={mark} canMark={canMark} />)}
     </div>
   );
 }
@@ -405,33 +425,41 @@ function SetCard({ s, saving, mark, canMark }: {
     done: "bg-white/8 text-white/45",
   };
   const hasScreen = !!(s.screen_type && s.screen_type.trim());
-  const screenNotInstalled = hasScreen && s.screen_installed !== V_GLASS_DONE;
+  const screenNotInstalled = hasScreen && s.screen_installed !== V_SCREEN_DONE;
 
   const designDone = s.design_received === V_DESIGN_DONE;
   const glassDone = s.glass_installed === V_GLASS_DONE;
   const qcBefore = s.qc_before_glass === V_QC_PASS;
   const qcAfter = s.qc_after_glass === V_QC_PASS;
   const qcDone = qcBefore && qcAfter;
+  // QC ทีละสเตจตามสภาพกระจก: ยังไม่ใส่→ตรวจก่อนใส่ · ใส่แล้ว→ตรวจหลังใส่ (กันตรวจหลังทั้งที่ยังไม่ใส่)
+  const qcStageAfter = glassDone;
+  const qcField = qcStageAfter ? "qc_after_glass" : "qc_before_glass";
+  const qcStagePassed = qcStageAfter ? qcAfter : qcBefore;
+  const qcCount = (qcBefore ? 1 : 0) + (qcAfter ? 1 : 0);
 
   return (
     <div className={`rounded-xl border border-white/10 bg-white/5 p-3 ${done ? "opacity-60" : ""}`}>
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
-        <span className="text-white font-semibold text-[15px]">{s.set_label || "ชุดงาน"}</span>
-        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-md ${dlTone[dl.tone]}`}>
+        <span className="text-white font-bold text-[16px]">{s.set_label || "ชุดงาน"}</span>
+        <span className={`text-[13px] font-bold px-2.5 py-1 rounded-lg ${dlTone[dl.tone]}`}>
           {dl.tone === "over" && "🔴 "}{dl.tone === "soon" && "⚠️ "}{dl.text}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5 mb-1.5 text-[12px]">
-        {s.must_finish_date && <span className="tnum text-white/85">⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
-        {s.install_date && <span className="tnum text-white/55">· 🔧 ติดตั้ง {thShort(s.install_date)}</span>}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[12px]">
+        {s.must_finish_date && <span className="tnum text-white/90 font-medium">⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
+        {s.install_date && <span className="tnum text-white/65">🔧 ติดตั้ง {thShort(s.install_date)}</span>}
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
         {hasScreen ? (
-          <span className="inline-flex items-center gap-1 text-[12px] bg-sky-500/20 text-sky-100 rounded-md px-2 py-0.5">🪟 {s.screen_type}{screenNotInstalled && <span className="text-amber-200"> · ยังไม่ใส่</span>}</span>
+          <>
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-sky-500/25 text-sky-100 rounded-md px-2 py-0.5">🪟 {s.screen_type}</span>
+            {screenNotInstalled && <span className="text-[12px] font-bold bg-orange-500/30 text-orange-100 rounded-md px-2 py-0.5 ring-1 ring-orange-400/40">⚠️ ยังไม่ใส่มุ้ง</span>}
+          </>
         ) : (
           <span className="text-[11px] text-white/40">ไม่มีมุ้ง</span>
         )}
-        {s.glass_spec && <span className="text-[12px] text-white/70 truncate max-w-[60%]">🟦 {s.glass_spec}</span>}
+        {s.glass_spec && <span className="text-[12px] text-white/75 truncate max-w-[55%]">🟦 {s.glass_spec}</span>}
       </div>
 
       {canMark ? (
@@ -444,13 +472,13 @@ function SetCard({ s, saving, mark, canMark }: {
             onClick={() => glassDone
               ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
               : mark(s.id, { glass_installed: V_GLASS_DONE })} />
-          <MarkBtn label={qcDone ? "ตรวจผ่านครบ" : qcBefore ? "ตรวจหลังใส่" : "ตรวจก่อนสั่ง"} done={qcDone} half={qcBefore && !qcAfter} saving={saving}
-            sub={<span className="text-[9px] tracking-widest">{qcBefore ? "●" : "○"}{qcAfter ? "●" : "○"}</span>}
-            onClick={() => {
-              if (qcDone) return mark(s.id, { qc_after_glass: "" }, "ยกเลิก QC หลังใส่กระจก ?");
-              if (!qcBefore) return mark(s.id, { qc_before_glass: V_QC_PASS });
-              return mark(s.id, { qc_after_glass: V_QC_PASS });
-            }} />
+          <MarkBtn
+            label={qcStagePassed ? "ตรวจผ่านแล้ว" : qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"}
+            done={qcStagePassed} half={!qcStagePassed && qcCount > 0} saving={saving}
+            sub={<span className="text-[10px] font-normal text-white/85">ผ่าน {qcCount}/2 จุด</span>}
+            onClick={() => qcStagePassed
+              ? mark(s.id, { [qcField]: "" }, `ยกเลิก ${qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"} ?`)
+              : mark(s.id, { [qcField]: V_QC_PASS })} />
         </div>
       ) : (
         <div className="flex gap-1.5 text-[11px]">
