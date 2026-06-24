@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Icon from "./Icon";
 import { signOut } from "@/app/login/actions";
 import { ROLE_LABEL, type Profile } from "@/lib/types";
@@ -57,16 +57,27 @@ function NavLink({ n, active, onNav, badge }: { n: NavItem; active: boolean; onN
 
 export default function Shell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const active = (href: string) => path === href || path.startsWith(href + "/");
 
   const role = profile.role as Role;
+  // ช่างผลิต — เข้าได้แค่หน้าตารางผลิต (เมนูตัวเดียว + เด้งกลับถ้าหลงเข้าหน้าอื่น)
+  const isChang = role === "CHANG";
+  useEffect(() => {
+    if (isChang && !active("/production-schedule")) router.replace("/production-schedule");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChang, path]);
+
   const omsKeys = menusFor(role);
-  const omsItems = omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
+  const omsItems = isChang
+    ? [OMS_NAV.prodqueue]
+    : omsKeys.map((k) => OMS_NAV[k]).filter(Boolean);
 
   // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
   // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
-  const docItems = DOC_NAV.filter((n) => {
+  // ช่างผลิต = ไม่เห็นเมนูเอกสาร/บัญชีเลย
+  const docItems = isChang ? [] : DOC_NAV.filter((n) => {
     if (n.href === "/queue")                  return can(role, "queue",      "read");
     if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
     if (n.href === "/stats")                  return can(role, "finance",    "read");
@@ -136,13 +147,13 @@ export default function Shell({ profile, children }: { profile: Profile; childre
                 className="press w-10 h-10 rounded-xl inline-flex items-center justify-center glass-soft text-brand-dark">
                 <Icon name="dashboard" size={18} />
               </button>
-              <MobileOverdueDot role={role} />
+              {!isChang && <MobileOverdueDot role={role} />}
             </div>
             <div className="text-sm font-semibold text-brand-dark">JR Beta</div>
             <span className="ml-auto text-[11px] text-ink-3">{ROLE_LABEL[profile.role] ?? profile.role}</span>
           </div>
-          {/* P0-2A: OverdueBanner — แสดงเหนือ content */}
-          <OverdueWidget role={role} />
+          {/* P0-2A: OverdueBanner — แสดงเหนือ content (ช่างผลิตไม่ต้องเห็น) */}
+          {!isChang && <OverdueWidget role={role} />}
           {children}
         </main>
       </div>

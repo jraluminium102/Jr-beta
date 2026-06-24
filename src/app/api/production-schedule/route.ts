@@ -85,7 +85,7 @@ export const GET = withRoute(async () => {
     (a.produce_date ?? "9999-99-99").localeCompare(b.produce_date ?? "9999-99-99")
   );
 
-  return ok(rows, { can_write: can(ctx.role, "production", "write") });
+  return ok(rows, { can_write: can(ctx.role, "production", "write"), role: ctx.role });
 });
 
 const createSchema = z.object({

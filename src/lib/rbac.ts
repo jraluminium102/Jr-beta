@@ -49,6 +49,8 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     boq: ["read", "write"],
   },
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
+  // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)
+  CHANG: { production: ["read", "write"] },
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {

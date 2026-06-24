@@ -2,7 +2,7 @@
 // Run `npm run db:types` after schema changes to regenerate from Supabase.
 
 // ─── Domain Enums ─────────────────────────────────────────────────────────────
-export type Role = "ADMIN" | "SALES" | "DESIGNER" | "PRODUCTION" | "INSTALLER" | "ACCOUNTING" | "VIEWER";
+export type Role = "ADMIN" | "SALES" | "DESIGNER" | "PRODUCTION" | "INSTALLER" | "ACCOUNTING" | "VIEWER" | "CHANG";
 export type Channel = "LINE" | "FACEBOOK" | "INSTAGRAM" | "OTHER";
 export type JobStatus = "LEAD" | "PENDING_QUOTE" | "QUOTE_SENT" | "PENDING_DECISION" | "DEPOSITED" | "IN_PRODUCTION" | "INSTALLING" | "CANCELLED" | "COMPLETED";
 export type ProdStatus = "PENDING_MEASURE" | "MEASURED" | "PENDING_MEETING" | "REVISING" | "PENDING_CONFIRM" | "QUEUED" | "MANUFACTURING" | "QC" | "READY" | "ISSUE";

@@ -100,9 +100,10 @@ export default function ProductionSchedulePage() {
   });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
+  const isChang = (data?.meta?.role as string) === "CHANG"; // ช่างผลิต — ไม่มีโหมดออฟฟิศ/ปุ่มเพิ่ม
   // โหมดดู: "chang" = ช่างเช็คลิสต์ (ค่าเริ่มต้น ซ่อนปุ่มออฟฟิศ) · "office" = จัดการเต็ม
   const [mode, setMode] = useState<"chang" | "office">("chang");
-  const officeMode = canWrite && mode === "office";
+  const officeMode = canWrite && !isChang && mode === "office";
   const [addOpen, setAddOpen] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, Partial<SchedRow>>>({});
@@ -223,8 +224,8 @@ export default function ProductionSchedulePage() {
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-2xl font-bold flex items-center gap-2 mr-auto" style={{ color: IOS.ink, letterSpacing: "-.01em" }}><CalendarDays size={22} /> ตารางผลิต</h1>
 
-        {/* สลับโหมด ช่าง/ออฟฟิศ — segmented control แบบ iOS */}
-        {canWrite && (
+        {/* สลับโหมด ช่าง/ออฟฟิศ — segmented control แบบ iOS (ช่างผลิตไม่เห็น) */}
+        {canWrite && !isChang && (
           <div className="flex gap-0.5 rounded-[10px] p-0.5" style={{ background: "#e9e9ee" }}>
             {([["chang", "ช่าง"], ["office", "ออฟฟิศ"]] as const).map(([m, l]) => (
               <button key={m} onClick={() => setMode(m)}
@@ -246,7 +247,7 @@ export default function ProductionSchedulePage() {
           {producerList.map((name) => (<option key={name} value={name}>{name}</option>))}
         </select>
 
-        {canWrite && (
+        {canWrite && !isChang && (
           <button onClick={() => setAddOpen(true)} className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] text-white" style={{ background: IOS.blue }}>
             <Plus size={16} /> เพิ่มงาน
           </button>
