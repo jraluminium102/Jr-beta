@@ -29,6 +29,22 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const clean: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(body)) clean[k] = v === "" ? null : v;
 
+  // audit การมาร์ค 4 ช่อง — ปั๊มชื่อผู้กด+เวลา (ล้างเมื่อยกเลิกมาร์ค)
+  const MARK_AUDIT: Record<string, { by: string; at: string; done: string }> = {
+    design_received: { by: "design_received_by", at: "design_received_at", done: "ได้รับแบบ" },
+    glass_installed: { by: "glass_installed_by", at: "glass_installed_at", done: "ใส่แล้ว" },
+    qc_before_glass: { by: "qc_before_by", at: "qc_before_at", done: "ผ่าน" },
+    qc_after_glass: { by: "qc_after_by", at: "qc_after_at", done: "ผ่าน" },
+  };
+  const actor = ctx.profile.full_name || ctx.user.email || "ไม่ทราบ";
+  const nowIso = new Date().toISOString();
+  for (const [field, a] of Object.entries(MARK_AUDIT)) {
+    if (body[field as keyof typeof body] === undefined) continue; // ไม่ได้ส่งช่องนี้มา
+    const marked = clean[field] === a.done;
+    clean[a.by] = marked ? actor : null;
+    clean[a.at] = marked ? nowIso : null;
+  }
+
   const sb = ctx.supabase as unknown as Sb;
   const { data, error } = await sb
     .from("production_sets")
