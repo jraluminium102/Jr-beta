@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ UX — บานเปลือยรวม + L1-L3 มาตรฐาน (สีบาน=colorPrice · กระจก=ส่วนต่าง)</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.5;}
+.wrap{max-width:780px;margin:0 auto;padding:18px 14px 70px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:6px;}
+.demo{display:inline-block;background:#FEF3C7;border:1px solid #FCD34D;color:#92600A;border-radius:5px;padding:1px 8px;font-size:11px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.card h2{color:var(--red);font-size:16px;margin:0 0 4px;}
+.cdesc{font-size:12px;color:var(--mut);margin-bottom:12px;border-bottom:1px dashed var(--line);padding-bottom:8px;}
+.ok{display:inline-block;background:#ECFDF3;border:1px solid #A6E9C5;color:var(--ok);border-radius:5px;padding:0 7px;font-size:11px;}
+.lbl{font-size:12px;font-weight:700;color:#374151;margin:10px 0 4px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{border:1.5px solid #D1D5DB;background:#fff;border-radius:8px;padding:6px 13px;font-size:13px;cursor:pointer;user-select:none;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.sm{padding:4px 10px;font-size:12px;}
+.chip.cat{background:#F3F4F6;font-weight:600;}
+.chip.cat.on{background:var(--red);color:#fff;}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.fld{display:flex;flex-direction:column;} .fld label{font-size:11px;color:var(--mut);margin-bottom:2px;} .fld input{width:70px;height:34px;border:1px solid #D1D5DB;border-radius:7px;text-align:center;font-size:14px;}
+.hide{display:none!important;}
+.box{border:1px solid var(--line);border-radius:9px;padding:10px;margin-top:8px;background:#FAFBFC;}
+.sub2{border:1px solid #EAECEF;border-radius:8px;padding:9px;margin:8px 0;background:#fff;}
+.sub2 .t{font-weight:700;font-size:13px;color:#374151;margin-bottom:5px;}
+.l1{background:#F3F6FB;border:1px solid #E0E7F0;border-radius:7px;padding:9px 11px;font-size:12.5px;margin-bottom:8px;}
+.modebar{display:flex;gap:6px;margin:8px 0;}
+.mode{flex:1;border:1.5px solid #D1D5DB;border-radius:8px;padding:7px;text-align:center;font-size:12px;cursor:pointer;}
+.mode.on{border-color:var(--red);background:#FEF3F2;font-weight:700;color:var(--red);}
+.items{max-height:150px;overflow:auto;border:1px solid #EEE;border-radius:7px;padding:7px;margin-top:5px;background:#fff;}
+.l3box{margin-top:9px;padding:9px;background:#FFFDF8;border:1px dashed #d4a373;border-radius:8px;}
+.optbox{margin-top:10px;background:#FFF7ED;border:1px solid #FCD9A8;border-radius:8px;padding:9px 11px;}
+.optbox .h{font-size:12px;font-weight:700;color:#9A6A1E;margin-bottom:4px;}
+.optline{font-size:12.5px;color:#9A6A1E;margin:2px 0;}
+.pricebar{margin-top:12px;background:#111827;color:#fff;border-radius:9px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.pricebar .t{font-size:12px;opacity:.8;} .pricebar .p{font-size:20px;font-weight:700;} .bd{font-size:11.5px;color:#9CA3AF;margin-top:3px;}
+.note{font-size:11.5px;color:var(--mut);margin-top:10px;border-top:1px dashed var(--line);padding-top:7px;} .note b{color:var(--ok);}
+</style></head><body><div class="wrap">
+
+<h1>🎨 ดราฟ UX G1 — 2 เรื่อง</h1>
+<div class="sub"><span class="demo">ราคาเดโม</span> · สีบาน = colorPrice จริง (เรตตามขั้นพื้นที่) · กระจก = ส่วนต่าง spread × พื้นที่ · ดึงชื่อ+เรตจาก engine</div>
+
+<!-- ① -->
+<div class="card">
+<h2>① บานเปลือย — รวมติดตาย+ประตู <span class="ok">พี่ approve แล้ว</span></h2>
+<div class="cdesc">ติดตาย=ไม่มีบาน/ล็อค/มือจับ · ประตู=+8,000/บาน + มือจับสแตนเลส 6 ขนาด/ดิจิตอล + ชุดล็อค</div>
+<div class="lbl">ประเภท</div>
+<div class="chips" id="flType"><div class="chip on" data-t="fix" onclick="flPick(this)">ติดตาย</div><div class="chip" data-t="swing" onclick="flPick(this)">ประตู — สวิง</div><div class="chip" data-t="slide" onclick="flPick(this)">ประตู — เลื่อน</div></div>
+<div class="lbl">ขนาด</div>
+<div class="row"><div class="fld"><label>กว้าง</label><input id="flW" type="number" value="1" step="0.1" oninput="flCalc()"></div><div class="fld"><label>สูง</label><input id="flH" type="number" value="2" step="0.1" oninput="flCalc()"></div><div class="fld" id="flPanelWrap"><label>บาน</label><input id="flP" type="number" value="1" min="1" oninput="flCalc()"></div><div class="fld"><label>ชุด</label><input id="flQ" type="number" value="1" min="1" oninput="flCalc()"></div></div>
+<div id="flDoorOpts" class="hide"><div class="lbl">มือจับสแตนเลสอร่าม / ดิจิตอล</div><div class="chips" id="flHandle"><div class="chip sm on" data-p="0" onclick="flHpick(this)">ไม่ใส่</div><div class="chip sm" data-p="1500" onclick="flHpick(this)">30.5ซม.+1,500</div><div class="chip sm" data-p="2000" onclick="flHpick(this)">60ซม.+2,000</div><div class="chip sm" data-p="3200" onclick="flHpick(this)">120ซม.+3,200</div><div class="chip sm" data-p="0" onclick="flHpick(this)">ดิจิตอล ✎</div></div>
+<div class="lbl">ชุดล็อค</div><div class="chips"><div class="chip sm" onclick="pickOne(this)">ไม่มีชุดล็อก</div><div class="chip sm" onclick="pickOne(this)">มีชุดล็อก</div><div class="chip sm on" onclick="pickOne(this)">มีชุดล็อก + กุญแจ</div></div></div>
+<div class="pricebar"><div><div class="t">ราคาบานเปลือย</div><div class="bd" id="flBd"></div></div><div class="p" id="flPrice">฿0</div></div>
+</div>
+
+<!-- ② -->
+<div class="card">
+<h2>② สูตรสี/กระจก L1-L3 มาตรฐาน — <b>สีบาน=colorPrice · กระจก=ส่วนต่าง×พื้นที่</b></h2>
+<div class="cdesc">เคส: บานเลื่อน SMS · ปรับขนาดได้ · <b>ค่าเริ่มต้น = ☑ สีตามทั้งใบ</b> (คิดราคาตามเรทสีหัวใบ) · <b>ไม่ติ๊ก → L2/L3 โผล่</b> (🟢จริง/🔵ออปชั่น · สีอลู 13 + กระจก 66 ในกล่องเดียวกัน)</div>
+
+<div class="row" style="margin-bottom:8px;">
+  <div class="fld"><label>กว้าง (ม.)</label><input id="cw" type="number" value="3.0" step="0.1" oninput="render()"></div>
+  <div class="fld"><label>สูง (ม.)</label><input id="ch2" type="number" value="2.4" step="0.1" oninput="render()"></div>
+  <div class="fld"><label>ค่าบานฐาน</label><input id="cbase" type="number" value="40000" step="1000" oninput="render()" style="width:92px;"></div>
+  <div class="fld"><label>พื้นที่</label><div id="careaTxt" style="height:34px;line-height:34px;font-weight:700;color:var(--red);"></div></div>
+</div>
+
+<!-- ชั้น 1 -->
+<div class="l1">🌐 <b>หัวใบ — ตั้งสี/กระจกทั้งใบ</b> <span style="font-weight:400;color:#6B7280;font-size:11.5px;">(ตั้งบนหัวใบ · ข้อที่ติ๊ก "สีตามทั้งใบ" ใช้ค่านี้ + คิดราคาตามเรทนี้)</span>
+  <div class="lbl" style="margin:7px 0 3px;">สีทั้งใบ</div><div class="chips" id="l1AluCat"></div><div class="items"><div class="chips" id="l1AluItems"></div></div>
+  <div class="lbl" style="margin:7px 0 3px;">กระจกทั้งใบ</div><div class="chips" id="l1GlCat"></div><div class="items"><div class="chips" id="l1GlItems"></div></div>
+</div>
+
+<!-- ชั้น 2 + 3 -->
+<div class="box">
+  <div style="font-weight:700;font-size:13px;color:#374151;">🎨 สี/กระจก (บานนี้)</div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="followChk" checked onchange="followToggle()" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b> <span style="color:#6B7280;font-size:11.5px;">(ค่าเริ่มต้น · คิดราคาตามเรทสีทั้งใบ)</span></label>
+  <div style="font-size:11.5px;color:#6B7280;margin:5px 0 0 26px;">ทั้งใบตอนนี้: <b id="followTxt"></b></div>
+  <div id="coBody" class="hide" style="margin-top:9px;">
+    <div style="font-size:11.5px;color:#9A6A1E;margin-bottom:5px;font-weight:700;">▼ ไม่ติ๊ก = เลือกสี/กระจกเฉพาะบานนี้ (L2 / L3)</div>
+
+    <div class="sub2"><div class="t">L2 — เปลี่ยนเฉพาะบานนี้</div>
+      <div class="modebar"><div class="mode on" id="mReal" onclick="setMode('real')">🟢 ใช้จริง<br><span style="font-size:10px;font-weight:400;">บวกยอด · ลงรายละเอียด</span></div><div class="mode" id="mOpt" onclick="setMode('opt')">🔵 ออปชั่นเทียบราคา<br><span style="font-size:10px;font-weight:400;">ไม่บวกยอด · ลง OPTION</span></div></div>
+      <div class="lbl">สีบาน (สีอลู — 13 สี)</div><div class="chips" id="l2AluCat"></div><div class="items"><div class="chips" id="l2AluItems"></div></div>
+      <div class="lbl">กระจก (66 สเปค)</div><div class="chips" id="l2GlCat"></div><div class="items"><div class="chips" id="l2GlItems"></div></div>
+    </div>
+
+    <div class="l3box"><div class="lbl" style="margin-top:0;color:#9A6A1E;">L3 — อัปต่อจาก L2 (ออปชั่นเทียบราคา · ไม่บวกยอด · เทียบกับสี/กระจกที่ L2 เลือก)</div>
+      <div class="lbl">เปลี่ยนสีบานอีก</div><div class="chips" id="l3AluCat"></div><div class="items"><div class="chips" id="l3AluItems"></div></div>
+      <div class="lbl">หรือเปลี่ยนกระจก</div><div class="chips" id="l3GlCat"></div><div class="items"><div class="chips" id="l3GlItems"></div></div>
+      <div style="margin-top:7px;"><span class="chip sm" onclick="clearL3()">✕ ล้าง L3</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="box" style="background:#fff;"><div class="lbl" style="margin-top:0;">📋 รายละเอียด (ลงใบ — สเปคจริงของบานนี้)</div><div id="detailLines" style="font-size:12.5px;"></div></div>
+<div class="optbox hide" id="optBox"><div class="h">＋ OPTION ทางเลือกลูกค้า (ในใบเสนอราคา)</div><div id="optLines"></div></div>
+<div class="pricebar"><div><div class="t">ยอดรวมข้อนี้</div><div class="bd" id="coBd"></div></div><div class="p" id="coPrice">฿0</div></div>
+<div class="note"><b>ค่าเริ่มต้น ☑ สีตามทั้งใบ</b> (คิดราคาตามเรทสีหัวใบ · ไม่ติ๊ก → L2/L3 โผล่) · <b>L2</b> 🟢จริง=บวกยอด+รายละเอียด / 🔵ออปชั่น=swap line ลง OPTION ไม่บวกยอด · <b>L3</b> ต่อจาก L2 เปลี่ยนสี/กระจกอีก เทียบกับ L2 · OPTION signed (+เพิ่ม / −ลด) · noSum · ใช้สูตรนี้ทุกกลุ่ม G1-G7</div>
+</div>
+
+<p style="text-align:center;color:var(--mut);font-size:12px;">กดเล่น: ปรับขนาด → ราคาสีขยับตามขั้น · เลือก L1/L2/L3 · สลับ 🟢/🔵 · ถ้าตรงสเปก ตอบ "approve" → ลงมือทำ helper กลาง</p>
+
+<script>
+// ===== ① บานเปลือยรวม =====
+var flT='fix',flHandle=0;
+function pickOne(el){[].forEach.call(el.parentNode.children,function(c){c.classList.remove('on');});el.classList.add('on');}
+function flPick(el){document.querySelectorAll('#flType .chip').forEach(function(c){c.classList.remove('on');});el.classList.add('on');flT=el.dataset.t;var d=flT!=='fix';document.getElementById('flDoorOpts').classList.toggle('hide',!d);document.getElementById('flPanelWrap').classList.toggle('hide',!d);flCalc();}
+function flHpick(el){document.querySelectorAll('#flHandle .chip').forEach(function(c){c.classList.remove('on');});el.classList.add('on');flHandle=+el.dataset.p;flCalc();}
+function flCalc(){var w=+document.getElementById('flW').value||0,h=+document.getElementById('flH').value||0,p=+document.getElementById('flP').value||1,q=+document.getElementById('flQ').value||1;var area=w*h;var base=Math.max(7000,Math.round(area*4500));var bd='ฐานติดตาย '+base.toLocaleString();var tot=base;if(flT!=='fix'){var dr=8000*p;tot=base+dr+flHandle;bd='ฐาน '+base.toLocaleString()+' + ประตู 8,000×'+p+' '+(flHandle?('+ มือจับ '+flHandle.toLocaleString()):'');}tot*=q;if(q>1)bd+=' × '+q;document.getElementById('flBd').textContent=bd;document.getElementById('flPrice').textContent='฿'+tot.toLocaleString();}
+
+// ===== ② L1-L3 (เรตจริงจาก engine) =====
+// COLORS: index ตาม engine · rates=[[ขั้นล่าง,ขั้นบน,เรต/ตร.ม.]] · min=ราคาขั้นต่ำ
+var CO=[
+ {n:'สีอบขาว',min:0,rates:null,cat:'มาตรฐาน'},
+ {n:'สีดำ',min:0,rates:null,cat:'มาตรฐาน'},
+ {n:'สีเทาซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],cat:'ซาฮาร่า'},
+ {n:'สีดำซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],cat:'ซาฮาร่า'},
+ {n:'สี Aztec gray',min:4000,rates:[[7,10,700],[10,20,650],[20,9999,600]],cat:'ซาฮาร่า'},
+ {n:'ลายไม้สต๊อก สักทอง',min:4000,rates:[[7,10,850],[10,9999,750]],cat:'ลายไม้สต๊อก'},
+ {n:'ลายไม้สต๊อก มะฮอกกานี',min:4000,rates:[[7,10,850],[10,9999,750]],cat:'ลายไม้สต๊อก'},
+ {n:'ลายไม้สต๊อก ไวท์โอ๊ค',min:4000,rates:[[7,10,850],[10,9999,750]],cat:'ลายไม้สต๊อก'},
+ {n:'Fuji Oak (โอ๊ค)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],cat:'พิเศษ'},
+ {n:'Fuji Makha (มะค่า)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]],cat:'พิเศษ'},
+ {n:'สีอบพิเศษ (ระบุรหัส)',min:10000,rates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]],cat:'พิเศษ'},
+ {n:'สีลายไม้อบพิเศษ (ระบุรหัส)',min:15000,rates:[[7,10,2900],[10,15,2600],[15,20,2350],[20,9999,2200]],cat:'พิเศษ'},
+ {n:'สีชุบ (ระบุชื่อ)',min:16000,rates:null,cat:'พิเศษ'}
+];
+var ALUCATS=['มาตรฐาน','ซาฮาร่า','ลายไม้สต๊อก','พิเศษ'];
+function rateOf(a,t){if(a<t[0][0])return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];}return t[t.length-1][2];}
+function colorPrice(ci,a){var c=CO[ci];if(!c)return 0;if(!c.rates)return c.min;return Math.max(c.min,Math.round(a*rateOf(a,c.rates)));}
+
+// กระจก 66 — [ชื่อ, spread(.s)/ตร.ม.] จาก engine
+var GRAW=[["กระจกเขียว 6 มม.",0],["กระจกใส 6 มม.",0],["กระจกเขียว/ใส 8 มม.",1200],["กระจกเขียว/ใส 10 มม.",1200],["กระจกเคลือบขาว 6 มม.",1800],["ยูโรเกรย์ 6 มม.",800],["ยูโรเกรย์ 8 มม.",1500],["ยูโรเกรย์ 10 มม.",1700],["ยูโรบรอนซ์ 6 มม.",1000],["ยูโรบรอนซ์ 10 มม.",6400],["reflective สีเทา 6 มม.",2100],["reflective สีเขียว 6 มม.",2400],["reflective สีฟ้า 6 มม.",2700],["เทมเปอร์เขียว/ใส 6 มม.",600],["เทมเปอร์เขียว/ใส 10 มม.",2100],["เทมเปอร์เขียว/ใส 12 มม.",2400],["เทมเปอร์เขียว/ใส 15 มม.",5000],["เทมเปอร์ใสพิเศษ 6 มม.",2500],["เทมเปอร์ใสพิเศษ 10 มม.",5700],["เทมเปอร์ฝ้า 6 มม.",2200],["เทมเปอร์ฝ้า 8 มม.",3500],["เทมเปอร์ยูโรเกรย์ 4 มม.",1300],["เทมเปอร์ยูโรเกรย์ 5 มม.",1700],["เทมเปอร์ยูโรเกรย์ 6 มม.",2100],["เทมเปอร์ยูโรเกรย์ 10 มม.",4200],["เทมเปอร์ยูโรบรอนซ์ 5 มม.",2000],["เทมเปอร์ยูโรบรอนซ์ 6 มม.",2800],["เทมเปอร์ยูโรบรอนซ์ 10 มม.",5900],["เทมเปอร์ reflective สีเทา 6 มม.",3500],["เทมเปอร์ reflective สีเขียว 6 มม.",4000],["เทมเปอร์ reflective สีฟ้า 6 มม.",4400],["ลามิเนต 4+4 ฟิล์มเขียว/ใส 0.38",2200],["ลามิเนต 5+5 ฟิล์มเขียว/ใส 0.38",2700],["ลามิเนตใส 4+4 ฟิล์มสีต่างๆ",4200],["ลามิเนต 4+4 ฟิล์มกันเสียง 0.76",5300],["ลามิเนต 4+4 Solar Max 0.76",4300],["ลามิเนต 4+4 กันขโมย STG 1.52",5500],["อินซูเลทเขียว/ใส 6+6+6 มม.",4000],["กระจกชาดำ/ฝ้า/ลายผ้า 5-6 มม.",500],["กระจกเงา 5 มม.",1000],["กระจกลอนแก้ว 5 มม.",1300],["เทมเปอร์ 8 มม.",1300],["เทมเปอร์สีชาดำ 6 มม.",1800],["เทมเปอร์สีชาดำ 10 มม.",3000],["เทมเปอร์สีฟ้า 6 มม.",1400],["เทมเปอร์ใสพิเศษ 8 มม.",4000],["ลามิเนต 6+6 ฟิล์ม 0.38",2400],["ลามิเนต 4+4 (สูง>2.5ม.) 0.76",2200],["ลามิเนต 5+5 (สูง>2.5ม.) 0.76",2300],["ลามิเนต 6+6 (สูง>2.5ม.) 0.76",2800],["ลามิเนตยูโรเกรย์+ใส 6+6",3000],["ลามิเนตยูโรเกรย์+ยูโรเกรย์ 6+6",3600],["ลามิเนตสีชาดำ+ใส 6+6",3000],["ลามิเนตสีชาดำ+สีชาดำ 6+6",3600],["ลามิเนตคริสตัลเกรย์+ใส 6+6",3000],["ลามิเนตคริสตัลเกรย์+คริสตัลเกรย์ 6+6",3600],["ลามิเนตสีฟ้า+สีใส 6+6",2800],["ลามิเนตสีฟ้า+สีฟ้า 6+6",3400],["ลามิเนตยูโรบรอนซ์+ใส 6+6",2800],["ลามิเนตยูโรบรอนซ์+ยูโรบรอนซ์ 6+6",3400],["ใสดัดโค้งหนา 10 มม.",8550],["ใสดัดโค้งลามิเนตใส 5+5 มม.",11150],["ลามิเนต 4+4 ยูโรเกรย์",3000],["กระจกเงาทอง",1000],["ลามิเนตลอนแก้ว/เงาทอง 4+4",3600],["เทมเปอร์ลามิเนต 6+6 Pvb 1.52",4800]];
+function gcat(n){ if(/อินซู/.test(n))return'อินซูเลท'; if(/เทมเปอร์/.test(n))return'เทมเปอร์'; if(/ลามิเนต/.test(n))return'ลามิเนต'; if(/ยูโรเกรย์|ยูโรบรอนซ์|reflective|ดัดโค้ง|เงา|ลอนแก้ว|ชาดำ|ฝ้า|ลายผ้า|คริสตัล/.test(n))return'พิเศษ'; return'ทั่วไป'; }
+var GCATS=['ทั่วไป','เทมเปอร์','ลามิเนต','อินซูเลท','พิเศษ'];
+function glassUp(gi,a){return Math.round(GRAW[gi][1]*a);}
+function glCount(i){var n=0;GRAW.forEach(function(g){if(gcat(g[0])===GCATS[i])n++;});return n;}
+
+// state
+var st={l1a:0,l1g:0,l2a:null,l2g:null,l3a:null,l3g:null,follow:true,mode:'real'};
+var catIdx={l1a:0,l1g:0,l2a:0,l2g:0,l3a:0,l3g:0};
+function area(){return (+document.getElementById('cw').value||0)*(+document.getElementById('ch2').value||0);}
+
+function aluChips(key,sel,pickFn){
+  var ci=catIdx[key],a=area();
+  var cat=ALUCATS.map(function(c,i){return '<span class="chip sm cat'+(i===ci?' on':'')+'" onclick="catIdx.'+key+'='+i+';render()">'+c+'</span>';}).join('');
+  var items=CO.map(function(c,idx){if(c.cat!==ALUCATS[ci])return '';var p=colorPrice(idx,a);return '<span class="chip sm'+(sel===idx?' on':'')+'" onclick="'+pickFn+'('+idx+')">'+c.n+(p?' +'+p.toLocaleString():' ฟรี')+'</span>';}).join('');
+  return {cat:cat,items:items};
+}
+function glassChips(key,sel,pickFn){
+  var ci=catIdx[key],a=area();
+  var cat=GCATS.map(function(c,i){return '<span class="chip sm cat'+(i===ci?' on':'')+'" onclick="catIdx.'+key+'='+i+';render()">'+c+' ('+glCount(i)+')</span>';}).join('');
+  var items=GRAW.map(function(g,idx){if(gcat(g[0])!==GCATS[ci])return '';var p=glassUp(idx,a);return '<span class="chip sm'+(sel===idx?' on':'')+'" onclick="'+pickFn+'('+idx+')">'+g[0]+(p?' +'+p.toLocaleString():' ฟรี')+'</span>';}).join('');
+  return {cat:cat,items:items};
+}
+function fill(catId,itemId,o){document.getElementById(catId).innerHTML=o.cat;document.getElementById(itemId).innerHTML=o.items;}
+
+function pickL1Alu(i){st.l1a=i;render();}
+function pickL1Gl(i){st.l1g=i;render();}
+function pickL2Alu(i){st.l2a=(st.l2a===i?null:i);render();}
+function pickL2Gl(i){st.l2g=(st.l2g===i?null:i);render();}
+function pickL3Alu(i){st.l3a=(st.l3a===i?null:i);render();}
+function pickL3Gl(i){st.l3g=(st.l3g===i?null:i);render();}
+function clearL3(){st.l3a=null;st.l3g=null;render();}
+function followToggle(){st.follow=document.getElementById('followChk').checked;document.getElementById('coBody').classList.toggle('hide',st.follow);if(st.follow){st.l2a=null;st.l2g=null;st.l3a=null;st.l3g=null;}render();}
+function setMode(m){st.mode=m;document.getElementById('mReal').classList.toggle('on',m==='real');document.getElementById('mOpt').classList.toggle('on',m==='opt');render();}
+function swap(part,from,to,z){var w=z>=0?('ราคาเพิ่ม '+z.toLocaleString()):('ราคาลดลง '+Math.abs(z).toLocaleString());return 'เปลี่ยน'+part+' จาก'+from+' เป็น '+to+' '+w+' บาท';}
+
+function render(){
+ var a=area(),base=+(document.getElementById('cbase').value)||0;
+ document.getElementById('careaTxt').textContent=a.toFixed(2)+' ตร.ม.';
+ document.getElementById('followTxt').textContent=CO[st.l1a].n+' · '+GRAW[st.l1g][0];
+ fill('l1AluCat','l1AluItems',aluChips('l1a',st.l1a,'pickL1Alu'));
+ fill('l1GlCat','l1GlItems',glassChips('l1g',st.l1g,'pickL1Gl'));
+ if(!st.follow){
+   fill('l2AluCat','l2AluItems',aluChips('l2a',st.l2a,'pickL2Alu'));
+   fill('l2GlCat','l2GlItems',glassChips('l2g',st.l2g,'pickL2Gl'));
+   fill('l3AluCat','l3AluItems',aluChips('l3a',st.l3a,'pickL3Alu'));
+   fill('l3GlCat','l3GlItems',glassChips('l3g',st.l3g,'pickL3Gl'));
+ }
+ // ---- ราคา ----
+ var l1cp=colorPrice(st.l1a,a),l1gp=glassUp(st.l1g,a);
+ var curColor=st.l1a,curGlass=st.l1g,sumColor=l1cp,sumGlass=l1gp;
+ if(!st.follow&&st.mode==='real'){
+   if(st.l2a!=null){curColor=st.l2a;sumColor=colorPrice(st.l2a,a);}
+   if(st.l2g!=null){curGlass=st.l2g;sumGlass=glassUp(st.l2g,a);}
+ }
+ var total=base+sumColor+sumGlass;
+ // รายละเอียด (สเปคจริง)
+ var details=['– สีอลู: '+CO[curColor].n+(sumColor?' (+'+sumColor.toLocaleString()+')':' (ฟรี)'),
+              '– กระจก: '+GRAW[curGlass][0]+(sumGlass?' (+'+sumGlass.toLocaleString()+')':'')];
+ // OPTION
+ var opts=[];
+ if(!st.follow&&st.mode==='opt'){
+   if(st.l2a!=null&&st.l2a!==st.l1a)opts.push(swap('สีบาน',CO[st.l1a].n,CO[st.l2a].n,colorPrice(st.l2a,a)-l1cp));
+   if(st.l2g!=null&&st.l2g!==st.l1g)opts.push(swap('กระจก',GRAW[st.l1g][0],GRAW[st.l2g][0],glassUp(st.l2g,a)-l1gp));
+ }
+ // L3 = เทียบกับ L2 (ถ้าไม่เลือก L2 = เทียบ L1) · ไม่บวกยอดเสมอ
+ var baseC=(st.l2a!=null?st.l2a:st.l1a),baseG=(st.l2g!=null?st.l2g:st.l1g);
+ if(!st.follow){
+   if(st.l3a!=null&&st.l3a!==baseC)opts.push(swap('สีบาน',CO[baseC].n,CO[st.l3a].n,colorPrice(st.l3a,a)-colorPrice(baseC,a)));
+   if(st.l3g!=null&&st.l3g!==baseG)opts.push(swap('กระจก',GRAW[baseG][0],GRAW[st.l3g][0],glassUp(st.l3g,a)-glassUp(baseG,a)));
+ }
+ document.getElementById('coPrice').textContent='฿'+Math.round(total).toLocaleString();
+ document.getElementById('coBd').textContent='ค่าบาน '+base.toLocaleString()+(sumColor?' · สีอลู '+sumColor.toLocaleString():' · อบขาวฟรี')+(sumGlass?' · กระจก '+sumGlass.toLocaleString():'');
+ document.getElementById('detailLines').innerHTML=details.map(function(d){return '<div>'+d+'</div>';}).join('');
+ var ob=document.getElementById('optBox');
+ if(opts.length){ob.classList.remove('hide');document.getElementById('optLines').innerHTML=opts.map(function(t){return '<div class="optline">• '+t+'</div>';}).join('');}else ob.classList.add('hide');
+}
+flCalc();render();
+</script>
+</div></body></html>

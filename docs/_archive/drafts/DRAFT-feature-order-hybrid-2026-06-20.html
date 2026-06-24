@@ -1,0 +1,308 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ จัดฟีเจอร์ แบบผสม (กลุ่ม+แยกชนิดบาน) — 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--blue:#1E40AF;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--good:#059669;--bg:#F3F4F6;--amber:#B45309;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;font-size:14px;line-height:1.5;}
+h2{color:var(--red);font-size:18px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px;}
+.wrap{max-width:840px;margin:0 auto;}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.tab{padding:8px 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);min-height:42px;}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.card{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--line);margin-bottom:12px;}
+.sechead{font-size:14px;font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:8px;}
+.sechead.blue{color:var(--blue);}.sechead.door{color:var(--red);}
+.rec{background:#FFFBEB;border:1px solid #FCD34D;border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--amber);margin-bottom:12px;line-height:1.55;}
+.rec b{color:#92400E;}
+.row{border:1.5px solid var(--line);border-radius:10px;margin-bottom:7px;background:#fff;overflow:hidden;transition:.1s;}
+.row.over{border-color:var(--red);background:#FFF5F5;}.row.drag{opacity:.4;border-style:dashed;}
+.rtop{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:grab;flex-wrap:wrap;}
+.grip{color:#bbb;font-size:15px;}
+.num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
+.nm{flex:1;min-width:110px;font-size:13px;font-weight:700;}
+.acts{display:flex;gap:3px;}
+.acts button{min-width:28px;height:26px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-size:11px;color:var(--muted);padding:0 5px;}
+.acts button:hover{border-color:var(--red);color:var(--red);}
+.ar{display:flex;flex-direction:column;gap:1px;}
+.ar button{width:24px;height:12px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer;font-size:8px;line-height:1;color:var(--muted);padding:0;}
+.notebox{display:none;padding:0 11px 9px 40px;}.notebox.show{display:block;}
+.notebox textarea{width:100%;border:1px solid #FCD34D;border-radius:7px;padding:6px;font:inherit;font-size:12px;background:#FFFBEB;resize:vertical;min-height:34px;}
+.trow{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px;background:#fff;flex-wrap:wrap;}
+.trow .tn{flex:1;font-weight:700;font-size:13px;min-width:110px;}
+.badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.badge.same{background:#F3F4F6;color:var(--muted);}
+.badge.ovr{background:#FEE2E2;color:var(--red);}
+.badge.diff{background:#FEF3C7;color:var(--amber);}
+.tbtn{font-size:11px;border:1px solid var(--red);background:#FFF5F5;color:var(--red);border-radius:7px;padding:5px 10px;cursor:pointer;font-weight:700;}
+.tbtn.off{border-color:var(--line);background:#fff;color:var(--muted);}
+.tin{padding:0 0 4px 18px;}
+.tin .row{margin-bottom:5px;}
+.tin .num{background:var(--red);}
+.tsec{font-size:11px;color:var(--muted);margin:6px 0 5px 18px;}
+.bar{display:flex;gap:8px;margin:6px 0 0;flex-wrap:wrap;}
+.bar button{flex:1;min-width:130px;padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12px;cursor:pointer;font-weight:700;color:var(--muted);}
+.bar button.go{background:var(--red);color:#fff;border-color:var(--red);}
+.out{margin-top:12px;background:#1F2937;color:#E5E7EB;border-radius:10px;padding:12px;font-size:12px;font-family:'Consolas',monospace;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}
+.note{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;}
+.warn{color:var(--red);font-weight:700;}.good{color:var(--good);font-weight:700;}
+</style></head>
+<body>
+<div class="wrap">
+<h2>ดราฟ จัดฟีเจอร์ แบบผสม — กลุ่มเป็นหลัก + แยกเฉพาะชนิดที่ต่าง</h2>
+<p class="sub">🔵 <b>ลำดับกลุ่ม</b> = ใช้กับทุกชนิดบาน · 🚪 <b>ชนิดบานไหนอยากต่าง</b> กด "แยกลำดับ" แล้วจัดเอง · ที่ไม่แยก = ตามกลุ่มอัตโนมัติ</p>
+
+<div class="tabs" id="tabs"></div>
+<div class="rec" id="rec"></div>
+
+<div class="card">
+  <div class="sechead blue">🔵 ลำดับเริ่มต้นของกลุ่ม <span style="font-size:11px;font-weight:400;color:var(--muted);">(ทุกชนิดบานใช้อันนี้ ถ้าไม่แยก)</span></div>
+  <div id="deflist"></div>
+</div>
+
+<div class="card">
+  <div class="sechead door">🚪 ชนิดบานในกลุ่ม <span style="font-size:11px;font-weight:400;color:var(--muted);">(กด "แยกลำดับ" เฉพาะตัวที่อยากต่าง)</span></div>
+  <div id="typelist"></div>
+</div>
+
+<div class="bar"><button onclick="resetG()">↺ คืนค่าเดิมกลุ่มนี้</button><button class="go" onclick="exportAll()">📋 สรุปทั้งหมด — ส่งผม</button></div>
+<div class="out" id="out" style="display:none;"></div>
+
+<p class="note">
+  <span class="warn">⚠️ จริงจาก render:</span> ส่วนใหญ่ชนิดบานใน G1 ลำดับเหมือนกัน (ตามกลุ่ม) · ต่างจริง = <b>เฟี้ยม/เลื่อนภายใน</b> (มีโครงสร้าง) · <b>shower</b> (ไม่มีล็อค·มุ้ง·คาด) → ติดป้าย 🟡<br>
+  <span class="good">กันพัง:</span> "ตามกลุ่ม" = ปลอดภัยสุด · "แยกเฉพาะชนิด" = แก้เจาะจง ผมจะบอกความเสี่ยงต่อจุดตอนสรุป · ทุก push เช็ค golden 3 ตัว
+</p>
+</div>
+
+<script>
+var ALL={
+ "1": {
+  "types": {
+   "บานเลื่อน": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานเปิด": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "ติดตาย": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานเฟี้ยม": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานกระทุ้ง": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "เลื่อนภายใน": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "ลูกฟูก+คอมโพสิททึบ": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "PC Door": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานเปลือย": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "shower": [
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานยก": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "YKK": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "บานหมุน": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "ดัดโค้ง": [
+    "🔧 ล็อค · มุ้ง · คาดตาราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ]
+  },
+  "def": [
+   "🔧 ล็อค · มุ้ง · คาดตาราง",
+   "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "3": {
+  "types": {
+   "หลังคา": [
+    "🏠 วัสดุมุง · โครง",
+    "🔄 หลังคาเลื่อน",
+    "🌧️ ปลายหลังคา · รางน้ำ",
+    "🔩 ของเสริมหลังคา",
+    "➕ หลังคาผสม (วัสดุที่ 2)",
+    "📝 งานพิเศษ · รื้อของเดิม"
+   ],
+   "ฝ้า-ผนัง": [
+    "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "เสริม": [
+    "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ]
+  },
+  "def": [
+   "🏠 วัสดุมุง · โครง",
+   "🔄 หลังคาเลื่อน",
+   "🌧️ ปลายหลังคา · รางน้ำ",
+   "🔩 ของเสริมหลังคา",
+   "➕ หลังคาผสม (วัสดุที่ 2)",
+   "📝 งานพิเศษ · รื้อของเดิม",
+   "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "4": {
+  "types": {
+   "ฝาตู้": [
+    "📦 รายละเอียดตู้",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ],
+   "ตู้อลู": [
+    "📦 รายละเอียดตู้",
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ]
+  },
+  "def": [
+   "📦 รายละเอียดตู้",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "7": {
+  "types": {
+   "ม่านซิป": [
+    "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+    "➕ งานเสริม · หมายเหตุ"
+   ]
+  },
+  "def": [
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ }
+};
+var GN={'1':'G1 บาน · กระจก','3':'G3 หลังคา · ฝ้า-ผนัง','4':'G4 ตู้อลู · ฝาตู้','7':'G7 ม่านซิป'};
+var SKIPT={'1':['เสริม','เส้นคาด'],'3':['เสริม'],'4':[],'7':[]};
+var REC={
+ '1':'<b>💡 G1:</b> ลำดับกลุ่มใช้ได้กับเกือบทุกบาน · แนะนำ "แยก" เฉพาะ <b>shower</b> (ฟีเจอร์ต่างเยอะ) ถ้าอยากจัดเป็นพิเศษ · ที่เหลือปล่อยตามกลุ่ม',
+ '3':'<b>💡 G3:</b> หลังคา กับ ฝ้า-ผนัง ต่างกันมาก — แนะนำ "แยก" ฝ้า-ผนัง ออกจากหลังคา',
+ '4':'<b>💡 G4:</b> ตู้อลู/ฝาตู้ คล้ายกัน — ตามกลุ่มพอ',
+ '7':'<b>💡 G7:</b> ม่านซิปอย่างเดียว — ตามกลุ่ม'
+};
+var cur='1', STATE={};
+function initG(g){ if(STATE[g])return;
+ var def=ALL[g].def.map(function(x){return {name:x,note:''};});
+ var types={}; Object.keys(ALL[g].types).forEach(function(t){ if((SKIPT[g]||[]).indexOf(t)>=0)return; types[t]={sections:ALL[g].types[t].slice(),override:null,note:''}; });
+ STATE[g]={def:def,types:types};
+}
+var tabs=document.getElementById('tabs');
+Object.keys(GN).forEach(function(g){ var b=document.createElement('button'); b.className='tab'+(g===cur?' on':''); b.textContent='G'+g; b.onclick=function(){cur=g;render();}; tabs.appendChild(b); });
+function defOrder(){ return STATE[cur].def.filter(function(x){return !x.del;}).map(function(x){return x.name;}); }
+function render(){
+ initG(cur);
+ [].forEach.call(tabs.children,function(b){b.classList.toggle('on',b.textContent==='G'+cur);});
+ document.getElementById('rec').innerHTML=REC[cur]||'';
+ renderDef(); renderTypes();
+}
+function rowEl(it,i,arr,reRender,small){
+ var r=document.createElement('div'); r.className='row'; r.dataset.i=i;
+ r.innerHTML='<div class="rtop" draggable="true"><span class="grip">⠿</span><span class="num">'+(i+1)+'</span><span class="nm">'+it.name+'</span>'+
+  '<span class="acts"><button data-act="note">📝'+(it.note?'✓':'')+'</button></span>'+
+  '<span class="ar"><button data-up>▲</button><button data-dn>▼</button></span></div>'+
+  '<div class="notebox'+(it.note?' show':'')+'"><textarea placeholder="โน้ต">'+(it.note||'')+'</textarea></div>';
+ var nb=r.querySelector('.notebox');
+ r.querySelector('[data-act=note]').onclick=function(e){e.stopPropagation();nb.classList.toggle('show');};
+ r.querySelector('[data-up]').onclick=function(e){e.stopPropagation();if(i>0){var x=arr.splice(i,1)[0];arr.splice(i-1,0,x);reRender();}};
+ r.querySelector('[data-dn]').onclick=function(e){e.stopPropagation();if(i<arr.length-1){var x=arr.splice(i,1)[0];arr.splice(i+1,0,x);reRender();}};
+ nb.querySelector('textarea').oninput=function(){it.note=this.value;};
+ var top=r.querySelector('.rtop');
+ top.addEventListener('dragstart',function(){r.classList.add('drag');window._di=i;window._darr=arr;});
+ top.addEventListener('dragend',function(){r.classList.remove('drag');});
+ top.addEventListener('dragover',function(e){e.preventDefault();r.classList.add('over');});
+ top.addEventListener('dragleave',function(){r.classList.remove('over');});
+ top.addEventListener('drop',function(e){e.preventDefault();if(window._darr===arr){var x=arr.splice(window._di,1)[0];arr.splice(i,0,x);reRender();}});
+ return r;
+}
+function renderDef(){ var l=document.getElementById('deflist'); l.innerHTML=''; STATE[cur].def.forEach(function(it,i){ l.appendChild(rowEl(it,i,STATE[cur].def,render)); }); }
+function renderTypes(){
+ var l=document.getElementById('typelist'); l.innerHTML='';
+ var def=defOrder();
+ Object.keys(STATE[cur].types).forEach(function(t){
+  var td=STATE[cur].types[t];
+  // ต่างจาก default ไหม (ชุด section ไม่ครบ/มีเพิ่ม)
+  var missing=def.filter(function(s){return td.sections.indexOf(s)<0;});
+  var extra=td.sections.filter(function(s){return def.indexOf(s)<0;});
+  var wrap=document.createElement('div');
+  // ทุกตัว = ตามกลุ่ม (ลำดับเดียวกัน) เว้นแต่กด "แยก" · บอกแค่ "ขาด/เพิ่ม" เบาๆ ไม่ใช่ alarm
+  var hint=extra.length?('<span class="badge diff">🟡 มีพิเศษ: '+extra.map(function(s){return s.replace(/^[^ ]+ /,"");}).join(", ")+'</span>'):'';
+  var miss=missing.length?('<span style="font-size:10.5px;color:var(--muted);">ไม่มี: '+missing.map(function(s){return s.replace(/^[^ ]+ /,"");}).join(", ")+'</span>'):'';
+  var badge=td.override?'<span class="badge ovr">⚙ แยกลำดับแล้ว</span>':'<span class="badge same">✓ ตามกลุ่ม</span>';
+  var tr=document.createElement('div'); tr.className='trow';
+  tr.innerHTML='<span class="tn">🚪 '+t+'</span><span style="font-size:11px;color:var(--muted);">'+td.sections.length+' ส่วน</span>'+badge+hint+miss+
+   '<button class="tbtn'+(td.override?'':' off')+'" data-t="'+t+'">'+(td.override?'✓ แยกอยู่ (กดเลิก)':'แยกลำดับเฉพาะนี้')+'</button>';
+  tr.querySelector('.tbtn').onclick=function(){ if(td.override){td.override=null;} else { td.override=(def.filter(function(s){return td.sections.indexOf(s)>=0;}).concat(td.sections.filter(function(s){return def.indexOf(s)<0;}))).map(function(s){return {name:s,note:''};}); } renderTypes(); };
+  wrap.appendChild(tr);
+  if(td.override){ var inner=document.createElement('div'); inner.className='tin';
+   var sec=document.createElement('div'); sec.className='tsec'; sec.textContent='ลำดับเฉพาะ '+t+' (ลาก/▲▼):'; inner.appendChild(sec);
+   td.override.forEach(function(it,i){ inner.appendChild(rowEl(it,i,td.override,renderTypes)); });
+   wrap.appendChild(inner);
+  }
+  l.appendChild(wrap);
+ });
+}
+function resetG(){ delete STATE[cur]; render(); }
+function exportAll(){
+ var o='===== สรุปจัดฟีเจอร์ แบบผสม (กลุ่ม + แยกชนิดบาน) =====\n';
+ Object.keys(GN).forEach(function(g){ initG(g); var s=STATE[g];
+  o+='\n══ G'+g+' '+GN[g]+' ══\n';
+  o+='🔵 ลำดับกลุ่ม (default): '+s.def.map(function(x,i){return (i+1)+'.'+x.name.replace(/^[^ ]+ /,'')+(x.note?'['+x.note+']':'');}).join('  ')+'\n';
+  var ov=Object.keys(s.types).filter(function(t){return s.types[t].override;});
+  if(ov.length){ ov.forEach(function(t){ o+='  ⚙ แยก '+t+': '+s.types[t].override.map(function(x,i){return (i+1)+'.'+x.name.replace(/^[^ ]+ /,'')+(x.note?'['+x.note+']':'');}).join('  ')+'\n'; }); }
+  else o+='  (ทุกชนิดบานตามกลุ่ม)\n';
+ });
+ var el=document.getElementById('out'); el.style.display='block'; el.textContent=o; el.scrollIntoView({behavior:'smooth'});
+}
+render();
+</script>
+</body></html>

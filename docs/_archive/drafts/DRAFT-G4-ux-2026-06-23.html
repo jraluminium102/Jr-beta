@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ UX G4 — ตู้อลู / ฝาตู้ (3 โซน · ลากจัดได้)</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.5;}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 170px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:10px;}
+.demo{display:inline-block;background:#FEF3C7;border:1px solid #FCD34D;color:#92600A;border-radius:5px;padding:1px 8px;font-size:11px;}
+.new{display:inline-block;background:#ECFDF3;border:1px solid #A6E9C5;color:#1E7E45;border-radius:5px;padding:0 6px;font-size:10.5px;font-weight:700;}
+.switch{display:flex;gap:8px;margin:10px 0 14px;}
+.switch .chip{flex:1;text-align:center;padding:11px;font-size:14px;font-weight:600;}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.bh{padding:10px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;}
+.b1 .bh{background:#FEF3F2;color:#B3151D;border-bottom:1px solid #F5C0BC;}
+.b2 .bh{background:#EFF6FF;color:#1E5AA8;border-bottom:1px solid #BFD7F0;}
+.b3 .bh{background:#F9FAFB;color:#374151;cursor:pointer;}
+.bh .tag{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:5px;margin-left:auto;}
+.b1 .tag{background:#B3151D;color:#fff;}.b2 .tag{background:#1E5AA8;color:#fff;}.b3 .tag{background:#E5E7EB;color:#555;}
+.body{padding:12px 14px;min-height:30px;}
+.fld{margin:9px 0;position:relative;border:1px dashed transparent;border-radius:7px;padding:3px 22px 3px 4px;}.fld:hover{border-color:#E5E7EB;}.fld:first-child{margin-top:0;}
+.dh{position:absolute;right:7px;top:5px;cursor:grab;color:#C9CDD3;font-size:14px;}
+.fld.dragging{opacity:.45;border-style:solid;border-color:#F5B5B0;background:#FFF7F7;}
+.body.dragover{background:#FEF3F2;}
+.lbl{font-size:12.5px;font-weight:700;color:#374151;margin-bottom:5px;}
+.lbl .req{color:#B3151D;font-size:11px;margin-left:4px;}.mini{font-size:11px;color:var(--mut);font-weight:400;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{border:1.5px solid #D1D5DB;background:#fff;border-radius:8px;padding:6px 13px;font-size:13px;cursor:pointer;user-select:none;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.sm{padding:5px 11px;font-size:12px;}.chip.chk{border-style:dashed;}
+.colgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;}
+@media(max-width:560px){.colgrid{grid-template-columns:1fr;}}
+.colgrid .chips{gap:5px;}.colgrid .chips .chip{padding:4px 9px;font-size:11.5px;}
+.l3det{margin-top:8px;}.l3det>summary{cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;}.l3det>summary::-webkit-details-marker{display:none;}.l3det>summary::before{content:'＋ ';color:#B3151D;font-weight:700;}.l3det[open]>summary::before{content:'－ ';}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;}
+.in{width:70px;height:36px;border:1px solid #D1D5DB;border-radius:7px;text-align:center;font-size:14px;}
+.fl{display:flex;flex-direction:column;width:auto;}.fl span{font-size:10px;color:var(--mut);margin-bottom:2px;}.fl input{width:66px;}
+.wall{border-top:1px solid #E5E7EB;padding-top:7px;margin-top:7px;}
+.wall label{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13px;}
+.wdetail{display:none;padding:6px 0 0 26px;}.wall.on .wdetail{display:block;}
+.b3 .body{display:none;}.b3.open .body{display:block;}
+.arr{transition:transform .15s;font-size:11px;}.b3.open .arr{transform:rotate(90deg);}
+.hint{font-size:11px;color:#6B7280;margin-top:4px;}
+.hintb{font-size:11px;color:#1E40AF;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:5px 9px;margin-top:6px;}
+.warn{font-size:11px;color:#B3151D;background:#FFF7F7;border:1px solid #F5C0BC;border-radius:6px;padding:5px 9px;margin-top:6px;}
+.readout{background:#0f172a;color:#e2e8f0;border-radius:9px;padding:11px 14px;margin-top:14px;font-size:12px;line-height:1.7;}.readout b{color:#fff;}.readout .z{color:#FCA5A5;}
+.pricebar{position:fixed;top:64px;right:16px;width:244px;background:#111827;color:#fff;padding:11px 13px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;}
+@media(max-width:1120px){.pricebar{top:auto;bottom:0;right:0;left:0;width:auto;max-width:720px;margin:0 auto;border-radius:0;}}
+.pricebar .ph{font-size:11px;color:#9CA3AF;margin-bottom:3px;display:flex;justify-content:space-between;}
+.bdlines{font-size:12px;color:#cbd5e1;max-height:55vh;overflow:auto;}
+.bdlines div{display:flex;justify-content:space-between;padding:1.5px 0;}
+.ptot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #374151;margin-top:5px;padding-top:5px;}
+.ptot b{font-size:20px;}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;border-top:1px dashed var(--line);padding-top:9px;}
+.hide{display:none!important;}
+</style></head><body><div class="wrap">
+
+<h1>📦 ดราฟ UX G4 — ตู้อลู / ฝาตู้</h1>
+<div class="sub"><span class="demo">เรตจริง engine</span> · 3 โซน · <b>ลากที่ ⠿ ย้ายข้ามโซน</b></div>
+<div style="background:#ECFDF3;border:1px solid #A6E9C5;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:#1E5128;">🆕 <b>อัปเดต 23มิ.ย. (รอบนี้ขอตรวจ):</b> ① สี L1/L2/L3 จัดใหม่ <b>2 คอลัมน์ (หน้าบาน|โครง) + L3 พับเก็บ</b> → ไม่ยาวลงมา · ② <b>การ์ดราคา sticky มุมขวา</b> (เลื่อนหน้าก็ตามติด · มือถือเด้งลงล่าง)</div>
+
+<div class="switch" id="prodSw">
+  <div class="chip on" data-p="cab" onclick="pickProd(this)">📦 ตู้อลู</div>
+  <div class="chip" data-p="ft" onclick="pickProd(this)">🚪 ฝาตู้ Future Tech</div>
+</div>
+
+<!-- ===== ตู้อลู ===== -->
+<div id="cabForm">
+  <div class="box b1"><div class="bh">① สเปกหลัก <span class="tag">บังคับ</span></div><div class="body">
+    <div class="fld"><div class="lbl">ประเภทตู้ <span class="req">*</span></div><div class="chips" id="typeChips"><span class="chip sm on" data-t="wardrobe" onclick="pk(this);calc()">ตู้ทั่วไป (ชั้น~40ซม.)</span><span class="chip sm" data-t="shoe" onclick="pk(this);calc()">ตู้รองเท้า (ชั้น~20ซม.)</span></div></div>
+    <div class="fld"><div class="lbl">จำนวนบานหน้าตู้ <span class="req">*</span></div><div class="chips" id="doorChips"><span class="chip sm" data-d="1" onclick="pk(this);calc()">1 บาน</span><span class="chip sm on" data-d="2" onclick="pk(this);calc()">2 บาน</span><span class="chip sm" data-d="3" onclick="pk(this);calc()">3 บาน</span></div><div class="hint">ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานลด · บานที่ 2-3 +5,500/บาน</div></div>
+    <div class="fld"><div class="lbl">ขนาดตู้ <span class="req">*</span></div><div class="row"><label class="fl"><span>กว้าง</span><input class="in cw" value="2.0" oninput="calc()"></label><label class="fl"><span>สูง</span><input class="in ch" value="2.4" oninput="calc()"></label><label class="fl"><span>ชุด</span><input class="in cq" value="1" oninput="calc()"></label></div></div>
+    <div class="fld"><div class="lbl">ลึก + จำนวนชั้น</div><div class="row"><label class="fl"><span>ลึก(ม.)</span><input class="in cdep" value="0.6" oninput="calc()"></label><label class="fl"><span>จำนวนชั้น</span><input class="in cshv" placeholder="auto" oninput="calc()"></label><span class="mini" style="align-self:center;">เว้น=auto</span></div></div>
+    <div class="fld"><div class="lbl">ชนิดชั้น</div><div class="chips" id="shelfChips"><span class="chip sm on" data-s="" onclick="pk(this);calc()">ตามประเภท</span><span class="chip sm" data-s="alu" onclick="pk(this);calc()">อลู +1,200</span><span class="chip sm" data-s="glass" onclick="pk(this);calc()">กระจก +1,000</span></div><div class="hint shelfHint hide" style="color:#059669;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง</div></div>
+    <div class="fld"><div class="lbl">🎨 สี (โครงตู้ + หน้าบาน) — L1/L2/L3</div>
+      <label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;"><input type="checkbox" id="cabFollow" checked onchange="cabFollowTog();calc()" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b> <span class="mini">(L1 · ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></label>
+      <div id="cabColorBody" class="hide" style="margin-top:7px;">
+        <div class="mini" style="color:#9A6A1E;margin-bottom:5px;font-weight:700;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะตู้นี้ (🟢จริง=บวกยอด · 🔵ออปชั่น=OPTION line)</div>
+        <div class="chips" style="margin-bottom:6px;"><span class="chip sm on" id="cabMReal" onclick="cabSetMode('real')">🟢 ใช้จริง</span><span class="chip sm" id="cabMOpt" onclick="cabSetMode('opt')">🔵 ออปชั่น</span></div>
+        <div class="colgrid">
+        <div><div class="lbl" style="margin:6px 0 3px;">L2 ① สีหน้าบาน <span class="mini">(FT · แยกจากโครง)</span></div><div class="chips" id="frontColorChips"><span class="chip sm on" data-f="0" onclick="pk(this);calc()">ขาว/ดำ (ฟรี)</span><span class="chip sm" data-f="1" onclick="pk(this);calc()">ซาฮาร่า</span><span class="chip sm" data-f="1" onclick="pk(this);calc()">ลายไม้สต๊อก</span><span class="chip sm" data-f="1" onclick="pk(this);calc()">อบพิเศษ</span><span class="chip sm" data-f="1" onclick="pk(this);calc()">สีชุบ</span></div></div>
+        <div><div class="lbl" style="margin:6px 0 3px;">L2 ② สีโครงตู้ <span class="mini">(rn90 × อลู)</span></div><div class="chips" id="colorChips"><span class="chip sm on" data-c="0" onclick="pk(this);calc()">อบขาว/ดำ (ฟรี)</span><span class="chip sm" data-c="400" onclick="pk(this);calc()">ซาฮาร่า</span><span class="chip sm" data-c="950" onclick="pk(this);calc()">Aztec gray</span><span class="chip sm" data-c="1500" onclick="pk(this);calc()">ลายไม้สต๊อก</span><span class="chip sm" data-c="1600" onclick="pk(this);calc()">อบพิเศษ</span><span class="chip sm" data-c="2200" onclick="pk(this);calc()">ลายไม้อบพิเศษ</span><span class="chip sm" data-c="1600" onclick="pk(this);calc()">สีชุบ</span></div></div>
+        </div>
+        <div id="shelfGlassRow" class="hide"><div class="lbl" style="margin:7px 0 3px;">L2 ③ กระจกชั้น <span class="mini" style="color:#1E7E45;">🆕 เจียริม (เรต R3.9)</span></div><div class="chips" id="shelfGlassChips"><span class="chip sm on" data-g="0" onclick="pk(this);calc()">ใส 6 มม.</span><span class="chip sm" data-g="1200" onclick="pk(this);calc()">ใส 8 มม. +1,200</span><span class="chip sm" data-g="1200" onclick="pk(this);calc()">ใส 10 มม. +1,200</span><span class="chip sm" data-g="600" onclick="pk(this);calc()">เทมเปอร์ 6 มม. +600</span><span class="chip sm" data-g="1300" onclick="pk(this);calc()">เทมเปอร์ 8 มม. +1,300</span><span class="chip sm" data-g="2100" onclick="pk(this);calc()">เทมเปอร์ 10 มม. +2,100</span></div></div>
+        <div id="wallGlassRow" class="hide"><div class="lbl" style="margin:7px 0 3px;">L2 ④ กระจกผนัง <span class="mini" style="color:#1E7E45;">🆕 ธรรมดา 5-6 มม. (เรต R3.9)</span></div><div class="chips" id="wallGlassChips"><span class="chip sm on" data-g="0" onclick="pk(this);calc()">ใส 5-6 มม.</span><span class="chip sm" data-g="500" onclick="pk(this);calc()">ฝ้า +500</span><span class="chip sm" data-g="500" onclick="pk(this);calc()">ชาดำ +500</span><span class="chip sm" data-g="0" onclick="pk(this);calc()">อื่นๆ ✎</span></div></div>
+        <div class="mini" style="color:#9CA3AF;margin-top:3px;">ℹ️ กระจกชั้น/ผนัง จะโผล่เมื่อเลือก "ชนิดชั้น=กระจก" หรือ "ผนัง=กระจก"</div>
+        <details class="l3det"><summary>เทียบราคาสีโครงอื่น (ออปชั่น · ไม่บวกยอด)</summary><div class="chips" id="colorL3" style="margin-top:5px;"><span class="chip sm on" data-c="" onclick="pk(this);calc()">— ไม่เทียบ —</span><span class="chip sm" data-c="400" onclick="pk(this);calc()">ซาฮาร่า</span><span class="chip sm" data-c="1500" onclick="pk(this);calc()">ลายไม้สต๊อก</span><span class="chip sm" data-c="1600" onclick="pk(this);calc()">อบพิเศษ</span><span class="chip sm" data-c="2200" onclick="pk(this);calc()">ลายไม้อบพิเศษ</span></div></details>
+      </div>
+      <div class="hintb">สีกระทบ <b>โครงตู้ (rn90×พื้นที่อลู) + หน้าบาน (FT)</b> · ผนังกระจก/สมาร์ทบอร์ด → ไม่คิดค่าสี · <span style="color:#6B7280;">สีชุบ = เรตเดิม (โครงตู้ 1,600/ตร.ม.)</span></div></div>
+    <div class="fld"><div class="lbl">ผนังตู้ (ติ๊กด้านที่ต้องการ) <span class="mini">— ชนผนังปูนไม่ต้องติ๊ก · min 1 ตร.ม.</span></div>
+      <div class="wall" id="wL"><label><input type="checkbox" onchange="wt('wL');calc()" style="width:20px;height:20px;"> ด้านซ้าย <span class="mini">(D×H auto)</span></label><div class="wdetail"><div class="chips wmat"><span class="chip sm on" onclick="pk(this);calc()">อลูทึบ +4,000</span><span class="chip sm" onclick="pk(this);calc()">กระจก +3,000</span><span class="chip sm" onclick="pk(this);calc()">สมาร์ทบอร์ด +2,500 🆕</span></div></div></div>
+      <div class="wall" id="wR"><label><input type="checkbox" onchange="wt('wR');calc()" style="width:20px;height:20px;"> ด้านขวา <span class="mini">(D×H auto)</span></label><div class="wdetail"><div class="chips wmat"><span class="chip sm on" onclick="pk(this);calc()">อลูทึบ +4,000</span><span class="chip sm" onclick="pk(this);calc()">กระจก +3,000</span><span class="chip sm" onclick="pk(this);calc()">สมาร์ทบอร์ด +2,500 🆕</span></div></div></div>
+      <div class="wall" id="wB"><label><input type="checkbox" onchange="wt('wB');calc()" style="width:20px;height:20px;"> ด้านหลัง <span class="mini">(W×H auto)</span></label><div class="wdetail"><div class="chips wmat"><span class="chip sm on" onclick="pk(this);calc()">อลูทึบ +4,000</span><span class="chip sm" onclick="pk(this);calc()">กระจก +3,000</span><span class="chip sm" onclick="pk(this);calc()">สมาร์ทบอร์ด +2,500 🆕</span></div></div></div>
+      <div class="hint" style="color:#1E7E45;">🆕 สมาร์ทบอร์ด (ผนังเบา) = เสนอใหม่ · engine ยังไม่มี (R3.9 ข้อ 49 · 2,500/ตร.ม.) → dev เพิ่ม</div>
+    </div>
+  </div></div>
+
+  <div class="box b2"><div class="bh">② ออปชั่นหลัก <span class="tag">เลือกได้</span></div><div class="body">
+    <div class="fld"><div class="lbl">คาดตาราง</div><div class="chips"><span class="chip sm chk" onclick="this.classList.toggle('on')">☐ มีคาดตาราง</span></div></div>
+    <div class="fld"><div class="lbl">ครอบวงกบตู้</div><div class="chips"><span class="chip sm">ดำ/ขาว/ซาฮาร่า 700/ม.</span><span class="chip sm">สีอื่นสต๊อก 800/ม.</span><span class="chip sm">อบพิเศษ 1,200/ม.</span><span class="chip sm">ลายไม้อบ 1,300/ม.</span></div></div>
+  </div></div>
+
+  <div class="box b3" id="cab3"><div class="bh" onclick="this.closest('.box').classList.toggle('open')"><span class="arr">▶</span> ③ ออปชั่นเสริม <span class="mini">— นานๆใช้ · กดกาง</span> <span class="tag">พับเก็บ</span></div><div class="body">
+    <div class="fld"><div class="lbl">งานเสริม · รื้อ · หมายเหตุ</div><div class="chips"><span class="chip sm">รื้อของเดิม</span><span class="chip sm">งานเสริม</span><span class="chip sm">หมายเหตุ</span></div></div>
+  </div></div>
+</div>
+
+<!-- ===== ฝาตู้ ===== -->
+<div id="ftForm" class="hide">
+  <div class="box b1"><div class="bh">① สเปกหลัก <span class="tag">บังคับ</span></div><div class="body">
+    <div class="fld"><div class="lbl">ขนาด <span class="req">*</span> <span class="mini">(ต่อบาน · max 3 บาน/ชุด · ใหญ่สุด 1.7 ตร.ม./บาน)</span></div><div class="row"><label class="fl"><span>กว้าง/บาน</span><input class="in ftw" value="0.8" oninput="calc()"></label><label class="fl"><span>สูง</span><input class="in fth" value="1.2" oninput="calc()"></label><label class="fl"><span>จำนวนบาน</span><input class="in ftn" value="2" oninput="calc()"></label><label class="fl"><span>ชุด</span><input class="in ftq" value="1" oninput="calc()"></label></div><div class="hint">ℹ️ บานที่ 2-3 +5,500/บาน</div><div class="warn ftBig hide">⚠ เกิน 1.7 ตร.ม./บาน — ใหญ่กว่าขนาดสูงสุด (คิดเรตสูงสุด)</div></div>
+  </div></div>
+  <div class="box b2"><div class="bh">② ออปชั่นหลัก <span class="tag">เลือกได้</span></div><div class="body">
+    <div class="fld"><div class="lbl">🎨 สีฝาตู้ — L1/L2</div>
+      <label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;"><input type="checkbox" id="ftFollow" checked onchange="ftFollowTog();calc()" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b> <span class="mini">(L1 · ค่าเริ่มต้น)</span></label>
+      <div id="ftColorBody" class="hide" style="margin-top:7px;">
+        <div class="mini" style="color:#9A6A1E;margin-bottom:5px;font-weight:700;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะฝานี้</div>
+        <div class="chips" style="margin-bottom:6px;"><span class="chip sm on" id="ftMReal" onclick="ftSetMode('real')">🟢 ใช้จริง</span><span class="chip sm" id="ftMOpt" onclick="ftSetMode('opt')">🔵 ออปชั่น</span></div>
+        <div class="lbl" style="margin:6px 0 3px;">วัสดุหน้าบาน <span class="mini" style="color:#1E7E45;">🆕 ฝาตู้กระจก (engine ยังไม่มี)</span></div><div class="chips" id="ftMatChips"><span class="chip sm on" data-m="alu" onclick="pk(this);ftMatTog();calc()">อลู</span><span class="chip sm" data-m="glass" onclick="pk(this);ftMatTog();calc()">กระจก</span></div>
+        <div id="ftAluColor"><div class="lbl" style="margin:7px 0 3px;">สีหน้าบาน (อลู FT)</div><div class="chips" id="ftColorChips"><span class="chip sm on" data-c="0" onclick="pk(this);calc()">ขาว/ดำ (ฟรี)</span><span class="chip sm" data-c="1" onclick="pk(this);calc()">ซาฮาร่า</span><span class="chip sm" data-c="1" onclick="pk(this);calc()">ลายไม้สต๊อก</span><span class="chip sm" data-c="1" onclick="pk(this);calc()">อบพิเศษ</span><span class="chip sm" data-c="1" onclick="pk(this);calc()">สีชุบ</span></div></div>
+        <div id="ftGlassColor" class="hide"><div class="lbl" style="margin:7px 0 3px;">สีกระจก (ธรรมดา 6 มม.) <span class="mini">ไม่มีเทมป์/ลามิเนต · เรต R3.9</span></div><div class="chips" id="ftGlassChips"><span class="chip sm on" data-g="0" onclick="pk(this);calc()">ใส</span><span class="chip sm" data-g="500" onclick="pk(this);calc()">ฝ้า +500</span><span class="chip sm" data-g="500" onclick="pk(this);calc()">ชาดำ +500</span><span class="chip sm" data-g="0" onclick="pk(this);calc()">อื่นๆ ✎</span></div></div>
+        <div class="mini" style="margin-top:5px;">ℹ️ ฝาตู้อลู สีพิเศษราคาเท่ากัน (FT flat) · ฝาตู้กระจก = 🆕 สเปกกระจกธรรมดา 6 มม.</div>
+      </div>
+      <div class="warn">⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน · สีพิเศษ +1,500~3,500/บาน · <span style="color:#6B7280;">สีชุบ = เรตเดิม</span></div></div>
+    <div class="fld"><div class="lbl">รหัสสี <span class="mini">(เฉพาะสีพิเศษ/อบ)</span></div><div class="row"><input class="in" style="width:auto;flex:1;" placeholder="เช่น KL10232A"></div></div>
+  </div></div>
+  <div class="box b3" id="ft3"><div class="bh" onclick="this.closest('.box').classList.toggle('open')"><span class="arr">▶</span> ③ ออปชั่นเสริม <span class="mini">— นานๆใช้</span> <span class="tag">พับเก็บ</span></div><div class="body">
+    <div class="fld"><div class="lbl">งานเสริม · รื้อ · หมายเหตุ</div><div class="chips"><span class="chip sm">รื้อของเดิม</span><span class="chip sm">งานเสริม</span><span class="chip sm">หมายเหตุ</span></div></div>
+  </div></div>
+</div>
+
+<div class="note">
+<b>เรตจริงจาก engine (index.html):</b> บานหน้า=FT [≤1.0=7,500 / ≤1.5=10,000 / ≤1.7=12,500 ต่อบาน] +สีพิเศษ +บานเพิ่ม 5,500 · พื้น W×D×4,000 · ชั้น อลู1,200/กระจก1,000 · ผนัง อลู4,000+สี(rn90)/กระจก3,000/<span style="color:#1E7E45;">สมาร์ท2,500🆕</span> min 1 ตร.ม. · ค่าสีโครง rn90×พื้นที่อลู<br>
+<span class="mini">* ① แค่จัดกลุ่ม (ไม่ validate) · ราคาไม่กระทบจากการย้ายช่อง (calcUnit อ่าน class)</span>
+</div>
+
+<div class="readout" id="readout"></div>
+
+<div class="pricebar">
+  <div class="ph"><span>💰 ราคาแยกย่อย (เรตจริง)</span><span class="demo" style="background:#374151;color:#cbd5e1;border-color:#4b5563;">เดโม UI</span></div>
+  <div class="bdlines" id="bdlines"></div>
+  <div class="ptot"><span>รวม (ปัดขึ้นพัน)</span><b id="price">฿0</b></div>
+</div>
+
+<script>
+function fmt(n){return Math.round(n).toLocaleString();}
+function pk(el){[].forEach.call(el.parentNode.children,function(c){c.classList.remove('on');});el.classList.add('on');var sh=document.querySelector('.shelfHint');if(sh){var g=document.querySelector('#shelfChips [data-s="glass"].on');sh.classList.toggle('hide',!g);}}
+function wt(id){var w=document.getElementById(id);w.classList.toggle('on',w.querySelector('input').checked);}
+function pickProd(el){[].forEach.call(el.parentNode.children,function(c){c.classList.remove('on');});el.classList.add('on');var ft=el.dataset.p==='ft';document.getElementById('cabForm').classList.toggle('hide',ft);document.getElementById('ftForm').classList.toggle('hide',!ft);calc();updateReadout();}
+function num(s){var e=document.querySelector(s);return parseFloat(e&&e.value)||0;}
+function onv(grp,attr){var e=document.querySelector(grp+' .chip.on');return e?e.getAttribute(attr):null;}
+function ftR(a,t){if(a<=0)return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<=t[i][1])return t[i][2];}if(a<t[0][0])return t[0][2];return t[t.length-1][2];}
+var FT_BASE=[[0.5,1.0,7500],[1.0,1.5,10000],[1.5,1.7,12500]];
+var FT_COLOR=[[0.5,1.0,1500],[1.0,1.5,2000],[1.5,2.0,2500],[2.0,2.5,3000],[2.5,3.0,3500]];
+var COLOR_NAME={0:'อบขาว/ดำ',400:'ซาฮาร่า',950:'Aztec gray',1500:'ลายไม้สต๊อก',1600:'อบพิเศษ/ชุบ',2200:'ลายไม้อบพิเศษ'};
+function sgn(z){return z>=0?('ราคาเพิ่ม '+fmt(z)):('ราคาลดลง '+fmt(-z));}
+function cabFollowTog(){document.getElementById('cabColorBody').classList.toggle('hide',document.getElementById('cabFollow').checked);}
+function cabSetMode(m){document.getElementById('cabMReal').classList.toggle('on',m==='real');document.getElementById('cabMOpt').classList.toggle('on',m==='opt');calc();}
+function ftFollowTog(){document.getElementById('ftColorBody').classList.toggle('hide',document.getElementById('ftFollow').checked);}
+function ftSetMode(m){document.getElementById('ftMReal').classList.toggle('on',m==='real');document.getElementById('ftMOpt').classList.toggle('on',m==='opt');calc();}
+function ftMatTog(){var g=onv('#ftMatChips','data-m')==='glass';document.getElementById('ftAluColor').classList.toggle('hide',g);document.getElementById('ftGlassColor').classList.toggle('hide',!g);}
+function calc(){
+  var ft=document.querySelector('#prodSw .chip.on').dataset.p==='ft';
+  var lines=[],opt=[],total=0;
+  if(ft){
+    var w=num('.ftw'),h=num('.fth'),n=parseInt(num('.ftn'))||1,q=num('.ftq')||1;var a=w*h;
+    document.querySelector('.ftBig').classList.toggle('hide',a<=1.7);
+    var mat=(document.getElementById('ftMatChips')?onv('#ftMatChips','data-m'):'alu')||'alu';
+    var ffollow=document.getElementById('ftFollow').checked;
+    var fmode=document.getElementById('ftMOpt').classList.contains('on')?'opt':'real';
+    var fsel=(mat!=='glass')&&onv('#ftColorChips','data-c')==='1';
+    var special;
+    if(ffollow||mat==='glass')special=false;
+    else if(fmode==='real')special=fsel;
+    else{special=false; if(fsel)opt.push('เปลี่ยนสีฝาตู้ ขาว/ดำ เป็น สีพิเศษ '+sgn(ftR(a,FT_COLOR)*n));}
+    var per=ftR(a,FT_BASE)+(special?ftR(a,FT_COLOR):0);
+    var ftGlassAdd=(mat==='glass')?(parseInt(onv('#ftGlassChips','data-g'))||0)*a*n:0;
+    var extra=n>=2?(n-1)*5500:0;
+    lines.push([(mat==='glass'?'ฝาตู้กระจก 🆕 ':'ฝาตู้ ')+n+' บาน × '+fmt(per),per*n]); if(extra)lines.push(['บานเพิ่ม '+(n-1)+'×5,500',extra]);
+    if(ftGlassAdd)lines.push(['สีกระจก (R3.9)',ftGlassAdd]);
+    total=(per*n+extra+ftGlassAdd)*q; if(q>1)lines.push(['× '+q+' ชุด','']);
+  } else {
+    var W=num('.cw'),H=num('.ch'),Q=num('.cq')||1,D=num('.cdep')||0.6;
+    var stype=onv('#typeChips','data-t')||'wardrobe',spacing=stype==='shoe'?0.2:0.4;
+    var nsh=num('.cshv'); if(!(nsh>=1))nsh=Math.max(2,Math.round(H/spacing));
+    var sg=onv('#shelfChips','data-s'); if(!sg)sg=(stype==='shoe'?'glass':'alu');
+    var srate=sg==='glass'?1000:1200;
+    var nDoors=parseInt(onv('#doorChips','data-d'))||2;
+    var aPerDoor=(W*H)/nDoors, aFloor=W*D;
+    var wall=0,wallAlu=0,glassWallArea=0,wn=0;
+    [['wL','ซ้าย',D*H],['wR','ขวา',D*H],['wB','หลัง',W*H]].forEach(function(s){var el=document.getElementById(s[0]);if(!el||!el.classList.contains('on'))return;var area=Math.max(1,s[2]);var t=el.querySelector('.wmat .chip.on').textContent;wn++;if(/กระจก/.test(t)){wall+=area*3000;glassWallArea+=area;}else if(/สมาร์ท/.test(t))wall+=area*2500;else{wall+=area*4000;wallAlu+=area;}});
+    var nShelfAlu=(sg==='glass')?0:nsh;
+    var aAlu=wallAlu+aFloor+aFloor*nShelfAlu;
+    document.getElementById('shelfGlassRow').classList.toggle('hide',sg!=='glass');
+    document.getElementById('wallGlassRow').classList.toggle('hide',glassWallArea===0);
+    var follow=document.getElementById('cabFollow').checked;
+    var mode=document.getElementById('cabMOpt').classList.contains('on')?'opt':'real';
+    var selRn=parseInt(onv('#colorChips','data-c'))||0, headRn=0;
+    function swapStruct(aR,bR){var z=Math.round((bR-aR)*aAlu);return 'เปลี่ยนสีโครงจาก '+(COLOR_NAME[aR]||'?')+' เป็น '+(COLOR_NAME[bR]||'?')+' '+sgn(z);}
+    var rn;
+    if(follow)rn=headRn; else if(mode==='real')rn=selRn; else{rn=headRn; if(selRn!==headRn)opt.push(swapStruct(headRn,selRn));}
+    if(!follow){var l3s=onv('#colorL3','data-c');if(l3s!==null&&l3s!==''){var l3=parseInt(l3s);var base=(mode==='real')?selRn:headRn;if(l3!==base)opt.push(swapStruct(base,l3));}}
+    // สีหน้าบาน (FT) แยกจากโครง
+    var fSel=onv('#frontColorChips','data-f')==='1';
+    var frontSpecial; if(follow)frontSpecial=false; else if(mode==='real')frontSpecial=fSel; else{frontSpecial=false; if(fSel)opt.push('เปลี่ยนสีหน้าบาน ขาว/ดำ เป็น สีพิเศษ '+sgn(ftR(aPerDoor,FT_COLOR)*nDoors));}
+    var per=ftR(aPerDoor,FT_BASE)+(frontSpecial?ftR(aPerDoor,FT_COLOR):0);
+    var extra=nDoors>=2?(nDoors-1)*5500:0, front=per*nDoors+extra;
+    lines.push(['บานหน้าตู้ '+nDoors+' บาน × '+fmt(per),per*nDoors]); if(extra)lines.push(['บานเพิ่ม '+(nDoors-1)+'×5,500',extra]);
+    if(wall)lines.push(['ผนัง '+wn+' ด้าน',wall]);
+    var fl=aFloor*4000, shc=nsh*srate;
+    lines.push(['พื้น '+aFloor.toFixed(2)+' ตร.ม.×4,000',fl]);
+    lines.push(['ชั้น '+nsh+(sg==='glass'?' กระจก×1,000':' อลู×1,200'),shc]);
+    var shelfGlassAdd=(sg==='glass')?(parseInt(onv('#shelfGlassChips','data-g'))||0)*aFloor*nsh:0;
+    var wallGlassAdd=(parseInt(onv('#wallGlassChips','data-g'))||0)*glassWallArea;
+    if(shelfGlassAdd)lines.push(['อัปเกรดกระจกชั้น (R3.9)',shelfGlassAdd]);
+    if(wallGlassAdd)lines.push(['อัปเกรดกระจกผนัง (R3.9)',wallGlassAdd]);
+    var colorStruct=Math.round(rn*aAlu);
+    if(colorStruct)lines.push(['ค่าสีโครง (rn90)',colorStruct]);
+    total=Math.ceil((front+wall+fl+shc+colorStruct+shelfGlassAdd+wallGlassAdd)/1000)*1000*Q;
+    if(Q>1)lines.push(['× '+Q+' ชุด','']);
+  }
+  var html=lines.map(function(l){return '<div><span>'+l[0]+'</span><span>'+(l[1]===''?'':fmt(l[1]))+'</span></div>';}).join('');
+  if(opt.length)html+=opt.map(function(t){return '<div style="color:#FCA5A5;"><span>OPTION: '+t+'</span><span></span></div>';}).join('');
+  document.getElementById('bdlines').innerHTML=html;
+  document.getElementById('price').textContent='฿'+fmt(total);
+}
+// ===== ลากย้ายข้ามโซน =====
+var dragEl=null;
+function getAfter(z,y){var els=[].slice.call(z.querySelectorAll('.fld:not(.dragging)'));var c={o:-Infinity,e:null};els.forEach(function(ch){var b=ch.getBoundingClientRect();var off=y-b.top-b.height/2;if(off<0&&off>c.o)c={o:off,e:ch};});return c.e;}
+function updateReadout(){var form=document.getElementById('ftForm').classList.contains('hide')?'cabForm':'ftForm';var boxes=document.querySelectorAll('#'+form+' .box');var out='<b>📋 โครงที่พี่จัด ('+(form==='ftForm'?'ฝาตู้':'ตู้อลู')+'):</b>';boxes.forEach(function(b){var nm=b.querySelector('.bh').textContent.replace(/\s+/g,' ').split('—')[0].trim().slice(0,15);var flds=[].map.call(b.querySelectorAll('.fld'),function(f){var l=f.querySelector('.lbl');return l?l.textContent.replace(/[*]/g,'').split('ℹ')[0].replace(/\s+/g,' ').trim():'?';});out+='<br><span class="z">'+nm+'</span>: '+(flds.length?flds.join(' · '):'(ว่าง)');});document.getElementById('readout').innerHTML=out;}
+document.querySelectorAll('.fld').forEach(function(f){f.setAttribute('draggable','true');var h=document.createElement('span');h.className='dh';h.textContent='⠿';f.insertBefore(h,f.firstChild);f.querySelectorAll('input,select,textarea').forEach(function(i){i.setAttribute('draggable','false');});f.addEventListener('dragstart',function(){dragEl=f;f.classList.add('dragging');});f.addEventListener('dragend',function(){f.classList.remove('dragging');document.querySelectorAll('.body').forEach(function(z){z.classList.remove('dragover');});updateReadout();});});
+document.querySelectorAll('.box .body').forEach(function(z){z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('dragover');var after=getAfter(z,e.clientY);if(!dragEl)return;if(!after)z.appendChild(dragEl);else z.insertBefore(dragEl,after);});z.addEventListener('dragleave',function(){z.classList.remove('dragover');});});
+calc();updateReadout();
+</script>
+</div></body></html>

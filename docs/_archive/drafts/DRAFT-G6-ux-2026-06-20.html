@@ -1,0 +1,153 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ UX G6 กั้นห้องกระจก — ฟอร์มต่อบาน (จัดลำดับได้) 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--red-d:#8E1118;--blue:#1E40AF;--green:#047857;--amber:#B45309;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--bg:#F3F4F6;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;font-size:14px;line-height:1.5;}
+.wrap{max-width:560px;margin:0 auto;}
+h2{color:var(--red);font-size:18px;margin:0 0 3px;}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 12px;}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.tg{flex:1;min-width:140px;display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+.tg button{flex:1;border:0;background:#fff;padding:9px;font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;}
+.tg button.on{background:var(--red);color:#fff;}
+.dtypes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.dt{min-height:44px;padding:7px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);}
+.dt.on{background:var(--red);color:#fff;border-color:var(--red);}
+.card{background:#fff;border-radius:14px;border:1px solid var(--line);padding:13px;}
+.sec{border:1px solid var(--line);border-radius:11px;margin-bottom:10px;overflow:hidden;}
+.sh{display:flex;align-items:center;gap:8px;padding:10px 12px;font-weight:800;font-size:13.5px;}
+.sh.s1{background:#EAF1FB;color:var(--blue);}
+.sh.s2{background:#E7F6EF;color:var(--green);}
+.sh.s3{background:#FFF7E6;color:var(--amber);cursor:pointer;}
+.sh .badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(0,0,0,.06);}
+.sb{padding:11px 12px;}
+.fld{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap;}
+.fld .lb{font-size:13px;color:var(--muted);min-width:74px;}
+.chip{min-height:38px;padding:6px 13px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+input[type=text],input[type=number],select{height:38px;border:1px solid #D1D5DB;border-radius:8px;padding:0 9px;font:inherit;font-size:13px;background:#fff;}
+.ckrow{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.ckrow input{width:20px;height:20px;}
+/* draggable rows in zone 2 */
+.drow{display:flex;align-items:center;gap:9px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:#fff;}
+.drow.over{border-color:var(--green);background:#F0FDF8;}
+.drow.drag{opacity:.4;border-style:dashed;}
+.drow .grip{color:#bbb;font-size:17px;cursor:grab;flex:none;}
+.drow .body{flex:1;min-width:0;}
+.drow .body .nm{font-size:13px;font-weight:700;margin-bottom:5px;}
+.drow .ar{display:flex;flex-direction:column;gap:2px;flex:none;}
+.drow .ar button{width:30px;height:18px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer;font-size:10px;color:var(--muted);padding:0;}
+.hint{font-size:11.5px;color:var(--muted);margin:-2px 0 8px 74px;}
+.room{margin-top:12px;border:1.5px dashed var(--red);border-radius:12px;padding:12px;background:#FFF8F8;}
+.room .rt{font-weight:800;font-size:13px;color:var(--red);margin-bottom:7px;}
+.room .rc{display:flex;flex-wrap:wrap;gap:6px;}
+.room .rc span{font-size:12.5px;padding:6px 11px;border-radius:8px;background:#fff;border:1px solid #F0D0D2;}
+.bbar{display:flex;gap:8px;margin-top:12px;}
+.bbar button{flex:1;min-height:44px;border-radius:10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);}
+.bbar button.go{background:var(--red);color:#fff;border-color:var(--red);}
+.out{margin-top:10px;background:#1F2937;color:#E5E7EB;border-radius:10px;padding:11px;font-size:12px;font-family:'Consolas',monospace;white-space:pre-wrap;display:none;}
+.note{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.6;}
+.demo{font-size:10px;color:#9CA3AF;border:1px solid var(--line);border-radius:5px;padding:1px 6px;}
+</style></head>
+<body>
+<div class="wrap">
+<h2>ดราฟ UX G6 — ฟอร์ม "ต่อบาน" ในห้อง</h2>
+<p class="sub">เหมือนจริง · กดสลับชนิดบาน · <b>โหมดจัดลำดับ</b> = ลากเรียงข้อในกล่อง ② ได้เอง <span class="demo">ราคาเดโม — dev ดึงเรตจริง</span></p>
+
+<div class="toolbar">
+ <div class="tg"><button id="m-view" class="on" onclick="setMode('view')">👁 ดูฟอร์ม</button><button id="m-edit" onclick="setMode('edit')">↕ จัดลำดับ</button></div>
+</div>
+
+<div class="dtypes" id="dtypes"></div>
+<div class="card" id="card"></div>
+
+<div class="room">
+ <div class="rt">🏠 งาน "ทั้งห้อง" — หน้าแยก (ไม่อยู่ในแต่ละด้าน)</div>
+ <div class="rc"><span>หลังคา / ฝ้า</span><span>ไฟ (ดาวน์ไลท์/สวิตช์)</span><span>งานปูพื้น</span><span>พัดลมดูดอากาศ</span></div>
+</div>
+
+<div class="bbar"><button onclick="resetT()">↺ คืนค่าเดิม</button><button class="go" onclick="exp()">📋 บันทึกลำดับที่จัด</button></div>
+<div class="out" id="out"></div>
+
+<p class="note">ชนิดบาน + ฟิลด์ = ดึงจาก builder G6 จริง (เลื่อน=ลักษณะเปิด/ราง · เปิด=ธรณี/โช้ค · เฟี้ยม=ทิศ/ธรณีเฟี้ยม · ติดตาย=กระจกอย่างเดียว · ดัดโค้ง=มือจับ/กระจก) · ลำดับโซน ①②③ ตามมติ 20มิ.ย. · ภายในกล่อง ② ลากปรับเองได้</p>
+</div>
+
+<script>
+var T={
+ 'บานเลื่อน':{main:[['ลักษณะการเปิด','chip','บานเลื่อน|เลื่อนสลับ'],['ราง','chip','โชว์ราง|ซ่อนราง']],freq:['มือจับ','ชุดล็อก','มุ้ง','คาดตาราง','ลูกฟูก']},
+ 'บานเปิด':{main:[['ธรณี','chip','มาตรฐาน|หลังเต่า'],['โช้คอัพ','chip','ไม่มี|มี']],freq:['มือจับ','ชุดล็อก','มุ้ง','คาดตาราง','ลูกฟูก']},
+ 'บานเฟี้ยม':{main:[['ทิศเปิด','chip','เปิดซ้าย|เปิดขวา|แยกกลาง'],['ธรณีเฟี้ยม','chip','นอก|ใน']],freq:['ชุดล็อก','มุ้ง','คาดตาราง','ลูกฟูก']},
+ 'ติดตาย/ทึบ':{main:[],freq:['คาดตาราง','ลูกฟูก']},
+ 'ดัดโค้ง':{main:[],freq:['มือจับ','คาดตาราง','ลูกฟูก']}
+};
+var FREQDEF={
+ 'มือจับ':['chip','Cmech|ดิจิตอล|สแตนเลส'],
+ 'ชุดล็อก':['chip','มีกุญแจ|ไม่มีกุญแจ'],
+ 'มุ้ง':['chip','ไม่ใส่|เฟรม|จีบ|ม้วน'],
+ 'คาดตาราง':['check',''],
+ 'ลูกฟูก':['sel','ไม่มี|ลูกฟูก|คอมโพสิต']
+};
+var cur='บานเลื่อน', mode='view', ORDER={};
+function ord(t){ if(!ORDER[t])ORDER[t]=T[t].freq.slice(); return ORDER[t]; }
+function setMode(m){mode=m;document.getElementById('m-view').classList.toggle('on',m==='view');document.getElementById('m-edit').classList.toggle('on',m==='edit');render();}
+function resetT(){delete ORDER[cur];render();}
+
+function chips(spec,sm){return spec.split('|').map(function(x,i){return '<span class="chip'+(i===0?' on':'')+'"'+(sm?' style="min-height:34px;padding:5px 11px;font-size:12.5px;"':'')+'>'+x+'</span>';}).join('');}
+function ctrl(name){
+ var d=FREQDEF[name]; if(!d)return '';
+ if(d[0]==='chip')return '<div class="fld"><span class="lb">'+name+'</span>'+chips(d[1])+'</div>';
+ if(d[0]==='check')return '<div class="ckrow"><input type="checkbox"><span style="font-size:13px;">มี'+name+'</span></div>';
+ if(d[0]==='sel')return '<div class="fld"><span class="lb">'+(name==='ลูกฟูก'?'แผ่นทึบล่าง':name)+'</span><select>'+d[1].split('|').map(function(o){return '<option>'+o+'</option>';}).join('')+'</select></div>';
+ return '';
+}
+function render(){
+ document.getElementById('dtypes').innerHTML=Object.keys(T).map(function(t){return '<button class="dt'+(t===cur?' on':'')+'" data-t="'+t+'">'+t+'</button>';}).join('');
+ var d=T[cur], h='';
+ // ① บานหลัก
+ var s1=''; s1+='<div class="fld"><span class="lb">แบบ/รุ่น</span>'+chips('ยูโร|ทีเทค|SMS')+'</div>';
+ s1+='<div class="fld"><span class="lb">ขนาด</span><input type="number" placeholder="กว้าง" style="width:74px"><span style="color:#9CA3AF">×</span><input type="number" placeholder="สูง" style="width:74px"><input type="number" placeholder="บาน" style="width:60px"></div>';
+ d.main.forEach(function(m){ s1+='<div class="fld"><span class="lb">'+m[0]+'</span>'+chips(m[2])+'</div>'; });
+ h+='<div class="sec"><div class="sh s1">① บานหลัก<span class="badge">หลัก</span></div><div class="sb">'+s1+'</div></div>';
+ // ② ใช้บ่อยมาก
+ var fr=ord(cur), s2='';
+ if(mode==='edit'){
+  s2=fr.map(function(name,i){return '<div class="drow" draggable="true" data-i="'+i+'"><span class="grip">⠿</span><div class="body"><div class="nm">'+name+'</div>'+ctrl(name)+'</div><div class="ar"><button data-up>▲</button><button data-dn>▼</button></div></div>';}).join('');
+ } else {
+  s2=fr.map(function(name){return ctrl(name);}).join('');
+ }
+ h+='<div class="sec"><div class="sh s2">② ล็อก·มุ้ง·คาด·ลูกฟูก<span class="badge">ใช้บ่อยมาก'+(mode==='edit'?' · ลากได้':'')+'</span></div><div class="sb" id="z2">'+(s2||'<span style="color:#9CA3AF;font-size:12px;">— ไม่มีในบานนี้ —</span>')+'</div></div>';
+ // ③ พับล่าง
+ var open=window._o3;
+ var s3='<div class="fld"><span class="lb">สีอลู</span><select><option>อบขาว</option><option>ดำ</option><option>เทา</option><option>ชาฮาร่า</option></select></div>'
+  +'<div class="fld"><span class="lb">ชนิดกระจก</span><select><option>เขียว 6มม.</option><option>ใส 6มม.</option><option>ลามิเนต</option></select></div>'
+  +'<div class="fld"><span class="lb">สีกระจก</span><select><option>มาตรฐาน</option><option>ชา</option><option>ดำ</option></select></div>'
+  +'<div class="hint">สีคงต่อบาน — แต่ละด้านเลือกต่างกันได้</div>'
+  +'<div class="fld"><span class="lb">อุปกรณ์เสริม</span><select><option>— เลือก —</option><option>ครอบวงกบ</option><option>ดรอปพื้น</option><option>รื้อของเดิม</option></select></div>';
+ h+='<div class="sec"><div class="sh s3" onclick="window._o3=!window._o3;render();">③ เพิ่มเติม — สี · อุปกรณ์ <span class="badge">'+(open?'▲ พับ':'▼ กางดู')+'</span></div>'+(open?'<div class="sb">'+s3+'</div>':'')+'</div>';
+ document.getElementById('card').innerHTML=h;
+ [].forEach.call(document.querySelectorAll('.dt'),function(b){b.onclick=function(){cur=this.dataset.t;render();};});
+ if(mode==='edit')bindDrag();
+}
+function bindDrag(){
+ var z=document.getElementById('z2'), fr=ord(cur);
+ [].forEach.call(z.querySelectorAll('.drow'),function(r){
+  var i=+r.dataset.i;
+  r.querySelector('[data-up]').onclick=function(e){e.stopPropagation();if(i>0){var x=fr.splice(i,1)[0];fr.splice(i-1,0,x);render();}};
+  r.querySelector('[data-dn]').onclick=function(e){e.stopPropagation();if(i<fr.length-1){var x=fr.splice(i,1)[0];fr.splice(i+1,0,x);render();}};
+  r.addEventListener('dragstart',function(){r.classList.add('drag');window._di=i;});
+  r.addEventListener('dragend',function(){r.classList.remove('drag');[].forEach.call(z.querySelectorAll('.drow'),function(x){x.classList.remove('over');});});
+  r.addEventListener('dragover',function(e){e.preventDefault();r.classList.add('over');});
+  r.addEventListener('dragleave',function(){r.classList.remove('over');});
+  r.addEventListener('drop',function(e){e.preventDefault();var x=fr.splice(window._di,1)[0];fr.splice(i,0,x);render();});
+ });
+}
+function exp(){
+ var o='===== ลำดับ G6 ต่อบาน (ที่จัด) =====\n';
+ Object.keys(T).forEach(function(t){o+='\n🚪 '+t+'\n  ① หลัก: '+(T[t].main.map(function(m){return m[0];}).join(' · ')||'ชนิด/ขนาด')+'\n  ② ใช้บ่อย: '+ord(t).join(' · ')+'\n  ③ พับ: สีอลู · ชนิดกระจก · สีกระจก · อุปกรณ์';});
+ o+='\n\n🏠 ทั้งห้อง (หน้าแยก): หลังคา · ไฟ · พื้น · พัดลม';
+ var el=document.getElementById('out');el.style.display='block';el.textContent=o;el.scrollIntoView({behavior:'smooth'});
+}
+render();
+</script>
+</body></html>

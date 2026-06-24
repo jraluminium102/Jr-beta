@@ -1,0 +1,72 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ บานหลัก — กระชับ ไม่เกะกะ 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--bad:#DC2626;--good:#059669;--blue:#9DBCE0;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:#F3F4F6;color:var(--ink);padding:14px;font-size:13.5px;line-height:1.5;}
+h2{color:var(--red);font-size:18px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:880px;margin:0 auto;align-items:start;}
+@media(max-width:740px){.cols{grid-template-columns:1fr;}}
+.col{background:#fff;border-radius:12px;padding:12px;border:1px solid var(--line);}
+.col.now{border-top:4px solid var(--bad);}
+.col.new{border-top:4px solid var(--good);}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;margin-bottom:10px;}
+.tag.now{background:#FEE2E2;color:var(--bad);}
+.tag.new{background:#D1FAE5;color:var(--good);}
+.box{border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-bottom:6px;background:#fff;}
+.box .t{font-size:12px;font-weight:700;color:#374151;}
+.box .body{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.box.open{background:#FAFAFA;}
+.box.core{border-color:var(--blue);background:#F4F9FF;}
+.tgl{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;margin-bottom:6px;background:#fff;font-size:13px;font-weight:700;cursor:default;}
+.tgl .arr{color:var(--muted);}
+.tgl.acc{border-color:#E1B0B4;background:#FFF8F8;color:var(--red);}
+.h{font-size:10.5px;color:var(--muted);font-weight:400;}
+.tall{font-size:10px;color:var(--bad);font-weight:700;float:right;}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.divhdr{font-size:11px;font-weight:800;color:var(--muted);margin:10px 0 5px;letter-spacing:.3px;border-top:1px solid var(--line);padding-top:7px;}
+.divmix{font-size:12px;font-weight:800;color:var(--red);margin:12px 0 5px;padding:6px 9px;background:#FFF0F0;border:1px dashed var(--red);border-radius:8px;text-align:center;}
+.tgl.mix{border-color:var(--red);background:#fff;color:var(--red);}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:11px 13px;font-size:13px;max-width:880px;margin:14px auto 0;}
+</style></head>
+<body>
+<h2>ดราฟ การ์ดบานหลัก — กระชับ ไม่เกะกะ (พับส่วนรองเป็นปุ่ม)</h2>
+<p class="sub">ตอนนี้การ์ดสูง ~1,800px (เลื่อนยาว) เพราะกล่องใหญ่กางพร้อมกัน · เสนอ: เก็บแกนหลักเปิด · ที่เหลือพับเป็นปุ่มกด (เหมือนผสมบาน)</p>
+
+<div class="cols">
+  <div class="col now">
+    <span class="tag now">⚠ ตอนนี้ ~1,800px</span>
+    <div class="box core"><div class="t">กลุ่มงาน + แบบ (เลือกชนิดบาน)<span class="tall">~360px</span></div></div>
+    <div class="box core"><div class="t">ขนาด (กว้าง/สูง/บาน/ชุด)</div></div>
+    <div class="box open"><div class="t">กล่องฟ้า บานเลื่อน<span class="tall">233px</span></div><div class="body">ชนิดเปิด · ราง · ติดตาย · เสริมคาน</div></div>
+    <div class="box open"><div class="t">🔧 ล็อค · มุ้ง · คาดตาราง · อลูทึบ<span class="tall">287px</span></div><div class="body">กางเต็ม</div></div>
+    <div class="box open"><div class="t">ผสมบาน<span class="tall">141px</span></div><div class="body">ชิป 8 ตัว</div></div>
+    <div class="box open"><div class="t">อุปกรณ์เสริม (ใช้ไม่บ่อย)<span class="tall">145px</span></div></div>
+    <div class="box open"><div class="t">หมายเหตุ / OPTION ลูกค้า<span class="tall">299px</span></div><div class="body">OPTION ชิป + ติ๊กหมายเหตุ + textarea</div></div>
+    <div class="note"><span style="color:var(--bad);font-weight:700;">ปัญหา:</span> 6 กล่องใหญ่กางพร้อมกัน → เลื่อนยาว หาของลำบาก</div>
+  </div>
+
+  <div class="col new">
+    <span class="tag new">✓ เสนอ ~700px (เปิดเฉพาะแกน)</span>
+    <div class="box core"><div class="t">กลุ่มงาน + แบบ <span class="h">เปิด (แกนหลัก)</span></div></div>
+    <div class="box core"><div class="t">ขนาด <span class="h">เปิด</span></div></div>
+    <div class="box core"><div class="t">กล่องฟ้า บานเลื่อน <span class="h">เปิด (เฉพาะบานเลื่อน)</span></div></div>
+    <div class="divhdr">━━ ออปชั่นของ "บานหลัก" (ทั้งหมดอยู่ด้วยกัน) ━━</div>
+    <div class="tgl acc"><span>🔧 ล็อค · คาดตาราง · อลูทึบ</span><span class="arr">▶</span></div>
+    <div class="tgl"><span>⚙ อุปกรณ์เสริม (ใช้ไม่บ่อย)</span><span class="arr">▶</span></div>
+    <div class="tgl"><span>📝 หมายเหตุ / OPTION ลูกค้า</span><span class="arr">▶</span></div>
+    <div class="tgl"><span>🎨 สีอลู / กระจก</span><span class="arr">▶</span></div>
+    <div class="divmix">═══ เพิ่ม "บานอื่น" ในชุด (คนละบาน) ═══</div>
+    <div class="tgl mix"><span>＋ ผสมบาน</span><span class="arr">▶</span></div>
+    <div class="note"><span style="color:var(--good);font-weight:700;">แก้ความงง:</span> ออปชั่นบานหลัก (ล็อค/อุปกรณ์/หมายเหตุ/สี) <b>อยู่รวมกันด้านบน</b> — ไม่มีผสมบานมาคั่น · "ผสมบาน" ย้ายลงล่างสุด มีเส้นแบ่งชัดว่าเป็น <b>คนละบาน</b> → ไม่งงว่าออปชั่นของใคร</div>
+  </div>
+</div>
+
+<div class="q">
+  <b>จุดสำคัญที่แก้:</b> ออปชั่น "บานหลัก" รวมกลุ่มเดียว (บน) · "ผสมบาน" แยกลงล่างสุด มีเส้นแบ่ง "คนละบาน" → หายงงว่าออปชั่นเป็นของใคร<br><br>
+  <b>ขอเคาะ:</b><br>
+  1. เอาแนวนี้ไหม — บานหลักรวมบน · ผสมบานแยกล่างสุด?<br>
+  2. ออปชั่นบานหลักให้ <b>พับเป็นปุ่ม</b> ทั้งหมด หรืออยากให้ <b>ล็อค·คาดตาราง เปิดไว้</b> (ใช้บ่อย)?
+</div>
+</body></html>

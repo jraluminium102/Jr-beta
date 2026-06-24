@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before→After คิดเร็ว — ที่จะแก้ (19 มิ.ย. 69)</title>
+<style>
+:root{
+  --red:#B3151D;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --blue:#1565C0;--blue-bg:#EAF3FF;--blue-bd:#9DBCE0;
+  --green:#065F46;--green-bg:#ECFDF5;--green-bd:#6EE7B7;
+  --amber:#92400E;--amber-bg:#FFF7ED;--amber-bd:#FCD34D;
+  --gray:#6B7280;--border:#E5E7EB;--bg:#F3F4F6;--ink:#1F2937;--muted:#9CA3AF;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:"Leelawadee UI","Tahoma","Noto Sans Thai",sans-serif;font-size:14px;background:var(--bg);color:var(--ink);}
+.demobar{background:#FFF7ED;border-bottom:2px solid #FCD34D;padding:7px 14px;text-align:center;font-size:12px;font-weight:700;color:var(--amber);}
+.page{max-width:680px;margin:0 auto;padding:12px 12px 120px;}
+h1{font-size:17px;color:var(--red);margin:0 0 2px;}
+.sub{color:var(--gray);font-size:11px;margin-bottom:16px;}
+
+/* Section header */
+.sec{display:flex;align-items:center;gap:8px;margin:20px 0 10px;font-size:14px;font-weight:800;color:#374151;}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+.gtag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:800;background:var(--red);color:#fff;}
+.gtag.g2{background:#1565C0;}.gtag.g3{background:#0369A1;}.gtag.g4{background:#7C3AED;}.gtag.g5{background:#065F46;}
+
+/* BA pair */
+.ba-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.ba-box{border-radius:12px;padding:12px;border:1.5px solid;}
+.ba-box.before{background:var(--red-bg);border-color:var(--red-bd);}
+.ba-box.after{background:var(--green-bg);border-color:var(--green-bd);}
+.ba-label{font-size:10.5px;font-weight:800;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.ba-box.before .ba-label{color:var(--red);}
+.ba-box.after .ba-label{color:var(--green);}
+
+/* Phone mockup */
+.mockup{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 10px;min-height:60px;}
+.m-lbl{font-size:10px;font-weight:700;color:var(--gray);margin:7px 0 4px;}
+.m-lbl:first-child{margin-top:0;}
+.m-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.m-chip{padding:5px 9px;border:1.5px solid var(--border);border-radius:7px;background:#fff;font-size:11.5px;font-weight:600;color:#374151;display:inline-flex;align-items:center;cursor:default;white-space:nowrap;}
+.m-chip.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+.m-chip.on-red{background:var(--red);color:#fff;border-color:var(--red);}
+.m-chip.new{background:#F0FDF4;border-color:#6EE7B7;color:var(--green);border-style:dashed;}
+.m-chip.warn{background:#FEF2F2;border-color:var(--red-bd);color:var(--red);}
+.m-input{width:100%;height:34px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;text-align:center;font-family:inherit;padding:0 6px;color:var(--ink);background:#fff;}
+.m-row{display:grid;gap:6px;margin-top:6px;}
+.m-row.r2{grid-template-columns:1fr 1fr;}
+.m-row.r3{grid-template-columns:1fr 1fr 1fr;}
+.m-fld label{font-size:10px;color:var(--gray);display:block;margin-bottom:2px;}
+.m-missing{font-size:11px;color:var(--muted);font-style:italic;text-align:center;padding:6px;}
+.m-new-badge{font-size:9.5px;background:#D1FAE5;color:var(--green);font-weight:800;padding:1px 5px;border-radius:5px;margin-left:4px;}
+.m-warn-badge{font-size:9.5px;background:#FEF2F2;color:var(--red);font-weight:800;padding:1px 5px;border-radius:5px;margin-left:4px;}
+.m-select{width:100%;height:32px;border:1.5px solid var(--border);border-radius:7px;font-size:11.5px;font-family:inherit;padding:0 6px;background:#fff;}
+.m-check-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.m-check{display:flex;align-items:center;gap:4px;font-size:11.5px;padding:4px 8px;border:1.5px solid;border-radius:7px;cursor:default;}
+.m-check.off{border-color:var(--border);color:var(--gray);background:#fff;}
+.m-check.on{border-color:var(--green-bd);background:var(--green-bg);color:var(--green);}
+
+/* Note + Question */
+.note{background:#FFF7ED;border:1px solid var(--amber-bd);border-radius:8px;padding:8px 10px;font-size:11.5px;color:var(--amber);margin-bottom:8px;line-height:1.5;}
+.q-box{background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.q-box h3{font-size:13px;font-weight:800;color:var(--blue);margin-bottom:8px;}
+.q-opt{display:flex;gap:8px;flex-direction:column;}
+.q-opt-item{border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;background:#fff;cursor:pointer;font-size:12.5px;line-height:1.5;}
+.q-opt-item:hover,.q-opt-item.picked{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);}
+.q-opt-item strong{display:block;font-size:13px;margin-bottom:2px;}
+.answer-note{background:var(--green-bg);border:1px solid var(--green-bd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--green);margin-top:8px;display:none;}
+
+/* Summary table */
+.stbl{width:100%;border-collapse:collapse;font-size:12px;}
+.stbl th{background:#F9FAFB;font-weight:700;padding:6px 10px;border:1px solid var(--border);text-align:left;}
+.stbl td{padding:6px 10px;border:1px solid var(--border);}
+.stbl .ok{color:var(--green);font-weight:700;}
+.stbl .wait{color:var(--amber);font-weight:700;}
+.stbl .sm-txt{color:var(--gray);}
+
+.divider-note{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 8px;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="demobar">⚠️ ดราฟ UX — ก่อน→หลัง สิ่งที่จะแก้ · 19 มิ.ย. 2569</div>
+<div class="page">
+
+<h1>Before → After คิดเร็ว</h1>
+<p class="sub">แต่ละกลุ่ม: ซ้าย = ปัจจุบัน · ขวา = จะเพิ่ม · สีเขียวขอบประ = ส่วนที่เพิ่มใหม่</p>
+
+<!-- ========== G2 ========== -->
+<div class="sec"><span class="gtag g2">G2</span>ระแนง/ราวกันตก — เพิ่ม label "ประเภทงาน"</div>
+<p class="note">🐛 บั๊ก: กดเลือก "ระแนง" ไม่ได้เพราะไม่มีหัวข้อ → ผู้ใช้ไม่รู้ว่าต้องกดปุ่มพวกนี้ก่อน</p>
+
+<div class="ba-pair">
+  <div class="ba-box before">
+    <div class="ba-label">⛔ ก่อน</div>
+    <div class="mockup">
+      <div class="m-lbl">กลุ่มงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">🪟 บาน</span>
+        <span class="m-chip on">🚪 ระแนง·ราว</span>
+        <span class="m-chip">🏠 หลังคา</span>
+      </div>
+      <!-- ❌ ไม่มี label นี้ -->
+      <div class="m-chips" style="margin-top:8px;">
+        <span class="m-chip on-red">ประตูรั้ว</span>
+        <span class="m-chip">ระแนง</span>
+        <span class="m-chip">ราวกันตก</span>
+        <span class="m-chip">ระแนงพิเศษ</span>
+      </div>
+      <div class="m-missing">← ปุ่ม 4 ตัวนี้โผล่มาโดยไม่มีหัวข้อ ผู้ใช้ไม่รู้ว่าต้องกด</div>
+    </div>
+  </div>
+  <div class="ba-box after">
+    <div class="ba-label">✅ หลัง</div>
+    <div class="mockup">
+      <div class="m-lbl">กลุ่มงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">🪟 บาน</span>
+        <span class="m-chip on">🚪 ระแนง·ราว</span>
+        <span class="m-chip">🏠 หลังคา</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">ประเภทงาน <span class="m-new-badge">เพิ่มใหม่</span></div>
+      <div class="m-chips">
+        <span class="m-chip on-red">ประตูรั้ว</span>
+        <span class="m-chip">ระแนง</span>
+        <span class="m-chip">ราวกันตก</span>
+        <span class="m-chip">ระแนงพิเศษ</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="divider-note">dev แก้ 1 บรรทัด — เพิ่ม &lt;div class="qi-lbl"&gt;ประเภทงาน&lt;/div&gt; ก่อน div.qi-cats ใน qiRenderG2</p>
+
+<!-- ========== G3 ผนังเบา ========== -->
+<div class="sec"><span class="gtag g3">G3</span>ผนังเบา — ชื่อปุ่มไม่ชัดว่ามีฉนวนไหม</div>
+<p class="note">🐛 บั๊ก: ปุ่มแสดงว่า "ISOWALL / ภายนอก / ภายใน" ผู้ใช้ไม่รู้ว่าตัวไหนมีฉนวน</p>
+
+<div class="ba-pair">
+  <div class="ba-box before">
+    <div class="ba-label">⛔ ก่อน (ชื่อสับสน)</div>
+    <div class="mockup">
+      <div class="m-lbl">ประเภทงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">เมทัลชีท</span>
+        <span class="m-chip">ชินโคไลท์</span>
+        <span class="m-chip">ไวนิล/ดีไลท์</span>
+        <span class="m-chip on-red">ผนังเบา</span>
+      </div>
+      <div class="m-lbl">รุ่น</div>
+      <div class="m-chips">
+        <span class="m-chip on">ISOWALL</span>
+        <span class="m-chip warn">ภายนอก</span>
+        <span class="m-chip warn">ภายใน</span>
+      </div>
+      <div class="m-missing">← "ISOWALL" คืออะไร? ภายนอก/ใน มีฉนวนไหม?</div>
+    </div>
+  </div>
+  <div class="ba-box after">
+    <div class="ba-label">✅ หลัง (อ่านออกทันที)</div>
+    <div class="mockup">
+      <div class="m-lbl">ประเภทงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">เมทัลชีท</span>
+        <span class="m-chip">ชินโคไลท์</span>
+        <span class="m-chip">ไวนิล/ดีไลท์</span>
+        <span class="m-chip on-red">ผนังเบา</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">ชนิดผนัง <span class="m-new-badge">แก้ชื่อ</span></div>
+      <div class="m-chips">
+        <span class="m-chip on">✓ ฉนวน iso</span>
+        <span class="m-chip">ภายนอก (ไม่มีฉนวน)</span>
+        <span class="m-chip">ภายใน (ไม่มีฉนวน)</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="divider-note">dev แก้ label ใน qiRenderG3 strip logic — ราคา/engine ไม่แตะ</p>
+
+<!-- ========== G3 สีหลังคา ========== -->
+<div class="sec"><span class="gtag g3">G3</span>ไวนิล/ดีไลท์/โพลีตัน — เพิ่มช่อง "สี" (อ้างอิง ไม่กระทบราคา)</div>
+<p class="note">📌 engine ไม่คิดค่าสีหลังคา (ราคาเหมือนกันทุกสี) → เพิ่มช่องเลือกสีเพื่อ <strong>บันทึกลงใบเสนอราคา</strong> เท่านั้น</p>
+
+<div class="ba-pair">
+  <div class="ba-box before">
+    <div class="ba-label">⛔ ก่อน (ไม่มีช่องสี)</div>
+    <div class="mockup">
+      <div class="m-lbl">ประเภทงาน</div>
+      <div class="m-chips">
+        <span class="m-chip on-red">ไวนิล/ดีไลท์</span>
+        <span class="m-chip">โพลีตัน/กระจก</span>
+      </div>
+      <div class="m-lbl">รุ่น</div>
+      <div class="m-chips">
+        <span class="m-chip on">ไวนิล</span>
+        <span class="m-chip">ดีไลท์</span>
+      </div>
+      <div class="m-lbl">ขนาด (กว้าง × ยาว)</div>
+      <div class="m-row r3">
+        <div class="m-fld"><label>กว้าง (ม.)</label><input class="m-input" value="4"></div>
+        <div class="m-fld"><label>ยาว (ม.)</label><input class="m-input" value="3"></div>
+        <div class="m-fld"><label>ชุด</label><input class="m-input" value="1"></div>
+      </div>
+      <div class="m-missing">← ไม่มีช่องสี</div>
+    </div>
+  </div>
+  <div class="ba-box after">
+    <div class="ba-label">✅ หลัง (มีช่องสี)</div>
+    <div class="mockup">
+      <div class="m-lbl">ประเภทงาน</div>
+      <div class="m-chips">
+        <span class="m-chip on-red">ไวนิล/ดีไลท์</span>
+        <span class="m-chip">โพลีตัน/กระจก</span>
+      </div>
+      <div class="m-lbl">รุ่น</div>
+      <div class="m-chips">
+        <span class="m-chip on">ไวนิล</span>
+        <span class="m-chip">ดีไลท์</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">สี <span class="m-new-badge">เพิ่มใหม่</span> <span style="font-size:10px;color:var(--gray);font-weight:400;">(อ้างอิง · ไม่กระทบราคา)</span></div>
+      <div class="m-chips">
+        <span class="m-chip new on">ขาว</span>
+        <span class="m-chip new">ครีม</span>
+        <span class="m-chip new">น้ำตาล</span>
+        <span class="m-chip new">เขียว</span>
+        <span class="m-chip new">อื่นๆ</span>
+      </div>
+      <div class="m-lbl">ขนาด (กว้าง × ยาว)</div>
+      <div class="m-row r3">
+        <div class="m-fld"><label>กว้าง (ม.)</label><input class="m-input" value="4"></div>
+        <div class="m-fld"><label>ยาว (ม.)</label><input class="m-input" value="3"></div>
+        <div class="m-fld"><label>ชุด</label><input class="m-input" value="1"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note" style="margin-top:0;">❓ <strong>ถามพี่นัท:</strong> สีไวนิล/ดีไลท์/โพลีตัน — ใช้สีอะไรบ้าง? (ตอนนี้ใส่ไว้: ขาว/ครีม/น้ำตาล/เขียว/อื่นๆ — ถ้าไม่ตรงบอกได้)</p>
+
+<!-- ========== G4 ========== -->
+<div class="sec"><span class="gtag g4">G4</span>ตู้อลู — เพิ่มจำนวนชั้น + กั้นกี่ด้าน</div>
+<p class="note">📌 engine รองรับทั้งสองแล้ว แค่ UI ไม่ได้ส่ง param → เพิ่ม UI แล้วเชื่อม param ได้เลย · ตอนนี้ชั้นคำนวณจากความสูงอัตโนมัติ + ไม่มีผนัง</p>
+
+<div class="ba-pair">
+  <div class="ba-box before">
+    <div class="ba-label">⛔ ก่อน (ชั้น/ด้านไม่มี)</div>
+    <div class="mockup">
+      <div class="m-lbl">ชนิดงาน</div>
+      <div class="m-chips">
+        <span class="m-chip on-red">ตู้อลู</span>
+        <span class="m-chip">ฝาตู้ Future Tech</span>
+      </div>
+      <div class="m-lbl">ชนิดตู้</div>
+      <div class="m-chips">
+        <span class="m-chip on">ตู้เสื้อผ้า</span>
+        <span class="m-chip">ตู้รองเท้า</span>
+      </div>
+      <div class="m-lbl">ขนาดตู้</div>
+      <div class="m-row r3">
+        <div class="m-fld"><label>กว้าง (ม.)</label><input class="m-input" value="2.0"></div>
+        <div class="m-fld"><label>สูง (ม.)</label><input class="m-input" value="2.4"></div>
+        <div class="m-fld"><label>ลึก (ม.)</label><input class="m-input" value="0.6"></div>
+      </div>
+      <div class="m-lbl">บานหน้า</div>
+      <div class="m-chips">
+        <span class="m-chip">1</span><span class="m-chip on">2</span>
+        <span class="m-chip">3</span><span class="m-chip">4</span>
+      </div>
+      <div class="m-missing">← ชั้นคำนวณ auto · ไม่มีกั้นด้าน</div>
+    </div>
+  </div>
+  <div class="ba-box after">
+    <div class="ba-label">✅ หลัง (+ชั้น +ด้านผนัง)</div>
+    <div class="mockup">
+      <div class="m-lbl">ชนิดงาน</div>
+      <div class="m-chips">
+        <span class="m-chip on-red">ตู้อลู</span>
+        <span class="m-chip">ฝาตู้ Future Tech</span>
+      </div>
+      <div class="m-lbl">ชนิดตู้</div>
+      <div class="m-chips">
+        <span class="m-chip on">ตู้เสื้อผ้า</span>
+        <span class="m-chip">ตู้รองเท้า</span>
+      </div>
+      <div class="m-lbl">ขนาดตู้</div>
+      <div class="m-row r3">
+        <div class="m-fld"><label>กว้าง (ม.)</label><input class="m-input" value="2.0"></div>
+        <div class="m-fld"><label>สูง (ม.)</label><input class="m-input" value="2.4"></div>
+        <div class="m-fld"><label>ลึก (ม.)</label><input class="m-input" value="0.6"></div>
+      </div>
+      <div class="m-lbl">บานหน้า</div>
+      <div class="m-chips">
+        <span class="m-chip">1</span><span class="m-chip on">2</span>
+        <span class="m-chip">3</span><span class="m-chip">4</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">จำนวนชั้น <span class="m-new-badge">เพิ่มใหม่</span></div>
+      <div class="m-chips">
+        <span class="m-chip new on">auto (จากสูง)</span>
+        <span class="m-chip new">3</span>
+        <span class="m-chip new">4</span>
+        <span class="m-chip new">5</span>
+        <span class="m-chip new">6</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">ผนังตู้ (กั้นกี่ด้าน) <span class="m-new-badge">เพิ่มใหม่</span></div>
+      <div class="m-check-row">
+        <div class="m-check off">□ ซ้าย</div>
+        <div class="m-check on">☑ หลัง</div>
+        <div class="m-check off">□ ขวา</div>
+      </div>
+      <div style="font-size:10px;color:var(--gray);margin-top:4px;">วัสดุผนัง: อลูทึบ (default) · กระจกเลือกในใบจริง</div>
+    </div>
+  </div>
+</div>
+<p class="divider-note">engine รองรับ shelves + cabwall_*_on ใน optSel แล้ว — แก้ qiRenderG4 + qiCalcG4 เพิ่ม param</p>
+
+<!-- ========== G5 ========== -->
+<div class="sec"><span class="gtag g5">G5</span>มุ้ง — เพิ่ม label "ประเภทมุ้ง" + ปุ่มรุ่น</div>
+<p class="note">🐛 บั๊ก: 4 ปุ่มหมวด (เฟรม/จีบ/รังผึ้ง/ม้วน) โผล่มาไม่มีหัวข้อ ผู้ใช้ไม่รู้ว่าต้องกดก่อน · หลังกดแล้วก็ไม่โชว์รุ่นในหมวด</p>
+
+<div class="ba-pair">
+  <div class="ba-box before">
+    <div class="ba-label">⛔ ก่อน</div>
+    <div class="mockup">
+      <div class="m-lbl">กลุ่มงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">🪟 บาน</span>
+        <span class="m-chip on">🦟 มุ้ง</span>
+        <span class="m-chip">🏠 หลังคา</span>
+      </div>
+      <!-- ❌ ไม่มี label -->
+      <div class="m-chips" style="margin-top:8px;">
+        <span class="m-chip on-red">มุ้งเฟรม</span>
+        <span class="m-chip">มุ้งจีบ</span>
+        <span class="m-chip">รังผึ้ง</span>
+        <span class="m-chip">ม้วน</span>
+      </div>
+      <div class="m-missing">← 4 ปุ่มไม่มีหัวข้อ และกด "มุ้งเฟรม" แล้วก็ไม่โชว์รุ่น</div>
+    </div>
+  </div>
+  <div class="ba-box after">
+    <div class="ba-label">✅ หลัง</div>
+    <div class="mockup">
+      <div class="m-lbl">กลุ่มงาน</div>
+      <div class="m-chips">
+        <span class="m-chip">🪟 บาน</span>
+        <span class="m-chip on">🦟 มุ้ง</span>
+        <span class="m-chip">🏠 หลังคา</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">ประเภทมุ้ง <span class="m-new-badge">เพิ่ม label</span></div>
+      <div class="m-chips">
+        <span class="m-chip on-red">มุ้งเฟรม</span>
+        <span class="m-chip">มุ้งจีบ</span>
+        <span class="m-chip">รังผึ้ง</span>
+        <span class="m-chip">ม้วน</span>
+      </div>
+      <div class="m-lbl" style="color:var(--green);">รุ่น (เฟรม) <span class="m-new-badge">เพิ่มใหม่</span></div>
+      <div class="m-chips">
+        <span class="m-chip new">imp21 เล็ก</span>
+        <span class="m-chip new on">imp22 ใหญ่</span>
+        <span class="m-chip new">imp23 ประตู</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="divider-note">label แก้ 1 บรรทัดเหมือน G2 · ปุ่มรุ่นดึงจาก MOSQ_GRP_PRODS ที่มีอยู่แล้ว</p>
+
+<!-- ========== G1 ผสมบาน — คำถาม ========== -->
+<div class="sec"><span class="gtag">G1</span>บาน — คำถาม: ผสมบาน</div>
+
+<div class="q-box">
+  <h3>❓ "กลุ่มบานควรผสมบานอื่นได้" — พี่นัทต้องการแบบไหน?</h3>
+  <p style="font-size:12px;color:var(--gray);margin-bottom:10px;">ตัวอย่างที่ต้องการ: "หน้าต่าง 1 ชุดมี บานเลื่อน 1.2 ม. + ช่องแสง 0.6 ม." → คำถามคือจะออกใบเป็นกี่บรรทัด</p>
+  <div class="q-opt">
+    <div class="q-opt-item" onclick="pickQ(this,'A')">
+      <strong>แบบ A — เพิ่มบานในชุดเดียว (1 บรรทัดในใบ)</strong>
+      กด "+ เพิ่มบาน" → ใส่บาน 2 เป็นแบบอื่น+ขนาดอื่น → ราคารวมออกมาเป็นบรรทัดเดียว<br>
+      <span style="color:var(--gray);font-size:11px;">ข้อดี: ใบสะอาด 1 รายการ · ข้อเสีย: dev ต้องสร้างใหม่ ใช้เวลา 2-3 วัน</span>
+    </div>
+    <div class="q-opt-item" onclick="pickQ(this,'B')">
+      <strong>แบบ B — กด "+ เพิ่มรายการ" ตามปกติ (2 บรรทัดในใบ)</strong>
+      ใช้ปุ่มที่มีอยู่แล้ว กด G1 อีกครั้ง → บาน 2 เป็น item แยก → ใบแสดง 2 บรรทัด<br>
+      <span style="color:var(--gray);font-size:11px;">ข้อดี: ทำได้เลยไม่ต้องพัฒนา · ข้อเสีย: ราคาแยกกัน 2 บรรทัด</span>
+    </div>
+  </div>
+  <div class="answer-note" id="ansNote"></div>
+</div>
+
+<!-- ========== G6/G7 ========== -->
+<div class="sec">G6/G7 — ไม่ต้องแก้</div>
+<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--green);margin-bottom:12px;">
+  ✅ G6 กั้นห้องกระจก + G7 ม่านซิป — ตรวจแล้วครบ ไม่มีจุดที่ขาด
+</div>
+
+<!-- ========== สรุปคิว ========== -->
+<div class="sec">สรุปคิวงานที่จะส่ง dev</div>
+<table class="stbl">
+  <thead>
+    <tr><th>กลุ่ม</th><th>งาน</th><th>ขนาด</th><th>สถานะ</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="gtag g2" style="font-size:10px;">G2</span></td>
+      <td>เพิ่ม label "ประเภทงาน" ก่อน 4 ปุ่มหมวด</td>
+      <td class="sm-txt">1 บรรทัด</td>
+      <td class="ok">พร้อมส่ง</td>
+    </tr>
+    <tr>
+      <td><span class="gtag g3" style="font-size:10px;">G3</span></td>
+      <td>แก้ชื่อชิป ผนังเบา: ISOWALL→"✓ฉนวน iso" · ภายนอก/ใน บอกว่า "ไม่มีฉนวน"</td>
+      <td class="sm-txt">แก้ label strip</td>
+      <td class="ok">พร้อมส่ง</td>
+    </tr>
+    <tr>
+      <td><span class="gtag g3" style="font-size:10px;">G3</span></td>
+      <td>เพิ่มชิปสีหลังคา ไวนิล/ดีไลท์/โพลีตัน (อ้างอิง ไม่กระทบราคา)</td>
+      <td class="sm-txt">เพิ่ม chip row</td>
+      <td class="wait">รอยืนยันสีที่ใช้จริง</td>
+    </tr>
+    <tr>
+      <td><span class="gtag g4" style="font-size:10px;">G4</span></td>
+      <td>เพิ่ม chip จำนวนชั้น (auto/3/4/5/6) + tick ผนังด้าน ซ้าย/หลัง/ขวา</td>
+      <td class="sm-txt">กลาง</td>
+      <td class="ok">พร้อมส่ง (engine รองรับแล้ว)</td>
+    </tr>
+    <tr>
+      <td><span class="gtag g5" style="font-size:10px;">G5</span></td>
+      <td>เพิ่ม label "ประเภทมุ้ง" + ชิปรุ่นในหมวด (ดึงจาก MOSQ_GRP_PRODS)</td>
+      <td class="sm-txt">กลาง</td>
+      <td class="ok">พร้อมส่ง</td>
+    </tr>
+    <tr>
+      <td><span class="gtag" style="font-size:10px;">G1</span></td>
+      <td>ผสมบาน</td>
+      <td class="sm-txt">A=ใหญ่ / B=เล็ก</td>
+      <td class="wait">รอพี่นัทเลือกแบบ A หรือ B</td>
+    </tr>
+  </tbody>
+</table>
+
+</div><!-- /page -->
+<script>
+function pickQ(el, choice){
+  document.querySelectorAll('.q-opt-item').forEach(e=>e.classList.remove('picked'));
+  el.classList.add('picked');
+  var n = document.getElementById('ansNote');
+  n.style.display='block';
+  if(choice==='A') n.innerHTML='✅ เลือกแบบ A — ส่ง dev สร้างฟีเจอร์ "เพิ่มบาน +" ใหม่ใน G1 quick mode (ใช้เวลา ~2-3 วัน)';
+  else n.innerHTML='✅ เลือกแบบ B — ใช้ปุ่ม "+ เพิ่มรายการ" เดิม ทำได้เลยไม่ต้องพัฒนาเพิ่ม (ใบ 2 บรรทัด)';
+}
+</script>
+</body>
+</html>

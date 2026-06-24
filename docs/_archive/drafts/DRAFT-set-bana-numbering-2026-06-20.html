@@ -1,0 +1,141 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ ชุด/บาน/เบอร์ — แก้ความงง 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--bad:#DC2626;--good:#059669;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:#F3F4F6;color:var(--ink);padding:14px;font-size:14px;line-height:1.55;}
+h2{color:var(--red);font-size:19px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:980px;margin:0 auto;}
+@media(max-width:760px){.cols{grid-template-columns:1fr;}}
+.col{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--line);}
+.col.now{border-top:4px solid var(--bad);}
+.col.new{border-top:4px solid var(--good);}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;margin-bottom:10px;}
+.tag.now{background:#FEE2E2;color:var(--bad);}
+.tag.new{background:#D1FAE5;color:var(--good);}
+.mock{border:1px solid var(--line);border-radius:10px;padding:8px;background:#FAFAFA;margin-bottom:6px;}
+.setbox{border:1px solid #F0C040;border-radius:9px;padding:8px;margin-bottom:8px;background:#FFFDF5;}
+.setbox.plain{border-color:var(--line);background:#fff;}
+.shead{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;}
+.bana{background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 9px;margin:4px 0;font-size:13px;display:flex;align-items:center;gap:6px;}
+.bnum{font-size:11px;color:var(--muted);font-weight:700;min-width:54px;}
+.bnum.hl{color:var(--bad);}
+.bnum.ok{color:var(--good);}
+.sub-bana{margin-left:22px;border-style:dashed;border-color:#C4B5FD;background:#FaFaFF;font-size:12px;}
+.addbtn{background:var(--red);color:#fff;border:0;border-radius:8px;padding:7px 0;width:100%;font-size:12px;font-weight:700;margin-top:4px;}
+.addbtn.ghost{background:#fff;color:var(--red);border:1.5px dashed var(--red);}
+.arrow{text-align:center;color:var(--muted);font-size:18px;margin:6px 0;}
+.bill{border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12.5px;}
+.brow{display:flex;gap:6px;padding:7px 9px;border-bottom:1px solid #F0F0F0;}
+.brow:last-child{border-bottom:0;}
+.brow .rn{font-weight:800;color:var(--red);min-width:18px;}
+.lbl{font-size:11px;font-weight:800;color:var(--muted);margin:10px 0 5px;display:block;text-transform:uppercase;letter-spacing:.3px;}
+.note{font-size:12px;color:var(--muted);margin-top:4px;}
+.bad-pt{color:var(--bad);font-weight:700;}
+.good-pt{color:var(--good);font-weight:700;}
+.foot{max-width:980px;margin:16px auto 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;}
+.foot h3{margin:0 0 8px;font-size:15px;color:var(--red);}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px;}
+table.cmp td,table.cmp th{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;}
+table.cmp th{background:#FAFAFA;font-weight:700;}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:5px;}
+.pill.cut{background:#FEE2E2;color:var(--bad);}
+.pill.keep{background:#D1FAE5;color:var(--good);}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13px;}
+</style></head>
+<body>
+<h2>ดราฟ — แก้ความงง ชุด / ส่วน / บานย่อย + การเรียงเบอร์</h2>
+<p class="sub">เทียบ "ตอนนี้" (งง) กับ "ที่เสนอ" (สะอาด) ทั้งฝั่งฟอร์มและใบเสนอราคา · ยังไม่แก้โค้ด รอพี่เคาะ</p>
+
+<div class="cols">
+
+  <!-- ===== ตอนนี้ ===== -->
+  <div class="col now">
+    <span class="tag now">⚠ ตอนนี้ — งง 3 ชั้น</span>
+    <span class="lbl">ฟอร์ม</span>
+    <div class="mock">
+      <div class="setbox"><div class="shead"><span class="badge">ชุด</span><span style="font-size:11px;color:var(--muted);">ห้องนอน</span></div>
+        <div class="bana"><span class="bnum hl">ส่วนที่ 1</span> บานเลื่อน</div>
+        <div class="bana"><span class="bnum hl">ส่วนที่ 2</span> บานเลื่อน</div>
+        <button class="addbtn ghost">+ เพิ่มส่วน</button>
+      </div>
+      <div class="setbox"><div class="shead"><span class="badge">ชุด</span></div>
+        <div class="bana"><span class="bnum hl">ส่วนที่ 3</span> บานเลื่อน</div>
+      </div>
+      <div class="setbox"><div class="shead"><span class="badge">ชุด</span></div>
+        <div class="bana"><span class="bnum hl">ส่วนที่ 4</span> บานเลื่อน</div>
+        <div class="bana sub-bana"><span class="bnum">↳ บานย่อย</span> บานเปิด (ผสมบาน)</div>
+      </div>
+    </div>
+    <div class="arrow">▼ ออกใบ</div>
+    <span class="lbl">ใบเสนอราคา</span>
+    <div class="bill">
+      <div class="brow"><span class="rn">1</span><span>ห้องนอน → บานเลื่อน × 2 บาน</span></div>
+      <div class="brow"><span class="rn">2</span><span>จุดที่ 2 บานเลื่อน</span></div>
+      <div class="brow"><span class="rn">3</span><span>จุดที่ 3 บานเลื่อน + บานเปิด</span></div>
+    </div>
+    <div class="note">
+      <span class="bad-pt">①</span> ฟอร์ม "ส่วนที่ 1-4" (4) ≠ ใบ "3 แถว"<br>
+      <span class="bad-pt">②</span> 3 คำเรียก: ส่วนที่ / ชุด / จุดที่<br>
+      <span class="bad-pt">③</span> เบอร์ "ส่วนที่" ไล่ข้ามชุด (ชุด 2 = ส่วนที่ 3)<br>
+      <span class="bad-pt">④</span> 2 วิธีเพิ่มบาน (เพิ่มส่วน / ผสมบานย่อย) แสดงคนละแบบ + ซ้อน 3 ชั้น
+    </div>
+  </div>
+
+  <!-- ===== เสนอ ===== -->
+  <div class="col new">
+    <span class="tag new">✓ เสนอ — เหลือ 2 ชั้น "ชุด › บาน"</span>
+    <span class="lbl">ฟอร์ม</span>
+    <div class="mock">
+      <div class="setbox"><div class="shead"><span class="badge">ชุดที่ 1</span><span style="font-size:11px;color:var(--muted);">ห้องนอน</span></div>
+        <div class="bana"><span class="bnum ok">บานที่ 1</span> บานเลื่อน</div>
+        <div class="bana"><span class="bnum ok">บานที่ 2</span> บานเลื่อน</div>
+        <button class="addbtn ghost">+ เพิ่มบานในชุดนี้</button>
+      </div>
+      <div class="setbox plain"><div class="shead"><span class="badge">ชุดที่ 2</span><span style="font-size:11px;color:var(--muted);">(ชุดเดี่ยว — บานเดียว ไม่ต้องโชว์ "บานที่")</span></div>
+        <div class="bana"><span class="bnum ok">　</span> บานเลื่อน</div>
+        <button class="addbtn ghost">+ เพิ่มบานในชุดนี้</button>
+      </div>
+      <div class="setbox"><div class="shead"><span class="badge">ชุดที่ 3</span></div>
+        <div class="bana"><span class="bnum ok">บานที่ 1</span> บานเลื่อน</div>
+        <div class="bana"><span class="bnum ok">บานที่ 2</span> บานเปิด</div>
+        <button class="addbtn ghost">+ เพิ่มบานในชุดนี้</button>
+      </div>
+    </div>
+    <div class="arrow">▼ ออกใบ</div>
+    <span class="lbl">ใบเสนอราคา</span>
+    <div class="bill">
+      <div class="brow"><span class="rn">1</span><span>ชุดที่ 1 "ห้องนอน" → บานเลื่อน × 2 บาน</span></div>
+      <div class="brow"><span class="rn">2</span><span>ชุดที่ 2 → บานเลื่อน</span></div>
+      <div class="brow"><span class="rn">3</span><span>ชุดที่ 3 → บานเลื่อน + บานเปิด</span></div>
+    </div>
+    <div class="note">
+      <span class="good-pt">①</span> ฟอร์ม "ชุดที่ N" = ใบ "แถว N" ตรงกัน 1:1<br>
+      <span class="good-pt">②</span> คำเดียว: <b>ชุด</b> (แถว) + <b>บาน</b> (ในชุด)<br>
+      <span class="good-pt">③</span> "บานที่" เริ่มใหม่ทุกชุด · ชุดบานเดียวไม่โชว์เลขบาน<br>
+      <span class="good-pt">④</span> วิธีเพิ่มบานเดียว = <b>"+ ผสมบาน"</b> (ตัด "เพิ่มส่วน" ที่ซ้ำซ้อนทิ้ง — มติพี่นัท)
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <h3>สรุปการเปลี่ยน</h3>
+  <table class="cmp">
+    <tr><th>เรื่อง</th><th>ตอนนี้</th><th>เสนอ</th></tr>
+    <tr><td>ชั้นซ้อน</td><td>3 ชั้น (ชุด › ส่วน › บานย่อย)</td><td>2 ชั้น (ชุด › บาน)</td></tr>
+    <tr><td>คำเรียก</td><td>ส่วนที่ / ชุด / จุดที่ (3 คำ)</td><td>ชุดที่ / บานที่ (2 คำ · ฟอร์ม=ใบ)</td></tr>
+    <tr><td>เลขบาน</td><td>ไล่ข้ามชุด (1,2,3,4)</td><td>เริ่มใหม่ต่อชุด (ชุดละ 1,2…)</td></tr>
+    <tr><td>วิธีเพิ่มบานในชุด</td><td>เพิ่มส่วน <span class="pill cut">ตัดทิ้ง</span> + ผสมบาน <span class="pill keep">เก็บ</span></td><td>"+ ผสมบาน (เพิ่มบานในชุด)" อย่างเดียว</td></tr>
+    <tr><td>ชุดเดี่ยว (บานเดียว)</td><td>โชว์ "ส่วนที่ N" เสมอ</td><td>ไม่โชว์เลขบาน (สะอาด)</td></tr>
+  </table>
+  <div class="q">
+    <b>มติพี่นัท:</b> ✅ ตัด "เพิ่มส่วน" ทิ้ง · เก็บ "ผสมบาน" เป็นวิธีเพิ่มบานในชุดเดียว<br>
+    <b>ที่เหลือรอเคาะ:</b><br>
+    2. เปลี่ยนคำ "ส่วน → บาน" และ "จุดที่ → ชุดที่" — โอเคไหม?<br>
+    3. เลข "บานที่" เริ่มใหม่ต่อชุด + ชุดบานเดียวไม่โชว์เลข — โอเคไหม?
+  </div>
+</div>
+</body></html>

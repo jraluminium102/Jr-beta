@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G2 คิดเร็ว — Cascade Fix (19 มิ.ย.)</title>
+<style>
+:root{--red:#E63B2B;--bg:#F3F4F6;--card:#fff;--line:#E5E7EB;--muted:#6B7280;--text:#111827;--green:#059669;--green-bg:#D1FAE5;--green-txt:#065F46;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{background:var(--bg);padding:16px;color:var(--text);}
+h1{font-size:16px;font-weight:800;color:var(--red);border-left:5px solid var(--red);padding-left:10px;margin-bottom:3px;}
+.sub{font-size:11px;color:var(--muted);padding-left:15px;margin-bottom:14px;}
+
+/* card */
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;max-width:480px;margin:0 auto;}
+.card-title{font-size:13px;font-weight:800;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* group selector (tab row) */
+.group-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.gtab{height:40px;border:1.5px solid var(--line);border-radius:10px;font-size:12px;font-weight:700;background:#fff;color:var(--muted);cursor:pointer;transition:.15s;}
+.gtab:hover{border-color:var(--red);color:var(--red);}
+.gtab.on{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* chips */
+.lbl{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 5px;display:block;}
+.lbl:first-of-type{margin-top:0;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{height:40px;padding:0 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13px;font-weight:600;background:#fff;color:var(--text);cursor:pointer;transition:.15s;white-space:nowrap;}
+.chip:hover{border-color:var(--red);color:var(--red);}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* cascade steps — animate in */
+.step{margin-top:8px;animation:fadeIn .18s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* size row */
+.sz-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
+.sz-row.two{grid-template-columns:1fr 90px;}
+.fld label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px;}
+.fld input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;font-family:inherit;}
+.fld input:focus{outline:none;border-color:var(--red);}
+
+/* price card */
+.pcrd{margin-top:14px;background:#F9FAFB;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;}
+.pcrd-ttl{font-size:11px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px;}
+.pcrd-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:var(--muted);}
+.pcrd-row b{color:var(--text);}
+.pcrd-tot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1.5px solid var(--line);}
+.pcrd-tot .nm{font-size:13px;font-weight:800;}
+.pcrd-tot .val{font-size:18px;font-weight:800;color:var(--red);}
+.demo{display:inline-block;font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:5px;padding:1px 5px;margin-left:4px;}
+
+/* pending state */
+.pending{text-align:center;padding:12px;font-size:13px;color:var(--muted);border:1.5px dashed var(--line);border-radius:8px;margin-top:10px;}
+
+/* note */
+.note{font-size:11px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:7px;padding:6px 10px;color:#1E40AF;margin-top:8px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<h1>DRAFT G2 คิดเร็ว — ระแนง Cascade Fix</h1>
+<p class="sub">19 มิ.ย. 2569 · ราคาเดโม <span class="demo">dev ดึงเรตจริง</span> · กดเล่นได้จริง</p>
+
+<div class="card">
+  <div class="card-title">G2 รั้ว / ระแนง / ราวกันตก</div>
+
+  <!-- group tab row (เลียนแบบ qi-cats จริง) -->
+  <div class="group-tabs">
+    <button class="gtab" data-cat="gate">ประตูรั้ว</button>
+    <button class="gtab on" data-cat="ranae">ระแนง</button>
+    <button class="gtab" data-cat="rail">ราวกันตก</button>
+    <button class="gtab" data-cat="special">ระแนงพิเศษ</button>
+  </div>
+
+  <!-- body สลับตาม cat -->
+  <div id="g2-body"></div>
+
+  <!-- price card (ใช้ร่วม) -->
+  <div class="pcrd">
+    <div class="pcrd-ttl">รายการราคา <span class="demo">เดโม</span></div>
+    <div id="pc-body"><div class="pending">— เลือกให้ครบก่อน —</div></div>
+    <div class="pcrd-tot">
+      <span class="nm" id="pc-lbl">รวม ×1 ชุด</span>
+      <span class="val" id="pc-tot">฿-</span>
+    </div>
+  </div>
+
+  <div class="note" id="g2-note" style="display:none;"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   DATA (ดึงจาก index.html จริง — READ-ONLY)
+══════════════════════════════════════════════ */
+// QIG2_BANGTA_DATA: [id, rate/sqm, box, sp, frame]
+var BANGTA=[["rn1",3300,"1x5 cm.","1cm. 5cm.","ไม่โครง"],["rn2",5200,"1x5 cm.","1cm. 5cm.","รวมโครง"],["rn3",4300,"1x5 cm.","1cm. 3cm.","ไม่โครง"],["rn4",6000,"1x5 cm.","1cm. 3cm.","รวมโครง"],["rn5",5000,"1x5 cm.","1cm. 2cm.","ไม่โครง"],["rn6",7200,"1x5 cm.","1cm. 2cm.","รวมโครง"],["rn7",2800,"1x5 cm.","5cm. 5cm.","ไม่โครง"],["rn8",4500,"1x5 cm.","5cm. 5cm.","รวมโครง"],["rn9",3200,"1x5 cm.","5cm. 3cm.","ไม่โครง"],["rn10",4800,"1x5 cm.","5cm. 3cm.","รวมโครง"],["rn11",3300,"1x5 cm.","5cm. 2cm.","ไม่โครง"],["rn12",5100,"1x5 cm.","5cm. 2cm.","รวมโครง"],["rn13",3700,'1"x1.6"','1" 5cm.',"ไม่โครง"],["rn14",5300,'1"x1.6"','1" 5cm.',"รวมโครง"],["rn15",4500,'1"x1.6"','1" 3cm.',"ไม่โครง"],["rn16",6400,'1"x1.6"','1" 3cm.',"รวมโครง"],["rn17",4800,'1"x1.6"','1" 2cm.',"ไม่โครง"],["rn18",6900,'1"x1.6"','1" 2cm.',"รวมโครง"],["rn19",3200,'1"x1"','1" 5cm.',"ไม่โครง"],["rn20",4700,'1"x1"','1" 5cm.',"รวมโครง"],["rn21",3700,'1"x1"','1" 3cm.',"ไม่โครง"],["rn22",5400,'1"x1"','1" 3cm.',"รวมโครง"],["rn23",3900,'1"x1"','1" 2cm.',"ไม่โครง"],["rn24",5600,'1"x1"','1" 2cm.',"รวมโครง"],["rn25",3300,'1"x1½"','1" 5cm.',"ไม่โครง"],["rn26",5200,'1"x1½"','1" 5cm.',"รวมโครง"],["rn27",4000,'1"x1½"','1" 3cm.',"ไม่โครง"],["rn28",6100,'1"x1½"','1" 3cm.',"รวมโครง"],["rn29",4300,'1"x1½"','1" 2cm.',"ไม่โครง"],["rn30",6500,'1"x1½"','1" 2cm.',"รวมโครง"],["rn43",5500,'1"x4"','1" 5cm.',"ไม่โครง"],["rn44",8100,'1"x4"','1" 5cm.',"รวมโครง"],["rn49",4000,'1"x4"','4" 5cm.',"ไม่โครง"],["rn50",6000,'1"x4"','4" 5cm.',"รวมโครง"]];
+
+// QIG2_GLEED: [id, rate/sqm, size, frame]
+var GLEED=[["rn83",3600,'1"',"ไม่โครง"],["rn84",5200,'1"',"รวมโครง"],["rn85",4900,'1.6"',"ไม่โครง"],["rn86",6900,'1.6"',"รวมโครง"],["rn87",5300,'4"',"ไม่โครง"],["rn88",7700,'4"',"รวมโครง"]];
+
+// สร้าง RTREE จาก BANGTA (เหมือน engine จริง)
+var RTREE={}, BOX_ORDER=[];
+BANGTA.forEach(function(r){
+  var box=r[2], sp=r[3], frame=r[4], id=r[0], rate=r[1];
+  var parts=sp.trim().split(/\s+/);
+  var face=parts[0], gap=parts.slice(1).join(' ')||'ทึบ';
+  if(!RTREE[box]){RTREE[box]={};BOX_ORDER.push(box);}
+  RTREE[box][face]=RTREE[box][face]||{};
+  RTREE[box][face][gap]=RTREE[box][face][gap]||{};
+  RTREE[box][face][gap][frame]={id:id,rate:rate};
+});
+
+// GAP labels แปลให้อ่านง่าย
+function gapLabel(g){
+  if(g==='5cm.') return 'ห่าง 5 ซม.';
+  if(g==='3cm.') return 'ห่าง 3 ซม.';
+  if(g==='2cm.') return 'ชิด 2 ซม.';
+  return g;
+}
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+var S={
+  cat:'ranae', rtype:'box',
+  box:'', face:'', gap:'', frame:'',
+  gtype:'ตรง', gprof:'', gspac:'', gmotor:1,
+  railShape:'เฉียง', railMount:'หมุด', railHr:'none',
+  spId:'bar_openclose', spMotor:0,
+  W:3, H:2, qty:1
+};
+
+/* ══════════════════════════════════════════════
+   UTIL: HTML-safe attribute value (แก้ bug "x1.6")
+   — encode " → &quot; สำหรับใส่ใน HTML attribute
+══════════════════════════════════════════════ */
+function qa(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function he(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ══════════════════════════════════════════════
+   CHIP BUILDER — ใช้ data-v แทน onclick inline
+   (กันปัญหา " ใน value ทำ attribute พัง)
+══════════════════════════════════════════════ */
+function chipSet(items, selectedVal, dataKey){
+  var h='<div class="chips">';
+  items.forEach(function(item){
+    var val=Array.isArray(item)?item[0]:item;
+    var label=Array.isArray(item)?item[1]:item;
+    var on=(val===selectedVal);
+    h+='<button class="chip'+(on?' on':'')+'" data-k="'+dataKey+'" data-v="'+qa(val)+'">'+he(label)+'</button>';
+  });
+  return h+'</div>';
+}
+
+/* ══════════════════════════════════════════════
+   BIND — ผูก event หลัง innerHTML (core fix)
+══════════════════════════════════════════════ */
+function bindChips(container){
+  container.querySelectorAll('.chip[data-k]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var k=this.dataset.k, v=this.dataset.v;
+      handlePick(k,v);
+    });
+  });
+  container.querySelectorAll('input.qi-w').forEach(function(inp){inp.addEventListener('input',function(){S.W=parseFloat(this.value)||0;calc();});});
+  container.querySelectorAll('input.qi-h').forEach(function(inp){inp.addEventListener('input',function(){S.H=parseFloat(this.value)||0;calc();});});
+  container.querySelectorAll('input.qi-qty').forEach(function(inp){inp.addEventListener('input',function(){S.qty=parseInt(this.value)||1;calc();});});
+}
+
+function handlePick(k,v){
+  if(k==='rtype'){S.rtype=v;S.box='';S.face='';S.gap='';S.frame='';}
+  else if(k==='box'){S.box=v;S.face='';S.gap='';S.frame='';}
+  else if(k==='face'){S.face=v;S.gap='';S.frame='';}
+  else if(k==='gap'){S.gap=v;S.frame='รวมโครง';}
+  else if(k==='frame'){S.frame=v;}
+  else if(k==='gtype'){S.gtype=v;}
+  else if(k==='gprof'){S.gprof=v;S.gspac='';}
+  else if(k==='gspac'){S.gspac=v;}
+  else if(k==='gmotor'){S.gmotor=parseInt(v);}
+  else if(k==='railShape'){S.railShape=v;}
+  else if(k==='railMount'){S.railMount=v;}
+  else if(k==='railHr'){S.railHr=v;}
+  else if(k==='spId'){S.spId=v;}
+  else if(k==='spMotor'){S.spMotor=parseInt(v);}
+  render();
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function render(){
+  // group tabs
+  document.querySelectorAll('.gtab').forEach(function(b){
+    b.classList.toggle('on', b.dataset.cat===S.cat);
+  });
+
+  var body=document.getElementById('g2-body');
+  var note=document.getElementById('g2-note');
+  note.style.display='none';
+  var h='';
+
+  if(S.cat==='ranae'){
+    /* ──── ระแนง ──── */
+    h += '<span class="lbl">ชนิดระแนง</span>';
+    h += chipSet([['box','ระแนงกล่อง'],['gleed','เกล็ด Z']], S.rtype, 'rtype');
+
+    if(S.rtype==='box'){
+      /* ขั้น 1: ขนาดกล่อง */
+      h += '<div class="step"><span class="lbl">ขนาดกล่อง</span>';
+      h += chipSet(BOX_ORDER.map(function(b){return [b,b];}), S.box, 'box');
+      h += '</div>';
+
+      /* ขั้น 2: หน้าโชว์ */
+      if(S.box && RTREE[S.box]){
+        var faces=Object.keys(RTREE[S.box]);
+        h += '<div class="step"><span class="lbl">หน้าโชว์ (ระยะจากเส้นกึ่งกลาง)</span>';
+        h += chipSet(faces.map(function(f){
+          var label=f.replace('cm.','ซม.').replace('"','"');
+          return [f, 'หน้า '+label];
+        }), S.face, 'face');
+        h += '</div>';
+      }
+
+      /* ขั้น 3: ระยะห่าง */
+      if(S.face && RTREE[S.box] && RTREE[S.box][S.face]){
+        var gaps=Object.keys(RTREE[S.box][S.face]);
+        h += '<div class="step"><span class="lbl">ระยะห่างระหว่างระแนง</span>';
+        h += chipSet(gaps.map(function(g){return [g,gapLabel(g)];}), S.gap, 'gap');
+        h += '</div>';
+      }
+
+      /* ขั้น 4: โครง */
+      if(S.gap && RTREE[S.box] && RTREE[S.box][S.face] && RTREE[S.box][S.face][S.gap]){
+        var frames=Object.keys(RTREE[S.box][S.face][S.gap]);
+        h += '<div class="step"><span class="lbl">โครง</span>';
+        h += chipSet(frames.map(function(f){
+          var label=f==='รวมโครง'?'รวมโครงเหล็ก (+ราคา)':'ไม่รวมโครง';
+          return [f,label];
+        }), S.frame, 'frame');
+        h += '</div>';
+      }
+
+    } else {
+      /* เกล็ด Z */
+      var glSizes=[]; var seen={};
+      GLEED.forEach(function(r){if(!seen[r[2]]){seen[r[2]]=1;glSizes.push(r[2]);}});
+      h += '<div class="step"><span class="lbl">ขนาดเกล็ด</span>';
+      h += chipSet(glSizes.map(function(s){return [s,s];}), S.box, 'box');
+      h += '</div>';
+      if(S.box){
+        var gFrames=GLEED.filter(function(r){return r[2]===S.box;}).map(function(r){return r[3];});
+        h += '<div class="step"><span class="lbl">โครง</span>';
+        h += chipSet(gFrames.map(function(f){return [f,f==='รวมโครง'?'รวมโครงเหล็ก':'ไม่รวมโครง'];}), S.frame, 'frame');
+        h += '</div>';
+      }
+    }
+
+    /* ขนาด */
+    h += '<div class="sz-row">';
+    h += '<div class="fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+S.W+'"></div>';
+    h += '<div class="fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+S.H+'"></div>';
+    h += '<div class="fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" min="1" value="'+S.qty+'"></div>';
+    h += '</div>';
+
+  } else if(S.cat==='gate'){
+    /* ──── ประตูรั้ว (mockup · ไม่ใช่ focus) ──── */
+    h += '<span class="lbl">ชนิด</span>';
+    h += chipSet([['ตรง','บานเลื่อนตรง'],['โค้ง','บานเลื่อนโค้ง']], S.gtype, 'gtype');
+    h += '<div class="sz-row"><div class="fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" value="'+S.W+'"></div><div class="fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" value="'+S.H+'"></div><div class="fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" value="'+S.qty+'"></div></div>';
+    h += '<div class="pending" style="margin-top:10px;">ลายระแนง / มอเตอร์ → เหมือนเดิม (ไม่อยู่ใน scope)</div>';
+
+  } else if(S.cat==='rail'){
+    /* ──── ราวกันตก (mockup) ──── */
+    h += '<span class="lbl">ทรงราว</span>';
+    h += chipSet([['เฉียง','เฉียง'],['ตรง','ตรง']], S.railShape, 'railShape');
+    h += '<span class="lbl">ระบบยึด</span>';
+    h += chipSet([['หมุด','หมุดแปะข้าง'],['ยู','วางยู+ครอบอลู'],['เสา','เสาตั้ง+ราวบน']], S.railMount, 'railMount');
+    h += '<span class="lbl">ราวมือจับบน</span>';
+    h += chipSet([['none','ไม่มี'],['u','ยู +500/ม.'],['box','กล่อง +600/ม.']], S.railHr, 'railHr');
+    h += '<div class="sz-row two"><div class="fld"><label>ความยาว (ม.)</label><input class="qi-w" type="number" step="0.1" value="'+S.W+'"></div><div class="fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" value="'+S.qty+'"></div></div>';
+
+  } else if(S.cat==='special'){
+    /* ──── ระแนงพิเศษ (mockup) ──── */
+    h += '<span class="lbl">ชนิด</span>';
+    h += chipSet([['bar_openclose','ระแนงหมุนเปิด-ปิด'],['bar_grid_z','บานเกล็ดอลู']], S.spId, 'spId');
+    h += '<div class="sz-row"><div class="fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" value="'+S.W+'"></div><div class="fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" value="'+S.H+'"></div><div class="fld"><label>ชุด</label><input class="qi-qty" type="number" step="1" value="'+S.qty+'"></div></div>';
+    if(S.spId==='bar_openclose'){
+      h += '<span class="lbl">ควบคุม</span>';
+      h += chipSet([['0','มือ'],['1','มอเตอร์']], String(S.spMotor), 'spMotor');
+    }
+  }
+
+  body.innerHTML=h;
+  bindChips(body);
+  calc();
+}
+
+/* ══════════════════════════════════════════════
+   CALC — คำนวณราคา (dummy rate · เดโม)
+══════════════════════════════════════════════ */
+function calc(){
+  var pcBody=document.getElementById('pc-body');
+  var pcTot=document.getElementById('pc-tot');
+  var pcLbl=document.getElementById('pc-lbl');
+  var a=S.W*S.H;
+
+  // sync W/H/qty from inputs (กัน lose focus)
+  var wi=document.querySelector('input.qi-w'), hi=document.querySelector('input.qi-h'), qi=document.querySelector('input.qi-qty');
+  if(wi) S.W=parseFloat(wi.value)||S.W;
+  if(hi) S.H=parseFloat(hi.value)||S.H;
+  if(qi) S.qty=parseInt(qi.value)||S.qty;
+
+  var rate=0, name='', id='';
+
+  if(S.cat==='ranae'){
+    if(S.rtype==='box'){
+      if(S.box&&S.face&&S.gap&&S.frame){
+        var node=RTREE[S.box]&&RTREE[S.box][S.face]&&RTREE[S.box][S.face][S.gap]&&RTREE[S.box][S.face][S.gap][S.frame];
+        if(node){rate=node.rate;id=node.id;name='ระแนงกล่อง '+S.box+' · '+S.frame;}
+      }
+    } else {
+      if(S.box&&S.frame){
+        var gr=GLEED.find(function(r){return r[2]===S.box&&r[3]===S.frame;});
+        if(gr){rate=gr[1];id=gr[0];name='เกล็ด Z '+S.box+' · '+S.frame;}
+      }
+    }
+  } else if(S.cat==='rail'){
+    // dummy rail calc
+    var rmap={'หมุด+เฉียง':'imp1','ยู+เฉียง':'imp2','เสา+เฉียง':'imp3','หมุด+ตรง':'imp4','ยู+ตรง':'imp5','เสา+ตรง':'imp6'};
+    var rk=S.railMount+'+'+S.railShape;
+    var rRates={imp1:[[0,5,10700],[5,10,10000],[10,15,9700],[15,9999,9400]],imp2:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],imp3:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],imp4:[[0,5,9700],[5,10,9000],[10,15,8700],[15,9999,8400]],imp5:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]],imp6:[[0,5,7900],[5,10,7200],[10,15,7000],[15,9999,6700]]};
+    var rid=rmap[rk]||'imp1';
+    var tiers=rRates[rid];
+    var rr=0; for(var i=0;i<tiers.length;i++){if(S.W>=tiers[i][0]&&S.W<tiers[i][1]){rr=tiers[i][2];break;}} if(!rr)rr=tiers[tiers.length-1][2];
+    rate=rr; a=S.W; name='ราวกันตก '+S.railShape+' · '+S.railMount;
+    var hrAdd=S.railHr==='u'?500*S.W:S.railHr==='box'?600*S.W:0;
+    if(rate){
+      var sell=Math.ceil((rate*S.W+hrAdd)/1000)*1000;
+      pcBody.innerHTML='<div class="pcrd-row"><b>'+he(name)+'</b></div><div class="pcrd-row"><span>'+S.W.toFixed(1)+' ม. × '+fmt(rate)+' บ./ม.</span></div>'+(hrAdd?'<div class="pcrd-row"><span>มือจับบน +'+fmt(hrAdd)+'</span></div>':'')+'<div class="pcrd-row"><span>ราคา/ชุด</span><b>฿'+fmt(sell)+'</b></div>';
+      pcLbl.textContent='รวม ×'+S.qty+' ชุด'; pcTot.textContent='฿'+fmt(sell*S.qty);
+      return;
+    }
+  }
+
+  if(rate&&a>0){
+    var sell=Math.ceil(a*rate/1000)*1000;
+    var note=document.getElementById('g2-note');
+    note.style.display='block';
+    note.innerHTML='<b>'+he(id)+'</b> · '+S.W.toFixed(1)+'×'+S.H.toFixed(1)+' ม. = '+a.toFixed(2)+' ตร.ม. × '+fmt(rate)+' บ./ตร.ม. = ฿'+fmt(Math.round(a*rate))+' → ปัดขึ้นพัน = ฿'+fmt(sell);
+    pcBody.innerHTML='<div class="pcrd-row"><b>'+he(name)+'</b></div><div class="pcrd-row"><span>พื้นที่ '+a.toFixed(2)+' ตร.ม. × '+fmt(rate)+' บ./ตร.ม.</span></div><div class="pcrd-row"><span>ราคา/ชุด (ปัดขึ้นพัน)</span><b>฿'+fmt(sell)+'</b></div>';
+    pcLbl.textContent='รวม ×'+S.qty+' ชุด';
+    pcTot.textContent='฿'+fmt(sell*S.qty);
+  } else {
+    document.getElementById('g2-note').style.display='none';
+    pcBody.innerHTML='<div class="pending">— เลือกให้ครบก่อน —</div>';
+    pcTot.textContent='฿-';
+    pcLbl.textContent='รวม ×1 ชุด';
+  }
+}
+
+function fmt(n){return Math.round(n).toLocaleString('th-TH');}
+
+/* ══════════════════════════════════════════════
+   BIND GROUP TABS
+══════════════════════════════════════════════ */
+document.querySelectorAll('.gtab').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    S.cat=this.dataset.cat;
+    // reset size defaults per cat
+    if(S.cat==='gate'){S.W=3;S.H=1.8;}
+    else if(S.cat==='ranae'){S.W=3;S.H=2;}
+    else if(S.cat==='rail'){S.W=3;S.H=1;}
+    else if(S.cat==='special'){S.W=3;S.H=1.8;}
+    render();
+  });
+});
+
+// init
+render();
+</script>
+</body>
+</html>

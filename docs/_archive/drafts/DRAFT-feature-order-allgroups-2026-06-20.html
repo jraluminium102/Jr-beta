@@ -1,0 +1,177 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ จัดฟีเจอร์ทุกกลุ่ม (เว้น G2) — ลาก/ลบ/เพิ่ม/แก้/โน้ต — 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--red-d:#8E1118;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--good:#059669;--bg:#F3F4F6;--amber:#B45309;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;font-size:14px;line-height:1.5;}
+h2{color:var(--red);font-size:19px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px;}
+.wrap{max-width:820px;margin:0 auto;}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.tab{padding:8px 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);min-height:42px;}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.tab .b{font-size:10px;opacity:.7;}
+.card{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--line);}
+.ghead{font-size:15px;font-weight:800;color:var(--red);margin:0 0 2px;}
+.gnote{font-size:12px;color:var(--muted);margin:0 0 10px;}
+.rec{background:#FFFBEB;border:1px solid #FCD34D;border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--amber);margin-bottom:12px;line-height:1.55;}
+.rec b{color:#92400E;}
+.row{border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;overflow:hidden;transition:.1s;}
+.row.over{border-color:var(--red);background:#FFF5F5;}
+.row.drag{opacity:.4;border-style:dashed;}
+.row.del{opacity:.5;background:#Fef2f2;}
+.row.del .nm{text-decoration:line-through;}
+.rtop{display:flex;align-items:center;gap:8px;padding:10px 11px;cursor:grab;flex-wrap:wrap;}
+.grip{color:#bbb;font-size:16px;}
+.num{width:23px;height:23px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
+.nm{flex:1;min-width:120px;font-size:13.5px;font-weight:700;cursor:text;}
+.nm input{font:inherit;font-weight:700;border:1px solid var(--red);border-radius:5px;padding:2px 6px;width:100%;}
+.cnt{font-size:11px;color:var(--muted);background:#F3F4F6;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.acts{display:flex;gap:3px;}
+.acts button{min-width:30px;height:28px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-size:12px;color:var(--muted);padding:0 5px;}
+.acts button:hover{border-color:var(--red);color:var(--red);}
+.ar{display:flex;flex-direction:column;gap:1px;}
+.ar button{width:26px;height:13px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer;font-size:9px;line-height:1;color:var(--muted);padding:0;}
+.notebox{display:none;padding:0 11px 10px 42px;}
+.notebox.show{display:block;}
+.notebox textarea{width:100%;border:1px solid #FCD34D;border-radius:7px;padding:7px;font:inherit;font-size:12.5px;background:#FFFBEB;resize:vertical;min-height:38px;}
+.inside{display:none;padding:2px 11px 11px 42px;border-top:1px dashed var(--line);background:#FAFBFD;}
+.inside.show{display:block;}
+.ititle{font-size:11px;color:var(--muted);margin:8px 0 5px;}
+.opt{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#374151;padding:3px 0;}
+.opt .dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex:none;opacity:.45;}
+.opt .onote{margin-left:auto;font-size:10px;color:var(--muted);cursor:pointer;border:1px solid var(--line);border-radius:5px;padding:1px 5px;}
+.opt .onote.has{background:#FFFBEB;border-color:#FCD34D;color:var(--amber);}
+.optnote{display:none;margin:3px 0 6px 13px;}
+.optnote.show{display:block;}
+.optnote input{width:100%;border:1px solid #FCD34D;border-radius:6px;padding:4px 7px;font:inherit;font-size:12px;background:#FFFBEB;}
+.empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;background:#FAFAFA;border-radius:8px;}
+.addbar{display:flex;gap:6px;margin-top:8px;}
+.addbar input{flex:1;border:1.5px dashed var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px;}
+.addbar button{padding:8px 14px;border:1.5px solid var(--red);border-radius:8px;background:#FFF5F5;color:var(--red);font-weight:700;cursor:pointer;font-size:13px;}
+.bar{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;}
+.bar button{flex:1;min-width:120px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12px;cursor:pointer;font-weight:700;color:var(--muted);}
+.bar button:hover{border-color:var(--red);color:var(--red);}
+.bar button.go{background:var(--red);color:#fff;border-color:var(--red);}
+.out{margin-top:12px;background:#1F2937;color:#E5E7EB;border-radius:10px;padding:12px;font-size:12px;font-family:'Consolas',monospace;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}
+.note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;border-top:1px solid var(--line);padding-top:10px;}
+.warn{color:var(--red);font-weight:700;}.good{color:var(--good);font-weight:700;}
+</style></head>
+<body>
+<div class="wrap">
+<h2>ดราฟ จัดฟีเจอร์ทุกกลุ่ม (เว้น G2) <span style="font-size:11px;background:#D1FAE5;color:#065F46;padding:2px 9px;border-radius:20px;">ตรง render จริง</span></h2>
+<p class="sub">เลือกกลุ่ม → <b>ลาก/▲▼</b> เรียง · <b>✎</b> แก้ชื่อ · <b>📝</b> โน้ต · <b>✕</b> ลบ · <b>+ เพิ่มหมวด</b> ล่างสุด · กางดูออปชั่นข้างใน (โน้ตรายตัวได้) · เสร็จกด <b>"📋 สรุปทั้งหมด"</b> ส่งผม</p>
+
+<div class="tabs" id="tabs"></div>
+<div class="card">
+  <div class="ghead" id="ghead"></div>
+  <div class="gnote" id="gnote"></div>
+  <div class="rec" id="rec"></div>
+  <div class="bar"><button onclick="allExp(true)">กางดูทุกหมวด ▾</button><button onclick="allExp(false)">พับทั้งหมด ▴</button><button onclick="resetG()">↺ คืนค่าเดิมกลุ่มนี้</button></div>
+  <div id="list"></div>
+  <div class="addbar"><input id="addinp" placeholder="พิมพ์ชื่อหมวดใหม่ที่อยากเพิ่ม..."><button onclick="addCat()">+ เพิ่มหมวด</button></div>
+</div>
+<div class="bar"><button class="go" onclick="exportAll()">📋 สรุปทั้งหมด (ทุกกลุ่ม) — ส่งผม</button></div>
+<div class="out" id="out" style="display:none;"></div>
+
+<p class="note">
+  <span class="warn">⚠️ ความจริงที่ต้องรู้:</span>
+  • <b>G1</b> ออปชั่นหลัก (ล็อค/มุ้ง/คาดตาราง/สี/กระจก) อยู่ <b>นอก accordion</b> (กล่องเด่นบนสุด) — ในนี้เหลือของรอง · <b>G5 มุ้ง</b> ฟอร์มเฉพาะ ไม่มีหมวด · <b>G3</b> = หลังคา+ฝ้า-ผนัง รวม<br>
+  <span class="good">กันพัง:</span> ทำจริงผ่านระบบ "ลำดับต่อกลุ่ม" (แก้กลุ่มเดียวไม่กระทบอื่น) + golden 3 ตัว (รวม order-snapshot) เช็คทุก push · การ "ย้ายข้ามหมวด/เพิ่ม/ลบ" = งานใหญ่กว่าเรียงเฉยๆ ผมจะบอกความเสี่ยงต่อจุดตอนสรุป
+</p>
+</div>
+
+<script>
+var SRC={"1":["🚪 ติดตาย · ช่องแสง","🏗️ โครงสร้าง · แผ่นทึบ · ราง","🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)","➕ งานเสริม · หมายเหตุ"],"3":["🏠 วัสดุมุง · โครง","🔄 หลังคาเลื่อน","🌧️ ปลายหลังคา · รางน้ำ","🔩 ของเสริมหลังคา","➕ หลังคาผสม (วัสดุที่ 2)","📝 งานพิเศษ · รื้อของเดิม","🏗️ โครงสร้าง · แผ่นทึบ · ราง","🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)","➕ งานเสริม · หมายเหตุ"],"4":["📦 รายละเอียดตู้","🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)","➕ งานเสริม · หมายเหตุ"],"7":["🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)","➕ งานเสริม · หมายเหตุ"]};
+var OPTS={"1":{"🚪 ติดตาย · ช่องแสง":["ช่องแสง (กระจก) พื้นที่ ตร.ม. เว้น 0 = ทึบล้วน"],"🏗️ โครงสร้าง · แผ่นทึบ · ราง":["ซ่อนคาน (base 4,000) (≤3ม.=4,000 · เกิน +500/ม.) ยาว","ซ่อนราง (base 4,000) (≤3ม.=4,000 · เกิน +500/ม.) ยาว","ทาสี บาท","สี","ทาสี","Soft Close (สลักหน่วงบาน) +4,000","สลิงเปิดซ้อน(×บาน) +2,000"],"🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)":["ฝังรางยู (ในพื้น) — ติ๊กแล้วเลือกธรณีหลังเต่าไม่ได้","รื้อของเดิม (รายการนี้)","ครอบวงกบอลู หรือระบุ(ม.)","ดรอปพื้น(ม.)","ธรณี","ฝังรางยู (U-Track) (≤2ม.=4,000 · เกิน +500/ม.) ยาว(ม","เสริมคานซัพพอร์ท (≤3ม.=4,000 · เกิน +500/ม.) ยาว(ม.)"],"➕ งานเสริม · หมายเหตุ":["งานเสริม/วิศวกรรม","combo ราคา (กรอกเอง · บาท)","ตารางเต็มบาน +5,000 (กว้าง≤1.2 / สูง≤3)","แบบเปิด","รุ่นผนังเบา","ฉนวนกันความร้อนและกันเสียง หนา 3\" +600/ตร.ม.","รุ่น/ความหนา (ระบุในใบ · ราคาตามวัสดุ รอเรต)","โครง","ความหนา ISOWALL","สมาร์ทบอร์ด หนา","ทุนกระจก (บาท/ตร.ม.)","โหมดกำไร","กำไร % (มือ)","Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-4000=+70%"]},"3":{"🏠 วัสดุมุง · โครง":["สีวัสดุมุง (ไวนิล)","แป","โครงสร้าง ⚠ ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลั","สีวัสดุมุง (ดีไลท์)","สีวัสดุมุง (โพลีตัน) (ชื่อเต็มลงใบ)","ชนิดฟิล์ม","ความหนากระจก","สีเมทัลชีท","สีชินโคไลท์ (ชื่อเต็ม+รหัสลงใบ)"],"🔄 หลังคาเลื่อน":["ทำเป็นหลังคาเลื่อน","① ชนิดเลื่อน (ราคาเท่ากัน · ระบุในใบ)② พื้นที่เลื่อน"],"🌧️ ปลายหลังคา · รางน้ำ":["ปลายหลังคา \"ปิดปลายกันน้ำ\" = กันน้ำกระเด็น (1,000/ม.","ชนิดราง (คิด/ม.) ยาว(ม.) (ว่าง/0 = ใช้ความกว้างหลังค","ปิดปลายกันน้ำกระเด็น (1,000/ม.) ยาว(ม.) (ว่าง/0 = ใช"],"🔩 ของเสริมหลังคา":["เสาแผง (4,000/ต้น) · เสา 4\"x8\" (2,000/ต้น)","คานเหล็กถัก ยาว(ม.)","เสริมเพลทเหล็กล่าง (รับล่าง)","เหล็กดึงด้านบน","ซ่อนสโลป สูง ยาว/ด้าน ด้าน สี","มีงานปิดซ่อนราง กว้างราง(ซม.) สูง(ซม.) ยาวรวม(ม.)","มีงานครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม.) ยาว","วัสดุปิดรอยต่อแผ่นหลังคายาว (ม.) สี (ขั้นต่ำ 5,000 ·","โซ่รางน้ำ (3,000/เส้น)","ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว(ม.)"],"➕ หลังคาผสม (วัสดุที่ 2)":["+ ต่อปลายวัสดุที่ 2สีวัสดุที่ 2ขนาดส่วนที่ 2ยาว (ม.)"],"📝 งานพิเศษ · รื้อของเดิม":["ฝ้า (ออปชั่น)ชนิดฝ้าสี/ลาย ฉนวนกันร้อน/กันเสียง หนา ","งานเสริม/วิศวกรรม","รื้อของเดิม (รายการนี้)"],"🏗️ โครงสร้าง · แผ่นทึบ · ราง":["ทาสี บาท","สี","ทาสี","สีอบ ปิดราง (ลูกฟูก 1 ทาง)"],"🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)":["รื้อของเดิม (รายการนี้)"],"➕ งานเสริม · หมายเหตุ":["รุ่น/ความหนา (ระบุในใบ · ราคาตามวัสดุ รอเรต)","โครง","งานเสริม/วิศวกรรม","ฉนวนกันความร้อนและกันเสียง หนา 3\" +600/ตร.ม.","ฝ้าฉาบเรียบ","ฝ้าเฉียงตามแนวหลังคา","ความหนา ISOWALL","สมาร์ทบอร์ด หนา","ขนาดราง (กว้าง)","หรือกรอก กว้าง (ซม.)","สูงราง (ซม.)"]},"4":{"📦 รายละเอียดตู้":["สินค้า ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5,500/บ","สีฝาตู้ ⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน","รหัสสี (เฉพาะสีพิเศษ/อบ)","สินค้า","ประเภทตู้","จำนวนบานหน้าตู้ ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราคา/บานล","ชนิดชั้น ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง","สีอลู (ช่องสีด้านบน) กระทบ เฉพาะโครงตู้ ไม่ใช่บานหน้","ลึก(ม.) autoจำนวนชั้น auto","ผนังตู้ (ติ๊กด้านที่ต้องการ) — ด้านชนผนังปูน ไม่ต้อง"],"🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)":["รื้อของเดิม (รายการนี้)"],"➕ งานเสริม · หมายเหตุ":["งานเสริม/วิศวกรรม"]},"7":{"🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)":["รื้อของเดิม (รายการนี้)"],"➕ งานเสริม · หมายเหตุ":["งานเสริม/วิศวกรรม"]}};
+var NAMES={'1':'G1 บาน · กระจก','3':'G3 หลังคา · ฝ้า-ผนัง','4':'G4 ตู้อลู · ฝาตู้','5':'G5 มุ้ง','7':'G7 ม่านซิป'};
+var REC={
+ '1':'<b>💡 แนะนำ G1:</b> ลำดับปัจจุบันโอเค (ของรอง) · ข้อสังเกต: "งานเสริม · หมายเหตุ" มี 14 ตัวเยอะ — ปนหลายเรื่อง (ผนังเบา/ฉนวน/โหมดกำไร/ทุนกระจก) อาจแยก "ตั้งราคา/กำไร" ออกเป็นกล่องของตัวเอง',
+ '3':'<b>💡 แนะนำ G3:</b> ลำดับหลังคา (วัสดุมุง→เลื่อน→ปลาย→ของเสริม→ผสม→พิเศษ) เป็น flow ที่ดีอยู่แล้ว · "ของเสริมหลังคา" 10 ตัวเยอะสุด — ถ้ารกอาจแยกย่อย · ฝ้า-ผนังใช้หมวดท้าย (โครงสร้าง/เสริม/หมายเหตุ) ปนกับหลังคา',
+ '4':'<b>💡 แนะนำ G4:</b> เรียบง่ายดี (ตู้→เสริม→หมายเหตุ) ไม่ต้องแก้มาก',
+ '5':'<b>💡 G5 มุ้ง:</b> ใช้ฟอร์มมุ้งเฉพาะ ไม่มีหมวดในระบบนี้ — ถ้าอยากจัดลำดับในฟอร์มมุ้ง เป็นงานคนละแบบ บอกได้',
+ '7':'<b>💡 แนะนำ G7:</b> มีแค่ 2 หมวด (เสริม/หมายเหตุ) พอแล้ว'
+};
+var cur='1';
+var STATE={};
+function initG(g){
+ if(STATE[g])return;
+ STATE[g]=(SRC[g]||[]).map(function(c){return {name:c,note:'',del:false,custom:false,opts:((OPTS[g]&&OPTS[g][c])||[]).map(function(o){return {name:o,note:''};})};});
+}
+var tabs=document.getElementById('tabs');
+Object.keys(NAMES).forEach(function(g){
+ var b=document.createElement('button'); b.className='tab'+(g===cur?' on':'');
+ b.innerHTML='G'+g+' <span class="b">('+((SRC[g]||[]).length||0)+')</span>';
+ b.onclick=function(){cur=g;render();}; tabs.appendChild(b);
+});
+function render(){
+ initG(cur);
+ [].forEach.call(tabs.children,function(b){b.classList.toggle('on',b.textContent.indexOf('G'+cur+' ')===0);});
+ document.getElementById('ghead').textContent=NAMES[cur];
+ document.getElementById('rec').innerHTML=REC[cur]||'';
+ var st=STATE[cur];
+ document.getElementById('gnote').textContent=st.length?(st.filter(function(x){return !x.del;}).length+' หมวด · ลาก/▲▼ เรียง · ✎ แก้ · 📝 โน้ต · ✕ ลบ'):'';
+ var list=document.getElementById('list');
+ if(!st.length){ list.innerHTML='<div class="empty">กลุ่มนี้ไม่มีหมวด (ฟอร์มเฉพาะ) — โน้ตบอกผมได้ว่าอยากให้ทำอะไร</div>'; return; }
+ list.innerHTML=''; var shown=0;
+ st.forEach(function(it,i){
+  if(!it.del)shown++;
+  var r=document.createElement('div'); r.className='row'+(it.del?' del':''); r.dataset.i=i;
+  var os=it.opts||[];
+  var insideHtml=os.length? '<div class="ititle">ของข้างใน ('+os.length+'):</div>'+os.map(function(o,oi){
+     return '<div class="opt"><span class="dot"></span><span>'+o.name+'</span><span class="onote'+(o.note?' has':'')+'" data-oi="'+oi+'">📝'+(o.note?'✓':'')+'</span></div>'+
+            '<div class="optnote'+(o.note?' show':'')+'" data-oin="'+oi+'"><input placeholder="โน้ต/อยากย้าย-ลบ-แก้..." value="'+(o.note||'').replace(/"/g,'&quot;')+'"></div>';
+   }).join('') : '<div class="ititle">— ไม่พบออปชั่น —</div>';
+  r.innerHTML='<div class="rtop" draggable="true">'+
+    '<span class="grip">⠿</span><span class="num">'+(it.del?'✕':shown)+'</span>'+
+    '<span class="nm">'+it.name+(it.custom?' <span style="font-size:10px;color:#059669;">(ใหม่)</span>':'')+'</span>'+
+    '<span class="cnt">'+(os.length||'·')+' ออปชั่น</span>'+
+    '<span class="acts"><button data-act="edit">✎</button><button data-act="note">📝'+(it.note?'✓':'')+'</button><button data-act="del">'+(it.del?'↺':'✕')+'</button><button data-act="exp">▾</button></span>'+
+    '<span class="ar"><button data-up>▲</button><button data-dn>▼</button></span></div>'+
+    '<div class="notebox'+(it.note?' show':'')+'"><textarea placeholder="โน้ตหมวดนี้ (เช่น ทำไมย้าย/อยากได้แบบไหน)">'+(it.note||'')+'</textarea></div>'+
+    '<div class="inside">'+insideHtml+'</div>';
+  var top=r.querySelector('.rtop'), inside=r.querySelector('.inside'), nb=r.querySelector('.notebox');
+  r.querySelector('[data-act=exp]').onclick=function(e){e.stopPropagation();inside.classList.toggle('show');};
+  r.querySelector('[data-act=note]').onclick=function(e){e.stopPropagation();nb.classList.toggle('show');};
+  r.querySelector('[data-act=del]').onclick=function(e){e.stopPropagation();it.del=!it.del;render();};
+  r.querySelector('[data-act=edit]').onclick=function(e){e.stopPropagation();editName(r,it);};
+  r.querySelector('[data-up]').onclick=function(e){e.stopPropagation();mv(i,i-1);};
+  r.querySelector('[data-dn]').onclick=function(e){e.stopPropagation();mv(i,i+1);};
+  nb.querySelector('textarea').oninput=function(){it.note=this.value;};
+  [].forEach.call(r.querySelectorAll('.onote'),function(b){b.onclick=function(e){e.stopPropagation();var box=r.querySelector('.optnote[data-oin="'+this.dataset.oi+'"]');box.classList.toggle('show');};});
+  [].forEach.call(r.querySelectorAll('.optnote input'),function(inp){inp.oninput=function(){os[this.closest('.optnote').dataset.oin].note=this.value;};});
+  top.addEventListener('dragstart',function(){r.classList.add('drag');window._di=i;});
+  top.addEventListener('dragend',function(){r.classList.remove('drag');[].forEach.call(list.children,function(x){x.classList.remove('over');});});
+  top.addEventListener('dragover',function(e){e.preventDefault();r.classList.add('over');});
+  top.addEventListener('dragleave',function(){r.classList.remove('over');});
+  top.addEventListener('drop',function(e){e.preventDefault();mv(window._di,i);});
+  list.appendChild(r);
+ });
+}
+function editName(r,it){
+ var span=r.querySelector('.nm'); var inp=document.createElement('input'); inp.value=it.name;
+ span.innerHTML=''; span.appendChild(inp); inp.focus();
+ function save(){it.name=inp.value||it.name;render();}
+ inp.onblur=save; inp.onkeydown=function(e){if(e.key==='Enter')save();};
+}
+function mv(from,to){var s=STATE[cur];if(to<0||to>=s.length||from===to)return;var x=s.splice(from,1)[0];s.splice(to,0,x);render();}
+function allExp(on){[].forEach.call(document.querySelectorAll('#list .inside'),function(el){el.classList.toggle('show',on);});}
+function addCat(){var v=document.getElementById('addinp').value.trim();if(!v)return;initG(cur);STATE[cur].push({name:'✨ '+v,note:'',del:false,custom:true,opts:[]});document.getElementById('addinp').value='';render();}
+function resetG(){delete STATE[cur];render();}
+function exportAll(){
+ var o='===== สรุปจัดฟีเจอร์ (เว้น G2) =====\n';
+ Object.keys(NAMES).forEach(function(g){
+  initG(g); var s=STATE[g]; if(!s.length){o+='\nG'+g+' '+NAMES[g]+': (ไม่มีหมวด)\n';return;}
+  o+='\n── G'+g+' '+NAMES[g]+' ──\n';
+  var n=0;
+  s.forEach(function(it){
+   if(it.del){o+='  ✕ ลบ: '+it.name+(it.note?'  [โน้ต: '+it.note+']':'')+'\n';return;}
+   n++; o+='  '+n+'. '+it.name+(it.custom?' (เพิ่มใหม่)':'')+(it.note?'  [โน้ต: '+it.note+']':'')+'\n';
+   (it.opts||[]).forEach(function(op){if(op.note)o+='       • '+op.name+' → '+op.note+'\n';});
+  });
+ });
+ var el=document.getElementById('out'); el.style.display='block'; el.textContent=o; el.scrollIntoView({behavior:'smooth'});
+}
+render();
+</script>
+</body></html>

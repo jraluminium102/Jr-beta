@@ -1,0 +1,94 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ คิดเร็ว — คาดตาราง + ลูกฟูก (ปุ่มสวย) 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--red-dark:#8E1118;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:#F3F4F6;color:var(--ink);padding:14px;font-size:15px;}
+h2{color:var(--red);font-size:18px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;max-width:520px;margin:0 auto 14px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.lbl{font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;}
+.sec{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{min-height:44px;padding:8px 16px;border:1.5px solid var(--line);border-radius:11px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;transition:all .12s;}
+.chip:hover{border-color:#bbb;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 2px 6px rgba(179,21,29,.25);}
+.chip .ic{font-size:17px;}
+.sub-row{display:none;margin-top:10px;background:#FAFAFA;border:1px solid var(--line);border-radius:11px;padding:11px;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.sub-row.show{display:flex;}
+.fld{display:flex;flex-direction:column;}
+.fld label{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.stp{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;align-items:center;background:#fff;}
+.stp button{width:38px;height:42px;border:0;background:#F3F4F6;font-size:18px;cursor:pointer;color:var(--ink);}
+.stp input{width:46px;border:0;text-align:center;height:42px;font-size:15px;font-family:inherit;}
+.num{width:74px;height:42px;border:1.5px solid var(--line);border-radius:10px;text-align:center;font-size:15px;font-family:inherit;}
+.hint{font-size:12px;color:var(--muted);background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:6px 10px;margin-top:8px;color:#0369A1;}
+.price{margin-top:14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
+.price .t{font-size:13px;color:var(--muted);}
+.price .v{font-size:24px;font-weight:800;color:var(--red);}
+.deltas{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7;}
+.demo{display:inline-block;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;}
+</style></head>
+<body>
+<h2>ดราฟ โหมดคิดเร็ว (งานบาน) — เพิ่ม "คาดตาราง" + "ลูกฟูก/แผ่นทึบล่าง"<span class="demo">ราคาเดโม</span></h2>
+<p class="sub">ปุ่มสวย กดง่าย · กดเปิดแล้วช่องกรอกค่อยโผล่ · ลูกฟูก: สีคิดตามสีอลูอัตโนมัติ (ตรงกับงานโหมดเต็มที่เพิ่งแก้)</p>
+
+<div class="card">
+  <div style="font-size:13px;color:var(--muted);">ตัวอย่าง: บานเลื่อน 1.8 × 2.0 ม. · สีอลู <b id="aluName" style="color:var(--ink);">อบขาว</b></div>
+  <div style="margin-top:6px;"><span class="lbl">เปลี่ยนสีอลู (เดโม — ดูผลกับสีลูกฟูก)</span>
+    <div class="chips">
+      <button class="chip on" data-fin="0" onclick="pickAlu(this,0,'อบขาว')">อบขาว</button>
+      <button class="chip" data-fin="400" onclick="pickAlu(this,400,'เทาซาฮาร่า')">เทาซาฮาร่า</button>
+      <button class="chip" data-fin="1500" onclick="pickAlu(this,1500,'ลายไม้สต๊อก')">ลายไม้สต๊อก</button>
+      <button class="chip" data-fin="1600" onclick="pickAlu(this,1600,'อบพิเศษ')">อบพิเศษ</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="lbl">▦ คาดตาราง</span>
+    <div class="chips">
+      <button class="chip on" id="gridOff" onclick="setGrid(false)"><span class="ic">▢</span>ไม่มี</button>
+      <button class="chip" id="gridOn" onclick="setGrid(true)"><span class="ic">▦</span>มีคาดตาราง</button>
+    </div>
+    <div class="sub-row" id="gridRow">
+      <div class="fld"><label>เส้นนอน</label><div class="stp"><button onclick="bump('gnh',-1)">−</button><input id="gnh" value="0" readonly><button onclick="bump('gnh',1)">+</button></div></div>
+      <div class="fld"><label>เส้นตั้ง</label><div class="stp"><button onclick="bump('gnv',-1)">−</button><input id="gnv" value="0" readonly><button onclick="bump('gnv',1)">+</button></div></div>
+      <div class="fld"><label>ราคา/ม.</label><input class="num" id="grate" value="200" oninput="calc()"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="lbl">▤ แผ่นทึบล่าง (ลูกฟูก / คอมโพสิท)</span>
+    <div class="chips">
+      <button class="chip on" data-sl="" onclick="setSolid(this,'')"><span class="ic">▢</span>ไม่มี</button>
+      <button class="chip" data-sl="corrugated" onclick="setSolid(this,'corrugated')"><span class="ic">▤</span>อลูลูกฟูก</button>
+      <button class="chip" data-sl="composite" onclick="setSolid(this,'composite')"><span class="ic">▦</span>คอมโพสิท</button>
+    </div>
+    <div class="sub-row" id="slRow">
+      <div class="fld"><label>กว้าง (ม.)</label><input class="num" id="slw" value="1.8" oninput="calc()"></div>
+      <div class="fld"><label>สูง (ม.)</label><input class="num" id="slh" value="0.4" oninput="calc()"></div>
+      <div class="fld" style="justify-content:flex-end;"><span class="hint" style="margin:0;" id="slColorHint">สีลูกฟูก: ตามสีอลู (+0/ตร.ม.)</span></div>
+    </div>
+  </div>
+
+  <div class="price"><span class="t">ราคา/ชุด (เดโม)</span><span class="v" id="price">฿21,000</span></div>
+  <div class="deltas" id="deltas"></div>
+</div>
+
+<script>
+var BASE=21000, aluFin=0, gridOn=false, gnh=0, gnv=0, sl='';
+var W=1.8,H=2.0;
+function pickAlu(b,fin,nm){ document.querySelectorAll('[data-fin]').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); aluFin=fin; document.getElementById('aluName').textContent=nm; calc(); }
+function setGrid(on){ gridOn=on; document.getElementById('gridOn').classList.toggle('on',on); document.getElementById('gridOff').classList.toggle('on',!on); document.getElementById('gridRow').classList.toggle('show',on); if(on&&gnv===0){gnv=2;document.getElementById('gnv').value=2;} calc(); }
+function setSolid(b,v){ document.querySelectorAll('[data-sl]').forEach(function(c){c.classList.remove('on');}); b.classList.add('on'); sl=v; document.getElementById('slRow').classList.toggle('show',!!v); calc(); }
+function bump(id,d){ var el=document.getElementById(id); var v=Math.max(0,(parseInt(el.value)||0)+d); el.value=v; if(id==='gnh')gnh=v; else gnv=v; calc(); }
+function calc(){
+  var total=BASE, parts=[];
+  if(gridOn){ var grate=parseFloat(document.getElementById('grate').value)||200; var glen=gnh*W+gnv*H; var gc=Math.round(glen*grate); if(gc>0){total+=gc; parts.push('คาดตาราง '+gnh+'นอน+'+gnv+'ตั้ง = '+glen.toFixed(1)+'ม.×'+grate+' = +'+gc.toLocaleString());} }
+  if(sl){ var slw=parseFloat(document.getElementById('slw').value)||0, slh=parseFloat(document.getElementById('slh').value)||0; var a=slw*slh; var rate=sl==='composite'?3300:3500; var colorRate=sl==='corrugated'?aluFin:0; var sc=Math.round(a*rate+colorRate*a); document.getElementById('slColorHint').textContent='สีลูกฟูก: ตามสีอลู (+'+colorRate.toLocaleString()+'/ตร.ม.)'; if(a>0){total+=sc; parts.push((sl==='composite'?'คอมโพสิทล่าง':'อลูลูกฟูกล่าง')+' '+a.toFixed(2)+'ตร.ม.×'+rate.toLocaleString()+(colorRate>0?(' +สี '+colorRate.toLocaleString()):'')+' = +'+sc.toLocaleString());} }
+  document.getElementById('price').textContent='฿'+total.toLocaleString();
+  document.getElementById('deltas').innerHTML=parts.length?('ฐาน 21,000<br>'+parts.join('<br>')):'ฐาน 21,000 (ยังไม่เลือกเสริม)';
+}
+calc();
+</script>
+</body></html>

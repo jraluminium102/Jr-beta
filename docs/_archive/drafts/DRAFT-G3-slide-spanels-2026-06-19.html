@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT — G3 หลังคาเลื่อน จำนวนแผง</title>
+<style>
+:root{--red:#C0392B;--line:#D1D5DB;--muted:#6B7280;--bg:#F9FAFB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:#222;font-size:15px;padding:20px;}
+h2{font-size:16px;margin-bottom:4px;color:var(--red);}
+.note{font-size:12px;color:var(--muted);margin-bottom:16px;background:#FEF3C7;padding:8px 12px;border-radius:8px;border:1px solid #FDE68A;}
+.card{background:#fff;border-radius:12px;padding:20px;max-width:560px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.lbl{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:14px;font-family:inherit;transition:all .15s;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip small{font-size:11px;opacity:.8;}
+.step-wrap{display:flex;align-items:center;gap:10px;}
+.stepper{display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;}
+.stepper button{width:44px;min-height:44px;border:0;background:#F3F4F6;font-size:20px;cursor:pointer;}
+.stepper button:hover{background:#E5E7EB;}
+.stepper input{width:52px;border:0;text-align:center;height:44px;font-size:16px;font-family:inherit;}
+.hint{font-size:12px;color:var(--muted);}
+.price-card{background:var(--red);color:#fff;border-radius:10px;padding:14px 16px;margin-top:16px;}
+.price-card .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;opacity:.9;}
+.price-card .total{display:flex;justify-content:space-between;font-size:20px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.3);}
+.price-card .detail{font-size:11px;opacity:.7;margin-top:6px;}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.box{padding:14px;border-radius:10px;border:2px solid;}
+.box.before{border-color:#EF4444;background:#FEF2F2;}
+.box.after{border-color:#10B981;background:#ECFDF5;}
+.box h3{font-size:13px;font-weight:700;margin-bottom:8px;}
+.box ul{font-size:13px;padding-left:16px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<h2>DRAFT — G3 หลังคาเลื่อน เพิ่มช่องจำนวนแผง</h2>
+<div class="note">
+  📋 ดราฟนี้แสดงเฉพาะส่วนที่เปลี่ยน — กดปุ่มทดสอบได้จริง · ราคาใช้สูตร engine จริง<br>
+  <strong>จุดที่เปลี่ยน:</strong> เมื่อกด "ทำเลื่อน" → โผล่ช่อง stepper "จำนวนแผงเลื่อน" (ขั้นต่ำ 2)
+</div>
+
+<div class="before-after">
+  <div class="box before">
+    <h3>❌ ก่อน (ปัจจุบัน)</h3>
+    <ul>
+      <li>กด "ทำเลื่อน" → ราคาเปลี่ยนทันที</li>
+      <li>hardcode 2 แผงเสมอ</li>
+      <li>ลูกค้า 4 แผงก็คิดเงินแค่ 2 แผง</li>
+    </ul>
+  </div>
+  <div class="box after">
+    <h3>✅ หลัง (ดราฟนี้)</h3>
+    <ul>
+      <li>กด "ทำเลื่อน" → โผล่ช่อง stepper จำนวนแผง</li>
+      <li>ค่าเริ่มต้น 2 แผง, ปรับได้ − / +</li>
+      <li>ราคาคิดตามจำนวนแผงที่กรอก</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="lbl">หลังคาเลื่อน</div>
+  <div class="chips">
+    <button class="chip" id="btn-slide-on" onclick="setSlide(1)">ทำเลื่อน <small>+ชุดเลื่อน+มอเตอร์</small></button>
+    <button class="chip on" id="btn-slide-off" onclick="setSlide(0)">ไม่เลื่อน</button>
+  </div>
+
+  <div id="panels-section" style="display:none;">
+    <div class="lbl">จำนวนแผงเลื่อน</div>
+    <div class="step-wrap">
+      <div class="stepper">
+        <button onclick="stepPanels(-1)">−</button>
+        <input id="inp-panels" type="number" min="2" value="2" oninput="clampPanels();calcPrice()">
+        <button onclick="stepPanels(1)">+</button>
+      </div>
+      <span class="hint">แผง (ขั้นต่ำ 2)</span>
+    </div>
+  </div>
+
+  <div class="lbl">ขนาด (กว้าง × ยาว)</div>
+  <div style="display:flex;gap:10px;margin-bottom:4px;">
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">กว้าง (ม.)</div>
+      <input type="number" id="inp-w" value="4" step="0.1" min="0" oninput="calcPrice()" style="width:100px;padding:8px;border:1.5px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;">
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">ยาว (ม.)</div>
+      <input type="number" id="inp-h" value="3" step="0.1" min="0" oninput="calcPrice()" style="width:100px;padding:8px;border:1.5px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;">
+    </div>
+  </div>
+
+  <div class="price-card" id="price-card">
+    <div class="row"><span>เมทัลชีท 1 นิ้ว ท้อง PVC EPS</span></div>
+    <div class="row"><span>พื้นที่</span><span id="area-txt">12.00 ตร.ม.</span></div>
+    <div class="row" id="slide-row" style="display:none;"><span id="slide-txt"></span></div>
+    <div class="total"><span>/ชุด</span><span id="price-txt">฿28,000</span></div>
+    <div class="detail" id="detail-txt">calcUnit จริง · ขั้นต่ำ 28,000</div>
+  </div>
+</div>
+
+<script>
+var slideOn = false;
+
+// เรต engine จริง (ดึงจาก index.html)
+var BASE_RATE = 2800; // imp7 per sqm (IMP7_RATES ขั้นต่ำ 10 ตร.ม.)
+var IMP7_RATES = [[0,10,2800],[10,20,2600],[20,40,2400],[40,1e9,2200]];
+var MIN_PRICE = 28000;
+
+// สูตรเลื่อน (engine L1761)
+// _tier: area<=10→4500, <=20→6750, <=30→9000, else→11250
+// spanels N: ฐาน 18000 + (N-2)*4500
+// motor: 1 ตัว 30000
+
+function getTier(a){ return a<=10?4500:a<=20?6750:a<=30?9000:11250; }
+function getBaseRate(a){ for(var i=0;i<IMP7_RATES.length;i++){ if(a>=IMP7_RATES[i][0]&&a<IMP7_RATES[i][1])return IMP7_RATES[i][2]; } return IMP7_RATES[IMP7_RATES.length-1][2]; }
+
+function calcPrice(){
+  var W = parseFloat(document.getElementById('inp-w').value)||0;
+  var H = parseFloat(document.getElementById('inp-h').value)||0;
+  var a = W*H;
+  document.getElementById('area-txt').textContent = a.toFixed(2)+' ตร.ม.';
+
+  var roofCost = Math.max(MIN_PRICE, getBaseRate(a)*a);
+  var slideCost = 0;
+  var slideDesc = '';
+
+  if(slideOn){
+    var N = Math.max(2, parseInt(document.getElementById('inp-panels').value)||2);
+    var tier = getTier(a);
+    var motorCost = 30000;
+    slideCost = 18000 + (N-2)*4500 + motorCost;
+    slideDesc = 'ชุดเลื่อน '+N+' แผง (ฐาน 18,000 + บานเพิ่ม '+(N-2)+'×4,500='+(N-2)*4500+') + มอเตอร์ 1 ตัว 30,000';
+    document.getElementById('slide-row').style.display='';
+    document.getElementById('slide-txt').textContent = slideDesc;
+  } else {
+    document.getElementById('slide-row').style.display='none';
+  }
+
+  var total = Math.ceil((roofCost+slideCost)/1000)*1000;
+  document.getElementById('price-txt').textContent = '฿'+total.toLocaleString();
+  document.getElementById('detail-txt').textContent = 'หลังคา '+Math.ceil(roofCost/1000)*1000+' + เลื่อน '+(slideCost?slideCost.toLocaleString():'0');
+}
+
+function setSlide(v){
+  slideOn = v===1;
+  document.getElementById('btn-slide-on').className = 'chip'+(slideOn?' on':'');
+  document.getElementById('btn-slide-off').className = 'chip'+(!slideOn?' on':'');
+  document.getElementById('panels-section').style.display = slideOn?'':'none';
+  calcPrice();
+}
+
+function stepPanels(d){
+  var inp = document.getElementById('inp-panels');
+  var v = Math.max(2,(parseInt(inp.value)||2)+d);
+  inp.value = v;
+  calcPrice();
+}
+
+function clampPanels(){
+  var inp = document.getElementById('inp-panels');
+  if(parseInt(inp.value)<2) inp.value=2;
+  calcPrice();
+}
+
+calcPrice();
+</script>
+</body>
+</html>

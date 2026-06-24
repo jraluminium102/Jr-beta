@@ -1,0 +1,143 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ใบตัวอย่าง G1 — ลากจัดเนื้อหาข้ามบล็อก</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.5;}
+.wrap{max-width:820px;margin:0 auto;padding:18px 14px 80px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:12px;}
+.howto{background:#FFF7ED;border:1px solid #FCD9A8;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:16px;color:#9A6A1E;}
+
+/* ใบจริง mock */
+.inv{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.invhdr{display:flex;background:#FAFBFC;border-bottom:2px solid var(--red);font-size:11.5px;font-weight:700;color:#374151;}
+.invhdr>div{padding:7px 8px;}
+.c-no{width:34px;text-align:center;} .c-main{flex:1;} .c-qty{width:60px;text-align:right;} .c-up{width:78px;text-align:right;} .c-tot{width:84px;text-align:right;}
+.invrow{display:flex;}
+.invrow>.cell{padding:8px;} .cell.c-no{text-align:center;color:var(--mut);} .cell.c-qty,.cell.c-up,.cell.c-tot{text-align:right;vertical-align:top;font-size:13px;}
+.cell.c-main{flex:1;border-right:1px dashed #EEE;}
+
+.blk{border:1px dashed #D9DCE0;border-radius:8px;margin:6px 0;background:#fff;}
+.bh{font-size:10.5px;font-weight:700;color:#9CA3AF;padding:3px 8px;border-bottom:1px dashed #EEE;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center;background:#FCFCFD;border-radius:8px 8px 0 0;}
+.bh .tag{background:#EFF3F8;color:#1E5AA8;border-radius:4px;padding:0 6px;font-size:10px;}
+.dropzone{min-height:30px;padding:5px;}
+.dropzone.dragover{background:#FEF3F2;outline:2px dashed #F5B5B0;outline-offset:-3px;}
+.lineitem{display:flex;align-items:center;gap:7px;padding:5px 8px;margin:3px 0;border:1px solid #E5E7EB;border-radius:6px;background:#fff;cursor:grab;font-size:13px;}
+.lineitem:active{cursor:grabbing;}
+.lineitem.dragging{opacity:.4;border-style:dashed;}
+.lineitem .h{color:#C9CDD3;font-size:14px;flex:none;line-height:1;}
+.lineitem.head{font-weight:700;color:#1F2937;font-size:14px;}
+.lineitem.opt{color:var(--red);background:#FFF7F7;border-color:#F5C0BC;}
+.lineitem.note{color:var(--mut);background:#FAFAFB;}
+.lineitem.price{color:#1F2937;justify-content:space-between;}
+.lineitem.price .pv{color:var(--mut);font-weight:600;}
+.bh.opt{color:var(--red);} .bh.note2{color:var(--mut);}
+
+.readout{margin-top:16px;background:#111827;color:#E5E7EB;border-radius:9px;padding:12px 14px;font-size:12.5px;line-height:1.7;}
+.readout b{color:#fff;} .readout .rb{color:#FCA5A5;}
+.btns{margin-top:10px;display:flex;gap:8px;}
+.btn{border:1px solid var(--red);color:var(--red);background:#fff;border-radius:7px;padding:6px 14px;font-size:12.5px;cursor:pointer;}
+</style></head><body><div class="wrap">
+
+<h1>🧾 ใบตัวอย่าง G1 — ลากจัดเนื้อหาข้ามบล็อก</h1>
+<div class="sub">เคส: ประตูบานเลื่อน SMS 3.0×2.4 · ลากเส้นเนื้อหา (⠿) ย้ายข้ามบล็อกได้ · ด้านล่างโชว์โครงที่จัดใหม่</div>
+<div class="howto"><b>วิธีเล่น:</b> จับที่ ⠿ แล้วลากเส้นไปวางบล็อกไหนก็ได้ (สลับลำดับในบล็อก/ข้ามบล็อก) → กล่องดำล่างสุดอัปเดต "โครงที่พี่จัด" ให้เลย · พอใจแล้วบอกผม จะเอาไปเป็นสเปกให้ dev</div>
+
+<div class="inv">
+  <div class="invhdr"><div class="c-no">#</div><div class="c-main">รายการ / รายละเอียด</div><div class="c-qty">จำนวน</div><div class="c-up">ราคา/หน่วย</div><div class="c-tot">รวม</div></div>
+  <div class="invrow">
+    <div class="cell c-no">1</div>
+    <div class="cell c-main" id="mainCell">
+
+      <div class="blk"><div class="bh">① รายการ (หัวข้อ + ขนาด) <span class="tag">หัวข้อ</span></div>
+        <div class="dropzone" data-b="① รายการ">
+          <div class="lineitem head"><span class="h">⠿</span>ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) แบ่ง 4 บาน (เลื่อน 2 ติดตาย 2) (รุ่น M เซมิยูโร)</div>
+          <div class="lineitem"><span class="h">⠿</span>(3.00 × 2.40 ม.)</div>
+        </div>
+      </div>
+
+      <div class="blk"><div class="bh">② รายการงาน <span class="tag">สรุปงาน</span></div>
+        <div class="dropzone" data-b="② รายการงาน">
+          <div class="lineitem"><span class="h">⠿</span>- ประตูบานเลื่อน 4 บาน พร้อมติดตั้ง</div>
+          <div class="lineitem"><span class="h">⠿</span>- เสริมคานซัพพอร์ท ยาว 3 ม.</div>
+        </div>
+      </div>
+
+      <div class="blk"><div class="bh opt">③ OPTION (ตัวแดง · เพิ่ม/ลด) <span class="tag" style="background:#FDE8E8;color:#B3151D;">ทางเลือก</span></div>
+        <div class="dropzone" data-b="③ OPTION">
+          <div class="lineitem opt"><span class="h">⠿</span>OPTION เปลี่ยนสีบาน จากอบขาว เป็น ลายไม้สักทอง ราคาเพิ่ม 6,120 บาท</div>
+          <div class="lineitem opt"><span class="h">⠿</span>OPTION เปลี่ยนกระจก จากเขียว 6 มม. เป็น เทมเปอร์ ราคาเพิ่ม 4,320 บาท</div>
+        </div>
+      </div>
+
+      <div class="blk"><div class="bh note2">④ หมายเหตุ (ตัวเทา) <span class="tag" style="background:#F3F4F6;color:#6B7280;">remark</span></div>
+        <div class="dropzone" data-b="④ หมายเหตุ">
+          <div class="lineitem note"><span class="h">⠿</span>- รับประกันงานติดตั้ง 1 ปี</div>
+        </div>
+      </div>
+
+      <div class="blk"><div class="bh" style="color:var(--red);">⑤ รายละเอียดงาน (สเปค) <span class="tag" style="background:#FDE8E8;color:#B3151D;">สเปค</span></div>
+        <div class="dropzone" data-b="⑤ รายละเอียดงาน">
+          <div class="lineitem"><span class="h">⠿</span>- อลูมิเนียม สีอบขาว</div>
+          <div class="lineitem"><span class="h">⠿</span>- กระจกเขียว 6 มม.</div>
+          <div class="lineitem"><span class="h">⠿</span>- มุ้งจีบ (เฟรมตามสีบาน / ผ้าไฟเบอร์ดำ)</div>
+          <div class="lineitem"><span class="h">⠿</span>- ชุดล็อค + กุญแจ</div>
+          <div class="lineitem"><span class="h">⠿</span>- มือจับสแตนเลสสีเงิน 60 ซม.</div>
+        </div>
+      </div>
+
+      <div class="blk"><div class="bh">⑥ แตกราคา (เมื่อเปิด) <span class="tag">breakdown</span></div>
+        <div class="dropzone" data-b="⑥ แตกราคา">
+          <div class="lineitem price"><span class="h">⠿</span><span>ค่าบาน</span><span class="pv">40,000</span></div>
+          <div class="lineitem price"><span class="h">⠿</span><span>มุ้งจีบ</span><span class="pv">3,200</span></div>
+          <div class="lineitem price"><span class="h">⠿</span><span>เสริมคาน</span><span class="pv">4,500</span></div>
+          <div class="lineitem price"><span class="h">⠿</span><span>มือจับ</span><span class="pv">2,000</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cell c-qty">1 ชุด</div>
+    <div class="cell c-up">49,700</div>
+    <div class="cell c-tot">49,700</div>
+  </div>
+</div>
+
+<div class="btns"><button class="btn" onclick="resetOrder()">↩ รีเซ็ตลำดับเดิม</button></div>
+
+<div class="readout" id="readout"></div>
+
+<script>
+var initialHTML=document.getElementById('mainCell').innerHTML;
+var dragEl=null;
+function attachAll(){
+  document.querySelectorAll('.lineitem').forEach(function(el){
+    el.setAttribute('draggable','true');
+    el.ondragstart=function(){dragEl=el;el.classList.add('dragging');};
+    el.ondragend=function(){el.classList.remove('dragging');document.querySelectorAll('.dropzone').forEach(function(z){z.classList.remove('dragover');});updateReadout();};
+  });
+  document.querySelectorAll('.dropzone').forEach(function(zone){
+    zone.ondragover=function(e){e.preventDefault();zone.classList.add('dragover');var after=getAfter(zone,e.clientY);if(!dragEl)return;if(!after)zone.appendChild(dragEl);else zone.insertBefore(dragEl,after);};
+    zone.ondragleave=function(){zone.classList.remove('dragover');};
+    zone.ondrop=function(e){e.preventDefault();zone.classList.remove('dragover');};
+  });
+}
+function getAfter(zone,y){
+  var els=[].slice.call(zone.querySelectorAll('.lineitem:not(.dragging)'));
+  var closest={offset:-Infinity,el:null};
+  els.forEach(function(child){var box=child.getBoundingClientRect();var off=y-box.top-box.height/2;if(off<0&&off>closest.offset)closest={offset:off,el:child};});
+  return closest.el;
+}
+function updateReadout(){
+  var out='<b>📋 โครงที่พี่จัด (ลำดับล่าสุด):</b><br>';
+  document.querySelectorAll('.blk').forEach(function(blk){
+    var name=blk.querySelector('.bh').childNodes[0].textContent.trim();
+    var lines=[].slice.call(blk.querySelectorAll('.lineitem')).map(function(l){return l.textContent.replace('⠿','').trim();});
+    out+='<br><span class="rb">'+name+'</span>'+(lines.length?('<br>&nbsp;&nbsp;• '+lines.join('<br>&nbsp;&nbsp;• ')):' <span style="color:#6B7280;">(ว่าง)</span>');
+  });
+  document.getElementById('readout').innerHTML=out;
+}
+function resetOrder(){document.getElementById('mainCell').innerHTML=initialHTML;attachAll();updateReadout();}
+attachAll();updateReadout();
+</script>
+</div></body></html>

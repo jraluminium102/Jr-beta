@@ -1,0 +1,102 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เสนอโครง G6 — แยกฟีเจอร์หลัก/ออปชั่น (ให้พี่นัทตรวจ) — 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--blue:#1E40AF;--green:#047857;--amber:#B45309;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--bg:#F3F4F6;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;font-size:14px;line-height:1.55;}
+.wrap{max-width:760px;margin:0 auto;}
+h2{color:var(--red);font-size:19px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px;}
+.zone{background:#fff;border-radius:12px;border:1px solid var(--line);padding:14px;margin-bottom:12px;border-left:5px solid var(--c,#ccc);}
+.zone.z1{--c:var(--blue);}.zone.z2{--c:var(--green);}.zone.z3{--c:var(--amber);}.zone.z4{--c:#7C3AED;}
+.zh{font-size:15px;font-weight:800;margin:0 0 3px;color:var(--c);}
+.zd{font-size:12px;color:var(--muted);margin:0 0 10px;}
+.lv{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 5px;text-transform:none;border-top:1px dashed var(--line);padding-top:8px;}
+.it{display:flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;background:#fff;font-size:13px;}
+.it .ic{flex:none;}
+.it.move{background:#ECFDF5;border-color:#A7F3D0;}
+.it.move .tag{background:#A7F3D0;color:#065F46;}
+.it.q{background:#FFFBEB;border-color:#FDE68A;}
+.tag{font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;background:#F3F4F6;color:var(--muted);margin-left:auto;flex:none;}
+.flow{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px;}
+.flow .it{flex:0 0 auto;margin-bottom:0;}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:14px;}
+.q b{color:var(--amber);}
+.qi{padding:6px 0;border-bottom:1px dashed #F0C040;}
+.qi:last-child{border:0;}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+.leg span{display:flex;align-items:center;gap:4px;}
+.dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+b.k{color:var(--blue);}b.o{color:var(--amber);}
+</style></head>
+<body>
+<div class="wrap">
+<h2>เสนอโครง G6 กั้นห้องกระจก — แยก "ฟีเจอร์หลัก / ออปชั่น"</h2>
+<p class="sub">ผมคิดจากงานกั้นห้องจริง · แยก 4 โซน · <b>🟢 = ย้ายมาเป็นออปชั่นรวมห้องตามที่พี่สั่ง</b> · <b>🟡 ขอบล็อก = จุดที่ผมไม่ชัวร์ รอพี่เคาะ</b></p>
+<div class="leg">
+ <span><i class="dot" style="background:#1E40AF;"></i> หลัก = ทุกงานต้องตอบ</span>
+ <span><i class="dot" style="background:#047857;"></i> รวมห้อง = ตั้งครั้งเดียว</span>
+ <span><i class="dot" style="background:#B45309;"></i> ต่อบาน = เลือกเฉพาะที่เอา</span>
+ <span><i class="dot" style="background:#7C3AED;"></i> เสริมห้อง = หน้าแยก</span>
+</div>
+
+<div class="zone z1">
+ <div class="zh">🔵 โซน 1 — ฟีเจอร์หลัก (ขาดไม่ได้ ทุกงานต้องตอบ)</div>
+ <div class="zd">ตัวกำหนดว่าห้องหน้าตาแบบไหน + บานอะไรบ้าง</div>
+ <div class="lv">ระดับห้อง</div>
+ <div class="it"><span class="ic">🧱</span> จำนวนด้าน / รูปห้อง (ทีละด้าน) <span class="tag">หลัก</span></div>
+ <div class="it"><span class="ic">🚧</span> แต่ละด้าน = บานกระจก / ผนังทึบ / เปิดโล่ง <span class="tag">หลัก</span></div>
+ <div class="lv">ระดับบาน (แต่ละบานในด้าน)</div>
+ <div class="it"><span class="ic">🚪</span> ชนิดบาน (เลื่อน/เปิด/เฟี้ยม/ติดตาย/ดัดโค้ง) <span class="tag">หลัก</span></div>
+ <div class="it"><span class="ic">📐</span> ขนาด (กว้าง×สูง) + จำนวนบาน <span class="tag">หลัก</span></div>
+ <div class="it q"><span class="ic">↔️</span> ลักษณะเฉพาะบาน: ทิศเปิด(เปิด/เฟี้ยม) · ราง(เลื่อน) <span class="tag">หลัก ❓</span></div>
+</div>
+
+<div class="zone z2">
+ <div class="zh">🟢 โซน 2 — ออปชั่นรวมทั้งห้อง (ตั้งครั้งเดียว ใช้ทุกบาน)</div>
+ <div class="zd">พี่นัทสั่ง: ย้ายออกจากบานย่อย → ตั้งทีเดียวทั้งงาน (ทั้งห้องเหมือนกัน)</div>
+ <div class="it move"><span class="ic">🎨</span> สีอลู (เฟรม) <span class="tag">ย้ายมารวม</span></div>
+ <div class="it move"><span class="ic">🪟</span> ชนิดกระจก <span class="tag">ย้ายมารวม</span></div>
+ <div class="it move"><span class="ic">🌈</span> สีกระจก <span class="tag">ย้ายมารวม</span></div>
+ <div class="zd" style="margin:8px 0 0;color:var(--green);">→ ในบานย่อย <b>ตัด</b> ชนิดกระจก/สีกระจก/สีอลู ออกหมด</div>
+</div>
+
+<div class="zone z3">
+ <div class="zh">🟡 โซน 3 — ออปชั่นต่อบาน (เลือกเฉพาะบานที่ต้องการ)</div>
+ <div class="zd">ของเสริมเฉพาะบาน — บานไหนไม่เอาก็ไม่ต้องมี</div>
+ <div class="flow">
+  <div class="it"><span class="ic">🔒</span> ชุดล็อก / กุญแจ <span class="tag">ออปชั่น</span></div>
+  <div class="it"><span class="ic">🪟</span> มุ้ง (รุ่น/ผ้า) <span class="tag">ออปชั่น</span></div>
+  <div class="it"><span class="ic">🔲</span> คาดตาราง <span class="tag">ออปชั่น</span></div>
+  <div class="it"><span class="ic">🧱</span> ลูกฟูก / คอมโพ <span class="tag">ออปชั่น</span></div>
+  <div class="it"><span class="ic">✋</span> มือจับพิเศษ <span class="tag">ออปชั่น</span></div>
+ </div>
+ <div class="lv">ของเสริมงานติดตั้ง (ใช้ไม่บ่อย)</div>
+ <div class="flow">
+  <div class="it q"><span class="ic">🚪</span> ธรณี <span class="tag">❓</span></div>
+  <div class="it q"><span class="ic">🔧</span> โช้คอัพ <span class="tag">❓</span></div>
+  <div class="it"><span class="ic">🪟</span> ครอบวงกบ <span class="tag">ออปชั่น</span></div>
+  <div class="it"><span class="ic">⬇️</span> ดรอปพื้น <span class="tag">ออปชั่น</span></div>
+ </div>
+</div>
+
+<div class="zone z4">
+ <div class="zh">🟣 โซน 4 — ออปชั่นเสริมทั้งห้อง (หน้าแยก)</div>
+ <div class="zd">งานเพิ่มของทั้งห้อง ไม่เกี่ยวกับบานใดบานหนึ่ง</div>
+ <div class="flow">
+  <div class="it"><span class="ic">🏠</span> หลังคา / ฝ้า <span class="tag">เสริม</span></div>
+  <div class="it"><span class="ic">💡</span> ไฟ (ดาวน์ไลท์/สวิตช์) <span class="tag">เสริม</span></div>
+  <div class="it"><span class="ic">🟫</span> งานปูพื้น <span class="tag">เสริม</span></div>
+  <div class="it"><span class="ic">🌀</span> พัดลมดูดอากาศ <span class="tag">เสริม</span></div>
+ </div>
+</div>
+
+<div class="q">
+ <b>❓ ขอพี่เคาะ 3 จุด (ที่ผมไม่ชัวร์):</b>
+ <div class="qi">1. <b>ทิศเปิด / ราง</b> = ฟีเจอร์หลัก (ส่วนของการเลือกบาน) หรือ ออปชั่น? ผมว่าหลัก</div>
+ <div class="qi">2. <b>ธรณี / โช้คอัพ</b> = ออปชั่นต่อบาน (เลือกเอา) หรือ มีติดทุกบานเลย (หลัก)?</div>
+ <div class="qi">3. <b>มือจับ</b> = ต่อบาน (แต่ละบานเลือกได้ต่างกัน) หรือ รวมห้อง (ทั้งห้องแบบเดียว)? ผมว่าต่อบาน</div>
+ <div class="qi" style="color:var(--green);">✅ ที่พี่สั่งแล้ว: สีอลู/ชนิดกระจก/สีกระจก → รวมห้อง (ตัดจากบานย่อย)</div>
+ <br><b>ถ้าโครงนี้โอเค</b> ผมจะทำดราฟแบบกดลากจัดลำดับต่อ · ผิดตรงไหนบอกได้ ผมแก้โครงให้</div>
+</div>
+</body></html>

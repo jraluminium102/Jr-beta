@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ UX G1 — เกณฑ์ปุ่มทุกปุ่ม (ground truth)</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.55;}
+.wrap{max-width:900px;margin:0 auto;padding:18px 14px 70px;}
+h1{color:var(--red);font-size:20px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:8px;}
+.howto{background:#FFF7ED;border:1px solid #FCD9A8;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:16px;}
+.howto b{color:#9A6A1E;}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;}
+.card h3{margin:0 0 9px;font-size:16px;color:var(--red);display:flex;gap:7px;align-items:center;}
+.card h3 .ic{font-size:18px;}
+.ctrl{margin:7px 0;padding-left:2px;}
+.lbl{font-size:12.5px;font-weight:700;color:#374151;margin-bottom:3px;}
+.lbl .z{font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;margin-right:5px;vertical-align:middle;}
+.z1{background:#FEF3F2;color:#B3151D;border:1px solid #F5B5B0;} .z2{background:#EFF6FF;color:#1E5AA8;border:1px solid #BFD7F0;} .z3{background:#F3F4F6;color:#555;border:1px solid #D9DCE0;}
+.btns{display:flex;flex-wrap:wrap;gap:5px;}
+.b{border:1px solid #D1D5DB;background:#fff;border-radius:6px;padding:3px 10px;font-size:12.5px;}
+.b.def{background:var(--red);color:#fff;border-color:var(--red);}
+.b.chk{border-style:dashed;}
+.b.num{background:#F9FAFB;color:var(--mut);font-style:italic;}
+.cut{color:#B3151D;font-size:11.5px;background:#fff;border:1px dashed #E0A0A0;border-radius:5px;padding:1px 7px;}
+.m{font-size:11.5px;color:var(--mut);margin-top:6px;border-top:1px dashed var(--line);padding-top:5px;}
+.m b{color:var(--ok);}
+.zonehdr{font-size:11px;font-weight:700;color:#9CA3AF;margin:9px 0 2px;letter-spacing:.3px;}
+</style></head><body><div class="wrap">
+
+<h1>🎯 ดราฟ UX G1 — เกณฑ์ "ปุ่มทุกปุ่ม" (ground truth)</h1>
+<div class="sub">22 มิ.ย. · รวมทุกมติที่พี่สั่งแก้ + SPEC-LOCKED · <b style="color:#B3151D;">ปุ่มแดง</b>=ค่าเริ่มต้น · <span class="b chk" style="padding:0 6px;">เส้นประ</span>=ติ๊ก · <span class="cut">ขีดฆ่า</span>=ตัดออก</div>
+<div class="howto"><b>วิธีใช้:</b> นี่คือ "สิ่งที่ควรเป็น" — เว็บสดต้องมีปุ่มเป๊ะตามนี้ ทุก control ทุกชนิด · พี่ดูว่า<b>ปุ่มครบ/ค่าถูก/โซนถูกไหม</b> → จุดไหนผิดบอกได้ ผมแก้ดราฟ → approve → ผมเทียบเว็บปุ่มต่อปุ่มแก้จนตรง 100%</div>
+
+<!-- 1 -->
+<div class="card"><h3><span class="ic">⬌</span> 1. บานเลื่อน</h3>
+<div class="zonehdr">โซน z1 — หลัก</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">เซมิยูโร</span><span class="b">ยูโร</span><span class="b">E-series</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b def">ประตู</span><span class="b">หน้าต่าง</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด</div><div class="btns"><span class="b num">กว้าง</span><span class="b num">× สูง</span><span class="b num">× บาน</span><span class="b num">× ชุด</span></div></div>
+<div class="ctrl"><div class="lbl">ชนิดการเปิด</div><div class="btns"><span class="b def">เลื่อน (ระบุติดตาย)</span><span class="b">สลับ</span><span class="b">เปิดคู่กลาง</span><span class="b">ลากจูง</span></div></div>
+<div class="ctrl"><div class="lbl">ติดตาย / เปิด</div><div class="btns"><span class="b num">ติดตาย __ บาน · เปิด __ บาน</span></div></div>
+<div class="ctrl"><div class="lbl">ราง (ล่าง)</div><div class="btns"><span class="b def">รางกันน้ำ</span><span class="b">รางเตี้ย 7 มม.</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค <span style="font-weight:400;color:#999;">(เฉพาะประตู)</span></div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="ctrl"><div class="lbl">มือจับ <span style="font-weight:400;color:#999;">(ติ๊กได้หลายแบรนด์)</span></div><div class="btns"><span class="b chk">Cmech</span><span class="b chk">ดิจิตอล</span><span class="b chk">สแตนอร่าม</span><span class="b chk">รุ่นอื่น ✎</span></div></div>
+<div class="zonehdr">โซน z2 — ใช้บ่อย</div>
+<div class="ctrl"><div class="lbl">มุ้ง</div><div class="btns"><span class="b def">ไม่ใส่</span><span class="b">เฟรม</span><span class="b">จีบ</span><span class="b">ม้วน</span><span class="b">อื่นๆ</span></div></div>
+<div class="ctrl"><div class="lbl">คาดตาราง</div><div class="btns"><span class="b chk">☐ มีคาดตาราง</span></div></div>
+<div class="ctrl"><div class="lbl">แผ่นทึบล่าง</div><div class="btns"><span class="b def">ไม่มี</span><span class="b">อลูลูกฟูก 3,500/ตร.ม.</span><span class="b">คอมโพสิท 3,300/ตร.ม.</span></div></div>
+<div class="zonehdr">โซน z3 — เสริม</div>
+<div class="ctrl"><div class="lbl">🎨 สี/กระจก (เฉพาะข้อ) <span style="font-weight:400;color:#999;">— มีทุกชนิดบาน</span></div><div class="btns"><span class="b">☑ สีตามทั้งใบ (default · คิดเรทสีหัวใบ) → เอาติ๊กออก → L2 🟢จริง/🔵ออปชั่น + L3 ต่อจาก L2 · สีอลู 13 + กระจก 66 ในกล่องเดียว</span></div></div>
+<div class="ctrl"><div class="lbl">อื่นๆ</div><div class="btns"><span class="b">ครอบวงกบ</span><span class="b">ดรอปพื้น</span><span class="b">รื้อ</span><span class="b">งานเสริม</span><span class="b">หมายเหตุ</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 2 -->
+<div class="card"><h3><span class="ic">⬌</span> 2. เลื่อนภายใน</h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">รางบนซ้อน</span><span class="b">SlimLux</span><span class="b">X-series</span></div></div>
+<div class="ctrl"><div class="lbl">ชนิดการเปิด</div><div class="btns"><span class="b">เลื่อน</span><span class="b">สลับ</span><span class="b">เปิดคู่กลาง</span><span class="b">ลากจูง</span></div></div>
+<div class="ctrl"><div class="lbl">ราง (บน)</div><div class="btns"><span class="b def">โชว์ราง</span><span class="b">ซ่อนราง +5,000</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค</div><div class="btns"><span class="b def">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="ctrl"><div class="lbl">มือจับ <span style="font-weight:400;color:#999;">(X-series ฟรี · รางบนซ้อน=ไม่มี)</span></div><div class="btns"><span class="b chk">สแตนอร่าม</span><span class="b chk">ดิจิตอล</span></div></div>
+<div class="zonehdr">z2</div>
+<div class="ctrl"><div class="btns"><span class="cut">ตัด มุ้ง</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="zonehdr">z3</div>
+<div class="ctrl"><div class="lbl">โครงสร้าง / ราง</div><div class="btns"><span class="b chk">☐ Soft Close +4,000</span><span class="b chk">☐ สลิง 2,000/บาน</span><span class="b chk">☐ ซ่อนคาน</span><span class="b chk">☐ ฝังรางยู</span><span class="b chk">☐ เสริมคาน</span></div></div>
+<div class="ctrl"><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">รื้อ</span><span class="b">งานเสริม</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 3 -->
+<div class="card"><h3><span class="ic">🚪</span> 3. บานเปิด</h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">ยูโร</span><span class="b">X-series</span><span class="b">Velora</span><span class="b">โซลิด ทู</span><span class="b">โซลิด วัน</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด <span style="font-weight:400;color:#999;">(ยูโร=กรอกกว้างรวม ÷บาน)</span></div><div class="btns"><span class="b num">กว้างรวม × สูง × บาน × ชุด</span></div></div>
+<div class="ctrl"><div class="lbl">ธรณี</div><div class="btns"><span class="b def">กันน้ำ (มาตรฐาน)</span><span class="b">หลังเต่า+Drop Seal +1,000</span><span class="b">หลังเต่า+สักหลาด</span><span class="b">ไม่มีธรณี</span></div></div>
+<div class="ctrl"><div class="lbl">โช้คอัพประตู <span style="font-weight:400;color:#999;">(Velora ไม่มี)</span></div><div class="btns"><span class="b def">ไม่มี</span><span class="b">แขนยื่น +5,000</span><span class="b">รางเลื่อน +5,000</span><span class="b">บานพับ +5,000</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค</div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="ctrl"><div class="lbl">มือจับ</div><div class="btns"><span class="b chk">Cmech</span><span class="b chk">ดิจิตอล</span><span class="b chk">สแตนอร่าม</span><span class="b chk">รุ่นอื่น ✎</span></div></div>
+<div class="zonehdr">z2</div>
+<div class="ctrl"><div class="btns"><span class="b">มุ้ง (5 ปุ่ม)</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="ctrl"><div class="lbl">เฉพาะรุ่นโซลิด</div><div class="btns"><span class="b num">ช่องแสง (กระจก) พื้นที่</span><span class="b chk">☐ ตารางเต็มบาน +5,000</span></div></div>
+<div class="ctrl"><div class="lbl">combo (เฉพาะยูโร/โซลิด)</div><div class="btns"><span class="b chk">☐ combo บานกระทุ้งเข้าใน + มุ้งนิรภัย (ราคากรอกเอง)</span></div></div>
+<div class="zonehdr">z3</div><div class="ctrl"><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">ดรอปพื้น</span><span class="b">รื้อ</span><span class="b">งานเสริม</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 4 -->
+<div class="card"><h3><span class="ic">🚪</span> 4. บานกระทุ้ง</h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">ยูโร</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b">ประตู</span><span class="b def">หน้าต่าง</span></div></div>
+<div class="ctrl"><div class="lbl">แบบเปิด</div><div class="btns"><span class="b def">เปิดล่าง</span><span class="b">เปิดข้าง</span><span class="b">tilt & turn +5,000/บาน</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค</div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="ctrl"><div class="lbl">เสริมแขนค้ำ</div><div class="btns"><span class="b chk">☐ +500/ชุด (เฉพาะเปิดล่าง · auto เมื่อขนาดถึง)</span></div></div>
+<div class="ctrl"><div class="lbl">มือจับ</div><div class="btns"><span class="b chk">Cmech หลบมุ้ง (ดำ/ขาว +600 · ชุบ +840)</span></div></div>
+<div class="zonehdr">z2</div><div class="ctrl"><div class="btns"><span class="b">มุ้ง</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="zonehdr">z3</div><div class="ctrl"><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">ดรอปพื้น</span><span class="b">รื้อ</span><span class="b">งานเสริม</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 5 -->
+<div class="card"><h3><span class="ic">🚪</span> 5. บานหมุน</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">รุ่นเมืองทอง</span><span class="b">ประเภท</span><span class="b">ขนาด(บาน)</span><span class="b">ชุดล็อค 3 แบบ</span><span class="b chk">มือจับ: ดิจิตอล/สแตนอร่าม <span class="cut" style="margin-left:4px;">ไม่มี Cmech</span></span></div></div>
+<div class="ctrl"><div class="lbl">z2</div><div class="btns"><span class="cut">ตัด มุ้ง</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">รื้อ</span><span class="b">งานเสริม</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 6 -->
+<div class="card"><h3><span class="ic">▥</span> 6. บานเฟี้ยม</h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">เซมิยูโร</span><span class="b">ยูโร</span><span class="b">X-series (ภายใน)</span></div></div>
+<div class="ctrl"><div class="lbl">ทิศเปิด</div><div class="btns"><span class="b def">เปิดซ้าย</span><span class="b">เปิดขวา</span><span class="b">แยกกลาง → ระบุช่องซ้าย/ขวา</span></div></div>
+<div class="ctrl"><div class="lbl">ธรณีเฟี้ยม <span style="font-weight:400;color:#999;">(ไม่คิดเงิน)</span></div><div class="btns"><span class="b def">กันน้ำภายนอก</span><span class="b">หลังเต่าภายใน</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค</div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="zonehdr">z2</div><div class="ctrl"><div class="btns"><span class="b">มุ้ง <span style="color:#999;">(X-series ตัด)</span></span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="zonehdr">z3</div><div class="ctrl"><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b chk">ซ่อนคาน</span><span class="b chk">ซ่อนราง <span style="color:#999;">(เซมิ/X)</span></span><span class="b chk">ฝังรางยู <span style="color:#999;">(เซมิ/X)</span></span><span class="b chk">เสริมคาน</span><span class="b">ดรอปพื้น</span><span class="b">ผสมบาน</span></div></div>
+</div>
+
+<!-- 7 -->
+<div class="card"><h3><span class="ic">▢</span> 7. กระจกติดตาย</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">รุ่นเดียว</span><span class="b">ขนาด: กว้าง × สูง × ชุด <b style="color:#B3151D;">(ไม่มีบาน)</b></span><span class="cut">ตัด ชนิดเปิด/ราง/ชุดล็อค/มือจับ/มุ้ง</span></div></div>
+<div class="ctrl"><div class="lbl">z2</div><div class="btns"><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">รื้อ</span><span class="b">งานเสริม</span></div></div>
+</div>
+
+<!-- 8 (รวม 8+9) -->
+<div class="card" style="border-color:#A6E9C5;"><h3><span class="ic">▢</span> 8. บานเปลือย (รวม ติดตาย + ประตู) <span class="ok">approve แล้ว</span></h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b def">ติดตาย</span><span class="b">ประตู — สวิง</span><span class="b">ประตู — เลื่อน</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด <span style="font-weight:400;color:#999;">(ประตู: ฐาน +8,000/บาน · ติดตาย: ไม่มีบาน)</span></div><div class="btns"><span class="b num">กว้าง × สูง × บาน × ชุด</span></div></div>
+<div class="ctrl"><div class="lbl">มือจับสแตนเลส <span style="font-weight:400;color:#999;">(เฉพาะประตู · <b style="color:#B3151D;">ไม่มีดิจิตอล</b> · เลือกสี)</span></div><div class="btns"><span class="b">30.5 ซม. +1,500</span><span class="b">45 ซม. +2,000</span><span class="b">60 ซม. +2,000</span><span class="b">80 ซม. +2,500</span><span class="b">100 ซม. +3,000</span><span class="b">120 ซม. +3,200</span></div>
+<div class="btns" style="margin-top:4px;"><span class="b def">สีเงิน</span><span class="b">สีอื่น (ดำ/ทอง) +คิดเงิน</span><span class="b num">กรอกราคาเพิ่ม ___ บาท</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค <span style="font-weight:400;color:#999;">(เฉพาะประตู)</span></div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="zonehdr">z2 / z3</div>
+<div class="ctrl"><div class="btns"><span class="b chk">☐ คาดตาราง</span><span class="b">🎨 สี/กระจก (สีเฟรม)</span><span class="b">รื้อ</span><span class="cut">ไม่มี ครอบวงกบ (frameless)</span></div></div>
+<div class="m">รวมเดิม "บานเปลือยติดตาย" + "บานเปลือยประตู" เป็นข้อเดียว · สลับประเภทในข้อ · ติดตาย=ไม่มีบาน/ล็อค/มือจับ · <b>ประตู +8,000/บาน</b></div>
+</div>
+
+<!-- 10 -->
+<div class="card"><h3><span class="ic">▢</span> 9. ผนัง (ทึบ/ฉนวน)</h3>
+<div class="zonehdr">z1</div>
+<div class="ctrl"><div class="lbl">รุ่น</div><div class="btns"><span class="b def">ผนังเบาภายนอก</span><span class="b">ผนังเบาภายใน</span><span class="b">ISOWALL</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด</div><div class="btns"><span class="b num">กว้าง × ยาว × ชุด <b style="color:#B3151D;">(พื้นที่ · ไม่มีบาน)</b></span></div></div>
+<div class="ctrl"><div class="lbl">โครง</div><div class="btns"><span class="b def">เหล็กชุบซิงค์</span><span class="b">อลูมิเนียม</span></div></div>
+<div class="zonehdr">z2</div>
+<div class="ctrl"><div class="lbl">ความหนา</div><div class="btns"><span class="b">สมาร์ทบอร์ด 12</span><span class="b">ISOWALL หนา 10 ซม.</span><span class="cut">ตัด 7.5 · สมาร์ทบอร์ด 20→G6</span></div></div>
+<div class="ctrl"><div class="lbl">ทาสี / ฉนวน</div><div class="btns"><span class="b">ทาขาว</span><span class="b">รองพื้น</span><span class="b">ไม่ทา</span><span class="b chk">☐ ฉนวน +600/ตร.ม.</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">รื้อ</span><span class="b">หมายเหตุ</span><span class="cut">ตัด สี/กระจก · มุ้ง · คาด · ทึบ · ผสมบาน</span></div></div>
+</div>
+
+<!-- 11 -->
+<div class="card"><h3><span class="ic">◗</span> 10. ดัดโค้ง</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">บานคู่</span><span class="b">บานเดี่ยว</span><span class="b">ติดตายโค้ง</span><span class="b">สลิม</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b def">ประตู</span><span class="b">หน้าต่าง</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค · มือจับ</div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span><span class="b chk">มือจับ ดิจิตอล/สแตน <span style="color:#999;">(ติดตายโค้ง=ไม่มี)</span></span></div></div>
+<div class="ctrl"><div class="lbl">z2 / z3</div><div class="btns"><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span><span class="b">🎨 สี/กระจก <span style="color:#6B7280;">(เลือกกระจกปกติได้ทุกแบบ · กระจกโค้งนานๆมี ไม่ต้องล็อก)</span></span></div></div>
+</div>
+
+<!-- 12 -->
+<div class="card"><h3><span class="ic">⋯</span> 11. PC Door</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">2 บาน</span><span class="b">4 บาน</span><span class="b">ประเภท</span><span class="b">ชุดล็อค 3 แบบ</span><span class="b chk">มือจับ ดิจิตอล/สแตน <span style="color:#999;">(ไม่มี Cmech)</span></span></div></div>
+<div class="ctrl"><div class="lbl">z2</div><div class="btns"><span class="b">มุ้ง</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">ครอบวงกบ</span><span class="b">ดรอปพื้น</span><span class="cut">ตัด ฝังรางยู</span></div></div>
+</div>
+
+<!-- 13 -->
+<div class="card"><h3><span class="ic">⋯</span> 12. YKK</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">Ventilation</span><span class="b">Exhido</span><span class="b">Tostem A01</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b def">ประตูเท่านั้น</span><span class="cut">ตัดหน้าต่าง</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด · โช๊คอัพ</div><div class="btns"><span class="b num">กว้าง × สูง × ชุด (ไม่มีบาน)</span><span class="b def">ไม่มี</span><span class="b">มี +5,000</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">ครอบวงกบ</span><span class="b">ดรอปพื้น</span><span class="b">รื้อ</span><span class="cut">ตัด สี/กระจก · ล็อค · มุ้ง · คาด · ทึบ · ผสมบาน</span></div></div>
+</div>
+
+<!-- 14 -->
+<div class="card"><h3><span class="ic">⋯</span> 13. บานยก</h3>
+<div class="ctrl"><div class="lbl">z1</div><div class="btns"><span class="b def">SMS สลิม</span><span class="b">เซมิยูโร</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภท</div><div class="btns"><span class="b def">หน้าต่างเท่านั้น</span><span class="cut">ไม่มีประตู</span></div></div>
+<div class="ctrl"><div class="lbl">ลักษณะการยก <span style="font-weight:400;color:#999;">(ราคาเท่ากัน)</span></div><div class="btns"><span class="b def">ยกบานบน</span><span class="b">ยกบานบน-ล่าง สลับกัน</span></div></div>
+<div class="ctrl"><div class="lbl">ขนาด <span style="font-weight:400;color:#999;">(บาน = 2 บังคับทุกครั้ง · ล็อค)</span></div><div class="btns"><span class="b num">กว้าง × สูง × ชุด</span><span class="b" style="font-style:normal;background:#FEF3F2;color:#B3151D;border-color:#F5B5B0;">บาน = 2 (ล็อค)</span></div></div>
+<div class="ctrl"><div class="lbl">มอเตอร์</div><div class="btns"><span class="b def">ไม่มี</span><span class="b">80กก. +18,000</span><span class="b">300กก. +28,000</span></div></div>
+<div class="ctrl"><div class="lbl">ชุดล็อค</div><div class="btns"><span class="b">ไม่มีชุดล็อก</span><span class="b">มีชุดล็อก</span><span class="b def">มีชุดล็อก + กุญแจ</span></div></div>
+<div class="ctrl"><div class="lbl">z2 / z3</div><div class="btns"><span class="b">มุ้ง</span><span class="b chk">☐ คาดตาราง</span><span class="b">แผ่นทึบล่าง</span><span class="b">🎨 สี/กระจก</span><span class="cut">ตัด ฝังรางยู</span></div></div>
+</div>
+
+<!-- 15 -->
+<div class="card"><h3><span class="ic">⋯</span> 14. shower (ฉากกั้นอาบน้ำ)</h3>
+<div class="ctrl"><div class="lbl">รูปแบบ shower</div><div class="btns"><span class="b def">ประตู+กระจกติดตาย</span><span class="b">ติดตายอย่างเดียว</span><span class="b">ประตูอย่างเดียว</span></div></div>
+<div class="ctrl"><div class="lbl">ประเภทประตู <span style="font-weight:400;color:#999;">(เมื่อมีประตู)</span></div><div class="btns"><span class="b def">บานเปิด</span><span class="b">บานเลื่อน</span></div></div>
+<div class="ctrl"><div class="lbl">อุปกรณ์ (สี) · เข้ามุม</div><div class="btns"><span class="b def">เงิน</span><span class="b">ดำ +4,000</span><span class="b">ทอง +6,000</span><span class="b chk">☐ เข้ามุม +3,000</span></div></div>
+<div class="ctrl"><div class="lbl">z3</div><div class="btns"><span class="b">🎨 สี/กระจก</span><span class="b">รื้อ</span><span class="cut">ตัด ประเภท(ซ้ำ) · มุ้ง · คาด · ทึบ · ผสมบาน</span></div></div>
+</div>
+
+<div class="card" style="background:#FEF9F9;border-color:#F5C0BC;">
+<div style="font-weight:700;color:var(--red);font-size:15px;">📋 งานที่ต้องแก้ → ส่ง dev (รวมที่เดียว)</div>
+<div class="m" style="border:0;color:#444;line-height:1.75;">
+<b style="color:#1E7E45;">A. บานเปลือยรวม</b> <span class="ok">approve แล้ว</span> — รวมข้อ "ติดตาย" + "ประตู" เป็นข้อเดียว (ดู #8) · สลับประเภทในข้อ · <b>ประตู +8,000/บาน</b> + มือจับสแตนเลส 6 ขนาด (<b>ไม่มีดิจิตอล</b>) + ชุดล็อค · ติดตาย=มีกล่อง 🎨 สี/กระจกเหมือนบานอื่น<br><br>
+<b style="color:#1E7E45;">B. สูตรสี/กระจก L1-L3 มาตรฐาน</b> — <b style="color:#B3151D;">ใส่ทุกชนิดบาน</b> (เลื่อน/เปิด/เฟี้ยม/กระทุ้ง/หมุน/ติดตาย/เปลือย/ดัดโค้ง/PC/บานยก/shower) · helper กลาง reuse G1-G7 · เทสผ่านดราฟ ②:<br>
+&nbsp;&nbsp;• <b>L1</b> = <b style="color:#B3151D;">ช่องติ๊ก "สีตามทั้งใบ"</b> (ค่าเริ่มต้น = ติ๊กไว้ · ใช้สี/กระจกหัวใบ + <u>คิดราคาตามเรทสีหัวใบ</u>)<br>
+&nbsp;&nbsp;• <b>เอาติ๊กออก → โผล่ L2/L3</b> — <b>L2</b> 🟢ใช้จริง (บวกยอด · ลงรายละเอียด) / 🔵ออปชั่น (swap line ลง OPTION · ไม่บวกยอด)<br>
+&nbsp;&nbsp;• <b>L3</b> ต่อจาก L2 — เปลี่ยนสี/กระจกอีก เทียบกับ L2 · OPTION signed (+ราคาเพิ่ม / −ราคาลดลง) · noSum<br>
+&nbsp;&nbsp;• สีบาน = <b>colorPrice จริง</b> · กระจก = <b>spread × พื้นที่</b> · <b>สีอลู 13 + กระจก 66 อยู่ในกล่องเดียวกัน</b> (ไม่แยกกระจกล่าง) · ตัวอย่าง 7.2 ตร.ม.: ซาฮาร่า 3,888 · สักทอง 6,120 · Fuji Oak 15,120<br>
+&nbsp;&nbsp;• <span style="color:#1E7E45;">✓ ผนัง(#9) + YKK(#12) = <b>ไม่มี</b> L1-L3 (เคาะ 22มิ.ย. · ไม่มีกระจก)</span><br><br>
+<b style="color:#1E7E45;">C. บานยก</b> <span class="ok">เคาะแล้ว</span> — <b>บาน = 2 บังคับทุกครั้ง</b> (ล็อค ไม่ต้องเลือก) · เพิ่มช่อง <b>"ลักษณะการยก"</b> 2 แบบ: <b>ยกบานบน</b> (ค่าเริ่มต้น) / <b>ยกบานบน-ล่างสลับกัน</b> · <b>ราคาเท่ากัน</b> (เลือกเพื่อระบุในใบ ไม่กระทบราคา · #13)
+</div>
+</div>
+
+<div class="card" style="background:#F3F6FB;border-color:#C7D7EC;">
+<div style="font-weight:700;color:#1E5AA8;font-size:15px;">📑 ลำดับใบเสนอราคา G1 (ใบ 5 บล็อก) — อิงโครงจริง qrow() L5746 / itemDetail() L6096</div>
+<div class="m" style="border:0;color:#333;line-height:1.7;">
+<b>📊 ตาราง 5 คอลัมน์:</b> ลำดับ · <b>รายการ + รายละเอียด</b> (ช่องใหญ่ช่องเดียว) · จำนวน (ชุด) · ราคา/หน่วย · ราคารวม<br><br>
+<b>ในช่องใหญ่ เรียงบน→ล่าง:</b><br>
+<b>① รายการ (หัวข้อ) + ขนาดต่อท้าย</b> = [ประตู/หน้าต่าง]+ชนิดเปิด+ราง+แบ่ง N บาน+(เลื่อน/ติดตาย)+(เสริมคาน)+(รุ่น) <b style="color:#B3151D;">+ (กว้าง × สูง ม.)</b><br>
+&nbsp;&nbsp;<span style="color:#6B7280;">เช่น "ประตูบานเลื่อนรางล่าง (รุ่นกันน้ำ) แบ่ง 4 บาน (เลื่อน 2 ติดตาย 2) (รุ่น M เซมิยูโร) (3.00 × 2.40 ม.)"</span><br>
+<b>② รายการงาน</b> — สรุปงาน 1-2 บรรทัด (ถ้ามี)<br>
+<b style="color:#B3151D;">③ OPTION (ตัวหนังสือสีแดง)</b> = "เปลี่ยน...จาก X เป็น Y <b>ราคาเพิ่ม / ลด Z บาท</b>" · โชว์ชัดเป็นตัวแดง · มีได้หลายบรรทัด<br>
+<b style="color:#6B7280;">④ หมายเหตุ (ตัวเทา)</b> = หัวข้อ "หมายเหตุ" + บรรทัดหมายเหตุ<br>
+<b style="color:#B3151D;">⑤ รายละเอียดงาน (หัวข้อแดง) — เรียงเป๊ะ:</b> 1.อลูมิเนียม [สี][รหัส] · 2.กระจก [ชนิด] หนา X มม. <span style="color:#6B7280;">(โซลิด=บานทึบลูกฟูก+ช่องแสง)</span> · 3.มุ้ง (เฟรม[สี]/[ผ้า]) · 4.เสริมคานซัพพอร์ท · 5.ชุดล็อค(+กุญแจ) · 6.มือจับ [รุ่น] · + บานย่อย(ผสมบาน) "- [ชนิด] (กว้าง×สูง)"<br>
+<b>⑥ แตกราคา</b> (เมื่อเปิด) = ค่าบาน + บานย่อย + งานเสริม/บริการ (รื้อ/ขนส่ง/ไฟ/นั่งร้าน) แต่ละบรรทัด<br><br>
+<b style="color:#1E5AA8;">📌 "ขนาด" อยู่ตรงไหน (ที่พี่ถาม):</b> <u>ไม่ใช่คอลัมน์แยก</u> — กว้าง×สูง <b>ต่อท้ายชื่อรายการ (บล็อก①)</b> · ส่วน "จำนวนชุด" = คอลัมน์ "ชุด" แยกขวา<br>
+<b style="color:#B3151D;">🎨 L1-L3 ลงตรงไหน:</b> L1ติ๊ก/L2🟢จริง → แก้ ⑤ บรรทัด 1,2 (อลู/กระจก) + เข้าค่าบาน(⑥) · L2🔵ออปชั่น + L3 → บรรทัด <b>③ OPTION ตัวแดง</b> (เพิ่ม/ลด) ไม่แตะค่าบาน
+</div>
+</div>
+
+<div class="card" style="background:#FFF9F9;border-color:#F5C0BC;">
+<div style="font-weight:700;color:var(--red);font-size:15px;">🗂️ ใบสั่ง dev (ละเอียด) — G1 แก้รอบเดียว · ต้องเหมือนทุกอย่าง · งานไม่พัง</div>
+<div class="m" style="border:0;color:#333;line-height:1.75;">
+<b style="color:#B3151D;">⚠ กฎความปลอดภัย:</b> ไฟล์เดียว public/calculator/index.html · ทำทีละเฟส · <b>รัน golden-snapshot ทุกเฟส ต้อง 150/150</b> · ห้ามแก้สูตรราคาเดิม (สี=colorPrice(ci,area) · กระจก=GLASS[gi].s×area · เปลือยประตู=ref_plus_panel +8,000/บาน · บานยก=lift area-based) · เทสเบราว์เซอร์จริงทุกชนิดบานก่อน push<br><br>
+<b style="color:#B3151D;font-size:13.5px;">⭐ เฟส 0 — ปุ่ม/โซน/layout ทุกชนิด "เหมือนดราฟ" (เป้าหลัก · สะอาดตา · ทำก่อน)</b><br>
+&nbsp;&nbsp;• ทำปุ่ม/ชิป/ค่าเริ่มต้น/<b>โซน z1·z2·z3 ของทุกชนิด #1-#14 ให้ตรงการ์ดด้านบนในไฟล์นี้เป๊ะ</b> (ยึดเกณฑ์นี้ตัวเดียว · ไม่ regroup ใหม่)<br>
+&nbsp;&nbsp;• 3 กล่อง = โซนที่มีอยู่แล้ว (แค่ชื่อเรียก ไม่ใช่โครงใหม่): <b>① สเปกหลัก = z1</b> · <b>② ออปชั่นหลัก = z2</b> · <b>③ ออปชั่นเสริม = z3 (การ์ดพับ)</b> · ① แค่จัดกลุ่ม (ไม่ validate) · ทำ G1 ก่อน<br>
+&nbsp;&nbsp;• สไตล์สะอาดตาแบบดราฟ: <b>ชิปแทน dropdown</b> · ปุ่มแดง = ค่าเริ่มต้น · เส้นประ = ติ๊ก · drill-down หมวด→รุ่น · กล่อง③ พับเก็บ<br>
+&nbsp;&nbsp;• เทียบเว็บสด ↔ เกณฑ์ <b>ทีละชนิด ทีละปุ่ม</b> → แก้ให้ตรง 100% · ห้ามเพิ่มปุ่มที่ไม่มีในเกณฑ์<br>
+&nbsp;&nbsp;• <b style="color:#B3151D;">⚠ เทคนิค:</b> ย้าย DOM = ราคาไม่กระทบ (calcUnit อ่าน class .o-*) <b>แต่ต้องเทส G6 ด้วย</b> (G6 ซ่อนฟอร์มด้วย CSS ครอบ wrapper — ย้ายออก=โผล่) + เทสทุกชนิด + โหมดคิดเร็ว · golden 150/150<br><br>
+<b style="color:#1E7E45;">เฟส 1 — บานเปลือยรวม (#8)</b><br>
+&nbsp;&nbsp;• รวม product "บานเปลือยติดตาย"(frameless_fixed L716) + "บานเปลือยประตู"(frameless_door L717) → ชนิดเดียว "บานเปลือย" · ปุ่มประเภท: <b>ติดตาย</b>(default)/ประตู—สวิง/ประตู—เลื่อน<br>
+&nbsp;&nbsp;• ติดตาย: ไม่มีบาน/ล็อค/มือจับ (bucket min 7,000) · ประตู: <b>ฐาน +8,000/บาน</b> + มือจับ(เฟส 4) + ชุดล็อค (ไม่มี/มี/มี+กุญแจ)<br>
+&nbsp;&nbsp;• ไม่มีครอบวงกบ (frameless) · <b>มีกล่อง 🎨 (สีเฟรม+กระจก) เหมือนบานอื่น</b> (เฟส 2) · เช็ค ITYPE_NA/ITYPE_LOCK_DOOR<br><br>
+<b style="color:#1E7E45;">เฟส 2 — helper สี/กระจก L1-L3 (กลาง · ใส่ทุกชนิดบาน · ยกเว้น ผนัง#9 + YKK#12)</b><br>
+&nbsp;&nbsp;• <b>L1</b> = checkbox "สีตามทั้งใบ" <b>default ติ๊ก</b> → ข้อใช้สี/กระจกหัวใบ + <u>คิดราคาตามเรทสีหัวใบ</u> (colorPrice + spread×area) เข้าค่าบาน<br>
+&nbsp;&nbsp;• <b>เอาติ๊กออก</b> → โผล่ L2/L3 (สีอลู 13 + กระจก 66 · drill หมวด→ตัว · <b>กล่องเดียว ห้ามแยกกระจกล่าง</b>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;– <b>L2 🟢 ใช้จริง:</b> สี/กระจก = สเปคข้อนี้ · <b>บวกยอด</b> = (colorPrice ใหม่−หัวใบ)+(spread ใหม่−หัวใบ)×area · ลง ⑤ บรรทัด 1,2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;– <b>L2 🔵 ออปชั่น:</b> บรรทัด ③ OPTION (แดง) "เปลี่ยน...จาก X เป็น Y ราคาเพิ่ม/ลด Z" · <b>noSum (ไม่บวกยอด)</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;– <b>L3:</b> ต่อจาก L2 · เลือกสี/กระจกอีก · เทียบ baseline = L2(ถ้าเลือก) ไม่งั้น L1 → บรรทัด ③ OPTION signed · noSum<br>
+&nbsp;&nbsp;• signed = ใหม่−เดิม · บวก="ราคาเพิ่ม" ลบ="ราคาลดลง" · <b>reuse ทุกกลุ่ม G1-G7</b> · ตัวอย่าง 7.2 ตร.ม.: ซาฮาร่า 3,888·สักทอง 6,120·Fuji Oak 15,120·เทมเปอร์ +4,320<br><br>
+&nbsp;&nbsp;• <b style="color:#B3151D;">ชนิดพิเศษ (เคาะ 23มิ.ย.):</b> โซลิด → ไม่มีช่องแสง = <b>ซ่อนช่องกระจก เลือกแค่สี</b> · มีช่องแสง = กระจก=ช่องแสงนั้น · shower → <b>เลือกแค่กระจก</b> (ใช้สีอุปกรณ์เดิม เงิน/ดำ/ทอง · ไม่ใส่สีอลู 13) · ดัดโค้ง → <b>กระจกปกติทุกแบบ</b> (ไม่ล็อกกระจกโค้ง)<br><br>
+<b style="color:#1E7E45;">เฟส 3 — บานยก (#13)</b><br>
+&nbsp;&nbsp;• <b>บาน = 2 บังคับ</b> (ล็อค ไม่ให้เลือก) · engine lift คิดพื้นที่ จำนวนบานไม่กระทบราคา<br>
+&nbsp;&nbsp;• เพิ่มช่อง "<b>ลักษณะการยก</b>": ยกบานบน(default)/ยกบานบน-ล่างสลับกัน · <b>ต่อท้ายชื่อหัวข้อในใบ</b> (เช่น "...บานยก ยกบานบน-ล่างสลับกัน") · ราคาเท่ากัน ไม่กระทบราคา<br><br>
+<b style="color:#1E7E45;">เฟส 4 — มือจับสแตนเลส (มีสี · ทุกชนิดที่มีมือจับ)</b><br>
+&nbsp;&nbsp;• ขนาด 6: 30.5=1,500 · 45=2,000 · 60=2,000 · 80=2,500 · 100=3,000 · 120=3,200<br>
+&nbsp;&nbsp;• <b>เลือกสี:</b> สีเงิน(default · ไม่เพิ่ม) / สีอื่น (ดำ/ทอง/…) = คิดเงินเพิ่ม → <b>ช่องกรอกราคาเอง</b> (แบบ o-gatewood L5079 · manual)<br>
+&nbsp;&nbsp;• ลงใบ: "<b>มือจับสแตนเลสสีเงิน [ขนาด]</b>" (หรือสีที่เลือก)<br><br>
+<b style="color:#B3151D;">✏️ แก้คำในใบ (ทำพร้อมกัน):</b> "เสริมคานซัพพอร์ท<u>รุ่น 1</u>" → "เสริมคานซัพพอร์ท" (มีรุ่นเดียว) · "มือจับสแตนเลส<u>อร่าม</u>" → "มือจับสแตนเลสสีเงิน" · ย้าย "เสริมคาน" จาก ⑤ → ② รายการงาน · <b>ตัด "SMS" ออกทุกที่ในใบ</b> (ยี่ห้ออลูภายใน · เช่น "บานยก SMS"→"บานยก" · "Golden Teak SMS"→"Golden Teak")<br><br>
+<b>เช็คทุกเฟส:</b> golden-snapshot 150/150 + เทสเบราว์เซอร์จริง (กล่องสีทุกชนิด + เรนเดอร์ใบ) ก่อน push · <b style="color:#B3151D;">⏳ รอแชท G2/G3 แก้ index.html เสร็จก่อน (กันชนไฟล์)</b>
+</div>
+</div>
+
+<p style="text-align:center;color:var(--mut);font-size:12px;margin-top:18px;">ถ้าปุ่ม/ค่า/โซน/ลำดับใบ/แผน ตรงตามที่พี่ต้องการ → ตอบ "approve" · ผมจะแก้ทีเดียวจบตามแผน ยึดไฟล์นี้ ไม่เดา</p>
+</div></body></html>

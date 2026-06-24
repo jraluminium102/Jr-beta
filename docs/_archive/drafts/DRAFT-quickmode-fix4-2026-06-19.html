@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT — Quick Mode Fix 4 ข้อ (19 มิ.ย.)</title>
+<style>
+:root{--red:#E63B2B;--red2:#c0392b;--bg:#F9FAFB;--card:#fff;--line:#E5E7EB;--muted:#6B7280;--text:#111827;--blue:#2563EB;--green:#059669;--green-bg:#D1FAE5;--green-text:#065F46;--warn:#F59E0B;--warn-bg:#FEF3C7;--warn-text:#92400E;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{background:var(--bg);color:var(--text);padding:16px;}
+h1{font-size:18px;font-weight:800;color:var(--red);border-left:5px solid var(--red);padding-left:12px;margin-bottom:4px;}
+.subtitle{font-size:12px;color:var(--muted);margin-bottom:20px;padding-left:17px;}
+.section{margin-bottom:24px;}
+.section-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sec-num{width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;}
+.sec-sub{font-size:12px;color:var(--muted);}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:620px){.cols{grid-template-columns:1fr;}}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;}
+.panel-hd{padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--line);}
+.panel-hd.before{background:#FEF2F2;color:#991B1B;}
+.panel-hd.after{background:#ECFDF5;color:#065F46;}
+.panel-body{padding:14px;}
+
+/* chips */
+.lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;margin-top:10px;}
+.lbl:first-child{margin-top:0;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px;}
+.chip{height:40px;padding:0 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13px;font-weight:600;background:#fff;color:var(--text);cursor:pointer;transition:.15s;}
+.chip:hover{border-color:var(--red);color:var(--red);}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.disabled{opacity:.4;cursor:default;}
+
+/* size row */
+.size-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+.size-row.two{grid-template-columns:1fr 1fr;}
+.fld label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px;}
+.fld input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;font-family:inherit;}
+.fld input:focus{outline:none;border-color:var(--red);}
+
+/* stepper */
+.stepper{display:flex;align-items:center;gap:0;height:44px;}
+.step-btn{width:44px;height:44px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:20px;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;}
+.step-btn:first-child{border-radius:9px 0 0 9px;}
+.step-btn:last-child{border-radius:0 9px 9px 0;}
+.step-btn:hover{background:#FEF2F2;color:var(--red);border-color:var(--red);}
+.step-btn:active{background:var(--red);color:#fff;}
+.step-val{width:52px;height:44px;border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);border-left:none;border-right:none;text-align:center;font-size:16px;font-weight:700;font-family:inherit;background:#fff;color:var(--text);}
+.step-val:focus{outline:none;}
+
+/* toggle */
+.toggle-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;margin-top:8px;background:#F9FAFB;}
+.toggle-row label{font-size:13px;font-weight:600;flex:1;}
+.tog{position:relative;width:44px;height:24px;flex-shrink:0;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-slider{position:absolute;inset:0;background:#D1D5DB;border-radius:12px;cursor:pointer;transition:.2s;}
+.tog-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.tog input:checked+.tog-slider{background:var(--green);}
+.tog input:checked+.tog-slider:before{transform:translateX(20px);}
+
+/* insul badge */
+.insul-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.insul-badge.on{background:var(--green-bg);color:var(--green-text);}
+.insul-badge.off{background:#FEE2E2;color:#991B1B;}
+.price-impact{font-size:12px;color:var(--muted);margin-top:4px;}
+.price-impact.pos{color:var(--green);}
+.price-impact.neg{color:#991B1B;}
+
+/* price card */
+.pcrd{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;}
+.pcrd .ttl{font-size:11px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px;}
+.pcrd-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:3px;}
+.pcrd-row .nm{color:var(--muted);}
+.pcrd-row .val{font-weight:700;}
+.pcrd-tot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1.5px solid var(--line);}
+.pcrd-tot .nm{font-size:13px;font-weight:800;}
+.pcrd-tot .val{font-size:16px;font-weight:800;color:var(--red);}
+.demo-tag{display:inline-block;font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:middle;}
+
+/* cascade */
+.cascade-step{padding:8px 12px;border:1.5px dashed var(--line);border-radius:10px;margin-top:8px;position:relative;}
+.cascade-step .step-lbl{position:absolute;top:-8px;left:10px;font-size:10px;font-weight:800;background:#fff;padding:0 4px;color:var(--muted);}
+.cascade-step.done{border-color:var(--green);background:#ECFDF5;}
+.cascade-step.done .step-lbl{color:var(--green);}
+.cascade-step.pending{border-color:#E5E7EB;background:#F9FAFB;opacity:.6;}
+.arrow{text-align:center;font-size:14px;color:var(--muted);margin:3px 0;}
+
+/* note box */
+.note{font-size:12px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:8px 12px;color:#0369A1;margin-top:8px;line-height:1.6;}
+.note b{color:#075985;}
+
+/* hidden/show */
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<h1>DRAFT — Quick Mode ปรับ 4 ข้อ</h1>
+<p class="subtitle">19 มิ.ย. 2569 · ราคาเดโม (dev ดึงเรตจริง) · กดเล่นได้ทุกส่วน</p>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ข้อ 1: +/- Stepper                           -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-hd">
+    <div class="sec-num">1</div>
+    <div>
+      <div class="sec-title">ทุกกลุ่ม — ช่อง "ชุด" / "จำนวนบาน" เปลี่ยนเป็น +/- Stepper</div>
+      <div class="sec-sub">แก้เฉพาะช่องตัวเลขจำนวนนับ (ชุด/บาน) · กว้าง-สูง-ความยาว ยังใส่ได้อิสระ</div>
+    </div>
+  </div>
+  <div class="cols">
+    <!-- BEFORE -->
+    <div class="panel">
+      <div class="panel-hd before">⛔ ก่อน (ปัจจุบัน) — กล่องตัวเลขพิมพ์เอง</div>
+      <div class="panel-body">
+        <div class="lbl">ขนาด</div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="1.8" step="0.1"></div>
+          <div class="fld"><label>สูง (ม.)</label><input type="number" value="2.0" step="0.1"></div>
+          <div class="fld"><label>ชุด</label><input type="number" value="1" step="1" min="1"></div>
+        </div>
+        <div style="margin-top:8px;" class="lbl">จำนวนบาน</div>
+        <div class="size-row two">
+          <div class="fld"><input type="number" value="2" step="1" min="1"></div>
+        </div>
+        <div class="note">ช่องตัวเลขพิมพ์ธรรมดา — บนมือถือต้องเรียก keyboard ตัวเลข กดปุ่ม ± ไม่ได้</div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="panel">
+      <div class="panel-hd after">✅ หลัง (ใหม่) — +/- stepper กดง่าย</div>
+      <div class="panel-body">
+        <div class="lbl">ขนาด</div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="1.8" step="0.1"></div>
+          <div class="fld"><label>สูง (ม.)</label><input type="number" value="2.0" step="0.1"></div>
+          <div class="fld"><label>ชุด</label>
+            <div class="stepper">
+              <button class="step-btn" onclick="stepChange(this,-1,1,99)">−</button>
+              <input class="step-val" type="number" id="s1qty" value="1" min="1" max="99" oninput="syncStep(this)">
+              <button class="step-btn" onclick="stepChange(this,1,1,99)">+</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px;" class="lbl">จำนวนบาน</div>
+        <div style="width:140px;">
+          <div class="stepper">
+            <button class="step-btn" onclick="stepChange(this,-1,1,20)">−</button>
+            <input class="step-val" type="number" id="s1pan" value="2" min="1" max="20" oninput="syncStep(this)">
+            <button class="step-btn" onclick="stepChange(this,1,1,20)">+</button>
+          </div>
+        </div>
+        <div class="note">กดทีเดียว ไม่ต้องพิมพ์ · กว้าง/สูง ยังพิมพ์ได้ปกติ เพราะต้องการทศนิยม</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ข้อ 2: G3 ผนังเบา + toggle ฉนวน             -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-hd">
+    <div class="sec-num">2</div>
+    <div>
+      <div class="sec-title">G3 ผนังเบา — เพิ่ม toggle ฉนวน สำหรับ "ภายนอก" / "ภายใน"</div>
+      <div class="sec-sub">ค่าเริ่มต้น = มีฉนวน · isowall มีฉนวนในตัว (ไม่ต้องเลือก) · +600 บ./ตร.ม. เมื่อเลือกมีฉนวน</div>
+    </div>
+  </div>
+  <div class="cols">
+    <!-- BEFORE -->
+    <div class="panel">
+      <div class="panel-hd before">⛔ ก่อน — เลือกแค่รุ่น ไม่มี toggle ฉนวน</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip">เมทัลชีท</button><button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล-ดีไลท์</button><button class="chip">โพลีตัน-กระจก</button>
+          <button class="chip">ฝ้า-เพดาน</button><button class="chip on">ผนังเบา</button>
+        </div>
+        <div class="lbl">รุ่น</div>
+        <div class="chips">
+          <button class="chip">ISOWALL</button>
+          <button class="chip">ภายนอก (ไม่มีฉนวน)</button>
+          <button class="chip on">ภายใน (ไม่มีฉนวน)</button>
+        </div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="3.0" step="0.1"></div>
+          <div class="fld"><label>สูง (ม.)</label><input type="number" value="2.5" step="0.1"></div>
+          <div class="fld"><label>ชุด</label><input type="number" value="1" step="1"></div>
+        </div>
+        <div class="note">ชื่อ "ไม่มีฉนวน" ทำให้สับสน — ลูกค้าส่วนใหญ่ต้องการฉนวนแต่ไม่รู้ว่าต้องเพิ่มราคา</div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="panel">
+      <div class="panel-hd after">✅ หลัง — เลือกรุ่น + toggle ฉนวน (default=มีฉนวน)</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip">เมทัลชีท</button><button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล-ดีไลท์</button><button class="chip">โพลีตัน-กระจก</button>
+          <button class="chip">ฝ้า-เพดาน</button><button class="chip on">ผนังเบา</button>
+        </div>
+        <div class="lbl">รุ่น</div>
+        <div class="chips">
+          <button class="chip" onclick="g3WallPick(this,'isowall')">ISOWALL</button>
+          <button class="chip" onclick="g3WallPick(this,'wall_ext')">ภายนอก</button>
+          <button class="chip on" onclick="g3WallPick(this,'wall_int')">ภายใน</button>
+        </div>
+        <!-- insul toggle (hidden for isowall) -->
+        <div id="insul-wrap" class="toggle-row">
+          <label>ฉนวน <small style="color:var(--muted)">(+600 บ./ตร.ม.)</small></label>
+          <label class="tog"><input type="checkbox" id="insul-tog" checked onchange="g3InsulChange()"><span class="tog-slider"></span></label>
+          <span id="insul-badge" class="insul-badge on">มีฉนวน</span>
+        </div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" id="g3ww" value="3.0" step="0.1" oninput="g3WallCalc()"></div>
+          <div class="fld"><label>สูง (ม.)</label><input type="number" id="g3wh" value="2.5" step="0.1" oninput="g3WallCalc()"></div>
+          <div class="fld"><label>ชุด</label>
+            <div class="stepper">
+              <button class="step-btn" onclick="stepChange(this,-1,1,99);g3WallCalc()">−</button>
+              <input class="step-val" type="number" id="g3wqty" value="1" min="1" oninput="syncStep(this);g3WallCalc()">
+              <button class="step-btn" onclick="stepChange(this,1,1,99);g3WallCalc()">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pcrd">
+          <div class="ttl">ราคาประเมิน <span class="demo-tag">เดโม</span></div>
+          <div class="pcrd-row"><span class="nm">ผนังเบาภายใน</span><span class="val" id="g3w-base">฿32,000</span></div>
+          <div class="pcrd-row" id="g3w-insul-row"><span class="nm" style="color:var(--green)">+ ฉนวน (7.5 ตร.ม. × 600)</span><span class="val" style="color:var(--green)" id="g3w-insul-val">+฿4,500</span></div>
+          <div class="pcrd-tot"><span class="nm">รวม ×1 ชุด</span><span class="val" id="g3w-tot">฿36,500</span></div>
+        </div>
+        <div class="note"><b>isowall</b> = มีฉนวนในตัว ไม่มี toggle · <b>ภายนอก/ภายใน</b> = ตั้งค่าเริ่มต้นมีฉนวน ลูกค้ายกเลิกเองได้</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ข้อ 3: G3 หลังคาเลื่อน                      -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-hd">
+    <div class="sec-num">3</div>
+    <div>
+      <div class="sec-title">G3 หลังคา — เพิ่ม toggle "หลังคาเลื่อน" ทุกแบบ</div>
+      <div class="sec-sub">Engine มี optSlide:true ครบทุกรุ่น · เพิ่มแค่ UI toggle + ช่องจำนวนบาน</div>
+    </div>
+  </div>
+  <div class="cols">
+    <!-- BEFORE -->
+    <div class="panel">
+      <div class="panel-hd before">⛔ ก่อน — ไม่มี option หลังคาเลื่อน</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip on">เมทัลชีท</button><button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล-ดีไลท์</button><button class="chip">โพลีตัน-กระจก</button>
+          <button class="chip">ฝ้า-เพดาน</button><button class="chip">ผนังเบา</button>
+        </div>
+        <div class="lbl">รุ่น</div>
+        <div class="chips">
+          <button class="chip on">1 นิ้ว ท้องPVC EPS</button>
+          <button class="chip">2 นิ้ว ท้องPVC EPS</button>
+          <button class="chip">1 นิ้ว ท้องเหล็ก EPS</button>
+          <button class="chip">2 นิ้ว ท้องเหล็ก EPS</button>
+          <button class="chip">1 นิ้ว ท้องฟอยล์ PU</button>
+          <button class="chip">2 นิ้ว ท้องฟอยล์ PU</button>
+          <button class="chip">1 นิ้ว ท้องเหล็ก PU</button>
+          <button class="chip">2 นิ้ว ท้องเหล็ก PU</button>
+        </div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="6.0" step="0.1"></div>
+          <div class="fld"><label>ยาว (ม.)</label><input type="number" value="8.0" step="0.1"></div>
+          <div class="fld"><label>ชุด</label><input type="number" value="1" step="1"></div>
+        </div>
+        <div class="note">ลูกค้าต้องการหลังคาเลื่อนต้องเปิดโหมดปกติ — ในคิดเร็วยังไม่รองรับ</div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="panel">
+      <div class="panel-hd after">✅ หลัง — มี toggle หลังคาเลื่อน + ช่องจำนวนบาน</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip on">เมทัลชีท</button><button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล-ดีไลท์</button><button class="chip">โพลีตัน-กระจก</button>
+          <button class="chip">ฝ้า-เพดาน</button><button class="chip">ผนังเบา</button>
+        </div>
+        <div class="lbl">รุ่น</div>
+        <div class="chips">
+          <button class="chip on">1 นิ้ว ท้องPVC EPS</button>
+          <button class="chip">2 นิ้ว ท้องPVC EPS</button>
+          <button class="chip">1 นิ้ว ท้องเหล็ก EPS</button>
+          <button class="chip">2 นิ้ว ท้องเหล็ก EPS</button>
+          <button class="chip">1 นิ้ว ท้องฟอยล์ PU</button>
+          <button class="chip">2 นิ้ว ท้องฟอยล์ PU</button>
+          <button class="chip">1 นิ้ว ท้องเหล็ก PU</button>
+          <button class="chip">2 นิ้ว ท้องเหล็ก PU</button>
+        </div>
+        <!-- slide toggle -->
+        <div class="toggle-row">
+          <label>หลังคาเลื่อน</label>
+          <label class="tog"><input type="checkbox" id="slide-tog" onchange="g3SlideChange()"><span class="tog-slider"></span></label>
+          <span id="slide-badge" class="insul-badge off">ไม่เลื่อน</span>
+        </div>
+        <!-- slide panel count (hidden by default) -->
+        <div id="slide-extra" class="hidden">
+          <div class="lbl" style="margin-top:8px;">จำนวนบานเลื่อน</div>
+          <div style="width:140px;">
+            <div class="stepper">
+              <button class="step-btn" onclick="stepChange(this,-1,2,10);g3SlideCalc()">−</button>
+              <input class="step-val" type="number" id="slide-panels" value="2" min="2" max="10" oninput="syncStep(this);g3SlideCalc()">
+              <button class="step-btn" onclick="stepChange(this,1,2,10);g3SlideCalc()">+</button>
+            </div>
+          </div>
+          <div class="note" style="margin-top:6px;">ต่ำสุด 2 บาน (1 บานติดตาย + 1 บานเลื่อน)</div>
+        </div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" id="g3rw" value="6.0" step="0.1" oninput="g3SlideCalc()"></div>
+          <div class="fld"><label>ยาว (ม.)</label><input type="number" id="g3rh" value="8.0" step="0.1" oninput="g3SlideCalc()"></div>
+          <div class="fld"><label>ชุด</label>
+            <div class="stepper">
+              <button class="step-btn" onclick="stepChange(this,-1,1,99);g3SlideCalc()">−</button>
+              <input class="step-val" type="number" id="g3rqty" value="1" min="1" oninput="syncStep(this);g3SlideCalc()">
+              <button class="step-btn" onclick="stepChange(this,1,1,99);g3SlideCalc()">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pcrd">
+          <div class="ttl">ราคาประเมิน <span class="demo-tag">เดโม</span></div>
+          <div class="pcrd-row"><span class="nm">เมทัลชีท 1 นิ้ว ท้องPVC</span><span class="val" id="g3r-base">฿28,000</span></div>
+          <div class="pcrd-row" id="g3r-slide-row" style="display:none;"><span class="nm" style="color:var(--blue)">+ หลังคาเลื่อน</span><span class="val" style="color:var(--blue)" id="g3r-slide-val">+฿0</span></div>
+          <div class="pcrd-tot"><span class="nm">รวม ×1 ชุด</span><span class="val" id="g3r-tot">฿28,000</span></div>
+        </div>
+        <div class="note">
+          <b>อัตราหลังคาเลื่อน</b> (จาก engine): 5,000/ตร.ม. (&lt;10 ตร.ม.) · 4,700 (10-15) · 4,400 (15-20) · 4,100 (20-25) · 3,800 (25-30) · 3,500 (&gt;30) + บานเพิ่ม ×4,500-9,000/บาน
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- ข้อ 4: G2 Cascade Bug                        -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-hd">
+    <div class="sec-num">4</div>
+    <div>
+      <div class="sec-title">G2 ระแนง — แก้ cascade (กดขนาดกล่อง → ขั้นถัดไปโผล่)</div>
+      <div class="sec-sub">4 ขั้น: ชนิด → ขนาดกล่อง → หน้าโชว์ → ระยะห่าง → โครง</div>
+    </div>
+  </div>
+  <div class="cols">
+    <!-- BEFORE -->
+    <div class="panel">
+      <div class="panel-hd before">⛔ ก่อน — กดขนาดกล่องแล้ว cascade หยุด</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip">ประตูรั้ว</button>
+          <button class="chip on">ระแนง</button>
+          <button class="chip">ราวกันตก</button>
+          <button class="chip">ระแนงพิเศษ</button>
+        </div>
+        <div class="lbl">ชนิดระแนง</div>
+        <div class="chips">
+          <button class="chip on">ระแนงกล่อง</button>
+          <button class="chip">เกล็ด Z</button>
+        </div>
+        <div class="lbl">ขนาดกล่อง</div>
+        <div class="chips">
+          <button class="chip on">1x5 cm.</button>
+          <button class="chip">1"x1.6"</button>
+          <button class="chip">1"x1"</button>
+          <button class="chip">1"x1½"</button>
+          <button class="chip">1"x4"</button>
+        </div>
+        <!-- cascade stops here — nothing appears -->
+        <div style="margin-top:12px;padding:12px;background:#FEF2F2;border:1.5px dashed #FCA5A5;border-radius:8px;text-align:center;font-size:13px;color:#991B1B;">
+          ❌ หน้าโชว์ / ระยะห่าง / โครง ไม่โผล่<br>
+          <small style="color:var(--muted)">ราคาแสดง ฿0 ตลอด</small>
+        </div>
+        <div class="note">
+          <b>root cause:</b> ค่าชื่อขนาดกล่องที่มี <code>"</code> เช่น 1"x1.6" ทำ onclick attribute ใน HTML พัง · ส่วน 1x5 cm. อาจยัง render ได้แต่ราคาไม่คำนวณ
+        </div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="panel">
+      <div class="panel-hd after">✅ หลัง — cascade ทำงานครบทุกขั้น (กดเล่นได้เลย)</div>
+      <div class="panel-body">
+        <div class="lbl">ประเภทงาน</div>
+        <div class="chips">
+          <button class="chip">ประตูรั้ว</button>
+          <button class="chip on">ระแนง</button>
+          <button class="chip">ราวกันตก</button>
+          <button class="chip">ระแนงพิเศษ</button>
+        </div>
+        <div class="lbl">ชนิดระแนง</div>
+        <div class="chips">
+          <button class="chip on" onclick="g2SetType(this,'box')">ระแนงกล่อง</button>
+          <button class="chip" onclick="g2SetType(this,'gleed')">เกล็ด Z</button>
+        </div>
+        <div id="g2-cascade"></div>
+        <div class="size-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" id="g2w" value="3.0" step="0.1" oninput="g2Calc()"></div>
+          <div class="fld"><label>สูง (ม.)</label><input type="number" id="g2h" value="2.0" step="0.1" oninput="g2Calc()"></div>
+          <div class="fld"><label>ชุด</label>
+            <div class="stepper">
+              <button class="step-btn" onclick="stepChange(this,-1,1,99);g2Calc()">−</button>
+              <input class="step-val" type="number" id="g2qty" value="1" min="1" oninput="syncStep(this);g2Calc()">
+              <button class="step-btn" onclick="stepChange(this,1,1,99);g2Calc()">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="pcrd">
+          <div class="ttl">ราคาประเมิน <span class="demo-tag">เดโม</span></div>
+          <div id="g2-pc-body"><div class="pcrd-row"><span class="nm">— เลือกให้ครบก่อน —</span><span class="val">฿-</span></div></div>
+          <div class="pcrd-tot"><span class="nm" id="g2-tot-lbl">รวม ×1 ชุด</span><span class="val" id="g2-tot">฿-</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- สรุปผลจริง — deploy แล้ว                     -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" style="margin-top:32px;">
+  <div class="section-hd">
+    <div class="sec-num" style="background:var(--green);">✓</div>
+    <div>
+      <div class="sec-title">สรุปผลจริง — deploy เสร็จแล้ว</div>
+      <div class="sec-sub">commit e473b68 · push main · Vercel auto-deploy · golden-snapshot 150/150 ✅</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <!-- ผลจาก code fix -->
+    <div class="panel">
+      <div class="panel-hd after">📦 จุดที่แก้ใน index.html</div>
+      <div class="panel-body" style="font-size:13px;line-height:1.9;">
+        <div style="margin-bottom:8px;"><span style="font-weight:700;">G3 ผนังเบา — ฉนวน isowall</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">
+          <span style="color:#991B1B;font-weight:700;font-size:16px;">⛔</span>
+          <div><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px;">['wall_ext','wall_int'].includes(curId)</code><br>
+          <span style="color:#6B7280;font-size:12px;">L2282 — toggle ฉนวนไม่โผล่เมื่อเลือก ISOWALL</span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-start;">
+          <span style="color:var(--green);font-weight:700;font-size:16px;">✅</span>
+          <div><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px;">['<b>isowall</b>','wall_ext','wall_int'].includes(curId)</code><br>
+          <span style="color:#6B7280;font-size:12px;">กด ISOWALL → toggle ฉนวน +600/ตร.ม. โผล่แล้ว</span></div>
+        </div>
+
+        <div style="margin-bottom:8px;"><span style="font-weight:700;">G3 คิดราคา qiCalcG3</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;">
+          <span style="color:#991B1B;font-weight:700;font-size:16px;">⛔</span>
+          <div><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px;">['wall_ext','wall_int'].includes(id)</code><br>
+          <span style="color:#6B7280;font-size:12px;">L2311 — ราคา isowall ไม่บวก +600/ตร.ม. แม้กด toggle</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="color:var(--green);font-weight:700;font-size:16px;">✅</span>
+          <div><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px;">['<b>isowall</b>','wall_ext','wall_int'].includes(id)</code><br>
+          <span style="color:#6B7280;font-size:12px;">กด มีฉนวน → ราคาเด้ง +600 × ตร.ม. ถูกต้อง</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ที่ไม่แตะ + ผ่านแล้ว -->
+    <div class="panel">
+      <div class="panel-hd" style="background:#F0F9FF;color:#0369A1;">📋 ที่ทำงานอยู่แล้วในตัว (ไม่ต้องแตะ)</div>
+      <div class="panel-body" style="font-size:13px;line-height:1.9;">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <span style="color:var(--green);">✅</span>
+          <span><b>G3 หลังคาเลื่อน</b> — toggle โผล่เมื่อเลือกหลังคาทุกรุ่น ราคา +ชุดเลื่อน+มอเตอร์</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <span style="color:var(--green);">✅</span>
+          <span><b>G2 cascade ระแนงกล่อง</b> — chips 1"x1.6" / 1"x4" / 1"x1" ทำงานได้ด้วย data-v approach</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <span style="color:var(--green);">✅</span>
+          <span><b>ขนาดกล่องที่มี 2 หน้า</b> — 1x5cm. (หน้า 1cm./5cm.) + 1"x4" (หน้า 1"/4") โชว์ครบ 2 หน้า</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:16px;">
+          <span style="color:var(--green);">✅</span>
+          <span><b>+/- Stepper</b> — ทุกกลุ่ม G1-G6 แก้แล้วก่อนหน้า</span>
+        </div>
+        <div style="background:#D1FAE5;border-radius:8px;padding:8px 12px;">
+          <div style="font-weight:800;color:#065F46;font-size:12px;margin-bottom:4px;">Golden Snapshot</div>
+          <div style="font-size:13px;color:#065F46;">✅ 150/150 · ไม่มีราคาเพี้ยน</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;background:#F9FAFB;border:1.5px solid var(--line);border-radius:10px;padding:12px 16px;font-size:12px;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:18px;">🌐</span>
+    <span style="color:var(--muted);">Deploy:</span>
+    <code style="color:var(--blue);font-weight:700;">jr-beta-azure.vercel.app</code>
+    <span style="color:var(--muted);margin-left:8px;">commit</span>
+    <code style="background:#F3F4F6;padding:2px 8px;border-radius:6px;font-size:11px;">e473b68</code>
+  </div>
+</div>
+
+<script>
+/* ─── Stepper ─── */
+function stepChange(btn,delta,mn,mx){
+  var inp=btn.parentElement.querySelector('.step-val');
+  var v=parseInt(inp.value)||mn;
+  v=Math.min(mx,Math.max(mn,v+delta));
+  inp.value=v;
+}
+function syncStep(inp){
+  var mn=parseInt(inp.min)||1, mx=parseInt(inp.max)||999;
+  var v=parseInt(inp.value);
+  if(isNaN(v))return;
+  if(v<mn)inp.value=mn;
+  if(v>mx)inp.value=mx;
+}
+
+/* ─── G3 Wall Insulation ─── */
+var g3WallId='wall_int';
+// dummy base rates (เดโม)
+var G3W_BASE={isowall:28000,wall_ext:32000,wall_int:32000};
+function g3WallPick(btn,id){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g3WallId=id;
+  var wrap=document.getElementById('insul-wrap');
+  wrap.style.display=(id==='isowall')?'none':'flex';
+  if(id==='isowall'){ document.getElementById('insul-tog').checked=true; }
+  g3WallCalc();
+}
+function g3InsulChange(){
+  var on=document.getElementById('insul-tog').checked;
+  var badge=document.getElementById('insul-badge');
+  badge.textContent=on?'มีฉนวน':'ไม่มีฉนวน';
+  badge.className='insul-badge '+(on?'on':'off');
+  g3WallCalc();
+}
+function g3WallCalc(){
+  var W=parseFloat(document.getElementById('g3ww').value)||0;
+  var H=parseFloat(document.getElementById('g3wh').value)||0;
+  var qty=parseInt(document.getElementById('g3wqty').value)||1;
+  var a=W*H;
+  var base=Math.max(13500,a*(g3WallId==='isowall'?3700:3200)); // dummy rates
+  if(g3WallId==='isowall') base=Math.max(7000,a*3700);
+  var insul=(document.getElementById('insul-tog').checked&&g3WallId!=='isowall')?600*a:0;
+  var tot=(base+insul)*qty;
+  document.getElementById('g3w-base').textContent='฿'+fmt(Math.round(base/1000)*1000);
+  document.getElementById('g3w-insul-row').style.display=insul>0?'flex':'none';
+  document.getElementById('g3w-insul-val').textContent='+฿'+fmt(Math.round(insul));
+  document.getElementById('g3w-tot').textContent='฿'+fmt(Math.round(tot/1000)*1000);
+}
+
+/* ─── G3 Roof Slide ─── */
+function g3SlideChange(){
+  var on=document.getElementById('slide-tog').checked;
+  var badge=document.getElementById('slide-badge');
+  badge.textContent=on?'เลื่อนได้':'ไม่เลื่อน';
+  badge.className='insul-badge '+(on?'on':'off');
+  document.getElementById('slide-extra').style.display=on?'block':'none';
+  document.getElementById('g3r-slide-row').style.display=on?'flex':'none';
+  g3SlideCalc();
+}
+// ROOF_SLIDE tiers from engine (real rates)
+var ROOF_SLIDE=[[5,10,5000],[10,15,4700],[15,20,4400],[20,25,4100],[25,30,3800],[30,9999,3500]];
+var ROOF_PANEL_TIERS=[[0,10,4500],[10,20,6750],[20,30,9000],[30,9999,11250]];
+function monoRate(a,tiers){
+  for(var i=0;i<tiers.length;i++){ if(a>=tiers[i][0]&&a<tiers[i][1]) return a*tiers[i][2]; }
+  return a*tiers[tiers.length-1][2];
+}
+function panelTier(a){ for(var i=0;i<ROOF_PANEL_TIERS.length;i++){ if(a>=ROOF_PANEL_TIERS[i][0]&&a<ROOF_PANEL_TIERS[i][1]) return ROOF_PANEL_TIERS[i][2]; } return 11250; }
+function g3SlideCalc(){
+  var W=parseFloat(document.getElementById('g3rw').value)||0;
+  var H=parseFloat(document.getElementById('g3rh').value)||0;
+  var qty=parseInt(document.getElementById('g3rqty').value)||1;
+  var a=W*H;
+  var base=28000; // dummy เมทัลชีท min
+  if(a>0) base=Math.max(28000,a*4500); // dummy rate
+  base=Math.round(base/1000)*1000;
+  var slide=0;
+  if(document.getElementById('slide-tog').checked){
+    var N=parseInt(document.getElementById('slide-panels').value)||2;
+    var slideBase=monoRate(a,ROOF_SLIDE);
+    var extraPanels=(N-1)*panelTier(a);
+    slide=Math.round((slideBase+extraPanels)/1000)*1000;
+  }
+  document.getElementById('g3r-base').textContent='฿'+fmt(base);
+  document.getElementById('g3r-slide-val').textContent='+฿'+fmt(slide);
+  document.getElementById('g3r-tot').textContent='฿'+fmt((base+slide)*qty);
+  document.getElementById('g3rqty').closest('.step-val')&&(document.getElementById('g3r-tot').textContent='฿'+fmt((base+slide)*qty));
+}
+
+/* ─── G2 Cascade ─── */
+// dummy data (subset of real QIG2_BANGTA_DATA)
+var G2_BOX_DATA={
+  '1x5 cm.':{
+    '1 cm.':{gaps:{'5 cm.':{frames:{'ไม่โครง':3300,'รวมโครง':5200},'default':'รวมโครง'},'3 cm.':{frames:{'ไม่โครง':4300,'รวมโครง':6000},'default':'รวมโครง'},'2 cm.':{frames:{'ไม่โครง':5000,'รวมโครง':7200},'default':'รวมโครง'}}},
+    '5 cm.':{gaps:{'5 cm.':{frames:{'ไม่โครง':2800,'รวมโครง':4500},'default':'รวมโครง'},'3 cm.':{frames:{'ไม่โครง':3200,'รวมโครง':4800},'default':'รวมโครง'},'2 cm.':{frames:{'ไม่โครง':3300,'รวมโครง':5100},'default':'รวมโครง'}}}
+  },
+  '1"x1.6"':{
+    '1"':{gaps:{'5 cm.':{frames:{'ไม่โครง':3700,'รวมโครง':5300},'default':'รวมโครง'},'3 cm.':{frames:{'ไม่โครง':4500,'รวมโครง':6400},'default':'รวมโครง'},'2 cm.':{frames:{'ไม่โครง':4800,'รวมโครง':6900},'default':'รวมโครง'}}}
+  },
+  '1"x1"':{
+    '1"':{gaps:{'5 cm.':{frames:{'ไม่โครง':3200,'รวมโครง':4700},'default':'รวมโครง'},'3 cm.':{frames:{'ไม่โครง':3700,'รวมโครง':5400},'default':'รวมโครง'},'2 cm.':{frames:{'ไม่โครง':3900,'รวมโครง':5600},'default':'รวมโครง'}}}
+  },
+  '1"x1½"':{
+    '1"':{gaps:{'5 cm.':{frames:{'ไม่โครง':3300,'รวมโครง':5200},'default':'รวมโครง'},'3 cm.':{frames:{'ไม่โครง':4000,'รวมโครง':6100},'default':'รวมโครง'},'2 cm.':{frames:{'ไม่โครง':4300,'รวมโครง':6500},'default':'รวมโครง'}}}
+  },
+  '1"x4"':{
+    '1"':{gaps:{'5 cm.':{frames:{'ไม่โครง':5500,'รวมโครง':8100},'default':'รวมโครง'}}},
+    '4"':{gaps:{'5 cm.':{frames:{'ไม่โครง':4000,'รวมโครง':6000},'default':'รวมโครง'}}}
+  }
+};
+var G2_GLEED_DATA={'1"':{frames:{'ไม่โครง':3600,'รวมโครง':5200},'default':'รวมโครง'},'1.6"':{frames:{'ไม่โครง':4900,'รวมโครง':6900},'default':'รวมโครง'},'4"':{frames:{'ไม่โครง':5300,'รวมโครง':7700},'default':'รวมโครง'}};
+
+var g2State={type:'box',box:'',face:'',gap:'',frame:'รวมโครง'};
+
+function g2SetType(btn,v){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g2State={type:v,box:'',face:'',gap:'',frame:'รวมโครง'};
+  g2Render();
+}
+function g2PickBox(btn,v){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g2State.box=v; g2State.face=''; g2State.gap=''; g2State.frame='รวมโครง';
+  g2Render();
+}
+function g2PickFace(btn,v){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g2State.face=v; g2State.gap=''; g2State.frame='รวมโครง';
+  g2Render();
+}
+function g2PickGap(btn,v){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g2State.gap=v; g2State.frame='รวมโครง';
+  g2Render();
+}
+function g2PickFrame(btn,v){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  g2State.frame=v;
+  g2Calc();
+}
+
+function g2Render(){
+  var h='';
+  if(g2State.type==='box'){
+    // ขนาดกล่อง
+    h+='<div class="lbl">ขนาดกล่อง</div><div class="chips">';
+    Object.keys(G2_BOX_DATA).forEach(function(box){
+      h+='<button class="chip'+(g2State.box===box?' on':'')+'" onclick="g2PickBox(this,\''+encodeVal(box)+'\')">'+esc(box)+'</button>';
+    });
+    h+='</div>';
+    // หน้าโชว์
+    if(g2State.box&&G2_BOX_DATA[g2State.box]){
+      var faces=Object.keys(G2_BOX_DATA[g2State.box]);
+      h+='<div class="lbl">หน้าโชว์</div><div class="chips">';
+      faces.forEach(function(f){ h+='<button class="chip'+(g2State.face===f?' on':'')+'" onclick="g2PickFace(this,\''+encodeVal(f)+'\')">'+esc(f)+'</button>'; });
+      h+='</div>';
+    }
+    // ระยะห่าง
+    if(g2State.face&&G2_BOX_DATA[g2State.box]&&G2_BOX_DATA[g2State.box][g2State.face]){
+      var gaps=Object.keys(G2_BOX_DATA[g2State.box][g2State.face].gaps);
+      h+='<div class="lbl">ระยะห่าง</div><div class="chips">';
+      gaps.forEach(function(g){ h+='<button class="chip'+(g2State.gap===g?' on':'')+'" onclick="g2PickGap(this,\''+encodeVal(g)+'\')">'+esc(g)+'</button>'; });
+      h+='</div>';
+    }
+    // โครง
+    if(g2State.gap&&G2_BOX_DATA[g2State.box]&&G2_BOX_DATA[g2State.box][g2State.face]&&G2_BOX_DATA[g2State.box][g2State.face].gaps[g2State.gap]){
+      var fr=G2_BOX_DATA[g2State.box][g2State.face].gaps[g2State.gap].frames;
+      var selFr=g2State.frame||G2_BOX_DATA[g2State.box][g2State.face].gaps[g2State.gap].default;
+      if(!g2State.frame) g2State.frame=selFr;
+      h+='<div class="lbl">โครง</div><div class="chips">';
+      Object.keys(fr).forEach(function(f){ h+='<button class="chip'+(g2State.frame===f?' on':'')+'" onclick="g2PickFrame(this,\''+encodeVal(f)+'\')">'+esc(f)+'</button>'; });
+      h+='</div>';
+    }
+  } else {
+    // เกล็ด Z
+    h+='<div class="lbl">ขนาดเกล็ด</div><div class="chips">';
+    Object.keys(G2_GLEED_DATA).forEach(function(s){ h+='<button class="chip'+(g2State.box===s?' on':'')+'" onclick="g2PickBox(this,\''+encodeVal(s)+'\')">'+esc(s)+'</button>'; });
+    h+='</div>';
+    if(g2State.box&&G2_GLEED_DATA[g2State.box]){
+      var gfr=G2_GLEED_DATA[g2State.box].frames;
+      var gdef=G2_GLEED_DATA[g2State.box].default;
+      if(!g2State.frame) g2State.frame=gdef;
+      h+='<div class="lbl">โครง</div><div class="chips">';
+      Object.keys(gfr).forEach(function(f){ h+='<button class="chip'+(g2State.frame===f?' on':'')+'" onclick="g2PickFrame(this,\''+encodeVal(f)+'\')">'+esc(f)+'</button>'; });
+      h+='</div>';
+    }
+  }
+  document.getElementById('g2-cascade').innerHTML=h;
+  g2Calc();
+}
+
+function encodeVal(s){ return s.replace(/\\/g,'\\\\').replace(/'/g,'\\x27'); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function g2Calc(){
+  var W=parseFloat(document.getElementById('g2w').value)||0;
+  var H=parseFloat(document.getElementById('g2h').value)||0;
+  var qty=parseInt(document.getElementById('g2qty').value)||1;
+  var a=W*H;
+  var rate=0;
+  if(g2State.type==='box'&&g2State.box&&g2State.face&&g2State.gap&&g2State.frame){
+    var node=G2_BOX_DATA[g2State.box];
+    if(node&&node[g2State.face]&&node[g2State.face].gaps[g2State.gap]&&node[g2State.face].gaps[g2State.gap].frames[g2State.frame]){
+      rate=node[g2State.face].gaps[g2State.gap].frames[g2State.frame];
+    }
+  } else if(g2State.type==='gleed'&&g2State.box&&g2State.frame){
+    if(G2_GLEED_DATA[g2State.box]&&G2_GLEED_DATA[g2State.box].frames[g2State.frame]){
+      rate=G2_GLEED_DATA[g2State.box].frames[g2State.frame];
+    }
+  }
+  if(rate&&a>0){
+    var sell=Math.ceil(a*rate/1000)*1000;
+    var pname=(g2State.type==='box'?'ระแนงกล่อง '+g2State.box:'เกล็ด Z '+g2State.box)+(g2State.frame?' · '+g2State.frame:'');
+    document.getElementById('g2-pc-body').innerHTML=
+      '<div class="pcrd-row"><span class="nm">'+esc(pname)+'</span><span class="val">฿'+fmt(sell)+'</span></div>'+
+      '<div class="pcrd-row"><span class="nm">พื้นที่ '+a.toFixed(2)+' ตร.ม. × '+fmt(rate)+' บ./ตร.ม.</span></div>';
+    document.getElementById('g2-tot').textContent='฿'+fmt(sell*qty);
+  } else {
+    document.getElementById('g2-pc-body').innerHTML='<div class="pcrd-row"><span class="nm">— เลือกให้ครบก่อน —</span><span class="val">฿-</span></div>';
+    document.getElementById('g2-tot').textContent='฿-';
+  }
+  document.getElementById('g2-tot-lbl').textContent='รวม ×'+qty+' ชุด';
+}
+
+/* ─── utils ─── */
+function fmt(n){ return n.toLocaleString('th-TH'); }
+
+/* ─── init ─── */
+g2Render();
+g3WallCalc();
+g3SlideCalc();
+</script>
+</body>
+</html>

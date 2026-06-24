@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT G6 กั้นห้องกระจก — UX redesign 19 มิ.ย. 69</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --jr:#B3151D;--jr-light:#fdf3f3;--jr-border:#e8c0c2;
+  --chip-h:42px;--radius:8px;--gap:10px;
+  --blue:#1565C0;--blue-bg:#E3F2FD;--blue-bd:#90CAF9;
+  --green:#065F46;--green-bg:#ECFDF5;--green-bd:#6EE7B7;
+  --amber:#92400E;--amber-bg:#FFF7ED;--amber-bd:#FCD34D;
+  --gray:#6B7280;--border:#E5E7EB;--ink:#1F2937;--muted:#9CA3AF;
+  --gh:#7C3AED;--gh-bg:#F5F3FF;--gh-bd:#C4B5FD;
+}
+body{font-family:'Leelawadee UI','Tahoma','Noto Sans Thai',sans-serif;font-size:14px;color:var(--ink);background:#f0f2f5;padding:12px 8px 80px;}
+.demo-wrap{max-width:480px;margin:0 auto;}
+.d-header{background:var(--jr);color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;}
+.d-title{font-weight:700;font-size:15px;}
+.demo-badge{background:rgba(255,255,255,.25);font-size:10px;padding:2px 8px;border-radius:20px;}
+.demo-note{background:var(--amber-bg);border:1px solid var(--amber-bd);text-align:center;font-size:11px;color:var(--amber);font-weight:700;padding:6px 10px;}
+.demo-note a{color:var(--jr);cursor:pointer;text-decoration:underline;}
+
+/* Room card */
+.room-card{background:#fff;border:1.5px solid var(--gh-bd);border-radius:0 0 12px 12px;overflow:hidden;}
+.room-header{background:var(--gh-bg);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gh-bd);}
+.room-title{font-weight:700;color:var(--gh);font-size:14px;display:flex;align-items:center;gap:6px;}
+.room-price{font-size:13px;font-weight:700;color:var(--jr);}
+
+/* Section */
+.d-sec{border-bottom:1px solid var(--border);}
+.d-sec-head{padding:9px 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#374151;background:#fafafa;cursor:pointer;user-select:none;}
+.d-sec-head .sec-icon{color:var(--jr);font-size:14px;}
+.d-sec-head .toggle-arrow{margin-left:auto;color:var(--muted);font-size:12px;transition:transform .2s;}
+.d-sec-head.open .toggle-arrow{transform:rotate(180deg);}
+.d-sec-body{padding:10px 14px;display:flex;flex-direction:column;gap:var(--gap);}
+.d-sec-body.hidden{display:none;}
+
+/* Fields */
+.d-field{display:flex;flex-direction:column;gap:5px;}
+.d-field>label{font-size:12px;font-weight:700;color:#374151;}
+.d-hint{font-size:11px;color:var(--muted);}
+
+/* Chips */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{height:var(--chip-h);min-width:64px;padding:0 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:#374151;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;gap:4px;}
+.chip:active{transform:scale(.96);}
+.chip.on{border-color:var(--jr);background:var(--jr-light);color:var(--jr);font-weight:700;}
+.chip.on-pur{border-color:var(--gh);background:var(--gh-bg);color:var(--gh);font-weight:700;}
+.chip.chip-sm{height:36px;font-size:12px;min-width:52px;padding:0 10px;}
+.chip:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Size row */
+.sz-row{display:flex;gap:8px;flex-wrap:wrap;}
+.sz-f{display:flex;flex-direction:column;gap:3px;flex:1;min-width:70px;}
+.sz-f label{font-size:11px;font-weight:700;color:#374151;}
+.sz-f .num-wrap{display:flex;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.sz-f .num-wrap input{flex:1;min-width:0;height:42px;border:0;text-align:center;font-size:16px;font-weight:700;font-family:inherit;padding:0;}
+.sz-f .num-wrap button{width:34px;height:42px;border:0;background:#F3F4F6;color:#374151;font-size:17px;cursor:pointer;flex-shrink:0;}
+.sz-f .num-wrap button:active{background:#E5E7EB;}
+.sz-f input[type=number]{-moz-appearance:textfield;}
+.sz-f input::-webkit-inner-spin-button,.sz-f input::-webkit-outer-spin-button{-webkit-appearance:none;}
+
+/* Bay selector */
+.bay-header{background:var(--gh-bg);border:1.5px solid var(--gh-bd);border-radius:var(--radius);padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;}
+.bay-header .bay-num{width:26px;height:26px;border-radius:50%;background:var(--gh);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.bay-header .bay-name{font-weight:700;color:var(--gh);font-size:13px;}
+.bay-header .bay-sum{margin-left:auto;font-size:11px;color:var(--gray);}
+.bay-header .bay-arr{color:var(--muted);font-size:12px;transition:transform .2s;}
+.bay-header.open .bay-arr{transform:rotate(180deg);}
+.bay-detail{border:1.5px solid var(--gh-bd);border-top:0;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;}
+
+/* Bay Type grid */
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.type-btn{padding:9px 6px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.2;}
+.type-btn .tb-ic{font-size:16px;}
+.type-btn.on{border-color:var(--jr);background:var(--jr-light);color:var(--jr);}
+.sub-model-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.sub-btn{padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:#fff;font-size:11.5px;cursor:pointer;}
+.sub-btn.on{border-color:var(--jr);background:var(--jr-light);color:var(--jr);font-weight:700;}
+.sub-btn:disabled{opacity:.4;text-decoration:line-through;cursor:not-allowed;}
+
+/* Glass chips (KEY CHANGE vs current dropdown) */
+.glass-cats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.glass-models{display:flex;flex-wrap:wrap;gap:5px;}
+.glass-chip{height:35px;padding:0 11px;border-radius:17px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.glass-chip.on{border-color:#0369A1;background:#E0F2FE;color:#0369A1;font-weight:700;}
+
+/* Color swatches */
+.color-cats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.color-models{display:flex;flex-wrap:wrap;gap:7px;}
+.color-sw{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;min-width:50px;}
+.color-sw .dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);transition:all .15s;}
+.color-sw.on .dot{border-color:var(--jr);box-shadow:0 0 0 2px var(--jr-light);}
+.color-sw .nm{font-size:9.5px;color:#374151;text-align:center;line-height:1.15;max-width:52px;}
+.color-sw.on .nm{color:var(--jr);font-weight:700;}
+
+/* Toggle option */
+.tog-row{display:flex;align-items:center;gap:10px;}
+.tog-btn{position:relative;width:40px;height:22px;border-radius:11px;border:0;cursor:pointer;background:#d1d5db;transition:background .15s;flex-shrink:0;}
+.tog-btn::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.tog-btn.on{background:var(--jr);}
+.tog-btn.on::after{left:20px;}
+.tog-lbl{font-size:13px;font-weight:600;}
+.tog-hint{font-size:11px;color:var(--muted);}
+
+/* Ex pills */
+.ex-row{display:flex;flex-wrap:wrap;gap:6px;}
+.ex-pill{padding:6px 11px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:500;cursor:pointer;}
+.ex-pill.on{border-color:var(--amber);background:var(--amber-bg);color:var(--amber);font-weight:700;}
+
+/* Room color row (improved - chips instead of dropdown) */
+.room-color-bar{background:var(--amber-bg);border:1.5px solid var(--amber-bd);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.room-color-bar .rcb-title{font-size:12px;font-weight:800;color:var(--amber);}
+.room-color-bar .rcb-row{display:flex;gap:16px;flex-wrap:wrap;}
+.rcb-field{flex:1;min-width:140px;display:flex;flex-direction:column;gap:5px;}
+.rcb-field label{font-size:11px;font-weight:700;color:var(--amber);}
+
+/* Note box */
+.note-box{background:#f9fafb;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11.5px;color:var(--gray);}
+
+/* Price bar */
+.price-bar{position:sticky;bottom:0;background:var(--jr);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 12px 12px;}
+.pb-label{font-size:12px;opacity:.85;}
+.pb-price{font-size:22px;font-weight:700;}
+.pb-badge{background:rgba(255,255,255,.2);font-size:9px;padding:2px 6px;border-radius:10px;margin-left:5px;}
+
+/* Compare panel */
+.cmp-wrap{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}
+.cmp-title{font-size:14px;font-weight:800;color:var(--jr);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.cmp-tbl th{background:#F9FAFB;padding:6px 8px;border:1px solid var(--border);text-align:left;font-weight:700;}
+.cmp-tbl td{padding:6px 8px;border:1px solid var(--border);vertical-align:top;}
+.tag-ok{color:var(--green);font-weight:700;}
+.tag-fix{color:var(--jr);font-weight:700;}
+.tag-new{color:#0369A1;font-weight:700;}
+.tag-q{color:var(--amber);font-weight:700;}
+
+/* Add bay button */
+.add-bay-btn{width:100%;height:40px;border:1.5px dashed var(--gh-bd);border-radius:8px;background:var(--gh-bg);color:var(--gh);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;}
+.add-bay-btn:hover{background:#EDE9FE;}
+
+.collapse-more{cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--blue);font-weight:700;padding:4px 0;user-select:none;}
+.more-body.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ── ตาราง Compare G6 vs G1 (จากกดเว็บจริง 19 มิ.ย.) ── -->
+<div class="cmp-wrap">
+  <div class="cmp-title">🔍 เทียบ G6 กั้นห้อง vs G1 — จากกดเว็บจริง</div>
+  <div style="font-size:11px;color:#6B7280;margin-bottom:8px;background:#F9FAFB;padding:6px 8px;border-radius:6px;">
+    ✅ = ดีแล้ว · 🟡 = ต้องปรับ · 🔴 = ขาด/ผิดวิธี · — = ไม่มีในกลุ่มนั้น (ปกติ)
+  </div>
+  <table class="cmp-tbl">
+    <tr><th>ออปชั่น</th><th>G1 จริง (บาน/กระจก)</th><th>G6 จริง (กั้นห้อง)</th><th>ดราฟนี้เสนอ</th></tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── ชนิดบาน ──</td></tr>
+    <tr>
+      <td>เลือกชนิดบาน</td>
+      <td class="tag-ok">✅ 6 กลุ่ม chips + sub-chips</td>
+      <td class="tag-ok">✅ 6 กลุ่ม chips + sub-btn per bay</td>
+      <td class="tag-ok">✅ คงเดิม</td>
+    </tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── สีอลู + กระจก ──</td></tr>
+    <tr>
+      <td><b>กระจก (per บาน)</b></td>
+      <td class="tag-q">🟡 SELECT dropdown 66 ตัวเลือก</td>
+      <td class="tag-q">🟡 SELECT dropdown 66 ตัวเลือก<br><span style="font-size:10px;color:#6B7280;">(โชว์ตลอด แต่ยังเป็น dropdown ยาว)</span></td>
+      <td class="tag-new">🆕 Chips drill-down 5 หมวด<br><span style="font-size:10px;">(ทั่วไป/เทมเปอร์/ลามิเนต/อินซูเลท/พิเศษ)</span></td>
+    </tr>
+    <tr>
+      <td><b>สีอลู (per บาน)</b></td>
+      <td class="tag-q">🟡 SELECT dropdown 13 ตัวเลือก<br><span style="font-size:10px;color:#6B7280;">(โชว์ตลอด แต่ยังเป็น dropdown)</span></td>
+      <td class="tag-q">🟡 Chips 13 ตัว แต่ <u>ซ่อนในพับ</u><br><span style="font-size:10px;color:#B3151D;">"ตัวเลือกเพิ่มเติม" — ต้องกดเปิดก่อน</span></td>
+      <td class="tag-new">🆕 Chips+จุดสี โชว์ตลอด<br><span style="font-size:10px;">(ย้ายออกจากพับ)</span></td>
+    </tr>
+    <tr>
+      <td><b>สีอลู+กระจก (ทั้งห้อง)</b></td>
+      <td>— G1 ไม่มี room-level</td>
+      <td class="tag-q">🟡 SELECT dropdown (room-level)<br><span style="font-size:10px;color:#6B7280;">เซ็ตทีเดียวใช้ทุกบาน แต่ยัง dropdown</span></td>
+      <td class="tag-new">🆕 Chips ทั้ง 2 ฟิลด์ (แถบสีเหลือง)</td>
+    </tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── มือจับ + ล็อก ──</td></tr>
+    <tr>
+      <td>มือจับ</td>
+      <td class="tag-q">🟡 SELECT 3 ตัว (chipified บางส่วน)</td>
+      <td class="tag-ok">✅ Chips 4 แบรนด์ (Cmech/ดิจิ/สแตน/อื่น)</td>
+      <td class="tag-ok">✅ คงเดิม (G6 ดีกว่า G1)</td>
+    </tr>
+    <tr>
+      <td>ล็อก</td>
+      <td class="tag-ok">✅ Chips มีกุญแจ/ไม่มี</td>
+      <td class="tag-ok">✅ Chips มีกุญแจ/ไม่มี</td>
+      <td class="tag-ok">✅ คงเดิม</td>
+    </tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── ออปชั่นตามชนิดบาน ──</td></tr>
+    <tr>
+      <td>ธรณี / โช้คอัพ / ราง</td>
+      <td class="tag-ok">✅ Chips (chipified)</td>
+      <td class="tag-ok">✅ Chips (G6PROF)</td>
+      <td class="tag-ok">✅ คงเดิม</td>
+    </tr>
+    <tr>
+      <td>มุ้ง</td>
+      <td class="tag-ok">✅ chips toggle → 3 หมวด → รุ่น → ผ้า</td>
+      <td class="tag-ok">✅ chips toggle → 3 หมวด → รุ่น → ผ้า</td>
+      <td>คงเดิม (ย้ายลงหลัง กระจก/สี)</td>
+    </tr>
+    <tr>
+      <td>คาดตาราง</td>
+      <td class="tag-q">🟡 checkbox (plain)</td>
+      <td class="tag-ok">✅ chip toggle + กรอกเส้น</td>
+      <td class="tag-ok">✅ คงเดิม (G6 ดีกว่า)</td>
+    </tr>
+    <tr>
+      <td>ลูกฟูก / คอมโพสิต</td>
+      <td class="tag-q">🟡 checkbox + ราคา manual</td>
+      <td class="tag-ok">✅ chip toggle + เลือกชนิด</td>
+      <td class="tag-ok">✅ คงเดิม (G6 ดีกว่า)</td>
+    </tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── ของเสริม ──</td></tr>
+    <tr>
+      <td>ครอบวงกบ / ดรอปพื้น / รื้อ</td>
+      <td class="tag-q">🟡 โชว์ตลอด (ยาวหน้า)</td>
+      <td class="tag-q">🟡 ซ่อนในพับ "ตัวเลือกเพิ่มเติม"<br><span style="font-size:10px;color:#6B7280;">(เดียวกับสีอลู — ต้องกดเปิด)</span></td>
+      <td class="tag-ok">✅ พับแยกต่างหาก "ของเสริม"</td>
+    </tr>
+
+    <tr><td colspan="4" style="background:#F3F4F6;font-weight:800;font-size:11px;color:#374151;">── ฟีเจอร์ขาด / เพิ่มเติม ──</td></tr>
+    <tr>
+      <td><b>ตารางเต็มบาน</b></td>
+      <td class="tag-ok">✅ G1 มี (o-fullgrid)</td>
+      <td class="tag-fix">🔴 G6 ไม่มีเลย</td>
+      <td class="tag-new">🆕 เพิ่มใน section กระจก</td>
+    </tr>
+    <tr>
+      <td>Room builder หลายด้าน</td>
+      <td>— G1 ไม่มี</td>
+      <td class="tag-ok">✅ มีแถบ ด้าน A / +ด้าน</td>
+      <td class="tag-ok">✅ คงเดิม</td>
+    </tr>
+    <tr>
+      <td>หลังคา / งานไฟ / พื้น</td>
+      <td>— G1 ไม่มี (G3 แยก)</td>
+      <td class="tag-ok">✅ มีหน้าเฉพาะ (tabs)</td>
+      <td class="tag-ok">✅ คงเดิม</td>
+    </tr>
+  </table>
+
+  <div style="margin-top:10px;background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:8px 10px;font-size:11.5px;color:var(--amber);">
+    <b>🔎 จากกดเว็บจริง — สรุปจุดหลักที่ต้องปรับ G6:</b><br>
+    1. <b>กระจก SELECT→chips</b> — ทั้ง G1 และ G6 ยังเป็น dropdown 66 ตัว กดยากทั้งคู่<br>
+    2. <b>สีอลูซ่อนในพับ</b> — G6 มี chips อยู่แล้วแต่ต้องกดเปิด "ตัวเลือกเพิ่มเติม" ก่อน<br>
+    3. <b>ตารางเต็มบาน</b> — G6 ขาดออปชั่นนี้ ทั้งที่ G1 มี
+  </div>
+</div>
+
+<!-- ── กล่องลำดับใหม่ที่เสนอ ── -->
+<div class="cmp-wrap" style="border-color:var(--gh-bd);">
+  <div class="cmp-title" style="color:var(--gh);">📋 ลำดับฟีเจอร์ใหม่ (ต่อบาน) — ที่เสนอ</div>
+  <div style="font-size:12px;color:var(--ink);line-height:1.9;">
+    <div style="background:#F0FDF4;border:1px solid var(--green-bd);border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+      <b style="color:var(--green);">▼ โชว์ตลอด (ใช้บ่อย)</b><br>
+      <span style="color:#6B7280;">① ชนิดบาน → ② ขนาด+จำนวน → ③ ลักษณะเปิด+ราง/ธรณี</span><br>
+      ④ มือจับ + ล็อก<br>
+      ⑤ <b style="color:#0369A1;">กระจก (chips)</b> <span style="font-size:10px;color:#0369A1;">🆕 เปลี่ยนจาก dropdown</span><br>
+      ⑥ <b style="color:var(--jr);">สีอลู (เฟรม)</b> <span style="font-size:10px;color:var(--jr);">🆕 ย้ายขึ้นจากพับ</span><br>
+      ⑦ มุ้ง<br>
+      ⑧ เสริมกระจก: คาดตาราง → <b style="color:var(--green);">ตารางเต็มบาน 🆕</b> → ลูกฟูก/คอมโพ
+    </div>
+    <div style="background:#F9FAFB;border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+      <b style="color:#6B7280;">▼ พับซ่อน "⚙ ตัวเลือกเพิ่มเติม" (นานๆใช้)</b><br>
+      <span style="color:#6B7280;">⑨ ทาสี/ฉนวน (เฉพาะผนังเบา) · ครอบวงกบ · ดรอปพื้น · รื้อของเดิม · แขนค้ำ</span>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:7px 9px;">
+      <b>เทียบของเดิม G6:</b> สีอลู + ครอบ/ดรอป/รื้อ <u>ถูกซ่อนรวมในพับเดียว</u> · กระจกเป็น dropdown 66 ตัว · ไม่มีตารางเต็มบาน
+    </div>
+  </div>
+</div>
+
+<!-- ── DEMO: G6 Room Builder UX ── -->
+<div class="demo-wrap">
+  <div class="d-header">
+    <div class="d-title">🔲 G6 กั้นห้องกระจก</div>
+    <span class="demo-badge">DRAFT UX · 19 มิ.ย. 2026</span>
+  </div>
+  <div class="demo-note">ราคาเดโม (dev ดึงเรตจริง) · <a onclick="toggleCmp()">ดูตาราง Before→After</a></div>
+
+  <div class="room-card">
+
+    <!-- ── ① ประเภทห้อง ── -->
+    <div class="d-sec">
+      <div class="d-sec-head open" onclick="toggleSec(this)">
+        <span class="sec-icon">🏠</span> ① ประเภทห้อง
+        <span class="toggle-arrow">▾</span>
+      </div>
+      <div class="d-sec-body">
+        <div class="d-field">
+          <label>รูปแบบห้อง</label>
+          <div class="chip-row">
+            <button class="chip on" onclick="pickRoomType(this,'ตรง')">ตรง (L-shape)</button>
+            <button class="chip" onclick="pickRoomType(this,'เข้ามุม')">เข้ามุม (U-shape)</button>
+            <button class="chip" onclick="pickRoomType(this,'อิสระ')">อิสระ (กรอกเอง)</button>
+          </div>
+        </div>
+        <div class="d-field">
+          <label>ชื่อตำแหน่ง <span style="font-weight:400;color:var(--muted)">(ไม่จำเป็น)</span></label>
+          <input type="text" placeholder="เช่น ห้องรับแขก ชั้น 2" style="height:40px;border:1.5px solid var(--border);border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ② สีอลู+กระจก ทั้งห้อง (KEY CHANGE: chips แทน dropdown) ── -->
+    <div class="d-sec">
+      <div class="d-sec-head open" onclick="toggleSec(this)">
+        <span class="sec-icon">🎨</span> ② สีอลู + กระจก <span style="font-weight:400;font-size:11px;color:var(--amber);background:var(--amber-bg);padding:2px 7px;border-radius:10px;margin-left:4px;">ทั้งห้อง</span>
+        <span class="toggle-arrow">▾</span>
+      </div>
+      <div class="d-sec-body">
+        <div class="room-color-bar">
+          <div class="rcb-title">🎨 ตั้งค่าสีอลู + กระจก สำหรับทุกบานในห้องนี้</div>
+          <div class="d-hint" style="margin-top:-4px;">เปลี่ยนที่นี่จุดเดียว ทุกบานในห้องอัปเดตอัตโนมัติ</div>
+          <div class="rcb-row">
+            <!-- สีอลู (ทั้งห้อง) -->
+            <div class="rcb-field">
+              <label>สีอลูมิเนียม</label>
+              <div class="color-cats" id="room-color-cats">
+                <button class="glass-chip on" onclick="pickRoomColorCat(this,'std')">มาตรฐาน</button>
+                <button class="glass-chip" onclick="pickRoomColorCat(this,'sahara')">ซาฮาร่า</button>
+                <button class="glass-chip" onclick="pickRoomColorCat(this,'wood')">ลายไม้</button>
+                <button class="glass-chip" onclick="pickRoomColorCat(this,'bake')">อบพิเศษ</button>
+              </div>
+              <div class="color-models" id="room-color-models">
+                <div class="color-sw on" onclick="pickRoomColor(this,'อบขาว')">
+                  <div class="dot" style="background:#F5F5F0;"></div>
+                  <div class="nm">อบขาว</div>
+                </div>
+                <div class="color-sw" onclick="pickRoomColor(this,'สีดำ')">
+                  <div class="dot" style="background:#1a1a1a;"></div>
+                  <div class="nm">สีดำ</div>
+                </div>
+              </div>
+            </div>
+            <!-- กระจก (ทั้งห้อง) -->
+            <div class="rcb-field">
+              <label>กระจก</label>
+              <div class="glass-cats" id="room-glass-cats">
+                <button class="glass-chip on" onclick="pickRoomGlasCat(this,'gen')">ทั่วไป</button>
+                <button class="glass-chip" onclick="pickRoomGlasCat(this,'temp')">เทมเปอร์</button>
+                <button class="glass-chip" onclick="pickRoomGlasCat(this,'lam')">ลามิเนต</button>
+                <button class="glass-chip" onclick="pickRoomGlasCat(this,'ins')">อินซูเลท</button>
+                <button class="glass-chip" onclick="pickRoomGlasCat(this,'sp')">พิเศษ</button>
+              </div>
+              <div class="glass-models" id="room-glass-models">
+                <button class="glass-chip on">เขียว 6 มม.</button>
+                <button class="glass-chip">ใส 6 มม.</button>
+                <button class="glass-chip">เขียว/ใส 8 มม.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ③ รายการบาน (Bays) ── -->
+    <div class="d-sec">
+      <div class="d-sec-head open" onclick="toggleSec(this)">
+        <span class="sec-icon">🪟</span> ③ รายการบาน
+        <span style="background:var(--gh-bg);color:var(--gh);font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700;">2 บาน</span>
+        <span class="toggle-arrow">▾</span>
+      </div>
+      <div class="d-sec-body" style="gap:8px;">
+
+        <!-- Bay 1: บานเลื่อน ยูโร -->
+        <div>
+          <div class="bay-header open" onclick="toggleBay(this)">
+            <div class="bay-num">1</div>
+            <div>
+              <div class="bay-name">⬌ บานเลื่อน › เซมิยูโร</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px;">3.0 × 2.4 ม. · 2 บาน · กันน้ำ</div>
+            </div>
+            <div class="bay-sum">฿45,000</div>
+            <span class="bay-arr">▾</span>
+          </div>
+          <div class="bay-detail" id="bay1-detail">
+            <!-- ① ชนิดบาน -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:800;color:var(--gh);margin-bottom:7px;">① ชนิดบาน</div>
+              <div class="type-grid" id="bay1-type-grid">
+                <button class="type-btn on" onclick="pickBay1Type(this,'slide')"><span class="tb-ic">⬌</span>บานเลื่อน</button>
+                <button class="type-btn" onclick="pickBay1Type(this,'swing')"><span class="tb-ic">🚪</span>บานเปิด</button>
+                <button class="type-btn" onclick="pickBay1Type(this,'fold')"><span class="tb-ic">▥</span>บานเฟี้ยม</button>
+                <button class="type-btn" onclick="pickBay1Type(this,'fix')"><span class="tb-ic">▢</span>ติดตาย</button>
+                <button class="type-btn" onclick="pickBay1Type(this,'curve')"><span class="tb-ic">◗</span>ดัดโค้ง</button>
+                <button class="type-btn" onclick="pickBay1Type(this,'other')"><span class="tb-ic">⋯</span>อื่นๆ</button>
+              </div>
+              <!-- sub-models (เปลี่ยนตาม type) -->
+              <div class="sub-model-row" id="bay1-sub-row">
+                <button class="sub-btn" onclick="pickSub(this)" disabled>ยูโร ⊘</button>
+                <button class="sub-btn on" onclick="pickSub(this)">เซมิยูโร</button>
+                <button class="sub-btn" onclick="pickSub(this)">รางบนซ้อน</button>
+                <button class="sub-btn" onclick="pickSub(this)">SlimLux</button>
+                <button class="sub-btn" onclick="pickSub(this)">X-series</button>
+              </div>
+            </div>
+
+            <!-- ② ขนาด + จำนวนบาน -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:800;color:var(--gh);margin-bottom:7px;">② ขนาด + จำนวนบาน</div>
+              <div class="sz-row">
+                <div class="sz-f">
+                  <label>กว้างรวม (ม.)</label>
+                  <div class="num-wrap">
+                    <button onclick="step('b1-w',-0.1)">−</button>
+                    <input id="b1-w" type="number" value="3.0" step="0.1" min="0" oninput="calcBay1()">
+                    <button onclick="step('b1-w',0.1)">+</button>
+                  </div>
+                </div>
+                <div class="sz-f">
+                  <label>สูง (ม.)</label>
+                  <div class="num-wrap">
+                    <button onclick="step('b1-h',-0.1)">−</button>
+                    <input id="b1-h" type="number" value="2.4" step="0.1" min="0" oninput="calcBay1()">
+                    <button onclick="step('b1-h',0.1)">+</button>
+                  </div>
+                </div>
+                <div class="sz-f" style="max-width:90px;">
+                  <label>จำนวนบาน</label>
+                  <div class="num-wrap">
+                    <button onclick="step('b1-panels',-1)">−</button>
+                    <input id="b1-panels" type="number" value="2" step="1" min="1" oninput="calcBay1()">
+                    <button onclick="step('b1-panels',1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ③ ลักษณะการเปิด + ราง -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:800;color:var(--gh);margin-bottom:7px;">③ ลักษณะการเปิด + ราง</div>
+              <div class="d-field">
+                <label>ลักษณะการเปิด</label>
+                <div class="chip-row">
+                  <button class="chip chip-sm on">เลื่อน</button>
+                  <button class="chip chip-sm">สลับ</button>
+                  <button class="chip chip-sm">คู่กลาง</button>
+                  <button class="chip chip-sm">ลากจูง</button>
+                </div>
+              </div>
+              <div class="d-field" style="margin-top:8px;">
+                <label>ราง</label>
+                <div class="chip-row">
+                  <button class="chip chip-sm on">กันน้ำ</button>
+                  <button class="chip chip-sm">รางเตี้ย (งานใน)</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ④ มือจับ + ล็อก -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:800;color:var(--gh);margin-bottom:7px;">④ มือจับ + ล็อก</div>
+              <div class="d-field">
+                <label>มือจับ</label>
+                <div class="chip-row" id="b1-handle-chips">
+                  <button class="chip chip-sm on" onclick="pickHandle(this,'cmech')">Cmech (ฟรี)</button>
+                  <button class="chip chip-sm" onclick="pickHandle(this,'digi')">ดิจิตอล +10,000</button>
+                  <button class="chip chip-sm" onclick="pickHandle(this,'st')">สแตนเลส +1,500</button>
+                  <button class="chip chip-sm" onclick="pickHandle(this,'other')">รุ่นอื่น (กรอก)</button>
+                </div>
+                <!-- Cmech sub -->
+                <div id="b1-cmech-sub" style="margin-top:6px;">
+                  <div class="chip-row">
+                    <button class="chip chip-sm on">ฝัง</button>
+                    <button class="chip chip-sm">เมโทร</button>
+                  </div>
+                  <div class="chip-row" style="margin-top:5px;">
+                    <button class="chip chip-sm" style="font-size:11px;">⬛ ดำ (ฟรี)</button>
+                    <button class="chip chip-sm on" style="font-size:11px;">⬜ ขาว</button>
+                    <button class="chip chip-sm" style="font-size:11px;">🔘 ชุบเงิน</button>
+                    <button class="chip chip-sm" style="font-size:11px;">🟡 ชุบทอง</button>
+                  </div>
+                </div>
+              </div>
+              <div class="d-field" style="margin-top:8px;">
+                <label>ล็อก</label>
+                <div class="chip-row">
+                  <button class="chip chip-sm on">มีกุญแจ</button>
+                  <button class="chip chip-sm">ไม่มีกุญแจ</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑤ กระจก (KEY CHANGE: chips แทน SELECT dropdown) -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);background:#F0F9FF;">
+              <div style="font-size:11px;font-weight:800;color:#0369A1;margin-bottom:7px;">
+                ⑤ กระจกบาน
+                <span style="background:#E0F2FE;color:#0369A1;font-size:10px;padding:1px 6px;border-radius:5px;margin-left:4px;">🆕 chips แทน dropdown</span>
+              </div>
+              <div class="d-field">
+                <label>หมวดกระจก</label>
+                <div class="glass-cats" id="b1-glass-cats">
+                  <button class="glass-chip on" onclick="pickGlasCat(this,'gen','b1-glass-models')">ทั่วไป (เขียว/ใส)</button>
+                  <button class="glass-chip" onclick="pickGlasCat(this,'temp','b1-glass-models')">เทมเปอร์</button>
+                  <button class="glass-chip" onclick="pickGlasCat(this,'lam','b1-glass-models')">ลามิเนต</button>
+                  <button class="glass-chip" onclick="pickGlasCat(this,'ins','b1-glass-models')">อินซูเลท</button>
+                  <button class="glass-chip" onclick="pickGlasCat(this,'sp','b1-glass-models')">พิเศษ</button>
+                </div>
+                <div class="glass-models" id="b1-glass-models">
+                  <button class="glass-chip on" onclick="pickGlas(this)">เขียว 6 มม.</button>
+                  <button class="glass-chip" onclick="pickGlas(this)">ใส 6 มม.</button>
+                  <button class="glass-chip" onclick="pickGlas(this)">เขียว/ใส 8 มม.</button>
+                  <button class="glass-chip" onclick="pickGlas(this)">เขียว/ใส 10 มม.</button>
+                  <button class="glass-chip" onclick="pickGlas(this)">เคลือบขาว 6 มม.</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑥ สีอลูเฟรม (ย้ายขึ้นจาก "ดูเพิ่ม") -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);background:#FDF3F3;">
+              <div style="font-size:11px;font-weight:800;color:var(--jr);margin-bottom:7px;">
+                ⑥ สีอลูเฟรม (บาน)
+                <span style="background:var(--jr-border);color:var(--jr);font-size:10px;padding:1px 6px;border-radius:5px;margin-left:4px;">🆕 ขึ้นมาจาก "ดูเพิ่ม"</span>
+              </div>
+              <div class="note-box" style="margin-bottom:7px;">สีนี้ = สีของบานเดียว · ถ้าต้องการเหมือนกันทั้งห้อง → ตั้งที่ "② สีอลู+กระจก ทั้งห้อง" ด้านบน</div>
+              <div class="color-cats" id="b1-color-cats">
+                <button class="glass-chip on" onclick="pickColorCat(this,'std','b1-color-models')">มาตรฐาน</button>
+                <button class="glass-chip" onclick="pickColorCat(this,'sahara','b1-color-models')">ซาฮาร่า</button>
+                <button class="glass-chip" onclick="pickColorCat(this,'wood','b1-color-models')">ลายไม้</button>
+                <button class="glass-chip" onclick="pickColorCat(this,'bake','b1-color-models')">อบพิเศษ (+ค่าสี)</button>
+              </div>
+              <div class="color-models" id="b1-color-models">
+                <div class="color-sw on" onclick="pickColSw(this)">
+                  <div class="dot" style="background:#F5F5F0;"></div><div class="nm">อบขาว</div>
+                </div>
+                <div class="color-sw" onclick="pickColSw(this)">
+                  <div class="dot" style="background:#1a1a1a;"></div><div class="nm">สีดำ</div>
+                </div>
+                <div class="color-sw" onclick="pickColSw(this)">
+                  <div class="dot" style="background:#8c8680;"></div><div class="nm">เทา</div>
+                </div>
+                <div class="color-sw" onclick="pickColSw(this)">
+                  <div class="dot" style="background:#c8aa78;"></div><div class="nm">ชาม่อน</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑦ มุ้ง (ย้ายหลัง กระจก+สี) -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:800;color:var(--gh);margin-bottom:7px;">⑦ มุ้ง <span style="font-weight:400;color:var(--muted);font-size:11px;">(ไม่จำเป็น)</span></div>
+              <div class="tog-row">
+                <button class="tog-btn" id="tog-mosq" onclick="togEl(this,'mosq-sub')"></button>
+                <div>
+                  <div class="tog-lbl">ใส่มุ้ง</div>
+                  <div class="tog-hint">เพิ่มค่ามุ้ง (จาก 3,500)</div>
+                </div>
+              </div>
+              <div id="mosq-sub" class="hidden" style="margin-top:8px;">
+                <div class="d-field">
+                  <label>หมวดมุ้ง</label>
+                  <div class="chip-row">
+                    <button class="chip chip-sm on">🪟 เฟรม</button>
+                    <button class="chip chip-sm">🌀 จีบ</button>
+                    <button class="chip chip-sm">🔄 ม้วน</button>
+                  </div>
+                </div>
+                <div class="d-field" style="margin-top:6px;">
+                  <label>รุ่น</label>
+                  <div class="chip-row">
+                    <button class="chip chip-sm on">Basic</button>
+                    <button class="chip chip-sm">สลิม</button>
+                    <button class="chip chip-sm">ซ่อนราง</button>
+                  </div>
+                </div>
+                <div class="d-field" style="margin-top:6px;">
+                  <label>ผ้ามุ้ง</label>
+                  <div class="chip-row">
+                    <button class="chip chip-sm on">ไฟเบอร์เทา</button>
+                    <button class="chip chip-sm">ไฟเบอร์ดำ</button>
+                    <button class="chip chip-sm">กันแมว</button>
+                    <button class="chip chip-sm">สแตนกันหนู</button>
+                    <button class="chip chip-sm">นิรภัย0.8</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑧ เสริมกระจก (คาดตาราง → ตารางเต็มบาน → ลูกฟูก) -->
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);background:#F0F9FF;">
+              <div style="font-size:11px;font-weight:800;color:#0369A1;margin-bottom:7px;">⑧ เสริมกระจก <span style="font-weight:400;color:var(--muted);font-size:11px;">(ไม่จำเป็น · ยกเว้น shower)</span></div>
+              <!-- คาดตาราง -->
+              <div class="tog-row">
+                <button class="tog-btn" id="tog-grid" onclick="togEl(this,'grid-sub')"></button>
+                <div>
+                  <div class="tog-lbl">คาดตาราง</div>
+                  <div class="tog-hint">เส้นคาดในบาน · ×200/ม.</div>
+                </div>
+              </div>
+              <div id="grid-sub" class="hidden" style="margin-top:6px;background:#f9fafb;border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+                <div class="chip-row">
+                  <div class="sz-f" style="max-width:110px;"><label style="font-size:11px;">นอน (เส้น)</label>
+                    <div class="num-wrap"><button onclick="step('grid-h',-1)">−</button><input id="grid-h" type="number" value="2" min="0"><button onclick="step('grid-h',1)">+</button></div>
+                  </div>
+                  <div class="sz-f" style="max-width:110px;"><label style="font-size:11px;">ตั้ง (เส้น)</label>
+                    <div class="num-wrap"><button onclick="step('grid-v',-1)">−</button><input id="grid-v" type="number" value="2" min="0"><button onclick="step('grid-v',1)">+</button></div>
+                  </div>
+                </div>
+              </div>
+              <!-- 🆕 ตารางเต็มบาน: วางใต้คาดตาราง · เฉพาะ โซลิด วัน/ทู (prod.full_grid) -->
+              <div class="tog-row" style="margin-top:6px;">
+                <button class="tog-btn" id="tog-fullgrid" onclick="togEl(this,'fg-sub')"></button>
+                <div>
+                  <div class="tog-lbl">ตารางเต็มบาน +5,000 <span style="background:#D1FAE5;color:var(--green);font-size:10px;padding:1px 5px;border-radius:4px;">🆕 เพิ่มให้ G6</span></div>
+                  <div class="tog-hint">ตะแกรงอลูเต็มหน้าบาน · <b>เฉพาะ โซลิด วัน / โซลิด ทู</b> · กว้าง ≤ 1.2 / สูง ≤ 3 ม.</div>
+                </div>
+              </div>
+              <!-- ลูกฟูก/คอมโพสิต -->
+              <div class="tog-row" style="margin-top:6px;">
+                <button class="tog-btn" id="tog-luf" onclick="togEl(this,'luf-sub')"></button>
+                <div>
+                  <div class="tog-lbl">ลูกฟูก / คอมโพสิต</div>
+                  <div class="tog-hint">แผ่นกั้นทึบล่าง</div>
+                </div>
+              </div>
+              <div id="luf-sub" class="hidden" style="margin-top:6px;background:#f9fafb;border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+                <div class="chip-row">
+                  <button class="glass-chip on">ลูกฟูก</button>
+                  <button class="glass-chip">คอมโพสิต</button>
+                </div>
+                <div class="sz-row" style="margin-top:6px;">
+                  <div class="sz-f" style="max-width:100px;"><label style="font-size:11px;">สูงแผ่น (ม.)</label>
+                    <div class="num-wrap"><button onclick="step('luf-h',-0.1)">−</button><input id="luf-h" type="number" value="0.3" step="0.1" min="0"><button onclick="step('luf-h',0.1)">+</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ⑨ ของเสริม (พับล่าง) -->
+            <div style="padding:10px 12px;">
+              <div class="collapse-more" onclick="togMore(this)">
+                ▸ ของเสริม / อุปกรณ์เพิ่มเติม
+              </div>
+              <div class="more-body hidden">
+                <div class="note-box" style="margin-bottom:7px;">เลือกเฉพาะที่ต้องการ · ราคาเพิ่มตามจริง</div>
+                <div class="ex-row">
+                  <button class="ex-pill" onclick="this.classList.toggle('on')">ครอบวงกบ</button>
+                  <button class="ex-pill" onclick="this.classList.toggle('on')">ดรอปพื้น</button>
+                  <button class="ex-pill" onclick="this.classList.toggle('on')">แขนค้ำ</button>
+                  <button class="ex-pill" onclick="this.classList.toggle('on')">รื้อของเดิม</button>
+                </div>
+                <div style="margin-top:8px;">
+                  <label style="font-size:12px;font-weight:700;color:#374151;">หมายเหตุ</label>
+                  <textarea placeholder="หมายเหตุเพิ่มเติม..." style="width:100%;margin-top:4px;height:50px;border:1.5px solid var(--border);border-radius:6px;padding:6px;font-size:12px;font-family:inherit;resize:none;"></textarea>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /bay-detail -->
+        </div><!-- /bay 1 -->
+
+        <!-- Bay 2: ติดตาย (collapsed) -->
+        <div>
+          <div class="bay-header" onclick="toggleBay(this)">
+            <div class="bay-num">2</div>
+            <div>
+              <div class="bay-name">▢ ติดตาย › กระจกติดตาย</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px;">1.5 × 2.4 ม. · เขียว 6 มม.</div>
+            </div>
+            <div class="bay-sum">฿12,000</div>
+            <span class="bay-arr">▾</span>
+          </div>
+        </div>
+
+        <!-- ปุ่มเพิ่มบาน -->
+        <button class="add-bay-btn" onclick="alert('เพิ่มบาน')">＋ เพิ่มบาน / ด้าน</button>
+
+      </div><!-- /d-sec-body -->
+    </div><!-- /section ③ -->
+
+    <!-- ── ④ หลังคา (ถ้ามี) ── -->
+    <div class="d-sec">
+      <div class="d-sec-head" onclick="toggleSec(this)">
+        <span class="sec-icon">🏗</span> ④ หลังคา / ฝ้า <span style="font-weight:400;font-size:11px;color:var(--muted);margin-left:4px;">(ไม่จำเป็น)</span>
+        <span class="toggle-arrow">▾</span>
+      </div>
+      <div class="d-sec-body hidden">
+        <div class="tog-row">
+          <button class="tog-btn" id="tog-roof" onclick="togEl(this,'roof-sub')"></button>
+          <div>
+            <div class="tog-lbl">เพิ่มหลังคา/ฝ้า</div>
+            <div class="tog-hint">คิดเป็นรายการแยก (G3 engine)</div>
+          </div>
+        </div>
+        <div id="roof-sub" class="hidden" style="margin-top:4px;">
+          <div class="note-box">หลังคา/ฝ้าจะถูกเพิ่มเป็นรายการแยกในใบเสนอราคา</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price bar -->
+    <div class="price-bar">
+      <div>
+        <div class="pb-label">ราคารวมทั้งห้อง</div>
+        <div style="font-size:11px;opacity:.75;" id="price-detail-txt">2 บาน · เดโม</div>
+      </div>
+      <div>
+        <span class="pb-price" id="price-total">฿57,000</span>
+        <span class="pb-badge">เดโม</span>
+      </div>
+    </div>
+
+  </div><!-- /room-card -->
+</div><!-- /demo-wrap -->
+
+<script>
+/* ── Utility ── */
+function toggleSec(head){
+  head.classList.toggle('open');
+  var body = head.nextElementSibling;
+  body.classList.toggle('hidden');
+}
+function toggleBay(header){
+  header.classList.toggle('open');
+  var detail = document.getElementById('bay1-detail');
+  if(detail) detail.style.display = header.classList.contains('open') ? '' : 'none';
+}
+function togEl(btn, targetId){
+  btn.classList.toggle('on');
+  var el = document.getElementById(targetId);
+  if(el) el.classList.toggle('hidden');
+}
+function togMore(el){
+  var body = el.nextElementSibling;
+  body.classList.toggle('hidden');
+  el.textContent = body.classList.contains('hidden') ? '▸ ของเสริม / อุปกรณ์เพิ่มเติม' : '▾ ของเสริม / อุปกรณ์เพิ่มเติม';
+}
+function step(id, delta){
+  var el = document.getElementById(id);
+  if(!el) return;
+  var v = parseFloat(el.value)||0;
+  el.value = Math.max(0, Math.round((v+delta)*10)/10);
+  calcBay1();
+}
+
+/* ── Chip pickers ── */
+function pickOne(chips, btn){
+  chips.forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function pickRoomType(btn){ pickOne(btn.closest('.chip-row').querySelectorAll('.chip'), btn); }
+function pickHandle(btn){ pickOne(document.querySelectorAll('#b1-handle-chips .chip'), btn); }
+function pickSub(btn){ pickOne(btn.closest('.sub-model-row').querySelectorAll('.sub-btn:not(:disabled)'), btn); }
+function pickColSw(sw){ sw.closest('.color-models').querySelectorAll('.color-sw').forEach(function(s){s.classList.remove('on');}); sw.classList.add('on'); }
+function pickGlas(btn){ btn.closest('.glass-models').querySelectorAll('.glass-chip').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); }
+
+function pickGlasCat(btn, cat, modelsId){
+  btn.closest('.glass-cats').querySelectorAll('.glass-chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var models = {
+    gen:['เขียว 6 มม.','ใส 6 มม.','เขียว/ใส 8 มม.','เขียว/ใส 10 มม.','เคลือบขาว 6 มม.'],
+    temp:['เทมเปอร์ใส 8 มม.','เทมเปอร์ใส 10 มม.','เทมเปอร์ใส 12 มม.'],
+    lam:['ลามิเนตใส','ลามิเนตฝ้า','ลามิเนตลายไม้'],
+    ins:['อินซูเลท 6+6','อินซูเลท 8+8'],
+    sp:['กระจกสี','มิเลอร์','เซรามิก']
+  };
+  var el = document.getElementById(modelsId);
+  if(!el) return;
+  el.innerHTML = (models[cat]||[]).map(function(m,i){
+    return '<button class="glass-chip'+(i===0?' on':'')+'" onclick="pickGlas(this)">'+m+'</button>';
+  }).join('');
+}
+
+function pickColorCat(btn, cat, modelsId){
+  btn.closest('.color-cats').querySelectorAll('.glass-chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var swatches = {
+    std:[['#F5F5F0','อบขาว'],['#1a1a1a','สีดำ'],['#8c8680','เทา'],['#c8aa78','ชาม่อน']],
+    sahara:[['#b8a898','ซาฮาร่า'],['#9a8878','เทาซาฮาร่า']],
+    wood:[['#8B6914','ลายไม้อ่อน'],['#5C3D1E','ลายไม้เข้ม']],
+    bake:[['#B22222','สีแดง'],['#1a237e','สีน้ำเงิน'],['#004d40','สีเขียว']]
+  };
+  var el = document.getElementById(modelsId);
+  if(!el) return;
+  el.innerHTML = (swatches[cat]||[]).map(function(s,i){
+    return '<div class="color-sw'+(i===0?' on':'')+'" onclick="pickColSw(this)"><div class="dot" style="background:'+s[0]+';"></div><div class="nm">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function pickRoomColorCat(btn, cat){
+  btn.closest('.color-cats').querySelectorAll('.glass-chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var swatches = {std:[['#F5F5F0','อบขาว'],['#1a1a1a','สีดำ']],sahara:[['#b8a898','ซาฮาร่า'],['#9a8878','เทาซาฮาร่า']],wood:[['#8B6914','ลายไม้อ่อน']],bake:[['#B22222','สีแดง'],['#1a237e','น้ำเงิน']]};
+  document.getElementById('room-color-models').innerHTML = (swatches[cat]||[]).map(function(s,i){
+    return '<div class="color-sw'+(i===0?' on':'')+'" onclick="this.closest(\'.color-models\').querySelectorAll(\'.color-sw\').forEach(function(x){x.classList.remove(\'on\')});this.classList.add(\'on\')"><div class="dot" style="background:'+s[0]+';"></div><div class="nm">'+s[1]+'</div></div>';
+  }).join('');
+}
+
+function pickRoomGlasCat(btn, cat){
+  btn.closest('.glass-cats').querySelectorAll('.glass-chip').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var models = {gen:['เขียว 6 มม.','ใส 6 มม.','เขียว/ใส 8 มม.'],temp:['เทมเปอร์ 8 มม.','เทมเปอร์ 10 มม.'],lam:['ลามิเนตใส','ลามิเนตฝ้า'],ins:['อินซูเลท 6+6'],sp:['กระจกสี','มิเลอร์']};
+  document.getElementById('room-glass-models').innerHTML = (models[cat]||[]).map(function(m,i){
+    return '<button class="glass-chip'+(i===0?' on':'')+'" onclick="this.closest(\'.glass-models\').querySelectorAll(\'.glass-chip\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\')">'+m+'</button>';
+  }).join('');
+}
+
+var bay1Types = {
+  slide:{sub:['ยูโร ⊘|ban','เซมิยูโร','รางบนซ้อน','SlimLux','X-series']},
+  swing:{sub:['ยูโร','X-series','Velora','โซลิด ทู','โซลิด วัน','บานกระทุ้ง','บานหมุน']},
+  fold:{sub:['ยูโร','เซมิยูโร','X-series']},
+  fix:{sub:['กระจกติดตาย','เปลือยติดตาย','เปลือยสวิง/เลื่อน','ผนังเบาภายนอก','ผนังเบาภายใน','Isowall']},
+  curve:{sub:['บานคู่','บานเดี่ยว','ติดตายโค้ง','สลิม']},
+  other:{sub:['ฉากกั้นอาบน้ำ','บานยก SMS','บานยก เซมิยูโร','PC Door 2','PC Door 4','YKK ระบาย']}
+};
+function pickBay1Type(btn, k){
+  btn.closest('.type-grid').querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  var t = bay1Types[k]||{sub:[]};
+  document.getElementById('bay1-sub-row').innerHTML = t.sub.map(function(s,i){
+    var ban = s.includes('⊘')||s.includes('ban');
+    var label = s.replace('|ban','').replace(' ⊘','');
+    return '<button class="sub-btn'+(ban?' ':(i===0?' on':''))+'" '+(ban?'disabled':'')+' onclick="pickSub(this)">'+label+(ban?' ⊘':'')+'</button>';
+  }).join('');
+}
+
+/* ── Calc dummy ── */
+function calcBay1(){
+  var w = parseFloat(document.getElementById('b1-w').value)||0;
+  var h = parseFloat(document.getElementById('b1-h').value)||0;
+  var p = parseInt(document.getElementById('b1-panels').value)||1;
+  var base = Math.round(w*h*p*7500/1000)*1000;
+  document.getElementById('price-total').textContent = '฿'+(base+12000).toLocaleString();
+}
+
+function toggleCmp(){ alert('เปิด/ปิดตาราง Before→After'); }
+</script>
+</body>
+</html>

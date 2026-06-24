@@ -1,0 +1,369 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ดราฟ G6 ฟอร์มจริง snapshot 20มิ.ย.</title><style>
+  :root{
+    --red:#E61E28; --red-dark:#B3151D; --bg:#F7F8FA; --card:#fff;
+    --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937; --redbg:#FDECEC; --ok:#1E7E45;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:"Sarabun","Prompt","Leelawadee UI","Noto Sans Thai","Segoe UI",Tahoma,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;}
+  .wrap{max-width:780px;margin:0 auto;padding:14px 14px 60px;}
+  header{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:14px 18px;margin-bottom:14px;}
+  .logo-text{font-size:30px;font-weight:800;color:var(--red);font-style:italic;letter-spacing:-1px;line-height:1;}
+  .logo-img{height:18px;width:auto;display:block;}
+  header .ht{border-left:3px solid var(--red);padding-left:12px;}
+  header h1{font-size:16px;margin:0;font-weight:700;}
+  header p{font-size:12px;margin:2px 0 0;color:var(--muted);}
+  .tabs{display:flex;gap:6px;padding:4px;background:#F3F4F6;border-radius:12px;margin-bottom:14px;}
+  .tab{flex:1;height:36px;border:none;border-radius:9px;background:transparent;color:var(--muted);
+    font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;}
+  .tab.on{background:#fff;color:var(--red-dark);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .tab .t-sm{display:none;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
+  .card h2{font-size:14px;margin:0 0 10px;color:var(--red-dark);font-weight:700;}
+  label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
+  input,select{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
+  input:focus,select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(230,30,40,.13);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .mt{margin-top:10px;}
+  .big{font-size:34px;font-weight:800;color:var(--red-dark);letter-spacing:.3px;}
+  .big small{font-size:16px;font-weight:600;color:var(--muted);}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+  /* line item */
+  .ch{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff;}
+  /* ม้าลาย — สลับสีกล่องกรอกข้อมูลแต่ละจุด */
+  #items .ch:nth-of-type(odd),#q-items .ch:nth-of-type(odd){background:#FAFBFD;}
+  #items .ch:nth-of-type(even),#q-items .ch:nth-of-type(even){background:#EAF0F7;}
+  .ch .top{display:flex;gap:8px;align-items:center;margin-bottom:8px;cursor:pointer;user-select:none;}
+  .ch .top input{height:36px;}
+  .ch.collapsed{padding:7px 12px;margin-bottom:6px;background:#FAFBFD;}
+  .ch.collapsed > *:not(.top){display:none !important;}
+  .ch.collapsed .top{margin-bottom:0;border-bottom:none;}
+  .ch:not(.collapsed){border-color:var(--red);}
+  .ch-summary{flex:1;color:#1E5AA8;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ch .top .ch-caret{flex:none;color:#9DBCE0;font-size:11px;}
+  .del{flex:0 0 auto;width:36px;height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;
+    color:var(--red);font-size:20px;cursor:pointer;line-height:1;}
+  .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .chgrid .full{grid-column:1 / -1;}
+  .opts{font-size:13.5px;margin:4px 0;}
+  .opt{display:inline-flex;align-items:center;gap:6px;margin-right:14px;color:var(--ink);}
+  .gh-box{display:block;width:100%;background:#FFF7E6;border:1px solid #F0C040;border-radius:8px;padding:10px;margin:6px 0;box-sizing:border-box;}
+  .gh-row{display:flex;flex-direction:column;width:100%;margin:6px 0;}
+  .gh-row input,.gh-row select,.gh-row textarea{width:100%;max-width:100%;box-sizing:border-box;height:34px;font-size:14px;margin-top:4px;}
+  .gh-row textarea{height:60px;}
+  .gh-row select[multiple]{height:130px;}
+  .opt input{width:auto;height:auto;}
+  .spanel-chip.on{background:#1976D2;color:#fff;border-color:#1976D2;font-weight:700;}
+  .chfoot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);
+    padding-top:8px;margin-top:4px;font-size:13px;color:var(--muted);}
+  .chfoot .price{font-weight:800;font-size:17px;color:var(--red-dark);}
+  .chmsg{font-size:12px;margin-top:6px;}
+  /* #2 2026-06-05: บานย่อยในชุด */
+  .subitem-wrap{margin:6px 0 2px;}
+  .subitem-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;padding:7px 10px;background:#fff;border:1px dashed var(--red);border-radius:8px;}
+  .subitem-row select,.subitem-row input{height:36px;font-size:14px;font-family:inherit;}
+  .subitem-row .s-detail input,.subitem-row .s-detail select{height:28px;font-size:12px;}
+  .subitem-row .s-type{flex:2;min-width:0;}
+  .subitem-row .s-w{width:72px;flex:none;}
+  .subitem-row .s-h{width:72px;flex:none;}
+  .subitem-row .s-tag{background:#fde8ea;color:#B3151D;font-size:11px;padding:2px 7px;border-radius:5px;font-weight:700;white-space:nowrap;flex:none;}
+  .subitem-row .s-del{flex:none;width:30px;height:30px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--red);font-size:16px;cursor:pointer;line-height:1;}
+  .stp{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .stp button{border:none;background:#f3f4f6;width:28px;height:28px;font-size:16px;cursor:pointer;color:var(--red);padding:0;}
+  .stp span{min-width:26px;text-align:center;font-weight:700;font-size:14px;}
+  .sub-addbtn{display:inline-flex;align-items:center;gap:6px;min-height:44px;border:1px dashed var(--red);color:var(--red-dark);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:2px;}
+  .addbtn{width:100%;height:44px;border:1.5px dashed var(--red);border-radius:10px;background:#fff;
+    color:var(--red-dark);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .chk{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;}
+  .chk input{width:20px;height:20px;}
+  .sum{background:var(--red);color:#fff;border-radius:12px;padding:16px;}
+  .sum .line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
+  .sum .disc{color:#FFE0E0;}
+  .sum .grand{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(255,255,255,.3);
+    margin-top:8px;padding-top:10px;}
+  .sum .grand b{font-size:13px;font-weight:600;}
+  .sum .grand .big{font-size:26px;font-weight:800;color:#fff;}
+  .owner{background:#fff;border:1px dashed var(--red);border-radius:10px;padding:12px;margin-top:12px;display:none;}
+  .owner h3{font-size:13px;margin:0 0 6px;color:var(--red-dark);}
+  .owner .line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .warnbox{background:var(--redbg);color:var(--red-dark);font-size:12px;padding:8px 10px;border-radius:8px;margin:8px 0;}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .actions button{height:48px;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .btn-prim{background:var(--red);color:#fff;border:1px solid var(--red);}
+  .btn-sec{background:#fff;color:var(--red-dark);border:1px solid var(--red);}
+  /* compare table */
+  table.cmp{width:100%;border-collapse:collapse;font-size:14px;}
+  table.cmp th,table.cmp td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right;}
+  table.cmp th:first-child,table.cmp td:first-child{text-align:left;}
+  table.cmp thead th{color:#fff;background:var(--red);font-size:12px;font-weight:600;}
+  tr.rowgood{background:var(--redbg);}
+  .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:700;}
+  .pill.ok{background:#e6f5ec;color:var(--ok);}
+  .pill.bad{background:#fde8e8;color:var(--red-dark);}
+  .note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;}
+  .hide{display:none;}
+  /* quote modal */
+  #quoteBox{display:none;position:fixed;inset:0;background:rgba(20,20,25,.6);z-index:50;overflow:auto;padding:20px;}
+  .quote{max-width:720px;margin:0 auto;background:#fff;border-radius:10px;padding:28px;}
+  .qhead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--red);padding-bottom:14px;}
+  .qhead h3{margin:0;color:var(--red-dark);font-size:20px;}
+  .qhead .sub{font-size:12px;color:var(--muted);}
+  .qmeta{display:flex;justify-content:space-between;font-size:13px;margin:14px 0;}
+  table.qt{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  table.qt th{background:var(--red);color:#fff;padding:8px 6px;text-align:left;font-weight:600;}
+  table.qt td{padding:7px 6px;border-bottom:1px solid var(--line);}
+  table.qt td.r,table.qt th.r{text-align:right;}
+  /* Zebra striping — สลับสีแถวให้ดูง่าย */
+  table.qt tr:nth-child(odd):not(:first-child){background:#FAFBFD;}
+  table.qt tr:nth-child(even):not(:first-child){background:#F0F4F8;}
+  table.qt tr:hover:not(:first-child){background:#FFF5E6;}
+  .qtot{margin-top:12px;margin-left:auto;width:320px;font-size:14px;}
+  .qtot .l{display:flex;justify-content:space-between;padding:4px 0;}
+  .qtot .l.disc{color:var(--red-dark);}
+  .qtot .g{display:flex;justify-content:space-between;border-top:2px solid var(--red);margin-top:6px;
+    padding-top:8px;font-weight:800;font-size:17px;color:var(--red-dark);}
+  .qnote{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.7;border-top:1px solid var(--line);padding-top:12px;}
+  .qbtns{max-width:720px;margin:14px auto 0;display:flex;gap:10px;}
+  .qbtns button{flex:1;height:46px;border-radius:9px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .qrunfoot{display:none;}
+  @media print{
+    @page{size:A4;margin:10mm 10mm 20mm 10mm;}
+    body *{visibility:hidden;} #quoteBox,#quoteBox *{visibility:visible;}
+    #quoteBox{position:absolute;inset:0;background:#fff;padding:0;} .qbtns{display:none;}
+    .quote{box-shadow:none;border-radius:0;max-width:100%;font-size:11pt;}
+    .qhead h3{font-size:18pt;} .qmeta{font-size:11pt;}
+    .qt th,.qt td{padding:4px 6px;font-size:10pt;} .qnote{font-size:9pt;}
+    .qtot .l,.qtot .g{font-size:11pt;}
+    #ckFab,#ckPanel{display:none !important;}
+    .qtoggle-set{display:none !important;}
+    table{page-break-inside:auto;} tr{page-break-inside:avoid;}
+    /* R4.2: ข้อมูลบริษัทซ้ำทุกหน้า (running footer) */
+    .qrunfoot{display:block !important;visibility:visible !important;position:fixed;bottom:6mm;left:10mm;right:10mm;text-align:center;font-size:8pt;color:#6B7280;border-top:1px solid #E5E7EB;padding-top:3px;}
+  }
+  /* Mobile responsive */
+  @media(max-width:768px){
+    body{padding:0;}
+    .container,.wrap{padding:8px;}
+    .tab{font-size:12px;}
+    .tab .t-lg{display:none;} .tab .t-sm{display:inline;}
+    .ch{padding:10px;margin-bottom:10px;}
+    .chgrid{grid-template-columns:1fr 1fr;gap:6px;}
+    .chgrid .full{grid-column:1/-1;}
+    .qmeta{flex-direction:column;gap:6px;}
+    .qtot{width:100%;}
+    .qt{font-size:12px;}
+    .qt th,.qt td{padding:4px;}
+    #ckFab{width:48px;height:48px;font-size:20px;right:12px;bottom:12px;}
+    #ckPanel{right:8px;bottom:70px;width:calc(100vw - 16px);}
+    .qbtns{flex-direction:column;}
+    .qbtns button{height:42px;}
+    .opts{flex-direction:column;align-items:flex-start;gap:4px;}
+    .opt{font-size:13px;}
+    /* P3 (แชท B): ปุ่ม/ช่องแตะง่าย 44px บนมือถือ — เดสก์ท็อปคงคอมแพกต์ */
+    .ch .opt input[type=number], .ch .opt select{min-height:44px;}
+    .ch .opt input[type=checkbox]{width:22px;height:22px;}
+    .ch .opt{padding:2px 0;}
+    /* R3.7.3: Mobile กั้นห้องกระจก — แค่ปรับ font size */
+    .gh-row{font-size:13px;}
+    input,select{font-size:16px;}
+  }
+  @media(max-width:520px){ .chgrid{grid-template-columns:1fr;} }
+  .cmpcat{border:1px solid var(--line);border-radius:8px;margin-bottom:6px;padding:0 10px;}
+  /* === คิดเร็ว v2 — pricecard + flex layout (quickmode-v2-allG) === */
+  .qi-flex{ display:flex; gap:12px; align-items:flex-start; }
+  .qi-form{ flex:1; min-width:0; }
+  .qi-pricecard{ width:220px; flex:none; position:sticky; top:8px; border:1px solid var(--red); border-radius:12px; background:#fff; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .qi-pricecard h4{ margin:0; background:var(--red); color:#fff; font-size:13px; font-weight:700; padding:8px 12px; }
+  .qi-pc-body{ padding:10px 12px; }
+  .qi-pc-line{ display:flex; justify-content:space-between; gap:8px; font-size:12px; margin-bottom:5px; }
+  .qi-pc-line .n{ color:var(--muted); font-weight:600; } .qi-pc-line .a{ font-weight:700; white-space:nowrap; }
+  .qi-pc-sub{ font-size:10.5px; color:var(--muted); margin:-2px 0 6px; line-height:1.4; }
+  .qi-pc-note{ font-size:10.5px; color:#92400e; background:#FEF9C3; border-radius:6px; padding:3px 7px; margin:3px 0; line-height:1.4; }
+  .qi-pc-tot{ border-top:2px solid var(--red); padding-top:9px; margin-top:4px; display:flex; justify-content:space-between; align-items:baseline; }
+  .qi-pc-tot .n{ font-size:12px; color:var(--muted); font-weight:600; } .qi-pc-tot .a{ font-size:21px; font-weight:800; color:var(--red-dark); font-variant-numeric:tabular-nums; }
+  .qi-pc-foot{ font-size:10px; color:var(--muted); padding:0 12px 10px; line-height:1.5; }
+  .qi-lbl{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); margin:12px 0 5px; font-weight:700; }
+  .qi-lbl:first-child{ margin-top:0; }
+  .qi-lbl .hint{ font-weight:400; color:#9CA3AF; font-size:11px; }
+  .qi-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .qi-chips .chip{ min-height:42px; font-size:12px; padding:6px 10px; }
+  .qi-row{ display:grid; grid-template-columns:1fr 1fr 110px; gap:8px; }
+  .qi-fld label,.qi-fld span{ font-size:11px; color:var(--muted); font-weight:700; display:block; margin-bottom:4px; }
+  .qi-fld input{ width:100%; height:44px; border:1.5px solid var(--line); border-radius:9px; padding:0 10px; font-size:15px; font-family:inherit; text-align:center; font-variant-numeric:tabular-nums; background:#fff; }
+  .qi-fld input:focus{ outline:none; border-color:var(--red); }
+  .qi-selname{ font-size:12px; color:#065F46; font-weight:600; background:#ECFDF5; border-radius:8px; padding:6px 10px; margin-top:9px; }
+  .qi-warn{ font-size:11px; color:#92400e; background:#FFF7ED; border-radius:8px; padding:6px 9px; margin-top:8px; }
+  .qi-subwrap{ background:#FAFBFD; border:1px dashed var(--bluebd,#BFDBFE); border-radius:10px; padding:9px; margin-top:7px; }
+  .qi-sublbl{ font-size:11px; color:var(--blue,#0369A1); font-weight:600; margin:6px 0 4px; }
+  .qi-sw{ width:18px; height:18px; border-radius:5px; border:1px solid rgba(0,0,0,.28); flex:none; display:inline-block; vertical-align:middle; margin-right:4px; }
+  .qi-cats{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:10px; }
+  .qi-cats .chip{ flex-direction:column; gap:2px; min-height:54px; font-size:12px; }
+  .qi-cats .chip .s{ font-size:10px; font-weight:400; opacity:.8; }
+  .qi-side{ border:1px solid var(--line); border-radius:10px; padding:9px; margin-bottom:7px; background:#fff; }
+  .qi-side .sh{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .qi-side .sh b{ font-size:12.5px; } .qi-side .sh .len{ font-size:11px; color:var(--muted); }
+  .qi-preset{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 2px; }
+  @media(max-width:560px){ .qi-flex{ flex-direction:column; } .qi-pricecard{ width:100%; position:static; order:-1; } .qi-cats{ grid-template-columns:repeat(2,1fr); } .qi-row{ grid-template-columns:1fr 1fr; } }
+  .cmpcat>summary{cursor:pointer;padding:9px 0;font-weight:600;font-size:13px;color:var(--red-dark);}
+  .optbox{margin:6px 0;border:1px solid var(--line);border-radius:8px;padding:0 10px;}
+  .optbox>summary{cursor:pointer;padding:8px 0;font-size:13px;color:var(--red-dark);font-weight:600;}
+  /* C2: ปุ่มส่งเข้าระบบ JR — เด่นสุด */
+  .btn-send-jr{width:100%;height:54px;background:#B3151D;color:#fff;border:none;border-radius:12px;
+    font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:.3px;
+    box-shadow:0 3px 10px rgba(179,21,29,.35);transition:background .15s,box-shadow .15s;}
+  .btn-send-jr:hover{background:#8f1017;box-shadow:0 4px 14px rgba(179,21,29,.45);}
+  .btn-send-jr:active{background:#700c12;}
+  /* C1: ลด rk .ch header */
+  .ch .top{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+  /* B3: หมายเหตุ/OPTION + อุปกรณ์เสริม รวมกลุ่มเดียว */
+  .note-opt-group{background:#F9FAFB;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .note-opt-group label{color:var(--ink);}
+  .note-opt-group .optbox{background:#fff;margin-top:6px;margin-bottom:2px;}
+  /* A: ข้อมูลลูกค้า card-details */
+  .card-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:2px 0;}
+  .card-details>summary::-webkit-details-marker{display:none;}
+  .card-details>summary::before{content:"\25B6";font-size:11px;color:var(--red);transition:transform .2s;}
+  .card-details[open]>summary::before{transform:rotate(90deg);}
+  .card-details>summary .sum-title{font-size:14px;font-weight:700;color:var(--red-dark);}
+  .card-details>summary .sum-hint{font-size:12px;color:var(--muted);margin-left:4px;}
+  /* B1: hint แก้ราคา */
+  .i-override-hint{background:#FFF7E6;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;padding:5px 10px;margin-top:2px;}
+  .setbox{border:2px solid rgba(179,21,29,.25);border-radius:12px;padding:10px;margin-bottom:14px;background:#FFF9F9;}
+  .set-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .set-badge{background:var(--red);color:#fff;border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap;}
+  .set-name{flex:1;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;}
+  .set-del{height:34px;border:1px solid #ddd;border-radius:8px;background:#fff;color:var(--red);cursor:pointer;padding:0 12px;font-size:13px;white-space:nowrap;}
+  .set-parts{display:flex;flex-direction:column;gap:8px;}
+  .set-btns{display:flex;gap:8px;}
+  .set-btns-top{margin:0 0 8px;}
+  .set-btns-bot{margin-top:8px;}
+  .set-addpart,.set-addfixed{flex:1;min-height:44px;border-radius:8px;cursor:pointer;font-size:14px;border:2px solid var(--red);background:var(--red);color:#fff;font-weight:700;}
+  .set-addfixed{border-style:solid;background:var(--red);color:#fff;}
+  /* ===== ADD ZONE (formtop R3.10: รวม เพิ่มด่วน+เพิ่มส่วน · วางใต้บาน เหนือ OPTION) ===== */
+  .addzone{margin-top:8px;border:1.5px solid #FFB300;border-radius:12px;overflow:hidden;}
+  .addzone-head{background:#FFF3E0;padding:8px 14px;display:flex;align-items:center;gap:8px;}
+  .addzone-head-txt{font-size:13px;font-weight:700;color:#92400E;}
+  .addzone-body{padding:10px 12px;}
+  .addzone-divider{display:flex;align-items:center;gap:8px;color:#9CA3AF;font-size:11px;margin:8px 0;}
+  .addzone-divider span{flex:1;height:1px;background:#E5E7EB;}
+  /* quickstrip = wrapper ในกล่อง addzone (ไม่มีกล่องส้มซ้อน · refreshSet ซ่อนตัวนี้เมื่อ GH) */
+  .addsec-quickstrip{margin-bottom:0;}
+  .addsec-strip-head{font-size:12px;font-weight:700;color:#E65100;margin-bottom:7px;}
+  .addsec-chip{min-height:44px;padding:0 14px;border:1.5px solid #FFB300;border-radius:22px;background:#fff;cursor:pointer;font-size:13px;color:#374151;font-family:inherit;}
+  .addsec-chip:active{background:#E65100;color:#fff;}
+  /* (formtop R3.11) ตัด OPTION ระดับชุด .set-opt-det ออกแล้ว — ซ้ำกับ OPTION ต่อบาน */
+  @keyframes addsec-flash{0%{box-shadow:0 0 0 0 #FFB30066;}60%{box-shadow:0 0 0 8px #FFB30000;}100%{box-shadow:0 0 0 0 #FFB30000;}}
+  .addsec-flash{animation:addsec-flash .4s ease-out;}
+  /* ===== MOSQ PANEL CHIPS (mosq-r2) ===== */
+  .mosq-panels-bar{margin-bottom:10px;}
+  .mosq-panels-bar-head{font-size:12px;font-weight:700;color:#1565C0;margin-bottom:6px;}
+  .mosq-panels-bar-hint{font-size:11px;font-weight:400;color:#888;margin-left:4px;}
+  .mosq-size-details summary{list-style:none;cursor:pointer;font-size:12px;color:#0369A1;}
+  .mosq-size-details summary::-webkit-details-marker{display:none;}
+  /* ===== CHIP CONTROLS (G1 Form UX Redesign) ===== */
+  .chip-group{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .chip{ display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:6px 11px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-size:13px; font-family:inherit; font-weight:600; cursor:pointer; line-height:1.25; text-align:center; transition:background .12s,border-color .12s; -webkit-tap-highlight-color:transparent; } /* คิว B รอบ2: compact (เดิม 44px/8-14/14px) · panel เตี้ยลง แตะยังได้ */
+  .chip:active{ background:var(--redbg); }
+  .chip.on{ background:var(--red-dark); border-color:var(--red-dark); color:#fff; }
+  .chip-2up{ }
+  .chip-2up .chip{ flex:1; font-size:16px; min-height:52px; }
+  .chip-sm .chip{ min-height:36px; padding:5px 10px; font-size:12.5px; } /* คิว B รอบ2: compact (เดิม 44/6-12/13) */
+  .chip.chip-discont{ opacity:.55; } /* ลำดับ3: รุ่นยกเลิกขาย ทำจาง แต่กดได้/ขายได้ปกติ */
+  .chip.chip-discont.on{ opacity:1; } /* เลือกแล้วเต็มสี */
+  /* ① สีอลู drill-down: จุดสีกลมในชิป ([[chip-color-swatch-style]]) */
+  .cdot{ display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:6px; border:1px solid rgba(0,0,0,.28); vertical-align:middle; flex:0 0 auto; background-size:cover; }
+  .chip.on .cdot{ border-color:rgba(255,255,255,.7); }
+  .color-cat-row .chip, .glass-cat-row .chip, .mosq-cat-row .chip{ font-weight:700; }
+  .color-drill, .glass-drill, .mosq-drill{ margin-top:4px; }
+  /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
+  /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
+  label.opt:has(> .chip-grid){ display:block; }
+  /* 🔴 selector container (เลือกแบบ/cascade/หลังคา/มุ้ง) เดิม .opt = flex nowrap → label "รูปแบบ" กับ "รุ่น" อยู่ข้างกันคนละครึ่ง + ปุ่มแคบ · บังคับ block ให้ stack เต็มแถว */
+  .fam-prodsel, .rn-prodsel, .g3-prodsel, .mosq-prodsel{ display:block; }
+  /* 🔴 size-row: inline display:flex โดน strip (เด็กเลยเต็มแถวทีละบรรทัด) · บังคับ flex ใน CSS · กว้าง/สูง/ชุด อยู่แถวเดียว */
+  .size-row{ display:flex !important; flex-wrap:wrap; gap:8px; align-items:flex-end; }
+  .size-row > div{ margin:0; }
+  .fam-prodsel > label.opt, .rn-prodsel > label.opt, .g3-prodsel > label.opt, .mosq-prodsel > label.opt{ display:block; width:100%; }
+  .chip-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin-top:4px; width:100%; } /* auto-fill = ปุ่มกว้างเท่ากันทุกจำนวน เรียงเต็มแถวไม่เละ */
+  .chip-grid.cg3{ grid-template-columns:repeat(3,1fr); }
+  .chip-grid.cg4{ grid-template-columns:repeat(4,1fr); }
+  .qi-groupchips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .qi-groupchips .chip{ width:auto; flex:0 0 auto; white-space:nowrap; min-height:46px; padding:8px 16px; font-size:13.5px; }
+  .chip-grid.cg2{ grid-template-columns:repeat(2,1fr); }
+  .chip-grid .chip{ width:100%; min-height:38px; padding:5px 4px; font-size:12px; line-height:1.2; word-break:keep-all; overflow-wrap:anywhere; } /* คิว B รอบ2: compact (เดิม 44) */
+  @media(max-width:560px){ .chip-grid{ grid-template-columns:repeat(3,1fr); } .chip-grid.cg4,.chip-grid.cg2{ grid-template-columns:repeat(2,1fr); } }
+  .field-label{ display:block; font-size:13px; color:var(--muted); margin-bottom:2px; }
+</style>
+<style>
+  #g6r-host{max-width:520px;margin:10px auto;font-family:inherit;}
+  .g6r-wrap{border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;background:#fff;}
+  .g6r-top{background:#B3151D;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;}
+  .g6r-top b{font-size:14px;} .g6r-pos{font-size:11px;opacity:.9;}
+  .g6r-tabs{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;background:#FAFAFA;border-bottom:1px solid #EEE;}
+  .g6r-tabs .tab{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;}
+  .g6r-tabs .tab.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-tabs .tab.addt{color:#B3151D;border-style:dashed;} .g6r-tabs .tab.rf{background:#EAF3FF;} .g6r-tabs .tab.sm{background:#F0FDF4;}
+  .g6r-body{padding:11px 13px;}
+  .g6r-body .ph{font-weight:700;color:#B3151D;font-size:13px;margin:0 0 8px;}
+  .g6r-body .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+  .g6r-body .rl{font-size:12px;color:#444;flex:0 0 64px;} .g6r-body .u{font-size:11px;color:#777;}
+  .g6r-body input[type=number]{width:62px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;}
+  .g6r-body .c{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;min-height:34px;}
+  .g6r-body .c.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-body .chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
+  .g6r-body .fl,.g6r-body .sl{font-size:12px;color:#666;margin:7px 0 2px;font-weight:600;}
+  .g6r-wall{display:flex;gap:5px;align-items:stretch;min-height:150px;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:8px;padding:6px;}
+  .g6r-wall .col{display:flex;flex-direction:column;gap:3px;min-width:54px;}
+  .g6r-wall .spacer{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#F3F4F6 4px,#F3F4F6 8px);}
+  .g6r-wall .pane{position:relative;border:1px solid #9DBCE0;background:#EAF3FF;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;cursor:pointer;padding:2px;min-height:26px;}
+  .g6r-wall .pane.on{outline:2px solid #B3151D;}
+  .g6r-wall .pane.g-solid{background:#F1EFE8;border-color:#B4B2A9;} .g6r-wall .pane.g-fix{background:#E1F5EE;border-color:#5DCAA5;}
+  .g6r-wall .pane .px{position:absolute;top:1px;right:1px;border:0;background:rgba(179,21,29,.85);color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;cursor:pointer;line-height:1;}
+  .g6r-wall .addcol{border:1px dashed #B3151D;background:#fff;color:#B3151D;border-radius:7px;min-width:34px;font-size:18px;cursor:pointer;}
+  .g6r-wtot{font-size:11px;color:#666;margin:5px 0;}
+  .g6r-edit{border:1px solid #E5E7EB;border-radius:8px;padding:9px;margin-top:8px;background:#FAFAFA;}
+  .g6r-btngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:5px;margin:5px 0;}
+  .g6r-btngrid .mb{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 4px;font-size:11px;cursor:pointer;}
+  .g6r-btngrid .mb.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+  .g6r-subc{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0;}
+  .g6r-subc .sc{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;}
+  .g6r-subc .sc.on{background:#1E5AA8;color:#fff;border-color:#1E5AA8;}
+  .g6r-subc .sc.ban{opacity:.45;text-decoration:line-through;cursor:not-allowed;}
+  .ch.g6room .g6r-sl, .g6r-sl{font-size:12.5px;font-weight:800;color:#374151;margin:12px 0 4px;border-top:1px solid #EEE;padding-top:9px;}
+  .g6r-sl.first{border-top:none;padding-top:0;margin-top:4px;}
+  .g6r-tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:5px;vertical-align:middle;}
+  .g6r-tag.main{background:#FCE7E9;color:#B3151D;}
+  .g6r-tag.glass{background:#E0ECFB;color:#1E5AA8;}
+  .g6r-tag.ex{background:#E6F5EC;color:#1B7A43;}
+  .g6r-rev{background:#FAFAFA;border:1px solid #EEE;border-radius:8px;padding:6px 9px;margin:3px 0 2px;}
+  /* B1-G6 (18มิ.ย.): กล่อง "ใช้บ่อย" + กล่องพับ "เพิ่มเติม" */
+  .g6r-sl.freq{color:#B3151D;border-top:2px solid #F0C0C0;}
+  details.g6r-more{margin-top:8px;border:1px solid #E5E7EB;border-radius:8px;background:#FCFCFD;}
+  details.g6r-more>summary{cursor:pointer;list-style:none;margin:0;padding:9px 11px;border-top:none;color:#6B7280;}
+  details.g6r-more>summary::-webkit-details-marker{display:none;}
+  details.g6r-more>summary::after{content:' ▾';color:#9CA3AF;}
+  details.g6r-more[open]>summary::after{content:' ▴';}
+  details.g6r-more[open]{padding:0 10px 8px;}
+  .g6r-mvrow button{border:1px solid #D1D5DB;background:#fff;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:3px;}
+  .g6r-mvrow button.danger{color:#A32D2D;border-color:#F0C0C0;}
+  .g6r-warn{background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;border-radius:7px;padding:7px 10px;margin-top:8px;font-size:12px;line-height:1.5;}
+  .g6r-banaPr{display:flex;justify-content:space-between;align-items:center;background:#FFF7ED;border:1px solid #F0C070;border-radius:7px;padding:6px 10px;margin-top:8px;font-size:12px;}
+  .g6r-banaPr b{color:#B3151D;font-size:14px;}
+  .g6r-foot{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-top:1px solid #EEE;background:#fff;position:sticky;bottom:0;}
+  .g6r-foot .nav button{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;}
+  .g6r-foot .grand{font-size:18px;font-weight:700;color:#B3151D;}
+  /* A4: กลุ่ม 6 = ห้องต่อเติม → ซ่อนฟอร์มบานปกติทั้งหมด เหลือชิปกลุ่ม + builder + ราคา */
+  .ch.g6room .size-row, .ch.g6room .fam-prodsel, .ch.g6room .rn-prodsel, .ch.g6room .g3-prodsel, .ch.g6room .mosq-prodsel,
+  .ch.g6room .i-color-wrap, .ch.g6room .i-glass-wrap, .ch.g6room .i-colorcode-wrap, .ch.g6room .i-sampleconfirm-wrap,
+  .ch.g6room .i-override-wrap, .ch.g6room .i-override-hint, .ch.g6room .cg-row,
+  /* FIX 20มิ.ย.: บล็อกฟอร์มบาน G1 ที่ commit 53a222b/f93e23e ย้ายขึ้นฟอร์มหลัก (หลุดจาก .size-row/optbox ที่เคยซ่อน) → โผล่เหนือ builder ในการ์ดกั้นห้อง · ซ่อนใน g6room (กลุ่ม 6 ใช้ builder ต่อบานแทน · display เฉยๆ ไม่แตะ DOM/ราคา) */
+  .ch.g6room .sliding-main-block, .ch.g6room .g1-rare-section, .ch.g6room .g1-lockgrid-host, .ch.g6room .optbox,
+  .ch.g6room .note-opt-group, .ch.g6room .subitem-wrap{ display:none!important; }
+  .ch.g6room .full:has(> .i-prod), .ch.g6room .full:has(> .i-position){ display:none!important; }
+  .ch.g6room .g6r-room-area{ display:block!important; margin-top:6px; }
+  /* ห้องไม่ต้องใช้ปุ่มชุด GH (เพิ่มบาน/เพิ่มหลังคา) — builder จัดการด้านเองในตัว */
+  .setbox:has(.ch.g6room) .set-addroof, .setbox:has(.ch.g6room) .set-addpart{ display:none!important; }
+</style><style>body{background:#f4f6f8;padding:12px;font-family:Sarabun,sans-serif;}.draft-banner{max-width:640px;margin:0 auto 12px;background:#fff7e6;border:1px solid #f0c040;border-radius:10px;padding:11px 14px;font-size:13px;color:#7a5c00;line-height:1.5;}.draft-banner b{color:#B45309;}.draft-wrap{max-width:640px;margin:0 auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:10px;overflow:auto;}.ch{display:block !important;}</style></head><body><div class="draft-banner">📸 <b>ฟอร์มจริง G6</b> — CSS+HTML ดึงจาก index.html ตรงๆ (ไม่ได้วาดเอง = เหมือนเป๊ะ) · <b>ดูอย่างเดียว</b> (snapshot · ปุ่มไม่ทำงาน)<br>🟡 จุดเดียวที่จะแก้: ย้าย <b>"ชนิดกระจก"</b> จากกล่องใช้บ่อย → ลงกล่อง <b>เพิ่มเติม ③</b> · ที่เหลือเหมือนเดิม = แก้นิดเดียว ไม่รื้อใหญ่</div><div class="draft-wrap"><div class="g6r-mount"><div class="g6r-wrap"><div class="g6r-top"><b>🏗️ ห้องต่อเติม (กั้นห้องกระจก)</b><span class="g6r-pos">ด้าน A · 1/4</span></div><div class="g6r-tabs"><button class="tab on" onclick="G6Rgo(0)">ด้าน A</button><button class="tab addt" onclick="G6RaddSide()">＋ด้าน</button><button class="tab rf" onclick="G6Rgo(1)">🏠หลังคา/ฝ้า</button><button class="tab rf" onclick="G6Rgo(2)">⚡ไฟ</button><button class="tab sm" onclick="G6Rgo(3)">📄สรุป</button></div><div class="g6r-body" id="g6r-bodyc"><div class="ph">ด้าน A</div><div class="row"><span class="rl">ประเภท</span><button class="c on" onclick="G6RsetType('glass')">กระจก/บาน</button><button class="c" onclick="G6RsetType('wall')">ผนังเบา</button><button class="c" onclick="G6RsetType('open')">เปิดโล่ง</button></div><div id="g6r-sb"><div class="g6r-wall" id="g6r-wallc"><div class="col"><div class="spacer"></div><div class="pane  on"><button class="px" onclick="G6RrmPc(event,0,0)">✕</button><div><b>บานเปิด</b><br>1×2.4</div></div></div><button class="addcol">＋</button></div><div class="g6r-wtot" id="g6r-wtot">รวมกว้าง ≈ 1.0 ม. · 1 ช่อง</div><div class="g6r-edit" id="g6r-editc" style="display: block;"><div class="fl" style="margin-top:0;">เลือกชนิดบานชั้นนี้ — <b>บานเปิด › ยูโร</b></div><div class="g6r-btngrid"><button class="mb" onclick="G6RopenF('slide')"><span style="font-size:15px;">⬌</span> บานเลื่อน</button><button class="mb on" onclick="G6RopenF('swing')"><span style="font-size:15px;">🚪</span> บานเปิด</button><button class="mb" onclick="G6RopenF('fold')"><span style="font-size:15px;">▥</span> บานเฟี้ยม</button><button class="mb" onclick="G6RopenF('fix')"><span style="font-size:15px;">▢</span> ติดตาย/ทึบ</button><button class="mb" onclick="G6RopenF('curve')"><span style="font-size:15px;">◗</span> ดัดโค้ง</button><button class="mb" onclick="G6RopenF('other')"><span style="font-size:15px;">⋯</span> อื่นๆ/พิเศษ</button></div><div class="g6r-subc"><button class="sc on" onclick="G6RsetSub('casement_euro')">ยูโร</button><button class="sc" onclick="G6RsetSub('casement_xseries')">X-series</button><button class="sc" onclick="G6RsetSub('casement_velora')">Velora</button><button class="sc" onclick="G6RsetSub('casement_flush_solid')">โซลิด ทู</button><button class="sc" onclick="G6RsetSub('casement_inset_solid')">โซลิด วัน</button><button class="sc" onclick="G6RsetSub('awning_euro')">บานกระทุ้ง</button><button class="sc" onclick="G6RsetSub('pivot')">บานหมุน</button></div><div class="row"><span class="rl">ขนาด</span><input type="number" value="1" step="0.1" oninput="G6RsetW(this.value)"><span class="u">กว้างบาน</span><input type="number" value="2.4" step="0.1" oninput="G6RsetH(this.value)"><span class="u">สูง ม.</span></div><div class="g6r-wtot">แต่ละบานที่ซ้อนกว้างไม่เท่ากันได้ · ค่าเริ่มต้น = เท่ากัน</div><div class="row g6r-mvrow"><span class="rl">จัดเรียง</span><button onclick="G6RmvCol(-1)">◀</button><button onclick="G6RmvCol(1)">▶</button><button onclick="G6RmvPc(-1)">▲</button><button onclick="G6RmvPc(1)">▼</button><button onclick="G6RaddPc(-1)">＋บน</button><button onclick="G6RaddPc(1)">＋ล่าง</button><button class="danger" onclick="G6RrmSel()">ลบ</button></div><div class="g6r-sl first">ออปชั่น+ของเสริมของบานนี้ <span class="g6r-tag main">ยูโร</span></div><div class="row"><span class="rl">จำนวนบาน</span><input type="number" value="1" min="1" step="1" oninput="G6RsetOpt('qty',this.value)"><span class="u">บาน</span></div><div class="fl">ธรณี</div><div class="chips"><button class="c on" onclick="G6RsetOpt2('thresh','std')">กันน้ำ</button><button class="c" onclick="G6RsetOpt2('thresh','turtle')">หลังเต่า +1,000</button></div><div class="fl">โช้คอัพ</div><div class="chips"><button class="c on" onclick="G6RsetOpt2('closer','0')">ไม่มี</button><button class="c" onclick="G6RsetOpt2('closer','5000')">มี +5,000</button></div><div class="g6r-sl freq">🔧 ใช้บ่อย <span class="g6r-tag main">มือจับ·ล็อก·มุ้ง·คาด·ลูกฟูก</span></div><div class="fl">มือจับ (หลายแบรนด์)</div><div class="chips"><button class="c" onclick="G6RsetHandleMode('cmech')">Cmech (ฟรี)</button><button class="c" onclick="G6RsetHandleMode('digi')">ดิจิตอล 10,000+</button><button class="c" onclick="G6RsetHandleMode('stainless')">สแตนเลส 1,500+</button><button class="c" onclick="G6RsetHandleMode('other')">รุ่นอื่น (กรอก)</button></div><div class="fl">ชุดล็อก</div><div class="chips"><button class="c" onclick="G6RsetOpt2('slidelock','ไม่มีล็อค')">ไม่มีล็อค</button><button class="c" onclick="G6RsetOpt2('slidelock','ไม่มีกุญแจ')">มีล็อค</button><button class="c on" onclick="G6RsetOpt2('slidelock','มีกุญแจ')">มีล็อค+กุญแจ</button></div><div class="fl">มุ้ง</div><div class="chips"><button class="c" onclick="G6RtogMosq()">＋ ใส่มุ้ง (จาก 3,500)</button></div><div class="fl" style="outline:2px dashed #B45309;outline-offset:2px;border-radius:6px;background:#FFFBEB;">ชนิดกระจก<span style="font-size:10px;font-weight:700;color:#B45309;background:#FDE68A;padding:1px 7px;border-radius:10px;margin-left:6px;">← ย้ายลงกล่องเพิ่มเติม ③</span></div><select class="g6r-glass-sel" onchange="G6RsetOpt2('glassIdx',this.value)" style="width:100%;max-width:340px;height:34px;border:1px solid #D1D5DB;border-radius:6px;margin-bottom:4px;padding:0 6px;"><optgroup label="ทั่วไป (เขียว/ใส)"><option value="0" selected="">เขียว 6 มม.</option><option value="1">ใส 6 มม.</option><option value="2">เขียว/ใส 8 มม.</option><option value="3">เขียว/ใส 10 มม.</option><option value="4">เคลือบขาว 6 มม.</option></optgroup><optgroup label="เทมเปอร์"><option value="13">เทมเปอร์เขียว/ใส 6 มม.</option><option value="14">เทมเปอร์เขียว/ใส 10 มม.</option><option value="15">เทมเปอร์เขียว/ใส 12 มม.</option><option value="16">เทมเปอร์เขียว/ใส 15 มม.</option><option value="17">เทมเปอร์ใสพิเศษ 6 มม.</option><option value="18">เทมเปอร์ใสพิเศษ 10 มม.</option><option value="19">เทมเปอร์ฝ้า 6 มม.</option><option value="20">เทมเปอร์ฝ้า 8 มม.</option><option value="21">เทมเปอร์ยูโรเกรย์ 4 มม. (ISG)</option><option value="22">เทมเปอร์ยูโรเกรย์ 5 มม. (ISG)</option><option value="23">เทมเปอร์ยูโรเกรย์ 6 มม. (ISG)</option><option value="24">เทมเปอร์ยูโรเกรย์ 10 มม. (BSG)</option><option value="25">เทมเปอร์ยูโรบรอนซ์ 5 มม. (ISG)</option><option value="26">เทมเปอร์ยูโรบรอนซ์ 6 มม. (ISG)</option><option value="27">เทมเปอร์ยูโรบรอนซ์ 10 มม. (BSG)</option><option value="28">เทมเปอร์ reflective สีเทา 6 มม.</option><option value="29">เทมเปอร์ reflective สีเขียว 6 มม. (CS214)</option><option value="30">เทมเปอร์ reflective สีฟ้า 6 มม. (CS514)</option><option value="41">เทมเปอร์ 8 มม.</option><option value="42">เทมเปอร์สีชาดำ 6 มม.</option><option value="43">เทมเปอร์สีชาดำ 10 มม.</option><option value="44">เทมเปอร์สีฟ้า 6 มม.</option><option value="45">เทมเปอร์ใสพิเศษ 8 มม.</option><option value="65">เทมเปอร์ลามิเนต 6+6 Pvb 1.52</option></optgroup><optgroup label="ลามิเนต"><option value="31">ลามิเนต 4+4 มม. ฟิล์มเขียว/ใส 0.38</option><option value="32">ลามิเนต 5+5 มม. ฟิล์มเขียว/ใส 0.38</option><option value="33">ลามิเนตใส 4+4 มม. ฟิล์มสีต่างๆ 0.38</option><option value="34">ลามิเนต 4+4 มม. ฟิล์มกันเสียง 0.76</option><option value="35">ลามิเนต 4+4 มม. Solar Max (กันร้อน) 0.76</option><option value="36">ลามิเนต 4+4 มม. กันขโมย STG 1.52</option><option value="46">ลามิเนต 6+6 มม. ฟิล์ม 0.38</option><option value="47">ลามิเนต 4+4 มม. (สูง&gt;2.5ม.) ฟิล์ม 0.76</option><option value="48">ลามิเนต 5+5 มม. (สูง&gt;2.5ม.) ฟิล์ม 0.76</option><option value="49">ลามิเนต 6+6 มม. (สูง&gt;2.5ม.) ฟิล์ม 0.76</option><option value="50">ลามิเนตยูโรเกรย์+ใส 6+6</option><option value="51">ลามิเนตยูโรเกรย์+ยูโรเกรย์ 6+6</option><option value="52">ลามิเนตสีชาดำ+ใส 6+6</option><option value="53">ลามิเนตสีชาดำ+สีชาดำ 6+6</option><option value="54">ลามิเนตคริสตัลเกรย์+ใส 6+6</option><option value="55">ลามิเนตคริสตัลเกรย์+คริสตัลเกรย์ 6+6</option><option value="56">ลามิเนตสีฟ้า+สีใส 6+6</option><option value="57">ลามิเนตสีฟ้า+สีฟ้า 6+6</option><option value="58">ลามิเนตยูโรบรอนซ์+ใส 6+6</option><option value="59">ลามิเนตยูโรบรอนซ์+ยูโรบรอนซ์ 6+6</option><option value="61">ใสดัดโค้งลามิเนตใส 5+5 มม.</option><option value="62">ลามิเนต 4+4 ยูโรเกรย์</option><option value="64">ลามิเนตลอนแก้ว/กระจกเงาทอง 4+4</option></optgroup><optgroup label="อินซูเลท"><option value="37">อินซูเลทเขียว/ใส 6+6+6 มม.</option></optgroup><optgroup label="พิเศษ"><option value="5">ยูโรเกรย์ 6 มม. (Perane)</option><option value="6">ยูโรเกรย์ 8 มม. (Perane)</option><option value="7">ยูโรเกรย์ 10 มม. (Perane)</option><option value="8">ยูโรบรอนซ์ 6 มม. (Perane)</option><option value="9">ยูโรบรอนซ์ 10 มม. (BSG)</option><option value="10">reflective สีเทา 6 มม. (CS120/130/150)</option><option value="11">reflective สีเขียว 6 มม. (CS214)</option><option value="12">reflective สีฟ้า/เทาใหม่ 6 มม. (CS514/140/148)</option><option value="38">ชาดำ/ฝ้า/ลายผ้า 5-6 มม.</option><option value="39">เงา 5 มม.</option><option value="40">ลอนแก้ว 5 มม.</option><option value="60">ใสดัดโค้งหนา 10 มม.</option><option value="63">เงาทอง</option></optgroup></select><div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c" onclick="G6RtogGrid()">＋ คาดตาราง +200</button><button class="c" onclick="G6RtogSolidlower()">＋ ลูกฟูก/คอมโพ +3,500</button></div><details class="g6r-more"><summary class="g6r-sl" onclick="setTimeout(function(){var d=document.querySelector(String.fromCharCode(46)+String.fromCharCode(103,54,114,45,109,111,114,101));if(d)window._g6moreOpen=d.open;},0)">⚙ ตัวเลือกเพิ่มเติม (สีเฟรม · ทาสี · ครอบวงกบ · ดรอปพื้น)</summary><div class="fl">สีอลู (เฟรม)</div><div class="chips"><button class="c on" onclick="G6RsetOpt2('colorIdx','0')"><span class="cdot" style="background:#ffffff;"></span>สีอบขาว</button><button class="c" onclick="G6RsetOpt2('colorIdx','1')"><span class="cdot" style="background:#1b1b1b;"></span>สีดำ</button><button class="c" onclick="G6RsetOpt2('colorIdx','2')"><span class="cdot" style="background:#6f7173;"></span>สีเทาซาฮาร่า</button><button class="c" onclick="G6RsetOpt2('colorIdx','3')"><span class="cdot" style="background:#2c2d2f;"></span>สีดำซาฮาร่า</button><button class="c" onclick="G6RsetOpt2('colorIdx','4')"><span class="cdot" style="background:#8b8e90;"></span>สี Aztec gray</button><button class="c" onclick="G6RsetOpt2('colorIdx','5')"><span class="cdot" style="background-image:linear-gradient(135deg,#b07c3a,#7d501f);"></span>สีลายไม้สต๊อก สักทอง</button><button class="c" onclick="G6RsetOpt2('colorIdx','6')"><span class="cdot" style="background-image:linear-gradient(135deg,#6a3322,#411d12);"></span>สีลายไม้สต๊อก มะฮอกกานี</button><button class="c" onclick="G6RsetOpt2('colorIdx','7')"><span class="cdot" style="background-image:linear-gradient(135deg,#dcc9a6,#b69a6e);"></span>สีลายไม้สต๊อก ไวท์โอ๊ค</button><button class="c" onclick="G6RsetOpt2('colorIdx','8')"><span class="cdot" style="background-image:linear-gradient(135deg,#cda06a,#9a6f3c);"></span>สีลายไม้อบพิเศษจาก Fuji - Oak (โอ๊ค)</button><button class="c" onclick="G6RsetOpt2('colorIdx','9')"><span class="cdot" style="background-image:linear-gradient(135deg,#5a3826,#321d12);"></span>สีลายไม้อบพิเศษจาก Fuji - Makha (มะค่า)</button><button class="c" onclick="G6RsetOpt2('colorIdx','10')"><span class="cdot" style="background-image:linear-gradient(135deg,#cfd2d6,#9aa0a6);"></span>สีอบพิเศษ</button><button class="c" onclick="G6RsetOpt2('colorIdx','11')"><span class="cdot" style="background-image:linear-gradient(135deg,#b07d40,#7e5326);"></span>สีลายไม้อบพิเศษ</button><button class="c" onclick="G6RsetOpt2('colorIdx','12')"><span class="cdot" style="background-image:linear-gradient(135deg,#dde0e3,#a7acb1,#dde0e3);"></span>สีชุบ</button></div><div class="g6r-sl">อุปกรณ์เสริม <span class="g6r-tag ex">หมวดเดียว</span></div><div class="chips"><button class="c pill" onclick="G6RtogCf()">ครอบวงกบ (700+/ม.)</button><button class="c pill" onclick="G6RtogOpt('dfOn')">ดรอปพื้น (5,000+)</button><button class="c pill" onclick="G6RtogOpt('ex_rm')">รื้อของเดิม</button></div></details><div class="g6r-banaPr"><span>ราคาบานนี้ (1×2.4 ม. · engine จริง)</span><b>฿20,000</b></div></div></div></div><div class="g6r-foot"><span class="nav"><button onclick="G6Rnav(-1)">◀ ย้อน</button> <button onclick="G6Rnav(1)">ถัดไป ▶</button></span><span class="grand">฿20,000</span></div></div></div></div></body></html>

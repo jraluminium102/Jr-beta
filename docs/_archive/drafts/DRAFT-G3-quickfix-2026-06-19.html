@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT G3+G2 คิดเร็ว — Toggle Fix (19 มิ.ย.)</title>
+<style>
+:root{--red:#E63B2B;--bg:#F3F4F6;--card:#fff;--line:#E5E7EB;--muted:#6B7280;--text:#111827;--green:#059669;--green-bg:#ECFDF5;--green-txt:#065F46;--amber:#D97706;--amber-bg:#FFFBEB;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{background:var(--bg);padding:16px;color:var(--text);}
+h1{font-size:16px;font-weight:800;color:var(--red);border-left:5px solid var(--red);padding-left:10px;margin-bottom:3px;}
+.sub{font-size:11px;color:var(--muted);padding-left:15px;margin-bottom:16px;}
+.demo{display:inline-block;font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
+.new{display:inline-block;font-size:9px;font-weight:700;background:#DCFCE7;color:#166534;border:1px solid #86EFAC;border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
+
+/* ── layout ── */
+.sections{display:flex;flex-direction:column;gap:20px;max-width:960px;margin:0 auto;}
+.section-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.side-by-side{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:700px){.side-by-side{grid-template-columns:1fr;}}
+
+/* ── card ── */
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;}
+.card.after{border-color:var(--green);}
+.card-hdr{font-size:12px;font-weight:700;margin-bottom:10px;}
+.card-hdr.before{color:var(--muted);}
+.card-hdr.after{color:var(--green-txt);}
+
+/* ── chips ── */
+.lbl{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 5px;display:block;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{height:40px;padding:0 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13px;font-weight:600;background:#fff;color:var(--text);cursor:pointer;transition:.15s;white-space:nowrap;}
+.chip:hover{border-color:var(--red);color:var(--red);}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.on-green{background:var(--green);color:#fff;border-color:var(--green);}
+
+/* ── toggle ── */
+.toggle-row{display:flex;align-items:center;gap:10px;margin:10px 0 6px;padding:8px 10px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;}
+.toggle-row.off{background:#FFF7ED;border-color:#FED7AA;}
+.toggle-btn{height:36px;padding:0 14px;border-radius:18px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:.15s;}
+.toggle-btn.on{background:var(--green);color:#fff;}
+.toggle-btn.off{background:#E5E7EB;color:var(--muted);}
+.toggle-lbl{font-size:12px;font-weight:600;flex:1;}
+.toggle-price{font-size:11px;color:var(--green-txt);font-weight:700;}
+.toggle-price.off{color:var(--muted);}
+
+/* ── step animate ── */
+.step{margin-top:8px;animation:fadeIn .18s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ── size row ── */
+.sz-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
+.fld label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px;}
+.fld input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;text-align:center;font-family:inherit;}
+.fld input:focus{outline:none;border-color:var(--red);}
+
+/* ── price card ── */
+.pcrd{margin-top:12px;background:#F9FAFB;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;}
+.pcrd-ttl{font-size:11px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px;}
+.pcrd-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;color:var(--muted);}
+.pcrd-row b{color:var(--text);}
+.pcrd-tot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1.5px solid var(--line);}
+.pcrd-tot .nm{font-size:12px;font-weight:800;}
+.pcrd-tot .val{font-size:17px;font-weight:800;color:var(--red);}
+.slide-add{font-size:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:4px 8px;color:#1E40AF;margin-top:6px;line-height:1.6;}
+
+/* ── info box ── */
+.info{font-size:11px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 12px;color:#1E40AF;margin-bottom:14px;line-height:1.7;}
+.info b{color:#1D4ED8;}
+
+/* ── g2 ref box ── */
+.ref-box{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px;}
+.ref-box h3{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.ref-link{display:inline-block;font-size:12px;font-weight:700;color:var(--red);text-decoration:underline;margin-top:6px;}
+.tag{display:inline-block;font-size:9px;font-weight:700;border-radius:4px;padding:2px 6px;margin-right:4px;}
+.tag.ok{background:var(--green-bg);color:var(--green-txt);border:1px solid #6EE7B7;}
+.tag.fix{background:#EDE9FE;color:#4C1D95;border:1px solid #C4B5FD;}
+</style>
+</head>
+<body>
+
+<h1>DRAFT G3+G2 คิดเร็ว — 3 จุดแก้ (19 มิ.ย.)</h1>
+<p class="sub">ราคาเดโม <span class="demo">dev ดึงเรตจริง</span> · กดเล่นได้จริง · เขียวคือ toggle ใหม่ที่จะเพิ่ม</p>
+
+<div class="sections">
+
+  <!-- ══════════════════════════════════════
+       CHANGE 1: G3 ฉนวนผนังเบา toggle
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="section-title">จุดที่ 1 — G3 ผนังเบา: เพิ่ม toggle ฉนวน <span class="new">NEW</span></div>
+    <div class="info">
+      <b>เดิม:</b> qiCalcG3 เรียก calcUnit(p,W,H,0,0,1,<b>{}</b>,false) → ไม่ส่ง optSel.insul → ฉนวนไม่บวก<br>
+      <b>ใหม่:</b> เพิ่ม toggle "รวมฉนวน" ใน qiRenderG3 เมื่อ prod=isowall/wall_ext/wall_int (default=ON)<br>
+      → qiCalcG3 ส่ง optSel.insul=true → engine บวก +600×ตร.ม. จาก L1754
+    </div>
+    <div class="side-by-side">
+      <div class="card">
+        <div class="card-hdr before">🔴 ก่อน (เดิม) — ไม่มี toggle</div>
+        <span class="lbl">ประเภทงาน</span>
+        <div class="chips">
+          <button class="chip">เมทัลชีท</button>
+          <button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล/ดีไลท์</button>
+          <button class="chip">โพลีตัน/กระจก</button>
+          <button class="chip">ฝ้า/เพดาน</button>
+          <button class="chip on">ผนังเบา</button>
+        </div>
+        <span class="lbl">รุ่น</span>
+        <div class="chips">
+          <button class="chip on">ISOWALL</button>
+          <button class="chip">ภายนอก</button>
+          <button class="chip">ภายใน</button>
+        </div>
+        <!-- ไม่มี toggle ฉนวน -->
+        <div class="sz-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="4" readonly></div>
+          <div class="fld"><label>ยาว (ม.)</label><input type="number" value="3" readonly></div>
+          <div class="fld"><label>ชุด</label><input type="number" value="1" readonly></div>
+        </div>
+        <div class="pcrd">
+          <div class="pcrd-ttl">ราคา <span class="demo">เดโม</span></div>
+          <div class="pcrd-row"><span>ISOWALL 12 ตร.ม. × 5,500</span></div>
+          <div class="pcrd-row"><b>ฉนวน: ไม่รวม (ไม่มีตัวเลือก)</b></div>
+          <div class="pcrd-tot"><span class="nm">รวม</span><span class="val">฿66,000</span></div>
+        </div>
+      </div>
+
+      <div class="card after">
+        <div class="card-hdr after">🟢 หลัง (ใหม่) — มี toggle ฉนวน</div>
+        <span class="lbl">ประเภทงาน</span>
+        <div class="chips">
+          <button class="chip">เมทัลชีท</button>
+          <button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล/ดีไลท์</button>
+          <button class="chip">โพลีตัน/กระจก</button>
+          <button class="chip">ฝ้า/เพดาน</button>
+          <button class="chip on" onclick="insulCatPick(this)">ผนังเบา</button>
+        </div>
+        <span class="lbl">รุ่น</span>
+        <div class="chips">
+          <button class="chip on" data-prod="isowall" onclick="insulProdPick(this)">ISOWALL</button>
+          <button class="chip" data-prod="wall_ext" onclick="insulProdPick(this)">ภายนอก</button>
+          <button class="chip" data-prod="wall_int" onclick="insulProdPick(this)">ภายใน</button>
+        </div>
+
+        <!-- NEW: toggle ฉนวน -->
+        <div class="step">
+          <div class="toggle-row" id="insul-row">
+            <button class="toggle-btn on" id="insul-btn" onclick="insulToggle()">รวมฉนวน ✓</button>
+            <span class="toggle-lbl" id="insul-lbl">ฉนวนในตัว</span>
+            <span class="toggle-price" id="insul-price">+600/ตร.ม.</span>
+          </div>
+        </div>
+
+        <div class="sz-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input class="qi-insul-w" type="number" step="0.1" value="4" oninput="insulCalc()"></div>
+          <div class="fld"><label>ยาว (ม.)</label><input class="qi-insul-h" type="number" step="0.1" value="3" oninput="insulCalc()"></div>
+          <div class="fld"><label>ชุด</label><input class="qi-insul-qty" type="number" step="1" value="1" oninput="insulCalc()"></div>
+        </div>
+        <div class="pcrd" id="insul-pcrd">
+          <div class="pcrd-ttl">ราคา <span class="demo">เดโม</span></div>
+          <div id="insul-body"></div>
+          <div class="pcrd-tot">
+            <span class="nm" id="insul-tot-lbl">รวม</span>
+            <span class="val" id="insul-tot">฿-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CHANGE 2: G3 หลังคาเลื่อน toggle
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="section-title">จุดที่ 2 — G3 หลังคา: เพิ่ม toggle หลังคาเลื่อน <span class="new">NEW</span></div>
+    <div class="info">
+      <b>เดิม:</b> qiCalcG3 ไม่ส่ง optSel.slide → หลังคาเลื่อนไม่มีในคิดเร็ว<br>
+      <b>ใหม่:</b> เพิ่ม toggle "หลังคาเลื่อน" ใน qiRenderG3 เมื่อ cat=หลังคา (default=OFF)<br>
+      → เมื่อ ON: โชว์ chips จำนวนบาน → qiCalcG3 ส่ง optSel.slide+spanels → engine คิดจาก L1761-1769<br>
+      <b>formula:</b> ฐาน (monoRate ROOF_SLIDE) + (N-1)×tier + motor auto (1 ตัว)
+    </div>
+    <div class="side-by-side">
+      <div class="card">
+        <div class="card-hdr before">🔴 ก่อน (เดิม) — ไม่มี toggle</div>
+        <span class="lbl">ประเภทงาน</span>
+        <div class="chips">
+          <button class="chip on">เมทัลชีท</button>
+          <button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล/ดีไลท์</button>
+          <button class="chip">โพลีตัน/กระจก</button>
+          <button class="chip">ฝ้า/เพดาน</button>
+          <button class="chip">ผนังเบา</button>
+        </div>
+        <span class="lbl">รุ่น</span>
+        <div class="chips">
+          <button class="chip on">ซีเอส ลอนเล็ก</button>
+          <button class="chip">ลอนใหญ่</button>
+          <button class="chip">ดักลาส</button>
+        </div>
+        <!-- ไม่มี toggle เลื่อน -->
+        <div class="sz-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input type="number" value="5" readonly></div>
+          <div class="fld"><label>ยาว (ม.)</label><input type="number" value="4" readonly></div>
+          <div class="fld"><label>ชุด</label><input type="number" value="1" readonly></div>
+        </div>
+        <div class="pcrd">
+          <div class="pcrd-ttl">ราคา <span class="demo">เดโม</span></div>
+          <div class="pcrd-row"><span>เมทัลชีท 20 ตร.ม. × 6,000</span></div>
+          <div class="pcrd-row"><b>หลังคาเลื่อน: ไม่รวม (ไม่มีตัวเลือก)</b></div>
+          <div class="pcrd-tot"><span class="nm">รวม</span><span class="val">฿120,000</span></div>
+        </div>
+      </div>
+
+      <div class="card after">
+        <div class="card-hdr after">🟢 หลัง (ใหม่) — มี toggle เลื่อน</div>
+        <span class="lbl">ประเภทงาน</span>
+        <div class="chips">
+          <button class="chip on">เมทัลชีท</button>
+          <button class="chip">ชินโคไลท์</button>
+          <button class="chip">ไวนิล/ดีไลท์</button>
+          <button class="chip">โพลีตัน/กระจก</button>
+          <button class="chip">ฝ้า/เพดาน</button>
+          <button class="chip">ผนังเบา</button>
+        </div>
+        <span class="lbl">รุ่น</span>
+        <div class="chips">
+          <button class="chip on">ซีเอส ลอนเล็ก</button>
+          <button class="chip">ลอนใหญ่</button>
+          <button class="chip">ดักลาส</button>
+        </div>
+
+        <!-- NEW: toggle หลังคาเลื่อน -->
+        <div class="step">
+          <div class="toggle-row off" id="slide-row">
+            <button class="toggle-btn off" id="slide-btn" onclick="slideToggle()">หลังคาเลื่อน</button>
+            <span class="toggle-lbl" id="slide-lbl">ไม่รวมชุดเลื่อน</span>
+            <span class="toggle-price off" id="slide-price"></span>
+          </div>
+          <!-- จำนวนบาน — โผล่เมื่อ ON -->
+          <div id="slide-panels-row" style="display:none;" class="step">
+            <span class="lbl">จำนวนบานเลื่อน</span>
+            <div class="chips">
+              <button class="chip" data-n="2" onclick="slidePanelPick(this)">2 บาน</button>
+              <button class="chip" data-n="3" onclick="slidePanelPick(this)">3 บาน</button>
+              <button class="chip" data-n="4" onclick="slidePanelPick(this)">4 บาน</button>
+              <button class="chip" data-n="5" onclick="slidePanelPick(this)">5 บาน</button>
+            </div>
+            <div class="slide-add" id="slide-note"></div>
+          </div>
+        </div>
+
+        <div class="sz-row">
+          <div class="fld"><label>กว้าง (ม.)</label><input class="qi-slide-w" type="number" step="0.1" value="5" oninput="slideCalc()"></div>
+          <div class="fld"><label>ยาว (ม.)</label><input class="qi-slide-h" type="number" step="0.1" value="4" oninput="slideCalc()"></div>
+          <div class="fld"><label>ชุด</label><input class="qi-slide-qty" type="number" step="1" value="1" oninput="slideCalc()"></div>
+        </div>
+        <div class="pcrd">
+          <div class="pcrd-ttl">ราคา <span class="demo">เดโม</span></div>
+          <div id="slide-body"></div>
+          <div class="pcrd-tot">
+            <span class="nm" id="slide-tot-lbl">รวม</span>
+            <span class="val" id="slide-tot">฿-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CHANGE 3: G2 cascade (approved ก่อนแล้ว)
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="section-title">จุดที่ 3 — G2 ระแนงกล่อง: cascade chip fix <span class="tag ok">approved ✅</span></div>
+    <div class="ref-box">
+      <h3>G2 cascade — draft ผ่านแล้ว ✅</h3>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px;">
+        ดราฟแยกที่ทดสอบครบ cascade 4 ขั้น + ชิปมี <code>"</code> กดได้แล้ว:<br>
+        <a class="ref-link" href="http://localhost:5599/review/DRAFT-G2-cascade-19.html" target="_blank">
+          → localhost:5599/review/DRAFT-G2-cascade-19.html
+        </a>
+      </p>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);">
+        <b>สรุปสิ่งที่แก้:</b><br>
+        เดิม: <code>onclick="qiG2PickBox(this,'1"x1.6"')"</code> → <code>"</code> ตัด attribute กลาง → กดไม่ขึ้น<br>
+        ใหม่: <code>data-k="box" data-v="1&amp;quot;x1.6&amp;quot;"</code> + addEventListener หลัง innerHTML<br>
+        ผล: ทุกขนาดกดได้ · <code>1x5 cm.</code> และ <code>1"x4"</code> โชว์ 2 หน้าโชว์ถูกต้อง
+      </div>
+    </div>
+  </div>
+
+</div><!-- /sections -->
+
+<script>
+/* ══════════════════════
+   SECTION 1: ฉนวนผนังเบา
+══════════════════════ */
+var insulState={
+  prod:'isowall',
+  on:true,
+  W:4, H:3, qty:1
+};
+
+var RATES_WALL={
+  isowall:[[1.0,1.5,7000],[1.5,2.0,6500],[2.0,2.5,6000],[2.5,3.0,5500],[3.0,3.5,5000],[3.5,9999,4500]],
+  wall_ext:[[3.0,4.5,4500],[4.5,6.0,4200],[6.0,7.5,3900],[7.5,9999,3600]],
+  wall_int:[[3.0,4.5,4100],[4.5,6.0,3800],[6.0,7.5,3500],[7.5,9999,3200]]
+};
+var WALL_MIN={isowall:7000,wall_ext:13500,wall_int:13500};
+var WALL_LABEL={isowall:'ISOWALL',wall_ext:'ผนังเบาภายนอก',wall_ext:'ผนังเบาภายนอก',wall_int:'ผนังเบาภายใน'};
+
+function rateOf(a,tiers){
+  for(var i=0;i<tiers.length;i++) if(a>=tiers[i][0]&&a<tiers[i][1]) return tiers[i][2];
+  return tiers[tiers.length-1][2];
+}
+
+function insulProdPick(btn){
+  document.querySelectorAll('[data-prod]').forEach(function(b){b.classList.toggle('on',b===btn);});
+  insulState.prod=btn.dataset.prod;
+  insulRenderToggle();
+  insulCalc();
+}
+function insulCatPick(){}
+
+function insulToggle(){
+  insulState.on=!insulState.on;
+  insulRenderToggle();
+  insulCalc();
+}
+function insulRenderToggle(){
+  var row=document.getElementById('insul-row');
+  var btn=document.getElementById('insul-btn');
+  var lbl=document.getElementById('insul-lbl');
+  var pr=document.getElementById('insul-price');
+  if(insulState.on){
+    row.className='toggle-row';
+    btn.className='toggle-btn on'; btn.textContent='รวมฉนวน ✓';
+    lbl.textContent='ฉนวนในตัว'; pr.className='toggle-price'; pr.textContent='+600/ตร.ม.';
+  } else {
+    row.className='toggle-row off';
+    btn.className='toggle-btn off'; btn.textContent='ไม่รวมฉนวน';
+    lbl.textContent='ไม่รวมค่าฉนวน'; pr.className='toggle-price off'; pr.textContent='';
+  }
+}
+function insulCalc(){
+  var wi=document.querySelector('.qi-insul-w'), hi=document.querySelector('.qi-insul-h'), qi=document.querySelector('.qi-insul-qty');
+  if(wi) insulState.W=parseFloat(wi.value)||0;
+  if(hi) insulState.H=parseFloat(hi.value)||0;
+  if(qi) insulState.qty=parseInt(qi.value)||1;
+  var a=insulState.W*insulState.H;
+  var tiers=RATES_WALL[insulState.prod];
+  if(!tiers||a<=0){document.getElementById('insul-body').innerHTML='<div style="font-size:12px;color:#9CA3AF;padding:6px 0;">— กรอกขนาดก่อน —</div>';return;}
+  var rate=rateOf(a,tiers);
+  var base=Math.max(WALL_MIN[insulState.prod]||0, Math.ceil(a*rate/1000)*1000);
+  var insulAdd=insulState.on?Math.ceil(600*a/1000)*1000:0;
+  var total=base+insulAdd;
+  var sell=Math.ceil(total*insulState.qty/1000)*1000;
+  var body='<div style="font-size:11px;color:#6B7280;margin-bottom:4px;"><b>'+WALL_LABEL[insulState.prod]+'</b></div>';
+  body+='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;">พื้นที่ '+a.toFixed(2)+' ตร.ม. × '+fmt(rate)+' บ./ตร.ม.</div>';
+  body+='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;">ฐาน ฿'+fmt(base)+(insulAdd?'' :'')+'</div>';
+  if(insulState.on) body+='<div style="font-size:11px;color:var(--green-txt);margin-bottom:2px;"><b>ฉนวน +600/ตร.ม. = +฿'+fmt(insulAdd)+'</b></div>';
+  body+='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;">ราคา/ชุด ฿'+fmt(total)+'</div>';
+  document.getElementById('insul-body').innerHTML=body;
+  document.getElementById('insul-tot-lbl').textContent='รวม ×'+insulState.qty+' ชุด';
+  document.getElementById('insul-tot').textContent='฿'+fmt(sell);
+}
+
+/* ══════════════════════
+   SECTION 2: หลังคาเลื่อน
+══════════════════════ */
+var slideState={
+  on:false, N:2,
+  W:5, H:4, qty:1
+};
+// ROOF_STD dummy rate for เมทัลชีท in draft
+var ROOF_STD=[[5,10,6500],[10,15,6000],[15,30,5500],[30,9999,5000]];
+var ROOF_SLIDE=[[5,10,5000],[10,15,4700],[15,20,4400],[20,25,4100],[25,30,3800],[30,9999,3500]];
+
+function slideToggle(){
+  slideState.on=!slideState.on;
+  if(slideState.on) slideState.N=2;
+  slideRender();
+  slideCalc();
+}
+function slidePanelPick(btn){
+  slideState.N=parseInt(btn.dataset.n);
+  document.querySelectorAll('[data-n]').forEach(function(b){b.classList.toggle('on',b===btn);});
+  slideCalc();
+}
+function slideRender(){
+  var btn=document.getElementById('slide-btn');
+  var row=document.getElementById('slide-row');
+  var lbl=document.getElementById('slide-lbl');
+  var pr=document.getElementById('slide-price');
+  var panRow=document.getElementById('slide-panels-row');
+  if(slideState.on){
+    row.className='toggle-row'; btn.className='toggle-btn on'; btn.textContent='หลังคาเลื่อน ✓';
+    lbl.textContent='รวมชุดเลื่อน+มอเตอร์'; pr.className='toggle-price'; pr.textContent='+ชุดเลื่อน';
+    panRow.style.display='';
+    // set จำนวนบาน default chip
+    document.querySelectorAll('[data-n]').forEach(function(b){b.classList.toggle('on',parseInt(b.dataset.n)===slideState.N);});
+  } else {
+    row.className='toggle-row off'; btn.className='toggle-btn off'; btn.textContent='หลังคาเลื่อน';
+    lbl.textContent='ไม่รวมชุดเลื่อน'; pr.className='toggle-price off'; pr.textContent='';
+    panRow.style.display='none';
+  }
+}
+function slideCalc(){
+  var wi=document.querySelector('.qi-slide-w'), hi=document.querySelector('.qi-slide-h'), qi=document.querySelector('.qi-slide-qty');
+  if(wi) slideState.W=parseFloat(wi.value)||0;
+  if(hi) slideState.H=parseFloat(hi.value)||0;
+  if(qi) slideState.qty=parseInt(qi.value)||1;
+  var a=slideState.W*slideState.H;
+  var base=Math.max(25000,Math.ceil(a*rateOf(a,ROOF_STD)/1000)*1000);
+  var slideAdd=0, slideNote='';
+  if(slideState.on&&a>0){
+    var N=slideState.N;
+    var tier=a<=10?4500:a<=20?6750:a<=30?9000:11250;
+    var slideBase=Math.ceil(rateOf(a,ROOF_SLIDE)*a/1000)*1000;
+    var extraPanels=(N-1)*tier;
+    // auto motor — based on single panel area
+    var panelA=a*N/(N+1);
+    var motor=panelA<=3.5?18000:panelA<=14?28000:panelA<=40?36000:72000;
+    slideAdd=slideBase+extraPanels+motor;
+    slideNote='ชุดเลื่อน: ฐาน ฿'+fmt(slideBase)+' + บานเพิ่ม '+(N-1)+'×฿'+fmt(tier)+'=฿'+fmt(extraPanels)+' + มอเตอร์ 1 ตัว ฿'+fmt(motor);
+    document.getElementById('slide-note').textContent=slideNote;
+  } else {
+    document.getElementById('slide-note').textContent='';
+  }
+  var total=base+slideAdd;
+  var sell=Math.ceil(total*slideState.qty/1000)*1000;
+  var body='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;"><b>เมทัลชีท (เดโม)</b></div>';
+  body+='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;">พื้นที่ '+a.toFixed(2)+' ตร.ม. → ฐาน ฿'+fmt(base)+'</div>';
+  if(slideState.on){
+    body+='<div style="font-size:11px;color:#1E40AF;margin-bottom:2px;"><b>หลังคาเลื่อน '+slideState.N+' บาน: +฿'+fmt(slideAdd)+'</b></div>';
+  }
+  body+='<div style="font-size:11px;color:#6B7280;margin-bottom:2px;">ราคา/ชุด ฿'+fmt(total)+'</div>';
+  document.getElementById('slide-body').innerHTML=body;
+  document.getElementById('slide-tot-lbl').textContent='รวม ×'+slideState.qty+' ชุด';
+  document.getElementById('slide-tot').textContent='฿'+fmt(sell);
+}
+
+function fmt(n){return Math.round(n).toLocaleString('th-TH');}
+
+// init
+insulCalc();
+slideCalc();
+</script>
+</body>
+</html>

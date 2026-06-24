@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ 3 กล่อง — บานเลื่อน (ตัวอย่าง)</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.5;}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 70px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:14px;}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.bh{padding:10px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;}
+.b1 .bh{background:#FEF3F2;color:#B3151D;border-bottom:1px solid #F5C0BC;}
+.b2 .bh{background:#EFF6FF;color:#1E5AA8;border-bottom:1px solid #BFD7F0;}
+.b3 .bh{background:#F9FAFB;color:#374151;cursor:pointer;}
+.bh .tag{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:5px;margin-left:auto;}
+.b1 .tag{background:#B3151D;color:#fff;} .b2 .tag{background:#1E5AA8;color:#fff;} .b3 .tag{background:#E5E7EB;color:#555;}
+.body{padding:12px 14px;}
+.fld{margin:9px 0;}
+.fld:first-child{margin-top:0;}
+.lbl{font-size:12.5px;font-weight:700;color:#374151;margin-bottom:5px;}
+.lbl .req{color:#B3151D;font-size:11px;margin-left:4px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{border:1.5px solid #D1D5DB;background:#fff;border-radius:8px;padding:6px 13px;font-size:13px;cursor:pointer;user-select:none;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.sm{padding:4px 10px;font-size:12px;}
+.chip.chk{border-style:dashed;}
+.row{display:flex;gap:7px;flex-wrap:wrap;}
+.in{width:72px;height:36px;border:1px solid #D1D5DB;border-radius:7px;text-align:center;font-size:14px;}
+.in.lab{display:flex;flex-direction:column;}
+.in.lab span{font-size:10px;color:var(--mut);margin-bottom:2px;}
+.b3 .body{display:none;}
+.b3.open .body{display:block;}
+.arr{transition:transform .15s;font-size:11px;}
+.b3.open .arr{transform:rotate(90deg);}
+.note{font-size:11.5px;color:var(--mut);margin-top:14px;border-top:1px dashed var(--line);padding-top:9px;}
+.mini{font-size:11px;color:var(--mut);font-weight:400;}
+</style></head><body><div class="wrap">
+
+<h1>📐 ดราฟ 3 กล่อง — บานเลื่อน (ตัวอย่าง)</h1>
+<div class="sub">โครงใหม่: ① สเปกหลัก (บังคับกรอก) · ② ออปชั่นหลัก · ③ ออปชั่นเสริม (การ์ดพับ) · <b>กดเล่นได้ · กล่อง③ กดพับ/กางได้</b></div>
+
+<!-- ① สเปกหลัก -->
+<div class="box b1"><div class="bh">① สเปกหลัก <span class="mini" style="font-weight:400;">— ต้องกรอก</span> <span class="tag">บังคับ</span></div>
+<div class="body">
+  <div class="fld"><div class="lbl">รุ่น <span class="req">*</span></div><div class="chips"><span class="chip sm on">เซมิยูโร</span><span class="chip sm">ยูโร</span><span class="chip sm">E-series</span></div></div>
+  <div class="fld"><div class="lbl">ประเภท <span class="req">*</span></div><div class="chips"><span class="chip sm on">ประตู</span><span class="chip sm">หน้าต่าง</span></div></div>
+  <div class="fld"><div class="lbl">ขนาด <span class="req">*</span></div><div class="row"><label class="in lab"><span>กว้าง</span><input class="in" value="3.0"></label><label class="in lab"><span>สูง</span><input class="in" value="2.4"></label><label class="in lab"><span>บาน</span><input class="in" value="4"></label><label class="in lab"><span>ชุด</span><input class="in" value="1"></label></div></div>
+  <div class="fld"><div class="lbl">ชนิดการเปิด <span class="req">*</span></div><div class="chips"><span class="chip sm on">เลื่อน (ระบุติดตาย)</span><span class="chip sm">สลับ</span><span class="chip sm">เปิดคู่กลาง</span><span class="chip sm">ลากจูง</span></div></div>
+  <div class="fld"><div class="lbl">ติดตาย / เปิด</div><div class="row"><input class="in" style="width:auto;flex:1;" placeholder="ติดตาย __ บาน · เปิด __ บาน"></div></div>
+</div></div>
+
+<!-- ② ออปชั่นหลัก -->
+<div class="box b2"><div class="bh">② ออปชั่นหลัก <span class="mini" style="font-weight:400;">— ตั้งบ่อย</span> <span class="tag">เลือกได้</span></div>
+<div class="body">
+  <div class="fld"><div class="lbl">ราง (ล่าง)</div><div class="chips"><span class="chip sm on">รางกันน้ำ</span><span class="chip sm">รางเตี้ย 7 มม.</span></div></div>
+  <div class="fld"><div class="lbl">ชุดล็อค <span class="mini">(เฉพาะประตู)</span></div><div class="chips"><span class="chip sm">ไม่มี</span><span class="chip sm">มีชุดล็อก</span><span class="chip sm on">มีชุดล็อก + กุญแจ</span></div></div>
+  <div class="fld"><div class="lbl">มือจับ <span class="mini">(ติ๊กได้หลายแบรนด์)</span></div><div class="chips"><span class="chip sm chk">Cmech</span><span class="chip sm chk">ดิจิตอล</span><span class="chip sm chk">สแตนเลสสีเงิน</span><span class="chip sm chk">รุ่นอื่น ✎</span></div></div>
+  <div class="fld"><div class="lbl">มุ้ง</div><div class="chips"><span class="chip sm on">ไม่ใส่</span><span class="chip sm">เฟรม</span><span class="chip sm">จีบ</span><span class="chip sm">ม้วน</span><span class="chip sm">อื่นๆ</span></div></div>
+  <div class="fld"><div class="lbl">แผ่นทึบล่าง · คาดตาราง</div><div class="chips"><span class="chip sm on">ไม่มีทึบ</span><span class="chip sm">อลูลูกฟูก</span><span class="chip sm">คอมโพสิท</span><span class="chip sm chk">☐ คาดตาราง</span></div></div>
+</div></div>
+
+<!-- ③ ออปชั่นเสริม (พับ) -->
+<div class="box b3" id="box3"><div class="bh" onclick="document.getElementById('box3').classList.toggle('open')"><span class="arr">▶</span> ③ ออปชั่นเสริม <span class="mini" style="font-weight:400;">— นานๆใช้ · กดกาง</span> <span class="tag">พับเก็บ</span></div>
+<div class="body">
+  <div class="fld"><div class="lbl">🎨 สี/กระจก (เฉพาะข้อ)</div><div class="chips"><span class="chip sm">☑ สีตามทั้งใบ → เอาออก = L2/L3 (สีอลู13+กระจก66)</span></div></div>
+  <div class="fld"><div class="lbl">งานติดตั้ง / อื่นๆ</div><div class="chips"><span class="chip sm">ครอบวงกบ</span><span class="chip sm">ดรอปพื้น</span><span class="chip sm">รื้อของเดิม</span><span class="chip sm">งานเสริม</span><span class="chip sm">ผสมบาน</span></div></div>
+  <div class="fld"><div class="lbl">หมายเหตุ</div><div class="row"><input class="in" style="width:auto;flex:1;" placeholder="หมายเหตุ / สเปกพิเศษ"></div></div>
+</div></div>
+
+<div class="note">
+<b>การจัดกล่อง (บานเลื่อน):</b><br>
+• <b style="color:#B3151D;">①</b> รุ่น · ประเภท · ขนาด · ชนิดเปิด · ติดตาย/เปิด <span class="mini">(ของที่ต้องกรอกทุกครั้ง)</span><br>
+• <b style="color:#1E5AA8;">②</b> ราง · ชุดล็อค · มือจับ · มุ้ง · ทึบล่าง/คาดตาราง <span class="mini">(ออปชั่นที่ตั้งบ่อย)</span><br>
+• <b>③</b> สี/กระจก L1-L3 · ครอบวงกบ · ดรอปพื้น · รื้อ · งานเสริม · ผสมบาน · หมายเหตุ <span class="mini">(พับเก็บ นานๆใช้)</span><br><br>
+<span class="mini">* ① ตอนนี้แค่จัดกลุ่ม (ยังไม่บังคับ validate ตามที่เคาะ) · ราคาไม่กระทบ (calcUnit อ่าน class) · ถ้าโครงนี้โอเค ผมทำ mapping ครบ 14 ชนิดใส่ใบสั่ง dev</span>
+</div>
+
+</div></body></html>

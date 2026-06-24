@@ -1,0 +1,344 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ ② ลากจัดลำดับฟีเจอร์ต่อกลุ่ม (ตรง render จริง) — 20มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--red-d:#8E1118;--line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--good:#059669;--bg:#F3F4F6;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;font-size:14px;line-height:1.5;}
+h2{color:var(--red);font-size:19px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px;}
+.wrap{max-width:780px;margin:0 auto;}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.tab{padding:8px 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);min-height:42px;}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red);}
+.card{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--line);}
+.ghead{font-size:15px;font-weight:800;color:var(--red);margin:0 0 3px;}
+.gnote{font-size:12px;color:var(--muted);margin:0 0 12px;}
+.row{border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;transition:.12s;overflow:hidden;}
+.row.over{border-color:var(--red);background:#FFF5F5;}
+.row.drag{opacity:.4;border-style:dashed;}
+.rtop{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:grab;}
+.rtop .grip{color:#bbb;font-size:17px;}
+.rtop .num{width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
+.rtop .nm{flex:1;font-size:13.5px;font-weight:700;}
+.rtop .cnt{font-size:11px;color:var(--muted);background:#F3F4F6;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.rtop .exp{font-size:11px;color:var(--red);cursor:pointer;user-select:none;padding:3px 6px;border:1px solid #eedede;border-radius:6px;background:#fffafa;white-space:nowrap;}
+.rtop .ar{display:flex;flex-direction:column;gap:2px;}
+.rtop .ar button{width:30px;height:20px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;color:var(--muted);padding:0;}
+.rtop .ar button:hover{border-color:var(--red);color:var(--red);}
+.inside{display:none;padding:2px 14px 12px 46px;border-top:1px dashed var(--line);background:#FAFBFD;}
+.inside.show{display:block;}
+.inside .ititle{font-size:11px;color:var(--muted);margin:8px 0 5px;}
+.opt{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#374151;padding:4px 0;}
+.opt .dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex:none;opacity:.5;}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px;background:#FAFAFA;border-radius:8px;}
+.note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;border-top:1px solid var(--line);padding-top:10px;}
+.good{color:var(--good);font-weight:700;}.warn{color:var(--red);font-weight:700;}
+.out{margin-top:12px;background:#1F2937;color:#E5E7EB;border-radius:10px;padding:12px;font-size:12px;font-family:'Consolas',monospace;white-space:pre;overflow:auto;}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:14px;}
+.bar{display:flex;gap:8px;margin:10px 0;}
+.bar button{flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12px;cursor:pointer;font-weight:700;color:var(--muted);}
+.bar button:hover{border-color:var(--red);color:var(--red);}
+</style></head>
+<body>
+<div class="wrap">
+<h2>ดราฟ ② ลากจัดลำดับฟีเจอร์ — แยกต่อกลุ่ม <span style="font-size:12px;background:#D1FAE5;color:#065F46;padding:2px 9px;border-radius:20px;">ตรง render จริง</span></h2>
+<p class="sub">หมวด + ลำดับ + ของข้างใน = <b>ดึงจากเว็บจริงปัจจุบัน</b> (ไม่ได้เขียนมือ) · เลือกกลุ่ม → ลาก/▲▼ จัดลำดับ → กด "กางดู" เห็นออปชั่นข้างใน</p>
+
+<div class="tabs" id="tabs"></div>
+<div class="card">
+  <div class="ghead" id="ghead"></div>
+  <div class="gnote" id="gnote"></div>
+  <div class="bar"><button onclick="allExp(true)">กางดูทุกหมวด ▾</button><button onclick="allExp(false)">พับทั้งหมด ▴</button></div>
+  <div id="list"></div>
+</div>
+<div class="out" id="out"></div>
+
+<div class="q">
+  <b>ทำงานยังไง:</b> เพิ่ม map <code>GROUP_ORDER[กลุ่ม]=[ลำดับหมวด]</code> · groupGHOpts เรียงตามของกลุ่มที่เปิด<br>
+  <b>กลุ่มอื่นไม่พัง:</b> จัด G2 = แก้แค่ <code>GROUP_ORDER['2']</code> · ล็อกด้วย order-snapshot (เด้งแดงถ้าเพี้ยน)<br><br>
+  <b>ขอเคาะ:</b> 1) ตรงของจริงแล้วใช่ไหม · 2) จัด G2 ระแนง ลำดับที่อยากได้ → บอกผม ส่ง dev
+</div>
+<p class="note">
+  <span class="warn">⚠️ จุดที่ต้องรู้ (ความจริงจาก render):</span><br>
+  • <b>G1 ไม่มีหมวด "ล็อค·มุ้ง·คาดตาราง" ในลิสต์นี้</b> — เพราะ G1 ดัน ล็อค/คาดตาราง ไปไว้ <b>นอก accordion</b> (กล่องเด่นด้านบน) คนละระบบกับการจัดหมวดนี้ · ถ้าอยากจัดอันนั้นด้วย = งานแยก<br>
+  • <b>G5 มุ้ง</b> = ฟอร์มเฉพาะ ไม่มีหมวด · <b>G3</b> = หลังคา + ฝ้า-ผนัง รวมกัน (9 หมวด)<br>
+  • "กางดู" = ออปชั่นจริงในหมวด · ถ้าเห็นออปชั่น <b>อยู่ผิดหมวด</b> บอกได้ (ย้ายข้ามหมวด = งานแยก)
+</p>
+</div>
+
+<script>
+var OPTS={
+ "1": {
+  "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)": [
+   "ฝังรางยู (ในพื้น) — ติ๊กแล้วเลือกธรณีหลังเต่าไ",
+   "รื้อของเดิม (รายการนี้)",
+   "ครอบวงกบอลู หรือระบุ(ม.)",
+   "ดรอปพื้น(ม.)",
+   "ธรณี",
+   "ฝังรางยู (U-Track) (≤2ม.=4,000 · เกิน +500/ม.)",
+   "เสริมคานซัพพอร์ท (≤3ม.=4,000 · เกิน +500/ม.) ย"
+  ],
+  "➕ งานเสริม · หมายเหตุ": [
+   "งานเสริม/วิศวกรรม",
+   "combo ราคา (กรอกเอง · บาท)",
+   "ตารางเต็มบาน +5,000 (กว้าง≤1.2 / สูง≤3)",
+   "แบบเปิด",
+   "รุ่นผนังเบา",
+   "ฉนวนกันความร้อนและกันเสียง หนา 3\" +600/ตร.ม.",
+   "รุ่น/ความหนา (ระบุในใบ · ราคาตามวัสดุ รอเรต)",
+   "โครง",
+   "ความหนา ISOWALL",
+   "สมาร์ทบอร์ด หนา",
+   "ทุนกระจก (บาท/ตร.ม.)",
+   "โหมดกำไร",
+   "กำไร % (มือ)",
+   "Auto 2 ขั้น: ขั้น1 ทุน 0-2500=+100% / 2501-400"
+  ],
+  "🚪 ติดตาย · ช่องแสง": [
+   "ช่องแสง (กระจก) พื้นที่ ตร.ม. เว้น 0 = ทึบล้วน"
+  ],
+  "🏗️ โครงสร้าง · แผ่นทึบ · ราง": [
+   "ซ่อนคาน (base 4,000) (≤3ม.=4,000 · เกิน +500/ม",
+   "ซ่อนราง (base 4,000) (≤3ม.=4,000 · เกิน +500/ม",
+   "ทาสี บาท",
+   "สี",
+   "ทาสี",
+   "Soft Close (สลักหน่วงบาน) +4,000",
+   "สลิงเปิดซ้อน(×บาน) +2,000"
+  ]
+ },
+ "2": {
+  "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)": [
+   "รื้อของเดิม (รายการนี้)",
+   "มีธรณี",
+   "ครอบวงกบ(ม.)"
+  ],
+  "➕ งานเสริม · หมายเหตุ": [
+   "งานเสริม/วิศวกรรม",
+   "ลักษณะการเปิด",
+   "ราคาประตู (กรอกเอง · บาท) (กรอก >0 = แทนราคารุ",
+   "ราคาประตู (กรอกเอง · บาท) (R3-2: กรอก >0 = ใช้",
+   "ความหนากระจก ราคาไม่ขึ้นกับความหนา",
+   "⚠ กรอกความยาว (ม.) ในช่อง \"กว้าง\"",
+   "สีอลูมิเนียม",
+   "ทิศติดตั้ง"
+  ],
+  "🏗️ โครงสร้าง · แผ่นทึบ · ราง": [
+   "มอเตอร์(ตัว)",
+   "ชนิดราง",
+   "อบสี/ผิว",
+   "OPTION ลายไม้ Golden Teak SMS (กรอกราคาเพิ่มเอ",
+   "มอเตอร์ระแนง 38.1 (⌈D÷3⌉ × 10,000)",
+   "ทิศระแนง",
+   "สี (แสดงในใบ)",
+   "ทำเป็นบาน (เลือกรุ่น)",
+   "สีอบ ลูกฟูกเรียบ 2 ทาง",
+   "เอามอเตอร์ (ถ้าไม่ติ๊ก = เปิด-ปิดด้วยมือ)",
+   "สีอบ"
+  ],
+  "🚪 ติดตาย · ช่องแสง": [
+   "ทำเป็นบาน · ค่าประตู (เลือกรุ่น)"
+  ],
+  "🔧 ล็อค · มุ้ง · คาดตาราง": [
+   "ราวมือจับด้านบน (option)"
+  ]
+ },
+ "3": {
+  "🏠 วัสดุมุง · โครง": [
+   "สีวัสดุมุง (ไวนิล)",
+   "แป",
+   "โครงสร้าง ⚠ ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบ",
+   "สีวัสดุมุง (ดีไลท์)",
+   "สีวัสดุมุง (โพลีตัน) (ชื่อเต็มลงใบ)",
+   "ชนิดฟิล์ม",
+   "ความหนากระจก",
+   "สีเมทัลชีท",
+   "สีชินโคไลท์ (ชื่อเต็ม+รหัสลงใบ)"
+  ],
+  "🔄 หลังคาเลื่อน": [
+   "ทำเป็นหลังคาเลื่อน",
+   "① ชนิดเลื่อน (ราคาเท่ากัน · ระบุในใบ)② พื้นที่"
+  ],
+  "🌧️ ปลายหลังคา · รางน้ำ": [
+   "ปลายหลังคา \"ปิดปลายกันน้ำ\" = กันน้ำกระเด็น (1,",
+   "ชนิดราง (คิด/ม.) ยาว(ม.) (ว่าง/0 = ใช้ความกว้า",
+   "ปิดปลายกันน้ำกระเด็น (1,000/ม.) ยาว(ม.) (ว่าง/"
+  ],
+  "🔩 ของเสริมหลังคา": [
+   "เสาแผง (4,000/ต้น) · เสา 4\"x8\" (2,000/ต้น)",
+   "คานเหล็กถัก ยาว(ม.)",
+   "เสริมเพลทเหล็กล่าง (รับล่าง)",
+   "เหล็กดึงด้านบน",
+   "ซ่อนสโลป สูง ยาว/ด้าน ด้าน สี",
+   "มีงานปิดซ่อนราง กว้างราง(ซม.) สูง(ซม.) ยาวรวม(",
+   "มีงานครอบคาน (ลูกฟูก 1 หน้า ลด 40%) กว้างห่อ(ม",
+   "วัสดุปิดรอยต่อแผ่นหลังคายาว (ม.) สี (ขั้นต่ำ 5",
+   "โซ่รางน้ำ (3,000/เส้น)",
+   "ครอบท่อ PVC (1,500/1.5ม. ปัดขึ้น) ยาว(ม.)"
+  ],
+  "➕ หลังคาผสม (วัสดุที่ 2)": [
+   "+ ต่อปลายวัสดุที่ 2สีวัสดุที่ 2ขนาดส่วนที่ 2ยา"
+  ],
+  "📝 งานพิเศษ · รื้อของเดิม": [
+   "ฝ้า (ออปชั่น)ชนิดฝ้าสี/ลาย ฉนวนกันร้อน/กันเสีย",
+   "งานเสริม/วิศวกรรม",
+   "รื้อของเดิม (รายการนี้)"
+  ],
+  "🏗️ โครงสร้าง · แผ่นทึบ · ราง": [
+   "ทาสี บาท",
+   "สี",
+   "ทาสี",
+   "สีอบ ปิดราง (ลูกฟูก 1 ทาง)"
+  ],
+  "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)": [
+   "รื้อของเดิม (รายการนี้)"
+  ],
+  "➕ งานเสริม · หมายเหตุ": [
+   "รุ่น/ความหนา (ระบุในใบ · ราคาตามวัสดุ รอเรต)",
+   "โครง",
+   "งานเสริม/วิศวกรรม",
+   "ฉนวนกันความร้อนและกันเสียง หนา 3\" +600/ตร.ม.",
+   "ฝ้าฉาบเรียบ",
+   "ฝ้าเฉียงตามแนวหลังคา",
+   "ความหนา ISOWALL",
+   "สมาร์ทบอร์ด หนา",
+   "ขนาดราง (กว้าง)",
+   "หรือกรอก กว้าง (ซม.)",
+   "สูงราง (ซม.)"
+  ]
+ },
+ "4": {
+  "📦 รายละเอียดตู้": [
+   "สินค้า ℹ️ ขนาดที่กรอก = ต่อบาน · บานที่ 2-3 +5",
+   "สีฝาตู้ ⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน",
+   "รหัสสี (เฉพาะสีพิเศษ/อบ)",
+   "สินค้า",
+   "ประเภทตู้",
+   "จำนวนบานหน้าตู้ ℹ️ ยิ่งหลายบาน บานยิ่งเล็ก ราค",
+   "ชนิดชั้น ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง",
+   "สีอลู (ช่องสีด้านบน) กระทบ เฉพาะโครงตู้ ไม่ใช่",
+   "ลึก(ม.) autoจำนวนชั้น auto",
+   "ผนังตู้ (ติ๊กด้านที่ต้องการ) — ด้านชนผนังปูน ไ"
+  ],
+  "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)": [
+   "รื้อของเดิม (รายการนี้)"
+  ],
+  "➕ งานเสริม · หมายเหตุ": [
+   "งานเสริม/วิศวกรรม"
+  ]
+ },
+ "7": {
+  "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)": [
+   "รื้อของเดิม (รายการนี้)"
+  ],
+  "➕ งานเสริม · หมายเหตุ": [
+   "งานเสริม/วิศวกรรม"
+  ]
+ }
+};
+var DATA={
+ "1": {
+  "name": "G1 บาน · กระจก",
+  "cats": [
+   "🚪 ติดตาย · ช่องแสง",
+   "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "2": {
+  "name": "G2 รั้ว · ระแนง · ราวกันตก",
+  "cats": [
+   "🚪 ติดตาย · ช่องแสง",
+   "🔧 ล็อค · มุ้ง · คาดตาราง",
+   "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "3": {
+  "name": "G3 หลังคา · ฝ้า-ผนัง",
+  "cats": [
+   "🏠 วัสดุมุง · โครง",
+   "🔄 หลังคาเลื่อน",
+   "🌧️ ปลายหลังคา · รางน้ำ",
+   "🔩 ของเสริมหลังคา",
+   "➕ หลังคาผสม (วัสดุที่ 2)",
+   "📝 งานพิเศษ · รื้อของเดิม",
+   "🏗️ โครงสร้าง · แผ่นทึบ · ราง",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "4": {
+  "name": "G4 ตู้อลู · ฝาตู้",
+  "cats": [
+   "📦 รายละเอียดตู้",
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ },
+ "5": {
+  "name": "G5 มุ้ง",
+  "cats": []
+ },
+ "7": {
+  "name": "G7 ม่านซิป",
+  "cats": [
+   "🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)",
+   "➕ งานเสริม · หมายเหตุ"
+  ]
+ }
+};
+var ORD={'1':'รหัสกลุ่ม','2':'','3':'','4':'','5':'','7':''};
+var cur='2';
+var tabs=document.getElementById('tabs');
+Object.keys(DATA).forEach(function(g){
+ var b=document.createElement('button'); b.className='tab'+(g===cur?' on':''); b.textContent='G'+g; b.onclick=function(){cur=g;render();};
+ tabs.appendChild(b);
+});
+function optsOf(cat){ return (OPTS[cur]&&OPTS[cur][cat])||[]; }
+function render(){
+ [].forEach.call(tabs.children,function(b){b.classList.toggle('on',b.textContent==='G'+cur);});
+ document.getElementById('ghead').textContent=DATA[cur].name;
+ var list=document.getElementById('list'); var cats=DATA[cur].cats;
+ document.getElementById('gnote').textContent=cats.length?(cats.length+' หมวด · ลากปรับลำดับ · กดกางดูของข้างใน'):'';
+ if(!cats.length){ list.innerHTML='<div class="empty">กลุ่มนี้ไม่มีหมวดให้จัดลำดับ (ฟอร์มเฉพาะ)</div>'; out(); return; }
+ list.innerHTML='';
+ cats.forEach(function(c,i){
+  var os=optsOf(c);
+  var r=document.createElement('div'); r.className='row'; r.dataset.i=i;
+  var insideHtml=os.length? '<div class="ititle">ของข้างใน ('+os.length+'):</div>'+os.map(function(o){return '<div class="opt"><span class="dot"></span>'+o+'</div>';}).join('') : '<div class="ititle">— ไม่พบออปชั่น (อาจขึ้นกับชนิดสินค้า) —</div>';
+  r.innerHTML='<div class="rtop" draggable="true">'+
+    '<span class="grip">⠿</span><span class="num">'+(i+1)+'</span><span class="nm">'+c+'</span>'+
+    '<span class="cnt">'+(os.length||'·')+' ออปชั่น</span>'+
+    '<span class="exp">กางดู ▾</span>'+
+    '<span class="ar"><button data-up>▲</button><button data-dn>▼</button></span></div>'+
+    '<div class="inside">'+insideHtml+'</div>';
+  var top=r.querySelector('.rtop'), inside=r.querySelector('.inside');
+  r.querySelector('.exp').onclick=function(e){e.stopPropagation();inside.classList.toggle('show');this.textContent=inside.classList.contains('show')?'พับ ▴':'กางดู ▾';};
+  r.querySelector('[data-up]').onclick=function(e){e.stopPropagation();mv(i,i-1);};
+  r.querySelector('[data-dn]').onclick=function(e){e.stopPropagation();mv(i,i+1);};
+  top.addEventListener('dragstart',function(){r.classList.add('drag');window._di=i;});
+  top.addEventListener('dragend',function(){r.classList.remove('drag');[].forEach.call(list.children,function(x){x.classList.remove('over');});});
+  top.addEventListener('dragover',function(e){e.preventDefault();r.classList.add('over');});
+  top.addEventListener('dragleave',function(){r.classList.remove('over');});
+  top.addEventListener('drop',function(e){e.preventDefault();mv(window._di,i);});
+  list.appendChild(r);
+ });
+ out();
+}
+function allExp(on){ [].forEach.call(document.querySelectorAll('#list .inside'),function(el){el.classList.toggle('show',on);}); [].forEach.call(document.querySelectorAll('#list .exp'),function(el){el.textContent=on?'พับ ▴':'กางดู ▾';}); }
+function mv(from,to){ var c=DATA[cur].cats; if(to<0||to>=c.length||from===to)return; var x=c.splice(from,1)[0]; c.splice(to,0,x); render(); }
+function out(){
+ var o='GROUP_ORDER = {\n';
+ Object.keys(DATA).forEach(function(g){
+  if(!DATA[g].cats.length){o+="  '"+g+"': [],  // มุ้ง — ไม่จัด\n";return;}
+  o+="  '"+g+"': ["+DATA[g].cats.map(function(c){return "'"+c.replace(/^[^ ]+ /,'')+"'";}).join(', ')+"],\n";
+ });
+ o+='}';
+ document.getElementById('out').textContent=o;
+}
+render();
+</script>
+</body></html>
