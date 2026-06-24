@@ -1526,6 +1526,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     const _cabSCL3 = (optSel&&optSel.cabStructColorL3!==undefined) ? parseInt(optSel.cabStructColorL3) : -1;
     // สีหน้าบาน (FT colorPlus) — L1=ฟรี / L2 real=บวก / L2 opt=ไม่บวก+OPTION
     const _cabFront = parseInt(optSel&&optSel.cabFrontColor)||0; // 0=ขาว/ดำ(ฟรี) 1=พิเศษ
+    // L3 เทียบสีหน้าบาน (ออปชั่น ไม่บวกยอด · binary · baseline = L2 ①) — -1=ไม่เทียบ
+    const _cabFCL3 = (optSel&&optSel.cabFrontColorL3!==undefined) ? parseInt(optSel.cabFrontColorL3) : -1;
     const _frontIsSpecial = _cabFront > 0;
     const _frontRealAdd = (!_cabCoFollow && _cabCoMode==='real' && _frontIsSpecial) ? ftR(aPerDoor, FT_COLOR_C) : 0; // บวกยอดเมื่อ L2 real เท่านั้น
     const colorPlus = _frontRealAdd; // พฤติกรรม L1 (follow=true) → 0 เหมือนเดิม
@@ -1578,6 +1580,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
         const _aAluEst=aFloor+aShelfAlu; // พื้น+ชั้น (ผนังอลูอ่านจาก cWall/rate แทน)
         const _structDiff=Math.round(_rDiff*_aAluEst);
         if(_structDiff!==0) _cabOptLines.push('OPTION : เปลี่ยนสีโครง จาก'+(COLORS[ci]?(COLORS[ci].quoteName||COLORS[ci].n).replace(/[★⚠🔖🔒]/g,'').trim():'สีหัวใบ')+' เป็น'+(COLORS[_cabSCI]?(COLORS[_cabSCI].quoteName||COLORS[_cabSCI].n).replace(/[★⚠🔖🔒]/g,'').trim():'สีใหม่')+' ราคา'+(_structDiff>=0?'เพิ่ม':'ลดลง')+' '+fmt(Math.abs(_structDiff))+' บาท');
+      }
+      // L3: เทียบสีหน้าบานจาก baseline L2 ① → OPTION signed diff (ไม่บวกยอด เสมอ · binary ขาว/ดำ↔พิเศษ)
+      if(_cabFCL3>=0 && _cabFCL3!==_cabFront){
+        const _frontRate=ftR(aPerDoor, FT_COLOR_C)*nDoors;
+        const _l3FDiff=Math.round((_cabFCL3>0?_frontRate:0)-(_cabFront>0?_frontRate:0));
+        const _fLbl=function(v){return v>0?'สีพิเศษ':'ขาว/ดำ (ฟรี)';};
+        if(_l3FDiff!==0) _cabOptLines.push('OPTION : เทียบสีหน้าบาน '+_fLbl(_cabFront)+' → '+_fLbl(_cabFCL3)+' ราคา'+(_l3FDiff>=0?'เพิ่ม':'ลดลง')+' '+fmt(Math.abs(_l3FDiff))+' บาท');
       }
       // L3: เทียบสีโครงจาก baseline L2 ② → OPTION signed diff (ไม่บวกยอด เสมอ)
       if(_cabSCL3>=0 && _cabSCL3!==_ciStruct){
@@ -5799,8 +5808,17 @@ function buildItemOpts(d){
           +'<span class="o-cabstructcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง <input type="text" class="o-cabstructcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
         +'</div>'// end cab-co-colgrid
-        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีโครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
+        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีหน้าบาน/โครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
         +'<div style="padding-top:5px;">'
+        // L3 ① เทียบสีหน้าบาน (FT · binary ขาว/ดำ↔พิเศษ · ครบเหมือน L2 ① · ดราฟ 24มิ.ย.)
+        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:2px 0 3px;">L3 ① เทียบสีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT)</span></div>'
+        +'<div class="chip-group chip-sm">'
+          +'<button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabfrontcolorL3\');calcQuote();">— ไม่เทียบ —</button>'
+          +'<button type="button" class="chip" data-val="0" onclick="chSetChip(this,\'o-cabfrontcolorL3\');calcQuote();">ขาว/ดำ (ฟรี)</button>'
+          +'<button type="button" class="chip" data-val="1" onclick="chSetChip(this,\'o-cabfrontcolorL3\');calcQuote();">สีพิเศษ</button>'
+        +'</div>'
+        +'<select class="o-cabfrontcolorL3" style="display:none;" onchange="calcQuote();"><option value="-1" selected>— ไม่เทียบ —</option><option value="0">ขาว/ดำ (ฟรี)</option><option value="1">สีพิเศษ</option></select>'
+        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:8px 0 3px;">L3 ② เทียบสีโครง <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90)</span></div>'
         +'<div class="chip-group chip-sm"><button type="button" class="chip on" data-val="-1" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').parentElement.querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">— ไม่เทียบ —</button>'
         +'<button type="button" class="chip" data-val="2" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').parentElement.querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">ซาฮาร่า</button>'
         +'<button type="button" class="chip" data-val="4" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').parentElement.querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'none\';calcQuote();">Aztec gray</button>'
@@ -5809,7 +5827,7 @@ function buildItemOpts(d){
         +'<button type="button" class="chip" data-val="8" onclick="chSetChip(this,\'o-cabstructcolorL3\');var _cr=this.closest(\'div\').parentElement.querySelector(\'.o-cabstructcodeL3-row\');if(_cr)_cr.style.display=\'inline-flex\';calcQuote();">ลายไม้อบพิเศษ</button></div>'
         +'<span class="o-cabstructcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง (L3) <input type="text" class="o-cabstructcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
         +'<select class="o-cabstructcolorL3" style="display:none;" onchange="calcQuote();"><option value="-1" selected>— ไม่เทียบ —</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option></select>'
-        +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ L3 เทียบจาก baseline L2 ② → OPTION signed diff (ไม่บวกยอด)</div>'
+        +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ L3 เทียบจาก baseline L2 (① หน้าบาน · ② โครง) → OPTION signed diff (ไม่บวกยอด)</div>'
         +'</div></details>'
       +'</div>'// end cab-co-body
       +'<div style="font-size:11px;color:#1E40AF;background:#EFF6FF;border-radius:6px;padding:4px 8px;margin-top:6px;">สีกระทบ <b>โครงตู้ (rn90) + หน้าบาน (FT flat)</b> · ผนังกระจก/สมาร์ทบอร์ด → ไม่คิดค่าสี</div>'
@@ -6392,6 +6410,8 @@ function readItem(d){
     // สีโครงตู้ (ci override ต่อข้อ) — -1=ตามหัวใบ · else = COLORS index
     const _csc=d.querySelector('.o-cabstructcolor'); optSel.cabStructColor=_csc?parseInt(_csc.value):-1;
     const _cscode=d.querySelector('.o-cabstructcode'); optSel.cabStructCode=_cscode?(_cscode.value||'').trim():'';
+    // L3 เทียบสีหน้าบาน (ออปชั่น ไม่บวกยอด · binary 0=ขาว/ดำ 1=พิเศษ · -1=ไม่เทียบ)
+    const _cfc3=d.querySelector('.o-cabfrontcolorL3'); optSel.cabFrontColorL3=_cfc3?parseInt(_cfc3.value):-1;
     // L3 เทียบสีโครง (ออปชั่น ไม่บวกยอด)
     const _csc3=d.querySelector('.o-cabstructcolorL3'); optSel.cabStructColorL3=_csc3?parseInt(_csc3.value):-1;
     const _csc3code=d.querySelector('.o-cabstructcodeL3'); optSel.cabStructCodeL3=_csc3code?(_csc3code.value||'').trim():'';
