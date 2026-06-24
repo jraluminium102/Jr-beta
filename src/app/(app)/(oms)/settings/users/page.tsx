@@ -4,9 +4,10 @@ import { api } from "@/lib/api";
 import { thDate } from "@/lib/format";
 import { Spinner } from "@/components/ui/primitives";
 import type { Role } from "@/lib/database.types";
+import { ROLE_LABEL } from "@/lib/types";
 
 type U = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; role: Role; is_active: boolean; created_at: string };
-const ROLES: Role[] = ["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER"];
+const ROLES: Role[] = ["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER", "CHANG"];
 
 export default function UsersPage() {
   const qc = useQueryClient();
@@ -32,7 +33,7 @@ export default function UsersPage() {
               </div>
               <select value={u.role} onChange={(e) => mut.mutate({ id: u.id, patch: { role: e.target.value as Role } })} aria-label="บทบาท"
                 className="focusable glass-card rounded-xl px-3 py-2 text-sm text-white outline-none min-h-[40px] [&>option]:text-gray-800">
-                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r] ?? r}</option>)}
               </select>
               <button onClick={() => mut.mutate({ id: u.id, patch: { is_active: !u.is_active } })}
                 className={`focusable pressable rounded-xl px-3 py-2 text-[12px] font-medium min-h-[40px] border ${u.is_active ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/30" : "bg-rose-500/20 text-rose-100 border-rose-300/30"}`}>
