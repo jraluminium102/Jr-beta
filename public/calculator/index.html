@@ -4327,6 +4327,7 @@ function rnDoorSwitch(ch){
   if(_spCas) _spCas.style.display=_isCasement?'':'none';
   if(_spFold) _spFold.style.display=_isFolding?'':'none';
   if(_spSwing) _spSwing.style.display=_isSwing?'':'none';
+  var _panelsWrap=ch.querySelector('.o-rn-panels-wrap'); if(_panelsWrap) _panelsWrap.style.display=doortype?'':'none';
   if(!doortype) return; // ไม่ทำบาน → ไม่ยุ่ง frame
   var ck=rnCatKey(p), d=rnParse(p);
   if(d.frame==='ไม่โครง') return; // ไม่โครงอยู่แล้ว
@@ -4335,6 +4336,24 @@ function rnDoorSwitch(ch){
 }
 // rnSwingHandleToggle: โชว์/ซ่อน ช่องเลือกขนาดมือจับอร่าม
 function rnSwingHandleToggle(ch){ var sv=ch.querySelector('.o-rnswinghandle'); var wrap=ch.querySelector('.o-rnswinghandle-sz-wrap'); if(wrap) wrap.style.display=(sv&&sv.value==='lux')?'':'none'; }
+// D2 (24มิ.ย.): stepper จำนวนบาน/ติดตาย ใน block ทำเป็นบาน → sync กับ i-panels / i-doorfixed จริง (ราคาไม่เปลี่ยน)
+function rnPanelStep(el,dlt,field){
+  var ch=el.closest('.ch'); if(!ch)return;
+  var disp=ch.querySelector(field==='panels'?'.o-rn-panels-disp':'.o-rn-fixed-disp');
+  var real=ch.querySelector(field==='panels'?'.i-panels':'.i-doorfixed');
+  if(!disp||!real)return;
+  var pv=parseInt(ch.querySelector('.i-panels').value)||1;
+  if(dlt!==0){ var v=(parseInt(disp.value)||0)+dlt; if(field==='panels'){v=Math.max(1,v);} else {v=Math.max(0,Math.min(pv-1,v));} disp.value=v; }
+  else { var vv=parseInt(disp.value)||0; if(field==='panels'){vv=Math.max(1,vv);} else {vv=Math.max(0,Math.min(pv-1,vv));} disp.value=vv; }
+  real.value=disp.value;
+  // sync max ติดตาย
+  if(field==='panels'){
+    var fixDisp=ch.querySelector('.o-rn-fixed-disp'); var fixReal=ch.querySelector('.i-doorfixed');
+    if(fixDisp&&fixReal){ var mx=Math.max(0,(parseInt(disp.value)||1)-1); if((parseInt(fixDisp.value)||0)>mx){ fixDisp.value=mx; fixReal.value=mx; } }
+  }
+  real.dispatchEvent(new Event('input',{bubbles:true})); real.dispatchEvent(new Event('change',{bubbles:true}));
+  calcQuote();
+}
 // G2 มุ้งติดตาย (23มิ.ย.): โชว์/ซ่อน rnmosq-wrap ตาม o-rnmosq checkbox
 function rnMosqToggle(ch){ var cb=ch.querySelector('.o-rnmosq'); var wrap=ch.querySelector('.rnmosq-wrap'); if(wrap) wrap.style.display=(cb&&cb.checked)?'':'none'; }
 // G2 มุ้งติดตาย: โชว์/ซ่อน rnmosq-manual-sz ตาม o-rnmosqsz
@@ -5505,6 +5524,8 @@ function buildItemOpts(d){
     // G2-formux: "ทำเป็นบาน" = โหมดในระแนง (ชิปเด่น) · เลือกชนิดบาน → ค่าทำบาน(door base)+ค่าระแนงไม่โครง (logic L1538 เดิม · R3-2)
     //   เฟส3: restore doortype จาก d.dataset.rnDoorType ข้าม rebuild (auto-switch ไม่โครงต้องไม่ทำให้บานหลุด)
     var _curDoor=(d.dataset.rnDoorType)||'';
+    var _curRnPanels=(d.querySelector('.i-panels')||{}).value||'2';
+    var _curRnFixed=(d.querySelector('.i-doorfixed')||{}).value||'0';
     var _doorSelOpts=[['','ไม่ทำ'],['sliding_sms','บานเลื่อน SMS'],['sliding_euro','บานเลื่อน ยูโร'],['sliding_top','บานเลื่อนรางบน'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['swing','บานสวิง']];
     var _curRnRail=(d.querySelector('.o-rnrail')||{}).value||'standard';
     var _curRnLock=d.querySelector('.o-rnlock') ? (d.querySelector('.o-rnlock').checked) : true;
@@ -5529,6 +5550,28 @@ function buildItemOpts(d){
       // ปุ่มชนิดบาน (chip-group wrap แนวนอนเต็มแถว)
       +'<select class="o-doortype" style="display:none;">'+_doorSelOpts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===_curDoor?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'
       +(function(){var _chips=rfChips('o-doortype',[['','— ไม่ทำ —'],['sliding_sms','เลื่อน SMS'],['sliding_euro','เลื่อนยูโร'],['sliding_top','เลื่อนรางบน'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['swing','บานสวิง']],_curDoor);return _chips.replace('data-val="" onclick','data-val="" style="color:#9CA3AF;border-style:dashed;border-color:#D1D5DB;background:#F9FAFB;" onclick');})()
+      // D2 (24มิ.ย.): จำนวนบาน + ติดตาย — โชว์เมื่อเลือกชนิดบาน (UI ระบุในใบ · sync i-panels/i-doorfixed · ไม่กระทบราคา)
+      +'<div class="o-rn-panels-wrap" style="margin-top:10px;display:'+(_curDoor?'':'none')+';">'
+        +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:6px;">จำนวนบานในระแนง</div>'
+        +'<div style="display:flex;gap:12px;flex-wrap:wrap;">'
+          // บานรวม — sync กับ i-panels
+          +'<div><div style="font-size:11px;color:#6B7280;margin-bottom:3px;">บานรวม</div>'
+            +'<div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:8px;overflow:hidden;align-items:center;">'
+              +'<button type="button" onclick="rnPanelStep(this,-1,\'panels\')" style="width:32px;height:34px;border:0;background:#F3F4F6;font-size:15px;cursor:pointer;color:#92400e;">−</button>'
+              +'<input class="o-rn-panels-disp" type="number" step="1" min="1" value="'+_curRnPanels+'" style="width:40px;border:0;text-align:center;height:34px;font-size:13px;" oninput="rnPanelStep(this,0,\'panels\')">'
+              +'<button type="button" onclick="rnPanelStep(this,1,\'panels\')" style="width:32px;height:34px;border:0;background:#F3F4F6;font-size:15px;cursor:pointer;color:#92400e;">+</button>'
+            +'</div>'
+          +'</div>'
+          // ติดตาย — sync กับ i-doorfixed
+          +'<div><div style="font-size:11px;color:#6B7280;margin-bottom:3px;">ติดตาย (บาน) <span style="font-size:10px;color:#9CA3AF;">max = บาน−1</span></div>'
+            +'<div style="display:inline-flex;border:1.5px solid #D1D5DB;border-radius:8px;overflow:hidden;align-items:center;">'
+              +'<button type="button" onclick="rnPanelStep(this,-1,\'fixed\')" style="width:32px;height:34px;border:0;background:#F3F4F6;font-size:15px;cursor:pointer;color:#92400e;">−</button>'
+              +'<input class="o-rn-fixed-disp" type="number" step="1" min="0" value="'+_curRnFixed+'" style="width:40px;border:0;text-align:center;height:34px;font-size:13px;" oninput="rnPanelStep(this,0,\'fixed\')">'
+              +'<button type="button" onclick="rnPanelStep(this,1,\'fixed\')" style="width:32px;height:34px;border:0;background:#F3F4F6;font-size:15px;cursor:pointer;color:#92400e;">+</button>'
+            +'</div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
       // ออปชั่นราง (sliding_sms/euro เท่านั้น)
       +'<div class="o-rnrail-wrap" style="margin-top:8px;display:'+( _isSlidingLow ? '':'none')+';">'
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">ราง</div>'
@@ -5570,14 +5613,8 @@ function buildItemOpts(d){
         +rfChips('o-rnswinghandle',[['std','สแตนเลสมาตรฐาน (ฟรี)'],['lux','สแตนเลสอร่าม (+ตามขนาด)']],_curRnSwingHandle)
         +'<div class="o-rnswinghandle-sz-wrap" style="margin-top:6px;display:'+(_curRnSwingHandle==='lux'?'':'none')+';">'
           +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">ขนาดมือจับสแตนเลสอร่าม</div>'
-          +'<select class="o-rnswinghandlesz" style="width:100%;height:36px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 8px;font-size:13px;font-family:inherit;" onchange="calcQuote();">'
-            +'<option value="1500"'+(_curRnSwingHandleSz==='1500'?' selected':'')+'>30.5 ซม. (+1,500)</option>'
-            +'<option value="2000"'+(_curRnSwingHandleSz==='2000'?' selected':'')+'>45 ซม. (+2,000)</option>'
-            +'<option value="2000b">60 ซม. (+2,000)</option>'
-            +'<option value="2500"'+(_curRnSwingHandleSz==='2500'?' selected':'')+'>80 ซม. (+2,500)</option>'
-            +'<option value="3000"'+(_curRnSwingHandleSz==='3000'?' selected':'')+'>100 ซม. (+3,000)</option>'
-            +'<option value="3200"'+(_curRnSwingHandleSz==='3200'?' selected':'')+'>120 ซม. (+3,200)</option>'
-          +'</select>'
+          +'<select class="o-rnswinghandlesz" style="display:none;" onchange="calcQuote();"><option value="1500"'+(_curRnSwingHandleSz==='1500'?' selected':'')+'>30.5 ซม. (+1,500)</option><option value="2000"'+(_curRnSwingHandleSz==='2000'?' selected':'')+'>45 ซม. (+2,000)</option><option value="2000b"'+(_curRnSwingHandleSz==='2000b'?' selected':'')+'>60 ซม. (+2,000)</option><option value="2500"'+(_curRnSwingHandleSz==='2500'?' selected':'')+'>80 ซม. (+2,500)</option><option value="3000"'+(_curRnSwingHandleSz==='3000'?' selected':'')+'>100 ซม. (+3,000)</option><option value="3200"'+(_curRnSwingHandleSz==='3200'?' selected':'')+'>120 ซม. (+3,200)</option></select>'
+          +rfChips('o-rnswinghandlesz',[['1500','30.5ซม. +1,500'],['2000','45ซม. +2,000'],['2000b','60ซม. +2,000'],['2500','80ซม. +2,500'],['3000','100ซม. +3,000'],['3200','120ซม. +3,200']],_curRnSwingHandleSz)
         +'</div>'
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:8px 0 4px;">ชุดล็อค <span style="font-weight:400;color:#6B7280;font-size:11px;">(default = มีล็อก+กุญแจ)</span></div>'
         +'<select class="o-rnswinglock" style="display:none;" onchange="calcQuote();"><option value="no">ไม่มี</option><option value="lock">มีชุดล็อก</option><option value="key">มีล็อก + กุญแจ</option></select>'
@@ -5718,7 +5755,11 @@ function buildItemOpts(d){
       h+=gateRnChipsHTML(_gateRn0);
       h+='<label class="opt">สี/ผิว <select class="o-gfin" style="width:auto;height:32px;"><option value="สีอบขาว" selected>สีอบขาว (default)</option><option value="สีดำ">สีดำ</option><option value="">ไม่อบสี</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></label>';
       // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบประตู → OPTION line (signed diff rnp.fin × พื้นที่ × disc · ไม่บวกยอด · ไม่แตะ calcUnit)
-      h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบประตู</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-gatecoopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option><option value="สีอบขาว">สีอบขาว</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select></div></div>';
+      // B4 (24มิ.ย.): o-gatecoopt → ชิป
+      h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบประตู</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;"><div style="font-size:11px;color:#6B7280;margin-bottom:4px;">เปลี่ยนสีอบเป็น</div>'
+        +'<select class="o-gatecoopt" style="display:none;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option><option value="สีอบขาว">สีอบขาว</option><option value="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="อบสีพิเศษ">สีอบพิเศษ</option><option value="อบสีลายไม้">สีลายไม้อบพิเศษ</option></select>'
+        +rfChips('o-gatecoopt',[['','— ไม่เทียบ —'],['สีอบขาว','สีอบขาว'],['สีเทาซาฮาร่า','ซาฮาร่า'],['สีลายไม้สต๊อก','ลายไม้สต๊อก'],['อบสีพิเศษ','สีพิเศษ'],['อบสีลายไม้','ลายไม้พิเศษ']],'')
+      +'</div></div>';
       h+='<label class="opt">มอเตอร์(ตัว) <input type="number" class="o-gmotor" step="1" min="0" value="1" style="width:55px;height:30px"></label>';
       h+='<label class="opt" style="width:100%;">🔌 งานสายไฟมอเตอร์ <input type="text" class="o-motorwire" placeholder="รายละเอียด เช่น เดินสายไฟจากตู้ควบคุม" style="width:auto;min-width:190px;height:32px;" oninput="calcQuote();"> <input type="number" class="o-motorwireprice" min="0" step="100" value="0" placeholder="ราคา" style="width:90px;height:32px;" oninput="calcQuote();"> บาท <span style="font-size:11px;color:#666;">(กรอกราคาเอง)</span></label>';
       /* #9 (21มิ.ย.): ตัด "มีธรณี" (o-gatethresh) ออกจากประตูรั้ว — รั้วไม่ต้องมีธรณี */
@@ -5738,14 +5779,14 @@ function buildItemOpts(d){
     h+='<label class="opt">ทำเป็นบาน (เลือกรุ่น) <select class="o-bsdoor" style="width:auto;height:32px;max-width:240px;"><option value="">ไม่มี (ระแนงเปล่า)</option>'+doorOpts+'</select></label>';
     h+='<label class="opt">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-bsdoorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(R3-2: กรอก &gt;0 = ใช้แทนราคารุ่นที่เลือก)</span></label>';
     h+='<label class="opt">สีอบ ลูกฟูกเรียบ 2 ทาง <select class="o-bsfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="400">สีเทาซาฮาร่า +400/ตร.ม.</option><option value="400">สีดำซาฮาร่า +400/ตร.ม.</option><option value="950">Aztec gray +950/ตร.ม.</option><option value="1500">สีลายไม้สต๊อก +1,500/ตร.ม.</option><option value="1600">สีอบพิเศษ +1,600/ตร.ม.</option><option value="1900">Fuji +1,900/ตร.ม.</option><option value="2200">สีลายไม้อบพิเศษ +2,200/ตร.ม.</option></select></label>'+'<label class="opt">ค่าทำสีบาน (%) <input type="number" class="o-doorcolorpct" min="0" max="100" step="5" value="30" style="width:56px;height:32px;" oninput="calcQuote();"> % <span style="font-size:11px;color:#666;">(สีบานคิด % นี้ของเรตสีอลู · default 30)</span></label>';
-    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-bsfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option><option value="400" data-n="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="400" data-n="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="950" data-n="Aztec gray">Aztec gray</option><option value="1500" data-n="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="1600" data-n="สีอบพิเศษ">สีอบพิเศษ</option><option value="1900" data-n="Fuji">Fuji</option><option value="2200" data-n="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></div></div>'; // ④
+    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-bsfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option><option value="400" data-n="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="400" data-n="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="950" data-n="Aztec gray">Aztec gray</option><option value="1500" data-n="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="1600" data-n="สีอบพิเศษ">สีอบพิเศษ</option><option value="1900" data-n="Fuji">Fuji</option><option value="2200" data-n="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></div></div>'; // ④ (คง dropdown เพราะ value 400 ซ้ำกัน 2 สี → ชิปจะ selectedIndex ผิด)
   }
   if(p.bar_openclose){
     h+='<label class="opt" style="width:100%;">ทิศระแนง <select class="o-bocdir" style="display:none;"><option value="v">แนวตั้ง (default)</option><option value="h">แนวนอน</option></select>'+rfChips('o-bocdir',[['v','แนวตั้ง'],['h','แนวนอน']],'v',true)+'</label>';
     h+='<label class="opt"><input type="checkbox" class="o-bocmotor"> เอามอเตอร์ (ถ้าไม่ติ๊ก = เปิด-ปิดด้วยมือ)</label>';
     h+='<label class="opt" style="width:100%;">🔌 งานสายไฟมอเตอร์ <input type="text" class="o-motorwire" placeholder="รายละเอียด เช่น เดินสายไฟจากตู้ควบคุม" style="width:auto;min-width:190px;height:32px;" oninput="calcQuote();"> <input type="number" class="o-motorwireprice" min="0" step="100" value="0" placeholder="ราคา" style="width:90px;height:32px;" oninput="calcQuote();"> บาท <span style="font-size:11px;color:#666;">(กรอกราคาเอง)</span></label>';
     h+='<label class="opt">สีอบ <select class="o-bocfinish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว (default)</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option><option value="500">สีเทาซาฮาร่า +500/ตร.ม.</option><option value="500">สีดำซาฮาร่า +500/ตร.ม.</option><option value="1050">Aztec gray +1,050/ตร.ม.</option><option value="1600">สีลายไม้สต๊อก +1,600/ตร.ม.</option><option value="3000">สีอบพิเศษ +3,000/ตร.ม.</option><option value="3650">Fuji +3,650/ตร.ม.</option><option value="4300">สีลายไม้อบพิเศษ +4,300/ตร.ม.</option></select></label>'+'<label class="opt">ค่าทำสีบาน (%) <input type="number" class="o-doorcolorpct" min="0" max="100" step="5" value="30" style="width:56px;height:32px;" oninput="calcQuote();"> % <span style="font-size:11px;color:#666;">(สีบานคิด % นี้ของเรตสีอลู · default 30)</span></label>';
-    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-bocfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option><option value="500" data-n="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="500" data-n="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="1050" data-n="Aztec gray">Aztec gray</option><option value="1600" data-n="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="3000" data-n="สีอบพิเศษ">สีอบพิเศษ</option><option value="3650" data-n="Fuji">Fuji</option><option value="4300" data-n="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></div></div>'; // ④
+    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-bocfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option><option value="500" data-n="สีเทาซาฮาร่า">สีเทาซาฮาร่า</option><option value="500" data-n="สีดำซาฮาร่า">สีดำซาฮาร่า</option><option value="1050" data-n="Aztec gray">Aztec gray</option><option value="1600" data-n="สีลายไม้สต๊อก">สีลายไม้สต๊อก</option><option value="3000" data-n="สีอบพิเศษ">สีอบพิเศษ</option><option value="3650" data-n="Fuji">Fuji</option><option value="4300" data-n="สีลายไม้อบพิเศษ">สีลายไม้อบพิเศษ</option></select></div></div>'; // ④ (คง dropdown เพราะ value 500 ซ้ำกัน 2 สี)
   }
   if(p.grid){ h+='<label class="opt">เส้นแนวนอน <input type="number" class="o-nh" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">เส้นแนวตั้ง <input type="number" class="o-nv" step="1" min="0" value="0" style="width:55px;height:30px"></label>'+'<label class="opt">สีเส้น <select class="o-gridcolor" style="width:auto;height:32px;"><option value="200">อบขาว/ดำ/ซาฮาร่า (200/ม.)</option><option value="250">ลายไม้สต็อก (250/ม.)</option><option value="300">อบสีพิเศษ/Fuji (300/ม.)</option><option value="350">ลายไม้อบพิเศษ (350/ม.)</option></select></label>'+'<label class="opt">เส้นโค้ง (เส้น·3,000) <input type="number" class="o-nc" step="1" min="0" value="0" style="width:55px;height:30px"></label>'; }
   if(p.ceiling && p.crates){ h+='<label class="opt">สี <select class="o-ckolor" style="width:auto;height:32px;">'+Object.keys(p.crates).map(function(k){return '<option value="'+k+'">'+k+' ('+fmt(p.crates[k])+'/ตร.ม.)</option>';}).join('')+'</select></label>'; } // ฝ้าระแนงอลู ไม่มี crates → ไม่โชว์สี (v1 สีมาตรฐาน)
@@ -5765,7 +5806,12 @@ function buildItemOpts(d){
   }
   if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option><option value="0" data-n="ไม่อบสี">ไม่อบสี</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>';
     // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบ → บรรทัด OPTION ในใบ (ไม่บวกยอด · ไม่แตะ calcUnit) · โมเดล G2 ระแนง: finish×พื้นที่
-    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span><div style="margin-top:6px;">เปลี่ยนสีอบเป็น <select class="o-rnfinopt" style="width:auto;height:32px;" onchange="calcQuote();"><option value="" data-n="">— ไม่เทียบ —</option><option value="0" data-n="สีอบขาว">สีอบขาว</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' (+'+fmt(p.fin[k])+'/ตร.ม.)</option>';}).join('')+'</select></div></div>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
+    // B1 (24มิ.ย.): o-rnfinopt → ชิป (hidden select backing + rfChips dynamic จาก p.fin)
+    var _rnfinOpts=[['','— ไม่เทียบ —'],['0','สีอบขาว']].concat(Object.keys(p.fin).map(function(k){return [String(p.fin[k]),k+' (+'+fmt(p.fin[k])+'/ตร.ม.)'];}));
+    h+='<div class="opt" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;"><b style="color:#1E40AF;font-size:12.5px;">🎨 ออปชั่นเทียบราคาสีอบ</b> <span style="font-size:11px;color:#6B7280;">(โชว์ช่อง OPTION ในใบ · ไม่บวกยอด)</span><div style="margin-top:6px;"><div style="font-size:11px;color:#6B7280;margin-bottom:4px;">เปลี่ยนสีอบเป็น</div>'
+      +'<select class="o-rnfinopt" style="display:none;" onchange="calcQuote();">'+_rnfinOpts.map(function(o){return '<option value="'+o[0]+'" data-n="'+(o[0]===''?'':o[1].replace(/\s*\(.*\)$/,''))+'">'+o[1]+'</option>';}).join('')+'</select>'
+      +rfChips('o-rnfinopt',_rnfinOpts,'')
+    +'</div></div>'; } // มติพี่นัท 2026-06-10: default = สีอบขาว (เหมือนทุกสินค้า) · ซาฮาร่าเลือกเองได้
   if(p.future_tech){
     // G4 ฝาตู้ 3-box layout (23มิ.ย.)
     h+='<div class="g4-prebox">';
