@@ -6858,7 +6858,7 @@ function qBdGet(it, itemId, total){
 function qBdHTML(it, itemId, total){
   if(!itemId || !window.qSplit) return '';
   var lines = qBdGet(it, itemId, total); if(!lines.length) return '';
-  if(lines.length<=1 && !window.qEdit) return ''; // #4 (22มิ.ย.): แตกราคาบรรทัดเดียว = ซ้ำยอดรวม → ซ่อนกล่อง (โหมดแก้ยังโชว์ไว้ปรับได้)
+  if(lines.length===0 && !window.qEdit) return ''; // #4→#6 (25มิ.ย.): 0 บรรทัด = ซ่อน · 1 บรรทัดขึ้นโชว์ได้ (G3 L1 หลังคาอย่างเดียว)
   var _ed = window.qEdit;
   var h = '<div class="q-bd" style="margin:6px 0 2px 8px;border:1px solid #ecd4d8;border-radius:7px;overflow:hidden;max-width:340px;">'+
           '<div style="background:#fdf4f5;font-size:11px;font-weight:700;color:#B3151D;padding:3px 9px;">แยกราคา</div>';
