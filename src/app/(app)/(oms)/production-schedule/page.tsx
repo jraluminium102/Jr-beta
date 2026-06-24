@@ -74,20 +74,24 @@ function deadlineInfo(must: string | null, done: boolean): { tone: string; text:
 }
 const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
-// สีประจำวันแบบไทย — bar=แถบ/จุด · band=แถบหัวข้อ(เข้มพอ ตัวขาวอ่านชัด)
+// สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
+const IOS = {
+  page: "#f2f2f7", card: "#ffffff", inset: "#f4f4f7",
+  ink: "#1c1c1e", ink2: "#636366", ink3: "#a1a1a8", line: "#e5e5ea",
+  blue: "#007aff", green: "#34c759", red: "#ff3b30", orange: "#ff9500",
+};
+// สีประจำวันแบบไทย — dot=จุดสด · deep=ตัวอักษรบนพื้นขาว
 const DAY_COLOR = [
-  { bar: "#f87171", band: "#a32630", dot: "#f87171" }, // อาทิตย์ แดง
-  { bar: "#fbbf24", band: "#9a6a06", dot: "#fbbf24" }, // จันทร์ เหลือง
-  { bar: "#f472b6", band: "#a83472", dot: "#f472b6" }, // อังคาร ชมพู
-  { bar: "#34d399", band: "#1a7d4f", dot: "#34d399" }, // พุธ เขียว
-  { bar: "#fb923c", band: "#a85a1a", dot: "#fb923c" }, // พฤหัสบดี ส้ม
-  { bar: "#38bdf8", band: "#1d6b9c", dot: "#38bdf8" }, // ศุกร์ ฟ้า
-  { bar: "#c084fc", band: "#6d3ba3", dot: "#c084fc" }, // เสาร์ ม่วง
+  { dot: "#ff453a", deep: "#c0392b" }, // อาทิตย์ แดง
+  { dot: "#ffcc00", deep: "#b7791f" }, // จันทร์ เหลือง
+  { dot: "#ff2d92", deep: "#be3d8a" }, // อังคาร ชมพู
+  { dot: "#34c759", deep: "#1a7d4f" }, // พุธ เขียว
+  { dot: "#ff9500", deep: "#c2410c" }, // พฤหัสบดี ส้ม
+  { dot: "#0a84ff", deep: "#0369a1" }, // ศุกร์ ฟ้า
+  { dot: "#bf5af2", deep: "#7e3ba3" }, // เสาร์ ม่วง
 ];
 const dayColorOf = (dateKey: string) =>
   (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
-// พื้นการ์ด/หน้า — กรมท่าทึบ (กันพื้นแดงของแอปทะลุ)
-const SURFACE = { page: "#0f1828", card: "#1b2536", set: "#222e44" };
 
 export default function ProductionSchedulePage() {
   const { data, isLoading, refetch } = useQuery({
@@ -207,66 +211,53 @@ export default function ProductionSchedulePage() {
     finally { setSavingId((s) => (s === r.id ? null : s)); }
   };
 
-  const dateCls = "glass-card rounded-lg px-2 py-1.5 text-[13px] text-white outline-none min-h-[40px] disabled:opacity-50";
-  const txtCls = "glass-card rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none placeholder-white/35 min-h-[40px] disabled:opacity-50";
+  const dateCls = "rounded-lg px-2 py-1.5 text-[13px] outline-none min-h-[40px] border border-[#e5e5ea] bg-white text-[#1c1c1e] disabled:opacity-50";
+  const txtCls = "rounded-lg px-2.5 py-1.5 text-[13px] outline-none min-h-[40px] border border-[#e5e5ea] bg-white text-[#1c1c1e] placeholder-[#a1a1a8] disabled:opacity-50";
 
   // datalist id
   const DATALIST_ID = "producers-list";
 
   return (
-    <div className="p-4 sm:p-6 fade-in rounded-2xl" style={{ background: SURFACE.page, minHeight: "calc(100vh - 24px)" }}>
+    <div className="p-4 sm:p-6 fade-in rounded-2xl" style={{ background: IOS.page, minHeight: "calc(100vh - 24px)", color: IOS.ink }}>
       {/* ── หัว: title + filter ช่าง + ปุ่มเพิ่ม ── */}
       <div className="flex flex-wrap items-center gap-3 mb-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 mr-auto"><CalendarDays size={22} /> ตารางผลิต</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2 mr-auto" style={{ color: IOS.ink, letterSpacing: "-.01em" }}><CalendarDays size={22} /> ตารางผลิต</h1>
 
-        {/* สลับโหมด ช่าง/ออฟฟิศ — เฉพาะคนที่แก้ได้ */}
+        {/* สลับโหมด ช่าง/ออฟฟิศ — segmented control แบบ iOS */}
         {canWrite && (
-          <div className="flex gap-1 glass-card rounded-xl p-1">
+          <div className="flex gap-0.5 rounded-[10px] p-0.5" style={{ background: "#e9e9ee" }}>
             {([["chang", "ช่าง"], ["office", "ออฟฟิศ"]] as const).map(([m, l]) => (
               <button key={m} onClick={() => setMode(m)}
-                className={`focusable pressable px-3 py-1.5 rounded-lg text-[13px] font-semibold min-h-[36px] ${mode === m ? "bg-white text-[#1F4E78]" : "text-white/70"}`}>{l}</button>
+                className="focusable px-4 py-1.5 rounded-lg text-[13px] font-semibold min-h-[34px] transition"
+                style={mode === m ? { background: "#fff", color: IOS.ink, boxShadow: "0 1px 3px rgba(0,0,0,.12)" } : { color: IOS.ink2 }}>{l}</button>
             ))}
           </div>
         )}
 
         {/* filter ช่าง */}
-        <div className="flex items-center gap-1.5">
-          <label htmlFor="producer-filter" className="text-[12px] shrink-0" style={{ color: "var(--t-low)" }}>ช่าง:</label>
-          <select
-            id="producer-filter"
-            value={producerFilter}
-            onChange={(e) => setProducerFilter(e.target.value)}
-            className="glass-card rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none min-h-[40px] appearance-none focus:ring-2 focus:ring-white/30"
-            aria-label="กรองตามช่างผลิต"
-          >
-            <option value="">ทั้งหมด</option>
-            {producerList.map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
-          {producerFilter && (
-            <button
-              onClick={() => setProducerFilter("")}
-              className="focusable pressable text-[12px] text-white/60 hover:text-white min-h-[40px] px-1.5"
-              aria-label="ล้างตัวกรองช่าง"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+        <select
+          value={producerFilter}
+          onChange={(e) => setProducerFilter(e.target.value)}
+          className="rounded-[10px] px-3 py-1.5 text-[13px] outline-none min-h-[34px] appearance-none border"
+          style={{ background: "#fff", color: IOS.ink, borderColor: IOS.line }}
+          aria-label="กรองตามช่างผลิต"
+        >
+          <option value="">ช่างทั้งหมด</option>
+          {producerList.map((name) => (<option key={name} value={name}>{name}</option>))}
+        </select>
 
         {canWrite && (
-          <button onClick={() => setAddOpen(true)} className="focusable pressable inline-flex items-center gap-1.5 bg-white/90 text-[#1F4E78] rounded-xl px-3.5 py-2 text-sm font-semibold min-h-[40px]">
-            <Plus size={16} /> เพิ่มงานผลิต
+          <button onClick={() => setAddOpen(true)} className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] text-white" style={{ background: IOS.blue }}>
+            <Plus size={16} /> เพิ่มงาน
           </button>
         )}
       </div>
-      <p className="text-sm mb-2.5" style={{ color: "var(--t-low)" }}>ตารางงานสำหรับช่าง · เรียงตามวันผลิต · สีหัวข้อ = สีประจำวัน</p>
+      <p className="text-[13px] mb-3" style={{ color: IOS.ink2 }}>ตารางงานสำหรับช่าง · แตะปุ่มเพื่ออัปเดตงาน · จุดสี = สีประจำวัน</p>
 
       {/* คีย์สีประจำวันไทย */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 text-[11px]">
         {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((d, i) => (
-          <span key={i} className="inline-flex items-center gap-1.5 font-semibold" style={{ color: DAY_COLOR[i].bar }}>
+          <span key={i} className="inline-flex items-center gap-1.5 font-medium" style={{ color: DAY_COLOR[i].deep }}>
             <span className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLOR[i].dot }} />{d}
           </span>
         ))}
@@ -289,54 +280,47 @@ export default function ProductionSchedulePage() {
               const isToday = dateKey === today();
               return (
               <div key={dateKey}>
-                {/* หัวข้อวัน — แถบสีประจำวันไทย ตัวขาวอ่านชัด */}
-                <div className="flex items-center gap-2.5 mb-2.5 rounded-xl px-3.5 py-2.5 shadow-md"
-                  style={{ background: dc ? dc.band : "#334155" }}>
-                  <span className="text-[16px] font-extrabold text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,.3)" }}>{thHead(items[0].produce_date)}</span>
-                  {isToday && <span className="text-[11px] bg-white/90 text-slate-900 rounded-md px-2 py-0.5 font-bold">วันนี้</span>}
-                  <span className="ml-auto text-[12px] tnum px-2 py-0.5 rounded-lg bg-black/30 text-white font-bold">{items.length} งาน</span>
+                {/* หัวข้อวัน — iOS section header (จุดสีวัน + วันที่) */}
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  {dc && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
+                  <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(items[0].produce_date)}</span>
+                  {isToday && <span className="text-[10px] rounded-full px-2 py-0.5 font-bold text-white" style={{ background: IOS.green }}>วันนี้</span>}
+                  <span className="ml-auto text-[12px] tnum font-medium" style={{ color: IOS.ink3 }}>{items.length} งาน</span>
                 </div>
                 <div className="space-y-2.5">
                   {items.map((r) => (
-                    <div key={r.id} className="rounded-2xl p-3.5 space-y-3 border-l-[6px] shadow-lg"
-                      style={{ background: SURFACE.card, borderLeftColor: dc ? dc.bar : "#475569" }}>
+                    <div key={r.id} className="rounded-[18px] p-4 space-y-3"
+                      style={{ background: IOS.card, boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04)" }}>
                       <div className={officeMode ? "grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center" : ""}>
                       {/* งาน/ลูกค้า */}
                       <div className="col-span-2 lg:col-span-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-white font-semibold text-[15px] truncate">{r.title}</span>
+                          <span className="font-bold text-[16px] truncate" style={{ color: IOS.ink, letterSpacing: "-.01em" }}>{r.title}</span>
                           {r.kind === "job" ? (
-                            <span className="text-[10px] tnum bg-sky-500/20 text-sky-200 rounded px-1.5 py-0.5">{r.job_code}</span>
+                            <span className="text-[10px] tnum rounded-md px-1.5 py-0.5 font-semibold" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>
                           ) : (
-                            <span className="text-[10px] bg-amber-500/20 text-amber-200 rounded px-1.5 py-0.5">จดเอง</span>
+                            <span className="text-[10px] rounded-md px-1.5 py-0.5 font-semibold" style={{ background: "#fff3e0", color: IOS.orange }}>จดเอง</span>
                           )}
-                          {/* ลิงก์พิมพ์ใบงาน — เฉพาะโหมดออฟฟิศ */}
                           {r.kind === "job" && officeMode && (
-                            <a
-                              href={`/production/${r.id}/print`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
+                            <a href={`/production/${r.id}/print`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                               aria-label={`พิมพ์ใบงาน ${r.job_code ?? r.title}`}
-                              className="focusable inline-flex items-center gap-1 text-[11px] bg-white/10 hover:bg-white/20 text-white/75 hover:text-white rounded-lg px-2 py-1 min-h-[28px] transition-colors"
-                            >
+                              className="focusable inline-flex items-center gap-1 text-[11px] rounded-lg px-2 py-1 min-h-[28px]" style={{ background: IOS.inset, color: IOS.ink2 }}>
                               <Printer size={12} /> ใบงาน
                             </a>
                           )}
                         </div>
                         {(r.customer_area || r.subtitle) && (
-                          <div className="text-[12px] truncate" style={{ color: "var(--t-mid)" }}>📍 {r.customer_area || r.subtitle}</div>
+                          <div className="text-[12.5px] truncate mt-0.5" style={{ color: IOS.ink2 }}>📍 {r.customer_area || r.subtitle}</div>
                         )}
-                        {/* วันติดตั้ง — โชว์ในโหมดช่างด้วย (read-only) */}
                         {!officeMode && r.install_date && (
-                          <div className="text-[11px] tnum text-white/55">🔧 ติดตั้ง {thShort(r.install_date)}</div>
+                          <div className="text-[12px] tnum mt-0.5" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</div>
                         )}
                       </div>
 
                       {officeMode && (<>
                       {/* วันผลิต */}
                       <label className="block">
-                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>วันผลิต</span>
+                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: IOS.ink2 }}>วันผลิต</span>
                         <DateField
                           disabled={!canWrite || savingId === r.id}
                           value={v(r, "produce_date")}
@@ -355,7 +339,7 @@ export default function ProductionSchedulePage() {
 
                       {/* ช่างผลิต — input + datalist */}
                       <label className="block">
-                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: "var(--t-low)" }}>ช่างผลิต</span>
+                        <span className="lg:hidden block text-[11px] mb-0.5" style={{ color: IOS.ink2 }}>ช่างผลิต</span>
                         <input
                           type="text"
                           list={DATALIST_ID}
@@ -372,8 +356,8 @@ export default function ProductionSchedulePage() {
 
                       {/* สถานะ + วันติดตั้ง */}
                       <div className="flex flex-col gap-1">
-                        <Chip>{r.kind === "job" ? PROD_STATUS[r.status as ProdStatus] : "งานจดเอง"}</Chip>
-                        {r.install_date && <span className="text-[11px] tnum" style={{ color: "var(--t-low)" }}>ติดตั้ง {thShort(r.install_date)}</span>}
+                        <span className="text-[11px] font-semibold rounded-full px-2.5 py-1 self-start" style={{ background: IOS.inset, color: IOS.ink2 }}>{r.kind === "job" ? PROD_STATUS[r.status as ProdStatus] : "งานจดเอง"}</span>
+                        {r.install_date && <span className="text-[11px] tnum" style={{ color: IOS.ink3 }}>ติดตั้ง {thShort(r.install_date)}</span>}
                       </div>
 
                       {/* actions */}
@@ -397,7 +381,7 @@ export default function ProductionSchedulePage() {
                           </button>
                         )}
                         {r.kind === "job" && (!canWrite || !JOB_NEXT[r.status]) && (
-                          <span className="text-[11px]" style={{ color: "var(--t-low)" }}>
+                          <span className="text-[11px]" style={{ color: IOS.ink3 }}>
                             {r.status === "READY" ? "พร้อมติดตั้งแล้ว" : "จัดการที่หน้า \"ผลิต\""}
                           </span>
                         )}
@@ -408,7 +392,7 @@ export default function ProductionSchedulePage() {
                         <ChangChecklist sets={r.sets} savingSetIds={savingSetIds} mark={markSet} canMark={canWrite} />
                       )}
                       {r.kind === "job" && r.job_id && (!r.sets || r.sets.length === 0) && (
-                        <p className="text-[12px] text-amber-200/90 bg-amber-500/10 border border-amber-300/20 rounded-xl px-3 py-2">⚠️ ยังไม่มีชุดงาน — ออฟฟิศลงรายละเอียดที่หน้า “ผลิต” (คลิกงานนี้) ก่อน ช่างถึงจะเห็นเช็คลิสต์</p>
+                        <p className="text-[12px] rounded-xl px-3 py-2" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>⚠️ ยังไม่มีชุดงาน — ออฟฟิศลงรายละเอียดที่หน้า “ผลิต” (คลิกงานนี้) ก่อน ช่างถึงจะเห็นเช็คลิสต์</p>
                       )}
                     </div>
                   ))}
@@ -447,13 +431,13 @@ function SetCard({ s, saving, mark, canMark }: {
   const [showMore, setShowMore] = useState(false);
   const done = setIsDone(s);
   const dl = deadlineInfo(s.must_finish_date, done);
-  const dlTone: Record<string, string> = {
-    over: "bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/40",
-    today: "bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/40",
-    soon: "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/40",
-    normal: "bg-white/10 text-white/80",
-    none: "bg-white/8 text-white/45",
-    done: "bg-white/8 text-white/45",
+  const dlTone: Record<string, { bg: string; fg: string }> = {
+    over: { bg: "#ffe5e5", fg: "#ff3b30" },
+    today: { bg: "#e3f8ea", fg: "#1a8f3c" },
+    soon: { bg: "#fff1dd", fg: "#c2410c" },
+    normal: { bg: "#eceef2", fg: "#636366" },
+    none: { bg: "#eceef2", fg: "#a1a1a8" },
+    done: { bg: "#e3f8ea", fg: "#1a8f3c" },
   };
   const hasScreen = !!(s.screen_type && s.screen_type.trim());
   const screenNotInstalled = hasScreen && s.screen_installed !== V_SCREEN_DONE;
@@ -468,29 +452,30 @@ function SetCard({ s, saving, mark, canMark }: {
   const qcField = qcStageAfter ? "qc_after_glass" : "qc_before_glass";
   const qcStagePassed = qcStageAfter ? qcAfter : qcBefore;
   const qcCount = (qcBefore ? 1 : 0) + (qcAfter ? 1 : 0);
+  const tone = dlTone[dl.tone];
 
   return (
-    <div className={`rounded-xl border border-white/10 p-3 ${done ? "opacity-60" : ""}`} style={{ background: SURFACE.set }}>
+    <div className="rounded-2xl p-3.5" style={{ background: IOS.inset, opacity: done ? 0.6 : 1 }}>
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
-        <span className="text-white font-bold text-[16px]">{s.set_label || "ชุดงาน"}</span>
-        <span className={`text-[13px] font-bold px-2.5 py-1 rounded-lg ${dlTone[dl.tone]}`}>
+        <span className="font-bold text-[16px]" style={{ color: IOS.ink }}>{s.set_label || "ชุดงาน"}</span>
+        <span className="text-[12.5px] font-bold px-2.5 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
           {dl.tone === "over" && "🔴 "}{dl.tone === "soon" && "⚠️ "}{dl.text}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[12px]">
-        {s.must_finish_date && <span className="tnum text-white/90 font-medium">⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
-        {s.install_date && <span className="tnum text-white/65">🔧 ติดตั้ง {thShort(s.install_date)}</span>}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[12.5px]">
+        {s.must_finish_date && <span className="tnum font-medium" style={{ color: IOS.ink }}>⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
+        {s.install_date && <span className="tnum" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(s.install_date)}</span>}
       </div>
-      <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+      <div className="flex flex-wrap items-center gap-1.5 mb-3">
         {hasScreen ? (
           <>
-            <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-sky-500/25 text-sky-100 rounded-md px-2 py-0.5">🪟 {s.screen_type}</span>
-            {screenNotInstalled && <span className="text-[12px] font-bold bg-orange-500/30 text-orange-100 rounded-md px-2 py-0.5 ring-1 ring-orange-400/40">⚠️ ยังไม่ใส่มุ้ง</span>}
+            <span className="inline-flex items-center gap-1 text-[12px] font-semibold rounded-full px-2.5 py-0.5" style={{ background: "#e6f3ff", color: IOS.blue }}>🪟 {s.screen_type}</span>
+            {screenNotInstalled && <span className="text-[12px] font-bold rounded-full px-2.5 py-0.5" style={{ background: "#fff0e0", color: IOS.orange }}>⚠️ ยังไม่ใส่มุ้ง</span>}
           </>
         ) : (
-          <span className="text-[11px] text-white/55">ไม่มีมุ้ง</span>
+          <span className="text-[11px]" style={{ color: IOS.ink3 }}>ไม่มีมุ้ง</span>
         )}
-        {s.glass_spec && <span className="text-[12px] text-white/75 truncate max-w-[55%]">🟦 {s.glass_spec}</span>}
+        {s.glass_spec && <span className="text-[12px] truncate max-w-[55%]" style={{ color: IOS.ink2 }}>🟦 {s.glass_spec}</span>}
       </div>
 
       {canMark ? (
@@ -506,7 +491,7 @@ function SetCard({ s, saving, mark, canMark }: {
           <MarkBtn
             label={qcStagePassed ? "ตรวจผ่านแล้ว" : qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"}
             done={qcStagePassed} half={!qcStagePassed && qcCount > 0} saving={saving}
-            sub={<span className="text-[10px] font-normal text-white/85">ผ่าน {qcCount}/2 จุด</span>}
+            sub={<span className="text-[10px] font-normal opacity-80">ผ่าน {qcCount}/2 จุด</span>}
             onClick={() => qcStagePassed
               ? mark(s.id, { [qcField]: "" }, `ยกเลิก ${qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"} ?`)
               : mark(s.id, { [qcField]: V_QC_PASS })} />
@@ -519,11 +504,11 @@ function SetCard({ s, saving, mark, canMark }: {
         </div>
       )}
 
-      <button onClick={() => setShowMore((x) => !x)} className="focusable pressable mt-2 text-[11px] text-white/50 hover:text-white/80 min-h-[32px]">
-        {showMore ? "▲ ซ่อนรายละเอียด" : "▼ ดูรายละเอียดทั้งหมด"}
+      <button onClick={() => setShowMore((x) => !x)} className="focusable pressable mt-2 text-[12px] font-medium min-h-[32px]" style={{ color: IOS.blue }}>
+        {showMore ? "ซ่อนรายละเอียด" : "ดูรายละเอียดทั้งหมด"}
       </button>
       {showMore && (
-        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11.5px]">
           <RoRow label="คนวัด" v={s.measurer_name} />
           <RoRow label="วันวัด" v={s.measure_actual ? thShort(s.measure_actual) : ""} />
           <RoRow label="โครง/โรงงาน" v={s.frame_status} />
@@ -542,26 +527,32 @@ function SetCard({ s, saving, mark, canMark }: {
 }
 
 function MarkBtn({ label, done, half, saving, sub, onClick }: { label: string; done: boolean; half?: boolean; saving: boolean; sub?: ReactNode; onClick: () => void }) {
-  const cls = done ? "bg-emerald-500/90 text-white" : half ? "bg-amber-500/80 text-white" : "bg-white/8 text-white/70 border border-white/12";
+  const st = done
+    ? { background: "#34c759", color: "#fff", border: "none" }
+    : half
+    ? { background: "#ff9500", color: "#fff", border: "none" }
+    : { background: "#fff", color: "#1c1c1e", border: "1px solid #d9d9df" };
   return (
     <button onClick={onClick} disabled={saving}
-      className={`focusable pressable rounded-xl min-h-[56px] px-1 flex flex-col items-center justify-center gap-0.5 text-[12px] font-semibold ${cls} disabled:opacity-60`}>
-      {saving ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-        : <>{done && <Check size={15} />}<span className="leading-tight text-center">{label}</span>{sub}</>}
+      className="focusable pressable rounded-2xl min-h-[58px] px-1 flex flex-col items-center justify-center gap-0.5 text-[12.5px] font-semibold disabled:opacity-60 transition active:scale-[.97]"
+      style={st}>
+      {saving ? <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-slate-500 animate-spin" />
+        : <>{done && <Check size={16} />}<span className="leading-tight text-center">{label}</span>{sub}</>}
     </button>
   );
 }
 
 function StatusPill({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 ${ok ? "bg-emerald-500/20 text-emerald-200" : "bg-white/8 text-white/45"}`}>
+    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+      style={ok ? { background: "#e3f8ea", color: "#1a8f3c" } : { background: "#eceef2", color: "#a1a1a8" }}>
       {ok ? <Check size={12} /> : "○"} {label}
     </span>
   );
 }
 
 function RoRow({ label, v }: { label: string; v: string }) {
-  return <div><span className="text-white/55">{label}: </span><span className="text-white/90">{v || "—"}</span></div>;
+  return <div><span style={{ color: "#a1a1a8" }}>{label}: </span><span style={{ color: "#1c1c1e" }}>{v || "—"}</span></div>;
 }
 
 // ── Modal เพิ่มงานผลิต (จดเอง / เลือกจากงานในระบบ) ──
