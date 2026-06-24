@@ -822,7 +822,6 @@ const PRODUCTS=[
  {id:'imp28',cat:'มุ้ง',name:"มุ้งจีบ ตีนตะขาบ รุ่นรางเตี้ยแบบพิเศษ ผ้ามุ้งไฟเบอร์",method:'bucket',min:0,rates:'IMP28',cost:null,mscolor:true},
  {id:'imp29',cat:'มุ้ง',name:"มุ้งม้วน ผ้ามุ้งไฟเบอร์ (เลื่อน/กระทุ้ง/ยก)",method:'bucket',min:0,rates:'IMP29',cost:null,mscolor:true,allow_with:['sliding_sms','sliding_euro','sliding_eseries','awning_euro','awning_aluinch','lift_sms','lift_aluinch']},
  {id:'imp30',cat:'มุ้ง',name:"มุ้งแม่เหล็ก พับเปิดได้",method:'bucket',min:0,rates:'IMP30',cost:null},
- {id:'imp31',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",method:'bucket',min:0,rates:'IMP31',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp32',cat:'มุ้ง',name:"มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม. เสริมวงกบ",method:'bucket',min:0,rates:'IMP32',cost:null,allow_with:['sliding_sms','sliding_euro','sliding_eseries','casement_euro','casement_dseries','casement_xseries','casement_velora','casement_flush_solid','casement_inset_solid','awning_euro','awning_aluinch','lift_sms','lift_aluinch','pc_door_2','pc_door_4','ykk_vent','ykk_exhido','tostem_a01']},
  {id:'imp33',cat:'มุ้ง',name:"มุ้งกันแมว",method:'bucket',min:0,rates:'IMP33',cost:null},  // G5 #8b (18มิ.ย.): ตัด "หมา" (ใบเก่าที่เลือก imp33 ไม่โชว์หมา) · ไม่กระทบราคา
  // R3.9: ลบ imp34 "ตะแกรงเหล็กสาน" (ซ้ำกับ steel_mesh) — ทั้งคู่ราคา 2,500/ตร.ม. เท่ากัน
@@ -1260,17 +1259,17 @@ function g1CoOptNote(d, area){
   }
   // ---- L3: เทียบ baseline=L2(ถ้าเลือก)/L1 ----
   var l3c=d.querySelector('.g1co-l3c'), l3g=d.querySelector('.g1co-l3g');
-  var l3ci=l3c?(parseInt(l3c.value)||0):0, l3gi=l3g?(parseInt(l3g.value)||0):0;
+  var l3ci=l3c?(parseInt(l3c.value)!=null&&!isNaN(parseInt(l3c.value))?parseInt(l3c.value):-1):-1, l3gi=l3g?(parseInt(l3g.value)!=null&&!isNaN(parseInt(l3g.value))?parseInt(l3g.value):-1):-1;
   // baseline: L2ใช้จริง=ci/gi, L2opt=gcI/ggI(ราคาบานยัง=L1), L1=gcI/ggI
   var baseC=(ov==='1')?ci:gcI;
   var baseG=(ov==='1')?gi:ggI;
-  if((l3ci>0&&l3ci!==baseC)||(l3gi>0&&l3gi!==baseG)){
-    var l3DiffC=Math.round(colorPrice(l3ci>0?l3ci:baseC,A,'')-colorPrice(baseC,A,''));
-    var l3DiffG=Math.round(((GLASS[l3gi>0?l3gi:baseG]&&GLASS[l3gi>0?l3gi:baseG].s||0)-(GLASS[baseG]&&GLASS[baseG].s||0))*A);
+  if((l3ci>=0&&l3ci!==baseC)||(l3gi>=0&&l3gi!==baseG)){
+    var l3DiffC=Math.round(colorPrice(l3ci>=0?l3ci:baseC,A,'')-colorPrice(baseC,A,''));
+    var l3DiffG=Math.round(((GLASS[l3gi>=0?l3gi:baseG]&&GLASS[l3gi>=0?l3gi:baseG].s||0)-(GLASS[baseG]&&GLASS[baseG].s||0))*A);
     var l3Diff=l3DiffC+l3DiffG;
     var l3Parts=[];
-    if(l3ci>0&&l3ci!==baseC){ var frN=(COLORS[baseC]&&(COLORS[baseC].quoteName||COLORS[baseC].n)||'').replace(/\s*—.*$/,'').replace(/[★⚠]/g,'').trim(); var toN=(COLORS[l3ci]&&(COLORS[l3ci].quoteName||COLORS[l3ci].n)||'').replace(/\s*—.*$/,'').replace(/[★⚠]/g,'').trim(); l3Parts.push('สีอลู จาก'+frN+' เป็น'+toN); }
-    if(l3gi>0&&l3gi!==baseG){ var frGN=(GLASS[baseG]&&GLASS[baseG].n||'').replace(/^[★⚠\s]+/,'').trim()||''; var toGN=(GLASS[l3gi]&&GLASS[l3gi].n||'').replace(/^[★⚠\s]+/,'').trim()||''; l3Parts.push('กระจก จาก'+frGN+' เป็น'+toGN); }
+    if(l3ci>=0&&l3ci!==baseC){ var frN=(COLORS[baseC]&&(COLORS[baseC].quoteName||COLORS[baseC].n)||'').replace(/\s*—.*$/,'').replace(/[★⚠]/g,'').trim(); var toN=(COLORS[l3ci]&&(COLORS[l3ci].quoteName||COLORS[l3ci].n)||'').replace(/\s*—.*$/,'').replace(/[★⚠]/g,'').trim(); l3Parts.push('สีอลู จาก'+frN+' เป็น'+toN); }
+    if(l3gi>=0&&l3gi!==baseG){ var frGN=(GLASS[baseG]&&GLASS[baseG].n||'').replace(/^[★⚠\s]+/,'').trim()||''; var toGN=(GLASS[l3gi]&&GLASS[l3gi].n||'').replace(/^[★⚠\s]+/,'').trim()||''; l3Parts.push('กระจก จาก'+frGN+' เป็น'+toGN); }
     if(l3Parts.length>0 && l3Diff!==0) lines.push('OPTION : เปลี่ยน'+l3Parts.join(' / ')+' ราคา'+(l3Diff>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(l3Diff))+' บาท');
   }
   return lines.join('\n');
@@ -6039,8 +6038,9 @@ function buildItemOpts(d){
         +'<div class="g1co-l3-wrap" style="display:none;flex-direction:column;gap:0;border-top:1px dashed #D1D5DB;padding-top:4px;">'
           +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">＋ เทียบสี/กระจกอื่น (L3 OPTION · ไม่บวกยอด)</summary>'
           +'<div style="padding-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'
-          +'<label style="font-size:12px;">เทียบสีอลู: <select class="g1co-l3c" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="0">— ไม่เทียบ —</option>'+_l3CoOpts+'</select></label>'
-          +'<label style="font-size:12px;">เทียบกระจก: <select class="g1co-l3g" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="0">— ไม่เทียบ —</option>'+_l3GlOpts+'</select></label>'
+          +'<label style="font-size:12px;">เทียบสีอลู: <select class="g1co-l3c" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="(function(s){var ci=parseInt(s.value);var c=COLORS[ci];var cw=s.closest(\'.g1co-l3det\').querySelector(\'.g1co-l3code-wrap\');if(cw)cw.style.display=(c&&c.hasCode&&ci>=0)?\'block\':\'none\';})(this);calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3CoOpts+'</select></label>'
+          +'<label style="font-size:12px;">เทียบกระจก: <select class="g1co-l3g" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3GlOpts+'</select></label>'
+          +'<div class="g1co-l3code-wrap" style="display:none;width:100%;"><label style="font-size:12px;">รหัสสี L3 (อบพิเศษ): <input type="text" class="g1co-l3code" placeholder="เช่น KL10232A · RAL7022" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;width:200px;" oninput="calcQuote()"></label></div>'
           +'</div></details>'
         +'</div>';
       // fix: ชื่อ radio name ต้องไม่ซ้ำกันระหว่างการ์ด — แทนด้วย unique id
@@ -6048,8 +6048,10 @@ function buildItemOpts(d){
       _rareS.innerHTML=_rareS.innerHTML.replace(/g1co-l2mode-SAMENAME/g,'g1co-l2mode-'+_uid);
     }
     var _rareDest=_rareS?_rareS.querySelector('.g1-rare-body'):null;
-    if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(cw); } else if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; } }
-    if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; } }
+    if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(cw); } else if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; if(_isG1 && !_ci2.classList.contains('g1co-l2c')) _ci2.classList.add('g1co-l2c'); } }
+    // A5 (24มิ.ย.): G1 → ย้าย i-colorcode-wrap เข้า g1-rare-body ต่อจาก cw (ใต้ dropdown สีอลู L2)
+    if(_isG1 && _rareDest){ var _ccw=d.querySelector('.i-colorcode-wrap'); if(_ccw){ var _civ=_ccw.previousElementSibling&&_ccw.closest?null:null; _rareDest.appendChild(_ccw); var _l2sel=_rareDest.querySelector('.i-color'); var _l2ci=_l2sel?parseInt(_l2sel.value)||0:0; var _l2c=COLORS[_l2ci]; _ccw.style.display=(_l2c&&_l2c.hasCode)?'block':'none'; } }
+    if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; if(_isG1 && !_gi2.classList.contains('g1co-l2g')) _gi2.classList.add('g1co-l2g'); } }
     if(_cgr) _cgr.style.display=_isG1?'none':(_showCw||_showGw)?'flex':'none';
     if(_rareS) _rareS.style.display=(_showCw||_showGw)?'':'none';
     if(!_isG1){ var _rs9=d.querySelector('.g1-rare-section'); if(_rs9){ _rs9.innerHTML=''; _rs9.style.display='none'; } } // บั๊ก: กล่อง #9 ค้างจาก render G1 → ล้างทิ้งเมื่อสลับกลุ่มอื่น

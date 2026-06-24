@@ -1,8 +1,8 @@
 {
  "meta": {
   "at": "baseline",
-  "catalog": 150,
-  "captured": 150,
+  "catalog": 149,
+  "captured": 149,
   "skipped": 0
  },
  "rows": [
@@ -1092,14 +1092,6 @@
    "name": "มุ้งแม่เหล็ก พับเปิดได้",
    "g": 5,
    "total": 3210,
-   "status": "ok"
-  },
-  {
-   "key": "5:imp31",
-   "id": "imp31",
-   "name": "มุ้งจีบนิรภัย มุ้งสแตนเลส หนา 0.8 มม.",
-   "g": 5,
-   "total": 7490,
    "status": "ok"
   },
   {
