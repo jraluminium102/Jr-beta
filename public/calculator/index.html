@@ -184,6 +184,7 @@
     .qtot .l,.qtot .g{font-size:11pt;}
     #ckFab,#ckPanel{display:none !important;}
     .qtoggle-set{display:none !important;}
+    .no-print{display:none !important;visibility:hidden !important;}  /* วิธีคิดราคา A (F5): บล็อก 🔍 + ปุ่มโหมด + แก้ในใบ ห้ามพิมพ์ติด */
     table{page-break-inside:auto;} tr{page-break-inside:avoid;}
     /* R4.2: ข้อมูลบริษัทซ้ำทุกหน้า (running footer) */
     .qrunfoot{display:block !important;visibility:visible !important;position:fixed;bottom:6mm;left:10mm;right:10mm;text-align:center;font-size:8pt;color:#6B7280;border-top:1px solid #E5E7EB;padding-top:3px;}
@@ -549,7 +550,11 @@
     <button type="button" class="btn-sec" onclick="document.getElementById('quoteBox').style.display='none'">ปิด</button>
     <button type="button" class="btn-prim" onclick="window.print()">พิมพ์ / เซฟ PDF</button>
     <button type="button" class="btn-prim" onclick="exportQuoteExcel()" style="background:#10803a;">Export Excel</button>
-    <button type="button" class="btn-sec" onclick="toggleSplit()" id="splitBtn">แยกราคาแต่ละส่วน</button>
+    <span id="qModeBar" style="display:inline-flex;border:1.5px solid #B3151D;border-radius:8px;overflow:hidden;vertical-align:middle;">
+      <button type="button" id="qmCust" onclick="setQMode('cust')" style="border:0;border-right:1px solid #B3151D;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:#B3151D;color:#fff;">👤 ลูกค้า</button>
+      <button type="button" id="qmSplit" onclick="setQMode('split')" style="border:0;border-right:1px solid #B3151D;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:#B3151D;">📊 แยกราคา</button>
+      <button type="button" id="qmFirm" onclick="setQMode('firm')" style="border:0;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;color:#B3151D;">🔍 วิธีคิดราคา</button>
+    </span>
     <button type="button" class="btn-sec" onclick="toggleQuoteEdit()" id="editBtn">✎ แก้ทุกข้อความ</button>
     <button type="button" class="btn-sec" onclick="startBlankQuote()" id="blankQuoteBtn">📄 เริ่มใบเปล่า</button>
     <button type="button" class="btn-sec" onclick="resetQText()" id="qResetBtn" style="display:none;">↺ คืนข้อความเดิม</button>
@@ -7856,7 +7861,8 @@ function genQuote(keepNo){
         const _w=parseFloat(it.w)||0,_h=parseFloat(it.h)||0; const _sz=(_w>0&&_h>0)?(' ('+it.w+' × '+it.h+' ม.)'):'';  // R4.3: โชว์ขนาดเมื่อแยกราคา
         var _iidG=(it.div?it.div.dataset.id:''); var _pnRaw=(_iidG&&window._nameOv&&window._nameOv[_iidG])||d.prodName; var _pnH=(window.qEdit&&_iidG)?('<span contenteditable="true" onblur="setRowName(\''+_iidG+'\',this)" style="border-bottom:1px dashed #B3151D;outline:none;cursor:text;">'+_pnRaw+'</span>'):_pnRaw; // #6 ข้อ2: ชื่อบานในชุดแก้ได้ (override _nameOv)
         content += '<div style="margin:2px 0 0 8px;display:flex;justify-content:space-between;font-size:13px;"><span>↳ '+_pnH+pos+_sz+'</span><span style="font-weight:600;">'+fmt(it.r.sell*it.qty)+ov+'</span></div>';
-        (it.r.addonLines||[]).forEach(function(a){ content += '<div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>· '+a.n+'</span><span>'+fmt(a.p)+'</span></div>'; }); });
+        (it.r.addonLines||[]).forEach(function(a){ content += '<div style="margin:1px 0 0 20px;display:flex;justify-content:space-between;font-size:12px;color:#666;"><span>· '+a.n+'</span><span>'+fmt(a.p)+'</span></div>'; });
+        content += qFirmHTML(it); });
       // ลบบรรทัดค่าทำชุดกั้นห้อง 5,000 — พี่นัทยกเลิกแล้ว
       if(matLines.length){ content += '<div style="margin-top:6px;font-weight:600;color:#1F2937;">รายละเอียดงาน</div>';
         var _gdOv=(window._gDetOv&&window._gDetOv[gn]!=null&&window._gDetOv[gn]!=='')?window._gDetOv[gn]:null; // #6 ข้อ2: รายละเอียดชุดแก้ได้
@@ -7949,7 +7955,7 @@ function genQuote(keepNo){
     // G2-12: ต่อ gateOptNote (OPTION ลายไม้) เข้า note → qrow render บล็อก OPTION (แดง) ระหว่างรายการ↔รายละเอียด
     const _itemNote = [it.note, d.gateOptNote, d.roofOptNote, d.ranaeOptNote, d.coOptNote, d.cabOptNote].filter(Boolean).join('\n');
     var _qIid=(it.div?it.div.dataset.id:''); if(_qIid && window._hdrOv && window._hdrOv[_qIid]) _qHdr=window._hdrOv[_qIid]; // #8: override หัวข้อ(bold)
-    rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, _qIid, qBdHTML(it, _qIid, it.r.sell));
+    rows += qrow(rowIdx, _qHdr, _qProd, _qSz, _qDet, it.qty, it.r.sell, line, it.r.addonLines, '', it.itemOptDelta||0, _itemNote, _qIid, qBdHTML(it, _qIid, it.r.sell)+qFirmHTML(it));
   });
   const discPct=clampDisc(parseFloat(document.getElementById('discPct').value)||0, subtotal);
   const discFlat=parseFloat(document.getElementById('discFlat').value)||0;
@@ -7959,6 +7965,59 @@ function genQuote(keepNo){
 }
 window.qSplitGroups = window.qSplitGroups || {};
 function toggleSplit(){ window.qSplit=!window.qSplit; var b=document.getElementById('splitBtn'); if(b) b.textContent=window.qSplit?'รวมราคา/ชุด':'แยกราคาแต่ละส่วน'; genQuote(true); }
+// ===== วิธีคิดราคา A (24มิ.ย.): โหมดดู 3 แบบ 👤ลูกค้า/📊แยกราคา/🔍วิธีคิดราคา(เฟิร์น) · read-only ไม่แตะ calcUnit → golden นิ่ง =====
+window.qMode = window.qMode || 'cust';
+function setQMode(m){ window.qMode=m; window.qSplit=(m!=='cust');  // firm = split + บล็อกวิธีคิด · cust = ปกติ
+  var ids={cust:'qmCust',split:'qmSplit',firm:'qmFirm'};
+  Object.keys(ids).forEach(function(k){ var b=document.getElementById(ids[k]); if(b){ var on=(k===m); b.style.background=on?'#B3151D':'#fff'; b.style.color=on?'#fff':'#B3151D'; } });
+  genQuote(true);
+}
+// คาย "วิธีคิดราคา" แบบ read-only — reuse สูตร engine เดิม (basePrice/monoRate/rateOf) + breakdown/msgs ที่ calcUnit คายอยู่แล้ว
+function qCalcStepLines(it){
+  if(!it||!it.r||!(it.r.sell>0)) return [];
+  var p=it.p, u=it.r, area=u.a||0;
+  var q=(p.method==='same_as'&&typeof PBYID!=='undefined'&&PBYID[p.ref])?PBYID[p.ref]:p;
+  var R=function(s){return '<span style="color:#B3151D;font-weight:700;">'+s+'</span>';};
+  var A=function(s){return '<span style="color:#1d4ed8;">'+s+'</span>';};
+  var O=function(s){return '<span style="color:#9ca3af;">'+s+'</span>';};
+  var L=[], raw=null;
+  var _w=parseFloat(it.w)||0,_h=parseFloat(it.h)||0;
+  var isLen=(p.method==='per_length_tier'||p.unit==='meter');
+  // 1) พื้นที่ / ความยาว
+  if(isLen) L.push('ความยาว = <b>'+area.toFixed(2)+' ม.</b>');
+  else if(_w>0&&_h>0) L.push('พื้นที่ = '+_w.toFixed(2)+' × '+_h.toFixed(2)+' = <b>'+area.toFixed(2)+' ตร.ม.</b>');
+  else if(area>0) L.push('พื้นที่ = <b>'+area.toFixed(2)+' ตร.ม.</b>');
+  // 2) แตกเรต (bucket-family + per_sqm) — เติมส่วนที่ engine msgs ไม่มี
+  try{
+    var m=q.method||'';
+    if(q.rates && RATES[q.rates] && area>0){
+      var rate=rateOf(area,RATES[q.rates]); var mono=monoRate(area,RATES[q.rates]); raw=area*rate;
+      L.push('เรต '+fmt(rate)+'/ตร.ม. × '+area.toFixed(2)+' = '+R(fmt(Math.round(raw))));
+      if(mono>raw+0.5){ L.push('เทียบช่วงพื้นที่ก่อนหน้า → ใช้ '+R(fmt(Math.round(mono)))); raw=mono; }
+    } else if(m==='per_sqm' && q.rate && area>0){
+      raw=area*q.rate; L.push('เรต '+fmt(q.rate)+'/ตร.ม. × '+area.toFixed(2)+' = '+R(fmt(Math.round(raw))));
+    }
+  }catch(e){}
+  // 3) แตกราคาย่อย (breakdown) — ข้ามบรรทัดฐานที่ = raw (กันซ้ำกับข้อ 2)
+  if(u.breakdown&&u.breakdown.length){ u.breakdown.forEach(function(b){ if(!(b.p>0)) return; if(raw!=null && Math.abs(b.p-Math.round(raw))<1) return; L.push(A(b.n)+' = '+R(fmt(b.p))); }); }
+  // 4) msgs จาก engine (สูตร method พิเศษ ม่านซิป ฯลฯ) — โชว์เฉพาะตอนไม่มีทั้งเรตและ breakdown (กันซ้ำ)
+  var _hasBd=!!(u.breakdown&&u.breakdown.some(function(b){return b.p>0;}));
+  if(raw==null && !_hasBd && u.msgs && u.msgs.length){ u.msgs.forEach(function(mm){ mm=(mm||'').trim(); if(mm && /\d/.test(mm) && mm.indexOf('OPTION')!==0) L.push(mm); }); }
+  // 5) ปัดขึ้นพันบาท + ขั้นต่ำ
+  var min=(q.min||0);
+  var rn='ปัดขึ้นพันบาท = '+R(fmt(u.sell));
+  if(min>0) rn += (min>=u.sell ? ' '+O('(ขั้นต่ำ '+fmt(min)+')') : ' '+O('(ขั้นต่ำ '+fmt(min)+' — สูงกว่า ใช้ที่คำนวณ)'));
+  L.push(rn);
+  return L;
+}
+function qFirmHTML(it){
+  if(window.qMode!=='firm') return '';
+  var L=qCalcStepLines(it); if(!L.length) return '';
+  return '<div class="qcs-block no-print" style="background:#fffbeb;border:1px dashed #fcd34d;border-radius:8px;padding:7px 10px;margin-top:6px;">'
+    +'<div style="display:inline-block;background:#92400e;color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 7px;margin-bottom:5px;">🔍 วิธีคิดราคา · ไม่พิมพ์ให้ลูกค้า</div>'
+    +L.map(function(s){return '<div style="font-size:12px;color:#374151;margin:2px 0;font-family:Consolas,monospace;">'+s+'</div>';}).join('')
+    +'</div>';
+}
 async function aiReviewQuote(){
   var box=document.getElementById('quoteContent');
   var txt=((box&&box.innerText)||'').trim();
