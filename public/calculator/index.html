@@ -6217,12 +6217,25 @@ function readItem(d){
     var _rbreak=_rlines.map(function(l){ return l[0]+' = '+Math.round(l[1]).toLocaleString(); }).join('\n');
     var _rwork=(window.g6rRoomDetail&&window.g6rRoomDetail(d))||_rbreak; // CODE-G6 จุด2: รายการ(งาน) แตกรายบาน → work (เดิมไปกองใน note)
     var _rspec=(window.g6rRoomSpec&&window.g6rRoomSpec(d))||'';          // สเปควัสดุ → spec
-    var _userNote=(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'';
+    // ธง G-② — อ่าน remarks จาก __g6state (ไม่ใช่ .i-note ที่ถูก CSS ซ่อน)
     var _notes=[];
-    if(/งานปูพื้น/.test(_rwork)) _notes.push('ไม่รับประกันพื้นแอ่น/ยวบ'); // หมายเหตุงานพื้น (Protection price-line คงเดิม · จุด4 รอเคาะ)
-    if(_userNote) _notes.push(_userNote);
+    if(/งานปูพื้น/.test(_rwork)) _notes.push('ไม่รับประกันพื้นแอ่น/ยวบ');
+    if(d.__g6state&&d.__g6state.remarks){ var _rem=d.__g6state.remarks; (_rem.ticked||[]).forEach(function(t){if(t)_notes.push(t);}); if(_rem.note&&_rem.note.trim())_notes.push(_rem.note.trim()); }
+    var _userNote=(d.querySelector('.i-note')&&d.querySelector('.i-note').value.trim())||'';
+    if(_userNote)_notes.push(_userNote);
+    // ธง B-⑪ — OPTION lines สีห้อง mode=opt + L3 เทียบ
+    var _optLines=[];
+    if(d.__g6state){ var _sv2=d.__g6state; var _RC=_sv2.roomColor||{}; var _GLASS=typeof GLASS!=='undefined'?GLASS:[];
+      if(_RC.on){ var _tArea=(function(st){ var a=0; st.sides.forEach(function(s){ if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(pc){ a+=(parseFloat(pc.w)||0)*(parseFloat(pc.h)||0)*(parseInt(pc.opt&&pc.opt.qty)||1); });}); }); return a; })(_sv2);
+        var _baseC=(typeof colorPrice==='function')?colorPrice(0,_tArea,''):0; var _newC=(typeof colorPrice==='function')?colorPrice(_RC.colorIdx||0,_tArea,''):0; var _baseG=0; var _newG=(_RC.glassIdx>0&&_GLASS[_RC.glassIdx])?(_GLASS[_RC.glassIdx].s||0)*_tArea:0; var _diff=(_newC-_baseC)+(_newG-_baseG);
+        var _cn=(typeof COLORS!=='undefined'&&COLORS[_RC.colorIdx])?((COLORS[_RC.colorIdx].quoteName||COLORS[_RC.colorIdx].n).replace(/[★⚠🔖🔒]/g,'').trim()):'สีเดิม';
+        var _gn=(_RC.glassIdx>0&&_GLASS[_RC.glassIdx])?_GLASS[_RC.glassIdx].n:'';
+        if(_RC.mode==='opt'&&_diff!==0){ var _dTxt=(_diff>0?'ราคาเพิ่ม +':'ราคาลด ')+Math.abs(Math.round(_diff)).toLocaleString()+' บาท'; _optLines.push('OPTION (สีห้อง) : เปลี่ยนสี'+(_cn?'เป็น '+_cn:'')+(_gn?' · กระจก'+_gn:'')+' '+_dTxt); }
+        if(_RC.l3ColorIdx>0){ var _l3cn=(typeof COLORS!=='undefined'&&COLORS[_RC.l3ColorIdx])?((COLORS[_RC.l3ColorIdx].quoteName||COLORS[_RC.l3ColorIdx].n).replace(/[★⚠🔖🔒]/g,'').trim()):''; var _l3C=(typeof colorPrice==='function')?colorPrice(_RC.l3ColorIdx,_tArea,''):0; var _l3diff=(_l3C-_baseC); _optLines.push('OPTION (L3) : เทียบ'+(_l3cn?' สี'+_l3cn:'')+' '+((_l3diff>=0?'ราคาเพิ่ม +':'ราคาลด ')+Math.abs(Math.round(_l3diff)).toLocaleString()+' บาท')); }
+      }
+    }
     return { p:{name:'ห้องต่อเติม (กั้นห้องกระจก)', cat:'กั้นห้องกระจก'},
-      r:{a:0, sell:_rt, cost:0, addonLines:[], msgs:[], addonLabel:''},
+      r:{a:0, sell:_rt, cost:0, addonLines:_optLines, msgs:[], addonLabel:''},
       qty:1, gi:0, ci:0, finLabel:'', optSel:{}, subItems:[],
       w:'', h:'', name:'ห้องต่อเติม', ship:false, itype:'door',
       groupName:'', groupLabel:'', groupOptText:'', groupOptDelta:0,
@@ -8238,7 +8251,11 @@ window.addEventListener('load',ckRefresh);
   // ---- state (โครงตาม DRAFT-G6-ux-REAL · ราคาต่อ engine จริง) ----
   function freshState(){ return {sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
     roof:{on:0,matId:null,w:3,l:4,frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{}}, ceil:{has:0}, elec:{down:0,sw:0},
-    floor:{on:0,mat:'smart',w:0,l:0,rate:0,disc:''}, fan:{on:0,size:'8',qty:1,price:0}, cur:0, sc:0, sp:0, openFam:null}; }
+    floor:{on:0,mat:'smart',w:0,l:0,rate:0,disc:''}, fan:{on:0,size:'8',qty:1,price:0},
+    services:[], svc:{demo:{roof:0,floor:0,rail:0,door:0,railLen:0},protect:0,protectPts:0},
+    roomColor:{on:0,mode:'real',colorIdx:0,colorCode:'',glassIdx:0,l3ColorIdx:0,l3Code:'',l3GlassIdx:0}, sideOvr:{},
+    remarks:{ticked:[],note:''},
+    cur:0, sc:0, sp:0, openFam:null}; }
   var G6R=freshState();   // pointer → state ของ item กลุ่ม 6 ที่ active (A4 ชี้ใหม่ต่อ item)
   var G6MOUNT=null;       // element ที่ render เข้า (default #g6r-host สำหรับ dev · A4 = .i-opts ของ item)
   function roofProds(){ try{ return PRODUCTS.filter(function(q){return q.cat==='หลังคา';}); }catch(e){ return []; } }
@@ -8254,6 +8271,8 @@ window.addEventListener('load',ckRefresh);
   function floorTotal(){ var F=G6R.floor; if(!F||!F.on)return 0; var raw=(parseFloat(F.w)||0)*(parseFloat(F.l)||0); if(raw<=0)return 0; var a=Math.max(5,raw); var rate=(F.mat==='spc')?(parseFloat(F.rate)||0):5000; var base=a*rate; var dp=(F.disc!==''&&F.disc!=null)?(parseFloat(F.disc)||0):(a>=20?10:0); return Math.round(base*(1-dp/100)); }
   function floorArea(){ var F=G6R.floor; return Math.max(5,(parseFloat(F.w)||0)*(parseFloat(F.l)||0)); }
   function fanTotal(){ var F=G6R.fan; if(!F||!F.on)return 0; return (parseInt(F.qty)||0)*(parseFloat(F.price)||0); }
+  function servicesTotal(){ if(!G6R.services||!G6R.services.length)return 0; return G6R.services.reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0); }
+  function svcTotal(){ var t=0; var D=G6R.svc&&G6R.svc.demo; if(D){ if(D.roof)t+=5000*parseInt(D.roof||0); if(D.floor)t+=5000*parseInt(D.floor||0); if(D.rail)t+=3000+(700*(parseFloat(D.railLen)||0)); if(D.door)t+=parseFloat(D.door)||0; } if(G6R.svc&&G6R.svc.protect)t+=2000+(parseInt(G6R.svc.protectPts)||0)*1000; return t; }
   function FCATS(){ var base=(typeof FAM_CATS!=='undefined'&&FAM_CATS['6'])?FAM_CATS['6'].slice():['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม'];
     ['บานหมุน','ดัดโค้ง'].forEach(function(c){ if(base.indexOf(c)<0 && modelsOf(c).length) base.push(c); }); return base; } // เพิ่มชนิดบานที่มีใน group 6 จริง (pivot/curve) ให้เลือกได้ในห้อง
   function flabel(c){ return (typeof FAM_LABEL!=='undefined'&&FAM_LABEL[c])||c; }
@@ -8355,16 +8374,70 @@ window.addEventListener('load',ckRefresh);
     var r=calcUnit(p,pc.w||1,pc.h||1,_gi,_ci,panels,g6rOptSel(pc));
     return (r&&r.msgs)?r.msgs.filter(function(m){return /⚠|🛑|❌/.test(m);}):[]; }catch(e){ return []; } }
   function L(i){return String.fromCharCode(65+i);}
-  function np(){return G6R.sides.length+3;}
-  function pageName(i){ if(i<G6R.sides.length)return 'ด้าน '+L(i); return ['หลังคา/ฝ้า','งานไฟ','สรุป'][i-G6R.sides.length]; }
+  function np(){return G6R.sides.length+4;}
+  function pageName(i){ if(i<G6R.sides.length)return 'ด้าน '+L(i); return ['🎨 สี/กระจก','หลังคา/ฝ้า','งานเสริม','สรุป'][i-G6R.sides.length]; }
   function fmt(n){return '฿'+Math.round(n).toLocaleString();}
-  function sideTotal(s){ var t=0; if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(p){t+=g6rPrice(p);});}); else if(s.type==='wall')t+=Math.round((s.aw||3)*(s.ah||2.6)*1350); return t; }
-  function roomTotal(){ var t=0; G6R.sides.forEach(function(s){t+=sideTotal(s);}); t+=roofTotalReal()+elecTotalReal()+floorTotal()+fanTotal(); return Math.ceil(t/100)*100; }
+  // B-⑩: sideTotal รับ si เพื่อ resolve override สีต่อด้าน
+  // ถ้า sideOvr[si] active + mode=real → บานในด้านนั้นคิดราคาตาม ci/gi ของด้านนั้นแทน pc.opt
+  // ถ้า mode=opt → ไม่บวกส่วนเพิ่มสี (ราคาบานยังเป็น ci=0/gi=0 ตามห้อง) → OPTION line ออกใน g6rSideOvrOptLine
+  function sideTotal(s,si){ var t=0;
+    if(s.type==='glass'){
+      var ov=(si!=null&&G6R.sideOvr&&G6R.sideOvr[si]&&G6R.sideOvr[si].on)?G6R.sideOvr[si]:null;
+      var ovrReal=ov&&(!G6R.roomColor||G6R.roomColor.mode!=='opt'); // real หรือ roomColor ยังปิด = บวกราคาจริง
+      s.cols.forEach(function(c){c.pcs.forEach(function(p){
+        if(ovrReal){
+          // B-⑩ fix: คิดราคาฐานปกติ + premium สีต่อด้าน (เหมือน roomColorPremium แต่ใช้พื้นที่บานนี้)
+          // ไม่ใช้ calcUnit recompute เพราะบางชนิด (casement_euro ceLinear) ไม่บวกสีตาม ci
+          var prod=PBYID&&PBYID[p.id];
+          var _ci=ov.colorIdx>=0?ov.colorIdx:0;
+          var _gi=ov.glassIdx>=0?ov.glassIdx:0;
+          var qty=parseInt(p.opt&&p.opt.qty)||1;
+          var pcArea=(parseFloat(p.w)||0)*(parseFloat(p.h)||0)*qty;
+          var baseP=g6rPrice(p); // ราคาฐาน (ci=0 gi=0)
+          var colorPrem=0;
+          if(pcArea>0&&prod&&prod.cat!=='ผนังเบา'){
+            var cBase=colorPrice(0,pcArea,''); var cNew=colorPrice(_ci,pcArea,'');
+            var gBase=0; var gNew=(_gi>0&&typeof GLASS!=='undefined'&&GLASS[_gi])?(GLASS[_gi].s||0)*pcArea:0;
+            colorPrem=(cNew-cBase)+(gNew-gBase);
+          }
+          t+=baseP+colorPrem;
+        } else {
+          t+=g6rPrice(p); // mode=opt หรือไม่มี override → ราคาปกติ (ส่วนเพิ่มไปออกเป็น OPTION line)
+        }
+      });});
+    } else if(s.type==='wall'){t+=Math.round((s.aw||3)*(s.ah||2.6)*1350);}
+    return t; }
+  // B-⑩: คำนวณส่วนเพิ่มสีต่อด้าน mode=opt → คาย OPTION line (ไม่บวก roomTotal)
+  function g6rSideOvrOptLine(s,si){ var SV=G6R.sideOvr||{}; var ov=SV[si]; if(!ov||!ov.on)return null;
+    var RC=G6R.roomColor||{}; if(!RC.on||RC.mode!=='opt')return null; // opt line เฉพาะ mode=opt
+    var area=roomGlassArea(si); if(area<=0)return null;
+    var _ci=ov.colorIdx>=0?ov.colorIdx:0; var _gi=ov.glassIdx>=0?ov.glassIdx:0;
+    var baseC=colorPrice(RC.colorIdx||0,area,''); var newC=colorPrice(_ci,area,'');
+    var baseG=(RC.glassIdx>0&&GLASS&&GLASS[RC.glassIdx])?(GLASS[RC.glassIdx].s||0)*area:0;
+    var newG=(_gi>0&&GLASS&&GLASS[_gi])?(GLASS[_gi].s||0)*area:0;
+    var delta=(newC-baseC)+(newG-baseG);
+    var cName=(_ci>0&&COLORS&&COLORS[_ci])?(COLORS[_ci].quoteName||COLORS[_ci].n).replace(/[★⚠🔖🔒]/g,'').trim():'อบขาว';
+    return {lbl:'ด้าน '+L(si)+' เปลี่ยนสีเป็น '+cName+(delta>0?' +'+Math.round(delta).toLocaleString():delta<0?' '+Math.round(delta).toLocaleString():''), delta:delta}; }
+  // ธง B — พื้นที่กระจกรวมทั้งห้อง (คิด OPTION สี/กระจก level-ห้อง = Q2)
+  function roomGlassArea(sideFilter){ var a=0; G6R.sides.forEach(function(s,si){ if(sideFilter!=null&&si!==sideFilter)return; if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(pc){ var prod=PBYID&&PBYID[pc.id]; if(prod&&prod.cat!=='ผนังเบา')a+=(parseFloat(pc.w)||0)*(parseFloat(pc.h)||0)*(parseInt(pc.opt&&pc.opt.qty)||1); });}); }); return a; }
+  // ธง B — ส่วนเพิ่มราคาระดับห้อง mode=real (บวกเข้า roomTotal) · หักพื้นที่ด้านที่ override real ออก (กันบวกซ้ำ)
+  function roomColorPremium(){ var RC=G6R.roomColor; if(!RC||!RC.on||RC.mode!=='real')return 0;
+    var SV=G6R.sideOvr||{};
+    // คำนวณพื้นที่ด้านที่ไม่ได้ override real (ด้านที่ override real → บวกราคาแล้วใน sideTotal แล้ว)
+    var nonOvrArea=0; G6R.sides.forEach(function(s,si){
+      var ov=SV[si]; var isOvrReal=ov&&ov.on&&(!G6R.roomColor||G6R.roomColor.mode!=='opt'); // B-⑩ fix: หักเฉพาะ real override (opt override ไม่ได้บวกใน sideTotal)
+      if(!isOvrReal){ if(s.type==='glass')s.cols.forEach(function(c){c.pcs.forEach(function(pc){ var prod=PBYID&&PBYID[pc.id]; if(prod&&prod.cat!=='ผนังเบา')nonOvrArea+=(parseFloat(pc.w)||0)*(parseFloat(pc.h)||0)*(parseInt(pc.opt&&pc.opt.qty)||1); });}); }
+    });
+    if(nonOvrArea<=0)return 0;
+    var baseC=colorPrice(0,nonOvrArea,''); var newC=colorPrice(RC.colorIdx||0,nonOvrArea,'');
+    var baseG=0; var newG=(RC.glassIdx>0&&typeof GLASS!=='undefined'&&GLASS[RC.glassIdx])?(GLASS[RC.glassIdx].s||0)*nonOvrArea:0;
+    return Math.max(0,(newC-baseC)+(newG-baseG)); }
+  function roomTotal(){ var t=0; G6R.sides.forEach(function(s,si){t+=sideTotal(s,si);}); t+=roofTotalReal()+elecTotalReal()+floorTotal()+fanTotal()+servicesTotal()+svcTotal()+roomColorPremium(); return Math.ceil(t/100)*100; }
   function host(){return document.getElementById('g6r-host');}
   function mountEl(){ return G6MOUNT||host(); }
   function tabsHTML(){ var h=''; G6R.sides.forEach(function(s,i){ h+='<button class="tab'+(G6R.cur===i?' on':'')+'" onclick="G6Rgo('+i+')">ด้าน '+L(i)+'</button>'; });
     h+='<button class="tab addt" onclick="G6RaddSide()">＋ด้าน</button>';
-    ['🏠หลังคา/ฝ้า','⚡ไฟ','📄สรุป'].forEach(function(lbl,o){ var idx=G6R.sides.length+o; h+='<button class="tab '+(o<2?'rf':'sm')+(G6R.cur===idx?' on':'')+'" onclick="G6Rgo('+idx+')">'+lbl+'</button>'; });
+    [{lbl:'🎨สี/กระจก',cls:'rf'},{lbl:'🏠หลังคา/ฝ้า',cls:'rf'},{lbl:'🔧งานเสริม',cls:'rf'},{lbl:'📄สรุป',cls:'sm'}].forEach(function(t,o){ var idx=G6R.sides.length+o; h+='<button class="tab '+t.cls+(G6R.cur===idx?' on':'')+'" onclick="G6Rgo('+idx+')">'+t.lbl+'</button>'; });
     return h; }
   function render(){ if(G6R.cur>=np())G6R.cur=np()-1;
     var b='<div class="g6r-wrap"><div class="g6r-top"><b>🏗️ ห้องต่อเติม (กั้นห้องกระจก)</b><span class="g6r-pos">'+pageName(G6R.cur)+' · '+(G6R.cur+1)+'/'+np()+'</span></div>'
@@ -8372,7 +8445,7 @@ window.addEventListener('load',ckRefresh);
       +'<div class="g6r-foot"><span class="nav"><button onclick="G6Rnav(-1)">◀ ย้อน</button> <button onclick="G6Rnav(1)">ถัดไป ▶</button></span><span class="grand">'+fmt(roomTotal())+'</span></div></div>';
     var mEl=mountEl(); if(!mEl)return; mEl.innerHTML=b;
     var bc=mEl.querySelector('#g6r-bodyc'); if(!bc)return;
-    if(G6R.cur<G6R.sides.length) sidePage(bc); else { var o=G6R.cur-G6R.sides.length; if(o===0)roofPage(bc); else if(o===1)elecPage(bc); else sumPage(bc); }
+    if(G6R.cur<G6R.sides.length) sidePage(bc); else { var o=G6R.cur-G6R.sides.length; if(o===0)colorPage(bc); else if(o===1)roofPage(bc); else if(o===2)extraPage(bc); else sumPage(bc); }
   }
   function sidePage(bc){ var s=G6R.sides[G6R.cur];
     var h='<div class="ph">ด้าน '+L(G6R.cur)+(G6R.sides.length>1?' <button class="c" style="float:right;color:#A32D2D;border-color:#F0C0C0;" onclick="G6RdelSide()">ลบด้าน ✕</button>':'')+'</div>'
@@ -8503,13 +8576,105 @@ window.addEventListener('load',ckRefresh);
       +'<div class="g6r-wtot" style="color:#92400e;">ฝ้า (ในหน้านี้) ต่อ A3b — ใช้ ฝ้า-ผนัง engine จริง</div>';
     bc.innerHTML=h;
   }
-  function elecPage(bc){ var E=G6R.elec, F=G6R.floor, FN=G6R.fan;
-    var h='<div class="ph">⚡ อุปกรณ์เสริม (ทั้งห้อง)</div>';
+  // ธง B — colorPage เต็ม (สี/กระจก ระดับห้อง L1/L2/L3 + override ต่อด้าน)
+  function g6ColorSelect(idAttr, curIdx, hasNone, onchangeFn){
+    var h='<select id="'+idAttr+'" style="height:34px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 8px;font-size:12.5px;background:#fff;max-width:300px;width:100%;" onchange="'+onchangeFn+'">';
+    if(hasNone)h+='<option value="-1">— ตามห้อง —</option>';
+    var lastG=''; COLORS.forEach(function(c,i){ var g=c.group||c.series||'อื่นๆ'; if(g!==lastG){if(lastG)h+='</optgroup>';h+='<optgroup label="'+g+'">';lastG=g;} var nm=(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim(); h+='<option value="'+i+'"'+(i===curIdx?' selected':'')+'>'+nm+'</option>'; }); if(lastG)h+='</optgroup>';
+    return h+'</select>'; }
+  function g6GlassSelect(idAttr, curIdx, hasNone, onchangeFn){
+    var h='<select id="'+idAttr+'" style="height:34px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 8px;font-size:12.5px;background:#fff;max-width:300px;width:100%;" onchange="'+onchangeFn+'">';
+    if(hasNone)h+='<option value="-1">— ตามห้อง —</option>';
+    h+=g6GlassOpts(curIdx); return h+'</select>'; }
+  function colorPage(bc){
+    var RC=G6R.roomColor||{}; var SV=G6R.sideOvr||{};
+    var h='<div class="ph" style="color:#047857;">🎨 สี / กระจก (ทั้งห้อง)</div>';
+    h+='<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">ระดับห้อง · เกี่ยวกับบานกระจก ไม่ใช่งานเสริม</div>';
+    // L1 — สีตามทั้งใบ (default checked)
+    h+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;background:#F0FDF4;border-radius:8px;margin-bottom:6px;">'
+     +'<input type="checkbox" id="g6l1chk" style="width:18px;height:18px;"'+(RC.on?'':' checked')+' onchange="G6RcolorL1(!this.checked)">'
+     +'<span><b>สีตามทั้งใบ</b> — สีอบขาว <span style="font-size:11px;color:#9CA3AF;">(L1 default)</span></span></label>';
+    // L2/L3 block
+    h+='<div id="g6l2l3" style="margin-top:10px;border-left:3px solid #047857;padding-left:12px;'+(RC.on?'':'display:none')+'">';
+    // mode 🟢/🔵
+    var mReal=!RC.mode||RC.mode==='real';
+    h+='<div style="display:flex;gap:8px;margin:8px 0;">'
+     +'<label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid '+(mReal?'#047857':'#E5E7EB')+';border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;background:'+(mReal?'#F0FDF4':'#fff')+'" onclick="G6RcolorMode(\'real\')">'
+     +'<input type="radio" name="g6cm"'+(mReal?' checked':'')+'> 🟢 ใช้จริง <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:#047857;color:#fff;">บวกยอด</span></label>'
+     +'<label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid '+(!mReal?'#1E40AF':'#E5E7EB')+';border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;background:'+(!mReal?'#EFF6FF':'#fff')+'" onclick="G6RcolorMode(\'opt\')">'
+     +'<input type="radio" name="g6cm"'+(!mReal?' checked':'')+'> 🔵 ออปชั่น <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:#1E40AF;color:#fff;">ไม่บวก</span></label>'
+     +'</div>';
+    // L2 สีอลู + กระจก
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 4px;">L2 สีอลูห้องนี้</div>';
+    h+=g6ColorSelect('g6l2c', RC.colorIdx||0, false, 'G6RcolorSet(\'colorIdx\',parseInt(this.value)||0)');
+    var l2ci=RC.colorIdx||0; var l2HasCode=typeof COLORS!=='undefined'&&COLORS[l2ci]&&COLORS[l2ci].hasCode;
+    h+='<div id="g6l2code" style="'+(l2HasCode?'':'display:none;')+'margin-top:7px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:7px 10px;">'
+     +'<label style="font-size:11.5px;font-weight:700;color:#9A3412;display:block;margin-bottom:3px;">รหัสสี/ชื่อสี (อบพิเศษ/ลายไม้อบ/ชุบ)</label>'
+     +'<input type="text" style="width:100%;max-width:260px;height:31px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;" placeholder="เช่น KL10232A · Fuji" value="'+g6Esc(RC.colorCode||'')+'" oninput="G6RcolorSet(\'colorCode\',this.value)"></div>';
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:10px 0 4px;">🪟 กระจก (ทั้งห้อง) <span style="font-size:11px;font-weight:400;color:#6B7280;">(66 รุ่น)</span></div>';
+    h+=g6GlassSelect('g6l2g', RC.glassIdx||0, false, 'G6RcolorSet(\'glassIdx\',parseInt(this.value)||0)');
+    // L3 — เทียบสีอื่น (details พับ)
+    h+='<details style="margin-top:10px;" '+(RC.l3ColorIdx>0?'open':'')+' onchange=""><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:700;list-style:none;padding:4px 0;" onmousedown="this.parentNode.open=!this.parentNode.open;event.preventDefault();">'
+     +'<span class="g6l3sum">＋ L3 — เทียบราคาสีอื่น (ไม่บวกยอด)</span></summary>'
+     +'<div style="border:1px dashed #D1D5DB;border-radius:8px;padding:9px;margin-top:5px;background:#FAFAFA;">'
+     +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:4px;">เทียบสีอลู</div>'
+     +g6ColorSelect('g6l3c', RC.l3ColorIdx||0, true, 'G6RcolorSet(\'l3ColorIdx\',parseInt(this.value)||0)')
+     +'<div id="g6l3code" style="'+(COLORS&&COLORS[RC.l3ColorIdx]&&COLORS[RC.l3ColorIdx].hasCode&&RC.l3ColorIdx>0?'':'display:none;')+'margin-top:6px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:7px 10px;">'
+     +'<label style="font-size:11.5px;font-weight:700;color:#9A3412;display:block;margin-bottom:3px;">รหัสสีอบพิเศษ (L3)</label>'
+     +'<input type="text" style="width:100%;max-width:260px;height:31px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;" placeholder="KL10232A" value="'+g6Esc(RC.l3Code||'')+'" oninput="G6RcolorSet(\'l3Code\',this.value)"></div>'
+     +'</div></details>';
+    h+='</div>'; // /g6l2l3
+    // override ต่อด้าน
+    h+='<div style="margin-top:12px;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:10px 12px;">';
+    h+='<div style="font-size:12.5px;font-weight:700;color:#6D28D9;margin-bottom:6px;">🔀 เปลี่ยนสี/กระจก "บางด้าน"</div>';
+    G6R.sides.forEach(function(s,si){
+      if(s.type!=='glass')return;
+      var ov=SV[si]||{}; var lbl='ด้าน '+L(si);
+      h+='<div style="border-top:1px dashed #DDD6FE;padding:6px 0;">';
+      h+='<label style="display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;font-weight:600;">'
+       +'<input type="checkbox" '+(ov.on?'checked':'')+' onchange="G6RovrTog('+si+',this.checked)"> '+lbl+' ต่างจากห้อง</label>';
+      h+='<div id="g6ovr'+si+'" style="'+(ov.on?'':'display:none;')+'padding:6px 0 2px 24px;">';
+      h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:5px 0 3px;">สีอลู '+lbl+'</div>';
+      h+='<select style="height:32px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 8px;font-size:12px;max-width:260px;width:100%;" onchange="G6RovrSet('+si+',\'colorIdx\',parseInt(this.value))">'
+       +'<option value="-1">— ตามห้อง —</option>'+g6ColorSelectOpts(ov.colorIdx!=null?ov.colorIdx:-1)+'</select>';
+      h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:5px 0 3px;">กระจก '+lbl+'</div>';
+      h+='<select style="height:32px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 8px;font-size:12px;max-width:260px;width:100%;" onchange="G6RovrSet('+si+',\'glassIdx\',parseInt(this.value))">'
+       +'<option value="-1">— ตามห้อง —</option>'+g6GlassOpts(ov.glassIdx!=null?ov.glassIdx:-1)+'</select>';
+      h+='</div></div>';
+    });
+    h+='<div style="font-size:11px;color:#6B7280;margin-top:5px;">ไม่ติ๊ก = ตามห้อง · ติ๊ก = บานในด้านนั้นคิดราคาตามสีด้าน</div>';
+    h+='</div>';
+    // แสดงราคาเพิ่ม
+    var prem=roomColorPremium();
+    if(prem>0)h+='<div class="g6r-banaPr" style="margin-top:8px;"><span>ราคาสี/กระจกห้อง '+(RC.mode==='opt'?'(OPTION · ไม่บวกยอด)':'(บวกยอดแล้ว)')+'</span><b>+'+fmt(prem)+'</b></div>';
+    bc.innerHTML=h;
+  }
+  function g6ColorSelectOpts(cur){ var h=''; var lastG=''; COLORS.forEach(function(c,i){ var g=c.group||c.series||'อื่นๆ'; if(g!==lastG){if(lastG)h+='</optgroup>';h+='<optgroup label="'+g+'">';lastG=g;} var nm=(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim(); h+='<option value="'+i+'"'+(i===cur?' selected':'')+'>'+nm+'</option>'; }); if(lastG)h+='</optgroup>'; return h; }
+  // ธง C — extraPage (เดิม elecPage + เพิ่ม ประปา/ผรม./หมายเหตุ)
+  function extraPage(bc){ var E=G6R.elec, F=G6R.floor, FN=G6R.fan, SV=G6R.services||[], SVC=G6R.svc||{}, REM=G6R.remarks||{};
+    var h='<div class="ph">🔧 งานเสริม (ทั้งห้อง)</div>';
+    // 1. ⚡ งานไฟ
+    h+='<div style="font-weight:700;color:#B45309;margin:6px 0 4px;">⚡ งานไฟฟ้า</div>';
     h+='<div class="row"><span class="rl">ดาวน์ไลท์</span><input type="number" value="'+E.down+'" min="0" step="1" oninput="G6RelecV(\'down\',this.value)"><span class="u">ดวง ×1,500</span></div>';
     h+='<div class="row"><span class="rl">สวิตช์</span><input type="number" value="'+E.sw+'" min="0" step="1" oninput="G6RelecV(\'sw\',this.value)"><span class="u">จุด ×1,000</span></div>';
-    h+='<div class="g6r-banaPr"><span>ราคางานไฟ</span><b>'+fmt(elecTotalReal())+'</b></div>';
-    // 🟫 งานปูพื้น
-    h+='<div class="row" style="margin-top:10px;border-top:1px dashed #ddd;padding-top:8px;"><label class="chk"><input type="checkbox" '+(F.on?'checked':'')+' onchange="G6RfloorV(\'on\',this.checked?1:0)"> 🟫 งานปูพื้น</label></div>';
+    if(elecTotalReal()>0)h+='<div class="g6r-banaPr"><span>รวมงานไฟ</span><b>'+fmt(elecTotalReal())+'</b></div>';
+    // 2. 🚰 งานประปา
+    h+='<div style="font-weight:700;color:#B45309;margin:12px 0 4px;border-top:1px dashed #ddd;padding-top:10px;">🚰 งานประปา <span style="font-size:11px;font-weight:400;color:#6B7280;">(กรอกเอง · กี่บรรทัดก็ได้)</span></div>';
+    var PLUMB_PRESETS=['เดินท่อน้ำดี-น้ำทิ้ง','จุดน้ำเข้า-ออก (ซิงก์/อ่าง)','ติดตั้งซิงก์/อ่างล้าง','บ่อพัก/บ่อดักไขมัน','floor drain ระบายพื้น','ต่อท่อระบายน้ำฝน','ปั๊มน้ำ/เครื่องทำน้ำอุ่น','อื่นๆ'];
+    h+='<div class="chips" style="flex-wrap:wrap;gap:4px;margin-bottom:6px;">'+PLUMB_PRESETS.map(function(n){ return '<button class="c" onclick="G6RsvcAdd(\'plumb\',\''+n+'\',\'จุด\')">☐ '+n+'</button>'; }).join('')+'</div>';
+    var plumbRows=SV.filter(function(s){return s.cat==='plumb';});
+    plumbRows.forEach(function(s,idx){ var ri=SV.indexOf(s);
+      h+='<div class="row" style="gap:4px;flex-wrap:wrap;"><input style="flex:2;min-width:80px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+g6Esc(s.name)+'" oninput="G6RsvcV('+ri+',\'name\',this.value)" placeholder="ชื่องาน">';
+      h+='<select style="height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 4px;" onchange="G6RsvcV('+ri+',\'unit\',this.value)"><option'+(s.unit==='จุด'?' selected':'')+'>จุด</option><option'+(s.unit==='ม.'?' selected':'')+'>ม.</option><option'+(s.unit==='ชุด'?' selected':'')+'>ชุด</option><option'+(s.unit==='เหมา'?' selected':'')+'>เหมา</option></select>';
+      h+='<input type="number" style="flex:0 0 52px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+(s.qty||'')+'" min="0" placeholder="จน." oninput="G6RsvcV('+ri+',\'qty\',this.value)">';
+      h+='<input type="number" style="flex:1;min-width:70px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+(s.rate||'')+'" min="0" placeholder="ราคา/หน่วย" oninput="G6RsvcV('+ri+',\'rate\',this.value)">';
+      var ln=(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0); h+='<span style="color:#047857;font-weight:700;min-width:60px;">= '+Math.round(ln).toLocaleString()+'</span>';
+      h+='<button class="c" style="color:#A32D2D;border-color:#F0C0C0;" onclick="G6RsvcRm('+ri+')">✕</button></div>';
+    });
+    if(servicesTotal()>0&&plumbRows.length)h+='<div class="g6r-banaPr"><span>รวมงานประปา</span><b>'+fmt(plumbRows.reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0))+'</b></div>';
+    // 3. 🟫 งานพื้น/พัดลม
+    h+='<div style="font-weight:700;color:#B45309;margin:12px 0 4px;border-top:1px dashed #ddd;padding-top:10px;">🟫 งานพื้น / พัดลม</div>';
+    h+='<div class="row"><label class="chk"><input type="checkbox" '+(F.on?'checked':'')+' onchange="G6RfloorV(\'on\',this.checked?1:0)"> 🟫 งานปูพื้น</label></div>';
     if(F.on){
       h+='<div class="row"><span class="rl">วัสดุ</span><select onchange="G6RfloorV(\'mat\',this.value)"><option value="smart"'+(F.mat==='smart'?' selected':'')+'>สมาร์ทบอร์ด 20มม.+กัลวาไนซ์ (5,000/ตร.ม.)</option><option value="wood"'+(F.mat==='wood'?' selected':'')+'>ไม้เทียม+กัลวาไนซ์ (5,000/ตร.ม.)</option><option value="spc"'+(F.mat==='spc'?' selected':'')+'>ลามิเนต/SPC (กรอกราคาเอง)</option></select></div>';
       if(F.mat==='spc') h+='<div class="row"><span class="rl">ราคา/ตร.ม.</span><input type="number" value="'+(F.rate||'')+'" min="0" step="100" oninput="G6RfloorV(\'rate\',this.value)"><span class="u">บาท</span></div>';
@@ -8518,23 +8683,119 @@ window.addEventListener('load',ckRefresh);
       h+='<div class="g6r-banaPr"><span>ราคางานพื้น</span><b>'+fmt(floorTotal())+'</b></div>';
       h+='<div class="g6r-wtot" style="color:#92400e;">⚠ ไม่รับประกันพื้นแอ่น/ยวบ · โครงเหล็กกัลวาไนซ์</div>';
     }
-    // 🌀 พัดลมดูดอากาศ
-    h+='<div class="row" style="margin-top:10px;border-top:1px dashed #ddd;padding-top:8px;"><label class="chk"><input type="checkbox" '+(FN.on?'checked':'')+' onchange="G6RfanV(\'on\',this.checked?1:0)"> 🌀 พัดลมดูดอากาศ + ฝาครอบกันแมลง</label></div>';
+    h+='<div class="row" style="margin-top:6px;"><label class="chk"><input type="checkbox" '+(FN.on?'checked':'')+' onchange="G6RfanV(\'on\',this.checked?1:0)"> 🌀 พัดลมดูดอากาศ + ฝาครอบกันแมลง</label></div>';
     if(FN.on){
       h+='<div class="row"><span class="rl">ขนาด</span><input type="number" value="'+(FN.size||'')+'" min="0" step="1" style="max-width:64px" oninput="G6RfanV(\'size\',this.value)"><span class="u">นิ้ว</span></div>';
       h+='<div class="row"><span class="rl">จำนวน</span><input type="number" value="'+(FN.qty||1)+'" min="1" step="1" style="max-width:64px" oninput="G6RfanV(\'qty\',this.value)"><span class="u">ตัว</span></div>';
       h+='<div class="row"><span class="rl">ราคา/ตัว</span><input type="number" value="'+(FN.price||'')+'" min="0" step="100" oninput="G6RfanV(\'price\',this.value)"><span class="u">บาท (ของซื้อมาติด)</span></div>';
       h+='<div class="g6r-banaPr"><span>ราคาพัดลม</span><b>'+fmt(fanTotal())+'</b></div>';
     }
+    // 4. 🔧 งานผรม./รื้อ
+    h+='<div style="font-weight:700;color:#B45309;margin:12px 0 4px;border-top:1px dashed #ddd;padding-top:10px;">🔧 งานผรม. / รื้อ</div>';
+    // 4a. รื้อของเดิม (svc-demo 4 ช่องย่อย ตาม Q1)
+    var DM=SVC.demo||{};
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:4px 0 3px;">มีเรตในระบบแล้ว — ดึงเข้าห้อง (ติ๊กใช้)</div>';
+    h+='<div class="row"><label class="chk"><input type="checkbox" '+(DM.roof?'checked':'')+' onchange="G6RdemoV(\'roof\',this.checked?1:0)"> ☐ รื้อหลังคา</label><span class="u" style="margin-left:8px;">5,000/ชุด</span>';
+    if(DM.roof)h+='<input type="number" value="'+(DM.roof||1)+'" min="1" step="1" style="max-width:48px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 5px;" oninput="G6RdemoV(\'roof\',parseInt(this.value)||1)"><span class="u">ชุด</span>';
+    h+='</div>';
+    h+='<div class="row"><label class="chk"><input type="checkbox" '+(DM.floor?'checked':'')+' onchange="G6RdemoV(\'floor\',this.checked?1:0)"> ☐ กรีดพื้นฝังรางยู</label><span class="u" style="margin-left:8px;">5,000/ราง</span>';
+    if(DM.floor)h+='<input type="number" value="'+(DM.floor||1)+'" min="1" step="1" style="max-width:48px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 5px;" oninput="G6RdemoV(\'floor\',parseInt(this.value)||1)"><span class="u">ราง</span>';
+    h+='</div>';
+    h+='<div class="row"><label class="chk"><input type="checkbox" '+(DM.rail?'checked':'')+' onchange="G6RdemoV(\'rail\',this.checked?1:0)"> ☐ รื้อราวกันตก</label><span class="u" style="margin-left:8px;">3,000 + 700/ม.</span>';
+    if(DM.rail)h+='<input type="number" value="'+(DM.railLen||0)+'" min="0" step="0.5" style="max-width:64px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 5px;" placeholder="ม." oninput="G6RdemoV(\'railLen\',parseFloat(this.value)||0)"><span class="u">ม.</span>';
+    h+='</div>';
+    h+='<div class="row"><label class="chk"><input type="checkbox" '+(DM.door?'checked':'')+' onchange="G6RdemoV(\'door\',this.checked?1:0)"> ☐ รื้อประตูเดิม (เหมา)</label>';
+    if(DM.door)h+='<input type="number" value="'+(DM.door||3000)+'" min="0" step="500" style="max-width:90px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 5px;" oninput="G6RdemoV(\'door\',parseFloat(this.value)||0)"><span class="u">บาท</span>';
+    h+='</div>';
+    if(svcTotal()>0&&(DM.roof||DM.floor||DM.rail||DM.door))h+='<div class="g6r-banaPr"><span>รวมรื้อ</span><b>'+fmt((DM.roof?5000*DM.roof:0)+(DM.floor?5000*DM.floor:0)+(DM.rail?(3000+700*(DM.railLen||0)):0)+(DM.door?DM.door:0))+'</b></div>';
+    // 4b. Protection
+    h+='<div class="row" style="margin-top:6px;"><label class="chk"><input type="checkbox" '+(SVC.protect?'checked':'')+' onchange="G6RtogProtect()"> ☐ Protection พื้น/ผนัง 2,000 min</label></div>';
+    if(SVC.protect){
+      h+='<div class="row"><span class="rl">จุดเพิ่ม</span><input type="number" value="'+(SVC.protectPts||0)+'" min="0" step="1" style="max-width:64px;height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 5px;" oninput="G6RprotectPts(parseInt(this.value)||0)"><span class="u">จุด ×1,000 = '+fmt(2000+(SVC.protectPts||0)*1000)+'</span></div>';
+    }
+    // 4c. งานต่อเติม/รีโนเวท กรอกเอง
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 3px;">งานต่อเติม/รีโนเวท (กรอกเอง)</div>';
+    var RENO_PRESETS=['ปูกระเบื้อง พื้น/ผนัง','เคาน์เตอร์/ท็อปครัว','ก่อ-ฉาบ ผนังอิฐ','ฝ้าเพิ่ม','ทาสี','เทพื้น คสล.','สุขภัณฑ์/ติดตั้ง','บิวท์อินเฟอร์นิเจอร์','อื่นๆ'];
+    h+='<div class="chips" style="flex-wrap:wrap;gap:4px;margin-bottom:6px;">'+RENO_PRESETS.map(function(n){ return '<button class="c" onclick="G6RsvcAdd(\'reno\',\''+n+'\',\'เหมา\')">☐ '+n+'</button>'; }).join('')+'</div>';
+    var renoRows=SV.filter(function(s){return s.cat==='reno';});
+    renoRows.forEach(function(s,idx){ var ri=SV.indexOf(s);
+      h+='<div class="row" style="gap:4px;flex-wrap:wrap;"><input style="flex:2;min-width:80px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+g6Esc(s.name)+'" oninput="G6RsvcV('+ri+',\'name\',this.value)" placeholder="ชื่องาน">';
+      h+='<select style="height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 4px;" onchange="G6RsvcV('+ri+',\'unit\',this.value)"><option'+(s.unit==='ตร.ม.'?' selected':'')+'>ตร.ม.</option><option'+(s.unit==='ม.'?' selected':'')+'>ม.</option><option'+(s.unit==='ชุด'?' selected':'')+'>ชุด</option><option'+(s.unit==='เหมา'?' selected':'')+'>เหมา</option></select>';
+      h+='<input type="number" style="flex:0 0 52px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+(s.qty||'')+'" min="0" placeholder="จน." oninput="G6RsvcV('+ri+',\'qty\',this.value)">';
+      h+='<input type="number" style="flex:1;min-width:70px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;" value="'+(s.rate||'')+'" min="0" placeholder="ราคา/หน่วย" oninput="G6RsvcV('+ri+',\'rate\',this.value)">';
+      var ln=(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0); h+='<span style="color:#047857;font-weight:700;min-width:60px;">= '+Math.round(ln).toLocaleString()+'</span>';
+      h+='<button class="c" style="color:#A32D2D;border-color:#F0C0C0;" onclick="G6RsvcRm('+ri+')">✕</button></div>';
+    });
+    // preset chips (localStorage)
+    var saved=[];try{saved=JSON.parse(localStorage.getItem('jr_g6_rno_presets')||'[]');}catch(e){}
+    if(saved.length){
+      h+='<div style="font-size:11.5px;font-weight:700;color:#374151;margin:6px 0 2px;">📌 รายการที่เซฟไว้</div>';
+      h+='<div class="chips" style="flex-wrap:wrap;gap:4px;">'+saved.map(function(p,pi){ return '<button class="c" onclick="G6RsvcAddPreset('+pi+')">'+g6Esc(p.name)+' · '+Math.round(p.rate||0).toLocaleString()+'/'+(p.unit||'เหมา')+'</button>'; }).join('')+'</div>';
+    }
+    if(renoRows.length){
+      h+='<div style="margin-top:5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      h+='<button class="c" style="border-color:#047857;color:#047857;" onclick="G6RsvcSaveLastReno()">💾 เซฟรายการล่าสุดไว้ใช้ครั้งหน้า</button>';
+      h+='</div>';
+    }
+    var renoTotal=renoRows.reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0);
+    if(renoTotal>0)h+='<div class="g6r-banaPr"><span>รวมงานผรม.อื่นๆ</span><b>'+fmt(renoTotal)+'</b></div>';
+    // 5. 📝 หมายเหตุ (ธง G — reuse REMARK_PRESETS)
+    h+='<div style="font-weight:700;color:#6D28D9;margin:12px 0 4px;border-top:1px dashed #ddd;padding-top:10px;">📝 หมายเหตุท้ายใบ <span style="font-size:11px;font-weight:400;color:#6B7280;">(ติ๊กพรีเซ็ต + กรอกเอง)</span></div>';
+    if(typeof REMARK_PRESETS!=='undefined'&&REMARK_PRESETS){
+      var tickArr=REM.ticked||[];
+      h+='<div class="chips" style="flex-wrap:wrap;gap:4px;">';
+      REMARK_PRESETS.forEach(function(grp){ (grp.items||grp).forEach(function(item){ var txt=item.text||item; var on=tickArr.indexOf(txt)>=0; h+='<button class="c'+(on?' on':'')+'" onclick="G6RremTick(\''+g6Esc(txt)+'\')">'+(on?'☑':'☐')+' '+txt+'</button>'; }); });
+      h+='</div>';
+    }
+    h+='<div class="row" style="margin-top:6px;"><textarea rows="2" style="width:100%;border:1px solid #D1D5DB;border-radius:8px;padding:6px 8px;font-size:12.5px;" placeholder="หมายเหตุเพิ่มเติม..." oninput="G6RremNote(this.value)">'+g6Esc(REM.note||'')+'</textarea></div>';
     bc.innerHTML=h;
   }
-  function sumPage(bc){ var h='<div class="ph">📄 สรุป — ห้องต่อเติม</div>';
-    G6R.sides.forEach(function(s,i){ var desc=s.type==='glass'?(s.cols.length+' ช่อง'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); h+='<div class="row" style="justify-content:space-between;"><span>ด้าน '+L(i)+' · '+desc+'</span><b>'+fmt(sideTotal(s))+'</b></div>'; });
-    if(roofTotalReal()>0)h+='<div class="row" style="justify-content:space-between;"><span>🏠 หลังคา/ฝ้า</span><b>'+fmt(roofTotalReal())+'</b></div>';
-    if(elecTotalReal()>0)h+='<div class="row" style="justify-content:space-between;"><span>⚡ งานไฟ</span><b>'+fmt(elecTotalReal())+'</b></div>';
-    if(floorTotal()>0)h+='<div class="row" style="justify-content:space-between;"><span>🟫 งานปูพื้น</span><b>'+fmt(floorTotal())+'</b></div>';
-    if(fanTotal()>0)h+='<div class="row" style="justify-content:space-between;"><span>🌀 พัดลมดูดอากาศ</span><b>'+fmt(fanTotal())+'</b></div>';
-    h+='<div class="g6r-banaPr"><span>รวมทั้งห้อง (engine จริง · ออปชั่นบานเต็ม ต่อ A3b)</span><b>'+fmt(roomTotal())+'</b></div>';
+  function sumPage(bc){
+    var billMd=G6R._billMode||'o'; // 'o'=ภาพรวม · 'd'=ละเอียด
+    var h='<div class="ph">📄 สรุปราคา — ห้องต่อเติม</div>';
+    // ธง E — toggle 📊/🔍
+    h+='<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">'
+      +'<button class="c'+(billMd==='o'?' on':'')+'" onclick="G6RbillMode(\'o\')">📊 ภาพรวม</button>'
+      +'<button class="c'+(billMd==='d'?' on':'')+'" onclick="G6RbillMode(\'d\')">🔍 ละเอียดทุกจุด</button>'
+      +'<span style="font-size:11px;color:#6B7280;">← ลูกค้าเลือกดูได้ 2 แบบ</span></div>';
+    if(billMd==='o'){
+      // 📊 ภาพรวม — ต่อด้าน + รายส่วน
+      G6R.sides.forEach(function(s,i){
+        var desc=s.type==='glass'?(s.cols.length+' ช่อง · '+s.cols.reduce(function(a,c){return a+c.pcs.length;},0)+' บาน'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง');
+        var pr=sideTotal(s,i);
+        h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>ด้าน '+L(i)+' · '+desc+'</span><b>'+fmt(pr)+'</b></div>';
+        if(s.type==='glass') s.cols.forEach(function(c){c.pcs.forEach(function(pc){var op=g6rPcOpts(pc);h+='<div style="color:#6B7280;font-size:11.5px;padding:1px 0 1px 12px;">• '+g6ModelName(pc.id)+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?' · '+op.join(', '):'')+' = '+fmt(g6rPrice(pc))+'</div>';});});
+      });
+    } else {
+      // 🔍 ละเอียด — แตกรายบาน/ออปชั่น
+      G6R.sides.forEach(function(s,i){
+        var pr=sideTotal(s,i); var desc=s.type==='glass'?(s.cols.length+' ช่อง'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง');
+        h+='<div style="font-weight:700;border-bottom:1px dotted #E5E7EB;padding:3px 0;display:flex;justify-content:space-between;"><span>ด้าน '+L(i)+' · '+desc+'</span><span>'+fmt(pr)+'</span></div>';
+        if(s.type==='glass') s.cols.forEach(function(c){c.pcs.forEach(function(pc){
+          var op=g6rPcOpts(pc); var bpr=g6rPrice(pc);
+          h+='<div style="padding:2px 0 2px 10px;border-bottom:1px dotted #F3F4F6;display:flex;justify-content:space-between;"><span>'+g6ModelName(pc.id)+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?'<br><span style="font-size:11px;color:#6B7280;">'+op.join(' · ')+'</span>':'')+'</span><b>'+fmt(bpr)+'</b></div>';
+        });});
+      });
+    }
+    // รายส่วนเสริม (เหมือนกันทั้ง 2 โหมด)
+    if(roofTotalReal()>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🏠 หลังคา/ฝ้า</span><b>'+fmt(roofTotalReal())+'</b></div>';
+    if(elecTotalReal()>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>⚡ งานไฟ</span><b>'+fmt(elecTotalReal())+'</b></div>';
+    // services
+    var _svcs=G6R.services||[]; var plumbT=_svcs.filter(function(s){return s.cat==='plumb';}).reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0); var renoT=_svcs.filter(function(s){return s.cat==='reno';}).reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0);
+    if(floorTotal()>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🟫 งานปูพื้น</span><b>'+fmt(floorTotal())+'</b></div>';
+    if(fanTotal()>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🌀 พัดลมดูดอากาศ</span><b>'+fmt(fanTotal())+'</b></div>';
+    if(plumbT>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🚰 งานประปา</span><b>'+fmt(plumbT)+'</b></div>';
+    var _SVC=G6R.svc||{}; var _DM=_SVC.demo||{}; var dT=((_DM.roof?5000*parseInt(_DM.roof||0):0)+(_DM.floor?5000*parseInt(_DM.floor||0):0)+(_DM.rail?(3000+700*(parseFloat(_DM.railLen)||0)):0)+(parseFloat(_DM.door)||0));
+    if(dT>0)h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🔧 รื้อของเดิม</span><b>'+fmt(dT)+'</b></div>';
+    if(_SVC.protect){ var ptT=2000+(parseInt(_SVC.protectPts)||0)*1000; h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🛡 Protection</span><b>'+fmt(ptT)+'</b></div>'; }
+    if(renoT>0){
+      if(billMd==='d'){ h+='<div style="font-weight:700;border-bottom:1px dotted #E5E7EB;padding:3px 0;display:flex;justify-content:space-between;"><span>🔧 งานผรม.อื่นๆ</span><span>'+fmt(renoT)+'</span></div>'; _svcs.filter(function(s){return s.cat==='reno';}).forEach(function(s){var ln=(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);if(ln>0)h+='<div style="padding:1px 0 1px 12px;font-size:11.5px;color:#374151;display:flex;justify-content:space-between;"><span>'+s.name+' '+s.qty+' '+s.unit+'</span><span>'+fmt(ln)+'</span></div>';});}
+      else h+='<div class="row" style="justify-content:space-between;border-bottom:1px dotted #E5E7EB;padding:3px 0;"><span>🔧 งานผรม.อื่นๆ</span><b>'+fmt(renoT)+'</b></div>';
+    }
+    // หมายเหตุ
+    var _rem=G6R.remarks||{}; var _remLines=(_rem.ticked||[]).concat(_rem.note&&_rem.note.trim()?[_rem.note.trim()]:[]);
+    if(_remLines.length)h+='<div style="background:#FFFBEB;border-radius:6px;padding:5px 8px;margin-top:4px;font-size:12px;color:#92400e;"><b>หมายเหตุ:</b> '+_remLines.join(' · ')+'</div>';
+    h+='<div class="g6r-banaPr"><span>รวมทั้งห้อง</span><b>'+fmt(roomTotal())+'</b></div>';
     bc.innerHTML=h;
   }
   function refreshGrand(){ var g=mountEl().querySelector('.grand'); if(g)g.textContent=fmt(roomTotal()); if(G6BOUND)G6BOUND(); }
@@ -8580,6 +8841,27 @@ window.addEventListener('load',ckRefresh);
   window.G6RelecV=function(k,v){ G6R.elec[k]=parseFloat(v)||0; render(); };
   window.G6RfloorV=function(k,v){ G6R.floor[k]=(k==='on')?(v?1:0):v; render(); };
   window.G6RfanV=function(k,v){ G6R.fan[k]=(k==='on')?(v?1:0):v; render(); };
+  // ธง C/D — services + svc actions
+  function g6Esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
+  window.G6RsvcAdd=function(cat,name,unit){ if(!G6R.services)G6R.services=[]; G6R.services.push({cat:cat,name:name,unit:unit||'จุด',qty:'',rate:''}); render(); };
+  window.G6RsvcV=function(idx,key,val){ if(!G6R.services||!G6R.services[idx])return; G6R.services[idx][key]=val; refreshGrand(); };
+  window.G6RsvcRm=function(idx){ if(!G6R.services)return; G6R.services.splice(idx,1); render(); };
+  window.G6RdemoV=function(k,v){ if(!G6R.svc)G6R.svc={}; if(!G6R.svc.demo)G6R.svc.demo={}; G6R.svc.demo[k]=v; render(); };
+  window.G6RtogProtect=function(){ if(!G6R.svc)G6R.svc={}; G6R.svc.protect=G6R.svc.protect?0:1; render(); };
+  window.G6RprotectPts=function(v){ if(!G6R.svc)G6R.svc={}; G6R.svc.protectPts=parseInt(v)||0; refreshGrand(); };
+  window.G6RsvcSaveLastReno=function(){ if(!G6R.services)return; var renoRows=G6R.services.filter(function(s){return s.cat==='reno';}); if(!renoRows.length)return; var last=renoRows[renoRows.length-1]; var saved=[]; try{saved=JSON.parse(localStorage.getItem('jr_g6_rno_presets')||'[]');}catch(e){} if(!saved.some(function(p){return p.name===last.name&&p.unit===last.unit&&p.rate===last.rate;})){ saved.push({name:last.name,unit:last.unit,rate:last.rate}); try{localStorage.setItem('jr_g6_rno_presets',JSON.stringify(saved));}catch(e){} } render(); };
+  window.G6RsvcAddPreset=function(pi){ var saved=[]; try{saved=JSON.parse(localStorage.getItem('jr_g6_rno_presets')||'[]');}catch(e){} var p=saved[pi]; if(!p)return; if(!G6R.services)G6R.services=[]; G6R.services.push({cat:'reno',name:p.name||'',unit:p.unit||'เหมา',qty:'1',rate:p.rate||''}); render(); };
+  // ธง G — remarks actions
+  window.G6RremTick=function(txt){ if(!G6R.remarks)G6R.remarks={ticked:[],note:''}; var arr=G6R.remarks.ticked; var i=arr.indexOf(txt); if(i>=0)arr.splice(i,1); else arr.push(txt); render(); };
+  window.G6RremNote=function(v){ if(!G6R.remarks)G6R.remarks={ticked:[],note:''}; G6R.remarks.note=v; };
+  // ธง F/E — billMode toggle
+  window.G6RbillMode=function(m){ G6R._billMode=m; render(); };
+  // ธง B — roomColor + sideOvr actions
+  window.G6RcolorL1=function(on){ if(!G6R.roomColor)G6R.roomColor={on:0,mode:'real',colorIdx:0,colorCode:'',glassIdx:0,l3ColorIdx:0,l3Code:'',l3GlassIdx:0}; G6R.roomColor.on=on?1:0; render(); };
+  window.G6RcolorMode=function(m){ if(!G6R.roomColor)G6R.roomColor={on:1,mode:'real',colorIdx:0,colorCode:'',glassIdx:0,l3ColorIdx:0,l3Code:'',l3GlassIdx:0}; G6R.roomColor.mode=m; render(); };
+  window.G6RcolorSet=function(k,v){ if(!G6R.roomColor)G6R.roomColor={on:1,mode:'real',colorIdx:0,colorCode:'',glassIdx:0,l3ColorIdx:0,l3Code:'',l3GlassIdx:0}; G6R.roomColor[k]=v; render(); };
+  window.G6RovrTog=function(si,on){ if(!G6R.sideOvr)G6R.sideOvr={}; if(on){ G6R.sideOvr[si]=G6R.sideOvr[si]||{on:1,colorIdx:-1,glassIdx:-1}; G6R.sideOvr[si].on=1; } else { delete G6R.sideOvr[si]; } render(); };
+  window.G6RovrSet=function(si,k,v){ if(!G6R.sideOvr)G6R.sideOvr={}; if(!G6R.sideOvr[si])G6R.sideOvr[si]={on:1,colorIdx:-1,glassIdx:-1}; G6R.sideOvr[si][k]=v; refreshGrand(); };
   // dev entry
   window.g6rDev=function(){ host().style.display='block'; if(!host().__g6state)host().__g6state=freshState(); G6R=host().__g6state; G6MOUNT=host(); G6BOUND=null; render(); host().scrollIntoView({behavior:'smooth'}); };
   window.G6R_STATE=G6R;
@@ -8635,23 +8917,37 @@ window.addEventListener('load',ckRefresh);
   window.g6rRoomDetail=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
     G6R.sides.forEach(function(s,i){
       if(s.type==='glass'){ var nb=s.cols.reduce(function(a,c){return a+c.pcs.length;},0);
-        out.push('ด้าน '+L(i)+' ('+s.cols.length+' ช่อง · '+nb+' บาน) = '+Math.round(sideTotal(s)).toLocaleString());
+        out.push('ด้าน '+L(i)+' ('+s.cols.length+' ช่อง · '+nb+' บาน) = '+Math.round(sideTotal(s,i)).toLocaleString());
         s.cols.forEach(function(c){ c.pcs.forEach(function(pc){ var op=g6rPcOpts(pc);
           var _cat=pc.cat||'', _nm=g6ModelName(pc.id); var _lbl=(_cat&&_cat!=='ติดตาย'&&_nm.indexOf(_cat)<0)?(_cat+' '+_nm):_nm; // ใส่ชนิดบานนำหน้ารุ่น กัน "ยูโร" ซ้ำ (บานเปิด/บานเลื่อน)
           out.push('• '+_lbl+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?' · '+op.join(', '):'')); }); });
-      } else if(s.type==='wall'){ out.push('ด้าน '+L(i)+' · ผนังเบา ('+(s.aw||3)+'×'+(s.ah||2.6)+' ม.) = '+Math.round(sideTotal(s)).toLocaleString()); }
+      } else if(s.type==='wall'){ out.push('ด้าน '+L(i)+' · ผนังเบา ('+(s.aw||3)+'×'+(s.ah||2.6)+' ม.) = '+Math.round(sideTotal(s,i)).toLocaleString()); }
     });
     var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')):''; out.push('หลังคา/ฝ้า'+rn+' ('+(R.w||1)+'×'+(R.l||1)+' ม.) = '+Math.round(rf).toLocaleString()); }
     var el=elecTotalReal(); if(el>0){ var E=G6R.elec; out.push('งานไฟ'+(E.down?' · ดาวน์ไลท์ '+E.down+' ดวง':'')+(E.sw?' · สวิตช์ '+E.sw+' จุด':'')+' = '+Math.round(el).toLocaleString()); }
     var _fl=floorTotal(); if(_fl>0){ var F=G6R.floor; var _fmat=F.mat==='wood'?'ไม้เทียม':(F.mat==='spc'?'ลามิเนต/SPC':'สมาร์ทบอร์ด 20มม.'); out.push('งานปูพื้น '+_fmat+' (โครงเหล็กกัลวาไนซ์) '+floorArea().toFixed(1)+' ตร.ม. = '+Math.round(_fl).toLocaleString()+' · ไม่รับประกันพื้นแอ่น/ยวบ'); }
     var _fn=fanTotal(); if(_fn>0){ var FN=G6R.fan; out.push('พัดลมดูดอากาศ + ฝาครอบกันแมลง '+(FN.size||'')+'" จำนวน '+(FN.qty||1)+' ตัว = '+Math.round(_fn).toLocaleString()); }
+    // ธง H — services (ประปา/ผรม.)
+    var _svcs=G6R.services||[]; var plumbSvcs=_svcs.filter(function(s){return s.cat==='plumb';}); var renoSvcs=_svcs.filter(function(s){return s.cat==='reno';}); var plumbT=plumbSvcs.reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0); var renoT=renoSvcs.reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0);
+    if(plumbT>0){ out.push('งานประปา = '+Math.round(plumbT).toLocaleString()); plumbSvcs.forEach(function(s){var ln=(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);if(ln>0)out.push('• '+s.name+' ('+s.qty+' '+s.unit+' × '+s.rate+') = '+Math.round(ln).toLocaleString());}); }
+    var _SVC=G6R.svc||{}; var _DM=_SVC.demo||{}; var demoT=((_DM.roof?5000*parseInt(_DM.roof||0):0)+(_DM.floor?5000*parseInt(_DM.floor||0):0)+(_DM.rail?(3000+700*(parseFloat(_DM.railLen)||0)):0)+(parseFloat(_DM.door)||0));
+    if(demoT>0){ out.push('🔧 รื้อของเดิม = '+Math.round(demoT).toLocaleString()); if(_DM.roof)out.push('• รื้อหลังคา '+_DM.roof+' ชุด = '+Math.round(5000*parseInt(_DM.roof)).toLocaleString()); if(_DM.floor)out.push('• กรีดพื้นฝังรางยู '+_DM.floor+' ราง = '+Math.round(5000*parseInt(_DM.floor)).toLocaleString()); if(_DM.rail)out.push('• รื้อราวกันตก '+(_DM.railLen||0)+' ม. = '+Math.round(3000+700*(parseFloat(_DM.railLen)||0)).toLocaleString()); if(_DM.door)out.push('• รื้อประตูเดิม (เหมา) = '+Math.round(parseFloat(_DM.door)).toLocaleString()); }
+    if(_SVC.protect){ var ptTotal=2000+(parseInt(_SVC.protectPts)||0)*1000; out.push('🛡 Protection พื้น/ผนัง = '+Math.round(ptTotal).toLocaleString()); }
+    if(renoT>0){ out.push('🔧 งานผรม.อื่นๆ = '+Math.round(renoT).toLocaleString()); renoSvcs.forEach(function(s){var ln=(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);if(ln>0)out.push('• '+s.name+' ('+s.qty+' '+s.unit+' × '+s.rate+') = '+Math.round(ln).toLocaleString());}); }
     G6R=sv; return out.join('\n'); };
   window.g6rRoomSummary=function(itemEl){ if(!itemEl||!itemEl.__g6state)return []; var sv=G6R; G6R=itemEl.__g6state; var lines=[];
-    G6R.sides.forEach(function(s,i){ var pr=sideTotal(s); if(pr>0||s.type!=='open'){ var desc=s.type==='glass'?(s.cols.length+' ช่อง · '+s.cols.reduce(function(a,c){return a+c.pcs.length;},0)+' บาน'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); lines.push(['ด้าน '+L(i)+' · '+desc, pr]); } });
+    G6R.sides.forEach(function(s,i){ var pr=sideTotal(s,i); if(pr>0||s.type!=='open'){ var desc=s.type==='glass'?(s.cols.length+' ช่อง · '+s.cols.reduce(function(a,c){return a+c.pcs.length;},0)+' บาน'):(s.type==='wall'?'ผนังเบา':'เปิดโล่ง'); lines.push(['ด้าน '+L(i)+' · '+desc, pr]); } });
     if(roofTotalReal()>0)lines.push(['หลังคา/ฝ้า', roofTotalReal()]);
-    if(elecTotalReal()>0)lines.push(['งานไฟ', elecTotalReal()]);
-    if(floorTotal()>0)lines.push(['งานปูพื้น ('+floorArea().toFixed(1)+' ตร.ม.)', floorTotal()]);
-    if(fanTotal()>0)lines.push(['พัดลมดูดอากาศ '+(G6R.fan.size||'')+'" ×'+(G6R.fan.qty||1), fanTotal()]);
+    if(elecTotalReal()>0)lines.push(['⚡ งานไฟ', elecTotalReal()]);
+    if(floorTotal()>0)lines.push(['🟫 งานปูพื้น ('+floorArea().toFixed(1)+' ตร.ม.)', floorTotal()]);
+    if(fanTotal()>0)lines.push(['🌀 พัดลมดูดอากาศ '+(G6R.fan.size||'')+'" ×'+(G6R.fan.qty||1), fanTotal()]);
+    // ธง H — services/svc
+    var _svcs2=G6R.services||[]; var plumbT2=_svcs2.filter(function(s){return s.cat==='plumb';}).reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0); var renoT2=_svcs2.filter(function(s){return s.cat==='reno';}).reduce(function(a,s){return a+(parseFloat(s.qty)||0)*(parseFloat(s.rate)||0);},0);
+    if(plumbT2>0)lines.push(['🚰 งานประปา', plumbT2]);
+    var _SVC2=G6R.svc||{}; var _DM2=_SVC2.demo||{}; var dT2=((_DM2.roof?5000*parseInt(_DM2.roof||0):0)+(_DM2.floor?5000*parseInt(_DM2.floor||0):0)+(_DM2.rail?(3000+700*(parseFloat(_DM2.railLen)||0)):0)+(parseFloat(_DM2.door)||0));
+    if(dT2>0)lines.push(['🔧 รื้อของเดิม', dT2]);
+    if(_SVC2.protect)lines.push(['🛡 Protection', 2000+(parseInt(_SVC2.protectPts)||0)*1000]);
+    if(renoT2>0)lines.push(['🔧 งานผรม.อื่นๆ', renoT2]);
     G6R=sv; return lines; };
 })();
 </script>
