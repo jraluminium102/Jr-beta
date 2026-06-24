@@ -89,6 +89,10 @@
   .ft-co-colgrid{display:block;margin-top:6px;}
   .ft-co-colgrid .chip-group.chip-sm .chip{padding:3px 8px;font-size:11.5px;}
   .cab-co-l3det>summary{list-style:none;}.cab-co-l3det>summary::-webkit-details-marker{display:none;}
+  .g1co-l3det>summary{list-style:none;}.g1co-l3det>summary::-webkit-details-marker{display:none;}
+  /* D marker (24มิ.ย.): ＋ พับ / － กาง อัตโนมัติ (เลิก literal ＋ ที่ไม่ flip) */
+  .cab-co-l3det>summary::before,.g1co-l3det>summary::before{content:"＋ ";color:#B3151D;font-weight:700;}
+  .cab-co-l3det[open]>summary::before,.g1co-l3det[open]>summary::before{content:"－ ";}
   .cab-co-l3det[open]>summary{color:#B3151D;}
   /* G4 3-box redesign (23มิ.ย.) */
   .g4-prebox{width:100%;display:flex;flex-direction:column;gap:8px;padding:0;}
@@ -5813,7 +5817,7 @@ function buildItemOpts(d){
           +'<span class="o-cabstructcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง <input type="text" class="o-cabstructcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'<select class="o-cabstructcolor" style="display:none;" onchange="calcQuote();"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select></div>'
         +'</div>'// end cab-co-colgrid
-        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">＋ เทียบราคาสีหน้าบาน/โครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
+        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">เทียบราคาสีหน้าบาน/โครงอื่น (L3 ออปชั่น · ไม่บวกยอด)</summary>'
         +'<div style="padding-top:5px;">'
         // L3 ① เทียบสีหน้าบาน (FT · binary ขาว/ดำ↔พิเศษ · ครบเหมือน L2 ① · ดราฟ 24มิ.ย.)
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:2px 0 3px;">L3 ① เทียบสีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT)</span></div>'
@@ -6064,7 +6068,7 @@ function buildItemOpts(d){
         +'</div>'
         // L3 wrap (โชว์หลัง L2 เปิด) — outer div ยังคงถูก toggle ด้วย JS · inner details พับ (จุด2 23มิ.ย.)
         +'<div class="g1co-l3-wrap" style="display:none;flex-direction:column;gap:0;border-top:1px dashed #D1D5DB;padding-top:4px;">'
-          +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">＋ เทียบสี/กระจกอื่น (L3 OPTION · ไม่บวกยอด)</summary>'
+          +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">เทียบสี/กระจกอื่น (L3 OPTION · ไม่บวกยอด)</summary>'
           +'<div style="padding-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'
           +'<label style="font-size:12px;">เทียบสีอลู: <select class="g1co-l3c" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="(function(s){var ci=parseInt(s.value);var c=COLORS[ci];var cw=s.closest(\'.g1co-l3det\').querySelector(\'.g1co-l3code-wrap\');if(cw)cw.style.display=(c&&c.hasCode&&ci>=0)?\'block\':\'none\';})(this);calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3CoOpts+'</select></label>'
           +'<label style="font-size:12px;">เทียบกระจก: <select class="g1co-l3g" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3GlOpts+'</select></label>'
