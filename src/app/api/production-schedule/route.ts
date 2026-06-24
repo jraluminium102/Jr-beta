@@ -15,13 +15,32 @@ export const GET = withRoute(async () => {
   const [{ data: prods }, { data: adhoc }] = await Promise.all([
     ctx.supabase
       .from("productions")
-      .select("id, status, production_queued, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
+      .select("id, job_id, status, production_queued, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
       .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY"]),
     sb
       .from("adhoc_production_tasks")
       .select("*")
       .neq("status", "DONE"),
   ]);
+
+  // ── ดึงชุดงานผลิต (production_sets) ของ job ที่อยู่ในคิว — สำหรับเช็คลิสต์ช่าง ──
+  const jobIds = (prods ?? [])
+    .map((p: Record<string, unknown>) => p.job_id as string | null)
+    .filter((x): x is string => !!x);
+  let setsByJob: Record<string, Record<string, unknown>[]> = {};
+  if (jobIds.length) {
+    const { data: sets } = await sb
+      .from("production_sets")
+      .select("id, job_id, set_label, seq, design_received, glass_installed, qc_before_glass, qc_after_glass, glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, frame_status, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note")
+      .in("job_id", jobIds)
+      .order("seq", { ascending: true })
+      .order("id", { ascending: true });
+    setsByJob = (sets ?? []).reduce((acc: Record<string, Record<string, unknown>[]>, s: Record<string, unknown>) => {
+      const jid = s.job_id as string;
+      (acc[jid] ??= []).push(s);
+      return acc;
+    }, {});
+  }
 
   // ตัดงานที่ job ถูกยกเลิก
   const jobRows = (prods ?? [])
@@ -31,6 +50,7 @@ export const GET = withRoute(async () => {
       return {
         kind: "job" as const,
         id: p.id as string,
+        job_id: (p.job_id as string | null) ?? null,
         title: job?.customer_name ?? "—",
         subtitle: job?.customer_area ?? null,
         job_code: job?.job_code ?? null,
@@ -39,6 +59,7 @@ export const GET = withRoute(async () => {
         install_date: (p.planned_install_date as string | null) ?? null,
         producer_note: (p.producer_note as string | null) ?? null,
         status: p.status as string,
+        sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
       };
     });
 
@@ -56,6 +77,8 @@ export const GET = withRoute(async () => {
     producer_note: (a.producer_note as string | null) ?? null,
     customer_name: (a.customer_name as string | null) ?? null,
     status: (a.status as string) ?? "QUEUED",
+    job_id: null as string | null,
+    sets: [] as Record<string, unknown>[],
   }));
 
   const rows = [...jobRows, ...adhocRows].sort((a, b) =>

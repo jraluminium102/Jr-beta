@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
@@ -10,9 +10,20 @@ import { Plus, X, Check, Trash2, CalendarDays } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
 
+type ProdSet = {
+  id: number; set_label: string; seq: number;
+  design_received: string; glass_installed: string;
+  qc_before_glass: string; qc_after_glass: string;
+  glass_spec: string; screen_type: string; screen_installed: string;
+  glass_order: string; mat_equipment: string; mat_alu_normal: string; mat_alu_painted: string;
+  frame_status: string; measurer_name: string; measure_actual: string | null;
+  must_finish_date: string | null; glass_done_date: string | null;
+  actual_done_date: string | null; install_date: string | null; note: string;
+};
 type SchedRow = {
   kind: "job" | "adhoc";
   id: string;
+  job_id?: string | null;
   title: string;
   subtitle: string | null;
   job_code: string | null;
@@ -22,6 +33,7 @@ type SchedRow = {
   install_date: string | null;
   producer_note: string | null;
   status: string;
+  sets?: ProdSet[];
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -38,6 +50,28 @@ const thShort = (d: string | null) => {
   const [y, m, day] = d.split("-");
   return `${day}/${m}/${(Number(y) + 543) % 100}`;
 };
+
+// ── ค่ามาตรฐาน (ตรงกับ ProductionSetsSection / Excel) ──
+const V_DESIGN_DONE = "ได้รับแบบ";
+const V_DESIGN_UNDONE = "ยังไม่ได้รับแบบ";
+const V_GLASS_DONE = "ใส่แล้ว";
+const V_GLASS_UNDONE = "ยังไม่ใส่";
+const V_QC_PASS = "ผ่าน";
+
+// นับวันถึงเดดไลน์ (เทียบ ISO string ตรงๆ กัน bug DATE same-day)
+function deadlineInfo(must: string | null, done: boolean): { tone: string; text: string } {
+  if (done) return { tone: "done", text: "เสร็จแล้ว" };
+  if (!must) return { tone: "none", text: "ยังไม่กำหนดวันต้องเสร็จ" };
+  const t = today();
+  const diff = Math.round(
+    (new Date(must + "T00:00:00").getTime() - new Date(t + "T00:00:00").getTime()) / 86400000
+  );
+  if (diff < 0) return { tone: "over", text: `เลยกำหนด ${-diff} วัน` };
+  if (diff === 0) return { tone: "today", text: "ต้องเสร็จวันนี้" };
+  if (diff <= 2) return { tone: "soon", text: `เหลือ ${diff} วัน` };
+  return { tone: "normal", text: `เหลือ ${diff} วัน` };
+}
+const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
 export default function ProductionSchedulePage() {
   const { data, isLoading, refetch } = useQuery({
@@ -77,6 +111,21 @@ export default function ProductionSchedulePage() {
   }, [rows, producerFilter]);
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
+
+  // ── มาร์คเช็คลิสต์ช่าง (เขียนลง production_sets ช่องเดียว — ออฟฟิศเห็นทันที) ──
+  const [savingSetId, setSavingSetId] = useState<number | null>(null);
+  const markSet = async (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    setSavingSetId(setId);
+    try {
+      await api.patch(`/production-sets/${setId}`, patch);
+      await refetch();
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ — เช็คเน็ตแล้วลองอีกครั้ง");
+    } finally {
+      setSavingSetId((s) => (s === setId ? null : s));
+    }
+  };
 
   const save = async (r: SchedRow, patch: Partial<SchedRow>) => {
     setDraft((d) => ({ ...d, [r.id]: { ...d[r.id], ...patch } }));
@@ -206,7 +255,8 @@ export default function ProductionSchedulePage() {
                 </div>
                 <div className="space-y-2">
                   {items.map((r) => (
-                    <div key={r.id} className="glass-card rounded-2xl p-3 grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center">
+                    <div key={r.id} className="glass-card rounded-2xl p-3 space-y-3">
+                      <div className="grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center">
                       {/* งาน/ลูกค้า */}
                       <div className="col-span-2 lg:col-span-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -303,6 +353,13 @@ export default function ProductionSchedulePage() {
                           </span>
                         )}
                       </div>
+                      </div>
+                      {r.kind === "job" && r.sets && r.sets.length > 0 && (
+                        <ChangChecklist sets={r.sets} savingSetId={savingSetId} mark={markSet} canMark={canWrite} />
+                      )}
+                      {r.kind === "job" && r.job_id && (!r.sets || r.sets.length === 0) && (
+                        <p className="text-[12px] text-amber-200/90 bg-amber-500/10 border border-amber-300/20 rounded-xl px-3 py-2">⚠️ ยังไม่มีชุดงาน — ออฟฟิศลงรายละเอียดที่หน้า “ผลิต” (คลิกงานนี้) ก่อน ช่างถึงจะเห็นเช็คลิสต์</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -315,6 +372,137 @@ export default function ProductionSchedulePage() {
       {addOpen && <AddModal producerList={producerList} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
     </div>
   );
+}
+
+// ════════ เช็คลิสต์ชุดงานสำหรับช่าง (มือถือ) ════════
+function ChangChecklist({ sets, savingSetId, mark, canMark }: {
+  sets: ProdSet[];
+  savingSetId: number | null;
+  mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
+  canMark: boolean;
+}) {
+  return (
+    <div className="space-y-2 border-t border-white/10 pt-2.5">
+      {sets.map((s) => <SetCard key={s.id} s={s} saving={savingSetId === s.id} mark={mark} canMark={canMark} />)}
+    </div>
+  );
+}
+
+function SetCard({ s, saving, mark, canMark }: {
+  s: ProdSet; saving: boolean;
+  mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
+  canMark: boolean;
+}) {
+  const [showMore, setShowMore] = useState(false);
+  const done = setIsDone(s);
+  const dl = deadlineInfo(s.must_finish_date, done);
+  const dlTone: Record<string, string> = {
+    over: "bg-rose-500/25 text-rose-100 ring-1 ring-rose-400/40",
+    today: "bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/40",
+    soon: "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/40",
+    normal: "bg-white/10 text-white/80",
+    none: "bg-white/8 text-white/45",
+    done: "bg-white/8 text-white/45",
+  };
+  const hasScreen = !!(s.screen_type && s.screen_type.trim());
+  const screenNotInstalled = hasScreen && s.screen_installed !== V_GLASS_DONE;
+
+  const designDone = s.design_received === V_DESIGN_DONE;
+  const glassDone = s.glass_installed === V_GLASS_DONE;
+  const qcBefore = s.qc_before_glass === V_QC_PASS;
+  const qcAfter = s.qc_after_glass === V_QC_PASS;
+  const qcDone = qcBefore && qcAfter;
+
+  return (
+    <div className={`rounded-xl border border-white/10 bg-white/5 p-3 ${done ? "opacity-60" : ""}`}>
+      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+        <span className="text-white font-semibold text-[15px]">{s.set_label || "ชุดงาน"}</span>
+        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-md ${dlTone[dl.tone]}`}>
+          {dl.tone === "over" && "🔴 "}{dl.tone === "soon" && "⚠️ "}{dl.text}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 mb-1.5 text-[12px]">
+        {s.must_finish_date && <span className="tnum text-white/85">⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
+        {s.install_date && <span className="tnum text-white/55">· 🔧 ติดตั้ง {thShort(s.install_date)}</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+        {hasScreen ? (
+          <span className="inline-flex items-center gap-1 text-[12px] bg-sky-500/20 text-sky-100 rounded-md px-2 py-0.5">🪟 {s.screen_type}{screenNotInstalled && <span className="text-amber-200"> · ยังไม่ใส่</span>}</span>
+        ) : (
+          <span className="text-[11px] text-white/40">ไม่มีมุ้ง</span>
+        )}
+        {s.glass_spec && <span className="text-[12px] text-white/70 truncate max-w-[60%]">🟦 {s.glass_spec}</span>}
+      </div>
+
+      {canMark ? (
+        <div className="grid grid-cols-3 gap-1.5">
+          <MarkBtn label={designDone ? "ได้แบบแล้ว" : "ได้แบบ"} done={designDone} saving={saving}
+            onClick={() => designDone
+              ? mark(s.id, { design_received: V_DESIGN_UNDONE }, "ยกเลิก “ได้แบบแล้ว” ?")
+              : mark(s.id, { design_received: V_DESIGN_DONE })} />
+          <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
+            onClick={() => glassDone
+              ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
+              : mark(s.id, { glass_installed: V_GLASS_DONE })} />
+          <MarkBtn label={qcDone ? "ตรวจผ่านครบ" : qcBefore ? "ตรวจหลังใส่" : "ตรวจก่อนสั่ง"} done={qcDone} half={qcBefore && !qcAfter} saving={saving}
+            sub={<span className="text-[9px] tracking-widest">{qcBefore ? "●" : "○"}{qcAfter ? "●" : "○"}</span>}
+            onClick={() => {
+              if (qcDone) return mark(s.id, { qc_after_glass: "" }, "ยกเลิก QC หลังใส่กระจก ?");
+              if (!qcBefore) return mark(s.id, { qc_before_glass: V_QC_PASS });
+              return mark(s.id, { qc_after_glass: V_QC_PASS });
+            }} />
+        </div>
+      ) : (
+        <div className="flex gap-1.5 text-[11px]">
+          <StatusPill ok={designDone} label="แบบ" />
+          <StatusPill ok={glassDone} label="กระจก" />
+          <StatusPill ok={qcDone} label="QC" />
+        </div>
+      )}
+
+      <button onClick={() => setShowMore((x) => !x)} className="focusable pressable mt-2 text-[11px] text-white/50 hover:text-white/80 min-h-[32px]">
+        {showMore ? "▲ ซ่อนรายละเอียด" : "▼ ดูรายละเอียดทั้งหมด"}
+      </button>
+      {showMore && (
+        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+          <RoRow label="คนวัด" v={s.measurer_name} />
+          <RoRow label="วันวัด" v={s.measure_actual ? thShort(s.measure_actual) : ""} />
+          <RoRow label="โครง/โรงงาน" v={s.frame_status} />
+          <RoRow label="สั่งกระจก" v={s.glass_order} />
+          <RoRow label="อุปกรณ์" v={s.mat_equipment} />
+          <RoRow label="อลู ปกติ" v={s.mat_alu_normal} />
+          <RoRow label="อลู อบสี" v={s.mat_alu_painted} />
+          <RoRow label="ใส่มุ้ง" v={s.screen_installed} />
+          <RoRow label="ใส่กระจกเสร็จ" v={s.glass_done_date ? thShort(s.glass_done_date) : ""} />
+          <RoRow label="เสร็จจริง" v={s.actual_done_date ? thShort(s.actual_done_date) : ""} />
+          {s.note && <div className="col-span-2"><RoRow label="หมายเหตุ" v={s.note} /></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarkBtn({ label, done, half, saving, sub, onClick }: { label: string; done: boolean; half?: boolean; saving: boolean; sub?: ReactNode; onClick: () => void }) {
+  const cls = done ? "bg-emerald-500/90 text-white" : half ? "bg-amber-500/80 text-white" : "bg-white/8 text-white/70 border border-white/12";
+  return (
+    <button onClick={onClick} disabled={saving}
+      className={`focusable pressable rounded-xl min-h-[56px] px-1 flex flex-col items-center justify-center gap-0.5 text-[12px] font-semibold ${cls} disabled:opacity-60`}>
+      {saving ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+        : <>{done && <Check size={15} />}<span className="leading-tight text-center">{label}</span>{sub}</>}
+    </button>
+  );
+}
+
+function StatusPill({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 ${ok ? "bg-emerald-500/20 text-emerald-200" : "bg-white/8 text-white/45"}`}>
+      {ok ? <Check size={12} /> : "○"} {label}
+    </span>
+  );
+}
+
+function RoRow({ label, v }: { label: string; v: string }) {
+  return <div><span className="text-white/40">{label}: </span><span className="text-white/75">{v || "—"}</span></div>;
 }
 
 // ── Modal เพิ่มงานผลิต (จดเอง / เลือกจากงานในระบบ) ──
