@@ -112,6 +112,29 @@ if (ch4) {
 // ===== C — ลบ imp31 (ตัด product) =====
 add("C", !/id:\s*['"]imp31['"]/.test(SRC), "ลบ imp31 ออกจาก PRODUCTS", /id:\s*['"]imp31['"]/.test(SRC) ? "ยังพบ id:'imp31' ใน source → ยังไม่ลบ" : "ลบแล้ว");
 
+// ===== MODE — G1 ปุ่มโหมด 🟢/🔵 ต้องเป็น radio group เดียว (กดสลับได้จริง) =====
+if (ch1) {
+  const modes = ch1.querySelectorAll(".g1co-l2mode");
+  const sameName = modes.length === 2 && modes[0].name === modes[1].name;
+  add("MODE", sameName, "G1 ปุ่มโหมด 🟢/🔵 = radio group เดียว", sameName ? "name ตรงกัน ✓" : "name คนละชื่อ → กดสลับไม่ได้: " + Array.prototype.map.call(modes, m => m.name).join(" / "));
+  if (modes.length === 2) {
+    modes[0].checked = true; modes[1].checked = false;
+    modes[1].click();
+    const toggled = modes[1].checked && !modes[0].checked;
+    add("MODE", toggled, "G1 กด 🔵 → 🟢 ปิด (toggle จริง)", toggled ? "สลับถูก ✓" : "กด 🔵 แล้ว 🟢 ยังติด = toggle พัง");
+  }
+}
+
+// ===== B-ft — G4 ฝาตู้ (future_tech) ต้องมีกล่องเลือกสี =====
+const ch4f = g4item("future_tech");
+if (ch4f) {
+  const ftGrid = ch4f.querySelector(".cab-co-colgrid, .ft-co-colgrid");
+  // ต้องเป็นกล่องสีจริง (colgrid เหมือนตู้อลู) ไม่ใช่ .i-color ที่ซ่อนอยู่
+  // หมายเหตุ: ห้ามใช้ .hide ใน closest() — แท็บ calculator อยู่ใน section#m-quote.hide (jsdom) จะ false-fail (กับดัก verify-real-browser) → เช็คแค่ inline display:none
+  const ftColor = !!ftGrid && !(ftGrid.closest("[style*='display:none'],[style*='display: none']"));
+  add("B", ftColor, "G4 ฝาตู้ มีกล่องเลือกสีจริง (colgrid เหมือนตู้อลู)", ftColor ? "พบกล่องสีฝาตู้ ✓" : "ฝาตู้ไม่มีกล่องสี (colgrid) → เพิ่มกล่องสีฝาตู้ให้เห็น+กดได้ (engine รองรับ ftCoMode แล้ว)");
+}
+
 // ===== sanity — COLORS 13 / GLASS 66 (นับจาก dropdown ที่มี) =====
 if (ch1) {
   const anyColor = ch1.querySelector(".g1co-l3c, .i-color");

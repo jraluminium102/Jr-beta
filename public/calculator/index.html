@@ -85,6 +85,9 @@
   .cab-co-colgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:4px;}
   @media(max-width:560px){.cab-co-colgrid{grid-template-columns:1fr;}}
   .cab-co-colgrid .chip-group.chip-sm .chip{padding:3px 8px;font-size:11.5px;}
+  /* G4 ฝาตู้ colgrid (24มิ.ย.) */
+  .ft-co-colgrid{display:block;margin-top:6px;}
+  .ft-co-colgrid .chip-group.chip-sm .chip{padding:3px 8px;font-size:11.5px;}
   .cab-co-l3det>summary{list-style:none;}.cab-co-l3det>summary::-webkit-details-marker{display:none;}
   .cab-co-l3det[open]>summary{color:#B3151D;}
   /* G4 3-box redesign (23มิ.ย.) */
@@ -5942,10 +5945,12 @@ function buildItemOpts(d){
           +'<button type="button" class="chip o-ftcomode-opt" data-val="opt" onclick="ftCoSetMode(this.closest(\'.ch\'),\'opt\')">🔵 ออปชั่น</button>'
         +'</div>'
         +'<input type="hidden" class="o-ftcomode" value="real">'
+      +'</div>'// end ft-co-body
+      +'<div class="ft-co-colgrid" style="margin-top:6px;">'
         +'<label style="width:100%;display:block;margin-bottom:5px;">วัสดุหน้าบาน <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="alu" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">อลู (FT)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-ftmat\');ftMatCascade(this.closest(\'.ch\'));calcQuote();">กระจก</button></div><select class="o-ftmat" style="display:none;" onchange="ftMatCascade(this.closest(\'.ch\'));calcQuote();"><option value="alu" selected>อลู (FT)</option><option value="glass">กระจก</option></select><div style="font-size:11px;color:#6B7280;margin-top:3px;">กระจก = ราคาฐาน FT เดิม + สีกระจก spread×พื้นที่/บาน</div></label>'
         +'<div class="ft-alucolor-row" style="margin-bottom:5px;">สีฝาตู้ (อลู FT) <select class="o-ftcolor" style="display:none;"><option value="0">ขาว/ดำ (ฟรี)</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>'+msftColorChips('o-ftcolor','0','0','ขาว/ดำ (ฟรี)')+' <span style="font-size:11px;color:#B3151D;">⚠ สีเส้นสำเร็จ ดูตัวอย่างจริงก่อน</span></div>'
         +'<div class="ft-glasscolor-row" style="display:none;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;">สีกระจก (ธรรมดา 6 มม.) <span style="font-size:11px;color:#6B7280;font-weight:400;">เรต R3.9</span></div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="0" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ใส (+0)</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ฝ้า +500</button><button type="button" class="chip" data-val="500" onclick="chSetChip(this,\'o-ftglasscolor\');calcQuote();">ชาดำ +500</button></div><select class="o-ftglasscolor" style="display:none;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="500">ฝ้า</option><option value="500">ชาดำ</option></select></div>'
-      +'</div>'// end ft-co-body
+      +'</div>'// end ft-co-colgrid
       +'</div>';
     h+='<div class="g4-fld"><label class="g4-lbl" style="font-weight:400;font-size:13px;">รหัสสี (เฉพาะสีพิเศษ/อบ) <input type="text" class="o-ftcolorcode" placeholder="เช่น KL10232A" style="width:200px;height:32px;"></label></div>';
     h+='</div></div>';  // close g4-body + g4-b2
@@ -6030,7 +6035,7 @@ function buildItemOpts(d){
         +'<div class="g1-rare-body" style="display:none;flex-direction:column;gap:8px;padding-top:8px;">'
           // L2 mode radio
           +'<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;">'
-          +'<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:3px 10px;"><input type="radio" class="g1co-l2mode" name="g1co-l2mode-'+Math.random().toString(36).slice(2)+'" value="1" checked onchange="g1L2ModeChange(this)"> <span>🟢 ใช้จริง (บวกยอด)</span></label>'
+          +'<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:3px 10px;"><input type="radio" class="g1co-l2mode" name="g1co-l2mode-SAMENAME" value="1" checked onchange="g1L2ModeChange(this)"> <span>🟢 ใช้จริง (บวกยอด)</span></label>'
           +'<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:3px 10px;"><input type="radio" class="g1co-l2mode" name="g1co-l2mode-SAMENAME" value="opt" onchange="g1L2ModeChange(this)"> <span>🔵 ออปชั่น (ไม่บวกยอด)</span></label>'
           +'</div>'
         +'</div>'
