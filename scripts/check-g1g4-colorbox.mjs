@@ -143,6 +143,31 @@ if (ch1) {
   if (anyGlass) add("sanity", optCount(anyGlass) >= 60, "GLASS dropdown ≥60", `${optCount(anyGlass)} options`);
 }
 
+// ===== DRAFT — G1 ต้องไม่มี chip "L3 อัปเป็นอบพิเศษ" (ดราฟ = L2 dropdown เดียว · L3 = เทียบ) =====
+// ⚠ บทเรียน false-green 24มิ.ย.: chip box เก่า (colorDrillRenderL3) render เฉพาะตอน "เปิด L2" (เอาติ๊กสีตามทั้งใบออก)
+//   → ต้องกด L1 ออกจริงก่อนตรวจ ไม่งั้น static check เห็น innerHTML ตอน L1 ติ๊ก (body ซ่อน) = ผ่านลวง
+if (ch1) {
+  const l1cb = ch1.querySelector(".g1co-l1cb");
+  if (l1cb) { l1cb.checked = false; try { w.g1L1Change(l1cb); } catch (e) {} }   // เปิด L2 = สถานะที่ chip เก่าเคยโผล่
+  const drillChip = !!ch1.querySelector(".color-drill, .glass-drill");           // ชิป drill ที่ทับ dropdown
+  const hasUpText = (ch1.innerHTML || "").indexOf("อัปเป็นอบพิเศษ") >= 0 || (ch1.innerHTML || "").indexOf("อัปอบพิเศษ") >= 0;
+  const l2cVisible = (() => { const s = ch1.querySelector(".g1co-l2c"); return !!s && (s.style.display !== "none"); })();
+  const ok = !drillChip && !hasUpText && l2cVisible;
+  add("DRAFT", ok, "G1 เปิด L2 → dropdown สีโชว์ · ไม่มีชิป/อัปอบพิเศษ (กดจริง)",
+    ok ? "L2 = dropdown ครบ · ไม่มี chip/อัปอบพิเศษ ✓" :
+    (drillChip ? "ยังมีชิป .color-drill/.glass-drill ทับ dropdown → ตัด colorDrillRenderL3" :
+     hasUpText ? "ยังมีกล่อง 'อัปเป็นอบพิเศษ' (renderer เก่า)" :
+     "เปิด L2 แล้ว dropdown สี (g1co-l2c) ไม่โชว์ → ตรวจ display"));
+}
+// ===== DRAFT — G4 L3 ต้องมีเทียบสีหน้าบาน (ครบเหมือน L2 · ดราฟแก้ 24มิ.ย.) =====
+{
+  const ch4d = g4item(null);
+  if (ch4d) {
+    const ftL3 = (ch4d.innerHTML || "").indexOf("เทียบสีหน้าบาน") >= 0 || !!ch4d.querySelector(".g4l3fr, .cab-l3fr, [onchange*='l3fr'], [onchange*='L3fr']");
+    add("DRAFT", ftL3, "G4 L3 มีเทียบสีหน้าบาน (ครบเหมือน L2)", ftL3 ? "มีเทียบสีหน้าบาน ✓" : "G4 L3 ขาดเทียบสีหน้าบาน → เพิ่มให้ครบ (หน้าบาน/โครง/กระจก)");
+  }
+}
+
 // ===== report =====
 const pass = rows.filter(r => r.pass).length, fail = rows.length - pass;
 console.log(`\n🚦 GATE กล่องสี L1/L2/L3 (G1+G4) — 🟢 ${pass} ผ่าน · 🔴 ${fail} ไม่ผ่าน · รวม ${rows.length} เกณฑ์`);
