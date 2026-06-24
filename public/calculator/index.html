@@ -4095,6 +4095,8 @@ function g2FinCoToggle(btn){ var sel=g2FinSel(btn); if(!sel)return; var isOn=(se
 function g2FinName(inp){ var w=inp.closest('.g2fin-wrap'); if(!w)return; var s=w.previousElementSibling; while(s&&s.tagName!=='SELECT')s=s.previousElementSibling; if(!s)return; s.dataset.g2name=inp.value; s.dispatchEvent(new Event('change',{bubbles:true})); }  // เฟส2: เก็บชื่อสีพิเศษ (ไม่ re-render กัน focus หลุด · ไม่กระทบราคา)
 // เฟส2: ชื่อสีพิเศษที่จะลงใบ — special + กรอกชื่อ → "(ชื่อ)" · special + ไม่กรอก → "· ⚠ ระบุชื่อสี"
 function g2FinNameSuffix(sel){ if(!sel)return ''; var o=sel.options[sel.selectedIndex]; if(!o||g2FinCat(g2FinLabel(o))!=='special')return ''; var nm=(sel.dataset.g2name||'').trim(); return nm?(' ('+nm+')'):' · ⚠ ระบุชื่อสี'; }
+// rnFinPick: ชิปสีอลูระแนง — ตั้ง selectedIndex (กัน value ซ้ำ ขาว/ดำ=0) + fire change → readItem เดิม (25มิ.ย.)
+function rnFinPick(btn){ var ch=btn.closest('.ch'); if(!ch)return; var sel=ch.querySelector('.o-finish'); if(!sel)return; var idx=parseInt(btn.dataset.ridx)||0; ch.querySelectorAll('.chip[onclick*="rnFinPick"]').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); sel.selectedIndex=idx; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
@@ -5969,7 +5971,12 @@ function buildItemOpts(d){
       h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
     }
   }
-  if(p.fin){ h+='<label class="opt">ผิว/สี ระแนง <select class="o-finish" style="width:auto;height:32px;"><option value="0" selected data-n="สีอบขาว">สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+' +'+fmt(p.fin[k])+'/ตร.ม.</option>';}).join('')+'</select></label>';
+  if(p.fin){ // ดราฟ 23มิ.ย.: สีอลูระแนง = ชิป 5 ตัว (อบขาว/ดำ ฟรี + ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ +เรตตามรุ่น) — hidden select = source of truth, data-chipped=1 ข้าม g2FinDrill
+    var _rnFSelOpts='<option value="0" data-n="สีอบขาว" selected>สีอบขาว</option><option value="0" data-n="สีดำ">สีดำ</option>'+Object.keys(p.fin).map(function(k){return '<option value="'+p.fin[k]+'" data-n="'+k+'">'+k+'</option>';}).join('');
+    var _rnFDotMap={'สีเทาซาฮาร่า':['#8a8175','เทาซาฮาร่า'],'สีลายไม้สต๊อก':['#9c6b3f','ลายไม้สต๊อก'],'อบสีพิเศษ':['#b3122a','อบพิเศษ'],'อบสีลายไม้':['#7a4a1e','ลายไม้พิเศษ']};
+    var _rnFChipHtml='<button type="button" class="chip sm on" data-ridx="0" onclick="rnFinPick(this)"><span class="cdot" style="background:#f9f9f9;"></span>อบขาว</button>'+'<button type="button" class="chip sm" data-ridx="1" onclick="rnFinPick(this)"><span class="cdot" style="background:#222;"></span>ดำ</button>';
+    var _rnFi=2; Object.keys(p.fin).forEach(function(k){ var _dm=_rnFDotMap[k]||[null,k]; _rnFChipHtml+='<button type="button" class="chip sm" data-ridx="'+_rnFi+'" onclick="rnFinPick(this)">'+(_dm[0]?'<span class="cdot" style="background:'+_dm[0]+';"></span>':'')+_dm[1]+' <span style="font-size:11px;opacity:.65;">+'+fmt(p.fin[k])+'</span></button>'; _rnFi++; });
+    h+='<label class="opt" style="width:100%;">สีอลู <select class="o-finish" style="display:none;" data-chipped="1">'+_rnFSelOpts+'</select><div class="chip-group chip-sm">'+_rnFChipHtml+'</div></label>';
     // ④ (23มิ.ย.): ออปชั่นเทียบราคาสีอบ → บรรทัด OPTION ในใบ (ไม่บวกยอด · ไม่แตะ calcUnit) · โมเดล G2 ระแนง: finish×พื้นที่
     // B1 (24มิ.ย.): o-rnfinopt → ชิป (hidden select backing + rfChips dynamic จาก p.fin)
     var _rnfinOpts=[['','— ไม่เทียบ —'],['0','สีอบขาว']].concat(Object.keys(p.fin).map(function(k){return [String(p.fin[k]),k+' (+'+fmt(p.fin[k])+'/ตร.ม.)'];}));
