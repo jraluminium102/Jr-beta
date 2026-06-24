@@ -3479,9 +3479,9 @@ function groupGHOpts(ch){
   var isRoof = !!(ch.querySelector('.o-roofend') || ch.querySelector('.o-roofbatten'));
   var CATS = isRoof ? [
     // ดราฟ G3 newstyle (23มิ.ย. · ยุบ 6→3 กล่องตายตัว ตามดราฟ · ตัดลาก/ตัดราคาหัวกล่อง · ชิปสวยคงเดิม): ①สเปกหลัก+รางน้ำ ②ออปชั่นหลัก ③เสริม
-    {key:'① สเปกหลัก · รางน้ำ', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','ชนิดฟิล์ม','ความหนากระจก','เทียบราคาสีโครง','สีโครงอลู','แป ','โครงสร้าง','ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง']},
-    {key:'② ออปชั่นหลัก (เลื่อน · ผสม · เหล็ก · ฝ้า)', open:false, sub:{key:'🏗️ โครงเหล็กเสริม · ของเสริมหลังคา', kw:['เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']}, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์','ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2','ฝ้า','เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ','เพลท','เหล็กดึง']},
-    {key:'③ ออปชั่นเสริม · หมายเหตุ', open:false, kw:[]} // catch-all: งานพิเศษ · รื้อของเดิม
+    {key:'① สเปกหลัก · รางน้ำ', open:true, kw:['สีวัสดุมุง','สีเมทัลชีท','สีชินโคไลท์','ชนิดฟิล์ม','ความหนากระจก','เทียบราคาสีโครง','สีโครงอลู','แป ','โครงสร้าง','ปลายหลังคา','ปิดปลายกันน้ำ','ระบบระบาย','ระบบรางน้ำ','ชนิดราง','ท่อน้ำทิ้ง','ตะแกรง','ลูกค้าเห็นตัวอย่าง']}, // จุด3 fix 25มิ.ย.: i-rfsampleconfirm → B1
+    {key:'② ออปชั่นหลัก (เลื่อน · ผสม · เหล็ก · ฝ้า)', open:false, sub:{key:'🏗️ โครงเหล็กเสริม · ของเสริมหลังคา', kw:['เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','เพลท','เหล็กดึง']}, kw:['หลังคาเลื่อน','จำนวนบานเลื่อน','บานติดตาย','พื้นที่เลื่อน','ชนิดเลื่อน','มอเตอร์','ต่อปลายวัสดุ','หลังคาผสม','พื้นที่ส่วนที่ 2','ฝ้า','เสาแผง','ตั้งเสา','คานเหล็ก','ซ่อนสโลป','เพลท','เหล็กดึง']}, // จุด4 fix 25มิ.ย.: ตัดงานปิด/ซ่อน/รอยต่อออก → ย้ายไป CATS[2]
+    {key:'③ ออปชั่นเสริม · หมายเหตุ', open:false, kw:['โซ่รางน้ำ','ครอบท่อ','ปิดซ่อนราง','ครอบคาน','วัสดุปิดรอยต่อ']} // catch-all + จุด4: งานปิด/ซ่อน/รอยต่อ 5 ตัว
   ] : [
     // ALLG-v2 (มติพี่นัท): รวม 7 หมวด → 4 (+ตู้) · array = ลำดับ match (เฉพาะเจาะจงก่อน) · disp = ลำดับแสดง
     // มือจับ·มุ้ง·คาด ต้อง match ก่อน ธรณี (o-mosq มีคำ 'ติดตาย' ในออปชั่น) · disp ให้ธรณีแสดงก่อน
@@ -5446,7 +5446,7 @@ function buildItemOpts(d){
     // ③ checkbox ยืนยันตัวอย่าง (ดราฟ G3 22มิ.ย.) — ทุกหลังคา ไม่ขึ้นกับสีชุบ · ขึ้นใบเมื่อติ๊ก
     h+='<label class="chk" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:9px;cursor:pointer;font-size:12.5px;color:#374151;background:#fff;"><input type="checkbox" class="i-rfsampleconfirm" style="width:17px;height:17px;accent-color:#059669;" onchange="calcQuote();"> 📸 ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</label>';
     // A: แป (ดราฟ 22มิ.ย.: อยู่หลังสีโครง ก่อนต่อปลายวัสดุที่ 2)
-    h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปคู่',true)+'</label>';
+    h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว" selected>แปเดี่ยว</option><option value="แปคู่">แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปเดี่ยว',true)+'</label>';
     // B: โครงสร้าง (ชิป · onchange เดิม warn เหล็กชุบ)
     h+='<label class="opt" style="width:100%;">โครงสร้าง <select class="o-roofframe" style="display:none;" onchange="var w=this.closest(\'.ch\').querySelector(\'.o-roofframe-warn\'); if(w) w.style.display=(this.value===\'โครงเหล็กชุบซิงค์\'?\'inline\':\'none\');"><option value="โครงอลูมิเนียม" selected>โครงอลูมิเนียม</option><option value="โครงเหล็กชุบซิงค์">โครงเหล็กชุบซิงค์</option></select>'+rfChips('o-roofframe',[['โครงอลูมิเนียม','โครงอลูมิเนียม'],['โครงเหล็กชุบซิงค์','โครงเหล็กชุบซิงค์']],'โครงอลูมิเนียม',true)+' <span class="o-roofframe-warn" style="display:none;color:#c0392b;font-size:11px;">&#9888; ราคาเท่าโครงอลู — เช็คราคาเหล็กชุบภายหลัง</span></label>';
     // FIX-12(G3): หลังคาผสม 2 วัสดุ — ต่อปลายวัสดุที่ 2 คิด ตร.ม.แยก (มติพี่นัท · feature)
@@ -5488,7 +5488,7 @@ function buildItemOpts(d){
     // C: ปลายหลังคา + chain D — option[1]=รางน้ำ (no-op) เพื่อให้ enableAllOpts ไม่คิดเงิน
     // ข้อ8: ตัดตัวเลือก "ปิดปลาย" (auto กว้าง) ออก — กันคิดซ้ำกับ "ปิดปลายกันน้ำ" (o-rfeave กรอกยาวเอง) ในของเสริม
     // G3-round2 C: ปลายหลังคา 3 ตัวเลือก single-select (ปล่อย / มีรางน้ำ / ปิดปลายกันน้ำกระเด็น) · ชิป (chSetChip fire change → onchange เดิมทำงาน)
-    h+='<label class="opt" style="width:100%;">ปลายหลังคา <select class="o-roofend" style="display:none;" onchange="var d=this.closest(\'.ch\'); var wp=d.querySelector(\'.o-guttersys-wrap\'); if(wp) wp.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\'); var ew=d.querySelector(\'.o-eave-wrap\'); if(ew) ew.style.display=(this.value===\'ปิดปลาย\'?\'block\':\'none\'); var iw=d.querySelector(\'.i-w\'), gl=d.querySelector(\'.o-rfgutlen\'), ev=d.querySelector(\'.o-rfeave\'); if(this.value===\'รางน้ำ\'){ if(gl&&iw&&(!gl.value||gl.value===\'0\')) gl.value=iw.value; if(ev) ev.value=\'0\'; } else if(this.value===\'ปิดปลาย\'){ if(ev&&iw&&(!ev.value||ev.value===\'0\')) ev.value=iw.value; if(gl) gl.value=\'0\'; } else { if(gl) gl.value=\'0\'; if(ev) ev.value=\'0\'; } calcQuote();"><option value="ปล่อย" selected>ปล่อย</option><option value="รางน้ำ">มีรางน้ำ</option><option value="ปิดปลาย">ปิดปลายกันน้ำกระเด็น</option></select><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="ปล่อย" onclick="chSetChip(this,\'o-roofend\')">ปล่อย</button><button type="button" class="chip" data-val="รางน้ำ" onclick="chSetChip(this,\'o-roofend\')">มีรางน้ำ</button><button type="button" class="chip" data-val="ปิดปลาย" onclick="chSetChip(this,\'o-roofend\')">ปิดปลายกันน้ำ</button></div><span style="font-size:11px;color:#666;display:block;margin-top:2px;">"ปิดปลายกันน้ำ" = กันน้ำกระเด็น (1,000/ม.)</span></label>';
+    h+='<label class="opt" style="width:100%;">ปลายหลังคา <select class="o-roofend" style="display:none;" onchange="var d=this.closest(\'.ch\'); var wp=d.querySelector(\'.o-guttersys-wrap\'); if(wp) wp.style.display=(this.value===\'รางน้ำ\'?\'block\':\'none\'); var ew=d.querySelector(\'.o-eave-wrap\'); if(ew) ew.style.display=(this.value===\'ปิดปลาย\'?\'block\':\'none\'); var iw=d.querySelector(\'.i-w\'), gl=d.querySelector(\'.o-rfgutlen\'), ev=d.querySelector(\'.o-rfeave\'); if(this.value===\'รางน้ำ\'){ if(gl&&iw&&(!gl.value||gl.value===\'0\')) gl.value=iw.value; if(ev) ev.value=\'0\'; } else if(this.value===\'ปิดปลาย\'){ if(ev&&iw&&(!ev.value||ev.value===\'0\')) ev.value=iw.value; if(gl) gl.value=\'0\'; } else { if(gl) gl.value=\'0\'; if(ev) ev.value=\'0\'; } calcQuote();"><option value="ปล่อย" selected>ปล่อย</option><option value="รางน้ำ">มีรางน้ำ</option><option value="ปิดปลาย">ปิดปลายกันน้ำ 1,000/ม.</option></select><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="ปล่อย" onclick="chSetChip(this,\'o-roofend\')">ปล่อย</button><button type="button" class="chip" data-val="รางน้ำ" onclick="chSetChip(this,\'o-roofend\')">มีรางน้ำ</button><button type="button" class="chip" data-val="ปิดปลาย" onclick="chSetChip(this,\'o-roofend\')">ปิดปลายกันน้ำ 1,000/ม.</button></div></label>';
     // D: ระบบรางน้ำ (โชว์เมื่อ C=รางน้ำ) — chain show/hide เหมือน .o-beamm-wrap
     h+='<div class="o-guttersys-wrap" style="display:none;">';
     // G3-round2 B③+D: เรียง ชนิดราง → ระบบระบาย · ทุก select เป็นชิป (E: รุ่น M=อลูมิเนียม)
@@ -6164,6 +6164,8 @@ function buildItemOpts(d){
     if(_ipw) _ipw.style.display=_hideProd?'none':''; }
   // R5.1: จัดหมวด option ทุกรายการ (ไม่ใช่แค่ GH) — idempotent, ใช้ groupGHOpts เดิม · ข้าม G5 มุ้ง (mosq form ไม่ต้องจัดกลุ่ม)
   if(p.cat !== 'มุ้ง') groupGHOpts(d);
+  // จุด5 fix 25มิ.ย.: G3 หลังคา → inject remarkSelectHTML() เข้า B3 body (ดราฟ DRAFT-G3-ภาพรวมครบ-2026-06-24 มีการ์ดติ๊กหมายเหตุใน ③)
+  if(p.cat==='หลังคา'){ var _g3b3body=d.querySelector('.g4-b3 .g4-body'); if(_g3b3body && !_g3b3body.querySelector('.rk-block')){ var _rkDiv=document.createElement('div'); _rkDiv.innerHTML=remarkSelectHTML(); while(_rkDiv.firstChild){ _g3b3body.appendChild(_rkDiv.firstChild); } } }
   // ② G3 สีโครง 3 ชั้น: ย้าย .i-color (L2 = สีโครงรายการ) เข้า host ในกล่อง · ซ่อน .cg-row เดิม (หลังคาไม่มีกระจก · สีโครงอยู่ในกล่อง 3 ชั้นแล้ว)
   if(p.cat==='หลังคา'){ var _l2h=d.querySelector('.rf-l2-host'), _cwR=d.querySelector('.i-color-wrap'); if(_l2h && _cwR && _cwR.parentNode!==_l2h){ _l2h.appendChild(_cwR); _cwR.style.display=''; } var _cgr3=d.querySelector('.cg-row'); if(_cgr3) _cgr3.style.display='none'; }
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
@@ -6395,7 +6397,7 @@ function readItem(d){
     const _cp=d.querySelector('.o-ceilpos');    optSel.ceilpos=_cp?_cp.value:'นอก';
     const _cd=d.querySelector('.o-ceildir');    optSel.ceildir=_cd?_cd.value:'ตรง';
     // options ใหม่: แป / โครง / ปลายหลังคา / ระบบรางน้ำ
-    const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปคู่'; // H3: fallback ตรงกับ UI default (แปคู่)
+    const _rb=d.querySelector('.o-roofbatten'); optSel.rfbatten=_rb?_rb.value:'แปเดี่ยว'; // H3: fallback ตรงกับ UI default (แปเดี่ยว · จุด1 fix 25มิ.ย.)
     const _rf=d.querySelector('.o-roofframe'); optSel.rfframe=_rf?_rf.value:'โครงอลูมิเนียม';
     const _re=d.querySelector('.o-roofend'); optSel.rfend=_re?_re.value:'ปล่อย';
     const _rgs=d.querySelector('.o-guttersys'); optSel.rfgutsys=_rgs?_rgs.value:'ท่อ';
@@ -7560,7 +7562,7 @@ function genQuote(keepNo){
       const _rcName = _rc ? (' '+(_rc.quoteName||_rc.n).replace(/[★⚠]/g,'').trim()) : '';
       const _os = it.optSel || {};
       const _rfframe = _os.rfframe || 'โครงอลูมิเนียม';
-      const _rfbatten = _os.rfbatten || 'แปคู่'; // F5: ชุดหลังคา fallback แปคู่ (ตรงกับ default standalone)
+      const _rfbatten = _os.rfbatten || 'แปเดี่ยว'; // F5: ชุดหลังคา fallback แปเดี่ยว (จุด1 fix 25มิ.ย. · ตรงดราฟ)
       const _rfend = _os.rfend || 'ปล่อย';
       const _rfgutsys = _os.rfgutsys || 'ท่อ';
       // ชื่อโครง (อลู=เดิม / เหล็กชุบ=เปลี่ยน) · FIX-6: เติม "(ไร้สนิม)" ให้เหล็กชุบหลังคา (ตรงฝ้า/ผนัง)
