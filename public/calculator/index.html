@@ -3501,6 +3501,53 @@ function groupGHOpts(ch){
     }
     return; // ไม่สร้าง accordion generic สำหรับ G4
   }
+  // G3 (24มิ.ย.): หลังคา → render 3 กล่องหัวสี (g4-box) แทน accordion เทา (ตรงดราฟ DRAFT-G3-ภาพรวมครบ-2026-06-24)
+  if(isRoof){
+    var _bxCfg=[
+      {cls:'g4-b1',tag:'① สเปกหลัก',badge:'บังคับ',isDetails:false,sub:CATS[1]&&CATS[1].sub},
+      {cls:'g4-b2',tag:'② ออปชั่นหลัก',badge:'เลือกได้',isDetails:false,sub:CATS[1]&&CATS[1].sub},
+      {cls:'g4-b3',tag:'③ ออปชั่นเสริม',badge:'พับเก็บ',isDetails:true,sub:null}
+    ];
+    buckets.forEach(function(bk,bi){
+      if(!bk.length) return;
+      var cfg=_bxCfg[bi]||_bxCfg[2];
+      var bxEl=document.createElement(cfg.isDetails?'details':'div');
+      bxEl.className='g4-box '+cfg.cls;
+      var bhEl=document.createElement(cfg.isDetails?'summary':'div');
+      bhEl.className='g4-bh';
+      bhEl.innerHTML=cfg.tag+' <span class="g4-btag">'+cfg.badge+'</span>';
+      bxEl.appendChild(bhEl);
+      var bodyEl=document.createElement('div');
+      bodyEl.className='g4-body';
+      bodyEl.style.cssText='display:flex;flex-direction:column;gap:8px;';
+      // bucket 1 (②): แยก sub-items (ของเสริมหลังคา) เข้า dcard พับ
+      if(bi===1 && CATS[1]&&CATS[1].sub){
+        var _subI=[],_dirI=[]; bk.forEach(function(k){ var _t=(k.textContent||'')+(k.className||''); (CATS[1].sub.kw.some(function(w){return _t.indexOf(w)>=0;})?_subI:_dirI).push(k); });
+        _dirI.forEach(function(k){ bodyEl.appendChild(k); });
+        if(_subI.length){
+          var _sd=document.createElement('details');
+          _sd.style.cssText='border:1px dashed #d1d5db;border-radius:8px;padding:0 10px;background:#f9fafb;margin-top:4px;';
+          var _ss=document.createElement('summary');
+          _ss.style.cssText='font-weight:700;color:#374151;font-size:12px;cursor:pointer;padding:7px 2px;min-height:40px;display:flex;align-items:center;';
+          _ss.textContent=CATS[1].sub.key;
+          _sd.appendChild(_ss);
+          _subI.forEach(function(k){ _sd.appendChild(k); });
+          bodyEl.appendChild(_sd);
+        }
+      } else {
+        bk.forEach(function(k){ bodyEl.appendChild(k); });
+      }
+      bxEl.appendChild(bodyEl);
+      box.appendChild(bxEl);
+    });
+    // wrap ใน g4-prebox — collect ก่อน (live NodeList ปลอดภัย)
+    var _wrap=document.createElement('div');
+    _wrap.className='g4-prebox';
+    var _toWrap=Array.from(box.querySelectorAll(':scope>.g4-box'));
+    _toWrap.forEach(function(c){ _wrap.appendChild(c); });
+    box.appendChild(_wrap);
+    return;
+  }
   // G1G6-D: แสดงผลตาม disp (①-⑦) — ลำดับจับ keyword (array order) แยกจากลำดับแสดง
   CATS.map(function(c,i){return i;}).sort(function(a,b){return ((CATS[a].disp!=null?CATS[a].disp:a)-(CATS[b].disp!=null?CATS[b].disp:b));}).forEach(function(i){
     var c=CATS[i];
@@ -4046,6 +4093,24 @@ function g3PickGrp(btn){ var first=(RF_GRP_PRODS[btn.dataset.grp]||[])[0]; if(fi
 function g3PickTab(btn,tab){ var ch=btn.closest('.ch'); g3SyncProd(ch, tab==='wall'?G3_WALL_PRODS[0][0]:RF_GRP_PRODS.metal[0][0]); }
 // ② G3 สีโครง 3 ชั้น (23มิ.ย.): L1 ชิป = ตั้ง #global-color (สีทั้งใบ → syncGlobalColorGlass ลงทุกข้อ) · L2 toggle = coOverride กัน global ทับ (.i-color เฉพาะข้อ) · L3 = swap เดิม
 function rfSetGlobalColor(idx){ var gc=document.getElementById('global-color'); if(!gc)return; gc.value=String(idx); gc.dispatchEvent(new Event('change',{bubbles:true})); }
+// L1 วนสี (24มิ.ย.): ⟳ วนผ่าน 6 สีหลัก (index 0-5) แล้วอัปเดต row บรรทัดเดียว
+var _rfL1Cycle=[0,1,2,3,4,5];
+function rfCycleL1(btn){
+  var gc=document.getElementById('global-color'); if(!gc)return;
+  var cur=parseInt(gc.value)||0;
+  var pos=_rfL1Cycle.indexOf(cur);
+  var next=_rfL1Cycle[(pos+1)%_rfL1Cycle.length];
+  gc.value=String(next);
+  gc.dispatchEvent(new Event('change',{bubbles:true}));
+  // อัปชื่อในแถว L1 ใกล้ปุ่ม
+  var row=btn.closest('.rf-l1row'); if(!row)return;
+  var nm=row.querySelector('.rf-l1name');
+  var sw=row.querySelector('span[style*="border-radius:50%"]');
+  var c=COLORS[next]||COLORS[0];
+  var label=(c.quoteName||c.n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim();
+  if(nm) nm.textContent=label;
+  if(sw) sw.style.background=c.sw;
+}
 function rfL2Toggle(det){ var ch=det.closest('.ch'); if(!ch)return; if(det.open){ ch.dataset.coOverride='1'; } else { ch.dataset.coOverride='0'; var ci=ch.querySelector('.i-color'), gc=document.getElementById('global-color'); if(ci&&gc){ ci.value=gc.value; ci.dispatchEvent(new Event('change',{bubbles:true})); } } if(window.calcQuote)calcQuote(); }
 // ② G3 สีโครง toggle-style (PHASE3 · 23มิ.ย.): checkbox แทน details — L2 = ติ๊กแล้วโผล่ · L3 ซ้อนใน L2
 function rfL2CbToggle(cb){ var ch=cb.closest('.ch'); if(!ch)return; var host=ch.querySelector('.rf-l2-host'); if(host)host.style.display=cb.checked?'':'none'; var lbl=cb.closest('label'); if(lbl){ lbl.style.borderColor=cb.checked?'#b3122a':'#cbd5e1'; lbl.style.background=cb.checked?'#fdecef':'#fff'; lbl.style.color=cb.checked?'#b3122a':'#374151'; } if(cb.checked){ ch.dataset.coOverride='1'; } else { ch.dataset.coOverride='0'; var ci=ch.querySelector('.i-color'),gc=document.getElementById('global-color'); if(ci&&gc){ci.value=gc.value;ci.dispatchEvent(new Event('change',{bubbles:true}));} var l3cb=ch.querySelector('.rf-l3-cb'); if(l3cb&&l3cb.checked){l3cb.checked=false;var l3h=ch.querySelector('.rf-l3-host');if(l3h)l3h.style.display='none'; var l3lbl=l3cb.closest('label'); if(l3lbl){l3lbl.style.borderColor='#cbd5e1';l3lbl.style.background='#fff';l3lbl.style.color='#374151';} } } if(window.calcQuote)calcQuote(); }
@@ -5315,11 +5380,15 @@ function buildItemOpts(d){
     // ② (23มิ.ย. · เคาะ "ทำ toggle เต็มในG3"): สีโครงอลู 3 ชั้น (L1 ทั้งใบ → L2 เฉพาะข้อ → L3 เทียบราคา) · ใช้กลไกสี G3 เอง (#global-color/.i-color/colorPrice) ไม่อิง G1 · L3 = swap เดิม (o-rfcoopt/o-rfmatopt → roofOptNote ไม่บวกยอด)
     h+='<div class="opt rf-colorbox" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 11px;">';
     h+='<div style="font-size:12.5px;font-weight:700;color:#1E40AF;margin-bottom:7px;">🎨 สีโครงอลูมิเนียม <span style="font-weight:400;font-size:11px;color:#6B7280;">(ระบบสีต่อข้อ 3 ชั้น)</span></div>';
-    // L1 row: แสดงสีทั้งใบ + ชิปเลือก (กะทัดรัด)
+    // L1 row: บรรทัดเดียว "L1 · ทั้งใบ: [ชื่อสี] ⟳ เปลี่ยนสีทั้งใบ" (ดราฟ 24มิ.ย.)
     var _gcv=parseInt((document.getElementById('global-color')||{}).value)||0;
-    h+='<div style="background:#fff;border:1px solid #dbe3f0;border-radius:8px;padding:7px 10px;margin-bottom:8px;">';
-    h+='<div style="font-size:11px;color:#6B7280;font-weight:700;margin-bottom:5px;">L1 · ทั้งใบ <span style="font-weight:400;">(ใช้ทุกข้อ · บวกยอด)</span></div>';
-    h+='<div class="rf-l1chips chip-group chip-sm">'+[0,1,2,3,4,5].map(function(i){var c=COLORS[i];return '<button type="button" class="chip'+(_gcv===i?' on':'')+'" onclick="rfSetGlobalColor('+i+')"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.2);background:'+c.sw+';margin-right:4px;vertical-align:-1px;"></span>'+(c.quoteName||c.n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()+'</button>';}).join('')+'</div>';
+    var _gcName=(COLORS[_gcv]&&((COLORS[_gcv].quoteName||COLORS[_gcv].n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()))||'สีอบขาว';
+    var _gcSw=(COLORS[_gcv]&&COLORS[_gcv].sw)||'#fff';
+    h+='<div class="rf-l1row" style="display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #dbe3f0;border-radius:8px;padding:8px 11px;margin-bottom:8px;">';
+    h+='<span style="font-size:11.5px;color:#374151;font-weight:700;white-space:nowrap;">L1 · ทั้งใบ:</span>';
+    h+='<span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:'+_gcSw+';flex:none;"></span>';
+    h+='<span class="rf-l1name" style="font-size:12.5px;font-weight:700;color:#111;flex:1;">'+_gcName+'</span>';
+    h+='<button type="button" onclick="rfCycleL1(this)" style="font-size:12px;color:#1e40af;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:5px;white-space:nowrap;font-weight:700;" title="กดวนสี">⟳ เปลี่ยนสีทั้งใบ</button>';
     h+='</div>';
     // L2 toggle: ติ๊กแล้วโผล่ (checkbox แทน details)
     var _l2Open=((d&&d.dataset&&d.dataset.coOverride)==='1');
