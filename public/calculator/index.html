@@ -5289,6 +5289,8 @@ function buildItemOpts(d){
     h+='<label class="opt" style="margin:0;font-size:12px;width:100%;">หรือเปลี่ยนวัสดุมุงเป็น <select class="o-rfmatopt" style="height:34px;border:1px solid #cbd5e1;border-radius:7px;max-width:210px;padding:0 6px;" onchange="calcQuote();"><option value="">— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'">'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select></label>';
     h+='</div>';
     h+='</div>';
+    // ③ checkbox ยืนยันตัวอย่าง (ดราฟ G3 22มิ.ย.) — ทุกหลังคา ไม่ขึ้นกับสีชุบ · ขึ้นใบเมื่อติ๊ก
+    h+='<label class="chk" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid #cbd5e1;border-radius:9px;cursor:pointer;font-size:12.5px;color:#374151;background:#fff;"><input type="checkbox" class="i-rfsampleconfirm" style="width:17px;height:17px;accent-color:#059669;" onchange="calcQuote();"> 📸 ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว</label>';
     // A: แป (ดราฟ 22มิ.ย.: อยู่หลังสีโครง ก่อนต่อปลายวัสดุที่ 2)
     h+='<label class="opt" style="width:100%;">แป <select class="o-roofbatten" style="display:none;"><option value="แปเดี่ยว">แปเดี่ยว</option><option value="แปคู่" selected>แปคู่</option></select>'+rfChips('o-roofbatten',[['แปเดี่ยว','แปเดี่ยว'],['แปคู่','แปคู่']],'แปคู่',true)+'</label>';
     // B: โครงสร้าง (ชิป · onchange เดิม warn เหล็กชุบ)
@@ -5526,7 +5528,7 @@ function buildItemOpts(d){
       +'<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;">🚪 ทำเป็นบาน <span style="font-size:11px;font-weight:400;">(ระแนงสลับไม่โครงอัตโนมัติ)</span></div>'
       // ปุ่มชนิดบาน (chip-group wrap แนวนอนเต็มแถว)
       +'<select class="o-doortype" style="display:none;">'+_doorSelOpts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===_curDoor?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'
-      +rfChips('o-doortype',[['','ไม่ทำ'],['sliding_sms','เลื่อน SMS'],['sliding_euro','เลื่อนยูโร'],['sliding_top','เลื่อนรางบน'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['swing','บานสวิง']],_curDoor)
+      +(function(){var _chips=rfChips('o-doortype',[['','— ไม่ทำ —'],['sliding_sms','เลื่อน SMS'],['sliding_euro','เลื่อนยูโร'],['sliding_top','เลื่อนรางบน'],['casement_euro','บานเปิด'],['folding','บานเฟี้ยม'],['swing','บานสวิง']],_curDoor);return _chips.replace('data-val="" onclick','data-val="" style="color:#9CA3AF;border-style:dashed;border-color:#D1D5DB;background:#F9FAFB;" onclick');})()
       // ออปชั่นราง (sliding_sms/euro เท่านั้น)
       +'<div class="o-rnrail-wrap" style="margin-top:8px;display:'+( _isSlidingLow ? '':'none')+';">'
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">ราง</div>'
@@ -5587,17 +5589,18 @@ function buildItemOpts(d){
         +rfChips('o-rnlock-slide',[['keyed','มีกุญแจ'],['nokey','ไม่มีกุญแจ']],((d.querySelector('.o-rnlock-slide')||{}).value||'keyed'))
         +'<select class="o-rnlock-slide" style="display:none;" onchange="calcQuote();"><option value="keyed">มีกุญแจ</option><option value="nokey">ไม่มีกุญแจ</option></select>'
       +'</div>'
-      // ค่าสี % (ซ่อนใน details พับ)
+      // ปรับเพิ่มเติม: ค่าสี % + ราคาประตูกรอกเอง (ซ่อนใน details พับ)
       +'<details class="o-rncolor-details" style="margin-top:8px;display:'+(_curDoor?'':'none')+';">'
-        +'<summary style="cursor:pointer;font-size:11.5px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">ปรับค่าทำสีบาน (%)</summary>'
+        +'<summary style="cursor:pointer;font-size:11.5px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">ปรับเพิ่มเติม</summary>'
         +'<div style="padding-top:7px;">'
+          +'<div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;">ค่าทำสีบาน (%)</div>'
           +'<select class="o-doorcolorpct" style="display:none;" onchange="calcQuote();"><option value="20">20%</option><option value="30"'+(+_curDcpV===30||!_curDcpV?' selected':'')+'>30%</option><option value="40"'+(+_curDcpV===40?' selected':'')+'>40%</option><option value="50"'+(+_curDcpV===50?' selected':'')+'>50%</option></select>'
           +rfChips('o-doorcolorpct',[['20','20%'],['30','30% (default)'],['40','40%'],['50','50%']],_curDcpV||'30')
           +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ค่าสีบาน = % ของเรตสีอลู · สีขาว/ดำ = ไม่มีค่าสีเพิ่ม</div>'
+          +'<div style="margin-top:8px;"><label style="font-size:11.5px;">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ)</span></label></div>'
         +'</div>'
       +'</details>'
       +'</div>';
-    h+='<label class="opt" style="font-size:11.5px;">ราคาประตู (กรอกเอง · บาท) <input type="number" class="o-doorprice" min="0" step="500" value="0" placeholder="ว่าง=auto" style="width:100px;height:32px;" oninput="calcQuote();"> <span style="font-size:11px;color:#666;">(กรอก &gt;0 = ใช้แทนราคาอัตโนมัติ)</span></label>';
   }
   if(p.cabinet){
     // G4 3-box layout (23มิ.ย. ตามดราฟ DRAFT-G4-ux-2026-06-23)
@@ -7425,6 +7428,9 @@ function genQuote(keepNo){
           var _m1=(it.p.name||'').replace(/^หลังคา\s*/,''), _m2=(PBYID[_os.rfmatopt].name||'').replace(/^หลังคา\s*/,'');
           var _matN='OPTION : เปลี่ยนวัสดุมุง จาก'+_m1+' เป็น'+_m2+' ราคา'+(_zm>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(_zm))+' บาท';
           roofOptNote = roofOptNote ? (roofOptNote+'\n'+_matN) : _matN; } }
+      // ③ checkbox ยืนยันตัวอย่าง (G3 ดราฟ 22มิ.ย.) — ขึ้นใบเมื่อติ๊ก
+      { var _rfSC=it.div?it.div.querySelector('.i-rfsampleconfirm'):null;
+        if(_rfSC && _rfSC.checked){ var _scNote='📸 ลูกค้าเห็นตัวอย่างจริงและถ่ายรูปยืนยันแล้ว'; roofOptNote=roofOptNote?(roofOptNote+'\n'+_scNote):_scNote; } }
     }
     else if((it.p.cat==='บานเลื่อน' || it.p.cat==='เลื่อนภายใน') && SLIDING_RAIL[it.p.id]){
       // บานเลื่อน/เลื่อนภายใน — รายละเอียดงาน: อลู/กระจก/มุ้ง(+ขนาด)/ชุดล็อค/มือจับ
