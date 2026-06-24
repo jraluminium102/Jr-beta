@@ -28,12 +28,6 @@ type Row = Record<string, unknown>;
 // GET /api/chang/:token — ตารางผลิต (งานในคิว + ชุดงาน)
 export async function GET(_req: Request, { params }: { params: { token: string } }) {
   // diagnostic ชั่วคราว: บอกแค่ว่า env ตั้งไว้ไหม + ยาวกี่ตัว (ไม่โชว์ค่า) เพื่อ debug
-  const dbg = new URL(_req.url).searchParams.get("debug");
-  if (dbg === "1") {
-    const t = await getChangToken();
-    const src = process.env.CHANG_LINK_TOKEN ? "env" : (t ? "db" : "none");
-    return NextResponse.json({ configured: !!t, len: t.length, source: src, matchesParam: t === params.token });
-  }
   if (!(await tokenOk(params.token))) return NextResponse.json({ error: "ไม่พบหน้านี้" }, { status: 404 });
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
 
