@@ -10,7 +10,7 @@ import { Plus, X, Check, Trash2, CalendarDays } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
 
-type ProdSet = {
+export type ProdSet = {
   id: number; set_label: string; seq: number;
   design_received: string; glass_installed: string;
   qc_before_glass: string; qc_after_glass: string;
@@ -39,7 +39,7 @@ type SchedRow = {
 const today = () => new Date().toISOString().slice(0, 10);
 const WD = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 // ISO → "จ 28/07/69"
-function thHead(d: string | null) {
+export function thHead(d: string | null) {
   if (!d) return "ยังไม่กำหนดวันผลิต";
   const dt = new Date(d + "T00:00:00");
   const [y, m, day] = d.split("-");
@@ -75,13 +75,13 @@ function deadlineInfo(must: string | null, done: boolean): { tone: string; text:
 const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
-const IOS = {
+export const IOS = {
   page: "#f2f2f7", card: "#ffffff", inset: "#f4f4f7",
   ink: "#1c1c1e", ink2: "#636366", ink3: "#a1a1a8", line: "#e5e5ea",
   blue: "#007aff", green: "#34c759", red: "#ff3b30", orange: "#ff9500",
 };
 // สีประจำวันแบบไทย — dot=จุดสด · deep=ตัวอักษรบนพื้นขาว
-const DAY_COLOR = [
+export const DAY_COLOR = [
   { dot: "#ff453a", deep: "#c0392b" }, // อาทิตย์ แดง
   { dot: "#ffcc00", deep: "#b7791f" }, // จันทร์ เหลือง
   { dot: "#ff2d92", deep: "#be3d8a" }, // อังคาร ชมพู
@@ -90,7 +90,7 @@ const DAY_COLOR = [
   { dot: "#0a84ff", deep: "#0369a1" }, // ศุกร์ ฟ้า
   { dot: "#bf5af2", deep: "#7e3ba3" }, // เสาร์ ม่วง
 ];
-const dayColorOf = (dateKey: string) =>
+export const dayColorOf = (dateKey: string) =>
   (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
 
 export default function ProductionSchedulePage() {
@@ -411,7 +411,7 @@ export default function ProductionSchedulePage() {
 }
 
 // ════════ เช็คลิสต์ชุดงานสำหรับช่าง (มือถือ) ════════
-function ChangChecklist({ sets, savingSetIds, mark, canMark }: {
+export function ChangChecklist({ sets, savingSetIds, mark, canMark }: {
   sets: ProdSet[];
   savingSetIds: Set<number>;
   mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
