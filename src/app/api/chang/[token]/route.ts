@@ -1,14 +1,15 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { getChangToken } from "@/lib/chang-token";
 
-// ── API สาธารณะสำหรับลิงก์ช่าง (ไม่ต้อง login) — ป้องกันด้วยโทเคนใน env ──
+// ── API สาธารณะสำหรับลิงก์ช่าง (ไม่ต้อง login) — ป้องกันด้วยโทเคน (env หรือ DB) ──
 // อ่านตารางผลิต + กดมาร์ค 4 ช่องเท่านั้น (service role + whitelist field กันใช้ผิด)
 export const dynamic = "force-dynamic";
 
-function tokenOk(token: string) {
-  const expected = process.env.CHANG_LINK_TOKEN;
-  return !!expected && expected.length >= 8 && token === expected;
+async function tokenOk(token: string) {
+  const expected = await getChangToken();
+  return !!expected && token === expected;
 }
 
 const MARK_FIELDS = ["design_received", "glass_installed", "qc_before_glass", "qc_after_glass"] as const;
@@ -29,10 +30,11 @@ export async function GET(_req: Request, { params }: { params: { token: string }
   // diagnostic ชั่วคราว: บอกแค่ว่า env ตั้งไว้ไหม + ยาวกี่ตัว (ไม่โชว์ค่า) เพื่อ debug
   const dbg = new URL(_req.url).searchParams.get("debug");
   if (dbg === "1") {
-    const t = process.env.CHANG_LINK_TOKEN || "";
-    return NextResponse.json({ configured: !!t, len: t.length, matchesParam: t === params.token });
+    const t = await getChangToken();
+    const src = process.env.CHANG_LINK_TOKEN ? "env" : (t ? "db" : "none");
+    return NextResponse.json({ configured: !!t, len: t.length, source: src, matchesParam: t === params.token });
   }
-  if (!tokenOk(params.token)) return NextResponse.json({ error: "ไม่พบหน้านี้" }, { status: 404 });
+  if (!(await tokenOk(params.token))) return NextResponse.json({ error: "ไม่พบหน้านี้" }, { status: 404 });
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
 
   const { data: prods } = await sb
@@ -70,7 +72,7 @@ const patchSchema = z.object({
 
 // PATCH /api/chang/:token — มาร์ค 1 ช่อง (เฉพาะ 4 ช่อง whitelist)
 export async function PATCH(req: Request, { params }: { params: { token: string } }) {
-  if (!tokenOk(params.token)) return NextResponse.json({ error: "ไม่พบหน้านี้" }, { status: 404 });
+  if (!(await tokenOk(params.token))) return NextResponse.json({ error: "ไม่พบหน้านี้" }, { status: 404 });
   let body;
   try { body = patchSchema.parse(await req.json()); }
   catch { return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง" }, { status: 400 }); }
