@@ -74,18 +74,20 @@ function deadlineInfo(must: string | null, done: boolean): { tone: string; text:
 }
 const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
-// สีประจำวันแบบไทย — อา แดง · จ เหลือง · อ ชมพู · พ เขียว · พฤ ส้ม · ศ ฟ้า · ส ม่วง
+// สีประจำวันแบบไทย — bar=แถบ/จุด · band=แถบหัวข้อ(เข้มพอ ตัวขาวอ่านชัด)
 const DAY_COLOR = [
-  { bar: "#ef4444", soft: "rgba(239,68,68,.18)", text: "#fecaca", dot: "#ef4444" }, // อาทิตย์
-  { bar: "#eab308", soft: "rgba(234,179,8,.18)", text: "#fde68a", dot: "#eab308" }, // จันทร์
-  { bar: "#ec4899", soft: "rgba(236,72,153,.18)", text: "#fbcfe8", dot: "#ec4899" }, // อังคาร
-  { bar: "#22c55e", soft: "rgba(34,197,94,.18)", text: "#bbf7d0", dot: "#22c55e" }, // พุธ
-  { bar: "#f97316", soft: "rgba(249,115,22,.18)", text: "#fed7aa", dot: "#f97316" }, // พฤหัสบดี
-  { bar: "#38bdf8", soft: "rgba(56,189,248,.18)", text: "#bae6fd", dot: "#38bdf8" }, // ศุกร์
-  { bar: "#a855f7", soft: "rgba(168,85,247,.18)", text: "#e9d5ff", dot: "#a855f7" }, // เสาร์
+  { bar: "#f87171", band: "#a32630", dot: "#f87171" }, // อาทิตย์ แดง
+  { bar: "#fbbf24", band: "#9a6a06", dot: "#fbbf24" }, // จันทร์ เหลือง
+  { bar: "#f472b6", band: "#a83472", dot: "#f472b6" }, // อังคาร ชมพู
+  { bar: "#34d399", band: "#1a7d4f", dot: "#34d399" }, // พุธ เขียว
+  { bar: "#fb923c", band: "#a85a1a", dot: "#fb923c" }, // พฤหัสบดี ส้ม
+  { bar: "#38bdf8", band: "#1d6b9c", dot: "#38bdf8" }, // ศุกร์ ฟ้า
+  { bar: "#c084fc", band: "#6d3ba3", dot: "#c084fc" }, // เสาร์ ม่วง
 ];
 const dayColorOf = (dateKey: string) =>
   (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
+// พื้นการ์ด/หน้า — กรมท่าทึบ (กันพื้นแดงของแอปทะลุ)
+const SURFACE = { page: "#0f1828", card: "#1b2536", set: "#222e44" };
 
 export default function ProductionSchedulePage() {
   const { data, isLoading, refetch } = useQuery({
@@ -212,7 +214,7 @@ export default function ProductionSchedulePage() {
   const DATALIST_ID = "producers-list";
 
   return (
-    <div className="p-4 sm:p-6 fade-in">
+    <div className="p-4 sm:p-6 fade-in rounded-2xl" style={{ background: SURFACE.page, minHeight: "calc(100vh - 24px)" }}>
       {/* ── หัว: title + filter ช่าง + ปุ่มเพิ่ม ── */}
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 mr-auto"><CalendarDays size={22} /> ตารางผลิต</h1>
@@ -264,7 +266,7 @@ export default function ProductionSchedulePage() {
       {/* คีย์สีประจำวันไทย */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 text-[11px]">
         {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((d, i) => (
-          <span key={i} className="inline-flex items-center gap-1.5" style={{ color: DAY_COLOR[i].text }}>
+          <span key={i} className="inline-flex items-center gap-1.5 font-semibold" style={{ color: DAY_COLOR[i].bar }}>
             <span className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLOR[i].dot }} />{d}
           </span>
         ))}
@@ -287,18 +289,17 @@ export default function ProductionSchedulePage() {
               const isToday = dateKey === today();
               return (
               <div key={dateKey}>
-                {/* หัวข้อวัน — สีประจำวันไทย ดูแยกวันง่าย */}
-                <div className="flex items-center gap-2.5 mb-2.5 rounded-xl px-3 py-2"
-                  style={dc ? { background: dc.soft, boxShadow: `inset 4px 0 0 ${dc.bar}` } : { background: "rgba(255,255,255,.06)" }}>
-                  {dc && <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
-                  <span className="text-[15px] font-extrabold" style={{ color: dc ? dc.text : "#fff" }}>{thHead(items[0].produce_date)}</span>
-                  {isToday && <span className="text-[11px] bg-emerald-500/30 text-emerald-50 rounded-md px-2 py-0.5 font-bold">วันนี้</span>}
-                  <span className="ml-auto text-[12px] tnum px-2 py-0.5 rounded-lg bg-black/25 text-white/85 font-semibold">{items.length} งาน</span>
+                {/* หัวข้อวัน — แถบสีประจำวันไทย ตัวขาวอ่านชัด */}
+                <div className="flex items-center gap-2.5 mb-2.5 rounded-xl px-3.5 py-2.5 shadow-md"
+                  style={{ background: dc ? dc.band : "#334155" }}>
+                  <span className="text-[16px] font-extrabold text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,.3)" }}>{thHead(items[0].produce_date)}</span>
+                  {isToday && <span className="text-[11px] bg-white/90 text-slate-900 rounded-md px-2 py-0.5 font-bold">วันนี้</span>}
+                  <span className="ml-auto text-[12px] tnum px-2 py-0.5 rounded-lg bg-black/30 text-white font-bold">{items.length} งาน</span>
                 </div>
                 <div className="space-y-2.5">
                   {items.map((r) => (
-                    <div key={r.id} className="glass-card rounded-2xl p-3 space-y-3 border-l-[5px]"
-                      style={dc ? { borderLeftColor: dc.bar } : { borderLeftColor: "rgba(255,255,255,.15)" }}>
+                    <div key={r.id} className="rounded-2xl p-3.5 space-y-3 border-l-[6px] shadow-lg"
+                      style={{ background: SURFACE.card, borderLeftColor: dc ? dc.bar : "#475569" }}>
                       <div className={officeMode ? "grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center" : ""}>
                       {/* งาน/ลูกค้า */}
                       <div className="col-span-2 lg:col-span-1 min-w-0">
@@ -469,7 +470,7 @@ function SetCard({ s, saving, mark, canMark }: {
   const qcCount = (qcBefore ? 1 : 0) + (qcAfter ? 1 : 0);
 
   return (
-    <div className={`rounded-xl border border-white/10 bg-white/5 p-3 ${done ? "opacity-60" : ""}`}>
+    <div className={`rounded-xl border border-white/10 p-3 ${done ? "opacity-60" : ""}`} style={{ background: SURFACE.set }}>
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
         <span className="text-white font-bold text-[16px]">{s.set_label || "ชุดงาน"}</span>
         <span className={`text-[13px] font-bold px-2.5 py-1 rounded-lg ${dlTone[dl.tone]}`}>
@@ -487,7 +488,7 @@ function SetCard({ s, saving, mark, canMark }: {
             {screenNotInstalled && <span className="text-[12px] font-bold bg-orange-500/30 text-orange-100 rounded-md px-2 py-0.5 ring-1 ring-orange-400/40">⚠️ ยังไม่ใส่มุ้ง</span>}
           </>
         ) : (
-          <span className="text-[11px] text-white/40">ไม่มีมุ้ง</span>
+          <span className="text-[11px] text-white/55">ไม่มีมุ้ง</span>
         )}
         {s.glass_spec && <span className="text-[12px] text-white/75 truncate max-w-[55%]">🟦 {s.glass_spec}</span>}
       </div>
@@ -560,7 +561,7 @@ function StatusPill({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function RoRow({ label, v }: { label: string; v: string }) {
-  return <div><span className="text-white/40">{label}: </span><span className="text-white/75">{v || "—"}</span></div>;
+  return <div><span className="text-white/55">{label}: </span><span className="text-white/90">{v || "—"}</span></div>;
 }
 
 // ── Modal เพิ่มงานผลิต (จดเอง / เลือกจากงานในระบบ) ──
