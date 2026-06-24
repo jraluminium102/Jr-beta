@@ -1069,10 +1069,9 @@ function _colorDrillSel(el){ var dr=el.closest('.color-drill'); if(!dr)return nu
 function colorDrillRender(sel){
   if(!sel) return;
   // G1 Full mode: สีอลูใช้ dropdown ธรรมดา ไม่ drill (มติพี่นัท 19มิ.ย.) — คืน select ให้โชว์ + ลบชิปเก่า
+  // ดราฟ v2 (24มิ.ย.): G1 สีอลู = dropdown ครบ 13 สีเสมอ (L1 ซ่อนทั้ง body · L2 โชว์ dropdown) — เลิกชิป/กล่อง "L3 อัปอบพิเศษ" (colorDrillRenderL3) ที่เคยทับ dropdown
   if(sel.classList.contains('i-color')){ var _ch1=sel.closest('.ch'); if(_ch1 && (_ch1.querySelector('.i-group')||{}).value==='1'){
-    var _ov1=_ch1.dataset.coOverride;
-    if(_ov1!=='1' && _ov1!=='opt'){ sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; }
-    colorDrillRenderL3(sel); return; } }
+    sel.style.display=''; var _w1=sel.nextSibling; if(_w1&&_w1.classList&&_w1.classList.contains('color-drill')) _w1.parentNode.removeChild(_w1); return; } }
   var present={}; // COLORS index → label (เฉพาะ option ที่มีจริงหลัง filter series)
   Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=(o.textContent||'').trim(); });
   var curIdx=parseInt(sel.value)||0;
@@ -1142,7 +1141,8 @@ function _glassDrillSel(el){ var dr=el.closest('.glass-drill'); if(!dr)return nu
 function glassDrillRender(sel){
   if(!sel) return;
   // G1 Full mode: กระจกใช้ dropdown ธรรมดา ไม่ drill เมื่อ L1 ตามทั้งใบ — คืน select ให้โชว์ + ลบชิปเก่า
-  if(sel.classList.contains('i-glass')){ var _ch2=sel.closest('.ch'); var _ov2=_ch2&&_ch2.dataset.coOverride; if(_ch2 && (_ch2.querySelector('.i-group')||{}).value==='1' && _ov2!=='1' && _ov2!=='opt'){ sel.style.display=''; var _w2=sel.nextSibling; if(_w2&&_w2.classList&&_w2.classList.contains('glass-drill')) _w2.parentNode.removeChild(_w2); return; } }
+  // ดราฟ v2 (24มิ.ย.): G1 กระจก = dropdown ครบ 66 รุ่นเสมอ (L1 ซ่อนทั้ง body · L2 โชว์ dropdown) — เลิกชิป/sub-dropdown drill
+  if(sel.classList.contains('i-glass')){ var _ch2=sel.closest('.ch'); if(_ch2 && (_ch2.querySelector('.i-group')||{}).value==='1'){ sel.style.display=''; var _w2=sel.nextSibling; if(_w2&&_w2.classList&&_w2.classList.contains('glass-drill')) _w2.parentNode.removeChild(_w2); return; } }
   var present={}; Array.prototype.forEach.call(sel.options,function(o){ var v=parseInt(o.value); if(!isNaN(v)) present[v]=true; });
   var curIdx=parseInt(sel.value)||0;
   var actCat=sel.dataset.glCat || glassCatOf(curIdx);
