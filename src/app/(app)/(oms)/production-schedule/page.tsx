@@ -74,6 +74,19 @@ function deadlineInfo(must: string | null, done: boolean): { tone: string; text:
 }
 const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
+// สีประจำวันแบบไทย — อา แดง · จ เหลือง · อ ชมพู · พ เขียว · พฤ ส้ม · ศ ฟ้า · ส ม่วง
+const DAY_COLOR = [
+  { bar: "#ef4444", soft: "rgba(239,68,68,.18)", text: "#fecaca", dot: "#ef4444" }, // อาทิตย์
+  { bar: "#eab308", soft: "rgba(234,179,8,.18)", text: "#fde68a", dot: "#eab308" }, // จันทร์
+  { bar: "#ec4899", soft: "rgba(236,72,153,.18)", text: "#fbcfe8", dot: "#ec4899" }, // อังคาร
+  { bar: "#22c55e", soft: "rgba(34,197,94,.18)", text: "#bbf7d0", dot: "#22c55e" }, // พุธ
+  { bar: "#f97316", soft: "rgba(249,115,22,.18)", text: "#fed7aa", dot: "#f97316" }, // พฤหัสบดี
+  { bar: "#38bdf8", soft: "rgba(56,189,248,.18)", text: "#bae6fd", dot: "#38bdf8" }, // ศุกร์
+  { bar: "#a855f7", soft: "rgba(168,85,247,.18)", text: "#e9d5ff", dot: "#a855f7" }, // เสาร์
+];
+const dayColorOf = (dateKey: string) =>
+  (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
+
 export default function ProductionSchedulePage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["production-schedule"],
@@ -246,7 +259,16 @@ export default function ProductionSchedulePage() {
           </button>
         )}
       </div>
-      <p className="text-sm mb-5" style={{ color: "var(--t-low)" }}>ตารางงานสำหรับช่าง · เรียงตามวันผลิต · แก้วัน/ใส่ชื่อช่างได้เลย · งานในระบบดึงจากหน้างานผลิตอัตโนมัติ</p>
+      <p className="text-sm mb-2.5" style={{ color: "var(--t-low)" }}>ตารางงานสำหรับช่าง · เรียงตามวันผลิต · สีหัวข้อ = สีประจำวัน</p>
+
+      {/* คีย์สีประจำวันไทย */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 text-[11px]">
+        {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((d, i) => (
+          <span key={i} className="inline-flex items-center gap-1.5" style={{ color: DAY_COLOR[i].text }}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLOR[i].dot }} />{d}
+          </span>
+        ))}
+      </div>
 
       {/* datalist รายชื่อช่าง (ใช้ร่วมกันทั้งหน้า) */}
       <datalist id={DATALIST_ID}>
@@ -260,16 +282,23 @@ export default function ProductionSchedulePage() {
           {groups.length === 0 && producerFilter ? (
             <EmptyState title={`ไม่มีงานของ "${producerFilter}"`} sub="ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" />
           ) : (
-            groups.map(([dateKey, items]) => (
+            groups.map(([dateKey, items]) => {
+              const dc = dayColorOf(dateKey);
+              const isToday = dateKey === today();
+              return (
               <div key={dateKey}>
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <span className={`text-sm font-bold ${dateKey === today() ? "text-emerald-300" : "text-white"}`}>{thHead(items[0].produce_date)}</span>
-                  {dateKey === today() && <span className="text-[11px] bg-emerald-500/20 text-emerald-200 rounded-md px-1.5 py-0.5">วันนี้</span>}
-                  <span className="text-[12px] tnum px-1.5 py-0.5 rounded-md bg-white/10" style={{ color: "var(--t-mid)" }}>{items.length}</span>
+                {/* หัวข้อวัน — สีประจำวันไทย ดูแยกวันง่าย */}
+                <div className="flex items-center gap-2.5 mb-2.5 rounded-xl px-3 py-2"
+                  style={dc ? { background: dc.soft, boxShadow: `inset 4px 0 0 ${dc.bar}` } : { background: "rgba(255,255,255,.06)" }}>
+                  {dc && <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
+                  <span className="text-[15px] font-extrabold" style={{ color: dc ? dc.text : "#fff" }}>{thHead(items[0].produce_date)}</span>
+                  {isToday && <span className="text-[11px] bg-emerald-500/30 text-emerald-50 rounded-md px-2 py-0.5 font-bold">วันนี้</span>}
+                  <span className="ml-auto text-[12px] tnum px-2 py-0.5 rounded-lg bg-black/25 text-white/85 font-semibold">{items.length} งาน</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {items.map((r) => (
-                    <div key={r.id} className="glass-card rounded-2xl p-3 space-y-3">
+                    <div key={r.id} className="glass-card rounded-2xl p-3 space-y-3 border-l-[5px]"
+                      style={dc ? { borderLeftColor: dc.bar } : { borderLeftColor: "rgba(255,255,255,.15)" }}>
                       <div className={officeMode ? "grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center" : ""}>
                       {/* งาน/ลูกค้า */}
                       <div className="col-span-2 lg:col-span-1 min-w-0">
@@ -384,7 +413,8 @@ export default function ProductionSchedulePage() {
                   ))}
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
