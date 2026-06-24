@@ -165,6 +165,25 @@ if (ch1) {
   if (ch4d) {
     const ftL3 = (ch4d.innerHTML || "").indexOf("เทียบสีหน้าบาน") >= 0 || !!ch4d.querySelector(".g4l3fr, .cab-l3fr, [onchange*='l3fr'], [onchange*='L3fr']");
     add("DRAFT", ftL3, "G4 L3 มีเทียบสีหน้าบาน (ครบเหมือน L2)", ftL3 ? "มีเทียบสีหน้าบาน ✓" : "G4 L3 ขาดเทียบสีหน้าบาน → เพิ่มให้ครบ (หน้าบาน/โครง/กระจก)");
+    // AUDIT 24มิ.ย. — จุดที่ gate เก่ามองไม่เห็น (เทสภาพรวม ไม่ใช่ element เดี่ยว)
+    const famDup = !ch4d.querySelector(".fam-prodsel");  // G4 ต้องไม่มี fam-prodsel ซ้ำ (ใช้ g4-psw)
+    add("AUDIT", famDup, "G4 ไม่มีปุ่มตู้/ฝาตู้ ซ้ำ (fam-prodsel)", famDup ? "มี g4-psw ชุดเดียว ✓" : "🔴 fam-prodsel ซ้ำกับ g4-psw → famSelectorHTML grp='4' หรือ L5166");
+    const glL3 = !!ch4d.querySelector(".o-cabglassL3") || (ch4d.innerHTML || "").indexOf("เทียบอัปเกรดกระจก") >= 0;
+    add("AUDIT", glL3, "G4 L3 มีเทียบอัปเกรดกระจก (ครบ 3 เหมือน L2)", glL3 ? "มีเทียบกระจก ✓" : "🔴 L3 ขาดเทียบกระจก");
+    // G4 generic colorbox ต้องไม่โผล่ (ใช้ cab-co-colgrid) — เช็ค i-color wrap ถูกซ่อน
+    const cabIc = ch4d.querySelector(".i-color"); const cabIcWrap = cabIc ? (cabIc.closest(".cg-row, .i-color-wrap, .g1-rare-section") || cabIc.parentElement) : null;
+    const cabHasColgrid = !!ch4d.querySelector(".cab-co-colgrid");
+    const genericHidden = cabHasColgrid && (!cabIcWrap || cabIcWrap.style.display === "none" || (cabIc && cabIc.style.display === "none"));
+    add("AUDIT", genericHidden, "G4 ใช้ cab-co-colgrid · generic colorbox ซ่อน", genericHidden ? "generic สีอลู ซ่อน ✓" : "🟠 generic .i-color/.color-drill ยังโผล่ปน cab-co");
+  }
+}
+// ===== AUDIT — G1 แผ่นทึบล่าง (ลูกฟูก/คอมโพ) กว้าง/สูง = ออโต้ (ไม่บังคับกรอก) =====
+{
+  const ch1s = g1item("sliding_sms");
+  if (ch1s) {
+    const slw = ch1s.querySelector(".o-sl-w"), slh = ch1s.querySelector(".o-sl-h");
+    const auto = !!slw && (slw.getAttribute("value") === null || slw.getAttribute("value") === "") && !!(slw.getAttribute("placeholder"));
+    add("AUDIT", auto, "G1 ลูกฟูก/คอมโพ กว้าง/สูง = ออโต้ (placeholder ไม่ value=0)", auto ? "auto (placeholder) ✓" : (slw ? `o-sl-w value="${slw.getAttribute("value")}" (ต้องว่าง+placeholder)` : "ไม่พบ o-sl-w"));
   }
 }
 
