@@ -12,12 +12,12 @@ const SCREEN_INST = ["", "มาแล้ว", "ใส่แล้ว", "ใส�
 const QC = ["", "ผ่าน", "ไม่ผ่าน"];
 const DESIGN_RECV = ["", "ได้รับแบบ", "ได้แบบไม่ครบ", "ยังไม่ได้รับแบบ"];
 
-// timestamptz → "24/06/69 14:30"
+// timestamptz → "24/06/2026 14:30" (ค.ศ. เต็ม)
 function fmtWhen(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${(d.getFullYear() + 543) % 100} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 type SetRow = { id: number; job_id: string } & Record<string, any>;

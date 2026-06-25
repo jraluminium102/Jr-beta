@@ -115,13 +115,13 @@ export function dayColor(isoDate: string | null): DayColor | null {
   return i === null ? null : DAY_COLORS[i];
 }
 
-// แปลง ISO -> วันที่ไทยอ่านง่าย (1 มิ.ย. 69)
+// แปลง ISO -> วันที่ไทยอ่านง่าย ปี ค.ศ. เต็ม (1 มิ.ย. 2026)
 const TH_MON = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 export function thaiDate(isoDate: string | null): string {
   if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-").map(Number);
   if (!y || !m || !d) return isoDate;
-  return `${d} ${TH_MON[m]} ${String((y + 543) % 100).padStart(2, "0")}`;
+  return `${d} ${TH_MON[m]} ${y}`;
 }
 
 // ---------- พิกัด: ดึง lat,lng จากข้อความ/ลิงก์ Google Maps (ฝั่ง client) ----------

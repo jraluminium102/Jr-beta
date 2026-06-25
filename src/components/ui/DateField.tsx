@@ -42,6 +42,8 @@ function parseDisplay(text: string): string | null {
   const mon = parseInt(mm, 10);
   const year = parseInt(yyyy, 10);
   if (isNaN(day) || isNaN(mon) || isNaN(year)) return null;
+  // กันปี พ.ศ. (เช่น 2569) หลุดเข้า DB — บังคับ ค.ศ. เท่านั้น
+  if (year >= 2500) return null;
   if (mon < 1 || mon > 12) return null;
   if (day < 1 || day > 31) return null;
   // ตรวจสอบวันจริงด้วย Date object
@@ -54,6 +56,14 @@ function parseDisplay(text: string): string | null {
     return null;
   }
   return `${String(year).padStart(4, "0")}-${String(mon).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/** ดึงเลขปี (ส่วนที่ 3) จากข้อความ DD/MM/YYYY — ใช้ตรวจว่ากรอก พ.ศ. มาไหม */
+function yearOf(text: string): number | null {
+  const parts = text.split(/[\/\-]/);
+  if (parts.length !== 3) return null;
+  const y = parseInt(parts[2].trim(), 10);
+  return isNaN(y) ? null : y;
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
@@ -93,6 +103,8 @@ export default function DateField({
   const [text, setText] = useState<string>(() => isoToDisplay(value));
   // ป้องกัน value เปลี่ยนจากภายนอก ขณะผู้ใช้ไม่ได้โฟกัส
   const [focused, setFocused] = useState(false);
+  // ข้อความเตือนเมื่อกรอกปี พ.ศ. (เช่น 2569)
+  const [beWarn, setBeWarn] = useState<string | null>(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
 
   // sync ถ้า value เปลี่ยนจากภายนอก (เช่น reset ฟอร์ม) ขณะไม่ได้โฟกัส
@@ -103,15 +115,23 @@ export default function DateField({
 
   // ── ผู้ใช้พิมพ์ ──
   function handleTextChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setText(e.target.value);
+    const v = e.target.value;
+    setText(v);
+    setBeWarn(null);
     // auto-commit เมื่อพิมพ์ครบ 10 ตัว (DD/MM/YYYY)
-    if (e.target.value.length === 10) {
-      const iso = parseDisplay(e.target.value);
+    if (v.length === 10) {
+      const yr = yearOf(v);
+      if (yr != null && yr >= 2500) {
+        // กรอกปี พ.ศ. มา → ไม่รับ + บอกให้ใช้ ค.ศ.
+        setBeWarn(`กรอกปี ค.ศ. ${yr - 543} (ไม่ใช่ พ.ศ. ${yr})`);
+        return;
+      }
+      const iso = parseDisplay(v);
       if (iso) {
         onChange(iso);
         // อย่า setText ตรง — ปล่อย blur จัดการ
       }
-    } else if (e.target.value === "") {
+    } else if (v === "") {
       onChange("");
     }
   }
@@ -120,9 +140,19 @@ export default function DateField({
   function handleBlur() {
     setFocused(false);
     if (text === "") {
+      setBeWarn(null);
       onChange("");
       return;
     }
+    const yr = yearOf(text);
+    if (yr != null && yr >= 2500) {
+      // กรอกปี พ.ศ. → คงข้อความเตือน + rollback ค่าเดิม (ไม่ commit พ.ศ.)
+      setBeWarn(`กรอกปี ค.ศ. ${yr - 543} (ไม่ใช่ พ.ศ. ${yr})`);
+      setText(isoToDisplay(value));
+      externalOnBlur?.();
+      return;
+    }
+    setBeWarn(null);
     const iso = parseDisplay(text);
     if (iso) {
       onChange(iso);
@@ -171,8 +201,19 @@ export default function DateField({
         onBlur={handleBlur}
         inputMode="numeric"
         autoComplete="off"
-        className={cn("tnum pr-9", className)}
+        aria-invalid={beWarn ? true : undefined}
+        className={cn("tnum pr-9", beWarn && "ring-1 ring-rose-500 border-rose-500", className)}
       />
+
+      {/* เตือนเมื่อกรอกปี พ.ศ. */}
+      {beWarn && (
+        <span
+          role="alert"
+          className="absolute left-0 top-full mt-0.5 z-20 whitespace-nowrap rounded bg-rose-600 px-1.5 py-0.5 text-[11px] font-medium text-white shadow"
+        >
+          {beWarn}
+        </span>
+      )}
 
       {/* ปุ่มปฏิทิน */}
       <button

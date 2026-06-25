@@ -44,7 +44,7 @@ function thaiDateFull(iso: string): string {
   try {
     const [y, m, d] = iso.split("-").map(Number);
     const dow = new Date(y, m - 1, d).getDay();
-    return `${TH_DOW[dow]} ${d} ${TH_MON[m]} ${y + 543}`;
+    return `${TH_DOW[dow]} ${d} ${TH_MON[m]} ${y}`;
   } catch {
     return iso;
   }

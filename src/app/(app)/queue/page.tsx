@@ -35,7 +35,7 @@ const copyTime = (t: string | null) => {
 };
 const copyDateBE = (iso: string) => {
   const [y, mo, da] = iso.split("-").map(Number);
-  return `${da}/${mo}/${y + 543}`;
+  return `${da}/${mo}/${y}`; // ค.ศ. เต็ม (เลิกใช้ พ.ศ.)
 };
 // ฟอร์มตามที่เจ้าของกำหนด — ไม่มีข้อมูลส่วนไหนใส่ "-"
 function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[]): string {

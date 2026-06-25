@@ -26,11 +26,11 @@ type Row = {
   installations: InstallationField[];
 };
 
-// ISO → วัน/เดือน/ปี(พ.ศ. 2 หลัก) เช่น 28/06/69
+// ISO → วัน/เดือน/ปี ค.ศ. เต็ม เช่น 28/06/2026
 const thInstDate = (d: string | null) => {
   if (!d) return null;
   const [y, m, day] = d.split("-");
-  return `${day}/${m}/${(Number(y) + 543) % 100}`;
+  return `${day}/${m}/${y}`;
 };
 // ครบทุกสถานะ — กันงานที่ถูกตีกลับ/มีปัญหาหายจากบอร์ด
 const COLS: InstStatus[] = ["PENDING", "INSTALLING", "PENDING_INSPECT", "REVISING", "COMPLETED", "ISSUE"];

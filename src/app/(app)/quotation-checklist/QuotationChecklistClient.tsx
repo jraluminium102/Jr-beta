@@ -37,7 +37,7 @@ function thaiDate(iso: string | null | undefined) {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-");
   const TH = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  return `${parseInt(d)} ${TH[parseInt(m)]} ${parseInt(y) + 543}`;
+  return `${parseInt(d)} ${TH[parseInt(m)]} ${parseInt(y)}`;
 }
 
 function parseNoteExt(note: string) {

@@ -54,7 +54,8 @@ const PHASE_TH: Record<string, string> = {
 function fmtDate(iso: string | null) {
   if (!iso) return "–";
   const d = new Date(iso);
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear() + 543}`;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
 export default function OperationsPage() {

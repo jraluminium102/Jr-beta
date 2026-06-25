@@ -38,17 +38,17 @@ type SchedRow = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const WD = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
-// ISO → "จ 28/07/69"
+// ISO → "จ. 28/07/2026" (ค.ศ. เต็ม)
 export function thHead(d: string | null) {
   if (!d) return "ยังไม่กำหนดวันผลิต";
   const dt = new Date(d + "T00:00:00");
   const [y, m, day] = d.split("-");
-  return `${WD[dt.getDay()]}. ${day}/${m}/${(Number(y) + 543) % 100}`;
+  return `${WD[dt.getDay()]}. ${day}/${m}/${y}`;
 }
 const thShort = (d: string | null) => {
   if (!d) return "—";
   const [y, m, day] = d.split("-");
-  return `${day}/${m}/${(Number(y) + 543) % 100}`;
+  return `${day}/${m}/${y}`;
 };
 
 // ── ค่ามาตรฐาน (ตรงกับ ProductionSetsSection / Excel) ──

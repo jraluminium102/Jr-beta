@@ -11,7 +11,7 @@ type Row = {
 };
 const today = () => new Date().toISOString().slice(0, 10);
 const thShort = (d: string | null) => {
-  if (!d) return "—"; const [y, m, day] = d.split("-"); return `${day}/${m}/${(Number(y) + 543) % 100}`;
+  if (!d) return "—"; const [y, m, day] = d.split("-"); return `${day}/${m}/${y}`;
 };
 
 export default function ChangPublicView({ token }: { token: string }) {

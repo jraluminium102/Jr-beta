@@ -25,7 +25,7 @@ function addMonth(m: string, delta: number): string {
 function monthLabel(m: string): string {
   const [y, mo] = m.split("-").map(Number);
   const TH = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  return `${TH[mo]} ${y + 543}`;
+  return `${TH[mo]} ${y}`;
 }
 
 export function LeaveSummaryModal({
