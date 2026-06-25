@@ -27,6 +27,7 @@ const schema = z.object({
   measure_time:         z.string().nullish(),
   measurer_id:          z.string().uuid().nullish(),
   measurer_name:        z.string().nullish(),
+  production_due_date:  z.string().nullish(),   // วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง)
   meeting_after_measure: z.string().nullish(),
   design_revision_done: z.string().nullish(),
   quote_revision_done:  z.string().nullish(),
@@ -50,7 +51,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   // Guard: ห้ามข้ามขั้น / ห้าม rollback จาก READY
   if (body.status && body.status !== "ISSUE") {
     const { data: current } = await ctx.supabase
-      .from("productions").select("status, production_queued, planned_install_date").eq("id", params.id).single();
+      .from("productions").select("status, production_queued, planned_install_date, production_due_date").eq("id", params.id).single();
     if (current) {
       const curIdx = PROD_FLOW.indexOf(current.status as ProdFlowStatus);
       const newIdx = PROD_FLOW.indexOf(body.status as ProdFlowStatus);
@@ -58,16 +59,21 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (current.status === "READY" && newIdx < curIdx) {
         return err("งานพร้อมติดตั้งแล้ว ไม่สามารถถอยสถานะได้", 409);
       }
-      // เริ่มผลิต (ลงวันผลิต) — ProductionStepModal ตัดขั้น QUEUED ออก: เข้า MANUFACTURING
-      // ตรงจากหลังประชุม/ยืนยันแบบได้ (PENDING_MEETING/REVISING/PENDING_CONFIRM) + จาก QUEUED(งานเก่า)/ISSUE
-      const MFG_FROM = ["PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "ISSUE"];
+      // เริ่มผลิต (ช่างกดเอง) — ต้องผ่านขั้น "รอลงผลิต" (QUEUED) ก่อนเสมอ + กู้จาก ISSUE
+      const MFG_FROM = ["QUEUED", "ISSUE"];
       if (body.status === "MANUFACTURING" && !MFG_FROM.includes(current.status as string)) {
-        return err("ต้องผ่านขั้นประชุม/ยืนยันแบบก่อนจึงเริ่มผลิตได้", 409);
+        return err("ต้องส่งเข้า 'รอลงผลิต' ก่อนจึงเริ่มผลิตได้", 409);
       }
-      // ลงคิวผลิต (QUEUED จากหน้าตารางผลิต) — ได้จากขั้นวัด/ประชุม/ยืนยัน (กันลงคิวตั้งแต่ยังไม่วัด)
+      // เริ่มผลิตจากรอลงผลิต: บังคับกรอกวันติดตั้ง + วันกำหนดผลิตเสร็จให้ครบก่อน
+      if (body.status === "MANUFACTURING" && current.status === "QUEUED") {
+        const inst = body.planned_install_date ?? current.planned_install_date;
+        const due = body.production_due_date ?? current.production_due_date;
+        if (!inst || !due) return err("ต้องกรอกวันติดตั้ง + วันกำหนดผลิตเสร็จ ก่อนเริ่มผลิต", 400);
+      }
+      // ส่งเข้ารอลงผลิต (QUEUED) — ได้จากขั้นวัด/ประชุม/ยืนยันแบบ (กันลงคิวตั้งแต่ยังไม่วัด)
       const QUEUE_FROM = ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"];
       if (body.status === "QUEUED" && !QUEUE_FROM.includes(current.status as string)) {
-        return err("ต้องวัด/ประชุมแบบก่อนจึงลงคิวผลิตได้", 409);
+        return err("ต้องวัด/ประชุมแบบก่อนจึงส่งเข้ารอลงผลิตได้", 409);
       }
       // ห้ามข้ามไป READY โดยตรง (ต้องผ่าน QC ก่อน)
       if (body.status === "READY" && current.status !== "QC") {

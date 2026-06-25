@@ -8,7 +8,7 @@ export const GET = withRoute(async () => {
   const ctx = await requirePermission("production", "read");
   const { data, error } = await ctx.supabase
     .from("productions")
-    .select(`id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_actual_time, measured_by_name, measure_time, measurer_id, measurer_name, production_queued, production_done, qc_result, qc_date, qc_note, producer_note, notes,
+    .select(`id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_actual_time, measured_by_name, measure_time, measurer_id, measurer_name, production_queued, production_due_date, production_done, qc_result, qc_date, qc_note, producer_note, notes,
       job:job_id(job_code, customer_name, customer_area, status, deposit_date,
         boqs(id, status, boq_items(id))
       )`)

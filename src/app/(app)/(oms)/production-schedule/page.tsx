@@ -30,6 +30,7 @@ type SchedRow = {
   customer_area: string | null;
   customer_name?: string | null;
   produce_date: string | null;
+  due_date: string | null;       // วันกำหนดผลิตเสร็จ = หัววัน/เรียงในตาราง
   install_date: string | null;
   producer_note: string | null;
   status: string;
@@ -40,7 +41,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const WD = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 // ISO → "จ. 28/07/2026" (ค.ศ. เต็ม)
 export function thHead(d: string | null) {
-  if (!d) return "ยังไม่กำหนดวันผลิต";
+  if (!d) return "ยังไม่กำหนดวันเสร็จ";
   const dt = new Date(d + "T00:00:00");
   const [y, m, day] = d.split("-");
   return `${WD[dt.getDay()]}. ${day}/${m}/${y}`;
@@ -127,7 +128,7 @@ export default function ProductionSchedulePage() {
       : rows;
     const map = new Map<string, SchedRow[]>();
     for (const r of filtered) {
-      const key = r.produce_date ?? "zzz";
+      const key = r.due_date ?? "zzz";       // จัดกลุ่มตามวันกำหนดเสร็จ (เดดไลน์) ด่วนสุดก่อน
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(r);
     }
@@ -284,7 +285,8 @@ export default function ProductionSchedulePage() {
                 {/* หัวข้อวัน — iOS section header (จุดสีวัน + วันที่) */}
                 <div className="flex items-center gap-2 mb-2 px-1">
                   {dc && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
-                  <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(items[0].produce_date)}</span>
+                  <span className="text-[11px] font-semibold" style={{ color: IOS.ink3 }}>กำหนดเสร็จ</span>
+                  <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(dateKey === "zzz" ? null : dateKey)}</span>
                   {isToday && <span className="text-[10px] rounded-full px-2 py-0.5 font-bold text-white" style={{ background: IOS.green }}>วันนี้</span>}
                   <span className="ml-auto text-[12px] tnum font-medium" style={{ color: IOS.ink3 }}>{items.length} งาน</span>
                 </div>
@@ -317,6 +319,16 @@ export default function ProductionSchedulePage() {
                           <div className="text-[12px] tnum mt-0.5" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</div>
                         )}
                       </div>
+
+                      {/* โหมดช่าง: ปุ่มเริ่มผลิต (QUEUED) / ส่ง QC (MANUFACTURING) — ช่างกดเอง */}
+                      {!officeMode && r.kind === "job" && canWrite && (r.status === "QUEUED" || r.status === "MANUFACTURING") && JOB_NEXT[r.status] && (
+                        <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
+                          className="focusable pressable mt-1 w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50"
+                          style={{ background: r.status === "QUEUED" ? IOS.orange : IOS.blue }}>
+                          {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (r.status === "QUEUED" ? "▶ " : "")}
+                          {JOB_NEXT[r.status].label}
+                        </button>
+                      )}
 
                       {officeMode && (<>
                       {/* วันผลิต */}

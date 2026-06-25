@@ -15,7 +15,7 @@ export const GET = withRoute(async () => {
   const [{ data: prods }, { data: adhoc }] = await Promise.all([
     ctx.supabase
       .from("productions")
-      .select("id, job_id, status, production_queued, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
+      .select("id, job_id, status, production_queued, production_due_date, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
       .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY"]),
     sb
       .from("adhoc_production_tasks")
@@ -56,6 +56,7 @@ export const GET = withRoute(async () => {
         job_code: job?.job_code ?? null,
         customer_area: job?.customer_area ?? null,
         produce_date: (p.production_queued as string | null) ?? null,
+        due_date: (p.production_due_date as string | null) ?? null,   // วันกำหนดเสร็จ = หัววันในตาราง
         install_date: (p.planned_install_date as string | null) ?? null,
         producer_note: (p.producer_note as string | null) ?? null,
         status: p.status as string,
@@ -73,6 +74,7 @@ export const GET = withRoute(async () => {
     job_code: null,
     customer_area: null,
     produce_date: (a.produce_date as string | null) ?? null,
+    due_date: (a.produce_date as string | null) ?? null,   // adhoc ใช้วันที่จดเองเป็นหัววัน
     install_date: (a.install_date as string | null) ?? null,
     producer_note: (a.producer_note as string | null) ?? null,
     customer_name: (a.customer_name as string | null) ?? null,
@@ -81,8 +83,9 @@ export const GET = withRoute(async () => {
     sets: [] as Record<string, unknown>[],
   }));
 
+  // เรียงงานด่วนก่อน: ตามวันกำหนดเสร็จ (due_date) ใกล้สุดขึ้นก่อน · ไม่มีวันไปท้าย
   const rows = [...jobRows, ...adhocRows].sort((a, b) =>
-    (a.produce_date ?? "9999-99-99").localeCompare(b.produce_date ?? "9999-99-99")
+    (a.due_date ?? "9999-99-99").localeCompare(b.due_date ?? "9999-99-99")
   );
 
   return ok(rows, { can_write: can(ctx.role, "production", "write"), role: ctx.role });

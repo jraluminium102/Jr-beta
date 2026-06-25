@@ -22,7 +22,7 @@ export type ProdRow = {
   measure_scheduled: string | null; measure_actual: string | null; planned_install_date: string | null;
   measure_time: string | null; measurer_id: string | null; measurer_name: string | null;
   measure_actual_time: string | null; measured_by_name: string | null;
-  production_queued: string | null; production_done: string | null;
+  production_queued: string | null; production_done: string | null; production_due_date: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
   job: { job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null } | null;
@@ -42,8 +42,9 @@ type Action = {
 
 // ── State machine งานผลิต (มีทางแยก ไม่ใช่เส้นตรง) ─────────────────────
 // แต่ละสถานะ → action ที่ทำได้ (ปุ่มเลือกเส้นทาง)
-// หมายเหตุ: ตัดขั้น "รอลงผลิต" (QUEUED) ออก — ใส่วันผลิตแล้วเข้า "กำลังผลิต" เลย
-// วันติดตั้งที่กำหนด (planned_install_date) ย้ายไปเป็นช่องแก้ได้ตลอด (ดูใน modal) ตั้งแต่ขั้นแรก
+// flow: ...ประชุม/แก้แบบ/ลูกค้าคอนเฟิร์ม → "ส่งเข้ารอลงผลิต" (QUEUED) → ออฟฟิศกรอกข้อมูล
+//        → ช่างกด "เริ่มผลิต" (MANUFACTURING) ในตารางผลิตช่าง (บังคับวันติดตั้ง+กำหนดเสร็จ)
+// วันติดตั้ง/วันกำหนดเสร็จ เป็นช่องแก้ได้ตลอด (ดูใน modal)
 const TRANSITIONS: Record<ProdStatus, Action[]> = {
   // รอวัด: นัดวัดล่วงหน้าได้ (อาจเป็นเดือน) — บันทึกนัดวัดแยกด้านบน, ปุ่มนี้คือ "วัดเสร็จแล้ว"
   PENDING_MEASURE: [
@@ -57,28 +58,25 @@ const TRANSITIONS: Record<ProdStatus, Action[]> = {
   MEASURED: [
     { to: "PENDING_MEETING", label: "เข้าสู่ขั้นประชุมสรุปแบบ", tone: "go" },
   ],
-  // หลังประชุม → เลือกได้ 3 ทาง (ลงวันผลิต = เข้าผลิตเลย)
+  // หลังประชุม → เลือกได้ 3 ทาง (แบบโอเค+ลูกค้าคอนเฟิร์ม = ส่งเข้ารอลงผลิต)
   PENDING_MEETING: [
-    { to: "MANUFACTURING", label: "แบบโอเค → เริ่มผลิต (ลงวันผลิต)", hint: "ใส่วันผลิตแล้วเข้าขั้นผลิตเลย", tone: "go",
-      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
+    { to: "QUEUED", label: "แบบโอเค + ลูกค้าคอนเฟิร์มแล้ว → ส่งเข้ารอลงผลิต", hint: "ไปกรอกข้อมูลผลิตก่อนเข้าตารางช่าง", tone: "go" },
     { to: "PENDING_CONFIRM", label: "รอลูกค้าคอนเฟิร์มแบบก่อน", tone: "wait" },
     { to: "REVISING", label: "ต้องแก้แบบ → ส่งกลับทีมเขียนแบบ", hint: "งานจะเด้งไปหน้าเขียนแบบ (สถานะ: แก้แบบ)", tone: "warn" },
   ],
   // แก้แบบหลังวัด
   REVISING: [
     { to: "PENDING_CONFIRM", label: "แก้แบบเสร็จ → รอลูกค้าคอนเฟิร์ม", tone: "go" },
-    { to: "MANUFACTURING", label: "แก้เสร็จ + ลูกค้าโอเค → เริ่มผลิต (ลงวันผลิต)", tone: "go",
-      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
+    { to: "QUEUED", label: "แก้เสร็จ + ลูกค้าโอเค → ส่งเข้ารอลงผลิต", tone: "go" },
   ],
   // รอลูกค้าคอนเฟิร์ม
   PENDING_CONFIRM: [
-    { to: "MANUFACTURING", label: "ลูกค้าคอนเฟิร์มแล้ว → เริ่มผลิต (ลงวันผลิต)", tone: "go",
-      fields: [{ field: "production_queued", label: "วันเริ่มผลิต (กำหนด)" }] },
+    { to: "QUEUED", label: "ลูกค้าคอนเฟิร์มแล้ว → ส่งเข้ารอลงผลิต", hint: "ไปกรอกข้อมูลผลิตก่อนเข้าตารางช่าง", tone: "go" },
     { to: "REVISING", label: "ลูกค้าขอแก้แบบอีก → ส่งกลับเขียนแบบ", tone: "warn" },
   ],
-  // QUEUED: คงไว้สำหรับงานเก่าที่ยังค้างสถานะนี้ — กดเข้าผลิตได้
+  // รอลงผลิต: ออฟฟิศกรอกวันติดตั้ง+วันกำหนดเสร็จ+สเปค แล้วช่างกดเริ่มผลิต (บังคับวันครบ)
   QUEUED: [
-    { to: "MANUFACTURING", label: "เริ่มลงมือผลิตแล้ว", tone: "go" },
+    { to: "MANUFACTURING", label: "ข้อมูลครบ → เริ่มผลิต", hint: "ต้องมีวันติดตั้ง + วันกำหนดผลิตเสร็จ", tone: "go" },
   ],
   MANUFACTURING: [
     { to: "QC", label: "ผลิตเสร็จ → ส่งตรวจ QC", tone: "go",
@@ -271,6 +269,8 @@ export function ProductionStepModal({
   const [measurerName, setMeasurerName] = useState(prod.measurer_name ?? "");
   // วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น
   const [installDate, setInstallDate] = useState(prod.planned_install_date ?? "");
+  // วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง) — กรอกตอนรอลงผลิต
+  const [dueDate, setDueDate] = useState(prod.production_due_date ?? "");
 
   // action ที่ "กางฟอร์ม" อยู่ (null = ยังไม่เลือก)
   const [armed, setArmed] = useState<string | null>(null);
@@ -315,6 +315,7 @@ export function ProductionStepModal({
   if (schedTime !== normalizeTime(row.measure_time) && prod.status === "PENDING_MEASURE") dirtyFields.push("เวลานัดวัด");
   if (measurerName !== (row.measurer_name ?? "") && prod.status === "PENDING_MEASURE") dirtyFields.push("ช่างที่วัด");
   if (installDate !== (row.planned_install_date ?? "")) dirtyFields.push("วันติดตั้ง");
+  if (dueDate !== (row.production_due_date ?? "")) dirtyFields.push("วันกำหนดผลิตเสร็จ");
 
   const flashFeedback = (key: string) => {
     setSavedField(key);
@@ -386,8 +387,19 @@ export function ProductionStepModal({
     return init;
   };
 
+  // เริ่มผลิต (จากรอลงผลิต) — ส่งวันติดตั้ง+กำหนดเสร็จไปด้วย กันยังไม่กดบันทึกในการ์ด
+  const startProduction = () =>
+    patch({ status: "MANUFACTURING", planned_install_date: installDate || null, production_due_date: dueDate || null }, { close: true });
+
   // คลิก action: ถ้าไม่มีฟอร์ม → ทำเลย, ถ้ามีฟอร์ม → กางฟอร์ม (กรอกแล้วกดยืนยัน)
   const clickAction = (a: Action) => {
+    // gate "เริ่มผลิต" (ช่าง) จากรอลงผลิต — บังคับวันติดตั้ง + วันกำหนดผลิตเสร็จ
+    if (a.to === "MANUFACTURING" && prod.status === "QUEUED") {
+      if (!installDate || !dueDate) { setErr("กรอกวันติดตั้ง + วันกำหนดผลิตเสร็จ (การ์ดด้านล่าง) ก่อนเริ่มผลิต"); return; }
+      if (needsMfgConfirm(a)) { setMfgConfirmPending(a); return; }
+      startProduction();
+      return;
+    }
     if (needsMfgConfirm(a)) { setMfgConfirmPending(a); return; }
     if (!a.fields || a.fields.length === 0) {
       const body: Record<string, unknown> = { status: a.to };
@@ -412,6 +424,8 @@ export function ProductionStepModal({
   // หลัง confirm dialog → ดำเนินต่อปกติ (กางฟอร์ม หรือ patch เลย)
   const proceedMfgAction = (a: Action) => {
     setMfgConfirmPending(null);
+    // เริ่มผลิตจากรอลงผลิต → ส่งวันไปด้วย
+    if (a.to === "MANUFACTURING" && prod.status === "QUEUED") { startProduction(); return; }
     if (!a.fields || a.fields.length === 0) {
       const body: Record<string, unknown> = { status: a.to };
       if (a.qc) body.qc_result = a.qc;
@@ -433,6 +447,9 @@ export function ProductionStepModal({
     }
     if (installDate !== (row.planned_install_date ?? "")) {
       body.planned_install_date = installDate || null;
+    }
+    if (dueDate !== (row.production_due_date ?? "")) {
+      body.production_due_date = dueDate || null;
     }
     patch(body, { close: true });
   };
@@ -745,6 +762,27 @@ export function ProductionStepModal({
                   </button>
                 </div>
                 <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ลูกค้ารู้วันติดตั้งตั้งแต่ก่อนมัดจำ — กรอกไว้เลยเพื่อกำหนดเดดไลน์ผลิต/วัด</p>
+              </div>
+            )}
+
+            {/* วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง) — บังคับก่อนเริ่มผลิต · ใช้เป็นหัววันในตารางผลิตช่าง */}
+            {prod.status !== "READY" && (
+              <div className="mt-3 glass-card rounded-2xl p-4 border border-orange-300/25">
+                <label className="block text-[13px] mb-1.5 font-medium text-orange-100">วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง)</label>
+                <div className="flex gap-2">
+                  <DateField value={dueDate} onChange={(iso) => setDueDate(iso)} aria-label="วันกำหนดผลิตเสร็จ"
+                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
+                  <button
+                    onClick={() => patch({ production_due_date: dueDate || null }, { close: false, feedbackKey: "due" })}
+                    disabled={saving}
+                    className={`focusable pressable px-4 rounded-xl text-white text-sm font-semibold min-h-[52px] disabled:opacity-60 transition-colors ${
+                      savedField === "due" ? "bg-orange-400" : "bg-orange-500 hover:bg-orange-400"
+                    }`}
+                  >
+                    {savedField === "due" ? <Check size={16} /> : "บันทึกวัน"}
+                  </button>
+                </div>
+                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ช่างเห็นเป็นเดดไลน์ในตารางผลิต แล้วจัดวันเริ่มผลิตเอง · บังคับกรอกก่อน "เริ่มผลิต"</p>
               </div>
             )}
 

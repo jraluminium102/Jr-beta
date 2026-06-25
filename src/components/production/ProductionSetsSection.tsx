@@ -5,8 +5,8 @@ import { api } from "@/lib/api";
 import { Plus, X } from "@/components/ui/icons";
 
 // ค่ามาตรฐาน (ตาม Excel ทีมผลิต)
-const MAT = ["", "เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว"];
-const GLASS_ORDER = ["", "สั่งแล้ว รอของ", "มาแล้ว"];
+const GLASS_ORDER = ["", "รอวัด", "สั่งแล้ว รอของ", "มาแล้ว", "วัดแล้ว", "มายังไม่ครบ"];
+const SCREEN_TYPE = ["", "มุ้งจีบ", "มุ้ง JR", "มุ้งจีบ+มุ้ง JR", "มุ้งนิรภัย"];
 const INSTALLED = ["", "ใส่แล้ว", "ยังไม่ใส่"];
 const SCREEN_INST = ["", "มาแล้ว", "ใส่แล้ว", "ใส่ไม่ครบ"];
 const QC = ["", "ผ่าน", "ไม่ผ่าน"];
@@ -39,6 +39,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const key = ["production-sets", jobId];
   const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api.get<SetRow[]>(`/production-sets?job_id=${jobId}`) });
   const sets = data?.data ?? [];
+  // ประวัติสเปคกระจก (เลือกจากที่เคยบันทึก) — datalist
+  const { data: specRes } = useQuery({ queryKey: ["glass-specs"], queryFn: () => api.get<string[]>("/production-sets/glass-specs"), staleTime: 60_000 });
+  const glassSpecHistory = specRes?.data ?? [];
   const [busy, setBusy] = useState(false);
   const [editKeys, setEditKeys] = useState<Record<string, boolean>>({}); // ช่อง mark ที่กด "แก้" override อยู่
 
@@ -65,6 +68,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     <select defaultValue={s[f] ?? ""} disabled={!canWrite} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls + " [&>option]:text-black"}>
       {opts.map((o) => <option key={o} value={o}>{o || "—"}</option>)}
     </select>
+  );
+  // สเปคกระจก — พิมพ์เอง หรือเลือกจากประวัติ (datalist)
+  const glassSpec = (s: SetRow) => (
+    <input list="glass-spec-history" defaultValue={s.glass_spec ?? ""} disabled={!canWrite} placeholder="พิมพ์ / เลือกจากประวัติ"
+      onBlur={(e) => e.target.value !== String(s.glass_spec ?? "") && save(s.id, "glass_spec", e.target.value)}
+      className={fieldCls + " placeholder-white/30"} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
@@ -105,6 +114,11 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
         )}
       </div>
 
+      {/* ประวัติสเปคกระจก (ใช้ร่วมทุกชุด) */}
+      <datalist id="glass-spec-history">
+        {glassSpecHistory.map((g) => <option key={g} value={g} />)}
+      </datalist>
+
       {isLoading ? (
         <div className="text-[12px] py-2" style={{ color: "var(--t-low)" }}>กำลังโหลด…</div>
       ) : sets.length === 0 ? (
@@ -125,16 +139,16 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 <F label="คนวัด">{txt(s, "measurer_name")}</F>
                 <F label="โครง/โรงงาน">{txt(s, "frame_status")}</F>
 
-                <F label="อุปกรณ์">{sel(s, "mat_equipment", MAT)}</F>
-                <F label="อลู ปกติ">{sel(s, "mat_alu_normal", MAT)}</F>
-                <F label="อลู อบสี">{sel(s, "mat_alu_painted", MAT)}</F>
+                <F label="อุปกรณ์">{txt(s, "mat_equipment")}</F>
+                <F label="อลู ปกติ">{txt(s, "mat_alu_normal")}</F>
+                <F label="อลู อบสี">{txt(s, "mat_alu_painted")}</F>
                 <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)">{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", QC)}</F>
 
-                <div className="col-span-2"><F label="สเปคกระจก">{txt(s, "glass_spec")}</F></div>
+                <div className="col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>
                 <F label="สั่งกระจก">{sel(s, "glass_order", GLASS_ORDER)}</F>
                 <F label="ใส่กระจก 👷 (ช่างกด)">{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", INSTALLED)}</F>
 
-                <F label="มุ้ง">{txt(s, "screen_type")}</F>
+                <F label="มุ้ง">{sel(s, "screen_type", SCREEN_TYPE)}</F>
                 <F label="ใส่มุ้ง">{sel(s, "screen_installed", SCREEN_INST)}</F>
                 <F label="QC หลังใส่กระจก 👷 (ช่างกด)">{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", QC)}</F>
                 <F label="ต้องผลิตเสร็จ">{date(s, "must_finish_date")}</F>
