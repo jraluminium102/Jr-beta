@@ -257,17 +257,9 @@
   {
    "key": "1:lift_sms",
    "id": "lift_sms",
-   "name": "บานยก SMS สลิม (ชุดเล็ก)",
+   "name": "บานยก (อัตโนมัติตามขนาด)",
    "g": 1,
    "total": 24610,
-   "status": "ok"
-  },
-  {
-   "key": "1:lift_aluinch",
-   "id": "lift_aluinch",
-   "name": "บานยก เซมิยูโร (บานใหญ่)",
-   "g": 1,
-   "total": 27820,
    "status": "ok"
   },
   {
@@ -1196,6 +1188,14 @@
    "name": "ม่านซิป (zipscreen) ม่านม้วนกันลม",
    "g": 7,
    "total": 16692,
+   "status": "ok"
+  },
+  {
+   "key": "1:lift_aluinch",
+   "id": "lift_aluinch",
+   "name": "บานยก เซมิยูโร (บานใหญ่)",
+   "g": 1,
+   "total": 27820,
    "status": "ok"
   }
  ]
