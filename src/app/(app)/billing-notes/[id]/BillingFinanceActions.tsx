@@ -234,6 +234,206 @@ export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number
 }
 
 // ─────────────────────────────────────────────
+// Issue receipt for one installment (inline) — ออกใบเสร็จตามงวด ไม่ต้องย้ายหน้า
+// POST /api/receipts (รับชำระ + ปิดงวด + ออกใบเสร็จในคราวเดียว · VAT ล็อกตามงานฝั่ง server)
+// ─────────────────────────────────────────────
+const RECEIPT_PAY_METHODS = [
+  { value: "transfer", label: "โอนเงิน" },
+  { value: "cash", label: "เงินสด" },
+  { value: "cheque", label: "เช็ค" },
+];
+
+export function IssueReceiptButton({
+  billingNoteId, installmentId, amount,
+}: { billingNoteId: number; installmentId: number; amount: number }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [amt, setAmt] = useState(String(amount));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [method, setMethod] = useState("transfer");
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const a = Number(amt) || 0;
+    if (a <= 0) { setError("ยอดต้องมากกว่า 0"); return; }
+    setBusy(true);
+    setError("");
+    const res = await fetch("/api/receipts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        billing_note_id: billingNoteId,
+        installment_id: installmentId,
+        amount: a,
+        payment_method: method,
+        issue_date: date,
+      }),
+    });
+    const json = await res.json().catch(() => null);
+    setBusy(false);
+    if (res.ok) { setOpen(false); router.refresh(); }
+    else setError(json?.error ?? "ออกใบเสร็จไม่สำเร็จ");
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="press inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus-visible:ring-2"
+        aria-label="ออกใบเสร็จงวดนี้"
+      >
+        <Icon name="receipt" size={14} /> ออกใบเสร็จ
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="ออกใบเสร็จงวดนี้">
+      <form onSubmit={submit} className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+            <Icon name="receipt" size={18} /> ออกใบเสร็จงวดนี้
+          </h2>
+          <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
+            className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
+          ออกใบเสร็จ = รับชำระ + ปิดงวดนี้ + ออกใบกำกับภาษีในคราวเดียว · VAT คิดตามงานอัตโนมัติ
+        </div>
+
+        <label className="block text-sm">
+          <span className="text-xs font-medium text-gray-500">ยอดรับชำระ (รวม VAT แล้ว) <span className="text-red-600">*</span></span>
+          <input type="number" inputMode="decimal" step="0.01" min="0.01" required value={amt}
+            onChange={(e) => setAmt(e.target.value)}
+            className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-brand" />
+        </label>
+
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block text-sm">
+            <span className="text-xs font-medium text-gray-500">วันที่</span>
+            <DateField value={date} onChange={(iso) => setDate(iso)}
+              className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus-visible:ring-2" />
+          </label>
+          <label className="block text-sm">
+            <span className="text-xs font-medium text-gray-500">วิธีชำระ</span>
+            <select value={method} onChange={(e) => setMethod(e.target.value)}
+              className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2">
+              {RECEIPT_PAY_METHODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </label>
+        </div>
+
+        {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
+
+        <div className="flex gap-2 pt-1">
+          <button type="button" onClick={() => setOpen(false)} disabled={busy}
+            className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
+            ยกเลิก
+          </button>
+          <button type="submit" disabled={busy || Number(amt) <= 0}
+            className="press flex-1 bg-emerald-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
+            {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+            ออกใบเสร็จ
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Edit displayed status (override) — แก้ป้ายสถานะบนเอกสาร (ไม่กระทบยอดเงิน)
+// ─────────────────────────────────────────────
+const STATUS_OVERRIDE_OPTIONS = [
+  { value: "", label: "อัตโนมัติ (ตามการชำระ)" },
+  { value: "unpaid", label: "ยังไม่ชำระ" },
+  { value: "partial", label: "ชำระบางส่วน" },
+  { value: "paid", label: "ชำระครบ" },
+];
+
+export function EditBillingStatusButton({
+  billingNoteId, current,
+}: { billingNoteId: number; current: string | null }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState(current ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const res = await fetch(`/api/billing-notes/${billingNoteId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display_status: val === "" ? null : val }),
+    });
+    const json = await res.json().catch(() => null);
+    setBusy(false);
+    if (res.ok) { setOpen(false); router.refresh(); }
+    else setError(json?.error ?? "บันทึกไม่สำเร็จ");
+  }
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)}
+        className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark min-h-[44px] focus:outline-none focus-visible:ring-2"
+        aria-label="แก้สถานะที่แสดง">
+        <Icon name="pencil" size={16} /> แก้สถานะ
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แก้สถานะที่แสดง">
+      <form onSubmit={submit} className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+            <Icon name="pencil" size={18} /> แก้สถานะที่แสดงบนเอกสาร
+          </h2>
+          <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
+            className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+          เป็นแค่ <b>ป้ายสถานะที่โชว์บนเอกสาร</b> — ไม่กระทบยอดเงิน/งวด/การคำนวณ · เลือก &quot;อัตโนมัติ&quot; เพื่อกลับไปใช้สถานะจริงจากการชำระ
+        </div>
+
+        <label className="block text-sm">
+          <span className="text-xs font-medium text-gray-500">สถานะที่จะแสดง</span>
+          <select value={val} onChange={(e) => setVal(e.target.value)}
+            className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            {STATUS_OVERRIDE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </label>
+
+        {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
+
+        <div className="flex gap-2 pt-1">
+          <button type="button" onClick={() => setOpen(false)} disabled={busy}
+            className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
+            ยกเลิก
+          </button>
+          <button type="submit" disabled={busy}
+            className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
+            {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+            บันทึก
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Installment editor
 // ─────────────────────────────────────────────
 export type InstallmentRow = {

@@ -33,6 +33,7 @@ export interface BillingNote {
   issue_date: string;
   total: number;
   status: BillingStatus;
+  display_status?: BillingStatus | null; // override ป้ายสถานะบนเอกสาร (null = อัตโนมัติ) — ไม่กระทบยอดเงิน
   note: string;
   created_at: string;
   updated_at: string;

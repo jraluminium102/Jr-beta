@@ -5,7 +5,7 @@ import { baht } from "@/lib/money";
 import type { Receipt } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintLetterhead } from "@/components/print/PrintLetterhead";
+import { PrintLetterhead, taxInvoiceMissing } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,8 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
 
   const rc = data as Receipt;
   const c = rc.customer_snapshot;
+  // ใบกำกับภาษีเต็มรูป (ม.86/4) ต้องมีที่อยู่ + เลขภาษีผู้ซื้อครบ — เตือนเจ้าหน้าที่ก่อนพิมพ์ (ไม่พิมพ์ลงเอกสาร)
+  const taxMissing = taxInvoiceMissing(c);
 
   // ดึงรหัสใบวางบิลอ้างอิง (ถ้ามี)
   let refCode: string | null = null;
@@ -41,6 +43,14 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
         </Link>
         <PrintButton />
       </div>
+
+      {/* เตือนเจ้าหน้าที่ (ไม่พิมพ์ลงเอกสาร) — ใบกำกับภาษีเต็มรูปยังขาดข้อมูลผู้ซื้อ */}
+      {taxMissing.length > 0 && (
+        <div className="no-print mx-auto mt-4 max-w-[210mm] rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <b>⚠ ใบกำกับภาษีเต็มรูปยังไม่สมบูรณ์</b> — ขาด: {taxMissing.join(" · ")}
+          <div className="text-xs mt-0.5">แก้หัวเอกสาร (ข้อมูลลูกค้า) ให้ครบก่อนส่งให้ลูกค้านิติบุคคล มิฉะนั้นลูกค้านำไปเครดิตภาษีซื้อไม่ได้</div>
+        </div>
+      )}
 
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>

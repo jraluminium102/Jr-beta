@@ -4,7 +4,7 @@ import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
 // หัวเอกสารพิมพ์กลาง (โลโก้จริง + COMPANY + หัวเอกสาร + บล็อกลูกค้า)
 // ใช้ดีไซน์เดียวกับใบเสนอราคา — ใช้ร่วมใบวางบิล/ใบเสร็จ
 type InfoRow = { label: string; value: ReactNode };
-type CustomerSnapshot = {
+export type CustomerSnapshot = {
   name?: string;
   job?: string;
   address?: string;
@@ -12,6 +12,36 @@ type CustomerSnapshot = {
   contact_person?: string;
   phone?: string;
 };
+
+// บล็อกข้อมูลลูกค้า/ผู้ซื้อ — ฟอร์มบัญชีไทย (ชื่อ → ที่อยู่ → เลขประจำตัวผู้เสียภาษี)
+// ใช้ร่วมทุกเอกสาร (ใบเสนอราคา/ใบวางบิล/ใบเสร็จ) ผ่าน export เดียว — กันรูปแบบเพี้ยนกัน
+// หมายเหตุ: ไม่พิมพ์ "—" แทนที่อยู่/เลขภาษีที่ว่าง (ใบกำกับภาษีต้องครบจริง) — ใบเสร็จเตือนเจ้าหน้าที่แยก
+export function PrintCustomerBlock({ c }: { c: CustomerSnapshot }) {
+  return (
+    <div className="mb-4" style={{ fontSize: 13 }}>
+      <span className="font-bold" style={{ color: "#b3151d" }}>ลูกค้า</span>
+      <div className="mt-0.5" style={{ lineHeight: 1.55 }}>
+        <div className="font-semibold" style={{ color: "#1f2937" }}>{c.name || "—"}</div>
+        {c.address && <div style={{ color: "#374151" }}>{c.address}</div>}
+        {c.tax_id && <div style={{ color: "#374151" }}>เลขประจำตัวผู้เสียภาษี {c.tax_id}</div>}
+        {c.job && <div style={{ color: "#6b7280", fontSize: 12 }}>งาน: {c.job}</div>}
+        {(c.contact_person || c.phone) && (
+          <div style={{ color: "#6b7280", fontSize: 12 }}>
+            ผู้ติดต่อ {c.contact_person || "—"} · โทร {c.phone || "—"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** เช็คความครบของข้อมูลผู้ซื้อสำหรับใบกำกับภาษีเต็มรูป (ม.86/4) — เลขภาษีรับเลขบัตร ปชช.13 หลักได้ */
+export function taxInvoiceMissing(c: CustomerSnapshot): string[] {
+  const miss: string[] = [];
+  if (!c.tax_id || c.tax_id.replace(/\D/g, "").length < 13) miss.push("เลขประจำตัวผู้เสียภาษี/บัตรประชาชน (13 หลัก) ของผู้ซื้อ");
+  if (!c.address) miss.push("ที่อยู่ผู้ซื้อ");
+  return miss;
+}
 
 export function PrintLetterhead({
   docTitle,
@@ -35,7 +65,7 @@ export function PrintLetterhead({
           <img src="/jr-logo.png" alt="JR Aluminium" style={{ height: 34 }} />
           <div className="mt-1.5 leading-relaxed" style={{ fontSize: 12 }}>
             <span className="font-semibold" style={{ color: "#b3151d" }}>
-              {COMPANY.name}
+              {COMPANY.nameFull}
             </span>{" "}
             ({COMPANY.branch})<br />
             {COMPANY.address}<br />
@@ -60,34 +90,7 @@ export function PrintLetterhead({
       </div>
 
       {/* ===== Customer block ===== */}
-      <div className="mb-4" style={{ fontSize: 13 }}>
-        <span className="font-bold" style={{ color: "#b3151d" }}>ลูกค้า</span>
-        <br />
-        <span className="font-medium">
-          {c.name}
-          {c.job ? ` · ${c.job}` : ""}
-        </span>
-        {c.address && (
-          <>
-            <br />
-            <span style={{ color: "#4b5563" }}>{c.address}</span>
-          </>
-        )}
-        {c.tax_id && (
-          <>
-            <br />
-            <span style={{ color: "#4b5563" }}>เลขผู้เสียภาษี: {c.tax_id}</span>
-          </>
-        )}
-        {(c.contact_person || c.phone) && (
-          <>
-            <br />
-            <span style={{ color: "#4b5563" }}>
-              ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}
-            </span>
-          </>
-        )}
-      </div>
+      <PrintCustomerBlock c={c} />
     </>
   );
 }

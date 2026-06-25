@@ -6,7 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
-import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton } from "./BillingFinanceActions";
+import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
@@ -34,6 +34,9 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   const writable = canWrite(profile?.role);
   const canVoid = can((profile?.role ?? "VIEWER") as Role, "finance", "void");
   const isCancelled = bn.status === "cancelled";
+  // ป้ายสถานะที่แสดง: ใช้ override ถ้ามี (display_status) ไม่งั้นใช้สถานะจริง
+  const effStatus: BillingStatus = (bn.display_status ?? bn.status) as BillingStatus;
+  const statusOverridden = !!bn.display_status && bn.display_status !== bn.status;
   // ซ่อนปุ่มแก้ยอดถ้ามีงวดที่ชำระแล้ว (BFF guard ซ้ำอีกชั้น)
   const hasAnyPayment = installments.some(
     (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
@@ -46,6 +49,18 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     refCode = q?.code ?? null;
   }
 
+  // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
+  const { data: rcs } = await supabase
+    .from("receipts")
+    .select("id, code, installment_id")
+    .eq("billing_note_id", bn.id)
+    .eq("is_voided", false);
+  const receiptByInst = new Map<number, { id: number; code: string }>();
+  (rcs ?? []).forEach((r) => {
+    const rr = r as { id: number; code: string; installment_id: number | null };
+    if (rr.installment_id != null) receiptByInst.set(Number(rr.installment_id), { id: Number(rr.id), code: rr.code });
+  });
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -54,7 +69,8 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             <Icon name="arrowLeft" size={18} />
           </Link>
           <h1 className="text-xl font-bold text-brand-dark font-mono">{bn.code}</h1>
-          <Badge tone={STATUS_TONE[bn.status]} dot>{BILLING_STATUS_LABEL[bn.status]}</Badge>
+          <Badge tone={STATUS_TONE[effStatus]} dot>{BILLING_STATUS_LABEL[effStatus]}</Badge>
+          {statusOverridden && <span className="text-[11px] text-amber-700" title={`สถานะจริง: ${BILLING_STATUS_LABEL[bn.status]}`}>(แก้เอง)</span>}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Link href={`/billing-notes/${bn.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
@@ -76,6 +92,9 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           )}
           {writable && !isCancelled && (
             <EditDocHeaderModal endpoint={`/api/billing-notes/${bn.id}/header`} snapshot={c} />
+          )}
+          {writable && !isCancelled && (
+            <EditBillingStatusButton billingNoteId={bn.id} current={bn.display_status ?? null} />
           )}
           {canVoid && !isCancelled && (
             <VoidBillingNoteButton billingNoteId={bn.id} />
@@ -127,6 +146,22 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                     {it.status === "paid" && (
                       <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {it.paid_date}</div>
                     )}
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <Link
+                        href={`/billing-notes/${bn.id}/print?installment=${it.seq}`}
+                        className="press inline-flex items-center gap-1 text-xs text-brand-dark/70 hover:text-brand-dark"
+                      >
+                        <Icon name="printer" size={12} /> PDF งวดนี้
+                      </Link>
+                      {(() => {
+                        const rc = receiptByInst.get(it.id!);
+                        return rc ? (
+                          <Link href={`/receipts/${rc.id}/print`} className="press inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800">
+                            <Icon name="receipt" size={12} /> ใบเสร็จ {rc.code}
+                          </Link>
+                        ) : null;
+                      })()}
+                    </div>
                   </td>
                   <td className="text-right font-semibold tabular-nums">฿{baht(it.amount)}</td>
                   <td className="text-center text-ink-2">{it.due_date || "—"}</td>
@@ -140,7 +175,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                       {it.status === "paid" ? (
                         <span className="text-xs text-ink-3">—</span>
                       ) : (
-                        <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
+                        <div className="flex flex-col items-end gap-1.5">
+                          <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
+                          <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
+                        </div>
                       )}
                     </td>
                   )}

@@ -9,7 +9,13 @@ import { PrintLetterhead } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
 
-export default async function BillingPrintPage({ params }: { params: { id: string } }) {
+export default async function BillingPrintPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { installment?: string };
+}) {
   const supabase = createClient();
   const { data } = await supabase
     .from("billing_notes")
@@ -19,10 +25,19 @@ export default async function BillingPrintPage({ params }: { params: { id: strin
   if (!data) notFound();
 
   const bn = data as BillingNote;
-  const installments = (bn.billing_installments ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+  const allInstallments = (bn.billing_installments ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = bn.customer_snapshot;
+
+  // export แยกงวด: ?installment=<seq> → โชว์เฉพาะงวดนั้น (ยอดรวม = ยอดงวด)
+  const selSeq = searchParams?.installment ? Number(searchParams.installment) : null;
+  const selected = selSeq != null ? allInstallments.find((i) => i.seq === selSeq) ?? null : null;
+  const isSingle = !!selected;
+  const installments = selected ? [selected] : allInstallments;
+
   const totalPaid = installments.reduce((a, i) => a + (Number(i.paid_amount) || 0), 0);
-  const remaining = (Number(bn.total) || 0) - totalPaid;
+  // ยอดรวมที่โชว์: ทั้งใบ = bn.total · แยกงวด = ยอดงวดนั้น
+  const grandTotal = isSingle ? (Number(selected!.amount) || 0) : (Number(bn.total) || 0);
+  const remaining = grandTotal - totalPaid;
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -37,12 +52,18 @@ export default async function BillingPrintPage({ params }: { params: { id: strin
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
         <PrintLetterhead
-          docTitle="ใบวางบิล"
+          docTitle={isSingle ? `ใบวางบิล (งวดที่ ${selSeq})` : "ใบวางบิล"}
           docSubtitle="Billing Note"
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{bn.code}</span> },
             { label: "วันที่", value: bn.issue_date },
-            { label: "สถานะ", value: BILLING_STATUS_LABEL[bn.status] },
+            {
+              label: "สถานะ",
+              value:
+                bn.display_status && bn.display_status !== bn.status
+                  ? `${BILLING_STATUS_LABEL[bn.display_status]} (ปรับด้วยมือ · ตามการชำระจริง: ${BILLING_STATUS_LABEL[bn.status]})`
+                  : BILLING_STATUS_LABEL[bn.status],
+            },
           ]}
           customer={c}
         />
@@ -78,7 +99,7 @@ export default async function BillingPrintPage({ params }: { params: { id: strin
             <tbody>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(remaining)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">ยอดรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">฿{baht(bn.total)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(grandTotal)}</td></tr>
             </tbody>
           </table>
         </div>

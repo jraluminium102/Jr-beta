@@ -6,6 +6,7 @@ import { bahtText } from "@/lib/baht-text";
 import { STATUS_LABEL, type Quotation } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
+import { PrintCustomerBlock } from "@/components/print/PrintLetterhead";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
@@ -93,35 +94,8 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
           </div>
         </div>
 
-        {/* ===== Customer block — matches genQuote qmeta ===== */}
-        <div className="mb-4" style={{ fontSize: 13 }}>
-          <span className="font-bold" style={{ color: "#b3151d" }}>ลูกค้า</span>
-          <br />
-          <span className="font-medium">
-            {c.name}
-            {c.job ? ` · ${c.job}` : ""}
-          </span>
-          {c.address && (
-            <>
-              <br />
-              <span style={{ color: "#4b5563" }}>{c.address}</span>
-            </>
-          )}
-          {c.tax_id && (
-            <>
-              <br />
-              <span style={{ color: "#4b5563" }}>เลขผู้เสียภาษี: {c.tax_id}</span>
-            </>
-          )}
-          {(c.contact_person || c.phone) && (
-            <>
-              <br />
-              <span style={{ color: "#4b5563" }}>
-                ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}
-              </span>
-            </>
-          )}
-        </div>
+        {/* ===== Customer block — ฟอร์มบัญชีไทย (ใช้ร่วมกับใบวางบิล/ใบเสร็จ) ===== */}
+        <PrintCustomerBlock c={c} />
 
         {/* ===== Item table — matches genQuote qt ===== */}
         <table className="w-full border-collapse" style={{ fontSize: 13 }}>
