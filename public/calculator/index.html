@@ -2796,7 +2796,11 @@ function qiRenderG4(d){
   var type = d.dataset.qiG4type || 'cabinet';
   var cabtype = d.dataset.qiG4cabtype || 'wardrobe';
   var color = d.dataset.qiG4color || '0';
+  var frontcolor = d.dataset.qiG4frontcolor || '0';
+  var shelfglass = d.dataset.qiG4shelfglass || '0';
   var ftpanel = parseInt(d.dataset.qiG4ftpanel||2);
+  var ftmat = d.dataset.qiG4ftmat || 'alu';
+  var ftglasscolor = d.dataset.qiG4ftglasscolor || '0';
   var h = '<div class="qi-flex"><div class="qi-form">';
   h += '<div class="qi-lbl">กลุ่มงาน</div>' + qiGroupChips(d.querySelector('.qi-group').value);
   h += '<div class="qi-lbl">ชนิดงาน</div><div class="qi-chips">';
@@ -2811,17 +2815,46 @@ function qiRenderG4(d){
     h += '<div class="qi-lbl">ขนาดตู้</div>';
     h += '<div class="qi-row" style="grid-template-columns:1fr 1fr 1fr;"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2.4)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ลึก (ม.)</label><input class="qi-g4depth" type="number" step="0.1" min="0" value="'+(d.dataset.qiG4depth||0.6)+'" oninput="calcQuickAll()"></div></div>';
     h += '<div class="qi-lbl">บานหน้า</div><div class="qi-chips"><button type="button" class="chip'+(parseInt(d.dataset.qiG4doors||2)===1?' on':'')+'" onclick="qiG4SetDoors(this,1)">1 บาน</button><button type="button" class="chip'+(parseInt(d.dataset.qiG4doors||2)===2?' on':'')+'" onclick="qiG4SetDoors(this,2)">2 บาน</button><button type="button" class="chip'+(parseInt(d.dataset.qiG4doors||2)===3?' on':'')+'" onclick="qiG4SetDoors(this,3)">3 บาน</button><button type="button" class="chip'+(parseInt(d.dataset.qiG4doors||2)===4?' on':'')+'" onclick="qiG4SetDoors(this,4)">4 บาน</button></div>';
+    h += '<div class="qi-lbl">สีโครง</div><div class="qi-chips">';
+    h += '<button type="button" class="chip'+(color==='0'?' on':'')+'" onclick="qiG4SetColor(this,\'0\')">มาตรฐาน</button>';
+    h += '<button type="button" class="chip'+(color==='1'?' on':'')+'" onclick="qiG4SetColor(this,\'1\')">สีพิเศษ (+ค่าสี)</button>';
+    h += '</div>';
+    h += '<div class="qi-lbl">สีหน้าบาน <span class="hint">(แยกจากสีโครง)</span></div><div class="qi-chips">';
+    h += '<button type="button" class="chip'+(frontcolor==='0'?' on':'')+'" onclick="qiG4SetFrontColor(this,\'0\')">ขาว/ดำ (มาตรฐาน)</button>';
+    h += '<button type="button" class="chip'+(frontcolor==='1'?' on':'')+'" onclick="qiG4SetFrontColor(this,\'1\')">สีพิเศษ (+ค่าสี)</button>';
+    h += '</div>';
+    if(cabtype==='shoe'){
+      h += '<div class="qi-lbl">อัปเกรดกระจกชั้น <span class="hint">(รองเท้า: ชั้น=กระจก)</span></div><div class="qi-chips">';
+      h += '<button type="button" class="chip'+(shelfglass==='0'?' on':'')+'" onclick="qiG4SetShelfGlass(this,\'0\')">ใส 6 มม. (มาตรฐาน)</button>';
+      h += '<button type="button" class="chip'+(shelfglass==='600'?' on':'')+'" onclick="qiG4SetShelfGlass(this,\'600\')">เทมเปอร์ 6 มม. +600</button>';
+      h += '<button type="button" class="chip'+(shelfglass==='1200'?' on':'')+'" onclick="qiG4SetShelfGlass(this,\'1200\')">ใส 8/10 มม. +1,200</button>';
+      h += '<button type="button" class="chip'+(shelfglass==='1300'?' on':'')+'" onclick="qiG4SetShelfGlass(this,\'1300\')">เทมเปอร์ 8 มม. +1,300</button>';
+      h += '<button type="button" class="chip'+(shelfglass==='2100'?' on':'')+'" onclick="qiG4SetShelfGlass(this,\'2100\')">เทมเปอร์ 10 มม. +2,100</button>';
+      h += '</div>';
+    }
   } else {
     h += '<div class="qi-lbl">ขนาดต่อบาน</div>';
     h += '<div class="qi-row" style="grid-template-columns:1fr 1fr;"><div class="qi-fld"><label>กว้าง/บาน (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||0.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.2)+'" oninput="calcQuickAll()"></div></div>';
     h += '<div class="qi-lbl">จำนวนบาน <span class="hint">(สูงสุด 3 บาน)</span></div><div class="qi-chips">';
     [1,2,3].forEach(function(n){ h += '<button type="button" class="chip'+(ftpanel===n?' on':'')+'" onclick="qiG4SetFtPanel(this,'+n+')">'+n+' บาน</button>'; });
     h += '</div>';
+    h += '<div class="qi-lbl">วัสดุหน้าบาน</div><div class="qi-chips">';
+    h += '<button type="button" class="chip'+(ftmat==='alu'?' on':'')+'" onclick="qiG4SetFtMat(this,\'alu\')">อลูมิเนียม</button>';
+    h += '<button type="button" class="chip'+(ftmat==='glass'?' on':'')+'" onclick="qiG4SetFtMat(this,\'glass\')">กระจก</button>';
+    h += '</div>';
+    if(ftmat==='glass'){
+      h += '<div class="qi-lbl">สีกระจก</div><div class="qi-chips">';
+      h += '<button type="button" class="chip'+(ftglasscolor==='0'?' on':'')+'" onclick="qiG4SetFtGlassColor(this,\'0\')">ใส (+0)</button>';
+      h += '<button type="button" class="chip'+(ftglasscolor==='500'?' on':'')+'" onclick="qiG4SetFtGlassColor(this,\'500\')">ฝ้า +500</button>';
+      h += '<button type="button" class="chip'+(ftglasscolor==='500x2'?' on':'')+'" onclick="qiG4SetFtGlassColor(this,\'500x2\')">ชาดำ +500</button>';
+      h += '</div>';
+    } else {
+      h += '<div class="qi-lbl">สีโครง</div><div class="qi-chips">';
+      h += '<button type="button" class="chip'+(color==='0'?' on':'')+'" onclick="qiG4SetColor(this,\'0\')">มาตรฐาน</button>';
+      h += '<button type="button" class="chip'+(color==='1'?' on':'')+'" onclick="qiG4SetColor(this,\'1\')">สีพิเศษ (+ค่าสี)</button>';
+      h += '</div>';
+    }
   }
-  h += '<div class="qi-lbl">สีโครง</div><div class="qi-chips">';
-  h += '<button type="button" class="chip'+(color==='0'?' on':'')+'" onclick="qiG4SetColor(this,\'0\')">มาตรฐาน</button>';
-  h += '<button type="button" class="chip'+(color==='1'?' on':'')+'" onclick="qiG4SetColor(this,\'1\')">สีพิเศษ (+ค่าสี)</button>';
-  h += '</div>';
   h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · ปัดขึ้นพัน · ผนัง 3 ด้านเพิ่มที่ใบจริง</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
@@ -2832,6 +2865,10 @@ function qiG4PickCabtype(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4cabtype
 function qiG4SetDoors(btn,n){ var d=btn.closest('.ch'); d.dataset.qiG4doors=n; qiSaveWH(d); qiRenderG4(d); }
 function qiG4SetFtPanel(btn,n){ var d=btn.closest('.ch'); d.dataset.qiG4ftpanel=n; qiSaveWH(d); qiRenderG4(d); }
 function qiG4SetColor(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4color=v; qiSaveWH(d); qiRenderG4(d); }
+function qiG4SetFrontColor(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4frontcolor=v; qiSaveWH(d); qiRenderG4(d); }
+function qiG4SetShelfGlass(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4shelfglass=v; qiSaveWH(d); qiRenderG4(d); }
+function qiG4SetFtMat(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4ftmat=v; qiSaveWH(d); qiRenderG4(d); }
+function qiG4SetFtGlassColor(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG4ftglasscolor=v; qiSaveWH(d); qiRenderG4(d); }
 function qiCalcG4(d){
   var type=d.dataset.qiG4type||'cabinet';
   var W=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
@@ -2844,18 +2881,31 @@ function qiCalcG4(d){
       var D=parseFloat((d.querySelector('.qi-g4depth')||{}).value)||0.6;
       var nD=parseInt(d.dataset.qiG4doors||2);
       var ci=d.dataset.qiG4color==='1'?4:0;
-      u=calcUnit(p,W,H,0,ci,1,{depth:D,cabtype:d.dataset.qiG4cabtype||'wardrobe',cabDoors:nD},false);
+      var frontColor=parseInt(d.dataset.qiG4frontcolor||0);
+      var shelfGlassSpread=parseInt(d.dataset.qiG4shelfglass||0);
+      var optCab={depth:D,cabtype:d.dataset.qiG4cabtype||'wardrobe',cabDoors:nD,
+        cabCoFollow:false,cabCoMode:'real',
+        cabStructColor:ci,
+        cabFrontColor:frontColor,
+        shelfglass:shelfGlassSpread};
+      u=calcUnit(p,W,H,0,ci,1,optCab,false);
       sub='ตู้ '+W+'×'+H+' ลึก'+D+' · '+nD+' บาน'+(d.dataset.qiG4cabtype==='shoe'?' (รองเท้า)':'');
     } else {
       p=PBYID['future_tech']; if(!p)return{sell:0,a:0,qty:qty};
       var panels=parseInt(d.dataset.qiG4ftpanel||2);
-      u=calcUnit(p,W,H,0,0,panels,{ftcolor:d.dataset.qiG4color==='1'?1:0},false);
-      sub='ฝาตู้ '+W+'×'+H+'/บาน · '+panels+' บาน';
+      var ftmat=d.dataset.qiG4ftmat||'alu';
+      var ftglasscolor=ftmat==='glass'?(d.dataset.qiG4ftglasscolor==='500x2'?500:parseInt(d.dataset.qiG4ftglasscolor||0)):0;
+      var ftcolor=(ftmat==='alu'&&d.dataset.qiG4color==='1')?1:0;
+      var optFt={ftmat:ftmat,ftglasscolor:ftglasscolor,ftcolor:ftcolor,ftCoFollow:false,ftCoMode:'real'};
+      u=calcUnit(p,W,H,0,0,panels,optFt,false);
+      sub=(ftmat==='glass'?'ฝาตู้กระจก':'ฝาตู้ Future Tech')+' '+W+'×'+H+'/บาน · '+panels+' บาน';
     }
   } catch(e){ return {sell:0,a:0,qty:qty}; }
   var sell=u.sell||0;
   var pc=d.querySelector('.qi-pc-body'); if(!pc) return {sell:sell,a:u.a,qty:qty};
-  var bd='<div class="qi-pc-line" style="font-weight:700;font-size:12.5px;"><span class="n" style="color:#1F2937;">'+p.name+(d.dataset.qiG4color==='1'?' · สีพิเศษ':'')+'</span></div>';
+  var typeLabel=type==='cabinet'?p.name:(d.dataset.qiG4ftmat==='glass'?'ฝาตู้กระจก Future Tech':'ฝาตู้ Future Tech');
+  var colorTag=type==='cabinet'?((d.dataset.qiG4color==='1'?' · สีโครงพิเศษ':'')+(d.dataset.qiG4frontcolor==='1'?' · สีหน้าบานพิเศษ':'')):((d.dataset.qiG4ftmat==='alu'&&d.dataset.qiG4color==='1')?' · สีพิเศษ':'');
+  var bd='<div class="qi-pc-line" style="font-weight:700;font-size:12.5px;"><span class="n" style="color:#1F2937;">'+typeLabel+colorTag+'</span></div>';
   bd += qiPcSub(sub);
   if(u.msgs&&u.msgs[0]) bd += qiPcSub(u.msgs[0]);
   bd += qiPcRow('ราคา/ชุด',sell);
