@@ -59,8 +59,8 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (current.status === "READY" && newIdx < curIdx) {
         return err("งานพร้อมติดตั้งแล้ว ไม่สามารถถอยสถานะได้", 409);
       }
-      // เริ่มผลิต (ช่างกดเอง) — ต้องผ่านขั้น "รอลงผลิต" (QUEUED) ก่อนเสมอ + กู้จาก ISSUE
-      const MFG_FROM = ["QUEUED", "ISSUE"];
+      // เริ่มผลิต — ต้องผ่าน "รอลงผลิต" (QUEUED) ก่อน · QC ไม่ผ่าน/กู้จาก ISSUE → กลับมาผลิตได้
+      const MFG_FROM = ["QUEUED", "QC", "ISSUE"];
       if (body.status === "MANUFACTURING" && !MFG_FROM.includes(current.status as string)) {
         return err("ต้องส่งเข้า 'รอลงผลิต' ก่อนจึงเริ่มผลิตได้", 409);
       }

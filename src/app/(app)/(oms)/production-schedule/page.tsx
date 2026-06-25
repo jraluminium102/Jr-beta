@@ -179,12 +179,25 @@ export default function ProductionSchedulePage() {
   const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
     QUEUED:        { label: "เริ่มผลิต", nextStatus: "MANUFACTURING", confirmMsg: (t) => `เริ่มผลิต "${t}" ใช่ไหม?` },
     MANUFACTURING: { label: "ส่ง QC",    nextStatus: "QC",            confirmMsg: (t) => `ส่งงาน "${t}" เข้าตรวจ QC ใช่ไหม?` },
-    QC:            { label: "ยืนยัน QC (หน้าผลิต)", nextStatus: "READY", confirmMsg: (t) => `งาน "${t}" ต้องกรอกผล QC + วันตรวจที่หน้า "ผลิต" — ไปที่หน้าผลิตเลยไหม?` },
+    QC:            { label: "ตรวจ QC (หน้า QC)", nextStatus: "READY", confirmMsg: (t) => `งาน "${t}" ตรวจ QC ที่หน้า "ตรวจ QC" — ไปที่หน้า QC เลยไหม?` },
   };
 
   const advanceJobStatus = async (r: SchedRow) => {
     const cfg = JOB_NEXT[r.status];
     if (!cfg) return;
+    // เริ่มผลิต (ช่าง): ต้องมีวันกำหนดเสร็จ + วันติดตั้งก่อน (ออฟฟิศกรอกในหน้า "ผลิต")
+    if (cfg.nextStatus === "MANUFACTURING" && (!r.due_date || !r.install_date)) {
+      const miss = [!r.due_date && "วันกำหนดเสร็จ", !r.install_date && "วันติดตั้ง"].filter(Boolean).join(" + ");
+      alert(`ยังเริ่มผลิตไม่ได้ — ออฟฟิศต้องกรอก ${miss} ก่อน (เปิดงานนี้ในหน้า "ผลิต")`);
+      return;
+    }
+    // ตรวจ QC: ช่างไม่ได้ตรวจเอง → ส่งเข้า QC แล้วรอเจ้าหน้าที่ QC
+    if (cfg.nextStatus === "READY") {
+      if (isChang) { alert(`ส่งงาน "${r.title}" เข้า QC แล้ว — รอเจ้าหน้าที่ QC ตรวจ`); return; }
+      if (!confirm(cfg.confirmMsg(r.title))) return;
+      window.location.href = "/qc"; // เจ้าหน้าที่ QC ตรวจที่หน้า "ตรวจ QC"
+      return;
+    }
     if (!confirm(cfg.confirmMsg(r.title))) return;
     setSavingId(r.id);
     try {
@@ -192,11 +205,6 @@ export default function ProductionSchedulePage() {
       if (cfg.nextStatus === "QC") {
         // ต้องส่ง production_done ด้วย — ใช้วันนี้ถ้าไม่มีใน draft
         body.production_done = today();
-      }
-      if (cfg.nextStatus === "READY") {
-        // READY ต้องกรอกผล QC + วันตรวจ ซึ่งมีเฉพาะหน้า "ผลิต" → พาไปที่นั่นแทนการเด้ง alert ทางตัน
-        window.location.href = "/production";
-        return;
       }
       await api.patch(`/production/${r.id}`, body);
       await refetch();
@@ -321,14 +329,24 @@ export default function ProductionSchedulePage() {
                       </div>
 
                       {/* โหมดช่าง: ปุ่มเริ่มผลิต (QUEUED) / ส่ง QC (MANUFACTURING) — ช่างกดเอง */}
-                      {!officeMode && r.kind === "job" && canWrite && (r.status === "QUEUED" || r.status === "MANUFACTURING") && JOB_NEXT[r.status] && (
-                        <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
-                          className="focusable pressable mt-1 w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50"
-                          style={{ background: r.status === "QUEUED" ? IOS.orange : IOS.blue }}>
-                          {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (r.status === "QUEUED" ? "▶ " : "")}
-                          {JOB_NEXT[r.status].label}
-                        </button>
-                      )}
+                      {!officeMode && r.kind === "job" && canWrite && (r.status === "QUEUED" || r.status === "MANUFACTURING") && JOB_NEXT[r.status] && (() => {
+                        const missingDates = r.status === "QUEUED" && (!r.due_date || !r.install_date);
+                        return (
+                          <div className="mt-1">
+                            {missingDates && (
+                              <div className="text-[11.5px] rounded-lg px-2.5 py-1.5 mb-1" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>
+                                ⏳ รอออฟฟิศกรอก{!r.due_date ? " วันกำหนดเสร็จ" : ""}{(!r.due_date && !r.install_date) ? " +" : ""}{!r.install_date ? " วันติดตั้ง" : ""} ก่อนเริ่มผลิต
+                              </div>
+                            )}
+                            <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
+                              className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50"
+                              style={{ background: missingDates ? "#c7c7cc" : (r.status === "QUEUED" ? IOS.orange : IOS.blue) }}>
+                              {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (r.status === "QUEUED" ? "▶ " : "")}
+                              {JOB_NEXT[r.status].label}
+                            </button>
+                          </div>
+                        );
+                      })()}
 
                       {officeMode && (<>
                       {/* วันผลิต */}
@@ -600,7 +618,9 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
         await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
-        await api.patch(`/production/${pickId}`, { status: "QUEUED", production_queued: pdate, ...(idate ? { planned_install_date: idate } : {}) });
+        if (!pdate) { setErr("กรุณากรอกวันกำหนดเสร็จ"); setSaving(false); return; }
+        // ส่งเข้า "รอลงผลิต" (QUEUED) พร้อมวันกำหนดเสร็จ → โผล่ในตารางช่างถูกกลุ่ม + ช่างเริ่มผลิตได้
+        await api.patch(`/production/${pickId}`, { status: "QUEUED", production_due_date: pdate, ...(idate ? { planned_install_date: idate } : {}) });
       }
       onSaved();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); setSaving(false); }
@@ -676,12 +696,12 @@ function AddModal({ producerList, onClose, onSaved }: { producerList: string[]; 
                 </select>
                 {candidates.length === 0 && <p className="text-[12px] text-amber-200 mt-1">ไม่มีงานที่วัดแล้วและยังไม่ลงคิว — งานที่ยังรอวัด (PENDING_MEASURE) ต้องวัดหน้างานก่อน</p>}</div>
               <div className="grid grid-cols-2 gap-2">
-                <div><label className="block text-[13px] mb-1 text-white">วันผลิต</label>
-                  <DateField value={pdate} onChange={(iso) => setPdate(iso)} className={dinp} aria-label="วันผลิต" /></div>
+                <div><label className="block text-[13px] mb-1 text-white">วันกำหนดเสร็จ *</label>
+                  <DateField value={pdate} onChange={(iso) => setPdate(iso)} className={dinp} aria-label="วันกำหนดเสร็จ" /></div>
                 <div><label className="block text-[13px] mb-1 text-white">วันติดตั้ง</label>
                   <DateField value={idate} onChange={(iso) => setIdate(iso)} className={dinp} aria-label="วันติดตั้ง" /></div>
               </div>
-              <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ "ลงคิวผลิต" + ใส่วันให้</p>
+              <p className="text-[12px]" style={{ color: "var(--t-low)" }}>เลือกแล้วงานจะเข้าสถานะ "รอลงผลิต" + ใส่วันกำหนดเสร็จให้ · ช่างกดเริ่มผลิตเองในตาราง</p>
             </div>
           )}
 

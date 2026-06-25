@@ -59,10 +59,11 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 
 export function menusFor(role: Role): string[] {
   // issues + sales_closure ยุบเข้า followup แล้ว — ไม่ปรากฏในเมนูแยก
-  const all = ["dashboard", "followup", "production", "prodqueue", "measure_schedule", "designer", "installation", "boq", "finance", "settings"];
+  const all = ["dashboard", "followup", "production", "prodqueue", "qc", "measure_schedule", "designer", "installation", "boq", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", production: "production",
     prodqueue: "production",
+    qc: "production",
     measure_schedule: "production",
     designer: "designer", installation: "installation",
     boq: "boq",

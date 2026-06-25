@@ -27,6 +27,7 @@ const schema = z.object({
   result: z.enum(["PASSED", "FAILED"]),
   defects: z.string().optional(),
   photo_url: z.string().optional(),
+  checklist: z.record(z.boolean()).optional(),   // เช็คลิสต์เทคนิค { "หัวข้อ": true/false }
 });
 
 // POST /api/qc — บันทึกผลตรวจ (ผลิต/ติดตั้ง/ลูกค้าตรวจ)
