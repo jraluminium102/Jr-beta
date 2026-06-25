@@ -20,6 +20,7 @@ export default function ChangPublicView({ token }: { token: string }) {
   const [err, setErr] = useState("");
   const [name, setName] = useState("");
   const [savingSetIds, setSavingSetIds] = useState<Set<number>>(new Set());
+  const [lastSync, setLastSync] = useState("");
 
   useEffect(() => { try { setName(localStorage.getItem("chang_name") || ""); } catch { /* ignore */ } }, []);
   const saveName = (v: string) => { setName(v); try { localStorage.setItem("chang_name", v); } catch { /* ignore */ } };
@@ -30,10 +31,24 @@ export default function ChangPublicView({ token }: { token: string }) {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "โหลดไม่สำเร็จ");
       setRows(j.data || []); setErr("");
+      setLastSync(new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }));
     } catch (e) { setErr(e instanceof Error ? e.message : "โหลดไม่สำเร็จ"); }
     finally { setLoading(false); }
   }, [token]);
   useEffect(() => { load(); }, [load]);
+
+  // อัปเดตอัตโนมัติ: เมื่อกลับมาที่แท็บ/โฟกัส + ทุก 30 วินาที (ลิงก์ช่างจะไม่ค้างข้อมูลเก่า)
+  useEffect(() => {
+    const onActive = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onActive);
+    window.addEventListener("focus", onActive);
+    const iv = setInterval(load, 30000);
+    return () => {
+      document.removeEventListener("visibilitychange", onActive);
+      window.removeEventListener("focus", onActive);
+      clearInterval(iv);
+    };
+  }, [load]);
 
   const mark = useCallback(async (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => {
     if (confirmMsg && !confirm(confirmMsg)) return;
@@ -59,8 +74,16 @@ export default function ChangPublicView({ token }: { token: string }) {
   return (
     <div style={{ background: IOS.page, minHeight: "100vh", color: IOS.ink }} className="p-4 sm:p-6">
       <div className="max-w-[760px] mx-auto">
-        <h1 className="text-2xl font-bold mb-0.5" style={{ letterSpacing: "-.01em" }}>📋 ตารางผลิต — ช่าง</h1>
-        <p className="text-[13px] mb-3" style={{ color: IOS.ink2 }}>แตะปุ่มเพื่ออัปเดตงาน · จุดสี = สีประจำวัน</p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <h1 className="text-2xl font-bold" style={{ letterSpacing: "-.01em" }}>📋 ตารางผลิต — ช่าง</h1>
+          <button onClick={() => load()} aria-label="รีเฟรช"
+            className="ml-auto inline-flex items-center gap-1 rounded-[10px] px-3 py-1.5 text-[13px] font-semibold min-h-[36px] text-white" style={{ background: IOS.blue }}>
+            ↻ รีเฟรช
+          </button>
+        </div>
+        <p className="text-[12.5px] mb-3" style={{ color: IOS.ink2 }}>
+          แตะปุ่มเพื่ออัปเดตงาน · อัปเดตอัตโนมัติทุก 30 วิ{lastSync ? ` · ล่าสุด ${lastSync}` : ""}
+        </p>
 
         <div className="mb-4 flex items-center gap-2">
           <span className="text-[13px]" style={{ color: IOS.ink2 }}>ฉันคือ:</span>
