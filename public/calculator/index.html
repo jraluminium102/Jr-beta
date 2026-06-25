@@ -2514,6 +2514,9 @@ function readQuickItem(d){
   // R3.19 (20มิ.ย. · มติพี่นัท): คาดตาราง + ลูกฟูก โหมดคิดเร็ว → ป้อน optSel · calcUnit คิดราคา (สีลูกฟูก=rn90FinRate(ci) auto)
   { var _qgm=d.querySelector('.qi-gridmark'); if(_qgm&&_qgm.value==='1'){ _opt.gridmark=true; _opt.gmNh=parseInt((d.querySelector('.qi-gnh')||{}).value)||0; _opt.gmNv=parseInt((d.querySelector('.qi-gnv')||{}).value)||0; _opt.gmRate=parseFloat((d.querySelector('.qi-grate')||{}).value)||200; _opt.gmCurve=0; }
     var _qsl=d.querySelector('.qi-solidlower'); if(_qsl&&_qsl.value){ _opt.solidlower=_qsl.value; _opt.solidlowerW=parseFloat((d.querySelector('.qi-slw')||{}).value)||0; _opt.solidlowerH=parseFloat((d.querySelector('.qi-slh')||{}).value)||0; } }
+  // G1 คิดเร็ว มุ้งติดบาน (addon): ป้อน mosqId/mosqPanels/mosqFabric เข้า calcUnit (engine มีพร้อมแล้ว)
+  { var _qmi=d.querySelector('.qi-mosq-id'); var _qmf=d.querySelector('.qi-mosq-fabric');
+    if(_qmi&&_qmi.value){ _opt.mosqId=_qmi.value; _opt.mosqPanels=panels; _opt.mosqFabric=(_qmf&&_qmf.value)||'fiber_gray'; } }
   const u=calcUnit(p, w, h, gi, ci, panels, _opt, false);
   // เทียบราคา vs มาตรฐาน (ขาว/กระจกแรก/ไม่อบสี) — ให้เซลล์บอกลูกค้าว่าสี/กระจก/สีระแนง เพิ่มเท่าไร
   var stdSell=calcUnit(p, w, h, 0, 0, panels, {}, false).sell;
@@ -2568,6 +2571,7 @@ function calcQuickAll(){
           html+=qiPcRow('ราคา/ชุด',sell);
           if(it.colorDelta>0) html+=qiPcRow('ค่าสีเพิ่ม',it.colorDelta);
           if(it.glassDelta>0) html+=qiPcRow('ค่ากระจกเพิ่ม',it.glassDelta);
+          if(it.u.addonLines&&it.u.addonLines.length){ it.u.addonLines.forEach(function(al){ html+=qiPcRow('+ '+al.n,al.p); }); }
           html+=qiPcTot('รวม '+(qty>1?'×'+qty+' ชุด':'/ชุด'),sell*qty);
           pc.innerHTML=html; }
       }
@@ -3372,6 +3376,26 @@ function qiRenderG1(d){
        '<span style="font-size:11px;color:#0369A1;align-self:center;">สีลูกฟูก: ตามสีอลูอัตโนมัติ</span>'+
      '</div>'+
    '</div>'+
+   '<div class="full qi-mosq-wrap" style="margin-top:10px;display:none;border-top:1px dashed var(--line);padding-top:10px;">'+
+     '<label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">🦟 มุ้งติดบาน</label>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'+
+       '<button type="button" class="chip on qi-mosq-chip" data-v="" onclick="qiMosqToggle(this)">ไม่มี</button>'+
+       '<button type="button" class="chip qi-mosq-chip" data-v="1" onclick="qiMosqToggle(this)">มีมุ้ง</button>'+
+     '</div>'+
+     '<input type="hidden" class="qi-mosq-id" value="">'+
+     '<input type="hidden" class="qi-mosq-fabric" value="fiber_gray">'+
+     '<div class="qi-mosq-detail" style="display:none;margin-top:6px;">'+
+       '<div style="font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px;">ชนิดมุ้ง</div>'+
+       '<div class="qi-mosq-chips-grp"></div>'+
+       '<div style="font-size:11.5px;color:var(--muted);font-weight:700;margin:8px 0 4px;">ผ้ามุ้ง</div>'+
+       '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+         '<button type="button" class="chip on qi-mosqfab-chip" data-v="fiber_gray" onclick="qiMosqFabPick(this)">ไฟเบอร์เทา</button>'+
+         '<button type="button" class="chip qi-mosqfab-chip" data-v="fiber_black" onclick="qiMosqFabPick(this)">ไฟเบอร์ดำ</button>'+
+         '<button type="button" class="chip qi-mosqfab-chip" data-v="anti_pet" onclick="qiMosqFabPick(this)">กันแมว +800</button>'+
+         '<button type="button" class="chip qi-mosqfab-chip" data-v="stainless" onclick="qiMosqFabPick(this)">สแตนกันหนู +1,200</button>'+
+       '</div>'+
+     '</div>'+
+   '</div>'+
    '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">calcUnit จริง · สี/กระจก เพิ่มจากมาตรฐาน</div></div></div>';
   // rebind prod change
   var ps=d.querySelector('.qi-prod');
@@ -3389,6 +3413,8 @@ function qiRenderG1(d){
         var gs=d.querySelector('.qi-gridsolid'); if(gs){ var showGS=!(ao||NO_COLOR_CATS.includes(p.cat)||p.cat==='มุ้ง'||p.grid||p.handrail||p.zipscreen||p.cabinet||p.future_tech); gs.style.display=showGS?'':'none';
           var showSL=showGS&&!p.solid_door; ['.qi-sl-label','.qi-sl-chips'].forEach(function(sel){ var e=gs.querySelector(sel); if(e)e.style.display=showSL?'':'none'; }); if(!showSL){ var _slr=gs.querySelector('.qi-sl-row'); if(_slr)_slr.style.display='none'; } } } // ก้อนรวม#8: drill-down สีคิดเร็ว (rebuild ชิปตามสินค้า)
       var _qfo=d.querySelector('.qi-fold-opts'); if(_qfo) _qfo.style.display=(p&&p.cat==='บานเฟี้ยม')?'':'none';
+      // มุ้งติดบาน: โชว์เฉพาะบานที่มี p.mosquito
+      var _qmw=d.querySelector('.qi-mosq-wrap'); if(_qmw){ var _showMosq=!!(p&&p.mosquito); _qmw.style.display=_showMosq?'':'none'; if(!_showMosq){ var _qmid=d.querySelector('.qi-mosq-id'); if(_qmid)_qmid.value=''; var _qmd=d.querySelector('.qi-mosq-detail'); if(_qmd)_qmd.style.display='none'; d.querySelectorAll('.qi-mosq-chip').forEach(function(c){c.classList.toggle('on',c.dataset.v==='');}); } }
       qiSyncFamOn(d); calcQuickAll();
     });
     // trigger once to sync display
@@ -3417,6 +3443,33 @@ function qiGridPick(btn){ var root=btn.closest('.qi-gridsolid'); if(!root)return
   var row=root.querySelector('.qi-grid-row'); if(row)row.style.display=on?'flex':'none';
   if(on){ var nv=root.querySelector('.qi-gnv'); var ch=btn.closest('.ch'); var pn=ch?parseInt((ch.querySelector('.qi-panels')||{}).value)||0:0; if(nv&&!(parseInt(nv.value)>0)&&pn>0)nv.value=pn; }
   calcQuickAll(); }
+function qiMosqToggle(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.querySelectorAll('.qi-mosq-chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var on=btn.dataset.v==='1'; var hid=ch.querySelector('.qi-mosq-id'); var det=ch.querySelector('.qi-mosq-detail');
+  if(!on){ if(hid)hid.value=''; if(det)det.style.display='none'; calcQuickAll(); return; }
+  // เปิดมุ้ง: ตั้งรุ่น default (mj_sd_basic) แล้ว rebuild chips
+  if(hid&&!hid.value){ hid.value='mj_sd_basic'; }
+  if(det){ det.style.display=''; var gc=det.querySelector('.qi-mosq-chips-grp'); if(gc)gc.innerHTML=qiMosqChipsForG1(hid?hid.value:'mj_sd_basic'); }
+  calcQuickAll(); }
+function qiMosqFabPick(btn){ var ch=btn.closest('.ch'); if(!ch)return; ch.querySelectorAll('.qi-mosqfab-chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var hid=ch.querySelector('.qi-mosq-fabric'); if(hid)hid.value=btn.dataset.v; calcQuickAll(); }
+// qiMosqPickProd: เลือกรุ่นมุ้งจาก chip ใน qi-mosq-detail (ไม่เซ็ต qi-prod เหมือน G5 — G1 mosq เป็น addon)
+function qiMosqPickId(btn){ var ch=btn.closest('.ch'); if(!ch)return;
+  var hid=ch.querySelector('.qi-mosq-id'); if(hid)hid.value=btn.dataset.id;
+  var det=ch.querySelector('.qi-mosq-detail'); if(det){ var gc=det.querySelector('.qi-mosq-chips-grp'); if(gc)gc.innerHTML=qiMosqChipsForG1(btn.dataset.id); }
+  calcQuickAll(); }
+function qiMosqPickGrpBtn(btn){ var first=(MOSQ_GRP_PRODS[btn.dataset.mgrp]||[])[0]; if(!first)return;
+  var ch=btn.closest('.ch'); if(!ch)return;
+  var hid=ch.querySelector('.qi-mosq-id'); if(hid)hid.value=first[0];
+  var det=ch.querySelector('.qi-mosq-detail'); if(det){ var gc=det.querySelector('.qi-mosq-chips-grp'); if(gc)gc.innerHTML=qiMosqChipsForG1(first[0]); }
+  calcQuickAll(); }
+// qiMosqChips สำหรับ G1 addon (ใช้ onclick qiMosqPickId/qiMosqPickGrpBtn แทน qiPickMosqProd/qiPickMosqGrp ที่เซ็ต qi-prod)
+function qiMosqChipsForG1(curId){
+  var grp=mosqGrpOf(curId)||'frame'; var gk;
+  var h='<div class="chip-grid">';
+  for(gk in MOSQ_GRP_PRODS){ h+='<button type="button" class="chip'+(gk===grp?' on':'')+'" data-mgrp="'+gk+'" onclick="qiMosqPickGrpBtn(this)">'+MOSQ_GRP_LABEL[gk]+'</button>'; }
+  h+='</div><div class="chip-grid" style="margin-top:5px;">';
+  MOSQ_GRP_PRODS[grp].forEach(function(x){ h+='<button type="button" class="chip'+(x[0]===curId?' on':'')+'" data-id="'+x[0]+'" onclick="qiMosqPickId(this)">'+x[1]+'</button>'; });
+  return h+'</div>'; }
 function qiSolidPick(btn){ var root=btn.closest('.qi-gridsolid'); if(!root)return; root.querySelectorAll('.qi-sl-chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
   var v=btn.dataset.v||''; var hid=root.querySelector('.qi-solidlower'); if(hid)hid.value=v;
   var row=root.querySelector('.qi-sl-row'); if(row)row.style.display=v?'flex':'none';
