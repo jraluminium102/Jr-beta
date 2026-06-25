@@ -1,8 +1,8 @@
 {
  "meta": {
   "at": "baseline",
-  "catalog": 149,
-  "captured": 149,
+  "catalog": 151,
+  "captured": 151,
   "skipped": 0
  },
  "rows": [
@@ -151,6 +151,14 @@
    "status": "ok"
   },
   {
+   "key": "1:wall_gyp",
+   "id": "wall_gyp",
+   "name": "ผนังยิปซั่ม",
+   "g": 1,
+   "total": 17120,
+   "status": "ok"
+  },
+  {
    "key": "1:inner_top_stack",
    "id": "inner_top_stack",
    "name": "เลื่อนภายในรางบน (ซ้อน)",
@@ -259,7 +267,7 @@
    "id": "lift_sms",
    "name": "บานยก SMS สลิม (ชุดเล็ก)",
    "g": 1,
-   "total": 27820,
+   "total": 0,
    "status": "ok"
   },
   {
@@ -275,7 +283,7 @@
    "id": "ykk_vent",
    "name": "ประตู Ventilation YKK",
    "g": 1,
-   "total": 56710,
+   "total": 0,
    "status": "ok"
   },
   {
@@ -1018,6 +1026,14 @@
    "key": "3:wall_int",
    "id": "wall_int",
    "name": "ผนังเบาภายใน",
+   "g": 3,
+   "total": 49220,
+   "status": "ok"
+  },
+  {
+   "key": "3:wall_gyp",
+   "id": "wall_gyp",
+   "name": "ผนังยิปซั่ม",
    "g": 3,
    "total": 49220,
    "status": "ok"
