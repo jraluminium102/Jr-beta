@@ -3447,27 +3447,23 @@ function fullFoldSync(inp){
   if(tot){ var ok=(fleft+fright===panels); tot.textContent='รวม '+(fleft+fright)+'/'+panels+(ok?' ✓':' ⚠'); tot.style.background=ok?'#D1FAE5':'#FEE2E2'; tot.style.color=ok?'#065F46':'#991B1B'; }
   calcQuote();
 }
-// #4 re-fix (25มิ.ย.): foldDirChange — โชว์ fold-split ทุกทิศ + lock/unlock ช่องซ้าย + sync ค่า
+// foldDirChange (25มิ.ย. แก้): โชว์ช่องซ้าย/ขวา "เฉพาะเมื่อแยกกลาง" · ซ้าย/ขวา ซ่อนกล่อง (auto ลงใบ (N+0))
 function foldDirChange(sel){
   var d=sel.closest('.ch'); if(!d)return;
   var fs=d.querySelector('.fold-split'); if(!fs)return;
   var fl=d.querySelector('.o-fleft'); var fr2=d.querySelector('.o-fright'); var tot=d.querySelector('.o-fold-total');
   var panels=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
   var dir=sel.value;
-  fs.style.display='flex'; // โชว์เสมอทุกทิศ
-  if(dir==='เปิดซ้าย'){
-    if(fl){fl.value=panels; fl.readOnly=true; fl.style.background='#f9fafb'; fl.style.color='#6B7280';}
-    if(fr2)fr2.textContent=0;
-    if(tot){tot.textContent='รวม '+panels+'/'+panels+' ✓';tot.style.background='#D1FAE5';tot.style.color='#065F46';}
-  } else if(dir==='เปิดขวา'){
-    if(fl){fl.value=0; fl.readOnly=true; fl.style.background='#f9fafb'; fl.style.color='#6B7280';}
-    if(fr2)fr2.textContent=panels;
-    if(tot){tot.textContent='รวม '+panels+'/'+panels+' ✓';tot.style.background='#D1FAE5';tot.style.color='#065F46';}
-  } else { // เปิดแยกกลาง
+  if(dir==='เปิดแยกกลาง'){ // โชว์ช่องกรอกซ้าย/ขวา เฉพาะแยกกลาง
+    fs.style.display='flex';
     if(fl){fl.readOnly=false; fl.style.background=''; fl.style.color=''; var initL=Math.floor(panels/2)||1; fl.value=initL; }
     if(fl) fullFoldSync(fl); else calcQuote();
     return;
   }
+  // เปิดซ้าย/เปิดขวา → ซ่อนกล่อง (ไม่ต้องกรอก) · sync ค่าไว้ให้ใบโชว์ (N+0)/(0+N)
+  fs.style.display='none';
+  if(dir==='เปิดซ้าย'){ if(fl)fl.value=panels; if(fr2)fr2.textContent=0; }
+  else { if(fl)fl.value=0; if(fr2)fr2.textContent=panels; }
   calcQuote();
 }
 function qiSyncFold(inp){
@@ -6306,7 +6302,7 @@ function buildItemOpts(d){
   // #4 re-fix (25มิ.ย.): fold-split — โชว์ทุกทิศ + sync ค่า + cleanup orphan เมื่อ cat!=บานเฟี้ยม
   if(p.cat==='บานเฟี้ยม'){
     var _fdSel=d.querySelector('.o-folddir'); var _fds=d.querySelector('.fold-split');
-    if(_fdSel && _fds){ _fds.style.display='flex'; foldDirChange(_fdSel); } // init ทุกทิศ
+    if(_fdSel && _fds){ foldDirChange(_fdSel); } // init: foldDirChange คุมโชว์/ซ่อนเอง (แยกกลางเท่านั้น)
   } else {
     // cleanup orphan fold-split/.fold-opt-row ที่ค้างมาจาก YKK/บานอื่น
     d.querySelectorAll('.fold-split,.fold-opt-row').forEach(function(_f){ _f.remove(); });
