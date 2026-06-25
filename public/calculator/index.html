@@ -6293,7 +6293,7 @@ function buildItemOpts(d){
   }
   // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
   // v9: เพิ่ม _hasOpenCat — ถ้า groupGHOpts สร้าง section ที่ open:true ไว้ใน .i-opts ให้เปิด optbox ด้วย (กัน ล็อค/มุ้ง/คาดตาราง ซ่อนอยู่ใน optbox พับ)
-  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
+  const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.future_tech||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
   // #1 (22มิ.ย. · ดราฟ z3): G1 กางกล่องอุปกรณ์เสริม + accordion ย่อย → โซนเสริมโชว์ (ครอบวงกบ/ดรอปพื้น/รื้อ/งานเสริม) เหมือนดราฟ · open state เท่านั้น ไม่กระทบราคา/golden
   if((d.querySelector('.i-group')||{}).value==='1' && ob){ ob.open=true; box.querySelectorAll('.gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
