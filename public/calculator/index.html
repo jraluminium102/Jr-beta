@@ -748,8 +748,8 @@ const PRODUCTS=[
  {id:'ceil_ranae_16_2',cat:'ฝ้า-ผนัง',name:'ฝ้าระแนงอลู 1"x1.6" (โชว์ 1" เว้น 2 ซม.)',ceiling:1,method:'per_sqm',rate:4800,min:0,cost:null},
  {id:'inner_bottom_sms',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง SMS',method:'area_rate_addon',rates:'INBOT_SMS',cost:null,addon:{kind:'sliding',amounts:{1:4000,2:10000,3:16000,4:22000}}},
  {id:'inner_bottom_euro',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง ยูโร',method:'area_rate_addon',rates:'INBOT_EURO',cost:null,addon:{kind:'sliding',amounts:{1:4400,2:11000,3:17600,4:24200}}},
- {id:'lift_sms',cat:'บานยก',name:'บานยก (อัตโนมัติตามขนาด)',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1,autoLift:true},
- {id:'lift_aluinch',cat:'บานยก',name:'บานยก เซมิยูโร (บานใหญ่)',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1,hidden:true},
+ {id:'lift_sms',cat:'บานยก',name:'บานยก รุ่นสลิม',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1,slimLift:true},
+ {id:'lift_aluinch',cat:'บานยก',name:'บานยก เซมิยูโร',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
  {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,glassDef:14,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000) · glassDef:14=เทมเปอร์เขียว/ใส 10มม.
  {id:'frameless_fixed',cat:'บานเปลือย',name:'บานเปลือยติดตาย',method:'bucket',min:7000,rates:'FRAMELESS',cost:null},
  {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,digihandle:1,cost:null},
@@ -2167,19 +2167,13 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(_ventHbad){ msgs.push('🛑 YKK Vent: สูงต้องอยู่ 2.0–2.2 ม. (กรอก '+H.toFixed(2)+' ม.) — ไม่คิดราคา'); sell=0; }
     if(!_ventWbad&&!_ventHbad&&W>0&&H>0) msgs.push('✓ ขนาด YKK Vent อยู่ในช่วง (กว้าง '+W.toFixed(2)+' × สูง '+H.toFixed(2)+' ม.)');
   }
-  // G1-#8 (25มิ.ย.): บานยก auto — ขนาดเป็นตัวกำหนดรุ่น · lift_sms เป็น entry เดียว (lift_aluinch hidden)
-  if(p.autoLift){
+  // บานยก (25มิ.ย. แก้): 2 รุ่นเลือกเอง · รุ่นสลิม กว้างสุด 1.2 × สูงสุด 2.4 ม. · เซมิยูโร บานใหญ่ (ไม่เกิน 10 ตร.ม.)
+  if(p.slimLift){
     const _lW=parseFloat(w)||0, _lH=parseFloat(h)||0;
-    if(a > 10){
-      msgs.push('🛑 บานยกเกิน 10 ตร.ม. — ห้ามรับงานนี้ · เกิน spec ผู้ผลิต · ติดต่อหัวหน้า'); sell=0;
-    } else if(_lW<=1.2 && _lH<=2.4){
-      msgs.push('รุ่น: SMS สลิม (อัตโนมัติตามขนาด · กว้าง '+_lW.toFixed(2)+' × สูง '+_lH.toFixed(2)+' ม.)');
-    } else {
-      msgs.push('รุ่น: เซมิยูโร (อัตโนมัติ · กว้าง '+_lW.toFixed(2)+' × สูง '+_lH.toFixed(2)+' ม.)');
-    }
+    if(_lW>1.2 || _lH>2.4){ msgs.push('🛑 บานยก รุ่นสลิม เกินขนาด (กว้างสุด 1.2 × สูงสุด 2.4 ม.) — กรุณาเลือก รุ่นเซมิยูโร'); sell=0; }
   } else if(p.id==='lift_aluinch' && a > 10){
     msgs.push('🛑 บานยก เซมิยูโร: พื้นที่เกิน 10 ตร.ม. — ห้ามรับงานนี้ · เกิน spec ผู้ผลิต · ติดต่อหัวหน้า'); sell=0;
-  } else if(p.cat==='บานยก' && !p.autoLift && p.id!=='lift_aluinch' && a > 10){
+  } else if(p.cat==='บานยก' && !p.slimLift && p.id!=='lift_aluinch' && a > 10){
     msgs.push('🛑❌ บานยกเกิน 10 ตร.ม. — ห้ามรับงานนี้ · เกิน spec ผู้ผลิต · ติดต่อหัวหน้า'); sell=0;
   }
   // R3 2026-05-30: Warning tilt&turn บานกระทุ้ง
@@ -4659,7 +4653,9 @@ function famSelectorHTML(p,grp,famOther){
     if(models.length>1){
       h+='<label class="opt" style="width:100%;margin:6px 0 0;">รุ่น<div class="chip-grid">';
       models.forEach(function(q){ h+='<button type="button" class="chip'+(q.id===p.id?' on':'')+discCls(q)+'" data-id="'+q.id+'" title="'+btnTitle(q)+'" onclick="g3PickProd(this)">'+btnShort(q,cur)+'</button>'; });
-      h+='</div></label>';
+      h+='</div>';
+      if(cur==='บานยก') h+='<div style="font-size:11px;color:#6B7280;margin-top:3px;">รุ่นสลิม: กว้างสุด 1.2 × สูงสุด 2.4 ม. · เซมิยูโร: บานใหญ่ (ไม่เกิน 10 ตร.ม.)</div>';
+      h+='</label>';
     }
   }
   return h+'</div>';
@@ -6307,6 +6303,18 @@ function buildItemOpts(d){
   // UX: ⚙ พับเป็น default สำหรับบาน (กระจก/สี/บานเลื่อน ย้ายออกมาฟอร์มหลักแล้ว) — เปิดอัตโนมัติเฉพาะสินค้าที่ option หลักอยู่ใน ⚙ (ระแนง/ตู้/รั้ว/หลังคา-ฝ้า/ฯลฯ)
   // v9: เพิ่ม _hasOpenCat — ถ้า groupGHOpts สร้าง section ที่ open:true ไว้ใน .i-opts ให้เปิด optbox ด้วย (กัน ล็อค/มุ้ง/คาดตาราง ซ่อนอยู่ใน optbox พับ)
   const ob=d.querySelector('.optbox'); if(ob){ ob.style.display=(h||_showCw||_showGw)?'':'none'; var _hasOpenCat=!!(box&&box.querySelector('.gh-opt-cat-det[open]')); ob.open=!!(p.ranae||p.cabinet||p.future_tech||p.gate||p.grid||p.ceiling||p.motor||p.optSlide||(p.opts&&p.opts.length))||_hasOpenCat; }
+  // YKK Vent (25มิ.ย.): ล็อกช่องกรอกขนาดในช่วงที่ผลิตได้ (กว้าง 0.6–0.9 · สูง 2.0–2.2) — เฉพาะ ykk_vent (sizeCheck='vent') · รุ่น YKK อื่นไม่ล็อก
+  { var _ykw=d.querySelector('.i-w'), _ykh=d.querySelector('.i-h');
+    if(p.sizeCheck==='vent'){
+      if(_ykw){ _ykw.min='0.6'; _ykw.max='0.9'; }
+      if(_ykh){ _ykh.min='2.0'; _ykh.max='2.2'; }
+    } else {
+      if(_ykw){ _ykw.min='0'; _ykw.removeAttribute('max'); }
+      if(_ykh){ _ykh.min='0'; _ykh.removeAttribute('max'); }
+    }
+    if(_ykw && !_ykw.dataset.ykkClamp){ _ykw.dataset.ykkClamp='1'; _ykw.addEventListener('change',function(){ var pp=PBYID[(d.querySelector('.i-prod')||{}).value]; if(pp&&pp.sizeCheck==='vent'){ var v=parseFloat(this.value)||0; if(v<0.6)this.value='0.6'; else if(v>0.9)this.value='0.9'; calcQuote(); } }); }
+    if(_ykh && !_ykh.dataset.ykkClamp){ _ykh.dataset.ykkClamp='1'; _ykh.addEventListener('change',function(){ var pp=PBYID[(d.querySelector('.i-prod')||{}).value]; if(pp&&pp.sizeCheck==='vent'){ var v=parseFloat(this.value)||0; if(v<2.0)this.value='2.0'; else if(v>2.2)this.value='2.2'; calcQuote(); } }); }
+  }
   // #1 (22มิ.ย. · ดราฟ z3): G1 กางกล่องอุปกรณ์เสริม + accordion ย่อย → โซนเสริมโชว์ (ครอบวงกบ/ดรอปพื้น/รื้อ/งานเสริม) เหมือนดราฟ · open state เท่านั้น ไม่กระทบราคา/golden
   if((d.querySelector('.i-group')||{}).value==='1' && ob){ ob.open=true; box.querySelectorAll('.gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
@@ -7323,12 +7331,8 @@ function genQuote(keepNo){
     const seriesTag = it.p.series ? (' ('+SERIES_LABEL[it.p.series]+')') : '';
     // #2: ใช้ let เพราะต้องต่อ subItems ที่หลัง
     let prodName = ((prefix && !/^(ประตู|หน้าต่าง)/.test(rawName)) ? (prefix + rawName) : rawName) + seriesTag + discontinuedSuffix;
-    // G1-#8 (25มิ.ย.): บานยก — ต่อท้ายรุ่น auto + ลักษณะการยก
+    // บานยก (25มิ.ย.): ชื่อรุ่นมาจาก name (รุ่นสลิม/เซมิยูโร) แล้ว · ต่อท้ายแค่ลักษณะการยก
     if(it.p.cat==='บานยก' && it.optSel){
-      if(it.p.autoLift){
-        const _lW=parseFloat(it.w)||0, _lH=parseFloat(it.h)||0;
-        if(_lW<=1.2 && _lH<=2.4) prodName+=' SMS สลิม'; else prodName+=' เซมิยูโร';
-      }
       const _lm=it.optSel.liftmode||'top'; if(_lm==='alt') prodName+=' ยกบานบน-ล่างสลับกัน'; else prodName+=' ยกบานบน';
     }
     // บานเลื่อน/เลื่อนภายใน — ประกอบข้อความตาม vocabulary ใบจริง
