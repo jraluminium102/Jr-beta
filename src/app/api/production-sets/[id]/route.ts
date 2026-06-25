@@ -16,7 +16,7 @@ const patchSchema = z.object({
   measure_actual: d, measurer_name: t, design_received: t,
   must_finish_date: d, glass_done_date: d, actual_done_date: d,
   mat_equipment: t, mat_alu_normal: t, mat_alu_painted: t,
-  glass_spec: t, glass_order: t, glass_installed: t, qc_before_glass: t,
+  glass_spec: t, glass_order: t, frame_done: t, glass_installed: t, qc_before_glass: t,
   frame_status: t, screen_type: t, screen_installed: t, qc_after_glass: t,
   install_date: d, note: t,
 });
