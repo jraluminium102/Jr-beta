@@ -1055,7 +1055,9 @@ const COLORS=[
 ];
 function colorOpts(series){ return COLORS.map((c,i)=>{ const sOk=!series||!c.series||c.series.indexOf(series)>=0; return sOk?`<option value="${i}"${i===0?' selected':''}>${c.n}${c.note?(' — '+c.note):''}</option>`:''; }).join(''); }  // R3.8: default = สีอบขาว
 // อัปเดต dropdown สีตาม series ของผลิตภัณฑ์ที่เลือก
-function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; var _ov=d.dataset.coOverride; if((d.querySelector('.i-group')||{}).value!=='1' || _ov==='1' || _ov==='opt') colorDrillRender(sel); }  // R3.9: default = สีอบขาว (index 0) · G1 dropdown ธรรมดา · #9 เฟส2: เปิด drill เมื่อ "ใช้สีต่าง" (🟢/🔵)
+function refreshColorByProduct(d){ const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return; const sel=d.querySelector('.i-color'); if(!sel)return; const cur=sel.value; sel.innerHTML=colorOpts(p.series||''); // ② G3 (25มิ.ย.): หลังคา=งานนอก → ตัดสีชุบ (COLORS[12] indoorOnly) ออกจากกล่องสีโครง G3
+  if(p.cat==='หลังคา'){ var _opt12=sel.querySelector('option[value="12"]'); if(_opt12)_opt12.parentNode.removeChild(_opt12); }
+  if(cur!==''&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur; else sel.value='0'; var _ov=d.dataset.coOverride; if((d.querySelector('.i-group')||{}).value!=='1' || _ov==='1' || _ov==='opt') colorDrillRender(sel); }  // R3.9: default = สีอบขาว (index 0) · G1 dropdown ธรรมดา · #9 เฟส2: เปิด drill เมื่อ "ใช้สีต่าง" (🟢/🔵)
 function g1RareToggle(btn){ var b=btn.nextElementSibling; var op=b.style.display==='none'; b.style.display=op?'flex':'none'; btn.querySelector('.g1-rare-arr').style.transform=op?'rotate(90deg)':''; }
 // ===== ① สีอลู drill-down (HANDOFF-redesign-ปุ่มใหญ่ 17มิ.ย. · มติพี่นัท) =====
 //   select(โดน hide) → ชิปหมวด(4) → ชิปสี+จุดสีกลม · ขับด้วย value=COLORS index · ไม่แตะ value/logic/ราคา · sync fire input+change
@@ -4699,6 +4701,39 @@ function g3CalcR2Area(ch){
   if(pv) pv.textContent=_pr>0?('฿'+fmt(_pr)):'฿—';
   if(hpr) hpr.textContent=_pr>0?('฿'+fmt(_pr)):'฿0';
 }
+// ══ ③ G3 หลายช่วง (26มิ.ย.): UI กรอก ยาว×ยื่น หลายช่วง → รวม ตร.ม. → set .i-w=totalArea .i-h=1 ══
+function g3SpansUpdate(ch){
+  var wrap=ch&&ch.querySelector('.rf-spans-wrap'); if(!wrap)return;
+  var rows=wrap.querySelectorAll('.rf-span-row');
+  var total=0;
+  rows.forEach(function(row,i){
+    var w=parseFloat(row.querySelector('.rf-sw').value)||0;
+    var h=parseFloat(row.querySelector('.rf-sh').value)||0;
+    var a=w*h;
+    var lbl=row.querySelector('.rf-sa'); if(lbl) lbl.textContent=a>0?a.toFixed(1)+' ตร.ม.':'—';
+    total+=a;
+  });
+  var totLbl=wrap.querySelector('.rf-spans-total'); if(totLbl) totLbl.textContent='รวม '+total.toFixed(1)+' ตร.ม.';
+  // set .i-w=totalArea .i-h=1 → calcUnit อ่าน area ถูก (w×h=totalArea×1=totalArea)
+  var iw=ch.querySelector('.i-w'), ih=ch.querySelector('.i-h');
+  if(iw&&ih){ iw.value=total>0?total.toFixed(2):'0'; ih.value='1'; ch.dataset.rfMultiSpan=(rows.length>1||true)?'1':'0'; }
+  calcQuote();
+}
+function g3SpansAddRow(btn){
+  var wrap=btn.closest('.rf-spans-wrap'); if(!wrap)return;
+  var rows=wrap.querySelectorAll('.rf-span-row'); var n=rows.length+1;
+  var row=document.createElement('div'); row.className='rf-span-row';
+  row.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px;';
+  row.innerHTML='<span style="font-size:11.5px;color:#6b7280;font-weight:700;white-space:nowrap;">ช่วงที่ '+n+'</span>'
+    +'<input type="number" class="rf-sw" step="0.1" min="0" value="4" placeholder="ยาว" style="width:62px;height:34px;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;text-align:center;" oninput="g3SpansUpdate(this.closest(\'.ch\'))">'
+    +'<span style="font-size:12px;color:#6b7280;">×</span>'
+    +'<input type="number" class="rf-sh" step="0.1" min="0" value="3" placeholder="ยื่น" style="width:62px;height:34px;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;text-align:center;" oninput="g3SpansUpdate(this.closest(\'.ch\'))">'
+    +'<span style="font-size:12px;color:#6b7280;">ม.</span>'
+    +'<span class="rf-sa" style="font-size:11.5px;font-weight:700;color:#16a34a;min-width:60px;">—</span>'
+    +'<button type="button" onclick="this.closest(\'.rf-span-row\').remove();g3SpansUpdate(this.closest(\'.ch\'))" style="font-size:13px;color:#ef4444;background:none;border:none;cursor:pointer;padding:2px 6px;font-weight:700;line-height:1;">✕</button>';
+  wrap.insertBefore(row, wrap.querySelector('.rf-spans-addrow'));
+  g3SpansUpdate(row.closest('.ch'));
+}
 // ══ ธงC (G3 2026-06-15): ฝ้าเป็นออปชั่นในหลังคา (none/รวม/แยก) ══
 // ceilCalc reuse calcUnit → ราคาฝ้า addon = ฝ้า standalone ที่พื้นที่เดียวกันเป๊ะ (กันราคาเพี้ยน)
 function ceilCalc(ceilTypeId, ceilAreaSqm, ceilColor, ceilInsul){
@@ -6672,6 +6707,42 @@ function buildItemOpts(d){
     if(_l2h && _l3h && _l3h.parentNode!==_l2h){ _l2h.appendChild(_l3h); }
     // render color-drill สำหรับ L3 (o-rfcoopt)
     var _rfco=d.querySelector('.o-rfcoopt'); if(_rfco){ try{ colorDrillRender(_rfco); }catch(e){} }
+    // ③ G3 หลายช่วง (26มิ.ย.): inject UI ยาว×ยื่น หลายช่วงก่อน .size-row
+    if(!d.querySelector('.rf-spans-wrap')){
+      var _sr=d.querySelector('.size-row');
+      if(_sr){
+        var _spWrap=document.createElement('div');
+        _spWrap.className='rf-spans-wrap';
+        _spWrap.style.cssText='background:#f8fafc;border:1px dashed #cbd5e1;border-radius:9px;padding:9px 11px;margin-bottom:8px;';
+        // หัว section
+        _spWrap.innerHTML='<div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:7px;">พื้นที่หลังคา (หลายช่วง)</div>'
+          +'<div class="rf-span-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px;">'
+          +'<span style="font-size:11.5px;color:#6b7280;font-weight:700;white-space:nowrap;">ช่วงที่ 1</span>'
+          +'<input type="number" class="rf-sw" step="0.1" min="0" value="" placeholder="ยาว" style="width:62px;height:34px;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;text-align:center;" oninput="g3SpansUpdate(this.closest(\'.ch\'))">'
+          +'<span style="font-size:12px;color:#6b7280;">×</span>'
+          +'<input type="number" class="rf-sh" step="0.1" min="0" value="" placeholder="ยื่น" style="width:62px;height:34px;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;text-align:center;" oninput="g3SpansUpdate(this.closest(\'.ch\'))">'
+          +'<span style="font-size:12px;color:#6b7280;">ม.</span>'
+          +'<span class="rf-sa" style="font-size:11.5px;font-weight:700;color:#16a34a;min-width:60px;">—</span>'
+          +'</div>'
+          +'<div class="rf-spans-addrow" style="margin:3px 0 6px;">'
+          +'<button type="button" onclick="g3SpansAddRow(this)" style="font-size:12px;background:#fff;border:1.5px solid #cbd5e1;border-radius:7px;padding:4px 12px;color:#374151;cursor:pointer;font-weight:700;">＋ เพิ่มช่วง</button>'
+          +'</div>'
+          +'<div style="font-size:12px;font-weight:700;color:#374151;padding-top:4px;border-top:1px dashed #e5e7eb;">รวม <span class="rf-spans-total">0 ตร.ม.</span></div>';
+        _sr.parentNode.insertBefore(_spWrap, _sr);
+        // ซ่อน size-row เดิม (แสดงขนาดด้วย spans แทน)
+        _sr.style.display='none';
+        d.dataset.rfMultiSpan='1';
+        // sync ค่า .i-w/.i-h จากช่วงที่ 1 ก่อน (ถ้ามีค่าอยู่แล้ว)
+        var _iw0=d.querySelector('.i-w'), _ih0=d.querySelector('.i-h');
+        if(_iw0&&_iw0.value&&parseFloat(_iw0.value)>0){
+          var _sw0=_spWrap.querySelector('.rf-sw'), _sh0=_spWrap.querySelector('.rf-sh');
+          // คำนวณ ยาว = sqrt(area) ยื่น = sqrt(area) เป็น default (หรือใช้ค่าเดิม w=ยาว h=ยื่น)
+          if(_sw0 && _ih0) _sw0.value=_iw0.value;
+          if(_sh0 && _ih0) _sh0.value=_ih0.value;
+        }
+        g3SpansUpdate(d);
+      }
+    }
   }
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
   rebuildMosqPanelChips(d);
@@ -8525,6 +8596,7 @@ function genQuote(keepNo){
     if(it.lumpsum) _sz='(เหมา)';
     else if(it.p.cabinet) _sz=''; // G4 โครงสร้างใบใหม่: ขนาดอยู่ในหัวรายการแล้ว ไม่ซ้ำในวงเล็บ
     else if(_isLength && _w>0) _sz=`(ยาว ${it.w} ม.)`;
+    else if(it.p&&it.p.cat==='หลังคา'&&it.div&&it.div.dataset&&it.div.dataset.rfMultiSpan==='1'&&_w>0) _sz=`(${_w.toFixed(1)} ตร.ม.)`;
     else if(!_isGH && _w>0 && _h>0) _sz=`(${it.w} × ${it.h} ม.)`;
     // งาน5: item-level optDelta ส่งเป็น optDelta ใน qrow · note ส่งเป็น optText (ข้อความ)
     // จุด N (มติ 16มิ.ย.): ไม่ใส่ตำแหน่ง/ชื่อ → เอาชื่อสินค้า(บรรทัดแรก)+ขนาด ขึ้นหัวข้อ "จุดที่ N {ชื่อ}" แทน "จุดที่ N" เปล่า (กันชื่อซ้ำ 2 ที่)
