@@ -78,18 +78,19 @@ const TRANSITIONS: Record<ProdStatus, Action[]> = {
   QUEUED: [
     { to: "MANUFACTURING", label: "ข้อมูลครบ → เริ่มผลิต", hint: "ต้องมีวันติดตั้ง + วันกำหนดผลิตเสร็จ", tone: "go" },
   ],
+  // ผลิต + QC ทำในเช็คลิสต์ชุดงาน (หน้าตารางผลิต) — เสร็จแล้วส่งติดตั้งได้เลย ไม่มีเฟส QC แยก
   MANUFACTURING: [
-    { to: "QC", label: "ผลิตเสร็จ → ส่งตรวจ QC", tone: "go",
-      fields: [{ field: "production_done", label: "วันผลิตเสร็จ" }] },
+    { to: "READY", label: "ผลิต + QC เสร็จ → พร้อมติดตั้ง", hint: "QC กดในตารางผลิต (เช็คลิสต์ชุดงาน)", tone: "go", qc: "PASSED",
+      fields: [
+        { field: "production_done", label: "วันผลิตเสร็จ" },
+        { field: "qc_date", label: "วันพร้อมส่งติดตั้ง" },
+      ] },
   ],
+  // งานเก่าที่ยังค้างสถานะ QC — ส่งติดตั้ง หรือกลับไปผลิต
   QC: [
     { to: "READY", label: "QC ผ่าน → พร้อมติดตั้ง", tone: "go", qc: "PASSED",
-      fields: [
-        { field: "qc_date", label: "วันตรวจ QC" },
-        { field: "qc_note", label: "หมายเหตุ QC (ไม่บังคับ)", type: "note", optional: true },
-      ] },
-    { to: "MANUFACTURING", label: "QC ไม่ผ่าน → กลับไปแก้/ผลิตใหม่", tone: "warn", qc: "FAILED",
-      fields: [{ field: "qc_note", label: "ระบุสิ่งที่ไม่ผ่าน", type: "note" }] },
+      fields: [{ field: "qc_date", label: "วันตรวจ QC" }] },
+    { to: "MANUFACTURING", label: "กลับไปผลิต/แก้", tone: "warn" },
   ],
   READY: [],
   // กู้คืนจากปัญหา

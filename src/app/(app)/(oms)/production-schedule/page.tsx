@@ -175,11 +175,16 @@ export default function ProductionSchedulePage() {
     save(r, { status: "DONE" } as Partial<SchedRow>);
   };
 
-  // ปุ่มเลื่อนสถานะสำหรับงานในระบบ (kind==='job')
+  // ทุกชุดพร้อมส่งติดตั้ง = QC หลังใส่กระจก "ผ่าน" + ใส่มุ้งครบ (ชุดที่มีมุ้ง) ทุกชุด
+  const allSetsReady = (r: SchedRow) =>
+    !!r.sets && r.sets.length > 0 &&
+    r.sets.every((s) => s.qc_after_glass === "ผ่าน" && (!s.screen_type?.trim() || s.screen_installed === "ใส่แล้ว"));
+
+  // ปุ่มเลื่อนสถานะสำหรับงานในระบบ (kind==='job') — QC ทำในเช็คลิสต์การ์ด ไม่มีเฟส รอ QC แยก
   const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
-    QUEUED:        { label: "เริ่มผลิต", nextStatus: "MANUFACTURING", confirmMsg: (t) => `เริ่มผลิต "${t}" ใช่ไหม?` },
-    MANUFACTURING: { label: "ส่ง QC",    nextStatus: "QC",            confirmMsg: (t) => `ส่งงาน "${t}" เข้าตรวจ QC ใช่ไหม?` },
-    QC:            { label: "ตรวจ QC (หน้า QC)", nextStatus: "READY", confirmMsg: (t) => `งาน "${t}" ตรวจ QC ที่หน้า "ตรวจ QC" — ไปที่หน้า QC เลยไหม?` },
+    QUEUED:        { label: "เริ่มผลิต",  nextStatus: "MANUFACTURING", confirmMsg: (t) => `เริ่มผลิต "${t}" ใช่ไหม?` },
+    MANUFACTURING: { label: "ส่งติดตั้ง", nextStatus: "READY",         confirmMsg: (t) => `ส่ง "${t}" เข้าติดตั้ง (QC ผ่านครบทุกชุดแล้ว) ใช่ไหม?` },
+    QC:            { label: "ส่งติดตั้ง", nextStatus: "READY",         confirmMsg: (t) => `ส่ง "${t}" เข้าติดตั้ง ใช่ไหม?` },
   };
 
   const advanceJobStatus = async (r: SchedRow) => {
@@ -191,19 +196,19 @@ export default function ProductionSchedulePage() {
       alert(`ยังเริ่มผลิตไม่ได้ — ออฟฟิศต้องกรอก ${miss} ก่อน (เปิดงานนี้ในหน้า "ผลิต")`);
       return;
     }
-    // ตรวจ QC: ช่างไม่ได้ตรวจเอง → ส่งเข้า QC แล้วรอเจ้าหน้าที่ QC
-    if (cfg.nextStatus === "READY") {
-      if (isChang) { alert(`ส่งงาน "${r.title}" เข้า QC แล้ว — รอเจ้าหน้าที่ QC ตรวจ`); return; }
-      if (!confirm(cfg.confirmMsg(r.title))) return;
-      window.location.href = "/qc"; // เจ้าหน้าที่ QC ตรวจที่หน้า "ตรวจ QC"
+    // ส่งติดตั้ง: ต้อง QC หลังใส่กระจก "ผ่าน" + ใส่มุ้งครบ ทุกชุดก่อน
+    if (cfg.nextStatus === "READY" && !allSetsReady(r)) {
+      alert(`ยังส่งติดตั้งไม่ได้ — ทุกชุดต้อง QC หลังใส่กระจก "ผ่าน" และใส่มุ้งครบก่อน`);
       return;
     }
     if (!confirm(cfg.confirmMsg(r.title))) return;
     setSavingId(r.id);
     try {
       const body: Record<string, string> = { status: cfg.nextStatus };
-      if (cfg.nextStatus === "QC") {
-        // ต้องส่ง production_done ด้วย — ใช้วันนี้ถ้าไม่มีใน draft
+      if (cfg.nextStatus === "READY") {
+        // QC ทำในเช็คลิสต์แล้ว — บันทึกผลรวม + วันที่เพื่อ audit/รายงาน
+        body.qc_result = "PASSED";
+        body.qc_date = today();
         body.production_done = today();
       }
       await api.patch(`/production/${r.id}`, body);
@@ -328,20 +333,22 @@ export default function ProductionSchedulePage() {
                         )}
                       </div>
 
-                      {/* โหมดช่าง: ปุ่มเริ่มผลิต (QUEUED) / ส่ง QC (MANUFACTURING) — ช่างกดเอง */}
-                      {!officeMode && r.kind === "job" && canWrite && (r.status === "QUEUED" || r.status === "MANUFACTURING") && JOB_NEXT[r.status] && (() => {
-                        const missingDates = r.status === "QUEUED" && (!r.due_date || !r.install_date);
+                      {/* โหมดช่าง: เริ่มผลิต (QUEUED) / ส่งติดตั้ง (MANUFACTURING/QC เมื่อ QC ครบ) — กดเอง */}
+                      {!officeMode && r.kind === "job" && canWrite && JOB_NEXT[r.status] && (() => {
+                        const isStart = r.status === "QUEUED";
+                        const blocked = isStart ? (!r.due_date || !r.install_date) : !allSetsReady(r);
+                        const warn = isStart
+                          ? `⏳ รอออฟฟิศกรอก${!r.due_date ? " วันกำหนดเสร็จ" : ""}${(!r.due_date && !r.install_date) ? " +" : ""}${!r.install_date ? " วันติดตั้ง" : ""} ก่อนเริ่มผลิต`
+                          : "⏳ ต้อง QC หลังใส่กระจก “ผ่าน” + ใส่มุ้งครบทุกชุดก่อนส่งติดตั้ง";
                         return (
                           <div className="mt-1">
-                            {missingDates && (
-                              <div className="text-[11.5px] rounded-lg px-2.5 py-1.5 mb-1" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>
-                                ⏳ รอออฟฟิศกรอก{!r.due_date ? " วันกำหนดเสร็จ" : ""}{(!r.due_date && !r.install_date) ? " +" : ""}{!r.install_date ? " วันติดตั้ง" : ""} ก่อนเริ่มผลิต
-                              </div>
+                            {blocked && (
+                              <div className="text-[11.5px] rounded-lg px-2.5 py-1.5 mb-1" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>{warn}</div>
                             )}
                             <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
                               className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50"
-                              style={{ background: missingDates ? "#c7c7cc" : (r.status === "QUEUED" ? IOS.orange : IOS.blue) }}>
-                              {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (r.status === "QUEUED" ? "▶ " : "")}
+                              style={{ background: blocked ? "#c7c7cc" : (isStart ? IOS.orange : IOS.green) }}>
+                              {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (isStart ? "▶ " : "📦 ")}
                               {JOB_NEXT[r.status].label}
                             </button>
                           </div>
@@ -475,14 +482,10 @@ function SetCard({ s, saving, mark, canMark }: {
 
   const designDone = s.design_received === V_DESIGN_DONE;
   const glassDone = s.glass_installed === V_GLASS_DONE;
+  const screenDone = s.screen_installed === V_SCREEN_DONE;
   const qcBefore = s.qc_before_glass === V_QC_PASS;
   const qcAfter = s.qc_after_glass === V_QC_PASS;
   const qcDone = qcBefore && qcAfter;
-  // QC ทีละสเตจตามสภาพกระจก: ยังไม่ใส่→ตรวจก่อนใส่ · ใส่แล้ว→ตรวจหลังใส่ (กันตรวจหลังทั้งที่ยังไม่ใส่)
-  const qcStageAfter = glassDone;
-  const qcField = qcStageAfter ? "qc_after_glass" : "qc_before_glass";
-  const qcStagePassed = qcStageAfter ? qcAfter : qcBefore;
-  const qcCount = (qcBefore ? 1 : 0) + (qcAfter ? 1 : 0);
   const tone = dlTone[dl.tone];
 
   return (
@@ -510,28 +513,38 @@ function SetCard({ s, saving, mark, canMark }: {
       </div>
 
       {canMark ? (
-        <div className="grid grid-cols-3 gap-1.5">
-          <MarkBtn label={designDone ? "ได้แบบแล้ว" : "ได้แบบ"} done={designDone} saving={saving}
-            onClick={() => designDone
-              ? mark(s.id, { design_received: V_DESIGN_UNDONE }, "ยกเลิก “ได้แบบแล้ว” ?")
-              : mark(s.id, { design_received: V_DESIGN_DONE })} />
-          <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
-            onClick={() => glassDone
-              ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
-              : mark(s.id, { glass_installed: V_GLASS_DONE })} />
-          <MarkBtn
-            label={qcStagePassed ? "ตรวจผ่านแล้ว" : qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"}
-            done={qcStagePassed} half={!qcStagePassed && qcCount > 0} saving={saving}
-            sub={<span className="text-[10px] font-normal opacity-80">ผ่าน {qcCount}/2 จุด</span>}
-            onClick={() => qcStagePassed
-              ? mark(s.id, { [qcField]: "" }, `ยกเลิก ${qcStageAfter ? "ตรวจหลังใส่กระจก" : "ตรวจก่อนใส่กระจก"} ?`)
-              : mark(s.id, { [qcField]: V_QC_PASS })} />
+        <div className="space-y-2">
+          {/* แถวช่าง: ได้แบบ / ใส่กระจก / ใส่มุ้ง */}
+          <div className={`grid ${hasScreen ? "grid-cols-3" : "grid-cols-2"} gap-1.5`}>
+            <MarkBtn label={designDone ? "ได้แบบแล้ว" : "ได้แบบ"} done={designDone} saving={saving}
+              onClick={() => designDone
+                ? mark(s.id, { design_received: V_DESIGN_UNDONE }, "ยกเลิก “ได้แบบแล้ว” ?")
+                : mark(s.id, { design_received: V_DESIGN_DONE })} />
+            <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
+              onClick={() => glassDone
+                ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
+                : mark(s.id, { glass_installed: V_GLASS_DONE })} />
+            {hasScreen && (
+              <MarkBtn label={screenDone ? "ใส่มุ้งแล้ว" : "ใส่มุ้ง"} done={screenDone} saving={saving}
+                onClick={() => screenDone
+                  ? mark(s.id, { screen_installed: "ยังไม่ใส่" }, "ยกเลิก “ใส่มุ้งแล้ว” ?")
+                  : mark(s.id, { screen_installed: V_SCREEN_DONE })} />
+            )}
+          </div>
+          {/* QC: คนตรวจกดตรงนี้ — ก่อน/หลังใส่กระจก ผ่าน/ไม่ผ่าน */}
+          <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "#fff", border: `1px solid ${IOS.line}` }}>
+            <div className="text-[11px] font-bold" style={{ color: IOS.ink3 }}>✓ QC (คนตรวจกดตรงนี้)</div>
+            <QcRow label="ก่อนใส่กระจก" value={s.qc_before_glass} saving={saving} onSet={(v) => mark(s.id, { qc_before_glass: v })} />
+            <QcRow label="หลังใส่กระจก" value={s.qc_after_glass} saving={saving} onSet={(v) => mark(s.id, { qc_after_glass: v })} />
+          </div>
         </div>
       ) : (
-        <div className="flex gap-1.5 text-[11px]">
+        <div className="flex flex-wrap gap-1.5 text-[11px]">
           <StatusPill ok={designDone} label="แบบ" />
           <StatusPill ok={glassDone} label="กระจก" />
-          <StatusPill ok={qcDone} label="QC" />
+          {hasScreen && <StatusPill ok={screenDone} label="มุ้ง" />}
+          <StatusPill ok={qcBefore} label="QCก่อน" />
+          <StatusPill ok={qcAfter} label="QCหลัง" />
         </div>
       )}
 
@@ -547,7 +560,6 @@ function SetCard({ s, saving, mark, canMark }: {
           <RoRow label="อุปกรณ์" v={s.mat_equipment} />
           <RoRow label="อลู ปกติ" v={s.mat_alu_normal} />
           <RoRow label="อลู อบสี" v={s.mat_alu_painted} />
-          <RoRow label="ใส่มุ้ง" v={s.screen_installed} />
           <RoRow label="ใส่กระจกเสร็จ" v={s.glass_done_date ? thShort(s.glass_done_date) : ""} />
           <RoRow label="เสร็จจริง" v={s.actual_done_date ? thShort(s.actual_done_date) : ""} />
           {s.note && <div className="col-span-2"><RoRow label="หมายเหตุ" v={s.note} /></div>}
@@ -570,6 +582,27 @@ function MarkBtn({ label, done, half, saving, sub, onClick }: { label: string; d
       {saving ? <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-slate-500 animate-spin" />
         : <>{done && <Check size={16} />}<span className="leading-tight text-center">{label}</span>{sub}</>}
     </button>
+  );
+}
+
+// แถว QC: ผ่าน(เขียว)/ไม่ผ่าน(แดง=รอแก้ ตรวจใหม่) — กดซ้ำตัวที่เลือก = ยกเลิก
+function QcRow({ label, value, saving, onSet }: { label: string; value: string; saving: boolean; onSet: (v: string) => void }) {
+  const pass = value === "ผ่าน";
+  const fail = value === "ไม่ผ่าน";
+  const btn = (active: boolean, color: string) => active
+    ? { background: color, color: "#fff", border: "none" }
+    : { background: "#fff", color: "#636366", border: "1px solid #d9d9df" };
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="flex-1 text-[12.5px] font-medium" style={{ color: "#1c1c1e" }}>
+        {label}
+        {fail && <span className="ml-1 font-bold" style={{ color: "#ff3b30" }}>· รอแก้ ตรวจใหม่</span>}
+      </span>
+      <button type="button" disabled={saving} onClick={() => onSet(pass ? "" : "ผ่าน")}
+        className="px-3 min-h-[38px] rounded-lg text-[13px] font-bold disabled:opacity-50 active:scale-[.97]" style={btn(pass, "#34c759")}>ผ่าน</button>
+      <button type="button" disabled={saving} onClick={() => onSet(fail ? "" : "ไม่ผ่าน")}
+        className="px-3 min-h-[38px] rounded-lg text-[13px] font-bold disabled:opacity-50 active:scale-[.97]" style={btn(fail, "#ff3b30")}>ไม่ผ่าน</button>
+    </div>
   );
 }
 

@@ -75,9 +75,9 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (body.status === "QUEUED" && !QUEUE_FROM.includes(current.status as string)) {
         return err("ต้องวัด/ประชุมแบบก่อนจึงส่งเข้ารอลงผลิตได้", 409);
       }
-      // ห้ามข้ามไป READY โดยตรง (ต้องผ่าน QC ก่อน)
-      if (body.status === "READY" && current.status !== "QC") {
-        return err("ต้องผ่านขั้น QC ก่อนจึงจะพร้อมติดตั้งได้", 409);
+      // ส่งติดตั้ง (READY) — ได้จากกำลังผลิต (QC ทำในเช็คลิสต์การ์ดแล้ว) หรือ QC (งานเก่า)
+      if (body.status === "READY" && !["QC", "MANUFACTURING"].includes(current.status as string)) {
+        return err("ต้องผลิตเสร็จก่อนจึงส่งติดตั้งได้", 409);
       }
     }
 
