@@ -6012,12 +6012,12 @@ function buildItemOpts(d){
       h+='<label class="opt" style="width:100%;">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select>'+rfChips('o-ceilfinish',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทาสี']],'ทาสีขาว')+'</label>';
       h+='<label class="opt"><input type="checkbox" class="o-ceilslope" onchange="calcQuote();"> ฝ้าเฉียงตามแนวหลังคา</label>';
     } else if(p.id==='wall_int'){
-      // #9 (25มิ.ย.): ผนังเบาภายใน → ยิปซั่มบอร์ด (ต่างจาก wall_ext = สมาร์ทบอร์ด)
-      h+='<label class="opt" style="width:100%;">ยิปซั่มบอร์ด 12มม <span style="font-size:11px;color:#6B7280;">(ผนังเบาภายใน)</span></label>';
-      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
+      // #9 (25มิ.ย.): ผนังเบาภายใน → ยิปซั่มบอร์ด · เพิ่ม class o-wallboard สำหรับ DOM reorder
+      h+='<label class="opt o-wallboard" style="width:100%;">วัสดุแผ่น: ยิปซั่มบอร์ด 12มม <span style="font-size:11px;color:#6B7280;">(ผนังเบาภายใน)</span></label>';
+      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="(function(s){var ch=s.closest(\'.ch\')||document;var cr=ch.querySelector(\'.o-wallpaintcolor-row\');if(cr)cr.style.display=(s.value===\'ระบุสีเอง\')?\'block\':\'none\';calcQuote();})(this);"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option><option value="ระบุสีเอง">ระบุสี/รหัสเอง</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา'],['ระบุสีเอง','ระบุสีเอง']],'ทาสีขาว')+'<div class="o-wallpaintcolor-row" style="display:none;margin-top:5px;"><label style="font-size:12px;color:#92400E;font-weight:700;">รหัส/ชื่อสี: <input type="text" class="o-wallpaintcolor" maxlength="80" placeholder="เช่น ขาวมุก / SAP 001 / #FFFFFF" style="width:200px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 8px;font-size:12px;" oninput="calcQuote();"></label></div></label>';
     } else if(!p.ceiling){
-      h+='<label class="opt" style="width:100%;">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="display:none;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select>'+rfChips('o-smartthick',[['12','12 มม.'],['20','20 มม.']],'12',true)+'</label>';
-      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
+      h+='<label class="opt" style="width:100%;">วัสดุแผ่น: สมาร์ทบอร์ด หนา <select class="o-smartthick" style="display:none;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select>'+rfChips('o-smartthick',[['12','12 มม.'],['20','20 มม.']],'12',true)+'</label>';
+      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="(function(s){var ch=s.closest(\'.ch\')||document;var cr=ch.querySelector(\'.o-wallpaintcolor-row\');if(cr)cr.style.display=(s.value===\'ระบุสีเอง\')?\'block\':\'none\';calcQuote();})(this);"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option><option value="ระบุสีเอง">ระบุสี/รหัสเอง</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา'],['ระบุสีเอง','ระบุสีเอง']],'ทาสีขาว')+'<div class="o-wallpaintcolor-row" style="display:none;margin-top:5px;"><label style="font-size:12px;color:#92400E;font-weight:700;">รหัส/ชื่อสี: <input type="text" class="o-wallpaintcolor" maxlength="80" placeholder="เช่น ขาวมุก / SAP 001 / #FFFFFF" style="width:200px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 8px;font-size:12px;" oninput="calcQuote();"></label></div></label>';
     }
   }
   if(p.fin){ // ดราฟ 23มิ.ย.: สีอลูระแนง = ชิป 5 ตัว (อบขาว/ดำ ฟรี + ซาฮาร่า/ลายไม้สต๊อก/อบพิเศษ +เรตตามรุ่น) — hidden select = source of truth, data-chipped=1 ข้าม g2FinDrill
@@ -6329,11 +6329,16 @@ function buildItemOpts(d){
       if((d.querySelector('.i-group')||{}).value==='1' && box){
         // #B/C/E (22มิ.ย. · ดราฟ z1): ดึงฟิลด์หลัก ทิศเปิด/แบบเปิด/ธรณี ขึ้นบนสุด (ก่อนล็อค) — calcUnit อ่าน class ตำแหน่งไม่กระทบราคา (เหมือนดึงล็อค)
         // ลำดับ list = ลำดับโชว์ z1→z2 (แต่ละชนิดมี subset ของตัวเอง) · ดราฟ: shower รูปแบบ→ประเภทประตู→อุปกรณ์→เข้ามุม · เปลือยประตู frametype · บานยก มอเตอร์ · ผนัง โครง→ความหนา · บาน ทิศเปิด/แบบเปิด/ธรณี
-        // #6 fix (25มิ.ย.): G1 ผนัง → ย้าย g1-wallsel (รุ่น) เข้า _lgHost บนสุดก่อน o-wallframe (ดราฟ #9 ลำดับ: รุ่น→โครง→ความหนา→ทาสี)
-        if(p && p.cat==='ฝ้า-ผนัง'){ var _ws=box.querySelector('.g1-wallsel'); if(_ws && !_lgHost.contains(_ws)) _lgHost.appendChild(_ws); }
-        ['.o-shtype','.o-shdoortype','.o-showerhw','.o-corner','.o-frametype','.o-motor','.o-wallframe','.o-isothick','.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
-        // #6 fix: G1 ผนัง → ย้าย o-smartthick + o-wallpaint เข้า _lgHost ต่อจาก o-wallframe/o-isothick (ลำดับ: ความหนา→ทาสี)
-        if(p && p.cat==='ฝ้า-ผนัง'){ ['.o-smartthick','.o-wallpaint','.o-isocolor','.o-insul'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } }); }
+        // #6 fix (25มิ.ย.): G1 ผนัง → ย้าย g1-wallsel (รุ่น) เข้า _lgHost บนสุดก่อน o-wallframe
+        // ลำดับใหม่ (ดราฟ 25มิ.ย.): ① รุ่น → ② วัสดุแผ่น (o-wallboard/o-smartthick/o-isothick) → ③ โครง → ④ ทาสี → ⑤ ฉนวน
+        if(p && p.cat==='ฝ้า-ผนัง'){
+          var _ws=box.querySelector('.g1-wallsel'); if(_ws && !_lgHost.contains(_ws)) _lgHost.appendChild(_ws);
+          // ② วัสดุแผ่น: wall_int = o-wallboard label · wall_ext = o-smartthick · isowall = o-isothick
+          ['.o-wallboard','.o-smartthick','.o-isothick'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
+        }
+        ['.o-shtype','.o-shdoortype','.o-showerhw','.o-corner','.o-frametype','.o-motor','.o-wallframe','.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
+        // ④⑤ G1 ผนัง → ทาสี + สีisowall + ฉนวน (หลังโครง)
+        if(p && p.cat==='ฝ้า-ผนัง'){ ['.o-wallpaint','.o-isocolor','.o-insul'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } }); }
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
         if(_lockSec){ _lockSec.open=true; var _sm=_lockSec.querySelector('summary'); if(_sm) _sm.style.display='none'; var _zh=document.createElement('div'); _zh.className='g1-zonehdr'; _zh.textContent='โซน z2 — ใช้บ่อย'; _lgHost.appendChild(_zh); _lgHost.appendChild(_lockSec); }
@@ -6496,6 +6501,7 @@ function readItem(d){
     const _it=d.querySelector('.o-isothick'); if(_it)optSel.isothick=_it.value; const _ic=d.querySelector('.o-isocolor'); if(_ic)optSel.isocolor=(_ic.value||'').trim();
     const _cf=d.querySelector('.o-ceilfinish'); if(_cf)optSel.ceilfinish=_cf.value; const _cs=d.querySelector('.o-ceilslope'); if(_cs)optSel.ceilslope=_cs.checked;
     const _smt=d.querySelector('.o-smartthick'); if(_smt)optSel.smartthick=_smt.value; const _wp=d.querySelector('.o-wallpaint'); if(_wp)optSel.wallpaint=_wp.value;
+    const _wpc=d.querySelector('.o-wallpaintcolor'); if(_wpc)optSel.wallpaintcolor=(_wpc.value||'').trim(); // ระบุสีเอง (25มิ.ย.)
     const _ck=d.querySelector('.o-ckolor'); if(_ck)optSel.ckolor=_ck.value; }
   if(p.optSlide){ const sl=d.querySelector('.o-slide'); optSel.slide=sl&&sl.checked; const sm=d.querySelector('.o-spanels'); optSel.spanels=sm?sm.value:2;
     // FIX C② (G3): พื้นที่เลื่อน = ยาว×ยื่น → sarea (ว่าง=auto เดิม) · calc ไม่แตะ
@@ -7484,9 +7490,9 @@ function genQuote(keepNo){
       else if(it.p.ceiling){ _work.push(it.p.name.replace(/\s*\([^)]*\)/g,'').trim()); // ฝ้าระแนงอลู/ตัวซี/remood
         if(_os.ckolor) _spec.push('สี/ลายฝ้า: '+_os.ckolor); }
       // v7A ข้อ7 (18มิ.ย. · registry #8): สเปกผนังเต็ม — ภายนอก=สมาร์ทบอร์ด+ฉนวน+เหล็กชุบ · ภายใน=ยิปซั่ม+ฉนวน+โครงคร่าวซี-ไลน์
-      else if(it.p.id==='wall_int'){ _work.push('ผนังยิปซั่มพร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push('โครงคร่าวซี-ไลน์เสริมแรง'); }
+      else if(it.p.id==='wall_int'){ var _wpTxt=_os.wallpaint?(_os.wallpaint===('ระบุสีเอง')&&_os.wallpaintcolor?('ทาสี '+_os.wallpaintcolor):' พร้อม'+_os.wallpaint):''; _work.push('ผนังยิปซั่มพร้อมฉนวนกันร้อนกันเสียง'+_wpTxt); _work.push('โครงคร่าวซี-ไลน์เสริมแรง'); }
 
-      else if(it.p.id==='wall_ext'){ _work.push('ผนังสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม. พร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
+      else if(it.p.id==='wall_ext'){ var _wpTxt2=_os.wallpaint?(_os.wallpaint===('ระบุสีเอง')&&_os.wallpaintcolor?(' ทาสี '+_os.wallpaintcolor):(' พร้อม'+_os.wallpaint)):''; _work.push('ผนังสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม. พร้อมฉนวนกันร้อนกันเสียง'+_wpTxt2); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
       else { _work.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
       if(_os.insul && it.p.id!=='wall_int' && it.p.id!=='wall_ext') _work.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');  // ผนังเบา v7A: ฉนวนรวมในสเปกแล้ว (กันซ้ำ)
       det = _work.join('\n')+(_spec.length?('\n###รายละเอียด###\n'+_spec.join('\n')):'');
