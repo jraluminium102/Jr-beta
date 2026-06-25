@@ -4712,6 +4712,13 @@ function cabProdSwitch(btn, prodId){
   var ch=btn.closest('.ch'); if(!ch) return;
   g3SyncProd(ch, prodId);
 }
+// G4 ฝาตู้ (future_tech): จำนวนบานหน้าตู้ ชิป [1][2][3] → ขับ .i-panels (เหมือนตู้อลู o-cabdoors · เลิก stepper)
+function ftDoors(btn,n){
+  var ch=btn.closest('.ch'); if(!ch) return;
+  var grp=btn.parentNode; if(grp) grp.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b===btn); });
+  var pi=ch.querySelector('.i-panels'); if(pi){ pi.value=n; pi.dispatchEvent(new Event('input',{bubbles:true})); pi.dispatchEvent(new Event('change',{bubbles:true})); }
+  if(window.calcQuote) calcQuote();
+}
 // เฟส1 G1 บานเปลือย: ชิป switch ประเภท ติดตาย↔ประตูสวิง↔ประตูเลื่อน (model จาก cabProdSwitch)
 // ติดตาย = frameless_fixed · ประตูสวิง/เลื่อน = frameless_door (สลับแค่ product id · ราคาเดิมไม่แตะ)
 function framelessTypeSwitch(btn, prodId){
@@ -6068,6 +6075,8 @@ function buildItemOpts(d){
     // Box ① สเปกหลัก (red)
     h+='<div class="g4-box g4-b1"><div class="g4-bh">① สเปกหลัก <span class="g4-btag">บังคับ</span></div><div class="g4-body">';
     h+='<div class="g4-hint">กรอกขนาด <b>ต่อบาน</b> ในช่องหลัก (กว้าง = กว้าง/บาน · สูง = สูง) · max 3 บาน/ชุด · ใหญ่สุด <b>1.7 ตร.ม./บาน</b></div>';
+    // จำนวนบานหน้าตู้ — ชิป [1][2][3] (เหมือนตู้อลู · ขับ .i-panels · stepper ซ่อน)
+    h+='<div class="g4-fld ft-doors-fld"><div class="g4-lbl">จำนวนบานหน้าตู้</div><div class="chip-group chip-sm"><button type="button" class="chip on" data-n="1" onclick="ftDoors(this,1)">1 บาน</button><button type="button" class="chip" data-n="2" onclick="ftDoors(this,2)">2 บาน</button><button type="button" class="chip" data-n="3" onclick="ftDoors(this,3)">3 บาน</button></div></div>';
     h+='<div class="g4-hint" style="color:#6B7280;">💡 บานที่ 2–3 +5,500/บาน</div>';
     h+='<div class="ft-big-warn" style="display:none;background:#FEF3F2;border:1px solid #F3D5D5;border-radius:7px;padding:6px 10px;font-size:12px;color:#B3151D;font-weight:700;margin-top:4px;">⚠ ขนาด >1.7 ตร.ม./บาน — เกินเรตสูงสุด (คิดเรต 12,500/บาน)</div>';
     h+='</div></div>';
@@ -6173,6 +6182,10 @@ function buildItemOpts(d){
     var _b1body=box.querySelector('.g4-b1 .g4-body');
     if(_b1body){ var _hint=_b1body.querySelector('.g4-hint'); _b1body.insertBefore(_g4SrNode, _hint?_hint.nextSibling:_b1body.firstChild); }
     else { var _cg2=d.querySelector('.chgrid'); if(_cg2) _cg2.insertBefore(_g4SrNode, _cg2.querySelector('.cg-row')||_cg2.querySelector('.full > .optbox')||null); }
+    // ฝาตู้: ใช้ชิป จำนวนบานหน้าตู้ แทน stepper → ซ่อน .i-panels-wrap + sync ชิป active ตามค่าปัจจุบัน
+    var _ftPw=_g4SrNode.querySelector('.i-panels-wrap'); if(_ftPw) _ftPw.style.display='none';
+    var _ftPv=parseInt((_g4SrNode.querySelector('.i-panels')||{}).value)||1; if(_ftPv<1)_ftPv=1; if(_ftPv>3)_ftPv=3;
+    var _ftFld=box.querySelector('.ft-doors-fld'); if(_ftFld){ _ftFld.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', parseInt(b.dataset.n)===_ftPv); }); }
   }
   // บานเฟี้ยม: ย้าย fold opts ออกนอก optbox ให้โผล่ทันที (ไม่ต้อง expand details)
   if(p.cat==='บานเฟี้ยม'){ var _ob=d.querySelector('.optbox'); if(_ob) box.querySelectorAll('.fold-opt-row,.fold-split').forEach(function(_f){ _ob.parentNode.insertBefore(_f,_ob); }); }
