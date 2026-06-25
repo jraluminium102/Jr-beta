@@ -5255,6 +5255,10 @@ function buildItemOpts(d){
       h+='<select class="o-frametype" style="display:none;" onchange="calcQuote();"><option value="swing"'+((_flSavedType!=='sliding')?' selected':'')+'>สวิง (บานเปิด)</option><option value="sliding"'+((_flSavedType==='sliding')?' selected':'')+'>เลื่อน</option></select>';
     }
   }
+  // #7 (25มิ.ย.): YKK Vent — hint ช่วงขนาดที่กรอกได้ (โชว์ก่อนช่อง closer)
+  if(p.id==='ykk_vent'){
+    h+='<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:8px;padding:6px 10px;font-size:12px;color:#856404;margin-bottom:4px;">ⓘ ใส่ขนาดได้ 0.6–0.9 × 2.0–2.2 ม. เท่านั้น</div>';
+  }
   if(p.closer){ if(p.cat==='YKK'){ h+='<label class="opt">โช้คอัพ <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คอัพ">มี +5,000</option></select></label>'; } else { h+='<label class="opt">โช้คอัพประตู <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช้ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช้ค">บานพับ +5,000</option></select></label>'; } } // 22มิ.ย. #3-A: YKK โช๊คราคาเดียว มี/ไม่มี +5,000 · บานเปิดคง 4 ตัวเลือก
   // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน · เพิ่ม frameless_door (ประตูบานเปลือย เฉพาะประตู ไม่ใช่ติดตาย)
   if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน','บานยก'].includes(p.cat) || (p.cat==='ดัดโค้ง'&&p.id!=='curved_fixed') || p.id==='frameless_door'){ // 22มิ.ย.: เพิ่ม บานยก/ดัดโค้ง(เว้นติดตายโค้ง)/บานเปลือยประตู · คำ "ชุดล็อค" 3 แบบครบทุกบาน
@@ -5334,11 +5338,7 @@ function buildItemOpts(d){
     if(!_isTop){ var _brDef=(_sr.txt&&/เตี้ย/.test(_sr.txt))?'เตี้ย':'กันน้ำ';
       h+='<label class="opt">ราง <div class="chip-group chip-sm"><button type="button" class="chip '+(_brDef==='กันน้ำ'?'on':'')+'" data-val="กันน้ำ" onclick="chSetChip(this,\'o-bottomrail\')">รางกันน้ำ</button><button type="button" class="chip '+(_brDef==='เตี้ย'?'on':'')+'" data-val="เตี้ย" onclick="chSetChip(this,\'o-bottomrail\')">รางเตี้ย 7 มม.</button></div><select class="o-bottomrail" style="display:none;" onchange="calcQuote();"><option value="กันน้ำ"'+(_brDef==='กันน้ำ'?' selected':'')+'>รางล่าง (รุ่นกันน้ำ)</option><option value="เตี้ย"'+(_brDef==='เตี้ย'?' selected':'')+'>รางล่าง (รุ่นรางเตี้ย 7 มม.)</option></select></label>';
     }
-    // G1G6-E: ราง (บน · โชว์/ซ่อน) = ชิป ใน sliding-main-block (ดันขึ้นเห็นทันทีพร้อมชนิดการเปิด)
-    if(_isTop){
-      h+='<label class="opt">ราง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="โชว์ราง" onclick="chSetChip(this,\'o-track\')">โชว์ราง</button><button type="button" class="chip" data-val="ซ่อนราง" onclick="chSetChip(this,\'o-track\')">ซ่อนราง +5,000</button></div><select class="o-track" style="display:none;"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
-      // ข้อ5(G1): เสริมคาน ย้ายไปบล็อกรวมด้านล่าง (บานเลื่อน/เลื่อนภายใน/บานเปิด/PC) — กันซ้ำ class
-    }
+    // G1G6-E: ราง (บน · โชว์/ซ่อน) — #2 (25มิ.ย.): ย้ายออกจาก sliding-main-block ไปอยู่กับ ซ่อนคาน/ฝังราง (COMMON_OPTS) ด้านล่าง
     h+='</div>'; // ปิด .sliding-main-block
     // ชุดล็อค — เฉพาะ itype=ประตู (อ่าน .i-type ณ ตอน buildItemOpts)
     const _itypeNow = (d.querySelector('.i-type')||{}).value || 'door';
@@ -5560,6 +5560,10 @@ function buildItemOpts(d){
     // FIX A④: (เลิก h+='</details>' — ไม่มี wrapper แล้ว)
   }
   const areaOnly=AREA_CATS.includes(p.cat);
+  // #2 (25มิ.ย.): ซ่อนราง +5,000 — ย้ายมาอยู่รวมกับ ซ่อนคาน/ฝังรางยู (COMMON_OPTS zone) · เฉพาะ inner_top_* เท่านั้น
+  if(['inner_top_stack','inner_top_slimlux','inner_top_xseries'].includes(p.id)){
+    h+='<label class="opt">ราง <div class="chip-group chip-sm"><button type="button" class="chip on" data-val="โชว์ราง" onclick="chSetChip(this,\'o-track\')">โชว์ราง</button><button type="button" class="chip" data-val="ซ่อนราง" onclick="chSetChip(this,\'o-track\')">ซ่อนราง +5,000</button></div><select class="o-track" style="display:none;" onchange="calcQuote();"><option value="โชว์ราง">โชว์ราง</option><option value="ซ่อนราง">ซ่อนราง (+5,000)</option></select></label>';
+  }
   COMMON_OPTS.forEach(o=>{ if(o.ids&&o.ids.includes(p.id)){ if(o.perLen){ h+=`<label class="opt"><input type="checkbox" class="o-${o.id}" onchange="calcQuote();"> ${o.label} <span style="font-size:11px;color:#666;">(≤${o.freeLen}ม.=${fmt(o.base)} · เกิน +${o.lenRate}/ม.)</span> ยาว(ม.) <input type="number" class="o-${o.id}-len" min="0" step="0.1" value="0" style="width:55px;height:30px;" oninput="calcQuote();"></label>`; } else { h+=`<label class="opt"><input type="checkbox" class="o-${o.id}"> ${o.label} +${fmt(o.price)}</label>`; } } });
   // R3.8: มุ้ง option ในบาน (ใหม่) — สำหรับบานที่ p.mosquito = true
   if(p.mosquito){
@@ -5991,6 +5995,10 @@ function buildItemOpts(d){
     } else if(p.id==='ceiling_smooth'){
       h+='<label class="opt" style="width:100%;">ฝ้าฉาบเรียบ <select class="o-ceilfinish" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทาสี</option></select>'+rfChips('o-ceilfinish',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทาสี']],'ทาสีขาว')+'</label>';
       h+='<label class="opt"><input type="checkbox" class="o-ceilslope" onchange="calcQuote();"> ฝ้าเฉียงตามแนวหลังคา</label>';
+    } else if(p.id==='wall_int'){
+      // #9 (25มิ.ย.): ผนังเบาภายใน → ยิปซั่มบอร์ด (ต่างจาก wall_ext = สมาร์ทบอร์ด)
+      h+='<label class="opt" style="width:100%;">ยิปซั่มบอร์ด 12มม <span style="font-size:11px;color:#6B7280;">(ผนังเบาภายใน)</span></label>';
+      h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
     } else if(!p.ceiling){
       h+='<label class="opt" style="width:100%;">สมาร์ทบอร์ด หนา <select class="o-smartthick" style="display:none;" onchange="calcQuote();"><option value="12">12 มม.</option><option value="20">20 มม.</option></select>'+rfChips('o-smartthick',[['12','12 มม.'],['20','20 มม.']],'12',true)+'</label>';
       h+='<label class="opt" style="width:100%;">ทาสี <select class="o-wallpaint" style="display:none;" onchange="calcQuote();"><option value="ทาสีขาว">ทาสีขาว</option><option value="ทาสีรองพื้นสีขาว">ทาสีรองพื้นสีขาว</option><option value="">ไม่ทา</option></select>'+rfChips('o-wallpaint',[['ทาสีขาว','ทาสีขาว'],['ทาสีรองพื้นสีขาว','รองพื้นสีขาว'],['','ไม่ทา']],'ทาสีขาว')+'</label>';
@@ -6247,6 +6255,9 @@ function buildItemOpts(d){
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
+  // #4 (25มิ.ย.): restore fold-split display หลัง buildItemOpts rebuild — ถ้า o-folddir=เปิดแยกกลาง โชว์ fold-split ทันที
+  { var _fdSel=d.querySelector('.o-folddir'); var _fds=d.querySelector('.fold-split');
+    if(_fdSel && _fds){ _fds.style.display=_fdSel.value==='เปิดแยกกลาง'?'flex':'none'; } }
   // #F (22มิ.ย. · ดราฟ): เก็บกวาดกล่องฟ้า sliding-main-block ที่ค้าง เมื่อสลับเป็นชนิด "ไม่ใช้บาน" (ติดตาย/เปลือย/ผนัง/shower/YKK) — ตัวเคลียร์ก่อน rebuild (L4639) ไม่ครอบ flow กดชิป · กู้บานกลับ size-row + ซ่อน + ลบกล่อง · ราคาไม่ขึ้นกับบาน (bucket) golden นิ่ง
   if((d.querySelector('.i-group')||{}).value==='1' && !usesPanels(p)){
     var _orphanSmb=d.querySelector('.sliding-main-block');
