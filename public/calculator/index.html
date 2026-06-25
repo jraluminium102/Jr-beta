@@ -4494,7 +4494,7 @@ function chipifyItem(d){ if(!d)return; CHIPIFY_SELECTS.forEach(function(cls){ va
 // ===== รอบ3 ข้อ4 (18มิ.ย.): สีอบ G2 เลือกแบบงานบาน — drill 4 หมวด · อ่าน option จริงของ select · คง selectedIndex = ราคาตรงเป๊ะ (ปลอดภัยการเงิน เหมือน chipify) =====
 var G2FIN_SELECTS=['o-gfin','o-finish','o-bgcolor','o-bsfinish','o-bocfinish'];
 function g2FinLabel(o){ return ((o&&(o.getAttribute('data-n')||o.textContent))||'').trim(); }
-function g2FinCat(lbl){ if(/พิเศษ|Fuji/i.test(lbl))return'special'; if(/ซาฮาร่า|Aztec/i.test(lbl))return'sahara'; if(/ลายไม้สต๊อก/.test(lbl))return'wood'; return'std'; } // priority: อบพิเศษ/Fuji → ซาฮาร่า/Aztec → ลายไม้สต๊อก → มาตรฐาน
+function g2FinCat(lbl){ if(/พิเศษ|Fuji|อบสีลายไม้|ลายไม้อบพิเศษ/i.test(lbl))return'special'; if(/ซาฮาร่า|Aztec/i.test(lbl))return'sahara'; if(/ลายไม้สต๊อก/.test(lbl))return'wood'; return'std'; } // priority: อบพิเศษ/Fuji/อบสีลายไม้/ลายไม้อบพิเศษ → ซาฮาร่า/Aztec → ลายไม้สต๊อก → มาตรฐาน (25มิ.ย. เพิ่ม อบสีลายไม้ → special)
 var G2FIN_CATS=[['std','มาตรฐาน'],['sahara','ซาฮาร่า'],['wood','ลายไม้สต๊อก'],['special','อบพิเศษ']];
 function g2FinDrill(sel){ if(!sel||sel.dataset.chipped==='1')return; if(sel.options.length<2)return;
   sel.dataset.chipped='1'; sel.style.display='none';
@@ -4535,6 +4535,10 @@ function g2FinName(inp){ var w=inp.closest('.g2fin-wrap'); if(!w)return; var s=w
 function g2FinNameSuffix(sel){ if(!sel)return ''; var o=sel.options[sel.selectedIndex]; if(!o||g2FinCat(g2FinLabel(o))!=='special')return ''; var nm=(sel.dataset.g2name||'').trim(); return nm?(' ('+nm+')'):' · ⚠ ระบุชื่อสี'; }
 // rnFinPick: ชิปสีอลูระแนง — ตั้ง selectedIndex (กัน value ซ้ำ ขาว/ดำ=0) + fire change → readItem เดิม (25มิ.ย.)
 function rnFinPick(btn){ var ch=btn.closest('.ch'); if(!ch)return; var sel=ch.querySelector('.o-finish'); if(!sel)return; var idx=parseInt(btn.dataset.ridx)||0; ch.querySelectorAll('.chip[onclick*="rnFinPick"]').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); sel.selectedIndex=idx; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+// rnFoldPick: ชิปทิศเปิดเฟี้ยม G2 ระแนง — sync select + โชว์/ซ่อน fold-split (center เท่านั้น) (25มิ.ย.)
+function rnFoldPick(btn,v){ var sub=btn.closest('.o-rn-subpanel-folding'); if(!sub)return; var ch=btn.closest('.ch'); if(!ch)return; sub.querySelectorAll('.chip[onclick*="rnFoldPick"]').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on'); var sel=sub.querySelector('.o-rnfolddir'); if(sel){ sel.value=v; sel.dispatchEvent(new Event('change',{bubbles:true})); } var fs=sub.querySelector('.o-rn-fold-split'); if(fs){ fs.style.display=(v==='center')?'flex':'none'; if(v==='center'){ var panels=parseInt((ch.querySelector('.i-panels')||{value:'2'}).value)||2; var fl=ch.querySelector('.o-rnfleft'); if(fl){ fl.value=Math.floor(panels/2)||1; rnFoldSync(fl); return; } } } calcQuote(); }
+// rnFoldSync: sync ขวา = panels − ซ้าย + update total chip (25มิ.ย.)
+function rnFoldSync(inp){ var sub=inp.closest('.o-rn-subpanel-folding')||inp.closest('.o-rn-subpanel-folding'); if(!sub)return; var ch=inp.closest('.ch'); if(!ch)return; var panels=parseInt((ch.querySelector('.i-panels')||{value:'2'}).value)||2; var fl=parseInt(inp.value)||1; if(fl<1)fl=1; if(fl>=panels)fl=panels-1; if(fl<1)fl=1; inp.value=fl; var fr=panels-fl; var frEl=sub.querySelector('.o-rnfright'); if(frEl)frEl.textContent=fr; var tot=sub.querySelector('.o-rn-fold-total'); if(tot){ var ok=(fl+fr===panels); tot.textContent='รวม '+(fl+fr)+'/'+panels+(ok?' ✓':' ⚠'); tot.style.background=ok?'#D1FAE5':'#FEE2E2'; tot.style.color=ok?'#065F46':'#991B1B'; } calcQuote(); }
 // ฝังรางยู → ล็อกธรณีเป็น std/outer (เดิม disable select · ตอนนี้ใช้ชิป → ล็อกชิปแทน)
 function toggleUChannel(cb){ var c=cb.closest('.ch'); if(!c)return; var t=c.querySelector('.o-thresh'), tf=c.querySelector('.o-threshf');
   if(cb.checked){ if(t)t.value='std'; if(tf)tf.value='outer'; }
@@ -6142,6 +6146,8 @@ function buildItemOpts(d){
     var _curRnThreshF=(d.querySelector('.o-rnthreshf')||{}).value||'outer';
     var _curRnLockCas=(d.querySelector('.o-rnlocktype')||{}).value||'lock';
     var _curRnFoldDir=(d.querySelector('.o-rnfolddir')||{}).value||'left';
+    var _curRnFleft=parseInt((d.querySelector('.o-rnfleft')||{}).value||'2')||2;
+    var _curRnFright=parseInt((d.querySelector('.o-rnfright')||{}).textContent||'2')||2;
     var _curRnSwingHandle=(d.querySelector('.o-rnswinghandle')||{}).value||'std';
     var _curRnSwingHandleSz=(d.querySelector('.o-rnswinghandlesz')||{}).value||'1500';
     var _curRnSwingThresh=(d.querySelector('.o-rnswingthresh')||{}).value||'turtle';
@@ -6212,7 +6218,13 @@ function buildItemOpts(d){
       +'<div class="o-rn-subpanel-folding" style="margin-top:8px;display:'+(_isFolding?'':'none')+';">'
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin-bottom:4px;">ทิศเปิด</div>'
         +'<select class="o-rnfolddir" style="display:none;" onchange="calcQuote();"><option value="left">เปิดซ้าย</option><option value="right">เปิดขวา</option><option value="center">แยกกลาง</option></select>'
-        +rfChips('o-rnfolddir',[['left','เปิดซ้าย'],['right','เปิดขวา'],['center','แยกกลาง']],_curRnFoldDir)
+        +'<div class="chip-group chip-sm"><button type="button" class="chip'+(_curRnFoldDir==='left'?' on':'')+'" onclick="rnFoldPick(this,\'left\')">เปิดซ้าย</button><button type="button" class="chip'+(_curRnFoldDir==='right'?' on':'')+'" onclick="rnFoldPick(this,\'right\')">เปิดขวา</button><button type="button" class="chip'+(_curRnFoldDir==='center'?' on':'')+'" onclick="rnFoldPick(this,\'center\')">แยกกลาง</button></div>'
+        // fold-split: โชว์เฉพาะ center (เหมือน G1 commit 5ce6c83)
+        +'<div class="o-rn-fold-split" style="display:'+(_curRnFoldDir==='center'?'flex':'none')+';margin-top:6px;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap;">'
+          +'ซ้าย <input class="o-rnfleft" type="number" min="1" value="'+_curRnFleft+'" style="width:48px;height:32px;border:1.5px solid var(--line);border-radius:8px;text-align:center;font-family:inherit;" oninput="rnFoldSync(this)"> ช่อง'
+          +' &nbsp;/ ขวา <span class="o-rnfright" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:32px;border:1.5px solid var(--line);border-radius:8px;font-weight:700;color:var(--muted);background:#F9FAFB;">'+_curRnFright+'</span> ช่อง'
+          +' <span class="o-rn-fold-total" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#065F46;">รวม '+(_curRnFleft+_curRnFright)+'/'+(_curRnFleft+_curRnFright)+' ✓</span>'
+        +'</div>'
         +'<div style="font-size:11.5px;font-weight:700;color:#374151;margin:8px 0 4px;">ธรณีเฟี้ยม</div>'
         +'<select class="o-rnthreshf" style="display:none;" onchange="calcQuote();"><option value="outer">กันน้ำภายนอก</option><option value="inner">หลังเต่าภายใน</option></select>'
         +rfChips('o-rnthreshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],_curRnThreshF)
@@ -6969,6 +6981,12 @@ function readItem(d){
     const _rmw=d.querySelector('.o-rnmosqw'); optSel.rnMosqW=_rmw?_rmw.value:'';
     const _rmh=d.querySelector('.o-rnmosqh'); optSel.rnMosqH=_rmh?_rmh.value:'';
     const _rmc=d.querySelector('.o-rnmosqcol'); optSel.rnMosqCol=_rmc?_rmc.value:'white';
+    // ออปชั่นเฟี้ยม: ทิศเปิด + N บานซ้าย/ขวา (25มิ.ย.)
+    const _rfd=d.querySelector('.o-rnfolddir'); optSel.rnFoldDir=_rfd?_rfd.value:'';
+    const _panels_rn=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
+    if(optSel.rnFoldDir==='left'){ optSel.rnFleft=_panels_rn; optSel.rnFright=0; }
+    else if(optSel.rnFoldDir==='right'){ optSel.rnFleft=0; optSel.rnFright=_panels_rn; }
+    else if(optSel.rnFoldDir==='center'){ const _rfl2=d.querySelector('.o-rnfleft'); const _rfr2=d.querySelector('.o-rnfright'); optSel.rnFleft=parseInt((_rfl2?_rfl2.value:'')||'1'); optSel.rnFright=parseInt((_rfr2?_rfr2.textContent:'')||'1'); }
   } // ล็อค+ราง+มุ้ง+ออปชั่นบาน (ดราฟ 23มิ.ย.)
   if(p.cabinet){ const _cd=d.querySelector('.o-cabdoors'); optSel.cabDoors=_cd?_cd.value:'2'; const _dp=d.querySelector('.o-depth'); optSel.depth=_dp?_dp.value:''; const _ct=d.querySelector('.o-cabtype'); optSel.cabtype=_ct?_ct.value:'wardrobe'; const _sh=d.querySelector('.o-shelves'); optSel.shelves=_sh?_sh.value:''; const _sm=d.querySelector('.o-shelfmat'); optSel.shelfmat=_sm?_sm.value:'';
     // G4 L1-L3: checkbox follow + mode (23มิ.ย.)
@@ -7868,6 +7886,8 @@ function genQuote(keepNo){
           if((_rnDtype==='sliding_sms'||_rnDtype==='sliding_euro') && it.optSel.rnRail==='low7') _rnSpec.push('ราง: รางเตี้ย 7มม.');
           else if(_rnDtype==='sliding_sms'||_rnDtype==='sliding_euro') _rnSpec.push('ราง: รางกันน้ำมาตรฐาน');
           if(it.optSel.rnLock!==false) _rnSpec.push('พร้อมกุญแจ');
+          // บานเฟี้ยม: แสดงทิศเปิด + N บาน ซ้าย/ขวา (25มิ.ย.)
+          if(_rnDtype==='folding'&&it.optSel.rnFoldDir){ var _rfd2=it.optSel.rnFoldDir; var _rfl2=it.optSel.rnFleft||0; var _rfr2=it.optSel.rnFright||0; var _rfdMap={left:'เปิดซ้าย',right:'เปิดขวา',center:'แยกกลาง'}; var _rfdTxt=_rfdMap[_rfd2]||_rfd2; if(_rfd2==='center'&&_rfl2&&_rfr2){ _rfdTxt+=' (เปิดซ้าย '+_rfl2+' บาน / เปิดขวา '+_rfr2+' บาน)'; } else if(_rfd2==='left'){ _rfdTxt+=' '+_rfl2+' บาน'; } else if(_rfd2==='right'){ _rfdTxt+=' '+_rfr2+' บาน'; } _rnSpec.push('ทิศเปิดเฟี้ยม: '+_rfdTxt); }
         }
         // มุ้งติดตาย G2 (23มิ.ย.): เพิ่มบรรทัดใน spec ถ้าติ๊ก
         if(it.optSel&&it.optSel.rnMosq&&it.optSel.rnMosqPrice>0){ var _rmFabLbl={'cat':'ผ้ากันแมว','rat':'ผ้ากันหนูสแตนเลส'}[it.optSel.rnMosqFab]||'ผ้าไฟเบอร์'; var _rmColLbl={'sahara':'สีเทาซาฮาร่า','wood':'สีลายไม้','black':'สีดำ'}[it.optSel.rnMosqCol]||'สีขาว'; var _rmSzLbl=it.optSel.rnMosqSz==='manual'?(it.optSel.rnMosqW+'×'+it.optSel.rnMosqH+' ม.'):(it.w+'×'+it.h+' ม. (auto)'); _rnSpec.push('มุ้งติดตาย '+_rmFabLbl+' ขนาด '+_rmSzLbl+' กรอบ'+_rmColLbl); }
