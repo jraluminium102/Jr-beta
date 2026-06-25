@@ -3118,6 +3118,20 @@ function qiG2RateOf(len,t){ for(var i=0;i<t.length;i++){if(len>=t[i][0]&&len<t[i
 function qiG2RuK(n){ return Math.ceil(n/1000)*1000; }
 function qiG2RanaeDisc(a){ return a>30?.15:a>20?.11:a>15?.08:a>10?.05:0; }
 function qiG2RanaeH(h){ var SET=[1,1.2,1.5,2,3]; for(var i=0;i<SET.length;i++){if(h<=SET[i]+1e-9)return SET[i];} return 3; }
+// G2 คิดเร็ว: สร้าง option list จาก product.fin object (finObj = {ชื่อสี: rate, ...})
+function qiG2FinOpts(finObj, selVal){
+  var h='<option value="0">มาตรฐาน (ฟรี)</option>';
+  if(finObj){ Object.keys(finObj).forEach(function(lbl){ var r=finObj[lbl]; h+='<option value="'+r+'"'+(parseFloat(selVal)===r?' selected':'')+'>'+lbl+' (+'+r+'/ตร.ม.)</option>'; }); }
+  return h;
+}
+// G2 คิดเร็ว: helper สร้าง qi-finish-wrap row
+function qiG2FinRow(finObj, selVal){
+  return '<div class="qi-cg-row" style="margin-top:6px;">'+
+    '<div class="qi-finish-wrap" style="flex:1;min-width:140px;">'+
+      '<label style="font-size:12px;color:var(--muted);font-weight:700;">สีอลู (ระแนง)</label>'+
+      '<select class="qi-finish" onchange="calcQuickAll()">'+qiG2FinOpts(finObj,selVal)+'</select>'+
+    '</div></div>';
+}
 function qiRenderG2(d){
   var cat=d.dataset.qiG2cat||'gate';
   var rtype=d.dataset.qiG2rtype||'box';
@@ -3155,6 +3169,11 @@ function qiRenderG2(d){
       var gsp=[];
       Object.keys(QIG2_RTREE[gprof]).forEach(function(fc){ Object.keys(QIG2_RTREE[gprof][fc]).forEach(function(gp){ if(QIG2_RTREE[gprof][fc][gp]['ไม่โครง']&&gsp.indexOf(fc+' '+gp)<0)gsp.push(fc+' '+gp); }); });
       if(gsp.length){ h += '<div class="qi-lbl">หน้าโชว์ · ระยะ</div><div class="qi-chips">'; gsp.forEach(function(s){ h += '<button type="button" class="chip'+(gspac===s?' on':'')+'" onclick="qiG2SetGspac(this,\''+s.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+s+'</button>'; }); h += '</div>'; }
+    }
+    // G2 คิดเร็ว §3 ข้อ1: สีอลู (ระแนง) ก่อนขนาด — gate: ดึง fin จากระแนงที่เลือก (gprof+gspac)
+    { var _gFin=null;
+      if(gprof&&gspac&&QIG2_RTREE[gprof]){ var _gp=gspac.split(' '); var _gfc=_gp[0],_ggp=_gp.slice(1).join(' '); var _goo=QIG2_RTREE[gprof]&&QIG2_RTREE[gprof][_gfc]&&QIG2_RTREE[gprof][_gfc][_ggp]&&QIG2_RTREE[gprof][_gfc][_ggp]['ไม่โครง']; if(_goo&&PBYID[_goo.id]) _gFin=PBYID[_goo.id].fin||null; }
+      h += qiG2FinRow(_gFin, parseFloat(d.dataset.qiG2finish)||0);
     }
     h += '<div class="qi-lbl">ขนาด</div>';
     h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
@@ -3199,6 +3218,13 @@ function qiRenderG2(d){
         h += '</div>';
       }
     }
+    // G2 คิดเร็ว §3 ข้อ1: สีอลู (ระแนง) ก่อนขนาด — ดึง fin จาก product ที่เลือก
+    { var _rnId='',_rnFin=null;
+      if(rtype==='box'){ var _nn=QIG2_RTREE[rbox]; if(_nn&&_nn[rface]&&_nn[rface][rgap]){ var _oo=_nn[rface][rgap][rframe]||_nn[rface][rgap]['รวมโครง']||_nn[rface][rgap]['ไม่โครง']; if(_oo){_rnId=_oo.id;} } }
+      else { for(var _gi=0;_gi<QIG2_GLEED.length;_gi++){ if(QIG2_GLEED[_gi][2]===rbox&&QIG2_GLEED[_gi][3]===rframe){_rnId=QIG2_GLEED[_gi][0];break;} } }
+      if(_rnId&&PBYID[_rnId]) _rnFin=PBYID[_rnId].fin||null;
+      h += qiG2FinRow(_rnFin, parseFloat(d.dataset.qiG2finish)||0);
+    }
     h += '<div class="qi-lbl">ขนาด</div>';
     h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   }
@@ -3222,6 +3248,10 @@ function qiRenderG2(d){
     h += '<button type="button" class="chip'+(spId==='bar_openclose'?' on':'')+'" onclick="qiG2SetSpid(this,\'bar_openclose\')">ระแนงหมุนเปิด-ปิด</button>';
     h += '<button type="button" class="chip'+(spId==='bar_grid_z'?' on':'')+'" onclick="qiG2SetSpid(this,\'bar_grid_z\')">บานเกล็ดอลู</button>';
     h += '</div>';
+    // G2 คิดเร็ว §3 ข้อ1: สีอลู (ระแนง) ก่อนขนาด — special: ดึง fin จาก PBYID[spId]
+    { var _spFin=(PBYID[spId]&&PBYID[spId].fin)||null;
+      h += qiG2FinRow(_spFin, parseFloat(d.dataset.qiG2finish)||0);
+    }
     h += '<div class="qi-lbl">ขนาด</div>';
     h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||3)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||1.8)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
     if(spId==='bar_openclose'){
@@ -3231,8 +3261,10 @@ function qiRenderG2(d){
       h += '</div>';
     }
   }
-  h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">สูตร verify กับ engine · ปัดขึ้นพัน · TODO: เปลี่ยนเป็น calcUnit G2 เต็มรูปแบบ</div></div></div>';
+  h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">engine G2 เต็ม · ปัดขึ้นพัน</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
+  // sync สีที่เลือก → dataset (กันค่าหายหลัง re-render)
+  var _fsel=d.querySelector('.qi-finish'); if(_fsel) _fsel.addEventListener('change',function(){ d.dataset.qiG2finish=this.value; calcQuickAll(); });
   calcQuickAll();   // กันราคาหายหลังกดชิปในคิดเร็ว (18มิ.ย.)
 }
 function qiG2PickCat(btn,v){ var d=btn.closest('.ch'); qiSaveWH(d); d.dataset.qiG2cat=v; qiRenderG2(d); }
@@ -3257,6 +3289,8 @@ function qiCalcG2(d){
   var H=parseFloat((d.querySelector('.qi-h')||{}).value)||0;
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
   var val=0,bd='',title='',notes='';
+  // ดึงค่าสี (finish) จาก qi-finish select (เพิ่ม §3 ข้อ1-2)
+  var _qFinV=parseFloat((d.querySelector('.qi-finish')||{}).value)||0;
   if(cat==='gate'){
     var gtype=d.dataset.qiG2gtype||'ตรง'; var gprof=d.dataset.qiG2gprof||''; var gspac=d.dataset.qiG2gspac||'';
     var gmotor=parseInt(d.dataset.qiG2gmotor||1); var A=W*H;
@@ -3269,28 +3303,34 @@ function qiCalcG2(d){
       if(o){patRate=o.rate;patId=o.id;}
     }
     var rnC=patRate>0?A*patRate*(1-disc):0;
+    // สีอบระแนง (§3 ข้อ2): _qFinV คือ rate/ตร.ม. จาก fin object — ใช้ disc เดียวกับระแนง
+    var finC=_qFinV>0?qiG2RuK(A*_qFinV*(1-disc)):0;
     var mtC=gmotor*30000; var railr=(gtype==='โค้ง')?2500:1500; var _qReuse=(d.dataset.qiG2railreuse==='reuse'); var railC=_qReuse?0:2*W*railr;
     var leafC=(gtype==='โค้ง')?Math.ceil(W/0.75)*4000:0;
-    val=qiG2RuK(makeC+rnC+mtC+railC+leafC);
+    val=qiG2RuK(makeC+rnC+finC+mtC+railC+leafC);
     title='ประตูรั้ว'+(gtype==='โค้ง'?'โค้ง':'ตรง');
-    bd=qiPcRow('ค่าทำประตู',makeC)+(rnC?qiPcRow('ระแนงไม่โครง',rnC):'')+(mtC?qiPcRow('มอเตอร์ '+gmotor+' ตัว',mtC):'')+qiPcRow(_qReuse?('ราง'+(gtype==='โค้ง'?'โค้ง':'ตรง')+' (ใช้รางเดิม · ไม่รวม)'):('ราง'+(gtype==='โค้ง'?'โค้ง':'ตรง')),railC)+(leafC?qiPcRow('บานโค้ง',leafC):'');
+    bd=qiPcRow('ค่าทำประตู',makeC)+(rnC?qiPcRow('ระแนงไม่โครง',rnC):'')+(finC?qiPcRow('สีอบระแนง',finC):'')+(mtC?qiPcRow('มอเตอร์ '+gmotor+' ตัว',mtC):'')+qiPcRow(_qReuse?('ราง'+(gtype==='โค้ง'?'โค้ง':'ตรง')+' (ใช้รางเดิม · ไม่รวม)'):('ราง'+(gtype==='โค้ง'?'โค้ง':'ตรง')),railC)+(leafC?qiPcRow('บานโค้ง',leafC):'');
     if(!patId)notes+='<div class="qi-pc-note">เลือกลายระแนงเพื่อคิดค่าระแนง</div>';
   } else if(cat==='ranae'){
+    // §3 ข้อ2: ต่อ calcUnit G2 เต็ม (รองรับส่วนลด ranaeHeight + fin rate ผ่าน optSel)
     var rtype=d.dataset.qiG2rtype||'box';
-    var rate=0,id='';
+    var _rnId2='';
     if(rtype==='box'){
       var rbox=d.dataset.qiG2rbox||''; var rface=d.dataset.qiG2rface||''; var rgap=d.dataset.qiG2rgap||''; var rframe=d.dataset.qiG2rframe||'รวมโครง';
-      var n=QIG2_RTREE[rbox]; if(n&&n[rface]&&n[rface][rgap]){ var oo=n[rface][rgap][rframe]||n[rface][rgap]['รวมโครง']||n[rface][rgap]['ไม่โครง']; if(oo){rate=oo.rate;id=oo.id;} }
+      var n=QIG2_RTREE[rbox]; if(n&&n[rface]&&n[rface][rgap]){ var oo=n[rface][rgap][rframe]||n[rface][rgap]['รวมโครง']||n[rface][rgap]['ไม่โครง']; if(oo){_rnId2=oo.id;} }
     } else {
       var gbox=d.dataset.qiG2rbox||''; var gframe=d.dataset.qiG2rframe||'รวมโครง';
-      for(var gi=0;gi<QIG2_GLEED.length;gi++){ if(QIG2_GLEED[gi][2]===gbox&&QIG2_GLEED[gi][3]===gframe){rate=QIG2_GLEED[gi][1];id=QIG2_GLEED[gi][0];break;} }
+      for(var gi=0;gi<QIG2_GLEED.length;gi++){ if(QIG2_GLEED[gi][2]===gbox&&QIG2_GLEED[gi][3]===gframe){_rnId2=QIG2_GLEED[gi][0];break;} }
     }
-    if(id){
-      var hh=qiG2RanaeH(H); var a=W*hh; var disc2=qiG2RanaeDisc(a);
-      val=qiG2RuK(a*rate*(1-disc2));
-      title='ระแนง '+id;
-      bd=qiPcRow('ระแนง '+a.toFixed(2)+' ตร.ม.',val);
-      bd+=qiPcSub(W+'×'+hh+' (ปัด '+H+' ม. → '+hh+')'+' ×'+rate.toLocaleString()+(disc2>0?' × '+(1-disc2):''));
+    if(_rnId2&&PBYID[_rnId2]){
+      var _rnP=PBYID[_rnId2]; var _rnOpt=_qFinV>0?{finish:_qFinV}:{};
+      try{
+        var _rnU=calcUnit(_rnP,W,H,0,0,1,_rnOpt,false); // panels=1 เสมอ · qty คูณด้านนอก
+        val=_rnU.sell||0; title='ระแนง '+_rnId2;
+        var hh=qiG2RanaeH(H); var _rnA=W*hh;
+        bd=qiPcRow('ระแนง '+_rnA.toFixed(2)+' ตร.ม. (ปัด '+H+'→'+hh+' ม.)',val);
+        if(_qFinV>0) bd+=qiPcSub('รวมสีอบ +'+_qFinV+'/ตร.ม. × '+_rnA.toFixed(2)+' ตร.ม. = '+Math.round(_qFinV*_rnA).toLocaleString());
+      } catch(e){ val=0; title='ระแนง'; notes='<div class="qi-pc-note">ERR: '+e.message+'</div>'; }
     } else { title='ระแนง'; notes='<div class="qi-pc-note">เลือกให้ครบ (ขนาด→หน้า→ระยะ→โครง)</div>'; }
   } else if(cat==='rail'){
     var railShape=d.dataset.qiG2railshape||'เฉียง'; var railMount=d.dataset.qiG2railmount||'หมุด'; var railHr=d.dataset.qiG2railhr||'none';
@@ -3299,14 +3339,12 @@ function qiCalcG2(d){
       var r=qiG2RateOf(W,rateT); var hrC=(railHr==='u'?500:railHr==='box'?600:0)*W;
       val=qiG2RuK(W*r+hrC); title='ราวกันตกกระจก '+QIG2_RAILNAME['imp'+(sh+mn)];
       bd=qiPcRow('ราว '+W+' ม. ×'+r.toLocaleString(),W*r)+(hrC?qiPcRow('ราวมือจับ',hrC):'');
-      notes='<div class="qi-pc-note">+ ค่ากระจก/สีอลู คิดตอน dev เต็ม (TODO: เรียก calcUnit G2)</div>';
     }
   } else if(cat==='special'){
-    var spId2=d.dataset.qiG2spid||'bar_openclose'; var A2=W*H;
-    // TODO: เปลี่ยนเป็น calcUnit(PBYID[spId2], W,H,0,0,1,{}) เมื่อ optSel G2 ชัดเจน
-    // ใช้สูตรดราฟ (verify กับ engine แล้ว)
-    var p2=PBYID[spId2];
-    try{ if(p2){ var u2=calcUnit(p2,W,H,0,0,1,{},false); val=u2.sell||0; title=p2.name; bd=qiPcRow('ราคา/ชุด',val); } }
+    // §3 ข้อ2: ส่ง finish เข้า calcUnit (special มี p.fin)
+    var spId2=d.dataset.qiG2spid||'bar_openclose';
+    var p2=PBYID[spId2]; var _spOpt=_qFinV>0?{finish:_qFinV}:{};
+    try{ if(p2){ var u2=calcUnit(p2,W,H,0,0,1,_spOpt,false); val=u2.sell||0; title=p2.name; bd=qiPcRow('ราคา/ชุด',val); if(_qFinV>0) bd+=qiPcSub('รวมสีอบ +'+_qFinV+'/ตร.ม.'); } }
     catch(e){ val=0; title=spId2; notes='<div class="qi-pc-note">ERR: '+e.message+'</div>'; }
   }
   var pc=d.querySelector('.qi-pc-body'); if(!pc)return{sell:val,a:W*H,qty:qty};
