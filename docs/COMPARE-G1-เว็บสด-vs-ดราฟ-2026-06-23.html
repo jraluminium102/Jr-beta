@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COMPARE G1 เว็บสด vs ดราฟ 2026-06-23</title>
+<style>
+:root{--red:#B3151D;--ok:#1E7E45;--line:#E5E7EB;--mut:#6B7280;}
+*{box-sizing:border-box;}
+body{font-family:"Sarabun","Leelawadee UI",Tahoma,sans-serif;font-size:13px;background:#F7F8FA;color:#1F2937;margin:0;padding:0;}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 14px 60px;}
+h1{color:var(--red);font-size:20px;border-bottom:3px solid var(--red);padding-bottom:8px;margin-top:0;}
+.meta{font-size:12px;color:var(--mut);margin-bottom:16px;}
+/* สรุปรวม */
+.summary-card{background:#fff;border:2px solid var(--red);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+.summary-card h2{color:var(--red);font-size:16px;margin:0 0 10px;}
+.pills-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.pill{padding:5px 12px;border-radius:20px;font-weight:700;font-size:12.5px;}
+.pill-ok{background:#dcfce7;color:#166534;}
+.pill-miss{background:#fee2e2;color:#991b1b;}
+.pill-extra{background:#ffedd5;color:#9a3412;}
+.pill-diff{background:#fef9c3;color:#854d0e;}
+.pill-info{background:#f1f5f9;color:#475569;}
+/* summary table */
+.sum-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.sum-table th{background:#fbe9ea;color:var(--red);padding:6px 8px;text-align:left;border:1px solid var(--line);}
+.sum-table td{border:1px solid var(--line);padding:5px 8px;vertical-align:top;}
+.sum-table a{color:#1E5AA8;text-decoration:none;}
+.sum-table a:hover{text-decoration:underline;}
+/* spec blocks */
+.spec-block{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;}
+.spec-header{padding:8px 12px;border-radius:8px;background:#fafafa;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.spec-title{font-weight:800;font-size:15px;color:var(--red);flex:0 0 auto;}
+.spec-pills{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.spec-prodids{width:100%;font-size:11px;color:var(--mut);}
+.spec-prodids code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:10.5px;}
+/* 2 col */
+.compare-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+@media(max-width:680px){.compare-cols{grid-template-columns:1fr;}}
+.col{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fafafa;}
+.col-draft{border-color:#F5B5B0;background:#FFF9F9;}
+.col-live{border-color:#A6E9C5;background:#F0FDF4;}
+.col-head{font-weight:700;font-size:13px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px dashed var(--line);}
+.col-draft .col-head{color:var(--red);}
+.col-live .col-head{color:var(--ok);}
+.zone-label{font-size:10px;font-weight:700;color:#9CA3AF;margin:7px 0 2px;letter-spacing:.5px;text-transform:uppercase;}
+.ctrl-item{font-size:12px;padding:2px 0;line-height:1.5;}
+.ctrl-draft{color:#374151;}
+.ctrl-ok{color:#166534;}
+.ctrl-miss{color:#991b1b;font-weight:700;}
+.default-badge{background:#FEE2E2;color:#991B1B;font-size:10px;padding:0 5px;border-radius:4px;font-weight:700;margin-left:4px;}
+.opts-count{color:#6B7280;font-size:11px;}
+.note{color:#9CA3AF;font-size:11px;font-style:italic;}
+/* diff table */
+.diff-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;}
+.diff-table th{background:#FBE9EA;color:var(--red);padding:5px 7px;text-align:left;border:1px solid var(--line);}
+.diff-table td{border:1px solid var(--line);padding:4px 7px;vertical-align:top;}
+code{background:#f3f4f6;padding:0 4px;border-radius:3px;font-size:11px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>🔍 หน้าเทียบคู่ G1 — เว็บสดจริง vs ดราฟเกณฑ์</h1>
+<div class="meta">
+  วันที่: 23 มิ.ย. 2569 · ดราฟ: DRAFT-G1-GROUNDTRUTH-ปุ่มทุกปุ่ม-2026-06-22.html · เว็บสด: public/calculator/index.html · render jsdom สด<br>
+  ซ้าย = ดราฟเกณฑ์ · ขวา = เว็บสดจริง · ตารางใต้บล็อก = เทียบรายปุ่ม<br>
+  🟢 ตรง · 🔴 ขาด (ดราฟมี เว็บไม่มี) · 🟠 เกิน (เว็บมี ดราฟไม่มี) · 🟡 default ต่าง
+</div>
+
+<div class="summary-card">
+  <h2>สรุปรวมทุกชนิด</h2>
+  <div class="pills-row">
+    <span class="pill pill-ok">🟢 ตรง 91</span>
+    <span class="pill pill-miss">🔴 ขาด 46</span>
+    <span class="pill pill-extra">🟠 เกิน 0</span>
+    <span class="pill pill-diff">🟡 default ต่าง 18</span>
+  </div>
+  <p style="font-size:13px;margin:8px 0;">ตรง 100%: <strong>0/14</strong> ชนิด
+     · มีจุดต่าง: <strong style="color:var(--red);">14 ชนิด</strong></p>
+  <table class="sum-table">
+    <tr><th>ชนิดบาน</th><th>สถานะ</th><th>ตรง</th><th>ขาด</th><th>เกิน</th><th>default ต่าง</th><th>จุดต่าง</th></tr>
+    <tr style="background:#fef2f2;">
+    <td><a href="#spec-slide">บานเลื่อน</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">12</td>
+    <td style="text-align:center;color:#B3151D;">9</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">3</td>
+    <td style="font-size:11px;">🟡 ประเภท · 🟡 ชนิดการเปิด · 🟡 ชุดล็อค (ประตู) · 🔴 มือจับ (cmech) · 🔴 มือจับ (ดิจิตอล) · 🔴 มือจับ (สแตนเลส) · 🔴 มือจับ (รุ่นอื่น) · 🔴 แผ่นทึบล่าง · 🔴 สี/กระจก (L1 ติ๊ก) · 🔴 รื้อ · 🔴 งานเสริม · 🔴 หมายเหตุ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-inner">เลื่อนภายใน</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">7</td>
+    <td style="text-align:center;color:#B3151D;">10</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">1</td>
+    <td style="font-size:11px;">🟡 ชุดล็อค · 🔴 มือจับ (สแตนเลส) · 🔴 มือจับ (ดิจิตอล) · 🔴 แผ่นทึบล่าง · 🔴 Soft Close +4,000 · 🔴 ซ่อนคาน · 🔴 ฝังรางยู · 🔴 เสริมคาน · 🔴 รื้อ · 🔴 งานเสริม · 🔴 มือจับ (handle-brand-wrap)</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-casement">บานเปิด</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">14</td>
+    <td style="text-align:center;color:#B3151D;">6</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">2</td>
+    <td style="font-size:11px;">🟡 ธรณี · 🟡 ชุดล็อค · 🔴 มือจับ (cmech) · 🔴 มือจับ (ดิจิตอล) · 🔴 มือจับ (สแตนเลส) · 🔴 มือจับ (รุ่นอื่น) · 🔴 ตารางเต็มบาน (โซลิดเท่านั้น) · 🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-awning">บานกระทุ้ง</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">9</td>
+    <td style="text-align:center;color:#B3151D;">2</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">2</td>
+    <td style="font-size:11px;">🟡 ประเภท · 🟡 ชุดล็อค · 🔴 มือจับ Cmech หลบมุ้ง · 🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-pivot">บานหมุน</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">9</td>
+    <td style="text-align:center;color:#B3151D;">3</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">0</td>
+    <td style="font-size:11px;">🔴 มือจับ (ดิจิตอล) · 🔴 มือจับ (สแตนเลส) · 🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-folding">บานเฟี้ยม</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">7</td>
+    <td style="text-align:center;color:#B3151D;">4</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">2</td>
+    <td style="font-size:11px;">🟡 ธรณีเฟี้ยม · 🟡 ชุดล็อค · 🔴 ซ่อนคาน · 🔴 ซ่อนราง (เซมิ/X) · 🔴 ฝังรางยู (เซมิ/X) · 🔴 เสริมคาน</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-fixed_glass">กระจกติดตาย</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">4</td>
+    <td style="text-align:center;color:#B3151D;">1</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">0</td>
+    <td style="font-size:11px;">🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-frameless">บานเปลือย (ติดตาย + ประตู รวม)</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">5</td>
+    <td style="text-align:center;color:#B3151D;">4</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">0</td>
+    <td style="font-size:11px;">🔴 มือจับสแตนเลส (ประตูเท่านั้น) · 🔴 สีมือจับ · 🔴 ชุดล็อค (ประตูเท่านั้น) · 🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-wall">ผนัง (ทึบ/ฉนวน)</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">2</td>
+    <td style="text-align:center;color:#B3151D;">2</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">0</td>
+    <td style="font-size:11px;">🔴 รื้อ · 🔴 หมายเหตุ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-curved">ดัดโค้ง</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">3</td>
+    <td style="text-align:center;color:#B3151D;">1</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">2</td>
+    <td style="font-size:11px;">🟡 ประเภท · 🟡 ชุดล็อค · 🔴 มือจับ (ดิจิตอล/สแตน ติดตายโค้ง=ไม่มี)</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-pc_door">PC Door</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">8</td>
+    <td style="text-align:center;color:#B3151D;">1</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">1</td>
+    <td style="font-size:11px;">🟡 ชุดล็อค · 🔴 มือจับ (ดิจิตอล/สแตน ไม่มี Cmech)</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-ykk">YKK</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">4</td>
+    <td style="text-align:center;color:#B3151D;">1</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">0</td>
+    <td style="font-size:11px;">🔴 รื้อ</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-lift">บานยก</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">5</td>
+    <td style="text-align:center;color:#B3151D;">0</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">3</td>
+    <td style="font-size:11px;">🟡 ลักษณะการยก · 🟡 มอเตอร์ · 🟡 ชุดล็อค</td>
+  </tr><tr style="background:#fef2f2;">
+    <td><a href="#spec-shower">shower (ฉากกั้นอาบน้ำ)</a></td>
+    <td style="text-align:center;">🔴 มีจุดต่าง</td>
+    <td style="text-align:center;color:#1E7E45;">2</td>
+    <td style="text-align:center;color:#B3151D;">2</td>
+    <td style="text-align:center;color:#9a3412;">0</td>
+    <td style="text-align:center;color:#854d0e;">2</td>
+    <td style="font-size:11px;">🟡 รูปแบบ shower · 🟡 ประเภทประตู (เมื่อมีประตู) · 🔴 เข้ามุม · 🔴 รื้อ</td>
+  </tr>
+  </table>
+</div>
+
+
+  <div class="spec-block" id="spec-slide">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานเลื่อน</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 9</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 3</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>sliding_sms</code> · <code>sliding_euro</code> · <code>sliding_eseries</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: เซมิยูโร</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท <span class="default-badge">default: ประตู</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ขนาด <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชนิดการเปิด <span class="default-badge">default: เลื่อน (ระบุติดตาย)</span> <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ติดตาย/เปิด</div><div class="ctrl-item ctrl-draft">ราง (ล่าง) <span class="default-badge">default: รางกันน้ำ</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค (ประตู) <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (cmech)</div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล)</div><div class="ctrl-item ctrl-draft">มือจับ (สแตนเลส)</div><div class="ctrl-item ctrl-draft">มือจับ (รุ่นอื่น)</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง <span class="default-badge">default: ไม่ใส่</span></div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง <span class="note">ดราฟใช้คำว่า 'แผ่นทึบล่าง' → เว็บใช้ลูกฟูก/คอมโพสิท</span></div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก (L1 ติ๊ก) <span class="note">ช่องติ๊ก สีตามทั้งใบ</span></div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div><div class="ctrl-item ctrl-draft">หมายเหตุ</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชนิดการเปิด default="บานเลื่อน (ระบุติดตายเอง)"</div><div class="ctrl-item ctrl-ok">🟢 ราง (ล่าง) chips: รางกันน้ำ [ON] / รางเตี้ย 7 มม.</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เลื่อน) default="มีกุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (12 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: cmech, digital, stainless, other</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-bottomrail</code> <code>o-cmech</code> <code>o-cmechcolor</code> <code>o-dfm</code> <code>o-digi</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-fixed</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-handlename</code> <code>o-handleprice</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-opencount</code> <code>o-opentype</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-slidelock</code> <code>o-solidlower</code> <code>o-stainless</code> <code>o-stainless-color</code> <code>o-stainless-othername</code> <code>o-stainless-otherprice</code> <code>o-stainless-otherprice-wrap</code> <code>o-stcolor-btn</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ประเภท</td>
+      <td>มี · default="ประตู"</td>
+      <td>มี · default="door"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ประตู" เว็บ="door"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชนิดการเปิด</td>
+      <td>มี · default="เลื่อน (ระบุติดตาย)"</td>
+      <td>มี · default="บานเลื่อน (ระบุติดตายเอง)"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="เลื่อน (ระบุติดตาย)" เว็บ="บานเลื่อน (ระบุติดตายเอง)"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค (ประตู)</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีกุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีกุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ขนาด</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ติดตาย/เปิด</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ราง (ล่าง)</td>
+      <td>มี · default="รางกันน้ำ"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง</td>
+      <td>มี · default="ไม่ใส่"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: cmech</td>
+      <td>มี brand "cmech"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: digital</td>
+      <td>มี brand "digital"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: stainless</td>
+      <td>มี brand "stainless"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: other</td>
+      <td>มี brand "other"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (cmech)</td>
+      <td>มี .cmech</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (สแตนเลส)</td>
+      <td>มี .stainless</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (รุ่นอื่น)</td>
+      <td>มี .other</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี .o-solidlower_DRAFT</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;">ดราฟใช้คำว่า 'แผ่นทึบล่าง' → เว็บใช้ลูกฟูก/คอมโพสิท</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>สี/กระจก (L1 ติ๊ก)</td>
+      <td>มี .o-colortick</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;">ช่องติ๊ก สีตามทั้งใบ</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>งานเสริม</td>
+      <td>มี .svc-</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>หมายเหตุ</td>
+      <td>มี .o-remark</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-inner">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">เลื่อนภายใน</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 10</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 1</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>inner_top_stack</code> · <code>inner_top_slimlux</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: รางบนซ้อน</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชนิดการเปิด <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ราง (บน) <span class="default-badge">default: โชว์ราง</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: ไม่มีชุดล็อก</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (สแตนเลส)</div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล)</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง (ตัดออก) <span class="note">ดราฟ: ตัดมุ้ง เลื่อนภายใน</span></div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">Soft Close +4,000</div><div class="ctrl-item ctrl-draft">สลิง 2,000/บาน</div><div class="ctrl-item ctrl-draft">ซ่อนคาน</div><div class="ctrl-item ctrl-draft">ฝังรางยู</div><div class="ctrl-item ctrl-draft">เสริมคาน</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชนิดการเปิด default="บานเลื่อน (ระบุติดตายเอง)"</div><div class="ctrl-item ctrl-ok">🟢 ราง (บน) chips: โชว์ราง [ON] / ซ่อนราง +5,000</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เลื่อน) default="ไม่มี"</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 สลิง</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-beam_support</code> <code>o-beam_support-len</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-fixed</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-hide_beam</code> <code>o-hide_beam-len</code> <code>o-opencount</code> <code>o-opentype</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-slidelock</code> <code>o-sling</code> <code>o-soft_close</code> <code>o-solidlower</code> <code>o-track</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="ไม่มีชุดล็อก"</td>
+      <td>มี · default="ไม่มี"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ไม่มีชุดล็อก" เว็บ="ไม่มี"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ชนิดการเปิด</td>
+      <td>มี</td>
+      <td>มี · default="บานเลื่อน (ระบุติดตายเอง)"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ราง (บน)</td>
+      <td>มี · default="โชว์ราง"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สลิง 2,000/บาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (สแตนเลส)</td>
+      <td>มี .stainless</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี .o-solidlower_DRAFT</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>Soft Close +4,000</td>
+      <td>มี .o-softclose</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ซ่อนคาน</td>
+      <td>มี .o-beamhide</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ฝังรางยู</td>
+      <td>มี .o-railyu</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>เสริมคาน</td>
+      <td>มี .o-beamsupp</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>งานเสริม</td>
+      <td>มี .svc-</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (handle-brand-wrap)</td>
+      <td>มีกล่องมือจับ</td>
+      <td>ไม่พบ .handle-brand-wrap</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-casement">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานเปิด</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 6</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 2</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>casement_euro</code> · <code>casement_xseries</code> · <code>casement_velora</code> · <code>casement_flush_solid</code> · <code>casement_inset_solid</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: ยูโร</span> <span class="opts-count">(5 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ขนาด <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ธรณี <span class="default-badge">default: กันน้ำ (มาตรฐาน)</span> <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">โช้คอัพประตู <span class="default-badge">default: ไม่มี</span> <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (cmech)</div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล)</div><div class="ctrl-item ctrl-draft">มือจับ (สแตนเลส)</div><div class="ctrl-item ctrl-draft">มือจับ (รุ่นอื่น)</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง (5 ปุ่ม)</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="ctrl-item ctrl-draft">ช่องแสง (โซลิดเท่านั้น)</div><div class="ctrl-item ctrl-draft">ตารางเต็มบาน (โซลิดเท่านั้น)</div><div class="ctrl-item ctrl-draft">combo บานกระทุ้งเข้าใน</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ธรณี (บานเปิด) default="std"</div><div class="ctrl-item ctrl-ok">🟢 โช้คอัพ default="ไม่มี"</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 combo บานกระทุ้ง</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: cmech, digital, stainless, other</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-closer</code> <code>o-cmech</code> <code>o-cmechcolor</code> <code>o-combo_awn_inside</code> <code>o-combo_price</code> <code>o-dfm</code> <code>o-digi</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-handlename</code> <code>o-handleprice</code> <code>o-lock</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code> <code>o-stainless</code> <code>o-stainless-color</code> <code>o-stainless-othername</code> <code>o-stainless-otherprice</code> <code>o-stainless-otherprice-wrap</code> <code>o-stcolor-btn</code> <code>o-thresh</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ธรณี</td>
+      <td>มี · default="กันน้ำ (มาตรฐาน)"</td>
+      <td>มี · default="std"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="กันน้ำ (มาตรฐาน)" เว็บ="std"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีล็อค+กุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ขนาด</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>โช้คอัพประตู</td>
+      <td>มี · default="ไม่มี"</td>
+      <td>มี · default="ไม่มี"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง (5 ปุ่ม)</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ช่องแสง (โซลิดเท่านั้น)</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>combo บานกระทุ้งเข้าใน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: cmech</td>
+      <td>มี brand "cmech"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: digital</td>
+      <td>มี brand "digital"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: stainless</td>
+      <td>มี brand "stainless"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: other</td>
+      <td>มี brand "other"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>งานเสริม</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (cmech)</td>
+      <td>มี .cmech</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (สแตนเลส)</td>
+      <td>มี .stainless</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (รุ่นอื่น)</td>
+      <td>มี .other</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ตารางเต็มบาน (โซลิดเท่านั้น)</td>
+      <td>มี .o-fullgrid</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-awning">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานกระทุ้ง</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 2</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 2</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>awning_euro</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: ยูโร</span> <span class="opts-count">(1 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท <span class="default-badge">default: หน้าต่าง</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">แบบเปิด (awn_mode) <span class="default-badge">default: เปิดล่าง</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">เสริมแขนค้ำ</div><div class="ctrl-item ctrl-draft">มือจับ Cmech หลบมุ้ง</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 เสริมแขนค้ำ</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: cmechawn</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="window"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-awn_mode</code> <code>o-awnbrace</code> <code>o-cmechawn</code> <code>o-dfm</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-lock</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ประเภท</td>
+      <td>มี · default="หน้าต่าง"</td>
+      <td>มี · default="window"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="หน้าต่าง" เว็บ="window"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีล็อค+กุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>แบบเปิด (awn_mode)</td>
+      <td>มี · default="เปิดล่าง"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>เสริมแขนค้ำ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: cmechawn</td>
+      <td>มี brand "cmechawn"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>งานเสริม</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ Cmech หลบมุ้ง</td>
+      <td>มี .cmechawn</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-pivot">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานหมุน</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 3</span>
+        
+        
+        
+      </div>
+      <div class="spec-prodids">prod: <code>pivot</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: รุ่นเมืองทอง</span> <span class="opts-count">(1 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท</div><div class="ctrl-item ctrl-draft">ขนาด</div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล) <span class="note">ไม่มี Cmech</span></div><div class="ctrl-item ctrl-draft">มือจับ (สแตนเลส)</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง (ตัดออก)</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: digital, stainless, other</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-digi</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-handlename</code> <code>o-handleprice</code> <code>o-lock</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code> <code>o-stainless</code> <code>o-stainless-color</code> <code>o-stainless-othername</code> <code>o-stainless-otherprice</code> <code>o-stainless-otherprice-wrap</code> <code>o-stcolor-btn</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#f0fdf4;">
+      <td>ประเภท</td>
+      <td>มี</td>
+      <td>มี · default="door"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ขนาด</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ชุดล็อค</td>
+      <td>มี</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: digital</td>
+      <td>มี brand "digital"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;">ไม่มี Cmech</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: stainless</td>
+      <td>มี brand "stainless"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>งานเสริม</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;">ไม่มี Cmech</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (สแตนเลส)</td>
+      <td>มี .stainless</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-folding">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานเฟี้ยม</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 4</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 2</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>folding</code> · <code>folding_euro</code> · <code>folding_xseries</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: เซมิยูโร</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ทิศเปิด <span class="default-badge">default: เปิดซ้าย</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ธรณีเฟี้ยม <span class="default-badge">default: กันน้ำภายนอก</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง (X-series ตัด)</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ซ่อนคาน</div><div class="ctrl-item ctrl-draft">ซ่อนราง (เซมิ/X)</div><div class="ctrl-item ctrl-draft">ฝังรางยู (เซมิ/X)</div><div class="ctrl-item ctrl-draft">เสริมคาน</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ธรณี (เฟี้ยม) default="outer"</div><div class="ctrl-item ctrl-ok">🟢 ทิศเปิด (เฟี้ยม) default="เปิดซ้าย"</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (12 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-beam_support</code> <code>o-beam_support-len</code> <code>o-dfm</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-fleft</code> <code>o-fold-total</code> <code>o-folddir</code> <code>o-fright</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-hide_beam</code> <code>o-hide_beam-len</code> <code>o-hide_track</code> <code>o-hide_track-len</code> <code>o-lock</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code> <code>o-threshf</code> <code>o-u_track</code> <code>o-u_track-len</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ธรณีเฟี้ยม</td>
+      <td>มี · default="กันน้ำภายนอก"</td>
+      <td>มี · default="outer"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="กันน้ำภายนอก" เว็บ="outer"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีล็อค+กุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ทิศเปิด</td>
+      <td>มี · default="เปิดซ้าย"</td>
+      <td>มี · default="เปิดซ้าย"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง (X-series ตัด)</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ผสมบาน</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ซ่อนคาน</td>
+      <td>มี .o-beamhide</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ซ่อนราง (เซมิ/X)</td>
+      <td>มี .o-railhide</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ฝังรางยู (เซมิ/X)</td>
+      <td>มี .o-railyu</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>เสริมคาน</td>
+      <td>มี .o-beamsupp</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-fixed_glass">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">กระจกติดตาย</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 1</span>
+        
+        
+        
+      </div>
+      <div class="spec-prodids">prod: <code>fixed_glass</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่นเดียว <span class="opts-count">(1 ตัวเลือก)</span> <span class="note">ไม่มีตัวเลือกรุ่น</span></div><div class="ctrl-item ctrl-draft">ขนาด (ไม่มีบาน) <span class="opts-count">(3 ตัวเลือก)</span> <span class="note">ตัดชนิดเปิด/ราง/ล็อค/มือจับ/มุ้ง</span></div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">งานเสริม</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#f0fdf4;">
+      <td>ขนาด (ไม่มีบาน)</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่นเดียว</td>
+      <td>ไม่มีตัวเลือกรุ่น</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>งานเสริม</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-frameless">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานเปลือย (ติดตาย + ประตู รวม)</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 4</span>
+        
+        
+        
+      </div>
+      <div class="spec-prodids">prod: <code>frameless_fixed</code> · <code>frameless_door</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">ประเภท <span class="default-badge">default: ติดตาย</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ขนาด <span class="note">ประตู +8,000/บาน</span></div><div class="ctrl-item ctrl-draft">มือจับสแตนเลส (ประตูเท่านั้น) <span class="note">6 ขนาด ไม่มีดิจิตอล</span></div><div class="ctrl-item ctrl-draft">สีมือจับ <span class="default-badge">default: สีเงิน</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค (ประตูเท่านั้น) <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="zone-label">z2/z3</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">สี/กระจก (สีเฟรม)</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">ไม่มีครอบวงกบ (frameless)</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สีเฟรม (บานเปลือย)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 บานเปลือย type: ติดตาย / ประตู — สวิง / ประตู — เลื่อน default="ติดตาย"</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-extrawork</code> <code>o-framecolor</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-optdelta</code> <code>o-removeold</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#f0fdf4;">
+      <td>ประเภท</td>
+      <td>มี · default="ติดตาย"</td>
+      <td>มี · default="ติดตาย"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ขนาด</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก (สีเฟรม)</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ไม่มีครอบวงกบ (frameless)</td>
+      <td>ไม่มี (ตัดออก)</td>
+      <td>ไม่มี (ถูกต้อง)</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับสแตนเลส (ประตูเท่านั้น)</td>
+      <td>มี .o-stainless</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;">6 ขนาด ไม่มีดิจิตอล</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>สีมือจับ</td>
+      <td>มี .o-stcolor-btn</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>ชุดล็อค (ประตูเท่านั้น)</td>
+      <td>มี .o-lock</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-wall">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">ผนัง (ทึบ/ฉนวน)</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 2</span>
+        
+        
+        
+      </div>
+      <div class="spec-prodids">prod: <code>wall_ext</code> · <code>wall_int</code> · <code>isowall</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: ผนังเบาภายนอก</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ขนาด (พื้นที่ ไม่มีบาน) <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">โครง <span class="default-badge">default: เหล็กชุบซิงค์</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">ความหนา <span class="note">สมาร์ทบอร์ด 12 / ISOWALL หนา 10 ซม.</span></div><div class="ctrl-item ctrl-draft">ทาสี/ฉนวน <span class="note">ทาขาว/รองพื้น/ไม่ทา + ฉนวน +600/ตร.ม.</span></div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">หมายเหตุ</div><div class="ctrl-item ctrl-draft">ตัดออก: สี/กระจก·มุ้ง·คาด·ทึบ·ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 โครงผนัง</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-extrawork</code> <code>o-insul</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-smartthick</code> <code>o-wallframe</code> <code>o-wallmodel</code> <code>o-wallpaint</code> <code>o-wallpaintprice</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#f0fdf4;">
+      <td>ขนาด (พื้นที่ ไม่มีบาน)</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>โครง</td>
+      <td>มี · default="เหล็กชุบซิงค์"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>ความหนา</td>
+      <td>สมาร์ทบอร์ด 12 / ISOWALL หนา 10 ซม.</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>ทาสี/ฉนวน</td>
+      <td>ทาขาว/รองพื้น/ไม่ทา + ฉนวน +600/ตร.ม.</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>หมายเหตุ</td>
+      <td>มี .o-remark</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-curved">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">ดัดโค้ง</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 1</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 2</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>curved_double</code> · <code>curved_single</code> · <code>curved_fixed</code> · <code>curved_slim</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: บานคู่</span> <span class="opts-count">(4 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท <span class="default-badge">default: ประตู</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล/สแตน ติดตายโค้ง=ไม่มี)</div><div class="zone-label">z2/z3</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="ctrl-item ctrl-draft">สี/กระจก (กระจกปกติทุกแบบ)</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: digital, stainless, other</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-dfm</code> <code>o-digi</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-handlename</code> <code>o-handleprice</code> <code>o-lock</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code> <code>o-stainless</code> <code>o-stainless-color</code> <code>o-stainless-othername</code> <code>o-stainless-otherprice</code> <code>o-stainless-otherprice-wrap</code> <code>o-stcolor-btn</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ประเภท</td>
+      <td>มี · default="ประตู"</td>
+      <td>มี · default="door"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ประตู" เว็บ="door"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีล็อค+กุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก (กระจกปกติทุกแบบ)</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: digital</td>
+      <td>มี brand "digital"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล/สแตน ติดตายโค้ง=ไม่มี)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-pc_door">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">PC Door</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 1</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 1</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>pc_door_2</code> · <code>pc_door_4</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น (จำนวนบาน) <span class="default-badge">default: 2 บาน</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท</div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">มือจับ (ดิจิตอล/สแตน ไม่มี Cmech)</div><div class="zone-label">z2 ออปชั่นหลัก</div><div class="ctrl-item ctrl-draft">มุ้ง</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">ตัดออก: ฝังรางยู</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เลื่อน) default="มีกุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 มือจับ brands: digital, stainless, other</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-beam_support</code> <code>o-beam_support-len</code> <code>o-dfm</code> <code>o-digi</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-handlename</code> <code>o-handleprice</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-slidelock</code> <code>o-solidlower</code> <code>o-stainless</code> <code>o-stainless-color</code> <code>o-stainless-othername</code> <code>o-stainless-otherprice</code> <code>o-stainless-otherprice-wrap</code> <code>o-stcolor-btn</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีกุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีกุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ประเภท</td>
+      <td>มี</td>
+      <td>มี · default="door"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ตัดออก: ฝังรางยู</td>
+      <td>ไม่มี (ตัดออก)</td>
+      <td>ไม่มี (ถูกต้อง)</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มือจับ brand: digital</td>
+      <td>มี brand "digital"</td>
+      <td>พบใน handle-brand-wrap</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น (จำนวนบาน)</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>มือจับ (ดิจิตอล/สแตน ไม่มี Cmech)</td>
+      <td>มี .digital</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-ykk">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">YKK</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 1</span>
+        
+        
+        
+      </div>
+      <div class="spec-prodids">prod: <code>ykk_vent</code> · <code>ykk_exhido</code> · <code>tostem_a01</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: Ventilation</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท (ประตูเท่านั้น) <span class="opts-count">(1 ตัวเลือก)</span> <span class="note">ตัดหน้าต่าง</span></div><div class="ctrl-item ctrl-draft">ขนาด (ไม่มีบาน)</div><div class="ctrl-item ctrl-draft">โช้คอัพ <span class="default-badge">default: ไม่มี</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">ครอบวงกบ</div><div class="ctrl-item ctrl-draft">ดรอปพื้น</div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">ตัดออก: สี/กระจก·ล็อค·มุ้ง·คาด·ทึบ·ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 โช้คอัพ default="ไม่มี"</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-closer</code> <code>o-dfm</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-optdelta</code> <code>o-removeold</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#f0fdf4;">
+      <td>ขนาด (ไม่มีบาน)</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>โช้คอัพ</td>
+      <td>มี · default="ไม่มี"</td>
+      <td>มี · default="ไม่มี"</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ครอบวงกบ</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ดรอปพื้น</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>ประเภท (ประตูเท่านั้น)</td>
+      <td>ตัดหน้าต่าง</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-lift">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">บานยก</div>
+      <div class="spec-pills">
+        
+        
+        <span class="pill pill-diff">🟡 default ต่าง 3</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>lift_sms</code> · <code>lift_aluinch</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รุ่น <span class="default-badge">default: SMS สลิม</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภท (หน้าต่างเท่านั้น) <span class="note">ไม่มีประตู</span></div><div class="ctrl-item ctrl-draft">ลักษณะการยก <span class="default-badge">default: ยกบานบน</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ขนาด (บาน=2 บังคับ) <span class="note">บาน=2 ล็อค</span></div><div class="ctrl-item ctrl-draft">มอเตอร์ <span class="default-badge">default: ไม่มี</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ชุดล็อค <span class="default-badge">default: มีชุดล็อก + กุญแจ</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="zone-label">z2/z3</div><div class="ctrl-item ctrl-draft">มุ้ง</div><div class="ctrl-item ctrl-draft">คาดตาราง</div><div class="ctrl-item ctrl-draft">แผ่นทึบล่าง</div><div class="ctrl-item ctrl-draft">สี/กระจก</div><div class="ctrl-item ctrl-draft">ตัดออก: ฝังรางยู</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 ชุดล็อค (เปิด/เฟี้ยม) default="มีล็อค+กุญแจ"</div><div class="ctrl-item ctrl-ok">🟢 มุ้ง (15 opts)</div><div class="ctrl-item ctrl-ok">🟢 คาดตาราง</div><div class="ctrl-item ctrl-ok">🟢 ครอบวงกบ</div><div class="ctrl-item ctrl-ok">🟢 ดรอปพื้น</div><div class="ctrl-item ctrl-ok">🟢 มอเตอร์ default="0"</div><div class="ctrl-item ctrl-ok">🟢 ลักษณะการยก default="top"</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="window"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-dfm</code> <code>o-extrawork</code> <code>o-fcm</code> <code>o-fcsides</code> <code>o-gm-curve</code> <code>o-gm-nh</code> <code>o-gm-nv</code> <code>o-gm-rate</code> <code>o-gm-wrap</code> <code>o-gridmark</code> <code>o-liftmode</code> <code>o-lock</code> <code>o-mosq</code> <code>o-mosqcolor</code> <code>o-mosqfabric</code> <code>o-mosqh</code> <code>o-mosqopenstyle</code> <code>o-mosqpanels</code> <code>o-mosqpanels-stepper</code> <code>o-mosqprice</code> <code>o-mosqw</code> <code>o-motor</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-sl-h</code> <code>o-sl-w</code> <code>o-sl-wrap</code> <code>o-solidlower</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>ลักษณะการยก</td>
+      <td>มี · default="ยกบานบน"</td>
+      <td>มี · default="top"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ยกบานบน" เว็บ="top"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>มอเตอร์</td>
+      <td>มี · default="ไม่มี"</td>
+      <td>มี · default="0"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ไม่มี" เว็บ="0"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ชุดล็อค</td>
+      <td>มี · default="มีชุดล็อก + กุญแจ"</td>
+      <td>มี · default="มีล็อค+กุญแจ"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="มีชุดล็อก + กุญแจ" เว็บ="มีล็อค+กุญแจ"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ขนาด (บาน=2 บังคับ)</td>
+      <td>ช่อง number input</td>
+      <td>กว้าง=1.5 สูง=2.2</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>มุ้ง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>คาดตาราง</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>ตัดออก: ฝังรางยู</td>
+      <td>ไม่มี (ตัดออก)</td>
+      <td>ไม่มี (ถูกต้อง)</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>รุ่น</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>ประเภท (หน้าต่างเท่านั้น)</td>
+      <td>ไม่มีประตู</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f8fafc;">
+      <td>แผ่นทึบล่าง</td>
+      <td>มี (visual/type ไม่สามารถ probe ด้วย class)</td>
+      <td>ต้องตรวจตาจอ</td>
+      <td style="text-align:center;">⬜</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+  <div class="spec-block" id="spec-shower">
+    <div class="spec-header" style="border-left:4px solid #B3151D;">
+      <div class="spec-title">shower (ฉากกั้นอาบน้ำ)</div>
+      <div class="spec-pills">
+        <span class="pill pill-miss">🔴 ขาด 2</span>
+        
+        <span class="pill pill-diff">🟡 default ต่าง 2</span>
+        
+      </div>
+      <div class="spec-prodids">prod: <code>shower</code></div>
+    </div>
+    <div class="compare-cols">
+      <div class="col col-draft">
+        <div class="col-head">📋 ดราฟเกณฑ์</div><div class="zone-label">z1 สเปกหลัก</div><div class="ctrl-item ctrl-draft">รูปแบบ shower <span class="default-badge">default: ประตู+กระจกติดตาย</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">ประเภทประตู (เมื่อมีประตู) <span class="default-badge">default: บานเปิด</span> <span class="opts-count">(2 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">อุปกรณ์ (สี) <span class="default-badge">default: เงิน</span> <span class="opts-count">(3 ตัวเลือก)</span></div><div class="ctrl-item ctrl-draft">เข้ามุม <span class="note">+3,000</span></div><div class="zone-label">z3 เสริม</div><div class="ctrl-item ctrl-draft">สี/กระจก (กระจกเท่านั้น) <span class="note">ไม่ใส่สีอลู 13</span></div><div class="ctrl-item ctrl-draft">รื้อ</div><div class="ctrl-item ctrl-draft">ตัดออก: มุ้ง·คาด·ทึบ·ผสมบาน</div></div>
+      <div class="col col-live">
+        <div class="col-head">🌐 เว็บสดจริง</div><div class="ctrl-item ctrl-ok">🟢 รูปแบบ shower default="door_fixed"</div><div class="ctrl-item ctrl-ok">🟢 ประเภทประตู shower default="swing"</div><div class="ctrl-item ctrl-ok">🟢 สี shower (via select)</div><div class="ctrl-item ctrl-ok">🟢 สี/กระจก (i-color) (13 opts)</div><div class="ctrl-item ctrl-ok">🟢 ประเภท (i-type) default="door"</div><div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;">classes จริง: <code>i-color</code> <code>i-glass</code> <code>i-panels</code> <code>i-panels-wrap</code> <code>i-type</code> <code>o-corner</code> <code>o-extrawork</code> <code>o-optdelta</code> <code>o-removeold</code> <code>o-shdoortype</code> <code>o-showerhw</code> <code>o-shtype</code></div></div>
+    </div><div style="margin-top:12px;">
+    <table class="diff-table">
+      <tr><th>ปุ่ม/control</th><th>ดราฟ</th><th>เว็บสด</th><th>สถานะ</th><th>หมายเหตุ</th></tr><tr style="background:#fefce8;">
+      <td>รูปแบบ shower</td>
+      <td>มี · default="ประตู+กระจกติดตาย"</td>
+      <td>มี · default="door_fixed"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="ประตู+กระจกติดตาย" เว็บ="door_fixed"</td>
+    </tr><tr style="background:#fefce8;">
+      <td>ประเภทประตู (เมื่อมีประตู)</td>
+      <td>มี · default="บานเปิด"</td>
+      <td>มี · default="swing"</td>
+      <td style="text-align:center;">🟡</td>
+      <td style="font-size:11px;color:#6b7280;">default ดราฟ="บานเปิด" เว็บ="swing"</td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>อุปกรณ์ (สี)</td>
+      <td>มี · default="เงิน"</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr><tr style="background:#f0fdf4;">
+      <td>สี/กระจก (กระจกเท่านั้น)</td>
+      <td>มี</td>
+      <td>มี</td>
+      <td style="text-align:center;">🟢</td>
+      <td style="font-size:11px;color:#6b7280;">ไม่ใส่สีอลู 13</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>เข้ามุม</td>
+      <td>มี .o-shcorner</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;">+3,000</td>
+    </tr><tr style="background:#fef2f2;">
+      <td>รื้อ</td>
+      <td>มี .o-remove</td>
+      <td>ไม่พบ control</td>
+      <td style="text-align:center;">🔴</td>
+      <td style="font-size:11px;color:#6b7280;"></td>
+    </tr></table>
+  </div>
+  </div>
+
+<p style="font-size:11px;color:var(--mut);margin-top:20px;text-align:center;">
+  หมายเหตุ: ⬜ INFO = probe ด้วย class ไม่ได้ (ต้องดูตา) · script render index.html สดทุกครั้ง (fresh jsdom · กัน orphan DOM)
+</p>
+
+</div>
+</body>
+</html>

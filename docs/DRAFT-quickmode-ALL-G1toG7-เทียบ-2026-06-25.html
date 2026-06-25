@@ -1,0 +1,186 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>แผนที่ตรวจ โหมดคิดเร็ว G1–G7 (รวมหน้าเดียว)</title>
+<style>
+  :root{ --red:#E61E28; --red-dark:#B3151D; --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937; --ok:#1E7E45; }
+  *{box-sizing:border-box;}
+  body{ font-family:"Sarabun",-apple-system,"Segoe UI",sans-serif; background:#eef1f5; color:var(--ink); margin:0; padding:20px 16px 70px; }
+  h1{ font-size:21px; margin:0 0 3px; } .sub{ color:var(--muted); font-size:13px; margin-bottom:16px; }
+  .legend{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:12.5px; margin-bottom:20px; line-height:1.8; }
+  .legend b{color:var(--red-dark);}
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:13px; overflow:hidden; display:flex; flex-direction:column; }
+  .card.bench{ border:2px solid var(--ok); }
+  .hd{ padding:9px 13px; font-weight:800; font-size:15px; color:#fff; display:flex; justify-content:space-between; align-items:center; }
+  .hd.bench{ background:var(--ok); } .hd.g{ background:var(--red-dark); }
+  .hd .tag{ font-size:10px; font-weight:600; background:rgba(255,255,255,.22); padding:2px 7px; border-radius:8px; }
+  .body{ padding:11px 13px; }
+  .sub2{ font-size:11px; color:var(--muted); font-weight:700; margin:8px 0 4px; }
+  .flow{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+  .pill{ font-size:11.5px; padding:4px 9px; border:1.5px solid var(--line); border-radius:8px; background:#fafbfc; font-weight:600; }
+  .pill.sz{ background:#eef6ff; border-color:#cfe2ff; color:#1e40af; }
+  .pill.col{ background:#fef3f2; border-color:#fecaca; color:#991b1b; }
+  .pill.colbox{ background:#fdf2e9; border-color:#f5d0a9; color:#9a5b14; }
+  .arr{ color:#cbd5e1; font-size:11px; }
+  .badges{ display:flex; gap:6px; margin:11px 0 8px; flex-wrap:wrap; }
+  .b{ font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; }
+  .b.ok{ background:#dcfce7; color:#166534; } .b.no{ background:#fee2e2; color:#991b1b; } .b.alt{ background:#fef9c3; color:#854d0e; } .b.na{ background:#f1f5f9; color:#64748b; }
+  .verdict{ font-size:12px; border-radius:9px; padding:8px 11px; margin-top:6px; line-height:1.55; }
+  .v-ok{ background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+  .v-bad{ background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .v-warn{ background:#fffbeb; border:1px solid #fde68a; color:#92722a; }
+  .cat{ font-size:11px; font-weight:700; color:var(--red-dark); margin:9px 0 3px; }
+  table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:10px; background:#fff; }
+  th,td{ border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+  th{ background:#f9fafb; }
+  .sumwrap{ margin-top:26px; background:#fff; border:1px solid var(--line); border-radius:13px; padding:16px 18px; }
+  .sumwrap h2{ font-size:17px; margin:0 0 4px; color:var(--red-dark); }
+</style></head><body>
+
+<h1>แผนที่ตรวจ — โหมดคิดเร็ว G1–G7 (รวมหน้าเดียว)</h1>
+<div class="sub">25 มิ.ย. · สแน็ปช็อตโครงฟอร์มจริงจากเว็บสด · <b>G1 = ต้นแบบ</b> · ยังไม่แตะ index.html (อีกแชทแก้อยู่ = ถือเป็นร่าง)</div>
+
+<div class="legend">
+<b>อ่านการ์ดยังไง:</b> แถว pill = ลำดับบล็อกในฟอร์ม (ซ้าย→ขวา = บน→ล่าง) · <span class="pill sz">ฟ้า</span>=ช่องขนาด · <span class="pill col">แดง</span>=ควรมีสีแต่ขาด · <span class="pill colbox">ส้ม</span>=สีแบบกล่อง🎨(ต่าง G1)<br>
+ป้าย: <span class="b ok">มี</span> ตรง G1 · <span class="b no">ขาด</span> ควรมีแต่ไม่มี · <span class="b alt">ต่างแบบ</span> มีแต่คนละสไตล์ G1 · <span class="b na">ไม่ต้องมี</span> กลุ่มนี้ไม่ใช้
+</div>
+
+<div class="grid">
+
+  <!-- G1 -->
+  <div class="card bench">
+    <div class="hd bench">G1 · บานกระจก <span class="tag">ต้นแบบ ✓</span></div>
+    <div class="body">
+      <div class="flow">
+        <span class="pill">กลุ่มงาน</span><span class="arr">→</span><span class="pill">แบบ</span><span class="arr">→</span>
+        <span class="pill" style="background:#dcfce7;border-color:#86efac;">สีอลู</span><span class="pill" style="background:#dcfce7;border-color:#86efac;">กระจก</span><span class="arr">→</span>
+        <span class="pill">ทิศเปิด</span><span class="arr">→</span><span class="pill sz">ขนาด+บาน+ชุด</span><span class="arr">→</span><span class="pill">คาด/แผ่นทึบ</span>
+      </div>
+      <div class="badges"><span class="b ok">สีอลู (dropdown)</span><span class="b ok">กระจก (dropdown)</span><span class="b ok">การ์ดราคา</span></div>
+      <div class="verdict v-ok">✅ ครบ — มีสีอลู+กระจกแบบ dropdown · สี/กระจกอยู่ "ก่อนขนาด" · ใช้ engine จริง <b>= มาตรฐานที่กลุ่มอื่นควรตาม</b></div>
+    </div>
+  </div>
+
+  <!-- G2 -->
+  <div class="card">
+    <div class="hd g">G2 · ระแนง·ราว <span class="tag">4 ประเภท</span></div>
+    <div class="body">
+      <div class="cat">ประตูรั้ว</div><div class="flow"><span class="pill">ชนิด</span><span class="pill">ลายระแนง</span><span class="arr">→</span><span class="pill sz">ขนาด</span><span class="arr">→</span><span class="pill">มอเตอร์</span><span class="pill">งานราง</span></div>
+      <div class="cat">ระแนง</div><div class="flow"><span class="pill">ชนิด</span><span class="pill">ขนาดกล่อง</span><span class="pill">หน้า/ระยะ/โครง</span><span class="arr">→</span><span class="pill sz">ขนาด</span></div>
+      <div class="cat">ราวกันตก</div><div class="flow"><span class="pill">ทรงราว</span><span class="pill">ระบบยึด</span><span class="pill">ราวมือจับ</span><span class="arr">→</span><span class="pill sz">ยาว+ชุด</span></div>
+      <div class="cat">ระแนงพิเศษ</div><div class="flow"><span class="pill">ชนิด</span><span class="arr">→</span><span class="pill sz">ขนาด</span><span class="pill">ควบคุม</span></div>
+      <div class="badges"><span class="b no">สีอลู — ขาดทุก cat</span><span class="b no">กระจก (ราวกันตก) — ขาด</span><span class="b alt">ราคา = สูตรย่อ (TODO)</span></div>
+      <div class="verdict v-bad">🔴 ทุกประเภท<b>ไม่มีช่องสีเลย</b> (ราวกันตกมีกระจกจริงก็ไม่มี) · ราคายังเป็นสูตรย่อ · ประตูรั้วลำดับขนาดอยู่กลาง (ต่าง cat อื่น)</div>
+    </div>
+  </div>
+
+  <!-- G3 -->
+  <div class="card">
+    <div class="hd g">G3 · งานหลังคา/ฝ้า <span class="tag">หลังคา + ผนัง</span></div>
+    <div class="body">
+      <div class="cat">หลังคา (ไวนิล/เมทัล/ชินโค/โพลีตัน)</div>
+      <div class="flow"><span class="pill">กลุ่มวัสดุ</span><span class="pill">รุ่น</span><span class="pill">สีวัสดุมุง</span><span class="arr">→</span><span class="pill colbox">🎨สีโครง L1/L2/L3</span><span class="arr">→</span><span class="pill">เลื่อน/ผสม/แป/โครง</span><span class="arr">→</span><span class="pill sz">ขนาด</span></div>
+      <div class="cat">ผนังเบา</div><div class="flow"><span class="pill">กลุ่มวัสดุ</span><span class="pill">รุ่น</span><span class="pill">ฉนวน</span><span class="arr">→</span><span class="pill sz">ขนาด</span></div>
+      <div class="badges"><span class="b alt">สีโครง = กล่อง🎨 (ต่าง G1)</span><span class="b no">กระจก — ไม่มี*</span><span class="b ok">ราคา engine จริง</span></div>
+      <div class="verdict v-warn">🟡 สีโครงเป็น<b>กล่อง🎨 L1/L2/L3</b> (ฟีเจอร์ครบกว่า แต่หน้าตาต่าง G1) · *ลามิเนตมี ฟิล์ม+หนากระจก เป็นชิปแล้ว · ผนังเบาไม่มีสีโครง (เช็คซ้ำว่าตั้งใจ)</div>
+    </div>
+  </div>
+
+  <!-- G4 -->
+  <div class="card">
+    <div class="hd g">G4 · ตู้อลู / ฝาตู้ <span class="tag"></span></div>
+    <div class="body">
+      <div class="flow"><span class="pill">ชนิดงาน</span><span class="pill">ชนิดตู้</span><span class="pill">ขนาดตู้</span><span class="arr">→</span><span class="pill sz">กว้าง/สูง/ลึก</span><span class="arr">→</span><span class="pill">บานหน้า</span><span class="pill colbox">สีโครง</span><span class="arr">→</span><span class="pill sz">ชุด</span></div>
+      <div class="badges"><span class="b alt">สีโครง (ปุ่มเฉพาะตู้)</span><span class="b no">กระจก — ไม่มี</span><span class="b ok">การ์ดราคา</span></div>
+      <div class="verdict v-warn">🟡 มี "สีโครง" แล้ว (แต่เป็นคอนโทรลเฉพาะตู้ ไม่ใช่ dropdown แบบ G1) · สี/บานหน้าอยู่ <b>หลังขนาด</b> (G1 อยู่ก่อนขนาด) · ตู้บานกระจกแต่ไม่มีช่องเลือกกระจก (เช็คซ้ำ)</div>
+    </div>
+  </div>
+
+  <!-- G5 -->
+  <div class="card">
+    <div class="hd g">G5 · มุ้ง <span class="tag"></span></div>
+    <div class="body">
+      <div class="flow"><span class="pill">ติดกับ</span><span class="pill">จำนวนบาน</span><span class="pill">ผ้ามุ้ง</span><span class="arr">→</span><span class="pill sz">ขนาด+ชุด</span></div>
+      <div class="badges"><span class="b no">สีกรอบอลู — ไม่มี</span><span class="b na">กระจก — ไม่ใช้</span><span class="b ok">การ์ดราคา</span></div>
+      <div class="verdict v-warn">🟡 มุ้งมี<b>สีกรอบอลู</b>จริง แต่โหมดคิดเร็วไม่มีให้เลือก (เลือกได้แค่ผ้ามุ้ง) · เช็คซ้ำว่าต้องเพิ่มสีกรอบไหม</div>
+    </div>
+  </div>
+
+  <!-- G6 -->
+  <div class="card">
+    <div class="hd g">G6 · กั้นห้องกระจก <span class="tag">room builder</span></div>
+    <div class="body">
+      <div class="flow"><span class="pill">รูปแบบห้อง</span><span class="arr">→</span><span class="pill sz">ยื่น/ยาว/สูง</span><span class="arr">→</span><span class="pill">บานแต่ละด้าน</span><span class="pill">มุ้ง</span><span class="pill">หลังคา</span><span class="pill">ฝ้า</span><span class="arr">→</span><span class="pill sz">ชุด</span></div>
+      <div class="badges"><span class="b alt">สี/กระจก = ต่อด้าน (คนละจอ)</span><span class="b ok">การ์ดราคา</span></div>
+      <div class="verdict v-warn">🟡 G6 เป็น "ห้องทั้งห้อง" — สี/กระจกเลือก<b>ต่อด้าน</b>ในตัว builder ไม่ใช่ฟอร์มเดียวแบบ G1 · พาราไดม์ต่าง (อาจไม่ต้องตาม G1 เป๊ะ — เช็คซ้ำ)</div>
+    </div>
+  </div>
+
+  <!-- G7 -->
+  <div class="card">
+    <div class="hd g">G7 · ม่านซิป <span class="tag"></span></div>
+    <div class="body">
+      <div class="flow"><span class="pill">รุ่น (auto)</span><span class="pill">ผ้า</span><span class="pill">ระบบควบคุม</span><span class="pill">กลุ่มลูกค้า</span><span class="arr">→</span><span class="pill sz">ขนาด+ชุด</span></div>
+      <div class="badges"><span class="b na">สีอลู — ไม่ใช้</span><span class="b na">กระจก — ไม่ใช้</span><span class="b ok">การ์ดราคา</span></div>
+      <div class="verdict v-ok">✅ ม่านซิปเลือก "ผ้า" ไม่ใช่สีอลู/กระจก = <b>ถูกตามชนิดงานแล้ว</b> ไม่ต้องเพิ่มสี · โครงเรียบ ใกล้เคียง G1</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- สรุป -->
+<div class="sumwrap">
+  <h2>สรุปภาพรวม — กลุ่มไหนต้องแก้ให้เหมือน G1</h2>
+  <table>
+    <tr><th>กลุ่ม</th><th>สีอลู</th><th>กระจก</th><th>ลำดับ vs G1</th><th>สรุป</th></tr>
+    <tr><td><b>G1</b></td><td>✅ dropdown</td><td>✅ dropdown</td><td>—</td><td>🟢 ต้นแบบ</td></tr>
+    <tr><td><b>G2</b></td><td>🔴 ขาดทุก cat</td><td>🔴 ขาด (ราวกันตก)</td><td>🟡 ประตูรั้วเพี้ยน</td><td>🔴 <b>แก้เยอะสุด</b></td></tr>
+    <tr><td><b>G3</b></td><td>🟡 กล่อง🎨 (ต่างแบบ)</td><td>🟡 ลามิเนตมีชิป</td><td>✅ สม่ำเสมอ</td><td>🟡 เคาะ: คงกล่องหรือยุบ</td></tr>
+    <tr><td><b>G4</b></td><td>🟡 ปุ่มเฉพาะตู้</td><td>🔴 ไม่มี (ตู้กระจก)</td><td>🟡 สีอยู่หลังขนาด</td><td>🟡 เช็คซ้ำ</td></tr>
+    <tr><td><b>G5</b></td><td>🟡 ไม่มีสีกรอบ</td><td>⚪ ไม่ใช้</td><td>✅ ใกล้เคียง</td><td>🟡 เช็คซ้ำ สีกรอบ</td></tr>
+    <tr><td><b>G6</b></td><td>🟡 ต่อด้าน</td><td>🟡 ต่อด้าน</td><td>⚪ พาราไดม์ต่าง</td><td>🟡 อาจไม่ต้องตาม</td></tr>
+    <tr><td><b>G7</b></td><td>⚪ ไม่ใช้</td><td>⚪ ไม่ใช้</td><td>✅ ใกล้เคียง</td><td>🟢 ถูกแล้ว</td></tr>
+  </table>
+  <div class="verdict v-warn" style="margin-top:14px;">
+    <b>ลำดับงานที่เสนอ (ไว→ตรง):</b> ① <b>G2</b> (แก้เยอะสุด ชัดสุด: เติมสีทุก cat + ราคา engine + ลำดับประตูรั้ว) → ② <b>G3</b> (เคาะกล่องสีก่อน) → ③ G4 สีก่อนขนาด+กระจกตู้ → ④ เช็คซ้ำ G5 สีกรอบ · ส่วน <b>G6/G7 ปล่อยไว้</b> (G7 ถูกแล้ว · G6 คนละพาราไดม์)
+  </div>
+  <p style="font-size:11.5px;color:#991b1b;margin-top:12px;"><b>หมายเหตุ:</b> สแน็ปช็อตตอนอีกแชทยังแก้ index → ก่อนแก้จริงให้ <code>git pull</code> + รัน dump-controls เช็กว่าตรงนี้ยังเป็นแบบนี้ไหม (กันข้อมูลเก่า) · คู่กับ <code>ORDER-dev-quickmode-G2G3-align-G1</code> + ดราฟละเอียด G2/G3 <code>DRAFT-quickmode-G2G3-vs-G1-เทียบ</code></p>
+</div>
+
+<div class="sumwrap">
+  <h2>🧩 extras (ออปชั่นเสริม) — ครบในโหมดคิดเร็วไหม ต่อกลุ่ม</h2>
+  <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">เทียบ "มติที่เคยเคาะ + มาสเตอร์ออปชั่นต่อ G" ↔ โหมดคิดเร็วจริง · <b>🔴</b>=ขาดชัด · <b>🟡 เช็คซ้ำ</b>=มาจากมติเก่า ต้องเปิดมาสเตอร์กลุ่มนั้นยืนยันก่อนแก้ (ไม่เดา) · <b>✅</b>=มี · <b>⚪</b>=ตัดโดยตั้งใจ</p>
+  <table>
+    <tr><th>กลุ่ม</th><th>extras ที่ควรมี (มติ/มาสเตอร์)</th><th>คิดเร็วมี?</th></tr>
+    <tr><td><b>G1 บาน</b></td>
+      <td>มุ้งติดบาน · คาดตาราง · ลูกฟูก · (ล็อก/มือจับ/ครอบวงกบ/ดรอปพื้น = ตัด)</td>
+      <td>🔴 <b>มุ้ง ขาด</b> (✅เคาะเพิ่มแล้ว) · ✅ คาดตาราง/ลูกฟูก · ⚪ ที่เหลือตัด (เคาะแล้ว)</td></tr>
+    <tr><td><b>G2 รั้ว/ระแนง/ราว</b></td>
+      <td>สีอลู · มุ้งติดตาย (ระแนง) · ราวกันตก=กระจก+สี · มอเตอร์ · ราง · ทำเป็นบาน</td>
+      <td>🔴 สีอลู ขาดทุก cat · 🔴 <b>มุ้งติดตาย (ระแนง) ขาด</b> · 🔴 ราวกันตกไม่มีกระจก/สี · ✅ มอเตอร์/ราง (ประตูรั้ว)</td></tr>
+    <tr><td><b>G3 หลังคา/ฝ้า</b></td>
+      <td>สีโครง L1/L2/L3 · หลังคาเลื่อน · ผสม · เสา (1,500/ต้น) · หมายเหตุ · แป/โครง</td>
+      <td>✅ สีโครง🎨/เลื่อน/ผสม/แป/โครง · 🟡 <b>เสา</b> เช็คซ้ำ (ไม่เห็นในคิดเร็ว) · 🟡 หมายเหตุ เช็คซ้ำ</td></tr>
+    <tr><td><b>G4 ตู้/ฝาตู้</b></td>
+      <td>ชนิดตู้ · บานหน้า · สีโครง · ลึก · กระจกตู้ · สมาร์ทบอร์ดผนัง</td>
+      <td>✅ ชนิดตู้/บานหน้า/สีโครง/ลึก · 🟡 <b>กระจกตู้</b> เช็คซ้ำ (ตู้บานกระจก) · 🟡 สมาร์ทบอร์ด เช็คซ้ำ</td></tr>
+    <tr><td><b>G5 มุ้ง</b></td>
+      <td>ผ้ามุ้ง · สีกรอบอลู · คาดตาราง(มุ้ง) · ตัดกระจก · จำนวนบาน</td>
+      <td>✅ ผ้ามุ้ง/จำนวนบาน · 🟡 <b>สีกรอบ</b> เช็คซ้ำ (④ ค้างเคาะเดิม) · 🟡 คาดตาราง/ตัดกระจก เช็คซ้ำ</td></tr>
+    <tr><td><b>G6 กั้นห้อง</b></td>
+      <td>สี/กระจก/มุ้ง/หลังคา/ฝ้า — <b>ต่อด้าน</b> (room builder)</td>
+      <td>🟡 มี มุ้ง/หลังคา/ฝ้า/เสา ในตัว builder · สี/กระจก เลือกต่อด้าน · พาราไดม์ต่าง G อื่น (เช็คซ้ำว่าครบ)</td></tr>
+    <tr><td><b>G7 ม่านซิป</b></td>
+      <td>ผ้า · ระบบควบคุม · กลุ่มลูกค้า (ม่านซิปไม่มี extras เยอะ)</td>
+      <td>✅ ครบ (ผ้า/ควบคุม/กลุ่มลูกค้า) — ไม่มี extras ตกชัด</td></tr>
+  </table>
+  <div class="verdict v-bad" style="margin-top:14px;">
+    <b>🔴 ขาดชัด (ควรเพิ่ม):</b> G1 มุ้ง (เคาะแล้ว) · G2 สีอลูทุก cat + มุ้งติดตาย(ระแนง) + ราวกันตกกระจก/สี
+  </div>
+  <div class="verdict v-warn" style="margin-top:8px;">
+    <b>🟡 เช็คซ้ำ (เปิดมาสเตอร์กลุ่มยืนยันก่อนตัดสิน):</b> G3 เสา/หมายเหตุ · G4 กระจกตู้/สมาร์ทบอร์ด · G5 สีกรอบ/คาดตาราง/ตัดกระจก · G6 ครบทุกด้านไหม
+  </div>
+  <p style="font-size:11.5px;color:#991b1b;margin-top:12px;"><b>หมายเหตุ:</b> 🟡 ทั้งหมดมาจากมติเก่าใน memory — <b>ยังไม่ยืนยันกับมาสเตอร์กลุ่มนั้น</b> · ก่อนสั่งแก้ควรเปิด SUMMARY-G{N}-options-extras-MASTER ของกลุ่มนั้นเทียบอีกรอบ (กันเดา) · ✅/🔴 = เช็ค source แล้ว แม่น</p>
+</div>
+
+</body></html>

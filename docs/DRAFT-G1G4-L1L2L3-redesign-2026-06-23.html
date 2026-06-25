@@ -1,0 +1,169 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟแก้ใหม่ v2 — กล่องสี L1/L2/L3 (G1 + G4)</title>
+<style>
+:root{--red:#B3151D;--line:#E5E7EB;--mut:#6B7280;--ok:#1E7E45;--blue:#1E5AA8;}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:14px;line-height:1.5;}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 80px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:10px;}
+.fixed{background:#ECFDF3;border:1px solid #A6E9C5;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12.5px;color:#1E5128;}
+.fixed b{color:var(--red);}
+.calc{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:12px;}
+.calc b{color:#fff;}.calc table{width:100%;border-collapse:collapse;margin-top:6px;}
+.calc td{padding:3px 6px;border-top:1px solid #334155;vertical-align:top;}
+.calc .y{color:#86efac;}.calc .n{color:#fca5a5;}
+.tabs{display:flex;gap:8px;margin-bottom:12px;}
+.tabs .t{flex:1;text-align:center;padding:10px;font-weight:700;border:1.5px solid var(--red);border-radius:9px;cursor:pointer;background:#fff;color:var(--red);}
+.tabs .t.on{background:var(--red);color:#fff;}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.boxh{font-weight:700;font-size:14px;margin-bottom:10px;color:#374151;}
+.l1{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;padding:8px;background:#F9FAFB;border-radius:8px;}
+.l1 input{width:18px;height:18px;}.l1 b{color:#374151;}
+.l2l3{margin-top:10px;border-left:3px solid var(--red);padding-left:12px;display:none;}
+.l2l3.show{display:block;}
+.mode{display:flex;gap:8px;margin-bottom:12px;}
+.mode label{flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;}
+.mode label.on-real{border-color:var(--ok);background:#F0FDF4;}
+.mode label.on-opt{border-color:var(--blue);background:#EFF6FF;}
+.flbl{font-size:12.5px;font-weight:700;color:#374151;margin:10px 0 5px;}
+.flbl .mini{font-weight:400;color:var(--mut);font-size:11px;}
+select.spec{width:100%;max-width:360px;height:38px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 9px;font-size:13px;background:#fff;}
+.codebox{display:none;margin-top:8px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:8px 10px;}
+.codebox.show{display:block;}
+.codebox label{font-size:12px;font-weight:700;color:#9A3412;display:block;margin-bottom:4px;}
+.codebox input{width:100%;max-width:280px;height:34px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;font-size:13px;}
+.l3{margin-top:12px;}
+.l3 summary{cursor:pointer;font-size:12.5px;color:var(--mut);font-weight:700;list-style:none;padding:5px 0;}
+.l3 summary::-webkit-details-marker{display:none;}
+.l3 summary::before{content:'＋ ';color:var(--red);font-weight:700;}
+.l3[open] summary::before{content:'－ ';}
+.l3 .inner{border:1px dashed #D1D5DB;border-radius:8px;padding:10px;margin-top:5px;background:#FAFAFA;}
+.note{font-size:11.5px;color:var(--mut);margin-top:6px;}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:5px;}
+.tag.r{background:var(--red);color:#fff;}.tag.b{background:var(--blue);color:#fff;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;}
+@media(max-width:560px){.two{grid-template-columns:1fr;}}
+.hide{display:none;}
+</style></head><body><div class="wrap">
+
+<h1>🎨 ดราฟแก้ใหม่ v2 — กล่องสี L1/L2/L3</h1>
+<div class="sub">G1 + G4 · สีอลู 13 + กระจก 66 = ดรอปดาวน์ (ดึงครบจาก engine จริง) · ราคาเดโม (dev ดึงเรตจริง)</div>
+
+<div class="fixed">🔧 <b>รอบ v2 ปรับตามพี่:</b> ① G1 L2 สีอลู = <b>ดรอปดาวน์</b> (เหมือน L3 ไม่รก) · ② กระจก <b>ครบ 66 รุ่น</b> ทุกช่อง · ③ G4 L3 <b>เพิ่มสเปกกระจก</b> · ④ ระบุวิธีคิดราคา L1/L2/L3 ให้ dev (ด้านล่าง)</div>
+
+<div class="calc">
+<b>💰 วิธีคิดราคา L1/L2/L3 (สเปกให้ dev คิดถูก):</b>
+<table>
+<tr><td><b>L1 สีตามทั้งใบ</b></td><td>colorPrice(สีหัวใบ) × พื้นที่ + กระจก spread × พื้นที่ (อบขาว/ดำ=ฟรี)</td><td class="y">บวกยอด</td></tr>
+<tr><td><b>L2 🟢 ใช้จริง</b></td><td>สีรายการนี้ = สีที่เลือก → colorPrice(สี L2) × พื้นที่ (แทนที่ L1)</td><td class="y">บวกยอด</td></tr>
+<tr><td><b>L2 🔵 ออปชั่น</b></td><td>ยอดยังคิดสีหัวใบ · โชว์ OPTION "เปลี่ยน X→Y ±Z" (Z = ใหม่−เดิม)</td><td class="n">ไม่บวก</td></tr>
+<tr><td><b>L3 เทียบ</b></td><td>เทียบต่อจาก baseline (สีจริงของรายการ/หัวใบ) · OPTION "±Z"</td><td class="n">ไม่บวก</td></tr>
+</table>
+<div style="margin-top:6px;font-size:11px;color:#94a3b8;">G4: สีโครง (rn90 × พื้นที่อลู) + สีหน้าบาน (FT) คิดแยกกัน · กระจกชั้น/ผนัง = spread × พื้นที่ · หลัก L1/L2/L3 เดียวกัน · ผนังกระจก/สมาร์ทบอร์ด = ไม่คิดค่าสีโครง</div>
+</div>
+
+<div class="tabs">
+  <div class="t on" data-v="g1" onclick="pickTab(this)">🪟 G1 บานกระจก</div>
+  <div class="t" data-v="g4" onclick="pickTab(this)">📦 G4 ตู้อลู</div>
+</div>
+
+<!-- ===================== G1 ===================== -->
+<div id="g1view">
+<div class="box">
+  <div class="boxh">🎨 สี / กระจก (เฉพาะรายการนี้) — L1 / L2 / L3</div>
+  <label class="l1"><input type="checkbox" id="g1l1" checked onchange="toggleL1('g1')">
+    <span><b>สีตามทั้งใบ</b> — สีอบขาว / กระจกเขียว 6 มม. <span class="mini" style="color:#9CA3AF;">(L1 · ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></span></label>
+  <div class="l2l3" id="g1body">
+    <div class="note" style="color:#9A6A1E;font-weight:700;">▼ ไม่ติ๊กสีตามทั้งใบ = เปลี่ยนเฉพาะรายการนี้</div>
+    <div class="mode" id="g1mode">
+      <label class="on-real" onclick="setMode('g1','real')"><input type="radio" name="g1mode" checked> 🟢 ใช้จริง <span class="tag r">บวกยอด</span></label>
+      <label onclick="setMode('g1','opt')"><input type="radio" name="g1mode"> 🔵 ออปชั่น <span class="tag b">ไม่บวก</span></label>
+    </div>
+    <div class="flbl">L2 ① สีอลูมิเนียม <span class="mini">(13 สี · ดรอปดาวน์ · เรต × พื้นที่)</span></div>
+    <select class="spec" id="g1l2c" onchange="onColor('g1l2c','g1l2code')"></select>
+    <div class="codebox" id="g1l2code"><label>รหัสสี / ชื่อสี (อบพิเศษ / ลายไม้อบ / ชุบ)</label><input type="text" placeholder="เช่น KL10232A · RAL7022 · Fuji Oak"></div>
+    <div class="flbl">L2 ② สเปกกระจก <span class="mini">(66 รุ่น · ดรอปดาวน์ครบ)</span></div>
+    <select class="spec" id="g1l2g"></select>
+    <details class="l3">
+      <summary>L3 — เทียบราคาสี/กระจกอื่น (ออปชั่น · ไม่บวกยอด · ขึ้นช่อง OPTION)</summary>
+      <div class="inner">
+        <div class="flbl" style="margin-top:0;">เทียบสีอลู</div>
+        <select class="spec" id="g1l3c" onchange="onColor('g1l3c','g1l3code')"></select>
+        <div class="codebox" id="g1l3code"><label>รหัสสีงานอบพิเศษ (L3)</label><input type="text" placeholder="เช่น KL10232A · Fuji"></div>
+        <div class="flbl">เทียบกระจก</div>
+        <select class="spec" id="g1l3g"></select>
+        <div class="note">→ ขึ้น OPTION: "เปลี่ยนสีจาก X เป็น Y ราคาเพิ่ม/ลด Z บาท" (ไม่บวกยอดรวม)</div>
+      </div>
+    </details>
+  </div>
+</div>
+</div>
+
+<!-- ===================== G4 ===================== -->
+<div id="g4view" class="hide">
+<div class="box">
+  <div class="boxh">🎨 สี (โครงตู้ + หน้าบาน) — L1 / L2 / L3</div>
+  <label class="l1"><input type="checkbox" id="g4l1" checked onchange="toggleL1('g4')">
+    <span><b>สีตามทั้งใบ</b> — สีอบขาว <span class="mini" style="color:#9CA3AF;">(L1 · ค่าเริ่มต้น)</span></span></label>
+  <div class="l2l3" id="g4body">
+    <div class="note" style="color:#9A6A1E;font-weight:700;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะตู้นี้</div>
+    <div class="mode" id="g4mode">
+      <label class="on-real" onclick="setMode('g4','real')"><input type="radio" name="g4mode" checked> 🟢 ใช้จริง <span class="tag r">บวกยอด</span></label>
+      <label onclick="setMode('g4','opt')"><input type="radio" name="g4mode"> 🔵 ออปชั่น <span class="tag b">ไม่บวก</span></label>
+    </div>
+    <div class="two">
+      <div><div class="flbl">L2 ① สีหน้าบาน <span class="mini">(FT)</span></div><select class="spec" id="g4frc" onchange="onColor('g4frc','g4code')"></select></div>
+      <div><div class="flbl">L2 ② สีโครงตู้ <span class="mini">(rn90 × อลู)</span></div><select class="spec" id="g4stc" onchange="onColor('g4stc','g4code')"></select></div>
+    </div>
+    <div class="codebox" id="g4code"><label>รหัสสี (สีพิเศษ/อบ — โครง + หน้าบาน)</label><input type="text" placeholder="เช่น KL10232A"></div>
+    <div class="flbl">L2 ③ สเปกกระจก (ชั้น/ผนัง) <span class="mini">(โผล่เมื่อเลือกชั้น/ผนัง = กระจก)</span></div>
+    <select class="spec" id="g4l2g"></select>
+    <details class="l3">
+      <summary>L3 — เทียบราคาสีหน้าบาน/โครง/กระจกอื่น (ออปชั่น · ไม่บวกยอด · <b>ครบเหมือน L2</b>)</summary>
+      <div class="inner">
+        <div class="flbl" style="margin-top:0;">เทียบสีหน้าบาน <span class="mini">(FT · เพิ่มให้ครบเหมือน L2 ①)</span></div>
+        <select class="spec" id="g4l3fr" onchange="onColor('g4l3fr','g4l3code')"></select>
+        <div class="flbl">เทียบสีโครงตู้ <span class="mini">(เหมือน L2 ②)</span></div>
+        <select class="spec" id="g4l3c" onchange="onColor('g4l3c','g4l3code')"></select>
+        <div class="codebox" id="g4l3code"><label>รหัสสีงานอบพิเศษ (L3 · หน้าบาน/โครง)</label><input type="text" placeholder="เช่น KL10232A"></div>
+        <div class="flbl">เทียบกระจก <span class="mini">(เหมือน L2 ③)</span></div>
+        <select class="spec" id="g4l3g"></select>
+        <div class="note">→ ขึ้น OPTION: "เปลี่ยนจาก X เป็น Y ±Z บาท" · <b>L3 มีครบทุกช่องเหมือน L2 (หน้าบาน/โครง/กระจก)</b></div>
+      </div>
+    </details>
+  </div>
+</div>
+</div>
+
+<script>
+// สีอลู 13 (จาก COLORS index.html · g=หมวด · code=ต้องกรอกรหัส)
+var ALU=[
+ {n:'สีอบขาว (ฟรี)',g:'มาตรฐาน'},{n:'สีดำ (ฟรี)',g:'มาตรฐาน'},{n:'สีชุบ (ระบุชื่อ)',g:'มาตรฐาน',code:1},
+ {n:'สีเทาซาฮาร่า',g:'ซาฮาร่า'},{n:'สีดำซาฮาร่า',g:'ซาฮาร่า'},{n:'Aztec gray',g:'ซาฮาร่า'},
+ {n:'สักทอง',g:'ลายไม้สต๊อก'},{n:'มะฮอกกานี',g:'ลายไม้สต๊อก'},{n:'ไวท์โอ๊ค',g:'ลายไม้สต๊อก'},
+ {n:'Fuji Oak (โอ๊ค)',g:'อบพิเศษ (ระบุรหัส)',code:1},{n:'Fuji Makha (มะค่า)',g:'อบพิเศษ (ระบุรหัส)',code:1},
+ {n:'อบพิเศษ',g:'อบพิเศษ (ระบุรหัส)',code:1},{n:'ลายไม้อบพิเศษ',g:'อบพิเศษ (ระบุรหัส)',code:1}];
+// กระจก 66 (จาก GLASS index.html · p=ส่วนต่าง/ตร.ม. · g=หมวด)
+var GLASS=[
+ {n:'กระจกเขียว 6 มม. (มาตรฐาน)',p:0,g:'ทั่วไป'},{n:'กระจกใส 6 มม.',p:0,g:'ทั่วไป'},{n:'เขียว/ใส 8 มม.',p:1200,g:'ทั่วไป'},{n:'เขียว/ใส 10 มม.',p:1200,g:'ทั่วไป'},{n:'เคลือบขาว 6 มม.',p:1800,g:'ทั่วไป'},
+ {n:'ยูโรเกรย์ 6 มม.',p:800,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรเกรย์ 8 มม.',p:1500,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรเกรย์ 10 มม.',p:1700,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรบรอนซ์ 6 มม.',p:1000,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรบรอนซ์ 10 มม.',p:6400,g:'ยูโรเกรย์/บรอนซ์'},
+ {n:'reflective เทา 6 มม.',p:2100,g:'Reflective'},{n:'reflective เขียว 6 มม.',p:2400,g:'Reflective'},{n:'reflective ฟ้า/เทาใหม่ 6 มม.',p:2700,g:'Reflective'},
+ {n:'เทมเปอร์ เขียว/ใส 6 มม.',p:600,g:'เทมเปอร์'},{n:'เทมเปอร์ เขียว/ใส 10 มม.',p:2100,g:'เทมเปอร์'},{n:'เทมเปอร์ เขียว/ใส 12 มม.',p:2400,g:'เทมเปอร์'},{n:'เทมเปอร์ เขียว/ใส 15 มม.',p:5000,g:'เทมเปอร์'},{n:'เทมเปอร์ ใสพิเศษ 6 มม.',p:2500,g:'เทมเปอร์'},{n:'เทมเปอร์ ใสพิเศษ 10 มม.',p:5700,g:'เทมเปอร์'},{n:'เทมเปอร์ ฝ้า 6 มม.',p:2200,g:'เทมเปอร์'},{n:'เทมเปอร์ ฝ้า 8 มม.',p:3500,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรเกรย์ 4 มม.',p:1300,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรเกรย์ 5 มม.',p:1700,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรเกรย์ 6 มม.',p:2100,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรเกรย์ 10 มม.',p:4200,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรบรอนซ์ 5 มม.',p:2000,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรบรอนซ์ 6 มม.',p:2800,g:'เทมเปอร์'},{n:'เทมเปอร์ ยูโรบรอนซ์ 10 มม.',p:5900,g:'เทมเปอร์'},{n:'เทมเปอร์ ref เทา 6 มม.',p:3500,g:'เทมเปอร์'},{n:'เทมเปอร์ ref เขียว 6 มม.',p:4000,g:'เทมเปอร์'},{n:'เทมเปอร์ ref ฟ้า 6 มม.',p:4400,g:'เทมเปอร์'},
+ {n:'ลามิเนต 4+4 เขียว/ใส',p:2200,g:'ลามิเนต'},{n:'ลามิเนต 5+5 เขียว/ใส',p:2700,g:'ลามิเนต'},{n:'ลามิเนตใส 4+4 ฟิล์มสี',p:4200,g:'ลามิเนต'},{n:'ลามิเนต 4+4 กันเสียง',p:5300,g:'ลามิเนต'},{n:'ลามิเนต 4+4 SolarMax',p:4300,g:'ลามิเนต'},{n:'ลามิเนต 4+4 กันขโมย STG',p:5500,g:'ลามิเนต'},
+ {n:'อินซูเลท เขียว/ใส 6+6+6',p:4000,g:'อินซูเลท'},
+ {n:'ชาดำ/ฝ้า/ลายผ้า 5-6 มม.',p:500,g:'พิเศษ'},{n:'กระจกเงา 5 มม.',p:1000,g:'พิเศษ'},{n:'ลอนแก้ว 5 มม.',p:1300,g:'พิเศษ'},
+ {n:'★ เทมเปอร์ 8 มม.',p:1300,g:'★ เพิ่มเติม'},{n:'★ เทมเปอร์ชาดำ 6 มม.',p:1800,g:'★ เพิ่มเติม'},{n:'★ เทมเปอร์ชาดำ 10 มม.',p:3000,g:'★ เพิ่มเติม'},{n:'★ เทมเปอร์ฟ้า 6 มม.',p:1400,g:'★ เพิ่มเติม'},{n:'★ เทมเปอร์ใสพิเศษ 8 มม.',p:4000,g:'★ เพิ่มเติม'},{n:'★ ลามิเนต 6+6',p:2400,g:'★ เพิ่มเติม'},{n:'★ ลามิเนต 4+4 (สูง>2.5ม.)',p:2200,g:'★ เพิ่มเติม'},{n:'★ ลามิเนต 5+5 (สูง>2.5ม.)',p:2300,g:'★ เพิ่มเติม'},{n:'★ ลามิเนต 6+6 (สูง>2.5ม.)',p:2800,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตยูโรเกรย์+ใส 6+6',p:3000,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตยูโรเกรย์+ยูโรเกรย์ 6+6',p:3600,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตชาดำ+ใส 6+6',p:3000,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตชาดำ+ชาดำ 6+6',p:3600,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตคริสตัลเกรย์+ใส 6+6',p:3000,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตคริสตัลเกรย์+คริสตัลเกรย์ 6+6',p:3600,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตฟ้า+ใส 6+6',p:2800,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตฟ้า+ฟ้า 6+6',p:3400,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตยูโรบรอนซ์+ใส 6+6',p:2800,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตยูโรบรอนซ์+ยูโรบรอนซ์ 6+6',p:3400,g:'★ เพิ่มเติม'},{n:'★ ใสดัดโค้ง 10 มม.',p:8550,g:'★ เพิ่มเติม'},{n:'★ ใสดัดโค้งลามิเนต 5+5',p:11150,g:'★ เพิ่มเติม'},{n:'★ ลามิเนต 4+4 ยูโรเกรย์',p:3000,g:'★ เพิ่มเติม'},{n:'★ เงาทอง',p:1000,g:'★ เพิ่มเติม'},{n:'★ ลามิเนตลอนแก้ว/เงาทอง 4+4',p:3600,g:'★ เพิ่มเติม'},{n:'★ เทมเปอร์ลามิเนต 6+6 Pvb 1.52',p:4800,g:'★ เพิ่มเติม'}];
+
+function fmt(p){return p>0?(' (+'+p.toLocaleString()+')'):'';}
+function fillColor(id,withNone){var s=document.getElementById(id);if(!s)return;var h=withNone?'<option value="-1">— ไม่เทียบ —</option>':'';var lastG='';ALU.forEach(function(c,i){if(c.g!==lastG){if(lastG)h+='</optgroup>';h+='<optgroup label="'+c.g+'">';lastG=c.g;}h+='<option value="'+i+'" data-code="'+(c.code?1:0)+'">'+c.n+'</option>';});h+='</optgroup>';s.innerHTML=h;}
+function fillGlass(id,withNone){var s=document.getElementById(id);if(!s)return;var h=withNone?'<option value="-1">— ไม่เทียบ —</option>':'';var lastG='';GLASS.forEach(function(g,i){if(g.g!==lastG){if(lastG)h+='</optgroup>';h+='<optgroup label="'+g.g+'">';lastG=g.g;}h+='<option value="'+i+'">'+g.n+fmt(g.p)+'</option>';});h+='</optgroup>';s.innerHTML=h;}
+function onColor(selId,codeId){var s=document.getElementById(selId);var o=s.options[s.selectedIndex];document.getElementById(codeId).classList.toggle('show',o&&o.dataset.code==='1');}
+function pickTab(t){document.querySelectorAll('.tabs .t').forEach(function(x){x.classList.remove('on');});t.classList.add('on');var v=t.dataset.v;document.getElementById('g1view').classList.toggle('hide',v!=='g1');document.getElementById('g4view').classList.toggle('hide',v!=='g4');}
+function toggleL1(g){var on=document.getElementById(g+'l1').checked;document.getElementById(g+'body').classList.toggle('show',!on);}
+function setMode(g,m){var box=document.getElementById(g+'mode');box.querySelectorAll('label').forEach(function(l){l.classList.remove('on-real','on-opt');});var i=m==='real'?0:1;box.querySelectorAll('label')[i].classList.add(m==='real'?'on-real':'on-opt');box.querySelectorAll('input')[i].checked=true;}
+// init
+fillColor('g1l2c',false);fillColor('g1l3c',true);fillGlass('g1l2g',false);fillGlass('g1l3g',true);
+fillColor('g4frc',false);fillColor('g4stc',false);fillColor('g4l3fr',true);fillColor('g4l3c',true);fillGlass('g4l2g',false);fillGlass('g4l3g',true);
+</script>
+</div></body></html>

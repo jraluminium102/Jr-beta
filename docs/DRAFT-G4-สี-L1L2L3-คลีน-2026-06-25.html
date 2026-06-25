@@ -1,0 +1,112 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ G4 สี L1/L2/L3 — คลีน (ดรอปดาวน์)</title>
+<style>
+:root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--blue:#1e40af}
+*{box-sizing:border-box;font-family:"Segoe UI",Tahoma,sans-serif}
+body{margin:0;background:#f4f5f7;color:var(--ink);padding:14px;line-height:1.45;font-size:14px}
+.wrap{max-width:640px;margin:0 auto}
+h1{color:var(--red);font-size:18px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{flex:1;text-align:center;padding:9px;border-radius:9px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red)}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
+.boxh{font-weight:800;font-size:14px;color:var(--red);margin-bottom:9px}
+.l1{display:flex;gap:8px;align-items:center;background:#FAFAFA;border:1px solid #F3D5D5;border-radius:9px;padding:9px 11px;cursor:pointer;font-size:13.5px}
+.l1 input{width:18px;height:18px;accent-color:var(--red)}
+.body{margin-top:10px;border-left:3px solid #FCA5A5;padding-left:11px}
+.body.hide{display:none}
+.note{font-size:11.5px;color:#9A6A1E;font-weight:700;margin-bottom:8px}
+.mode{display:flex;gap:6px;margin-bottom:10px}
+.mchip{border:1.5px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff}
+.mchip.on{background:#fdecef;border-color:var(--red);color:var(--red)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{margin-bottom:9px}
+.flbl{font-size:12px;font-weight:700;color:#374151;margin-bottom:4px;display:block}
+.mini{font-size:10.5px;font-weight:400;color:#9CA3AF}
+select{width:100%;height:38px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;background:#fff}
+.codebox{margin-top:7px;background:#FFFBEB;border:1px dashed #FCD34D;border-radius:8px;padding:7px 9px}
+.codebox.hide{display:none}
+.codebox label{font-size:11.5px;color:#92400E;font-weight:700;display:block;margin-bottom:3px}
+.codebox input{width:100%;height:32px;border:1px solid #cbd5e1;border-radius:6px;padding:0 8px;font-size:12.5px}
+details.l3{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+details.l3 summary{cursor:pointer;font-size:12.5px;color:var(--blue);font-weight:700;list-style:none}
+details.l3 summary::-webkit-details-marker{display:none}
+.l3in{padding-top:8px}
+.opnote{font-size:11px;color:var(--mut);margin-top:7px;background:#EFF6FF;border-radius:7px;padding:6px 8px}
+.cmp{font-size:11px;color:#16a34a;font-weight:700;margin-top:8px}
+.ask{background:#eef2ff;border:1px solid #c7d2fe;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#3730a3;margin-top:10px}
+.before{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px}
+.before b{color:var(--red)}
+.chiprow{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.xc{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:2px 6px;color:#9ca3af;background:#fafafa}
+</style></head><body><div class="wrap">
+<h1>🎨 ดราฟ G4 สี L1/L2/L3 — คลีน (ดรอปดาวน์ ตามดราฟ v2)</h1>
+<div class="sub">แก้จาก "ชิป 40 ปุ่ม รก" → ดรอปดาวน์สะอาด · โครงสร้าง L1→L2(①②③)→L3 ตรงดราฟ DRAFT-G1G4-L1L2L3-redesign · ราคา/ตัวเลือกจริงคงเดิม · 25 มิ.ย.</div>
+
+<div class="before">⬅ <b>ตอนนี้ (เว็บสด):</b> แต่ละชั้นเป็นชิปเรียงยาว — รวม ~40 ปุ่ม รกมาก
+<div class="chiprow"><span class="xc">ขาว/ดำ</span><span class="xc">ซาฮาร่า</span><span class="xc">ลายไม้</span><span class="xc">อบพิเศษ</span><span class="xc">สีชุบ</span><span class="xc">ตามหัวใบ</span><span class="xc">ซาฮาร่า</span><span class="xc">Aztec</span><span class="xc">ลายไม้</span><span class="xc">อบพิเศษ</span><span class="xc">ลายไม้อบ</span><span class="xc">สีชุบ</span><span class="xc">+อีก L2③ 6 · L3 อีก ~18</span></div></div>
+
+<div class="tabs"><div class="tab on" onclick="pick(this,'cab')">📦 ตู้อลู</div><div class="tab" onclick="pick(this,'ft')">🚪 ฝาตู้</div></div>
+
+<!-- ===== ตู้อลู ===== -->
+<div id="cab" class="box">
+  <div class="boxh">🎨 สี (โครงตู้ + หน้าบาน) — L1 / L2 / L3</div>
+  <label class="l1"><input type="checkbox" id="cabL1" checked onchange="tg('cab')"><span><b>สีตามทั้งใบ</b> — สีอบขาว <span class="mini">(L1 · ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></span></label>
+  <div class="body hide" id="cabBody">
+    <div class="note">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะตู้นี้</div>
+    <div class="mode"><span class="mchip on">🟢 ใช้จริง <span class="mini">(บวกยอด)</span></span><span class="mchip">🔵 ออปชั่น <span class="mini">(ไม่บวก)</span></span></div>
+    <div class="two">
+      <div class="fld"><label class="flbl">L2 ① สีหน้าบาน <span class="mini">(FT)</span></label>
+        <select onchange="codeCab(this,'cabCode')"><option>ขาว/ดำ (ฟรี)</option><option>ซาฮาร่า</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ ▸รหัส</option><option>สีชุบ ▸รหัส</option></select></div>
+      <div class="fld"><label class="flbl">L2 ② สีโครงตู้ <span class="mini">(rn90 × อลู)</span></label>
+        <select onchange="codeCab(this,'cabCode')"><option>ตามหัวใบ</option><option>ซาฮาร่า</option><option>Aztec gray</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ ▸รหัส</option><option>ลายไม้อบพิเศษ ▸รหัส</option><option>สีชุบ ▸รหัส</option></select></div>
+    </div>
+    <div class="codebox hide" id="cabCode"><label>รหัสสี (สีพิเศษ/อบ — โครง + หน้าบาน)</label><input placeholder="เช่น KL10232A · RAL7022 · Fuji"></div>
+    <div class="fld" style="margin-top:9px"><label class="flbl">L2 ③ สเปกกระจก (ชั้น/ผนัง) <span class="mini">(โผล่เมื่อชั้น/ผนัง = กระจก)</span></label>
+      <select><option>ใส 6 มม.</option><option>ใส 8 มม. +1,200</option><option>ใส 10 มม. +1,200</option><option>เทมเปอร์ 6 มม. +600</option><option>เทมเปอร์ 8 มม. +1,300</option><option>เทมเปอร์ 10 มม. +2,100</option></select></div>
+    <details class="l3"><summary>L3 — เทียบราคาสีหน้าบาน/โครง/กระจกอื่น (ออปชั่น · ไม่บวกยอด · ครบเหมือน L2) ▾</summary>
+      <div class="l3in">
+        <div class="fld"><label class="flbl">เทียบสีหน้าบาน <span class="mini">(FT)</span></label>
+          <select onchange="codeCab(this,'cabL3Code')"><option>— ไม่เทียบ —</option><option>ขาว/ดำ (ฟรี)</option><option>ซาฮาร่า</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ ▸รหัส</option><option>สีชุบ ▸รหัส</option></select></div>
+        <div class="fld"><label class="flbl">เทียบสีโครงตู้ <span class="mini">(rn90)</span></label>
+          <select onchange="codeCab(this,'cabL3Code')"><option>— ไม่เทียบ —</option><option>ซาฮาร่า</option><option>Aztec gray</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ ▸รหัส</option><option>ลายไม้อบพิเศษ ▸รหัส</option><option>สีชุบ ▸รหัส</option></select></div>
+        <div class="codebox hide" id="cabL3Code"><label>รหัสสีงานอบพิเศษ (L3 · หน้าบาน/โครง)</label><input placeholder="เช่น KL10232A"></div>
+        <div class="fld"><label class="flbl">เทียบกระจก <span class="mini">(เหมือน L2 ③)</span></label>
+          <select><option>— ไม่เทียบ —</option><option>ใส 6 มม.</option><option>ใส 8 มม.</option><option>ใส 10 มม.</option><option>เทมเปอร์ 6 มม.</option><option>เทมเปอร์ 8 มม.</option><option>เทมเปอร์ 10 มม.</option></select></div>
+        <div class="opnote">→ ขึ้นบรรทัด OPTION ในใบ: "เปลี่ยนจาก X เป็น Y ±Z บาท"</div>
+      </div>
+    </details>
+    <div class="cmp">✅ คลีน: 4 ดรอปดาวน์ (L2 ①②③ + L3) แทนชิป ~40 ปุ่ม</div>
+  </div>
+</div>
+
+<!-- ===== ฝาตู้ ===== -->
+<div id="ft" class="box" style="display:none">
+  <div class="boxh">🎨 สีฝาตู้ — L1 / L2 <span class="mini">(ฝาตู้ไม่มี L3 ตามดราฟ)</span></div>
+  <label class="l1"><input type="checkbox" id="ftL1" checked onchange="tg('ft')"><span><b>สีตามทั้งใบ</b> <span class="mini">(L1 · ค่าเริ่มต้น)</span></span></label>
+  <div class="body hide" id="ftBody">
+    <div class="note">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะฝานี้</div>
+    <div class="mode"><span class="mchip on">🟢 ใช้จริง</span><span class="mchip">🔵 ออปชั่น</span></div>
+    <div class="fld"><label class="flbl">วัสดุหน้าบาน</label>
+      <select id="ftMat" onchange="ftm()"><option value="alu">อลู (FT)</option><option value="glass">กระจก</option></select></div>
+    <div class="fld" id="ftAlu"><label class="flbl">สีฝาตู้ (อลู FT)</label>
+      <select onchange="codeCab(this,'ftCode')"><option>ขาว/ดำ (ฟรี)</option><option>ซาฮาร่า</option><option>ลายไม้สต๊อก</option><option>อบพิเศษ ▸รหัส</option><option>สีชุบ ▸รหัส</option><option>...(ครบ 12 สี)</option></select></div>
+    <div class="fld hide" id="ftGlass"><label class="flbl">สีกระจก (ธรรมดา 6 มม. · เรต R3.9)</label>
+      <select><option>ใส (+0)</option><option>ฝ้า +500</option><option>ชาดำ +500</option></select></div>
+    <div class="codebox hide" id="ftCode"><label>รหัสสี (เฉพาะสีพิเศษ/อบ)</label><input placeholder="เช่น KL10232A"></div>
+    <div class="cmp">✅ คลีน: ดรอปดาวน์ · วัสดุ=กระจก → สลับโชว์สีกระจก</div>
+  </div>
+</div>
+
+<div class="ask">🙋 <b>กดดราฟ 10 วิ — โอเคแบบนี้ไหม?</b> (ดรอปดาวน์คลีน · โครง L1→L2①②③→L3 ตรงดราฟ)<br>
+ถ้า <b>"โอเค"</b> → ผมลงมือแก้โค้ดทันที (ราคา/cascade เดิมไม่แตะ · golden กัน · เทสเบราว์เซอร์ก่อนบอกเสร็จ)<br>
+ถ้าอยากปรับ (เช่น "อยากให้กระจกเป็นชิป" / "L3 เอาออก" / สลับลำดับ) บอกได้เลย</div>
+
+<script>
+function pick(el,id){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});el.classList.add('on');document.getElementById('cab').style.display=id==='cab'?'':'none';document.getElementById('ft').style.display=id==='ft'?'':'none';}
+function tg(p){var on=document.getElementById(p+'L1').checked;document.getElementById(p+'Body').classList.toggle('hide',on);}
+function codeCab(sel,boxId){var need=/รหัส/.test(sel.value);document.getElementById(boxId).classList.toggle('hide',!need);}
+function ftm(){var g=document.getElementById('ftMat').value==='glass';document.getElementById('ftGlass').classList.toggle('hide',!g);document.getElementById('ftAlu').classList.toggle('hide',g);}
+</script>
+</div></body></html>

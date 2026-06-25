@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEST G1+G4 Form vs Draft — 2026-06-23</title>
+<style>
+*{box-sizing:border-box;font-family:'Leelawadee UI',Tahoma,sans-serif;}
+body{margin:0;background:#F4F5F7;color:#1F2937;font-size:13px;line-height:1.55;padding:14px;}
+h1{color:#B3151D;font-size:19px;border-bottom:3px solid #B3151D;padding-bottom:6px;margin:0 0 8px;}
+h2{color:#B3151D;font-size:15px;margin:18px 0 6px;}
+h3{color:#374151;font-size:13.5px;margin:12px 0 4px;border-left:3px solid #B3151D;padding-left:8px;}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px;}
+.pill{padding:5px 12px;border-radius:20px;font-weight:700;font-size:12.5px;}
+.pm{background:#fee2e2;color:#991b1b;}.po{background:#ffedd5;color:#9a3412;}.pw{background:#fef9c3;color:#854d0e;}.pk{background:#dcfce7;color:#166534;}
+table{border-collapse:collapse;width:100%;background:#fff;margin:6px 0 14px;font-size:12px;}
+th,td{border:1px solid #e5e7eb;padding:5px 8px;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;text-align:left;}
+tr.ok td{background:#f0fdf4;}tr.miss td{background:#fef2f2;}tr.extra td{background:#fff7ed;}tr.warn td{background:#fefce8;}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;}
+.ok{color:#166534;background:#dcfce7;}.miss{color:#991b1b;background:#fee2e2;}.extra{color:#9a3412;background:#ffedd5;}.warn{color:#854d0e;background:#fef9c3;}
+.note{color:#6B7280;font-size:11.5px;margin:4px 0;}
+.section{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+.g-header{background:#FEF3F2;border-bottom:1px solid #F5C0BC;margin:-10px -14px 10px;padding:8px 14px;border-radius:10px 10px 0 0;font-weight:700;color:#B3151D;font-size:14px;}
+code{background:#f3f4f6;padding:0 4px;border-radius:3px;font-size:11px;}
+.sub{color:#6B7280;font-size:12px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<h1>ผลตรวจ G1 + G4 Form vs Draft — 2026-06-23</h1>
+<div class="sub">เกณฑ์: DRAFT-G1-GROUNDTRUTH-ปุ่มทุกปุ่ม-2026-06-22.html + DRAFT-G4-ux-2026-06-23.html · render index.html สดด้วย jsdom · READ-ONLY (ห้ามแก้ index)</div>
+
+<div class="sum">
+  <span class="pill pm">ขาด/ไม่ตรง (ดราฟมี เว็บไม่มีหรือผิด): G1=6 จุด · G4=2 จุด</span>
+  <span class="pill po">เกิน (เว็บมี ดราฟไม่มี/ให้ตัด): G1=3 จุด</span>
+  <span class="pill pk">ตรง: G1 ส่วนใหญ่ผ่าน · G4 ผ่านเกือบทั้งหมด</span>
+</div>
+
+<!-- ========== G1 ========== -->
+<h2>G1 — งานบาน (ทุกชนิด 14 กลุ่ม)</h2>
+
+<!-- สรุปรวม G1 -->
+<div class="section">
+<div class="g-header">สรุปรวม G1 — ผ่าน/ไม่ผ่านต่อชนิดบาน</div>
+<table>
+<tr><th>ชนิดบาน</th><th>ปุ่ม/รุ่น</th><th>ค่าเริ่มต้น</th><th>L1/L3 สี</th><th>z1/z2/z3</th><th>สถานะ</th></tr>
+<tr class="ok"><td>1. บานเลื่อน (sliding)</td><td class="ok badge">ครบ 3 รุ่น</td><td class="ok badge">เซมิยูโร default</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="warn"><td>2. เลื่อนภายใน (inner)</td><td class="ok badge">ครบ 3 รุ่น</td><td class="warn badge">opentype default=บานเลื่อน ดราฟไม่ระบุ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="warn badge">ดูตา</span></td></tr>
+<tr class="ok"><td>3. บานเปิด (casement)</td><td class="ok badge">ครบ 5 รุ่น</td><td class="ok badge">ธรณี=กันน้ำ · lock=มีกุญแจ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>4. บานกระทุ้ง (awning)</td><td class="ok badge">ยูโร</td><td class="ok badge">หน้าต่าง · เปิดล่าง · lock=มีกุญแจ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>5. บานหมุน (pivot)</td><td class="ok badge">เมืองทอง</td><td class="ok badge">lock=มีกุญแจ · ไม่มี Cmech</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>6. บานเฟี้ยม (folding)</td><td class="ok badge">ครบ 3 รุ่น</td><td class="ok badge">เปิดซ้าย · ธรณีกันน้ำ · lock=มีกุญแจ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง (ซ่อนคาน/ราง/ฝังรางยู/เสริมคาน ครบ)</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>7. กระจกติดตาย (fixed_glass)</td><td class="ok badge">รุ่นเดียว</td><td class="ok badge">ตัด ชนิดเปิด/ราง/ล็อค/มุ้ง</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="warn"><td>8. บานเปลือย (frameless)</td><td class="ok badge">รวม ติดตาย+ประตู ✓</td><td class="ok badge">ติดตาย=default · lock=มีกุญแจ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="miss badge">มือจับสแตนเลส 6 ขนาด ยังไม่มี (เฟส 4)</td><td><span class="warn badge">ยังขาดเฟส 4</span></td></tr>
+<tr class="ok"><td>9. ผนัง (wall)</td><td class="ok badge">3 รุ่น</td><td class="ok badge">เหล็กชุบ · ทาขาว</td><td class="ok badge">L1/L2/L3 ซ่อนแล้ว (hidden=true)</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>10. ดัดโค้ง (curved)</td><td class="ok badge">4 รุ่น</td><td class="ok badge">ประตูบานคู่ · lock=มีกุญแจ · ไม่มี Cmech</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="ok"><td>11. PC Door</td><td class="ok badge">2บาน/4บาน</td><td class="ok badge">lock=มีกุญแจ · ไม่มี Cmech</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="miss"><td>12. YKK</td><td class="ok badge">3 รุ่น</td><td class="ok badge">ล็อค/มุ้ง/คาดตัด</td><td class="ok badge">L1 ซ่อนแล้ว</td><td class="miss badge">i-type ยังมี option หน้าต่าง (ดราฟ: ตัด)</td><td><span class="miss badge">ไม่ผ่าน 1 จุด</span></td></tr>
+<tr class="ok"><td>13. บานยก (lift)</td><td class="ok badge">SMS สลิม / เซมิยูโร</td><td class="ok badge">o-liftmode: top/alt ครบ</td><td class="ok badge">L1 ติ๊ก · L3 พับ</td><td class="ok badge">ตรง</td><td><span class="ok badge">ผ่าน</span></td></tr>
+<tr class="warn"><td>14. shower</td><td class="ok badge">3 รูปแบบ</td><td class="ok badge">o-showerhw เงิน/ดำ/ทอง · เข้ามุม</td><td class="miss badge">i-color ยังมีสีอลู 13 ตัว (ดราฟเฟส2: เลือกแค่กระจก)</td><td class="ok badge">ตรง</td><td><span class="miss badge">ไม่ผ่าน 1 จุด</span></td></tr>
+</table>
+</div>
+
+<!-- รายละเอียดจุดที่ไม่ตรง G1 -->
+<div class="section">
+<div class="g-header">จุดที่ยังไม่ตรงดราฟ G1 — ส่ง dev แก้</div>
+
+<h3>ขาด (ดราฟมี เว็บไม่มี)</h3>
+<table>
+<tr><th>#</th><th>ชนิดบาน</th><th>จุดที่ขาด</th><th>ดราฟบอก</th><th>เว็บเป็น</th></tr>
+<tr class="miss">
+<td>1</td>
+<td>บานเปลือย (frameless_door)</td>
+<td>มือจับสแตนเลส 6 ขนาด (เฟส 4)</td>
+<td>ดราฟ: 30.5=1,500 / 45=2,000 / 60=2,000 / 80=2,500 / 100=3,000 / 120=3,200 · สีเงิน(def)/สีอื่น+กรอก</td>
+<td>o-stainless มีแค่ 7 opts (ไม่ใส่/เลือกขนาด) แต่ไม่มีช่อง สี/กรอกราคา · ยังขาด UX สีและราคา</td>
+</tr>
+<tr class="miss">
+<td>2</td>
+<td>shower</td>
+<td>i-color ควรมีแค่สีกระจก ไม่ใช่สีอลู 13</td>
+<td>ดราฟเฟส2: shower เลือกแค่กระจก (ใช้สีอุปกรณ์ o-showerhw · ไม่มีสีอลู 13)</td>
+<td>i-color มี 13 opts (สีอลู เต็มชุด) · ควรตัด i-color ออก หรือกรองให้เหลือแค่กระจก</td>
+</tr>
+<tr class="miss">
+<td>3</td>
+<td>YKK (ykk_vent)</td>
+<td>i-type ยังมี option "หน้าต่าง"</td>
+<td>ดราฟ: ประตูเท่านั้น (ตัดหน้าต่าง)</td>
+<td>i-type options: door + window (ยังเลือกหน้าต่างได้)</td>
+</tr>
+<tr class="miss">
+<td>4</td>
+<td>เลื่อนภายใน (inner_top_stack)</td>
+<td>ฝังรางยู (o-u_track) ไม่มีใน z3</td>
+<td>ดราฟ z3: ☐ Soft Close / ☐ สลิง / ☐ ซ่อนคาน / <b>☐ ฝังรางยู</b> / ☐ เสริมคาน</td>
+<td>o-u_track not found · มีแค่ soft_close/sling/hide_beam/beam_support (ขาด u_track)</td>
+</tr>
+</table>
+
+<h3>เกิน (เว็บมี ดราฟตัดออก)</h3>
+<table>
+<tr><th>#</th><th>ชนิดบาน</th><th>จุดที่เกิน</th><th>ดราฟบอก</th><th>เว็บเป็น</th></tr>
+<tr class="extra">
+<td>5</td>
+<td>ทุกชนิดบาน (30 รุ่น)</td>
+<td>o-solidlower ยังโผล่</td>
+<td>ดราฟ: แผ่นทึบล่าง = ลูกฟูก/คอมโพสิท (ยังอยู่ใน z2) · แต่ check-g1.mjs เก่าบอก "ตัดทิ้ง" ตามมติ 15มิ.ย. ต้องถาม</td>
+<td>o-solidlower มีบน 30 รุ่น · ดราฟ 22มิ.ย. ยังคง "แผ่นทึบล่าง" ใน z2 ทุกชนิด = อาจ OK แล้ว</td>
+</tr>
+<tr class="extra">
+<td>6</td>
+<td>shower</td>
+<td>i-type option "หน้าต่าง"</td>
+<td>ดราฟ: shower ไม่มีประเภท หน้าต่าง</td>
+<td>i-type: door + window · ควรเหลือแค่ door (ประตู) ให้เลือก</td>
+</tr>
+<tr class="extra">
+<td>7</td>
+<td>บานเปิด casement_euro</td>
+<td>o-combo_awn_inside พบแล้ว</td>
+<td>ดราฟ z2: ☐ combo บานกระทุ้งเข้าใน (เฉพาะยูโร/โซลิด)</td>
+<td>o-combo_awn_inside found · checked=false = ตรงดราฟ (ติ๊กเสริม ไม่ใช่เกิน)</td>
+</tr>
+</table>
+
+<h3>ดูตา (script เทียบไม่ได้ ต้องเปิดดูเว็บจริง)</h3>
+<table>
+<tr><th>#</th><th>ชนิดบาน</th><th>จุด</th><th>หมายเหตุ</th></tr>
+<tr class="warn">
+<td>8</td>
+<td>เลื่อนภายใน (inner)</td>
+<td>o-opentype default = "บานเลื่อน" แต่ดราฟไม่ระบุ default</td>
+<td>ดราฟมี row "ชนิดการเปิด" 4 แบบ แต่ไม่ได้ขีดแดงค่าเริ่มต้น · เว็บเลือก "บานเลื่อน" ไว้ก่อน = น่าจะโอเค · ตรวจตาจริง</td>
+</tr>
+<tr class="warn">
+<td>9</td>
+<td>ผนัง (wall)</td>
+<td>o-wallmodel ไม่มี ISOWALL หนา 10 ซม. เป็น option</td>
+<td>ดราฟ: ความหนา = สมาร์ทบอร์ด 12 / ISOWALL หนา 10 ซม. (ตัด 7.5/smart20) · เว็บมี smartboard 12 แต่ไม่เจอ isowall 10 ใน wallmodel = เช็คเพิ่ม</td>
+</tr>
+</table>
+</div>
+
+<!-- ตรวจละเอียด จุดที่ผ่าน G1 -->
+<div class="section">
+<div class="g-header">จุดที่ผ่าน G1 (สรุปเร็ว)</div>
+<table>
+<tr><th>หมวด</th><th>รายการ</th><th>สถานะ</th></tr>
+<tr class="ok"><td>6 ปุ่มกลุ่ม</td><td>G1GROUPS พบ · 6 ปุ่ม slide/swing/fold/fix/curve/other · data-g1grp ครบ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>รุ่น (prod)</td><td>sliding_sms/euro/eseries · casement_euro/xseries/velora/flush/inset · folding/euro/xseries · awning_euro · pivot · curved 4 รุ่น · pc_door_2/4 · frameless fixed/door · shower · lift_sms/aluinch · ykk_vent/exhido/tostem · wall_ext/int/isowall = ครบตามดราฟ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานเลื่อน default</td><td>เซมิยูโร=on · ราง=กันน้ำ · lock=มีชุดล็อก+กุญแจ · L1=ติ๊ก</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานเปิด default</td><td>ธรณี=std(กันน้ำ) · โช้คอัพ=0(ไม่มี) · lock=มีล็อค+กุญแจ · L1=ติ๊ก</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>เลื่อนภายใน default</td><td>รางบนซ้อน · โชว์ราง · lock=ไม่มีชุดล็อก · L1=ติ๊ก</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>เลื่อนภายใน z3</td><td>o-soft_close/o-sling/o-hide_beam/o-beam_support ครบ · ขาดเฉพาะ o-u_track</td><td><span class="warn badge">ขาด u_track</span></td></tr>
+<tr class="ok"><td>บานเฟี้ยม</td><td>ทิศเปิด=เปิดซ้าย · ธรณี=กันน้ำภายนอก · z3: hide_beam/hide_track/u_track/beam_support ครบ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานกระทุ้ง</td><td>แบบเปิด=เปิดล่าง(def)/เปิดข้าง/tilt&turn · o-awnbrace(เสริมแขนค้ำ) ✓ · lock=มีกุญแจ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานยก</td><td>o-liftmode top=ยกบานบน(def) / alt=ยกบานบน-ล่างสลับกัน · i-type=window · lock=มีกุญแจ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานหมุน</td><td>lock=มีกุญแจ · ไม่มี Cmech · digi/stainless ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>บานเปลือยรวม</td><td>frameless_fixed(ติดตาย) + frameless_door(ประตู) รวมใน chip "บานเปลือย" แล้ว · สลับ chip ได้ · ประตู=lock+มีกุญแจ</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>L1/L3 สี/กระจก</td><td>g1co-l1cb checked=true ทุกชนิด (ยกเว้น ผนัง=hidden, YKK=hidden) · g1co-l3det found ทุกชนิด</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ผนัง L1 ซ่อน</td><td>g1co-l1cb hidden ใน g1-rare-section display:none ✓ · ตรงดราฟ (ผนัง+YKK ไม่มี L1)</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>YKK L1 ซ่อน</td><td>g1co-l1cb hidden ใน g1-rare-section display:none ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>shower</td><td>o-shtype(ประตู+ติดตาย/ติดตายอย่าง/ประตูอย่าง) · o-showerhw(เงิน/ดำ+4k/ทอง+6k) · o-corner ✓</td><td><span class="ok badge">ตรง (ยกเว้น i-color)</span></td></tr>
+<tr class="ok"><td>การ์ดราคา sticky</td><td>.ch-pcard/.ch-aside found · sticky ขวา ตรงดราฟ</td><td><span class="ok badge">ตรง</span></td></tr>
+</table>
+</div>
+
+<!-- ========== G4 ========== -->
+<h2>G4 — ตู้อลู + ฝาตู้ Future Tech</h2>
+
+<div class="section">
+<div class="g-header">สรุปรวม G4</div>
+<table>
+<tr><th>หมวด</th><th>รายการ</th><th>ดราฟบอก</th><th>เว็บเป็น</th><th>สถานะ</th></tr>
+<tr class="ok"><td>ปุ่มสลับสินค้า</td><td>ตู้อลู / ฝาตู้ Future Tech</td><td>2 chip สลับ</td><td>cabinet_alu + future_tech เลือกได้ · chip สลับได้</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: ประเภท</td><td>ตู้ทั่วไป/รองเท้า</td><td>2 chip · ตู้ทั่วไป=default</td><td>o-cabtype: wardrobe=default ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: จำนวนบาน</td><td>1/2/3 บาน</td><td>chip 3 ตัว · 2บาน=default</td><td>o-cabdoors: 2=default ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: ชนิดชั้น</td><td>ตามประเภท/อลู/กระจก</td><td>chip 3 ตัว · ตามประเภท=default</td><td>o-shelfmat: ""=ตามประเภท ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: ผนัง 3 ด้าน</td><td>ซ้าย/ขวา/หลัง · วัสดุ อลู/กระจก/สมาร์ทบอร์ด</td><td>ติ๊กอิสระ 3 ด้าน + วัสดุ</td><td>o-cabwall-left/right/back-on ✓ · mat: alu/glass/smart ✓ · สมาร์ทบอร์ด ตรงดราฟ 23มิ.ย.</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: L1 สีตามทั้งใบ</td><td>☑ สีตามทั้งใบ default=ติ๊ก</td><td>o-cabcofollow checked=true · เลิกติ๊ก→L2/L3</td><td>o-cabcofollow checked=true ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: L2 2 คอลัมน์</td><td>L2①สีหน้าบาน | L2②สีโครง (.cab-co-colgrid)</td><td>2 คอลัมน์ grid ตรงดราฟ 23มิ.ย.</td><td>.cab-co-colgrid found ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: L3 พับ</td><td>.cab-co-l3det พับเก็บ</td><td>details พับ ดราฟ 23มิ.ย.</td><td>.cab-co-l3det found ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="warn"><td>ตู้: L2①สีหน้าบาน default</td><td>ขาว/ดำ (ฟรี)</td><td>o-cabfrontcolor: 0=ฟรี default</td><td>o-cabfrontcolor val=0 ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="warn"><td>ตู้: L2②สีโครง default</td><td>อบขาว/ดำ (ฟรี) เมื่อ uncheck L1</td><td>o-cabstructcolor: L1ติ๊ก=-1(ตามหัวใบ) · ปลดติ๊ก→0=ฟรี</td><td>o-cabstructcolor val=-1 เมื่อ follow=true · ต้องทดสอบเมื่อ uncheck ว่า default=0 ✓ หรือไม่</td><td><span class="warn badge">ดูตา</span></td></tr>
+<tr class="ok"><td>ตู้: กระจกชั้น/ผนัง conditional</td><td>โผล่เมื่อ ชนิดชั้น=กระจก หรือ ผนัง=กระจก</td><td>shelfGlassRow / wallGlassRow conditional</td><td>o-shelfglass / o-wallglass มี · shelfGlassRow/wallGlassRow เช็ค class toggle ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ตู้: การ์ดราคา sticky</td><td>.ch-pcard sticky ขวา</td><td>pricebar sticky ดราฟ 23มิ.ย.</td><td>.ch-pcard found ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ฝาตู้: L1 สีตามทั้งใบ</td><td>☑ สีตามทั้งใบ default=ติ๊ก</td><td>o-ftcofollow checked=true</td><td>o-ftcofollow checked=true ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ฝาตู้: วัสดุ อลู/กระจก</td><td>2 chip อลู(def)/กระจก</td><td>o-ftmat default=alu</td><td>o-ftmat val=alu ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="ok"><td>ฝาตู้: สีกระจกธรรมดา 6มม</td><td>ใส/ฝ้า+500/ชาดำ+500/อื่นๆ</td><td>4 chip เมื่อเลือก กระจก</td><td>o-ftglasscolor มี opts ✓</td><td><span class="ok badge">ตรง</span></td></tr>
+<tr class="miss"><td>G4 ใบ: ผนังต่อด้านขึ้นใบ</td><td>ใบต้องโชว์ "ผนังซ้าย อลูทึบ" + "ผนังขวา กระจก"</td><td>ตามผนังที่ติ๊กแต่ละด้าน</td><td>check-g4.mjs: ผนังซ้าย=false · ผนังขวา=true → ใบยังแสดงไม่ครบ</td><td><span class="miss badge">ไม่ผ่าน</span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<div class="g-header">จุดที่ยังไม่ตรงดราฟ G4 — ส่ง dev แก้</div>
+<table>
+<tr><th>#</th><th>จุด</th><th>ดราฟบอก</th><th>เว็บเป็น</th></tr>
+<tr class="miss">
+<td>1</td>
+<td>ใบเสนอราคาตู้: ผนังต่อด้านขึ้นใบไม่ครบ</td>
+<td>เมื่อติ๊กผนังซ้าย = ใบโชว์ "ผนังซ้าย อลูทึบ" · ผนังขวากระจก = ใบโชว์ "ผนังขวา กระจก"</td>
+<td>check-g4.mjs: หาคำ "ผนังซ้าย" ในใบ = false · "ผนังขวา" = true · → ซ้ายยังไม่ขึ้นใบ</td>
+</tr>
+<tr class="warn">
+<td>2</td>
+<td>ตู้: o-cabstructcolor uncheck default</td>
+<td>เมื่อปลด L1 tick: L2②โครง = ขาว/ดำ (ฟรี) = 0 หรือ -1?</td>
+<td>follow=true→val=-1 ✓ · ต้องทดสอบ uncheck แล้วดูว่า default chip ชี้ที่ "อบขาว/ดำ (ฟรี)" ✓ — ดูตาในเบราว์เซอร์จริง</td>
+</tr>
+</table>
+</div>
+
+<!-- สรุปสำหรับส่ง dev -->
+<div class="section" style="background:#FFF9F9;border-color:#F5C0BC;">
+<div class="g-header">สรุปส่ง dev — รายการแก้ที่ยืนยันแล้ว</div>
+<table>
+<tr><th>#</th><th>G</th><th>ชนิด/จุด</th><th>แก้อะไร</th><th>ระดับ</th></tr>
+<tr class="miss">
+<td>1</td><td>G1</td>
+<td>YKK ykk_vent/exhido/tostem — i-type</td>
+<td>ตัด option "หน้าต่าง" ออกจาก i-type select (เหลือแค่ ประตู) · ดราฟ #12: ประตูเท่านั้น</td>
+<td><span class="miss badge">ขาด</span></td>
+</tr>
+<tr class="miss">
+<td>2</td><td>G1</td>
+<td>เลื่อนภายใน inner_top_stack — z3</td>
+<td>เพิ่ม o-u_track (☐ ฝังรางยู) ใน z3 · ดราฟ: ☐ Soft Close / ☐ สลิง 2,000 / ☐ ซ่อนคาน / <b>☐ ฝังรางยู</b> / ☐ เสริมคาน</td>
+<td><span class="miss badge">ขาด</span></td>
+</tr>
+<tr class="miss">
+<td>3</td><td>G1</td>
+<td>shower — i-color</td>
+<td>ตัด i-color (สีอลู 13 ตัว) ออกจาก shower form · เหลือแค่ i-glass + o-showerhw · ดราฟเฟส2: shower เลือกแค่กระจก ไม่ใส่สีอลู</td>
+<td><span class="miss badge">ขาด</span></td>
+</tr>
+<tr class="miss">
+<td>4</td><td>G1</td>
+<td>บานเปลือย frameless_door — มือจับสแตนเลส</td>
+<td>เพิ่ม UX มือจับสแตนเลส: เลือกสี (เงิน/สีอื่น) + กรอกราคาเมื่อสีอื่น (แบบ o-gatewood) · ดราฟเฟส4</td>
+<td><span class="miss badge">ขาด (เฟส4)</span></td>
+</tr>
+<tr class="miss">
+<td>5</td><td>G1</td>
+<td>shower — i-type</td>
+<td>ตัด option "หน้าต่าง" ออก (shower ไม่มีหน้าต่าง)</td>
+<td><span class="miss badge">ขาด</span></td>
+</tr>
+<tr class="miss">
+<td>6</td><td>G4</td>
+<td>ตู้อลู — ใบเสนอราคา ผนังต่อด้าน</td>
+<td>ใบต้องแสดง "ผนังซ้าย อลูทึบ" / "ผนังขวา กระจก" / "ผนังหลัง สมาร์ทบอร์ด" ตามที่ติ๊ก (ซ้ายยังไม่ขึ้นใบ)</td>
+<td><span class="miss badge">ขาด</span></td>
+</tr>
+<tr class="extra">
+<td>7</td><td>G1</td>
+<td>o-solidlower (แผ่นทึบล่าง) โผล่ 30 ชนิด</td>
+<td>check-g1.mjs เก่าบอกตัดทิ้ง · แต่ดราฟ 22มิ.ย. ยังมี "แผ่นทึบล่าง" ใน z2 ทุกชนิด → <b>ถามพี่นัทก่อน ว่า o-solidlower ควรคง/ตัด?</b></td>
+<td><span class="warn badge">รอเคาะ</span></td>
+</tr>
+</table>
+</div>
+
+<p style="color:#6B7280;font-size:11.5px;margin-top:14px;">
+  ไฟล์รายงาน script เดิม: <code>docs/กลุ่ม1-งานบาน-เลื่อนเปิดเฟี้ยม/CHECK-G1-vs-draft-2026-06-23.html</code> · <code>docs/กลุ่ม4-ตู้/CHECK-G4-vs-draft-2026-06-23.html</code><br>
+  ตรวจ: 2026-06-23 · render index.html สดด้วย jsdom · ดราฟ G1 22มิ.ย. + ดราฟ G4 23มิ.ย. · READ-ONLY ห้ามแก้ index
+</p>
+
+</body>
+</html>

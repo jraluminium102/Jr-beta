@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เรตอบสี G2 (ของจริงในระบบ) — 20 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.45}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 12px 50px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:18px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.92}
+  h2{font-size:15px;margin:16px 0 7px;color:#b3122a}
+  .tbox{background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #f1f1f1}
+  th{background:#fafafa;font-weight:700;color:#374151;position:sticky;top:0}
+  td.l,th.l{text-align:left}
+  tr:nth-child(even){background:#fcfcfc}
+  .z{color:#9ca3af}
+  .note{font-size:11.5px;color:#475569;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 11px;margin-top:6px}
+  .note b{color:#b3122a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>เรตอบสี G2 (ของจริงในระบบ · บาท/ตร.ม.)</h1>
+    <p>ดึงจาก index.html (PRODUCTS p.fin + เลื่อน/เปิด-ปิด) · สีอบขาว/ดำ/ไม่อบสี = 0 ทุกตัว</p></div>
+
+  <div class="note">📌 <b>ค่าทำสีบาน = เรตด้านล่างนี้ × พื้นที่บาน × 50%</b> (เฉพาะตอนทำเป็นบาน) · ค่าสีผิว = เรต × พื้นที่ (เต็ม)</div>
+
+  <h2>① ระแนง (บังตา/ผนัง · rn) — 37 กลุ่มเรต (ตามลาย/ขนาด/ระยะ/โครง)</h2>
+  <div class="tbox"><table>
+    <thead><tr><th class="l">รุ่น (ตัวอย่าง)</th><th>จำนวนรุ่น</th><th>เทาซาฮาร่า</th><th>ลายไม้สต๊อก</th><th>อบพิเศษ</th><th>ลายไม้อบพิเศษ</th></tr></thead>
+    <tbody id="rnBody"></tbody>
+  </table></div>
+
+  <h2>② ระแนงเลื่อน (ลูกฟูก · o-bsfinish)</h2>
+  <div class="tbox"><table><thead><tr><th class="l">สี</th><th>เรต</th></tr></thead><tbody id="bsBody"></tbody></table></div>
+
+  <h2>③ ระแนงเปิด-ปิด (o-bocfinish)</h2>
+  <div class="tbox"><table><thead><tr><th class="l">สี</th><th>เรต</th></tr></thead><tbody id="bocBody"></tbody></table></div>
+
+  <div class="note" style="margin-top:14px">หมายเหตุ: ระแนงเลื่อน/เปิด-ปิด เรตคงที่ (1 ชุด) · ระแนง rn เรต<b>ต่างกันตามรุ่น</b> (กล่อง/ระยะโชว์/รวมโครง-ไม่โครง) — เลือกระแนงแบบไหน เรตสีมาตามรุ่นนั้น</div>
+</div>
+
+<script>
+// ระแนง rn: [รุ่นตัวอย่าง, จำนวน, เทาซาฮาร่า, ลายไม้สต๊อก, อบพิเศษ, ลายไม้อบพิเศษ]
+var RN=[
+['rn1–2',4,300,null,1700,2400],['rn3–4',2,400,null,2500,3500],['rn5–6',2,500,null,3300,4700],
+['rn7–8',2,200,null,1100,1600],['rn9–10',2,200,null,1400,2000],['rn13–14',4,300,1000,1400,2000],
+['rn15–16',2,400,1400,1900,2800],['rn17–18',2,500,1600,2200,3200],['rn19–20',2,200,700,1000,1400],
+['rn21–22',2,300,1000,1300,1900],['rn23–24',2,300,1100,1500,2200],['rn25–26',4,300,900,1400,2000],
+['rn27–28',2,400,1200,1900,2800],['rn29–30',2,400,1400,2200,3200],['rn33–34',4,300,1000,1700,2400],
+['rn37–38',2,300,800,1100,1600],['rn41–42',2,400,1200,1700,2400],['rn43–44',2,600,2000,3700,5300],
+['rn45–46',2,800,2700,5200,7500],['rn47–48',2,900,3100,5900,8500],['rn49–50',4,400,1200,2300,3200],
+['rn53–54',4,500,1600,3000,4300],['rn57–58',2,300,1100,2000,2800],['rn59–60',2,400,1400,2400,3500],
+['rn61–62',2,500,1700,2900,4200],['rn63–64',4,600,1900,3300,4700],['rn65–66',2,700,2400,4100,5900],
+['rn67–68',2,800,2900,4900,7000],['rn69–70',4,400,1500,2500,3500],['rn75–76',4,700,2500,3300,4800],
+['rn79–80',2,900,3300,4400,6400],['rn81–82',2,600,1900,3400,4900],['rn83–84',2,300,1000,1500,2200],
+['rn85–86',2,500,1600,2200,3100],['rn87–88',2,500,1800,2800,4000],['rn89',1,700,2500,2500,3500],
+['rn90',1,400,1500,1600,2200]];
+var BS=[['เทาซาฮาร่า',400],['ดำซาฮาร่า',400],['Aztec gray',950],['ลายไม้สต๊อก',1500],['อบพิเศษ',1600],['Fuji',1900],['ลายไม้อบพิเศษ',2200]];
+var BOC=[['เทาซาฮาร่า',500],['ดำซาฮาร่า',500],['Aztec gray',1050],['ลายไม้สต๊อก',1600],['อบพิเศษ',3000],['Fuji',3650],['ลายไม้อบพิเศษ',4300]];
+function f(v){ return v==null?'<span class="z">—</span>':v.toLocaleString(); }
+document.getElementById('rnBody').innerHTML=RN.map(function(r){return '<tr><td class="l">'+r[0]+'</td><td>'+r[1]+'</td><td>'+f(r[2])+'</td><td>'+f(r[3])+'</td><td>'+f(r[4])+'</td><td>'+f(r[5])+'</td></tr>';}).join('');
+document.getElementById('bsBody').innerHTML='<tr><td class="l z">ขาว/ดำ/ไม่อบสี</td><td class="z">0</td></tr>'+BS.map(function(r){return '<tr><td class="l">'+r[0]+'</td><td>'+r[1].toLocaleString()+'</td></tr>';}).join('');
+document.getElementById('bocBody').innerHTML='<tr><td class="l z">ขาว/ดำ/ไม่อบสี</td><td class="z">0</td></tr>'+BOC.map(function(r){return '<tr><td class="l">'+r[0]+'</td><td>'+r[1].toLocaleString()+'</td></tr>';}).join('');
+</script>
+</body>
+</html>

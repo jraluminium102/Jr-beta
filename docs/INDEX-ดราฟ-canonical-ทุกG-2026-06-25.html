@@ -1,0 +1,62 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ canonical ทุก G — ต้นแบบตรวจงาน</title>
+<style>
+:root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb}
+*{box-sizing:border-box;font-family:"Segoe UI",Tahoma,sans-serif}
+body{margin:0;background:#f4f5f7;color:var(--ink);padding:18px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto}
+h1{color:var(--red);font-size:20px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+.g{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.gh{font-weight:800;font-size:15px;color:var(--red);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.gh .st{font-size:11px;font-weight:700;background:#eaf7ee;color:#1e7e45;border:1px solid #a3d9b1;border-radius:6px;padding:1px 8px}
+a.d{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink);font-size:13.5px;margin-top:6px;transition:.12s}
+a.d:hover{border-color:var(--red);background:#fff7f6}
+a.d .tag{font-size:11px;font-weight:700;color:var(--mut);margin-left:auto}
+.note{font-size:12px;color:var(--mut);margin-top:4px}
+.box{background:#fffbe6;border:1px solid #f5d76e;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+</style></head><body><div class="wrap">
+<h1>🗂️ ดราฟ canonical ทุกกลุ่ม — ต้นแบบตรวจงาน (โหมดเต็ม)</h1>
+<div class="sub">เฉพาะดราฟล่าสุดที่ใช้เป็นความจริง (source of truth) ต่อกลุ่ม · 25 มิ.ย. 2569 · เวอร์ชันเก่าทั้งหมดอยู่ในโฟลเดอร์กลุ่ม/_archive</div>
+
+<div class="box">📌 ทุกกลุ่มแก้ให้ตรงดราฟพวกนี้แล้ว (🔴=0 · golden 149/149) · เหลือ G4 กระจก 2 จุด (🟠 พี่ดูเอง) · โหมดคิดเร็วยังไม่ทำ (ไว้ทีหลัง)</div>
+
+<div class="g">
+  <div class="gh">🪟 G1 งานบาน <span class="st">ตรงดราฟแล้ว</span></div>
+  <a class="d" href="_archive/drafts/DRAFT-G1-GROUNDTRUTH-ปุ่มทุกปุ่ม-2026-06-22.html">📄 G1 GROUNDTRUTH — ปุ่มทุกปุ่ม ทุกชนิดบาน (z1/z2/z3) <span class="tag">โครงฟอร์ม</span></a>
+  <a class="d" href="DRAFT-G1G4-L1L2L3-redesign-2026-06-23.html">🎨 กล่องสี L1/L2/L3 (G1+G4) <span class="tag">ระบบสี</span></a>
+</div>
+
+<div class="g">
+  <div class="gh">🚪 G2 รั้ว/ระแนง/ราวกันตก <span class="st">ตรงดราฟแล้ว</span></div>
+  <a class="d" href="กลุ่ม2-รั้วระแนงราวกันตก/DRAFT-G2-ระแนงทำเป็นบาน+มุ้งติดตาย-2026-06-23.html">📄 G2 ระแนงทำเป็นบาน + มุ้งติดตาย <span class="tag">ฟอร์มหลัก</span></a>
+  <a class="d" href="กลุ่ม2-รั้วระแนงราวกันตก/DRAFT-G2-feature-order-2026-06-20.html">📄 G2 ลำดับฟีเจอร์ (ประตูรั้ว งานเสริม/รื้อ) <span class="tag">ลำดับ</span></a>
+  <a class="d" href="กลุ่ม2-รั้วระแนงราวกันตก/DRAFT-G2-color-pricing-2026-06-20.html">🎨 G2 สีระแนง 5 ชิป + ราคา <span class="tag">สี</span></a>
+</div>
+
+<div class="g">
+  <div class="gh">🏠 G3 หลังคา/ฝ้า <span class="st">ตรงดราฟแล้ว</span></div>
+  <a class="d" href="กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-ภาพรวมครบ-2026-06-24.html">📄 G3 ภาพรวมครบ (3 กล่อง/แป/ปลายหลังคา/ฝ้า toggle) <span class="tag">ฟอร์มหลัก ล่าสุด</span></a>
+  <a class="d" href="กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-ux-newstyle-2026-06-22.html">📄 G3 newstyle (3 กล่องสี ลากข้ามกล่อง) <span class="tag">ต้นแบบ UX</span></a>
+  <a class="d" href="กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-สีโครง-L1L2L3-ติ๊กโผล่-2026-06-23.html">🎨 G3 สีโครง L1/L2/L3 ติ๊กโผล่ <span class="tag">สี</span></a>
+</div>
+
+<div class="g">
+  <div class="gh">📦 G4 ตู้อลู/ฝาตู้ <span class="st">ตรงดราฟ (เหลือกระจก 2🟠)</span></div>
+  <a class="d" href="_archive/drafts/DRAFT-G4-ux-2026-06-23.html">📄 G4 ตู้อลู/ฝาตู้ 3 โซน + L1-L3 <span class="tag">ฟอร์มหลัก</span></a>
+  <a class="d" href="DRAFT-G1G4-L1L2L3-redesign-2026-06-23.html">🎨 กล่องสี L1/L2/L3 (G1+G4) <span class="tag">ระบบสี</span></a>
+  <div class="note">🟠 เหลือ: กระจก L2③ ตำแหน่งกล่อง · L3③ กระจก binary vs เต็ม (พี่ดูเอง)</div>
+</div>
+
+<div class="g">
+  <div class="gh">🧊 G6 กั้นห้องกระจก <span class="st">ตรงดราฟ v8</span></div>
+  <a class="d" href="DRAFT-G6-redesign-full-2026-06-23.html">📄 G6 redesign full (6 แท็บ · สี-กระจก · งานเสริม · สรุป) <span class="tag">ฟอร์มหลัก</span></a>
+</div>
+
+<div class="g">
+  <div class="gh">🧾 ใบเสนอราคา — แยกราคา <span class="st">ตรงดราฟ A</span></div>
+  <a class="d" href="DRAFT-price-calc-review-A-full-2026-06-24.html">📄 วิธีคิดราคา A — 3 โหมด (ลูกค้า/แยกส่วน/firm) <span class="tag">ใบ</span></a>
+</div>
+
+<p class="sub" style="margin-top:18px">หมายเหตุ: เปิดไฟล์ไม่ขึ้น = เปิดจากช่อง preview ในแชท หรือ path docs/ ตรง · เวอร์ชันเก่า/ดราฟทดลอง 100+ ไฟล์ ไม่ได้ลิสต์ที่นี่ (อยู่ในโฟลเดอร์กลุ่มแต่ละกลุ่ม)</p>
+</div></body></html>

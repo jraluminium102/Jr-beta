@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REVIEW — G1 v7B บานผสม 3 ชั้น + เฟี้ยมช่องซ้าย/ขวา · 19 มิ.ย. 2026</title>
+<style>
+:root{--red:#B3151D;--green:#16a34a;--blue:#1e40af;--line:#e5e7eb;--bg:#f9fafb;--card:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:#f0f2f5;color:#111;padding:20px;}
+h1{font-size:20px;font-weight:800;color:var(--red);margin-bottom:4px;}
+.sub{font-size:13px;color:#6b7280;margin-bottom:20px;}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.pass{background:#dcfce7;color:#15803d;}
+.warn{background:#fef9c3;color:#92400e;}
+.fail{background:#fee2e2;color:var(--red);}
+.section{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;border:1px solid var(--line);}
+.section h2{font-size:15px;font-weight:800;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.section h2 .num{background:var(--blue);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f3f4f6;padding:6px 10px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid var(--line);}
+td{padding:7px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.old{color:#9ca3af;text-decoration:line-through;}
+.new{color:var(--green);font-weight:700;}
+.check-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.check-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5;}
+.check-list li .icon{font-size:16px;flex:none;margin-top:1px;}
+.btn-link{display:inline-block;padding:8px 18px;background:var(--red);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;margin-right:8px;}
+.btn-link.sec{background:var(--blue);}
+.test-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:8px;}
+.test-card{background:#f7faff;border:1px solid #dbeafe;border-radius:10px;padding:12px 14px;}
+.test-card h4{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;}
+.test-card ol{padding-left:18px;font-size:12.5px;line-height:1.8;color:#374151;}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.result-row:last-child{border:none;}
+.ok{color:var(--green);}
+.na{color:#9ca3af;}
+</style>
+</head>
+<body>
+
+<h1>REVIEW — G1 v7B · 19 มิ.ย. 2026</h1>
+<p class="sub">บานผสม 3 ชั้น (ปรับ/จัดเต็ม) + บานเฟี้ยม ช่องซ้าย/ขวา · branch: quickmode-v2-allG</p>
+
+<div style="margin-bottom:16px;">
+  <a class="btn-link" href="http://localhost:3000/calculator/" target="_blank">🌐 เปิดเว็บจริง</a>
+  <a class="btn-link sec" href="http://localhost:5599/review/" target="_blank">🔍 Review Link</a>
+</div>
+
+<!-- เทสผ่าน -->
+<div class="section">
+  <h2><span class="num">✓</span> ผลเทสอัตโนมัติ</h2>
+  <div class="result-row"><span>golden-snapshot (ราคาทุกตัว)</span><span class="ok badge pass">150/150 ✅</span></div>
+  <div class="result-row"><span>qa-group-audit (ออปชั่นถูกหมวด)</span><span class="ok badge pass">167/167 ✅</span></div>
+</div>
+
+<!-- สิ่งที่แก้ -->
+<div class="section">
+  <h2><span class="num">1</span> สิ่งที่แก้รอบนี้ (8 จุด)</h2>
+  <table>
+    <thead><tr><th>จุด</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>CSS .subitem-row</b></td>
+        <td class="old">display:flex (wrap ไม่ได้)</td>
+        <td class="new">flex-wrap:wrap + .stp stepper + .s-detail small inputs</td>
+      </tr>
+      <tr>
+        <td><b>addSub()</b></td>
+        <td class="old">2 ชั้น: แถวราคา + detail เดิม (⋯ button · ข้อความ/ราคา)</td>
+        <td class="new">3 ชั้น: <br>
+          <b>ปรับ ▾</b> → มุ้ง (ชิป ไม่ใส่/เฟรม/จีบ/ม้วน) + หมายเหตุ + แบ่งบาน (เฉพาะบานทำงาน)<br>
+          <b>จัดเต็ม ▾</b> → คาดตาราง (มี/ไม่มี+ช่อง nh/nv) + ข้อความบนใบ + ราคาแยก</td>
+      </tr>
+      <tr>
+        <td><b>helper functions</b></td>
+        <td class="old">—</td>
+        <td class="new">subBump(), subMosqPick(), subGridPick() (เพิ่มใหม่)</td>
+      </tr>
+      <tr>
+        <td><b>readSubItems()</b></td>
+        <td class="old">อ่าน: kind/w/h/fprice/ftext เท่านั้น</td>
+        <td class="new">เพิ่ม: mosq, gridmark, note, openCt, fixCt, gnh, gnv</td>
+      </tr>
+      <tr>
+        <td><b>calcSubItemPrice()</b></td>
+        <td class="old">คิดแค่ calcUnit (ชนิด)</td>
+        <td class="new">+ มุ้ง ≠ ไม่ใส่ → +3,000 / คาดตาราง มี → +2,000</td>
+      </tr>
+      <tr>
+        <td><b>itemDetail sub lines</b></td>
+        <td class="old">- {ชื่อ} (w × h ม.)</td>
+        <td class="new">- {ชื่อ} (w × h ม.) [มุ้งเฟรม · คาดตาราง 0×1 · หมายเหตุ...]</td>
+      </tr>
+      <tr>
+        <td><b>buildItemOpts fold</b></td>
+        <td class="old">ทิศเปิด ชิป 3 ตัว (ซ้าย/ขวา/แยกกลาง) — ไม่มีช่องซ้าย/ขวา</td>
+        <td class="new">เพิ่ม .fold-split div → โชว์เมื่อเลือก "แยกกลาง" → ช่องซ้าย N ช่อง / ขวา N ช่อง</td>
+      </tr>
+      <tr>
+        <td><b>readItem + itemDetail fold</b></td>
+        <td class="old">อ่านแค่ folddir</td>
+        <td class="new">อ่าน fleft/fright ด้วย → ใบ: "เปิดแยกกลาง (ซ้าย 2 ช่อง / ขวา 2 ช่อง)"</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- checklist กดตรวจ -->
+<div class="section">
+  <h2><span class="num">2</span> Checklist กดตรวจบนเว็บจริง</h2>
+  <div class="test-grid">
+
+    <div class="test-card">
+      <h4>🪟 บานผสม — ปุ่มปรับ</h4>
+      <ol>
+        <li>เลือก G1 บานเลื่อน (sliding_euro)</li>
+        <li>กด + เพิ่มบาน → เลือกชนิดบาน</li>
+        <li>เห็นปุ่ม "ปรับ ▾" ในแถวบานย่อย ✓</li>
+        <li>กด "ปรับ ▾" → เห็นมุ้ง 4 ชิป + ช่องหมายเหตุ</li>
+        <li>เลือก "เฟรม +3,000" → ราคาบานย่อยขึ้น +3,000</li>
+        <li>ราคารวมใบขึ้น +3,000 ✓</li>
+      </ol>
+    </div>
+
+    <div class="test-card">
+      <h4>🪟 บานผสม — แบ่งบาน (บานทำงาน)</h4>
+      <ol>
+        <li>เลือก G1 บานเปิด (casement_euro)</li>
+        <li>+ เพิ่มบาน → เลือก "บานเปิด" (kind=open)</li>
+        <li>กด "ปรับ ▾" → เห็นแถว "แบ่งบาน": เปิด stepper + ติดตาย stepper ✓</li>
+        <li>กด "+" เพิ่มบานเปิด → ตัวเลขขึ้น</li>
+        <li>เลือก "บานกระจกติดตาย" (kind=fix) → ไม่เห็นแถวแบ่งบาน ✓</li>
+      </ol>
+    </div>
+
+    <div class="test-card">
+      <h4>📐 บานผสม — จัดเต็ม คาดตาราง</h4>
+      <ol>
+        <li>กด "ปรับ ▾" → กด "＋ จัดเต็ม ▾" (ล่างสุดของ detail)</li>
+        <li>เห็นชิป "ไม่มี" / "มี +2,000" สำหรับคาดตาราง</li>
+        <li>กด "มี +2,000" → ราคาบานย่อยขึ้น +2,000 ✓</li>
+        <li>เห็นช่อง nอน / nตั้ง เปิดออกมา ✓</li>
+        <li>กด "ไม่มี" → ราคาลงกลับ ✓</li>
+      </ol>
+    </div>
+
+    <div class="test-card">
+      <h4>📄 บานผสม — ข้อมูลในใบ</h4>
+      <ol>
+        <li>ใส่มุ้ง + คาดตาราง + หมายเหตุ</li>
+        <li>กด "ออกใบ" หรือดูรายละเอียด</li>
+        <li>บรรทัดบานย่อยต้องมี: [มุ้งเฟรม · คาดตาราง · ข้อความ] ✓</li>
+      </ol>
+    </div>
+
+    <div class="test-card">
+      <h4>🚪 บานเฟี้ยม — แยกกลาง</h4>
+      <ol>
+        <li>เลือก G1 บานเฟี้ยม (folding)</li>
+        <li>เห็นออปชั่น "ทิศเปิด": ชิป เปิดซ้าย / เปิดขวา / แยกกลาง</li>
+        <li>กด "เปิดซ้าย" หรือ "เปิดขวา" → ไม่เห็นช่องเพิ่ม ✓</li>
+        <li>กด "แยกกลาง" → เห็น "ซ้าย [ ] ช่อง / ขวา [ ] ช่อง" ✓</li>
+        <li>กรอก ซ้าย=2, ขวา=2 → ออกใบดูข้อความ</li>
+        <li>ใบต้องมี: "เปิดแยกกลาง (ซ้าย 2 ช่อง / ขวา 2 ช่อง)" ✓</li>
+      </ol>
+    </div>
+
+    <div class="test-card">
+      <h4>💰 ราคาไม่เพี้ยน (regression)</h4>
+      <ol>
+        <li>บานย่อย default (ไม่ใส่มุ้ง/ไม่มีคาดตาราง) → ราคาเท่าเดิม ✓</li>
+        <li>golden-snapshot 150/150 ✅ (รันแล้ว)</li>
+        <li>qa-group-audit 167/167 ✅ (รันแล้ว)</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+
+<!-- จุดที่ยังไม่ทำ -->
+<div class="section">
+  <h2><span class="num">3</span> งานที่ยังค้าง / deferred</h2>
+  <ul class="check-list">
+    <li><span class="icon">🔵</span><span><b>G1 Cmech bug</b> — บานเปิด+Cmech → ราคาถูก แต่ใบไม่โชว์ชื่อมือจับ (task แยกแชท)</span></li>
+    <li><span class="icon">🔵</span><span><b>openCt/fixCt ขึ้นใบ</b> — แบ่งบาน stepper อ่านค่าแล้ว แต่ยังไม่ push ลงใบสั่งงาน (เพิ่มใน future)</span></li>
+    <li><span class="icon">🔵</span><span><b>บานผสม custom</b> — kind=custom ยังต้องกรอกราคาแยกเอง (ตามเดิม)</span></li>
+  </ul>
+</div>
+
+<p style="font-size:11px;color:#9ca3af;margin-top:20px;">สร้างโดย Claude Code · 2026-06-19 · branch quickmode-v2-allG</p>
+</body>
+</html>

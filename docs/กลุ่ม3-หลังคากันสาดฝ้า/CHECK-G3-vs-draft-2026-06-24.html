@@ -1,0 +1,88 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><title>CHECK G3 vs ดราฟ 24มิ.ย.</title><style>
+body{font-family:'Sarabun','Leelawadee UI',Tahoma,sans-serif;font-size:13px;color:#1f2937;max-width:1040px;margin:0 auto;padding:16px;background:#f9fafb;}
+h1{color:#B3151D;font-size:20px;border-bottom:3px solid #B3151D;padding-bottom:6px;}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.pill{padding:6px 13px;border-radius:20px;font-weight:700;}
+.pk{background:#dcfce7;color:#166534;}.pm{background:#fee2e2;color:#991b1b;}.pn{background:#f3f4f6;color:#374151;}.pt{background:#fef9c3;color:#854d0e;}
+table{border-collapse:collapse;width:100%;background:#fff;margin:8px 0;font-size:12.5px;}
+th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-align:top;}
+th{background:#fbe9ea;color:#B3151D;}
+tr.fail td{background:#fef2f2;}tr.na td{background:#fafafa;color:#6b7280;}
+h2{color:#B3151D;font-size:15px;margin-top:20px;}
+code{background:#f3f4f6;padding:0 4px;border-radius:3px;font-size:11.5px;}
+.foot{color:#6b7280;margin-top:14px;font-size:11.5px;line-height:1.7;}
+</style></head><body>
+<h1>🔍 ตรวจฟอร์ม G3 หลังคา — index.html เทียบ ดราฟ 24 มิ.ย.</h1>
+<p>เกณฑ์: <code>DRAFT-G3-ภาพรวมครบ-2026-06-24.html</code> · render index.html สดด้วย jsdom + เรียก groupGHOpts(ch) ก่อนตรวจ · READ-ONLY (ไม่แก้ index) · รุ่นหลัก roof_vinyl</p>
+<div class="sum">
+<span class="pill pk">🟢 ผ่าน 56/56</span>
+<span class="pill pm">🔴 ไม่ผ่าน 0</span>
+<span class="pill pn">⬜ ข้าม/ตรวจไม่ได้ 0</span>
+</div>
+<h2>ผลตรวจ 56 ข้อ core + 3 ข้อรุ่นอื่น = 59 (เรียงตามหมวด)</h2>
+<table><tr><th>#</th><th></th><th>หมวด</th><th>รายการตรวจ</th><th>หมายเหตุ</th></tr>
+<tr class="ok"><td>1</td><td>🟢</td><td>1·โครงกล่อง</td><td>.i-opts .g4-box มี 3 กล่อง</td><td>พบ 3 กล่อง (ดราฟ: ①สเปกหลัก ②ออปชั่นหลัก ③เสริม)</td></tr>
+<tr class="ok"><td>2</td><td>🟢</td><td>1·โครงกล่อง</td><td>.g4-b1 = DIV (กล่องเปิดเสมอ)</td><td>tag=DIV</td></tr>
+<tr class="ok"><td>3</td><td>🟢</td><td>1·โครงกล่อง</td><td>.g4-b2 = DIV (กล่องเปิดเสมอ)</td><td>tag=DIV</td></tr>
+<tr class="ok"><td>4</td><td>🟢</td><td>1·โครงกล่อง</td><td>.g4-b3 = DETAILS (กล่องพับ)</td><td>tag=DETAILS</td></tr>
+<tr class="ok"><td>5</td><td>🟢</td><td>1·โครงกล่อง</td><td>ไม่มี .gh-opt-cat-det (accordion เทาเดิม)</td><td>ใช้ g4-box แทน accordion เทาแล้ว</td></tr>
+<tr class="ok"><td>6</td><td>🟢</td><td>1·โครงกล่อง</td><td>กล่อง wrap ใน .g4-prebox</td><td>พบ .g4-prebox</td></tr>
+<tr class="ok"><td>7</td><td>🟢</td><td>1·โครงกล่อง</td><td>ทั้ง 3 กล่องอยู่ใน .g4-prebox</td><td>ครบ</td></tr>
+<tr class="ok"><td>8</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>CSS .g4-b1&gt;.g4-bh background #FEF3F2 (แดงอ่อน)</td><td>หัวกล่อง① สีแดงอ่อน</td></tr>
+<tr class="ok"><td>9</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>CSS .g4-b2&gt;.g4-bh background #EFF6FF (ฟ้าอ่อน)</td><td>หัวกล่อง② สีฟ้าอ่อน</td></tr>
+<tr class="ok"><td>10</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>CSS .g4-b3&gt;.g4-bh background #F9FAFB (เทาอ่อน)</td><td>หัวกล่อง③ สีเทาอ่อน</td></tr>
+<tr class="ok"><td>11</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>หัวกล่อง① มีคำ 'สเปกหลัก'</td><td>หัว① = ① สเปกหลัก บังคับ</td></tr>
+<tr class="ok"><td>12</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>หัวกล่อง② มีคำ 'ออปชั่นหลัก'</td><td>หัว② = ② ออปชั่นหลัก เลือกได้</td></tr>
+<tr class="ok"><td>13</td><td>🟢</td><td>2·สีหัวกล่อง</td><td>หัวกล่อง③ มีคำ 'ออปชั่นเสริม'</td><td>หัว③ = ③ ออปชั่นเสริม พับเก็บ</td></tr>
+<tr class="ok"><td>14</td><td>🟢</td><td>3·L1สีโครง</td><td>.rf-l1row มี 1 แถว</td><td>พบ 1 แถว (L1 ทั้งใบ บรรทัดเดียว)</td></tr>
+<tr class="ok"><td>15</td><td>🟢</td><td>3·L1สีโครง</td><td>มีปุ่ม ⟳ เปลี่ยนสีทั้งใบ [onclick*=rfCycleL1]</td><td>พบปุ่ม cycle</td></tr>
+<tr class="ok"><td>16</td><td>🟢</td><td>3·L1สีโครง</td><td>.rf-l1name ไม่ว่าง (โชว์ชื่อสี)</td><td>ชื่อสี = 'สีอบขาว'</td></tr>
+<tr class="ok"><td>17</td><td>🟢</td><td>3·L1สีโครง</td><td>input.rf-l2-cb เป็น checkbox</td><td>type=checkbox</td></tr>
+<tr class="ok"><td>18</td><td>🟢</td><td>3·L1สีโครง</td><td>input.rf-l3-cb เป็น checkbox</td><td>type=checkbox</td></tr>
+<tr class="ok"><td>19</td><td>🟢</td><td>3·L1สีโครง</td><td>.rf-l2-host default ซ่อน (display:none)</td><td>display=none</td></tr>
+<tr class="ok"><td>20</td><td>🟢</td><td>3·L1สีโครง</td><td>.rf-l3-host default ซ่อน (display:none)</td><td>display=none</td></tr>
+<tr class="ok"><td>21</td><td>🟢</td><td>3·L1สีโครง</td><td>L3 host มี .o-rfcoopt (เทียบสีโครง)</td><td>พบ</td></tr>
+<tr class="ok"><td>22</td><td>🟢</td><td>3·L1สีโครง</td><td>L3 host มี .o-rfmatopt (เทียบวัสดุมุง)</td><td>พบ</td></tr>
+<tr class="ok"><td>23</td><td>🟢</td><td>3·L1สีโครง</td><td>L3 host มี .o-rfcocode (รหัสสีพิเศษ)</td><td>พบ</td></tr>
+<tr class="ok"><td>24</td><td>🟢</td><td>3·L1สีโครง</td><td>rfCycleL1 วน 6 สี (มติพี่นัท 24มิ.ย. คงตาม index)</td><td>index _rfL1Cycle=[0,1,2,3,4,5] · ที่ต้องการ=[0,1,2,3,4,5] ✓ ตรงมติ</td></tr>
+<tr class="ok"><td>25</td><td>🟢</td><td>D4·การ์ดราคา</td><td>G3 มีการ์ดราคามุมขวาบน (.ch-aside)</td><td>พบ .ch-aside ✓</td></tr>
+<tr class="ok"><td>26</td><td>🟢</td><td>D4·การ์ดราคา</td><td>G3 ติด class .ch-pcard บน .ch</td><td>ติด ch-pcard ✓</td></tr>
+<tr class="ok"><td>27</td><td>🟢</td><td>D5·สีโครงชิป</td><td>L3 'เปลี่ยนสีโครง' เป็นชิป (select o-rfcoopt ซ่อน)</td><td>o-rfcoopt display=none ✓ชิป</td></tr>
+<tr class="ok"><td>28</td><td>🟢</td><td>D5·สีโครงชิป</td><td>L3 'เปลี่ยนวัสดุมุง' เป็นชิป (select o-rfmatopt ซ่อน)</td><td>o-rfmatopt display=none ✓ชิป</td></tr>
+<tr class="ok"><td>29</td><td>🟢</td><td>D5·สีโครงชิป</td><td>L3 host มีชิป (l3catChips/l3colChips)</td><td>พบชิปใน rf-l3-host = 30 ✓</td></tr>
+<tr class="ok"><td>30</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-roofcolor (สีวัสดุมุง)</td><td>select ซ่อน✓ · ชิป 3 ตัว</td></tr>
+<tr class="ok"><td>31</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-roofbatten (แป)</td><td>select ซ่อน✓ · ชิป 2 ตัว</td></tr>
+<tr class="ok"><td>32</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-roofframe (โครงสร้าง)</td><td>select ซ่อน✓ · ชิป 2 ตัว</td></tr>
+<tr class="ok"><td>33</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-roofend (ปลายหลังคา)</td><td>select ซ่อน✓ · ชิป 3 ตัว (ดราฟต้อง 3)</td></tr>
+<tr class="ok"><td>34</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-rfgut (ชนิดราง รางน้ำ)</td><td>select ซ่อน✓ · ชิป 3 ตัว (ดราฟต้อง 3)</td></tr>
+<tr class="ok"><td>35</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-guttersys (ระบบระบาย)</td><td>select ซ่อน✓ · ชิป 9 ตัว</td></tr>
+<tr class="ok"><td>36</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-rfbeam (คานเหล็กถัก)</td><td>select ซ่อน✓ · ชิป 4 ตัว (ดราฟต้อง 4)</td></tr>
+<tr class="ok"><td>37</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-rfhs (ซ่อนสโลป)</td><td>select ซ่อน✓ · ชิป 3 ตัว (ดราฟต้อง 3)</td></tr>
+<tr class="ok"><td>38</td><td>🟢</td><td>4·ชิป</td><td>ชิป .o-gutter-pipecolor (สีท่อ PVC (รางน้ำ))</td><td>select ซ่อน✓ · ชิป 3 ตัว</td></tr>
+<tr class="ok"><td>39</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfgut มีสแตนเลส (val 3000)</td><td>vals=1000,2000,3000</td></tr>
+<tr class="ok"><td>40</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-gutter-pipecolor มี ดำ+เทา+ขาว (เช็คซ้ำ)</td><td>vals=ขาว,ดำ,เทา</td></tr>
+<tr class="ok"><td>41</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-gutter-chainpat มี ทิวลิป+โลตัส</td><td>vals=ทิวลิป,โลตัส</td></tr>
+<tr class="ok"><td>42</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfpole15 (ตั้งเสา 4" กลม 1,500/ต้น)</td><td>พบ</td></tr>
+<tr class="ok"><td>43</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfbeam มีคานรุ่น3 (val 4400)</td><td>vals=0,2400,3600,4400</td></tr>
+<tr class="ok"><td>44</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfhs มีสมาร์ทบอร์ด (val smart)</td><td>vals=0,comp,smart</td></tr>
+<tr class="ok"><td>45</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfsealer (วัสดุปิดรอยต่อ) + มีสี o-rfsealercolor</td><td>sealer=✓ color=✓</td></tr>
+<tr class="ok"><td>46</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>o-rfdrain (ท่อน้ำทิ้ง PVC พ่วงรางน้ำ)</td><td>vals=,ดำ,ขาว,เทา</td></tr>
+<tr class="ok"><td>47</td><td>🟢</td><td>5·ออปชั่นครบ</td><td>i-rfsampleconfirm เป็น checkbox (ยืนยันตัวอย่าง)</td><td>type=checkbox</td></tr>
+<tr class="ok"><td>48</td><td>🟢</td><td>6·ลำดับ</td><td>สีวัสดุมุง (rf-matcolor-wrap) ขึ้นก่อน สีโครง (rf-colorbox)</td><td>matColor → colorBox ✓</td></tr>
+<tr class="ok"><td>49</td><td>🟢</td><td>6·ลำดับ</td><td>แป (o-roofbatten) ก่อน ต่อปลายวัสดุที่ 2 (o-roof2)</td><td>แป → วัสดุ2 ✓</td></tr>
+<tr class="ok"><td>50</td><td>🟢</td><td>6·ลำดับ</td><td>L1row → L2 → L3 (เรียงบนลงล่าง)</td><td>L1→L2→L3 ✓</td></tr>
+<tr class="ok"><td>51</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>① มี o-roofbatten + o-roofframe + o-roofend</td><td>batten=✓ frame=✓ end=✓</td></tr>
+<tr class="ok"><td>52</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>① มี rf-colorbox (สีโครง) + o-rfgut (รางน้ำ)</td><td>colorbox=✓ rfgut=✓</td></tr>
+<tr class="ok"><td>53</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>② มี o-roof2 (ต่อปลายวัสดุ2) + o-ceilmode (ฝ้า)</td><td>roof2=✓ ceilmode=✓</td></tr>
+<tr class="ok"><td>54</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>② มี sub-details 'โครงเหล็กเสริม/ของเสริม'</td><td>sub-summaries: + ต่อปลายวัสดุที่ 2 (หลังคา 2 วัสดุ · กดเปิด)฿0 | 🏗️ โครงเหล็กเสริม · ของเสริมหลังคา</td></tr>
+<tr class="ok"><td>55</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>② โครงเหล็กเสริม มี o-rfbeam + o-rfhs + o-rfsealer</td><td>rfbeam=✓ rfhs=✓ rfsealer=✓</td></tr>
+<tr class="ok"><td>56</td><td>🟢</td><td>7·อยู่กล่องถูก</td><td>③ ไม่มี o-roofcolor/o-rfbeam หล่นมา</td><td>ไม่หล่น ✓</td></tr>
+</table>
+<h2>🧪 เทสรุ่นอื่น (polyton 8 สี / laminate film)</h2>
+<table><tr><th></th><th>รุ่น</th><th>รายการตรวจ</th><th>หมายเหตุ</th></tr>
+<tr class="ok"><td>🟢</td><td><code>roof_polyton</code></td><td>โพลีตัน 8 สี (ชิป swatch)</td><td>options=8 · chips=8 (ดราฟ 8 สี)</td></tr>
+<tr class="ok"><td>🟢</td><td><code>roof_laminate</code></td><td>ลามิเนต: ชนิดฟิล์ม (o-lamfilm) + ความหนา (o-lamthick)</td><td>film=ใส/เขียว/กันร้อน · thick=4+4/5+5</td></tr>
+<tr class="ok"><td>🟢</td><td><code>roof_laminate</code></td><td>ฟิล์มเป็นชิป (select ซ่อน)</td><td>select ซ่อน✓ · chips=3</td></tr>
+</table>
+<p class="foot">หมายเหตุ: ⬜ = element ไม่พบ/เลือกรุ่นไม่ได้ จึงข้าม · 🔴 ที่ติดป้าย "(เช็คซ้ำ)" = ต่างจากดราฟ ต้องเคาะพี่นัทก่อนแก้ (เช่น จำนวนสี rfCycleL1 · สีท่อ PVC ขาดเทา) · วันที่ตรวจ 2026-06-24</p>
+</body></html>

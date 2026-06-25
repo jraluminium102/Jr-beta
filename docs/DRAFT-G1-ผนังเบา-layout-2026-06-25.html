@@ -1,0 +1,97 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ ผนังเบา — จัดลำดับกล่อง + คำ</title>
+<style>
+:root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--blue:#1e40af;--bg:#f4f5f7}
+*{box-sizing:border-box;font-family:"Segoe UI",Tahoma,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);padding:14px;line-height:1.45;font-size:14px}
+.wrap{max-width:680px;margin:0 auto}
+h1{color:var(--red);font-size:19px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:12px}
+.cols{display:flex;gap:14px;flex-wrap:wrap}
+.col{flex:1;min-width:300px}
+.colhd{font-weight:800;font-size:13px;padding:6px 10px;border-radius:8px;margin-bottom:8px;color:#fff}
+.now{background:#9ca3af}.new{background:var(--red)}
+.blk{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px;position:relative}
+.blk.main{border-left:4px solid var(--red)}
+.blk.opt{border-left:4px solid #cbd5e1;background:#fafafa}
+.blk .n{position:absolute;top:-8px;left:9px;background:var(--blue);color:#fff;font-size:10.5px;font-weight:800;border-radius:5px;padding:1px 6px}
+.lbl{font-size:12px;font-weight:700;color:#374151;margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1.3px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;background:#fff;cursor:default}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.inp{display:inline-block;border:1.3px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;color:var(--mut);background:#fff;min-width:54px;text-align:center}
+.row{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
+.note{font-size:11px;color:var(--mut);margin-top:3px}
+.far{background:#fef3c7;border:1px dashed #f59e0b;border-radius:7px;padding:5px 8px;font-size:11.5px;color:#92400e;margin:6px 0}
+.acc{font-size:12px;font-weight:700;color:var(--red);padding:6px 0}
+.flag{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:8px 11px;font-size:12.5px;color:#991b1b;margin-bottom:12px}
+.ask{background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#3730a3;margin-top:10px}
+.tag{font-size:10px;color:#94a3b8;font-family:monospace}
+</style></head><body><div class="wrap">
+<h1>🧱 ดราฟ ผนังเบา (ผนังทึบ/ฉนวน) — จัดลำดับกล่อง + แก้คำ</h1>
+<div class="sub">ดึงฟิลด์จริงจากเว็บสด · ซ้าย = ตอนนี้ (ที่พี่ว่าห่าง/ไม่สวย) · ขวา = ที่ผมเสนอจัดใหม่ · พี่ดูแล้วบอกลำดับ+คำที่อยากได้ ผมแก้ทีเดียว · 25 มิ.ย.</div>
+
+<div class="flag">⚠️ <b>ปัญหาที่เจอ:</b> "รุ่น/ความหนา" (สมาร์ทบอร์ด / เวเทอร์บล็อค / ยิปซั่มบอร์ด) ซึ่งเป็น <b>วัสดุหลักของผนัง</b> ดันไปซ่อนอยู่ล่างสุดในกล่อง "➕ งานเสริม·หมายเหตุ" — ห่างจากสเปกหลัก (รุ่น/โครง/ทาสี) ทำให้กรอกไม่ต่อเนื่อง</div>
+
+<div class="cols">
+<!-- ===== ตอนนี้ ===== -->
+<div class="col">
+<div class="colhd now">⬅ ตอนนี้ (เว็บสด)</div>
+
+<div class="blk main"><div class="n">1</div><div class="lbl">รุ่นผนังเบา</div>
+<div class="chips"><span class="chip">ผนังเบาภายนอก</span><span class="chip on">ผนังเบาภายใน</span><span class="chip">ISOWALL</span></div></div>
+
+<div class="blk main"><div class="n">2</div><div class="lbl">โครง</div>
+<div class="chips"><span class="chip">อลูมิเนียม</span><span class="chip on">เหล็กชุบซิงค์ (ไร้สนิม)</span></div></div>
+
+<div class="blk main"><div class="n">3</div><div class="lbl">ทาสี</div>
+<div class="chips"><span class="chip on">ทาสีขาว</span><span class="chip">รองพื้นสีขาว</span><span class="chip">ไม่ทา</span></div></div>
+
+<div class="blk main"><div class="n">4</div>
+<div class="chips"><span class="chip on">☑ ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</span></div></div>
+
+<div class="acc">▼ อุปกรณ์เสริม / ออปชั่น</div>
+<div class="blk opt"><div class="lbl">🏗️ โครงสร้าง · แผ่นทึบ · ราง</div>
+<span class="note">ทาสี <span class="inp">0</span> บาท</span></div>
+<div class="blk opt"><div class="lbl">🔧 อุปกรณ์เสริม (ใช้ไม่บ่อย)</div>
+<span class="note">☐ รื้อของเดิม (รายการนี้)</span></div>
+
+<div class="far">📍 ลึกลงไปสุดในกล่อง "➕ งานเสริม·หมายเหตุ (6)" ↓</div>
+<div class="blk opt"><div class="n">5</div><div class="lbl">รุ่น / ความหนา <span class="tag">(วัสดุหลัก! แต่อยู่ล่างสุด)</span></div>
+<div class="chips"><span class="chip on">ไม่ระบุ</span><span class="chip">สมาร์ทบอร์ด หนา 12 มม.</span><span class="chip">เวเทอร์บล็อค ตราช้าง 9 มม. (ฟอยล์ กันร้อน/น้ำ/รา)</span></div>
+<div class="note">ยิปซั่มบอร์ด 12มม (ผนังเบาภายใน) · งานเสริม/วิศวกรรม [____]</div></div>
+</div>
+
+<!-- ===== เสนอจัดใหม่ ===== -->
+<div class="col">
+<div class="colhd new">➡ เสนอจัดใหม่ (กระชับ ต่อเนื่อง)</div>
+
+<div class="blk main"><div class="n">1</div><div class="lbl">รุ่นผนัง</div>
+<div class="chips"><span class="chip">ผนังเบาภายนอก</span><span class="chip on">ผนังเบาภายใน</span><span class="chip">ISOWALL</span></div></div>
+
+<div class="blk main"><div class="n">2</div><div class="lbl">วัสดุแผ่น / ความหนา <span class="tag">(ดึงขึ้นมาอยู่กับสเปกหลัก)</span></div>
+<div class="chips"><span class="chip on">ไม่ระบุ</span><span class="chip">สมาร์ทบอร์ด 12มม</span><span class="chip">เวเทอร์บล็อค ตราช้าง 9มม</span><span class="chip">ยิปซั่มบอร์ด 12มม</span></div>
+<div class="note">(ฟอยล์ กันร้อน/น้ำ/รา — ระบุในใบ · ราคาตามวัสดุ)</div></div>
+
+<div class="blk main"><div class="n">3</div><div class="lbl">โครง</div>
+<div class="chips"><span class="chip">อลูมิเนียม</span><span class="chip on">เหล็กชุบซิงค์ (ไร้สนิม)</span></div></div>
+
+<div class="blk main"><div class="n">4</div><div class="lbl">ทาสี</div>
+<div class="chips"><span class="chip on">ทาสีขาว</span><span class="chip">รองพื้นสีขาว</span><span class="chip">ไม่ทา</span></div></div>
+
+<div class="blk main"><div class="n">5</div>
+<div class="chips"><span class="chip on">☑ ฉนวนกันความร้อน+กันเสียง 3" (+600/ตร.ม.)</span></div></div>
+
+<div class="acc">▼ อุปกรณ์เสริม (พับเก็บ · นานๆใช้)</div>
+<div class="blk opt"><span class="note">ทาสีเพิ่ม <span class="inp">0</span> บาท · ☐ รื้อของเดิม · งานเสริม/วิศวกรรม [____]</span></div>
+
+<div style="font-size:11.5px;color:#1e7e45;font-weight:700;margin-top:8px;">✅ สเปกหลัก (รุ่น→วัสดุ→โครง→ทาสี→ฉนวน) อยู่ติดกันต่อเนื่อง · ของเสริมพับล่าง</div>
+</div>
+</div>
+
+<div class="ask">🙋 <b>พี่จัดลำดับ + แก้คำได้เลย</b> — บอกมาเป็นข้อ เช่น<br>
+• "เอาวัสดุแผ่นไว้บนสุด ก่อนรุ่นผนัง"<br>
+• "เปลี่ยนคำ 'รุ่นผนัง' → '...' · 'วัสดุแผ่น' → '...'"<br>
+• "ฉนวนย้ายไปอยู่ใต้โครง"<br>
+แล้วผมจะแก้โค้ดทีเดียวให้ตรงเป๊ะ (ราคา/logic เดิมไม่แตะ · golden กัน)</div>
+</div></body></html>

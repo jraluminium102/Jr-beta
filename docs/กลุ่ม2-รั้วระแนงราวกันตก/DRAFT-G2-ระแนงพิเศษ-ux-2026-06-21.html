@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ UX ระแนง/ระแนงพิเศษ — กดง่าย + ราคาขวา · 21 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:14px 12px 60px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:17px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.92}
+  .tag{display:inline-block;background:#fff;color:#b3122a;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-right:4px}
+  .grid{display:flex;gap:12px;align-items:flex-start}
+  .form{flex:1 1 auto;min-width:0}
+  .side{flex:0 0 246px;position:sticky;top:10px}
+  @media(max-width:720px){ .grid{flex-direction:column} .side{position:static;flex:1 1 auto;width:100%} }
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:11px}
+  .sec{font-size:12px;font-weight:700;color:#374151;margin:0 0 7px;display:flex;align-items:center;gap:6px}
+  .sec .new{background:#fdecef;color:#b3122a;font-size:10px;border-radius:5px;padding:1px 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{min-height:38px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .chip .dot{width:13px;height:13px;border-radius:50%;border:1px solid #00000022}
+  .sub{font-size:11.5px;color:#6b7280;font-weight:700;margin:9px 0 4px}
+  .casc-step{display:flex;align-items:center;gap:7px;margin:7px 0}
+  .casc-step .n{flex:0 0 20px;height:20px;border-radius:50%;background:#b3122a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .casc-step .cs-lbl{flex:0 0 64px;font-size:11.5px;color:#6b7280;font-weight:700}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+  .num{width:78px;height:40px;border:1.5px solid #d1d5db;border-radius:9px;text-align:center;font-size:14px;font-family:inherit}
+  .num-lbl{font-size:11px;color:#6b7280;font-weight:700;display:block;margin-bottom:2px}
+  .stepper{display:inline-flex;border:1.5px solid #d1d5db;border-radius:9px;overflow:hidden;align-items:center}
+  .stepper button{width:38px;height:40px;border:0;background:#f3f4f6;font-size:18px;cursor:pointer}
+  .stepper input{width:44px;height:40px;border:0;text-align:center;font-size:14px;font-family:inherit}
+  .door-detail{display:none;margin-top:9px;border-top:1px dashed #e5e7eb;padding-top:9px}
+  .door-detail.show{display:block}
+  .optbtns{display:flex;flex-wrap:wrap;gap:7px}
+  .optbtn{min-height:40px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .optbtn .ic{font-size:15px}
+  .optbtn.on{border-color:#16a34a;background:#f0fdf4;color:#166534}
+  .optbtn .pr{font-size:11px;color:#9ca3af;font-weight:700}
+  .optbtn.on .pr{color:#16a34a}
+  /* price card */
+  .pcard{background:#0f172a;color:#e2e8f0;border-radius:14px;padding:14px 15px;box-shadow:0 6px 18px #0f172a22}
+  .pcard h3{margin:0 0 2px;font-size:13px;color:#fff}
+  .pcard .pcsub{font-size:10.5px;color:#64748b;margin-bottom:9px}
+  .pcrow{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0;font-family:"SFMono-Regular",Consolas,monospace}
+  .pcrow span:first-child{color:#94a3b8}
+  .pcrow.add span:last-child{color:#86efac}
+  .pctot{border-top:1px solid #334155;margin-top:8px;padding-top:9px;display:flex;justify-content:space-between;align-items:baseline}
+  .pctot .pl{font-size:12px;color:#cbd5e1;font-weight:700}
+  .pctot .pv{font-size:22px;font-weight:800;color:#fff;font-family:"SFMono-Regular",Consolas,monospace}
+  .pcflash{animation:fl .4s}
+  @keyframes fl{0%{background:#1e3a5f}100%{background:transparent}}
+  .note{font-size:11.5px;color:#475569;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 11px;margin-top:8px}
+  .note b{color:#b3122a}
+  .q{font-size:11.5px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 11px;margin-top:9px}
+  .q b{color:#b45309}
+  .legend{font-size:11px;color:#6b7280;margin:2px 0 10px}
+  .legend .new{background:#fdecef;color:#b3122a;font-weight:700;border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>ดราฟ UX ระแนง / ระแนงพิเศษ — กดง่าย + ราคาโชว์ขวา</h1>
+    <p><span class="tag">21 มิ.ย.</span> 4 จุดที่พี่สั่ง · กดเล่นได้จริง ราคาขวาขยับตามที่กด</p>
+  </div>
+  <div class="legend"><span class="new">ของใหม่</span> = จุดที่ออกแบบเพิ่มตามที่พี่บอก</div>
+
+  <div class="grid">
+    <div class="form">
+
+      <!-- ชนิดระแนงพิเศษ -->
+      <div class="card">
+        <div class="sec">ชนิดระแนงพิเศษ</div>
+        <div class="chips" id="kindChips">
+          <button class="chip on" data-k="gleed" onclick="pickKind(this)">เกล็ดอลู (ลูกฟูก)</button>
+          <button class="chip" data-k="open" onclick="pickKind(this)">หมุนเปิด-ปิด</button>
+        </div>
+      </div>
+
+      <!-- ① ลายระแนง cascade ALL-VISIBLE -->
+      <div class="card">
+        <div class="sec">ลายระแนง <span class="new">โชว์ทุกขั้นเลย (แบบงานรั้ว)</span></div>
+        <div class="casc-step"><div class="n">1</div><div class="cs-lbl">ขนาดกล่อง</div>
+          <div class="chips"><button class="chip on" onclick="pickC(this)">1"x1"</button><button class="chip" onclick="pickC(this)">1"x1.6"</button><button class="chip" onclick="pickC(this)">1"x4"</button><button class="chip" onclick="pickC(this)">1.6"x4"</button></div></div>
+        <div class="casc-step"><div class="n">2</div><div class="cs-lbl">หน้าโชว์</div>
+          <div class="chips"><button class="chip on" onclick="pickC(this)">1"</button><button class="chip" onclick="pickC(this)">4"</button></div></div>
+        <div class="casc-step"><div class="n">3</div><div class="cs-lbl">ระยะห่าง</div>
+          <div class="chips"><button class="chip on" onclick="pickC(this)">2 ซม.</button><button class="chip" onclick="pickC(this)">3 ซม.</button><button class="chip" onclick="pickC(this)">5 ซม.</button></div></div>
+        <div class="note" style="margin-top:8px">เดิม: ระแนงต้องกดทีละขั้น (เลือก ① ก่อน ② ค่อยโผล่) · <b>ใหม่: เห็นครบ 3 ขั้นเลย</b> เหมือนประตูรั้ว กดรวดเดียว</div>
+      </div>
+
+      <!-- ขนาด -->
+      <div class="card">
+        <div class="sec">ขนาด</div>
+        <div class="row">
+          <div><span class="num-lbl">กว้าง (ม.)</span><input class="num" id="w" type="number" value="3.0" step="0.1" oninput="recalc()"></div>
+          <div><span class="num-lbl">สูง (ม.)</span><input class="num" id="h" type="number" value="2.0" step="0.1" oninput="recalc()"></div>
+          <div><span class="num-lbl">ชุด</span>
+            <div class="stepper"><button onclick="step('qty',-1)">−</button><input id="qty" value="1" readonly><button onclick="step('qty',1)">+</button></div></div>
+        </div>
+      </div>
+
+      <!-- ③ ทำเป็นบาน + ชนิดการเปิด + กี่บาน -->
+      <div class="card">
+        <div class="sec">🚪 ทำเป็นบาน <span class="new">เลือกรุ่น → ได้ชนิดการเปิด + กี่บาน</span></div>
+        <div class="sub">รูปแบบบาน</div>
+        <div class="chips" id="doorChips">
+          <button class="chip on" data-d="" onclick="pickDoor(this)">ไม่ทำ (ระแนงเปล่า)</button>
+          <button class="chip" data-d="slide" onclick="pickDoor(this)">บานเลื่อน</button>
+          <button class="chip" data-d="swing" onclick="pickDoor(this)">บานเปิด</button>
+          <button class="chip" data-d="fold" onclick="pickDoor(this)">บานเฟี้ยม</button>
+        </div>
+        <div class="door-detail" id="doorDetail">
+          <div class="sub">ชนิดการเปิด (ของรูปแบบบานนี้)</div>
+          <div class="chips" id="openChips">
+            <button class="chip on" data-o="open" onclick="pickOpen(this)">เปิดได้</button>
+            <button class="chip" data-o="fixed" onclick="pickOpen(this)">ติดตาย</button>
+          </div>
+          <div class="sub">จำนวนบาน <span style="font-weight:400;color:#9ca3af">(ราคาค่าประตูตามจำนวน)</span></div>
+          <div class="row">
+            <div class="stepper"><button onclick="step('panels',-1)">−</button><input id="panels" value="2" readonly><button onclick="step('panels',1)">+</button></div>
+            <span id="fixedNote" style="font-size:11.5px;color:#6b7280"></span>
+          </div>
+          <div class="sub">ถ้า "เปิดได้" + หลายบาน → ติดตายกี่บาน?</div>
+          <div class="row"><div class="stepper"><button onclick="step('fixed',-1)">−</button><input id="fixed" value="0" readonly><button onclick="step('fixed',1)">+</button></div>
+            <span style="font-size:11.5px;color:#6b7280">เช่น 4 บาน เปิด 2 ติดตาย 2</span></div>
+        </div>
+      </div>
+
+      <!-- ③ มอเตอร์ + งานสายไฟ (เฉพาะข้อที่มีมอเตอร์) -->
+      <div class="card" id="motorCard">
+        <div class="sec">⚙ มอเตอร์ <span style="font-size:11px;font-weight:400;color:#9ca3af">(เฉพาะ เกล็ดอลู / หมุนเปิด-ปิด / ประตูรั้ว)</span></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer"><input type="checkbox" id="hasMotor" onchange="toggleMotor()" style="width:19px;height:19px"> เอามอเตอร์</label>
+        <div id="motorWire" style="display:none;margin-top:10px;border-top:1px dashed #e5e7eb;padding-top:10px">
+          <div class="sub" style="margin-top:0">🔌 งานสายไฟมอเตอร์ <span class="new">ใหม่</span> <span style="font-weight:400;color:#9ca3af">— พิมพ์ข้อความ + กรอกราคาเอง</span></div>
+          <input type="text" id="wireText" placeholder="รายละเอียด เช่น เดินสายไฟจากตู้ควบคุม 15 ม. + เบรกเกอร์" oninput="recalc()" style="width:100%;height:40px;border:1.5px solid #d1d5db;border-radius:9px;padding:0 11px;font-size:13px;font-family:inherit;margin-bottom:8px">
+          <div class="row"><span class="num-lbl" style="margin:0">ราคา (กรอกเอง)</span><input type="number" id="wirePrice" value="0" oninput="recalc()" class="num" style="width:120px"> <span style="font-size:12px;color:#6b7280">บาท</span></div>
+        </div>
+      </div>
+
+      <!-- ④ สี 3 ชั้น (L1 ทั้งใบ → L2 เปลี่ยนสี → L3 อัปอบพิเศษ) -->
+      <div class="card">
+        <div class="sec">🎨 สี (เฉพาะข้อนี้) — 3 ชั้น <span class="new">L1 ทั้งใบ → L2 เปลี่ยนสี → L3 อัปอบพิเศษ</span></div>
+        <div style="font-size:12px;color:#374151;background:#f9fafb;border-radius:8px;padding:9px 11px;margin-bottom:9px"><b>ชั้น 1 — ทั้งใบ:</b> <b>สีอบขาว</b> <span style="color:#9ca3af">(ตั้งบนสุดของใบ · ทุกข้อใช้ตามนี้ · ฟรี)</span></div>
+        <div class="chips"><button class="chip" id="coTog" onclick="coToggle()">＋ ใช้สีต่างจากทั้งใบ (ข้อนี้)</button></div>
+        <div id="coBox" style="display:none;margin-top:10px;background:#fbf7f2;border:1px solid #e9d8c4;border-radius:10px;padding:11px">
+          <div class="sub" style="margin-top:0">ชั้น 2 — เลือกสีของข้อนี้ <span style="font-weight:400;color:#9ca3af">(คิดเงิน = เรต × พื้นที่)</span></div>
+          <div class="chips" id="coSw">
+            <button class="chip" data-c="400" data-haspecial="1" onclick="pickL2(this)"><span class="dot" style="background:#6b6e70"></span>เทาซาฮาร่า</button>
+            <button class="chip" data-c="950" data-haspecial="0" onclick="pickL2(this)"><span class="dot" style="background:#9ca3af"></span>Aztec</button>
+            <button class="chip" data-c="1500" data-haspecial="1" onclick="pickL2(this)"><span class="dot" style="background:#a9712f"></span>ลายไม้สต๊อก</button>
+          </div>
+          <div id="coUpRow" style="display:none;margin-top:11px;padding:9px 11px;background:#fff;border:1px dashed #d4a373;border-radius:8px">
+            <div class="sub" style="margin:0 0 6px">ชั้น 3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;color:#9ca3af">(เลือกได้ · คิดเงินเพิ่มอีก)</span></div>
+            <div class="chips" id="coUp">
+              <button class="chip on" data-up="0" onclick="pickL3(this)">ไม่อัป</button>
+              <button class="chip" data-up="1600" onclick="pickL3(this)">อบสีพิเศษ (+เรต)</button>
+              <button class="chip" data-up="2200" onclick="pickL3(this)">ลายไม้อบพิเศษ (+เรต)</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:9px;padding:8px 11px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#166534" id="coResult">ตามทั้งใบ — ไม่เพิ่มเงิน</div>
+        <p style="font-size:11px;color:#92722a;margin:8px 0 0">⊕ L2 (เปลี่ยนสี) + L3 (อบพิเศษ) คิดเงินเพิ่ม<b>ทั้งคู่</b> · เรต × พื้นที่ · เหมือน G1</p>
+      </div>
+
+      <!-- ② อุปกรณ์เสริม/ออปชั่น = ปุ่มโชว์ ไม่ซ่อน -->
+      <div class="card">
+        <div class="sec">อุปกรณ์เสริม / ออปชั่น <span class="new">ปุ่มโชว์เลย ไม่ซ่อนในกล่องพับ</span></div>
+        <div class="optbtns">
+          <button class="optbtn" id="ob-frame" onclick="toggleOpt(this,'frame')"><span class="ic">▢</span> ครอบวงกบ <span class="pr">+ตามม.</span></button>
+          <button class="optbtn" id="ob-remove" onclick="toggleOpt(this,'remove')"><span class="ic">🗑</span> รื้อของเดิม</button>
+          <button class="optbtn" id="ob-eng" onclick="toggleOpt(this,'eng')"><span class="ic">🛠</span> งานเสริม/วิศวกรรม</button>
+        </div>
+        <div class="note" style="margin-top:9px">เดิม: ของพวกนี้จมในกล่องพับ "🔧 อุปกรณ์เสริม" ต้องกดเปิดก่อน · <b>ใหม่: เป็นปุ่มโชว์เลย</b> ติ๊กเปิด/ปิดง่าย (ไม่ใช่ชนิด/ประเภท — เป็นของเสริม)</div>
+      </div>
+
+    </div><!-- /form -->
+
+    <!-- ④ การ์ดราคา ขวา · อัปเดตทุกครั้งที่กด -->
+    <div class="side">
+      <div class="pcard" id="pcard">
+        <h3>💰 ราคารายการนี้ <span class="new" style="font-size:9px">ใหม่</span></h3>
+        <div class="pcsub">ขยับทุกครั้งที่กด · ปัดขึ้นพัน</div>
+        <div id="pcBody"></div>
+        <div class="pctot"><span class="pl">รวม/ชุด</span><span class="pv" id="pcTot">—</span></div>
+        <div class="pctot" style="border:0;padding-top:4px"><span class="pl" style="font-size:11px;color:#94a3b8">× ชุด → รวมทั้งหมด</span><span class="pv" id="pcGrand" style="font-size:15px">—</span></div>
+      </div>
+      <div class="q"><b>เรตในดราฟเป็นตัวเลขสมมุติ</b> (ให้เห็นว่าราคาขยับตามที่กด) · ของจริง engine คิดเป๊ะ</div>
+    </div>
+  </div>
+
+  <div class="q">
+    <b>รอบนี้ (21มิ.ย. รอบ 2) — 3 ของใหม่ในดราฟ:</b><br>
+    <b>③ มอเตอร์ + งานสายไฟ</b> — ติ๊ก "เอามอเตอร์" → โผล่ช่อง 🔌 สายไฟ (พิมพ์ข้อความ + กรอกราคาเอง) · เฉพาะข้อที่มีมอเตอร์<br>
+    <b>④ สี 3 ชั้น</b> — กด "ใช้สีต่างจากทั้งใบ" → เลือกสี (L2 +เงิน) → ถ้ามีรุ่นอบพิเศษโผล่ "⬆ อัปอบพิเศษ" (L3 +เงินอีก) · เหมือน G1<br>
+    <b>② การ์ดราคา</b> — โชว์รายการคำนวณในการ์ดแล้ว (กดดูทุกบรรทัด) + จะทำให้ <b>sticky เลื่อนตามจอ</b> ตอนลงโค้ดจริง<br>
+    <span style="color:#166534">✅ ของเดิม (ระยะห่างครบ/ทำเป็นบาน/ออปชั่นโชว์/การ์ดขวา) ขึ้นเว็บแล้ว · ① มอเตอร์เลื่อน(38.2) ไม่ใส่ ตามที่พี่บอก</span>
+  </div>
+</div>
+
+<script>
+var state={ kind:'gleed', w:3.0, h:2.0, qty:1, door:'', open:'open', panels:2, fixed:0, opts:{},
+  coOn:false, c2:0, c2name:'', c3:0, c3name:'', motor:false };
+function pickKind(b){ sel(b,'#kindChips'); state.kind=b.dataset.k; recalc(); }
+function pickC(b){ [].forEach.call(b.parentNode.querySelectorAll('.chip'),function(c){c.classList.remove('on');}); b.classList.add('on'); recalc(); }
+function pickDoor(b){ sel(b,'#doorChips'); state.door=b.dataset.d; document.getElementById('doorDetail').classList.toggle('show',!!state.door); recalc(); }
+function pickOpen(b){ sel(b,'#openChips'); state.open=b.dataset.o; recalc(); }
+function toggleOpt(b,k){ b.classList.toggle('on'); state.opts[k]=b.classList.contains('on'); recalc(); }
+function sel(b,scope){ [].forEach.call(document.querySelector(scope).querySelectorAll('.chip'),function(c){c.classList.remove('on');}); b.classList.add('on'); }
+function step(id,d){ var el=document.getElementById(id); var min=(id==='qty'||id==='panels')?1:0; var v=Math.max(min,(parseInt(el.value)||min)+d); el.value=v; state[id]=v; recalc(); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function ru(n){ return Math.ceil(n/1000)*1000; }
+// ── สี 3 ชั้น ──
+function coToggle(){ state.coOn=!state.coOn; var t=document.getElementById('coTog'); t.classList.toggle('on',state.coOn); t.textContent=(state.coOn?'✓ ':'＋ ')+'ใช้สีต่างจากทั้งใบ (ข้อนี้)';
+  document.getElementById('coBox').style.display=state.coOn?'block':'none';
+  if(!state.coOn){ state.c2=0;state.c3=0;state.c2name='';state.c3name=''; } recalc(); }
+function pickL2(b){ sel(b,'#coSw'); state.c2=parseFloat(b.dataset.c)||0; state.c2name=b.textContent.trim();
+  state.c3=0;state.c3name=''; // เปลี่ยนสี → reset L3
+  var up=document.getElementById('coUpRow'); up.style.display=b.dataset.haspecial==='1'?'block':'none';
+  [].forEach.call(document.querySelectorAll('#coUp .chip'),function(c){c.classList.remove('on');}); var first=document.querySelector('#coUp .chip'); if(first)first.classList.add('on');
+  recalc(); }
+function pickL3(b){ sel(b,'#coUp'); state.c3=parseFloat(b.dataset.up)||0; state.c3name=state.c3>0?b.textContent.trim():''; recalc(); }
+function toggleMotor(){ state.motor=document.getElementById('hasMotor').checked; document.getElementById('motorWire').style.display=state.motor?'block':'none'; recalc(); }
+function recalc(){
+  state.w=parseFloat(document.getElementById('w').value)||0;
+  state.h=parseFloat(document.getElementById('h').value)||0;
+  var A=state.w*state.h, rows=[];
+  var baseRate=state.kind==='gleed'?2800:3200;
+  rows.push(['ระแนง'+(state.kind==='gleed'?' เกล็ดอลู':' หมุนเปิด-ปิด')+' ('+A.toFixed(1)+' ตร.ม.)',A*baseRate,false]);
+  // ④ สี 3 ชั้น
+  if(state.coOn && state.c2>0) rows.push(['L2 สี '+state.c2name+' ('+state.c2+'×'+A.toFixed(1)+')',state.c2*A,true]);
+  if(state.coOn && state.c3>0) rows.push(['L3 อัป '+state.c3name+' ('+state.c3+'×'+A.toFixed(1)+')',state.c3*A,true]);
+  // ทำเป็นบาน
+  if(state.door){ var perPanel=state.door==='swing'?6000:state.door==='fold'?7000:5000;
+    var doorC=perPanel*Math.max(1,state.panels);
+    rows.push(['ค่าทำบาน '+state.panels+' บาน'+(state.open==='fixed'?' (ติดตายล้วน)':(state.fixed>0?(' · ติดตาย '+state.fixed):'')),doorC,true]);
+    document.getElementById('fixedNote').textContent=(state.open==='fixed')?'ติดตายล้วน':'เปิดได้ '+Math.max(0,state.panels-state.fixed)+' บาน'; }
+  // ③ มอเตอร์ + สายไฟ
+  if(state.motor){ rows.push(['มอเตอร์',state.kind==='gleed'?Math.ceil((Math.max(state.w,state.h))/3)*10000:18000,true]);
+    var wp=parseFloat((document.getElementById('wirePrice')||{}).value)||0; var wt=((document.getElementById('wireText')||{}).value||'').trim();
+    if(wp>0) rows.push(['🔌 สายไฟมอเตอร์'+(wt?(' ('+wt.slice(0,18)+(wt.length>18?'…':'')+')'):''),wp,true]); }
+  if(state.opts.frame) rows.push(['ครอบวงกบ',Math.max(800,A*200),true]);
+  if(state.opts.remove) rows.push(['รื้อของเดิม',1500,true]);
+  if(state.opts.eng) rows.push(['งานเสริม/วิศวกรรม',2000,true]);
+  // สรุปกล่องสี
+  var cr=document.getElementById('coResult');
+  if(!state.coOn) cr.innerHTML='ตามทั้งใบ (สีอบขาว) — ไม่เพิ่มเงิน';
+  else cr.innerHTML='ข้อนี้: <b>'+(state.c2name||'(ยังไม่เลือก)')+'</b>'+(state.c3name?(' ⬆ <b>'+state.c3name+'</b>'):'')+' = +'+fmt((state.c2+state.c3)*A)+' บาท';
+  var sum=rows.reduce(function(a,r){return a+r[1];},0), per=ru(sum), grand=per*state.qty;
+  document.getElementById('pcBody').innerHTML=rows.map(function(r){return '<div class="pcrow'+(r[2]?' add':'')+'"><span>'+r[0]+'</span><span>'+(r[2]?'+':'')+fmt(r[1])+'</span></div>';}).join('');
+  document.getElementById('pcTot').textContent=fmt(per);
+  document.getElementById('pcGrand').textContent=fmt(grand)+' ฿';
+  var pc=document.getElementById('pcard'); pc.classList.remove('pcflash'); void pc.offsetWidth; pc.classList.add('pcflash');
+}
+recalc();
+</script>
+</body>
+</html>

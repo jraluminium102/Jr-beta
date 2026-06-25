@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สรุปสิ่งที่จะแก้ G6 — ตารางเต็มบาน + จัดลำดับ (20 มิ.ย.)</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --jr:#B3151D;--jr-light:#fdf3f3;--jr-bd:#e8c0c2;
+  --green:#065F46;--green-bg:#ECFDF5;--green-bd:#6EE7B7;
+  --amber:#92400E;--amber-bg:#FFF7ED;--amber-bd:#FCD34D;
+  --blue:#0369A1;--blue-bg:#E0F2FE;--blue-bd:#7DD3FC;
+  --gray:#6B7280;--border:#E5E7EB;--ink:#1F2937;--muted:#9CA3AF;
+  --gh:#7C3AED;--gh-bg:#F5F3FF;--gh-bd:#C4B5FD;
+}
+body{font-family:'Leelawadee UI','Tahoma','Noto Sans Thai',sans-serif;font-size:14px;color:var(--ink);background:#f0f2f5;padding:14px 10px 60px;line-height:1.55;}
+.wrap{max-width:680px;margin:0 auto;}
+.head{background:var(--jr);color:#fff;padding:14px 16px;border-radius:12px 12px 0 0;}
+.head h1{font-size:17px;font-weight:700;}
+.head .sub{font-size:12px;opacity:.9;margin-top:3px;}
+.body{background:#fff;border:1.5px solid var(--jr-bd);border-top:0;border-radius:0 0 12px 12px;padding:14px 16px;}
+
+.scope{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--amber);margin-bottom:16px;}
+.scope b{color:#7c2d12;}
+
+.card{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
+.card-head{padding:9px 12px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px;}
+.card-head .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:auto;}
+.c-new{background:var(--green-bg);border-bottom:1px solid var(--green-bd);color:var(--green);}
+.c-new .badge{background:var(--green);color:#fff;}
+.c-fix{background:var(--blue-bg);border-bottom:1px solid var(--blue-bd);color:var(--blue);}
+.c-fix .badge{background:var(--blue);color:#fff;}
+.c-move{background:var(--jr-light);border-bottom:1px solid var(--jr-bd);color:var(--jr);}
+.c-move .badge{background:var(--jr);color:#fff;}
+
+.ba{display:flex;gap:0;}
+.ba-col{flex:1;padding:10px 12px;font-size:12.5px;}
+.ba-col.before{background:#fafafa;border-right:1px dashed var(--border);}
+.ba-col .lbl{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;}
+.before .lbl{color:var(--muted);}
+.after .lbl{color:var(--green);}
+.ba-col ul{list-style:none;}
+.ba-col li{padding:2px 0 2px 16px;position:relative;}
+.ba-col li::before{content:'·';position:absolute;left:4px;color:var(--muted);font-weight:700;}
+.after li.hl{color:var(--green);font-weight:700;}
+.after li.hl::before{content:'✚';color:var(--green);font-size:11px;}
+.strike{text-decoration:line-through;color:var(--muted);}
+
+.meta{padding:8px 12px;background:#F9FAFB;border-top:1px solid var(--border);font-size:11.5px;color:var(--gray);}
+.meta code{background:#fff;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'Cascadia Code',monospace;font-size:11px;color:var(--jr);}
+
+.order-box{border:1.5px solid var(--gh-bd);border-radius:10px;padding:0;overflow:hidden;margin-bottom:14px;}
+.order-box .oh{background:var(--gh-bg);color:var(--gh);font-weight:800;font-size:13px;padding:9px 12px;border-bottom:1px solid var(--gh-bd);}
+.order-grid{display:flex;}
+.order-grid .oc{flex:1;padding:10px 12px;font-size:12px;}
+.order-grid .oc.before{background:#fafafa;border-right:1px dashed var(--border);}
+.order-grid .lbl{font-size:10.5px;font-weight:800;margin-bottom:6px;}
+.order-grid .before .lbl{color:var(--muted);}
+.order-grid .after .lbl{color:var(--green);}
+.order-grid ol{margin-left:18px;}
+.order-grid li{padding:1.5px 0;}
+.order-grid li.hl{color:var(--green);font-weight:700;}
+.order-grid li.dim{color:var(--muted);}
+.order-grid .sect{font-size:10.5px;font-weight:800;color:#9CA3AF;margin:6px 0 2px;text-transform:uppercase;}
+
+.rules{background:var(--jr-light);border:1px solid var(--jr-bd);border-radius:8px;padding:11px 13px;font-size:12.5px;}
+.rules .rt{font-weight:800;color:var(--jr);margin-bottom:6px;}
+.rules li{margin-left:18px;padding:2px 0;}
+
+.link-row{margin-top:16px;text-align:center;}
+.link-row a{display:inline-block;background:var(--gh);color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;}
+.q{margin-top:16px;background:#FFFBEB;border:1.5px solid var(--amber-bd);border-radius:8px;padding:11px 13px;font-size:13px;color:var(--amber);font-weight:700;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>🔲 สรุปสิ่งที่จะแก้ — G6 กั้นห้องกระจก</h1>
+    <div class="sub">เพิ่มตารางเต็มบาน + จัดลำดับฟีเจอร์ใหม่ · 20 มิ.ย. 2026 · ก่อนส่งคิวกลาง</div>
+  </div>
+  <div class="body">
+
+    <div class="scope">
+      <b>📌 ขอบเขต:</b> แก้แค่ <b>UI + ลำดับ section</b> ของฟอร์มกรอกบาน G6 (ฟังก์ชัน <code style="background:#fff;padding:1px 4px;border-radius:3px;">g6rRenderOpt</code>) ·
+      <b style="color:#991b1b;">ไม่แตะ engine / สูตรราคา / ค่าที่ส่ง</b> ทั้ง 3 งาน
+    </div>
+
+    <!-- ── งาน 1: ตารางเต็มบาน ── -->
+    <div class="card">
+      <div class="card-head c-new">① เพิ่ม "ตารางเต็มบาน +5,000" <span class="badge">ของขาด</span></div>
+      <div class="ba">
+        <div class="ba-col before">
+          <div class="lbl">ตอนนี้ G6</div>
+          <ul>
+            <li>เสริมกระจกมีแค่ <b>คาดตาราง</b> + <b>ลูกฟูก</b></li>
+            <li class="strike">ไม่มีปุ่มตารางเต็มบานเลย</li>
+            <li style="color:var(--amber);margin-top:4px;">⚠ ทั้งที่ G1 มี + engine รองรับอยู่แล้ว</li>
+          </ul>
+        </div>
+        <div class="ba-col after">
+          <div class="lbl">จะเป็น</div>
+          <ul>
+            <li>คาดตาราง</li>
+            <li class="hl">ตารางเต็มบาน +5,000 (ใต้คาดตาราง)</li>
+            <li>ลูกฟูก / คอมโพ</li>
+            <li style="margin-top:4px;color:var(--blue);">โผล่<b>เฉพาะ โซลิด วัน / ทู</b></li>
+          </ul>
+        </div>
+      </div>
+      <div class="meta">เพิ่ม 1 ปุ่ม toggle · ใช้ <code>G6RtogOpt('fullgrid')</code> ที่มีอยู่แล้ว · เงื่อนไข กว้าง≤1.2/สูง≤3 + ราคา 5,000 = engine คุมเอง (<code>prod.full_grid</code>)</div>
+    </div>
+
+    <!-- ── งาน 2: กระจก chips ── -->
+    <div class="card">
+      <div class="card-head c-fix">② กระจก: dropdown → ชิป (chips) <span class="badge">กดง่าย</span></div>
+      <div class="ba">
+        <div class="ba-col before">
+          <div class="lbl">ตอนนี้ G6</div>
+          <ul>
+            <li class="strike">SELECT dropdown ยาว 66 ตัวเลือก</li>
+            <li>ต้องกดเปิด + เลื่อนหาเอง</li>
+          </ul>
+        </div>
+        <div class="ba-col after">
+          <div class="lbl">จะเป็น</div>
+          <ul>
+            <li class="hl">ชิป 5 หมวด → เลือกรุ่น</li>
+            <li>ทั่วไป · เทมเปอร์ · ลามิเนต · อินซูเลท · พิเศษ</li>
+            <li>เห็นทีเดียว กดทีเดียว (แบบ G1)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="meta">เปลี่ยนแค่ตัวเลือก UI · ค่าที่ส่ง = <code>glassIdx</code> เดิม · ราคา/engine ไม่แตะ</div>
+    </div>
+
+    <!-- ── งาน 3: สีอลู visible ── -->
+    <div class="card">
+      <div class="card-head c-move">③ สีอลู (เฟรม): ย้ายออกจากพับ → โชว์ตลอด <span class="badge">ใช้บ่อย</span></div>
+      <div class="ba">
+        <div class="ba-col before">
+          <div class="lbl">ตอนนี้ G6</div>
+          <ul>
+            <li class="strike">ซ่อนในพับ "⚙ ตัวเลือกเพิ่มเติม"</li>
+            <li>ต้องกดเปิดก่อนทุกครั้ง (ทั้งที่ทุกบานต้องเลือกสี)</li>
+          </ul>
+        </div>
+        <div class="ba-col after">
+          <div class="lbl">จะเป็น</div>
+          <ul>
+            <li class="hl">โชว์ตลอด · วางหลังกระจก</li>
+            <li>ชิป + จุดสี (มีอยู่แล้ว แค่ย้ายที่)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="meta">ย้าย block สีอลู จากกลุ่ม <code>more</code> (พับ) → <code>freq</code> (โชว์) · ไม่เปลี่ยนตัวเลือก</div>
+    </div>
+
+    <!-- ── ลำดับ before/after ── -->
+    <div class="order-box">
+      <div class="oh">📐 ลำดับฟีเจอร์ต่อบาน — เทียบเดิม ↔ ใหม่</div>
+      <div class="order-grid">
+        <div class="oc before">
+          <div class="lbl">เดิม</div>
+          <div class="sect">โชว์</div>
+          <ol>
+            <li>มือจับ · ล็อก</li>
+            <li>มุ้ง</li>
+            <li class="dim">กระจก (dropdown)</li>
+            <li>คาด · ลูกฟูก</li>
+          </ol>
+          <div class="sect">พับ</div>
+          <ol start="5">
+            <li class="dim">สีอลู</li>
+            <li>ทาสี · ครอบ · ดรอป · รื้อ</li>
+          </ol>
+        </div>
+        <div class="oc after">
+          <div class="lbl">ใหม่</div>
+          <div class="sect">โชว์</div>
+          <ol>
+            <li>มือจับ · ล็อก</li>
+            <li class="hl">กระจก (ชิป)</li>
+            <li class="hl">สีอลู (ขึ้นมาโชว์)</li>
+            <li>มุ้ง</li>
+            <li>คาด → <b>เต็มบาน</b> → ลูกฟูก</li>
+          </ol>
+          <div class="sect">พับ</div>
+          <ol start="6">
+            <li>ทาสี · ครอบ · ดรอป · รื้อ · แขนค้ำ</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <div class="rt">🛡 กฎกันงานพัง</div>
+      <ul>
+        <li>ไม่แตะ engine / สูตร / ค่าที่ส่ง — แค่ UI + ลำดับ</li>
+        <li>snapshot golden 143 ตัว ก่อน-หลัง ต้องนิ่ง</li>
+        <li>เทสเบราว์เซอร์จริง 6 ชนิดบาน (เลื่อน/เปิด/เฟี้ยม/ติดตาย/โซลิด/shower)</li>
+        <li>โซลิด = ต้องเห็นตารางเต็มบาน · บานอื่น = ต้องไม่เห็น</li>
+      </ul>
+    </div>
+
+    <div class="link-row">
+      <a href="/DRAFT-G6-ux-2026-06-19.html" target="_blank">▶ เปิดดราฟกดเล่นจริง (ฟอร์มเต็ม)</a>
+    </div>
+
+    <div class="q">❓ พี่นัทดูแล้วโอเคไหมครับ — ถ้าโอเค ผมเขียนใบสั่งลงคิวกลางให้เลย</div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRAFT G2 — ระแนงทำเป็นบาน + มุ้งติดตาย · 23 มิ.ย. 2026</title>
+<style>
+:root{
+  --red:#b3122a; --red2:#8d0f20; --redbg:#fdecef;
+  --ink:#1f2937; --mut:#6b7280; --line:#e5e7eb;
+  --blue:#1e5aa8; --bluebg:#eaf3fb; --blueline:#cfe3f5;
+  --green:#166534; --greenbg:#f0fdf4; --greenline:#bbf7d0;
+  --yellow:#92400e; --yellowbg:#fffbeb; --yellowline:#fde68a;
+  --info:#0369a1; --infobg:#f0f9ff; --infoline:#bae6fd;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,"Sarabun","Leelawadee UI","Segoe UI",Tahoma,sans-serif;}
+body{margin:0;background:#f0f2f5;color:var(--ink);font-size:14px;line-height:1.55;}
+.wrap{max-width:720px;margin:0 auto;padding:12px 12px 80px;}
+
+/* Header */
+.hd{background:var(--red);color:#fff;border-radius:14px;padding:15px 18px 13px;margin-bottom:14px;}
+.hd h1{margin:0 0 3px;font-size:17px;font-weight:800;letter-spacing:-.3px;}
+.hd p{margin:0;font-size:12px;opacity:.93;line-height:1.5;}
+.tag{background:#fff;color:var(--red);border-radius:4px;padding:1px 7px;font-weight:800;font-size:11px;letter-spacing:.3px;}
+.tag-demo{background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 7px;font-weight:700;font-size:11px;}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.card-title{font-size:13.5px;font-weight:800;color:var(--red);margin:0 0 10px;display:flex;align-items:center;gap:6px;}
+.card-sub{font-size:11.5px;color:var(--mut);margin-bottom:10px;}
+
+/* Labels */
+.lbl{font-size:12px;color:var(--mut);font-weight:700;margin:11px 0 5px;letter-spacing:.3px;}
+.lbl:first-child{margin-top:0;}
+.hint{font-size:11px;color:var(--mut);font-weight:400;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{min-height:36px;padding:0 13px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;
+  font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  transition:border-color .1s,background .1s;}
+.chip:active{transform:scale(.96);}
+.chip.on{border-color:var(--red);background:var(--redbg);color:var(--red);}
+.chip.on-info{border-color:var(--info);background:var(--infobg);color:var(--info);}
+.chip.big{min-height:44px;font-size:13.5px;}
+.chip.sm{min-height:32px;font-size:12px;padding:0 10px;}
+.chip .price{font-size:11px;opacity:.7;font-weight:400;margin-left:2px;}
+
+/* Toggle (ติ๊กเปิดแล้วโผล่) */
+.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:10px;cursor:pointer;transition:border-color .1s,background .1s;}
+.toggle-row.on{border-color:var(--red);background:var(--redbg);}
+.toggle-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--red);flex-shrink:0;}
+.toggle-row .tl{font-size:13.5px;font-weight:700;flex:1;}
+.toggle-row.on .tl{color:var(--red);}
+.toggle-body{display:none;margin-top:10px;padding:12px 14px;background:#f9fafb;border-radius:10px;border:1px solid var(--line);}
+.toggle-body.on{display:block;}
+
+/* Section divider */
+.sec-div{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--mut);font-size:11.5px;}
+.sec-div::before,.sec-div::after{content:'';flex:1;height:1px;background:var(--line);}
+
+/* Size row */
+.size-row{display:flex;gap:8px;flex-wrap:wrap;}
+.size-row .f{flex:1;min-width:72px;}
+.size-row label{font-size:11px;color:var(--mut);display:block;margin-bottom:2px;}
+.size-row input{width:100%;height:38px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 9px;
+  font-size:14px;font-family:inherit;background:#fff;color:var(--ink);}
+.size-row input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(179,18,42,.12);}
+.auto-badge{font-size:10.5px;font-weight:700;color:#059669;background:#d1fae5;border-radius:3px;padding:1px 5px;margin-left:3px;}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;}
+.stepper button{width:36px;height:38px;border:1.5px solid #d1d5db;background:#f8fafc;
+  font-size:18px;cursor:pointer;color:var(--red);}
+.stepper button:first-child{border-radius:8px 0 0 8px;border-right:0;}
+.stepper button:last-child{border-radius:0 8px 8px 0;border-left:0;}
+.stepper input{width:48px;text-align:center;border:1.5px solid #d1d5db;border-radius:0;border-left:0;border-right:0;
+  height:38px;font-size:14px;font-family:inherit;}
+
+/* Color dot */
+.dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0;}
+
+/* Price box */
+.pricebox{background:var(--greenbg);border:1px solid var(--greenline);border-radius:10px;padding:11px 13px;font-size:13px;}
+.pricebox .row{display:flex;justify-content:space-between;padding:2.5px 0;}
+.pricebox .row.dim{color:var(--mut);}
+.pricebox .tot{border-top:1px dashed #86efac;margin-top:6px;padding-top:7px;font-weight:800;color:var(--green);font-size:14px;}
+.pricebox .tot .sub-tot{font-size:11.5px;font-weight:600;color:var(--mut);margin-top:2px;}
+
+/* Quote preview */
+.quote-preview{border:1px solid #e2c4c9;border-radius:11px;overflow:hidden;margin-top:10px;}
+.quote-preview .qh{background:#fff;border-bottom:2px solid var(--red);padding:8px 12px;
+  font-size:12px;font-weight:800;color:var(--red);}
+.quote-preview .qb{padding:10px 13px;font-size:12.5px;}
+.quote-preview .ln{padding:2px 0 2px 14px;position:relative;line-height:1.6;}
+.quote-preview .ln:before{content:'–';position:absolute;left:0;color:#9ca3af;}
+.quote-preview .ln.opt-ln{color:var(--green);font-weight:700;}
+.quote-preview .ln.opt-ln:before{content:'→';color:var(--green);}
+.quote-preview .ln.add{color:#1e5aa8;}
+
+/* Group box */
+.grp{border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+.grp.blue{background:var(--bluebg);border:1px solid var(--blueline);}
+.grp.yellow{background:var(--yellowbg);border:1px solid var(--yellowline);}
+.grp-t{font-size:12.5px;font-weight:800;margin-bottom:8px;}
+.grp.blue .grp-t{color:var(--blue);}
+.grp.yellow .grp-t{color:var(--yellow);}
+
+/* Notes */
+.note{font-size:12px;background:var(--infobg);border:1px solid var(--infoline);border-radius:9px;padding:10px 13px;margin-top:10px;color:#0c4a6e;line-height:1.65;}
+.note b{color:var(--red);}
+.note.warn{background:#fefce8;border-color:#fde68a;color:#713f12;}
+.note.question{background:#f5f3ff;border-color:#ddd6fe;color:#4c1d95;}
+
+/* Sticky price bar */
+.pricebar{position:sticky;bottom:10px;background:var(--red);color:#fff;border-radius:12px;
+  padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
+  font-weight:700;margin-top:10px;box-shadow:0 4px 14px rgba(179,18,42,.35);z-index:99;}
+.pricebar .big{font-size:20px;letter-spacing:-.5px;}
+.pricebar .sub{font-size:11px;opacity:.85;margin-top:1px;}
+
+/* Section heading */
+.sec-hd{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.8px;text-transform:uppercase;margin:16px 0 8px;}
+
+/* Badge */
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;}
+.badge.cut{background:#fee2e2;color:#991b1b;}
+.badge.new{background:#dcfce7;color:#166534;}
+
+/* Collapsed section (รายการที่ไม่ได้ใช้บ่อย) */
+details.extras{margin-top:10px;}
+details.extras summary{cursor:pointer;font-size:12.5px;color:var(--mut);font-weight:700;
+  padding:7px 11px;background:#f9fafb;border:1px solid var(--line);border-radius:8px;list-style:none;}
+details.extras summary::-webkit-details-marker{display:none;}
+details.extras summary::after{content:' ▾';}
+details.extras[open] summary{border-radius:8px 8px 0 0;border-bottom:none;}
+details.extras .extras-body{border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:10px 13px;background:#fff;}
+
+/* Collapsed sub-panel */
+.sub-panel{display:none;margin-top:10px;}
+.sub-panel.on{display:block;}
+
+/* Demo ribbon */
+.demo-ribbon{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:7px 12px;
+  font-size:12px;color:#92400e;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="hd">
+    <h1>DRAFT G2 — ระแนงทำเป็นบาน + มุ้งติดตาย</h1>
+    <p><span class="tag">ดราฟ 23 มิ.ย. 2026</span> <span class="tag-demo">ราคาประมาณ · DEMO</span>&nbsp;
+    2 งานค้าง: ① ออปชั่นบาน G1 เมื่อทำระแนงเป็นบาน · ② มุ้งติดตายกันยุงตามซี่ระแนง</p>
+  </div>
+
+  <div class="demo-ribbon">
+    ⚡ ราคาในดราฟเป็นค่าประมาณสาธิต — ของจริงดึงจาก engine (calcUnit/doorStructBase/imp22) เมื่อ dev ลง index.html
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- ส่วนที่ 1: ระแนงทำเป็นบาน + ออปชั่นบาน G1 -->
+  <!-- ======================================================== -->
+
+  <!-- ฟอร์มระแนง -->
+  <div class="card">
+    <div class="card-title">ฟอร์มงานระแนง</div>
+    <div class="card-sub">เลือกประเภทระแนง → ใส่ขนาด → ติ๊ก "ทำเป็นบาน" → ออปชั่นบาน G1 จะโผล่ทันที</div>
+
+    <!-- ประเภทระแนง -->
+    <div class="lbl">ประเภทระแนง</div>
+    <div class="chips" id="rnTypeChips">
+      <button class="chip big on" data-v="bangta" onclick="setRnType(this)">บังตา</button>
+      <button class="chip big" data-v="phanan" onclick="setRnType(this)">ผนัง</button>
+      <button class="chip big" data-v="klet" onclick="setRnType(this)">เกล็ด</button>
+    </div>
+
+    <!-- ขนาด -->
+    <div class="lbl" style="margin-top:12px;">ขนาด</div>
+    <div class="size-row">
+      <div class="f"><label>กว้าง (ม.)</label><input id="rnW" type="number" value="3.0" step="0.1" min="0" oninput="recalc()"></div>
+      <div class="f"><label>สูง (ม.)</label><input id="rnH" type="number" value="2.5" step="0.1" min="0" oninput="recalc()"></div>
+      <div class="f"><label>ชุด</label>
+        <div class="stepper"><button onclick="step('rnQty',-1)">−</button><input id="rnQty" value="1" oninput="recalc()"><button onclick="step('rnQty',1)">+</button></div>
+      </div>
+    </div>
+
+    <!-- สีระแนง -->
+    <div class="lbl">สีอลู</div>
+    <div class="chips" id="rnColorChips">
+      <button class="chip sm on" data-v="white" data-add="0" onclick="setRnColor(this)"><span class="dot" style="background:#f9f9f9"></span>อบขาว</button>
+      <button class="chip sm" data-v="black" data-add="0" onclick="setRnColor(this)"><span class="dot" style="background:#222"></span>ดำ</button>
+      <button class="chip sm" data-v="sahara" data-add="300" onclick="setRnColor(this)"><span class="dot" style="background:#8a8175"></span>เทาซาฮาร่า <span class="price">+300/ตร.ม.</span></button>
+      <button class="chip sm" data-v="wood_stock" data-add="1000" onclick="setRnColor(this)"><span class="dot" style="background:#9c6b3f"></span>ลายไม้สต๊อก <span class="price">+1,000/ตร.ม.</span></button>
+      <button class="chip sm" data-v="special" data-add="1700" onclick="setRnColor(this)">อบพิเศษ <span class="price">+1,700/ตร.ม.</span></button>
+    </div>
+
+    <!-- แนวซี่ระแนง -->
+    <div class="lbl" style="margin-top:12px;">แนวซี่ระแนง</div>
+    <div class="chips" id="rnDirChips">
+      <button class="chip sm on" data-v="ตั้ง" onclick="setChip('rnDirChips',this);recalc()">แนวตั้ง</button>
+      <button class="chip sm" data-v="นอน" onclick="setChip('rnDirChips',this);recalc()">แนวนอน</button>
+    </div>
+
+    <!-- โครงสร้าง -->
+    <div class="lbl" style="margin-top:12px;">โครงสร้าง</div>
+    <div class="chips" id="rnFrameChips">
+      <button class="chip sm on" data-v="noframe" data-add="0" onclick="setRnFrame(this)">ไม่โครง <span class="price">(ราคาต่ำกว่า)</span></button>
+      <button class="chip sm" data-v="withframe" data-add="1500" onclick="setRnFrame(this)">รวมโครง <span class="price">+1,500/ตร.ม.</span></button>
+    </div>
+
+    <!-- ===== จุด 3: มุ้งติดตาย — ย้ายขึ้นมาก่อน "งานเสริม" ===== -->
+    <div class="sec-div" style="margin-top:16px;">มุ้งติดตาย</div>
+
+    <label class="toggle-row" id="mosqFixToggleRow" onclick="toggleMosqFix()">
+      <input type="checkbox" id="mosqFixCb" onclick="event.stopPropagation()">
+      <span class="tl">เพิ่มมุ้งติดตาย (กันยุงตามซี่ระแนง)</span>
+      <span style="font-size:11px;color:var(--mut);">+ราคา addon</span>
+    </label>
+
+    <div class="toggle-body" id="mosqFixBody">
+
+      <!-- จุด 4: เพิ่มผ้ามุ้ง chips -->
+      <div class="lbl">ผ้ามุ้ง</div>
+      <div class="chips" id="mosqFabricChips">
+        <button class="chip sm on" data-v="fiber" data-add="0" onclick="setMosqFabric(this)">ผ้าไฟเบอร์ <span class="price">(มาตรฐาน)</span></button>
+        <button class="chip sm" data-v="cat" data-add="300" onclick="setMosqFabric(this)">ผ้ากันแมว <span class="price">หนากว่า · +300/ตร.ม. <span class="tag-demo" style="padding:0 4px;font-size:10px;">DEMO</span></span></button>
+        <button class="chip sm" data-v="rat" data-add="800" onclick="setMosqFabric(this)">ผ้ากันหนูสแตนเลส <span class="price">+800/ตร.ม. <span class="tag-demo" style="padding:0 4px;font-size:10px;">DEMO</span></span></button>
+      </div>
+
+      <!-- ขนาดมุ้ง -->
+      <div class="lbl" style="margin-top:10px;">ขนาดมุ้ง</div>
+      <div class="chips" id="mosqSzChips">
+        <button class="chip on" data-v="auto" onclick="setMosqSz(this)">เท่าระแนง (auto) <span id="mosqAutoSize">3.0×2.5 ม.</span></button>
+        <button class="chip" data-v="manual" onclick="setMosqSz(this)">กรอกเอง</button>
+      </div>
+      <div id="mosqManualSize" style="display:none;margin-top:8px;">
+        <div class="size-row">
+          <div class="f"><label>กว้าง (ม.)</label><input id="mosqW" type="number" value="3.0" step="0.1" oninput="recalcMosq()"></div>
+          <div class="f"><label>สูง (ม.)</label><input id="mosqH" type="number" value="2.5" step="0.1" oninput="recalcMosq()"></div>
+        </div>
+      </div>
+
+      <!-- สีกรอบมุ้ง -->
+      <div class="lbl" style="margin-top:10px;">สีกรอบมุ้ง (4 สี)</div>
+      <div class="chips" id="mosqFixColorChips">
+        <button class="chip on" data-v="white" data-add="0" onclick="setMosqFixColor(this)"><span class="dot" style="background:#f9f9f9"></span>อบขาว (ฟรี)</button>
+        <button class="chip" data-v="black" data-add="0" onclick="setMosqFixColor(this)"><span class="dot" style="background:#222"></span>ดำ (ฟรี)</button>
+        <button class="chip" data-v="sahara" data-add="1" onclick="setMosqFixColor(this)"><span class="dot" style="background:#8a8175"></span>เทาซาฮาร่า <span class="price">+ค่าทำสีกรอบ×0.5</span></button>
+        <button class="chip" data-v="wood" data-add="1" onclick="setMosqFixColor(this)"><span class="dot" style="background:#9c6b3f"></span>ลายไม้สต๊อก <span class="price">+ค่าทำสีกรอบ×0.5</span></button>
+      </div>
+
+      <!-- ราคา -->
+      <div class="pricebox" id="mosqFixPricebox" style="margin-top:12px;">
+        <div class="row dim">กดติ๊กเพื่อดูราคา</div>
+      </div>
+
+      <!-- Quote preview มุ้งติดตาย -->
+      <div class="quote-preview" style="margin-top:10px;">
+        <div class="qh">บรรทัดเพิ่มเติมในใบเสนอราคา</div>
+        <div class="qb">
+          <div class="ln">บังตาผนังระแนง 1"x1.6" โชว์ 1" เว้น 5ซม. ไม่โครง</div>
+          <div class="ln">ระแนงอลูมิเนียมกล่อง · สีอบขาว · แนวตั้ง</div>
+          <div class="ln add" id="mosqFixQuoteLine">—</div>
+        </div>
+      </div>
+
+      <!-- Note หลักการ -->
+      <div class="note" style="margin-top:10px;">
+        <b>หลักการมุ้งติดตาย:</b><br>
+        • addon บวกเพิ่มจากราคาระแนง · ปิด = ไม่กระทบราคาเดิม (golden ปลอดภัย)<br>
+        • ราคา = สูตร imp22 (ผ้าไฟเบอร์ติดตาย) ตามพื้นที่ · ขนาด auto=เท่าระแนง<br>
+        • สีขาว/ดำ ฟรี · เทาซาฮาร่า/ลายไม้ = +ค่าทำสีกรอบ (×0.5 ตามกฎมุ้งเดิม)<br>
+        • ใบเสนอราคา: โผล่เป็นบรรทัดเพิ่มต่อจากบรรทัดระแนง
+      </div>
+
+    </div><!-- /toggle-body #mosqFixBody -->
+
+    <div class="sec-div">งานเสริม</div>
+
+    <!-- ===== TOGGLE: ทำเป็นบาน ===== -->
+    <label class="toggle-row" id="doorToggleRow" onclick="toggleDoor()">
+      <input type="checkbox" id="doorCb" onclick="event.stopPropagation()">
+      <span class="tl">ทำเป็นบาน (ระแนงไม่โครง + บวกค่าทำบาน)</span>
+      <span style="font-size:11px;color:var(--mut);">ติ๊กเพื่อระบุชนิดบาน</span>
+    </label>
+
+    <!-- ===== BODY: ออปชั่นบาน (โผล่เมื่อติ๊ก) ===== -->
+    <div class="toggle-body" id="doorBody">
+
+      <!-- หมายเหตุ: ระแนงสลับไม่โครงอัตโนมัติ -->
+      <div class="note" style="margin-bottom:12px;font-size:11.5px;">
+        ติ๊ก "ทำเป็นบาน" → <b>ระแนงสลับเป็น "ไม่โครง" อัตโนมัติ</b> (บานให้โครงเอง · กันคิดซ้ำ) · ราคาสุดท้าย = ค่าระแนงไม่โครง + ค่าทำบาน
+      </div>
+
+      <!-- ชนิดบาน: ปุ่ม grid แบบ G1 -->
+      <div class="lbl">ชนิดบาน <span class="hint">(เลือกแล้วออปชั่นเปลี่ยนตาม)</span></div>
+      <!-- พี่นัทเคาะ 23มิ.ย.: ทำเป็นปุ่มเปิด/ปิด ให้คัดเองว่าจะเอาชนิดไหนให้ลูกค้าเลือก -->
+      <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11.5px;">
+        <b style="color:#9a3412;">🔧 เปิด/ปิดชนิดบานที่จะให้เลือก</b> <span class="hint">(ติ๊กเอาออกได้ตามต้องการ)</span>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;">
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="sliding_sms" checked onchange="curateDoor()"> เลื่อนเซมิ SMS</label>
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="sliding_euro" checked onchange="curateDoor()"> เลื่อนยูโร</label>
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="sliding_top" checked onchange="curateDoor()"> เลื่อนรางบน</label>
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="casement_euro" checked onchange="curateDoor()"> บานเปิด</label>
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="folding" checked onchange="curateDoor()"> บานเฟี้ยม</label>
+          <label style="font-weight:600;cursor:pointer;"><input type="checkbox" class="curate" data-t="swing" checked onchange="curateDoor()"> บานสวิง</label>
+        </div>
+      </div>
+      <div class="chips" id="doorTypeChips">
+        <button class="chip big on" data-v="sliding_sms" onclick="setDoorType(this)">บานเลื่อน<br><small style="font-size:10px;">เซมิ SMS</small></button>
+        <button class="chip big" data-v="sliding_euro" onclick="setDoorType(this)">บานเลื่อน<br><small style="font-size:10px;">ยูโร</small></button>
+        <button class="chip big" data-v="sliding_top" onclick="setDoorType(this)">บานเลื่อน<br><small style="font-size:10px;">รางบน</small></button>
+        <button class="chip big" data-v="casement_euro" onclick="setDoorType(this)">บานเปิด<br><small style="font-size:10px;">ยูโร</small></button>
+        <button class="chip big" data-v="folding" onclick="setDoorType(this)">บานเฟี้ยม<br><small style="font-size:10px;">ยูโร</small></button>
+        <button class="chip big" data-v="swing" onclick="setDoorType(this)">บานสวิง<br><small style="font-size:10px;">เปิด 2 ทาง</small></button>
+      </div>
+
+      <!-- จำนวนบาน + ติดตาย -->
+      <div class="lbl" style="margin-top:12px;">จำนวนบานในระแนง</div>
+      <div class="size-row">
+        <div class="f">
+          <label>บานรวม <span class="auto-badge">auto</span></label>
+          <div class="stepper"><button onclick="step('doorPanels',-1)">−</button><input id="doorPanels" value="2" oninput="recalc()"><button onclick="step('doorPanels',1)">+</button></div>
+        </div>
+        <div class="f">
+          <label>ติดตาย (บาน) <span class="hint">max = บาน−1</span></label>
+          <div class="stepper"><button onclick="step('doorFixed',-1)">−</button><input id="doorFixed" value="0" oninput="recalc()"><button onclick="step('doorFixed',1)">+</button></div>
+        </div>
+      </div>
+
+      <!-- ===== จุด 1: ออปชั่นราง — บานเลื่อนรางล่าง (SMS/ยูโร) ===== -->
+      <div class="sub-panel" id="opt-sliding" style="margin-top:10px;">
+        <div class="grp blue">
+          <div class="grp-t">บานเลื่อน — ออปชั่น</div>
+
+          <!-- railOptWrap: โชว์เฉพาะรางล่าง (SMS/ยูโร) · ซ่อนเมื่อ sliding_top -->
+          <div id="railOptWrap">
+            <div class="lbl">ราง</div>
+            <div class="chips" id="railChips">
+              <button class="chip sm on" data-v="standard" onclick="setChip2('railChips',this);recalc()">รางกันน้ำ (มาตรฐาน)</button>
+              <button class="chip sm" data-v="low7" onclick="setChip2('railChips',this);recalc()">รางเตี้ย 7มม. <span class="price">+500</span></button>
+            </div>
+          </div>
+
+          <div class="lbl" style="margin-top:8px;">ชุดล็อค</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="keyed" onclick="setChip2('lockChips',this);recalc()">มีกุญแจ</button>
+            <button class="chip sm" data-v="nokey" onclick="setChip2('lockChips',this);recalc()">ไม่มีกุญแจ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ออปชั่น: บานเปิด ===== -->
+      <div class="sub-panel" id="opt-casement" style="margin-top:10px;">
+        <div class="grp blue">
+          <div class="grp-t">บานเปิด — ออปชั่น</div>
+          <div class="lbl">โช้คอัด</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="none" onclick="setChip2('closerChips',this);recalc()">ไม่มี</button>
+            <button class="chip sm" data-v="yes" onclick="setChip2('closerChips',this);recalc()">มีโช้คอัด <span class="price">+5,000</span></button>
+          </div>
+          <div class="lbl" style="margin-top:8px;">ธรณี</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="std" onclick="setChip2('threshChips',this)">กันน้ำ (มาตรฐาน)</button>
+            <button class="chip sm" data-v="turtle" onclick="setChip2('threshChips',this)">หลังเต่า + Drop Seal <span class="price">+1,000</span></button>
+            <button class="chip sm" data-v="none" onclick="setChip2('threshChips',this)">ไม่มีธรณี</button>
+          </div>
+          <div class="lbl" style="margin-top:8px;">ชุดล็อค</div>
+          <div class="chips">
+            <button class="chip sm" data-v="no" onclick="setChip2('lockCasChips',this)">ไม่มี</button>
+            <button class="chip sm on" data-v="lock" onclick="setChip2('lockCasChips',this)">มีชุดล็อก</button>
+            <button class="chip sm" data-v="key" onclick="setChip2('lockCasChips',this)">มีล็อก + กุญแจ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ออปชั่น: บานเฟี้ยม ===== -->
+      <div class="sub-panel" id="opt-folding" style="margin-top:10px;">
+        <div class="grp blue">
+          <div class="grp-t">บานเฟี้ยม — ออปชั่น</div>
+          <div class="lbl">ทิศเปิด</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="left" onclick="setChip2('foldDirChips',this)">เปิดซ้าย</button>
+            <button class="chip sm" data-v="right" onclick="setChip2('foldDirChips',this)">เปิดขวา</button>
+            <button class="chip sm" data-v="center" onclick="setChip2('foldDirChips',this)">แยกกลาง</button>
+          </div>
+          <div class="lbl" style="margin-top:8px;">ธรณีเฟี้ยม</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="outer" onclick="setChip2('threshFoldChips',this)">กันน้ำภายนอก</button>
+            <button class="chip sm" data-v="inner" onclick="setChip2('threshFoldChips',this)">หลังเต่าภายใน</button>
+          </div>
+          <div class="lbl" style="margin-top:8px;">ชุดล็อค</div>
+          <div class="chips">
+            <button class="chip sm" data-v="no" onclick="setChip2('lockFoldChips',this)">ไม่มี</button>
+            <button class="chip sm on" data-v="lock" onclick="setChip2('lockFoldChips',this)">มีชุดล็อก</button>
+            <button class="chip sm" data-v="key" onclick="setChip2('lockFoldChips',this)">มีล็อก + กุญแจ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ออปชั่น: บานสวิง (เปิด 2 ทาง · ราคาเท่าบานเปิด · พี่นัทเคาะ 23มิ.ย.) ===== -->
+      <div class="sub-panel" id="opt-swing" style="margin-top:10px;">
+        <div class="grp blue">
+          <div class="grp-t">บานสวิง — ออปชั่น <span class="hint" style="font-weight:400;">(เปิดได้ 2 ทาง · ราคาเท่าบานเปิด)</span></div>
+          <div class="note" style="font-size:11px;margin:0 0 8px;background:#fff;border-color:var(--greenline);color:var(--green);">โช้คอัด — <b>มีให้ในตัว (รวมในราคาแล้ว)</b></div>
+          <div class="lbl">ธรณี</div>
+          <div class="chips">
+            <button class="chip sm on" data-v="turtle" onclick="setChip2('swingThreshChips',this)">หลังเต่า</button>
+            <button class="chip sm" data-v="none" onclick="setChip2('swingThreshChips',this)">ไม่มีธรณี</button>
+          </div>
+          <div class="lbl" style="margin-top:8px;">มือจับ</div>
+          <div class="chips" id="swingHandleChips">
+            <button class="chip sm on" data-v="std" onclick="setSwingHandle(this)">สแตนเลสมาตรฐาน <span class="price">(ฟรี)</span></button>
+            <button class="chip sm" data-v="lux" onclick="setSwingHandle(this)">สแตนเลสอร่าม <span class="price">(+ตามขนาด)</span></button>
+          </div>
+          <div id="swingHandleSize" style="display:none;margin-top:7px;">
+            <div class="lbl">ขนาดมือจับสแตนเลสอร่าม</div>
+            <select id="swingHandleSizeSel" onchange="recalc()" style="width:100%;height:38px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;">
+              <option value="1500">30.5 ซม. (+1,500)</option>
+              <option value="2000">45 ซม. (+2,000)</option>
+              <option value="2000">60 ซม. (+2,000)</option>
+              <option value="2500">80 ซม. (+2,500)</option>
+              <option value="3000">100 ซม. (+3,000)</option>
+              <option value="3200">120 ซม. (+3,200)</option>
+            </select>
+          </div>
+          <div class="lbl" style="margin-top:8px;">ชุดล็อค <span class="hint">(เริ่มต้น = มีล็อก+กุญแจ)</span></div>
+          <div class="chips">
+            <button class="chip sm" data-v="no" onclick="setChip2('swingLockChips',this)">ไม่มี</button>
+            <button class="chip sm" data-v="lock" onclick="setChip2('swingLockChips',this)">มีชุดล็อก</button>
+            <button class="chip sm on" data-v="key" onclick="setChip2('swingLockChips',this)">มีล็อก + กุญแจ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== จุด 2: ตัดคาดตาราง / สีอลูบาน / กระจกบาน ออก — เหลือเฉพาะค่าทำสีบาน ===== -->
+      <div class="sec-div">ออปชั่นทุกชนิดบาน</div>
+
+      <!-- ค่าทำสีบาน (%) — เก็บไว้ตามที่พี่นัทสั่ง -->
+      <details class="extras" style="margin-top:0;">
+        <summary>ปรับค่าทำสีบาน (%)</summary>
+        <div class="extras-body">
+          <div class="lbl">ค่าทำสีบาน (%)</div>
+          <div class="chips" id="doorColorPctChips">
+            <button class="chip sm" data-v="20" onclick="setChipSingle('doorColorPctChips',this);recalc()">20%</button>
+            <button class="chip sm on" data-v="30" onclick="setChipSingle('doorColorPctChips',this);recalc()">30% (default)</button>
+            <button class="chip sm" data-v="40" onclick="setChipSingle('doorColorPctChips',this);recalc()">40%</button>
+            <button class="chip sm" data-v="50" onclick="setChipSingle('doorColorPctChips',this);recalc()">50%</button>
+          </div>
+          <div class="note" style="font-size:11px;margin-top:6px;">
+            ค่าสีบาน = % ของเรตสีอลู ของระแนงฝั่ง · default 30% · สีอบขาว/ดำ = ไม่มีค่าสีเพิ่ม
+          </div>
+        </div>
+      </details>
+
+    </div><!-- /toggle-body #doorBody -->
+
+  </div><!-- /card ฟอร์มระแนง -->
+
+  <!-- Price box + Quote preview (ระแนง) -->
+  <div class="card" id="priceCard1">
+    <div class="card-title">ราคาประมาณ (ดราฟ · DEMO)</div>
+    <div class="pricebox" id="priceBox1">
+      <div class="row dim">เลือกขนาด/ชนิดเพื่อดูราคา</div>
+    </div>
+    <div class="quote-preview" style="margin-top:12px;" id="quotePreview1">
+      <div class="qh">ตัวอย่างบรรทัดในใบเสนอราคา</div>
+      <div class="qb" id="quoteLinesT1">
+        <div class="ln" style="color:var(--mut);">กำลังคำนวณ...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes task 1 -->
+  <div class="note" style="margin-bottom:10px;">
+    <b>หลักการ "ทำเป็นบาน"</b><br>
+    • ระแนงสลับเป็น <b>ไม่โครง</b> อัตโนมัติ (บานให้โครงเอง · กันคิดซ้ำ +12k)<br>
+    • ราคารวม = ค่าระแนงไม่โครง + ค่าทำบาน (doorStructBase · สูตรบานจริงเหมือน G1)<br>
+    • ออปชั่นบาน (ล็อก/สีบาน) = โผล่เมื่อติ๊ก "ทำเป็นบาน" เท่านั้น
+  </div>
+
+  <!-- จุด 5: กล่อง "เคาะแล้ว รอบ 3" อัปเดต -->
+  <div class="note" style="background:#f0fdf4;border-color:#86efac;">
+    <b style="color:#166534;">เคาะแล้ว (23 มิ.ย. รอบ 3):</b><br>
+    • <b>รางล่าง (SMS/ยูโร) = มีออปชั่นราง</b> "รางกันน้ำ (มาตรฐาน) / รางเตี้ย 7มม." คืนมาแล้ว<br>
+    • <b>บานเลื่อนรางบน</b> = ไม่มีออปชั่นราง (ไม่มีรางล่าง)<br>
+    • ตัด <b>กระจกบาน / คาดตาราง / สีอลูบาน</b> ออก — ระแนงไม่มีกระจก<br>
+    • <b>ค่าทำสีบาน</b> = เรตเท่าบานปกติ door 30% (ไม่ต่าง) · อยู่ใน details พับ<br>
+    • <b>มุ้งติดตาย</b> ย้ายขึ้นบนก่อน "งานเสริม" · โชว์ตลอด (toggle อิสระ ไม่ผูกทำเป็นบาน)<br>
+    • เพิ่ม <b>ผ้ามุ้ง 3 แบบ</b>: ไฟเบอร์ (มาตรฐาน) / กันแมว (+300 DEMO) / กันหนูสแตนเลส (+800 DEMO)<br>
+    • ชนิดบาน 5 ปุ่ม + ปุ่มเปิด/ปิดคัดบาน คงไว้เหมือนเดิม
+  </div>
+
+  <div class="note question">
+    <b>ยังเหลือให้พี่นัทเคาะ:</b><br>
+    Q6: ขนาดมุ้งติดตาย auto = กว้าง×สูงระแนง หรือคำนวณตาม net area (หักโครง)?<br>
+    Q7: สีกรอบมุ้งติดตาย — ควรให้เลือกอิสระจากสีระแนง หรือ default ตามสีระแนงอัตโนมัติ?
+  </div>
+
+  <!-- Sticky price bar -->
+  <div class="pricebar" id="stickyBar">
+    <div>
+      <div style="font-size:11.5px;opacity:.9;">ราคารวม (ประมาณ · DEMO)</div>
+      <div class="big" id="barTotal">—</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;opacity:.8;" id="barDetail">กรอกข้อมูลเพื่อดูราคา</div>
+    </div>
+  </div>
+
+</div><!-- /.wrap -->
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+var st = {
+  // ระแนง
+  rnType: 'bangta',
+  rnW: 3.0, rnH: 2.5, rnQty: 1,
+  rnColor: 'white', rnColorAdd: 0,
+  rnFrame: 'noframe', rnFrameAdd: 0,
+  rnRate: 3700,          // ประมาณ (จริง=engine · ต่อตร.ม.)
+  doorOn: false,
+  doorType: 'sliding_sms',
+  doorPanels: 2, doorFixed: 0,
+  doorColorPct: 30,
+  // มุ้งติดตาย
+  mosqFixOn: false,
+  mosqSz: 'auto',
+  mosqFixW: 3.0, mosqFixH: 2.5,
+  mosqFixColor: 'white', mosqFixColorAdd: 0,
+  mosqFabric: 'fiber', mosqFabricAdd: 0
+};
+
+var MOSQ_BASE_RATE = 650;  // ประมาณ imp22 (/ตร.ม.)
+var MOSQ_FABRIC_ADD = { fiber: 0, cat: 300, rat: 800 };
+var DOOR_RATES = {        // ⚠ เรตประมาณ (ดราฟ) · ของจริงดึง engine ตอนลงโค้ด
+  sliding_sms: 12000,
+  sliding_euro: 14000,
+  sliding_top: 12000,
+  casement_euro: 9500,
+  folding: 16000,
+  swing: 9500        // บานสวิง = ราคาเท่าประตูบานเปิด (พี่นัทเคาะ 23มิ.ย. · เปิดได้ 2 ทาง · โช้ครวมในตัว)
+};
+var DOOR_NAMES = {
+  sliding_sms: 'บานเลื่อนเซมิ SMS',
+  sliding_euro: 'บานเลื่อนยูโร',
+  sliding_top: 'บานเลื่อนรางบน',
+  casement_euro: 'บานเปิดยูโร',
+  folding: 'บานเฟี้ยม',
+  swing: 'บานสวิง (เปิดได้ 2 ทาง)'
+};
+
+// พี่นัทเคาะ 23มิ.ย.: คัดชนิดบาน — ติ๊กเปิด/ปิดในแถวด้านบน
+function curateDoor(){
+  var allow={}; document.querySelectorAll('.curate').forEach(function(c){ allow[c.dataset.t]=c.checked; });
+  var first=null;
+  document.querySelectorAll('#doorTypeChips .chip').forEach(function(ch){ var on=!!allow[ch.dataset.v]; ch.style.display=on?'':'none'; if(on&&!first)first=ch; });
+  var cur=document.querySelector('#doorTypeChips .chip.on');
+  if((!cur||cur.style.display==='none')&&first) setDoorType(first);
+}
+
+// ============================================================
+// CHIP HELPERS
+// ============================================================
+function setChip(grpId, btn){
+  var grp = document.getElementById(grpId);
+  if(!grp) return;
+  grp.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function setChip2(key, btn){
+  btn.parentNode.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function setChipSingle(grpId, btn){
+  document.getElementById(grpId).querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  btn.classList.add('on');
+}
+
+// ============================================================
+// STEPPER
+// ============================================================
+function step(id, dir){
+  var el = document.getElementById(id);
+  var v = (parseInt(el.value)||0) + dir;
+  if(v < 0) v = 0;
+  el.value = v;
+  recalc();
+}
+
+// ============================================================
+// RANAE TYPE / COLOR / FRAME
+// ============================================================
+function setRnType(btn){
+  setChip('rnTypeChips', btn);
+  st.rnType = btn.dataset.v;
+  recalc();
+}
+function setRnColor(btn){
+  setChip('rnColorChips', btn);
+  st.rnColor = btn.dataset.v;
+  st.rnColorAdd = parseInt(btn.dataset.add)||0;
+  recalc();
+}
+function setRnFrame(btn){
+  setChip('rnFrameChips', btn);
+  st.rnFrame = btn.dataset.v;
+  st.rnFrameAdd = parseInt(btn.dataset.add)||0;
+  recalc();
+}
+
+// ============================================================
+// DOOR TOGGLE + DOOR TYPE
+// ============================================================
+function toggleDoor(){
+  st.doorOn = !st.doorOn;
+  document.getElementById('doorCb').checked = st.doorOn;
+  document.getElementById('doorToggleRow').classList.toggle('on', st.doorOn);
+  document.getElementById('doorBody').classList.toggle('on', st.doorOn);
+  recalc();
+}
+
+function setSwingHandle(btn){
+  var p=btn.parentNode; p.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); btn.classList.add('on');
+  var sz=document.getElementById('swingHandleSize'); if(sz) sz.style.display = btn.dataset.v==='lux' ? 'block' : 'none';
+  recalc();
+}
+function setDoorType(btn){
+  setChip('doorTypeChips', btn);
+  st.doorType = btn.dataset.v;
+  // โชว์/ซ่อนออปชั่นตามชนิดบาน
+  var isSlide = /sliding/.test(st.doorType);
+  var isSlidingTop = st.doorType === 'sliding_top';
+  var isCasement = st.doorType === 'casement_euro';
+  var isSwing = st.doorType === 'swing';
+  var isFolding = st.doorType === 'folding';
+  document.getElementById('opt-sliding').classList.toggle('on', isSlide);
+  document.getElementById('opt-casement').classList.toggle('on', isCasement);
+  var _optSwing=document.getElementById('opt-swing'); if(_optSwing) _optSwing.classList.toggle('on', isSwing); // บานสวิง = กล่องออปชั่นของตัวเอง (โช้ครวม/ธรณี2/มือจับ/ล็อก default ล็อก+กุญแจ)
+  document.getElementById('opt-folding').classList.toggle('on', isFolding);
+  // จุด 1: ซ่อน railOptWrap เมื่อ sliding_top · โชว์เมื่อ SMS/ยูโร
+  var railWrap = document.getElementById('railOptWrap');
+  if(railWrap) railWrap.style.display = isSlidingTop ? 'none' : '';
+  recalc();
+}
+
+// ============================================================
+// MOSQ FABRIC
+// ============================================================
+function setMosqFabric(btn){
+  setChip('mosqFabricChips', btn);
+  st.mosqFabric = btn.dataset.v;
+  st.mosqFabricAdd = parseInt(btn.dataset.add)||0;
+  recalcMosq();
+}
+
+// ============================================================
+// MOSQ FIX
+// ============================================================
+function toggleMosqFix(){
+  st.mosqFixOn = !st.mosqFixOn;
+  document.getElementById('mosqFixCb').checked = st.mosqFixOn;
+  document.getElementById('mosqFixToggleRow').classList.toggle('on', st.mosqFixOn);
+  document.getElementById('mosqFixBody').classList.toggle('on', st.mosqFixOn);
+  recalcMosq();
+}
+function setMosqSz(btn){
+  setChip('mosqSzChips', btn);
+  st.mosqSz = btn.dataset.v;
+  document.getElementById('mosqManualSize').style.display = st.mosqSz==='manual' ? '' : 'none';
+  recalcMosq();
+}
+function setMosqFixColor(btn){
+  setChip('mosqFixColorChips', btn);
+  st.mosqFixColor = btn.dataset.v;
+  st.mosqFixColorAdd = parseInt(btn.dataset.add)||0;
+  recalcMosq();
+}
+
+// ============================================================
+// CALC: ระแนง
+// ============================================================
+function fmt(n){ return Math.round(n).toLocaleString(); }
+
+function recalc(){
+  // Read values
+  var w = parseFloat(document.getElementById('rnW').value)||0;
+  var h = parseFloat(document.getElementById('rnH').value)||0;
+  var qty = parseInt(document.getElementById('rnQty').value)||1;
+  st.rnW=w; st.rnH=h; st.rnQty=qty;
+  var panels = parseInt(document.getElementById('doorPanels').value)||1;
+  var fixed = parseInt(document.getElementById('doorFixed').value)||0;
+  if(fixed >= panels) fixed = panels-1;
+  st.doorPanels=panels; st.doorFixed=fixed;
+
+  // อัปเดต label auto บนปุ่มมุ้งติดตาย
+  var mosqAutoEl = document.getElementById('mosqAutoSize');
+  if(mosqAutoEl) mosqAutoEl.textContent = w+'×'+h+' ม.';
+
+  var area = w * h;
+  var frameAdj = st.doorOn ? 0 : st.rnFrameAdd; // ทำบาน→ไม่โครง อัตโนมัติ
+  var rnCost = area * (st.rnRate + st.rnColorAdd + frameAdj) * qty;
+  var doorBaseCost = 0, doorColorCost = 0;
+  var rows = [], quoteLines = [];
+
+  var rnTypeName = {bangta:'บังตา', phanan:'ผนัง', klet:'เกล็ด'}[st.rnType];
+
+  if(st.doorOn){
+    doorBaseCost = (DOOR_RATES[st.doorType]||12000) * panels * qty;
+    doorColorCost = rnCost * (st.doorColorPct/100) * 0.3;
+    rows.push({label:'ระแนง '+rnTypeName+' (ไม่โครง · '+w+'×'+h+'ม. × '+qty+'ชุด)', val: rnCost});
+    rows.push({label:'ค่าทำบาน '+DOOR_NAMES[st.doorType]+' ('+panels+' บาน'+( fixed>0?' · ติดตาย '+fixed+' บาน':'')+' × '+qty+'ชุด)', val: doorBaseCost});
+    if(doorColorCost>0) rows.push({label:'ค่าสีบาน (~'+st.doorColorPct+'%)', val: doorColorCost});
+
+    quoteLines.push(rnTypeName+'ผนังระแนงอลู ทำเป็นบาน — '+DOOR_NAMES[st.doorType]+' '+panels+' บาน'+(fixed>0?' (ติดตาย '+fixed+' บาน)':''));
+    quoteLines.push('ระแนงอลูมิเนียมกล่อง ขนาด 1"×1.6" โชว์หน้า 1" เว้นระยะห่าง 5 ซม.');
+    quoteLines.push('ขนาด '+w+'×'+h+' ม. จำนวน '+panels+' บาน'+( fixed>0?' ('+fixed+' ติดตาย)':'')+' × '+qty+' ชุด');
+  } else {
+    rnCost = area * (st.rnRate + st.rnColorAdd + st.rnFrameAdd) * qty;
+    rows.push({label:'ระแนง '+rnTypeName+' ('+( st.rnFrame==='withframe'?'รวมโครง':'ไม่โครง')+'· '+w+'×'+h+'ม. × '+qty+'ชุด)', val: rnCost});
+    quoteLines.push(rnTypeName+'ผนังระแนงอลูมิเนียมกล่อง ติดตาย (ไม่มีบานเปิด)');
+    quoteLines.push('ระแนงอลูมิเนียมกล่อง ขนาด 1"×1.6" โชว์หน้า 1" เว้นระยะห่าง 5 ซม.');
+    quoteLines.push('ขนาด '+w+'×'+h+' ม. จำนวน '+qty+' ชุด');
+  }
+
+  var total = rows.reduce(function(s,r){return s+r.val;}, 0);
+
+  // Render price box
+  var pb = document.getElementById('priceBox1');
+  var html = '';
+  rows.forEach(function(r){ html += '<div class="row"><span>'+r.label+'</span><span>'+fmt(r.val)+'</span></div>'; });
+  html += '<div class="row tot"><span>รวม ('+qty+' ชุด)</span><span>'+fmt(total)+' บาท</span></div>';
+  html += '<div class="sub-tot">ราคาประมาณ · ของจริงดึง engine</div>';
+  pb.innerHTML = html;
+
+  // Render quote
+  var ql = document.getElementById('quoteLinesT1');
+  ql.innerHTML = quoteLines.map(function(l){
+    return '<div class="ln">' + l + '</div>';
+  }).join('');
+
+  // Sticky bar
+  document.getElementById('barTotal').textContent = fmt(total)+' บาท';
+  document.getElementById('barDetail').textContent = rnTypeName+' '+w+'×'+h+'ม. × '+qty+'ชุด'+(st.doorOn?' + ทำบาน':'');
+
+  // sync mosq auto size
+  recalcMosq();
+}
+
+// ============================================================
+// CALC: มุ้งติดตาย
+// ============================================================
+function recalcMosq(){
+  if(!st.mosqFixOn){
+    document.getElementById('mosqFixPricebox').innerHTML = '<div class="row dim">ติ๊กเพื่อดูราคา</div>';
+    document.getElementById('mosqFixQuoteLine').textContent = '—';
+    return;
+  }
+  var mW = st.mosqSz==='auto' ? (st.rnW||3.0) : (parseFloat(document.getElementById('mosqW').value)||0);
+  var mH = st.mosqSz==='auto' ? (st.rnH||2.5) : (parseFloat(document.getElementById('mosqH').value)||0);
+  var area = mW * mH;
+  var fabricAdd = MOSQ_FABRIC_ADD[st.mosqFabric]||0;
+  var base = Math.max(1500, Math.round(area * (MOSQ_BASE_RATE + fabricAdd)));
+  var colorCost = st.mosqFixColorAdd ? Math.round(area * 700 * 0.5) : 0;
+  var total = base + colorCost;
+  var colName = {white:'อบขาว',black:'ดำ',sahara:'เทาซาฮาร่า',wood:'ลายไม้สต๊อก'}[st.mosqFixColor];
+  var fabricName = {fiber:'ผ้าไฟเบอร์',cat:'ผ้ากันแมว',rat:'ผ้ากันหนูสแตนเลส'}[st.mosqFabric];
+
+  var html = '<div class="row"><span>มุ้งติดตาย '+fabricName+' ('+mW+'×'+mH+' = '+area.toFixed(2)+' ตร.ม.)</span><span>'+fmt(base)+'</span></div>';
+  if(colorCost>0) html += '<div class="row"><span>สีกรอบ '+colName+' (ค่าทำสี×0.5)</span><span>'+fmt(colorCost)+'</span></div>';
+  html += '<div class="row tot"><span>รวมมุ้งติดตาย (addon)</span><span>'+fmt(total)+' บาท</span></div>';
+  html += '<div class="sub-tot">ราคาประมาณ · ของจริงดึง engine imp22</div>';
+  document.getElementById('mosqFixPricebox').innerHTML = html;
+  document.getElementById('mosqFixQuoteLine').textContent = 'มุ้งติดตาย กันยุง '+fabricName+' ('+mW+'×'+mH+' ม.) · กรอบสี'+colName+' — '+fmt(total)+' บาท';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  // init door type opt panels
+  document.getElementById('opt-sliding').classList.add('on'); // default sliding_sms
+  // railOptWrap: SMS = โชว์ (default)
+  var railWrap = document.getElementById('railOptWrap');
+  if(railWrap) railWrap.style.display = '';
+
+  recalc();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

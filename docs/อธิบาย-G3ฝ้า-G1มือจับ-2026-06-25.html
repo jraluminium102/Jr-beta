@@ -1,0 +1,113 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>อธิบาย G1 มือจับ + G3 ฝ้า — 25 มิ.ย.</title>
+<style>
+:root{--red:#c0392b;--red2:#e74c3c;--ink:#222;--mut:#666;--line:#e3e3e3;--ok:#1e8e3e;--warn:#e67e22;}
+*{box-sizing:border-box;font-family:"Segoe UI",Tahoma,sans-serif}
+body{margin:0;background:#f5f5f7;color:var(--ink);padding:16px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:20px;margin:6px 0 14px;color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.h{font-size:16px;font-weight:800;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.sub{font-size:13px;color:var(--mut);margin:0 0 12px}
+.fl{font-size:13px;font-weight:700;color:#374151;margin:12px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid #cfcfcf;background:#fafafa;border-radius:999px;padding:9px 14px;font-size:13px;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;gap:6px;transition:.12s}
+.chip:hover{border-color:var(--red2)}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.cdot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #999}
+.hide{display:none}
+.tg{display:flex;align-items:center;gap:10px;background:#fff7f6;border:1.5px solid var(--red2);border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700;font-size:14px;user-select:none}
+.tg input{width:20px;height:20px;accent-color:var(--red)}
+.sub-area{border-left:3px solid var(--red2);padding:10px 0 2px 14px;margin-top:10px}
+.note{background:#fffbe6;border:1px solid #f5d76e;border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px}
+.note.ok{background:#eaf7ee;border-color:#a3d9b1}
+.badge{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;color:#fff}
+.b-ok{background:var(--ok)}.b-warn{background:var(--warn)}.b-ask{background:#2563eb}
+.opt-box{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;cursor:pointer}
+.opt-box.sel{border-color:var(--red);background:#fff7f6}
+.opt-box .t{font-weight:800;font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.opt-box .d{font-size:13px;color:var(--mut)}
+.price{color:var(--red);font-weight:700;font-size:12px}
+.bar{font-size:13px;background:#222;color:#fff;border-radius:8px;padding:8px 12px;margin-top:10px;display:inline-block}
+.q{font-size:14px;font-weight:800;color:var(--red);margin-top:8px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp>div{border:1px solid var(--line);border-radius:10px;padding:10px}
+.cmp .t{font-size:12px;font-weight:800;margin-bottom:6px;color:var(--mut)}
+@media(max-width:560px){.cmp{grid-template-columns:1fr}}
+</style></head>
+<body><div class="wrap">
+<h1>🔍 อธิบาย 2 จุดที่พี่ถาม (กดเล่นได้ — เด้งจากเว็บจริง)</h1>
+
+<!-- ===== G1 มือจับ ===== -->
+<div class="card">
+  <div class="h">① บานเปลือยประตู — มือจับ 6 ขนาด <span class="badge b-ok">✅ ถูกแล้ว ไม่ต้องแก้</span></div>
+  <p class="sub">ก่อนแก้ มีมือจับ ดิจิตอล/Cmech/รุ่นอื่น ปนมา · <b>ดราฟต้องการเหลือสแตนเลสอย่างเดียว</b> → ตัดออกแล้ว เหลือปุ่ม "สแตนเลสสีเงิน" ปุ่มเดียว</p>
+
+  <div class="fl">มือจับ (กดดู)</div>
+  <div class="chips"><button class="chip" id="stBtn" onclick="tgSt()">สแตนเลสสีเงิน</button></div>
+  <div class="note" id="stHint">👆 กดปุ่ม "สแตนเลสสีเงิน" — จะโผล่ <b>6 ขนาด</b>ให้เลือก (ที่ dump เห็นปุ่มเดียวเพราะยังไม่กด = ปกติ)</div>
+
+  <div class="sub-area hide" id="stArea">
+    <div class="fl">ขนาดมือจับ (6 ขนาด)</div>
+    <div class="chips" id="szChips"></div>
+    <div class="fl">สี</div>
+    <div class="chips">
+      <button class="chip on" onclick="pickC(this)"><span class="cdot" style="background:#c9ccce"></span>สีเงิน (ปกติ)</button>
+      <button class="chip" onclick="pickC(this)"><span class="cdot" style="background:#1c1c1c"></span>สีอื่น (ดำ/ทอง — กรอกราคา)</button>
+    </div>
+    <div class="bar" id="szBar">เลือกขนาดมือจับ…</div>
+    <div class="note ok">ตรงดราฟ: บานเปลือย = สแตนเลส 6 ขนาดเท่านั้น · ไม่มีดิจิตอล/Cmech/รุ่นอื่น แล้ว</div>
+  </div>
+</div>
+
+<!-- ===== G3 ฝ้า ===== -->
+<div class="card">
+  <div class="h">② งานฝ้าใต้หลังคา — "แยกรายการ" หายไป <span class="badge b-ask">ขอพี่เคาะ</span></div>
+  <p class="sub">เดิมเลือก "วิธีคิดเงินฝ้า" ได้ 3 แบบ · ดราฟใหม่เหลือแค่เปิด/ปิด → ตัวเลือก "แยกรายการ" หายไป</p>
+
+  <div class="cmp">
+    <div><div class="t">เดิม (ก่อนแก้)</div>
+      <div class="chips">
+        <button class="chip">ไม่มีฝ้า</button>
+        <button class="chip on">รวมในหลังคา</button>
+        <button class="chip">แยกรายการ</button>
+      </div>
+      <div style="font-size:12px;color:#666;margin-top:8px">3 ปุ่ม — เลือกได้ว่าฝ้าจะ<b>รวมยอด</b>หรือ<b>แยกบรรทัด</b></div>
+    </div>
+    <div><div class="t">ตอนนี้ (ตามดราฟ)</div>
+      <label class="tg"><input type="checkbox" checked disabled> เพิ่มงานฝ้าใต้หลังคา</label>
+      <div style="font-size:12px;color:#666;margin-top:8px">toggle เปิด = <b>รวมในหลังคา</b> เสมอ · ไม่มีตัวเลือกแยกบรรทัดในโหมดใบปกติ</div>
+    </div>
+  </div>
+
+  <div class="note"><b>"แยกรายการ" คืออะไร:</b> ในใบเสนอราคา ฝ้าจะโชว์เป็น<b>บรรทัดแยก พร้อมราคาของมันเอง</b> (ลูกค้าเห็นว่าค่าฝ้าเท่าไร) แทนที่จะกลืนรวมในค่าหลังคา · <b>หมายเหตุ:</b> โหมด "แยกราคา" ในใบรุ่นใหม่ที่เพิ่งทำ จะแตกราคาฝ้าให้เห็นอยู่แล้วทุกกรณี</div>
+
+  <div class="q">พี่จะเอาแบบไหน? (กดเลือก)</div>
+  <div class="opt-box sel" id="oA" onclick="pickOpt('A')">
+    <div class="t"><span>A) คงตามดราฟ — toggle อย่างเดียว (รวมในหลังคา)</span><span class="badge b-ok">แนะนำ</span></div>
+    <div class="d">UI สะอาดสุด ตรงดราฟเป๊ะ · ถ้าลูกค้าอยากเห็นราคาฝ้าแยก → ใช้โหมด "แยกราคา" ในใบได้อยู่แล้ว</div>
+  </div>
+  <div class="opt-box" id="oB" onclick="pickOpt('B')">
+    <div class="t"><span>B) เพิ่ม "แยกรายการ" กลับ — toggle + ปุ่มย่อย รวม/แยก</span></div>
+    <div class="d">กดเปิดฝ้าแล้วมีปุ่มย่อยให้เลือก "รวมในหลังคา / แยกรายการ" · ได้ความสามารถเดิมกลับ แต่ UI มีปุ่มเพิ่ม (ต่างจากดราฟนิด)</div>
+    <div class="sub-area hide" id="bDemo">
+      <label class="tg"><input type="checkbox" checked disabled> เพิ่มงานฝ้าใต้หลังคา</label>
+      <div class="fl">วิธีลงใบ</div>
+      <div class="chips"><button class="chip on">รวมในหลังคา</button><button class="chip">แยกรายการ (โชว์ราคาฝ้าแยก)</button></div>
+    </div>
+  </div>
+  <div class="bar" id="optBar">เลือก A</div>
+</div>
+
+<p style="font-size:12px;color:#888;text-align:center">JR · 25 มิ.ย. 2569 · ดราฟอธิบายเฉยๆ ไม่กระทบเว็บจริง</p>
+</div>
+
+<script>
+var ST=[['30.5 ซม.',1500],['45 ซม.',2000],['60 ซม.',2000],['80 ซม.',2500],['100 ซม.',3000],['120 ซม.',3200]];
+function tgSt(){var b=document.getElementById('stBtn'),a=document.getElementById('stArea'),h=document.getElementById('stHint');
+  b.classList.toggle('on');var on=b.classList.contains('on');a.classList.toggle('hide',!on);h.classList.toggle('hide',on);
+  if(on&&!document.getElementById('szChips').childElementCount){ST.forEach(function(s){var c=document.createElement('button');c.className='chip';c.innerHTML=s[0]+' <span class="price">+'+s[1].toLocaleString()+'</span>';c.onclick=function(){document.querySelectorAll('#szChips .chip').forEach(function(x){x.classList.remove('on')});c.classList.add('on');document.getElementById('szBar').textContent='มือจับสแตนเลสสีเงิน '+s[0]+' = +'+s[1].toLocaleString()+' บาท';};document.getElementById('szChips').appendChild(c);});}}
+function pickC(b){b.parentNode.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on')});b.classList.add('on');}
+function pickOpt(o){document.getElementById('oA').classList.toggle('sel',o==='A');document.getElementById('oB').classList.toggle('sel',o==='B');document.getElementById('bDemo').classList.toggle('hide',o!=='B');document.getElementById('optBar').textContent='เลือก '+o+(o==='B'?' — จะเพิ่ม "แยกรายการ" กลับ':' — คงตามดราฟ');}
+</script>
+</body></html>

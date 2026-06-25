@@ -1,0 +1,148 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟเทียบ 2 แนวทาง — วิธีคิดราคา A (เฟิร์นตรวจ)</title>
+<style>
+  :root{--red:#B3151D;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--g:#16a34a;--y:#d97706;--bg:#faf7f5;}
+  *{box-sizing:border-box;} body{font-family:-apple-system,"Segoe UI",Tahoma,sans-serif;color:var(--ink);background:var(--bg);margin:0;padding:18px;line-height:1.5;}
+  h1{font-size:20px;color:var(--red);margin:0 0 4px;} h2{font-size:16px;margin:22px 0 8px;border-left:4px solid var(--red);padding-left:8px;}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:12px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  table{border-collapse:collapse;width:100%;font-size:13px;} th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;} th{background:#fbeaea;color:var(--red);}
+  .rec{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:8px;padding:8px 11px;font-size:13px;margin:8px 0;}
+  .badge{display:inline-block;font-size:11px;font-weight:700;border-radius:20px;padding:2px 9px;margin-left:6px;}
+  .b-g{background:#dcfce7;color:#166534;} .b-y{background:#fef3c7;color:#92400e;} .b-r{background:#fee2e2;color:#991b1b;}
+  /* 🔍 mock */
+  .qitem{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+  .qhead{background:#f9fafb;padding:8px 12px;font-weight:700;font-size:13.5px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;}
+  .qhead .price{color:var(--red);white-space:nowrap;}
+  .firm{background:#fffbeb;border-top:1px dashed #fcd34d;padding:9px 12px;font-size:12.5px;}
+  .firm .tag{display:inline-block;background:#92400e;color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 7px;margin-bottom:6px;}
+  .step{font-family:"SF Mono",Consolas,monospace;font-size:12px;color:#374151;margin:2px 0;}
+  .step .op{color:var(--mut);} .step .res{color:var(--red);font-weight:700;}
+  .addon{color:#1d4ed8;} .grp{font-size:11px;color:var(--mut);font-weight:700;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.04em;}
+  .modebar{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px;}
+  .mbtn{border:1.5px solid var(--red);border-radius:22px;padding:5px 14px;font-size:12.5px;font-weight:700;background:#fff;color:var(--red);}
+  .mbtn.on{background:var(--red);color:#fff;}
+  .note{font-size:12px;color:var(--mut);}
+  code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px;}
+</style></head>
+<body>
+<h1>🔍 ดราฟเทียบ 2 แนวทาง + หน้า "วิธีคิดราคา" (เฟิร์นตรวจ) ครบ 7 กลุ่ม</h1>
+<div class="sub">24 มิ.ย. 2569 · ตอบคำถามพี่ "ขอดราฟความต่างมาดูหน่อย" + "ครบ 7 กลุ่มทุก method รวดเดียว" · <b>ตัวเลขทั้งหมด = ดึงจาก engine จริง (ไม่เดา)</b></div>
+
+<h2>ส่วนที่ 1 — เทียบ 2 แนวทางสร้าง "ตัวเลขวิธีคิด"</h2>
+<div class="card">
+<table>
+<tr><th style="width:22%">หัวข้อ</th><th>A · ตัวคำนวณแยก read-only <span class="badge b-g">แนะนำ</span></th><th>B · ฝังใน calcUnit ทุก return</th></tr>
+<tr><td><b>ทำยังไง</b></td><td>ฟังก์ชันใหม่ <code>buildCalcSteps()</code> ดึงสูตรจาก <code>basePrice/monoRate/rateOf/roundUp</code> เดิม + อ่าน <code>msgs/breakdown</code> ที่ engine คายอยู่แล้ว</td><td>แก้ทุก <code>return</code> ของ calcUnit (~30 จุด คนละ shape) ให้แนบ field <code>calcSteps</code></td></tr>
+<tr><td><b>เสี่ยงราคาเพี้ยน</b></td><td><span class="badge b-g">0%</span> calcUnit ไม่ถูกแตะเลย → golden การันตีนิ่ง</td><td><span class="badge b-r">สูง</span> แตะ 30 จุดในฟังก์ชันราคา → พลาดที่เดียว golden เพี้ยน</td></tr>
+<tr><td><b>ความตรง engine</b></td><td>ใช้ helper ตัวเดียวกัน + breakdown จริง → เลขตรงเป๊ะ</td><td>ตรง (เพราะอยู่จุดคำนวณ) แต่ต้องไล่แก้ครบทุก method ไม่งั้นบางกลุ่มไม่มี</td></tr>
+<tr><td><b>แรง/เวลา</b></td><td>น้อย — จุดเดียว ครอบทุกกลุ่มทันที</td><td>มาก — 30 จุด + เทส golden ซ้ำทุกจุด</td></tr>
+<tr><td><b>ดูแลภายหลัง</b></td><td>โค้ดราคาสะอาด (logic วิธีคิดแยกออกมา)</td><td>โค้ดราคาบวมขึ้น 30 จุด</td></tr>
+</table>
+<div class="rec">✅ <b>แนะนำ A</b> — เพราะ engine <b>คายวิธีคิดออกมาใน <code>msgs</code>/<code>breakdown</code> อยู่แล้ว</b> (ดูตัวอย่างส่วนที่ 2 ทุกใบมาจากของจริง) · A แค่ "จัดรูปให้อ่านง่าย + เติมการแตกเรต bucket ที่ยังไม่มี" · <b>golden นิ่ง 100% · ผลหน้าจอเหมือนกันทั้ง A และ B</b> (พี่เห็นเหมือนกัน ต่างแค่วิธีหลังบ้าน)</div>
+</div>
+
+<h2>ส่วนที่ 2 — หน้าใบ 3 โหมด + 🔍 วิธีคิดราคา ครบ 7 กลุ่ม (เลขจริง)</h2>
+<div class="modebar"><span class="mbtn">👤 ลูกค้า (ปกติ)</span><span class="mbtn">📊 แยกราคาแต่ละส่วน</span><span class="mbtn on">🔍 วิธีคิดราคา (เฟิร์นตรวจ)</span></div>
+<div class="note" style="margin-bottom:12px;">↓ ตัวอย่างด้านล่าง = โหมด 🔍 ที่เฟิร์นเห็น (ลูกค้าไม่เห็น · พิมพ์ไม่ติด) · แต่ละ method คิดคนละแบบ — โชว์ให้เห็นว่ารองรับครบ</div>
+
+<div class="grp">G1 บาน/กระจก</div>
+<div class="qitem"><div class="qhead"><span>บานเลื่อน เซมิยูโร · 1.80 × 2.10 ม.</span><span class="price">22,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 1.80 × 2.10 = <b>3.78 ตร.ม.</b></div>
+<div class="step">เรต (ช่วงพื้นที่) <span class="op">3,000–4 ตร.ม. = 5,700/ตร.ม.</span> × 3.78 = <span class="res">21,546</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">22,000</span> <span class="op">(ขั้นต่ำ 6,500 — สูงกว่า ใช้ที่คำนวณ)</span></div>
+</div></div>
+
+<div class="qitem"><div class="qhead"><span>บานเฟี้ยม · 3.00 × 2.20 ม. · 4 บาน <span class="op">[method: fold]</span></span><span class="price">60,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 3.00 × 2.20 = <b>6.60 ตร.ม.</b></div>
+<div class="step">fold = max(พื้นที่ × เรต/ตร.ม. , ขั้นต่ำต่อบาน × 4 บาน) = <span class="res">60,000</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">60,000</span></div>
+</div></div>
+
+<div class="qitem"><div class="qhead"><span>บานยกสไลด์ · 2.00 × 2.20 ม. <span class="op">[method: lift]</span></span><span class="price">38,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 2.00 × 2.20 = <b>4.40 ตร.ม.</b></div>
+<div class="step">lift (ขั้นบันได): 1.5 ม.=20,000 · 2.0 ม.=23,000 · เกิน = max(23,000 , พื้นที่×8,500) = <span class="res">37,400</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">38,000</span></div>
+</div></div>
+
+<div class="grp">G2 รั้ว/ระแนง/ราวกันตก</div>
+<div class="qitem"><div class="qhead"><span>ระแนงบังตา rn1 · 2.00 × 2.50 ม. <span class="op">[per ตร.ม.]</span></span><span class="price">20,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">ปัดสูง 2.5 → 3.0 ม. (ไม่ต่อ) → พื้นที่ = 2.00 × 3.00 = <b>6.00 ตร.ม.</b></div>
+<div class="step">เรต <span class="op">3,300/ตร.ม.</span> × 6.00 = <span class="res">19,800</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">20,000</span></div>
+</div></div>
+
+<div class="qitem"><div class="qhead"><span>ประตูรั้ว fence_gate · 3.00 × 1.80 ม. <span class="op">[breakdown]</span></span><span class="price">31,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step"><span class="addon">ค่าทำประตู</span> = <span class="res">21,600</span></div>
+<div class="step"><span class="addon">รางตรง (2 × กว้าง)</span> = <span class="res">9,000</span></div>
+<div class="step">รวม 30,600 → ปัดขึ้นพันบาท = <span class="res">31,000</span></div>
+</div></div>
+
+<div class="grp">G3 หลังคา / ฝ้า-ผนัง</div>
+<div class="qitem"><div class="qhead"><span>หลังคาไวนิล · 4.00 × 3.00 ม.</span><span class="price">72,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 4.00 × 3.00 = <b>12.00 ตร.ม.</b></div>
+<div class="step">เรต <span class="op">6,000/ตร.ม.</span> × 12.00 = <span class="res">72,000</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">72,000</span> <span class="op">(ขั้นต่ำ 28,000 — สูงกว่า ใช้ที่คำนวณ)</span></div>
+</div></div>
+
+<div class="qitem"><div class="qhead"><span>ฝ้าระแนง 1×5 · 3.00 × 4.00 ม. <span class="op">[per ตร.ม.]</span></span><span class="price">40,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 3.00 × 4.00 = <b>12.00 ตร.ม.</b></div>
+<div class="step">เรต <span class="op">3,300/ตร.ม.</span> × 12.00 = <span class="res">39,600</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">40,000</span></div>
+</div></div>
+
+<div class="grp">G4 ตู้อลู / ฝาตู้</div>
+<div class="qitem"><div class="qhead"><span>ตู้อลูมิเนียม · 1.50 × 2.00 × ลึก 0.60 ม. · 5 ชั้น <span class="op">[multi-part]</span></span><span class="price">36,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step"><span class="addon">บานหน้า Future Tech 2 บาน</span> (2 × 10,000 + บานเพิ่ม 5,500) = <span class="res">25,500</span></div>
+<div class="step"><span class="addon">พื้นตู้</span> (0.60 × 1.50 ม.) = <span class="res">3,600</span></div>
+<div class="step"><span class="addon">ชั้นวาง 5 ชั้น (อลู)</span> = <span class="res">6,000</span></div>
+<div class="step">รวม 35,100 → ปัดขึ้นพันบาท = <span class="res">36,000</span></div>
+</div></div>
+
+<div class="qitem"><div class="qhead"><span>ฝาตู้ Future Tech · 1.00 × 2.00 ม. · 2 บาน <span class="op">[FT linear]</span></span><span class="price">31,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step"><span class="addon">ฝาตู้ 2 บาน</span> × 12,500/บาน = <span class="res">25,000</span></div>
+<div class="step"><span class="addon">บานเพิ่ม 1 บาน</span> = <span class="res">5,500</span></div>
+<div class="step">รวม 30,500 → ปัดขึ้นพันบาท = <span class="res">31,000</span></div>
+</div></div>
+
+<div class="grp">G5 มุ้ง</div>
+<div class="qitem"><div class="qhead"><span>มุ้งเฟรม IMP21 · 1.00 × 2.00 ม.</span><span class="price">4,000</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่/บาน = 1.00 × 2.00 = <b>2.00 ตร.ม.</b></div>
+<div class="step">เรต <span class="op">1,700/ตร.ม.</span> × 2.00 = <span class="res">3,400</span></div>
+<div class="step">ปัดขึ้นพันบาท = <span class="res">4,000</span> <span class="op">(ขั้นต่ำตาม itype)</span> · ⚠ ไม่รวมราง (คิดเพิ่มภายหลัง)</div>
+</div></div>
+
+<div class="grp">G6 กั้นห้องกระจก</div>
+<div class="qitem"><div class="qhead"><span>กั้นห้อง (รวมหลายด้าน + หลังคา + งานเสริม)</span><span class="price">รวมทั้งห้อง</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">G6 = รวมราคาต่อด้าน (แต่ละด้าน = บาน/กระจก คิดเหมือน G1) + หลังคา (เหมือน G3) + งานเสริม (กรอกเอง)</div>
+<div class="step">🔍 จะโชว์วิธีคิด<b>ต่อด้าน</b> (เหมือน G1 ด้านบน) + ค่าสีห้อง + บรรทัดงานเสริม → <span class="res">roomTotal</span></div>
+<div class="note">หมายเหตุ: G6 ใช้ engine เดียวกับ G1/G3 ต่อด้าน → calcSteps เด้งอัตโนมัติต่อด้าน</div>
+</div></div>
+
+<div class="grp">G7 ม่านซิป</div>
+<div class="qitem"><div class="qhead"><span>ม่านซิป JR-Z100 · 2.00 × 2.50 ม. (ปลีก ×2.0)</span><span class="price">15,600</span></div>
+<div class="firm"><div class="tag">ไม่พิมพ์ให้ลูกค้า</div>
+<div class="step">พื้นที่ = 2.00 × 2.50 = <b>5.00 ตร.ม.</b> · ผ้า 5% · มอเตอร์ AOK 220V</div>
+<div class="step">ราคาผ้า/มอเตอร์ (ปลีก ×2.0) = <span class="res">15,600</span></div>
+<div class="step"><span class="op">ℹ ค่าติดตั้ง (5,000 + 600/ตร.ม.) + ส่วนลดปริมาณ คิดที่ระดับใบเสนอราคา</span></div>
+</div></div>
+
+<h2>ส่วนที่ 3 — สรุป + ขอเคาะ</h2>
+<div class="card">
+<p style="margin:4px 0 8px;">• ทั้ง 7 กลุ่มด้านบน = <b>เลขจริงจาก engine วันนี้</b> · ทุก method (bucket / per-ตร.ม. / fold / lift / multi-part / FT linear / room) แตกวิธีคิดได้ครบ</p>
+<p style="margin:4px 0 8px;">• โหมด 👤 ลูกค้า = ใบปกติ (เหมือนเดิม) · 📊 แยกราคา = breakdown ต่อบรรทัด (น่าอ่าน) · 🔍 = ที่เห็นด้านบน (เฟิร์นเท่านั้น · <code>@media print{display:none}</code> + ไม่ออกไฟล์ลูกค้า)</p>
+<div class="rec">👉 <b>ขอเคาะ:</b> ใช้ <b>แนวทาง A</b> (read-only · golden นิ่ง · ผลเหมือนกัน) ทำครบ 7 กลุ่มรวดเดียวตามนี้ — โอเคไหมครับ? ถ้าโอเคผมลงมือ + เทสเว็บสด + push</div>
+</div>
+</body></html>

@@ -1,0 +1,231 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟลึก — cascade ทุกปุ่ม โหมดคิดเร็ว G1–G7</title>
+<style>
+  :root{ --red:#B3151D; --line:#e5e7eb; --muted:#6b7280; }
+  *{box-sizing:border-box;}
+  body{ font-family:"Sarabun",-apple-system,"Segoe UI",sans-serif; background:#f4f6f9; color:#1f2937; margin:0; padding:20px 16px 70px; line-height:1.55; }
+  h1{ font-size:21px; margin:0 0 3px; } .sub{ color:var(--muted); font-size:13px; margin-bottom:16px; }
+  .legend{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-size:12.5px; margin-bottom:18px; line-height:1.9; }
+  details.g{ background:#fff; border:1px solid var(--line); border-radius:12px; margin-bottom:12px; overflow:hidden; }
+  details.g>summary{ cursor:pointer; padding:13px 16px; font-size:17px; font-weight:800; color:#fff; background:var(--red); list-style:none; }
+  details.g>summary::-webkit-details-marker{ display:none; }
+  details.g>summary::before{ content:"▶ "; font-size:12px; }
+  details.g[open]>summary::before{ content:"▼ "; }
+  details.g.done>summary{ background:#15803d; }
+  .body{ padding:8px 18px 16px; }
+  ul.tree{ list-style:none; margin:6px 0; padding-left:14px; border-left:2px solid #eef1f5; }
+  ul.tree li{ padding:3px 0; font-size:14px; position:relative; }
+  ul.tree li::before{ content:"·"; color:#cbd5e1; position:absolute; left:-12px; }
+  .k{ font-weight:700; }
+  .v{ color:#374151; }
+  .tag{ font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:10px; margin-left:5px; white-space:nowrap; }
+  .have{ background:#dcfce7; color:#166534; } .new{ background:#fee2e2; color:#991b1b; } .chk{ background:#fef9c3; color:#854d0e; }
+  .hi{ background:#fffbeb; border:1px dashed #f5b942; border-radius:8px; padding:7px 10px; margin:7px 0; }
+  .price{ color:#b45309; font-size:12px; font-weight:600; }
+  .flag{ font-size:12px; background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:8px; padding:7px 10px; margin:8px 0; }
+  .sec{ font-weight:800; color:var(--red); font-size:13.5px; margin:12px 0 2px; }
+  .vchips{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+  .vchip{ font-size:12.5px; padding:6px 12px; border:1.5px solid var(--line); border-radius:9px; background:#fff; font-weight:600; }
+  .vchip.on{ background:var(--red); border-color:var(--red); color:#fff; }
+  .vstep{ background:#fafbfc; border:1px solid #e9edf2; border-radius:10px; padding:9px 12px; margin:8px 0; }
+  .vstep .h{ font-weight:800; font-size:13px; color:#15803d; margin-bottom:5px; }
+  .formula{ font-size:12.5px; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; border-radius:8px; padding:8px 11px; margin:7px 0; line-height:1.6; }
+</style></head><body>
+
+<h1>ดราฟลึก — cascade ทุกปุ่ม (กดแล้วอะไรโผล่ต่อ) · โหมดคิดเร็ว G1–G7</h1>
+<div class="sub">25 มิ.ย. · ดึงต้นไม้ตัวเลือกจริงจากโค้ด + ดราฟแต่ละกลุ่ม · กดหัวข้อกลุ่มเพื่อกางดู</div>
+
+<div class="legend">
+<span class="tag have">มีแล้ว</span> = คิดเร็วมีอยู่ · <span class="tag new">เพิ่มใหม่</span> = ต้องเพิ่ม (พี่เคาะ) · <span class="tag chk">เช็คซ้ำ</span> = ค่า/ดีไซน์ยืนยันตอน dev<br>
+<b>เปิดทุกกลุ่ม:</b> กดหัวข้อสีแดง · ตัวเลข/ราคาดึงจากโค้ด+ดราฟ — ตัวที่ไม่ชัวร์ติด "ยืนยันตอน dev"
+</div>
+
+<div style="background:#15803d;color:#fff;border-radius:12px;padding:13px 16px;margin-bottom:16px;line-height:1.7;">
+<div style="font-size:16px;font-weight:800;">🔒 FROZEN — มติล็อกครบ (25 มิ.ย.) · ตัวจริงตัวเดียว · พร้อมแก้รวดเดียว</div>
+<div style="font-size:12.5px;margin-top:6px;">
+✅ G1 เพิ่มมุ้งติดบาน · ✅ G2 เพิ่มสีอลู(ต่อ engine)+มุ้งติดตาย+ทำเป็นบาน · ราวกันตก<b>กระจกใส</b>(ไม่เลือกสี) · ✅ <b>G3 สีโครง = ยุบ dropdown เรียบแบบ G1</b> (เลิกกล่อง L1/L2/L3) · ✅ G4 ตู้ 4บาน/ฝาตู้ 3บาน + กระจกตู้/สีหน้าบาน · <b>สมาร์ทบอร์ด = เลื่อนไว้</b> · ✅ G5 ผ้า+<b>สีกรอบ dropdown สีเต็ม</b> (ตัดคาด/ตัดกระจก) · ✅ <b>G6 = สีเดียวทั้งห้อง</b> ไม่แยกด้าน · ✅ G7 ครบแล้ว<br>
+<b>engine:</b> รองรับเกือบหมด (มุ้ง/สี/เสา/กระจกตู้/สีกรอบ) แค่ต่อ UI · เหลือ G4 สมาร์ทบอร์ดเลื่อน<br>
+<b>ไม่มี 🟡 ค้างเคาะแล้ว</b> · ค่าที่ "ยืนยันตอน dev" = ดึงค่าจริงตอนแก้ ไม่ใช่มติ
+</div></div>
+
+<!-- ============ G1 ============ -->
+<details class="g" open><summary>G1 · งานบาน</summary><div class="body">
+  <div class="sec">ชนิดบาน (6 ปุ่มกลุ่ม → รุ่นย่อย)</div>
+  <ul class="tree">
+    <li><span class="k">บานเลื่อน</span> → เซมิยูโร · ยูโร · E-series <span class="tag have">มีแล้ว</span></li>
+    <li><span class="k">บานเปิด</span> → ยูโร · X-series · Velora · โซลิดวัน/ทู <span class="tag have">มีแล้ว</span></li>
+    <li><span class="k">บานเฟี้ยม</span> → เซมิ · ยูโร · X-series <span class="tag have">มีแล้ว</span>
+      <ul class="tree"><li>ทิศเปิด: ขวา · ซ้าย · <span class="k">แยกกลาง</span> → กรอกช่องซ้าย/ขวา (รวม X/X ✓)</li></ul></li>
+    <li><span class="k">เลื่อนภายใน · บานหมุน · ดัดโค้ง · PC Door · YKK · บานยก · shower</span> <span class="tag have">มีแล้ว</span></li>
+  </ul>
+  <div class="sec">สี · กระจก · ขนาด</div>
+  <ul class="tree">
+    <li>สีอลู → dropdown 13 สี (อบขาว/ดำ ฟรี · ซาฮาร่า · ลายไม้ · อบพิเศษกรอกรหัส) <span class="tag have">มีแล้ว</span></li>
+    <li>กระจก → dropdown 45+ รุ่น <span class="tag have">มีแล้ว</span></li>
+    <li>ขนาด: กว้าง · สูง · จำนวนบาน · ชุด <span class="tag have">มีแล้ว</span></li>
+    <li>คาดตาราง → ไม่มี/มี → เส้นนอน·เส้นตั้ง·ราคา/ม. <span class="tag have">มีแล้ว</span></li>
+    <li>แผ่นทึบล่าง → ไม่มี/ลูกฟูก/คอมโพ → กว้าง·สูง <span class="tag have">มีแล้ว</span></li>
+  </ul>
+  <div class="hi"><span class="sec" style="margin:0;">🆕 มุ้งกันยุง (ต้องเพิ่ม)</span>
+  <ul class="tree">
+    <li><span class="k">ไม่มี / มีมุ้ง</span> → ถ้ามี: <span class="tag new">เพิ่มใหม่</span></li>
+    <li><span class="k">ชนิด</span> → เฟรม (เฟรมเล็ก/ใหญ่/แม่เหล็กพับ) · จีบ (ตีนตะขาบ/SD) · ม้วน (ม้วน/เตะ150/300/600) <span class="tag chk">3-4 กลุ่ม ยืนยันตอน dev</span></li>
+    <li><span class="k">ผ้ามุ้ง</span> → ไฟเบอร์(ฟรี) · กันแมว <span class="price">+800</span> · กันหนู <span class="price">+1,200</span> · นิรภัย <span class="price">tier</span></li>
+    <li><span class="k">จำนวนมุ้ง</span> (กรอกเอง) · <span class="k">ราคามุ้ง</span> (เว้น=auto)</li>
+    <li>สีกรอบมุ้ง = ตามบาน / ซาฮาร่า ×0.5 (auto)</li>
+  </ul>
+  <div style="font-size:12px;color:#166534;">engine มุ้งพร้อม (mosqId/mosqPrice) — เพิ่มแค่ UI</div></div>
+</div></details>
+
+<!-- ============ G2 ============ -->
+<details class="g"><summary>G2 · รั้ว / ระแนง / ราวกันตก / ระแนงพิเศษ</summary><div class="body">
+  <div class="sec">① ประตูรั้ว <span class="tag have">มีแล้ว</span></div>
+  <ul class="tree"><li>ตรง/โค้ง → ลายระแนง (1x5/1"x1"/1"x1.6"/1"x1½"/1"x4") → หน้าโชว์·ระยะ → มอเตอร์(0/1/2) → งานราง(ใหม่/เดิม)</li></ul>
+
+  <div class="sec">② ระแนง</div>
+  <ul class="tree">
+    <li><span class="k">ชนิด</span> → ระแนงกล่อง → ขนาดกล่อง → หน้าโชว์ → ระยะห่าง → โครง(ไม่โครง/รวมโครง) <span class="tag have">มีแล้ว</span></li>
+    <li>หรือ เกล็ด Z → ขนาด(1"/1.6"/4") → โครง <span class="tag have">มีแล้ว</span></li>
+  </ul>
+  <div class="hi"><span class="k">🆕 สีอลู (4 หมวด)</span> <span class="tag new">เพิ่มใหม่</span>
+  <ul class="tree">
+    <li>มาตรฐาน (ขาว/ดำ ฟรี) · ซาฮาร่า <span class="price">+300</span> (เทา/ดำ/Aztec) · ลายไม้สต๊อก <span class="price">+1,000</span> · อบพิเศษ <span class="price">+1,700</span> (Fuji/กรอกชื่อ)</li>
+  </ul></div>
+  <div class="hi"><span class="k">🆕 มุ้งติดตาย</span> (toggle) <span class="tag new">เพิ่มใหม่</span>
+  <ul class="tree">
+    <li>ผ้า: ไฟเบอร์ · กันแมว · กันหนู → ขนาด(เท่าระแนง/กรอกเอง) → สีกรอบ(อบขาว/ดำ/ซาฮาร่า×0.5/ลายไม้×0.5)</li>
+  </ul></div>
+  <div class="hi"><span class="k">🆕 ทำเป็นบาน</span> (toggle · auto→ไม่โครง) <span class="tag new">เพิ่มใหม่ — ตัวอย่างที่พี่ถาม</span>
+  <ul class="tree">
+    <li><span class="k">ชนิดบาน 6 แบบ:</span> บานเลื่อน SMS · เลื่อนยูโร · เลื่อนรางบน · บานเปิดยูโร · เฟี้ยมยูโร · สวิงเปิด2ทาง</li>
+    <li>จำนวนบาน + ติดตาย (max=บาน−1)</li>
+    <li><span class="k">ถ้าบานเลื่อน:</span> ราง(กันน้ำ/เตี้ย7มม. <span class="price">+500</span>) + ล็อก(มี/ไม่มีกุญแจ)</li>
+    <li><span class="k">ถ้าบานเปิด:</span> โช้คอัด(<span class="price">+5,000</span>) + ธรณี(กันน้ำ/หลังเต่า+drop<span class="price">+1,000</span>/ไม่มี) + ล็อก(ไม่มี/มี/มี+กุญแจ)</li>
+    <li><span class="k">ถ้าเฟี้ยม:</span> ทิศเปิด(ซ้าย/ขวา/แยกกลาง) + ธรณี(นอก/ใน) + ล็อก</li>
+    <li><span class="k">ถ้าสวิง:</span> ธรณี(หลังเต่า/ไม่มี) + มือจับ(มาตรฐาน/อร่าม→30.5-120ซม. <span class="price">+1,500-3,200</span>) + ล็อก</li>
+    <li>ทุกชนิด: ค่าทำสีบาน 20/30/40/50% <span class="tag chk">ยืนยันตอน dev</span></li>
+  </ul></div>
+
+  <div class="sec">③ ราวกันตก <span class="tag have">มีแล้ว</span></div>
+  <ul class="tree">
+    <li>ทรงราว(เฉียง/ตรง) → ระบบยึด(หมุด/ยู/เสา) → ราวมือจับบน(ไม่มี/ยู<span class="price">+500</span>/กล่อง<span class="price">+600</span>) → ยาว·ชุด</li>
+    <li class="hi" style="margin:5px 0;"><span class="k">🆕 กระจก + สีอลู</span> <span class="tag new">เพิ่มใหม่</span> → <b>กระจกใสอย่างเดียว</b> (พี่เคาะ: ไม่เลือกสีกระจก) + สีอลู</li>
+  </ul>
+
+  <div class="sec">④ ระแนงพิเศษ <span class="tag have">มีแล้ว</span></div>
+  <ul class="tree"><li>หมุนเปิด-ปิด → ควบคุม(มือ/มอเตอร์) · หรือ บานเกล็ดอลู</li></ul>
+</div></details>
+
+<!-- ============ G3 ============ -->
+<details class="g"><summary>G3 · หลังคา / ฝ้า / ผนังเบา</summary><div class="body">
+  <div class="sec">หลังคา (ไวนิล/เมทัล/ชินโค/โพลีตัน)</div>
+  <ul class="tree">
+    <li>กลุ่มวัสดุ → (เมทัล: ความหนา 1"/2") → รุ่น → สีวัสดุมุง <span class="tag have">มีแล้ว</span></li>
+    <li>ถ้าลามิเนต → ชนิดฟิล์ม(ใส/เขียว/กันร้อน) + ความหนากระจก(4+4/5+5) <span class="tag have">มีแล้ว</span></li>
+    <li><span class="k">สีโครง</span> → <b>dropdown สีเต็ม เรียบแบบ G1</b> (พี่เคาะ: ยุบกล่อง 🎨 L1/L2/L3 ออก · กรอกง่าย) <span class="tag new">ปรับเป็น dropdown</span></li>
+    <li>หลังคาเลื่อน(toggle) → ชนิด(ยื่น/ข้าง) + บาน(≥2) + มอเตอร์ + ราคามอเตอร์ <span class="tag have">มีแล้ว</span></li>
+    <li>หลังคาผสม(toggle) → วัสดุ2 + พื้นที่ <span class="tag have">มีแล้ว</span></li>
+    <li>แป(เดี่ยว/คู่) · โครงสร้าง(อลู/เหล็กชุบ) <span class="tag have">มีแล้ว</span></li>
+  </ul>
+  <div class="hi">
+    <span class="k">🆕 เสา</span> → จำนวน(ต้น) × <span class="price">1,500/ต้น</span> <span class="tag new">เพิ่มใหม่</span> <span class="tag chk">engine คิด fixed (full มี o-rfpole15)</span>
+  </div>
+  <div class="hi"><span class="k">🆕 หมายเหตุ (REMARK_PRESETS — ลิสต์จริงที่มีในระบบ)</span> <span class="tag new">เพิ่มใหม่</span> (ไม่คิดเงิน · ติ๊กขึ้นใบ · พิมพ์เพิ่มเองได้)
+    <ul class="tree">
+      <li><span class="k">หมวด "รวมในราคา"</span> เช่น: รวมงานรื้อหลังคาเดิม (ซ่อมให้ไม่คิดเงิน · ไม่รวมวัสดุ) · รวมโครงยึดเข้าตัวบ้าน+ครอบอลู · รวมตั้งนั่งร้าน · รวมกรีดฝ้าซ่อนคาน · รวมทาสีผนังสมาร์ทบอร์ด</li>
+      <li><span class="k">หมวด "ไม่รวมในราคา"</span> เช่น: ไม่รวมงานระบบน้ำ/ประปา · ไม่รวมงานไฟเข้าตู้เมน · ไม่รวมรื้อพื้น/กระเบื้อง · ไม่รวมงานสมาร์ทบอร์ด · งานไฟมอเตอร์ (เดินสายไม่เกิน 10 ม.)</li>
+      <li><span class="k">หมวด "เงื่อนไข/วัสดุ"</span> เช่น: วัสดุตามแบบมาตรฐานผู้ผลิต · จำนวน/ราคาอาจเปลี่ยนเมื่อวัดหน้างานจริง</li>
+    </ul>
+    <span style="font-size:11.5px;color:#6b7280;">หมายเหตุเป็นลิสต์รวมทุกกลุ่ม — G3 ติ๊กข้อที่เกี่ยวหลังคา · แก้ข้อความ/พิมพ์เพิ่มได้</span>
+  </div>
+  <div class="sec">ฝ้า / ผนังเบา</div>
+  <ul class="tree"><li>ฝ้า: อลู/ไม้เทียม/ฉาบ/ระแนง3แบบ · ผนังเบา: ฉนวน(มี/ไม่มี) <span class="tag have">มีแล้ว</span></li></ul>
+</div></details>
+
+<!-- ============ G4 ============ -->
+<details class="g"><summary>G4 · ตู้อลู / ฝาตู้ Future Tech</summary><div class="body">
+  <div class="sec">ตู้อลู</div>
+  <ul class="tree">
+    <li>ชนิดตู้(เสื้อผ้า/รองเท้า) → ขนาด(กว้าง·สูง·ลึก) → <span class="k">บานหน้า: 1 / 2 / 3 / 4 บาน</span> (default 2) → สีโครง(มาตรฐาน/พิเศษ) <span class="tag have">มีแล้ว · ยืนยัน 4 บาน</span></li>
+  </ul>
+  <div class="sec">ฝาตู้ Future Tech</div>
+  <ul class="tree"><li>ขนาด/บาน → <span class="k">จำนวนบาน: 1 / 2 / 3 บาน (สูงสุด 3)</span> → สีโครง <span class="tag have">มีแล้ว · ยืนยัน 3 บาน</span></li></ul>
+  <div style="font-size:12.5px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px 10px;margin:6px 0;">✅ ตอบที่พี่ถาม: <b>ตู้อลู = ได้ถึง 4 บาน · ฝาตู้ FT = สูงสุด 3 บาน</b> (คนละชนิด เลยมีทั้ง 3 และ 4)</div>
+  <div class="formula"><b>สูตร + ข้อจำกัดมิติ (จาก engine จริง):</b><br>
+    บานหน้าตู้ใช้สูตร Future Tech · <b>พื้นที่ต่อบาน = (กว้าง × สูง) ÷ จำนวนบาน</b><br>
+    เรตต่อบาน: ≤ 1.0 ตร.ม. = 7,500 · 1.0–1.5 = 10,000 · 1.5–1.7 = 12,500<br>
+    <b>⛔ ข้อจำกัด: พื้นที่ต่อบานไม่ควรเกิน ~1.7 ตร.ม.</b> (เกินจะใช้เรตสูงสุด ไม่เพิ่มตามจริง) → ตู้ใหญ่ต้องเพิ่มจำนวนบานให้พื้นที่/บานเล็กลง<br>
+    + ชั้น (กระจก 1,000/อลู 1,200 ต่อชั้น) · ตู้รองเท้าชั้นถี่ (0.2ม.) ตู้เสื้อผ้า (0.4ม.)
+  </div>
+  <div class="hi">
+    <span class="k">🆕 กระจกตู้</span> → ชั้นกระจก dropdown (เขียว/ใส/เทมเปอร์/ลามิเนต) <span class="tag new">เพิ่มใหม่</span><br>
+    <span class="k">🆕 สีหน้าบานแยก</span> → (เมื่อสีพิเศษ) ขาว/ดำ/ซาฮาร่า/ลายไม้/อบพิเศษ+รหัส <span class="tag new">เพิ่มใหม่</span><br>
+    <span class="k">🆕 ฝาตู้กระจก</span> → วัสดุหน้าบาน(อลู/กระจก) → ถ้ากระจก: สเปก/สี <span class="tag new">เพิ่มใหม่</span>
+  </div>
+  <div class="flag" style="background:#f1f5f9;border-color:#cbd5e1;color:#475569;"><span class="k">สมาร์ทบอร์ดผนัง (2,500/ตร.ม.)</span> — ⏸️ <b>พี่เคาะ: เลื่อนไว้ทำทีหลัง</b> (ไม่ใส่ในรอบนี้ · ทำ G อื่นจบก่อน · wall_ext มีในระบบ ไว้ต่อทีหลัง)</div>
+</div></details>
+
+<!-- ============ G5 ============ -->
+<details class="g"><summary>G5 · มุ้ง</summary><div class="body">
+  <ul class="tree">
+    <li><span class="k">ชนิดมุ้ง 4-5 กลุ่ม:</span> เฟรม(เล็ก/ใหญ่/ติดตาย/แม่เหล็ก) · จีบ(ตีนตะขาบ/SD) · จีบรังผึ้ง · ม้วน(ม้วน/เตะ150/300/600) <span class="tag have">มีแล้ว</span></li>
+    <li><span class="k">เฉพาะเฟรม:</span> ติดกับ(ประตู/หน้าต่าง min ต่างกัน) + จำนวนบาน + ผ้ามุ้ง(ไฟเบอร์/กันแมว<span class="price">+800</span>/กันหนู<span class="price">+1,200</span>/นิรภัย) <span class="tag have">มีแล้ว</span></li>
+    <li>ขนาด: กว้าง·สูง·ชุด <span class="tag have">มีแล้ว</span></li>
+  </ul>
+  <div class="hi">
+    <span class="k">🆕 สีผ้า</span> (cascade ตามผ้า: ไฟเบอร์→ดำ/เทา · กันแมว→ขาว · กันหนู→เงิน/ดำ) <span class="tag new">เพิ่มใหม่</span><br>
+    <span class="k">🆕 สีกรอบอลู</span> → <b>dropdown สีเต็มแบบ G1</b> (พี่เคาะ · ×0.5) <span class="tag new">เพิ่มใหม่</span>
+  </div>
+  <div class="flag" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;">✅ แก้ตามพี่: <b>มุ้งไม่มีกระจก / ไม่มีคาดตาราง</b> (ตัดออกแล้ว) — มุ้งมีแค่ ผ้า + สีกรอบ</div>
+</div></details>
+
+<!-- ============ G6 ============ -->
+<details class="g" style="border:2px solid #15803d;"><summary style="background:#15803d;">G6 · กั้นห้องกระจก (ออกแบบใหม่ ต่อยอด v8)</summary><div class="body">
+  <div class="flag" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;"><b>G6 = สร้างห้องทั้งห้อง</b> — โหมดคิดเร็วทำเป็น <b>5 สเตปไหลลง</b> (ต่อยอดดราฟ v8 ที่ approve แล้ว) ไม่ใช่ฟอร์มเดียว เพราะห้องมีหลายด้าน</div>
+  <div class="vstep"><div class="h">สเตป 1 · รูปทรง + ขนาดห้อง</div>
+    <div style="font-size:11.5px;color:#6b7280;font-weight:700;">รูปแบบห้อง</div>
+    <div class="vchips"><span class="vchip">▭ ตัว I (1 ด้าน)</span><span class="vchip on">▙ ตัว L (2 ด้าน)</span><span class="vchip">▛ ตัว U (3 ด้าน)</span><span class="vchip">▣ กล่อง (4 ด้าน)</span></div>
+    <div style="font-size:11.5px;color:#6b7280;font-weight:700;">ขนาด: ยื่น · ยาว · สูง (กรอกตัวเลข)</div>
+  </div>
+  <div class="vstep"><div class="h">สเตป 2 · บาน + สี + กระจก (ทั้งห้อง · สีเดียว)</div>
+    <div style="font-size:11.5px;color:#6b7280;font-weight:700;">ชนิดบาน (ดึงชุดบานจาก G1)</div>
+    <div class="vchips"><span class="vchip on">เลื่อน</span><span class="vchip">เปิด</span><span class="vchip">เฟี้ยม</span><span class="vchip">ติดตาย</span><span class="vchip">ผนังเบาทึบ</span></div>
+    <div style="font-size:11.5px;color:#6b7280;font-weight:700;">สี · กระจก (ใช้ทั้งห้อง)</div>
+    <div class="vchips"><span class="vchip">สีอลู ▾</span><span class="vchip">กระจก ▾</span><span class="vchip">🔒 ล็อก</span><span class="vchip">🦟 มุ้ง</span></div>
+    <div style="font-size:11.5px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:5px 9px;margin-top:6px;">✅ พี่เคาะ: <b>สีเดียวทั้งห้อง ไม่แยกด้าน</b> (เร็ว ง่าย · เลิกแท็บ A/B/C/D)</div>
+  </div>
+  <ul class="tree" style="display:none;">
+    <li>x</li>
+    <li><span class="k">ถ้าบานกระจก</span> → เหมือนงานบาน G1: ชนิดบาน(เลื่อน/เปิด/เฟี้ยม/ติดตาย) → จำนวนบาน → <span class="k">สี · กระจก</span> → ล็อก · <span class="k">มุ้ง</span> · ลูกฟูก <span class="tag chk">ดึงชุดบานจาก G1</span></li>
+    <li>ตั้งค่า "ด้านนี้ต่างจากด้านอื่น" ได้ (สี/กระจก/บาน คนละแบบต่อด้าน) <span class="tag have">มีแล้ว v8</span></li>
+  </ul>
+  <div class="vstep"><div class="h">สเตป 3 · หลังคา (ทั้งห้อง) — reuse G3</div>
+    <div class="vchips"><span class="vchip">ไม่มีหลังคา</span><span class="vchip on">ไวนิล</span><span class="vchip">เมทัล</span><span class="vchip">โพลีตัน</span></div>
+    <div class="vchips"><span class="vchip">🎨 สีโครง ▾</span><span class="vchip">แปเดี่ยว/คู่</span><span class="vchip">โครงอลู/เหล็ก</span></div>
+  </div>
+  <div class="vstep"><div class="h">สเตป 4 · 🔧 งานเสริม (ทั้งห้อง)</div>
+    <div class="vchips"><span class="vchip">ฝ้า ▾</span><span class="vchip">💡 งานไฟ</span><span class="vchip">🚰 ประปา (กรอกเอง+💾)</span><span class="vchip">▦ งานพื้น</span><span class="vchip">👷 ผรม (กรอกเอง+💾)</span><span class="vchip">📝 หมายเหตุ</span></div>
+  </div>
+  <div class="vstep"><div class="h">สเตป 5 · สรุป (ใบเต็ม)</div>
+    <div class="vchips"><span class="vchip on">แตกราคารวมห้อง</span><span class="vchip">แตกราคาแยกด้าน</span></div>
+    <div style="font-size:11.5px;color:#6b7280;">รวมทุกด้าน + หลังคา + งานเสริม → ใบเสนอราคา</div>
+  </div>
+  <div class="flag" style="background:#fffbeb;border-color:#fde68a;color:#92722a;">🟡 ของใหม่ที่ v8 มีแต่ quick ปัจจุบันยังไม่ครบ: <b>งานประปา/ผรม กรอกเอง+เซฟ · แตกราคา 2 แบบ · มุ้ง/ล็อกต่อด้าน</b> → เติมตาม v8 · อ้าง <code>DRAFT-G6-redesign-full-2026-06-23</code></div>
+</div></details>
+
+<!-- ============ G7 ============ -->
+<details class="g done"><summary>G7 · ม่านซิป (ครบแล้ว ✓)</summary><div class="body">
+  <ul class="tree">
+    <li>รุ่น(auto/Z100/Z120/Z145D/Z120W) → ผ้า(0%ทึบ-30%/PET) → ระบบควบคุม(มือ/AOK220/DOOYA/AOK50N) → กลุ่มลูกค้า(ปลีก×2/โครงการ×1.75) → ขนาด <span class="tag have">ครบแล้ว</span></li>
+  </ul>
+  <div style="font-size:12px;color:#166534;">✅ สมบูรณ์ ไม่มีของตก</div>
+</div></details>
+
+<div class="legend" style="margin-top:18px;">
+<b>สรุป "เพิ่มใหม่" ทั้งหมด:</b> G1 มุ้ง · G2 (สีอลู·มุ้งติดตาย·ทำเป็นบาน·ราวกระจก) · G3 (เสา·หมายเหตุ) · G4 (กระจกตู้·สีหน้าบาน·ฝาตู้กระจก· ⚠️สมาร์ทบอร์ดรอ engine) · G5 (สีผ้า·สีกรอบ·คาด/ตัดกระจก)<br>
+<b>ต้องเคาะก่อน dev:</b> ① G4 สมาร์ทบอร์ด (engine) · ② G6 (ดีไซน์แยก) · ③ G5 สีกรอบ (dropdown vs preset) · ④ ค่าที่ติด "ยืนยันตอน dev" (ราคาทำสีบาน% · ชนิดมุ้ง 3 vs 4 กลุ่ม)<br>
+คู่กับใบสั่ง <code>ORDER-dev-quickmode-G2G3-align-G1</code> ส่วนที่ 7
+</div>
+
+</body></html>

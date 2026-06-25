@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Before→After คิดเร็ว — กดทดสอบได้ (19 มิ.ย. 69)</title>
+<style>
+:root{--red:#C0392B;--red2:#a93226;--green:#27ae60;--bg:#f0f0f0;--card:#fff;--border:#ddd;--orange:#e67e22;--blue:#2980b9;--lblue:#eaf4fd}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:#222;font-size:15px;line-height:1.65}
+h1{background:var(--red);color:#fff;padding:16px 24px;font-size:20px;display:flex;align-items:baseline;gap:12px}
+h1 small{font-size:12px;opacity:.75}
+.toc{background:#fff;border-bottom:2px solid #e5e5e5;padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.toc a{background:#f0f0f0;padding:5px 13px;border-radius:99px;text-decoration:none;color:#444;font-size:13px;white-space:nowrap;transition:.15s}
+.toc a:hover{background:var(--red);color:#fff}
+.section{padding:22px 24px;border-bottom:4px solid #ddd;background:#fff;margin-bottom:8px}
+.section-hd{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.badge{padding:3px 11px;border-radius:6px;font-size:12px;font-weight:700}
+.badge-red{background:var(--red);color:#fff}
+.badge-green{background:var(--green);color:#fff}
+.badge-orange{background:var(--orange);color:#fff}
+.badge-blue{background:var(--blue);color:#fff}
+/* grid layout */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.grid2{grid-template-columns:1fr}}
+/* cards */
+.card{background:var(--card);border-radius:10px;overflow:hidden;border:2px solid #e5e5e5}
+.card-hd{padding:9px 14px;font-weight:700;font-size:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px}
+.card-hd.before{background:#fdecea;color:#922b21;border-bottom:1px solid #f5c6cb}
+.card-hd.after{background:#eafaf1;color:#1e6e42;border-bottom:1px solid #a9dfbf}
+.card-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+/* field row */
+.fld{background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px}
+.fld-lbl{font-size:10.5px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 15px;border-radius:22px;border:1.5px solid #ccc;background:#fff;font-size:13px;cursor:pointer;transition:.12s;user-select:none;-webkit-user-select:none}
+.chip:active{transform:scale(.96)}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 2px 6px rgba(192,57,43,.3)}
+.chip.active-green{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 2px 6px rgba(39,174,96,.25)}
+.chip.new-feat{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* stepper */
+.stepper{display:inline-flex;align-items:center;border-radius:9px;overflow:hidden;border:2px solid var(--red);background:#fff}
+.stepper button{background:var(--red);color:#fff;border:none;width:38px;height:38px;font-size:20px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.1s}
+.stepper button:active{background:var(--red2)}
+.stepper .sval{min-width:46px;text-align:center;font-size:16px;font-weight:700;padding:0 4px}
+/* old input */
+.inp-old{border:1.5px solid #ccc;border-radius:8px;padding:8px 10px;width:80px;font-size:14px;text-align:center;background:#fff}
+/* notes */
+.note{font-size:12px;color:#888;font-style:italic;margin-top:4px}
+.note-ok{font-size:12px;color:var(--green);font-weight:600}
+.note-err{font-size:12px;color:var(--red);font-weight:600}
+/* callout */
+.call-bug{background:#fdecea;border:1.5px solid #e74c3c;border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:10px}
+.call-add{background:#eafaf1;border:1.5px solid #2ecc71;border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:10px}
+.call-blue{background:var(--lblue);border:1.5px solid var(--blue);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:10px}
+/* toggle row */
+.togrow{display:flex;gap:8px;flex-wrap:wrap}
+/* sub-area (reveal on toggle) */
+.sub-area{background:#f0f7ff;border:1.5px solid #b3d4ee;border-radius:8px;padding:10px 12px;margin-top:6px;display:none}
+.sub-area.show{display:block}
+/* price badge */
+.price-tag{background:#C0392B;color:#fff;border-radius:8px;padding:6px 14px;font-weight:700;font-size:16px;display:inline-block;margin-top:6px}
+/* section summary table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f5f5f5;padding:7px 10px;text-align:left;border:1px solid #ddd;font-weight:700}
+td{padding:6px 10px;border:1px solid #ddd;vertical-align:middle}
+.stat-ok{color:var(--green);font-weight:700}
+.stat-wait{color:var(--red);font-weight:700}
+.sep{height:1px;background:#e0e0e0;margin:12px 0}
+</style>
+</head>
+<body>
+
+<h1>Before→After คิดเร็ว <small>กดทดสอบได้ · 19 มิ.ย. 69</small></h1>
+
+<div class="toc">
+  <a href="#sum">สรุป</a>
+  <a href="#stepper">+/- stepper</a>
+  <a href="#g3slide">G3 หลังคาเลื่อน</a>
+  <a href="#g3wall">G3 ผนังเบา+ฉนวน</a>
+  <a href="#g2">G2 cascade</a>
+  <a href="#g4">G4 ตู้</a>
+  <a href="#g5">G5 มุ้ง</a>
+</div>
+
+<!-- ===== SUMMARY ===== -->
+<div class="section" id="sum">
+  <div class="section-hd">📋 สรุปงานทั้งหมด <span class="badge badge-orange">รออนุมัติ</span></div>
+  <table>
+    <tr><th>กลุ่ม</th><th>งาน</th><th>ชนิด</th><th>สถานะ</th></tr>
+    <tr><td><b>ทุกกลุ่ม</b></td><td>ช่องตัวเลข → +/- stepper</td><td>UX</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G3 หลังคา</b></td><td>เพิ่ม toggle "หลังคาเลื่อน" (ทุกแบบ — engine พร้อมแล้ว)</td><td>ฟีเจอร์</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G3 ผนังเบา</b></td><td>ภายนอก/ภายใน เพิ่ม toggle ฉนวน (ค่าเริ่มต้น=มีฉนวน, 600/ตร.ม.)</td><td>ฟีเจอร์</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G3 ผนังเบา</b></td><td>เปลี่ยนชื่อ ISOWALL → "✓ ฉนวน iso" ให้ชัดขึ้น</td><td>Label</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G2 ระแนง</b></td><td>🔴 Cascade พัง — กดขนาดกล่องไม่ตอบ ราคา=฿0</td><td>Bug</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G2 ระแนง</b></td><td>เพิ่ม label "ประเภทงาน" ก่อน 4 ปุ่ม</td><td>UX</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G4 ตู้</b></td><td>เพิ่ม จำนวนชั้น + วัสดุผนัง ต่อด้าน</td><td>ฟีเจอร์</td><td class="stat-wait">รออนุมัติ</td></tr>
+    <tr><td><b>G5 มุ้ง</b></td><td>"หลังคาผิดกลุ่ม" — รอพี่นัทชี้จุด</td><td>ถาม</td><td class="stat-wait">รอคำตอบ</td></tr>
+    <tr><td><b>G1 บาน</b></td><td>ผสมบาน — พักไว้ก่อน (อยู่ในอีกแชท)</td><td>—</td><td class="stat-ok">พัก</td></tr>
+  </table>
+</div>
+
+<!-- ===== STEPPER ===== -->
+<div class="section" id="stepper">
+  <div class="section-hd">🔵 ช่องตัวเลข (ชุด/จำนวน) ทุกกลุ่ม G1–G7 <span class="badge badge-blue">กดทดสอบได้</span></div>
+  <div class="call-blue">เปลี่ยน <b>เฉพาะ number input</b> ที่เป็น ชุด/จำนวนบาน/จำนวน → ปุ่ม +/− กดง่าย มือถือสบาย</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd before">⬅ ก่อน</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ชุด (ทุก group)</div>
+          <input class="inp-old" type="number" value="1" min="1">
+          <div class="note">⌨️ กรอกตัวเลขตรง — มือถือต้องเปิด keyboard</div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">จำนวนบาน (G5 มุ้ง)</div>
+          <input class="inp-old" type="number" value="1" min="1">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd after">➡ หลัง — กดทดสอบได้</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ชุด (ทุก group)</div>
+          <div class="stepper" id="st1">
+            <button onclick="stepChange('st1',-1)">−</button>
+            <div class="sval" id="st1v">1</div>
+            <button onclick="stepChange('st1',1)">+</button>
+          </div>
+          <div class="note-ok">✅ กดได้เลย ไม่ต้องเปิด keyboard</div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">จำนวนบาน (G5 มุ้ง)</div>
+          <div class="stepper" id="st2">
+            <button onclick="stepChange('st2',-1)">−</button>
+            <div class="sval" id="st2v">1</div>
+            <button onclick="stepChange('st2',1)">+</button>
+          </div>
+        </div>
+        <div class="note">✅ ใช้ทุก group G1–G7 ทุกช่อง "จำนวน"</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== G3 หลังคาเลื่อน ===== -->
+<div class="section" id="g3slide">
+  <div class="section-hd">🏠 G3 หลังคาเลื่อน — ทุกแบบ <span class="badge badge-green">engine พร้อมแล้ว</span></div>
+  <div class="call-add">ALL products หลังคา (เมทัลชีท/ชินโค/ไวนิล/ดีไลท์/โพลีตัน/ลามิเนต) มี <code>optSlide:true</code> อยู่แล้ว — แค่เพิ่ม toggle ใน UI คิดเร็ว</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd before">⬅ ก่อน</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ประเภทงาน</div>
+          <div class="chips">
+            <div class="chip active">เมทัลชีท</div>
+            <div class="chip">ชินโคไลท์</div>
+            <div class="chip">ไวนิล/ดีไลท์</div>
+            <div class="chip">โพลีตัน/กระจก</div>
+            <div class="chip">ฝ้า/เพดาน</div>
+            <div class="chip">ผนังเบา</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">รุ่น</div>
+          <div class="chips">
+            <div class="chip active">1 นิ้ว ท่อPVC EPS</div>
+            <div class="chip">2 นิ้ว ท่อPVC EPS</div>
+            <div class="chip">1 นิ้ว ท่อเหล็ก EPS</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ขนาด (กว้าง × ยาว)</div>
+          <div style="display:flex;gap:8px">
+            <input class="inp-old" value="3.0" style="width:72px"><input class="inp-old" value="4.0" style="width:72px">
+          </div>
+          <div class="note-err">❌ ไม่มีให้เลือก "หลังคาเลื่อน" เลย</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd after">➡ หลัง — กดทดสอบได้</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ประเภทงาน</div>
+          <div class="chips">
+            <div class="chip active" onclick="chipSolo(this)">เมทัลชีท</div>
+            <div class="chip" onclick="chipSolo(this)">ชินโคไลท์</div>
+            <div class="chip" onclick="chipSolo(this)">ไวนิล/ดีไลท์</div>
+            <div class="chip" onclick="chipSolo(this)">โพลีตัน/กระจก</div>
+            <div class="chip" onclick="chipSolo(this)">ฝ้า/เพดาน</div>
+            <div class="chip" onclick="chipSolo(this)">ผนังเบา</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">รุ่น</div>
+          <div class="chips">
+            <div class="chip active" onclick="chipSolo(this)">1 นิ้ว ท่อPVC EPS</div>
+            <div class="chip" onclick="chipSolo(this)">2 นิ้ว ท่อPVC EPS</div>
+            <div class="chip" onclick="chipSolo(this)">1 นิ้ว ท่อเหล็ก EPS</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl" style="color:var(--green)">🆕 ลักษณะหลังคา</div>
+          <div class="chips">
+            <div class="chip active" id="slide-off" onclick="slideToggle(this,'off')">แบบเปิด (ติดตาย)</div>
+            <div class="chip" id="slide-on" onclick="slideToggle(this,'on')">หลังคาเลื่อน 🔄</div>
+          </div>
+          <div class="sub-area" id="slide-sub">
+            <div class="fld-lbl">จำนวนบาน (เลื่อน)</div>
+            <div class="stepper" id="st-slide" style="margin-top:4px">
+              <button onclick="stepChange('st-slide',-1,2)">−</button>
+              <div class="sval" id="st-slidev">2</div>
+              <button onclick="stepChange('st-slide',1)">+</button>
+            </div>
+            <div class="note">มอเตอร์ auto คำนวณจากพื้นที่ (แก้ในใบเสนอราคาได้)</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ขนาด (กว้าง × ยาว)</div>
+          <div style="display:flex;gap:8px">
+            <input class="inp-old" value="3.0" style="width:72px"><input class="inp-old" value="4.0" style="width:72px">
+          </div>
+        </div>
+        <div class="price-tag" id="slide-price">฿84,000</div>
+        <div class="note">ราคาตัวอย่าง (3×4=12ตร.ม.) · กดหลังคาเลื่อน เห็นราคาเปลี่ยน</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== G3 ผนังเบา ===== -->
+<div class="section" id="g3wall">
+  <div class="section-hd">🧱 G3 ผนังเบา + ฉนวน <span class="badge badge-green">engine พร้อมแล้ว</span></div>
+  <div class="call-add">engine รองรับ optInsul 600 บาท/ตร.ม. สำหรับ isowall/wall_ext/wall_int ทุกตัวแล้ว — เพิ่ม toggle ใน UI คิดเร็ว ค่าเริ่มต้น = มีฉนวน</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd before">⬅ ก่อน</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">รุ่น (ผนังเบา)</div>
+          <div class="chips">
+            <div class="chip active">ISOWALL</div>
+            <div class="chip">ภายนอก</div>
+            <div class="chip">ภายใน</div>
+          </div>
+          <div class="note-err">❌ ไม่รู้ว่า ISOWALL คืออะไร · ภายนอก/ภายใน ไม่มีออปชั่นฉนวน</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd after">➡ หลัง — กดทดสอบได้</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">รุ่น (ผนังเบา)</div>
+          <div class="chips" id="wall-type-chips">
+            <div class="chip active" onclick="wallPickType(this,'iso')">✓ ฉนวน iso</div>
+            <div class="chip" onclick="wallPickType(this,'ext')">ภายนอก</div>
+            <div class="chip" onclick="wallPickType(this,'int')">ภายใน</div>
+          </div>
+        </div>
+        <div class="fld" id="wall-insul-row" style="display:none">
+          <div class="fld-lbl" style="color:var(--green)">🆕 ฉนวน (+600 บาท/ตร.ม.)</div>
+          <div class="chips">
+            <div class="chip active-green active" id="insul-yes" onclick="wallSetInsul('yes')">✓ มีฉนวน (ค่าเริ่มต้น)</div>
+            <div class="chip" id="insul-no" onclick="wallSetInsul('no')">ไม่มีฉนวน</div>
+          </div>
+        </div>
+        <div class="price-tag" id="wall-price">฿18,000</div>
+        <div class="note" id="wall-note">ISOWALL · 3ตร.ม. (ตัวอย่าง)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== G2 ===== -->
+<div class="section" id="g2">
+  <div class="section-hd">🚪 G2 ระแนง·ราว <span class="badge badge-red">Bug + Label</span></div>
+  <div class="call-bug">🔴 Cascade พัง — กด "ขนาดกล่อง" (1x5cm/1"x1.6"/ฯลฯ) แล้วไม่มีอะไรตอบ หน้าโชว์/ระยะห่าง/โครงไม่โผล่ ราคา=฿0 ตลอด ยืนยันจากเวปจริงแล้ว</div>
+  <div class="call-add">🟢 เพิ่ม label "ประเภทงาน" ก่อน 4 ปุ่ม</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd before">⬅ ก่อน (พัง)</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl" style="color:#c0392b">ไม่มี label — ปุ่มโผล่ทันที</div>
+          <div class="chips">
+            <div class="chip">ประตูรั้ว</div>
+            <div class="chip active">ระแนง</div>
+            <div class="chip">ราวกันตก</div>
+            <div class="chip">ระแนงพิเศษ</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ชนิดระแนง</div>
+          <div class="chips">
+            <div class="chip active">ระแนงกล่อง</div>
+            <div class="chip">เกล็ด Z</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl" style="color:#c0392b">ขนาดกล่อง — กดแล้วไม่มีอะไรเกิดขึ้น</div>
+          <div class="chips">
+            <div class="chip" style="opacity:.4;text-decoration:line-through">1x5 cm.</div>
+            <div class="chip" style="opacity:.4;text-decoration:line-through">1"x1.6"</div>
+            <div class="chip" style="opacity:.4;text-decoration:line-through">1"x1"</div>
+            <div class="chip" style="opacity:.4;text-decoration:line-through">1"x1½"</div>
+            <div class="chip" style="opacity:.4;text-decoration:line-through">1"x4"</div>
+          </div>
+          <div class="note-err">❌ หน้าโชว์/ระยะห่าง/โครง ไม่โผล่เลย ราคา=฿0</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd after">➡ หลัง — กดทดสอบ cascade</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl" style="color:var(--green)">ประเภทงาน ← เพิ่ม label นี้</div>
+          <div class="chips">
+            <div class="chip" onclick="chipSolo(this)">ประตูรั้ว</div>
+            <div class="chip active" onclick="chipSolo(this)">ระแนง</div>
+            <div class="chip" onclick="chipSolo(this)">ราวกันตก</div>
+            <div class="chip" onclick="chipSolo(this)">ระแนงพิเศษ</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ชนิดระแนง</div>
+          <div class="chips">
+            <div class="chip active" onclick="chipSolo(this)">ระแนงกล่อง</div>
+            <div class="chip" onclick="chipSolo(this)">เกล็ด Z</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl" style="color:var(--green)">ขนาดกล่อง ← กดแล้วโผล่ขั้นถัดไป</div>
+          <div class="chips" id="rn-size-chips">
+            <div class="chip" onclick="rnPickSize(this,'1x5')">1x5 cm.</div>
+            <div class="chip" onclick="rnPickSize(this,'1x1.6')">1"x1.6"</div>
+            <div class="chip" onclick="rnPickSize(this,'1x1')">1"x1"</div>
+            <div class="chip" onclick="rnPickSize(this,'1x1.5')">1"x1½"</div>
+            <div class="chip" onclick="rnPickSize(this,'1x4')">1"x4"</div>
+          </div>
+        </div>
+        <div id="rn-step2" style="display:none">
+          <div class="fld">
+            <div class="fld-lbl" style="color:var(--green)">หน้าโชว์ ← โผล่หลังเลือกขนาด</div>
+            <div class="chips">
+              <div class="chip active" onclick="chipSolo(this)">ตัน</div>
+              <div class="chip" onclick="chipSolo(this)">เว้นช่อง</div>
+            </div>
+          </div>
+          <div class="fld">
+            <div class="fld-lbl" style="color:var(--green)">ระยะห่าง</div>
+            <div class="chips">
+              <div class="chip active" onclick="chipSolo(this)">ชิด</div>
+              <div class="chip" onclick="chipSolo(this)">2 ซม.</div>
+              <div class="chip" onclick="chipSolo(this)">3 ซม.</div>
+            </div>
+          </div>
+          <div class="fld">
+            <div class="fld-lbl" style="color:var(--green)">โครง</div>
+            <div class="chips">
+              <div class="chip active" onclick="chipSolo(this)">อลู 1"</div>
+              <div class="chip" onclick="chipSolo(this)">อลู 1½"</div>
+            </div>
+          </div>
+          <div class="price-tag">฿12,000</div>
+          <div class="note-ok">✅ cascade ครบ → ราคาออก (ตัวอย่าง)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== G4 ===== -->
+<div class="section" id="g4">
+  <div class="section-hd">📦 G4 ตู้ <span class="badge badge-orange">รออนุมัติ</span></div>
+  <div class="call-blue">G4 engine รองรับ <code>shelves</code> (จำนวนชั้น) + <code>cabwall_*_on</code> (ผนัง) ผ่าน optSel อยู่แล้ว — แค่เพิ่ม UI</div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd before">⬅ ก่อน</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ชนิดงาน</div>
+          <div class="chips"><div class="chip active">ตู้อลู</div><div class="chip">ฝาตู้ Future Tech</div></div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ชนิดตู้</div>
+          <div class="chips"><div class="chip active">ตู้เสื้อผ้า</div><div class="chip">ตู้รองเท้า</div></div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">บานหน้า</div>
+          <div class="chips"><div class="chip">1</div><div class="chip active">2</div><div class="chip">3</div><div class="chip">4</div></div>
+        </div>
+        <div class="note-err">❌ จำนวนชั้น = auto 5 ชั้น (เปลี่ยนไม่ได้)<br>❌ ผนัง = "ไม่มี" ตลอด</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd after">➡ หลัง — กดทดสอบได้</div>
+      <div class="card-body">
+        <div class="fld">
+          <div class="fld-lbl">ชนิดงาน</div>
+          <div class="chips"><div class="chip active" onclick="chipSolo(this)">ตู้อลู</div><div class="chip" onclick="chipSolo(this)">ฝาตู้ Future Tech</div></div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">ชนิดตู้</div>
+          <div class="chips"><div class="chip active" onclick="chipSolo(this)">ตู้เสื้อผ้า</div><div class="chip" onclick="chipSolo(this)">ตู้รองเท้า</div></div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl">บานหน้า</div>
+          <div class="chips"><div class="chip" onclick="chipSolo(this)">1</div><div class="chip active" onclick="chipSolo(this)">2</div><div class="chip" onclick="chipSolo(this)">3</div><div class="chip" onclick="chipSolo(this)">4</div></div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl" style="color:var(--green)">🆕 จำนวนชั้น</div>
+          <div class="chips">
+            <div class="chip active new-feat" onclick="chipSolo(this)">auto (H÷0.4)</div>
+            <div class="chip" onclick="chipSolo(this)">3 ชั้น</div>
+            <div class="chip" onclick="chipSolo(this)">4 ชั้น</div>
+            <div class="chip" onclick="chipSolo(this)">5 ชั้น</div>
+            <div class="chip" onclick="chipSolo(this)">6 ชั้น</div>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fld-lbl" style="color:var(--green)">🆕 ผนังตู้ — กดด้านที่จะใส่ (ไม่กด=ชนปูน)</div>
+          <div class="chips">
+            <div class="chip" onclick="this.classList.toggle('active')">ผนังซ้าย</div>
+            <div class="chip" onclick="this.classList.toggle('active')">ผนังหลัง</div>
+            <div class="chip" onclick="this.classList.toggle('active')">ผนังขวา</div>
+          </div>
+          <div id="wall-mat-row" style="margin-top:8px" class="sub-area show">
+            <div class="fld-lbl">วัสดุผนัง</div>
+            <div class="chips">
+              <div class="chip active" onclick="chipSolo(this)">กระจก (3,000/ตร.ม.)</div>
+              <div class="chip" onclick="chipSolo(this)">อลูทึบ (4,000+สี/ตร.ม.)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== G5 ===== -->
+<div class="section" id="g5">
+  <div class="section-hd">🦟 G5 มุ้ง <span class="badge badge-orange">ถามก่อน</span></div>
+  <div class="call-bug">"G5 หลังคาผิดกลุ่ม" — ตรวจโค้ดและเวปจริงแล้ว <b>ไม่เจอ</b> หลังคาใน G5 ขอให้พี่นัทชี้จุดก่อน: กดปุ่มอะไรมาแล้วเห็น "หลังคา" ตรงไหน?</div>
+  <div class="call-add">สิ่งที่ทำได้ทันทีโดยไม่ต้องรอ: จำนวนบาน → +/- stepper (ดูส่วน stepper ด้านบน)</div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div style="background:#111;color:#aaa;padding:18px 24px;font-size:13px;line-height:1.8">
+  <b style="color:#fff">ยืนยันแล้ว (กดได้เลย):</b> stepper ทุกกลุ่ม · G3 หลังคาเลื่อน toggle · G3 ผนังเบา+ฉนวน toggle<br>
+  <b style="color:#fff">รออนุมัติ UX:</b> G4 จำนวนชั้น/ผนัง · G2 cascade fix (bug)<br>
+  <b style="color:#fff">รอคำตอบ:</b> G5 หลังคาผิดกลุ่ม (ชี้จุดให้ด้วย)<br>
+  <span style="color:#555;font-size:11px">หลังเคาะครบ → รวมก้อนส่ง Chat B แก้ index.html คิดเร็วทีเดียว</span>
+</div>
+
+<script>
+// Stepper
+function stepChange(id, delta, minVal){
+  var el = document.getElementById(id+'v');
+  var v = parseInt(el.textContent)||1;
+  var mn = minVal||1;
+  v = Math.max(mn, v+delta);
+  el.textContent = v;
+  // update price demos
+  updateSlidePriceDemo();
+}
+
+// Generic solo chip (single select in parent)
+function chipSolo(el){
+  var chips = el.parentNode.querySelectorAll('.chip');
+  chips.forEach(function(c){ c.classList.remove('active','active-green'); });
+  el.classList.add('active');
+}
+
+// Slide toggle
+function slideToggle(el, mode){
+  var off = document.getElementById('slide-off');
+  var on  = document.getElementById('slide-on');
+  var sub = document.getElementById('slide-sub');
+  off.classList.remove('active');
+  on.classList.remove('active');
+  el.classList.add('active');
+  sub.classList.toggle('show', mode==='on');
+  updateSlidePriceDemo();
+}
+
+function updateSlidePriceDemo(){
+  var isSlide = document.getElementById('slide-on').classList.contains('active');
+  var nPanels = parseInt((document.getElementById('st-slidev')||{textContent:'2'}).textContent)||2;
+  // demo: 3×4=12sqm, เมทัลชีท 1นิ้ว PVC ราคาbase ≈ 28000 min หรือ 12*7000=84000
+  var basePrice = 84000;
+  var slideExtra = isSlide ? (47000 + (nPanels-1)*6750 + 28000) : 0; // ROOF_SLIDE 12sqm≈47k + tier + motor28k
+  var total = basePrice + slideExtra;
+  var el = document.getElementById('slide-price');
+  if(el) el.textContent = '฿' + total.toLocaleString();
+}
+
+// G2 cascade
+function rnPickSize(el, key){
+  var chips = el.parentNode.querySelectorAll('.chip');
+  chips.forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('rn-step2').style.display = 'block';
+}
+
+// Wall type pick
+function wallPickType(el, type){
+  var chips = el.parentNode.querySelectorAll('.chip');
+  chips.forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  var insulRow = document.getElementById('wall-insul-row');
+  var priceEl = document.getElementById('wall-price');
+  var noteEl = document.getElementById('wall-note');
+  if(type==='iso'){
+    insulRow.style.display='none';
+    if(priceEl) priceEl.textContent='฿18,000';
+    if(noteEl) noteEl.textContent='ISOWALL · 3ตร.ม. (ตัวอย่าง)';
+  } else {
+    insulRow.style.display='block';
+    updateWallPrice(type);
+  }
+}
+
+function wallSetInsul(v){
+  var yes = document.getElementById('insul-yes');
+  var no  = document.getElementById('insul-no');
+  if(v==='yes'){
+    yes.classList.add('active','active-green'); yes.classList.remove('active');
+    no.classList.remove('active','active-green');
+    yes.classList.add('active-green','active');
+  } else {
+    yes.classList.remove('active','active-green');
+    no.classList.add('active');
+    no.classList.remove('active-green');
+  }
+  var type = document.querySelector('#wall-type-chips .chip.active');
+  if(type) updateWallPrice(type.textContent.includes('ภายนอก')?'ext':'int');
+}
+
+function updateWallPrice(type){
+  var hasInsul = document.getElementById('insul-yes').classList.contains('active');
+  var priceEl = document.getElementById('wall-price');
+  var noteEl = document.getElementById('wall-note');
+  // base 3sqm: wall_ext min=13500, WALL_EXT 3sqm=4500/sqm=13500; wall_int=4100/sqm=12300
+  var base = type==='ext' ? 13500 : 12300;
+  var insulAdd = hasInsul ? 600*3 : 0;
+  var total = Math.max(base, base + insulAdd);
+  if(priceEl) priceEl.textContent = '฿'+total.toLocaleString();
+  if(noteEl) noteEl.textContent = (type==='ext'?'ภายนอก':'ภายใน') + ' · 3ตร.ม.' + (hasInsul?' + ฉนวน 600×3=1,800':'') + ' (ตัวอย่าง)';
+}
+</script>
+</body>
+</html>

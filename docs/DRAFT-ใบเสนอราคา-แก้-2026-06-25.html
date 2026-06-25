@@ -1,0 +1,84 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟแก้ใบเสนอราคา — 25 มิ.ย. (เจาะครบ)</title>
+<style>
+  body{ font-family:"Sarabun",-apple-system,"Segoe UI",sans-serif; background:#eef1f5; color:#1f2937; margin:0; padding:20px 16px 70px; line-height:1.55; }
+  h1{ font-size:21px; margin:0 0 3px; } .sub{ color:#6b7280; font-size:13px; margin-bottom:18px; }
+  .iss{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; margin-bottom:14px; overflow:hidden; border-left:5px solid #B3151D; }
+  .iss.done{ border-left-color:#15803d; }
+  .ih{ padding:11px 15px; font-weight:800; font-size:15.5px; background:#fafbfc; }
+  .ib{ padding:6px 15px 14px; font-size:13.5px; }
+  .lab{ font-weight:800; font-size:12px; color:#6b7280; margin:9px 0 3px; }
+  .bad{ background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:8px 11px; color:#991b1b; font-size:13px; }
+  .good{ background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 11px; color:#166534; font-size:13px; }
+  .code{ font-family:ui-monospace,monospace; font-size:12px; background:#f1f5f9; padding:1px 6px; border-radius:5px; }
+  .qmock{ border:1px solid #ddd; border-radius:6px; padding:8px 10px; font-size:12.5px; background:#fff; margin-top:4px; }
+  .qmock .ti{ font-weight:700; } .qmock .sl{ color:#555; padding-left:12px; font-size:12px; }
+  .tag{ font-size:10.5px; font-weight:700; padding:1px 8px; border-radius:9px; margin-left:6px; }
+  .t-fix{ background:#dcfce7; color:#166534; } .t-ok{ background:#dbeafe; color:#1e40af; }
+  table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:6px; }
+  th,td{ border:1px solid #e5e7eb; padding:6px 8px; text-align:left; vertical-align:top; }
+  th{ background:#f9fafb; }
+</style></head><body>
+
+<h1>ดราฟแก้ใบเสนอราคา — เจาะครบ 6 จุด</h1>
+<div class="sub">25 มิ.ย. · เทียบ PDF จริง + เจาะโค้ดครบทุกจุด (agent 3 ตัว) · <span class="tag t-fix">แก้ได้</span>=รากชัดพร้อมทำ · <span class="tag t-ok">ใช้ได้แล้ว</span>=ไม่ต้องแก้ · ยังไม่แตะ index</div>
+
+<!-- 1 -->
+<div class="iss"><div class="ih">① หัวรายการงานกั้นห้องผิด <span class="tag t-fix">แก้ได้</span></div><div class="ib">
+  <div class="ba" style="display:flex;gap:12px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:230px;"><div class="lab">PDF ตอนนี้ (ผิด)</div>
+      <div class="qmock"><div class="ti">4 · ด้าน A &nbsp; 140,100</div><div class="sl">- ห้องต่อเติม (กั้นห้องกระจก) (เหมา)</div><div class="sl">- ด้าน A (2 ช่อง·3 บาน) = 47,000</div></div></div>
+    <div style="flex:1;min-width:230px;"><div class="lab">ควรเป็น (พี่เคาะ · ใบปกติ ไม่โชว์ราคาย่อย)</div>
+      <div class="qmock"><div class="ti">4 · ห้องต่อเติม (กั้นห้องกระจกพร้อมหลังคา) &nbsp; 140,100</div><div class="sl">- ด้าน A (2 ช่อง·3 บาน)</div><div class="sl">- ด้าน B · ผนังเบา</div><div class="sl">- หลังคา/ฝ้า ไวนิล</div></div></div>
+  </div>
+  <div class="good" style="margin-top:8px;">แก้: หัว = <b>"ห้องต่อเติม (กั้นห้องกระจกพร้อมหลังคา)"</b> (ถ้าไม่มีหลังคา → "(กั้นห้องกระจก)") · เอา "(เหมา)" ออก · <b>บรรทัดด้าน A/B/C/หลังคา = โชว์แค่ชื่อ ไม่มี "= ราคา"</b> (พี่เคาะ: ใบปกติส่งลูกค้าไม่โชว์ราคาย่อย) · มี string ที่ L6360/8630 ใช้ได้</div>
+</div></div>
+
+<!-- 2 -->
+<div class="iss"><div class="ih">② พิมพ์หน้า 2-4 ว่าง · เนื้อถูกตัด <span class="tag t-fix">แก้ได้</span></div><div class="ib">
+  <div class="bad">ราก (CSS print L181-184): <span class="code">body *{visibility:hidden}</span> + <span class="code">#quoteBox{position:absolute;inset:0}</span> = เนื้อยาวไม่ไหลข้ามหน้า → ตัดที่หน้า 1 · หน้า 2-4 ว่าง</div>
+  <div class="good" style="margin-top:6px;">แก้: เลิก absolute + visibility hack → ใช้ <span class="code">display:none</span> ซ่อน sibling + #quoteBox static (ไหลปกติ) + <span class="code">break-inside:avoid</span> ต่อรายการ</div>
+</div></div>
+
+<!-- 3 -->
+<div class="iss done"><div class="ih">③ ราคารวมห้อง ≠ ผลบวกบรรทัด <span class="tag t-ok">หายเอง (พี่เคาะใบปกติไม่โชว์ราคาย่อย)</span></div><div class="ib">
+  <div class="good">พอ <b>ใบปกติไม่โชว์ราคาย่อยรายด้าน</b> (โชว์แค่ยอดรวมห้อง 140,100) → <b>ปัญหาบวกไม่เท่ายอดหายเลย</b> (ลูกค้าไม่มีตัวเลขย่อยให้บวกตาม)</div>
+  <div class="bad" style="margin-top:6px;">ที่ต้องระวัง: ราคาย่อย "=47,000" จะไปอยู่ <b>โหมดวิธีคิดราคา 🔍 (เฟิร์น/ภายใน)</b> เท่านั้น → ตรงนั้นต้องบวกได้=ยอดรวม (รวม roomColorPremium L8611 + ปัดเศษ Math.ceil L8644) ไม่งั้นเฟิร์นงง · = รวมกับข้อ ④</div>
+</div></div>
+
+<!-- 4 -->
+<div class="iss"><div class="ih">④ หน้าวิธีคิดราคา 🔍 โชว์ไม่ครบ <span class="tag t-fix">แก้ได้</span></div><div class="ib">
+  <div class="bad">ราก: <span class="code">qCalcStepLines()</span> (L8104) แสดง base/breakdown/สูตร แต่ <b>ไม่แสดง addonLines</b> (ออปชั่นที่คิดเงิน เช่น มุ้ง +5,670 · มือจับ · ล็อก · คาดตาราง) → เฟิร์นเห็นวิธีคิดไม่ครบ</div>
+  <div class="good" style="margin-top:6px;">แก้: เพิ่ม loop แสดง <span class="code">u.addonLines</span> ที่ p&gt;0 (เช่น "+ มุ้ง = 5,670") ก่อนบรรทัดโครงสร้าง · engine คายข้อมูลครบแล้ว (ORDER-dev-price-calc-A F1 ทำแล้ว · เหลือ UI โชว์)</div>
+</div></div>
+
+<!-- 5+6 -->
+<div class="iss done"><div class="ih">⑤⑥ ปุ่มในใบ + ฉบับร่าง AI <span class="tag t-ok">ใช้ได้แล้ว — ไม่ต้องแก้</span></div><div class="ib">
+  <div class="good">เจาะแล้ว: <b>ปุ่มทุกตัวใช้งานได้จริง ไม่มี stub</b></div>
+  <table>
+    <tr><th>ปุ่ม</th><th>ทำอะไร</th><th>สถานะ</th></tr>
+    <tr><td>พิมพ์ / เซฟ PDF</td><td>window.print()</td><td>✅</td></tr>
+    <tr><td>Export Excel</td><td>ออก XLSX ครบ · <b>รองรับ G6 ห้อง</b></td><td>✅</td></tr>
+    <tr><td>ส่งเข้าระบบ JR</td><td>ส่งไป /quotations/new (จริง · ไม่ใช่ stub)</td><td>✅</td></tr>
+    <tr><td>✎ แก้ทุกข้อความ</td><td>contenteditable + เก็บ localStorage</td><td>✅</td></tr>
+    <tr><td>📄 เริ่มใบเปล่า</td><td>ล้าง+เปิดโหมดแก้+แถวว่าง</td><td>✅</td></tr>
+    <tr><td>+ ฉบับร่าง</td><td>watermark "ฉบับร่าง" ทับใบ</td><td>✅</td></tr>
+    <tr><td>🤖 AI ตรวจใบเสนอ</td><td>POST /api/ai/review-quotation → verdict (APPROVE/แก้/REJECT)</td><td>✅ (มี backend จริง)</td></tr>
+  </table>
+  <div class="good" style="margin-top:8px;">→ ⑤⑥ <b>ไม่ต้องแก้</b> · ที่พี่ถาม "ฉบับร่าง AI ใช้ได้จริงไหม" = ใช้ได้จริง (มี 2 อัน: watermark ฉบับร่าง + 🤖 AI ตรวจที่ยิง API จริง)</div>
+</div></div>
+
+<div class="iss done"><div class="ih">สรุป — เหลือแก้ 4 จุด (รากชัดหมด พร้อมทำใบสั่ง)</div><div class="ib">
+  <table>
+    <tr><th>จุด</th><th>ต้องทำ</th></tr>
+    <tr><td>① หัวห้อง G6</td><td>เปลี่ยน title → "ห้องต่อเติม (กั้นห้องกระจกพร้อมหลังคา)" · เอา (เหมา) ออก</td></tr>
+    <tr><td>② พิมพ์หน้าว่าง</td><td>แก้ CSS print (เลิก absolute+visibility → display:none+break-inside)</td></tr>
+    <tr><td>③ ราคารวมห้อง</td><td>เพิ่มบรรทัด สีห้อง + ปัดเศษ ใน sumPage</td></tr>
+    <tr><td>④ วิธีคิดราคา</td><td>qCalcStepLines แสดง addonLines (มุ้ง/เสริม)</td></tr>
+    <tr><td>⑤⑥ ปุ่ม/AI</td><td>✅ ใช้ได้แล้ว ไม่ต้องแก้</td></tr>
+  </table>
+  <div style="font-size:12px;color:#991b1b;margin-top:8px;">ทั้งหมด READ-ONLY · ยังไม่แตะ index · พร้อมทำใบสั่ง dev เมื่อพี่สั่ง</div>
+</div></div>
+
+</body></html>

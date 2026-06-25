@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ ลากเรียงฟีเจอร์ G2 เอง (ของจริง) — 20 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.5}
+  .wrap{max-width:680px;margin:0 auto;padding:16px 14px 70px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:10px}
+  .hd h1{margin:0 0 3px;font-size:18px;font-weight:700}
+  .hd p{margin:0;font-size:12.5px;opacity:.92}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .tab{flex:1;min-width:120px;min-height:44px;border:1.5px solid #d1d5db;border-radius:11px;background:#fff;font-size:14px;font-weight:700;color:#374151;cursor:pointer}
+  .tab.on{border-color:#b3122a;background:#b3122a;color:#fff}
+  .hint{font-size:12px;color:#475569;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 11px;margin-bottom:10px}
+  .hint b{color:#b3122a}
+  .list{list-style:none;margin:0;padding:0}
+  .card{background:#fff;border:1px solid #e5e7eb;border-left-width:5px;border-radius:11px;margin-bottom:8px;padding:9px 11px 11px;display:flex;gap:9px;align-items:flex-start;transition:box-shadow .12s}
+  .card.drag{opacity:.4}
+  .card.over{box-shadow:0 0 0 2px #b3122a}
+  .grip{cursor:grab;color:#9ca3af;font-size:19px;line-height:1;padding-top:2px;user-select:none;flex:0 0 auto}
+  .cmain{flex:1;min-width:0}
+  .crow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+  .num{width:19px;height:19px;border-radius:50%;background:#eef;color:#555;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .cl{font-size:13.5px;font-weight:700;color:#374151}
+  .ztag{font-size:10px;font-weight:700;border-radius:5px;padding:1px 7px;color:#fff}
+  .nudge{margin-left:auto;display:flex;gap:3px}
+  .nudge button{width:26px;height:26px;border:1px solid #e5e7eb;border-radius:7px;background:#fafafa;cursor:pointer;font-size:13px;color:#6b7280;padding:0}
+  .nudge button:active{background:#eee}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{min-height:30px;padding:0 10px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;font-size:11.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .chip.sp{background:#b3122a;color:#fff;border-color:#b3122a}
+  .dot{width:11px;height:11px;border-radius:50%;border:1px solid #00000022}
+  .inp{height:30px;border:1px solid #d1d5db;border-radius:7px;padding:0 9px;font-size:11.5px;background:#fafafa;color:#6b7280;display:inline-flex;align-items:center;min-width:74px}
+  .sizerow{display:flex;gap:6px}.sizerow .inp{flex:1;justify-content:center}
+  .casc{font-size:11.5px;color:#475569;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:7px;padding:5px 8px}.casc b{color:#b3122a}
+  .doorbox{border:1.5px dashed #0f766e55;background:#f0fdfa;border-radius:8px;padding:7px 9px}
+  .fix{font-size:10px;font-weight:700;background:#fee2e2;color:#b3122a;border-radius:5px;padding:1px 5px}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e5e7eb;padding:9px 14px;display:flex;gap:9px;align-items:center;justify-content:space-between;max-width:680px;margin:0 auto}
+  .bar button{min-height:40px;padding:0 16px;border-radius:10px;border:1.5px solid #d1d5db;background:#fff;font-size:13px;font-weight:700;color:#374151;cursor:pointer}
+  .bar .save{background:#b3122a;color:#fff;border-color:#b3122a}
+  .bar .ord{font-size:11px;color:#6b7280;flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .styb{min-height:30px;padding:0 10px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;font-size:11.5px;font-weight:700;color:#374151;cursor:pointer}
+  .styb.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .dd{height:34px;border:1.5px solid #b3122a;border-radius:8px;padding:0 9px;font-size:12.5px;font-weight:600;color:#b3122a;background:#fff;font-family:inherit;max-width:100%}
+  .addbtn{width:100%;min-height:42px;border:1.5px dashed #15803d;border-radius:11px;background:#f0fdf4;color:#15803d;font-size:13.5px;font-weight:700;cursor:pointer;margin-top:2px}
+  .addbtn:active{background:#dcfce7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>ลากเรียงฟีเจอร์ G2 เอง</h1>
+    <p>ลากที่ <b style="color:#fff">⠿</b> หรือกด ▲▼ เพื่อจัดลำดับ · ของจริงทุกฟีเจอร์ · สีแถบซ้าย = โซน</p>
+  </div>
+  <div class="hint">👉 ลากที่ ⠿ หรือ ▲▼ จัดลำดับ · เสร็จกด <b>📋 คัดลอกลำดับ</b> วางในแชท (หรือบอกผม "เสร็จ" ผมอ่านเอง)
+    <div style="margin-top:7px;display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-size:12px">สไตล์ช่อง “สีอบ”:</span>
+      <button class="styb on" data-s="chip" onclick="setCStyle(this,'chip')">ชิป drill (เหมือน G1)</button>
+      <button class="styb" data-s="dd" onclick="setCStyle(this,'dd')">ดรอปดาวน์</button></div></div>
+  <div class="tabs" id="tabs"></div>
+  <ul class="list" id="list"></ul>
+  <button class="addbtn" onclick="addFeat()">➕ เพิ่มฟีเจอร์</button>
+</div>
+<div class="bar"><span class="ord" id="ord"></span><button onclick="resetOrder()">↺ รีเซ็ต</button><button class="save" onclick="copyOrder()">📋 คัดลอกลำดับ</button></div>
+
+<script>
+var ZONE={ระบุงาน:'#9333ea',สเปกหลัก:'#b3122a','ออปชั่น':'#0f766e',เสริม:'#a16207',ปิดท้าย:'#6b7280'};
+var COLOR_DOTS={'สีอบขาว':'#fff','สีดำ':'#222','ไม่อบสี':'#c4c6c8'};
+// ฟีเจอร์ครบ + ของจริงต่อชนิด (ดึงจาก index.html group=2) · ลำดับเริ่ม=ที่เสนอ
+function colorField(l,fix){return {l:l,z:'สเปกหลัก',t:'color',fix:fix};}
+// ลำดับตามที่พี่นัทจัด (20มิ.ย.) · q=จุดที่ผมติดธงต้องเช็ค (สีส้ม)
+var DATA={
+  gate:[
+    {l:'ประเภทงาน',z:'ระบุงาน',t:'chips',o:['ประตูรั้ว','ระแนง','ราวกันตก','ระแนงพิเศษ'],on:0},
+    {l:'ลักษณะการเปิด',z:'สเปกหลัก',t:'chips',o:['บานเลื่อนตรง (รางตรง)','บานเลื่อนโค้ง (รางโค้ง)'],on:0,q:1,qt:'2 ชิป รวมรางในตัว · ต้องผูก o-railtype เดิม (ตรง 1,500 / โค้ง 2,500 + ค่าทำบานโค้ง 4,000/บาน) ไม่งั้นราคาพัง'},
+    {l:'ลายระแนง',z:'สเปกหลัก',t:'casc',c:'<b>ขนาดกล่อง</b> → <b>หน้าโชว์</b> → <b>ระยะห่าง</b>'},
+    {l:'ขนาด · กว้าง × สูง × ชุด',z:'สเปกหลัก',t:'size'},
+    {l:'สี (ใช้สีหลักด้านบน)',z:'สเปกหลัก',t:'topcolor',q:1,qt:'gate สีไม่มีราคา (o-gfin=ข้อความ) · เสนอ: คิดจากสีหลัก + ปุ่ม “เปลี่ยนสี” · ต้องเช็คว่า gate ผูกสีหลักได้ไหม'},
+    {l:'มอเตอร์ (ตัว)',z:'สเปกหลัก',t:'inp',ph:'1'},
+    {l:'รื้อของเดิม',z:'เสริม',t:'check'},
+    {l:'งานเสริม / วิศวกรรม',z:'ปิดท้าย',t:'inp',ph:'บาท'}],
+  ranae:[
+    {l:'ประเภทงาน',z:'ระบุงาน',t:'chips',o:['ประตูรั้ว','ระแนง','ราวกันตก','ระแนงพิเศษ'],on:1},
+    {l:'ทำเป็นบาน + ราคาประตู',z:'สเปกหลัก',t:'door'},
+    {l:'ชนิดระแนง',z:'ระบุงาน',t:'chips',o:['กล่อง (บังตา/ผนัง)','เกล็ด Z','เลื่อน'],on:0},
+    {l:'ลายระแนง (cascade)',z:'สเปกหลัก',t:'casc',c:'① <b>ขนาดกล่อง</b> → ② <b>หน้าโชว์</b> → ③ <b>ระยะห่าง</b> → ④ <b>โครง</b>'},
+    {l:'ขนาด · กว้าง × สูง × ชุด',z:'สเปกหลัก',t:'size'},
+    {l:'ผิว / สี ระแนง (ออปชั่น)',z:'สเปกหลัก',t:'optcolor',q:1,qt:'สีในฟอร์ม = ค่าผิวพิเศษเพิ่ม (+300…+2,400/ตร.ม.) คนละตัวกับสีหลัก · พับ default ขาวได้ · กดเปลี่ยนสีต้องโชว์ราคาเพิ่ม · ห้ามตัด'},
+    {l:'วิธีตัดระแนง (มีผลราคา)',z:'สเปกหลัก',t:'chips',o:['ปัดไม่ต่อ','ต่อเนื่อง'],on:0},
+    {l:'ครอบวงกบ',z:'เสริม',t:'chips',o:['ไม่มี','3 ด้าน','4 ด้าน'],on:0},
+    {l:'รื้อของเดิม',z:'เสริม',t:'check'},
+    {l:'งานเสริม / วิศวกรรม',z:'ปิดท้าย',t:'inp',ph:'บาท'},
+    {l:'หมายเหตุ (ติ๊ก)',z:'ปิดท้าย',t:'check'}],
+  rail:[
+    {l:'ประเภทงาน',z:'ระบุงาน',t:'chips',o:['ประตูรั้ว','ระแนง','ราวกันตก','ระแนงพิเศษ'],on:2},
+    {l:'ระบบยึด',z:'สเปกหลัก',t:'chips',o:['หมุดแปะข้าง','ยูเหล็ก + คาน'],on:0},
+    {l:'ทรงราว',z:'ระบุงาน',t:'chips',o:['กระจกเฉียง','กระจกตรง'],on:0},
+    {l:'ขนาด · ยาว × สูง',z:'สเปกหลัก',t:'size'},
+    {l:'ความหนากระจก',z:'สเปกหลัก',t:'chips',o:['10 มม.','12 มม.','เทมเปอร์'],on:0},
+    {l:'สีอลูมิเนียม (ออปชั่น)',z:'สเปกหลัก',t:'optcolor',q:1,qt:'o-railalucolor = ข้อความ ไม่มีราคา · สีจริง+ราคาอยู่ที่สีหลักด้านบน → พับ/ออปชั่นได้สบาย'},
+    {l:'ราวมือจับด้านบน (option)',z:'ออปชั่น',t:'chips',o:['ไม่มี','มี'],on:0},
+    {l:'รื้อของเดิม',z:'เสริม',t:'check'},
+    {l:'งานเสริม / วิศวกรรม',z:'ปิดท้าย',t:'inp',ph:'บาท'},
+    {l:'หมายเหตุ (ติ๊ก)',z:'ปิดท้าย',t:'check'}],
+  special:[
+    {l:'ประเภทงาน',z:'ระบุงาน',t:'chips',o:['ประตูรั้ว','ระแนง','ราวกันตก','ระแนงพิเศษ'],on:3},
+    {l:'ชนิด',z:'ระบุงาน',t:'chips',o:['เกล็ดอลู','เลื่อน (ลูกฟูก)','หมุนเปิด-ปิด'],on:0},
+    {l:'ทิศระแนง',z:'สเปกหลัก',t:'chips',o:['ตั้ง (D=สูง)','นอน (D=กว้าง)'],on:0},
+    {l:'ทำเป็นบาน + ราคาประตู',z:'สเปกหลัก',t:'door'},
+    {l:'ขนาด · กว้าง × สูง × ชุด',z:'สเปกหลัก',t:'size'},
+    {l:'สีอบ (ออปชั่น)',z:'สเปกหลัก',t:'optcolor',q:1,qt:'เกล็ดอลู (o-bgcolor) = ข้อความ ไม่มีราคา → พับสบาย · เลื่อน/เปิด-ปิด (o-bsfinish) มีค่าผิวเพิ่ม → พับได้แต่โชว์ราคาตอนเปลี่ยน'},
+    {l:'มอเตอร์ระแนง',z:'สเปกหลัก',t:'inp',ph:'⌈D÷3⌉ × 10,000'},
+    {l:'ครอบวงกบ',z:'เสริม',t:'chips',o:['ไม่มี','3 ด้าน','4 ด้าน'],on:0},
+    {l:'รื้อของเดิม',z:'เสริม',t:'check'},
+    {l:'งานเสริม / วิศวกรรม',z:'ปิดท้าย',t:'inp',ph:'บาท'},
+    {l:'หมายเหตุ (ติ๊ก)',z:'ปิดท้าย',t:'check'}]
+};
+var ORIG={}; Object.keys(DATA).forEach(k=>ORIG[k]=DATA[k].map(x=>Object.assign({},x)));
+var cur='gate', colorStyle='chip';
+function setCStyle(b,s){ colorStyle=s; document.querySelectorAll('.styb').forEach(x=>x.classList.remove('on')); b.classList.add('on'); render(); }
+function ddColor(sel){ var sp=sel.nextElementSibling; var grp=sel.options[sel.selectedIndex].parentNode.label||''; sp.style.display=/พิเศษ/.test(grp)?'inline-flex':'none'; }
+function copyOrder(){ var txt='ลำดับ '+({gate:'ประตูรั้ว',ranae:'ระแนง',rail:'ราวกันตก',special:'ระแนงพิเศษ'}[cur])+' (สีอบ='+(colorStyle==='dd'?'ดรอปดาวน์':'ชิป')+'):\n'+DATA[cur].map((f,i)=>(i+1)+'. '+f.l).join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){alert('คัดลอกแล้ว ✅ วางในแชทได้เลย\n\n'+txt);},function(){prompt('ก็อปข้อความนี้:',txt);});}else{prompt('ก็อปข้อความนี้:',txt);} }
+var cur0=cur;
+var tabsEl=document.getElementById('tabs'), listEl=document.getElementById('list');
+Object.keys(DATA).forEach(function(k){ var nm={gate:'🚪 ประตูรั้ว',ranae:'📘 ระแนง',rail:'🛡 ราวกันตก',special:'⚙ ระแนงพิเศษ'}[k];
+  var b=document.createElement('button'); b.className='tab'+(k===cur?' on':''); b.textContent=nm;
+  b.onclick=function(){cur=k;[...tabsEl.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');render();}; tabsEl.appendChild(b); });
+
+function colorChips(){ return '<div class="chips">'
+  +['สีอบขาว','สีดำ','ไม่อบสี'].map(function(c){return '<button type="button" class="chip"><span class="dot" style="background:'+COLOR_DOTS[c]+'"></span>'+c+'</button>';}).join('')
+  +'<button type="button" class="chip"><span class="dot" style="background:#6b6e70"></span>ซาฮาร่า ▾</button>'
+  +'<button type="button" class="chip"><span class="dot" style="background:#a9712f"></span>สีลายไม้สต๊อก</button>'
+  +'<button type="button" class="chip sp"><span class="dot" style="background:#fff"></span>อบพิเศษ ▾</button></div>'; }
+function control(f){
+  if(f.t==='chips')return '<div class="chips">'+f.o.map((o,i)=>'<button type="button" class="chip'+(i===f.on?' on':'')+'">'+o+'</button>').join('')+'</div>';
+  if(f.t==='size')return '<div class="sizerow"><span class="inp">กว้าง</span><span class="inp">สูง</span><span class="inp">ชุด</span></div>';
+  if(f.t==='casc')return '<div class="casc">'+f.c+'</div>';
+  if(f.t==='inp')return '<span class="inp">'+(f.ph||'')+'</span>';
+  if(f.t==='check')return '<label class="chip" style="cursor:pointer"><input type="checkbox"> เลือก</label>';
+  if(f.t==='door')return '<div class="doorbox"><div class="chips"><button type="button" class="chip on">ไม่ทำ</button><button type="button" class="chip">ทำเป็นบาน</button></div><div style="margin-top:5px"><span class="inp">ราคาประตู auto/กรอกเอง</span></div></div>';
+  if(f.t==='custom')return '<span class="inp" style="border-style:dashed;color:#15803d">ฟีเจอร์เพิ่มเอง — บอกผมว่าเป็นชนิดไหน (ชิป/ช่องกรอก/ติ๊ก)</span>';
+  if(f.t==='topcolor')return '<div class="chips"><span class="inp" style="color:#374151">🎨 = สีหลักด้านบน</span><button type="button" class="chip">เปลี่ยนสี (option)</button></div>';
+  if(f.t==='optcolor')return '<div class="chips"><span class="chip on"><span class="dot" style="background:#fff"></span>สีอบขาว (default)</span>'
+    +'<button type="button" class="chip" onclick="var d=this.parentNode.nextElementSibling;d.style.display=d.style.display===\'block\'?\'none\':\'block\'">เปลี่ยนสี ▾</button></div>'
+    +'<div style="display:none;margin-top:6px">'+colorChips()+'</div>';
+  if(f.t==='color'){
+    if(colorStyle==='dd') return '<select class="dd" onchange="ddColor(this)">'
+      +'<optgroup label="มาตรฐาน"><option>สีอบขาว</option><option>สีดำ</option><option>ไม่อบสี</option></optgroup>'
+      +'<optgroup label="ซาฮาร่า"><option>สีเทาซาฮาร่า</option><option>สีดำซาฮาร่า</option><option>สี Aztec gray</option></optgroup>'
+      +'<optgroup label="ลายไม้สต๊อก"><option>สีลายไม้สต๊อก</option></optgroup>'
+      +'<optgroup label="อบพิเศษ (ระบุชื่อ)"><option>สีอบพิเศษ</option><option>สีลายไม้อบพิเศษ</option><option>Fuji</option></optgroup></select>'
+      +'<span class="inp" style="display:none;margin-top:5px;width:210px;color:#b3122a">🎨 ระบุชื่อสี เช่น Golden Teak SMS</span>';
+    return '<div class="chips">'
+    +['สีอบขาว','สีดำ','ไม่อบสี'].map(c=>'<button type="button" class="chip"><span class="dot" style="background:'+COLOR_DOTS[c]+'"></span>'+c+'</button>').join('')
+    +'<button type="button" class="chip"><span class="dot" style="background:#6b6e70"></span>ซาฮาร่า ▾</button>'
+    +'<button type="button" class="chip"><span class="dot" style="background:#a9712f"></span>สีลายไม้สต๊อก</button>'
+    +'<button type="button" class="chip sp" onclick="var s=this.parentNode.nextElementSibling;s.style.display=s.style.display==\'inline-flex\'?\'none\':\'inline-flex\'"><span class="dot" style="background:#fff"></span>อบพิเศษ ▾</button></div>'
+    +'<span class="inp" style="display:none;margin-top:5px;width:210px;color:#b3122a">🎨 ระบุชื่อสี เช่น Golden Teak SMS</span>';
+  }
+  return '';
+}
+function render(){
+  var arr=DATA[cur]; var h='';
+  arr.forEach(function(f,i){
+    h+='<li class="card" draggable="true" data-i="'+i+'" style="border-left-color:'+ZONE[f.z]+'">'
+      +'<div class="grip">⠿</div><div class="cmain">'
+      +'<div class="crow"><span class="num">'+(i+1)+'</span><span class="cl">'+f.l+'</span>'
+      +(f.fix?' <span class="fix">⚠ แก้บั๊ก</span>':'')
+      +(f.added?' <span class="fix" style="background:#dcfce7;color:#15803d">＋เพิ่มเอง</span>':'')
+      +(f.q?' <span class="fix" style="background:#fef3c7;color:#92722a" title="'+(f.qt||'').replace(/"/g,'')+'">⚠ เช็ค</span>':'')
+      +'<span class="ztag" style="background:'+ZONE[f.z]+'">'+f.z+'</span>'
+      +'<span class="nudge"><button onclick="mv('+i+',-1)">▲</button><button onclick="mv('+i+',1)">▼</button><button onclick="del('+i+')" style="color:#b3122a;border-color:#fca5a5">✕</button></span></div>'
+      +control(f)
+      +(f.q&&f.qt?'<div style="font-size:11px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 7px;margin-top:5px">⚠ '+f.qt+'</div>':'')
+      +'</div></li>';
+  });
+  listEl.innerHTML=h;
+  document.getElementById('ord').textContent='ลำดับ: '+arr.map((f,i)=>(i+1)+'.'+f.l.replace(/ \(.*\)/,'')).join('  ');
+  bindDrag();
+}
+function mv(i,d){ var a=DATA[cur]; var j=i+d; if(j<0||j>=a.length)return; var t=a[i];a[i]=a[j];a[j]=t; render(); }
+function del(i){ if(confirm('ลบ "'+DATA[cur][i].l+'" ออก?')){ DATA[cur].splice(i,1); render(); } }
+function addFeat(){ var n=prompt('ชื่อฟีเจอร์ที่จะเพิ่ม:'); if(n&&n.trim()){ DATA[cur].push({l:n.trim(),z:'สเปกหลัก',t:'custom',added:1}); render(); var c=listEl.lastElementChild; if(c)c.scrollIntoView({behavior:'smooth'}); } }
+function resetOrder(){ if(confirm('คืนค่าลำดับ+ฟีเจอร์เดิมทั้งหมด?')){ DATA[cur]=ORIG[cur].map(x=>Object.assign({},x)); render(); } }
+var dragI=null;
+function bindDrag(){
+  [...listEl.children].forEach(function(li){
+    li.addEventListener('dragstart',function(e){dragI=+li.dataset.i;li.classList.add('drag');});
+    li.addEventListener('dragend',function(){li.classList.remove('drag');[...listEl.children].forEach(x=>x.classList.remove('over'));});
+    li.addEventListener('dragover',function(e){e.preventDefault();li.classList.add('over');});
+    li.addEventListener('dragleave',function(){li.classList.remove('over');});
+    li.addEventListener('drop',function(e){e.preventDefault();var to=+li.dataset.i;if(dragI==null||dragI===to)return;var a=DATA[cur];var m=a.splice(dragI,1)[0];a.splice(to,0,m);dragI=null;render();});
+  });
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เทียบหน้า G1 — ดราฟ vs เว็บจริง</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Sarabun","Segoe UI",sans-serif;background:#f3f4f6;color:#1f2937;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{background:#8b1a1a;color:#fff;padding:10px 16px;flex:0 0 auto}
+  header h1{font-size:17px;margin-bottom:2px}
+  header p{font-size:12.5px;opacity:.9}
+  .bar{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .bar a{background:#fff;color:#8b1a1a;text-decoration:none;font-size:12px;font-weight:700;padding:5px 12px;border-radius:6px}
+  .bar a:hover{background:#ffe3e3}
+  .legend{font-size:12px;background:#fff8e1;border-left:4px solid #f59e0b;padding:7px 12px;margin:0;flex:0 0 auto}
+  .legend b{color:#8b1a1a}
+  .panes{flex:1 1 auto;display:flex;min-height:0}
+  .pane{flex:1 1 50%;display:flex;flex-direction:column;border-right:3px solid #8b1a1a;min-width:0}
+  .pane:last-child{border-right:none}
+  .pane .ph{background:#1f2937;color:#fff;font-size:13px;font-weight:700;padding:6px 12px;text-align:center;flex:0 0 auto}
+  .pane.live .ph{background:#065f46}
+  .pane iframe{flex:1 1 auto;width:100%;border:0;background:#fff}
+  @media(max-width:760px){ .panes{flex-direction:column} .pane{flex:1 1 50%;border-right:none;border-bottom:3px solid #8b1a1a} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 เทียบหน้า G1 — ดราฟที่ approve ↔ เว็บจริง</h1>
+  <p>เลื่อนดูทั้งสองฝั่ง เทียบปุ่มต่อปุ่มได้เอง · ฝั่งขวาเลือก "กลุ่ม 1 บานกระจก → บานเลื่อน เซมิยูโร" ให้ตรงกับดราฟ</p>
+  <div class="bar">
+    <a href="DRAFT-G1-GROUNDTRUTH-ปุ่มทุกปุ่ม-2026-06-22.html" target="_blank">📋 เปิดดราฟเต็มจอ</a>
+    <a href="https://jr-beta-azure.vercel.app/calculator/" target="_blank">🌐 เปิดเว็บจริงเต็มจอ</a>
+  </div>
+</header>
+<div class="legend">
+  <b>จุดที่ผมเห็นว่าต่าง (บานเลื่อน):</b>
+  ① ดราฟจัด มุ้ง/คาดตาราง/แผ่นทึบ ใต้ป้าย <b>"โซน z2 — ใช้บ่อย"</b> · เว็บจริงยุบเป็นกล่องพับ <b>"🔧 ล็อค·มุ้ง·คาดตาราง (6)"</b>
+  &nbsp;② เว็บจริงมี<b>กล่องคำอธิบายสีเหลือง/ฟ้า</b> (มือจับ/มุ้ง/สี-กระจก) ที่ดราฟไม่มี → ทำให้รก
+  &nbsp;③ ที่เหลือ (รุ่น/ประเภท/ขนาด/ชนิดเปิด/ราง/ชุดล็อค/ชิปมือจับ) <b>ตรงกัน</b>
+</div>
+<div class="panes">
+  <div class="pane draft">
+    <div class="ph">📋 ดราฟที่ approve (เป้าหมายคลีน)</div>
+    <iframe src="DRAFT-G1-GROUNDTRUTH-ปุ่มทุกปุ่ม-2026-06-22.html"></iframe>
+  </div>
+  <div class="pane live">
+    <div class="ph">🌐 เว็บจริง (ตอนนี้)</div>
+    <iframe src="https://jr-beta-azure.vercel.app/calculator/"></iframe>
+  </div>
+</div>
+</body>
+</html>

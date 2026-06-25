@@ -1,0 +1,71 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AUDIT — บล็อก/ปุ่ม/อุปกรณ์เสริมโผล่ผิดกลุ่ม (หน้าใบเสนอราคา) 18 มิ.ย.</title>
+<style>
+ body{font-family:"Segoe UI",Tahoma,sans-serif;background:#fafafa;color:#1f2937;margin:0;padding:24px;line-height:1.55}
+ .wrap{max-width:1100px;margin:0 auto}
+ h1{font-size:21px;color:#B3151D;margin:0 0 4px}
+ .sub{color:#6b7280;font-size:13px;margin-bottom:18px}
+ h2{font-size:16px;margin:26px 0 8px;border-left:4px solid #B3151D;padding-left:9px}
+ table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;margin:8px 0 4px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+ th,td{border:1px solid #e5e7eb;padding:7px 9px;text-align:left;vertical-align:top}
+ th{background:#fef2f2;color:#7f1d1d;font-weight:700}
+ td code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}
+ .r{color:#B3151D;font-weight:700}.y{color:#b45309;font-weight:700}.g{color:#15803d;font-weight:700}
+ .box{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin:8px 0}
+ .key{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin:12px 0}
+ ul{margin:6px 0 6px 4px;padding-left:18px}
+ .tag{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:5px;padding:1px 7px;font-size:11px;margin-right:4px}
+</style></head><body><div class="wrap">
+
+<h1>AUDIT — บล็อก/ปุ่ม/อุปกรณ์เสริม "โผล่ผิดกลุ่ม" ในหน้าใบเสนอราคา</h1>
+<div class="sub">18 มิ.ย. 2026 · render index.html ของจริง (jsdom) ครอบ G1–G7 ทุกสินค้า (210 ตัว) · ทีมตรวจ QA 4 ชุด · READ-ONLY (ยังไม่แก้โค้ด)</div>
+
+<div class="key">
+<b>ต้นเหตุหลัก (1 จุด คุมเกือบทุกอาการ):</b><br>
+การ์ดสินค้าใน <code>addItem()</code> เรนเดอร์บล็อก <b>"ผสมบาน — เพิ่มบานในชุดเดียว"</b> (<code>.subitem-wrap</code> บรรทัด <b>4041–4056</b>) <u>ตายตัวทุกการ์ด</u> แล้วมี CSS ซ่อนไว้<u>เฉพาะกลุ่ม 6</u> (<code>.ch.g6room</code> บรรทัด <b>6632</b>) เท่านั้น →
+ทุกกลุ่มที่เหลือ (ระแนง/หลังคา/ตู้/มุ้ง/ม่านซิป) จึงเห็นปุ่ม "＋บานเปิด/เลื่อน/เฟี้ยม/กระทุ้ง" ทั้งที่ต่อบานกระจกไม่ได้.
+</div>
+
+<h2>🔴 ผิดแน่ — เรียงตามผลกระทบ</h2>
+<table>
+<tr><th>กลุ่ม / สินค้า</th><th>บล็อกที่ผิด</th><th>โผล่ตอนนี้</th><th>ควรเป็น</th><th>ต้นเหตุ (บรรทัด)</th><th>เสนอแก้</th></tr>
+<tr><td class="r">G2,G3,G4,G5,G7 — ทุกตัว<br><span class="tag">106 สินค้า</span></td><td><b>ผสมบาน — เพิ่มบาน</b> (.subitem-wrap)</td><td>โผล่ (G2 56/56 · G3 28/28 · G4 2/2 · G5 19/19 · G7 1/1)</td><td><b>ซ่อน</b> — เป็นฟีเจอร์งานบาน G1 เท่านั้น</td><td>addItem L4041–4056 (ตายตัว) · CSS ซ่อนแค่ g6room L6632</td><td>ซ่อน .subitem-wrap เมื่อไม่ใช่ "บานจริง G1" — เช่น <code>group!=='1' || ITYPE_NA.indexOf(p.cat)&gt;=0 || p.cat==='มุ้ง' || p.zipscreen</code> (แก้จุดเดียวคุม 106 ตัว · ใช้ g6room L6632 เป็นแม่แบบ)</td></tr>
+<tr><td class="r">G7 ม่านซิป<br>(<code>zipscreen</code>)</td><td>ประเภท ประตู/หน้าต่าง (.itype-seg)</td><td>โผล่</td><td>ซ่อน — ม่านซิปไม่ใช่บาน</td><td>cat <code>'ม่านซิป'</code> ไม่อยู่ใน ITYPE_NA (L5463)</td><td>เติม <code>'ม่านซิป'</code> เข้า ITYPE_NA</td></tr>
+<tr><td class="r">G7 ม่านซิป</td><td>อุปกรณ์เสริม "มีคาดตาราง" + "ฝังรางยู"</td><td>โผล่ทั้งคู่</td><td>ซ่อน — เป็นออปชั่นบานกระจก</td><td>exclude list คาดตาราง L4585–4586 / รางยู L4740 ไม่ตัด ม่านซิป</td><td>เติม <code>p.zipscreen</code> (หรือ <code>'ม่านซิป'</code>) เข้า exclude ทั้ง 2 บรรทัด</td></tr>
+<tr><td class="r">G3 roof_gutter_cover<br>("เพิ่ม ปิดซ่อนรางน้ำ")</td><td>"มีคาดตาราง" + "ฝังรางยู"</td><td>โผล่ทั้งคู่</td><td>ซ่อน — เป็น add-on รางน้ำ ไม่เกี่ยวบานกระจก</td><td>cat <code>'เสริม'</code> ลอด exclude list (L4585, L4740)</td><td>เติม <code>'เสริม'</code> (หรือ <code>p.gutter_cover</code>) เข้า exclude ทั้ง 2 บรรทัด</td></tr>
+<tr><td class="r">G2 ตะแกรงเหล็กสาน<br>(<code>steel_mesh</code>)</td><td>"มีคาดตาราง" + "ฝังรางยู"</td><td>โผล่ทั้งคู่</td><td>ซ่อน — ตะแกรงไม่ใส่คาดตาราง/รางยูบานเลื่อน</td><td>cat <code>'เสริม'</code> ลอด exclude (L4585, L4740)</td><td>แก้พร้อมกับ G3 ข้างบน — เติม <code>'เสริม'</code> จบทั้งคู่</td></tr>
+</table>
+
+<h2>🟡 น่าสงสัย (เช็คซ้ำกับพี่นัท)</h2>
+<table>
+<tr><th>กลุ่ม / สินค้า</th><th>บล็อก</th><th>ประเด็น</th><th>เสนอแก้</th></tr>
+<tr><td class="y">G4 ตู้อลู (<code>cabinet_alu</code>, <code>future_tech</code>)</td><td>"มีคาดตาราง"</td><td>ตู้อลูใส่คาดตารางหน้าบานได้จริงไหม? ถ้าไม่ใช้ = ของบานหลุดมา</td><td>ถ้ายืนยันว่าตู้ไม่ใช้ → เติม <code>'ฝาตู้','ตู้อลู'</code> เข้า exclude L4585 · ถ้าใช้ได้ = ปล่อย</td></tr>
+<tr><td class="y">G2 ➕ รายการกรอกเอง (<code>custom_item</code>)</td><td>"มีคาดตาราง" + "ฝังรางยู"</td><td>รายการ free-form ตั้งใจเปิดกว้าง — ต้องการคาดตาราง/รางยูไหม?</td><td>ถ้าเติม <code>'เสริม'</code> ตามข้างบน จะปิด custom_item ไปด้วย — ยืนยันก่อน</td></tr>
+<tr><td class="y">G1 ออปชั่นที่ไม่ใช่บาน<br>(เส้นคาด/ผนังเบา/glass_replace/awning_brace)</td><td>ผสมบาน</td><td>cat อยู่ใน ITYPE_NA อยู่แล้ว → ถ้าแก้ root 🔴#1 ด้วยเงื่อนไข ITYPE_NA จะหายไปพร้อมกัน</td><td>แก้ครอบด้วย root เดียว (ดู 🔴#1)</td></tr>
+</table>
+
+<h2>🟢 ตรวจแล้ว "ถูก" — ไม่ต้องแก้</h2>
+<div class="box">
+<ul>
+<li><b>G6 กั้นห้องกระจก (60 ตัว):</b> ผสมบานซ่อนครบ 0/60 · OPTION/optbox/หมายเหตุ 0/60 (ใช้ paged builder) · สี/กระจก 60/60 ถูก · ประเภท 29/60 = เฉพาะบานประตู/หน้าต่างจริง → <b>ใช้เป็นแม่แบบวิธีแก้</b></li>
+<li><b>G5 มุ้ง — อุปกรณ์เสริม:</b> ผ้ามุ้ง/สีกรอบ/สีผ้า/ครอบวงกบ/ลักษณะเปิด/โหมด B ติดมุ้งบานเดิม = ของมุ้งโดยตรง · ไม่มีของบานกระจกหลุด (เช็ค คาดตาราง/ดรอปพื้น/ธรณี/รางยู — ไม่เจอ) · สี/กระจก/ประเภท ซ่อนครบ 19/19</li>
+<li><b>G3 หลังคา — อุปกรณ์เสริม:</b> สีวัสดุมุง/แป/โครงสร้าง/เสา/คาน/ครอบราง/ครอบคาน/โซ่รางน้ำ/ครอบท่อ/ฝ้า = ของหลังคาโดยตรง ถูก · ครอบวงกบ/ประเภท ซ่อนถูก (AREA_CATS/ITYPE_NA)</li>
+<li><b>G2:</b> ประตูรั้ว (มีธรณี/มอเตอร์/ราง/ทำเป็นบาน) ถูก · ราวกันตกกระจก 6 ตัว (กระจก/สีอลู/ราวจับ) ถูก</li>
+<li><b>G1 บานจริง</b> (เลื่อน/เปิด/เฟี้ยม/กระทุ้ง/PC/ยก/หมุน/ดัดโค้ง): ผสมบาน+ประเภท+สี+กระจก ครบถูก · shower/บานเปลือย ล็อกเป็น "ประตู" โดยตั้งใจ (ITYPE_LOCK_DOOR)</li>
+</ul>
+</div>
+
+<h2>📋 ใบส่ง dev (Chat B) — แก้รอบเดียว</h2>
+<div class="box">
+รวมจุดแก้ทั้งหมด <b>4 บรรทัด/บล็อก</b> (ทุกจุดเป็นการ "ซ่อน" — ไม่แตะ engine ราคา · กดราคาเดิมไม่เพี้ยน):
+<ol>
+<li><b>ซ่อน .subitem-wrap (ผสมบาน) นอกงานบาน G1</b> — ใช้ L6632 (g6room) เป็นแม่แบบ เพิ่มเงื่อนไข cat: ซ่อนเมื่อ <code>group!=='1' || ITYPE_NA.indexOf(p.cat)&gt;=0 || p.cat==='มุ้ง' || p.zipscreen</code>. แก้ใน buildItemOpts (มี precedent <code>p.cat==='มุ้ง'</code> ซ่อนสี/กระจก ที่ L4760-4761) <span class="r">[คุม 106 ตัว]</span></li>
+<li><b>ITYPE_NA L5463</b> — เติม <code>'ม่านซิป'</code> (ซ่อนประเภทประตู/หน้าต่าง ม่านซิป)</li>
+<li><b>exclude คาดตาราง L4585-4586</b> — เติม <code>'เสริม'</code> + <code>p.zipscreen</code> (+ <code>'ฝาตู้','ตู้อลู'</code> ถ้าเคาะ 🟡 G4)</li>
+<li><b>exclude ฝังรางยู L4740</b> — เติม <code>'เสริม'</code> + <code>p.zipscreen</code></li>
+</ol>
+<b>กันพัง:</b> รัน <code>node scripts/audit-misplaced-sections.mjs</code> ซ้ำหลังแก้ — เป้าหมาย: ผสมบาน เหลือโผล่เฉพาะ G1 บานจริง · ม่านซิปสะอาด · steel_mesh/gutter_cover ไม่มีคาดตาราง/รางยู · golden snapshot ราคาต้องนิ่ง (subitem ไม่ถูก add = ราคาไม่ขยับ)
+</div>
+
+<div class="sub" style="margin-top:20px">ground truth: <code>docs/AUDIT-misplaced-sections.json</code> · สคริปต์ตรวจ: <code>scripts/audit-misplaced-sections.mjs</code></div>
+</div></body></html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ ราคาสีจบ — สีผิว + ค่าทำสีบาน 50% + สีอลู (แก้ได้) · 20 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.5}
+  .wrap{max-width:680px;margin:0 auto;padding:16px 14px 50px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:15px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:18px;font-weight:700}.hd p{margin:0;font-size:12.5px;opacity:.92}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 15px;margin-bottom:11px}
+  .ct{font-size:14px;font-weight:700;margin-bottom:9px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chip{min-height:34px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .dot{width:13px;height:13px;border-radius:50%;border:1px solid #00000022}
+  .fld{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .fld label{font-size:12.5px;color:#6b7280;font-weight:600;min-width:108px}
+  .ti{flex:1;min-width:150px;height:34px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit}
+  .pi{width:110px;height:34px;border:1.5px solid #d1d5db;border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit}
+  .ti:focus,.pi:focus{outline:none;border-color:#b3122a;box-shadow:0 0 0 3px #b3122a22}
+  .ck{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:6px}
+  .ck input{width:18px;height:18px}
+  .alubody{display:none;margin-top:8px;border-top:1px dashed #e5e7eb;padding-top:9px}
+  .alubody.show{display:block}
+  .prev{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px 14px;font-family:"SFMono-Regular",Consolas,monospace;font-size:13px}
+  .prev .t{font-family:inherit;font-size:11px;color:#64748b;margin-bottom:6px}
+  .prev .ln{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+  .prev .d50{color:#fca5a5}
+  .prev .gr{border-top:1px solid #334155;margin-top:6px;padding-top:7px;font-weight:700;color:#fff;font-size:14px}
+  .spec{font-size:12px;color:#1e3a5f;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:10px 12px;margin-top:11px}
+  .spec b{color:#b3122a}
+  .q{font-size:11.5px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>ราคาสีจบ · สีผิว + ค่าทำสีบาน 50% + สีอลู</h1>
+    <p>เลือกสี → ราคาคิดมาเลย · ทำเป็นบาน = +ค่าทำสีบาน (ลด 50%) · ทุกช่องแก้ได้</p></div>
+
+  <div class="card">
+    <div class="ct">🎨 สีอบ / ผิว ระแนง</div>
+    <div class="chips" id="chips"></div>
+    <div class="fld"><label>ข้อความลงใบ</label><input class="ti" id="abText" oninput="upd()"></div>
+    <div class="fld"><label>เรตสี (บาท/ตร.ม.)</label><input class="pi" id="finRate" type="number" oninput="upd()"> <span style="font-size:11px;color:#6b7280">คิดจากรุ่น · แก้ได้</span></div>
+    <div class="fld"><label>พื้นที่ (ตร.ม.)</label><input class="pi" id="area" type="number" value="6" oninput="upd()"></div>
+    <label class="ck"><input type="checkbox" id="asDoor" onchange="upd()"> 🚪 ทำเป็นบาน (+ ค่าทำสีบาน ลด 50%)</label>
+
+    <label class="ck" style="margin-top:8px" onclick="event.preventDefault();toggleAlu()"><input type="checkbox" id="aluCk"> ➕ ออปชั่น สีอลู (โครง/เฟรม)</label>
+    <div class="alubody" id="alubody">
+      <div class="fld"><label>ข้อความลงใบ</label><input class="ti" id="aluText" value="สีอลู —" oninput="upd()"></div>
+      <div class="fld"><label>ราคา (บาท)</label><input class="pi" id="aluPrice" type="number" value="0" oninput="upd()"></div>
+    </div>
+  </div>
+
+  <div class="prev" id="prev"></div>
+  <div class="spec"><b>สูตรราคาสี (ส่ง dev · เคาะ 20มิ.ย.):</b><br>
+    • <b>ค่าสีผิวระแนง = finRate × พื้นที่</b> (เต็ม · ขาว/ดำ/ไม่อบสี = 0) ← ของเดิม<br>
+    • <b>ค่าทำสีบาน = finRate × พื้นที่บาน × 50%</b> (เฉพาะทำเป็นบาน · เรตเดียวกับสีผิว) ← ใหม่<br>
+    • รั้วบานเลื่อน/โค้ง + บานจากบานกระจก = "บาน" (ค่าทำบานมีแล้ว) → บวกค่าทำสีบานนี้<br>
+    • <b>สีอลู</b> = ออปชั่นใหม่ · ข้อความ+ราคากรอกเอง → บวก total</div>
+  <div class="q" id="qbox"></div>
+</div>
+
+<script>
+var PAL=[['สีอบขาว','#fff',0],['สีดำ','#222',0],['ไม่อบสี','#c4c6c8',0],['สีเทาซาฮาร่า','#6b6e70',400],['สีลายไม้สต๊อก','#a9712f',1500],['สีอบพิเศษ','#b3122a',1600],['Fuji','#5b3a1e',1900],['สีลายไม้อบพิเศษ','#7a4a1e',2200]];
+var sel='สีอบขาว';
+document.getElementById('chips').innerHTML=PAL.map(function(c){return '<button type="button" class="chip'+(c[0]===sel?' on':'')+'" onclick="pick(\''+c[0]+'\')"><span class="dot" style="background:'+c[1]+'"></span>'+c[0]+'</button>';}).join('');
+function pick(n){ sel=n; var c=PAL.find(x=>x[0]===n); document.getElementById('finRate').value=c[2]; document.getElementById('abText').value=n;
+  document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on')); [...document.querySelectorAll('#chips .chip')].find(b=>b.textContent.trim().indexOf(n)===0).classList.add('on'); upd(); }
+function toggleAlu(){ var ck=document.getElementById('aluCk'); ck.checked=!ck.checked; document.getElementById('alubody').classList.toggle('show',ck.checked); upd(); }
+function upd(){
+  var rate=parseFloat(document.getElementById('finRate').value)||0;
+  var area=parseFloat(document.getElementById('area').value)||0;
+  var asDoor=document.getElementById('asDoor').checked;
+  var abText=document.getElementById('abText').value||sel;
+  var surface=rate*area;
+  var doorC=asDoor?Math.round(rate*area*0.5):0;
+  var aluOn=document.getElementById('aluCk').checked, aluP=aluOn?(parseFloat(document.getElementById('aluPrice').value)||0):0, aluT=document.getElementById('aluText').value;
+  var sum=surface+doorC+aluP;
+  var h='<div class="t">ค่าสีที่ลงใบ (ตัวอย่าง '+area+' ตร.ม.)</div>';
+  h+='<div class="ln"><span>'+abText+' (ผิวระแนง '+rate.toLocaleString()+'×'+area+')</span><span>'+(surface>0?'+'+surface.toLocaleString():'0')+'</span></div>';
+  if(asDoor) h+='<div class="ln d50"><span>ค่าทำสีบาน ('+rate.toLocaleString()+'×'+area+'×50%)</span><span>+'+doorC.toLocaleString()+'</span></div>';
+  if(aluOn) h+='<div class="ln"><span>'+(aluT||'สีอลู')+'</span><span>'+(aluP>0?'+'+aluP.toLocaleString():'0')+'</span></div>';
+  h+='<div class="ln gr"><span>รวมค่าสี</span><span>'+sum.toLocaleString()+' บาท</span></div>';
+  document.getElementById('prev').innerHTML=h;
+  document.getElementById('qbox').innerHTML='⚠ ขอยืนยัน 1 จุด: <b>"พื้นที่บาน" = พื้นที่ชิ้นงาน (กว้าง×สูง) ใช่ไหม?</b> (ระแนงทำเป็นบาน = ทั้งชิ้นเป็นบาน) · ดราฟนี้คิดแบบนั้น';
+}
+document.getElementById('finRate').value=0;
+upd();
+</script>
+</body>
+</html>

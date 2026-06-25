@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สูตรราคา JR — R3.9</title>
+<style>
+  :root {
+    --red:#C0392B; --red-light:#FDECEA; --red-mid:#E74C3C;
+    --blue:#1A5276; --blue-light:#D6EAF8; --blue-mid:#2980B9;
+    --green:#1E8449; --green-light:#D5F5E3;
+    --orange:#E67E22; --orange-light:#FDEBD0;
+    --purple:#6C3483; --purple-light:#EBD5F5;
+    --gray:#4A4A4A; --gray-light:#F5F5F5; --gray-mid:#CCC;
+    --text:#222; --border:#DDD;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Sarabun',sans-serif; font-size:15px; color:var(--text); background:#F7F9FC; }
+
+  /* ===== HEADER ===== */
+  .header { background:var(--red); color:#fff; padding:16px 20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,.3); }
+  .header h1 { font-size:20px; font-weight:700; }
+  .header .sub { font-size:12px; opacity:.8; margin-top:2px; }
+
+  /* ===== NAV TABS ===== */
+  .nav-tabs { background:#fff; border-bottom:2px solid var(--border); position:sticky; top:58px; z-index:99; overflow-x:auto; white-space:nowrap; }
+  .nav-tabs a { display:inline-block; padding:10px 16px; font-size:13px; font-weight:600; color:var(--gray); text-decoration:none; border-bottom:3px solid transparent; transition:.2s; }
+  .nav-tabs a:hover { color:var(--red); border-bottom-color:var(--red-light); }
+  .nav-tabs a.active { color:var(--red); border-bottom-color:var(--red); }
+
+  /* ===== LAYOUT ===== */
+  .page { max-width:1100px; margin:0 auto; padding:20px 16px 60px; }
+
+  /* ===== SECTION ===== */
+  .section { margin-bottom:32px; }
+  .section-title { font-size:18px; font-weight:700; color:#fff; background:var(--blue); padding:10px 16px; border-radius:8px 8px 0 0; display:flex; align-items:center; gap:8px; }
+  .section-title .badge { background:rgba(255,255,255,.25); padding:2px 10px; border-radius:99px; font-size:12px; }
+  .section-body { background:#fff; border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; padding:0; }
+
+  /* ===== ITEM CARD ===== */
+  .item { border-bottom:1px solid var(--border); padding:16px 20px; }
+  .item:last-child { border-bottom:none; }
+  .item-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .item-num { background:var(--blue); color:#fff; border-radius:6px; padding:3px 9px; font-size:12px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+  .item-num.red { background:var(--red); }
+  .item-num.green { background:var(--green); }
+  .item-num.orange { background:var(--orange); }
+  .item-num.purple { background:var(--purple); }
+  .item-title { font-size:15px; font-weight:700; color:var(--blue); }
+  .item-title.red { color:var(--red); }
+
+  /* ===== FORMULA BOX ===== */
+  .formula { background:var(--blue-light); border-left:4px solid var(--blue-mid); border-radius:4px; padding:10px 14px; font-size:14px; margin-bottom:10px; font-family:'Courier New',monospace; font-weight:600; color:var(--blue); }
+  .formula.red { background:var(--red-light); border-left-color:var(--red); color:var(--red); }
+  .formula.green { background:var(--green-light); border-left-color:var(--green); color:var(--green); }
+  .formula.orange { background:var(--orange-light); border-left-color:var(--orange); color:var(--orange); }
+
+  /* ===== RATE TABLE ===== */
+  .rate-wrap { overflow-x:auto; margin-bottom:8px; }
+  table.rate { border-collapse:collapse; font-size:13px; min-width:260px; }
+  table.rate th { background:var(--blue); color:#fff; padding:6px 12px; text-align:center; font-weight:600; }
+  table.rate td { padding:5px 12px; border:1px solid var(--border); text-align:center; }
+  table.rate tr:nth-child(even) td { background:var(--gray-light); }
+  table.rate tr:hover td { background:#EBF5FB; }
+  table.rate .min-row td { background:#FFF9C4; font-weight:600; }
+  table.rate .note-row td { background:var(--orange-light); font-size:12px; text-align:left; }
+
+  /* ===== SMALL TABLE (เส้นคาด สี ฯลฯ) ===== */
+  table.small { border-collapse:collapse; font-size:13px; margin-bottom:8px; }
+  table.small th { background:var(--gray); color:#fff; padding:5px 12px; text-align:left; }
+  table.small td { padding:5px 12px; border:1px solid var(--border); }
+  table.small tr:nth-child(even) td { background:var(--gray-light); }
+
+  /* ===== OPTIONS ===== */
+  .options { margin-top:6px; }
+  .opt-tag { display:inline-block; background:var(--orange-light); border:1px solid var(--orange); color:#8B4513; border-radius:4px; padding:2px 8px; font-size:12px; margin:2px; }
+  .warn-tag { display:inline-block; background:#FFF3CD; border:1px solid #FFC107; color:#856404; border-radius:4px; padding:2px 8px; font-size:12px; margin:2px; }
+  .new-tag { display:inline-block; background:var(--green-light); border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 8px; font-size:12px; margin:2px; }
+
+  /* ===== MULTI-COL RATES ===== */
+  .rate-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-bottom:8px; }
+  .rate-group { }
+  .rate-group-title { font-size:12px; font-weight:700; background:var(--gray); color:#fff; padding:4px 10px; border-radius:4px 4px 0 0; }
+
+  /* ===== GUARD TABLE ===== */
+  table.guard { border-collapse:collapse; font-size:13px; width:100%; }
+  table.guard th { background:var(--red); color:#fff; padding:7px 12px; text-align:left; }
+  table.guard td { padding:6px 12px; border:1px solid var(--border); vertical-align:top; }
+  table.guard tr:nth-child(even) td { background:#FEF9F9; }
+  .guard-allow { color:var(--green); font-weight:700; }
+  .guard-deny { color:var(--red); font-weight:700; }
+
+  /* ===== SEPARATOR ===== */
+  .sep { height:1px; background:var(--border); margin:8px 0; }
+
+  /* ===== NOTE ===== */
+  .note { font-size:12px; color:#666; margin-top:4px; line-height:1.6; }
+  .note strong { color:var(--red); }
+
+  /* ===== GLASS TABLE big ===== */
+  table.glass { border-collapse:collapse; font-size:12px; width:100%; }
+  table.glass th { background:var(--blue); color:#fff; padding:5px 8px; text-align:center; font-size:11px; }
+  table.glass td { padding:4px 8px; border:1px solid var(--border); text-align:center; }
+  table.glass tr:nth-child(even) td { background:var(--gray-light); }
+  table.glass .num { text-align:right; }
+
+  /* Responsive */
+  @media(max-width:600px) {
+    .header h1 { font-size:16px; }
+    .item { padding:12px 12px; }
+    .rate-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📐 สูตรราคา JR — R3.9 <span style="font-size:13px;opacity:.7;font-weight:400;">(ฉบับรวม ครบ 49 ข้อ)</span></h1>
+  <div class="sub">อัปเดต 23 มิ.ย. 2569 · ใช้คู่กับ JR_คิดราคา.html R3.9 · ⚠️ ห้ามเผยแพร่ภายนอก</div>
+</div>
+
+<div class="nav-tabs" id="nav">
+  <a href="#secA" class="active">A — ประตู/หน้าต่าง</a>
+  <a href="#secB">B — กระจก/สีอบ</a>
+  <a href="#secC">C — หลังคา</a>
+  <a href="#secD">D — รั้ว/ระแนง 38.x</a>
+  <a href="#secE">E — ฝ้า/มุ้ง/ตู้/บริการ</a>
+  <a href="#secF">F — R3 ใหม่</a>
+  <a href="#secG">G — Guard/Filter</a>
+</div>
+
+<div class="page">
+
+<!-- ==================== SECTION A ==================== -->
+<div class="section" id="secA">
+  <div class="section-title">🚪 ส่วน A — สินค้าหลัก ประตู/หน้าต่าง <span class="badge">ข้อ 1–27</span></div>
+  <div class="section-body">
+
+    <!-- 1.1 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="item-num">1.1</span>
+        <div class="item-title">บานเลื่อนภายนอก SMS รางกันน้ำ</div>
+      </div>
+      <div class="formula">ราคา = max(6,500, พื้นที่ × เรต) · ขั้นต่ำ 6,500 บาท/ชุด</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต (บาท/ตร.ม.)</th></tr>
+        <tr><td>2.0 – 2.3</td><td>6,500</td></tr>
+        <tr><td>2.3 – 3.5</td><td>6,000</td></tr>
+        <tr><td>3.5 – 4.5</td><td>5,700</td></tr>
+        <tr><td>4.5 – 5.0</td><td>5,000</td></tr>
+        <tr><td>5.0 – 7.0</td><td>4,700</td></tr>
+        <tr><td>7.0 – 9.0</td><td>4,400</td></tr>
+        <tr><td>9.0 – 12</td><td>4,200</td></tr>
+        <tr><td>&gt; 12</td><td>4,000</td></tr>
+      </table></div>
+    </div>
+
+    <!-- 1.2 -->
+    <div class="item">
+      <div class="item-header">
+        <span class="item-num">1.2</span>
+        <div class="item-title">บานเลื่อนภายนอก ยูโร</div>
+      </div>
+      <div class="formula">ราคา = max(7,500, พื้นที่ × เรต) · ขั้นต่ำ 7,500 บาท/ชุด</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต (บาท/ตร.ม.)</th></tr>
+        <tr><td>2.0 – 2.3</td><td>7,200</td></tr>
+        <tr><td>2.3 – 3.5</td><td>6,600</td></tr>
+        <tr><td>3.5 – 4.5</td><td>6,300</td></tr>
+        <tr><td>4.5 – 5.0</td><td>5,500</td></tr>
+        <tr><td>5.0 – 7.0</td><td>5,200</td></tr>
+        <tr><td>7.0 – 9.0</td><td>4,900</td></tr>
+        <tr><td>9.0 – 12</td><td>4,700</td></tr>
+        <tr><td>&gt; 12</td><td>4,400</td></tr>
+      </table></div>
+    </div>
+
+    <!-- 2 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">2</span><div class="item-title">บานกระจกติดตาย</div></div>
+      <div class="formula">ราคา = max(5,000, พื้นที่ × เรต) · ขั้นต่ำ 5,000 บาท/ชุด</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต (บาท/ตร.ม.)</th></tr>
+        <tr><td>0.5 – 1.0</td><td>7,000</td></tr>
+        <tr><td>1.0 – 1.5</td><td>6,500</td></tr>
+        <tr><td>1.5 – 2.0</td><td>6,000</td></tr>
+        <tr><td>2.0 – 2.5</td><td>5,500</td></tr>
+        <tr><td>2.5 – 3.0</td><td>5,000</td></tr>
+        <tr><td>3.0 – 3.5</td><td>4,500</td></tr>
+        <tr><td>&gt; 3.5</td><td>4,000</td></tr>
+      </table></div>
+    </div>
+
+    <!-- 3 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">3</span><div class="item-title">บานกระทุ้ง ยูโร</div></div>
+      <div class="formula">ราคา = max(10,800, max(0.6, พื้นที่) × เรต) + (บานเพิ่ม × 2,900) · ขั้นต่ำพื้นที่ 0.6 ตร.ม.</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต (บาท/ตร.ม.)</th></tr>
+        <tr><td>0.6 – 0.8</td><td>18,000</td></tr>
+        <tr><td>0.8 – 1.1</td><td>14,400</td></tr>
+        <tr><td>1.1 – 1.3</td><td>12,000</td></tr>
+        <tr><td>1.3 – 1.6</td><td>10,800</td></tr>
+        <tr><td>1.6 – 2.0</td><td>9,600</td></tr>
+        <tr><td>2.0 – 2.5</td><td>8,400</td></tr>
+        <tr><td>2.5 – 2.9</td><td>7,800</td></tr>
+        <tr><td>2.9 – 5.5</td><td>7,200</td></tr>
+        <tr><td>5.5 – 6.0</td><td>6,600</td></tr>
+        <tr><td>&gt; 6.0</td><td>6,300</td></tr>
+      </table></div>
+      <div class="options">
+        <span class="opt-tag">R3: เปิดล่าง/เปิดข้าง/tilt&turn +5,000/บาน (เปิดออกเท่านั้น)</span>
+        <span class="opt-tag">เสริมแขนค้ำ +500/ชุด (เฉพาะเปิดล่าง)</span>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">4</span><div class="item-title">ประตูบานเปิด ยูโร</div></div>
+      <div class="formula">เดี่ยว: max(18,000, พื้นที่ × เรต) · คู่: max(32,000, พื้นที่ × เรต)</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต (บาท/ตร.ม.)</th></tr>
+        <tr><td>2.0 – 2.4</td><td>7,500</td></tr>
+        <tr><td>2.4 – 3.0</td><td>7,000</td></tr>
+        <tr><td>3.0 – 3.5</td><td>7,000</td></tr>
+        <tr><td>3.5 – 4.0</td><td>6,500</td></tr>
+        <tr><td>4.0 – 5.0</td><td>6,000</td></tr>
+        <tr><td>5.0 – 6.0</td><td>5,500</td></tr>
+        <tr><td>&gt; 6.0</td><td>5,000</td></tr>
+      </table></div>
+      <div class="options">
+        <span class="opt-tag">โช้คแขนยื่น/รางเลื่อน/บานพับโช้ค +5,000/รายการ (ยูโรเท่านั้น)</span>
+        <span class="opt-tag">R3: Std/Up1 Cmech 6สี/Up2 ดิจิตอล/Up3 สแตน+โช้ค</span>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">5</span><div class="item-title">บานเฟี้ยม</div></div>
+      <div class="formula">ราคาหลัก = max(พื้นที่ × 9,000, 15,000 × จำนวนบาน)</div>
+      <div class="note"><strong>5.1</strong> ค่าเสริมคาน (โชว์คาน) — Option แยกช่วง max(ชุด, พื้นที่×เรต): 3.5–8.0 → 1,300 · 8.0–10 → 1,100 · 10–12 → 900 · &gt;12 → 800</div>
+    </div>
+
+    <!-- 6 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">6</span><div class="item-title">Shower กั้นห้องอาบน้ำ (เทมเปอร์ใส/เขียว 10มม.)</div></div>
+      <div class="formula">ราคา = max(12,000, พื้นที่ × เรต) · ขั้นต่ำ 12,000 บาท/ชุด</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>พื้นที่ (ตร.ม.)</th><th>เรต</th></tr>
+        <tr><td>2.4 – 3.0</td><td>5,500</td></tr>
+        <tr><td>3.0 – 3.5</td><td>5,300</td></tr>
+        <tr><td>3.5 – 4.0</td><td>5,200</td></tr>
+        <tr><td>4.0 – 4.5</td><td>5,100</td></tr>
+        <tr><td>&gt; 4.5</td><td>5,100</td></tr>
+      </table></div>
+      <div class="options">
+        <span class="opt-tag">บานเข้ามุม +3,000/ชุด</span>
+        <span class="opt-tag">อุปกรณ์สีดำ +4,000</span>
+        <span class="opt-tag">สีทอง +6,000</span>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num">7</span><div class="item-title">บานเปลือยติดตาย (เทมเปอร์ 10มม.) — ขั้นต่ำ 7,000/ชุด</div></div>
+      <div class="formula">ราคา = max(7,000, พื้นที่ × เรต)</div>
+      <div class="rate-wrap"><table class="rate">
+        <tr><th>ช่วง (ตร.ม.)</th><th>เรต</th><th>ช่วง (ตร.ม.)</th><th>เรต</th></tr>
+        <tr><td>1–2</td><td>7,200</td><td>5–6</td><td>5,600</td></tr>
+        <tr><td>2–3</td><td>6,800</td><td>6–7</td><td>5,200</td></tr>
+        <tr><td>3–4</td><td>6,400</td><td>7–8</td><td>4,800</td></tr>
+        <tr><td>4–5</td><td>6,000</td><td>&gt; 8</td><td>4,500</td></tr>
+      </table></div>
+    </div>
+
+    <!-- 8-17 abbreviated -->
+    <div class="item" style="background:#f9f9f9;">
+      <div class="item-header"><span class="item-num blue">8–17</span><div class="item-title" style="color:#666;">รายการเพิ่มเติม (สรุป)</div></div>
+      <table class="small" style="width:100%">
+        <tr><th>ข้อ</th><th>ชื่อ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>8</td><td>ประตูสวิง/บานเลื่อน บานเปลือย</td><td>min 7,000 + ประตูสวิง: ref + 8,000/บาน</td></tr>
+        <tr><td>9</td><td>ประตูดัดโค้งบานคู่ เฟรมปกติ</td><td>max(47,000, A×เรต) · เรต 11,000–12,000</td></tr>
+        <tr><td>10</td><td>ประตูดัดโค้งบานเดี่ยว เฟรมปกติ</td><td>max(32,000, A×เรต) · เรต 13,500–14,000</td></tr>
+        <tr><td>11</td><td>บานติดตายดัดโค้ง</td><td>max(10,000, A×เรต) · เรต 4,000–6,500</td></tr>
+        <tr><td>12</td><td>PC Door 2 บาน (≤0.9×2.4)</td><td>max(36,000, A×เรต) · เรต 9,000–11,000</td></tr>
+        <tr><td>13</td><td>PC Door 4 บาน</td><td>max(46,000, max(4,A)×เรต) · เรต 8,500–11,500</td></tr>
+        <tr><td>14</td><td>บานเลื่อนภายในรางบน SMS</td><td>A×เรต + Add-on/บาน (4,000–22,000)</td></tr>
+        <tr><td>15.1/15.2</td><td>บานเลื่อนภายในรางล่าง SMS/ยูโร</td><td>A×เรต + Add-on/บาน (สูตรเดิม)</td></tr>
+        <tr><td>16</td><td>บานยก SMS</td><td>ตาราง lift_sms · 🛑 ≤ 10 ตร.ม.</td></tr>
+        <tr><td>17</td><td>บานหมุนเมืองทอง</td><td>max(26,000, A×เรต) + บานเพิ่ม×5,000</td></tr>
+      </table>
+    </div>
+
+    <!-- 18-27 abbreviated -->
+    <div class="item" style="background:#f9f9f9;">
+      <div class="item-header"><span class="item-num blue">18–27</span><div class="item-title" style="color:#666;">Aluinch / X-series / Velora / E-series (สรุป)</div></div>
+      <table class="small" style="width:100%">
+        <tr><th>ข้อ</th><th>ชื่อ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>18</td><td>บานเลื่อน E-series (aluinch)</td><td>min 12,000 · ตาราง ESERIES</td></tr>
+        <tr><td>19</td><td>บานกระทุ้ง aluinch</td><td>= ข้อ 3 (ยูโร)</td></tr>
+        <tr><td>20</td><td>บานยก aluinch</td><td>= ข้อ 16 (SMS)</td></tr>
+        <tr><td>21</td><td>บานหมุน aluinch</td><td>= ข้อ 17 (เมืองทอง)</td></tr>
+        <tr><td>22</td><td>ประตูบานเปิด D-series</td><td>เดี่ยว max(24,000,A×เรต) · คู่ max(43,000,A×เรต)</td></tr>
+        <tr><td>23</td><td>บานเฟี้ยม X-series</td><td>max(36,000, A×12,000)</td></tr>
+        <tr><td>24</td><td>บานดัดโค้งสลิม</td><td>max(50,000, A×เรต) · เรต 19,000–20,000</td></tr>
+        <tr><td>25.1</td><td>บานเปิด X-series</td><td>เดี่ยว max(28,000,A×เรต) · คู่ +5,000</td></tr>
+        <tr><td>25.2</td><td>บานเปิด Velora (รวมเทมเปอร์ 6มม.)</td><td>เดี่ยว max(19,000,A×เรต) · คู่ max(34,000,...)</td></tr>
+        <tr><td>26</td><td>บานเลื่อนรางล่าง E-series</td><td>= ข้อ 1.1 (SMS)</td></tr>
+        <tr><td>27</td><td>บานเลื่อนรางบน X/SlimLux</td><td>A×เรต (5,600–7,500) รวม soft close+สลิง+เทมเปอร์</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SECTION B ==================== -->
+<div class="section" id="secB">
+  <div class="section-title" style="background:var(--purple);">💎 ส่วน B — เส้นคาด / กระจก / สีอบ <span class="badge">ข้อ 28–32</span></div>
+  <div class="section-body">
+
+    <!-- 28 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num purple">28</span><div class="item-title red">เส้นคาดตาราง</div></div>
+      <div class="rate-grid">
+        <div class="rate-group">
+          <div class="rate-group-title">28.1 เส้นคาดตรง (บาท/ม.)</div>
+          <table class="rate"><tr><th>สี</th><th>ราคา</th></tr>
+            <tr><td>ขาว / ดำ / ซาฮารา</td><td>200</td></tr>
+            <tr><td>ลายไม้สต๊อก</td><td>250</td></tr>
+            <tr><td>อบพิเศษ</td><td>300</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">28.2 เส้นคาดโค้ง</div>
+          <table class="rate"><tr><th>รายการ</th><th>ราคา</th></tr>
+            <tr><td>โค้ง ≤ 1 ม.</td><td>3,000/โค้ง</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 29-30 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num purple">29–30</span><div class="item-title">ดรอปพื้น / ครอบวงกบ</div></div>
+      <div class="rate-grid">
+        <div class="rate-group">
+          <div class="rate-group-title">29 — ดรอปพื้น</div>
+          <table class="rate"><tr><th>รายการ</th><th>ราคา</th></tr>
+            <tr><td>ขั้นต่ำ</td><td>5,000/ชุด</td></tr>
+            <tr><td>ยาวเกิน 7 ม.</td><td>+750/ม.</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">30 — ครอบวงกบ (บาท/ม.)</div>
+          <table class="rate"><tr><th>สี</th><th>ราคา</th></tr>
+            <tr><td>ดำ / ขาว / ซาฮารา</td><td>700</td></tr>
+            <tr><td>สีอื่น สต๊อก</td><td>800</td></tr>
+            <tr><td>อบพิเศษ</td><td>1,200</td></tr>
+            <tr><td>ลายไม้อบพิเศษ</td><td>1,300</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="note">R3: ใช้กับ ระแนง + ตู้อลู (fw_ranae_* / fw_cabinet_*) · PVC ครอบท่อ: ⌈ยาว÷1.5⌉ × 1,500</div>
+    </div>
+
+    <!-- 31 กระจก -->
+    <div class="item">
+      <div class="item-header"><span class="item-num purple">31</span><div class="item-title">เปลี่ยนกระจก (R3 Auto กำไร 2 ขั้น)</div></div>
+      <div class="formula" style="background:var(--purple-light);border-left-color:var(--purple);color:var(--purple);">ราคาขาย = (ทุน − 200) × (1 + กำไร%)</div>
+      <div class="rate-grid">
+        <div class="rate-group">
+          <div class="rate-group-title">ขั้น 1 — กำไรตามทุน</div>
+          <table class="rate"><tr><th>ทุน (บาท)</th><th>กำไร</th></tr>
+            <tr><td>0 – 2,500</td><td>+100%</td></tr>
+            <tr><td>2,501 – 4,000</td><td>+70%</td></tr>
+            <tr><td>&gt; 4,001</td><td>+30%</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">ขั้น 2 — ลดกำไรตามพื้นที่รวม</div>
+          <table class="rate"><tr><th>พื้นที่รวม (ตร.ม.)</th><th>ลดกำไร</th></tr>
+            <tr><td>≤ 30</td><td>ปกติ</td></tr>
+            <tr><td>30 – 80</td><td>ลด 10%</td></tr>
+            <tr><td>80 – 130</td><td>ลด 15%</td></tr>
+            <tr><td>&gt; 130</td><td>ลด 20%</td></tr>
+          </table>
+        </div>
+      </div>
+      <details style="margin-top:10px;">
+        <summary style="cursor:pointer;font-size:13px;color:var(--blue);font-weight:600;">▶ ดูรายการกระจก 65 รุ่น (ทุน/ตร.ม. + ส่วนเพิ่มขาย)</summary>
+        <div class="rate-wrap" style="margin-top:8px;">
+        <table class="glass">
+          <tr><th>#</th><th style="text-align:left;">ชื่อกระจก</th><th>ทุน/ตร.ม.</th><th>เพิ่มขาย/ตร.ม.</th></tr>
+          <tr><td>1</td><td style="text-align:left;">กระจกเขียว/ใส 6 มม. (ฐาน)</td><td class="num">264</td><td class="num">0</td></tr>
+          <tr><td>2</td><td style="text-align:left;">กระจกเขียว/ใส 8 มม.</td><td class="num">646</td><td class="num">1,200</td></tr>
+          <tr><td>3</td><td style="text-align:left;">กระจกเขียว/ใส 10 มม.</td><td class="num">754</td><td class="num">1,200</td></tr>
+          <tr><td>4</td><td style="text-align:left;">กระจกเคลือบขาว 6 มม.</td><td class="num">915</td><td class="num">1,800</td></tr>
+          <tr><td>5</td><td style="text-align:left;">ยูโรเกรย์ 6 มม. (Perane)</td><td class="num">517</td><td class="num">800</td></tr>
+          <tr><td>6</td><td style="text-align:left;">ยูโรเกรย์ 8 มม.</td><td class="num">915</td><td class="num">1,500</td></tr>
+          <tr><td>7</td><td style="text-align:left;">ยูโรเกรย์ 10 มม.</td><td class="num">1,023</td><td class="num">1,700</td></tr>
+          <tr><td>8</td><td style="text-align:left;">ยูโรบรอนซ์ 6 มม.</td><td class="num">571</td><td class="num">1,000</td></tr>
+          <tr><td>9</td><td style="text-align:left;">ยูโรบรอนซ์ 10 มม. (BSG)</td><td class="num">3,917</td><td class="num">6,400</td></tr>
+          <tr><td>10</td><td style="text-align:left;">Reflective สีเทา 6 มม.</td><td class="num">1,216</td><td class="num">2,100</td></tr>
+          <tr><td>11</td><td style="text-align:left;">Reflective สีเขียว 6 มม.</td><td class="num">1,388</td><td class="num">2,400</td></tr>
+          <tr><td>12</td><td style="text-align:left;">Reflective สีฟ้า/เทาใหม่ 6 มม.</td><td class="num">1,517</td><td class="num">2,700</td></tr>
+          <tr><td>13</td><td style="text-align:left;">เทมเปอร์เขียว/ใส 6 มม.</td><td class="num">439</td><td class="num">600</td></tr>
+          <tr><td>14</td><td style="text-align:left;">เทมเปอร์เขียว/ใส 10 มม.</td><td class="num">1,023</td><td class="num">2,100</td></tr>
+          <tr><td>15</td><td style="text-align:left;">เทมเปอร์เขียว/ใส 12 มม.</td><td class="num">1,159</td><td class="num">2,400</td></tr>
+          <tr><td>16</td><td style="text-align:left;">เทมเปอร์เขียว/ใส 15 มม.</td><td class="num">3,121</td><td class="num">5,000</td></tr>
+          <tr><td>17</td><td style="text-align:left;">เทมเปอร์ใสพิเศษ 6 มม.</td><td class="num">1,432</td><td class="num">2,500</td></tr>
+          <tr><td>18</td><td style="text-align:left;">เทมเปอร์ใสพิเศษ 10 มม.</td><td class="num">3,497</td><td class="num">5,700</td></tr>
+          <tr><td>19</td><td style="text-align:left;">เทมเปอร์ฝ้า 6 มม.</td><td class="num">1,076</td><td class="num">2,200</td></tr>
+          <tr><td>20</td><td style="text-align:left;">เทมเปอร์ฝ้า 8 มม.</td><td class="num">1,937</td><td class="num">3,500</td></tr>
+          <tr><td>21–40</td><td style="text-align:left;">เทมเปอร์ยูโรเกรย์/บรอนซ์ · Reflective · ลามิเนต · Solar · อินซูเลท · ชาดำ/ฝ้า/ลอนแก้ว…</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr style="background:#E8F8F5;"><td colspan="4" style="text-align:center;font-size:12px;padding:6px;">⭐ รุ่น 41–65 (ใหม่) — เทมเปอร์ 8มม. / ชาดำ / ลามิเนต 6+6 / โค้ง / เงาทอง</td></tr>
+          <tr><td>41</td><td style="text-align:left;">เทมเปอร์ 8 มม.</td><td class="num">820</td><td class="num">1,300</td></tr>
+          <tr><td>42</td><td style="text-align:left;">เทมเปอร์สีชาดำ 6 มม.</td><td class="num">1,100</td><td class="num">1,800</td></tr>
+          <tr><td>60</td><td style="text-align:left;">กระจกใสดัดโค้ง 10 มม.</td><td class="num">6,750</td><td class="num">8,550</td></tr>
+          <tr><td>63</td><td style="text-align:left;">กระจกเงาทอง</td><td class="num">700</td><td class="num">1,000</td></tr>
+          <tr><td>65</td><td style="text-align:left;">เทมเปอร์ลามิเนต 6+6 Pvb 1.52</td><td class="num">3,000</td><td class="num">4,800</td></tr>
+        </table>
+        </div>
+      </details>
+    </div>
+
+    <!-- 32 สีอบ -->
+    <div class="item">
+      <div class="item-header"><span class="item-num purple">32</span><div class="item-title">อบสี (Rate/ตร.ม.)</div></div>
+      <div class="rate-grid">
+        <div class="rate-group">
+          <div class="rate-group-title">ซาฮารา (ไม่มี min)</div>
+          <table class="rate"><tr><th>พื้นที่</th><th>เรต</th></tr>
+            <tr><td>5–20</td><td>540</td></tr>
+            <tr><td>20–30</td><td>520</td></tr>
+            <tr><td>30–40</td><td>480</td></tr>
+            <tr><td>&gt;40</td><td>440</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">ลายไม้สต๊อก (min 4,000)</div>
+          <table class="rate"><tr><th>พื้นที่</th><th>เรต</th></tr>
+            <tr><td>7–10</td><td>850</td></tr>
+            <tr><td>&gt;10</td><td>750</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">Fuji ลายไม้ (min 11,000)</div>
+          <table class="rate"><tr><th>พื้นที่</th><th>เรต</th></tr>
+            <tr><td>7–10</td><td>2,100</td></tr>
+            <tr><td>10–15</td><td>1,900</td></tr>
+            <tr><td>15–20</td><td>1,700</td></tr>
+            <tr><td>&gt;20</td><td>1,600</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">อบพิเศษ (min 10,000)</div>
+          <table class="rate"><tr><th>พื้นที่</th><th>เรต</th></tr>
+            <tr><td>7–10</td><td>2,200</td></tr>
+            <tr><td>10–15</td><td>2,100</td></tr>
+            <tr><td>15–20</td><td>1,800</td></tr>
+            <tr><td>&gt;20</td><td>1,600</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">ลายไม้อบพิเศษ (min 15,000)</div>
+          <table class="rate"><tr><th>พื้นที่</th><th>เรต</th></tr>
+            <tr><td>7–10</td><td>2,900</td></tr>
+            <tr><td>10–15</td><td>2,600</td></tr>
+            <tr><td>15–20</td><td>2,350</td></tr>
+            <tr><td>&gt;20</td><td>2,200</td></tr>
+          </table>
+        </div>
+        <div class="rate-group">
+          <div class="rate-group-title">ชุบทอง (สูตร 2)</div>
+          <table class="rate"><tr><th>สูตร</th><th>ราคา</th></tr>
+            <tr><td>max(16,000, จำนวนเส้นอลู × 1,500 × 1.2)</td><td>—</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SECTION C ==================== -->
+<div class="section" id="secC">
+  <div class="section-title" style="background:var(--green);">🏠 ส่วน C — หลังคา + เสริม <span class="badge">ข้อ 33–34</span></div>
+  <div class="section-body">
+    <div class="item">
+      <div class="item-header"><span class="item-num green">33</span><div class="item-title">หลังคา (ขั้นต่ำตามรุ่น)</div></div>
+      <table class="small">
+        <tr><th>รุ่น</th><th>ขั้นต่ำ (บาท)</th></tr>
+        <tr><td>ไวนิล / ดีไลท์ / โพลีตัน</td><td>28,000</td></tr>
+        <tr><td>กระจกลามิเนต</td><td>30,000+</td></tr>
+        <tr><td>เมทัลชีท EPS (4 สเปก)</td><td>28,000</td></tr>
+        <tr><td>เมทัลชีท PU เหล็ก</td><td>30,000</td></tr>
+        <tr><td>ชินโคไลท์ (HC/Superior/Shade/Prime/Grang)</td><td>ตามรุ่น</td></tr>
+      </table>
+      <div class="sep"></div>
+      <div style="font-weight:700;margin:8px 0 6px;font-size:13px;">ของเสริมหลังคา</div>
+      <table class="small">
+        <tr><th>รายการ</th><th>ราคา</th></tr>
+        <tr><td>รางน้ำอลู S (10×10)</td><td>1,000/ม.</td></tr>
+        <tr><td>รางน้ำสแตน M (15×10)</td><td>2,000/ม.</td></tr>
+        <tr><td>รางน้ำสแตน L (30×10)</td><td>3,000/ม.</td></tr>
+        <tr><td>เสาแผงหลังคา</td><td>4,000/ต้น</td></tr>
+        <tr><td>เสา 4"×8"</td><td>2,000/ต้น</td></tr>
+        <tr><td>ซ่อนสโลป คอม 3 มม.</td><td>3,500/ตร.ม.</td></tr>
+        <tr><td>ซ่อนสโลป สมาร์ทบอร์ด 6 มม. <span class="new-tag">ใหม่</span></td><td>4,000/ตร.ม.</td></tr>
+        <tr><td>โซ่รางน้ำ ลายดอกทิวลิป</td><td>3,000/เส้น</td></tr>
+        <tr><td>ครอบท่อ PVC</td><td>⌈ยาว÷1.5⌉ × 1,500</td></tr>
+      </table>
+      <div class="sep"></div>
+      <div style="font-weight:700;margin:8px 0 6px;font-size:13px;">คานเหล็กถัก (R3 ใหม่)</div>
+      <table class="small">
+        <tr><th>รุ่น</th><th>สำหรับเมทัล (ม.)</th><th>สำหรับกระจก (ม.)</th><th>ราคา</th></tr>
+        <tr><td>120 ซม. (2×4" ซ้อน 2 ท่อน)</td><td>3–4</td><td>2.5–3</td><td>2,400/ม.</td></tr>
+        <tr><td>230 ซม. (คานถักตั้ง+เฉียง)</td><td>5–6</td><td>4–5</td><td>3,600/ม.</td></tr>
+        <tr><td>350 ซม. (คานถักตั้ง+เฉียง)</td><td>7–9</td><td>6–7</td><td>4,400/ม.</td></tr>
+      </table>
+    </div>
+    <div class="item">
+      <div class="item-header"><span class="item-num green">34</span><div class="item-title">หลังคาเลื่อน</div></div>
+      <div class="formula green">ราคา = พื้นที่×เรต + (บานเพิ่ม−1)×tier + เสริมคาน + มอเตอร์ · min 30,000</div>
+      <table class="small">
+        <tr><th>มอเตอร์</th><th>ราคา</th><th>ช่วงขนาด</th></tr>
+        <tr><td>80 กก.</td><td>18,000</td><td>≤ 3.5 ตร.ม.</td></tr>
+        <tr><td>300 กก.</td><td>28,000</td><td>3.5 – 14 ตร.ม.</td></tr>
+        <tr><td>1,000 กก.</td><td>30,000</td><td>14 – 40 ตร.ม.</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION D ==================== -->
+<div class="section" id="secD">
+  <div class="section-title" style="background:var(--orange);">🚧 ส่วน D — ประตูรั้ว / ระแนง 38.x <span class="badge">ข้อ 37–38.4</span></div>
+  <div class="section-body">
+
+    <!-- 37 ประตูรั้ว -->
+    <div class="item">
+      <div class="item-header"><span class="item-num orange">37</span><div class="item-title">ประตูรั้วบานเลื่อน</div></div>
+      <div class="formula orange">รวม: ค่าทำประตู + ค่าระแนง×(1−ส่วนลด) + ค่าอบสี×(1−ส่วนลด) + ค่าราง + ค่ามอเตอร์</div>
+      <table class="small">
+        <tr><th>รายการ</th><th>ราคา</th></tr>
+        <tr><td>ราง ตรง</td><td>1,500/ม.</td></tr>
+        <tr><td>ราง โค้ง</td><td>2,500/ม.</td></tr>
+        <tr><td>มอเตอร์</td><td>30,000/ตัว</td></tr>
+        <tr><td>ค่าทำประตู (ขั้นต่ำ)</td><td>15,000/บาน</td></tr>
+      </table>
+      <div class="note">R3: สีอบประตูรั้วลด 15% (เดิม 30%) · บานเล็ก 0.9×สูง + โครง 6,000 · กรีดพื้น ลด 30% min 5,000 เกิน 7ม. +750/ม.</div>
+    </div>
+
+    <!-- 38.1 ★ -->
+    <div class="item" style="border-left:4px solid var(--orange);">
+      <div class="item-header"><span class="item-num orange">38.1 ★</span><div class="item-title red">ระแนงบานเกล็ดอลู (ลูกฟูกเรียบ 2 หน้า)</div></div>
+      <div class="formula orange">ฐาน = max(5,500, พื้นที่_รวม × 5,500) · ชุดเพิ่ม: max(500, พื้นที่/ชุด × 1,500) + 1,000</div>
+      <table class="small">
+        <tr><th>รายการ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>จำนวนชุด</td><td>⌈D ÷ 1.5⌉ (D = สูง ถ้าตั้ง / กว้าง ถ้านอน · ≤ 1.5 ม./ชิ้น)</td></tr>
+        <tr><td>ชุดแรก (ฐาน)</td><td>max(5,500, พื้นที่_รวม × 5,500)</td></tr>
+        <tr><td>ชุดเพิ่ม (ต่อชุด)</td><td>max(500, พื้นที่/ชุด × 1,500) + 1,000</td></tr>
+        <tr><td>ค่ายึดเกล็ด (R3)</td><td>max(500, area × 1,500)</td></tr>
+        <tr><td>มอเตอร์ระแนง</td><td>⌈D÷3⌉ × 10,000</td></tr>
+      </table>
+      <div class="note">ทิศ: ตั้ง (default) / นอน · ห้ามต่อชิ้น · ทำเป็นบานได้ (บวกค่าทำบาน)</div>
+    </div>
+
+    <!-- 38.2 ★ -->
+    <div class="item" style="border-left:4px solid var(--orange);">
+      <div class="item-header"><span class="item-num orange">38.2 ★</span><div class="item-title red">ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง)</div></div>
+      <div class="formula orange">ราคา = ค่าประตู + ค่าเลื่อน + ค่าลูกฟูก + ค่าสี</div>
+      <table class="small">
+        <tr><th>ส่วน</th><th>สูตร</th></tr>
+        <tr><td>ค่าประตู</td><td>doorStructBase (เลือกรุ่น) หรือกรอกเอง</td></tr>
+        <tr><td>ค่าเลื่อน</td><td>max(3,000, พื้นที่ × 1,000)</td></tr>
+        <tr><td>ลูกฟูก (ปัดความสูง 1.0/1.5/2.0/3.0 ม.)</td><td>max(3,500, พื้นที่_ปัด × 3,500) · 🛑 สูง &gt; 3 ม. = เสริมโครงเหล็ก</td></tr>
+      </table>
+      <div style="margin-top:8px;">
+        <table class="rate"><tr><th>ค่าสี</th><th>เพิ่ม/ตร.ม.</th></tr>
+          <tr><td>ขาว / ดำ / ไม่อบสี</td><td>0</td></tr>
+          <tr><td>ซาฮารา / ดำซาฮารา</td><td>+400</td></tr>
+          <tr><td>ลายไม้สต๊อก</td><td>+1,500</td></tr>
+          <tr><td>อบพิเศษ</td><td>+1,600</td></tr>
+          <tr><td>ลายไม้อบพิเศษ</td><td>+2,200</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 38.3 ★ -->
+    <div class="item" style="border-left:4px solid var(--orange);">
+      <div class="item-header"><span class="item-num orange">38.3 ★</span><div class="item-title red">ระแนงเปิด-ปิด (กล่อง 1"×4")</div></div>
+      <div class="formula orange">ราคา = num_ชุด × (ค่าระแนง + ค่าเปิด-ปิด) + ค่ามอเตอร์ + ค่าสี</div>
+      <table class="small">
+        <tr><th>ส่วน</th><th>สูตร</th></tr>
+        <tr><td>จำนวนชุด</td><td>min(3, ⌈D_ขนาน÷3⌉) · ตั้ง→สูง / นอน→กว้าง</td></tr>
+        <tr><td>ค่าระแนง/ชุด</td><td>max(20,700, พื้นที่/ชุด × 6,900)</td></tr>
+        <tr><td>ค่าเปิด-ปิด/ชุด</td><td>D_ฉาก × 2,000 · ตั้ง→กว้าง / นอน→สูง</td></tr>
+        <tr><td>มอเตอร์ (optional)</td><td>num_ชุด × ⌈D_ฉาก÷3⌉ × 10,000</td></tr>
+        <tr><td>🛑 ขนาดสูงสุด</td><td>D_ขนาน ≤ 9 ม. (3 ชุด × 3 ม.)</td></tr>
+      </table>
+      <div style="margin-top:8px;">
+        <table class="rate"><tr><th>ค่าสี</th><th>เพิ่ม/ตร.ม.</th></tr>
+          <tr><td>ขาว / ดำ / ไม่อบสี</td><td>0</td></tr>
+          <tr><td>ซาฮารา / ดำซาฮารา</td><td>+500</td></tr>
+          <tr><td>ลายไม้สต๊อก</td><td>+1,600</td></tr>
+          <tr><td>อบพิเศษ</td><td>+3,000</td></tr>
+          <tr><td>ลายไม้อบพิเศษ</td><td>+4,300</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 38.4 -->
+    <div class="item">
+      <div class="item-header"><span class="item-num orange">38.4 ⭐</span><div class="item-title">ระแนงบังตา/ผนัง/เกล็ด — 92 รุ่น</div></div>
+      <div class="note" style="margin-bottom:8px;">Format ID: rn[ขนาด]-[โชว์][ระยะ][N/F] · N=ไม่โครง · F=รวมโครง</div>
+      <details>
+        <summary style="cursor:pointer;font-size:13px;color:var(--orange);font-weight:600;">▶ ดูตารางระแนง 92 รุ่น (ราคาผลิต+ติดตั้ง / เฉพาะผลิต / ค่าสี)</summary>
+        <div class="rate-wrap" style="margin-top:8px;">
+        <table class="glass">
+          <tr><th>ID ใหม่</th><th>ID เก่า</th><th style="text-align:left">ชื่อย่อ</th><th>ผลิต+ติด</th><th>เฉพาะผลิต</th><th>ซาฮารา</th><th>ลายไม้สต๊อก</th><th>อบพิเศษ</th><th>ลายไม้พิเศษ</th></tr>
+          <!-- 1x5 -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม 1×5 ซม. (12 รุ่น)</td></tr>
+          <tr><td>rn15-1c5N</td><td>rn1</td><td style="text-align:left">1×5 โชว์1 ระยะ5 ไม่โครง</td><td>3,300</td><td>2,700</td><td>+300</td><td>—</td><td>+1,700</td><td>+2,400</td></tr>
+          <tr><td>rn15-1c5F</td><td>rn2</td><td style="text-align:left">1×5 โชว์1 ระยะ5 รวมโครง</td><td>5,200</td><td>3,600</td><td>+300</td><td>—</td><td>+1,700</td><td>+2,400</td></tr>
+          <tr><td>rn15-1c3N</td><td>rn3</td><td style="text-align:left">1×5 โชว์1 ระยะ3 ไม่โครง</td><td>4,300</td><td>3,700</td><td>+400</td><td>—</td><td>+2,500</td><td>+3,500</td></tr>
+          <tr><td>rn15-1c3F</td><td>rn4</td><td style="text-align:left">1×5 โชว์1 ระยะ3 รวมโครง</td><td>6,000</td><td>4,500</td><td>+400</td><td>—</td><td>+2,500</td><td>+3,500</td></tr>
+          <tr><td>rn15-1c2N</td><td>rn5</td><td style="text-align:left">1×5 โชว์1 ระยะ2 ไม่โครง</td><td>5,000</td><td>4,500</td><td>+500</td><td>—</td><td>+3,300</td><td>+4,700</td></tr>
+          <tr><td>rn15-1c2F</td><td>rn6</td><td style="text-align:left">1×5 โชว์1 ระยะ2 รวมโครง</td><td>7,200</td><td>5,300</td><td>+500</td><td>—</td><td>+3,300</td><td>+4,700</td></tr>
+          <!-- 1x1.6" -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม 1"×1.6" (12 รุ่น)</td></tr>
+          <tr><td>rn116-15N</td><td>rn13</td><td style="text-align:left">1"×1.6" โชว์1" ระยะ5 ไม่โครง</td><td>3,700</td><td>3,100</td><td>+300</td><td>+1,000</td><td>+1,400</td><td>+2,000</td></tr>
+          <tr><td>rn116-15F</td><td>rn14</td><td style="text-align:left">1"×1.6" โชว์1" ระยะ5 รวมโครง</td><td>5,300</td><td>4,000</td><td>+300</td><td>+1,000</td><td>+1,400</td><td>+2,000</td></tr>
+          <!-- 1x4" -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม 1"×4" (14 รุ่น) — โปรดเซลล์</td></tr>
+          <tr><td>rn14-45N</td><td>rn49</td><td style="text-align:left">1"×4" โชว์4" ระยะ5 ไม่โครง</td><td>4,000</td><td>3,600</td><td>+400</td><td>+1,200</td><td>+2,300</td><td>+3,200</td></tr>
+          <tr><td>rn14-45F</td><td>rn50</td><td style="text-align:left">1"×4" โชว์4" ระยะ5 รวมโครง</td><td>6,000</td><td>4,500</td><td>+400</td><td>+1,200</td><td>+2,300</td><td>+3,200</td></tr>
+          <!-- 4x4" -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม 4"×4" (6 รุ่น)</td></tr>
+          <tr><td>rn44-45N</td><td>rn75</td><td style="text-align:left">4"×4" โชว์4" ระยะ5 ไม่โครง</td><td>6,600</td><td>6,600</td><td>+700</td><td>+2,500</td><td>+3,300</td><td>+4,800</td></tr>
+          <tr><td>rn44-45F</td><td>rn76</td><td style="text-align:left">4"×4" โชว์4" ระยะ5 รวมโครง</td><td>9,600</td><td>7,400</td><td>+700</td><td>+2,500</td><td>+3,300</td><td>+4,800</td></tr>
+          <!-- เกล็ด Z -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม เกล็ด Z (6 รุ่น)</td></tr>
+          <tr><td>rnZ1-N</td><td>rn83</td><td style="text-align:left">เกล็ด Z 1" ไม่โครง</td><td>3,600</td><td>3,100</td><td>+300</td><td>+1,000</td><td>+1,500</td><td>+2,200</td></tr>
+          <tr><td>rnZ1-F</td><td>rn84</td><td style="text-align:left">เกล็ด Z 1" รวมโครง</td><td>5,200</td><td>4,000</td><td>+300</td><td>+1,000</td><td>+1,500</td><td>+2,200</td></tr>
+          <tr><td>rnZ16-N</td><td>rn85</td><td style="text-align:left">เกล็ด Z 1.6" ไม่โครง</td><td>4,900</td><td>4,500</td><td>+500</td><td>+1,600</td><td>+2,200</td><td>+3,100</td></tr>
+          <tr><td>rnZ4-N</td><td>rn87</td><td style="text-align:left">เกล็ด Z 4" ไม่โครง</td><td>5,300</td><td>4,900</td><td>+500</td><td>+1,800</td><td>+2,800</td><td>+4,000</td></tr>
+          <!-- ลูกฟูก -->
+          <tr style="background:#EBF5FB"><td colspan="9" style="text-align:left;font-weight:700;padding:6px 8px;">กลุ่ม ลูกฟูก / คอมโพสิต</td></tr>
+          <tr><td>rnLF1-N</td><td>rn89</td><td style="text-align:left">ลูกฟูกเรียบ 1 ทาง ไม่โครง</td><td>3,500</td><td>3,500</td><td>+700</td><td>+2,500</td><td>+2,500</td><td>+3,500</td></tr>
+          <tr><td>rnLF2-N</td><td>rn90</td><td style="text-align:left">ลูกฟูกเรียบ 2 ทาง ไม่โครง</td><td>3,500</td><td>3,500</td><td>+400</td><td>+1,500</td><td>+1,600</td><td>+2,200</td></tr>
+          <tr><td>rnCP3-N</td><td>rn91</td><td style="text-align:left">คอมโพสิต 3 มม.</td><td>3,300</td><td>3,300</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>rnCP4-N</td><td>rn92</td><td style="text-align:left">คอมโพสิต 4 มม.</td><td>4,000</td><td>4,000</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </table>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SECTION E ==================== -->
+<div class="section" id="secE">
+  <div class="section-title" style="background:#6B7280;">🔧 ส่วน E — ฝ้า / มุ้ง / ตู้ / ค่าบริการ <span class="badge">ข้อ 35–49</span></div>
+  <div class="section-body">
+
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">35–36</span><div class="item-title">ฝ้า</div></div>
+      <table class="small"><tr><th>รายการ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>ฝ้าฉาบเรียบทาสีขาว (ยิปซั่ม 9มม.)</td><td>max(12,000, A×เรต) · 10–20: 1,200 · &gt;20: 1,150</td></tr>
+        <tr><td>+ฉนวนกันร้อน/เสียง 3" (rockwool)</td><td>+600/ตร.ม.</td></tr>
+        <tr><td>ฝ้าไม้เทียม</td><td>ทุนไม้เทียม/ตร.ม. × 2</td></tr>
+      </table>
+    </div>
+
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">39–40</span><div class="item-title">ผนัง</div></div>
+      <table class="small"><tr><th>รายการ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>ISOWALL สีขาว</td><td>max(7,000, A×เรต) · 1.0–3.5: 7,000→5,000 · &gt;3.5: 4,500</td></tr>
+        <tr><td>ผนังเบาภายนอก (สมาร์ทบอร์ด+ฉนวน 3")</td><td>max(13,500, A×เรต) · 3.0–4.5: 4,500 → &gt;7.5: 3,600</td></tr>
+        <tr><td>ผนังเบาภายใน (ยิปซั่ม+ฉนวน 3")</td><td>max(13,500, A×เรต) · 3.0–4.5: 4,100 → &gt;7.5: 3,200</td></tr>
+      </table>
+    </div>
+
+    <!-- 42 มุ้ง -->
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">42</span><div class="item-title">มุ้ง (อัปเดท 28 พ.ค. 2026)</div></div>
+      <div class="formula" style="background:#F0FFF4;border-left-color:#27AE60;color:#1E8449;">มุ้งที่ทำสีกรอบได้: ราคา = ค่ามุ้งฐาน + (colorPrice × 0.5)</div>
+      <table class="small"><tr><th>รุ่น</th><th>ราคา/ตร.ม.</th><th>ขั้นต่ำ</th></tr>
+        <tr><td>42.1 เฟรมเล็ก</td><td>1,000–1,800 (ตามขนาด)</td><td>1,000/ชุด</td></tr>
+        <tr><td>42.2 เฟรมเล็กติดตาย</td><td>1,200</td><td>—</td></tr>
+        <tr><td>42.3 บานเลื่อนเฟรมใหญ่</td><td>2,800–4,000</td><td>4,000/ชุด</td></tr>
+        <tr><td>42.4 มุ้งจีบ SD (P-NET)</td><td>2,500</td><td>3,500/ชุด</td></tr>
+        <tr><td>42.4 มุ้งจีบ + ทูเวย์ รังผึ้ง</td><td>4,000</td><td>—</td></tr>
+        <tr><td>42.4 มุ้งจีบนิรภัย (พับจีบ) สแตน 0.8</td><td>9,000</td><td>—</td></tr>
+        <tr><td>42.4 ตีนตะขาบ</td><td>4,500</td><td>—</td></tr>
+        <tr><td>42.5 ม้วน</td><td>3,000</td><td>min 1 ตร.ม./ชุด</td></tr>
+        <tr><td>42.6 ม้วนเตะได้ ⭐</td><td>7,500</td><td>รุ่น 150/300/600</td></tr>
+        <tr><td>42.7 แม่เหล็ก</td><td>1,500</td><td>≤ 1.2 ตร.ม.</td></tr>
+      </table>
+      <div class="sep"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Option ผ้ามุ้ง (ทุกรุ่น)</div>
+      <table class="small"><tr><th>ผ้า</th><th>ราคาเพิ่ม</th></tr>
+        <tr><td>กันแมว/หมา (ขาว)</td><td>+800/ตร.ม.</td></tr>
+        <tr><td>กันหนู สแตน 0.3 มม.</td><td>+1,200/ตร.ม.</td></tr>
+        <tr><td>นิรภัย สแตน 0.8 มม.</td><td>+9,000/ตร.ม. (เฉพาะเฟรมใหญ่)</td></tr>
+      </table>
+    </div>
+
+    <!-- 44-46 ค่าบริการ -->
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">44–46</span><div class="item-title">ค่าบริการ</div></div>
+      <table class="small"><tr><th>รายการ</th><th>สูตร/ราคา</th></tr>
+        <tr><td>44.1 นั่งร้าน</td><td>max(0, ชั้น−1) × 5,000</td></tr>
+        <tr><td>44.2 ค่าความเสี่ยง</td><td>(10,000 + max(0,ชั้น−3)×5,000) × ชุดเสี่ยง</td></tr>
+        <tr><td>45.1 เดินทาง ตจว.</td><td>ที่พัก: ⌈ยอด÷100k⌉×3,000 + เดินทาง: ⌈ระยะ÷100⌉×5,000</td></tr>
+        <tr><td>45.2 ขนส่ง ตจว.</td><td>ระยะ×เรต(23/18/16)/km × จำนวนรถ · ฟรีปริมณฑล>20k</td></tr>
+        <tr><td>46 ขนของขึ้นบันได</td><td>(พื้นที่×500) + (ชั้น×300) · max 12,000 → กรอกเพิ่ม</td></tr>
+      </table>
+    </div>
+
+    <!-- 47 ราวกันตก -->
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">47</span><div class="item-title">ราวกันตกกระจก (สูง 90–100ซม.) — คิด/เมตร</div></div>
+      <div class="rate-grid">
+        <div class="rate-group"><div class="rate-group-title">47.1 บันไดเฉียง หมุดแปะข้าง</div>
+          <table class="rate"><tr><th>ช่วง</th><th>เรต</th></tr>
+            <tr><td>1–5</td><td>10,700</td></tr><tr><td>5–10</td><td>10,000</td></tr>
+            <tr><td>10–15</td><td>9,700</td></tr><tr><td>&gt;15</td><td>9,400</td></tr>
+          </table>
+        </div>
+        <div class="rate-group"><div class="rate-group-title">47.2 บันไดเฉียง วางยู/เสาอลู</div>
+          <table class="rate"><tr><th>ช่วง</th><th>เรต</th></tr>
+            <tr><td>1–5</td><td>9,700</td></tr><tr><td>5–10</td><td>9,000</td></tr>
+            <tr><td>10–15</td><td>8,700</td></tr><tr><td>&gt;15</td><td>8,400</td></tr>
+          </table>
+        </div>
+        <div class="rate-group"><div class="rate-group-title">47.4 บันไดตรง วางยู/เสาอลู</div>
+          <table class="rate"><tr><th>ช่วง</th><th>เรต</th></tr>
+            <tr><td>1–5</td><td>7,900</td></tr><tr><td>5–10</td><td>7,200</td></tr>
+            <tr><td>10–15</td><td>7,000</td></tr><tr><td>&gt;15</td><td>6,700</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="options"><span class="opt-tag">ราวจับ ยู 5 หุน +500/ม.</span><span class="opt-tag">กล่อง 1"×2" +600/ม.</span></div>
+    </div>
+
+    <!-- 48 YKK -->
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">48</span><div class="item-title">ประตู YKK</div></div>
+      <table class="small"><tr><th>รุ่น</th><th>สูตร</th></tr>
+        <tr><td>48.1 Ventilation Door</td><td>17,500/ตร.ม. (min/บาน 30,000) · กว้าง 0.60–0.90 · สูง 2.00–2.20</td></tr>
+        <tr><td>48.2 Exhido Door (กำไร 50%)</td><td>max(50,000, A×เรต) · ≤4ตร.ม.=30,000 · &gt;4ตร.ม.=20,000</td></tr>
+        <tr><td>48.3 Tostem Giesta Airflow</td><td>max(30,000, A×17,500) + 4,000/บาน</td></tr>
+      </table>
+    </div>
+
+    <!-- 49 ตู้ -->
+    <div class="item">
+      <div class="item-header"><span class="item-num" style="background:#6B7280;">49</span><div class="item-title">ตู้อลูมิเนียม — คิด 4 ด้าน</div></div>
+      <table class="small"><tr><th>ส่วน</th><th>ราคา</th></tr>
+        <tr><td>บานหน้า (Future Tech)</td><td>ดูข้อ 41</td></tr>
+        <tr><td>พื้นตู้อลูทึบ</td><td>4,000/ตร.ม.</td></tr>
+        <tr><td>ผนัง Fix อลู</td><td>4,000/ตร.ม. · สมาร์ทบอร์ดแปะด้านนอก 2,500/ตร.ม.</td></tr>
+        <tr><td>ชั้นกระจก</td><td>1,000/ชั้น (3,500/ตร.ม.)</td></tr>
+        <tr><td>ชั้นอลู</td><td>1,200/ชั้น (4,000/ตร.ม.)</td></tr>
+        <tr><td>ราวแขวนผ้าสแตนเลส</td><td>800/เมตร</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SECTION F ==================== -->
+<div class="section" id="secF">
+  <div class="section-title" style="background:#0E6655;">🆕 ส่วน F — รายการเพิ่ม R3 <span class="badge">F.1–F.7</span></div>
+  <div class="section-body">
+    <div class="item">
+      <table class="small" style="width:100%"><tr><th>ข้อ</th><th>รายการ</th><th>หมายเหตุ</th></tr>
+        <tr><td>F.1</td><td>กั้นห้องกระจก (Room Builder)</td><td>8 ด้าน (A–H) + หลังคา + 13 OPTION · สีอลูซาฮาร่า default · กระจกเขียว 6มม. default</td></tr>
+        <tr><td>F.2</td><td>มือจับ Cmech 6 สี</td><td>ใช้กับ เลื่อน/เปิด/กระทุ้ง · กรอกราคาเอง (1,000–1,500)</td></tr>
+        <tr><td>F.3</td><td>มือจับ JR Prime</td><td>24,900 · ยูโร / โซลิดวัน / โซลิดทู</td></tr>
+        <tr><td>F.4</td><td>ประตูบานเปิด โซลิดวัน / โซลิดทู</td><td>กรอกเองตามสูตร · ตารางเต็มบาน +5,000</td></tr>
+        <tr><td>F.5</td><td>มุ้งโหมด B (ติดบานเดิม)</td><td>ราคา/ตร.ม. เท่าโหมด A + ค่าเสริมกล่อง/ราง (กรอกเอง)</td></tr>
+        <tr><td>F.7</td><td>Glasshouse 13 OPTION delta</td><td>ดูตาราง R3.9 ข้อ F.7 (-59,000 ถึง +15,000)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION G ==================== -->
+<div class="section" id="secG">
+  <div class="section-title" style="background:var(--red);">⚠️ ส่วน G — Guard / Filter / Warning <span class="badge">R3.x</span></div>
+  <div class="section-body">
+    <div class="item">
+      <table class="guard">
+        <tr><th>รายการ</th><th>พฤติกรรม</th><th>เงื่อนไข</th></tr>
+        <tr><td>บานยก &gt; 10 ตร.ม.</td><td class="guard-deny">🛑❌ ห้ามรับงาน</td><td>ติดต่อหัวหน้า</td></tr>
+        <tr><td>มุ้งเฟรมเล็ก + PC Door</td><td class="guard-deny">ห้าม (deny_with)</td><td>—</td></tr>
+        <tr><td>มุ้งเฟรมใหญ่</td><td>Filter</td><td>เฉพาะ เลื่อน/เปิด/กระทุ้ง/ยก (ตัด PC)</td></tr>
+        <tr><td>มุ้งม้วน</td><td>เพิ่ม กระทุ้ง</td><td>R3.x filter ใหม่</td></tr>
+        <tr><td>มุ้งจีบนิรภัย</td><td>เพิ่ม กระทุ้ง/PC/YKK</td><td>R3.x filter ใหม่</td></tr>
+        <tr><td>โช้ค +5,000</td><td>บานเปิดยูโรเท่านั้น</td><td>ตัด D/X/Velora</td></tr>
+        <tr><td>JR Prime</td><td>Filter</td><td>ยูโร / โซลิดวัน / โซลิดทูเท่านั้น</td></tr>
+        <tr><td>tilt&amp;turn บานกระทุ้ง</td><td class="guard-deny">⚠️🌧️</td><td>เปิดออกนอกบ้านเท่านั้น</td></tr>
+        <tr><td>เสริมคาน per_sqm</td><td>บานเฟี้ยมเท่านั้น</td><td>—</td></tr>
+        <tr><td>เสริมคาน per_meter</td><td>ยูโร/SMS รางบน/SlimLux/X/PC</td><td>—</td></tr>
+        <tr><td>เสริมแขนค้ำ +500/ชุด</td><td>กระทุ้งเปิดล่างเท่านั้น</td><td>—</td></tr>
+        <tr><td>R3.9 Unify ชื่อสี</td><td class="guard-allow">ทุก dropdown ใช้ COLORS array</td><td>default = สีอบขาว · เพิ่ม 'สีดำซาฮารา' ใน 38.2/38.3/ลูกฟูก/ประตูรั้ว</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// Smooth scroll + active tab
+document.querySelectorAll('.nav-tabs a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'});
+  });
+});
+window.addEventListener('scroll', () => {
+  const secs = ['secA','secB','secC','secD','secE','secF','secG'];
+  const links = document.querySelectorAll('.nav-tabs a');
+  let cur = 0;
+  secs.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if(el && window.scrollY >= el.offsetTop - 120) cur = i;
+  });
+  links.forEach((l,i) => l.classList.toggle('active', i===cur));
+});
+</script>
+</body>
+</html>

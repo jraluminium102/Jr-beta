@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ สีโครงอลู G3 ออกแบบใหม่ — ติ๊กแล้วโผล่ (แบบ G2) · 23 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.55}
+  .wrap{max-width:720px;margin:0 auto;padding:14px 12px 70px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:13px}
+  .hd h1{margin:0 0 3px;font-size:16px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.93}
+  .tag{background:#fff;color:#b3122a;border-radius:4px;padding:0 6px;font-weight:700;font-size:11px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  @media(max-width:620px){.cmp{grid-template-columns:1fr}}
+  .cmpx{background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:10px 12px;font-size:12px}
+  .cmpx.bad{border-color:#fca5a5;background:#fef2f2}.cmpx.good{border-color:#86efac;background:#f0fdf4}
+  .cmpx h3{margin:0 0 5px;font-size:12.5px}.cmpx.bad h3{color:#b91c1c}.cmpx.good h3{color:#166534}
+  .cmpx ul{margin:0;padding-left:16px}.cmpx li{margin:2px 0}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:13px}
+  .ct{font-size:13.5px;font-weight:700;margin:0 0 3px;color:#374151;display:flex;align-items:center;gap:7px}
+  .sub{font-size:11.5px;color:#6b7280;margin-bottom:11px}
+  /* กล่องสีโครง */
+  .cbox{border:1px solid #c7d7f0;background:#f0f4ff;border-radius:11px;padding:12px 13px}
+  .cbox .title{font-size:13px;font-weight:700;color:#1e40af;display:flex;align-items:center;gap:7px;margin-bottom:9px}
+  .l1{display:flex;align-items:center;gap:8px;font-size:12.5px;background:#fff;border:1px solid #dbe3f0;border-radius:8px;padding:8px 11px;color:#374151}
+  .l1 b{color:#111}.l1 .free{color:#16a34a;font-weight:700;font-size:11.5px}
+  .l1 .edit{margin-left:auto;font-size:11px;color:#2563eb;text-decoration:underline;cursor:pointer}
+  .tg{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;cursor:pointer;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:10px;margin-top:9px;background:#fff;color:#374151}
+  .tg.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .tg input{width:18px;height:18px;accent-color:#b3122a}
+  .body{display:none;margin-top:10px;padding-left:4px;border-left:2px dashed #cbd5e1}
+  .body.on{display:block;animation:slideIn .15s ease}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .inner{padding-left:11px}
+  .lbl{font-size:11.5px;color:#6b7280;font-weight:700;margin:10px 0 5px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{min-height:34px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip.sm{min-height:30px;font-size:12px;padding:0 10px}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .chip.caton{border-color:#1e40af;background:#dbeafe;color:#1e40af}
+  .dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.2);flex:none}
+  .price{font-size:11.5px;font-weight:700;color:#166534;background:#dcfce7;border-radius:6px;padding:2px 8px;display:inline-block;margin-top:8px}
+  .tg2{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;cursor:pointer;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:9px;margin-top:12px;background:#fff;color:#374151}
+  .tg2.on{border-color:#1e40af;background:#eff6ff;color:#1e40af}
+  .tg2 input{width:16px;height:16px;accent-color:#1e40af}
+  .body2{display:none;margin-top:9px}.body2.on{display:block;animation:slideIn .15s ease}
+  .selrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap}
+  .selrow select{height:34px;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 8px;font-size:12.5px;font-family:inherit;max-width:230px;flex:1;min-width:160px}
+  .optline{font-size:12px;color:#b3122a;background:#fff5f5;border:1px solid #f3cdd3;border-radius:7px;padding:7px 10px;margin-top:8px}
+  /* preview ใบ */
+  .prev{border:1px solid #e2c4c9;border-radius:10px;overflow:hidden;margin-top:13px}
+  .prevh{background:#b3122a;color:#fff;padding:6px 11px;font-size:11.5px;font-weight:700}
+  .qb{border-top:1px solid #f0d0d6}.qb .qbh{background:#fdecef;color:#b3122a;font-weight:700;padding:4px 11px;font-size:11px}
+  .qb .qbb{padding:6px 11px;font-size:12px}.qb .ln{padding:1px 0 1px 12px;position:relative}.qb .ln:before{content:'–';position:absolute;left:0;color:#9ca3af}
+  .qb .opt{color:#b3122a}
+  .note{font-size:12px;color:#1e3a5f;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:11px 13px;margin-top:12px;line-height:1.7}
+  .note b{color:#b3122a}
+  .warn{font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>สีโครงอลูมิเนียม (หลังคา) — ออกแบบใหม่ "ติ๊กแล้วค่อยโผล่"</h1>
+    <p><span class="tag">ดราฟ · 23 มิ.ย.</span> แก้ของเดิมที่ "รก/ชิปใหญ่/L2-L3 อัดกัน" → แบบ G2 กดทีละชั้น · กดเล่นได้จริง</p></div>
+
+  <div class="cmp">
+    <div class="cmpx bad"><h3>❌ ของเดิม (ที่ push ไป)</h3>
+      <ul><li>ชิปสี L1 เป็นการ์ดใหญ่ ล้นเป็นแถวยาว</li><li>L2 + L3 กางโชว์พร้อมกัน ตัวอักษรอัดกัน</li><li>ดูครั้งเดียวงง ไม่รู้เริ่มตรงไหน</li></ul></div>
+    <div class="cmpx good"><h3>✅ แบบใหม่ (ดราฟนี้)</h3>
+      <ul><li>L1 = บรรทัดเดียว บอกสีทั้งใบ (ฟรี)</li><li>ติ๊ก "ใช้สีต่าง" → L2 ค่อยโผล่</li><li>ติ๊ก "เทียบราคา" → L3 ค่อยโผล่ (ซ้อนใน L2)</li></ul></div>
+  </div>
+
+  <div class="card">
+    <div class="ct">🏠 ฟอร์มหลังคา (ตัวอย่าง: โพลีตัน 4 × 3 ม. = 12 ตร.ม.)</div>
+    <div class="sub">↓ กล่องสีโครงแบบใหม่ — เริ่มจากปิดหมด สะอาดตา</div>
+
+    <div class="cbox">
+      <div class="title">🎨 สีโครงอลูมิเนียม</div>
+
+      <!-- L1 -->
+      <div class="l1">L1 · ทั้งใบ: <b id="l1name">สีอบขาว</b> <span class="free" id="l1free">(ฟรี)</span>
+        <span class="edit" onclick="cycleL1()">เปลี่ยนสีทั้งใบ ⟳</span></div>
+      <div style="font-size:10.5px;color:#9ca3af;margin-top:3px;padding-left:2px;">ตั้งที่หัวใบ · ทุกข้อใช้สีนี้อัตโนมัติ (กด ⟳ เพื่อลองสลับ)</div>
+
+      <!-- L2 toggle -->
+      <label class="tg" id="tg2lbl" onclick="togL2()"><input type="checkbox" id="cb2"> ใช้สีต่างจากทั้งใบ — เฉพาะหลังคานี้</label>
+      <div class="body" id="l2body">
+        <div class="inner">
+          <div class="lbl">หมวดสี</div>
+          <div class="chips" id="catChips"></div>
+          <div class="lbl">เลือกสี (คิดเงินตามเรต × พื้นที่ · บวกยอด)</div>
+          <div class="chips" id="colChips"></div>
+          <div id="l2coderow" style="display:none;margin-top:9px">
+            <div class="lbl">รหัสสีพิเศษ (ระบุให้ครบ)</div>
+            <input type="text" id="l2code" placeholder="เช่น 1076-A มัสตาร์ดทอง" oninput="calc()" style="width:100%;height:34px;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:12.5px;font-family:inherit">
+          </div>
+          <div class="price" id="l2price">+0 บาท</div>
+
+          <!-- L3 toggle (ซ้อนใน L2) -->
+          <label class="tg2" id="tg3lbl" onclick="togL3()"><input type="checkbox" id="cb3"> เทียบราคาเสนอลูกค้า — "ถ้าเปลี่ยนเป็นสี/วัสดุอื่น +/- เท่าไร"</label>
+          <div class="body2" id="l3body">
+            <div class="selrow">เปลี่ยนสีโครงเป็น
+              <select id="l3color" onchange="l3colorChange()"><option value="">— ไม่เทียบ —</option></select></div>
+            <div id="l3coderow" style="display:none;margin-top:6px">
+              <div class="lbl">รหัสสีพิเศษ (L3)</div>
+              <input type="text" id="l3code" placeholder="เช่น 1076-A มัสตาร์ดทอง" oninput="calc()" style="width:100%;height:32px;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit">
+            </div>
+            <div class="selrow">หรือเปลี่ยนวัสดุมุงเป็น
+              <select id="l3mat" onchange="calc()">
+                <option value="">— ไม่เทียบ —</option>
+                <option value="2000">เมทัลชีท (−2,000)</option>
+                <option value="4500">ชินโคไลท์ (+4,500)</option>
+                <option value="1200">ไวนิล VG (−1,200)</option></select></div>
+            <div class="optline" id="l3opt">เลือกแล้วจะขึ้นเป็นบรรทัด <b>OPTION</b> ในใบ · <b>ไม่บวกยอดรวม</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- preview ใบ -->
+    <div class="prev">
+      <div class="prevh">📄 ใบเสนอราคา (อัปเดตตามที่เลือก)</div>
+      <div class="qb"><div class="qbh">① รายการ</div><div class="qbb">
+        <div class="ln"><b>หลังคากันสาด โพลีตัน (4 × 3 ม.)</b></div>
+        <div class="ln">โครงอลูมิเนียม</div></div></div>
+      <div class="qb"><div class="qbh" style="color:#b3122a">② OPTION (เทียบราคา · ไม่บวกยอด)</div><div class="qbb" id="qopt"><span style="color:#9ca3af">— ไม่มี —</span></div></div>
+      <div class="qb"><div class="qbh">③ หมายเหตุ</div><div class="qbb" style="color:#9ca3af;font-size:12px;">— ไม่มี —</div></div>
+      <div class="qb"><div class="qbh">④ รายละเอียดงาน</div><div class="qbb">
+        <div class="ln" id="qcolor">สีโครง: อบขาว (ตามทั้งใบ)</div>
+        <div class="ln" id="qmatcolor">สีหลังคา: Opal 103 สีขาวขุ่น (แสงผ่าน 20%)</div></div></div>
+      <div class="qb"><div class="qbh">⑤ แตกราคา</div><div class="qbb" id="qbreak"></div></div>
+    </div>
+  </div>
+
+  <div class="note">📌 <b>หลักการ 3 ชั้น</b> (ย้ำตามที่พี่เคาะ · <b>ทุกชั้นใช้สีอลูชุดเดียวกัน — L3 ไม่ใช่สีพิเศษ</b>):<br>
+    • <b>L1 · ทั้งใบ</b> — สีโครงที่ตั้งหัวใบ ใช้ทุกข้อ (บวกยอด)<br>
+    • <b>L2 · เฉพาะข้อนี้</b> — กดติ๊กค่อยโผล่ → เลือกสีต่างเฉพาะหลังคานี้ (สีจริง บวกยอด)<br>
+    • <b>L3 · เทียบราคา</b> — กดติ๊กค่อยโผล่ (ซ้อนใน L2) → เสนอลูกค้าว่าเปลี่ยนแล้ว +/- เท่าไร (โชว์ OPTION <b>ไม่บวกยอด</b>)</div>
+  <div class="warn">⚠ ตัวเลขราคาในดราฟใช้เรตจริง engine (colorPrice) · งานจริงดึงสด · <b>ยังไม่แตะ index.html</b> รอพี่ approve แบบนี้ก่อน แล้วค่อยส่งแก้ทีเดียว · เรื่อง L3 ของ G2 (ระแนง) ที่ยังเขียน "อบพิเศษ" จะแก้ให้ตรงอันนี้ตอนทำ G2</div>
+</div>
+<script>
+// COLORS จริง (index.html) — ชื่อ + เรต (min, [low,high,rate]) + swatch
+var COLORS=[
+ {n:'สีอบขาว',min:0,rates:null,sw:'#ffffff'},
+ {n:'สีดำ',min:0,rates:null,sw:'#1b1b1b'},
+ {n:'สีเทาซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],sw:'#6f7173'},
+ {n:'สีดำซาฮาร่า',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]],sw:'#2c2d2f'},
+ {n:'Aztec gray',min:4000,rates:[[7,10,700],[10,20,650],[20,9999,600]],sw:'#8b8e90'},
+ {n:'ลายไม้ สักทอง',min:4000,rates:[[7,10,850],[10,9999,750]],sw:'linear-gradient(135deg,#b07c3a,#7d501f)'},
+ {n:'ลายไม้ มะฮอกกานี',min:4000,rates:[[7,10,850],[10,9999,750]],sw:'linear-gradient(135deg,#6a3322,#411d12)'},
+ {n:'ลายไม้ ไวท์โอ๊ค',min:4000,rates:[[7,10,850],[10,9999,750]],sw:'linear-gradient(135deg,#dcc9a6,#b69a6e)'},
+ {n:'สีอบพิเศษ (มีรหัส)',min:10000,rates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]],sw:'linear-gradient(135deg,#cfd2d6,#9aa0a6)'},
+ {n:'ลายไม้อบพิเศษ (มีรหัส)',min:15000,rates:[[7,10,2900],[10,15,2600],[15,20,2350],[20,9999,2200]],sw:'linear-gradient(135deg,#b07d40,#7e5326)'}
+];
+var CATS=[{k:'std',t:'มาตรฐาน',idx:[0,1]},{k:'sahara',t:'ซาฮาร่า',idx:[2,3,4]},{k:'wood',t:'ลายไม้',idx:[5,6,7]},{k:'special',t:'อบพิเศษ (มีรหัส)',idx:[8,9]}];
+var AREA=12;
+function rateOf(a,t){ if(a<t[0][0])return t[0][2]; for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];} return t[t.length-1][2]; }
+function colorPrice(ci){ var c=COLORS[ci]; if(!c)return 0; if(!c.rates)return c.min||0; return Math.max(c.min||0, AREA*rateOf(AREA,c.rates)); }
+var st={l1:0,l2:false,cat:'sahara',ci:2,l3:false};
+function fmt(n){return Math.round(n).toLocaleString();}
+function cycleL1(){ st.l1=(st.l1+1)%4; renderL1(); calc(); } // วน อบขาว/ดำ/เทาซาฮาร่า/Aztec (ตัวอย่าง)
+function renderL1(){ var c=COLORS[st.l1]; document.getElementById('l1name').textContent=c.n; var p=colorPrice(st.l1); document.getElementById('l1free').textContent=p>0?('(+'+fmt(p)+')'):'(ฟรี)'; document.getElementById('l1free').style.color=p>0?'#b3122a':'#16a34a'; }
+function togL2(){ st.l2=!st.l2; document.getElementById('cb2').checked=st.l2; document.getElementById('tg2lbl').classList.toggle('on',st.l2); document.getElementById('l2body').classList.toggle('on',st.l2); if(!st.l2){st.l3=false;document.getElementById('cb3').checked=false;document.getElementById('tg3lbl').classList.remove('on');document.getElementById('l3body').classList.remove('on');} calc(); }
+function togL3(){ st.l3=!st.l3; document.getElementById('cb3').checked=st.l3; document.getElementById('tg3lbl').classList.toggle('on',st.l3); document.getElementById('l3body').classList.toggle('on',st.l3); calc(); }
+function renderCats(){ document.getElementById('catChips').innerHTML=CATS.map(function(c){return '<button class="chip sm'+(st.cat===c.k?' caton':'')+'" onclick="setCat(\''+c.k+'\')">'+c.t+'</button>';}).join(''); }
+function setCat(k){ st.cat=k; var ids=CATS.filter(function(c){return c.k===k;})[0].idx; if(ids.indexOf(st.ci)<0)st.ci=ids[0]; renderCols(); calc(); }
+function renderCols(){ var ids=CATS.filter(function(c){return c.k===st.cat;})[0].idx; document.getElementById('colChips').innerHTML=ids.map(function(i){var c=COLORS[i];var p=colorPrice(i);return '<button class="chip'+(st.ci===i?' on':'')+'" onclick="setCol('+i+')"><span class="dot" style="background:'+c.sw+'"></span>'+c.n+(p>0?(' +'+fmt(p)):' ฟรี')+'</button>';}).join(''); }
+function setCol(i){ st.ci=i; renderCols(); var isSpec=i===8||i===9; document.getElementById('l2coderow').style.display=isSpec?'':'none'; if(!isSpec)document.getElementById('l2code').value=''; calc(); }
+function l3colorChange(){ var v=document.getElementById('l3color').value; var isSpec=v==='8'||v==='9'; document.getElementById('l3coderow').style.display=isSpec?'':'none'; if(!isSpec)document.getElementById('l3code').value=''; calc(); }
+function renderL3sel(){ var s=document.getElementById('l3color'); s.innerHTML='<option value="">— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'">'+c.n+'</option>'):'';}).join(''); }
+function calc(){
+  renderL1();
+  // ราคาที่บวกจริง = L2 (ถ้าเปิด) ไม่งั้น L1
+  var billCi=st.l2?st.ci:st.l1;
+  var billP=colorPrice(billCi);
+  var l2codeVal=(document.getElementById('l2code')||{}).value||''; l2codeVal=l2codeVal.trim();
+  var l3codeVal=(document.getElementById('l3code')||{}).value||''; l3codeVal=l3codeVal.trim();
+  var billCodeSuffix=(st.l2&&(billCi===8||billCi===9)&&l2codeVal)?' ('+l2codeVal+')':'';
+  document.getElementById('l2price').textContent=(colorPrice(st.ci)>0?'+'+fmt(colorPrice(st.ci))+' บาท (สีนี้)':'ฟรี (สีนี้)');
+  // ใบ
+  document.getElementById('qcolor').textContent='สีโครง: '+COLORS[billCi].n.replace(/^สี/,'')+billCodeSuffix+(st.l2?' (เฉพาะรายการนี้)':' (ตามทั้งใบ)');
+  // OPTION (L3)
+  var optHtml='';
+  if(st.l3){
+    var lc=document.getElementById('l3color').value, lm=document.getElementById('l3mat').value;
+    if(lc!==''){ var z=colorPrice(parseInt(lc))-billP; var lcIdx=parseInt(lc); var l3cs=(lcIdx===8||lcIdx===9)&&l3codeVal?' ('+l3codeVal+')':''; optHtml+='<div class="ln opt">OPTION : เปลี่ยนสีโครง จาก '+COLORS[billCi].n+billCodeSuffix+' เป็น '+COLORS[lcIdx].n+l3cs+' ราคา'+(z>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(z))+' บาท</div>'; }
+    if(lm!==''){ var mo=document.getElementById('l3mat').options[document.getElementById('l3mat').selectedIndex].text; optHtml+='<div class="ln opt">OPTION : '+mo.replace(/\s*\([^)]*\)/,'')+' '+mo.match(/\(([^)]*)\)/)[0]+' (เทียบ)</div>'; }
+  }
+  document.getElementById('qopt').innerHTML=optHtml||'<span style="color:#9ca3af">— ไม่มี —</span>';
+  // แตกราคา
+  var base=78000;
+  var br='<div class="ln">หลังคากันสาด โพลีตัน 12 ตร.ม. — '+fmt(base)+'</div>';
+  if(billP>0)br+='<div class="ln">สีโครง '+COLORS[billCi].n.replace(/^สี/,'')+billCodeSuffix+' — +'+fmt(billP)+'</div>';
+  br+='<div class="ln" style="border-top:1px solid #eee;margin-top:3px;padding-top:3px;font-weight:700;color:#b3122a">รวม — '+fmt(base+billP)+'</div>';
+  document.getElementById('qbreak').innerHTML=br;
+}
+renderCats(); renderCols(); renderL3sel(); renderL1(); calc();
+</script>
+</body>
+</html>

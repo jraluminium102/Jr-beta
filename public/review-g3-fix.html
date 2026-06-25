@@ -1,0 +1,78 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ตรวจ+แก้ G3 หลังคา — รวมก้อนเดียว · 25 มิ.ย.</title>
+<style>
+  body{ font-family:"Sarabun",-apple-system,"Segoe UI",sans-serif; background:#eef1f5; color:#1f2937; margin:0; padding:20px 16px 70px; line-height:1.55; }
+  h1{ font-size:21px; margin:0 0 3px; } .sub{ color:#6b7280; font-size:13px; margin-bottom:16px; }
+  .frozen{ background:#15803d;color:#fff;border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:13px;line-height:1.7; }
+  .frozen b{font-size:15px;}
+  .iss{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; margin-bottom:13px; overflow:hidden; border-left:5px solid #B3151D; }
+  .iss.pend{ border-left-color:#b45309; }
+  .ih{ padding:11px 15px; font-weight:800; font-size:15px; background:#fafbfc; }
+  .ib{ padding:8px 15px 14px; font-size:13.5px; }
+  .lab{ font-weight:800; font-size:12px; color:#6b7280; margin:9px 0 3px; }
+  .bad{ background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:8px 11px; color:#991b1b; font-size:13px; }
+  .good{ background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 11px; color:#166534; font-size:13px; margin-top:6px; }
+  .warn{ background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 11px; color:#92722a; font-size:12.5px; margin-top:6px; }
+  .code{ font-family:ui-monospace,monospace; font-size:12px; background:#f1f5f9; padding:1px 6px; border-radius:5px; }
+  .mock{ border:1px solid #ddd;border-radius:8px;padding:9px 11px;background:#fff;margin-top:6px; }
+  .chip{ display:inline-flex;align-items:center;font-size:12px;padding:5px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-weight:600;margin:2px; }
+  .chip.on{ background:#B3151D;border-color:#B3151D;color:#fff; }
+  .fld{display:inline-block;border:1.5px solid #cbd5e1;border-radius:7px;padding:4px 8px;font-size:13px;margin:2px;background:#fff;}
+</style></head><body>
+
+<h1>ตรวจ + แก้ G3 หลังคา — รวมก้อนเดียว</h1>
+<div class="sub">25 มิ.ย. · ดราฟต้นแบบ = DRAFT-G3-ภาพรวมครบ · รวม 5 จุดพี่โน้ต + งานค้างเดิม · ยังไม่แตะ index</div>
+
+<div class="frozen"><b>🔒 ก้อนแก้ G3 (เตรียมพร้อม · แก้รวดเดียว)</b><br>
+5 จุดพี่โน้ตวันนี้ + 2 งานค้างเดิม (ใบ) · ทั้งหมดเทียบ "ดราฟ G3 ภาพรวมครบ" ที่ approve แล้ว</div>
+
+<!-- 1 -->
+<div class="iss"><div class="ih">① L2 (สีโครง) layout ไม่เหมือนดราฟ</div><div class="ib">
+  <div class="bad">ของจริง (ซ้าย) กล่อง L1/L2 สีโครง จัดเรียงคนละแบบดราฟ (ขวา) — รก/ไม่เป็นระเบียบ</div>
+  <div class="good">แก้: จัด L1/L2 สีโครง ให้ตรง layout ดราฟ G3 ภาพรวมครบ (กล่องเดียว เรียบ · L1 ทั้งใบบรรทัด⟳ · L2 ติ๊กเปลี่ยนเฉพาะหลังนี้ → หมวด+สี) · <span class="warn" style="display:inline;padding:1px 6px;margin:0;">ต้อง render เทียบ pixel</span></div>
+</div></div>
+
+<!-- 2 -->
+<div class="iss"><div class="ih">② ตัด "สีชุบ" ออกจาก L2 (ใช้ภายนอกไม่ได้)</div><div class="ib">
+  <div class="bad">L2 มี "สีชุบ (ระบุชื่อ) +16,000" — สีชุบใช้ภายนอกไม่ได้ (หลังคา=งานนอก) ผิด</div>
+  <div class="good">แก้: <b>กรองสีชุบออกจากกล่องสี G3</b> (งานนอก) · สีชุบอยู่ใน COLORS L1052 (+16,000) — ใช้ได้เฉพาะงานใน (เช่น G4 ตู้) · filter ไม่ให้โผล่ใน G3 roof color box</div>
+</div></div>
+
+<!-- 3 -->
+<div class="iss"><div class="ih">③ เพิ่มช่องกรอก ยาว×ยื่น + รวม ตร.ม. (หลังคาหลายขยัก)</div><div class="ib">
+  <div class="bad">ตอนนี้กรอกได้ขนาดเดียว (ยาว×ยื่น) · หลังคาจริงมีหลายขยัก/หลายช่วง → รวมพื้นที่ไม่ได้</div>
+  <div class="lab">ควรเป็น</div>
+  <div class="mock">ช่วงที่ 1: ยาว <span class="fld">6</span> × ยื่น <span class="fld">3</span> = 18 ตร.ม.<br>
+  ช่วงที่ 2: ยาว <span class="fld">4</span> × ยื่น <span class="fld">2</span> = 8 ตร.ม. &nbsp;<span class="chip">＋ เพิ่มช่วง</span><br>
+  <b>รวม 26 ตร.ม.</b></div>
+  <div class="good">แก้: เพิ่มกรอกหลายช่วง (ยาว×ยื่น) + auto รวม ตร.ม. → ส่ง area รวมเข้า engine · เผื่อหลังคาหลายขยัก</div>
+</div></div>
+
+<!-- 4 -->
+<div class="iss"><div class="ih">④ ออปชั่นหลัก (เสา/ตามเหล็ก/ปลายหลังคา) ไม่เหมือนดราฟ</div><div class="ib">
+  <div class="bad">กล่องออปชั่นหลัก (เสาแผง/เสา 4"x8"/เสา 4"กลม · ตามเหล็กถัก ฿1-3 · ปลายหลังคา) จัด/หน้าตาไม่ตรงดราฟ</div>
+  <div class="good">แก้: เปิดดราฟ G3 ภาพรวมครบจับเทียบ → จัดออปชั่นหลักให้ตรง (โครงสร้างเสริม/งานเหล็ก: เสา · ตามเหล็กถัก · ปลายหลังคา) · <span class="warn" style="display:inline;padding:1px 6px;margin:0;">ต้อง render เทียบทีละ control</span></div>
+</div></div>
+
+<!-- 5 -->
+<div class="iss"><div class="ih">⑤ รางน้ำ/ระบบระบาย/สีท่อ PVC — ทำให้คลีนเหมือนดราฟ</div><div class="ib">
+  <div class="bad">บล็อก ปลายหลังคา/รางน้ำ(อลู S/M/สแตนเลส)/ระบบระบาย(ท่อ/โซ่)/สีท่อ PVC(ดำ/เทา/ขาว) — ของจริงไม่คลีน/ไม่สวยเท่าดราฟ</div>
+  <div class="good">แก้: จัดบล็อกนี้ให้คลีนตามดราฟ (พี่ชอบ layout ดราฟ) · กลุ่ม: ปลายหลังคา → รางน้ำ(ชนิด/ยาว) → ระบบระบาย → สีท่อ PVC · <span class="warn" style="display:inline;padding:1px 6px;margin:0;">render เทียบ</span></div>
+</div></div>
+
+<!-- pending -->
+<div class="iss pend"><div class="ih">⑥ งานค้างเดิม (ใบเสนอราคา G3) — รวมมาด้วย</div><div class="ib">
+  <div class="lab">จาก g3-invoice-format-pending</div>
+  <div class="warn" style="margin-top:0;">• <b>สีโครงต้องขึ้นก่อนสีหลังคา</b> ในใบ (สลับไว้บน)<br>
+  • <b>ชื่อวัสดุมุงต้องครบ</b> เช่น "Opal 103 สีขาวขุ่น (แสงผ่าน 20%)" ไม่ใช่ชื่อย่อ</div>
+  <div class="good">เกณฑ์ตรวจ: รัน <span class="code">gen-g3-invoices-report.mjs</span> แล้วเทียบ</div>
+</div></div>
+
+<div class="iss" style="border-left-color:#15803d;"><div class="ih">สรุป — ก้อนแก้ G3 (6 จุด)</div><div class="ib">
+  <div class="good">①②③④⑤ ฟอร์ม (เทียบดราฟ G3 ภาพรวมครบ) + ⑥ ใบ (สีโครงก่อนหลังคา + ชื่อวัสดุครบ)<br>
+  ② ตัดสีชุบ = ชัด (filter COLORS) · ③ หลายขยัก = ชัด (เพิ่ม UI+รวม) · ①④⑤ ต้อง render เทียบ pixel กับดราฟก่อน patch<br>
+  ทั้งหมด READ-ONLY · ทำดราฟ · รอ index ว่าง → render เทียบ → patch รวดเดียว</div>
+</div></div>
+
+</body></html>

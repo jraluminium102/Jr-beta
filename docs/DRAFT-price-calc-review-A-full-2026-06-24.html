@@ -1,0 +1,146 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ A เต็ม — วิธีคิดราคา (เฟิร์นตรวจ) เรตจริง</title>
+<style>
+:root{--red:#B3151D;--blue:#1E40AF;--green:#047857;--amber:#B45309;--purple:#7C3AED;--line:#E5E7EB;--mut:#6B7280;--ink:#1F2937;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:#F3F4F6;color:var(--ink);font-size:14px;line-height:1.55;}
+.wrap{max-width:820px;margin:0 auto;padding:16px 14px 90px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:12px;}
+.note{font-size:11.5px;color:var(--mut);}
+.real{background:#ECFDF3;border:1px solid #A6E9C5;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#14532D;}
+.real b{color:var(--red);}
+.modebar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;position:sticky;top:0;background:#F3F4F6;padding:6px 0;z-index:5;}
+.mb{padding:7px 13px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;}
+.mb.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.mb.firm.on{background:var(--purple);border-color:var(--purple);}
+.quote{border:1px solid #9CA3AF;border-radius:10px;padding:14px;font-size:12.8px;background:#fff;}
+.qhead{display:flex;justify-content:space-between;border-bottom:2px solid var(--red);padding-bottom:7px;margin-bottom:9px;}
+.qhead .co{font-weight:800;color:var(--red);font-size:14px;}
+.qhead .qn{text-align:right;font-size:11.5px;color:var(--mut);}
+.firmflag{display:none;background:#F3E8FF;border:1px solid #D8B4FE;color:#6D28D9;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;margin-bottom:9px;}
+.firmflag.show{display:block;}
+.item{border-bottom:1px dotted #E5E7EB;padding:8px 0;}
+.item .top{display:flex;justify-content:space-between;font-weight:700;gap:8px;}
+.item .spec{color:var(--mut);font-size:11.5px;padding-left:4px;}
+.splitL{display:none;}.splitL.show{display:block;}
+.splitL .s{color:#374151;font-size:11.5px;padding-left:14px;}
+.calc{display:none;margin-top:7px;background:#FAF5FF;border:1px solid #E9D5FF;border-radius:8px;padding:10px 12px;font-size:12px;}
+.calc.show{display:block;}
+.calc .ttl{font-weight:800;color:var(--purple);margin-bottom:5px;display:flex;justify-content:space-between;}
+.calc .step{padding:2px 0;font-family:'Consolas','Sarabun',monospace;}
+.calc .step b{color:var(--ink);}
+.calc .dev{color:#9333EA;background:#F5F3FF;border-radius:5px;padding:1px 6px;font-size:10.5px;font-weight:700;}
+.calc .res{border-top:1px solid #E9D5FF;margin-top:5px;padding-top:4px;font-weight:800;color:var(--purple);}
+.warn{display:inline-block;font-size:10.5px;font-weight:700;color:#92400e;background:#FEF3C7;border-radius:5px;padding:1px 7px;}
+.qtot{margin-top:10px;border-top:2px solid var(--line);padding-top:8px;}
+.qtot .r{display:flex;justify-content:space-between;padding:1.5px 0;}
+.qtot .r.g{font-weight:800;color:var(--red);font-size:14px;border-top:1px solid var(--line);margin-top:3px;padding-top:5px;}
+.devbox{background:#FFF7ED;border:1px solid #FDBA74;border-radius:10px;padding:11px 14px;margin-top:14px;font-size:12.3px;color:#7C2D12;}
+.devbox b{color:var(--red);}
+.devbox code{background:#fff;border:1px solid #FDBA74;border-radius:4px;padding:0 4px;font-size:11.5px;}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:14px;}
+.q b{color:var(--amber);}
+</style></head><body><div class="wrap">
+
+<h1>🧮 ดราฟ A (เต็ม) — โหมด "วิธีคิดราคา" สำหรับเฟิร์นตรวจ · เรตจริง</h1>
+<div class="sub">ในหน้าใบเสนอราคา มี 3 โหมดสลับ · ใช้ได้ทุกกลุ่ม (ตัวอย่างนี้ G1 บาน + G3 หลังคา + G5 มุ้ง · เรต/ยอดดึงจาก engine จริง)</div>
+
+<div class="real">✅ <b>เรต/เลขจริงจาก engine</b> (verify ตรงสูตรเป๊ะ · ก่อน VAT): บานเลื่อน 5,700×3.78=21,546 +มุ้ง 1,500×3.78=5,670 → ปัดพัน <b>28,000</b> · หลังคา 6,000×12 = <b>72,000</b> · มุ้ง 1,700×2=3,400 → ปัด <b>4,000</b> · Protection อัตโนมัติ <b>2,000</b> · <span class="note">สูตร: เรต(ช่วงพื้นที่)×พื้นที่ → ปัดขึ้นพันบาท → เทียบขั้นต่ำ</span></div>
+
+<div class="modebar">
+  <span class="mb on" id="m1" onclick="setM('cust')">👤 ลูกค้า (ปกติ)</span>
+  <span class="mb" id="m2" onclick="setM('split')">📊 แยกราคาแต่ละส่วน</span>
+  <span class="mb firm" id="m3" onclick="setM('firm')">🔍 วิธีคิดราคา (เฟิร์นตรวจ)</span>
+</div>
+
+<div class="quote">
+  <div class="qhead"><div><div class="co">บริษัท เจอาร์ อลูมิเนียม</div><div class="note">ใบเสนอราคา</div></div>
+    <div class="qn">เลขที่ QT2026xxx<br>วันที่ 24/06/2026<br>ลูกค้า: ตัวอย่าง</div></div>
+
+  <div class="firmflag" id="ff">🔍 โหมดเฟิร์นตรวจ — โชว์วิธีคิดราคาทุกรายการ · <b>ภายในเท่านั้น ไม่พิมพ์ให้ลูกค้า</b> (พิมพ์จริงสลับกลับ 👤 ลูกค้า)</div>
+
+  <!-- item 1 -->
+  <div class="item">
+    <div class="top"><span>1) บานเลื่อน เซมิยูโร + มุ้งเฟรมเล็ก (1.8×2.1 ม.)</span><span>28,000</span></div>
+    <div class="spec">• อลู สีอบขาว · กระจกเขียว 6 มม. · บานเลื่อน 2 บาน · มุ้งเฟรมเล็ก ผ้าไฟเบอร์</div>
+    <div class="splitL"><div class="s">• ตัวบาน (รวมกระจก+อุปกรณ์มาตรฐาน) = 22,000</div><div class="s">• มุ้งเฟรมเล็ก = 6,000</div></div>
+    <div class="calc">
+      <div class="ttl"><span>🔍 วิธีคิดราคา</span><span class="warn">ไม่พิมพ์ให้ลูกค้า</span></div>
+      <div class="step">พื้นที่ = 1.8 × 2.1 = <b>3.78</b> ตร.ม.</div>
+      <div class="step">ตัวบาน: เรต (ช่วง 3.5–4.5 ตร.ม.) = <b>5,700</b>/ตร.ม. × 3.78 = <b>21,546</b></div>
+      <div class="step">+ มุ้งเฟรมเล็ก: เรต (ช่วง ≥2.5 ตร.ม.) = <b>1,500</b>/ตร.ม. × 3.78 = <b>5,670</b></div>
+      <div class="step">รวมก่อนปัด = 27,216 → ปัดขึ้นพันบาท = <b>28,000</b> · (ขั้นต่ำบาน 6,500 — สูงกว่า)</div>
+      <div class="res">= 28,000 บาท (ก่อน VAT)</div>
+    </div>
+  </div>
+
+  <!-- item 2 -->
+  <div class="item">
+    <div class="top"><span>2) หลังคา ไวนิล (4.0×3.0 ม.)</span><span>72,000</span></div>
+    <div class="spec">• โครงอลู · หลังคาไวนิล 12 ตร.ม.</div>
+    <div class="splitL"><div class="s">• หลังคา+โครง = 72,000</div></div>
+    <div class="calc">
+      <div class="ttl"><span>🔍 วิธีคิดราคา</span><span class="warn">ไม่พิมพ์ให้ลูกค้า</span></div>
+      <div class="step">พื้นที่ = 4.0 × 3.0 = <b>12</b> ตร.ม.</div>
+      <div class="step">เรต (ช่วง 10–15 ตร.ม.) = <b>6,000</b>/ตร.ม. × 12 = <b>72,000</b></div>
+      <div class="step">ปัดขึ้นพันบาท = 72,000 · (ขั้นต่ำ 28,000 — สูงกว่า)</div>
+      <div class="res">= 72,000 บาท (ก่อน VAT)</div>
+    </div>
+  </div>
+
+  <!-- item 3 -->
+  <div class="item">
+    <div class="top"><span>3) มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์ (1.0×2.0 ม.)</span><span>4,000</span></div>
+    <div class="spec">• เฟรมเล็ก · ผ้ามุ้งไฟเบอร์ · สีเฟรมขาว</div>
+    <div class="splitL"><div class="s">• มุ้ง (เฟรม+ผ้า) = 4,000</div></div>
+    <div class="calc">
+      <div class="ttl"><span>🔍 วิธีคิดราคา</span><span class="warn">ไม่พิมพ์ให้ลูกค้า</span></div>
+      <div class="step">พื้นที่ = 1.0 × 2.0 = <b>2</b> ตร.ม.</div>
+      <div class="step">เรต (ช่วง 1.5–2.5 ตร.ม.) = <b>1,700</b>/ตร.ม. × 2 = <b>3,400</b></div>
+      <div class="step">ปัดขึ้นพันบาท = <b>4,000</b> · (ขั้นต่ำหน้าต่าง 1,200 — สูงกว่า)</div>
+      <div class="res">= 4,000 บาท (ก่อน VAT)</div>
+    </div>
+  </div>
+
+  <!-- service line -->
+  <div class="item">
+    <div class="top"><span>4) Protection พื้น/ผนัง <span class="note">(ใส่อัตโนมัติทุกงาน)</span></span><span>2,000</span></div>
+    <div class="spec">• กันรอยพื้น/ผนังบริเวณติดตั้ง</div>
+    <div class="splitL"><div class="s">• Protection = 2,000</div></div>
+    <div class="calc">
+      <div class="ttl"><span>🔍 วิธีคิดราคา</span><span class="warn">ไม่พิมพ์ให้ลูกค้า</span></div>
+      <div class="step">เหมาขั้นต่ำ = <b>2,000</b> (เพิ่ม 1,000/จุด ถ้ามีหลายจุด) · ระบบใส่อัตโนมัติ</div>
+      <div class="res">= 2,000 บาท (ก่อน VAT)</div>
+    </div>
+  </div>
+
+  <div class="qtot">
+    <div class="r"><span>รวมเป็นเงิน</span><span>106,000.00</span></div>
+    <div class="r"><span>ส่วนลด</span><span>0.00</span></div>
+    <div class="r"><span>VAT 7%</span><span>7,420.00</span></div>
+    <div class="r g"><span>รวมทั้งสิ้น</span><span>113,420.00</span></div>
+  </div>
+</div>
+<div class="note" id="hint" style="margin-top:7px;">↑ กดปุ่มโหมดด้านบน · ตอนนี้ = 👤 ลูกค้า (ปกติ) · เรต/ยอดทั้งหมดเป็นของจริงจาก engine</div>
+
+<div class="devbox">
+  <b>🔧 หมายเหตุงาน dev (จาก probe engine จริง):</b> ตอนนี้ <code>calcUnit</code> คืนแค่ยอดสุทธิ (sell) <b>ยังไม่คายขั้นตอนคิด</b> · ฟีเจอร์นี้ = ให้ engine คาย <code>calcSteps</code> ต่อรายการ: { วิธีคิด(method) · ตารางเรต(rates) · พื้นที่ · เรต bucket ที่ใช้ · min ที่เทียบ · ปัดเศษ · <code>addonLines[]</code> (ออปชั่นรายบรรทัด+เรตจริง) } แล้ว UI โหมด 🔍 แค่เอามาแสดง · <b>ไม่แตะสูตรราคา → golden 150/150 คงเดิม</b> · ทำที่ engine จุดเดียว ใช้ได้ทั้ง 7 กลุ่ม
+</div>
+
+<div class="q"><b>✅ ดราฟ A (ปรับ · โชว์ตัวเลขที่คูณจริง)</b> — 🔍 วิธีคิด บอกชัด: เรต (ช่วงพื้นที่) <b>× พื้นที่</b> = ฐาน → ปัดขึ้นพันบาท → เทียบขั้นต่ำ · ออปชั่นมีราคาแตกบรรทัด (มุ้ง 5,670) · ไม่มีราคาไม่ใส่ · เลขทุกตัว verify ตรง engine<br>
+<b>🟡 ดูแล้วบอก:</b> ① ละเอียดพอตรวจง่ายไหม / อยากเพิ่มอะไร (เช่น ต้นทุน-กำไร %?) · ② โอเคแล้วผมเขียนใบสั่ง dev (engine คาย calcSteps + addonLines · 7 กลุ่ม) เก็บก้อนรอ index ว่าง</div>
+
+<script>
+function setM(m){
+  document.getElementById('m1').classList.toggle('on',m==='cust');
+  document.getElementById('m2').classList.toggle('on',m==='split');
+  document.getElementById('m3').classList.toggle('on',m==='firm');
+  document.getElementById('ff').classList.toggle('show',m==='firm');
+  document.querySelectorAll('.splitL').forEach(function(e){e.classList.toggle('show',m==='split');});
+  document.querySelectorAll('.calc').forEach(function(e){e.classList.toggle('show',m==='firm');});
+  var h={cust:'ตอนนี้ = 👤 ลูกค้า (ปกติ) · โชว์รายการ+ราคารวมต่อรายการ',split:'ตอนนี้ = 📊 แยกราคาแต่ละส่วน (ส่งลูกค้า) · เห็นราคาย่อยแต่ละส่วน',firm:'ตอนนี้ = 🔍 วิธีคิดราคา (เฟิร์นตรวจ · ภายใน) · เห็น method/พื้นที่/เรต/min/ออปชั่น ครบ'}[m];
+  document.getElementById('hint').textContent='↑ '+h;
+}
+</script>
+</div></body></html>

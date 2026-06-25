@@ -1,0 +1,176 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เทียบโหมดคิดเร็ว G1 ↔ G2 ↔ G3 (24 มิ.ย.)</title>
+<style>
+  :root{ --red:#E61E28; --red-dark:#B3151D; --bg:#F7F8FA; --card:#fff;
+    --line:#E5E7EB; --muted:#6B7280; --ink:#1F2937; --redbg:#FDECEC; --ok:#1E7E45; }
+  *{box-sizing:border-box;}
+  body{ font-family:"Sarabun",-apple-system,"Segoe UI",sans-serif; background:#eef1f5; color:var(--ink); margin:0; padding:18px 14px 60px; }
+  h1{ font-size:20px; margin:0 0 4px; } .sub{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .legend{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 13px; font-size:12.5px; margin-bottom:18px; line-height:1.7; }
+  .legend b{color:var(--red-dark);}
+  .cols{ display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  .col{ flex:1; min-width:300px; max-width:380px; }
+  .colhd{ font-weight:800; font-size:15px; padding:8px 12px; border-radius:10px 10px 0 0; color:#fff; }
+  .colhd.g1{ background:#1E7E45; } .colhd.g2{ background:#B3151D; } .colhd.g3{ background:#B3151D; }
+  .colhd .t{ font-size:11px; font-weight:500; opacity:.9; display:block; }
+  .phone{ background:#fff; border:1px solid var(--line); border-top:0; border-radius:0 0 12px 12px; padding:13px; }
+  /* ===== qi CSS จริงจาก index.html ===== */
+  .qi-flex{ display:flex; gap:12px; align-items:flex-start; }
+  .qi-form{ flex:1; min-width:0; }
+  .qi-lbl{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); margin:12px 0 5px; font-weight:700; }
+  .qi-lbl:first-child{ margin-top:0; }
+  .qi-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .qi-chips .chip{ min-height:42px; font-size:12px; padding:6px 10px; }
+  .qi-row{ display:grid; grid-template-columns:1fr 1fr 110px; gap:8px; }
+  .qi-fld label,.qi-fld span{ font-size:11px; color:var(--muted); font-weight:700; display:block; margin-bottom:4px; }
+  .qi-fld input{ width:100%; height:44px; border:1.5px solid var(--line); border-radius:9px; padding:0 10px; font-size:15px; text-align:center; background:#fff; }
+  .qi-cats{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:10px; }
+  .qi-cats .chip{ flex-direction:column; gap:2px; min-height:54px; font-size:12px; }
+  .qi-cg-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  select{ width:100%; height:38px; border:1.5px solid var(--line); border-radius:9px; padding:0 8px; font-family:inherit; font-size:13px; background:#fff; }
+  label.lab{ font-size:12px; color:var(--muted); font-weight:700; display:block; }
+  .chip-group{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .chip{ display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:6px 11px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); font-size:13px; font-weight:600; line-height:1.25; text-align:center; }
+  .chip.on{ background:var(--red-dark); border-color:var(--red-dark); color:#fff; }
+  .stepper{ display:flex; border:1.5px solid var(--line); border-radius:9px; overflow:hidden; align-items:center; }
+  .stepper button{ width:32px; min-height:44px; border:0; background:#F3F4F6; font-size:17px; padding:0; }
+  .stepper input{ width:40px; height:44px; border:0; text-align:center; font-size:15px; }
+  /* annotation */
+  .note{ font-size:12px; border-radius:9px; padding:8px 11px; margin:10px 0; line-height:1.6; }
+  .bad{ background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .warn{ background:#fffbeb; border:1px solid #fde68a; color:#92722a; }
+  .good{ background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+  .miss{ outline:2px dashed #ef4444; outline-offset:2px; border-radius:8px; padding:4px; position:relative; }
+  .miss::after{ content:"◀ จุดต่าง"; position:absolute; right:-6px; top:-9px; background:#ef4444; color:#fff; font-size:9px; padding:1px 5px; border-radius:6px; }
+  .g3box{ background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; padding:8px 9px; margin-top:10px; }
+  .g3box .hd{ font-size:11px; font-weight:700; color:#374151; margin-bottom:4px; }
+  .pcard{ border:1px solid var(--red); border-radius:11px; margin-top:14px; overflow:hidden; }
+  .pcard h4{ margin:0; background:var(--red-dark); color:#fff; font-size:12px; padding:6px 10px; }
+  .pcard .b{ padding:9px 11px; font-size:12px; color:var(--muted); }
+  .plan{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-top:24px; }
+  .plan h2{ font-size:17px; margin:0 0 10px; color:var(--red-dark); }
+  table{ border-collapse:collapse; width:100%; font-size:12.5px; margin-top:8px; }
+  th,td{ border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+  th{ background:#f9fafb; }
+</style></head><body>
+
+<h1>เทียบโหมดคิดเร็ว — G1 (ต้นแบบ) ↔ G2 ↔ G3</h1>
+<div class="sub">24 มิ.ย. · ดราฟเทียบก่อนลุยแก้ · ฝัง CSS จริงจาก index.html → หน้าตาตรงเว็บสด · <b>ยังไม่แตะ index.html</b></div>
+
+<div class="legend">
+<b>ทำไมทำดราฟนี้:</b> พี่บอก "G2,G3 ปุ่มไม่สวย + จัดเรียงผิดตำแหน่ง เทียบ G1". ผมเช็คโค้ดสดแล้วพบว่า <b>ไม่ใช่ปุ่ม CSS ต่างกัน</b> (ใช้คลาส <code>.chip</code> ชุดเดียวกันหมด) — แต่เป็นเพราะ <b>G2/G3 ยังสร้างไม่ครบเท่า G1</b>:<br>
+🟢 = ตรง G1 · 🔴 = ขาด/ผิด · 🟡 = ต่างแบบ (ต้องเคาะ) · กรอบ <span style="outline:2px dashed #ef4444;padding:1px 4px;">เส้นประแดง</span> = จุดที่ต่างจาก G1
+</div>
+
+<div class="cols">
+
+  <!-- ===================== G1 ===================== -->
+  <div class="col">
+    <div class="colhd g1">G1 · บานกระจก <span class="t">ต้นแบบที่พี่ว่า "ใกล้เคียงดราฟสุด" ✓</span></div>
+    <div class="phone">
+      <div class="qi-lbl">กลุ่มงาน</div>
+      <div class="qi-chips"><span class="chip on">🪟 บาน</span><span class="chip">🚪 ระแนง·ราว</span><span class="chip">🏠 หลังคา</span><span class="chip">📦 ตู้</span></div>
+      <div class="qi-lbl">แบบ</div>
+      <div class="qi-chips"><span class="chip on">บานเลื่อน SMS</span><span class="chip">บานเลื่อนยูโร</span><span class="chip">บานสวิง</span></div>
+      <div class="qi-lbl" style="margin-bottom:0;">สี / กระจก</div>
+      <div class="qi-cg-row" style="margin-top:5px;">
+        <div style="flex:1;min-width:130px;"><label class="lab">สีอลูมิเนียม</label><select><option>สีอบขาว (มาตรฐาน)</option><option>ดำ</option><option>ซาฮาร่า</option></select></div>
+        <div style="flex:1;min-width:130px;"><label class="lab">กระจก</label><select><option>เขียว 6 มม.</option><option>ใส 8 มม.</option></select></div>
+      </div>
+      <div class="qi-lbl">ขนาด</div>
+      <div class="qi-row" style="grid-template-columns:1fr 1fr;">
+        <div class="qi-fld"><label>กว้าง (ม.)</label><input value="1.8"></div>
+        <div class="qi-fld"><label>สูง (ม.)</label><input value="2.0"></div>
+        <div class="qi-fld"><label>จำนวนบาน</label><div class="stepper"><button>−</button><input value="2"><button>+</button></div></div>
+        <div class="qi-fld"><label>จำนวนชุด</label><div class="stepper"><button>−</button><input value="1"><button>+</button></div></div>
+      </div>
+      <div class="pcard"><h4>รายการราคา</h4><div class="b">calcUnit จริง · สี/กระจก เพิ่มจากมาตรฐาน</div></div>
+      <div class="note good">🟢 ครบ: มีช่อง <b>สีอลู + กระจก (dropdown)</b> · ขนาดเป็น grid สวย · ราคาใช้ engine จริง</div>
+    </div>
+  </div>
+
+  <!-- ===================== G2 ===================== -->
+  <div class="col">
+    <div class="colhd g2">G2 · ระแนง·ราว <span class="t">(ตัวอย่าง: ระแนงกล่อง)</span></div>
+    <div class="phone">
+      <div class="qi-lbl">กลุ่มงาน</div>
+      <div class="qi-chips"><span class="chip">🪟 บาน</span><span class="chip on">🚪 ระแนง·ราว</span><span class="chip">🏠 หลังคา</span><span class="chip">📦 ตู้</span></div>
+      <div class="qi-cats" style="margin-top:8px;"><span class="chip">ประตูรั้ว</span><span class="chip on">ระแนง</span><span class="chip">ราวกันตก</span><span class="chip">ระแนงพิเศษ</span></div>
+      <div class="qi-lbl">ชนิดระแนง</div>
+      <div class="qi-chips"><span class="chip on">ระแนงกล่อง</span><span class="chip">เกล็ด Z</span></div>
+      <div class="qi-lbl">ขนาดกล่อง</div>
+      <div class="qi-chips"><span class="chip on">1"x1"</span><span class="chip">1"x1.6"</span><span class="chip">1"x4"</span></div>
+      <div class="qi-lbl">หน้าโชว์ · ระยะ · โครง</div>
+      <div class="qi-chips"><span class="chip on">โชว์ 1"</span><span class="chip">เว้น 1"</span><span class="chip">รวมโครง</span></div>
+      <div class="miss" style="margin-top:14px;">
+        <div class="qi-lbl" style="margin-top:0;color:#ef4444;">⚠ ไม่มีช่อง "สีอลู (ระแนง)" เลย — G1 มี</div>
+        <div style="font-size:11.5px;color:#991b1b;">ลูกค้าเลือกสีระแนงไม่ได้ในโหมดคิดเร็ว</div>
+      </div>
+      <div class="qi-lbl">ขนาด</div>
+      <div class="qi-row">
+        <div class="qi-fld"><label>กว้าง (ม.)</label><input value="3"></div>
+        <div class="qi-fld"><label>สูง (ม.)</label><input value="2"></div>
+        <div class="qi-fld"><label>ชุด</label><div class="stepper"><button>−</button><input value="1"><button>+</button></div></div>
+      </div>
+      <div class="pcard"><h4>รายการราคา</h4><div class="b">สูตร verify กับ engine · ปัดขึ้นพัน · <b style="color:#b3151d;">TODO: เปลี่ยนเป็น calcUnit G2 เต็มรูปแบบ</b></div></div>
+      <div class="note bad">🔴 <b>ไม่มีช่องสี/กระจก</b> (G1 มี) · 🟡 ราคายังเป็น<b>สูตรย่อ</b> ไม่ใช่ engine เต็ม (มี TODO ในโค้ด) → สีไม่บวกเข้าราคา</div>
+    </div>
+  </div>
+
+  <!-- ===================== G3 ===================== -->
+  <div class="col">
+    <div class="colhd g3">G3 · งานหลังคา <span class="t">(ตัวอย่าง: ไวนิล VG)</span></div>
+    <div class="phone">
+      <div class="qi-lbl">กลุ่มงาน</div>
+      <div class="qi-chips"><span class="chip">🪟 บาน</span><span class="chip">🚪 ระแนง·ราว</span><span class="chip on">🏠 หลังคา</span><span class="chip">📦 ตู้</span></div>
+      <div class="qi-lbl">กลุ่มวัสดุ</div>
+      <div class="qi-chips"><span class="chip on">ไวนิล/ดีไลท์</span><span class="chip">เมทัลชีท</span><span class="chip">ชินโคไลท์</span><span class="chip">โพลีตัน</span></div>
+      <div class="qi-lbl">รุ่น</div>
+      <div class="qi-chips"><span class="chip on">ไวนิล VG</span><span class="chip">ดีไลท์</span></div>
+      <div class="qi-lbl">สีวัสดุมุง</div>
+      <div class="qi-chips"><span class="chip on">ขาว</span><span class="chip">เทา</span><span class="chip">น้ำตาล</span></div>
+      <div class="miss" style="margin-top:12px;">
+        <div class="g3box" style="margin-top:0;">
+          <div class="hd">🎨 L1 · สีโครงทั้งใบ (บวกในยอด)</div>
+          <div class="qi-chips"><span class="chip on">มาตรฐาน</span><span class="chip">ซาฮาร่า</span><span class="chip">ลายไม้</span><span class="chip">อบพิเศษ</span></div>
+          <div class="qi-chips" style="margin-top:4px;"><span class="chip on">สีอบขาว</span><span class="chip">ดำ</span></div>
+          <label class="lab" style="display:flex;gap:6px;margin-top:8px;align-items:center;"><input type="checkbox"> L2 · เปลี่ยนสีโครงเฉพาะหลังคานี้</label>
+        </div>
+      </div>
+      <div class="qi-lbl">แป · โครงสร้าง</div>
+      <div class="qi-chips"><span class="chip on">แปเดี่ยว</span><span class="chip">แปคู่</span><span class="chip on">โครงอลู</span><span class="chip">เหล็กชุบ</span></div>
+      <div class="qi-lbl">ขนาด (ยาว × ยื่น)</div>
+      <div class="qi-row">
+        <div class="qi-fld"><label>ยาว (ม.)</label><input value="4"></div>
+        <div class="qi-fld"><label>ยื่น (ม.)</label><input value="3"></div>
+        <div class="qi-fld"><label>ชุด</label><div class="stepper"><button>−</button><input value="1"><button>+</button></div></div>
+      </div>
+      <div class="pcard"><h4>💰 ราคาหลังคา</h4><div class="b">calcUnit จริง · ปัดขึ้นพัน</div></div>
+      <div class="note warn">🟡 สีโครงเป็น <b>ชิปแบ่งหมวด ในกล่อง 🎨 (L1/L2/L3)</b> — คนละแบบ G1 (G1 = dropdown เรียบ) · 🔴 ไม่มีช่องกระจก · ✅ ราคาใช้ engine จริงแล้ว</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== แผนเสนอ ===================== -->
+<div class="plan">
+  <h2>ข้อเสนอ — ทำ G2/G3 ให้เรียบเป็นแพทเทิร์นเดียวกับ G1</h2>
+  <p style="font-size:13px;color:var(--muted);margin:0 0 6px;">เป้าหมาย: ทุกกลุ่มในโหมดคิดเร็ว <b>เรียงเหมือนกัน</b> = กลุ่มงาน → แบบ/ประเภท → ออปชั่นเฉพาะ → <b>สี/กระจก (แถวเดียว)</b> → ขนาด → การ์ดราคา</p>
+  <table>
+    <tr><th>จุด</th><th>ตอนนี้</th><th>เสนอแก้ให้เหมือน G1</th><th>เสี่ยง?</th></tr>
+    <tr><td><b>G2 สีอลู (ระแนง)</b></td><td>🔴 ไม่มีเลย</td><td>เพิ่มแถว "สีอลู" แบบ G1 (dropdown/ชิปแบ่งหมวด) วางก่อนช่องขนาด</td><td>🟡 แตะ engine ราคา G2 (ต้องต่อ calcUnit ให้สีบวกเข้ายอด) → ต้องรัน golden</td></tr>
+    <tr><td><b>G2 ราคา</b></td><td>🟡 สูตรย่อ (TODO)</td><td>เปลี่ยนเป็น calcUnit G2 เต็ม (เหมือน G1/G3)</td><td>🟡 แตะ engine → golden</td></tr>
+    <tr><td><b>G3 สีโครง</b></td><td>🟡 กล่อง 🎨 L1/L2/L3 ชิปแบ่งหมวด</td><td><b>เคาะ:</b> คงกล่อง L1/L2/L3 (ระบบสีต่อข้อที่ approve แล้ว) หรือยุบเป็น dropdown เรียบแบบ G1?</td><td>🟡 ถ้ายุบ = เสียฟีเจอร์ L2/L3 ที่เคยเคาะ</td></tr>
+    <tr><td><b>G3 กระจก</b></td><td>🔴 ไม่มี</td><td>หลังคาส่วนใหญ่ไม่มีกระจก — เพิ่มเฉพาะรุ่นกระจก (ลามิเนต) เท่านั้น</td><td>🟢 ต่ำ</td></tr>
+    <tr><td><b>ลำดับ/จัดเรียง</b></td><td>โครงคล้ายกันแต่ G2 ไม่มีบล็อกสี</td><td>จัดให้ทุกกลุ่มเรียงเหมือน G1 (สี/กระจกอยู่ก่อนขนาดเสมอ)</td><td>🟢 ต่ำ (จัด layout)</td></tr>
+  </table>
+  <div class="note warn" style="margin-top:14px;">
+    <b>ต้องพี่เคาะ 2 ข้อก่อนลุย:</b><br>
+    ① <b>G3 สีโครง</b> — คงกล่อง 🎨 L1/L2/L3 (ระบบสีต่อข้อ) ไว้ หรืออยากให้เรียบเป็น dropdown เหมือน G1? (คงไว้ = ฟีเจอร์ครบกว่า แต่หน้าตาต่าง G1)<br>
+    ② <b>G2 เติมสี + ต่อราคา engine</b> = แตะ golden — พี่โอเคให้แตะไหม หรือเอาแค่จัด layout ไปก่อน (สียังไม่บวกราคา)
+  </div>
+  <p style="font-size:12px;color:#991b1b;margin-top:12px;"><b>หมายเหตุ:</b> ดราฟนี้เป็น mockup เทียบโครง (ฝัง CSS จริง) — ตัวเลขสี/รุ่นเป็นตัวอย่าง · งานจริงดึงจาก index.html ครบทุกตัว · <b>ยังไม่แก้ index.html</b> (อีกแชทกำลังแก้อยู่)</p>
+</div>
+
+</body></html>

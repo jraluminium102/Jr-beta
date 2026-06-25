@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ G3 หลังคา — ภาพรวมครบ · 24 มิ.ย. 2026</title>
+<style>
+:root{
+  --red:#B3151D;--red2:#7f1d1d;--ok:#16a34a;--amber:#a16207;
+  --blue:#1e40af;--line:#e5e7eb;--bg:#f3f4f6;--mut:#6b7280
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:#111;padding:12px 10px 60px}
+.wrap{max-width:1100px;margin:0 auto}
+
+/* ── NOTE บนสุด ── */
+.note-top{background:#1e40af;color:#fff;border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:12.5px;line-height:1.75}
+.note-top h2{font-size:14px;font-weight:800;margin-bottom:6px}
+.note-top ul{padding-left:18px}
+.note-top li{margin:2px 0}
+.note-top .tag{background:rgba(255,255,255,.2);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 310px;gap:14px;align-items:start}
+@media(max-width:820px){.layout{grid-template-columns:1fr}}
+
+/* ── กล่อง 3 ชุด ── */
+.mbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:13px}
+.mbox.m1{border-left:4px solid var(--red)}.mbox.m2{border-left:4px solid #0284c7}.mbox.m3{border-left:4px solid var(--amber)}
+.mh{font-size:14px;font-weight:800;margin-bottom:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.m1 .mh{color:var(--red2)}.m2 .mh{color:#075985}.m3 .mh{color:var(--amber)}
+.badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:8px;background:#f3f4f6;color:var(--mut)}
+.m1 .badge{background:#fde8e8;color:var(--red2)}.m2 .badge{background:#e0f2fe;color:#075985}.m3 .badge{background:#fef3c7;color:var(--amber)}
+
+/* ── FIELD ── */
+.fld{margin-bottom:13px}
+.fld:last-child{margin-bottom:0}
+.fl{font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.fl .sub{font-size:11px;font-weight:400;color:var(--mut);margin-left:2px}
+
+/* ── GROUPS (กลุ่มวัสดุ) ── */
+.grp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}
+.grp-btn{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;color:#374151;cursor:pointer;min-height:48px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left}
+.grp-btn .gc{font-size:10.5px;font-weight:400;color:var(--mut);margin-top:2px}
+.grp-btn.on{border-color:var(--red);background:var(--red);color:#fff}
+.grp-btn.on .gc{color:rgba(255,255,255,.8)}
+
+/* ── CHIPS ── */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;user-select:none;font-family:inherit}
+.chip.sm{min-height:32px;font-size:12px;padding:0 10px}
+.chip.xs{min-height:28px;font-size:11.5px;padding:0 9px}
+.chip.on{border-color:var(--red);background:#fff2f2;color:var(--red2);font-weight:700}
+.chip.on2{border-color:var(--blue);background:#eff6ff;color:var(--blue);font-weight:700}
+.dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);flex:none;flex-shrink:0}
+.prc{font-size:10.5px;color:var(--ok);font-weight:700;margin-left:2px}
+.prc.neg{color:#b45309}
+
+/* ── SIZE ROW ── */
+.szrow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.szrow input,.szin{height:36px;border:1px solid var(--line);border-radius:7px;padding:0 9px;font-family:inherit;font-size:13px;text-align:center;width:70px;min-width:0}
+.szin{width:70px}
+.x{color:var(--mut);font-weight:700;font-size:13px}
+.u{color:var(--mut);font-size:12px}
+
+/* ── TOGGLE (L2/L3 / หลังคาเลื่อน ฯลฯ) ── */
+.tg{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;cursor:pointer;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:#374151;margin-top:8px;user-select:none}
+.tg.on{border-color:var(--red);background:#fdecef;color:var(--red2)}
+.tg.on2{border-color:var(--blue);background:#eff6ff;color:var(--blue)}
+.tg input[type=checkbox]{width:17px;height:17px;accent-color:var(--red);flex:none}
+.tg-body{display:none;margin-top:9px;padding-left:5px;border-left:2px dashed #cbd5e1;animation:si .15s ease}
+.tg-body.on{display:block}
+@keyframes si{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ── L1 row ── */
+.l1row{display:flex;align-items:center;gap:8px;font-size:12.5px;background:#f8fafc;border:1px solid #dbe3f0;border-radius:8px;padding:8px 11px;color:#374151}
+.l1row b{color:#111}.l1row .lfree{color:var(--ok);font-weight:700;font-size:11.5px}
+.l1row .ledit{margin-left:auto;font-size:11.5px;color:var(--blue);text-decoration:underline;cursor:pointer;white-space:nowrap}
+
+/* ── COLOR BOX ── */
+.cbox{background:#f0f4ff;border:1px solid #c7d7f0;border-radius:10px;padding:11px 13px}
+.cbox-title{font-size:12.5px;font-weight:700;color:var(--blue);margin-bottom:9px}
+.lbl{font-size:11.5px;color:var(--mut);font-weight:700;margin:9px 0 5px}
+
+/* ── DCARD (พับ/กาง) ── */
+.dcard{border:1px solid var(--line);border-radius:10px;background:#fcfcfd;margin-bottom:8px}
+.dcard:last-child{margin-bottom:0}
+.dhead{display:flex;align-items:center;gap:8px;padding:10px 13px;cursor:pointer;font-size:13px;font-weight:700;color:#374151}
+.dhead .arr{margin-left:auto;font-size:11px;color:var(--mut);transition:transform .2s}
+.dbody{display:none;padding:4px 13px 12px}
+.dcard.open .dbody{display:block}
+.dcard.open .arr{transform:rotate(180deg)}
+
+/* ── CHECKBOX ROW ── */
+.ckrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#374151;cursor:pointer;min-height:34px;padding:2px 0}
+.ckrow input[type=checkbox]{width:16px;height:16px;accent-color:var(--red);flex:none}
+.ckrow .u{color:var(--mut);font-size:11.5px}
+
+/* ── HINT ── */
+.hint{font-size:11px;color:var(--blue);background:#eff6ff;border:1px dashed #bfdbfe;border-radius:7px;padding:5px 9px;margin-bottom:10px}
+.cobox{background:#fbf7f2;border:1px solid #e9d8c4;border-radius:8px;padding:7px 10px;font-size:11.5px;line-height:1.6;color:#5b4a36;margin-top:6px}
+.cobox b{color:var(--red2)}
+.warn{font-size:11.5px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:7px 10px;margin-top:7px}
+.divider{height:1px;background:var(--line);margin:10px 0}
+
+/* ── PRICE CARD ── */
+.pcard{position:sticky;top:12px;background:#fff;border:1px solid var(--line);border-top:3px solid var(--red);border-radius:12px;padding:13px 15px;box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.pcard h3{font-size:13px;color:var(--red2);margin-bottom:3px;font-weight:800}
+.pcard .pnm{font-size:12px;color:var(--mut);margin-bottom:10px;line-height:1.5}
+.bd .r{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #eee;font-size:12.5px}
+.bd .r span:last-child{font-variant-numeric:tabular-nums;font-weight:700}
+.bd .r.opt span:first-child{color:var(--ok)}
+.tot{display:flex;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:2px solid var(--red);font-weight:800;font-size:16px;color:var(--red2)}
+.demo-tag{font-size:10.5px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:5px 8px;margin-top:8px;line-height:1.5}
+
+/* ── mini input ── */
+.mini{width:62px;height:30px;border:1px solid var(--line);border-radius:6px;text-align:center;font-family:inherit;font-size:12px;padding:0 4px}
+.mini-m{width:80px}
+
+/* ── สีวัสดุ swatch ── */
+.color-swatch-chip{min-height:32px;padding:0 10px;gap:7px}
+
+/* ── reveal (ซ่อนเมื่อ ck ไม่ติ๊ก) ── */
+.reveal{display:none;margin-top:8px;padding:8px 10px;background:#f9fafb;border:1px solid var(--line);border-radius:8px}
+.reveal.on{display:block}
+
+/* ── QUOTE PREVIEW ── */
+.qprev{margin-top:9px;border:1px solid #e2c4c9;border-radius:10px;overflow:hidden;font-size:12px}
+.qph{background:var(--red);color:#fff;padding:6px 11px;font-size:11.5px;font-weight:700}
+.qsec{border-top:1px solid #f0d0d6}
+.qsec .qsh{background:#fdecef;color:var(--red2);font-weight:700;padding:4px 11px;font-size:11px}
+.qsec .qsb{padding:6px 11px}
+.qsec .ql{padding:1.5px 0 1.5px 12px;position:relative;color:#374151}
+.qsec .ql:before{content:'–';position:absolute;left:0;color:#9ca3af}
+.qsec .ql.opt{color:var(--red2)}
+.foot{font-size:11px;color:var(--mut);margin-top:12px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ NOTE บนสุด ══ -->
+<div class="note-top">
+  <h2>ดราฟ G3 หลังคา — ภาพรวมครบ <span class="tag">24 มิ.ย. 2026</span></h2>
+  <ul>
+    <li><b>ให้ดูอะไรเป็นหลัก:</b> ชิปจัดใหม่ (ไม่เละ) · ลำดับ "สีวัสดุมุง ขึ้นก่อน สีโครง" · สีโครง L1/L2/L3 แบบ "ติ๊กค่อยโผล่"</li>
+    <li><b>เพิ่มจากดราฟเก่า:</b> สแตนเลส L 3,000/ม. · ท่อ PVC มีสี ดำ/เทา/ขาว · โซ่ลายโลตัส · เสา 4" กลม 1,500/ต้น · คานรุ่น3 4,400/ม. · ซ่อนสโลปสมาร์ทบอร์ด 4,000/ตร.ม. · วัสดุปิดรอยต่อมีสี</li>
+    <li><b>ชิปทุกกลุ่ม:</b> dropdown ≤5 ตัว = ชิปเลย (ห้าม dropdown) · สีวัสดุมีสว็อตสีกลม · ขนาดสม่ำเสมอ</li>
+    <li><b>ราคาเดโม</b> (จากเรตจริง engine · ไม่แตะ index.html)</li>
+  </ul>
+</div>
+
+<div class="layout">
+<div class="col-main">
+
+<!-- ══════════════════════════════
+     กล่อง 1 · สเปกหลัก (แดง)
+════════════════════════════════ -->
+<div class="mbox m1">
+  <div class="mh">① สเปกหลัก <span class="badge">บังคับกรอก</span></div>
+
+  <!-- กลุ่มวัสดุ -->
+  <div class="fld">
+    <div class="fl">กลุ่มวัสดุ</div>
+    <div class="grp-grid" id="grpGrid"></div>
+  </div>
+
+  <!-- รุ่น (กรองตามกลุ่ม) -->
+  <div class="fld" id="modelWrap">
+    <div class="fl">รุ่น</div>
+    <div class="chips" id="modelChips"></div>
+  </div>
+
+  <!-- ความหนา (เมทัลชีทเท่านั้น) -->
+  <div class="fld" id="thickWrap" style="display:none">
+    <div class="fl">ความหนา</div>
+    <div class="chips" id="thickChips"></div>
+  </div>
+
+  <!-- ฟิล์มลามิเนต (กระจกลามิเนตเท่านั้น) -->
+  <div class="fld" id="filmWrap" style="display:none">
+    <div class="fl">ชนิดฟิล์ม (ลามิเนต)</div>
+    <div class="chips" id="filmChips">
+      <button class="chip sm on" onclick="pickSingle('film',this,'ใส')">ใส</button>
+      <button class="chip sm" onclick="pickSingle('film',this,'เขียว')">เขียว</button>
+      <button class="chip sm" onclick="pickSingle('film',this,'กันร้อน')">กันร้อน</button>
+    </div>
+  </div>
+
+  <!-- ความหนากระจก (ลามิเนต) -->
+  <div class="fld" id="glassWrap" style="display:none">
+    <div class="fl">ความหนากระจก</div>
+    <div class="chips">
+      <button class="chip sm on" onclick="pickSingle('glass',this,'4+4')">4+4 มม.</button>
+      <button class="chip sm" onclick="pickSingle('glass',this,'5+5')">5+5 มม.</button>
+    </div>
+  </div>
+
+  <!-- สีวัสดุมุง (ขึ้นก่อนสีโครง) -->
+  <div class="fld" id="matColorWrap">
+    <div class="fl">สีวัสดุมุง</div>
+    <div class="chips" id="matColorChips"></div>
+  </div>
+
+  <!-- สีโครงอลู — L1/L2/L3 แบบติ๊กโผล่ -->
+  <div class="fld">
+    <div class="fl">สีโครงอลูมิเนียม</div>
+    <div class="cbox">
+      <div class="cbox-title">สีโครงอลูมิเนียม</div>
+      <!-- L1 -->
+      <div class="l1row">
+        L1 · ทั้งใบ: <b id="l1name">สีอบขาว</b>
+        <span class="lfree" id="l1price">(ฟรี)</span>
+        <span class="ledit" onclick="cycleL1()">เปลี่ยนสีทั้งใบ ⟳</span>
+      </div>
+      <div style="font-size:10.5px;color:#9ca3af;margin-top:3px;padding-left:2px">ตั้งที่หัวใบ · ทุกข้อใช้สีนี้อัตโนมัติ · กด ⟳ ทดลองสลับ</div>
+
+      <!-- L2 toggle -->
+      <label class="tg" id="l2tg" onclick="togL2()">
+        <input type="checkbox" id="l2cb"> ใช้สีต่างจากทั้งใบ — เฉพาะหลังคานี้
+      </label>
+      <div class="tg-body" id="l2body">
+        <div class="lbl">หมวดสี</div>
+        <div class="chips" id="l2catChips"></div>
+        <div class="lbl">เลือกสี <span style="font-size:10.5px;font-weight:400">(คิดเงินตามพื้นที่ · บวกยอด)</span></div>
+        <div class="chips" id="l2colChips"></div>
+        <div id="l2codeWrap" style="display:none;margin-top:7px">
+          <div class="lbl">รหัสสีพิเศษ</div>
+          <input type="text" id="l2code" placeholder="เช่น 1076-A มัสตาร์ดทอง" oninput="calc()" style="width:100%;height:34px;border:1.5px solid var(--line);border-radius:8px;padding:0 10px;font-size:12.5px;font-family:inherit">
+        </div>
+        <div id="l2priceTag" style="font-size:11.5px;font-weight:700;color:var(--ok);background:#dcfce7;border-radius:6px;padding:2px 9px;display:inline-block;margin-top:8px">+0 บาท</div>
+
+        <!-- L3 toggle (ซ้อนใน L2) -->
+        <label class="tg on2" id="l3tg" onclick="togL3()" style="margin-top:10px;border-color:#1e40af;background:#eff6ff;color:#1e40af">
+          <input type="checkbox" id="l3cb" style="accent-color:#1e40af"> เทียบราคา OPTION — "ถ้าเปลี่ยนสีอื่น +/- เท่าไร"
+        </label>
+        <div class="tg-body" id="l3body">
+          <div class="lbl">หมวดสี (OPTION)</div>
+          <div class="chips" id="l3catChips"></div>
+          <div class="lbl">สีที่เทียบ</div>
+          <div class="chips" id="l3colChips"></div>
+          <div id="l3optLine" style="font-size:12px;color:var(--red2);background:#fff5f5;border:1px solid #f3cdd3;border-radius:7px;padding:7px 10px;margin-top:8px">เลือกแล้วจะขึ้นเป็น <b>OPTION</b> ในใบ · ไม่บวกยอดรวม</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- แป + โครงสร้าง -->
+  <div class="fld">
+    <div class="fl">แป</div>
+    <div class="chips">
+      <button class="chip sm on" onclick="pickSingle('purlin',this,'แปเดี่ยว')">แปเดี่ยว</button>
+      <button class="chip sm" onclick="pickSingle('purlin',this,'แปคู่')">แปคู่</button>
+    </div>
+  </div>
+  <div class="fld">
+    <div class="fl">โครงสร้างหลัก</div>
+    <div class="chips">
+      <button class="chip sm on" onclick="pickSingle('frame',this,'alu')">โครงอลูมิเนียม</button>
+      <button class="chip sm" onclick="pickSingle('frame',this,'steel')">โครงเหล็กชุบซิงค์</button>
+    </div>
+  </div>
+
+  <!-- ขนาดหลังคา -->
+  <div class="fld">
+    <div class="fl">ขนาดหลังคา</div>
+    <div class="szrow">
+      <input class="szin" type="number" id="rlen" value="4" placeholder="ยาว"> <span class="x">×</span>
+      <input class="szin" type="number" id="rproj" value="3" placeholder="ยื่น"> <span class="u">ม.</span>
+      <span class="x">·</span>
+      <input class="szin" type="number" id="rsets" value="1" style="width:55px"> <span class="u">ชุด</span>
+    </div>
+    <div class="cobox" id="areaNote" style="margin-top:6px">พื้นที่ = 4 × 3 = 12 ตร.ม.</div>
+  </div>
+
+  <!-- ปลายหลังคา (กล่องพับ) -->
+  <div class="fld">
+    <div class="fl">ปลายหลังคา</div>
+    <div class="chips">
+      <button class="chip sm on" onclick="pickPEnd(this,'ปล่อย')">ปล่อย</button>
+      <button class="chip sm" onclick="pickPEnd(this,'รางน้ำ')">มีรางน้ำ</button>
+      <button class="chip sm" onclick="pickPEnd(this,'ปิดปลาย')">ปิดปลายกันน้ำ <span style="font-size:10px;color:var(--mut)">1,000/ม.</span></button>
+    </div>
+
+    <!-- กล่อง: ระบบรางน้ำ -->
+    <div id="gutterBox" class="reveal" style="margin-top:8px">
+      <div class="fl" style="margin-bottom:7px">รางน้ำ</div>
+      <div class="fld">
+        <div class="fl">ชนิดราง <span class="sub">คิด/ม.</span></div>
+        <div class="chips">
+          <button class="chip sm on" onclick="pickSingle('gtype',this,'aluS')">อลู S · 1,000/ม.</button>
+          <button class="chip sm" onclick="pickSingle('gtype',this,'alu')">อลูมิเนียม M · 2,000/ม.</button>
+          <button class="chip sm" onclick="pickSingle('gtype',this,'ss')">สแตนเลส L · 3,000/ม.</button>
+        </div>
+      </div>
+      <div class="fld">
+        <div class="fl">ยาวราง (ม.) <span class="sub">ว่าง = ใช้ความกว้างหลังคา</span></div>
+        <input class="szin mini-m" type="number" placeholder="auto" style="width:80px;height:34px">
+      </div>
+      <div class="divider"></div>
+      <div class="fld">
+        <div class="fl">ระบบระบาย</div>
+        <div class="chips" id="drainChips">
+          <button class="chip sm on" onclick="pickDrain(this,'ท่อ')">ท่อ</button>
+          <button class="chip sm" onclick="pickDrain(this,'โซ่')">โซ่</button>
+        </div>
+      </div>
+      <!-- สีท่อ (โชว์เมื่อเลือก "ท่อ") -->
+      <div id="pipeBox" style="margin-top:7px">
+        <div class="fl">สีท่อ PVC</div>
+        <div class="chips">
+          <button class="chip sm on" onclick="pickSingle('pipecolor',this,'ดำ')"><span class="dot" style="background:#1b1b1b"></span>ดำ</button>
+          <button class="chip sm" onclick="pickSingle('pipecolor',this,'เทา')"><span class="dot" style="background:#6b7280"></span>เทา</button>
+          <button class="chip sm" onclick="pickSingle('pipecolor',this,'ขาว')"><span class="dot" style="background:#e5e7eb;border-color:#aaa"></span>ขาว</button>
+        </div>
+      </div>
+      <!-- ลายโซ่ (โชว์เมื่อเลือก "โซ่") -->
+      <div id="chainBox" style="display:none;margin-top:7px">
+        <div class="fl">ลายโซ่</div>
+        <div class="chips" style="margin-bottom:8px">
+          <button class="chip sm on" onclick="pickSingle('chainpat',this,'ทิวลิป')">ทิวลิป</button>
+          <button class="chip sm" onclick="pickSingle('chainpat',this,'โลตัส')">โลตัส</button>
+        </div>
+        <div class="fl">สีโซ่</div>
+        <div class="chips">
+          <button class="chip sm on" onclick="pickSingle('chaincolor',this,'ขาว')"><span class="dot" style="background:#e5e7eb;border-color:#aaa"></span>ขาว</button>
+          <button class="chip sm" onclick="pickSingle('chaincolor',this,'น้ำตาล')"><span class="dot" style="background:#9c6b3f"></span>น้ำตาล</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <label class="ckrow"><input type="checkbox" checked disabled> ตะแกรงพลาสติกกันใบไม้ สีดำ <span class="u">(รวมในราคา)</span></label>
+      <label class="ckrow"><input type="checkbox" id="ck_drain"> ท่อน้ำทิ้ง PVC 2.5″ <span class="u">(สเปกพ่วงรางน้ำ)</span></label>
+    </div>
+
+    <!-- กล่อง: ปิดปลาย -->
+    <div id="eaveBox" class="reveal">
+      <div class="fl">ยาวด้านปิดปลาย (ม.) <span class="sub">ว่าง = ใช้ด้านยาวหลังคา</span></div>
+      <input class="szin mini-m" type="number" placeholder="auto" style="width:100px;height:34px">
+    </div>
+  </div>
+
+  <!-- ✅ ลูกค้าเห็นตัวอย่างจริง -->
+  <label class="ckrow" style="margin-top:4px">
+    <input type="checkbox" id="confirmSample">
+    📸 ลูกค้าเห็นตัวอย่างจริง + ถ่ายรูปยืนยันแล้ว
+  </label>
+</div><!-- /m1 -->
+
+<!-- ══════════════════════════════
+     กล่อง 2 · ออปชั่นหลัก (น้ำเงิน)
+════════════════════════════════ -->
+<div class="mbox m2">
+  <div class="mh">② ออปชั่นหลัก <span class="badge">ใช้บ่อย · กดหัวการ์ดเพื่อเปิด/ปิด</span></div>
+
+  <!-- การ์ด: โครงสร้างเสริม / งานเหล็ก -->
+  <div class="dcard open" id="structCard">
+    <div class="dhead" onclick="tcard('structCard')">
+      🏗️ โครงสร้างเสริม / งานเหล็ก <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <!-- เสา -->
+      <div class="fld">
+        <div class="fl">เสา</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+          <label class="ckrow" style="min-width:0">
+            <input type="checkbox"> เสาแผง <span class="u">4,000/ต้น</span>
+            <input class="mini" type="number" min="0" value="0" placeholder="ต้น">
+          </label>
+          <label class="ckrow" style="min-width:0">
+            <input type="checkbox"> เสา 4"x8" <span class="u">2,000/ต้น</span>
+            <input class="mini" type="number" min="0" value="0" placeholder="ต้น">
+          </label>
+          <label class="ckrow" style="min-width:0">
+            <input type="checkbox"> เสา 4" กลม <span class="u">1,500/ต้น</span>
+            <input class="mini" type="number" min="0" value="0" placeholder="ต้น">
+          </label>
+        </div>
+      </div>
+
+      <!-- คานเหล็กถัก -->
+      <div class="fld">
+        <div class="fl">คานเหล็กถัก</div>
+        <div class="chips">
+          <button class="chip sm on" onclick="pickSingle('beam',this,'0')">ไม่มี</button>
+          <button class="chip sm" onclick="pickSingle('beam',this,'2400')">รุ่น1 · 2,400/ม.</button>
+          <button class="chip sm" onclick="pickSingle('beam',this,'3600')">รุ่น2 · 3,600/ม.</button>
+          <button class="chip sm" onclick="pickSingle('beam',this,'4400')">รุ่น3 · 4,400/ม.</button>
+        </div>
+        <div id="beamLenWrap" style="display:none;margin-top:7px;display:flex;align-items:center;gap:7px">
+          <span class="u">ยาว</span>
+          <input class="mini-m" type="number" placeholder="ม." style="height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-family:inherit;font-size:12px">
+          <span class="u">ม.</span>
+        </div>
+      </div>
+
+      <!-- เพลท / เหล็กดึง -->
+      <label class="ckrow"><input type="checkbox"> เสริมเพลทเหล็กล่าง (รับล่าง)</label>
+      <label class="ckrow"><input type="checkbox"> เหล็กดึงด้านบน</label>
+
+      <!-- ซ่อนสโลป -->
+      <div class="fld" style="margin-top:8px">
+        <div class="fl">ซ่อนสโลป (ใต้หลังคา)</div>
+        <div class="chips">
+          <button class="chip sm on" onclick="pickSingle('hideslope',this,'0')">ไม่มี</button>
+          <button class="chip sm" onclick="pickSingle('hideslope',this,'comp')">คอมโพสิต 3มม. · 3,500/ตร.ม.</button>
+          <button class="chip sm" onclick="pickSingle('hideslope',this,'smart')">สมาร์ทบอร์ด 6มม. · 4,000/ตร.ม.</button>
+        </div>
+        <div id="hideslopeDetail" style="display:none;margin-top:7px">
+          <div class="szrow">
+            <span class="u">สูง</span><input class="szin" type="number" placeholder="ม." style="width:65px">
+            <span class="u">× ยาว</span><input class="szin" type="number" placeholder="ม." style="width:65px">
+            <span class="u">× ด้าน</span><input class="szin" type="number" value="1" style="width:50px">
+          </div>
+          <div style="margin-top:6px">
+            <span class="u">สี</span>
+            <input type="text" placeholder="เช่น เทาซาฮาร่า / ลายไม้" style="height:32px;border:1px solid var(--line);border-radius:6px;padding:0 9px;font-family:inherit;font-size:12px;width:200px;margin-left:6px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /struct -->
+
+  <!-- การ์ด: ฝ้าในตัว -->
+  <div class="dcard" id="ceilCard">
+    <div class="dhead" onclick="tcard('ceilCard')">
+      ▦ ฝ้าในตัว (ใต้หลังคา) <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <label class="tg" id="ceilTg" onclick="togEl('ceilTg','ceilBody')">
+        <input type="checkbox" id="ceilCb"> เพิ่มงานฝ้าใต้หลังคา
+      </label>
+      <div class="tg-body" id="ceilBody">
+        <!-- ชนิดฝ้า -->
+        <div class="fld">
+          <div class="fl">ชนิดฝ้า</div>
+          <div class="chips">
+            <button class="chip sm on" onclick="pickSingle('ceiltype',this,'ceil_cshape')">ฝ้าอลู ไทยทิพย์ (ตัวซี 15ซม.)</button>
+            <button class="chip sm" onclick="pickSingle('ceiltype',this,'ceil_bsc')">ฝ้าไม้เทียม remood (เรียบ 12ซม.)</button>
+            <button class="chip sm" onclick="pickSingle('ceiltype',this,'ceiling_smooth')">ฝ้าฉาบเรียบ</button>
+            <button class="chip sm" onclick="pickSingle('ceiltype',this,'ceil_ranae_1x5')">ฝ้าระแนง 1×5 ซม.</button>
+            <button class="chip sm" onclick="pickSingle('ceiltype',this,'ceil_ranae_16_5')">ฝ้าระแนง 1"×1.6" เว้น 5ซม.</button>
+            <button class="chip sm" onclick="pickSingle('ceiltype',this,'ceil_ranae_16_2')">ฝ้าระแนง 1"×1.6" เว้น 2ซม.</button>
+          </div>
+        </div>
+        <!-- สีฝ้า (เฉพาะบางชนิด) -->
+        <div class="fld" id="ceilColorWrap">
+          <div class="fl">สีฝ้า</div>
+          <div class="chips">
+            <button class="chip sm on" onclick="pickSingle('ceilcolor',this,'std')">มาตรฐาน (ขาว-ซิลเวอร์)</button>
+            <button class="chip sm" onclick="pickSingle('ceilcolor',this,'wood')">ลายไม้ / สีอื่น</button>
+          </div>
+        </div>
+        <!-- ตำแหน่ง / แนว -->
+        <div class="fld">
+          <div class="fl">ตำแหน่ง / แนว</div>
+          <div class="chips">
+            <button class="chip sm on" onclick="pickSingle('ceilpos',this,'out')">ฝ้านอก</button>
+            <button class="chip sm" onclick="pickSingle('ceilpos',this,'in')">ฝ้าใน</button>
+            <span style="width:10px"></span>
+            <button class="chip sm on" onclick="pickSingle('ceildir',this,'straight')">ตรง</button>
+            <button class="chip sm" onclick="pickSingle('ceildir',this,'slope')">เฉียง</button>
+          </div>
+        </div>
+        <!-- พื้นที่ฝ้า -->
+        <div class="fld">
+          <div class="fl">พื้นที่ฝ้า <span class="sub">ว่าง = auto ตามหลังคา</span></div>
+          <div class="szrow">
+            <input class="szin" type="number" placeholder="ตร.ม." id="ceilarea" style="max-width:100px">
+            <span class="u">ตร.ม.</span>
+          </div>
+        </div>
+        <!-- ฉนวน -->
+        <label class="ckrow"><input type="checkbox" id="ceilinsul"> มีฉนวนกันความร้อน <span class="u">(+600/ตร.ม.)</span></label>
+      </div>
+    </div>
+  </div><!-- /ceil -->
+
+  <!-- การ์ด: หลังคาเลื่อน -->
+  <div class="dcard" id="slideCard">
+    <div class="dhead" onclick="tcard('slideCard')">
+      🔁 ทำเป็นหลังคาเลื่อน <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <label class="tg" id="slideTg" onclick="togEl('slideTg','slideBody')">
+        <input type="checkbox" id="slideCb"> เปิดใช้งานหลังคาเลื่อน (เปิด-ปิดได้)
+      </label>
+      <div class="tg-body" id="slideBody">
+        <div class="fld">
+          <div class="fl">ชนิดเลื่อน</div>
+          <div class="chips">
+            <button class="chip sm on" onclick="pickSingle('slidetype',this,'out')">เลื่อนยื่น</button>
+            <button class="chip sm" onclick="pickSingle('slidetype',this,'side')">เลื่อนข้าง</button>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fl">พื้นที่เลื่อน <span class="sub">ว่าง = เท่าหลังคา</span></div>
+          <div class="szrow">
+            <input class="szin" type="number" placeholder="ยาว" style="width:70px"> <span class="x">×</span>
+            <input class="szin" type="number" placeholder="ยื่น" style="width:70px"> <span class="u">ม.</span>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fl">บานเลื่อน (≥2) · บานติดตาย</div>
+          <div class="szrow">
+            <input class="mini" type="number" value="2" min="2"> <span class="u">เลื่อน</span>
+            <input class="mini" type="number" value="0" min="0"> <span class="u">ติดตาย</span>
+          </div>
+        </div>
+        <div class="fld">
+          <div class="fl">มอเตอร์</div>
+          <div class="szrow">
+            <input class="mini" type="number" value="0" min="0"> <span class="u">ตัว ×</span>
+            <input class="mini-m" type="number" value="0"> <span class="u">บาท/ตัว</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /slide -->
+
+  <!-- การ์ด: หลังคาผสม วัสดุที่ 2 -->
+  <div class="dcard" id="mixCard">
+    <div class="dhead" onclick="tcard('mixCard')">
+      ➕ หลังคาผสม (วัสดุที่ 2) <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <label class="tg" id="mixTg" onclick="togEl('mixTg','mixBody')">
+        <input type="checkbox" id="mixCb"> ใช้ 2 วัสดุในหลังคาเดียว
+      </label>
+      <div class="tg-body" id="mixBody">
+        <div class="fld">
+          <div class="fl">วัสดุที่ 2</div>
+          <div class="chips" id="mixModelChips"></div>
+        </div>
+        <div class="fld">
+          <div class="fl">พื้นที่วัสดุที่ 2</div>
+          <div class="szrow">
+            <input class="szin" type="number" placeholder="ยาว" style="width:70px"> <span class="x">×</span>
+            <input class="szin" type="number" placeholder="ยื่น" style="width:70px"> <span class="u">ม.</span>
+          </div>
+        </div>
+        <div class="cobox">วัสดุที่ 1 คิดพื้นที่ส่วนที่เหลือ (รวม − วัสดุที่ 2) · แต่ละวัสดุสีของตัวเอง</div>
+      </div>
+    </div>
+  </div><!-- /mix -->
+
+</div><!-- /m2 -->
+
+<!-- ══════════════════════════════
+     กล่อง 3 · ออปชั่นเสริม (เหลือง พับ)
+════════════════════════════════ -->
+<div class="mbox m3">
+  <div class="mh">③ ออปชั่นเสริม <span class="badge">นานๆ ใช้</span></div>
+
+  <!-- การ์ด: งานปิด/ซ่อน/รอยต่อ -->
+  <div class="dcard" id="coverCard">
+    <div class="dhead" onclick="tcard('coverCard')">
+      🔧 งานปิด / ซ่อน / รอยต่อ <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <!-- ปิดซ่อนราง -->
+      <div class="fld">
+        <label class="ckrow" onclick="togReveal('rfgcReveal',this)">
+          <input type="checkbox"> มีงานปิดซ่อนราง
+        </label>
+        <div class="reveal" id="rfgcReveal">
+          <div class="szrow">
+            กว้างราง<input class="mini" type="number" placeholder="ซม."> สูง<input class="mini" type="number" placeholder="ซม." value="10"> ยาวรวม<input class="mini" type="number" placeholder="ม.">
+          </div>
+        </div>
+      </div>
+      <!-- ครอบคาน -->
+      <div class="fld">
+        <label class="ckrow" onclick="togReveal('rfbcReveal',this)">
+          <input type="checkbox"> มีงานครอบคาน <span class="u">(ลูกฟูก 1 หน้า ลด 40%)</span>
+        </label>
+        <div class="reveal" id="rfbcReveal">
+          <div class="szrow">
+            กว้างห่อ<input class="mini" type="number" placeholder="ม."> ยาวคาน<input class="mini" type="number" placeholder="ม.">
+          </div>
+        </div>
+      </div>
+      <!-- วัสดุปิดรอยต่อ -->
+      <div class="fld">
+        <label class="ckrow" onclick="togReveal('sealerReveal',this)">
+          <input type="checkbox"> วัสดุปิดรอยต่อแผ่นหลังคา <span class="u">(ขั้นต่ำ 5,000 · 800/ม.)</span>
+        </label>
+        <div class="reveal" id="sealerReveal">
+          <div class="szrow" style="margin-bottom:8px">
+            ยาว<input class="mini-m" type="number" placeholder="ม." style="height:32px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-family:inherit;font-size:12px">
+            <span class="u">ม.</span>
+          </div>
+          <div class="fl">สี</div>
+          <div class="chips">
+            <button class="chip sm on" onclick="pickSingle('sealercolor',this,'ขาว')"><span class="dot" style="background:#f3f4f6;border-color:#aaa"></span>ขาว</button>
+            <button class="chip sm" onclick="pickSingle('sealercolor',this,'ดำ')"><span class="dot" style="background:#1b1b1b"></span>ดำ</button>
+            <button class="chip sm" onclick="pickSingle('sealercolor',this,'เทา')"><span class="dot" style="background:#6b7280"></span>เทา</button>
+          </div>
+        </div>
+      </div>
+      <!-- โซ่รางน้ำ -->
+      <label class="ckrow">
+        <input type="checkbox"> โซ่รางน้ำ <span class="u">3,000/เส้น</span>
+        <input class="mini" type="number" min="0" value="0" placeholder="เส้น">
+      </label>
+      <!-- ครอบท่อ PVC -->
+      <label class="ckrow">
+        <input type="checkbox"> ครอบท่อ PVC <span class="u">1,500/1.5ม.</span>
+        ยาว <input class="mini" type="number" placeholder="ม."> ม.
+      </label>
+    </div>
+  </div><!-- /cover -->
+
+  <!-- การ์ด: หมายเหตุมาตรฐาน -->
+  <div class="dcard open" id="remarkCard">
+    <div class="dhead" onclick="tcard('remarkCard')">
+      📝 หมายเหตุมาตรฐาน (ติ๊กขึ้นใบ) <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <div id="rmList"></div>
+      <div style="display:flex;gap:7px;margin-top:8px">
+        <input id="newRm" type="text" placeholder="พิมพ์หมายเหตุใหม่… กด Enter เพิ่ม" style="flex:1;height:32px;border:1.5px solid var(--line);border-radius:7px;padding:0 9px;font-family:inherit;font-size:12.5px" onkeydown="if(event.key==='Enter')addRm()">
+        <button onclick="addRm()" style="height:32px;padding:0 12px;border:1.5px solid var(--red);background:var(--red);color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">+ เพิ่ม</button>
+      </div>
+      <div class="cobox" style="margin-top:7px">ติ๊กข้อ → ขึ้นในใบ · คลิกข้อความแก้ได้ · เพิ่มเองได้</div>
+    </div>
+  </div><!-- /remark -->
+
+  <!-- การ์ด: งานเสริม / รื้อ / ผลิตส่ง -->
+  <div class="dcard" id="etcCard">
+    <div class="dhead" onclick="tcard('etcCard')">
+      ⚙️ งานเสริม / รื้อ / ผลิตส่ง <span class="arr">▼</span>
+    </div>
+    <div class="dbody">
+      <label class="ckrow">
+        <input type="checkbox"> งานเสริม/วิศวกรรม (ระบุราคา)
+        <input class="mini-m" type="number" placeholder="บาท" style="height:30px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-family:inherit;font-size:12px">
+      </label>
+      <label class="ckrow"><input type="checkbox"> รื้อของเดิม (รายการนี้)</label>
+      <label class="ckrow"><input type="checkbox"> ผลิตส่ง (ไม่ติดตั้ง — หักค่าติดตั้ง)</label>
+    </div>
+  </div><!-- /etc -->
+</div><!-- /m3 -->
+
+</div><!-- /col-main -->
+
+<!-- ══ PRICE CARD (sticky ขวา) ══ -->
+<div class="col-side">
+  <div class="pcard">
+    <h3>ราคาหลังคา</h3>
+    <div class="pnm" id="pcName">—</div>
+    <div class="bd" id="pcBd"></div>
+    <div class="tot"><span>รวม</span><span id="pcTot">฿0</span></div>
+    <!-- ใบย่อ -->
+    <div class="qprev">
+      <div class="qph">ใบเสนอราคา (preview)</div>
+      <div class="qsec"><div class="qsh">① รายการ</div><div class="qsb" id="qItem"><div class="ql">—</div></div></div>
+      <div class="qsec"><div class="qsh">② รายละเอียด</div><div class="qsb" id="qDetail"></div></div>
+      <div class="qsec"><div class="qsh" style="color:var(--blue)">③ OPTION <span style="font-size:10px;font-weight:400">(ไม่บวกยอด)</span></div><div class="qsb" id="qOpt"><span style="color:#9ca3af">—</span></div></div>
+      <div class="qsec"><div class="qsh">④ หมายเหตุ</div><div class="qsb" id="qRmPrev"><span style="color:#9ca3af">—</span></div></div>
+    </div>
+    <div class="demo-tag">ราคาเดโม — เรตจาก engine จริง · ยังไม่แตะ index.html</div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<div class="foot">ดราฟ · 24 มิ.ย. 2026 · ราคาเดโม · ยังไม่แตะ index.html · approve แล้วค่อยส่ง dev</div>
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+var GROUPS={
+  vinyl:{label:'ไวนิล / ดีไลท์',sub:'มุงโปร่ง · ยอดนิยม',models:[
+    {v:'roof_vinyl',t:'ไวนิล VG',colors:[{n:'สีขาว',sw:'#f3f4f6'},{n:'สีเทา',sw:'#6b7280'},{n:'สีน้ำตาล',sw:'#92400e'}]},
+    {v:'roof_delight',t:'ดีไลท์',colors:[{n:'DG-2 สีฟ้าคราม',sw:'#1d4ed8'},{n:'DG7 สีเทาโมเดิร์น',sw:'#374151'}]}
+  ]},
+  metal:{label:'เมทัลชีท',sub:'8 รุ่น (ความหนา 1"/2")',thicks:['1 นิ้ว','2 นิ้ว'],
+    modelsByThick:[
+      [{v:'imp7',t:'ท้อง PVC EPS'},{v:'imp9',t:'ท้องเหล็ก EPS'},{v:'imp11',t:'ท้องฟอยล์ PU'},{v:'imp13',t:'ท้องเหล็ก PU'}],
+      [{v:'imp8',t:'ท้อง PVC EPS'},{v:'imp10',t:'ท้องเหล็ก EPS'},{v:'imp12',t:'ท้องฟอยล์ PU'},{v:'imp14',t:'ท้องเหล็ก PU'}]
+    ],
+    colors:[{n:'สีน้ำตาล',sw:'#92400e'},{n:'สีขาว',sw:'#f3f4f6'},{n:'สีเทา',sw:'#6b7280'}]
+  },
+  shinco:{label:'ชินโคไลท์',sub:'6 รุ่น',models:[
+    {v:'imp15',t:'Heat Cut (6มม.)',colors:[{n:'Modern Grey HC-N828',sw:'#6b7280'},{n:'Royal Blue HC-B703',sw:'#1d4ed8'},{n:'Classic Brown HC-570',sw:'#92400e'},{n:'Noble Green HC-N590',sw:'#166534'}]},
+    {v:'imp16',t:'Superior (6มม.)',colors:[{n:'SP-NB00 ขาวขุ่น',sw:'#e5e7eb'},{n:'SP-NB30 Foggy Brown',sw:'#78350f'},{n:'SP-B857 Marine Blue',sw:'#1e3a8a'},{n:'SP-NC95 Light Brown',sw:'#b45309'}]},
+    {v:'imp17',t:'Nature (6มม.)',colors:[{n:'NT-001 ใส',sw:'#bfdbfe'},{n:'NT-332 เทาอ่อน',sw:'#9ca3af'}]},
+    {v:'imp18',t:'Shade (4มม.)',colors:[{n:'Shade-430S Pearl White',sw:'#f9fafb'}]},
+    {v:'imp19',t:'Prime (10มม.)',colors:[{n:'Prime 562 Brownish Green',sw:'#3d6b4f'}]},
+    {v:'imp20',t:'Grand (10มม.)',colors:[]}
+  ]},
+  poly:{label:'โพลีตัน / กระจก',sub:'โปร่งแสง · ลามิเนต',models:[
+    {v:'roof_polyton',t:'โพลีตัน 3มม.',colors:[
+      {n:'Clear 101 ใส (แสง 83%)',sw:'rgba(200,230,255,.6)'},{n:'Opal 103 ขาวขุ่น (แสง 20%)',sw:'#f3f4f6'},
+      {n:'Bronze 107 ชาใส (30%)',sw:'#b45309'},{n:'Green 109 เขียวใส (45%)',sw:'#166534'},
+      {n:'Australian Grey 108 เทาออส (40%)',sw:'#6b7280'},{n:'Silver 501 ซิลเวอร์ (4.8%)',sw:'#9ca3af'},
+      {n:'Bronze Metallic 503 (1%)',sw:'#92400e'},{n:'Green Metallic 504 (13.9%)',sw:'#166534'}
+    ]},
+    {v:'roof_laminate',t:'กระจกลามิเนต',colors:[]}
+  ]}
+};
+
+var COLORS=[
+  {n:'สีอบขาว',sw:'#ffffff',min:0,rates:null},
+  {n:'สีดำ',sw:'#1b1b1b',min:0,rates:null},
+  {n:'สีเทาซาฮาร่า',sw:'#6f7173',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]]},
+  {n:'สีดำซาฮาร่า',sw:'#2c2d2f',min:0,rates:[[5,20,540],[20,30,520],[30,40,480],[40,9999,440]]},
+  {n:'Aztec gray',sw:'#8b8e90',min:4000,rates:[[7,10,700],[10,20,650],[20,9999,600]]},
+  {n:'ลายไม้ สักทอง',sw:'linear-gradient(135deg,#b07c3a,#7d501f)',min:4000,rates:[[7,10,850],[10,9999,750]]},
+  {n:'ลายไม้ มะฮอกกานี',sw:'linear-gradient(135deg,#6a3322,#411d12)',min:4000,rates:[[7,10,850],[10,9999,750]]},
+  {n:'ลายไม้ ไวท์โอ๊ค',sw:'linear-gradient(135deg,#dcc9a6,#b69a6e)',min:4000,rates:[[7,10,850],[10,9999,750]]},
+  {n:'Fuji Oak',sw:'linear-gradient(135deg,#cda06a,#9a6f3c)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]]},
+  {n:'Fuji Makha',sw:'linear-gradient(135deg,#5a3826,#321d12)',min:11000,rates:[[7,10,2100],[10,15,1900],[15,20,1700],[20,9999,1600]]},
+  {n:'สีอบพิเศษ (มีรหัส)',sw:'linear-gradient(135deg,#cfd2d6,#9aa0a6)',min:10000,rates:[[7,10,2200],[10,15,2100],[15,20,1800],[20,9999,1600]],code:1},
+  {n:'ลายไม้อบพิเศษ (มีรหัส)',sw:'linear-gradient(135deg,#b07d40,#7e5326)',min:15000,rates:[[7,10,2900],[10,15,2600],[15,20,2350],[20,9999,2200]],code:1},
+  {n:'สีชุบ (ระบุชื่อ)',sw:'linear-gradient(135deg,#dde0e3,#a7acb1,#dde0e3)',min:16000,rates:null,code:1}
+];
+var FCCATS=[
+  {k:'std',t:'มาตรฐาน',idx:[0,1]},
+  {k:'sahara',t:'ซาฮาร่า',idx:[2,3,4]},
+  {k:'wood',t:'ลายไม้',idx:[5,6,7,8,9,11]},
+  {k:'special',t:'อบพิเศษ',idx:[10,12]}
+];
+
+var RMARK_DEFAULT=[
+  'ราคานี้รวมค่าวัสดุและค่าแรง',
+  'ระยะเวลาติดตั้ง 1-3 วัน',
+  'งานต้องเตรียมพื้นที่ก่อนติดตั้ง',
+  'ค้ำยันโครงด้วยสกรูสเตนเลส'
+];
+
+// ══ STATE ══
+var st={
+  grp:'vinyl',thick:0,model:'roof_vinyl',matColor:0,
+  l1:0,l2:false,l2cat:'sahara',l2ci:2,
+  l3:false,l3cat:'sahara',l3ci:3,
+  pend:'ปล่อย',drain:'ท่อ',
+  rlen:4,rproj:3,
+  remarks:[]
+};
+
+// ══ UTIL ══
+function fmt(n){return Math.round(n).toLocaleString('th-TH');}
+function rateOf(a,t){if(a<t[0][0])return t[0][2];for(var i=0;i<t.length;i++){if(a>=t[i][0]&&a<t[i][1])return t[i][2];}return t[t.length-1][2];}
+function monoRate(a,t){var v=a*rateOf(a,t);for(var i=0;i<t.length;i++){if(t[i][1]<=a){var e=t[i][1]*t[i][2];if(e>v)v=e;}}return v;}
+function ru(x){return Math.ceil(x/1000)*1000;}
+var RMODEL={roof_vinyl:['ROOF_STD',28000],roof_delight:['ROOF_STD',28000],roof_polyton:['ROOF_POLY',30000],roof_laminate:['ROOF_LAM',45000],imp7:['IMP7',28000],imp8:['IMP8',28000],imp9:['IMP9',29000],imp10:['IMP10',29000],imp11:['IMP11',28000],imp12:['IMP12',28000],imp13:['IMP13',32000],imp14:['IMP14',33000],imp15:['IMP15',48000],imp16:['IMP16',46000],imp17:['IMP17',47000],imp18:['IMP18',44000],imp19:['IMP19',61000],imp20:['IMP19',61000]};
+var RTAB={ROOF_STD:[[5,10,6500],[10,15,6000],[15,30,5500],[30,9999,5000]],ROOF_POLY:[[5,10,7500],[10,15,6500],[15,30,6000],[30,9999,5700]],ROOF_LAM:[[5,10,11000],[10,15,10500],[15,9999,10000]],IMP7:[[0,10,6300],[10,15,5800],[15,30,5300],[30,9999,4800]],IMP8:[[0,10,6400],[10,15,5900],[15,30,5400],[30,9999,4900]],IMP9:[[0,10,6600],[10,15,6100],[15,30,5600],[30,9999,5100]],IMP10:[[0,10,6700],[10,15,6200],[15,30,5700],[30,9999,5200]],IMP11:[[0,10,6300],[10,15,5800],[15,30,5300],[30,9999,4800]],IMP12:[[0,10,6600],[10,15,6100],[15,30,5600],[30,9999,5100]],IMP13:[[0,10,7300],[10,15,6800],[15,30,6300],[30,9999,5800]],IMP14:[[0,10,7500],[10,15,7000],[15,30,6500],[30,9999,6000]],IMP15:[[0,10,11000],[10,15,10500],[15,9999,10000]],IMP16:[[0,10,10600],[10,15,10000],[15,9999,9600]],IMP17:[[0,10,10800],[10,15,10200],[15,9999,9800]],IMP18:[[0,10,10100],[10,15,9500],[15,9999,9100]],IMP19:[[0,10,14000],[10,15,13500],[15,9999,13000]]};
+function roofBase(model,a){var m=RMODEL[model];if(!m||a<=0)return 0;return Math.max(m[1],monoRate(a,RTAB[m[0]]));}
+function colorPrice(ci,a){var c=COLORS[ci];if(!c)return 0;if(!c.rates)return c.min||0;return Math.max(c.min||0,a*rateOf(a,c.rates));}
+function curArea(){return (parseFloat(document.getElementById('rlen').value)||0)*(parseFloat(document.getElementById('rproj').value)||0);}
+function curModels(){
+  var g=GROUPS[st.grp];
+  if(g.modelsByThick) return g.modelsByThick[st.thick]||g.modelsByThick[0];
+  return g.models||[];
+}
+function allModels(){
+  var g=GROUPS[st.grp];
+  if(g.modelsByThick) return g.modelsByThick.reduce(function(a,b){return a.concat(b);},[]);
+  return g.models||[];
+}
+function modelName(v){
+  for(var k in GROUPS){
+    var ms=(GROUPS[k].modelsByThick)?GROUPS[k].modelsByThick.reduce(function(a,b){return a.concat(b);},[]):(GROUPS[k].models||[]);
+    var m=ms.find(function(x){return x.v===v;});if(m)return m.t;
+  }
+  return v;
+}
+
+// ══ RENDER GROUPS ══
+function renderGroups(){
+  var h='';
+  for(var k in GROUPS){
+    var g=GROUPS[k];
+    h+='<button class="grp-btn'+(st.grp===k?' on':'')+'" onclick="setGrp(\''+k+'\')">'
+      +g.label+'<span class="gc">'+g.sub+'</span></button>';
+  }
+  document.getElementById('grpGrid').innerHTML=h;
+}
+function setGrp(k){
+  st.grp=k;st.thick=0;st.matColor=0;
+  var cm=curModels();st.model=cm[0].v;
+  renderGroups();renderThick();renderModels();renderMatColor();renderMixModels();calc();
+}
+
+function renderThick(){
+  var g=GROUPS[st.grp];
+  var tw=document.getElementById('thickWrap');
+  if(g.thicks){
+    tw.style.display='';
+    document.getElementById('thickChips').innerHTML=g.thicks.map(function(t,i){
+      return '<button class="chip sm'+(st.thick===i?' on':'')+'" onclick="setThick('+i+')">'+t+'</button>';
+    }).join('');
+  } else { tw.style.display='none'; }
+}
+function setThick(i){
+  st.thick=i;
+  var cm=curModels();st.model=cm[0].v;
+  renderThick();renderModels();renderMatColor();calc();
+}
+
+function renderModels(){
+  var ms=curModels();
+  document.getElementById('modelChips').innerHTML=ms.map(function(m){
+    return '<button class="chip sm'+(st.model===m.v?' on':'')+'" onclick="setModel(\''+m.v+'\')">'
+      +m.t+'</button>';
+  }).join('');
+  // ลามิเนต toggle
+  var isLam=(st.model==='roof_laminate');
+  document.getElementById('filmWrap').style.display=isLam?'':'none';
+  document.getElementById('glassWrap').style.display=isLam?'':'none';
+}
+function setModel(v){st.model=v;st.matColor=0;renderModels();renderMatColor();calc();}
+
+function renderMatColor(){
+  var g=GROUPS[st.grp];
+  var ms=curModels();
+  var m=ms.find(function(x){return x.v===st.model;});
+  var cols=(m&&m.colors)||(g.colors)||[];
+  var wrap=document.getElementById('matColorWrap');
+  if(!cols||!cols.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  // shimco ใช้สีต่อรุ่น (object {n,sw}) · vinyl/metal = object/string
+  document.getElementById('matColorChips').innerHTML=cols.map(function(c,i){
+    var label=typeof c==='string'?c:c.n;
+    var sw=typeof c==='string'?'#9ca3af':c.sw;
+    return '<button class="chip sm color-swatch-chip'+(st.matColor===i?' on':'')+'" onclick="setMatColor('+i+')">'
+      +'<span class="dot" style="background:'+sw+'"></span>'+label+'</button>';
+  }).join('');
+}
+function setMatColor(i){st.matColor=i;renderMatColor();calc();}
+
+// ══ MIX MODELS ══
+function renderMixModels(){
+  var h='';
+  for(var k in GROUPS){
+    var ms=(GROUPS[k].modelsByThick)?GROUPS[k].modelsByThick.reduce(function(a,b){return a.concat(b);},[]):(GROUPS[k].models||[]);
+    ms.forEach(function(m){
+      h+='<button class="chip sm" onclick="pickSingle(\'mixmodel\',this,\''+m.v+'\')">'+(m.t||m.v)+'</button>';
+    });
+  }
+  document.getElementById('mixModelChips').innerHTML=h;
+}
+
+// ══ L1 COLOR ══
+var L1_CYCLE=[0,1,2,4]; // อบขาว/ดำ/เทาซาฮาร่า/Aztec
+var l1CycleIdx=0;
+function cycleL1(){
+  l1CycleIdx=(l1CycleIdx+1)%L1_CYCLE.length;
+  st.l1=L1_CYCLE[l1CycleIdx];
+  renderL1();calc();
+}
+function renderL1(){
+  var c=COLORS[st.l1];
+  document.getElementById('l1name').textContent=c.n;
+  var a=curArea();
+  var p=colorPrice(st.l1,a);
+  var el=document.getElementById('l1price');
+  el.textContent=p>0?('(+'+fmt(p)+')'):'(ฟรี)';
+  el.style.color=p>0?'var(--red2)':'var(--ok)';
+}
+
+// ══ L2/L3 ══
+function togL2(){
+  st.l2=!st.l2;
+  document.getElementById('l2cb').checked=st.l2;
+  document.getElementById('l2tg').classList.toggle('on',st.l2);
+  document.getElementById('l2body').classList.toggle('on',st.l2);
+  if(!st.l2){st.l3=false;applyL3();}
+  if(st.l2) renderL2();
+  calc();
+}
+function togL3(){
+  if(!st.l2) return;
+  st.l3=!st.l3;
+  applyL3();
+  if(st.l3) renderL3();
+  calc();
+}
+function applyL3(){
+  document.getElementById('l3cb').checked=st.l3;
+  document.getElementById('l3tg').classList.toggle('on2',st.l3);
+  document.getElementById('l3body').classList.toggle('on',st.l3);
+}
+
+function colorChipsHtml(cats,curCat,curIdx){
+  var catH=cats.map(function(c){
+    return '<button class="chip xs'+(curCat===c.k?' on2':'')+'" onclick="setL2Cat(\''+c.k+'\')" style="font-size:11px">'+c.t+'</button>';
+  }).join('');
+  var catObj=cats.find(function(c){return c.k===curCat;})||cats[0];
+  var colH=catObj.idx.map(function(i){
+    var c=COLORS[i];
+    var a=curArea();
+    var p=colorPrice(i,a);
+    return '<button class="chip sm color-swatch-chip'+(curIdx===i?' on':'')+'" onclick="setL2Ci('+i+')">'
+      +'<span class="dot" style="background:'+c.sw+'"></span>'+c.n
+      +(p>0?(' <span class="prc">+'+fmt(p)+'</span>'):' <span class="prc" style="color:var(--mut)">ฟรี</span>')
+      +'</button>';
+  }).join('');
+  return {catH:catH,colH:colH};
+}
+function colorChipsHtml3(cats,curCat,curIdx){
+  var catH=cats.map(function(c){
+    return '<button class="chip xs'+(curCat===c.k?' on2':'')+'" onclick="setL3Cat(\''+c.k+'\')" style="font-size:11px">'+c.t+'</button>';
+  }).join('');
+  var catObj=cats.find(function(c){return c.k===curCat;})||cats[0];
+  var colH=catObj.idx.map(function(i){
+    var c=COLORS[i];
+    var a=curArea();
+    var p=colorPrice(i,a);
+    return '<button class="chip sm color-swatch-chip'+(curIdx===i?' on':'')+'" onclick="setL3Ci('+i+')">'
+      +'<span class="dot" style="background:'+c.sw+'"></span>'+c.n
+      +(p>0?(' <span class="prc">+'+fmt(p)+'</span>'):' <span class="prc" style="color:var(--mut)">ฟรี</span>')
+      +'</button>';
+  }).join('');
+  return {catH:catH,colH:colH};
+}
+function renderL2(){
+  var h=colorChipsHtml(FCCATS,st.l2cat,st.l2ci);
+  document.getElementById('l2catChips').innerHTML=h.catH;
+  document.getElementById('l2colChips').innerHTML=h.colH;
+}
+function renderL3(){
+  var h=colorChipsHtml3(FCCATS,st.l3cat,st.l3ci);
+  document.getElementById('l3catChips').innerHTML=h.catH;
+  document.getElementById('l3colChips').innerHTML=h.colH;
+}
+function setL2Cat(k){
+  st.l2cat=k;
+  var catObj=FCCATS.find(function(c){return c.k===k;})||FCCATS[0];
+  if(catObj.idx.indexOf(st.l2ci)<0) st.l2ci=catObj.idx[0];
+  renderL2();calc();
+}
+function setL2Ci(i){
+  st.l2ci=i;
+  var isSpec=(i===10||i===11||i===12);
+  document.getElementById('l2codeWrap').style.display=isSpec?'block':'none';
+  renderL2();calc();
+}
+function setL3Cat(k){
+  st.l3cat=k;
+  var catObj=FCCATS.find(function(c){return c.k===k;})||FCCATS[0];
+  if(catObj.idx.indexOf(st.l3ci)<0) st.l3ci=catObj.idx[0];
+  renderL3();calc();
+}
+function setL3Ci(i){st.l3ci=i;renderL3();calc();}
+
+// ══ PICK HELPERS ══
+function pickSingle(key,el,val){
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  st[key]=val;
+  // cascade logic
+  if(key==='hideslope'){document.getElementById('hideslopeDetail').style.display=val==='0'?'none':'block';}
+  if(key==='beam'){} // ยาวคาน — ไม่ toggle เพราะ always visible ใน dcard
+  calc();
+}
+function pickPEnd(el,val){
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  st.pend=val;
+  document.getElementById('gutterBox').classList.toggle('on',val==='รางน้ำ');
+  document.getElementById('eaveBox').classList.toggle('on',val==='ปิดปลาย');
+  calc();
+}
+function pickDrain(el,val){
+  el.closest('.chips').querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  st.drain=val;
+  document.getElementById('pipeBox').style.display=val==='ท่อ'?'block':'none';
+  document.getElementById('chainBox').style.display=val==='โซ่'?'block':'none';
+  calc();
+}
+
+// ══ TOGGLE CARD ══
+function tcard(id){
+  var c=document.getElementById(id);
+  c.classList.toggle('open');
+}
+function togEl(tgId,bodyId){
+  var cb=document.querySelector('#'+tgId+' input[type=checkbox]');
+  if(!cb)return;
+  var on=cb.checked;
+  document.getElementById(tgId).classList.toggle('on',on);
+  document.getElementById(bodyId).classList.toggle('on',on);
+  calc();
+}
+function togReveal(revId,lbl){
+  var ck=lbl.querySelector('input[type=checkbox]');
+  document.getElementById(revId).classList.toggle('on',ck.checked);
+}
+
+// ══ REMARKS ══
+function initRemarks(){
+  st.remarks=RMARK_DEFAULT.map(function(t){return {t:t,on:false};});
+  renderRemarks();
+}
+function renderRemarks(){
+  document.getElementById('rmList').innerHTML=st.remarks.map(function(r,i){
+    return '<div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-top:1px solid #f3f4f6">'
+      +'<input type="checkbox" '+(r.on?'checked':'')+' onchange="toggleRm('+i+')" style="width:16px;height:16px;accent-color:var(--red);flex:none">'
+      +'<span contenteditable="true" onblur="editRm('+i+',this)" style="flex:1;font-size:12.5px;border:1px dashed transparent;border-radius:5px;padding:2px 5px;outline:none" onmouseover="this.style.borderColor=\'#e2c4c9\'" onmouseout="this.style.borderColor=\'transparent\'">'+r.t+'</span>'
+      +'<button onclick="delRm('+i+')" style="background:none;border:0;color:#d1d5db;cursor:pointer;font-size:14px;padding:0 2px" onmouseover="this.style.color=\'#b91c1c\'" onmouseout="this.style.color=\'#d1d5db\'">×</button>'
+      +'</div>';
+  }).join('');
+  updateRmPrev();
+}
+function toggleRm(i){st.remarks[i].on=!st.remarks[i].on;renderRemarks();}
+function editRm(i,el){st.remarks[i].t=el.textContent.trim();}
+function delRm(i){st.remarks.splice(i,1);renderRemarks();}
+function addRm(){
+  var inp=document.getElementById('newRm');
+  var t=inp.value.trim();if(!t)return;
+  st.remarks.push({t:t,on:true});
+  inp.value='';renderRemarks();
+}
+function updateRmPrev(){
+  var on=st.remarks.filter(function(r){return r.on;});
+  document.getElementById('qRmPrev').innerHTML=on.length
+    ?on.map(function(r){return '<div class="ql">'+r.t+'</div>';}).join('')
+    :'<span style="color:#9ca3af">—</span>';
+}
+
+// ══ CALC & PREVIEW ══
+function calc(){
+  renderL1();
+  var a=curArea();
+  // update area note
+  var rl=parseFloat(document.getElementById('rlen').value)||0;
+  var rp=parseFloat(document.getElementById('rproj').value)||0;
+  document.getElementById('areaNote').textContent='พื้นที่ = '+rl+' × '+rp+' = '+(rl*rp)+' ตร.ม.';
+
+  // ราคาหลัก
+  var baseP=roofBase(st.model,a);
+  // สีโครง
+  var coIdx=st.l2?st.l2ci:st.l1;
+  var coP=colorPrice(coIdx,a);
+  var l1P=colorPrice(st.l1,a);
+  var coExtra=coP-l1P; // ส่วนต่าง (L2 ใส่ยอดแค่ส่วนต่าง)
+  var addP=st.l2?coExtra:l1P;
+  var total=ru(baseP+addP);
+
+  // L2 price tag
+  if(st.l2){
+    var d2tag=document.getElementById('l2priceTag');
+    if(d2tag){d2tag.textContent=(coP>0?('+'+fmt(coP)+' บาท (ส่วนต่างบวก)'):'ฟรี');}
+  }
+  // L3 OPTION line
+  if(st.l2&&st.l3){
+    var l3p=colorPrice(st.l3ci,a);
+    var diff=l3p-coP;
+    var sign=diff>=0?'เพิ่ม ':'ลดลง ';
+    document.getElementById('l3optLine').innerHTML='<b>OPTION :</b> เปลี่ยนจาก '+COLORS[coIdx].n+' เป็น '+COLORS[st.l3ci].n+' ราคา'+sign+'<b>'+fmt(Math.abs(diff))+'</b> บาท · ไม่บวกยอดรวม';
+  }
+
+  // price card
+  document.getElementById('pcName').textContent=modelName(st.model)+' · '+(a>0?(a+' ตร.ม. · '+(parseFloat(document.getElementById('rsets').value)||1)+' ชุด'):'กรอกขนาด');
+  var bdr='';
+  bdr+='<div class="r"><span>หลังคา '+modelName(st.model)+' '+a+' ตร.ม.</span><span>'+fmt(baseP)+'</span></div>';
+  if(coP>0){bdr+='<div class="r opt"><span>สีโครง '+COLORS[coIdx].n+(st.l2?' (เฉพาะรายการนี้)':' (ทั้งใบ)')+'</span><span>+'+fmt(addP)+'</span></div>';}
+  document.getElementById('pcBd').innerHTML=bdr;
+  document.getElementById('pcTot').textContent='฿'+fmt(total);
+
+  // quote preview ①②③
+  var mColors=curModels().find(function(m){return m.v===st.model;});
+  var cols=(mColors&&mColors.colors)||(GROUPS[st.grp].colors)||[];
+  var matColorName='';
+  if(cols&&cols.length&&cols[st.matColor]){
+    var c=cols[st.matColor];matColorName=typeof c==='string'?c:c.n;
+  }
+  document.getElementById('qItem').innerHTML='<div class="ql"><b>หลังคากันสาด '+modelName(st.model)+(a?' ('+rl+' × '+rp+' ม.)':'')+'</b></div>';
+  var det='';
+  if(matColorName)det+='<div class="ql">สีวัสดุมุง: '+matColorName+'</div>';
+  det+='<div class="ql">สีโครง: '+COLORS[coIdx].n+(st.l2?' (เฉพาะรายการนี้)':' (ตามทั้งใบ)')+'</div>';
+  document.getElementById('qDetail').innerHTML=det;
+  // OPTION (L3)
+  var optH='';
+  if(st.l2&&st.l3){
+    var l3p2=colorPrice(st.l3ci,a);
+    var diff2=l3p2-coP;
+    optH='<div class="ql opt">OPTION : เปลี่ยนสีโครง จาก '+COLORS[coIdx].n+' เป็น '+COLORS[st.l3ci].n+' ราคา'+(diff2>=0?'เพิ่ม ':'ลดลง ')+fmt(Math.abs(diff2))+' บาท</div>';
+  }
+  document.getElementById('qOpt').innerHTML=optH||'<span style="color:#9ca3af">—</span>';
+  updateRmPrev();
+}
+
+// ══ INIT ══
+(function init(){
+  renderGroups();
+  renderThick();
+  renderModels();
+  renderMatColor();
+  renderMixModels();
+  renderL1();
+  initRemarks();
+  calc();
+  // listen ขนาด
+  ['rlen','rproj','rsets'].forEach(function(id){
+    document.getElementById(id).addEventListener('input',function(){calc();});
+  });
+})();
+</script>
+</body>
+</html>

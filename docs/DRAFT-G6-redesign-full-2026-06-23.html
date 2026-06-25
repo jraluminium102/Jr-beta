@@ -1,0 +1,420 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ดราฟ G6 v8 — กั้นห้องกระจก</title>
+<style>
+:root{--red:#B3151D;--blue:#1E40AF;--green:#047857;--amber:#B45309;--purple:#7C3AED;--line:#E5E7EB;--mut:#6B7280;--ink:#1F2937;}
+*{box-sizing:border-box;font-family:'Sarabun','Segoe UI',sans-serif;}
+body{margin:0;background:#F3F4F6;color:var(--ink);font-size:14px;line-height:1.55;}
+.wrap{max-width:780px;margin:0 auto;padding:16px 14px 90px;}
+h1{color:var(--red);font-size:19px;margin:0 0 3px;}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:10px;}
+.note{font-size:11.5px;color:var(--mut);}
+.fixed{background:#ECFDF3;border:1px solid #A6E9C5;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:#1E5128;}
+.fixed b{color:var(--red);}
+.zone{background:#fff;border-radius:12px;border:1px solid var(--line);border-left:5px solid var(--c,#ccc);padding:13px 14px;margin-bottom:12px;}
+.z1{--c:var(--blue);}.z2{--c:var(--green);}
+.zh{font-size:15px;font-weight:800;color:var(--c);margin:0 0 3px;}
+.zd{font-size:12px;color:var(--mut);margin:0 0 10px;}
+.flbl{font-size:12px;font-weight:700;color:#374151;margin:9px 0 4px;}
+.flbl .mini{font-weight:400;color:var(--mut);font-size:11px;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1.5px solid #D1D5DB;background:#fff;border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;user-select:none;}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red);}
+.chip.sm{padding:4px 9px;font-size:11.5px;}
+.chip.chk{border-style:dashed;}
+.chip.more{border-color:#93C5FD;color:#1E40AF;font-weight:700;}
+select.spec{height:34px;border:1.5px solid #D1D5DB;border-radius:8px;padding:0 9px;font-size:12.5px;background:#fff;max-width:300px;width:100%;}
+select.sm{height:31px;font-size:12px;max-width:230px;}
+.builder{background:#F8FAFF;border:1px solid #DBEAFE;border-radius:10px;padding:10px;margin-bottom:10px;}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tabs .t{padding:6px 11px;border:1.5px solid #93C5FD;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#1E40AF;}
+.tabs .t.on{background:#1E40AF;color:#fff;}
+.tabs .t.sum{border-color:#A7F3D0;color:#047857;}
+.cols{display:flex;gap:6px;}
+.col{flex:1;min-height:56px;border:2px solid var(--red);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;padding:8px;cursor:pointer;}
+.col.add{flex:0 0 40px;border-style:dashed;border-color:#93C5FD;color:#1E40AF;font-size:20px;}
+.panel{border:1px solid var(--amber);border-radius:10px;padding:11px 12px;margin-top:8px;background:#FFFDF8;}
+.panel .ph{font-size:13px;font-weight:800;color:var(--amber);margin-bottom:6px;}
+.sechd{font-size:11.5px;font-weight:700;color:var(--amber);margin:10px 0 4px;border-top:1px dashed var(--line);padding-top:7px;}
+.l1{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;background:#F0FDF4;border-radius:8px;}
+.l1 input{width:18px;height:18px;}
+.l2l3{margin-top:10px;border-left:3px solid var(--green);padding-left:12px;display:none;}
+.l2l3.show{display:block;}
+.mode{display:flex;gap:8px;margin:8px 0;}
+.mode label{flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;}
+.mode label.on-real{border-color:var(--green);background:#F0FDF4;}.mode label.on-opt{border-color:var(--blue);background:#EFF6FF;}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:#F3F4F6;color:var(--mut);}
+.tag.g{background:#047857;color:#fff;}.tag.b{background:#1E40AF;color:#fff;}
+.codebox{display:none;margin-top:7px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:7px 10px;}
+.codebox.show{display:block;}
+.codebox label{font-size:11.5px;font-weight:700;color:#9A3412;display:block;margin-bottom:3px;}
+.codebox input{width:100%;max-width:260px;height:31px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;}
+.l3{margin-top:10px;}
+.l3 summary{cursor:pointer;font-size:12px;color:var(--mut);font-weight:700;list-style:none;padding:4px 0;}
+.l3 summary::-webkit-details-marker{display:none;}
+.l3 summary::before{content:'＋ ';color:var(--red);font-weight:700;}
+.l3[open] summary::before{content:'－ ';}
+.l3 .inner{border:1px dashed #D1D5DB;border-radius:8px;padding:9px;margin-top:5px;background:#FAFAFA;}
+.esc{margin-top:10px;}
+.esc summary{cursor:pointer;font-size:12px;color:var(--amber);font-weight:700;list-style:none;}
+.esc summary::-webkit-details-marker{display:none;}
+.esc summary::before{content:'⚙ ';}
+.ovr{margin-top:12px;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:10px 12px;}
+.ovr .h{font-size:12.5px;font-weight:700;color:#6D28D9;margin-bottom:6px;}
+.ovr .side{border-top:1px dashed #DDD6FE;padding:6px 0;}.ovr .side:first-of-type{border-top:0;}
+.ovr label.pick{display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;font-weight:600;}
+.ovr .det{display:none;padding:6px 0 2px 24px;}.ovr .det.show{display:block;}
+.it{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;font-size:12px;background:#fff;}
+.flow{display:flex;flex-wrap:wrap;gap:5px;}
+.pricebar{position:fixed;top:60px;right:14px;width:225px;background:#0f172a;color:#e2e8f0;border-radius:12px;padding:11px 13px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;font-size:12px;}
+@media(max-width:1140px){.pricebar{position:static;width:auto;margin-bottom:12px;}}
+.pricebar .ph{font-size:11px;color:#9CA3AF;margin-bottom:4px;}
+.pricebar .row{display:flex;justify-content:space-between;padding:1.5px 0;color:#cbd5e1;}
+.pricebar .tot{display:flex;justify-content:space-between;border-top:1px solid #374151;margin-top:5px;padding-top:5px;}
+.pricebar .tot b{font-size:18px;color:#fff;}
+.bill{background:#fff;border:1px dashed #9CA3AF;border-radius:10px;padding:12px;font-size:12px;}
+.bill .h{font-weight:700;color:var(--red);margin-bottom:6px;}
+.bill .ln{padding:3px 0;border-bottom:1px dotted #E5E7EB;}.bill .sub2{color:var(--mut);padding-left:12px;font-size:11.5px;}
+.q{background:#FFF7E6;border:1px solid #F0C040;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:14px;}
+.q b{color:var(--amber);}
+.hide{display:none;}
+</style></head><body><div class="wrap">
+
+<h1>🔲 ดราฟ G6 v8 — กั้นห้องกระจก (งานบาน + หลังคา + ไฟ/ประปา/ผรม.)</h1>
+<div class="sub">งานกั้นห้อง = งานบาน ผสม งานหลังคา(G3) + เพิ่มงานไฟฟ้า/ประปา/ผรม.อื่นๆ (งานต่อเติมครัว·ห้องนั่งเล่น·รีโนเวท) · แตกราคาทุกส่วนให้ลูกค้าดู</div>
+
+<div class="fixed">🆕 <b>v8 (รอบนี้):</b> ① <b>🎨 สี/กระจก = ทำเป็นแท็บข้างด้าน</b> (เป็นเรื่องบานกระจก แยกจากงานเสริมชัดเจน · เลิกโซนลอย) · ② <b>📄 สรุปราคา = ใบเต็ม + วิธีคิดราคาละเอียดทุกจุด</b> (ย้ายใบมาไว้ในแท็บสรุป กด 📊/🔍 ที่นี่)<br>
+<b>v7:</b> รวม ไฟ+ประปา+พื้น+ผรม.+หมายเหตุ → ปุ่มเดียว 🔧 งานเสริม · <b>v6:</b> แตกราคา 2 แบบ · 💾เซฟใช้ครั้งหน้า · <b>v4-5:</b> แท็บประปา/ผรม. · ผนังเบาในชิปชนิดบาน</div>
+
+<div class="pricebar">
+  <div class="ph">💰 ราคาห้องนี้ — แตกทุกส่วน (เดโม)</div>
+  <div class="row"><span>ด้าน A · 3 บาน</span><span>98,100</span></div>
+  <div class="row"><span>ด้าน B · 2 บาน</span><span>46,000</span></div>
+  <div class="row"><span>🏠 หลังคา/ฝ้า</span><span>90,000</span></div>
+  <div class="row"><span>⚡ งานไฟ</span><span>12,000</span></div>
+  <div class="row"><span>🚰 งานประปา</span><span>18,000</span></div>
+  <div class="row"><span>🟫 พื้น/พัดลม</span><span>35,000</span></div>
+  <div class="row"><span>🔧 รื้อของเดิม</span><span>8,000</span></div>
+  <div class="row"><span>🛡 Protection</span><span>5,000</span></div>
+  <div class="row"><span>🔧 งานผรม.อื่นๆ</span><span>25,000</span></div>
+  <div class="tot"><span>รวมห้อง</span><b>337,100</b></div>
+</div>
+
+<div class="zone z1">
+  <div class="zh">🔵 โซน 1 — เครื่องสร้างห้อง (บาน · หลังคา · งานเสริม รวมแท็บเดียว)</div>
+  <div class="zd">แท็บด้าน = กดช่อง→เลือกชนิด+ออปชั่น · 🎨 สี/กระจก (ทั้งห้อง) · 🏠 หลังคา · <b>🔧 งานเสริม</b> (ไฟ+ประปา+พื้น+ผรม.+หมายเหตุ) · 📄 สรุป=ใบเต็ม+วิธีคิดราคา · <span style="color:var(--green);">กดแท็บสลับได้จริง</span></div>
+  <div class="builder">
+    <div class="tabs">
+      <span class="t on" data-tab="side" onclick="g6tab('side',this)">ด้าน A</span>
+      <span class="t" data-tab="side" onclick="g6tab('side',this)">+ ด้าน</span>
+      <span class="t" data-tab="color" onclick="g6tab('color',this)">🎨 สี/กระจก</span>
+      <span class="t" data-tab="roof" onclick="g6tab('roof',this)">🏠 หลังคา/ฝ้า</span>
+      <span class="t" data-tab="extra" onclick="g6tab('extra',this)">🔧 งานเสริม</span>
+      <span class="t sum" data-tab="sum" onclick="g6tab('sum',this)">📄 สรุปราคา</span>
+    </div>
+    <div class="note" style="margin-bottom:6px;">🎨 <b>สี/กระจก</b> = ระดับห้อง (เกี่ยวกับบานกระจก · คนละเรื่องกับงานเสริม) · 🔧 <b>งานเสริม</b> = ไฟ·ประปา·พื้น·ผรม.·หมายเหตุ รวมปุ่มเดียว</div>
+    <div id="tabSide">
+    <div class="cols">
+      <div class="col" style="flex-direction:column;gap:4px;padding:5px;">
+        <div style="border:1px solid #D1D5DB;border-radius:6px;padding:5px;width:100%;font-size:11px;color:#6B7280;">ช่องแสงบน · 1.8×0.5</div>
+        <div style="border:2px solid #B3151D;border-radius:6px;padding:7px;width:100%;background:#FFF7F7;">บานเลื่อน · 1.8×2.1</div>
+      </div>
+      <div class="col" style="border-color:#D1D5DB;color:#9CA3AF;">+ บาน</div>
+      <div class="col add">+</div>
+    </div>
+    <div class="note" style="margin-top:5px;">คอลัมน์ = ช่อง · ซ้อนชั้นได้ (ช่องแสงบน + บานล่าง) · กดช่อง → ขนาด+จัดเรียง+ออปชั่น ↓</div>
+    <div class="panel">
+      <div class="ph">⚙ ออปชั่นช่องนี้ — <span id="pname">บานเลื่อน</span></div>
+      <div class="flbl">ชนิด <span class="mini">(เลือกแล้ว ออปชั่นเปลี่ยนตาม)</span></div>
+      <div class="chips" id="kindChips"></div>
+      <div class="chips hide" id="moreChips" style="margin-top:5px;"></div>
+      <div id="modelWrap"><div class="flbl">รุ่น</div><div class="chips" id="model"></div></div>
+      <div id="sizeWrap">
+        <div class="flbl">ขนาด <span class="mini">(ต่อบาน · ซ้อนกว้างไม่เท่ากันได้ · ค่าเริ่มต้น = เท่ากัน)</span></div>
+        <div class="flow"><span class="it">กว้าง <b>1.8</b> ม.</span><span class="it">สูง <b>2.1</b> ม.</span></div>
+        <div class="flbl">จัดเรียง <span class="mini">(ของเดิม · ◀▶ ย้ายคอลัมน์ · ▲▼ ย้ายชั้น · +บน/+ล่าง เพิ่มชั้นซ้อน)</span></div>
+        <div class="chips"><span class="chip sm">◀</span><span class="chip sm">▶</span><span class="chip sm">▲</span><span class="chip sm">▼</span><span class="chip sm">+ บน</span><span class="chip sm">+ ล่าง</span><span class="chip sm" style="border-color:#B3151D;color:#B3151D;">🗑 ลบ</span></div>
+      </div>
+      <div id="panelBody"></div>
+    </div>
+    </div><!-- /tabSide -->
+
+    <div id="tabRoof" class="hide">
+      <div class="panel" style="border-color:#FCD34D;">
+        <div class="ph" style="color:var(--amber);">🏠 หลังคา / ฝ้า</div>
+        <div class="flbl" style="margin-top:0;">วัสดุมุง</div>
+        <div class="chips"><span class="chip sm on">เมทัลชีท</span><span class="chip sm">โปร่งแสง</span><span class="chip sm">ไวนิล</span><span class="chip sm">ชินโค ✎</span></div>
+        <div class="flow" style="margin-top:6px;"><span class="it">กว้าง <b>3</b> ม.</span><span class="it">ยาว <b>6</b> ม.</span><span class="it">โครง: อลู ▾</span></div>
+        <div class="flbl">ปลายหลังคา</div>
+        <div class="chips"><span class="chip sm on">รางน้ำ</span><span class="chip sm">โซ่รางน้ำ</span><span class="chip sm">ปิดปลายกันน้ำ</span><span class="chip sm">ไม่มี</span></div>
+        <div class="flbl">ฝ้า</div>
+        <div class="chips"><span class="chip sm on">ไม่มี</span><span class="chip sm">รวมราคา</span><span class="chip sm">แยกราคา</span></div>
+        <div class="note" style="margin-top:6px;color:var(--amber);">※ ดึง engine หลังคา G3 ตัวเดียวกัน (calcUnit) — รุ่น/เรต/ออปชั่นตรง G3 ทุกตัว</div>
+      </div>
+    </div>
+
+    <div id="tabExtra" class="hide">
+      <div class="note" style="margin:2px 0 8px;color:#1E40AF;">🔧 <b>งานเสริม (ทั้งห้อง)</b> — เลื่อนดูทีละหัวข้อ: ไฟ · ประปา · พื้น/พัดลม · งานผรม./รื้อ · หมายเหตุ · ทุกหัวข้อ "กรอกเอง" แยกราคาในใบ</div>
+
+      <div class="panel" style="border-color:#FCD34D;">
+        <div class="ph" style="color:var(--amber);">⚡ งานไฟฟ้า</div>
+        <div class="flow"><span class="it">ดาวน์ไลท์: <b>6</b> ดวง × 1,500 = <b style="color:var(--green);">9,000</b></span><span class="it">สวิตช์: <b>3</b> จุด × 1,000 = <b style="color:var(--green);">3,000</b></span></div>
+      </div>
+
+      <div class="panel" style="border-color:#FDBA74;margin-top:10px;">
+        <div class="ph">🚰 งานประปา <span class="mini" style="font-weight:400;color:var(--mut);">(กรอกเอง)</span></div>
+        <div class="flbl" style="margin-top:0;">เพิ่มรายการ <span class="mini">(กดพรีเซ็ต → กรอกราคา · กี่บรรทัดก็ได้)</span></div>
+        <div class="chips">
+          <span class="chip sm chk">☐ เดินท่อน้ำดี-น้ำทิ้ง</span>
+          <span class="chip sm chk">☐ จุดน้ำเข้า-ออก (ซิงก์/อ่าง)</span>
+          <span class="chip sm chk">☐ ติดตั้งซิงก์/อ่างล้าง</span>
+          <span class="chip sm chk">☐ บ่อพัก/บ่อดักไขมัน</span>
+          <span class="chip sm chk">☐ floor drain ระบายพื้น</span>
+          <span class="chip sm chk">☐ ต่อท่อระบายน้ำฝน</span>
+          <span class="chip sm chk">☐ ปั๊มน้ำ/เครื่องทำน้ำอุ่น</span>
+          <span class="chip sm chk">☐ อื่นๆ ✎</span>
+        </div>
+        <div class="flow" style="margin-top:8px;"><span class="it">ชื่องาน: <b>เดินท่อน้ำดี-น้ำทิ้ง</b></span><span class="it">หน่วย: จุด ▾</span><span class="it">จำนวน: <b>4</b></span><span class="it">ราคา/หน่วย: <b>3,000</b></span><span class="it" style="color:var(--green);font-weight:700;">= 12,000</span></div>
+        <div class="note" style="margin-top:5px;">＋ เพิ่มได้หลายบรรทัด · รวมงานประปา = <b style="color:var(--green);">18,000</b></div>
+      </div>
+
+      <div class="panel" style="border-color:#FCD34D;margin-top:10px;">
+        <div class="ph" style="color:var(--amber);">🟫 งานพื้น / พัดลม</div>
+        <div class="flbl" style="margin-top:0;">ปูพื้น</div>
+        <div class="chips"><span class="chip sm on">สมาร์ทบอร์ด 20มม.</span><span class="chip sm">ไม้เทียม</span><span class="chip sm">SPC/ลามิเนต ✎</span></div>
+        <div class="flow" style="margin-top:6px;"><span class="it">พื้นที่ <b>6</b> ตร.ม. × 5,000 = <b style="color:var(--green);">30,000</b></span><span class="it">≥20 ตร.ม. ลด 10% อัตโนมัติ</span></div>
+        <div class="flbl">พัดลมดูดอากาศ <span class="mini">(กรอกเอง)</span></div>
+        <div class="flow"><span class="it">ขนาด 8" · จำนวน <b>1</b> · = <b style="color:var(--green);">5,000</b></span></div>
+      </div>
+
+      <div class="panel" style="border-color:#FDBA74;margin-top:10px;">
+        <div class="ph">🔧 งานผรม. / รื้อ</div>
+        <div class="sechd" style="border-top:0;padding-top:0;margin-top:0;">มีเรตในระบบแล้ว — ดึงเข้าห้อง (ติ๊กใช้)</div>
+        <div class="chips">
+          <span class="chip sm chk">☐ รื้อของเดิม — หลังคา/พื้น/ราง/ประตู (svc-demo)</span>
+          <span class="chip sm chk">☐ Protection พื้น/ผนัง 2,000 min (svc-protect)</span>
+        </div>
+        <div class="sechd">งานต่อเติม/รีโนเวท (กรอกเอง)</div>
+        <div class="chips">
+          <span class="chip sm chk">☐ ปูกระเบื้อง พื้น/ผนัง</span>
+          <span class="chip sm chk">☐ เคาน์เตอร์/ท็อปครัว</span>
+          <span class="chip sm chk">☐ ก่อ-ฉาบ ผนังอิฐ</span>
+          <span class="chip sm chk">☐ ฝ้าเพิ่ม</span>
+          <span class="chip sm chk">☐ ทาสี</span>
+          <span class="chip sm chk">☐ เทพื้น คสล.</span>
+          <span class="chip sm chk">☐ สุขภัณฑ์/ติดตั้ง</span>
+          <span class="chip sm chk">☐ บิวท์อินเฟอร์นิเจอร์</span>
+          <span class="chip sm chk">☐ อื่นๆ ✎</span>
+        </div>
+        <div class="flow" style="margin-top:8px;"><span class="it">ชื่องาน: <b>ปูกระเบื้องพื้น</b></span><span class="it">หน่วย: ตร.ม. ▾</span><span class="it">จำนวน: <b>20</b></span><span class="it">ราคา/หน่วย: <b>650</b></span><span class="it" style="color:var(--green);font-weight:700;">= 13,000</span></div>
+        <div style="margin-top:7px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <span class="chip sm" style="border-color:var(--green);color:var(--green);" onclick="prmSave()">💾 เซฟรายการนี้ไว้ใช้ครั้งหน้า</span>
+          <span class="note">เก็บชื่อ+หน่วย+ราคาในเครื่อง · ครั้งหน้ากดเพิ่มได้เลย ไม่ต้องพิมพ์ใหม่</span>
+        </div>
+        <div class="flbl">📌 รายการที่เซฟไว้ <span class="mini">(กดเพื่อเพิ่มเข้าใบทันที)</span></div>
+        <div class="chips" id="prmSaved">
+          <span class="chip sm">ปูกระเบื้องพื้น · 650/ตร.ม.</span>
+          <span class="chip sm">เคาน์เตอร์ครัว · 8,000/ชุด</span>
+          <span class="chip sm">ทาสีภายใน · 120/ตร.ม.</span>
+        </div>
+        <div class="note" style="margin-top:5px;">รื้อ <b>8,000</b> · Protection <b>5,000</b> · งานต่อเติมอื่นๆ <b>25,000</b> — แยกบรรทัดในใบ</div>
+      </div>
+
+      <div class="panel" style="border-color:#C4B5FD;margin-top:10px;">
+        <div class="ph" style="color:#6D28D9;">📝 หมายเหตุท้ายใบ <span class="mini" style="font-weight:400;color:var(--mut);">(ติ๊กพรีเซ็ต + กรอกเอง)</span></div>
+        <div class="chips">
+          <span class="chip sm chk">☑ ติดตั้งภายใน 30 วัน</span>
+          <span class="chip sm chk">☑ รับประกันงาน 1 ปี</span>
+          <span class="chip sm chk">☑ ราคารวมขนส่ง+ติดตั้ง</span>
+          <span class="chip sm chk">☐ ไม่รวมงานไฟ/ประปาเดินใหม่นอกแบบ</span>
+          <span class="chip sm chk">☐ ไม่รับประกันพื้นแอ่น</span>
+          <span class="chip sm chk">☐ อื่นๆ ✎</span>
+        </div>
+        <div class="note" style="margin-top:6px;color:#6D28D9;">📝 หมายเหตุย้ายมารวมในแท็บ 🔧 งานเสริม นี้แล้ว (เป็นหัวข้อล่างสุด) — โผล่ท้ายใบเสนอราคา</div>
+      </div>
+      <div class="note" style="margin-top:8px;color:#B45309;">💡 <b>ทำรอบเดียวจบได้:</b> ประปา + ผรม. + อื่นๆ = engine เพิ่ม "รายการบริการห้อง" ชุดเดียว (ชื่อ/หน่วย/จำนวน/ราคา) ครอบคลุมหมด ไม่ต้องลงเรตทีละงาน · รื้อ/Protection ใช้ svc-* เดิม · ขนส่ง/ค่าเดินทาง = ปล่อยระดับใบเหมือนเดิม</div>
+    </div>
+
+
+    <div id="tabColor" class="hide">
+      <div class="panel" style="border-color:#A7F3D0;">
+        <div class="ph" style="color:var(--green);">🎨 สี / กระจก (ทั้งห้อง) <span class="mini" style="font-weight:400;color:var(--mut);">— ระดับห้อง · เกี่ยวกับบานกระจก ไม่ใช่งานเสริม</span></div>
+  <div class="flbl">🎨 สีอลู (ทั้งห้อง) — L1 / L2 / L3</div>
+  <label class="l1"><input type="checkbox" id="l1" checked onchange="toggleL1()"><span><b>สีตามทั้งใบ</b> — สีอบขาว <span class="mini" style="color:#9CA3AF;">(L1 default)</span></span></label>
+  <div class="l2l3" id="body">
+    <div class="mode" id="mode">
+      <label class="on-real" onclick="setMode('real')"><input type="radio" name="m" checked> 🟢 ใช้จริง <span class="tag g">บวกยอด</span></label>
+      <label onclick="setMode('opt')"><input type="radio" name="m"> 🔵 ออปชั่น <span class="tag b">ไม่บวก</span></label>
+    </div>
+    <div class="flbl">L2 สีอลูห้องนี้</div>
+    <select class="spec" id="l2c" onchange="onColor('l2c','l2code')"></select>
+    <div class="codebox" id="l2code"><label>รหัสสี/ชื่อสี (อบพิเศษ/ลายไม้อบ/ชุบ)</label><input type="text" placeholder="เช่น KL10232A · Fuji"></div>
+    <details class="l3"><summary>L3 — เทียบราคาสีอื่น (ไม่บวกยอด)</summary><div class="inner">
+      <div class="flbl" style="margin-top:0;">เทียบสีอลู</div><select class="spec" id="l3c" onchange="onColor('l3c','l3code')"></select>
+      <div class="codebox" id="l3code"><label>รหัสสีอบพิเศษ (L3)</label><input type="text" placeholder="KL10232A"></div></div></details>
+  </div>
+  <div class="flbl" style="margin-top:13px;">🪟 กระจก (ทั้งห้อง) <span class="mini">(66 รุ่น)</span></div>
+  <select class="spec" id="l2g"></select>
+  <div class="ovr">
+    <div class="h">🔀 เปลี่ยนสี/กระจก "บางด้าน"</div>
+    <div class="side"><label class="pick"><input type="checkbox" onchange="ovrT(this,'sA')"> ด้าน A ต่างจากห้อง</label>
+      <div class="det" id="sA"><div class="flbl" style="margin:5px 0 3px;">สีอลู A</div><select class="spec sm sidec"></select><div class="flbl" style="margin:5px 0 3px;">กระจก A</div><select class="spec sm sideg"></select></div></div>
+    <div class="side"><label class="pick"><input type="checkbox" onchange="ovrT(this,'sB')"> ด้าน B ต่างจากห้อง</label>
+      <div class="det" id="sB"><div class="flbl" style="margin:5px 0 3px;">สีอลู B</div><select class="spec sm sidec"></select><div class="flbl" style="margin:5px 0 3px;">กระจก B</div><select class="spec sm sideg"></select></div></div>
+    <div class="note" style="margin-top:5px;">ไม่ติ๊ก = ตามห้อง · ติ๊ก = บานในด้านนั้นคิดราคาตามสีด้าน</div>
+  </div>
+      </div>
+    </div>
+
+    <div id="tabSum" class="hide">
+      <div class="flbl" style="font-size:14px;margin-top:0;">🧾 ใบเสนอราคา (ห้องแตกรายบาน) — กดสลับ 📊 ภาพรวม / 🔍 ละเอียดทุกจุด (วิธีคิดราคา)</div>
+<div class="bill">
+  <div class="h">งานกั้นห้องกระจก — ห้องที่ 1</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">
+    <span class="chip sm on" id="bmO" onclick="billMode('o')">📊 ภาพรวม</span>
+    <span class="chip sm" id="bmD" onclick="billMode('d')">🔍 ละเอียดทุกจุด</span>
+    <span class="note">← ลูกค้าเลือกดูได้ 2 แบบ (ค่าเริ่มต้น = ภาพรวม)</span>
+  </div>
+  <div id="billOverview">
+    <div class="ln">ด้าน A (3 บาน) = 98,100<div class="sub2">• บานเลื่อน เซมิยูโร (1.8×2.1) · ล็อก+กุญแจ · มุ้งจีบ · คาดตาราง</div></div>
+    <div class="ln">ด้าน B (ผนังเบา + 1 บานเปิด) = 46,000<div class="sub2">• ผนังเบาภายนอก 4 ตร.ม. · บานเปิด ยูโร (0.9×2.1)</div></div>
+    <div class="ln">หลังคา/ฝ้า เมทัลชีท โครงอลู (3×6 ม.) = 90,000</div>
+    <div class="ln">งานไฟ — ดาวน์ไลท์ 6 ดวง · สวิตช์ 3 จุด = 12,000</div>
+    <div class="ln">งานประปา — เดินท่อน้ำดี-น้ำทิ้ง · จุดน้ำซิงก์ · floor drain = 18,000</div>
+    <div class="ln">งานพื้น/พัดลม — ปูพื้นสมาร์ทบอร์ด + พัดลมดูดอากาศ = 35,000</div>
+    <div class="ln">รื้อของเดิม (หลังคา + พื้น) = 8,000</div>
+    <div class="ln">Protection พื้น/ผนัง = 5,000</div>
+    <div class="ln">งานผรม.อื่นๆ — ปูกระเบื้อง · เคาน์เตอร์ครัว · ทาสี = 25,000</div>
+  </div>
+  <div id="billDetail" class="hide">
+    <div class="ln"><b>ด้าน A (3 บาน) = 98,100</b>
+      <div class="sub2">• บานเลื่อน เซมิยูโร 1.8×2.1 × 3 บาน = 84,400</div>
+      <div class="sub2">• ชุดล็อก + กุญแจ = 3,500</div>
+      <div class="sub2">• มุ้งจีบ × 3 บาน = 9,000</div>
+      <div class="sub2">• คาดตาราง = 1,200</div></div>
+    <div class="ln"><b>ด้าน B = 46,000</b>
+      <div class="sub2">• ผนังเบาภายนอก 4 ตร.ม. = 13,500</div>
+      <div class="sub2">• บานเปิด ยูโร 0.9×2.1 = 31,000</div>
+      <div class="sub2">• ชุดล็อก + กุญแจ = 1,500</div></div>
+    <div class="ln"><b>🏠 หลังคา/ฝ้า = 90,000</b>
+      <div class="sub2">• เมทัลชีท 18 ตร.ม. = 72,000</div>
+      <div class="sub2">• โครงอลู = 12,000</div>
+      <div class="sub2">• รางน้ำ 6 ม. = 6,000</div></div>
+    <div class="ln"><b>⚡ งานไฟ = 12,000</b>
+      <div class="sub2">• ดาวน์ไลท์ 6 ดวง × 1,500 = 9,000</div>
+      <div class="sub2">• สวิตช์ 3 จุด × 1,000 = 3,000</div></div>
+    <div class="ln"><b>🚰 งานประปา = 18,000</b>
+      <div class="sub2">• เดินท่อน้ำดี-น้ำทิ้ง 4 จุด × 3,000 = 12,000</div>
+      <div class="sub2">• จุดน้ำซิงก์ + floor drain = 6,000</div></div>
+    <div class="ln"><b>🟫 งานพื้น/พัดลม = 35,000</b>
+      <div class="sub2">• ปูพื้นสมาร์ทบอร์ด 6 ตร.ม. × 5,000 = 30,000</div>
+      <div class="sub2">• พัดลมดูดอากาศ 1 ตัว = 5,000</div></div>
+    <div class="ln"><b>🔧 รื้อของเดิม = 8,000</b><div class="sub2">• รื้อหลังคา + พื้นเดิม = 8,000</div></div>
+    <div class="ln"><b>🛡 Protection พื้น/ผนัง = 5,000</b></div>
+    <div class="ln"><b>🔧 งานผรม.อื่นๆ = 25,000</b>
+      <div class="sub2">• ปูกระเบื้อง 20 ตร.ม. × 650 = 13,000</div>
+      <div class="sub2">• เคาน์เตอร์ครัว = 8,000</div>
+      <div class="sub2">• ทาสี = 4,000</div></div>
+  </div>
+  <div class="ln" style="border:0;background:#EFF6FF;border-radius:6px;padding:5px 7px;margin-top:4px;color:#1E40AF;"><b>OPTION (ลูกค้าเลือกได้ · ยังไม่บวกยอด):</b><br>OPTION (1) : เปลี่ยนสีห้องจากเทาซาฮาร่าเป็นลายไม้สต๊อก ราคาเพิ่ม + 8,500 บาท<br>OPTION (2) : ด้าน B เปลี่ยนกระจกเป็นชาดำ 6 มม. ราคาเพิ่ม + 2,000 บาท</div>
+  <div class="ln" style="border:0;background:#FFFBEB;border-radius:6px;padding:5px 7px;margin-top:4px;color:#92400e;"><b>หมายเหตุ:</b> ติดตั้งภายใน 30 วัน · รับประกันงาน 1 ปี · ราคารวมขนส่ง+ติดตั้ง</div>
+  <div class="ln" style="border:0;margin-top:4px;"><b>รายละเอียดงาน:</b> อลู <b>สีเทาซาฮาร่า</b> · กระจก <b>เขียว 6 มม.</b> · หลังคาเมทัลชีท โครงอลู</div>
+  <div class="ln" style="border:0;font-weight:700;margin-top:4px;">รวมห้องที่ 1 = 337,100 บาท (ยังไม่รวม OPTION)</div>
+</div>
+<div class="note" style="margin-top:5px;">📋 <b>บล็อกนี้ = เฉพาะ "รายการห้อง G6"</b> (เรียง: หัวห้อง → รายการบานแตกรายด้าน → <b>งานเสริมแยกราคาทุกบรรทัด</b> (หลังคา/ไฟ/ประปา/พื้น/รื้อ/Protection/ผรม.) → OPTION(1)(2) → หมายเหตุ → รายละเอียดงาน)<br>🔎 <b>เรียนรู้จากใบจริง:</b> หัวใบ (โลโก้/ที่อยู่บริษัท/เลขที่ QT/วันที่/ลูกค้า) + ยอดรวม→ส่วนลด→<b>VAT 7%</b>→รวมทั้งสิ้น + ตัวอักษรจำนวนเงิน + ช่องลงนาม (ผู้สั่งซื้อ/ผู้อนุมัติ) + เงื่อนไขท้ายใบ (เข้าทำงาน 5 ข้อ + แบบ/ใบเสนอราคา 6 ข้อ) + footer ทุกหน้า = <b>engine ห่อให้ทั้งใบ เหมือน G1-G5</b> (G6 reuse ได้ ไม่ต้องทำใหม่)</div>
+    </div>
+  </div>
+</div>
+
+<div class="q"><b>✅ v8 เพิ่มครบ</b> — แท็บ <b>🎨 สี/กระจก</b> (แยกจากงานเสริม) · แท็บ <b>📄 สรุปราคา</b> = ใบเต็ม+วิธีคิดราคาละเอียดทุกจุด (กด 📊/🔍 ในสรุป) · แท็บรวม 6: ด้าน·สี/กระจก·หลังคา·งานเสริม·สรุป<br>
+<b>🟡 ดูแล้วบอก:</b> ① สี/กระจก เป็นแท็บแยกแบบนี้ชัดขึ้นไหม · ② สรุป=ใบเต็ม+วิธีคิดราคา ครบไหม · ③ พรีเซ็ตประปา/ผรม. ครบไหม · ถ้าโอเค ผมทำใบสั่ง dev G6 เก็บก้อน (รอ index ว่าง)</div>
+
+<script>
+var ALU=[{n:'สีอบขาว (ฟรี)',g:'มาตรฐาน'},{n:'สีดำ (ฟรี)',g:'มาตรฐาน'},{n:'สีชุบ',g:'มาตรฐาน',code:1},{n:'สีเทาซาฮาร่า',g:'ซาฮาร่า'},{n:'สีดำซาฮาร่า',g:'ซาฮาร่า'},{n:'Aztec gray',g:'ซาฮาร่า'},{n:'สักทอง',g:'ลายไม้สต๊อก'},{n:'มะฮอกกานี',g:'ลายไม้สต๊อก'},{n:'ไวท์โอ๊ค',g:'ลายไม้สต๊อก'},{n:'Fuji Oak',g:'อบพิเศษ',code:1},{n:'Fuji Makha',g:'อบพิเศษ',code:1},{n:'อบพิเศษ',g:'อบพิเศษ',code:1},{n:'ลายไม้อบพิเศษ',g:'อบพิเศษ',code:1}];
+var GLASS=[{n:'เขียว 6 มม.',p:0,g:'ทั่วไป'},{n:'ใส 6 มม.',p:0,g:'ทั่วไป'},{n:'เขียว/ใส 8 มม.',p:1200,g:'ทั่วไป'},{n:'เขียว/ใส 10 มม.',p:1200,g:'ทั่วไป'},{n:'เคลือบขาว 6',p:1800,g:'ทั่วไป'},{n:'ยูโรเกรย์ 6',p:800,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรเกรย์ 8',p:1500,g:'ยูโรเกรย์/บรอนซ์'},{n:'ยูโรบรอนซ์ 6',p:1000,g:'ยูโรเกรย์/บรอนซ์'},{n:'reflective เทา 6',p:2100,g:'Reflective'},{n:'reflective เขียว 6',p:2400,g:'Reflective'},{n:'เทมเปอร์ เขียว/ใส 6',p:600,g:'เทมเปอร์'},{n:'เทมเปอร์ 10',p:2100,g:'เทมเปอร์'},{n:'เทมเปอร์ ฝ้า 6',p:2200,g:'เทมเปอร์'},{n:'ลามิเนต 4+4',p:2200,g:'ลามิเนต'},{n:'ลามิเนต กันเสียง',p:5300,g:'ลามิเนต'},{n:'อินซูเลท 6+6+6',p:4000,g:'อินซูเลท'},{n:'ชาดำ/ฝ้า 5-6',p:500,g:'พิเศษ'},{n:'★ (กระจกครบ 66 ใน engine)',p:0,g:'★ เพิ่มเติม'}];
+var KINDS=[
+ {k:'slide',ic:'⬌',n:'บานเลื่อน',main:1,models:['เซมิยูโร','ยูโร','E-series'],open:['เลื่อน(ระบุติดตาย)','สลับ','เปิดคู่กลาง','ลากจูง'],rail:['รางกันน้ำ','รางเตี้ย 7มม.'],fixrow:1,lock:1,handle:'full',mosq:1,grid:1,solid:1},
+ {k:'inner',ic:'⬌',n:'เลื่อนภายใน',main:1,models:['รางบนซ้อน','SlimLux','X-series'],open:['เลื่อน','สลับ','เปิดคู่กลาง','ลากจูง'],railTop:['โชว์ราง','ซ่อนราง +5,000'],lock:1,handle:'st2',grid:1,solid:1,struct:['Soft Close +4,000','สลิง 2,000/บาน','ซ่อนคาน','ฝังรางยู','เสริมคาน']},
+ {k:'swing',ic:'🚪',n:'บานเปิด',main:1,models:['ยูโร','X-series','Velora','โซลิด ทู','โซลิด วัน'],thresh:['กันน้ำ','หลังเต่า+Drop +1,000','หลังเต่า+สักหลาด','ไม่มีธรณี'],closer:['ไม่มี','แขนยื่น +5,000','รางเลื่อน +5,000','บานพับ +5,000'],lock:1,handle:'full',mosq:1,grid:1,solid:1,combo:1},
+ {k:'awning',ic:'🚪',n:'บานกระทุ้ง',main:1,models:['ยูโร'],awn:['เปิดล่าง','เปิดข้าง','tilt & turn +5,000/บาน'],lock:1,brace:1,handle:'cmech',mosq:1,grid:1},
+ {k:'pivot',ic:'🚪',n:'บานหมุน',main:1,models:['เมืองทอง'],lock:1,handle:'pivot',grid:1,solid:1},
+ {k:'fold',ic:'▥',n:'บานเฟี้ยม',main:1,models:['เซมิยูโร','ยูโร','X-series'],open:['เปิดซ้าย','เปิดขวา','แยกกลาง'],thresh:['กันน้ำภายนอก','หลังเต่าภายใน'],lock:1,handle:'full',mosq:1,grid:1,solid:1,struct:['ซ่อนคาน','ซ่อนราง','ฝังรางยู','เสริมคาน']},
+ {k:'fix',ic:'▢',n:'กระจกติดตาย',main:1,models:['รุ่นเดียว'],nobana:1,grid:1,solid:1},
+ {k:'wall',ic:'🧱',n:'ผนังเบา',main:1,models:['—'],wall:1},
+ {k:'open',ic:'⬜',n:'เปิดโล่ง',main:1,models:['—'],openspace:1},
+ {k:'frameless',ic:'▢',n:'บานเปลือย',models:['—'],sub:['ติดตาย','ประตู — สวิง','ประตู — เลื่อน'],handleSt:1,lock:1},
+ {k:'curve',ic:'◗',n:'ดัดโค้ง',models:['ดับเบิล','ซิงเกิล','ติดตาย','สลิม'],lock:1,handle:'full',grid:1},
+ {k:'lift',ic:'⬍',n:'บานยก',models:['SMS','aluinch'],liftmode:['ยกบานบน','ยกบานบน-ล่างสลับ'],lock2:1,motor:1,handleSt:1,grid:1},
+ {k:'pc',ic:'🚪',n:'PC Door',models:['2 บาน','4 บาน'],lock:1,handle:'full'},
+ {k:'shower',ic:'🚿',n:'Shower',models:['รุ่นเดียว'],showeronly:1},
+ {k:'ykk',ic:'🚪',n:'YKK',models:['Ventilation','Exhido'],lock:1,grid:1}
+];
+var curKind=KINDS[0];
+function fmt(p){return p>0?(' (+'+p.toLocaleString()+')'):'';}
+function colorHtml(n){var h=n?'<option value="-1">— ตามห้อง —</option>':'';var lg='';ALU.forEach(function(c,i){if(c.g!==lg){if(lg)h+='</optgroup>';h+='<optgroup label="'+c.g+'">';lg=c.g;}h+='<option value="'+i+'" data-code="'+(c.code?1:0)+'">'+c.n+'</option>';});return h+'</optgroup>';}
+function glassHtml(n){var h=n?'<option value="-1">— ตามห้อง —</option>':'';var lg='';GLASS.forEach(function(g,i){if(g.g!==lg){if(lg)h+='</optgroup>';h+='<optgroup label="'+g.g+'">';lg=g.g;}h+='<option value="'+i+'">'+g.n+fmt(g.p)+'</option>';});return h+'</optgroup>';}
+function onColor(sid,cid){var s=document.getElementById(sid);var o=s.options[s.selectedIndex];document.getElementById(cid).classList.toggle('show',o&&o.dataset.code==='1');}
+function toggleL1(){document.getElementById('body').classList.toggle('show',!document.getElementById('l1').checked);}
+function setMode(m){var b=document.getElementById('mode');b.querySelectorAll('label').forEach(function(l){l.classList.remove('on-real','on-opt');});var i=m==='real'?0:1;b.querySelectorAll('label')[i].classList.add(m==='real'?'on-real':'on-opt');b.querySelectorAll('input')[i].checked=true;}
+function ovrT(cb,id){document.getElementById(id).classList.toggle('show',cb.checked);}
+function billMode(m){var o=m==='o';document.getElementById('billOverview').classList.toggle('hide',!o);document.getElementById('billDetail').classList.toggle('hide',o);document.getElementById('bmO').classList.toggle('on',o);document.getElementById('bmD').classList.toggle('on',!o);}
+function prmSave(){var box=document.getElementById('prmSaved');var c=document.createElement('span');c.className='chip sm';c.style.borderColor='#047857';c.style.color='#047857';c.textContent='✓ เซฟแล้ว: ปูกระเบื้องพื้น · 650/ตร.ม.';box.appendChild(c);}
+function g6tab(t,el){['Side','Color','Roof','Extra','Sum'].forEach(function(x){var n=document.getElementById('tab'+x);if(n)n.classList.toggle('hide',x.toLowerCase()!==t);});document.querySelectorAll('.builder .tabs .t').forEach(function(c){c.classList.remove('on');});if(el)el.classList.add('on');}
+function chipRow(arr,first){return '<div class="chips">'+arr.map(function(x,i){return '<span class="chip sm'+(i===(first||0)?' on':'')+'">'+x+'</span>';}).join('')+'</div>';}
+var HANDLES={full:['Cmech','ดิจิตอล','สแตนเลสสีเงิน','รุ่นอื่น ✎'],cmech:['Cmech หลบมุ้ง'],pivot:['ดิจิตอล','สแตนเลส'],st2:['สแตนเลส','ดิจิตอล']};
+function renderModel(){var p=curKind;document.getElementById('model').innerHTML=(p.models||[]).map(function(m,i){return '<span class="chip sm'+(i===0?' on':'')+'">'+m+'</span>';}).join('');}
+function renderPanel(){
+  var p=curKind,h='';document.getElementById('pname').textContent=p.n;
+  document.getElementById('modelWrap').style.display=(p.models&&p.models[0]!=='—')?'':'none';
+  document.getElementById('sizeWrap').style.display=p.openspace?'none':'';
+  if(p.openspace){document.getElementById('panelBody').innerHTML='<div class="note" style="margin-top:8px;">⬜ ช่องเปิดโล่ง — ไม่มีบาน/ขนาด/ออปชั่น (ราคา 0)</div>';return;}
+  if(p.wall){h+='<div class="sechd">① หลัก</div><div class="flbl">ชนิดผนังเบา</div>'+chipRow(['ภายนอก (min 13,500)','ภายใน (min 13,500)','isowall (min 7,000)'])+'<div class="sechd">② ออปชั่น</div><div class="chips"><span class="chip sm chk">☐ ฉนวน +600/ตร.ม.</span><span class="chip sm chk">☐ ทาสี</span></div>';document.getElementById('panelBody').innerHTML=h;renderModel();return;}
+  h+='<div class="sechd">① หลัก</div>';
+  if(p.sub){h+='<div class="flbl">ประเภท</div>'+chipRow(p.sub);}
+  if(p.open){h+='<div class="flbl">ชนิดการเปิด</div>'+chipRow(p.open);}
+  if(p.awn){h+='<div class="flbl">แบบเปิด</div>'+chipRow(p.awn);}
+  if(p.liftmode){h+='<div class="flbl">ลักษณะการยก <span class="mini">(ราคาเท่ากัน)</span></div>'+chipRow(p.liftmode);}
+  if(p.rail){h+='<div class="flbl">ราง (ล่าง)</div>'+chipRow(p.rail);}
+  if(p.railTop){h+='<div class="flbl">ราง (บน)</div>'+chipRow(p.railTop);}
+  if(p.fixrow){h+='<div class="flbl">ติดตาย / เปิด</div><span class="it">ติดตาย 0 · เปิด 1 บาน</span>';}
+  if(p.thresh){h+='<div class="flbl">ธรณี</div>'+chipRow(p.thresh);}
+  if(p.closer){h+='<div class="flbl">โช้คอัพประตู</div>'+chipRow(p.closer);}
+  if(p.showeronly){h+='<span class="it">รูปแบบ shower + สีอุปกรณ์ (เลือกแค่กระจก)</span>';}
+  if(p.nobana){h+='<span class="it">ขนาด: กว้าง × สูง × ชุด (ไม่มีบาน · ตัดเปิด/ราง/ล็อก/มือจับ/มุ้ง)</span>';}
+  if(p.lock||p.lock2||p.handle||p.handleSt||p.brace||p.motor||p.mosq||p.grid||p.solid){
+    h+='<div class="sechd">② ออปชั่นหลัก (ใช้บ่อย)</div>';
+    if(p.lock){h+='<div class="flbl">ชุดล็อค</div>'+chipRow(['ไม่มี','มีชุดล็อค','มีชุดล็อค + กุญแจ'],2);}
+    if(p.lock2){h+='<div class="flbl">ชุดล็อค <span class="mini">(2 บาน)</span></div>'+chipRow(['ไม่มี','มีชุดล็อค','มีชุดล็อค + กุญแจ'],2);}
+    if(p.motor){h+='<div class="flbl">มอเตอร์ยก</div><div class="chips"><span class="chip sm chk">☐ ใส่มอเตอร์</span></div>';}
+    if(p.brace){h+='<div class="flbl">เสริมแขนค้ำ</div><div class="chips"><span class="chip sm chk">☐ +500/ชุด (auto)</span></div>';}
+    if(p.handle){h+='<div class="flbl">มือจับ <span class="mini">(ติ๊กได้หลายแบรนด์)</span></div><div class="chips">'+HANDLES[p.handle].map(function(x){return '<span class="chip sm chk">☐ '+x+'</span>';}).join('')+'</div>';}
+    if(p.handleSt){h+='<div class="flbl">มือจับสแตนเลส <span class="mini">(6 ขนาด+สี · ไม่มีดิจิตอล)</span></div><div class="chips"><span class="chip sm">30.5</span><span class="chip sm">45</span><span class="chip sm">60</span><span class="chip sm">80</span><span class="chip sm">100</span><span class="chip sm">120 ซม.</span></div>';}
+    if(p.mosq){h+='<div class="flbl">มุ้ง</div>'+chipRow(['ไม่ใส่','เฟรม','จีบ','ม้วน','อื่นๆ']);}
+    if(p.grid){h+='<div class="flbl">คาดตาราง</div><div class="chips"><span class="chip sm chk">☐ มีคาดตาราง</span></div>';}
+    if(p.solid){h+='<div class="flbl">แผ่นทึบล่าง</div>'+chipRow(['ไม่มี','อลูลูกฟูก 3,500','คอมโพสิท 3,300']);}
+  }
+  var ex='';
+  if(p.struct)p.struct.forEach(function(s){ex+='<span class="it">☐ '+s+'</span>';});
+  if(p.combo)ex+='<span class="it">☐ combo บานกระทุ้งใน + มุ้งนิรภัย</span>';
+  ex+='<span class="it">ครอบวงกบ</span><span class="it">ดรอปพื้น</span><span class="it">รื้อ/งานเสริม</span>';
+  h+='<details class="esc"><summary>ออปชั่นเสริม (นานๆ ใช้)</summary><div class="flow" style="margin-top:6px;">'+ex+'</div></details>';
+  h+='<div class="note" style="margin-top:6px;color:#B45309;">※ สี/กระจก ตั้งระดับห้อง/ด้าน (โซน 2)</div>';
+  document.getElementById('panelBody').innerHTML=h;renderModel();
+}
+(function(){
+  var kc=document.getElementById('kindChips'),mc=document.getElementById('moreChips');
+  kc.innerHTML=KINDS.filter(function(k){return k.main;}).map(function(k){return '<span class="chip sm" data-k="'+k.k+'">'+k.ic+' '+k.n+'</span>';}).join('')+'<span class="chip sm more" id="moreBtn">⋯ อื่นๆ</span>';
+  mc.innerHTML=KINDS.filter(function(k){return !k.main;}).map(function(k){return '<span class="chip sm" data-k="'+k.k+'">'+k.ic+' '+k.n+'</span>';}).join('');
+  function pick(k){curKind=KINDS.filter(function(x){return x.k===k;})[0];document.querySelectorAll('#kindChips .chip[data-k],#moreChips .chip[data-k]').forEach(function(c){c.classList.toggle('on',c.dataset.k===k);});renderPanel();}
+  kc.querySelectorAll('.chip[data-k]').forEach(function(c){c.onclick=function(){pick(c.dataset.k);};});
+  mc.querySelectorAll('.chip[data-k]').forEach(function(c){c.onclick=function(){pick(c.dataset.k);};});
+  document.getElementById('moreBtn').onclick=function(){mc.classList.toggle('hide');this.classList.toggle('on');};
+  document.querySelector('#kindChips .chip[data-k]').classList.add('on');
+  document.getElementById('l2c').innerHTML=colorHtml(false);
+  document.getElementById('l3c').innerHTML=colorHtml(true);
+  document.getElementById('l2g').innerHTML=glassHtml(false);
+  document.querySelectorAll('.sidec').forEach(function(s){s.innerHTML=colorHtml(true);});
+  document.querySelectorAll('.sideg').forEach(function(s){s.innerHTML=glassHtml(true);});
+  renderPanel();
+})();
+</script>
+</div></body></html>

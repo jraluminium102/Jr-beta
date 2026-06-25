@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before ↔ After — G1 v7B · 3 งาน · 19 มิ.ย. 2026</title>
+<style>
+:root{--red:#B3151D;--green:#16a34a;--blue:#1e40af;--line:#e5e7eb;--bg:#f0f2f5;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:#111;padding:20px;}
+h1{font-size:20px;font-weight:800;color:var(--red);margin-bottom:4px;}
+.sub{font-size:13px;color:#6b7280;margin-bottom:24px;}
+.section{background:#fff;border-radius:14px;padding:18px 22px;margin-bottom:20px;border:1px solid var(--line);box-shadow:0 1px 4px #0001;}
+.section-title{font-size:15px;font-weight:800;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:800;flex:none;}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.box{border-radius:10px;padding:14px 16px;}
+.box-before{background:#fff5f5;border:1.5px solid #fca5a5;}
+.box-after{background:#f0fdf4;border:1.5px solid #86efac;}
+.box-label{font-size:11px;font-weight:800;letter-spacing:.5px;margin-bottom:8px;}
+.box-before .box-label{color:#b91c1c;}
+.box-after .box-label{color:#15803d;}
+.ui-mock{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.8;color:#374151;}
+.ui-mock .label{font-size:11px;color:#9ca3af;margin-bottom:4px;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0;}
+.chip{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;border:1.5px solid #d1d5db;color:#374151;background:#fff;}
+.chip.on{background:#1e40af;border-color:#1e40af;color:#fff;}
+.chip.red-on{background:#B3151D;border-color:#B3151D;color:#fff;}
+.chip.gray{background:#f3f4f6;color:#9ca3af;border-color:#e5e7eb;}
+.input-mock{display:inline-block;border:1.5px solid #d1d5db;border-radius:6px;padding:3px 8px;font-size:12px;min-width:44px;text-align:center;background:#fff;}
+.row-mock{display:flex;align-items:center;gap:8px;margin:4px 0;flex-wrap:wrap;}
+.label-sm{font-size:11.5px;color:#6b7280;}
+.price-tag{font-size:13px;font-weight:700;color:var(--green);}
+.strikethrough{color:#9ca3af;text-decoration:line-through;font-size:12px;}
+.arrow{font-size:18px;color:#9ca3af;display:flex;align-items:center;justify-content:center;}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.result-row:last-child{border:none;}
+.ok{color:var(--green);font-weight:700;}
+.test-pass{background:#dcfce7;color:#15803d;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;}
+.note{font-size:12px;color:#6b7280;margin-top:8px;padding:8px 10px;background:#f9fafb;border-radius:6px;}
+.price-check{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.pc{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 10px;text-align:center;}
+.pc .p-label{font-size:11px;color:#6b7280;}
+.pc .p-val{font-size:14px;font-weight:800;color:var(--green);}
+.pc .p-formula{font-size:10.5px;color:#9ca3af;}
+.btn-link{display:inline-block;padding:8px 18px;background:var(--red);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;margin-right:8px;margin-bottom:12px;}
+.btn-link.sec{background:var(--blue);}
+.summary-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.sum-chip{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px;}
+.sum-chip .icon{font-size:18px;}
+@media(max-width:600px){.compare{grid-template-columns:1fr;}.price-check{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<h1>Before ↔ After — G1 v7B · 19 มิ.ย. 2026</h1>
+<p class="sub">3 งาน: ① ทิศเปิดบานเฟี้ยม (Quick) · ② G6 fold-split · ③ บานผสม มุ้ง→จัดเต็ม+อลูทึบ · branch: quickmode-v2-allG</p>
+
+<div style="margin-bottom:16px;">
+  <a class="btn-link" href="http://localhost:5599/calculator/index.html" target="_blank">🌐 เปิดเว็บจริง</a>
+  <a class="btn-link sec" href="http://localhost:5599/review/" target="_blank">🔍 Review Link</a>
+</div>
+
+<!-- ผลเทส -->
+<div class="summary-bar">
+  <div class="sum-chip"><span class="icon">✅</span><span>golden-snapshot <b>150/150</b></span></div>
+  <div class="sum-chip"><span class="icon">✅</span><span>qa-group-audit <b>167/167</b></span></div>
+  <div class="sum-chip"><span class="icon">✅</span><span>ราคาเฟรม <b>฿20,500</b></span></div>
+  <div class="sum-chip"><span class="icon">✅</span><span>ราคาอลูทึบ <b>฿23,800</b></span></div>
+  <div class="sum-chip"><span class="icon">✅</span><span>ราคาไม่ใส่ <b>฿17,500</b></span></div>
+</div>
+
+<!-- งาน ① -->
+<div class="section">
+  <div class="section-title"><span class="badge">①</span> ทิศเปิดบานเฟี้ยม — G1 Quick Mode</div>
+
+  <div class="compare">
+    <div class="box box-before">
+      <div class="box-label">BEFORE</div>
+      <div class="ui-mock">
+        <div class="label">แบบ</div>
+        <div class="chip-row">
+          <span class="chip red-on">บานเลื่อน</span>
+          <span class="chip">บานเปิด</span>
+          <span class="chip">กระจกติดตาย</span>
+          <span class="chip">บานเฟี้ยม</span>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#9ca3af;">
+          — เลือกบานเฟี้ยม → ไม่มีอะไรเพิ่ม<br>
+          — ไม่มีให้กรอกทิศเปิด / ช่องซ้าย-ขวา
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-after">
+      <div class="box-label">AFTER ✅</div>
+      <div class="ui-mock">
+        <div class="label">แบบ</div>
+        <div class="chip-row">
+          <span class="chip">บานเลื่อน</span>
+          <span class="chip">บานเปิด</span>
+          <span class="chip">กระจกติดตาย</span>
+          <span class="chip red-on">บานเฟี้ยม</span>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="label">ทิศเปิด</div>
+          <div class="chip-row">
+            <span class="chip">เปิดขวา</span>
+            <span class="chip">เปิดซ้าย</span>
+            <span class="chip on">แยกกลาง</span>
+          </div>
+          <div class="row-mock" style="margin-top:6px;">
+            <span class="label-sm">ซ้าย</span>
+            <span class="input-mock">2</span>
+            <span class="label-sm">ช่อง / ขวา</span>
+            <span class="input-mock">2</span>
+            <span class="label-sm">ช่อง</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;background:#dbeafe;padding:6px 8px;border-radius:6px;color:#1e40af;">
+          ป้ายราคา: "3.60 ตร.ม. · ฿33,000 · <b>เปิดแยกกลาง (ซ้าย 2 / ขวา 2 ช่อง)</b>"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">📝 ทิศเปิด + fold-split โชว์เฉพาะเมื่อเลือก "บานเฟี้ยม" / label ที่การ์ดราคาอัปเดตอัตโนมัติ</div>
+</div>
+
+<!-- งาน ② -->
+<div class="section">
+  <div class="section-title"><span class="badge">②</span> G6 กั้นห้อง — fold-split ช่องซ้าย/ขวา</div>
+
+  <div class="compare">
+    <div class="box box-before">
+      <div class="box-label">BEFORE</div>
+      <div class="ui-mock">
+        <div class="label">บานเฟี้ยม — ทิศเปิด</div>
+        <div class="chip-row">
+          <span class="chip on">เปิดขวา</span>
+          <span class="chip">เปิดซ้าย</span>
+          <span class="chip">แยกกลาง</span>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:#9ca3af;">
+          — เลือก "แยกกลาง" → ไม่มีช่องกรอกจำนวน<br>
+          — label: "แยกกลาง" (ไม่มีจำนวนช่อง)
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-after">
+      <div class="box-label">AFTER ✅</div>
+      <div class="ui-mock">
+        <div class="label">บานเฟี้ยม — ทิศเปิด</div>
+        <div class="chip-row">
+          <span class="chip">เปิดขวา</span>
+          <span class="chip">เปิดซ้าย</span>
+          <span class="chip on">แยกกลาง</span>
+        </div>
+        <div class="row-mock" style="margin-top:8px;">
+          <span class="label-sm">ซ้าย</span>
+          <span class="input-mock">3</span>
+          <span class="label-sm">ช่อง / ขวา</span>
+          <span class="input-mock">2</span>
+          <span class="label-sm">ช่อง</span>
+        </div>
+        <div style="margin-top:8px;font-size:12px;background:#dbeafe;padding:6px 8px;border-radius:6px;color:#1e40af;">
+          label: "<b>แยกกลาง (ซ้าย 3 / ขวา 2 ช่อง)</b>"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">📝 G6: ค่า folddir จะเป็น 'แยกกลาง' (ไม่มีคำว่า "เปิด") — บันทึกผ่าน G6RsetOpt2('fleft'/'fright', val)</div>
+</div>
+
+<!-- งาน ③ -->
+<div class="section">
+  <div class="section-title"><span class="badge">③</span> บานผสม G1 — มุ้ง/วัสดุ ย้ายจาก ปรับ → จัดเต็ม + เพิ่มอลูทึบ</div>
+
+  <div class="compare">
+    <div class="box box-before">
+      <div class="box-label">BEFORE (v7A)</div>
+      <div class="ui-mock">
+        <div class="chip-row" style="margin-bottom:6px;">
+          <span class="chip red-on" style="font-size:11px;">บานเปิด</span>
+          <span style="font-size:11px;color:#6b7280;">1.0 × 1.5 ม. · ฿17,500</span>
+          <span class="chip" style="font-size:11px;">ปรับ ▾</span>
+        </div>
+        <div style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:8px;font-size:12px;">
+          <b>ปรับ ▴</b> (เปิดอยู่)<br>
+          <div class="label" style="margin-top:6px;">มุ้ง (อยู่ใน ปรับ)</div>
+          <div class="chip-row">
+            <span class="chip on" style="font-size:11px;">ไม่ใส่</span>
+            <span class="chip" style="font-size:11px;">เฟรม +3,000</span>
+            <span class="chip" style="font-size:11px;">จีบ +3,000</span>
+            <span class="chip" style="font-size:11px;">ม้วน +3,000</span>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:#9ca3af;">จัดเต็ม ▾ → คาดตาราง · ข้อความ · ราคา</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box box-after">
+      <div class="box-label">AFTER ✅</div>
+      <div class="ui-mock">
+        <div class="chip-row" style="margin-bottom:6px;">
+          <span class="chip red-on" style="font-size:11px;">บานเปิด</span>
+          <span style="font-size:11px;color:#6b7280;">1.0 × 1.5 ม. · ฿20,500</span>
+          <span class="chip" style="font-size:11px;">ปรับ ▾</span>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px;font-size:12px;">
+          <b>ปรับ ▴</b> (เปิดอยู่)<br>
+          <div style="font-size:11px;color:#9ca3af;margin:4px 0;">— หมายเหตุ / แบ่งบาน (บานทำงาน) —</div>
+          <b style="font-size:11.5px;">＋ จัดเต็ม ▴ (มุ้ง/อลูทึบ · คาดตาราง/ราคา/ข้อความ)</b><br>
+          <div style="margin-top:6px;background:#dbeafe;border-radius:6px;padding:6px 8px;">
+            <div class="label" style="font-size:11px;color:#1e40af;font-weight:700;">มุ้ง/วัสดุ (ย้ายมาใน จัดเต็ม)</div>
+            <div class="chip-row">
+              <span class="chip on" style="font-size:11px;">เฟรม +3,000</span>
+              <span class="chip" style="font-size:11px;">จีบ +3,000</span>
+              <span class="chip" style="font-size:11px;">อลูทึบ</span>
+            </div>
+            <div style="font-size:10.5px;color:#6b7280;margin-top:4px;">ไม่ใส่/ม้วน ตัดออก · อลูทึบ = พื้นที่×3,500</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ตรวจราคา -->
+  <div style="margin-top:14px;">
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">ตรวจราคา (บานเปิด 1.2×1.5 ม. = 17,500 base)</div>
+    <div class="price-check">
+      <div class="pc">
+        <div class="p-label">เฟรม / จีบ</div>
+        <div class="p-val">฿20,500</div>
+        <div class="p-formula">base + 3,000 ✅</div>
+      </div>
+      <div class="pc">
+        <div class="p-label">อลูทึบ</div>
+        <div class="p-val">฿23,800</div>
+        <div class="p-formula">base + 1.2×1.5×3500 = +6,300 ✅</div>
+      </div>
+      <div class="pc">
+        <div class="p-label">ไม่ใส่ (toggle off)</div>
+        <div class="p-val">฿17,500</div>
+        <div class="p-formula">base เท่าเดิม ✅</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ข้อความในใบ -->
+  <div style="margin-top:12px;background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:12.5px;">
+    <b style="color:#374151;">ข้อความในใบเสนอราคา:</b>
+    <div style="margin-top:6px;font-family:monospace;font-size:12px;color:#1e40af;">
+      - บานเปิด (1.2 × 1.5 ม.) [มุ้งเฟรม]<br>
+      - บานเปิด (1.2 × 1.5 ม.) [อลูทึบ]<br>
+      - บานเปิด (1.2 × 1.5 ม.) [มุ้งจีบ · คาดตาราง 2×3]
+    </div>
+  </div>
+
+  <div class="note">📝 s-mosq-chip → s-mat-chip · ม้วน/ไม่ใส่ตัดออก · subMatPick() toggle ใหม่ · calcSubItemPrice() อ่าน sub.mat แทน sub.mosq</div>
+</div>
+
+<!-- ผลรวมเทส -->
+<div class="section">
+  <div class="section-title"><span class="badge" style="background:var(--green);">✓</span> ผลเทสอัตโนมัติ</div>
+  <div class="result-row"><span>🧪 golden-snapshot (ราคาทุกตัวไม่เพี้ยน)</span><span class="test-pass">150/150 ✅</span></div>
+  <div class="result-row"><span>🗂️ qa-group-audit (ออปชั่นถูกหมวด)</span><span class="test-pass">167/167 ✅</span></div>
+  <div class="result-row"><span>💰 ราคาบานผสม เฟรม (base 17,500 + 3,000)</span><span class="ok">฿20,500 ✅</span></div>
+  <div class="result-row"><span>💰 ราคาบานผสม อลูทึบ (1.2×1.5×3500=6,300)</span><span class="ok">฿23,800 ✅</span></div>
+  <div class="result-row"><span>💰 ราคาบานผสม ไม่ใส่ (toggle off)</span><span class="ok">฿17,500 ✅</span></div>
+  <div class="result-row"><span>🚪 G1 Quick ทิศเปิด + fold-split (live)</span><span class="ok">แสดงผลถูก ✅</span></div>
+  <div class="result-row"><span>🏠 G6 fold-split ซ้าย/ขวา (live)</span><span class="ok">บันทึก+label ถูก ✅</span></div>
+</div>
+
+<p style="font-size:11px;color:#9ca3af;margin-top:16px;">สร้างโดย Claude Code · 2026-06-19 · branch quickmode-v2-allG</p>
+</body>
+</html>

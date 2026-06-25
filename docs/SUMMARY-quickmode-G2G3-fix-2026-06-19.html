@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>สรุปงานแก้ไข Quick mode G2+G3 — 19 มิ.ย. 2569</title>
+<style>
+:root{--red:#C0392B;--green:#059669;--muted:#6B7280;--line:#D1D5DB;--bg:#F9FAFB;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',system-ui,sans-serif;background:#fff;color:#1F2937;font-size:14px;padding:24px;max-width:860px;margin:0 auto;}
+h1{font-size:20px;color:var(--red);margin-bottom:4px;}
+.subtitle{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.section{margin-bottom:22px;border-left:3px solid var(--red);padding-left:14px;}
+.section h2{font-size:14px;color:var(--red);font-weight:700;margin-bottom:6px;}
+.section .meta{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.section p{font-size:13px;line-height:1.7;margin-bottom:4px;}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.ba-before{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;font-size:12.5px;}
+.ba-after{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:10px 12px;font-size:12.5px;}
+.ba-before b,.ba-after b{display:block;font-size:11px;margin-bottom:4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px;}
+thead tr{background:#374151;color:#fff;}
+th{padding:6px 10px;text-align:left;font-weight:700;}
+td{padding:5px 10px;border-bottom:1px solid var(--line);}
+tr:nth-child(even) td{background:var(--bg);}
+td:last-child{text-align:right;}
+.summary-table thead tr{background:var(--red);}
+.summary-table td:last-child{color:var(--green);font-weight:700;text-align:left;}
+.badge{display:inline-block;background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;font-family:monospace;}
+.footer{margin-top:24px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);}
+@media print{body{padding:0;}@page{margin:18mm;}}
+</style>
+</head>
+<body>
+
+<h1>สรุปงานแก้ไข Quick mode G2+G3 — 19 มิ.ย. 2569</h1>
+<p class="subtitle">5 จุดใน public/calculator/index.html · golden-snapshot 150/150 ✅ ทุกครั้ง · push ขึ้น main แล้ว</p>
+
+<!-- 1 -->
+<div class="section">
+  <h2>1 — G2 cascade bug: ปุ่มระแนงมีเครื่องหมาย " ใน onclick string</h2>
+  <p class="meta"><span class="badge">83ac171</span> · บรรทัด ~2699-2706</p>
+  <p><strong>ปัญหา:</strong> onclick attribute ใส่ string ที่มี " → HTML parser ตัด attribute กลางคัน → function ได้ argument ผิด → กด <code>1"x1.6"</code> แล้วหน้า/face ไม่โผล่</p>
+  <p><strong>แก้:</strong> ใช้ <code>data-v="..."</code> + <code>.replace(/"/g,'&amp;quot;')</code> แทน inline string — browser decode กลับก่อนส่ง argument</p>
+  <div class="ba">
+    <div class="ba-before"><b>Before</b>กด 1"x1.6" → face ไม่โผล่</div>
+    <div class="ba-after"><b>After ✅</b>กด 1"x1.6" → face โผล่ครบ</div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="section">
+  <h2>2 — G3 toggle ฉนวน isowall/ผนังเบา ไม่แสดง/ไม่คิดเงิน</h2>
+  <p class="meta"><span class="badge">e473b68</span> · บรรทัด ~2282-2288</p>
+  <p><strong>ปัญหา:</strong> ฉนวน toggle ไม่โผล่สำหรับ isowall · ราคา +600/ตร.ม. ไม่คิด</p>
+  <p><strong>แก้:</strong> เพิ่ม condition <code>['isowall','wall_ext','wall_int'].includes(curId)</code> ใน qiRenderG3 · qiCalcG3 ส่ง <code>insul:_insulOn</code> เข้า calcUnit</p>
+  <div class="ba">
+    <div class="ba-before"><b>Before</b>กด "มีฉนวน" → ราคาไม่เปลี่ยน</div>
+    <div class="ba-after"><b>After ✅</b>กด "มีฉนวน" → +600 × พื้นที่</div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="section">
+  <h2>3 — G2 ระแนงผนัง 1"x1.6" face 1.6" หายจาก cascade</h2>
+  <p class="meta"><span class="badge">8467749</span> · บรรทัด 2631 QIG2_BANGTA_DATA</p>
+  <p><strong>ปัญหา:</strong> BANGTA_DATA มีแค่ face 1" (บังตา) สำหรับกล่อง 1"x1.6" — ระแนงผนัง face 1.6" (rn37-42) ไม่มีในระบบ</p>
+  <p><strong>แก้:</strong> เพิ่ม rn37-rn42 (6 รุ่น) ราคาตาม R3.9 v11</p>
+  <table>
+    <thead><tr><th>ID</th><th>Box</th><th>Face</th><th>Gap</th><th>Frame</th><th>ราคา บ./ตร.ม.</th></tr></thead>
+    <tbody>
+      <tr><td>rn37</td><td>1"x1.6"</td><td>1.6"</td><td>5cm</td><td>ไม่โครง</td><td>3,200</td></tr>
+      <tr><td>rn38</td><td>1"x1.6"</td><td>1.6"</td><td>5cm</td><td>รวมโครง</td><td>4,900</td></tr>
+      <tr><td>rn39</td><td>1"x1.6"</td><td>1.6"</td><td>3cm</td><td>ไม่โครง</td><td>3,700</td></tr>
+      <tr><td>rn40</td><td>1"x1.6"</td><td>1.6"</td><td>3cm</td><td>รวมโครง</td><td>5,300</td></tr>
+      <tr><td>rn41</td><td>1"x1.6"</td><td>1.6"</td><td>2cm</td><td>ไม่โครง</td><td>4,000</td></tr>
+      <tr><td>rn42</td><td>1"x1.6"</td><td>1.6"</td><td>2cm</td><td>รวมโครง</td><td>5,800</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 4A -->
+<div class="section">
+  <h2>4A — G3 หลังคาเลื่อน: spanels hardcode 2 แผงเสมอ</h2>
+  <p class="meta"><span class="badge">beced6c</span> · บรรทัด ~2278-2295, 2326</p>
+  <p><strong>ปัญหา:</strong> <code>spanels:2</code> hardcode ใน qiCalcG3 → กด "ทำเลื่อน" คิดราคา 2 แผงเสมอ ปรับไม่ได้</p>
+  <p><strong>แก้ 3 จุด:</strong></p>
+  <p>① qiRenderG3 — เพิ่ม stepper <code>.qi-g3panels</code> โผล่เมื่อ _slideOn=true (ขั้นต่ำ 2)</p>
+  <p>② qiCalcG3 — <code>spanels:2</code> → <code>spanels:_panels</code> (ดึงจาก .qi-g3panels)</p>
+  <p>③ qiG3StepPanels — function ปุ่ม −/+ บันทึกค่าลง dataset.qiG3panels</p>
+  <div class="ba">
+    <div class="ba-before"><b>Before</b>ทำเลื่อน 4 แผง → คิดราคา 2 แผงเสมอ</div>
+    <div class="ba-after"><b>After ✅</b>ทำเลื่อน 4 แผง → ราคาตามจำนวนแผงจริง</div>
+  </div>
+</div>
+
+<!-- 4B -->
+<div class="section">
+  <h2>4B — G2 ระแนง 1"x1½" face 1½" หายจาก cascade</h2>
+  <p class="meta"><span class="badge">beced6c</span> · บรรทัด 2631 QIG2_BANGTA_DATA</p>
+  <p><strong>ปัญหา:</strong> BANGTA_DATA มีแค่ face 1" สำหรับกล่อง 1"x1½" — face 1½" (rn31-36) ไม่มีในระบบ</p>
+  <p><strong>แก้:</strong> เพิ่ม rn31-rn36 (6 รุ่น) ราคาตาม R3.9 v11</p>
+  <table>
+    <thead><tr><th>ID</th><th>Box</th><th>Face</th><th>Gap</th><th>Frame</th><th>ราคา บ./ตร.ม.</th></tr></thead>
+    <tbody>
+      <tr><td>rn31</td><td>1"x1½"</td><td>1½"</td><td>5cm</td><td>ไม่โครง</td><td>3,300</td></tr>
+      <tr><td>rn32</td><td>1"x1½"</td><td>1½"</td><td>5cm</td><td>รวมโครง</td><td>5,200</td></tr>
+      <tr><td>rn33</td><td>1"x1½"</td><td>1½"</td><td>3cm</td><td>ไม่โครง</td><td>3,700</td></tr>
+      <tr><td>rn34</td><td>1"x1½"</td><td>1½"</td><td>3cm</td><td>รวมโครง</td><td>5,600</td></tr>
+      <tr><td>rn35</td><td>1"x1½"</td><td>1½"</td><td>2cm</td><td>ไม่โครง</td><td>3,700</td></tr>
+      <tr><td>rn36</td><td>1"x1½"</td><td>1½"</td><td>2cm</td><td>รวมโครง</td><td>5,600</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- summary -->
+<h2 style="color:var(--red);font-size:14px;margin-bottom:8px;">สรุปสถานะทั้งหมด</h2>
+<table class="summary-table">
+  <thead><tr><th>งาน</th><th>จุดแก้</th><th>commit</th><th>สถานะ</th></tr></thead>
+  <tbody>
+    <tr><td>G2 cascade " bug</td><td>L2699-2706</td><td><code>83ac171</code></td><td>✅ push แล้ว</td></tr>
+    <tr><td>G3 ฉนวน toggle</td><td>L2282-2288</td><td><code>e473b68</code></td><td>✅ push แล้ว</td></tr>
+    <tr><td>G2 ระแนง 1"x1.6" face 1.6"</td><td>L2631</td><td><code>8467749</code></td><td>✅ push แล้ว</td></tr>
+    <tr><td>G3 spanels stepper</td><td>L2278-2295, L2326</td><td><code>beced6c</code></td><td>✅ push แล้ว</td></tr>
+    <tr><td>G2 ระแนง 1"x1½" face 1½"</td><td>L2631</td><td><code>beced6c</code></td><td>✅ push แล้ว</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  golden-snapshot 150/150 ✅ ทุก commit · ไฟล์ที่แก้: public/calculator/index.html เพียงไฟล์เดียว<br>
+  หากต้องการ PDF: เปิดใน browser แล้ว Ctrl+P → Save as PDF
+</div>
+
+</body>
+</html>

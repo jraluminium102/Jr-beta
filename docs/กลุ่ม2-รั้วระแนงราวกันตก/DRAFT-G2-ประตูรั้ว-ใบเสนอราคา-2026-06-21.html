@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ดราฟ ใบเสนอราคา "ประตูรั้ว" ใหม่ — แต่งคำ+เรียงลำดับ+ออปชั่นราง · 21 มิ.ย.</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI","Sarabun",Tahoma,sans-serif;margin:0;background:#f5f6f8;color:#1f2937;line-height:1.55}
+  .wrap{max-width:840px;margin:0 auto;padding:14px 12px 60px}
+  .hd{background:#b3122a;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
+  .hd h1{margin:0 0 3px;font-size:17px;font-weight:700}.hd p{margin:0;font-size:12px;opacity:.92}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 15px;margin-bottom:12px}
+  .ct{font-size:13.5px;font-weight:700;margin:0 0 9px;color:#374151}
+  .ctl{font-size:11px;font-weight:700;color:#b3122a;background:#fdecef;border-radius:5px;padding:1px 7px;margin-left:5px}
+  .ctrl{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 4px}
+  .chip{min-height:34px;padding:0 12px;border:1.5px solid #d1d5db;border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;display:inline-flex;align-items:center}
+  .chip.on{border-color:#b3122a;background:#fdecef;color:#b3122a}
+  .lbl{font-size:11.5px;color:#6b7280;font-weight:700;margin-top:8px}
+  /* ใบจำลอง */
+  .quote{border:1px solid #e2c4c9;border-radius:10px;overflow:hidden}
+  .qhead{background:#fff;border-bottom:2px solid #b3122a;padding:9px 13px;display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#b3122a}
+  .qbody{padding:11px 13px;font-size:13px}
+  .qtitle{font-weight:700;font-size:14px;margin-bottom:3px}
+  .qsec{font-size:10.5px;font-weight:700;color:#9ca3af;letter-spacing:.5px;margin:9px 0 3px;text-transform:uppercase}
+  .qline{padding:2px 0 2px 14px;position:relative;color:#1f2937}
+  .qline:before{content:'–';position:absolute;left:2px;color:#9ca3af}
+  .qline.add{color:#166534}
+  .qopt{margin-top:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:7px 10px;font-size:12px;color:#b91c1c}
+  .qty{font-size:12px;color:#6b7280;text-align:right;margin-top:7px;border-top:1px dashed #eee;padding-top:5px}
+  .bad{background:#fff7f7;border-color:#fecaca}
+  .bad .qhead{color:#9ca3af;border-color:#d1d5db}
+  .badmark{color:#b91c1c;font-weight:700}
+  .strike{text-decoration:line-through;color:#b91c1c}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:680px){.two{grid-template-columns:1fr}}
+  .minih{font-size:11px;font-weight:700;color:#6b7280;margin-bottom:5px}
+  .note{font-size:12px;color:#1e3a5f;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 12px;margin-top:9px}
+  .note b{color:#b3122a}
+  .q{font-size:12px;color:#92722a;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 12px;margin-top:10px}
+  .q b{color:#b45309}
+  .q ol{margin:6px 0 0;padding-left:20px}.q li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1>ใบเสนอราคา "ประตูรั้ว" — แต่งคำ + เรียงลำดับ + ออปชั่นราง</h1>
+    <p><span style="background:#fff;color:#b3122a;border-radius:4px;padding:0 5px;font-weight:700">21 มิ.ย.</span> กดสลับ ตรง/โค้ง · วางรางใหม่/ใช้รางเดิม → ดูข้อความใบเปลี่ยน · เทียบของเดิม(ผิด)↔ใหม่</p></div>
+
+  <!-- ปุ่มลองกด -->
+  <div class="card">
+    <div class="ct">ลองปรับ (ของจริงดึงจากที่กรอกในฟอร์ม)</div>
+    <div class="lbl">ลักษณะการเปิด</div>
+    <div class="ctrl" id="cOpen">
+      <button class="chip on" data-v="straight" onclick="setOpen(this)">บานเลื่อนตรง (รางตรง)</button>
+      <button class="chip" data-v="curved" onclick="setOpen(this)">บานเลื่อนโค้ง (รางโค้ง)</button>
+    </div>
+    <div class="lbl">งานราง <span class="ctl">ออปชั่นใหม่</span></div>
+    <div class="ctrl" id="cRail">
+      <button class="chip on" data-v="new" onclick="setRail(this)">พร้อมวางรางใหม่</button>
+      <button class="chip" data-v="reuse" onclick="setRail(this)">ใช้รางเดิม (ไม่รวมราง)</button>
+    </div>
+    <div class="lbl">มอเตอร์</div>
+    <div class="ctrl" id="cMotor">
+      <button class="chip on" data-v="1" onclick="setMotor(this)">มี (1 ตัว) + สายไฟ</button>
+      <button class="chip" data-v="0" onclick="setMotor(this)">ไม่มี</button>
+    </div>
+  </div>
+
+  <!-- เทียบ -->
+  <div class="card">
+    <div class="ct">เดิม (ผิด) ↔ ใหม่ (เสนอ)</div>
+    <div class="two">
+      <div>
+        <div class="minih">❌ ตอนนี้</div>
+        <div class="quote bad">
+          <div class="qhead"><span>ชุดที่ 1 ประตูรั้วระแนง (1.8 × 2.7 ม.)</span><span>1 ชุด</span></div>
+          <div class="qbody">
+            <div class="qline"><span class="strike">ประตูระแนงอลูมิเนียมบานเลื่อนเปิดคู่กลางรางล่าง พร้อมระแนงติดตายด้านข้าง</span> <span class="badmark">← ผิด</span></div>
+            <div class="qline"><span class="strike">ราง ตรง</span> <span class="badmark">← ไม่บอกวางใหม่/เดิม</span></div>
+            <div class="qline">มอเตอร์ 1 ตัว <span class="badmark">(สายไฟไม่ขึ้น)</span></div>
+            <div class="qline">ไม่มีธรณี</div>
+            <div class="qsec">รายละเอียด</div>
+            <div class="qline badmark">ลายระแนง: ... <span style="font-weight:400">← จมอยู่ล่าง ควรขึ้นบน</span></div>
+            <div class="qline">สีอบขาว</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="minih">✅ เสนอใหม่ (กดปุ่มด้านบนดูเปลี่ยน)</div>
+        <div class="quote">
+          <div class="qhead"><span>ชุดที่ 1 ประตูรั้วระแนง (1.8 × 2.7 ม.)</span><span>1 ชุด</span></div>
+          <div class="qbody" id="newQuote"></div>
+        </div>
+      </div>
+    </div>
+    <div class="note">📌 <b>ที่แก้:</b> ① ชื่อดึงจาก <b>ตรง/โค้ง</b> ไม่ใช่ "เปิดคู่กลางรางล่าง" · ② <b>ลายระแนงขึ้นรายการบน</b> + format สวยแบบใบจริง · ③ ราง = <b>พร้อมวางรางใหม่ / ใช้รางเดิม</b> · ④ มอเตอร์ + <b>งานสายไฟขึ้นใบ</b> · เรียง: ลักษณะ→ลาย→ราง→มอเตอร์→ธรณี → (ล่าง) สี</div>
+  </div>
+
+  <div class="q">
+    <b>⚠ ขอพี่เคาะ 3 จุด ก่อนลงโค้ดจริง (เจอจากตรวจใบจริง):</b>
+    <ol>
+      <li><b>ชื่อลักษณะเปิด</b> — เอา "บานเลื่อน<b>ตรง/โค้ง</b>" (ตามฟอร์มที่ทำไว้) · หรือใบจริงเก่าใช้ "บานเลื่อน<b>เปิดคู่กลางรางบน</b>" — เอาแบบไหน? (ดราฟนี้ใช้ ตรง/โค้ง)</li>
+      <li><b>ชื่อลายระแนง</b> — แบบสวย "ระแนงอลูมิเนียมกล่อง 1"×1.6" โชว์หน้า 1" เว้นระยะ 2.5 ซม." (เหมือนใบจริง) · หรือชื่อ raw "บังตาผนังระแนง 1x5 cm. โชว์ 1cm. 5cm."? (ดราฟนี้ใช้แบบสวย)</li>
+      <li><b>ใช้รางเดิม</b> = ตัดเฉพาะค่าราง (railC=0) · <b>บานโค้งยังคิด</b> (เป็นค่าบานไม่ใช่ราง) · ทำ<b>โหมดเต็มก่อน</b> (คิดเร็วทีหลัง) — โอเคไหม?</li>
+    </ol>
+    ✅ ของเดิม (ราคา/ออปชั่นในฟอร์ม) ไม่แตะ · แก้แค่ "ข้อความ+ลำดับในใบ" + เพิ่ม control งานราง
+  </div>
+</div>
+
+<script>
+var st={open:'straight',rail:'new',motor:'1'};
+function setOpen(b){pick('cOpen',b);st.open=b.dataset.v;render();}
+function setRail(b){pick('cRail',b);st.rail=b.dataset.v;render();}
+function setMotor(b){pick('cMotor',b);st.motor=b.dataset.v;render();}
+function pick(id,b){[].forEach.call(document.getElementById(id).querySelectorAll('.chip'),function(c){c.classList.remove('on')});b.classList.add('on');}
+function render(){
+  var openTxt=st.open==='curved'?'บานเลื่อนโค้ง':'บานเลื่อนตรง';
+  var railTxt=st.rail==='reuse'?'ใช้รางเดิม (ไม่รวมราง)':'พร้อมวางรางใหม่';
+  var leaf=st.open==='curved'?' · บานโค้ง 3 บาน':'';
+  var h='<div class="qtitle">รายการ</div>';
+  h+='<div class="qline">ประตูระแนงอลูมิเนียม'+openTxt+' พร้อมระแนงติดตายด้านข้าง</div>';
+  h+='<div class="qline add">ลายระแนง: ระแนงอลูมิเนียมกล่อง 1”×1.6” โชว์หน้า 1” เว้นระยะ 2.5 ซม. <span style="font-size:10px;color:#9ca3af">← ขึ้นบน</span></div>';
+  h+='<div class="qline'+(st.rail==='reuse'?' add':'')+'">ราง'+(st.open==='curved'?'โค้ง':'ตรง')+' '+railTxt+leaf+'</div>';
+  if(st.motor==='1'){ h+='<div class="qline">มอเตอร์ 1 ตัว</div>'; h+='<div class="qline add">งานสายไฟมอเตอร์: เดินสายไฟจากตู้ควบคุม 15 ม. <span style="font-size:10px;color:#9ca3af">← ขึ้นใบ</span></div>'; }
+  h+='<div class="qline">ไม่มีธรณี</div>';
+  h+='<div class="qsec">รายละเอียด</div>';
+  h+='<div class="qline">สีอบขาว</div>';
+  h+='<div class="qopt">OPTION : เปลี่ยนเป็นอลูมิเนียมลายไม้ สี Golden Teak SMS = ราคาเพิ่ม 8,000 บาท</div>';
+  h+='<div class="qty">จำนวน 1 ชุด</div>';
+  document.getElementById('newQuote').innerHTML=h;
+}
+render();
+</script>
+</body>
+</html>

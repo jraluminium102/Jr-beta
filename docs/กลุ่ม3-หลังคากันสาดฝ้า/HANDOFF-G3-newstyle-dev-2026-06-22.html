@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ใบสั่ง dev G3 หลังคา (newstyle) — ฉบับละเอียด รอบเดียวผ่าน · 22 มิ.ย.</title>
+<style>
+:root{--red:#B3151D;--red2:#7f1d1d;--line:#e5e7eb;--bg:#f3f4f6;--blue:#1e40af;--ok:#16a34a;--amber:#a16207;--mut:#6b7280}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun','Segoe UI',sans-serif;background:var(--bg);color:#1f2937;padding:14px 12px 60px;line-height:1.6}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:19px;color:var(--red2);margin-bottom:3px}
+.sub{font-size:12.5px;color:var(--mut);margin-bottom:14px}
+.sec{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:12px}
+.sec h2{font-size:15px;color:var(--red2);margin-bottom:9px;border-bottom:2px solid #fde8ea;padding-bottom:5px}
+.sec h3{font-size:13.5px;color:#374151;margin:11px 0 5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}
+th{background:#b3122a;color:#fff;padding:6px 8px;text-align:left;font-weight:600}
+td{border:1px solid #eee;padding:5px 8px;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:4px;padding:0 5px;font-size:11.5px;color:#b3122a;font-family:Consolas,monospace}
+.warn{background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid var(--amber);border-radius:9px;padding:10px 13px;font-size:12.5px;color:#92400e;margin:8px 0}
+.ok{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid var(--ok);border-radius:9px;padding:10px 13px;font-size:12.5px;color:#166534;margin:8px 0}
+.note{background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid var(--blue);border-radius:9px;padding:10px 13px;font-size:12.5px;color:#1e3a5f;margin:8px 0}
+ul,ol{margin:5px 0 5px 20px}li{margin:3px 0;font-size:12.5px}
+.chk{list-style:none;margin-left:0}.chk li:before{content:'☐ ';color:var(--red);font-weight:700}
+.tag{display:inline-block;background:#eef2ff;color:var(--blue);font-size:11px;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:5px}
+.lbl{font-weight:700;color:var(--red2)}
+.y{color:var(--amber);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ใบสั่ง dev — G3 หลังคา/กันสาด/ฝ้า (ฟอร์มสไตล์ใหม่)</h1>
+  <div class="sub">22 มิ.ย. · เป้าหมาย <b>"รอบเดียวผ่าน"</b> — ทำตามนี้แล้วตรงดราฟเป๊ะ ไม่ต้องตรวจซ้ำหลายรอบ</div>
+
+  <div class="ok"><b>📐 ต้นแบบตายตัว = ดราฟ</b> <code>docs/กลุ่ม3-หลังคากันสาดฝ้า/DRAFT-G3-ux-newstyle-2026-06-22.html</code> (review: localhost:5599/review/g3-newstyle.html) · <b>งานจริงต้องหน้าตา+พฤติกรรม+ราคา = ดราฟ 100%</b> · ทุกตัวเลข/ปุ่ม/ลำดับในใบสั่งนี้ดึงจาก index.html จริงแล้ว (ไม่เดา)</div>
+
+  <div class="sec">
+    <h2>0) กฎเหล็กกันพัง (ทำก่อน-หลังเสมอ)</h2>
+    <ol class="chk">
+      <li><code>git pull --rebase --autostash origin main</code> ก่อนแตะไฟล์ (ดึงงาน G1 คิวกลางล่าสุด)</li>
+      <li><code>node scripts/golden-snapshot.mjs</code> <b>ก่อนแก้</b> → จด baseline (150 ราคา ทุกกลุ่ม)</li>
+      <li>แก้เฉพาะโซน G3 · <b>ห้ามแตะ engine ราคาที่กลุ่มอื่นใช้ร่วม</b> (colorPrice/rateOf/roundUp/basePrice — ใช้ได้ ห้ามแก้นิยาม)</li>
+      <li><code>node scripts/golden-snapshot.mjs</code> <b>หลังแก้</b> → 150 ราคาต้องตรง baseline (เพี้ยน=หยุด ตรวจ)</li>
+      <li>เทส G3 ของจริงเทียบดราฟ (section 7) → add → commit → pull --rebase → push HEAD:main</li>
+    </ol>
+    <div class="warn">⚠ G3 ใช้ engine ร่วม (calcUnit/ceilCalc/colorPrice). แก้ที่ "การประกอบ UI + การเรียก" เท่านั้น · <b>อย่าแก้สูตร/เรตใน RATES/COLORS</b> (กลุ่มอื่นพัง)</div>
+  </div>
+
+  <div class="sec">
+    <h2>1) โครงฟอร์ม — 3 กล่องหลัก + ลากข้ามกล่อง</h2>
+    <table>
+      <tr><th>กล่อง</th><th>เนื้อหา</th><th>ลากได้</th></tr>
+      <tr><td><b>① สเปกหลัก</b></td><td>กลุ่มวัสดุ → รุ่น → (ความหนา/ฟิล์ม/กระจก) → สีวัสดุมุง → <b>สีโครง L1/L2/L3</b> → แป → โครงสร้าง → ขนาด(ยาว×ยื่น×ชุด) → ยืนยันตัวอย่าง → <b>รางน้ำ</b> (การ์ด)</td><td>การ์ด "รางน้ำ" ลากข้ามกล่องได้</td></tr>
+      <tr><td><b>② ออปชั่นหลัก</b></td><td>การ์ด: โครงเหล็กเสริม · ฝ้าในตัว · หลังคาเลื่อน · หลังคาผสม</td><td>✅ ลากเรียง+ข้ามกล่อง</td></tr>
+      <tr><td><b>③ ออปชั่นเสริม</b></td><td>การ์ด: หมายเหตุมาตรฐาน · งานเสริม/อื่นๆ</td><td>✅ ลากเรียง+ข้ามกล่อง</td></tr>
+    </table>
+    <div class="note"><b>ลากเรียง:</b> ใช้เครื่องมือลาก-เรียงตัวเดิมที่กลุ่มอื่นมี (ลากได้ทั้งมือถือ) · <b>default order (พี่นัทจัด):</b> กล่อง② <code>[โครงเหล็ก, ฝ้า, เลื่อน, ผสม]</code> · กล่อง③ <code>[หมายเหตุ, อื่นๆ]</code> · มีปุ่ม "คัดลอกลำดับ" ส่งกลับได้</div>
+  </div>
+
+  <div class="sec">
+    <h2>2) สินค้า + ปุ่ม/ชิป (ดึงจาก index.html จริง · ห้ามเดา)</h2>
+    <table>
+      <tr><th>กลุ่มวัสดุ</th><th>รุ่น (ชิป)</th><th>ความหนา</th><th>สีวัสดุมุง (ต่อรุ่น)</th></tr>
+      <tr><td>ไวนิล/ดีไลท์</td><td>ไวนิล VG · ดีไลท์</td><td>—</td><td>ไวนิล: เทา/ขาว/น้ำตาล · ดีไลท์: DG-2 ฟ้าคราม/DG7 เทาโมเดิร์น</td></tr>
+      <tr><td>เมทัลชีท</td><td>PVC EPS · เหล็ก EPS · ฟอยล์ PU · เหล็ก PU</td><td><b>เลือกความหนา 1"/2" → สลับชุด product</b> (1"=imp7/9/11/13 · 2"=imp8/10/12/14) แล้วเลือกรุ่นย่อย (engine L3738)</td><td>น้ำตาล/ขาว/เทา</td></tr>
+      <tr><td>ชินโคไลท์</td><td>Heat Cut(6) · Superior(6) · Nature(6) · Shade(4) · Prime(10) · Grand(10)</td><td><b>ล็อกกับรุ่น (ไม่ต้องเลือกแยก)</b></td><td>ต่อรุ่น: HC-/SP-/NT-/Shade-/Prime- (ดูดราฟ · Grand ไม่มีสี)</td></tr>
+      <tr><td>โพลีตัน/กระจก</td><td>โพลีตัน 3มม. · กระจกลามิเนต</td><td>ลามิเนต: ฟิล์ม[ใส/เขียว/กันร้อน] + กระจก[4+4/5+5]</td><td>โพลีตัน 8 สี (Clear101…Green Metallic504) · ลามิเนตไม่มีสีมุง</td></tr>
+    </table>
+    <div class="warn">⚠ รายการรุ่น/สี <b>ดึงจาก product def + select จริงใน index.html</b> (เหมือนดราฟ) ไม่ใช่ filter cat · ลามิเนต = ซ่อนช่อง "สีวัสดุมุง" โชว์ ฟิล์ม+กระจกแทน</div>
+  </div>
+
+  <div class="sec">
+    <h2>3) ราคา — เรตจริงทุกตัว (cross-check engine แล้ว · ห้ามพัง)</h2>
+    <h3>3.1 ราคาหลังคาหลัก = <code>roundUp(max(min, monoRate(area, table)))</code></h3>
+    <table>
+      <tr><th>วัสดุ</th><th>table</th><th>min</th></tr>
+      <tr><td>ไวนิล/ดีไลท์</td><td>ROOF_STD</td><td>28,000</td></tr>
+      <tr><td>โพลีตัน</td><td>ROOF_POLY</td><td>30,000</td></tr>
+      <tr><td>ลามิเนต</td><td>ROOF_LAM</td><td>45,000</td></tr>
+      <tr><td>เมทัล imp7/9/11/13 (+8/10/12/14)</td><td>IMP7…IMP14</td><td>28,000/29,000/28,000/32,000…</td></tr>
+      <tr><td>ชินโค imp15-20</td><td>IMP15-19 (Grand=IMP19)</td><td>48k/46k/47k/44k/61k/61k</td></tr>
+    </table>
+    <div class="ok">✅ cross-check แล้ว 7/7: vinyl 4×3=72,000 · polyton=78,000 · laminate 3×2=66,000 · imp7 5×4=106,000 · imp13 6×5=189,000 · imp15=126,000 · imp19=260,000</div>
+    <h3>3.2 ที่ "ไม่คิดเงิน" (สำคัญ — engine L1890-91)</h3>
+    <ul><li><b>แป (เดี่ยว/คู่) = 0</b> · <b>โครงเหล็กชุบซิงค์ = 0</b> (เท่าโครงอลู) — เป็นสเปก ไม่ขึ้นแตกราคา/ไม่บวกยอด</li></ul>
+    <h3>3.3 หลังคาเลื่อน</h3>
+    <ul><li><code>monoRate(area, ROOF_SLIDE) + (บาน−1)×tier</code> · tier: a≤10=4,500 · ≤20=6,750 · ≤30=9,000 · >30=11,250 · + มอเตอร์ (กรอกราคา×จำนวน · default 30,000/ตัว)</li></ul>
+    <h3>3.4 ฝ้าในตัว = ceilCalc (reuse calcUnit · roundUp พัน)</h3>
+    <table>
+      <tr><th>ชนิดฝ้า</th><th>เรต/ตร.ม.</th><th>หมายเหตุ</th></tr>
+      <tr><td>ฝ้าอลู ไทยทิพย์ (ตัวซี)</td><td>ขาว-ดำ 2,100 · ลายไม้ 2,700</td><td>มีสี</td></tr>
+      <tr><td>ฝ้าไม้เทียม remood</td><td>มาตรฐาน 2,600 · ลายไม้/สีอื่น 2,800</td><td>มีสี</td></tr>
+      <tr><td>ฝ้าฉาบเรียบ</td><td>max(12,000, A×1,200/1,150) <b>+ฉนวน 600/ตร.ม.</b></td><td>bucket · ไม่มีสีอลู · <b>ฉนวนเฉพาะฉาบเรียบ</b> (optInsul) — ฝ้าชนิดอื่นไม่มีฉนวน</td></tr>
+      <tr><td>ฝ้าระแนงอลู 1×5 / 1"×1.6"(เว้น5) / (เว้น2)</td><td>3,300 / 3,700 / 4,800</td><td>สีอลูมาตรฐาน</td></tr>
+    </table>
+    <div class="ok">✅ ฉนวน = <b>600/ตร.ม. (เป๊ะ · engine L1863 <code>opt+=600*a</code>)</b> · เฉพาะฝ้าฉาบเรียบ (optInsul)</div>
+    <h3>3.5 รางน้ำ / โครงเหล็กเสริม (เรตจาก label จริง)</h3>
+    <ul><li>รางอลู S 1,000/ม. · ปิดปลายกันน้ำกระเด็น 1,000/ม. · ท่อน้ำทิ้ง PVC · โซ่รางน้ำ 3,000/เส้น · ครอบท่อ PVC 1,500/1.5ม.(ปัดขึ้น) · ตะแกรงกันใบไม้ = รวมในราคา</li>
+    <li>เสาแผง 4,000/ต้น · เสา 4"×8" 2,000/ต้น · <b>ตั้งเสา 4" = 1,500/ต้น</b> (กรอกจำนวน) · คานเหล็กถัก รุ่น1 2,400/ม. รุ่น2 3,600/ม. · ซ่อนสโลปคอมโพสิต 3,500/ตร.ม. · รื้อของเดิม 5,000</li></ul>
+  </div>
+
+  <div class="sec">
+    <h2>4) สีโครงอลูมิเนียม L1/L2/L3 (ระบบสีต่อข้อ · มาตรฐานใช้ทุกกลุ่ม)</h2>
+    <table>
+      <tr><th>ระดับ</th><th>ทำอะไร</th><th>ราคา / ที่โผล่ในใบ</th></tr>
+      <tr><td><b>L1 สีทั้งใบ</b></td><td>หลังคาใช้สีเดียวกับ "สีทั้งใบ" ของใบเสนอราคา</td><td><code>colorPrice(สีทั้งใบ, area)</code> · <b>บวกในยอด</b> · โชว์ "สีโครง: X" ใน รายละเอียด (อบขาว=ฟรี)</td></tr>
+      <tr><td><b>L2 เปลี่ยนเฉพาะข้อนี้</b></td><td>2 โหมด</td><td>🟢 <b>สีจริง (คอนเฟิร์ม)</b> = เป็นสีของข้อนี้ · <code>colorPrice</code> <b>บวกยอด</b> · โชว์รายละเอียด<br>🔵 <b>ออปชั่น</b> = บรรทัด "เปลี่ยนสีโครง จาก[ทั้งใบ]เป็น[L2] ราคาเพิ่ม/ลด Z" ใน <b>ช่อง OPTION</b> · <b>ไม่บวกยอด</b></td></tr>
+      <tr><td><b>L3 ต่อจาก L2</b></td><td>เปลี่ยน <b>สีโครง</b> หรือ <b>ชนิดวัสดุมุง</b></td><td>บรรทัด "เปลี่ยน[สีโครง/วัสดุมุง] จาก[ค่า L2]เป็น[L3] ราคาเพิ่ม/ลด Z" ใน <b>ช่อง OPTION</b> · <b>ไม่บวกยอด</b></td></tr>
+    </table>
+    <ul>
+      <li>ราคา = <code>colorPrice(ci, area)</code> (สี · COLORS 13 ตัวเดิม) หรือ <code>roofBase ส่วนต่าง</code> (วัสดุมุง)</li>
+      <li>Z = ส่วนต่าง (signed): บวก→"ราคาเพิ่ม" · ลบ→"ราคาลดลง" (กลับคำอัตโนมัติ)</li>
+      <li><b>noSum:</b> โหมดออปชั่น (L2-🔵) + L3 → โชว์เฉพาะกล่อง OPTION · <b>ไม่รวมในยอด/แตกราคา</b> (ลูกค้ายังไม่เลือก)</li>
+    </ul>
+    <div class="note">เทสจริงในดราฟ: L2🟢ซาฮาร่า→ยอด 78,480 (รวม) · L2🔵→ยอด 72,000 (ไม่รวม) + OPTION "เพิ่ม 6,480" · L3 วัสดุไวนิล→PVC EPS "ลดลง 2,000"</div>
+  </div>
+
+  <div class="sec">
+    <h2>5) ใบเสนอราคา — 5 กล่อง (ลำดับตายตัว)</h2>
+    <ol>
+      <li><b>① รายการ</b> = หัวงาน "หลังคา[กันสาด/เลื่อน] [รุ่น] (ยาว×ยื่น ม.)" + บรรทัด default: โครงสร้าง+แป · รางน้ำ · ท่อทิ้ง · เสา4"</li>
+      <li><b>② OPTION (ของเสริม)</b> = ชุดเลื่อน/มอเตอร์/ฝ้า/หลังคาผสม/โครงเหล็ก + <b>บรรทัดสลับสี L2🔵/L3 (+/-)</b></li>
+      <li><b>③ หมายเหตุ</b> = หมายเหตุมาตรฐานที่ติ๊ก (แก้/เพิ่ม/คงค้างได้)</li>
+      <li><b>④ รายละเอียดงาน</b> = default: สีโครง · วัสดุมุง+สี · (กระจกลามิเนต)</li>
+      <li><b>⑤ แตกราคา</b> = รายบรรทัด + รวม (<b>ไม่รวมบรรทัด noSum</b>)</li>
+    </ol>
+    <div class="note">บรรทัด spec <b>สลับ ① รายการ ↔ ④ รายละเอียด ได้</b> (ปุ่ม ⇄ ในดราฟ) · default ตามดราฟ · ส่ง dev ตั้ง default นี้</div>
+  </div>
+
+  <div class="sec">
+    <h2>6) จุดแก้ใน index.html (ระวัง shared)</h2>
+    <ul>
+      <li>ฟอร์มหลังคา (สร้างชิป/การ์ด/ลาก) — โซน roof form (ราว L4870+ · <code>o-roof*</code>)</li>
+      <li>genQuote หลังคา (5 กล่อง + swap option line) — โซน roof quote (ราว L6500+)</li>
+      <li>เรียกใช้: <code>calcUnit</code>(หลัก) · <code>ceilCalc</code>(ฝ้า) · <code>colorPrice</code>(สีโครง) · <code>roofBase/doorStructBase</code> — <b>เรียกได้ ห้ามแก้นิยาม</b></li>
+      <li>สีต่อข้อ L1/L2/L3 — reuse กลไกสีทั้งใบ/coOverride ของ G1 (<code>#global-color</code> / <code>.i-color</code> / colorDrillRender) ถ้ามี · ไม่สร้างใหม่ซ้ำ</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2>7) Acceptance — "รอบเดียวผ่าน" (เช็กให้ครบก่อนปิด)</h2>
+    <ul class="chk">
+      <li>golden 150 ราคา = baseline (ไม่มีกลุ่มอื่นพัง)</li>
+      <li>ปุ่ม/ชิป/การ์ด + default order = ดราฟ 100% (กลุ่มวัสดุ/รุ่น/สีต่อรุ่น/ความหนาชินโคล็อก/ลามิเนตซ่อนสีมุง)</li>
+      <li>ราคาหลัก 7 เคส (section 3.1) ตรงเป๊ะ · แป/โครงเหล็ก = ไม่ขยับยอด · ฝ้า 4 ชนิดตรง ceilCalc</li>
+      <li>สีโครง: L1 ตามทั้งใบ · L2🟢บวกยอด/🔵ไม่บวก+OPTION · L3 +/- ไม่บวก (ทดสอบเพิ่ม+ลด)</li>
+      <li>ใบ 5 กล่อง ลำดับถูก · swap line อยู่ OPTION · ⑤ แตกราคาไม่รวม noSum</li>
+      <li>เทียบสายตากับดราฟ (mirror) — หน้าตาเหมือน</li>
+    </ul>
+    <div class="ok">แนะนำ: ทำ <code>scripts/check-g3.mjs</code> (ลอก check-g1) ใส่ EXPECTED จากดราฟ → รัน 1 คำสั่ง เห็น 🔴 ที่ยังไม่ตรง = ปิดงานเมื่อ 🔴 เหลือ 0</div>
+  </div>
+
+  <div class="sec">
+    <h2>8) 🟡 รอเคาะ — เคลียร์หมดแล้ว ✅</h2>
+    <div class="ok">ทั้ง 2 จุดเคาะ + ค้นโค้ดยืนยันแล้ว (22มิ.ย.):<br>① <b>ฉนวนฝ้า = 600/ตร.ม.</b> (เป๊ะ · engine L1863 · เฉพาะฉาบเรียบ)<br>② <b>เมทัล 2"</b> = ความหนา 1"/2" สลับ product จริง (imp7↔8 ฯลฯ · engine L3738) · ดราฟแก้ให้ตรงแล้ว · ไม่มี 🟡 ค้าง</div>
+  </div>
+
+  <div class="sub">อ้างอิง: ดราฟ DRAFT-G3-ux-newstyle-2026-06-22.html · memory [[g3-newstyle-draft-master]] [[color-swap-option-line]] [[always-pull-real-data-first]] · กฎ deploy [[deploy-workflow-chatB]]</div>
+</div>
+</body>
+</html>

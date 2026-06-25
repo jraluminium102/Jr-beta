@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAFT — fold-split UX (บานเฟี้ยมแยกกลาง) · 2026-06-19</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,sans-serif;background:#F7F8FA;color:#1F2937;padding:16px;}
+:root{
+  --red:#E61E28;--red-dark:#B3151D;--bg:#F7F8FA;--card:#fff;
+  --line:#E5E7EB;--muted:#6B7280;--ink:#1F2937;--redbg:#FDECEC;--ok:#1E7E45;
+}
+h1{font-size:15px;font-weight:700;color:var(--red-dark);margin-bottom:4px;}
+.meta{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.note-box{background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400E;margin-bottom:14px;}
+.sec-head{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
+
+/* ===== G1 QUICK STYLE ===== */
+.qi-label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;}
+.qi-grid{display:grid;grid-template-columns:1fr 1fr 90px 90px;gap:8px;margin-bottom:10px;}
+.qi-fld input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:15px;font-family:inherit;text-align:center;background:#fff;color:var(--ink);}
+.qi-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+/* G1 chip */
+.chip{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:6px 11px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;line-height:1.25;transition:background .12s,border-color .12s;}
+.chip:active{background:var(--redbg);}
+.chip.on{background:var(--red-dark);border-color:var(--red-dark);color:#fff;}
+/* Quick fold-split row */
+.qi-fold-split{display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap;margin-top:6px;}
+.qi-fold-split input{width:52px;height:32px;border:1.5px solid var(--line);border-radius:8px;text-align:center;font-family:inherit;font-size:14px;color:var(--ink);padding:0 4px;}
+.auto-box{display:inline-flex;align-items:center;justify-content:center;width:52px;height:32px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-weight:700;color:var(--muted);background:#F9FAFB;}
+.tag-ok{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:#D1FAE5;color:#065F46;margin-left:2px;}
+.tag-warn{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:#FEE2E2;color:#991B1B;margin-left:2px;}
+.hidden{display:none!important;}
+
+/* ===== G1 FULL STYLE ===== */
+.opt-label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px;}
+.fold-split{display:flex;align-items:center;gap:10px;margin:4px 0 6px;padding:7px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;flex-wrap:wrap;}
+.fold-split input{width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;font-size:14px;color:var(--ink);padding:0 4px;}
+.fold-split .auto-box{width:48px;height:30px;font-size:13px;}
+
+/* ===== G6 STYLE ===== */
+.g6r-body{padding:11px 13px;}
+.g6r-body .sec-fl{font-size:12px;color:#666;margin:7px 0 2px;font-weight:600;}
+.g6r-body .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+.g6r-body .rl{font-size:12px;color:#444;flex:0 0 64px;}
+.g6r-body .u{font-size:11px;color:#777;}
+.g6r-body input[type=number]{width:62px;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 6px;font-family:inherit;font-size:14px;}
+.g6r-body .chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
+.g6r-body .c{border:1px solid #D1D5DB;background:#fff;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;min-height:34px;font-family:inherit;font-weight:600;}
+.g6r-body .c.on{background:#B3151D;color:#fff;border-color:#B3151D;}
+.g6r-body .auto-box{display:inline-flex;align-items:center;justify-content:center;width:52px;height:32px;border:1px solid #D1D5DB;border-radius:6px;font-size:14px;font-weight:700;color:#777;background:#F9FAFB;}
+.g6r-wrap{border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;background:#fff;}
+.g6r-top{background:#B3151D;color:#fff;padding:7px 12px;font-size:13px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>DRAFT — fold-split UX · บานเฟี้ยม แยกกลาง</h1>
+<div class="meta">19 มิ.ย. 2569 · ดราฟตรวจเท่านั้น ยังไม่แก้โค้ด · ราคา = เดโม</div>
+<div class="note-box">⚠️ ดราฟนี้ตรวจ UX เท่านั้น — ยังไม่ได้แก้ index.html<br>
+แก้ได้ 3 จุด: G1 Quick · G1 Full · G6 (ไม่แตะส่วนอื่น)</div>
+
+<!-- ────────────────────────── G1 QUICK ────────────────────────── -->
+<div class="sec-head">G1 Quick mode — บานเฟี้ยม</div>
+<div class="card">
+  <!-- size row แบบเดิม: กว้าง/สูง/บาน/ชุด -->
+  <div class="qi-grid">
+    <div class="qi-fld"><label class="qi-label">กว้าง (ม.)</label><input type="number" step="0.1" value="2.0"></div>
+    <div class="qi-fld"><label class="qi-label">สูง (ม.)</label><input type="number" step="0.1" value="2.1"></div>
+    <div class="qi-fld">
+      <label class="qi-label">จำนวนบาน</label>
+      <input type="number" id="qi-panels" step="1" min="2" value="4" oninput="qiPanelChange()">
+    </div>
+    <div class="qi-fld"><label class="qi-label">จำนวนชุด</label><input type="number" step="1" value="1"></div>
+  </div>
+
+  <!-- ทิศเปิด chips (เดิมอยู่เหนือ size-row · ในดราฟนี้แสดงลำดับเดิม) -->
+  <label class="qi-label">ทิศเปิด</label>
+  <div class="qi-chips">
+    <button class="chip on" onclick="qiPick('right',this)">เปิดขวา</button>
+    <button class="chip" onclick="qiPick('left',this)">เปิดซ้าย</button>
+    <button class="chip" onclick="qiPick('mid',this)">แยกกลาง</button>
+  </div>
+
+  <!-- fold-split (โชว์เมื่อแยกกลาง) — ปรับใหม่: ขวา=auto -->
+  <div class="qi-fold-split hidden" id="qi-split">
+    ซ้าย
+    <input type="number" id="qi-fleft" value="2" min="1" oninput="qiLeftChange()">
+    ช่อง
+    <span style="color:var(--muted);">/</span>
+    ขวา
+    <span class="auto-box" id="qi-fright-box">2</span>
+    ช่อง
+    <span id="qi-tag" class="tag-ok">รวม 4/4 ✓</span>
+  </div>
+
+  <div style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted);">
+    ราคา: <b style="color:var(--red-dark);">฿ — เดโม —</b>
+  </div>
+</div>
+
+<!-- ────────────────────────── G1 FULL MODE ────────────────────────── -->
+<div class="sec-head">G1 Full mode (ใบเสนอราคา) — บานเฟี้ยม</div>
+<div class="card">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+    <div><label class="opt-label">กว้าง (ม.)</label><input style="width:80px;height:40px;padding:0 8px;border:1px solid var(--line);border-radius:8px;font-size:15px;" type="number" value="2.0"></div>
+    <div><label class="opt-label">สูง (ม.)</label><input style="width:80px;height:40px;padding:0 8px;border:1px solid var(--line);border-radius:8px;font-size:15px;" type="number" value="2.1"></div>
+    <div>
+      <label class="opt-label">บาน</label>
+      <input style="width:64px;height:40px;padding:0 8px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:center;" type="number" id="f-panels" value="6" min="2" oninput="fPanelChange()">
+    </div>
+    <div><label class="opt-label">ชุด</label><input style="width:58px;height:40px;padding:0 8px;border:1px solid var(--line);border-radius:8px;font-size:15px;text-align:center;" type="number" value="1"></div>
+  </div>
+
+  <label class="opt-label" style="width:100%;">ธรณี
+    <div class="qi-chips" style="margin-top:4px;">
+      <button class="chip on">กันน้ำภายนอก</button>
+      <button class="chip">หลังเต่าภายใน</button>
+    </div>
+  </label>
+
+  <label class="opt-label" style="width:100%;margin-top:6px;">ทิศเปิด
+    <div class="qi-chips" style="margin-top:4px;">
+      <button class="chip" onclick="fPick('left',this)">เปิดซ้าย</button>
+      <button class="chip" onclick="fPick('right',this)">เปิดขวา</button>
+      <button class="chip on" onclick="fPick('mid',this)">แยกกลาง</button>
+    </div>
+  </label>
+
+  <!-- fold-split box style เดิม (background:#f3f4f6) — ปรับ: ขวา=auto -->
+  <div class="fold-split" id="f-split">
+    ซ้าย
+    <input type="number" id="f-fleft" value="3" min="1" oninput="fLeftChange()">
+    ช่อง
+    <span style="color:var(--muted);">&nbsp;/</span>
+    ขวา
+    <span class="auto-box" id="f-fright-box">3</span>
+    ช่อง
+    <span id="f-tag" class="tag-ok">รวม 6/6 ✓</span>
+  </div>
+
+  <div style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted);">
+    ราคา: <b style="color:var(--red-dark);">฿ — เดโม —</b>
+  </div>
+</div>
+
+<!-- ────────────────────────── G6 ────────────────────────── -->
+<div class="sec-head">G6 กั้นห้องกระจก — บานเฟี้ยม (fold)</div>
+<div class="g6r-wrap">
+  <div class="g6r-top">บานเฟี้ยม ยูโร · 2.0 × 2.1 ม.</div>
+  <div class="g6r-body">
+
+    <!-- จำนวนบาน บนสุด (ลำดับแก้ใหม่) -->
+    <div class="row">
+      <span class="rl">จำนวนบาน</span>
+      <input type="number" id="g6-qty" value="4" min="2" step="1" oninput="g6QtyChange()">
+      <span class="u">บาน</span>
+    </div>
+
+    <!-- ทิศเปิด -->
+    <div class="sec-fl">ทิศเปิด</div>
+    <div class="chips">
+      <button class="c on" onclick="g6Pick('right',this)">เปิดขวา</button>
+      <button class="c" onclick="g6Pick('left',this)">เปิดซ้าย</button>
+      <button class="c" onclick="g6Pick('mid',this)">แยกกลาง</button>
+    </div>
+
+    <!-- fold-split G6 — ปรับ: ขวา=auto -->
+    <div class="row hidden" id="g6-split">
+      <span class="rl">ซ้าย</span>
+      <input type="number" id="g6-fleft" value="2" min="1" style="width:52px;" oninput="g6LeftChange()">
+      <span class="u">ช่อง /</span>
+      <span class="rl" style="flex:0 0 auto;">ขวา</span>
+      <span class="auto-box" id="g6-fright-box">2</span>
+      <span class="u">ช่อง</span>
+      <span id="g6-tag" class="tag-ok">รวม 4/4 ✓</span>
+    </div>
+
+    <!-- ธรณีเฟี้ยม -->
+    <div class="sec-fl">ธรณีเฟี้ยม</div>
+    <div class="chips">
+      <button class="c on">กันน้ำ</button>
+      <button class="c">ภายใน</button>
+    </div>
+
+    <div style="margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;font-size:12px;color:#777;">
+      ราคาบานนี้: <b style="color:#B3151D;">฿ — เดโม —</b>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;padding:10px 14px;background:#EAF3FF;border-radius:8px;font-size:12px;color:#1E3A5F;">
+  <b>สรุปการเปลี่ยน vs เดิม:</b><br>
+  🟢 ขวา = auto (บาน − ซ้าย) · ไม่ต้องกรอกเอง<br>
+  🟢 เปลี่ยนจำนวนบาน → ซ้าย reset ครึ่งๆ อัตโนมัติ<br>
+  🟢 G6: จำนวนบานขึ้นก่อนทิศเปิด (ลำดับถูก)<br>
+  🟡 Style เหมือนเดิมทุกจุด (chip สีแดง · box #f3f4f6 · G6 .c.on)
+</div>
+
+<script>
+function cl(v,mn,mx){return Math.max(mn,Math.min(mx,parseInt(v)||mn));}
+
+/* ── QI ── */
+var qiDir='right';
+function qiUpdateTag(){
+  var p=parseInt(document.getElementById('qi-panels').value)||2; if(p<2)p=2;
+  var fl=cl(document.getElementById('qi-fleft').value,1,p-1);
+  document.getElementById('qi-fleft').value=fl;
+  var fr=p-fl;
+  document.getElementById('qi-fright-box').textContent=fr;
+  var tag=document.getElementById('qi-tag');
+  tag.textContent='รวม '+(fl+fr)+'/'+p+(fl+fr===p?' ✓':'');
+  tag.className=fl+fr===p?'tag-ok':'tag-warn';
+}
+function qiPanelChange(){
+  if(qiDir!=='mid')return;
+  var p=parseInt(document.getElementById('qi-panels').value)||2; if(p<2)p=2;
+  document.getElementById('qi-fleft').value=Math.floor(p/2);
+  qiUpdateTag();
+}
+function qiLeftChange(){qiUpdateTag();}
+function qiPick(d,btn){
+  qiDir=d;
+  btn.parentNode.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  var sp=document.getElementById('qi-split');
+  if(d==='mid'){
+    sp.classList.remove('hidden');
+    var p=parseInt(document.getElementById('qi-panels').value)||2; if(p<2)p=2;
+    document.getElementById('qi-fleft').value=Math.floor(p/2);
+    qiUpdateTag();
+  } else {
+    sp.classList.add('hidden');
+  }
+}
+
+/* ── FULL ── */
+var fDir='mid';
+function fUpdate(){
+  var p=parseInt(document.getElementById('f-panels').value)||2; if(p<2)p=2;
+  var fl=cl(document.getElementById('f-fleft').value,1,p-1);
+  document.getElementById('f-fleft').value=fl;
+  document.getElementById('f-fright-box').textContent=p-fl;
+  var tag=document.getElementById('f-tag');
+  tag.textContent='รวม '+p+'/'+p+' ✓';
+  tag.className='tag-ok';
+}
+function fPanelChange(){
+  if(fDir!=='mid')return;
+  var p=parseInt(document.getElementById('f-panels').value)||2; if(p<2)p=2;
+  document.getElementById('f-fleft').value=Math.floor(p/2);
+  fUpdate();
+}
+function fLeftChange(){fUpdate();}
+function fPick(d,btn){
+  fDir=d;
+  btn.parentNode.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  var sp=document.getElementById('f-split');
+  if(d==='mid'){
+    sp.classList.remove('hidden');
+    var p=parseInt(document.getElementById('f-panels').value)||2; if(p<2)p=2;
+    document.getElementById('f-fleft').value=Math.floor(p/2);
+    fUpdate();
+  } else {
+    sp.classList.add('hidden');
+  }
+}
+
+/* ── G6 ── */
+var g6Dir='right';
+function g6Update(){
+  var p=parseInt(document.getElementById('g6-qty').value)||2; if(p<2)p=2;
+  var fl=cl(document.getElementById('g6-fleft').value,1,p-1);
+  document.getElementById('g6-fleft').value=fl;
+  document.getElementById('g6-fright-box').textContent=p-fl;
+  var tag=document.getElementById('g6-tag');
+  tag.textContent='รวม '+p+'/'+p+' ✓';
+  tag.className='tag-ok';
+}
+function g6QtyChange(){
+  if(g6Dir!=='mid')return;
+  var p=parseInt(document.getElementById('g6-qty').value)||2; if(p<2)p=2;
+  document.getElementById('g6-fleft').value=Math.floor(p/2);
+  g6Update();
+}
+function g6LeftChange(){g6Update();}
+function g6Pick(d,btn){
+  g6Dir=d;
+  btn.parentNode.querySelectorAll('.c').forEach(function(c){c.classList.remove('on');});
+  btn.classList.add('on');
+  var sp=document.getElementById('g6-split');
+  if(d==='mid'){
+    sp.classList.remove('hidden');
+    var p=parseInt(document.getElementById('g6-qty').value)||2; if(p<2)p=2;
+    document.getElementById('g6-fleft').value=Math.floor(p/2);
+    g6Update();
+  } else {
+    sp.classList.add('hidden');
+  }
+}
+</script>
+</body>
+</html>
