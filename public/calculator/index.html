@@ -3431,13 +3431,43 @@ function qiSolidPick(btn){ var root=btn.closest('.qi-gridsolid'); if(!root)retur
 function fullFoldSync(inp){
   var d=inp.closest('.ch'); if(!d)return;
   var panels=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
-  var fleft=parseInt(inp.value)||1;
-  if(fleft<1)fleft=1; if(fleft>=panels)fleft=panels-1; if(fleft<1)fleft=1;
-  inp.value=fleft;
-  var fright=panels-fleft;
+  var dir=(d.querySelector('.o-folddir')||{}).value||'เปิดซ้าย';
+  var fleft, fright;
+  if(dir==='เปิดซ้าย'){ fleft=panels; fright=0; }
+  else if(dir==='เปิดขวา'){ fleft=0; fright=panels; }
+  else { // เปิดแยกกลาง — กรอกซ้ายได้
+    fleft=parseInt(inp.value)||1;
+    if(fleft<1)fleft=1; if(fleft>=panels)fleft=panels-1; if(fleft<1)fleft=1;
+    fright=panels-fleft;
+  }
+  if(dir!=='เปิดแยกกลาง') inp.value=fleft;
+  else inp.value=fleft;
   var fr=d.querySelector('.o-fright'); if(fr)fr.textContent=fright;
   var tot=d.querySelector('.o-fold-total');
   if(tot){ var ok=(fleft+fright===panels); tot.textContent='รวม '+(fleft+fright)+'/'+panels+(ok?' ✓':' ⚠'); tot.style.background=ok?'#D1FAE5':'#FEE2E2'; tot.style.color=ok?'#065F46':'#991B1B'; }
+  calcQuote();
+}
+// #4 re-fix (25มิ.ย.): foldDirChange — โชว์ fold-split ทุกทิศ + lock/unlock ช่องซ้าย + sync ค่า
+function foldDirChange(sel){
+  var d=sel.closest('.ch'); if(!d)return;
+  var fs=d.querySelector('.fold-split'); if(!fs)return;
+  var fl=d.querySelector('.o-fleft'); var fr2=d.querySelector('.o-fright'); var tot=d.querySelector('.o-fold-total');
+  var panels=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
+  var dir=sel.value;
+  fs.style.display='flex'; // โชว์เสมอทุกทิศ
+  if(dir==='เปิดซ้าย'){
+    if(fl){fl.value=panels; fl.readOnly=true; fl.style.background='#f9fafb'; fl.style.color='#6B7280';}
+    if(fr2)fr2.textContent=0;
+    if(tot){tot.textContent='รวม '+panels+'/'+panels+' ✓';tot.style.background='#D1FAE5';tot.style.color='#065F46';}
+  } else if(dir==='เปิดขวา'){
+    if(fl){fl.value=0; fl.readOnly=true; fl.style.background='#f9fafb'; fl.style.color='#6B7280';}
+    if(fr2)fr2.textContent=panels;
+    if(tot){tot.textContent='รวม '+panels+'/'+panels+' ✓';tot.style.background='#D1FAE5';tot.style.color='#065F46';}
+  } else { // เปิดแยกกลาง
+    if(fl){fl.readOnly=false; fl.style.background=''; fl.style.color=''; var initL=Math.floor(panels/2)||1; fl.value=initL; }
+    if(fl) fullFoldSync(fl); else calcQuote();
+    return;
+  }
   calcQuote();
 }
 function qiSyncFold(inp){
@@ -5223,9 +5253,9 @@ function buildItemOpts(d){
   // Pass2-A: ธรณี บานเฟี้ยม (cosmetic ไม่คิดเงิน)
   if(p.cat==='บานเฟี้ยม'){
     h+='<label class="opt fold-opt-row" style="width:100%;">ธรณี <select class="o-threshf" style="display:none;" onchange="calcQuote();"><option value="outer" selected>ธรณีกันน้ำภายนอก</option><option value="inner">ธรณีหลังเต่าภายใน</option></select>'+rfChips('o-threshf',[['outer','กันน้ำภายนอก'],['inner','หลังเต่าภายใน']],'outer',true)+'</label>'; // ข้อ8(G1): รางยู ล็อกชิปนี้เมื่อติ๊ก
-    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม + v7B-ปรับ(19มิ.ย.): แยกกลาง → โชว์ช่องซ้าย/ขวา
-    h+='<label class="opt fold-opt-row" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="calcQuote();var _fs=this.closest(\'.ch\').querySelector(\'.fold-split\');if(_fs){_fs.style.display=this.value===\'เปิดแยกกลาง\'?\'flex\':\'none\';if(this.value===\'เปิดแยกกลาง\'){var _d2=this.closest(\'.ch\');var _fl2=_d2&&_d2.querySelector(\'.o-fleft\');if(_fl2){_fl2.value=Math.floor((parseInt((_d2.querySelector(\'.i-panels\')||{value:\'2\'}).value)||2)/2)||1;fullFoldSync(_fl2);}}}"><option value="เปิดซ้าย" selected>เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'เปิดซ้าย')+'</label>';
-    h+='<div class="fold-split" style="display:none;align-items:center;gap:10px;margin:0 0 6px;padding:6px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;flex-wrap:wrap;">ซ้าย <input class="o-fleft" type="number" min="1" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" oninput="fullFoldSync(this)"> ช่อง &nbsp;/ ขวา <span class="o-fright" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:30px;border:1px solid #e5e7eb;border-radius:7px;font-weight:700;color:#6B7280;background:#f9fafb;">1</span> ช่อง <span class="o-fold-total" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#065F46;">รวม 2/2 ✓</span></div>';
+    // HANDOFF-G6 ธง⑥③: ทิศเปิดเฟี้ยม + #4 re-fix (25มิ.ย.): โชว์ทุกทิศ ซ้าย/ขวา auto · แยกกลางกรอกซ้าย
+    h+='<label class="opt fold-opt-row" style="width:100%;">ทิศเปิด <select class="o-folddir" style="display:none;" onchange="foldDirChange(this)"><option value="เปิดซ้าย" selected>เปิดซ้าย</option><option value="เปิดขวา">เปิดขวา</option><option value="เปิดแยกกลาง">เปิดแยกกลาง</option></select>'+rfChips('o-folddir',[['เปิดซ้าย','เปิดซ้าย'],['เปิดขวา','เปิดขวา'],['เปิดแยกกลาง','แยกกลาง']],'เปิดซ้าย')+'</label>';
+    h+='<div class="fold-split" style="display:flex;align-items:center;gap:10px;margin:0 0 6px;padding:6px 10px;background:#f3f4f6;border-radius:8px;font-size:13px;flex-wrap:wrap;">ซ้าย <input class="o-fleft" type="number" min="0" value="1" style="width:48px;height:30px;text-align:center;border:1px solid #e5e7eb;border-radius:7px;font-family:inherit;" oninput="fullFoldSync(this)"> ช่อง &nbsp;/ ขวา <span class="o-fright" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:30px;border:1px solid #e5e7eb;border-radius:7px;font-weight:700;color:#6B7280;background:#f9fafb;">1</span> ช่อง <span class="o-fold-total" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#065F46;">รวม 2/2 ✓</span></div>';
   }
   // R4.0: ม่านซิป (zipscreen) option UI — ใส่ขนาดในช่อง กว้าง/สูง ด้านบน
   if(p.zipscreen){
@@ -6273,9 +6303,14 @@ function buildItemOpts(d){
   // B (21มิ.ย.): ระแนงพิเศษ (เลื่อน/เกล็ดอลู/หมุนเปิด-ปิด) — เปิดกล่องอุปกรณ์เสริม/ออปชั่นโชว์เลย ไม่ต้องกดพับ (มติพี่นัท "โชว์ ไม่ซ่อน")
   if(p.bar_slide||p.bar_grid||p.bar_openclose){ if(ob)ob.open=true; d.querySelectorAll('.optbox .gh-opt-cat-det').forEach(function(_dt){ _dt.open=true; }); }
   g2SyncDoorFields(d); // D (21มิ.ย.): ทำเป็นบาน → โชว์ จำนวนบาน (ก่อนชุด) + ติดตายกี่บาน
-  // #4 (25มิ.ย.): restore fold-split display หลัง buildItemOpts rebuild — ถ้า o-folddir=เปิดแยกกลาง โชว์ fold-split ทันที
-  { var _fdSel=d.querySelector('.o-folddir'); var _fds=d.querySelector('.fold-split');
-    if(_fdSel && _fds){ _fds.style.display=_fdSel.value==='เปิดแยกกลาง'?'flex':'none'; } }
+  // #4 re-fix (25มิ.ย.): fold-split — โชว์ทุกทิศ + sync ค่า + cleanup orphan เมื่อ cat!=บานเฟี้ยม
+  if(p.cat==='บานเฟี้ยม'){
+    var _fdSel=d.querySelector('.o-folddir'); var _fds=d.querySelector('.fold-split');
+    if(_fdSel && _fds){ _fds.style.display='flex'; foldDirChange(_fdSel); } // init ทุกทิศ
+  } else {
+    // cleanup orphan fold-split/.fold-opt-row ที่ค้างมาจาก YKK/บานอื่น
+    d.querySelectorAll('.fold-split,.fold-opt-row').forEach(function(_f){ _f.remove(); });
+  }
   // #F (22มิ.ย. · ดราฟ): เก็บกวาดกล่องฟ้า sliding-main-block ที่ค้าง เมื่อสลับเป็นชนิด "ไม่ใช้บาน" (ติดตาย/เปลือย/ผนัง/shower/YKK) — ตัวเคลียร์ก่อน rebuild (L4639) ไม่ครอบ flow กดชิป · กู้บานกลับ size-row + ซ่อน + ลบกล่อง · ราคาไม่ขึ้นกับบาน (bucket) golden นิ่ง
   if((d.querySelector('.i-group')||{}).value==='1' && !usesPanels(p)){
     var _orphanSmb=d.querySelector('.sliding-main-block');
@@ -6403,7 +6438,12 @@ function readItem(d){
   // Pass2-A: ธรณี บานเปิด
   if(p.cat==='บานเปิด'){ const _th=d.querySelector('.o-thresh'); optSel.thresh=_th?_th.value:'std'; }
   // Pass2-A: ธรณี บานเฟี้ยม
-  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; const _fd=d.querySelector('.o-folddir'); optSel.folddir=_fd?_fd.value:''; if(optSel.folddir==='เปิดแยกกลาง'){ const _fl=d.querySelector('.o-fleft'); const _fr=d.querySelector('.o-fright'); optSel.fleft=parseInt((_fl?_fl.value:'')||'1'); optSel.fright=parseInt((_fr?_fr.textContent:'')||'1'); } } // ธง⑥③+v7B: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวา
+  if(p.cat==='บานเฟี้ยม'){ const _thf=d.querySelector('.o-threshf'); optSel.threshf=_thf?_thf.value:'outer'; const _fd=d.querySelector('.o-folddir'); optSel.folddir=_fd?_fd.value:''; // #4 re-fix: capture fleft/fright ทุก mode
+    const _panels4=parseInt((d.querySelector('.i-panels')||{value:'2'}).value)||2;
+    if(optSel.folddir==='เปิดซ้าย'){ optSel.fleft=_panels4; optSel.fright=0; }
+    else if(optSel.folddir==='เปิดขวา'){ optSel.fleft=0; optSel.fright=_panels4; }
+    else if(optSel.folddir==='เปิดแยกกลาง'){ const _fl=d.querySelector('.o-fleft'); const _fr=d.querySelector('.o-fright'); optSel.fleft=parseInt((_fl?_fl.value:'')||'1'); optSel.fright=parseInt((_fr?_fr.textContent:'')||'1'); }
+  } // ธง⑥③+v7B+#4 re-fix: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวาทุกทิศ
   // shower config
   if(p.id==='shower'){
     const _st=d.querySelector('.o-shtype'); optSel.shtype=_st?_st.value:'door_fixed';
@@ -7372,8 +7412,14 @@ function genQuote(keepNo){
       _parts.push(_thfLabel);
     }
     // HANDOFF-G6 ธง⑥③+v7B: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวา (แสดงในใบ · ไม่กระทบราคา)
-    // จุด5 (25มิ.ย.): เติม N บาน ต่อท้ายทิศเปิด → "เปิดซ้าย 6 บาน"
-    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ var _fdTxt=it.optSel.folddir; var _fdPanels=parseInt(it.panels)||0; if(_fdTxt==='เปิดแยกกลาง' && it.optSel.fleft && it.optSel.fright){ _fdTxt+=' (ซ้าย '+it.optSel.fleft+' ช่อง / ขวา '+it.optSel.fright+' ช่อง)'; } else if(_fdPanels>0){ _fdTxt+=' '+_fdPanels+' บาน'; } _parts.push(_fdTxt); }
+    // #4 re-fix (25มิ.ย.): แสดง "(fleft+fright) บาน" ทุกทิศ
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){
+      var _fdTxt=it.optSel.folddir;
+      var _fdFl=(it.optSel.fleft!==undefined)?it.optSel.fleft:0;
+      var _fdFr=(it.optSel.fright!==undefined)?it.optSel.fright:0;
+      _fdTxt+=' ('+_fdFl+'+'+_fdFr+') บาน';
+      _parts.push(_fdTxt);
+    }
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
       _parts.push('ติดบานเดิม');
