@@ -2962,6 +2962,12 @@ function qiRenderG5(d){
     QIG5_FABRIC.forEach(function(f){ if(f.k==='safety'&&!hasSafety)return; h += '<button type="button" class="chip'+(fab===f.k?' on':'')+'" onclick="qiG5SetFab(this,\''+f.k+'\')">'+f.n+'</button>'; });
     h += '</div>';
   }
+  // สีกรอบอลู — เฉพาะ products ที่ mscolor:true (×0.5 ตาม engine มุ้ง L1663)
+  if(p&&p.mscolor){
+    var _g5ci=parseInt(d.dataset.qiG5color)||0;
+    h += '<div class="qi-lbl">สีกรอบอลู <span class="hint">(×0.5 · ไม่เลือก = สีมาตรฐาน)</span></div>';
+    h += '<div class="qi-cg-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;"><div style="flex:1;min-width:140px;"><select class="qi-g5color" onchange="var _d=this.closest(\'.ch\');_d.dataset.qiG5color=this.value;calcQuickAll();" style="width:100%;height:40px;border:1.5px solid var(--line);border-radius:9px;padding:0 8px;font-size:14px;"><option value="0">สีมาตรฐาน (ไม่บวกสี)</option>'+COLORS.map(function(c,i){ return i>=1?('<option value="'+i+'"'+(_g5ci===i?' selected':'')+'>'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):''; }).join('')+'</select></div></div>';
+  }
   h += '<div class="qi-lbl">ขนาด</div>';
   h += '<div class="qi-row"><div class="qi-fld"><label>กว้าง (ม.)</label><input class="qi-w" type="number" step="0.1" min="0" value="'+(d.dataset.qiW||1)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>สูง (ม.)</label><input class="qi-h" type="number" step="0.1" min="0" value="'+(d.dataset.qiH||2)+'" oninput="calcQuickAll()"></div><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">เรต verify กับ engine · ปัดขึ้นพัน · มุ้งเฟรม: min ต่างประตู/หน้าต่าง</div></div></div>';
@@ -2981,6 +2987,9 @@ function qiCalcG5(d){
   var fab=d.dataset.qiG5fab||'free'; var itype=d.dataset.qiG5itype||'door';
   var optSel={};
   if(p.screen_addon){ optSel.itype=itype; if(fab!=='free') optSel.mosqFabric=fab; }
+  // สีกรอบอลู ×0.5 — อ่านจาก qi-g5color select (engine L1663: p.mscolor && optSel.mscolor)
+  var _g5ci=parseInt((d.querySelector('.qi-g5color')||{}).value)||0;
+  if(p.mscolor && _g5ci>0) optSel.mscolor=_g5ci;
   var u; try{ u=calcUnit(p,W,H,0,0,panels,optSel,false); } catch(e){ return{sell:0,a:0,qty:qty}; }
   var sell=u.sell||0;
   var pc=d.querySelector('.qi-pc-body'); if(!pc)return{sell:sell,a:u.a,qty:qty};
