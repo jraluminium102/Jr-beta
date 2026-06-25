@@ -50,7 +50,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     .from("production_sets")
     .update(clean)
     .eq("id", params.id)
-    .select("*, job:job_id(job_code, customer_name, customer_area, status, current_stage, planned_install_date)")
+    .select("*, job:job_id(job_code, customer_name, customer_area, status, current_stage)")
     .maybeSingle();
   if (error) throw dbError(error);
   if (!data) return notFound("ไม่พบชุดงานนี้");

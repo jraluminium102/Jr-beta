@@ -8,8 +8,9 @@ import { can } from "@/lib/rbac";
 export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
 
+// หมายเหตุ: planned_install_date อยู่บนตาราง productions ไม่ใช่ jobs — ห้ามใส่ใน jobs embed (PostgREST error)
 const SELECT =
-  "*, job:job_id(job_code, customer_name, customer_area, status, current_stage, planned_install_date)";
+  "*, job:job_id(job_code, customer_name, customer_area, status, current_stage)";
 
 // GET /api/production-sets?job_id= — รายการชุดงานผลิต (กรองตามงานได้)
 export const GET = withRoute(async (req: Request) => {
