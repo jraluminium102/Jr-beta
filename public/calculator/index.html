@@ -1796,7 +1796,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       _ftOptLines.push('OPTION : เปลี่ยนสีฝาตู้ จากขาว/ดำ เป็นสีพิเศษ ราคาเพิ่ม '+fmt(Math.round(_ftDiff))+' บาท');
     }
     let _msg = (_ftmat==='glass'?'ฝาตู้กระจก ':'')+panelN+' บาน × '+fmt(perDoor)+'/บาน'+(colorPlus>0?(' (รวมสีพิเศษ +'+fmt(colorPlus)+')'):'')+(extraFee>0?(' + บานเพิ่ม '+fmt(extraFee)):'')+(ftGlassAdd>0?(' + สีกระจก +'+fmt(ftGlassAdd)):'')+(_ftOptLines.length>0?(' · '+_ftOptLines.join(' · ')):'');
-    if(aPerDoor > 2.8) _msg += ' · ⚠ ขนาด >2.8 ตร.ม./บาน ไม่แนะนำ';
+    if(aPerDoor > 1.7) _msg += ' · ⚠ ขนาด >1.7 ตร.ม./บาน — เกินเรตสูงสุด (คิด 12,500/บาน)';
     if((parseInt(panels)||1) > 3) _msg += ' · ⚠ เกิน 3 บาน/ชุด — ให้แยกชุดใหม่';
     // #6 breakdown G4 future_tech (display-only · ไม่กระทบ sell)
     var _ftBd=[];
@@ -4678,10 +4678,10 @@ function railSelectorHTML(p){ if(p.cat!=='ราวบันได')return''; va
   return h+'</div>';
 }
 // G4 (HANDOFF-G4-cabinet-next ข้อ4): ชิป switch สินค้า ตู้อลู↔ฝาตู้ — set .i-prod เดิม + rebuild ฟอร์ม (ไม่ hardcode รายการ)
+// patch (25มิ.ย.): ใช้ g3SyncProd (add option ก่อน set value) กันกรณี option ยังไม่อยู่ใน select ทำให้ set value ไม่สำเร็จ
 function cabProdSwitch(btn, prodId){
   var ch=btn.closest('.ch'); if(!ch) return;
-  var ps=ch.querySelector('.i-prod'); if(!ps || ps.value===prodId) return;
-  ps.value=prodId; ps.dispatchEvent(new Event('change',{bubbles:true}));
+  g3SyncProd(ch, prodId);
 }
 // เฟส1 G1 บานเปลือย: ชิป switch ประเภท ติดตาย↔ประตูสวิง↔ประตูเลื่อน (model จาก cabProdSwitch)
 // ติดตาย = frameless_fixed · ประตูสวิง/เลื่อน = frameless_door (สลับแค่ product id · ราคาเดิมไม่แตะ)
@@ -6030,7 +6030,9 @@ function buildItemOpts(d){
 
     // Box ① สเปกหลัก (red)
     h+='<div class="g4-box g4-b1"><div class="g4-bh">① สเปกหลัก <span class="g4-btag">บังคับ</span></div><div class="g4-body">';
-    h+='<div class="g4-hint">กรอกขนาดในช่องหลัก (กว้าง = กว้าง/บาน · สูง = สูง)</div>';
+    h+='<div class="g4-hint">กรอกขนาด <b>ต่อบาน</b> ในช่องหลัก (กว้าง = กว้าง/บาน · สูง = สูง) · max 3 บาน/ชุด · ใหญ่สุด <b>1.7 ตร.ม./บาน</b></div>';
+    h+='<div class="g4-hint" style="color:#6B7280;">💡 บานที่ 2–3 +5,500/บาน</div>';
+    h+='<div class="ft-big-warn" style="display:none;background:#FEF3F2;border:1px solid #F3D5D5;border-radius:7px;padding:6px 10px;font-size:12px;color:#B3151D;font-weight:700;margin-top:4px;">⚠ ขนาด >1.7 ตร.ม./บาน — เกินเรตสูงสุด (คิดเรต 12,500/บาน)</div>';
     h+='</div></div>';
 
     // Box ② ออปชั่นหลัก (blue) — สีฝาตู้ L1/L2
@@ -6763,6 +6765,8 @@ function calcQuote(){
       if(_bd){ var _ln=[]; if(it.r.addonLabel)_ln.push(it.r.addonLabel); (it.r.msgs||[]).forEach(function(mm){ String(mm||'').split(' · ').forEach(function(x){ x=x.trim(); if(x)_ln.push(x); }); });
         _bd.innerHTML='<div class="bd head"><span>รายการคำนวณ</span><span></span></div>'+(_ln.length?_ln.map(function(x){ var mt=x.match(/^(.*?)[\s:=]*\+?([\d,]+)\s*(บาท|฿)?\s*$/); if(mt&&mt[1].trim()&&mt[2].replace(/,/g,'').length>=3){ return '<div class="bd"><span>'+mt[1].trim()+'</span><span>'+mt[2]+'</span></div>'; } return '<div class="bd"><span>'+x+'</span><span></span></div>'; }).join(''):'<div class="bd"><span>—</span><span></span></div>'); }
       _as.classList.remove('flash'); void _as.offsetWidth; _as.classList.add('flash'); } }
+    // ft-big-warn toggle (25มิ.ย.): ฝาตู้ >1.7 ตร.ม./บาน → โชว์ warning ใน Box ①
+    { var _ftw=d.querySelector('.ft-big-warn'); if(_ftw){ var _ftp=PBYID[(d.querySelector('.i-prod')||{}).value]; _ftw.style.display=(_ftp&&_ftp.future_tech&&it.r.a>1.7)?'':'none'; } }
     let msg=[...it.r.msgs];
     if(it.r.addonLabel) msg.unshift(it.r.addonLabel);
     d.querySelector('.i-msg').innerHTML = msg.length?('<span style="color:var(--red-dark);font-size:14px;font-weight:600">'+msg.join(' · ')+'</span>'):'';
