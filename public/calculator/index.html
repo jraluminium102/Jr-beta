@@ -4138,10 +4138,12 @@ function rfCycleL1(btn){
   var row=btn.closest('.rf-l1row'); if(!row)return;
   var nm=row.querySelector('.rf-l1name');
   var sw=row.querySelector('span[style*="border-radius:50%"]');
+  var pr=row.querySelector('.rf-l1price');
   var c=COLORS[next]||COLORS[0];
   var label=(c.quoteName||c.n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim();
   if(nm) nm.textContent=label;
   if(sw) sw.style.background=c.sw;
+  if(pr){ var _p=colorPrice(next); pr.textContent=_p>0?'(+'+fmt(_p)+' บาท)':'(ฟรี)'; pr.style.color=_p>0?'#b3122a':'#16a34a'; }
 }
 function rfL2Toggle(det){ var ch=det.closest('.ch'); if(!ch)return; if(det.open){ ch.dataset.coOverride='1'; } else { ch.dataset.coOverride='0'; var ci=ch.querySelector('.i-color'), gc=document.getElementById('global-color'); if(ci&&gc){ ci.value=gc.value; ci.dispatchEvent(new Event('change',{bubbles:true})); } } if(window.calcQuote)calcQuote(); }
 // ② G3 สีโครง toggle-style (PHASE3 · 23มิ.ย.): checkbox แทน details — L2 = ติ๊กแล้วโผล่ · L3 ซ้อนใน L2
@@ -5418,10 +5420,14 @@ function buildItemOpts(d){
     var _gcv=parseInt((document.getElementById('global-color')||{}).value)||0;
     var _gcName=(COLORS[_gcv]&&((COLORS[_gcv].quoteName||COLORS[_gcv].n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()))||'สีอบขาว';
     var _gcSw=(COLORS[_gcv]&&COLORS[_gcv].sw)||'#fff';
+    var _gcPrice=colorPrice(_gcv);
+    var _gcPriceLabel=_gcPrice>0?'(+'+fmt(_gcPrice)+' บาท)':'(ฟรี)';
+    var _gcPriceColor=_gcPrice>0?'#b3122a':'#16a34a';
     h+='<div class="rf-l1row" style="display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #dbe3f0;border-radius:8px;padding:8px 11px;margin-bottom:8px;">';
     h+='<span style="font-size:11.5px;color:#374151;font-weight:700;white-space:nowrap;">L1 · ทั้งใบ:</span>';
     h+='<span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:'+_gcSw+';flex:none;"></span>';
-    h+='<span class="rf-l1name" style="font-size:12.5px;font-weight:700;color:#111;flex:1;">'+_gcName+'</span>';
+    h+='<span class="rf-l1name" style="font-size:12.5px;font-weight:700;color:#111;">'+_gcName+'</span>';
+    h+='<span class="rf-l1price" style="font-size:11.5px;font-weight:700;color:'+_gcPriceColor+';flex:1;">'+_gcPriceLabel+'</span>';
     h+='<button type="button" onclick="rfCycleL1(this)" style="font-size:12px;color:#1e40af;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:5px;white-space:nowrap;font-weight:700;" title="กดวนสี">⟳ เปลี่ยนสีทั้งใบ</button>';
     h+='</div>';
     // L2 toggle: ติ๊กแล้วโผล่ (checkbox แทน details)
@@ -5436,8 +5442,8 @@ function buildItemOpts(d){
     // D5 (24มิ.ย. · พี่เคาะ): L3 = ชิป+จุดสี (เลิก dropdown ดิบ · ตรงดราฟ 06-24) · select ซ่อน = แหล่งความจริง engine + onchange coderow
     var _l3CodeOn=(_l3Val!==''&&COLORS[parseInt(_l3Val)||0]&&COLORS[parseInt(_l3Val)||0].hasCode);
     h+='<div style="font-size:12px;color:#374151;font-weight:700;">เปลี่ยนสีโครงเป็น</div>';
-    h+='<select class="o-rfcoopt" style="display:none;" onchange="var _rv=parseInt(this.value)||0,_hw=(this.value!==\'\'&&COLORS[_rv]&&COLORS[_rv].hasCode);var _h3=this.closest(\'.rf-l3-host\');var _cr=_h3?_h3.querySelector(\'.l3coderow\'):null;if(_cr)_cr.style.display=_hw?\'inline-flex\':\'none\';calcQuote();"><option value=""'+(_l3Val===''?' selected':'')+'>— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'"'+(String(i)===_l3Val?' selected':'')+'>'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>';
-    h+=msftColorChips('o-rfcoopt',_l3Val,'','— ไม่เทียบ —');
+    h+='<select class="o-rfcoopt" style="display:none;" onchange="var _rv=parseInt(this.value)||0,_hw=(this.value!==\'\'&&COLORS[_rv]&&COLORS[_rv].hasCode);var _h3=this.closest(\'.rf-l3-host\');var _cr=_h3?_h3.querySelector(\'.l3coderow\'):null;if(_cr)_cr.style.display=_hw?\'inline-flex\':\'none\';try{colorDrillRender(this);}catch(e){}calcQuote();"><option value=""'+(_l3Val===''?' selected':'')+'>— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'"'+(String(i)===_l3Val?' selected':'')+'>'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>';
+    h+='<div class="color-drill l3-color-drill"></div>';
     h+='<span class="l3coderow" style="'+(_l3CodeOn?'display:inline-flex;':'display:none;')+'align-items:center;gap:4px;font-size:12px;">รหัส <input type="text" class="o-rfcocode" maxlength="50" style="width:110px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น 1076-A" oninput="calcQuote()"></span>';
     var _l3MatVal=(d&&d.querySelector)?((d.querySelector('.o-rfmatopt')||{}).value||''):('');
     h+='<div style="font-size:12px;color:#374151;font-weight:700;margin-top:3px;">หรือเปลี่ยนวัสดุมุงเป็น</div>';
@@ -6200,7 +6206,18 @@ function buildItemOpts(d){
   // จุด5 fix 25มิ.ย.: G3 หลังคา → inject remarkSelectHTML() เข้า B3 body (ดราฟ DRAFT-G3-ภาพรวมครบ-2026-06-24 มีการ์ดติ๊กหมายเหตุใน ③)
   if(p.cat==='หลังคา'){ var _g3b3body=d.querySelector('.g4-b3 .g4-body'); if(_g3b3body && !_g3b3body.querySelector('.rk-block')){ var _rkDiv=document.createElement('div'); _rkDiv.innerHTML=remarkSelectHTML(); while(_rkDiv.firstChild){ _g3b3body.appendChild(_rkDiv.firstChild); } } }
   // ② G3 สีโครง 3 ชั้น: ย้าย .i-color (L2 = สีโครงรายการ) เข้า host ในกล่อง · ซ่อน .cg-row เดิม (หลังคาไม่มีกระจก · สีโครงอยู่ในกล่อง 3 ชั้นแล้ว)
-  if(p.cat==='หลังคา'){ var _l2h=d.querySelector('.rf-l2-host'), _cwR=d.querySelector('.i-color-wrap'); if(_l2h && _cwR && _cwR.parentNode!==_l2h){ _l2h.appendChild(_cwR); _cwR.style.display=''; } var _cgr3=d.querySelector('.cg-row'); if(_cgr3) _cgr3.style.display='none'; }
+  // fix L3-in-L2 (25มิ.ย.): ย้าย L3 label + rf-l3-host เข้าใน rf-l2-host (L3 ซ้อนใน L2 ตามดราฟ)
+  if(p.cat==='หลังคา'){
+    var _l2h=d.querySelector('.rf-l2-host'), _cwR=d.querySelector('.i-color-wrap');
+    if(_l2h && _cwR && _cwR.parentNode!==_l2h){ _l2h.appendChild(_cwR); _cwR.style.display=''; }
+    var _cgr3=d.querySelector('.cg-row'); if(_cgr3) _cgr3.style.display='none';
+    // ย้าย L3 label + rf-l3-host เข้าใน rf-l2-host (หลัง .i-color-wrap append แล้ว)
+    var _l3cb=d.querySelector('.rf-l3-cb'), _l3lbl=_l3cb?_l3cb.closest('label'):null, _l3h=d.querySelector('.rf-l3-host');
+    if(_l2h && _l3lbl && _l3lbl.parentNode!==_l2h){ _l2h.appendChild(_l3lbl); }
+    if(_l2h && _l3h && _l3h.parentNode!==_l2h){ _l2h.appendChild(_l3h); }
+    // render color-drill สำหรับ L3 (o-rfcoopt)
+    var _rfco=d.querySelector('.o-rfcoopt'); if(_rfco){ try{ colorDrillRender(_rfco); }catch(e){} }
+  }
   // [mosq-r2] rebuild ชิปบานมุ้งหลัง buildItemOpts เสร็จ (ถ้า mosq-detail-group มีอยู่)
   rebuildMosqPanelChips(d);
   // งาน7: init i-panels-mirror + o-opencount หลัง build opts ใหม่
