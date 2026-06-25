@@ -180,8 +180,8 @@
   .qrunfoot{display:none;}
   @media print{
     @page{size:A4;margin:10mm 10mm 20mm 10mm;}
-    body *{visibility:hidden;} #quoteBox,#quoteBox *{visibility:visible;}
-    #quoteBox{position:absolute;inset:0;background:#fff;padding:0;} .qbtns{display:none;}
+    body > *:not(#quoteBox){display:none !important;}
+    #quoteBox{position:static;background:#fff;padding:0;width:100%;} .qbtns{display:none;}
     .quote{box-shadow:none;border-radius:0;max-width:100%;font-size:11pt;}
     .qhead h3{font-size:18pt;} .qmeta{font-size:11pt;}
     .qt th,.qt td{padding:4px 6px;font-size:10pt;} .qnote{font-size:9pt;}
@@ -189,7 +189,7 @@
     #ckFab,#ckPanel{display:none !important;}
     .qtoggle-set{display:none !important;}
     .no-print{display:none !important;visibility:hidden !important;}  /* วิธีคิดราคา A (F5): บล็อก 🔍 + ปุ่มโหมด + แก้ในใบ ห้ามพิมพ์ติด */
-    table{page-break-inside:auto;} tr{page-break-inside:avoid;}
+    table{page-break-inside:auto;} tr{page-break-inside:avoid;} .qt tbody tr{break-inside:avoid;}
     /* R4.2: ข้อมูลบริษัทซ้ำทุกหน้า (running footer) */
     .qrunfoot{display:block !important;visibility:visible !important;position:fixed;bottom:6mm;left:10mm;right:10mm;text-align:center;font-size:8pt;color:#6B7280;border-top:1px solid #E5E7EB;padding-top:3px;}
   }
