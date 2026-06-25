@@ -20,8 +20,8 @@ next-env.d.ts
 # เอาต์พุตทดสอบ (สร้างใหม่ได้จาก scripts/gen-quotes.mjs)
 /ใบเสนอราคาทดสอบ/
 
-# ��ʴ���ҧ�ԧ�ͧ��ԧ (�˭� ��� commit)
-/07_�鹩�Ѻ�ع_��ҧ�ԧ/
+# ��ʴ���ҧ�ԧ�ͧ��ԧ (�˭� ��� commit)
+/07_�鹩�Ѻ�ع_��ҧ�ԧ/
 scripts/seed_queue.sql
 scripts/seedgen.mjs
 .claude/
@@ -33,3 +33,23 @@ public/review/
 
 # ไฟล์ชั่วคราว/PII — ห้าม commit
 tmp/
+
+# ไฟล์ชั่วคราว/backup กัน deploy vercel + PR บวม (24 มิ.ย.)
+_backups/
+public/_*
+public/drafts/
+public/DRAFT-*
+public/**/index.bak*
+public/**/index.snapshot*
+public/**/_mirror-*
+public/**/glasshouse-preview*
+public/**/*-draft-play*
+_f.txt
+scripts/_tmp-*
+scripts/_verify-*
+
+# เก็บกวาด temp probe/verify/dump/frag (25 มิ.ย.) — กันรก git status ซ้ำ
+scripts/_*
+test/_*
+docs/_*.json
+*.tmp
