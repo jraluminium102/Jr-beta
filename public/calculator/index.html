@@ -750,13 +750,13 @@ const PRODUCTS=[
  {id:'inner_bottom_euro',cat:'เลื่อนภายใน',name:'เลื่อนภายในรางล่าง ยูโร',method:'area_rate_addon',rates:'INBOT_EURO',cost:null,addon:{kind:'sliding',amounts:{1:4400,2:11000,3:17600,4:24200}}},
  {id:'lift_sms',cat:'บานยก',name:'บานยก SMS สลิม (ชุดเล็ก)',method:'lift',cost:'lift_sms',maxPanels:2,motor:true,mosquito:1},
  {id:'lift_aluinch',cat:'บานยก',name:'บานยก เซมิยูโร (บานใหญ่)',method:'same_as',ref:'lift_sms',cost:null,motor:true,mosquito:1},
- {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000)
+ {id:'shower',cat:'shower',name:'shower กั้นห้องอาบน้ำ',method:'bucket',min:12000,rates:'SHOWER',cost:null,glassDef:14,opts:[{id:'corner',label:'เข้ามุม',price:3000},{id:'showerhw',label:'อุปกรณ์',type:'select',options:['เงิน (default)','ดำ +4,000','ทอง +6,000'],defaults:0}]}, // ข้อ11: blackhw/goldhw รวมเป็น select เดียว เลือกสีเดียว (กันติ๊กซ้อน +10,000) · glassDef:14=เทมเปอร์เขียว/ใส 10มม.
  {id:'frameless_fixed',cat:'บานเปลือย',name:'บานเปลือยติดตาย',method:'bucket',min:7000,rates:'FRAMELESS',cost:null},
  {id:'frameless_door',cat:'บานเปลือย',name:'ประตูสวิง/เลื่อน บานเปลือย',method:'ref_plus_panel',ref:'frameless_fixed',per_panel:8000,digihandle:1,cost:null},
- {id:'curved_double',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานคู่',method:'bucket',min:47000,rates:'CURVE_DBL',cost:null,digihandle:1,glassDef:60},
- {id:'curved_single',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานเดี่ยว',method:'bucket',min:32000,rates:'CURVE_SGL',cost:null,digihandle:1,glassDef:60},
- {id:'curved_fixed',cat:'ดัดโค้ง',name:'บานติดตายดัดโค้ง',method:'bucket',min:10000,rates:'CURVE_FIX',cost:null,glassDef:60},
- {id:'curved_slim',cat:'ดัดโค้ง',name:'บานดัดโค้งสลิม',method:'bucket',min:50000,rates:'CURVE_SLIM',cost:null,digihandle:1,glassDef:60},
+ {id:'curved_double',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานคู่',method:'bucket',min:47000,rates:'CURVE_DBL',cost:null,digihandle:1},
+ {id:'curved_single',cat:'ดัดโค้ง',name:'ประตูดัดโค้งบานเดี่ยว',method:'bucket',min:32000,rates:'CURVE_SGL',cost:null,digihandle:1},
+ {id:'curved_fixed',cat:'ดัดโค้ง',name:'บานติดตายดัดโค้ง',method:'bucket',min:10000,rates:'CURVE_FIX',cost:null},
+ {id:'curved_slim',cat:'ดัดโค้ง',name:'บานดัดโค้งสลิม',method:'bucket',min:50000,rates:'CURVE_SLIM',cost:null,digihandle:1},
  {id:'pc_door_2',cat:'PC Door',name:'PC Door 2 บาน',method:'bucket',min:36000,rates:'PC2',cost:null,mosquito:1,digihandle:1},
  {id:'pc_door_4',cat:'PC Door',name:'PC Door 4 บาน',method:'area_rate',rates:'PC4',min:46000,cost:null,mosquito:1,digihandle:1},
  {id:'roof_vinyl',cat:'หลังคา',name:'หลังคา ไวนิล',method:'bucket',min:28000,rates:'ROOF_STD',cost:'roof_vinyl',optSlide:true},
@@ -1359,7 +1359,7 @@ function colorPrice(ci,a,series){
 }
 // B2 (2026-06-15 · พี่นัทเคาะ): เอา 'บานเปลือย' ออก → โชว์สีเฟรม + คิดราคาตามสี (default อบขาว ci=0 = ฟรี · golden ไม่ขยับ)
 const NO_COLOR_CATS=['ฝ้า-ผนัง','เสริม','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ลูกฟูก+คอมโพสิททึบ','เส้นคาด','ประตูรั้ว','ฝาตู้','ม่านซิป'];
-const COMMON_OPTS=[{id:'soft_close',label:'Soft Close (สลักหน่วงบาน)',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'hide_track',label:'ซ่อนราง (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'u_track',label:'ฝังรางยู (U-Track)',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_stack','inner_top_slimlux','inner_top_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3)
+const COMMON_OPTS=[{id:'soft_close',label:'Soft Close (สลักหน่วงบาน)',price:4000,ids:['inner_top_stack','inner_top_xseries']},{id:'sling',label:'สลิงเปิดซ้อน(×บาน)',price:2000,perPanel:true,ids:['inner_top_stack','inner_top_xseries']},{id:'hide_beam',label:'ซ่อนคาน (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_xseries']},{id:'u_track',label:'ฝังรางยู (U-Track)',perLen:true,base:4000,freeLen:2,lenRate:500,ids:['folding','folding_xseries','inner_top_stack','inner_top_slimlux','inner_top_xseries']},{id:'hide_track',label:'ซ่อนราง (base 4,000)',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['folding','folding_xseries']},{id:'beam_support',label:'เสริมคานซัพพอร์ท',perLen:true,base:4000,freeLen:3,lenRate:500,ids:['inner_top_stack','inner_top_slimlux','inner_top_xseries','folding','folding_euro','folding_xseries','pc_door_2','pc_door_4']}]; // R3.9: ซ่อนคาน/ซ่อนราง/เสริมคาน ≤3ม.=4,000+500/ม. · รางยู ≤2ม.=4,000+500/ม. · เสริมคานซัพพอร์ท: เลื่อนภายใน+บานเฟี้ยม+PC (เลิกรุ่น1/2/3) · จุด2 (25มิ.ย.): ย้าย u_track ติด hide_beam
 // SLIDING_RAIL: metadata ราง ต่อรุ่น — ใช้ใน buildItemOpts + itemDetail
 const SLIDING_RAIL={
   sliding_sms:{rail:'low',txt:'รางล่าง (รุ่นกันน้ำ)'},
@@ -5249,7 +5249,9 @@ function buildItemOpts(d){
   if(p.closer){ if(p.cat==='YKK'){ h+='<label class="opt">โช้คอัพ <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คอัพ">มี +5,000</option></select></label>'; } else { h+='<label class="opt">โช้คอัพประตู <select class="o-closer" style="width:auto;height:32px;"><option value="0">ไม่มี</option><option value="5000" data-n="โช้คแขนยื่น">แขนยื่น +5,000</option><option value="5000" data-n="โช้ครางเลื่อน">รางเลื่อน +5,000</option><option value="5000" data-n="บานพับโช้ค">บานพับ +5,000</option></select></label>'; } } // 22มิ.ย. #3-A: YKK โช๊คราคาเดียว มี/ไม่มี +5,000 · บานเปิดคง 4 ตัวเลือก
   // v7A ข้อ2 (18มิ.ย.): ล็อค = สเปคเฉยๆ ไม่คิดเงิน (calcUnit ไม่อ่าน) · เฉพาะบานเปิด/เฟี้ยม/กระทุ้ง/หมุน · เพิ่ม frameless_door (ประตูบานเปลือย เฉพาะประตู ไม่ใช่ติดตาย)
   if(['บานเปิด','บานเฟี้ยม','บานกระทุ้ง','บานหมุน','บานยก'].includes(p.cat) || (p.cat==='ดัดโค้ง'&&p.id!=='curved_fixed') || p.id==='frameless_door'){ // 22มิ.ย.: เพิ่ม บานยก/ดัดโค้ง(เว้นติดตายโค้ง)/บานเปลือยประตู · คำ "ชุดล็อค" 3 แบบครบทุกบาน
-    h+='<label class="opt" style="width:100%;">ชุดล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี">ไม่มีชุดล็อก</option><option value="มีล็อค">มีชุดล็อก</option><option value="มีล็อค+กุญแจ" selected>มีชุดล็อก + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีชุดล็อก'],['มีล็อค','มีชุดล็อก'],['มีล็อค+กุญแจ','มีชุดล็อก + กุญแจ']],'มีล็อค+กุญแจ',true)+'</label>';
+    // จุด4 (25มิ.ย.): บานกระทุ้ง default = มีชุดล็อก · ชนิดอื่น = มีชุดล็อก+กุญแจ
+    var _lockDef=p.cat==='บานกระทุ้ง'?'มีล็อค':'มีล็อค+กุญแจ';
+    h+='<label class="opt" style="width:100%;">ชุดล็อค <select class="o-lock" style="display:none;"><option value="ไม่มี">ไม่มีชุดล็อก</option><option value="มีล็อค"'+(_lockDef==='มีล็อค'?' selected':'')+'>มีชุดล็อก</option><option value="มีล็อค+กุญแจ"'+(_lockDef==='มีล็อค+กุญแจ'?' selected':'')+'>มีชุดล็อก + กุญแจ</option></select>'+rfChips('o-lock',[['ไม่มี','ไม่มีชุดล็อก'],['มีล็อค','มีชุดล็อก'],['มีล็อค+กุญแจ','มีชุดล็อก + กุญแจ']],_lockDef,true)+'</label>';
   }
   // #1 (22มิ.ย.): เสริมแขนค้ำ บานกระทุ้ง — checkbox ต่อจากล็อค · default off (golden นิ่ง) · ติ๊กเอง +500/ชุด · แนะนำเมื่อบานใหญ่
   if(p.cat==='บานกระทุ้ง'){
@@ -7320,7 +7322,8 @@ function genQuote(keepNo){
       _parts.push(_thfLabel);
     }
     // HANDOFF-G6 ธง⑥③+v7B: ทิศเปิดเฟี้ยม + ช่องซ้าย/ขวา (แสดงในใบ · ไม่กระทบราคา)
-    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ var _fdTxt=it.optSel.folddir; if(_fdTxt==='เปิดแยกกลาง' && it.optSel.fleft && it.optSel.fright){ _fdTxt+=' (ซ้าย '+it.optSel.fleft+' ช่อง / ขวา '+it.optSel.fright+' ช่อง)'; } _parts.push(_fdTxt); }
+    // จุด5 (25มิ.ย.): เติม N บาน ต่อท้ายทิศเปิด → "เปิดซ้าย 6 บาน"
+    if(it.p.cat==='บานเฟี้ยม' && it.optSel && it.optSel.folddir){ var _fdTxt=it.optSel.folddir; var _fdPanels=parseInt(it.panels)||0; if(_fdTxt==='เปิดแยกกลาง' && it.optSel.fleft && it.optSel.fright){ _fdTxt+=' (ซ้าย '+it.optSel.fleft+' ช่อง / ขวา '+it.optSel.fright+' ช่อง)'; } else if(_fdPanels>0){ _fdTxt+=' '+_fdPanels+' บาน'; } _parts.push(_fdTxt); }
     // R3.6: มุ้งโหมด B prefix
     if(it.p.cat==='มุ้ง' && it.optSel && it.optSel.screen_existing){
       _parts.push('ติดบานเดิม');

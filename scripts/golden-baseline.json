@@ -251,7 +251,7 @@
    "id": "shower",
    "name": "shower กั้นห้องอาบน้ำ",
    "g": 1,
-   "total": 18190,
+   "total": 24610,
    "status": "ok"
   },
   {
@@ -315,7 +315,7 @@
    "id": "curved_double",
    "name": "ประตูดัดโค้งบานคู่",
    "g": 1,
-   "total": 78110,
+   "total": 50290,
    "status": "ok"
   },
   {
@@ -323,7 +323,7 @@
    "id": "curved_single",
    "name": "ประตูดัดโค้งบานเดี่ยว",
    "g": 1,
-   "total": 71690,
+   "total": 43870,
    "status": "ok"
   },
   {
@@ -331,7 +331,7 @@
    "id": "curved_fixed",
    "name": "บานติดตายดัดโค้ง",
    "g": 1,
-   "total": 46010,
+   "total": 18190,
    "status": "ok"
   },
   {
@@ -339,7 +339,7 @@
    "id": "curved_slim",
    "name": "บานดัดโค้งสลิม",
    "g": 1,
-   "total": 88810,
+   "total": 60990,
    "status": "ok"
   },
   {
