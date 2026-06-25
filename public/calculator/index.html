@@ -6159,10 +6159,10 @@ function buildItemOpts(d){
       _rareS.innerHTML=_rareS.innerHTML.replace(/g1co-l2mode-SAMENAME/g,'g1co-l2mode-'+_uid);
     }
     var _rareDest=_rareS?_rareS.querySelector('.g1-rare-body'):null;
-    if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(cw); } else if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; if(_isG1 && !_ci2.classList.contains('g1co-l2c')) _ci2.classList.add('g1co-l2c'); } }
+    if(cw){ cw.style.display=_showCw?'':'none'; cw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(cw); cw.style.flex='0 0 auto'; } else if(_cgr){ _cgr.appendChild(cw); } else box.insertBefore(cw,box.firstChild); var _ci2=cw.querySelector('.i-color'); if(_ci2){ _ci2.value=_savedColorVal; if(_isG1 && !_ci2.classList.contains('g1co-l2c')) _ci2.classList.add('g1co-l2c'); } }
     // A5 (24มิ.ย.): G1 → ย้าย i-colorcode-wrap เข้า g1-rare-body ต่อจาก cw (ใต้ dropdown สีอลู L2)
-    if(_isG1 && _rareDest){ var _ccw=d.querySelector('.i-colorcode-wrap'); if(_ccw){ var _civ=_ccw.previousElementSibling&&_ccw.closest?null:null; _rareDest.appendChild(_ccw); var _l2sel=_rareDest.querySelector('.i-color'); var _l2ci=_l2sel?parseInt(_l2sel.value)||0:0; var _l2c=COLORS[_l2ci]; _ccw.style.display=(_l2c&&_l2c.hasCode)?'block':'none'; } }
-    if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; if(_isG1 && !_gi2.classList.contains('g1co-l2g')) _gi2.classList.add('g1co-l2g'); } }
+    if(_isG1 && _rareDest){ var _ccw=d.querySelector('.i-colorcode-wrap'); if(_ccw){ var _civ=_ccw.previousElementSibling&&_ccw.closest?null:null; _rareDest.appendChild(_ccw); _ccw.style.flex='0 0 auto'; var _l2sel=_rareDest.querySelector('.i-color'); var _l2ci=_l2sel?parseInt(_l2sel.value)||0:0; var _l2c=COLORS[_l2ci]; _ccw.style.display=(_l2c&&_l2c.hasCode)?'block':'none'; } }
+    if(gw){ gw.style.display=_showGw?'':'none'; gw.style.flex='1 1 150px'; if(_rareDest){ _rareDest.appendChild(gw); gw.style.flex='0 0 auto'; } else if(_cgr){ _cgr.appendChild(gw); } else { var _ref2=cw&&cw.parentNode===box?cw.nextSibling:box.firstChild; box.insertBefore(gw,_ref2); } var _gi2=gw.querySelector('.i-glass'); if(_gi2){ _gi2.value=_savedGlassVal; if(_isG1 && !_gi2.classList.contains('g1co-l2g')) _gi2.classList.add('g1co-l2g'); } }
     if(_cgr) _cgr.style.display=_isG1?'none':(_showCw||_showGw)?'flex':'none';
     if(_rareS) _rareS.style.display=(_showCw||_showGw)?'':'none';
     if(!_isG1){ var _rs9=d.querySelector('.g1-rare-section'); if(_rs9){ _rs9.innerHTML=''; _rs9.style.display='none'; } } // บั๊ก: กล่อง #9 ค้างจาก render G1 → ล้างทิ้งเมื่อสลับกลุ่มอื่น
@@ -6277,7 +6277,11 @@ function buildItemOpts(d){
       if((d.querySelector('.i-group')||{}).value==='1' && box){
         // #B/C/E (22มิ.ย. · ดราฟ z1): ดึงฟิลด์หลัก ทิศเปิด/แบบเปิด/ธรณี ขึ้นบนสุด (ก่อนล็อค) — calcUnit อ่าน class ตำแหน่งไม่กระทบราคา (เหมือนดึงล็อค)
         // ลำดับ list = ลำดับโชว์ z1→z2 (แต่ละชนิดมี subset ของตัวเอง) · ดราฟ: shower รูปแบบ→ประเภทประตู→อุปกรณ์→เข้ามุม · เปลือยประตู frametype · บานยก มอเตอร์ · ผนัง โครง→ความหนา · บาน ทิศเปิด/แบบเปิด/ธรณี
+        // #6 fix (25มิ.ย.): G1 ผนัง → ย้าย g1-wallsel (รุ่น) เข้า _lgHost บนสุดก่อน o-wallframe (ดราฟ #9 ลำดับ: รุ่น→โครง→ความหนา→ทาสี)
+        if(p && p.cat==='ฝ้า-ผนัง'){ var _ws=box.querySelector('.g1-wallsel'); if(_ws && !_lgHost.contains(_ws)) _lgHost.appendChild(_ws); }
         ['.o-shtype','.o-shdoortype','.o-showerhw','.o-corner','.o-frametype','.o-motor','.o-wallframe','.o-isothick','.o-folddir','.o-awn_mode','.o-thresh','.o-threshf'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } });
+        // #6 fix: G1 ผนัง → ย้าย o-smartthick + o-wallpaint เข้า _lgHost ต่อจาก o-wallframe/o-isothick (ลำดับ: ความหนา→ทาสี)
+        if(p && p.cat==='ฝ้า-ผนัง'){ ['.o-smartthick','.o-wallpaint','.o-isocolor','.o-insul'].forEach(function(_s){ var _c=d.querySelector(_s); if(_c){ var _l=_c.closest('label')||_c.closest('.opt'); if(_l && !_lgHost.contains(_l)) _lgHost.appendChild(_l); } }); }
         var _lockSec=null;
         box.querySelectorAll('.gh-opt-cat-det').forEach(function(s){ var sm=s.querySelector('summary'); if(sm && sm.textContent.indexOf('ล็อค')>=0) _lockSec=s; });
         if(_lockSec){ _lockSec.open=true; var _sm=_lockSec.querySelector('summary'); if(_sm) _sm.style.display='none'; var _zh=document.createElement('div'); _zh.className='g1-zonehdr'; _zh.textContent='โซน z2 — ใช้บ่อย'; _lgHost.appendChild(_zh); _lgHost.appendChild(_lockSec); }
