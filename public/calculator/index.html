@@ -767,7 +767,7 @@ const PRODUCTS=[
  {id:'isowall',cat:'ฝ้า-ผนัง',name:'ISOWALL',method:'bucket',min:7000,rates:'ISOWALL',cost:null},
  {id:'wall_ext',cat:'ฝ้า-ผนัง',name:'ผนังเบาภายนอก',method:'bucket',min:13500,rates:'WALL_EXT',cost:null},
  {id:'wall_int',cat:'ฝ้า-ผนัง',name:'ผนังเบาภายใน',method:'bucket',min:13500,rates:'WALL_INT',cost:null},
- {id:'wall_gyp',cat:'ฝ้า-ผนัง',name:'ผนังยิปซั่ม',method:'bucket',min:13500,rates:'WALL_INT',cost:null}, // G1-fix (25มิ.ย.): ยิปซั่ม เรต WALL_INT = max(13,500, 4,100→3,200/ตร.ม.) ตาม R3.9
+
  {id:'steel_mesh',g:2,cat:'เสริม',name:'ตะแกรงเหล็กสาน',method:'per_sqm',rate:2500,cost:null},
  {id:'ykk_vent',cat:'YKK',name:'ประตู Ventilation YKK',method:'per_sqm',rate:17500,min:30000,cost:null,sizeCheck:'vent',closer:1},
  {id:'ykk_exhido',cat:'YKK',name:'ประตู Exhido YKK (ช่องเปิดเต็ม)',method:'bucket',min:120000,rates:'EXHIDO',cost:null,sizeCheck:'exhido',closer:1},
@@ -1017,7 +1017,7 @@ function prodOptionsG6(g){
   const _GM={'1':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','PC Door','บานเปลือย','shower','บานยก','YKK','บานหมุน','ดัดโค้ง','เส้นคาด','ลูกฟูก+คอมโพสิททึบ'],'2':['ประตูรั้ว','ระแนง','ระแนง-บังตา','ระแนง-ผนัง','ระแนง-เกล็ด','ราวบันได'],'3':['หลังคา','ฝ้า-ผนัง'],'4':['ตู้อลู','ฝาตู้'],'5':['มุ้ง'],'6':['บานเลื่อน','บานเปิด','ติดตาย','บานเฟี้ยม','บานกระทุ้ง','เลื่อนภายใน','บานเปลือย','บานยก','บานหมุน','ดัดโค้ง','PC Door','YKK','หลังคา','ฝ้า-ผนัง'],'7':['ม่านซิป']}; // UX-ALL G6: ตัด shower/ระแนง×4/ราวบันได (ไม่เกี่ยวงานกั้นห้อง) · รอบ3ข้อ5: +YKK (รวมชุดบาน G1+G6)
   const cats=_GM[g]||_GM['1']; const gi=parseInt(g);
   // B6 (เปิดแล้ว · พี่นัทเคาะ 2026-06-15): ผนังเบาทึบ 3 ตัวเข้ากลุ่ม 1 (เฉพาะ id · ไม่ดึงฝ้าเพดาน) · default on · ปิด rollback ด้วย window.G1_WALLSOLID=false · โผล่ใต้ "อื่นๆ → ผนังเบา"
-  const inG=p=>(p.cat!=='เสริม'&&cats.includes(p.cat))||p.g===gi||(g==='1'&&(typeof window==='undefined'||window.G1_WALLSOLID!==false)&&(p.id==='wall_ext'||p.id==='wall_int'||p.id==='wall_gyp'||p.id==='isowall')); // G1-fix (25มิ.ย.): +wall_gyp
+  const inG=p=>(p.cat!=='เสริม'&&cats.includes(p.cat))||p.g===gi||(g==='1'&&(typeof window==='undefined'||window.G1_WALLSOLID!==false)&&(p.id==='wall_ext'||p.id==='wall_int'||p.id==='isowall'));
   const byCat={}; PRODUCTS.forEach(p=>{ if(inG(p) && !p.hidden && !(g==='2'&&_hideRanaeSolo(p)) && !_hideInnerBottom(p)){ (byCat[p.cat]=byCat[p.cat]||[]).push(p); } }); // R2-2: กรองไม่โครงออกจากขายเดี่ยว (group 2) · ธง⑤: ซ่อนเลื่อนรางล่าง
   return CATS.filter(c=>byCat[c]).map(c=>`<optgroup label="${c}">`+byCat[c].map(p=>`<option value="${p.id}">${p.name}</option>`).join('')+`</optgroup>`).join('');
 }
@@ -2071,7 +2071,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(optSel.motor==='300')opt+=28000; }
   if(p.optBeam&&optSel&&optSel.beam){ opt+=Math.max(4000, a*rateOf(a,RATES.BEAM)); }
   if(['บานเลื่อน','เลื่อนภายใน','บานเปิด','PC Door'].includes(p.cat)&&optSel){ const _bmr=(parseFloat(optSel.beamM)||0)*(parseFloat(optSel.beamMlen)||0); if(_bmr>0){ opt+=_bmr; msgs.push('เสริมคาน '+fmt(_bmr)); } }
-  if((p.optInsul||['isowall','wall_ext','wall_int','wall_gyp'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
+  if((p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id))&&optSel&&optSel.insul){ opt+=600*a; }
   if(p.cat==='ฝ้า-ผนัง'&&optSel){ const _wpp=parseFloat(optSel.wallpaintprice)||0; if(_wpp>0){ opt+=_wpp; msgs.push('ทาสี +'+fmt(_wpp)); } if(optSel.wallmodel) msgs.push(optSel.wallmodel); } // G3 ข้อ2: ทาสี(กรอกเอง) + รุ่น/ความหนา(label)
   if(optSel){ COMMON_OPTS.forEach(o=>{ if(optSel[o.id]){ if(o.perLen){ const _l=parseFloat(optSel[o.id+'Len'])||0; const _c=o.base+Math.max(0,_l-o.freeLen)*o.lenRate; opt+=_c; msgs.push(o.label+(_l>0?(' '+_l+' ม.'):'')+' '+fmt(_c)); } else { opt+=o.price*(o.perPanel?Math.max(1,panels):1); } } }); }
   if(optSel){ const fcm=parseFloat(optSel.fcm)||0; if(fcm>0){ const _fr=ci<=2?700:(ci<=4?800:(ci<=7?1000:(ci<=9?1100:(ci===10?1200:(ci===11?1300:700))))); opt+=_fr*fcm; } const dfm=parseFloat(optSel.dfm)||0; if(dfm>0)opt+=5000+Math.max(0,dfm-7)*750; }
@@ -2164,9 +2164,11 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(_ventHbad){ msgs.push('🛑 YKK Vent: สูงต้องอยู่ 2.0–2.2 ม. (กรอก '+H.toFixed(2)+' ม.) — ไม่คิดราคา'); sell=0; }
     if(!_ventWbad&&!_ventHbad&&W>0&&H>0) msgs.push('✓ ขนาด YKK Vent อยู่ในช่วง (กว้าง '+W.toFixed(2)+' × สูง '+H.toFixed(2)+' ม.)');
   }
-  // G1-fix (25มิ.ย.): บล็อกบานยกแยกรุ่น (พี่เคาะ: SMS สลิม ≤2 ตร.ม. · เซมิยูโร ≤10 ตร.ม.)
-  if(p.id==='lift_sms' && a > 2){
-    msgs.push('🛑 บานยก SMS สลิม (ชุดเล็ก): พื้นที่เกิน 2 ตร.ม. — ห้ามรับงานนี้ · เกิน spec ผู้ผลิต · ติดต่อหัวหน้า'); sell=0;
+  // G1-fix (25มิ.ย.): บล็อกบานยกแยกรุ่น · SMS สลิม = ต่อมิติ (กว้าง>1.2 หรือ สูง>2.4) · เซมิยูโร = area>10
+  if(p.id==='lift_sms'){
+    const _lW=parseFloat(w)||0, _lH=parseFloat(h)||0;
+    if(_lW>1.2){ msgs.push('🛑 บานยก SMS สลิม: กว้างเกิน 1.2 ม. (กรอก '+_lW.toFixed(2)+' ม.) — ใหญ่กว่านี้ใช้บานยกเซมิยูโร'); sell=0; }
+    else if(_lH>2.4){ msgs.push('🛑 บานยก SMS สลิม: สูงเกิน 2.4 ม. (กรอก '+_lH.toFixed(2)+' ม.) — ใหญ่กว่านี้ใช้บานยกเซมิยูโร'); sell=0; }
   } else if(p.id==='lift_aluinch' && a > 10){
     msgs.push('🛑 บานยก เซมิยูโร: พื้นที่เกิน 10 ตร.ม. — ห้ามรับงานนี้ · เกิน spec ผู้ผลิต · ติดต่อหัวหน้า'); sell=0;
   } else if(p.cat==='บานยก' && p.id!=='lift_sms' && p.id!=='lift_aluinch' && a > 10){
@@ -4190,7 +4192,7 @@ function g3SelectorHTML(p){
   return h+'</div>';
 }
 // ธง4 (มติ 16มิ.ย.): G1 ผนังเบา profile solid — เลือกผนังนอก/ใน/isowall เท่านั้น (allowlist 3 ตัว · ไม่มี หลังคา/ฝ้าหลังคา/ฉาบเรียบ/กระจก) · ฉนวน+600/ทาสี render แยกใน buildItemOpts
-var G1_WALL_IDS=['wall_ext','wall_int','wall_gyp','isowall']; // G1-fix (25มิ.ย.): +wall_gyp ยิปซั่ม
+var G1_WALL_IDS=['wall_ext','wall_int','isowall'];
 function g1WallSelectorHTML(p){
   var walls=G1_WALL_IDS.map(function(id){return PBYID[id];}).filter(Boolean);
   var h='<div class="opt g1-wallsel" style="width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 10px;background:#FAFAFA;">';
@@ -5363,7 +5365,7 @@ function buildItemOpts(d){
   // PC Door — เสริมคาน (ไม่มี track เพราะเป็นรางล่าง)
   // ข้อ5(G1): เสริมคาน — บล็อกรวม cat บานเลื่อน/เลื่อนภายใน/บานเปิด/PC Door (เดิมมีแค่ PC/รางบน · งานจริงบางชุดต้องใช้คาน)
   // R3.9: เลิก "เสริมคาน รุ่น1/2/3" (o-beamm · บานเลื่อน/เปิด/PC) — เสริมคานเหลือเฉพาะเลื่อนภายใน+บานเฟี้ยม ผ่าน "เสริมคานซัพพอร์ท" (COMMON_OPTS) · บานเลื่อนรางล่าง/เปิด/PC ไม่มีเสริมคาน
-  if(p.optInsul || ['isowall','wall_ext','wall_int','wall_gyp'].includes(p.id)){ const _insChk=['isowall','wall_ext','wall_int','wall_gyp'].includes(p.id)?' checked':''; h+=`<label class="opt"><input type="checkbox" class="o-insul"${_insChk} onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; } // G1-fix (25มิ.ย.): +wall_gyp default checked
+  if(p.optInsul || ['isowall','wall_ext','wall_int'].includes(p.id)){ const _insChk=['isowall','wall_ext','wall_int'].includes(p.id)?' checked':''; h+=`<label class="opt"><input type="checkbox" class="o-insul"${_insChk} onchange="calcQuote();"> ฉนวนกันความร้อนและกันเสียง หนา 3" +600/ตร.ม.</label>`; }
   // G3 ข้อ2 (มติพี่นัท ข): ฝ้า-ผนัง — รุ่น/ความหนา (ระบุในใบ) + ทาสี (กรอกราคาเอง)
   if(p.cat==='ฝ้า-ผนัง'){
     h+='<label class="opt" style="width:100%;">รุ่น/ความหนา <select class="o-wallmodel" style="width:auto;height:32px;max-width:340px;" onchange="calcQuote();"><option value="">ไม่ระบุ</option><option value="สมาร์ทบอร์ด หนา 12 มม.">สมาร์ทบอร์ด หนา 12 มม.</option><option value="เวเทอร์บล็อค ตราช้าง หนา 9 มม. เสริมฟอยล์กันร้อน/น้ำ/รา">เวเทอร์บล็อค ตราช้าง 9 มม. (ฟอยล์ กันร้อน/น้ำ/รา)</option></select> <span style="font-size:11px;color:#666;">(ระบุในใบ · ราคาตามวัสดุ รอเรต)</span></label>';
@@ -6424,7 +6426,7 @@ function readItem(d){
     const _gmr=d.querySelector('.o-gm-rate'); optSel.gmRate=_gmr?_gmr.value:'200';
     const _gmc=d.querySelector('.o-gm-curve'); optSel.gmCurve=_gmc?_gmc.value:'0';
   }
-  if(p.optInsul||['isowall','wall_ext','wall_int','wall_gyp'].includes(p.id)){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
+  if(p.optInsul||['isowall','wall_ext','wall_int'].includes(p.id)){ const b=d.querySelector('.o-insul'); optSel.insul=b&&b.checked; }
   if(p.cat==='ฝ้า-ผนัง'){ const _wm=d.querySelector('.o-wallmodel'); if(_wm)optSel.wallmodel=_wm.value; const _wpp=d.querySelector('.o-wallpaintprice'); if(_wpp)optSel.wallpaintprice=_wpp.value; } // G3 ข้อ2
   // สเปก rev2: ฝ้า-ผนัง ฟิลด์รายละเอียด
   if(p.cat==='ฝ้า-ผนัง'){ const _wf=d.querySelector('.o-wallframe'); optSel.wallframe=_wf?_wf.value:'';
@@ -7410,10 +7412,10 @@ function genQuote(keepNo){
         if(_os.ckolor) _spec.push('สี/ลายฝ้า: '+_os.ckolor); }
       // v7A ข้อ7 (18มิ.ย. · registry #8): สเปกผนังเต็ม — ภายนอก=สมาร์ทบอร์ด+ฉนวน+เหล็กชุบ · ภายใน=ยิปซั่ม+ฉนวน+โครงคร่าวซี-ไลน์
       else if(it.p.id==='wall_int'){ _work.push('ผนังยิปซั่มพร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push('โครงคร่าวซี-ไลน์เสริมแรง'); }
-      else if(it.p.id==='wall_gyp'){ _work.push('ผนังยิปซั่มพร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push('โครงคร่าวซี-ไลน์เสริมแรง'); } // G1-fix (25มิ.ย.)
+
       else if(it.p.id==='wall_ext'){ _work.push('ผนังสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม. พร้อมฉนวนกันร้อนกันเสียง'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
       else { _work.push('แผ่นสมาร์ทบอร์ด หนา '+(_os.smartthick||'12')+' มม.'+(_os.wallpaint?(' พร้อม'+_os.wallpaint):'')); _work.push(_frame+' พร้อมโครงคร่าวซี-ไลน์เสริมแรง'); }
-      if(_os.insul && it.p.id!=='wall_int' && it.p.id!=='wall_ext' && it.p.id!=='wall_gyp') _work.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');  // ผนังเบา v7A+G1-fix: ฉนวนรวมในสเปกแล้ว (กันซ้ำ)
+      if(_os.insul && it.p.id!=='wall_int' && it.p.id!=='wall_ext') _work.push('ฉนวนกันความร้อนและกันเสียง หนา 3"');  // ผนังเบา v7A: ฉนวนรวมในสเปกแล้ว (กันซ้ำ)
       det = _work.join('\n')+(_spec.length?('\n###รายละเอียด###\n'+_spec.join('\n')):'');
       if(!det.trim()) det='-';
     }
