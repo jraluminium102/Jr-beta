@@ -3069,7 +3069,60 @@ function qiG6SidesOf(shape,reach,len){
 }
 function qiG6GetState(d){
   return {shape:d.dataset.qiG6shape||'3',mosq:parseInt(d.dataset.qiG6mosq||0),roof:parseInt(d.dataset.qiG6roof||0),ceil:parseInt(d.dataset.qiG6ceil||0),
-    sideDoor:JSON.parse(d.dataset.qiG6sides||'[0,1,1]')};
+    sideDoor:JSON.parse(d.dataset.qiG6sides||'[0,1,1]'),
+    ci:parseInt(d.dataset.qiG6ci||0), gcat:d.dataset.qiG6gcat||'กระจกใส/สี', gsub:d.dataset.qiG6gsub||'ใส·เขียว', gi:parseInt(d.dataset.qiG6gi||0)};
+}
+/* helpers สี/กระจก G6 คิดเร็ว (ใช้ COLORS,GLASS,COLOR_CATS ที่มีอยู่แล้ว) */
+var QIG6_GLASS_CATS=['กระจกใส/สี','เทมเปอร์','ลามิเนต','อินซูเลท','อื่นๆ'];
+var QIG6_GLASS_BIGCATS=['กระจกใส/สี','เทมเปอร์','ลามิเนต'];
+function qiG6GlassCat(n){ return /อินซูเลท/.test(n)?'อินซูเลท':(/เทมเปอร์/.test(n)?'เทมเปอร์':(/ลามิเนต/.test(n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(n)?'กระจกใส/สี':'อื่นๆ'))); }
+function qiG6GlassSub(cat,n){
+  if(cat==='กระจกใส/สี') return /reflective|เคลือบ/.test(n)?'เคลือบ·reflective':(/ยูโร/.test(n)?'ยูโร':'ใส·เขียว');
+  if(cat==='เทมเปอร์')   return /ยูโรเกรย์/.test(n)?'ยูโรเกรย์':(/ยูโรบรอนซ์/.test(n)?'ยูโรบรอนซ์':(/ฝ้า/.test(n)?'ฝ้า':((/reflective|ชาดำ|ฟ้า/.test(n))?'สี·reflective':'เขียว·ใส·พิเศษ')));
+  if(cat==='ลามิเนต')    return /กันเสียง|กันร้อน|Solar|กันขโมย/.test(n)?'กันเสียง·ร้อน·ขโมย':((/ยูโร|ชาดำ|คริสตัล|ฟ้า|บรอนซ์/.test(n))?'สี':((/ลอนแก้ว|เงาทอง/.test(n))?'พิเศษ':'ใส·เขียว'));
+  return null;
+}
+function qiG6GlassShort(cat,n){ n=n.replace(/^★\s*/,'').replace(/^กระจก/,''); if(cat==='เทมเปอร์')return n.replace('เทมเปอร์','').trim(); if(cat==='ลามิเนต')return n.replace('ลามิเนต','').trim(); return n.trim(); }
+function qiG6GlassSubGroupsOf(cat){ if(QIG6_GLASS_BIGCATS.indexOf(cat)<0) return null; var seen=[]; GLASS.forEach(function(g,i){ if(qiG6GlassCat(g.n)===cat){ var s=qiG6GlassSub(cat,g.n); if(seen.indexOf(s)<0) seen.push(s); } }); return seen; }
+function qiG6FirstGi(cat,sub){ for(var i=0;i<GLASS.length;i++){ if(qiG6GlassCat(GLASS[i].n)===cat && (!sub || qiG6GlassSub(cat,GLASS[i].n)===sub)) return i; } return 0; }
+/* render สี/กระจก G6 คิดเร็ว → HTML string ส่งกลับ */
+function qiG6ColorGlassHtml(st){
+  var h='';
+  /* สีอลู */
+  h += '<div class="qi-lbl">สีอลูมิเนียม (ทั้งห้อง)</div>';
+  h += '<div class="qi-chips" style="flex-wrap:wrap;">';
+  COLOR_CATS.forEach(function(cc,ci_){ h += '<button type="button" class="chip'+(colorCatOf(st.ci)===cc.key?' on':'')+'" onclick="qiG6SetCcat(this,\''+cc.key+'\')">'+cc.label+'</button>'; });
+  h += '</div>';
+  /* ชิปสีในหมวด */
+  var curCatKey=colorCatOf(st.ci);
+  var curCc=null; for(var i=0;i<COLOR_CATS.length;i++){if(COLOR_CATS[i].key===curCatKey){curCc=COLOR_CATS[i];break;}}
+  if(curCc){
+    h += '<div class="qi-subwrap"><div class="qi-chips" style="flex-wrap:wrap;">';
+    curCc.idx.forEach(function(cidx){
+      var c=COLORS[cidx]; if(!c)return;
+      var sw='<span class="qi-sw" style="'+colorSwStyle(cidx)+'display:inline-block;"></span>';
+      var label=sw+(c.n||'').replace(/^สี/,'').replace(/ — เช็ค KC/,'').replace(/★|⚠/g,'').trim();
+      h += '<button type="button" class="chip'+(st.ci===cidx?' on':'')+'" onclick="qiG6SetCi(this,'+cidx+')">'+label+'</button>';
+    });
+    h += '</div></div>';
+  }
+  /* กระจก */
+  h += '<div class="qi-lbl" style="margin-top:10px;">กระจก (ทั้งห้อง)</div>';
+  h += '<div class="qi-chips" style="flex-wrap:wrap;">';
+  QIG6_GLASS_CATS.forEach(function(gc){ var cnt=GLASS.filter(function(g){return qiG6GlassCat(g.n)===gc;}).length; if(!cnt)return; h += '<button type="button" class="chip cat'+(st.gcat===gc?' on':'')+'" onclick="qiG6SetGcat(this,\''+gc.replace(/'/g,"\\'")+'\')">' +gc+'<span style="opacity:.5;font-size:10px;margin-left:2px;">('+cnt+')</span></button>'; });
+  h += '</div>';
+  /* glass sub-group */
+  var gsubs=qiG6GlassSubGroupsOf(st.gcat);
+  if(gsubs){
+    h += '<div class="qi-subwrap" style="margin-bottom:6px;"><div class="qi-chips" style="flex-wrap:wrap;">';
+    gsubs.forEach(function(s){ var cnt=GLASS.filter(function(g){return qiG6GlassCat(g.n)===st.gcat && qiG6GlassSub(st.gcat,g.n)===s;}).length; h += '<button type="button" class="chip cat'+(st.gsub===s?' on':'')+'" onclick="qiG6SetGsub(this,\''+s.replace(/'/g,"\\'")+'\')">' +s+'<span style="opacity:.5;font-size:10px;margin-left:2px;">('+cnt+')</span></button>'; });
+    h += '</div></div>';
+  }
+  /* glass items */
+  h += '<div class="qi-subwrap"><div class="qi-chips" style="flex-wrap:wrap;">';
+  GLASS.forEach(function(g,gi){ if(qiG6GlassCat(g.n)!==st.gcat) return; if(st.gsub && qiG6GlassSub(st.gcat,g.n)!==st.gsub) return; h += '<button type="button" class="chip'+(st.gi===gi?' on':'')+'" onclick="qiG6SetGi(this,'+gi+')">'+qiG6GlassShort(st.gcat,g.n)+'</button>'; });
+  h += '</div></div>';
+  return h;
 }
 function qiG6SetState(d,k,v){ d.dataset['qiG6'+k]=v; }
 function qiRenderG6(d){
@@ -3092,14 +3145,17 @@ function qiRenderG6(d){
     QIG6_DOOR.forEach(function(t,ti){ h += '<button type="button" class="chip'+(st.sideDoor[i]===ti?' on':'')+' " onclick="qiG6SetDoor(this,'+i+','+ti+')">'+t[0]+'</button>'; });
     h += '</div></div>';
   });
-  h += '<div class="qi-lbl">มุ้ง</div><div class="qi-chips">';
-  QIG6_MOSQ.forEach(function(m,mi){ h += '<button type="button" class="chip'+(st.mosq===mi?' on':'')+'" onclick="qiG6SetMosq(this,'+mi+')">'+m[0]+'</button>'; });
-  h += '</div>';
-  h += '<div class="qi-lbl">หลังคา</div><div class="qi-chips">';
+  /* Step 4: สี/กระจก ทั้งห้อง */
+  h += qiG6ColorGlassHtml(st);
+  /* Step 5: หลังคา */
+  h += '<div class="qi-lbl" style="margin-top:10px;">หลังคา</div><div class="qi-chips">';
   QIG6_ROOF.forEach(function(r,ri){ h += '<button type="button" class="chip'+(st.roof===ri?' on':'')+'" onclick="qiG6SetRoof(this,'+ri+')">'+r[0]+'</button>'; });
   h += '</div>';
   h += '<div class="qi-lbl">ฝ้า</div><div class="qi-chips">';
-  QIG6_CEIL.forEach(function(c,ci){ h += '<button type="button" class="chip'+(st.ceil===ci?' on':'')+'" onclick="qiG6SetCeil(this,'+ci+')">'+c[0]+'</button>'; });
+  QIG6_CEIL.forEach(function(c,ci2){ h += '<button type="button" class="chip'+(st.ceil===ci2?' on':'')+'" onclick="qiG6SetCeil(this,'+ci2+')">'+c[0]+'</button>'; });
+  h += '</div>';
+  h += '<div class="qi-lbl">มุ้ง</div><div class="qi-chips">';
+  QIG6_MOSQ.forEach(function(m,mi){ h += '<button type="button" class="chip'+(st.mosq===mi?' on':'')+'" onclick="qiG6SetMosq(this,'+mi+')">'+m[0]+'</button>'; });
   h += '</div>';
   h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">ทุกบรรทัด = calcUnit จริง · บานต่อด้าน</div></div></div>';
@@ -3111,7 +3167,12 @@ function qiG6OnSz(inp){ var d=inp.closest('.ch'); qiSaveWH(d); qiRenderG6(d); }
 function qiG6SetDoor(btn,si,ti){ var d=btn.closest('.ch'); var sides=JSON.parse(d.dataset.qiG6sides||'[0,1,1]'); sides[si]=ti; d.dataset.qiG6sides=JSON.stringify(sides); qiSaveWH(d); qiRenderG6(d); }
 function qiG6SetMosq(btn,mi){ var d=btn.closest('.ch'); d.dataset.qiG6mosq=mi; qiSaveWH(d); qiRenderG6(d); }
 function qiG6SetRoof(btn,ri){ var d=btn.closest('.ch'); d.dataset.qiG6roof=ri; qiSaveWH(d); qiRenderG6(d); }
-function qiG6SetCeil(btn,ci){ var d=btn.closest('.ch'); d.dataset.qiG6ceil=ci; qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetCeil(btn,ci2){ var d=btn.closest('.ch'); d.dataset.qiG6ceil=ci2; qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetCcat(btn,catKey){ var d=btn.closest('.ch'); var cc=null; for(var i=0;i<COLOR_CATS.length;i++){if(COLOR_CATS[i].key===catKey){cc=COLOR_CATS[i];break;}} if(cc&&cc.idx.length>0){ d.dataset.qiG6ci=cc.idx[0]; } qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetCi(btn,cidx){ var d=btn.closest('.ch'); d.dataset.qiG6ci=cidx; qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetGcat(btn,gcat){ var d=btn.closest('.ch'); d.dataset.qiG6gcat=gcat; var subs=qiG6GlassSubGroupsOf(gcat); var gsub=subs?subs[0]:null; if(gsub) d.dataset.qiG6gsub=gsub; else delete d.dataset.qiG6gsub; d.dataset.qiG6gi=qiG6FirstGi(gcat,gsub); qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetGsub(btn,gsub){ var d=btn.closest('.ch'); d.dataset.qiG6gsub=gsub; d.dataset.qiG6gi=qiG6FirstGi(d.dataset.qiG6gcat||'กระจกใส/สี',gsub); qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetGi(btn,gi){ var d=btn.closest('.ch'); d.dataset.qiG6gi=gi; qiSaveWH(d); qiRenderG6(d); }
 function qiCalcG6(d){
   var st=qiG6GetState(d);
   var reach=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
@@ -3120,10 +3181,11 @@ function qiCalcG6(d){
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
   var sides=qiG6SidesOf(st.shape,reach,len);
   var html=''; var total=0;
+  var _ci=st.ci||0, _gi=st.gi||0;
   function sideSell(prodId,w,h2,isGlass,panels){
     var p=PBYID[prodId]; if(!p)return 0;
-    var gi=isGlass?0:0, ci=0;
-    try{ return calcUnit(p,w,h2,gi,ci,panels,{},false).sell||0; } catch(e){ return 0; }
+    var useGi=isGlass?_gi:0, useCi=isGlass?_ci:0;
+    try{ return calcUnit(p,w,h2,useGi,useCi,panels,{},false).sell||0; } catch(e){ return 0; }
   }
   sides.forEach(function(sd,i){
     var t=QIG6_DOOR[st.sideDoor[i]]; if(!t)return;
