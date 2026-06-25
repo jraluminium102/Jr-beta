@@ -6359,6 +6359,8 @@ function buildItemOpts(d){
         // #D (22มิ.ย. · ดราฟ z1): เสริมแขนค้ำ (บานกระทุ้ง) ใต้ล็อค — readItem อ่าน .o-awnbrace ตาม class ตำแหน่งไม่กระทบราคา
         var _abc=d.querySelector('.o-awnbrace'); if(_abc){ var _abl=_abc.closest('label')||_abc.closest('.opt'); if(_abl && !_lgHost.contains(_abl)) _lgHost.appendChild(_abl); }
         if(_lgHost.children.length) _lgHost.style.display='';
+        // #fold-split reposition (25มิ.ย.): บานเฟี้ยม → ย้าย .fold-split ให้เป็น nextSibling ของ label ที่มี .o-folddir ใน _lgHost (ติดกันทันที ไม่ให้กล่องสีคั่น)
+        if(p.cat==='บานเฟี้ยม'){ var _fdlEl=_lgHost.querySelector('.o-folddir'); var _fdRow=_fdlEl?(_fdlEl.closest('label')||_fdlEl.closest('.opt')):null; var _fspEl=d.querySelector('.fold-split'); if(_fdRow && _fspEl && _fdRow.parentNode===_lgHost){ _fdRow.parentNode.insertBefore(_fspEl,_fdRow.nextSibling); } }
       }
     }
   }
