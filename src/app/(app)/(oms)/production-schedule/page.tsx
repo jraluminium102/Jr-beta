@@ -12,7 +12,7 @@ import type { ProdStatus } from "@/lib/database.types";
 
 export type ProdSet = {
   id: number; set_label: string; seq: number;
-  design_received: string; glass_installed: string;
+  design_received: string; frame_done: string; glass_installed: string;
   qc_before_glass: string; qc_after_glass: string;
   glass_spec: string; screen_type: string; screen_installed: string;
   glass_order: string; mat_equipment: string; mat_alu_normal: string; mat_alu_painted: string;
@@ -55,6 +55,7 @@ const thShort = (d: string | null) => {
 // ── ค่ามาตรฐาน (ตรงกับ ProductionSetsSection / Excel) ──
 const V_DESIGN_DONE = "ได้รับแบบ";
 const V_DESIGN_UNDONE = "ยังไม่ได้รับแบบ";
+const V_FRAME_DONE = "ผลิตเสร็จ";
 const V_GLASS_DONE = "ใส่แล้ว";
 const V_GLASS_UNDONE = "ยังไม่ใส่";
 const V_QC_PASS = "ผ่าน";
@@ -134,6 +135,14 @@ export default function ProductionSchedulePage() {
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [rows, producerFilter]);
+
+  // นับชุดที่ผลิตเสร็จแล้วแต่ยังรอ QC ตรวจก่อนใส่กระจก (แจ้งเตือนเด่นๆ บนสุด)
+  const waitQcCount = useMemo(
+    () => rows.reduce((n, r) => n + (r.sets ?? []).filter(
+      (s) => s.frame_done === "ผลิตเสร็จ" && s.qc_before_glass !== "ผ่าน" && s.glass_installed !== "ใส่แล้ว"
+    ).length, 0),
+    [rows]
+  );
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -277,6 +286,14 @@ export default function ProductionSchedulePage() {
           </span>
         ))}
       </div>
+
+      {/* 🔔 แจ้งเตือนรวม: ชุดที่ผลิตเสร็จแล้วรอ QC ตรวจก่อนใส่กระจก */}
+      {waitQcCount > 0 && (
+        <div className="rounded-xl px-4 py-3 mb-4 font-bold text-[15px] flex items-center gap-2"
+          style={{ background: "#fff0e0", color: "#c2410c", border: "2px solid #ff9500" }}>
+          🔔 มี {waitQcCount} ชุด <span style={{ textDecoration: "underline" }}>รอ QC ตรวจก่อนใส่กระจก</span>
+        </div>
+      )}
 
       {/* datalist รายชื่อช่าง (ใช้ร่วมกันทั้งหน้า) */}
       <datalist id={DATALIST_ID}>
@@ -481,11 +498,14 @@ function SetCard({ s, saving, mark, canMark }: {
   const screenNotInstalled = hasScreen && s.screen_installed !== V_SCREEN_DONE;
 
   const designDone = s.design_received === V_DESIGN_DONE;
+  const frameDone = s.frame_done === V_FRAME_DONE;
   const glassDone = s.glass_installed === V_GLASS_DONE;
   const screenDone = s.screen_installed === V_SCREEN_DONE;
   const qcBefore = s.qc_before_glass === V_QC_PASS;
   const qcAfter = s.qc_after_glass === V_QC_PASS;
   const qcDone = qcBefore && qcAfter;
+  // เฟรมผลิตเสร็จแล้ว แต่ QC ก่อนใส่กระจกยังไม่ตรวจ + ยังไม่ใส่กระจก → เตือน QC เด่นๆ
+  const waitQcBefore = frameDone && !qcBefore && !glassDone;
   const tone = dlTone[dl.tone];
 
   return (
@@ -514,12 +534,16 @@ function SetCard({ s, saving, mark, canMark }: {
 
       {canMark ? (
         <div className="space-y-2">
-          {/* แถวช่าง: ได้แบบ / ใส่กระจก / ใส่มุ้ง */}
-          <div className={`grid ${hasScreen ? "grid-cols-3" : "grid-cols-2"} gap-1.5`}>
+          {/* แถวช่าง: ได้แบบ / ผลิตเสร็จ / ใส่กระจก / ใส่มุ้ง */}
+          <div className="grid grid-cols-2 gap-1.5">
             <MarkBtn label={designDone ? "ได้แบบแล้ว" : "ได้แบบ"} done={designDone} saving={saving}
               onClick={() => designDone
                 ? mark(s.id, { design_received: V_DESIGN_UNDONE }, "ยกเลิก “ได้แบบแล้ว” ?")
                 : mark(s.id, { design_received: V_DESIGN_DONE })} />
+            <MarkBtn label={frameDone ? "ผลิตเสร็จแล้ว" : "ผลิตเสร็จ"} done={frameDone} saving={saving}
+              onClick={() => frameDone
+                ? mark(s.id, { frame_done: "" }, "ยกเลิก “ผลิตเสร็จ” ?")
+                : mark(s.id, { frame_done: V_FRAME_DONE })} />
             <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
               onClick={() => glassDone
                 ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
@@ -531,8 +555,15 @@ function SetCard({ s, saving, mark, canMark }: {
                   : mark(s.id, { screen_installed: V_SCREEN_DONE })} />
             )}
           </div>
+          {/* 🔔 เตือน QC เด่นๆ เมื่อผลิตเสร็จแต่ยังไม่ตรวจก่อนใส่กระจก */}
+          {waitQcBefore && (
+            <div className="rounded-xl px-3 py-2.5 text-[13.5px] font-bold flex items-center gap-2 qc-alert"
+              style={{ background: "#fff0e0", color: "#c2410c", border: "2px solid #ff9500" }}>
+              🔔 ผลิตเสร็จแล้ว — QC ต้องมาตรวจ <u>ก่อนใส่กระจก</u>!
+            </div>
+          )}
           {/* QC: คนตรวจกดตรงนี้ — ก่อน/หลังใส่กระจก ผ่าน/ไม่ผ่าน */}
-          <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "#fff", border: `1px solid ${IOS.line}` }}>
+          <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "#fff", border: waitQcBefore ? "2px solid #ff9500" : `1px solid ${IOS.line}` }}>
             <div className="text-[11px] font-bold" style={{ color: IOS.ink3 }}>✓ QC (คนตรวจกดตรงนี้)</div>
             <QcRow label="ก่อนใส่กระจก" value={s.qc_before_glass} saving={saving} onSet={(v) => mark(s.id, { qc_before_glass: v })} />
             <QcRow label="หลังใส่กระจก" value={s.qc_after_glass} saving={saving} onSet={(v) => mark(s.id, { qc_after_glass: v })} />

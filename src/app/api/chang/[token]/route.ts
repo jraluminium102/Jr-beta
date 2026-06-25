@@ -12,8 +12,8 @@ async function tokenOk(token: string) {
   return !!expected && token === expected;
 }
 
-const MARK_FIELDS = ["design_received", "glass_installed", "qc_before_glass", "qc_after_glass"] as const;
-const DONE: Record<string, string> = { design_received: "ได้รับแบบ", glass_installed: "ใส่แล้ว", qc_before_glass: "ผ่าน", qc_after_glass: "ผ่าน" };
+const MARK_FIELDS = ["design_received", "frame_done", "glass_installed", "qc_before_glass", "qc_after_glass", "screen_installed"] as const;
+const DONE: Record<string, string> = { design_received: "ได้รับแบบ", frame_done: "ผลิตเสร็จ", glass_installed: "ใส่แล้ว", qc_before_glass: "ผ่าน", qc_after_glass: "ผ่าน", screen_installed: "ใส่แล้ว" };
 const AUDIT: Record<string, [string, string]> = {
   design_received: ["design_received_by", "design_received_at"],
   glass_installed: ["glass_installed_by", "glass_installed_at"],
@@ -21,7 +21,7 @@ const AUDIT: Record<string, [string, string]> = {
   qc_after_glass: ["qc_after_by", "qc_after_at"],
 };
 const SET_COLS =
-  "id, job_id, set_label, seq, design_received, glass_installed, qc_before_glass, qc_after_glass, glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, frame_status, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note";
+  "id, job_id, set_label, seq, design_received, frame_done, glass_installed, qc_before_glass, qc_after_glass, glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, frame_status, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note";
 
 type Row = Record<string, unknown>;
 
@@ -52,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
       produce_date: (p.production_queued as string | null) ?? null, install_date: (p.planned_install_date as string | null) ?? null,
       status: p.status as string, sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
     };
-  }).sort((a, b) => (a.produce_date ?? "9999-99-99").localeCompare(b.produce_date ?? "9999-99-99"));
+  }).sort((a: { produce_date: string | null }, b: { produce_date: string | null }) => (a.produce_date ?? "9999-99-99").localeCompare(b.produce_date ?? "9999-99-99"));
 
   return NextResponse.json({ data: rows });
 }
@@ -72,12 +72,15 @@ export async function PATCH(req: Request, { params }: { params: { token: string 
   catch { return NextResponse.json({ error: "ข้อมูลไม่ถูกต้อง" }, { status: 400 }); }
 
   const marked = body.value === DONE[body.field];
-  const [byCol, atCol] = AUDIT[body.field];
   const patch: Record<string, unknown> = {
     [body.field]: body.value === "" ? null : body.value,
-    [byCol]: marked ? (body.by?.trim() || "ช่าง (ลิงก์)") : null,
-    [atCol]: marked ? new Date().toISOString() : null,
   };
+  // บาง field มี audit column (by/at) บางอันไม่มี (frame_done/screen_installed)
+  const audit = AUDIT[body.field];
+  if (audit) {
+    patch[audit[0]] = marked ? (body.by?.trim() || "ช่าง (ลิงก์)") : null;
+    patch[audit[1]] = marked ? new Date().toISOString() : null;
+  }
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
   const { error } = await sb.from("production_sets").update(patch).eq("id", body.set_id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

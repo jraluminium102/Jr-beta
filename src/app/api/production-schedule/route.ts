@@ -31,7 +31,7 @@ export const GET = withRoute(async () => {
   if (jobIds.length) {
     const { data: sets } = await sb
       .from("production_sets")
-      .select("id, job_id, set_label, seq, design_received, glass_installed, qc_before_glass, qc_after_glass, glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, frame_status, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note")
+      .select("id, job_id, set_label, seq, design_received, frame_done, glass_installed, qc_before_glass, qc_after_glass, glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, frame_status, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note")
       .in("job_id", jobIds)
       .order("seq", { ascending: true })
       .order("id", { ascending: true });
