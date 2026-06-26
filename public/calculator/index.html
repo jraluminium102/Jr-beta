@@ -5952,18 +5952,15 @@ function buildItemOpts(d){
     // L3 toggle: ซ้อนใน L2 (แสดงทุกเวลา แต่ host ซ่อน/โชว่ตาม checkbox)
     var _l3Val=(d&&d.querySelector)?((d.querySelector('.o-rfcoopt')||{}).value||''):('');
     var _l3Open=!!_l3Val;
-    h+='<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid '+(_l3Open?'#1e40af':'#cbd5e1')+';border-radius:9px;cursor:pointer;background:'+(_l3Open?'#dbeafe':'#fff')+';margin-bottom:7px;font-size:12px;font-weight:700;color:'+(_l3Open?'#1e40af':'#374151')+';"><input type="checkbox" class="rf-l3-cb" '+(_l3Open?'checked':'')+' onchange="rfL3CbToggle(this)" style="width:16px;height:16px;accent-color:#1e40af;"> L3 · เทียบราคา สี/วัสดุมุง <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:3px;">(ออปชั่น · ไม่บวกยอด)</span></label>';
+    h+='<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid '+(_l3Open?'#1e40af':'#cbd5e1')+';border-radius:9px;cursor:pointer;background:'+(_l3Open?'#dbeafe':'#fff')+';margin-bottom:7px;font-size:12px;font-weight:700;color:'+(_l3Open?'#1e40af':'#374151')+';"><input type="checkbox" class="rf-l3-cb" '+(_l3Open?'checked':'')+' onchange="rfL3CbToggle(this)" style="width:16px;height:16px;accent-color:#1e40af;"> เทียบราคา OPTION — "ถ้าเปลี่ยนสีอื่น +/- เท่าไร" <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:3px;">(ไม่บวกยอดรวม)</span></label>';
     h+='<div class="rf-l3-host" style="display:'+(_l3Open?'flex':'none')+';flex-direction:column;gap:8px;padding:7px 10px;background:#eff6ff;border:1px dashed #bfdbfe;border-radius:8px;margin-bottom:2px;">';
     // D5 (24มิ.ย. · พี่เคาะ): L3 = ชิป+จุดสี (เลิก dropdown ดิบ · ตรงดราฟ 06-24) · select ซ่อน = แหล่งความจริง engine + onchange coderow
     var _l3CodeOn=(_l3Val!==''&&COLORS[parseInt(_l3Val)||0]&&COLORS[parseInt(_l3Val)||0].hasCode);
-    h+='<div style="font-size:12px;color:#374151;font-weight:700;">เปลี่ยนสีโครงเป็น</div>';
+    h+='<div style="font-size:11px;color:#374151;font-weight:700;margin-bottom:3px;">หมวดสี (OPTION)</div>';
     h+='<select class="o-rfcoopt" style="display:none;" onchange="var _rv=parseInt(this.value)||0,_hw=(this.value!==\'\'&&COLORS[_rv]&&COLORS[_rv].hasCode);var _h3=this.closest(\'.rf-l3-host\');var _cr=_h3?_h3.querySelector(\'.l3coderow\'):null;if(_cr)_cr.style.display=_hw?\'inline-flex\':\'none\';try{colorDrillRender(this);}catch(e){}calcQuote();"><option value=""'+(_l3Val===''?' selected':'')+'>— ไม่เทียบ —</option>'+COLORS.map(function(c,i){return i>=2?('<option value="'+i+'"'+(String(i)===_l3Val?' selected':'')+'>'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join('')+'</select>';
     h+='<div class="color-drill l3-color-drill"></div>';
     h+='<span class="l3coderow" style="'+(_l3CodeOn?'display:inline-flex;':'display:none;')+'align-items:center;gap:4px;font-size:12px;">รหัส <input type="text" class="o-rfcocode" maxlength="50" style="width:110px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น 1076-A" oninput="calcQuote()"></span>';
-    var _l3MatVal=(d&&d.querySelector)?((d.querySelector('.o-rfmatopt')||{}).value||''):('');
-    h+='<div style="font-size:12px;color:#374151;font-weight:700;margin-top:3px;">หรือเปลี่ยนวัสดุมุงเป็น</div>';
-    h+='<select class="o-rfmatopt" style="display:none;" onchange="calcQuote();"><option value=""'+(_l3MatVal===''?' selected':'')+'>— ไม่เทียบ —</option>'+PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return '<option value="'+q.id+'"'+(q.id===_l3MatVal?' selected':'')+'>'+q.name.replace(/^หลังคา\s*/,'')+'</option>';}).join('')+'</select>';
-    h+=rfChips('o-rfmatopt',[['','— ไม่เทียบ —']].concat(PRODUCTS.filter(function(q){return q.cat==='หลังคา'&&q.id!==p.id;}).map(function(q){return [q.id,q.name.replace(/^หลังคา\s*/,'')];})),_l3MatVal);
+    h+='<div style="font-size:11.5px;color:#1e40af;background:#fff5f5;border:1px solid #f3cdd3;border-radius:7px;padding:7px 10px;margin-top:4px;">เลือกแล้วจะขึ้นเป็น <b>OPTION</b> ในใบ · ไม่บวกยอดรวม</div>';
     h+='</div>';
     h+='</div>';
     // ③ checkbox ยืนยันตัวอย่าง (ดราฟ G3 22มิ.ย.) — ทุกหลังคา ไม่ขึ้นกับสีชุบ · ขึ้นใบเมื่อติ๊ก
@@ -6030,10 +6027,13 @@ function buildItemOpts(d){
     // FIX A④ (G3 form-ux): ลบ wrapper <details optbox> — ปล่อย label ลอยใน .i-opts → groupGHOpts จัดเข้ากล่อง "🔩 ของเสริมหลังคา" (พับ 1 ชั้น) เอง (เลิก details ซ้อน details)
     // FIX-13: ช่อง "รางน้ำ" (o-rfgut/o-rfgutlen) ย้ายไปรวมใต้ "ปลายหลังคา=รางน้ำ" แล้ว (กล่อง o-guttersys-wrap)
     // G3-round2 D: ของเสริมหลังคา กลุ่มเดียวเรียง 1-9 (โครงรับ → สวยงาม → กันน้ำ/รอยต่อ) · select(o-rfbeam/o-rfhs/o-rfsealercolor)→ชิป
-    // 1. โครงรับ — เสาแผง · เสา 4x8
-    h+='<label class="opt">เสาแผง (4,000/ต้น) <input type="number" class="o-rfpolep" min="0" step="1" value="0" style="width:55px;height:30px;" oninput="calcQuote();"> · เสา 4"x8" (2,000/ต้น) <input type="number" class="o-rfpole4" min="0" step="1" value="0" style="width:55px;height:30px;" oninput="calcQuote();"></label>';
-    // ดราฟ G3 L200/L465: ตั้งเสา 4" (เสากลม) 1,500/ต้น — แยกจากเสา 4"x8" (2,000) · กู้กลับตามดราฟ
-    h+='<label class="opt">ตั้งเสา 4" กลม (1,500/ต้น) <input type="number" class="o-rfpole15" min="0" step="1" value="0" style="width:55px;height:30px;" oninput="calcQuote();"></label>';
+    // 1. เสา — 3 checkbox แยกต่างหาก (ดราฟ G3 บรรทัด 362-377)
+    h+='<div class="opt" style="width:100%;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">เสา</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;">';
+    h+='<label class="opt" style="min-width:0;display:flex;align-items:center;gap:5px;"><input type="checkbox" onchange="var inp=this.nextElementSibling;inp.disabled=!this.checked;if(!this.checked){inp.value=\'0\';}calcQuote();"> เสาแผง <span style="font-size:11px;color:#6B7280;">4,000/ต้น</span> <input type="number" class="o-rfpolep" min="0" step="1" value="0" disabled style="width:55px;height:30px;" oninput="calcQuote();"></label>';
+    h+='<label class="opt" style="min-width:0;display:flex;align-items:center;gap:5px;"><input type="checkbox" onchange="var inp=this.nextElementSibling;inp.disabled=!this.checked;if(!this.checked){inp.value=\'0\';}calcQuote();"> เสา 4"x8" <span style="font-size:11px;color:#6B7280;">2,000/ต้น</span> <input type="number" class="o-rfpole4" min="0" step="1" value="0" disabled style="width:55px;height:30px;" oninput="calcQuote();"></label>';
+    h+='<label class="opt" style="min-width:0;display:flex;align-items:center;gap:5px;"><input type="checkbox" onchange="var inp=this.nextElementSibling;inp.disabled=!this.checked;if(!this.checked){inp.value=\'0\';}calcQuote();"> เสา 4" กลม <span style="font-size:11px;color:#6B7280;">1,500/ต้น</span> <input type="number" class="o-rfpole15" min="0" step="1" value="0" disabled style="width:55px;height:30px;" oninput="calcQuote();"></label>';
+    h+='</div></div>';
     // 2. คานเหล็กถัก (ชิป)
     h+='<label class="opt" style="width:100%;">คานเหล็กถัก <select class="o-rfbeam" style="display:none;"><option value="0" selected>ไม่มี</option><option value="2400">รุ่น1 2,400/ม.</option><option value="3600">รุ่น2 3,600/ม.</option><option value="4400">รุ่น3 4,400/ม.</option></select>'+rfChips('o-rfbeam',[['0','ไม่มี'],['2400','รุ่น1 2,400'],['3600','รุ่น2 3,600'],['4400','รุ่น3 4,400']],'0')+' ยาว(ม.) <input type="number" class="o-rfbeamlen" min="0" step="0.1" value="0" style="width:60px;height:30px;"></label>';
     // 3. เสริมเพลทเหล็กล่าง · เหล็กดึงด้านบน (ฟรี)
