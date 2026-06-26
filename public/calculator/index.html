@@ -3075,7 +3075,9 @@ function qiG6GetState(d){
   return {shape:d.dataset.qiG6shape||'3',mosq:parseInt(d.dataset.qiG6mosq||0),roof:parseInt(d.dataset.qiG6roof||0),ceil:parseInt(d.dataset.qiG6ceil||0),
     sideDoor:JSON.parse(d.dataset.qiG6sides||'[0,1,1]'),
     ci:parseInt(d.dataset.qiG6ci||0), gcat:d.dataset.qiG6gcat||'กระจกใส/สี', gsub:d.dataset.qiG6gsub||'ใส·เขียว', gi:parseInt(d.dataset.qiG6gi||0),
+    lock:parseInt(d.dataset.qiG6lock||0),
     roofFrame:d.dataset.qiG6roofFrame||'alu', roofPurlin:d.dataset.qiG6roofPurlin||'single',
+    roofCi:parseInt(d.dataset.qiG6roofCi||0),
     elec:parseInt(d.dataset.qiG6elec||0),
     plumb:parseFloat(d.dataset.qiG6plumb||0),
     floor:parseFloat(d.dataset.qiG6floor||0),
@@ -3167,6 +3169,7 @@ function qiRenderG6(d){
   h += '<div class="qi-lbl" style="margin-top:8px;">สี · กระจก (ใช้ทั้งห้อง)</div>';
   h += qiG6ColorGlassHtml(st);
   h += '<div class="qi-lbl" style="margin-top:8px;">อุปกรณ์เสริม (ทั้งห้อง)</div><div class="qi-chips">';
+  h += '<button type="button" class="chip'+(st.lock?' on':'')+'" onclick="qiG6TogLock(this)">🔒 '+(st.lock?'ล็อก ✓':'ล็อก')+'</button>';
   QIG6_MOSQ.forEach(function(m,mi){ h += '<button type="button" class="chip'+(st.mosq===mi?' on':'')+'" onclick="qiG6SetMosq(this,'+mi+')">'+(mi===0?'🦟 มุ้ง: ไม่มี':(mi===st.mosq?'🦟 '+m[0]:'🦟 '+m[0]))+'</button>'; });
   h += '</div>';
 
@@ -3182,8 +3185,9 @@ function qiRenderG6(d){
     h += '<button type="button" class="chip'+(st.roofPurlin==='single'?' on':'')+'" onclick="qiG6SetRoofOpt(this,\'roofPurlin\',\'single\')">แปเดี่ยว</button>';
     h += '<button type="button" class="chip'+(st.roofPurlin==='double'?' on':'')+'" onclick="qiG6SetRoofOpt(this,\'roofPurlin\',\'double\')">แปคู่</button>';
     h += '</div>';
-    h += '<div class="qi-chips" style="margin-top:6px;">';
-    h += '<button type="button" class="chip qi-lbl-inline">🎨 สีโครง</button>';
+    h += '<div class="qi-cg-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">';
+    h += '<div style="flex:1;min-width:160px;"><label style="font-size:12px;color:var(--muted);font-weight:700;">🎨 สีโครง</label>';
+    h += '<select class="qi-g6roofci" onchange="qiG6SetRoofCi(this)" style="height:44px;width:100%;border:1.5px solid var(--line);border-radius:9px;padding:0 10px;font-size:14px;font-family:inherit;">'+colorOpts()+'</select></div>';
     h += '</div>';
   }
   h += '<div class="qi-lbl" style="margin-top:6px;">ฝ้า</div><div class="qi-chips">';
@@ -3222,6 +3226,8 @@ function qiRenderG6(d){
   h += '<div class="qi-row" style="grid-template-columns:110px;"><div class="qi-fld"><label>ชุด</label><div style="display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;align-items:center;"><button type="button" onclick="panelStep(this,-1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">−</button><input class="qi-qty" type="number" step="1" min="1" value="'+(d.dataset.qiQty||1)+'" style="width:36px;height:44px;border:0;text-align:center;font-size:15px;padding:0;" oninput="calcQuickAll()"><button type="button" onclick="panelStep(this,1)" style="width:32px;min-height:44px;border:0;background:#F3F4F6;font-size:17px;cursor:pointer;padding:0;">+</button></div></div></div>';
   h += '</div><div class="qi-pricecard"><h4>รายการราคา</h4><div class="qi-pc-body"></div><div class="qi-pc-foot">ทุกบรรทัด = calcUnit จริง · บานต่อด้าน</div></div></div>';
   d.querySelector('.qi-body').innerHTML = h;
+  // sync dropdown สีโครงหลังคา ให้ตรงกับ st.roofCi ที่บันทึกไว้
+  var _g6rcSel=d.querySelector('.qi-g6roofci'); if(_g6rcSel) _g6rcSel.value=String(st.roofCi||0);
   calcQuickAll();
 }
 function qiG6SetShape(btn,v){ var d=btn.closest('.ch'); qiSaveWH(d); d.dataset.qiG6shape=v; var sides=qiG6SidesOf(v,parseFloat(d.dataset.qiW||2),parseFloat(d.dataset.qiH||4)); d.dataset.qiG6sides=JSON.stringify(sides.map(function(s,i){return i===0?0:1;})); qiRenderG6(d); }
@@ -3250,6 +3256,8 @@ function qiG6SaveSvc(btn,k){
   setTimeout(function(){ btn.textContent='💾 เซฟ'; },1500);
 }
 function qiG6SetSplitView(btn,v){ var d=btn.closest('.ch'); d.dataset.qiG6splitView=v; qiSaveWH(d); qiRenderG6(d); }
+function qiG6TogLock(btn){ var d=btn.closest('.ch'); d.dataset.qiG6lock=parseInt(d.dataset.qiG6lock||0)?0:1; qiSaveWH(d); qiRenderG6(d); }
+function qiG6SetRoofCi(sel){ var d=sel.closest('.ch'); d.dataset.qiG6roofCi=sel.value; qiSaveWH(d); calcQuickAll(); }
 function qiCalcG6(d){
   var st=qiG6GetState(d);
   var reach=parseFloat((d.querySelector('.qi-w')||{}).value)||0;
@@ -3277,9 +3285,16 @@ function qiCalcG6(d){
     var mosqKey=QIG6_MOSQ[st.mosq][1];
     if(mosqKey&&t[4]){ var mc=sideSell(mosqKey,sd[1],hgt,0,2); if(mc>0){ total+=mc; sideRows.push({name:'  🦟มุ้ง '+sd[0],cost:mc,sub:''}); } }
   });
-  // หลังคา
-  var roofKey=QIG6_ROOF[st.roof][1]; var roofCost=0;
-  if(roofKey){ roofCost=sideSell(roofKey,len,reach,0,1); total+=roofCost; }
+  // หลังคา + สีโครง
+  var roofKey=QIG6_ROOF[st.roof][1]; var roofCost=0; var roofColorCost=0;
+  if(roofKey){
+    roofCost=sideSell(roofKey,len,reach,0,1);
+    // สีโครงหลังคา: reuse colorPrice(ci, area) เหมือน G3 คิดเร็ว
+    var _roofArea=reach*len;
+    try{ roofColorCost=colorPrice(st.roofCi||0,_roofArea); }catch(e){ roofColorCost=0; }
+    roofCost+=roofColorCost;
+    total+=roofCost;
+  }
   // ฝ้า
   var ceilKey=QIG6_CEIL[st.ceil][1]; var ceilCost=0;
   if(ceilKey){ ceilCost=sideSell(ceilKey,len,reach,0,1); total+=ceilCost; }
@@ -3287,6 +3302,8 @@ function qiCalcG6(d){
   var elecCost=0; if(elec>0){ elecCost=Math.max(elec*1500,3000); total+=elecCost; }
   // ประปา/พื้น/ผรม
   total+=plumb; total+=floor; total+=pm;
+  // ชื่อสีโครง (สำหรับโชว์ในการ์ด)
+  var _roofCname=(COLORS&&COLORS[st.roofCi||0])?(COLORS[st.roofCi||0].n||'อบขาว'):'อบขาว';
 
   // render ตาม splitView
   if(st.splitView===1){
@@ -3295,7 +3312,8 @@ function qiCalcG6(d){
       html+=qiPcRow(r.name,r.cost);
       if(r.sub) html+=qiPcSub(r.sub);
     });
-    if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0],roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'); }
+    if(st.lock){ html+=qiPcSub('🔒 มีชุดล็อก (label-only)'); }
+    if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0]+' (สีโครง: '+_roofCname+')',roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'+(roofColorCost>0?(' · สีโครง +'+roofColorCost.toLocaleString()):'(อบขาวฟรี)')); }
     if(ceilCost>0){ html+=qiPcRow('ฝ้า '+QIG6_CEIL[st.ceil][0],ceilCost); }
     if(elecCost>0){ html+=qiPcRow('💡 งานไฟ '+elec+' ดวง',elecCost); }
     if(plumb>0){ html+=qiPcRow('🚰 ประปา',plumb); }
@@ -3305,7 +3323,8 @@ function qiCalcG6(d){
     // รวมห้อง — แสดงเป็น group
     var doorTotal=0; sideRows.forEach(function(r){ doorTotal+=r.cost; });
     if(doorTotal>0){ html+=qiPcRow('งานบาน ('+sides.length+' ด้าน)',doorTotal); }
-    if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0],roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'); }
+    if(st.lock){ html+=qiPcSub('🔒 มีชุดล็อก (label-only)'); }
+    if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0]+' ('+_roofCname+')',roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'+(roofColorCost>0?(' · สีโครง +'+roofColorCost.toLocaleString()):'(อบขาวฟรี)')); }
     if(ceilCost>0){ html+=qiPcRow('ฝ้า '+QIG6_CEIL[st.ceil][0],ceilCost); }
     if(elecCost>0){ html+=qiPcRow('💡 งานไฟ '+elec+' ดวง',elecCost); }
     if(plumb>0){ html+=qiPcRow('🚰 ประปา',plumb); }
