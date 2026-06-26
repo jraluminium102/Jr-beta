@@ -7755,7 +7755,7 @@ function genQuote(keepNo){
   // Helper to format an item detail (single row)
   function itemDetail(it){
     // CODE-G6 จุด3: ห้องต่อเติม G6 — ใช้ work/spec ที่ readItem เตรียมไว้ (genQuote ประกอบ marker เอง) · ไม่ parse det
-    if(it.room){ var _hasRoof=!!(it.roomHasRoof); return {prodName:'ห้องต่อเติม (กั้นห้องกระจก'+(_hasRoof?' พร้อมหลังคา':'')+')', det:'', work:it.work||[], spec:it.spec||[]}; }
+    if(it.room){ var _hasRoof=!!(it.roomHasRoof); return {prodName:'ห้องต่อเติม (กั้นห้องกระจก'+(_hasRoof?'พร้อมหลังคา':'')+')', det:'', work:it.work||[], spec:it.spec||[]}; }
     const naType = ITYPE_NA.indexOf(it.p.cat)>=0;
     // หมวดที่ไม่ใส่ prefix: หลัก ITYPE_NA + shower/ม่านซิป/กั้นห้องกระจก/บานเปลือย (ชื่อสื่อตัวเอง)
     const noPrefix = naType || ['shower','ม่านซิป','กั้นห้องกระจก','บานเปลือย','ติดตาย'].indexOf(it.p.cat)>=0;
