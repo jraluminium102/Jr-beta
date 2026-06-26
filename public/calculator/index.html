@@ -9138,6 +9138,9 @@ window.addEventListener('load',ckRefresh);
   var G6EX={cf:'ครอบวงกบ',df:'ดรอปพื้น',rm:'รื้อของเดิม',br:'แขนค้ำ'};
   function g6FindModel(id){ for(var i=0;i<G6GROUPS.length;i++){ var ms=G6GROUPS[i].models; for(var j=0;j<ms.length;j++){ if(ms[j][0]===id) return {grp:G6GROUPS[i],m:ms[j]}; } } return null; }
   function g6Grp(k){ for(var i=0;i<G6GROUPS.length;i++)if(G6GROUPS[i].k===k)return G6GROUPS[i]; return G6GROUPS[0]; }
+  // v9 ①: รุ่น default ต่อชนิดบาน (กดเลือกชนิด → ติ๊กรุ่นนี้อัตโนมัติ) · override เฉพาะที่ต่างจากตัวแรก (เลื่อน→เซมิยูโร · เฟี้ยม→เซมิยูโร) · ที่เหลือ=รุ่นแรกที่ไม่ ban
+  var G6_GRPDEF={slide:'sliding_sms',fold:'folding'};
+  function g6GrpDef(k){ if(G6_GRPDEF[k]&&typeof PBYID!=='undefined'&&PBYID[G6_GRPDEF[k]])return G6_GRPDEF[k]; var g=g6Grp(k); for(var i=0;i<g.models.length;i++){ if(!g.models[i][3])return g.models[i][0]; } return g.models[0][0]; }
   function g6GrpOfId(id){ var f=g6FindModel(id); return f?f.grp.k:'swing'; }
   function g6ProfOfId(id){ var f=g6FindModel(id); return (f&&G6PROF[f.m[2]])||G6PROF.fix; }
   function g6ModelName(id){ var f=g6FindModel(id); return f?f.m[1]:pname(id); }
@@ -9326,7 +9329,7 @@ window.addEventListener('load',ckRefresh);
           +'<div class="row"><span class="rl">ราคามุ้ง</span><input type="number" min="0" step="100" value="'+(o.mosqPrice||'')+'" placeholder="auto" onchange="G6RsetOpt(\'mosqPrice\',this.value)"><span class="u">บาท (เว้น=auto)</span></div></div>'; }
     }
     // เสริมกระจก [ยกเว้น shower] — คาดตาราง + ลูกฟูก/คอมโพ (ใส่กลับตามดราฟ)
-    if(pf.glass){ freq+='<div class="fl">ชนิดกระจก</div><select class="g6r-glass-sel" onchange="G6RsetOpt2(\'glassIdx\',this.value)" style="width:100%;max-width:340px;height:34px;border:1px solid #D1D5DB;border-radius:6px;margin-bottom:4px;padding:0 6px;">'+g6GlassOpts(o.glassIdx)+'</select>';  // A2 จุด1: เลือกชนิดกระจกต่อช่อง (reuse GLASS · default เขียว6มม.)
+    if(pf.glass){ freq+='<div class="g6r-wtot" style="color:#B45309;margin:6px 0 2px;">✂ <b>ไม่มีชนิดกระจกในช่องบาน</b> — เลือกสี/กระจกที่แท็บ 🎨 สี/กระจก ที่เดียว (ระดับห้อง)</div>';  // v9 ②: ตัดชนิดกระจกต่อช่อง — เลือกที่แท็บ 🎨 (กระจก default เขียว6มม. · room L2 คิดเปลี่ยน)
       freq+='<div class="g6r-sl">เสริมกระจก <span class="g6r-tag glass">ยกเว้น shower</span></div><div class="chips"><button class="c'+(o.gridmark?' on':'')+'" onclick="G6RtogGrid()">'+(o.gridmark?'คาดตาราง ✓':'＋ คาดตาราง +200')+'</button>'+(prod.full_grid?('<button class="c'+(o.fullgrid?' on':'')+'" onclick="G6RtogOpt(\'fullgrid\')">'+(o.fullgrid?'ตารางเต็มบาน ✓':'＋ ตารางเต็มบาน +5,000')+'</button>'):'')+'<button class="c'+(o.solidlower?' on':'')+'" onclick="G6RtogSolidlower()">'+(o.solidlower?'ลูกฟูก/คอมโพ ✓':'＋ ลูกฟูก/คอมโพ +3,500')+'</button></div>';
       if(o.gridmark) freq+='<div class="g6r-rev"><div class="row"><span class="rl">คาดตาราง</span><input type="number" value="'+(o.gmNh||0)+'" min="0" step="1" oninput="G6RsetOpt(\'gmNh\',this.value)"><span class="u">นอน</span><input type="number" value="'+(o.gmNv!=null?o.gmNv:(o.qty||1))+'" min="0" step="1" oninput="G6RsetOpt(\'gmNv\',this.value)"><span class="u">ตั้ง ×200/ม.</span></div></div>';
       if(o.solidlower) freq+='<div class="g6r-rev">'+pick('ชนิดแผ่นล่าง','solidlower',[['corrugated','ลูกฟูก 3,500/ตร.ม.'],['composite','คอมโพสิต 3,300/ตร.ม.']],o.solidlower,'corrugated')+'<div class="row"><span class="rl">ขนาดแผ่น</span><input type="number" value="'+(o.solidlowerW||p.w||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerW\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+(o.solidlowerH||0)+'" min="0" step="0.1" oninput="G6RsetOpt(\'solidlowerH\',this.value)"><span class="u">สูง ม.</span></div></div>'; }
@@ -9595,7 +9598,9 @@ window.addEventListener('load',ckRefresh);
   window.G6RdelSide=function(){ G6R.sides.splice(G6R.cur,1); if(!G6R.sides.length)G6R.sides.push({type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]}); if(G6R.cur>=G6R.sides.length)G6R.cur=G6R.sides.length-1; render(); };
   window.G6RsetType=function(t){ var s=G6R.sides[G6R.cur]; s.type=t; if(t==='glass'&&!s.cols.length)s.cols=[{pcs:[{cat:'บานเปิด',id:defOf('บานเปิด'),w:1,h:2.4,opt:{}}]}]; G6R.sc=0;G6R.sp=0; render(); };
   window.G6RsetWall=function(k,v){ G6R.sides[G6R.cur][k]=parseFloat(v)||1; render(); };
-  window.G6RopenF=function(c){ G6R.openFam=c; renderEdit(); };
+  window.G6RopenF=function(c){ var p=G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp]; // v9 ①: กดเลือกชนิด → ติ๊กรุ่น default ของชนิดนั้นทันที (ถ้าบานนี้ยังไม่ใช่ชนิดนี้) · ล้าง opt เหมือน setSub
+    if(p&&g6GrpOfId(p.id)!==c){ var def=g6GrpDef(c); if(def){ p.id=def; p.cat=(typeof PBYID!=='undefined'&&PBYID[def]&&PBYID[def].cat)||p.cat; p.opt={}; } G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); }
+    else { G6R.openFam=c; renderEdit(); } };
   window.G6RsetSub=function(id){ var p=G6R.sides[G6R.cur].cols[G6R.sc].pcs[G6R.sp]; p.id=id; p.cat=(typeof PBYID!=='undefined'&&PBYID[id]&&PBYID[id].cat)||p.cat; p.opt={}; G6R.openFam=null; renderWall(); renderEdit(); refreshGrand(); }; // FIX 20มิ.ย.: ล้าง opt บานเก่า กันออปชั่นค้างข้ามชนิดบาน (โช้ค/มุ้ง/closer ติดมา = ราคาเพี้ยน)
   window.G6RsetHandleMode=function(m){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.handleMode=(o.handleMode===m)?'':m; renderEdit(); refreshGrand(); }; // toggle reveal มือจับ
   window.G6RtogSolidlower=function(){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.solidlower=o.solidlower?'':'corrugated'; renderEdit(); refreshGrand(); }; // ลูกฟูก/คอมโพ (default ลูกฟูก)
