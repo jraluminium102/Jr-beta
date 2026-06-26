@@ -4732,7 +4732,7 @@ function g3SpansUpdate(ch){
     var lbl=row.querySelector('.rf-sa'); if(lbl) lbl.textContent=a>0?a.toFixed(1)+' ตร.ม.':'—';
     total+=a;
   });
-  var totLbl=wrap.querySelector('.rf-spans-total'); if(totLbl) totLbl.textContent='รวม '+total.toFixed(1)+' ตร.ม.';
+  var totLbl=wrap.querySelector('.rf-spans-total'); if(totLbl) totLbl.textContent=total.toFixed(1)+' ตร.ม.';
   // set .i-w=totalArea .i-h=1 → calcUnit อ่าน area ถูก (w×h=totalArea×1=totalArea)
   var iw=ch.querySelector('.i-w'), ih=ch.querySelector('.i-h');
   if(iw&&ih){ iw.value=total>0?total.toFixed(2):'0'; ih.value='1'; ch.dataset.rfMultiSpan=(rows.length>1||true)?'1':'0'; }
@@ -6748,8 +6748,8 @@ function buildItemOpts(d){
           +'</div>'
           +'<div style="font-size:12px;font-weight:700;color:#374151;padding-top:4px;border-top:1px dashed #e5e7eb;">รวม <span class="rf-spans-total">0 ตร.ม.</span></div>';
         _sr.parentNode.insertBefore(_spWrap, _sr);
-        // ซ่อน size-row เดิม (แสดงขนาดด้วย spans แทน)
-        _sr.style.display='none';
+        // ซ่อน size-row เดิม (แสดงขนาดด้วย spans แทน) — ต้องใช้ important เพราะ .size-row{ display:flex !important }
+        _sr.style.setProperty('display','none','important');
         d.dataset.rfMultiSpan='1';
         // sync ค่า .i-w/.i-h จากช่วงที่ 1 ก่อน (ถ้ามีค่าอยู่แล้ว)
         var _iw0=d.querySelector('.i-w'), _ih0=d.querySelector('.i-h');
