@@ -9036,7 +9036,9 @@ window.addEventListener('load',ckRefresh);
 (function(){
   // ---- state (โครงตาม DRAFT-G6-ux-REAL · ราคาต่อ engine จริง) ----
   function freshState(){ return {sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
-    roof:{on:0,matId:null,w:3,l:4,segs:[],frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{},
+    roof:{on:0,matId:null,matCat:'vinyl',matThick:0,matColorIdx:0,w:3,l:4,segs:[],frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{},
+      roof2on:0,roof2:'',roof2area:'',roof2colorIdx:0,
+      frameL2on:0,frameL2code:'',frameL3on:0,frameL3color:0,frameL3code:'',
       ceilOn:0,ceilType:'ceiling_smooth',ceilBoard:'weather',ceilPaint:'white',ceilCode:'',ceilColor:'',ceilInsul:0,ceilArea:'',ceilPos:'นอก',ceilDir:'ตรง'}, ceil:{has:0}, elec:{down:0,sw:0},
     floor:{on:0,mat:'smart',w:0,l:0,rate:0,disc:''}, fan:{on:0,size:'8',qty:1,price:0},
     services:[], svc:{demo:{roof:0,floor:0,rail:0,door:0,railLen:0},protect:0,protectPts:0},
@@ -9046,6 +9048,14 @@ window.addEventListener('load',ckRefresh);
   var G6R=freshState();   // pointer → state ของ item กลุ่ม 6 ที่ active (A4 ชี้ใหม่ต่อ item)
   var G6MOUNT=null;       // element ที่ render เข้า (default #g6r-host สำหรับ dev · A4 = .i-opts ของ item)
   function roofProds(){ try{ return PRODUCTS.filter(function(q){return q.cat==='หลังคา';}); }catch(e){ return []; } }
+  // v9 รอบA: วัสดุมุง drill 4 หมวด + สีวัสดุมุง (reuse QIG3_GROUPS global · เมทัลมี thick 1"/2")
+  var RCATS=['vinyl','metal','shinko','poly'];
+  function rgGrp(k){ try{ return QIG3_GROUPS[k]; }catch(e){ return null; } }
+  function g6RoofModels(cat,thick){ var g=rgGrp(cat); if(!g)return []; return g.modelsByThick?(g.modelsByThick[thick||0]||g.modelsByThick[0]):(g.models||[]); }
+  function g6RoofAllModels(cat){ var g=rgGrp(cat); if(!g)return []; return g.modelsByThick?[].concat.apply([],g.modelsByThick):(g.models||[]); }
+  function g6RoofMColors(id,cat){ var g=rgGrp(cat); if(!g)return []; var m=g6RoofAllModels(cat).find(function(x){return x.v===id;}); return (m&&m.colors)||g.colors||[]; }
+  function g6RoofCatOf(id){ for(var i=0;i<RCATS.length;i++){ if(g6RoofAllModels(RCATS[i]).some(function(x){return x.v===id;}))return RCATS[i]; } return 'vinyl'; }
+  function g6RoofMColorName(R){ var c=g6RoofMColors(R.matId,R.matCat||g6RoofCatOf(R.matId)); return (c&&c[R.matColorIdx||0])||''; }
   // ราคาหลังคา = engine จริง (calcUnit roof product + opts รางน้ำ/ปิดปลาย/โครง/ของเสริม)
   // A2 จุด3 (18มิ.ย.): สีอลูตัวแทนห้อง = สีของช่องกระจกช่องแรกที่ตั้งสีพิเศษ (>0) · ไม่มี = อบขาว(0) · ใช้เป็น default สีโครงหลังคา "ทั้งงานสีเดียว"
   function roomAluColor(){ var ci=0; G6R.sides.forEach(function(s){ if(s.type!=='glass')return; s.cols.forEach(function(c){ c.pcs.forEach(function(pc){ var v=parseInt(pc.opt&&pc.opt.colorIdx)||0; if(v>0&&!ci)ci=v; }); }); }); return ci; }
@@ -9056,6 +9066,7 @@ window.addEventListener('load',ckRefresh);
     var multi=(R.segs&&R.segs.length>0); var tA=roofArea(); var ew=multi?(tA||1):(R.w||1), el=multi?1:(R.l||1); // หลายช่วง → ส่งพื้นที่รวม (กว้าง=รวม·ยาว=1) เหมือน G3
     var os={rfframe:R.frame, rfgut:R.gut||0, rfgutlen:(R.gut?(R.gutlen||R.w):0), rfeave:R.eave||0,
       rfbeam:R.ex.beam?2400:0, rfbeamlen:R.ex.beam||0, rfpolep:R.ex.pole||0, rfpole4:R.ex.pole4||0, rfpole15:R.ex.pole15||0, rfchain:R.ex.chain||0, rfpvc:R.ex.pvc||0,
+      roof2:(R.roof2on?(R.roof2||''):''), roof2area:(R.roof2on?(parseFloat(R.roof2area)||0):0), // ต่อวัสดุที่2 (engine L1968)
       ceilmode:(R.ceilOn?'in':'none'), ceiltype:R.ceilType||'ceiling_smooth', ceilcolor:R.ceilColor||'', ceilarea:R.ceilArea||'', ceilinsul:!!R.ceilInsul, ceilpos:R.ceilPos||'นอก', ceildir:R.ceilDir||'ตรง'}; // ฝ้า reuse engine path เดียวกับ G3 (calcUnit L2098-2103)
     var r=calcUnit(p, ew, el, 0, roofFrameColor(), 1, os); return (r&&r.sell)||0; }catch(e){ return 0; } }
   // v9 ก้อน3: สเปกฝ้าลงใบ (ชื่อวัสดุแผ่น + ทาสี/รหัสสี + ฉนวน + ตำแหน่ง/แนว)
@@ -9386,8 +9397,14 @@ window.addEventListener('load',ckRefresh);
       +'<div class="row"><button class="c'+(R.on?' on':'')+'" onclick="G6RroofOn('+(R.on?0:1)+')">'+(R.on?'มีหลังคา ✓':'＋ เพิ่มหลังคา')+'</button></div>';
     if(R.on){
       var rps=roofProds();
-      // ① วัสดุมุง
-      h+='<div class="g6r-sl first">① วัสดุมุง</div><div class="chips">'+rps.map(function(p){ return '<button class="c'+(R.matId===p.id?' on':'')+'" onclick="G6RroofMat(\''+p.id+'\')">'+p.name.replace(/^หลังคา\s*/,'')+'</button>'; }).join('')+'</div>';
+      // ① วัสดุมุง (drill: หมวด → รุ่น → สีวัสดุมุง)
+      var _rcat=R.matCat||g6RoofCatOf(R.matId);
+      h+='<div class="g6r-sl first">① วัสดุมุง</div><div class="chips">'+RCATS.map(function(k){ var g=rgGrp(k); return g?('<button class="c'+(_rcat===k?' on':'')+'" onclick="G6RroofCat(\''+k+'\')">'+g.label+'</button>'):''; }).join('')+'</div>';
+      var _rg=rgGrp(_rcat);
+      if(_rg&&_rg.thicks){ h+='<div class="chips">'+_rg.thicks.map(function(t,ti){ return '<button class="c'+((R.matThick||0)===ti?' on':'')+'" onclick="G6RroofThick('+ti+')">'+t+'</button>'; }).join('')+'</div>'; }
+      h+='<div class="chips">'+g6RoofModels(_rcat,R.matThick).map(function(m){ return '<button class="c'+(R.matId===m.v?' on':'')+'" onclick="G6RroofMat(\''+m.v+'\')">'+m.t+'</button>'; }).join('')+'</div>';
+      var _mc=g6RoofMColors(R.matId,_rcat);
+      if(_mc.length){ h+='<div class="fl">สีวัสดุมุง</div><div class="chips">'+_mc.map(function(c,ci){ return '<button class="c'+((R.matColorIdx||0)===ci?' on':'')+'" onclick="G6RroofMColor('+ci+')">'+c+'</button>'; }).join('')+'</div>'; }
       // ② ขนาด (หลายช่วง = หลังคาขยัก) + โครงสร้าง
       h+='<div class="g6r-sl">② ขนาด · โครงสร้าง</div>';
       h+='<div class="row"><span class="rl">'+((R.segs&&R.segs.length)?'ช่วง 1':'ขนาด')+'</span><input type="number" value="'+R.w+'" step="0.1" oninput="G6RroofV(\'w\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+R.l+'" step="0.1" oninput="G6RroofV(\'l\',this.value)"><span class="u">ยาว ม.</span></div>';
@@ -9400,6 +9417,10 @@ window.addEventListener('load',ckRefresh);
       if(R.eave)h+='<div class="row"><span class="rl">ปิดปลาย</span><input type="number" value="'+R.eave+'" step="0.1" oninput="G6RroofV(\'eave\',this.value)"><span class="u">ม. ×1,000</span></div>';
       // ④ ฝ้า / เพดาน
       h+=g6RoofCeilBlock(R);
+      // ต่อปลายวัสดุที่ 2 (เช่น หลังคาโปร่งแสงต่อปลาย · engine roof2)
+      h+='<div class="g6r-sl">ต่อปลายวัสดุที่ 2</div><div class="chips"><button class="c'+(R.roof2on?' on':'')+'" onclick="G6Rroof2On('+(R.roof2on?0:1)+')">'+(R.roof2on?'มีวัสดุที่ 2 ✓':'＋ ต่อปลายวัสดุที่ 2')+'</button></div>';
+      if(R.roof2on){ h+='<div class="g6r-rev"><div class="fl">วัสดุที่ 2</div><div class="chips">'+rps.map(function(p){ return '<button class="c'+(R.roof2===p.id?' on':'')+'" onclick="G6Rroof2Mat(\''+p.id+'\')">'+p.name.replace(/^หลังคา\s*/,'')+'</button>'; }).join('')+'</div>';
+        h+='<div class="row"><span class="rl">พื้นที่วัสดุ2</span><input type="number" value="'+(R.roof2area||'')+'" min="0" step="0.1" placeholder="0" onchange="G6Rroof2Area(this.value)"><span class="u">ตร.ม. (ส่วนที่ใช้วัสดุ 2 · ที่เหลือ=วัสดุหลัก)</span></div></div>'; }
       // ⑤ สีอลูโครงหลังคา
       if(R.frame==='โครงอลูมิเนียม') h+='<div class="g6r-sl">⑤ สีอลูโครงหลังคา <span style="font-size:11px;color:#6B7280;font-weight:400;">(default = สีงานบานในห้อง · คิดค่าสีพิเศษ)</span></div>'+g6RoofColorChips(roofFrameColor());
       // ⑥ ของเสริมหลังคา
@@ -9667,7 +9688,14 @@ window.addEventListener('load',ckRefresh);
   window.G6RtogCloser=function(){ var o=g6rCurP().opt=g6rCurP().opt||{}; o.closer=o.closer?0:5000; renderEdit(); refreshGrand(); };
   // หลังคา/ไฟ actions
   window.G6RroofOn=function(v){ G6R.roof.on=v; if(v&&!G6R.roof.matId){ var rp=roofProds(); if(rp.length)G6R.roof.matId=rp[0].id; } render(); };
-  window.G6RroofMat=function(id){ G6R.roof.matId=id; render(); };
+  window.G6RroofMat=function(id){ var R=G6R.roof; R.matId=id; R.matCat=g6RoofCatOf(id); R.matColorIdx=0; render(); };
+  // v9 รอบA: วัสดุมุง drill + สีวัสดุมุง + ต่อวัสดุที่2
+  window.G6RroofCat=function(cat){ var R=G6R.roof; R.matCat=cat; R.matThick=0; R.matColorIdx=0; var ms=g6RoofModels(cat,0); if(ms.length)R.matId=ms[0].v; render(); };
+  window.G6RroofThick=function(ti){ var R=G6R.roof; R.matThick=ti; R.matColorIdx=0; var ms=g6RoofModels(R.matCat,ti); if(ms.length)R.matId=ms[0].v; render(); };
+  window.G6RroofMColor=function(ci){ G6R.roof.matColorIdx=ci; render(); };
+  window.G6Rroof2On=function(v){ var R=G6R.roof; R.roof2on=v; if(v&&!R.roof2)R.roof2='roof_polyton'; render(); };
+  window.G6Rroof2Mat=function(id){ G6R.roof.roof2=id; render(); };
+  window.G6Rroof2Area=function(v){ G6R.roof.roof2area=parseFloat(v)||0; render(); };
   window.G6RroofV=function(k,v){ G6R.roof[k]=parseFloat(v)||0; render(); };
   window.G6RroofFrame=function(f){ G6R.roof.frame=f; render(); };
   window.G6RroofColor=function(v){ G6R.roof.frameColor=parseInt(v); render(); };  // A2 จุด3: ตั้งสีโครงหลังคาเอง (override default=สีห้อง)
@@ -9759,7 +9787,8 @@ window.addEventListener('load',ckRefresh);
     if(G6R.sides.some(function(s){return s.type==='wall';})) out.push('ผนังเบา (ISOWALL/สมาร์ทบอร์ด)');
     var _rfS=roofTotalReal(); if(_rfS>0){ var _Rs=G6R.roof; var _rns=(_Rs.matId&&PBYID[_Rs.matId])?PBYID[_Rs.matId].name.replace(/^หลังคา\s*/,''):'เมทัลชีท';
       var _rfc=roofFrameColor(); var _rfcN=(_rfc>0&&COLORS[_rfc])?(' · สีโครง '+(COLORS[_rfc].quoteName||COLORS[_rfc].n).replace(/[★⚠🔖🔒]/g,'').replace(/^\s*สี/,'').trim()):'';
-      out.push('หลังคา: '+_rns+(_Rs.frame?(' · '+_Rs.frame):'')+_rfcN); var _cs=g6rCeilSpec(_Rs); if(_cs)out.push(_cs); }  // C2+A2จุด3: ชนิด+โครง+สีโครงหลังคา · v9: +สเปกฝ้า
+      var _rmc=g6RoofMColorName(_Rs); var _r2s=(_Rs.roof2on&&_Rs.roof2&&PBYID[_Rs.roof2])?(' · ต่อปลายวัสดุที่2: '+PBYID[_Rs.roof2].name.replace(/^หลังคา\s*/,'')+(_Rs.roof2area?(' '+_Rs.roof2area+' ตร.ม.'):'')):'';
+      out.push('หลังคา: '+_rns+(_rmc?(' '+_rmc):'')+(_Rs.frame?(' · '+_Rs.frame):'')+_rfcN+_r2s); var _cs=g6rCeilSpec(_Rs); if(_cs)out.push(_cs); }  // C2+A2จุด3: ชนิด+สีวัสดุมุง+โครง+สีโครง+วัสดุ2 · v9: +สเปกฝ้า
     G6R=sv; return out.join('\n'); };
   window.g6rRoomDetail=function(itemEl){ if(!itemEl||!itemEl.__g6state)return ''; var sv=G6R; G6R=itemEl.__g6state; var out=[];
     G6R.sides.forEach(function(s,i){
@@ -9770,7 +9799,7 @@ window.addEventListener('load',ckRefresh);
           out.push('• '+_lbl+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?' · '+op.join(', '):'')); }); });
       } else if(s.type==='wall'){ out.push('ด้าน '+L(i)+' · ผนังเบา ('+(s.aw||3)+'×'+(s.ah||2.6)+' ม.) = '+Math.round(sideTotal(s,i)).toLocaleString()); }
     });
-    var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')):''; var _ra=(R.segs&&R.segs.length)?(roofArea().toFixed(1)+' ตร.ม. ('+(R.segs.length+1)+' ช่วง)'):((R.w||1)+'×'+(R.l||1)+' ม.'); out.push('หลังคา/ฝ้า'+rn+' ('+_ra+') = '+Math.round(rf).toLocaleString()); var _cd=g6rCeilSpec(R); if(_cd)out.push('• '+_cd); }
+    var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var _dmc=g6RoofMColorName(R); var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')+(_dmc?(' '+_dmc):'')):''; var _ra=(R.segs&&R.segs.length)?(roofArea().toFixed(1)+' ตร.ม. ('+(R.segs.length+1)+' ช่วง)'):((R.w||1)+'×'+(R.l||1)+' ม.'); out.push('หลังคา/ฝ้า'+rn+' ('+_ra+') = '+Math.round(rf).toLocaleString()); if(R.roof2on&&R.roof2&&PBYID[R.roof2])out.push('• ต่อปลายวัสดุที่ 2: '+PBYID[R.roof2].name.replace(/^หลังคา\s*/,'')+(R.roof2area?(' '+R.roof2area+' ตร.ม.'):'')); var _cd=g6rCeilSpec(R); if(_cd)out.push('• '+_cd); }
     var el=elecTotalReal(); if(el>0){ var E=G6R.elec; out.push('งานไฟ'+(E.down?' · ดาวน์ไลท์ '+E.down+' ดวง':'')+(E.sw?' · สวิตช์ '+E.sw+' จุด':'')+' = '+Math.round(el).toLocaleString()); }
     var _fl=floorTotal(); if(_fl>0){ var F=G6R.floor; var _fmat=F.mat==='wood'?'ไม้เทียม':(F.mat==='spc'?'ลามิเนต/SPC':'สมาร์ทบอร์ด 20มม.'); out.push('งานปูพื้น '+_fmat+' (โครงเหล็กกัลวาไนซ์) '+floorArea().toFixed(1)+' ตร.ม. = '+Math.round(_fl).toLocaleString()+' · ไม่รับประกันพื้นแอ่น/ยวบ'); }
     var _fn=fanTotal(); if(_fn>0){ var FN=G6R.fan; out.push('พัดลมดูดอากาศ + ฝาครอบกันแมลง '+(FN.size||'')+'" จำนวน '+(FN.qty||1)+' ตัว = '+Math.round(_fn).toLocaleString()); }
