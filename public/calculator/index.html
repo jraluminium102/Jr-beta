@@ -9040,7 +9040,9 @@ window.addEventListener('load',ckRefresh);
 (function(){
   // ---- state (โครงตาม DRAFT-G6-ux-REAL · ราคาต่อ engine จริง) ----
   function freshState(){ return {sides:[{type:'glass',cols:[{pcs:[{cat:'บานเปิด',id:'casement_euro',w:1,h:2.4,opt:{}}]}]}],
-    roof:{on:0,matId:null,matCat:'vinyl',matThick:0,matColorIdx:0,w:3,l:4,segs:[],frame:'โครงอลูมิเนียม',gut:0,gutlen:0,eave:0,ex:{},
+    roof:{on:0,matId:null,matCat:'vinyl',matThick:0,matColorIdx:0,w:3,l:4,segs:[],frame:'โครงอลูมิเนียม',purlin:'single',
+      slideOn:0,spanels:2,smotorqty:0,smotorprice:0,gut:0,gutlen:0,eave:0,gutScreen:1,ex:{},
+      hs:{on:0,type:'comp',h:0,l:0,n:1}, gc:{on:0,w:0,h:0,l:0}, bc:{on:0,w:0,l:0}, sealer:{on:0,len:0}, plate:0, tierod:0,
       roof2on:0,roof2:'',roof2area:'',roof2colorIdx:0,
       frameL2on:0,frameL2code:'',frameL3on:0,frameL3color:0,frameL3code:'',
       ceilOn:0,ceilType:'ceiling_smooth',ceilBoard:'weather',ceilPaint:'white',ceilCode:'',ceilColor:'',ceilInsul:0,ceilArea:'',ceilPos:'นอก',ceilDir:'ตรง'}, ceil:{has:0}, elec:{down:0,sw:0},
@@ -9068,11 +9070,17 @@ window.addEventListener('load',ckRefresh);
   function roofArea(){ var R=G6R.roof; var a=(parseFloat(R.w)||0)*(parseFloat(R.l)||0); (R.segs||[]).forEach(function(s){ a+=(parseFloat(s.w)||0)*(parseFloat(s.l)||0); }); return a; }
   function roofTotalReal(){ var R=G6R.roof; if(!R.on||!R.matId)return 0; try{ var p=PBYID[R.matId]; if(!p)return 0;
     var multi=(R.segs&&R.segs.length>0); var tA=roofArea(); var ew=multi?(tA||1):(R.w||1), el=multi?1:(R.l||1); // หลายช่วง → ส่งพื้นที่รวม (กว้าง=รวม·ยาว=1) เหมือน G3
+    var HS=R.hs||{}, GC=R.gc||{}, BC=R.bc||{}, SL=R.sealer||{};
     var os={rfframe:R.frame, rfgut:R.gut||0, rfgutlen:(R.gut?(R.gutlen||R.w):0), rfeave:R.eave||0,
       rfbeam:R.ex.beam?2400:0, rfbeamlen:R.ex.beam||0, rfpolep:R.ex.pole||0, rfpole4:R.ex.pole4||0, rfpole15:R.ex.pole15||0, rfchain:R.ex.chain||0, rfpvc:R.ex.pvc||0,
+      slide:(R.slideOn?1:0), spanels:(parseInt(R.spanels)||2), // ทำเลื่อน (engine L2089)
+      rfhs:(HS.on?HS.type:''), rfhsh:(HS.on?(HS.h||0):0), rfhsl:(HS.on?(HS.l||0):0), rfhsn:(HS.on?(HS.n||1):1), // ซ่อนสโลป (L2098)
+      rfgcw:(GC.on?(GC.w||0):0), rfgch:(GC.on?(GC.h||0):0), rfgcl:(GC.on?(GC.l||0):0), // ปิดซ่อนราง
+      rfbcw:(BC.on?(BC.w||0):0), rfbcl:(BC.on?(BC.l||0):0), // ครอบคาน
+      rfsealer:(SL.on?1:0), rfsealerlen:(SL.on?(SL.len||0):0), // ปิดรอยต่อ
       roof2:(R.roof2on?(R.roof2||''):''), roof2area:(R.roof2on?(parseFloat(R.roof2area)||0):0), // ต่อวัสดุที่2 (engine L1968)
       ceilmode:(R.ceilOn?'in':'none'), ceiltype:R.ceilType||'ceiling_smooth', ceilcolor:R.ceilColor||'', ceilarea:R.ceilArea||'', ceilinsul:!!R.ceilInsul, ceilpos:R.ceilPos||'นอก', ceildir:R.ceilDir||'ตรง'}; // ฝ้า reuse engine path เดียวกับ G3 (calcUnit L2098-2103)
-    var r=calcUnit(p, ew, el, 0, roofFrameColor(), 1, os); return (r&&r.sell)||0; }catch(e){ return 0; } }
+    var r=calcUnit(p, ew, el, 0, roofFrameColor(), 1, os); var _motor=(R.slideOn?(parseInt(R.smotorqty)||0)*(parseFloat(R.smotorprice)||0):0); return ((r&&r.sell)||0)+_motor; }catch(e){ return 0; } }
   // v9 ก้อน3: สเปกฝ้าลงใบ (ชื่อวัสดุแผ่น + ทาสี/รหัสสี + ฉนวน + ตำแหน่ง/แนว)
   function g6rCeilSpec(R){ if(!R||!R.ceilOn)return '';
     var CTN={ceiling_smooth:'ฝ้าฉาบเรียบ',ceil_cshape:'ฝ้าอลู ตัวซี',ceil_bsc:'ฝ้าไม้เทียม remood',ceil_ranae_1x5:'ฝ้าระแนงอลู 1×5',ceil_ranae_16_5:'ฝ้าระแนงอลู 1.6 เว้น5',ceil_ranae_16_2:'ฝ้าระแนงอลู 1.6 เว้น2'};
@@ -9083,6 +9091,15 @@ window.addEventListener('load',ckRefresh);
     else if(R.ceilColor){ s+=' · '+R.ceilColor; }
     if(R.ceilInsul) s+=' · มีฉนวนกันร้อน 3"';
     s+=' · ฝ้า'+(R.ceilPos||'นอก')+(R.ceilDir==='เฉียง'?' เฉียงตามหลังคา':''); return s; }
+  // v9 รอบC: สเปกแป/เลื่อน/ของเสริมหลังคา ลงใบ
+  function g6rRoofExtraSpec(R){ var a=[]; if(!R)return '';
+    if(R.purlin==='double')a.push('แปคู่');
+    if(R.slideOn)a.push('หลังคาเลื่อน '+(R.spanels||2)+' แผง'+((parseInt(R.smotorqty)||0)>0?(' · มอเตอร์ '+R.smotorqty+' ตัว'):''));
+    Object.keys(R.ex||{}).forEach(function(k){ var nm={beam:'คานเหล็กถัก',pole:'เสาแผง',pole4:'เสา 4x8',pole15:'ตั้งเสา 4"',chain:'โซ่รางน้ำ',pvc:'ครอบท่อ PVC'}[k]; if(nm&&R.ex[k])a.push(nm+' '+R.ex[k]); });
+    if((R.hs||{}).on)a.push('ซ่อนสโลป ('+(R.hs.type==='smart'?'สมาร์ทบอร์ด 6มม.':'คอมโพสิต 3มม.')+')');
+    if((R.gc||{}).on)a.push('ปิดซ่อนราง'); if((R.bc||{}).on)a.push('ครอบคาน'); if((R.sealer||{}).on)a.push('ปิดรอยต่อแผ่นหลังคา');
+    if(R.gut&&R.gutScreen)a.push('ตะแกรงกันใบไม้'); if(R.plate)a.push('เพลทเหล็กล่าง'); if(R.tierod)a.push('เหล็กดึงบน');
+    return a.length?a.join(' · '):''; }
   function elecTotalReal(){ return (G6R.elec.down||0)*1500 + (G6R.elec.sw||0)*1000; }
   // G6 งานพื้น (มติ 16มิ.ย.): สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. · ลามิเนต/SPC กรอกเรตเอง · min 5 ตร.ม. · ส่วนลด auto 10% ถ้า ≥20 (แก้ %ได้)
   function floorTotal(){ var F=G6R.floor; if(!F||!F.on)return 0; var raw=(parseFloat(F.w)||0)*(parseFloat(F.l)||0); if(raw<=0)return 0; var a=Math.max(5,raw); var rate=(F.mat==='spc')?(parseFloat(F.rate)||0):5000; var base=a*rate; var dp=(F.disc!==''&&F.disc!=null)?(parseFloat(F.disc)||0):(a>=20?10:0); return Math.round(base*(1-dp/100)); }
@@ -9418,11 +9435,15 @@ window.addEventListener('load',ckRefresh);
       (R.segs||[]).forEach(function(s,i){ b+='<div class="row"><span class="rl">ช่วง '+(i+2)+'</span><input type="number" value="'+s.w+'" step="0.1" oninput="G6RroofSegV('+i+',\'w\',this.value)"><span class="u">กว้าง ×</span><input type="number" value="'+s.l+'" step="0.1" oninput="G6RroofSegV('+i+',\'l\',this.value)"><span class="u">ยาว</span><button class="c" style="color:#A32D2D;border-color:#F0C0C0;padding:4px 9px;" onclick="G6RroofSegDel('+i+')">🗑</button></div>'; });
       b+='<div class="row"><button class="c" style="border-style:dashed;color:#1E5AA8;" onclick="G6RroofSegAdd()">＋ เพิ่มช่วง (หลังคาขยัก)</button>'+((R.segs&&R.segs.length)?('<span class="u" style="font-weight:700;color:#1B7A43;">รวม '+roofArea().toFixed(2)+' ตร.ม.</span>'):'')+'</div>';
       b+='<div class="fl">โครงสร้าง</div><div class="chips"><button class="c'+(R.frame==='โครงอลูมิเนียม'?' on':'')+'" onclick="G6RroofFrame(\'โครงอลูมิเนียม\')">อลูมิเนียม</button><button class="c'+(R.frame==='โครงเหล็กชุบซิงค์'?' on':'')+'" onclick="G6RroofFrame(\'โครงเหล็กชุบซิงค์\')">เหล็กชุบซิงค์</button></div>';
+      b+='<div class="fl">แป</div><div class="chips"><button class="c'+(R.purlin==='single'?' on':'')+'" onclick="G6RroofSet(\'purlin\',\'single\')">แปเดี่ยว</button><button class="c'+(R.purlin==='double'?' on':'')+'" onclick="G6RroofSet(\'purlin\',\'double\')">แปคู่</button></div>';
+      b+='<div class="fl">หลังคาเลื่อน</div><div class="chips"><button class="c'+(R.slideOn?' on':'')+'" onclick="G6RroofSlide('+(R.slideOn?0:1)+')">'+(R.slideOn?'ทำเลื่อน ✓':'＋ ทำหลังคาเลื่อน')+'</button></div>';
+      if(R.slideOn){ b+='<div class="g6r-rev"><div class="row"><span class="rl">แผงเลื่อน</span><input type="number" min="2" step="1" value="'+(R.spanels||2)+'" onchange="G6RroofSet(\'spanels\',this.value)"><span class="u">แผง (ขั้นต่ำ 2 · engine คิดราคา)</span></div><div class="row"><span class="rl">มอเตอร์</span><input type="number" min="0" step="1" value="'+(R.smotorqty||0)+'" onchange="G6RroofSet(\'smotorqty\',this.value)"><span class="u">ตัว ×</span><input type="number" min="0" step="100" value="'+(R.smotorprice||0)+'" onchange="G6RroofSet(\'smotorprice\',this.value)"><span class="u">บาท/ตัว</span></div></div>'; }
       B.size=b;
       // ③ ปลายหลังคา · ระบบรางน้ำ
       b='<div class="g6r-sl">③ ปลายหลังคา · รางน้ำ</div><div class="chips"><button class="c'+(!R.gut&&!R.eave?' on':'')+'" onclick="G6RroofEnd(\'none\')">ปล่อย</button><button class="c'+(R.gut?' on':'')+'" onclick="G6RroofEnd(\'gut\')">มีรางน้ำ</button><button class="c'+(R.eave?' on':'')+'" onclick="G6RroofEnd(\'eave\')">ปิดปลายกันน้ำ</button></div>';
       if(R.gut)b+='<div class="row"><span class="rl">รางน้ำ</span>'+[['1000','อลู S'],['2000','อลู M'],['3000','สแตน L']].map(function(x){return '<button class="c'+(String(R.gut)===x[0]?' on':'')+'" onclick="G6RroofGut('+x[0]+')">'+x[1]+'</button>';}).join('')+'<input type="number" value="'+(R.gutlen||R.w)+'" step="0.1" oninput="G6RroofV(\'gutlen\',this.value)"><span class="u">ม.</span></div>';
       if(R.eave)b+='<div class="row"><span class="rl">ปิดปลาย</span><input type="number" value="'+R.eave+'" step="0.1" oninput="G6RroofV(\'eave\',this.value)"><span class="u">ม. ×1,000</span></div>';
+      if(R.gut){ b+='<div class="fl">ระบบระบาย</div><div class="chips"><button class="c'+(R.gutScreen?' on':'')+'" onclick="G6RroofTog(\'gutScreen\')">'+(R.gutScreen?'ตะแกรงกันใบไม้ ✓ (ฟรี)':'＋ ตะแกรงกันใบไม้')+'</button></div><div class="g6r-wtot" style="color:#6B7280;">+ ท่อน้ำทิ้ง PVC 2.5″ สีดำ (รวมในงานราง)</div>'; }
       B.end=b;
       // ④ ฝ้า / เพดาน
       B.ceil=g6RoofCeilBlock(R);
@@ -9450,6 +9471,13 @@ window.addEventListener('load',ckRefresh);
       // ⑦ ของเสริมหลังคา
       b='<div class="g6r-sl">⑦ ของเสริมหลังคา</div><div class="chips">'+[['beam','คานเหล็กถัก'],['pole','เสาแผง'],['pole4','เสา 4x8'],['pole15','ตั้งเสา 4"'],['chain','โซ่รางน้ำ'],['pvc','ครอบท่อ PVC']].map(function(x){return '<button class="c'+(R.ex[x[0]]!=null?' on':'')+'" onclick="G6RroofEx(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>';
       Object.keys(R.ex).forEach(function(k){ var lbl={beam:'คานเหล็กถัก ความยาว(ม.)',pole:'เสาแผง จำนวน(ต้น)',pole4:'เสา 4x8 จำนวน(ต้น)',pole15:'ตั้งเสา 4" จำนวน(ต้น)',chain:'โซ่รางน้ำ จำนวน(จุด)',pvc:'ครอบ PVC ความยาว(ม.)'}[k]||k; b+='<div class="row"><span class="rl" style="flex:0 0 auto;">'+lbl+'</span><input type="number" value="'+R.ex[k]+'" step="0.1" oninput="G6RroofExV(\''+k+'\',this.value)"></div>'; });
+      // งานปิด/ซ่อน (กรอกขนาด · engine คิดเงิน) + เสริมโครงฟรี
+      b+='<div class="fl">งานปิด / ซ่อน (กรอกขนาด)</div><div class="chips"><button class="c'+(R.hs.on?' on':'')+'" onclick="G6RroofXTog(\'hs\')">'+(R.hs.on?'ซ่อนสโลป ✓':'＋ ซ่อนสโลป')+'</button><button class="c'+(R.gc.on?' on':'')+'" onclick="G6RroofXTog(\'gc\')">'+(R.gc.on?'ปิดซ่อนราง ✓':'＋ ปิดซ่อนราง')+'</button><button class="c'+(R.bc.on?' on':'')+'" onclick="G6RroofXTog(\'bc\')">'+(R.bc.on?'ครอบคาน ✓':'＋ ครอบคาน')+'</button><button class="c'+(R.sealer.on?' on':'')+'" onclick="G6RroofXTog(\'sealer\')">'+(R.sealer.on?'ปิดรอยต่อ ✓':'＋ ปิดรอยต่อ')+'</button></div>';
+      if(R.hs.on){ b+='<div class="g6r-rev"><div class="chips"><span class="rl">ซ่อนสโลป</span><button class="c'+(R.hs.type==='comp'?' on':'')+'" onclick="G6RroofXSet(\'hs\',\'type\',\'comp\')">คอมโพสิต 3มม.</button><button class="c'+(R.hs.type==='smart'?' on':'')+'" onclick="G6RroofXSet(\'hs\',\'type\',\'smart\')">สมาร์ทบอร์ด 6มม.</button></div><div class="row"><span class="rl">สูง×ยาว×จำนวน</span><input type="number" min="0" step="0.1" value="'+(R.hs.h||'')+'" placeholder="สูง" onchange="G6RroofXSet(\'hs\',\'h\',this.value)"><input type="number" min="0" step="0.1" value="'+(R.hs.l||'')+'" placeholder="ยาว" onchange="G6RroofXSet(\'hs\',\'l\',this.value)"><input type="number" min="1" step="1" value="'+(R.hs.n||1)+'" placeholder="จำนวน" onchange="G6RroofXSet(\'hs\',\'n\',this.value)"></div></div>'; }
+      if(R.gc.on){ b+='<div class="g6r-rev"><div class="row"><span class="rl">ปิดซ่อนราง</span><input type="number" min="0" step="1" value="'+(R.gc.w||'')+'" placeholder="กว้าง ซม." onchange="G6RroofXSet(\'gc\',\'w\',this.value)"><input type="number" min="0" step="1" value="'+(R.gc.h||'')+'" placeholder="สูง ซม." onchange="G6RroofXSet(\'gc\',\'h\',this.value)"><input type="number" min="0" step="0.1" value="'+(R.gc.l||'')+'" placeholder="ยาว ม." onchange="G6RroofXSet(\'gc\',\'l\',this.value)"></div></div>'; }
+      if(R.bc.on){ b+='<div class="g6r-rev"><div class="row"><span class="rl">ครอบคาน</span><input type="number" min="0" step="0.1" value="'+(R.bc.w||'')+'" placeholder="กว้างห่อ ม." onchange="G6RroofXSet(\'bc\',\'w\',this.value)"><input type="number" min="0" step="0.1" value="'+(R.bc.l||'')+'" placeholder="ยาวคาน ม." onchange="G6RroofXSet(\'bc\',\'l\',this.value)"></div></div>'; }
+      if(R.sealer.on){ b+='<div class="g6r-rev"><div class="row"><span class="rl">ปิดรอยต่อ</span><input type="number" min="0" step="0.1" value="'+(R.sealer.len||'')+'" placeholder="ยาว ม." onchange="G6RroofXSet(\'sealer\',\'len\',this.value)"><span class="u">ม. (ขั้นต่ำ 5,000 · 800/ม.)</span></div></div>'; }
+      b+='<div class="fl">เสริมโครง (ฟรี)</div><div class="chips"><button class="c'+(R.plate?' on':'')+'" onclick="G6RroofTog(\'plate\')">'+(R.plate?'เพลทเหล็กล่าง ✓':'＋ เพลทเหล็กล่าง')+'</button><button class="c'+(R.tierod?' on':'')+'" onclick="G6RroofTog(\'tierod\')">'+(R.tierod?'เหล็กดึงบน ✓':'＋ เหล็กดึงบน')+'</button></div>';
       B.extra=b;
       // ลากจัดเรียงบล็อก (grip-only draggable · input ในบล็อกใช้ได้ปกติ)
       h+='<div class="g6r-wtot" style="color:#6B7280;">☰ ลากหัวบล็อก (มุมขวา) เพื่อจัดเรียงใหม่</div>';
@@ -9725,6 +9753,12 @@ window.addEventListener('load',ckRefresh);
   window.G6Rroof2On=function(v){ var R=G6R.roof; R.roof2on=v; if(v&&!R.roof2)R.roof2='roof_polyton'; render(); };
   window.G6Rroof2Mat=function(id){ G6R.roof.roof2=id; render(); };
   window.G6Rroof2Area=function(v){ G6R.roof.roof2area=parseFloat(v)||0; render(); };
+  // v9 รอบC: แป/ทำเลื่อน/มอเตอร์ + ระบบรางน้ำ + ของเสริมเชิงซ้อน
+  window.G6RroofSet=function(k,v){ G6R.roof[k]=v; render(); };
+  window.G6RroofSlide=function(v){ G6R.roof.slideOn=v; render(); };
+  window.G6RroofTog=function(k){ G6R.roof[k]=G6R.roof[k]?0:1; render(); };
+  window.G6RroofXTog=function(k){ var o=G6R.roof[k]; if(o)o.on=o.on?0:1; render(); };
+  window.G6RroofXSet=function(grp,k,v){ var o=G6R.roof[grp]; if(o)o[k]=v; render(); };
   // v9 รอบB: สีโครงหลังคา L1/L2/L3
   window.G6RframeL2=function(v){ var R=G6R.roof; R.frameL2on=v; if(v&&R.frameColor==null)R.frameColor=roomAluColor(); render(); };
   window.G6RframeL3=function(v){ G6R.roof.frameL3on=v; render(); };
@@ -9839,7 +9873,7 @@ window.addEventListener('load',ckRefresh);
           out.push('• '+_lbl+' ('+(pc.w||1)+'×'+(pc.h||0.5)+' ม.)'+(op.length?' · '+op.join(', '):'')); }); });
       } else if(s.type==='wall'){ out.push('ด้าน '+L(i)+' · ผนังเบา ('+(s.aw||3)+'×'+(s.ah||2.6)+' ม.) = '+Math.round(sideTotal(s,i)).toLocaleString()); }
     });
-    var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var _dmc=g6RoofMColorName(R); var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')+(_dmc?(' '+_dmc):'')):''; var _ra=(R.segs&&R.segs.length)?(roofArea().toFixed(1)+' ตร.ม. ('+(R.segs.length+1)+' ช่วง)'):((R.w||1)+'×'+(R.l||1)+' ม.'); out.push('หลังคา/ฝ้า'+rn+' ('+_ra+') = '+Math.round(rf).toLocaleString()); if(R.roof2on&&R.roof2&&PBYID[R.roof2])out.push('• ต่อปลายวัสดุที่ 2: '+PBYID[R.roof2].name.replace(/^หลังคา\s*/,'')+(R.roof2area?(' '+R.roof2area+' ตร.ม.'):'')); var _cd=g6rCeilSpec(R); if(_cd)out.push('• '+_cd); var _fol2=g6rRoofFrameOptLine(R); if(_fol2)out.push('• '+_fol2); }
+    var rf=roofTotalReal(); if(rf>0){ var R=G6R.roof; var _dmc=g6RoofMColorName(R); var rn=(R.matId&&PBYID[R.matId])?(' '+PBYID[R.matId].name.replace(/^หลังคา\s*/,'')+(_dmc?(' '+_dmc):'')):''; var _ra=(R.segs&&R.segs.length)?(roofArea().toFixed(1)+' ตร.ม. ('+(R.segs.length+1)+' ช่วง)'):((R.w||1)+'×'+(R.l||1)+' ม.'); out.push('หลังคา/ฝ้า'+rn+' ('+_ra+') = '+Math.round(rf).toLocaleString()); if(R.roof2on&&R.roof2&&PBYID[R.roof2])out.push('• ต่อปลายวัสดุที่ 2: '+PBYID[R.roof2].name.replace(/^หลังคา\s*/,'')+(R.roof2area?(' '+R.roof2area+' ตร.ม.'):'')); var _xs2=g6rRoofExtraSpec(R); if(_xs2)out.push('• ของเสริม: '+_xs2); var _cd=g6rCeilSpec(R); if(_cd)out.push('• '+_cd); var _fol2=g6rRoofFrameOptLine(R); if(_fol2)out.push('• '+_fol2); }
     var el=elecTotalReal(); if(el>0){ var E=G6R.elec; out.push('งานไฟ'+(E.down?' · ดาวน์ไลท์ '+E.down+' ดวง':'')+(E.sw?' · สวิตช์ '+E.sw+' จุด':'')+' = '+Math.round(el).toLocaleString()); }
     var _fl=floorTotal(); if(_fl>0){ var F=G6R.floor; var _fmat=F.mat==='wood'?'ไม้เทียม':(F.mat==='spc'?'ลามิเนต/SPC':'สมาร์ทบอร์ด 20มม.'); out.push('งานปูพื้น '+_fmat+' (โครงเหล็กกัลวาไนซ์) '+floorArea().toFixed(1)+' ตร.ม. = '+Math.round(_fl).toLocaleString()+' · ไม่รับประกันพื้นแอ่น/ยวบ'); }
     var _fn=fanTotal(); if(_fn>0){ var FN=G6R.fan; out.push('พัดลมดูดอากาศ + ฝาครอบกันแมลง '+(FN.size||'')+'" จำนวน '+(FN.qty||1)+' ตัว = '+Math.round(_fn).toLocaleString()); }
