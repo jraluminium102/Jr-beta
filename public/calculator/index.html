@@ -5776,7 +5776,8 @@ function buildItemOpts(d){
   }
   // ก้อน3(G1 formux): มือจับ multi-toggle — รวบ control เดิมไว้กล่องเดียว · ติ๊กแบรนด์ได้หลายอัน · ราคาบวกสะสม (logic เดิม)
   { var _cmechOK=(p.cat==='บานเลื่อน'||p.cat==='บานเปิด'), _xOK=/xseries|slimlux/.test(p.id), _awnOK=(p.cat==='บานกระทุ้ง');
-    if(p.digihandle||_cmechOK||_xOK||_awnOK){
+    // B8 (ดราฟ GROUNDTRUTH L61): เลื่อนภายในรางบนซ้อน = ไม่มีมือจับ (SlimLux/X-series ยังมี)
+    if((p.digihandle||_cmechOK||_xOK||_awnOK)&&p.id!=='inner_top_stack'){
       var _hsub='';
       // toggle แบรนด์ (เฉพาะที่ใช้ได้กับสินค้านี้)
       var _btoggle='';
