@@ -6,7 +6,7 @@ import {
 
 type Row = {
   id: string; job_id: string | null; title: string; job_code: string | null;
-  customer_area: string | null; produce_date: string | null; install_date: string | null;
+  customer_area: string | null; produce_date: string | null; due_date: string | null; install_date: string | null;
   status: string; sets: ProdSet[];
 };
 const today = () => new Date().toISOString().slice(0, 10);
@@ -67,7 +67,7 @@ export default function ChangPublicView({ token }: { token: string }) {
 
   const groups = useMemo(() => {
     const m = new Map<string, Row[]>();
-    for (const r of rows) { const k = r.produce_date ?? "zzz"; if (!m.has(k)) m.set(k, []); m.get(k)!.push(r); }
+    for (const r of rows) { const k = r.due_date ?? "zzz"; if (!m.has(k)) m.set(k, []); m.get(k)!.push(r); }
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [rows]);
 
@@ -111,7 +111,8 @@ export default function ChangPublicView({ token }: { token: string }) {
                       <div key={dateKey}>
                         <div className="flex items-center gap-2 mb-2 px-1">
                           {dc && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
-                          <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(items[0].produce_date)}</span>
+                          <span className="text-[11px] font-semibold" style={{ color: IOS.ink3 }}>กำหนดเสร็จ</span>
+                          <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(dateKey === "zzz" ? null : dateKey)}</span>
                           {isToday && <span className="text-[10px] rounded-full px-2 py-0.5 font-bold text-white" style={{ background: IOS.green }}>วันนี้</span>}
                           <span className="ml-auto text-[12px] font-medium" style={{ color: IOS.ink3 }}>{items.length} งาน</span>
                         </div>

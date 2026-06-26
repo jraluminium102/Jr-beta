@@ -33,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
 
   const { data: prods } = await sb
     .from("productions")
-    .select("id, job_id, status, production_queued, planned_install_date, job:job_id(job_code, customer_name, customer_area, status)")
+    .select("id, job_id, status, production_queued, production_due_date, planned_install_date, job:job_id(job_code, customer_name, customer_area, status)")
     .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY"]);
   const jobs = (prods ?? []).filter((p: Row) => (p.job as { status?: string } | null)?.status !== "CANCELLED");
   const jobIds = jobs.map((p: Row) => p.job_id as string | null).filter(Boolean) as string[];
@@ -49,10 +49,12 @@ export async function GET(_req: Request, { params }: { params: { token: string }
     return {
       kind: "job" as const, id: p.id as string, job_id: (p.job_id as string) ?? null,
       title: job?.customer_name ?? "—", job_code: job?.job_code ?? null, customer_area: job?.customer_area ?? null,
-      produce_date: (p.production_queued as string | null) ?? null, install_date: (p.planned_install_date as string | null) ?? null,
+      produce_date: (p.production_queued as string | null) ?? null,
+      due_date: (p.production_due_date as string | null) ?? null,
+      install_date: (p.planned_install_date as string | null) ?? null,
       status: p.status as string, sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
     };
-  }).sort((a: { produce_date: string | null }, b: { produce_date: string | null }) => (a.produce_date ?? "9999-99-99").localeCompare(b.produce_date ?? "9999-99-99"));
+  }).sort((a: { due_date: string | null }, b: { due_date: string | null }) => (a.due_date ?? "9999-99-99").localeCompare(b.due_date ?? "9999-99-99"));
 
   return NextResponse.json({ data: rows });
 }
