@@ -3075,7 +3075,7 @@ function qiG6GetState(d){
   return {shape:d.dataset.qiG6shape||'3',mosq:parseInt(d.dataset.qiG6mosq||0),roof:parseInt(d.dataset.qiG6roof||0),ceil:parseInt(d.dataset.qiG6ceil||0),
     sideDoor:JSON.parse(d.dataset.qiG6sides||'[0,1,1]'),
     ci:parseInt(d.dataset.qiG6ci||0), gcat:d.dataset.qiG6gcat||'กระจกใส/สี', gsub:d.dataset.qiG6gsub||'ใส·เขียว', gi:parseInt(d.dataset.qiG6gi||0),
-    lock:parseInt(d.dataset.qiG6lock||0),
+    lock:parseInt(d.dataset.qiG6lock||0), lockPrice:parseFloat(d.dataset.qiG6lockprice||0),
     roofFrame:d.dataset.qiG6roofFrame||'alu', roofPurlin:d.dataset.qiG6roofPurlin||'single',
     roofCi:parseInt(d.dataset.qiG6roofCi||0),
     elec:parseInt(d.dataset.qiG6elec||0),
@@ -3170,6 +3170,7 @@ function qiRenderG6(d){
   h += qiG6ColorGlassHtml(st);
   h += '<div class="qi-lbl" style="margin-top:8px;">อุปกรณ์เสริม (ทั้งห้อง)</div><div class="qi-chips">';
   h += '<button type="button" class="chip'+(st.lock?' on':'')+'" onclick="qiG6TogLock(this)">🔒 '+(st.lock?'ล็อก ✓':'ล็อก')+'</button>';
+  if(st.lock){ h += '<input class="qi-g6lockprice" type="number" step="100" min="0" value="'+(st.lockPrice||0)+'" placeholder="ราคาล็อก (บาท)" style="width:120px;height:34px;border:1.5px solid var(--line);border-radius:8px;padding:0 8px;font-size:13px;font-family:inherit;vertical-align:middle;" oninput="qiG6OnSvc(this,\'lockprice\')">'; }
   QIG6_MOSQ.forEach(function(m,mi){ h += '<button type="button" class="chip'+(st.mosq===mi?' on':'')+'" onclick="qiG6SetMosq(this,'+mi+')">'+(mi===0?'🦟 มุ้ง: ไม่มี':(mi===st.mosq?'🦟 '+m[0]:'🦟 '+m[0]))+'</button>'; });
   h += '</div>';
 
@@ -3267,6 +3268,7 @@ function qiCalcG6(d){
   var plumb=parseFloat((d.querySelector('.qi-g6plumb')||{}).value)||0;
   var floor=parseFloat((d.querySelector('.qi-g6floor')||{}).value)||0;
   var pm=parseFloat((d.querySelector('.qi-g6pm')||{}).value)||0;
+  var lockPrice=st.lock?parseFloat((d.querySelector('.qi-g6lockprice')||{}).value||st.lockPrice||0):0;
   var qty=parseInt((d.querySelector('.qi-qty')||{}).value)||1;
   var sides=qiG6SidesOf(st.shape,reach,len);
   var _ci=st.ci||0, _gi=st.gi||0;
@@ -3300,8 +3302,8 @@ function qiCalcG6(d){
   if(ceilKey){ ceilCost=sideSell(ceilKey,len,reach,0,1); total+=ceilCost; }
   // งานไฟ (ดาวน์ไลท์ 1,500/ดวง · min 3,000)
   var elecCost=0; if(elec>0){ elecCost=Math.max(elec*1500,3000); total+=elecCost; }
-  // ประปา/พื้น/ผรม
-  total+=plumb; total+=floor; total+=pm;
+  // ประปา/พื้น/ผรม/ล็อก
+  total+=plumb; total+=floor; total+=pm; total+=lockPrice;
   // ชื่อสีโครง (สำหรับโชว์ในการ์ด)
   var _roofCname=(COLORS&&COLORS[st.roofCi||0])?(COLORS[st.roofCi||0].n||'อบขาว'):'อบขาว';
 
@@ -3312,7 +3314,7 @@ function qiCalcG6(d){
       html+=qiPcRow(r.name,r.cost);
       if(r.sub) html+=qiPcSub(r.sub);
     });
-    if(st.lock){ html+=qiPcSub('🔒 มีชุดล็อก (label-only)'); }
+    if(st.lock){ html+=(lockPrice>0?qiPcRow('🔒 ชุดล็อก',lockPrice):qiPcSub('🔒 มีชุดล็อก (กรอกราคา)')); }
     if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0]+' (สีโครง: '+_roofCname+')',roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'+(roofColorCost>0?(' · สีโครง +'+roofColorCost.toLocaleString()):'(อบขาวฟรี)')); }
     if(ceilCost>0){ html+=qiPcRow('ฝ้า '+QIG6_CEIL[st.ceil][0],ceilCost); }
     if(elecCost>0){ html+=qiPcRow('💡 งานไฟ '+elec+' ดวง',elecCost); }
@@ -3323,7 +3325,7 @@ function qiCalcG6(d){
     // รวมห้อง — แสดงเป็น group
     var doorTotal=0; sideRows.forEach(function(r){ doorTotal+=r.cost; });
     if(doorTotal>0){ html+=qiPcRow('งานบาน ('+sides.length+' ด้าน)',doorTotal); }
-    if(st.lock){ html+=qiPcSub('🔒 มีชุดล็อก (label-only)'); }
+    if(st.lock){ html+=(lockPrice>0?qiPcRow('🔒 ชุดล็อก',lockPrice):qiPcSub('🔒 มีชุดล็อก (กรอกราคา)')); }
     if(roofCost>0){ html+=qiPcRow('🏠 หลังคา '+QIG6_ROOF[st.roof][0]+' ('+_roofCname+')',roofCost); html+=qiPcSub('ยื่น×ยาว='+(reach*len).toFixed(1)+'ตร.ม.'+(roofColorCost>0?(' · สีโครง +'+roofColorCost.toLocaleString()):'(อบขาวฟรี)')); }
     if(ceilCost>0){ html+=qiPcRow('ฝ้า '+QIG6_CEIL[st.ceil][0],ceilCost); }
     if(elecCost>0){ html+=qiPcRow('💡 งานไฟ '+elec+' ดวง',elecCost); }
