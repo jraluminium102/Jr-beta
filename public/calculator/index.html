@@ -5660,6 +5660,14 @@ function calcSubItemPrice(sub){
 }
 function buildItemOpts(d){
   const p=PBYID[d.querySelector('.i-prod').value]; if(!p)return;
+  // FIX (26มิ.ย.): กลุ่ม≠หลังคา → คืนแถวขนาด(size-row) + ลบช่องช่วงหลังคา(rf-spans-wrap)ที่ค้างข้ามกลุ่ม
+  //   เหตุ: เลือกหลังคาแล้ว size-row ถูกซ่อน display:none!important + สร้าง rf-spans-wrap · ทั้งคู่อยู่นอก .i-opts → ไม่ถูก rebuild → พอสลับกลุ่มอื่นช่องกว้าง/สูงหายค้าง
+  //   วางก่อน early-return ทุกตัว (รวม G6 ห้องที่ return เร็ว) ให้ cleanup ครอบทุกกลุ่ม
+  if(p.cat!=='หลังคา'){
+    d.querySelectorAll('.rf-spans-wrap').forEach(function(el){ el.remove(); });
+    var _srBack=d.querySelector('.size-row'); if(_srBack) _srBack.style.removeProperty('display');
+    delete d.dataset.rfMultiSpan;
+  }
   const box=d.querySelector('.i-opts');
   let h='';
   // G1G6-B: การ์ดตระกูล+ปุ่มรุ่น กลุ่ม 1/2/6 (เหนือ cascade เฉพาะ) · famOther=โหมด "อื่นๆ" โชว์ dropdown เดิม
