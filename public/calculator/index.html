@@ -6589,10 +6589,12 @@ function buildItemOpts(d){
   if(pw)pw.style.display=usesPanels(p)?'':'none';
   const q=p.method==='same_as'?PBYID[p.ref]:p;
   const pn=d.querySelector('.i-panels');
+  if(pn){ // กันค่าว่าง: บางการ์ด (มุ้ง/กั้นห้อง/ม่านซิป) อาจยังไม่มีช่องจำนวนบานตอน render → ข้ามแทนพัง
   if(q.addon&&q.addon.kind==='door'){ pn.max=2; }
   else if(q.method==='lift'){ pn.max=2; pn.value=2; pn.disabled=true; pn.title='บานยกบังคับ 2 บาน'; } // เฟส A: บานยก lock 2 บาน
   else if(q.addon&&q.addon.kind==='sliding'){ pn.max=4; }
   else { pn.removeAttribute('max'); pn.disabled=false; pn.title=''; }
+  }
   // บันทึกค่าสี/กระจกปัจจุบันก่อน innerHTML= (กัน node หาย เมื่อ cw/gw อยู่ใน box อยู่แล้ว)
   var _savedColorVal=(cw&&cw.querySelector('.i-color'))?cw.querySelector('.i-color').value:'0';
   var _savedGlassVal=(gw&&gw.querySelector('.i-glass'))?gw.querySelector('.i-glass').value:'0';
@@ -7204,8 +7206,8 @@ function readItem(d){
     const _slw=d.querySelector('.o-sl-w'); optSel.solidlowerW=_slw?(parseFloat(_slw.value)||0):0;
     const _slh=d.querySelector('.o-sl-h'); optSel.solidlowerH=_slh?(parseFloat(_slh.value)||0):0;
     const _slc=d.querySelector('.o-sl-color'); optSel.solidlowerColor=_slc?(parseFloat(_slc.value)||0):0; }
-  let gi=parseInt(d.querySelector('.i-glass').value||0); if(AREA_CATS.includes(p.cat))gi=0;
-  let ci=parseInt(d.querySelector('.i-color').value||0); if((AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat)) && !p.cabinet && p.cat!=='หลังคา')ci=0; // UX-ALL G4: cabinet ปลด force ci=0 → เลือกสีจ่ายเพิ่มได้ (colorPlus คิดใน calc แล้ว) · 23มิ.ย.(เคาะ): หลังคาปลด force → สีโครงคิดเงิน colorPrice (colorUp L1777 บวกเข้า sell อยู่แล้ว · default อบขาว=0 golden นิ่ง)
+  let gi=parseInt((d.querySelector('.i-glass')||{}).value||0); if(AREA_CATS.includes(p.cat))gi=0;
+  let ci=parseInt((d.querySelector('.i-color')||{}).value||0); if((AREA_CATS.includes(p.cat)||NO_COLOR_CATS.includes(p.cat)) && !p.cabinet && p.cat!=='หลังคา')ci=0; // UX-ALL G4: cabinet ปลด force ci=0 → เลือกสีจ่ายเพิ่มได้ (colorPlus คิดใน calc แล้ว) · 23มิ.ย.(เคาะ): หลังคาปลด force → สีโครงคิดเงิน colorPrice (colorUp L1777 บวกเข้า sell อยู่แล้ว · default อบขาว=0 golden นิ่ง)
   // L2🔵ออปชั่น (coOverride='opt'): ราคา sell ต้องคิดตามสี/กระจกหัวใบ (global) ไม่ใช่ค่าที่เลือกต่อข้อ → force ci/gi=global
   if(d.dataset.coOverride==='opt'){
     var _gcEl=document.getElementById('global-color'); var _ggEl=document.getElementById('global-glass');
@@ -7216,11 +7218,11 @@ function readItem(d){
   const _lsChk=d.querySelector('.o-lumpsum'); const _lsOn=_lsChk&&_lsChk.checked;
   const _lsPrice=parseFloat((d.querySelector('.o-lumpsumprice')||{}).value)||0;
   const _panels=parseInt((d.querySelector('.i-panels')||{}).value||1)||1;
-  const r=calcUnit(p, d.querySelector('.i-w').value, d.querySelector('.i-h').value,
-    gi, ci, _panels, optSel, d.querySelector('.i-ship').checked);
+  const r=calcUnit(p, (d.querySelector('.i-w')||{}).value, (d.querySelector('.i-h')||{}).value,
+    gi, ci, _panels, optSel, (d.querySelector('.i-ship')||{}).checked);
   // #1 (22มิ.ย.): เสริมแขนค้ำ บานกระทุ้ง +500/ชุด — บวกฝั่ง sell ตรงนี้ (หลัง markup · ×1 ตรงตัว · ไม่ผ่าน opt ที่โดน cost×markup) · default off → golden นิ่ง
   if(r && optSel && optSel.awnbrace && p.cat==='บานกระทุ้ง'){ r.sell=(r.sell||0)+500; }
-  let qty=parseInt(d.querySelector('.i-qty').value||1); if(qty<1)qty=1;
+  let qty=parseInt((d.querySelector('.i-qty')||{}).value||1); if(qty<1)qty=1;
   const _ov=parseFloat((d.querySelector('.i-override')||{}).value)||0; if(_ov>0&&r){ r.sell=_ov; r.overridden=true; }
   // งาน9: โหมดเหมา override ราคา (ความสำคัญสูงกว่า i-override ปกติ)
   if(_lsOn&&_lsPrice>0&&r){ r.sell=_lsPrice; r.overridden=true; r.lumpsum=true; }
@@ -7246,8 +7248,8 @@ function readItem(d){
   const _lsEl=d.querySelector('.o-lumpsum'); const _isLumpsum=!!(_lsEl&&_lsEl.checked);
   return {p, r, qty, gi, ci, finLabel, optSel, subItems, panels:_panels,
     glassColor:(d.querySelector('.i-glass')||{}).dataset?(d.querySelector('.i-glass').dataset.glColor||''):'',  // รอบ3 ข้อ1ข: เขียว/ใส ที่เลือก (label ใบ)
-    w:d.querySelector('.i-w').value, h:d.querySelector('.i-h').value,
-    name:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'', ship:d.querySelector('.i-ship').checked,
+    w:(d.querySelector('.i-w')||{}).value, h:(d.querySelector('.i-h')||{}).value,
+    name:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'', ship:(d.querySelector('.i-ship')||{}).checked,
     itype:(d.querySelector('.i-type')&&d.querySelector('.i-type').value)||'door',
     groupName:(_sb&&_multi)?_sb.dataset.sid:'',
     groupLabel:(_sb&&_sb.querySelector('.set-name'))?_sb.querySelector('.set-name').value.trim():'',
