@@ -2980,7 +2980,7 @@ var QIG5_FAM=[
   {k:'pleat',n:'มุ้งจีบ',items:[
     {id:'imp28',n:'จีบตีนตะขาบ'},{id:'mj_sd_basic',n:'จีบ SD พื้นฐาน'},{id:'mj_screen_safety',n:'จีบนิรภัย'}]},
   {k:'honey',n:'จีบรังผึ้ง',items:[
-    {id:'mj_blackout',n:'Blackout รังผึ้ง'},{id:'mj_sd_twoway',n:'SD ทูเวย์'},{id:'mj_keeprail_twoway',n:'ตีนตะขาบทูเวย์'},{id:'mj_keeprail_honey',n:'ตีนตะขาบรังผึ้ง'}]},
+    {id:'mj_blackout',n:'Blackout รังผึ้ง'},{id:'mj_sd_twoway',n:'SD ทูเวย์'},{id:'mj_keep_twoway',n:'ตีนตะขาบทูเวย์'},{id:'mj_keep_honey',n:'ตีนตะขาบรังผึ้ง'}]}, /* fix 27มิ.ย.: id ตรง PBYID (เดิม mj_keeprail_* ไม่มีจริง→quote ฿0) */
   {k:'roll',n:'มุ้งม้วน',items:[
     {id:'imp29',n:'ม้วนไฟเบอร์'},{id:'mj_kick_150',n:'ม้วนเตะ 150'},{id:'mj_kick_300',n:'ม้วนเตะ 300'},{id:'mj_kick_600',n:'ม้วนเตะ 600'}]}
 ];
@@ -4374,7 +4374,7 @@ function ocChipPick(btn){
 }
 function ocItemOptions(cat){
   if(cat==='glass'){ const grp={'กระจกใส/สี':[],'เทมเปอร์':[],'ลามิเนต':[],'อินซูเลท':[],'อื่นๆ':[]};
-    GLASS.forEach(function(g,i){ var k=/อินซูเลท/.test(g.n)?'อินซูเลท':(/เทมเปอร์/.test(g.n)?'เทมเปอร์':(/ลามิเนต/.test(g.n)?'ลามิเนต':(/ใส|เขียว|ยูโร|reflective|เคลือบ/.test(g.n)?'กระจกใส/สี':'อื่นๆ'))); grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
+    GLASS.forEach(function(g,i){ var k=qiG6GlassCat(g.n); /* dedup 27มิ.ย.: ใช้ qiG6GlassCat ตัวเดียว (เดิม inline ก๊อปซ้ำ · ผลเท่าเดิม) */ grp[k].push('<option value="'+i+'" data-r="'+(g.s||0)+'">'+g.n+'</option>'); });
     return Object.keys(grp).filter(function(k){return grp[k].length;}).map(function(k){return '<optgroup label="'+k+'">'+grp[k].join('')+'</optgroup>';}).join(''); }
   if(cat==='mosq'){ return MOSQUITO_SCREENS.filter(function(m){return !m.frame;}).map(function(m){return '<option value="'+m.id+'" data-r="'+(m.rate||0)+'">'+m.name+'</option>';}).join(''); }
   if(cat==='color'){ return COLORS.map(function(c,i){return i>=1?('<option value="'+i+'" data-color="1">'+(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim()+'</option>'):'';}).join(''); }
