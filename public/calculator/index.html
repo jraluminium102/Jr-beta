@@ -4467,7 +4467,7 @@ function buildItemOpts(d){
     h+='</div>'; // /rf-matcolor-wrap (สีวัสดุมุง — ย้ายขึ้นต่อจากปุ่มรุ่น)
     // ② (23มิ.ย.): สีโครงอลู — ออปชั่นเทียบราคา (เปลี่ยนสีโครงเป็น… → บรรทัด OPTION ในใบ · ไม่บวกยอด · ไม่แตะ calcUnit/.i-color) · L1=สีทั้งใบ/L2real=สีอลูรายการ มีอยู่แล้ว
     // ② (23มิ.ย. · เคาะ "ทำ toggle เต็มในG3"): สีโครงอลู 3 ชั้น (L1 ทั้งใบ → L2 เฉพาะข้อ → L3 เทียบราคา) · ใช้กลไกสี G3 เอง (#global-color/.i-color/colorPrice) ไม่อิง G1 · L3 = swap เดิม (o-rfcoopt/o-rfmatopt → roofOptNote ไม่บวกยอด)
-    h+='<div class="opt rf-colorbox" style="width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 11px;">';
+    h+='<div class="opt rf-colorbox" style="display:block;width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 11px;">';
     h+='<div style="font-size:12.5px;font-weight:700;color:#1E40AF;margin-bottom:7px;">🎨 สีโครงอลูมิเนียม <span style="font-weight:400;font-size:11px;color:#6B7280;">(ระบบสีต่อข้อ 3 ชั้น)</span></div>';
     // L1 row: บรรทัดเดียว "L1 · ทั้งใบ: [ชื่อสี] ⟳ เปลี่ยนสีทั้งใบ" (ดราฟ 24มิ.ย.)
     var _gcv=parseInt((document.getElementById('global-color')||{}).value)||0;
