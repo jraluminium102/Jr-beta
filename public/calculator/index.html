@@ -364,8 +364,8 @@
   </header>
 
   <div class="tabs">
-    <button class="tab on" data-m="quick" onclick="setMode('quick')">คิดเร็ว</button>
-    <button class="tab" data-m="quote" onclick="setMode('quote')"><span class="t-lg">ใบเสนอราคา</span><span class="t-sm">ใบเสนอ</span></button>
+    <button class="tab" data-m="quick" onclick="setMode('quick')" style="display:none" title="โหมดคิดเร็ว — ยุบชั่วคราว 27มิ.ย. (ไว้ทำให้คนประเมินภายหลัง)">คิดเร็ว</button>
+    <button class="tab on" data-m="quote" onclick="setMode('quote')"><span class="t-lg">ใบเสนอราคา</span><span class="t-sm">ใบเสนอ</span></button>
     <button class="tab" data-m="compare" onclick="setMode('compare')">เทียบราคา</button>
     <button class="tab" data-m="check" onclick="setMode('check')">เช็คลิสต์</button>
   </div>
@@ -2417,6 +2417,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   addSet();
   calcCompare();
   calcQuote(); // ข้อ13: คิดยอดตอนโหลด → Protection พื้น (default ติ๊ก) สะท้อนในกล่องสรุปทันที ไม่ต้องรอกด
+  setMode('quote'); // ยุบโหมดคิดเร็ว 27มิ.ย.: เปิดมาที่ใบเสนอราคา (แท็บคิดเร็วซ่อน · โค้ด qiRender/qiCalc ยังอยู่ ลบเป็นชุดทีหลัง)
 });
 
 /* ---- QUICK ---- */
