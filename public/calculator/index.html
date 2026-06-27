@@ -3005,12 +3005,20 @@ function rfChipsSw(cls, items, defVal){
 // Z4 A1/A2 (18มิ.ย.): สีกรอบมุ้ง (o-mscolor) + สีฝาตู้ (o-ftcolor) → ชิป+จุดสี แบบ ค ชุดเดียวกัน
 // คง value = COLORS index เดิม (ชิปแรก = freeVal) · ชื่อเต็มลงใบเหมือนเดิม (อ่าน optSel.mscolor/ftcolor ไม่แตะ) · จุดสี = colorSwStyle รองรับ gradient
 function msftColorChips(cls, defVal, freeVal, freeLabel){
-  var h='<div class="chip-group chip-sm"><button type="button" class="chip'+(freeVal===defVal?' on':'')+'" data-val="'+freeVal+'" onclick="chSetChip(this,\''+cls+'\')">'+freeLabel+'</button>';
-  COLORS.forEach(function(c,i){ if(i<2) return;
-    var nm=(c.quoteName||c.n).replace(/[★⚠🔖🔒]/g,'').trim();
-    h+='<button type="button" class="chip'+(String(i)===defVal?' on':'')+'" data-val="'+i+'" onclick="chSetChip(this,\''+cls+'\')"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+nm+'</button>';
+  // ดราฟ G5 (27มิ.ย.): สีกรอบมุ้งจัดเป็นหมวด (ซาฮาร่า/ลายไม้/อบพิเศษ) เหมือนสีอลู — onclick/data-val/จุดสี เดิมเป๊ะ (engine/golden ไม่แตะ · แค่จัดกลุ่ม visual)
+  var h='<div class="chip-group chip-sm"><button type="button" class="chip'+(freeVal===defVal?' on':'')+'" data-val="'+freeVal+'" onclick="chSetChip(this,\''+cls+'\')">'+freeLabel+'</button></div>';
+  COLOR_CATS.forEach(function(cat){
+    if(cat.key==='std') return; // มุ้งไม่มี ขาว/ดำ (i<2)
+    var idxs=cat.idx.filter(function(i){ return i>=2 && COLORS[i]; });
+    if(!idxs.length) return;
+    h+='<div style="font-size:10.5px;color:#6B7280;font-weight:700;margin:6px 0 2px;">'+cat.label+'</div><div class="chip-group chip-sm">';
+    idxs.forEach(function(i){
+      var nm=(COLORS[i].quoteName||COLORS[i].n).replace(/[★⚠🔖🔒]/g,'').trim();
+      h+='<button type="button" class="chip'+(String(i)===defVal?' on':'')+'" data-val="'+i+'" onclick="chSetChip(this,\''+cls+'\')"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+nm+'</button>';
+    });
+    h+='</div>';
   });
-  return h+'</div>';
+  return h;
 }
 // B3: palette สีชินโคไลท์ (เสนอจากชื่อสี · พี่นัทปรับ hex ได้) — key = string สีเต็มใน SHINCO_COLORS
 var SHINCO_SW={'HC-N828 Modern Grey':'#8a8d8f','HC-B703 Royal Blue':'#26408b','HC-570 Classic Brown':'#6b4a2f','HC-N590 Noble Green':'#2f5d43','SP-NB00 ขาวขุ่น':'#efece4','SP-NB30 Foggy Brown':'#8a7a68','SP-B857 Marine Blue':'#3a6e88','SP-NC95 Light Brown':'#a98b63','NT-001 ใส':'#e9f1f1','NT-332 เทาอ่อน':'#c2c4c2','Prime 562 Brownish Green':'#5a6347','Shade-430S Pearl White':'#f4f2ec'};
