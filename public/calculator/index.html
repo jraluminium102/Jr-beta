@@ -2254,35 +2254,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
       sell += _mosqPrice;
       addonLines.push({n:mscreen.name, det:mscreen.name+' '+fabricLabel+_mosqColorLbl+(parseFloat(optSel.mosqPrice)>0?' (ราคากรอกเอง)':''), p:_mosqPrice, mosqArea:mosqArea});
     }
-    if(false){
-      const pat = OPENING_PATTERNS.find(p2 => p2.id===optSel.mosqPat) || OPENING_PATTERNS[0];
-      let totalBan = pat.total, openBan = pat.open;
-      if(pat.id==='p_custom'){
-        totalBan = parseInt(optSel.mosqTotal)||1;
-        openBan = parseInt(optSel.mosqOpen)||1;
-      }
-      const baseA = a;
-      let mosqA;
-      if(totalBan>0 && openBan>0 && totalBan>=openBan){
-        mosqA = baseA * openBan / totalBan;
-      } else {
-        mosqA = baseA;
-      }
-      let mosqPrice = Math.max(mscreen.min || 0, mosqA * mscreen.rate);
-      // ค่าทำสีกรอบ (ดรอปดาวน์ใหม่ — ลด 50%) 2026-05-28
-      let colorLabel = '';
-      if(mscreen.mscolor && optSel.mosqColor){
-        const mc = optSel.mosqColor;
-        if(mc==='sahara'){ const ca = colorPrice(2, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เทาซาฮาร่า '+fmt(Math.round(ca)); }
-        else if(mc==='kl_special'){ const ca = colorPrice(10, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลอบพิเศษ '+fmt(Math.round(ca)); }
-        else if(mc==='kl_wood'){ const ca = colorPrice(11, mosqA, '') * 0.5; mosqPrice += ca; colorLabel = ' + เคแอลลายไม้ '+fmt(Math.round(ca)); }
-      }
-      sell += roundUp(mosqPrice);
-      const fracTxt = (openBan===totalBan && totalBan===1) ? 'เต็มพื้นที่' : (openBan+'/'+totalBan);
-      let mosqMsg = 'มุ้ง: '+mscreen.name+' · ช่องเปิด '+fracTxt+' = '+mosqA.toFixed(2)+' ตร.ม. = '+fmt(mosqPrice)+colorLabel;
-      if(mscreen.overhang) mosqMsg += ' · ⚠ ติดล้นนอกวงกบ';
-      msgs.push(mosqMsg);
-    }
+    /* dead code ลบ 27มิ.ย. (R-C2 prep): บล็อก if(false) มุ้ง OPENING_PATTERNS เก่า ตายสนิท · ตรรกะจริงอยู่ block บน (ดูคอมเมนต์ L~2242) */
   }
   // #6-G3: breakdown หลังคา (display-only · ไม่กระทบ sell) — core + สีโครง + ออปชั่นแยกตาม _g3box
   if(_breakdown==null && p.cat==='หลังคา'){ var _rfBd=[];
