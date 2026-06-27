@@ -1515,7 +1515,8 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
   // casement-euro (มติพี่นัท 2026-06-13): sales กรอก "กว้างรวม × สูง + จำนวนบาน" → a=พื้นที่รวม(หน้าต่างทั้งบาน) · base+สี คิดต่อบาน (a/บาน) · กระจก+มุ้ง ใช้พื้นที่รวม
   const _ceN = p.ceLinear ? Math.max(1,parseInt(panels)||1) : 1;
   const _paneA = a/_ceN; // พื้นที่ต่อบาน (= a เมื่อไม่ใช่ ceLinear)
-  if(p.cabinet){ 
+  if(p.cabinet){ return _calcCabinet();
+    function _calcCabinet(){ /* R-B(27มิ.ย.): ห่อสาขา G4 ตู้ เป็นฟังก์ชันมีชื่อ (closure เดิม · ค่าเท่าเดิม · golden นิ่ง) — แก้ตู้ไม่ลามสาขาอื่น */
     const W=parseFloat(w)||0,H=parseFloat(h)||0,D=parseFloat(optSel&&optSel.depth)||0.6;
     const stype=(optSel&&optSel.cabtype)||'wardrobe'; const spacing=stype==='shoe'?0.2:0.4;
     let nsh=parseInt(optSel&&optSel.shelves); if(!(nsh>=1))nsh=Math.max(2,Math.round(H/spacing));
@@ -1632,7 +1633,7 @@ function calcUnit(p, w, h, gi, ci, panels, optSel, shipOnly){
     if(shelfGlassAdd>0) _cabBd.push({n:'อัปเกรดกระจกชั้น',p:Math.round(shelfGlassAdd)});
     if(wallGlassAdd>0) _cabBd.push({n:'อัปเกรดกระจกผนัง',p:Math.round(wallGlassAdd)});
     return {a:W*H, sell:_sell, cost:null, addonLabel:'', breakdown:(_cabBd.length>=2?_cabBd:null), msgs:['บานหน้าตู้ (Future Tech) '+nDoors+' บาน × '+fmt(perDoor)+'/บาน'+(extraFee?(' + '+fmt(extraFee)):'')+' = '+fmt(front)+' · ลึก '+D+' ม. · '+nsh+' ชั้น'+(sg==='glass'?'กระจก':'อลู')+(stype==='shoe'?' (รองเท้า)':'')+' · ผนัง'+(_wmsg.length?(_wmsg.join('/')+' '+fmt(wall)):'ไม่มี (ชนผนังปูน)')+(colorStruct>0?(' · ค่าสีโครง '+fmt(colorStruct)):'')+(_extraMsgs.length?(' · '+_extraMsgs.join(' · ')):'')], cabOptLines:_cabOptLines};
-  }
+  } } /* ปิด _calcCabinet() + if(p.cabinet) */
   if(p.frame_wrap){ const W=parseFloat(w)||0, H=parseFloat(h)||0; const perim = (p.frame_wrap==='door') ? (W + 2*H) : 2*(W+H); const _sell = Math.max(1500, perim * (p.rate||700)); return {a:W*H, sell:_sell, cost:null, addonLabel:'', msgs:['เส้นรอบวง '+perim.toFixed(2)+' ม. × '+(p.rate||700)+'/ม. (min 1,500)']}; }
     if(p.screen_addon){
     // มุ้งเฟรมเล็ก/เฟรมใหญ่ — มี min ตาม itype + option ผ้ามุ้ง
