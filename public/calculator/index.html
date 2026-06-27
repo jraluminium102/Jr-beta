@@ -54,6 +54,8 @@
     color:var(--red);font-size:20px;cursor:pointer;line-height:1;}
   .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
   .chgrid .full{grid-column:1 / -1;}
+  /* กัน grid blowout: grid item min-width:auto = min-content ดันคอลัมน์เกินจอ (G2 ประตูรั้ว/เกล็ด ล้น 434px) · min-width:0 → คอลัมน์คงที่ ลูก wrap ในจอ */
+  .chgrid > *{ min-width:0; }
   .opts{font-size:13.5px;margin:4px 0;}
   .opt{display:inline-flex;align-items:center;gap:6px;margin-right:14px;color:var(--ink);}
   .gh-box{display:block;width:100%;background:#FFF7E6;border:1px solid #F0C040;border-radius:8px;padding:10px;margin:6px 0;box-sizing:border-box;}
@@ -335,6 +337,8 @@
   /* ALLG-v2 grid: ปุ่มกว้างเท่ากัน เรียงเป็นแถวไม่เละ (แทน flex wrap ที่ปุ่มกว้างตามเนื้อหา) */
   /* label.opt เป็น display:flex → บีบ .chip-grid เหลือคอลัมน์เดียว · บังคับ label ที่มี grid เป็น block ให้ grid กินเต็มแถว */
   label.opt:has(> .chip-grid){ display:block; }
+  /* เช่นเดียวกับ chip-grid: label.opt ที่ห่อ .chip-group เป็น inline-flex → chip ไม่ wrap ล้นจอ · บังคับ block (G2 ประตูรั้ว/เกล็ด · G3 หลังคา) */
+  label.opt:has(> .chip-group){ display:block; }
   /* 🔴 selector container (เลือกแบบ/cascade/หลังคา/มุ้ง) เดิม .opt = flex nowrap → label "รูปแบบ" กับ "รุ่น" อยู่ข้างกันคนละครึ่ง + ปุ่มแคบ · บังคับ block ให้ stack เต็มแถว */
   .fam-prodsel, .rn-prodsel, .g3-prodsel, .mosq-prodsel{ display:block; }
   /* 🔴 size-row: inline display:flex โดน strip (เด็กเลยเต็มแถวทีละบรรทัด) · บังคับ flex ใน CSS · กว้าง/สูง/ชุด อยู่แถวเดียว */
