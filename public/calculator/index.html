@@ -56,6 +56,10 @@
   .chgrid .full{grid-column:1 / -1;}
   /* กัน grid blowout: grid item min-width:auto = min-content ดันคอลัมน์เกินจอ (G2 ประตูรั้ว/เกล็ด ล้น 434px) · min-width:0 → คอลัมน์คงที่ ลูก wrap ในจอ */
   .chgrid > *{ min-width:0; }
+  /* ซ่อนลูกศร ↑↓ native ของช่อง type=number ทุกที่ (เคาะ 28มิ.ย.: ใช้ปุ่ม −/+ อย่างเดียว ทุก G · ราคาไม่แตะ) */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; appearance:none; margin:0; }
+  input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
   .opts{font-size:13.5px;margin:4px 0;}
   .opt{display:inline-flex;align-items:center;gap:6px;margin-right:14px;color:var(--ink);}
   .gh-box{display:block;width:100%;background:#FFF7E6;border:1px solid #F0C040;border-radius:8px;padding:10px;margin:6px 0;box-sizing:border-box;}
@@ -2570,6 +2574,8 @@ function groupGHOpts(ch){
     var _toWrap=Array.from(box.querySelectorAll(':scope>.g4-box'));
     _toWrap.forEach(function(c){ _wrap.appendChild(c); });
     box.appendChild(_wrap);
+    // R1 (28มิ.ย. · ดราฟ G3 newstyle "③ ออปชั่นเสริม · หมายเหตุ"): ย้ายการ์ดหมายเหตุมาตรฐาน (.rk-block render นอก .i-opts) เข้าท้ายกล่อง③
+    try{ var _b3body=_wrap.querySelector('.g4-b3 .g4-body'); var _noteC=ch.querySelector('.rk-block'); if(_b3body && _noteC && !_b3body.contains(_noteC)) _b3body.appendChild(_noteC); }catch(e){}
     return;
   }
   // G1G6-D: แสดงผลตาม disp (①-⑦) — ลำดับจับ keyword (array order) แยกจากลำดับแสดง
