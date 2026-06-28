@@ -42,8 +42,15 @@ for (const c of CASES) {
     d.querySelectorAll('*').forEach(el => {
       if (el.offsetParent === null) return;
       const t = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
-      if (/^L2\b|^L3\b|ใช้สีต่าง|เทียบราคา OPTION/.test(t) && t.length < 40) {
-        out.push({ txt: t.slice(0, 24), color: cs(el).color, lvl: /^L3|เทียบราคา/.test(t) ? 'L3' : 'L2' });
+      // anchor #1: data-lvl="l2"/"l3" (G4 — ป้ายเลิกใช้คำ L2/L3 แล้ว 28มิ.ย. · semantic=data-lvl, ทดสอบ=สี)
+      const dl = el.getAttribute('data-lvl');
+      if (dl === 'l2' || dl === 'l3') {
+        out.push({ txt: t.slice(0, 24), color: cs(el).color, lvl: dl === 'l3' ? 'L3' : 'L2' });
+        return;
+      }
+      // anchor #2: ข้อความไทย (G3 toggle — "ใช้สีต่าง"=สีเฉพาะข้อ(แดง) · "เทียบราคา OPTION"=เทียบ(น้ำเงิน))
+      if (/ใช้สีต่าง|เทียบราคา OPTION/.test(t) && t.length < 70) {
+        out.push({ txt: t.slice(0, 24), color: cs(el).color, lvl: /เทียบราคา/.test(t) ? 'L3' : 'L2' });
       }
     });
     return out;

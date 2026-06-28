@@ -1109,9 +1109,9 @@ function colorDrillRenderL3(sel){ if(!sel)return;
   Object.keys(present).map(Number).sort(function(a,b){return a-b;}).forEach(function(i){ var n=(COLORS[i]&&COLORS[i].n)||''; if(_isSp(n)) special.push(i); else cats[_l2cat(n)].push(i); });
   function _chips(arr){ return arr.map(function(i){ return '<button type="button" class="chip color-chip'+(i===curIdx?' on':'')+'" data-idx="'+i+'" onclick="colorDrillPick(this)"><span class="cdot" style="'+colorSwStyle(i)+'"></span>'+_nm(i)+'</button>'; }).join(''); }
   var CATLBL={std:'มาตรฐาน',sahara:'ซาฮาร่า',wood:'ลายไม้สต๊อก'};
-  var html='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L2 — เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div>';
+  var html='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div>';
   ['std','sahara','wood'].forEach(function(k){ if(!cats[k].length)return; html+='<div style="font-size:10.5px;color:#9ca3af;font-weight:700;margin:5px 0 3px;">'+CATLBL[k]+'</div><div class="chip-group chip-sm">'+_chips(cats[k])+'</div>'; });
-  if(special.length){ html+='<div style="margin-top:9px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">'+_chips(special)+'</div></div>'; }
+  if(special.length){ html+='<div style="margin-top:9px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">'+_chips(special)+'</div></div>'; }
   wrap.innerHTML=html;
 }
 function colorDrillCat(btn){ var sel=_colorDrillSel(btn); if(!sel)return; sel.dataset.colCat=btn.dataset.cat; colorDrillRender(sel); }  // เปลี่ยนหมวด (ยังไม่ commit ค่า)
@@ -3077,15 +3077,15 @@ function g2FinRender(sel,wrap){ if(!wrap){ var n=sel.nextSibling; while(n&&!(n.c
   var curIdx=sel.selectedIndex; var curCat=g2FinCat(g2FinLabel(sel.options[curIdx]));
   var dflt=byCat.std.length?byCat.std[0]:{i:0,lbl:(sel.options[0]?g2FinLabel(sel.options[0]):'สีอบขาว')};
   var coOn=(sel.dataset.coOn==='1')||(curCat!=='std');
-  var html='<div style="font-size:11.5px;color:#374151;background:#f9fafb;border-radius:7px;padding:6px 9px;margin-bottom:6px;"><b>L1 ทั้งใบ:</b> '+dflt.lbl+' <span style="color:#9ca3af;">(ฟรี)</span></div>';
+  var html='<div style="font-size:11.5px;color:#374151;background:#f9fafb;border-radius:7px;padding:6px 9px;margin-bottom:6px;"><b>สีทั้งใบ:</b> '+dflt.lbl+' <span style="color:#9ca3af;">(ฟรี)</span></div>';
   html+='<div class="chip-group chip-sm"><button type="button" class="chip'+(coOn?' on':'')+'" onclick="g2FinCoToggle(this)">'+(coOn?'✓ ':'＋ ')+'ใช้สีต่างจากทั้งใบ (ข้อนี้)</button></div>';
   if(coOn){
     html+='<div style="margin-top:7px;background:#fbf7f2;border:1px solid #e9d8c4;border-radius:9px;padding:9px;">';
-    html+='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L2 — เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div><div class="chip-group chip-sm">';
+    html+='<div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">เลือกสีของข้อนี้ <span style="font-weight:400;">(คิดเงินตามเรต × พื้นที่)</span></div><div class="chip-group chip-sm">';
     var l2=byCat.std.slice(1).concat(byCat.sahara).concat(byCat.wood);
     l2.forEach(function(it){ html+='<button type="button" class="chip'+(it.i===curIdx?' on':'')+'" onclick="g2FinPick(this,'+it.i+')">'+it.lbl+'</button>'; });
     html+='</div>';
-    if(byCat.special.length){ html+='<div style="margin-top:8px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">L3 — ⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">';
+    if(byCat.special.length){ html+='<div style="margin-top:8px;padding:8px 9px;background:#fff;border:1px dashed #d4a373;border-radius:8px;"><div style="font-size:11px;color:#6b7280;font-weight:700;margin-bottom:4px;">⬆ อัปเป็นอบพิเศษ <span style="font-weight:400;">(คิดเงินเพิ่มอีก)</span></div><div class="chip-group chip-sm">';
       byCat.special.forEach(function(it){ html+='<button type="button" class="chip'+(it.i===curIdx?' on':'')+'" onclick="g2FinPick(this,'+it.i+')">'+it.lbl+'</button>'; });
       html+='</div></div>'; }
     if(curCat==='special'){ html+='<div style="margin-top:6px;"><input type="text" class="g2fin-name" placeholder="ระบุชื่อสีอบ เช่น Golden Teak SMS" value="'+(sel.dataset.g2name||'').replace(/"/g,'&quot;')+'" oninput="g2FinName(this)" style="width:100%;max-width:240px;height:30px;font-size:12.5px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;"></div>'; }
@@ -4486,7 +4486,7 @@ function buildItemOpts(d){
     // ② (23มิ.ย.): สีโครงอลู — ออปชั่นเทียบราคา (เปลี่ยนสีโครงเป็น… → บรรทัด OPTION ในใบ · ไม่บวกยอด · ไม่แตะ calcUnit/.i-color) · L1=สีทั้งใบ/L2real=สีอลูรายการ มีอยู่แล้ว
     // ② (23มิ.ย. · เคาะ "ทำ toggle เต็มในG3"): สีโครงอลู 3 ชั้น (L1 ทั้งใบ → L2 เฉพาะข้อ → L3 เทียบราคา) · ใช้กลไกสี G3 เอง (#global-color/.i-color/colorPrice) ไม่อิง G1 · L3 = swap เดิม (o-rfcoopt/o-rfmatopt → roofOptNote ไม่บวกยอด)
     h+='<div class="opt rf-colorbox" style="display:block;width:100%;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 11px;">';
-    h+='<div style="font-size:12.5px;font-weight:700;color:#1E40AF;margin-bottom:7px;">🎨 สีโครงอลูมิเนียม <span style="font-weight:400;font-size:11px;color:#6B7280;">(ระบบสีต่อข้อ 3 ชั้น)</span></div>';
+    h+='<div style="font-size:12.5px;font-weight:700;color:#1E40AF;margin-bottom:7px;">🎨 สีโครงอลูมิเนียม <span style="font-weight:400;font-size:11px;color:#6B7280;">(เลือกสีแยกรายข้อได้)</span></div>';
     // L1 row: บรรทัดเดียว "L1 · ทั้งใบ: [ชื่อสี] ⟳ เปลี่ยนสีทั้งใบ" (ดราฟ 24มิ.ย.)
     var _gcv=parseInt((document.getElementById('global-color')||{}).value)||0;
     var _gcName=(COLORS[_gcv]&&((COLORS[_gcv].quoteName||COLORS[_gcv].n).replace(/\s*\([^)]*\)/g,'').replace(/[★⚠🔖🔒]/g,'').trim()))||'สีอบขาว';
@@ -4495,7 +4495,7 @@ function buildItemOpts(d){
     var _gcPriceLabel=_gcPrice>0?'(+'+fmt(_gcPrice)+' บาท)':'(ฟรี)';
     var _gcPriceColor=_gcPrice>0?'#b3122a':'#16a34a';
     h+='<div class="rf-l1row" style="display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #dbe3f0;border-radius:8px;padding:8px 11px;margin-bottom:8px;">';
-    h+='<span style="font-size:11.5px;color:#374151;font-weight:700;white-space:nowrap;">L1 · ทั้งใบ:</span>';
+    h+='<span style="font-size:11.5px;color:#374151;font-weight:700;white-space:nowrap;">สีทั้งใบ:</span>';
     h+='<span style="display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:'+_gcSw+';flex:none;"></span>';
     h+='<span class="rf-l1name" style="font-size:12.5px;font-weight:700;color:#111;">'+_gcName+'</span>';
     h+='<span class="rf-l1price" style="font-size:11.5px;font-weight:700;color:'+_gcPriceColor+';flex:1;">'+_gcPriceLabel+'</span>';
@@ -4503,7 +4503,7 @@ function buildItemOpts(d){
     h+='</div>';
     // L2 toggle: ติ๊กแล้วโผล่ (checkbox แทน details)
     var _l2Open=((d&&d.dataset&&d.dataset.coOverride)==='1');
-    h+='<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid '+(_l2Open?'var(--l2)':'#cbd5e1')+';border-radius:9px;cursor:pointer;background:'+(_l2Open?'var(--l2bg)':'#fff')+';margin-bottom:7px;font-size:12.5px;font-weight:700;color:'+(_l2Open?'var(--l2)':'#374151')+';"><input type="checkbox" class="rf-l2-cb" '+(_l2Open?'checked':'')+' onchange="rfL2CbToggle(this)" style="width:17px;height:17px;accent-color:var(--l2);"> L2 · ใช้สีต่างเฉพาะหลังคานี้ <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:3px;">(สีจริง · บวกยอด)</span></label>';
+    h+='<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid '+(_l2Open?'var(--l2)':'#cbd5e1')+';border-radius:9px;cursor:pointer;background:'+(_l2Open?'var(--l2bg)':'#fff')+';margin-bottom:7px;font-size:12.5px;font-weight:700;color:'+(_l2Open?'var(--l2)':'#374151')+';"><input type="checkbox" class="rf-l2-cb" '+(_l2Open?'checked':'')+' onchange="rfL2CbToggle(this)" style="width:17px;height:17px;accent-color:var(--l2);"> ใช้สีต่างเฉพาะหลังคานี้ <span style="font-weight:400;font-size:11px;color:#6B7280;margin-left:3px;">(สีจริง · บวกยอด)</span></label>';
     h+='<div class="rf-l2-host" style="margin-bottom:7px;padding:8px 10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;'+(_l2Open?'':'display:none;')+'"></div>';
     // L3 toggle: ซ้อนใน L2 (แสดงทุกเวลา แต่ host ซ่อน/โชว่ตาม checkbox)
     var _l3Val=(d&&d.querySelector)?((d.querySelector('.o-rfcoopt')||{}).value||''):('');
@@ -4901,10 +4901,10 @@ function buildItemOpts(d){
     h+='<div class="g4-fld"><div class="g4-lbl">ชนิดชั้น</div><div class="chip-group chip-sm"><button type="button" class="chip on" data-val="" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">ตามประเภท</button><button type="button" class="chip" data-val="alu" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">อลู (+1,200)</button><button type="button" class="chip" data-val="glass" onclick="chSetChip(this,\'o-shelfmat\');cabUpdateHints(this.closest(\'.ch\'))">กระจก (+1,000)</button></div><select class="o-shelfmat" style="display:none;"><option value="" selected>ตามประเภท</option><option value="alu">อลู (1,200)</option><option value="glass">กระจก (1,000)</option></select><div class="cab-shelf-glass-hint" style="display:none;font-size:11px;color:#059669;font-weight:600;margin-top:3px;">ℹ️ ชั้นกระจก = ไม่คิดค่าสีโครง · สเปกกระจกอยู่ในกล่อง 🎨 สี ด้านล่าง</div></div>';
     // สีตามทั้งใบ L1/L2/L3
     h+='<div class="g4-fld" style="border:1px solid #F3D5D5;border-radius:8px;padding:8px 10px;background:#FAFAFA;">'
-      +'<div class="g4-lbl" style="margin-bottom:6px;">🎨 สี (โครงตู้ + หน้าบาน) — L1/L2/L3</div>'
+      +'<div class="g4-lbl" style="margin-bottom:6px;">🎨 สี (โครงตู้ + หน้าบาน)</div>'
       +'<label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;">'
       +'<input type="checkbox" class="o-cabcofollow" checked onchange="cabCoFollowTog(this);calcQuote();" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b>'
-      +'<span style="font-size:11px;color:#6B7280;">(L1 · ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></label>'
+      +'<span style="font-size:11px;color:#6B7280;">(ค่าเริ่มต้น · คิดเรตสีหัวใบ)</span></label>'
       +'<div class="cab-co-body" style="display:none;margin-top:7px;">'
         +'<div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:5px;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะตู้นี้ (🟢ใช้จริง=บวกยอด · 🔵ออปชั่น=OPTION line)</div>'
         +'<div class="chip-group chip-sm" style="margin-bottom:8px;">'
@@ -4913,31 +4913,31 @@ function buildItemOpts(d){
         +'</div>'
         +'<input type="hidden" class="o-cabcomode" value="real">'
         +'<div class="cab-co-colgrid">'
-          +'<div><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin:4px 0 3px;">L2 ① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat)</span></div>'
+          +'<div><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin:4px 0 3px;" data-lvl="l2">① สีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT flat)</span></div>'
           +'<select class="o-cabfrontcolor" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="cabSelCode(this,\'.o-cabfrontcode-row\');"><option value="0" selected>ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select>'
           +'<span class="o-cabfrontcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีหน้าบาน <input type="text" class="o-cabfrontcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'</div>'
-          +'<div><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin:4px 0 3px;">L2 ② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู)</span></div>'
+          +'<div><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin:4px 0 3px;" data-lvl="l2">② สีโครงตู้ <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90 × พื้นที่อลู)</span></div>'
           +'<select class="o-cabstructcolor" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="cabSelCode(this,\'.o-cabstructcode-row\');"><option value="-1" selected>ตามหัวใบ</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select>'
           +'<span class="o-cabstructcode-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง <input type="text" class="o-cabstructcode" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
           +'</div>'
           // L2 ③ สเปกกระจก (ชั้น/ผนัง) — ย้ายเข้า color box ตามดราฟ 24มิ.ย. · cascade โผล่เมื่อชั้น/ผนัง=กระจก
-          +'<div class="cab-shelfglass-row" style="display:none;border-top:1px solid #E5E7EB;margin-top:7px;padding-top:6px;"><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin-bottom:4px;">L2 ③ สเปกกระจก (ชั้น/ผนัง) <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(โผล่เมื่อเลือกชั้น/ผนัง = กระจก)</span></div>'
+          +'<div class="cab-shelfglass-row" style="display:none;border-top:1px solid #E5E7EB;margin-top:7px;padding-top:6px;"><div style="font-size:11.5px;font-weight:700;color:var(--l2);margin-bottom:4px;" data-lvl="l2">③ สเปกกระจก (ชั้น/ผนัง) <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(โผล่เมื่อเลือกชั้น/ผนัง = กระจก)</span></div>'
           +'<select class="o-shelfglass" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="calcQuote();"><option value="0" selected>ใส 6 มม.</option><option value="1200">ใส 8 มม. +1,200</option><option value="1200">ใส 10 มม. +1,200</option><option value="600">เทมเปอร์ 6 มม. +600</option><option value="1300">เทมเปอร์ 8 มม. +1,300</option><option value="2100">เทมเปอร์ 10 มม. +2,100</option></select></div>'
         +'</div>'// end cab-co-colgrid
-        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">เทียบราคาสีหน้าบาน/โครง/กระจกอื่น (L3 ออปชั่น · ไม่บวกยอด · ครบเหมือน L2)</summary>'
+        +'<details class="cab-co-l3det" style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:2px 0;">เทียบราคาสีหน้าบาน/โครง/กระจกอื่น (ออปชั่น · ไม่บวกยอด)</summary>'
         +'<div style="padding-top:5px;">'
         // L3 ① เทียบสีหน้าบาน (FT · ครบเหมือน L2 ① · ดราฟ 24มิ.ย.)
-        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:2px 0 3px;">L3 ① เทียบสีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT)</span></div>'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:2px 0 3px;" data-lvl="l3">① เทียบสีหน้าบาน <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(FT)</span></div>'
         +'<select class="o-cabfrontcolorL3" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="cabSelCode(this,\'.o-cabfrontcodeL3-row\');"><option value="-1" selected>— ไม่เทียบ —</option><option value="0">ขาว/ดำ (ฟรี)</option><option value="1">ซาฮาร่า</option><option value="1">ลายไม้สต๊อก</option><option value="1">อบพิเศษ</option><option value="1">สีชุบ</option></select>'
-        +'<span class="o-cabfrontcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีหน้าบาน (L3) <input type="text" class="o-cabfrontcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
-        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:8px 0 3px;">L3 ② เทียบสีโครง <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90)</span></div>'
+        +'<span class="o-cabfrontcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีหน้าบาน (เทียบ) <input type="text" class="o-cabfrontcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:8px 0 3px;" data-lvl="l3">② เทียบสีโครง <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(rn90)</span></div>'
         +'<select class="o-cabstructcolorL3" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="cabSelCode(this,\'.o-cabstructcodeL3-row\');"><option value="-1" selected>— ไม่เทียบ —</option><option value="2">ซาฮาร่า</option><option value="4">Aztec gray</option><option value="5">ลายไม้สต๊อก</option><option value="10">อบพิเศษ</option><option value="8">ลายไม้อบพิเศษ</option><option value="12">สีชุบ</option></select>'
-        +'<span class="o-cabstructcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง (L3) <input type="text" class="o-cabstructcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
+        +'<span class="o-cabstructcodeL3-row" style="display:none;align-items:center;gap:4px;font-size:12px;margin-top:4px;">รหัสสีโครง (เทียบ) <input type="text" class="o-cabstructcodeL3" maxlength="50" style="width:120px;height:28px;border:1px solid #cbd5e1;border-radius:5px;padding:0 6px;font-size:12px;" placeholder="เช่น KL10232A · RAL7022 · Fuji" oninput="calcQuote()"></span>'
         // L3 ③ เทียบอัปเกรดกระจก — select ครบเหมือน L2 ③ (spread value เดียวกัน · ดราฟ 25มิ.ย.)
-        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:8px 0 3px;">L3 ③ เทียบอัปเกรดกระจก <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(ชั้น/ผนังกระจก · โผล่เมื่อมีกระจก)</span></div>'
+        +'<div style="font-size:11.5px;font-weight:700;color:var(--l3);margin:8px 0 3px;" data-lvl="l3">③ เทียบอัปเกรดกระจก <span style="font-size:10.5px;font-weight:400;color:#6B7280;">(ชั้น/ผนังกระจก · โผล่เมื่อมีกระจก)</span></div>'
         +'<select class="o-cabglassL3" style="width:100%;height:36px;border:1.4px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:13px;font-family:inherit;" onchange="calcQuote();"><option value="-1" selected>— ไม่เทียบ —</option><option value="0">ใส 6 มม.</option><option value="1200">ใส 8 มม. +1,200</option><option value="1200">ใส 10 มม. +1,200</option><option value="600">เทมเปอร์ 6 มม. +600</option><option value="1300">เทมเปอร์ 8 มม. +1,300</option><option value="2100">เทมเปอร์ 10 มม. +2,100</option></select>'
-        +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ L3 เทียบจาก baseline L2 (① หน้าบาน · ② โครง · ③ กระจก) → OPTION signed diff (ไม่บวกยอด)</div>'
+        +'<div style="font-size:11px;color:#6B7280;margin-top:4px;">ℹ️ เทียบจากสีที่เลือก (① หน้าบาน · ② โครง · ③ กระจก) → OPTION ไม่บวกยอด</div>'
         +'</div></details>'
       +'</div>'// end cab-co-body
       +'<div style="font-size:11px;color:#1E40AF;background:#EFF6FF;border-radius:6px;padding:4px 8px;margin-top:6px;">สีกระทบ <b>โครงตู้ (rn90) + หน้าบาน (FT flat)</b> · ผนังกระจก/สมาร์ทบอร์ด → ไม่คิดค่าสี</div>'
@@ -5074,10 +5074,10 @@ function buildItemOpts(d){
 
     // Box ② ออปชั่นหลัก (blue) — สีฝาตู้ L1/L2
     h+='<div class="g4-box g4-b2"><div class="g4-bh">② ออปชั่นหลัก <span class="g4-btag">เลือกได้</span></div><div class="g4-body">';
-    h+='<div class="g4-fld"><div class="g4-lbl">🎨 สีฝาตู้ — L1/L2</div>'
+    h+='<div class="g4-fld"><div class="g4-lbl">🎨 สีฝาตู้</div>'
       +'<label style="display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer;">'
       +'<input type="checkbox" class="o-ftcofollow" checked onchange="ftCoFollowTog(this);calcQuote();" style="width:18px;height:18px;"> <b>สีตามทั้งใบ</b>'
-      +'<span style="font-size:11px;color:#6B7280;">(L1 · ค่าเริ่มต้น)</span></label>'
+      +'<span style="font-size:11px;color:#6B7280;">(ค่าเริ่มต้น)</span></label>'
       +'<div class="ft-co-body" style="display:none;margin-top:7px;">'
         +'<div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:5px;">▼ ไม่ติ๊ก = เปลี่ยนเฉพาะฝานี้</div>'
         +'<div class="chip-group chip-sm" style="margin-bottom:8px;">'
@@ -5205,11 +5205,11 @@ function buildItemOpts(d){
         +'</div>'
         // L3 wrap (โชว์หลัง L2 เปิด) — outer div ยังคงถูก toggle ด้วย JS · inner details พับ (จุด2 23มิ.ย.)
         +'<div class="g1co-l3-wrap" style="display:none;flex-direction:column;gap:0;border-top:1px dashed #D1D5DB;padding-top:4px;">'
-          +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">เทียบสี/กระจกอื่น (L3 OPTION · ไม่บวกยอด)</summary>'
+          +'<details class="g1co-l3det"><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:600;list-style:none;padding:3px 0;">เทียบสี/กระจกอื่น (OPTION · ไม่บวกยอด)</summary>'
           +'<div style="padding-top:5px;display:flex;gap:8px;flex-wrap:wrap;">'
           +'<label style="font-size:12px;">เทียบสีอลู: <select class="g1co-l3c" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="(function(s){var ci=parseInt(s.value);var c=COLORS[ci];var cw=s.closest(\'.g1co-l3det\').querySelector(\'.g1co-l3code-wrap\');if(cw)cw.style.display=(c&&c.hasCode&&ci>=0)?\'block\':\'none\';})(this);calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3CoOpts+'</select></label>'
           +'<label style="font-size:12px;">เทียบกระจก: <select class="g1co-l3g" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;" onchange="calcQuote();"><option value="-1">— ไม่เทียบ —</option>'+_l3GlOpts+'</select></label>'
-          +'<div class="g1co-l3code-wrap" style="display:none;width:100%;"><label style="font-size:12px;">รหัสสี L3 (อบพิเศษ): <input type="text" class="g1co-l3code" placeholder="เช่น KL10232A · RAL7022" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;width:200px;" oninput="calcQuote()"></label></div>'
+          +'<div class="g1co-l3code-wrap" style="display:none;width:100%;"><label style="font-size:12px;">รหัสสี (เทียบ · อบพิเศษ): <input type="text" class="g1co-l3code" placeholder="เช่น KL10232A · RAL7022" style="height:30px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;width:200px;" oninput="calcQuote()"></label></div>'
           +'</div></details>'
         +'</div>';
       // fix: ชื่อ radio name ต้องไม่ซ้ำกันระหว่างการ์ด — แทนด้วย unique id
@@ -7978,14 +7978,14 @@ window.addEventListener('load',ckRefresh);
       if(R.frame==='โครงอลูมิเนียม'){
         var _cN=function(i){ return COLORS[i]?(COLORS[i].quoteName||COLORS[i].n).replace(/[★⚠🔖🔒]/g,'').trim():'อบขาว'; };
         var _rmAlu=roomAluColor();
-        b+='<div class="g6r-sl">⑥ 🎨 สีอลูโครงหลังคา (L1/L2/L3)</div>';
-        b+='<div class="g6r-wtot"><b>L1 · ตามทั้งใบ:</b> '+_cN(_rmAlu)+(_rmAlu>0?'':' (ฟรี)')+'</div>';
-        b+='<div class="chips"><button class="c'+(R.frameL2on?' on':'')+'" onclick="G6RframeL2('+(R.frameL2on?0:1)+')">'+(R.frameL2on?'L2 · ใช้สีต่างเฉพาะหลังคานี้ ✓':'＋ L2 · ใช้สีต่างเฉพาะหลังคานี้ (บวกยอด)')+'</button></div>';
+        b+='<div class="g6r-sl">⑥ 🎨 สีอลูโครงหลังคา</div>';
+        b+='<div class="g6r-wtot"><b>สีตามทั้งใบ:</b> '+_cN(_rmAlu)+(_rmAlu>0?'':' (ฟรี)')+'</div>';
+        b+='<div class="chips"><button class="c'+(R.frameL2on?' on':'')+'" onclick="G6RframeL2('+(R.frameL2on?0:1)+')">'+(R.frameL2on?'ใช้สีต่างเฉพาะหลังคานี้ ✓':'＋ ใช้สีต่างเฉพาะหลังคานี้ (บวกยอด)')+'</button></div>';
         if(R.frameL2on){ var _l2c=(R.frameColor!=null?parseInt(R.frameColor):_rmAlu); b+='<div class="g6r-rev">'+g6RoofColorChips(_l2c,'G6RroofColor');
           if(COLORS[_l2c]&&COLORS[_l2c].hasCode) b+='<div class="row"><span class="rl">รหัสสี</span><input type="text" value="'+(R.frameL2code||'').replace(/"/g,'&quot;')+'" placeholder="เช่น KL10232A · Fuji" onchange="G6RframeCode(\'frameL2code\',this.value)" style="flex:1;min-width:0;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;"></div>'; b+='</div>'; }
-        b+='<div class="chips"><button class="c'+(R.frameL3on?' on':'')+'" onclick="G6RframeL3('+(R.frameL3on?0:1)+')">'+(R.frameL3on?'L3 · เทียบราคาสีอื่น ✓':'＋ L3 · เทียบราคาสีอื่น (ออปชั่น·ไม่บวกยอด)')+'</button></div>';
+        b+='<div class="chips"><button class="c'+(R.frameL3on?' on':'')+'" onclick="G6RframeL3('+(R.frameL3on?0:1)+')">'+(R.frameL3on?'เทียบราคาสีอื่น ✓':'＋ เทียบราคาสีอื่น (ออปชั่น·ไม่บวกยอด)')+'</button></div>';
         if(R.frameL3on){ var _l3c=parseInt(R.frameL3color)||0; b+='<div class="g6r-rev">'+g6RoofColorChips(_l3c,'G6RframeL3color');
-          if(COLORS[_l3c]&&COLORS[_l3c].hasCode) b+='<div class="row"><span class="rl">รหัสสี L3</span><input type="text" value="'+(R.frameL3code||'').replace(/"/g,'&quot;')+'" placeholder="รหัสสีเทียบ" onchange="G6RframeCode(\'frameL3code\',this.value)" style="flex:1;min-width:0;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;"></div>';
+          if(COLORS[_l3c]&&COLORS[_l3c].hasCode) b+='<div class="row"><span class="rl">รหัสสี (เทียบ)</span><input type="text" value="'+(R.frameL3code||'').replace(/"/g,'&quot;')+'" placeholder="รหัสสีเทียบ" onchange="G6RframeCode(\'frameL3code\',this.value)" style="flex:1;min-width:0;height:32px;border:1px solid #D1D5DB;border-radius:6px;padding:0 8px;"></div>';
           var _ol=g6rRoofFrameOptLine(R); if(_ol)b+='<div class="g6r-wtot" style="color:#1E40AF;">'+_ol+'</div>'; b+='</div>'; }
         b+='<div class="chips" style="margin-top:5px;"><button class="c'+(R.framePhotoConfirm?' on':'')+'" onclick="G6RroofTog(\'framePhotoConfirm\')">'+(R.framePhotoConfirm?'📸 ลูกค้าเห็นตัวอย่างจริง+ถ่ายรูปยืนยันแล้ว ✓':'＋ 📸 ลูกค้าเห็นตัวอย่างจริง+ถ่ายรูปยืนยันแล้ว')+'</button></div>';
       }
@@ -8024,10 +8024,10 @@ window.addEventListener('load',ckRefresh);
     var h='<div class="ph" style="color:#047857;">🎨 สี / กระจก (ทั้งห้อง)</div>';
     h+='<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">ระดับห้อง · เกี่ยวกับบานกระจก ไม่ใช่งานเสริม</div>';
     // L1 — สีตามทั้งใบ (default checked)
-    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 4px;">🎨 สีอลู (ทั้งห้อง) — L1 / L2 / L3</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 4px;">🎨 สีอลู (ทั้งห้อง)</div>';
     h+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;background:#F0FDF4;border-radius:8px;margin-bottom:6px;">'
      +'<input type="checkbox" id="g6l1chk" style="width:18px;height:18px;"'+(RC.on?'':' checked')+' onchange="G6RcolorL1(!this.checked)">'
-     +'<span><b>สีตามทั้งใบ</b> — สีอบขาว <span style="font-size:11px;color:#9CA3AF;">(L1 default)</span></span></label>';
+     +'<span><b>สีตามทั้งใบ</b> — สีอบขาว <span style="font-size:11px;color:#9CA3AF;">(ค่าเริ่มต้น)</span></span></label>';
     // L2/L3 block
     h+='<div id="g6l2l3" style="margin-top:10px;border-left:3px solid #047857;padding-left:12px;'+(RC.on?'':'display:none')+'">';
     // mode 🟢/🔵
@@ -8039,7 +8039,7 @@ window.addEventListener('load',ckRefresh);
      +'<input type="radio" name="g6cm"'+(!mReal?' checked':'')+'> 🔵 ออปชั่น <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:#1E40AF;color:#fff;">ไม่บวก</span></label>'
      +'</div>';
     // L2 สีอลู + กระจก
-    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 4px;">L2 สีอลูห้องนี้</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;margin:8px 0 4px;">สีอลูห้องนี้</div>';
     h+=g6ColorSelect('g6l2c', RC.colorIdx||0, false, 'G6RcolorSet(\'colorIdx\',parseInt(this.value)||0)');
     var l2ci=RC.colorIdx||0; var l2HasCode=typeof COLORS!=='undefined'&&COLORS[l2ci]&&COLORS[l2ci].hasCode;
     h+='<div id="g6l2code" style="'+(l2HasCode?'':'display:none;')+'margin-top:7px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:7px 10px;">'
@@ -8047,12 +8047,12 @@ window.addEventListener('load',ckRefresh);
      +'<input type="text" style="width:100%;max-width:260px;height:31px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;" placeholder="เช่น KL10232A · Fuji" value="'+g6Esc(RC.colorCode||'')+'" oninput="G6RcolorSet(\'colorCode\',this.value)"></div>';
     // L3 — เทียบสีอื่น (details พับ)
     h+='<details style="margin-top:10px;" '+(RC.l3ColorIdx>0?'open':'')+' onchange=""><summary style="cursor:pointer;font-size:12px;color:#6B7280;font-weight:700;list-style:none;padding:4px 0;" onmousedown="this.parentNode.open=!this.parentNode.open;event.preventDefault();">'
-     +'<span class="g6l3sum">＋ L3 — เทียบราคาสีอื่น (ไม่บวกยอด)</span></summary>'
+     +'<span class="g6l3sum">＋ เทียบราคาสีอื่น (ไม่บวกยอด)</span></summary>'
      +'<div style="border:1px dashed #D1D5DB;border-radius:8px;padding:9px;margin-top:5px;background:#FAFAFA;">'
      +'<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:4px;">เทียบสีอลู</div>'
      +g6ColorSelect('g6l3c', RC.l3ColorIdx||0, true, 'G6RcolorSet(\'l3ColorIdx\',parseInt(this.value)||0)')
      +'<div id="g6l3code" style="'+(COLORS&&COLORS[RC.l3ColorIdx]&&COLORS[RC.l3ColorIdx].hasCode&&RC.l3ColorIdx>0?'':'display:none;')+'margin-top:6px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:7px 10px;">'
-     +'<label style="font-size:11.5px;font-weight:700;color:#9A3412;display:block;margin-bottom:3px;">รหัสสีอบพิเศษ (L3)</label>'
+     +'<label style="font-size:11.5px;font-weight:700;color:#9A3412;display:block;margin-bottom:3px;">รหัสสีอบพิเศษ (เทียบ)</label>'
      +'<input type="text" style="width:100%;max-width:260px;height:31px;border:1px solid #D1D5DB;border-radius:7px;padding:0 9px;" placeholder="KL10232A" value="'+g6Esc(RC.l3Code||'')+'" oninput="G6RcolorSet(\'l3Code\',this.value)"></div>'
      +'</div></details>';
     h+='</div>'; // /g6l2l3
