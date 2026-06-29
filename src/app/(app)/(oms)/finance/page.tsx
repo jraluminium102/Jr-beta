@@ -16,7 +16,7 @@ type Row = {
   id: string; payment_date: string; amount: number; type: PaymentType; channel: PaymentChannel; is_auto_created: boolean;
   job: { job_code: string; customer_name: string } | null;
 };
-type OutRow = { job_id: string; job_code: string; customer_name: string; total: number; paid: number; outstanding: number };
+type OutRow = { job_id: string; job_code: string; customer_name: string; total: number | null; paid: number; outstanding: number; needs_amount?: boolean };
 const TYPE_TH: Record<PaymentType, string> = { DEPOSIT: "มัดจำ", INSTALLMENT_2: "งวด 2", INSTALLMENT_3: "งวด 3", FINAL: "งวดสุดท้าย" };
 const CH_TH: Record<PaymentChannel, string> = { TRANSFER: "โอน", CASH: "เงินสด", CHEQUE: "เช็ค" };
 
@@ -141,12 +141,18 @@ export default function FinancePage() {
             <div key={r.job_id} className="glass-card rounded-2xl p-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-white font-medium text-sm tnum">{r.job_code} · <span style={{ color: "var(--t-mid)" }}>{r.customer_name}</span></div>
-                <div className="text-[12px] mt-1 tnum" style={{ color: "var(--t-low)" }}>ยอดรวม {baht(r.total)} · รับแล้ว {baht(r.paid)}</div>
+                <div className="text-[12px] mt-1 tnum" style={{ color: "var(--t-low)" }}>ยอดรวม {r.total != null ? baht(r.total) : "—"} · รับแล้ว {baht(r.paid)}</div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
-                  <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ค้างรับ</div>
-                  <div className="text-amber-300 font-bold text-sm tnum">{baht(r.outstanding)} ฿</div>
+                  {r.needs_amount ? (
+                    <div className="text-rose-300 font-bold text-[12px] leading-tight">⚠ ยังไม่กรอก<br />ยอดงาน</div>
+                  ) : (
+                    <>
+                      <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ค้างรับ</div>
+                      <div className="text-amber-300 font-bold text-sm tnum">{baht(r.outstanding)} ฿</div>
+                    </>
+                  )}
                 </div>
                 {canWrite && (
                   <button onClick={() => openRecord(r.job_id)} className="focusable pressable bg-white/90 hover:bg-white text-[#1F4E78] rounded-lg px-3 py-2 text-[12px] font-semibold min-h-[40px]">รับเงิน</button>

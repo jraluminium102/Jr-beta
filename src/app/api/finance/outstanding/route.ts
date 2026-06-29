@@ -83,21 +83,26 @@ export const GET = withRoute(async () => {
         );
       }
 
-      const outstanding = round2(base - paid);
+      // ยังกรอกยอดไม่ครบ/คำนวณค้างรับไม่ได้ → อย่าตัดทิ้งเงียบ (กันลูกหนี้หาย) ครอบ 2 ร่อง:
+      //  (1) total ว่าง + ไม่มีบิล   (2) ฐานยอด ≤ 0 ทั้งที่รับเงินมาแล้ว (เปิดบิล total=0 + มีมัดจำ)
+      const needsAmount = (j.total_amount == null && activeBns.length === 0) || (base <= 0 && paid > 0);
+      const outstanding = needsAmount ? 0 : round2(base - paid);
 
       return {
         job_id: j.id,
         job_code: j.job_code,
         customer_name: j.customer_name,
-        total: base,
+        total: needsAmount ? null : base,
         paid,
         outstanding,
         status: j.status,
         has_billing: activeBns.length > 0,
+        needs_amount: needsAmount,   // งานมัดจำแล้วแต่ยังไม่กรอกยอด — ต้องเตือนให้กรอก
       };
     })
-    .filter((r) => r.outstanding > 0)
-    .sort((a, b) => b.outstanding - a.outstanding);
+    // โชว์ทั้งงานที่ค้างจริง + งานที่ยังไม่กรอกยอด (กันลูกหนี้หาย)
+    .filter((r) => r.outstanding > 0 || r.needs_amount)
+    .sort((a, b) => Number(b.needs_amount) - Number(a.needs_amount) || b.outstanding - a.outstanding);
 
   const totalOutstanding = round2(rows.reduce((s, r) => s + r.outstanding, 0));
   return ok(rows, { total_outstanding: totalOutstanding, can_write: can(ctx.role, "finance", "write") });
