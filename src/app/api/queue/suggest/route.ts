@@ -210,31 +210,32 @@ export const POST = withRoute(async (req: Request) => {
 
       // R-45min: ถ้าเป็นคิวที่ 2 ในวันเดียว → เช็คเวลาเดินทาง
       // (ข้อ 10) ใช้ระยะ "ขับรถจริง" จาก ORS, fallback haversine ถ้าไม่มี key/พัง
+      // ⚠ กันจับคู่ไกล/ข้ามจังหวัด: ถ้าตรวจระยะไม่ได้ (พิกัดไม่ครบ) → ไม่จับคู่วันเดียว (ไปวันอื่น)
       if (dayEntries.length === 1) {
         const existing = dayEntries[0];
         const newLat = body.lat ?? null;
         const newLng = body.lng ?? null;
-        if (existing.lat != null && existing.lng != null && newLat != null && newLng != null) {
-          const ck = `${existing.lat},${existing.lng}`;
-          let travelMin: number | null;
-          if (driveCache.has(ck)) {
-            travelMin = driveCache.get(ck) ?? null;
-          } else {
-            travelMin = await drivingMinutes(
-              { lat: existing.lat, lng: existing.lng },
-              { lat: newLat, lng: newLng },
-            );
-            driveCache.set(ck, travelMin);
-          }
-          if (travelMin == null) {
-            travelMin = estimateMinutes(
-              { lat: existing.lat, lng: existing.lng },
-              { lat: newLat, lng: newLng },
-              { avgSpeedKmh, detourFactor }
-            );
-          }
-          if (travelMin > maxPairMin) continue; // ไกลเกิน → ข้าม slot นี้
+        const haveBoth = existing.lat != null && existing.lng != null && newLat != null && newLng != null;
+        if (!haveBoth) continue; // ไม่มีพิกัดครบ → ตรวจระยะไม่ได้ → อย่าจัดคู่ (กันข้ามจังหวัด)
+        const ck = `${existing.lat},${existing.lng}`;
+        let travelMin: number | null;
+        if (driveCache.has(ck)) {
+          travelMin = driveCache.get(ck) ?? null;
+        } else {
+          travelMin = await drivingMinutes(
+            { lat: existing.lat!, lng: existing.lng! },
+            { lat: newLat!, lng: newLng! },
+          );
+          driveCache.set(ck, travelMin);
         }
+        if (travelMin == null) {
+          travelMin = estimateMinutes(
+            { lat: existing.lat!, lng: existing.lng! },
+            { lat: newLat!, lng: newLng! },
+            { avgSpeedKmh, detourFactor }
+          );
+        }
+        if (travelMin > maxPairMin) continue; // ไกลเกิน → ข้าม slot นี้
       }
 
       return ok({

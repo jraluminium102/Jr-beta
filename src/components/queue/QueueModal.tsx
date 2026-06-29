@@ -165,7 +165,7 @@ export function QueueModal({
   preset?: { queue_date?: string; queue_time?: string; sales_id?: string };
   salesList: QueueSales[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (savedDate?: string | null) => void;
   readOnly?: boolean;
   contextMonth?: string; // เดือนที่ผู้ใช้ดูอยู่ (YYYY-MM) → ใช้เป็น from_date hint ใน suggest
 }) {
@@ -966,7 +966,7 @@ export function QueueModal({
       } else {
         await api.post("/queue", payload);
       }
-      onSaved();
+      onSaved((payload as { queue_date?: string | null }).queue_date ?? null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
       setBusy(false);

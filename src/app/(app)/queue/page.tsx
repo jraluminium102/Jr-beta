@@ -210,6 +210,7 @@ export default function QueuePage() {
   const [filterTeam, setFilterTeam] = useState<QueueTeam | "">("");
   const [filterStatus, setFilterStatus] = useState<QueueStatus | "">("");
   const [filterDow, setFilterDow] = useState<number | null>(null); // (ข้อ 6) กรองตามวันในสัปดาห์ 0-6
+  const [filterDate, setFilterDate] = useState(""); // เสิชวันที่เจาะจง (YYYY-MM-DD) — ดูคิวรายวัน
 
   // Availability (วันลา) สำหรับ calendar view
   const [avail, setAvail] = useState<AvailRow[]>([]);
@@ -280,10 +281,12 @@ export default function QueuePage() {
         if (filterDow != null && e.queue_date) {
           if (new Date(e.queue_date + "T00:00:00").getDay() !== filterDow) return false;
         }
+        // (ข้อ 6) เสิชวันที่เจาะจง — โชว์เฉพาะคิววันนั้น
+        if (filterDate && e.queue_date !== filterDate) return false;
         return true;
       })
       .sort(cmp);
-  }, [rows, q, filterTeam, filterStatus, filterDow, salesRank]);
+  }, [rows, q, filterTeam, filterStatus, filterDow, filterDate, salesRank]);
 
   // แยก "รอจัดคิว" (queue_date=null) ออกจากที่นัดแล้ว
   const pendingRows = useMemo(() => list.filter((e) => !e.queue_date), [list]);
@@ -391,11 +394,12 @@ export default function QueuePage() {
         if (officeWeekdays.has(new Date(yy, mm - 1, dd).getDay())) set.add(ds);
       }
     }
-    // (ข้อ 6) กดวันในสัปดาห์ → เหลือเฉพาะวันนั้น (กรองทั้งคิว+ลา+ออฟฟิศ)
+    // (ข้อ 6) กดวันในสัปดาห์/เสิชวันที่ → เหลือเฉพาะวันนั้น (กรองทั้งคิว+ลา+ออฟฟิศ)
     return [...set].sort().filter(
-      (ds) => filterDow == null || new Date(ds + "T00:00:00").getDay() === filterDow
+      (ds) => (filterDow == null || new Date(ds + "T00:00:00").getDay() === filterDow)
+        && (!filterDate || ds === filterDate)
     );
-  }, [byDay, avail, sales, filterMonth, filterDow]);
+  }, [byDay, avail, sales, filterMonth, filterDow, filterDate]);
 
   // calendar: entries ในสัปดาห์ที่เลือก (queue_date มีค่า)
   const calEntries = useMemo(() => {
@@ -514,6 +518,7 @@ export default function QueuePage() {
   // ---- render ----
   return (
     <div className="space-y-5">
+      <div id="queue-top" />
       {/* Header — sticky top เพื่อให้ปุ่มและ title ลอยอยู่ด้านบนเมื่อ scroll */}
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm -mx-4 px-4 py-3 border-b border-gray-200/60">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -574,6 +579,18 @@ export default function QueuePage() {
               className="w-full glass-soft rounded-xl pl-9 pr-3 py-2 text-sm outline-none" />
           </div>
         )}
+        {/* (ข้อ 4) เมนูไปสัปดาห์ — อยู่ใน header sticky จึงไม่หายเวลาเลื่อนลง */}
+        {viewMode === "list" && !q.trim() && weekMondays.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto mt-2 pb-0.5">
+            <span className="text-xs text-ink-3 shrink-0">ไปสัปดาห์:</span>
+            {weekMondays.map((mon, i) => (
+              <button key={mon} type="button" onClick={() => jumpToWeek(mon)}
+                className="press text-xs font-semibold glass-soft rounded-lg px-2.5 py-1 text-brand-dark hover:bg-brand/5 shrink-0">
+                ส.{i + 1} <span className="text-ink-3">(จ.{Number(mon.slice(8, 10))})</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* แถบสีประจำวัน (คีย์สี) — (ข้อ 6) กดเพื่อกรองเฉพาะวันนั้น */}
@@ -593,6 +610,17 @@ export default function QueuePage() {
         })}
         {filterDow != null && (
           <button type="button" onClick={() => setFilterDow(null)} className="press text-ink-3 underline px-1">ล้างกรองวัน</button>
+        )}
+        {/* (ข้อ 6) เสิชวันที่เจาะจง + ดูคิววันนี้ */}
+        <span className="mx-1 text-gray-300">|</span>
+        <input type="date" value={filterDate} aria-label="ดูคิววันที่"
+          onChange={(e) => { const v = e.target.value; setFilterDate(v); setFilterDow(null); if (v) setFilterMonth(v.slice(0, 7)); }}
+          className="glass-soft rounded-md px-2 py-1 text-[12px] outline-none [&::-webkit-calendar-picker-indicator]:opacity-60" />
+        <button type="button"
+          onClick={() => { const n = new Date(); const t = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; setFilterDate(t); setFilterDow(null); setFilterMonth(t.slice(0, 7)); }}
+          className="press text-[12px] font-semibold glass-soft rounded-md px-2 py-1 text-brand-dark hover:bg-brand/5">คิววันนี้</button>
+        {filterDate && (
+          <button type="button" onClick={() => setFilterDate("")} className="press text-ink-3 underline px-1 text-[12px]">ล้างวันที่</button>
         )}
       </div>
 
@@ -735,28 +763,34 @@ export default function QueuePage() {
         ) : (
           /* ===== List View ===== */
           <>
-            {(scheduleDays.length === 0 && (filterDow != null || pendingRows.length === 0)) ? (
+            {q.trim() ? (
+              /* (ข้อ 3) เสิชชื่อ → ผลลัพธ์เด้งขึ้นบนสุดทันที (flat ไม่ต้องเลื่อนหา) */
+              list.length === 0 ? (
+                <p className="text-center text-ink-3 py-12">ไม่พบ &quot;{q}&quot;</p>
+              ) : (
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand/10 text-brand-dark text-sm font-semibold mb-2">
+                    <Icon name="search" size={14} /> ผลค้นหา
+                    <span className="tabular-nums ml-1 bg-brand/15 rounded-md px-1.5 py-0.5 text-xs">{list.length}</span>
+                  </div>
+                  <div className="xl:hidden space-y-2">
+                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
+                  </div>
+                  <div className="hidden xl:block overflow-x-auto rounded-xl border border-gray-100">
+                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
+                  </div>
+                </div>
+              )
+            ) : (scheduleDays.length === 0 && (filterDow != null || filterDate || pendingRows.length === 0)) ? (
               <p className="text-center text-ink-3 py-12">
-                {filterDow != null
-                  ? 'ไม่มีคิว/วันลาในวันนี้ของเดือนนี้ — กด "ล้างกรองวัน" เพื่อดูทั้งหมด'
-                  : q || filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
+                {filterDow != null || filterDate
+                  ? 'ไม่มีคิว/วันลาในวันที่เลือก — กดล้างเพื่อดูทั้งหมด'
+                  : filterTeam || filterStatus ? "ไม่พบรายการที่กรอง" : "ยังไม่มีคิว/วันลาในช่วงนี้"}
               </p>
             ) : (
               <>
-            {/* (ข้อ 3) ปุ่มเลื่อนไปจันทร์แต่ละสัปดาห์ — กันเลื่อนเยอะตาลาย */}
-            {weekMondays.length > 1 && (
-              <div className="flex items-center gap-1.5 flex-wrap mb-4">
-                <span className="text-xs text-ink-3">ไปสัปดาห์:</span>
-                {weekMondays.map((mon, i) => (
-                  <button key={mon} type="button" onClick={() => jumpToWeek(mon)}
-                    className="press text-xs font-semibold glass-soft rounded-lg px-2.5 py-1.5 text-brand-dark hover:bg-brand/5">
-                    สัปดาห์ {i + 1} <span className="text-ink-3">(จ.{Number(mon.slice(8, 10))})</span>
-                  </button>
-                ))}
-              </div>
-            )}
             {/* กล่อง "รอจัดคิว" — ซ่อนตอนกรองวัน (ข้อ 6) เพราะรอจัดคิวยังไม่มีวันนัด */}
-            {pendingRows.length > 0 && filterDow == null && (
+            {pendingRows.length > 0 && filterDow == null && !filterDate && (
               <div className="mb-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-semibold">
@@ -853,7 +887,15 @@ export default function QueuePage() {
           readOnly={!canWrite}
           contextMonth={contextMonth}
           onClose={() => setModal(null)}
-          onSaved={() => { setModal(null); load(); }}
+          onSaved={(savedDate) => {
+            setModal(null);
+            // (ข้อ 2) กันคิวที่เพิ่งบันทึก "หาย": เคลียร์ตัวกรองแคบ + เด้งไปเดือนของคิว + เลื่อนหา
+            setQ(""); setFilterDow(null); setFilterDate("");
+            const mo = savedDate ? savedDate.slice(0, 7) : "";
+            if (mo && mo !== filterMonth) setFilterMonth(mo); // effect reload เอง
+            else load();
+            if (savedDate) setTimeout(() => document.getElementById(`qday-${savedDate}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 600);
+          }}
         />
       )}
 
@@ -898,6 +940,13 @@ export default function QueuePage() {
           }}
         />
       )}
+
+      {/* (ข้อ 1) ปุ่มเลื่อนขึ้นบนสุด — ลอยมุมขวาล่าง เห็นตลอด */}
+      <button type="button" aria-label="ขึ้นบนสุด"
+        onClick={() => document.getElementById("queue-top")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        className="press fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-brand text-white shadow-lg inline-flex items-center justify-center hover:opacity-90">
+        <Icon name="arrowLeft" size={20} className="rotate-90" />
+      </button>
     </div>
   );
 }
