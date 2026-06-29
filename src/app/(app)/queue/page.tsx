@@ -257,17 +257,28 @@ export default function QueuePage() {
   const backfillGeo = useCallback(async () => {
     if (!confirm("อ่านลิงก์แผนที่ของคิวเก่าที่ยังไม่มีพิกัด แล้วเติมให้อัตโนมัติ?\n(ทำครั้งเดียว ไม่ต้องกรอกใหม่ · อาจใช้เวลาสักครู่)")) return;
     setGeoBusy(true); setGeoMsg("กำลังอ่านลิงก์แผนที่…");
-    let after = "", upd = 0, fail = 0;
+    let totalUpd = 0;
+    let failedUrls = new Set<string>();
     try {
-      for (let i = 0; i < 300; i++) {
-        const r = await api.post<{ processed: number; updated: number; failed: number; lastId: string }>(
-          `/queue/backfill-geo?after=${encodeURIComponent(after)}`, {});
-        const d = r.data;
-        upd += d.updated; fail += d.failed; after = d.lastId;
-        setGeoMsg(`กำลังอ่าน… เติมพิกัดได้ ${upd} · อ่านไม่ได้ ${fail}`);
-        if (d.processed === 0) break;
+      // วน 2 รอบเต็ม — ลิงก์ช้า/หลุดในรอบแรกจะได้โอกาสใหม่ในรอบสอง (คนละ invocation)
+      for (let pass = 0; pass < 2; pass++) {
+        let after = "", passUpd = 0;
+        failedUrls = new Set<string>(); // เก็บเฉพาะรอบล่าสุด (ที่เหลือจริง)
+        for (let i = 0; i < 400; i++) {
+          const r = await api.post<{ processed: number; updated: number; failed: number; lastId: string; failedSamples?: string[] }>(
+            `/queue/backfill-geo?after=${encodeURIComponent(after)}`, {});
+          const d = r.data;
+          passUpd += d.updated; after = d.lastId;
+          (d.failedSamples ?? []).forEach((u) => failedUrls.add(u));
+          setGeoMsg(`รอบ ${pass + 1}/2 · กำลังอ่าน… เติมพิกัดสะสม ${totalUpd + passUpd}`);
+          if (d.processed === 0) break;
+        }
+        totalUpd += passUpd;
+        if (passUpd === 0) break; // รอบนี้ไม่ได้เพิ่ม → หยุด (ที่เหลืออ่านไม่ได้จริง)
       }
-      setGeoMsg(`เสร็จ — เติมพิกัดได้ ${upd} คิว${fail ? ` · อ่านไม่ได้ ${fail} (ลิงก์เสีย/ไม่ใช่แผนที่)` : ""}`);
+      const remain = failedUrls.size;
+      if (remain) console.warn("[backfill-geo] ลิงก์ที่ยังอ่านไม่ได้ (ตัวอย่าง):", [...failedUrls].slice(0, 20));
+      setGeoMsg(`เสร็จ — เติมพิกัดได้ ${totalUpd} คิว${remain ? ` · ยังอ่านไม่ได้บางส่วน (ดูตัวอย่างใน Console / แจ้งผมได้)` : ""}`);
       load();
     } catch (e) {
       setGeoMsg("ผิดพลาด: " + (e instanceof Error ? e.message : "ลองใหม่"));

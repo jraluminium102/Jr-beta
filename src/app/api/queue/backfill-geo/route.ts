@@ -9,7 +9,7 @@ import { resolveMapLink } from "@/lib/queue-geo";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 type Sb = { from: (t: string) => any };
-const BATCH = 12;
+const BATCH = 8; // ยิงพร้อมกัน 8 (กัน Google throttle จากการยิงเยอะเกิน)
 
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("queue", "write");
@@ -31,6 +31,7 @@ export const POST = withRoute(async (req: Request) => {
 
   let updated = 0;
   let failed = 0;
+  const failedSamples: string[] = []; // ลิงก์ที่อ่านไม่ได้ — ไว้ diagnose ว่าเป็นลิงก์จริงแต่อ่านไม่ออก หรือไม่ใช่แผนที่
   await Promise.all(
     batch.map(async (e) => {
       const co = await resolveMapLink(e.location_url);
@@ -39,11 +40,12 @@ export const POST = withRoute(async (req: Request) => {
         if (ue) failed++;
         else updated++;
       } else {
-        failed++; // อ่านพิกัดไม่ได้ (ลิงก์เสีย/ไม่ใช่แผนที่) — ข้ามด้วย cursor id ไม่วนซ้ำ
+        failed++;
+        if (failedSamples.length < 5) failedSamples.push(e.location_url);
       }
     })
   );
 
   const lastId = batch.length ? batch[batch.length - 1].id : after;
-  return ok({ processed: batch.length, updated, failed, lastId });
+  return ok({ processed: batch.length, updated, failed, lastId, failedSamples });
 });
