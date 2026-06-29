@@ -14,7 +14,7 @@ export const GET = withRoute(async (req: Request) => {
   const statusFilter = url.searchParams.get("status");
   const q = url.searchParams.get("q");
   const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
-  const limit = Math.min(100, Number(url.searchParams.get("limit") ?? 50));
+  const limit = Math.min(500, Number(url.searchParams.get("limit") ?? 50));
   const from = (page - 1) * limit;
 
   // Build filter string for .or() separately to avoid type reassignment issues

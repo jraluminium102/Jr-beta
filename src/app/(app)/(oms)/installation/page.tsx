@@ -37,7 +37,7 @@ const COLS: InstStatus[] = ["PENDING", "INSTALLING", "PENDING_INSPECT", "REVISIN
 
 export default function InstallationPage() {
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
-  const { data, isLoading, refetch } = useQuery({ queryKey: ["jobs", "inst"], queryFn: () => api.get<Row[]>("/jobs?limit=100") });
+  const { data, isLoading, refetch } = useQuery({ queryKey: ["jobs", "inst"], queryFn: () => api.get<Row[]>("/jobs?limit=500") });
   const jobs = (data?.data ?? []).filter((j) => j.installations?.length && j.status !== "CANCELLED");
   const canInstall = (data?.meta?.can_install as boolean) ?? false;
 
