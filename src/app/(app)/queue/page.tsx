@@ -199,6 +199,8 @@ export default function QueuePage() {
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [officeOpen, setOfficeOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoMsg, setGeoMsg] = useState("");
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -250,6 +252,27 @@ export default function QueuePage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadAvail(); }, [loadAvail]);
+
+  // อ่านลิงก์แผนที่ของคิวเก่าที่ยังไม่มีพิกัด (เมื่อก่อนเว็บอ่านลิงก์ย่อไม่ได้) → เติม lat/lng ทีเดียว
+  const backfillGeo = useCallback(async () => {
+    if (!confirm("อ่านลิงก์แผนที่ของคิวเก่าที่ยังไม่มีพิกัด แล้วเติมให้อัตโนมัติ?\n(ทำครั้งเดียว ไม่ต้องกรอกใหม่ · อาจใช้เวลาสักครู่)")) return;
+    setGeoBusy(true); setGeoMsg("กำลังอ่านลิงก์แผนที่…");
+    let after = "", upd = 0, fail = 0;
+    try {
+      for (let i = 0; i < 300; i++) {
+        const r = await api.post<{ processed: number; updated: number; failed: number; lastId: string }>(
+          `/queue/backfill-geo?after=${encodeURIComponent(after)}`, {});
+        const d = r.data;
+        upd += d.updated; fail += d.failed; after = d.lastId;
+        setGeoMsg(`กำลังอ่าน… เติมพิกัดได้ ${upd} · อ่านไม่ได้ ${fail}`);
+        if (d.processed === 0) break;
+      }
+      setGeoMsg(`เสร็จ — เติมพิกัดได้ ${upd} คิว${fail ? ` · อ่านไม่ได้ ${fail} (ลิงก์เสีย/ไม่ใช่แผนที่)` : ""}`);
+      load();
+    } catch (e) {
+      setGeoMsg("ผิดพลาด: " + (e instanceof Error ? e.message : "ลองใหม่"));
+    } finally { setGeoBusy(false); }
+  }, [load]);
 
   // ลำดับเซลล์ตามที่ API ส่งมา (เรียง team → name แล้ว) ใช้จัดกลุ่มคิวตามเซลล์
   const salesRank = useMemo(() => {
@@ -562,6 +585,12 @@ export default function QueuePage() {
                 className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
                 <Icon name="building" size={16} /> วันออฟฟิศ
               </button>
+              <button onClick={backfillGeo} disabled={geoBusy}
+                title="อ่านลิงก์แผนที่ของคิวเก่าที่ยังไม่มีพิกัด แล้วเติมให้อัตโนมัติ (กันจัดคิวข้ามจังหวัด)"
+                className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2 disabled:opacity-60">
+                <Icon name="pin" size={16} className={geoBusy ? "animate-pulse" : ""} />
+                <span className="hidden sm:inline">{geoBusy ? "กำลังอ่าน…" : "อ่านลิงก์แมพ"}</span>
+              </button>
               <button onClick={() => setModal({ entry: null })}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
                 <Icon name="plus" size={16} /> เพิ่มคิว
@@ -623,6 +652,14 @@ export default function QueuePage() {
           <button type="button" onClick={() => setFilterDate("")} className="press text-ink-3 underline px-1 text-[12px]">ล้างวันที่</button>
         )}
       </div>
+
+      {geoMsg && (
+        <div className="flex items-center gap-2 rounded-xl bg-brand/10 border border-brand/20 px-3 py-2 text-sm text-brand-dark">
+          <Icon name="pin" size={15} className={geoBusy ? "animate-pulse shrink-0" : "shrink-0"} />
+          <span>{geoMsg}</span>
+          {!geoBusy && <button onClick={() => setGeoMsg("")} className="press ml-auto text-ink-3 hover:text-ink-2"><Icon name="close" size={15} /></button>}
+        </div>
+      )}
 
       <Card className="p-4">
         {/* Filter bar */}
