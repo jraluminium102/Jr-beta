@@ -463,7 +463,7 @@ export default function DesignerBoard({
         <AddDesignWorkModal
           designers={designers}
           onClose={() => setShowAddModal(false)}
-          onAdded={async () => { await load(); }}
+          onAdded={async (state) => { await load(); if (state) { setActiveState(state); setShowAllDone(false); } }}
         />
       )}
 

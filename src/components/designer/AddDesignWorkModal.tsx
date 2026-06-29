@@ -49,7 +49,7 @@ export default function AddDesignWorkModal({
 }: {
   designers: DesignerOption[];
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (state?: DesignState) => void;
 }) {
   const [mode, setMode] = useState<Mode>("search");
 
@@ -238,7 +238,7 @@ function SearchMode({
 }: {
   designers: DesignerOption[];
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (state?: DesignState) => void;
 }) {
   const [query, setQuery] = useState("");
   const debouncedQ = useDebounce(query, 320);
@@ -325,7 +325,7 @@ function SearchMode({
       const patchStateJson = await patchState.json();
       if (!patchState.ok) throw new Error(patchStateJson.error ?? "เปลี่ยนสถานะไม่สำเร็จ");
 
-      onAdded();
+      onAdded(action);
       onClose();
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
@@ -490,7 +490,7 @@ function WalkInMode({
 }: {
   designers: DesignerOption[];
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (state?: DesignState) => void;
 }) {
   const [customerName, setCustomerName] = useState("");
   const [customerTel, setCustomerTel] = useState("");
@@ -562,7 +562,7 @@ function WalkInMode({
       const patchStateJson = await patchState.json();
       if (!patchState.ok) throw new Error(patchStateJson.error ?? "เปลี่ยนสถานะไม่สำเร็จ");
 
-      onAdded();
+      onAdded(action);
       onClose();
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
