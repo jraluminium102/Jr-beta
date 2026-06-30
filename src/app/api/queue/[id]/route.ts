@@ -56,11 +56,65 @@ const patchSchema = z.object({
 
 const PRE_DEPOSIT = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
 
+// ยกเลิก/ลบคิว — เอาคิวออกจริง + เก็บกวาดลูกค้า "ใหม่" ที่ผูกเฉพาะคิวนี้
+//   - ก่อนประเมิน (ไม่มีงาน) → ลบคิวจริง · ลูกค้าใหม่ (ไม่มีงาน/คิวอื่น) → ลบจากทะเบียนด้วย
+//   - ประเมินแล้ว (มีงาน) → เก็บเป็นประวัติ (soft cancel) กัน orphan งาน/บัญชี
+//   - ลูกค้าเก่า (target_customer_id / มีอ้างอิงอื่น) → ไม่แตะทะเบียน
+async function removeQueueOnCancel(
+  sb: Sb,
+  queueId: string,
+  opts: { forceDelete?: boolean } = {},
+): Promise<{ found: boolean; soft: boolean; removedCustomerId: number | null }> {
+  const { data: qrow } = await sb
+    .from("queue_entries")
+    .select("id, customer_id, target_customer_id, job_id")
+    .eq("id", queueId)
+    .maybeSingle();
+  if (!qrow) return { found: false, soft: false, removedCustomerId: null };
+  const q = qrow as { customer_id: number | null; target_customer_id: number | null; job_id: string | null };
+
+  // ประเมินแล้ว (มีงานผูก) + ไม่ได้สั่งลบจริง → soft cancel เก็บเป็นประวัติ
+  if (q.job_id && !opts.forceDelete) {
+    await sb.from("queue_entries").update({ status: "CANCELLED" }).eq("id", queueId);
+    return { found: true, soft: true, removedCustomerId: null };
+  }
+
+  // ลบคิวจริง
+  await sb.from("queue_entries").delete().eq("id", queueId);
+
+  // เก็บกวาดลูกค้า "ใหม่": ผูกเฉพาะคิวนี้ ไม่มีงาน + ไม่มีคิวอื่นเหลือ (ลูกค้าเก่าไม่แตะ)
+  let removedCustomerId: number | null = null;
+  const cid = q.customer_id;
+  if (cid != null && cid !== q.target_customer_id) {
+    const { count: jobCount } = await sb.from("jobs").select("id", { count: "exact", head: true }).eq("customer_id", cid);
+    const { count: qCount } = await sb.from("queue_entries").select("id", { count: "exact", head: true }).eq("customer_id", cid);
+    if ((jobCount ?? 0) === 0 && (qCount ?? 0) === 0) {
+      const { error: delErr } = await sb.from("customers").delete().eq("id", cid);
+      if (!delErr) removedCustomerId = cid; // FK อื่นค้าง → เก็บลูกค้าไว้ (best-effort)
+    }
+  }
+  return { found: true, soft: false, removedCustomerId };
+}
+
 // PATCH /api/queue/[id] — แก้ไขคิว (ADMIN) · updated_at อัปเดตอัตโนมัติด้วย trigger
 export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("queue", "write");
   const rawBody = patchSchema.parse(clean(await req.json()));
   const sb = ctx.supabase as unknown as Sb;
+
+  // ยกเลิกคิว = เอาออกจริง (ตามที่ต้องการ "ลบออกไปเลย") + เก็บกวาดลูกค้าใหม่
+  if (rawBody.status === "CANCELLED") {
+    const res = await removeQueueOnCancel(sb, params.id);
+    if (!res.found) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");
+    await audit({
+      userId: ctx.user.id,
+      action: res.soft ? "QUEUE_CANCELLED_KEPT" : "QUEUE_REMOVED",
+      table: "queue_entries",
+      recordId: params.id,
+      newValue: { soft: res.soft, removed_customer_id: res.removedCustomerId },
+    });
+    return ok({ id: params.id, removed: !res.soft, removed_customer: res.removedCustomerId != null });
+  }
 
   // แยก field ที่ไม่ใช่คอลัมน์ DB ออกก่อน update (กัน DB error)
   const { clear_revise, ...body } = rawBody;
@@ -222,8 +276,15 @@ export const DELETE = withRoute(async (_req: Request, { params }: { params: { id
   const ctx = await requirePermission("queue", "write");
   const sb = ctx.supabase as unknown as Sb;
 
-  const { data, error } = await sb.from("queue_entries").delete().eq("id", params.id).select("id");
-  if (error) throw dbError(error);
-  if (!data || data.length === 0) throw new HttpError(404, "ไม่พบคิวที่จะลบ");
-  return ok({ id: params.id });
+  // ลบจริงเสมอ (forceDelete) + เก็บกวาดลูกค้าใหม่ที่ผูกเฉพาะคิวนี้
+  const res = await removeQueueOnCancel(sb, params.id, { forceDelete: true });
+  if (!res.found) throw new HttpError(404, "ไม่พบคิวที่จะลบ");
+  await audit({
+    userId: ctx.user.id,
+    action: "QUEUE_REMOVED",
+    table: "queue_entries",
+    recordId: params.id,
+    newValue: { removed_customer_id: res.removedCustomerId },
+  });
+  return ok({ id: params.id, removed_customer: res.removedCustomerId != null });
 });
