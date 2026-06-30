@@ -309,6 +309,9 @@ export default function QueuePage() {
           const team = e.sales?.team ?? detectTeam(e.address, e.lat, e.lng);
           if (team !== filterTeam) return false;
         }
+        // ซ่อนคิวที่ "ยกเลิก" จากลิสต์หลัก — กดยกเลิกแล้วต้องหายจริง ไม่เด้งกลับ
+        // (ยังดูย้อนหลังได้ด้วยตัวกรองสถานะ = ยกเลิก)
+        if (e.status === "CANCELLED" && filterStatus !== "CANCELLED") return false;
         // status filter
         if (filterStatus && e.status !== filterStatus) return false;
         // (ข้อ 6) กรองตามวันในสัปดาห์ — เฉพาะคิวที่มีวันนัด (รอจัดคิวไม่กระทบ)
@@ -440,6 +443,8 @@ export default function QueuePage() {
     // เมื่อ viewMode=calendar, load ดึง ?week= มาแล้ว แต่ยังกรองฝั่ง client ด้วย filterTeam/filterStatus/filterSales
     return rows.filter((e) => {
       if (!e.queue_date) return false;
+      // ซ่อนคิวที่ยกเลิกจากปฏิทินด้วย (เว้นแต่กรองดูเฉพาะยกเลิก)
+      if (e.status === "CANCELLED" && filterStatus !== "CANCELLED") return false;
       if (filterTeam) {
         const team = e.sales?.team ?? detectTeam(e.address, e.lat, e.lng);
         if (team !== filterTeam) return false;
