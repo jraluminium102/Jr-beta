@@ -173,13 +173,8 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     // assess_date มาจาก promote (queue_date) ผ่าน trigger อยู่แล้ว — ไม่ต้องอัปเดตซ้ำ
     // (เดิม: target_job_id → บันทึก assess_date ใต้งานเดิม ซึ่งผิด เพราะสร้างงานใหม่แล้ว)
 
-    // คืนชีพงานที่ถูก cancel ก่อนเริ่มจริง (idempotent) — เฉพาะงานใหม่/งานเดิมที่ cancel เร็ว
-    const { data: jrow2 } = await sb.from("jobs")
-      .select("status, design_state, current_stage").eq("id", jobId).maybeSingle();
-    const jr2 = jrow2 as { status?: string; design_state?: string; current_stage?: number } | null;
-    if (jr2 && jr2.status === "CANCELLED" && jr2.design_state === "NOT_STARTED" && (jr2.current_stage ?? 0) <= 2) {
-      await sb.from("jobs").update({ status: "LEAD" }).eq("id", jobId);
-    }
+    // [0067] เลิก auto-revive — ยกเลิก = อยู่ยกเลิกถาวร (ไม่ปลุกงานที่ยกเลิกกลับมาตอนกดเสร็จ/แก้คิว)
+    // ประเมินเสร็จที่ยังไม่มีงาน → _promote_queue_core สร้างใหม่ให้แล้ว (ด้านบน)
 
     // ─── wiring มัดจำหน้างาน (ฟีเจอร์ A) ────────────────────────────────
     if (body.payment === "มัดจำหน้างาน") {

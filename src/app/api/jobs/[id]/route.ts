@@ -103,6 +103,13 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
         .update({ status: "cancelled" })
         .eq("job_id", params.id)
         .in("status", ["draft", "sent"]);
+
+      // [0067] ยกเลิกคิวต้นทางด้วย → กัน cron auto-complete / promote "ปลุกงานกลับมา"
+      // (ยกเลิก = อยู่ยกเลิกถาวร ไม่เด้งกลับ)
+      const qid = (data as { queue_entry_id?: string | null }).queue_entry_id ?? null;
+      if (qid) {
+        await ctx.supabase.from("queue_entries").update({ status: "CANCELLED" }).eq("id", qid);
+      }
     }
 
     await audit({
