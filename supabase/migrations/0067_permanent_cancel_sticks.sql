@@ -77,11 +77,12 @@ grant execute on function public._promote_queue_core(uuid) to service_role;
 grant execute on function public.promote_queue_to_job(uuid) to authenticated, service_role;
 
 -- ── 2) ซ่อม cleanup พลาดครั้งเดียว (เฉพาะ reason นั้น + stage≤2) ──
+-- ใช้ลิงก์ที่เชื่อถือได้ q.job_id = j.id (job เก่าบางตัว queue_entry_id ไม่ตรง/ว่าง)
 -- 2a) คิว "ประเมินแล้ว (DONE)" → ฟื้นงานเข้าเขียนแบบ (เก็บ job_code เดิม) — ปทิตตา
 update public.jobs j
    set status = 'LEAD', design_state = 'NOT_STARTED'
   from public.queue_entries q
- where q.id = j.queue_entry_id
+ where q.job_id = j.id
    and q.status = 'DONE'
    and j.status = 'CANCELLED'
    and coalesce(j.current_stage, 0) <= 2
@@ -92,8 +93,7 @@ update public.jobs j
 update public.queue_entries q
    set job_id = null
   from public.jobs j
- where j.queue_entry_id = q.id
-   and q.job_id = j.id
+ where q.job_id = j.id
    and q.status <> 'DONE'
    and j.status = 'CANCELLED'
    and coalesce(j.current_stage, 0) <= 2
