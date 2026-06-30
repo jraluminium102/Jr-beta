@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Icon from "@/components/Icon";
+
+// แผนที่ปักหมุด — โหลด client-only (Leaflet แตะ window)
+const MapPicker = dynamic(() => import("./MapPicker"), {
+  ssr: false,
+  loading: () => <div className="rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-ink-3" style={{ height: 280 }}>กำลังโหลดแผนที่…</div>,
+});
 import { Badge } from "@/components/ui";
 import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
@@ -189,8 +196,13 @@ export function QueueModal({
 
   const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(null);
   const [resolving, setResolving] = useState(false);
-  // พิกัด: parse ตรงๆ (raw/ลิงก์เต็ม) ก่อน, ไม่ได้ค่อยใช้ที่ server แกะลิงก์ย่อมา
-  const coords = parseLatLng(f.location_url) ?? resolved;
+  // หมุดที่เลือกบนแผนที่เอง (ปัก/ลาก/ค้นหา) — ได้พิกัดแน่นอน ไม่ต้องพึ่งการอ่านลิงก์
+  // เปิดงานเก่าที่มีพิกัดอยู่แล้ว → โชว์หมุดตำแหน่งเดิมทันที
+  const [manualCoords, setManualCoords] = useState<{ lat: number; lng: number } | null>(
+    entry?.lat != null && entry?.lng != null ? { lat: entry.lat, lng: entry.lng } : null
+  );
+  // พิกัด: หมุดที่เลือกเอง > parse ตรงๆ (raw/ลิงก์เต็ม) > server แกะลิงก์ย่อ
+  const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
 
@@ -1686,7 +1698,7 @@ export function QueueModal({
               </Field>
 
               <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
-                <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); }}
+                <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); setManualCoords(null); }}
                   onBlur={resolveLink}
                   placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
                 <span className="text-[11px] mt-1 block">
@@ -1694,16 +1706,25 @@ export function QueueModal({
                     <span className="text-ink-3">กำลังอ่านพิกัดจากลิงก์…</span>
                   ) : coords ? (
                     <span className="text-emerald-700">
-                      ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{resolved ? " (จากลิงก์)" : ""}
+                      ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{manualCoords ? " (ปักบนแผนที่)" : resolved ? " (จากลิงก์)" : ""}
                     </span>
                   ) : f.location_url ? (
                     <span className="text-amber-700">
-                      อ่านพิกัดจากลิงก์ไม่ได้ — ลองวางลิงก์ Google Maps แบบเต็ม หรือพิมพ์ "lat, lng" ตรง ๆ
+                      อ่านลิงก์ไม่ได้ — ปักหมุด/ค้นหา/คลิกบนแผนที่ด้านล่างแทนได้เลย
                     </span>
                   ) : (
-                    <span className="text-ink-3">ใส่พิกัดเพื่อใช้ตรวจกฎ R-45min อัตโนมัติ</span>
+                    <span className="text-ink-3">วางลิงก์ หรือปักหมุดบนแผนที่ด้านล่าง (ใช้จัดคิวอัตโนมัติ)</span>
                   )}
                 </span>
+              </Field>
+
+              {/* แผนที่ปักหมุด — แหล่งพิกัดที่เชื่อถือได้ (ไม่ต้องพึ่งการอ่านลิงก์) */}
+              <Field label="ปักหมุดบนแผนที่" wide>
+                <MapPicker
+                  lat={coords?.lat ?? null}
+                  lng={coords?.lng ?? null}
+                  onChange={(lat, lng) => setManualCoords({ lat, lng })}
+                />
               </Field>
             </>
           )}
