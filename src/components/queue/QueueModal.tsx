@@ -201,6 +201,7 @@ export function QueueModal({
   const [manualCoords, setManualCoords] = useState<{ lat: number; lng: number } | null>(
     entry?.lat != null && entry?.lng != null ? { lat: entry.lat, lng: entry.lng } : null
   );
+  const [coordText, setCoordText] = useState(""); // ช่องวางพิกัด lat,lng เอง (ตอนลิงก์อ่านไม่ได้)
   // พิกัด: หมุดที่เลือกเอง > parse ตรงๆ (raw/ลิงก์เต็ม) > server แกะลิงก์ย่อ
   const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
@@ -1697,35 +1698,64 @@ export function QueueModal({
                   className={`${inp} resize-none`} />
               </Field>
 
-              <Field label="โลเคชั่น (ลิงก์แผนที่ หรือพิกัด lat,lng)" wide>
-                <input value={f.location_url} onChange={(e) => { set("location_url", e.target.value); setResolved(null); setManualCoords(null); }}
+              {/* ── โลเคชั่น: ลิงก์(ให้เซลล์) + สเตตัสชัด + ปักหมุดง่าย ── */}
+              <div className="sm:col-span-2 space-y-2">
+                {/* ขั้น 1: ลิงก์แมพ — บันทึกไว้ส่งให้เซลล์เสมอ แม้ระบบอ่านพิกัดไม่ได้ */}
+                <label className="block text-sm font-medium text-ink-2">
+                  1) ลิงก์แมพ <span className="font-normal text-ink-3">— วางลิงก์ที่ลูกค้าส่งมา (เก็บไว้ส่งให้เซลล์เสมอ)</span>
+                </label>
+                <input value={f.location_url}
+                  onChange={(e) => { set("location_url", e.target.value); setResolved(null); setManualCoords(null); setCoordText(""); }}
                   onBlur={resolveLink}
-                  placeholder="https://maps.app.goo.gl/… หรือ 13.6466, 100.4936" className={inp} />
-                <span className="text-[11px] mt-1 block">
-                  {resolving ? (
-                    <span className="text-ink-3">กำลังอ่านพิกัดจากลิงก์…</span>
-                  ) : coords ? (
-                    <span className="text-emerald-700">
-                      ✓ พิกัด {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}{manualCoords ? " (ปักบนแผนที่)" : resolved ? " (จากลิงก์)" : ""}
-                    </span>
-                  ) : f.location_url ? (
-                    <span className="text-amber-700">
-                      อ่านลิงก์ไม่ได้ — ปักหมุด/ค้นหา/คลิกบนแผนที่ด้านล่างแทนได้เลย
-                    </span>
-                  ) : (
-                    <span className="text-ink-3">วางลิงก์ หรือปักหมุดบนแผนที่ด้านล่าง (ใช้จัดคิวอัตโนมัติ)</span>
-                  )}
-                </span>
-              </Field>
+                  placeholder="วางลิงก์ Google Maps ที่นี่" className={inp} />
 
-              {/* แผนที่ปักหมุด — แหล่งพิกัดที่เชื่อถือได้ (ไม่ต้องพึ่งการอ่านลิงก์) */}
-              <Field label="ปักหมุดบนแผนที่" wide>
+                {/* ขั้น 2: สเตตัสใหญ่ ชัดเจน — บอกตลอดว่าเซฟพิกัดลงระบบแล้วหรือยัง */}
+                {resolving ? (
+                  <div className="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2.5 text-sm text-sky-800 flex items-center gap-2">
+                    <Icon name="refresh" size={16} className="animate-spin shrink-0" /> กำลังอ่านพิกัดจากลิงก์…
+                  </div>
+                ) : coords ? (
+                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-sm text-emerald-800">
+                    <div className="font-semibold flex items-center gap-1.5"><Icon name="check" size={16} className="shrink-0" /> บันทึกโลเคชั่นลงระบบแล้ว ✓</div>
+                    <div className="text-[12px] mt-0.5 text-emerald-700">
+                      {manualCoords ? "ปักหมุดเอง" : resolved ? "ระบบอ่านลิงก์ + ปักหมุดให้อัตโนมัติ" : "อ่านพิกัดจากลิงก์"} · {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                    </div>
+                  </div>
+                ) : f.location_url ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2.5 text-sm text-amber-900">
+                    <div className="font-semibold flex items-center gap-1.5"><Icon name="warn" size={16} className="shrink-0" /> ระบบอ่านพิกัดจากลิงก์นี้ไม่ได้</div>
+                    <div className="text-[12px] mt-0.5">ลิงก์ถูกเก็บให้เซลล์เรียบร้อย — แต่ต้อง <b>ปักหมุดเอง 1 ครั้ง</b> เพื่อใช้จัดคิว (เลือกวิธีด้านล่าง 👇)</div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2.5 text-sm text-ink-3">
+                    📍 วางลิงก์ด้านบน หรือปักหมุดบนแผนที่ด้านล่าง (เพื่อใช้จัดคิวอัตโนมัติ)
+                  </div>
+                )}
+
+                {/* ขั้น 3: ปักเอง — โชว์เด่นเฉพาะตอน "ยังไม่มีพิกัด" (อ่านลิงก์ไม่ได้/ยังไม่ปัก) */}
+                {!coords && !resolving && (
+                  <div className="rounded-lg bg-amber-50/60 border border-amber-200 p-3 space-y-2">
+                    <p className="text-[12px] font-semibold text-amber-900">ปักหมุดเอง — เลือกทางใดก็ได้:</p>
+                    <p className="text-[12px] text-ink-2">① <b>คลิกหรือลากหมุด</b> บนแผนที่ด้านล่าง</p>
+                    <div className="text-[12px] text-ink-2">
+                      ② หรือ <b>วางพิกัด</b>: {f.location_url && /^https?:\/\//i.test(f.location_url) && (
+                        <a href={f.location_url} target="_blank" rel="noopener noreferrer" className="text-brand font-semibold underline">เปิดแมพ</a>
+                      )} {f.location_url && /^https?:\/\//i.test(f.location_url) && "→ "}กดค้างที่หมุดใน Google Maps → ก๊อปตัวเลขพิกัด → วางช่องนี้
+                      <input value={coordText}
+                        onChange={(e) => { const v = e.target.value; setCoordText(v); const c = parseLatLng(v); if (c) setManualCoords(c); }}
+                        placeholder="เช่น 13.65782, 100.47339"
+                        className={`${inp} mt-1`} />
+                    </div>
+                  </div>
+                )}
+
+                {/* แผนที่ปักหมุด */}
                 <MapPicker
                   lat={coords?.lat ?? null}
                   lng={coords?.lng ?? null}
-                  onChange={(lat, lng) => setManualCoords({ lat, lng })}
+                  onChange={(lat, lng) => { setManualCoords({ lat, lng }); setCoordText(""); }}
                 />
-              </Field>
+              </div>
             </>
           )}
 
