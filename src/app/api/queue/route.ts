@@ -112,8 +112,11 @@ export const GET = withRoute(async (req: Request) => {
   }
 
   if (dateFrom && dateTo) {
-    // Include entries with null queue_date (unscheduled "รอจัด") always
-    query = query.or(`queue_date.is.null,and(queue_date.gte.${dateFrom},queue_date.lte.${dateTo})`);
+    // โชว์: (1) คิวรอจัด (queue_date null) เสมอ · (2) คิวในเดือนที่ดู ·
+    // (3) คิวเลยวัน "ยังไม่ปิด" (PENDING/PROPOSED/CONFIRMED ก่อนเดือนนี้) — กันงานค้างหายข้ามเดือน
+    query = query.or(
+      `queue_date.is.null,and(queue_date.gte.${dateFrom},queue_date.lte.${dateTo}),and(status.in.(PENDING,PROPOSED,CONFIRMED),queue_date.lt.${dateFrom})`
+    );
   }
 
   // SALES role: show only their own queue entries (RLS also guards at DB level)

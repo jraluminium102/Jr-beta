@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
   const { data: prods } = await sb
     .from("productions")
     .select("id, job_id, status, production_queued, production_due_date, planned_install_date, job:job_id(job_code, customer_name, customer_area, status)")
-    .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY"]);
+    .in("status", ["QUEUED", "MANUFACTURING", "QC", "READY", "ISSUE"]);
   const jobs = (prods ?? []).filter((p: Row) => (p.job as { status?: string } | null)?.status !== "CANCELLED");
   const jobIds = jobs.map((p: Row) => p.job_id as string | null).filter(Boolean) as string[];
 
