@@ -554,7 +554,7 @@ export function ProductionStepModal({
                                 className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none resize-none placeholder-white/40" />
                             ) : f.type === "time" ? (
                               <input type="time" step={60} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value.slice(0, 5) }))} aria-label={f.label}
-                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px] [&::-webkit-calendar-picker-indicator]:invert" />
+                                className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none tnum min-h-[52px]" />
                             ) : f.type === "text" ? (
                               <>
                                 <input type="text" list={`field-list-${f.field}`} value={vals[f.field] ?? ""} onChange={e => setVals(v => ({ ...v, [f.field]: e.target.value }))} aria-label={f.label}

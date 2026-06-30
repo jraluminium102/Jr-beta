@@ -49,6 +49,9 @@ body { font-family: "Sarabun", system-ui, sans-serif; color: #1f2127; margin: 0;
 .app-bg {
   min-height: 100%;
   color: var(--t-hi);
+  /* โซนมืด — บอก browser ให้ render native control (select/date/time/scrollbar) เป็นธีมมืด
+     แก้บั๊ก Windows: select/date เดิม render พื้นขาว + text-white = ขาวบนขาว อ่านไม่ออก */
+  color-scheme: dark;
   background:
     radial-gradient(1200px 600px at 8% -5%, rgba(179,21,29,0.55), transparent 60%),
     radial-gradient(900px 520px at 92% 12%, rgba(216,58,66,0.30), transparent 55%),

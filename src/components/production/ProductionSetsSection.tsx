@@ -63,9 +63,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
 
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
-  const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls + " [&::-webkit-calendar-picker-indicator]:invert"} />;
+  const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
   const sel = (s: SetRow, f: string, opts: string[]) => (
-    <select defaultValue={s[f] ?? ""} disabled={!canWrite} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls + " [&>option]:text-black"}>
+    <select defaultValue={s[f] ?? ""} disabled={!canWrite} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
       {opts.map((o) => <option key={o} value={o}>{o || "—"}</option>)}
     </select>
   );
@@ -83,7 +83,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     if (canWrite && editKeys[key]) {
       return (
         <div className="flex items-center gap-1">
-          <select defaultValue={s[f] ?? ""} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls + " [&>option]:text-black"}>
+          <select defaultValue={s[f] ?? ""} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
             {opts.map((o) => <option key={o} value={o}>{o || "—"}</option>)}
           </select>
           <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: false }))} className="text-[10px] text-emerald-300 shrink-0 px-1">เสร็จ</button>
