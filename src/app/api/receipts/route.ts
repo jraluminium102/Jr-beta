@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (!body) return fail("payload ไม่ถูกต้อง");
   if (!body.billing_note_id) return fail("ต้องเลือกใบวางบิล");
 
-  const amount = Number(body.amount) || 0;
+  let amount = Number(body.amount) || 0;
   if (amount <= 0) return fail("จำนวนเงินต้องมากกว่า 0");
 
   const payment_method = String(body.payment_method ?? "transfer");
@@ -67,13 +67,25 @@ export async function POST(req: Request) {
       .eq("billing_note_id", bn.id)
       .single<{ amount: number; paid_amount: number | null; status: string }>();
     if (instErr || !inst) return fail("ไม่พบงวดในใบวางบิลนี้", 404);
-    const remaining = round2((Number(inst.amount) || 0) - (Number(inst.paid_amount) || 0));
-    if (inst.status === "paid" || remaining <= 0.01) {
-      return fail("งวดนี้ชำระครบแล้ว ออกใบเสร็จซ้ำไม่ได้", 409);
+    const paidAmt = round2(Number(inst.paid_amount) || 0);
+    const remaining = round2((Number(inst.amount) || 0) - paidAmt);
+    // ออกใบเสร็จได้เฉพาะงวดที่ "รับชำระแล้ว" (หลักบัญชี: ใบเสร็จออกเมื่อรับเงินจริง)
+    // — บันทึกชำระก่อน (ปุ่ม "บันทึกชำระ") แล้วจึงออกใบเสร็จ
+    if (inst.status !== "paid" && remaining > 0.01) {
+      return fail("งวดนี้ยังไม่ได้รับชำระเต็มจำนวน — บันทึกชำระก่อนจึงออกใบเสร็จได้", 409);
     }
-    if (amount > remaining + 0.01) {
-      return fail(`ยอดเกินยอดคงเหลือของงวด (คงเหลือ ฿${remaining.toFixed(2)})`, 400);
-    }
+    // กันออกใบเสร็จซ้ำต่องวด
+    const { data: existRc } = await supabase
+      .from("receipts").select("id").eq("installment_id", Number(body.installment_id)).eq("is_voided", false).maybeSingle();
+    if (existRc) return fail("งวดนี้ออกใบเสร็จแล้ว ออกซ้ำไม่ได้", 409);
+    // ยอดใบเสร็จ = "เงินที่รับจริง" จาก finance_entry ที่ผูกงวดนี้ (ยึดยอดที่ลงบัญชี)
+    // กันเคสมัดจำ: paid_amount ของงวดอาจถูกตั้ง ≠ ยอดมัดจำจริง → ใบเสร็จต้องตรงเงินที่ลงระบบ
+    const { data: fe } = await supabase
+      .from("finance_entries").select("amount")
+      .eq("billing_installment_id", Number(body.installment_id)).eq("is_voided", false)
+      .maybeSingle<{ amount: number }>();
+    amount = fe ? round2(Number(fe.amount) || 0) : (paidAmt > 0 ? paidAmt : round2(Number(inst.amount) || 0));
+    if (amount <= 0) return fail("ไม่พบยอดเงินที่รับจริงของงวดนี้ — ตรวจสอบการบันทึกชำระก่อน", 409);
   }
 
   // [MEDIUM-2] ถอด VAT ออกจากยอดรวม (amount = ยอดรวม VAT แล้ว)
@@ -118,12 +130,16 @@ export async function POST(req: Request) {
     const { error: payErr } = await applyInstallmentPayment(supabase, {
       installmentId: Number(body.installment_id),
       billingNoteId: String(bn.id),
-      paidAmount: amount, // จ่ายตามยอดที่รับจริง (รองรับจ่ายบางส่วน + สะสม paid_amount)
+      // งวดนี้รับชำระแล้ว (guard ด้านบนบังคับ) → ไม่ส่ง paidAmount = ไม่บวกเงินซ้ำ
+      // applyInstallmentPayment จะ set paid=amount (idempotent) + ผูก receiptId เข้า finance_entry เดิม
       paidDate: body.issue_date,
       receiptId,
     });
-    // ใบเสร็จออกสำเร็จแล้ว — ถ้า sync งวดพลาด ไม่ rollback แต่แจ้งเตือน (กันใบเสร็จหาย)
-    if (payErr) return ok({ id: rc.id, code: rc.code, warn: "ออกใบเสร็จสำเร็จ แต่ปิดงวดไม่สำเร็จ: " + payErr }, 201);
+    // ถ้า sync งวด/finance พลาด → rollback ลบใบเสร็จที่เพิ่งสร้าง (กันเอกสารภาษีลอย ไม่ผูกเงิน)
+    if (payErr) {
+      await supabase.from("receipts").delete().eq("id", receiptId);
+      return fail("ออกใบเสร็จไม่สำเร็จ (ปิดงวด/ผูกเงินไม่ได้): " + payErr, 500);
+    }
   } else if (bn.job_id) {
     // [HIGH-3] ไม่มี installment_id → ตรวจก่อนว่าบิลนี้มีงวดหรือไม่
     // ถ้ามีงวด (≥1) แต่ไม่ระบุ installment_id → reject 400 (กัน finance_entry ลอย)

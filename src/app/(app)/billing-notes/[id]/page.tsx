@@ -173,12 +173,15 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                   {writable && !isCancelled && (
                     <td className="text-right p-2">
                       {it.status === "paid" ? (
-                        <span className="text-xs text-ink-3">—</span>
-                      ) : (
-                        <div className="flex flex-col items-end gap-1.5">
+                        // จ่ายแล้ว → ออกใบเสร็จได้ (ถ้ายังไม่เคยออก) · ออกแล้ว = โชว์ลิงก์ฝั่งซ้าย
+                        receiptByInst.has(it.id!) ? (
+                          <span className="text-xs text-emerald-700">ออกใบเสร็จแล้ว ✓</span>
+                        ) : (
                           <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
-                          <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
-                        </div>
+                        )
+                      ) : (
+                        // ยังไม่จ่าย → บันทึกชำระอย่างเดียว (ออกใบเสร็จงวดยังไม่จ่ายไม่ได้)
+                        <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
                       )}
                     </td>
                   )}
