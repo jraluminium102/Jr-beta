@@ -37,7 +37,19 @@ export function StageAdvanceButton({ jobId, currentStage, onAdvanced }: {
 
       {!isDone(currentStage) && nextForm && (
         <div className="text-[12px] rounded-lg bg-sky-500/15 border border-sky-300/25 text-sky-100 px-3 py-2">
-          ➜ ขั้นต่อไป ({STAGE_NAMES[next!]}): {nextForm}
+          <div>➜ ขั้นต่อไป ({STAGE_NAMES[next!]}): {nextForm}</div>
+          {/* ปุ่มสำรอง (กันเหนียว) — ใช้เฉพาะกรณีทำขั้นตอนจริงแล้วแต่งานค้างไม่เลื่อนเอง */}
+          <button
+            onClick={() => {
+              const hint = next === 8
+                ? "ใช้เมื่อ: บันทึกมัดจำเรียบร้อยแล้ว แต่งานค้าง ไม่เลื่อนไป “รอวัดจริง”"
+                : "ใช้เมื่อ: ตั้ง Production เป็น “พร้อมติดตั้ง” แล้ว แต่งานค้าง ไม่เลื่อนขั้น";
+              if (confirm(`บังคับเลื่อนไป “${STAGE_NAMES[next!]}” ?\n\n${hint}\n\n⚠ ถ้ายังไม่ได้ทำขั้นตอนข้างต้นจริง อย่ากดปุ่มนี้`)) go(next!);
+            }}
+            disabled={busy}
+            className="focusable pressable mt-2 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-sky-100 border border-sky-300/40 hover:bg-sky-400/15 disabled:opacity-60">
+            {busy ? "กำลังทำ…" : `🔧 บังคับเลื่อนเอง (กรณีงานค้าง)`}
+          </button>
         </div>
       )}
 
