@@ -76,11 +76,16 @@ export default function StockClient({
           </span>
           เช็คสต๊อกวัสดุ
         </h1>
-        {canWrite && (
-          <button onClick={() => { setAdding(true); setSel(null); }} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
-            <Icon name="plus" size={16} /> เพิ่มวัสดุใหม่
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <a href="/stock/moves" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+            <Icon name="calendar" size={16} /> สมุดเคลื่อนไหว
+          </a>
+          {canWrite && (
+            <button onClick={() => { setAdding(true); setSel(null); }} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+              <Icon name="plus" size={16} /> เพิ่มวัสดุใหม่
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
@@ -333,7 +338,7 @@ function MoveForm({ item, onDone }: { item: StockItem; onDone: () => void }) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Field label={type === "adjust" ? `คงเหลือใหม่ (${item.unit})` : `จำนวน (${item.unit})`} value={qty} onChange={setQty} type="number" autoFocus />
             {type === "out" && <Field label="ผู้เบิก" value={requester} onChange={setRequester} placeholder="ชื่อคนเบิก" />}
-            {type === "in" && <Field label="ราคารวมบิลนี้ (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="ถ้ามี" />}
+            {type === "in" && <Field label="ราคาที่จ่ายจริง (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="รวมทั้งบิล ถ้ามี" />}
             {type === "in" && <Field label="ผู้รับเข้า" value={requester} onChange={setRequester} placeholder="ชื่อคนรับ" />}
           </div>
 
