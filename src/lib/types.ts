@@ -95,13 +95,39 @@ export interface StockItem {
   sku: string;
   name: string;
   category: string;
+  category_id: number | null;
   unit: string;
   qty_on_hand: number;
   min_qty: number;
   note: string;
   is_active: boolean;
+  // 0073 — ต้นทุน/น้ำหนัก/รูป/ร้าน
+  image_url: string;
+  supplier: string;
+  unit_cost: number;          // ต้นทุนต่อหน่วยฐาน (ต่อเส้น/ชิ้น) ล่าสุด
+  is_weight_based: boolean;   // true = อลู คิดต่อโล
+  weight_per_unit: number;    // กก. ต่อ 1 หน่วย
+  price_per_kg: number;       // ราคาต่อโลล่าสุด
   created_at: string;
   updated_at: string;
+}
+
+export interface StockCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface StockPrice {
+  id: number;
+  stock_item_id: number;
+  price_per_kg: number | null;
+  unit_cost: number;
+  effective_date: string;
+  supplier: string;
+  note: string;
+  created_at: string;
 }
 
 export interface StockMove {
@@ -111,6 +137,12 @@ export interface StockMove {
   qty: number;
   ref: string;
   note: string;
+  // 0073 — ผู้เบิก/งาน/ต้นทุน/รูป
+  requester: string;
+  job_id: string | null;
+  unit_cost: number;
+  total_price: number;
+  image_url: string;
   created_at: string;
 }
 

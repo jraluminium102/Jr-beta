@@ -1,18 +1,32 @@
-import { getProfile, canWrite } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import StockClient from "./StockClient";
-import type { StockItem } from "@/lib/types";
+import type { StockItem, StockCategory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+// สโตร์/ผลิต บันทึกได้ (0073) · อัปเดตราคา = บัญชี/แอดมิน
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const PRICE_WRITE = ["ADMIN", "ACCOUNTING"];
+
 export default async function StockPage() {
   const profile = await getProfile();
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("stock_items")
-    .select("*")
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+  const role = profile?.role ?? "";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as unknown as { from: (t: string) => any };
 
-  return <StockClient initial={(data ?? []) as StockItem[]} canWrite={canWrite(profile?.role)} />;
+  const [{ data: items }, { data: cats }] = await Promise.all([
+    supabase.from("stock_items").select("*").eq("is_active", true).order("name", { ascending: true }),
+    supabase.from("stock_categories").select("*").eq("is_active", true)
+      .order("sort_order", { ascending: true }).order("name", { ascending: true }),
+  ]);
+
+  return (
+    <StockClient
+      initial={(items ?? []) as StockItem[]}
+      categories={(cats ?? []) as StockCategory[]}
+      canWrite={STORE_WRITE.includes(role)}
+      canPrice={PRICE_WRITE.includes(role)}
+    />
+  );
 }
