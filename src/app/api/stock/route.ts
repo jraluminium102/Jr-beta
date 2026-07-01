@@ -18,7 +18,11 @@ export async function GET(req: Request) {
     .eq("is_active", true)
     .order("name", { ascending: true });
 
-  if (q) query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,category.ilike.%${q}%`);
+  if (q) {
+    // escape อักขระที่ทำ .or() filter เพี้ยน (comma แยก filter, % คือ wildcard)
+    const safe = q.replace(/[,%()]/g, " ").trim();
+    if (safe) query = query.or(`name.ilike.%${safe}%,sku.ilike.%${safe}%,category.ilike.%${safe}%`);
+  }
 
   const { data, error } = await query;
   if (error) return fail(error.message, 500);
@@ -33,6 +37,8 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   if (!body?.name?.trim()) return fail("ต้องระบุชื่อวัสดุ");
+  if (Number(body.qty_on_hand) < 0) return fail("ยอดยกมาติดลบไม่ได้");
+  if (Number(body.min_qty) < 0) return fail("จุดเตือนขั้นต่ำติดลบไม่ได้");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as unknown as { from: (t: string) => any };

@@ -27,6 +27,7 @@ export default async function StockPage() {
       categories={(cats ?? []) as StockCategory[]}
       canWrite={STORE_WRITE.includes(role)}
       canPrice={PRICE_WRITE.includes(role)}
+      isAdmin={role === "ADMIN"}
     />
   );
 }

@@ -16,19 +16,27 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const body = await req.json().catch(() => null);
   const type = body?.type as StockMoveType;
   if (!TYPES.includes(type)) return fail("ประเภทไม่ถูกต้อง (in/out/adjust)");
-  const qty = Number(body?.qty);
+  let qty = Number(body?.qty);
   if (!Number.isFinite(qty) || qty === 0) return fail("ต้องระบุจำนวน");
+  // ไม่ไว้ใจเครื่องหมายจาก client — ทิศทางกำหนดโดย type (in=+, out=−, adjust=ตั้งค่า)
+  // กันกด "รับเข้า" แล้วพิมพ์ค่าลบทำให้สต๊อกลดสวนทาง
+  qty = Math.abs(qty);
+  if (qty === 0) return fail("จำนวนต้องมากกว่า 0");
 
   const supabase = createClient() as unknown as Sb;
 
   // ต้นทุน ณ ตอนเคลื่อนไหว = snapshot จากต้นทุนล่าสุดของวัสดุ (ไว้คิดต้นทุนงาน)
   const { data: item } = await supabase.from("stock_items").select("unit_cost").eq("id", Number(params.id)).single();
   const itemCost = Number(item?.unit_cost) || 0;
-  // รับเข้า: ให้กรอกราคารวมได้ (บิลจริง) · เบิก/ปรับ: คิดจากต้นทุนล่าสุด
-  const unitCost = body.unit_cost != null ? Number(body.unit_cost) || 0 : itemCost;
-  const totalPrice = body.total_price != null
-    ? Number(body.total_price) || 0
-    : Math.round(Math.abs(qty) * unitCost * 100) / 100;
+  // รับเข้า + กรอกราคารวมบิลจริง → unit_cost ของ move = ราคาจริง/จำนวน (ให้ล้อกับ total_price)
+  // เบิก/ปรับ → ใช้ต้นทุนล่าสุดของวัสดุ
+  const billTotal = type === "in" && body.total_price != null ? Number(body.total_price) || 0 : null;
+  const unitCost = billTotal != null && qty > 0
+    ? Math.round((billTotal / qty) * 100) / 100
+    : (body.unit_cost != null ? Number(body.unit_cost) || 0 : itemCost);
+  const totalPrice = billTotal != null
+    ? billTotal
+    : Math.round(qty * unitCost * 100) / 100;
 
   const { error } = await supabase.from("stock_moves").insert({
     stock_item_id: Number(params.id),

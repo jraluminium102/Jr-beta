@@ -10,6 +10,8 @@ import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } f
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
 const isLow = (it: StockItem) => Number(it.qty_on_hand) <= Number(it.min_qty);
+// น้ำหนักเก็บ 3 ตำแหน่ง — baht() ปัดเหลือ 2 ทำให้เลขที่โชว์ไม่ตรงที่บันทึก
+const fmt3 = (n: number) => Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 3 });
 
 // ── อัปโหลดรูปเข้า Supabase Storage (bucket 'stock') → คืน public URL ──
 async function uploadImage(file: File): Promise<string> {
@@ -24,9 +26,9 @@ async function uploadImage(file: File): Promise<string> {
 type JobHit = { id: string; job_code: string | null; customer_name: string; customer_area: string | null };
 
 export default function StockClient({
-  initial, categories: catsInit, canWrite, canPrice,
+  initial, categories: catsInit, canWrite, canPrice, isAdmin,
 }: {
-  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean;
+  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; isAdmin: boolean;
 }) {
   const [list, setList] = useState<StockItem[]>(initial);
   const [cats, setCats] = useState<StockCategory[]>(catsInit);
@@ -37,6 +39,7 @@ export default function StockClient({
   const [lowOnly, setLowOnly] = useState(false);
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
+  const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
 
   const lowCount = list.filter(isLow).length;
   const filtered = list
@@ -51,8 +54,10 @@ export default function StockClient({
 
   async function selectItem(it: StockItem) {
     setSel(it); setAdding(false);
+    const my = ++reqRef.current;
     const res = await fetch(`/api/stock/${it.id}`);
     const json = await res.json();
+    if (my !== reqRef.current) return; // มีการเลือกใหม่แล้ว — ทิ้งผลเก่า
     if (res.ok) {
       setMoves((json.data?.stock_moves ?? []) as StockMove[]);
       setPrices((json.data?.stock_prices ?? []) as StockPrice[]);
@@ -129,7 +134,7 @@ export default function StockClient({
           ) : sel ? (
             <ItemDetail
               key={sel.id} item={sel} moves={moves} prices={prices} cats={cats}
-              canWrite={canWrite} canPrice={canPrice}
+              canWrite={canWrite} canPrice={canPrice} isAdmin={isAdmin}
               onManageCat={() => setManageCat(true)}
               onChanged={() => selectItem(sel)}
               onItemPatched={(it) => { setSel(it); setList((l) => l.map((x) => x.id === it.id ? it : x)); }}
@@ -160,10 +165,10 @@ function Thumb({ url, active, size = 40 }: { url: string; active?: boolean; size
 
 // ── รายละเอียดวัสดุ + เคลื่อนไหว + ต้นทุน/ราคา ──
 function ItemDetail({
-  item, moves, prices, cats, canWrite, canPrice, onManageCat, onChanged, onItemPatched,
+  item, moves, prices, cats, canWrite, canPrice, isAdmin, onManageCat, onChanged, onItemPatched,
 }: {
   item: StockItem; moves: StockMove[]; prices: StockPrice[]; cats: StockCategory[];
-  canWrite: boolean; canPrice: boolean; onManageCat: () => void; onChanged: () => void;
+  canWrite: boolean; canPrice: boolean; isAdmin: boolean; onManageCat: () => void; onChanged: () => void;
   onItemPatched: (it: StockItem) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -200,16 +205,17 @@ function ItemDetail({
         <div className="rounded-2xl px-5 py-4 glass-soft">
           <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย{item.is_weight_based ? " (คิดต่อโล)" : ""}</div>
           <div className="text-3xl font-bold leading-tight text-brand-dark">฿{baht(item.unit_cost)}</div>
-          {item.is_weight_based
-            ? <div className="text-xs text-ink-3 mt-1">{baht(item.price_per_kg)} ฿/กก. × {baht(item.weight_per_unit)} กก./{item.unit}</div>
-            : <div className="text-xs text-ink-3 mt-1">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>}
+          {item.is_weight_based && (
+            <div className="text-xs text-ink-3 mt-1">{baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}</div>
+          )}
+          <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>
         </div>
       </div>
 
       {canWrite && <MoveForm item={item} onDone={onChanged} />}
 
       {/* ต้นทุน/ราคา — บัญชี */}
-      <PriceSection item={item} prices={prices} canPrice={canPrice} onDone={onChanged} />
+      <PriceSection item={item} prices={prices} canPrice={canPrice} isAdmin={isAdmin} onDone={onChanged} />
 
       {/* แก้ข้อมูลวัสดุ */}
       {canWrite && (
@@ -357,7 +363,7 @@ function MoveForm({ item, onDone }: { item: StockItem; onDone: () => void }) {
 }
 
 // ── ต้นทุน/ราคา + ประวัติราคา ──
-function PriceSection({ item, prices, canPrice, onDone }: { item: StockItem; prices: StockPrice[]; canPrice: boolean; onDone: () => void }) {
+function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: StockItem; prices: StockPrice[]; canPrice: boolean; isAdmin: boolean; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [pricePerKg, setPricePerKg] = useState("");
   const [unitCost, setUnitCost] = useState("");
@@ -379,6 +385,13 @@ function PriceSection({ item, prices, canPrice, onDone }: { item: StockItem; pri
     setBusy(false);
     if (!res.ok) { setErr(json.error ?? "บันทึกไม่สำเร็จ"); return; }
     setPricePerKg(""); setUnitCost(""); setNote(""); setOpen(false); onDone();
+  }
+
+  async function delPrice(pid: number) {
+    if (!confirm("ลบราคานี้? ต้นทุนจะคำนวณใหม่จากราคาล่าสุดที่เหลือ")) return;
+    const res = await fetch(`/api/stock/${item.id}/price/${pid}`, { method: "DELETE" });
+    if (res.ok) onDone();
+    else { const j = await res.json().catch(() => null); alert(j?.error ?? "ลบไม่ได้"); }
   }
 
   return (
@@ -424,6 +437,7 @@ function PriceSection({ item, prices, canPrice, onDone }: { item: StockItem; pri
                   {item.is_weight_based && <th className="px-3 py-2 font-medium text-right">฿/กก.</th>}
                   <th className="px-3 py-2 font-medium text-right">ต้นทุน/{item.unit}</th>
                   <th className="px-3 py-2 font-medium">ร้าน</th>
+                  {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -433,6 +447,11 @@ function PriceSection({ item, prices, canPrice, onDone }: { item: StockItem; pri
                     {item.is_weight_based && <td className="px-3 py-2 text-right tabular-nums">{p.price_per_kg != null ? baht(p.price_per_kg) : "—"}</td>}
                     <td className="px-3 py-2 text-right font-semibold tabular-nums">฿{baht(p.unit_cost)}</td>
                     <td className="px-3 py-2 text-ink-2 truncate max-w-[120px]">{p.supplier || p.note || "—"}</td>
+                    {isAdmin && (
+                      <td className="px-3 py-2 text-right">
+                        <button onClick={() => delPrice(p.id)} title="ลบราคานี้" className="text-ink-3 hover:text-red-600"><Icon name="trash" size={13} /></button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -640,6 +659,10 @@ function EditItemForm({ item, cats, onManageCat, onSaved }: {
           <select value={f.category_id} onChange={(e) => setF({ ...f, category_id: e.target.value })}
             className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
             <option value="">— ไม่ระบุ —</option>
+            {/* หมวดเดิมที่ถูกปิดใช้งานแล้ว — โชว์ไว้กันเลือกผิดเงียบๆ */}
+            {item.category_id && !cats.some((c) => c.id === item.category_id) && (
+              <option value={item.category_id}>{item.category || "หมวดเดิม"} (ปิดใช้งานแล้ว)</option>
+            )}
             {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
