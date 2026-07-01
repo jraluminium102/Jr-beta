@@ -8,7 +8,7 @@ import { baht } from "@/lib/money";
 export const dynamic = "force-dynamic";
 
 const PAYMENT_LABEL: Record<string, string> = {
-  transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค",
+  transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค", other: "อื่นๆ",
 };
 
 export default async function ReceiptsPage() {
@@ -33,11 +33,16 @@ export default async function ReceiptsPage() {
           </span>
           ใบเสร็จ / ใบกำกับภาษี
         </h1>
-        {canWrite(profile?.role) && (
-          <Link href="/receipts/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
-            <Icon name="plus" size={16} /> สร้างใบเสร็จ
+        <div className="flex items-center gap-2">
+          <Link href="/receipts/summary" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+            <Icon name="calendar" size={16} /> สรุปรายเดือน
           </Link>
-        )}
+          {canWrite(profile?.role) && (
+            <Link href="/receipts/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+              <Icon name="plus" size={16} /> สร้างใบเสร็จ
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card className="p-5">

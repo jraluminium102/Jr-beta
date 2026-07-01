@@ -116,6 +116,7 @@ export async function POST(req: Request) {
       net,
       payment_method,
       note: body.note ?? "",
+      item_desc: (body.item_desc ?? "").toString().trim(),
       created_by: profile.id,
     })
     .select("id, code")

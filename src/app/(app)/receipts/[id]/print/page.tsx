@@ -10,7 +10,7 @@ import { PrintLetterhead, taxInvoiceMissing, DOC_COLORS } from "@/components/pri
 export const dynamic = "force-dynamic";
 
 const PAYMENT_LABEL: Record<string, string> = {
-  transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค",
+  transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค", other: "อื่นๆ",
 };
 
 export default async function ReceiptPrintPage({ params }: { params: { id: string } }) {
@@ -75,7 +75,9 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           <tbody>
             <tr>
               <td className="p-2 border border-gray-200">
-                รับชำระเงินตามใบวางบิล{refCode ? ` ${refCode}` : ""}
+                {(rc as { item_desc?: string }).item_desc?.trim()
+                  ? (rc as { item_desc?: string }).item_desc
+                  : `รับชำระเงินตามใบวางบิล${refCode ? ` ${refCode}` : ""}`}
                 {rc.note && <div className="text-xs text-gray-500">{rc.note}</div>}
               </td>
               <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td>

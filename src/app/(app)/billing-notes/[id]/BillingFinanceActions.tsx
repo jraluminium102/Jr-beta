@@ -241,6 +241,7 @@ const RECEIPT_PAY_METHODS = [
   { value: "transfer", label: "โอนเงิน" },
   { value: "cash", label: "เงินสด" },
   { value: "cheque", label: "เช็ค" },
+  { value: "other", label: "อื่นๆ" },
 ];
 
 export function IssueReceiptButton({
@@ -252,6 +253,8 @@ export function IssueReceiptButton({
   const [amt, setAmt] = useState(String(amount));
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [method, setMethod] = useState("transfer");
+  const [itemDesc, setItemDesc] = useState("");
+  const [note, setNote] = useState("");
   const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
@@ -269,6 +272,8 @@ export function IssueReceiptButton({
         amount: a,
         payment_method: method,
         issue_date: date,
+        item_desc: itemDesc,
+        note,
       }),
     });
     const json = await res.json().catch(() => null);
@@ -327,6 +332,19 @@ export function IssueReceiptButton({
             </select>
           </label>
         </div>
+
+        <label className="block text-sm">
+          <span className="text-xs font-medium text-gray-500">รายการ (แก้ข้อความได้ · เว้นว่าง = ใช้ชื่องวดเดิม)</span>
+          <input value={itemDesc} onChange={(e) => setItemDesc(e.target.value)}
+            placeholder="เช่น ค่างวดที่ 2 · ค่าแรงติดตั้ง (รวม VAT)"
+            className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand" />
+        </label>
+        <label className="block text-sm">
+          <span className="text-xs font-medium text-gray-500">หมายเหตุ (พิมพ์บนใบเสร็จ)</span>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+            placeholder="ข้อความเพิ่มเติม (ถ้ามี)"
+            className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none resize-none focus-visible:ring-2 focus-visible:ring-brand" />
+        </label>
 
         {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
 
