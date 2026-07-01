@@ -263,6 +263,8 @@ export function ProductionStepModal({
   const [boqStatus, setBoqStatus] = useState(prod.boq_summary?.status ?? null);
   // confirm "เริ่มผลิต" เมื่อ BOQ ยังไม่ ordered
   const [mfgConfirmPending, setMfgConfirmPending] = useState<Action | null>(null);
+  // undo "พร้อมติดตั้ง" (กันกดผิด) — กางยืนยันก่อนถอยกลับกำลังผลิต
+  const [undoReadyOpen, setUndoReadyOpen] = useState(false);
 
   // นัดวัด (เฉพาะตอน PENDING_MEASURE) — บันทึกได้โดยไม่เลื่อนสถานะ
   const [sched, setSched] = useState(prod.measure_scheduled ?? today());
@@ -588,6 +590,39 @@ export function ProductionStepModal({
               <div className="mt-4 bg-emerald-500/15 border border-emerald-300/30 rounded-2xl p-4 text-center">
                 <div className="text-emerald-200 font-semibold">พร้อมติดตั้งแล้ว</div>
                 <div className="text-[12px] mt-1" style={{ color: "var(--t-mid)" }}>งานนี้ส่งเข้าทีมติดตั้งอัตโนมัติแล้ว</div>
+
+                {/* undo — กันกดผิด: ย้อนกลับไป "กำลังผลิต" (บล็อกอัตโนมัติถ้าเริ่มติดตั้งแล้ว) */}
+                {!undoReadyOpen ? (
+                  <button
+                    onClick={() => { setUndoReadyOpen(true); setErr(null); }}
+                    disabled={saving}
+                    className="focusable pressable mt-3 text-[12px] text-white/60 hover:text-white/90 underline underline-offset-2 disabled:opacity-60"
+                  >
+                    กดผิด? ย้อนกลับไป “กำลังผลิต”
+                  </button>
+                ) : (
+                  <div className="mt-3 rounded-xl border border-amber-300/30 bg-amber-500/12 p-3 text-left space-y-2">
+                    <p className="text-[12px] text-amber-100">
+                      ย้อนกลับไปขั้น <b>กำลังผลิต</b>? ระบบจะดึงงานออกจากคิวติดตั้ง (ทำได้เฉพาะงานที่ <b>ยังไม่เริ่มติดตั้ง/ยังไม่นัด</b>)
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => patch({ status: "MANUFACTURING" }, { close: true })}
+                        disabled={saving}
+                        className="focusable pressable flex-1 min-h-[40px] rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-[12px] font-semibold disabled:opacity-60"
+                      >
+                        {saving ? "กำลังย้อน…" : "ยืนยันย้อนกลับ"}
+                      </button>
+                      <button
+                        onClick={() => setUndoReadyOpen(false)}
+                        disabled={saving}
+                        className="focusable pressable flex-1 min-h-[40px] rounded-xl glass-card border border-white/15 text-white/80 text-[12px]"
+                      >
+                        ไม่ย้อน
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

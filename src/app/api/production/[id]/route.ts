@@ -48,19 +48,41 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requirePermission("production", "write");
   const body = schema.parse(clean(await req.json()));
 
+  // undo "พร้อมติดตั้ง": READY → กลับไปกำลังผลิต (กันกดผิด) — อนุญาตเฉพาะเส้นนี้เส้นเดียว
+  const isUndoReady = body.status === "MANUFACTURING";
+
   // Guard: ห้ามข้ามขั้น / ห้าม rollback จาก READY
   if (body.status && body.status !== "ISSUE") {
     const { data: current } = await ctx.supabase
-      .from("productions").select("status, production_queued, planned_install_date, production_due_date").eq("id", params.id).single();
+      .from("productions").select("status, production_queued, planned_install_date, production_due_date, job_id").eq("id", params.id).single();
     if (current) {
       const curIdx = PROD_FLOW.indexOf(current.status as ProdFlowStatus);
       const newIdx = PROD_FLOW.indexOf(body.status as ProdFlowStatus);
-      // ห้ามถอยหลังถ้าอยู่ที่ READY แล้ว
-      if (current.status === "READY" && newIdx < curIdx) {
+      // ห้ามถอยหลังถ้าอยู่ที่ READY แล้ว — ยกเว้น undo กลับไป "กำลังผลิต" (กันกดผิด)
+      if (current.status === "READY" && newIdx < curIdx && !(isUndoReady && current.job_id)) {
         return err("งานพร้อมติดตั้งแล้ว ไม่สามารถถอยสถานะได้", 409);
       }
-      // เริ่มผลิต — ต้องผ่าน "รอลงผลิต" (QUEUED) ก่อน · QC ไม่ผ่าน/กู้จาก ISSUE → กลับมาผลิตได้
-      const MFG_FROM = ["QUEUED", "QC", "ISSUE"];
+      // undo READY→กำลังผลิต: บล็อกถ้าติดตั้งเริ่มไปแล้ว (ไม่ใช่ PENDING) — กันข้อมูลติดตั้งหาย
+      if (current.status === "READY" && isUndoReady && current.job_id) {
+        const { data: inst } = await ctx.supabase
+          .from("installations")
+          .select("status, install_actual, lead_installer_id")
+          .eq("job_id", current.job_id)
+          .maybeSingle();
+        if (inst && (inst.status !== "PENDING" || inst.install_actual || inst.lead_installer_id)) {
+          return err("งานนี้เข้าขั้นติดตั้งแล้ว (มีการนัด/เริ่มติดตั้ง) ย้อนกลับไม่ได้ — แก้ที่หน้าติดตั้งแทน", 409);
+        }
+        // ลบใบติดตั้งที่ระบบสร้างอัตโนมัติแต่ยังไม่เริ่ม + คืน stage งานกลับขั้นผลิต (18)
+        await ctx.supabase.from("installations").delete()
+          .eq("job_id", current.job_id).eq("status", "PENDING");
+        await ctx.supabase.from("jobs").update({ current_stage: 18 })
+          .eq("id", current.job_id).eq("current_stage", 20);
+        // เคลียร์ผล QC เดิม — พอกด "พร้อมติดตั้ง" อีกครั้งจะบันทึกวันผลิตเสร็จ/QC ใหม่
+        (body as Record<string, unknown>).qc_result = null;
+        (body as Record<string, unknown>).qc_date = null;
+      }
+      // เริ่มผลิต — ต้องผ่าน "รอลงผลิต" (QUEUED) ก่อน · QC ไม่ผ่าน/กู้จาก ISSUE → กลับมาผลิตได้ · undo จาก READY
+      const MFG_FROM = ["QUEUED", "QC", "ISSUE", "READY"];
       if (body.status === "MANUFACTURING" && !MFG_FROM.includes(current.status as string)) {
         return err("ต้องส่งเข้า 'รอลงผลิต' ก่อนจึงเริ่มผลิตได้", 409);
       }
