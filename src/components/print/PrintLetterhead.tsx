@@ -11,16 +11,18 @@ export type CustomerSnapshot = {
   tax_id?: string;
   branch?: string;   // (0069) สำนักงานใหญ่/สาขาที่ NNNNN — โชว์เฉพาะนิติบุคคล
   kind?: string;     // INDIVIDUAL | COMPANY
+  line_id?: string;
   contact_person?: string;
   phone?: string;
 };
 
-// สีประจำชนิดเอกสาร (แนว FlowAccount) — ส่งเข้ามาต่อเอกสาร
+// สีหัวเอกสาร — ใช้แดงแบรนด์ทุกใบ (ไม่ลอกสีรุ้งของ FlowAccount)
+const BRAND = "#b3151d";
 export const DOC_COLORS = {
-  quotation: "#E8850C", // ใบเสนอราคา — ส้ม
-  billing: "#7C3AED",   // ใบวางบิล — ม่วง
-  receipt: "#0F9D58",   // ใบเสร็จ/ใบกำกับภาษี — เขียว
-  warranty: "#b3151d",  // ใบรับประกัน — แดง (แบรนด์)
+  quotation: BRAND,
+  billing: BRAND,
+  receipt: BRAND,
+  warranty: BRAND,
 } as const;
 
 /** เช็คความครบของข้อมูลผู้ซื้อสำหรับใบกำกับภาษีเต็มรูป (ม.86/4) — เลขภาษีรับเลขบัตร ปชช.13 หลักได้ */
@@ -67,17 +69,21 @@ export function PrintLetterhead({
   customer: CustomerSnapshot;
 }) {
   const c = customer;
-  // แถวข้อมูลติดต่อ — ถ้าไม่ส่งมา ใช้ผู้ติดต่อ/เบอร์จาก snapshot
+  // แถวผู้ติดต่อ — โชว์แพลตฟอร์มที่คุย (LINE) + ชื่อ · แล้วเบอร์โทร
+  const who = c.contact_person || "";
   const contacts: InfoRow[] = contactRows ?? [
-    ...(c.contact_person ? [{ label: "ผู้ติดต่อ", value: c.contact_person }] : []),
+    ...(c.line_id
+      ? [{ label: "ผู้ติดต่อ", value: (who ? who + " · " : "") + "LINE: " + c.line_id }]
+      : who ? [{ label: "ผู้ติดต่อ", value: who }] : []),
     ...(c.phone ? [{ label: "เบอร์โทร", value: c.phone }] : []),
   ];
+  void pageNo;
   const LabelTable = ({ rows }: { rows: InfoRow[] }) => (
     <table style={{ fontSize: 12, marginLeft: "auto", borderCollapse: "collapse" }}>
       <tbody>
         {rows.map((r, i) => (
           <tr key={i}>
-            <td style={{ color: docColor, textAlign: "right", paddingRight: 14, paddingTop: 2, paddingBottom: 2, whiteSpace: "nowrap", verticalAlign: "top" }}>{r.label}</td>
+            <td style={{ color: "#6b7280", textAlign: "right", paddingRight: 14, paddingTop: 2, paddingBottom: 2, whiteSpace: "nowrap", verticalAlign: "top" }}>{r.label}</td>
             <td style={{ color: "#1f2937", textAlign: "left", paddingTop: 2, paddingBottom: 2 }}>{r.value}</td>
           </tr>
         ))}
@@ -86,11 +92,7 @@ export function PrintLetterhead({
   );
 
   return (
-    <div style={{ position: "relative", marginBottom: 18 }}>
-      {/* สามเหลี่ยมมุมขวาบน + เลขหน้า */}
-      <div style={{ position: "absolute", top: 0, right: 0, width: 0, height: 0, borderTop: `62px solid ${docColor}`, borderLeft: "62px solid transparent" }} />
-      <div style={{ position: "absolute", top: 8, right: 8, color: "#fff", fontSize: 13, fontWeight: 700 }}>{pageNo}</div>
-
+    <div style={{ marginBottom: 18 }}>
       <div className="flex justify-between items-start" style={{ gap: 24 }}>
         {/* ซ้าย: โลโก้ + บริษัท + ลูกค้า */}
         <div style={{ flex: 1, maxWidth: "56%" }}>
@@ -110,7 +112,7 @@ export function PrintLetterhead({
         <div className="text-right" style={{ minWidth: "40%" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: docColor, lineHeight: 1.1 }}>{docTitle}</div>
           <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>{copyLabel}</div>
-          <div style={{ borderTop: `1px solid ${docColor}33`, paddingTop: 8 }}>
+          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 8 }}>
             <LabelTable rows={infoRows} />
           </div>
           {contacts.length > 0 && (

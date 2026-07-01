@@ -57,7 +57,6 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{q.code}</span> },
             { label: "วันที่", value: q.issue_date },
-            { label: "สถานะ", value: STATUS_LABEL[q.status] },
           ]}
         />
 
