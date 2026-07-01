@@ -52,6 +52,13 @@ const patchSchema = z.object({
   target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
   target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
   clear_revise: z.boolean().optional(),            // (0044) toggle "มีแก้ใบเสนอ+แบบ" — ไม่ใช่คอลัมน์ DB
+  // (0070) ออกเอกสารในนาม
+  bill_choice: z.enum(["SITE", "OTHER_ADDR", "COMPANY"]).optional(),
+  bill_kind: z.enum(["INDIVIDUAL", "COMPANY"]).optional(),
+  bill_name: z.string().nullish(),
+  bill_tax_id: z.string().nullish(),
+  bill_branch: z.string().nullish(),
+  bill_address: z.string().nullish(),
 });
 
 const PRE_DEPOSIT = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
@@ -264,6 +271,37 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
         // best-effort: ไม่ throw ถ้า deposit update พัง (แจ้ง admin ทีหลังได้)
       }
     }
+
+    // (0070) materialize "นามออกบิล" จากตัวเลือกในคิว (best-effort — ทุกอย่างซิงก์กัน)
+    //   COMPANY → สร้างนามบริษัทให้ลูกค้า + ตั้งเป็นนามหลัก (กันซ้ำด้วยชื่อ)
+    //   OTHER_ADDR → นามเดิม แต่ตั้งที่อยู่ออกบิล = ที่อยู่อื่น · ที่อยู่หน้างานไปเป็น ship_address บนนามหลัก
+    try {
+      const bc = (data as { bill_choice?: string }).bill_choice ?? "SITE";
+      if (bc !== "SITE") {
+        const { data: jr } = await sb.from("jobs").select("customer_id").eq("id", jobId).maybeSingle();
+        const cid = (jr as { customer_id?: number | null } | null)?.customer_id ?? null;
+        const d = data as { bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string; address?: string };
+        if (cid && bc === "COMPANY") {
+          const billName = (d.bill_name ?? "").trim();
+          if (billName) {
+            const { data: exist } = await sb.from("billing_profiles").select("id").eq("customer_id", cid).eq("bill_name", billName).maybeSingle();
+            if (!exist) {
+              await sb.from("billing_profiles").update({ is_default: false }).eq("customer_id", cid).eq("is_default", true);
+              await sb.from("billing_profiles").insert({
+                customer_id: cid, kind: "COMPANY", bill_name: billName,
+                tax_id: (d.bill_tax_id ?? "").trim(), branch: (d.bill_branch ?? "").trim() || "สำนักงานใหญ่",
+                address: (d.bill_address ?? "").trim(), ship_address: d.address ?? "",
+                contact_person: "", phone: "", is_default: true,
+              });
+            }
+          }
+        } else if (cid && bc === "OTHER_ADDR" && (d.bill_address ?? "").trim()) {
+          const { data: defP } = await sb.from("billing_profiles").select("id").eq("customer_id", cid).eq("is_default", true).maybeSingle();
+          const pid = (defP as { id?: number } | null)?.id;
+          if (pid) await sb.from("billing_profiles").update({ address: (d.bill_address ?? "").trim(), ship_address: d.address ?? "" }).eq("id", pid);
+        }
+      }
+    } catch { /* best-effort — ไม่บล็อกการปิดคิว */ }
 
     return ok(data, { job_id: jobId });
   }

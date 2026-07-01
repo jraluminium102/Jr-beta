@@ -111,10 +111,19 @@ type FormState = {
   target_customer_id: number | null; // (0045) ลูกค้าเก่าหน้างานใหม่
   custMode: CustMode;                // (0045) ลูกค้าใหม่ / ลูกค้าเก่า
   oldCustomerMode: OldCustomerMode;  // (0045) หน้างานเดิม / หน้างานใหม่
+  // (0070) ออกเอกสารในนาม
+  bill_choice: "SITE" | "OTHER_ADDR" | "COMPANY";
+  bill_kind: "INDIVIDUAL" | "COMPANY";
+  bill_name: string;
+  bill_tax_id: string;
+  bill_branch: string;
+  bill_address: string;
 };
 
 function initForm(e?: QueueEntry | null): FormState {
   const fee = e?.assess_fee ?? null;
+  // (0070) entry อาจมีฟิลด์ bill_* (คอลัมน์ใหม่) ที่ type ยังไม่ประกาศ — cast อ่านแบบปลอดภัย
+  const eb = e as (QueueEntry & { bill_choice?: string; bill_kind?: string; bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string }) | null | undefined;
 
   // derive custMode / oldCustomerMode จาก entry ที่มีอยู่จริง
   // เฉพาะ ประเมินหน้างาน เท่านั้น (เคลียร์แบบ ใช้ target_job_id แต่ custMode ไม่เกี่ยว)
@@ -162,6 +171,13 @@ function initForm(e?: QueueEntry | null): FormState {
     target_customer_id: e?.target_customer_id ?? null, // (BUG-1) restore จาก entry จริง
     custMode: initCustMode,
     oldCustomerMode: initOldCustomerMode,
+    // (0070) ออกเอกสารในนาม
+    bill_choice: (eb?.bill_choice as FormState["bill_choice"]) ?? "SITE",
+    bill_kind: (eb?.bill_kind as FormState["bill_kind"]) ?? "INDIVIDUAL",
+    bill_name: eb?.bill_name ?? "",
+    bill_tax_id: eb?.bill_tax_id ?? "",
+    bill_branch: eb?.bill_branch ?? "สำนักงานใหญ่",
+    bill_address: eb?.bill_address ?? "",
   };
 }
 
@@ -943,6 +959,13 @@ export function QueueModal({
       target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
       clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
       target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่ + หน้างานเดิม
+      // (0070) ออกเอกสารในนาม
+      bill_choice: f.bill_choice,
+      bill_kind: f.bill_choice === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
+      bill_name: f.bill_name || null,
+      bill_tax_id: f.bill_tax_id || null,
+      bill_branch: f.bill_branch || null,
+      bill_address: f.bill_address || null,
     };
     try {
       if (editing) {
@@ -1756,6 +1779,37 @@ export function QueueModal({
                   onChange={(lat, lng) => { setManualCoords({ lat, lng }); setCoordText(""); }}
                 />
               </div>
+
+              {/* (0070) ออกเอกสารในนาม — เลือกได้ตั้งแต่ลงคิว → กดเสร็จแล้วเป็น "นามออกบิล" ให้ลูกค้าอัตโนมัติ */}
+              <Field label="ออกเอกสารในนาม" wide>
+                <div className="flex flex-col gap-1.5 text-sm">
+                  {([
+                    ["SITE", "ตามชื่อหน้างาน (ใช้ชื่อ/ที่อยู่ลูกค้าด้านบน)"],
+                    ["OTHER_ADDR", "ที่อยู่อื่น (ออกบิลคนละที่กับหน้างาน)"],
+                    ["COMPANY", "ในนามบริษัท (นิติบุคคล)"],
+                  ] as const).map(([v, label]) => (
+                    <label key={v} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="bill_choice" checked={f.bill_choice === v} onChange={() => set("bill_choice", v)} />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+                {f.bill_choice === "OTHER_ADDR" && (
+                  <textarea value={f.bill_address} onChange={(e) => set("bill_address", e.target.value)} rows={2}
+                    placeholder="ที่อยู่ออกบิล (คนละที่กับหน้างาน)" className={`${inp} mt-2 resize-none`} />
+                )}
+                {f.bill_choice === "COMPANY" && (
+                  <div className="mt-2 space-y-2">
+                    <input value={f.bill_name} onChange={(e) => set("bill_name", e.target.value)} placeholder="ชื่อบริษัท" className={inp} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input value={f.bill_tax_id} onChange={(e) => set("bill_tax_id", e.target.value)} placeholder="เลขผู้เสียภาษี 13 หลัก" className={inp} />
+                      <input value={f.bill_branch} onChange={(e) => set("bill_branch", e.target.value)} placeholder="สำนักงานใหญ่ / สาขาที่ 00001" className={inp} />
+                    </div>
+                    <textarea value={f.bill_address} onChange={(e) => set("bill_address", e.target.value)} rows={2} placeholder="ที่อยู่บริษัท (ตามภาษี)" className={`${inp} resize-none`} />
+                  </div>
+                )}
+                <p className="text-[11px] text-ink-3 mt-1.5">พอกดคิวเสร็จ ระบบบันทึกเป็น &quot;นามออกบิล&quot; ให้ลูกค้าอัตโนมัติ · แก้ทีหลังได้ในทะเบียนลูกค้า</p>
+              </Field>
             </>
           )}
 

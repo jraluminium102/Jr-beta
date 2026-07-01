@@ -56,6 +56,13 @@ const entrySchema = z.object({
   note_ai: z.string().nullish(),
   target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
   target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
+  // (0070) ออกเอกสารในนาม: ตามหน้างาน / ที่อยู่อื่น / ในนามบริษัท
+  bill_choice: z.enum(["SITE", "OTHER_ADDR", "COMPANY"]).optional(),
+  bill_kind: z.enum(["INDIVIDUAL", "COMPANY"]).optional(),
+  bill_name: z.string().nullish(),
+  bill_tax_id: z.string().nullish(),
+  bill_branch: z.string().nullish(),
+  bill_address: z.string().nullish(),
 });
 
 // GET /api/queue — list entries + sales dropdown
