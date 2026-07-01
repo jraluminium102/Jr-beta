@@ -6,7 +6,7 @@ import { bahtText } from "@/lib/baht-text";
 import { STATUS_LABEL, type Quotation } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintLetterhead } from "@/components/print/PrintLetterhead";
+import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +52,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
         {/* ===== หัวเอกสารกลาง — ตัวเดียวกับใบวางบิล/ใบเสร็จ (ฟอร์มเดียวกันทุกเอกสาร) ===== */}
         <PrintLetterhead
           docTitle="ใบเสนอราคา"
+          docColor={DOC_COLORS.quotation}
           customer={c}
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{q.code}</span> },

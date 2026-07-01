@@ -5,7 +5,7 @@ import { baht } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintLetterhead } from "@/components/print/PrintLetterhead";
+import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
 
@@ -52,8 +52,8 @@ export default async function BillingPrintPage({
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
         <PrintLetterhead
-          docTitle={isSingle ? `ใบวางบิล (งวดที่ ${selSeq})` : "ใบวางบิล"}
-          docSubtitle="Billing Note"
+          docTitle={isSingle ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq})` : "ใบวางบิล/ใบแจ้งหนี้"}
+          docColor={DOC_COLORS.billing}
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{bn.code}</span> },
             { label: "วันที่", value: bn.issue_date },

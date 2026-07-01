@@ -5,7 +5,7 @@ import { baht } from "@/lib/money";
 import type { Receipt } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintLetterhead, taxInvoiceMissing } from "@/components/print/PrintLetterhead";
+import { PrintLetterhead, taxInvoiceMissing, DOC_COLORS } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +55,8 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
         <PrintLetterhead
-          docTitle="ใบเสร็จรับเงิน / ใบกำกับภาษี"
-          docSubtitle="Receipt / Tax Invoice"
+          docTitle="ใบเสร็จรับเงิน/ใบกำกับภาษี"
+          docColor={DOC_COLORS.receipt}
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{rc.code}</span> },
             { label: "วันที่", value: rc.issue_date },
