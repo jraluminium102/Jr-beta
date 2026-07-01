@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
+import { BillingProfiles } from "@/components/customers/BillingProfiles";
 import type { Customer } from "@/lib/types";
 
 // หน้างานของลูกค้า (จาก /api/jobs/search?customer_id=)
@@ -153,6 +154,9 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 <span className="shrink-0 mt-0.5 text-sky-700"><Icon name="info" size={16} /></span>
                 <span>เมื่อสร้างใบเสนอราคา ข้อมูลชุดนี้จะถูกคัดลอกไปฝัง (snapshot) ในเอกสาร — แก้ทะเบียนทีหลังไม่กระทบเอกสารเก่า</span>
               </div>
+
+              {/* นามออกบิล — ออกเอกสารได้หลายนาม (บุคคล/บริษัท) */}
+              <BillingProfiles customerId={sel.id} canWrite={canWrite} />
 
               {/* หน้างานของลูกค้า — เห็นว่ามีหลายหน้างานใต้ชื่อเดียว (ลูกค้าเก่า หน้างานใหม่) */}
               <div className="mt-5">
