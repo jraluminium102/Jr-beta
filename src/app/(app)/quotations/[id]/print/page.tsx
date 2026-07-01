@@ -6,7 +6,7 @@ import { bahtText } from "@/lib/baht-text";
 import { STATUS_LABEL, type Quotation } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintCustomerBlock } from "@/components/print/PrintLetterhead";
+import { PrintLetterhead } from "@/components/print/PrintLetterhead";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
@@ -49,53 +49,16 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
         className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0"
         style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}
       >
-        {/* ===== Header — matches genQuote qhead ===== */}
-        <div
-          className="flex justify-between items-start pb-4 mb-4"
-          style={{ borderBottom: "4px solid #b3151d" }}
-        >
-          {/* Company block (left) */}
-          <div>
-            {/* โลโก้จริงจากไฟล์ /jr-logo.png (crop ขอบขาวออกแล้ว) */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/jr-logo.png" alt="JR Aluminium" style={{ height: 34 }} />
-            <div className="mt-1.5 leading-relaxed" style={{ fontSize: 12 }}>
-              <span className="font-semibold" style={{ color: "#b3151d" }}>
-                {COMPANY.name}
-              </span>{" "}
-              ({COMPANY.branch})<br />
-              {COMPANY.address}<br />
-              เลขประจำตัวผู้เสียภาษี {COMPANY.taxId} · โทร. {COMPANY.phone}<br />
-              {COMPANY.website}
-            </div>
-          </div>
-
-          {/* Document info block (right) */}
-          <div className="text-right">
-            <div className="text-xl font-bold" style={{ color: "#7d0f15" }}>
-              ใบเสนอราคา
-            </div>
-            <table className="mt-2 ml-auto" style={{ fontSize: 12 }}>
-              <tbody>
-                <tr>
-                  <td className="text-right pr-3" style={{ color: "#6b7280" }}>เลขที่</td>
-                  <td className="font-mono font-semibold">{q.code}</td>
-                </tr>
-                <tr>
-                  <td className="text-right pr-3" style={{ color: "#6b7280" }}>วันที่</td>
-                  <td>{q.issue_date}</td>
-                </tr>
-                <tr>
-                  <td className="text-right pr-3" style={{ color: "#6b7280" }}>สถานะ</td>
-                  <td>{STATUS_LABEL[q.status]}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ===== Customer block — ฟอร์มบัญชีไทย (ใช้ร่วมกับใบวางบิล/ใบเสร็จ) ===== */}
-        <PrintCustomerBlock c={c} />
+        {/* ===== หัวเอกสารกลาง — ตัวเดียวกับใบวางบิล/ใบเสร็จ (ฟอร์มเดียวกันทุกเอกสาร) ===== */}
+        <PrintLetterhead
+          docTitle="ใบเสนอราคา"
+          customer={c}
+          infoRows={[
+            { label: "เลขที่", value: <span className="font-mono font-semibold">{q.code}</span> },
+            { label: "วันที่", value: q.issue_date },
+            { label: "สถานะ", value: STATUS_LABEL[q.status] },
+          ]}
+        />
 
         {/* ===== Item table — matches genQuote qt ===== */}
         <table className="w-full border-collapse" style={{ fontSize: 13 }}>

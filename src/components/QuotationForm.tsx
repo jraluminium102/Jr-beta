@@ -28,6 +28,10 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
   const [activeJobsLoading, setActiveJobsLoading] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
+  // (0069) นามออกบิล ของลูกค้าที่เลือก
+  type BProf = { id: number; bill_name: string; kind: string; branch: string; is_default: boolean };
+  const [billingProfiles, setBillingProfiles] = useState<BProf[]>([]);
+  const [billingProfileId, setBillingProfileId] = useState<number | "">("");
   const [calcCustomer, setCalcCustomer] = useState("");
   const [calcMatched, setCalcMatched] = useState(false); // preselect ให้แล้ว (จาก calc)
   const [calcExact, setCalcExact] = useState(false); // มั่นใจ (customer_id ตรง/ชื่อตรงเป๊ะรายเดียว) → เขียว; เดา → เหลือง
@@ -123,6 +127,24 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     return () => { cancelled = true; };
   }, [customerId]);
 
+  // (0069) โหลดนามออกบิลของลูกค้า → default = นามหลัก
+  useEffect(() => {
+    setBillingProfiles([]); setBillingProfileId("");
+    if (!customerId) return;
+    let cancelled = false;
+    fetch(`/api/billing-profiles?customer_id=${customerId}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const ps: BProf[] = Array.isArray(json?.data) ? json.data : [];
+        setBillingProfiles(ps);
+        const def = ps.find((p) => p.is_default) ?? ps[0];
+        setBillingProfileId(def ? def.id : "");
+      })
+      .catch(() => { if (!cancelled) setBillingProfiles([]); });
+    return () => { cancelled = true; };
+  }, [customerId]);
+
   const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: disc, wht_rate: wht }), [items, vat, disc, wht]);
 
   const setItem = (i: number, k: keyof Item, v: string | number) =>
@@ -170,6 +192,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           wht_rate: wht,
           note,
           ...(selectedJobId ? { job_id: selectedJobId } : {}),
+          ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -213,6 +236,21 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             </div>
             {customers.length === 0 && (
               <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู "ทะเบียนลูกค้า" ก่อน</p>
+            )}
+            {/* (0069) เลือกนามออกบิล — หัวเอกสารจะเป็นนามนี้ · แก้/เพิ่มนามได้ที่ทะเบียนลูกค้า */}
+            {customerId !== "" && billingProfiles.length > 0 && (
+              <label className="block mt-3">
+                <span className="text-xs font-medium text-ink-3">ออกเอกสารในนาม</span>
+                <select value={billingProfileId} onChange={(e) => setBillingProfileId(e.target.value ? Number(e.target.value) : "")}
+                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
+                  {billingProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.bill_name} {p.kind === "COMPANY" ? `(นิติบุคคล${p.branch ? " · " + p.branch : ""})` : "(บุคคล)"}{p.is_default ? " · นามหลัก" : ""}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-ink-3 mt-1 block">หัวเอกสารจะเป็นนามนี้ · เพิ่ม/แก้นามได้ที่ทะเบียนลูกค้า</span>
+              </label>
             )}
             {calcCustomer && calcMatched && calcExact && (
               <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">
