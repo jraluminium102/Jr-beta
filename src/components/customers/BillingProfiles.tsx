@@ -9,6 +9,7 @@ export type BillingProfile = {
   tax_id: string;
   branch: string;
   address: string;
+  ship_address: string;
   contact_person: string;
   phone: string;
   is_default: boolean;
@@ -17,7 +18,7 @@ export type BillingProfile = {
 type FormState = Omit<BillingProfile, "id" | "is_default"> & { id?: number; is_default?: boolean };
 const EMPTY: FormState = {
   kind: "INDIVIDUAL", bill_name: "", tax_id: "", branch: "สำนักงานใหญ่",
-  address: "", contact_person: "", phone: "",
+  address: "", ship_address: "", contact_person: "", phone: "",
 };
 
 // จัดการ "นามออกบิล" ของลูกค้า 1 คน → ออกเอกสารได้หลายนาม (บุคคล/บริษัท)
@@ -130,13 +131,22 @@ export function BillingProfiles({ customerId, canWrite }: { customerId: number; 
           </div>
           <input value={form.bill_name} onChange={(e) => setForm({ ...form, bill_name: e.target.value })}
             placeholder={form.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อ-สกุล"} className={inp} />
-          <div className="grid grid-cols-2 gap-2">
-            <input value={form.tax_id} onChange={(e) => setForm({ ...form, tax_id: e.target.value })} placeholder="เลขผู้เสียภาษี 13 หลัก" className={inp} />
-            {form.kind === "COMPANY" && (
-              <input value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} placeholder="สำนักงานใหญ่ / สาขาที่ 00001" className={inp} />
-            )}
-          </div>
-          <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="ที่อยู่ (ตามภาษี)" className={inp} />
+          <input value={form.tax_id} onChange={(e) => setForm({ ...form, tax_id: e.target.value })}
+            placeholder={form.kind === "COMPANY" ? "เลขผู้เสียภาษี 13 หลัก" : "เลขบัตรประชาชน/ผู้เสียภาษี (ถ้ามี)"} className={inp} />
+          {form.kind === "COMPANY" && (
+            <div className="flex items-center gap-3 text-sm flex-wrap">
+              <label className="flex items-center gap-1.5"><input type="radio" checked={!form.branch.startsWith("สาขา")} onChange={() => setForm({ ...form, branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
+              <label className="flex items-center gap-1.5"><input type="radio" checked={form.branch.startsWith("สาขา")} onChange={() => setForm({ ...form, branch: "สาขาที่ " })} /> สาขา</label>
+              {form.branch.startsWith("สาขา") && (
+                <input value={form.branch.replace(/\D/g, "")} onChange={(e) => setForm({ ...form, branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })}
+                  placeholder="รหัสสาขา เช่น 00001" className={`${inp} max-w-[170px]`} />
+              )}
+            </div>
+          )}
+          <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2}
+            placeholder="ที่อยู่ออกบิล (ตามภาษี — ขึ้นหัวเอกสาร)" className={`${inp} resize-none`} />
+          <textarea value={form.ship_address} onChange={(e) => setForm({ ...form, ship_address: e.target.value })} rows={2}
+            placeholder="ที่อยู่จัดส่ง/หน้างาน (ถ้าต่างจากที่อยู่บิล — ไม่บังคับ)" className={`${inp} resize-none`} />
           <div className="grid grid-cols-2 gap-2">
             <input value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} placeholder="ผู้ติดต่อ" className={inp} />
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="เบอร์โทร" className={inp} />

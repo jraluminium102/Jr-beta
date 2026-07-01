@@ -23,6 +23,7 @@ export async function PATCH(req: Request, { params }: Params) {
   if (typeof body.tax_id === "string") upd.tax_id = body.tax_id.trim();
   if (typeof body.branch === "string") upd.branch = body.branch.trim() || "สำนักงานใหญ่";
   if (typeof body.address === "string") upd.address = body.address;
+  if (typeof body.ship_address === "string") upd.ship_address = body.ship_address;
   if (typeof body.contact_person === "string") upd.contact_person = body.contact_person;
   if (typeof body.phone === "string") upd.phone = body.phone;
 

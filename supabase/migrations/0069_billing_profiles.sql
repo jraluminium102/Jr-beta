@@ -20,6 +20,7 @@ create table if not exists public.billing_profiles (
   tax_id         text not null default '',                      -- เลขผู้เสียภาษี 13 หลัก
   branch         text not null default 'สำนักงานใหญ่',          -- 'สำนักงานใหญ่' หรือ 'สาขาที่ NNNNN'
   address        text not null default '',                      -- ที่อยู่ตามภาษี (ออกบิล)
+  ship_address   text not null default '',                      -- ที่อยู่จัดส่ง/หน้างาน (แยกจากที่อยู่บิล)
   contact_person text not null default '',                      -- ผู้ติดต่อ (แยกจากชื่อบิล)
   phone          text not null default '',
   is_default     boolean not null default false,                -- นามหลัก (auto-เลือกตอนออกเอกสาร)
@@ -27,6 +28,9 @@ create table if not exists public.billing_profiles (
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+
+-- เผื่อรันเวอร์ชันก่อนแล้ว (ยังไม่มี ship_address) — เพิ่มแบบ idempotent
+alter table public.billing_profiles add column if not exists ship_address text not null default '';
 
 create index if not exists billing_profiles_customer_idx on public.billing_profiles(customer_id);
 -- 1 นามหลัก ต่อลูกค้า (partial unique)
