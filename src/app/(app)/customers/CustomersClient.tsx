@@ -13,6 +13,9 @@ type CustJob = {
 };
 
 const EMPTY = { name: "", job: "", address: "", tax_id: "", line_id: "", phone: "", contact_person: "" };
+// นามออกบิลเริ่มต้น (นามหลัก) — กรอกได้ตั้งแต่ตอนสร้างลูกค้าใหม่ (นิติบุคคล/สาขา/ที่อยู่จัดส่ง)
+type BillingDraft = { kind: "INDIVIDUAL" | "COMPANY"; bill_name: string; branch: string; ship_address: string };
+const EMPTY_BILLING: BillingDraft = { kind: "INDIVIDUAL", bill_name: "", branch: "สำนักงานใหญ่", ship_address: "" };
 
 export default function CustomersClient({ initial, canWrite }: { initial: Customer[]; canWrite: boolean }) {
   const [list, setList] = useState<Customer[]>(initial);
@@ -21,6 +24,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [billing, setBilling] = useState<BillingDraft>(EMPTY_BILLING);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   // หน้างานของลูกค้าที่เลือก
@@ -43,7 +47,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
     [c.name, c.job, c.phone, c.line_id].join(" ").toLowerCase().includes(q.toLowerCase())
   );
 
-  function startAdd() { setForm(EMPTY); setEditId(null); setAdding(true); setSel(null); setErr(""); }
+  function startAdd() { setForm(EMPTY); setBilling(EMPTY_BILLING); setEditId(null); setAdding(true); setSel(null); setErr(""); }
   function startEdit(c: Customer) {
     setForm({ name: c.name, job: c.job, address: c.address, tax_id: c.tax_id, line_id: c.line_id, phone: c.phone, contact_person: c.contact_person });
     setEditId(c.id); setAdding(true); setErr("");
@@ -65,10 +69,46 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
       setList(list.map((c) => (c.id === editId ? json.data : c)));
       setSel(json.data);
     } else {
-      setList([json.data, ...list]);
-      setSel(json.data);
+      // ลูกค้าใหม่ — trigger สร้าง "นามหลัก" ให้แล้ว · อัปเดตด้วยข้อมูลนิติบุคคล/สาขา/ที่อยู่จัดส่งที่กรอก
+      const newC = json.data;
+      await syncDefaultBilling(newC?.id);
+      setList([newC, ...list]);
+      setSel(newC);
     }
-    setAdding(false); setEditId(null); setForm(EMPTY);
+    setAdding(false); setEditId(null); setForm(EMPTY); setBilling(EMPTY_BILLING);
+  }
+
+  // อัปเดต "นามหลัก" ที่ trigger สร้างให้ตอนสร้างลูกค้าใหม่ ด้วยข้อมูลนิติบุคคล/สาขา/ที่อยู่จัดส่ง
+  // เลขภาษี/ที่อยู่บิล/ผู้ติดต่อ/เบอร์ ใช้จากฟอร์มลูกค้าด้านบน
+  async function syncDefaultBilling(customerId?: number) {
+    if (!customerId) return;
+    const bbody = {
+      kind: billing.kind,
+      bill_name: billing.bill_name.trim() || form.name.trim(),
+      tax_id: form.tax_id,
+      branch: billing.kind === "COMPANY" ? (billing.branch.trim() || "สำนักงานใหญ่") : "สำนักงานใหญ่",
+      address: form.address,
+      ship_address: billing.ship_address,
+      contact_person: form.contact_person,
+      phone: form.phone,
+    };
+    try {
+      const r = await fetch(`/api/billing-profiles?customer_id=${customerId}`);
+      const j = await r.json().catch(() => null);
+      const rows = (j?.data ?? []) as { id: number; is_default: boolean }[];
+      const def = rows.find((p) => p.is_default) ?? rows[0];
+      if (def) {
+        await fetch(`/api/billing-profiles/${def.id}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bbody),
+        });
+      } else {
+        // เผื่อ trigger ยังไม่ถูกติดตั้ง — สร้างนามหลักเอง
+        await fetch(`/api/billing-profiles`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...bbody, customer_id: customerId, is_default: true }),
+        });
+      }
+    } catch { /* นามออกบิลแก้ทีหลังในรายละเอียดลูกค้าได้ */ }
   }
 
   return (
@@ -119,6 +159,46 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 <FormField label="Line" value={form.line_id} onChange={(v) => setForm({ ...form, line_id: v })} />
                 <FormField label="เบอร์โทร" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
               </div>
+
+              {/* นามออกบิล (นามหลัก) — กรอกได้ตั้งแต่สร้างลูกค้าใหม่ · เพิ่มนามอื่นภายหลังในรายละเอียดลูกค้า */}
+              {editId == null && (
+                <div className="mt-4 rounded-xl border border-brand/20 bg-brand/5 p-3.5 space-y-2.5">
+                  <div className="text-sm font-semibold text-brand-dark flex items-center gap-1.5">
+                    <Icon name="receipt" size={15} /> นามออกบิล (นามหลัก)
+                  </div>
+                  <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm">
+                    {(["INDIVIDUAL", "COMPANY"] as const).map((k) => (
+                      <button key={k} type="button" onClick={() => setBilling({ ...billing, kind: k })}
+                        className={`px-3 py-1.5 ${billing.kind === k ? "bg-brand text-white" : "text-ink-2"}`}>
+                        {k === "INDIVIDUAL" ? "บุคคลธรรมดา" : "นิติบุคคล"}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">ชื่อที่ออกบิล {billing.bill_name.trim() ? "" : "(เว้นว่าง = ใช้ชื่อลูกค้า)"}</span>
+                    <input value={billing.bill_name} onChange={(e) => setBilling({ ...billing, bill_name: e.target.value })}
+                      placeholder={billing.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อ-สกุล"}
+                      className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none text-sm" />
+                  </label>
+                  {billing.kind === "COMPANY" && (
+                    <div className="flex items-center gap-3 text-sm flex-wrap">
+                      <label className="flex items-center gap-1.5"><input type="radio" checked={!billing.branch.startsWith("สาขา")} onChange={() => setBilling({ ...billing, branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
+                      <label className="flex items-center gap-1.5"><input type="radio" checked={billing.branch.startsWith("สาขา")} onChange={() => setBilling({ ...billing, branch: "สาขาที่ " })} /> สาขา</label>
+                      {billing.branch.startsWith("สาขา") && (
+                        <input value={billing.branch.replace(/\D/g, "")} onChange={(e) => setBilling({ ...billing, branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })}
+                          placeholder="รหัสสาขา เช่น 00001" className="glass-soft rounded-lg px-3 py-2 outline-none text-sm max-w-[170px]" />
+                      )}
+                    </div>
+                  )}
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">ที่อยู่จัดส่ง/หน้างาน (ถ้าต่างจากที่อยู่บิล — ไม่บังคับ)</span>
+                    <textarea value={billing.ship_address} onChange={(e) => setBilling({ ...billing, ship_address: e.target.value })} rows={2}
+                      className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none text-sm resize-none" />
+                  </label>
+                  <p className="text-[11px] text-ink-3">เลขภาษี/ที่อยู่บิล/ผู้ติดต่อ ใช้จากช่องด้านบน · เพิ่มนามออกบิลอื่นได้ภายหลังในรายละเอียดลูกค้า</p>
+                </div>
+              )}
+
               {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
               <div className="flex gap-2 mt-4">
                 <button onClick={save} disabled={busy} className="press rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
