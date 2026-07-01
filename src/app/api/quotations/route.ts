@@ -45,9 +45,28 @@ export async function POST(req: Request) {
     .eq("id", body.customer_id)
     .single<Customer>();
   if (cErr || !cust) return fail("ไม่พบลูกค้า", 404);
-  const snapshot = {
+
+  // เลือก "นามออกบิล": ที่ระบุ (billing_profile_id) → นามหลัก → ข้อมูลลูกค้า (fallback ไม่ให้ snapshot ว่าง)
+  const sbp = supabase as unknown as { from: (t: string) => any };
+  const bpId = Number(body.billing_profile_id) || null;
+  const bpCols = "bill_name,address,tax_id,branch,kind,contact_person,phone";
+  type Prof = { bill_name: string; address: string; tax_id: string; branch: string; kind: string; contact_person: string; phone: string };
+  let billProfile: Prof | null = null;
+  if (bpId) {
+    const { data } = await sbp.from("billing_profiles").select(bpCols).eq("id", bpId).eq("customer_id", cust.id).maybeSingle();
+    billProfile = (data as Prof) ?? null;
+  }
+  if (!billProfile) {
+    const { data } = await sbp.from("billing_profiles").select(bpCols).eq("customer_id", cust.id).eq("is_default", true).eq("is_active", true).maybeSingle();
+    billProfile = (data as Prof) ?? null;
+  }
+  const snapshot = billProfile ? {
+    name: billProfile.bill_name, job: cust.job, address: billProfile.address, tax_id: billProfile.tax_id,
+    branch: billProfile.branch, kind: billProfile.kind, line_id: cust.line_id,
+    phone: billProfile.phone || cust.phone, contact_person: billProfile.contact_person || cust.contact_person,
+  } : {
     name: cust.name, job: cust.job, address: cust.address, tax_id: cust.tax_id,
-    line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
+    kind: "INDIVIDUAL", line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
   };
 
   // 2) ผูกใบเสนอกับงาน (job) ของลูกค้า — ไม่สร้างงานใหม่
@@ -101,6 +120,7 @@ export async function POST(req: Request) {
       code,
       customer_id: cust.id,
       job_id: jobId,
+      billing_profile_id: billProfile ? bpId : null,
       customer_snapshot: snapshot,
       issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
       status: "draft",

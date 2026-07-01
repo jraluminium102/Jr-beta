@@ -10,6 +10,8 @@ const SnapSchema = z.object({
   job: z.string().optional().default(""),
   address: z.string().optional().default(""),
   tax_id: z.string().optional().default(""),
+  branch: z.string().optional(),   // (0069) สำนักงานใหญ่/สาขา — แก้/คงสาขาได้ (identity ล้วน)
+  kind: z.string().optional(),
   contact_person: z.string().optional().default(""),
   phone: z.string().optional().default(""),
 }).strict();

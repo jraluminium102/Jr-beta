@@ -9,6 +9,8 @@ export type CustomerSnapshot = {
   job?: string;
   address?: string;
   tax_id?: string;
+  branch?: string;   // (0069) สำนักงานใหญ่/สาขาที่ NNNNN — โชว์เฉพาะนิติบุคคล
+  kind?: string;     // INDIVIDUAL | COMPANY
   contact_person?: string;
   phone?: string;
 };
@@ -21,7 +23,10 @@ export function PrintCustomerBlock({ c }: { c: CustomerSnapshot }) {
     <div className="mb-4" style={{ fontSize: 13 }}>
       <span className="font-bold" style={{ color: "#b3151d" }}>ลูกค้า</span>
       <div className="mt-0.5" style={{ lineHeight: 1.55 }}>
-        <div className="font-semibold" style={{ color: "#1f2937" }}>{c.name || "—"}</div>
+        <div className="font-semibold" style={{ color: "#1f2937" }}>
+          {c.name || "—"}
+          {c.kind === "COMPANY" && c.branch ? <span style={{ fontWeight: 400 }}> ({c.branch})</span> : null}
+        </div>
         {c.address && <div style={{ color: "#374151" }}>{c.address}</div>}
         {c.tax_id && <div style={{ color: "#374151" }}>เลขประจำตัวผู้เสียภาษี {c.tax_id}</div>}
         {c.job && <div style={{ color: "#6b7280", fontSize: 12 }}>งาน: {c.job}</div>}

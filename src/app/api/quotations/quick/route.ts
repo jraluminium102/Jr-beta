@@ -79,9 +79,19 @@ export const POST = withRoute(async (req: Request) => {
     .single();
   if (cErr || !cust) return err("ไม่พบลูกค้า", 404);
   const custTyped = cust as Customer;
-  const snapshot = {
+
+  // ใช้ "นามหลัก" ของลูกค้าถ้ามี (สอดคล้องกับใบเสนอปกติ + ได้ branch) · ไม่มี → ข้อมูลลูกค้า
+  const { data: dp } = await sb.from("billing_profiles")
+    .select("bill_name,address,tax_id,branch,kind,contact_person,phone")
+    .eq("customer_id", custTyped.id).eq("is_default", true).eq("is_active", true).maybeSingle();
+  const p = dp as { bill_name: string; address: string; tax_id: string; branch: string; kind: string; contact_person: string; phone: string } | null;
+  const snapshot = p ? {
+    name: p.bill_name, job: custTyped.job, address: p.address, tax_id: p.tax_id,
+    branch: p.branch, kind: p.kind, line_id: custTyped.line_id,
+    phone: p.phone || custTyped.phone, contact_person: p.contact_person || custTyped.contact_person,
+  } : {
     name: custTyped.name, job: custTyped.job, address: custTyped.address, tax_id: custTyped.tax_id,
-    line_id: custTyped.line_id, phone: custTyped.phone, contact_person: custTyped.contact_person,
+    kind: "INDIVIDUAL", line_id: custTyped.line_id, phone: custTyped.phone, contact_person: custTyped.contact_person,
   };
 
   // 3) สร้าง note มี marker เพื่อระบุว่าใบนี้มาจากเช็คลิสต์

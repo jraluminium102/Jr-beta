@@ -10,7 +10,7 @@ export type StockMoveType = "in" | "out" | "adjust";
 
 type CustomerSnapshot = Pick<
   Customer, "name" | "job" | "address" | "tax_id" | "line_id" | "phone" | "contact_person"
->;
+> & { branch?: string; kind?: string };  // (0069) นามออกบิล: kind=INDIVIDUAL/COMPANY, branch=สนญ./สาขา (optional เผื่อใบเก่า)
 
 export interface BillingInstallment {
   id?: number;
