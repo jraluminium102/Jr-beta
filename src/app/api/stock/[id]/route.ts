@@ -20,22 +20,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     .eq("stock_item_id", params.id)
     .order("created_at", { ascending: false }).limit(50);
 
-  const canViewCost = ["ADMIN", "ACCOUNTING"].includes(profile.role);
-  const { data: prices } = canViewCost
-    ? await supabase.from("stock_prices").select("*")
-        .eq("stock_item_id", params.id)
-        .order("effective_date", { ascending: false }).order("id", { ascending: false }).limit(30)
-    : { data: [] };
+  const { data: prices } = await supabase
+    .from("stock_prices").select("*")
+    .eq("stock_item_id", params.id)
+    .order("effective_date", { ascending: false }).order("id", { ascending: false }).limit(30);
 
-  // ฝ่ายสโตร์ไม่เห็นราคา/ต้นทุน — ตัดฝั่ง server (กันเปิด devtools ดู)
-  let outItem = item as Record<string, unknown>;
-  let outMoves = (moves ?? []) as Record<string, unknown>[];
-  if (!canViewCost) {
-    outItem = { ...outItem, unit_cost: 0, price_per_kg: 0 };
-    outMoves = outMoves.map((m) => ({ ...m, unit_cost: 0, total_price: 0 }));
-  }
-
-  return ok({ ...outItem, stock_moves: outMoves, stock_prices: prices ?? [] });
+  return ok({ ...item, stock_moves: moves ?? [], stock_prices: prices ?? [] });
 }
 
 // PATCH /api/stock/[id]  → แก้ข้อมูลวัสดุ (ไม่รวมราคา — ใช้ /price เพื่อเก็บประวัติ)

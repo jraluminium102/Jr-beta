@@ -26,10 +26,6 @@ export async function GET(req: Request) {
 
   const { data, error } = await query;
   if (error) return fail(error.message, 500);
-  // ฝ่ายสโตร์ (ไม่ใช่ ADMIN/ACCOUNTING) ไม่เห็นราคา/ต้นทุน — ตัดออกฝั่ง server ด้วย ไม่ใช่แค่ซ่อน UI
-  if (!["ADMIN", "ACCOUNTING"].includes(profile.role)) {
-    for (const it of (data ?? []) as Record<string, unknown>[]) { it.unit_cost = 0; it.price_per_kg = 0; }
-  }
   return ok(data);
 }
 

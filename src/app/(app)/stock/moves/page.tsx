@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
@@ -30,8 +29,8 @@ type Row = {
 };
 
 export default async function StockMovesPage({ searchParams }: { searchParams: { m?: string; type?: string } }) {
-  const profile = await getProfile();
-  const canViewCost = ["ADMIN", "ACCOUNTING"].includes(profile?.role ?? ""); // ฝ่ายสโตร์ไม่เห็นราคา
+  // การซ่อนราคาจากฝ่ายสโตร์ยังไม่เปิด — ตอนนี้ทุกคนเห็นราคา (ไว้สร้างแอคเคาท์สโตร์ค่อยกลับมาตั้ง role)
+  const canViewCost = true;
   const { y, m0 } = parseMonth(searchParams.m);
   const start = `${y}-${pad2(m0 + 1)}-01`;
   const nextY = m0 === 11 ? y + 1 : y;

@@ -5,11 +5,12 @@ import type { StockItem, StockCategory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// สโตร์/ผลิต บันทึกได้ (0073) · อัปเดต+เห็นราคา = บัญชี/แอดมิน
-// ฝ่ายสโตร์ (PRODUCTION) รับเข้า/เบิกออกได้ แต่ "ไม่เห็นราคา/ต้นทุน"
+// สโตร์/ผลิต บันทึกได้ (0073) · อัปเดตราคา = บัญชี/แอดมิน
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 const PRICE_WRITE = ["ADMIN", "ACCOUNTING"];
-const COST_VIEW = ["ADMIN", "ACCOUNTING"];
+// การซ่อนราคาจากฝ่ายสโตร์ = ยังไม่เปิด (ตอนนี้ทุกคนที่เข้าหน้านี้เห็นราคา)
+// ไว้สร้างแอคเคาท์สโตร์ (role เฉพาะ) แล้วค่อยตั้ง COST_VIEW ให้ไม่รวม role นั้น
+const COST_VIEW: string[] | null = null; // null = เห็นราคาได้ทุกคน
 
 export default async function StockPage() {
   const profile = await getProfile();
@@ -29,7 +30,7 @@ export default async function StockPage() {
       categories={(cats ?? []) as StockCategory[]}
       canWrite={STORE_WRITE.includes(role)}
       canPrice={PRICE_WRITE.includes(role)}
-      canViewCost={COST_VIEW.includes(role)}
+      canViewCost={COST_VIEW === null ? true : COST_VIEW.includes(role)}
       isAdmin={role === "ADMIN"}
     />
   );
