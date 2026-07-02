@@ -180,9 +180,18 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     const cur: string = (A.handleType && avail.includes(A.handleType)) ? A.handleType : (avail.find((id) => A[id]) || "none");
     const chips = [{ val: "none", label: "มือจับมาตรฐาน (ฟรี)" }, ...avail.map((id) => ({ val: id, label: HANDLE_LABELS[id] || id }))];
     const onPick = (v: string) => {
+      const isDoorish = /ประตู|บานเปิด|PC|สวิง|โซลิด|เปิด/.test(prod.name || "");
+      const isAwn = /กระทุ้ง/.test(prod.name || "");
       setAddons((old) => {
         const next: AddonsMap = { ...old, handleType: v };
         avail.forEach((id) => { if (id !== v) next[id] = ""; });
+        // เลือก Cmech → ตั้ง default (แบบ ฝัง · ประตู/หน้าต่างตามรุ่น · สี White) ให้คิดราคาได้ทันที
+        if (v === "cmech" && !next.cmech) {
+          next.cmechStyle = next.cmechStyle || "embed";
+          next.cmechDoor = next.cmechDoor || (isDoorish ? "door" : "window");
+          next.cmechColor = next.cmechColor || "White";
+          next.cmech = isAwn ? "awn_normal" : `${next.cmechStyle}_${next.cmechDoor}_normal`;
+        }
         return next;
       });
     };
@@ -514,16 +523,19 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     );
   }
   if (ad === "solid_panel") {
-    const g = A.solid_panel || { type: "none", w: 0, h: 0.8 };
+    const g = A.solid_panel || {};
+    const h = g.h ?? 0.8; // default 0.8 ม. (ตรงเครื่องเดิม) — กว้าง = กว้างบานอัตโนมัติ ไม่ต้องกรอก
     return (
-      <Field label="แผ่นทึบล่าง" hint="(อลูลูกฟูก/คอมโพสิต)">
+      <Field label="แผ่นทึบล่าง" hint="(กว้าง = กว้างบานอัตโนมัติ · กรอกแค่ความสูง)">
         <div className="space-y-2">
-          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "corr", label: "อลูลูกฟูก 3,500/ตร.ม." }, { val: "comp", label: "คอมโพสิต 3,300/ตร.ม." }]} value={g.type || "none"} onChange={(v) => setObj("solid_panel", { type: v })} />
+          {/* เลือกชนิด → set สูง 0.8 ทันที เพื่อให้คิดราคาเลย (กว้างมาจากกว้างบานใน engine) */}
+          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "corr", label: "อลูลูกฟูก 3,500/ตร.ม." }, { val: "comp", label: "คอมโพสิต 3,300/ตร.ม." }]}
+            value={g.type || "none"}
+            onChange={(v) => setObj("solid_panel", v === "none" ? { type: "none" } : { type: v, h })} />
           {g.type && g.type !== "none" && (
-            <div className="grid grid-cols-2 gap-2">
-              <NumberInput value={g.w || 0} onChange={(v) => setObj("solid_panel", { w: v })} placeholder="กว้าง (ม. ว่าง=กว้างบาน)" step={0.1} />
-              <NumberInput value={g.h ?? 0.8} onChange={(v) => setObj("solid_panel", { h: v })} placeholder="สูงแผ่นล่าง (ม.)" step={0.1} />
-            </div>
+            <Field label="ความสูงแผ่นล่าง (ม.)" hint="· เว้น = 0.8 ม.">
+              <NumberInput value={h} onChange={(v) => setObj("solid_panel", { h: v || 0.8 })} step={0.1} />
+            </Field>
           )}
         </div>
       </Field>
@@ -805,18 +817,45 @@ function renderHandleModel(cur: string, prod: any, A: AddonsMap, setAddons: (fn:
     // index ด้วย string จาก Object.keys() ตี type literal ที่ tsc อนุมานจาก engine.mjs แคบเกินจริง (ตัว .mjs ไม่มี .d.ts) — cast เป็น Record ที่นี่จุดเดียว
     const tiers = CMECH_TIERS as Record<string, { p: number; l: string }>;
     const isAwn = /กระทุ้ง/.test(prod.name || "");
-    const opts = Object.keys(tiers).filter((k) => (isAwn ? k.startsWith("awn") : !k.startsWith("awn")));
+    // สี Cmech 6 สี (ตรงเครื่องเดิม CMECH_COLORS) — สีชุบพิเศษ (ไม่ใช่ ขาว/ดำ) = ราคา special
+    const COLORS = [
+      { k: "White", n: "White", sp: false }, { k: "Black", n: "Black", sp: false },
+      { k: "Silver", n: "Silver", sp: true }, { k: "Champagne", n: "Champagne", sp: true },
+      { k: "Gold", n: "Gold", sp: true }, { k: "Bronze", n: "Bronze", sp: true },
+    ];
+    // แบบ ฝัง/เมโทร (awn ไม่มีแบบ) · ประตู/หน้าต่าง (default door สำหรับรุ่นประตู/บานเปิด) · สี → normal/special
+    const isDoorish = /ประตู|บานเปิด|PC|สวิง|โซลิด|เปิด/.test(prod.name || "");
+    const style: string = A.cmechStyle || "embed";
+    const dw: string = A.cmechDoor || (isDoorish ? "door" : "window");
+    const color: string = A.cmechColor || "White";
+    const grade = COLORS.find((c) => c.k === color)?.sp ? "special" : "normal";
+    const tierKey = isAwn ? `awn_${grade}` : `${style}_${dw}_${grade}`;
+    // sync tier key เข้า A.cmech (engine คิดเงินจาก key นี้) ทุกครั้งที่เลือก
+    const apply = (patch: Record<string, string>) => {
+      setAddons((old) => {
+        const st = patch.cmechStyle ?? (old.cmechStyle || "embed");
+        const d = patch.cmechDoor ?? (old.cmechDoor || dw);
+        const col = patch.cmechColor ?? (old.cmechColor || "White");
+        const gr = COLORS.find((c) => c.k === col)?.sp ? "special" : "normal";
+        const key = isAwn ? `awn_${gr}` : `${st}_${d}_${gr}`;
+        return { ...old, ...patch, cmech: key };
+      });
+    };
+    const priced = tiers[tierKey];
     return (
-      <select
-        value={A.cmech || ""}
-        onChange={(e) => set("cmech", e.target.value)}
-        className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
-      >
-        <option value="">— ไม่ใส่ —</option>
-        {opts.map((k) => (
-          <option key={k} value={k}>{tiers[k].l} · {fmt(tiers[k].p)}</option>
-        ))}
-      </select>
+      <div className="space-y-2">
+        {!isAwn && (
+          <>
+            <ChipRow items={[{ val: "embed", label: "ฝัง" }, { val: "metro", label: "เมโทร" }]} value={style} onChange={(v) => apply({ cmechStyle: v })} />
+            <ChipRow items={[{ val: "door", label: "ประตู (2 ฝั่ง)" }, { val: "window", label: "หน้าต่าง (1 ฝั่ง)" }]} value={dw} onChange={(v) => apply({ cmechDoor: v })} />
+          </>
+        )}
+        <ChipRow items={COLORS.map((c) => ({ val: c.k, label: c.n + (c.sp ? " ✦" : "") }))} value={color} onChange={(v) => apply({ cmechColor: v })} />
+        <p className="text-[11px] text-ink-3">
+          {priced ? `${priced.l} · ${fmt(priced.p)} บ.` : ""}{" "}
+          <span className="opacity-70">(✦ = ชุบพิเศษ ราคาสูงกว่า)</span>
+        </p>
+      </div>
     );
   }
   if (cur === "stainless") {
