@@ -329,6 +329,19 @@ export default function QueuePage() {
   const pendingRows = useMemo(() => list.filter((e) => !e.queue_date), [list]);
   const scheduledRows = useMemo(() => list.filter((e) => !!e.queue_date), [list]);
 
+  // แก้บั๊ก "เดือน 7 ขึ้นลูกค้าเดือน 6": API ยกคิวเดือนก่อนที่ยังไม่ปิดมาด้วย (กันงานค้างหาย)
+  // → แยกคิวที่วันก่อนวันแรกของเดือนที่ดู เป็นกล่อง "ค้าง/เลยกำหนด" ไม่ให้สร้าง section วันเดือนก่อนปนในเดือนนี้
+  //   เมื่อค้นวันเจาะจง (filterDate) ไม่แยก — โชว์วันนั้นปกติ
+  const monthStart = `${filterMonth}-01`;
+  const overdueRows = useMemo(
+    () => (filterDate ? [] : scheduledRows.filter((e) => (e.queue_date as string) < monthStart)),
+    [scheduledRows, monthStart, filterDate]
+  );
+  const inMonthRows = useMemo(
+    () => (filterDate ? scheduledRows : scheduledRows.filter((e) => (e.queue_date as string) >= monthStart)),
+    [scheduledRows, monthStart, filterDate]
+  );
+
   // (ข้อ 3) จันทร์แต่ละสัปดาห์ของเดือนที่ดู (ไว้ทำปุ่มเลื่อน)
   const weekMondays = useMemo(() => {
     if (!filterMonth) return [] as string[];
@@ -353,13 +366,14 @@ export default function QueuePage() {
   // จัดกลุ่มตามวัน
   const byDay = useMemo(() => {
     const map = new Map<string, QueueEntry[]>();
-    scheduledRows.forEach((e) => {
+    // ใช้เฉพาะคิวในเดือนที่ดู (คิวเดือนก่อนไปอยู่กล่อง "ค้าง/เลยกำหนด")
+    inMonthRows.forEach((e) => {
       const d = e.queue_date!;
       if (!map.has(d)) map.set(d, []);
       map.get(d)!.push(e);
     });
     return map;
-  }, [scheduledRows]);
+  }, [inMonthRows]);
 
   // รวมคิว + อยู่ออฟฟิศประจำ + วันลา ของวันนั้น เรียงตาม "เวลา" ก่อน (เซลล์เป็น tiebreak)
   // office ประจำ = แสดงเฉพาะวันนี้เป็นต้นไป (ไม่ย้อนหลัง) และหลบให้คิว (ช่องที่มีคิวแล้วไม่โชว์ออฟฟิศ)
@@ -834,7 +848,7 @@ export default function QueuePage() {
                   </div>
                 </div>
               )
-            ) : (scheduleDays.length === 0 && (filterDow != null || filterDate || pendingRows.length === 0)) ? (
+            ) : (scheduleDays.length === 0 && overdueRows.length === 0 && (filterDow != null || filterDate || pendingRows.length === 0)) ? (
               <p className="text-center text-ink-3 py-12">
                 {filterDow != null || filterDate
                   ? 'ไม่มีคิว/วันลาในวันที่เลือก — กดล้างเพื่อดูทั้งหมด'
@@ -842,6 +856,25 @@ export default function QueuePage() {
               </p>
             ) : (
               <>
+            {/* กล่อง "ค้าง/เลยกำหนด" — คิวเดือนก่อนที่ยังไม่ปิด (แยกออกจากวันของเดือนนี้ · กันโผล่ปนข้ามเดือน) */}
+            {overdueRows.length > 0 && filterDow == null && !filterDate && (
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold">
+                    <Icon name="calendar" size={14} />
+                    ค้าง / เลยกำหนด (เดือนก่อน · ยังไม่ปิด)
+                    <span className="tabular-nums ml-1 bg-red-200/70 rounded-md px-1.5 py-0.5 text-xs">{overdueRows.length}</span>
+                  </span>
+                </div>
+                <div className="xl:hidden space-y-2">
+                  {overdueRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
+                </div>
+                <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
+                  <DesktopTable rows={overdueRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
+                </div>
+              </div>
+            )}
+
             {/* กล่อง "รอจัดคิว" — ซ่อนตอนกรองวัน (ข้อ 6) เพราะรอจัดคิวยังไม่มีวันนัด */}
             {pendingRows.length > 0 && filterDow == null && !filterDate && (
               <div className="mb-5">
