@@ -278,7 +278,13 @@ export function IssueReceiptButton({
     });
     const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
+    if (res.ok) {
+      setOpen(false);
+      // ออกใบเสร็จเสร็จ → เด้งไปหน้าใบเสร็จที่เพิ่งออกเลย
+      const rid = json?.data?.id;
+      if (rid) router.push(`/receipts/${rid}`);
+      else router.refresh();
+    }
     else setError(json?.error ?? "ออกใบเสร็จไม่สำเร็จ");
   }
 
