@@ -22,6 +22,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
+import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -75,14 +76,29 @@ export default function Calculator40Client() {
   const [fixedPanes, setFixedPanes] = useState(0); // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ลด movePanes ของมุ้ง + ขึ้นใบ
   const [profit, setProfit] = useState("100");
   const [sets, setSets] = useState("1");
+  // G4 ตู้: kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) — ตรง app.js calc() บรรทัด 217
+  const [kind, setKind] = useState<Record<string, string>>({});
+  const [faceColorCode, setFaceColorCode] = useState(""); // รหัสสีหน้าบานพิเศษ FT → ขึ้นใบ (opt.faceColorCode)
+  const [depth, setDepth] = useState(""); // ความลึกตู้ (ม.) — เว้น = prod.defDepth
+  const [shelves, setShelves] = useState(""); // จำนวนชั้น — เว้น = อัตโนมัติตามสูง
+  const [cabSides, setCabSides] = useState<Record<string, { on: boolean; mat: string }>>({
+    left: { on: true, mat: "alu" }, right: { on: true, mat: "alu" }, back: { on: false, mat: "alu" },
+  });
+  // G3 หลังคา: สีวัสดุมุง (label พิมพ์ลงใบ ไม่กระทบราคา) + หลังคาหลายช่วง (ขยัก · คิด computeCost ต่อช่วงจริง)
+  const [sheetColor, setSheetColor] = useState("");
+  const [roofSegs, setRoofSegs] = useState<{ w: number; h: number }[]>([]);
+  // G1 ผสมบาน — เพิ่มบานหลายชนิดในชุดเดียว (คิดราคาตามชนิดจริง สี/กระจกตามบานหลัก) ตรง app.js SUB_GROUPS/renderSubPanes
+  const [subs, setSubs] = useState<SubPane[]>([]);
 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
   const [keySeq, setKeySeq] = useState(1);
 
   const prod: any = (PRODUCTS as any)[prodId];
+  // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
+  // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
-    () => Object.values(PRODUCTS as Record<string, any>).filter((x: any) => x && x.group === group),
+    () => Object.values(PRODUCTS as Record<string, any>).filter((x: any) => x && x.group === group && !x.pickerHide),
     [group]
   );
   const todoList = useMemo(
@@ -104,6 +120,17 @@ export default function Calculator40Client() {
     setSpec(s);
     setAddons({}); // เปลี่ยนรุ่น → เคลียร์ของเสริม (ของเสริมผูกกับ addon id เฉพาะรุ่น)
     setFixedPanes(0);
+    // G4 kindOpts default ต่อ key (ตรง defCfg ของ mockup)
+    const k: Record<string, string> = {};
+    (x.kindOpts ?? []).forEach((ko: any) => { k[ko.key] = ko.def ?? (ko.opts?.[0]?.[0] ?? ""); });
+    setKind(k);
+    setFaceColorCode("");
+    setDepth("");
+    setShelves("");
+    setCabSides({ left: { on: true, mat: "alu" }, right: { on: true, mat: "alu" }, back: { on: false, mat: "alu" } });
+    setSheetColor("");
+    setRoofSegs([]);
+    setSubs([]); // เปลี่ยนรุ่น → เคลียร์บานย่อย (ผสมบานผูกกับบานหลักที่กำลังตั้งค่าอยู่)
   }
 
   // จำนวนบานเลื่อน/เปิดจริง (หักบานติดตาย) — ใช้เป็น default จำนวนบานมุ้ง (ตรง app.js c.p - c.fixedPanes)
@@ -115,9 +142,44 @@ export default function Calculator40Client() {
     setFixedPanes((v) => Math.max(0, Math.min(pCount - 1, v)));
   }, [p, prod]);
 
+  // แก้ spec[key] ที่ค้างค่าเดิมเมื่อ optsByMaterial กรองตัวเลือกออกไปแล้ว (เช่น เปลี่ยนผ้ามุ้ง → สีที่เคยเลือกไม่มีในผ้าใหม่)
+  // ตรง app.js ~1468: if (!opts.includes(c.spec[so.key])) c.spec[so.key] = def ?? opts[0]
+  useEffect(() => {
+    if (!prod?.specOpts?.length) return;
+    setSpec((s) => {
+      let changed = false;
+      const next = { ...s };
+      prod.specOpts.forEach((o: any) => {
+        const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
+        if (!opts.includes(next[o.key])) {
+          next[o.key] = o.def && opts.includes(o.def) ? o.def : opts[0];
+          changed = true;
+        }
+      });
+      return changed ? next : s;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [material, prod]);
+
+  // สีวัสดุมุงหลังคา (sheetColors) — auto เลือกสีแรกของวัสดุใหม่ ถ้าสีเดิมไม่มีในชุดสีของวัสดุนี้ ตรง app.js ~1251-1259
+  const roofSheetColors: { n: string; dot: string }[] = useMemo(() => {
+    if (!prod?.sheetColors || !material) return [];
+    let sc = prod.sheetColors[material];
+    if (typeof sc === "string") sc = (prod.sheetColorSets || {})[sc] || [];
+    return sc || [];
+  }, [prod, material]);
+  useEffect(() => {
+    if (!roofSheetColors.length) { setSheetColor(""); return; }
+    if (!roofSheetColors.some((x) => x.n === sheetColor)) setSheetColor(roofSheetColors[0].n);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roofSheetColors]);
+
   // คิดราคาสด
   const result = useMemo(() => {
     if (!prod) return null;
+    // ห้องกระจก (G6 composite) — engine.mjs ยังไม่มี composeRoom (mockup เป็น composer ใหญ่: ห้อง→ด้าน→ช่อง→บานซ้อน)
+    // computeCost(prod.composite) จะคืนทุน/ราคา = 0 เงียบๆ (ไม่ throw) ถ้าปล่อยผ่านจะกดเพิ่มใบเสนอราคาฟรีได้ → บล็อกไว้ก่อน
+    if (prod.composite) return { error: "ห้องกระจก (G6) กำลังพัฒนา — ยังคิดราคาอัตโนมัติไม่ได้ในเวอร์ชันนี้ กรุณาคิดราคาแยกทีละบาน/หลังคา/พื้นจากเมนู G1/G3 แล้วรวมเอง" } as any;
     try {
       const wCm = Number(w) || prod.defaults?.w || 200;
       const hCm = Number(h) || prod.defaults?.h || 200;
@@ -136,6 +198,14 @@ export default function Calculator40Client() {
       };
       if (glassType) opt.glassType = glassType;
       if (material) opt.material = material;
+      // G4 kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) → engine อ่าน opt[key] ตรง ๆ ตรง app.js calc() บรรทัด 217
+      (prod.kindOpts ?? []).forEach((ko: any) => { if (kind[ko.key] != null) opt[ko.key] = kind[ko.key]; });
+      if (faceColorCode) opt.faceColorCode = faceColorCode; // รหัสสีหน้าบานพิเศษ FT → ขึ้นใบ (ไม่กระทบราคา)
+      if (depth !== "") opt.depth = Number(depth) || undefined; // ความลึกตู้ (ม.) — เว้น = prod.defDepth
+      if (shelves !== "") opt.shelves = Number(shelves) || undefined; // จำนวนชั้น — เว้น = อัตโนมัติตามสูง
+      if (prod.sellCabinet && !prod.faceOnly) opt.cabSides = cabSides; // กั้นด้านตู้ ซ้าย/ขวา/หลัง (เฉพาะตู้เต็ม ไม่ใช่ฝาตู้อย่างเดียว)
+      // มือจับดิจิตอล nc (บานเปิดยูโร +โช้ค 5,000) — engine อ่านจาก opt.digiNc ตรง ๆ (ไม่ใช่ opt.addons.dgNc) ตรง app.js A.dgNc
+      if (addons?.dgNc) opt.digiNc = true;
       // มุ้งบวกบาน R4.0 — คิดจากรุ่นมุ้งจริง (screen/screen_big/screen_ready) แล้วส่งเข้า opt.mosquitoR4
       // ตรง app.js ~232-235: computeMosquitoR4(c.addons||{}, {wCm,hCm,movePanes,form}, pb, profitPct, installProfitPct)
       const mqR4 = computeMosquitoR4(
@@ -147,11 +217,46 @@ export default function Calculator40Client() {
         profitPct
       );
       if (mqR4) opt.mosquitoR4 = mqR4;
-      return computeCost(pb, prod, opt);
+      // สีวัสดุมุงหลังคา (label พิมพ์ลงใบ ไม่กระทบราคา) — ตรง app.js calc() บรรทัด 212
+      if (prod.sheetColors) { opt.sheetColor = sheetColor || ""; opt.roofMat = true; }
+      const r = computeCost(pb, prod, opt);
+      // รวม "รายการเสริม" (ผสมบาน G1 + หลังคาหลายช่วง G3) เข้า subLines/subSell/subCost เดียวกัน
+      // ตรง app.js calc() บรรทัด 236-256: sl/sSell/sCost สะสมร่วมกัน ไม่แยก array คนละชุด
+      const sl: { desc: string; amt: number }[] = [];
+      let sSell = 0, sCost = 0;
+      // ── ผสมบาน (G1) — คิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก) ตรง app.js calc() บรรทัด 236-245 ──
+      if (subs.length) {
+        subs.forEach((s) => {
+          const amt = subPrice(s, pb, color, glassType, profitPct);
+          if (amt <= 0) return;
+          sl.push({ desc: subDesc(s), amt });
+          sSell += amt;
+          sCost += Math.round(amt / (1 + (profitPct || 100) / 100)); // ทุนบานย่อย ≈ ถอดจาก markup ปัจจุบัน (ตรง app.js sellToCost)
+        });
+      }
+      // ── หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิด computeCost ต่อช่วงจริง (วัสดุ/สีตามช่วงหลัก) ตรง app.js calc() บรรทัด 246-256 ──
+      if (prod.roofSegments && roofSegs.length) {
+        roofSegs.forEach((sg, i) => {
+          const sw = (+sg.w || 0) * 100, sh = (+sg.h || 0) * 100;
+          if (!(sw > 0 && sh > 0)) return;
+          const sr: any = computeCost(pb, prod, {
+            w: sw, h: sh, p: 1, form: formVal, material, color, addons: {}, profitPct, installProfitPct: profitPct,
+          });
+          sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sr.sell.withInstall });
+          sSell += sr.sell.withInstall;
+          sCost += sr.cost.total;
+        });
+      }
+      if (sl.length) {
+        (r as any).subLines = sl;
+        (r as any).subSell = sSell;
+        (r as any).subCost = sCost;
+      }
+      return r;
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs]);
 
   const ok = result && !("error" in result);
   const glassKeys = useMemo(() => Object.keys((pb.GLASS ?? {}) as Record<string, number>), [pb]);
@@ -159,15 +264,20 @@ export default function Calculator40Client() {
   function addToQuote() {
     if (!ok || !prod) return;
     const n = Math.max(1, Number(sets) || 1);
+    // subLines (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมเข้ายอด/ทุน ของรายการเดียวกัน ตรง app.js (แยกจาก main แต่ไม่แยกบรรทัดในใบย่อยนี้)
+    const subSell = (result as any).subSell || 0;
+    const subCost = (result as any).subCost || 0;
+    const subDescs: string[] = ((result as any).subLines || []).map((l: any) => l.desc);
     const desc = `${w}×${h} ซม.`
       + (prod.forms?.length ? ` · ${form}` : "")
       + ((Number(p) || 1) > 1 ? ` · ${p} บาน` : "")
       + ` · ${COLOR_LABEL[color] ?? color}`
       + (glassType ? ` · ${glassType}` : "")
-      + (material ? ` · ${material}` : "");
+      + (material ? ` · ${material}` : "")
+      + (subDescs.length ? ` · + ${subDescs.join(", ")}` : "");
     setQuote((q) => [...q, {
       key: keySeq, name: prod.name, desc, qty: n,
-      perUnit: result.sell.withInstall, cost: result.cost.total,
+      perUnit: result.sell.withInstall + subSell, cost: result.cost.total + subCost,
     }]);
     setKeySeq((k) => k + 1);
   }
@@ -327,6 +437,27 @@ export default function Calculator40Client() {
                 {prod.note && <span className="text-[11px] text-ink-3 max-w-[45%] text-right">{prod.note.slice(0, 90)}</span>}
               </div>
 
+              {/* หลังคา: แถบเลือกทรง (กันสาด/จั่ว/เลื่อน) — สลับ prodId ไปยังรุ่นจริงที่ pickerHide (roof/roof_gable/roof_slide)
+                  ตรง app.js renderRoofShapeBar ~1601-1611 (เลือกก่อน→วัสดุ) */}
+              {prod.roofShape && (
+                <div className="mt-4">
+                  <div className="text-xs font-bold text-brand-dark mb-1.5">🏠 ทรงหลังคา & วัสดุมุง</div>
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">ทรงหลังคา <span className="text-brand font-semibold">(เลือกก่อน)</span></span>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {([["roof", "สโลปทางเดียว (กันสาด)"], ["roof_gable", "จั่ว สโลป 2 ทาง"], ["roof_slide", "หลังคาเลื่อน"]] as [string, string][])
+                        .filter(([pid]) => (PRODUCTS as any)[pid])
+                        .map(([pid, label]) => (
+                          <button key={pid} type="button" onClick={() => { if (pid !== prodId) pickProduct((PRODUCTS as any)[pid]); }}
+                            className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${prodId === pid ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                            {label}
+                          </button>
+                        ))}
+                    </div>
+                  </label>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
                 <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
                 <Field label="สูง (ซม.)" value={h} onChange={setH} />
@@ -348,10 +479,90 @@ export default function Calculator40Client() {
                 {prod.materials?.length > 0 && (
                   <Select label="วัสดุ" value={material} onChange={setMaterial} opts={prod.materials} />
                 )}
-                {(prod.specOpts ?? []).map((o: any) => (
-                  <Select key={o.key} label={o.label} value={spec[o.key] ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={o.opts} />
-                ))}
+                {(prod.specOpts ?? []).map((o: any) => {
+                  // optsByMaterial: ตัวเลือกล็อกตามวัสดุที่เลือก (เช่น สีผ้ามุ้ง — ผ้ากันแมวมีแต่สีขาว) ตรง app.js ~1468
+                  const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
+                  const val = opts.includes(spec[o.key]) ? spec[o.key] : (o.def && opts.includes(o.def) ? o.def : opts[0]);
+                  return (
+                    <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} />
+                  );
+                })}
               </div>
+
+              {/* สีวัสดุมุงหลังคา (label พิมพ์ลงใบ ไม่กระทบราคา) — ตรง app.js ~1250-1260 */}
+              {roofSheetColors.length > 0 && (
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">สีวัสดุมุง <span className="text-ink-3/70 font-normal">({roofSheetColors.length} สี · พิมพ์ลงใบ)</span></span>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {roofSheetColors.map((x) => (
+                        <button key={x.n} type="button" onClick={() => setSheetColor(x.n)}
+                          className={`press inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 ${sheetColor === x.n ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                          <span className="w-3 h-3 rounded-full border border-black/10" style={{ background: x.dot }} />
+                          {x.n}
+                        </button>
+                      ))}
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* kindOpts (G4 ตู้/ฝาตู้/shower) — ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน ฯลฯ ตรง app.js renderKindOpts ~1116-1131
+                  showIf/hideIf: โผล่/ซ่อนตามค่าของ kindOpt อื่น (เช่น เกรดกระจกชั้น โผล่เฉพาะ ชนิดชั้น=กระจก) */}
+              {(prod.kindOpts ?? []).length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mt-3">
+                  {prod.kindOpts.map((ko: any) => {
+                    if (ko.showIf && kind[ko.showIf.key] !== ko.showIf.val) return null;
+                    if (ko.hideIf && kind[ko.hideIf.key] === ko.hideIf.val) return null;
+                    const opts: string[] = ko.opts.map((pair: [string, string]) => pair[0]);
+                    const labels: Record<string, string> = {};
+                    ko.opts.forEach((pair: [string, string]) => { labels[pair[0]] = pair[1]; });
+                    return (
+                      <Select key={ko.key} label={ko.label} value={kind[ko.key] ?? ko.def ?? opts[0]}
+                        onChange={(v) => setKind((s) => ({ ...s, [ko.key]: v }))} opts={opts} labels={labels} />
+                    );
+                  })}
+                  {/* รหัสสีหน้าบานพิเศษ — โผล่เฉพาะเลือก "สีพิเศษ" (faceColor) · label พิมพ์ลงใบ ไม่กระทบราคา */}
+                  {kind.faceColor === "special" && (
+                    <label className="block">
+                      <span className="text-xs font-medium text-ink-3">รหัสสีหน้าบานพิเศษ (พิมพ์ลงใบ)</span>
+                      <input type="text" value={faceColorCode} onChange={(e) => setFaceColorCode(e.target.value)}
+                        placeholder="เช่น RAL 9016"
+                        className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none" />
+                    </label>
+                  )}
+                </div>
+              )}
+
+              {/* G4 ตู้: ความลึก + จำนวนชั้น + กั้นด้านตู้ — ตรง app.js calc() c.depth/c.shelves/c.cabSides */}
+              {prod.sellCabinet && (
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    <Field label="ความลึกตู้ (ม.)" value={depth} onChange={setDepth}
+                      placeholder={String(prod.defDepth ?? (kind.kind === "shoe" ? 0.4 : 0.6))} />
+                    {!prod.faceOnly && (
+                      <Field label="จำนวนชั้น (เว้น=อัตโนมัติ)" value={shelves} onChange={setShelves} />
+                    )}
+                  </div>
+                  {!prod.faceOnly && (
+                    <div>
+                      <div className="text-xs font-bold text-brand-dark mb-1.5">🧱 ผนัง / กั้นด้านตู้</div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                        {([["left", "กั้นด้านซ้าย"], ["right", "กั้นด้านขวา"], ["back", "กั้นด้านหลัง"]] as [string, string][]).map(([k, lbl]) => {
+                          const side = cabSides[k] ?? { on: false, mat: "alu" };
+                          const matOpts = ["none", "alu", "glass", "smart"];
+                          const matLabels: Record<string, string> = { none: "ไม่กั้น", alu: "อลูทึบ", glass: "กระจก", smart: "สมาร์ทบอร์ด" };
+                          const val = side.on ? side.mat : "none";
+                          return (
+                            <Select key={k} label={lbl} value={val} opts={matOpts} labels={matLabels}
+                              onChange={(v) => setCabSides((s) => ({ ...s, [k]: v === "none" ? { on: false, mat: "alu" } : { on: true, mat: v } }))} />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ตรง app.js ~1104-1114 · ลด movePanes ของมุ้ง + ขึ้นใบ */}
               {prod.group === 1 && !prod.composite && !prod.sellDirect && !prod.pFromForm &&
@@ -381,7 +592,53 @@ export default function Calculator40Client() {
                 area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
                 W={(Number(w) || prod.defaults?.w || 200) / 100}
                 movePanes={movePanes}
+                color={color}
+                form={form || prod.defForm}
               />
+
+              {/* หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิดวัสดุ/โครงตามขนาดจริง (วัสดุ/สีตามช่วงหลัก) รวมพื้นที่ในรายการเดียว
+                  ตรง app.js renderRoofSegs ~1426-1440 */}
+              {prod.roofSegments && (
+                <div className="mt-4 space-y-2.5 rounded-2xl glass-soft p-4">
+                  <div className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
+                    🏠 หลังคาหลายช่วง (ขยัก) <span className="text-xs font-normal text-ink-3">(ช่วงเพิ่ม · รวมพื้นที่)</span>
+                  </div>
+                  <button type="button" onClick={() => setRoofSegs((s) => [...s, { w: 3, h: 2 }])}
+                    className="press text-xs font-semibold rounded-full px-3.5 py-2 glass-soft text-ink-2 hover:bg-white/70">
+                    ＋ เพิ่มช่วงหลังคา
+                  </button>
+                  {roofSegs.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-ink-3 w-14 shrink-0">ช่วง {i + 2}</span>
+                      <input type="number" step={0.1} placeholder="กว้าง(ม.)" value={s.w || ""}
+                        onChange={(e) => setRoofSegs((arr) => arr.map((x, xi) => xi === i ? { ...x, w: +e.target.value || 0 } : x))}
+                        className="min-h-[44px] glass-soft rounded-lg px-3 py-2 w-24 outline-none tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" />
+                      <input type="number" step={0.1} placeholder="ลึก(ม.)" value={s.h || ""}
+                        onChange={(e) => setRoofSegs((arr) => arr.map((x, xi) => xi === i ? { ...x, h: +e.target.value || 0 } : x))}
+                        className="min-h-[44px] glass-soft rounded-lg px-3 py-2 w-24 outline-none tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" />
+                      <button type="button" onClick={() => setRoofSegs((arr) => arr.filter((_, xi) => xi !== i))}
+                        className="press min-w-[44px] min-h-[44px] rounded-lg glass-soft text-ink-3 hover:text-red-600">
+                        <Icon name="trash" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {roofSegs.length > 0 && (
+                    <p className="text-[11px] text-ink-3">ช่วงหลังคาเพิ่มคิดวัสดุ/โครงตามขนาดจริง · วัสดุ/สีตามช่วงหลัก · รวมพื้นที่ในรายการเดียว (ออปหลังคา เช่น รางน้ำ คิดที่ช่วงหลัก)</p>
+                  )}
+                </div>
+              )}
+
+              {/* ➕ ผสมบาน (G1) — เพิ่มบานหลายชนิดในชุดเดียว ตรง app.js renderSubPanes ~1356-1367 (ทุกรุ่น G1 ยกเว้นห้องกระจก composite) */}
+              {prod.group === 1 && !prod.composite && (
+                <SubPanesSection
+                  subs={subs}
+                  setSubs={setSubs}
+                  pb={pb}
+                  mainColor={color}
+                  mainGlass={glassType}
+                  profitPct={Number(profit) || 100}
+                />
+              )}
 
               {/* ราคา */}
               {ok ? (
@@ -428,6 +685,28 @@ export default function Calculator40Client() {
                 <p className="mt-5 text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">คิดราคาไม่ได้: {(result as any)?.error ?? "ตรวจอินพุต"}</p>
               )}
 
+              {/* สรุปบานย่อย/ช่วงเพิ่ม (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมยอดขาย+ทุน แยกจาก main แต่รวมเป็นรายการเดียวตอนขึ้นใบ */}
+              {ok && ((result as any).subLines?.length > 0) && (
+                <div className="mt-3 rounded-xl px-4 py-2.5 bg-sky-50 border border-sky-200 text-sm text-sky-900">
+                  <div className="flex items-center justify-between font-semibold">
+                    <span>+ รายการเสริม {(result as any).subLines.length} รายการ</span>
+                    <span className="tabular-nums">+฿{baht((result as any).subSell || 0)}</span>
+                  </div>
+                  <ul className="mt-1.5 space-y-0.5 text-xs text-sky-800">
+                    {(result as any).subLines.map((l: any, i: number) => (
+                      <li key={i} className="flex items-center justify-between gap-2">
+                        <span>{l.desc}</span>
+                        <span className="tabular-nums shrink-0">฿{baht(l.amt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-1.5 pt-1.5 border-t border-sky-200 flex items-center justify-between font-bold">
+                    <span>รวมทั้งหมด (หลัก + เสริม)</span>
+                    <span className="tabular-nums">฿{baht(result.sell.withInstall + ((result as any).subSell || 0))}</span>
+                  </div>
+                </div>
+              )}
+
               {/* สรุปของเสริม + คำเตือนจาก addon (cat:'warn' เช่น มอเตอร์ 80 เกินพื้นที่) */}
               {ok && (() => {
                 const addonLines = result.lines.filter((l: any) => l.cat === "addon");
@@ -445,6 +724,19 @@ export default function Calculator40Client() {
                     ))}
                   </>
                 );
+              })()}
+
+              {/* คำเตือนพื้นที่/บาน (G4 ฝาตู้ FT) — ตรง prod.faceHint (แนะนำ ≤1.7 ตร.ม./บาน กันบานแอ่น) */}
+              {ok && prod.faceHint && (() => {
+                const wM = (Number(w) || prod.defaults?.w || 200) / 100;
+                const hM = (Number(h) || prod.defaults?.h || 200) / 100;
+                const pCount = Number(p) || prod.defaults?.p || 1;
+                const aPerDoor = (wM * hM) / Math.max(1, pCount);
+                return aPerDoor > 1.7 ? (
+                  <p className="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                    ⚠️ พื้นที่/บาน {aPerDoor.toFixed(2)} ตร.ม. — {prod.faceHint}
+                  </p>
+                ) : null;
               })()}
 
               {/* เพิ่มลงรายการ */}
@@ -523,11 +815,11 @@ export default function Calculator40Client() {
   );
 }
 
-function Field({ label, value, onChange, narrow }: { label: string; value: string; onChange: (v: string) => void; narrow?: boolean }) {
+function Field({ label, value, onChange, narrow, placeholder }: { label: string; value: string; onChange: (v: string) => void; narrow?: boolean; placeholder?: string }) {
   return (
     <label className={`block ${narrow ? "w-28" : ""}`}>
       <span className="text-xs font-medium text-ink-3">{label}</span>
-      <input type="number" value={value} onChange={(e) => onChange(e.target.value)}
+      <input type="number" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
         className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none tabular-nums" />
     </label>
   );

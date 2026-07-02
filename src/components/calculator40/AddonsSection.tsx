@@ -6,18 +6,26 @@
  * แต่ละ addon เก็บค่าใน state `addons: Record<string, any>` ส่งเข้า computeCost เป็น opt.addons[id]
  * sel shape ต้องตรงกับที่ engine.mjs `computeAddon(id, sel, ctx)` คาดหวังเป๊ะ — ห้ามเดา/แก้ shape เอง
  *
- * addon id ที่ engine รู้จักแต่ไม่มี product ใดประกาศใน prod.addons (products.mjs) ปัจจุบัน — ไม่ต้องทำ UI
- * เพราะไม่มีทางถูก render (เช่น cmech, stainless, digihandle, motor, slide_auto, grid, closer, thresh,
- * hide_track, inner_track, solid_panel, soft_close, sling, u_track, beam_support, hide_beam, drop_floor,
- * awn_auto, awn_tt, awn_brace, banklet_motor) — ของเดิม G1 บางรุ่น (open_door, awning, sms_slide ฯลฯ)
- * ยังไม่ประกาศ addons ในไฟล์ products.mjs เวอร์ชันนี้ ถ้าอนาคตเพิ่ม addons ให้รุ่นเหล่านั้น ค่อยเติม UI ตรงนี้
+ * แก้ 2ก.ค. (ผล QA: ปุ่มหายจริง) — เติม branch UI ให้ครบทุก id ที่ประกาศใน prod.addons จริง (bootstrap ผูกให้ G1/G2)
+ * แต่ก่อนหน้านี้ AddonField ไม่มี branch รองรับ: cmech, stainless, digihandle (รวมเป็นหมวด 🤚 มือจับเดียว ตรง mockup
+ * renderHandleSection), closer, thresh, hide_track, inner_track, motor, slide_auto, grid, awn_tt, awn_brace,
+ * awn_auto, banklet_motor — ก๊อป UI จาก scratchpad/r40/app.js บรรทัด ~1751-2115 + renderHandleSection ~1696-1717
+ * เป๊ะทุก branch (ค่า/ชื่อคีย์ตรง sel shape ที่ engine.mjs computeAddon อ่าน)
+ *
+ * id ที่เหลือ (soft_close, sling, u_track, beam_support, hide_beam, drop_floor) มี branch อยู่แล้วด้านล่าง
+ * — ไม่มี id ไหนที่ engine รู้จักแต่ยังไม่มี branch UI อีกแล้ว (เช็คซ้ำกับ computeAddon ทุก id 2ก.ค.)
  */
 
+import { useEffect } from "react";
 import { fmt } from "@/lib/calculator40/fmt";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
+// @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน)
+import { CMECH_TIERS, STAINLESS_TIERS } from "@/lib/calculator40/engine.mjs";
+// @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json (DIGI = ตารางมือจับดิจิตอล ราคา/ชื่อรุ่น)
+import R39DATA from "@/lib/calculator40/r39-data.json";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -31,6 +39,9 @@ const CEIL_RATE: Record<string, number> = {
   "ฉาบเรียบ": 480, "อลูตัวซี": 2100, "อลูไทยทิพย์": 2100,
   "ไม้เทียม remood": 2600, "ระแนงอลู 1×5": 3300, "ระแนงอลู เว้นร่อง": 3700,
 };
+// สีเส้นคาดอัตโนมัติตามสีเฟรม (R3.9 GRID_RATE_BY_BAKE) — auto จนกว่าจะกดเลือกเอง (rateTouched)
+const GRID_RATE_BY_BAKE: Record<string, number> = { white: 200, sahara: 200, woodStock: 250, special: 300, woodSpecial: 350 };
+const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
 
 // ── กลุ่มออปชั่นเสริม → จัดเข้าหมวด (แค่จัดหน้า ไม่กระทบราคา/engine) — ตรง app.js OPENING/HANDLE/SCREEN/MAIN_EXTRA/AUTO_ADDONS ──
 const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "motor", "awn_tt", "awn_brace"];
@@ -38,6 +49,7 @@ const HANDLE_ADDONS = ["cmech", "stainless", "digihandle"];
 const SCREEN_ADDONS = ["mosquito", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
 const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "shower_corner", "shower_hw"];
 const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor"];
+const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
 
 function addonsIn(prodAddons: string[], ids: string[]) {
   return prodAddons.filter((a) => ids.includes(a));
@@ -98,12 +110,198 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 }
 
 /* ── field ต่อ addon 1 ตัว — ตรง app.js renderAddonField เป๊ะทีละ branch ── */
-function AddonField({ ad, prod, addons, setAddons, area, W, movePanes }: {
-  ad: string; prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes: number;
+function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form }: {
+  ad: string; prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes: number; color: string; form: string;
 }) {
   const A = addons;
   const set = (k: string, v: any) => setAddons((old) => ({ ...old, [k]: v }));
   const setObj = (k: string, patch: any) => setAddons((old) => ({ ...old, [k]: { ...(old[k] || {}), ...patch } }));
+
+  // R3.9: แขนค้ำ (awn_brace) เฉพาะบานกระทุ้งเปิดล่าง — ไม่ใช่เปิดล่าง = เคลียร์ค่าทิ้ง (ตรง app.js เดิม mutate ตอน render
+  // แต่ React ห้าม setState ระหว่าง render ตรง ๆ → ย้ายเป็น useEffect · ต้องอยู่ก่อน early return ใด ๆ (Rules of Hooks)
+  useEffect(() => {
+    if (ad === "awn_brace" && form !== "เปิดล่าง" && A.awn_brace === "yes") set("awn_brace", "none");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ad, form, A.awn_brace]);
+
+  if (ad === "closer") {
+    return (
+      <Field label="โช้คอัพประตู">
+        <ChipRow
+          items={[{ val: "none", label: "ไม่มี" }, { val: "arm", label: "แขนยื่น (+5,000)" }, { val: "slide", label: "รางเลื่อน (+5,000)" }, { val: "fold", label: "บานพับ (+5,000)" }]}
+          value={A.closer || "none"}
+          onChange={(v) => set("closer", v)}
+        />
+      </Field>
+    );
+  }
+  if (ad === "thresh") {
+    return (
+      <Field label="ธรณีประตู">
+        <ChipRow
+          items={[{ val: "none", label: "กันน้ำ (มาตรฐาน)" }, { val: "turtle", label: "หลังเต่า+Drop Seal (+1,000)" }, { val: "turtle_felt", label: "หลังเต่า+สักหลาด (ฟรี)" }, { val: "nothresh", label: "ไม่มีธรณี (ฟรี)" }]}
+          value={A.thresh || "none"}
+          onChange={(v) => set("thresh", v)}
+        />
+      </Field>
+    );
+  }
+  if (ad === "grid") {
+    const g = A.grid || { nh: 0, nv: 0 };
+    // ออโต้: เส้นคาดสีเดียวกับเฟรม จนกว่าจะเลือกเอง (rateTouched) — ตรง app.js renderAddonField 'grid'
+    const rate = g.rateTouched ? (g.rate || 200) : gridRateFor(color);
+    const wM = W || 0, hM = (area && wM) ? area / wM : 0;
+    const len = (g.nh || 0) * wM + (g.nv || 0) * hM;
+    return (
+      <Field label="คาดตาราง (เส้น)">
+        <div className="grid grid-cols-3 gap-2">
+          <NumberInput value={g.nh || 0} onChange={(v) => setObj("grid", { nh: Math.round(v) })} placeholder="แนวนอน" />
+          <NumberInput value={g.nv || 0} onChange={(v) => setObj("grid", { nv: Math.round(v) })} placeholder="แนวตั้ง" />
+          <NumberInput value={g.nc || 0} onChange={(v) => setObj("grid", { nc: Math.round(v) })} placeholder="เส้นโค้ง (+3,000)" />
+        </div>
+        <p className="text-[11px] text-ink-3 mt-1.5">
+          สูตร: (นอน {g.nh || 0}×{fmtNum(wM)} + ตั้ง {g.nv || 0}×{fmtNum(hM)}) = {fmtNum(len)} ม. × {rate} = {fmt(len * rate)} บาท
+        </p>
+        <div className="mt-2">
+          <ChipRow
+            items={[{ val: "200", label: "อบขาว/ดำ/ซาฮาร่า" }, { val: "250", label: "ลายไม้สต็อก (+50/ม.)" }, { val: "300", label: "อบพิเศษ/Fuji (+100/ม.)" }, { val: "350", label: "ลายไม้อบพิเศษ (+150/ม.)" }]}
+            value={String(rate)}
+            onChange={(v) => setObj("grid", { rate: +v, rateTouched: true })}
+          />
+        </div>
+      </Field>
+    );
+  }
+  // ── หมวด 🤚 มือจับ — รวมกล่องเดียว ตรง app.js renderHandleSection: เลือกชนิด → โชว์รุ่นของชนิดนั้น (มือจับชนิดเดียวต่อบาน) ──
+  if (ad === "cmech" || ad === "stainless" || ad === "digihandle") {
+    // AddonsSection เรียก AddonField ต่อ id — ให้ id แรกที่เจอใน list (ตามลำดับ HANDLE_ADDONS) เป็นตัวเรนเดอร์กล่องรวม กันซ้ำ 3 กล่อง
+    const avail = HANDLE_ADDONS.filter((id) => (prod.addons || []).includes(id));
+    if (avail[0] !== ad) return null;
+    const cur: string = (A.handleType && avail.includes(A.handleType)) ? A.handleType : (avail.find((id) => A[id]) || "none");
+    const chips = [{ val: "none", label: "มือจับมาตรฐาน (ฟรี)" }, ...avail.map((id) => ({ val: id, label: HANDLE_LABELS[id] || id }))];
+    const onPick = (v: string) => {
+      setAddons((old) => {
+        const next: AddonsMap = { ...old, handleType: v };
+        avail.forEach((id) => { if (id !== v) next[id] = ""; });
+        return next;
+      });
+    };
+    return (
+      <Field label="ชนิดมือจับ">
+        <ChipRow items={chips} value={cur} onChange={onPick} />
+        {cur !== "none" && <div className="mt-2.5">{renderHandleModel(cur, prod, A, setAddons, set)}</div>}
+      </Field>
+    );
+  }
+  if (ad === "motor") {
+    return (
+      <Field label="มอเตอร์บานยก">
+        <ChipRow
+          items={[{ val: "none", label: "ไม่มี" }, { val: "80", label: "80 กก. (+11,300)" }, { val: "300", label: "300 กก. (+31,300)" }]}
+          value={A.motor || "none"}
+          onChange={(v) => set("motor", v)}
+        />
+        {A.motor === "80" && area > 3.5 && (
+          <p className="text-[11px] text-amber-700 mt-1.5">มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ {fmtNum(area)}) — เปลี่ยนเป็น 300 กก.</p>
+        )}
+      </Field>
+    );
+  }
+  if (ad === "hide_track") {
+    return (
+      <Field label="ซ่อนราง">
+        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: `ซ่อนราง (+${fmt(ADDON_FLAT.hide_track)} · ฟรี ≤3ม.)` }]} value={A.hide_track || "none"} onChange={(v) => set("hide_track", v)} />
+      </Field>
+    );
+  }
+  if (ad === "inner_track") {
+    return (
+      <Field label="ราง (เลื่อนภายในรางบน)">
+        <ChipRow items={[{ val: "none", label: "โชว์ราง" }, { val: "yes", label: "ซ่อนราง (+5,000)" }]} value={A.inner_track || "none"} onChange={(v) => set("inner_track", v)} />
+      </Field>
+    );
+  }
+  if (ad === "awn_tt") {
+    return (
+      <Field label="บานกระทุ้ง Tilt & Turn">
+        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มี (+5,000/บาน)" }]} value={A.awn_tt || "none"} onChange={(v) => set("awn_tt", v)} />
+        {A.awn_tt === "yes" && <p className="text-[11px] text-amber-700 mt-1.5">Tilt & Turn ต้องเปิดออกนอกบ้านเท่านั้น (เปิดเข้า = เสี่ยงน้ำเข้า)</p>}
+      </Field>
+    );
+  }
+  if (ad === "awn_brace") {
+    // R3.9: แขนค้ำเฉพาะบานกระทุ้งเปิดล่าง (เคลียร์ค่าเมื่อไม่ใช่ — จัดการใน useEffect ด้านบนแล้ว)
+    if (form !== "เปิดล่าง") return null;
+    return (
+      <Field label="เสริมแขนค้ำ" hint="(เฉพาะเปิดล่าง)">
+        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มี (+500)" }]} value={A.awn_brace || "none"} onChange={(v) => set("awn_brace", v)} />
+      </Field>
+    );
+  }
+  if (ad === "awn_auto") {
+    return (
+      <Field label="ชุดออโต้บานกระทุ้ง" hint="(× จำนวนบาน)">
+        <ChipRow
+          items={[{ val: "none", label: "ไม่มี" }, { val: "choke50", label: "โช้คเปิด 50" }, { val: "choke80", label: "โช้คเปิด 80" }, { val: "chain1", label: "โซ่เดี่ยว 50" }, { val: "chain2", label: "โซ่คู่ 50" }]}
+          value={A.awn_auto || "none"}
+          onChange={(v) => set("awn_auto", v)}
+        />
+      </Field>
+    );
+  }
+  if (ad === "banklet_motor") {
+    return (
+      <Field label="มอเตอร์บานเกล็ด">
+        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มีมอเตอร์ (+6,000)" }]} value={A.banklet_motor || "none"} onChange={(v) => set("banklet_motor", v)} />
+      </Field>
+    );
+  }
+  if (ad === "slide_auto") {
+    const sa = (A.slide_auto && typeof A.slide_auto === "object") ? A.slide_auto : { brand: "none" };
+    return (
+      <Field label="ชุดมอเตอร์บานเลื่อน (ออโต้)" hint="(มีผลกับราคา)">
+        <div className="space-y-2">
+          <ChipRow
+            items={[{ val: "none", label: "ไม่มี (มือเลื่อน)" }, { val: "evecca", label: "Evecca (จีน)" }, { val: "changsaek", label: "ช่างแซก" }, { val: "slimlux", label: "SlimLux" }]}
+            value={sa.brand || "none"}
+            onChange={(v) => setObj("slide_auto", { brand: v })}
+          />
+          {sa.brand === "evecca" && (
+            <>
+              <Field label="Smart lock">
+                <ChipRow items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (Smart lock)" }]} value={sa.smartlock ? "yes" : "no"} onChange={(v) => setObj("slide_auto", { smartlock: v === "yes" })} />
+              </Field>
+              <p className="text-[11px] text-ink-3">+ สายพานตามความกว้าง × 2 (อัตโนมัติ)</p>
+            </>
+          )}
+          {sa.brand === "changsaek" && (
+            <>
+              <p className="text-[11px] text-ink-3">+ เซฟตี้ตาแมว (บังคับ) + ราง/ม. (อัตโนมัติ)</p>
+              <Field label="ออปชั่นเสริม">
+                <ChipRow
+                  items={[{ val: "no", label: "ไม่มี" }, { val: "touch", label: "Touch" }, { val: "infrared", label: "Infrared" }, { val: "both", label: "Touch+Infrared" }]}
+                  value={sa.touch && sa.infrared ? "both" : sa.infrared ? "infrared" : sa.touch ? "touch" : "no"}
+                  onChange={(v) => setObj("slide_auto", { touch: v === "touch" || v === "both", infrared: v === "infrared" || v === "both" })}
+                />
+              </Field>
+            </>
+          )}
+          {sa.brand === "slimlux" && (
+            <>
+              <p className="text-[11px] text-ink-3">+ ราง/ม. × จำนวนบาน + บานเพิ่ม (อัตโนมัติ)</p>
+              <Field label="ระบบสั่งงาน" hint="(บังคับเลือก)">
+                <ChipRow
+                  items={[{ val: "touch", label: "Touch Switch (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }]}
+                  value={sa.scan ? "scan" : "touch"}
+                  onChange={(v) => setObj("slide_auto", { scan: v === "scan" })}
+                />
+              </Field>
+            </>
+          )}
+        </div>
+      </Field>
+    );
+  }
 
   if (ad === "frame_wrap") {
     return (
@@ -575,13 +773,78 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes }: {
   return null;
 }
 
+// ── ดรอปดาวน์รุ่นของชนิดมือจับที่เลือก (cmech/stainless/digihandle) — ตรง app.js renderAddonField เดิม (ก๊อปมาทั้งตาราง/เงื่อนไข) ──
+function renderHandleModel(cur: string, prod: any, A: AddonsMap, setAddons: (fn: (a: AddonsMap) => AddonsMap) => void, set: (k: string, v: any) => void) {
+  if (cur === "digihandle") {
+    const digi: { n: string; p: number; nc?: number; jr?: number }[] = (R39DATA && (R39DATA as any).DIGI) || [];
+    const jrOK = prod.id === "open_door" || /โซลิด/.test(prod.name || ""); // JR Prime เฉพาะบานเปิดยูโร/โซลิด (R3.9 jr:1)
+    const isEuro = prod.id === "open_door"; // nc → +โช้ค เฉพาะบานเปิดยูโร (R3.9)
+    return (
+      <>
+        <select
+          value={A.digihandle || ""}
+          onChange={(e) => {
+            const opt = e.target.selectedOptions[0];
+            const nc = opt && opt.dataset.nc === "1" ? 1 : 0;
+            setAddons((old) => ({ ...old, digihandle: e.target.value, dgNc: nc }));
+          }}
+          className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+        >
+          <option value="">— ไม่ใส่ —</option>
+          {digi.filter((d) => !(d.jr && !jrOK)).map((d) => (
+            <option key={d.n} value={d.p} data-nc={d.nc && isEuro ? "1" : "0"}>
+              {d.n} · {fmt(d.p)} บ.{d.nc && isEuro ? " +โช้ค5,000" : ""}
+            </option>
+          ))}
+        </select>
+        {!jrOK && <p className="text-[11px] text-amber-700 mt-1.5">JR Prime (24,900) ใช้ได้เฉพาะ ประตูบานเปิดยูโร/โซลิด วัน-ทู</p>}
+      </>
+    );
+  }
+  if (cur === "cmech") {
+    // index ด้วย string จาก Object.keys() ตี type literal ที่ tsc อนุมานจาก engine.mjs แคบเกินจริง (ตัว .mjs ไม่มี .d.ts) — cast เป็น Record ที่นี่จุดเดียว
+    const tiers = CMECH_TIERS as Record<string, { p: number; l: string }>;
+    const isAwn = /กระทุ้ง/.test(prod.name || "");
+    const opts = Object.keys(tiers).filter((k) => (isAwn ? k.startsWith("awn") : !k.startsWith("awn")));
+    return (
+      <select
+        value={A.cmech || ""}
+        onChange={(e) => set("cmech", e.target.value)}
+        className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+      >
+        <option value="">— ไม่ใส่ —</option>
+        {opts.map((k) => (
+          <option key={k} value={k}>{tiers[k].l} · {fmt(tiers[k].p)}</option>
+        ))}
+      </select>
+    );
+  }
+  if (cur === "stainless") {
+    // เหตุผลเดียวกับ cmech ด้านบน — cast Record ให้ index ด้วย string ได้
+    const tiers = STAINLESS_TIERS as Record<string, { p: number; l: string }>;
+    return (
+      <select
+        value={A.stainless || ""}
+        onChange={(e) => set("stainless", e.target.value)}
+        className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+      >
+        <option value="">— ไม่ใส่ —</option>
+        {Object.keys(tiers).map((k) => (
+          <option key={k} value={k}>{tiers[k].l} · {fmt(tiers[k].p)}</option>
+        ))}
+      </select>
+    );
+  }
+  return null;
+}
+
 function fmtNum(n: number) {
   return (n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
 }
 
 /* ── ส่วนหลัก ── */
-export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes }: {
-  prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes?: number;
+export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form }: {
+  prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes?: number; color?: string; form?: string;
 }) {
   const list: string[] = prod?.addons || [];
   if (!list.length) return null;
@@ -611,7 +874,7 @@ export default function AddonsSection({ prod, addons, setAddons, area, W, movePa
         <div key={g.label} className="space-y-2.5">
           <SectionHeader icon={g.icon} label={g.label} />
           {g.ids.map((ad) => (
-            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} area={area} W={W} movePanes={movePanes ?? 1} />
+            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} />
           ))}
         </div>
       ))}
