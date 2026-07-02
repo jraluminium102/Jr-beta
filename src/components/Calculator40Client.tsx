@@ -6,7 +6,7 @@
  * engine/products/pricebook ก๊อปตรงจากแพ็คเกจส่งต่อ (ผ่าน verify 63/63) — ห้ามแก้ไฟล์ engine โดยไม่รัน scripts/verify-r40.mjs
  * แยกเอกเทศจากเครื่องคิดราคา R3.9 เดิม (/calculator) — ไม่แตะของเก่า
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
@@ -15,8 +15,19 @@ import { computeCost } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
+// @ts-expect-error — bootstrap เป็น ESM JS ล้วน (ก๊อปตรงจาก mockup index.html script ฝัง — ห้ามแก้กติกา)
+import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
+// @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json ที่ดึงจาก mockup (ราคาขาย R3.9 fallback)
+import R39DATA from "@/lib/calculator40/r39-data.json";
+// @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
+import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
+import AddonsSection from "@/components/calculator40/AddonsSection";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// bootstrap (fallback R3.9 products + auto-addons ต่อรุ่น G1/G2 + colorKeys) — รันครั้งเดียวตอนโหลดโมดูล
+// idempotent ในตัว (applyBootstrap เช็ค PRODUCTS.__r39BootstrapApplied) กัน HMR/re-import ซ้ำพัง
+applyBootstrap(PRODUCTS, R39DATA);
 
 const GROUPS: { g: number; label: string }[] = [
   { g: 1, label: "G1 บาน" },
@@ -60,6 +71,8 @@ export default function Calculator40Client() {
   const [glassType, setGlassType] = useState<string>("");
   const [material, setMaterial] = useState<string>("");
   const [spec, setSpec] = useState<Record<string, string>>({});
+  const [addons, setAddons] = useState<Record<string, any>>({});
+  const [fixedPanes, setFixedPanes] = useState(0); // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ลด movePanes ของมุ้ง + ขึ้นใบ
   const [profit, setProfit] = useState("100");
   const [sets, setSets] = useState("1");
 
@@ -89,28 +102,56 @@ export default function Calculator40Client() {
     const s: Record<string, string> = {};
     (x.specOpts ?? []).forEach((o: any) => { s[o.key] = o.def ?? o.opts?.[0] ?? ""; });
     setSpec(s);
+    setAddons({}); // เปลี่ยนรุ่น → เคลียร์ของเสริม (ของเสริมผูกกับ addon id เฉพาะรุ่น)
+    setFixedPanes(0);
   }
+
+  // จำนวนบานเลื่อน/เปิดจริง (หักบานติดตาย) — ใช้เป็น default จำนวนบานมุ้ง (ตรง app.js c.p - c.fixedPanes)
+  const movePanes = Math.max(1, (Number(p) || prod?.defaults?.p || 1) - (fixedPanes || 0));
+
+  // clamp บานติดตาย เมื่อจำนวนบานเปลี่ยน (ตรง app.js: fixedPanes = max(0, min(p-1, fixedPanes)))
+  useEffect(() => {
+    const pCount = Number(p) || prod?.defaults?.p || 1;
+    setFixedPanes((v) => Math.max(0, Math.min(pCount - 1, v)));
+  }, [p, prod]);
 
   // คิดราคาสด
   const result = useMemo(() => {
     if (!prod) return null;
     try {
+      const wCm = Number(w) || prod.defaults?.w || 200;
+      const hCm = Number(h) || prod.defaults?.h || 200;
+      const pCount = Number(p) || prod.defaults?.p || 1;
+      const formVal = form || prod.defForm;
+      const profitPct = Number(profit) || 100;
       const opt: any = {
-        w: Number(w) || prod.defaults?.w || 200,
-        h: Number(h) || prod.defaults?.h || 200,
-        p: Number(p) || prod.defaults?.p || 1,
-        form: form || prod.defForm,
+        w: wCm,
+        h: hCm,
+        p: pCount,
+        form: formVal,
         color,
-        profitPct: Number(profit) || 100,
+        profitPct,
         spec,
+        addons,
       };
       if (glassType) opt.glassType = glassType;
       if (material) opt.material = material;
+      // มุ้งบวกบาน R4.0 — คิดจากรุ่นมุ้งจริง (screen/screen_big/screen_ready) แล้วส่งเข้า opt.mosquitoR4
+      // ตรง app.js ~232-235: computeMosquitoR4(c.addons||{}, {wCm,hCm,movePanes,form}, pb, profitPct, installProfitPct)
+      const mqR4 = computeMosquitoR4(
+        PRODUCTS,
+        addons || {},
+        { wCm, hCm, movePanes: Math.max(1, pCount - (fixedPanes || 0)), form: formVal },
+        pb,
+        profitPct,
+        profitPct
+      );
+      if (mqR4) opt.mosquitoR4 = mqR4;
       return computeCost(pb, prod, opt);
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes]);
 
   const ok = result && !("error" in result);
   const glassKeys = useMemo(() => Object.keys((pb.GLASS ?? {}) as Record<string, number>), [pb]);
@@ -257,7 +298,12 @@ export default function Calculator40Client() {
               <button key={x.id} onClick={() => pickProduct(x)} aria-current={prodId === x.id}
                 className={`press w-full text-left rounded-xl px-3 py-2.5 flex items-center gap-2.5 ${prodId === x.id ? "text-white bg-brand shadow-brand" : "glass-soft hover:bg-white/70"}`}>
                 <span className="text-lg">{x.icon ?? "▫️"}</span>
-                <span className="font-semibold text-sm">{x.name}</span>
+                <span className="font-semibold text-sm flex-1">{x.name}</span>
+                {x.isR39Fallback && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${prodId === x.id ? "bg-white/25 text-white" : "bg-amber-100 text-amber-800"}`}>
+                    R3.9
+                  </span>
+                )}
               </button>
             ))}
             {todoList.map((t: any, i: number) => (
@@ -274,7 +320,10 @@ export default function Calculator40Client() {
           {prod ? (
             <div>
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-lg font-bold text-brand-dark">{prod.icon} {prod.name}</h3>
+                <h3 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+                  {prod.icon} {prod.name}
+                  {prod.isR39Fallback && <Badge tone="amber">ราคา R3.9 · ยังไม่ถอดทุน</Badge>}
+                </h3>
                 {prod.note && <span className="text-[11px] text-ink-3 max-w-[45%] text-right">{prod.note.slice(0, 90)}</span>}
               </div>
 
@@ -304,9 +353,35 @@ export default function Calculator40Client() {
                 ))}
               </div>
 
-              {prod.addons?.length > 0 && (
-                <p className="text-[11px] text-ink-3 mt-2">⏳ ของเสริม ({prod.addons.length} รายการ เช่น มอเตอร์/เสา/รางน้ำ) — เฟสถัดไป · ตอนนี้คิดตัวงานหลักก่อน</p>
+              {/* บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ตรง app.js ~1104-1114 · ลด movePanes ของมุ้ง + ขึ้นใบ */}
+              {prod.group === 1 && !prod.composite && !prod.sellDirect && !prod.pFromForm &&
+                (Number(p) || prod.defaults?.p || 1) > 1 && !/ติดตาย|ดัดโค้ง/.test(prod.name || "") && (
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">
+                      บานติดตาย (ไม่{/เปิด|เฟี้ยม|กระทุ้ง|หมุน|ยก|ประตู|PC|Velora/i.test(prod.name || "") ? "เปิด" : "เลื่อน"})
+                      <span className="text-ink-3/70 font-normal"> · ที่เหลือ {movePanes} บาน{/เปิด|เฟี้ยม|กระทุ้ง|หมุน|ยก|ประตู|PC|Velora/i.test(prod.name || "") ? "เปิด" : "เลื่อน"} · ขึ้นใบ</span>
+                    </span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <button type="button" onClick={() => setFixedPanes((v) => Math.max(0, v - 1))}
+                        className="press min-w-[44px] min-h-[44px] rounded-lg glass-soft text-ink-2 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">−</button>
+                      <input type="number" readOnly value={fixedPanes}
+                        className="w-16 min-h-[44px] glass-soft rounded-lg px-2 py-2 text-center outline-none tabular-nums" />
+                      <button type="button" onClick={() => setFixedPanes((v) => Math.min((Number(p) || prod.defaults?.p || 1) - 1, v + 1))}
+                        className="press min-w-[44px] min-h-[44px] rounded-lg glass-soft text-ink-2 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">+</button>
+                    </div>
+                  </label>
+                </div>
               )}
+
+              <AddonsSection
+                prod={prod}
+                addons={addons}
+                setAddons={setAddons}
+                area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
+                W={(Number(w) || prod.defaults?.w || 200) / 100}
+                movePanes={movePanes}
+              />
 
               {/* ราคา */}
               {ok ? (
@@ -352,6 +427,25 @@ export default function Calculator40Client() {
               ) : (
                 <p className="mt-5 text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">คิดราคาไม่ได้: {(result as any)?.error ?? "ตรวจอินพุต"}</p>
               )}
+
+              {/* สรุปของเสริม + คำเตือนจาก addon (cat:'warn' เช่น มอเตอร์ 80 เกินพื้นที่) */}
+              {ok && (() => {
+                const addonLines = result.lines.filter((l: any) => l.cat === "addon");
+                const warnLines = result.lines.filter((l: any) => l.cat === "warn");
+                const addonSum = addonLines.reduce((s: number, l: any) => s + (l.amount || 0), 0);
+                return (
+                  <>
+                    {addonLines.length > 0 && (
+                      <div className="mt-3 rounded-xl px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center justify-between">
+                        <span>ของเสริม +฿{baht(addonSum)} ({addonLines.length} รายการ)</span>
+                      </div>
+                    )}
+                    {warnLines.map((l: any, i: number) => (
+                      <p key={i} className="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">{l.name}</p>
+                    ))}
+                  </>
+                );
+              })()}
 
               {/* เพิ่มลงรายการ */}
               <div className="mt-4 flex items-end gap-3">
