@@ -26,9 +26,9 @@ async function uploadImage(file: File): Promise<string> {
 type JobHit = { id: string; job_code: string | null; customer_name: string; customer_area: string | null };
 
 export default function StockClient({
-  initial, categories: catsInit, canWrite, canPrice, isAdmin,
+  initial, categories: catsInit, canWrite, canPrice, canViewCost, isAdmin,
 }: {
-  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; isAdmin: boolean;
+  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean;
 }) {
   const [list, setList] = useState<StockItem[]>(initial);
   const [cats, setCats] = useState<StockCategory[]>(catsInit);
@@ -37,6 +37,7 @@ export default function StockClient({
   const [prices, setPrices] = useState<StockPrice[]>([]);
   const [q, setQ] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
+  const [catFilter, setCatFilter] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
   const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
@@ -44,7 +45,10 @@ export default function StockClient({
   const lowCount = list.filter(isLow).length;
   const filtered = list
     .filter((c) => (lowOnly ? isLow(c) : true))
+    .filter((c) => (catFilter ? c.category_id === catFilter : true))
     .filter((c) => [c.name, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
+  // นับจำนวนต่อหมวด (โชว์บนปุ่มกรอง)
+  const catCount = (id: number) => list.filter((c) => c.category_id === id).length;
 
   async function refreshCats() {
     const r = await fetch("/api/stock/categories");
@@ -96,12 +100,25 @@ export default function StockClient({
             <input aria-label="ค้นหาวัสดุ" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา ชื่อ / SKU / หมวด"
               className="w-full glass-soft rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none" />
           </label>
+          {/* กรองตามหมวด (ปุ่มกด) */}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            <button onClick={() => setCatFilter(null)}
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${catFilter === null ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+              ทุกหมวด
+            </button>
+            {cats.map((c) => (
+              <button key={c.id} onClick={() => setCatFilter(catFilter === c.id ? null : c.id)}
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${catFilter === c.id ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                {c.name}{catCount(c.id) > 0 ? ` (${catCount(c.id)})` : ""}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-2 mb-3">
             <button onClick={() => setLowOnly((v) => !v)}
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${lowOnly ? "bg-red-600 text-white" : "glass-soft text-ink-2"}`}>
               ต้องสั่งซื้อ {lowCount > 0 ? `(${lowCount})` : ""}
             </button>
-            {lowOnly && <button onClick={() => setLowOnly(false)} className="text-xs text-ink-3">ดูทั้งหมด</button>}
+            {(lowOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {
@@ -132,14 +149,14 @@ export default function StockClient({
         <Card className="p-6 lg:col-span-2">
           {adding ? (
             <AddItemForm
-              cats={cats} onManageCat={() => setManageCat(true)}
+              cats={cats} canViewCost={canViewCost} onManageCat={() => setManageCat(true)}
               onCancel={() => setAdding(false)}
               onSaved={(it) => { setList([it, ...list]); setSel(it); setMoves([]); setPrices([]); setAdding(false); }}
             />
           ) : sel ? (
             <ItemDetail
               key={sel.id} item={sel} moves={moves} prices={prices} cats={cats}
-              canWrite={canWrite} canPrice={canPrice} isAdmin={isAdmin}
+              canWrite={canWrite} canPrice={canPrice} canViewCost={canViewCost} isAdmin={isAdmin}
               onManageCat={() => setManageCat(true)}
               onChanged={() => selectItem(sel)}
               onItemPatched={(it) => { setSel(it); setList((l) => l.map((x) => x.id === it.id ? it : x)); }}
@@ -170,10 +187,10 @@ function Thumb({ url, active, size = 40 }: { url: string; active?: boolean; size
 
 // ── รายละเอียดวัสดุ + เคลื่อนไหว + ต้นทุน/ราคา ──
 function ItemDetail({
-  item, moves, prices, cats, canWrite, canPrice, isAdmin, onManageCat, onChanged, onItemPatched,
+  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onChanged, onItemPatched,
 }: {
   item: StockItem; moves: StockMove[]; prices: StockPrice[]; cats: StockCategory[];
-  canWrite: boolean; canPrice: boolean; isAdmin: boolean; onManageCat: () => void; onChanged: () => void;
+  canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; onManageCat: () => void; onChanged: () => void;
   onItemPatched: (it: StockItem) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -198,8 +215,8 @@ function ItemDetail({
         </a>
       )}
 
-      {/* คงเหลือ + ต้นทุน */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      {/* คงเหลือ + ต้นทุน (ต้นทุนโชว์เฉพาะคนที่เห็นราคาได้) */}
+      <div className={`mt-4 grid gap-3 ${canViewCost ? "grid-cols-2" : "grid-cols-1"}`}>
         <div className={`rounded-2xl px-5 py-4 ${isLow(item) ? "bg-red-50" : "glass-soft"}`}>
           <div className="text-xs font-medium text-ink-3">คงเหลือในคลัง</div>
           <div className={`text-3xl font-bold leading-tight ${isLow(item) ? "text-red-700" : "text-brand-dark"}`}>
@@ -207,20 +224,22 @@ function ItemDetail({
           </div>
           <div className="text-xs text-ink-3 mt-1">จุดเตือนขั้นต่ำ {baht(item.min_qty)} {item.unit}</div>
         </div>
-        <div className="rounded-2xl px-5 py-4 glass-soft">
-          <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย{item.is_weight_based ? " (คิดต่อโล)" : ""}</div>
-          <div className="text-3xl font-bold leading-tight text-brand-dark">฿{baht(item.unit_cost)}</div>
-          {item.is_weight_based && (
-            <div className="text-xs text-ink-3 mt-1">{baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}</div>
-          )}
-          <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>
-        </div>
+        {canViewCost && (
+          <div className="rounded-2xl px-5 py-4 glass-soft">
+            <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย{item.is_weight_based ? " (คิดต่อโล)" : ""}</div>
+            <div className="text-3xl font-bold leading-tight text-brand-dark">฿{baht(item.unit_cost)}</div>
+            {item.is_weight_based && (
+              <div className="text-xs text-ink-3 mt-1">{baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}</div>
+            )}
+            <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>
+          </div>
+        )}
       </div>
 
-      {canWrite && <MoveForm item={item} onDone={onChanged} />}
+      {canWrite && <MoveForm item={item} canViewCost={canViewCost} onDone={onChanged} />}
 
-      {/* ต้นทุน/ราคา — บัญชี */}
-      <PriceSection item={item} prices={prices} canPrice={canPrice} isAdmin={isAdmin} onDone={onChanged} />
+      {/* ต้นทุน/ราคา — เฉพาะคนที่เห็นราคาได้ (ซ่อนจากฝ่ายสโตร์) */}
+      {canViewCost && <PriceSection item={item} prices={prices} canPrice={canPrice} isAdmin={isAdmin} onDone={onChanged} />}
 
       {/* แก้ข้อมูลวัสดุ */}
       {canWrite && (
@@ -229,7 +248,7 @@ function ItemDetail({
             <Icon name="pencil" size={14} /> {editOpen ? "ปิดการแก้ไข" : "แก้ข้อมูลวัสดุ (ชื่อ/หมวด/หน่วย/รูป/น้ำหนัก)"}
           </button>
           {editOpen && (
-            <EditItemForm item={item} cats={cats} onManageCat={onManageCat}
+            <EditItemForm item={item} cats={cats} canViewCost={canViewCost} onManageCat={onManageCat}
               onSaved={(it) => { onItemPatched(it); setEditOpen(false); }} />
           )}
         </div>
@@ -281,7 +300,7 @@ function ItemDetail({
 }
 
 // ── ฟอร์มบันทึกเคลื่อนไหว (รับเข้า/เบิกออก/ปรับยอด) ──
-function MoveForm({ item, onDone }: { item: StockItem; onDone: () => void }) {
+function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost: boolean; onDone: () => void }) {
   const [type, setType] = useState<StockMoveType | null>(null);
   const [qty, setQty] = useState("");
   const [requester, setRequester] = useState("");
@@ -338,7 +357,7 @@ function MoveForm({ item, onDone }: { item: StockItem; onDone: () => void }) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Field label={type === "adjust" ? `คงเหลือใหม่ (${item.unit})` : `จำนวน (${item.unit})`} value={qty} onChange={setQty} type="number" autoFocus />
             {type === "out" && <Field label="ผู้เบิก" value={requester} onChange={setRequester} placeholder="ชื่อคนเบิก" />}
-            {type === "in" && <Field label="ราคาที่จ่ายจริง (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="รวมทั้งบิล ถ้ามี" />}
+            {type === "in" && canViewCost && <Field label="ราคาที่จ่ายจริง (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="รวมทั้งบิล ถ้ามี" />}
             {type === "in" && <Field label="ผู้รับเข้า" value={requester} onChange={setRequester} placeholder="ชื่อคนรับ" />}
           </div>
 
@@ -539,8 +558,8 @@ function ImageField({ label, url, onChange }: { label: string; url: string; onCh
 }
 
 // ── ฟอร์มเพิ่มวัสดุ ──
-function AddItemForm({ cats, onManageCat, onCancel, onSaved }: {
-  cats: StockCategory[]; onManageCat: () => void; onCancel: () => void; onSaved: (it: StockItem) => void;
+function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
+  cats: StockCategory[]; canViewCost: boolean; onManageCat: () => void; onCancel: () => void; onSaved: (it: StockItem) => void;
 }) {
   const [f, setF] = useState({
     name: "", sku: "", category_id: "", unit: "เส้น", min_qty: "", qty_on_hand: "",
@@ -595,24 +614,28 @@ function AddItemForm({ cats, onManageCat, onCancel, onSaved }: {
       {/* รูป */}
       <div className="mt-3"><ImageField label="รูปสินค้า" url={f.image_url} onChange={(u) => setF({ ...f, image_url: u })} /></div>
 
-      {/* ราคา/ต้นทุน */}
-      <div className="mt-4 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-2.5">
-        <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
-          <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
-          คิดราคาแบบชั่งน้ำหนัก (อลูมิเนียม — ต่อโล)
-        </label>
-        {f.is_weight_based ? (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <Field label="ราคาต่อโล (฿/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
-            <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
-          </div>
-        )}
-        {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>฿{baht(computedCost)}</b></p>}
-      </div>
+      {/* ราคา/ต้นทุน — เฉพาะคนที่เห็นราคาได้ (ฝ่ายสโตร์เพิ่มวัสดุได้ แต่ราคาให้บัญชีใส่ทีหลัง) */}
+      {canViewCost ? (
+        <div className="mt-4 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-2.5">
+          <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
+            <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
+            คิดราคาแบบชั่งน้ำหนัก (อลูมิเนียม — ต่อโล)
+          </label>
+          {f.is_weight_based ? (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <Field label="ราคาต่อโล (฿/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
+              <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
+            </div>
+          )}
+          {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>฿{baht(computedCost)}</b></p>}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-ink-3">* ราคา/ต้นทุนให้ฝ่ายบัญชีเป็นผู้กรอกภายหลัง</p>
+      )}
 
       {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
       <div className="flex gap-2 mt-4">
@@ -626,8 +649,8 @@ function AddItemForm({ cats, onManageCat, onCancel, onSaved }: {
 }
 
 // ── ฟอร์มแก้วัสดุ ──
-function EditItemForm({ item, cats, onManageCat, onSaved }: {
-  item: StockItem; cats: StockCategory[]; onManageCat: () => void; onSaved: (it: StockItem) => void;
+function EditItemForm({ item, cats, canViewCost, onManageCat, onSaved }: {
+  item: StockItem; cats: StockCategory[]; canViewCost: boolean; onManageCat: () => void; onSaved: (it: StockItem) => void;
 }) {
   const [f, setF] = useState({
     name: item.name, sku: item.sku, category_id: item.category_id ? String(item.category_id) : "",
@@ -676,12 +699,16 @@ function EditItemForm({ item, cats, onManageCat, onSaved }: {
         <Field label="ร้าน/ผู้ขาย" value={f.supplier} onChange={(v) => setF({ ...f, supplier: v })} />
         <Field label="จุดเตือนขั้นต่ำ" value={f.min_qty} onChange={(v) => setF({ ...f, min_qty: v })} type="number" />
       </div>
-      <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
-        <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
-        คิดราคาแบบชั่งน้ำหนัก (ต่อโล)
-      </label>
-      {f.is_weight_based && (
-        <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+      {canViewCost && (
+        <>
+          <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
+            <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
+            คิดราคาแบบชั่งน้ำหนัก (ต่อโล)
+          </label>
+          {f.is_weight_based && (
+            <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+          )}
+        </>
       )}
       <ImageField label="รูปสินค้า" url={f.image_url} onChange={(u) => setF({ ...f, image_url: u })} />
       {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}

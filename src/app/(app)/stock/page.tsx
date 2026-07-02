@@ -5,9 +5,11 @@ import type { StockItem, StockCategory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// สโตร์/ผลิต บันทึกได้ (0073) · อัปเดตราคา = บัญชี/แอดมิน
+// สโตร์/ผลิต บันทึกได้ (0073) · อัปเดต+เห็นราคา = บัญชี/แอดมิน
+// ฝ่ายสโตร์ (PRODUCTION) รับเข้า/เบิกออกได้ แต่ "ไม่เห็นราคา/ต้นทุน"
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 const PRICE_WRITE = ["ADMIN", "ACCOUNTING"];
+const COST_VIEW = ["ADMIN", "ACCOUNTING"];
 
 export default async function StockPage() {
   const profile = await getProfile();
@@ -27,6 +29,7 @@ export default async function StockPage() {
       categories={(cats ?? []) as StockCategory[]}
       canWrite={STORE_WRITE.includes(role)}
       canPrice={PRICE_WRITE.includes(role)}
+      canViewCost={COST_VIEW.includes(role)}
       isAdmin={role === "ADMIN"}
     />
   );

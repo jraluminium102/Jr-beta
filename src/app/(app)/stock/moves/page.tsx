@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
@@ -29,6 +30,8 @@ type Row = {
 };
 
 export default async function StockMovesPage({ searchParams }: { searchParams: { m?: string; type?: string } }) {
+  const profile = await getProfile();
+  const canViewCost = ["ADMIN", "ACCOUNTING"].includes(profile?.role ?? ""); // ฝ่ายสโตร์ไม่เห็นราคา
   const { y, m0 } = parseMonth(searchParams.m);
   const start = `${y}-${pad2(m0 + 1)}-01`;
   const nextY = m0 === 11 ? y + 1 : y;
@@ -91,7 +94,7 @@ export default async function StockMovesPage({ searchParams }: { searchParams: {
               ประจำเดือน {monthLabel}{typeFilter ? ` · เฉพาะ${MOVE_LABEL[typeFilter]}` : ""}
             </div>
             <div style={{ fontSize: 12, color: "#6b7280", marginTop: 3 }}>
-              รับเข้า ฿{baht(sumIn)} · เบิกใช้ ฿{baht(sumOut)} · ทั้งหมด {rows.length} รายการ
+              {canViewCost ? `รับเข้า ฿${baht(sumIn)} · เบิกใช้ ฿${baht(sumOut)} · ` : ""}ทั้งหมด {rows.length} รายการ
             </div>
           </div>
         </div>
@@ -107,13 +110,13 @@ export default async function StockMovesPage({ searchParams }: { searchParams: {
               <th className="p-1.5 text-right border border-gray-200" style={{ width: 70 }}>จำนวน</th>
               <th className="p-1.5 text-left border border-gray-200" style={{ width: 90 }}>ผู้เบิก</th>
               <th className="p-1.5 text-left border border-gray-200">งาน (ลูกค้า)</th>
-              <th className="p-1.5 text-right border border-gray-200" style={{ width: 80 }}>ราคารวม</th>
+              {canViewCost && <th className="p-1.5 text-right border border-gray-200" style={{ width: 80 }}>ราคารวม</th>}
               <th className="p-1.5 text-left border border-gray-200" style={{ width: 110 }}>หมายเหตุ</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={10} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีการเคลื่อนไหวในเดือนนี้ —</td></tr>
+              <tr><td colSpan={canViewCost ? 10 : 9} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีการเคลื่อนไหวในเดือนนี้ —</td></tr>
             ) : rows.map((r, i) => (
               <tr key={r.id}>
                 <td className="p-1.5 text-center border border-gray-200">{i + 1}</td>
@@ -130,12 +133,12 @@ export default async function StockMovesPage({ searchParams }: { searchParams: {
                 <td className="p-1.5 border border-gray-200">
                   {r.jobs ? `${r.jobs.job_code || "—"} · ${r.jobs.customer_name}` : (r.ref || "—")}
                 </td>
-                <td className="p-1.5 text-right border border-gray-200 tabular-nums">{r.total_price ? baht(r.total_price) : "—"}</td>
+                {canViewCost && <td className="p-1.5 text-right border border-gray-200 tabular-nums">{r.total_price ? baht(r.total_price) : "—"}</td>}
                 <td className="p-1.5 border border-gray-200" style={{ color: "#6b7280" }}>{r.note || ""}</td>
               </tr>
             ))}
           </tbody>
-          {rows.length > 0 && (
+          {rows.length > 0 && canViewCost && (
             <tfoot>
               <tr style={{ fontWeight: 700, background: "#fafafa" }}>
                 <td className="p-1.5 border border-gray-200 text-right" colSpan={8}>รวมมูลค่ารับเข้าเดือนนี้</td>
@@ -151,9 +154,11 @@ export default async function StockMovesPage({ searchParams }: { searchParams: {
           )}
         </table>
 
-        <div style={{ marginTop: 18, fontSize: 10, color: "#9ca3af" }}>
-          * ราคาต้นทุนตามที่จ่ายจริง (บริษัทไม่จด VAT) · มูลค่าเบิกใช้ = ต้นทุนถัวเฉลี่ย ณ วันเบิก
-        </div>
+        {canViewCost && (
+          <div style={{ marginTop: 18, fontSize: 10, color: "#9ca3af" }}>
+            * ราคาต้นทุนตามที่จ่ายจริง (บริษัทไม่จด VAT) · มูลค่าเบิกใช้ = ต้นทุนถัวเฉลี่ย ณ วันเบิก
+          </div>
+        )}
       </div>
     </div>
   );
