@@ -6,10 +6,12 @@
  * engine/products/pricebook ก๊อปตรงจากแพ็คเกจส่งต่อ (ผ่าน verify 63/63) — ห้ามแก้ไฟล์ engine โดยไม่รัน scripts/verify-r40.mjs
  * แยกเอกเทศจากเครื่องคิดราคา R3.9 เดิม (/calculator) — ไม่แตะของเก่า
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
 import { computeCost } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
@@ -53,9 +55,24 @@ type QuoteItem = {
   qty: number;        // จำนวนชุด
   perUnit: number;    // ราคาขาย+ติดตั้ง/ชุด
   cost: number;       // ทุน/ชุด (ไว้ดูกำไรรวม)
+  prodId?: string;    // (เฟส B) product_id → สถิติ
+  groupLabel?: string;// (เฟส B) หมวด → สถิติ
 };
 
-export default function Calculator40Client() {
+type CustomerOption = Pick<Customer, "id" | "name" | "job" | "phone" | "address" | "contact_person">;
+
+export default function Calculator40Client({ customers = [] }: { customers?: CustomerOption[] }) {
+  const router = useRouter();
+  // ผูกลูกค้าจากทะเบียน (เฟส B)
+  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [custQuery, setCustQuery] = useState("");
+  const [custOpen, setCustOpen] = useState(false);
+  const custRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => { if (custRef.current && !custRef.current.contains(e.target as Node)) setCustOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
   // pricebook แก้ได้ในหน้า (in-memory — รีเฟรชกลับค่าไฟล์ เหมือน mockup)
   const [pb, setPb] = useState<any>(() => JSON.parse(JSON.stringify(PRICEBOOK)));
   const [group, setGroup] = useState(1);
@@ -284,6 +301,7 @@ export default function Calculator40Client() {
         key: keySeq, name: prod.name,
         desc: `${sideDesc}${rt.roof > 0 ? ` · หลังคา ${baht(rt.roof)}฿` : ""}${rt.ceil > 0 ? ` · ฝ้า ${baht(rt.ceil)}฿` : ""}`,
         qty: n, perUnit: rt.total, cost: 0,
+        prodId: prod.id, groupLabel: "ห้องกระจก",
       }]);
       setKeySeq((k) => k + 1);
       return;
@@ -302,8 +320,37 @@ export default function Calculator40Client() {
     setQuote((q) => [...q, {
       key: keySeq, name: prod.name, desc, qty: n,
       perUnit: result.sell.withInstall + subSell, cost: result.cost.total + subCost,
+      prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
     }]);
     setKeySeq((k) => k + 1);
+  }
+
+  // ── เฟส B: ผูกลูกค้า + ส่งออกใบเสนอราคาจริง (ตรง flow เครื่องเดิม → /quotations/new?from=calc) ──
+  const selectedCustomer = customers.find((c) => c.id === customerId);
+  const custFiltered = custQuery.trim()
+    ? customers.filter((c) => {
+        const q = custQuery.trim().toLowerCase();
+        const last4 = (c.phone ?? "").replace(/\D/g, "").slice(-4);
+        return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q) || last4.includes(q) || (c.address ?? "").toLowerCase().includes(q);
+      })
+    : customers;
+
+  function sendToQuotation() {
+    if (quote.length === 0) return;
+    const payload = {
+      items: quote.map((it) => ({
+        name: it.name,
+        detail: it.desc,
+        qty: it.qty,
+        unit_price: it.perUnit,
+        category: it.groupLabel ?? "",
+        product_id: it.prodId ?? "",
+      })),
+      customer: selectedCustomer?.name ?? "",
+      customer_id: customerId,
+    };
+    try { sessionStorage.setItem("jr_quote_items", JSON.stringify(payload)); } catch { /* ignore */ }
+    router.push("/quotations/new?from=calc");
   }
 
   const quoteTotal = quote.reduce((s, it) => s + it.perUnit * it.qty, 0);
@@ -365,6 +412,37 @@ export default function Calculator40Client() {
       <p className="text-sm text-ink-3 -mt-3">
         ราคาขาย = ทุนจริง × (1 + กำไร%) ปัดร้อย — อลูขึ้นราคา แก้ที่ ⚙️ ทุกรุ่นขยับตามทันที · R3.9 เดิมยังใช้ได้ที่เมนูเครื่องคิดราคา
       </p>
+
+      {/* ── ผูกลูกค้าจากทะเบียน (เฟส B — ออกใบเสนอราคาจริง) ── */}
+      <div className="relative max-w-xl" ref={custRef}>
+        <div className="flex items-center gap-1.5 glass-soft rounded-xl px-3 py-2.5">
+          <Icon name="search" size={15} className="shrink-0 text-ink-3" />
+          <input
+            type="text" placeholder="ผูกลูกค้า (พิมพ์ชื่อ/เบอร์/พื้นที่) — ไว้ออกใบเสนอราคา"
+            value={custQuery}
+            onFocus={() => setCustOpen(true)}
+            onChange={(e) => { setCustQuery(e.target.value); setCustOpen(true); if (customerId) setCustomerId(null); }}
+            className="flex-1 min-w-0 bg-transparent outline-none text-sm" />
+          {customerId != null && (
+            <button onClick={() => { setCustomerId(null); setCustQuery(""); }} className="shrink-0 text-ink-3 hover:text-red-600 text-xs">✕</button>
+          )}
+        </div>
+        {selectedCustomer && (
+          <p className="mt-1 text-xs text-green-700 font-medium flex items-center gap-1"><Icon name="check" size={13} /> ผูกแล้ว: {selectedCustomer.name}{selectedCustomer.phone ? ` · ${selectedCustomer.phone}` : ""}</p>
+        )}
+        {custOpen && custFiltered.length > 0 && (
+          <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-lg">
+            {custFiltered.slice(0, 30).map((c) => (
+              <li key={c.id}
+                onMouseDown={(e) => { e.preventDefault(); setCustomerId(c.id); setCustQuery(c.name); setCustOpen(false); }}
+                className="px-3 py-2 text-sm cursor-pointer hover:bg-brand/5 border-b border-black/5 last:border-0">
+                {c.name}{c.job ? <span className="text-ink-3"> · {c.job}</span> : ""}
+                <span className="float-right text-xs text-ink-3">{(c.phone ?? "").replace(/\D/g, "").slice(-4) || ""}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* ── แผงแก้ราคา (in-memory เหมือน mockup — รีเฟรชคืนค่าเดิม) ── */}
       {adminOpen && (
@@ -804,7 +882,11 @@ export default function Calculator40Client() {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-brand-dark">🧾 รายการที่คิดไว้ ({quote.length})</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={sendToQuotation}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand">
+                <Icon name="file" size={15} /> ออกใบเสนอราคา →
+              </button>
               <button onClick={printQuote} className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
                 <Icon name="printer" size={15} /> พิมพ์ (ร่าง)
               </button>
