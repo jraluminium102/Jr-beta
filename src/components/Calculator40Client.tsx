@@ -23,6 +23,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
+import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -89,6 +90,8 @@ export default function Calculator40Client() {
   const [roofSegs, setRoofSegs] = useState<{ w: number; h: number }[]>([]);
   // G1 ผสมบาน — เพิ่มบานหลายชนิดในชุดเดียว (คิดราคาตามชนิดจริง สี/กระจกตามบานหลัก) ตรง app.js SUB_GROUPS/renderSubPanes
   const [subs, setSubs] = useState<SubPane[]>([]);
+  // G6 ห้องกระจก (composite) — RoomComposer คิดราคาเองทั้งก้อน (ผลรวมด้าน+ฝ้า+หลังคา) แล้ว callback กลับมาที่นี่
+  const [roomTotals, setRoomTotals] = useState<RoomTotals | null>(null);
 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
@@ -113,7 +116,7 @@ export default function Calculator40Client() {
     setP(String(x.defaults?.p ?? 1));
     setForm(x.defForm ?? (x.forms?.[0] ?? ""));
     setColor("white");
-    setGlassType(x.defGlass ?? "");
+    setGlassType(x.defGlass ?? (x.composite ? "เขียว 6มม." : ""));
     setMaterial(x.defMaterial ?? (x.materials?.[0] ?? ""));
     const s: Record<string, string> = {};
     (x.specOpts ?? []).forEach((o: any) => { s[o.key] = o.def ?? o.opts?.[0] ?? ""; });
@@ -177,9 +180,18 @@ export default function Calculator40Client() {
   // คิดราคาสด
   const result = useMemo(() => {
     if (!prod) return null;
-    // ห้องกระจก (G6 composite) — engine.mjs ยังไม่มี composeRoom (mockup เป็น composer ใหญ่: ห้อง→ด้าน→ช่อง→บานซ้อน)
-    // computeCost(prod.composite) จะคืนทุน/ราคา = 0 เงียบๆ (ไม่ throw) ถ้าปล่อยผ่านจะกดเพิ่มใบเสนอราคาฟรีได้ → บล็อกไว้ก่อน
-    if (prod.composite) return { error: "ห้องกระจก (G6) กำลังพัฒนา — ยังคิดราคาอัตโนมัติไม่ได้ในเวอร์ชันนี้ กรุณาคิดราคาแยกทีละบาน/หลังคา/พื้นจากเมนู G1/G3 แล้วรวมเอง" } as any;
+    // ห้องกระจก (G6 composite) — คิดราคาผ่าน RoomComposer (ประกอบด้าน/ฝ้า/หลังคา ด้วย R4.0 cost-engine จริงต่อชิ้น)
+    // RoomComposer callback (onTotal) → roomTotals · ที่นี่แค่ห่อผลลัพธ์ให้เข้ากับ shape { sell, cost } เดิมที่ UI ใช้ร่วม
+    if (prod.composite) {
+      if (!roomTotals || roomTotals.total <= 0) return { error: "กำลังตั้งค่าห้อง — ใส่ขนาด/เลือกชนิดบานอย่างน้อย 1 ด้านก่อน" } as any;
+      return {
+        input: { area: 0 }, aluKg: 0,
+        sell: { beforeLabor: roomTotals.total, mfgOnly: roomTotals.total, withInstall: roomTotals.total },
+        cost: { total: 0, alu: 0, bake: 0, openOven: 0, glass: 0, hardware: 0, consum: 0 },
+        profit: 0, labor: { prod: 0, install: 0 }, lines: [],
+        isRoom: true,
+      } as any;
+    }
     try {
       const wCm = Number(w) || prod.defaults?.w || 200;
       const hCm = Number(h) || prod.defaults?.h || 200;
@@ -256,7 +268,7 @@ export default function Calculator40Client() {
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals]);
 
   const ok = result && !("error" in result);
   const glassKeys = useMemo(() => Object.keys((pb.GLASS ?? {}) as Record<string, number>), [pb]);
@@ -264,6 +276,18 @@ export default function Calculator40Client() {
   function addToQuote() {
     if (!ok || !prod) return;
     const n = Math.max(1, Number(sets) || 1);
+    // ห้องกระจก (G6 composite) — RoomComposer คิดราคารวมทั้งก้อนแล้ว ขึ้นใบเป็นรายการเดียว (แยกรายด้าน/ฝ้า/หลังคาอยู่ในหน้าสรุปของ composer)
+    if (prod.composite) {
+      const rt = roomTotals!;
+      const sideDesc = rt.sides.map((s, i) => `ด้าน ${String.fromCharCode(65 + i)} ${baht(s)}฿`).join(", ");
+      setQuote((q) => [...q, {
+        key: keySeq, name: prod.name,
+        desc: `${sideDesc}${rt.roof > 0 ? ` · หลังคา ${baht(rt.roof)}฿` : ""}${rt.ceil > 0 ? ` · ฝ้า ${baht(rt.ceil)}฿` : ""}`,
+        qty: n, perUnit: rt.total, cost: 0,
+      }]);
+      setKeySeq((k) => k + 1);
+      return;
+    }
     // subLines (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมเข้ายอด/ทุน ของรายการเดียวกัน ตรง app.js (แยกจาก main แต่ไม่แยกบรรทัดในใบย่อยนี้)
     const subSell = (result as any).subSell || 0;
     const subCost = (result as any).subCost || 0;
@@ -458,23 +482,31 @@ export default function Calculator40Client() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
-                <Field label="สูง (ซม.)" value={h} onChange={setH} />
-                {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
-                  <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
-                ) : <div />}
-                <Field label="กำไร %" value={profit} onChange={setProfit} />
-              </div>
+              {!prod.composite && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
+                  <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
+                  <Field label="สูง (ซม.)" value={h} onChange={setH} />
+                  {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
+                    <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
+                  ) : <div />}
+                  <Field label="กำไร %" value={profit} onChange={setProfit} />
+                </div>
+              )}
+              {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
+              {prod.composite && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
+                  <Field label="กำไร %" value={profit} onChange={setProfit} />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mt-3">
-                {prod.forms?.length > 0 && (
+                {prod.forms?.length > 0 && !prod.composite && (
                   <Select label="รูปแบบ" value={form} onChange={setForm} opts={prod.forms} />
                 )}
-                <Select label="สี" value={color} onChange={setColor}
+                <Select label="สี (ทั้งห้อง)" value={color} onChange={setColor}
                   opts={Object.keys(pb.BAKE)} labels={COLOR_LABEL} />
-                {prod.defGlass && (
-                  <Select label="กระจก" value={glassType} onChange={setGlassType} opts={glassKeys} />
+                {(prod.defGlass || prod.composite) && (
+                  <Select label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}
                 {prod.materials?.length > 0 && (
                   <Select label="วัสดุ" value={material} onChange={setMaterial} opts={prod.materials} />
@@ -585,16 +617,29 @@ export default function Calculator40Client() {
                 </div>
               )}
 
-              <AddonsSection
-                prod={prod}
-                addons={addons}
-                setAddons={setAddons}
-                area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
-                W={(Number(w) || prod.defaults?.w || 200) / 100}
-                movePanes={movePanes}
-                color={color}
-                form={form || prod.defForm}
-              />
+              {!prod.composite && (
+                <AddonsSection
+                  prod={prod}
+                  addons={addons}
+                  setAddons={setAddons}
+                  area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
+                  W={(Number(w) || prod.defaults?.w || 200) / 100}
+                  movePanes={movePanes}
+                  color={color}
+                  form={form || prod.defForm}
+                />
+              )}
+
+              {/* 🏗️ ห้องกระจก (G6) — ประกอบด้าน/ผนัง/ฝ้า/หลังคา คิดราคาด้วย R4.0 จริงต่อชิ้น (RoomComposer คิดเองทั้งก้อน) */}
+              {prod.composite && (
+                <RoomComposer
+                  pb={pb}
+                  mainColor={color}
+                  mainGlass={glassType}
+                  profitPct={Number(profit) || 100}
+                  onTotal={setRoomTotals}
+                />
+              )}
 
               {/* หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิดวัสดุ/โครงตามขนาดจริง (วัสดุ/สีตามช่วงหลัก) รวมพื้นที่ในรายการเดียว
                   ตรง app.js renderRoofSegs ~1426-1440 */}
@@ -640,8 +685,8 @@ export default function Calculator40Client() {
                 />
               )}
 
-              {/* ราคา */}
-              {ok ? (
+              {/* ราคา (ห้องกระจก G6 มีการ์ดราคารวมของตัวเองใน RoomComposer แล้ว — ไม่ต้องซ้ำ) */}
+              {!prod.composite && (ok ? (
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl px-5 py-4 glass-soft">
                     <div className="text-xs font-medium text-ink-3">ขายผลิตอย่างเดียว</div>
@@ -683,10 +728,10 @@ export default function Calculator40Client() {
                 </div>
               ) : (
                 <p className="mt-5 text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">คิดราคาไม่ได้: {(result as any)?.error ?? "ตรวจอินพุต"}</p>
-              )}
+              ))}
 
               {/* สรุปบานย่อย/ช่วงเพิ่ม (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมยอดขาย+ทุน แยกจาก main แต่รวมเป็นรายการเดียวตอนขึ้นใบ */}
-              {ok && ((result as any).subLines?.length > 0) && (
+              {!prod.composite && ok && ((result as any).subLines?.length > 0) && (
                 <div className="mt-3 rounded-xl px-4 py-2.5 bg-sky-50 border border-sky-200 text-sm text-sky-900">
                   <div className="flex items-center justify-between font-semibold">
                     <span>+ รายการเสริม {(result as any).subLines.length} รายการ</span>
@@ -708,7 +753,7 @@ export default function Calculator40Client() {
               )}
 
               {/* สรุปของเสริม + คำเตือนจาก addon (cat:'warn' เช่น มอเตอร์ 80 เกินพื้นที่) */}
-              {ok && (() => {
+              {!prod.composite && ok && (() => {
                 const addonLines = result.lines.filter((l: any) => l.cat === "addon");
                 const warnLines = result.lines.filter((l: any) => l.cat === "warn");
                 const addonSum = addonLines.reduce((s: number, l: any) => s + (l.amount || 0), 0);
