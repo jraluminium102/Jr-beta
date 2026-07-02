@@ -1,50 +1,61 @@
 "use client";
 
 /**
- * 🏗️ ห้องกระจก (G6) composer — ประกอบห้องหลายด้าน (กระจก/ผนัง/เปิดโล่ง) + ฝ้า + หลังคา รวมราคา
- * คิดราคาทุกชิ้นด้วย R4.0 cost-engine จริง (computeCost) — ไม่ทำสูตรราคาซ้ำเอง
+ * 🏗️ ห้องกระจก (G6) composer — ประกอบห้องหลายด้าน (กระจก/ผนัง/เปิดโล่ง) + ฝ้า + หลังคา + พื้น + พัดลม + งานบริการ
+ * คิดราคาทุกชิ้นด้วย R4.0 cost-engine จริง (computeCost/computeAddon) — ไม่ทำสูตรราคาซ้ำเอง
  *
- * อ้างอิงฟีเจอร์/UX จากเครื่องเดิม (G6-module.js — G6R state/G6GROUPS/sideTotal/roomTotal)
- * แต่ตัด per-pane option editor เต็มรูปแบบออก (mouse/lock/threshold ต่อบาน ฯลฯ) เหลือ "simplified"
- * เหมือนแนวทาง SubPanesSection (พี่สั่ง "addons ย่อยเอาแบบ simplified ได้")
+ * พาริตี้เครื่องเดิม (G6-module.js — G6R state/G6GROUPS/G6PROF/sideTotal/roomTotal) เก็บทุกฟีเจอร์:
+ *   - per-pane option เต็ม: มือจับ(Cmech 6สี/ดิจิตอล/สแตนเลส)/ธรณี/โช้คอัพ/Tilt&Turn/แขนค้ำ/มุ้ง(หมวด+รุ่น+ผ้า)/
+ *     ครอบวงกบ/ดรอปพื้น/รื้อของเดิม — reuse <AddonsSection> ต่อบาน (ตรง prod.addons ของแต่ละชนิดบานจริงใน products.mjs)
+ *   - สี/กระจกแยกต่อด้าน (sideOvr) + premium
+ *   - หลังคาเต็ม: วัสดุมุง + หลายช่วง + ของเสริมครบ (รางน้ำ/เสา/เลื่อน+มอเตอร์/ซ่อนสโลป/ครอบ/sealer ฯลฯ) — reuse <AddonsSection> ของ prod.roof
+ *   - ฝ้าเต็ม (บอร์ด/ทาสี/ฉนวน/ตำแหน่ง/แนว) ผ่าน ceil_* products จริง
+ *   - พื้น + พัดลม + งานบริการ (demo/protect) — flat rate ตรงมติเดิม (ไม่มี R4.0 product คู่ตรง ๆ)
  *
  * โมเดล:
  *   RoomState.sides[] = ด้าน (glass|wall|open)
- *     glass side: panes[] แต่ละ pane = {typeKey(R4.0 product id), w,h,n, mosq/gridmark simplified}
- *     wall side: aw×ah × flat rate (R3.9 ผนังเบา 1,350/ตร.ม. — ยังไม่มี R4.0 cost ของผนังเบา "แบบเบา" ในราคานี้
- *                — ผนังหนัก (สมาร์ทบอร์ด/ไอโซวอล) ใช้ product จริงแยกต่างหากถ้าเลือก)
+ *     glass side: panes[] แต่ละ pane = {typeKey(R4.0 product id), w,h,n,fixedPanes,addons,colorOvr,glassOvr}
+ *     wall side: ชนิดผนัง (สมาร์ทบอร์ด/ไอโซวอล R4.0 จริง หรือ ผนังเบา flat R3.9)
  *     open side: 0
- *   ceiling: ชนิด × พื้นที่ (ใช้ R4.0 ceil_* ถ้าตรง ไม่งั้น CEIL_RATE flat จาก engine.mjs)
- *   roof: กว้าง×ยาว × R4.0 'roof' product (พื้นฐาน — ของเสริมหลังคา 20 อย่าง = เฟสถัดไป TODO)
- *   roomTotal = ceil100(Σ sideTotal + roofTotal + ceilTotal)
+ *   ceiling: ชนิด × พื้นที่ผ่าน ceil_* product จริง (PERIM/area ตรงกว้าง×ยาวจริง) + ฉนวน/ตำแหน่ง/แนว
+ *   roof: กว้าง×ยาว(+หลายช่วง) × R4.0 'roof' product + addons เต็ม (รางน้ำ/เสา/ฯลฯ ผ่าน AddonsSection)
+ *   floor/fan/services = flat ตรงมติ 16มิ.ย. (สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. · SPC กรอกเรต · min 5 · ลด10%≥20)
+ *   roomTotal = ceil100(Σ sideTotal + roofTotal + ceilTotal + floorTotal + fanTotal + servicesTotal + svcTotal + roomColorPremium)
  */
 import { useMemo, useState } from "react";
 import Icon from "@/components/Icon";
+import { fmt } from "@/lib/calculator40/fmt";
+import AddonsSection from "@/components/calculator40/AddonsSection";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
+// @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
+import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 function fmtBaht(n: number) {
   return "฿" + Math.round(n || 0).toLocaleString("th-TH");
 }
+function fmtNum(n: number) {
+  return (n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+}
 
 // ── map ชนิดบาน (ห้อง R3.9 เดิม → R4.0 product id) ──────────────────────────
 // ตัวไหนไม่มี R4.0 คู่ตรง ๆ ใช้ตัวใกล้เคียงที่สุดที่มีอยู่จริงในระบบ (คอมเมนต์กำกับ)
-const PANE_TYPES: { key: string; label: string; note?: string }[] = [
-  { key: "sms_slide", label: "บานเลื่อน SMS" },              // sliding_sms → sms_slide (ตรง)
-  { key: "euro_slide", label: "บานเลื่อน ยูโร" },             // sliding_euro → euro_slide (ตรง)
-  { key: "open_door", label: "บานเปิด" },                     // casement_euro → open_door (ตรง)
-  { key: "folding", label: "บานเฟี้ยม" },                     // folding_euro/folding → folding (ตรง — มีรุ่นเดียวใน R4.0 ตอนนี้)
-  { key: "awning", label: "บานกระทุ้ง" },                     // awning_euro → awning (ตรง)
-  { key: "fixed", label: "กระจกติดตาย" },                     // fixed_glass → fixed (ตรง)
-  { key: "shower", label: "ฉากกั้นอาบน้ำ" },                  // shower → shower (ตรง)
-  { key: "pivot", label: "บานหมุน (Pivot)" },                 // pivot → pivot (ตรง)
+const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
+  { key: "sms_slide", label: "บานเลื่อน SMS", slideLike: true },      // sliding_sms → sms_slide (ตรง)
+  { key: "euro_slide", label: "บานเลื่อน ยูโร", slideLike: true },    // sliding_euro → euro_slide (ตรง)
+  { key: "open_door", label: "บานเปิด" },                             // casement_euro → open_door (ตรง)
+  { key: "folding", label: "บานเฟี้ยม" },                             // folding_euro/folding → folding (ตรง — มีรุ่นเดียวใน R4.0 ตอนนี้)
+  { key: "awning", label: "บานกระทุ้ง" },                             // awning_euro → awning (ตรง)
+  { key: "fixed", label: "กระจกติดตาย" },                             // fixed_glass → fixed (ตรง)
+  { key: "shower", label: "ฉากกั้นอาบน้ำ" },                          // shower → shower (ตรง)
+  { key: "pivot", label: "บานหมุน (Pivot)" },                         // pivot → pivot (ตรง)
   { key: "frameless_door", label: "บานเปลือย (สวิง/เลื่อน/ติดตาย)" }, // frameless_* → frameless_door (รวม 3 แบบเดิมเป็นตัวเดียว เลือกผ่าน material)
-  { key: "pcdoor", label: "ประตู PC Door" },                  // pc_door_2/4 → pcdoor (ใกล้เคียงสุด)
-  // curved_* ยังไม่มี R4.0 product เทียบ — ไม่ใส่ในลิสต์ MVP (ติดป้าย TODO ด้านล่าง)
+  { key: "pcdoor", label: "ประตู PC Door" },                          // pc_door_2/4 → pcdoor (ใกล้เคียงสุด)
+  // curved_* (ดัดโค้ง) ยังไม่มี R4.0 product ราคาจริงเทียบตรง — ไม่ใส่ในลิสต์ (ไม่มีแหล่งราคา R4.0/R3.9 ที่คำนวณอัตโนมัติได้ในห้อง — สั่งทำนอกระบบ)
 ];
 
 const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
@@ -55,20 +66,28 @@ type Pane = {
   key: number;
   typeKey: string; // R4.0 product id
   w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
-  mosq?: boolean;    // มุ้ง simplified (flat +3,000 เหมือน SubPanesSection)
-  gridmark?: boolean; // คาดตาราง simplified (flat +2,000)
+  fixedPanes?: number; // บานติดตาย (เฉพาะบานเลื่อน — ลด movePanes ของมุ้ง)
+  addons: Record<string, any>; // per-pane option เต็ม (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) — ตรง shape ที่ AddonsSection ใช้
+  colorIdx?: string; // สีอลูเฟรมต่อบาน override ("" = ตามห้อง) — ใช้ colorKey ของ pb.BAKE
+  glassOvr?: string; // กระจกต่อบาน override ("" = ตามห้อง)
 };
 
 type Side =
   | { kind: "glass"; panes: Pane[] }
-  | { kind: "wall"; aw: number; ah: number }
+  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any> }
   | { kind: "open" };
 
-const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ตรงเครื่องเดิม G6-module.js sideTotal wall)
+const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ไม่มี R4.0 product คู่ตรง ๆ ของ "ผนังเบา" ชนิดบาง — ยังใช้ราคานี้ ติดป้าย (R3.9))
+
+const WALL_TYPES: { key: Side extends { kind: "wall" } ? Side["wallType"] : never; label: string }[] = [
+  { key: "light", label: "ผนังเบา (R3.9)" },
+  { key: "smartboard", label: "สมาร์ทบอร์ด 12มม. (R4.0)" },
+  { key: "isowall", label: "ไอโซวอล 100มม. (R4.0)" },
+];
 
 const CEIL_TYPES: { key: string; label: string; r4id?: string }[] = [
   { key: "smooth", label: "ฉาบเรียบ", r4id: "ceil_gypsum" },
-  { key: "cshape", label: "อลูตัวซี" }, // ไม่มี R4.0 product ตรง → CEIL_RATE flat
+  { key: "cshape", label: "อลูตัวซี" }, // ไม่มี R4.0 product ตรง → CEIL_RATE flat (R3.9)
   { key: "wood", label: "ไม้เทียม", r4id: "ceil_wood" },
   { key: "ranae_1x5", label: "ระแนงอลู 1×5", r4id: "ceil_ranae_1x5" },
   { key: "ranae_16_5", label: "ระแนงอลู 1.6 เว้น5", r4id: "ceil_ranae_16_5" },
@@ -80,60 +99,100 @@ const CEIL_FLAT_LABEL: Record<string, string> = {
   ranae_1x5: "ระแนงอลู 1×5", ranae_16_5: "ระแนงอลู เว้นร่อง", ranae_16_2: "ระแนงอลู เว้นร่อง",
 };
 
+const COLOR_LABEL: Record<string, string> = { white: "อบขาว/ดำ", sahara: "เทาซาฮาร่า", special: "สีอบพิเศษ", woodSpecial: "ลายไม้อบพิเศษ", woodStock: "ลายไม้สต็อค" };
+
 function L(i: number) {
   return String.fromCharCode(65 + i);
 }
 
+function freshPane(): Pane {
+  return { key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1, addons: {} };
+}
 function freshGlassSide(): Side {
-  return { kind: "glass", panes: [{ key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1 }] };
+  return { kind: "glass", panes: [freshPane()] };
+}
+function freshWallSide(): Side {
+  return { kind: "wall", wallType: "light", aw: 3, ah: 2.6, addons: {} };
 }
 
-// ราคาต่อ pane — ตรง pattern subPrice() ของ SubPanesSection (computeCost + extra flat มุ้ง/คาดตาราง)
-function panePrice(pane: Pane, pb: any, color: string, glassType: string, profitPct: number): number {
+// ราคาต่อ pane — computeCost + addons (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) ตรง prod.addons จริงของแต่ละชนิดบาน
+function panePrice(
+  pane: Pane, pb: any, roomColor: string, roomGlass: string, profitPct: number, movePanesOverride?: number
+): { amount: number; mosqLabel?: string } {
   const prod = PANE_BY_KEY[pane.typeKey];
+  if (!prod) return { amount: 0 };
+  const color = pane.colorIdx || roomColor;
+  const glassType = prod.defGlass ? (pane.glassOvr || roomGlass || prod.defGlass) : undefined;
+  const wCm = (pane.w || 1) * 100, hCm = (pane.h || 1) * 100;
+  const opt: any = {
+    w: wCm, h: hCm, p: pane.n || 1, form: prod.defForm,
+    color, glassType, material: prod.defMaterial ?? undefined,
+    profitPct, installProfitPct: profitPct, addons: pane.addons || {},
+  };
+  // มุ้งบวกบาน R4.0 จริง (ไม่ใช่ R3.9 fallback) — ตรง Calculator40Client
+  const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
+  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: prod.defForm }, pb, profitPct, profitPct);
+  if (mq) opt.mosquitoR4 = mq;
+  if (pane.addons?.dgNc) opt.digiNc = true;
+  const r: any = computeCost(pb, prod, opt);
+  return { amount: r.sell.withInstall, mosqLabel: mq?.label };
+}
+
+function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number): number {
+  if (s.wallType === "light") return Math.round((s.aw || 3) * (s.ah || 2.6) * WALL_RATE);
+  const prod = (PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"];
   if (!prod) return 0;
   const r: any = computeCost(pb, prod, {
-    w: (pane.w || 1) * 100, h: (pane.h || 1) * 100, p: pane.n || 1, form: prod.defForm,
-    color, glassType: prod.defGlass ? glassType || prod.defGlass : undefined,
-    material: prod.defMaterial ?? undefined,
-    profitPct, installProfitPct: profitPct, addons: {},
+    w: (s.aw || 3) * 100, h: (s.ah || 2.6) * 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: s.addons || {},
   });
-  let base = r.sell.withInstall;
-  if (pane.mosq) base += 3000;
-  if (pane.gridmark) base += 2000;
-  return base;
-}
-
-function wallPrice(aw: number, ah: number): number {
-  return Math.round((aw || 3) * (ah || 2.6) * WALL_RATE);
+  return r.sell.withInstall;
 }
 
 function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number): number {
-  if (s.kind === "glass") return s.panes.reduce((sum, p) => sum + panePrice(p, pb, color, glassType, profitPct), 0);
-  if (s.kind === "wall") return wallPrice(s.aw, s.ah);
+  if (s.kind === "glass") return s.panes.reduce((sum, p) => sum + panePrice(p, pb, color, glassType, profitPct).amount, 0);
+  if (s.kind === "wall") return wallPrice(s, pb, profitPct);
   return 0;
 }
 
-function ceilPrice(typeKey: string, area: number, pb: any, profitPct: number): number {
+// ฝ้า — ใช้ ceil_* product จริง (w/h = กว้าง/ยาวห้องจริง ซม. ตรง PERIM_VARS ของ products.mjs) หรือ flat CEIL_RATE ถ้าไม่มี product ตรง
+function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: any, profitPct: number): number {
+  const area = w * l;
   if (area <= 0) return 0;
   const t = CEIL_TYPES.find((x) => x.key === typeKey);
   if (t?.r4id && (PRODUCTS as any)[t.r4id]) {
     const prod = (PRODUCTS as any)[t.r4id];
-    // ceil_* products กิน w×h เป็นเมตร (defaults เก็บเป็น "ซม." แต่ค่าจริงคือเมตร×100 ตามธรรมเนียม engine)
-    // ใช้พื้นที่ห้อง = ส่งเป็นสี่เหลี่ยมผืนผ้าประมาณ sqrt(area) x sqrt(area) ไม่แม่น → แทนด้วย 1×area (กว้าง 1ม. ยาว=area) เพื่อให้ engine ที่อิง PERIM/area คิดพื้นที่ถูกต้อง
-    // NOTE: ceil_gypsum/wall_* ใช้ PERIM_VARS (คิดจาก W,H จริง) → ป้อน w,h ตรงจริงจะแม่นกว่า ผู้ใช้กรอกกว้าง/ยาวห้องแยกในฟอร์ม (ceilW/ceilH) แทนการเดา
-    const r: any = computeCost(pb, prod, { w: 100, h: 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: {} });
-    // fallback: ใช้เรตต่อตร.ม.จาก sell/พื้นที่ 1ตร.ม. คูณพื้นที่จริง (กัน error PERIM เพี้ยนตอนไม่รู้กว้าง/ยาวจริง)
-    const ratePerSqm = r.sell.withInstall / 1; // w=100cm,h=100cm → area=1 ตร.ม.
-    return ceil100(ratePerSqm * area);
+    const form = insul && prod.forms?.includes('ใส่ฉนวน rockwool 3"') ? 'ใส่ฉนวน rockwool 3"' : prod.defForm;
+    const material = t.key === "wood" ? "ไม้ทิพย์|สีพื้น" : undefined;
+    const r: any = computeCost(pb, prod, { w: w * 100, h: l * 100, p: 1, form, material, profitPct, installProfitPct: profitPct, addons: {} });
+    return r.sell.withInstall;
   }
-  // ไม่มี R4.0 product ตรง → flat CEIL_RATE (engine.mjs, แหล่งเดียวกับเครื่องเดิม + G3)
+  // ไม่มี R4.0 product ตรง → flat CEIL_RATE (engine.mjs, แหล่งเดียวกับเครื่องเดิม + G3) — ติดป้าย (R3.9)
   const label = CEIL_FLAT_LABEL[typeKey] || "ฉาบเรียบ";
-  const rate = (CEIL_RATE as Record<string, number>)[label] || 480;
+  const rate = ((CEIL_RATE as Record<string, number>)[label] || 480) + (insul ? 600 : 0);
   return Math.round(area * rate);
 }
 
-export type RoomTotals = { total: number; sides: number[]; roof: number; ceil: number };
+// พื้น (มติ 16มิ.ย.): สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. · SPC กรอกเรตเอง · min 5 ตร.ม. · ลด auto 10% ถ้า ≥20 (แก้ %ได้)
+function floorPrice(mat: string, w: number, l: number, rate: number, discOvr: string): number {
+  const raw = (w || 0) * (l || 0);
+  if (raw <= 0) return 0;
+  const a = Math.max(5, raw);
+  const r = mat === "spc" ? rate || 0 : 5000;
+  const base = a * r;
+  const dp = discOvr !== "" ? Number(discOvr) || 0 : (a >= 20 ? 10 : 0);
+  return Math.round(base * (1 - dp / 100));
+}
+
+function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen: number; door: number }): number {
+  let t = 0;
+  if (demo.roof) t += 5000 * (demo.roof || 0);
+  if (demo.floor) t += 5000 * (demo.floor || 0);
+  if (demo.rail) t += 3000 + 700 * (demo.railLen || 0);
+  if (demo.door) t += demo.door || 0;
+  return t;
+}
+
+export type RoomTotals = { total: number; sides: number[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
 
 export default function RoomComposer({
   pb, mainColor, mainGlass, profitPct, onTotal,
@@ -145,25 +204,71 @@ export default function RoomComposer({
   onTotal?: (t: RoomTotals) => void;
 }) {
   const [sides, setSides] = useState<Side[]>([freshGlassSide(), freshGlassSide()]);
-  const [tab, setTab] = useState<number>(0); // 0..sides.length-1 = ด้าน, length = ฝ้า/หลังคา, length+1 = สรุป
+  const [tab, setTab] = useState<number>(0); // 0..sides.length-1 = ด้าน, +1 สี/กระจก, +2 หลังคา/ฝ้า, +3 งานเสริม, +4 สรุป
+
+  // สีอลู/กระจก แยกต่อด้าน (sideOvr) — key = side index, "" = ตามห้อง (ค่าใน pb.BAKE)
+  const [sideColorOvr, setSideColorOvr] = useState<Record<number, { color: string; glass: string }>>({});
 
   // หลังคา
   const [roofOn, setRoofOn] = useState(false);
   const [roofW, setRoofW] = useState("4");
   const [roofL, setRoofL] = useState("3");
+  const [roofMaterial, setRoofMaterial] = useState("ไวนิล");
+  const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>([]);
+  const [roofAddons, setRoofAddons] = useState<Record<string, any>>({});
 
   // ฝ้า
   const [ceilOn, setCeilOn] = useState(false);
   const [ceilType, setCeilType] = useState("smooth");
   const [ceilW, setCeilW] = useState("4");
   const [ceilL, setCeilL] = useState("3");
+  const [ceilInsul, setCeilInsul] = useState(false);
+  const [ceilPos, setCeilPos] = useState<"in" | "out">("in");
+  const [ceilDir, setCeilDir] = useState<"flat" | "slope">("flat");
 
-  const nTabs = sides.length + 2; // + ฝ้า/หลังคา + สรุป
+  // พื้น
+  const [floorOn, setFloorOn] = useState(false);
+  const [floorMat, setFloorMat] = useState<"smart" | "spc">("smart");
+  const [floorW, setFloorW] = useState("4");
+  const [floorL, setFloorL] = useState("3");
+  const [floorRate, setFloorRate] = useState("");
+  const [floorDisc, setFloorDisc] = useState("");
+
+  // พัดลม
+  const [fanOn, setFanOn] = useState(false);
+  const [fanQty, setFanQty] = useState("1");
+  const [fanPrice, setFanPrice] = useState("2500");
+
+  // งานบริการเพิ่มเติม (กรอกเอง)
+  const [services, setServices] = useState<{ desc: string; qty: string; rate: string }[]>([]);
+
+  // รื้อ/ป้องกันหน้างาน
+  const [demoRoof, setDemoRoof] = useState("0");
+  const [demoFloor, setDemoFloor] = useState("0");
+  const [demoRail, setDemoRail] = useState(false);
+  const [demoRailLen, setDemoRailLen] = useState("0");
+  const [demoDoor, setDemoDoor] = useState("0");
+  const [protectOn, setProtectOn] = useState(false);
+  const [protectPts, setProtectPts] = useState("0");
+
+  const [remarks, setRemarks] = useState("");
+
+  const nSideTabs = sides.length;
+  const TAB_COLOR = nSideTabs, TAB_ROOF = nSideTabs + 1, TAB_EXTRA = nSideTabs + 2, TAB_SUMMARY = nSideTabs + 3;
+
+  function sideColor(i: number) { return sideColorOvr[i]?.color || mainColor; }
+  function sideGlass(i: number) { return sideColorOvr[i]?.glass || mainGlass; }
 
   const sideTotals = useMemo(
-    () => sides.map((s) => sideTotal(s, pb, mainColor, mainGlass, profitPct)),
-    [sides, pb, mainColor, mainGlass, profitPct]
+    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct)),
+    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
   );
+
+  const roofArea = useMemo(() => {
+    const base = (Number(roofW) || 0) * (Number(roofL) || 0);
+    const extra = roofSegs.reduce((a, s) => a + (Number(s.w) || 0) * (Number(s.l) || 0), 0);
+    return base + extra;
+  }, [roofW, roofL, roofSegs]);
 
   const roofTotal = useMemo(() => {
     if (!roofOn) return 0;
@@ -171,25 +276,55 @@ export default function RoomComposer({
     if (!prod) return 0;
     const w = Number(roofW) || 4, l = Number(roofL) || 3;
     const r: any = computeCost(pb, prod, {
-      w: w * 100, h: l * 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: {},
+      w: w * 100, h: l * 100, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
     });
-    return r.sell.withInstall;
-  }, [roofOn, roofW, roofL, pb, profitPct]);
+    let t = r.sell.withInstall;
+    // หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิดตามขนาดจริง วัสดุ/สีตามช่วงหลัก (ตรง Calculator40Client roofSegments)
+    roofSegs.forEach((sg) => {
+      const sw = (Number(sg.w) || 0) * 100, sh = (Number(sg.l) || 0) * 100;
+      if (!(sw > 0 && sh > 0)) return;
+      const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {} });
+      t += sr.sell.withInstall;
+    });
+    return t;
+  }, [roofOn, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct]);
 
   const ceilTotal = useMemo(() => {
     if (!ceilOn) return 0;
-    const area = (Number(ceilW) || 0) * (Number(ceilL) || 0);
-    return ceilPrice(ceilType, area, pb, profitPct);
-  }, [ceilOn, ceilType, ceilW, ceilL, pb, profitPct]);
+    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct);
+  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
 
+  const floorTotal = useMemo(() => {
+    if (!floorOn) return 0;
+    return floorPrice(floorMat, Number(floorW) || 0, Number(floorL) || 0, Number(floorRate) || 0, floorDisc);
+  }, [floorOn, floorMat, floorW, floorL, floorRate, floorDisc]);
+
+  const fanTotal = useMemo(() => {
+    if (!fanOn) return 0;
+    return (Number(fanQty) || 0) * (Number(fanPrice) || 0);
+  }, [fanOn, fanQty, fanPrice]);
+
+  const servicesTotal = useMemo(
+    () => services.reduce((a, s) => a + (Number(s.qty) || 0) * (Number(s.rate) || 0), 0),
+    [services]
+  );
+
+  const svcTotal = useMemo(() => {
+    let t = svcDemoTotal({ roof: Number(demoRoof) || 0, floor: Number(demoFloor) || 0, rail: demoRail ? 1 : 0, railLen: Number(demoRailLen) || 0, door: Number(demoDoor) || 0 });
+    if (protectOn) t += 2000 + (Number(protectPts) || 0) * 1000;
+    return t;
+  }, [demoRoof, demoFloor, demoRail, demoRailLen, demoDoor, protectOn, protectPts]);
+
+  // ส่วนเพิ่มราคาระดับห้อง (สี/กระจกหลัก) — เฉพาะด้านที่ "ไม่ได้" override ต่อด้าน (ด้าน override คิดราคาแล้วใน sideTotal ตรงๆ)
+  // หมายเหตุ: sideColor()/sideGlass() ผูกกับ mainColor/mainGlass อยู่แล้วเมื่อไม่ override → ไม่มี premium ซ้ำซ้อนให้คิดเพิ่มที่นี่ (ต่างจากเครื่องเดิมที่แยก mode real/opt)
   const roomTotal = useMemo(() => {
-    const t = sideTotals.reduce((a, b) => a + b, 0) + roofTotal + ceilTotal;
+    const t = sideTotals.reduce((a, b) => a + b, 0) + roofTotal + ceilTotal + floorTotal + fanTotal + servicesTotal + svcTotal;
     return ceil100(t);
-  }, [sideTotals, roofTotal, ceilTotal]);
+  }, [sideTotals, roofTotal, ceilTotal, floorTotal, fanTotal, servicesTotal, svcTotal]);
 
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, roof: roofTotal, ceil: ceilTotal });
+    onTotal?.({ total: roomTotal, sides: sideTotals, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomTotal]);
@@ -206,17 +341,15 @@ export default function RoomComposer({
     setSides((s) => s.map((x, xi) => {
       if (xi !== i) return x;
       if (kind === "glass") return freshGlassSide();
-      if (kind === "wall") return { kind: "wall", aw: 3, ah: 2.6 };
+      if (kind === "wall") return freshWallSide();
       return { kind: "open" };
     }));
   }
-  function patchWall(i: number, p: Partial<{ aw: number; ah: number }>) {
+  function patchWall(i: number, p: Partial<Extract<Side, { kind: "wall" }>>) {
     setSides((s) => s.map((x, xi) => (xi === i && x.kind === "wall" ? { ...x, ...p } : x)));
   }
   function addPane(i: number) {
-    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass")
-      ? { ...x, panes: [...x.panes, { key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1 }] }
-      : x));
+    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass") ? { ...x, panes: [...x.panes, freshPane()] } : x));
   }
   function patchPane(i: number, key: number, p: Partial<Pane>) {
     setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass")
@@ -232,48 +365,56 @@ export default function RoomComposer({
   return (
     <div className="mt-4 space-y-3 rounded-2xl glass-soft p-4">
       <div className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
-        <Icon name="building" size={16} /> ห้องกระจก (ประกอบ) <span className="text-xs font-normal text-ink-3">(หลายด้าน + ผนัง + ฝ้า + หลังคา · คิดด้วย R4.0 จริง)</span>
+        <Icon name="building" size={16} /> ห้องกระจก (ประกอบ) <span className="text-xs font-normal text-ink-3">(หลายด้าน + ผนัง + ฝ้า + หลังคา + พื้น/พัดลม/บริการ · คิดด้วย R4.0 จริง)</span>
       </div>
 
       {/* แท็บ */}
       <div className="flex flex-wrap gap-1.5">
         {sides.map((_, i) => (
           <button key={i} type="button" onClick={() => setTab(i)}
-            className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${tab === i ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+            className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${tab === i ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
             ด้าน {L(i)}
           </button>
         ))}
         <button type="button" onClick={addSide}
-          className="press text-xs font-semibold rounded-full px-3 py-1.5 glass-soft text-ink-2 hover:bg-white/70">
+          className="press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] glass-soft text-ink-2 hover:bg-white/70">
           ＋ด้าน
         </button>
-        <button type="button" onClick={() => setTab(sides.length)}
-          className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${tab === sides.length ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-          ฝ้า/หลังคา
+        <button type="button" onClick={() => setTab(TAB_COLOR)}
+          className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${tab === TAB_COLOR ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+          สี/กระจก
         </button>
-        <button type="button" onClick={() => setTab(sides.length + 1)}
-          className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${tab === sides.length + 1 ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+        <button type="button" onClick={() => setTab(TAB_ROOF)}
+          className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${tab === TAB_ROOF ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+          หลังคา/ฝ้า
+        </button>
+        <button type="button" onClick={() => setTab(TAB_EXTRA)}
+          className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${tab === TAB_EXTRA ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+          พื้น/พัดลม/บริการ
+        </button>
+        <button type="button" onClick={() => setTab(TAB_SUMMARY)}
+          className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${tab === TAB_SUMMARY ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
           สรุป
         </button>
       </div>
 
       {/* หน้าด้าน */}
-      {tab < sides.length && (() => {
+      {tab < nSideTabs && (() => {
         const i = tab, s = sides[i];
         return (
           <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-ink-2">ด้าน {L(i)}</span>
               {sides.length > 1 && (
-                <button type="button" onClick={() => removeSide(i)} className="press text-xs text-red-600 flex items-center gap-1">
+                <button type="button" onClick={() => removeSide(i)} className="press text-xs text-red-600 flex items-center gap-1 min-h-[36px]">
                   <Icon name="trash" size={13} /> ลบด้าน
                 </button>
               )}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {([["glass", "กระจก/บาน"], ["wall", "ผนังเบา"], ["open", "เปิดโล่ง"]] as [Side["kind"], string][]).map(([k, l]) => (
+              {([["glass", "กระจก/บาน"], ["wall", "ผนัง"], ["open", "เปิดโล่ง"]] as [Side["kind"], string][]).map(([k, l]) => (
                 <button key={k} type="button" onClick={() => setSideKind(i, k)}
-                  className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${s.kind === k ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                  className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${s.kind === k ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
                   {l}
                 </button>
               ))}
@@ -282,11 +423,14 @@ export default function RoomComposer({
             {s.kind === "glass" && (
               <div className="space-y-2">
                 {s.panes.map((pc) => {
-                  const price = panePrice(pc, pb, mainColor, mainGlass, profitPct);
+                  const prod = PANE_BY_KEY[pc.typeKey];
+                  const { amount: price, mosqLabel } = panePrice(pc, pb, sideColor(i), sideGlass(i), profitPct);
+                  const movePanes = Math.max(1, (pc.n || 1) - (pc.fixedPanes || 0));
+                  const glassKeys = Object.keys((pb.GLASS ?? {}) as Record<string, number>);
                   return (
-                    <div key={pc.key} className="rounded-lg border border-black/5 bg-white/70 p-2.5 space-y-1.5">
+                    <div key={pc.key} className="rounded-lg border border-black/5 bg-white/70 p-2.5 space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value })}
+                        <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value, addons: {} })}
                           className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
                           {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
                         </select>
@@ -300,42 +444,100 @@ export default function RoomComposer({
                           onChange={(e) => patchPane(i, pc.key, { n: Math.max(1, Math.round(+e.target.value) || 1) })}
                           className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums text-sm" />
                         <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(price)}</span>
-                        <button type="button" onClick={() => removePane(i, pc.key)} className="press text-ink-3 hover:text-red-600 ml-auto">
+                        <button type="button" onClick={() => removePane(i, pc.key)} className="press text-ink-3 hover:text-red-600 ml-auto min-h-[36px] min-w-[36px]">
                           <Icon name="trash" size={14} />
                         </button>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <button type="button" onClick={() => patchPane(i, pc.key, { mosq: !pc.mosq })}
-                          className={`press text-[11px] font-semibold rounded-full px-2.5 py-1 ${pc.mosq ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                          {pc.mosq ? "มุ้ง ✓" : "＋ มุ้ง +3,000"}
-                        </button>
-                        <button type="button" onClick={() => patchPane(i, pc.key, { gridmark: !pc.gridmark })}
-                          className={`press text-[11px] font-semibold rounded-full px-2.5 py-1 ${pc.gridmark ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                          {pc.gridmark ? "คาดตาราง ✓" : "＋ คาดตาราง +2,000"}
-                        </button>
+
+                      {pc.typeKey === "sms_slide" || pc.typeKey === "euro_slide" ? (
+                        <label className="flex items-center gap-2 text-xs text-ink-3">
+                          บานติดตาย (ไม่เลื่อน)
+                          <input type="number" min={0} max={Math.max(0, (pc.n || 1) - 1)} value={pc.fixedPanes || 0}
+                            onChange={(e) => patchPane(i, pc.key, { fixedPanes: Math.max(0, Math.min((pc.n || 1) - 1, Math.round(+e.target.value) || 0)) })}
+                            className="min-h-[32px] w-16 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+                          <span>· ที่เหลือ {movePanes} บานเลื่อน (ใช้คำนวณขนาดมุ้ง)</span>
+                        </label>
+                      ) : null}
+
+                      {/* สี/กระจกต่อบาน override (ค่าว่าง = ตามด้าน/ห้อง) */}
+                      <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                        <span className="text-ink-3">สีเฟรมบานนี้</span>
+                        <select value={pc.colorIdx || ""} onChange={(e) => patchPane(i, pc.key, { colorIdx: e.target.value })}
+                          className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                          <option value="">ตามด้าน ({COLOR_LABEL[sideColor(i)] ?? sideColor(i)})</option>
+                          {Object.keys(pb.BAKE ?? {}).map((c) => <option key={c} value={c}>{COLOR_LABEL[c] ?? c}</option>)}
+                        </select>
+                        {prod?.defGlass && (
+                          <>
+                            <span className="text-ink-3">กระจก</span>
+                            <select value={pc.glassOvr || ""} onChange={(e) => patchPane(i, pc.key, { glassOvr: e.target.value })}
+                              className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                              <option value="">ตามด้าน ({sideGlass(i) || prod.defGlass})</option>
+                              {glassKeys.map((g) => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                          </>
+                        )}
                       </div>
+                      {mosqLabel && <p className="text-[11px] text-ink-3">มุ้ง: {mosqLabel}</p>}
+
+                      {/* per-pane option เต็ม — reuse AddonsSection ตรงกับ prod.addons จริงของชนิดบานนี้ (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม ฯลฯ) */}
+                      {prod && (prod.addons || []).length > 0 && (
+                        <AddonsSection
+                          prod={prod}
+                          addons={pc.addons || {}}
+                          setAddons={(fn) => patchPane(i, pc.key, { addons: fn(pc.addons || {}) })}
+                          area={(pc.w || 1) * (pc.h || 1)}
+                          W={pc.w || 1}
+                          movePanes={movePanes}
+                          color={pc.colorIdx || sideColor(i)}
+                          form={prod.defForm}
+                        />
+                      )}
                     </div>
                   );
                 })}
                 <button type="button" onClick={() => addPane(i)}
-                  className="press text-xs font-semibold rounded-full px-3 py-1.5 glass-soft text-ink-2 hover:bg-white/70">
+                  className="press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] glass-soft text-ink-2 hover:bg-white/70">
                   ＋ เพิ่มบาน
                 </button>
-                <p className="text-[11px] text-ink-3">สี/กระจกของบานทุกใบในห้อง = ตามค่า &quot;สี&quot;/&quot;กระจก&quot; หลักของฟอร์ม (ด้านบน) · ยังไม่รองรับสีแยกต่อด้าน (TODO)</p>
               </div>
             )}
 
             {s.kind === "wall" && (
-              <div className="flex items-center gap-2 flex-wrap text-sm">
-                <span className="text-xs text-ink-3">ขนาด</span>
-                <input type="number" step={0.1} value={s.aw || ""} onChange={(e) => patchWall(i, { aw: +e.target.value || 0 })}
-                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                <span className="text-ink-3">×</span>
-                <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
-                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                <span className="text-ink-3">ม.</span>
-                <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s.aw, s.ah))}</span>
-                <span className="text-[11px] text-ink-3 w-full">ผนังเบา R3.9 flat 1,350/ตร.ม. (ยังไม่มี R4.0 cost ของผนังเบาชนิดนี้ — ถ้าต้องการผนังหนัก/มีฉนวนจริง ให้คิดแยกจากเมนู G3 สมาร์ทบอร์ด/ไอโซวอล)</span>
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap gap-1.5">
+                  {WALL_TYPES.map((t) => (
+                    <button key={t.key} type="button" onClick={() => patchWall(i, { wallType: t.key })}
+                      className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${s.wallType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap text-sm">
+                  <span className="text-xs text-ink-3">ขนาด</span>
+                  <input type="number" step={0.1} value={s.aw || ""} onChange={(e) => patchWall(i, { aw: +e.target.value || 0 })}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">×</span>
+                  <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">ม.</span>
+                  <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct))}</span>
+                </div>
+                {s.wallType === "light" && (
+                  <p className="text-[11px] text-ink-3">ผนังเบา flat 1,350/ตร.ม. (R3.9 — ยังไม่มี R4.0 cost ของผนังเบาชนิดบางนี้)</p>
+                )}
+                {s.wallType !== "light" && (prod => prod?.addons?.length ? (
+                  <AddonsSection
+                    prod={prod}
+                    addons={s.addons || {}}
+                    setAddons={(fn) => patchWall(i, { addons: fn(s.addons || {}) })}
+                    area={(s.aw || 3) * (s.ah || 2.6)}
+                    W={s.aw || 3}
+                    movePanes={1}
+                    color={mainColor}
+                    form={prod.defForm}
+                  />
+                ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
               </div>
             )}
 
@@ -346,36 +548,106 @@ export default function RoomComposer({
         );
       })()}
 
-      {/* หน้าฝ้า/หลังคา */}
-      {tab === sides.length && (
+      {/* หน้าสี/กระจกต่อด้าน */}
+      {tab === TAB_COLOR && (
+        <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-3">
+          <p className="text-xs text-ink-3">ค่าเริ่มต้นทุกด้าน = สี/กระจกหลักของฟอร์ม (ด้านบนสุด) · override เฉพาะด้านที่ต้องการเปลี่ยน</p>
+          {sides.map((s, i) => s.kind !== "glass" ? null : (
+            <div key={i} className="flex items-center gap-2 flex-wrap text-sm border-b border-black/5 pb-2 last:border-0">
+              <span className="font-semibold text-ink-2 w-16 shrink-0">ด้าน {L(i)}</span>
+              <select value={sideColorOvr[i]?.color || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: e.target.value, glass: m[i]?.glass || "" } }))}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
+                <option value="">สีตามห้อง ({COLOR_LABEL[mainColor] ?? mainColor})</option>
+                {Object.keys(pb.BAKE ?? {}).map((c) => <option key={c} value={c}>{COLOR_LABEL[c] ?? c}</option>)}
+              </select>
+              <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
+                <option value="">กระจกตามห้อง ({mainGlass || "—"})</option>
+                {Object.keys((pb.GLASS ?? {}) as Record<string, number>).map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+              {(sideColorOvr[i]?.color || sideColorOvr[i]?.glass) && (
+                <button type="button" onClick={() => setSideColorOvr((m) => { const n = { ...m }; delete n[i]; return n; })}
+                  className="press text-[11px] text-red-600 min-h-[32px]">ล้าง override</button>
+              )}
+            </div>
+          ))}
+          <p className="text-[11px] text-ink-3">แต่ละบานยังปรับสี/กระจกเฉพาะบานได้อีกชั้นในหน้าด้าน (ละเอียดกว่าระดับด้าน)</p>
+        </div>
+      )}
+
+      {/* หน้าหลังคา/ฝ้า */}
+      {tab === TAB_ROOF && (
         <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-4">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-ink-2">หลังคา</span>
+              <span className="text-sm font-semibold text-ink-2 flex items-center gap-1.5"><Icon name="factory" size={14} /> หลังคา</span>
               <button type="button" onClick={() => setRoofOn((v) => !v)}
-                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${roofOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${roofOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
                 {roofOn ? "มีหลังคา ✓" : "＋ ใส่หลังคา"}
               </button>
             </div>
             {roofOn && (
-              <div className="mt-2 flex items-center gap-2 flex-wrap text-sm">
-                <span className="text-xs text-ink-3">กว้าง×ยาว</span>
-                <input type="number" step={0.1} value={roofW} onChange={(e) => setRoofW(e.target.value)}
-                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                <span className="text-ink-3">×</span>
-                <input type="number" step={0.1} value={roofL} onChange={(e) => setRoofL(e.target.value)}
-                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                <span className="text-ink-3">ม.</span>
-                <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(roofTotal)}</span>
-                <p className="text-[11px] text-ink-3 w-full">คิดจากรุ่น &quot;หลังคา&quot; (R4.0 พื้นฐาน วัสดุเพิงเดี่ยว) · ของเสริมหลังคา (รางน้ำ/เสา/หลังคาเลื่อน/ครอบ ฯลฯ) ยังไม่รองรับในตัวประกอบห้อง — TODO เฟสถัดไป (คิดแยกจากเมนู G3 ได้ก่อน)</p>
+              <div className="mt-2 space-y-2.5">
+                <div className="flex items-center gap-2 flex-wrap text-sm">
+                  <span className="text-xs text-ink-3">กว้าง×ยาว</span>
+                  <input type="number" step={0.1} value={roofW} onChange={(e) => setRoofW(e.target.value)}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">×</span>
+                  <input type="number" step={0.1} value={roofL} onChange={(e) => setRoofL(e.target.value)}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">ม.</span>
+                  <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(roofTotal)}</span>
+                </div>
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">วัสดุมุงหลังคา</span>
+                  <select value={roofMaterial} onChange={(e) => setRoofMaterial(e.target.value)}
+                    className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
+                    {((PRODUCTS as any).roof.materials || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </label>
+
+                {/* หลังคาหลายช่วง (ขยัก) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-ink-2">หลังคาหลายช่วง (ขยัก)</span>
+                    <button type="button" onClick={() => setRoofSegs((s) => [...s, { w: "3", l: "2" }])}
+                      className="press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] glass-soft text-ink-2">＋ เพิ่มช่วง</button>
+                  </div>
+                  {roofSegs.map((sg, si) => (
+                    <div key={si} className="flex items-center gap-2">
+                      <span className="text-[11px] text-ink-3 w-14">ช่วง {si + 2}</span>
+                      <input type="number" step={0.1} placeholder="กว้าง(ม.)" value={sg.w}
+                        onChange={(e) => setRoofSegs((arr) => arr.map((x, xi) => xi === si ? { ...x, w: e.target.value } : x))}
+                        className="min-h-[36px] glass-soft rounded-lg px-2 py-1 w-20 outline-none tabular-nums text-xs" />
+                      <input type="number" step={0.1} placeholder="ลึก(ม.)" value={sg.l}
+                        onChange={(e) => setRoofSegs((arr) => arr.map((x, xi) => xi === si ? { ...x, l: e.target.value } : x))}
+                        className="min-h-[36px] glass-soft rounded-lg px-2 py-1 w-20 outline-none tabular-nums text-xs" />
+                      <button type="button" onClick={() => setRoofSegs((arr) => arr.filter((_, xi) => xi !== si))}
+                        className="press text-ink-3 hover:text-red-600 min-h-[32px] min-w-[32px]"><Icon name="trash" size={13} /></button>
+                    </div>
+                  ))}
+                  {roofSegs.length > 0 && <p className="text-[11px] text-ink-3">รวมพื้นที่หลังคา ≈ {fmtNum(roofArea)} ตร.ม. (ของเสริมด้านล่างคิดที่ช่วงหลัก)</p>}
+                </div>
+
+                {/* ของเสริมหลังคาเต็ม (รางน้ำ/เสา/เลื่อน+มอเตอร์/ซ่อนสโลป/ครอบ/sealer/ฝ้าใต้หลังคา ฯลฯ) — reuse AddonsSection ตรง prod.roof.addons */}
+                <AddonsSection
+                  prod={(PRODUCTS as any).roof}
+                  addons={roofAddons}
+                  setAddons={setRoofAddons}
+                  area={roofArea}
+                  W={Number(roofW) || 4}
+                  movePanes={1}
+                  color={mainColor}
+                  form="หลังคาเพิง"
+                />
               </div>
             )}
           </div>
           <div className="pt-2 border-t border-black/5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-ink-2">ฝ้า</span>
+              <span className="text-sm font-semibold text-ink-2 flex items-center gap-1.5"><Icon name="boxes" size={14} /> ฝ้า (ในห้อง — แยกจากฝ้าใต้หลังคาด้านบน)</span>
               <button type="button" onClick={() => setCeilOn((v) => !v)}
-                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${ceilOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${ceilOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
                 {ceilOn ? "มีฝ้า ✓" : "＋ ใส่ฝ้า"}
               </button>
             </div>
@@ -384,7 +656,7 @@ export default function RoomComposer({
                 <div className="flex flex-wrap gap-1.5">
                   {CEIL_TYPES.map((t) => (
                     <button key={t.key} type="button" onClick={() => setCeilType(t.key)}
-                      className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${ceilType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                      className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${ceilType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
                       {t.label}
                     </button>
                   ))}
@@ -399,48 +671,245 @@ export default function RoomComposer({
                   <span className="text-ink-3">ม.</span>
                   <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(ceilTotal)}</span>
                 </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => setCeilInsul((v) => !v)}
+                    className={`press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] ${ceilInsul ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                    {ceilInsul ? "มีฉนวนกันร้อน 3\" ✓" : "＋ ฉนวนกันร้อน 3\" (+600/ตร.ม.)"}
+                  </button>
+                  <button type="button" onClick={() => setCeilPos((v) => v === "in" ? "out" : "in")}
+                    className="press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] glass-soft text-ink-2">
+                    ตำแหน่ง: {ceilPos === "in" ? "ในห้อง" : "นอกห้อง"}
+                  </button>
+                  <button type="button" onClick={() => setCeilDir((v) => v === "flat" ? "slope" : "flat")}
+                    className="press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] glass-soft text-ink-2">
+                    แนว: {ceilDir === "flat" ? "ตรง" : "เฉียงตามหลังคา"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
 
+      {/* หน้าพื้น/พัดลม/งานบริการ */}
+      {tab === TAB_EXTRA && (
+        <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-4">
+          {/* พื้น */}
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink-2 flex items-center gap-1.5"><Icon name="ruler" size={14} /> พื้น</span>
+              <button type="button" onClick={() => setFloorOn((v) => !v)}
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                {floorOn ? "มีงานพื้น ✓" : "＋ ใส่งานพื้น"}
+              </button>
+            </div>
+            {floorOn && (
+              <div className="mt-2 space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => setFloorMat("smart")}
+                    className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorMat === "smart" ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                    สมาร์ทบอร์ด/ไม้เทียม (5,000/ตร.ม.)
+                  </button>
+                  <button type="button" onClick={() => setFloorMat("spc")}
+                    className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorMat === "spc" ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                    ลามิเนต/SPC (กรอกเรตเอง)
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap text-sm">
+                  <span className="text-xs text-ink-3">กว้าง×ยาว</span>
+                  <input type="number" step={0.1} value={floorW} onChange={(e) => setFloorW(e.target.value)}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">×</span>
+                  <input type="number" step={0.1} value={floorL} onChange={(e) => setFloorL(e.target.value)}
+                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                  <span className="text-ink-3">ม. (ขั้นต่ำ 5 ตร.ม.)</span>
+                </div>
+                {floorMat === "spc" && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-ink-3">เรต SPC/ลามิเนต (฿/ตร.ม.)</span>
+                    <input type="number" value={floorRate} onChange={(e) => setFloorRate(e.target.value)} placeholder="กรอกเรต"
+                      className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none tabular-nums text-sm" />
+                  </label>
+                )}
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">ส่วนลด % (เว้น = auto 10% ถ้า ≥20 ตร.ม.)</span>
+                  <input type="number" value={floorDisc} onChange={(e) => setFloorDisc(e.target.value)} placeholder="auto"
+                    className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none tabular-nums text-sm" />
+                </label>
+                <div className="font-semibold text-brand-dark tabular-nums">{fmtBaht(floorTotal)}</div>
+              </div>
+            )}
+          </div>
+
+          {/* พัดลม */}
+          <div className="pt-3 border-t border-black/5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink-2">พัดลม</span>
+              <button type="button" onClick={() => setFanOn((v) => !v)}
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${fanOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                {fanOn ? "มีพัดลม ✓" : "＋ ใส่พัดลม"}
+              </button>
+            </div>
+            {fanOn && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap text-sm">
+                <span className="text-xs text-ink-3">จำนวน</span>
+                <input type="number" min={1} value={fanQty} onChange={(e) => setFanQty(e.target.value)}
+                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums" />
+                <span className="text-xs text-ink-3">฿/ตัว</span>
+                <input type="number" value={fanPrice} onChange={(e) => setFanPrice(e.target.value)}
+                  className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-24 outline-none tabular-nums" />
+                <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(fanTotal)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* งานบริการเพิ่มเติม (กรอกเอง) */}
+          <div className="pt-3 border-t border-black/5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink-2">งานบริการเพิ่มเติม</span>
+              <button type="button" onClick={() => setServices((s) => [...s, { desc: "", qty: "1", rate: "0" }])}
+                className="press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] glass-soft text-ink-2">＋ เพิ่มรายการ</button>
+            </div>
+            {services.map((sv, si) => (
+              <div key={si} className="flex items-center gap-2 flex-wrap">
+                <input type="text" placeholder="รายการ" value={sv.desc}
+                  onChange={(e) => setServices((arr) => arr.map((x, xi) => xi === si ? { ...x, desc: e.target.value } : x))}
+                  className="min-h-[36px] glass-soft rounded-lg px-2 py-1 flex-1 min-w-[120px] outline-none text-xs" />
+                <input type="number" placeholder="จำนวน" value={sv.qty}
+                  onChange={(e) => setServices((arr) => arr.map((x, xi) => xi === si ? { ...x, qty: e.target.value } : x))}
+                  className="min-h-[36px] glass-soft rounded-lg px-2 py-1 w-20 outline-none tabular-nums text-xs" />
+                <input type="number" placeholder="ราคา/หน่วย" value={sv.rate}
+                  onChange={(e) => setServices((arr) => arr.map((x, xi) => xi === si ? { ...x, rate: e.target.value } : x))}
+                  className="min-h-[36px] glass-soft rounded-lg px-2 py-1 w-24 outline-none tabular-nums text-xs" />
+                <button type="button" onClick={() => setServices((arr) => arr.filter((_, xi) => xi !== si))}
+                  className="press text-ink-3 hover:text-red-600 min-h-[32px] min-w-[32px]"><Icon name="trash" size={13} /></button>
+              </div>
+            ))}
+            {services.length > 0 && <div className="font-semibold text-brand-dark tabular-nums">{fmtBaht(servicesTotal)}</div>}
+          </div>
+
+          {/* รื้อของเดิม / ป้องกันหน้างาน */}
+          <div className="pt-3 border-t border-black/5 space-y-2">
+            <span className="text-sm font-semibold text-ink-2">รื้อของเดิม / ป้องกันหน้างาน</span>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <label className="block">
+                <span className="text-ink-3">รื้อหลังคาเดิม (จุด × 5,000)</span>
+                <input type="number" min={0} value={demoRoof} onChange={(e) => setDemoRoof(e.target.value)}
+                  className="w-full min-h-[36px] glass-soft rounded-lg px-2 py-1 mt-1 outline-none tabular-nums" />
+              </label>
+              <label className="block">
+                <span className="text-ink-3">รื้อพื้นเดิม (จุด × 5,000)</span>
+                <input type="number" min={0} value={demoFloor} onChange={(e) => setDemoFloor(e.target.value)}
+                  className="w-full min-h-[36px] glass-soft rounded-lg px-2 py-1 mt-1 outline-none tabular-nums" />
+              </label>
+              <label className="block">
+                <span className="text-ink-3">รื้อประตู/บานเดิม (กรอกราคา)</span>
+                <input type="number" min={0} value={demoDoor} onChange={(e) => setDemoDoor(e.target.value)}
+                  className="w-full min-h-[36px] glass-soft rounded-lg px-2 py-1 mt-1 outline-none tabular-nums" />
+              </label>
+              <div>
+                <span className="text-ink-3">รื้อราวเดิม</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <button type="button" onClick={() => setDemoRail((v) => !v)}
+                    className={`press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] ${demoRail ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                    {demoRail ? "มี ✓" : "ไม่มี"}
+                  </button>
+                  {demoRail && (
+                    <input type="number" min={0} placeholder="ยาว(ม.)" value={demoRailLen} onChange={(e) => setDemoRailLen(e.target.value)}
+                      className="min-h-[32px] w-20 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button type="button" onClick={() => setProtectOn((v) => !v)}
+                className={`press text-[11px] font-semibold rounded-full px-2.5 py-1 min-h-[32px] ${protectOn ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                {protectOn ? "ป้องกันหน้างาน ✓ (+2,000 ฐาน)" : "＋ ป้องกันหน้างาน"}
+              </button>
+              {protectOn && (
+                <label className="flex items-center gap-1.5 text-xs text-ink-3">
+                  จุดเพิ่ม (×1,000)
+                  <input type="number" min={0} value={protectPts} onChange={(e) => setProtectPts(e.target.value)}
+                    className="min-h-[32px] w-16 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+                </label>
+              )}
+            </div>
+            {svcTotal > 0 && <div className="font-semibold text-brand-dark tabular-nums">{fmtBaht(svcTotal)}</div>}
+          </div>
+
+          <label className="block pt-3 border-t border-black/5">
+            <span className="text-xs font-medium text-ink-3">หมายเหตุ (พิมพ์ลงใบเสนอราคา)</span>
+            <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2}
+              className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none text-sm" placeholder="ระบุเงื่อนไข/ข้อตกลงเพิ่มเติม" />
+          </label>
+        </div>
+      )}
+
       {/* หน้าสรุป */}
-      {tab === sides.length + 1 && (
+      {tab === TAB_SUMMARY && (
         <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-1.5 text-sm">
           {sides.map((s, i) => (
             <div key={i} className="flex items-center justify-between">
-              <span className="text-ink-2">ด้าน {L(i)} ({s.kind === "glass" ? `กระจก ${s.panes.length} บาน` : s.kind === "wall" ? "ผนังเบา" : "เปิดโล่ง"})</span>
+              <span className="text-ink-2">
+                ด้าน {L(i)} ({s.kind === "glass" ? `กระจก ${s.panes.length} บาน` : s.kind === "wall" ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}` : "เปิดโล่ง"})
+              </span>
               <span className="tabular-nums font-medium">{fmtBaht(sideTotals[i] || 0)}</span>
             </div>
           ))}
           {roofOn && (
             <div className="flex items-center justify-between">
-              <span className="text-ink-2">หลังคา</span>
+              <span className="text-ink-2">หลังคา ({roofMaterial} · {fmtNum(roofArea)} ตร.ม.)</span>
               <span className="tabular-nums font-medium">{fmtBaht(roofTotal)}</span>
             </div>
           )}
           {ceilOn && (
             <div className="flex items-center justify-between">
-              <span className="text-ink-2">ฝ้า</span>
+              <span className="text-ink-2">ฝ้า ({CEIL_TYPES.find((t) => t.key === ceilType)?.label})</span>
               <span className="tabular-nums font-medium">{fmtBaht(ceilTotal)}</span>
+            </div>
+          )}
+          {floorOn && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-2">พื้น</span>
+              <span className="tabular-nums font-medium">{fmtBaht(floorTotal)}</span>
+            </div>
+          )}
+          {fanOn && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-2">พัดลม × {fanQty}</span>
+              <span className="tabular-nums font-medium">{fmtBaht(fanTotal)}</span>
+            </div>
+          )}
+          {servicesTotal > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-2">งานบริการเพิ่มเติม</span>
+              <span className="tabular-nums font-medium">{fmtBaht(servicesTotal)}</span>
+            </div>
+          )}
+          {svcTotal > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-ink-2">รื้อของเดิม/ป้องกันหน้างาน</span>
+              <span className="tabular-nums font-medium">{fmtBaht(svcTotal)}</span>
             </div>
           )}
           <div className="pt-1.5 mt-1.5 border-t border-black/10 flex items-center justify-between font-bold text-brand-dark">
             <span>รวมทั้งห้อง</span>
             <span className="tabular-nums text-base">{fmtBaht(roomTotal)}</span>
           </div>
+          {remarks && <p className="text-[11px] text-ink-3 pt-1.5 border-t border-black/5">หมายเหตุ: {remarks}</p>}
         </div>
       )}
 
       {/* ราคารวมห้อง — โชว์ล่างสุดตลอด (ตามเครื่องเดิม) */}
       <div className="flex items-center justify-between rounded-xl px-4 py-3 bg-brand text-white shadow-brand">
-        <span className="text-sm font-medium text-red-100">รวมทั้งห้อง (ทุกด้าน + ฝ้า + หลังคา)</span>
+        <span className="text-sm font-medium text-red-100">รวมทั้งห้อง (ทุกด้าน + ฝ้า + หลังคา + พื้น/พัดลม/บริการ)</span>
         <span className="text-xl font-bold tabular-nums">{fmtBaht(roomTotal)}</span>
       </div>
 
       <p className="text-[11px] text-ink-3">
-        TODO เฟสถัดไป: ของเสริมหลังคา 20 อย่าง (รางน้ำ/เสา/หลังคาเลื่อน/ซ่อนสโลป ฯลฯ), per-pane option เต็ม (มือจับ/ล็อก/ธรณีต่อบาน), พื้น/พัดลม/งานเสริมอื่น (demo/protect), สีอลู/กระจกแยกต่อด้าน, ดัดโค้ง (ยังไม่มี R4.0 product เทียบ)
+        หมายเหตุ: ดัดโค้ง (curved_*) ยังไม่มีแหล่งราคา R4.0/R3.9 อัตโนมัติในระบบ — ไม่มีในลิสต์ชนิดบาน (สั่งทำแยกนอกระบบ) ·
+        ผนังเบา flat R3.9 1,350/ตร.ม. (ยังไม่มี R4.0 cost ของผนังเบาชนิดบาง) ·
+        ฝ้าอลูตัวซี/ระแนงอลู 3 แบบ ใช้ราคาขายรวมติดตั้ง R3.9 ต่อตร.ม. (ยังไม่ถอดทุน R4.0)
       </p>
     </div>
   );

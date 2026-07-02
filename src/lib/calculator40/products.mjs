@@ -55,6 +55,7 @@ export const PRODUCTS = {
     id: 'sms_slide', group: 1, name: 'บานเลื่อน SMS', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
+    addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — มุ้ง/มือจับ/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม (engine computeAddon รองรับอยู่แล้ว)
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     vars: SLIDE_VARS,
     alu: [
@@ -85,6 +86,7 @@ export const PRODUCTS = {
     id: 'euro_slide', group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
+    addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     vars: SLIDE_VARS,
     alu: [
@@ -159,6 +161,7 @@ export const PRODUCTS = {
   open_door: {
     id: 'open_door', group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
+    addons: ['thresh', 'closer', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ธรณีหลังเต่า/โช้คอัพ/มือจับ/มุ้ง
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
     vars: {
       S: "form==='มีธรณี'?1:0",
@@ -189,6 +192,7 @@ export const PRODUCTS = {
   awning: {
     id: 'awning', group: 1, name: 'บานกระทุ้ง', brand: 'EURO', laborKey: 'บานกระทุ้ง (ยูโร)',
     icon: '🪟', defForm: 'เปิดล่าง', forms: ['เปิดล่าง', 'เปิดข้าง'], // แบบเปิด (R3.9 awn_mode) · Tilt&Turn = ออปชั่น awn_tt (+5,000/บาน)
+    addons: ['awn_tt', 'awn_brace', 'awn_auto', 'mosquito', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — Tilt&Turn/แขนค้ำ/ชุดออโต้/มุ้ง
     defaults: { w: 40, h: 40, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
     vars: {},
     alu: [
@@ -226,6 +230,7 @@ export const PRODUCTS = {
       { key: 'folddir', label: 'ทิศเปิด', opts: ['เปิดขวา', 'เปิดซ้าย', 'แยกกลาง'], def: 'เปิดซ้าย' },
       { key: 'threshf', label: 'ธรณีเฟี้ยม', opts: ['ธรณีกันน้ำ', 'ธรณีหลังเต่า', 'รางยู'], def: 'ธรณีกันน้ำ' }, // มด dropdown B6 (label · รางยู/หลังเต่า เช็คซ้ำราคา)
     ],
+    addons: ['mosquito', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defForm: '2บาน: รวบเปิดซ้าย (2-0)',
     // เฟี้ยมเปิด 3 แบบ (พี่สั่ง 1ก.ค.): รวบเปิดซ้าย (X-0) · รวบเปิดขวา (0-X · ราคาเท่ารวบซ้าย mirror) · เปิดกลาง (แยกครึ่ง) · เลิก "พับสลับ" · โค้ด (X-Y) คงไว้ให้ HW parse
     forms: ['2บาน: รวบเปิดซ้าย (2-0)', '2บาน: รวบเปิดขวา (0-2)', '2บาน: เปิดกลาง (1-1)', '3บาน: รวบเปิดซ้าย (3-0)', '3บาน: รวบเปิดขวา (0-3)', '3บาน: เปิดกลาง (2-1)', '4บาน: รวบเปิดซ้าย (4-0)', '4บาน: รวบเปิดขวา (0-4)', '4บาน: เปิดกลาง (2-2)', '5บาน: รวบเปิดซ้าย (5-0)', '5บาน: รวบเปิดขวา (0-5)', '5บาน: เปิดกลาง (3-2)', '6บาน: รวบเปิดซ้าย (6-0)', '6บาน: รวบเปิดขวา (0-6)', '6บาน: เปิดกลาง (3-3)'],
@@ -258,6 +263,7 @@ export const PRODUCTS = {
   fixed: {
     id: 'fixed', group: 1, name: 'บานติดตาย', brand: 'MTONG', laborKey: 'บานติดตาย',
     icon: '🟦', defForm: 'กระจกล้วน', forms: ['กระจกล้วน'], stockLen: 6.0,
+    addons: ['frame_wrap', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ติดตาย: ครอบวงกบ/รื้อของเดิม เท่านั้น (ไม่มีมือจับ/ล็อค/มุ้ง)
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 6,
     alu: [
       { name: 'กล่อง 1.6"x3" (วิ่งรอบ)', price: 1240, kg: 0, seg: 'W', count: '2' },
@@ -362,6 +368,7 @@ export const PRODUCTS = {
       { key: 'pcsill', label: 'ธรณี', opts: ['มีธรณี', 'ไม่มีธรณี'], def: 'มีธรณี' },
       { key: 'pcsoft', label: 'ล้อ + ซอฟต์โคลส', opts: ['ใส่', 'ไม่ใส่'], def: 'ใส่' },
     ],
+    addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defaults: { w: 150, h: 200, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 4,
     vars: { SILL: "spec.pcsill==='ไม่มีธรณี'?0:1" },
     alu: [
@@ -1253,6 +1260,7 @@ export const PRODUCTS = {
     id: 'frameless_door', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานเปลือย (ติดตาย/สวิง/เลื่อน)', brand: '-',
     sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: '7000', sellAdd: "material==='ติดตาย'?0:8000*P",
     icon: '🚪', materialLabel: 'แบบบานเปลือย', materials: ['ติดตาย', 'สวิง (ประตู)', 'เลื่อน'], defMaterial: 'สวิง (ประตู)',
+    addons: ['stainless', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — เปลือย: มือจับสแตนเลส + รื้อของเดิม เท่านั้น (ไม่มีครอบวงกบ/มุ้ง — เฟรมไม่มีวงกบอลู)
     defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 90, h: 220, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 4,
     vars: { SR: 'area<2?7200:(area<3?6800:(area<4?6400:(area<5?6000:(area<6?5600:(area<7?5200:(area<8?4800:4500))))))' }, alu: [], glass: null, hardware: [], consum: [],
     note: 'บานเปลือยกระจกเทมเปอร์ (ไม่มีเฟรมอลู) — ราคาขายอ้างอิง R3.9: ติดตาย bucket FRAMELESS 7,200→4,500 ฿/ตร.ม. ขั้นต่ำ 7,000 · สวิง/เลื่อน +8,000/บาน (บานพับ/ราง+อุปกรณ์) · ⚠️ ทุนจริงรอ Excel',
@@ -1261,6 +1269,7 @@ export const PRODUCTS = {
     id: 'pivot', group: 1, name: 'บานหมุน (Pivot)', brand: 'เมืองทอง',
     sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: '26000',
     icon: '🚪', materialLabel: 'แบบ', materials: ['บานเดี่ยว', 'บานคู่'], defMaterial: 'บานเดี่ยว',
+    addons: ['stainless', 'frame_wrap', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 100, h: 240, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 2,
     vars: { SR: 'area<2.5?14000:(area<3?13000:(area<3.5?12000:(area<4?11000:(area<4.5?10000:9000))))' }, alu: [], glass: null, hardware: [], consum: [],
     note: 'บานหมุนแกนกลาง Pivot (เมืองทอง) — ราคาขายอ้างอิง R3.9: bucket PIVOT 14,000→9,000 ฿/ตร.ม. ขั้นต่ำ 26,000 · ⚠️ ทุนจริงรอ Excel',
