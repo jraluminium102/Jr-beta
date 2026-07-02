@@ -160,6 +160,7 @@ export default function StockClient({
               onManageCat={() => setManageCat(true)}
               onChanged={() => selectItem(sel)}
               onItemPatched={(it) => { setSel(it); setList((l) => l.map((x) => x.id === it.id ? it : x)); }}
+              onDeleted={(id) => { setList((l) => l.filter((x) => x.id !== id)); setSel(null); setMoves([]); setPrices([]); }}
             />
           ) : (
             <p className="text-ink-3 text-center py-10">เลือกวัสดุทางซ้าย หรือเพิ่มใหม่</p>
@@ -187,13 +188,23 @@ function Thumb({ url, active, size = 40 }: { url: string; active?: boolean; size
 
 // ── รายละเอียดวัสดุ + เคลื่อนไหว + ต้นทุน/ราคา ──
 function ItemDetail({
-  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onChanged, onItemPatched,
+  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onChanged, onItemPatched, onDeleted,
 }: {
   item: StockItem; moves: StockMove[]; prices: StockPrice[]; cats: StockCategory[];
   canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; onManageCat: () => void; onChanged: () => void;
-  onItemPatched: (it: StockItem) => void;
+  onItemPatched: (it: StockItem) => void; onDeleted: (id: number) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function delItem() {
+    if (!confirm(`ลบ "${item.name}" ถาวร?\nประวัติรับเข้า/เบิกออก/ราคาของวัสดุนี้จะถูกลบตามไปด้วย — กู้คืนไม่ได้`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/stock/${item.id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (res.ok) onDeleted(item.id);
+    else { const j = await res.json().catch(() => null); alert(j?.error ?? "ลบไม่สำเร็จ"); }
+  }
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
@@ -244,9 +255,15 @@ function ItemDetail({
       {/* แก้ข้อมูลวัสดุ */}
       {canWrite && (
         <div className="mt-5">
-          <button onClick={() => setEditOpen((v) => !v)} className="press text-sm text-brand-dark font-semibold inline-flex items-center gap-1.5">
-            <Icon name="pencil" size={14} /> {editOpen ? "ปิดการแก้ไข" : "แก้ข้อมูลวัสดุ (ชื่อ/หมวด/หน่วย/รูป/น้ำหนัก)"}
-          </button>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <button onClick={() => setEditOpen((v) => !v)} className="press text-sm text-brand-dark font-semibold inline-flex items-center gap-1.5">
+              <Icon name="pencil" size={14} /> {editOpen ? "ปิดการแก้ไข" : "แก้ข้อมูลวัสดุ (ชื่อ/หมวด/หน่วย/รูป/น้ำหนัก)"}
+            </button>
+            <button onClick={delItem} disabled={deleting}
+              className="press text-sm text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5 disabled:opacity-60">
+              <Icon name="trash" size={14} /> {deleting ? "กำลังลบ…" : "ลบวัสดุนี้"}
+            </button>
+          </div>
           {editOpen && (
             <EditItemForm item={item} cats={cats} canViewCost={canViewCost} onManageCat={onManageCat}
               onSaved={(it) => { onItemPatched(it); setEditOpen(false); }} />

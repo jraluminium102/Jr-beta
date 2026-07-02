@@ -61,3 +61,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (error) return fail(error.message, 500);
   return ok(data);
 }
+
+// DELETE /api/stock/[id]  → ลบวัสดุถาวร (cascade ลบ moves + prices ของมันด้วย)
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const profile = await getProfile();
+  if (!profile) return UNAUTHORIZED();
+  if (!STORE_WRITE.includes(profile.role)) return FORBIDDEN();
+
+  const supabase = createClient() as unknown as Sb;
+  const { error } = await supabase.from("stock_items").delete().eq("id", params.id);
+  if (error) return fail(error.message, 500);
+  return ok({ id: Number(params.id) });
+}
