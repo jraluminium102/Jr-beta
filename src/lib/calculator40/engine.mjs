@@ -1,0 +1,734 @@
+// engine.mjs — เครื่องคิดทุน/ราคา JR R4.0 (cost engine กลางตัวเดียว ทุกรุ่นเรียกร่วม)
+// ──────────────────────────────────────────────────────────────────────────────
+// กฎ (ตรงไฟล์ทุน xlsx):
+//   • อลูเท่านั้น × ราคา/กก. (ผ่านตัวคูณ mult = ราคาปัจจุบัน/ตั้งต้น) — แก้ราคาอลูที่เดียว ทุกบานขยับ
+//   • สีพิเศษ: + (ค่าอบ ฿/กก. × น้ำหนักอลูรวม) [+ ค่าเปิดตู้อบ 2000 ถ้าอบพิเศษ/ลายไม้อบพิเศษ]
+//   • กระจก = พื้นที่กระจก × ฿/ตร.ม. (คงที่)  • อุปกรณ์/วัสดุสิ้นเปลือง = คงที่ต่อหน่วย
+//   • อลูตัดจากเส้น stock 6.4 ม. (bar-nesting)  • ค่าแรง = ฐาน + เรต × ตร.ม. (ผลิต/ติดตั้งแยก)
+//   • ขายผลิตอย่างเดียว = ceil100((ทุน+ค่าแรงผลิต)×(1+กำไร%))
+//   • ขายผลิต+ติดตั้ง   = ขายผลิต + ceil100(ค่าแรงติดตั้ง×(1+กำไรติดตั้ง%))
+// ──────────────────────────────────────────────────────────────────────────────
+
+export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
+
+export function ceil100(x) { return Math.ceil(x / 100) * 100; }
+export function roundUp1000(x) { return Math.ceil(x / 1000) * 1000; }  // R3.9 ปัดขึ้นหลักพัน
+
+// เลือกเรตขาย R3.9 ตามช่วงพื้นที่ (tier [lo,hi,rate]) — x<lo→เรตแรก · lo≤x<hi→เรตนั้น · เกิน→เรตสุดท้าย
+export function rateOf(x, tiers) {
+  if (!tiers || !tiers.length) return 0;
+  if (x < tiers[0][0]) return tiers[0][2];
+  for (const t of tiers) if (x >= t[0] && x < t[1]) return t[2];
+  return tiers[tiers.length - 1][2];
+}
+
+// จำนวนเส้น stock ที่ต้องใช้ (bar-nesting) — segLen=ความยาวชิ้น(ม.), count=จำนวนชิ้น
+export function barsNeeded(segLen, count, stockLen = STOCK_LEN) {
+  if (!(segLen > 0) || !(count > 0)) return 0;
+  const fit = Math.floor(stockLen / segLen);
+  if (fit >= 1) return Math.ceil(count / fit);
+  return Math.ceil(segLen / stockLen) * count;
+}
+
+// ── สร้าง evaluator ของ expression strings ในสเปกสินค้า ──────────────────────
+function buildEvaluator(extraVarNames) {
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult'];
+  const names = [...base, ...extraVarNames];
+  const cache = new Map();
+  const compile = (expr) => {
+    if (typeof expr === 'number') return () => expr;
+    if (cache.has(expr)) return cache.get(expr);
+    // eslint-disable-next-line no-new-func
+    const fn = new Function(...names, 'Math', 'return (' + expr + ')');
+    const wrapped = (scope) => fn(...names.map(n => scope[n]), Math);
+    cache.set(expr, wrapped);
+    return wrapped;
+  };
+  return { names, compile };
+}
+
+/**
+ * คิดราคากลาง — ทุกรุ่นเรียกฟังก์ชันนี้
+ * @param {object} PB   pricebook { ALU, ALU_BASE, BAKE, BAKE_OPEN_OVEN, GLASS, LABOR }
+ * @param {object} prod สเปกสินค้า (จาก products)
+ * @param {object} opt  { w, h(cm), p(จำนวนบาน), form, color, glassType, profitPct, installProfitPct }
+ * @returns {object} ผลคิดราคาแบบละเอียด
+ */
+export function computeCost(PB, prod, opt) {
+  const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
+  const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
+  const P = opt.p ?? prod.defaults.p ?? 1;
+  const form = opt.form ?? prod.defForm ?? 'std';
+  const area = W * H;
+  const color = opt.color ?? 'white';
+  const colorDisp = opt.colorName || colorLabel(color);      // ชื่อสีเฉพาะ (display) — ราคามาจาก bake key เท่านั้น
+  const material = opt.material ?? prod.defMaterial ?? null;  // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
+  const glassType = opt.glassType ?? prod.defGlass ?? 'เขียว 6มม.';
+  const profitPct = opt.profitPct ?? 100;
+  const installProfitPct = opt.installProfitPct ?? profitPct;
+
+  const brand = prod.brand;
+  const mult = (PB.ALU[brand] ?? 1) / (PB.ALU_BASE[brand] ?? PB.ALU[brand] ?? 1);
+  const bakeRate = PB.BAKE[color] ?? 0;
+
+  // เตรียม scope + evaluator
+  const varDefs = prod.vars || {};
+  const ev = buildEvaluator(Object.keys(varDefs));
+  // ROW = แถวข้อมูลจาก LUT ต่อรุ่น (cascade เช่น ฝ้าไม้เทียม) เลือกด้วย material เป็น key
+  // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult };
+  for (const [k, expr] of Object.entries(varDefs)) {
+    scope[k] = ev.compile(expr)(scope);
+  }
+  const val = (expr) => ev.compile(expr)(scope);
+
+  const stockLen = prod.stockLen ?? STOCK_LEN;
+  const lines = [];
+  let aluCost = 0, aluKg = 0;
+
+  // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
+  for (const it of (prod.alu || [])) {
+    const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
+    const count = val(it.count);
+    const bars = barsNeeded(seg, count, stockLen);
+    if (bars <= 0) continue;
+    const amount = bars * it.price * mult;
+    aluCost += amount;
+    aluKg += bars * (it.kg || 0);
+    lines.push({ cat: 'alu', name: it.name, qty: bars, unit: 'เส้น', unitPrice: round2(it.price * mult), amount: round2(amount) });
+  }
+  // ค่าอบสี (อลูเท่านั้น)
+  let bakeCost = 0, openOven = 0;
+  if (bakeRate > 0 && aluKg > 0) {
+    bakeCost = bakeRate * aluKg;
+    if (color === 'special' || color === 'woodSpecial') openOven = PB.BAKE_OPEN_OVEN || 0;
+    lines.push({ cat: 'bake', name: 'ค่าอบสี (' + colorDisp + ' ' + bakeRate + '/กก. × ' + round2(aluKg) + 'กก.)', qty: round2(aluKg), unit: 'กก.', unitPrice: bakeRate, amount: round2(bakeCost) });
+    if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
+  }
+
+  // (2) กระจก = พื้นที่กระจก × ฿/ตร.ม.
+  let glassCost = 0, glassArea = 0;
+  if (prod.glass) {
+    glassArea = val(prod.glass);
+    const gp = PB.GLASS[glassType] ?? 0;
+    glassCost = glassArea * gp;
+    lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
+  }
+
+  // (3) อุปกรณ์ + วัสดุสิ้นเปลือง (คงที่)
+  let hwCost = 0;
+  for (const it of (prod.hardware || [])) {
+    const count = val(it.count);
+    if (count <= 0) continue;
+    let price = typeof it.price === 'number' ? it.price : val(it.price);   // รองรับ price เป็นสูตร (เช่น เลือกกล่องระแนงประตูรั้ว)
+    if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
+    if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
+    const amount = count * price;
+    hwCost += amount;
+    lines.push({ cat: 'hardware', name: it.name, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount) });
+  }
+  let consumCost = 0;
+  for (const it of (prod.consum || [])) {
+    const count = val(it.count);
+    if (count <= 0) continue;
+    let unitPrice = typeof it.price === 'number' ? it.price : val(it.price);  // ราคา expression ได้ (cascade LUT)
+    if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
+    if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
+    const amount = count * unitPrice;
+    consumCost += amount;
+    lines.push({ cat: 'consum', name: it.name, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });
+  }
+
+  // สีโครงพิเศษ — ค่าสีเพิ่ม/ตร.ม. (per-item · เฉพาะรุ่น showColor เช่น หลังคา · X รอราคา · ไม่ sync ทั้งใบ)
+  let frameColorCost = 0;
+  if (prod.showColor && (opt.frameColorRate || 0) > 0) {
+    frameColorCost = opt.frameColorRate * area;
+    lines.push({ cat: 'bake', name: 'สีโครงพิเศษ (' + colorDisp + ' ' + opt.frameColorRate + '/ตร.ม.)', qty: round2(area), unit: 'ตร.ม.', unitPrice: opt.frameColorRate, amount: round2(frameColorCost) });
+  }
+  const costTotal = aluCost + bakeCost + openOven + glassCost + hwCost + consumCost + frameColorCost;
+
+  // (4) ค่าแรง = ฐาน + เรต × ตร.ม.  (บางรุ่นคิดต่อบาน → ×จำนวนบาน)
+  const L = PB.LABOR[prod.laborKey] || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
+  let laborProd, laborInstall;
+  if (prod.laborPerLeaf) {
+    // ค่าแรง "ต่อใบ": ฐาน×จำนวนใบ + เรต×พื้นที่รวม (เช่น มุ้ง — ชีต "ราคามุ้ง" L–O)
+    const leaves = val(prod.laborLeaves);
+    laborProd = Math.max(0, L.pBase * leaves + L.pRate * area);
+    laborInstall = Math.max(0, L.iBase * leaves + L.iRate * area);
+  } else {
+    const lp = prod.laborPerPanel ? P : 1;  // บางรุ่นคิดต่อบาน → ×จำนวนบาน
+    laborProd = Math.max(0, L.pBase + L.pRate * area) * lp;
+    laborInstall = Math.max(0, L.iBase + L.iRate * area) * lp;
+  }
+
+  // (5) ราคาขาย
+  let sellBeforeLabor, sellMfgOnly, sellWithInstall;
+  let sellCostOverride = null;  // รุ่นซื้อมาขายไป (ม่านซิป) — โชว์ทุนจริง = ขาย÷ตัวคูณ
+  if (prod.sellR39) {
+    const RR = (prod.cascade && scope.ROW) ? scope.ROW : null;
+    if (RR && RR.boxP) {
+      // ── ระแนง R4.0: ทุนจริง box/โชว์/ช่องห่าง/โครง (ชีต "คิดทุน ระแนง") → ขาย = ทุน×(1+กำไร%) ──
+      const Wc = W * 100, Hc = H * 100;                          // ซม.
+      const pitch = RR.showCm + RR.spacing;
+      const strands = Math.floor(Hc / pitch) + 1;                // จำนวนเส้นใบ
+      const perBar = Math.max(Math.floor(600 / Wc), 1);          // ใบ/ท่อน 6 ม. (bar-nest)
+      const bars = Math.ceil(strands / perBar);
+      const leaf = bars * RR.boxP;
+      const frm = RR.frame ? Math.ceil((Hc <= 250 ? 2 : 3) / Math.max(Math.floor(600 / RR.spacing), 1)) * (Math.round(485 * RR.showCm / 5) * 5) : 0;
+      const lab = area * 900;                                    // ค่าแรง ผลิต 300 + ติดตั้ง 600 /ตร.ม.
+      // สีอบ (fin) ต่อ SKU — R3.9 +เรต/ตร.ม. (sell) → ถอดทุนตาม markup กลาง ÷(1+กำไร%) (เดิม ÷2 ผูก 100% · แก้ 1ก.ค.) · ฐานอบขาว/ดำ ฟรี
+      const finRate = (RR.finMap && opt.ranaeFin) ? (RR.finMap[opt.ranaeFin] || 0) : 0;
+      const finCost = finRate * area / (1 + (profitPct || 100) / 100);
+      const cost = leaf + frm + lab + finCost;
+      sellCostOverride = round2(cost);
+      sellBeforeLabor = sellMfgOnly = sellWithInstall = ceil100(cost * (1 + profitPct / 100));
+      lines.length = 0;
+      lines.push({ cat: 'consum', name: 'ใบระแนง ' + RR.box + ' · ' + strands + ' เส้น (' + bars + ' ท่อน)', qty: bars, unit: 'ท่อน', unitPrice: RR.boxP, amount: round2(leaf) });
+      if (frm > 0) lines.push({ cat: 'consum', name: 'โครงดาม', qty: 1, unit: 'ชุด', unitPrice: round2(frm), amount: round2(frm) });
+      lines.push({ cat: 'labor', name: 'ค่าแรง (ผลิต+ติดตั้ง)', qty: round2(area), unit: 'ตร.ม.', unitPrice: 900, amount: round2(lab) });
+      if (finCost > 0) lines.push({ cat: 'consum', name: 'สีอบ ' + opt.ranaeFin + ' (' + finRate + '/ตร.ม.)', qty: round2(area), unit: 'ตร.ม.', unitPrice: round2(finRate / 2), amount: round2(finCost) });
+    } else {
+      // fallback ราคาขาย R3.9 (รุ่นที่ยังไม่มีต้นทุน) — ตรงสูตร R3.9: max(min, พื้นที่×เรต) ปัดพัน · รวมติดตั้งแล้ว
+      const r39k = (scope.ROW && scope.ROW.r39key) || prod.r39key;   // cascade เลือกตารางเรตต่อแบบ (เช่น ราวบันได imp1-6)
+      const tiers = (PB.R39RATES && r39k) ? PB.R39RATES[r39k] : null;
+      const lenOrArea = prod.r39method === 'per_length_tier' ? W : area;  // ราวบันได = ความยาว(กว้าง)
+      let raw;
+      if (prod.r39method === 'per_sqm') {
+        const rr = (prod.cascade && scope.ROW && scope.ROW.rate) ? scope.ROW.rate : (prod.r39rate || 0);
+        // สีอบ (fin) ต่อ SKU — เลือกสี → +เรต/ตร.ม. (R3.9 ซาฮาร่า/อบพิเศษ/ลายไม้ · ฐานอบขาว/ดำ ฟรี)
+        const rf = (prod.cascade && scope.ROW && scope.ROW.finMap && opt.ranaeFin) ? (scope.ROW.finMap[opt.ranaeFin] || 0)
+          : ((prod.cascade && scope.ROW && scope.ROW.fin) ? scope.ROW.fin : (prod.r39fin || 0));
+        raw = area * (rr + rf);
+      }
+      else if (prod.r39method === 'per_length_tier') raw = lenOrArea * rateOf(lenOrArea, tiers);
+      else if (prod.r39method === 'fold_flat') raw = Math.max(prod.r39min || 0, area * (prod.r39unitRate || 0));  // เฟี้ยม X-series: max(min, พื้นที่×เรต/บาน)
+      else if (prod.r39method === 'area_rate_addon') {   // เลื่อนภายในรางล่าง: พื้นที่×tier + เพิ่มตามจำนวนบาน
+        const am = (prod.r39addon && prod.r39addon.amounts) ? (prod.r39addon.amounts[Math.min(4, Math.max(1, P))] || 0) : 0;
+        raw = area * rateOf(area, tiers) + am;
+      }
+      else raw = area * rateOf(area, tiers);  // bucket / area_rate
+      const goods = roundUp1000(Math.max(prod.r39min || 0, raw));
+      sellBeforeLabor = sellMfgOnly = sellWithInstall = goods;
+      lines.length = 0;
+      lines.push({ cat: 'consum', name: (prod.name || 'รายการ') + ' · ราคา R3.9', qty: round2(area), unit: prod.r39method === 'per_length_tier' ? 'ม.' : 'ตร.ม.', unitPrice: round2(area > 0 ? goods / area : goods), amount: goods });
+    }
+  } else if (prod.sellCabinet) {
+    // ตู้อลู Future Tech (G4) — ทุนจริงจาก บานตู้.xlsx (ตารางต่อชนิดบาน×ขนาด×สี) → ขาย = ทุน×(1+กำไร%)
+    // ทุนบาน = เส้น/อุปกรณ์(ตาราง ถอดของ) + กระจก(พื้นที่/บาน×300) + วัสดุ1000 + ผลิต1400 + ติดตั้ง700 + ค่ารถ1000
+    const dtype = /เปิด/.test(form || '') ? 'เปิด' : 'เลื่อน';
+    const dcolor = /ทอง/.test(material || '') ? 'ทอง' : 'ดำ';
+    // FT_FRAME = ทุนเส้น+อุปกรณ์/บาน (ถอดของ จริง) · big=สูง>1.5ม. · ทอง-เปิด-เล็ก ประมาณ (เช็คซ้ำ)
+    const FT_FRAME = {
+      'ดำ': { 'เลื่อน': { big: 2078, small: 1590 }, 'เปิด': { big: 1830, small: 1111 } },
+      'ทอง': { 'เลื่อน': { big: 3117, small: 2242 }, 'เปิด': { big: 2869, small: 1742 } },
+    };
+    const FLAT = 1000 + 1400 + 700 + 1000;        // วัสดุ+ค่าแรงผลิต+ติดตั้ง+ค่ารถ (ต่อบาน · ชีต H/I/J/K)
+    const nDoors = P;
+    const aPerDoor = (W * H) / nDoors;
+    const band = H > 1.5 ? 'big' : 'small';
+    const frameHW = FT_FRAME[dcolor][dtype][band];
+    // กระจกหน้าบาน ฝ้า/ชาดำ — R3.9 +500/ตร.ม. (sell) → ทุน 250 (×กำไร100% = +500 ตรง R3.9 · ftglasscolor)
+    const FACE_GLASS_ADD = { clear: 0, frost: 250, black: 250 };
+    const fgAdd = FACE_GLASS_ADD[opt.faceGlass] || 0;
+    const fgLbl = { clear: ' · กระจกใส', frost: ' · กระจกฝ้า', black: ' · กระจกชาดำ' }[opt.faceGlass] || '';
+    // สีหน้าบานพิเศษ — R3.9 FT_COLOR_PLUS ต่อบาน ตามพื้นที่/บาน (1,500-3,500 sell) → ทุน ÷2
+    const FT_COLOR_TIER = [[1.0, 1500], [1.5, 2000], [2.0, 2500], [2.5, 3000], [3.0, 3500]];
+    const ftColorSell = a => { for (const [hi, v] of FT_COLOR_TIER) if (a <= hi) return v; return FT_COLOR_TIER[FT_COLOR_TIER.length - 1][1]; };
+    const fcAddDoor = (opt.faceColor === 'special') ? ftColorSell(aPerDoor) / 2 : 0;   // ทุน/บาน
+    const fcLbl = (opt.faceColor === 'special') ? (' · สีหน้าบานพิเศษ' + (opt.faceColorCode ? ' (รหัส ' + opt.faceColorCode + ')' : '')) : '';
+    const costDoor = frameHW + aPerDoor * (300 + fgAdd) + fcAddDoor + FLAT;   // กระจก 300/ตร.ม. + ฝ้า/ชาดำ + สีพิเศษ/บาน
+    let cabCost = costDoor * nDoors;
+    lines.length = 0;
+    lines.push({ cat: 'consum', name: 'บานหน้า Future Tech · ' + dtype + ' · สี' + dcolor + fgLbl + fcLbl + ' · ' + nDoors + ' บาน', qty: nDoors, unit: 'บาน', unitPrice: round2(costDoor), amount: round2(cabCost) });
+    if (!prod.faceOnly) {
+      const isShoe = opt.kind === 'shoe';                    // ตู้รองเท้า — ชั้นถี่ (R3.9 spacing 0.2) + ลึก 0.4
+      const D = opt.depth || (isShoe ? 0.4 : (prod.defDepth || 0.6));
+      const spacing = isShoe ? 0.2 : 0.4;
+      let nsh = opt.shelves; if (!(nsh >= 1)) nsh = Math.max(2, Math.round(H / spacing));
+      // ผนัง/กั้นด้านตู้ — ติ๊กต่อด้าน ซ้าย/ขวา/หลัง + วัสดุ (R3.9 _calcCabinet · min 1 ตร.ม./ด้าน) · default ซ้าย+ขวา อลู (=เดิม)
+      const WMAT = { alu: 1383, glass: (opt.wallGlassRate || 1383), smart: (opt.wallSmartRate || 1383) }; // อลูทุนจริง 1383 · กระจก/สมาร์ท: เรตอลูชั่วคราวจนกว่าจะกรอก
+      const WLBL = { alu: 'อลูทึบ', glass: 'กระจก', smart: 'สมาร์ทบอร์ด' };
+      const sides = opt.cabSides || { left: { on: true, mat: 'alu' }, right: { on: true, mat: 'alu' }, back: { on: false, mat: 'alu' } };
+      const wgcAdd = (opt.wallGlassColor === 'frost' || opt.wallGlassColor === 'black') ? 250 : 0;  // สีกระจกผนัง ฝ้า/ชาดำ R3.9 +500/ตร.ม. → ทุน 250 (×กำไร100%)
+      const wgcLbl = opt.wallGlassColor === 'frost' ? ' ฝ้า' : (opt.wallGlassColor === 'black' ? ' ชาดำ' : '');
+      let wallCost = 0;
+      [['left', 'ซ้าย', D * H], ['right', 'ขวา', D * H], ['back', 'หลัง', W * H]].forEach(([k, lbl, autoA]) => {
+        const s = sides[k]; if (!s || !s.on) return;
+        const a = Math.max(1, (s.w > 0 && s.h > 0) ? s.w * s.h : autoA);
+        const mat = s.mat || 'alu', rate = WMAT[mat] || 1383;
+        const wc = a * rate + (mat === 'glass' ? wgcAdd * a : 0);   // กระจกผนัง + ส่วนเพิ่มสีฝ้า/ชาดำ
+        const pend = mat !== 'alu' && !((mat === 'glass' ? opt.wallGlassRate : opt.wallSmartRate) > 0);
+        wallCost += wc;
+        lines.push({ cat: 'consum', name: 'ผนังตู้ ' + lbl + ' (' + WLBL[mat] + (mat === 'glass' ? wgcLbl : '') + ')' + (pend ? ' (รอราคาจริง)' : ''), qty: round2(a), unit: 'ตร.ม.', unitPrice: round2(rate + (mat === 'glass' ? wgcAdd : 0)), amount: round2(wc) });
+      });
+      const glassShelf = opt.shelfMat === 'glass';
+      const glassPending = glassShelf && !(opt.glassShelfRate > 0);
+      // อัปเกรดกระจกชั้น 6 ระดับ — R3.9 sell: ใส8/10 +1,200 · เทมเปอร์6/8/10 +600/+1,300/+2,100 → ทุน ÷2 (×กำไร100% = ตรง R3.9 · o-shelfglass)
+      const GLASS_GRADE_ADD = { clear6: 0, clear8: 600, clear10: 600, temper6: 300, temper8: 650, temper10: 1050, temper: 300 };
+      const gradeAdd = glassShelf ? (GLASS_GRADE_ADD[opt.glassGrade] || 0) : 0;
+      const shelfRate = (glassShelf ? (opt.glassShelfRate || 1416) : 1416) + gradeAdd;  // ชั้นอลู 1416 (จริง) · ชั้นกระจก: เรตอลูชั่วคราว + อัปเกรดเกรด (X)
+      const aShelf = nsh * D * W, shelfCost = aShelf * shelfRate;
+      lines.push({ cat: 'consum', name: 'ชั้นวาง ' + (glassShelf ? 'กระจก' : 'อลู') + ' ' + nsh + ' ชั้น' + (glassPending ? ' (กระจก·รอราคาจริง)' : '') + ' (ลึก ' + D + '×กว้าง ' + round2(W) + ' ม.)', qty: round2(aShelf), unit: 'ตร.ม.', unitPrice: round2(shelfRate), amount: round2(shelfCost) });
+      cabCost += wallCost + shelfCost;
+    }
+    sellCostOverride = round2(cabCost);
+    sellBeforeLabor = sellMfgOnly = sellWithInstall = ceil100(cabCost * (1 + profitPct / 100));
+  } else if (prod.sellZip) {
+    // ม่านซิป R4.0 — ซื้อสำเร็จจากจีน (¥×เรต = ทุน) → ×ตัวคูณ (กำไร 100%) = ขาย
+    // ขาย = พื้นที่ × ราคาขายผ้า+โครง/ตร.ม.(ตาม series+ผ้า) + มอเตอร์ + รีโมท (แยกราคา)
+    const Z = prod.zip;
+    const fab = (material != null) ? material : '5';
+    let ser = ({ 'อัตโนมัติ': 'auto', 'Z100': 'Z100', 'Z120': 'Z120', 'Double 2 ชั้น': 'Z200D', 'Ultra Wide': 'Z120W', 'Skylight 100': 'Z100S', 'Skylight 120': 'Z120S' })[form] || 'auto';
+    if (ser === 'auto') ser = W > 5 ? 'Z120W' : (H > 3 ? 'Z120' : 'Z100');
+    const S = Z.series[ser] || Z.series.Z100;
+    const Hc = Math.max(H, S.minH || 1.5);                 // สูงต่ำสุดบังคับ (Hunan)
+    const a = Math.max(W * Hc, S.minA || 3);                // พื้นที่ขั้นต่ำ
+    const fabMissing = S.fab[fab] == null;
+    let fabRate = S.fab[fab]; if (fabRate == null) fabRate = S.fab['5'] || S.fab['0'] || Object.values(S.fab)[0];
+    const fabSell = a * fabRate;
+    // เตือนเซล (R3.9 msgsZ) — cat:'warn' ไม่โผล่ใน BOM breakdown · UI โชว์ใต้ราคา
+    const zWarn = [];
+    if (S.maxW && W > S.maxW) zWarn.push('⚠️ กว้างเกินรุ่น ' + ser + ' (สูงสุด ' + S.maxW + ' ม.)');
+    if (S.maxH && H > S.maxH) zWarn.push('⚠️ สูงเกินรุ่น ' + ser + ' (สูงสุด ' + S.maxH + ' ม.)');
+    if (fabMissing) zWarn.push('⚠️ รุ่น ' + ser + ' ไม่มีผ้า ' + fab + ' — คิดเรตผ้า 5% แทน');
+    if (W * H > 0 && W * H < (S.minA || 3)) zWarn.push('ℹ️ คิดพื้นที่ขั้นต่ำ ' + (S.minA || 3) + ' ตร.ม. (กรอก ' + round2(W * H) + ')');
+    if (H > 0 && H < (S.minH || 1.5)) zWarn.push('ℹ️ สูงต่ำสุด ' + (S.minH || 1.5) + ' ม. (คิดที่ขั้นต่ำ)');
+    let motorKey = opt.motor || (ser === 'Z120W' ? (W > 15 ? 'uwdual' : 'uw') : ((ser === 'Z100S' || ser === 'Z120S') ? 'sky' : 'dooya'));
+    const motorSell = Z.motor[motorKey] || 0;
+    const remoteSell = opt.noRemote ? 0 : (Z.acc.remote1 || 0);
+    const sell = Math.round(fabSell + motorSell + remoteSell);
+    sellBeforeLabor = sellMfgOnly = sellWithInstall = sell;
+    sellCostOverride = sell / (Z.mult || 2);                // ทุนนำเข้า = ขาย ÷ ตัวคูณ
+    lines.length = 0;
+    lines.push({ cat: 'consum', name: 'ผ้า+โครง ' + ser + ' · ผ้า ' + fab + ' (' + round2(a) + ' ตร.ม.)', qty: round2(a), unit: 'ตร.ม.', unitPrice: fabRate, amount: round2(fabSell) });
+    lines.push({ cat: 'hardware', name: 'มอเตอร์ ' + (Z.motorLabel[motorKey] || motorKey), qty: 1, unit: 'ชุด', unitPrice: motorSell, amount: motorSell });
+    if (remoteSell > 0) lines.push({ cat: 'hardware', name: 'รีโมท 1 ตัว', qty: 1, unit: 'ตัว', unitPrice: remoteSell, amount: remoteSell });
+    zWarn.forEach(w => lines.push({ cat: 'warn', name: w, amount: 0 }));
+  } else if (prod.sellDirect) {
+    // ของซื้อสำเร็จ — ราคาขาย = พื้นที่ × เรต/ตร.ม. (B เป็นราคาขายแล้ว ไม่ ×กำไร) + ค่าแรงติดตั้ง/ตร.ม.
+    let aSell = area, hNote = '';
+    if (prod.heightRound && H > 0 && H <= 3.0) {   // ลูกฟูก/ระแนง: ปัดสูงตามแผ่นสต็อก (R3.9 ranaeHeight [1/1.2/1.5/2/3] · ซื้อเต็มแผ่น=ทุนจริง)
+      for (const v of [1.0, 1.2, 1.5, 2.0, 3.0]) { if (H <= v + 1e-9) { if (Math.abs(v - H) > 1e-9) { aSell = W * v; hNote = ' (ปัดสูง ' + round2(H) + '→' + v + 'ม.)'; } break; } }
+    }
+    const rate = val(prod.sellRate);
+    const irate = prod.sellInstallRate ? val(prod.sellInstallRate) : 0;
+    const minSell = prod.sellMin ? val(prod.sellMin) : 0;       // ราคาขายขั้นต่ำต่อชนิด (รังผึ้ง/ม้วนเตะ ฯลฯ)
+    let matBase = aSell * rate; const minHit = (minSell > 0 && matBase < minSell); if (minHit) matBase = minSell;
+    if (prod.sellAdd) matBase += val(prod.sellAdd);   // บวกค่าคงที่หลัง min (เช่น บานเปลือยสวิง/เลื่อน +8,000/บาน · R3.9 ref_plus_panel)
+    let rnDisc = 0;
+    if (prod.ranaeDisc) { const d = area > 30 ? 0.15 : area > 20 ? 0.11 : area > 15 ? 0.08 : area > 10 ? 0.05 : 0; if (d > 0) { rnDisc = ceil100(matBase) - ceil100(matBase * (1 - d)); } }
+    sellBeforeLabor = sellMfgOnly = ceil100(matBase) - rnDisc;
+    sellWithInstall = sellMfgOnly + ceil100(aSell * irate);
+    lines.length = 0;
+    const sdName = (prod.name || 'รายการ');   // เลิกคำ "สำเร็จ" (R3.9 ไม่มี · พี่สั่ง 1ก.ค.) — ใช้ชื่อรุ่นจริง
+    lines.push({ cat: 'consum', name: sdName + (material ? ' ' + material : '') + hNote + (minHit ? ' (ขั้นต่ำ)' : ''), qty: round2(aSell), unit: 'ตร.ม.', unitPrice: rate, amount: round2(matBase) });
+    if (rnDisc > 0) lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round((area > 30 ? 15 : area > 20 ? 11 : area > 15 ? 8 : 5)) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: -rnDisc, amount: -rnDisc });
+    if (irate > 0) lines.push({ cat: 'labor', name: 'ค่าแรงติดตั้ง', qty: round2(aSell), unit: 'ตร.ม.', unitPrice: irate, amount: round2(aSell * irate) });
+  } else {
+    sellBeforeLabor = ceil100(costTotal * (1 + profitPct / 100));
+    sellMfgOnly = ceil100((costTotal + laborProd) * (1 + profitPct / 100));
+    sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + installProfitPct / 100));
+    // ส่วนลดปริมาณระแนง/รั้ว (R3.9 ranaeDisc) — ลดเฉพาะค่าของ(งานผลิต) ไม่ลดค่าติดตั้ง
+    if (prod.ranaeDisc) {
+      const d = area > 30 ? 0.15 : area > 20 ? 0.11 : area > 15 ? 0.08 : area > 10 ? 0.05 : 0;
+      if (d > 0) {
+        const inst = sellWithInstall - sellMfgOnly;          // ค่าติดตั้ง (ไม่ลด)
+        const before = sellMfgOnly;
+        sellBeforeLabor = ceil100(sellBeforeLabor * (1 - d));
+        sellMfgOnly = ceil100(sellMfgOnly * (1 - d));
+        sellWithInstall = sellMfgOnly + inst;
+        lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round(d * 100) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: round2(-(before - sellMfgOnly)), amount: round2(-(before - sellMfgOnly)) });
+      }
+    }
+  }
+
+  // (6) ออปชั่นเสริม (add-on) — แต่ละตัวเป็นบรรทัดราคาแยก บวกเข้ายอดขาย (ราคา R3.9 ยังไม่ถอดทุน · flag)
+  // computeAddon คืน object เดียว หรือ array (มอเตอร์ = หลายบรรทัด: ตัวมอเตอร์+ฟันเฟือง+เซนเซอร์)
+  // r.cost (ถ้ามี) = ทุนจริง (มอเตอร์/ออโต้ ถอดจาก "ราคาออโต้") → ไม่ใช่ ÷2 · ไม่มี = R3.9 ทุน≈ขาย÷2
+  const selAddons = opt.addons || {};
+  let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
+  for (const ad of (prod.addons || [])) {
+    const rr = computeAddon(ad, selAddons[ad], { W, H, P, area, opt, PB });
+    if (!rr) continue;
+    for (const r of (Array.isArray(rr) ? rr : [rr])) {
+      if (!r) continue;
+      if (r.cat === 'warn') { lines.push({ cat: 'warn', name: r.label, amount: 0 }); continue; }   // คำเตือน (เช่น มอเตอร์เกินพื้นที่) — โชว์ ไม่บวกเงิน
+      if (r.amount > 0) {
+        addonTotal += r.amount;
+        if (r.cost != null) addonCostExplicit += r.cost;     // ทุนจริง (มอเตอร์ ฯลฯ)
+        else addonSellImplicit += r.amount;                  // R3.9 → ÷2
+        lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount) });
+      }
+    }
+  }
+  // (6b) ค่าทาสีผนังเพิ่มเติม (R3.9 wallpaintprice · กรอกมือ · sell-based · default 0 = ไม่มีผล) — ผนัง G3
+  const _wpp = +((opt.spec || {}).wallpaintprice) || 0;
+  if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp }); addonTotal += _wpp; addonSellImplicit += _wpp; }
+  if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
+  // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
+  const addonCost = round2(addonCostExplicit + addonSellImplicit / (1 + (profitPct || 100) / 100));
+  const costBase = sellCostOverride != null ? sellCostOverride : costTotal;
+  const costTotalOut = round2(costBase + addonCost);
+  return {
+    input: { W, H, P, form, area: round2(area), color, colorName: colorDisp, material, glassType, brand, mult: round3(mult), profitPct, installProfitPct, sheetColor: opt.sheetColor || '', roofMat: !!opt.roofMat },
+    cost: {
+      alu: round2(aluCost), bake: round2(bakeCost), openOven, glass: round2(glassCost),
+      hardware: round2(hwCost), consum: round2(consumCost + addonCost), total: costTotalOut,
+    },
+    profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
+    glassArea: round2(glassArea), aluKg: round2(aluKg),
+    costPerSqm: area > 0 ? round2(costTotal / area) : 0,
+    labor: { prod: round2(laborProd), install: round2(laborInstall) },
+    sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, withInstall: sellWithInstall },
+    lines,
+  };
+}
+
+// ราคาจาก PB section (แอดมินแก้ได้) — ref="STEEL.box1" → PB.STEEL.box1 · ไม่มี = null (ใช้ price เดิม fallback)
+function refPrice(PB, ref) { const i = ref.indexOf('.'); if (i < 0) return null; const sec = PB[ref.slice(0, i)]; if (!sec) return null; const v = sec[ref.slice(i + 1)]; return (typeof v === 'number') ? v : null; }
+// ราคาขายมอเตอร์/ออโต้ — ขาย = max(ceil100(ทุน×2.5), floor) · ตัวมอเตอร์ floor=6,000 (เซอร์วิสแพง) · อะไหล่ floor=0 (พี่เคาะ 30มิ.ย.)
+function motorSell(cost, floor = 6000) { return Math.max(ceil100((+cost || 0) * 2.5), floor); }
+function motorCost(PB, key, fallback) { const v = PB && PB.MOTOR && PB.MOTOR[key]; return (typeof v === 'number') ? v : fallback; }
+// ตารางราคามือจับ (แหล่งเดียว · ใช้ทั้ง engine คิดเงิน + UI โชว์ป้าย · แก้ที่เดียวตรงกัน)
+export const CMECH_TIERS = {
+  embed_door_normal: { p: 1050, l: 'ฝัง ประตู สีปกติ' }, embed_door_special: { p: 1470, l: 'ฝัง ประตู ชุบพิเศษ' },
+  embed_window_normal: { p: 350, l: 'ฝัง หน้าต่าง สีปกติ' }, embed_window_special: { p: 490, l: 'ฝัง หน้าต่าง ชุบพิเศษ' },
+  metro_door_normal: { p: 1000, l: 'เมโทร ประตู สีปกติ' }, metro_door_special: { p: 1400, l: 'เมโทร ประตู ชุบพิเศษ' },
+  metro_window_normal: { p: 600, l: 'เมโทร หน้าต่าง สีปกติ' }, metro_window_special: { p: 840, l: 'เมโทร หน้าต่าง ชุบพิเศษ' },
+  awn_normal: { p: 600, l: 'หลบมุ้ง สีปกติ' }, awn_special: { p: 840, l: 'หลบมุ้ง ชุบพิเศษ' },
+};
+export const STAINLESS_TIERS = { '30': { p: 1500, l: '30.5 ซม.' }, '45': { p: 2000, l: '45 ซม.' }, '60': { p: 2000, l: '60 ซม.' }, '80': { p: 2500, l: '80 ซม.' }, '100': { p: 3000, l: '100 ซม.' }, '120': { p: 3200, l: '120 ซม.' } };
+// เรตออปชั่นราคาคงที่ (แหล่งเดียว · ใช้ทั้ง engine คิดเงิน + ป้ายปุ่ม UI) — แก้ที่นี่ที่เดียว ป้าย+ราคาขยับตรงกัน (ป้องกันป้ายโกหก)
+export const ADDON_FLAT = { soft_close: 4000, sling: 2000, hide_beam: 4000, u_track: 4000, beam_support: 4000, hide_track: 4000, gate_curve: 4000, shower_black: 4000, shower_gold: 6000 };
+// เรตฝ้าใต้หลังคา/ฝ้าในห้อง ฿/ตร.ม. ตามชนิด (R3.9 · +ฉนวน 600) — แหล่งเดียว ใช้ทั้ง engine (ceil_under) + app (G3/G6) · global หลัง deModule
+export const CEIL_RATE = { 'ฉาบเรียบ': 480, 'อลูตัวซี': 2100, 'อลูไทยทิพย์': 2100, 'ไม้เทียม remood': 2600, 'ระแนงอลู 1×5': 3300, 'ระแนงอลู เว้นร่อง': 3700 };
+function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
+function round3(x) { return Math.round((x + Number.EPSILON) * 1000) / 1000; }
+function colorLabel(c) {
+  return ({ white: 'อบขาว/ดำ', sahara: 'เทาซาฮาร่า', special: 'สีอบพิเศษ', woodSpecial: 'ลายไม้อบพิเศษ', woodStock: 'ลายไม้สต็อค' })[c] || c;
+}
+
+// ── ออปชั่นเสริม (add-on) — คืน {label,qty,unit,unitPrice,amount} หรือ null ถ้าไม่เลือก ──
+// ราคาอ้างอิง R3.9 (ยังไม่ถอดทุน R4.0 · ติดป้าย "(R3.9)") — W,H เป็นเมตร
+export function computeAddon(id, sel, ctx) {
+  if (sel == null || sel === 'none' || sel === false || sel === '') return null;
+  const W = ctx.W, H = ctx.H;
+  if (id === 'frame_wrap') {            // ครอบวงกบอลู (รอบวงกบ × เรตตามเกรดสี · Excel มด: 700/800/1,200/1,300)
+    const sides = (sel === '4') ? 4 : 3;
+    const perim = sides === 4 ? 2 * (W + H) : (2 * H + W);   // 3 ด้าน = บน+ข้าง 2 · 4 ด้าน = รอบ
+    const bake = (ctx.opt && ctx.opt.color) || 'white';      // เกรดสีตามสีโครงหลัก
+    const rate = ({ white: 700, sahara: 700, woodStock: 800, special: 1200, woodSpecial: 1300 })[bake] || 700;
+    return { label: 'ครอบวงกบอลู ' + sides + ' ด้าน', qty: round2(perim), unit: 'ม.', unitPrice: rate, amount: perim * rate };
+  }
+  if (id === 'handrail_grip') {         // ราวจับด้านบน (R3.9: ยู 5หุน 500/ม. · กล่อง 1"×2" 600/ม. · W=ความยาว)
+    const rate = sel === 'u5' ? 500 : sel === 'box' ? 600 : 0;
+    if (rate <= 0) return null;
+    return { label: 'ราวจับด้านบน (' + (sel === 'u5' ? 'ยู 5 หุน' : 'กล่อง 1"×2"') + ')', qty: round2(W), unit: 'ม.', unitPrice: rate, amount: round2(rate * W) };
+  }
+  if (id === 'closer') {                // โช้คอัพประตู (ทุกชนิด +5,000 · ชนิดพิมพ์ลงใบ · R3.9)
+    const CL = { arm: 'โช้คแขนยื่น', slide: 'โช้ครางเลื่อน', fold: 'บานพับโช้ค', yes: 'โช้คอัพประตู' };
+    const nm = CL[sel] || 'โช้คอัพประตู';
+    return { label: nm + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: 5000, amount: 5000 };
+  }
+  if (id === 'thresh') {                // ธรณี — หลังเต่า+Drop Seal +1,000 · หลังเต่า+สักหลาด/ไม่มีธรณี ฟรี (R3.9)
+    if (sel === 'turtle') return { label: 'ธรณีหลังเต่า + Drop Seal (R3.9)', qty: 1, unit: 'ชุด', unitPrice: 1000, amount: 1000 };
+    return null;   // turtle_felt (สักหลาด) / none (ไม่มีธรณี) / std (กันน้ำมาตรฐาน) = ฟรี +0
+  }
+  if (id === 'grid') {                  // คาดตาราง (เส้นนอน/ตั้ง × ความยาว × เรตสี + เส้นโค้ง × 3,000)
+    const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0), rate = sel.rate || 200;
+    const len = nh * W + nv * H, curveC = nc * 3000;
+    if (len <= 0 && curveC <= 0) return null;
+    return { label: 'คาดตาราง ' + nh + 'นอน+' + nv + 'ตั้ง' + (nc ? '+โค้ง ' + nc + 'เส้น' : '') + ' (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: rate, amount: round2(len * rate + curveC) };
+  }
+  if (id === 'digihandle') {            // มือจับดิจิตอล (sel = ราคา จาก DIGI) · nc + บานเปิดยูโร → +โช้ค 5,000 (R3.9)
+    const pr = +sel || 0;
+    if (pr <= 0) return null;
+    const ncAdd = (ctx.opt && ctx.opt.digiNc) ? 5000 : 0;
+    return { label: 'มือจับดิจิตอล' + (ncAdd ? ' +โช้ค 1 ตัว (บานหลัก)' : '') + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: pr + ncAdd, amount: pr + ncAdd };
+  }
+  if (id === 'mosquito') {              // มุ้งบวกบาน — ใช้ราคา R4.0 จาก cost-engine มุ้ง (app คำนวณส่งมาทาง opt.mosquitoR4)
+    const r4 = ctx.opt && ctx.opt.mosquitoR4;
+    if (r4 && r4.amount > 0) return { label: r4.label + ' (R4.0)', qty: round2(ctx.area), unit: 'ตร.ม.', unitPrice: round2(r4.amount / (ctx.area || 1)), amount: r4.amount };
+    // fallback (ถ้า app ไม่ส่ง R4.0 มา) — ราคา R3.9 ประมาณ
+    const M = { small: { rate: 1700, min: 2400, label: 'มุ้งเฟรมเล็ก' }, big: { rate: 1500, min: 7200, label: 'มุ้งเฟรมใหญ่' }, safety: { rate: 5000, min: 5000, label: 'มุ้งนิรภัย' } };
+    const m = M[sel]; if (!m) return null;
+    return { label: m.label + ' (R3.9)', qty: round2(ctx.area), unit: 'ตร.ม.', unitPrice: m.rate, amount: Math.max(m.min, ctx.area * m.rate) };
+  }
+  // ── ออปชั่น R4.0 (ทุนจีน×2 · ไม่ติดป้าย R3.9) ──
+  if (id === 'zip_smart') {             // ม่านซิป Smart Module (Wi-Fi/Voice/App) — ทุนจีน ¥80×5×2
+    return { label: 'Smart Module (Wi-Fi/Voice/App)', qty: 1, unit: 'ชิ้น', unitPrice: 800, amount: 800 };
+  }
+  if (id === 'zip_remote') {            // ม่านซิป รีโมทเพิ่ม (Multi Frequency)
+    const n = +sel || 0;
+    return n > 0 ? { label: 'รีโมทเพิ่ม ' + n + ' ตัว (Multi)', qty: n, unit: 'ตัว', unitPrice: 400, amount: n * 400 } : null;
+  }
+  if (id === 'pullrod') {               // ก้านดึงมือ (มือดึงสำรองไฟดับ) 250/ชุด
+    const n = +sel || 0;
+    return n > 0 ? { label: 'ก้านดึงมือ (สำรองไฟดับ) ' + n + ' ชุด', qty: n, unit: 'ชุด', unitPrice: 250, amount: n * 250 } : null;
+  }
+  // ── ออปชั่นเฟส 2 ② (ราคา R3.9 จาก audit · ติดป้าย R3.9) ──
+  if (id === 'cmech') {                 // มือจับ Cmech (ตาราง CMECH_TIERS — แหล่งเดียวกับ UI)
+    const t = CMECH_TIERS[sel]; if (!t) return null;
+    return { label: 'มือจับ Cmech ' + t.l + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: t.p, amount: t.p };
+  }
+  if (id === 'stainless') {             // มือจับสแตนเลสอร่าม (ตาราง STAINLESS_TIERS — แหล่งเดียวกับ UI)
+    const t = STAINLESS_TIERS[sel]; if (!t) return null;
+    return { label: 'มือจับสแตนเลส ' + t.l + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: t.p, amount: t.p };
+  }
+  if (id === 'motor') {                 // มอเตอร์บานยก (ทุนราคาออโต้ 80=4,500/300=12,500 · ขาย=max(ทุน×2.5,6,000))
+    const cmap = { '80': motorCost(ctx.PB, 'บานยก ยก80', 4500), '300': motorCost(ctx.PB, 'บานยก ยก300', 12500) };
+    const cost = cmap[sel]; if (cost == null) return null;
+    if (sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
+    const sell = motorSell(cost);
+    return { label: 'มอเตอร์บานยก ' + sel + ' กก.', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
+  }
+  if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน (80/300/1500 + ฟันเฟือง + เซนเซอร์) · ขาย ×2.5/6,000
+    const s = (sel && typeof sel === 'object') ? sel : { kw: '1500' };
+    const kw = String(s.kw || '1500');
+    const cmap = { '80': motorCost(ctx.PB, 'หลังคาเลื่อน ยก80', 4500), '300': motorCost(ctx.PB, 'หลังคาเลื่อน ยก300', 12500), '1500': motorCost(ctx.PB, 'หลังคาเลื่อน ยก1500', 13325) };
+    const mcost = cmap[kw]; if (mcost == null) return null;
+    const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก.', qty: 1, unit: 'ชุด', unitPrice: motorSell(mcost), amount: motorSell(mcost), cost: mcost }];
+    if (kw === '1500') {                 // ฟันเฟือง + เซนเซอร์ เฉพาะ 1500 กก.
+      const gl = +s.gearLen || 0;
+      if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = motorSell(gc, 0); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
+      if (s.sensor) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = motorSell(sc, 0); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
+    }
+    return out;
+  }
+  if (id === 'banklet_motor') {         // มอเตอร์บานเกล็ด (ทุน 1,800 · ขาย max(×2.5,6,000)=6,000)
+    if (sel !== 'yes') return null;
+    const cost = motorCost(ctx.PB, 'บานเกล็ด', 1800);
+    return { label: 'มอเตอร์บานเกล็ด', qty: 1, unit: 'ชุด', unitPrice: motorSell(cost), amount: motorSell(cost), cost };
+  }
+  if (id === 'awn_auto') {              // ชุดออโต้บานกระทุ้ง (โช้ค50/80 · โซ่เดี่ยว/คู่) × จำนวนบาน · ขาย ×2.5/6,000
+    const map = { choke50: ['โช้คเปิด 50', 'กระทุ้ง โช้ค50', 3575], choke80: ['โช้คเปิด 80', 'กระทุ้ง โช้ค80', 3725], chain1: ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], chain2: ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600] };
+    const m = map[sel]; if (!m) return null;
+    const cost = motorCost(ctx.PB, m[1], m[2]);
+    const n = ctx.P || 1, each = motorSell(cost);
+    return { label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : ''), qty: n, unit: 'ชุด', unitPrice: each, amount: each * n, cost: cost * n };
+  }
+  if (id === 'slide_auto') {            // ชุดออโต้บานเลื่อน G1 — Evecca / ช่างแซก / SlimLux + อะไหล่ · ขาย ×2.5 (มอเตอร์ floor 6,000)
+    const s = (sel && typeof sel === 'object') ? sel : null;
+    const brand = s && s.brand; if (!brand || brand === 'none') return null;
+    const W = ctx.W || 0, P = ctx.P || 1, out = [];
+    const C = (k, fb) => motorCost(ctx.PB, k, fb);
+    const acc = (label, cost, qty, unit) => { const sl = motorSell(cost, 0); out.push({ label, qty: qty || 1, unit: unit || 'ชุด', unitPrice: round2(sl / (qty || 1)), amount: sl, cost }); };
+    if (brand === 'evecca') {
+      const mc = C('เลื่อน Evecca', 13480); out.push({ label: 'ชุดออโต้เลื่อน Evecca (จีน)', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
+      const beltLen = W * 2; if (beltLen > 0) acc('สายพาน Evecca (' + round2(beltLen) + ' ม.)', C('เลื่อน Evecca สายพาน/ม.', 75) * beltLen, round2(beltLen), 'ม.');
+      if (s.smartlock) acc('Smart lock', C('เลื่อน Evecca Smart lock', 6500));
+    } else if (brand === 'changsaek') {
+      const mc = C('เลื่อน ช่างแซก', 8000); out.push({ label: 'ชุดออโต้เลื่อน ช่างแซก', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
+      acc('เซฟตี้ตาแมว (บังคับ)', C('เลื่อน ช่างแซก ตาแมว', 1000));
+      if (W > 0) acc('ราง ช่างแซก (' + round2(W) + ' ม.)', C('เลื่อน ช่างแซก ราง/ม.', 950) * W, round2(W), 'ม.');
+      if (s.touch) acc('Touch Switch', C('เลื่อน ช่างแซก Touch', 1000));
+      if (s.infrared) acc('Infrared', C('เลื่อน ช่างแซก Infrared', 9000));
+    } else if (brand === 'slimlux') {
+      const mc = C('เลื่อน SlimLux ชุดแรก', 6900); out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
+      if (P > 1) acc('SlimLux บานเพิ่ม ×' + (P - 1), C('เลื่อน SlimLux บานเพิ่ม', 2250) * (P - 1), P - 1, 'บาน');
+      if (W > 0) acc('ราง SlimLux (' + round2(W * P) + ' ม.)', C('เลื่อน SlimLux ราง/ม.', 1100) * W * P, round2(W * P), 'ม.');
+      if (s.scan) acc('สแกนหน้า', C('เลื่อน SlimLux สแกนหน้า', 2750));
+      else acc('Touch Switch', C('เลื่อน SlimLux Touch', 100));   // บังคับเลือก 1 ใน 2
+    } else return null;
+    return out;
+  }
+  if (id === 'awn_tt') {                // บานกระทุ้ง tilt & turn (×บาน)
+    if (sel !== 'yes') return null;
+    const n = ctx.P || 1;
+    return { label: 'บานกระทุ้ง Tilt & Turn (R3.9)', qty: n, unit: 'บาน', unitPrice: 5000, amount: 5000 * n };
+  }
+  if (id === 'awn_brace') {             // เสริมแขนค้ำ (บานกระทุ้ง)
+    return sel === 'yes' ? { label: 'เสริมแขนค้ำกระทุ้ง (R3.9)', qty: 1, unit: 'ชุด', unitPrice: 500, amount: 500 } : null;
+  }
+  if (id === 'hide_track') {            // ซ่อนราง (เฟี้ยม · ฟรี ≤3ม. +500/ม.) — ฐานจาก ADDON_FLAT.hide_track
+    if (sel !== 'yes') return null;
+    const amt = ADDON_FLAT.hide_track + Math.max(0, W - 3) * 500;
+    return { label: 'ซ่อนราง (R3.9)', qty: 1, unit: 'ชุด', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'inner_track') {           // เลื่อนภายในรางบน — ซ่อนราง +5,000 (R3.9 index.html:2000 · เฉพาะรางบน)
+    if (sel !== 'yes') return null;
+    return { label: 'ซ่อนราง (รางบน · R3.9)', qty: 1, unit: 'ชุด', unitPrice: 5000, amount: 5000 };
+  }
+  // ── ออปหลังคา (R3.9 · ราคาขายตรง/ม.,ตร.ม.) ──
+  if (id === 'gutter') {                // รางน้ำ ฿/ม. × ยาว (ว่าง=กว้างหลังคา) · อลู1000/M2000/สแตนเลส3000
+    const g = sel || {}; const rate = +g.rate || 0; if (!rate) return null;
+    const len = (+g.len > 0) ? +g.len : W;
+    return { label: (rate >= 3000 ? 'รางน้ำสแตนเลส' : 'รางน้ำอลูมิเนียม') + ' (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: rate, amount: round2(rate * len) };
+  }
+  if (id === 'chain_drain') {           // โซ่รางน้ำ 3,000/เส้น × จำนวนเส้น (R3.9)
+    const n = +sel || 0; if (n <= 0) return null;
+    return { label: 'โซ่รางน้ำ (R3.9)', qty: n, unit: 'เส้น', unitPrice: 3000, amount: n * 3000 };
+  }
+  if (id === 'pipe_cover') {            // ครอบท่อ PVC 1,500/1.5ม. → ปัดขึ้นต่อท่อน 1.5ม. (R3.9)
+    const len = +sel || 0; if (len <= 0) return null;
+    const seg = Math.ceil(len / 1.5 - 1e-9);
+    return { label: 'ครอบท่อ PVC (R3.9)', qty: seg, unit: 'ท่อน(1.5ม.)', unitPrice: 1500, amount: seg * 1500 };
+  }
+  if (id === 'gutter_cover') {          // ปิดซ่อนรางน้ำ (ลูกฟูก ×0.7) · (กว้างม.+สูงม.)×ยาว×3500×0.7
+    const g = sel || {}; const gw = (+g.gw || 0) / 100, gh = (+g.gh || 0) / 100, gll = +g.gll || 0;
+    if (!((gw + gh) > 0 && gll > 0)) return null;
+    const amt = (gw + gh) * gll * 3500 * 0.7;
+    return { label: 'ปิดซ่อนรางน้ำ ลูกฟูก (R3.9)', qty: round2(gll), unit: 'ม.', unitPrice: round2(amt / (gll || 1)), amount: round2(amt) };
+  }
+  if (id === 'hide_slope') {            // ซ่อนสโลป คอมโพสิต3500 / สมาร์ทบอร์ด4000 · พื้นที่ต่างตามชนิด
+    const g = sel || {}; const h = +g.h || 0, l = +g.l || 0, n = +g.n || 1;
+    if (!(h > 0 && l > 0)) return null;
+    const comp = g.type !== 'smart';
+    const area = comp ? (2 * h + 0.1) * n * l : h * n * l;
+    const rate = comp ? 3500 : 4000;
+    return { label: 'ซ่อนสโลป ' + (comp ? 'คอมโพสิต 3มม.' : 'สมาร์ทบอร์ด 6มม.') + ' (R3.9)', qty: round2(area), unit: 'ตร.ม.', unitPrice: rate, amount: round2(area * rate) };
+  }
+  if (id === 'gate_curve') {            // ประตูรั้วบานโค้ง — ค่าทำบานโค้ง 4,000/บาน (R3.9 leafC · leaves=ceil(กว้าง/0.75))
+    // ⚠️ ค่าดัดรางโค้ง: R3.9 = ราง 2×กว้าง × (โค้ง2500−ตรง1500)=+1,000/ม. · แต่ matrix (=cost×2) โค้งบวกน้อยกว่า (Δ 15,200-54,500 ตามขนาด · ไม่คงที่)
+    // → R3.9 vs matrix ขัดกัน · รอพี่เคาะ target (log CSV) · ตอนนี้คงบานโค้ง 4,000 เดิม ไม่บวกรางโค้งเพิ่ม (กันราคากระโดดเกิน matrix)
+    if (sel !== 'yes') return null;
+    const leaves = Math.ceil(W / 0.75);
+    return { label: 'บานโค้ง (R3.9 ' + ADDON_FLAT.gate_curve.toLocaleString() + '/บาน · รางโค้งรอเคาะ R3.9/matrix)', qty: leaves, unit: 'บาน', unitPrice: ADDON_FLAT.gate_curve, amount: ADDON_FLAT.gate_curve * leaves };
+  }
+  if (id === 'gate_motor') {            // มอเตอร์ประตูรั้ว เพิ่ม (นอกเหนือ 1 ตัวในชุด) — ขายตามสูตรมอเตอร์ max(ทุน×2.5,6000)
+    const n = +sel || 0; if (n <= 0) return null;
+    const cost = motorCost(ctx.PB, 'ประตูรั้ว', 16000);
+    const each = motorSell(cost);
+    return { label: 'มอเตอร์ประตูรั้ว เพิ่ม', qty: n, unit: 'ตัว', unitPrice: each, amount: n * each, cost: n * cost };
+  }
+  if (id === 'gate_wire') {             // ค่าเดินสายไฟ/ระบบไฟ ประตูรั้ว · กรอกราคาเอง (X)
+    const amt = +sel || 0; if (!amt) return null;
+    return { label: 'เดินสายไฟ/ระบบไฟ ประตูรั้ว', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'louver_door') {            // ระแนงทำเป็นบาน (เลื่อน/เฟี้ยม/เปิด) — ใช้โครงบาน G1 เหมือน R3.9 (พี่สั่ง 1ก.ค.)
+    const type = sel;
+    if (!type || type === 'ติดตาย') return null;
+    const sp = (ctx.opt && ctx.opt.spec) || {};
+    const pn = Math.max(1, +sp.rnPanels || 1);
+    const A = W * H;
+    const ovr = +sp.rnDoorPrice || 0;
+    // ออปชั่นบานระแนง R3.9 (มีราคาจริง · sell-based · index.html:2143-2147) — flat add ตามชนิดบาน
+    const optLines = [];
+    if (type === 'บานเลื่อน' && sp.rnRail === 'low7') optLines.push({ label: 'รางเตี้ย 7มม. (R3.9)', qty: 1, unit: 'ชุด', unitPrice: 500, amount: 500 });
+    if (type === 'บานเปิด') {
+      const cl = +sp.rnCloser || 0; if (cl > 0) optLines.push({ label: 'โช้คอัดประตู (R3.9)', qty: 1, unit: 'ตัว', unitPrice: cl, amount: cl });
+      if (sp.rnThresh === 'turtle') optLines.push({ label: 'ธรณีหลังเต่า + Drop Seal (R3.9)', qty: 1, unit: 'ชุด', unitPrice: 1000, amount: 1000 });
+      if (sp.rnSwingHandle === 'lux') { const sz = parseFloat(sp.rnSwingHandleSz) || 1500; optLines.push({ label: 'มือจับสแตนเลสอร่าม (R3.9)', qty: 1, unit: 'ชุด', unitPrice: sz, amount: sz }); }
+    }
+    if (ovr > 0) { const b = { label: 'ทำเป็น' + type + ' (กำหนดราคาเอง · ' + pn + ' บาน)', qty: pn, unit: 'บาน', unitPrice: round2(ovr / pn), amount: round2(ovr) }; return optLines.length ? [b, ...optLines] : b; }
+    // R3.9 bar_slide: ระแนงทำเป็นบาน = doorStructBase (โครงบาน G1 จริง · เลื่อน=SMS/เปิด=OPEN) + ค่ากลไกเลื่อน max(3000,A×1000)
+    // ใบระแนง(corrugate) = BOM louver แล้ว → addon นี้บวกเฉพาะ "โครงบาน+กลไก" (ไม่ double-count) · ใช้เรตบาน R3.9 จริง (ห้ามเดา) · พี่ทัก "ใช้บานเหมือน G1"
+    const SMS = [[2, 2.3, 6500], [2.3, 3.5, 6000], [3.5, 4.5, 5700], [4.5, 5, 5000], [5, 7, 4700], [7, 9, 4400], [9, 12, 4200], [12, 9999, 4000]];
+    const EURO = [[2, 2.3, 7200], [2.3, 3.5, 6600], [3.5, 4.5, 6300], [4.5, 5, 5500], [5, 7, 5200], [7, 9, 4900], [9, 12, 4700], [12, 9999, 4400]];
+    const OPEN = [[2, 2.4, 7500], [2.4, 3, 7000], [3, 3.5, 7000], [3.5, 4, 6500], [4, 5, 6000], [5, 6, 5500], [6, 9999, 5000]];
+    // เลือกเรตตามรุ่นบาน G1 ที่อ้างอิง (R3.9 bsDoor) · fallback ตามชนิด (เปิด=OPEN · เลื่อน/เฟี้ยม=SMS)
+    const RATE_BY_MODEL = { sliding_sms: SMS, sliding_euro: EURO, folding: SMS, folding_xseries: EURO, casement_euro: OPEN, casement_dseries: OPEN };
+    const tiers = RATE_BY_MODEL[sp.rnDoorModel] || ((type === 'บานเปิด') ? OPEN : SMS);
+    const rOf = (a, t) => { if (a < t[0][0]) return t[0][2]; for (const r of t) if (a >= r[0] && a < r[1]) return r[2]; return t[t.length - 1][2]; };
+    const mono = (a, t) => { let v = a * rOf(a, t); for (const r of t) if (r[1] <= a) { const e = r[1] * r[2]; if (e > v) v = e; } return v; };   // R3.9 monoRate
+    let doorStruct = mono(A, tiers);
+    if (pn > 1) { const per = mono(A / pn, tiers); const floor = per * (1 + 0.67 * (pn - 1)); if (floor > doorStruct) doorStruct = floor; }   // R3.9 floor ต่อบาน
+    const mechC = (type === 'บานเปิด') ? 0 : Math.max(3000, A * 1000);   // เลื่อน/เฟี้ยม = ค่ากลไกเลื่อน (R3.9 slideCost) · เปิด=บานพับรวมในโครง
+    const amt = ceil100(doorStruct + mechC);
+    const b = { label: 'ทำเป็น' + type + ' — โครงบาน G1 (R3.9) ' + pn + ' บาน' + (mechC > 0 ? ' +กลไกเลื่อน' : ''), qty: pn, unit: 'บาน', unitPrice: round2(amt / pn), amount: amt };
+    return optLines.length ? [b, ...optLines] : b;
+  }
+  if (id === 'shower_corner') {         // shower เข้ามุม (L-shape) +3,000 คงที่ (R3.9 corner)
+    if (sel !== 'yes') return null;
+    return { label: 'เข้ามุม (L-shape)', qty: 1, unit: 'งาน', unitPrice: 3000, amount: 3000 };
+  }
+  if (id === 'shower_hw') {             // shower อุปกรณ์ราวสี (R3.9 showerhw) เงิน 0 / ดำ +4,000 / ทอง +6,000
+    const amt = ({ black: ADDON_FLAT.shower_black, gold: ADDON_FLAT.shower_gold })[sel] || 0; if (!amt) return null;
+    return { label: 'อุปกรณ์ราวสี' + ({ black: 'ดำ', gold: 'ทอง' })[sel], qty: 1, unit: 'ชุด', unitPrice: amt, amount: amt };
+  }
+  if (id === 'ms_color') {              // สีกรอบมุ้ง — ค่าทำสี ×0.5 (R3.9 mscolor) · เรตรอกรอก (0=รอราคา · สูตรพร้อม)
+    if (!sel || sel === 'none') return null;
+    const rate = ctx.opt && ctx.opt.msColorRate ? ctx.opt.msColorRate : 0;   // ฿/ตร.ม. (×0.5 คิดที่ฝั่ง rate แล้ว)
+    return { label: 'สีกรอบมุ้ง ' + sel + (rate ? '' : ' (รอราคา)'), qty: round2(ctx.area), unit: 'ตร.ม.', unitPrice: round2(rate), amount: round2(ctx.area * rate) };
+  }
+  // ── อุปกรณ์เสริมบาน (R3.9 COMMON_OPTS index.html:1357 + แผ่นทึบ rn89-92) ──
+  if (id === 'solid_panel') {           // แผ่นทึบล่าง ลูกฟูก 3,500 / คอมโพสิต 3,300 ฿/ตร.ม. × กว้าง×สูงแผ่น
+    const g = sel || {}; const t = g.type; if (!t || t === 'none') return null;
+    const sw = +g.w > 0 ? +g.w : W, sh = +g.h || 0; if (!(sh > 0)) return null;
+    const rate = t === 'comp' ? 3300 : 3500;
+    return { label: 'แผ่นทึบล่าง ' + (t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก') + ' (R3.9)', qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
+  }
+  if (id === 'u_track') {               // ฝังรางยู U-Track · ฟรี ≤2ม. + 500/ม.เกิน
+    if (sel !== 'yes') return null;
+    const amt = ADDON_FLAT.u_track + Math.max(0, W - 2) * 500;
+    return { label: 'ฝังรางยู U-Track (R3.9)', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'beam_support') {          // เสริมคานซัพพอร์ท · ฟรี ≤3ม. + 500/ม.เกิน
+    if (sel !== 'yes') return null;
+    const amt = ADDON_FLAT.beam_support + Math.max(0, W - 3) * 500;
+    return { label: 'เสริมคานซัพพอร์ท (R3.9)', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'hide_beam') {             // ซ่อนคาน · ฟรี ≤3ม. + 500/ม.เกิน
+    if (sel !== 'yes') return null;
+    const amt = ADDON_FLAT.hide_beam + Math.max(0, W - 3) * 500;
+    return { label: 'ซ่อนคาน (R3.9)', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'soft_close') {            // Soft Close สลักหน่วงบาน
+    return sel === 'yes' ? { label: 'Soft Close หน่วงบาน (R3.9)', qty: 1, unit: 'ชุด', unitPrice: ADDON_FLAT.soft_close, amount: ADDON_FLAT.soft_close } : null;
+  }
+  if (id === 'sling') {                 // สลิงเปิดซ้อน × บาน
+    if (sel !== 'yes') return null;
+    const n = ctx.P || 1;
+    return { label: 'สลิงเปิดซ้อน (R3.9)', qty: n, unit: 'บาน', unitPrice: ADDON_FLAT.sling, amount: ADDON_FLAT.sling * n };
+  }
+  if (id === 'demolish') {              // รื้อของเดิม · กรอกราคาเอง
+    const amt = +sel || 0; if (!amt) return null;
+    return { label: 'รื้อ/รื้อถอนของเดิม', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'drop_floor') {            // ดรอปพื้น (ปรับระดับพื้น) · กรอกราคาเอง (X)
+    const amt = +sel || 0; if (!amt) return null;
+    return { label: 'ดรอปพื้น (ปรับระดับ)', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  if (id === 'screen_demo') {           // รื้อมุ้งเดิม 1,000 (R3.9)
+    if (sel !== 'yes') return null;
+    return { label: 'รื้อมุ้งเดิม (R3.9)', qty: 1, unit: 'งาน', unitPrice: 1000, amount: 1000 };
+  }
+  if (id === 'screen_existing') {       // ติดบานเดิม (เสริมกล่อง/ราง) · กรอกราคาเอง (X)
+    const amt = +sel || 0; if (!amt) return null;
+    return { label: 'ติดบานเดิม (เสริมกล่อง/ราง)', qty: 1, unit: 'งาน', unitPrice: round2(amt), amount: round2(amt) };
+  }
+  // ── ออปหลังคาเพิ่ม (R3.9 index.html:2090 · ขายตรง) ──
+  if (id === 'roof_pole') {             // เสา แผง4,000 / 4"×8" 2,000 / กลม 1,500 ฿/ต้น
+    const g = sel || {}; const pp = +g.polep || 0, p4 = +g.pole4 || 0, p15 = +g.pole15 || 0;
+    const amt = pp * 4000 + p4 * 2000 + p15 * 1500; if (!amt) return null;
+    const parts = []; if (pp) parts.push('แผง×' + pp); if (p4) parts.push('4"×8"×' + p4); if (p15) parts.push('กลม×' + p15);
+    const n = pp + p4 + p15;
+    return { label: 'เสา ' + parts.join(' · ') + ' (R3.9)', qty: n, unit: 'ต้น', unitPrice: round2(amt / Math.max(1, n)), amount: round2(amt) };
+  }
+  if (id === 'truss_beam') {            // คานเหล็กถัก รุ่น1 2,400 / รุ่น2 3,600 / รุ่น3 4,400 ฿/ม. × ยาว
+    const g = sel || {}; const rate = +g.rate || 0, len = +g.len || 0; if (!(rate > 0 && len > 0)) return null;
+    return { label: 'คานเหล็กถัก (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: rate, amount: round2(rate * len) };
+  }
+  if (id === 'roof_eave') {             // ปิดปลายหลังคากันน้ำ 1,000/ม. (ว่าง=ด้านยาวหลังคา)
+    const g = sel || {}; if (!g.on) return null;
+    const len = (+g.len > 0) ? +g.len : W;
+    return { label: 'ปิดปลายหลังคากันน้ำ (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: 1000, amount: round2(len * 1000) };
+  }
+  if (id === 'beam_cover') {            // ครอบคาน ลูกฟูก 1 หน้า ลด 40% · 3500×0.6×กว้างห่อ×ยาวคาน
+    const g = sel || {}; const bcw = +g.bcw || 0, bcl = +g.bcl || 0; if (!(bcw > 0 && bcl > 0)) return null;
+    return { label: 'ครอบคาน ลูกฟูก (R3.9)', qty: round2(bcw * bcl), unit: 'ตร.ม.', unitPrice: round2(3500 * 0.6), amount: round2(3500 * 0.6 * bcw * bcl) };
+  }
+  if (id === 'roof_sealer') {           // วัสดุปิดรอยต่อแผ่นหลังคา · ขั้นต่ำ 5,000 + 800/ม.
+    const g = sel || {}; if (!g.on) return null;
+    const len = +g.len || 0;
+    const amt = Math.max(5000, 800 * len);
+    return { label: 'วัสดุปิดรอยต่อหลังคา (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: 800, amount: round2(amt) };
+  }
+  if (id === 'roof_film') {             // ฟิล์ม/ลามิเนตหลังคา (กันร้อน/UV) — กรอก ฿/ตร.ม. เอง × พื้นที่หลังคา
+    const rate = +sel || 0; if (rate <= 0) return null;
+    return { label: 'ฟิล์ม/ลามิเนตหลังคา (กันร้อน/UV)', qty: round2(ctx.area), unit: 'ตร.ม.', unitPrice: round2(rate), amount: round2(ctx.area * rate) };
+  }
+  if (id === 'roof_2nd') {              // หลังคาผสม วัสดุที่ 2 (ต่อปลาย) — ยาว × ยื่น × ฿/ตร.ม. (กรอกเอง)
+    const g = sel || {}; const len = +g.len || 0, proj = +g.proj || 0, rate = +g.rate || 0;
+    if (!(len > 0 && proj > 0 && rate > 0)) return null;
+    const a = len * proj;
+    return { label: 'หลังคาผสม วัสดุที่ 2' + (g.mat ? ' (' + g.mat + ')' : ''), qty: round2(a), unit: 'ตร.ม.', unitPrice: round2(rate), amount: round2(a * rate) };
+  }
+  if (id === 'ceil_under') {            // ฝ้าใต้หลังคา (R3.9 ceilmode · ฝ้าในชุดหลังคา) — เรตตามชนิด + ฉนวน · ว่าง=พื้นที่หลังคา
+    const g = sel || {}; if (!g.on) return null;
+    const rate = (CEIL_RATE[g.type] || 480) + (g.insul ? 600 : 0);
+    const a = (+g.area > 0) ? +g.area : ctx.area;
+    return { label: 'ฝ้าใต้หลังคา ' + (g.type || 'ฉาบเรียบ') + (g.insul ? ' +ฉนวน' : '') + (g.pos ? ' (' + g.pos + ')' : ''), qty: round2(a), unit: 'ตร.ม.', unitPrice: rate, amount: round2(a * rate) };
+  }
+  return null;
+}
