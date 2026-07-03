@@ -6,6 +6,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
+import { calcLink } from "@/lib/calculator40/stock-link";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -37,14 +38,17 @@ export default function StockClient({
   const [prices, setPrices] = useState<StockPrice[]>([]);
   const [q, setQ] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
+  const [calcOnly, setCalcOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
   const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
 
   const lowCount = list.filter(isLow).length;
+  const calcCount = list.filter((c) => calcLink(c).linked).length;
   const filtered = list
     .filter((c) => (lowOnly ? isLow(c) : true))
+    .filter((c) => (calcOnly ? calcLink(c).linked : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
     .filter((c) => [c.name, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
   // นับจำนวนต่อหมวด (โชว์บนปุ่มกรอง)
@@ -113,12 +117,16 @@ export default function StockClient({
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
             <button onClick={() => setLowOnly((v) => !v)}
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${lowOnly ? "bg-red-600 text-white" : "glass-soft text-ink-2"}`}>
               ต้องสั่งซื้อ {lowCount > 0 ? `(${lowCount})` : ""}
             </button>
-            {(lowOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            <button onClick={() => setCalcOnly((v) => !v)} title="วัสดุที่ราคาลิงค์กับคิดราคา 4.0"
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${calcOnly ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+              🧮 ใช้ในคิดราคา {calcCount > 0 ? `(${calcCount})` : ""}
+            </button>
+            {(lowOnly || calcOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {
@@ -129,7 +137,10 @@ export default function StockClient({
                   <Thumb url={c.image_url} active={active} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="font-semibold text-sm truncate">{c.name}</div>
+                      <div className="font-semibold text-sm truncate flex items-center gap-1">
+                        {calcLink(c).linked && <span title="ราคาลิงค์กับคิดราคา 4.0" className="shrink-0">🧮</span>}
+                        <span className="truncate">{c.name}</span>
+                      </div>
                       {low && (active
                         ? <span className="text-xs font-semibold bg-white/25 rounded-full px-2 py-0.5 shrink-0">ใกล้หมด</span>
                         : <Badge tone="red" dot>ใกล้หมด</Badge>)}
@@ -215,6 +226,11 @@ function ItemDetail({
             <p className="text-sm text-ink-3 truncate">
               {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
             </p>
+            {calcLink(item).linked && (
+              <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-dark bg-brand/10 rounded-full px-2 py-0.5">
+                🧮 ใช้ในคิดราคา 4.0 · หมวด {calcLink(item).section}
+              </span>
+            )}
           </div>
         </div>
         {isLow(item) ? <Badge tone="red" dot>สั่งเพิ่ม</Badge> : <Badge tone="emerald" dot>ปกติ</Badge>}
@@ -445,6 +461,12 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
           </button>
         )}
       </div>
+      {calcLink(item).linked && (
+        <p className="mt-2 text-[11px] text-brand-dark bg-brand/5 border border-brand/15 rounded-lg px-3 py-2">
+          🧮 <b>ราคานี้ลิงค์กับคิดราคา 4.0</b> — แก้ราคาที่นี่แล้วใบเสนอราคา 4.0 คิดตามราคาใหม่ทันที
+          {calcLink(item).section === "อลูมิเนียม" && " · อลูคิดเป็น “เรตต่อโล/แบรนด์” (แก้เส้นไหนก็ปรับทั้งแบรนด์ " + (item.supplier || "") + " ในคิดราคา — ควรตั้งให้เท่ากันทั้งแบรนด์)"}
+        </p>
+      )}
 
       {open && canPrice && (
         <div className="mt-2 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2.5">

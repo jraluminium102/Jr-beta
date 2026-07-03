@@ -17,6 +17,7 @@ import { computeCost } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
+import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 // @ts-expect-error — bootstrap เป็น ESM JS ล้วน (ก๊อปตรงจาก mockup index.html script ฝัง — ห้ามแก้กติกา)
 import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json ที่ดึงจาก mockup (ราคาขาย R3.9 fallback)
@@ -61,7 +62,7 @@ type QuoteItem = {
 
 type CustomerOption = Pick<Customer, "id" | "name" | "job" | "phone" | "address" | "contact_person">;
 
-export default function Calculator40Client({ customers = [] }: { customers?: CustomerOption[] }) {
+export default function Calculator40Client({ customers = [], priceOverride }: { customers?: CustomerOption[]; priceOverride?: PriceOverride | null }) {
   const router = useRouter();
   // ผูกลูกค้าจากทะเบียน (เฟส B)
   const [customerId, setCustomerId] = useState<number | null>(null);
@@ -73,8 +74,9 @@ export default function Calculator40Client({ customers = [] }: { customers?: Cus
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
-  // pricebook แก้ได้ในหน้า (in-memory — รีเฟรชกลับค่าไฟล์ เหมือน mockup)
-  const [pb, setPb] = useState<any>(() => JSON.parse(JSON.stringify(PRICEBOOK)));
+  // pricebook = โครงสร้าง/สูตร + ราคาจริงจากสต๊อก (ทับด้วย priceOverride ตอนโหลด → ลิงค์สดกับหน้า stock)
+  // แก้ ⚙️ ในหน้า = in-memory ชั่วคราว (รีเฟรชกลับค่าสต๊อก) — แก้ราคาถาวรทำที่หน้า stock
+  const [pb, setPb] = useState<any>(() => applyPriceOverride(JSON.parse(JSON.stringify(PRICEBOOK)), priceOverride));
   const [group, setGroup] = useState(1);
   const [prodId, setProdId] = useState<string>("sms_slide");
   const [showCost, setShowCost] = useState(false);   // โหมดดูทุน/กำไร
@@ -448,8 +450,8 @@ export default function Calculator40Client({ customers = [] }: { customers?: Cus
       {adminOpen && (
         <Card className="p-5 border-2 border-brand/25">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-brand-dark">⚙️ แก้ราคากลาง (ชั่วคราว — รีเฟรชหน้าแล้วคืนค่าจากไฟล์)</h3>
-            <button onClick={() => setPb(JSON.parse(JSON.stringify(PRICEBOOK)))} className="press text-xs font-semibold glass-soft rounded-lg px-2.5 py-1.5 text-ink-2">↺ คืนค่าเดิม</button>
+            <h3 className="font-bold text-brand-dark">⚙️ ลองปรับราคา (ชั่วคราว — รีเฟรชแล้วคืนค่าจากสต๊อก)</h3>
+            <button onClick={() => setPb(applyPriceOverride(JSON.parse(JSON.stringify(PRICEBOOK)), priceOverride))} className="press text-xs font-semibold glass-soft rounded-lg px-2.5 py-1.5 text-ink-2">↺ คืนค่าจากสต๊อก</button>
           </div>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -490,7 +492,7 @@ export default function Calculator40Client({ customers = [] }: { customers?: Cus
               </div>
             </div>
           </div>
-          <p className="text-[11px] text-ink-3 mt-3">* แก้ถาวร (อัปเดตไฟล์ราคา) = เฟสถัดไป — ตอนนี้ใช้ทดลอง/เช็คราคา ถ้าราคาจริงเปลี่ยนแจ้งเดฟอัปเดต pricebook</p>
+          <p className="text-[11px] text-ink-3 mt-3">* ตรงนี้ใช้ <b>ลองปรับดูราคา</b>เฉยๆ (รีเฟรชแล้วหาย) — <b>ราคาจริงมาจากหน้า “เช็คสต๊อกวัสดุ”</b> แก้ราคาที่นั่นแล้วใบเสนอ 4.0 เปลี่ยนตามถาวร · อลูคิดจากเรตต่อโล/แบรนด์ (SMS/EURO…)</p>
         </Card>
       )}
 
