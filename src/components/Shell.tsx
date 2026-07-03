@@ -17,6 +17,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/queue", icon: "calendar", label: "คิวงาน" },
   { href: "/customers", icon: "users", label: "ทะเบียนลูกค้า" },
   { href: "/quotations", icon: "file", label: "ใบเสนอราคา" },
+  { href: "/quotations/quick", icon: "file", label: "ใบเสนอราคาด่วน" },
   { href: "/quotation-checklist", icon: "clipboard", label: "ใบเสนอ · เช็คลิสต์" },
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
   { href: "/calculator40", icon: "calculator", label: "คิดราคา 4.0" },
