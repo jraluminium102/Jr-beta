@@ -1316,7 +1316,5 @@ export const PRODUCTS = {
 };
 
 // รุ่นที่ยังไม่ลงระบบ — แสดงเป็นป้าย TODO ใต้กลุ่ม (ดู TODO.md)
-export const PRODUCTS_TODO = [
-  { group: 4, name: 'ตู้อลู / ฝาตู้', note: 'ไม่มีชีตเฉพาะ — ต้องเก็บ BOM จริงก่อน (ห้ามมั่ว)' },
-  { group: 7, name: 'ม่านซิป (zip screen)', note: 'ไม่มีชีต — ต้องเก็บราคาจริงก่อน (ห้ามมั่ว)' },
-];
+// (ว่างแล้ว: ตู้ G4 = cabinet/cabinet_face · ม่านซิป G7 = zipscreen ลงระบบจริงแล้ว มีทุน R4.0)
+export const PRODUCTS_TODO = [];
