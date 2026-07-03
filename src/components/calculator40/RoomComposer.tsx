@@ -26,6 +26,8 @@ import { useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
+import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
+import { groupGlass } from "@/lib/calculator40/glass-cats";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
@@ -126,12 +128,12 @@ function panePrice(
 ): { amount: number; mosqLabel?: string } {
   const prod = PANE_BY_KEY[pane.typeKey];
   if (!prod) return { amount: 0 };
-  const color = pane.colorIdx || roomColor;
+  const rc = resolveAluColor(pane.colorIdx || roomColor); // ชื่อสี → หมวดค่าอบ (พาริตี้ 13 สี)
   const glassType = prod.defGlass ? (pane.glassOvr || roomGlass || prod.defGlass) : undefined;
   const wCm = (pane.w || 1) * 100, hCm = (pane.h || 1) * 100;
   const opt: any = {
     w: wCm, h: hCm, p: pane.n || 1, form: prod.defForm,
-    color, glassType, material: prod.defMaterial ?? undefined,
+    color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
   };
   // มุ้งบวกบาน R4.0 จริง (ไม่ใช่ R3.9 fallback) — ตรง Calculator40Client
@@ -580,8 +582,8 @@ export default function RoomComposer({
                         <span className="text-ink-3">สีเฟรมบานนี้</span>
                         <select value={pc.colorIdx || ""} onChange={(e) => patchPane(i, pc.key, { colorIdx: e.target.value })}
                           className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                          <option value="">ตามด้าน ({COLOR_LABEL[sideColor(i)] ?? sideColor(i)})</option>
-                          {Object.keys(pb.BAKE ?? {}).map((c) => <option key={c} value={c}>{COLOR_LABEL[c] ?? c}</option>)}
+                          <option value="">ตามด้าน ({ALU_COLOR_LABEL[sideColor(i)] ?? COLOR_LABEL[sideColor(i)] ?? sideColor(i)})</option>
+                          {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
                         </select>
                         {prod?.defGlass && (
                           <>
@@ -589,7 +591,11 @@ export default function RoomComposer({
                             <select value={pc.glassOvr || ""} onChange={(e) => patchPane(i, pc.key, { glassOvr: e.target.value })}
                               className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
                               <option value="">ตามด้าน ({sideGlass(i) || prod.defGlass})</option>
-                              {glassKeys.map((g) => <option key={g} value={g}>{g}</option>)}
+                              {groupGlass(glassKeys).map((gp) => (
+                                <optgroup key={gp.cat} label={gp.cat}>
+                                  {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
+                                </optgroup>
+                              ))}
                             </select>
                           </>
                         )}
@@ -605,7 +611,7 @@ export default function RoomComposer({
                           area={(pc.w || 1) * (pc.h || 1)}
                           W={pc.w || 1}
                           movePanes={movePanes}
-                          color={pc.colorIdx || sideColor(i)}
+                          color={resolveAluColor(pc.colorIdx || sideColor(i)).bake}
                           form={prod.defForm}
                         />
                       )}
@@ -646,7 +652,7 @@ export default function RoomComposer({
                     area={(s.aw || 3) * (s.ah || 2.6)}
                     W={s.aw || 3}
                     movePanes={1}
-                    color={mainColor}
+                    color={resolveAluColor(mainColor).bake}
                     form={prod.defForm}
                   />
                 ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
@@ -669,13 +675,17 @@ export default function RoomComposer({
               <span className="font-semibold text-ink-2 w-16 shrink-0">ด้าน {L(i)}</span>
               <select value={sideColorOvr[i]?.color || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: e.target.value, glass: m[i]?.glass || "" } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
-                <option value="">สีตามห้อง ({COLOR_LABEL[mainColor] ?? mainColor})</option>
-                {Object.keys(pb.BAKE ?? {}).map((c) => <option key={c} value={c}>{COLOR_LABEL[c] ?? c}</option>)}
+                <option value="">สีตามห้อง ({ALU_COLOR_LABEL[mainColor] ?? COLOR_LABEL[mainColor] ?? mainColor})</option>
+                {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
               </select>
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
                 <option value="">กระจกตามห้อง ({mainGlass || "—"})</option>
-                {Object.keys((pb.GLASS ?? {}) as Record<string, number>).map((g) => <option key={g} value={g}>{g}</option>)}
+                {groupGlass(Object.keys((pb.GLASS ?? {}) as Record<string, number>)).map((gp) => (
+                  <optgroup key={gp.cat} label={gp.cat}>
+                    {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </optgroup>
+                ))}
               </select>
               {(sideColorOvr[i]?.color || sideColorOvr[i]?.glass) && (
                 <button type="button" onClick={() => setSideColorOvr((m) => { const n = { ...m }; delete n[i]; return n; })}
@@ -749,7 +759,7 @@ export default function RoomComposer({
                   area={roofArea}
                   W={Number(roofW) || 4}
                   movePanes={1}
-                  color={mainColor}
+                  color={resolveAluColor(mainColor).bake}
                   form="หลังคาเพิง"
                 />
               </div>

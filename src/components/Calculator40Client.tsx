@@ -726,7 +726,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               {prod.composite && (
                 <RoomComposer
                   pb={pb}
-                  mainColor={resolveAluColor(color).bake}
+                  mainColor={color}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
                   onTotal={setRoomTotals}
@@ -771,7 +771,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   subs={subs}
                   setSubs={setSubs}
                   pb={pb}
-                  mainColor={resolveAluColor(color).bake}
+                  mainColor={color}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
                 />
