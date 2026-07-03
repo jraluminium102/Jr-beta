@@ -72,8 +72,10 @@ type Pane = {
   glassOvr?: string; // กระจกต่อบาน override ("" = ตามห้อง)
 };
 
+// ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
+type Col = { key: number; pcs: Pane[] };
 type Side =
-  | { kind: "glass"; panes: Pane[] }
+  | { kind: "glass"; cols: Col[] }
   | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any> }
   | { kind: "open" };
 
@@ -108,8 +110,11 @@ function L(i: number) {
 function freshPane(): Pane {
   return { key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1, addons: {} };
 }
+function freshCol(): Col {
+  return { key: Date.now() + Math.random(), pcs: [freshPane()] };
+}
 function freshGlassSide(): Side {
-  return { kind: "glass", panes: [freshPane()] };
+  return { kind: "glass", cols: [freshCol()] };
 }
 function freshWallSide(): Side {
   return { kind: "wall", wallType: "light", aw: 3, ah: 2.6, addons: {} };
@@ -149,7 +154,7 @@ function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: numbe
 }
 
 function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number): number {
-  if (s.kind === "glass") return s.panes.reduce((sum, p) => sum + panePrice(p, pb, color, glassType, profitPct).amount, 0);
+  if (s.kind === "glass") return s.cols.reduce((sum, c) => sum + c.pcs.reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct).amount, 0), 0);
   if (s.kind === "wall") return wallPrice(s, pb, profitPct);
   return 0;
 }
@@ -354,18 +359,55 @@ export default function RoomComposer({
   function patchWall(i: number, p: Partial<Extract<Side, { kind: "wall" }>>) {
     setSides((s) => s.map((x, xi) => (xi === i && x.kind === "wall" ? { ...x, ...p } : x)));
   }
-  function addPane(i: number) {
-    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass") ? { ...x, panes: [...x.panes, freshPane()] } : x));
+  function updateGlass(i: number, fn: (cols: Col[]) => Col[]) {
+    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass") ? { ...x, cols: fn(x.cols) } : x));
   }
   function patchPane(i: number, key: number, p: Partial<Pane>) {
-    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass")
-      ? { ...x, panes: x.panes.map((pc) => (pc.key === key ? { ...pc, ...p } : pc)) }
-      : x));
+    updateGlass(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.map((pc) => (pc.key === key ? { ...pc, ...p } : pc)) })));
   }
   function removePane(i: number, key: number) {
-    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass")
-      ? { ...x, panes: x.panes.filter((pc) => pc.key !== key) }
-      : x));
+    updateGlass(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.filter((pc) => pc.key !== key) })).filter((c) => c.pcs.length > 0));
+  }
+  // ＋ช่อง — เพิ่มช่องใหม่ (คอลัมน์) ทางขวา
+  function addColumn(i: number) {
+    const col = freshCol();
+    updateGlass(i, (cols) => [...cols, col]);
+    setSelKey(col.pcs[0].key);
+  }
+  // ＋บน(-1)/＋ล่าง(1) — เพิ่มบานซ้อนในช่องเดียวกับบานที่เลือก
+  function addPiece(i: number, key: number, dir: -1 | 1) {
+    const np = freshPane();
+    updateGlass(i, (cols) => cols.map((c) => {
+      const idx = c.pcs.findIndex((x) => x.key === key);
+      if (idx < 0) return c;
+      const pcs = [...c.pcs];
+      pcs.splice(dir < 0 ? idx : idx + 1, 0, np);
+      return { ...c, pcs };
+    }));
+    setSelKey(np.key);
+  }
+  // ◀▶ — เลื่อนทั้งช่องซ้าย/ขวา
+  function moveCol(i: number, key: number, dir: -1 | 1) {
+    updateGlass(i, (cols) => {
+      const ci = cols.findIndex((c) => c.pcs.some((x) => x.key === key));
+      const j = ci + dir;
+      if (ci < 0 || j < 0 || j >= cols.length) return cols;
+      const arr = [...cols];
+      [arr[ci], arr[j]] = [arr[j], arr[ci]];
+      return arr;
+    });
+  }
+  // ▲▼ — เลื่อนบานขึ้น/ลงในช่องเดียวกัน
+  function movePc(i: number, key: number, dir: -1 | 1) {
+    updateGlass(i, (cols) => cols.map((c) => {
+      const idx = c.pcs.findIndex((x) => x.key === key);
+      if (idx < 0) return c;
+      const j = idx + dir;
+      if (j < 0 || j >= c.pcs.length) return c;
+      const pcs = [...c.pcs];
+      [pcs[idx], pcs[j]] = [pcs[j], pcs[idx]];
+      return { ...c, pcs };
+    }));
   }
 
   return (
@@ -428,54 +470,81 @@ export default function RoomComposer({
 
             {s.kind === "glass" && (
               <div className="space-y-2">
-                {/* 🖼️ รูปด้าน — ผังด้านเห็นสัดส่วนจริง (พาริตี้ R3.9): กล่องบานตามกว้าง×สูงจริง เรียงกัน · คลิกเพื่อไปตั้งค่า · ＋ เพิ่มบาน · ✕ ลบ */}
+                {/* 🖼️ รูปด้าน (2 มิติ) — ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง · คลิกเลือกบาน แล้วใช้แถบจัดเรียง ◀▶▲▼ ＋บน/ล่าง/ช่อง (พาริตี้ R3.9 G6R) */}
                 {(() => {
-                  const panes = s.panes;
-                  const maxH = Math.max(1, ...panes.map((p) => p.h || 1));
-                  const scale = 110 / maxH; // px ต่อเมตร (สูงสุด ≈ 110px)
-                  const totalW = panes.reduce((a, p) => a + (p.w || 0), 0);
-                  const leaves = panes.reduce((a, p) => a + (p.n || 1), 0);
+                  const cols = s.cols;
+                  const allPcs = cols.flatMap((c) => c.pcs);
+                  const sel = allPcs.find((p) => p.key === selKey) || allPcs[0];
+                  const colH = cols.map((c) => c.pcs.reduce((a, p) => a + (p.h || 0), 0));
+                  const maxColH = Math.max(1, ...colH);
+                  const scale = 150 / maxColH; // px/เมตร แนวตั้ง (สแต็คสูงสุด ≈ 150px)
+                  const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
+                  const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
                   return (
-                    <div className="rounded-lg border border-black/5 bg-white/40 p-2 overflow-x-auto">
-                      <div className="flex items-end gap-1.5" style={{ minHeight: 124 }}>
-                        {panes.map((pc) => {
-                          const wPx = Math.max(48, (pc.w || 0.5) * scale);
-                          const hPx = Math.max(34, (pc.h || 0.5) * scale);
-                          const sel = selKey === pc.key;
-                          const lbl = PANE_TYPES.find((t) => t.key === pc.typeKey)?.label || "บาน";
-                          return (
-                            <div key={pc.key} role="button" tabIndex={0} onClick={() => selectPane(pc.key)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectPane(pc.key); } }}
-                              title="คลิกเพื่อตั้งค่าบานนี้"
-                              className={`relative shrink-0 cursor-pointer rounded-md border-2 flex flex-col items-center justify-center text-center px-1 transition-colors ${sel ? "border-brand bg-brand/10" : "border-black/25 bg-white/70 hover:border-brand/50"}`}
-                              style={{ width: wPx, height: hPx }}>
-                              <span className="text-[10px] font-semibold text-ink-2 leading-tight line-clamp-2">{lbl}{(pc.n || 1) > 1 ? ` ×${pc.n}` : ""}</span>
-                              <span className="text-[10px] text-ink-3 tabular-nums">{fmtNum(pc.w)}×{fmtNum(pc.h)}</span>
-                              {panes.length > 1 && (
-                                <span role="button" tabIndex={0} title="ลบบานนี้"
-                                  onClick={(e) => { e.stopPropagation(); removePane(i, pc.key); }}
-                                  onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); removePane(i, pc.key); } }}
-                                  className="absolute -top-2 -right-2 w-5 h-5 inline-flex items-center justify-center rounded-full bg-white border border-black/10 text-red-600 text-xs leading-none shadow-sm">×</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                        <button type="button" onClick={() => addPane(i)} title="เพิ่มบาน"
-                          className="press shrink-0 rounded-md border-2 border-dashed border-black/25 text-ink-3 hover:border-brand/50 hover:text-brand flex items-center justify-center text-lg font-bold"
-                          style={{ width: 48, height: 110 }}>＋</button>
+                    <>
+                      <div className="rounded-lg border border-black/5 bg-white/40 p-2 overflow-x-auto">
+                        <div className="flex items-start gap-2" style={{ minHeight: 170 }}>
+                          {cols.map((col, ci) => {
+                            const colW = Math.max(0.3, ...col.pcs.map((p) => p.w || 0));
+                            const wPx = Math.max(54, colW * scale);
+                            return (
+                              <div key={col.key} className="shrink-0 flex flex-col gap-1" style={{ width: wPx }}>
+                                {col.pcs.map((pc) => {
+                                  const hPx = Math.max(32, (pc.h || 0.4) * scale);
+                                  const isSel = sel?.key === pc.key;
+                                  const lbl = PANE_TYPES.find((t) => t.key === pc.typeKey)?.label || "บาน";
+                                  return (
+                                    <div key={pc.key} role="button" tabIndex={0} onClick={() => selectPane(pc.key)}
+                                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectPane(pc.key); } }}
+                                      title="คลิกเพื่อเลือก/ตั้งค่าบานนี้"
+                                      className={`cursor-pointer rounded-md border-2 flex flex-col items-center justify-center text-center px-1 transition-colors ${isSel ? "border-brand bg-brand/10" : "border-black/25 bg-white/70 hover:border-brand/50"}`}
+                                      style={{ height: hPx }}>
+                                      <span className="text-[10px] font-semibold text-ink-2 leading-tight line-clamp-2">{lbl}{(pc.n || 1) > 1 ? ` ×${pc.n}` : ""}</span>
+                                      <span className="text-[10px] text-ink-3 tabular-nums">{fmtNum(pc.w)}×{fmtNum(pc.h)}</span>
+                                    </div>
+                                  );
+                                })}
+                                <div className="text-center text-[10px] text-ink-3">ช่อง {ci + 1}</div>
+                              </div>
+                            );
+                          })}
+                          <button type="button" onClick={() => addColumn(i)} title="เพิ่มช่องใหม่"
+                            className="press shrink-0 rounded-md border-2 border-dashed border-black/25 text-ink-3 hover:border-brand/50 hover:text-brand flex flex-col items-center justify-center font-bold"
+                            style={{ width: 54, minHeight: 110 }}><span className="text-lg leading-none">＋</span><span className="text-[10px]">ช่อง</span></button>
+                        </div>
+                        <p className="text-[11px] text-ink-3 mt-1.5">รวมกว้าง ≈ {fmtNum(totalW)} ม. · {cols.length} ช่อง · {allPcs.length} บาน</p>
                       </div>
-                      <p className="text-[11px] text-ink-3 mt-1.5">รวมกว้าง ≈ {fmtNum(totalW)} ม. · {panes.length} ช่อง{leaves !== panes.length ? ` (${leaves} บาน)` : ""}</p>
-                    </div>
+
+                      {sel && (
+                        <div className="flex items-center gap-1 flex-wrap rounded-lg bg-white/50 border border-black/5 px-2 py-1.5">
+                          <span className="text-[11px] font-semibold text-ink-3 mr-0.5">จัดเรียงบานที่เลือก:</span>
+                          <button type="button" className={arrCls} title="เลื่อนช่องไปซ้าย" onClick={() => moveCol(i, sel.key, -1)}>◀</button>
+                          <button type="button" className={arrCls} title="เลื่อนช่องไปขวา" onClick={() => moveCol(i, sel.key, 1)}>▶</button>
+                          <button type="button" className={arrCls} title="เลื่อนบานขึ้น (ในช่อง)" onClick={() => movePc(i, sel.key, -1)}>▲</button>
+                          <button type="button" className={arrCls} title="เลื่อนบานลง (ในช่อง)" onClick={() => movePc(i, sel.key, 1)}>▼</button>
+                          <button type="button" className={arrCls} title="เพิ่มบานด้านบน (ช่องเดียวกัน)" onClick={() => addPiece(i, sel.key, -1)}>＋บน</button>
+                          <button type="button" className={arrCls} title="เพิ่มบานด้านล่าง (ช่องเดียวกัน)" onClick={() => addPiece(i, sel.key, 1)}>＋ล่าง</button>
+                          {allPcs.length > 1 && (
+                            <button type="button" onClick={() => removePane(i, sel.key)}
+                              className="press min-h-[32px] px-2.5 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 ml-auto">ลบบานนี้</button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
-                {s.panes.map((pc) => {
+                {(() => {
+                  const allPcs = s.cols.flatMap((c) => c.pcs);
+                  const pc = allPcs.find((p) => p.key === selKey) || allPcs[0];
+                  if (!pc) return null;
                   const prod = PANE_BY_KEY[pc.typeKey];
                   const { amount: price, mosqLabel } = panePrice(pc, pb, sideColor(i), sideGlass(i), profitPct);
                   const movePanes = Math.max(1, (pc.n || 1) - (pc.fixedPanes || 0));
                   const glassKeys = Object.keys((pb.GLASS ?? {}) as Record<string, number>);
                   return (
                     <div key={pc.key} ref={(el) => { cardRefs.current[pc.key] = el; }}
-                      className={`rounded-lg border bg-white/70 p-2.5 space-y-2 scroll-mt-2 ${selKey === pc.key ? "border-brand ring-2 ring-brand/40" : "border-black/5"}`}>
+                      className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
+                      <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value, addons: {} })}
                           className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
@@ -542,11 +611,7 @@ export default function RoomComposer({
                       )}
                     </div>
                   );
-                })}
-                <button type="button" onClick={() => addPane(i)}
-                  className="press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] glass-soft text-ink-2 hover:bg-white/70">
-                  ＋ เพิ่มบาน
-                </button>
+                })()}
               </div>
             )}
 
@@ -898,7 +963,7 @@ export default function RoomComposer({
           {sides.map((s, i) => (
             <div key={i} className="flex items-center justify-between">
               <span className="text-ink-2">
-                ด้าน {L(i)} ({s.kind === "glass" ? `กระจก ${s.panes.length} บาน` : s.kind === "wall" ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}` : "เปิดโล่ง"})
+                ด้าน {L(i)} ({s.kind === "glass" ? `กระจก ${s.cols.length} ช่อง · ${s.cols.reduce((a, c) => a + c.pcs.length, 0)} บาน` : s.kind === "wall" ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}` : "เปิดโล่ง"})
               </span>
               <span className="tabular-nums font-medium">{fmtBaht(sideTotals[i] || 0)}</span>
             </div>
