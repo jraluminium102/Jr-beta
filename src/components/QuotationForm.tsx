@@ -150,6 +150,34 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const setItem = (i: number, k: keyof Item, v: string | number) =>
     setItems(items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
 
+  // จัดลำดับรายการ (เลื่อนขึ้น/ลง) — sort_order ตอนบันทึกใช้ลำดับ array นี้
+  const moveItem = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const arr = [...items];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setItems(arr);
+  };
+
+  // Export Excel (CSV · UTF-8 BOM เปิดใน Excel ได้ ไม่ต้องมีไลบรารี)
+  function exportCsv() {
+    const rows: string[][] = [["#", "รายการ", "รายละเอียด", "จำนวน", "ราคา/หน่วย", "รวม"]];
+    items.filter((i) => i.name.trim()).forEach((it, idx) =>
+      rows.push([String(idx + 1), it.name, it.detail, String(it.qty), String(it.unit_price), String((Number(it.qty) || 0) * (Number(it.unit_price) || 0))]));
+    rows.push([]);
+    rows.push(["", "", "", "", "ยอดก่อนภาษี", String(t.subtotal)]);
+    if (t.discount_amt > 0) rows.push(["", "", "", "", `ส่วนลด ${disc}%`, String(-t.discount_amt)]);
+    rows.push(["", "", "", "", `VAT ${vat}%`, String(t.vat_amt)]);
+    rows.push(["", "", "", "", "ยอดรวมสุทธิ", String(t.total)]);
+    if (t.wht_amt > 0) { rows.push(["", "", "", "", `หัก ณ ที่จ่าย ${wht}%`, String(-t.wht_amt)]); rows.push(["", "", "", "", "ยอดรับสุทธิ", String(t.net)]); }
+    const csv = "﻿" + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `ใบเสนอราคา_${issueDate}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function aiVerify() {
     setAiErr(""); setAiResult(null);
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
@@ -318,10 +346,16 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                     <input value={it.name} onChange={(e) => setItem(i, "name", e.target.value)} placeholder="ชื่อรายการ เช่น ประตูบานเปิดคู่"
                       className="flex-1 glass rounded-md px-3 py-2 text-sm font-medium outline-none" />
                     {items.length > 1 && (
-                      <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label="ลบรายการ"
-                        className="press w-9 rounded-md inline-flex items-center justify-center text-red-700 bg-red-50 hover:bg-red-100">
-                        <Icon name="trash" size={15} />
-                      </button>
+                      <>
+                        <button onClick={() => moveItem(i, -1)} disabled={i === 0} aria-label="เลื่อนขึ้น"
+                          className="press w-8 rounded-md inline-flex items-center justify-center text-ink-2 glass hover:bg-white/70 disabled:opacity-30">▲</button>
+                        <button onClick={() => moveItem(i, 1)} disabled={i === items.length - 1} aria-label="เลื่อนลง"
+                          className="press w-8 rounded-md inline-flex items-center justify-center text-ink-2 glass hover:bg-white/70 disabled:opacity-30">▼</button>
+                        <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} aria-label="ลบรายการ"
+                          className="press w-9 rounded-md inline-flex items-center justify-center text-red-700 bg-red-50 hover:bg-red-100">
+                          <Icon name="trash" size={15} />
+                        </button>
+                      </>
                     )}
                   </div>
                   <input value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} placeholder="รายละเอียด เช่น 1.8×2.2ม. สีอบขาว กระจกเขียว 6มม."
@@ -402,6 +436,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             <div className="mt-4 space-y-2">
               <button onClick={submit} disabled={busy} className="press w-full rounded-xl py-3 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
                 {busy ? "กำลังบันทึก…" : "บันทึกใบเสนอราคา"}
+              </button>
+              <button onClick={exportCsv} className="press w-full glass-soft rounded-xl py-2.5 text-sm text-ink-2 inline-flex items-center justify-center gap-1.5">
+                <Icon name="file" size={14} /> Export Excel (CSV)
               </button>
               <button onClick={() => router.back()} className="press w-full glass-soft rounded-xl py-2.5 text-sm text-ink-2">ยกเลิก</button>
             </div>
