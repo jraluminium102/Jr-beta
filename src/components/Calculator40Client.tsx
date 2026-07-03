@@ -26,6 +26,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
+import { groupGlass } from "@/lib/calculator40/glass-cats";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 
@@ -590,7 +591,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
                   opts={ALU_COLOR_KEYS} labels={ALU_COLOR_LABEL} />
                 {(prod.defGlass || prod.composite) && (
-                  <Select label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
+                  <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}
                 {prod.materials?.length > 0 && (
                   <Select label="วัสดุ" value={material} onChange={setMaterial} opts={prod.materials} />
@@ -974,6 +975,26 @@ function Select({ label, value, onChange, opts, labels }: {
       <select value={value} onChange={(e) => onChange(e.target.value)}
         className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
         {opts.map((o) => <option key={o} value={o}>{labels?.[o] ?? o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+// เลือกกระจกแบบจัดหมวด (optgroup: ทั่วไป/เทมเปอร์/ลามิเนต/อินซูเลท/ดัดโค้ง/อื่นๆ) — พาริตี้ drill-down R3.9
+function GlassSelect({ label, value, onChange, opts }: {
+  label: string; value: string; onChange: (v: string) => void; opts: string[];
+}) {
+  const groups = useMemo(() => groupGlass(opts), [opts]);
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-ink-3">{label} <span className="text-ink-3/70 font-normal">({opts.length} รุ่น · จัดหมวด)</span></span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
+        {groups.map((g) => (
+          <optgroup key={g.cat} label={g.cat}>
+            {g.items.map((o) => <option key={o} value={o}>{o}</option>)}
+          </optgroup>
+        ))}
       </select>
     </label>
   );
