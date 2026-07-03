@@ -27,6 +27,7 @@ import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
 import { groupGlass } from "@/lib/calculator40/glass-cats";
+import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 
@@ -117,6 +118,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
   const [keySeq, setKeySeq] = useState(1);
+  // ค่าบริการเพิ่มเติมทั้งใบ (นั่งร้าน/เดินทาง/ขนส่ง/ค่าไฟ/ความเสี่ยง/รื้อ) — พาริตี้ R3.9
+  const [svc, setSvc] = useState<ServiceInput>(EMPTY_SERVICES);
+  const [svcOpen, setSvcOpen] = useState(false);
 
   const prod: any = (PRODUCTS as any)[prodId];
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
@@ -344,15 +348,20 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   function sendToQuotation() {
     if (quote.length === 0) return;
+    const items = quote.map((it) => ({
+      name: it.name,
+      detail: it.desc,
+      qty: it.qty,
+      unit_price: it.perUnit,
+      category: it.groupLabel ?? "",
+      product_id: it.prodId ?? "",
+    }));
+    // ค่าบริการเพิ่มเติม → ต่อท้ายเป็นบรรทัดในใบเสนอราคา (เฉพาะที่ > 0)
+    svcResult.lines.filter((l) => l.amount > 0).forEach((l) => {
+      items.push({ name: l.name, detail: "", qty: 1, unit_price: l.amount, category: "ค่าบริการ", product_id: "" });
+    });
     const payload = {
-      items: quote.map((it) => ({
-        name: it.name,
-        detail: it.desc,
-        qty: it.qty,
-        unit_price: it.perUnit,
-        category: it.groupLabel ?? "",
-        product_id: it.prodId ?? "",
-      })),
+      items,
       customer: selectedCustomer?.name ?? "",
       customer_id: customerId,
     };
@@ -362,11 +371,18 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   const quoteTotal = quote.reduce((s, it) => s + it.perUnit * it.qty, 0);
   const quoteCost = quote.reduce((s, it) => s + it.cost * it.qty, 0);
+  const svcResult = useMemo(() => computeServices(svc, quoteTotal), [svc, quoteTotal]);
+  const grandTotal = quoteTotal + svcResult.total;
 
   function printQuote() {
     const rows = quote.map((it, i) =>
       `<tr><td>${i + 1}</td><td>${it.name}<div class="d">${it.desc}</div></td><td class="r">${it.qty}</td><td class="r">${baht(it.perUnit)}</td><td class="r">${baht(it.perUnit * it.qty)}</td></tr>`
     ).join("");
+    const svcRows = svcResult.lines.filter((l) => l.amount > 0)
+      .map((l) => `<tr><td></td><td>${l.name}</td><td class="r">1</td><td class="r">${baht(l.amount)}</td><td class="r">${baht(l.amount)}</td></tr>`).join("");
+    const grandRow = svcResult.total > 0
+      ? `<tr class="t"><td colspan="4" class="r">รวมทั้งสิ้น (สินค้า + บริการ)</td><td class="r">฿${baht(grandTotal)}</td></tr>`
+      : "";
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>ใบเสนอราคา (R4.0)</title><style>
       body{font-family:'Segoe UI',Tahoma,sans-serif;padding:24px;color:#1f2937}h2{color:#b3151d;margin:0 0 2px}
       table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
@@ -376,8 +392,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       <h2>ใบเสนอราคา (ร่าง — เครื่องคิดราคา 4.0)</h2>
       <div style="font-size:12px;color:#6b7280">ราคารวมติดตั้ง · ยังไม่ใช่เอกสารทางการ — ออกใบเสนอราคาจริงที่เมนูใบเสนอราคา</div>
       <table><thead><tr><th>#</th><th>รายการ</th><th class="r">จำนวน</th><th class="r">ราคา/ชุด</th><th class="r">รวม</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr class="t"><td colspan="4" class="r">รวมทั้งสิ้น</td><td class="r">฿${baht(quoteTotal)}</td></tr></tfoot></table>
+      <tbody>${rows}${svcRows}</tbody>
+      <tfoot><tr class="t"><td colspan="4" class="r">${svcResult.total > 0 ? "รวมค่าสินค้า/งาน" : "รวมทั้งสิ้น"}</td><td class="r">฿${baht(quoteTotal)}</td></tr>${grandRow}</tfoot></table>
       <div class="note">คิดโดยเครื่องคิดราคา R4.0 (ต้นทุนจริง × กำไร) · ${new Date().toLocaleDateString("th-TH")}</div>
       <script>window.print()</script></body></html>`;
     const win = window.open("", "_blank");
@@ -907,6 +923,35 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               <button onClick={() => setQuote([])} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างทั้งหมด</button>
             </div>
           </div>
+
+          {/* ── ค่าบริการเพิ่มเติมทั้งใบ (พาริตี้ R3.9) ── */}
+          <div className="mb-3">
+            <button onClick={() => setSvcOpen((v) => !v)}
+              className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
+              <Icon name="plus" size={15} /> ค่าบริการเพิ่มเติม (ทั้งใบ) {svcOpen ? "▲" : "▼"}
+              {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· ฿{baht(svcResult.total)}</span>}
+            </button>
+            {svcOpen && (
+              <div className="mt-2 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-3">
+                <label className="flex items-center gap-2 text-sm text-ink-1">
+                  <input type="checkbox" checked={svc.inBKK} onChange={(e) => setSvc((s) => ({ ...s, inBKK: e.target.checked }))} />
+                  งานในกรุงเทพฯ/ปริมณฑล <span className="text-xs text-ink-3">(ยอด &gt; 20,000 → ฟรีค่านั่งร้าน+เดินทาง)</span>
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <Field label="นั่งร้าน: จำนวนชั้น" value={String(svc.floors || "")} onChange={(v) => setSvc((s) => ({ ...s, floors: Number(v) || 1 }))} />
+                  <Field label="เดินทาง (กม.)" value={String(svc.travelKm || "")} onChange={(v) => setSvc((s) => ({ ...s, travelKm: Number(v) || 0 }))} />
+                  <Field label="ค่าที่พัก (บาท)" value={String(svc.lodging || "")} onChange={(v) => setSvc((s) => ({ ...s, lodging: Number(v) || 0 }))} />
+                  <Field label="ขนส่ง (บาท)" value={String(svc.shipping || "")} onChange={(v) => setSvc((s) => ({ ...s, shipping: Number(v) || 0 }))} />
+                  <Field label="ค่าไฟหน้างาน (บาท)" value={String(svc.power || "")} onChange={(v) => setSvc((s) => ({ ...s, power: Number(v) || 0 }))} />
+                  <Field label="ความเสี่ยง (บาท)" value={String(svc.risk || "")} onChange={(v) => setSvc((s) => ({ ...s, risk: Number(v) || 0 }))} />
+                  <Field label="รื้อหลังคาเดิม (จุด)" value={String(svc.demoRoofPts || "")} onChange={(v) => setSvc((s) => ({ ...s, demoRoofPts: Number(v) || 0 }))} />
+                </div>
+                {svcResult.waivedNote && <p className="text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">✓ {svcResult.waivedNote}</p>}
+                {svcResult.total > 0 && <p className="text-sm font-semibold text-brand-dark">รวมค่าบริการ ฿{baht(svcResult.total)}</p>}
+              </div>
+            )}
+          </div>
+
           <div className="overflow-x-auto glass-soft rounded-xl">
             <table className="w-full text-sm">
               <thead>
@@ -935,11 +980,25 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 ))}
               </tbody>
               <tfoot>
-                <tr className="font-bold">
-                  <td className="px-3 py-2.5" colSpan={3}>รวมทั้งสิ้น (รวมติดตั้ง)</td>
-                  <td className="px-3 py-2.5 text-right text-brand-dark tabular-nums">฿{baht(quoteTotal)}</td>
+                <tr className={svcResult.total > 0 ? "font-medium text-ink-2" : "font-bold"}>
+                  <td className="px-3 py-2.5" colSpan={3}>{svcResult.total > 0 ? "รวมค่าสินค้า/งาน (รวมติดตั้ง)" : "รวมทั้งสิ้น (รวมติดตั้ง)"}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">฿{baht(quoteTotal)}</td>
                   <td></td>
                 </tr>
+                {svcResult.lines.filter((l) => l.amount > 0).map((l, idx) => (
+                  <tr key={idx} className="text-xs text-ink-2">
+                    <td className="px-3 py-1" colSpan={3}>+ {l.name}</td>
+                    <td className="px-3 py-1 text-right tabular-nums">฿{baht(l.amount)}</td>
+                    <td></td>
+                  </tr>
+                ))}
+                {svcResult.total > 0 && (
+                  <tr className="font-bold border-t border-black/10">
+                    <td className="px-3 py-2.5" colSpan={3}>รวมทั้งสิ้น (สินค้า + บริการ)</td>
+                    <td className="px-3 py-2.5 text-right text-brand-dark tabular-nums">฿{baht(grandTotal)}</td>
+                    <td></td>
+                  </tr>
+                )}
                 {showCost && (
                   <tr className="text-xs text-ink-3">
                     <td className="px-3 pb-2" colSpan={3}>ทุนรวม ฿{baht(quoteCost)} · กำไรรวม ฿{baht(quoteTotal - quoteCost)}</td>
