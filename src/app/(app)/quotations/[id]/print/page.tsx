@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { baht } from "@/lib/money";
@@ -28,6 +29,11 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
   const q = data as Quotation;
   const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = q.customer_snapshot;
+  // เงื่อนไขท้ายใบ: ใช้ค่าที่แก้ต่อใบถ้ามี (0076) มิฉะนั้นค่ามาตรฐาน
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyQ = q as any;
+  const condWork: string[] = Array.isArray(anyQ.conditions_work) && anyQ.conditions_work.length ? anyQ.conditions_work : CONDITIONS_WORK;
+  const condQuote: string[] = Array.isArray(anyQ.conditions_quote) && anyQ.conditions_quote.length ? anyQ.conditions_quote : CONDITIONS_QUOTE;
   const total = q.wht_amt > 0 ? q.net : q.total;
   const totalLabel = q.wht_amt > 0 ? "ยอดรับสุทธิ" : "จำนวนเงินรวมทั้งสิ้น";
 
@@ -97,8 +103,21 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
             </tr>
           </thead>
           <tbody>
-            {items.map((it, i) => (
-              <tr key={it.id}>
+            {items.map((it, i) => {
+              // หัวข้อชุด (0076): แทรกแถวหัวข้อเมื่อ group_label เปลี่ยน (และไม่ว่าง)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const gl = String((it as any).group_label ?? "").trim();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const prevGl = i > 0 ? String((items[i - 1] as any).group_label ?? "").trim() : "";
+              const showHeading = gl && gl !== prevGl;
+              return (
+              <Fragment key={it.id}>
+                {showHeading && (
+                  <tr>
+                    <td colSpan={5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
+                  </tr>
+                )}
+              <tr>
                 <td className="p-2 border border-gray-200 text-center align-top tabular-nums">
                   {i + 1}
                 </td>
@@ -118,7 +137,9 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
                   {baht(it.line_total)}
                 </td>
               </tr>
-            ))}
+              </Fragment>
+              );
+            })}
           </tbody>
         </table>
 
@@ -227,7 +248,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
             เงื่อนไขการเข้าทำงาน
           </h4>
           <ol className="list-decimal ml-5 mb-3 space-y-1">
-            {CONDITIONS_WORK.map((cond, idx) => (
+            {condWork.map((cond, idx) => (
               <li key={idx} style={{ color: "#1f2937" }}>
                 {cond.split("\n").map((line, li) => (
                   <span key={li}>
@@ -244,7 +265,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
             เงื่อนไขแบบและใบเสนอราคา
           </h4>
           <ol className="list-none ml-0 mb-3 space-y-1">
-            {CONDITIONS_QUOTE.map((cond, idx) => (
+            {condQuote.map((cond, idx) => (
               <li key={idx} style={{ color: "#1f2937" }}>
                 {cond.split("\n").map((line, li) => (
                   <span key={li}>

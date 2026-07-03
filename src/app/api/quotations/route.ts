@@ -114,24 +114,31 @@ export async function POST(req: Request) {
   if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
 
   // 4) insert หัวเอกสาร
-  const { data: q, error: qErr } = await supabase
-    .from("quotations")
-    .insert({
-      code,
-      customer_id: cust.id,
-      job_id: jobId,
-      billing_profile_id: billProfile ? bpId : null,
-      customer_snapshot: snapshot,
-      issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
-      status: "draft",
-      vat_rate, discount_pct, wht_rate,
-      subtotal: t.subtotal, discount_amt: t.discount_amt, vat_amt: t.vat_amt,
-      total: t.total, wht_amt: t.wht_amt, net: t.net,
-      note: body.note ?? "",
-      created_by: profile.id,
-    })
-    .select("id, code")
-    .single();
+  const qBase: Record<string, unknown> = {
+    code,
+    customer_id: cust.id,
+    job_id: jobId,
+    billing_profile_id: billProfile ? bpId : null,
+    customer_snapshot: snapshot,
+    issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
+    status: "draft",
+    vat_rate, discount_pct, wht_rate,
+    subtotal: t.subtotal, discount_amt: t.discount_amt, vat_amt: t.vat_amt,
+    total: t.total, wht_amt: t.wht_amt, net: t.net,
+    note: body.note ?? "",
+    created_by: profile.id,
+  };
+  // เงื่อนไขท้ายใบแก้ได้ต่อใบ (ส่งมาเฉพาะที่แก้ · null = ใช้ค่ามาตรฐาน)
+  const qCond: Record<string, unknown> = {};
+  if (Array.isArray(body.conditions_work)) qCond.conditions_work = body.conditions_work;
+  if (Array.isArray(body.conditions_quote)) qCond.conditions_quote = body.conditions_quote;
+  let { data: q, error: qErr } = await supabase
+    .from("quotations").insert({ ...qBase, ...qCond }).select("id, code").single();
+  // กันพัง: ถ้า migration 0076 (conditions_*) ยังไม่รัน → insert ซ้ำแบบไม่มีเงื่อนไข
+  if (qErr && /conditions_/i.test(qErr.message)) {
+    ({ data: q, error: qErr } = await supabase
+      .from("quotations").insert(qBase).select("id, code").single());
+  }
   if (qErr || !q) return fail("บันทึกใบเสนอไม่สำเร็จ: " + (qErr?.message ?? ""), 500);
 
   // 5) insert รายการ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
@@ -145,8 +152,14 @@ export async function POST(req: Request) {
     sort_order: i,
     category: String(it.category ?? ""),     // หมวดสินค้า → สถิติขายดี (0046)
     product_id: String(it.product_id ?? ""),
+    group_label: String(it.group_label ?? ""), // หัวข้อชุด (0076) → จัดกลุ่มในใบพิมพ์
   }));
-  const { error: iErr } = await supabase.from("quotation_items").insert(rows);
+  let { error: iErr } = await supabase.from("quotation_items").insert(rows);
+  // กันพัง: ถ้า migration 0076 (group_label) ยังไม่รัน → insert ซ้ำแบบตัด group_label ออก
+  if (iErr && /group_label/i.test(iErr.message)) {
+    const rowsNoGl = rows.map(({ group_label, ...r }: any) => r);
+    ({ error: iErr } = await supabase.from("quotation_items").insert(rowsNoGl));
+  }
   if (iErr) {
     await supabase.from("quotations").delete().eq("id", q.id);
     return fail("บันทึกรายการไม่สำเร็จ: " + iErr.message, 500);

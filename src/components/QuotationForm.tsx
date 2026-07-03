@@ -7,11 +7,12 @@ import Icon from "./Icon";
 import { computeTotals, baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 import type { Customer } from "@/lib/types";
+import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/print/quote-constants";
 
 type ActiveJob = { id: string; job_code: string | null; current_stage: number; status: string; created_at: string };
 
-type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string };
-const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "" });
+type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string; group_label: string };
+const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "", group_label: "" });
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
   const router = useRouter();
@@ -23,6 +24,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [disc, setDisc] = useState(0);
   const [wht, setWht] = useState(0);
   const [note, setNote] = useState("");
+  // เงื่อนไขท้ายใบ (แก้ได้ต่อใบ) — เริ่มจากค่ามาตรฐาน · ส่งเฉพาะเมื่อแก้ (null = ใช้มาตรฐาน)
+  const [condWork, setCondWork] = useState<string[]>([...CONDITIONS_WORK]);
+  const [condQuote, setCondQuote] = useState<string[]>([...CONDITIONS_QUOTE]);
+  const [condEdited, setCondEdited] = useState(false);
+  const [condOpen, setCondOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
@@ -52,7 +58,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string }>; customer?: string; customer_id?: number | null };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string }>; customer?: string; customer_id?: number | null };
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -62,6 +68,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           unit_price: Number(it.unit_price) || 0,
           category: String(it.category ?? ""),     // หมวดสินค้าจากเครื่องคิดราคา → สถิติ (0046)
           product_id: String(it.product_id ?? ""),
+          group_label: String(it.group_label ?? ""),
         }));
       if (bridged.length) setItems(bridged);
       // ลูกค้าจากเครื่องคิดราคา: ใช้ customer_id (เลือกจากทะเบียนแล้ว) ก่อน — แม่นยำสุด
@@ -221,6 +228,10 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           note,
           ...(selectedJobId ? { job_id: selectedJobId } : {}),
           ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
+          ...(condEdited ? {
+            conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
+            conditions_quote: condQuote.map((s) => s.trim()).filter(Boolean),
+          } : {}),
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -342,6 +353,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             <div className="space-y-2">
               {items.map((it, i) => (
                 <div key={i} className="glass-soft rounded-xl p-3.5">
+                  <input value={it.group_label} onChange={(e) => setItem(i, "group_label", e.target.value)} placeholder="หัวข้อชุด (เว้นว่าง=ไม่มี · เช่น ห้องนอน 1)"
+                    className="w-full glass rounded-md px-3 py-1.5 text-xs mb-2 outline-none text-brand-dark font-semibold" />
                   <div className="flex gap-2">
                     <input value={it.name} onChange={(e) => setItem(i, "name", e.target.value)} placeholder="ชื่อรายการ เช่น ประตูบานเปิดคู่"
                       className="flex-1 glass rounded-md px-3 py-2 text-sm font-medium outline-none" />
@@ -397,6 +410,42 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 </select>
               </label>
             </div>
+          </Card>
+
+          {/* เงื่อนไขท้ายใบ (แก้ได้ต่อใบ) — เริ่มจากค่ามาตรฐาน · แก้แล้วพิมพ์ลงใบนี้เท่านั้น */}
+          <Card className="p-5">
+            <button onClick={() => setCondOpen((v) => !v)} className="press w-full flex items-center justify-between">
+              <h3 className="font-bold text-brand-dark">เงื่อนไขท้ายใบเสนอราคา {condEdited && <span className="text-xs font-normal text-amber-700">· แก้แล้ว</span>}</h3>
+              <span className="text-ink-3 text-sm">{condOpen ? "▲" : "▼ แก้ไข"}</span>
+            </button>
+            {condOpen && (
+              <div className="mt-3 space-y-4">
+                {([["เงื่อนไขการเข้าทำงาน", condWork, setCondWork], ["เงื่อนไขแบบและใบเสนอราคา", condQuote, setCondQuote]] as const).map(([title, list, setList]) => (
+                  <div key={title}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-semibold text-brand-dark">{title}</span>
+                      <button onClick={() => { setList([...list, ""]); setCondEdited(true); }} className="press text-xs text-brand font-semibold">+ เพิ่มข้อ</button>
+                    </div>
+                    <div className="space-y-1.5">
+                      {list.map((c, ci) => (
+                        <div key={ci} className="flex gap-1.5">
+                          <textarea value={c} rows={c.length > 80 ? 3 : 1}
+                            onChange={(e) => { setList(list.map((x, xi) => xi === ci ? e.target.value : x)); setCondEdited(true); }}
+                            className="flex-1 glass rounded-md px-2.5 py-1.5 text-xs outline-none resize-y" />
+                          <button onClick={() => { setList(list.filter((_, xi) => xi !== ci)); setCondEdited(true); }} aria-label="ลบข้อ"
+                            className="press w-8 rounded-md inline-flex items-center justify-center text-red-700 bg-red-50 hover:bg-red-100 shrink-0"><Icon name="trash" size={13} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {condEdited && (
+                  <button onClick={() => { setCondWork([...CONDITIONS_WORK]); setCondQuote([...CONDITIONS_QUOTE]); setCondEdited(false); }}
+                    className="press text-xs text-ink-3">↺ คืนค่ามาตรฐาน</button>
+                )}
+                <p className="text-[11px] text-ink-3">* ไม่แก้ = ใช้เงื่อนไขมาตรฐาน · แก้แล้วจะพิมพ์เฉพาะใบนี้</p>
+              </div>
+            )}
           </Card>
         </div>
 
