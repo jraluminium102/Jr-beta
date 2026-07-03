@@ -25,6 +25,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
+import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 
@@ -217,12 +218,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       const pCount = Number(p) || prod.defaults?.p || 1;
       const formVal = form || prod.defForm;
       const profitPct = Number(profit) || 100;
+      // สีอลู: ผู้ใช้เลือก "ชื่อสีจริง" (13 สี) → แปลงเป็นหมวดค่าอบ (bake) สำหรับคิดราคา + ชื่อสีพิมพ์ลงใบ
+      const rc = resolveAluColor(color);
       const opt: any = {
         w: wCm,
         h: hCm,
         p: pCount,
         form: formVal,
-        color,
+        color: rc.bake,
+        colorName: rc.label,
         profitPct,
         spec,
         addons,
@@ -258,7 +262,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       // ── ผสมบาน (G1) — คิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก) ตรง app.js calc() บรรทัด 236-245 ──
       if (subs.length) {
         subs.forEach((s) => {
-          const amt = subPrice(s, pb, color, glassType, profitPct);
+          const amt = subPrice(s, pb, rc.bake, glassType, profitPct);
           if (amt <= 0) return;
           sl.push({ desc: subDesc(s), amt });
           sSell += amt;
@@ -271,7 +275,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           const sw = (+sg.w || 0) * 100, sh = (+sg.h || 0) * 100;
           if (!(sw > 0 && sh > 0)) return;
           const sr: any = computeCost(pb, prod, {
-            w: sw, h: sh, p: 1, form: formVal, material, color, addons: {}, profitPct, installProfitPct: profitPct,
+            w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, addons: {}, profitPct, installProfitPct: profitPct,
           });
           sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sr.sell.withInstall });
           sSell += sr.sell.withInstall;
@@ -315,7 +319,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const desc = `${w}×${h} ซม.`
       + (prod.forms?.length ? ` · ${form}` : "")
       + ((Number(p) || 1) > 1 ? ` · ${p} บาน` : "")
-      + ` · ${COLOR_LABEL[color] ?? color}`
+      + ` · ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`
       + (glassType ? ` · ${glassType}` : "")
       + (material ? ` · ${material}` : "")
       + (subDescs.length ? ` · + ${subDescs.join(", ")}` : "");
@@ -583,8 +587,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 {prod.forms?.length > 0 && !prod.composite && (
                   <Select label="รูปแบบ" value={form} onChange={setForm} opts={prod.forms} />
                 )}
-                <Select label="สี (ทั้งห้อง)" value={color} onChange={setColor}
-                  opts={Object.keys(pb.BAKE)} labels={COLOR_LABEL} />
+                <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
+                  opts={ALU_COLOR_KEYS} labels={ALU_COLOR_LABEL} />
                 {(prod.defGlass || prod.composite) && (
                   <Select label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}
@@ -600,6 +604,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   );
                 })}
               </div>
+
+              {/* รีมาร์คสี (สีชุบ/Aztec ฯลฯ ที่ยังใช้ราคา R3.9 อ้างอิง — รอถอดทุน 4.0) */}
+              {resolveAluColor(color).note && (
+                <p className="mt-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ⓘ {resolveAluColor(color).note}
+                </p>
+              )}
 
               {/* สีวัสดุมุงหลังคา (label พิมพ์ลงใบ ไม่กระทบราคา) — ตรง app.js ~1250-1260 */}
               {roofSheetColors.length > 0 && (
@@ -705,7 +716,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
                   W={(Number(w) || prod.defaults?.w || 200) / 100}
                   movePanes={movePanes}
-                  color={color}
+                  color={resolveAluColor(color).bake}
                   form={form || prod.defForm}
                 />
               )}
@@ -714,7 +725,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               {prod.composite && (
                 <RoomComposer
                   pb={pb}
-                  mainColor={color}
+                  mainColor={resolveAluColor(color).bake}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
                   onTotal={setRoomTotals}
@@ -759,7 +770,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   subs={subs}
                   setSubs={setSubs}
                   pb={pb}
-                  mainColor={color}
+                  mainColor={resolveAluColor(color).bake}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
                 />
