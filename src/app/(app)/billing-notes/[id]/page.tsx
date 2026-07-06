@@ -6,7 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
-import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
+import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
@@ -80,6 +80,16 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             <EditBillingTotalButton
               billingNoteId={bn.id}
               currentTotal={bn.total}
+            />
+          )}
+          {/* แก้ VAT/ส่วนลด (footer) — เฉพาะใบที่มียอดก่อนภาษี (subtotal) และยังไม่จ่าย */}
+          {writable && !isCancelled && !hasAnyPayment && Number((bn as { subtotal?: number }).subtotal) > 0 && (
+            <EditBillingBreakdownButton
+              billingNoteId={bn.id}
+              subtotal={Number((bn as { subtotal?: number }).subtotal) || 0}
+              discount_pct={Number((bn as { discount_pct?: number }).discount_pct) || 0}
+              vat_rate={Number((bn as { vat_rate?: number }).vat_rate) || 0}
+              wht_rate={Number((bn as { wht_rate?: number }).wht_rate) || 0}
             />
           )}
           {writable && !isCancelled && (
@@ -191,12 +201,12 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           </table>
         </div>
 
-        {/* ยอดแยก (0078) — โชว์ถ้ามี breakdown (ใบเดิม subtotal=total ไม่โชว์ซ้ำ) */}
+        {/* ยอดแยก (0078) — โชว์ทุกใบ (ใบเดิมไม่มีภาษีแยก → รวมเป็นเงิน = ยอดชำระ) */}
         {(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const b = bn as any;
-          const sub = Number(b.subtotal) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
-          if (sub <= 0 || (dis === 0 && va === 0 && wh === 0)) return null;
+          const sub = Number(b.subtotal) || Number(bn.total) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
+          if (sub <= 0) return null;
           return (
             <div className="mt-5 flex justify-end">
               <div className="w-full sm:w-72 text-sm space-y-1">

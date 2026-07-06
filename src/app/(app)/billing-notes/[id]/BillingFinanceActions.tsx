@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { baht } from "@/lib/money";
+import { baht, computeTotals } from "@/lib/money";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
 
@@ -124,6 +124,127 @@ export function EditBillingTotalButton({
               <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
             )}
             บันทึกยอดใหม่
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Edit breakdown (VAT / discount / WHT) — แก้ footer ในใบที่สร้างแล้ว (ยังไม่จ่าย)
+// คิดใหม่จาก subtotal ของบิลเอง → net → re-split งวด (API โหมด B)
+// ─────────────────────────────────────────────
+export function EditBillingBreakdownButton({
+  billingNoteId, subtotal, discount_pct, vat_rate, wht_rate,
+}: {
+  billingNoteId: number;
+  subtotal: number;
+  discount_pct: number;
+  vat_rate: number;
+  wht_rate: number;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [disc, setDisc] = useState(discount_pct);
+  const [vat, setVat] = useState(vat_rate);
+  const [wht, setWht] = useState(wht_rate);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const base = Number(subtotal) || 0;
+  const t = useMemo(
+    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: vat, discount_pct: disc, wht_rate: wht }),
+    [base, vat, disc, wht]
+  );
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const res = await fetch(`/api/billing-notes/${billingNoteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ discount_pct: disc, vat_rate: vat, wht_rate: wht }),
+    });
+    const json = await res.json().catch(() => null);
+    setBusy(false);
+    if (res.ok) { setOpen(false); router.refresh(); }
+    else setError(json?.error ?? "แก้ยอดแยกไม่สำเร็จ");
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark min-h-[44px] focus:outline-none focus-visible:ring-2"
+        aria-label="แก้ VAT / ส่วนลด"
+      >
+        <Icon name="pencil" size={16} /> แก้ VAT / ส่วนลด
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แก้ VAT / ส่วนลด">
+      <form onSubmit={submit} className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+            <Icon name="pencil" size={18} /> แก้ VAT / ส่วนลด
+          </h2>
+          <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
+            className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+          คิดใหม่จากยอดก่อนภาษี <b className="tabular-nums">฿{baht(base)}</b> · งวดชำระจะ re-split อัตโนมัติตามยอดใหม่
+        </div>
+
+        {/* footer เดียวกับตอนสร้าง */}
+        <div className="space-y-1.5 text-sm">
+          <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-ink-3 flex items-center gap-1">ส่วนลด
+              <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
+                className="w-12 border border-gray-200 rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
+            </span>
+            <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
+              <input type="number" min={0} step="any" value={t.discount_amt || ""}
+                onChange={(e) => setDisc(base > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / base) * 10000) / 100) : 0)}
+                className="w-20 border border-gray-200 rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
+            </span>
+          </div>
+          <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+          <label className="flex items-center justify-between gap-2 cursor-pointer">
+            <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
+            <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+          </label>
+          <div className="border-t border-gray-300/70 my-1.5" />
+          <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+          <label className="flex items-center justify-between gap-2 cursor-pointer">
+            <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
+              <select value={wht || 3} disabled={wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="border border-gray-200 rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
+                <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
+              </select>
+            </span>
+            <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+          </label>
+          <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
+        </div>
+
+        {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
+
+        <div className="flex gap-2 pt-1">
+          <button type="button" onClick={() => setOpen(false)} disabled={busy}
+            className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
+            ยกเลิก
+          </button>
+          <button type="submit" disabled={busy}
+            className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
+            {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+            บันทึก
           </button>
         </div>
       </form>

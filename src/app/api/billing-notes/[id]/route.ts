@@ -5,7 +5,7 @@ import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { err, notFound } from "@/lib/bff/response";
-import { suggestInstallments } from "@/lib/money";
+import { suggestInstallments, computeTotals } from "@/lib/money";
 
 // GET /api/billing-notes/[id]  → ใบวางบิล + งวดชำระ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -25,12 +25,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
 // ──────────────────────────────────────────────────────────────────
 // PATCH /api/billing-notes/[id]  → แก้ยอดบิล + re-split งวดใหม่
+// รับได้ 2 โหมด:
+//   (A) { total }                         → override ยอดตรงๆ (เดิม)
+//   (B) { discount_pct, vat_rate, wht_rate } → แก้ footer (คิดใหม่จาก subtotal ของบิล) net→total
 // Guard: ห้ามแก้ถ้ามีงวด paid หรือมี receipt/finance_entry ผูกอยู่
 // ──────────────────────────────────────────────────────────────────
 const PatchSchema = z.object({
-  total: z
-    .number({ required_error: "ต้องระบุยอดใหม่", invalid_type_error: "ยอดต้องเป็นตัวเลข" })
-    .positive("ยอดต้องมากกว่า 0"),
+  total: z.number({ invalid_type_error: "ยอดต้องเป็นตัวเลข" }).positive("ยอดต้องมากกว่า 0").optional(),
+  discount_pct: z.number().min(0, "ส่วนลดต้อง ≥ 0").max(100, "ส่วนลดต้องอยู่ 0–100%").optional(),
+  vat_rate: z.number().min(0).max(100).optional(),
+  wht_rate: z.number().min(0).max(100).optional(),
 });
 
 export const PATCH = withRoute(
@@ -41,22 +45,46 @@ export const PATCH = withRoute(
     const parsed = PatchSchema.safeParse(body);
     if (!parsed.success) return err(parsed.error.errors[0].message, 400);
 
-    const newTotal = Math.round((parsed.data.total + Number.EPSILON) * 100) / 100; // round2
+    // โหมด B = แก้ footer (มี field ภาษี/ส่วนลดอย่างน้อย 1 ตัว) · ไม่งั้นโหมด A = แก้ยอดตรง
+    const isBreakdownMode =
+      parsed.data.discount_pct != null || parsed.data.vat_rate != null || parsed.data.wht_rate != null;
+    if (!isBreakdownMode && parsed.data.total == null) return err("ต้องระบุยอดใหม่ หรือ ส่วนลด/VAT", 400);
     const bnId = params.id;
 
-    // 1) ดึงใบวางบิล + งวดปัจจุบัน
+    // 1) ดึงใบวางบิล + งวดปัจจุบัน (subtotal ใช้เป็นฐานโหมด B)
     const { data: bn, error: bnErr } = await ctx.supabase
       .from("billing_notes")
-      .select("id, total, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
       .single<{
         id: number;
         total: number;
+        subtotal: number | null;
         status: string;
         billing_installments: { id: number; status: string; paid_amount: number }[];
       }>();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
     if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว แก้ยอดไม่ได้", 409);
+
+    // คำนวณ newTotal + breakdown ตามโหมด
+    let newTotal: number;
+    let breakdown: Record<string, number> | null = null;
+    if (isBreakdownMode) {
+      const sub = Number(bn.subtotal) || 0;
+      if (sub <= 0) return err("ใบวางบิลนี้ไม่มียอดก่อนภาษี (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
+      const disc = Number(parsed.data.discount_pct) || 0;
+      const vat = Number(parsed.data.vat_rate) || 0;
+      const wht = Number(parsed.data.wht_rate) || 0;
+      const bt = computeTotals({ items: [{ qty: 1, unit_price: sub }], vat_rate: vat, discount_pct: disc, wht_rate: wht });
+      newTotal = bt.net;
+      breakdown = {
+        subtotal: bt.subtotal, discount_pct: disc, discount_amt: bt.discount_amt,
+        vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt,
+      };
+    } else {
+      newTotal = Math.round((parsed.data.total! + Number.EPSILON) * 100) / 100; // round2
+    }
+    if (newTotal <= 0) return err("ยอดสุทธิต้องมากกว่า 0", 400);
 
     const installments = bn.billing_installments ?? [];
     const instIds = installments.map((i) => i.id);
@@ -86,11 +114,16 @@ export const PATCH = withRoute(
 
     const oldTotal = Number(bn.total) || 0;
 
-    // 3) อัปเดต total ก่อน (RPC อ่าน total ใหม่ → งวดตรง)
-    const { error: upErr } = await ctx.supabase
+    // 3) อัปเดต total (+ breakdown ถ้าโหมด B) ก่อน (RPC อ่าน total ใหม่ → งวดตรง)
+    const updatePayload = breakdown ? { total: newTotal, ...breakdown } : { total: newTotal };
+    let { error: upErr } = await ctx.supabase
       .from("billing_notes")
-      .update({ total: newTotal })
+      .update(updatePayload)
       .eq("id", bnId);
+    // กันพัง: ถ้า 0078 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
+    if (upErr && breakdown && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate/i.test(upErr.message ?? "")) {
+      ({ error: upErr } = await ctx.supabase.from("billing_notes").update({ total: newTotal }).eq("id", bnId));
+    }
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);
 
     // 4) re-split งวดผ่าน RPC replace_billing_installments (1 txn → constraint ผ่าน)
@@ -124,11 +157,11 @@ export const PATCH = withRoute(
     // 5) audit
     await audit({
       userId: ctx.user.id,
-      action: "UPDATE_BILLING_TOTAL",
+      action: isBreakdownMode ? "UPDATE_BILLING_BREAKDOWN" : "UPDATE_BILLING_TOTAL",
       table: "billing_notes",
       recordId: bnId,
       oldValue: { total: oldTotal },
-      newValue: { total: newTotal, installments: items },
+      newValue: { total: newTotal, ...(breakdown ?? {}), installments: items },
     });
 
     return ok({ ok: true, total: newTotal, installments: items });
