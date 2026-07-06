@@ -321,15 +321,20 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const subSell = (result as any).subSell || 0;
     const subCost = (result as any).subCost || 0;
     const subDescs: string[] = ((result as any).subLines || []).map((l: any) => l.desc);
-    const desc = `${w}×${h} ซม.`
-      + (prod.forms?.length ? ` · ${form}` : "")
-      + ((Number(p) || 1) > 1 ? ` · ${p} บาน` : "")
-      + ` · ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`
-      + (glassType ? ` · ${glassType}` : "")
-      + (material ? ` · ${material}` : "")
-      + (subDescs.length ? ` · + ${subDescs.join(", ")}` : "");
+    // ── รูปแบบรายละเอียดแบบเครื่องเดิม R3.9: ชื่อ+รูปแบบ+ขนาด(ม.) เป็นหัว · บุลเล็ตออปชั่น · "รายละเอียดงาน" + สี/กระจก ──
+    const fmtM = (cm: number) => (Math.round(cm) / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+    const nBan = Number(p) || prod.defaults?.p || 1;
+    const itemName = `${prod.name}`
+      + (prod.forms?.length && form ? ` (${form})` : "")
+      + (nBan > 1 ? ` ${nBan} บาน` : "")
+      + ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
+    const workLines = subDescs.map((d) => `- ${d}`);               // ผสมบาน/ช่วงเพิ่ม = บุลเล็ตออปชั่น
+    const jobLines = [`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`];
+    if (glassType) jobLines.push(`- กระจก: ${glassType}`);
+    if (material) jobLines.push(`- วัสดุ: ${material}`);
+    const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     setQuote((q) => [...q, {
-      key: keySeq, name: prod.name, desc, qty: n,
+      key: keySeq, name: itemName, desc, qty: n,
       perUnit: result.sell.withInstall + subSell, cost: result.cost.total + subCost,
       prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
     }]);
@@ -376,7 +381,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   function printQuote() {
     const rows = quote.map((it, i) =>
-      `<tr><td>${i + 1}</td><td>${it.name}<div class="d">${it.desc}</div></td><td class="r">${it.qty}</td><td class="r">${baht(it.perUnit)}</td><td class="r">${baht(it.perUnit * it.qty)}</td></tr>`
+      `<tr><td>${i + 1}</td><td>${it.name}<div class="d">${it.desc.replace(/รายละเอียดงาน/g, '<b style="color:#b3151d">รายละเอียดงาน</b>')}</div></td><td class="r">${it.qty}</td><td class="r">${baht(it.perUnit)}</td><td class="r">${baht(it.perUnit * it.qty)}</td></tr>`
     ).join("");
     const svcRows = svcResult.lines.filter((l) => l.amount > 0)
       .map((l) => `<tr><td></td><td>${l.name}</td><td class="r">1</td><td class="r">${baht(l.amount)}</td><td class="r">${baht(l.amount)}</td></tr>`).join("");
@@ -387,7 +392,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       body{font-family:'Segoe UI',Tahoma,sans-serif;padding:24px;color:#1f2937}h2{color:#b3151d;margin:0 0 2px}
       table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
       th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}th{background:#fdecec;color:#7d0f15}
-      .r{text-align:right}.d{font-size:11px;color:#6b7280}.t{font-weight:700}
+      .r{text-align:right}.d{font-size:11px;color:#6b7280;white-space:pre-line;line-height:1.5;margin-top:2px}.t{font-weight:700}
       .note{margin-top:14px;font-size:11px;color:#9ca3af}</style></head><body>
       <h2>ใบเสนอราคา (ร่าง — เครื่องคิดราคา 4.0)</h2>
       <div style="font-size:12px;color:#6b7280">ราคารวมติดตั้ง · ยังไม่ใช่เอกสารทางการ — ออกใบเสนอราคาจริงที่เมนูใบเสนอราคา</div>
@@ -968,7 +973,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <tr key={it.key} className="border-b border-black/5 last:border-0">
                     <td className="px-3 py-2">
                       <div className="font-medium">{it.name}</div>
-                      <div className="text-xs text-ink-3">{it.desc}</div>
+                      <div className="text-xs text-ink-3 whitespace-pre-line leading-relaxed">{it.desc}</div>
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{it.qty}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{baht(it.perUnit)}</td>

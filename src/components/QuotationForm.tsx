@@ -191,7 +191,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   function exportCsv() {
     const rows: string[][] = [["#", "รายการ", "รายละเอียด", "จำนวน", "ราคา/หน่วย", "รวม"]];
     items.filter((i) => i.name.trim()).forEach((it, idx) =>
-      rows.push([String(idx + 1), it.name, it.detail, String(it.qty), String(it.unit_price), String((Number(it.qty) || 0) * (Number(it.unit_price) || 0))]));
+      rows.push([String(idx + 1), it.name, it.detail.replace(/\n/g, " · "), String(it.qty), String(it.unit_price), String((Number(it.qty) || 0) * (Number(it.unit_price) || 0))]));
     rows.push([]);
     rows.push(["", "", "", "", "ยอดก่อนภาษี", String(t.subtotal)]);
     if (t.discount_amt > 0) rows.push(["", "", "", "", `ส่วนลด ${disc}%`, String(-t.discount_amt)]);
@@ -433,8 +433,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       </>
                     )}
                   </div>
-                  <input value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} placeholder="รายละเอียด เช่น 1.8×2.2ม. สีอบขาว กระจกเขียว 6มม."
-                    className="w-full glass rounded-md px-3 py-1.5 text-xs mt-2 outline-none" />
+                  <textarea value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} rows={Math.max(2, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
+                    placeholder={"รายละเอียด (แต่ละบรรทัด = บุลเล็ต)\n- ชุดล็อค + กุญแจ\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                    className="w-full glass rounded-md px-3 py-1.5 text-xs mt-2 outline-none resize-y leading-relaxed" />
                   <div className="flex items-center gap-3 text-sm flex-wrap mt-2.5">
                     <label className="text-xs text-ink-3">จำนวน
                       <input type="number" min={0} value={it.qty} onChange={(e) => setItem(i, "qty", Number(e.target.value))} className="w-16 ml-1.5 glass rounded-md px-2 py-1 text-right outline-none" />

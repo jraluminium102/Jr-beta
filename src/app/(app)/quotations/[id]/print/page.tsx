@@ -124,7 +124,14 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
                 <td className="p-2 border border-gray-200 align-top">
                   <div className="font-medium">{it.name}</div>
                   {it.detail && (
-                    <div style={{ color: "#4b5563", fontSize: 12 }}>{it.detail}</div>
+                    <div style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>
+                      {it.detail.split("\n").map((ln, li) => {
+                        const t = ln.trim();
+                        if (!t) return null;
+                        if (t === "รายละเอียดงาน") return <div key={li} style={{ fontWeight: 600, color: "#b3151d", marginTop: 3 }}>{t}</div>;
+                        return <div key={li} style={{ color: "#4b5563", marginLeft: t.startsWith("-") ? 8 : 0 }}>{t}</div>;
+                      })}
+                    </div>
                   )}
                 </td>
                 <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
