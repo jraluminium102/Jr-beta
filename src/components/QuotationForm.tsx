@@ -453,28 +453,6 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             </button>
           </Card>
 
-          <Card className="p-5">
-            <h3 className="font-bold text-brand-dark mb-3">ภาษี / ส่วนลด</h3>
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <label className="block">
-                <span className="text-xs font-medium text-ink-3">VAT (%)</span>
-                <select value={vat} onChange={(e) => setVat(Number(e.target.value))} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
-                  <option value={0}>0% (ไม่มีใบกำกับ)</option><option value={7}>7%</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-medium text-ink-3">ส่วนลด (%) · ≤2%</span>
-                <input type="number" min={0} max={2} step={0.5} value={disc} onChange={(e) => setDisc(Number(e.target.value))} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 text-right outline-none" />
-              </label>
-              <label className="block">
-                <span className="text-xs font-medium text-ink-3">หัก ณ ที่จ่าย (%)</span>
-                <select value={wht} onChange={(e) => setWht(Number(e.target.value))} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
-                  <option value={0}>ไม่หัก</option><option value={3}>3%</option><option value={5}>5%</option>
-                </select>
-              </label>
-            </div>
-          </Card>
-
           {/* เงื่อนไขท้ายใบ (แก้ได้ต่อใบ) — เริ่มจากค่ามาตรฐาน · แก้แล้วพิมพ์ลงใบนี้เท่านั้น */}
           <Card className="p-5">
             <button onClick={() => setCondOpen((v) => !v)} className="press w-full flex items-center justify-between">
@@ -515,12 +493,41 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         <div>
           <Card className="p-5 sticky top-4">
             <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
-            <Row k="ยอดรวมก่อนภาษี" v={t.subtotal} />
-            {t.discount_amt > 0 && <Row k={`ส่วนลด ${disc}%`} v={-t.discount_amt} red />}
-            <Row k={`VAT ${vat}%`} v={t.vat_amt} />
-            <div className="border-t border-gray-300/70 my-2" />
-            <Row k="ยอดรวมสุทธิ" v={t.total} bold />
-            {t.wht_amt > 0 && <><Row k={`หัก ณ ที่จ่าย ${wht}%`} v={-t.wht_amt} red /><Row k="ยอดรับสุทธิ" v={t.net} bold big /></>}
+            {/* footer แบบเดียวกับใบวางบิล/FlowAccount: ส่วนลด %+บาท · VAT ติ๊ก · หัก ณ ที่จ่าย ติ๊ก+% */}
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-ink-3 flex items-center gap-1">ส่วนลด
+                  <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
+                    className="w-14 glass-soft rounded px-1.5 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
+                </span>
+                <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
+                  <input type="number" min={0} step="any" value={t.discount_amt || ""}
+                    onChange={(e) => setDisc(t.subtotal > 0 ? Math.max(0, ((Number(e.target.value) || 0) / t.subtotal) * 100) : 0)}
+                    className="w-24 glass-soft rounded px-1.5 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
+                </span>
+              </div>
+              <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+              <label className="flex items-center justify-between gap-2 cursor-pointer">
+                <span className="text-ink-3 flex items-center gap-1.5">
+                  <input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%
+                </span>
+                <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+              </label>
+              <div className="border-t border-gray-300/70 my-1.5" />
+              <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+              <label className="flex items-center justify-between gap-2 cursor-pointer">
+                <span className="text-ink-3 flex items-center gap-1.5">
+                  <input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
+                  <select value={wht || 3} disabled={wht === 0} onChange={(e) => setWht(Number(e.target.value))}
+                    className="glass-soft rounded px-1.5 py-1 outline-none text-xs disabled:opacity-50">
+                    <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
+                  </select>
+                </span>
+                <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+              </label>
+              {wht > 0 && <div className="flex justify-between font-bold text-lg"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>}
+            </div>
 
             {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
 

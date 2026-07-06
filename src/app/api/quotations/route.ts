@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const vat_rate = Number(body.vat_rate) || 0;
   const discount_pct = Number(body.discount_pct) || 0;
   const wht_rate = Number(body.wht_rate) || 0;
-  if (discount_pct > 2) return fail("ส่วนลดสูงสุด 2%");
+  if (discount_pct < 0 || discount_pct > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
 
   const supabase = createClient();
 
