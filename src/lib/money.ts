@@ -11,8 +11,8 @@ const roundBaht = (n: number) => Math.round(n + Number.EPSILON);
 export interface MoneyInput {
   items: Pick<QuotationItem, "qty" | "unit_price">[];
   vat_rate: number; // 0 | 7
-  discount_pct: number; // ≤ 2
-  wht_rate: number; // 0 | 3 | 5
+  discount_pct: number; // 0–100 (เจ้าของสั่งกรอกอิสระ 3ก.ค.69 · เดิม ≤2 · กรอกบาทได้ที่ UI แล้วแปลงกลับเป็น % ปัด 2 ตำแหน่ง)
+  wht_rate: number; // 0 | 1 | 2 | 3 | 5
 }
 
 export interface MoneyResult {

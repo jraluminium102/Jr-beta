@@ -503,10 +503,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 </span>
                 <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
                   <input type="number" min={0} step="any" value={t.discount_amt || ""}
-                    onChange={(e) => setDisc(t.subtotal > 0 ? Math.max(0, ((Number(e.target.value) || 0) / t.subtotal) * 100) : 0)}
+                    onChange={(e) => setDisc(t.subtotal > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / t.subtotal) * 10000) / 100) : 0)}
                     className="w-24 glass-soft rounded px-1.5 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
                 </span>
               </div>
+              {disc > 10 && <p className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1">⚠ ส่วนลด {Number(disc.toFixed(2))}% สูงผิดปกติ — ตรวจว่ากรอกถูกก่อนบันทึก</p>}
               <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
               <label className="flex items-center justify-between gap-2 cursor-pointer">
                 <span className="text-ink-3 flex items-center gap-1.5">
