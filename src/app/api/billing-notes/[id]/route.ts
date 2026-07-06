@@ -56,7 +56,7 @@ export const PATCH = withRoute(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, quotation_id, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
       .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
@@ -73,11 +73,18 @@ export const PATCH = withRoute(
     let newTotal: number;
     let breakdown: Record<string, number | boolean>;
     if (isBreakdownMode) {
-      // แก้ footer ได้เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (has_tax_breakdown) — กันคิด VAT ทับใบ backfill/นำเข้า
-      if (!bn.has_tax_breakdown || Number(bn.subtotal) <= 0) {
-        return err("ใบวางบิลนี้ไม่มียอดก่อนภาษีที่เชื่อถือได้ (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
+      // ฐานยอดก่อน VAT = subtotal จาก "ใบเสนอต้นทาง" (เชื่อถือได้เสมอ) ไม่ใช่ bn.subtotal ที่อาจถูก flatten (0078)
+      // → ใช้ได้ทุกใบ (เก่า/ใหม่) และไม่มีทางคิด VAT ทับ เพราะฐานมาจากใบเสนอเสมอ
+      let sub = 0;
+      if (bn.quotation_id) {
+        const { data: q } = await ctx.supabase
+          .from("quotations").select("subtotal").eq("id", bn.quotation_id)
+          .single<{ subtotal: number | null }>();
+        sub = Number(q?.subtotal) || 0;
       }
-      const sub = Number(bn.subtotal) || 0;
+      if (sub <= 0) {
+        return err("ใบวางบิลนี้ไม่มีใบเสนอต้นทางที่มียอดก่อนภาษี (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
+      }
       const disc = Number(parsed.data.discount_pct) || 0;
       const vat = Number(parsed.data.vat_rate) || 0;
       const wht = Number(parsed.data.wht_rate) || 0;

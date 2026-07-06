@@ -42,12 +42,33 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
   );
 
-  // ดึงรหัสใบเสนออ้างอิง (ถ้ามี)
+  // ดึงใบเสนออ้างอิง — รหัส + ยอดก่อนภาษี(subtotal จริง) ใช้เป็นฐานปุ่ม "แก้ VAT/ส่วนลด"
   let refCode: string | null = null;
+  let quoteBase: { subtotal: number; discount_pct: number; vat_rate: number; wht_rate: number } | null = null;
   if (bn.quotation_id) {
-    const { data: q } = await supabase.from("quotations").select("code").eq("id", bn.quotation_id).single();
+    const { data: q } = await supabase
+      .from("quotations").select("code, subtotal, discount_pct, vat_rate, wht_rate")
+      .eq("id", bn.quotation_id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .single<any>();
     refCode = q?.code ?? null;
+    if (q && Number(q.subtotal) > 0) {
+      quoteBase = {
+        subtotal: Number(q.subtotal) || 0,
+        discount_pct: Number(q.discount_pct) || 0,
+        vat_rate: Number(q.vat_rate) || 0,
+        wht_rate: Number(q.wht_rate) || 0,
+      };
+    }
   }
+  // ค่าเริ่มต้นในฟอร์มแก้: ถ้าบิลเคยแก้ footer แล้ว (มี breakdown จริง) ใช้ค่าบิล · ไม่งั้นใช้ค่าจากใบเสนอ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bnAny = bn as any;
+  const editDefaults = quoteBase && Number(bnAny.has_tax_breakdown)
+    ? { discount_pct: Number(bnAny.discount_pct) || 0, vat_rate: Number(bnAny.vat_rate) || 0, wht_rate: Number(bnAny.wht_rate) || 0 }
+    : quoteBase
+    ? { discount_pct: quoteBase.discount_pct, vat_rate: quoteBase.vat_rate, wht_rate: quoteBase.wht_rate }
+    : null;
 
   // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
   const { data: rcs } = await supabase
@@ -82,14 +103,14 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               currentTotal={bn.total}
             />
           )}
-          {/* แก้ VAT/ส่วนลด (footer) — เฉพาะใบที่มียอดก่อนภาษีจริง (has_tax_breakdown) และยังไม่จ่าย */}
-          {writable && !isCancelled && !hasAnyPayment && (bn as { has_tax_breakdown?: boolean }).has_tax_breakdown && (
+          {/* แก้ VAT/ส่วนลด (footer) — โผล่ถ้าใบเสนอต้นทางมียอดก่อนภาษีจริง และยังไม่จ่าย (ฐานมาจากใบเสนอ) */}
+          {writable && !isCancelled && !hasAnyPayment && quoteBase && editDefaults && (
             <EditBillingBreakdownButton
               billingNoteId={bn.id}
-              subtotal={Number((bn as { subtotal?: number }).subtotal) || 0}
-              discount_pct={Number((bn as { discount_pct?: number }).discount_pct) || 0}
-              vat_rate={Number((bn as { vat_rate?: number }).vat_rate) || 0}
-              wht_rate={Number((bn as { wht_rate?: number }).wht_rate) || 0}
+              subtotal={quoteBase.subtotal}
+              discount_pct={editDefaults.discount_pct}
+              vat_rate={editDefaults.vat_rate}
+              wht_rate={editDefaults.wht_rate}
             />
           )}
           {writable && !isCancelled && (
