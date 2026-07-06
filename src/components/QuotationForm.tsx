@@ -34,6 +34,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
   const [activeJobsLoading, setActiveJobsLoading] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
+  const [bridgeJobId, setBridgeJobId] = useState<string>(""); // งานที่มาจากเช็คลิสต์ → preselect หลังโหลดงานลูกค้า
   // (0069) นามออกบิล ของลูกค้าที่เลือก
   type BProf = { id: number; bill_name: string; kind: string; branch: string; is_default: boolean; tax_id?: string; address?: string; postal_code?: string; contact_person?: string; phone?: string };
   const [billingProfiles, setBillingProfiles] = useState<BProf[]>([]);
@@ -63,7 +64,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string }>; customer?: string; customer_id?: number | null };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string }>; customer?: string; customer_id?: number | null; job_id?: string };
+      if (payload.job_id) setBridgeJobId(String(payload.job_id));
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -131,8 +133,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         if (cancelled) return;
         const jobs: ActiveJob[] = Array.isArray(json?.data) ? json.data : [];
         setActiveJobs(jobs);
-        // 1 งาน → เลือกอัตโนมัติ; ≥2 งาน → เว้นว่างบังคับให้ผู้ใช้เลือกเอง (กันผูกงานล่าสุดผิด)
-        setSelectedJobId(jobs.length === 1 ? jobs[0].id : "");
+        // งานจากเช็คลิสต์ (bridgeJobId) → เลือกงานนั้นให้เลยถ้ายังอยู่ในลิสต์ · ไม่งั้น 1 งาน→auto · ≥2→เว้นว่าง
+        const bridged = bridgeJobId && jobs.find((j) => j.id === bridgeJobId);
+        setSelectedJobId(bridged ? bridgeJobId : (jobs.length === 1 ? jobs[0].id : ""));
       })
       .catch(() => { if (!cancelled) setActiveJobs([]); })
       .finally(() => { if (!cancelled) setActiveJobsLoading(false); });

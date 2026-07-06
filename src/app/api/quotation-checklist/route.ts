@@ -22,6 +22,7 @@ export type ChecklistStage = "in_design" | "pending" | "drafted" | "sent";
 export type ChecklistItem = {
   job_id: string;
   job_code: string | null;
+  customer_id: number | null;
   customer_name: string;
   customer_area: string | null;
   assess_date: string | null;
@@ -91,7 +92,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -107,6 +108,7 @@ export const GET = withRoute(async () => {
   type JobRow = {
     id: string;
     job_code: string | null;
+    customer_id: number | null;
     customer_name: string;
     customer_area: string | null;
     assess_date: string | null;
@@ -198,6 +200,7 @@ export const GET = withRoute(async () => {
       held.push({
         job_id:        j.id,
         job_code:      j.job_code,
+        customer_id:   j.customer_id ?? null,
         customer_name: j.customer_name,
         customer_area: j.customer_area,
         assess_date:   j.assess_date,
@@ -257,6 +260,7 @@ export const GET = withRoute(async () => {
     const item: ChecklistItem = {
       job_id:        j.id,
       job_code:      j.job_code,
+      customer_id:   j.customer_id ?? null,
       customer_name: j.customer_name,
       customer_area: j.customer_area,
       assess_date:   j.assess_date,
