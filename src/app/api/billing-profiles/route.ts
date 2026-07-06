@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     await sb.from("billing_profiles").update({ is_default: false }).eq("customer_id", cid).eq("is_default", true);
   }
 
-  const { data, error } = await sb.from("billing_profiles").insert({
+  const row: Record<string, unknown> = {
     customer_id: cid,
     kind,
     bill_name: body.bill_name.trim(),
@@ -53,7 +53,13 @@ export async function POST(req: Request) {
     contact_person: body.contact_person ?? "",
     phone: body.phone ?? "",
     is_default: isDefault,
-  }).select("*").single();
+  };
+  let { data, error } = await sb.from("billing_profiles").insert(row).select("*").single();
+  // กันพัง: ถ้า migration 0077 (postal_code) ยังไม่รัน → retry แบบตัด postal_code ออก
+  if (error && /postal_code/i.test(error.message ?? "")) {
+    const { postal_code, ...rowNoPostal } = row;
+    ({ data, error } = await sb.from("billing_profiles").insert(rowNoPostal).select("*").single());
+  }
   if (error) return fail(error.message, 500);
   return ok(data);
 }

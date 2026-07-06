@@ -59,6 +59,7 @@ const patchSchema = z.object({
   bill_tax_id: z.string().nullish(),
   bill_branch: z.string().nullish(),
   bill_address: z.string().nullish(),
+  bill_postal: z.string().nullish(),
 });
 
 const PRE_DEPOSIT = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
@@ -137,8 +138,13 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     body.lng = null;
   }
 
-  const { data, error } = await sb.from("queue_entries")
+  let { data, error } = await sb.from("queue_entries")
     .update(body).eq("id", params.id).select(SELECT).maybeSingle();
+  // กันพัง: ถ้า migration 0077 (bill_postal) ยังไม่รัน → retry แบบตัด bill_postal ออก (คิวต้องเซฟได้เสมอ)
+  if (error && /bill_postal/i.test(error.message ?? "")) {
+    const { bill_postal, ...bodyNoPostal } = body as Record<string, unknown>;
+    ({ data, error } = await sb.from("queue_entries").update(bodyNoPostal).eq("id", params.id).select(SELECT).maybeSingle());
+  }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");
 
@@ -280,7 +286,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       if (bc !== "SITE") {
         const { data: jr } = await sb.from("jobs").select("customer_id").eq("id", jobId).maybeSingle();
         const cid = (jr as { customer_id?: number | null } | null)?.customer_id ?? null;
-        const d = data as { bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string; address?: string };
+        const d = data as { bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string; bill_postal?: string; address?: string };
         if (cid && bc === "COMPANY") {
           const billName = (d.bill_name ?? "").trim();
           if (billName) {
@@ -290,6 +296,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
               await sb.from("billing_profiles").insert({
                 customer_id: cid, kind: "COMPANY", bill_name: billName,
                 tax_id: (d.bill_tax_id ?? "").trim(), branch: (d.bill_branch ?? "").trim() || "สำนักงานใหญ่",
+                postal_code: (d.bill_postal ?? "").trim(),
                 address: (d.bill_address ?? "").trim(), ship_address: d.address ?? "",
                 contact_person: "", phone: "", is_default: true,
               });

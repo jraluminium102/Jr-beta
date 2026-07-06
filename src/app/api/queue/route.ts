@@ -63,6 +63,7 @@ const entrySchema = z.object({
   bill_tax_id: z.string().nullish(),
   bill_branch: z.string().nullish(),
   bill_address: z.string().nullish(),
+  bill_postal: z.string().nullish(),
 });
 
 // GET /api/queue — list entries + sales dropdown
@@ -165,11 +166,13 @@ export const POST = withRoute(async (req: Request) => {
     if (co) { body.lat = co.lat; body.lng = co.lng; }
   }
 
-  const { data, error } = await sb
-    .from("queue_entries")
-    .insert({ ...body, status: body.status ?? "PENDING", created_by: ctx.user.id })
-    .select(SELECT)
-    .single();
+  const insertRow = { ...body, status: body.status ?? "PENDING", created_by: ctx.user.id };
+  let { data, error } = await sb.from("queue_entries").insert(insertRow).select(SELECT).single();
+  // กันพัง: ถ้า migration 0077 (bill_postal) ยังไม่รัน → retry แบบตัด bill_postal ออก
+  if (error && /bill_postal/i.test(error.message ?? "")) {
+    const { bill_postal, ...rowNoPostal } = insertRow as Record<string, unknown>;
+    ({ data, error } = await sb.from("queue_entries").insert(rowNoPostal).select(SELECT).single());
+  }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(400, "สร้างคิวไม่สำเร็จ");
   return created(data);

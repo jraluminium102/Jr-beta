@@ -118,12 +118,13 @@ type FormState = {
   bill_tax_id: string;
   bill_branch: string;
   bill_address: string;
+  bill_postal: string;
 };
 
 function initForm(e?: QueueEntry | null): FormState {
   const fee = e?.assess_fee ?? null;
   // (0070) entry อาจมีฟิลด์ bill_* (คอลัมน์ใหม่) ที่ type ยังไม่ประกาศ — cast อ่านแบบปลอดภัย
-  const eb = e as (QueueEntry & { bill_choice?: string; bill_kind?: string; bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string }) | null | undefined;
+  const eb = e as (QueueEntry & { bill_choice?: string; bill_kind?: string; bill_name?: string; bill_tax_id?: string; bill_branch?: string; bill_address?: string; bill_postal?: string }) | null | undefined;
 
   // derive custMode / oldCustomerMode จาก entry ที่มีอยู่จริง
   // เฉพาะ ประเมินหน้างาน เท่านั้น (เคลียร์แบบ ใช้ target_job_id แต่ custMode ไม่เกี่ยว)
@@ -178,6 +179,7 @@ function initForm(e?: QueueEntry | null): FormState {
     bill_tax_id: eb?.bill_tax_id ?? "",
     bill_branch: eb?.bill_branch ?? "สำนักงานใหญ่",
     bill_address: eb?.bill_address ?? "",
+    bill_postal: eb?.bill_postal ?? "",
   };
 }
 
@@ -966,6 +968,7 @@ export function QueueModal({
       bill_tax_id: f.bill_tax_id || null,
       bill_branch: f.bill_branch || null,
       bill_address: f.bill_address || null,
+      bill_postal: f.bill_postal || null,
     };
     try {
       if (editing) {
@@ -1806,6 +1809,7 @@ export function QueueModal({
                       <input value={f.bill_branch} onChange={(e) => set("bill_branch", e.target.value)} placeholder="สำนักงานใหญ่ / สาขาที่ 00001" className={inp} />
                     </div>
                     <textarea value={f.bill_address} onChange={(e) => set("bill_address", e.target.value)} rows={2} placeholder="ที่อยู่บริษัท (ตามภาษี)" className={`${inp} resize-none`} />
+                    <input value={f.bill_postal} onChange={(e) => set("bill_postal", e.target.value.replace(/\D/g, "").slice(0, 5))} inputMode="numeric" placeholder="รหัสไปรษณีย์" className={`${inp} max-w-[180px]`} />
                   </div>
                 )}
                 <p className="text-[11px] text-ink-3 mt-1.5">พอกดคิวเสร็จ ระบบบันทึกเป็น &quot;นามออกบิล&quot; ให้ลูกค้าอัตโนมัติ · แก้ทีหลังได้ในทะเบียนลูกค้า</p>
