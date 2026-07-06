@@ -44,14 +44,31 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     .eq("id", params.id);
   if (uErr) return err(uErr.message, 500);
 
+  // (ผู้ใช้สั่ง 3 ก.ค.) หัวเอกสารต้องตรงกันทั้งสาย — แก้ใบวางบิล → ไหลไปใบเสร็จที่ออกจากใบนี้
+  // ทับเฉพาะใบเสร็จที่ยังไม่ยกเลิก (merge คงคีย์เดิม) · ออกใบเสร็จใหม่ก็ก๊อป snapshot นี้อยู่แล้ว
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = ctx.supabase as any;
+  let receiptsUpdated = 0;
+  const { data: rcs } = await sb.from("receipts")
+    .select("id, customer_snapshot")
+    .eq("billing_note_id", bn.id)
+    .eq("is_voided", false);
+  if (Array.isArray(rcs)) {
+    for (const rc of rcs) {
+      const rcNew = { ...(rc.customer_snapshot ?? {}), ...snapshot };
+      const { error: rErr } = await sb.from("receipts").update({ customer_snapshot: rcNew }).eq("id", rc.id);
+      if (!rErr) receiptsUpdated++;
+    }
+  }
+
   await audit({
     userId: ctx.user.id,
     action: "EDIT_BILLING_HEADER",
     table: "billing_notes",
     recordId: params.id,
     oldValue: { customer_snapshot: oldSnap, reason: reason ?? null },
-    newValue: { customer_snapshot: newSnap },
+    newValue: { customer_snapshot: newSnap, receipts_synced: receiptsUpdated },
   });
 
-  return ok({ ok: true });
+  return ok({ ok: true, receipts_synced: receiptsUpdated });
 });
