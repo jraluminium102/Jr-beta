@@ -98,12 +98,16 @@ export async function POST(req: Request) {
     note: body.note ?? "",
     created_by: profile.id,
   };
+  // labor_ratio = % ค่าแรง (0-100 หรือ null) — สำหรับแยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด (ไม่กระทบยอด)
+  const rawLabor = body.labor_ratio;
+  const bLabor = rawLabor == null || rawLabor === "" ? null : Math.min(100, Math.max(0, Number(rawLabor) || 0));
+
   // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
-  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal };
+  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, labor_ratio: bLabor };
   let { data: bn, error: bnErr } = await supabase
     .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
-  // กันพัง: ถ้า migration 0078/0079 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
-  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown/i.test(bnErr.message ?? "")) {
+  // กันพัง: ถ้า migration 0078/0079/0081 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
+  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|labor_ratio/i.test(bnErr.message ?? "")) {
     ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
   }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);

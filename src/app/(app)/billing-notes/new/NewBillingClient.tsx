@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht, suggestInstallments, computeTotals } from "@/lib/money";
+import { baht, suggestInstallments, computeTotals, splitLaborMaterial } from "@/lib/money";
 import type { AvailableQuotation } from "./page";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,6 +40,8 @@ export default function NewBillingClient({
   const [disc, setDisc] = useState(0);
   const [vat, setVat] = useState(7);
   const [wht, setWht] = useState(0);
+  // % ค่าแรง (แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด) — ว่าง = ไม่แยก
+  const [laborRatio, setLaborRatio] = useState<number | "">("");
   useEffect(() => {
     if (!selected) return;
     const hasSub = Number(selected.subtotal) > 0;
@@ -76,7 +78,7 @@ export default function NewBillingClient({
       const res = await fetch("/api/billing-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht }),
+        body: JSON.stringify({ quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht, labor_ratio: laborRatio === "" ? null : Number(laborRatio) }),
       });
       const json = await res.json();
       if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
@@ -202,6 +204,26 @@ export default function NewBillingClient({
                 </label>
                 <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
               </div>
+
+              {/* % ค่าแรง — สำหรับแยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด (ลูกค้านิติบุคคลหัก ณ ที่จ่าย 3% เฉพาะค่าแรง) */}
+              {!locked && (
+                <label className="block mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-xs font-medium text-ink-3 flex items-center gap-1">
+                    % ค่าแรง <span className="text-ink-4 font-normal">(ไม่บังคับ — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด)</span>
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input type="number" min={0} max={100} step="any" value={laborRatio}
+                      onChange={(e) => setLaborRatio(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                      placeholder="เว้นว่าง = ไม่แยก"
+                      className="w-24 glass-soft rounded-lg px-2 py-1.5 text-right outline-none tabular-nums text-sm" />
+                    <span className="text-sm text-ink-3">%</span>
+                    {laborRatio !== "" && (() => {
+                      const s = splitLaborMaterial(t.after_discount, Number(laborRatio));
+                      return <span className="text-xs text-ink-4">ค่าแรง ฿{baht(s.labor)} · ค่าของ ฿{baht(s.material)}</span>;
+                    })()}
+                  </div>
+                </label>
+              )}
 
               {err && (
                 <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">

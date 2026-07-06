@@ -57,6 +57,18 @@ export function backoutVat(amountInclVat: number, vatRate: number): { base: numb
   return { base, vat: round2(amt - base) };
 }
 
+// อัตราหัก ณ ที่จ่าย "ค่าแรง/ค่าบริการ" (นิติบุคคลในไทย) — ค่าเริ่มต้นตามที่บัญชีแนะนำ
+// ⚠ ต้องยืนยันกับผู้สอบบัญชีของร้าน (บางสัญญา "จ้างทำของ" อาจหัก 3% ทั้งก้อน) — ปรับที่จุดเดียวนี้
+export const WHT_LABOR_RATE = 3;
+
+// แตกยอดก่อน VAT เป็น ค่าแรง/ค่าของ ตามสัดส่วน labor_ratio (%) — ค่าของ = ส่วนที่เหลือ (อุ้มเศษ ไม่ปัดสองตัว)
+export function splitLaborMaterial(baseExVat: number, laborRatioPct: number): { labor: number; material: number } {
+  const base = round2(Number(baseExVat) || 0);
+  const ratio = Math.min(100, Math.max(0, Number(laborRatioPct) || 0));
+  const labor = round2((base * ratio) / 100);
+  return { labor, material: round2(base - labor) };
+}
+
 export const baht = (n: number) =>
   (Number(n) || 0).toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 

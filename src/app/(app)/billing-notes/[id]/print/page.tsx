@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht, backoutVat } from "@/lib/money";
+import { baht, backoutVat, splitLaborMaterial, WHT_LABOR_RATE } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -112,19 +112,23 @@ export default async function BillingPrintPage({
                   </>
                 );
               })()}
-              {/* พิมพ์แยกงวด — ถอด VAT ออกจากยอดงวด (back-out) โชว์ ยอดก่อน VAT / VAT ของงวดนี้ (บัญชี approve) */}
+              {/* พิมพ์แยกงวด — ถอด VAT ออกจากยอดงวด (back-out) + แยกค่าของ/ค่าแรง ถ้ามี labor_ratio (บัญชี approve) */}
               {isSingle && (() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
                 const vatRate = Number(b.vat_rate) || 0;
                 const sub = Number(b.subtotal) || 0;
-                // ใบไม่มี VAT จริง (import เก่า/ไม่มี breakdown) → โชว์แค่ยอดงวดนี้ ไม่ถอด VAT มั่ว
-                if (sub <= 0 || vatRate <= 0) return null;
+                // ใบ import เก่า/ไม่รู้ว่ามี VAT ไหม → โชว์แค่ยอดงวดนี้ ไม่ถอด VAT มั่ว
+                if (sub <= 0) return null;
                 const { base, vat } = backoutVat(grandTotal, vatRate);
+                const laborRatio = b.labor_ratio == null ? null : Number(b.labor_ratio);
+                const split = laborRatio == null ? null : splitLaborMaterial(base, laborRatio);
                 return (
                   <>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อน VAT (งวดนี้)</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {vatRate}% (งวดนี้)</td><td className="text-right tabular-nums">{baht(vat)}</td></tr>
+                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าวัสดุ/ค่าของ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.material)}</td></tr>}
+                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าแรง/ค่าบริการ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.labor)}</td></tr>}
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">{split ? "รวมยอดก่อน VAT (งวดนี้)" : "ยอดก่อน VAT (งวดนี้)"}</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
+                    {vat > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {vatRate}% (งวดนี้)</td><td className="text-right tabular-nums">{baht(vat)}</td></tr>}
                   </>
                 );
               })()}
@@ -135,12 +139,32 @@ export default async function BillingPrintPage({
           </table>
         </div>
 
-        {/* พิมพ์แยกงวด + ใบมีหัก ณ ที่จ่าย → อ้างอิงยอดทั้งใบ กันลูกค้าหักซ้ำต่องวด */}
-        {isSingle && Number((bn as { wht_amt?: number }).wht_amt) > 0 && (
-          <div className="mt-4 text-xs text-gray-600">
-            * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({(bn as { wht_rate?: number }).wht_rate}% = ฿{baht(Number((bn as { wht_amt?: number }).wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
-          </div>
-        )}
+        {/* พิมพ์แยกงวด — บรรทัดหัก ณ ที่จ่าย (เป็นข้อมูลให้ลูกค้าหักถูก ไม่หักออกจากยอด) */}
+        {isSingle && (() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const b = bn as any;
+          const laborRatio = b.labor_ratio == null ? null : Number(b.labor_ratio);
+          // มี labor_ratio → หัก ณ ที่จ่าย 3% เฉพาะ "ค่าแรง" ของงวดนี้
+          if (laborRatio != null && Number(b.subtotal) > 0) {
+            const { base } = backoutVat(grandTotal, Number(b.vat_rate) || 0);
+            const { labor } = splitLaborMaterial(base, laborRatio);
+            const whtLabor = Math.round((labor * WHT_LABOR_RATE) / 100);
+            return (
+              <div className="mt-4 text-xs text-gray-600">
+                * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% เฉพาะค่าแรง/ค่าบริการ (งวดนี้ = ฿{baht(labor)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
+              </div>
+            );
+          }
+          // ไม่มี labor split แต่ใบมีหัก ณ ที่จ่ายระดับใบ → อ้างอิงยอดทั้งสัญญา กันหักซ้ำรายงวด
+          if (Number(b.wht_amt) > 0) {
+            return (
+              <div className="mt-4 text-xs text-gray-600">
+                * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({b.wht_rate}% = ฿{baht(Number(b.wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {bn.note && <div className="mt-6 text-xs text-gray-600"><b>หมายเหตุ:</b> {bn.note}</div>}
 

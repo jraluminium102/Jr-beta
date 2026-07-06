@@ -35,6 +35,7 @@ const PatchSchema = z.object({
   discount_pct: z.number().min(0, "ส่วนลดต้อง ≥ 0").max(100, "ส่วนลดต้องอยู่ 0–100%").optional(),
   vat_rate: z.number().min(0).max(100).optional(),
   wht_rate: z.number().min(0).max(100).optional(),
+  labor_ratio: z.number().min(0, "% ค่าแรงต้อง ≥ 0").max(100, "% ค่าแรงต้องอยู่ 0–100").nullable().optional(),
 });
 
 export const PATCH = withRoute(
@@ -56,7 +57,7 @@ export const PATCH = withRoute(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, quotation_id, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, labor_ratio, quotation_id, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
       .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
@@ -66,12 +67,12 @@ export const PATCH = withRoute(
     const oldBreakdown = {
       subtotal: Number(bn.subtotal) || 0, discount_pct: Number(bn.discount_pct) || 0, discount_amt: Number(bn.discount_amt) || 0,
       vat_rate: Number(bn.vat_rate) || 0, vat_amt: Number(bn.vat_amt) || 0, wht_rate: Number(bn.wht_rate) || 0, wht_amt: Number(bn.wht_amt) || 0,
-      has_tax_breakdown: !!bn.has_tax_breakdown,
+      has_tax_breakdown: !!bn.has_tax_breakdown, labor_ratio: bn.labor_ratio == null ? null : Number(bn.labor_ratio),
     };
 
     // คำนวณ newTotal + breakdown ตามโหมด
     let newTotal: number;
-    let breakdown: Record<string, number | boolean>;
+    let breakdown: Record<string, number | boolean | null>;
     if (isBreakdownMode) {
       // ฐานยอดก่อน VAT = subtotal จาก "ใบเสนอต้นทาง" (เชื่อถือได้เสมอ) ไม่ใช่ bn.subtotal ที่อาจถูก flatten (0078)
       // → ใช้ได้ทุกใบ (เก่า/ใหม่) และไม่มีทางคิด VAT ทับ เพราะฐานมาจากใบเสนอเสมอ
@@ -94,6 +95,8 @@ export const PATCH = withRoute(
         subtotal: bt.subtotal, discount_pct: disc, discount_amt: bt.discount_amt,
         vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt, has_tax_breakdown: true,
       };
+      // labor_ratio ปรับได้พร้อมกัน (null = ล้างการแยกค่าแรง/ค่าของ) — ตั้งเฉพาะเมื่อส่งมา
+      if (parsed.data.labor_ratio !== undefined) breakdown.labor_ratio = parsed.data.labor_ratio;
     } else {
       // แก้ยอดตรง = ยอดล้วน (flat) → ตั้ง breakdown ให้ตรงกับ total (footer ไม่เพี้ยน) + has_tax_breakdown=false
       newTotal = Math.round((parsed.data.total! + Number.EPSILON) * 100) / 100; // round2
@@ -137,8 +140,8 @@ export const PATCH = withRoute(
       .from("billing_notes")
       .update({ total: newTotal, ...breakdown })
       .eq("id", bnId);
-    // กันพัง: ถ้า 0078/0079 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
-    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown/i.test(upErr.message ?? "")) {
+    // กันพัง: ถ้า 0078/0079/0081 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
+    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|labor_ratio/i.test(upErr.message ?? "")) {
       ({ error: upErr } = await ctx.supabase.from("billing_notes").update({ total: newTotal }).eq("id", bnId));
     }
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);
