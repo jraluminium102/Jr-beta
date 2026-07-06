@@ -119,9 +119,10 @@ export default function QuotationEditButton({
               <input type="text" value={row.name} onChange={(e) => updateRow(idx, "name", e.target.value)}
                 placeholder="ชื่อรายการ *" required
                 className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2" />
-              <input type="text" value={row.detail} onChange={(e) => updateRow(idx, "detail", e.target.value)}
-                placeholder="รายละเอียด"
-                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2" />
+              <textarea value={row.detail} onChange={(e) => updateRow(idx, "detail", e.target.value)}
+                rows={Math.max(2, (row.detail.match(/\n/g)?.length ?? 0) + 1)}
+                placeholder={"รายละเอียด (บรรทัด=บุลเล็ต)\n- ชุดล็อค\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2 resize-y leading-relaxed" />
               <input type="number" inputMode="decimal" value={row.qty} min={0.01} step="any"
                 onChange={(e) => updateRow(idx, "qty", Number(e.target.value))}
                 placeholder="จำนวน"
