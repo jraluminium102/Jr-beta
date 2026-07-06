@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { suggestInstallments } from "@/lib/money";
+import { suggestInstallments, computeTotals } from "@/lib/money";
 import type { Quotation } from "@/lib/types";
 
 // GET /api/billing-notes  → รายการใบวางบิล
@@ -35,9 +35,10 @@ export async function POST(req: Request) {
   // 1) ดึงใบเสนอราคา
   const { data: q, error: qErr } = await supabase
     .from("quotations")
-    .select("id, status, net, customer_snapshot, job_id")
+    .select("id, status, net, subtotal, discount_pct, vat_rate, wht_rate, customer_snapshot, job_id")
     .eq("id", body.quotation_id)
-    .single<Pick<Quotation, "id" | "status" | "net" | "customer_snapshot"> & { job_id: string | null }>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .single<any>();
   if (qErr || !q) return fail("ไม่พบใบเสนอราคา", 404);
   // ห้ามสร้างจากใบที่ถูกยกเลิก
   if (q.status === "cancelled") return fail("ใบเสนอราคาถูกยกเลิกแล้ว สร้างบิลไม่ได้", 409);
@@ -63,12 +64,18 @@ export async function POST(req: Request) {
     if (approveErr) return fail("อนุมัติใบเสนอราคาอัตโนมัติไม่สำเร็จ: " + approveErr.message, 500);
   }
 
-  const net = Number(q.net) || 0;
-  if (net <= 0) return fail("ยอดสุทธิของใบเสนอต้องมากกว่า 0 จึงวางบิลได้", 400);
+  // ยอดแยกของใบวางบิล — เริ่มจากยอดก่อนภาษี(subtotal)ของใบเสนอ · ส่วนลด/VAT/หัก ณ ที่จ่าย ปรับได้ตอนสร้าง (default=ค่าใบเสนอ)
+  // ไม่คิดซ้ำ: base = subtotal (ยอดก่อนภาษี) ไม่ใช่ net · computeTotals แหล่งเดียวกับใบเสนอ (บัญชีคุม)
+  const bSubtotal = Number(q.subtotal) || Number(q.net) || 0;
+  const bDisc = body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0);
+  const bVat = body.vat_rate != null ? Number(body.vat_rate) : (Number(q.vat_rate) || 0);
+  const bWht = body.wht_rate != null ? Number(body.wht_rate) : (Number(q.wht_rate) || 0);
+  if (bDisc < 0 || bDisc > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
+  const bt = computeTotals({ items: [{ qty: 1, unit_price: bSubtotal }], vat_rate: bVat, discount_pct: bDisc, wht_rate: bWht });
+  const net = bt.net;
+  if (net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0 จึงวางบิลได้", 400);
 
-  // suggestInstallments รับ net (มีสตางค์) คืนงวดที่ผลรวม = net เป๊ะ (round2, 2 ตำแหน่ง)
-  // งวด "ส่วนที่เหลือ" อุ้มเศษสตางค์ → billTotal = net เป๊ะ
-  // constraint tg_check_installment_sum (tol 0.01) ผ่านแน่นอน
+  // suggestInstallments รับ net (มีสตางค์) คืนงวดที่ผลรวม = net เป๊ะ
   const plan = suggestInstallments(net);
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
@@ -77,21 +84,24 @@ export async function POST(req: Request) {
   if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
 
   // 4) insert หัวเอกสาร
-  const { data: bn, error: bnErr } = await supabase
-    .from("billing_notes")
-    .insert({
-      code,
-      quotation_id: q.id,
-      job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
-      customer_snapshot: q.customer_snapshot,
-      issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
-      total: billTotal,
-      status: "unpaid",
-      note: body.note ?? "",
-      created_by: profile.id,
-    })
-    .select("id, code")
-    .single();
+  const bnBase: Record<string, unknown> = {
+    code,
+    quotation_id: q.id,
+    job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
+    customer_snapshot: q.customer_snapshot,
+    issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
+    total: billTotal,
+    status: "unpaid",
+    note: body.note ?? "",
+    created_by: profile.id,
+  };
+  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt };
+  let { data: bn, error: bnErr } = await supabase
+    .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
+  // กันพัง: ถ้า migration 0078 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
+  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate/i.test(bnErr.message ?? "")) {
+    ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
+  }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
 
   // 5) สร้างงวดชำระอัตโนมัติ (plan คำนวณไว้แล้วด้านบน) — ถ้าพลาดให้ลบหัวเอกสารทิ้ง

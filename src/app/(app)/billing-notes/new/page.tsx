@@ -11,6 +11,10 @@ export type AvailableQuotation = {
   code: string;
   status: string;
   net: number;
+  subtotal: number;
+  discount_pct: number;
+  vat_rate: number;
+  wht_rate: number;
   job_id: string | null;
   customer_snapshot: { name: string; job: string };
 };
@@ -28,7 +32,7 @@ export default async function NewBillingNotePage({
   // ดึงใบเสนอทุกสถานะที่ไม่ cancelled
   const { data: allQ } = await supabase
     .from("quotations")
-    .select("id, code, status, net, job_id, customer_snapshot")
+    .select("id, code, status, net, subtotal, discount_pct, vat_rate, wht_rate, job_id, customer_snapshot")
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 

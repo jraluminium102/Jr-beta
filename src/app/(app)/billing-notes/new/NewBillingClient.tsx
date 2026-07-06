@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht, suggestInstallments } from "@/lib/money";
+import { baht, suggestInstallments, computeTotals } from "@/lib/money";
 import type { AvailableQuotation } from "./page";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -32,10 +32,24 @@ export default function NewBillingClient({
     () => quotations.find((q) => q.id === quotationId) ?? null,
     [quotations, quotationId]
   );
-  const plan = useMemo(
-    () => (selected ? suggestInstallments(selected.net) : []),
-    [selected]
+
+  // footer ยอดแยก (ติ๊กปรับได้) — base = ยอดก่อนภาษี(subtotal) ของใบเสนอ · default = ค่าจากใบเสนอ (ไม่คิดซ้ำ)
+  const [disc, setDisc] = useState(0);
+  const [vat, setVat] = useState(7);
+  const [wht, setWht] = useState(0);
+  useEffect(() => {
+    if (!selected) return;
+    setDisc(Number(selected.discount_pct) || 0);
+    setVat(Number(selected.vat_rate) || 0);
+    setWht(Number(selected.wht_rate) || 0);
+  }, [selected]);
+
+  const base = Number(selected?.subtotal) || 0;
+  const t = useMemo(
+    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: vat, discount_pct: disc, wht_rate: wht }),
+    [base, vat, disc, wht]
   );
+  const plan = useMemo(() => (selected ? suggestInstallments(t.net) : []), [selected, t.net]);
 
   async function submit() {
     // synchronous guard — กัน double-tap / กดรัว
@@ -58,7 +72,7 @@ export default function NewBillingClient({
       const res = await fetch("/api/billing-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotation_id: quotationId }),
+        body: JSON.stringify({ quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht }),
       });
       const json = await res.json();
       if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
@@ -147,16 +161,37 @@ export default function NewBillingClient({
 
           <div>
             <Card className="p-5 sticky top-4">
-              <h3 className="font-bold text-brand-dark mb-3">สรุป</h3>
-              <div className="flex justify-between text-sm py-0.5">
-                <span className="text-ink-3">ยอดรวม (จากใบเสนอ)</span>
-                <span className="font-bold tabular-nums" style={{ color: "#7d0f15" }}>
-                  ฿{baht(selected?.net ?? 0)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm py-0.5">
-                <span className="text-ink-3">จำนวนงวด</span>
-                <span>{plan.length} งวด</span>
+              <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
+              {/* footer เดียวกับใบเสนอ — เริ่มจากยอดก่อนภาษีของใบเสนอ · ติ๊ก/แก้ได้ (default = ค่าใบเสนอ ไม่คิดซ้ำ) */}
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-ink-3 flex items-center gap-1">ส่วนลด
+                    <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
+                      className="w-12 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
+                  </span>
+                  <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
+                    <input type="number" min={0} step="any" value={t.discount_amt || ""}
+                      onChange={(e) => setDisc(base > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / base) * 10000) / 100) : 0)}
+                      className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
+                  </span>
+                </div>
+                <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+                <label className="flex items-center justify-between gap-2 cursor-pointer">
+                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
+                  <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+                </label>
+                <div className="border-t border-gray-300/70 my-1.5" />
+                <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+                <label className="flex items-center justify-between gap-2 cursor-pointer">
+                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
+                    <select value={wht || 3} disabled={wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="glass-soft rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
+                      <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
+                    </select>
+                  </span>
+                  <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+                </label>
+                <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
               </div>
 
               {err && (

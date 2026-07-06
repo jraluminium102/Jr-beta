@@ -97,6 +97,21 @@ export default async function BillingPrintPage({
         <div className="flex justify-end mt-4">
           <table className="text-sm">
             <tbody>
+              {/* ยอดแยก (0078) — โชว์เฉพาะทั้งใบ ถ้ามี breakdown */}
+              {!isSingle && (() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const b = bn as any;
+                const sub = Number(b.subtotal) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
+                if (sub <= 0) return null;
+                return (
+                  <>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รวมเป็นเงิน</td><td className="text-right tabular-nums">{baht(sub)}</td></tr>
+                    {dis > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ส่วนลด {b.discount_pct > 0 ? `${b.discount_pct}%` : ""}</td><td className="text-right tabular-nums">-{baht(dis)}</td></tr>}
+                    {va > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {b.vat_rate}%</td><td className="text-right tabular-nums">{baht(va)}</td></tr>}
+                    {wh > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {b.wht_rate}%</td><td className="text-right tabular-nums">-{baht(wh)}</td></tr>}
+                  </>
+                );
+              })()}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(remaining)}</td></tr>
               <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(grandTotal)}</td></tr>
