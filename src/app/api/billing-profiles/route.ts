@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     bill_name: body.bill_name.trim(),
     tax_id: (body.tax_id ?? "").trim(),
     branch: (body.branch ?? "").trim() || "สำนักงานใหญ่",
+    postal_code: (body.postal_code ?? "").trim(),
     address: body.address ?? "",
     ship_address: body.ship_address ?? "",
     contact_person: body.contact_person ?? "",

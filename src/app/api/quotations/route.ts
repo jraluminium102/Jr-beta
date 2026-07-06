@@ -49,8 +49,8 @@ export async function POST(req: Request) {
   // เลือก "นามออกบิล": ที่ระบุ (billing_profile_id) → นามหลัก → ข้อมูลลูกค้า (fallback ไม่ให้ snapshot ว่าง)
   const sbp = supabase as unknown as { from: (t: string) => any };
   const bpId = Number(body.billing_profile_id) || null;
-  const bpCols = "bill_name,address,tax_id,branch,kind,contact_person,phone";
-  type Prof = { bill_name: string; address: string; tax_id: string; branch: string; kind: string; contact_person: string; phone: string };
+  const bpCols = "bill_name,address,postal_code,tax_id,branch,kind,contact_person,phone";
+  type Prof = { bill_name: string; address: string; postal_code: string; tax_id: string; branch: string; kind: string; contact_person: string; phone: string };
   let billProfile: Prof | null = null;
   if (bpId) {
     const { data } = await sbp.from("billing_profiles").select(bpCols).eq("id", bpId).eq("customer_id", cust.id).maybeSingle();
@@ -61,7 +61,8 @@ export async function POST(req: Request) {
     billProfile = (data as Prof) ?? null;
   }
   const snapshot = billProfile ? {
-    name: billProfile.bill_name, job: cust.job, address: billProfile.address, tax_id: billProfile.tax_id,
+    name: billProfile.bill_name, job: cust.job,
+    address: [billProfile.address, billProfile.postal_code].filter(Boolean).join(" "), tax_id: billProfile.tax_id,
     branch: billProfile.branch, kind: billProfile.kind, line_id: cust.line_id,
     phone: billProfile.phone || cust.phone, contact_person: billProfile.contact_person || cust.contact_person,
   } : {

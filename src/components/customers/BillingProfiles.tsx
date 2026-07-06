@@ -8,6 +8,7 @@ export type BillingProfile = {
   bill_name: string;
   tax_id: string;
   branch: string;
+  postal_code: string;
   address: string;
   ship_address: string;
   contact_person: string;
@@ -18,7 +19,7 @@ export type BillingProfile = {
 type FormState = Omit<BillingProfile, "id" | "is_default"> & { id?: number; is_default?: boolean };
 const EMPTY: FormState = {
   kind: "INDIVIDUAL", bill_name: "", tax_id: "", branch: "สำนักงานใหญ่",
-  address: "", ship_address: "", contact_person: "", phone: "",
+  postal_code: "", address: "", ship_address: "", contact_person: "", phone: "",
 };
 
 // จัดการ "นามออกบิล" ของลูกค้า 1 คน → ออกเอกสารได้หลายนาม (บุคคล/บริษัท)
@@ -145,6 +146,8 @@ export function BillingProfiles({ customerId, canWrite }: { customerId: number; 
           )}
           <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2}
             placeholder="ที่อยู่ออกบิล (ตามภาษี — ขึ้นหัวเอกสาร)" className={`${inp} resize-none`} />
+          <input value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value.replace(/\D/g, "").slice(0, 5) })}
+            placeholder="รหัสไปรษณีย์" inputMode="numeric" className={`${inp} max-w-[180px]`} />
           <textarea value={form.ship_address} onChange={(e) => setForm({ ...form, ship_address: e.target.value })} rows={2}
             placeholder="ที่อยู่จัดส่ง/หน้างาน (ถ้าต่างจากที่อยู่บิล — ไม่บังคับ)" className={`${inp} resize-none`} />
           <div className="grid grid-cols-2 gap-2">
