@@ -191,6 +191,25 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           </table>
         </div>
 
+        {/* ยอดแยก (0078) — โชว์ถ้ามี breakdown (ใบเดิม subtotal=total ไม่โชว์ซ้ำ) */}
+        {(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const b = bn as any;
+          const sub = Number(b.subtotal) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
+          if (sub <= 0 || (dis === 0 && va === 0 && wh === 0)) return null;
+          return (
+            <div className="mt-5 flex justify-end">
+              <div className="w-full sm:w-72 text-sm space-y-1">
+                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(sub)}</span></div>
+                {dis > 0 && <div className="flex justify-between"><span className="text-ink-3">ส่วนลด {b.discount_pct > 0 ? `${b.discount_pct}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(dis)}</span></div>}
+                {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {b.vat_rate}%</span><span className="tabular-nums">฿{baht(va)}</span></div>}
+                {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {b.wht_rate}%</span><span className="tabular-nums text-red-700">-฿{baht(wh)}</span></div>}
+                <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(bn.total)}</span></div>
+              </div>
+            </div>
+          );
+        })()}
+
         {bn.note && <div className="mt-5 text-xs text-ink-3"><b>หมายเหตุ:</b> {bn.note}</div>}
       </Card>
     </div>
