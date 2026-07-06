@@ -34,20 +34,24 @@ export default function NewBillingClient({
   );
 
   // footer ยอดแยก (ติ๊กปรับได้) — base = ยอดก่อนภาษี(subtotal) ของใบเสนอ · default = ค่าจากใบเสนอ (ไม่คิดซ้ำ)
+  // locked = ใบเสนอ import เก่าที่ไม่มี subtotal → net เป็นยอด "หลัง VAT" แล้ว · ถือเป็นยอดล้วน ปรับภาษีไม่ได้ (กันคิด VAT ซ้ำ)
+  const locked = !(Number(selected?.subtotal) > 0);
+  const base = locked ? (Number(selected?.net) || 0) : Number(selected?.subtotal) || 0;
   const [disc, setDisc] = useState(0);
   const [vat, setVat] = useState(7);
   const [wht, setWht] = useState(0);
   useEffect(() => {
     if (!selected) return;
-    setDisc(Number(selected.discount_pct) || 0);
-    setVat(Number(selected.vat_rate) || 0);
-    setWht(Number(selected.wht_rate) || 0);
+    const hasSub = Number(selected.subtotal) > 0;
+    setDisc(hasSub ? Number(selected.discount_pct) || 0 : 0);
+    setVat(hasSub ? Number(selected.vat_rate) || 0 : 0);
+    setWht(hasSub ? Number(selected.wht_rate) || 0 : 0);
   }, [selected]);
 
-  const base = Number(selected?.subtotal) || 0;
+  // เมื่อ locked บังคับ vat/wht/disc = 0 ให้ตรงกับ API (net = ยอดล้วน)
   const t = useMemo(
-    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: vat, discount_pct: disc, wht_rate: wht }),
-    [base, vat, disc, wht]
+    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: locked ? 0 : vat, discount_pct: locked ? 0 : disc, wht_rate: locked ? 0 : wht }),
+    [base, vat, disc, wht, locked]
   );
   const plan = useMemo(() => (selected ? suggestInstallments(t.net) : []), [selected, t.net]);
 
@@ -163,29 +167,34 @@ export default function NewBillingClient({
             <Card className="p-5 sticky top-4">
               <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
               {/* footer เดียวกับใบเสนอ — เริ่มจากยอดก่อนภาษีของใบเสนอ · ติ๊ก/แก้ได้ (default = ค่าใบเสนอ ไม่คิดซ้ำ) */}
+              {locked && (
+                <p className="mb-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                  ใบเสนอนี้ไม่มียอดก่อนภาษี (นำเข้าจากภายนอก) — ใช้ยอดสุทธิเป็นยอดล้วน ปรับส่วนลด/VAT ไม่ได้
+                </p>
+              )}
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-ink-3 flex items-center gap-1">ส่วนลด
-                    <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
-                      className="w-12 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
+                    <input type="number" min={0} step="any" disabled={locked} value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
+                      className="w-12 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด %" />%
                   </span>
                   <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
-                    <input type="number" min={0} step="any" value={t.discount_amt || ""}
+                    <input type="number" min={0} step="any" disabled={locked} value={t.discount_amt || ""}
                       onChange={(e) => setDisc(base > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / base) * 10000) / 100) : 0)}
-                      className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
+                      className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด บาท" />
                   </span>
                 </div>
                 <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
                 <label className="flex items-center justify-between gap-2 cursor-pointer">
-                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
+                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" disabled={locked} checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
                   <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
                 </label>
                 <div className="border-t border-gray-300/70 my-1.5" />
                 <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
                 <label className="flex items-center justify-between gap-2 cursor-pointer">
-                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
-                    <select value={wht || 3} disabled={wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="glass-soft rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
+                  <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" disabled={locked} checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
+                    <select value={wht || 3} disabled={locked || wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="glass-soft rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
                       <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
                     </select>
                   </span>

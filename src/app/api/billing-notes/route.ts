@@ -66,10 +66,13 @@ export async function POST(req: Request) {
 
   // ยอดแยกของใบวางบิล — เริ่มจากยอดก่อนภาษี(subtotal)ของใบเสนอ · ส่วนลด/VAT/หัก ณ ที่จ่าย ปรับได้ตอนสร้าง (default=ค่าใบเสนอ)
   // ไม่คิดซ้ำ: base = subtotal (ยอดก่อนภาษี) ไม่ใช่ net · computeTotals แหล่งเดียวกับใบเสนอ (บัญชีคุม)
-  const bSubtotal = Number(q.subtotal) || Number(q.net) || 0;
-  const bDisc = body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0);
-  const bVat = body.vat_rate != null ? Number(body.vat_rate) : (Number(q.vat_rate) || 0);
-  const bWht = body.wht_rate != null ? Number(body.wht_rate) : (Number(q.wht_rate) || 0);
+  // กันคิด VAT ซ้ำ (บัญชีเตือน): ใบเสนอ import เก่าไม่มี subtotal → net เป็นยอด "หลัง VAT/WHT" แล้ว
+  //   ถ้าเอา net เป็น base แล้วคิด vat 7% อีก = คิดภาษีซ้ำ ยอดเกินจริง → ถือ net เป็นยอดล้วน บังคับ vat/wht/disc = 0
+  const hasSubtotal = Number(q.subtotal) > 0;
+  const bSubtotal = hasSubtotal ? Number(q.subtotal) : (Number(q.net) || 0);
+  const bDisc = hasSubtotal ? (body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0)) : 0;
+  const bVat = hasSubtotal ? (body.vat_rate != null ? Number(body.vat_rate) : (Number(q.vat_rate) || 0)) : 0;
+  const bWht = hasSubtotal ? (body.wht_rate != null ? Number(body.wht_rate) : (Number(q.wht_rate) || 0)) : 0;
   if (bDisc < 0 || bDisc > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
   const bt = computeTotals({ items: [{ qty: 1, unit_price: bSubtotal }], vat_rate: bVat, discount_pct: bDisc, wht_rate: bWht });
   const net = bt.net;

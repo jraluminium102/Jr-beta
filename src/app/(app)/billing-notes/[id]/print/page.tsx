@@ -102,7 +102,7 @@ export default async function BillingPrintPage({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
                 const sub = Number(b.subtotal) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
-                if (sub <= 0) return null;
+                if (sub <= 0 || (dis === 0 && va === 0 && wh === 0)) return null;
                 return (
                   <>
                     <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รวมเป็นเงิน</td><td className="text-right tabular-nums">{baht(sub)}</td></tr>
