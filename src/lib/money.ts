@@ -43,6 +43,20 @@ export function computeTotals(input: MoneyInput): MoneyResult {
 export const lineTotal = (qty: number, unit_price: number) =>
   round2((Number(qty) || 0) * (Number(unit_price) || 0));
 
+// ============================================================
+// ถอด VAT ออกจาก "ยอดที่รวม VAT แล้ว" (back-out) — สำหรับ footer พิมพ์แยกงวด
+// ยอดงวด (amount) เป็น "ตัวตั้ง" ไม่คิดใหม่ → แค่บอกว่าในนั้นเป็นยอดก่อน VAT เท่าไร / VAT เท่าไร
+// ผลรวมทุกงวด = net ทั้งใบเสมอ (ไม่เพี้ยน) · บัญชี approve วิธี back-out สำหรับ "ใบวางบิล" (ไม่ใช่ใบกำกับภาษี)
+// ⚠ ถ้าจะออกใบกำกับภาษีต่องวดจริง ต้องให้งวดสุดท้ายอุ้มเศษ VAT (คนละงาน — ใช้ตาราง receipts)
+// ============================================================
+export function backoutVat(amountInclVat: number, vatRate: number): { base: number; vat: number } {
+  const amt = round2(Number(amountInclVat) || 0);
+  const rate = Number(vatRate) || 0;
+  if (rate <= 0) return { base: amt, vat: 0 };
+  const base = round2(amt / (1 + rate / 100));
+  return { base, vat: round2(amt - base) };
+}
+
 export const baht = (n: number) =>
   (Number(n) || 0).toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 

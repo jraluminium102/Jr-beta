@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht } from "@/lib/money";
+import { baht, backoutVat } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -112,12 +112,35 @@ export default async function BillingPrintPage({
                   </>
                 );
               })()}
+              {/* พิมพ์แยกงวด — ถอด VAT ออกจากยอดงวด (back-out) โชว์ ยอดก่อน VAT / VAT ของงวดนี้ (บัญชี approve) */}
+              {isSingle && (() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const b = bn as any;
+                const vatRate = Number(b.vat_rate) || 0;
+                const sub = Number(b.subtotal) || 0;
+                // ใบไม่มี VAT จริง (import เก่า/ไม่มี breakdown) → โชว์แค่ยอดงวดนี้ ไม่ถอด VAT มั่ว
+                if (sub <= 0 || vatRate <= 0) return null;
+                const { base, vat } = backoutVat(grandTotal, vatRate);
+                return (
+                  <>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อน VAT (งวดนี้)</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {vatRate}% (งวดนี้)</td><td className="text-right tabular-nums">{baht(vat)}</td></tr>
+                  </>
+                );
+              })()}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(remaining)}</td></tr>
               <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(grandTotal)}</td></tr>
             </tbody>
           </table>
         </div>
+
+        {/* พิมพ์แยกงวด + ใบมีหัก ณ ที่จ่าย → อ้างอิงยอดทั้งใบ กันลูกค้าหักซ้ำต่องวด */}
+        {isSingle && Number((bn as { wht_amt?: number }).wht_amt) > 0 && (
+          <div className="mt-4 text-xs text-gray-600">
+            * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({(bn as { wht_rate?: number }).wht_rate}% = ฿{baht(Number((bn as { wht_amt?: number }).wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
+          </div>
+        )}
 
         {bn.note && <div className="mt-6 text-xs text-gray-600"><b>หมายเหตุ:</b> {bn.note}</div>}
 
