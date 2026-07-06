@@ -10,6 +10,7 @@ const SnapSchema = z.object({
   name: z.string().min(1, "ต้องระบุชื่อ"),
   job: z.string().optional().default(""),
   address: z.string().optional().default(""),
+  postal_code: z.string().optional(),   // (0077) รหัสไปรษณีย์
   tax_id: z.string().optional().default(""),
   branch: z.string().optional(),   // (0069) สำนักงานใหญ่/สาขา — แก้/คงสาขาได้ (identity ล้วน)
   kind: z.string().optional(),

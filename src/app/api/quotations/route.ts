@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   }
   const snapshot = billProfile ? {
     name: billProfile.bill_name, job: cust.job,
-    address: [billProfile.address, billProfile.postal_code].filter(Boolean).join(" "), tax_id: billProfile.tax_id,
+    address: billProfile.address, postal_code: billProfile.postal_code, tax_id: billProfile.tax_id,
     branch: billProfile.branch, kind: billProfile.kind, line_id: cust.line_id,
     phone: billProfile.phone || cust.phone, contact_person: billProfile.contact_person || cust.contact_person,
   } : {

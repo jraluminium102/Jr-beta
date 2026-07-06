@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 
 type Snap = {
-  name?: string; job?: string; address?: string;
-  tax_id?: string; contact_person?: string; phone?: string;
+  name?: string; job?: string; address?: string; postal_code?: string;
+  tax_id?: string; branch?: string; kind?: string; contact_person?: string; phone?: string;
 };
 
 // นิยามนอก component — ถ้านิยามใน render input จะ remount หลุดโฟกัสทุกตัวอักษร
@@ -42,8 +42,11 @@ export function EditDocHeaderModal({
   const [f, setF] = useState({
     name: snapshot.name ?? "",
     job: snapshot.job ?? "",
-    address: snapshot.address ?? "",
+    kind: snapshot.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
     tax_id: snapshot.tax_id ?? "",
+    branch: snapshot.branch ?? "สำนักงานใหญ่",
+    address: snapshot.address ?? "",
+    postal_code: snapshot.postal_code ?? "",
     contact_person: snapshot.contact_person ?? "",
     phone: snapshot.phone ?? "",
   });
@@ -101,10 +104,35 @@ export function EditDocHeaderModal({
           {!requireReason && <> · หากออกใบเสร็จไปแล้ว การแก้นี้ไม่ย้อนไปแก้ใบเสร็จเก่า</>}
         </p>
 
-        <HeaderField label="ชื่อลูกค้า / บริษัท" value={f.name} onChange={set("name")} required />
+        {/* บุคคล/นิติบุคคล */}
+        <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm">
+          {(["INDIVIDUAL", "COMPANY"] as const).map((k) => (
+            <button key={k} type="button" onClick={() => setF({ ...f, kind: k })}
+              className={`px-3 py-1.5 ${f.kind === k ? "bg-brand text-white" : "text-gray-600"}`}>
+              {k === "INDIVIDUAL" ? "บุคคลธรรมดา" : "นิติบุคคล"}
+            </button>
+          ))}
+        </div>
+
+        <HeaderField label={f.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อลูกค้า"} value={f.name} onChange={set("name")} required />
         <HeaderField label="ชื่องาน / โปรเจกต์" value={f.job} onChange={set("job")} />
-        <HeaderField label="ที่อยู่ (ออกบิล)" value={f.address} onChange={set("address")} />
         <HeaderField label="เลขประจำตัวผู้เสียภาษี" value={f.tax_id} onChange={set("tax_id")} />
+
+        {/* สำนักงานใหญ่/สาขา — เฉพาะนิติบุคคล */}
+        {f.kind === "COMPANY" && (
+          <div className="flex items-center gap-3 text-sm flex-wrap">
+            <label className="flex items-center gap-1.5"><input type="radio" checked={!f.branch.startsWith("สาขา")} onChange={() => setF({ ...f, branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
+            <label className="flex items-center gap-1.5"><input type="radio" checked={f.branch.startsWith("สาขา")} onChange={() => setF({ ...f, branch: "สาขาที่ " })} /> สาขา</label>
+            {f.branch.startsWith("สาขา") && (
+              <input value={f.branch.replace(/\D/g, "")} onChange={(e) => setF({ ...f, branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })}
+                placeholder="รหัสสาขา เช่น 00001"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand max-w-[160px]" />
+            )}
+          </div>
+        )}
+
+        <HeaderField label="ที่อยู่ (ออกบิล)" value={f.address} onChange={set("address")} />
+        <div className="max-w-[180px]"><HeaderField label="รหัสไปรษณีย์" value={f.postal_code} onChange={(v) => set("postal_code")(v.replace(/\D/g, "").slice(0, 5))} /></div>
         <div className="grid grid-cols-2 gap-2">
           <HeaderField label="ผู้ติดต่อ" value={f.contact_person} onChange={set("contact_person")} />
           <HeaderField label="โทรศัพท์" value={f.phone} onChange={set("phone")} />
