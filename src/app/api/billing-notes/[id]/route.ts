@@ -52,26 +52,32 @@ export const PATCH = withRoute(
     const bnId = params.id;
 
     // 1) ดึงใบวางบิล + งวดปัจจุบัน (subtotal ใช้เป็นฐานโหมด B)
-    const { data: bn, error: bnErr } = await ctx.supabase
+    // ดึง breakdown เดิมด้วย (ใช้ rollback ให้ครบถ้า RPC fail — บัญชีเตือน footer ต้องตรง total เสมอ)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
-      .single<{
-        id: number;
-        total: number;
-        subtotal: number | null;
-        status: string;
-        billing_installments: { id: number; status: string; paid_amount: number }[];
-      }>();
+      .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
     if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว แก้ยอดไม่ได้", 409);
 
+    // breakdown เดิม (สำหรับ rollback) — คืนให้ครบทุกคอลัมน์ ไม่ใช่แค่ total
+    const oldBreakdown = {
+      subtotal: Number(bn.subtotal) || 0, discount_pct: Number(bn.discount_pct) || 0, discount_amt: Number(bn.discount_amt) || 0,
+      vat_rate: Number(bn.vat_rate) || 0, vat_amt: Number(bn.vat_amt) || 0, wht_rate: Number(bn.wht_rate) || 0, wht_amt: Number(bn.wht_amt) || 0,
+      has_tax_breakdown: !!bn.has_tax_breakdown,
+    };
+
     // คำนวณ newTotal + breakdown ตามโหมด
     let newTotal: number;
-    let breakdown: Record<string, number> | null = null;
+    let breakdown: Record<string, number | boolean>;
     if (isBreakdownMode) {
+      // แก้ footer ได้เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (has_tax_breakdown) — กันคิด VAT ทับใบ backfill/นำเข้า
+      if (!bn.has_tax_breakdown || Number(bn.subtotal) <= 0) {
+        return err("ใบวางบิลนี้ไม่มียอดก่อนภาษีที่เชื่อถือได้ (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
+      }
       const sub = Number(bn.subtotal) || 0;
-      if (sub <= 0) return err("ใบวางบิลนี้ไม่มียอดก่อนภาษี (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
       const disc = Number(parsed.data.discount_pct) || 0;
       const vat = Number(parsed.data.vat_rate) || 0;
       const wht = Number(parsed.data.wht_rate) || 0;
@@ -79,10 +85,15 @@ export const PATCH = withRoute(
       newTotal = bt.net;
       breakdown = {
         subtotal: bt.subtotal, discount_pct: disc, discount_amt: bt.discount_amt,
-        vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt,
+        vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt, has_tax_breakdown: true,
       };
     } else {
+      // แก้ยอดตรง = ยอดล้วน (flat) → ตั้ง breakdown ให้ตรงกับ total (footer ไม่เพี้ยน) + has_tax_breakdown=false
       newTotal = Math.round((parsed.data.total! + Number.EPSILON) * 100) / 100; // round2
+      breakdown = {
+        subtotal: newTotal, discount_pct: 0, discount_amt: 0,
+        vat_rate: 0, vat_amt: 0, wht_rate: 0, wht_amt: 0, has_tax_breakdown: false,
+      };
     }
     if (newTotal <= 0) return err("ยอดสุทธิต้องมากกว่า 0", 400);
 
@@ -114,14 +125,13 @@ export const PATCH = withRoute(
 
     const oldTotal = Number(bn.total) || 0;
 
-    // 3) อัปเดต total (+ breakdown ถ้าโหมด B) ก่อน (RPC อ่าน total ใหม่ → งวดตรง)
-    const updatePayload = breakdown ? { total: newTotal, ...breakdown } : { total: newTotal };
+    // 3) อัปเดต total + breakdown ก่อน (RPC อ่าน total ใหม่ → งวดตรง · footer ตรง total เสมอ)
     let { error: upErr } = await ctx.supabase
       .from("billing_notes")
-      .update(updatePayload)
+      .update({ total: newTotal, ...breakdown })
       .eq("id", bnId);
-    // กันพัง: ถ้า 0078 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
-    if (upErr && breakdown && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate/i.test(upErr.message ?? "")) {
+    // กันพัง: ถ้า 0078/0079 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
+    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown/i.test(upErr.message ?? "")) {
       ({ error: upErr } = await ctx.supabase.from("billing_notes").update({ total: newTotal }).eq("id", bnId));
     }
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);
@@ -146,11 +156,12 @@ export const PATCH = withRoute(
       p_items: items,
     });
     if (rpcErr) {
-      // rollback total ถ้า RPC ล้มเหลว (best-effort)
-      await ctx.supabase
+      // rollback total + breakdown ให้ครบถ้า RPC ล้มเหลว (best-effort) — footer ต้องตรง total เดิม
+      let { error: rbErr } = await ctx.supabase
         .from("billing_notes")
-        .update({ total: oldTotal })
+        .update({ total: oldTotal, ...oldBreakdown })
         .eq("id", bnId);
+      if (rbErr) ({ error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal }).eq("id", bnId));
       return err("re-split งวดไม่สำเร็จ: " + rpcErr.message, 500);
     }
 

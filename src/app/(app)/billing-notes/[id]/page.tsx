@@ -82,8 +82,8 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               currentTotal={bn.total}
             />
           )}
-          {/* แก้ VAT/ส่วนลด (footer) — เฉพาะใบที่มียอดก่อนภาษี (subtotal) และยังไม่จ่าย */}
-          {writable && !isCancelled && !hasAnyPayment && Number((bn as { subtotal?: number }).subtotal) > 0 && (
+          {/* แก้ VAT/ส่วนลด (footer) — เฉพาะใบที่มียอดก่อนภาษีจริง (has_tax_breakdown) และยังไม่จ่าย */}
+          {writable && !isCancelled && !hasAnyPayment && (bn as { has_tax_breakdown?: boolean }).has_tax_breakdown && (
             <EditBillingBreakdownButton
               billingNoteId={bn.id}
               subtotal={Number((bn as { subtotal?: number }).subtotal) || 0}

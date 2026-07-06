@@ -98,11 +98,12 @@ export async function POST(req: Request) {
     note: body.note ?? "",
     created_by: profile.id,
   };
-  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt };
+  // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
+  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal };
   let { data: bn, error: bnErr } = await supabase
     .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
-  // กันพัง: ถ้า migration 0078 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
-  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate/i.test(bnErr.message ?? "")) {
+  // กันพัง: ถ้า migration 0078/0079 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
+  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown/i.test(bnErr.message ?? "")) {
     ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
   }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
