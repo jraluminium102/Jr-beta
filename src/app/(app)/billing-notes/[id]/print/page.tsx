@@ -121,7 +121,8 @@ export default async function BillingPrintPage({
                 // ใบ import เก่า/ไม่รู้ว่ามี VAT ไหม → โชว์แค่ยอดงวดนี้ ไม่ถอด VAT มั่ว
                 if (sub <= 0) return null;
                 const { base, vat } = backoutVat(grandTotal, vatRate);
-                const laborRatio = b.labor_ratio == null ? null : Number(b.labor_ratio);
+                // มีหัก ณ ที่จ่ายระดับใบ → ยอดงวดเป็นยอดหลัง WHT ถอด VAT/แยกค่าแรงจะเพี้ยน → ไม่แยก (บัญชีเตือน)
+                const laborRatio = b.labor_ratio == null || Number(b.wht_amt) > 0 ? null : Number(b.labor_ratio);
                 const split = laborRatio == null ? null : splitLaborMaterial(base, laborRatio);
                 return (
                   <>
@@ -143,8 +144,16 @@ export default async function BillingPrintPage({
         {isSingle && (() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const b = bn as any;
+          // ใบมีหัก ณ ที่จ่ายระดับใบ → เตือนอ้างอิงยอดทั้งสัญญา (เช็คก่อน · เคสนี้ไม่แยกค่าแรงอยู่แล้ว)
+          if (Number(b.wht_amt) > 0) {
+            return (
+              <div className="mt-4 text-xs text-gray-600">
+                * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({b.wht_rate}% = ฿{baht(Number(b.wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
+              </div>
+            );
+          }
+          // ไม่มี WHT ระดับใบ แต่มี labor_ratio → หัก ณ ที่จ่าย 3% เฉพาะ "ค่าแรง" งวดนี้ (ข้อมูลให้ลูกค้าหัก)
           const laborRatio = b.labor_ratio == null ? null : Number(b.labor_ratio);
-          // มี labor_ratio → หัก ณ ที่จ่าย 3% เฉพาะ "ค่าแรง" ของงวดนี้
           if (laborRatio != null && Number(b.subtotal) > 0) {
             const { base } = backoutVat(grandTotal, Number(b.vat_rate) || 0);
             const { labor } = splitLaborMaterial(base, laborRatio);
@@ -152,14 +161,6 @@ export default async function BillingPrintPage({
             return (
               <div className="mt-4 text-xs text-gray-600">
                 * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% เฉพาะค่าแรง/ค่าบริการ (งวดนี้ = ฿{baht(labor)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
-              </div>
-            );
-          }
-          // ไม่มี labor split แต่ใบมีหัก ณ ที่จ่ายระดับใบ → อ้างอิงยอดทั้งสัญญา กันหักซ้ำรายงวด
-          if (Number(b.wht_amt) > 0) {
-            return (
-              <div className="mt-4 text-xs text-gray-600">
-                * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({b.wht_rate}% = ฿{baht(Number(b.wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
               </div>
             );
           }

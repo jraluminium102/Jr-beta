@@ -48,6 +48,8 @@ export const lineTotal = (qty: number, unit_price: number) =>
 // ยอดงวด (amount) เป็น "ตัวตั้ง" ไม่คิดใหม่ → แค่บอกว่าในนั้นเป็นยอดก่อน VAT เท่าไร / VAT เท่าไร
 // ผลรวมทุกงวด = net ทั้งใบเสมอ (ไม่เพี้ยน) · บัญชี approve วิธี back-out สำหรับ "ใบวางบิล" (ไม่ใช่ใบกำกับภาษี)
 // ⚠ ถ้าจะออกใบกำกับภาษีต่องวดจริง ต้องให้งวดสุดท้ายอุ้มเศษ VAT (คนละงาน — ใช้ตาราง receipts)
+// ⚠⚠ contract สำคัญ: amountInclVat ต้องเป็น "ยอดรวม VAT ล้วน" (base×(1+rate)) — ห้ามถูกหัก ณ ที่จ่ายมาก่อน
+//    ถ้ายอดงวดถูกหัก WHT ระดับใบแล้ว (amount=net) base/vat ที่ได้จะเพี้ยน → ต้องไม่แยกค่าแรง/ถอด VAT (บัญชีเตือน)
 // ============================================================
 export function backoutVat(amountInclVat: number, vatRate: number): { base: number; vat: number } {
   const amt = round2(Number(amountInclVat) || 0);

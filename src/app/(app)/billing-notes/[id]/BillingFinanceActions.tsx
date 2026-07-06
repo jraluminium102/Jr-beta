@@ -236,23 +236,29 @@ export function EditBillingBreakdownButton({
           <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
         </div>
 
-        {/* % ค่าแรง — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด (ลูกค้านิติบุคคลหัก ณ ที่จ่าย 3% เฉพาะค่าแรง) */}
-        <label className="block pt-2 border-t border-gray-200">
-          <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
-            % ค่าแรง <span className="text-gray-400 font-normal">(ไม่บังคับ — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด)</span>
-          </span>
-          <div className="flex items-center gap-2 mt-1">
-            <input type="number" min={0} max={100} step="any" value={laborRatio}
-              onChange={(e) => setLaborRatio(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-              placeholder="เว้นว่าง = ไม่แยก"
-              className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-right outline-none tabular-nums text-sm" />
-            <span className="text-sm text-gray-500">%</span>
-            {laborRatio !== "" && (() => {
-              const s = splitLaborMaterial(t.after_discount, Number(laborRatio));
-              return <span className="text-xs text-gray-400">ค่าแรง ฿{baht(s.labor)} · ค่าของ ฿{baht(s.material)}</span>;
-            })()}
-          </div>
-        </label>
+        {/* % ค่าแรง — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด · ใช้ร่วมกับหัก ณ ที่จ่ายในตัวไม่ได้ */}
+        {wht === 0 ? (
+          <label className="block pt-2 border-t border-gray-200">
+            <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
+              % ค่าแรง <span className="text-gray-400 font-normal">(ไม่บังคับ — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด)</span>
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="number" min={0} max={100} step="any" value={laborRatio}
+                onChange={(e) => setLaborRatio(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                placeholder="เว้นว่าง = ไม่แยก"
+                className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-right outline-none tabular-nums text-sm" />
+              <span className="text-sm text-gray-500">%</span>
+              {laborRatio !== "" && (() => {
+                const s = splitLaborMaterial(t.after_discount, Number(laborRatio));
+                return <span className="text-xs text-gray-400">ค่าแรง ฿{baht(s.labor)} · ค่าของ ฿{baht(s.material)}</span>;
+              })()}
+            </div>
+          </label>
+        ) : (
+          <p className="pt-2 border-t border-gray-200 text-xs text-gray-400">
+            แยกค่าของ/ค่าแรงใช้กับใบที่หัก ณ ที่จ่ายในตัวไม่ได้ — เอาติ๊กหัก ณ ที่จ่ายออกก่อน
+          </p>
+        )}
 
         {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
 

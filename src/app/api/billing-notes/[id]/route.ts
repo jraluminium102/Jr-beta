@@ -96,7 +96,8 @@ export const PATCH = withRoute(
         vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt, has_tax_breakdown: true,
       };
       // labor_ratio ปรับได้พร้อมกัน (null = ล้างการแยกค่าแรง/ค่าของ) — ตั้งเฉพาะเมื่อส่งมา
-      if (parsed.data.labor_ratio !== undefined) breakdown.labor_ratio = parsed.data.labor_ratio;
+      // ⚠ ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบ (wht>0) ไม่ได้ → บังคับ null (ยอดงวดหลัง WHT ทำถอด VAT เพี้ยน)
+      if (parsed.data.labor_ratio !== undefined) breakdown.labor_ratio = wht > 0 ? null : parsed.data.labor_ratio;
     } else {
       // แก้ยอดตรง = ยอดล้วน (flat) → ตั้ง breakdown ให้ตรงกับ total (footer ไม่เพี้ยน) + has_tax_breakdown=false
       newTotal = Math.round((parsed.data.total! + Number.EPSILON) * 100) / 100; // round2

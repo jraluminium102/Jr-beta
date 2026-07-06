@@ -99,8 +99,10 @@ export async function POST(req: Request) {
     created_by: profile.id,
   };
   // labor_ratio = % ค่าแรง (0-100 หรือ null) — สำหรับแยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด (ไม่กระทบยอด)
+  // ⚠ ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบ (bWht>0) ไม่ได้ — ยอดงวดเป็นยอดหลัง WHT การถอด VAT ต่องวดจะเพี้ยน (บัญชีเตือน)
+  //    การแยกค่าแรงมีไว้ให้ "ลูกค้าหัก ณ ที่จ่ายเอง" ใบจึงต้องไม่หัก WHT มาก่อน → บังคับ null ถ้ามี WHT ระดับใบ
   const rawLabor = body.labor_ratio;
-  const bLabor = rawLabor == null || rawLabor === "" ? null : Math.min(100, Math.max(0, Number(rawLabor) || 0));
+  const bLabor = bWht > 0 || rawLabor == null || rawLabor === "" ? null : Math.min(100, Math.max(0, Number(rawLabor) || 0));
 
   // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
   const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, labor_ratio: bLabor };

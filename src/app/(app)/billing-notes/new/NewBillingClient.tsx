@@ -206,7 +206,8 @@ export default function NewBillingClient({
               </div>
 
               {/* % ค่าแรง — สำหรับแยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด (ลูกค้านิติบุคคลหัก ณ ที่จ่าย 3% เฉพาะค่าแรง) */}
-              {!locked && (
+              {/* ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบไม่ได้ — แยกค่าแรงมีไว้ให้ลูกค้าหัก WHT เอง ใบต้องไม่หักมาก่อน */}
+              {!locked && wht === 0 && (
                 <label className="block mt-3 pt-3 border-t border-gray-200">
                   <span className="text-xs font-medium text-ink-3 flex items-center gap-1">
                     % ค่าแรง <span className="text-ink-4 font-normal">(ไม่บังคับ — แยกค่าของ/ค่าแรงในใบพิมพ์แยกงวด)</span>
@@ -223,6 +224,11 @@ export default function NewBillingClient({
                     })()}
                   </div>
                 </label>
+              )}
+              {!locked && wht > 0 && (
+                <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-ink-4">
+                  แยกค่าของ/ค่าแรงใช้กับใบที่หัก ณ ที่จ่ายในตัวไม่ได้ (แยกค่าแรงไว้ให้ลูกค้าหักเอง) — เอาติ๊กหัก ณ ที่จ่ายออกก่อน
+                </p>
               )}
 
               {err && (
