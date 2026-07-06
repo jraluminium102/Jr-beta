@@ -35,9 +35,14 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [activeJobsLoading, setActiveJobsLoading] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   // (0069) นามออกบิล ของลูกค้าที่เลือก
-  type BProf = { id: number; bill_name: string; kind: string; branch: string; is_default: boolean };
+  type BProf = { id: number; bill_name: string; kind: string; branch: string; is_default: boolean; tax_id?: string; address?: string; postal_code?: string; contact_person?: string; phone?: string };
   const [billingProfiles, setBillingProfiles] = useState<BProf[]>([]);
   const [billingProfileId, setBillingProfileId] = useState<number | "">("");
+  // หัวบิล (ออกในนาม) — autofill จากนามออกบิลที่เลือก (ซึ่งมาจากคิวได้) · แก้ได้แบบเดียวกับใบวางบิล
+  type Hdr = { kind: string; name: string; tax_id: string; branch: string; postal_code: string; address: string; contact_person: string; phone: string };
+  const EMPTY_HDR: Hdr = { kind: "INDIVIDUAL", name: "", tax_id: "", branch: "สำนักงานใหญ่", postal_code: "", address: "", contact_person: "", phone: "" };
+  const [hdr, setHdr] = useState<Hdr>(EMPTY_HDR);
+  const [hdrOpen, setHdrOpen] = useState(false);
   const [calcCustomer, setCalcCustomer] = useState("");
   const [calcMatched, setCalcMatched] = useState(false); // preselect ให้แล้ว (จาก calc)
   const [calcExact, setCalcExact] = useState(false); // มั่นใจ (customer_id ตรง/ชื่อตรงเป๊ะรายเดียว) → เขียว; เดา → เหลือง
@@ -152,6 +157,19 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     return () => { cancelled = true; };
   }, [customerId]);
 
+  // autofill หัวบิลจากนามออกบิลที่เลือก (นามหลัก/บริษัทที่มาจากคิว จะเด้งเข้าฟอร์มให้เลย)
+  useEffect(() => {
+    const p = billingProfiles.find((x) => x.id === billingProfileId);
+    if (!p) { setHdr(EMPTY_HDR); return; }
+    setHdr({
+      kind: p.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
+      name: p.bill_name ?? "", tax_id: p.tax_id ?? "",
+      branch: p.branch || "สำนักงานใหญ่", postal_code: p.postal_code ?? "",
+      address: p.address ?? "", contact_person: p.contact_person ?? "", phone: p.phone ?? "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billingProfileId, billingProfiles]);
+
   const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: disc, wht_rate: wht }), [items, vat, disc, wht]);
 
   const setItem = (i: number, k: keyof Item, v: string | number) =>
@@ -228,6 +246,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           note,
           ...(selectedJobId ? { job_id: selectedJobId } : {}),
           ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
+          ...(hdr.name.trim() ? { header_override: hdr } : {}),
           ...(condEdited ? {
             conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
             conditions_quote: condQuote.map((s) => s.trim()).filter(Boolean),
@@ -290,6 +309,46 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 </select>
                 <span className="text-[11px] text-ink-3 mt-1 block">หัวเอกสารจะเป็นนามนี้ · เพิ่ม/แก้นามได้ที่ทะเบียนลูกค้า</span>
               </label>
+            )}
+
+            {/* แก้หัวบิลตรงนี้ (ออกในนามนิติบุคคล) — autofill จากนามออกบิลที่เลือก (ข้อมูลบริษัทจากคิวเด้งเข้าให้) · แก้ได้เฉพาะใบนี้ */}
+            {customerId !== "" && (
+              <div className="mt-3">
+                <button type="button" onClick={() => setHdrOpen((v) => !v)} className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
+                  <Icon name="pencil" size={14} /> แก้หัวบิล / ออกในนามบริษัท {hdrOpen ? "▲" : "▼"}
+                  {hdr.kind === "COMPANY" && <span className="text-[11px] font-normal text-ink-3">· {hdr.name || "นิติบุคคล"}</span>}
+                </button>
+                {hdrOpen && (
+                  <div className="mt-2 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2">
+                    <p className="text-[11px] text-ink-3">autofill จากนามออกบิลที่เลือก (ถ้ามีข้อมูลบริษัทจากคิวจะเด้งเข้าให้) · แก้ตรงนี้ = เฉพาะใบนี้ · ไม่กระทบทะเบียน</p>
+                    <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm">
+                      {(["INDIVIDUAL", "COMPANY"] as const).map((k) => (
+                        <button key={k} type="button" onClick={() => setHdr({ ...hdr, kind: k })}
+                          className={`px-3 py-1.5 ${hdr.kind === k ? "bg-brand text-white" : "text-ink-2"}`}>
+                          {k === "INDIVIDUAL" ? "บุคคลธรรมดา" : "นิติบุคคล"}
+                        </button>
+                      ))}
+                    </div>
+                    <input value={hdr.name} onChange={(e) => setHdr({ ...hdr, name: e.target.value })} placeholder={hdr.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อลูกค้า"} className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                    <input value={hdr.tax_id} onChange={(e) => setHdr({ ...hdr, tax_id: e.target.value })} placeholder="เลขผู้เสียภาษี 13 หลัก" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                    {hdr.kind === "COMPANY" && (
+                      <div className="flex items-center gap-3 text-sm flex-wrap">
+                        <label className="flex items-center gap-1.5"><input type="radio" checked={!hdr.branch.startsWith("สาขา")} onChange={() => setHdr({ ...hdr, branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
+                        <label className="flex items-center gap-1.5"><input type="radio" checked={hdr.branch.startsWith("สาขา")} onChange={() => setHdr({ ...hdr, branch: "สาขาที่ " })} /> สาขา</label>
+                        {hdr.branch.startsWith("สาขา") && (
+                          <input value={hdr.branch.replace(/\D/g, "")} onChange={(e) => setHdr({ ...hdr, branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })} placeholder="รหัสสาขา" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[150px]" />
+                        )}
+                      </div>
+                    )}
+                    <textarea value={hdr.address} onChange={(e) => setHdr({ ...hdr, address: e.target.value })} rows={2} placeholder="ที่อยู่ออกบิล (ตามภาษี)" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none resize-none" />
+                    <input value={hdr.postal_code} onChange={(e) => setHdr({ ...hdr, postal_code: e.target.value.replace(/\D/g, "").slice(0, 5) })} inputMode="numeric" placeholder="รหัสไปรษณีย์" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[160px]" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input value={hdr.contact_person} onChange={(e) => setHdr({ ...hdr, contact_person: e.target.value })} placeholder="ผู้ติดต่อ" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                      <input value={hdr.phone} onChange={(e) => setHdr({ ...hdr, phone: e.target.value })} placeholder="เบอร์โทร" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
             {calcCustomer && calcMatched && calcExact && (
               <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 mt-2">

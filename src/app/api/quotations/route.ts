@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const { data } = await sbp.from("billing_profiles").select(bpCols).eq("customer_id", cust.id).eq("is_default", true).eq("is_active", true).maybeSingle();
     billProfile = (data as Prof) ?? null;
   }
-  const snapshot = billProfile ? {
+  const snapshot: Record<string, unknown> = billProfile ? {
     name: billProfile.bill_name, job: cust.job,
     address: billProfile.address, postal_code: billProfile.postal_code, tax_id: billProfile.tax_id,
     branch: billProfile.branch, kind: billProfile.kind, line_id: cust.line_id,
@@ -69,6 +69,19 @@ export async function POST(req: Request) {
     name: cust.name, job: cust.job, address: cust.address, tax_id: cust.tax_id,
     kind: "INDIVIDUAL", line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
   };
+
+  // หัวบิลแก้ในหน้าสร้างใบเสนอ (ออกในนามนิติบุคคล) — ทับเฉพาะฟิลด์ identity (ไม่แตะยอด/งาน)
+  const ho = body.header_override;
+  if (ho && typeof ho === "object" && String(ho.name ?? "").trim()) {
+    snapshot.name = String(ho.name).trim();
+    snapshot.kind = ho.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL";
+    snapshot.tax_id = String(ho.tax_id ?? "").trim();
+    snapshot.branch = String(ho.branch ?? "สำนักงานใหญ่").trim() || "สำนักงานใหญ่";
+    snapshot.postal_code = String(ho.postal_code ?? "").trim();
+    snapshot.address = String(ho.address ?? "").trim();
+    snapshot.contact_person = String(ho.contact_person ?? "").trim();
+    snapshot.phone = String(ho.phone ?? "").trim();
+  }
 
   // 2) ผูกใบเสนอกับงาน (job) ของลูกค้า — ไม่สร้างงานใหม่
   //    ลำดับความสำคัญ:
