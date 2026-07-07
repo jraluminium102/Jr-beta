@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { baht, backoutVat, splitLaborMaterial, WHT_LABOR_RATE } from "@/lib/money";
-import FooterLaborInput from "./FooterLaborInput";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -35,12 +34,16 @@ export default async function BillingPrintPage({
   const isSingle = !!selected;
   const installments = selected ? [selected] : allInstallments;
 
-  // % ค่าแรง ตอนพิมพ์แยกงวด (?labor=<%>) — กรอกแล้ว footer แตกค่าของ/ค่าแรง · เว้นว่าง = โชว์แค่ยอดก่อน VAT/VAT
-  const laborRaw = searchParams?.labor;
-  const laborNum =
-    laborRaw != null && laborRaw !== "" && !Number.isNaN(Number(laborRaw))
-      ? Math.min(100, Math.max(0, Number(laborRaw)))
-      : null;
+  // % ค่าแรง ต่องวด — ตั้งไว้ที่หน้ารายละเอียดบิล (เก็บใน installment.footer_labor_pct) · เว้นว่าง = ไม่แยก
+  // footer เป็น display-only (ยอดงวดคงเดิม) · ?labor=<%> override ได้ตอนพิมพ์ถ้าอยากลองชั่วคราว
+  const overrideRaw = searchParams?.labor;
+  const override = overrideRaw != null && overrideRaw !== "" && !Number.isNaN(Number(overrideRaw))
+    ? Math.min(100, Math.max(0, Number(overrideRaw)))
+    : null;
+  const stored = selected && (selected as { footer_labor_pct?: number | null }).footer_labor_pct != null
+    ? Number((selected as { footer_labor_pct?: number | null }).footer_labor_pct)
+    : null;
+  const laborNum = override != null ? override : stored;
 
   const totalPaid = installments.reduce((a, i) => a + (Number(i.paid_amount) || 0), 0);
   // ยอดรวมที่โชว์: ทั้งใบ = bn.total · แยกงวด = ยอดงวดนั้น
@@ -54,8 +57,8 @@ export default async function BillingPrintPage({
         <Link href={`/billing-notes/${bn.id}`} className="press inline-flex items-center gap-1.5 text-sm text-ink-2">
           <Icon name="arrowLeft" size={16} /> กลับ
         </Link>
-        {isSingle && (
-          <FooterLaborInput billingNoteId={bn.id} seq={selSeq!} current={laborNum == null ? "" : String(laborNum)} />
+        {isSingle && laborNum != null && (
+          <span className="text-xs text-ink-3">ท้ายใบ: แยกค่าแรง {laborNum}%</span>
         )}
         <PrintButton />
       </div>
