@@ -98,20 +98,36 @@ export function applyBootstrap(PRODUCTS, R39DATA) {
       p.addons = ['frame_wrap']; na++;
     }
   });
-  // ── FIX: เติม คาดตาราง (grid) + แผ่นทึบล่าง (solid_panel) ให้ครบทุกบาน G1 ──
+  // ── FIX (parity): union addon ที่ R3.9 ตั้งใจให้ทุกบาน (regex เดิม) เข้ากับ addons ที่ตั้งเอง ──
   // บั๊ก: บล็อกด้านบน (บรรทัด 72 `if (...p.addons) return`) ข้ามรุ่นที่ตั้ง addons เองตอน G6 parity (2ก.ค.)
-  // → grid/solid_panel ที่ควรมี "ทุกบาน" หายไปเกือบหมด · pass นี้ merge กลับ (dedupe) ใช้ regex เดียวกับต้นฉบับ
-  // ไม่ใส่ให้ บานกระจกเปลือย/สำเร็จ (ไม่มีเฟรมอลูให้คาด/ใส่แผ่นทึบ) — shower/บานเปลือย/YKK
+  //   → option ที่ R3.9 ควรมี (grid/solid_panel/slide_auto/closer/thresh/มือจับ/ซ่อนราง/ซ่อนคาน ฯลฯ) หล่นเยอะ
+  // pass นี้คำนวณ "เจตนา R3.9" ต่อบาน (regex เดียวกับบล็อกบน 75-93) แล้ว union เข้า (dedupe · เก็บ option พิเศษที่ curate ไว้)
+  // เว้น บานกระจกเปลือย/สำเร็จ (ไม่มีเฟรมอลู) — shower/บานเปลือย/YKK · ไม่แตะ specOpts/สี (ทำในบล็อกบนแล้ว)
+  function intendedAddons(nm) {
+    const ads = ['frame_wrap', 'grid'];
+    if (/เปิด|ประตู|door|casement|ดัดโค้ง|YKK|เฟี้ยม/i.test(nm)) { ads.push('closer'); if (/เปิด|เฟี้ยม|ประตู/.test(nm)) ads.push('thresh'); }
+    if (!/ติดตาย/.test(nm)) ads.push('mosquito');
+    if (/เลื่อน|เปิด|ประตู|หมุน|ดัดโค้ง|PC|เฟี้ยม/i.test(nm)) ads.push('digihandle');
+    if (/เปิด|ประตู|กระทุ้ง|เฟี้ยม|หมุน|PC|door|casement/i.test(nm)) ads.push('cmech');
+    if (/เลื่อน|เปิด|ประตู|PC/i.test(nm)) ads.push('stainless');
+    if (/บานยก/.test(nm)) ads.push('motor');
+    if (/เกล็ด/.test(nm)) ads.push('banklet_motor');
+    if (/เลื่อน/.test(nm)) ads.push('slide_auto');
+    if (/กระทุ้ง/.test(nm)) ads.push('awn_tt', 'awn_brace', 'awn_auto');
+    if (/เฟี้ยม/.test(nm)) ads.push('hide_track');
+    if (/SlimLux|รางบน|เลื่อนซ้อน/i.test(nm)) ads.push('inner_track');
+    if (/เลื่อน|เปิด|ประตู|เฟี้ยม|ติดตาย|ทึบ/i.test(nm) && !/ดัดโค้ง|ระแนง/.test(nm)) ads.push('solid_panel');
+    if (/SlimLux|รางบน|เลื่อนซ้อน/i.test(nm)) ads.push('soft_close', 'sling');
+    if (/SlimLux|รางบน|เลื่อนซ้อน|เฟี้ยม/i.test(nm)) ads.push('hide_beam', 'u_track');
+    if (/SlimLux|รางบน|เลื่อนซ้อน|เฟี้ยม|PC/i.test(nm)) ads.push('beam_support');
+    ads.push('demolish', 'drop_floor');
+    return ads;
+  }
   Object.values(PRODUCTS).forEach(function (p) {
-    if (p.group !== 1 || !Array.isArray(p.addons)) return;
+    if (p.group !== 1 || !Array.isArray(p.addons) || p.composite || p.sellZip) return;
     const nm = p.name || '', sc = p.subcat || '';
-    const frameless = /เปลือย|shower|YKK|สำเร็จ/i.test(nm) || /เปลือย|สำเร็จ/.test(sc);
-    if (frameless) return;
-    if (!p.addons.includes('grid')) p.addons.push('grid');   // คาดตาราง: ทุกบาน G1 (ต้นฉบับบรรทัด 75)
-    // แผ่นทึบล่าง: บานกระจกหลัก (regex ต้นฉบับบรรทัด 89) — เว้นดัดโค้ง/ระแนง/กระทุ้ง/เกล็ด/ยก/หมุน
-    if (!p.addons.includes('solid_panel') && /เลื่อน|เปิด|ประตู|เฟี้ยม|ติดตาย|ทึบ/i.test(nm) && !/ดัดโค้ง|ระแนง/.test(nm)) {
-      p.addons.push('solid_panel');
-    }
+    if (/เปลือย|shower|YKK|สำเร็จ/i.test(nm) || /เปลือย|สำเร็จ/.test(sc)) return; // เปลือย/สำเร็จ ข้าม (ไม่มีเฟรม)
+    intendedAddons(nm).forEach(function (a) { if (!p.addons.includes(a)) p.addons.push(a); });
   });
   // ── สีอลูที่เลือกได้ต่อรุ่น (ตาม dropdown Excel มด) — ล็อกสีเฉพาะที่รุ่นนั้นมีจริง ──
   const C6 = ['white', 'black', 'sahara', 'sahara_black', 'wood_teak', 'wood_maho', 'wood_whiteoak', 'special', 'wood_special'];       // SMS/รางบน/เฟี้ยม/E-series (6 หมวด)
