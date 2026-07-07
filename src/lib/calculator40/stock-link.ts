@@ -14,8 +14,9 @@ const motorNames = new Set(Object.keys(PB.MOTOR || {}));
 const steelKeys = new Set(Object.keys(PB.STEEL || {}));
 const extraNames = new Set(Object.keys(PB.EXTRA || {}));
 const aluBrands = new Set(Object.keys(PB.ALU || {}));
+const partNames = new Set(Object.keys(PB.PARTS || {}));   // อุปกรณ์/โปรไฟล์/สิ้นเปลือง รุ่นถอดทุนใหม่ (partsLinked) — ผูกตามชื่อ
 
-export type CalcSection = "กระจก" | "หลังคา/ผนัง" | "มอเตอร์/ออโต้" | "เหล็ก" | "งานเสริม" | "อลูมิเนียม";
+export type CalcSection = "กระจก" | "หลังคา/ผนัง" | "มอเตอร์/ออโต้" | "เหล็ก" | "งานเสริม" | "อลูมิเนียม" | "ถอดทุน 4.0";
 
 type LinkInput = {
   name?: string | null;
@@ -33,6 +34,7 @@ export function calcLink(item: LinkInput): { linked: boolean; section?: CalcSect
   if (name && motorNames.has(name)) return { linked: true, section: "มอเตอร์/ออโต้" };
   if (sku && steelKeys.has(sku)) return { linked: true, section: "เหล็ก" };
   if (name && extraNames.has(name)) return { linked: true, section: "งานเสริม" };
+  if (name && partNames.has(name)) return { linked: true, section: "ถอดทุน 4.0" };
   if (item.is_weight_based && item.supplier && aluBrands.has(item.supplier))
     return { linked: true, section: "อลูมิเนียม" };
   return { linked: false };
@@ -46,11 +48,12 @@ export type PriceOverride = {
   STEEL: Record<string, number>;
   EXTRA: Record<string, number>;
   ALU: Record<string, number>;
+  PARTS: Record<string, number>;
 };
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {} };
   const aluByBrand: Record<string, number> = {};
   for (const r of rows || []) {
     const name = (r.name || "").trim();
@@ -62,6 +65,7 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       else if (name && pb.MOTOR && name in pb.MOTOR) ov.MOTOR[name] = cost;
       else if (sku && pb.STEEL && sku in pb.STEEL) ov.STEEL[sku] = cost;
       else if (name && pb.EXTRA && name in pb.EXTRA) ov.EXTRA[name] = cost;
+      else if (name && pb.PARTS && name in pb.PARTS) ov.PARTS[name] = cost;   // อุปกรณ์/โปรไฟล์ ถอดทุน 4.0
     }
     // อลู: เรตต่อกิโล/แบรนด์ = ค่าสูงสุดในกลุ่ม (กันคิดขาด)
     if (r.is_weight_based && r.supplier && pb.ALU && r.supplier in pb.ALU) {
@@ -76,7 +80,7 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
 // ทับราคาลง pricebook (mutate) — เรียกกับสำเนา pb เท่านั้น
 export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
   if (!pb || !ov) return pb;
-  for (const sec of ["GLASS", "ROOFMAT", "MOTOR", "STEEL", "ALU"] as const) {
+  for (const sec of ["GLASS", "ROOFMAT", "MOTOR", "STEEL", "ALU", "PARTS"] as const) {
     const o = ov[sec];
     if (o && pb[sec]) for (const k in o) pb[sec][k] = o[k];
   }

@@ -675,7 +675,7 @@ export const PRODUCTS = {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน ราวกันตก") — คิดตามความยาว · ยูเหล็ก+เพลท+ครอบอลู เสมอ
     // + หมุดจับ (ระบบหมุด) หรือ เสา (ระบบเสาตั้ง) · กระจก area · ค่าแรงแบน 1575 (พับในทุน) · เส้น 6ม.=600ซม.
     // W(กว้าง)=ความยาวราว(ซม.) · H=สูง · P=จำนวนช่อง(เสา) · เศษเส้นคิดตามสัดส่วน (ตรง Excel /600)
-    id: 'handrail', group: 2, name: 'ราวกันตก/ราวบันได กระจก', brand: '-', laborKey: 'ราวกันตก (ในวัสดุ)',
+    id: 'handrail', partsLinked: true, group: 2, name: 'ราวกันตก/ราวบันได กระจก', brand: '-', laborKey: 'ราวกันตก (ในวัสดุ)',
     showColor: true,   // กล่องสี 13 สี (อลูราวจับ/เสา · label-only)
     icon: '🛡️', cascade: true,
     materialLabel: 'ทรง · ระบบยึด', cascadeLabels: ['ทรง', 'ระบบยึด'],
@@ -735,7 +735,7 @@ export const PRODUCTS = {
   bar_slide: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานระแนงเลื่อน") — SMS + ลูกฟูก2ทางแทนกระจก + ล้อ + ดามกล่อง
     // form = รางล่าง (ภายใน/ภายนอก) · material = โหมด (อิสระ/ลากจูง/เปิดคู่กลาง) → F2-F6 · auto = addon slide_auto เดิม
-    id: 'bar_slide', group: 2, subcat: 'ระแนง', name: 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)', brand: 'SMS', laborKey: 'บานระแนงเลื่อน',
+    id: 'bar_slide', partsLinked: true, group: 2, subcat: 'ระแนง', name: 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)', brand: 'SMS', laborKey: 'บานระแนงเลื่อน',
     showColor: true, outdoor: true, icon: '▤',
     materialLabel: 'โหมด', materials: ['อิสระ', 'ลากจูง', 'เปิดคู่กลาง'], defMaterial: 'อิสระ',
     defForm: 'ภายนอก', forms: ['ภายนอก', 'ภายใน'],
@@ -1264,7 +1264,7 @@ export const PRODUCTS = {
   cabinet_face: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานตู้ Futuretech") — เฟรม+เสามือจับ+อุปกรณ์+กระจก · คูณจำนวนบาน (P)
     // W=กว้างรวมทุกบาน · H=สูง · P=จำนวนบาน · material=สีเฟรม(สีดำ=อบขาว/ดำ · สีทอง=ชุบ) · form=แบบ(เลื่อน/เปิด)
-    id: 'cabinet_face', group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'Futuretech (ในวัสดุ)',
+    id: 'cabinet_face', partsLinked: true, group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'Futuretech (ในวัสดุ)',
     icon: '🚪', materialLabel: 'สีเฟรม (มีผลราคา)', materials: ['สีดำ', 'สีทอง'], defMaterial: 'สีดำ',
     defForm: 'บานเลื่อน', forms: ['บานเลื่อน', 'บานเปิด'],
     defaults: { w: 120, h: 240, p: 2 }, defGlass: 'ใส 5มม.', minP: 1, maxP: 3, faceHint: 'แนะนำพื้นที่/บาน ≤ 1.7 ตร.ม. (บานใหญ่กว่านี้เสี่ยงแอ่น)',
@@ -1301,7 +1301,7 @@ export const PRODUCTS = {
   shower: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน ชุด Shower") — บานตาย(W×H) + ประตู(spec.dw×spec.dh) + ช่องปูน(spec.cw)
     // material=ชุด(สแตนเลส/อลู) · form=แบบ(บานตาย/+เปิด/+เลื่อน) · ค่าแรงติดตั้งพับในทุน (ผลิต0)
-    id: 'shower', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-', laborKey: 'Shower (ในวัสดุ)',
+    id: 'shower', partsLinked: true, group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-', laborKey: 'Shower (ในวัสดุ)',
     icon: '🚿',
     materialLabel: 'ชุด', materials: ['สแตนเลส', 'อลูมิเนียม'], defMaterial: 'สแตนเลส',
     defForm: 'บานตาย+บานเปิด', forms: ['บานตาย', 'บานตาย+บานเปิด', 'บานตาย+บานเลื่อน'],
@@ -1334,7 +1334,7 @@ export const PRODUCTS = {
   // ── รุ่นใหม่ที่รอ BOM (พี่อนุมัติ 29มิ.ย. · sellDirect X รอราคา → เลือกได้ทั้ง G1 และ G6) ──
   frameless_door: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานเปลือย") — กระจกเทมเปอร์ + อุปกรณ์ตามแบบ (ไม่มีเฟรมอลู · ค่าแรงติดตั้ง=บานเปิด)
-    id: 'frameless_door', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานเปลือย (ติดตาย/สวิง/เลื่อน)', brand: '-', laborKey: 'บานเปลือย',
+    id: 'frameless_door', partsLinked: true, group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานเปลือย (ติดตาย/สวิง/เลื่อน)', brand: '-', laborKey: 'บานเปลือย',
     icon: '🚪', materialLabel: 'แบบบานเปลือย', materials: ['ติดตาย', 'สวิง (ประตู)', 'เลื่อน'], defMaterial: 'สวิง (ประตู)',
     addons: ['stainless', 'demolish'],
     defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 100, h: 220, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 4,
@@ -1350,7 +1350,7 @@ export const PRODUCTS = {
   },
   pivot: {
     // ถอดทุน BOM R4.0 (ไฟล์ "ถอดทุน_งานใหม่" ชีต "คิดทุน บานหมุน") — เหมือนบานเปิด แต่จุดหมุนแทนบานพับ
-    id: 'pivot', group: 1, name: 'บานหมุน (Pivot)', brand: 'EURO', laborKey: 'บานหมุน',
+    id: 'pivot', partsLinked: true, group: 1, name: 'บานหมุน (Pivot)', brand: 'EURO', laborKey: 'บานหมุน',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['stainless', 'frame_wrap', 'demolish'],
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 2,
@@ -1379,7 +1379,7 @@ export const PRODUCTS = {
   fold_lift: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน เฟี้ยมยก") — เฟี้ยมยูโรหมุน 90° · เฟรม F79xx (ราคาสีอบขาว/ดำ D-col) + HD + ยาง + กระจก
     // seg = Σยาว(ซม.)/100 เป็นเมตร (STOCK_LEN 6.4) · P = จำนวนบานเฟี้ยม N · ราคาสีพิเศษยังใช้ฐานอบขาว/ดำ (kg=0 · ปรับทีหลัง)
-    id: 'fold_lift', group: 1, name: 'บานเฟี้ยมยก', brand: 'EURO', laborKey: 'บานเฟี้ยมยก',
+    id: 'fold_lift', partsLinked: true, group: 1, name: 'บานเฟี้ยมยก', brand: 'EURO', laborKey: 'บานเฟี้ยมยก',
     icon: '🚪', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'],
     addons: ['mosquito', 'frame_wrap', 'demolish'],
     defaults: { w: 200, h: 120, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 8,
@@ -1415,7 +1415,7 @@ export const PRODUCTS = {
   bansolid: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานโซลิด") — บานเปิด + ลูกฟูก2ทาง 2 ฝั่ง + เส้นคาดตาราง 2 ฝั่ง (ไม่มีกระจก)
     // ลูกฟูก/คาดตาราง = SlimLux (mult_slim=1) · ราคาสีอบขาว/ดำ ลูกฟูก 432 · คาดตาราง 140 (แปรตามสีทีหลัง)
-    id: 'bansolid', group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
+    id: 'bansolid', partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['stainless', 'frame_wrap', 'demolish'],
     defaults: { w: 150, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 2,

@@ -86,16 +86,21 @@ export function computeCost(PB, prod, opt) {
   const lines = [];
   let aluCost = 0, aluKg = 0;
 
+  // ราคาต่อชิ้นจาก PB.PARTS (เฉพาะสินค้าติดธง partsLinked = รุ่นถอดทุนใหม่ · แก้ราคาที่ stock แล้วเปลี่ยนตาม)
+  // ตั้งต้น PARTS = ราคาเดิมใน BOM → behavior-preserving (verify 63/63 คงเดิม) · รุ่นเดิม (ไม่ติดธง) ใช้ it.price ปกติ
+  const pPrice = (name, base) => (prod.partsLinked && PB.PARTS && name in PB.PARTS) ? PB.PARTS[name] : base;
+
   // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
   for (const it of (prod.alu || [])) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
     const count = val(it.count);
     const bars = barsNeeded(seg, count, stockLen);
     if (bars <= 0) continue;
-    const amount = bars * it.price * mult;
+    const price = pPrice(it.name, it.price);
+    const amount = bars * price * mult;
     aluCost += amount;
     aluKg += bars * (it.kg || 0);
-    lines.push({ cat: 'alu', name: it.name, qty: bars, unit: 'เส้น', unitPrice: round2(it.price * mult), amount: round2(amount) });
+    lines.push({ cat: 'alu', name: it.name, qty: bars, unit: 'เส้น', unitPrice: round2(price * mult), amount: round2(amount) });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;
@@ -120,7 +125,7 @@ export function computeCost(PB, prod, opt) {
   for (const it of (prod.hardware || [])) {
     const count = val(it.count);
     if (count <= 0) continue;
-    let price = typeof it.price === 'number' ? it.price : val(it.price);   // รองรับ price เป็นสูตร (เช่น เลือกกล่องระแนงประตูรั้ว)
+    let price = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));   // รองรับ price เป็นสูตร + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
     const amount = count * price;
@@ -131,7 +136,7 @@ export function computeCost(PB, prod, opt) {
   for (const it of (prod.consum || [])) {
     const count = val(it.count);
     if (count <= 0) continue;
-    let unitPrice = typeof it.price === 'number' ? it.price : val(it.price);  // ราคา expression ได้ (cascade LUT)
+    let unitPrice = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));  // ราคา expression + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
     const amount = count * unitPrice;
