@@ -1262,18 +1262,30 @@ export const PRODUCTS = {
     note: 'ตู้อลู Future Tech — ทุนจริงจากบานตู้.xlsx: บานหน้า(เส้น+กระจก+ค่าแรง ต่อบาน) + ผนัง 2 ข้าง(1,383/ตร.ม.) + ชั้น(1,416/ตร.ม.) → ×กำไร R4.0 · จำนวนบาน 1-3 · ตู้รองเท้า=ชั้นถี่(0.2ม.)+ลึก 0.4ม. · ⚠️บานเปิดกว้าง/ทอง-เปิด-เล็ก + ชั้นกระจก(ทุนรอ) เช็คซ้ำ',
   },
   cabinet_face: {
-    id: 'cabinet_face', group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', sellCabinet: true, faceOnly: true,
-    showColor: true, colorNote: '🎨 สีอบ/ผิว — เลือกได้ พิมพ์ลงใบ · ยังไม่บวกเงิน (รอราคาทุนสีต่อ ตร.ม. ใน Excel) · "ฐานเฟรม" ด้านล่างมีผลราคาจริง',
-    icon: '🚪', materialLabel: 'ฐานเฟรม (มีผลราคา)', materials: ['สีดำ', 'สีทอง'], defMaterial: 'สีดำ',
+    // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานตู้ Futuretech") — เฟรม+เสามือจับ+อุปกรณ์+กระจก · คูณจำนวนบาน (P)
+    // W=กว้างรวมทุกบาน · H=สูง · P=จำนวนบาน · material=สีเฟรม(สีดำ=อบขาว/ดำ · สีทอง=ชุบ) · form=แบบ(เลื่อน/เปิด)
+    id: 'cabinet_face', group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'Futuretech (ในวัสดุ)',
+    icon: '🚪', materialLabel: 'สีเฟรม (มีผลราคา)', materials: ['สีดำ', 'สีทอง'], defMaterial: 'สีดำ',
     defForm: 'บานเลื่อน', forms: ['บานเลื่อน', 'บานเปิด'],
-    kindOpts: [
-      { key: 'faceMat', label: 'วัสดุหน้าบาน', def: 'glass', opts: [['glass', 'หน้ากระจก'], ['alu', 'หน้าอลูทึบ (รอราคา X)']] },   // FutureTech อลู/กระจก (มติ 14มิ.ย. · ส่วนต่าง รอ BOM)
-      { key: 'faceGlass', label: 'กระจกหน้าบาน', def: 'clear', opts: [['clear', 'ใส'], ['frost', 'ฝ้า (+500)'], ['black', 'ชาดำ (+500)']], showIf: { key: 'faceMat', val: 'glass' } }, // R3.9 ftglasscolor +500/ตร.ม.
-      { key: 'faceColor', label: 'สีหน้าบาน (อลู)', def: 'white', opts: [['white', 'ขาว (ฟรี)'], ['black', 'ดำ (ฟรี)'], ['special', 'สีพิเศษ (+1,500–3,500/บาน)']], showIf: { key: 'faceMat', val: 'alu' } }, // R3.9 FT_COLOR_PLUS ตามพื้นที่/บาน
+    defaults: { w: 120, h: 240, p: 2 }, defGlass: 'ใส 5มม.', minP: 1, maxP: 3, faceHint: 'แนะนำพื้นที่/บาน ≤ 1.7 ตร.ม. (บานใหญ่กว่านี้เสี่ยงแอ่น)',
+    vars: {},
+    glass: 'W*H',
+    hardware: [
+      { name: 'เฟรม (บน+ล่าง+ข้าง) อบขาว/ดำ', price: 975, unit: 'เส้น6ม', count: "material==='สีดำ'?(2*(W*100/P)+H*100)/600*P:0" },
+      { name: 'เฟรม (บน+ล่าง+ข้าง) สีชุบ', price: 875, unit: 'เส้น6ม', count: "material==='สีทอง'?(2*(W*100/P)+H*100)/600*P:0" },
+      { name: 'เสามือจับ อบขาว/ดำ', price: 1500, unit: 'เส้น6ม', count: "material==='สีดำ'?(H*100/600)*P:0" },
+      { name: 'เสามือจับ สีชุบ', price: 1015, unit: 'เส้น6ม', count: "material==='สีทอง'?(H*100/600)*P:0" },
+      { name: 'บานพับ (4ชิ้น/บาน)', price: 80, unit: 'ถุง', count: "form==='บานเปิด'?P:0" },
+      { name: 'ฉากประกอบมุม', price: 12, unit: 'ชิ้น', count: '4*P' },
+      { name: 'สกรู (8/บาน)', price: 0.5, unit: 'ตัว', count: '8*P' },
+      { name: 'ชุดล้อ (4ล้อ)', price: 100, unit: 'ชุด', count: "form==='บานเลื่อน'?P:0" },
+      { name: 'รางยู', price: 180, unit: 'เส้น6ม', count: "form==='บานเลื่อน'?(2*(W/P)/6)*P:0" },
+      { name: 'ค่ากรีดราง', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'?2*W:0" },
     ],
-    defaults: { w: 120, h: 240, p: 2 }, defGlass: null, minP: 1, maxP: 3, faceHint: 'แนะนำพื้นที่/บาน ≤ 1.7 ตร.ม. (บานใหญ่กว่านี้เสี่ยงแอ่น)',
-    alu: [], glass: null, hardware: [], consum: [],
-    note: 'ฝาตู้ Future Tech — เฉพาะบานหน้า · ทุนจริง/บาน = เส้น+อุปกรณ์(ตาราง ถอดของ) + กระจก(300/ตร.ม.) + วัสดุ/ค่าแรง/ค่ารถ 4,100 → ×กำไร R4.0 · ⚠️บานเปิดกว้าง/ทอง-เปิด-เล็ก เช็คซ้ำ',
+    consum: [
+      { name: 'ค่าแรง (ผลิต+ติดตั้ง)', price: 87.5, unit: 'ชม.', count: '12*P' },   // (ผลิต7+ติดตั้ง5)×87.5×บาน (Excel E25)
+    ],
+    note: 'ฝาตู้ Future Tech — ถอดทุน R4.0 (เฟรม+เสามือจับ+กระจก 5มม.) · สีเฟรม สีดำ=อบขาว/ดำ · สีทอง=ชุบ',
   },
 
   // ═══════════════════════ G6 ห้องกระจก ═══════════════════════
