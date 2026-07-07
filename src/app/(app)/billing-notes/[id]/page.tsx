@@ -111,7 +111,6 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               discount_pct={editDefaults.discount_pct}
               vat_rate={editDefaults.vat_rate}
               wht_rate={editDefaults.wht_rate}
-              labor_ratio={(bn as { labor_ratio?: number | null }).labor_ratio ?? null}
             />
           )}
           {writable && !isCancelled && (

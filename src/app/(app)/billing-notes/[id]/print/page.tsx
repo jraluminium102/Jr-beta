@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht, backoutVat, splitLaborMaterial, WHT_LABOR_RATE } from "@/lib/money";
+import { baht, backoutVat, WHT_LABOR_RATE } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -34,6 +34,11 @@ export default async function BillingPrintPage({
   const isSingle = !!selected;
   const installments = selected ? [selected] : allInstallments;
 
+  // รูปแบบท้ายใบ (เลือกตอนพิมพ์แยกงวด): plain=ยอดเดียว · vat=แยก VAT · material=ค่าของ · labor=ค่าแรง
+  const footerStyle = (["plain", "vat", "material", "labor"].includes(String(searchParams?.footer))
+    ? String(searchParams?.footer)
+    : "vat") as "plain" | "vat" | "material" | "labor";
+
   const totalPaid = installments.reduce((a, i) => a + (Number(i.paid_amount) || 0), 0);
   // ยอดรวมที่โชว์: ทั้งใบ = bn.total · แยกงวด = ยอดงวดนั้น
   const grandTotal = isSingle ? (Number(selected!.amount) || 0) : (Number(bn.total) || 0);
@@ -42,17 +47,42 @@ export default async function BillingPrintPage({
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
       {/* แถบเครื่องมือ — ไม่พิมพ์ */}
-      <div className="no-print sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
+      <div className="no-print sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
         <Link href={`/billing-notes/${bn.id}`} className="press inline-flex items-center gap-1.5 text-sm text-ink-2">
           <Icon name="arrowLeft" size={16} /> กลับ
         </Link>
+        {isSingle && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-ink-3">รูปแบบท้ายใบ:</span>
+            {([
+              { key: "plain", label: "ยอดเดียว" },
+              { key: "vat", label: "แยก VAT" },
+              { key: "material", label: "ค่าของ" },
+              { key: "labor", label: "ค่าแรง" },
+            ] as const).map((o) => (
+              <Link
+                key={o.key}
+                href={`/billing-notes/${bn.id}/print?installment=${selSeq}&footer=${o.key}`}
+                className={`press text-xs rounded-lg px-2.5 py-1.5 border ${
+                  footerStyle === o.key
+                    ? "bg-brand text-white border-brand"
+                    : "bg-white text-ink-2 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {o.label}
+              </Link>
+            ))}
+          </div>
+        )}
         <PrintButton />
       </div>
 
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
         <PrintLetterhead
-          docTitle={isSingle ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq})` : "ใบวางบิล/ใบแจ้งหนี้"}
+          docTitle={isSingle
+            ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq}${footerStyle === "material" ? " · ค่าของ" : footerStyle === "labor" ? " · ค่าแรง" : ""})`
+            : "ใบวางบิล/ใบแจ้งหนี้"}
           docColor={DOC_COLORS.billing}
           infoRows={[
             { label: "เลขที่", value: <span className="font-mono font-semibold">{bn.code}</span> },
@@ -112,23 +142,21 @@ export default async function BillingPrintPage({
                   </>
                 );
               })()}
-              {/* พิมพ์แยกงวด — ถอด VAT ออกจากยอดงวด (back-out) + แยกค่าของ/ค่าแรง ถ้ามี labor_ratio (บัญชี approve) */}
-              {isSingle && (() => {
+              {/* พิมพ์แยกงวด — footer ตามที่เลือกบนหน้าพิมพ์ (plain=ไม่แยก · vat/material/labor=ถอด VAT ออกจากยอดงวด) */}
+              {isSingle && footerStyle !== "plain" && (() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
                 const vatRate = Number(b.vat_rate) || 0;
                 const sub = Number(b.subtotal) || 0;
-                // ใบ import เก่า/ไม่รู้ว่ามี VAT ไหม → โชว์แค่ยอดงวดนี้ ไม่ถอด VAT มั่ว
+                // ใบ import เก่า/ไม่รู้ว่ามี VAT ไหม → ไม่ถอด VAT มั่ว (โชว์แค่ยอดงวด)
                 if (sub <= 0) return null;
                 const { base, vat } = backoutVat(grandTotal, vatRate);
-                // มีหัก ณ ที่จ่ายระดับใบ → ยอดงวดเป็นยอดหลัง WHT ถอด VAT/แยกค่าแรงจะเพี้ยน → ไม่แยก (บัญชีเตือน)
-                const laborRatio = b.labor_ratio == null || Number(b.wht_amt) > 0 ? null : Number(b.labor_ratio);
-                const split = laborRatio == null ? null : splitLaborMaterial(base, laborRatio);
+                const baseLabel = footerStyle === "material" ? "ค่าวัสดุ/ค่าของ (ก่อน VAT)"
+                  : footerStyle === "labor" ? "ค่าแรง/ค่าบริการ (ก่อน VAT)"
+                  : "ยอดก่อน VAT (งวดนี้)";
                 return (
                   <>
-                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าวัสดุ/ค่าของ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.material)}</td></tr>}
-                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าแรง/ค่าบริการ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.labor)}</td></tr>}
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">{split ? "รวมยอดก่อน VAT (งวดนี้)" : "ยอดก่อน VAT (งวดนี้)"}</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">{baseLabel}</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
                     {vat > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {vatRate}% (งวดนี้)</td><td className="text-right tabular-nums">{baht(vat)}</td></tr>}
                   </>
                 );
@@ -144,23 +172,21 @@ export default async function BillingPrintPage({
         {isSingle && (() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const b = bn as any;
-          // ใบมีหัก ณ ที่จ่ายระดับใบ → เตือนอ้างอิงยอดทั้งสัญญา (เช็คก่อน · เคสนี้ไม่แยกค่าแรงอยู่แล้ว)
+          // เลือก "ค่าแรง" + ใบไม่มี WHT ระดับใบ → หัก ณ ที่จ่าย 3% ของค่าแรงงวดนี้ (ข้อมูลให้ลูกค้าหัก)
+          if (footerStyle === "labor" && Number(b.subtotal) > 0 && Number(b.wht_amt) <= 0) {
+            const { base } = backoutVat(grandTotal, Number(b.vat_rate) || 0);
+            const whtLabor = Math.round((base * WHT_LABOR_RATE) / 100);
+            return (
+              <div className="mt-4 text-xs text-gray-600">
+                * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% ของค่าแรง/ค่าบริการงวดนี้ (฿{baht(base)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
+              </div>
+            );
+          }
+          // ใบมีหัก ณ ที่จ่ายระดับใบ → เตือนอ้างอิงยอดทั้งสัญญา กันหักซ้ำรายงวด
           if (Number(b.wht_amt) > 0) {
             return (
               <div className="mt-4 text-xs text-gray-600">
                 * หัก ณ ที่จ่ายคิดจากยอดรวมทั้งสัญญา ({b.wht_rate}% = ฿{baht(Number(b.wht_amt) || 0)}) — ดูใบวางบิลเต็ม ไม่หักซ้ำรายงวด
-              </div>
-            );
-          }
-          // ไม่มี WHT ระดับใบ แต่มี labor_ratio → หัก ณ ที่จ่าย 3% เฉพาะ "ค่าแรง" งวดนี้ (ข้อมูลให้ลูกค้าหัก)
-          const laborRatio = b.labor_ratio == null ? null : Number(b.labor_ratio);
-          if (laborRatio != null && Number(b.subtotal) > 0) {
-            const { base } = backoutVat(grandTotal, Number(b.vat_rate) || 0);
-            const { labor } = splitLaborMaterial(base, laborRatio);
-            const whtLabor = Math.round((labor * WHT_LABOR_RATE) / 100);
-            return (
-              <div className="mt-4 text-xs text-gray-600">
-                * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% เฉพาะค่าแรง/ค่าบริการ (งวดนี้ = ฿{baht(labor)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
               </div>
             );
           }
