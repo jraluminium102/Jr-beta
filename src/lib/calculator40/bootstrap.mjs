@@ -98,6 +98,21 @@ export function applyBootstrap(PRODUCTS, R39DATA) {
       p.addons = ['frame_wrap']; na++;
     }
   });
+  // ── FIX: เติม คาดตาราง (grid) + แผ่นทึบล่าง (solid_panel) ให้ครบทุกบาน G1 ──
+  // บั๊ก: บล็อกด้านบน (บรรทัด 72 `if (...p.addons) return`) ข้ามรุ่นที่ตั้ง addons เองตอน G6 parity (2ก.ค.)
+  // → grid/solid_panel ที่ควรมี "ทุกบาน" หายไปเกือบหมด · pass นี้ merge กลับ (dedupe) ใช้ regex เดียวกับต้นฉบับ
+  // ไม่ใส่ให้ บานกระจกเปลือย/สำเร็จ (ไม่มีเฟรมอลูให้คาด/ใส่แผ่นทึบ) — shower/บานเปลือย/YKK
+  Object.values(PRODUCTS).forEach(function (p) {
+    if (p.group !== 1 || !Array.isArray(p.addons)) return;
+    const nm = p.name || '', sc = p.subcat || '';
+    const frameless = /เปลือย|shower|YKK|สำเร็จ/i.test(nm) || /เปลือย|สำเร็จ/.test(sc);
+    if (frameless) return;
+    if (!p.addons.includes('grid')) p.addons.push('grid');   // คาดตาราง: ทุกบาน G1 (ต้นฉบับบรรทัด 75)
+    // แผ่นทึบล่าง: บานกระจกหลัก (regex ต้นฉบับบรรทัด 89) — เว้นดัดโค้ง/ระแนง/กระทุ้ง/เกล็ด/ยก/หมุน
+    if (!p.addons.includes('solid_panel') && /เลื่อน|เปิด|ประตู|เฟี้ยม|ติดตาย|ทึบ/i.test(nm) && !/ดัดโค้ง|ระแนง/.test(nm)) {
+      p.addons.push('solid_panel');
+    }
+  });
   // ── สีอลูที่เลือกได้ต่อรุ่น (ตาม dropdown Excel มด) — ล็อกสีเฉพาะที่รุ่นนั้นมีจริง ──
   const C6 = ['white', 'black', 'sahara', 'sahara_black', 'wood_teak', 'wood_maho', 'wood_whiteoak', 'special', 'wood_special'];       // SMS/รางบน/เฟี้ยม/E-series (6 หมวด)
   const C9 = C6.concat(['aztec']);                                                                                              // ยูโร/เปิด/กระทุ้ง/PC/รั้ว (+แอทแทคเกรย์)
