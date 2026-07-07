@@ -1266,13 +1266,32 @@ export const PRODUCTS = {
     note: 'บานเปลือยกระจกเทมเปอร์ (ไม่มีเฟรมอลู) — ราคาขายอ้างอิง R3.9: ติดตาย bucket FRAMELESS 7,200→4,500 ฿/ตร.ม. ขั้นต่ำ 7,000 · สวิง/เลื่อน +8,000/บาน (บานพับ/ราง+อุปกรณ์) · ⚠️ ทุนจริงรอ Excel',
   },
   pivot: {
-    id: 'pivot', group: 1, name: 'บานหมุน (Pivot)', brand: 'เมืองทอง',
-    sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: '26000',
-    icon: '🚪', materialLabel: 'แบบ', materials: ['บานเดี่ยว', 'บานคู่'], defMaterial: 'บานเดี่ยว',
-    addons: ['stainless', 'frame_wrap', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
-    defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 100, h: 240, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 2,
-    vars: { SR: 'area<2.5?14000:(area<3?13000:(area<3.5?12000:(area<4?11000:(area<4.5?10000:9000))))' }, alu: [], glass: null, hardware: [], consum: [],
-    note: 'บานหมุนแกนกลาง Pivot (เมืองทอง) — ราคาขายอ้างอิง R3.9: bucket PIVOT 14,000→9,000 ฿/ตร.ม. ขั้นต่ำ 26,000 · ⚠️ ทุนจริงรอ Excel',
+    // ถอดทุน BOM R4.0 (ไฟล์ "ถอดทุน_งานใหม่" ชีต "คิดทุน บานหมุน") — เหมือนบานเปิด แต่จุดหมุนแทนบานพับ
+    id: 'pivot', group: 1, name: 'บานหมุน (Pivot)', brand: 'EURO', laborKey: 'บานหมุน',
+    icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
+    addons: ['stainless', 'frame_wrap', 'demolish'],
+    defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 2,
+    vars: { S: "form==='มีธรณี'?1:0" },
+    alu: [
+      { name: 'วงกบ 3 ด้าน F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1' },
+      { name: 'ธรณี F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
+      { name: 'ตบธรณี F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
+      { name: 'เสริมใต้บาน F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
+      { name: 'กรอบประตู 7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },
+      { name: 'คิ้ว F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
+      { name: 'เปิดกลาง F7945c', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
+    ],
+    glass: 'W*H',
+    hardware: [
+      { name: 'จุดหมุน (2 ตัว/บาน)', price: 450, unit: 'ชุด', count: '2*P' },
+      { name: 'มือจับ+ล็อค ใบหลัก', price: 1045, unit: 'ชุด', count: '1' },
+      { name: 'ชุดกลอน ใบลอง', price: 450, unit: 'ชุด', count: 'Math.max(P-1,0)' },
+      { name: 'น็อตเฟรม', price: 1, unit: 'ตัว', count: 'S?8:6' },
+    ],
+    consum: [
+      { name: 'ยาง', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      SILICONE,
+    ],
   },
   ykk: {
     id: 'ykk', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานสำเร็จ YKK', brand: 'YKK',
