@@ -62,6 +62,7 @@ const createSchema = z.object({
   customer_name: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
   customer_tel: z.string().optional(),
   customer_area: z.string().optional(),
+  customer_id: z.string().uuid().optional(),   // ผูกลูกค้าจากทะเบียนโดยตรง (หน้าเขียนแบบเลือกลูกค้าที่มีอยู่)
   channel: z.enum(["LINE", "FACEBOOK", "INSTAGRAM", "OTHER"]),
   assess_date: z.string().min(1, "กรุณาระบุวันเข้าประเมิน"),
   estimator_id: z.string().uuid().optional(),
@@ -70,21 +71,24 @@ const createSchema = z.object({
 // POST /api/jobs — create
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("jobs", "write");
-  const body = createSchema.parse(await req.json());
+  const { customer_id: bodyCustomerId, ...body } = createSchema.parse(await req.json());
 
   // B1/B2: ผูก/สร้างลูกค้าในตาราง customers (dedup เบอร์ normalize) → ลูกค้าโผล่หน้าทะเบียนลูกค้า
+  // ถ้าส่ง customer_id มา (เลือกจากทะเบียนแล้ว) → ผูกตรง ไม่ต้อง find_or_create (กันลูกค้าซ้ำ)
   // ไม่บล็อกการสร้างงานถ้า upsert ลูกค้าพลาด
-  let customerId: string | null = null;
-  try {
-    const { data: cid } = await (ctx.supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null }>;
-    }).rpc("find_or_create_customer", {
-      p_name: body.customer_name,
-      p_phone: body.customer_tel ?? "",
-      p_address: body.customer_area ?? "",
-    });
-    customerId = cid ?? null;
-  } catch { /* keep going — งานยังสร้างได้ */ }
+  let customerId: string | null = bodyCustomerId ?? null;
+  if (!customerId) {
+    try {
+      const { data: cid } = await (ctx.supabase as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null }>;
+      }).rpc("find_or_create_customer", {
+        p_name: body.customer_name,
+        p_phone: body.customer_tel ?? "",
+        p_address: body.customer_area ?? "",
+      });
+      customerId = cid ?? null;
+    } catch { /* keep going — งานยังสร้างได้ */ }
+  }
 
   const { data, error } = await ctx.supabase
     .from("jobs")

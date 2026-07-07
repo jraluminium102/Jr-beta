@@ -10,9 +10,11 @@ import type { DesignerOption } from "@/app/(app)/designer/page";
 type Mode = "search" | "walkin";
 
 type SearchResult = {
-  id: string;
+  kind: "job" | "customer";   // job = งานที่มีอยู่ · customer = ลูกค้าในทะเบียน (ยังไม่มีงาน)
+  id: string;                 // job: job id · customer: customer id
   job_code: string | null;
   customer_name: string;
+  customer_tel?: string;      // สำหรับ kind=customer → ใช้ตอนสร้างงาน
   design_state: DesignState;
   designer_name: string | null;
   designer_ref: number | null;
@@ -133,6 +135,7 @@ function AssignFields({
   onDueDateChange,
   onActionChange,
   saving,
+  hideAction,
 }: {
   designers: DesignerOption[];
   designerRef: number | null;
@@ -142,6 +145,7 @@ function AssignFields({
   onDueDateChange: (v: string) => void;
   onActionChange: (v: "DRAWING" | "REVISING") => void;
   saving: boolean;
+  hideAction?: boolean;
 }) {
   const fieldCls =
     "focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none min-h-[44px] placeholder-white/40 [&>option]:text-gray-800 disabled:opacity-60";
@@ -179,27 +183,29 @@ function AssignFields({
         />
       </div>
 
-      <div>
-        <label className={lblCls}>
-          การกระทำ <span className="text-rose-300">*</span>
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          <ActionBtn
-            active={action === "DRAWING"}
-            onClick={() => onActionChange("DRAWING")}
-            disabled={saving}
-            label="เริ่มเขียนแบบ"
-            dot="#2563eb"
-          />
-          <ActionBtn
-            active={action === "REVISING"}
-            onClick={() => onActionChange("REVISING")}
-            disabled={saving}
-            label="ส่งแก้แบบ"
-            dot="#B3151D"
-          />
+      {!hideAction && (
+        <div>
+          <label className={lblCls}>
+            การกระทำ <span className="text-rose-300">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <ActionBtn
+              active={action === "DRAWING"}
+              onClick={() => onActionChange("DRAWING")}
+              disabled={saving}
+              label="เริ่มเขียนแบบ"
+              dot="#2563eb"
+            />
+            <ActionBtn
+              active={action === "REVISING"}
+              onClick={() => onActionChange("REVISING")}
+              disabled={saving}
+              label="ส่งแก้แบบ"
+              dot="#B3151D"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -266,12 +272,18 @@ function SearchMode({
       setSearching(true);
       setSearchErr("");
       try {
-        const res = await fetch(`/api/jobs?q=${encodeURIComponent(debouncedQ)}&limit=20`);
-        const json = await res.json();
+        // ค้นทั้ง "งานที่มีอยู่" (jobs) และ "ลูกค้าในทะเบียน" (customers) พร้อมกัน
+        // → ลูกค้าที่เพิ่งสร้างในทะเบียน (ยังไม่มีงาน) ก็เจอ แล้วสร้างงานเขียนแบบให้ได้เลย
+        const [jobRes, custRes] = await Promise.all([
+          fetch(`/api/jobs?q=${encodeURIComponent(debouncedQ)}&limit=20`),
+          fetch(`/api/customers?q=${encodeURIComponent(debouncedQ)}`),
+        ]);
+        const jobJson = await jobRes.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "ค้นหาไม่สำเร็จ");
-        // Map to SearchResult shape (job list response uses full row)
-        const rows = (json.data as Record<string, unknown>[]).map((j) => ({
+        if (!jobRes.ok) throw new Error(jobJson.error ?? "ค้นหาไม่สำเร็จ");
+        const jobRows: Record<string, unknown>[] = jobJson.data ?? [];
+        const jobs: SearchResult[] = jobRows.map((j) => ({
+          kind: "job" as const,
           id: j.id as string,
           job_code: j.job_code as string | null,
           customer_name: j.customer_name as string,
@@ -281,7 +293,27 @@ function SearchMode({
             : null),
           designer_ref: j.designer_ref as number | null,
         }));
-        setResults(rows);
+
+        // ลูกค้าในทะเบียนที่ "ยังไม่มีงาน" ในผลลัพธ์ (กันซ้ำกับงานที่เจอแล้ว)
+        const jobCustIds = new Set(jobRows.map((j) => j.customer_id as string).filter(Boolean));
+        let customers: SearchResult[] = [];
+        if (custRes.ok) {
+          const custJson = await custRes.json().catch(() => null);
+          const custRows: Record<string, unknown>[] = custJson?.data ?? [];
+          customers = custRows
+            .filter((c) => !jobCustIds.has(c.id as string))
+            .map((c) => ({
+              kind: "customer" as const,
+              id: c.id as string,
+              job_code: null,
+              customer_name: c.name as string,
+              customer_tel: (c.phone as string) || "",
+              design_state: "NOT_STARTED" as DesignState,
+              designer_name: null,
+              designer_ref: null,
+            }));
+        }
+        setResults([...jobs, ...customers]);
       } catch (e) {
         if (!cancelled) setSearchErr(e instanceof Error ? e.message : "ค้นหาไม่สำเร็จ");
       } finally {
@@ -307,8 +339,28 @@ function SearchMode({
     setSaveErr("");
     setSaving(true);
     try {
+      let jobId = selected.id;
+      // ลูกค้าจากทะเบียน (ยังไม่มีงาน) → สร้างงานให้ก่อน (ผูก customer_id ตรง กันลูกค้าซ้ำ)
+      if (selected.kind === "customer") {
+        const createRes = await fetch("/api/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer_name: selected.customer_name,
+            customer_tel: selected.customer_tel || undefined,
+            customer_id: selected.id,
+            channel: "OTHER",
+            assess_date: TODAY,
+          }),
+        });
+        const createJson = await createRes.json();
+        if (!createRes.ok) throw new Error(createJson.error ?? "สร้างงานไม่สำเร็จ");
+        jobId = createJson.data?.id;
+        if (!jobId) throw new Error("ไม่ได้รับ ID งานใหม่");
+      }
+
       // 1) Assign designer + due date
-      const patchJob = await fetch(`/api/jobs/${selected.id}`, {
+      const patchJob = await fetch(`/api/jobs/${jobId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ designer_ref: designerRef, design_due_date: dueDate || null }),
@@ -316,16 +368,17 @@ function SearchMode({
       const patchJobJson = await patchJob.json();
       if (!patchJob.ok) throw new Error(patchJobJson.error ?? "มอบหมายงานไม่สำเร็จ");
 
-      // 2) Change design state
-      const patchState = await fetch(`/api/designer/${selected.id}`, {
+      // 2) Change design state (ลูกค้าใหม่ = DRAWING เสมอ)
+      const nextState = selected.kind === "customer" ? "DRAWING" : action;
+      const patchState = await fetch(`/api/designer/${jobId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: action }),
+        body: JSON.stringify({ state: nextState }),
       });
       const patchStateJson = await patchState.json();
       if (!patchState.ok) throw new Error(patchStateJson.error ?? "เปลี่ยนสถานะไม่สำเร็จ");
 
-      onAdded(action);
+      onAdded(nextState);
       onClose();
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
@@ -381,25 +434,34 @@ function SearchMode({
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-white text-sm">
-                      {job.job_code ?? "—"}
+                    <span className="font-semibold text-white text-sm truncate">
+                      {job.kind === "customer" ? job.customer_name : (job.job_code ?? "—")}
                     </span>
-                    <span className="text-white/60 text-[12px] truncate">{job.customer_name}</span>
+                    {job.kind === "job" && (
+                      <span className="text-white/60 text-[12px] truncate">{job.customer_name}</span>
+                    )}
+                    {job.kind === "customer" && job.customer_tel && (
+                      <span className="text-white/50 text-[12px] truncate">{job.customer_tel}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] text-white/50">
-                      {DESIGN_STATE_TH[job.design_state]}
+                      {job.kind === "customer" ? "จากทะเบียนลูกค้า · จะสร้างงานเขียนแบบให้" : DESIGN_STATE_TH[job.design_state]}
                     </span>
                     {job.designer_name && (
                       <span className="text-[11px] text-white/40">· {job.designer_name}</span>
                     )}
                   </div>
                 </div>
-                {onBoard && (
+                {job.kind === "customer" ? (
+                  <span className="shrink-0 text-[10px] text-emerald-300 bg-emerald-400/20 border border-emerald-300/30 rounded-full px-2 py-0.5 font-medium whitespace-nowrap">
+                    ลูกค้าใหม่
+                  </span>
+                ) : onBoard ? (
                   <span className="shrink-0 text-[10px] text-amber-300 bg-amber-400/20 border border-amber-300/30 rounded-full px-2 py-0.5 font-medium whitespace-nowrap">
                     อยู่บนบอร์ด
                   </span>
-                )}
+                ) : null}
               </button>
             );
           })}
@@ -408,19 +470,25 @@ function SearchMode({
 
       {/* No results hint */}
       {debouncedQ.trim() && !searching && results.length === 0 && !selected && (
-        <p className="text-[13px] text-white/40 text-center py-2">ไม่พบงานที่ตรงกับ "{debouncedQ}"</p>
+        <p className="text-[13px] text-white/40 text-center py-2">ไม่พบลูกค้า/งานที่ตรงกับ "{debouncedQ}"</p>
       )}
 
-      {/* Selected job summary */}
+      {/* Selected job/customer summary */}
       {selected && (
         <div className="glass-soft rounded-xl px-3.5 py-2.5 flex items-center gap-2.5">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white text-sm">{selected.job_code ?? "—"}</span>
-              <span className="text-white/60 text-[12px] truncate">{selected.customer_name}</span>
+              <span className="font-semibold text-white text-sm truncate">
+                {selected.kind === "customer" ? selected.customer_name : (selected.job_code ?? "—")}
+              </span>
+              {selected.kind === "job" && (
+                <span className="text-white/60 text-[12px] truncate">{selected.customer_name}</span>
+              )}
             </div>
-            <span className="text-[11px] text-white/45">{DESIGN_STATE_TH[selected.design_state]}</span>
-            {ON_BOARD_STATES.includes(selected.design_state) && (
+            <span className="text-[11px] text-white/45">
+              {selected.kind === "customer" ? "ลูกค้าจากทะเบียน · จะสร้างงานเขียนแบบให้อัตโนมัติ" : DESIGN_STATE_TH[selected.design_state]}
+            </span>
+            {selected.kind === "job" && ON_BOARD_STATES.includes(selected.design_state) && (
               <span className="ml-2 text-[11px] text-amber-300 bg-amber-400/20 border border-amber-300/30 rounded-full px-1.5 py-px font-medium">
                 งานนี้อยู่บนบอร์ดแล้ว — สามารถเปลี่ยนสถานะได้
               </span>
@@ -448,6 +516,7 @@ function SearchMode({
           onDueDateChange={setDueDate}
           onActionChange={setAction}
           saving={saving}
+          hideAction={selected.kind === "customer"}
         />
       )}
 
