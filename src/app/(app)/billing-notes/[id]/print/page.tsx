@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht, backoutVat, WHT_LABOR_RATE } from "@/lib/money";
+import { baht, backoutVat, splitLaborMaterial, WHT_LABOR_RATE } from "@/lib/money";
+import FooterLaborInput from "./FooterLaborInput";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -34,10 +35,12 @@ export default async function BillingPrintPage({
   const isSingle = !!selected;
   const installments = selected ? [selected] : allInstallments;
 
-  // รูปแบบท้ายใบ (เลือกตอนพิมพ์แยกงวด): plain=ยอดเดียว · vat=แยก VAT · material=ค่าของ · labor=ค่าแรง
-  const footerStyle = (["plain", "vat", "material", "labor"].includes(String(searchParams?.footer))
-    ? String(searchParams?.footer)
-    : "vat") as "plain" | "vat" | "material" | "labor";
+  // % ค่าแรง ตอนพิมพ์แยกงวด (?labor=<%>) — กรอกแล้ว footer แตกค่าของ/ค่าแรง · เว้นว่าง = โชว์แค่ยอดก่อน VAT/VAT
+  const laborRaw = searchParams?.labor;
+  const laborNum =
+    laborRaw != null && laborRaw !== "" && !Number.isNaN(Number(laborRaw))
+      ? Math.min(100, Math.max(0, Number(laborRaw)))
+      : null;
 
   const totalPaid = installments.reduce((a, i) => a + (Number(i.paid_amount) || 0), 0);
   // ยอดรวมที่โชว์: ทั้งใบ = bn.total · แยกงวด = ยอดงวดนั้น
@@ -52,27 +55,7 @@ export default async function BillingPrintPage({
           <Icon name="arrowLeft" size={16} /> กลับ
         </Link>
         {isSingle && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-ink-3">รูปแบบท้ายใบ:</span>
-            {([
-              { key: "plain", label: "ยอดเดียว" },
-              { key: "vat", label: "แยก VAT" },
-              { key: "material", label: "ค่าของ" },
-              { key: "labor", label: "ค่าแรง" },
-            ] as const).map((o) => (
-              <Link
-                key={o.key}
-                href={`/billing-notes/${bn.id}/print?installment=${selSeq}&footer=${o.key}`}
-                className={`press text-xs rounded-lg px-2.5 py-1.5 border ${
-                  footerStyle === o.key
-                    ? "bg-brand text-white border-brand"
-                    : "bg-white text-ink-2 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                {o.label}
-              </Link>
-            ))}
-          </div>
+          <FooterLaborInput billingNoteId={bn.id} seq={selSeq!} current={laborNum == null ? "" : String(laborNum)} />
         )}
         <PrintButton />
       </div>
@@ -81,7 +64,7 @@ export default async function BillingPrintPage({
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
         <PrintLetterhead
           docTitle={isSingle
-            ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq}${footerStyle === "material" ? " · ค่าของ" : footerStyle === "labor" ? " · ค่าแรง" : ""})`
+            ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq}${laborNum != null ? ` · ค่าแรง ${laborNum}%` : ""})`
             : "ใบวางบิล/ใบแจ้งหนี้"}
           docColor={DOC_COLORS.billing}
           infoRows={[
@@ -142,8 +125,8 @@ export default async function BillingPrintPage({
                   </>
                 );
               })()}
-              {/* พิมพ์แยกงวด — footer ตามที่เลือกบนหน้าพิมพ์ (plain=ไม่แยก · vat/material/labor=ถอด VAT ออกจากยอดงวด) */}
-              {isSingle && footerStyle !== "plain" && (() => {
+              {/* พิมพ์แยกงวด — ถอด VAT ออกจากยอดงวด · กรอก % ค่าแรง → แตกค่าของ/ค่าแรง (เว้นว่าง = โชว์แค่ยอดก่อน VAT) */}
+              {isSingle && (() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
                 const vatRate = Number(b.vat_rate) || 0;
@@ -151,12 +134,13 @@ export default async function BillingPrintPage({
                 // ใบ import เก่า/ไม่รู้ว่ามี VAT ไหม → ไม่ถอด VAT มั่ว (โชว์แค่ยอดงวด)
                 if (sub <= 0) return null;
                 const { base, vat } = backoutVat(grandTotal, vatRate);
-                const baseLabel = footerStyle === "material" ? "ค่าวัสดุ/ค่าของ (ก่อน VAT)"
-                  : footerStyle === "labor" ? "ค่าแรง/ค่าบริการ (ก่อน VAT)"
-                  : "ยอดก่อน VAT (งวดนี้)";
+                // มีหัก ณ ที่จ่ายระดับใบ → ยอดงวดหลัง WHT ถอด/แยกจะเพี้ยน → ไม่แยกค่าแรง (บัญชีเตือน)
+                const split = laborNum != null && Number(b.wht_amt) <= 0 ? splitLaborMaterial(base, laborNum) : null;
                 return (
                   <>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">{baseLabel}</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
+                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าวัสดุ/ค่าของ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.material)}</td></tr>}
+                    {split && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ค่าแรง/ค่าบริการ (งวดนี้)</td><td className="text-right tabular-nums">{baht(split.labor)}</td></tr>}
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">{split ? "รวมยอดก่อน VAT (งวดนี้)" : "ยอดก่อน VAT (งวดนี้)"}</td><td className="text-right tabular-nums">{baht(base)}</td></tr>
                     {vat > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {vatRate}% (งวดนี้)</td><td className="text-right tabular-nums">{baht(vat)}</td></tr>}
                   </>
                 );
@@ -172,13 +156,14 @@ export default async function BillingPrintPage({
         {isSingle && (() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const b = bn as any;
-          // เลือก "ค่าแรง" + ใบไม่มี WHT ระดับใบ → หัก ณ ที่จ่าย 3% ของค่าแรงงวดนี้ (ข้อมูลให้ลูกค้าหัก)
-          if (footerStyle === "labor" && Number(b.subtotal) > 0 && Number(b.wht_amt) <= 0) {
+          // กรอก % ค่าแรง + ใบไม่มี WHT ระดับใบ → หัก ณ ที่จ่าย 3% เฉพาะค่าแรงงวดนี้ (ข้อมูลให้ลูกค้าหัก)
+          if (laborNum != null && Number(b.subtotal) > 0 && Number(b.wht_amt) <= 0) {
             const { base } = backoutVat(grandTotal, Number(b.vat_rate) || 0);
-            const whtLabor = Math.round((base * WHT_LABOR_RATE) / 100);
+            const { labor } = splitLaborMaterial(base, laborNum);
+            const whtLabor = Math.round((labor * WHT_LABOR_RATE) / 100);
             return (
               <div className="mt-4 text-xs text-gray-600">
-                * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% ของค่าแรง/ค่าบริการงวดนี้ (฿{baht(base)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
+                * ลูกค้าที่เป็นนิติบุคคลหักภาษี ณ ที่จ่าย {WHT_LABOR_RATE}% เฉพาะค่าแรง/ค่าบริการ (งวดนี้ = ฿{baht(labor)} × {WHT_LABOR_RATE}% = ฿{baht(whtLabor)}) — เป็นข้อมูลประกอบ ยอดเรียกเก็บไม่หักออก
               </div>
             );
           }
