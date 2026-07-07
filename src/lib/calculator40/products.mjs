@@ -1257,13 +1257,20 @@ export const PRODUCTS = {
 
   // ── รุ่นใหม่ที่รอ BOM (พี่อนุมัติ 29มิ.ย. · sellDirect X รอราคา → เลือกได้ทั้ง G1 และ G6) ──
   frameless_door: {
-    id: 'frameless_door', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานเปลือย (ติดตาย/สวิง/เลื่อน)', brand: '-',
-    sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: '7000', sellAdd: "material==='ติดตาย'?0:8000*P",
+    // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานเปลือย") — กระจกเทมเปอร์ + อุปกรณ์ตามแบบ (ไม่มีเฟรมอลู · ค่าแรงติดตั้ง=บานเปิด)
+    id: 'frameless_door', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานเปลือย (ติดตาย/สวิง/เลื่อน)', brand: '-', laborKey: 'บานเปลือย',
     icon: '🚪', materialLabel: 'แบบบานเปลือย', materials: ['ติดตาย', 'สวิง (ประตู)', 'เลื่อน'], defMaterial: 'สวิง (ประตู)',
-    addons: ['stainless', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — เปลือย: มือจับสแตนเลส + รื้อของเดิม เท่านั้น (ไม่มีครอบวงกบ/มุ้ง — เฟรมไม่มีวงกบอลู)
-    defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 90, h: 220, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 4,
-    vars: { SR: 'area<2?7200:(area<3?6800:(area<4?6400:(area<5?6000:(area<6?5600:(area<7?5200:(area<8?4800:4500))))))' }, alu: [], glass: null, hardware: [], consum: [],
-    note: 'บานเปลือยกระจกเทมเปอร์ (ไม่มีเฟรมอลู) — ราคาขายอ้างอิง R3.9: ติดตาย bucket FRAMELESS 7,200→4,500 ฿/ตร.ม. ขั้นต่ำ 7,000 · สวิง/เลื่อน +8,000/บาน (บานพับ/ราง+อุปกรณ์) · ⚠️ ทุนจริงรอ Excel',
+    addons: ['stainless', 'demolish'],
+    defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 100, h: 220, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 4,
+    vars: {}, alu: [],
+    glass: 'W*H',
+    hardware: [
+      { name: 'ชุดล้อ+ราง (เลื่อน)', price: 3600, unit: 'ชุด', count: "material==='เลื่อน'?P:0" },
+      { name: 'โช้ค+จุดหมุน (สวิง)', price: 2330, unit: 'ชุด', count: "material==='สวิง (ประตู)'?P:0" },
+      { name: 'มือจับ', price: 1500, unit: 'ตัว', count: "material==='ติดตาย'?0:P" },
+      { name: 'ล็อค', price: 1200, unit: 'ชุด', count: "material==='ติดตาย'?0:P" },
+    ],
+    consum: [],
   },
   pivot: {
     // ถอดทุน BOM R4.0 (ไฟล์ "ถอดทุน_งานใหม่" ชีต "คิดทุน บานหมุน") — เหมือนบานเปิด แต่จุดหมุนแทนบานพับ
