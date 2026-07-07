@@ -1287,18 +1287,36 @@ export const PRODUCTS = {
     note: 'ห้องกระจก R4.0 — ประกอบจากรุ่นจริง: ผนังกระจก(เลือกชนิดบาน) + หลังคา(เลือกวัสดุ) + พื้น(ออปชั่น) · คิดด้วย cost-engine ของแต่ละชิ้น (ราคา R4.0 จริง · แยกราคาทุกด้าน) · room builder หลายช่อง/ต่อด้าน ทำต่อ',
   },
   shower: {
-    id: 'shower', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-',
-    sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: '12000',
+    // ถอดทุน BOM R4.0 (ชีต "คิดทุน ชุด Shower") — บานตาย(W×H) + ประตู(spec.dw×spec.dh) + ช่องปูน(spec.cw)
+    // material=ชุด(สแตนเลส/อลู) · form=แบบ(บานตาย/+เปิด/+เลื่อน) · ค่าแรงติดตั้งพับในทุน (ผลิต0)
+    id: 'shower', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-', laborKey: 'Shower (ในวัสดุ)',
     icon: '🚿',
-    kindOpts: [
-      { key: 'showerForm', label: 'รูปแบบ', def: 'door_fix', opts: [['door_fix', 'ประตู + กระจกติดตาย'], ['fix_only', 'ติดตายอย่างเดียว'], ['door_only', 'ประตูอย่างเดียว']] },
-      { key: 'doorType', label: 'ประเภทประตู', def: 'swing', opts: [['swing', 'บานเปิด'], ['sliding', 'บานเลื่อน']], hideIf: { key: 'showerForm', val: 'fix_only' } },
-    ],
-    defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 240, h: 200, p: 1 }, defGlass: 'เทมเปอร์ 10มม.', minP: 1, maxP: 1,
+    materialLabel: 'ชุด', materials: ['สแตนเลส', 'อลูมิเนียม'], defMaterial: 'สแตนเลส',
+    defForm: 'บานตาย+บานเปิด', forms: ['บานตาย', 'บานตาย+บานเปิด', 'บานตาย+บานเลื่อน'],
+    defaults: { w: 60, h: 200, p: 1 }, defGlass: 'เทมเปอร์ใส 10มม.', minP: 1, maxP: 1,
     addons: ['shower_corner', 'shower_hw'],
-    vars: { SR: 'W<=3?5500:(W<=3.5?5300:(W<=4?5200:5100))' },   // R3.9 bucket SHOWER ตามกว้าง (ม.) · ขั้นต่ำ 12,000 · ราคาขายตรง (ทุนจริงรอ Excel)
-    alu: [], glass: null, hardware: [], consum: [],
-    note: 'ห้องอาบน้ำกระจกเทมเปอร์ 10มม. — งานบาน G1 (ย้ายจาก G6 · 30มิ.ย.) · ราคา R3.9 bucket ตามกว้าง 5,500/5,300/5,200/5,100 ฿/ตร.ม. ขั้นต่ำ 12,000 · เข้ามุม +3,000 · อุปกรณ์ราว ดำ+4,000/ทอง+6,000 · ⚠️ ทุนจริงรอ Excel',
+    specOpts: [
+      { key: 'dw', type: 'number', step: 1, label: 'ประตู: กว้าง (ซม.)', def: '60' },
+      { key: 'dh', type: 'number', step: 1, label: 'ประตู: สูง (ซม.)', def: '200' },
+      { key: 'cw', type: 'number', step: 1, label: 'ช่องปูน: กว้าง (ซม. · สำหรับราว/ราง)', def: '120' },
+      { key: 'rail', label: 'ราวกลมด้านบน', opts: ['มี', 'ไม่มี'], def: 'มี' },
+    ],
+    vars: {},
+    glass: 'W*H + (+spec.dw||0)/100*(+spec.dh||0)/100',   // บานตาย(W×H ม²) + ประตู(dw×dh ซม→ม²)
+    hardware: [
+      { name: 'ยูจับกระจก', price: 200, unit: 'ตัว', count: "material==='สแตนเลส'?4:0" },
+      { name: 'ราวสแตนเลสกลม', price: 430, unit: 'เส้น6ม', count: "material==='สแตนเลส'&&spec.rail==='มี'&&form!=='บานตาย+บานเลื่อน'?(+spec.cw||0)/600:0" },
+      { name: 'ตัวจับกระจกคู่ราว', price: 175, unit: 'ตัว', count: "material==='สแตนเลส'&&spec.rail==='มี'&&form!=='บานตาย+บานเลื่อน'?2:0" },
+      { name: 'บานพับสแตนเลส', price: 1450, unit: 'ตัว', count: "material==='สแตนเลส'&&form==='บานตาย+บานเปิด'?2:0" },
+      { name: 'ยางปิดหน้าบาน', price: 150, unit: 'เส้น', count: "material==='สแตนเลส'&&form==='บานตาย+บานเปิด'?1:0" },
+      { name: 'รางสแตนเลสเลื่อน', price: 3500, unit: 'เส้น6ม', count: "material==='สแตนเลส'&&form==='บานตาย+บานเลื่อน'?(+spec.cw||0)/600:0" },
+      { name: 'มือจับสแตนเลส', price: 1500, unit: 'ตัว', count: "form==='บานตาย'?0:1" },
+      { name: 'ยู5หุนอลู (รอบแผ่น)', price: 200, unit: 'เส้น6ม', count: "material==='อลูมิเนียม'?(2*(W*100+H*100)+2*((+spec.dw||0)+(+spec.dh||0)))/600:0" },
+    ],
+    consum: [
+      { name: 'ค่าแรงติดตั้ง', price: 87.5, unit: 'ชม.', count: "form==='บานตาย'?5:6" },   // ตาย5/เปิด-เลื่อน6 ชม. × 87.5 (Excel E28)
+    ],
+    note: 'ห้องอาบน้ำกระจกเทมเปอร์ 10มม. — ถอดทุน R4.0 (สแตนเลส/อลู · บานตาย+ประตู) · กรอกขนาดประตู/ช่องปูนในช่องเสริม',
   },
 
   // ── รุ่นใหม่ที่รอ BOM (พี่อนุมัติ 29มิ.ย. · sellDirect X รอราคา → เลือกได้ทั้ง G1 และ G6) ──

@@ -618,6 +618,17 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <Select label="วัสดุ" value={material} onChange={setMaterial} opts={prod.materials} />
                 )}
                 {(prod.specOpts ?? []).map((o: any) => {
+                  // specOpts type:'number' → ช่องกรอกตัวเลข (มิติเพิ่ม เช่น บานเปิด/ช่องปูน Shower · ลึกตู้)
+                  if (o.type === 'number') {
+                    return (
+                      <label key={o.key} className="block">
+                        <span className="text-xs font-medium text-ink-3">{o.label}</span>
+                        <input type="number" step={o.step ?? 0.1} min={0} value={spec[o.key] ?? ""} placeholder={o.placeholder ?? ""}
+                          onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
+                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" />
+                      </label>
+                    );
+                  }
                   // optsByMaterial: ตัวเลือกล็อกตามวัสดุที่เลือก (เช่น สีผ้ามุ้ง — ผ้ากันแมวมีแต่สีขาว) ตรง app.js ~1468
                   const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
                   const val = opts.includes(spec[o.key]) ? spec[o.key] : (o.def && opts.includes(o.def) ? o.def : opts[0]);
