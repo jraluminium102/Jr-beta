@@ -62,7 +62,7 @@ const createSchema = z.object({
   customer_name: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
   customer_tel: z.string().optional(),
   customer_area: z.string().optional(),
-  customer_id: z.string().uuid().optional(),   // ผูกลูกค้าจากทะเบียนโดยตรง (หน้าเขียนแบบเลือกลูกค้าที่มีอยู่)
+  customer_id: z.coerce.number().int().positive().optional(),   // ผูกลูกค้าจากทะเบียนโดยตรง (customers.id = bigint · หน้าเขียนแบบเลือกลูกค้าที่มีอยู่)
   channel: z.enum(["LINE", "FACEBOOK", "INSTAGRAM", "OTHER"]),
   assess_date: z.string().min(1, "กรุณาระบุวันเข้าประเมิน"),
   estimator_id: z.string().uuid().optional(),
@@ -76,7 +76,7 @@ export const POST = withRoute(async (req: Request) => {
   // B1/B2: ผูก/สร้างลูกค้าในตาราง customers (dedup เบอร์ normalize) → ลูกค้าโผล่หน้าทะเบียนลูกค้า
   // ถ้าส่ง customer_id มา (เลือกจากทะเบียนแล้ว) → ผูกตรง ไม่ต้อง find_or_create (กันลูกค้าซ้ำ)
   // ไม่บล็อกการสร้างงานถ้า upsert ลูกค้าพลาด
-  let customerId: string | null = bodyCustomerId ?? null;
+  let customerId: string | number | null = bodyCustomerId ?? null;
   if (!customerId) {
     try {
       const { data: cid } = await (ctx.supabase as unknown as {

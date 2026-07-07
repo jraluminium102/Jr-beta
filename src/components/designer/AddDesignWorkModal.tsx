@@ -295,16 +295,16 @@ function SearchMode({
         }));
 
         // ลูกค้าในทะเบียนที่ "ยังไม่มีงาน" ในผลลัพธ์ (กันซ้ำกับงานที่เจอแล้ว)
-        const jobCustIds = new Set(jobRows.map((j) => j.customer_id as string).filter(Boolean));
+        const jobCustIds = new Set(jobRows.map((j) => String(j.customer_id ?? "")).filter((x) => x));
         let customers: SearchResult[] = [];
         if (custRes.ok) {
           const custJson = await custRes.json().catch(() => null);
           const custRows: Record<string, unknown>[] = custJson?.data ?? [];
           customers = custRows
-            .filter((c) => !jobCustIds.has(c.id as string))
+            .filter((c) => !jobCustIds.has(String(c.id)))
             .map((c) => ({
               kind: "customer" as const,
-              id: c.id as string,
+              id: String(c.id),
               job_code: null,
               customer_name: c.name as string,
               customer_tel: (c.phone as string) || "",
