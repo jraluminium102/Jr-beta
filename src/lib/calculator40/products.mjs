@@ -1293,6 +1293,40 @@ export const PRODUCTS = {
       SILICONE,
     ],
   },
+  bansolid: {
+    // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานโซลิด") — บานเปิด + ลูกฟูก2ทาง 2 ฝั่ง + เส้นคาดตาราง 2 ฝั่ง (ไม่มีกระจก)
+    // ลูกฟูก/คาดตาราง = SlimLux (mult_slim=1) · ราคาสีอบขาว/ดำ ลูกฟูก 432 · คาดตาราง 140 (แปรตามสีทีหลัง)
+    id: 'bansolid', group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
+    icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
+    addons: ['stainless', 'frame_wrap', 'demolish'],
+    defaults: { w: 150, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 2,
+    vars: { S: "form==='มีธรณี'?1:0", HG: '(H>3||(W/P)>1.2)?5:4' },
+    alu: [
+      { name: 'วงกบ 3 ด้าน F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1' },
+      { name: 'ธรณี F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
+      { name: 'ตบธรณี F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
+      { name: 'เสริมใต้บาน F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
+      { name: 'กรอบประตู 7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },
+      { name: 'คิ้ว F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
+      { name: 'เปิดกลาง F7945c', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
+    ],
+    glass: null,
+    hardware: [
+      { name: 'บานพับ hyda', price: 117, unit: 'ตัว', count: 'HG*P' },
+      { name: 'มือจับ+ล็อค ใบหลัก', price: 1045, unit: 'ชุด', count: '1' },
+      { name: 'ชุดกลอน ใบลอง', price: 450, unit: 'ชุด', count: 'Math.max(P-1,0)' },
+      { name: 'น็อตเฟรม', price: 1, unit: 'ตัว', count: 'S?8:6' },
+      // ลูกฟูก2ทาง 2 ฝั่ง (SlimLux ตัดไม่ต่อ) — จำนวนเส้น 6ม. ตามการตัด · Excel R24
+      { name: 'ลูกฟูก2ทาง 2 ฝั่ง', price: 432, unit: 'เส้น', count: 'Math.ceil( Math.ceil((W*100/P)/10) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
+      // เส้นคาดตาราง แนวตั้ง 2 ฝั่ง — Excel R33 (เส้นกว้าง1.8 ช่อง2 เว้นข้าง10)
+      { name: 'เส้นคาดตาราง 2 ฝั่ง', price: 140, unit: 'เส้น', count: 'Math.ceil( Math.max(0, Math.trunc((W*100/P-18)/3.8)) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
+    ],
+    consum: [
+      { name: 'ยาง', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      SILICONE,
+    ],
+  },
+
   ykk: {
     id: 'ykk', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานสำเร็จ YKK', brand: 'YKK',
     sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: "material==='Exhido'?120000:(material==='Tostem Airflow'?34000:30000)",
