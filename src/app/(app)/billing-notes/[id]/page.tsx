@@ -8,7 +8,6 @@ import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
-import InstallmentFooterInput from "./InstallmentFooterInput";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
@@ -194,15 +193,6 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                         ) : null;
                       })()}
                     </div>
-                    {/* ตั้ง footer ต่องวด (โชว์แตกยอดตอนพิมพ์งวดนี้) — ยอดงวดไม่เปลี่ยน */}
-                    {writable && !isCancelled && (
-                      <div className="mt-1">
-                        <InstallmentFooterInput
-                          installmentId={it.id!}
-                          current={(it as { footer_labor_pct?: number | null }).footer_labor_pct ?? null}
-                        />
-                      </div>
-                    )}
                   </td>
                   <td className="text-right font-semibold tabular-nums">฿{baht(it.amount)}</td>
                   <td className="text-center text-ink-2">{it.due_date || "—"}</td>
