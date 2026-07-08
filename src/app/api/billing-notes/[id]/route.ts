@@ -43,6 +43,24 @@ export const PATCH = withRoute(
     const ctx = await requirePermission("finance", "write");
 
     const body = await req.json().catch(() => ({}));
+
+    // โหมด C = footer override (display-only) — แก้ footer ใบเต็มบน PDF · ไม่ re-split ไม่กระทบยอด/งวด · ทำได้แม้จ่ายแล้ว
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (body && typeof body === "object" && "footer_override" in (body as any)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const raw = (body as any).footer_override;
+      const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+      const num = (v: unknown) => Math.max(0, r2(Number(v) || 0));
+      const value =
+        raw == null ? null : { subtotal: num(raw.subtotal), discount: num(raw.discount), vat: num(raw.vat), wht: num(raw.wht) };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: ovErr } = await (ctx.supabase as any)
+        .from("billing_notes").update({ footer_override: value }).eq("id", params.id);
+      if (ovErr && /footer_override/i.test(ovErr.message ?? "")) return err("ยังไม่ได้รัน migration 0085 (footer ใบเต็ม) — รันก่อนใช้งาน", 400);
+      if (ovErr) return err(ovErr.message, 500);
+      return ok({ ok: true, footer_override: value });
+    }
+
     const parsed = PatchSchema.safeParse(body);
     if (!parsed.success) return err(parsed.error.errors[0].message, 400);
 

@@ -222,20 +222,27 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           </table>
         </div>
 
-        {/* ยอดแยก (0078) — โชว์ทุกใบ (ใบเดิมไม่มีภาษีแยก → รวมเป็นเงิน = ยอดชำระ) */}
+        {/* ยอดแยก (0078) — โชว์ทุกใบ · ถ้าเคยแก้ footer ใบเต็มบน PDF (footer_override) โชว์ค่านั้น */}
         {(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const b = bn as any;
-          const sub = Number(b.subtotal) || Number(bn.total) || 0, dis = Number(b.discount_amt) || 0, va = Number(b.vat_amt) || 0, wh = Number(b.wht_amt) || 0;
-          if (sub <= 0) return null;
+          const ov = b.footer_override ?? null;
+          const sub = ov ? Number(ov.subtotal) || 0 : (Number(b.subtotal) || Number(bn.total) || 0);
+          const dis = ov ? Number(ov.discount) || 0 : (Number(b.discount_amt) || 0);
+          const va = ov ? Number(ov.vat) || 0 : (Number(b.vat_amt) || 0);
+          const wh = ov ? Number(ov.wht) || 0 : (Number(b.wht_amt) || 0);
+          if (sub <= 0 && !ov) return null;
           return (
             <div className="mt-5 flex justify-end">
               <div className="w-full sm:w-72 text-sm space-y-1">
                 <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(sub)}</span></div>
-                {dis > 0 && <div className="flex justify-between"><span className="text-ink-3">ส่วนลด {b.discount_pct > 0 ? `${b.discount_pct}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(dis)}</span></div>}
-                {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {b.vat_rate}%</span><span className="tabular-nums">฿{baht(va)}</span></div>}
-                {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {b.wht_rate}%</span><span className="tabular-nums text-red-700">-฿{baht(wh)}</span></div>}
+                {dis > 0 && <div className="flex justify-between"><span className="text-ink-3">ส่วนลด {Number(b.discount_pct) > 0 ? `${b.discount_pct}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(dis)}</span></div>}
+                {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {Number(b.vat_rate) > 0 ? `${b.vat_rate}%` : ""}</span><span className="tabular-nums">฿{baht(va)}</span></div>}
+                {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {Number(b.wht_rate) > 0 ? `${b.wht_rate}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(wh)}</span></div>}
                 <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(bn.total)}</span></div>
+                <div className="text-[11px] text-ink-3 pt-0.5">
+                  แก้ footer (ส่วนลด/VAT/หัก ณ ที่จ่าย) ได้ที่หน้า <b>พิมพ์ / PDF</b> {ov ? "· แก้แล้ว ✎" : ""}
+                </div>
               </div>
             </div>
           );

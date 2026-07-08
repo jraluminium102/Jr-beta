@@ -47,6 +47,7 @@ export interface BillingNote {
   created_at: string;
   updated_at: string;
   billing_installments?: BillingInstallment[];
+  footer_override?: InstallmentFooter | null; // แก้ footer ใบเต็มทับ (display-only) · null = ใช้ค่าจริงจากคอลัมน์
 }
 
 export interface Receipt {
