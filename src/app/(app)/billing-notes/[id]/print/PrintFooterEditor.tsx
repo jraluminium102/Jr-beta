@@ -2,99 +2,109 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { baht } from "@/lib/money";
+import { baht, footerSnapshot } from "@/lib/money";
 import type { InstallmentFooter } from "@/lib/types";
 
-// footer "แก้ inline บนหน้า PDF" — ใช้ได้ทั้งใบเต็ม (apiUrl=billing-notes) และงวดแยก (apiUrl=billing-installments)
-// ค่าตั้งต้น = def · แก้ทับได้ จำไว้ (footer_override) · display-only ไม่กระทบยอด/งวด
-// ปุ่ม/อินพุตทั้งหมด .no-print (ไม่ติดเวลาพิมพ์) · render เป็น <tr> ในตาราง footer
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-
+// footer ใบวางบิล แก้ inline บน PDF — เครื่องคิดจริง: กรอก subtotal + %ส่วนลด + VAT + %หัก ณ ที่จ่าย
+// → คิดยอด/สุทธิ ให้ (computeTotals) · display-only (ไม่ re-split งวด แก้ได้แม้จ่ายแล้ว)
+// ส่ง "ค่าตั้งต้น" (subtotal+%) ให้ server คิด snapshot เก็บ (กันเลขเพี้ยน) · ปุ่ม/อินพุต .no-print
 export default function PrintFooterEditor({
   apiUrl,
   suffix = "",
   def,
   current,
-  rates,
 }: {
-  apiUrl: string;                                 // PATCH endpoint (รับ {footer_override})
-  suffix?: string;                                // ต่อท้าย "รวมเป็นเงิน" เช่น " (งวดนี้)"
-  def: InstallmentFooter;                         // ค่าตั้งต้น (ใบเต็ม=ค่าจริง · งวด=เฉลี่ยตามสัดส่วน)
-  current: InstallmentFooter | null;              // override เดิม (ถ้าเคยแก้)
-  rates: { discount_pct: number; vat_rate: number; wht_rate: number };
+  apiUrl: string;                        // PATCH endpoint (รับ {footer_override})
+  suffix?: string;                       // ต่อท้าย "รวมเป็นเงิน" เช่น " (งวดนี้)"
+  def: InstallmentFooter;                // ค่าตั้งต้น (คิดแล้ว)
+  current: InstallmentFooter | null;     // override เดิม (ถ้าเคยแก้)
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const base = current ?? def;
   const [sub, setSub] = useState(String(base.subtotal));
-  const [dis, setDis] = useState(String(base.discount));
-  const [vat, setVat] = useState(String(base.vat));
-  const [wht, setWht] = useState(String(base.wht));
+  const [dp, setDp] = useState(String(base.discount_pct || ""));
+  const [vatOn, setVatOn] = useState(base.vat_rate > 0);
+  const [wr, setWr] = useState(base.wht_rate || 0);
 
   const n = (v: string) => Math.max(0, Number(v) || 0);
   const cellL = "pr-10 py-0.5 text-gray-500 text-left";
   const cellR = "text-right tabular-nums";
-  const inp = "w-28 border border-gray-300 rounded px-1.5 py-1 text-right outline-none tabular-nums focus-visible:ring-2 focus-visible:ring-brand";
+  const inp = "w-16 border border-gray-300 rounded px-1.5 py-1 text-right outline-none tabular-nums focus-visible:ring-2 focus-visible:ring-brand";
+  const inpWide = "w-28 border border-gray-300 rounded px-1.5 py-1 text-right outline-none tabular-nums focus-visible:ring-2 focus-visible:ring-brand";
 
-  const discL = `ส่วนลด${rates.discount_pct > 0 ? ` ${rates.discount_pct}%` : ""}`;
-  const vatL = `ภาษีมูลค่าเพิ่ม${rates.vat_rate > 0 ? ` ${rates.vat_rate}%` : ""}`;
-  const whtL = `หักภาษี ณ ที่จ่าย${rates.wht_rate > 0 ? ` ${rates.wht_rate}%` : ""}`;
+  // พรีวิวสด (คิดเหมือน server)
+  const t = footerSnapshot(n(sub), n(dp), vatOn ? 7 : 0, wr);
+  const afterDiscount = Math.round((t.subtotal - t.discount_amt + Number.EPSILON) * 100) / 100;
+  const total = Math.round((afterDiscount + t.vat_amt + Number.EPSILON) * 100) / 100;
 
-  async function save(payload: InstallmentFooter | null) {
+  async function save(payload: { subtotal: number; discount_pct: number; vat_rate: number; wht_rate: number } | null) {
     setBusy(true);
     try {
       const res = await fetch(apiUrl, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ footer_override: payload }),
       });
       if (res.ok) { setEditing(false); router.refresh(); }
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   }
 
-  // โหมดแก้ — โชว์ครบ 4 ช่อง (เพิ่ม/ลบบรรทัดได้โดยใส่/ล้างเป็น 0)
   if (editing) {
     return (
       <>
-        <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}><input type="number" step="0.01" min={0} value={sub} onChange={(e) => setSub(e.target.value)} className={inp} aria-label="รวมเป็นเงิน" /></td></tr>
-        <tr><td className={cellL}>{discL}</td><td className={cellR}><span className="mr-0.5">-</span><input type="number" step="0.01" min={0} value={dis} onChange={(e) => setDis(e.target.value)} className={inp} aria-label="ส่วนลด" /></td></tr>
-        <tr><td className={cellL}>{vatL}</td><td className={cellR}><input type="number" step="0.01" min={0} value={vat} onChange={(e) => setVat(e.target.value)} className={inp} aria-label="ภาษีมูลค่าเพิ่ม" /></td></tr>
-        <tr><td className={cellL}>{whtL}</td><td className={cellR}><span className="mr-0.5">-</span><input type="number" step="0.01" min={0} value={wht} onChange={(e) => setWht(e.target.value)} className={inp} aria-label="หักภาษี ณ ที่จ่าย" /></td></tr>
+        <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}>
+          <input type="number" step="0.01" min={0} value={sub} onChange={(e) => setSub(e.target.value)} className={inpWide} aria-label="รวมเป็นเงิน" />
+        </td></tr>
+        <tr><td className={cellL}>
+          <span className="inline-flex items-center gap-1">ส่วนลด
+            <input type="number" step="any" min={0} max={100} value={dp} onChange={(e) => setDp(e.target.value)} className={inp} aria-label="ส่วนลด %" />%
+          </span>
+        </td><td className={`${cellR} text-red-700`}>-{baht(t.discount_amt)}</td></tr>
+        <tr><td className={cellL}>ราคาหลังหักส่วนลด</td><td className={cellR}>{baht(afterDiscount)}</td></tr>
+        <tr><td className={cellL}>
+          <label className="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked={vatOn} onChange={(e) => setVatOn(e.target.checked)} /> ภาษีมูลค่าเพิ่ม 7%
+          </label>
+        </td><td className={cellR}>{baht(t.vat_amt)}</td></tr>
+        <tr className="font-semibold"><td className={cellL}>จำนวนเงินรวมทั้งสิ้น</td><td className={cellR}>{baht(total)}</td></tr>
+        <tr><td className={cellL}>
+          <span className="inline-flex items-center gap-1">หักภาษี ณ ที่จ่าย
+            <select value={wr} onChange={(e) => setWr(Number(e.target.value))} className="border border-gray-300 rounded px-1 py-1 text-xs outline-none">
+              <option value={0}>ไม่หัก</option><option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
+            </select>
+          </span>
+        </td><td className={`${cellR} text-red-700`}>-{baht(t.wht_amt)}</td></tr>
         <tr className="no-print"><td colSpan={2} className="pt-2">
-          <div className="flex justify-end gap-2">
-            <button type="button" disabled={busy}
-              onClick={() => { setSub(String(def.subtotal)); setDis(String(def.discount)); setVat(String(def.vat)); setWht(String(def.wht)); save(null); }}
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
-              title="ล้างค่าที่แก้ กลับไปใช้ค่าตั้งต้น">ค่าตั้งต้น</button>
-            <button type="button" disabled={busy}
-              onClick={() => { const b = current ?? def; setSub(String(b.subtotal)); setDis(String(b.discount)); setVat(String(b.vat)); setWht(String(b.wht)); setEditing(false); }}
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">ยกเลิก</button>
-            <button type="button" disabled={busy}
-              onClick={() => save({ subtotal: n(sub), discount: n(dis), vat: n(vat), wht: n(wht) })}
-              className="text-xs px-3 py-1.5 rounded-lg bg-brand text-white font-semibold shadow-brand disabled:opacity-50 inline-flex items-center gap-1.5">
-              {busy && <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />}บันทึก
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm">ยอดสุทธิ <b className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</b></span>
+            <span className="flex gap-2">
+              <button type="button" disabled={busy} onClick={() => save(null)}
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50" title="ล้างค่าที่แก้ กลับค่าตั้งต้น">ค่าตั้งต้น</button>
+              <button type="button" disabled={busy} onClick={() => setEditing(false)}
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">ยกเลิก</button>
+              <button type="button" disabled={busy}
+                onClick={() => save({ subtotal: n(sub), discount_pct: n(dp), vat_rate: vatOn ? 7 : 0, wht_rate: wr })}
+                className="text-xs px-3 py-1.5 rounded-lg bg-brand text-white font-semibold shadow-brand disabled:opacity-50 inline-flex items-center gap-1.5">
+                {busy && <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />}บันทึก
+              </button>
+            </span>
           </div>
         </td></tr>
       </>
     );
   }
 
-  // โหมดแสดง (พิมพ์ได้) + ปุ่มแก้ (.no-print)
+  // โหมดแสดง (พิมพ์ได้) — ไล่ยอดตามที่คิดไว้ + ปุ่มแก้ (.no-print)
   const v = current ?? def;
-  const sR = round2(v.subtotal), dR = round2(v.discount), vR = round2(v.vat), wR = round2(v.wht);
   return (
     <>
-      <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}>{baht(sR)}</td></tr>
-      {dR > 0 && <tr><td className={cellL}>{discL}</td><td className={cellR}>-{baht(dR)}</td></tr>}
-      {vR > 0 && <tr><td className={cellL}>{vatL}</td><td className={cellR}>{baht(vR)}</td></tr>}
-      {wR > 0 && <tr><td className={cellL}>{whtL}</td><td className={cellR}>-{baht(wR)}</td></tr>}
+      <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}>{baht(v.subtotal)}</td></tr>
+      {v.discount_amt > 0 && <tr><td className={cellL}>ส่วนลด {v.discount_pct > 0 ? `${v.discount_pct}%` : ""}</td><td className={`${cellR} text-red-700`}>-{baht(v.discount_amt)}</td></tr>}
+      {v.vat_amt > 0 && <tr><td className={cellL}>ภาษีมูลค่าเพิ่ม {v.vat_rate}%</td><td className={cellR}>{baht(v.vat_amt)}</td></tr>}
+      {v.wht_amt > 0 && <tr><td className={cellL}>หักภาษี ณ ที่จ่าย {v.wht_rate}%</td><td className={`${cellR} text-red-700`}>-{baht(v.wht_amt)}</td></tr>}
       <tr className="no-print"><td colSpan={2} className="text-right pt-1">
-        <button type="button" onClick={() => setEditing(true)}
-          className="text-xs text-brand-dark/70 hover:text-brand-dark inline-flex items-center gap-1">
+        <button type="button" onClick={() => setEditing(true)} className="text-xs text-brand-dark/70 hover:text-brand-dark inline-flex items-center gap-1">
           ✎ แก้ footer{current ? " (แก้แล้ว)" : ""}
         </button>
       </td></tr>

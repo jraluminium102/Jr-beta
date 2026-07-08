@@ -2,10 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { footerSnapshot } from "@/lib/money";
 import type { Role } from "@/lib/database.types";
-
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-const num = (v: unknown) => Math.max(0, round2(Number(v) || 0)); // footer เป็นยอดโชว์ ไม่ติดลบ
 
 // PATCH /api/billing-installments/[id] → แก้ต่องวด (display-only ไม่กระทบยอดงวด/ยอดบิล · แก้ได้แม้จ่ายแล้ว)
 // body รับได้ทั้ง (ใส่คีย์ไหนก็อัปเดตคีย์นั้น):
@@ -24,8 +22,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const hasFooter = "footer_override" in body;
   if (hasFooter) {
     const raw = body.footer_override;
+    // รับ "ค่าตั้งต้น" (subtotal + %) แล้วคิด snapshot ด้วย computeTotals (server-authoritative)
     update.footer_override =
-      raw == null ? null : { subtotal: num(raw.subtotal), discount: num(raw.discount), vat: num(raw.vat), wht: num(raw.wht) };
+      raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, raw.vat_rate, raw.wht_rate);
   }
   if ("label" in body) update.label = String(body.label ?? "").slice(0, 200);
   if (Object.keys(update).length === 0) return fail("payload ไม่ถูกต้อง");

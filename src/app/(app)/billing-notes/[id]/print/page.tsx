@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht } from "@/lib/money";
+import { baht, footerSnapshot } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
@@ -12,6 +12,9 @@ import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead"
 export const dynamic = "force-dynamic";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+// รับเฉพาะ footer_override รูปแบบใหม่ (มี net เป็นตัวเลข) — ของเก่ารูปแบบอื่นถือว่าไม่มี (กันโชว์ ฿0)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const validFooter = (o: any) => (o && typeof o.net === "number") ? o : null;
 
 export default async function BillingPrintPage({
   params,
@@ -110,52 +113,37 @@ export default async function BillingPrintPage({
               {/* ยอดแยก (0078) — ส่วนลด/VAT/หัก ณ ที่จ่าย
                   · ทั้งใบ = ยอดจริงของบิล
                   · แยกงวด = เฉลี่ยตามสัดส่วนงวด (×ratio) → footer เหมือนใบใหญ่ แต่เป็นของงวดนี้ · ผลรวมทุกงวด = ใบใหญ่เป๊ะ */}
-              {/* footer แก้ inline บน PDF ได้ (display-only) — ใบเต็ม=ค่าจริง · งวดแยก=เฉลี่ยตามสัดส่วน */}
+              {/* footer แก้ inline บน PDF (เครื่องคิดจริง) — ใบเต็ม=ค่าจริงบิล · งวดแยก=เฉลี่ยตามสัดส่วน · คิดผ่าน computeTotals */}
               {(() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
-                const rates = { discount_pct: Number(b.discount_pct) || 0, vat_rate: Number(b.vat_rate) || 0, wht_rate: Number(b.wht_rate) || 0 };
+                const dp = Number(b.discount_pct) || 0, vr = Number(b.vat_rate) || 0, wr = Number(b.wht_rate) || 0;
                 if (isSingle) {
-                  // งวดแยก: ค่าตั้งต้น = เฉลี่ยตามสัดส่วน · ใบเก่าไม่มี breakdown + ไม่เคยตั้งเอง → ไม่โชว์
-                  const def = {
-                    subtotal: round2((Number(b.subtotal) || 0) * ratio),
-                    discount: round2((Number(b.discount_amt) || 0) * ratio),
-                    vat: round2((Number(b.vat_amt) || 0) * ratio),
-                    wht: round2((Number(b.wht_amt) || 0) * ratio),
-                  };
-                  const ov = selected!.footer_override ?? null;
+                  const ov = validFooter(selected!.footer_override);
                   if (Number(b.subtotal) <= 0 && !ov) return null;
-                  return (
-                    <PrintFooterEditor
-                      apiUrl={`/api/billing-installments/${selected!.id!}`}
-                      suffix=" (งวดนี้)"
-                      def={def}
-                      current={ov}
-                      rates={rates}
-                    />
-                  );
+                  const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr);
+                  return <PrintFooterEditor apiUrl={`/api/billing-installments/${selected!.id!}`} suffix=" (งวดนี้)" def={def} current={ov} />;
                 }
-                // ใบเต็ม (รวมทุกงวด): ค่าตั้งต้น = ค่าจริงจากคอลัมน์ (fallback subtotal→total)
-                const def = {
-                  subtotal: round2(Number(b.subtotal) || Number(bn.total) || 0),
-                  discount: round2(Number(b.discount_amt) || 0),
-                  vat: round2(Number(b.vat_amt) || 0),
-                  wht: round2(Number(b.wht_amt) || 0),
-                };
-                const ov = (b.footer_override ?? null) as typeof def | null;
-                if (def.subtotal <= 0 && !ov) return null;
+                const ov = validFooter(b.footer_override);
+                const subW = Number(b.subtotal) || Number(bn.total) || 0;
+                if (subW <= 0 && !ov) return null;
+                const def = footerSnapshot(subW, dp, vr, wr);
+                return <PrintFooterEditor apiUrl={`/api/billing-notes/${bn.id}`} def={def} current={ov} />;
+              })()}
+              {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ใช้ยอดสุทธิที่คิดใหม่ · ไม่งั้นยอดเดิม */}
+              {(() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const ov = !isSingle ? validFooter((bn as any).footer_override) : null;
+                const effTotal = ov ? Number(ov.net) || 0 : grandTotal;
+                const effRemaining = effTotal - totalPaid;
                 return (
-                  <PrintFooterEditor
-                    apiUrl={`/api/billing-notes/${bn.id}`}
-                    def={def}
-                    current={ov}
-                    rates={rates}
-                  />
+                  <>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(effRemaining)}</td></tr>
+                    <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
+                  </>
                 );
               })()}
-              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
-              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(remaining)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(grandTotal)}</td></tr>
             </tbody>
           </table>
         </div>

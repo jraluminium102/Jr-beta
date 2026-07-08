@@ -5,7 +5,7 @@ import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { err, notFound } from "@/lib/bff/response";
-import { suggestInstallments, computeTotals } from "@/lib/money";
+import { suggestInstallments, computeTotals, footerSnapshot } from "@/lib/money";
 
 // GET /api/billing-notes/[id]  → ใบวางบิล + งวดชำระ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -45,14 +45,13 @@ export const PATCH = withRoute(
     const body = await req.json().catch(() => ({}));
 
     // โหมด C = footer override (display-only) — แก้ footer ใบเต็มบน PDF · ไม่ re-split ไม่กระทบยอด/งวด · ทำได้แม้จ่ายแล้ว
+    // รับ "ค่าตั้งต้น" (subtotal + %) แล้วคิด snapshot ด้วย computeTotals (server-authoritative)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (body && typeof body === "object" && "footer_override" in (body as any)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw = (body as any).footer_override;
-      const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-      const num = (v: unknown) => Math.max(0, r2(Number(v) || 0));
       const value =
-        raw == null ? null : { subtotal: num(raw.subtotal), discount: num(raw.discount), vat: num(raw.vat), wht: num(raw.wht) };
+        raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, raw.vat_rate, raw.wht_rate);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: ovErr } = await (ctx.supabase as any)
         .from("billing_notes").update({ footer_override: value }).eq("id", params.id);

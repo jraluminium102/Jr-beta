@@ -12,12 +12,17 @@ type CustomerSnapshot = Pick<
   Customer, "name" | "job" | "address" | "tax_id" | "line_id" | "phone" | "contact_person"
 > & { branch?: string; kind?: string };  // (0069) นามออกบิล: kind=INDIVIDUAL/COMPANY, branch=สนญ./สาขา (optional เผื่อใบเก่า)
 
-// footer ใบวางบิลพิมพ์แยกงวด — ยอดแตก (display-only) · null field = ใช้ค่าเฉลี่ยตามสัดส่วน
+// footer ใบวางบิล (display-only) — snapshot ที่คิดแล้วด้วย computeTotals: เก็บทั้ง % และยอด + สุทธิ
+// คิดจาก subtotal + discount_pct + vat_rate + wht_rate (server recompute เสมอ กันเลขเพี้ยน)
 export interface InstallmentFooter {
   subtotal: number;
-  discount: number;
-  vat: number;
-  wht: number;
+  discount_pct: number;
+  discount_amt: number;
+  vat_rate: number;
+  vat_amt: number;
+  wht_rate: number;
+  wht_amt: number;
+  net: number;
 }
 
 export interface BillingInstallment {

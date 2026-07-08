@@ -2,7 +2,7 @@
 // สูตรคำนวณยอดเงิน — แหล่งความจริงเดียว (กฎเหล็ก: ยอดต้องตรง)
 // ลำดับ: (ยอดรวม − ส่วนลด) → VAT → (− หัก ณ ที่จ่าย) = ยอดรับสุทธิ
 // ============================================================
-import type { QuotationItem } from "./types";
+import type { QuotationItem, InstallmentFooter } from "./types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 // VAT/หัก ณ ที่จ่าย ปัดเป็น "บาทเต็ม" ให้ตรงกับเอกสารจริง (ทุกใบโชว์บาทเต็ม)
@@ -42,6 +42,22 @@ export function computeTotals(input: MoneyInput): MoneyResult {
 
 export const lineTotal = (qty: number, unit_price: number) =>
   round2((Number(qty) || 0) * (Number(unit_price) || 0));
+
+// footer ใบวางบิล (display-only) — คิด snapshot จาก subtotal + %ส่วนลด + %VAT + %หัก ณ ที่จ่าย
+// ใช้ computeTotals แหล่งเดียว (เหมือนใบเสนอ) → ยอด/สุทธิ ถูกต้องตามกฎไทย · เก็บ % ไว้โชว์ด้วย
+export function footerSnapshot(
+  subtotal: number, discount_pct: number, vat_rate: number, wht_rate: number
+): InstallmentFooter {
+  const sub = Math.max(0, Number(subtotal) || 0);
+  const dp = Math.max(0, Math.min(100, Number(discount_pct) || 0));
+  const vr = Math.max(0, Number(vat_rate) || 0);
+  const wr = Math.max(0, Number(wht_rate) || 0);
+  const t = computeTotals({ items: [{ qty: 1, unit_price: sub }], vat_rate: vr, discount_pct: dp, wht_rate: wr });
+  return {
+    subtotal: t.subtotal, discount_pct: dp, discount_amt: t.discount_amt,
+    vat_rate: vr, vat_amt: t.vat_amt, wht_rate: wr, wht_amt: t.wht_amt, net: t.net,
+  };
+}
 
 // ============================================================
 // ถอด VAT ออกจาก "ยอดที่รวม VAT แล้ว" (back-out) — สำหรับ footer พิมพ์แยกงวด
