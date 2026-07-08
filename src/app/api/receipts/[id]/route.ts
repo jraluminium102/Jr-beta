@@ -22,11 +22,13 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // PATCH /api/receipts/[id]  → แก้ "ข้อความ" บนใบเสร็จ/ใบกำกับ (รายการ/หมายเหตุ) — ไม่แตะยอด/VAT (เอกสารภาษี)
-// guard: block ใบ void (เป็นหลักฐาน) · whitelist item_desc/note · audit เต็ม
+// guard (accountant): block ใบ void · whitelist item_desc/note · audit เต็ม
+//   แก้ "รายการ" (item_desc) = องค์ประกอบบังคับ ม.86/4 → **บังคับ reason** (เก็บ audit) · แก้ note เฉยๆ ไม่ต้อง
 const PatchSchema = z.object({
   item_desc: z.string().max(500).optional(),
   note: z.string().max(1000).optional(),
-}).refine((d) => d.item_desc !== undefined || d.note !== undefined, { message: "ไม่มีข้อมูลให้แก้" });
+  reason: z.string().max(500).optional(),
+}).strict().refine((d) => d.item_desc !== undefined || d.note !== undefined, { message: "ไม่มีข้อมูลให้แก้" });
 
 export const PATCH = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("finance", "write");
@@ -47,6 +49,11 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   if (parsed.data.item_desc !== undefined) update.item_desc = parsed.data.item_desc.trim();
   if (parsed.data.note !== undefined) update.note = parsed.data.note.trim();
 
+  // แก้ "รายการ" จริง (ค่าต่างจากเดิม) = แก้สาระใบกำกับ → ต้องมีเหตุผล (ม.86/4 · เทียบ /header)
+  const changingDesc = update.item_desc !== undefined && update.item_desc !== (rc.item_desc ?? "").trim();
+  const reason = (parsed.data.reason ?? "").trim();
+  if (changingDesc && !reason) return err("การแก้ 'รายการ' บนใบกำกับภาษีต้องระบุเหตุผล", 400);
+
   const { error: uErr } = await ctx.supabase.from("receipts").update(update as never).eq("id", params.id);
   if (uErr) return err(uErr.message, 500);
 
@@ -55,7 +62,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     action: "EDIT_RECEIPT_TEXT",
     table: "receipts",
     recordId: params.id,
-    oldValue: { item_desc: rc.item_desc, note: rc.note },
+    oldValue: { item_desc: rc.item_desc, note: rc.note, reason: reason || null },
     newValue: update,
   });
 
