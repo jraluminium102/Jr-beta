@@ -5,6 +5,7 @@ import { baht } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
+import PrintInstallmentFooter from "./PrintInstallmentFooter";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
@@ -108,26 +109,42 @@ export default async function BillingPrintPage({
               {/* ยอดแยก (0078) — ส่วนลด/VAT/หัก ณ ที่จ่าย
                   · ทั้งใบ = ยอดจริงของบิล
                   · แยกงวด = เฉลี่ยตามสัดส่วนงวด (×ratio) → footer เหมือนใบใหญ่ แต่เป็นของงวดนี้ · ผลรวมทุกงวด = ใบใหญ่เป๊ะ */}
-              {(() => {
+              {/* ทั้งใบ (รวมทุกงวด) — footer ยอดจริง (คงที่ ไม่แก้) */}
+              {!isSingle && (() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
-                // override ต่องวด (แก้เอง จำไว้) มาก่อน · ไม่มี → ค่าเฉลี่ยตามสัดส่วน (autofill)
-                const ov = isSingle ? (selected!.footer_override ?? null) : null;
-                const dSub = (Number(b.subtotal) || (isSingle ? 0 : Number(bn.total)) || 0) * ratio;
-                if (!ov && dSub <= 0) return null; // ใบเก่าไม่มี breakdown + ไม่ได้ตั้งเอง → โชว์แค่ยอด
-                const subR = round2(ov ? ov.subtotal : dSub);
-                const dis = round2(ov ? ov.discount : (Number(b.discount_amt) || 0) * ratio);
-                const va = round2(ov ? ov.vat : (Number(b.vat_amt) || 0) * ratio);
-                const wh = round2(ov ? ov.wht : (Number(b.wht_amt) || 0) * ratio);
-                if (subR <= 0 && dis <= 0 && va <= 0 && wh <= 0) return null;
-                const suffix = isSingle ? " (งวดนี้)" : "";
+                const sub = Number(b.subtotal) || Number(bn.total) || 0;
+                if (sub <= 0) return null; // ใบ import เก่าไม่มี breakdown → โชว์แค่ยอด
+                const dis = round2(Number(b.discount_amt) || 0), va = round2(Number(b.vat_amt) || 0), wh = round2(Number(b.wht_amt) || 0);
                 return (
                   <>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รวมเป็นเงิน{suffix}</td><td className="text-right tabular-nums">{baht(subR)}</td></tr>
+                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รวมเป็นเงิน</td><td className="text-right tabular-nums">{baht(sub)}</td></tr>
                     {dis > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ส่วนลด {Number(b.discount_pct) > 0 ? `${b.discount_pct}%` : ""}</td><td className="text-right tabular-nums">-{baht(dis)}</td></tr>}
                     {va > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {Number(b.vat_rate) > 0 ? `${b.vat_rate}%` : ""}</td><td className="text-right tabular-nums">{baht(va)}</td></tr>}
                     {wh > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {Number(b.wht_rate) > 0 ? `${b.wht_rate}%` : ""}</td><td className="text-right tabular-nums">-{baht(wh)}</td></tr>}
                   </>
+                );
+              })()}
+              {/* พิมพ์แยกงวด — footer แก้ inline ได้ตรงนี้ (ค่าตั้งต้น = เฉลี่ยตามสัดส่วน) */}
+              {isSingle && (() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const b = bn as any;
+                const def = {
+                  subtotal: round2((Number(b.subtotal) || 0) * ratio),
+                  discount: round2((Number(b.discount_amt) || 0) * ratio),
+                  vat: round2((Number(b.vat_amt) || 0) * ratio),
+                  wht: round2((Number(b.wht_amt) || 0) * ratio),
+                };
+                const ov = selected!.footer_override ?? null;
+                // ใบเก่าไม่มี breakdown + ไม่เคยตั้งเอง → ไม่โชว์ footer แตกยอด (กันคิด VAT มั่ว)
+                if (Number(b.subtotal) <= 0 && !ov) return null;
+                return (
+                  <PrintInstallmentFooter
+                    installmentId={selected!.id!}
+                    def={def}
+                    current={ov}
+                    rates={{ discount_pct: Number(b.discount_pct) || 0, vat_rate: Number(b.vat_rate) || 0, wht_rate: Number(b.wht_rate) || 0 }}
+                  />
                 );
               })()}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>

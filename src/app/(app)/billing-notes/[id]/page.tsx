@@ -8,8 +8,7 @@ import { baht } from "@/lib/money";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
-import InstallmentFooterEditor from "./InstallmentFooterEditor";
-import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus, type InstallmentFooter } from "@/lib/types";
+import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
 
@@ -70,26 +69,6 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     : quoteBase
     ? { discount_pct: quoteBase.discount_pct, vat_rate: quoteBase.vat_rate, wht_rate: quoteBase.wht_rate }
     : null;
-
-  // footer แยกงวด: ค่าเฉลี่ยตามสัดส่วน (autofill) ต่องวด + เรตไว้ทำ label — โชว์ปุ่มแก้เฉพาะบิลที่มี breakdown จริง
-  const round2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
-  const billTotal = Number(bn.total) || 0;
-  const bSubtotal = Number(bnAny.subtotal) || 0;
-  const hasBreakdown = bSubtotal > 0;
-  const footerRates = {
-    discount_pct: Number(bnAny.discount_pct) || 0,
-    vat_rate: Number(bnAny.vat_rate) || 0,
-    wht_rate: Number(bnAny.wht_rate) || 0,
-  };
-  const footerDefault = (amt: number): InstallmentFooter => {
-    const r = billTotal > 0 ? amt / billTotal : 0;
-    return {
-      subtotal: round2(bSubtotal * r),
-      discount: round2((Number(bnAny.discount_amt) || 0) * r),
-      vat: round2((Number(bnAny.vat_amt) || 0) * r),
-      wht: round2((Number(bnAny.wht_amt) || 0) * r),
-    };
-  };
 
   // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
   const { data: rcs } = await supabase
@@ -213,16 +192,6 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                           </Link>
                         ) : null;
                       })()}
-                      {writable && !isCancelled && hasBreakdown && (
-                        <InstallmentFooterEditor
-                          installmentId={it.id!}
-                          seq={it.seq}
-                          amount={it.amount}
-                          def={footerDefault(it.amount)}
-                          current={it.footer_override ?? null}
-                          rates={footerRates}
-                        />
-                      )}
                     </div>
                   </td>
                   <td className="text-right font-semibold tabular-nums">฿{baht(it.amount)}</td>
