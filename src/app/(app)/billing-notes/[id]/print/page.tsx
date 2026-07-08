@@ -6,6 +6,7 @@ import { BILLING_STATUS_LABEL, type BillingNote } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import PrintFooterEditor from "./PrintFooterEditor";
+import PrintLabelEditor from "./PrintLabelEditor";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
@@ -91,7 +92,7 @@ export default async function BillingPrintPage({
               <tr key={it.id}>
                 <td className="p-2 border border-gray-200 align-top text-center">{it.seq}</td>
                 <td className="p-2 border border-gray-200">
-                  <div className="font-medium">{it.label}</div>
+                  <div><PrintLabelEditor installmentId={it.id!} label={it.label} /></div>
                   {it.status === "paid" && (
                     <div className="text-xs text-gray-500">รับชำระแล้ว ฿{baht(it.paid_amount)}{it.paid_date ? ` · ${it.paid_date}` : ""}</div>
                   )}
