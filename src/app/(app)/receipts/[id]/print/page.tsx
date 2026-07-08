@@ -5,6 +5,7 @@ import { baht } from "@/lib/money";
 import type { Receipt } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
+import ReceiptTextEditor from "./ReceiptTextEditor";
 import { PrintLetterhead, taxInvoiceMissing, DOC_COLORS } from "@/components/print/PrintLetterhead";
 
 export const dynamic = "force-dynamic";
@@ -75,10 +76,12 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           <tbody>
             <tr>
               <td className="p-2 border border-gray-200">
-                {(rc as { item_desc?: string }).item_desc?.trim()
-                  ? (rc as { item_desc?: string }).item_desc
-                  : `รับชำระเงินตามใบวางบิล${refCode ? ` ${refCode}` : ""}`}
-                {rc.note && <div className="text-xs text-gray-500">{rc.note}</div>}
+                <ReceiptTextEditor
+                  receiptId={rc.id}
+                  itemDesc={(rc as { item_desc?: string }).item_desc ?? ""}
+                  note={rc.note ?? ""}
+                  placeholder={`รับชำระเงินตามใบวางบิล${refCode ? ` ${refCode}` : ""}`}
+                />
               </td>
               <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td>
             </tr>
