@@ -14,7 +14,7 @@ const thumb = (fileId: string) => `https://drive.google.com/thumbnail?id=${fileI
 export default function ImportClient() {
   const router = useRouter();
   const rows = CANDIDATES as Cand[];
-  const [sel, setSel] = useState<Set<number>>(new Set());
+  const [sel, setSel] = useState<Set<number>>(() => new Set((CANDIDATES as Cand[]).map((r) => r.stockId)));
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Record<number, Res>>({});
 
