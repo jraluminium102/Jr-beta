@@ -50,6 +50,14 @@ export default async function BillingPrintPage({
   const billTotal = Number(bn.total) || 0;
   const ratio = isSingle && billTotal > 0 ? (Number(selected!.amount) || 0) / billTotal : 1;
 
+  // footer ใบเต็มที่แก้มือ (display-only) → ยอดสุทธิ/คงเหลือที่โชว์ + ธงเตือน (บัญชีสั่ง)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wholeFooter = !isSingle ? validFooter((bn as any).footer_override) : null;
+  const effTotal = wholeFooter ? Number(wholeFooter.net) || 0 : grandTotal;
+  const effRemaining = round2(effTotal - totalPaid);
+  const footerMismatch = !!wholeFooter && Math.abs(effTotal - billTotal) > 0.01; // สุทธิ footer ≠ ผลรวมงวดจริง
+  const overpaid = effRemaining < -0.01;                                          // คงเหลือติดลบ (รับเกิน)
+
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
       {/* แถบเครื่องมือ — ไม่พิมพ์ */}
@@ -59,6 +67,15 @@ export default async function BillingPrintPage({
         </Link>
         <PrintButton />
       </div>
+
+      {/* เตือนเจ้าหน้าที่ (ไม่พิมพ์ลงเอกสาร) — footer แก้มือทำให้ยอดไม่สอดคล้อง (บัญชีสั่งให้เตือน) */}
+      {(footerMismatch || overpaid) && (
+        <div className="no-print mx-auto mt-3 max-w-[210mm] rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+          <b>⚠ ตรวจ footer ก่อนส่งลูกค้า</b>
+          {footerMismatch && <div className="text-xs mt-0.5">ยอดสุทธิที่แก้ footer (฿{baht(effTotal)}) ไม่ตรงผลรวมงวดจริง (฿{baht(billTotal)}) — ตารางงวดกับยอดรวมท้ายใบจะไม่ตรงกัน กด &quot;✎ แก้ footer → ค่าตั้งต้น&quot; เพื่อกลับยอดจริง</div>}
+          {overpaid && <div className="text-xs mt-0.5">ยอดสุทธิต่ำกว่ายอดรับชำระแล้ว → คงเหลือติดลบ (เหมือนรับเงินเกิน) โปรดตรวจสอบ</div>}
+        </div>
+      )}
 
       {/* กระดาษ A4 */}
       <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
@@ -130,20 +147,10 @@ export default async function BillingPrintPage({
                 const def = footerSnapshot(subW, dp, vr, wr);
                 return <PrintFooterEditor apiUrl={`/api/billing-notes/${bn.id}`} def={def} current={ov} />;
               })()}
-              {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ใช้ยอดสุทธิที่คิดใหม่ · ไม่งั้นยอดเดิม */}
-              {(() => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const ov = !isSingle ? validFooter((bn as any).footer_override) : null;
-                const effTotal = ov ? Number(ov.net) || 0 : grandTotal;
-                const effRemaining = effTotal - totalPaid;
-                return (
-                  <>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
-                    <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className="text-right tabular-nums">{baht(effRemaining)}</td></tr>
-                    <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
-                  </>
-                );
-              })()}
+              {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ยอดสุทธิที่คิดใหม่ · คงเหลือติดลบ = แดง (เตือนรับเกิน) */}
+              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
+              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className={`text-right tabular-nums${overpaid ? " text-red-700 font-semibold" : ""}`}>{baht(effRemaining)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
             </tbody>
           </table>
         </div>
