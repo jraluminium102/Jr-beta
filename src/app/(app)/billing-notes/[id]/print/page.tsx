@@ -111,19 +111,22 @@ export default async function BillingPrintPage({
               {(() => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
-                const sub = (Number(b.subtotal) || (isSingle ? 0 : Number(bn.total)) || 0) * ratio;
-                if (sub <= 0) return null; // ใบ import เก่าไม่มี breakdown → โชว์แค่ยอด (ไม่คิด VAT มั่ว)
-                const subR = round2(sub);
-                const dis = round2((Number(b.discount_amt) || 0) * ratio);
-                const va = round2((Number(b.vat_amt) || 0) * ratio);
-                const wh = round2((Number(b.wht_amt) || 0) * ratio);
+                // override ต่องวด (แก้เอง จำไว้) มาก่อน · ไม่มี → ค่าเฉลี่ยตามสัดส่วน (autofill)
+                const ov = isSingle ? (selected!.footer_override ?? null) : null;
+                const dSub = (Number(b.subtotal) || (isSingle ? 0 : Number(bn.total)) || 0) * ratio;
+                if (!ov && dSub <= 0) return null; // ใบเก่าไม่มี breakdown + ไม่ได้ตั้งเอง → โชว์แค่ยอด
+                const subR = round2(ov ? ov.subtotal : dSub);
+                const dis = round2(ov ? ov.discount : (Number(b.discount_amt) || 0) * ratio);
+                const va = round2(ov ? ov.vat : (Number(b.vat_amt) || 0) * ratio);
+                const wh = round2(ov ? ov.wht : (Number(b.wht_amt) || 0) * ratio);
+                if (subR <= 0 && dis <= 0 && va <= 0 && wh <= 0) return null;
                 const suffix = isSingle ? " (งวดนี้)" : "";
                 return (
                   <>
                     <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รวมเป็นเงิน{suffix}</td><td className="text-right tabular-nums">{baht(subR)}</td></tr>
-                    {dis > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ส่วนลด {b.discount_pct > 0 ? `${b.discount_pct}%` : ""}</td><td className="text-right tabular-nums">-{baht(dis)}</td></tr>}
-                    {va > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {b.vat_rate}%</td><td className="text-right tabular-nums">{baht(va)}</td></tr>}
-                    {wh > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {b.wht_rate}%</td><td className="text-right tabular-nums">-{baht(wh)}</td></tr>}
+                    {dis > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ส่วนลด {Number(b.discount_pct) > 0 ? `${b.discount_pct}%` : ""}</td><td className="text-right tabular-nums">-{baht(dis)}</td></tr>}
+                    {va > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {Number(b.vat_rate) > 0 ? `${b.vat_rate}%` : ""}</td><td className="text-right tabular-nums">{baht(va)}</td></tr>}
+                    {wh > 0 && <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {Number(b.wht_rate) > 0 ? `${b.wht_rate}%` : ""}</td><td className="text-right tabular-nums">-{baht(wh)}</td></tr>}
                   </>
                 );
               })()}

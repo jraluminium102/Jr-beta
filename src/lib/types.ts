@@ -12,6 +12,14 @@ type CustomerSnapshot = Pick<
   Customer, "name" | "job" | "address" | "tax_id" | "line_id" | "phone" | "contact_person"
 > & { branch?: string; kind?: string };  // (0069) นามออกบิล: kind=INDIVIDUAL/COMPANY, branch=สนญ./สาขา (optional เผื่อใบเก่า)
 
+// footer ใบวางบิลพิมพ์แยกงวด — ยอดแตก (display-only) · null field = ใช้ค่าเฉลี่ยตามสัดส่วน
+export interface InstallmentFooter {
+  subtotal: number;
+  discount: number;
+  vat: number;
+  wht: number;
+}
+
 export interface BillingInstallment {
   id?: number;
   billing_note_id?: number;
@@ -23,6 +31,7 @@ export interface BillingInstallment {
   paid_amount: number;
   paid_date: string | null;
   sort_order: number;
+  footer_override?: InstallmentFooter | null; // แก้ footer งวดนี้ทับค่าเฉลี่ย (จำไว้) · null = เฉลี่ยอัตโนมัติ
 }
 
 export interface BillingNote {
