@@ -99,7 +99,7 @@ export default function QuotationEditButton({
     >
       <form
         onSubmit={submit}
-        className="w-full max-w-2xl bg-white rounded-2xl p-6 shadow-2xl space-y-5 mb-8"
+        className="w-full max-w-3xl bg-white rounded-2xl p-6 shadow-2xl space-y-5 mb-8"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
@@ -115,26 +115,33 @@ export default function QuotationEditButton({
         <div className="space-y-2">
           <div className="text-xs font-medium text-gray-500">รายการ</div>
           {rows.map((row, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-              <input type="text" value={row.name} onChange={(e) => updateRow(idx, "name", e.target.value)}
-                placeholder="ชื่อรายการ *" required
-                className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2" />
+            <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50/50 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 w-5 text-center shrink-0">{idx + 1}</span>
+                <input type="text" value={row.name} onChange={(e) => updateRow(idx, "name", e.target.value)}
+                  placeholder="ชื่อรายการ *" required
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus-visible:ring-2" />
+                <button type="button" onClick={() => removeRow(idx)} aria-label={`ลบรายการ ${idx + 1}`}
+                  className="press w-9 h-9 inline-flex items-center justify-center rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100 shrink-0 focus:outline-none focus-visible:ring-2">
+                  <Icon name="trash" size={16} />
+                </button>
+              </div>
               <textarea value={row.detail} onChange={(e) => updateRow(idx, "detail", e.target.value)}
-                rows={Math.max(2, (row.detail.match(/\n/g)?.length ?? 0) + 1)}
-                placeholder={"รายละเอียด (บรรทัด=บุลเล็ต)\n- ชุดล็อค\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
-                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2 resize-y leading-relaxed" />
-              <input type="number" inputMode="decimal" value={row.qty} min={0.01} step="any"
-                onChange={(e) => updateRow(idx, "qty", Number(e.target.value))}
-                placeholder="จำนวน"
-                className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
-              <input type="number" inputMode="decimal" value={row.unit_price} min={0} step="any"
-                onChange={(e) => updateRow(idx, "unit_price", Number(e.target.value))}
-                placeholder="ราคา/หน่วย"
-                className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
-              <button type="button" onClick={() => removeRow(idx)} aria-label={`ลบรายการ ${idx + 1}`}
-                className="press col-span-1 w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2">
-                <Icon name="trash" size={15} />
-              </button>
+                rows={Math.max(6, (row.detail.match(/\n/g)?.length ?? 0) + 1)}
+                placeholder={"รายละเอียด (กด Enter เว้นบรรทัดได้ · แต่ละบรรทัด = บุลเล็ต)\n- ด้าน A: บานเลื่อนเปิดคู่กลาง + มุ้ง\n- ด้าน B: กระจกติดตาย\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2 resize-y leading-relaxed"
+                style={{ minHeight: "9rem" }} />
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="text-xs text-gray-500 flex items-center gap-1.5">จำนวน
+                  <input type="number" inputMode="decimal" value={row.qty} min={0.01} step="any"
+                    onChange={(e) => updateRow(idx, "qty", Number(e.target.value))}
+                    className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2" /></label>
+                <label className="text-xs text-gray-500 flex items-center gap-1.5">ราคา/หน่วย
+                  <input type="number" inputMode="decimal" value={row.unit_price} min={0} step="any"
+                    onChange={(e) => updateRow(idx, "unit_price", Number(e.target.value))}
+                    className="w-28 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2" /></label>
+                <span className="ml-auto text-sm font-semibold text-brand-dark tabular-nums">รวม ฿{baht((Number(row.qty) || 0) * (Number(row.unit_price) || 0))}</span>
+              </div>
             </div>
           ))}
           <button type="button" onClick={addRow}

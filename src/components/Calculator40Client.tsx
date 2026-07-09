@@ -114,6 +114,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [subs, setSubs] = useState<SubPane[]>([]);
   // G6 ห้องกระจก (composite) — RoomComposer คิดราคาเองทั้งก้อน (ผลรวมด้าน+ฝ้า+หลังคา) แล้ว callback กลับมาที่นี่
   const [roomTotals, setRoomTotals] = useState<RoomTotals | null>(null);
+  const [g6HideSidePrice, setG6HideSidePrice] = useState(false); // ซ่อนราคารายด้านในใบเสนอ (G6)
 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
@@ -321,17 +322,19 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ห้องกระจก (G6 composite) — RoomComposer คิดราคารวมทั้งก้อนแล้ว ขึ้นใบเป็นรายการเดียว (แยกรายด้าน/ฝ้า/หลังคาอยู่ในหน้าสรุปของ composer)
     if (prod.composite) {
       const rt = roomTotals!;
-      // รายละเอียดรายด้านแบบ G1 (ชนิดบาน+รูปแบบ+ขนาด+กระจก+ออปชั่น) + หลังคา/ฝ้า/สี/กระจก → ปริ้นใบเสนอราคาเห็นครบ
+      // โครงเหมือน G1: "งานรายด้าน/หลังคา/ฝ้า" เป็นบุลเล็ตหลักก่อน → แล้วหัว "รายละเอียดงาน" = สี/กระจก (สเปค)
       const dd = rt.sideDescs ?? [];
-      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)}: ${dd[i] || "—"}${s > 0 ? ` (${baht(s)}฿)` : ""}`);
-      if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"} (${baht(rt.roof)}฿)`);
-      if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"} (${baht(rt.ceil)}฿)`);
-      if (rt.floor > 0) lines.push(`- พื้น (${baht(rt.floor)}฿)`);
+      const showP = !g6HideSidePrice; // ปุ่มซ่อนราคารายด้าน
+      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)}: ${dd[i] || "—"}${showP && s > 0 ? ` (${baht(s)}฿)` : ""}`);
+      if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(rt.roof)}฿)` : ""}`);
+      if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(rt.ceil)}฿)` : ""}`);
+      if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);
+      lines.push("รายละเอียดงาน");
       lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
       lines.push(`- กระจกหลัก: ${glassType || "—"}`);
       setQuote((q) => [...q, {
         key: keySeq, name: prod.name,
-        desc: ["รายละเอียดงาน", ...lines].join("\n"),
+        desc: lines.join("\n"),
         qty: n, perUnit: rt.total, cost: 0,
         prodId: prod.id, groupLabel: "ห้องกระจก",
       }]);
@@ -933,12 +936,18 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               })()}
 
               {/* เพิ่มลงรายการ */}
-              <div className="mt-4 flex items-end gap-3">
+              <div className="mt-4 flex items-end gap-3 flex-wrap">
                 <Field label="จำนวน (ชุด)" value={sets} onChange={setSets} narrow />
                 <button onClick={addToQuote} disabled={!ok}
                   className="press rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
                   + เพิ่มลงรายการ
                 </button>
+                {prod?.composite && (
+                  <label className="flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer select-none">
+                    <input type="checkbox" checked={g6HideSidePrice} onChange={(e) => setG6HideSidePrice(e.target.checked)} />
+                    ซ่อนราคารายด้านในใบเสนอ
+                  </label>
+                )}
               </div>
             </div>
           ) : (
