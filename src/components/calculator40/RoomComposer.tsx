@@ -116,6 +116,11 @@ const ADDON_LABELS: Record<string, string> = {
   digihandle: "มือจับดิจิตอล", digiNc: "ดิจิตอล", frame_wrap: "ครอบวงกบ", drop_floor: "ดรอปพื้น",
   demolish: "รื้อของเดิม", closer: "โช้คอัพ", thresh: "ธรณี", lock: "ชุดล็อค", handle: "มือจับ",
   solid_panel: "แผ่นทึบ", slide_auto: "ระบบออโต้", louver: "เกล็ด",
+  // ของเสริมหลังคา
+  roof_pole: "เสา", truss_beam: "คานรับ", roof_eave: "ครอบชายคา", gutter: "รางน้ำ",
+  chain_drain: "โซ่ระบายน้ำ", pipe_cover: "ท่อน้ำทิ้ง", gutter_cover: "ตะแกรงกันใบไม้",
+  beam_cover: "ครอบคาน", hide_slope: "ซ่อนสโลป", roof_sealer: "ซีลเลอร์", roof_film: "ฟิล์มหลังคา",
+  roof_2nd: "หลังคาชั้น 2", ceil_under: "ฝ้าใต้หลังคา",
 };
 function addonSummary(addons: Record<string, any> | undefined): string {
   const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k]) => ADDON_LABELS[k] || k);
@@ -223,7 +228,7 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
   return t;
 }
 
-export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
+export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
 
 export default function RoomComposer({
   pb, mainColor, mainGlass, profitPct, onTotal,
@@ -371,9 +376,22 @@ export default function RoomComposer({
   const roofDesc = roofOn ? `หลังคา ${roofMaterial} ${roofW}×${roofL} ม.` : "";
   const ceilDesc = ceilOn ? `ฝ้า ${CEIL_TYPES.find((t) => t.key === ceilType)?.label || ceilType} ${ceilW}×${ceilL} ม.` : "";
 
+  // สเปคสรุป (หมวด "รายละเอียดงาน") — มุ้ง(ด้านไหน) / หลังคา(วัสดุ+รางน้ำ ฯลฯ) · สีอลู+กระจก เติมฝั่ง client
+  const specLines = useMemo(() => {
+    const out: string[] = [];
+    const mosqSides = sides.map((s, i) => (s.kind === "glass" && s.cols.some((c) => c.pcs.some((p) => p.addons?.mosquito)) ? L(i) : "")).filter(Boolean);
+    if (mosqSides.length) out.push(`มุ้ง: ด้าน ${mosqSides.join(", ")}`);
+    if (roofOn) {
+      const extras = addonSummary(roofAddons).replace(/^ \+ /, "");
+      out.push(`หลังคา: ${roofMaterial}${extras ? ` (${extras})` : ""}`);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sides, roofOn, roofMaterial, roofAddons]);
+
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
+    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, specLines, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomTotal]);

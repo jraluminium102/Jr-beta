@@ -331,7 +331,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);
       lines.push("รายละเอียดงาน");
       lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
-      lines.push(`- กระจกหลัก: ${glassType || "—"}`);
+      lines.push(`- กระจก: ${glassType || "—"}`);
+      (rt.specLines ?? []).forEach((s) => lines.push(`- ${s}`)); // มุ้ง / หลังคา / รางน้ำ ฯลฯ
       setQuote((q) => [...q, {
         key: keySeq, name: prod.name,
         desc: lines.join("\n"),
