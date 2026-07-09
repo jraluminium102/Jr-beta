@@ -55,6 +55,28 @@ export interface BillingNote {
   footer_override?: InstallmentFooter | null; // แก้ footer ใบเต็มทับ (display-only) · null = ใช้ค่าจริงจากคอลัมน์
 }
 
+// หน้าติดตั้งใหม่ (ปฏิทินคิวช่าง) — 0086
+export interface InstallTeam {
+  id: string;
+  name: string;
+  lead_name: string;
+  color: string;       // red|blue|green|amber|purple|teal
+  sort_order: number;
+  is_active: boolean;
+}
+export interface InstallAssignment {
+  id: string;
+  job_id: string;
+  team_id: string | null;
+  date: string;        // ISO YYYY-MM-DD
+  crew: string;
+  day_no: number | null;
+  day_total: number | null;
+  note: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  jobs?: any;          // joined job (code/customer_name/customer_area)
+}
+
 export interface Receipt {
   id: number;
   code: string;
