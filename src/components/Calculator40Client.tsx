@@ -118,6 +118,20 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
   const [keySeq, setKeySeq] = useState(1);
+  // ย้อนกลับจากใบเสนอราคามาแก้ (?restore=1) → คืนรายการที่ส่งไปล่าสุด
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("restore") !== "1") return;
+    try {
+      const raw = sessionStorage.getItem("jr_calc_quote");
+      const arr = raw ? (JSON.parse(raw) as QuoteItem[]) : [];
+      if (Array.isArray(arr) && arr.length) {
+        setQuote(arr);
+        setKeySeq(Math.max(1, ...arr.map((x) => Number(x.key) || 0)) + 1);
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // ค่าบริการเพิ่มเติมทั้งใบ (นั่งร้าน/เดินทาง/ขนส่ง/ค่าไฟ/ความเสี่ยง/รื้อ) — พาริตี้ R3.9
   const [svc, setSvc] = useState<ServiceInput>(EMPTY_SERVICES);
   const [svcOpen, setSvcOpen] = useState(false);
@@ -307,12 +321,14 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ห้องกระจก (G6 composite) — RoomComposer คิดราคารวมทั้งก้อนแล้ว ขึ้นใบเป็นรายการเดียว (แยกรายด้าน/ฝ้า/หลังคาอยู่ในหน้าสรุปของ composer)
     if (prod.composite) {
       const rt = roomTotals!;
-      // รายละเอียดรายด้านแบบ G1 (ชนิดบาน+รูปแบบ+ขนาด+กระจก) → ปริ้นใบเสนอราคาเห็นครบ
+      // รายละเอียดรายด้านแบบ G1 (ชนิดบาน+รูปแบบ+ขนาด+กระจก+ออปชั่น) + หลังคา/ฝ้า/สี/กระจก → ปริ้นใบเสนอราคาเห็นครบ
       const dd = rt.sideDescs ?? [];
-      const lines = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)}: ${dd[i] || "—"}${s > 0 ? ` (${baht(s)}฿)` : ""}`);
-      if (rt.roof > 0) lines.push(`- หลังคา (${baht(rt.roof)}฿)`);
-      if (rt.ceil > 0) lines.push(`- ฝ้า (${baht(rt.ceil)}฿)`);
+      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)}: ${dd[i] || "—"}${s > 0 ? ` (${baht(s)}฿)` : ""}`);
+      if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"} (${baht(rt.roof)}฿)`);
+      if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"} (${baht(rt.ceil)}฿)`);
       if (rt.floor > 0) lines.push(`- พื้น (${baht(rt.floor)}฿)`);
+      lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
+      lines.push(`- กระจกหลัก: ${glassType || "—"}`);
       setQuote((q) => [...q, {
         key: keySeq, name: prod.name,
         desc: ["รายละเอียดงาน", ...lines].join("\n"),
@@ -375,7 +391,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       customer: selectedCustomer?.name ?? "",
       customer_id: customerId,
     };
-    try { sessionStorage.setItem("jr_quote_items", JSON.stringify(payload)); } catch { /* ignore */ }
+    try {
+      sessionStorage.setItem("jr_quote_items", JSON.stringify(payload));
+      sessionStorage.setItem("jr_calc_quote", JSON.stringify(quote)); // เก็บไว้ให้ย้อนกลับมาแก้ในเครื่องคิดราคาได้
+    } catch { /* ignore */ }
     router.push("/quotations/new?from=calc");
   }
 
@@ -989,7 +1008,14 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <tr key={it.key} className="border-b border-black/5 last:border-0">
                     <td className="px-3 py-2">
                       <div className="font-medium">{it.name}</div>
-                      <div className="text-xs text-ink-3 whitespace-pre-line leading-relaxed">{it.desc}</div>
+                      <textarea
+                        value={it.desc}
+                        onChange={(e) => setQuote((q) => q.map((x) => x.key === it.key ? { ...x, desc: e.target.value } : x))}
+                        rows={Math.max(3, (it.desc.match(/\n/g)?.length ?? 0) + 1)}
+                        placeholder={"รายละเอียด (เว้นบรรทัดได้ · แต่ละบรรทัด = บุลเล็ต)\nรายละเอียดงาน\n- สีอลูมิเนียม: ...\n- กระจก: ..."}
+                        className="w-full mt-1 glass-soft rounded-lg px-2 py-1.5 text-xs text-ink-2 leading-relaxed outline-none resize-y"
+                        aria-label={`แก้รายละเอียด ${it.name}`}
+                      />
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{it.qty}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{baht(it.perUnit)}</td>

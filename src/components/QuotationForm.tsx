@@ -53,6 +53,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [aiBusy, setAiBusy] = useState(false);
   const [aiResult, setAiResult] = useState<AiReview | null>(null);
   const [aiErr, setAiErr] = useState("");
+  const [fromCalc, setFromCalc] = useState(false); // มาจากเครื่องคิดราคา → โชว์ปุ่มย้อนกลับไปแก้
 
   // รับรายการจากเครื่องคิดราคา (สะพาน) ตอน mount
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           product_id: String(it.product_id ?? ""),
           group_label: String(it.group_label ?? ""),
         }));
-      if (bridged.length) setItems(bridged);
+      if (bridged.length) { setItems(bridged); setFromCalc(true); }
       // ลูกค้าจากเครื่องคิดราคา: ใช้ customer_id (เลือกจากทะเบียนแล้ว) ก่อน — แม่นยำสุด
       const cidFromCalc =
         payload.customer_id != null && customers.some((c) => c.id === Number(payload.customer_id))
@@ -278,6 +279,13 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         <span className="text-xs font-normal text-ink-3">(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)</span>
       </h1>
 
+      {fromCalc && (
+        <button type="button" onClick={() => router.push("/calculator40?restore=1")}
+          className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2 text-sm font-semibold text-brand-dark">
+          <Icon name="arrowLeft" size={16} /> กลับไปแก้ในเครื่องคิดราคา
+        </button>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-5">
@@ -433,9 +441,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       </>
                     )}
                   </div>
-                  <textarea value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} rows={Math.max(2, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
-                    placeholder={"รายละเอียด (แต่ละบรรทัด = บุลเล็ต)\n- ชุดล็อค + กุญแจ\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
-                    className="w-full glass rounded-md px-3 py-1.5 text-xs mt-2 outline-none resize-y leading-relaxed" />
+                  <textarea value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} rows={Math.max(4, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
+                    placeholder={"รายละเอียด (กด Enter เว้นบรรทัดได้ · แต่ละบรรทัด = บุลเล็ต)\n- ชุดล็อค + กุญแจ\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                    className="w-full glass rounded-md px-3 py-2 text-sm mt-2 outline-none resize-y leading-relaxed" style={{ minHeight: "6rem" }} />
                   <div className="flex items-center gap-3 text-sm flex-wrap mt-2.5">
                     <label className="text-xs text-ink-3">จำนวน
                       <input type="number" min={0} value={it.qty} onChange={(e) => setItem(i, "qty", Number(e.target.value))} className="w-16 ml-1.5 glass rounded-md px-2 py-1 text-right outline-none" />

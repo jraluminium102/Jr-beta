@@ -110,14 +110,26 @@ function L(i: number) {
   return String.fromCharCode(65 + i);
 }
 
-// สร้างข้อความรายละเอียดต่อบาน (ชนิด + รูปแบบ + จำนวน + ขนาด + กระจก) — ใช้ขึ้นใบเสนอราค่ารายด้าน
+// ป้ายชื่อ addon (id → ไทย) สำหรับสรุปลงใบเสนอราคา
+const ADDON_LABELS: Record<string, string> = {
+  mosquito: "มุ้ง", grid: "คาดตาราง", cmech: "มือจับ CMECH", stainless: "สแตนเลส",
+  digihandle: "มือจับดิจิตอล", digiNc: "ดิจิตอล", frame_wrap: "ครอบวงกบ", drop_floor: "ดรอปพื้น",
+  demolish: "รื้อของเดิม", closer: "โช้คอัพ", thresh: "ธรณี", lock: "ชุดล็อค", handle: "มือจับ",
+  solid_panel: "แผ่นทึบ", slide_auto: "ระบบออโต้", louver: "เกล็ด",
+};
+function addonSummary(addons: Record<string, any> | undefined): string {
+  const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k]) => ADDON_LABELS[k] || k);
+  return on.length ? ` + ${on.join(", ")}` : "";
+}
+
+// สร้างข้อความรายละเอียดต่อบาน (ชนิด + รูปแบบ + จำนวน + ขนาด + กระจก + ออปชั่น) — ใช้ขึ้นใบเสนอราคารายด้าน
 function paneDesc(p: Pane, glassFallback: string): string {
   const prod = PANE_BY_KEY[p.typeKey];
   const label = PANE_TYPES.find((t) => t.key === p.typeKey)?.label || p.typeKey;
   const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
   const glass = prod?.defGlass ? (p.glassOvr || glassFallback || prod.defGlass) : "";
   const size = `${(p.w || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}×${(p.h || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}ม.`;
-  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}`;
+  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}${addonSummary(p.addons)}`;
 }
 
 function freshPane(): Pane {
@@ -211,7 +223,7 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
   return t;
 }
 
-export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
+export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
 
 export default function RoomComposer({
   pb, mainColor, mainGlass, profitPct, onTotal,
@@ -355,9 +367,13 @@ export default function RoomComposer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [sides, mainGlass, mainColor]);
 
+  // รายละเอียดหลังคา/ฝ้า (ชนิด+ขนาด) → ขึ้นใบเสนอราคา (เดิมมีแค่ยอด ฿)
+  const roofDesc = roofOn ? `หลังคา ${roofMaterial} ${roofW}×${roofL} ม.` : "";
+  const ceilDesc = ceilOn ? `ฝ้า ${CEIL_TYPES.find((t) => t.key === ceilType)?.label || ceilType} ${ceilW}×${ceilL} ม.` : "";
+
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
+    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomTotal]);
