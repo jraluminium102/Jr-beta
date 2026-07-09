@@ -112,7 +112,16 @@ export default async function QuotationDetail({ params }: { params: { id: string
                   <td className="p-2">{i + 1}</td>
                   <td>
                     <div className="font-medium">{it.name}</div>
-                    {it.detail && <div className="text-xs text-ink-3">{it.detail}</div>}
+                    {it.detail && (
+                      <div className="text-xs mt-0.5" style={{ lineHeight: 1.5 }}>
+                        {it.detail.split("\n").map((ln, li) => {
+                          const t = ln.trim();
+                          if (!t) return null;
+                          if (t === "รายละเอียดงาน") return <div key={li} className="font-semibold" style={{ color: "#b3151d", marginTop: 2 }}>{t}</div>;
+                          return <div key={li} className="text-ink-3" style={{ marginLeft: t.startsWith("-") ? 8 : 0 }}>{t}</div>;
+                        })}
+                      </div>
+                    )}
                   </td>
                   <td className="text-center tabular-nums">{baht(it.qty)}</td>
                   <td className="text-right tabular-nums">{baht(it.unit_price)}</td>
