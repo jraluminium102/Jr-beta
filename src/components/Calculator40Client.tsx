@@ -307,10 +307,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ห้องกระจก (G6 composite) — RoomComposer คิดราคารวมทั้งก้อนแล้ว ขึ้นใบเป็นรายการเดียว (แยกรายด้าน/ฝ้า/หลังคาอยู่ในหน้าสรุปของ composer)
     if (prod.composite) {
       const rt = roomTotals!;
-      const sideDesc = rt.sides.map((s, i) => `ด้าน ${String.fromCharCode(65 + i)} ${baht(s)}฿`).join(", ");
+      // รายละเอียดรายด้านแบบ G1 (ชนิดบาน+รูปแบบ+ขนาด+กระจก) → ปริ้นใบเสนอราคาเห็นครบ
+      const dd = rt.sideDescs ?? [];
+      const lines = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)}: ${dd[i] || "—"}${s > 0 ? ` (${baht(s)}฿)` : ""}`);
+      if (rt.roof > 0) lines.push(`- หลังคา (${baht(rt.roof)}฿)`);
+      if (rt.ceil > 0) lines.push(`- ฝ้า (${baht(rt.ceil)}฿)`);
+      if (rt.floor > 0) lines.push(`- พื้น (${baht(rt.floor)}฿)`);
       setQuote((q) => [...q, {
         key: keySeq, name: prod.name,
-        desc: `${sideDesc}${rt.roof > 0 ? ` · หลังคา ${baht(rt.roof)}฿` : ""}${rt.ceil > 0 ? ` · ฝ้า ${baht(rt.ceil)}฿` : ""}`,
+        desc: ["รายละเอียดงาน", ...lines].join("\n"),
         qty: n, perUnit: rt.total, cost: 0,
         prodId: prod.id, groupLabel: "ห้องกระจก",
       }]);

@@ -67,6 +67,7 @@ const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
 type Pane = {
   key: number;
   typeKey: string; // R4.0 product id
+  form?: string;   // รูปแบบเปิด (อิสระ/สลับ/ลากจูง/เปิดคู่กลาง ฯลฯ) — ดึงจาก prod.forms เหมือน G1 · undefined = prod.defForm
   w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
   fixedPanes?: number; // บานติดตาย (เฉพาะบานเลื่อน — ลด movePanes ของมุ้ง)
   addons: Record<string, any>; // per-pane option เต็ม (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) — ตรง shape ที่ AddonsSection ใช้
@@ -109,6 +110,16 @@ function L(i: number) {
   return String.fromCharCode(65 + i);
 }
 
+// สร้างข้อความรายละเอียดต่อบาน (ชนิด + รูปแบบ + จำนวน + ขนาด + กระจก) — ใช้ขึ้นใบเสนอราค่ารายด้าน
+function paneDesc(p: Pane, glassFallback: string): string {
+  const prod = PANE_BY_KEY[p.typeKey];
+  const label = PANE_TYPES.find((t) => t.key === p.typeKey)?.label || p.typeKey;
+  const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
+  const glass = prod?.defGlass ? (p.glassOvr || glassFallback || prod.defGlass) : "";
+  const size = `${(p.w || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}×${(p.h || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}ม.`;
+  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}`;
+}
+
 function freshPane(): Pane {
   return { key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1, addons: {} };
 }
@@ -131,14 +142,15 @@ function panePrice(
   const rc = resolveAluColor(pane.colorIdx || roomColor); // ชื่อสี → หมวดค่าอบ (พาริตี้ 13 สี)
   const glassType = prod.defGlass ? (pane.glassOvr || roomGlass || prod.defGlass) : undefined;
   const wCm = (pane.w || 1) * 100, hCm = (pane.h || 1) * 100;
+  const formVal = (prod.forms?.length ? (pane.form || prod.defForm) : prod.defForm); // ใช้รูปแบบที่เลือก (เปิดคู่กลาง ฯลฯ) เหมือน G1
   const opt: any = {
-    w: wCm, h: hCm, p: pane.n || 1, form: prod.defForm,
+    w: wCm, h: hCm, p: pane.n || 1, form: formVal,
     color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
   };
   // มุ้งบวกบาน R4.0 จริง (ไม่ใช่ R3.9 fallback) — ตรง Calculator40Client
   const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
-  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: prod.defForm }, pb, profitPct, profitPct);
+  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);
   if (mq) opt.mosquitoR4 = mq;
   if (pane.addons?.dgNc) opt.digiNc = true;
   const r: any = computeCost(pb, prod, opt);
@@ -199,7 +211,7 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
   return t;
 }
 
-export type RoomTotals = { total: number; sides: number[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
+export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
 
 export default function RoomComposer({
   pb, mainColor, mainGlass, profitPct, onTotal,
@@ -335,9 +347,17 @@ export default function RoomComposer({
     return ceil100(t);
   }, [sideTotals, roofTotal, ceilTotal, floorTotal, fanTotal, servicesTotal, svcTotal]);
 
+  // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
+  const sideDescs = useMemo(() => sides.map((s, i) => {
+    if (s.kind === "glass") return s.cols.flatMap((c) => c.pcs).map((p) => paneDesc(p, sideGlass(i))).join(" + ");
+    if (s.kind === "wall") return `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.`;
+    return "เปิดโล่ง";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [sides, mainGlass, mainColor]);
+
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
+    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomTotal]);
@@ -548,10 +568,16 @@ export default function RoomComposer({
                       className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
                       <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value, addons: {} })}
+                        <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value, addons: {}, form: undefined })}
                           className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
                           {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
                         </select>
+                        {(prod?.forms?.length ?? 0) > 0 && (
+                          <select value={pc.form || prod.defForm} onChange={(e) => patchPane(i, pc.key, { form: e.target.value })}
+                            className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="รูปแบบการเปิด (เหมือน G1)">
+                            {prod.forms.map((f: string) => <option key={f} value={f}>{f}</option>)}
+                          </select>
+                        )}
                         <input type="number" step={0.1} value={pc.w || ""} placeholder="กว้าง(ม.)"
                           onChange={(e) => patchPane(i, pc.key, { w: +e.target.value || 0 })}
                           className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
@@ -612,7 +638,7 @@ export default function RoomComposer({
                           W={pc.w || 1}
                           movePanes={movePanes}
                           color={resolveAluColor(pc.colorIdx || sideColor(i)).bake}
-                          form={prod.defForm}
+                          form={pc.form || prod.defForm}
                         />
                       )}
                     </div>
