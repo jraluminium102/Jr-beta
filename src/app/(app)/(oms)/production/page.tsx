@@ -63,7 +63,8 @@ const GROUPS: { key: string; label: string; match: (r: Row) => boolean; tone: st
   { key: "measure", label: "รอวัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !!r.measure_scheduled, tone: "text-sky-300" },
   { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", match: (r) => ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"].includes(r.status), tone: "text-cyan-300" },
   { key: "queued", label: "รอลงผลิต", match: (r) => r.status === "QUEUED", tone: "text-amber-300" },
-  { key: "producing", label: "กำลังผลิต/QC", match: (r) => ["MANUFACTURING", "QC"].includes(r.status), tone: "text-orange-300" },
+  { key: "producing", label: "กำลังผลิต", match: (r) => r.status === "MANUFACTURING", tone: "text-orange-300" },
+  { key: "qc", label: "ตรวจ QC", match: (r) => r.status === "QC", tone: "text-purple-300" },
   { key: "ready", label: "พร้อมติดตั้ง", match: (r) => r.status === "READY", tone: "text-emerald-300" },
   { key: "issue", label: "มีปัญหา", match: (r) => r.status === "ISSUE", tone: "text-rose-300" },
 ];
