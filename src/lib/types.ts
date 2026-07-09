@@ -181,6 +181,10 @@ export interface StockMove {
   total_price: number;
   image_url: string;
   created_at: string;
+  is_voided?: boolean;   // 0087 — ยกเลิกรายการ (soft void) + recompute
+  void_reason?: string | null;
+  voided_at?: string | null;
+  edited_at?: string | null;
 }
 
 export const BILLING_STATUS_LABEL: Record<BillingStatus, string> = {

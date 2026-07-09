@@ -109,19 +109,15 @@ export default function StockClient({
             <input aria-label="ค้นหาวัสดุ" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา ชื่อ / SKU / หมวด"
               className="w-full glass-soft rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none" />
           </label>
-          {/* กรองตามหมวด (ปุ่มกด) */}
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            <button onClick={() => setCatFilter(null)}
-              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${catFilter === null ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-              ทุกหมวด
-            </button>
+          {/* กรองตามหมวด (dropdown) */}
+          <select value={catFilter ?? ""} onChange={(e) => setCatFilter(e.target.value ? Number(e.target.value) : null)}
+            aria-label="กรองตามหมวด"
+            className="w-full glass-soft rounded-xl px-3 py-2.5 text-sm outline-none mb-2">
+            <option value="">ทุกหมวด ({list.length})</option>
             {cats.map((c) => (
-              <button key={c.id} onClick={() => setCatFilter(catFilter === c.id ? null : c.id)}
-                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${catFilter === c.id ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                {c.name}{catCount(c.id) > 0 ? ` (${catCount(c.id)})` : ""}
-              </button>
+              <option key={c.id} value={c.id}>{c.name}{catCount(c.id) > 0 ? ` (${catCount(c.id)})` : ""}</option>
             ))}
-          </div>
+          </select>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <button onClick={() => setLowOnly((v) => !v)}
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${lowOnly ? "bg-red-600 text-white" : "glass-soft text-ink-2"}`}>
@@ -212,6 +208,19 @@ function ItemDetail({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [voidBusy, setVoidBusy] = useState<number | null>(null);
+  const [editMove, setEditMove] = useState<StockMove | null>(null);
+
+  async function voidMove(m: StockMove) {
+    const reason = window.prompt(`ยกเลิกรายการ ${MOVE_LABEL[m.type]} ${baht(m.qty)} ${item.unit}?\n(ยอด/ต้นทุนจะถูกคิดใหม่ · เก็บไว้ในประวัติ)\n\nเหตุผล:`);
+    if (!reason || !reason.trim()) return;
+    setVoidBusy(m.id);
+    try {
+      const r = await fetch(`/api/stock/moves/${m.id}/void`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+      if (r.ok) onChanged();
+      else alert((await r.json().catch(() => null))?.error ?? "ยกเลิกไม่สำเร็จ");
+    } finally { setVoidBusy(null); }
+  }
 
   async function delItem() {
     if (!confirm(`ลบ "${item.name}" ถาวร?\nประวัติรับเข้า/เบิกออก/ราคาของวัสดุนี้จะถูกลบตามไปด้วย — กู้คืนไม่ได้`)) return;
@@ -307,31 +316,99 @@ function ItemDetail({
                   <th className="px-3 py-2 font-medium text-right">จำนวน</th>
                   <th className="px-3 py-2 font-medium">ผู้เบิก/อ้างอิง</th>
                   <th className="px-3 py-2 font-medium">รูป</th>
+                  {canWrite && <th className="px-3 py-2 font-medium text-right">จัดการ</th>}
                 </tr>
               </thead>
               <tbody>
                 {moves.map((m) => (
-                  <tr key={m.id} className="border-b border-black/5 last:border-0">
+                  <tr key={m.id} className={`border-b border-black/5 last:border-0 ${m.is_voided ? "opacity-50" : ""}`}>
                     <td className="px-3 py-2 text-ink-2 whitespace-nowrap">{new Date(m.created_at).toLocaleDateString("th-TH")}</td>
-                    <td className="px-3 py-2"><Badge tone={MOVE_TONE[m.type]}>{MOVE_LABEL[m.type]}</Badge></td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                    <td className="px-3 py-2">
+                      <Badge tone={MOVE_TONE[m.type]}>{MOVE_LABEL[m.type]}</Badge>
+                      {m.is_voided && <span className="ml-1 text-[10px] text-red-600 font-semibold">ยกเลิก</span>}
+                      {!m.is_voided && m.edited_at && <span className="ml-1 text-[10px] text-amber-600">แก้แล้ว</span>}
+                    </td>
+                    <td className={`px-3 py-2 text-right font-semibold tabular-nums ${m.is_voided ? "line-through" : ""}`}>
                       {m.type === "out" ? "−" : m.type === "in" ? "+" : "="}{baht(m.qty)}
                     </td>
                     <td className="px-3 py-2 text-ink-2 truncate max-w-[160px]">
                       {m.requester || m.ref || "—"}
                       {m.total_price ? <span className="text-ink-3"> · ฿{baht(m.total_price)}</span> : ""}
+                      {m.is_voided && m.void_reason && <div className="text-[10px] text-red-500">เหตุผล: {m.void_reason}</div>}
                     </td>
                     <td className="px-3 py-2">
                       {m.image_url
                         ? <a href={m.image_url} target="_blank" rel="noopener noreferrer" className="text-brand"><Icon name="search" size={14} /></a>
                         : <span className="text-ink-3">—</span>}
                     </td>
+                    {canWrite && (
+                      <td className="px-3 py-2 text-right whitespace-nowrap">
+                        {m.is_voided ? <span className="text-ink-3 text-xs">—</span> : (
+                          <span className="inline-flex gap-1">
+                            <button onClick={() => setEditMove(m)} title="แก้ไข" className="press text-ink-3 hover:text-brand-dark"><Icon name="pencil" size={14} /></button>
+                            <button onClick={() => voidMove(m)} disabled={voidBusy === m.id} title="ยกเลิก" className="press text-ink-3 hover:text-red-600 disabled:opacity-50"><Icon name="close" size={15} /></button>
+                          </span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+      </div>
+      {editMove && <MoveEditModal move={editMove} unit={item.unit} canViewCost={canViewCost} onClose={() => setEditMove(null)} onSaved={() => { setEditMove(null); onChanged(); }} />}
+    </div>
+  );
+}
+
+// ── แก้รายการเคลื่อนไหว (กรอกผิด) — จำนวน/ผู้เบิก/หมายเหตุ/ราคา → recompute ยอดใหม่ ──
+function MoveEditModal({ move, unit, canViewCost, onClose, onSaved }: {
+  move: StockMove; unit: string; canViewCost: boolean; onClose: () => void; onSaved: () => void;
+}) {
+  const [qty, setQty] = useState(String(move.qty));
+  const [requester, setRequester] = useState(move.requester || "");
+  const [note, setNote] = useState(move.note || "");
+  const [ref, setRef] = useState(move.ref || "");
+  const [total, setTotal] = useState(move.total_price ? String(move.total_price) : "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function save() {
+    const q = Number(qty);
+    if (!(q > 0)) { setErr("จำนวนต้องมากกว่า 0"); return; }
+    setBusy(true); setErr("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body: Record<string, any> = { qty: q, requester, note, ref };
+    if (move.type === "in" && canViewCost && total !== "") body.total_price = Number(total) || 0;
+    try {
+      const r = await fetch(`/api/stock/moves/${move.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (r.ok) onSaved();
+      else setErr((await r.json().catch(() => null))?.error ?? "บันทึกไม่สำเร็จ");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true">
+      <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-brand-dark">แก้ {MOVE_LABEL[move.type]}</h3>
+          <button onClick={onClose} aria-label="ปิด" className="text-ink-3"><Icon name="close" size={18} /></button>
+        </div>
+        <p className="text-xs text-ink-3">แก้แล้วยอดคงเหลือ/ต้นทุนจะคิดใหม่ให้ · ถ้ากรอกประเภทผิด (รับ↔เบิก) ให้ยกเลิกแล้วลงใหม่</p>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <Field label={`จำนวน (${unit})`} value={qty} onChange={setQty} type="number" autoFocus />
+          {move.type === "in" && canViewCost && <Field label="ราคาที่จ่ายจริง (บาท)" value={total} onChange={setTotal} type="number" />}
+          <Field label="ผู้เบิก/ผู้รับ" value={requester} onChange={setRequester} list="stk-requesters" />
+          <Field label="อ้างอิง" value={ref} onChange={setRef} />
+          <Field label="หมายเหตุ" value={note} onChange={setNote} wide />
+        </div>
+        {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} disabled={busy} className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm">ยกเลิก</button>
+          <button onClick={save} disabled={busy} className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50">บันทึก</button>
+        </div>
       </div>
     </div>
   );
@@ -349,6 +426,12 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
   const [imageUrl, setImageUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [reqOpts, setReqOpts] = useState<string[]>([]); // รายชื่อผู้เบิก/รับเข้าเดิม (datalist)
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/stock/requesters").then((r) => r.json()).then((j) => { if (alive && Array.isArray(j?.data)) setReqOpts(j.data); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   function reset() { setQty(""); setRequester(""); setJob(null); setRef(""); setNote(""); setTotalPrice(""); setImageUrl(""); setErr(""); }
 
@@ -394,10 +477,11 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Field label={type === "adjust" ? `คงเหลือใหม่ (${item.unit})` : `จำนวน (${item.unit})`} value={qty} onChange={setQty} type="number" autoFocus />
-            {type === "out" && <Field label="ผู้เบิก" value={requester} onChange={setRequester} placeholder="ชื่อคนเบิก" />}
+            {type === "out" && <Field label="ผู้เบิก" value={requester} onChange={setRequester} placeholder="เลือกหรือพิมพ์ชื่อ" list="stk-requesters" />}
             {type === "in" && canViewCost && <Field label="ราคาที่จ่ายจริง (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="รวมทั้งบิล ถ้ามี" />}
-            {type === "in" && <Field label="ผู้รับเข้า" value={requester} onChange={setRequester} placeholder="ชื่อคนรับ" />}
+            {type === "in" && <Field label="ผู้รับเข้า" value={requester} onChange={setRequester} placeholder="เลือกหรือพิมพ์ชื่อ" list="stk-requesters" />}
           </div>
+          <datalist id="stk-requesters">{reqOpts.map((n) => <option key={n} value={n} />)}</datalist>
 
           {/* ผูกงาน (เบิกออก) */}
           {type === "out" && <JobPicker value={job} onPick={setJob} />}
@@ -814,14 +898,14 @@ function CategoryManager({ cats, onClose, onChanged }: { cats: StockCategory[]; 
   );
 }
 
-// ── input ทั่วไป ──
-function Field({ label, value, onChange, wide, type = "text", placeholder, autoFocus }: {
-  label: string; value: string; onChange: (v: string) => void; wide?: boolean; type?: string; placeholder?: string; autoFocus?: boolean;
+// ── input ทั่วไป (มี list = datalist สำหรับเลือกเดิม+เพิ่มใหม่) ──
+function Field({ label, value, onChange, wide, type = "text", placeholder, autoFocus, list }: {
+  label: string; value: string; onChange: (v: string) => void; wide?: boolean; type?: string; placeholder?: string; autoFocus?: boolean; list?: string;
 }) {
   return (
     <label className={`block ${wide ? "col-span-2" : ""}`}>
       <span className="text-xs font-medium text-ink-3">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus} list={list}
         className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none" />
     </label>
   );
