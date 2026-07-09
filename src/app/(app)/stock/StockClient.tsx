@@ -358,32 +358,26 @@ function ItemDetail({
           </div>
         )}
       </div>
-      {editMove && <MoveEditModal move={editMove} unit={item.unit} canViewCost={canViewCost} onClose={() => setEditMove(null)} onSaved={() => { setEditMove(null); onChanged(); }} />}
+      {editMove && <MoveEditModal move={editMove} onClose={() => setEditMove(null)} onSaved={() => { setEditMove(null); onChanged(); }} />}
     </div>
   );
 }
 
-// ── แก้รายการเคลื่อนไหว (กรอกผิด) — จำนวน/ผู้เบิก/หมายเหตุ/ราคา → recompute ยอดใหม่ ──
-function MoveEditModal({ move, unit, canViewCost, onClose, onSaved }: {
-  move: StockMove; unit: string; canViewCost: boolean; onClose: () => void; onSaved: () => void;
+// ── แก้ข้อความรายการเคลื่อนไหว (ผู้เบิก/อ้างอิง/หมายเหตุ) — ไม่แตะจำนวน/ต้นทุน (กันยอดเพี้ยน) ──
+// จำนวน/ประเภทผิด → ใช้ปุ่ม "ยกเลิก" แล้วลงใหม่
+function MoveEditModal({ move, onClose, onSaved }: {
+  move: StockMove; onClose: () => void; onSaved: () => void;
 }) {
-  const [qty, setQty] = useState(String(move.qty));
   const [requester, setRequester] = useState(move.requester || "");
   const [note, setNote] = useState(move.note || "");
   const [ref, setRef] = useState(move.ref || "");
-  const [total, setTotal] = useState(move.total_price ? String(move.total_price) : "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
   async function save() {
-    const q = Number(qty);
-    if (!(q > 0)) { setErr("จำนวนต้องมากกว่า 0"); return; }
     setBusy(true); setErr("");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body: Record<string, any> = { qty: q, requester, note, ref };
-    if (move.type === "in" && canViewCost && total !== "") body.total_price = Number(total) || 0;
     try {
-      const r = await fetch(`/api/stock/moves/${move.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const r = await fetch(`/api/stock/moves/${move.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ requester, note, ref }) });
       if (r.ok) onSaved();
       else setErr((await r.json().catch(() => null))?.error ?? "บันทึกไม่สำเร็จ");
     } finally { setBusy(false); }
@@ -393,16 +387,14 @@ function MoveEditModal({ move, unit, canViewCost, onClose, onSaved }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true">
       <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-brand-dark">แก้ {MOVE_LABEL[move.type]}</h3>
+          <h3 className="font-bold text-brand-dark">แก้ข้อความ — {MOVE_LABEL[move.type]} {baht(move.qty)}</h3>
           <button onClick={onClose} aria-label="ปิด" className="text-ink-3"><Icon name="close" size={18} /></button>
         </div>
-        <p className="text-xs text-ink-3">แก้แล้วยอดคงเหลือ/ต้นทุนจะคิดใหม่ให้ · ถ้ากรอกประเภทผิด (รับ↔เบิก) ให้ยกเลิกแล้วลงใหม่</p>
+        <p className="text-xs text-ink-3">แก้ได้เฉพาะข้อความ · <b>จำนวน/ประเภทผิด</b> ให้กด &quot;ยกเลิก (✕)&quot; แล้วลงรายการใหม่ (กันยอด/ต้นทุนเพี้ยน)</p>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Field label={`จำนวน (${unit})`} value={qty} onChange={setQty} type="number" autoFocus />
-          {move.type === "in" && canViewCost && <Field label="ราคาที่จ่ายจริง (บาท)" value={total} onChange={setTotal} type="number" />}
-          <Field label="ผู้เบิก/ผู้รับ" value={requester} onChange={setRequester} list="stk-requesters" />
+          <Field label="ผู้เบิก/ผู้รับ" value={requester} onChange={setRequester} autoFocus wide />
           <Field label="อ้างอิง" value={ref} onChange={setRef} />
-          <Field label="หมายเหตุ" value={note} onChange={setNote} wide />
+          <Field label="หมายเหตุ" value={note} onChange={setNote} />
         </div>
         {err && <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
         <div className="flex gap-2 pt-1">
