@@ -63,7 +63,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
     setBusy(g.key); setMsg(null);
     const res = await fetch("/api/stock/alu-rates", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: g.items.map((r) => r.id), rate, series: g.series, color: g.color, prev_rate: g.rate || null }),
+      body: JSON.stringify({ ids: g.items.map((r) => r.id), rate, series: g.series, color: g.color }),
     });
     const j = await res.json().catch(() => null);
     setBusy(null);
@@ -71,8 +71,13 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
     setRows((rs) => rs.map((r) => g.items.some((x) => x.id === r.id)
       ? { ...r, unit_cost: round2(Number(r.weight_per_unit) * rate), price_per_kg: rate } : r));
     setInputs((v) => ({ ...v, [g.key]: "" }));
-    setMsg({ key: g.key, text: `อัปเดตแล้ว ${j?.data?.updated ?? g.items.length} เส้น ✓ (คิดราคา 4.0 ใช้ราคาใหม่ทันที)`, ok: true });
-    setLog((l) => [{ id: Date.now(), series: g.series, color: g.color, prev_rate: g.rate || null, rate,
+    const warns: string[] = j?.data?.warns ?? [];
+    setMsg({
+      key: g.key,
+      text: `อัปเดตแล้ว ${j?.data?.updated ?? g.items.length} เส้น ✓ (คิดราคา 4.0 ใช้ราคาใหม่ทันที)${warns.length ? " · ⚠ " + warns.join(" · ") : ""}`,
+      ok: true,
+    });
+    setLog((l) => [{ id: Date.now(), series: g.series, color: g.color, prev_rate: j?.data?.prev_rate ?? (g.rate || null), rate,
       item_count: j?.data?.updated ?? g.items.length, changed_by_name: "คุณ", created_at: new Date().toISOString() }, ...l]);
   }
 

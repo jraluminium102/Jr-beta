@@ -62,14 +62,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return ok(data);
 }
 
-// DELETE /api/stock/[id]  → ลบวัสดุถาวร (cascade ลบ moves + prices ของมันด้วย)
+// DELETE /api/stock/[id]  → ลบวัสดุ (ผลตรวจบัญชี 10 ก.ค.69: กันล้างประวัติต้นทุน)
+// • ADMIN เท่านั้น · มีประวัติเคลื่อนไหว/ราคา = ปิดใช้งาน (soft delete) แทน — สอบย้อนต้นทุนได้เสมอ
+// • ลบถาวรได้เฉพาะวัสดุเปล่า (ไม่มี moves/prices เลย เช่น สร้างผิด)
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
-  if (!STORE_WRITE.includes(profile.role)) return FORBIDDEN();
+  if (profile.role !== "ADMIN") return FORBIDDEN();
 
   const supabase = createClient() as unknown as Sb;
-  const { error } = await supabase.from("stock_items").delete().eq("id", params.id);
+  const id = Number(params.id);
+  const [{ count: mv }, { count: pr }] = await Promise.all([
+    supabase.from("stock_moves").select("id", { count: "exact", head: true }).eq("stock_item_id", id),
+    supabase.from("stock_prices").select("id", { count: "exact", head: true }).eq("stock_item_id", id),
+  ]);
+  if ((mv ?? 0) > 0 || (pr ?? 0) > 0) {
+    const { error } = await supabase.from("stock_items").update({ is_active: false }).eq("id", id);
+    if (error) return fail(error.message, 500);
+    return ok({ id, softDeleted: true, note: "มีประวัติเคลื่อนไหว/ราคา — ปิดใช้งานแทนการลบถาวร (สอบย้อนได้)" });
+  }
+  const { error } = await supabase.from("stock_items").delete().eq("id", id);
   if (error) return fail(error.message, 500);
-  return ok({ id: Number(params.id) });
+  return ok({ id });
 }

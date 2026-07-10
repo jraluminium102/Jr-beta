@@ -69,8 +69,9 @@ export type PriceOverride = {
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
   const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {} };
   const aluByBrand: Record<string, number> = {};
-  // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.) · ไม่มีอบขาว = ค่าสูงสุด (กันคิดขาด)
-  const aluByCode: Record<string, { white: number; max: number }> = {};
+  // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
+  // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
+  const aluByCode: Record<string, { white: number; min: number }> = {};
   for (const r of rows || []) {
     const name = (r.name || "").trim();
     const sku = (r.sku || "").trim();
@@ -85,8 +86,8 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       // อลูรายเส้นด้วยรหัส (ไม่ else — แถวเดียวเป็นได้ทั้ง PARTS(ชื่อ) และ ALUCODE(รหัส))
       const code = sku ? normCode(sku) : "";
       if (code && aluCodes.has(code)) {
-        const e = aluByCode[code] || (aluByCode[code] = { white: 0, max: 0 });
-        e.max = Math.max(e.max, cost);
+        const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0 });
+        e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
         if (name.includes("อบขาว")) e.white = Math.max(e.white, cost);
       }
     }
@@ -97,7 +98,7 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     }
   }
   for (const b in aluByBrand) ov.ALU[b] = aluByBrand[b];
-  for (const c in aluByCode) ov.ALUCODE[c] = aluByCode[c].white || aluByCode[c].max;
+  for (const c in aluByCode) ov.ALUCODE[c] = aluByCode[c].white || aluByCode[c].min;
   return ov;
 }
 
