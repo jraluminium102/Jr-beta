@@ -6,6 +6,7 @@ import { syncSchedule } from "../route";
 
 const Schema = z.object({
   team_id: z.string().uuid().nullable().optional(),
+  lead_name: z.string().optional(),   // หัวหน้าช่าง (0089)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   crew: z.string().optional(),
   day_no: z.number().int().positive().nullable().optional(),

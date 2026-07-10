@@ -67,7 +67,8 @@ export interface InstallTeam {
 export interface InstallAssignment {
   id: string;
   job_id: string;
-  team_id: string | null;
+  team_id: string | null;   // เลิกใช้ (0089) — คงไว้เพื่อข้อมูลเก่า
+  lead_name?: string;       // หัวหน้าช่าง (พิมพ์อิสระ · 0089) — สีการ์ดปฏิทินอิงชื่อนี้
   date: string;        // ISO YYYY-MM-DD
   crew: string;
   day_no: number | null;
