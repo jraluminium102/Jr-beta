@@ -27,9 +27,11 @@ function colorOf(name: string): string {
 }
 
 type Group = { key: string; series: string; color: string; items: Row[]; rate: number };
+type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
-export default function AluRatesClient({ items, noWeightCount, canEdit }: { items: Row[]; noWeightCount: number; canEdit: boolean }) {
+export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [] }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[] }) {
   const [rows, setRows] = useState<Row[]>(items);
+  const [log, setLog] = useState<RateLog[]>(rateLog);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ key: string; text: string; ok: boolean } | null>(null);
@@ -61,7 +63,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit }: { item
     setBusy(g.key); setMsg(null);
     const res = await fetch("/api/stock/alu-rates", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: g.items.map((r) => r.id), rate }),
+      body: JSON.stringify({ ids: g.items.map((r) => r.id), rate, series: g.series, color: g.color, prev_rate: g.rate || null }),
     });
     const j = await res.json().catch(() => null);
     setBusy(null);
@@ -70,6 +72,8 @@ export default function AluRatesClient({ items, noWeightCount, canEdit }: { item
       ? { ...r, unit_cost: round2(Number(r.weight_per_unit) * rate), price_per_kg: rate } : r));
     setInputs((v) => ({ ...v, [g.key]: "" }));
     setMsg({ key: g.key, text: `อัปเดตแล้ว ${j?.data?.updated ?? g.items.length} เส้น ✓ (คิดราคา 4.0 ใช้ราคาใหม่ทันที)`, ok: true });
+    setLog((l) => [{ id: Date.now(), series: g.series, color: g.color, prev_rate: g.rate || null, rate,
+      item_count: j?.data?.updated ?? g.items.length, changed_by_name: "คุณ", created_at: new Date().toISOString() }, ...l]);
   }
 
   return (
@@ -127,6 +131,49 @@ export default function AluRatesClient({ items, noWeightCount, canEdit }: { item
           ยังไม่มีเส้นอลูที่มีทั้ง sku และน้ำหนัก/เส้น — รัน SQL seed น้ำหนัก หรือเติมน้ำหนักในหน้าสต๊อกก่อน
         </p>
       )}
+
+      {/* ประวัติการเปลี่ยนเรต (0088) — วันที่ · กลุ่ม · เรตเดิม→ใหม่ · กี่เส้น · ใคร */}
+      <div className="glass-card rounded-2xl p-4">
+        <div className="text-sm font-bold text-brand-dark mb-2">🕘 ประวัติการเปลี่ยนเรต</div>
+        {log.length === 0 ? (
+          <p className="text-[13px] text-ink-3">ยังไม่มีประวัติ — จะบันทึกอัตโนมัติทุกครั้งที่กดอัปเดตเรต</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[12px] text-ink-3 border-b border-brand/10">
+                  <th className="py-1.5 pr-3">วันที่</th>
+                  <th className="py-1.5 pr-3">กลุ่ม</th>
+                  <th className="py-1.5 pr-3">สี</th>
+                  <th className="py-1.5 pr-3 text-right">เรต (฿/กก.)</th>
+                  <th className="py-1.5 pr-3 text-right">เส้น</th>
+                  <th className="py-1.5 pr-3">โดย</th>
+                </tr>
+              </thead>
+              <tbody>
+                {log.map((h) => {
+                  const up = h.prev_rate != null && h.rate > h.prev_rate;
+                  const down = h.prev_rate != null && h.rate < h.prev_rate;
+                  return (
+                    <tr key={h.id} className="border-b border-brand/5">
+                      <td className="py-1.5 pr-3 whitespace-nowrap">{new Date(h.created_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
+                      <td className="py-1.5 pr-3">{h.series}</td>
+                      <td className="py-1.5 pr-3">{h.color}</td>
+                      <td className="py-1.5 pr-3 text-right whitespace-nowrap">
+                        {h.prev_rate != null && <span className="text-ink-3">{fmt(Number(h.prev_rate))} → </span>}
+                        <b className={up ? "text-red-700" : down ? "text-green-700" : "text-brand-dark"}>{fmt(Number(h.rate))}</b>
+                        {up && " ▲"}{down && " ▼"}
+                      </td>
+                      <td className="py-1.5 pr-3 text-right">{h.item_count}</td>
+                      <td className="py-1.5 pr-3">{h.changed_by_name || "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -15,6 +15,9 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const ids: number[] = Array.isArray(body?.ids) ? body.ids.map(Number).filter((n: number) => n > 0) : [];
   const rate = Number(body?.rate) || 0;
+  const series = String(body?.series ?? "").slice(0, 80);
+  const color = String(body?.color ?? "").slice(0, 40);
+  const prevRate = Number(body?.prev_rate) || null;
   if (!ids.length || ids.length > 500) return fail("รายการไม่ถูกต้อง (1-500 เส้น)");
   if (rate <= 0 || rate > 100000) return fail("เรตต่อโลไม่ถูกต้อง");
 
@@ -50,6 +53,11 @@ export async function POST(req: Request) {
     supplier: "",
     note: `ตั้งเรตต่อโล ${rate} ฿/กก. (หน้าเรตอลู)`,
   })));
+  // ประวัติเรตระดับกลุ่ม (0088) — วันที่/เรตเดิม→ใหม่/ใคร (ยังไม่รัน migration = ข้ามเงียบ ราคาหลักไม่กระทบ)
+  await anyDb.from("alu_rate_log").insert({
+    series, color, prev_rate: prevRate, rate, item_count: updated,
+    changed_by: profile.id, changed_by_name: profile.full_name ?? "",
+  });
 
   return ok({ updated, skippedNoWeight: rows.length - withW.length });
 }

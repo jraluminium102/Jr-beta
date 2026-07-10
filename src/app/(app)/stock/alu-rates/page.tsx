@@ -14,7 +14,7 @@ export default async function AluRatesPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as unknown as { from: (t: string) => any };
 
-  const [{ data: withWeight }, { count: noWeight }] = await Promise.all([
+  const [{ data: withWeight }, { count: noWeight }, { data: rateLog }] = await Promise.all([
     supabase.from("stock_items")
       .select("id, sku, name, supplier, weight_per_unit, unit_cost, price_per_kg")
       .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
@@ -23,6 +23,9 @@ export default async function AluRatesPage() {
       .select("id", { count: "exact", head: true })
       .eq("is_active", true).eq("category", "อลูมิเนียม")
       .or("weight_per_unit.is.null,weight_per_unit.eq.0"),
+    supabase.from("alu_rate_log")
+      .select("id, series, color, prev_rate, rate, item_count, changed_by_name, created_at")
+      .order("created_at", { ascending: false }).limit(60),
   ]);
 
   return (
@@ -31,6 +34,8 @@ export default async function AluRatesPage() {
       items={(withWeight ?? []) as any[]}
       noWeightCount={noWeight ?? 0}
       canEdit={PRICE_WRITE.includes(role)}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rateLog={(rateLog ?? []) as any[]}
     />
   );
 }
