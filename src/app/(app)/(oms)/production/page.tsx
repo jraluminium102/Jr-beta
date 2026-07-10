@@ -155,7 +155,9 @@ export default function ProductionPage() {
 
   const filtered = useMemo(() => {
     const g = GROUPS.find((x) => x.key === filterKey);
-    let list = g ? rows.filter((r) => g.match(r)) : rows;
+    // ค่าเริ่มต้น (ไม่กรอง) ซ่อนงาน READY = พร้อมติดตั้ง (ส่งเข้าหน้าติดตั้งแล้ว ไม่ต้องรกบอร์ดผลิต)
+    // กดการ์ด "พร้อมติดตั้ง" ยังเห็นได้ (g.match)
+    let list = g ? rows.filter((r) => g.match(r)) : rows.filter((r) => r.status !== "READY");
     const term = q.trim().toLowerCase();
     if (term) list = list.filter((r) =>
       (r.job?.job_code ?? "").toLowerCase().includes(term) ||
@@ -250,6 +252,12 @@ export default function ProductionPage() {
         )}
         {filterKey && (
           <button onClick={() => setFilterKey(null)} className="focusable pressable text-[13px] text-white/70 hover:text-white px-3 py-2">ล้างตัวกรอง ✕</button>
+        )}
+        {!filterKey && (counts["ready"] ?? 0) > 0 && (
+          <button onClick={() => setFilterKey("ready")}
+            className="focusable pressable flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-300/30 rounded-xl px-3 py-2 text-[13px] text-emerald-100">
+            <PackageCheck size={15} /> พร้อมติดตั้งแล้ว <b className="tnum">{counts["ready"]}</b> งาน (ซ่อนจากรายการ — แตะดู)
+          </button>
         )}
       </div>
 
