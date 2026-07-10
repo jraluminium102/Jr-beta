@@ -63,6 +63,8 @@ const V_SCREEN_DONE = "ใส่แล้ว"; // ตรง SCREEN_INST ฝั�
 
 // ── เฟสภาพรวม (derive จาก status + ความคืบหน้ารายชุด — ไม่แตะ enum/แกนระบบ) ──
 const PHASE_ORDER = ["รอผลิต", "กำลังผลิต", "กระจก", "QC", "พร้อม"];
+// สเตจบอร์ดคัมบังฝั่งช่าง (ไม่รวม "พร้อม" = READY ซ่อนไปหน้าติดตั้ง) · "ปัญหา" ขึ้นบนสุด
+const CHANG_PHASES = ["ปัญหา", "รอผลิต", "กำลังผลิต", "กระจก", "QC"];
 const PHASE_META: Record<string, { bg: string; fg: string }> = {
   "รอผลิต": { bg: "#eef0f2", fg: "#5f6b76" },
   "กำลังผลิต": { bg: "#fff1db", fg: "#9a6a00" },
@@ -154,21 +156,22 @@ export default function ProductionSchedulePage() {
     [rows]
   );
 
-  // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด) + apply producer filter · โหมดช่างซ่อน READY
+  // โหมดช่าง = บอร์ดคัมบังแนวตั้ง จัดกลุ่มตาม "สเตจ" (derivePhase) · ซ่อน READY · ในสเตจเรียงตามเดดไลน์ (ด่วนก่อน)
   const groups = useMemo(() => {
-    const filterTrimmed = producerFilter.trim();
+    const ft = producerFilter.trim();
     const filtered = rows.filter((r) => {
-      if (r.kind === "job" && r.status === "READY") return false;   // ผลิตเสร็จแล้ว → หลุดจากตารางช่าง
-      if (filterTrimmed && (r.producer_note ?? "").trim() !== filterTrimmed) return false;
+      if (r.kind === "job" && r.status === "READY") return false;   // พร้อมติดตั้ง → หลุดไปหน้าติดตั้ง
+      if (ft && (r.producer_note ?? "").trim() !== ft) return false;
       return true;
     });
     const map = new Map<string, SchedRow[]>();
     for (const r of filtered) {
-      const key = r.due_date ?? "zzz";       // จัดกลุ่มตามวันกำหนดเสร็จ (เดดไลน์) ด่วนสุดก่อน
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(r);
+      const ph = derivePhase(r);
+      if (!map.has(ph)) map.set(ph, []);
+      map.get(ph)!.push(r);
     }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    for (const arr of map.values()) arr.sort((a, b) => (a.due_date ?? "zzz").localeCompare(b.due_date ?? "zzz"));
+    return CHANG_PHASES.filter((p) => map.has(p)).map((p) => [p, map.get(p)!] as [string, SchedRow[]]);
   }, [rows, producerFilter]);
 
   // นับชุดที่ผลิตเสร็จแล้วแต่ยังรอ QC ตรวจก่อนใส่กระจก (แจ้งเตือนเด่นๆ บนสุด)
@@ -320,15 +323,6 @@ export default function ProductionSchedulePage() {
         </span>
       </div>
 
-      {/* คีย์สีประจำวันไทย */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 text-[11px]">
-        {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((d, i) => (
-          <span key={i} className="inline-flex items-center gap-1.5 font-medium" style={{ color: DAY_COLOR[i].deep }}>
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLOR[i].dot }} />{d}
-          </span>
-        ))}
-      </div>
-
       {/* 🔔 แจ้งเตือนรวม: ชุดที่ผลิตเสร็จแล้วรอ QC ตรวจก่อนใส่กระจก */}
       {waitQcCount > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4 font-bold text-[15px] flex items-center gap-2"
@@ -352,21 +346,21 @@ export default function ProductionSchedulePage() {
               <Check size={15} /> พร้อมติดตั้งแล้ว {readyDoneCount} งาน — ส่งเข้าหน้าติดตั้งเรียบร้อย (แตะไปดู)
             </a>
           )}
-          {groups.length === 0 && producerFilter ? (
-            <EmptyState title={`ไม่มีงานของ "${producerFilter}"`} sub="ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" />
+          {groups.length === 0 ? (
+            <EmptyState
+              title={producerFilter ? `ไม่มีงานของ "${producerFilter}"` : "ไม่มีงานกำลังผลิต"}
+              sub={producerFilter ? "ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" : "งานพร้อมติดตั้งไปอยู่ที่หน้าติดตั้งแล้ว"} />
           ) : (
-            groups.map(([dateKey, items]) => {
-              const dc = dayColorOf(dateKey);
-              const isToday = dateKey === today();
+            groups.map(([phase, items]) => {
+              const pm = PHASE_META[phase] ?? PHASE_META["รอผลิต"];
               return (
-              <div key={dateKey}>
-                {/* หัวข้อวัน — iOS section header (จุดสีวัน + วันที่) */}
+              <div key={phase}>
+                {/* หัวข้อสเตจ — บอร์ดคัมบังแนวตั้ง */}
                 <div className="flex items-center gap-2 mb-2 px-1">
-                  {dc && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dc.dot }} />}
-                  <span className="text-[11px] font-semibold" style={{ color: IOS.ink3 }}>กำหนดเสร็จ</span>
-                  <span className="text-[15px] font-bold" style={{ color: dc ? dc.deep : IOS.ink }}>{thHead(dateKey === "zzz" ? null : dateKey)}</span>
-                  {isToday && <span className="text-[10px] rounded-full px-2 py-0.5 font-bold text-white" style={{ background: IOS.green }}>วันนี้</span>}
-                  <span className="ml-auto text-[12px] tnum font-medium" style={{ color: IOS.ink3 }}>{items.length} งาน</span>
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ background: pm.fg }} />
+                  <span className="text-[16px] font-bold" style={{ color: pm.fg }}>{phase}</span>
+                  <span className="text-[12px] font-bold rounded-full px-2 py-0.5" style={{ background: pm.bg, color: pm.fg }}>{items.length}</span>
+                  <span className="ml-auto text-[11px]" style={{ color: IOS.ink3 }}>เรียงตามเดดไลน์</span>
                 </div>
                 <div className="space-y-2.5">
                   {items.map((r) => (
@@ -393,6 +387,14 @@ export default function ProductionSchedulePage() {
                         {(r.customer_area || r.subtitle) && (
                           <div className="text-[12.5px] truncate mt-0.5" style={{ color: IOS.ink2 }}>📍 {r.customer_area || r.subtitle}</div>
                         )}
+                        {!officeMode && r.due_date && (() => {
+                          const late = r.due_date < today() && derivePhase(r) !== "พร้อม";
+                          return (
+                            <div className="text-[12.5px] tnum mt-0.5 font-semibold" style={{ color: late ? IOS.red : IOS.ink }}>
+                              ⏰ กำหนดเสร็จ {thShort(r.due_date)}{late ? " · เลยกำหนด" : ""}
+                            </div>
+                          );
+                        })()}
                         {!officeMode && r.install_date && (
                           <div className="text-[12px] tnum mt-0.5" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</div>
                         )}
