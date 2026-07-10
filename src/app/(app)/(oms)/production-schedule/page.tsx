@@ -346,12 +346,34 @@ export default function ProductionSchedulePage() {
               <Check size={15} /> พร้อมติดตั้งแล้ว {readyDoneCount} งาน — ส่งเข้าหน้าติดตั้งเรียบร้อย (แตะไปดู)
             </a>
           )}
+          {/* ชิปเลือกสเตจ — กดดูเฉพาะสเตจนั้น (กดซ้ำ = กลับทั้งหมด) */}
+          {groups.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap">
+              <button onClick={() => setPhaseFilter("")}
+                className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px]"
+                style={phaseFilter === "" ? { background: IOS.ink, color: "#fff" } : { background: IOS.inset, color: IOS.ink2 }}>
+                ทั้งหมด {groups.reduce((n, [, items]) => n + items.length, 0)}
+              </button>
+              {groups.map(([p, items]) => {
+                const pm = PHASE_META[p] ?? PHASE_META["รอผลิต"];
+                const on = phaseFilter === p;
+                return (
+                  <button key={p} onClick={() => setPhaseFilter(on ? "" : p)}
+                    className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px] inline-flex items-center gap-1.5"
+                    style={on ? { background: pm.fg, color: "#fff" } : { background: pm.bg, color: pm.fg }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: on ? "#fff" : pm.fg }} />
+                    {p} {items.length}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {groups.length === 0 ? (
             <EmptyState
               title={producerFilter ? `ไม่มีงานของ "${producerFilter}"` : "ไม่มีงานกำลังผลิต"}
               sub={producerFilter ? "ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" : "งานพร้อมติดตั้งไปอยู่ที่หน้าติดตั้งแล้ว"} />
           ) : (
-            groups.map(([phase, items]) => {
+            ((phaseFilter && groups.some(([p]) => p === phaseFilter)) ? groups.filter(([p]) => p === phaseFilter) : groups).map(([phase, items]) => {
               const pm = PHASE_META[phase] ?? PHASE_META["รอผลิต"];
               return (
               <div key={phase}>
