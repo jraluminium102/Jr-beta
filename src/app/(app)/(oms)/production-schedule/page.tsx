@@ -148,12 +148,20 @@ export default function ProductionSchedulePage() {
   // ── filter ช่าง ──
   const [producerFilter, setProducerFilter] = useState<string>("");
 
-  // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด) + apply producer filter
+  // งานพร้อมติดตั้ง (READY) = ผลิตเสร็จ ส่งเข้าหน้าติดตั้งแล้ว → ไม่ต้องรกตารางช่าง (โหมดออฟฟิศยังเห็นในเฟส "พร้อม")
+  const readyDoneCount = useMemo(
+    () => rows.filter((r) => r.kind === "job" && r.status === "READY").length,
+    [rows]
+  );
+
+  // จัดกลุ่มตามวันผลิต (ยังไม่กำหนด → ท้ายสุด) + apply producer filter · โหมดช่างซ่อน READY
   const groups = useMemo(() => {
     const filterTrimmed = producerFilter.trim();
-    const filtered = filterTrimmed
-      ? rows.filter((r) => (r.producer_note ?? "").trim() === filterTrimmed)
-      : rows;
+    const filtered = rows.filter((r) => {
+      if (r.kind === "job" && r.status === "READY") return false;   // ผลิตเสร็จแล้ว → หลุดจากตารางช่าง
+      if (filterTrimmed && (r.producer_note ?? "").trim() !== filterTrimmed) return false;
+      return true;
+    });
     const map = new Map<string, SchedRow[]>();
     for (const r of filtered) {
       const key = r.due_date ?? "zzz";       // จัดกลุ่มตามวันกำหนดเสร็จ (เดดไลน์) ด่วนสุดก่อน
@@ -331,6 +339,12 @@ export default function ProductionSchedulePage() {
         <EmptyState title="ยังไม่มีงานในตารางผลิต" sub="กด 'เพิ่มงานผลิต' หรือไปลงคิวผลิตในหน้างานผลิต" />
       ) : !officeMode ? (
         <div className="space-y-5">
+          {readyDoneCount > 0 && (
+            <a href="/installation" className="focusable flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-medium"
+              style={{ background: "#e7f6ec", color: "#227a44", border: "1px solid #b6e3c5" }}>
+              <Check size={15} /> พร้อมติดตั้งแล้ว {readyDoneCount} งาน — ส่งเข้าหน้าติดตั้งเรียบร้อย (แตะไปดู)
+            </a>
+          )}
           {groups.length === 0 && producerFilter ? (
             <EmptyState title={`ไม่มีงานของ "${producerFilter}"`} sub="ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" />
           ) : (
