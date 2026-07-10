@@ -368,7 +368,7 @@ export default function ProductionSchedulePage() {
                       style={{ background: IOS.card, boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04)" }}>
                       <div className={officeMode ? "grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_auto] gap-2 lg:items-center" : ""}>
                       {/* งาน/ลูกค้า */}
-                      <div className="col-span-2 lg:col-span-1 min-w-0">
+                      <button type="button" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)} className="w-full text-left min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-[16px] truncate" style={{ color: IOS.ink, letterSpacing: "-.01em" }}>{r.title}</span>
                           {r.kind === "job" ? (
@@ -376,29 +376,30 @@ export default function ProductionSchedulePage() {
                           ) : (
                             <span className="text-[10px] rounded-md px-1.5 py-0.5 font-semibold" style={{ background: "#fff3e0", color: IOS.orange }}>จดเอง</span>
                           )}
-                          {r.kind === "job" && officeMode && (
-                            <a href={`/production/${r.id}/print`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                              aria-label={`พิมพ์ใบงาน ${r.job_code ?? r.title}`}
-                              className="focusable inline-flex items-center gap-1 text-[11px] rounded-lg px-2 py-1 min-h-[28px]" style={{ background: IOS.inset, color: IOS.ink2 }}>
-                              <Printer size={12} /> ใบงาน
-                            </a>
-                          )}
+                          <span className="ml-auto text-[12px] font-semibold" style={{ color: IOS.blue }}>{expandedId === r.id ? "ซ่อน ▲" : "ติ๊ก ▾"}</span>
                         </div>
-                        {(r.customer_area || r.subtitle) && (
-                          <div className="text-[12.5px] truncate mt-0.5" style={{ color: IOS.ink2 }}>📍 {r.customer_area || r.subtitle}</div>
-                        )}
-                        {!officeMode && r.due_date && (() => {
-                          const late = r.due_date < today() && derivePhase(r) !== "พร้อม";
-                          return (
-                            <div className="text-[12.5px] tnum mt-0.5 font-semibold" style={{ color: late ? IOS.red : IOS.ink }}>
-                              ⏰ กำหนดเสร็จ {thShort(r.due_date)}{late ? " · เลยกำหนด" : ""}
-                            </div>
-                          );
+                        <div className="flex items-center gap-2.5 flex-wrap mt-1">
+                          {(r.customer_area || r.subtitle) && (
+                            <span className="text-[12px] truncate" style={{ color: IOS.ink3 }}>📍 {r.customer_area || r.subtitle}</span>
+                          )}
+                          {r.due_date && (() => {
+                            const late = r.due_date < today() && derivePhase(r) !== "พร้อม";
+                            return <span className="text-[12px] tnum font-semibold" style={{ color: late ? IOS.red : IOS.ink2 }}>⏰ {thShort(r.due_date)}{late ? " เลยกำหนด" : ""}</span>;
+                          })()}
+                          {r.install_date && <span className="text-[12px] tnum" style={{ color: IOS.ink3 }}>🔧 {thShort(r.install_date)}</span>}
+                        </div>
+                        {(() => {
+                          const pi = PHASE_ORDER.indexOf(derivePhase(r));
+                          return pi >= 0 ? (
+                            <span className="inline-flex gap-[4px] mt-2 items-center">
+                              {PHASE_ORDER.slice(0, 4).map((_, x) => (
+                                <span key={x} className="rounded-full" style={{ width: x === pi ? 9 : 7, height: x === pi ? 9 : 7, background: x < pi ? IOS.green : x === pi ? IOS.blue : "#d5d5da" }} />
+                              ))}
+                              <span className="text-[10.5px] ml-1" style={{ color: IOS.ink3 }}>{["รอผลิต", "กำลังผลิต", "ใส่กระจก", "QC"][pi] ?? ""}</span>
+                            </span>
+                          ) : null;
                         })()}
-                        {!officeMode && r.install_date && (
-                          <div className="text-[12px] tnum mt-0.5" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</div>
-                        )}
-                      </div>
+                      </button>
 
                       {/* โหมดช่าง: เริ่มผลิต (QUEUED) / ส่งติดตั้ง (MANUFACTURING/QC เมื่อ QC ครบ) — กดเอง */}
                       {!officeMode && r.kind === "job" && canWrite && JOB_NEXT[r.status] && (() => {
@@ -407,18 +408,19 @@ export default function ProductionSchedulePage() {
                         const warn = isStart
                           ? `⏳ รอออฟฟิศกรอก${!r.due_date ? " วันกำหนดเสร็จ" : ""}${(!r.due_date && !r.install_date) ? " +" : ""}${!r.install_date ? " วันติดตั้ง" : ""} ก่อนเริ่มผลิต`
                           : "⏳ ต้อง QC หลังใส่กระจก “ผ่าน” + ใส่มุ้งครบทุกชุดก่อนส่งติดตั้ง";
+                        // ปุ่มลัด: โชว์เฉพาะตอนกดได้จริง (รอผลิต→เริ่มผลิต · QC ครบ→ส่งติดตั้ง) · ถ้าติดเงื่อนไข โชว์เหตุผลเฉพาะตอนกาง
+                        if (blocked) {
+                          return expandedId === r.id ? (
+                            <div className="text-[11.5px] rounded-lg px-2.5 py-1.5 mt-1" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>{warn}</div>
+                          ) : null;
+                        }
                         return (
-                          <div className="mt-1">
-                            {blocked && (
-                              <div className="text-[11.5px] rounded-lg px-2.5 py-1.5 mb-1" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>{warn}</div>
-                            )}
-                            <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
-                              className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50"
-                              style={{ background: blocked ? "#c7c7cc" : (isStart ? IOS.orange : IOS.green) }}>
-                              {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (isStart ? "▶ " : "📦 ")}
-                              {JOB_NEXT[r.status].label}
-                            </button>
-                          </div>
+                          <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
+                            className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-white text-[14px] font-bold min-h-[48px] disabled:opacity-50 mt-1"
+                            style={{ background: isStart ? IOS.orange : IOS.green }}>
+                            {savingId === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (isStart ? "▶ " : "📦 ")}
+                            {JOB_NEXT[r.status].label}
+                          </button>
                         );
                       })()}
 
@@ -493,11 +495,17 @@ export default function ProductionSchedulePage() {
                       </div>
                       </>)}
                       </div>
-                      {r.kind === "job" && r.sets && r.sets.length > 0 && (
+                      {expandedId === r.id && r.kind === "job" && r.sets && r.sets.length > 0 && (
                         <ChangChecklist sets={r.sets} savingSetIds={savingSetIds} mark={markSet} canMark={canWrite} />
                       )}
-                      {r.kind === "job" && r.job_id && (!r.sets || r.sets.length === 0) && (
+                      {expandedId === r.id && r.kind === "job" && r.job_id && (!r.sets || r.sets.length === 0) && (
                         <p className="text-[12px] rounded-xl px-3 py-2" style={{ background: "#fff4e0", color: "#b45309", border: "1px solid #fde0b0" }}>⚠️ ยังไม่มีชุดงาน — ออฟฟิศลงรายละเอียดที่หน้า “ผลิต” (คลิกงานนี้) ก่อน ช่างถึงจะเห็นเช็คลิสต์</p>
+                      )}
+                      {expandedId === r.id && r.kind === "adhoc" && canWrite && (
+                        <div className="flex gap-2">
+                          <button onClick={() => markDone(r)} disabled={savingId === r.id} className="focusable pressable inline-flex items-center gap-1 bg-emerald-500/90 text-white rounded-lg px-3 py-2 text-[13px] font-semibold min-h-[44px] disabled:opacity-50"><Check size={14} /> เสร็จ</button>
+                          <button onClick={() => del(r)} disabled={savingId === r.id} aria-label="ลบ" className="focusable pressable inline-flex items-center justify-center text-rose-500 rounded-lg w-11 h-11"><Trash2 size={15} /></button>
+                        </div>
                       )}
                     </div>
                   ))}
