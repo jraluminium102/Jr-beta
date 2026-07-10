@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
-import { PROD_STATUS } from "@/lib/constants";
+import { PROD_STATUS, PROD_LANE, PROD_LANE_META, PROD_FLOW_STEPS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
@@ -483,11 +483,38 @@ export function ProductionStepModal({
           <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-11 h-11 inline-flex items-center justify-center rounded-xl text-white/75 hover:bg-white/10 shrink-0"><X size={22} /></button>
         </div>
 
-        {/* สถานะตอนนี้ + summary chips (ข้อ 8: ขึ้นมาใต้ชื่อ) */}
-        <div className="text-center py-2">
-          <div className="text-[13px] mb-1.5" style={{ color: "var(--t-low)" }}>ตอนนี้อยู่ขั้น</div>
-          <div className="inline-block scale-125"><Chip>{PROD_STATUS[prod.status]}</Chip></div>
-        </div>
+        {/* เลน + สถานะตอนนี้ + progress ขั้นที่ x/n (ให้เห็นชัดว่าใครดูแล อยู่ตรงไหน) */}
+        {(() => {
+          const lane = PROD_LANE[prod.status];
+          const meta = PROD_LANE_META[lane];
+          const stepIdx = PROD_FLOW_STEPS.indexOf(prod.status);   // -1 ถ้า ISSUE (ทางแยก)
+          return (
+            <div className="py-2">
+              <div className="flex items-center justify-center gap-1.5 mb-2">
+                <span className="text-[12px] font-semibold rounded-full px-2.5 py-1" style={{ background: meta.bg, color: meta.fg }}>
+                  {meta.icon} {meta.label}
+                </span>
+              </div>
+              <div className="text-center">
+                <div className="text-[13px] mb-1.5" style={{ color: "var(--t-low)" }}>
+                  ตอนนี้อยู่ขั้น{stepIdx >= 0 ? ` (${stepIdx + 1}/${PROD_FLOW_STEPS.length})` : ""}
+                </div>
+                <div className="inline-block scale-125"><Chip>{PROD_STATUS[prod.status]}</Chip></div>
+              </div>
+              {stepIdx >= 0 && (
+                <div className="flex items-center justify-center gap-[5px] mt-3">
+                  {PROD_FLOW_STEPS.map((s, i) => (
+                    <span key={s} title={PROD_STATUS[s]} className="rounded-full transition-all"
+                      style={{
+                        width: i === stepIdx ? 10 : 7, height: i === stepIdx ? 10 : 7,
+                        background: i < stepIdx ? "#34d399" : i === stepIdx ? (lane === "chang" ? "#a7e08a" : "#93c5fd") : "rgba(255,255,255,.22)",
+                      }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {/* summary chips อ่านจาก row (สดหลัง in-place save) */}
         <SummaryChips row={row} />
 

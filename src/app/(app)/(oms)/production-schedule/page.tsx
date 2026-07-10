@@ -311,7 +311,14 @@ export default function ProductionSchedulePage() {
           </button>
         )}
       </div>
-      <p className="text-[13px] mb-3" style={{ color: IOS.ink2 }}>ตารางงานสำหรับช่าง · แตะปุ่มเพื่ออัปเดตงาน · จุดสี = สีประจำวัน</p>
+      <div className="flex items-center gap-2 mb-3 rounded-xl px-3.5 py-2.5" style={{ background: "#eef7ee", border: "1px solid #cbe6cf" }}>
+        <span className="text-base">🔧</span>
+        <span className="text-[12.5px]" style={{ color: "#2f6b3d" }}>
+          หน้านี้สำหรับ<b>ช่าง</b> — เฉพาะงานที่ลงคิวผลิตแล้ว (เริ่มผลิต · เช็คลิสต์ · QC · ส่งติดตั้ง) · งานก่อนผลิต (วัด/ประชุม/แบบ) อยู่ที่{" "}
+          <a href="/production" className="underline underline-offset-2" style={{ color: IOS.blue }}>งานผลิต (ออฟฟิศ)</a>
+          {officeMode && <span> · <b>โหมดออฟฟิศ</b> = ดูภาพรวมทุกงานแบบตาราง</span>}
+        </span>
+      </div>
 
       {/* คีย์สีประจำวันไทย */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5 text-[11px]">

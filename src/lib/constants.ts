@@ -18,6 +18,24 @@ export const PROD_STATUS: Record<ProdStatus, string> = {
   MANUFACTURING: "กำลังผลิต", QC: "ตรวจ QC", READY: "พร้อมติดตั้ง", ISSUE: "มีปัญหา",
 };
 
+// 2 เลนงานผลิต (ให้ ออฟฟิศ/ช่าง เห็นชัดว่าใครดูแลช่วงไหน) — ไม่ตัดสถานะ แค่จัดกลุ่มให้เข้าใจ
+// office = ก่อนลงมือผลิต (วัด/ประชุม/แบบ/คอนเฟิร์ม/รอลงผลิต) · chang = ตอนผลิต (ผลิต/QC/พร้อม) · issue = ปัญหา
+export type ProdLane = "office" | "chang" | "issue";
+export const PROD_LANE: Record<ProdStatus, ProdLane> = {
+  PENDING_MEASURE: "office", MEASURED: "office", PENDING_MEETING: "office",
+  REVISING: "office", PENDING_CONFIRM: "office", QUEUED: "office",
+  MANUFACTURING: "chang", QC: "chang", READY: "chang", ISSUE: "issue",
+};
+export const PROD_LANE_META: Record<ProdLane, { label: string; short: string; icon: string; fg: string; bg: string }> = {
+  office: { label: "ช่วงออฟฟิศ · ก่อนลงมือผลิต", short: "ออฟฟิศ", icon: "🏢", fg: "#93c5fd", bg: "rgba(55,138,221,.14)" },
+  chang:  { label: "ช่วงช่าง · กำลังผลิต",        short: "ช่าง",   icon: "🔧", fg: "#a7e08a", bg: "rgba(99,153,34,.16)" },
+  issue:  { label: "มีปัญหา · ต้องแก้ก่อน",       short: "ปัญหา",  icon: "⚠️", fg: "#fca5a5", bg: "rgba(226,75,74,.14)" },
+};
+// ลำดับขั้นในเลน (โชว์ progress "ขั้นที่ x/n") — ISSUE เป็นทางแยก ไม่นับ
+export const PROD_FLOW_STEPS: ProdStatus[] = [
+  "PENDING_MEASURE", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "MANUFACTURING", "QC", "READY",
+];
+
 export const INST_STATUS: Record<InstStatus, string> = {
   PENDING: "รอติดตั้ง", INSTALLING: "กำลังติดตั้ง", PENDING_INSPECT: "รอลูกค้าตรวจ",
   REVISING: "แก้งาน", COMPLETED: "จบงาน", ISSUE: "มีปัญหา",

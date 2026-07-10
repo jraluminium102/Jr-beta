@@ -58,16 +58,22 @@ function normalizeTime(t: string | null | undefined): string {
 const todayStr = new Date().toISOString().slice(0, 10);
 // กลุ่มสรุปสำหรับ dashboard ช่าง
 // แยกเฟส "รอวัด" เป็น 2 ตามว่าได้คิว(วัน)แล้วหรือยัง — มัดจำแล้วยังไม่นัด = รอจัดคิว · นัดแล้ว = รอวัดจริง
-const GROUPS: { key: string; label: string; match: (r: Row) => boolean; tone: string }[] = [
-  { key: "queue_wait", label: "รอจัดคิววัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !r.measure_scheduled, tone: "text-amber-300" },
-  { key: "measure", label: "รอวัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !!r.measure_scheduled, tone: "text-sky-300" },
-  { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", match: (r) => ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"].includes(r.status), tone: "text-cyan-300" },
-  { key: "queued", label: "รอลงผลิต", match: (r) => r.status === "QUEUED", tone: "text-amber-300" },
-  { key: "producing", label: "กำลังผลิต", match: (r) => r.status === "MANUFACTURING", tone: "text-orange-300" },
-  { key: "qc", label: "ตรวจ QC", match: (r) => r.status === "QC", tone: "text-purple-300" },
-  { key: "ready", label: "พร้อมติดตั้ง", match: (r) => r.status === "READY", tone: "text-emerald-300" },
-  { key: "issue", label: "มีปัญหา", match: (r) => r.status === "ISSUE", tone: "text-rose-300" },
+type Lane = "office" | "chang" | "issue";
+const GROUPS: { key: string; label: string; match: (r: Row) => boolean; tone: string; lane: Lane }[] = [
+  { key: "queue_wait", label: "รอจัดคิววัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !r.measure_scheduled, tone: "text-amber-300", lane: "office" },
+  { key: "measure", label: "รอวัดจริง", match: (r) => r.status === "PENDING_MEASURE" && !!r.measure_scheduled, tone: "text-sky-300", lane: "office" },
+  { key: "prep", label: "เตรียม/ประชุม/แก้แบบ", match: (r) => ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"].includes(r.status), tone: "text-cyan-300", lane: "office" },
+  { key: "queued", label: "รอลงผลิต", match: (r) => r.status === "QUEUED", tone: "text-amber-300", lane: "office" },
+  { key: "producing", label: "กำลังผลิต", match: (r) => r.status === "MANUFACTURING", tone: "text-orange-300", lane: "chang" },
+  { key: "qc", label: "ตรวจ QC", match: (r) => r.status === "QC", tone: "text-purple-300", lane: "chang" },
+  { key: "ready", label: "พร้อมติดตั้ง", match: (r) => r.status === "READY", tone: "text-emerald-300", lane: "chang" },
+  { key: "issue", label: "มีปัญหา", match: (r) => r.status === "ISSUE", tone: "text-rose-300", lane: "issue" },
 ];
+const LANE_HEAD: Record<Lane, { icon: string; title: string; sub: string }> = {
+  office: { icon: "🏢", title: "ช่วงออฟฟิศ · ก่อนลงมือผลิต", sub: "วัด → ประชุม/แบบ → สั่งของ → ส่งเข้าคิวผลิต" },
+  chang: { icon: "🔧", title: "ช่วงช่าง · กำลังผลิต", sub: "เริ่มผลิต → QC → ส่งติดตั้ง (ช่างทำในหน้าตารางผลิต)" },
+  issue: { icon: "⚠️", title: "มีปัญหา", sub: "ต้องเคลียร์ก่อนไปต่อ" },
+};
 // label เฟสย่อยสำหรับชิป (PENDING_MEASURE แยก 2 · อื่นๆ ใช้ PROD_STATUS เดิม)
 function phaseLabel(r: Row): string {
   if (r.status === "PENDING_MEASURE") return r.measure_scheduled ? "รอวัดจริง" : "รอจัดคิววัดจริง";
@@ -176,18 +182,41 @@ export default function ProductionPage() {
           </Link>
         </div>
       </div>
-      <p className="text-sm mb-4" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
+      <p className="text-sm mb-3" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
 
-      {/* ── Dashboard ช่าง: นับแต่ละสถานะ ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mb-3">
-        {GROUPS.map((g) => (
-          <button key={g.key} onClick={() => setFilterKey(filterKey === g.key ? null : g.key)}
-            className={`focusable pressable glass-card rounded-2xl p-3 text-left border-2 ${filterKey === g.key ? "border-white/60" : "border-transparent"}`}>
-            <div className={`text-2xl font-bold tnum ${g.tone}`}>{counts[g.key] ?? 0}</div>
-            <div className="text-[12px] mt-0.5" style={{ color: "var(--t-mid)" }}>{g.label}</div>
-          </button>
-        ))}
+      {/* ป้ายบอกหน้า: นี่คือหน้าออฟฟิศ (งานตอนผลิตจริงช่างทำที่ "ตารางผลิต") */}
+      <div className="flex items-center gap-2 mb-4 rounded-xl px-3.5 py-2.5" style={{ background: "rgba(55,138,221,.12)", border: "1px solid rgba(55,138,221,.28)" }}>
+        <span className="text-base">🏢</span>
+        <span className="text-[13px]" style={{ color: "#bfdbff" }}>
+          หน้านี้สำหรับ<b>ออฟฟิศ</b> — ดูแลงานตั้งแต่วัดจนส่งเข้าคิวผลิต · งานที่ช่างกำลังผลิตดูรายวันที่{" "}
+          <Link href="/production-schedule" className="underline underline-offset-2 text-white">ตารางผลิต (ช่าง)</Link>
+        </span>
       </div>
+
+      {/* ── Dashboard 2 เลน: ก่อนผลิต (ออฟฟิศ) / กำลังผลิต (ช่าง) ── */}
+      {(["office", "chang", "issue"] as const).map((lane) => {
+        const gs = GROUPS.filter((g) => g.lane === lane);
+        const laneTotal = gs.reduce((n, g) => n + (counts[g.key] ?? 0), 0);
+        if (lane === "issue" && laneTotal === 0) return null;   // ซ่อนแถวปัญหาถ้าไม่มี
+        const h = LANE_HEAD[lane];
+        return (
+          <div key={lane} className="mb-3">
+            <div className="flex items-baseline gap-2 mb-1.5 px-1">
+              <span className="text-sm font-semibold text-white">{h.icon} {h.title}</span>
+              <span className="text-[11px]" style={{ color: "var(--t-low)" }}>{h.sub}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {gs.map((g) => (
+                <button key={g.key} onClick={() => setFilterKey(filterKey === g.key ? null : g.key)}
+                  className={`focusable pressable glass-card rounded-2xl p-3 text-left border-2 ${filterKey === g.key ? "border-white/60" : "border-transparent"}`}>
+                  <div className={`text-2xl font-bold tnum ${g.tone}`}>{counts[g.key] ?? 0}</div>
+                  <div className="text-[12px] mt-0.5" style={{ color: "var(--t-mid)" }}>{g.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       {/* ค้นหา */}
       <label className="glass-card rounded-xl flex items-center gap-2.5 px-3.5 py-2.5 mb-3 focusable" style={{ color: "var(--t-mid)" }}>
