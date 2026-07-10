@@ -91,12 +91,14 @@ export function computeCost(PB, prod, opt) {
   const pPrice = (name, base) => (prod.partsLinked && PB.PARTS && name in PB.PARTS) ? PB.PARTS[name] : base;
 
   // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
+  // ราคาเส้นผูก "รหัส" (B####/F####) กับสต็อก: PB.ALUCODE[code] มาก่อน → PARTS(ชื่อ) → ราคาเดิมใน BOM
+  // ไม่มีราคาสต็อก = ราคาเดิมเป๊ะ (behavior-preserving · verify 63/63 คงเดิม)
   for (const it of (prod.alu || [])) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
     const count = val(it.count);
     const bars = barsNeeded(seg, count, stockLen);
     if (bars <= 0) continue;
-    const price = pPrice(it.name, it.price);
+    const price = (it.code && PB.ALUCODE && PB.ALUCODE[it.code] > 0) ? PB.ALUCODE[it.code] : pPrice(it.name, it.price);
     const amount = bars * price * mult;
     aluCost += amount;
     aluKg += bars * (it.kg || 0);
