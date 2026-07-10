@@ -88,6 +88,11 @@ export default function StockClient({
           <a href="/stock/moves" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สมุดเคลื่อนไหว
           </a>
+          {canPrice && (
+            <a href="/stock/alu-rates" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              ⚖️ เรตอลูต่อโล
+            </a>
+          )}
           {canWrite && (
             <a href="/stock/import" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               <Icon name="file" size={16} /> นำเข้าจากไฟล์
