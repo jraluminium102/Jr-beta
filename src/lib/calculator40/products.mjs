@@ -174,7 +174,7 @@ export const PRODUCTS = {
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
       { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
-      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // ⚠ ชื่อเดิม "7864" — เดารหัส F7864 (รอเจ้าของยืนยัน)
+      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
       { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],
@@ -200,7 +200,7 @@ export const PRODUCTS = {
     alu: [
       { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: '(W+2*H)', count: '1' },
       { name: 'ธรณี F7939B', code: 'F7939B', price: 1400, kg: 7.77778, seg: 'W', count: '1' },
-      { name: 'กรอบ 7943B', code: 'F7943B', price: 1480, kg: 8.22222, seg: '(2*P*H+2*W)', count: '1' },   // ⚠ ชื่อเดิม "7943B" — เดารหัส F7943B (รอเจ้าของยืนยัน)
+      { name: 'กรอบ 7943B', code: 'F7943B', price: 1480, kg: 8.22222, seg: '(2*P*H+2*W)', count: '1' },   // รหัส F7943B (เจ้าของยืนยัน 10 ก.ค.69)
       { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '(2*P*H+2*W)', count: '1' },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: '(P>1?1:0)' },
     ],
@@ -244,7 +244,7 @@ export const PRODUCTS = {
     alu: [
       { name: 'B24001 เฟรมบน', code: 'B24001', price: 2105, kg: 11.69444, seg: 'W', count: '1' },
       { name: 'B24002 คิ้วเฟรมบน', code: 'B24002', price: 320, kg: 1.77778, seg: 'W', count: '1' },
-      { name: 'เฟรมล่าง (ธรณี)', code: 'B24003', price: 1445, kg: 8.0278, seg: 'W', count: '1' },   // ⚠ เดารหัส B24003 (ช่องว่างในซีรีส์ B24001-9 · รอเจ้าของยืนยัน)
+      { name: 'เฟรมล่าง (ธรณี)', code: 'B24003', price: 1445, kg: 8.0278, seg: 'W', count: '1' },   // รหัส B24003 (เจ้าของยืนยัน 10 ก.ค.69)
       { name: 'B24004 ตบธรณี', code: 'B24004', price: 570, kg: 3.16667, seg: 'W', count: '1' },
       { name: 'B24005 เฟรมข้าง', code: 'B24005', price: 1000, kg: 5.55556, seg: 'H', count: '2' },
       { name: 'B24006 คิ้วเฟรมข้าง', code: 'B24006', price: 280, kg: 1.55556, seg: 'H', count: '2' },
@@ -1362,7 +1362,7 @@ export const PRODUCTS = {
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
       { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
-      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // ⚠ ชื่อเดิม "7864" — เดารหัส F7864 (รอเจ้าของยืนยัน)
+      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
       { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],
@@ -1428,7 +1428,7 @@ export const PRODUCTS = {
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
       { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
-      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // ⚠ ชื่อเดิม "7864" — เดารหัส F7864 (รอเจ้าของยืนยัน)
+      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
       { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],

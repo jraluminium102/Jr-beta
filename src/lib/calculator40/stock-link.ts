@@ -25,6 +25,9 @@ const aluCodes = new Set<string>();
 for (const p of Object.values(PRODUCTS as Record<string, any>))
   for (const a of (p?.alu || [])) if (a.code) aluCodes.add(normCode(a.code));
 
+// sku นี้ผูกรายเส้นกับสูตร 4.0 ไหม (ใช้แสดงคำอธิบายหน้าสต็อก)
+export const isAluCode = (sku?: string | null) => !!sku && aluCodes.has(normCode(sku));
+
 export type CalcSection = "กระจก" | "หลังคา/ผนัง" | "มอเตอร์/ออโต้" | "เหล็ก" | "งานเสริม" | "อลูมิเนียม" | "ถอดทุน 4.0";
 
 type LinkInput = {

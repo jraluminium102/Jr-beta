@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
-import { calcLink } from "@/lib/calculator40/stock-link";
+import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -545,7 +545,9 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
       {calcLink(item).linked && (
         <p className="mt-2 text-[11px] text-brand-dark bg-brand/5 border border-brand/15 rounded-lg px-3 py-2">
           🧮 <b>ราคานี้ลิงค์กับคิดราคา 4.0</b> — แก้ราคาที่นี่แล้วใบเสนอราคา 4.0 คิดตามราคาใหม่ทันที
-          {calcLink(item).section === "อลูมิเนียม" && " · อลูคิดเป็น “เรตต่อโล/แบรนด์” (แก้เส้นไหนก็ปรับทั้งแบรนด์ " + (item.supplier || "") + " ในคิดราคา — ควรตั้งให้เท่ากันทั้งแบรนด์)"}
+          {calcLink(item).section === "อลูมิเนียม" && (isAluCode(item.sku)
+            ? " · ผูกรายเส้นด้วยรหัส " + (item.sku || "") + " — แก้ต้นทุน/หน่วยแล้วราคาเส้นนี้เปลี่ยนทุกรุ่นที่ใช้ (ถ้ามีหลายสี ระบบยึดแถวสีอบขาว)"
+            : " · อลูคิดเป็น “เรตต่อโล/แบรนด์” (แก้เส้นไหนก็ปรับทั้งแบรนด์ " + (item.supplier || "") + " ในคิดราคา — ควรตั้งให้เท่ากันทั้งแบรนด์)")}
         </p>
       )}
 
