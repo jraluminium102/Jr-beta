@@ -60,8 +60,9 @@ export const PRODUCTS = {
     vars: SLIDE_VARS,
     alu: [
       // code = รหัสเส้นในสต็อก (B####) — ผูกราคารายเส้น: แก้ราคาใน stock แล้วราคาที่นี่เปลี่ยนตาม (ALUCODE override)
-      { name: 'เฟรมบน', code: 'B22001', price: 1235, kg: 6.86111, seg: 'W', count: '1' },
-      { name: 'เฟรมข้าง', code: 'B22002', price: 1045, kg: 5.80556, seg: 'H', count: '1' },
+      // บานเลื่อน SMS ใช้ซีรีส์ B20xxx เป็นหลัก (เจ้าของยืนยัน 10 ก.ค.69: B22xxx คนละตัว แทบไม่ใช้)
+      { name: 'เฟรมบน', code: 'B20001', price: 1235, kg: 6.86111, seg: 'W', count: '1' },
+      { name: 'เฟรมข้าง', code: 'B20003', price: 1045, kg: 5.80556, seg: 'H', count: '1' },
       { name: 'เฟรมล่างกันน้ำ', code: 'B20041', price: 2070, kg: 11.5, seg: 'W', count: '1' },
       { name: 'เสากุญแจ ML', code: 'B20051', price: 885, kg: 4.91667, seg: 'H', count: 'F5' },
       { name: 'เสาเกี่ยวธรรมดา', code: 'B20009', price: 745, kg: 4.13889, seg: 'H', count: 'H>2.4?F6:2*F6' },
