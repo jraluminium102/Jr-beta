@@ -374,13 +374,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (!l || !l.name || l.cat === "warn" || l.cat === "labor") return;
       if (isOverride || l.cat === "addon") workLines.push(`- ${cleanTag(l.name)}`);
     });
-    // specOpts ที่ผู้ใช้เลือกไม่ตรง default → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
+    // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
+    // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
     (prod.specOpts ?? []).forEach((o: any) => {
-      if (o.type === "number") return; // ตัวเลขคิดเงิน → เป็น engine line แล้ว
+      if (o.type === "number") return;
       const v = spec[o.key];
       if (v == null || v === "") return;
-      if (o.opts && v === o.def) return; // ค่า default = ไม่ต้องรก
       if (o.priced) workLines.push(`- ${o.label}: ${v}`);
       else specDetailLines.push(`- ${o.label}: ${v}`);
     });
