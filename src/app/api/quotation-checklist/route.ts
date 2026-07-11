@@ -44,6 +44,7 @@ export type ChecklistItem = {
   revise_count: number;   // จำนวนรอบแก้แบบ
   floor_work: string;     // none | jr | customer (งานพื้น ผรม. — 0090)
   floor_note: string;     // ผรม.ใคร / รายละเอียดงานพื้น
+  floor_quote_sent: boolean; // ส่งใบเสนอราคางานพื้นแล้ว (เฉพาะ jr — 0091)
 };
 
 // ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมที่มัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย
@@ -56,6 +57,8 @@ export type SentHistoryItem = {
   status: string;
   floor_work: string;
   floor_note: string;
+  floor_quote_sent: boolean;
+  assess_date: string | null;
 };
 
 export type ChecklistData = {
@@ -107,7 +110,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, floor_work, floor_note, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, floor_work, floor_note, floor_quote_sent, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -140,6 +143,7 @@ export const GET = withRoute(async () => {
     on_hold_reason: string | null;
     floor_work: string | null;
     floor_note: string | null;
+    floor_quote_sent: boolean | null;
     estimator: EstimatorJoin;
     designer_lookup: DesignerJoin;
   };
@@ -150,7 +154,7 @@ export const GET = withRoute(async () => {
   // ── ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมมัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย ──
   const { data: histRows } = await sb
     .from("jobs")
-    .select("id, job_code, customer_name, customer_area, quote_sent_date, status, floor_work, floor_note")
+    .select("id, job_code, customer_name, customer_area, assess_date, quote_sent_date, status, floor_work, floor_note, floor_quote_sent")
     .not("quote_sent_date", "is", null)
     .neq("status", "CANCELLED")
     .order("quote_sent_date", { ascending: false })
@@ -160,6 +164,7 @@ export const GET = withRoute(async () => {
     job_id: h.id, job_code: h.job_code ?? null, customer_name: h.customer_name ?? "—",
     customer_area: h.customer_area ?? null, quote_sent_date: h.quote_sent_date ?? null,
     status: h.status ?? "", floor_work: h.floor_work ?? "none", floor_note: h.floor_note ?? "",
+    floor_quote_sent: h.floor_quote_sent ?? false, assess_date: h.assess_date ?? null,
   }));
   const floorJr = history.filter((h) => h.floor_work === "jr").length;
   const floorCustomer = history.filter((h) => h.floor_work === "customer").length;
@@ -253,6 +258,7 @@ export const GET = withRoute(async () => {
         revise_count: j.design_revise_count ?? 0,
         floor_work: j.floor_work ?? "none",
         floor_note: j.floor_note ?? "",
+        floor_quote_sent: j.floor_quote_sent ?? false,
         on_hold: true,
         on_hold_reason: j.on_hold_reason ?? null,
       });
@@ -315,6 +321,7 @@ export const GET = withRoute(async () => {
       revise_count: reviseCount,
       floor_work: j.floor_work ?? "none",
       floor_note: j.floor_note ?? "",
+      floor_quote_sent: j.floor_quote_sent ?? false,
       on_hold: false,
       on_hold_reason: null,
     };

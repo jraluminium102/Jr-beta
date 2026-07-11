@@ -91,31 +91,36 @@ const FLOOR_META: Record<string, { label: string; cls: string }> = {
   customer: { label: "งานพื้น · ผรม.ลูกค้า",   cls: "bg-amber-100 text-amber-800 border-amber-300" },
 };
 
-function FloorWorkControl({ jobId, floorWork, floorNote, canWrite, onSaved }: {
-  jobId: string; floorWork: string; floorNote: string; canWrite: boolean; onSaved: () => void;
+function FloorWorkControl({ jobId, floorWork, floorNote, floorQuoteSent, canWrite, onSaved }: {
+  jobId: string; floorWork: string; floorNote: string; floorQuoteSent: boolean; canWrite: boolean; onSaved: () => void;
 }) {
   const [fw, setFw] = useState(floorWork || "none");
   const [note, setNote] = useState(floorNote || "");
+  const [fqs, setFqs] = useState(!!floorQuoteSent);
   const [busy, setBusy] = useState(false);
   const m = FLOOR_META[fw] ?? FLOOR_META.none;
 
-  async function persist(nextFw: string, nextNote: string) {
+  async function save(patch: Record<string, unknown>) {
     setBusy(true);
-    try { await api.post(`/jobs/${jobId}/floor-work`, { floor_work: nextFw, floor_note: nextNote }); onSaved(); }
+    try { await api.post(`/jobs/${jobId}/floor-work`, patch); onSaved(); }
     finally { setBusy(false); }
   }
 
   if (!canWrite) {
+    if (fw === "none") return <span className="text-[11px] text-ink-3">—</span>;
     return (
-      <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${m.cls}`}>
-        {m.label}{fw !== "none" && floorNote ? ` · ${floorNote}` : ""}
+      <span className="inline-flex flex-wrap items-center gap-1">
+        <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${m.cls}`}>
+          {m.label}{floorNote ? ` · ${floorNote}` : ""}
+        </span>
+        {fw === "jr" && fqs && <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งใบเสนอพื้นแล้ว</span>}
       </span>
     );
   }
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <select value={fw} disabled={busy}
-        onChange={(e) => { const v = e.target.value; setFw(v); if (v === "none") setNote(""); persist(v, v === "none" ? "" : note); }}
+        onChange={(e) => { const v = e.target.value; setFw(v); if (v === "none") { setNote(""); setFqs(false); } save({ floor_work: v, floor_note: v === "none" ? "" : note }); }}
         aria-label="งานพื้น ผรม."
         className={`text-[11px] rounded-lg border px-1.5 py-1 outline-none ${m.cls}`}>
         <option value="none">— ไม่มีงานพื้น</option>
@@ -125,8 +130,15 @@ function FloorWorkControl({ jobId, floorWork, floorNote, canWrite, onSaved }: {
       {fw !== "none" && (
         <input value={note} disabled={busy} placeholder="ผรม.ใคร / โน้ต"
           onChange={(e) => setNote(e.target.value)}
-          onBlur={() => { if (note !== (floorNote || "")) persist(fw, note); }}
-          className="text-[11px] rounded-lg border border-gray-300 px-1.5 py-1 outline-none w-32 tabular-nums" />
+          onBlur={() => { if (note !== (floorNote || "")) save({ floor_note: note }); }}
+          className="text-[11px] rounded-lg border border-gray-300 px-1.5 py-1 outline-none w-28" />
+      )}
+      {fw === "jr" && (
+        <label className={`inline-flex items-center gap-1 text-[11px] font-semibold cursor-pointer rounded-full px-2 py-1 border ${fqs ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-white text-ink-2 border-gray-300"}`}>
+          <input type="checkbox" checked={fqs} disabled={busy}
+            onChange={(e) => { setFqs(e.target.checked); save({ floor_quote_sent: e.target.checked }); }} />
+          ส่งใบเสนอพื้นแล้ว
+        </label>
       )}
     </div>
   );
@@ -322,7 +334,7 @@ function SentJobCard({
       </div>
 
       {/* งานพื้น ผรม. */}
-      <FloorWorkControl jobId={item.job_id} floorWork={item.floor_work} floorNote={item.floor_note} canWrite={canWrite} onSaved={onReload} />
+      <FloorWorkControl jobId={item.job_id} floorWork={item.floor_work} floorNote={item.floor_note} floorQuoteSent={item.floor_quote_sent} canWrite={canWrite} onSaved={onReload} />
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
         {item.customer_area && (
@@ -397,13 +409,14 @@ function SentJobCard({
 // ---------- Active Table Row (desktop) ----------
 
 function ActiveTableRow({
-  item, todayStr, onAction, canWrite, onHold,
+  item, todayStr, onAction, canWrite, onHold, onReload,
 }: {
   item: ChecklistItem;
   todayStr: string;
   onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
   canWrite: boolean;
   onHold?: (item: ChecklistItem) => void;
+  onReload: () => void;
 }) {
   const q = item.quotation;
   const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
@@ -416,6 +429,15 @@ function ActiveTableRow({
       : <Badge tone="gray">รอแบบ</Badge>;
   } else if (item.stage === "pending") {
     quoteBadge = <Badge tone="amber">ยังไม่ทำ</Badge>;
+  } else if (item.stage === "sent") {
+    quoteBadge = (
+      <div className="space-y-0.5">
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งแล้ว</span>
+        {q && (
+          <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}</div>
+        )}
+      </div>
+    );
   } else {
     // drafted
     quoteBadge = (
@@ -431,7 +453,7 @@ function ActiveTableRow({
   }
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-white/60 transition-colors">
+    <tr className={`border-b border-gray-100 hover:bg-white/60 transition-colors ${item.stage === "sent" ? "bg-emerald-50/50" : ""}`}>
       {/* ลูกค้า/เซลล์ */}
       <td className="px-3 py-3 align-top">
         <div className="font-semibold text-ink text-sm leading-snug">{item.customer_name}</div>
@@ -462,6 +484,10 @@ function ActiveTableRow({
             <Icon name="pin" size={10} />{item.customer_area}
           </div>
         )}
+        {/* งานพื้น ผรม. — ติ๊กได้ทุก stage */}
+        <div className="mt-1.5">
+          <FloorWorkControl jobId={item.job_id} floorWork={item.floor_work} floorNote={item.floor_note} floorQuoteSent={item.floor_quote_sent} canWrite={canWrite} onSaved={onReload} />
+        </div>
       </td>
 
       {/* วันประเมิน */}
@@ -542,6 +568,25 @@ function ActiveTableRow({
                 </button>
               </>
             )}
+            {/* ส่งแล้ว = ไม่ย้ายออก (แค่แถวเขียว) — ทำใบเสนอในระบบ / แก้ยอด / วางบิล */}
+            {item.stage === "sent" && (
+              <>
+                <Link href="/quotations/new" onClick={() => makeQuoteBridge(item)}
+                  className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
+                  <Icon name="file" size={12} /> สร้างในระบบ
+                </Link>
+                <button onClick={() => onAction(item, "step2", q ?? null)} aria-label="แก้ยอดใบเสนอ"
+                  className="press inline-flex items-center justify-center rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px] min-w-[36px]">
+                  <Icon name="pencil" size={12} />
+                </button>
+                {q && (
+                  <Link href={`/billing-notes/new?quotation=${q.id}`}
+                    className="press inline-flex items-center gap-1 rounded-lg border border-brand px-2.5 py-1.5 text-xs font-semibold text-brand-dark hover:bg-brand/5 min-h-[36px]">
+                    <Icon name="banknote" size={12} /> วางบิล
+                  </Link>
+                )}
+              </>
+            )}
             {/* ปุ่ม พักงาน (ทุก stage active) */}
             {onHold && (
               <button
@@ -562,19 +607,20 @@ function ActiveTableRow({
 // ---------- Active Mobile Card ----------
 
 function ActiveMobileCard({
-  item, todayStr, onAction, canWrite, onHold,
+  item, todayStr, onAction, canWrite, onHold, onReload,
 }: {
   item: ChecklistItem;
   todayStr: string;
   onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
   canWrite: boolean;
   onHold?: (item: ChecklistItem) => void;
+  onReload: () => void;
 }) {
   const q = item.quotation;
   const designLabel = DESIGN_STATE_LABEL[item.design_state] ?? item.design_state;
 
   return (
-    <div className="glass rounded-2xl p-4 space-y-2.5">
+    <div className={`glass rounded-2xl p-4 space-y-2.5 ${item.stage === "sent" ? "ring-1 ring-emerald-300 bg-emerald-50/40" : ""}`}>
       {/* Header */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -603,7 +649,11 @@ function ActiveMobileCard({
           : <Badge tone="gray">รอแบบ</Badge>)}
         {item.stage === "pending"   && <Badge tone="amber">ยังไม่ทำใบเสนอ</Badge>}
         {item.stage === "drafted"   && <Badge tone="sky">ร่างใบเสนอ</Badge>}
+        {item.stage === "sent"      && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งแล้ว</span>}
       </div>
+
+      {/* งานพื้น ผรม. */}
+      <FloorWorkControl jobId={item.job_id} floorWork={item.floor_work} floorNote={item.floor_note} floorQuoteSent={item.floor_quote_sent} canWrite={canWrite} onSaved={onReload} />
 
       {/* เดดไลน์ (เด่น) */}
       <div className="flex items-center justify-between rounded-xl bg-gray-50/70 border border-gray-200/60 px-3 py-2">
@@ -680,6 +730,20 @@ function ActiveMobileCard({
               </button>
             </>
           )}
+          {item.stage === "sent" && (
+            <>
+              <Link href="/quotations/new" onClick={() => makeQuoteBridge(item)}
+                className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white shadow-brand min-h-[44px]">
+                <Icon name="file" size={15} /> สร้างในระบบ
+              </Link>
+              {q && (
+                <Link href={`/billing-notes/new?quotation=${q.id}`}
+                  className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand/5 min-h-[44px]">
+                  <Icon name="banknote" size={15} /> วางบิล
+                </Link>
+              )}
+            </>
+          )}
           {/* ปุ่ม พักงาน (ทุก stage active) */}
           {onHold && (
             <button
@@ -705,12 +769,12 @@ export default function QuotationChecklistClient() {
   const [canWrite,  setCanWrite]  = useState(false);
   const [modal,     setModal]     = useState<ModalState | null>(null);
   const [holdJob,   setHoldJob]   = useState<ChecklistItem | null>(null);
-  const [sentOpen,  setSentOpen]  = useState(false);
   const [heldOpen,  setHeldOpen]  = useState(false);
   const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [hq, setHq] = useState("");   // ค้นหาในประวัติ
   const [floorOnly, setFloorOnly] = useState(false);
+  const [sortKey, setSortKey] = useState<"assess" | "delivery" | "name">("assess");
   const [meta,      setMeta]      = useState<{
     counts: { in_design: number; pending: number; drafted: number; sent: number; held: number };
     overdue: number;
@@ -782,6 +846,18 @@ export default function QuotationChecklistClient() {
     const q = hq.trim().toLowerCase();
     if (!q) return true;
     return [h.customer_name, h.job_code ?? "", h.floor_note].join(" ").toLowerCase().includes(q);
+  });
+
+  // ลิสต์หลัก = active + sent รวมกัน (ส่งแล้วไม่ย้ายออก แค่แถวเขียว) · เรียงตามที่เลือก
+  const mainList = [...active, ...sent].sort((a, b) => {
+    if (sortKey === "delivery") {
+      if (!a.delivery_due && !b.delivery_due) return 0;
+      if (!a.delivery_due) return 1;
+      if (!b.delivery_due) return -1;
+      return a.delivery_due.localeCompare(b.delivery_due);
+    }
+    if (sortKey === "name") return a.customer_name.localeCompare(b.customer_name, "th");
+    return (b.assess_date ?? "").localeCompare(a.assess_date ?? ""); // ประเมินใหม่สุดก่อน
   });
 
   return (
@@ -865,16 +941,27 @@ export default function QuotationChecklistClient() {
         <Card className="p-12 text-center text-ink-3">กำลังโหลด…</Card>
       )}
 
-      {/* ตารางหลัก "งานก่อนส่งลูกค้า" */}
+      {/* ตารางหลักใบเสนอราคา (รวม "ส่งแล้ว" · ไม่ซ่อน · แถวเขียว) */}
       {data && (
         <div className="space-y-3">
-          <h2 className="text-base font-bold text-ink flex items-center gap-2">
-            <Icon name="track" size={16} className="text-brand" />
-            งานก่อนส่งลูกค้า
-            <span className="tabular-nums text-sm font-normal text-ink-3">({active.length} รายการ)</span>
-          </h2>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-base font-bold text-ink flex items-center gap-2">
+              <Icon name="track" size={16} className="text-brand" />
+              รายการใบเสนอราคา
+              <span className="tabular-nums text-sm font-normal text-ink-3">({mainList.length} รายการ)</span>
+            </h2>
+            <label className="flex items-center gap-1.5 text-xs text-ink-2">
+              เรียง:
+              <select value={sortKey} onChange={(e) => setSortKey(e.target.value as "assess" | "delivery" | "name")}
+                className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-brand">
+                <option value="assess">เข้าประเมินใหม่สุดก่อน</option>
+                <option value="delivery">เดดไลน์ส่งใกล้สุดก่อน</option>
+                <option value="name">ชื่อลูกค้า ก-ฮ</option>
+              </select>
+            </label>
+          </div>
 
-          {active.length === 0 ? (
+          {mainList.length === 0 ? (
             <Card className="p-10 text-center text-ink-3 text-sm">ไม่มีงานในไปป์ไลน์</Card>
           ) : (
             <>
@@ -893,7 +980,7 @@ export default function QuotationChecklistClient() {
                     </tr>
                   </thead>
                   <tbody>
-                    {active.map((item) => (
+                    {mainList.map((item) => (
                       <ActiveTableRow
                         key={item.job_id}
                         item={item}
@@ -901,6 +988,7 @@ export default function QuotationChecklistClient() {
                         onAction={openModal}
                         canWrite={canWrite}
                         onHold={canWrite ? (i) => setHoldJob(i) : undefined}
+                        onReload={load}
                       />
                     ))}
                   </tbody>
@@ -909,7 +997,7 @@ export default function QuotationChecklistClient() {
 
               {/* Mobile cards */}
               <div className="md:hidden space-y-3">
-                {active.map((item) => (
+                {mainList.map((item) => (
                   <ActiveMobileCard
                     key={item.job_id}
                     item={item}
@@ -917,46 +1005,11 @@ export default function QuotationChecklistClient() {
                     onAction={openModal}
                     canWrite={canWrite}
                     onHold={canWrite ? (i) => setHoldJob(i) : undefined}
+                    onReload={load}
                   />
                 ))}
               </div>
             </>
-          )}
-        </div>
-      )}
-
-      {/* ส่งแล้ว · รอมัดจำ (collapsible) */}
-      {data && (
-        <div className="space-y-3">
-          <button
-            onClick={() => setSentOpen((v) => !v)}
-            className="press w-full flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm font-semibold hover:bg-emerald-100 transition-colors min-h-[44px]">
-            <Icon name="check" size={15} />
-            <span>ส่งแล้ว · รอมัดจำ</span>
-            <span className="tabular-nums text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">
-              {sent.length}
-            </span>
-            <span className="ml-auto">
-              <Icon name={sentOpen ? "chevron-up" : "chevron-down"} size={16} />
-            </span>
-          </button>
-
-          {sentOpen && (
-            <div className="space-y-3">
-              {sent.length === 0 ? (
-                <Card className="p-8 text-center text-ink-3 text-sm">ไม่มีรายการ</Card>
-              ) : (
-                sent.map((item) => (
-                  <SentJobCard
-                    key={item.job_id}
-                    item={item}
-                    onAction={openModal}
-                    canWrite={canWrite}
-                    onReload={load}
-                  />
-                ))
-              )}
-            </div>
           )}
         </div>
       )}
@@ -1007,7 +1060,7 @@ export default function QuotationChecklistClient() {
                           </td>
                           <td className="px-3 py-2.5 align-top text-sm text-ink-2 tabular-nums whitespace-nowrap">{thaiDate(h.quote_sent_date)}</td>
                           <td className="px-3 py-2.5 align-top">
-                            <FloorWorkControl jobId={h.job_id} floorWork={h.floor_work} floorNote={h.floor_note} canWrite={canWrite} onSaved={load} />
+                            <FloorWorkControl jobId={h.job_id} floorWork={h.floor_work} floorNote={h.floor_note} floorQuoteSent={h.floor_quote_sent} canWrite={canWrite} onSaved={load} />
                           </td>
                         </tr>
                       ))}
