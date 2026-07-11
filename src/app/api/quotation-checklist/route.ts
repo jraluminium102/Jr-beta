@@ -42,12 +42,27 @@ export type ChecklistItem = {
   on_hold_reason: string | null;
   revised: boolean;       // มาจากการแก้แบบ (อยู่ใน active เพราะถูกแก้)
   revise_count: number;   // จำนวนรอบแก้แบบ
+  floor_work: string;     // none | jr | customer (งานพื้น ผรม. — 0090)
+  floor_note: string;     // ผรม.ใคร / รายละเอียดงานพื้น
+};
+
+// ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมที่มัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย
+export type SentHistoryItem = {
+  job_id: string;
+  job_code: string | null;
+  customer_name: string;
+  customer_area: string | null;
+  quote_sent_date: string | null;
+  status: string;
+  floor_work: string;
+  floor_note: string;
 };
 
 export type ChecklistData = {
   active: ChecklistItem[];
   sent:   ChecklistItem[];
   held:   ChecklistItem[];
+  history: SentHistoryItem[];
 };
 
 // ---------- helpers ----------
@@ -92,7 +107,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, floor_work, floor_note, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -123,6 +138,8 @@ export const GET = withRoute(async () => {
     onsite_deposit: boolean; // (0044)
     on_hold: boolean;
     on_hold_reason: string | null;
+    floor_work: string | null;
+    floor_note: string | null;
     estimator: EstimatorJoin;
     designer_lookup: DesignerJoin;
   };
@@ -130,10 +147,27 @@ export const GET = withRoute(async () => {
   const jobRows = (jobs ?? []) as JobRow[];
   const salesOf = await buildSalesResolver(sb);   // เซลล์ที่ไปดู (estimator → คิว)
 
+  // ── ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมมัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย ──
+  const { data: histRows } = await sb
+    .from("jobs")
+    .select("id, job_code, customer_name, customer_area, quote_sent_date, status, floor_work, floor_note")
+    .not("quote_sent_date", "is", null)
+    .neq("status", "CANCELLED")
+    .order("quote_sent_date", { ascending: false })
+    .limit(500);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const history: SentHistoryItem[] = (histRows ?? []).map((h: any) => ({
+    job_id: h.id, job_code: h.job_code ?? null, customer_name: h.customer_name ?? "—",
+    customer_area: h.customer_area ?? null, quote_sent_date: h.quote_sent_date ?? null,
+    status: h.status ?? "", floor_work: h.floor_work ?? "none", floor_note: h.floor_note ?? "",
+  }));
+  const floorJr = history.filter((h) => h.floor_work === "jr").length;
+  const floorCustomer = history.filter((h) => h.floor_work === "customer").length;
+
   if (jobRows.length === 0) {
     return ok<ChecklistData>(
-      { active: [], sent: [], held: [] },
-      { can_write: canWrite, counts: { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 }, overdue: 0, due_soon: 0 }
+      { active: [], sent: [], held: [], history },
+      { can_write: canWrite, counts: { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 }, overdue: 0, due_soon: 0, floor_jr: floorJr, floor_customer: floorCustomer }
     );
   }
 
@@ -217,6 +251,8 @@ export const GET = withRoute(async () => {
         onsite_deposit: j.onsite_deposit ?? false,
         revised: j.design_state === "REVISING",
         revise_count: j.design_revise_count ?? 0,
+        floor_work: j.floor_work ?? "none",
+        floor_note: j.floor_note ?? "",
         on_hold: true,
         on_hold_reason: j.on_hold_reason ?? null,
       });
@@ -277,6 +313,8 @@ export const GET = withRoute(async () => {
       onsite_deposit: j.onsite_deposit ?? false, // (0044)
       revised,
       revise_count: reviseCount,
+      floor_work: j.floor_work ?? "none",
+      floor_note: j.floor_note ?? "",
       on_hold: false,
       on_hold_reason: null,
     };
@@ -315,12 +353,14 @@ export const GET = withRoute(async () => {
   });
 
   return ok<ChecklistData>(
-    { active, sent, held },
+    { active, sent, held, history },
     {
       can_write: canWrite,
       counts: { in_design: countInDesign, pending: countPending, drafted: countDrafted, sent: countSent, held: countHeld },
       overdue,
       due_soon: dueSoon,
+      floor_jr: floorJr,
+      floor_customer: floorCustomer,
     }
   );
 });

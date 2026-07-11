@@ -8,7 +8,7 @@ import { Card, Badge } from "@/components/ui";
 import { api } from "@/lib/api";
 import { baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
-import type { ChecklistData, ChecklistItem, ChecklistQuotation } from "@/app/api/quotation-checklist/route";
+import type { ChecklistData, ChecklistItem, ChecklistQuotation, SentHistoryItem } from "@/app/api/quotation-checklist/route";
 import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ---------- types ----------
@@ -81,6 +81,55 @@ function DaysRemainingBadge({ deliveryDue, todayIso }: { deliveryDue: string | n
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ---------- งานพื้น ผรม. (0090) ----------
+
+const FLOOR_META: Record<string, { label: string; cls: string }> = {
+  none:     { label: "— ไม่มีงานพื้น",        cls: "bg-gray-100 text-gray-500 border-gray-200" },
+  jr:       { label: "งานพื้น · JR ทำ",       cls: "bg-sky-100 text-sky-800 border-sky-300" },
+  customer: { label: "งานพื้น · ผรม.ลูกค้า",   cls: "bg-amber-100 text-amber-800 border-amber-300" },
+};
+
+function FloorWorkControl({ jobId, floorWork, floorNote, canWrite, onSaved }: {
+  jobId: string; floorWork: string; floorNote: string; canWrite: boolean; onSaved: () => void;
+}) {
+  const [fw, setFw] = useState(floorWork || "none");
+  const [note, setNote] = useState(floorNote || "");
+  const [busy, setBusy] = useState(false);
+  const m = FLOOR_META[fw] ?? FLOOR_META.none;
+
+  async function persist(nextFw: string, nextNote: string) {
+    setBusy(true);
+    try { await api.post(`/jobs/${jobId}/floor-work`, { floor_work: nextFw, floor_note: nextNote }); onSaved(); }
+    finally { setBusy(false); }
+  }
+
+  if (!canWrite) {
+    return (
+      <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${m.cls}`}>
+        {m.label}{fw !== "none" && floorNote ? ` · ${floorNote}` : ""}
+      </span>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <select value={fw} disabled={busy}
+        onChange={(e) => { const v = e.target.value; setFw(v); if (v === "none") setNote(""); persist(v, v === "none" ? "" : note); }}
+        aria-label="งานพื้น ผรม."
+        className={`text-[11px] rounded-lg border px-1.5 py-1 outline-none ${m.cls}`}>
+        <option value="none">— ไม่มีงานพื้น</option>
+        <option value="jr">งานพื้น · JR ทำ</option>
+        <option value="customer">งานพื้น · ผรม.ลูกค้า</option>
+      </select>
+      {fw !== "none" && (
+        <input value={note} disabled={busy} placeholder="ผรม.ใคร / โน้ต"
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={() => { if (note !== (floorNote || "")) persist(fw, note); }}
+          className="text-[11px] rounded-lg border border-gray-300 px-1.5 py-1 outline-none w-32 tabular-nums" />
+      )}
+    </div>
+  );
 }
 
 // ---------- Modal ----------
@@ -250,11 +299,12 @@ function Modal({
 // ---------- Sent Job Card (ส่งแล้ว รอมัดจำ) ----------
 
 function SentJobCard({
-  item, onAction, canWrite,
+  item, onAction, canWrite, onReload,
 }: {
   item: ChecklistItem;
   onAction: (job: ChecklistItem, mode: ModalMode, q: ChecklistQuotation | null) => void;
   canWrite: boolean;
+  onReload: () => void;
 }) {
   const q = item.quotation;
   const parsed = q ? parseNoteExt(q.note) : null;
@@ -270,6 +320,9 @@ function SentJobCard({
         </div>
         <Badge tone="sky">ส่งแล้ว</Badge>
       </div>
+
+      {/* งานพื้น ผรม. */}
+      <FloorWorkControl jobId={item.job_id} floorWork={item.floor_work} floorNote={item.floor_note} canWrite={canWrite} onSaved={onReload} />
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
         {item.customer_area && (
@@ -655,10 +708,15 @@ export default function QuotationChecklistClient() {
   const [sentOpen,  setSentOpen]  = useState(false);
   const [heldOpen,  setHeldOpen]  = useState(false);
   const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [hq, setHq] = useState("");   // ค้นหาในประวัติ
+  const [floorOnly, setFloorOnly] = useState(false);
   const [meta,      setMeta]      = useState<{
     counts: { in_design: number; pending: number; drafted: number; sent: number; held: number };
     overdue: number;
     due_soon: number;
+    floor_jr: number;
+    floor_customer: number;
   } | null>(null);
 
   const today = todayIso();
@@ -674,6 +732,8 @@ export default function QuotationChecklistClient() {
           counts: (res.meta.counts as { in_design: number; pending: number; drafted: number; sent: number; held: number }) ?? { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 },
           overdue:  Number(res.meta.overdue  ?? 0),
           due_soon: Number(res.meta.due_soon ?? 0),
+          floor_jr: Number(res.meta.floor_jr ?? 0),
+          floor_customer: Number(res.meta.floor_customer ?? 0),
         });
       }
     } catch (e) {
@@ -711,9 +771,18 @@ export default function QuotationChecklistClient() {
   const active = data?.active ?? [];
   const sent   = data?.sent   ?? [];
   const held   = data?.held   ?? [];
+  const history = data?.history ?? [];
   const counts = meta?.counts ?? { in_design: 0, pending: 0, drafted: 0, sent: 0, held: 0 };
   const overdue  = meta?.overdue  ?? 0;
   const dueSoon  = meta?.due_soon ?? 0;
+  const floorJr = meta?.floor_jr ?? 0;
+  const floorCustomer = meta?.floor_customer ?? 0;
+  const historyFiltered = history.filter((h) => {
+    if (floorOnly && h.floor_work === "none") return false;
+    const q = hq.trim().toLowerCase();
+    if (!q) return true;
+    return [h.customer_name, h.job_code ?? "", h.floor_note].join(" ").toLowerCase().includes(q);
+  });
 
   return (
     <div className="space-y-5">
@@ -772,6 +841,14 @@ export default function QuotationChecklistClient() {
             <div className="text-2xl font-extrabold tabular-nums">{counts.sent}</div>
             <div className="text-xs font-medium mt-0.5 leading-tight">ส่งแล้ว · รอมัดจำ</div>
           </div>
+        </div>
+      )}
+
+      {/* งานพื้น ผรม. — สรุป */}
+      {data && (floorJr > 0 || floorCustomer > 0) && (
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 bg-sky-100 text-sky-800 border border-sky-200">🧱 งานพื้น JR ทำ · {floorJr}</span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 bg-amber-100 text-amber-800 border border-amber-200">🧱 งานพื้น ผรม.ลูกค้า · {floorCustomer}</span>
         </div>
       )}
 
@@ -875,8 +952,68 @@ export default function QuotationChecklistClient() {
                     item={item}
                     onAction={openModal}
                     canWrite={canWrite}
+                    onReload={load}
                   />
                 ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ประวัติใบเสนอที่ส่งแล้ว (ถาวร) · ไล่เช็คงานพื้น ── */}
+      {data && (
+        <div className="space-y-3">
+          <button onClick={() => setHistoryOpen((v) => !v)}
+            className="press w-full flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 px-4 py-3 text-sm font-semibold hover:bg-sky-100 transition-colors min-h-[44px]">
+            <Icon name="clipboard" size={15} />
+            <span>ประวัติใบเสนอที่ส่งแล้ว · ไล่เช็คงานพื้น</span>
+            <span className="tabular-nums text-xs font-bold bg-white/60 rounded-md px-1.5 py-0.5 ml-1">{history.length}</span>
+            <span className="ml-auto"><Icon name={historyOpen ? "chevron-up" : "chevron-down"} size={16} /></span>
+          </button>
+
+          {historyOpen && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input value={hq} onChange={(e) => setHq(e.target.value)} placeholder="ค้นหาชื่อลูกค้า / job / ผรม."
+                  className="flex-1 min-w-[180px] rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand" />
+                <button onClick={() => setFloorOnly((v) => !v)}
+                  className={`press text-xs font-semibold rounded-full px-3 py-2 border min-h-[40px] ${floorOnly ? "bg-brand text-white border-brand" : "bg-white text-ink-2 border-gray-300"}`}>
+                  เฉพาะมีงานพื้น
+                </button>
+              </div>
+
+              {historyFiltered.length === 0 ? (
+                <Card className="p-8 text-center text-ink-3 text-sm">{hq || floorOnly ? "ไม่พบรายการ" : "ยังไม่มีประวัติใบเสนอที่ส่งแล้ว"}</Card>
+              ) : (
+                <div className="glass rounded-2xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-white/50 border-b border-gray-100">
+                        <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">ลูกค้า</th>
+                        <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide whitespace-nowrap">ส่งเมื่อ</th>
+                        <th className="px-3 py-2.5 text-left text-xs font-semibold text-ink-3 uppercase tracking-wide">งานพื้น (ผรม.)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyFiltered.map((h: SentHistoryItem) => (
+                        <tr key={h.job_id} className="border-b border-gray-100 last:border-0 hover:bg-white/60 transition-colors">
+                          <td className="px-3 py-2.5 align-top">
+                            <div className="font-semibold text-ink text-sm leading-snug">{h.customer_name}</div>
+                            <div className="text-xs text-ink-3 flex flex-wrap gap-x-2">
+                              {h.job_code && <span className="font-mono">{h.job_code}</span>}
+                              {h.customer_area && <span>· {h.customer_area}</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 align-top text-sm text-ink-2 tabular-nums whitespace-nowrap">{thaiDate(h.quote_sent_date)}</td>
+                          <td className="px-3 py-2.5 align-top">
+                            <FloorWorkControl jobId={h.job_id} floorWork={h.floor_work} floorNote={h.floor_note} canWrite={canWrite} onSaved={load} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
