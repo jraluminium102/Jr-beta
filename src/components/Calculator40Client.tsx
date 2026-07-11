@@ -329,6 +329,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(rt.roof)}฿)` : ""}`);
       if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(rt.ceil)}฿)` : ""}`);
       if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);
+      if (rt.fan > 0) lines.push(`- พัดลม/ระบายอากาศ${showP ? ` (${baht(rt.fan)}฿)` : ""}`);
+      if (rt.services > 0) lines.push(`- งานบริการเพิ่มเติม${showP ? ` (${baht(rt.services)}฿)` : ""}`);
+      if (rt.svc > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(rt.svc)}฿)` : ""}`);
       lines.push("รายละเอียดงาน");
       lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
       lines.push(`- กระจก: ${glassType || "—"}`);
@@ -353,10 +356,40 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       + (prod.forms?.length && form ? ` (${form})` : "")
       + (nBan > 1 ? ` ${nBan} บาน` : "")
       + ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
-    const workLines = subDescs.map((d) => `- ${d}`);               // ผสมบาน/ช่วงเพิ่ม = บุลเล็ตออปชั่น
+    // ── "รายการ" (บน · บุลเล็ตงานที่ทำ) ──────────────────────────────────────
+    // ทุก option ที่ผู้ใช้เลือก "และคิดเงินแล้ว" ต้องขึ้นในใบ (ตรงโจทย์เจ้าของ)
+    // - subDescs = ผสมบาน G1 / หลังคาหลายช่วง G3 (เดิม)
+    // - บานติดตาย · addon (มุ้ง/มือจับ/โช้ค/มอเตอร์/รางน้ำ/ครอบวงกบ ฯลฯ จาก result.lines)
+    // - รุ่น override (ตู้ G4 / ม่านซิป G7 / ของขายตรง/R3.9) engine แทน lines เป็นคำอธิบายลูกค้าแล้ว → ดึงทั้งชุด
+    const workLines = subDescs.map((d) => `- ${d}`);
+    // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ขึ้นใบ (เดิมคิด movePanes แต่ไม่พิมพ์)
+    if ((fixedPanes || 0) > 0) {
+      const isOpen = /เปิด|เฟี้ยม|กระทุ้ง|หมุน|ยก|ประตู|PC|Velora/i.test(prod.name || "");
+      workLines.push(`- บานติดตาย ${fixedPanes} บาน (ที่เหลือ ${movePanes} บาน${isOpen ? "เปิด" : "เลื่อน"})`);
+    }
+    // ดึงบรรทัดออปชั่นจาก engine (คิดเงินแล้ว) — normal: เฉพาะ addon · override: ทั้งหมด (ยกเว้น warn/ค่าแรง)
+    const isOverride = !!(prod.sellCabinet || prod.sellZip || prod.sellR39 || prod.sellDirect);
+    const cleanTag = (s: string) => String(s ?? "").replace(/\s*\((?:R3\.9|R4\.0)\)\s*$/, "").trim();
+    ((result as any).lines || []).forEach((l: any) => {
+      if (!l || !l.name || l.cat === "warn" || l.cat === "labor") return;
+      if (isOverride || l.cat === "addon") workLines.push(`- ${cleanTag(l.name)}`);
+    });
+    // specOpts ที่ผู้ใช้เลือกไม่ตรง default → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
+    const specDetailLines: string[] = [];
+    (prod.specOpts ?? []).forEach((o: any) => {
+      if (o.type === "number") return; // ตัวเลขคิดเงิน → เป็น engine line แล้ว
+      const v = spec[o.key];
+      if (v == null || v === "") return;
+      if (o.opts && v === o.def) return; // ค่า default = ไม่ต้องรก
+      if (o.priced) workLines.push(`- ${o.label}: ${v}`);
+      else specDetailLines.push(`- ${o.label}: ${v}`);
+    });
+    // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
     const jobLines = [`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`];
     if (glassType) jobLines.push(`- กระจก: ${glassType}`);
-    if (material) jobLines.push(`- วัสดุ: ${material}`);
+    if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
+    if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
+    specDetailLines.forEach((l) => jobLines.push(l));
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     setQuote((q) => [...q, {
       key: keySeq, name: itemName, desc, qty: n,
@@ -825,8 +858,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 </div>
               )}
 
-              {/* ➕ ผสมบาน (G1) — เพิ่มบานหลายชนิดในชุดเดียว ตรง app.js renderSubPanes ~1356-1367 (ทุกรุ่น G1 ยกเว้นห้องกระจก composite) */}
-              {prod.group === 1 && !prod.composite && (
+              {/* ➕ ผสมบาน (G1) — เพิ่มบานหลายชนิดในชุดเดียว ตรง app.js renderSubPanes ~1356-1367
+                  ยกเว้นห้องกระจก composite + รุ่นระบบเดี่ยว "พิเศษ · กระจกเปลือย · สำเร็จ" (shower/บานเปลือย/YKK ผสมบานไม่ได้ · SPEC-G1 LOCKED) */}
+              {prod.group === 1 && !prod.composite && prod.subcat !== "พิเศษ · กระจกเปลือย · สำเร็จ" && (
                 <SubPanesSection
                   subs={subs}
                   setSubs={setSubs}
@@ -935,6 +969,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   </p>
                 ) : null;
               })()}
+
+              {/* บานเปิดดัดโค้ง — สูงเกิน 2.8 ม. = สั่งร้านอื่น ไม่มีราคาในตาราง (clamp เรต 2.8 ม.) เตือนให้กรอกราคาจริง */}
+              {ok && prod.id === "curve_open" && (Number(h) || prod.defaults?.h || 0) > 280 && (
+                <p className="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                  ⚠️ บานดัดโค้งสูง {((Number(h) || 0) / 100).toFixed(2)} ม. — เกิน 2.8 ม. ไม่มีราคาในตาราง (คิดที่เรต 2.8 ม. · บานสั่งร้านอื่น) <b>ตรวจ/กรอกราคาจริงก่อนเสนอลูกค้า</b>
+                </p>
+              )}
 
               {/* เพิ่มลงรายการ */}
               <div className="mt-4 flex items-end gap-3 flex-wrap">

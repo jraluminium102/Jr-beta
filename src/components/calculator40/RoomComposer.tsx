@@ -367,7 +367,7 @@ export default function RoomComposer({
   // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
   const sideDescs = useMemo(() => sides.map((s, i) => {
     if (s.kind === "glass") return s.cols.flatMap((c) => c.pcs).map((p) => paneDesc(p, sideGlass(i))).join(" + ");
-    if (s.kind === "wall") return `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.`;
+    if (s.kind === "wall") return `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.${addonSummary(s.addons)}`;
     return "เปิดโล่ง";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [sides, mainGlass, mainColor]);

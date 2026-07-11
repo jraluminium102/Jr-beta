@@ -22,8 +22,10 @@ import { fmt } from "@/lib/calculator40/fmt";
 import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
-// @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน)
-import { CMECH_TIERS, STAINLESS_TIERS } from "@/lib/calculator40/engine.mjs";
+// @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW } from "@/lib/calculator40/engine.mjs";
+const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
+const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json (DIGI = ตารางมือจับดิจิตอล ราคา/ชื่อรุ่น)
 import R39DATA from "@/lib/calculator40/r39-data.json";
 
@@ -31,14 +33,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 
 type AddonsMap = Record<string, any>;
 
-const ADDON_FLAT: Record<string, number> = {
-  soft_close: 4000, sling: 2000, hide_beam: 4000, u_track: 4000, beam_support: 4000,
-  hide_track: 4000, gate_curve: 4000, shower_black: 4000, shower_gold: 6000,
-};
-const CEIL_RATE: Record<string, number> = {
-  "ฉาบเรียบ": 480, "อลูตัวซี": 2100, "อลูไทยทิพย์": 2100,
-  "ไม้เทียม remood": 2600, "ระแนงอลู 1×5": 3300, "ระแนงอลู เว้นร่อง": 3700,
-};
+// ADDON_FLAT + CEIL_RATE ย้ายไป import จาก engine.mjs (แหล่งเดียว — กันป้าย UI/ราคา engine หลุดกันในอนาคต)
 // สีเส้นคาดอัตโนมัติตามสีเฟรม (R3.9 GRID_RATE_BY_BAKE) — auto จนกว่าจะกดเลือกเอง (rateTouched)
 const GRID_RATE_BY_BAKE: Record<string, number> = { white: 200, sahara: 200, woodStock: 250, special: 300, woodSpecial: 350 };
 const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
