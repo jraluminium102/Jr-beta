@@ -87,8 +87,9 @@ export function splitLaborMaterial(baseExVat: number, laborRatioPct: number): { 
   return { labor, material: round2(base - labor) };
 }
 
+// เอกสารการเงินโชว์ 2 ตำแหน่งเสมอ (บัญชีสั่ง 11ก.ค.69) — VAT/หัก ณ ที่จ่าย/ส่วนลด/ยอด ต้องมี .00
 export const baht = (n: number) =>
-  (Number(n) || 0).toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  (Number(n) || 0).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ============================================================
 // แบ่งงวดชำระอัตโนมัติตามยอดสุทธิ (PRD P0-5)

@@ -32,6 +32,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 // ──────────────────────────────────────────────────────────────────
 const PatchSchema = z.object({
   total: z.number({ invalid_type_error: "ยอดต้องเป็นตัวเลข" }).positive("ยอดต้องมากกว่า 0").optional(),
+  subtotal: z.number().min(0).optional(),   // ยอดก่อนภาษีที่กรอกเอง (footer editor คิดใหม่จริง) — ใช้แทน subtotal ใบเสนอ
   discount_pct: z.number().min(0, "ส่วนลดต้อง ≥ 0").max(100, "ส่วนลดต้องอยู่ 0–100%").optional(),
   vat_rate: z.number().min(0).max(100).optional(),
   wht_rate: z.number().min(0).max(100).optional(),
@@ -63,9 +64,9 @@ export const PATCH = withRoute(
     const parsed = PatchSchema.safeParse(body);
     if (!parsed.success) return err(parsed.error.errors[0].message, 400);
 
-    // โหมด B = แก้ footer (มี field ภาษี/ส่วนลดอย่างน้อย 1 ตัว) · ไม่งั้นโหมด A = แก้ยอดตรง
+    // โหมด B = แก้ footer (มี field ภาษี/ส่วนลด หรือ subtotal ที่กรอกเอง อย่างน้อย 1 ตัว) · ไม่งั้นโหมด A = แก้ยอดตรง
     const isBreakdownMode =
-      parsed.data.discount_pct != null || parsed.data.vat_rate != null || parsed.data.wht_rate != null;
+      parsed.data.subtotal != null || parsed.data.discount_pct != null || parsed.data.vat_rate != null || parsed.data.wht_rate != null;
     if (!isBreakdownMode && parsed.data.total == null) return err("ต้องระบุยอดใหม่ หรือ ส่วนลด/VAT", 400);
     const bnId = params.id;
 
@@ -91,17 +92,18 @@ export const PATCH = withRoute(
     let newTotal: number;
     let breakdown: Record<string, number | boolean | null>;
     if (isBreakdownMode) {
-      // ฐานยอดก่อน VAT = subtotal จาก "ใบเสนอต้นทาง" (เชื่อถือได้เสมอ) ไม่ใช่ bn.subtotal ที่อาจถูก flatten (0078)
-      // → ใช้ได้ทุกใบ (เก่า/ใหม่) และไม่มีทางคิด VAT ทับ เพราะฐานมาจากใบเสนอเสมอ
-      let sub = 0;
-      if (bn.quotation_id) {
+      // ฐานยอดก่อน VAT:
+      //  1) subtotal ที่กรอกเองจาก footer editor (คิดใหม่จริง) มาก่อน — เจ้าของแก้ราคาบน PDF ได้ตรงๆ
+      //  2) ถ้าไม่ได้ส่งมา → ใช้ subtotal จากใบเสนอต้นทาง (กัน VAT ทับ · bn.subtotal อาจ flatten 0078)
+      let sub = Number(parsed.data.subtotal) || 0;
+      if (sub <= 0 && bn.quotation_id) {
         const { data: q } = await ctx.supabase
           .from("quotations").select("subtotal").eq("id", bn.quotation_id)
           .single<{ subtotal: number | null }>();
         sub = Number(q?.subtotal) || 0;
       }
       if (sub <= 0) {
-        return err("ใบวางบิลนี้ไม่มีใบเสนอต้นทางที่มียอดก่อนภาษี (นำเข้า/ใบเก่า) — แก้ VAT/ส่วนลดไม่ได้ ใช้ 'แก้ยอดบิล' แทน", 409);
+        return err("ยังไม่มียอดก่อนภาษี — กรอก 'รวมเป็นเงิน' ในช่อง footer ก่อน หรือใช้ 'แก้ยอดบิล'", 409);
       }
       const disc = Number(parsed.data.discount_pct) || 0;
       const vat = Number(parsed.data.vat_rate) || 0;

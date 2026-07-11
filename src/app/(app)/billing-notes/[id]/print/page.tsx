@@ -44,19 +44,19 @@ export default async function BillingPrintPage({
   const totalPaid = installments.reduce((a, i) => a + (Number(i.paid_amount) || 0), 0);
   // ยอดรวมที่โชว์: ทั้งใบ = bn.total (= ผลรวมทุกงวด) · แยกงวด = ยอดงวดนั้น
   const grandTotal = isSingle ? (Number(selected!.amount) || 0) : (Number(bn.total) || 0);
-  const remaining = grandTotal - totalPaid;
 
-  // สัดส่วนของงวดที่เลือก เทียบยอดทั้งใบ (bn.total = ผลรวมทุกงวด) — ใช้เฉลี่ย ส่วนลด/VAT/หัก ณ ที่จ่าย ลงงวด
   const billTotal = Number(bn.total) || 0;
   const ratio = isSingle && billTotal > 0 ? (Number(selected!.amount) || 0) / billTotal : 1;
 
-  // footer ใบเต็มที่แก้มือ (display-only) → ยอดสุทธิ/คงเหลือที่โชว์ + ธงเตือน (บัญชีสั่ง)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const wholeFooter = !isSingle ? validFooter((bn as any).footer_override) : null;
-  const effTotal = wholeFooter ? Number(wholeFooter.net) || 0 : grandTotal;
+  // ยอด "ยอดรวมทั้งสิ้น/ยอดงวดนี้" ที่โชว์:
+  //  · ทั้งใบ = bn.total (แก้ footer = แก้ยอดจริง จึงตรงเสมอ ไม่ต้องพึ่ง footer_override)
+  //  · แยกงวด = ถ้ามี footer_override ต่องวด (display-only) ใช้ net นั้น ไม่งั้น = ยอดงวด (แก้บั๊กเดิมที่ไม่สะท้อน net)
+  const instFooter = isSingle ? validFooter(selected!.footer_override) : null;
+  const effTotal = isSingle ? (instFooter ? Number(instFooter.net) || 0 : grandTotal) : billTotal;
   const effRemaining = round2(effTotal - totalPaid);
-  const footerMismatch = !!wholeFooter && Math.abs(effTotal - billTotal) > 0.01; // สุทธิ footer ≠ ผลรวมงวดจริง
   const overpaid = effRemaining < -0.01;                                          // คงเหลือติดลบ (รับเกิน)
+  // เตือน (งวดแยก): net ที่แก้ footer ต่องวด ≠ ยอดงวดจริง → ตารางกับท้ายใบไม่ตรง
+  const instMismatch = isSingle && !!instFooter && Math.abs(effTotal - (Number(selected!.amount) || 0)) > 0.01;
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -69,10 +69,10 @@ export default async function BillingPrintPage({
       </div>
 
       {/* เตือนเจ้าหน้าที่ (ไม่พิมพ์ลงเอกสาร) — footer แก้มือทำให้ยอดไม่สอดคล้อง (บัญชีสั่งให้เตือน) */}
-      {(footerMismatch || overpaid) && (
+      {(instMismatch || overpaid) && (
         <div className="no-print mx-auto mt-3 max-w-[210mm] rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
           <b>⚠ ตรวจ footer ก่อนส่งลูกค้า</b>
-          {footerMismatch && <div className="text-xs mt-0.5">ยอดสุทธิที่แก้ footer (฿{baht(effTotal)}) ไม่ตรงผลรวมงวดจริง (฿{baht(billTotal)}) — ตารางงวดกับยอดรวมท้ายใบจะไม่ตรงกัน กด &quot;✎ แก้ footer → ค่าตั้งต้น&quot; เพื่อกลับยอดจริง</div>}
+          {instMismatch && <div className="text-xs mt-0.5">ยอดสุทธิที่แก้ footer งวดนี้ (฿{baht(effTotal)}) ไม่ตรงยอดงวดจริง (฿{baht(Number(selected!.amount) || 0)}) — ตารางงวดกับยอดท้ายใบไม่ตรงกัน กด &quot;✎ แก้ footer → ค่าตั้งต้น&quot; เพื่อกลับยอดจริง</div>}
           {overpaid && <div className="text-xs mt-0.5">ยอดสุทธิต่ำกว่ายอดรับชำระแล้ว → คงเหลือติดลบ (เหมือนรับเงินเกิน) โปรดตรวจสอบ</div>}
         </div>
       )}
@@ -136,16 +136,17 @@ export default async function BillingPrintPage({
                 const b = bn as any;
                 const dp = Number(b.discount_pct) || 0, vr = Number(b.vat_rate) || 0, wr = Number(b.wht_rate) || 0;
                 if (isSingle) {
+                  // งวดแยก = display-only (แก้ footer ต่องวดไม่แตะยอด booked · re-split ทั้งใบทีละงวดไม่ได้)
                   const ov = validFooter(selected!.footer_override);
                   if (Number(b.subtotal) <= 0 && !ov) return null;
                   const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr);
                   return <PrintFooterEditor apiUrl={`/api/billing-installments/${selected!.id!}`} suffix=" (งวดนี้)" def={def} current={ov} />;
                 }
-                const ov = validFooter(b.footer_override);
+                // ทั้งใบ = แก้ยอดจริง (real): กรอก รวมเป็นเงิน/ส่วนลด/VAT/หัก → คิด total ใหม่ + แตกงวดใหม่ (บิลที่ยังไม่จ่าย)
                 const subW = Number(b.subtotal) || Number(bn.total) || 0;
-                if (subW <= 0 && !ov) return null;
+                if (subW <= 0) return null;
                 const def = footerSnapshot(subW, dp, vr, wr);
-                return <PrintFooterEditor apiUrl={`/api/billing-notes/${bn.id}`} def={def} current={ov} />;
+                return <PrintFooterEditor real apiUrl={`/api/billing-notes/${bn.id}`} def={def} current={null} />;
               })()}
               {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ยอดสุทธิที่คิดใหม่ · คงเหลือติดลบ = แดง (เตือนรับเกิน) */}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
