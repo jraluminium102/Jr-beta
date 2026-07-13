@@ -53,6 +53,8 @@ export const PRODUCTS = {
   // ═══════════════════════ G1 บาน ═══════════════════════
   sms_slide: {
     id: 'sms_slide', group: 1, name: 'บานเลื่อน SMS', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
+    // saleName = ชื่อบรรยายลงใบเสนอราคา ({form} = รูปแบบที่เลือก เช่น ลากจูง) · name = ชื่อสั้นในลิสต์เลือกรุ่น
+    saleName: 'ประตูบานเลื่อน{form} รางล่าง (รุ่นกันน้ำ)',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — มุ้ง/มือจับ/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม (engine computeAddon รองรับอยู่แล้ว)

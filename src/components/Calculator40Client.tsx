@@ -358,9 +358,17 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ── รูปแบบรายละเอียดแบบเครื่องเดิม R3.9: ชื่อ+รูปแบบ+ขนาด(ม.) เป็นหัว · บุลเล็ตออปชั่น · "รายละเอียดงาน" + สี/กระจก ──
     const fmtM = (cm: number) => (Math.round(cm) / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
     const nBan = Number(p) || prod.defaults?.p || 1;
-    const itemName = `${prod.name}`
-      + (prod.forms?.length && form ? ` (${form})` : "")
-      + (nBan > 1 ? ` ${nBan} บาน` : "")
+    // ชนิดมุ้งที่เลือก → ขึ้นในชื่อ "(มีมุ้ง...)" + รายละเอียดงาน (ผ้ามุ้ง)
+    const MQ_LABEL: Record<string, string> = { small: "เฟรมเล็ก", big: "เฟรมใหญ่", pleat: "จีบ", honey: "จีบม่านรังผึ้ง", roll: "ม้วน" };
+    const mqSel = (addons as any)?.mosquito;
+    const mqType = mqSel && mqSel !== "none" ? (MQ_LABEL[mqSel] || "") : "";
+    // ชื่อบรรยาย: prod.saleName (แทน {form} = รูปแบบที่เลือก) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
+    const baseName: string = prod.saleName
+      ? String(prod.saleName).replace(/\{form\}/g, form || "")
+      : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) ? ` (${form})` : "");
+    const itemName = baseName
+      + (nBan > 1 ? ` แบ่ง ${nBan} บาน` : "")
+      + (mqType ? ` (มีมุ้ง${mqType})` : "")
       + ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
     // ── "รายการ" (บน · บุลเล็ตงานที่ทำ) ──────────────────────────────────────
     // ทุก option ที่ผู้ใช้เลือก "และคิดเงินแล้ว" ต้องขึ้นในใบ (ตรงโจทย์เจ้าของ)
@@ -376,8 +384,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ดึงบรรทัดออปชั่นจาก engine (คิดเงินแล้ว) — normal: เฉพาะ addon · override: ทั้งหมด (ยกเว้น warn/ค่าแรง)
     const isOverride = !!(prod.sellCabinet || prod.sellZip || prod.sellR39 || prod.sellDirect);
     const cleanTag = (s: string) => String(s ?? "").replace(/\s*\((?:R3\.9|R4\.0)\)\s*$/, "").trim();
+    // มุ้ง — ย้ายไปเขียนใน "รายละเอียดงาน" (พร้อมผ้ามุ้ง/ชนิด) + ขึ้นในชื่อ "(มีมุ้ง...)" · ไม่ซ้ำเป็นบุลเล็ตงาน
+    const mqLineObj = ((result as any).lines || []).find((l: any) => l?.cat === "addon" && /^(มุ้ง|ม่าน)/.test(l.name || ""));
+    const mqDetail = mqLineObj ? cleanTag(mqLineObj.name) : "";
     ((result as any).lines || []).forEach((l: any) => {
       if (!l || !l.name || l.cat === "warn" || l.cat === "labor") return;
+      if (l.cat === "addon" && /^(มุ้ง|ม่าน)/.test(l.name)) return; // มุ้ง จัดการแยก (ชื่อ + รายละเอียดงาน)
       if (isOverride || l.cat === "addon") workLines.push(`- ${cleanTag(l.name)}`);
     });
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
@@ -395,6 +407,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     if (glassType) jobLines.push(`- กระจก: ${glassType}`);
     if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
+    if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
     specDetailLines.forEach((l) => jobLines.push(l));
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     setQuote((q) => [...q, {
