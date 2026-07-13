@@ -521,7 +521,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   return (
     <div className="space-y-5">
       {/* พิมพ์ "ฟอร์มนี้" → ซ่อนทุกอย่างยกเว้นฟอร์ม A4 (.qfp-a4) */}
-      <style dangerouslySetInnerHTML={{ __html: `@media print { body * { visibility: hidden !important; } .qfp-a4, .qfp-a4 * { visibility: visible !important; } .qfp-a4 { position: absolute !important; left: 0; top: 0; box-shadow: none !important; } .no-print { display: none !important; } }` }} />
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (min-width: 1536px) { .qfp-scale { zoom: 0.72; } }
+        @media print { .qfp-scale { zoom: 1 !important; } body * { visibility: hidden !important; } .qfp-a4, .qfp-a4 * { visibility: visible !important; } .qfp-a4 { position: absolute !important; left: 0; top: 0; box-shadow: none !important; } .no-print { display: none !important; } }
+      ` }} />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
@@ -1044,7 +1047,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         </div>{/* /ซ้าย: เครื่องคิดราคา */}
 
         {/* ── ขวา: ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด + แก้ข้อความ inline ── */}
-        <div className="w-full 2xl:w-auto 2xl:shrink-0 2xl:sticky 2xl:top-4 space-y-3">
+        <div className="w-full 2xl:w-[600px] 2xl:shrink-0 2xl:sticky 2xl:top-4 space-y-3">
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button onClick={sendToQuotation} disabled={quote.length === 0}
               className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50">
@@ -1100,8 +1103,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
             <p className="text-[11px] text-ink-3">แก้ชื่อ/รายละเอียด/จำนวน/ราคา ได้ในฟอร์มด้านล่างเลย · กด &quot;ออกใบเสนอราคา&quot; เพื่อบันทึกเข้าระบบ (ออกเลขเอกสาร)</p>
           </Card>
 
-          {/* พรีวิวฟอร์ม A4 จริง (แก้ข้อความ inline) */}
-          <div className="overflow-x-auto rounded-xl bg-gray-100 p-2 2xl:p-3">
+          {/* พรีวิวฟอร์ม A4 จริง (แก้ข้อความ inline) · ย่อพอดีคอลัมน์บนจอกว้าง (zoom) */}
+          <div className="qfp-scale overflow-x-auto rounded-xl bg-gray-100 p-2 2xl:p-3">
             <QuoteFormPreview
               items={previewItems}
               onEdit={editPreviewItem}
