@@ -458,10 +458,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const grandTotal = quoteTotal + svcResult.total;
 
   // ── พรีวิว "ฟอร์มใบเสนอราคาจริง" (A4) — รายการสินค้า (แก้ inline) + ค่าบริการ (ล็อก) ──
+  // ไม่ใส่ groupLabel ในพรีวิว — ชื่อกลุ่มภายใน (G1 บาน ฯลฯ) ไม่ต้องโผล่หัวข้อในใบให้ลูกค้า
+  // (หมวดยังส่งไปสถิติผ่าน it.groupLabel ตอนออกใบเสนอราคาเหมือนเดิม)
   const previewItems: PreviewItem[] = [
-    ...quote.map((it) => ({ key: it.key, name: it.name, detail: it.desc, qty: it.qty, unitPrice: it.perUnit, groupLabel: it.groupLabel })),
+    ...quote.map((it) => ({ key: it.key, name: it.name, detail: it.desc, qty: it.qty, unitPrice: it.perUnit })),
     ...svcResult.lines.filter((l) => l.amount > 0).map((l, i) => ({
-      key: -(i + 1), name: l.name, detail: "", qty: 1, unitPrice: l.amount, groupLabel: "ค่าบริการ", locked: true,
+      key: -(i + 1), name: l.name, detail: "", qty: 1, unitPrice: l.amount, locked: true,
     })),
   ];
   // ยอดก่อนส่วนลด (ไว้ sync ส่วนลด % ↔ บาท ในฟอร์ม)
