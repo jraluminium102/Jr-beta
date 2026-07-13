@@ -464,6 +464,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       key: -(i + 1), name: l.name, detail: "", qty: 1, unitPrice: l.amount, groupLabel: "ค่าบริการ", locked: true,
     })),
   ];
+  // ยอดก่อนส่วนลด (ไว้ sync ส่วนลด % ↔ บาท ในฟอร์ม)
+  const previewSubtotal = previewItems.reduce((s, it) => s + (it.qty || 0) * (it.unitPrice || 0), 0);
+  const discountBaht = Math.round(previewSubtotal * (qDisc || 0)) / 100;
   function editPreviewItem(key: number, patch: Partial<PreviewItem>) {
     if (key < 0) return; // ค่าบริการ (แก้ที่แผงค่าบริการ)
     setQuote((q) => q.map((x) => x.key === key ? {
@@ -1069,16 +1072,33 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
           {/* footer (VAT/ส่วนลด/หัก ณ ที่จ่าย) + ค่าบริการเพิ่มเติม */}
           <Card className="p-3 no-print space-y-3">
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <label className="block"><span className="text-xs font-medium text-ink-3">VAT</span>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <label className="block"><span className="text-xs font-medium text-ink-3">ภาษีมูลค่าเพิ่ม</span>
                 <select value={qVat} onChange={(e) => setQVat(Number(e.target.value))} className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none">
-                  <option value={7}>7%</option><option value={0}>ไม่คิด</option></select></label>
-              <label className="block"><span className="text-xs font-medium text-ink-3">ส่วนลด %</span>
-                <input type="number" min={0} step={0.5} value={qDisc || ""} onChange={(e) => setQDisc(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none text-right tabular-nums" /></label>
+                  <option value={7}>คิด VAT 7%</option><option value={0}>ไม่คิด VAT</option></select></label>
               <label className="block"><span className="text-xs font-medium text-ink-3">หัก ณ ที่จ่าย</span>
                 <select value={qWht} onChange={(e) => setQWht(Number(e.target.value))} className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none">
-                  <option value={0}>ไม่หัก</option><option value={3}>3%</option><option value={5}>5%</option></select></label>
+                  <option value={0}>ไม่หัก</option><option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option></select></label>
+              {/* ส่วนลด — ใส่ได้ทั้ง % และจำนวนเงิน (ผูกกัน แก้ช่องไหนอีกช่องขยับตาม) */}
+              <div className="col-span-2">
+                <span className="text-xs font-medium text-ink-3">ส่วนลด (ใส่ % หรือ จำนวนเงิน อย่างใดอย่างหนึ่ง)</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1">
+                    <input type="number" min={0} step={0.5} value={qDisc ? Number(qDisc.toFixed(2)) : ""} placeholder="0"
+                      onChange={(e) => setQDisc(Math.max(0, Number(e.target.value) || 0))}
+                      className="w-20 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
+                    <span className="text-ink-3">%</span>
+                  </div>
+                  <span className="text-ink-3">=</span>
+                  <div className="flex items-center gap-1">
+                    <input type="number" min={0} step={100} value={discountBaht || ""} placeholder="0"
+                      onChange={(e) => { const b = Math.max(0, Number(e.target.value) || 0); setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 10000) / 100 : 0); }}
+                      className="w-28 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
+                    <span className="text-ink-3">บาท</span>
+                  </div>
+                </div>
+                {qDisc > 0 && <p className="text-[11px] text-ink-3 mt-1">ส่วนลด {Number(qDisc.toFixed(2))}% = ฿{baht(discountBaht)}</p>}
+              </div>
             </div>
             <div>
               <button onClick={() => setSvcOpen((v) => !v)} className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">

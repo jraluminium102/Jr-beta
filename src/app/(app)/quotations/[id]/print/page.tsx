@@ -207,7 +207,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
               <tr className="font-bold border-t" style={{ color: "#7d0f15" }}>
                 <td className="pr-10 py-1 text-right border-t">{totalLabel}</td>
                 <td className="text-right tabular-nums border-t">
-                  ฿{baht(total)} บาท
+                  {baht(total)} บาท
                 </td>
               </tr>
             </tbody>
