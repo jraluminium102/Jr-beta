@@ -30,6 +30,7 @@ import { groupGlass } from "@/lib/calculator40/glass-cats";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
+import QuoteFormPreview, { type PreviewItem } from "@/components/calculator40/QuoteFormPreview";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -136,6 +137,11 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // ค่าบริการเพิ่มเติมทั้งใบ (นั่งร้าน/เดินทาง/ขนส่ง/ค่าไฟ/ความเสี่ยง/รื้อ) — พาริตี้ R3.9
   const [svc, setSvc] = useState<ServiceInput>(EMPTY_SERVICES);
   const [svcOpen, setSvcOpen] = useState(false);
+  // footer ใบเสนอ (VAT/ส่วนลด/หัก ณ ที่จ่าย) — ให้พรีวิวฟอร์มจริงคิดยอดครบเหมือนใบพิมพ์
+  const [qVat, setQVat] = useState(7);
+  const [qDisc, setQDisc] = useState(0);
+  const [qWht, setQWht] = useState(0);
+  const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const prod: any = (PRODUCTS as any)[prodId];
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
@@ -440,6 +446,40 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const svcResult = useMemo(() => computeServices(svc, quoteTotal), [svc, quoteTotal]);
   const grandTotal = quoteTotal + svcResult.total;
 
+  // ── พรีวิว "ฟอร์มใบเสนอราคาจริง" (A4) — รายการสินค้า (แก้ inline) + ค่าบริการ (ล็อก) ──
+  const previewItems: PreviewItem[] = [
+    ...quote.map((it) => ({ key: it.key, name: it.name, detail: it.desc, qty: it.qty, unitPrice: it.perUnit, groupLabel: it.groupLabel })),
+    ...svcResult.lines.filter((l) => l.amount > 0).map((l, i) => ({
+      key: -(i + 1), name: l.name, detail: "", qty: 1, unitPrice: l.amount, groupLabel: "ค่าบริการ", locked: true,
+    })),
+  ];
+  function editPreviewItem(key: number, patch: Partial<PreviewItem>) {
+    if (key < 0) return; // ค่าบริการ (แก้ที่แผงค่าบริการ)
+    setQuote((q) => q.map((x) => x.key === key ? {
+      ...x,
+      ...(patch.name != null ? { name: patch.name } : {}),
+      ...(patch.detail != null ? { desc: patch.detail } : {}),
+      ...(patch.qty != null ? { qty: patch.qty } : {}),
+      ...(patch.unitPrice != null ? { perUnit: patch.unitPrice } : {}),
+    } : x));
+  }
+  function removePreviewItem(key: number) {
+    if (key < 0) return;
+    setQuote((q) => q.filter((x) => x.key !== key));
+  }
+  const previewCustomer = {
+    name: selectedCustomer?.name ?? "",
+    address: selectedCustomer?.address ?? "",
+    phone: selectedCustomer?.phone ?? "",
+    job: selectedCustomer?.job ?? "",
+    contact_person: selectedCustomer?.contact_person ?? "",
+    kind: "INDIVIDUAL",
+  };
+  function printRealForm() {
+    // พิมพ์เฉพาะฟอร์ม A4 (พรีวิว) — print CSS ซ่อนส่วนอื่น
+    window.print();
+  }
+
   function printQuote() {
     const rows = quote.map((it, i) =>
       `<tr><td>${i + 1}</td><td>${it.name}<div class="d">${it.desc.replace(/รายละเอียดงาน/g, '<b style="color:#b3151d">รายละเอียดงาน</b>')}</div></td><td class="r">${it.qty}</td><td class="r">${baht(it.perUnit)}</td><td class="r">${baht(it.perUnit * it.qty)}</td></tr>`
@@ -480,6 +520,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   return (
     <div className="space-y-5">
+      {/* พิมพ์ "ฟอร์มนี้" → ซ่อนทุกอย่างยกเว้นฟอร์ม A4 (.qfp-a4) */}
+      <style dangerouslySetInnerHTML={{ __html: `@media print { body * { visibility: hidden !important; } .qfp-a4, .qfp-a4 * { visibility: visible !important; } .qfp-a4 { position: absolute !important; left: 0; top: 0; box-shadow: none !important; } .no-print { display: none !important; } }` }} />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
@@ -583,7 +625,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         </Card>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      {/* ── Split view: ซ้าย=เครื่องคิดราคา · ขวา=ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด ── */}
+      <div className="flex flex-col 2xl:flex-row gap-4 2xl:items-start">
+        {/* ── ซ้าย: เครื่องคิดราคา (เลือกกลุ่ม/รุ่น/ออปชั่น) ── */}
+        <div className="flex-1 min-w-0 grid lg:grid-cols-3 gap-4">
         {/* ── ซ้าย: เลือกกลุ่ม + รุ่น ── */}
         <Card className="p-4 lg:col-span-1">
           <div className="flex flex-wrap gap-1.5 mb-3">
@@ -996,10 +1041,83 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
             <p className="text-ink-3 text-center py-10">เลือกรุ่นทางซ้าย</p>
           )}
         </Card>
-      </div>
+        </div>{/* /ซ้าย: เครื่องคิดราคา */}
 
-      {/* ── รายการที่คิดไว้ (ใบเสนอราคาอย่างย่อ) ── */}
-      {quote.length > 0 && (
+        {/* ── ขวา: ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด + แก้ข้อความ inline ── */}
+        <div className="w-full 2xl:w-auto 2xl:shrink-0 2xl:sticky 2xl:top-4 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap no-print">
+            <button onClick={sendToQuotation} disabled={quote.length === 0}
+              className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50">
+              <Icon name="file" size={15} /> ออกใบเสนอราคา (บันทึกในระบบ) →
+            </button>
+            <button onClick={printRealForm} disabled={quote.length === 0}
+              className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2 disabled:opacity-50">
+              <Icon name="printer" size={15} /> พิมพ์ฟอร์มนี้
+            </button>
+            {quote.length > 0 && <button onClick={() => setQuote([])} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างรายการ</button>}
+          </div>
+
+          {/* footer (VAT/ส่วนลด/หัก ณ ที่จ่าย) + ค่าบริการเพิ่มเติม */}
+          <Card className="p-3 no-print space-y-3">
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <label className="block"><span className="text-xs font-medium text-ink-3">VAT</span>
+                <select value={qVat} onChange={(e) => setQVat(Number(e.target.value))} className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none">
+                  <option value={7}>7%</option><option value={0}>ไม่คิด</option></select></label>
+              <label className="block"><span className="text-xs font-medium text-ink-3">ส่วนลด %</span>
+                <input type="number" min={0} step={0.5} value={qDisc || ""} onChange={(e) => setQDisc(Math.max(0, Number(e.target.value) || 0))}
+                  className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none text-right tabular-nums" /></label>
+              <label className="block"><span className="text-xs font-medium text-ink-3">หัก ณ ที่จ่าย</span>
+                <select value={qWht} onChange={(e) => setQWht(Number(e.target.value))} className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none">
+                  <option value={0}>ไม่หัก</option><option value={3}>3%</option><option value={5}>5%</option></select></label>
+            </div>
+            <div>
+              <button onClick={() => setSvcOpen((v) => !v)} className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
+                <Icon name="plus" size={15} /> ค่าบริการเพิ่มเติม (ทั้งใบ) {svcOpen ? "▲" : "▼"}
+                {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· ฿{baht(svcResult.total)}</span>}
+              </button>
+              {svcOpen && (
+                <div className="mt-2 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm text-ink-1">
+                    <input type="checkbox" checked={svc.inBKK} onChange={(e) => setSvc((s) => ({ ...s, inBKK: e.target.checked }))} />
+                    งานในกรุงเทพฯ/ปริมณฑล <span className="text-xs text-ink-3">(ยอด &gt; 20,000 → ฟรีนั่งร้าน+เดินทาง)</span>
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                    <Field label="นั่งร้าน: ชั้น" value={String(svc.floors || "")} onChange={(v) => setSvc((s) => ({ ...s, floors: Number(v) || 1 }))} />
+                    <Field label="เดินทาง (กม.)" value={String(svc.travelKm || "")} onChange={(v) => setSvc((s) => ({ ...s, travelKm: Number(v) || 0 }))} />
+                    <Field label="ที่พัก (บาท)" value={String(svc.lodging || "")} onChange={(v) => setSvc((s) => ({ ...s, lodging: Number(v) || 0 }))} />
+                    <Field label="ขนส่ง (บาท)" value={String(svc.shipping || "")} onChange={(v) => setSvc((s) => ({ ...s, shipping: Number(v) || 0 }))} />
+                    <Field label="ค่าไฟหน้างาน" value={String(svc.power || "")} onChange={(v) => setSvc((s) => ({ ...s, power: Number(v) || 0 }))} />
+                    <Field label="ความเสี่ยง (บาท)" value={String(svc.risk || "")} onChange={(v) => setSvc((s) => ({ ...s, risk: Number(v) || 0 }))} />
+                    <Field label="รื้อหลังคาเดิม (จุด)" value={String(svc.demoRoofPts || "")} onChange={(v) => setSvc((s) => ({ ...s, demoRoofPts: Number(v) || 0 }))} />
+                  </div>
+                  {svcResult.waivedNote && <p className="text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">✓ {svcResult.waivedNote}</p>}
+                </div>
+              )}
+            </div>
+            {showCost && quote.length > 0 && (
+              <p className="text-xs text-ink-3">ทุนรวม ฿{baht(quoteCost)} · กำไรรวม ฿{baht(quoteTotal - quoteCost)}</p>
+            )}
+            <p className="text-[11px] text-ink-3">แก้ชื่อ/รายละเอียด/จำนวน/ราคา ได้ในฟอร์มด้านล่างเลย · กด &quot;ออกใบเสนอราคา&quot; เพื่อบันทึกเข้าระบบ (ออกเลขเอกสาร)</p>
+          </Card>
+
+          {/* พรีวิวฟอร์ม A4 จริง (แก้ข้อความ inline) */}
+          <div className="overflow-x-auto rounded-xl bg-gray-100 p-2 2xl:p-3">
+            <QuoteFormPreview
+              items={previewItems}
+              onEdit={editPreviewItem}
+              onRemove={removePreviewItem}
+              customer={previewCustomer}
+              issueDate={issueDate}
+              vatRate={qVat}
+              discountPct={qDisc}
+              whtRate={qWht}
+            />
+          </div>
+        </div>{/* /ขวา */}
+      </div>{/* /split view */}
+
+      {/* (เดิม) รายการที่คิดไว้แบบตาราง — แทนที่ด้วยฟอร์มจริงทางขวาแล้ว (ปิดไว้) */}
+      {false && quote.length > 0 && (
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-brand-dark">🧾 รายการที่คิดไว้ ({quote.length})</h3>
