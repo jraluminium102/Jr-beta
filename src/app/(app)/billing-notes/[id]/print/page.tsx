@@ -135,17 +135,19 @@ export default async function BillingPrintPage({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const b = bn as any;
                 const dp = Number(b.discount_pct) || 0, vr = Number(b.vat_rate) || 0, wr = Number(b.wht_rate) || 0;
+                const dAmt = b.discount_amt != null ? Number(b.discount_amt) || 0 : undefined; // ส่วนลดเป็นจำนวนเงิน (ตัวตั้งจริง · กัน drift)
                 if (isSingle) {
                   // งวดแยก = display-only (แก้ footer ต่องวดไม่แตะยอด booked · re-split ทั้งใบทีละงวดไม่ได้)
                   const ov = validFooter(selected!.footer_override);
                   if (Number(b.subtotal) <= 0 && !ov) return null;
-                  const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr);
+                  // ส่วนลดต่องวด = ส่วนลดทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = ส่วนลดเต็มใบ
+                  const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr, dAmt != null ? Math.round((dAmt * ratio + Number.EPSILON) * 100) / 100 : undefined);
                   return <PrintFooterEditor apiUrl={`/api/billing-installments/${selected!.id!}`} suffix=" (งวดนี้)" def={def} current={ov} />;
                 }
                 // ทั้งใบ = แก้ยอดจริง (real): กรอก รวมเป็นเงิน/ส่วนลด/VAT/หัก → คิด total ใหม่ + แตกงวดใหม่ (บิลที่ยังไม่จ่าย)
                 const subW = Number(b.subtotal) || Number(bn.total) || 0;
                 if (subW <= 0) return null;
-                const def = footerSnapshot(subW, dp, vr, wr);
+                const def = footerSnapshot(subW, dp, vr, wr, dAmt);
                 return <PrintFooterEditor real apiUrl={`/api/billing-notes/${bn.id}`} def={def} current={null} />;
               })()}
               {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ยอดสุทธิที่คิดใหม่ · คงเหลือติดลบ = แดง (เตือนรับเกิน) */}

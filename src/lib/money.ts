@@ -11,7 +11,10 @@ const roundBaht = (n: number) => Math.round(n + Number.EPSILON);
 export interface MoneyInput {
   items: Pick<QuotationItem, "qty" | "unit_price">[];
   vat_rate: number; // 0 | 7
-  discount_pct: number; // 0–100 (เจ้าของสั่งกรอกอิสระ 3ก.ค.69 · เดิม ≤2 · กรอกบาทได้ที่ UI แล้วแปลงกลับเป็น % ปัด 2 ตำแหน่ง)
+  discount_pct: number; // 0–100 · ใช้เมื่อ "ไม่ได้" ส่ง discount_amt (โหมด %)
+  // ส่วนลดเป็น "จำนวนเงิน" (โหมดบาท) — ถ้าส่งมา (ไม่ null) จะใช้ค่านี้ตรง ๆ เป็นส่วนลด (authoritative)
+  // ชนะ discount_pct เสมอ · clamp 0..subtotal · เลิกคิด amt กลับจาก % ทุกที่ (กัน round-trip drift · บัญชีสั่ง)
+  discount_amt?: number;
   wht_rate: number; // 0 | 1 | 2 | 3 | 5
 }
 
@@ -29,7 +32,11 @@ export function computeTotals(input: MoneyInput): MoneyResult {
   const subtotal = round2(
     input.items.reduce((a, i) => a + (Number(i.qty) || 0) * (Number(i.unit_price) || 0), 0)
   );
-  const discount_amt = round2((subtotal * (Number(input.discount_pct) || 0)) / 100);
+  // ส่วนลด: โหมดบาท (discount_amt ส่งมา) ชนะเสมอ · ไม่งั้นคิดจาก % · clamp 0..subtotal (กัน after_discount ติดลบ)
+  const rawDiscount = input.discount_amt != null
+    ? (Number(input.discount_amt) || 0)
+    : (subtotal * (Number(input.discount_pct) || 0)) / 100;
+  const discount_amt = round2(Math.min(Math.max(0, rawDiscount), subtotal));
   const after_discount = round2(subtotal - discount_amt);
   const vat_amt = roundBaht((after_discount * (Number(input.vat_rate) || 0)) / 100);
   const total = round2(after_discount + vat_amt);
@@ -46,13 +53,17 @@ export const lineTotal = (qty: number, unit_price: number) =>
 // footer ใบวางบิล (display-only) — คิด snapshot จาก subtotal + %ส่วนลด + %VAT + %หัก ณ ที่จ่าย
 // ใช้ computeTotals แหล่งเดียว (เหมือนใบเสนอ) → ยอด/สุทธิ ถูกต้องตามกฎไทย · เก็บ % ไว้โชว์ด้วย
 export function footerSnapshot(
-  subtotal: number, discount_pct: number, vat_rate: number, wht_rate: number
+  subtotal: number, discount_pct: number, vat_rate: number, wht_rate: number,
+  discount_amt?: number // โหมดบาท — ถ้าส่งมาใช้ตรง ๆ (authoritative) · ไม่ส่ง = คิดจาก % (เดิม)
 ): InstallmentFooter {
   const sub = Math.max(0, Number(subtotal) || 0);
   const dp = Math.max(0, Math.min(100, Number(discount_pct) || 0));
   const vr = Math.max(0, Number(vat_rate) || 0);
   const wr = Math.max(0, Number(wht_rate) || 0);
-  const t = computeTotals({ items: [{ qty: 1, unit_price: sub }], vat_rate: vr, discount_pct: dp, wht_rate: wr });
+  const t = computeTotals({
+    items: [{ qty: 1, unit_price: sub }], vat_rate: vr, discount_pct: dp, wht_rate: wr,
+    ...(discount_amt != null ? { discount_amt } : {}),
+  });
   return {
     subtotal: t.subtotal, discount_pct: dp, discount_amt: t.discount_amt,
     vat_rate: vr, vat_amt: t.vat_amt, wht_rate: wr, wht_amt: t.wht_amt, net: t.net,

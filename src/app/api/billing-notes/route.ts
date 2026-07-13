@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   // 1) ดึงใบเสนอราคา
   const { data: q, error: qErr } = await supabase
     .from("quotations")
-    .select("id, status, net, subtotal, discount_pct, vat_rate, wht_rate, customer_snapshot, job_id")
+    .select("id, status, net, subtotal, discount_pct, discount_amt, discount_label, vat_rate, wht_rate, customer_snapshot, job_id")
     .eq("id", body.quotation_id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .single<any>();
@@ -71,10 +71,16 @@ export async function POST(req: Request) {
   const hasSubtotal = Number(q.subtotal) > 0;
   const bSubtotal = hasSubtotal ? Number(q.subtotal) : (Number(q.net) || 0);
   const bDisc = hasSubtotal ? (body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0)) : 0;
+  // สืบ "จำนวนเงินส่วนลด" จากใบเสนอตรง ๆ (ตัวตั้งจริง) กัน drift · body override ได้ · ไม่มี = คิดจาก %
+  const bDiscAmt = hasSubtotal
+    ? (body.discount_amt != null ? Number(body.discount_amt) : (q.discount_amt != null ? Number(q.discount_amt) : undefined))
+    : 0;
+  const bDiscLabel = String(body.discount_label ?? (q as { discount_label?: string }).discount_label ?? "").slice(0, 120);
   const bVat = hasSubtotal ? (body.vat_rate != null ? Number(body.vat_rate) : (Number(q.vat_rate) || 0)) : 0;
   const bWht = hasSubtotal ? (body.wht_rate != null ? Number(body.wht_rate) : (Number(q.wht_rate) || 0)) : 0;
   if (bDisc < 0 || bDisc > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
-  const bt = computeTotals({ items: [{ qty: 1, unit_price: bSubtotal }], vat_rate: bVat, discount_pct: bDisc, wht_rate: bWht });
+  const bt = computeTotals({ items: [{ qty: 1, unit_price: bSubtotal }], vat_rate: bVat, discount_pct: bDisc, wht_rate: bWht, ...(bDiscAmt != null ? { discount_amt: bDiscAmt } : {}) });
+  const bStoredPct = bDiscAmt != null ? (bt.subtotal > 0 ? Math.round((bt.discount_amt / bt.subtotal) * 10000) / 100 : 0) : bDisc;
   const net = bt.net;
   if (net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0 จึงวางบิลได้", 400);
 
@@ -105,11 +111,11 @@ export async function POST(req: Request) {
   const bLabor = bWht > 0 || rawLabor == null || rawLabor === "" ? null : Math.min(100, Math.max(0, Number(rawLabor) || 0));
 
   // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
-  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bDisc, discount_amt: bt.discount_amt, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, labor_ratio: bLabor };
+  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, labor_ratio: bLabor };
   let { data: bn, error: bnErr } = await supabase
     .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
   // กันพัง: ถ้า migration 0078/0079/0081 (ยอดแยก) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
-  if (bnErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|labor_ratio/i.test(bnErr.message ?? "")) {
+  if (bnErr && /subtotal|discount_amt|discount_label|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|labor_ratio/i.test(bnErr.message ?? "")) {
     ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
   }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);

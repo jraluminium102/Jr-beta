@@ -33,6 +33,8 @@ export async function POST(req: Request) {
 
   const vat_rate = Number(body.vat_rate) || 0;
   const discount_pct = Number(body.discount_pct) || 0;
+  const discount_amt_in = body.discount_amt != null ? Number(body.discount_amt) || 0 : undefined; // โหมดบาท (ชนะ %)
+  const discount_label = String(body.discount_label ?? "").slice(0, 120);
   const wht_rate = Number(body.wht_rate) || 0;
   if (discount_pct < 0 || discount_pct > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
 
@@ -120,8 +122,11 @@ export async function POST(req: Request) {
     jobId = activeJob?.id ?? null;
   }
 
-  // 3) คำนวณยอด (แหล่งความจริงเดียว)
-  const t = computeTotals({ items, vat_rate, discount_pct, wht_rate });
+  // 3) คำนวณยอด (แหล่งความจริงเดียว · ส่งบาทมา = ใช้ตรง ๆ ชนะ %)
+  const t = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt_in != null ? { discount_amt: discount_amt_in } : {}) });
+  const storedPct = discount_amt_in != null
+    ? (t.subtotal > 0 ? Math.round((t.discount_amt / t.subtotal) * 10000) / 100 : 0)
+    : discount_pct;
 
   // 3) ออกรหัสอัตโนมัติ (พ.ศ. · reset รายเดือน) ผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "QT" });
@@ -136,7 +141,7 @@ export async function POST(req: Request) {
     customer_snapshot: snapshot,
     issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
     status: "draft",
-    vat_rate, discount_pct, wht_rate,
+    vat_rate, discount_pct: storedPct, discount_label, wht_rate,
     subtotal: t.subtotal, discount_amt: t.discount_amt, vat_amt: t.vat_amt,
     total: t.total, wht_amt: t.wht_amt, net: t.net,
     note: body.note ?? "",

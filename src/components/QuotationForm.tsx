@@ -22,6 +22,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [items, setItems] = useState<Item[]>([blank()]);
   const [vat, setVat] = useState(7);
   const [disc, setDisc] = useState(0);
+  const [discLabel, setDiscLabel] = useState(""); // หัวข้อส่วนลด
   const [wht, setWht] = useState(0);
   const [note, setNote] = useState("");
   // เงื่อนไขท้ายใบ (แก้ได้ต่อใบ) — เริ่มจากค่ามาตรฐาน · ส่งเฉพาะเมื่อแก้ (null = ใช้มาตรฐาน)
@@ -246,6 +247,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           items: valid,
           vat_rate: vat,
           discount_pct: disc,
+          discount_amt: t.discount_amt,       // ส่งบาท (exact) เป็นตัวตั้ง
+          discount_label: discLabel.trim(),
           wht_rate: wht,
           note,
           ...(selectedJobId ? { job_id: selectedJobId } : {}),
@@ -516,6 +519,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 </span>
               </div>
               {disc > 10 && <p className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1">⚠ ส่วนลด {Number(disc.toFixed(2))}% สูงผิดปกติ — ตรวจว่ากรอกถูกก่อนบันทึก</p>}
+              {t.discount_amt > 0 && (
+                <input type="text" value={discLabel} onChange={(e) => setDiscLabel(e.target.value)}
+                  placeholder="หัวข้อส่วนลด (เช่น ส่วนลดโปรโมชัน) — โชว์บนใบ"
+                  className="w-full glass-soft rounded px-2 py-1 text-xs outline-none" aria-label="หัวข้อส่วนลด" />
+              )}
               <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
               <label className="flex items-center justify-between gap-2 cursor-pointer">
                 <span className="text-ink-3 flex items-center gap-1.5">

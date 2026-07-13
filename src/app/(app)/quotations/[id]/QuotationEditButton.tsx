@@ -14,6 +14,8 @@ export default function QuotationEditButton({
   quotationId,
   vatRate,
   discountPct,
+  discountAmt: discountAmtProp = 0,
+  discountLabel = "",
   whtRate,
   note,
   items,
@@ -21,6 +23,8 @@ export default function QuotationEditButton({
   quotationId: number;
   vatRate: number;
   discountPct: number;
+  discountAmt?: number;
+  discountLabel?: string;
   whtRate: number;
   note: string;
   items: QuotationItem[];
@@ -33,15 +37,18 @@ export default function QuotationEditButton({
     }))
   );
   const [vat, setVat] = useState(vatRate);
-  const [discount, setDiscount] = useState(discountPct);
+  // ส่วนลดเก็บเป็น "จำนวนเงิน" (ตัวตั้งจริง) · % เป็น derived · + หัวข้อ
+  const [discAmt, setDiscAmt] = useState(discountAmtProp || 0);
+  const [discLabel, setDiscLabel] = useState(discountLabel);
   const [wht, setWht] = useState(whtRate);
   const [noteVal, setNoteVal] = useState(note);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // preview ยอดแบบ real-time
+  // preview ยอดแบบ real-time — ส่วนลดใช้ discAmt ตรง ๆ (clamp 0..subtotal)
   const subtotal = round2(rows.reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unit_price) || 0), 0));
-  const discountAmt = round2((subtotal * discount) / 100);
+  const discountAmt = round2(Math.min(Math.max(0, discAmt), subtotal));
+  const discPct = subtotal > 0 ? Math.round((discountAmt / subtotal) * 10000) / 100 : 0;
   const afterDiscount = round2(subtotal - discountAmt);
   const vatAmt = Math.round((afterDiscount * vat) / 100 + Number.EPSILON);
   const total = round2(afterDiscount + vatAmt);
@@ -69,7 +76,8 @@ export default function QuotationEditButton({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         items: rows.map((r, i) => ({ ...r, sort_order: i })),
-        vat_rate: vat, discount_pct: discount, wht_rate: wht, note: noteVal,
+        vat_rate: vat, discount_amt: discountAmt, discount_pct: discPct, discount_label: discLabel.trim(),
+        wht_rate: wht, note: noteVal,
       }),
     });
     const json = await res.json();
@@ -150,8 +158,31 @@ export default function QuotationEditButton({
           </button>
         </div>
 
+        {/* ส่วนลด — ใส่เป็น % หรือ จำนวนเงิน (ผูกกัน) + หัวข้อ */}
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+          <div className="text-xs font-medium text-gray-500">ส่วนลด (ใส่ % หรือ จำนวนเงิน อย่างใดอย่างหนึ่ง)</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1">
+              <input type="number" min={0} step="any" value={discPct ? Number(discPct.toFixed(2)) : ""} placeholder="0"
+                onChange={(e) => setDiscAmt(subtotal > 0 ? round2((subtotal * (Number(e.target.value) || 0)) / 100) : 0)}
+                className="w-20 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
+              <span className="text-gray-500 text-sm">%</span>
+            </div>
+            <span className="text-gray-400">=</span>
+            <div className="flex items-center gap-1">
+              <input type="number" min={0} step="any" value={discAmt || ""} placeholder="0"
+                onChange={(e) => setDiscAmt(Math.max(0, Number(e.target.value) || 0))}
+                className="w-28 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
+              <span className="text-gray-500 text-sm">บาท</span>
+            </div>
+          </div>
+          <input type="text" value={discLabel} onChange={(e) => setDiscLabel(e.target.value)}
+            placeholder="หัวข้อส่วนลด (เช่น ส่วนลดโปรโมชัน / ลูกค้าเก่า) — โชว์บนใบ"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2" />
+        </div>
+
         {/* อัตราภาษี */}
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           <label className="block text-sm">
             <span className="text-xs font-medium text-gray-500">VAT (%)</span>
             <select value={vat} onChange={(e) => setVat(Number(e.target.value))}
@@ -159,12 +190,6 @@ export default function QuotationEditButton({
               <option value={7}>7%</option>
               <option value={0}>0%</option>
             </select>
-          </label>
-          <label className="block text-sm">
-            <span className="text-xs font-medium text-gray-500">ส่วนลด (%)</span>
-            <input type="number" min={0} max={100} step="any" value={discount}
-              onChange={(e) => setDiscount(Number(e.target.value))}
-              className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm tabular-nums outline-none focus-visible:ring-2" />
           </label>
           <label className="block text-sm">
             <span className="text-xs font-medium text-gray-500">หัก ณ ที่จ่าย (%)</span>
@@ -186,7 +211,7 @@ export default function QuotationEditButton({
         {/* สรุปยอด realtime */}
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
           <div className="flex justify-between"><span className="text-gray-500">ยอดรวมก่อนภาษี</span><span className="tabular-nums">{baht(subtotal)}</span></div>
-          {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด {discount}%</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
+          {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด{discLabel.trim() ? ` (${discLabel.trim()})` : ` ${Number(discPct.toFixed(2))}%`}</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
           <div className="flex justify-between"><span className="text-gray-500">VAT {vat}%</span><span className="tabular-nums">{baht(vatAmt)}</span></div>
           <div className="flex justify-between font-bold text-brand-dark border-t pt-1"><span>ยอดรวมสุทธิ</span><span className="tabular-nums">฿{baht(total)}</span></div>
           {whtAmt > 0 && <>

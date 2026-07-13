@@ -35,6 +35,8 @@ const PatchSchema = z.object({
   items: z.array(ItemSchema).min(1, "ต้องมีอย่างน้อย 1 รายการ"),
   vat_rate: z.number().min(0).max(100).default(7),
   discount_pct: z.number().min(0).max(100).default(0),
+  discount_amt: z.number().min(0).optional(),   // โหมดบาท — ส่งมา = ใช้ตรง ๆ (ชนะ %)
+  discount_label: z.string().max(120).optional(), // หัวข้อส่วนลด
   wht_rate: z.number().min(0).max(100).default(0),
   note: z.string().optional(),
 });
@@ -47,7 +49,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   const body = await req.json().catch(() => ({}));
   const parsed = PatchSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.errors[0].message, 400);
-  const { items, vat_rate, discount_pct, wht_rate, note } = parsed.data;
+  const { items, vat_rate, discount_pct, discount_amt, discount_label, wht_rate, note } = parsed.data;
 
   const qId = params.id;
 
@@ -72,13 +74,17 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     return err(`มีใบวางบิล ${code} ที่ยังใช้งานอยู่ — ต้องยกเลิกใบวางบิลก่อนแก้ใบเสนอ`, 409);
   }
 
-  // 3) คำนวณยอดใหม่ทั้งหมดด้วย computeTotals
-  const money = computeTotals({ items, vat_rate, discount_pct, wht_rate });
+  // 3) คำนวณยอดใหม่ทั้งหมดด้วย computeTotals (ส่งบาทมา = ใช้ตรง ๆ · ไม่งั้นคิดจาก %)
+  const money = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt != null ? { discount_amt } : {}) });
+  // discount_pct ที่เก็บ = derived จากยอดจริง (โหมดบาท) เพื่อโชว์ให้ตรง · amt เป็นตัวตั้ง
+  const storedPct = discount_amt != null
+    ? (money.subtotal > 0 ? Math.round((money.discount_amt / money.subtotal) * 10000) / 100 : 0)
+    : discount_pct;
 
   // 4) update quotations header
   const updateData: Record<string, unknown> = {
     vat_rate,
-    discount_pct,
+    discount_pct: storedPct,
     wht_rate,
     subtotal: money.subtotal,
     discount_amt: money.discount_amt,
@@ -87,6 +93,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     wht_amt: money.wht_amt,
     net: money.net,
   };
+  if (discount_label !== undefined) updateData.discount_label = discount_label;
   if (note !== undefined) updateData.note = note;
 
   const { error: uErr } = await ctx.supabase
@@ -122,7 +129,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     action: "PATCH_QUOTATION",
     table: "quotations",
     recordId: qId,
-    newValue: { ...money, vat_rate, discount_pct, wht_rate, item_count: items.length },
+    newValue: { ...money, vat_rate, discount_pct: storedPct, discount_label: discount_label ?? "", wht_rate, item_count: items.length },
   });
 
   return ok({ id: Number(qId), ...money });

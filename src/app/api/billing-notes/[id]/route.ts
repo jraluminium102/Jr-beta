@@ -92,6 +92,14 @@ export const PATCH = withRoute(
     let newTotal: number;
     let breakdown: Record<string, number | boolean | null>;
     if (isBreakdownMode) {
+      // กันยอด booked เพี้ยน (บัญชีสั่ง 13ก.ค.): บิลที่ส่วนลดเป็น "จำนวนเงิน" (pct×subtotal ≠ discount_amt เป๊ะ)
+      // mode B คิด footer ใหม่จาก % → total/งวดจะ drift · ยังไม่รองรับส่วนลดบาทในโหมดคิดใหม่ → กั้นไว้
+      // แก้ส่วนลด/ยอดที่ "ใบเสนอราคา" แล้วออกบิลใหม่แทน (flow หลักสืบจำนวนเงินถูกต้องอยู่แล้ว)
+      const cSub = Number(bn.subtotal) || 0, cAmt = Number(bn.discount_amt) || 0, cPct = Number(bn.discount_pct) || 0;
+      const pctRecomp = Math.round((cSub * cPct) / 100 * 100) / 100;
+      if (cAmt > 0 && cSub > 0 && pctRecomp !== cAmt) {
+        return err("ใบนี้ใช้ส่วนลดแบบจำนวนเงิน — แก้ส่วนลด/ยอดที่ใบเสนอราคาแล้วออกบิลใหม่ (แก้ footer โหมดคิดยอดใหม่ยังไม่รองรับส่วนลดจำนวนเงิน)", 409);
+      }
       // ฐานยอดก่อน VAT:
       //  1) subtotal ที่กรอกเองจาก footer editor (คิดใหม่จริง) มาก่อน — เจ้าของแก้ราคาบน PDF ได้ตรงๆ
       //  2) ถ้าไม่ได้ส่งมา → ใช้ subtotal จากใบเสนอต้นทาง (กัน VAT ทับ · bn.subtotal อาจ flatten 0078)

@@ -169,7 +169,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
               {q.discount_amt > 0 && (
                 <tr>
                   <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                    ส่วนลด {q.discount_pct > 0 ? `${q.discount_pct}%` : ""}
+                    ส่วนลด {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
                   </td>
                   <td className="text-right tabular-nums">
                     -{baht(q.discount_amt)} บาท
