@@ -33,7 +33,7 @@ import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
-import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
+import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -123,7 +123,11 @@ const ADDON_LABELS: Record<string, string> = {
   roof_2nd: "หลังคาชั้น 2", ceil_under: "ฝ้าใต้หลังคา",
 };
 function addonSummary(addons: Record<string, any> | undefined): string {
-  const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k]) => ADDON_LABELS[k] || k);
+  const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k, v]) => {
+    // มุ้ง — โชว์ชนิด (จีบ/เฟรมเล็ก ฯลฯ) เหมือน G1 · แหล่งชื่อเดียวกัน (mosquitoTypeLabel) แก้ที่เดียวมีผลทั้งคู่
+    if (k === "mosquito") { const t = mosquitoTypeLabel(v); return t ? `มุ้ง${t}` : "มุ้ง"; }
+    return ADDON_LABELS[k] || k;
+  });
   return on.length ? ` + ${on.join(", ")}` : "";
 }
 

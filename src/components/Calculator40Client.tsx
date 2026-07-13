@@ -23,7 +23,7 @@ import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json ที่ดึงจาก mockup (ราคาขาย R3.9 fallback)
 import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
-import { computeMosquitoR4 } from "@/lib/calculator40/mosquito.mjs";
+import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
 import { groupGlass } from "@/lib/calculator40/glass-cats";
@@ -358,10 +358,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // ── รูปแบบรายละเอียดแบบเครื่องเดิม R3.9: ชื่อ+รูปแบบ+ขนาด(ม.) เป็นหัว · บุลเล็ตออปชั่น · "รายละเอียดงาน" + สี/กระจก ──
     const fmtM = (cm: number) => (Math.round(cm) / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
     const nBan = Number(p) || prod.defaults?.p || 1;
-    // ชนิดมุ้งที่เลือก → ขึ้นในชื่อ "(มีมุ้ง...)" + รายละเอียดงาน (ผ้ามุ้ง)
-    const MQ_LABEL: Record<string, string> = { small: "เฟรมเล็ก", big: "เฟรมใหญ่", pleat: "จีบ", honey: "จีบม่านรังผึ้ง", roll: "ม้วน" };
-    const mqSel = (addons as any)?.mosquito;
-    const mqType = mqSel && mqSel !== "none" ? (MQ_LABEL[mqSel] || "") : "";
+    // ชนิดมุ้งที่เลือก → ขึ้นในชื่อ "(มีมุ้ง...)" + รายละเอียดงาน (ผ้ามุ้ง) · ชื่อชนิดใช้แหล่งเดียวกับ G6 (mosquitoTypeLabel)
+    const mqType = mosquitoTypeLabel((addons as any)?.mosquito);
     // ชื่อบรรยาย: prod.saleName (แทน {form} = รูปแบบที่เลือก) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
     const baseName: string = prod.saleName
       ? String(prod.saleName).replace(/\{form\}/g, form || "")
@@ -641,44 +639,40 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         </Card>
       )}
 
-      {/* ── Split view: ซ้าย=เครื่องคิดราคา · ขวา=ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด ── */}
-      <div className="flex flex-col 2xl:flex-row gap-4 2xl:items-start">
-        {/* ── ซ้าย: เครื่องคิดราคา (เลือกกลุ่ม/รุ่น/ออปชั่น) ── */}
-        <div className="flex-1 min-w-0 grid lg:grid-cols-3 gap-4">
-        {/* ── ซ้าย: เลือกกลุ่ม + รุ่น ── */}
-        <Card className="p-4 lg:col-span-1">
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {GROUPS.map((g) => (
-              <button key={g.g} onClick={() => setGroup(g.g)}
-                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${group === g.g ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                {g.label}
-              </button>
-            ))}
-          </div>
-          <div className="space-y-2 max-h-[62vh] overflow-y-auto">
-            {prodList.map((x: any) => (
-              <button key={x.id} onClick={() => pickProduct(x)} aria-current={prodId === x.id}
-                className={`press w-full text-left rounded-xl px-3 py-2.5 flex items-center gap-2.5 ${prodId === x.id ? "text-white bg-brand shadow-brand" : "glass-soft hover:bg-white/70"}`}>
-                <span className="text-lg">{x.icon ?? "▫️"}</span>
-                <span className="font-semibold text-sm flex-1">{x.name}</span>
-                {x.isR39Fallback && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${prodId === x.id ? "bg-white/25 text-white" : "bg-amber-100 text-amber-800"}`}>
-                    R3.9
-                  </span>
-                )}
-              </button>
-            ))}
-            {todoList.map((t: any, i: number) => (
-              <div key={i} className="rounded-xl px-3 py-2 text-xs text-ink-3 border border-dashed border-gray-300">
-                ⏳ {t.name} — ยังไม่ลงระบบ
-              </div>
-            ))}
-            {prodList.length === 0 && todoList.length === 0 && <p className="text-sm text-ink-3 text-center py-4">กลุ่มนี้ยังไม่มีรุ่น</p>}
-          </div>
-        </Card>
+      {/* ── เมนูประเภทบาน (กลุ่ม + รุ่น) — ไว้ด้านบน แนวนอน (ไม่อัดข้าง อ่านง่าย) ── */}
+      <Card className="p-4">
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {GROUPS.map((g) => (
+            <button key={g.g} onClick={() => setGroup(g.g)}
+              className={`press text-xs font-semibold rounded-full px-3.5 py-1.5 ${group === g.g ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2"}`}>
+              {g.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {prodList.map((x: any) => (
+            <button key={x.id} onClick={() => pickProduct(x)} aria-current={prodId === x.id}
+              className={`press text-left rounded-xl px-3 py-2 flex items-center gap-2 ${prodId === x.id ? "text-white bg-brand shadow-brand" : "glass-soft hover:bg-white/70"}`}>
+              <span className="text-base">{x.icon ?? "▫️"}</span>
+              <span className="font-semibold text-sm">{x.name}</span>
+              {x.isR39Fallback && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${prodId === x.id ? "bg-white/25 text-white" : "bg-amber-100 text-amber-800"}`}>R3.9</span>
+              )}
+            </button>
+          ))}
+          {todoList.map((t: any, i: number) => (
+            <div key={i} className="rounded-xl px-3 py-2 text-xs text-ink-3 border border-dashed border-gray-300">⏳ {t.name}</div>
+          ))}
+          {prodList.length === 0 && todoList.length === 0 && <p className="text-sm text-ink-3 py-2">กลุ่มนี้ยังไม่มีรุ่น</p>}
+        </div>
+      </Card>
 
-        {/* ── ขวา: ฟอร์ม + ราคา ── */}
-        <Card className="p-6 lg:col-span-2">
+      {/* ── Split view: ซ้าย=ฟอร์มคิดราคา · ขวา=ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด ── */}
+      <div className="flex flex-col 2xl:flex-row gap-4 2xl:items-start">
+        {/* ── ซ้าย: ฟอร์มคิดราคา (ออปชั่น) ── */}
+        <div className="flex-1 min-w-0">
+        {/* ── ฟอร์ม + ราคา ── */}
+        <Card className="p-6">
           {prod ? (
             <div>
               <div className="flex items-start justify-between gap-2">

@@ -10,6 +10,13 @@ export const MOSQ_CHIPS = [
   { val: 'pleat', label: 'จีบ' }, { val: 'honey', label: 'จีบม่านรังผึ้ง' }, { val: 'roll', label: 'ม้วน' },
 ];
 
+// ชื่อชนิดมุ้งลงใบเสนอราคา — แหล่งเดียว ใช้ทั้ง G1 (Calculator40Client) + G6 (RoomComposer) · แก้ที่นี่ที่เดียว มีผลทั้งคู่
+export const MOSQ_TYPE_LABEL = { small: 'เฟรมเล็ก', big: 'เฟรมใหญ่', pleat: 'จีบ', honey: 'จีบม่านรังผึ้ง', roll: 'ม้วน' };
+export function mosquitoTypeLabel(sel) {
+  if (!sel || sel === 'none') return '';
+  return MOSQ_TYPE_LABEL[sel] || '';
+}
+
 // รุ่นย่อยมุ้ง (จีบ/รังผึ้ง/ม้วน) = ดึงจาก screen_ready.materials จริง (ลิงค์ G5 · ครบทุก variant · พี่สั่ง 1ก.ค.) — filter ตามหมวด
 export function mosqVariants(PRODUCTS, cat) {
   const mats = (PRODUCTS.screen_ready && PRODUCTS.screen_ready.materials) || [];
