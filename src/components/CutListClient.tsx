@@ -12,7 +12,8 @@ import Icon from "@/components/Icon";
 import { computeCutList } from "@/lib/cutlist/engine";
 import { CUT_SPECS, CUT_SPEC_BY_ID } from "@/lib/cutlist/products";
 
-export default function CutListClient() {
+export default function CutListClient({ imagesByCode = {} }: { imagesByCode?: Record<string, string> }) {
+  const imgOf = (code: string) => imagesByCode[String(code ?? "").trim().toUpperCase()] || "";
   const [specId, setSpecId] = useState(CUT_SPECS[0].id);
   const spec = CUT_SPEC_BY_ID[specId];
   const [W, setW] = useState(String(spec.defaults.W));
@@ -99,7 +100,12 @@ export default function CutListClient() {
                     <tr key={i} className={`border-b border-black/5 last:border-0 ${r.qty === 0 ? "opacity-40" : ""}`}>
                       <td className="px-3 py-2 text-ink-3 tabular-nums">{i + 1}</td>
                       <td className="px-3 py-2 font-medium">{r.name}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{r.code}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <ProfileThumb url={imgOf(r.code)} code={r.code} />
+                          <span className="font-mono text-xs">{r.code}</span>
+                        </div>
+                      </td>
                       <td className="px-3 py-2 text-right tabular-nums">{r.qty > 0 ? r.len.toLocaleString("th-TH") : "-"}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{r.qty || "-"}</td>
                       <td className="px-3 py-2 text-right tabular-nums font-semibold">{r.bars || "-"}</td>
@@ -128,7 +134,12 @@ export default function CutListClient() {
                 <tbody>
                   {result.barsByCode.map((b) => (
                     <tr key={b.code} className="border-b border-black/5 last:border-0">
-                      <td className="px-3 py-2 font-mono font-semibold">{b.code}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <ProfileThumb url={imgOf(b.code)} code={b.code} />
+                          <span className="font-mono font-semibold">{b.code}</span>
+                        </div>
+                      </td>
                       <td className="px-3 py-2 text-right tabular-nums text-ink-2">{b.totalLenCm.toLocaleString("th-TH")}</td>
                       <td className="px-3 py-2 text-right tabular-nums font-bold text-emerald-700">{b.bars}</td>
                     </tr>
@@ -148,6 +159,17 @@ export default function CutListClient() {
         </div>
       </div>
     </div>
+  );
+}
+
+// รูปหน้าตัดโปรไฟล์ (ดึงจากสต็อก image_url ต่อ sku=รหัส) — คลิกเปิดรูปเต็ม · ไม่มีรูป = กล่องจาง
+function ProfileThumb({ url, code }: { url: string; code: string }) {
+  if (!url) return <span className="inline-flex items-center justify-center w-9 h-7 rounded border border-dashed border-gray-300 text-[9px] text-ink-3 shrink-0">—</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" title={`รูปโปรไฟล์ ${code}`} className="shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt={code} className="w-9 h-7 object-cover rounded border border-black/10 hover:ring-2 hover:ring-brand/40" loading="lazy" />
+    </a>
   );
 }
 
