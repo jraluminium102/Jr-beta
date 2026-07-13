@@ -1092,7 +1092,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <span className="text-ink-3">=</span>
                   <div className="flex items-center gap-1">
                     <input type="number" min={0} step={100} value={discountBaht || ""} placeholder="0"
-                      onChange={(e) => { const b = Math.max(0, Number(e.target.value) || 0); setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 10000) / 100 : 0); }}
+                      onChange={(e) => { const b = Math.max(0, Number(e.target.value) || 0); setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 1000000) / 10000 : 0); }}
                       className="w-28 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
                     <span className="text-ink-3">บาท</span>
                   </div>
