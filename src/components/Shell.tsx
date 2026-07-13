@@ -24,6 +24,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
+  { href: "/cutlist", icon: "box", label: "ใบตัด/BOQ (นำร่อง)" },
   { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
 ];
 
