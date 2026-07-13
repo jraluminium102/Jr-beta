@@ -30,9 +30,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (Object.keys(upd).length === 0) return fail("ไม่มีข้อมูลให้แก้");
 
   const sb = createClient();
+  // .select().maybeSingle() → รู้ว่าเขียนติดจริงกี่แถว (RLS บล็อก/ไม่พบงาน = 0 แถว = error=null เงียบ ๆ ถ้าไม่ select)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (sb as any).from("jobs").update(upd).eq("id", params.id);
+  const { data, error } = await (sb as any)
+    .from("jobs").update(upd).eq("id", params.id)
+    .select("id, floor_work, floor_note, floor_quote_sent").maybeSingle();
   if (error && /floor_work|floor_note|floor_quote_sent/i.test(error.message ?? "")) return fail("ยังไม่ได้รัน migration 0090/0091 — รันก่อนใช้งาน", 400);
   if (error) return fail(error.message, 500);
-  return ok({ ok: true, ...upd });
+  if (!data) return fail("บันทึกงานพื้นไม่ติด — ไม่พบงานนี้ หรือไม่มีสิทธิ์แก้ (RLS)", 409);
+  return ok(data);
 }

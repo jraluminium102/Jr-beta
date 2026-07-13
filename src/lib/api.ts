@@ -9,6 +9,7 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<{ data: T; meta?: Record<string, unknown> }> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
+    cache: "no-store", // ERP live data — กันเบราว์เซอร์ cache ทำให้คนละเครื่องเห็นข้อมูลไม่ตรง (เช่น ติ๊กงานพื้นแล้วอีกเครื่องไม่ขึ้น)
     ...init,
   });
   const json = (await res.json()) as ApiOk<T> | ApiErr;

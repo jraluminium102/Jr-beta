@@ -98,12 +98,26 @@ function FloorWorkControl({ jobId, floorWork, floorNote, floorQuoteSent, canWrit
   const [note, setNote] = useState(floorNote || "");
   const [fqs, setFqs] = useState(!!floorQuoteSent);
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   const m = FLOOR_META[fw] ?? FLOOR_META.none;
 
+  // sync กับข้อมูลที่โหลดมาล่าสุด (เครื่องอื่นแก้ / รีเฟรช) — กันแสดงค่าค้างในเครื่องไม่ตรง DB
+  useEffect(() => { setFw(floorWork || "none"); }, [floorWork]);
+  useEffect(() => { setNote(floorNote || ""); }, [floorNote]);
+  useEffect(() => { setFqs(!!floorQuoteSent); }, [floorQuoteSent]);
+
   async function save(patch: Record<string, unknown>) {
-    setBusy(true);
-    try { await api.post(`/jobs/${jobId}/floor-work`, patch); onSaved(); }
-    finally { setBusy(false); }
+    setBusy(true); setErr("");
+    try {
+      const { data } = await api.post<{ floor_work?: string; floor_note?: string; floor_quote_sent?: boolean }>(`/jobs/${jobId}/floor-work`, patch);
+      // ยึดค่าที่ DB ยืนยันกลับมา (กันแสดงค่าที่บันทึกไม่ติด)
+      if (data) { setFw(data.floor_work ?? "none"); setNote(data.floor_note ?? ""); setFqs(!!data.floor_quote_sent); }
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      // revert กลับค่าที่โหลดมาล่าสุด (ไม่ให้ค้างค่าที่ยังไม่ติด)
+      setFw(floorWork || "none"); setNote(floorNote || ""); setFqs(!!floorQuoteSent);
+    } finally { setBusy(false); }
   }
 
   if (!canWrite) {
@@ -140,6 +154,7 @@ function FloorWorkControl({ jobId, floorWork, floorNote, floorQuoteSent, canWrit
           ส่งใบเสนอพื้นแล้ว
         </label>
       )}
+      {err && <span className="text-[11px] text-red-600 w-full">⚠ {err}</span>}
     </div>
   );
 }
@@ -775,6 +790,7 @@ export default function QuotationChecklistClient() {
   const [hq, setHq] = useState("");   // ค้นหาในประวัติ
   const [floorOnly, setFloorOnly] = useState(false);
   const [sortKey, setSortKey] = useState<"assess" | "delivery" | "name">("assess");
+  const [catFilter, setCatFilter] = useState<"all" | "in_design" | "pending" | "drafted" | "sent">("all"); // กรองตามหมวด (กดการ์ดด้านบน)
   const [meta,      setMeta]      = useState<{
     counts: { in_design: number; pending: number; drafted: number; sent: number; held: number };
     overdue: number;
@@ -848,8 +864,8 @@ export default function QuotationChecklistClient() {
     return [h.customer_name, h.job_code ?? "", h.floor_note].join(" ").toLowerCase().includes(q);
   });
 
-  // ลิสต์หลัก = active + sent รวมกัน (ส่งแล้วไม่ย้ายออก แค่แถวเขียว) · เรียงตามที่เลือก
-  const mainList = [...active, ...sent].sort((a, b) => {
+  // ลิสต์หลัก = active + sent รวมกัน (ส่งแล้วไม่ย้ายออก แค่แถวเขียว) · กรองหมวด (กดการ์ด) แล้วเรียงตามที่เลือก
+  const mainList = [...active, ...sent].filter((it) => catFilter === "all" || it.stage === catFilter).sort((a, b) => {
     if (sortKey === "delivery") {
       if (!a.delivery_due && !b.delivery_due) return 0;
       if (!a.delivery_due) return 1;
@@ -899,25 +915,30 @@ export default function QuotationChecklistClient() {
       {/* Metric bar */}
       {data && (
         <div className={`grid gap-3 ${counts.drafted > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
-          <div className="rounded-2xl border px-4 py-3 bg-purple-50 border-purple-200 text-purple-800">
-            <div className="text-2xl font-extrabold tabular-nums">{counts.in_design}</div>
-            <div className="text-xs font-medium mt-0.5 leading-tight">รอแบบ</div>
-          </div>
-          <div className="rounded-2xl border px-4 py-3 bg-amber-50 border-amber-200 text-amber-800">
-            <div className="text-2xl font-extrabold tabular-nums">{counts.pending}</div>
-            <div className="text-xs font-medium mt-0.5 leading-tight">รอทำใบเสนอ</div>
-          </div>
-          {counts.drafted > 0 && (
-            <div className="rounded-2xl border px-4 py-3 bg-sky-50 border-sky-200 text-sky-800">
-              <div className="text-2xl font-extrabold tabular-nums">{counts.drafted}</div>
-              <div className="text-xs font-medium mt-0.5 leading-tight">ร่าง</div>
-            </div>
-          )}
-          <div className="rounded-2xl border px-4 py-3 bg-emerald-50 border-emerald-200 text-emerald-800">
-            <div className="text-2xl font-extrabold tabular-nums">{counts.sent}</div>
-            <div className="text-xs font-medium mt-0.5 leading-tight">ส่งแล้ว · รอมัดจำ</div>
-          </div>
+          {([
+            { key: "in_design", n: counts.in_design, label: "รอแบบ", cls: "bg-purple-50 border-purple-200 text-purple-800", ring: "ring-purple-400", show: true },
+            { key: "pending", n: counts.pending, label: "รอทำใบเสนอ", cls: "bg-amber-50 border-amber-200 text-amber-800", ring: "ring-amber-400", show: true },
+            { key: "drafted", n: counts.drafted, label: "ร่าง", cls: "bg-sky-50 border-sky-200 text-sky-800", ring: "ring-sky-400", show: counts.drafted > 0 },
+            { key: "sent", n: counts.sent, label: "ส่งแล้ว · รอมัดจำ", cls: "bg-emerald-50 border-emerald-200 text-emerald-800", ring: "ring-emerald-400", show: true },
+          ] as const).filter((c) => c.show).map((c) => {
+            const on = catFilter === c.key;
+            return (
+              <button key={c.key} type="button"
+                onClick={() => setCatFilter((v) => (v === c.key ? "all" : c.key))}
+                aria-pressed={on}
+                className={`press text-left rounded-2xl border px-4 py-3 transition ${c.cls} ${on ? `ring-2 ${c.ring} shadow-sm` : "opacity-95 hover:opacity-100"}`}>
+                <div className="text-2xl font-extrabold tabular-nums">{c.n}</div>
+                <div className="text-xs font-medium mt-0.5 leading-tight flex items-center gap-1">{c.label}{on && <span className="text-[10px]">▼ กรองอยู่</span>}</div>
+              </button>
+            );
+          })}
         </div>
+      )}
+      {catFilter !== "all" && (
+        <button type="button" onClick={() => setCatFilter("all")}
+          className="press inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 bg-gray-100 text-ink-2 border border-gray-300 hover:bg-gray-200">
+          ✕ ล้างตัวกรองหมวด (โชว์ทั้งหมด)
+        </button>
       )}
 
       {/* งานพื้น ผรม. — สรุป */}
