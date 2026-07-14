@@ -70,6 +70,14 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     ? { discount_pct: quoteBase.discount_pct, vat_rate: quoteBase.vat_rate, wht_rate: quoteBase.wht_rate }
     : null;
 
+  // งาน No-VAT (ยืนยันชัดจากใบวางบิลเอง) → รับชำระแล้ว "แค่ติ๊กว่าชำระ" พอ ไม่ต้องออกใบเสร็จ/ใบกำกับภาษี
+  //  - รู้ชัดว่า No-VAT เมื่อบิลมียอดแยกจริง (has_tax_breakdown) หรือแก้ footer แล้ว และ vat_rate = 0
+  //  - ใบเก่า/ใบ import ที่ไม่มียอดแยก (vat_rate=0 แต่ยอดอาจรวม VAT อยู่) → ไม่ถือเป็น No-VAT ยังออกใบเสร็จได้ตามเดิม
+  const bnOverride = (bnAny.footer_override && typeof bnAny.footer_override.net === "number") ? bnAny.footer_override : null;
+  const effVatRate = bnOverride ? Number(bnOverride.vat_rate) || 0 : (Number(bnAny.vat_rate) || 0);
+  const vatKnown = bnOverride ? true : !!Number(bnAny.has_tax_breakdown);
+  const isNoVatBill = vatKnown && effVatRate <= 0;
+
   // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
   const { data: rcs } = await supabase
     .from("receipts")
@@ -207,6 +215,11 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                         // จ่ายแล้ว → ออกใบเสร็จได้ (ถ้ายังไม่เคยออก) · ออกแล้ว = โชว์ลิงก์ฝั่งซ้าย
                         receiptByInst.has(it.id!) ? (
                           <span className="text-xs text-emerald-700">ออกใบเสร็จแล้ว ✓</span>
+                        ) : isNoVatBill ? (
+                          // บิล No-VAT → แค่ติ๊กว่าชำระ ไม่ต้องออกใบเสร็จ/ใบกำกับภาษี
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                            <Icon name="check" size={13} /> ชำระแล้ว
+                          </span>
                         ) : (
                           <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
                         )
