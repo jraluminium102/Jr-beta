@@ -102,6 +102,11 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           </table>
         </div>
 
+        {/* หมายเหตุ — เอกสารสมบูรณ์เมื่อรับชำระเงินเรียบร้อย */}
+        <div className="mt-4 text-xs italic" style={{ color: "#6b7280" }}>
+          หมายเหตุ: เอกสารฉบับนี้จะสมบูรณ์เมื่อบริษัทได้รับชำระเงินเรียบร้อยแล้ว
+        </div>
+
         <PrintSignature customerName={c.name} customerRole="ผู้จ่ายเงิน" companyRole="ผู้รับเงิน" />
       </div>
     </div>
