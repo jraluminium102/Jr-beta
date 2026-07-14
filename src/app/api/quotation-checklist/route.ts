@@ -178,12 +178,13 @@ export const GET = withRoute(async () => {
 
   const jobIds = jobRows.map((j) => j.id);
 
-  // โหลดใบเสนอราคาที่มี marker (ยกเว้น cancelled)
+  // โหลดใบเสนอราคาล่าสุดของแต่ละงาน — ทั้งใบเบา (checklist) และใบจริง (เครื่องคิดราคา/ฟอร์ม)
+  // เดิมกรองเฉพาะใบที่มี marker [เช็คลิสต์] → ใบจากเครื่องคิดราคาถูกซ่อน ทำให้กด "ส่งแล้ว" แล้วเกิดใบซ้ำ
+  // ตอนนี้จับใบล่าสุดของ job (ไม่ cancelled) → ใบเครื่องคิดราคาโผล่เป็น "ร่าง" เอง ไม่ต้องสร้างซ้ำ
   const { data: quotations, error: qErr } = await sb
     .from("quotations")
     .select("id, code, net, status, note, job_id, vat_rate")
     .in("job_id", jobIds)
-    .ilike("note", `${CHECKLIST_MARKER}%`)
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
   if (qErr) throw new Error(qErr.message);

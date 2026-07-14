@@ -108,22 +108,30 @@ export const POST = withRoute(async (req: Request) => {
   const vat_amt  = vat_rate > 0 ? Math.round((total * vat_rate) / (100 + vat_rate) * 100) / 100 : 0;
   const subtotal = Math.round((total - vat_amt) * 100) / 100; // 2 ตำแหน่ง · subtotal+vat=total เป๊ะ
 
-  // 5) idempotent — หาใบเช็คลิสต์ active ของงานนี้
+  // 5) idempotent — หาใบล่าสุดของงานนี้ (ใบเบา checklist หรือ ใบจริงจากเครื่องคิดราคา/ฟอร์ม)
+  // เดิมกรองเฉพาะใบมาร์คเกอร์ → ไม่เจอใบเครื่องคิดราคา เลยสร้างใบเบาซ้ำ · ตอนนี้จับใบล่าสุดทุกชนิด
   const { data: existing } = await sb
     .from("quotations")
-    .select("id, code, status, note")
+    .select("id, code, status, note, subtotal, vat_rate")
     .eq("job_id", job_id)
-    .ilike("note", `${CHECKLIST_MARKER}%`)
     .neq("status", "cancelled")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
+  // ใบจริง (จากเครื่องคิดราคา/ฟอร์ม) = ไม่มีมาร์คเกอร์ → ห้ามทับรายการ/ยอด/note แค่ promote สถานะ (กันลบรายละเอียดจริง)
+  const existingIsReal = !!existing?.id && !String(existing.note ?? "").startsWith(CHECKLIST_MARKER);
+
   let quotation_id: number;
   let code: string;
   let currentStatus: string;
 
-  if (existing?.id) {
+  if (existingIsReal) {
+    // ใบจริงมีอยู่แล้ว → ใช้ใบนี้ ไม่แตะรายการ/ยอด/note (คงใบเครื่องคิดราคาไว้ครบ)
+    quotation_id  = existing.id;
+    code          = existing.code;
+    currentStatus = existing.status;
+  } else if (existing?.id) {
     // อัปเดตใบเดิม
     const { data: upd, error: uErr } = await sb
       .from("quotations")
@@ -237,7 +245,12 @@ export const POST = withRoute(async (req: Request) => {
       // ส่งใบใหม่หลังแก้ → ค่านี้ตามทัน design_revise_count → งานหลุดออกจากเช็คลิสต์เอง
       quoted_revise_count: (job as { design_revise_count: number | null }).design_revise_count ?? 0,
     };
-    if (total > 0) {
+    // ใบจริง → ใช้ยอดก่อน VAT + vat_rate ของใบเอง (ไม่ใช่ยอดที่กรอกใน modal ซึ่งไม่ได้แก้ใบจริง)
+    // ใบเบา → ใช้ยอดที่กรอก (total>0)
+    if (existingIsReal) {
+      jobUpdate.net_amount = Number(existing.subtotal) || subtotal;
+      jobUpdate.vat_rate = Number(existing.vat_rate) || vat_rate;
+    } else if (total > 0) {
       jobUpdate.net_amount = subtotal;
       jobUpdate.vat_rate = vat_rate;
     }
