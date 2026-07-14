@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import ReceiptTextEditor from "./ReceiptTextEditor";
 import { PrintLetterhead, taxInvoiceMissing, DOC_COLORS } from "@/components/print/PrintLetterhead";
+import { PrintSignature } from "@/components/print/PrintSignature";
 
 export const dynamic = "force-dynamic";
 
@@ -101,10 +102,7 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           </table>
         </div>
 
-        <div className="grid grid-cols-2 gap-8 mt-16 text-center text-sm">
-          <div><div className="border-t border-gray-400 pt-2 mx-6">ผู้รับเงิน</div></div>
-          <div><div className="border-t border-gray-400 pt-2 mx-6">ผู้จ่ายเงิน / ลูกค้า</div></div>
-        </div>
+        <PrintSignature customerName={c.name} customerRole="ผู้จ่ายเงิน" companyRole="ผู้รับเงิน" />
       </div>
     </div>
   );

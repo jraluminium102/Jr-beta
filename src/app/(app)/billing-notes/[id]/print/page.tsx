@@ -8,6 +8,7 @@ import PrintButton from "./PrintButton";
 import PrintFooterEditor from "./PrintFooterEditor";
 import PrintLabelEditor from "./PrintLabelEditor";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
+import { PrintSignature } from "@/components/print/PrintSignature";
 
 export const dynamic = "force-dynamic";
 
@@ -153,7 +154,7 @@ export default async function BillingPrintPage({
               {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ยอดสุทธิที่คิดใหม่ · คงเหลือติดลบ = แดง (เตือนรับเกิน) */}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className={`text-right tabular-nums${overpaid ? " text-red-700 font-semibold" : ""}`}>{baht(effRemaining)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดงวดนี้" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
             </tbody>
           </table>
         </div>
@@ -167,10 +168,7 @@ export default async function BillingPrintPage({
 
         {bn.note && <div className="mt-6 text-xs text-gray-600"><b>หมายเหตุ:</b> {bn.note}</div>}
 
-        <div className="grid grid-cols-2 gap-8 mt-16 text-center text-sm">
-          <div><div className="border-t border-gray-400 pt-2 mx-6">ผู้วางบิล</div></div>
-          <div><div className="border-t border-gray-400 pt-2 mx-6">ผู้รับวางบิล / ลูกค้า</div></div>
-        </div>
+        <PrintSignature customerName={c.name} customerRole="ผู้รับวางบิล" companyRole="ผู้วางบิล" />
       </div>
     </div>
   );

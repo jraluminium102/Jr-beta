@@ -38,11 +38,11 @@ export function computeTotals(input: MoneyInput): MoneyResult {
     : (subtotal * (Number(input.discount_pct) || 0)) / 100;
   const discount_amt = round2(Math.min(Math.max(0, rawDiscount), subtotal));
   const after_discount = round2(subtotal - discount_amt);
-  const vat_amt = roundBaht((after_discount * (Number(input.vat_rate) || 0)) / 100);
+  // ห้ามปัดเศษกลางทาง (เจ้าของสั่ง 13ก.ค.69): รายการมีทศนิยม → VAT/หัก ณ ที่จ่าย เก็บ 2 ตำแหน่ง (สตางค์)
+  // ไม่ปัดบาทเต็ม เพราะทำให้ยอดไม่ตรง (subtotal+VAT≠total) · ปัดเฉพาะตอนโชว์ยอดสุดท้ายถ้าจำเป็น
+  const vat_amt = round2((after_discount * (Number(input.vat_rate) || 0)) / 100);
   const total = round2(after_discount + vat_amt);
-  const wht_amt = roundBaht((after_discount * (Number(input.wht_rate) || 0)) / 100);
-  // net = round2 (2 ตำแหน่ง) ไม่ปัดบาทเต็ม — suggestInstallments รองรับสตางค์แล้ว ผลรวมงวด = net เป๊ะ
-  // vat_amt/wht_amt ยังเป็นบาทเต็ม (roundBaht) เพราะกรมสรรพากรกำหนดให้ปัดบาท ไม่เปลี่ยน
+  const wht_amt = round2((after_discount * (Number(input.wht_rate) || 0)) / 100);
   const net = round2(total - wht_amt);
   return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net };
 }

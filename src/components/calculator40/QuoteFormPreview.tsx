@@ -9,6 +9,7 @@ import { Fragment } from "react";
 import { baht, computeTotals } from "@/lib/money";
 import { bahtText } from "@/lib/baht-text";
 import { PrintLetterhead, DOC_COLORS, type CustomerSnapshot } from "@/components/print/PrintLetterhead";
+import { PrintSignature } from "@/components/print/PrintSignature";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/print/quote-constants";
 import Icon from "@/components/Icon";
 
@@ -179,17 +180,8 @@ export default function QuoteFormPreview({
         </table>
       </div>
 
-      {/* ลายเซ็น */}
-      <div className="mt-5 flex gap-5 justify-between" style={{ padding: 15, border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 13 }}>
-        <div className="flex-1 text-center">
-          <div className="font-semibold mb-8">ในนาม {customer.name || "ลูกค้า"}</div>
-          <div style={{ borderTop: "1px dashed #999", paddingTop: 4 }}>ผู้สั่งซื้อสินค้า · วันที่ ............/............/............</div>
-        </div>
-        <div className="flex-1 text-center">
-          <div className="font-semibold mb-8">ในนาม {COMPANY.name}</div>
-          <div style={{ borderTop: "1px dashed #999", paddingTop: 4 }}>ผู้อนุมัติ · วันที่ ............/............/............</div>
-        </div>
-      </div>
+      {/* ลายเซ็น — ฟอร์มกลางเดียวกับใบพิมพ์จริง */}
+      <PrintSignature customerName={customer.name} customerRole="ผู้สั่งซื้อสินค้า" companyRole="ผู้อนุมัติ" />
 
       {/* เงื่อนไข */}
       <div className="mt-5" style={{ fontSize: 11.5, lineHeight: 1.65, pageBreakBefore: "always" }}>

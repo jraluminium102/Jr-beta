@@ -8,6 +8,7 @@ import { STATUS_LABEL, type Quotation } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
+import { PrintSignature } from "@/components/print/PrintSignature";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
@@ -221,29 +222,8 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
           </div>
         )}
 
-        {/* ===== Signature block — matches genQuote qsign ===== */}
-        <div
-          className="mt-5 flex gap-5 justify-between"
-          style={{
-            padding: "15px",
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            fontSize: 13,
-          }}
-        >
-          <div className="flex-1 text-center">
-            <div className="font-semibold mb-8">ในนาม {c.name}</div>
-            <div style={{ borderTop: "1px dashed #999", paddingTop: 4 }}>
-              ผู้สั่งซื้อสินค้า · วันที่ ............/............/............
-            </div>
-          </div>
-          <div className="flex-1 text-center">
-            <div className="font-semibold mb-8">ในนาม {COMPANY.name}</div>
-            <div style={{ borderTop: "1px dashed #999", paddingTop: 4 }}>
-              ผู้อนุมัติ · วันที่ ............/............/............
-            </div>
-          </div>
-        </div>
+        {/* ===== Signature block — ฟอร์มกลาง (ในนามลูกค้า | ในนามบริษัท + บทบาท/วันที่) ===== */}
+        <PrintSignature customerName={c.name} customerRole="ผู้สั่งซื้อสินค้า" companyRole="ผู้อนุมัติ" />
 
         {/* ===== Conditions — page-break-before so always starts new page when printing ===== */}
         <div
