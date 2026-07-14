@@ -14,11 +14,15 @@ export function PrintSignature({
     { name: COMPANY.name, role: companyRole },
   ];
   return (
-    <div className="mt-12 flex gap-10 justify-between" style={{ fontSize: 13 }}>
+    // break-inside/page-break-inside: avoid — กันบล็อกเซ็นถูกตัดครึ่งข้ามหน้าเวลาพิมพ์ (ต้องไปทั้งก้อน)
+    <div
+      className="mt-12 flex gap-10 justify-between"
+      style={{ fontSize: 13, breakInside: "avoid", pageBreakInside: "avoid" }}
+    >
       {halves.map((h, i) => (
-        <div key={i} className="flex-1">
+        <div key={i} className="flex-1" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div className="font-semibold text-center mb-14">ในนาม {h.name}</div>
-          <div className="flex gap-6">
+          <div className="flex gap-6" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div className="flex-1 text-center">
               <div style={{ borderTop: "1px solid #9ca3af", paddingTop: 4 }}>{h.role}</div>
             </div>
