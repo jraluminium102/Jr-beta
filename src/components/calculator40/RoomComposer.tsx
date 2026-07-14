@@ -57,6 +57,10 @@ const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
   { key: "pivot", label: "บานหมุน (Pivot)" },                         // pivot → pivot (ตรง)
   { key: "frameless_door", label: "บานเปลือย (สวิง/เลื่อน/ติดตาย)" }, // frameless_* → frameless_door (รวม 3 แบบเดิมเป็นตัวเดียว เลือกผ่าน material)
   { key: "pcdoor", label: "ประตู PC Door" },                          // pc_door_2/4 → pcdoor (ใกล้เคียงสุด)
+  // ── ผนังทึบ (รวมโครง) — ใส่เป็น "ช่องบาน" ในด้านได้ (mix กับบานเปิด/ฟิกในด้านเดียว) ──
+  { key: "wall_smartboard", label: "ผนังสมาร์ทบอร์ด (รวมโครง)" },
+  { key: "wall_corrugated", label: "ผนังอลูลูกฟูก (รวมโครง)" },
+  { key: "wall_composite", label: "ผนังคอมโพสิต (รวมโครง)" },
   // curved_* (ดัดโค้ง) ยังไม่มี R4.0 product ราคาจริงเทียบตรง — ไม่ใส่ในลิสต์ (ไม่มีแหล่งราคา R4.0/R3.9 ที่คำนวณอัตโนมัติได้ในห้อง — สั่งทำนอกระบบ)
 ];
 
