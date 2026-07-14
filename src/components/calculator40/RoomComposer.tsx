@@ -77,6 +77,7 @@ type Pane = {
   addons: Record<string, any>; // per-pane option เต็ม (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) — ตรง shape ที่ AddonsSection ใช้
   colorIdx?: string; // สีอลูเฟรมต่อบาน override ("" = ตามห้อง) — ใช้ colorKey ของ pb.BAKE
   glassOvr?: string; // กระจกต่อบาน override ("" = ตามห้อง)
+  colorRate?: number; // ผนังแผ่นทึบ (ลูกฟูก/คอมโพ) — สีพิเศษ +ราคาขาย/ตร.ม. (0/เว้น = สีมาตรฐาน) · ระบบ ÷2 เป็นทุน
 };
 
 // ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
@@ -142,7 +143,8 @@ function paneDesc(p: Pane, glassFallback: string): string {
   const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
   const glass = prod?.defGlass ? (p.glassOvr || glassFallback || prod.defGlass) : "";
   const size = `${(p.w || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}×${(p.h || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}ม.`;
-  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}${addonSummary(p.addons)}`;
+  const special = (p.colorRate || 0) > 0 ? " สีพิเศษ" : "";
+  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}${special}${addonSummary(p.addons)}`;
 }
 
 function freshPane(): Pane {
@@ -172,6 +174,8 @@ function panePrice(
     w: wCm, h: hCm, p: pane.n || 1, form: formVal,
     color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
+    // ผนังแผ่นทึบสีพิเศษ (ลูกฟูก/คอมโพ · prod.showColor) — กรอกเป็นราคาขาย/ตร.ม. ÷2 เป็นทุน (×(1+กำไร%) กลับเป็นราคาขาย)
+    frameColorRate: (pane.colorRate || 0) > 0 ? (pane.colorRate as number) / 2 : 0,
   };
   // มุ้งบวกบาน R4.0 จริง (ไม่ใช่ R3.9 fallback) — ตรง Calculator40Client
   const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
@@ -668,6 +672,16 @@ export default function RoomComposer({
                           </>
                         )}
                       </div>
+                      {/* ผนังแผ่นทึบ (ลูกฟูก/คอมโพ · prod.showColor) — สีพิเศษ +ราคาขาย/ตร.ม. (สีมาตรฐาน=เว้นว่าง/0) */}
+                      {prod?.showColor && (
+                        <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                          <span className="text-ink-3">สีพิเศษ +บาท/ตร.ม.</span>
+                          <input type="number" min={0} step={50} value={pc.colorRate || ""} placeholder="เว้น=สีมาตรฐาน"
+                            onChange={(e) => patchPane(i, pc.key, { colorRate: Math.max(0, +e.target.value || 0) })}
+                            className="min-h-[32px] w-32 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums text-xs" />
+                          <span className="text-ink-3">(ราคาขาย · สีมาตรฐาน=0)</span>
+                        </div>
+                      )}
                       {mosqLabel && <p className="text-[11px] text-ink-3">มุ้ง: {mosqLabel}</p>}
 
                       {/* per-pane option เต็ม — reuse AddonsSection ตรงกับ prod.addons จริงของชนิดบานนี้ (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม ฯลฯ) */}
