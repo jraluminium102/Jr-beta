@@ -395,7 +395,7 @@ function SentJobCard({
       {canWrite && (
         <div className="flex gap-2 pt-0.5">
           <Link
-            href="/quotations/new"
+            href="/calculator40"
             onClick={() => makeQuoteBridge(item)}
             title="สร้างใบเสนอราคาจริงในระบบ (ผูกลูกค้า/งานให้)"
             className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand text-white px-3 py-2.5 text-sm font-semibold shadow-brand hover:opacity-95 min-h-[44px]">
@@ -552,7 +552,7 @@ function ActiveTableRow({
             )}
             {(item.stage === "pending" || item.stage === "drafted") && (
               <Link
-                href="/quotations/new"
+                href="/calculator40"
                 onClick={() => makeQuoteBridge(item)}
                 title="สร้างใบเสนอราคาจริงในระบบ (ผูกลูกค้า/งานให้)"
                 className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
@@ -586,7 +586,7 @@ function ActiveTableRow({
             {/* ส่งแล้ว = ไม่ย้ายออก (แค่แถวเขียว) — ทำใบเสนอในระบบ / แก้ยอด / วางบิล */}
             {item.stage === "sent" && (
               <>
-                <Link href="/quotations/new" onClick={() => makeQuoteBridge(item)}
+                <Link href="/calculator40" onClick={() => makeQuoteBridge(item)}
                   className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
                   <Icon name="file" size={12} /> สร้างในระบบ
                 </Link>
@@ -747,7 +747,7 @@ function ActiveMobileCard({
           )}
           {item.stage === "sent" && (
             <>
-              <Link href="/quotations/new" onClick={() => makeQuoteBridge(item)}
+              <Link href="/calculator40" onClick={() => makeQuoteBridge(item)}
                 className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white shadow-brand min-h-[44px]">
                 <Icon name="file" size={15} /> สร้างในระบบ
               </Link>

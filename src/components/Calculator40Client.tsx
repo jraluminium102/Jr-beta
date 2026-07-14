@@ -70,6 +70,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const router = useRouter();
   // ผูกลูกค้าจากทะเบียน (เฟส B)
   const [customerId, setCustomerId] = useState<number | null>(null);
+  const [bridgeJobId, setBridgeJobId] = useState<string | null>(null); // งานที่ส่งมาจากเช็คลิสต์ (ปุ่ม "สร้างในระบบ") → ผูกตอนออกใบเสนอ
   const [custQuery, setCustQuery] = useState("");
   const [custOpen, setCustOpen] = useState(false);
   const custRef = useRef<HTMLDivElement>(null);
@@ -77,6 +78,21 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const onDown = (e: MouseEvent) => { if (custRef.current && !custRef.current.contains(e.target as Node)) setCustOpen(false); };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  // รับ "ลูกค้า+งาน" ที่ส่งมาจากเช็คลิสต์ (ปุ่ม "สร้างในระบบ" → มาที่เครื่องคิดราคา 4.0)
+  // → เลือกลูกค้าให้อัตโนมัติ + จำ job_id ไว้ผูกตอนออกใบเสนอ (จับเฉพาะ bridge ที่ items ว่าง กัน payload ที่ calc เขียนเอง)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("jr_quote_items");
+      if (!raw) return;
+      const p = JSON.parse(raw) as { customer_id?: number | null; job_id?: string; items?: unknown[] };
+      if (p && Array.isArray(p.items) && p.items.length === 0) {
+        if (p.customer_id != null) setCustomerId(Number(p.customer_id));
+        if (p.job_id) setBridgeJobId(String(p.job_id));
+        sessionStorage.removeItem("jr_quote_items"); // consume แล้ว กันเด้งลูกค้าเก่าค้างครั้งถัดไป
+      }
+    } catch { /* ignore */ }
   }, []);
   // pricebook = โครงสร้าง/สูตร + ราคาจริงจากสต๊อก (ทับด้วย priceOverride ตอนโหลด → ลิงค์สดกับหน้า stock)
   // แก้ ⚙️ ในหน้า = in-memory ชั่วคราว (รีเฟรชกลับค่าสต๊อก) — แก้ราคาถาวรทำที่หน้า stock
@@ -444,6 +460,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       items,
       customer: selectedCustomer?.name ?? "",
       customer_id: customerId,
+      ...(bridgeJobId ? { job_id: bridgeJobId } : {}), // ผูกงานที่ส่งมาจากเช็คลิสต์ (ถ้ามี)
     };
     try {
       sessionStorage.setItem("jr_quote_items", JSON.stringify(payload));
