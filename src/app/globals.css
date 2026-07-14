@@ -115,4 +115,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .no-print { display: none !important; }
   body { background: #fff; }
   .bgwrap, .app-bg { background: #fff; color: #1f2127; }
+  /* กรอบ/เส้นในเอกสาร เข้มขึ้น ให้พิมพ์แล้วเห็นชัด (เดิม gray-200 จางเกินไป มองไม่เห็น) */
+  .border-gray-100, .border-gray-200, .border-gray-300 { border-color: #4b5563 !important; }
+  table, th, td { border-color: #4b5563 !important; }
+  /* บังคับพิมพ์สีพื้น/สีเส้นให้ครบ (กัน browser ตัดพื้นหัวตาราง/หัวบิลทิ้ง) */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
+
+/* เต็มหน้า A4 + เอาหัว-ท้ายที่ browser แปะเอง (URL jr-beta / วันที่-เวลา / ชื่อระบบ / เลขหน้า) ออก
+   เดิม margin ปริยายของ browser ทำให้เนื้อหา 210mm ถูกย่อให้พอดี → ปริ้นออกมาเล็ก · margin:0 = เต็มแผ่นจริง
+   (ระยะขอบเนื้อหาใช้ padding 16mm ในกล่อง A4 ของแต่ละเอกสารอยู่แล้ว) */
+@page { size: A4; margin: 0; }
