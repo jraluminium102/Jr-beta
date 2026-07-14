@@ -62,7 +62,16 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
           docColor={DOC_COLORS.quotation}
           customer={c}
           infoRows={[
-            { label: "เลขที่", value: <span className="font-mono font-semibold">{q.code}</span> },
+            {
+              label: "เลขที่",
+              value: (
+                <span className="font-mono font-semibold">
+                  {q.code}
+                  {/* ป้าย Rev (0093) — แก้ใบแล้วเลือกนับ Rev → พิมพ์ต่อท้ายเลขที่ */}
+                  {String(anyQ.revision_label ?? "").trim() ? ` · ${String(anyQ.revision_label).trim()}` : ""}
+                </span>
+              ),
+            },
             { label: "วันที่", value: q.issue_date },
           ]}
         />

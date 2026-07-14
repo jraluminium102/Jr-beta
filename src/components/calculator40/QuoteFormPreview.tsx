@@ -25,7 +25,7 @@ export type PreviewItem = {
 
 export default function QuoteFormPreview({
   items, onEdit, onRemove, customer, code, issueDate,
-  vatRate, discountPct, whtRate, editable = true,
+  vatRate, discountPct, discountAmt, whtRate, editable = true,
 }: {
   items: PreviewItem[];
   onEdit: (key: number, patch: Partial<PreviewItem>) => void;
@@ -35,12 +35,14 @@ export default function QuoteFormPreview({
   issueDate: string;
   vatRate: number;
   discountPct: number;
+  discountAmt?: number; // ส่วนลดเป็นบาท (ตัวตั้งจริง) — ส่งมา = ชนะ % (กัน drift · บัญชีสั่ง)
   whtRate: number;
   editable?: boolean;
 }) {
   const t = computeTotals({
     items: items.map((it) => ({ qty: it.qty, unit_price: it.unitPrice })),
     vat_rate: vatRate, discount_pct: discountPct, wht_rate: whtRate,
+    ...(discountAmt != null && discountAmt > 0 ? { discount_amt: discountAmt } : {}),
   });
   const total = t.wht_amt > 0 ? t.net : t.total;
   const totalLabel = t.wht_amt > 0 ? "ยอดรับสุทธิ" : "จำนวนเงินรวมทั้งสิ้น";

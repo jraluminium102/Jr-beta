@@ -11,8 +11,9 @@ import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/p
 
 type ActiveJob = { id: string; job_code: string | null; current_stage: number; status: string; created_at: string };
 
-type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string; group_label: string };
-const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "", group_label: "" });
+// calc_recipe (0093) = สูตรคิดราคา 4.0 ต่อข้อ — passthrough ไม่แตะ (โหลดกลับเข้าเครื่องคิดได้)
+type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string; group_label: string; calc_recipe?: unknown };
+const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "", group_label: "", calc_recipe: null });
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string }>; customer?: string; customer_id?: number | null; job_id?: string };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown }>; customer?: string; customer_id?: number | null; job_id?: string };
       if (payload.job_id) setBridgeJobId(String(payload.job_id));
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
@@ -78,6 +79,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           category: String(it.category ?? ""),     // หมวดสินค้าจากเครื่องคิดราคา → สถิติ (0046)
           product_id: String(it.product_id ?? ""),
           group_label: String(it.group_label ?? ""),
+          calc_recipe: it.calc_recipe ?? null,     // สูตรคิดราคา 4.0 (0093) — เก็บลงใบ
         }));
       if (bridged.length) { setItems(bridged); setFromCalc(true); }
       // ลูกค้าจากเครื่องคิดราคา: ใช้ customer_id (เลือกจากทะเบียนแล้ว) ก่อน — แม่นยำสุด

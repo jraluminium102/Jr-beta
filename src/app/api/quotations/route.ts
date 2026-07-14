@@ -172,11 +172,12 @@ export async function POST(req: Request) {
     category: String(it.category ?? ""),     // หมวดสินค้า → สถิติขายดี (0046)
     product_id: String(it.product_id ?? ""),
     group_label: String(it.group_label ?? ""), // หัวข้อชุด (0076) → จัดกลุ่มในใบพิมพ์
+    calc_recipe: it.calc_recipe ?? null,       // สูตรคิดราคา 4.0 (0093) — โหลดกลับเข้าเครื่องคิดได้
   }));
   let { error: iErr } = await supabase.from("quotation_items").insert(rows);
-  // กันพัง: ถ้า migration 0076 (group_label) ยังไม่รัน → insert ซ้ำแบบตัด group_label ออก
-  if (iErr && /group_label/i.test(iErr.message)) {
-    const rowsNoGl = rows.map(({ group_label, ...r }: any) => r);
+  // กันพัง: ถ้า migration 0076 (group_label) / 0093 (calc_recipe) ยังไม่รัน → insert ซ้ำแบบตัดคอลัมน์นั้นออก
+  if (iErr && /group_label|calc_recipe/i.test(iErr.message)) {
+    const rowsNoGl = rows.map(({ group_label, calc_recipe, ...r }: any) => r);
     ({ error: iErr } = await supabase.from("quotation_items").insert(rowsNoGl));
   }
   if (iErr) {

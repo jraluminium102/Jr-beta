@@ -61,7 +61,11 @@ type QuoteItem = {
   perUnit: number;    // ราคาขาย+ติดตั้ง/ชุด
   cost: number;       // ทุน/ชุด (ไว้ดูกำไรรวม)
   prodId?: string;    // (เฟส B) product_id → สถิติ
-  groupLabel?: string;// (เฟส B) หมวด → สถิติ
+  groupLabel?: string;// (เฟส B) หมวด → สถิติ (ลง category)
+  heading?: string;   // หัวข้อชุด (group_label 0076 เช่น "ห้องนอน 1") — passthrough กันหายตอนแก้ผ่านเครื่องคิด (QA HIGH-3)
+  // "สูตร" (0093) — ทุก input ที่กดตอนคิดข้อนี้ → คลิก ✏️ โหลดกลับเข้าเครื่องคิดแก้ได้ · null = ข้อพิมพ์มือ/ใบเก่า/ค่าบริการ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recipe?: any;
 };
 
 type CustomerOption = Pick<Customer, "id" | "name" | "job" | "phone" | "address" | "contact_person">;
@@ -132,10 +136,23 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // G6 ห้องกระจก (composite) — RoomComposer คิดราคาเองทั้งก้อน (ผลรวมด้าน+ฝ้า+หลังคา) แล้ว callback กลับมาที่นี่
   const [roomTotals, setRoomTotals] = useState<RoomTotals | null>(null);
   const [g6HideSidePrice, setG6HideSidePrice] = useState(false); // ซ่อนราคารายด้านในใบเสนอ (G6)
+  // G6 save/restore (0093): เก็บ state ห้องล่าสุดไว้ใส่สูตร + จุดตั้งต้นตอนโหลดสูตรกลับ (remount ด้วย roomSeed)
+  const roomStateRef = useRef<any>(null);
+  const [roomInitial, setRoomInitial] = useState<any>(null);
+  const [roomSeed, setRoomSeed] = useState(0);
 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
   const [keySeq, setKeySeq] = useState(1);
+  // ข้อที่กำลังแก้ (คลิก ✏️ ในรายการ) — กด "อัปเดตข้อนี้" = แทนที่เดิม ตำแหน่งเดิม (0093)
+  const [editingKey, setEditingKey] = useState<number | null>(null);
+  // โหมดแก้ใบเสนอเดิม (?edit=<id>) — โหลดใบ+สูตรเข้ามา แก้ แล้วบันทึกกลับใบเดิม (เลือก Rev ได้)
+  const [editingQ, setEditingQ] = useState<{ id: number; code: string; status: string; revision_no: number; revision_label: string } | null>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
+  const [revAction, setRevAction] = useState<"none" | "rev" | "rev_keep">("none");
+  const [revLabel, setRevLabel] = useState("Rev01");
   // ย้อนกลับจากใบเสนอราคามาแก้ (?restore=1) → คืนรายการที่ส่งไปล่าสุด
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -150,12 +167,48 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // โหมดแก้ใบเสนอเดิม (?edit=<id>) — โหลดใบ + รายการ + สูตร (calc_recipe) เข้าเครื่องคิด (0093)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qid = new URLSearchParams(window.location.search).get("edit");
+    if (!qid) return;
+    fetch(`/api/quotations/${qid}`)
+      .then((r) => r.json())
+      .then((json) => {
+        const d = json?.data;
+        if (!d?.id) return;
+        const revNo = Number(d.revision_no) || 0;
+        setEditingQ({ id: d.id, code: d.code, status: d.status, revision_no: revNo, revision_label: String(d.revision_label ?? "") });
+        if (d.customer_id != null) setCustomerId(Number(d.customer_id));
+        setQVat(Number(d.vat_rate) || 0);
+        setQDisc(Number(d.discount_pct) || 0);
+        setQDiscAmt(Number(d.discount_amt) || 0); // จำนวนเงินจริงจากใบ (ตัวตั้ง) — เซฟกลับไม่ drift
+        setQWht(Number(d.wht_rate) || 0);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const its = ((d.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order);
+        setQuote(its.map((it, i) => ({
+          key: i + 1, name: it.name, desc: String(it.detail ?? ""), qty: Number(it.qty) || 1,
+          perUnit: Number(it.unit_price) || 0, cost: 0,
+          prodId: it.product_id || undefined, groupLabel: it.category || "",
+          heading: it.group_label || "", // หัวข้อชุด (0076) — เก็บไว้ส่งกลับ ไม่ให้หายตอนเซฟ
+          recipe: it.calc_recipe ?? null,
+        })));
+        setKeySeq(its.length + 1);
+        setRevLabel(`Rev${String(revNo + 1).padStart(2, "0")}`);
+        // ใบที่ส่งลูกค้าแล้ว → แนะนำนับ Rev (แก้หลังส่ง = ควรมีร่องรอย) · ร่าง → ทับเฉยๆ
+        if (d.status === "sent" || d.status === "approved") setRevAction("rev");
+      })
+      .catch(() => { /* ผู้ใช้เห็นหน้าเปล่า + แก้ใหม่ได้ ไม่ต้อง crash */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // ค่าบริการเพิ่มเติมทั้งใบ (นั่งร้าน/เดินทาง/ขนส่ง/ค่าไฟ/ความเสี่ยง/รื้อ) — พาริตี้ R3.9
   const [svc, setSvc] = useState<ServiceInput>(EMPTY_SERVICES);
   const [svcOpen, setSvcOpen] = useState(false);
   // footer ใบเสนอ (VAT/ส่วนลด/หัก ณ ที่จ่าย) — ให้พรีวิวฟอร์มจริงคิดยอดครบเหมือนใบพิมพ์
   const [qVat, setQVat] = useState(7);
   const [qDisc, setQDisc] = useState(0);
+  // ส่วนลดเป็น "จำนวนเงิน" (ตัวตั้งจริง · บัญชีสั่ง: ห้าม derive บาทกลับจาก % กัน round-trip drift) — % เป็นตัวโชว์/ตัวช่วยกรอก
+  const [qDiscAmt, setQDiscAmt] = useState(0);
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
@@ -338,6 +391,42 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const ok = result && !("error" in result);
   const glassKeys = useMemo(() => Object.keys((pb.GLASS ?? {}) as Record<string, number>), [pb]);
 
+  // "สูตร" ของข้อปัจจุบัน (0093) — เก็บทุก input เพื่อโหลดกลับมาแก้ทีหลัง (คลิก ✏️ ในรายการ)
+  function buildRecipe(): any {
+    if (!prod) return null;
+    if (prod.composite) {
+      return {
+        v: 1, kind: "room", prodId: prod.id, group: prod.group,
+        color, glassType, profit, g6HideSidePrice,
+        room: roomStateRef.current ?? null, // state ทั้งห้อง (ด้าน/ช่อง/บาน/หลังคา/ฝ้า/พื้น ฯลฯ) จาก RoomComposer
+      };
+    }
+    return {
+      v: 1, kind: "std", prodId: prod.id, group: prod.group,
+      w, h, p, form, color, glassType, material,
+      spec, addons, fixedPanes, profit,
+      kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
+    };
+  }
+
+  // เพิ่มข้อใหม่ หรือ (ถ้ากำลังแก้ ✏️) แทนที่ข้อเดิม ตำแหน่งเดิม key เดิม
+  // ถ้าข้อที่กำลังแก้ถูกลบไปแล้ว (เช่น ลบผ่านฟอร์มพรีวิว) → ต่อท้ายแทน ไม่หายเงียบ (QA HIGH-1)
+  function pushQuoteItem(item: Omit<QuoteItem, "key">) {
+    if (editingKey != null) {
+      const stillThere = quote.some((x) => x.key === editingKey);
+      if (stillThere) {
+        setQuote((q) => q.map((x) => (x.key === editingKey ? { ...item, key: editingKey } : x)));
+      } else {
+        setQuote((q) => [...q, { ...item, key: keySeq }]);
+        setKeySeq((k) => k + 1);
+      }
+      setEditingKey(null);
+    } else {
+      setQuote((q) => [...q, { ...item, key: keySeq }]);
+      setKeySeq((k) => k + 1);
+    }
+  }
+
   function addToQuote() {
     if (!ok || !prod) return;
     const n = Math.max(1, Number(sets) || 1);
@@ -358,13 +447,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
       lines.push(`- กระจก: ${glassType || "—"}`);
       (rt.specLines ?? []).forEach((s) => lines.push(`- ${s}`)); // มุ้ง / หลังคา / รางน้ำ ฯลฯ
-      setQuote((q) => [...q, {
-        key: keySeq, name: prod.name,
+      pushQuoteItem({
+        name: prod.name,
         desc: lines.join("\n"),
         qty: n, perUnit: rt.total, cost: 0,
         prodId: prod.id, groupLabel: "ห้องกระจก",
-      }]);
-      setKeySeq((k) => k + 1);
+        recipe: buildRecipe(),
+      });
       return;
     }
     // subLines (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมเข้ายอด/ทุน ของรายการเดียวกัน ตรง app.js (แยกจาก main แต่ไม่แยกบรรทัดในใบย่อยนี้)
@@ -424,12 +513,110 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
     specDetailLines.forEach((l) => jobLines.push(l));
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
-    setQuote((q) => [...q, {
-      key: keySeq, name: itemName, desc, qty: n,
+    pushQuoteItem({
+      name: itemName, desc, qty: n,
       perUnit: result.sell.withInstall + subSell, cost: result.cost.total + subCost,
       prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
-    }]);
+      recipe: buildRecipe(),
+    });
+  }
+
+  // ── (0093) แก้/ก็อป/เลื่อน ข้อในรายการ ──────────────────────────────────
+  // ✏️ โหลดสูตรของข้อกลับเข้าเครื่องคิด (ขนาด/รูปแบบ/สี/กระจก/option ที่บันทึกไว้) → แก้ → "อัปเดตข้อนี้"
+  function editQuoteItem(it: QuoteItem) {
+    const r = it.recipe;
+    const px = r ? (PRODUCTS as any)[r.prodId] : null;
+    if (!r || !px) return; // ไม่มีสูตร (ข้อพิมพ์มือ/ใบเก่า/ค่าบริการ) — แก้ข้อความในฟอร์มขวาได้อย่างเดียว
+    setGroup(px.group ?? r.group ?? 1);
+    setProdId(r.prodId);
+    setSets(String(it.qty || 1));
+    setColor(r.color ?? "white");
+    setGlassType(r.glassType ?? (px.defGlass ?? ""));
+    setProfit(String(r.profit ?? "100"));
+    if (r.kind === "room") {
+      setG6HideSidePrice(!!r.g6HideSidePrice);
+      setRoomInitial(r.room ?? null);
+      setRoomSeed((s) => s + 1); // remount RoomComposer ด้วย state ที่บันทึกไว้
+    } else {
+      setW(String(r.w ?? px.defaults?.w ?? ""));
+      setH(String(r.h ?? px.defaults?.h ?? ""));
+      setP(String(r.p ?? px.defaults?.p ?? 1));
+      setForm(r.form ?? px.defForm ?? "");
+      setMaterial(r.material ?? px.defMaterial ?? (px.materials?.[0] ?? ""));
+      setSpec(r.spec ?? {});
+      setAddons(r.addons ?? {});
+      setFixedPanes(Number(r.fixedPanes) || 0);
+      setKind(r.kindOpts ?? {});
+      setFaceColorCode(r.faceColorCode ?? "");
+      setDepth(String(r.depth ?? ""));
+      setShelves(String(r.shelves ?? ""));
+      setCabSides(r.cabSides ?? { left: { on: true, mat: "alu" }, right: { on: true, mat: "alu" }, back: { on: false, mat: "alu" } });
+      setSheetColor(r.sheetColor ?? "");
+      setRoofSegs(Array.isArray(r.roofSegs) ? r.roofSegs : []);
+      setSubs(Array.isArray(r.subs) ? r.subs : []);
+    }
+    setEditingKey(it.key);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  // 📋 ก็อปข้อ (พร้อมสูตร) แทรกถัดจากต้นฉบับ — งานคล้ายๆ ก็อปแล้วกด ✏️ ปรับนิดหน่อย
+  function copyQuoteItem(key: number) {
+    setQuote((q) => {
+      const i = q.findIndex((x) => x.key === key);
+      if (i < 0) return q;
+      const arr = [...q];
+      arr.splice(i + 1, 0, { ...q[i], key: keySeq });
+      return arr;
+    });
     setKeySeq((k) => k + 1);
+  }
+  // ⬆⬇ เลื่อนข้ออิสระ
+  function moveQuoteItem(key: number, dir: -1 | 1) {
+    setQuote((q) => {
+      const i = q.findIndex((x) => x.key === key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= q.length) return q;
+      const arr = [...q];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      return arr;
+    });
+  }
+  function cancelEditItem() { setEditingKey(null); }
+
+  // บันทึกกลับใบเดิม (?edit=) — PATCH ใบเดิม + เลือก Rev (guard ฝั่ง server: มีบิล active = 409 ให้ยกเลิกบิลก่อน)
+  async function saveBackToQuotation() {
+    if (!editingQ || quote.length === 0) return;
+    setSaveBusy(true);
+    setSaveErr("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = quote.map((it, i) => ({
+      name: it.name, detail: it.desc, qty: it.qty, unit_price: it.perUnit,
+      sort_order: i, category: it.groupLabel ?? "", product_id: it.prodId ?? "",
+      group_label: it.heading ?? "", // หัวข้อชุด (0076) — ส่งกลับครบ ไม่หาย (QA HIGH-3)
+      calc_recipe: it.recipe ?? null,
+    }));
+    // ค่าบริการที่ตั้งเพิ่มในหน้านี้ (svc panel) — ต่อท้าย (ค่าบริการเดิมของใบอยู่ใน quote แล้วตอนโหลด)
+    svcResult.lines.filter((l) => l.amount > 0).forEach((l) => {
+      items.push({ name: l.name, detail: "", qty: 1, unit_price: l.amount, sort_order: items.length, category: "ค่าบริการ", product_id: "", group_label: "", calc_recipe: null });
+    });
+    try {
+      const res = await fetch(`/api/quotations/${editingQ.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items, vat_rate: qVat, discount_pct: qDisc, wht_rate: qWht,
+          // ส่งบาท (ตัวตั้งจริง) ด้วยเสมอเมื่อมี — server ใช้บาทชนะ % (กัน drift · บัญชีสั่ง)
+          ...(qDiscAmt > 0 ? { discount_amt: qDiscAmt } : {}),
+          ...(revAction !== "none" ? { revision_action: revAction, revision_label: revLabel.trim() } : {}),
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok) { router.push(`/quotations/${editingQ.id}`); return; }
+      setSaveErr(json?.error ?? `บันทึกไม่สำเร็จ (${res.status})`);
+    } catch {
+      setSaveErr("เชื่อมต่อไม่สำเร็จ — ลองอีกครั้ง");
+    } finally {
+      setSaveBusy(false);
+    }
   }
 
   // ── เฟส B: ผูกลูกค้า + ส่งออกใบเสนอราคาจริง (ตรง flow เครื่องเดิม → /quotations/new?from=calc) ──
@@ -444,17 +631,19 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   function sendToQuotation() {
     if (quote.length === 0) return;
-    const items = quote.map((it) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = quote.map((it) => ({
       name: it.name,
       detail: it.desc,
       qty: it.qty,
       unit_price: it.perUnit,
       category: it.groupLabel ?? "",
       product_id: it.prodId ?? "",
+      calc_recipe: it.recipe ?? null, // สูตร (0093) → เก็บลงใบ เพื่อกลับมาแก้ในเครื่องคิดได้
     }));
     // ค่าบริการเพิ่มเติม → ต่อท้ายเป็นบรรทัดในใบเสนอราคา (เฉพาะที่ > 0)
     svcResult.lines.filter((l) => l.amount > 0).forEach((l) => {
-      items.push({ name: l.name, detail: "", qty: 1, unit_price: l.amount, category: "ค่าบริการ", product_id: "" });
+      items.push({ name: l.name, detail: "", qty: 1, unit_price: l.amount, category: "ค่าบริการ", product_id: "", calc_recipe: null });
     });
     const payload = {
       items,
@@ -485,7 +674,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   ];
   // ยอดก่อนส่วนลด (ไว้ sync ส่วนลด % ↔ บาท ในฟอร์ม)
   const previewSubtotal = previewItems.reduce((s, it) => s + (it.qty || 0) * (it.unitPrice || 0), 0);
-  const discountBaht = Math.round(previewSubtotal * (qDisc || 0)) / 100;
+  // บาทเป็นตัวตั้ง (qDiscAmt) — ถ้ายังไม่เคยตั้ง (0) ค่อย derive จาก % (พฤติกรรมเดิมของใบที่มีแต่ %)
+  const discountBaht = qDiscAmt > 0 ? qDiscAmt : Math.round(previewSubtotal * (qDisc || 0)) / 100;
   function editPreviewItem(key: number, patch: Partial<PreviewItem>) {
     if (key < 0) return; // ค่าบริการ (แก้ที่แผงค่าบริการ)
     setQuote((q) => q.map((x) => x.key === key ? {
@@ -499,6 +689,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   function removePreviewItem(key: number) {
     if (key < 0) return;
     setQuote((q) => q.filter((x) => x.key !== key));
+    // ลบข้อที่กำลังแก้อยู่ (✏️) → เลิกโหมดแก้ กันกด "อัปเดตข้อ" แล้วหายเงียบ (QA HIGH-1)
+    if (key === editingKey) setEditingKey(null);
   }
   const previewCustomer = {
     name: selectedCustomer?.name ?? "",
@@ -895,11 +1087,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               {/* 🏗️ ห้องกระจก (G6) — ประกอบด้าน/ผนัง/ฝ้า/หลังคา คิดราคาด้วย R4.0 จริงต่อชิ้น (RoomComposer คิดเองทั้งก้อน) */}
               {prod.composite && (
                 <RoomComposer
+                  key={roomSeed}
                   pb={pb}
                   mainColor={color}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
-                  onTotal={setRoomTotals}
+                  initial={roomInitial}
+                  onTotal={(t) => { setRoomTotals(t); roomStateRef.current = (t as any).state ?? roomStateRef.current; }}
                 />
               )}
 
@@ -1054,13 +1248,21 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 </p>
               )}
 
-              {/* เพิ่มลงรายการ */}
+              {/* เพิ่มลงรายการ / อัปเดตข้อที่กำลังแก้ (0093) */}
               <div className="mt-4 flex items-end gap-3 flex-wrap">
                 <Field label="จำนวน (ชุด)" value={sets} onChange={setSets} narrow />
                 <button onClick={addToQuote} disabled={!ok}
-                  className="press rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-60">
-                  + เพิ่มลงรายการ
+                  className={`press rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-brand disabled:opacity-60 ${editingKey != null ? "bg-amber-600" : "bg-brand"}`}>
+                  {editingKey != null
+                    ? `✓ อัปเดตข้อ ${Math.max(1, quote.findIndex((x) => x.key === editingKey) + 1)}`
+                    : "+ เพิ่มลงรายการ"}
                 </button>
+                {editingKey != null && (
+                  <button onClick={cancelEditItem}
+                    className="press rounded-xl px-3 py-2.5 text-sm font-semibold glass-soft text-ink-2">
+                    ยกเลิกแก้
+                  </button>
+                )}
                 {prod?.composite && (
                   <label className="flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer select-none">
                     <input type="checkbox" checked={g6HideSidePrice} onChange={(e) => setG6HideSidePrice(e.target.checked)} />
@@ -1077,17 +1279,109 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
         {/* ── ขวา: ฟอร์มใบเสนอราคาจริง (A4) พรีวิวสด + แก้ข้อความ inline ── */}
         <div className="w-full 2xl:w-[600px] 2xl:shrink-0 2xl:sticky 2xl:top-4 space-y-3">
+          {/* โหมดแก้ใบเดิม (?edit=) — แบนเนอร์ + ปุ่มบันทึกกลับใบเดิม (เลือก Rev) แทนการออกใบใหม่ */}
+          {editingQ && (
+            <div className="no-print rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              ✏️ กำลังแก้ใบ <b className="font-mono">{editingQ.code}</b>
+              {editingQ.revision_label ? ` (${editingQ.revision_label})` : ""} · สถานะ {editingQ.status === "draft" ? "ร่าง" : editingQ.status === "sent" ? "ส่งแล้ว" : editingQ.status}
+              — คลิก ✏️ ที่ข้อในรายการเพื่อโหลดสูตรกลับมาแก้ · เสร็จแล้วกด &quot;บันทึกกลับใบเดิม&quot;
+            </div>
+          )}
           <div className="flex items-center gap-2 flex-wrap no-print">
-            <button onClick={sendToQuotation} disabled={quote.length === 0}
-              className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50">
-              <Icon name="file" size={15} /> ออกใบเสนอราคา (บันทึกในระบบ) →
-            </button>
+            {editingQ ? (
+              <button onClick={() => { setSaveErr(""); setSaveOpen(true); }} disabled={quote.length === 0}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50">
+                <Icon name="file" size={15} /> บันทึกกลับ {editingQ.code} →
+              </button>
+            ) : (
+              <button onClick={sendToQuotation} disabled={quote.length === 0}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50">
+                <Icon name="file" size={15} /> ออกใบเสนอราคา (บันทึกในระบบ) →
+              </button>
+            )}
             <button onClick={printRealForm} disabled={quote.length === 0}
               className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2 disabled:opacity-50">
               <Icon name="printer" size={15} /> พิมพ์ฟอร์มนี้
             </button>
-            {quote.length > 0 && <button onClick={() => setQuote([])} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างรายการ</button>}
+            {quote.length > 0 && <button onClick={() => { setQuote([]); setEditingKey(null); }} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างรายการ</button>}
           </div>
+
+          {/* (0093) รายการข้อ — ✏️ แก้ (โหลดสูตรกลับ) · 📋 ก็อป · ▲▼ เลื่อน · ✕ ลบ */}
+          {quote.length > 0 && (
+            <Card className="p-3 no-print space-y-1.5">
+              <div className="text-xs font-semibold text-ink-3">
+                รายการ ({quote.length}) — ✏️ = โหลดสูตรกลับเข้าเครื่องคิดเพื่อแก้ · 📋 = ก็อปข้อ (งานคล้ายกัน)
+              </div>
+              {quote.map((it, i) => {
+                const hasRecipe = !!(it.recipe && (PRODUCTS as any)[it.recipe.prodId]);
+                const isEditing = editingKey === it.key;
+                return (
+                  <div key={it.key}
+                    className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs ${isEditing ? "bg-amber-50 border border-amber-300" : "bg-black/[0.03]"}`}>
+                    <span className="w-5 text-center text-ink-3 shrink-0">{i + 1}</span>
+                    <span className="flex-1 min-w-0 truncate font-medium text-ink-1" title={it.name}>
+                      {it.name}{isEditing ? " ← กำลังแก้" : ""}
+                    </span>
+                    <span className="tabular-nums text-ink-2 shrink-0">฿{baht(it.perUnit * it.qty)}</span>
+                    {hasRecipe ? (
+                      <button onClick={() => editQuoteItem(it)} title="แก้ข้อนี้ (โหลดขนาด/option ที่บันทึกไว้กลับเข้าเครื่องคิด)"
+                        className="press px-1.5 py-1 rounded hover:bg-white">✏️</button>
+                    ) : (
+                      <span title="ข้อนี้ไม่มีสูตรบันทึกไว้ (พิมพ์มือ/ใบเก่า/ค่าบริการ) — แก้ข้อความ/ราคาในฟอร์มด้านล่างได้"
+                        className="px-1.5 py-1 opacity-25 cursor-not-allowed">✏️</span>
+                    )}
+                    <button onClick={() => copyQuoteItem(it.key)} title="ก็อปข้อนี้ (พร้อมสูตร)" className="press px-1.5 py-1 rounded hover:bg-white">📋</button>
+                    <button onClick={() => moveQuoteItem(it.key, -1)} disabled={i === 0} title="เลื่อนขึ้น"
+                      className="press px-1 py-1 rounded hover:bg-white disabled:opacity-25">▲</button>
+                    <button onClick={() => moveQuoteItem(it.key, 1)} disabled={i === quote.length - 1} title="เลื่อนลง"
+                      className="press px-1 py-1 rounded hover:bg-white disabled:opacity-25">▼</button>
+                    <button onClick={() => { removePreviewItem(it.key); if (editingKey === it.key) setEditingKey(null); }} title="ลบข้อนี้"
+                      className="press px-1 py-1 rounded text-red-500 hover:bg-red-50">✕</button>
+                  </div>
+                );
+              })}
+            </Card>
+          )}
+
+          {/* dialog บันทึกกลับใบเดิม — เลือกว่าการแก้ครั้งนี้นับเป็น Rev ไหม (0093) */}
+          {saveOpen && editingQ && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true">
+              <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+                <h3 className="text-lg font-bold text-brand-dark">บันทึกกลับ {editingQ.code}</h3>
+                <div className="flex flex-col gap-1.5 text-sm">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="c40rev" checked={revAction === "none"} onChange={() => setRevAction("none")} />
+                    <span>บันทึกทับเฉยๆ (ไม่นับ Rev)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="c40rev" checked={revAction === "rev"} onChange={() => setRevAction("rev")} />
+                    <span>ขึ้น Rev ใหม่ <span className="text-xs text-gray-400">(ป้ายขึ้นบนใบ)</span></span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="c40rev" checked={revAction === "rev_keep"} onChange={() => setRevAction("rev_keep")} />
+                    <span>ขึ้น Rev ใหม่ + เก็บฉบับเดิมเป็นประวัติ</span>
+                  </label>
+                  {revAction !== "none" && (
+                    <label className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500 shrink-0">ป้าย Rev</span>
+                      <input type="text" value={revLabel} onChange={(e) => setRevLabel(e.target.value)} maxLength={40}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none" />
+                    </label>
+                  )}
+                </div>
+                {saveErr && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{saveErr}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => setSaveOpen(false)} disabled={saveBusy}
+                    className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50">ยกเลิก</button>
+                  <button onClick={saveBackToQuotation} disabled={saveBusy}
+                    className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 flex items-center justify-center gap-2">
+                    {saveBusy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+                    บันทึก
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* footer (VAT/ส่วนลด/หัก ณ ที่จ่าย) + ค่าบริการเพิ่มเติม */}
           <Card className="p-3 no-print space-y-3">
@@ -1104,14 +1398,23 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex items-center gap-1">
                     <input type="number" min={0} step={0.5} value={qDisc ? Number(qDisc.toFixed(2)) : ""} placeholder="0"
-                      onChange={(e) => setQDisc(Math.max(0, Number(e.target.value) || 0))}
+                      onChange={(e) => {
+                        const pct = Math.max(0, Number(e.target.value) || 0);
+                        setQDisc(pct);
+                        // ตั้งบาท (ตัวตั้ง) จาก % ที่กรอก ณ ยอดปัจจุบัน — จากนั้นบาทคงที่ ไม่ derive ซ้ำ (กัน drift)
+                        setQDiscAmt(Math.round(previewSubtotal * pct) / 100);
+                      }}
                       className="w-20 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
                     <span className="text-ink-3">%</span>
                   </div>
                   <span className="text-ink-3">=</span>
                   <div className="flex items-center gap-1">
                     <input type="number" min={0} step={100} value={discountBaht || ""} placeholder="0"
-                      onChange={(e) => { const b = Math.max(0, Number(e.target.value) || 0); setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 1000000) / 10000 : 0); }}
+                      onChange={(e) => {
+                        const b = Math.max(0, Number(e.target.value) || 0);
+                        setQDiscAmt(b); // บาทเป็นตัวตั้งจริง
+                        setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 1000000) / 10000 : 0);
+                      }}
                       className="w-28 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
                     <span className="text-ink-3">บาท</span>
                   </div>
@@ -1159,6 +1462,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               issueDate={issueDate}
               vatRate={qVat}
               discountPct={qDisc}
+              discountAmt={qDiscAmt > 0 ? qDiscAmt : undefined}
               whtRate={qWht}
             />
           </div>

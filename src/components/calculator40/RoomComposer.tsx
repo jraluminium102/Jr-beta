@@ -244,18 +244,21 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
   return t;
 }
 
-export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number };
+// state = สแนป state ทั้งห้อง (0093) — เก็บเป็น "สูตร" ในใบเสนอ แล้วโหลดกลับมาแก้ได้ (ผ่าน prop initial)
+export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number; state?: any };
 
 export default function RoomComposer({
-  pb, mainColor, mainGlass, profitPct, onTotal,
+  pb, mainColor, mainGlass, profitPct, onTotal, initial,
 }: {
   pb: any;
   mainColor: string;
   mainGlass: string;
   profitPct: number;
   onTotal?: (t: RoomTotals) => void;
+  initial?: any; // state ที่บันทึกไว้ (0093) — ตั้งต้นทุกช่องตามสูตรเดิม (parent remount ด้วย key ตอนโหลด)
 }) {
-  const [sides, setSides] = useState<Side[]>([freshGlassSide(), freshGlassSide()]);
+  const ini: any = initial || {};
+  const [sides, setSides] = useState<Side[]>(() => (Array.isArray(ini.sides) && ini.sides.length ? ini.sides : [freshGlassSide(), freshGlassSide()]));
   const [tab, setTab] = useState<number>(0); // 0..sides.length-1 = ด้าน, +1 สี/กระจก, +2 หลังคา/ฝ้า, +3 งานเสริม, +4 สรุป
   const [selKey, setSelKey] = useState<number | null>(null); // บานที่เลือกในรูปด้าน (ไฮไลต์ + เลื่อนไปการ์ดตั้งค่า)
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({}); // อ้างการ์ดแต่ละบาน เพื่อ scrollIntoView ตอนคลิกในรูปด้าน
@@ -265,51 +268,51 @@ export default function RoomComposer({
   }
 
   // สีอลู/กระจก แยกต่อด้าน (sideOvr) — key = side index, "" = ตามห้อง (ค่าใน pb.BAKE)
-  const [sideColorOvr, setSideColorOvr] = useState<Record<number, { color: string; glass: string }>>({});
+  const [sideColorOvr, setSideColorOvr] = useState<Record<number, { color: string; glass: string }>>(() => ini.sideColorOvr || {});
 
   // หลังคา
-  const [roofOn, setRoofOn] = useState(false);
-  const [roofW, setRoofW] = useState("4");
-  const [roofL, setRoofL] = useState("3");
-  const [roofMaterial, setRoofMaterial] = useState("ไวนิล");
-  const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>([]);
-  const [roofAddons, setRoofAddons] = useState<Record<string, any>>({});
+  const [roofOn, setRoofOn] = useState(!!ini.roofOn);
+  const [roofW, setRoofW] = useState(ini.roofW ?? "4");
+  const [roofL, setRoofL] = useState(ini.roofL ?? "3");
+  const [roofMaterial, setRoofMaterial] = useState(ini.roofMaterial ?? "ไวนิล");
+  const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>(() => (Array.isArray(ini.roofSegs) ? ini.roofSegs : []));
+  const [roofAddons, setRoofAddons] = useState<Record<string, any>>(() => ini.roofAddons || {});
 
   // ฝ้า
-  const [ceilOn, setCeilOn] = useState(false);
-  const [ceilType, setCeilType] = useState("smooth");
-  const [ceilW, setCeilW] = useState("4");
-  const [ceilL, setCeilL] = useState("3");
-  const [ceilInsul, setCeilInsul] = useState(false);
-  const [ceilPos, setCeilPos] = useState<"in" | "out">("in");
-  const [ceilDir, setCeilDir] = useState<"flat" | "slope">("flat");
+  const [ceilOn, setCeilOn] = useState(!!ini.ceilOn);
+  const [ceilType, setCeilType] = useState(ini.ceilType ?? "smooth");
+  const [ceilW, setCeilW] = useState(ini.ceilW ?? "4");
+  const [ceilL, setCeilL] = useState(ini.ceilL ?? "3");
+  const [ceilInsul, setCeilInsul] = useState(!!ini.ceilInsul);
+  const [ceilPos, setCeilPos] = useState<"in" | "out">(ini.ceilPos === "out" ? "out" : "in");
+  const [ceilDir, setCeilDir] = useState<"flat" | "slope">(ini.ceilDir === "slope" ? "slope" : "flat");
 
   // พื้น
-  const [floorOn, setFloorOn] = useState(false);
-  const [floorMat, setFloorMat] = useState<"smart" | "spc">("smart");
-  const [floorW, setFloorW] = useState("4");
-  const [floorL, setFloorL] = useState("3");
-  const [floorRate, setFloorRate] = useState("");
-  const [floorDisc, setFloorDisc] = useState("");
+  const [floorOn, setFloorOn] = useState(!!ini.floorOn);
+  const [floorMat, setFloorMat] = useState<"smart" | "spc">(ini.floorMat === "spc" ? "spc" : "smart");
+  const [floorW, setFloorW] = useState(ini.floorW ?? "4");
+  const [floorL, setFloorL] = useState(ini.floorL ?? "3");
+  const [floorRate, setFloorRate] = useState(ini.floorRate ?? "");
+  const [floorDisc, setFloorDisc] = useState(ini.floorDisc ?? "");
 
   // พัดลม
-  const [fanOn, setFanOn] = useState(false);
-  const [fanQty, setFanQty] = useState("1");
-  const [fanPrice, setFanPrice] = useState("2500");
+  const [fanOn, setFanOn] = useState(!!ini.fanOn);
+  const [fanQty, setFanQty] = useState(ini.fanQty ?? "1");
+  const [fanPrice, setFanPrice] = useState(ini.fanPrice ?? "2500");
 
   // งานบริการเพิ่มเติม (กรอกเอง)
-  const [services, setServices] = useState<{ desc: string; qty: string; rate: string }[]>([]);
+  const [services, setServices] = useState<{ desc: string; qty: string; rate: string }[]>(() => (Array.isArray(ini.services) ? ini.services : []));
 
   // รื้อ/ป้องกันหน้างาน
-  const [demoRoof, setDemoRoof] = useState("0");
-  const [demoFloor, setDemoFloor] = useState("0");
-  const [demoRail, setDemoRail] = useState(false);
-  const [demoRailLen, setDemoRailLen] = useState("0");
-  const [demoDoor, setDemoDoor] = useState("0");
-  const [protectOn, setProtectOn] = useState(false);
-  const [protectPts, setProtectPts] = useState("0");
+  const [demoRoof, setDemoRoof] = useState(ini.demoRoof ?? "0");
+  const [demoFloor, setDemoFloor] = useState(ini.demoFloor ?? "0");
+  const [demoRail, setDemoRail] = useState(!!ini.demoRail);
+  const [demoRailLen, setDemoRailLen] = useState(ini.demoRailLen ?? "0");
+  const [demoDoor, setDemoDoor] = useState(ini.demoDoor ?? "0");
+  const [protectOn, setProtectOn] = useState(!!ini.protectOn);
+  const [protectPts, setProtectPts] = useState(ini.protectPts ?? "0");
 
-  const [remarks, setRemarks] = useState("");
+  const [remarks, setRemarks] = useState(ini.remarks ?? "");
 
   const nSideTabs = sides.length;
   const TAB_COLOR = nSideTabs, TAB_ROOF = nSideTabs + 1, TAB_EXTRA = nSideTabs + 2, TAB_SUMMARY = nSideTabs + 3;
@@ -405,12 +408,24 @@ export default function RoomComposer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sides, roofOn, roofMaterial, roofAddons]);
 
+  // สแนป state ทั้งห้อง (0093) — parent เก็บเป็น "สูตร" ในใบเสนอ · โหลดกลับผ่าน prop initial
+  const savedState = {
+    sides, sideColorOvr,
+    roofOn, roofW, roofL, roofMaterial, roofSegs, roofAddons,
+    ceilOn, ceilType, ceilW, ceilL, ceilInsul, ceilPos, ceilDir,
+    floorOn, floorMat, floorW, floorL, floorRate, floorDisc,
+    fanOn, fanQty, fanPrice, services,
+    demoRoof, demoFloor, demoRail, demoRailLen, demoDoor, protectOn, protectPts, remarks,
+  };
+  const savedKey = JSON.stringify(savedState);
+
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
+  // dep รวม savedKey — state เปลี่ยนแม้ยอดเท่าเดิม (เช่น สลับตำแหน่ง/หมายเหตุ) สูตรก็ตามทัน
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, specLines, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal });
+    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, specLines, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal, state: savedState });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomTotal]);
+  }, [roomTotal, savedKey]);
 
   function addSide() {
     setSides((s) => [...s, freshGlassSide()]);

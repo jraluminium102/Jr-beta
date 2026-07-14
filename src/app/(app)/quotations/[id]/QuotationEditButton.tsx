@@ -6,7 +6,8 @@ import { baht } from "@/lib/money";
 import Icon from "@/components/Icon";
 import type { QuotationItem } from "@/lib/types";
 
-type EditRow = { name: string; detail: string; qty: number; unit_price: number; sort_order: number };
+// category/product_id/group_label/calc_recipe = passthrough (มองไม่เห็นใน dialog) — กันสูตร/หัวข้อชุดหายตอนแก้ข้อความ (0093/0076)
+type EditRow = { name: string; detail: string; qty: number; unit_price: number; sort_order: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown };
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -19,6 +20,8 @@ export default function QuotationEditButton({
   whtRate,
   note,
   items,
+  revisionNo = 0,
+  revisionLabel = "",
 }: {
   quotationId: number;
   vatRate: number;
@@ -28,14 +31,23 @@ export default function QuotationEditButton({
   whtRate: number;
   note: string;
   items: QuotationItem[];
+  revisionNo?: number;
+  revisionLabel?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<EditRow[]>(
     items.map((it) => ({
       name: it.name, detail: it.detail, qty: it.qty, unit_price: it.unit_price, sort_order: it.sort_order,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      category: (it as any).category ?? "", product_id: (it as any).product_id ?? "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      group_label: (it as any).group_label ?? "", calc_recipe: (it as any).calc_recipe ?? null,
     }))
   );
+  // ระบบ Rev (0093): เลือกได้ว่าการแก้ครั้งนี้ นับเป็น Rev ไหม + เก็บฉบับเดิมไหม · ป้ายพิมพ์เองได้
+  const [revAction, setRevAction] = useState<"none" | "rev" | "rev_keep">("none");
+  const [revLabel, setRevLabel] = useState(`Rev${String((revisionNo || 0) + 1).padStart(2, "0")}`);
   const [vat, setVat] = useState(vatRate);
   // ส่วนลดเก็บเป็น "จำนวนเงิน" (ตัวตั้งจริง) · % เป็น derived · + หัวข้อ
   const [discAmt, setDiscAmt] = useState(discountAmtProp || 0);
@@ -78,6 +90,8 @@ export default function QuotationEditButton({
         items: rows.map((r, i) => ({ ...r, sort_order: i })),
         vat_rate: vat, discount_amt: discountAmt, discount_pct: discPct, discount_label: discLabel.trim(),
         wht_rate: wht, note: noteVal,
+        // Rev (0093): none = แค่บันทึกทับ · rev/rev_keep = ขึ้น Rev ใหม่ (rev_keep เก็บฉบับเดิมเป็นประวัติ)
+        ...(revAction !== "none" ? { revision_action: revAction, revision_label: revLabel.trim() } : {}),
       }),
     });
     const json = await res.json();
@@ -218,6 +232,34 @@ export default function QuotationEditButton({
             <div className="flex justify-between"><span className="text-gray-500">หัก ณ ที่จ่าย {wht}%</span><span className="tabular-nums text-brand">-{baht(whtAmt)}</span></div>
             <div className="flex justify-between font-bold text-brand-dark"><span>ยอดรับสุทธิ</span><span className="tabular-nums">฿{baht(net)}</span></div>
           </>}
+        </div>
+
+        {/* Rev (0093) — เลือกว่าการแก้ครั้งนี้นับเป็น Rev ไหม · ป้ายพิมพ์เองได้ · พิมพ์ต่อท้ายเลขที่บนใบ */}
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2 text-sm">
+          <div className="text-xs font-semibold text-gray-600">
+            การแก้ครั้งนี้{revisionLabel ? ` (ปัจจุบัน: ${revisionLabel})` : ""}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="revact" checked={revAction === "none"} onChange={() => setRevAction("none")} />
+              <span>บันทึกทับเฉยๆ (ไม่นับ Rev)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="revact" checked={revAction === "rev"} onChange={() => setRevAction("rev")} />
+              <span>ขึ้น Rev ใหม่ <span className="text-xs text-gray-400">(ป้ายขึ้นบนใบ · ไม่เก็บฉบับเดิม)</span></span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="revact" checked={revAction === "rev_keep"} onChange={() => setRevAction("rev_keep")} />
+              <span>ขึ้น Rev ใหม่ + เก็บฉบับเดิมเป็นประวัติ</span>
+            </label>
+          </div>
+          {revAction !== "none" && (
+            <label className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 shrink-0">ป้าย Rev (แก้ได้)</span>
+              <input type="text" value={revLabel} onChange={(e) => setRevLabel(e.target.value)} maxLength={40}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus-visible:ring-2" />
+            </label>
+          )}
         </div>
 
         {error && (

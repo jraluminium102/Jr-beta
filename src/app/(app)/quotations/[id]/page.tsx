@@ -55,18 +55,27 @@ export default async function QuotationDetail({ params }: { params: { id: string
               <Icon name="banknote" size={16} /> สร้างใบวางบิล
             </Link>
           )}
-          {/* ปุ่มแก้ไขใบเสนอ — โชว์เฉพาะเมื่อไม่มีบิล active */}
+          {/* ปุ่มแก้ไขใบเสนอ — โชว์เฉพาะเมื่อไม่มีบิล active (วางบิลแล้ว = ยกเลิกบิลเดิมก่อน แล้วแก้/ออกบิลใหม่) */}
           {writable && !hasActiveBilling && q.status !== "cancelled" && (
-            <QuotationEditButton
-              quotationId={q.id}
-              vatRate={q.vat_rate}
-              discountPct={q.discount_pct}
-              discountAmt={q.discount_amt}
-              discountLabel={(q as { discount_label?: string }).discount_label ?? ""}
-              whtRate={q.wht_rate}
-              note={q.note}
-              items={items}
-            />
+            <>
+              {/* แก้ในเครื่องคิดราคา 4.0 (0093) — โหลดใบ+สูตรกลับเข้าเครื่องคิด แก้ขนาด/option แล้วบันทึกกลับใบเดิม */}
+              <Link href={`/calculator40?edit=${q.id}`}
+                className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+                <Icon name="calculator" size={16} /> แก้ในเครื่องคิดราคา
+              </Link>
+              <QuotationEditButton
+                quotationId={q.id}
+                vatRate={q.vat_rate}
+                discountPct={q.discount_pct}
+                discountAmt={q.discount_amt}
+                discountLabel={(q as { discount_label?: string }).discount_label ?? ""}
+                whtRate={q.wht_rate}
+                note={q.note}
+                items={items}
+                revisionNo={Number((q as { revision_no?: number }).revision_no ?? 0)}
+                revisionLabel={(q as { revision_label?: string }).revision_label ?? ""}
+              />
+            </>
           )}
           {writable && (
             <QuotationActions id={q.id} status={q.status} hasActiveBilling={hasActiveBilling} />
