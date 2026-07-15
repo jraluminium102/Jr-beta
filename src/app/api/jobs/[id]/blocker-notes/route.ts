@@ -28,6 +28,10 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
     .select("id, tag, note, source, created_at")
     .eq("job_id", params.id)
     .order("created_at", { ascending: true });
+  // ตารางยังไม่มี (0098 ยังไม่รัน) → บอกชัด ไม่โยน error ดิบให้คนงง
+  if (error && /job_blocker_notes|does not exist|42P01/i.test(error.message ?? "")) {
+    return err("ยังไม่ได้รัน migration 0098 (โน้ตหน้างานผลิต) — รัน supabase/migrations/0098_job_blocker_notes.sql ก่อนใช้งาน", 400);
+  }
   if (error) throw dbError(error);
   return ok(data ?? []);
 });
