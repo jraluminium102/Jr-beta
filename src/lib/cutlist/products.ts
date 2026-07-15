@@ -313,9 +313,118 @@ export const EURO_BIFOLD: CutSpec = {
   // กระจก: (ขวาง−13มม.=1.3ซม.… ตามไฟล์ (sashW−1.3)×(sashH−1.3) × N แผ่น · ฮาร์ดแวร์ HD-### LUT รอเฟสถัดไป
 };
 
+// ═══════════════════════ FUJI (ไฟล์ มม. → พอร์ต ซม. ÷10 · รหัส F####/B####) ═══════════════════════
+// ⑨ FUJI บานเลื่อนสลับ 2/3 ราง (JR_FUJI_บานเลื่อน.xlsx) — ราง = เลือกชีต · qty สเกลตามราง
+const FUJI_RC: Record<string, { p: number; sd: number; sa: number; hook: number }> = {
+  "2ราง": { p: 2, sd: 4.92, sa: 3.9, hook: 2 },
+  "3ราง": { p: 3, sd: 5.04, sa: 5.2, hook: 4 },
+};
+const frc = (o: CutInput) => FUJI_RC[o.rail] ?? FUJI_RC["2ราง"];
+const fSash = (o: CutInput) => (o.W - frc(o).sd) / frc(o).p + frc(o).sa; // ขวาง (ซม.)
+export const FUJI_SLIDE: CutSpec = {
+  id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 ราง)", stockLen: 640,
+  rails: ["2ราง", "3ราง"],
+  defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false },
+  profiles: [
+    { name: "เฟรมข้าง", code: "F7978", len: (o) => o.H, qty: () => 2 },
+    { name: "เฟรม บน-ล่าง", code: "F7976", len: (o) => o.W - 4.2, qty: () => 2 },
+    { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: () => 1 },
+    { name: "เสา", code: "F7980", len: (o) => o.H - 7.4, qty: (o) => 2 * frc(o).p },
+    { name: "ขวาง", code: "F7980", len: fSash, qty: (o) => 2 * frc(o).p, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: "F7919", len: (o) => o.H - 7.4 - 15.6, qty: (o) => 2 * frc(o).p },
+    { name: "คิ้ว ขวาง", code: "F7919", len: (o) => fSash(o) - 12.6, qty: (o) => 2 * frc(o).p, note: "อลูเดียวกับคิ้วตั้ง" },
+    { name: "ตบเกี่ยว", code: "F7983", len: (o) => o.H - 7.4, qty: (o) => frc(o).hook },
+    { name: "ยูข้าง", code: "F7986", len: (o) => o.H - 9.0, qty: () => 2 },
+    { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
+    { name: "ตบยูข้าง", code: "F7988", len: (o) => o.H - 9.0, qty: () => 2 },
+    { name: "ปิดตบเกี่ยว", code: "-", len: (o) => o.H - 7.4, qty: (o) => frc(o).hook, note: "Excel รวมสต็อกกับ F7988 — รอเจ้าของเคาะรหัส" },
+    { name: "ตบกันสาด#2", code: "-", len: (o) => o.W, qty: () => 1, note: "Excel รวมสต็อกกับ F7988 — รอเจ้าของเคาะ" },
+    { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
+  ],
+  hardware: [
+    { name: "ล้อ 27", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
+    { name: "มือจับ Align", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
+    { name: "ชุดล็อค", qty: () => 1, unit: "ชุด" },
+    { name: "น็อตประกอบ", qty: () => 4, unit: "ตัว" },
+  ],
+};
+
+// ⑩ FUJI บานเปิด/กระทุ้ง (casement · JR_FUJI_บานเปิด-บานกระทุ้ง.xlsx)
+export const FUJI_SWING: CutSpec = {
+  id: "fuji_swing", name: "FUJI บานเปิด (เปิด/กระทุ้ง)", stockLen: 640, rails: [],
+  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false },
+  profiles: [
+    { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
+    { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
+    { name: "เฟรม ล่าง", code: "F7939", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "เสา", code: "F7943", len: (o) => o.H - 3.7, qty: () => 2 },
+    { name: "ขวาง", code: "F7943", len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 2 },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - 12.0, qty: () => 2, note: "อลูเดียวกับคิ้วตั้ง" },
+  ],
+  hardware: [
+    { name: "บานพับ hyda", qty: () => 4, unit: "ตัว" },
+    { name: "มือจับ+ล็อค", qty: () => 1, unit: "ชุด" },
+    { name: "กลอน", qty: () => 1, unit: "ตัว" },
+    { name: "น็อตเฟรม", qty: () => 6, unit: "ตัว" },
+  ],
+};
+
+// ⑪ FUJI ประตูเดี่ยว มีธรณี (dropdown เสา 10/8 ซม.)
+export const FUJI_DOOR: CutSpec = {
+  id: "fuji_door", name: "FUJI ประตูเดี่ยว มีธรณี", stockLen: 640, rails: [],
+  opts: [{ key: "box", label: "เสา", choices: ["10 cm · 7864", "8 cm · 7943B"] }],
+  defaults: { W: 90, H: 210, N: 1, rail: "", honk: false, box: "10 cm · 7864" },
+  profiles: [
+    { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
+    { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "เฟรม ล่าง", code: "F7938", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "เสา", code: (o) => (o.box === "8 cm · 7943B" ? "7943B" : "7864"), len: (o) => o.H - 3.7, qty: () => 2 },
+    { name: "ขวาง", code: (o) => (o.box === "8 cm · 7943B" ? "7943B" : "7864"), len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - (o.box === "8 cm · 7943B" ? 16.0 : 20.0), qty: () => 2 },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - (o.box === "8 cm · 7943B" ? 12.0 : 16.0), qty: () => 2 },
+    { name: "ตบธรณี", code: "F7960", len: (o) => o.W - 5.0, qty: () => 1 },
+  ],
+  hardware: [
+    { name: "บานพับ hyda", qty: () => 4, unit: "ตัว" }, { name: "มือจับ+ล็อค", qty: () => 1, unit: "ชุด" },
+    { name: "กลอน", qty: () => 1, unit: "ตัว" }, { name: "น็อตเฟรม", qty: () => 8, unit: "ตัว" },
+  ],
+};
+
+// ⑫ FUJI บานติดตาย (Fix)
+export const FUJI_FIX: CutSpec = {
+  id: "fuji_fix", name: "FUJI บานติดตาย (Fix)", stockLen: 640, rails: [],
+  defaults: { W: 180, H: 200, N: 1, rail: "", honk: false },
+  profiles: [
+    { name: "เฟรมข้าง", code: "F7937", len: (o) => o.H, qty: () => 2 },
+    { name: "เฟรม บน", code: "F7937", len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
+    { name: "เฟรม-ล่าง", code: "F7858", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 9.0, qty: () => 2 },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 5.0, qty: () => 2, note: "อลูเดียวกับคิ้วตั้ง" },
+  ],
+};
+
+// ⑬ FUJI บานยก HUNG (JR_บานยก_ฟูจิ.xlsx sheet "JR คำนวณ" · ไฟล์เป็น ซม. อยู่แล้ว · รหัส B#### ผูกสต็อกได้)
+export const FUJI_HUNG: CutSpec = {
+  id: "fuji_hung", name: "FUJI บานยก (HUNG)", stockLen: 640, rails: [],
+  defaults: { W: 104.3, H: 288.8, N: 1, rail: "", honk: false },
+  profiles: [
+    { name: "เฟรมบน (HEAD)", code: "B28009", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "ตบปิดเฟรมบน (COVER HEAD)", code: "B28010", len: (o) => o.W - 9.4, qty: () => 1 },
+    { name: "กรอบบาน แนวนอน (SASH↔)", code: "B28011", len: (o) => o.W - 15.4, qty: () => 4 },
+    { name: "กรอบบาน แนวตั้ง (SASH↕)", code: "B28011", len: (o) => (o.H - 4.6) / 2 - 0.1, qty: () => 4, note: "อลูเดียวกับ SASH↔" },
+    { name: "คิ้วยึดเสาเกี่ยว (ADAPTOR)", code: "B28012", len: (o) => o.W - 13.2, qty: () => 2 },
+    { name: "เสาเกี่ยว (INTERLOCK)", code: "B28013", len: (o) => o.W - 11.2, qty: () => 2 },
+    { name: "เฟรมล่าง (SILL)", code: "B28014", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "เสาเสริมเฟรมข้าง (JAMB)", code: "B28015", len: (o) => o.H - 6.9, qty: () => 2 },
+    { name: "เฟรมข้าง (NARROW FRAME)", code: "B10004", len: (o) => o.H, qty: () => 2 },
+  ],
+};
+
 export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD,
+  FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));
