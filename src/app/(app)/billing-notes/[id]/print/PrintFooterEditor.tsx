@@ -72,28 +72,21 @@ export default function PrintFooterEditor({
         <tr><td className={cellL}>ราคาหลังหักส่วนลด</td><td className={cellR}>{baht(afterDiscount)}</td></tr>
         <tr><td className={cellL}>
           <label className="inline-flex items-center gap-1.5 cursor-pointer">
-            {/* โหมด display-only (footer_override) ล็อก VAT ไว้ — บัญชีสั่ง 15 ก.ค.69:
-                อัตรา VAT เป็นคุณสมบัติของ "ธุรกรรม" ไม่ใช่ของกระดาษที่พิมพ์ · override ไม่แตะยอด booked
-                ถ้าปล่อยให้แก้ = ใบที่ส่งลูกค้าโชว์ VAT ต่างจากใบกำกับที่จะออกตามมา (ขัดกันเอง ตรวจย้อนไม่ได้)
-                → แก้ VAT ได้ที่ "แก้ VAT / ส่วนลด" (คิดยอด+งวดใหม่จริง) หรือโหมดคิดยอดจริงเท่านั้น */}
-            <input type="checkbox" checked={vatOn} disabled={!real}
-              title={real ? undefined : "แก้ VAT ที่นี่ไม่ได้ (ช่องนี้แก้แค่หน้ากระดาษ ไม่เปลี่ยนยอดจริง) — ใช้ปุ่ม 'แก้ VAT / ส่วนลด' ที่หน้าใบวางบิลแทน"}
-              onChange={(e) => setVatOn(e.target.checked)} className="disabled:opacity-50" /> ภาษีมูลค่าเพิ่ม 7%
-            {!real && <span className="text-[10px] text-gray-400">(ล็อก)</span>}
+            {/* ⚠ เคยล็อกช่องนี้ไว้ (15 ก.ค.69) แล้ว "ถอยคืน" วันเดียวกัน — อย่าล็อกอีกโดยไม่ดูข้อมูลจริงก่อน:
+                ตรวจ production พบ override ต่องวด 7 อัน "6 อันตั้ง VAT/หัก ณ ที่จ่าย ต่างจากใบโดยตั้งใจ"
+                = วิธีทำงานจริงของร้าน (งวดค่าแรงติดตั้ง ตั้ง VAT 7 + หัก 3 บนใบที่ตัวใบเป็น No-VAT)
+                ตรงกับที่เจ้าของอธิบาย: "ดึงงวด 1 แล้วเลือกหัก 3 ก็หักทั้งยอดที่ดึง" = เลือกภาษีต่องวด
+                ปัญหาจริงไม่ใช่ "ห้ามตั้งต่องวด" แต่คือ "ตั้งแล้วใบเสร็จไม่รู้" → ต้องทำให้ค่านี้ booked + ใบเสร็จอ่าน (งานรอบหน้า) */}
+            <input type="checkbox" checked={vatOn} onChange={(e) => setVatOn(e.target.checked)} /> ภาษีมูลค่าเพิ่ม 7%
           </label>
         </td><td className={cellR}>{baht(t.vat_amt)}</td></tr>
         <tr className="font-semibold"><td className={cellL}>จำนวนเงินรวมทั้งสิ้น</td><td className={cellR}>{baht(total)}</td></tr>
         <tr><td className={cellL}>
-          {/* ล็อกเหมือน VAT ในโหมด display-only — server ignore อัตราจาก client อยู่แล้ว
-              ถ้าปล่อยให้เลือกได้ พรีวิวจะโชว์ -3,000 แล้วกดบันทึกไม่ขึ้น = "พรีวิวโกหก" ซึ่งเป็นรากของบั๊กทั้งเรื่องนี้ */}
+          {/* ⚠ ถอยการล็อกคืนเช่นกัน — ดูเหตุผลที่ช่อง VAT ข้างบน (งวดค่าแรงตั้งหัก 3% เองคือ flow จริง) */}
           <span className="inline-flex items-center gap-1">หักภาษี ณ ที่จ่าย
-            <select value={wr} disabled={!real}
-              title={real ? undefined : "แก้หัก ณ ที่จ่ายที่นี่ไม่ได้ (ช่องนี้แก้แค่หน้ากระดาษ ไม่เปลี่ยนยอดจริง) — ใช้ปุ่ม 'แก้ VAT / ส่วนลด' ที่หน้าใบวางบิลแทน"}
-              onChange={(e) => setWr(Number(e.target.value))}
-              className="border border-gray-300 rounded px-1 py-1 text-xs outline-none disabled:opacity-50">
+            <select value={wr} onChange={(e) => setWr(Number(e.target.value))} className="border border-gray-300 rounded px-1 py-1 text-xs outline-none">
               <option value={0}>ไม่หัก</option><option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
             </select>
-            {!real && <span className="text-[10px] text-gray-400">(ล็อก)</span>}
           </span>
         </td><td className={`${cellR} text-red-700`}>-{baht(t.wht_amt)}</td></tr>
         <tr className="no-print"><td colSpan={2} className="pt-2">

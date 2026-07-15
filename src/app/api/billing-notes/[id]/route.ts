@@ -51,20 +51,10 @@ export const PATCH = withRoute(
     if (body && typeof body === "object" && "footer_override" in (body as any)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw = (body as any).footer_override;
-      // ⚠ ห้ามเชื่อ client เรื่องอัตราภาษี (กฎเดียวกับ POST /api/receipts) — footer นี้ display-only ไม่แตะยอด booked
-      //   ปล่อยให้ตั้ง VAT ต่างจากใบ = ใบที่ส่งลูกค้าขัดกับใบกำกับที่ออกตามมา · UI ล็อกแล้วแต่ต้องบังคับที่ server ด้วย
-      // fail-closed: อ่านอัตราไม่ได้ = ไม่เขียน (ห้ามเดา 0 — เดาผิดคือ VAT หายจากใบที่ส่งลูกค้า)
-      let ovVat = 0, ovWht = 0;
-      if (raw != null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: cur } = await (ctx.supabase as any)
-          .from("billing_notes").select("vat_rate, wht_rate").eq("id", params.id).single();
-        if (!cur) return err("อ่านอัตราภาษีของใบวางบิลไม่ได้ — ลองใหม่", 500);
-        ovVat = Number(cur.vat_rate) || 0;
-        ovWht = Number(cur.wht_rate) || 0;
-      }
+      // ⚠ เคย ignore อัตราจาก client (15 ก.ค.69) → ถอยคืนวันเดียวกัน ด้วยเหตุผลเดียวกับ footer ต่องวด
+      //   (ตั้งภาษีต่างจากใบ = flow จริงของร้าน · ดู api/billing-installments/[id]/route.ts)
       const value =
-        raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, ovVat, ovWht);
+        raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, raw.vat_rate, raw.wht_rate);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: ovErr } = await (ctx.supabase as any)
         .from("billing_notes").update({ footer_override: value }).eq("id", params.id);
