@@ -447,7 +447,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                     )}
                   </div>
                   <textarea value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} rows={Math.max(4, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
-                    placeholder={"รายละเอียด (กด Enter เว้นบรรทัดได้ · แต่ละบรรทัด = บุลเล็ต)\n- ชุดล็อค + กุญแจ\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                    placeholder={"รายละเอียด (บรรทัด = บุลเล็ต · บรรทัดว่าง = เว้นวรรค · ขึ้นต้น # = หัวข้อหนาแดง)\n- ชุดล็อค + กุญแจ\n\n#หมายเหตุ\n- ราคารวมติดตั้ง\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว"}
                     className="w-full glass rounded-md px-3 py-2 text-sm mt-2 outline-none resize-y leading-relaxed" style={{ minHeight: "6rem" }} />
                   <div className="flex items-center gap-3 text-sm flex-wrap mt-2.5">
                     <label className="text-xs text-ink-3">จำนวน

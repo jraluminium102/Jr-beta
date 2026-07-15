@@ -10,6 +10,7 @@ import { baht, computeTotals } from "@/lib/money";
 import { bahtText } from "@/lib/baht-text";
 import { PrintLetterhead, DOC_COLORS, type CustomerSnapshot } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
+import { DetailLines } from "@/components/print/DetailLines";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/print/quote-constants";
 import Icon from "@/components/Icon";
 
@@ -104,17 +105,9 @@ export default function QuoteFormPreview({
                     {editable && !it.locked ? (
                       <textarea value={it.detail} onChange={(e) => onEdit(it.key, { detail: e.target.value })}
                         rows={Math.max(1, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
-                        placeholder="รายละเอียด (แต่ละบรรทัด = บุลเล็ต · 'รายละเอียดงาน' = หัวข้อ)"
+                        placeholder="รายละเอียด (บรรทัด = บุลเล็ต · บรรทัดว่าง = เว้นวรรค · ขึ้นต้น # = หัวข้อหนาแดง เช่น #หมายเหตุ)"
                         className={`${cellInput} resize-y mt-0.5`} style={{ fontSize: 12, lineHeight: 1.5, color: "#4b5563" }} />
-                    ) : (it.detail && (
-                      <div style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>
-                        {it.detail.split("\n").map((ln, li) => {
-                          const s = ln.trim(); if (!s) return null;
-                          if (s === "รายละเอียดงาน") return <div key={li} style={{ fontWeight: 600, color: "#b3151d", marginTop: 3 }}>{s}</div>;
-                          return <div key={li} style={{ color: "#4b5563", marginLeft: s.startsWith("-") ? 8 : 0 }}>{s}</div>;
-                        })}
-                      </div>
-                    ))}
+                    ) : (it.detail && <DetailLines text={it.detail} />)}
                   </td>
                   <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
                     {editable && !it.locked ? (

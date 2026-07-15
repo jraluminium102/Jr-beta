@@ -1,0 +1,108 @@
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth";
+import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
+
+export const dynamic = "force-dynamic";
+
+// สิทธิ์เขียนใบตัด = ชุดเดียวกับสโตร์ (ตรง RLS 0094)
+const CUT_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Sb = { from: (t: string) => any };
+
+// GET /api/cutlists → รายการใบตัด (ล่าสุดก่อน) + งาน/ลูกค้า
+export async function GET() {
+  const profile = await getProfile();
+  if (!profile) return UNAUTHORIZED();
+  const sb = createClient() as unknown as Sb;
+  const { data, error } = await sb
+    .from("cutlists")
+    .select("id, code, name, status, job_id, created_at, stock_cut_at, jobs:job_id(job_code, customer_name)")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) return fail(error.message, 500);
+  return ok(data);
+}
+
+// POST /api/cutlists → สร้างใบตัด
+//   { job_id?, name?, from_job?: true }
+//   from_job: ดึงข้อจากใบเสนอล่าสุดของงาน (calc_recipe 0093) → map เป็นข้อใบตัดอัตโนมัติ
+//   ข้อที่ map ไม่ได้ (รุ่นยังไม่มีสูตรตัด/พิมพ์มือ/G6) → ข้าม + ส่งชื่อกลับใน meta.skipped
+export async function POST(req: Request) {
+  const profile = await getProfile();
+  if (!profile) return UNAUTHORIZED();
+  if (!CUT_WRITE.includes(profile.role)) return FORBIDDEN();
+
+  const body = await req.json().catch(() => null);
+  if (!body) return fail("payload ไม่ถูกต้อง");
+  const jobId = body.job_id ? String(body.job_id) : null;
+
+  const sb = createClient() as unknown as Sb;
+
+  // ชื่อใบตัดตั้งต้น: ชื่อลูกค้าจากงาน (ถ้ามี)
+  let jobName = "";
+  if (jobId) {
+    const { data: j } = await sb.from("jobs").select("customer_name, job_code").eq("id", jobId).maybeSingle();
+    if (!j) return fail("ไม่พบงาน", 404);
+    jobName = `${j.customer_name ?? ""}${j.job_code ? ` (${j.job_code})` : ""}`;
+  }
+
+  // from_job: ดึงข้อจากใบเสนอล่าสุด (ไม่ cancelled) ของงาน
+  type NewItem = { spec_id: string; label: string; input: Record<string, unknown>; sets: number; sort_order: number };
+  const items: NewItem[] = [];
+  const skipped: string[] = [];
+  if (body.from_job && jobId) {
+    const { data: q } = await sb
+      .from("quotations")
+      .select("id, code, quotation_items(*)")
+      .eq("job_id", jobId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const qItems = ((q?.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order);
+    for (const it of qItems) {
+      if ((it.category ?? "") === "ค่าบริการ") continue; // ค่าบริการไม่ใช่งานตัด
+      const m = cutInputFromRecipe(it.calc_recipe);
+      if (m) {
+        items.push({
+          spec_id: m.spec_id,
+          label: String(it.name ?? "").slice(0, 200),
+          input: m.input as Record<string, unknown>,
+          // sets = จำนวนชุดในใบเสนอ × multiplier (เช่น Velora: ใบตัด 1 บาน/ชุด สั่ง N บาน → ×N — QA HIGH)
+          sets: Math.max(1, Math.round((Number(it.qty) || 1) * (m.multiplier ?? 1))),
+          sort_order: items.length,
+        });
+      } else {
+        skipped.push(String(it.name ?? "(ไม่มีชื่อ)"));
+      }
+    }
+  }
+
+  const { data: cl, error: clErr } = await sb
+    .from("cutlists")
+    .insert({
+      job_id: jobId,
+      name: String(body.name ?? "").trim() || (jobName ? `ใบตัด — ${jobName}` : "ใบตัดใหม่"),
+      note: "",
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
+  if (clErr || !cl) return fail("สร้างใบตัดไม่สำเร็จ: " + (clErr?.message ?? ""), 500);
+
+  // code = CL-<id> (ใช้เป็น ref ตอนตัดสต็อก)
+  await sb.from("cutlists").update({ code: `CL-${cl.id}` }).eq("id", cl.id);
+
+  if (items.length) {
+    const rows = items.map((it) => ({ ...it, cutlist_id: cl.id }));
+    const { error: iErr } = await sb.from("cutlist_items").insert(rows);
+    if (iErr) {
+      await sb.from("cutlists").delete().eq("id", cl.id);
+      return fail("บันทึกข้อใบตัดไม่สำเร็จ: " + iErr.message, 500);
+    }
+  }
+
+  return ok({ id: cl.id, code: `CL-${cl.id}`, item_count: items.length, skipped }, 201);
+}

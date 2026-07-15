@@ -150,7 +150,7 @@ export default function QuotationEditButton({
               </div>
               <textarea value={row.detail} onChange={(e) => updateRow(idx, "detail", e.target.value)}
                 rows={Math.max(6, (row.detail.match(/\n/g)?.length ?? 0) + 1)}
-                placeholder={"รายละเอียด (กด Enter เว้นบรรทัดได้ · แต่ละบรรทัด = บุลเล็ต)\n- ด้าน A: บานเลื่อนเปิดคู่กลาง + มุ้ง\n- ด้าน B: กระจกติดตาย\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว\n- กระจก: เขียว 6มม."}
+                placeholder={"รายละเอียด (บรรทัด = บุลเล็ต · บรรทัดว่าง = เว้นวรรค · ขึ้นต้น # = หัวข้อหนาแดง เช่น #หมายเหตุ)\n- ด้าน A: บานเลื่อนเปิดคู่กลาง + มุ้ง\n\n#หมายเหตุ\n- ราคารวมติดตั้ง\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว"}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2 resize-y leading-relaxed"
                 style={{ minHeight: "9rem" }} />
               <div className="flex items-center gap-3 flex-wrap">

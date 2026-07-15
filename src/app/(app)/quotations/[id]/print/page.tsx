@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
+import { DetailLines } from "@/components/print/DetailLines";
 import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
@@ -133,16 +134,8 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
                 </td>
                 <td className="p-2 border border-gray-200 align-top">
                   <div className="font-medium">{it.name}</div>
-                  {it.detail && (
-                    <div style={{ fontSize: 12, lineHeight: 1.5, marginTop: 2 }}>
-                      {it.detail.split("\n").map((ln, li) => {
-                        const t = ln.trim();
-                        if (!t) return null;
-                        if (t === "รายละเอียดงาน") return <div key={li} style={{ fontWeight: 600, color: "#b3151d", marginTop: 3 }}>{t}</div>;
-                        return <div key={li} style={{ color: "#4b5563", marginLeft: t.startsWith("-") ? 8 : 0 }}>{t}</div>;
-                      })}
-                    </div>
-                  )}
+                  {/* บรรทัดว่าง = เว้นวรรค · #หัวข้อ = หนา+แดง (กติกากลาง DetailLines) */}
+                  {it.detail && <DetailLines text={it.detail} />}
                 </td>
                 <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
                   {baht(it.qty)}

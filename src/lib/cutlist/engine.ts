@@ -13,10 +13,21 @@
 export type CutInput = {
   W: number;      // กว้างช่อง (ซม.)
   H: number;      // สูงช่อง (ซม.)
-  N: number;      // จำนวนบาน
+  N: number;      // จำนวนบาน (บานติดตาย = จำนวนช่อง)
   rail: string;   // ราง (เช่น "3รางเสียบ" / "รางเตี้ย7มม")
-  honk: boolean;  // มีโหนกไหม
+  honk: boolean;  // มีโหนกไหม (SMS)
+  // ตัวเลือกเฉพาะรุ่น (optional — รุ่นไหนใช้ประกาศผ่าน spec.opts ให้ UI render เอง)
+  fit?: string;      // SlimLux: "ยัดในช่อง" | "แปะนอก"
+  sashMode?: string; // SlimLux: "อิสระ" | "ลากจูง" | "เปิดคู่กลาง"
+  beam?: string;     // SlimLux: คาน "1×2".."4×4"
+  handle?: string;   // SlimLux: "X-J" | "ไม่มี"
+  box?: string;      // บานติดตาย: ชนิดกล่อง
+  L?: number;        // เฟี้ยมยูโร: จำนวนบานพับซ้าย (ที่เหลือ = ขวา)
+  glass?: number;    // ความหนากระจก (มม.) — เลือกรหัสคิ้วตบกระจก (เฟี้ยม)
 };
+
+// ตัวเลือกต่อรุ่น — UI render อัตโนมัติ (นอกเหนือจาก W/H/N/ราง/โหนก) · type "number" = ช่องตัวเลข
+export type CutOpt = { key: string; label: string; choices?: string[]; type?: "number" };
 
 // โปรไฟล์ 1 เส้นในใบตัด — code/len/qty เป็นฟังก์ชันของอินพุต (พอร์ตสูตร Excel)
 export type CutProfile = {
@@ -32,7 +43,8 @@ export type CutSpec = {
   name: string;
   stockLen: number;              // ความยาวเส้นสต็อก (ซม.)
   defaults: CutInput;
-  rails: string[];               // ตัวเลือกราง
+  rails: string[];               // ตัวเลือกราง ([] = รุ่นนี้ไม่มีราง)
+  opts?: CutOpt[];               // ตัวเลือกเฉพาะรุ่น (dropdown เพิ่มเติม)
   profiles: CutProfile[];
   hardware?: { name: string; qty: (o: CutInput) => number; unit?: string }[];
 };
@@ -70,7 +82,8 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
   const barsByCode = [...byCode.entries()]
     .map(([code, totalLenCm]) => ({ code, totalLenCm: round1(totalLenCm), bars: ceil(totalLenCm / spec.stockLen) }))
     .sort((a, b) => a.code.localeCompare(b.code));
-  const hardware = (spec.hardware ?? []).map((h) => ({ name: h.name, qty: Math.max(0, Math.round(h.qty(o))) * n, unit: h.unit ?? "ชิ้น" }));
+  // ฮาร์ดแวร์: จำนวนทศนิยมได้ (เช่น เทปหนุนกระจกเป็นเมตร 7.0) — ปัด 1 ตำแหน่ง ไม่ใช่จำนวนเต็ม
+  const hardware = (spec.hardware ?? []).map((h) => ({ name: h.name, qty: round1(Math.max(0, h.qty(o)) * n), unit: h.unit ?? "ชิ้น" }));
   const totalBars = rows.reduce((s, r) => s + r.bars, 0);
   return { rows, barsByCode, hardware, totalBars };
 }
