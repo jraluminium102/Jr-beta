@@ -13,6 +13,35 @@
 
 export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number };
 
+/**
+ * ดึง stock_items "ทั้งหมด" แบบแบ่งหน้า — PostgREST/Supabase คืนสูงสุด ~1,000 แถว/ครั้ง
+ * สต็อกจริงมี ~1,800 แถว → ดึงครั้งเดียวได้ไม่ครบ รหัสที่อยู่หลังแถว 1,000 (เช่น กล่อง 2"x4")
+ * จะกลายเป็น "ไม่มีในสต็อก" บนจอ และ "ถูกข้ามตอนหักสต็อก" เงียบๆ (เจอจริงบน production 16 ก.ค.69)
+ * ใช้ตัวนี้ทุกที่ที่ต้องจับคู่รหัสใบตัด ↔ สต็อก (หน้า editor + cut-stock)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchAllStockRows<T = any>(
+  // supabase client (typed หลวมเพราะโปรเจกต์ยังไม่ gen types ตารางนี้)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sb: { from: (t: string) => any },
+  columns: string,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  for (let fromIdx = 0; ; fromIdx += PAGE) {
+    const { data, error } = await sb
+      .from("stock_items")
+      .select(columns)
+      .eq("is_active", true)
+      .order("id", { ascending: true }) // ต้อง order คงที่ ไม่งั้น range เลื่อนแล้วแถวซ้ำ/หาย
+      .range(fromIdx, fromIdx + PAGE - 1);
+    if (error || !data) break; // ได้เท่าที่ได้ — ดีกว่าล้มทั้งหน้า (พฤติกรรมเดิมก็ไม่เช็ค error)
+    all.push(...(data as T[]));
+    if (data.length < PAGE) break;
+  }
+  return all;
+}
+
 const U = (s: unknown) => String(s ?? "").trim().toUpperCase();
 // เทียบสีแบบไม่สนช่องว่าง — "อื่น ๆ" = "อื่นๆ" · "Aztec gray" ก็ยังเทียบติด
 const normColor = (s: unknown) => String(s ?? "").replace(/\s+/g, "").trim();

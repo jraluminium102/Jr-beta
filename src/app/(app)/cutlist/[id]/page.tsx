@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import CutlistEditorClient from "@/components/cutlist/CutlistEditorClient";
-import { stockColorOptions, type StockLite } from "@/lib/cutlist/stock-match";
+import { stockColorOptions, fetchAllStockRows, type StockLite } from "@/lib/cutlist/stock-match";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +14,12 @@ export default async function CutlistEditorPage({ params }: { params: { id: stri
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as unknown as { from: (t: string) => any };
 
-  const { data: stock } = await sb
-    .from("stock_items")
-    .select("sku, name, qty_on_hand, image_url")
-    .eq("is_active", true);
-
-  const stockList: StockLite[] = ((stock ?? []) as { sku: string | null; name: string | null; qty_on_hand: number | null; image_url: string | null }[])
+  // ⚠ ต้องดึงแบบแบ่งหน้า (fetchAllStockRows) — สต็อก ~1,800 แถว เกิน cap 1,000/ครั้งของ Supabase
+  //   ดึงครั้งเดียว = รหัสหลังแถว 1,000 หายเงียบ โชว์ "ไม่มีในสต็อก" ทั้งที่มีจริง
+  const stock = await fetchAllStockRows<{ sku: string | null; name: string | null; qty_on_hand: number | null; image_url: string | null }>(
+    sb, "sku, name, qty_on_hand, image_url",
+  );
+  const stockList: StockLite[] = stock
     .map((r) => ({ sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "" }));
   const colorOptions = stockColorOptions(stockList);
 
