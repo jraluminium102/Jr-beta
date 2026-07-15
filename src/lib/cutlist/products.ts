@@ -495,12 +495,12 @@ const boxCode = (size: string) => {
 };
 
 // ⑮ PC Door (JR_PCDoor) — บานเปิดเมืองทอง + บานเลื่อน sms · N มาจาก split
-// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน — มีชิ้น sms ที่ปกติ 640)
+// เส้นสต็อก 640 (6.4 ม.) — เจ้าของยืนยัน (ไฟล์ไม่มีคอลัมน์เส้น · รุ่นนี้มีชิ้น sms)
 const pcBeamCut = (o: CutInput) => (o.beam === "2×4" ? 5 : 2.5);
 const pcN = (o: CutInput) => (o.split === "แบ่ง 4" ? 4 : 2);
 const pcNoSill = (o: CutInput) => o.sill === "ไม่มีธรณี";
 export const PC_DOOR: CutSpec = {
-  id: "pc_door", name: "ประตู PC Door (เปิดเมืองทอง + เลื่อน sms)", stockLen: 600, rails: [],
+  id: "pc_door", name: "ประตู PC Door (เปิดเมืองทอง + เลื่อน sms)", stockLen: 640, rails: [],
   opts: [
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×4", "2×4"] },
     { key: "split", label: "รูปแบบบาน", choices: ["แบ่ง 2", "แบ่ง 4"] },
@@ -637,7 +637,8 @@ export const SOLID_DOOR: CutSpec = {
 };
 
 // ⑱ บานเปิดครอบวงกบไม้ (JR_บานเปิดครอบวงกบไม้) — กล่องเรียบ/บังใบล้วน · N ∈ {1,2}
-// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน) · ไฟล์ไม่ระบุ "ขนาดกล่องเรียบ" → ยังไม่ผูกสต็อก
+// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน)
+// กล่องครอบวงกบ = กล่องเรียบ 4"x4" (เจ้าของยืนยัน) — สต็อกมี 1.6"x4" กับไม่ระบุขนาดด้วย ต้องใส่ขนาดเต็มกันจับผิดตัว
 const wDoor1 = (o: CutInput) => (o.N === 1 ? o.W : o.doorSplit === "เท่ากัน" ? o.W / 2 : (o.motherW ?? o.W));
 const wDoor2 = (o: CutInput) => (o.N === 2 ? (o.doorSplit === "เท่ากัน" ? o.W / 2 : o.W - (o.motherW ?? 0)) : 0);
 const wSill = (o: CutInput) => o.sill === "มีธรณี";
@@ -650,8 +651,8 @@ export const WOODJAMB_SWING: CutSpec = {
   ],
   defaults: { W: 130, H: 210, N: 2, rail: "", honk: false, doorSplit: "แม่ลูก", motherW: 80, sill: "มีธรณี" },
   profiles: [
-    { name: "กล่องเรียบ แนวตั้ง (ครอบข้าง)", code: "-", len: (o) => o.H - 4.3, qty: () => 2 },
-    { name: "กล่องเรียบ แนวนอน (ครอบบน)", code: "-", len: (o) => o.W - 0.7, qty: () => 1 },
+    { name: 'กล่องเรียบ 4"x4" แนวตั้ง (ครอบข้าง)', code: 'กล่องเรียบ 4"x4"', len: (o) => o.H - 4.3, qty: () => 2 },
+    { name: 'กล่องเรียบ 4"x4" แนวนอน (ครอบบน)', code: 'กล่องเรียบ 4"x4"', len: (o) => o.W - 0.7, qty: () => 1 },
     { name: "บังใบกล่อง แนวนอน (บน)", code: "-", len: (o) => o.W - 0.4, qty: () => 1, note: "45° 2ฝั่ง" },
     { name: "บังใบกล่อง แนวตั้ง (ข้าง)", code: "-", len: (o) => o.H - 0.2 - (wSill(o) ? 4.5 : 0), qty: () => 2, note: "45° 1ฝั่ง" },
     { name: "ธรณี", code: "-", len: (o) => o.W - 0.4, qty: (o) => (wSill(o) ? 1 : 0) },

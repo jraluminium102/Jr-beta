@@ -14,26 +14,32 @@
 export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number };
 
 const U = (s: unknown) => String(s ?? "").trim().toUpperCase();
-// แตกข้อความเป็น segment (คั่นด้วย - เว้นวรรค / , วงเล็บ) เพื่อเทียบ "สี" แบบทั้งคำ (กัน "ดำ" ไปแมตช์ "ดำซาฮาร่า")
-const SEG = (s: unknown) => String(s ?? "").split(/[-\s/,()+]+/).filter(Boolean);
+// เทียบสีแบบไม่สนช่องว่าง — "อื่น ๆ" = "อื่นๆ" · "Aztec gray" ก็ยังเทียบติด
+const normColor = (s: unknown) => String(s ?? "").replace(/\s+/g, "").trim();
 
-// token สีที่ "รู้จัก" (curated) — ใช้กรองว่า segment ไหนคือ "สี" · เรียงตามที่อยากให้โชว์
-// หมายเหตุ: เป็นแค่ตัวกรอง segment — dropdown โชว์เฉพาะสีที่ "โผล่จริง" ในสต็อก (ตัด token ที่ไม่มีของทิ้ง)
+// สีจริงในสต็อก (หมวดอลูมิเนียม 1,165 แถว — นับจากข้อมูลจริง ไม่ได้เดา) เรียงตามจำนวนของ
+// ⚠ ต้องสะกดตรงสต็อกเป๊ะ: "ไวท์โอ็ค" (ไม่ใช่ ไวท์โอ๊ค) · "ลายไม้สักทอง" เป็นคำเดียว · "Aztec gray" มีเว้นวรรค
 export const KNOWN_ALU_COLORS = [
-  "ดำ", "อบขาว", "ขาว", "เทาซาฮาร่า", "ดำซาฮาร่า", "ซาฮาร่า", "มิว",
-  "สีชุบ", "ชุบ", "เงิน", "สักทอง", "มะฮอกกานี", "ไวท์โอ๊ค", "โอ๊ค", "วอลนัท", "ลายไม้",
+  "อบขาว", "ดำ", "เทาซาฮาร่า", "ลายไม้สักทอง", "Aztec gray", "ไวท์โอ็ค", "มะฮอกกานี", "มิว", "อื่นๆ",
 ];
+const KNOWN_NORM = new Set(KNOWN_ALU_COLORS.map(normColor));
 
-// รายการสต็อกนี้ "มีสี" นี้ไหม — เทียบทั้งคำ (segment) ทั้งใน ชื่อ และ sku (บางรหัสเก็บสีใน sku)
-function stockHasColor(s: StockLite, color: string): boolean {
-  if (!color) return true;
-  return SEG(s.name).includes(color) || SEG(s.sku).includes(color);
+/**
+ * สีของรายการสต็อก — ชื่อจริงรูปแบบ "รหัส-ชื่อ-สี" เช่น "F7935-คิ้วกรอบบาน-อบขาว"
+ * → สี = ข้อความหลัง "-" ตัวสุดท้าย (ถ้าเป็นสีที่รู้จัก) · ไม่ใช่สี = "" (ของกลาง ใช้ได้ทุกสี)
+ */
+export function stockColorOf(s: StockLite): string {
+  for (const src of [s.name, s.sku]) {
+    const t = String(src ?? "");
+    const i = t.lastIndexOf("-");
+    if (i < 0) continue;
+    const c = t.slice(i + 1).trim();
+    if (KNOWN_NORM.has(normColor(c))) return c;
+  }
+  return "";
 }
-// รายการสต็อก "ไม่ระบุสีเลย" (ทั้งชื่อ+sku ไม่มี segment ไหนเป็นสีที่รู้จัก) — ถือเป็นตัวใช้ได้ทุกสี (ของกลาง)
-function isColorAgnostic(s: StockLite): boolean {
-  const segs = [...SEG(s.name), ...SEG(s.sku)];
-  return !segs.some((x) => KNOWN_ALU_COLORS.includes(x));
-}
+const stockHasColor = (s: StockLite, color: string) => !color || normColor(stockColorOf(s)) === normColor(color);
+const isColorAgnostic = (s: StockLite) => stockColorOf(s) === "";
 
 /**
  * จับคู่ (รหัส, สี) → รายการสต็อกตัวเดียว (null = ไม่มีในสต็อก / ไม่มีสีนั้น)
@@ -59,31 +65,31 @@ export function resolveStock(stock: StockLite[], code: string, color?: string): 
   return cand[0];
 }
 
-// รหัสนี้ในสต็อกมี "หลายสี" ไหม (candidate ที่ระบุสี ≥ 2 สีต่างกัน) — ไว้เตือนตอนไม่ได้เลือกสี
+// รหัสนี้ในสต็อกมี "หลายสี" ไหม (≥ 2 สีต่างกัน) — ไว้เตือนตอนไม่ได้เลือกสี
 export function hasMultipleColors(stock: StockLite[], code: string): boolean {
   const uc = U(code);
   if (!uc || uc === "-") return false;
   const cand = stock.filter((s) => U(s.sku) === uc || U(s.name).includes(uc));
   const colors = new Set<string>();
-  for (const s of cand) for (const seg of [...SEG(s.name), ...SEG(s.sku)]) if (KNOWN_ALU_COLORS.includes(seg)) colors.add(seg);
+  for (const s of cand) { const c = stockColorOf(s); if (c) colors.add(normColor(c)); }
   return colors.size >= 2;
 }
 
-// สีที่ "มีจริง" ในสต็อก (ไว้ทำ dropdown) — token ที่โผล่เป็น segment ใน ชื่อ หรือ sku ของรายการอลู
+// สีที่ "มีจริง" ในสต็อก (ไว้ทำ dropdown) — อ่านจากของจริง · เรียงตามลำดับใน KNOWN_ALU_COLORS
 export function stockColorOptions(stock: StockLite[]): string[] {
   const found = new Set<string>();
-  for (const s of stock) for (const seg of [...SEG(s.name), ...SEG(s.sku)]) if (KNOWN_ALU_COLORS.includes(seg)) found.add(seg);
-  return KNOWN_ALU_COLORS.filter((c) => found.has(c));
+  for (const s of stock) { const c = stockColorOf(s); if (c) found.add(normColor(c)); }
+  return KNOWN_ALU_COLORS.filter((c) => found.has(normColor(c)));
 }
 
-// map สีเครื่องคิด (key/label ใน alu-colors) → token สต็อก แบบ best-effort (ตั้งค่าเริ่ม dropdown เท่านั้น · ผู้ใช้ปรับได้)
+// map สีเครื่องคิด (key/label ใน alu-colors) → สีในสต็อก แบบ best-effort (ตั้งค่าเริ่มเท่านั้น · ผู้ใช้ปรับได้)
+// สีที่สต็อกไม่มี (สีชุบ / ดำซาฮาร่า / อบพิเศษ) → เว้นว่าง ให้ผู้ใช้เลือกเอง (ไม่เดา)
 const CALC_COLOR_TO_STOCK: Record<string, string> = {
   white: "อบขาว", อบขาว: "อบขาว",
   black: "ดำ", อบดำ: "ดำ",
   sahara: "เทาซาฮาร่า", เทาซาฮาร่า: "เทาซาฮาร่า",
-  sahara_black: "ดำซาฮาร่า", ดำซาฮาร่า: "ดำซาฮาร่า",
-  plated: "สีชุบ", สีชุบ: "สีชุบ",
-  wood_teak: "สักทอง", wood_maho: "มะฮอกกานี", wood_whiteoak: "ไวท์โอ๊ค",
+  aztec: "Aztec gray",
+  wood_teak: "ลายไม้สักทอง", wood_maho: "มะฮอกกานี", wood_whiteoak: "ไวท์โอ็ค",
 };
 export function calcColorToStock(calcColor: unknown): string {
   const k = String(calcColor ?? "").trim();
