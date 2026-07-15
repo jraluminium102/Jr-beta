@@ -78,6 +78,39 @@ export interface InstallAssignment {
   jobs?: any;          // joined job (code/customer_name/customer_area)
 }
 
+// จัดทีมช่างรายวัน (0097) — ลอกจากเว็บ SetTeamApp ที่เจ้าของใช้จริง
+// ต่างจาก InstallTeam/InstallAssignment (0086, ปฏิทินรายเดือน "1 งาน→หลายวัน"):
+// อันนี้คือ "1 วัน→หลายทีม→หลายสถานที่/ทีม" ใช้จัดหน้างานละเอียด + ปริ้นฟอร์มให้ช่าง
+export interface CrewPerson {
+  id: string;
+  name: string;
+  is_leader: boolean;
+  is_member: boolean;
+  is_active: boolean;
+  sort_order: number;
+}
+export interface CrewTeamSite {
+  id: string;
+  team_id: string;
+  site_no: number;             // 1-4
+  job_id: string | null;       // ผูกงานจากระบบ (ไม่บังคับ — พิมพ์เองได้ เช่น "โรงงาน","ลากลับบ้าน")
+  customer_name: string;
+  appointment_time: string;    // เวลานัด (ข้อความสั้น พิมพ์อิสระ)
+  address: string | null;      // snapshot ที่อยู่หน้างาน (ดึงจากงานตอนเลือก)
+  phone: string | null;        // snapshot เบอร์ลูกค้า
+}
+export interface CrewDayTeam {
+  id: string;
+  work_date: string;           // ISO YYYY-MM-DD
+  sort_order: number;
+  start_time: string;          // เวลาเริ่มงาน พิมพ์อิสระ (ห้ามเป็น time picker — ของจริงพิมพ์ "6.30","ตี4","000")
+  leader_id: string | null;
+  leader?: { id: string; name: string } | null;
+  member_ids: string[];
+  note: string;
+  crew_team_sites: CrewTeamSite[];
+}
+
 export interface Receipt {
   id: number;
   code: string;

@@ -5,6 +5,8 @@ import { api } from "@/lib/api";
 import { INST_STATUS } from "@/lib/constants";
 import { Spinner } from "@/components/ui/primitives";
 import { InstallationStepModal } from "@/components/installation/InstallationStepModal";
+import CrewDayTeamsPanel from "@/components/installation/CrewDayTeamsPanel";
+import Icon from "@/components/Icon";
 import type { InstStatus } from "@/lib/database.types";
 import type { InstRow } from "@/components/installation/InstallationStepModal";
 import type { InstallAssignment } from "@/lib/types";
@@ -43,12 +45,14 @@ const leadOf = (a: InstallAssignment) => (a.lead_name || "").trim();
 type Plan = { assignments: InstallAssignment[]; ready: { id: string; job_id: string; jobs: Record<string, unknown> }[] };
 
 export default function InstallationPage() {
-  const [tab, setTab] = useState<"cal" | "tmr" | "status">("cal");
+  const [tab, setTab] = useState<"cal" | "crew" | "tmr" | "status">("cal");
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [detail, setDetail] = useState<InstallAssignment | null>(null);
   const [addAt, setAddAt] = useState<{ date: string; job_id?: string } | null>(null);
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
   const [busy, setBusy] = useState(false);
+  // จัดทีมช่างรายวัน (แท็บใหม่) — วันที่ที่กำลังดู/แก้ไข เชื่อมกับปฏิทินเดือนผ่าน badge ในช่องวัน
+  const [crewDate, setCrewDate] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
 
   // ตารางเดือน: เริ่มจันทร์ก่อน/ในวันที่ 1 → ครบสัปดาห์สุดท้ายของเดือน
   const gridStart = useMemo(() => startOfWeek(month), [month]);
@@ -69,6 +73,18 @@ export default function InstallationPage() {
   const asg = useMemo(() => plan?.assignments ?? [], [plan]);
   const ready = plan?.ready ?? [];
   const canWrite = (data?.meta?.can_install as boolean) ?? true;
+
+  // จำนวนทีมช่างรายวันต่อวัน (เดือนที่กำลังดู) — ทำ badge บนปฏิทิน เชื่อมไปแท็บ "จัดทีมรายวัน"
+  const { data: crewCountsData } = useQuery({
+    queryKey: ["crew-day-counts-month", from, to],
+    queryFn: () => api.get<{ work_date: string; team_count: number }[]>(`/crew-day/counts?from=${from}&to=${to}`),
+  });
+  const crewCountsByDate = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of crewCountsData?.data ?? []) m.set(r.work_date, r.team_count);
+    return m;
+  }, [crewCountsData]);
+  function jumpToCrewDay(ds: string) { setCrewDate(ds); setTab("crew"); }
 
   const byDate = useMemo(() => {
     const m = new Map<string, InstallAssignment[]>();
@@ -132,8 +148,8 @@ export default function InstallationPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">แผนติดตั้ง</h1>
           <p className="text-sm" style={{ color: "var(--t-low)" }}>ปฏิทินทั้งเดือน · การ์ด = ลูกค้า + หัวหน้าช่าง · กดการ์ดดูลูกน้อง/หมายเหตุ</p>
         </div>
-        <div className="flex gap-1.5">
-          {([["cal", "ปฏิทินเดือน"], ["tmr", "พรุ่งนี้"], ["status", "สถานะงาน"]] as const).map(([k, l]) => (
+        <div className="flex gap-1.5 flex-wrap">
+          {([["cal", "ปฏิทินเดือน"], ["crew", "จัดทีมรายวัน"], ["tmr", "พรุ่งนี้"], ["status", "สถานะงาน"]] as const).map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)}
               className={`px-3 py-2 rounded-xl text-sm font-medium border ${tab === k ? "bg-white/16 text-white border-white/20" : "bg-white/6 text-white/70 border-white/10"}`}>{l}</button>
           ))}
@@ -183,6 +199,7 @@ export default function InstallationPage() {
                     const inMonth = d.getMonth() === month.getMonth();
                     const isToday = ds === today;
                     const items = byDate.get(ds) || [];
+                    const crewCount = crewCountsByDate.get(ds) ?? 0;
                     return (
                       <div key={ds}
                         className="rounded-lg p-1 flex flex-col"
@@ -192,7 +209,17 @@ export default function InstallationPage() {
                           border: isToday ? "1px solid rgba(55,138,221,.5)" : "1px solid rgba(255,255,255,.06)",
                           opacity: inMonth ? 1 : 0.45,
                         }}>
-                        <div className="text-[10px] text-right pr-0.5" style={{ color: isToday ? "#93c5fd" : "var(--t-low)", fontWeight: isToday ? 600 : 400 }}>{d.getDate()}</div>
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="text-[10px] pl-0.5" style={{ color: isToday ? "#93c5fd" : "var(--t-low)", fontWeight: isToday ? 600 : 400 }}>{d.getDate()}</div>
+                          {inMonth && (
+                            <button onClick={() => jumpToCrewDay(ds)}
+                              className="inline-flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded leading-none focusable"
+                              style={crewCount ? { background: "rgba(255,255,255,.16)", color: "#fff" } : { color: "rgba(255,255,255,.25)" }}
+                              title={crewCount ? `จัดทีมช่างแล้ว ${crewCount} ทีม — ดู/แก้ไข` : "ยังไม่จัดทีมช่างวันนี้ — กดเพื่อจัด"}>
+                              <Icon name="users" size={8} />{crewCount || ""}
+                            </button>
+                          )}
+                        </div>
                         <div className="space-y-0.5 flex-1">
                           {items.map((a) => {
                             const c = leadColor(leadOf(a));
@@ -234,6 +261,10 @@ export default function InstallationPage() {
             </div>
           )}
         </>
+      )}
+
+      {tab === "crew" && (
+        <CrewDayTeamsPanel date={crewDate} onDateChange={setCrewDate} canWrite={canWrite} />
       )}
 
       {tab === "tmr" && (
