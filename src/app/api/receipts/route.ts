@@ -41,21 +41,24 @@ export async function POST(req: Request) {
   // 1) ดึงใบวางบิล → copy customer_snapshot + job_id (ใช้กรณีไม่มี installment [HIGH-3])
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
-    .select("id, customer_snapshot, job_id")
+    .select("id, customer_snapshot, job_id, vat_rate, has_tax_breakdown")
     .eq("id", body.billing_note_id)
-    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null }>();
+    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; has_tax_breakdown: boolean | null }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
 
-  // ดึง vat_rate จากงาน (source of truth) — VAT เป็นคุณสมบัติของงาน ไม่ใช่ของการรับเงิน
-  // บังคับใช้ค่าจากงานเสมอ ไม่เชื่อ client เพื่อกันออกใบกำกับภาษีผิดประเภท
+  // ── vat_rate ของใบเสร็จ = ของ "ใบวางบิลใบนี้" (แหล่งความจริง) ──
+  // เดิมอ่านจาก jobs.vat_rate → บั๊ก: jobs.vat_rate ถูกเขียนครั้งเดียวตอนสร้างใบเสนอ และ "ไม่เคยอัปเดต"
+  // เวลาผู้ใช้กด "แก้ VAT/ส่วนลด" ที่ใบวางบิล (PATCH โหมด B เขียน billing_notes.vat_rate + คิดยอด/งวดใหม่)
+  // → ใบวางบิลติ๊ก VAT ออก แต่ใบเสร็จยังถอด VAT 7% จากงาน = base/VAT ไม่ตรงกับใบวางบิลทั้งก่อนและหลัง VAT
+  // has_tax_breakdown=true = ใบที่ subtotal เป็นยอดก่อน VAT จริง → vat_rate ของใบเชื่อถือได้ (ปุ่มแก้ VAT โผล่เฉพาะใบพวกนี้)
+  // has_tax_breakdown=false = ใบเก่า/ใบนำเข้า (subtotal backfill = total หลัง VAT) → คงพฤติกรรมเดิม ใช้ jobs.vat_rate
   let jobVatRate = 7;
   if (bn.job_id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: j } = await (supabase as any).from("jobs").select("vat_rate").eq("id", bn.job_id).single();
     jobVatRate = Number(j?.vat_rate ?? 7);
   }
-  // vat_rate = jobVatRate เสมอ (ignore body.vat_rate)
-  const vat_rate = jobVatRate;
+  const vat_rate = bn.has_tax_breakdown ? Number(bn.vat_rate) || 0 : jobVatRate; // ignore body.vat_rate เสมอ (ไม่เชื่อ client)
 
   // [idempotency/partial] ถ้าระบุงวด → ตรวจยอดคงเหลือก่อนสร้างใบเสร็จ
   // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)

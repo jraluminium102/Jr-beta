@@ -249,7 +249,9 @@ export const POST = withRoute(async (req: Request) => {
     // ใบเบา → ใช้ยอดที่กรอก (total>0)
     if (existingIsReal) {
       jobUpdate.net_amount = Number(existing.subtotal) || subtotal;
-      jobUpdate.vat_rate = Number(existing.vat_rate) || vat_rate;
+      // ⚠ ต้องใช้ ?? ไม่ใช่ || — vat_rate = 0 (ใบไม่มี VAT) เป็น falsy → || จะตกไปใช้ default 7
+      // ผลเดิม: งาน No-VAT ถูกบันทึกเป็น 7% → ใบเสร็จของบิลที่ไม่มี breakdown ถอด VAT ที่ไม่เคยเรียกเก็บ (บัญชี P0)
+      jobUpdate.vat_rate = Number(existing.vat_rate ?? vat_rate);
     } else if (total > 0) {
       jobUpdate.net_amount = subtotal;
       jobUpdate.vat_rate = vat_rate;
