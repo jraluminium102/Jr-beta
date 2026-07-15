@@ -7,6 +7,7 @@
  */
 import { CUT_SPEC_BY_ID } from "./products";
 import type { CutInput } from "./engine";
+import { calcColorToStock } from "./stock-match";
 
 // multiplier = ตัวคูณจำนวนชุด (เช่น Velora: ใบตัด 1 บาน/ชุด แต่ใบเสนอสั่ง N บาน → sets ×N) — ผู้เรียกต้องคูณเข้า sets
 export type RecipeCutMap = { spec_id: string; input: Partial<CutInput> & Record<string, unknown>; multiplier?: number };
@@ -71,5 +72,7 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
   }
   // กัน map ไป spec ที่ไม่มีจริง (พิมพ์ผิด/ยังไม่พอร์ต)
   if (m && !CUT_SPEC_BY_ID[m.spec_id]) return null;
+  // ตั้งค่าสีเริ่มจากสูตร (best-effort) — token สต็อก · ผู้ใช้ปรับใน dropdown ได้ทีหลัง
+  if (m) { const col = calcColorToStock(recipe.color); if (col) m.input.color = col; }
   return m;
 }
