@@ -23,6 +23,9 @@ export const GET = withRoute(async (req: Request) => {
     .select("work_date")
     .gte("work_date", from)
     .lte("work_date", to);
+  // 0097 ยังไม่รัน → คืน "ว่าง" แทน 500 — endpoint นี้เลี้ยง badge บนปฏิทินหน้าใช้ทุกวัน
+  // (500 ทำให้ react-query retry ฟรี 3 รอบทุกครั้งที่เปิด/เปลี่ยนเดือน · badge ไม่ขึ้นอยู่ดี)
+  if (error && /crew_day_teams|does not exist|42P01/i.test(error.message ?? "")) return ok([]);
   if (error) return err(error.message, 500);
 
   const counts = new Map<string, number>();

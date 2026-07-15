@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { redirect } from "next/navigation";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 
@@ -24,12 +27,18 @@ type Team = {
 
 // ฟอร์มพิมพ์ A4 แผนจัดทีมช่างประจำวัน — การ์ดทีม 2 คอลัมน์ สูงยืดตามเนื้อหา เต็มหน้าอัตโนมัติ (CSS print, ไม่ใช้ jsPDF)
 export default async function CrewTeamsPrintPage({ searchParams }: { searchParams?: { date?: string } }) {
+  // ⚠ Server Component ไม่ผ่านชั้น BFF → ต้องเช็คสิทธิ์เองที่นี่ (QA CRITICAL 16 ก.ค.69:
+  //   เดิมไม่เช็คเลย + RLS อ่านได้ทุก active user → role ไหนก็พิมพ์ URL ตรงมาดูชื่อ/ที่อยู่/เบอร์ลูกค้าได้)
+  const profile = await getProfile();
+  if (!profile || !can(profile.role, "installation", "read")) redirect("/");
+
   const date = searchParams?.date ?? "";
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
   const supabase = createClient();
 
   let teams: Team[] = [];
   let nameById = new Map<string, string>();
+  let loadError = "";
   if (validDate) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
@@ -40,6 +49,13 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
         .order("sort_order", { ascending: true }),
       sb.from("crew_people").select("id, name"),
     ]);
+    // แยก "วันว่างจริง" ออกจาก "อ่านข้อมูลไม่ได้" — เดิมกลืน error แล้วโชว์ "ยังไม่มีการจัดทีม"
+    // = ข้อความหลอกที่ดูสมจริง คนปริ้นจะเชื่อว่าวันนั้นไม่มีทีม (คลาสเดียวกับหน้าผลิตโชว์ 0)
+    if (teamsR.error) {
+      loadError = /crew_day_teams|crew_people|does not exist|42P01/i.test(teamsR.error.message ?? "")
+        ? "ยังไม่ได้รัน migration 0097 (จัดทีมช่างรายวัน) — รันก่อนใช้งาน"
+        : "อ่านข้อมูลจัดทีมไม่สำเร็จ — ลองรีเฟรช (อย่าเพิ่งเชื่อว่าวันนี้ไม่มีทีม)";
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     teams = ((teamsR.data ?? []) as any[]).map((t) => ({
       ...t,
@@ -62,7 +78,11 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
         <PrintButton />
       </div>
 
-      {!validDate || teams.length === 0 ? (
+      {loadError ? (
+        <div role="alert" className="no-print mx-auto mt-8 max-w-[210mm] text-center text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          {loadError}
+        </div>
+      ) : !validDate || teams.length === 0 ? (
         <div className="no-print mx-auto mt-8 max-w-[210mm] text-center text-sm text-gray-500 px-4">
           {!validDate ? "ไม่ได้ระบุวันที่ที่ถูกต้อง (?date=YYYY-MM-DD)" : `วันที่ ${thFullDate(date)} ยังไม่มีการจัดทีมช่าง`}
         </div>

@@ -24,7 +24,9 @@ create unique index if not exists uq_job_blocker_notes_tag on public.job_blocker
 
 alter table public.job_blocker_notes enable row level security;
 create policy jbn_read  on public.job_blocker_notes for select using (public.is_active());
--- write = คนที่แก้หน้างานผลิต (ตรงกับ productions table เดิม, rbac.ts resource "production")
+-- write = คนที่แก้หน้างานผลิต (rbac.ts resource "production" = ADMIN/PRODUCTION/CHANG)
+-- ⚠ ต้องมี CHANG ด้วย — rbac.ts ให้ CHANG มี production:write → ปุ่มโน้ตโชว์และผ่าน BFF ได้
+--   ถ้า RLS ไม่มี CHANG = กดได้แต่ DB ปฏิเสธ (บทเรียนเดิมจาก production_sets ที่ต้องออก 0058 ตามแก้)
 create policy jbn_write on public.job_blocker_notes for all
-  using (public.has_role('ADMIN', 'PRODUCTION'))
-  with check (public.has_role('ADMIN', 'PRODUCTION'));
+  using (public.has_role('ADMIN', 'PRODUCTION', 'CHANG'))
+  with check (public.has_role('ADMIN', 'PRODUCTION', 'CHANG'));

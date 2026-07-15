@@ -44,6 +44,9 @@ export function BlockerNotesInline({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        // keydown ต้อง stop แยกจาก onClick — ผู้ใช้คีย์บอร์ด Tab มากด Enter ที่ปุ่มนี้
+        // event จะ bubble ไปแถวแม่ (div role="button" ดัก onKeyDown) → โมดัลรายละเอียดเด้งทับ popover (QA MEDIUM)
+        onKeyDown={(e) => e.stopPropagation()}
         aria-label={notes.length > 0 ? `ดู/แก้โน้ต ${customerName}` : `เพิ่มโน้ต ${customerName}`}
         className="focusable pressable inline-flex items-center gap-1 text-[12px] font-semibold px-1.5 py-0.5 rounded-md hover:bg-white/10"
         style={{ color: notes.length > 0 ? "#fcd34d" : "var(--t-low)" }}

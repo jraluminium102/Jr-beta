@@ -248,10 +248,19 @@ export const POST = withRoute(async (req: Request) => {
     // ใบจริง → ใช้ยอดก่อน VAT + vat_rate ของใบเอง (ไม่ใช่ยอดที่กรอกใน modal ซึ่งไม่ได้แก้ใบจริง)
     // ใบเบา → ใช้ยอดที่กรอก (total>0)
     if (existingIsReal) {
-      jobUpdate.net_amount = Number(existing.subtotal) || subtotal;
-      // ⚠ ต้องใช้ ?? ไม่ใช่ || — vat_rate = 0 (ใบไม่มี VAT) เป็น falsy → || จะตกไปใช้ default 7
-      // ผลเดิม: งาน No-VAT ถูกบันทึกเป็น 7% → ใบเสร็จของบิลที่ไม่มี breakdown ถอด VAT ที่ไม่เคยเรียกเก็บ (บัญชี P0)
-      jobUpdate.vat_rate = Number(existing.vat_rate ?? vat_rate);
+      // ⚠ ยอดกับอัตราต้องมาจาก "แหล่งเดียวกัน" ห้ามไขว้ (audit 16 ก.ค.69 — ฝาแฝดบั๊ก vat_rate ตัวล่าง):
+      //   ใบ import เก่า subtotal=0 (default) แต่ vat_rate=7 (default 0005) → เดิมยอดตกไปใช้ของ modal
+      //   แต่อัตราใช้ของใบ (7 ที่ไม่ใช่การตัดสินใจจริง) → trigger tg_calc_financials บวก VAT 7% ทับยอดที่รวมแล้ว
+      const hasRealSubtotal = Number(existing.subtotal) > 0;
+      if (hasRealSubtotal) {
+        jobUpdate.net_amount = Number(existing.subtotal);
+        // ?? ไม่ใช่ || — vat_rate = 0 (ใบไม่มี VAT) เป็น falsy → || จะตกไปใช้ default 7 (บัญชี P0)
+        jobUpdate.vat_rate = Number(existing.vat_rate ?? vat_rate);
+      } else {
+        // ใบไม่มียอดแยกจริง → ใช้ยอด+อัตราจาก modal คู่กันทั้งชุด
+        jobUpdate.net_amount = subtotal;
+        jobUpdate.vat_rate = vat_rate;
+      }
     } else if (total > 0) {
       jobUpdate.net_amount = subtotal;
       jobUpdate.vat_rate = vat_rate;

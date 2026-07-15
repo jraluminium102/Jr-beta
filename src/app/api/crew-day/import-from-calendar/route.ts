@@ -28,9 +28,15 @@ export const POST = withRoute(async (req: Request) => {
   if (!asg || asg.length === 0) return ok({ created: 0, message: "วันนี้ไม่มีแผนในปฏิทินรายเดือน" });
 
   // ทีมของวันนี้ (ถ้ามีอยู่แล้ว) — ใช้เช็คกันซ้ำ + ต่อ sort_order
-  const { data: existingTeams } = await sb
+  const { data: existingTeams, error: existErr } = await sb
     .from("crew_day_teams").select("id, sort_order, crew_team_sites(job_id)")
     .eq("work_date", date);
+  // ⚠ fail-closed: select กันซ้ำล้มแล้วเดินต่อ = alreadyImported ว่าง → กดซ้ำได้ทีมซ้ำทั้งวัน (audit เจอ 16 ก.ค.69)
+  if (existErr) {
+    return err(/crew_day_teams|does not exist|42P01/i.test(existErr.message ?? "")
+      ? "ยังไม่ได้รัน migration 0097 (จัดทีมช่างรายวัน) — รันก่อนใช้งาน"
+      : "อ่านทีมของวันนี้ไม่สำเร็จ — ลองใหม่ (กันนำเข้าซ้ำ)", 400);
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const alreadyImported = new Set(((existingTeams ?? []) as any[]).flatMap((t) => (t.crew_team_sites ?? []).map((s: { job_id: string | null }) => s.job_id).filter(Boolean)));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +74,12 @@ export const POST = withRoute(async (req: Request) => {
     const noteParts: string[] = [];
     if (leadName && !leaderId) noteParts.push(`หัวหน้า (จากปฏิทิน ยังไม่ผูกชื่อ): ${leadName}`);
     if (unmatchedCrew.length) noteParts.push(`ลูกทีม (จากปฏิทิน ยังไม่ผูกชื่อ): ${unmatchedCrew.join(", ")}`);
+    // ⚠ เกิน 4 จุด/ทีม ห้ามตัดทิ้งเงียบ (QA HIGH: งานหายจากใบปริ้น = ช่างพลาดหน้างานจริง)
+    //   → จดชื่องานที่ไม่ได้ใส่ ลงหมายเหตุทีมให้เห็นชัด คนจัดจะได้แยกทีม/จัดมือเอง
+    const dropped = items.slice(4);
+    if (dropped.length) {
+      noteParts.push(`⚠ เกิน 4 จุด — ยังไม่ได้ใส่: ${dropped.map((a) => a.jobs?.customer_name || a.job_id).join(", ")}`);
+    }
 
     const { data: newTeam, error: teamErr } = await sb
       .from("crew_day_teams")

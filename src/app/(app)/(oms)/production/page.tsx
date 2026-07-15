@@ -275,7 +275,7 @@ export default function ProductionPage() {
               // เดิมเป็น <button> ล้วน — เปลี่ยนเป็น div+role="button" เพราะต้องมีปุ่มโน้ต (BlockerNotesInline) ซ้อนข้างใน
               // (nested <button> ใน <button> ผิด HTML spec) ปุ่มซ้อนกด stopPropagation กันชนกับ onClick แถวนี้
               <div key={r.id} role="button" tabIndex={0} onClick={() => setOpen(r)}
-                onKeyDown={(e) => { if (e.key === "Enter") setOpen(r); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(r); } }}
                 aria-label={`อัปเดต ${r.job?.job_code}`}
                 className={`focusable pressable w-full text-left glass-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer ${stale ? "ring-1 ring-rose-300/40" : ""}`}>
                 <div className="flex-1 min-w-0">

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Calculator40Client from "@/components/Calculator40Client";
 import { buildPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
+import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import type { Customer } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -12,18 +13,24 @@ export default async function Calculator40Page() {
   const supabase = createClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyDb = supabase as unknown as { from: (t: string) => any };
-  const [{ data }, { data: stock }] = await Promise.all([
+  // ⚠ สต็อกต้องดึงแบบแบ่งหน้า — เกิน cap 1,000 แถว/query แล้ว (สต็อก ~1,800)
+  //   ดึงครั้งเดียว = รหัสอลูหลังแถว 1,000 ไม่ได้ราคาสต็อก → คิดราคาด้วย pricebook เก่าเงียบๆ
+  const [{ data }, stock] = await Promise.all([
     supabase
       .from("customers")
       .select("id, name, job, phone, address, contact_person")
       .eq("is_active", true)
       .order("name"),
-    anyDb
-      .from("stock_items")
-      .select("name, sku, supplier, is_weight_based, unit_cost, price_per_kg")
-      .eq("is_active", true),
+    fetchAllPaged<StockRow>((f, t) =>
+      anyDb
+        .from("stock_items")
+        .select("name, sku, supplier, is_weight_based, unit_cost, price_per_kg")
+        .eq("is_active", true)
+        .order("id", { ascending: true })
+        .range(f, t),
+    ),
   ]);
-  const priceOverride = buildPriceOverride((stock ?? []) as StockRow[]);
+  const priceOverride = buildPriceOverride(stock);
   return (
     <Calculator40Client
       customers={

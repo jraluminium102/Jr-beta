@@ -14,11 +14,14 @@ export default async function AluRatesPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as unknown as { from: (t: string) => any };
 
-  const [{ data: withWeight }, { count: noWeight }, { data: rateLog }] = await Promise.all([
-    supabase.from("stock_items")
-      .select("id, sku, name, supplier, weight_per_unit, unit_cost, price_per_kg")
-      .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
-      .order("sku", { ascending: true }),
+  // ⚠ อลูมี sku ~1,100+ แถว ใกล้/เกิน cap 1,000 ต่อ query — แบ่งหน้ากันแถวท้ายหายเงียบ
+  const [withWeight, { count: noWeight }, { data: rateLog }] = await Promise.all([
+    fetchAllPaged<Record<string, unknown>>((f, t) =>
+      supabase.from("stock_items")
+        .select("id, sku, name, supplier, weight_per_unit, unit_cost, price_per_kg")
+        .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
+        .order("sku", { ascending: true }).order("id", { ascending: true }).range(f, t),
+    ),
     supabase.from("stock_items")
       .select("id", { count: "exact", head: true })
       .eq("is_active", true).eq("category", "อลูมิเนียม")

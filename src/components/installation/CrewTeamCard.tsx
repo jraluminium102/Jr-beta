@@ -38,6 +38,11 @@ export default function CrewTeamCard({
 
   function toggleMember(id: string) {
     const has = team.member_ids.includes(id);
+    // เพิ่มคนที่ทีมอื่นจองแล้ว → ถามยืนยันก่อน (QA: สีเตือนอย่างเดียวมองข้ามง่าย ช่างคนเดียวโดนส่ง 2 ที่จริง)
+    if (!has) {
+      const claimedTeamNo = claimedElsewhere.get(id);
+      if (claimedTeamNo && !confirm(`คนนี้ถูกจัดอยู่ทีม ${claimedTeamNo} แล้ว — เลือกซ้ำใส่ทีมนี้ด้วยจริงไหม?`)) return;
+    }
     const next = has ? team.member_ids.filter((x) => x !== id) : [...team.member_ids, id];
     onPatchTeam(team.id, { member_ids: next });
   }
