@@ -66,7 +66,20 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       m = { spec_id: "velora_swing", input: { W: N > 1 ? Math.round((W / N) * 10) / 10 : W, H, N: 1, rail: "ยัดในช่อง" }, multiplier: N };
       break;
     }
-    // รุ่นถัดไปเติมที่นี่เมื่อพอร์ตสเปกแล้ว (open_door / sms240_bifold ฯลฯ)
+    case "pcdoor": {
+      const split = String(recipe.form ?? "") === "แบ่ง 4" ? "แบ่ง 4" : "แบ่ง 2";
+      const sill = recipe.spec?.pcsill === "ไม่มีธรณี" ? "ไม่มีธรณี" : "มีธรณี";
+      // คิดราคาไม่มี dropdown คาน → default 1×4 (ปรับในใบตัดเองถ้าเป็น 2×4)
+      m = { spec_id: "pc_door", input: { W, H, N: split === "แบ่ง 4" ? 4 : 2, split, sill, beam: "1×4" } };
+      break;
+    }
+    case "gate": {
+      // คิดราคาเก็บแค่แนวระแนง (form) — ด้านโชว์/ช่องห่าง/โหมดสลับ ต้องกรอกในใบตัดเอง
+      m = { spec_id: "gate_slide", input: { W, H, N: 1, slatDir: String(recipe.form ?? "") === "ตั้ง" ? "ตั้ง" : "นอน", slatType: "ระแนง", fit: "ยัดใน" } };
+      break;
+    }
+    // ⚠ ไม่ auto-map: open_door (บานเปิดยูโร) ใช้ดายชุดเดียวกับบานโซลิดแต่เป็น "บานกระจก" (เรขาคณิตต่าง) →
+    //   จับคู่อัตโนมัติจะผิด · บานโซลิด/วงกบไม้ ให้สร้างข้อในใบตัดเอง
     default:
       m = null;
   }

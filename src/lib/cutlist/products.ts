@@ -486,10 +486,197 @@ export const FUJI_HUNG: CutSpec = {
   ],
 };
 
+// ═══════════════════════ ประตู 4 รุ่น (ไฟล์เป็น ซม. อยู่แล้ว — ไม่ต้อง ÷10) ═══════════════════════
+// รหัสกล่องอลู → ชื่อในสต็อก "หมวดอลูมิเนียม" รูปแบบ: กล่อง 2"x4" (แยกต่อสี · เลือกสีที่ dropdown สีอลู)
+// ⚠ ห้ามใช้รหัสหลวมอย่าง "2x4" — หมวด "อุปกรณ์" มีกล่องไฟฟ้า (กล่องลอย-2x4/กล่องกันนํ้า-2x4) จะหักผิดของ
+const boxCode = (size: string) => {
+  const [a, b] = String(size).split(/[×xX*]/).map((s) => s.trim());
+  return b ? `กล่อง ${a}"x${b}"` : `กล่อง ${a}`;
+};
+
+// ⑮ PC Door (JR_PCDoor) — บานเปิดเมืองทอง + บานเลื่อน sms · N มาจาก split
+// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน — มีชิ้น sms ที่ปกติ 640)
+const pcBeamCut = (o: CutInput) => (o.beam === "2×4" ? 5 : 2.5);
+const pcN = (o: CutInput) => (o.split === "แบ่ง 4" ? 4 : 2);
+const pcNoSill = (o: CutInput) => o.sill === "ไม่มีธรณี";
+export const PC_DOOR: CutSpec = {
+  id: "pc_door", name: "ประตู PC Door (เปิดเมืองทอง + เลื่อน sms)", stockLen: 600, rails: [],
+  opts: [
+    { key: "beam", label: "คาน (กล่อง)", choices: ["1×4", "2×4"] },
+    { key: "split", label: "รูปแบบบาน", choices: ["แบ่ง 2", "แบ่ง 4"] },
+    { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+  ],
+  defaults: { W: 300, H: 240, N: 2, rail: "", honk: false, beam: "1×4", split: "แบ่ง 2", sill: "มีธรณี" },
+  profiles: [
+    { name: "คาน", code: (o) => boxCode(o.beam ?? "1×4"), len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
+    { name: "ฝาครอบรางบน", code: "-", len: (o) => o.W - 3.3 - 2.5, qty: () => 1 },
+    { name: "รางบนบานเลื่อน", code: "-", len: (o) => o.W - 4.5 - 2.5, qty: () => 1 },
+    { name: "วงกบบานเปิด", code: "-", len: (o) => o.H - pcBeamCut(o), qty: () => 1 },
+    { name: "เสารับบานเลื่อน", code: "-", len: (o) => o.H - pcBeamCut(o), qty: () => 1 },
+    { name: "ชนกลางรับบานเลื่อน", code: "-", len: (o) => o.H - pcBeamCut(o) - 4, qty: () => 1 },
+    { name: "ชนกลางบานเลื่อน", code: "B20046", len: (o) => o.H - pcBeamCut(o) - 4, qty: () => 1, note: "ไฟล์เขียนรหัสเปล่า '20046'" },
+    { name: "กรอบบานเปิด เมืองทอง (สูง)", code: "-", len: (o) => o.H - pcBeamCut(o) - (pcNoSill(o) ? 3 : 6.3), qty: pcN },
+    { name: "กรอบบานเปิด เมืองทอง (กว้าง)", code: "-", len: (o) => o.W / pcN(o) + (o.split === "แบ่ง 4" ? 0.5 : -0.7), qty: pcN },
+    { name: "กรอบบานเลื่อน sms (สูง)", code: "-", len: (o) => o.H - pcBeamCut(o) - (pcNoSill(o) ? 5.8 : 10.3), qty: pcN },
+    { name: "กรอบบานเลื่อน sms (กว้าง)", code: "-", len: (o) => o.W / pcN(o) - (o.split === "แบ่ง 4" ? 10 : 11.4), qty: pcN },
+  ],
+  hardware: [
+    { name: "บานพับ hyda", qty: (o) => (o.split === "แบ่ง 2" ? 4 : 8), unit: "ตัว" },
+    { name: "ล้อ + ซอฟโค้ด", qty: (o) => (o.split === "แบ่ง 2" ? 1 : 2), unit: "ชุด" },
+    { name: "มือจับ Align SMS", qty: pcN, unit: "บาน" },
+    { name: "กลอนบานลอง", qty: () => 1, unit: "ชุด" },
+    { name: "น็อตเฟรม", qty: (o) => (pcNoSill(o) ? 6 : 8), unit: "ตัว" },
+    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * pcN(o)), unit: "ม." },
+    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+  ],
+};
+
+// ⑯ ประตูรั้วบานเลื่อน (JR_ประตูรั้ว) — โครงกล่อง 2×4 (+หาง) + ระแนง · เส้น 600 ยืนยันในไฟล์
+const GATE_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1½"': 3.81, '1.6"': 4.06, '4"': 10.16 };
+const gShow = (s?: string) => GATE_SHOW[s ?? '1.6"'] ?? 4.06;
+const gStand = (o: CutInput) => o.H - (o.fit === "แปะนอก" ? 17.5 : 15.5);
+const gSpan = (o: CutInput) => (o.slatDir === "นอน" ? gStand(o) : o.W);
+const gSlatLen = (o: CutInput) =>
+  o.slatDir === "นอน"
+    ? (o.fit === "แปะนอก" ? o.W : o.W - 20.4)
+    : (o.fit === "แปะนอก" ? gStand(o) + 5 : gStand(o) - 20.4);
+const GATE_DIAG = Math.round(Math.sqrt(30 ** 2 + (40 - 15) ** 2) * 10) / 10; // เส้นทแยงค้ำมุม = 39.1 คงที่
+const gAlt = (o: CutInput) => o.slatType === "ระแนงสลับ";
+function gCounts(o: CutInput) {
+  const span = gSpan(o), fA = gShow(o.showA), fB = gShow(o.showB), gap = o.gap ?? 5;
+  const aRun = Math.max(1, Math.round(o.aRun ?? 3)), bRun = Math.max(1, Math.round(o.bRun ?? 5));
+  const E6 = fA + gap;
+  const E9 = Math.max(Math.trunc((span + gap) / E6), 2);
+  const d1 = Math.abs((span - E9 * fA) / (E9 - 1) - gap);
+  const d2 = Math.abs((span - (E9 + 1) * fA) / E9 - gap);
+  const single = d1 <= d2 ? E9 : E9 + 1;
+  let cum = 0, aCount = 0, bCount = 0;
+  for (let k = 1; k <= 400; k++) {
+    const isA = ((k - 1) % (aRun + bRun)) < aRun;
+    cum += isA ? fA : fB;
+    if (cum + (k - 1) * gap <= span + 1e-9) { if (isA) aCount++; else bCount++; } else break;
+  }
+  return { single, aCount, bCount };
+}
+export const GATE_SLIDE: CutSpec = {
+  id: "gate_slide", name: "ประตูรั้วบานเลื่อน (โครงกล่อง 2×4 + ระแนง)", stockLen: 600, rails: [],
+  opts: [
+    { key: "fit", label: "แบบประกอบ", choices: ["ยัดใน", "แปะนอก"] },
+    { key: "slatDir", label: "แนวระแนง", choices: ["ตั้ง", "นอน"] },
+    { key: "slatType", label: "ชนิดใบ", choices: ["ระแนง", "ระแนงสลับ"] },
+    { key: "showA", label: "ด้านโชว์ A", choices: ["1 cm", "5 cm", '1"', '1½"', '1.6"', '4"'] },
+    { key: "showB", label: "ด้านโชว์ B (สลับ)", choices: ["1 cm", "5 cm", '1"', '1½"', '1.6"', '4"'] },
+    { key: "gap", label: "ช่องห่าง (ซม.)", type: "number" },
+    { key: "aRun", label: "สลับ: A ท่อน/ชุด", type: "number" },
+    { key: "bRun", label: "สลับ: B ท่อน/ชุด", type: "number" },
+  ],
+  defaults: { W: 350, H: 180, N: 1, rail: "", honk: false, fit: "ยัดใน", slatDir: "ตั้ง", slatType: "ระแนง", showA: '1.6"', showB: '1.6"', gap: 5, aRun: 3, bRun: 5 },
+  profiles: [
+    { name: "เสาตั้งข้าง (กล่อง 2×4)", code: boxCode("2×4"), len: gStand, qty: () => 2 },
+    { name: "เสานอนบน (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + 30, qty: () => 1, note: "W+30" },
+    { name: "เสานอนล่าง (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + 30, qty: () => 1 },
+    { name: "เสาตั้งท้ายหาง (2×4)", code: boxCode("2×4"), len: gStand, qty: () => 1 },
+    { name: "เส้นทแยงค้ำมุมบน (2×4)", code: boxCode("2×4"), len: () => GATE_DIAG, qty: () => 1, note: "√(30²+25²)=39.1" },
+    { name: "ใบระแนง A", code: "-", len: gSlatLen, qty: (o) => (gAlt(o) ? gCounts(o).aCount : gCounts(o).single) },
+    { name: "ใบระแนง B (สลับ)", code: "-", len: (o) => (gAlt(o) ? gSlatLen(o) : 0), qty: (o) => (gAlt(o) ? gCounts(o).bCount : 0) },
+    { name: 'ฉากข้อ 2" (แปะนอก)', code: "-", len: (o) => o.W, qty: (o) => (o.fit === "แปะนอก" ? 1 : 0) },
+    { name: "เสารับไกด์ (กล่อง 4×4) — เสาแยก", code: boxCode("4×4"), len: (o) => (o.fit === "แปะนอก" ? o.H + 5 : o.H), qty: () => 1 },
+    { name: "ราง (ฉากเหล็ก+เพลา)", code: "-", len: (o) => o.W * 2 - 50, qty: () => 1, note: "W×2−50" },
+  ],
+  hardware: [
+    { name: 'ล้อวิ่ง 3"', qty: () => 2, unit: "ลูก" },
+    { name: "ล้อไกด์ประคองหลัง", qty: () => 4, unit: "ชิ้น" },
+  ],
+};
+
+// ⑰ บานโซลิด (JR_บานโซลิด) — บานเปิดทึบ + ลูกฟูก + เส้นคาด · รองรับแม่-ลูก · เส้น 600 ยืนยันในไฟล์
+// ⚠ รหัส "7864" ต้องเปล่า (ไม่ใส่ F) — ชื่อในสต็อกคือ "กรอบประตู 7864"
+const sMother = (o: CutInput) => (o.N === 1 ? o.W : o.doorSplit === "แม่-ลูก" ? (o.motherW ?? o.W) : o.W / o.N);
+const sChild = (o: CutInput) => (o.N === 1 ? 0 : o.doorSplit === "แม่-ลูก" ? o.W - (o.motherW ?? 0) : o.W / o.N);
+const sChildN = (o: CutInput) => Math.max(o.N - 1, 0);
+const sFrameH = (o: CutInput) => o.H - 3.7;
+const sBattenM = (o: CutInput) => Math.max(0, Math.trunc((sMother(o) - 18) / 3.8));
+const sBattenC = (o: CutInput) => (sChild(o) > 0 ? Math.max(0, Math.trunc((sChild(o) - 18) / 3.8)) : 0);
+const sCorrM = (o: CutInput) => Math.ceil(sMother(o) / 10);
+const sCorrC = (o: CutInput) => (sChild(o) > 0 ? Math.ceil(sChild(o) / 10) : 0);
+const sHasSill = (o: CutInput) => o.sill === "มี";
+export const SOLID_DOOR: CutSpec = {
+  id: "solid_door", name: "บานโซลิด (เปิดทึบ+ลูกฟูก · แม่-ลูก)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sill", label: "ธรณี", choices: ["มี", "ไม่มี"] },
+    { key: "doorSplit", label: "แบ่งบาน", choices: ["แม่-ลูก", "เท่ากัน"] },
+    { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
+  ],
+  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80 },
+  profiles: [
+    { name: "วงกบบน F7859", code: "F7859", len: (o) => o.W - 5, qty: () => 1 },
+    { name: "วงกบข้าง F7859", code: "F7859", len: (o) => o.H, qty: () => 2 },
+    { name: "ธรณี F7938B", code: "F7938B", len: (o) => o.W - 5, qty: (o) => (sHasSill(o) ? 1 : 0) },
+    { name: "ตบธรณี F7960", code: "F7960", len: (o) => o.W - 5, qty: (o) => (sHasSill(o) ? 1 : 0) },
+    { name: "เสริมใต้บาน F7863", code: "F7863", len: (o) => o.W - 5, qty: (o) => (sHasSill(o) ? 0 : 1) },
+    { name: "กรอบบานตั้ง 7864", code: "7864", len: (o) => o.H - 3.7, qty: (o) => 2 * o.N },
+    { name: "คิ้วตั้ง F7935", code: "F7935", len: (o) => o.H - 23.7, qty: (o) => 2 * o.N },
+    { name: "เปิดกลาง F7945c", code: "F7945c", len: (o) => o.H - 5.4, qty: sChildN },
+    { name: "กรอบนอน บานแม่ 7864", code: "7864", len: (o) => sMother(o) - (o.N === 1 ? 3.7 : 1.95), qty: () => 2 },
+    { name: "กรอบนอน บานลูก 7864", code: "7864", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 3.7 : 1.95) : 0), qty: (o) => 2 * sChildN(o) },
+    { name: "คิ้วนอน บานแม่ F7935", code: "F7935", len: (o) => sMother(o) - (o.N === 1 ? 19.7 : 17.95), qty: () => 2 },
+    { name: "คิ้วนอน บานลูก F7935", code: "F7935", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 19.7 : 17.95) : 0), qty: (o) => 2 * sChildN(o) },
+    { name: "ลูกฟูก บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrM(o) * 2 },
+    { name: "ลูกฟูก บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrC(o) * 2 * sChildN(o) },
+    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
+    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
+  ],
+  hardware: [
+    { name: "บานพับ hyda", qty: (o) => (o.H > 300 || sMother(o) > 120 ? 5 : 4) * o.N, unit: "ชิ้น" },
+    { name: "มือจับ+ล็อค ใบหลัก", qty: () => 1, unit: "ชิ้น" },
+    { name: "ชุดกลอน ใบลอง", qty: sChildN, unit: "ชิ้น" },
+    { name: "น็อตเฟรม", qty: (o) => (sHasSill(o) ? 8 : 6), unit: "ชิ้น" },
+    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * o.N), unit: "ม." },
+    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+  ],
+};
+
+// ⑱ บานเปิดครอบวงกบไม้ (JR_บานเปิดครอบวงกบไม้) — กล่องเรียบ/บังใบล้วน · N ∈ {1,2}
+// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน) · ไฟล์ไม่ระบุ "ขนาดกล่องเรียบ" → ยังไม่ผูกสต็อก
+const wDoor1 = (o: CutInput) => (o.N === 1 ? o.W : o.doorSplit === "เท่ากัน" ? o.W / 2 : (o.motherW ?? o.W));
+const wDoor2 = (o: CutInput) => (o.N === 2 ? (o.doorSplit === "เท่ากัน" ? o.W / 2 : o.W - (o.motherW ?? 0)) : 0);
+const wSill = (o: CutInput) => o.sill === "มีธรณี";
+export const WOODJAMB_SWING: CutSpec = {
+  id: "woodjamb_swing", name: "บานเปิดครอบวงกบไม้", stockLen: 600, rails: [],
+  opts: [
+    { key: "doorSplit", label: "แบบแบ่ง (2 บาน)", choices: ["แม่ลูก", "เท่ากัน"] },
+    { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
+    { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+  ],
+  defaults: { W: 130, H: 210, N: 2, rail: "", honk: false, doorSplit: "แม่ลูก", motherW: 80, sill: "มีธรณี" },
+  profiles: [
+    { name: "กล่องเรียบ แนวตั้ง (ครอบข้าง)", code: "-", len: (o) => o.H - 4.3, qty: () => 2 },
+    { name: "กล่องเรียบ แนวนอน (ครอบบน)", code: "-", len: (o) => o.W - 0.7, qty: () => 1 },
+    { name: "บังใบกล่อง แนวนอน (บน)", code: "-", len: (o) => o.W - 0.4, qty: () => 1, note: "45° 2ฝั่ง" },
+    { name: "บังใบกล่อง แนวตั้ง (ข้าง)", code: "-", len: (o) => o.H - 0.2 - (wSill(o) ? 4.5 : 0), qty: () => 2, note: "45° 1ฝั่ง" },
+    { name: "ธรณี", code: "-", len: (o) => o.W - 0.4, qty: (o) => (wSill(o) ? 1 : 0) },
+    { name: "กรอบบานบังใบ แนวตั้ง", code: "-", len: (o) => o.H - 0.2 - 0.8 + 2.7 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
+    { name: "กรอบบานไม่บังใบ แนวตั้ง", code: "-", len: (o) => o.H - 0.2 - 0.8 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
+    { name: "กรอบบานบังใบ แนวนอน — บาน1", code: "-", len: (o) => wDoor1(o) - 0.8 + 2.7, qty: () => 1 },
+    { name: "กรอบบานบังใบ แนวนอน — บาน2", code: "-", len: (o) => wDoor2(o) - 0.8 + 2.7, qty: (o) => (o.N === 2 ? 1 : 0) },
+    { name: "กรอบบานไม่บังใบ แนวนอน — บาน1", code: "-", len: (o) => wDoor1(o) - 0.8 - 3.2, qty: () => 1 },
+    { name: "กรอบบานไม่บังใบ แนวนอน — บาน2", code: "-", len: (o) => wDoor2(o) - 0.8 - 3.2, qty: (o) => (o.N === 2 ? 1 : 0) },
+  ],
+  hardware: [
+    { name: "บานพับ hyda", qty: (o) => (o.H > 300 || o.W / o.N > 120 ? 5 : 4) * o.N, unit: "ชิ้น" },
+    { name: "มือจับ+ล็อค (ใบหลัก)", qty: () => 1, unit: "ชุด" },
+    { name: "ชุดกลอน (ใบลอง)", qty: (o) => Math.max(o.N - 1, 0), unit: "ชุด" },
+    { name: "น็อตเฟรม", qty: (o) => (wSill(o) ? 8 : 6), unit: "ตัว" },
+    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * o.N), unit: "ม." },
+    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+  ],
+};
+
 export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
+  PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));
