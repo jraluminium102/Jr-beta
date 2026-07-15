@@ -6,7 +6,7 @@
  * ⑦ ค่าหัก (แก้ที่เดียว): เฟรม 4.4 · เสากุญแจ เสียบ6.1/เตี้ย3 · ฝาปิด เสียบ5/เตี้ย2.3
  *   · ขวางบน สปส.4.2 + คงที่11.2 · ตบร่องใน 7
  */
-import type { CutSpec } from "./engine";
+import type { CutSpec, CutInput } from "./engine";
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
 
@@ -313,6 +313,71 @@ export const EURO_BIFOLD: CutSpec = {
   // กระจก: (ขวาง−13มม.=1.3ซม.… ตามไฟล์ (sashW−1.3)×(sashH−1.3) × N แผ่น · ฮาร์ดแวร์ HD-### LUT รอเฟสถัดไป
 };
 
+// ═══ เฟี้ยมยูโร CORNER (เข้ามุม 2 ผนัง) — JR_เฟี้ยมยูโร.xlsx sheet CORNER (6 sheet ตรวจครบ) ═══
+// โครงต่างจากบานเดี่ยว: แต่ละผนังมี W/จำนวนบานของตัวเอง (WA/nA, WB/nB) → ใช้ opts ไม่ใช้ W/N ในจอ
+// ขวาง 45° ต่อด้าน = (W − 1.8 − 0.95 − 0.8×(n−1) − OFFSET)/n · OFFSET: ปิด=6.2 · เปิด n คู่=10.2/คี่=7.7
+// นิยาม "ฝั่งเปิด" กายภาพ (ช่างมองด้านไหนเปิด) — ทำเป็น toggle openSide ตามดรอปดาว H4/H6 ในไฟล์ (คณิตยืนยันตรงเลขตรวจทาน · label ฝั่งควรยืนยันหน้างาน)
+const cIsU = (r: string) => r === "รางยู";
+const cornerBead = (g: number) => (g < 0 ? "F7853" : g <= 12 ? "F7935" : "F7949");
+const cornerSashW = (W: number, n: number, open: boolean) => {
+  const off = !open ? 6.2 : (n % 2 === 0 ? 10.2 : 7.7);
+  return (W - 1.8 - 0.95 - 0.8 * (n - 1) - off) / n;
+};
+type CornerCase = { mid: number; cornerLock: number; stop: number };
+const cornerCase = (nA: number, nB: number): CornerCase => {
+  const eA = nA % 2 === 0, eB = nB % 2 === 0;
+  if (eA && eB) return { mid: 1, cornerLock: 1, stop: 0 };
+  return { mid: 0, cornerLock: 0, stop: 2 };
+};
+// อ่านค่า corner จาก input (opts) — fallback default กันพัง
+const CI = (o: CutInput) => ({
+  WA: Number(o.WA) || 300, WB: Number(o.WB) || 300, H: o.H,
+  nA: Math.max(1, Math.round(Number(o.nA) || 2)), nB: Math.max(1, Math.round(Number(o.nB) || 2)),
+  openSide: String(o.openSide ?? "A"), u: cIsU(o.rail), glass: Number(o.glass ?? 6),
+});
+const cFramePost = (o: CutInput) => o.H - (CI(o).u ? 6.9 : 9.4);
+const cSxA = (o: CutInput) => { const c = CI(o); return cornerSashW(c.WA, c.nA, c.openSide === "A"); };
+const cSxB = (o: CutInput) => { const c = CI(o); return cornerSashW(c.WB, c.nB, c.openSide === "B"); };
+const cBead = (o: CutInput) => cornerBead(CI(o).glass);
+
+export const EURO_BIFOLD_CORNER: CutSpec = {
+  id: "euro_bifold_corner",
+  name: "เฟี้ยมยูโร เข้ามุม (CORNER) — ใช้ผนัง A/B",
+  stockLen: 640,
+  rails: ["เฟรมล่าง", "รางยู"],
+  opts: [
+    { key: "WA", label: "กว้างผนัง A (ซม.)", type: "number" },
+    { key: "WB", label: "กว้างผนัง B (ซม.)", type: "number" },
+    { key: "nA", label: "บานฝั่ง A", type: "number" },
+    { key: "nB", label: "บานฝั่ง B", type: "number" },
+    { key: "openSide", label: "ฝั่งเปิดบาน", choices: ["A", "B"] },
+    { key: "glass", label: "กระจก (มม.)", type: "number" },
+  ],
+  defaults: { W: 0, H: 260, N: 1, rail: "เฟรมล่าง", honk: false, WA: 300, WB: 300, nA: 2, nB: 2, openSide: "A", glass: 6 },
+  profiles: [
+    { name: "เฟรมบน A", code: "F7968", len: (o) => CI(o).WA - 1.8, qty: () => 1 },
+    { name: "เฟรมบน B", code: "F7968", len: (o) => CI(o).WB - 1.8, qty: () => 1 },
+    { name: "เฟรมล่าง/รางยู A", code: (o) => (CI(o).u ? "F7932" : "F7969"), len: (o) => CI(o).WA - 1.8, qty: () => 1 },
+    { name: "เฟรมล่าง/รางยู B", code: (o) => (CI(o).u ? "F7932" : "F7969"), len: (o) => CI(o).WB - 1.8, qty: () => 1 },
+    { name: "เฟรมข้าง", code: "F7970", len: (o) => o.H, qty: () => 2 },
+    { name: "คิ้วตบเฟรมข้าง", code: "F7971", len: (o) => o.H - (CI(o).u ? 7.5 : 12), qty: () => 2 },
+    { name: "ตบปิดเฟรม (ตั้ง)", code: "F7973", len: (o) => o.H - (CI(o).u ? 7.5 : 12), qty: () => 2 },
+    { name: "ตบปิดเฟรม (นอน) A", code: "F7973", len: (o) => CI(o).WA - 7.6, qty: () => 2 },
+    { name: "ตบปิดเฟรม (นอน) B", code: "F7973", len: (o) => CI(o).WB - 7.6, qty: () => 2 },
+    { name: "กรอบตั้ง A", code: "F7972", len: cFramePost, qty: (o) => 2 * CI(o).nA },
+    { name: "กรอบตั้ง B", code: "F7972", len: cFramePost, qty: (o) => 2 * CI(o).nB },
+    { name: "กรอบขวาง 45° A", code: "F7972", len: cSxA, qty: (o) => 2 * CI(o).nA },
+    { name: "กรอบขวาง 45° B", code: "F7972", len: cSxB, qty: (o) => 2 * CI(o).nB },
+    { name: "ชนกลางบานคู่", code: "F7974", len: (o) => cFramePost(o) + 0.4, qty: (o) => cornerCase(CI(o).nA, CI(o).nB).mid },
+    { name: "รับล็อคเสาเข้ามุมบานคู่", code: "F7963", len: (o) => cFramePost(o) + 0.4, qty: (o) => cornerCase(CI(o).nA, CI(o).nB).cornerLock },
+    { name: "เสาเข้ามุม", code: "F7964", len: (o) => cFramePost(o) + 0.4, qty: () => 1 },
+    { name: "บังใบ", code: "F7975", len: (o) => cFramePost(o) + 0.4, qty: (o) => cornerCase(CI(o).nA, CI(o).nB).stop },
+    { name: "คิ้วกระจก (ตั้ง)", code: cBead, len: (o) => cFramePost(o) - 16, qty: (o) => 2 * (CI(o).nA + CI(o).nB) },
+    { name: "คิ้วกระจก (นอน) A", code: cBead, len: (o) => cSxA(o) - 12, qty: (o) => 2 * CI(o).nA },
+    { name: "คิ้วกระจก (นอน) B", code: cBead, len: (o) => cSxB(o) - 12, qty: (o) => 2 * CI(o).nB },
+  ],
+};
+
 // ═══════════════════════ FUJI (ไฟล์ มม. → พอร์ต ซม. ÷10 · รหัส F####/B####) ═══════════════════════
 // ⑨ FUJI บานเลื่อนสลับ 2/3 ราง (JR_FUJI_บานเลื่อน.xlsx) — ราง = เลือกชีต · qty สเกลตามราง
 const FUJI_RC: Record<string, { p: number; sd: number; sa: number; hook: number }> = {
@@ -424,7 +489,7 @@ export const FUJI_HUNG: CutSpec = {
 export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
-  VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD,
+  VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));
