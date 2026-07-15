@@ -31,17 +31,25 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   if (!cl) return fail("ไม่พบใบตัด", 404);
   if (cl.status === "stock_cut") return fail("ใบนี้ตัดสต็อกไปแล้ว — หักซ้ำไม่ได้", 409);
 
-  // รวมความยาวต่อรหัสจากทุกข้อก่อน แล้วค่อยปัดเป็นเส้น (nesting รวมทั้งใบ — logic เดียวกับ BOQ ฝั่งจอ)
+  // รวมความยาว + ชิ้นยาวสุด + ตัวเลือกเส้น ต่อรหัสทั้งใบ → เลือกเส้นคุ้มสุดครั้งเดียว (nesting รวมทั้งใบ · logic เดียวกับ BOQ ฝั่งจอ)
   const lenByCode = new Map<string, number>();
-  const stockLenByCode = new Map<string, number>();
+  const maxCutByCode = new Map<string, number>();
+  const stockOptsByCode = new Map<string, Set<number>>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const it of (cl.cutlist_items ?? []) as any[]) {
     const spec = CUT_SPEC_BY_ID[String(it.spec_id)];
     if (!spec) continue; // สเปกหาย (โค้ดรุ่นถูกถอด) — จอเตือนอยู่แล้ว
     const r = computeCutList(spec, it.input ?? {}, Math.max(1, Number(it.sets) || 1));
+    // ใช้ rows หา maxCut/ตัวเลือกเส้นต่อรหัส (barsByCode มีความยาวรวมแล้ว แต่ไม่มี maxCut ราย code — ดึงจาก rows)
     for (const bc of r.barsByCode) {
       lenByCode.set(bc.code, (lenByCode.get(bc.code) ?? 0) + bc.totalLenCm);
-      stockLenByCode.set(bc.code, spec.stockLen);
+      if (!stockOptsByCode.has(bc.code)) stockOptsByCode.set(bc.code, new Set());
+      stockOptsByCode.get(bc.code)!.add(bc.stockLen);
+    }
+    for (const row of r.rows) {
+      if (!row.code || row.code === "-" || row.qty <= 0 || row.len <= 0) continue;
+      maxCutByCode.set(row.code, Math.max(maxCutByCode.get(row.code) ?? 0, row.len));
+      stockOptsByCode.get(row.code)?.add(row.stockLen);
     }
   }
   if (lenByCode.size === 0) return fail("ใบตัดนี้ไม่มีเส้นที่มีรหัสอลูให้หัก", 400);
@@ -77,8 +85,19 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const failed: { code: string; bars: number; error: string }[] = [];
 
   for (const code of lenByCode.keys()) {
-    const stockLen = stockLenByCode.get(code) || 640;
-    const bars = Math.ceil((lenByCode.get(code) ?? 0) / stockLen - 1e-9);
+    // เลือกเส้นคุ้มสุดต่อรหัสรวมทั้งใบ (เศษน้อยสุด · ยาว ≥ ชิ้นยาวสุด) — ตรง engine pickStock
+    const sumLen = lenByCode.get(code) ?? 0;
+    const maxCut = maxCutByCode.get(code) ?? 0;
+    const opts = [...(stockOptsByCode.get(code) ?? new Set([640]))].filter((b) => b > 0).sort((a, b) => a - b);
+    const feasible = opts.filter((b) => b >= maxCut - 1e-9);
+    const pool = feasible.length ? feasible : [Math.max(...opts)];
+    let stockLen = pool[0], bestWaste = Infinity;
+    for (const b of pool) {
+      const bb = Math.ceil(sumLen / b - 1e-9);
+      const waste = bb * b - sumLen;
+      if (waste < bestWaste - 1e-9) { bestWaste = waste; stockLen = b; }
+    }
+    const bars = Math.ceil(sumLen / stockLen - 1e-9);
     if (bars <= 0) continue;
     const item = bySku.get(code.trim().toUpperCase());
     if (!item) { skipped.push({ code, bars }); continue; }

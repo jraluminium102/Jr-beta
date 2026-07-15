@@ -96,7 +96,7 @@ const slimDead = (m?: string) => (m === "ลากจูง" ? 1 : m === "เป
 export const SLIMLUX_SLIDE: CutSpec = {
   id: "slimlux_slide",
   name: "SlimLux บานเลื่อนรางบน",
-  stockLen: 640, // TODO: ยืนยันความยาวเส้นสต็อก SlimLux — Excel ไม่มีคอลัมน์นี้
+  stockLen: 600, // เจ้าของยืนยัน: เส้น 6 ม. (เสากุญแจมี 2 ขนาด 4.8/6 → ระบุ stockLens ต่อโปรไฟล์)
   rails: [],
   opts: [
     { key: "fit", label: "รูปแบบช่องปูน", choices: ["ยัดในช่อง", "แปะนอก"] },
@@ -111,7 +111,7 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: "เสารับบาน", code: (o) => (o.N === 1 ? "กล่อง 1×2" : o.N === 2 ? "กล่อง 1×4" : "กล่อง 1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
     { name: "บังใบ 4 หุน", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 3.6, qty: () => 2 },
     { name: "ขวางบน-ล่าง", code: "OPK-A201", len: (o) => (o.fit === "แปะนอก" ? (o.W - 0.8) / o.N + 0.2 * o.N : (o.W - 5) / o.N + 0.2 * o.N), qty: (o) => 2 * o.N },
-    { name: "เสากุญแจ", code: "OPK-A202", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => 2 * o.N },
+    { name: "เสากุญแจ", code: "OPK-A202", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => 2 * o.N, stockLens: [480, 600], note: "เส้นมี 2 ขนาด 4.8/6 ม. — เลือกอันคุ้มสุด" },
     { name: "ตบเรียบหน้าเสากุญแจ (บานเลื่อน)", code: "OPK-A203", len: (o) => o.H - slimBeamCut(o.beam) - 5.1, qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
     { name: "ตบเรียบหน้าเสากุญแจ (บานตาย)", code: "OPK-A203", len: (o) => o.H - slimBeamCut(o.beam), qty: () => 0, note: "Excel = 0 คงที่ (แก้มือเมื่อมีบานตาย — รอเจ้าของเคาะสูตร)" },
     { name: "ตบเกี่ยวใส่สักหลาด", code: "OPK-A204", len: (o) => o.H - slimBeamCut(o.beam) - 5.1, qty: (o) => o.N - slimDead(o.sashMode) + 1 + (o.fit === "แปะนอก" ? 1 : 0), note: "บานเลื่อน+1 (+1 ถ้าแปะนอก)" },

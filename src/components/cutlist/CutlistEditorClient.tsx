@@ -112,19 +112,36 @@ export default function CutlistEditorClient({
 
   const boq = useMemo(() => {
     const len = new Map<string, number>();
-    const sl = new Map<string, number>();
+    const maxCut = new Map<string, number>();
+    const opts = new Map<string, Set<number>>();
     for (const c of computed) {
       if (!c.result || !c.spec) continue;
       for (const b of c.result.barsByCode) {
         len.set(b.code, (len.get(b.code) ?? 0) + b.totalLenCm);
-        sl.set(b.code, c.spec.stockLen);
+        if (!opts.has(b.code)) opts.set(b.code, new Set());
+        opts.get(b.code)!.add(b.stockLen);
+      }
+      for (const row of c.result.rows) {
+        if (!row.code || row.code === "-" || row.qty <= 0 || row.len <= 0) continue;
+        maxCut.set(row.code, Math.max(maxCut.get(row.code) ?? 0, row.len));
+        opts.get(row.code)?.add(row.stockLen);
       }
     }
     return [...len.entries()]
       .map(([codeK, totalLenCm]) => {
-        const bars = Math.ceil(totalLenCm / (sl.get(codeK) || 640) - 1e-9);
+        // เลือกเส้นคุ้มสุด (เศษน้อยสุด · ยาว ≥ ชิ้นยาวสุด) — ตรง engine pickStock / server cut-stock
+        const cand = [...(opts.get(codeK) ?? new Set([640]))].filter((b) => b > 0).sort((a, b) => a - b);
+        const feas = cand.filter((b) => b >= (maxCut.get(codeK) ?? 0) - 1e-9);
+        const pool = feas.length ? feas : [Math.max(...cand)];
+        let stockLen = pool[0], bestWaste = Infinity;
+        for (const b of pool) {
+          const bb = Math.ceil(totalLenCm / b - 1e-9);
+          const w = bb * b - totalLenCm;
+          if (w < bestWaste - 1e-9) { bestWaste = w; stockLen = b; }
+        }
+        const bars = Math.ceil(totalLenCm / stockLen - 1e-9);
         const st = stockOf(codeK);
-        return { code: codeK, totalLenCm: Math.round(totalLenCm * 10) / 10, bars, stockQty: st ? st.qty : null, stockName: st?.name ?? "" };
+        return { code: codeK, totalLenCm: Math.round(totalLenCm * 10) / 10, bars, stockLen, stockQty: st ? st.qty : null, stockName: st?.name ?? "" };
       })
       .sort((a, b) => a.code.localeCompare(b.code));
     // eslint-disable-next-line react-hooks/exhaustive-deps
