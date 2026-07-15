@@ -30,6 +30,12 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   // หน้างานของลูกค้าที่เลือก
   const [custJobs, setCustJobs] = useState<CustJob[]>([]);
   const [jobsBusy, setJobsBusy] = useState(false);
+  // แก้ "ที่อยู่หน้างาน" ต่อหน้างาน (jobs.customer_area) — คนละก้อนกับ "ที่อยู่ออกบิล" ของลูกค้าด้านบน
+  // ไม่ใช่ snapshot เอกสาร → แก้ที่นี่ไม่กระทบใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว
+  const [editAreaJobId, setEditAreaJobId] = useState<string | null>(null);
+  const [areaDraft, setAreaDraft] = useState("");
+  const [areaSaving, setAreaSaving] = useState(false);
+  const [areaErr, setAreaErr] = useState("");
 
   useEffect(() => {
     if (!sel) { setCustJobs([]); return; }
@@ -53,6 +59,23 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
     setEditId(c.id); setAdding(true); setErr("");
   }
   function cancelForm() { setAdding(false); setEditId(null); setErr(""); }
+
+  function startEditArea(j: CustJob) {
+    setEditAreaJobId(j.id); setAreaDraft(j.customer_area ?? ""); setAreaErr("");
+  }
+  async function saveJobArea(jobId: string) {
+    setAreaSaving(true); setAreaErr("");
+    const res = await fetch(`/api/jobs/${jobId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_area: areaDraft }),
+    });
+    const json = await res.json().catch(() => null);
+    setAreaSaving(false);
+    if (!res.ok) { setAreaErr(json?.error ?? "บันทึกไม่สำเร็จ"); return; }
+    setCustJobs(custJobs.map((j) => (j.id === jobId ? { ...j, customer_area: areaDraft } : j)));
+    setEditAreaJobId(null);
+  }
 
   async function save() {
     if (!form.name.trim()) { setErr("ต้องระบุชื่อลูกค้า"); return; }
@@ -240,28 +263,64 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
 
               {/* หน้างานของลูกค้า — เห็นว่ามีหลายหน้างานใต้ชื่อเดียว (ลูกค้าเก่า หน้างานใหม่) */}
               <div className="mt-5">
-                <div className="text-sm font-semibold text-brand-dark mb-2 flex items-center gap-1.5">
+                <div className="text-sm font-semibold text-brand-dark mb-1 flex items-center gap-1.5">
                   <Icon name="building" size={15} /> หน้างานของลูกค้า ({custJobs.length})
                 </div>
+                <p className="text-[11px] text-ink-3 mb-2">
+                  ที่อยู่หน้างาน (ไปวัด/ติดตั้ง) ต่องาน — คนละก้อนกับ &ldquo;ที่อยู่ออกบิล&rdquo; ด้านบน · แก้ที่นี่ไม่กระทบใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว
+                </p>
                 {jobsBusy ? (
                   <p className="text-sm text-ink-3">กำลังโหลด…</p>
                 ) : custJobs.length === 0 ? (
                   <p className="text-sm text-ink-3 glass-soft rounded-lg px-3 py-2">ยังไม่มีหน้างาน</p>
                 ) : (
                   <div className="space-y-2">
-                    {custJobs.map((j) => (
-                      <a
-                        key={j.id}
-                        href={`/jobs?open=${j.id}`}
-                        className="press flex items-center justify-between gap-2 glass-soft rounded-lg px-3 py-2.5 text-sm hover:bg-white/60"
-                      >
-                        <div className="min-w-0">
-                          <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
-                          <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
+                    {custJobs.map((j) =>
+                      editAreaJobId === j.id ? (
+                        <div key={j.id} className="glass-soft rounded-lg px-3 py-2.5 text-sm border border-brand/25">
+                          <div className="font-semibold text-brand-dark tnum mb-1.5">{j.job_code || "—"}</div>
+                          <textarea
+                            value={areaDraft}
+                            onChange={(e) => setAreaDraft(e.target.value)}
+                            rows={2}
+                            autoFocus
+                            placeholder="ที่อยู่หน้างาน"
+                            className="w-full glass-soft rounded-lg px-3 py-2 outline-none text-sm resize-none border border-gray-200"
+                          />
+                          {areaErr && <p role="alert" className="text-xs text-red-700 mt-1">{areaErr}</p>}
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => { setEditAreaJobId(null); setAreaErr(""); }} disabled={areaSaving}
+                              className="press flex-1 border border-gray-200 rounded-lg py-2 text-xs text-gray-700 min-h-[36px]">
+                              ยกเลิก
+                            </button>
+                            <button onClick={() => saveJobArea(j.id)} disabled={areaSaving}
+                              className="press flex-1 bg-brand text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50 min-h-[36px]">
+                              {areaSaving ? "กำลังบันทึก…" : "บันทึก"}
+                            </button>
+                          </div>
                         </div>
-                        <Badge tone="sky">ขั้น {j.current_stage}</Badge>
-                      </a>
-                    ))}
+                      ) : (
+                        <div key={j.id} className="flex items-center justify-between gap-2 glass-soft rounded-lg px-3 py-2.5 text-sm hover:bg-white/60">
+                          <a href={`/jobs?open=${j.id}`} className="press min-w-0 flex-1">
+                            <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
+                            <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
+                          </a>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Badge tone="sky">ขั้น {j.current_stage}</Badge>
+                            {canWrite && (
+                              <button
+                                onClick={() => startEditArea(j)}
+                                aria-label="แก้ที่อยู่หน้างาน"
+                                title="แก้ที่อยู่หน้างาน"
+                                className="press inline-flex items-center justify-center w-9 h-9 rounded-lg text-ink-3 hover:bg-white/80 hover:text-brand-dark"
+                              >
+                                <Icon name="pencil" size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
               </div>

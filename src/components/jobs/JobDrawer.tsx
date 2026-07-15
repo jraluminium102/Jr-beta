@@ -7,7 +7,7 @@ import { baht, thDate } from "@/lib/format";
 import DateField from "@/components/ui/DateField";
 import { calcFinancials } from "@/lib/finance";
 import { Chip, Tag, Spinner } from "@/components/ui/primitives";
-import { X, ShieldCheck, TriangleAlert, Banknote } from "@/components/ui/icons";
+import { X, ShieldCheck, TriangleAlert, Banknote, Pencil } from "@/components/ui/icons";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
 import { QcPanel } from "@/components/jobs/QcPanel";
@@ -123,6 +123,12 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                   )}
 
                   <div className="mt-3">
+                    <SiteAddressEditor
+                      jobId={jobId}
+                      area={job.customer_area}
+                      readOnly={readOnly}
+                      onSaved={() => { refetch(); onChanged(); }}
+                    />
                     <Row l="ช่องทาง" v={job.channel} />
                     <Row l="เบอร์โทร" v={job.customer_tel} num />
                     <Row l="วันเข้าประเมิน" v={thDate(job.assess_date)} />
@@ -249,6 +255,72 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
             )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── ที่อยู่หน้างาน (จุดไปวัด/ติดตั้งจริง) — เก็บที่ jobs.customer_area ──
+// คนละก้อนกับ "ที่อยู่ออกบิล" ที่อยู่ในทะเบียนลูกค้า/นามออกบิล: อันนั้นไปฝัง (snapshot) ในเอกสาร
+// ส่วนอันนี้เป็นข้อมูลปฏิบัติงานล้วน ไม่เคย snapshot ไปเอกสารไหน → แก้ตรงนี้ไม่กระทบใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว
+function SiteAddressEditor({ jobId, area, readOnly, onSaved }: { jobId: string; area: string | null | undefined; readOnly: boolean; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(area ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = async () => {
+    setErr(null); setSaving(true);
+    try {
+      await api.patch(`/jobs/${jobId}`, { customer_area: draft });
+      setEditing(false);
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <div className="py-2.5 border-b border-white/8">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm shrink-0" style={{ color: "var(--t-low)" }}>ที่อยู่หน้างาน (ไปวัด/ติดตั้ง)</span>
+          {!readOnly && (
+            <button
+              onClick={() => { setDraft(area ?? ""); setErr(null); setEditing(true); }}
+              className="focusable pressable inline-flex items-center gap-1 text-[12px] text-white/70 hover:text-white border border-white/15 rounded-lg px-2.5 py-1.5 min-h-[36px]"
+            >
+              <Pencil size={13} /> แก้ไข
+            </button>
+          )}
+        </div>
+        <div className="text-sm font-medium text-white text-right mt-1">{area || "—"}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-2.5 border-b border-white/8">
+      <div className="text-sm mb-1.5" style={{ color: "var(--t-low)" }}>ที่อยู่หน้างาน (ไปวัด/ติดตั้ง)</div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={2}
+        autoFocus
+        className="focusable w-full glass-card rounded-lg px-3 py-2 text-sm text-white outline-none resize-none"
+      />
+      <p className="mt-1.5 text-[11px]" style={{ color: "var(--t-low)" }}>
+        แก้เฉพาะที่อยู่หน้างานของงานนี้ — ไม่กระทบที่อยู่ออกบิลในใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว (เอกสารเก็บที่อยู่แยกไว้ ณ วันที่ออก)
+      </p>
+      {err && <p role="alert" className="mt-1.5 text-[12px] text-rose-200">{err}</p>}
+      <div className="flex gap-2 mt-2">
+        <button onClick={() => setEditing(false)} disabled={saving} className="focusable pressable flex-1 glass-card text-white rounded-lg px-3 py-2 text-sm min-h-[40px]">ยกเลิก</button>
+        <button onClick={save} disabled={saving} className="focusable pressable flex-1 bg-white text-[#1F4E78] rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 min-h-[40px] flex items-center justify-center gap-2">
+          {saving && <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
+          บันทึก
+        </button>
       </div>
     </div>
   );
