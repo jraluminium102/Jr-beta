@@ -10,6 +10,8 @@ import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { TriangleAlert, Clock, ChevronRight, Package, PackageCheck, Search } from "@/components/ui/icons";
 import Icon from "@/components/Icon";
 import { ProductionStepModal, type ProdRow, type BoqSummary } from "@/components/production/ProductionStepModal";
+import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
+import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -270,12 +272,20 @@ export default function ProductionPage() {
             const showMeasureSched = r.status === "PENDING_MEASURE" && r.measure_scheduled;
             const installSoon = r.planned_install_date && r.planned_install_date <= in3days && r.status !== "READY";
             return (
-              <button key={r.id} onClick={() => setOpen(r)} aria-label={`อัปเดต ${r.job?.job_code}`}
-                className={`focusable pressable w-full text-left glass-card rounded-2xl p-4 flex items-center gap-3 ${stale ? "ring-1 ring-rose-300/40" : ""}`}>
+              // เดิมเป็น <button> ล้วน — เปลี่ยนเป็น div+role="button" เพราะต้องมีปุ่มโน้ต (BlockerNotesInline) ซ้อนข้างใน
+              // (nested <button> ใน <button> ผิด HTML spec) ปุ่มซ้อนกด stopPropagation กันชนกับ onClick แถวนี้
+              <div key={r.id} role="button" tabIndex={0} onClick={() => setOpen(r)}
+                onKeyDown={(e) => { if (e.key === "Enter") setOpen(r); }}
+                aria-label={`อัปเดต ${r.job?.job_code}`}
+                className={`focusable pressable w-full text-left glass-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer ${stale ? "ring-1 ring-rose-300/40" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-white font-semibold tnum">{r.job?.job_code}</span>
+                    {/* มีงาน ผรม. (0090) — read-only marker ต่อเลขงาน */}
+                    <FloorWorkBadge floorWork={r.job?.floor_work} floorNote={r.job?.floor_note} dark />
                     <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</span>
+                    {/* โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098) — กดใส่/เอาออกเร็วจากรายการ */}
+                    <BlockerNotesInline jobId={r.job_id} customerName={r.job?.customer_name ?? ""} notes={r.job?.job_blocker_notes ?? []} canWrite={canWrite} onChanged={invalidateAll} />
                     {stale && <span className="text-[11px] text-rose-200 flex items-center gap-0.5"><Clock size={11} /> ค้าง {daysSince(r.status_updated_at, r.created_at)} วัน</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -316,7 +326,7 @@ export default function ProductionPage() {
                   )}
                 </div>
                 <span className="shrink-0 inline-flex items-center gap-1 bg-white/90 text-[#1F4E78] rounded-xl px-3 py-2.5 text-sm font-semibold min-h-[44px]">อัปเดต <ChevronRight size={16} /></span>
-              </button>
+              </div>
             );
           })}
           {filtered.length === 0 && <EmptyState title="ไม่มีงานในกลุ่มนี้" />}

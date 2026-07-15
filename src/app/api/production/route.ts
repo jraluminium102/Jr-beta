@@ -9,8 +9,9 @@ export const GET = withRoute(async () => {
   const { data, error } = await ctx.supabase
     .from("productions")
     .select(`id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_actual_time, measured_by_name, measure_time, measurer_id, measurer_name, production_queued, production_due_date, production_done, qc_result, qc_date, qc_note, producer_note, notes,
-      job:job_id(job_code, customer_name, customer_area, status, deposit_date,
-        boqs(id, status, boq_items(id))
+      job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note,
+        boqs(id, status, boq_items(id)),
+        job_blocker_notes(id, tag, note, source, created_at)
       )`)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -31,12 +32,13 @@ export const GET = withRoute(async () => {
       const boq_summary = latestBoq
         ? { id: latestBoq.id, status: latestBoq.status, item_count: latestBoq.boq_items.length }
         : null;
-      // ตัด boqs ออกจาก job ก่อน return เพื่อไม่ให้ payload พอง
+      // ตัด boqs ออกจาก job ก่อน return เพื่อไม่ให้ payload พอง + เรียง blocker_notes เก่า→ใหม่ (PostgREST ไม่การันตี order ของ embed)
       let jobRest: Record<string, unknown> | null = null;
       if (job) {
-        const { boqs: _b, ...rest } = job as Record<string, unknown>;
+        const { boqs: _b, job_blocker_notes, ...rest } = job as Record<string, unknown> & { job_blocker_notes?: { created_at: string }[] };
         void _b;
-        jobRest = rest;
+        const sortedNotes = [...(job_blocker_notes ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at));
+        jobRest = { ...rest, job_blocker_notes: sortedNotes };
       }
       return { ...p, job: jobRest, boq_summary };
     });

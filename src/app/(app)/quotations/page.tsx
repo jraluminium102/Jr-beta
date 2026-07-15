@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { Card, StatusBadge } from "@/components/ui";
+import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import type { QuotationStatus } from "@/lib/types";
@@ -13,13 +14,13 @@ export default async function QuotationsPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("quotations")
-    .select("id, code, customer_snapshot, issue_date, status, net, job_id, jobs:job_id(job_code)")
+    .select("id, code, customer_snapshot, issue_date, status, net, job_id, jobs:job_id(job_code, floor_work, floor_note)")
     .order("created_at", { ascending: false });
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
     issue_date: string; status: QuotationStatus; net: number;
-    job_id: string | null; jobs: { job_code: string | null } | null;
+    job_id: string | null; jobs: { job_code: string | null; floor_work: string | null; floor_note: string | null } | null;
   }[];
 
   return (
@@ -61,7 +62,10 @@ export default async function QuotationsPage() {
                 {rows.map((r) => (
                   <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
                     <td className="py-3">
-                      <Link href={`/quotations/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link href={`/quotations/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                        <FloorWorkBadge floorWork={r.jobs?.floor_work} floorNote={r.jobs?.floor_note} />
+                      </div>
                     </td>
                     <td>
                       <div className="font-medium">{r.customer_snapshot?.name}</div>

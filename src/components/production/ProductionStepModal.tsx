@@ -9,6 +9,8 @@ import { Chip } from "@/components/ui/primitives";
 import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import { ProductionSetsSection } from "@/components/production/ProductionSetsSection";
+import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
+import type { BlockerNote } from "@/components/production/BlockerNotesInline";
 import type { ProdStatus } from "@/lib/database.types";
 
 export type BoqSummary = {
@@ -25,7 +27,11 @@ export type ProdRow = {
   production_queued: string | null; production_done: string | null; production_due_date: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
-  job: { job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null } | null;
+  job: {
+    job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
+    floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker
+    job_blocker_notes?: BlockerNote[];                                  // โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098)
+  } | null;
   boq_summary: BoqSummary | null;
 };
 
@@ -477,7 +483,10 @@ export function ProductionStepModal({
         {/* header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
-            <div className="text-white font-bold text-xl tnum">{prod.job?.job_code}</div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="text-white font-bold text-xl tnum">{prod.job?.job_code}</div>
+              <FloorWorkBadge floorWork={prod.job?.floor_work} floorNote={prod.job?.floor_note} dark />
+            </div>
             <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>{prod.job?.customer_name} · {prod.job?.customer_area ?? "—"}</div>
           </div>
           <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-11 h-11 inline-flex items-center justify-center rounded-xl text-white/75 hover:bg-white/10 shrink-0"><X size={22} /></button>

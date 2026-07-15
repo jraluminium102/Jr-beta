@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { Card, StatusBadge } from "@/components/ui";
+import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import QuotationActions from "./QuotationActions";
@@ -16,12 +17,12 @@ export default async function QuotationDetail({ params }: { params: { id: string
   const supabase = createClient();
   const { data } = await supabase
     .from("quotations")
-    .select("*, quotation_items(*)")
+    .select("*, quotation_items(*), job:job_id(floor_work, floor_note)")
     .eq("id", params.id)
     .single();
   if (!data) notFound();
 
-  const q = data as Quotation;
+  const q = data as Quotation & { job: { floor_work: string | null; floor_note: string | null } | null };
   const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = q.customer_snapshot;
   const writable = canWrite(profile?.role);
@@ -44,6 +45,7 @@ export default async function QuotationDetail({ params }: { params: { id: string
             <Icon name="arrowLeft" size={18} />
           </Link>
           <h1 className="text-xl font-bold text-brand-dark font-mono">{q.code}</h1>
+          <FloorWorkBadge floorWork={q.job?.floor_work} floorNote={q.job?.floor_note} />
           <StatusBadge status={q.status} />
         </div>
         <div className="flex gap-2 flex-wrap">
