@@ -106,9 +106,12 @@ export const SLIMLUX_SLIDE: CutSpec = {
   ],
   defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J" },
   profiles: [
-    { name: "คาน", code: (o) => `กล่อง ${o.beam ?? "1×4"}`, len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W), qty: () => 1, note: "ยัดในช่อง=W · แปะนอก=W×2" },
+    // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
+    // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
+    { name: "คาน", code: (o) => beamBoxCodes(o.beam ?? "1×4")[0] ?? "-", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W), qty: () => 1, note: "ยัดในช่อง=W · แปะนอก=W×2" },
+    { name: "คาน (กล่องตัวที่ 2 — คานผสม)", code: (o) => beamBoxCodes(o.beam ?? "1×4")[1] ?? "-", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W), qty: (o) => (beamBoxCodes(o.beam ?? "1×4").length > 1 ? 1 : 0) },
     { name: "รางบน (รางแขวน)", code: "XSW40008", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => o.N - slimDead(o.sashMode), note: "จำนวน = บานเลื่อน" },
-    { name: "เสารับบาน", code: (o) => (o.N === 1 ? "กล่อง 1×2" : o.N === 2 ? "กล่อง 1×4" : "กล่อง 1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
+    { name: "เสารับบาน", code: (o) => boxCode(o.N === 1 ? "1×2" : o.N === 2 ? "1×4" : "1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
     { name: "บังใบ 4 หุน", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 3.6, qty: () => 2 },
     { name: "ขวางบน-ล่าง", code: "OPK-A201", len: (o) => (o.fit === "แปะนอก" ? (o.W - 0.8) / o.N + 0.2 * o.N : (o.W - 5) / o.N + 0.2 * o.N), qty: (o) => 2 * o.N },
     { name: "เสากุญแจ", code: "OPK-A202", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => 2 * o.N, stockLens: [480, 600], note: "เส้นมี 2 ขนาด 4.8/6 ม. — เลือกอันคุ้มสุด" },
@@ -493,6 +496,11 @@ const boxCode = (size: string) => {
   const [a, b] = String(size).split(/[×xX*]/).map((s) => s.trim());
   return b ? `กล่อง ${a}"x${b}"` : `กล่อง ${a}`;
 };
+// คาน "ผสม" (เช่น "1×4+1×1.6", "2×4+4×4") = กล่อง 2 ตัวประกบกัน ตัดยาวเท่ากันทั้งคู่
+// ห้ามส่งทั้งก้อนเข้า boxCode ตรงๆ — split บน × จะได้ กล่อง 2"x4+4" (รหัสผี ไม่มีในสต็อก หักไม่ติดเงียบๆ)
+// → แตกด้วย + ก่อน แล้วค่อยแปลงทีละตัว · โปรไฟล์หลักใช้ตัวแรก + โปรไฟล์ "กล่องเสริม" ใช้ตัวที่สอง
+const beamBoxCodes = (beam?: string): string[] =>
+  String(beam ?? "").split("+").map((s) => s.trim()).filter(Boolean).map(boxCode);
 
 // ⑮ PC Door (JR_PCDoor) — บานเปิดเมืองทอง + บานเลื่อน sms · N มาจาก split
 // เส้นสต็อก 640 (6.4 ม.) — เจ้าของยืนยัน (ไฟล์ไม่มีคอลัมน์เส้น · รุ่นนี้มีชิ้น sms)
@@ -947,7 +955,9 @@ export const TOPRAIL_FRAME: CutSpec = {
   ],
   defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4" },
   profiles: [
-    { name: "คานรับราง", code: (o) => boxCode(o.beam ?? "2×4"), len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง · คาน 2×4+4×4 = 2 กล่อง (ไฟล์รวมเป็นตัวเลือกเดียว)" },
+    // คานผสม "2×4+4×4" ห้ามเข้า boxCode ตรงๆ (ได้รหัสผี กล่อง 2"x4+4") → แตก 2 โปรไฟล์เหมือน SlimLux
+    { name: "คานรับราง", code: (o) => beamBoxCodes(o.beam ?? "2×4")[0] ?? "-", len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
+    { name: "คานรับราง (กล่องตัวที่ 2 — คานผสม)", code: (o) => beamBoxCodes(o.beam ?? "2×4")[1] ?? "-", len: (o) => o.W, qty: (o) => (beamBoxCodes(o.beam ?? "2×4").length > 1 ? 1 : 0) },
     { name: "เสารับบาน (กล่อง)", code: "-", len: (o) => o.H - trBeam(o), qty: (o) => (trOut(o) === 1 ? 1 : 2), note: "ไฟล์ไม่ผูกรหัสกล่อง" },
     { name: "ชนกลางรับบาน", code: "-", len: (o) => o.H - trBeam(o), qty: () => 1, note: "ไฟล์ตั้ง 1 ตายตัว" },
     { name: "รางบน Hafele", code: "-", len: (o) => (o.fit === "ยัดในช่อง" ? o.W - 5 : o.W * 2), qty: trSlide, note: "⚠ แปะนอก = W×2 (ไฟล์ตั้งใจว่า 2 ท่อนเท่า W)" },
