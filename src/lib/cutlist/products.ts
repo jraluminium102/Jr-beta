@@ -673,11 +673,306 @@ export const WOODJAMB_SWING: CutSpec = {
   ],
 };
 
+// ═══════════════════════ หลังคา / กันสาด / ระแนง (ไฟล์เป็น ซม. อยู่แล้ว) ═══════════════════════
+// ⚠ ไฟล์กลุ่มนี้ "ไม่มีคอลัมน์รหัสอลู" → ผูก boxCode() เฉพาะรายการที่ไฟล์ระบุขนาดกล่องชัด · ที่เหลือ "-"
+// ⚠ เหล็ก (ฉาก6หุน/แซด4"/กล่องเหล็ก/เพลท) ห้ามผูก boxCode — คนละของกับกล่องอลู
+const ceil = (x: number) => Math.ceil(x - 1e-9);
+const r1 = (x: number) => Math.round(x * 10) / 10;
+const r2 = (x: number) => Math.round(x * 100) / 100;
+// ตารางชนิดแผ่นมุง: max = ระยะจันทันสูงสุด · w = กว้างใช้งาน/แผ่น (ซม.)
+const ROOF_SHEET: Record<string, { max: number; w: number }> = {
+  "ไวนิล": { max: 100, w: 25 }, "ดีไลท์": { max: 100, w: 100 }, "เมทัลชีท": { max: 100, w: 34 },
+  "โพลีตัน": { max: 122, w: 122 }, "ชินโคร์ HC": { max: 138, w: 138 }, "ชินโคร์ Sup": { max: 138, w: 138 },
+};
+const SHEET_TYPES = ["ไวนิล", "ดีไลท์", "เมทัลชีท", "โพลีตัน", "ชินโคร์ HC", "ชินโคร์ Sup"];
+const sMax = (o: CutInput) => ROOF_SHEET[o.sheet ?? "ไวนิล"]?.max ?? 100;
+const sW = (o: CutInput) => ROOF_SHEET[o.sheet ?? "ไวนิล"]?.w ?? 25;
+const dblP = (o: CutInput) => (o.purlin === "แปคู่" ? 2 : 1);
+
+// ⑲ กันสาดเพิง (JR_กันสาด) — เส้น 600 ยืนยันในสูตร
+// ⏳ ค่าหัก กล่องเหล็ก (F43) / ครอบเพลท (F44) = 0 ในไฟล์ → 2 แถวนี้ยังเป็นค่าดิบ ใช้ตัดจริงไม่ได้ (รอเจ้าของ)
+const aRake = (o: CutInput) => r1((o.P ?? 0) / Math.cos(((o.deg ?? 7) * Math.PI) / 180));
+const aNr = (o: CutInput) => ceil(o.W / sMax(o)) + 1;
+const aBays = (o: CutInput) => aNr(o) - 1;
+const aNp = (o: CutInput) => ceil((o.P ?? 0) / 50) + 1;
+const aEndSide = (o: CutInput) => (o.roofEnd === "ปิดปลาย" ? 0 : o.roofEnd === "ยื่นปลาย" ? 10 : 10.2);
+const aEndJack = (o: CutInput) => (o.roofEnd === "ยื่นปลาย" ? 14.5 : o.roofEnd === "ปิดปลาย" ? 16.5 : 14.7);
+const aOut = (o: CutInput) => o.roofEnd === "ยื่นปลาย";
+export const AWNING: CutSpec = {
+  id: "awning", name: "กันสาดเพิง (หลังคา)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "P", label: "ยื่น P (ซม.)", type: "number" },
+    { key: "deg", label: "องศาเอียง", type: "number" },
+    { key: "purlin", label: "แป", choices: ["แปคู่", "แปเดี่ยว"] },
+    { key: "roofEnd", label: "ปลายหลังคา", choices: ["รางน้ำ", "ปิดปลาย", "ยื่นปลาย"] },
+  ],
+  defaults: { W: 300, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", P: 150, deg: 7, purlin: "แปคู่", roofEnd: "รางน้ำ" },
+  profiles: [
+    { name: "จันทันรัดรอบ (กว้าง หน้า-หลัง)", code: boxCode("1.6×4"), len: (o) => o.W - 0.4, qty: () => 2 },
+    { name: "จันทันรัดรอบ (ยื่น ข้าง)", code: boxCode("1.6×4"), len: (o) => aRake(o) - aEndSide(o), qty: () => 2 },
+    { name: "จันทันซอย 1.6×4", code: boxCode("1.6×4"), len: (o) => aRake(o) - aEndJack(o), qty: aNr },
+    { name: "แป 1×1½ (ยัดในช่อง)", code: boxCode("1×1.5"), len: (o) => (o.W - aNr(o) * 4.5) / aBays(o), qty: (o) => aBays(o) * aNp(o) * dblP(o) },
+    { name: "ฉาก 6 หุน (เหล็ก)", code: "-", len: (o) => o.W, qty: (o) => ceil(o.W / 600), note: "⚠ ไฟล์: ยาว=W แต่จำนวน=⌈W/600⌉" },
+    { name: 'แซด 4" (เหล็ก)', code: "-", len: (o) => o.W, qty: (o) => ceil(o.W / 600) },
+    { name: 'กล่องเหล็ก 1"×1"', code: "-", len: aRake, qty: aNr, note: "⏳ ไฟล์ยังไม่ใส่ค่าหัก (F43=0) — ยาวดิบ" },
+    { name: "เพลทเหล็ก", code: "-", len: () => 0, qty: (o) => 2 * aNr(o), note: "2/จันทัน · ไม่มีความยาว" },
+    { name: "กล่องครอบเพลท 1.6×4", code: boxCode("1.6×4"), len: (o) => aRake(o) / 3, qty: aNr, note: "⏳ ไฟล์ยังไม่ใส่ค่าหัก (F44=0) — ยาวดิบ" },
+    { name: "รัดรอบ (หน้า)", code: "-", len: (o) => (aOut(o) ? 0 : o.W + (o.roofEnd === "ปิดปลาย" ? 1 : 5.4)), qty: (o) => (aOut(o) ? 0 : 1) },
+    { name: "รัดรอบ (ข้าง)", code: "-", len: (o) => (aOut(o) ? 0 : aRake(o) + (o.roofEnd === "ปิดปลาย" ? 0.5 : 2.7)), qty: (o) => (aOut(o) ? 0 : 2) },
+    { name: "รางน้ำอลู", code: "-", len: (o) => o.W, qty: (o) => (o.roofEnd === "รางน้ำ" ? ceil(o.W / 600) : 0) },
+    { name: "แผ่นหลังคา", code: "-", len: aRake, qty: (o) => ceil(o.W / sW(o)) },
+  ],
+};
+
+// ⑳ กันสาด ตัวแอล / เพิงตรง (JR_กันสาด_L) — เส้น 600 ยืนยันในไฟล์
+// ⚠ บัคในไฟล์: ตัวคิดแถวแป (AK/AL) ไม่เช็ค "ตัวแอล" → เลือก "เพิงตรง" จำนวนแปยังผันตาม "ยื่น B" (พอร์ตตามไฟล์ ไม่แก้ให้ — รอเจ้าของเคาะ)
+// ⏳ ค่าหัก ชนตะเข้ (B91) / กล่องเหล็ก (B92) / ครอบเพลท (B93) = 0 ในไฟล์
+const lIsL = (o: CutInput) => o.shape === "ตัวแอล";
+const lRaftA = (o: CutInput) => r1(Math.sqrt((o.PA ?? 0) ** 2 + (o.drop ?? 0) ** 2));
+const lRaftB = (o: CutInput) => r1(Math.sqrt((o.PB ?? 0) ** 2 + (o.drop ?? 0) ** 2));
+const lNrA = (o: CutInput) => ceil((o.LA ?? 0) / sMax(o)) + 1;
+const lNrB = (o: CutInput) => (lIsL(o) ? ceil((o.LB ?? 0) / sMax(o)) + 1 : 0);
+const lPitchA = (o: CutInput) => r2((o.LA ?? 0) / (lNrA(o) - 1));
+const lPitchB = (o: CutInput) => (lNrB(o) > 1 ? r2((o.LB ?? 0) / (lNrB(o) - 1)) : 0);
+const lHip = (o: CutInput) => r1(Math.sqrt((o.PA ?? 0) ** 2 + (o.PB ?? 0) ** 2 + (o.drop ?? 0) ** 2));
+const lEaveA = (o: CutInput) => (lIsL(o) ? (o.LA ?? 0) - (o.PB ?? 0) : (o.LA ?? 0));
+const lEaveB = (o: CutInput) => (lIsL(o) ? (o.LB ?? 0) - (o.PA ?? 0) : 0);
+const lJackA = (o: CutInput) => (lIsL(o) && lPitchA(o) > 0 ? Math.min(lNrA(o) - 1, Math.trunc(((o.PB ?? 0) - 0.001) / lPitchA(o))) : 0);
+const lJackB = (o: CutInput) => (lIsL(o) && lPitchB(o) > 0 ? Math.min(lNrB(o) - 1, Math.trunc(((o.PA ?? 0) - 0.001) / lPitchB(o))) : 0);
+const lFullA = (o: CutInput) => (lIsL(o) ? lNrA(o) - 1 - lJackA(o) : lNrA(o));
+const lFullB = (o: CutInput) => (lIsL(o) ? lNrB(o) - 1 - lJackB(o) : 0);
+const lTotA = (o: CutInput) => lJackA(o) + lFullA(o);
+const lTotB = (o: CutInput) => (lIsL(o) ? lJackB(o) + lFullB(o) : 0);
+const lCut = (o: CutInput) => (o.roofEnd === "รางน้ำ" ? 10.2 : o.roofEnd === "ยื่นปลาย" ? 10 : 12.5);
+const lSag = (o: CutInput) => (o.hipMode ?? "ยุบ") === "ยุบ";
+// แถวแปต่อปีก = Σ ต่อช่อง ⌈min(ลึกหัวช่อง, ลึกท้ายช่อง)/50⌉+1
+function lPurlinRows(o: CutInput, wing: "A" | "B"): number {
+  if (wing === "B" && !lIsL(o)) return 0;
+  const [pitch, nr, near, far] = wing === "A"
+    ? [lPitchA(o), lNrA(o), o.PB ?? 0, o.PA ?? 0]
+    : [lPitchB(o), lNrB(o), o.PA ?? 0, o.PB ?? 0];
+  if (!pitch || nr < 2 || !near) return 0;
+  let sum = 0;
+  for (let k = 1; k <= 30 && k <= nr - 1; k++) {
+    const d = (x: number) => (x >= near ? far : lSag(o) ? (x / near) * far : (1 - x / near) * far);
+    sum += ceil(Math.min(d((k - 1) * pitch), d(k * pitch)) / 50) + 1;
+  }
+  return sum;
+}
+const lJackLen = (o: CutInput, j: number, wing: "A" | "B") =>
+  wing === "A"
+    ? r1((lSag(o) ? (j * lPitchA(o)) / (o.PB || 1) : 1 - (j * lPitchA(o)) / (o.PB || 1)) * lRaftA(o))
+    : r1((lSag(o) ? (j * lPitchB(o)) / (o.PA || 1) : 1 - (j * lPitchB(o)) / (o.PA || 1)) * lRaftB(o));
+const L_JACK_ROWS = 8; // ⚠ ไฟล์รองรับแค่ 5 แถว/ปีก (เกิน 5 ไฟล์ตกจันทันเงียบ) — โค้ดทำ 8
+export const AWNING_L: CutSpec = {
+  id: "awning_l", name: "กันสาด ตัวแอล / เพิงตรง", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "shape", label: "รูปแบบ", choices: ["ตัวแอล", "เพิงตรง"] },
+    { key: "LA", label: "ยาวผนัง A (ซม.)", type: "number" },
+    { key: "LB", label: "ยาวผนัง B (ซม.)", type: "number" },
+    { key: "PA", label: "ยื่น A (ซม.)", type: "number" },
+    { key: "PB", label: "ยื่น B (ซม.)", type: "number" },
+    { key: "drop", label: "สูง (ตก) (ซม.)", type: "number" },
+    { key: "hipMode", label: "มุมตะเข้", choices: ["ยุบ", "นูน"] },
+    { key: "roofEnd", label: "ปลายหลังคา", choices: ["รางน้ำ", "ปิดปลาย", "ยื่นปลาย"] },
+    { key: "purlin", label: "แป", choices: ["แปคู่", "แปเดี่ยว"] },
+  ],
+  defaults: { W: 0, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", shape: "ตัวแอล", LA: 400, LB: 300, PA: 150, PB: 120, drop: 18, hipMode: "ยุบ", roofEnd: "รางน้ำ", purlin: "แปคู่" },
+  profiles: [
+    { name: "จันทันเต็ม A", code: boxCode("1.6×4"), len: (o) => r1(lRaftA(o) - lCut(o)), qty: lFullA },
+    ...Array.from({ length: L_JACK_ROWS }, (_, i) => ({
+      name: `jack A #${i + 1}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => (i + 1 <= lJackA(o) ? lJackLen(o, i + 1, "A") : 0),
+      qty: (o: CutInput) => (i + 1 <= lJackA(o) ? 1 : 0),
+    })),
+    { name: "จันทันเต็ม B", code: boxCode("1.6×4"), len: (o) => (lIsL(o) ? r1(lRaftB(o) - lCut(o)) : 0), qty: lFullB },
+    ...Array.from({ length: L_JACK_ROWS }, (_, i) => ({
+      name: `jack B #${i + 1}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => (i + 1 <= lJackB(o) ? lJackLen(o, i + 1, "B") : 0),
+      qty: (o: CutInput) => (i + 1 <= lJackB(o) ? 1 : 0),
+    })),
+    { name: "จันทันตะเข้", code: boxCode("1.6×4"), len: (o) => (lIsL(o) ? lHip(o) : 0), qty: (o) => (lIsL(o) ? 1 : 0), note: "⏳ ไฟล์ยังไม่ใส่ค่าหักชนตะเข้ (B91=0)" },
+    { name: "ราง ปีก A", code: "-", len: lEaveA, qty: () => 1 },
+    { name: "ราง ปีก B", code: "-", len: lEaveB, qty: (o) => (lIsL(o) ? 1 : 0) },
+    { name: "แผ่นหลังคา A", code: "-", len: lRaftA, qty: (o) => ceil((o.LA ?? 0) / sW(o)) },
+    { name: "แผ่นหลังคา B", code: "-", len: (o) => (lIsL(o) ? lRaftB(o) : 0), qty: (o) => (lIsL(o) ? ceil((o.LB ?? 0) / sW(o)) : 0) },
+    { name: "รางน้ำอลู ปีก A", code: "-", len: lEaveA, qty: (o) => (o.roofEnd === "รางน้ำ" ? 1 : 0) },
+    { name: "รางน้ำอลู ปีก B", code: "-", len: lEaveB, qty: (o) => (o.roofEnd === "รางน้ำ" && lIsL(o) ? 1 : 0) },
+    { name: "รัดรอบ ผนัง A", code: "-", len: (o) => o.LA ?? 0, qty: () => 1 },
+    { name: "รัดรอบ ผนัง B", code: "-", len: (o) => (lIsL(o) ? o.LB ?? 0 : 0), qty: (o) => (lIsL(o) ? 1 : 0) },
+    { name: "รัดรอบ ราง A", code: "-", len: lEaveA, qty: () => 1 },
+    { name: "รัดรอบ ราง B", code: "-", len: lEaveB, qty: (o) => (lIsL(o) ? 1 : 0) },
+    { name: "รัดรอบ ปลาย A", code: "-", len: lRaftA, qty: (o) => (lIsL(o) ? 1 : 2) },
+    { name: "รัดรอบ ปลาย B", code: "-", len: (o) => (lIsL(o) ? lRaftB(o) : 0), qty: (o) => (lIsL(o) ? 1 : 0) },
+    { name: "แป 1×1½ ปีก A", code: boxCode("1×1.5"), len: (o) => r1(((o.LA ?? 0) - lNrA(o) * 4.5) / (lNrA(o) - 1)), qty: (o) => lPurlinRows(o, "A") * dblP(o) },
+    { name: "แป 1×1½ ปีก B", code: boxCode("1×1.5"), len: (o) => (lIsL(o) ? r1(((o.LB ?? 0) - lNrB(o) * 4.5) / (lNrB(o) - 1)) : 0), qty: (o) => (lIsL(o) ? lPurlinRows(o, "B") * dblP(o) : 0) },
+    { name: "ฉาก 6หุน A (เหล็ก)", code: "-", len: (o) => o.LA ?? 0, qty: (o) => ceil((o.LA ?? 0) / 600) },
+    { name: "ฉาก 6หุน B (เหล็ก)", code: "-", len: (o) => (lIsL(o) ? o.LB ?? 0 : 0), qty: (o) => (lIsL(o) ? ceil((o.LB ?? 0) / 600) : 0) },
+    { name: 'แซด 4" A (เหล็ก)', code: "-", len: (o) => o.LA ?? 0, qty: (o) => ceil((o.LA ?? 0) / 600) },
+    { name: 'แซด 4" B (เหล็ก)', code: "-", len: (o) => (lIsL(o) ? o.LB ?? 0 : 0), qty: (o) => (lIsL(o) ? ceil((o.LB ?? 0) / 600) : 0) },
+    { name: "เพลทเหล็ก", code: "-", len: () => 0, qty: (o) => 2 * (lTotA(o) + lTotB(o)) },
+    { name: "กล่องเหล็ก 1×1 A", code: "-", len: lRaftA, qty: lTotA, note: "⏳ ไฟล์ยังไม่ใส่ค่าหัก (B92=0)" },
+    { name: "กล่องเหล็ก 1×1 B", code: "-", len: (o) => (lIsL(o) ? lRaftB(o) : 0), qty: lTotB },
+    { name: "กล่องครอบเพลท 1.6×4 A", code: boxCode("1.6×4"), len: (o) => r1(lRaftA(o) / 3), qty: lTotA, note: "⏳ ไฟล์ยังไม่ใส่ค่าหัก (B93=0)" },
+    { name: "กล่องครอบเพลท 1.6×4 B", code: boxCode("1.6×4"), len: (o) => (lIsL(o) ? r1(lRaftB(o) / 3) : 0), qty: lTotB },
+    { name: "ฝาครอบ A (ไวนิล/โพลี)", code: "-", len: lRaftA, qty: (o) => (o.sheet === "ไวนิล" ? ceil((o.LA ?? 0) / sW(o)) : o.sheet === "โพลีตัน" ? lTotA(o) : 0) },
+    { name: "ฝาครอบ B", code: "-", len: (o) => (lIsL(o) ? lRaftB(o) : 0), qty: (o) => (!lIsL(o) ? 0 : o.sheet === "ไวนิล" ? ceil((o.LB ?? 0) / sW(o)) : o.sheet === "โพลีตัน" ? lTotB(o) : 0) },
+  ],
+};
+
+// ㉑ หลังคาจั่วตรง (JR_จั่วหลายด้าน · ชีต "จั่วตรง") — เส้น 600
+// หมายเหตุ: JR_กันสาด ชีต2 "หลังคาจั่ว" เป็นรุ่นเก่ากว่า (รายการไม่ตรงกัน) — ไม่พอร์ต รอเจ้าของยืนยันว่าใช้อันไหน
+const gSlope = (o: CutInput) => r1(Math.sqrt((o.W / 2) ** 2 + (o.ridgeH ?? 0) ** 2));
+const gN = (o: CutInput) => ceil((o.D ?? 0) / sMax(o)) + 1;
+const gPitch = (o: CutInput) => r2((o.D ?? 0) / (gN(o) - 1));
+const gCutEnd = (o: CutInput) => (o.roofEnd === "รางน้ำ" ? 10.2 : 10);
+const gPurRows = (o: CutInput) => ceil(o.W / 2 / 50) + 1;
+export const GABLE_STRAIGHT: CutSpec = {
+  id: "gable_straight", name: "หลังคาจั่วตรง (1 ช่วง · 2 สโลป)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "D", label: "ยื่น/ลึก D (ซม.)", type: "number" },
+    { key: "ridgeH", label: "สูงสัน (ซม.)", type: "number" },
+    { key: "purlin", label: "แป", choices: ["แปคู่", "แปเดี่ยว"] },
+    { key: "roofEnd", label: "ปลาย", choices: ["รางน้ำ", "ปล่อยปลาย"] },
+  ],
+  defaults: { W: 400, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", D: 300, ridgeH: 60, purlin: "แปคู่", roofEnd: "รางน้ำ" },
+  profiles: [
+    { name: "จันทัน 1.6×4 (2 ฝั่ง)", code: boxCode("1.6×4"), len: (o) => r1(gSlope(o) - gCutEnd(o)), qty: (o) => 2 * gN(o) },
+    { name: "สัน/อกไก่ 4×4", code: boxCode("4×4"), len: (o) => r1(((o.D ?? 0) - 10.2) / ceil(((o.D ?? 0) - 10.2) / 600)), qty: (o) => ceil(((o.D ?? 0) - 10.2) / 600) },
+    { name: "คานตัว T คานนอน 4×4", code: boxCode("4×4"), len: (o) => r1(o.W - 20.4), qty: (o) => gN(o) - 1 },
+    { name: "คานตัว T เสาตั้ง 4×4", code: boxCode("4×4"), len: (o) => r1((o.ridgeH ?? 0) - 10.2), qty: (o) => gN(o) - 1 },
+    { name: "แป 1×1½", code: boxCode("1×1.5"), len: (o) => r1(gPitch(o) - 4.5), qty: (o) => (gN(o) - 1) * gPurRows(o) * 2 * dblP(o) },
+    { name: "รางน้ำอลู", code: "-", len: (o) => r1((o.D ?? 0) / ceil((o.D ?? 0) / 600)), qty: (o) => (o.roofEnd === "รางน้ำ" ? 2 * ceil((o.D ?? 0) / 600) : 0) },
+    { name: "รัดรอบ 4×4 (แนวยื่น 2 ข้าง)", code: boxCode("4×4"), len: (o) => r1((o.D ?? 0) / ceil((o.D ?? 0) / 600)), qty: (o) => 2 * ceil((o.D ?? 0) / 600) },
+    { name: "รัดรอบ 4×4 (แนวกว้าง ปลาย)", code: boxCode("4×4"), len: (o) => r1(o.W / ceil(o.W / 600)), qty: (o) => ceil(o.W / 600), note: "เว้นฝั่งผนัง = 1 ด้าน" },
+    { name: "แผ่นหลังคา (2 สโลป)", code: "-", len: gSlope, qty: (o) => 2 * ceil((o.D ?? 0) / sW(o)) },
+  ],
+};
+
+// ㉒ กลาสเฮ้าส์ (JR_กลาสเฮ้าส์) — เพิงตรง หลังคา+เสาในตัว
+// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → 600 (เดา · อิงไฟล์หลังคาอื่นในชุด) · ⚠ ไฟล์ไม่มีแผงค่าหักเลย → จันทัน/เสา ตัดเต็มไม่หักปลาย (รอเจ้าของยืนยัน)
+const ghDrop = (o: CutInput) => (o.hiH ?? 0) - (o.loH ?? 0);
+const ghRaft = (o: CutInput) => r1(Math.sqrt((o.D ?? 0) ** 2 + ghDrop(o) ** 2));
+const ghN = (o: CutInput) => ceil(o.W / sMax(o)) + 1;
+export const GLASSHOUSE: CutSpec = {
+  id: "glasshouse", name: "กลาสเฮ้าส์ (เพิงตรง · หลังคา+เสาในตัว)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "D", label: "ยาว ทิศลาด (ซม.)", type: "number" },
+    { key: "hiH", label: "สูงฝั่งสูง ชนบ้าน (ซม.)", type: "number" },
+    { key: "loH", label: "สูงฝั่งต่ำ หน้า (ซม.)", type: "number" },
+  ],
+  defaults: { W: 400, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", D: 300, hiH: 270, loH: 240 },
+  profiles: [
+    { name: "จันทันรัดรอบ 4×4 หน้า-หลัง", code: boxCode("4×4"), len: (o) => o.W, qty: () => 2 },
+    { name: "จันทันรัดรอบ 4×4 ข้าง (สโลป)", code: boxCode("4×4"), len: ghRaft, qty: () => 2 },
+    { name: "จันทันซอย 1.6×4 (ตัวใน)", code: boxCode("1.6×4"), len: ghRaft, qty: (o) => Math.max(ghN(o) - 2, 0) },
+    { name: "แป 1×1½", code: boxCode("1×1.5"), len: (o) => r1((o.W - ghN(o) * 4.5) / (ghN(o) - 1)), qty: (o) => (ghN(o) - 1) * (ceil((o.D ?? 0) / 50) + 1) * 2, note: "ไฟล์ ×2 ตายตัว (ไม่มีตัวเลือกแป)" },
+    { name: "ราง (เท่ากว้าง)", code: "-", len: (o) => o.W, qty: () => 1 },
+    { name: "แผ่นหลังคา", code: "-", len: ghRaft, qty: (o) => ceil(o.W / sW(o)) },
+    { name: "เสา 4×4 (ฝั่งต่ำ/หน้า)", code: boxCode("4×4"), len: (o) => o.loH ?? 0, qty: () => 2 },
+    { name: "กล่อง 1.6×4 ตั้ง (ฝั่งสูง/บ้าน)", code: boxCode("1.6×4"), len: (o) => o.hiH ?? 0, qty: () => 2 },
+  ],
+};
+
+// ㉓ บานระแนง (JR_บานระแนง) — ระแนง / ระแนงสลับ A-B · เส้น 600 ยืนยันในสูตร
+const LV_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1.5"': 3.81, '1.6"': 4.06, '2"': 5.08, '4"': 10.16 };
+const LV_BOX = ["1.6×4", "1×2", "2×4", "1×1.6"];
+const lvShow = (s?: string) => LV_SHOW[s ?? '4"'] ?? 10.16;
+const lvLen = (o: CutInput) => (o.slatDir === "นอน" ? o.W : o.H);
+const lvSpan = (o: CutInput) => (o.slatDir === "นอน" ? o.H : o.W);
+const lvAlt = (o: CutInput) => o.slatType === "ระแนงสลับ";
+const lvSingle = (o: CutInput) => Math.max(Math.trunc((lvSpan(o) - (o.gapA ?? 2.5)) / (lvShow(o.showA) + (o.gapA ?? 2.5))) + 1, 2);
+// ไล่ใบทีละท่อน — A ครบ aRun แล้วสลับ B ครบ bRun · หยุดเมื่อสะสมเกินช่วง
+function lvCounts(o: CutInput) {
+  const span = lvSpan(o), fA = lvShow(o.showA), fB = lvShow(o.showB);
+  const aRun = Math.max(1, Math.round(o.aRun ?? 3)), bRun = Math.max(1, Math.round(o.bRun ?? 5));
+  let P = 0, U = 0, a = 0, b = 0, prevA = true;
+  for (let k = 1; k <= 200; k++) {
+    const isA = (k - 1) % (aRun + bRun) < aRun;
+    if (k > 1) U += prevA ? (o.gapA ?? 2.5) : (o.gapB ?? 2.5);
+    P += isA ? fA : fB;
+    if (P + U <= span + 1e-9) { if (isA) a++; else b++; } else break;
+    prevA = isA;
+  }
+  return { a, b };
+}
+export const LOUVER_PANEL: CutSpec = {
+  id: "louver_panel", name: "บานระแนง (ระแนง / ระแนงสลับ)", stockLen: 600, rails: [],
+  opts: [
+    { key: "slatDir", label: "แนวเกล็ด", choices: ["นอน", "ตั้ง"] },
+    { key: "slatType", label: "ชนิดใบ", choices: ["ระแนง", "ระแนงสลับ"] },
+    { key: "boxA", label: "กล่อง A", choices: LV_BOX },
+    { key: "showA", label: "โชว์ A", choices: Object.keys(LV_SHOW) },
+    { key: "aRun", label: "A กี่ท่อน/ชุด", type: "number" },
+    { key: "gapA", label: "ระยะห่าง A (ซม.)", type: "number" },
+    { key: "boxB", label: "กล่อง B", choices: LV_BOX },
+    { key: "showB", label: "โชว์ B", choices: Object.keys(LV_SHOW) },
+    { key: "bRun", label: "B กี่ท่อน/ชุด", type: "number" },
+    { key: "gapB", label: "ระยะห่าง B (ซม.)", type: "number" },
+  ],
+  defaults: { W: 200, H: 240, N: 1, rail: "", honk: false, slatDir: "นอน", slatType: "ระแนง", boxA: "1.6×4", showA: '4"', aRun: 3, gapA: 2.5, boxB: "1×1.6", showB: '1.6"', bRun: 5, gapB: 2.5 },
+  profiles: [
+    { name: "ใบระแนง A", code: (o) => boxCode(o.boxA ?? "1.6×4"), len: lvLen, qty: (o) => (lvAlt(o) ? lvCounts(o).a : lvSingle(o)) },
+    { name: "ใบระแนง B (สลับ)", code: (o) => boxCode(o.boxB ?? "1×1.6"), len: (o) => (lvAlt(o) ? lvLen(o) : 0), qty: (o) => (lvAlt(o) ? lvCounts(o).b : 0) },
+    { name: 'โครงดาม 1"×1.6"', code: boxCode("1×1.6"), len: (o) => o.W, qty: (o) => (lvAlt(o) ? 2 : 1) * (o.H <= 250 ? 2 : 3), note: "สลับ = 2 หน้า · สูง>250 = 3 แถว · ⚠ ไฟล์ใช้ W เสมอ (ไม่ตามแนวเกล็ด)" },
+  ],
+};
+
+// ㉔ บานเลื่อนรางบนเฟรมปกติ (JR_รางบนเฟรมปกติ) — Hafele · SMS / ยูโร
+// ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → 600 (รอเจ้าของ · ชิ้น SMS ปกติ 640)
+// ⚠ "แปะนอก" รางบน = W×2 (ยาวเกินเส้น 600) — ไฟล์ตั้งใจว่า "2 ท่อน เท่า W" → จำนวนเส้นจะเพี้ยน (รอเคาะ)
+const TR_BEAM: Record<string, number> = { "1×1.6": 2.5, "1.6×1.6": 4.5, "1×3": 2.5, "2×4": 5, "4×4": 10.2, "2×4+4×4": 10.2 };
+const trBeam = (o: CutInput) => TR_BEAM[o.beam ?? "2×4"] ?? 5;
+const trOut = (o: CutInput) => (o.fit === "แปะนอกชนผนัง" || o.fit === "แปะนอกไปต่อ" ? 1 : 0);
+const trDead = (o: CutInput) => (o.sashMode === "อิสระ" ? 0 : o.sashMode === "ลากจูง" ? 1 : 2);
+const trSlide = (o: CutInput) => o.N - trDead(o);
+const trLock = (o: CutInput) => (o.N === 1 ? 1 : trOut(o) === 1 ? 1 : 2);
+const trHook = (o: CutInput) => (o.N === 1 ? 1 : trSlide(o) + trOut(o));
+const trOv = (o: CutInput) => Math.max(1, o.N - 1);
+const trCsms = (o: CutInput) => (o.fit === "ยัดในช่อง" ? 16.8 : o.fit === "แปะนอกชนผนัง" ? 8.4 : o.handle === "ฝัง" ? 4.3 : 5.9);
+const trCeuro = (o: CutInput) => (o.fit === "ยัดในช่อง" ? 5 : o.fit === "แปะนอกชนผนัง" ? 2.5 : 0);
+const trSMS = (o: CutInput) => (o.sys ?? "SMS") === "SMS";
+export const TOPRAIL_FRAME: CutSpec = {
+  id: "toprail_frame", name: "บานเลื่อนรางบนเฟรมปกติ (Hafele · SMS/ยูโร)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sys", label: "ระบบ", choices: ["SMS", "ยูโร"] },
+    { key: "sashMode", label: "รูปแบบบาน", choices: ["อิสระ", "ลากจูง", "เปิดคู่กลาง"] },
+    { key: "fit", label: "ช่องปูน", choices: ["ยัดในช่อง", "แปะนอกชนผนัง", "แปะนอกไปต่อ"] },
+    { key: "handle", label: "มือจับ (SMS+ไปต่อ)", choices: ["ฝัง", "เมโทร"] },
+    { key: "beam", label: "คาน (กล่อง)", choices: ["1×1.6", "1.6×1.6", "1×3", "2×4", "4×4", "2×4+4×4"] },
+  ],
+  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4" },
+  profiles: [
+    { name: "คานรับราง", code: (o) => boxCode(o.beam ?? "2×4"), len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง · คาน 2×4+4×4 = 2 กล่อง (ไฟล์รวมเป็นตัวเลือกเดียว)" },
+    { name: "เสารับบาน (กล่อง)", code: "-", len: (o) => o.H - trBeam(o), qty: (o) => (trOut(o) === 1 ? 1 : 2), note: "ไฟล์ไม่ผูกรหัสกล่อง" },
+    { name: "ชนกลางรับบาน", code: "-", len: (o) => o.H - trBeam(o), qty: () => 1, note: "ไฟล์ตั้ง 1 ตายตัว" },
+    { name: "รางบน Hafele", code: "-", len: (o) => (o.fit === "ยัดในช่อง" ? o.W - 5 : o.W * 2), qty: trSlide, note: "⚠ แปะนอก = W×2 (ไฟล์ตั้งใจว่า 2 ท่อนเท่า W)" },
+    { name: 'ฉาก 4" ปิดราง', code: "-", len: (o) => o.W, qty: () => 2 },
+    { name: "เสากุญแจ B20051 (SMS·ตั้ง)", code: "B20051", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? trLock(o) : 0) },
+    { name: "เสาเกี่ยว B20009 (SMS·ตั้ง)", code: "B20009", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? trHook(o) : 0) },
+    { name: "ขวางบน/ล่าง B20054 (SMS·นอน)", code: "B20054", len: (o) => (o.W - trCsms(o) - trOv(o) * 4) / o.N, qty: (o) => (trSMS(o) ? 2 * o.N : 0) },
+    { name: "เสากุญแจยูโร (ตั้ง)", code: "-", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trLock(o)), note: "ไฟล์เขียนรหัสว่า 'ยูโร' ไม่ใช่ B####" },
+    { name: "เสากุญแจยูโร (นอน 45°)", code: "-", len: (o) => (o.W - trCeuro(o) + trOv(o) * 8) / o.N, qty: (o) => (trSMS(o) ? 0 : 2 * o.N) },
+    { name: "ตบเกี่ยวยูโร", code: "-", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trHook(o)) },
+  ],
+  hardware: [
+    { name: "ล้อ Hafele (1 กล่อง/บาน)", qty: (o) => o.N, unit: "กล่อง" },
+    { name: "มือจับ Align (2/บาน)", qty: (o) => 2 * o.N, unit: "ตัว" },
+    { name: "ชุดล็อค (1/บาน)", qty: (o) => o.N, unit: "ชุด" },
+    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
+  ],
+};
+
 export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
+  AWNING, AWNING_L, GABLE_STRAIGHT, GLASSHOUSE, LOUVER_PANEL, TOPRAIL_FRAME,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));
