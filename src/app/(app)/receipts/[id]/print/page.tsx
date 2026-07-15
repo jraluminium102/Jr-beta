@@ -26,6 +26,13 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
 
   const rc = data as Receipt;
   const c = rc.customer_snapshot;
+  // ยอดแยกบนใบ = snapshot ณ วันออก (0095) — ห้ามคำนวณใหม่ เอกสารภาษีต้องพิมพ์ออกมาเหมือนเดิมเสมอ
+  // ใบเก่าก่อน 0095 (base_amt = null) → fallback amount − vat_amt (ใบเก่า wht = 0 อยู่แล้ว จึงตรงพอดี)
+  const rcAny = rc as Receipt & { base_amt?: number | null; wht_amt?: number | null; wht_rate?: number | null };
+  const rcBase = rcAny.base_amt != null ? Number(rcAny.base_amt) : rc.amount - rc.vat_amt;
+  const rcWht = Number(rcAny.wht_amt) || 0;
+  const rcWhtRate = Number(rcAny.wht_rate) || 0;
+  const rcGross = Math.round((rcBase + rc.vat_amt) * 100) / 100; // จำนวนเงินรวมทั้งสิ้น (ก่อนหัก ณ ที่จ่าย)
   // ใบกำกับภาษีเต็มรูป (ม.86/4) ต้องมีที่อยู่ + เลขภาษีผู้ซื้อครบ — เตือนเจ้าหน้าที่ก่อนพิมพ์ (ไม่พิมพ์ลงเอกสาร)
   const taxMissing = taxInvoiceMissing(c);
 
@@ -84,7 +91,7 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
                   placeholder={`รับชำระเงินตามใบวางบิล${refCode ? ` ${refCode}` : ""}`}
                 />
               </td>
-              <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td>
+              <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rcBase)}</td>
             </tr>
           </tbody>
         </table>
@@ -93,11 +100,19 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           <div className="text-sm text-gray-600">
             วิธีชำระเงิน: <b>{PAYMENT_LABEL[rc.payment_method] ?? rc.payment_method}</b>
           </div>
+          {/* ลำดับตามที่บัญชีกำหนด: ส่วนภาษี (ฐาน→VAT→รวมทั้งสิ้น) จบก่อน แล้วหัก ณ ที่จ่ายเป็น memo ใต้เส้น
+              ม.86/4(5) บังคับแสดงจำนวนภาษีแยกจากราคาให้ชัดแจ้ง → ห้ามให้ WHT มาทำให้ฐาน/VAT กำกวม */}
           <table className="text-sm">
             <tbody>
-              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rc.amount - rc.vat_amt)}</td></tr>
+              <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rcBase)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {rc.vat_rate}%</td><td className="text-right tabular-nums">{baht(rc.vat_amt)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">ยอดสุทธิ (รวม VAT)</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">จำนวนเงินรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">฿{baht(rcGross)}</td></tr>
+              {rcWht > 0 && (
+                <>
+                  <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {rcWhtRate}%</td><td className="text-right tabular-nums">-{baht(rcWht)}</td></tr>
+                  <tr className="font-bold"><td className="pr-10 py-1 border-t text-left">เงินสดรับสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
+                </>
+              )}
             </tbody>
           </table>
         </div>

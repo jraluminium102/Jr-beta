@@ -3,6 +3,7 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { applyInstallmentPayment } from "@/lib/billing";
+import { effectiveBillVat, splitCashReceived } from "@/lib/money";
 import type { BillingNote } from "@/lib/types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -41,24 +42,23 @@ export async function POST(req: Request) {
   // 1) ดึงใบวางบิล → copy customer_snapshot + job_id (ใช้กรณีไม่มี installment [HIGH-3])
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
-    .select("id, customer_snapshot, job_id, vat_rate, has_tax_breakdown")
+    .select("id, customer_snapshot, job_id, vat_rate, vat_rate_set, wht_rate")
     .eq("id", body.billing_note_id)
-    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; has_tax_breakdown: boolean | null }>();
+    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; vat_rate_set: boolean | null; wht_rate: number | null }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
 
-  // ── vat_rate ของใบเสร็จ = ของ "ใบวางบิลใบนี้" (แหล่งความจริง) ──
+  // ── vat_rate ของใบเสร็จ = ของ "ใบวางบิลใบนี้" (แหล่งความจริงเดียว · effectiveBillVat ใน money.ts) ──
   // เดิมอ่านจาก jobs.vat_rate → บั๊ก: jobs.vat_rate ถูกเขียนครั้งเดียวตอนสร้างใบเสนอ และ "ไม่เคยอัปเดต"
   // เวลาผู้ใช้กด "แก้ VAT/ส่วนลด" ที่ใบวางบิล (PATCH โหมด B เขียน billing_notes.vat_rate + คิดยอด/งวดใหม่)
-  // → ใบวางบิลติ๊ก VAT ออก แต่ใบเสร็จยังถอด VAT 7% จากงาน = base/VAT ไม่ตรงกับใบวางบิลทั้งก่อนและหลัง VAT
-  // has_tax_breakdown=true = ใบที่ subtotal เป็นยอดก่อน VAT จริง → vat_rate ของใบเชื่อถือได้ (ปุ่มแก้ VAT โผล่เฉพาะใบพวกนี้)
-  // has_tax_breakdown=false = ใบเก่า/ใบนำเข้า (subtotal backfill = total หลัง VAT) → คงพฤติกรรมเดิม ใช้ jobs.vat_rate
+  // → ใบวางบิลติ๊ก VAT ออก แต่ใบเสร็จยังถอด VAT 7% จากงาน = base/VAT ไม่ตรงใบวางบิลทั้งก่อนและหลัง VAT
+  // ใช้ helper เดียวกับหน้าใบวางบิล/หน้าสร้างใบเสร็จ → ใบเสร็จตรงกับใบที่ส่งลูกค้าเสมอ
   let jobVatRate = 7;
   if (bn.job_id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: j } = await (supabase as any).from("jobs").select("vat_rate").eq("id", bn.job_id).single();
     jobVatRate = Number(j?.vat_rate ?? 7);
   }
-  const vat_rate = bn.has_tax_breakdown ? Number(bn.vat_rate) || 0 : jobVatRate; // ignore body.vat_rate เสมอ (ไม่เชื่อ client)
+  const vat_rate = effectiveBillVat(bn, jobVatRate); // ignore body.vat_rate เสมอ (ไม่เชื่อ client)
 
   // [idempotency/partial] ถ้าระบุงวด → ตรวจยอดคงเหลือก่อนสร้างใบเสร็จ
   // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)
@@ -91,39 +91,46 @@ export async function POST(req: Request) {
     if (amount <= 0) return fail("ไม่พบยอดเงินที่รับจริงของงวดนี้ — ตรวจสอบการบันทึกชำระก่อน", 409);
   }
 
-  // [MEDIUM-2] ถอด VAT ออกจากยอดรวม (amount = ยอดรวม VAT แล้ว)
-  // vat_rate=7 → vat_amt = round(amount*7/107), base = amount - vat_amt, net = amount (ยอดรับจริง)
-  // ไม่บวก VAT ซ้ำ (เดิมคิด amount*1.07 ผิด)
-  let vat_amt = 0;
-  if (vat_rate > 0) {
-    vat_amt = round2((amount * vat_rate) / (100 + vat_rate));
-  }
-  const net = amount; // net = ยอดรวม VAT ที่รับจริง (ไม่บวกเพิ่ม)
+  // ── แยกเงินสดที่รับ → ฐาน / VAT / หัก ณ ที่จ่าย (splitCashReceived = แหล่งความจริงเดียว ใน money.ts) ──
+  // amount = เงินสดที่รับจริง (ไม่บวก VAT ซ้ำ · เดิมคิด amount*1.07 ผิด)
+  // ⚠ ใบที่มีหัก ณ ที่จ่าย: ยอดงวดเป็นยอด "หลังถูกหักแล้ว" → ถอด VAT ตรง ๆ จะได้ฐานต่ำกว่าจริง (VAT ขายขาด)
+  //    ต้อง gross-up: ฐาน = A/(1 + r/100 − w/100) · WHT ไม่ลดฐาน VAT (ม.50/69 ทวิ — เป็นการหักเงินที่จ่าย ไม่ใช่ส่วนลด)
+  //    ตัวอย่าง: บิล 100,000 VAT7 WHT3 → รับ 104,000 → ฐาน 100,000 VAT 7,000 (เดิมได้ 97,196.26/6,803.74 = ผิด)
+  const wht_rate = Number(bn.wht_rate) || 0;
+  const split = splitCashReceived(amount, vat_rate, wht_rate);
+  const vat_amt = split.vat;
+  const base_amt = split.base;   // snapshot ฐาน ณ วันออกใบ — หน้าพิมพ์ห้ามคำนวณเอง (เอกสารภาษีต้องนิ่ง)
+  const wht_amt = split.wht;
+  const net = amount; // net = เงินสดที่รับจริงเสมอ (ต้องกระทบยอดกับ finance_entries/statement ได้)
 
   // 3) ออกรหัสอัตโนมัติผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "INV" });
   if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
 
   // 4) insert ใบเสร็จ
-  const { data: rc, error: rcErr } = await supabase
-    .from("receipts")
-    .insert({
-      code,
-      billing_note_id: bn.id,
-      installment_id: body.installment_id ? Number(body.installment_id) : null,
-      customer_snapshot: bn.customer_snapshot,
-      issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
-      amount,
-      vat_rate,
-      vat_amt,
-      net,
-      payment_method,
-      note: body.note ?? "",
-      item_desc: (body.item_desc ?? "").toString().trim(),
-      created_by: profile.id,
-    })
-    .select("id, code")
-    .single();
+  const rcBase = {
+    code,
+    billing_note_id: bn.id,
+    installment_id: body.installment_id ? Number(body.installment_id) : null,
+    customer_snapshot: bn.customer_snapshot,
+    issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
+    amount,
+    vat_rate,
+    vat_amt,
+    net,
+    payment_method,
+    note: body.note ?? "",
+    item_desc: (body.item_desc ?? "").toString().trim(),
+    created_by: profile.id,
+  };
+  // snapshot ยอดแยก (0095) — ฐาน/หัก ณ ที่จ่าย ณ วันออกใบ (เอกสารภาษีต้องนิ่ง หน้าพิมพ์ห้ามคิดเอง)
+  let { data: rc, error: rcErr } = await supabase
+    .from("receipts").insert({ ...rcBase, base_amt, wht_rate, wht_amt }).select("id, code").single();
+  // กันพัง: ถ้า 0095 ยังไม่รัน → insert แบบเดิม (ยอด/VAT ยังถูก · ใบที่มี WHT จะเตือนให้รัน migration)
+  if (rcErr && /base_amt|wht_rate|wht_amt/i.test(rcErr.message ?? "")) {
+    if (wht_rate > 0) return fail("ใบวางบิลนี้มีหัก ณ ที่จ่าย — ต้องรัน migration 0095 ก่อนออกใบเสร็จ (ไม่งั้นฐานภาษีบนใบจะผิด)", 400);
+    ({ data: rc, error: rcErr } = await supabase.from("receipts").insert(rcBase).select("id, code").single());
+  }
   if (rcErr || !rc) return fail("บันทึกใบเสร็จไม่สำเร็จ: " + (rcErr?.message ?? ""), 500);
 
   const receiptId = Number((rc as { id: number; code: string }).id);

@@ -85,10 +85,13 @@ export interface Receipt {
   installment_id: number | null;
   customer_snapshot: CustomerSnapshot;
   issue_date: string;
-  amount: number;
+  amount: number;      // เงินสดที่รับจริง (= net เสมอ) — ต้องกระทบยอดกับ finance_entries ได้
   vat_rate: number;
   vat_amt: number;
-  net: number;
+  base_amt?: number | null; // ฐานก่อน VAT ณ วันออกใบ (snapshot 0095) · null = ใบเก่า → fallback amount − vat_amt
+  wht_rate?: number;        // หัก ณ ที่จ่าย (0095) — memo ใต้ "จำนวนเงินรวมทั้งสิ้น" ไม่ลดฐาน VAT
+  wht_amt?: number;
+  net: number;         // เงินสดรับสุทธิ · จำนวนเงินรวมทั้งสิ้น = base_amt + vat_amt (= net + wht_amt)
   payment_method: string;
   note: string;
   created_at: string;

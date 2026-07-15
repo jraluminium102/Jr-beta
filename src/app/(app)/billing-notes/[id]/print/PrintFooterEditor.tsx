@@ -72,15 +72,28 @@ export default function PrintFooterEditor({
         <tr><td className={cellL}>ราคาหลังหักส่วนลด</td><td className={cellR}>{baht(afterDiscount)}</td></tr>
         <tr><td className={cellL}>
           <label className="inline-flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={vatOn} onChange={(e) => setVatOn(e.target.checked)} /> ภาษีมูลค่าเพิ่ม 7%
+            {/* โหมด display-only (footer_override) ล็อก VAT ไว้ — บัญชีสั่ง 15 ก.ค.69:
+                อัตรา VAT เป็นคุณสมบัติของ "ธุรกรรม" ไม่ใช่ของกระดาษที่พิมพ์ · override ไม่แตะยอด booked
+                ถ้าปล่อยให้แก้ = ใบที่ส่งลูกค้าโชว์ VAT ต่างจากใบกำกับที่จะออกตามมา (ขัดกันเอง ตรวจย้อนไม่ได้)
+                → แก้ VAT ได้ที่ "แก้ VAT / ส่วนลด" (คิดยอด+งวดใหม่จริง) หรือโหมดคิดยอดจริงเท่านั้น */}
+            <input type="checkbox" checked={vatOn} disabled={!real}
+              title={real ? undefined : "แก้ VAT ที่นี่ไม่ได้ (ช่องนี้แก้แค่หน้ากระดาษ ไม่เปลี่ยนยอดจริง) — ใช้ปุ่ม 'แก้ VAT / ส่วนลด' ที่หน้าใบวางบิลแทน"}
+              onChange={(e) => setVatOn(e.target.checked)} className="disabled:opacity-50" /> ภาษีมูลค่าเพิ่ม 7%
+            {!real && <span className="text-[10px] text-gray-400">(ล็อก)</span>}
           </label>
         </td><td className={cellR}>{baht(t.vat_amt)}</td></tr>
         <tr className="font-semibold"><td className={cellL}>จำนวนเงินรวมทั้งสิ้น</td><td className={cellR}>{baht(total)}</td></tr>
         <tr><td className={cellL}>
+          {/* ล็อกเหมือน VAT ในโหมด display-only — server ignore อัตราจาก client อยู่แล้ว
+              ถ้าปล่อยให้เลือกได้ พรีวิวจะโชว์ -3,000 แล้วกดบันทึกไม่ขึ้น = "พรีวิวโกหก" ซึ่งเป็นรากของบั๊กทั้งเรื่องนี้ */}
           <span className="inline-flex items-center gap-1">หักภาษี ณ ที่จ่าย
-            <select value={wr} onChange={(e) => setWr(Number(e.target.value))} className="border border-gray-300 rounded px-1 py-1 text-xs outline-none">
+            <select value={wr} disabled={!real}
+              title={real ? undefined : "แก้หัก ณ ที่จ่ายที่นี่ไม่ได้ (ช่องนี้แก้แค่หน้ากระดาษ ไม่เปลี่ยนยอดจริง) — ใช้ปุ่ม 'แก้ VAT / ส่วนลด' ที่หน้าใบวางบิลแทน"}
+              onChange={(e) => setWr(Number(e.target.value))}
+              className="border border-gray-300 rounded px-1 py-1 text-xs outline-none disabled:opacity-50">
               <option value={0}>ไม่หัก</option><option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
             </select>
+            {!real && <span className="text-[10px] text-gray-400">(ล็อก)</span>}
           </span>
         </td><td className={`${cellR} text-red-700`}>-{baht(t.wht_amt)}</td></tr>
         <tr className="no-print"><td colSpan={2} className="pt-2">

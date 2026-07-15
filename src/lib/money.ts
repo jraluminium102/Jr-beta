@@ -78,12 +78,41 @@ export function footerSnapshot(
 // ⚠⚠ contract สำคัญ: amountInclVat ต้องเป็น "ยอดรวม VAT ล้วน" (base×(1+rate)) — ห้ามถูกหัก ณ ที่จ่ายมาก่อน
 //    ถ้ายอดงวดถูกหัก WHT ระดับใบแล้ว (amount=net) base/vat ที่ได้จะเพี้ยน → ต้องไม่แยกค่าแรง/ถอด VAT (บัญชีเตือน)
 // ============================================================
+// นโยบายการปัด = "Method A: ปัด VAT ก่อน แล้วให้ฐานอุ้มเศษ" (บัญชีเคาะ 15 ก.ค.69)
+//   1) ตัวเลขที่มีผลทางกฎหมายคือ VAT (ม.86/4(5) ต้องแสดงจำนวนภาษีแยกชัดแจ้ง) → ปัดตัวนั้นให้ตรงที่สุด
+//   2) ฐาน + VAT = ยอดรวม เป๊ะเสมอ (ไม่มีสตางค์ลอย)
+//   3) ตรงกับที่ receipts/route.ts ทำอยู่เดิม → ใบเสร็จเก่าที่ถูกอยู่แล้วไม่ขยับแม้แต่สตางค์เดียว
+// ⚠ สรรพากรไม่ได้กำหนดทิศทางการปัดของการถอด VAT ย้อนกลับเป็นกฎหมาย — นี่คือนโยบายบริษัท ควรให้ผู้สอบบัญชีเคาะรับรอง 1 ครั้ง
 export function backoutVat(amountInclVat: number, vatRate: number): { base: number; vat: number } {
-  const amt = round2(Number(amountInclVat) || 0);
-  const rate = Number(vatRate) || 0;
-  if (rate <= 0) return { base: amt, vat: 0 };
-  const base = round2(amt / (1 + rate / 100));
-  return { base, vat: round2(amt - base) };
+  const { base, vat } = splitCashReceived(amountInclVat, vatRate, 0);
+  return { base, vat };
+}
+
+/**
+ * แยก "เงินสดที่รับจริง" กลับเป็น ฐาน / VAT / หัก ณ ที่จ่าย — แหล่งความจริงเดียวของใบเสร็จ
+ *
+ * ทำไมต้องมี: ใบวางบิลที่มีหัก ณ ที่จ่าย เก็บ total = net (หลังถูกหักแล้ว) → งวดแตกจากยอดนั้น
+ * ถ้าเอาเงินที่รับไปถอด VAT ตรง ๆ จะได้ฐานต่ำกว่าจริง → VAT ขายขาด กระทบ ภ.พ.30
+ *   เงินรับ A = ฐาน × (1 + r/100 − w/100)   →   ฐาน = A / (1 + r/100 − w/100)
+ * หลักภาษี: WHT = การหักเงินที่จ่าย (ม.50/69 ทวิ) ไม่ใช่ส่วนลดราคา → "ไม่ลดฐาน VAT"
+ *          และ WHT คิดจากฐานก่อน VAT (ท.ป.4/2528) — ตรงกับ computeTotals ที่คิด wht จาก after_discount
+ * ปัด: ปัดตัวภาษีก่อน แล้ว plug ฐาน = A − vat + wht → บังคับ ฐาน + VAT − WHT = A เป๊ะ
+ *
+ * ตัวอย่าง: A=104,000 · VAT 7% · WHT 3% → ฐาน 100,000 · VAT 7,000 · WHT 3,000 · รวมทั้งสิ้น 107,000
+ */
+export function splitCashReceived(
+  cashReceived: number, vatRate: number, whtRate: number,
+): { base: number; vat: number; wht: number; gross: number } {
+  const A = round2(Number(cashReceived) || 0);
+  const r = Math.max(0, Number(vatRate) || 0);
+  const w = Math.max(0, Number(whtRate) || 0);
+  if (r <= 0 && w <= 0) return { base: A, vat: 0, wht: 0, gross: A };
+  const f = 1 + r / 100 - w / 100;
+  const raw = f > 0 ? A / f : A; // f<=0 = หักมากกว่ายอด (ไม่เกิดจริง) → กันหารศูนย์/ติดลบ
+  const vat = round2((raw * r) / 100);
+  const wht = round2((raw * w) / 100);
+  const base = round2(A - vat + wht); // plug — ฐานอุ้มเศษ
+  return { base, vat, wht, gross: round2(base + vat) };
 }
 
 // อัตราหัก ณ ที่จ่าย "ค่าแรง/ค่าบริการ" (นิติบุคคลในไทย) — ค่าเริ่มต้นตามที่บัญชีแนะนำ
@@ -101,6 +130,59 @@ export function splitLaborMaterial(baseExVat: number, laborRatioPct: number): { 
 // เอกสารการเงินโชว์ 2 ตำแหน่งเสมอ (บัญชีสั่ง 11ก.ค.69) — VAT/หัก ณ ที่จ่าย/ส่วนลด/ยอด ต้องมี .00
 export const baht = (n: number) =>
   (Number(n) || 0).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ============================================================
+// "VAT ที่ใช้จริง" ของใบวางบิล — แหล่งความจริงเดียว
+// ใช้ร่วมกันทั้ง หน้าใบวางบิล · หน้าสร้างใบเสร็จ · POST /api/receipts (เดิมต่างคนต่างคิด → ใบเสร็จไม่ตรงใบที่ส่งลูกค้า)
+// ยึด vat_rate_set (0095) = "อัตรา VAT ของใบนี้ยืนยันแล้ว" — ธงที่ booked จริง ตรวจย้อนได้
+//   · true  → ใช้ bn.vat_rate (ผู้ใช้ติ๊ก VAT ที่ใบวางบิลเอง)
+//   · false → ใบเก่า/ใบนำเข้า (ยอด flatten อาจรวม VAT อยู่แล้ว) → ไม่รู้ชัด ให้ผู้เรียก fallback jobs.vat_rate
+//
+// ⚠ ห้ามเอา footer_override มาตัดสิน (บัญชีสั่ง 15 ก.ค.69): มันคือ display-only ไม่แตะยอด booked
+//    ถ้าให้มันขับใบกำกับภาษี = เอกสารภาษีอ้างตัวเลขที่ไม่ผูกบัญชี ตรวจย้อนไม่ได้ ผิดหลัก audit trail
+//    → กันไม่ให้ต่างกันตั้งแต่ต้นทางแทน: ช่องแก้ footer แบบ display-only ล็อก VAT ไว้ (แก้ได้ที่ "แก้ VAT/ส่วนลด" เท่านั้น)
+// ⚠ known=false = "เดาจากงาน" → ห้ามใช้สรุปว่าใบนี้ No-VAT (ดู isNoVatBill)
+//
+// ทำไมต้องแยกจาก has_tax_breakdown (อย่าเอามารวมกัน — บัญชีเตือน):
+//   has_tax_breakdown = "subtotal เป็นยอดก่อน VAT จริง (ตรง quotations.subtotal)" → คุม UI ปุ่มแก้ VAT/footer
+//   vat_rate_set      = "อัตรา VAT ยืนยันแล้ว" → คุมใบเสร็จ
+//   "แก้ยอดบิล" (mode A) ทำให้ subtotal ไม่ตรงใบเสนอแล้ว (has_tax_breakdown=false) แต่ "การตัดสินใจ VAT ยังอยู่"
+// ============================================================
+export interface BillVatSource {
+  vat_rate?: number | null;
+  vat_rate_set?: boolean | null;
+}
+
+/** การตัดสินใจ VAT ที่ "ตัวใบวางบิลเอง" บอกได้ (ไม่พึ่งงาน) */
+export function billVatDecision(bn: BillVatSource): { rate: number; known: boolean } {
+  if (bn.vat_rate_set) return { rate: Number(bn.vat_rate) || 0, known: true };
+  return { rate: 0, known: false };
+}
+
+/** อัตรา VAT ที่ใบเสร็จ/ใบกำกับต้องใช้ = ของใบวางบิลถ้ารู้ชัด · ไม่งั้น fallback อัตราของงาน (ใบเก่า) */
+export function effectiveBillVat(bn: BillVatSource, jobVatRate: number): number {
+  const d = billVatDecision(bn);
+  return d.known ? d.rate : Number(jobVatRate) || 0;
+}
+
+/**
+ * ใบนี้ "ไม่มี VAT แน่ชัด" ไหม → รับชำระแล้วติ๊กว่าชำระพอ ไม่ต้องออกใบกำกับภาษี
+ *
+ * ⚠ ต่างจาก effectiveBillVat ตรงที่ "ดู footer_override ด้วย" — ตั้งใจ ไม่ใช่ความไม่สอดคล้อง:
+ *   · effectiveBillVat = ขับ "ตัวเลข" บนเอกสารภาษี → ห้าม ov แตะ (ov ไม่ผูกยอด booked · ตรวจย้อนไม่ได้)
+ *   · isNoVatBill      = "บล็อกไม่ให้ออกเอกสาร" → ov ใช้ได้ เพราะทิศนี้ fail-safe (กันไม่ให้ออกใบ ไม่ใช่ออกใบผิด)
+ * ถ้าไม่มีบรรทัด ov นี้: ใบเก่าที่ footer (ที่ส่งลูกค้าจริง) โชว์ VAT 0 แต่ vat_rate_set=false
+ *   → ปุ่มออกใบเสร็จจะโผล่ (เดิมซ่อน) → กดแล้ว fallback jobs.vat_rate=7 = ออกใบกำกับ VAT 7%
+ *     ขัดกับใบที่ส่งลูกค้าไปแล้ว (บัญชีจับได้ตอนรีวิว 15 ก.ค.69 — regression จาก 0095)
+ */
+export function isNoVatBill(
+  bn: BillVatSource & { footer_override?: { vat_rate?: number | null; net?: number | null } | null },
+): boolean {
+  const d = billVatDecision(bn);
+  if (d.known) return d.rate <= 0;
+  const ov = bn.footer_override;
+  return !!(ov && typeof ov.net === "number" && (Number(ov.vat_rate) || 0) <= 0);
+}
 
 // ============================================================
 // แบ่งงวดชำระอัตโนมัติตามยอดสุทธิ (PRD P0-5)

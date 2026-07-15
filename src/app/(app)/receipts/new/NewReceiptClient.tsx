@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht } from "@/lib/money";
+import { baht, splitCashReceived } from "@/lib/money";
 
 export type InstallmentOption = {
   id: number;
@@ -22,7 +22,8 @@ export type BillingNoteOption = {
   customer_snapshot: { name: string; job: string };
   total: number;
   status: string;
-  job_vat_rate?: 0 | 7;
+  job_vat_rate?: 0 | 7;   // อัตราที่ "ใช้จริง" ของใบนี้ (effectiveBillVat — ไม่ใช่ของงานเสมอไป)
+  bill_wht_rate?: number; // หัก ณ ที่จ่ายระดับใบ → ต้อง gross-up ตอนถอดฐาน ไม่งั้นฐานต่ำกว่าจริง
   billing_installments?: InstallmentOption[];
 };
 
@@ -86,10 +87,11 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
   }, [selectedInstallment, selected]);
 
   const amountNum = Number(amount) || 0;
-  // ถอด VAT แบบ inclusive ให้ตรงกับ API: vat = amount*rate/(100+rate), ฐานภาษี = amount - vat, ยอดสุทธิ = amount
-  const vatAmt = vatRate ? round2((amountNum * vatRate) / (100 + vatRate)) : 0;
-  const baseAmt = round2(amountNum - vatAmt);
-  const net = amountNum;
+  // แยกเงินสดที่รับ → ฐาน/VAT/หัก ณ ที่จ่าย ด้วย splitCashReceived ตัวเดียวกับ POST /api/receipts
+  // (ห้ามคิดสูตรเองซ้ำ — จอกับใบจริงต้องตรงกันเป๊ะ · ใบที่มี WHT ต้อง gross-up ไม่งั้นฐานต่ำกว่าจริง)
+  const whtRate = Number(selected?.bill_wht_rate) || 0;
+  const { base: baseAmt, vat: vatAmt, wht: whtAmt, gross } = splitCashReceived(amountNum, vatRate, whtRate);
+  const net = amountNum; // เงินสดรับจริง
 
   // บิลที่มีงวด (pending อยู่) บังคับเลือกงวด
   const hasInstallments = installments.length > 0;
@@ -227,9 +229,21 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                 <span className="tabular-nums">฿{baht(vatAmt)}</span>
               </div>
               <div className="flex justify-between text-sm py-1 mt-1 border-t font-bold" style={{ color: "#7d0f15" }}>
-                <span>ยอดรับสุทธิ (รวม VAT)</span>
-                <span className="tabular-nums">฿{baht(net)}</span>
+                <span>จำนวนเงินรวมทั้งสิ้น</span>
+                <span className="tabular-nums">฿{baht(gross)}</span>
               </div>
+              {whtAmt > 0 && (
+                <>
+                  <div className="flex justify-between text-sm py-0.5">
+                    <span className="text-ink-3">หัก ณ ที่จ่าย {whtRate}%</span>
+                    <span className="tabular-nums">-฿{baht(whtAmt)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-1 mt-1 border-t font-bold" style={{ color: "#7d0f15" }}>
+                    <span>เงินสดรับสุทธิ</span>
+                    <span className="tabular-nums">฿{baht(net)}</span>
+                  </div>
+                </>
+              )}
 
               {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
 

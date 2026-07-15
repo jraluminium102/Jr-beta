@@ -5,7 +5,7 @@ import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { err, notFound } from "@/lib/bff/response";
-import { suggestInstallments, computeTotals, footerSnapshot } from "@/lib/money";
+import { suggestInstallments, computeTotals, footerSnapshot, backoutVat } from "@/lib/money";
 
 // GET /api/billing-notes/[id]  → ใบวางบิล + งวดชำระ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -51,8 +51,20 @@ export const PATCH = withRoute(
     if (body && typeof body === "object" && "footer_override" in (body as any)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw = (body as any).footer_override;
+      // ⚠ ห้ามเชื่อ client เรื่องอัตราภาษี (กฎเดียวกับ POST /api/receipts) — footer นี้ display-only ไม่แตะยอด booked
+      //   ปล่อยให้ตั้ง VAT ต่างจากใบ = ใบที่ส่งลูกค้าขัดกับใบกำกับที่ออกตามมา · UI ล็อกแล้วแต่ต้องบังคับที่ server ด้วย
+      // fail-closed: อ่านอัตราไม่ได้ = ไม่เขียน (ห้ามเดา 0 — เดาผิดคือ VAT หายจากใบที่ส่งลูกค้า)
+      let ovVat = 0, ovWht = 0;
+      if (raw != null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: cur } = await (ctx.supabase as any)
+          .from("billing_notes").select("vat_rate, wht_rate").eq("id", params.id).single();
+        if (!cur) return err("อ่านอัตราภาษีของใบวางบิลไม่ได้ — ลองใหม่", 500);
+        ovVat = Number(cur.vat_rate) || 0;
+        ovWht = Number(cur.wht_rate) || 0;
+      }
       const value =
-        raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, raw.vat_rate, raw.wht_rate);
+        raw == null ? null : footerSnapshot(raw.subtotal, raw.discount_pct, ovVat, ovWht);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: ovErr } = await (ctx.supabase as any)
         .from("billing_notes").update({ footer_override: value }).eq("id", params.id);
@@ -75,7 +87,7 @@ export const PATCH = withRoute(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, labor_ratio, quotation_id, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, vat_rate_set, labor_ratio, quotation_id, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
       .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
@@ -120,17 +132,30 @@ export const PATCH = withRoute(
       newTotal = bt.net;
       breakdown = {
         subtotal: bt.subtotal, discount_pct: disc, discount_amt: bt.discount_amt,
-        vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt, has_tax_breakdown: true,
+        vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt,
+        has_tax_breakdown: true, vat_rate_set: true, // ผู้ใช้ยืนยันอัตรา VAT เอง → ใบเสร็จใช้ค่านี้ (0095)
       };
       // labor_ratio ปรับได้พร้อมกัน (null = ล้างการแยกค่าแรง/ค่าของ) — ตั้งเฉพาะเมื่อส่งมา
       // ⚠ ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบ (wht>0) ไม่ได้ → บังคับ null (ยอดงวดหลัง WHT ทำถอด VAT เพี้ยน)
       if (parsed.data.labor_ratio !== undefined) breakdown.labor_ratio = wht > 0 ? null : parsed.data.labor_ratio;
     } else {
-      // แก้ยอดตรง = ยอดล้วน (flat) → ตั้ง breakdown ให้ตรงกับ total (footer ไม่เพี้ยน) + has_tax_breakdown=false
+      // ── โหมด A: แก้ยอดตรง (flat) ──
+      // ⚠ ใบที่มีหัก ณ ที่จ่าย: ยอด flat ที่กรอกคือ "ก่อนหัก WHT" หรือ "เงินที่โอนจริงหลังหัก"? — ไม่มีทางรู้
+      //   เดาผิด = VAT บนใบกำกับผิดทันที → ปฏิเสธดีกว่าเดา (บัญชีสั่ง · pattern เดียวกับ guard ส่วนลดบาทข้างบน)
+      if ((Number(bn.wht_rate) || 0) > 0) {
+        return err("ใบนี้มีหัก ณ ที่จ่าย — แก้ยอดตรงไม่ได้ (ระบบแยกไม่ออกว่ายอดที่กรอกรวมหัก ณ ที่จ่ายแล้วหรือยัง) ใช้ 'แก้ VAT / ส่วนลด' หรือแก้ที่ใบเสนอราคาแทน", 409);
+      }
       newTotal = Math.round((parsed.data.total! + Number.EPSILON) * 100) / 100; // round2
+      // ยอด flat = "ยอดรวม VAT แล้ว" → ถอด VAT ตามอัตราที่ใบเคยยืนยันไว้ (subtotal + vat = total เป๊ะ)
+      // ⚠ carry forward vat_rate_set: เดิมล้างเป็น false → ใบเสร็จ fallback jobs.vat_rate → VAT 7% กลับมาเงียบๆ
+      //   ทั้งที่ผู้ใช้เพิ่งติ๊ก VAT ออก (บัญชี P0) · has_tax_breakdown ต้อง false เพราะ subtotal ไม่ตรงใบเสนอแล้ว
+      const keepSet = !!oldBreakdown.has_tax_breakdown || !!(bn as { vat_rate_set?: boolean }).vat_rate_set;
+      const keepRate = keepSet ? Number(oldBreakdown.vat_rate) || 0 : 0;
+      const flat = backoutVat(newTotal, keepRate);
       breakdown = {
-        subtotal: newTotal, discount_pct: 0, discount_amt: 0,
-        vat_rate: 0, vat_amt: 0, wht_rate: 0, wht_amt: 0, has_tax_breakdown: false,
+        subtotal: flat.base, discount_pct: 0, discount_amt: 0,
+        vat_rate: keepRate, vat_amt: flat.vat, wht_rate: 0, wht_amt: 0,
+        has_tax_breakdown: false, vat_rate_set: keepSet,
       };
     }
     if (newTotal <= 0) return err("ยอดสุทธิต้องมากกว่า 0", 400);
@@ -169,7 +194,7 @@ export const PATCH = withRoute(
       .update({ total: newTotal, ...breakdown })
       .eq("id", bnId);
     // กันพัง: ถ้า 0078/0079/0081 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
-    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|labor_ratio/i.test(upErr.message ?? "")) {
+    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio/i.test(upErr.message ?? "")) {
       ({ error: upErr } = await ctx.supabase.from("billing_notes").update({ total: newTotal }).eq("id", bnId));
     }
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);

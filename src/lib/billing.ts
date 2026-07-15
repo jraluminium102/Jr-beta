@@ -48,6 +48,45 @@ export async function applyInstallmentPayment(
 
   const amount = Number(inst.amount) || 0;
 
+  // ── guard มัดจำ: งวด 1 ที่มีมัดจำ auto รออยู่ ยอดต้องตรงกัน (บัญชี P0 · เช็คก่อนแตะงวด) ──
+  // ปัญหาเดิม: งาน DEPOSITED → trigger สร้าง finance_entry มัดจำ (เช่น 30,000) ไว้ก่อน (ยังไม่ผูกงวด)
+  //   ออกบิลทีหลัง งวด 1 = 59,500 → ปุ่ม "บันทึกชำระ" prefill 59,500 มาให้ → กดยืนยันตามที่เห็น
+  //   → งวดถูก mark paid 59,500 แต่ฝั่งเงินสดมีจริง 30,000 (โค้ดข้างล่างตั้งใจไม่ทับ amount มัดจำ)
+  //   = บัญชีแตกสองทางเงียบ ๆ · ใบเสร็จออกตามเงินจริง 30,000 (≠ บิล) · แล้ว 29,500 ที่เหลือ
+  //     ออกใบเสร็จไม่ได้อีกเลย เพราะงวดปิดไปแล้ว (guard กันออกซ้ำต่องวด)
+  // → ปฏิเสธไปเลย บอกยอดมัดจำจริง ให้ผู้ใช้ตัดสินใจ ดีกว่าบันทึกเลขที่ไม่ตรงเงิน
+  if (inst.seq === 1) {
+    const { data: bnJob } = await supabase
+      .from("billing_notes")
+      .select("job_id")
+      .eq("id", opts.billingNoteId)
+      .single<{ job_id: string | null }>();
+    const { data: pendingDeposit } = bnJob?.job_id
+      ? await supabase
+          .from("finance_entries")
+          .select("amount")
+          .eq("job_id", bnJob.job_id)
+          .eq("type", "DEPOSIT")
+          .eq("is_auto_created", true)
+          .eq("is_voided", false)
+          .is("billing_installment_id", null)
+          .maybeSingle<{ amount: number }>()
+      : { data: null };
+    if (pendingDeposit) {
+      const depositAmt = round2(Number(pendingDeposit.amount) || 0);
+      // ยอดที่กำลังจะบันทึกรวมทั้งงวด (สะสมกับที่เคยจ่าย) — ต้องเท่ามัดจำจริง
+      const willBe = opts.paidAmount != null
+        ? round2((Number(inst.paid_amount) || 0) + (Number(opts.paidAmount) || 0))
+        : amount;
+      if (Math.abs(depositAmt - willBe) >= 0.01) {
+        return {
+          error: `งานนี้มีมัดจำที่รับจริง ฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })} แต่กำลังบันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} — ยอดไม่ตรงเงินที่เข้าจริง`
+            + ` · ถ้ารับเพิ่มจริงให้บันทึกเป็นเงินเข้าที่หน้าการเงินก่อน หรือแก้ยอดงวด 1 ให้ตรงมัดจำ (หรือ void มัดจำเดิมถ้าลงผิด)`,
+        };
+      }
+    }
+  }
+
   // [MEDIUM-1] partial payment: สะสม paid_amount แทนการ overwrite
   // - ถ้าส่ง paidAmount มา (จาก /pay route = จ่ายบางส่วน/เพิ่ม): บวกสะสม, reject ถ้าเกิน
   // - ถ้าไม่ส่ง paidAmount (จาก receipts = ปิดงวดเต็ม): set = amount เหมือนเดิม
