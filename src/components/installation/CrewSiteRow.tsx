@@ -10,7 +10,7 @@ import type { SiteInfo } from "@/app/api/jobs/[id]/site-info/route";
 export default function CrewSiteRow({
   site, canWrite, onPatch, onDelete,
 }: {
-  site: { id: string; site_no: number; job_id: string | null; customer_name: string; appointment_time: string; address: string | null; phone: string | null };
+  site: { id: string; site_no: number; job_id: string | null; customer_name: string; appointment_time: string; address: string | null; phone: string | null; off_board?: boolean };
   canWrite: boolean;
   onPatch: (id: string, patch: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
@@ -112,6 +112,16 @@ export default function CrewSiteRow({
           placeholder="เวลานัด"
           className="w-20 bg-white/8 rounded-md px-1.5 py-0.5 text-[11px] text-white outline-none placeholder:text-white/30"
         />
+        {/* ธง ⚑ นอกบอร์ดพร้อมติดตั้ง (import SetTeam/งานพิเศษ) — กดสลับได้ */}
+        <button type="button" disabled={!canWrite}
+          onClick={() => canWrite && onPatch(site.id, { off_board: !site.off_board })}
+          title={site.off_board ? "งานนอกบอร์ดพร้อมติดตั้ง (กดเอาธงออก)" : "ทำเครื่องหมายว่างานนอกบอร์ดพร้อมติดตั้ง"}
+          className="text-[10.5px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 disabled:opacity-60"
+          style={site.off_board
+            ? { background: "rgba(239,159,39,.18)", color: "#fcd38a", border: "1px solid rgba(239,159,39,.4)" }
+            : { background: "rgba(255,255,255,.06)", color: "var(--t-low)", border: "1px solid rgba(255,255,255,.12)" }}>
+          ⚑{site.off_board ? " นอกบอร์ด" : ""}
+        </button>
         {(site.address || site.phone) && (
           <span className="text-[11px] truncate" style={{ color: "var(--t-low)" }}>
             {site.address}{site.address && site.phone ? " · " : ""}{site.phone}

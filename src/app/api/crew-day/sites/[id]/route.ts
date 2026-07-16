@@ -9,6 +9,7 @@ const Schema = z.object({
   appointment_time: z.string().optional(),
   address: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
+  off_board: z.boolean().optional(),   // ธงจุดงานนอกบอร์ดพร้อมติดตั้ง (import SetTeam/งานพิเศษ) — 0100
 });
 
 // PATCH /api/crew-day/sites/[id] → แก้ชื่อสถานที่/เวลานัด/ผูก(หรือเลิกผูก)งาน/ที่อยู่-เบอร์

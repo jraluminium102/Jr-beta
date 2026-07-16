@@ -1,0 +1,389 @@
+<style>
+:root{--bg:#f4f4f6;--card:#fff;--ink:#1a1c22;--ink2:#5b606b;--ink3:#9297a2;--line:#e6e7ec;--brand:#b3151d;--ok:#16a34a;--okbg:#e7f7ec;--warn:#b45309;--warnbg:#fef3e2;--err:#c0392b;--errbg:#fdeaea;--muted:#6b7280;--mutedbg:#eef0f2;}
+@media(prefers-color-scheme:dark){:root{--bg:#14161b;--card:#1c1f26;--ink:#e9eaee;--ink2:#a3a8b3;--ink3:#6b7280;--line:#2a2e37;--okbg:#123020;--warnbg:#3a2a10;--errbg:#3a1717;--mutedbg:#242832;}}
+:root[data-theme=dark]{--bg:#14161b;--card:#1c1f26;--ink:#e9eaee;--ink2:#a3a8b3;--ink3:#6b7280;--line:#2a2e37;--okbg:#123020;--warnbg:#3a2a10;--errbg:#3a1717;--mutedbg:#242832;}
+:root[data-theme=light]{--bg:#f4f4f6;--card:#fff;--ink:#1a1c22;--ink2:#5b606b;--ink3:#9297a2;--line:#e6e7ec;--okbg:#e7f7ec;--warnbg:#fef3e2;--errbg:#fdeaea;--mutedbg:#eef0f2;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:24px;margin:0 0 2px;letter-spacing:-.01em}.lead{color:var(--ink2);font-size:14px;margin:0 0 18px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:22px;font-weight:700}.stat span{font-size:12px;color:var(--ink2)}
+.stat.ok b{color:var(--ok)}.stat.warn b{color:var(--warn)}.stat.err b{color:var(--err)}.stat.muted b{color:var(--muted)}
+.day{margin-bottom:22px}
+.day h2{font-size:16px;margin:0 0 10px;padding-bottom:7px;border-bottom:2px solid var(--brand);display:flex;align-items:center;gap:8px}
+.ddow{background:var(--brand);color:#fff;font-size:11px;padding:2px 7px;border-radius:6px}
+.dcount{margin-left:auto;font-size:12px;color:var(--ink3);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.team{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.thead{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+.leader{font-weight:700;font-size:15px}.nolead{font-weight:400;color:var(--ink3);font-style:italic}
+.start{margin-left:auto;font-size:12px;color:var(--ink3)}
+.site{display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px dashed var(--line)}
+.site:first-child{border-top:0}.sname{font-size:13px;flex:1;min-width:0}
+.chip{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.chip.ok{background:var(--okbg);color:var(--ok)}.chip.warn{background:var(--warnbg);color:var(--warn)}.chip.err{background:var(--errbg);color:var(--err)}.chip.muted{background:var(--mutedbg);color:var(--muted)}
+.mems{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.mlabel{font-size:10.5px;color:var(--ink3);margin-right:2px}
+.mem{font-size:11px;background:var(--mutedbg);color:var(--ink2);padding:1px 7px;border-radius:20px}
+.note{background:var(--warnbg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink);margin-bottom:22px}
+</style>
+<div class="wrap">
+<h1>ตรวจข้อมูล SetTeam ก่อนนำเข้าระบบ</h1>
+<p class="lead">จัดทีมช่างรายวัน 8–17 ก.ค. 2569 · ดึงจาก SetTeamApp (เลือก snapshot ล่าสุดต่อวัน) — ยังไม่ได้บันทึกลงระบบ รอเจ้าของตรวจ</p>
+<div class="note"><b>สัญลักษณ์:</b> ทุกจุดงานจะติดธง ⚑ เพราะไม่มีใครอยู่บนบอร์ด "พร้อมติดตั้ง" (งานพวกนี้จัดคิว/ติดตั้งไปแล้ว หลุดจากบอร์ด) · <b>ผูกงาน</b> = เจอในระบบ ดึงที่อยู่/เบอร์ให้ · <b>ลอยๆ</b> = ไม่เจอในระบบ ใส่ชื่อเฉยๆ · <b>เลือกงาน?</b> = คุณสุกัญญา มี 2 งานมัดจำ (ภูเก็ต / สมุทรปราการ) รอเจ้าของบอกว่าอันไหน</div>
+<div class="sum">
+  <div class="stat"><b>9</b><span>วัน (8–17 ก.ค.)</span></div>
+  <div class="stat"><b>86</b><span>ทีม</span></div>
+  <div class="stat"><b>92</b><span>จุดงาน</span></div>
+  <div class="stat ok"><b>21</b><span>ผูกงานในระบบ</span></div>
+  <div class="stat warn"><b>34</b><span>ชื่อลอยๆ (ไม่มีในระบบ)</span></div>
+  <div class="stat muted"><b>35</b><span>โรงงาน/ลากลับ/วัด</span></div>
+  <div class="stat err"><b>2</b><span>ต้องเลือกงาน (สุกัญญา)</span></div>
+</div>
+<section class="day"><h2><span class="ddow">พ</span>8 ก.ค. 2569 <span class="dcount">9 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณธัญญาภรณ์</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">ทอม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณอ้อ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 11</span><span class="mem">ซู</span><span class="mem">แดน</span><span class="mem">หมี</span><span class="mem">ตาล</span><span class="mem">โก้</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">เบียร์</span><span class="mem">เก่ง</span><span class="mem">คุณ</span><span class="mem">นาย2</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณสายทิพย์ (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">ต้น</span><span class="mem">หวัน</span><span class="mem">ศักดิ์</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 10</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">อั๋น</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">เฮ</span><span class="mem">วิชัย</span><span class="mem">เล็ก</span><span class="mem">เต้ย</span><span class="mem">พร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณป้อ (1วัน)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">แอ๊ด</span><span class="mem">จอนนี่</span><span class="mem">ประทีป</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">กุ้ง</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวันฑนา (3วัน)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">ปั้น</span><span class="mem">เป้า</span><span class="mem">เอ็ม</span><span class="mem">เสือ</span><span class="mem">ศักดิ์2</span><span class="mem">บุญทิ้ง</span><span class="mem">ศรีพร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">วัดงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">โด้</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">พฤ</span>9 ก.ค. 2569 <span class="dcount">9 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณธัญญาภรณ์</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">ทอม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณอ้อ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 12</span><span class="mem">ซู</span><span class="mem">แดน</span><span class="mem">ตาล</span><span class="mem">โก้</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">เบียร์</span><span class="mem">เก่ง</span><span class="mem">คุณ</span><span class="mem">นาย2</span><span class="mem">เสก</span><span class="mem">ต้น</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณแหม่ม  (ศรีพร ส่ง)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">ศักดิ์</span><span class="mem">แอ๊ด</span><span class="mem">ปั้น</span><span class="mem">ศักดิ์2</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 10</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">แรม</span><span class="mem">ศรีพร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">เฮ</span><span class="mem">วิชัย</span><span class="mem">เล็ก</span><span class="mem">เต้ย</span><span class="mem">พร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">กุ้ง</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวันฑนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">เป้า</span><span class="mem">เอ็ม</span><span class="mem">เสือ</span><span class="mem">บุญทิ้ง</span><span class="mem">หวัน</span><span class="mem">หมี</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชาญณรงค์ (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">จอนนี่</span><span class="mem">ประทีป</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โชว์รูม</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">อั๋น</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">ศ</span>10 ก.ค. 2569 <span class="dcount">9 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณศิริพร (3วัน)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">ทอม</span><span class="mem">ศักดิ์</span><span class="mem">ศักดิ์2</span><span class="mem">เล็ก</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณอ้อ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 11</span><span class="mem">คุณ</span><span class="mem">นาย2</span><span class="mem">ต้น</span><span class="mem">ซู</span><span class="mem">แดน</span><span class="mem">ตาล</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">เบียร์</span><span class="mem">เก่ง</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณน้ำหวาน (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">แอ๊ด</span><span class="mem">หมี</span><span class="mem">ปั้น</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 13</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">ศรีพร</span><span class="mem">โก้</span><span class="mem">พร</span><span class="mem">ต้น2</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เฮ</span><span class="mem">วิชัย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">กุ้ง</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวันฑนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">เป้า</span><span class="mem">เอ็ม</span><span class="mem">เสือ</span><span class="mem">บุญทิ้ง</span><span class="mem">หวัน</span><span class="mem">ประทีป</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณธีรศานต์ 1วัน</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">คุณปอม(เช็คขนาดอีกรอบ)ทูนไปคนเดียว</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">จอนนี่</span><span class="mem">เต้ย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โชว์รูม</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">อั๋น</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">ส</span>11 ก.ค. 2569 <span class="dcount">10 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณศิริพร</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 10</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">ศักดิ์</span><span class="mem">ศักดิ์2</span><span class="mem">เล็ก</span><span class="mem">ตาล</span><span class="mem">นาย2</span><span class="mem">คุณ</span><span class="mem">เอ็ม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณโสมนัสสา 1วัน</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">ซู</span><span class="mem">ซอ</span><span class="mem">เบียร์</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณเฟียตตือ 1วัน</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">หมี</span><span class="mem">จอ</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 11</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">ศรีพร</span><span class="mem">โก้</span><span class="mem">พร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เฮ</span><span class="mem">วิชัย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">กุ้ง</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณแอนนิสต้า (1วัน)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เสือ</span><span class="mem">บุญทิ้ง</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณบอบ บางบอน (ไดร์เป่ากระจก)</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">ช่างเปี๊ยกงานคุณจรูญ ปิ่นเกล้า</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โชว์รูม</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">อั๋น</span><span class="mem">เก่ง</span><span class="mem">จอนนี่</span><span class="mem">หวัน</span><span class="mem">ประทีป</span><span class="mem">ปั้น</span><span class="mem">เป้า</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวชิรวิชญ์ (บานไม่ลงร่อง)</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">คุณทีปกร (เก็บสมาร์ทบอร์ด) เป็นรอย</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">ต้น</span><span class="mem">ทอม</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">จ</span>13 ก.ค. 2569 <span class="dcount">10 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณศิริพร</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เปีย</span><span class="mem">นาย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณอ้อ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 11</span><span class="mem">คุณ</span><span class="mem">นาย2</span><span class="mem">ต้น</span><span class="mem">ซู</span><span class="mem">แดน</span><span class="mem">ตาล</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">เบียร์</span><span class="mem">เก่ง</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณมาลิณี 3วัน</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">แอ๊ด</span><span class="mem">หมี</span><span class="mem">ทอม</span><span class="mem">ศักดิ์</span><span class="mem">ไท</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 13</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">ศรีพร</span><span class="mem">โก้</span><span class="mem">พร</span><span class="mem">โด้</span><span class="mem">ต้น2</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เฮ</span><span class="mem">วิชัย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">กุ้ง</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวันฑนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">เป้า</span><span class="mem">เอ็ม</span><span class="mem">เสือ</span><span class="mem">บุญทิ้ง</span><span class="mem">หวัน</span><span class="mem">ประทีป</span><span class="mem">เล็ก</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณนวรัตน์ 1วัน</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">จอนนี่</span><span class="mem">เต้ย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โชว์รูม</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">อั๋น</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณแหม่ม (ศรีพร ส่ง)</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">ึคุณพรภัทร ซ่อมมุ้ง</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">ปั้น</span><span class="mem">ศักดิ์2</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">อ</span>14 ก.ค. 2569 <span class="dcount">9 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณยุทธนา (โพรเทคVIP)  4วัน</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ทอม</span><span class="mem">ไท</span><span class="mem">นาย2</span><span class="mem">คุณ</span><span class="mem">อั๋น</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณอ้อ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 10</span><span class="mem">ต้น</span><span class="mem">ซู</span><span class="mem">แดน</span><span class="mem">ตาล</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">เบียร์</span><span class="mem">เก่ง</span><span class="mem">แรม</span><span class="mem">จอนนี่</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณมาลิณี</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 7</span><span class="mem">แอ๊ด</span><span class="mem">หมี</span><span class="mem">ศักดิ์</span><span class="mem">ประทีป</span><span class="mem">บุญทิ้ง</span><span class="mem">เอ็ม</span><span class="mem">เป้า</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 12</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">โก้</span><span class="mem">พร</span><span class="mem">โด้</span><span class="mem">ต้น2</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เฮ</span><span class="mem">วิชัย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณวันฑนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">เสือ</span><span class="mem">เล็ก</span><span class="mem">ศรีพร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชาญณรงค์(เก็บงานเดิม) รองเท้าผ้าใบ</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">เต้ย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชณันภัสร</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">ปั้น</span><span class="mem">ศักดิ์2</span><span class="mem">กุ้ง</span><span class="mem">หวัน</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">พ</span>15 ก.ค. 2569 <span class="dcount">11 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณยุทธนา</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 8</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ทอม</span><span class="mem">ไท</span><span class="mem">นาย2</span><span class="mem">คุณ</span><span class="mem">อั๋น</span><span class="mem">ตาล</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชนิตา (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">ซู</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณมาลิณี</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แอ๊ด</span><span class="mem">หมี</span><span class="mem">บุญทิ้ง</span><span class="mem">เป้า</span><span class="mem">ศักดิ์</span><span class="mem">เก่ง</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 12</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">โก้</span><span class="mem">พร</span><span class="mem">เบียร์</span><span class="mem">ศรีพร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">7โมงเช้า</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณรัตนา (ต่องานเดิม) พ่นสีกรอบ</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">เสือ</span><span class="mem">เอ็ม</span><span class="mem">แดน</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชนิตา (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เต้ย</span><span class="mem">ต้น</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณชณันภัสร</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 3</span><span class="mem">ปั้น</span><span class="mem">ศักดิ์2</span><span class="mem">กุ้ง</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">วัดงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โชว์รูม</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">เล็ก</span><span class="mem">แรม</span><span class="mem">จอนนี่</span><span class="mem">หวัน</span><span class="mem">ประทีป</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">วิชัย</span><span class="mem">เฮ</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">พฤ</span>16 ก.ค. 2569 <span class="dcount">9 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณยุทธนา</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 8</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">นาย2</span><span class="mem">คุณ</span><span class="mem">อั๋น</span><span class="mem">ตาล</span><span class="mem">หวัน</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณเอญ่า 2-3 วัน</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 8</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">ซู</span><span class="mem">เก่ง</span><span class="mem">ต้น</span><span class="mem">ศักดิ์2</span><span class="mem">เล็ก</span><span class="mem">ประทีป</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณสุกัญญา 2วัน</span><span class="chip err">⚑ เลือกงาน?</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แอ๊ด</span><span class="mem">บุญทิ้ง</span><span class="mem">ทอม</span><span class="mem">เป้า</span><span class="mem">จอนนี่</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 13</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">เนียน</span><span class="mem">โก้</span><span class="mem">พร</span><span class="mem">เบียร์</span><span class="mem">ศรีพร</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เฮ</span><span class="mem">วิชัย</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณรัตนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เสือ</span><span class="mem">แดน</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณณัฐญา (1วัน)</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เต้ย</span><span class="mem">เอ็ม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">ตี4</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณกฤติกา ภูเก็ต</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">คุณธัชมน นครศรีธรรมราช</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">ปั้น</span><span class="mem">กุ้ง</span><span class="mem">หมี</span><span class="mem">ศักดิ์</span></div>
+    </div></div></section><section class="day"><h2><span class="ddow">ศ</span>17 ก.ค. 2569 <span class="dcount">10 ทีม</span></h2><div class="grid"><div class="team">
+      <div class="thead"><span class="leader">โซ</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณยุทธนา</span><span class="chip ok">⚑ ผูกงาน</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 8</span><span class="mem">เปีย</span><span class="mem">นาย</span><span class="mem">ไท</span><span class="mem">นาย2</span><span class="mem">คุณ</span><span class="mem">อั๋น</span><span class="mem">ตาล</span><span class="mem">หวัน</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">มอส</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณเอญ่า</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 9</span><span class="mem">ซอ</span><span class="mem">จอ</span><span class="mem">ซู</span><span class="mem">เก่ง</span><span class="mem">ต้น</span><span class="mem">ศักดิ์2</span><span class="mem">เล็ก</span><span class="mem">ประทีป</span><span class="mem">เบียร์</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณสุกัญญา</span><span class="chip err">⚑ เลือกงาน?</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 5</span><span class="mem">แอ๊ด</span><span class="mem">บุญทิ้ง</span><span class="mem">ทอม</span><span class="mem">จอนนี่</span><span class="mem">แรม</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เป</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 9</span><span class="mem">มิ้ง</span><span class="mem">สาว</span><span class="mem">กร</span><span class="mem">จ่อย</span><span class="mem">เตี้ย</span><span class="mem">แดง</span><span class="mem">มองฮุง</span><span class="mem">โก้</span><span class="mem">พร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">โรงงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 6</span><span class="mem">แบงค์</span><span class="mem">ชัย</span><span class="mem">ต้น2</span><span class="mem">บอม</span><span class="mem">วี</span><span class="mem">โต้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เสก</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณรัตนา</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">เสือ</span><span class="mem">แดน</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">ทูน</span><span class="start">6.30</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณนิธิมา (2วัน)</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">เต้ย</span><span class="mem">เอ็ม</span><span class="mem">เป้า</span><span class="mem">ศรีพร</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">คุณกฤติกา ภูเก็ต</span><span class="chip warn">⚑ ลอยๆ</span></div><div class="site"><span class="sname">คุณธัชมน นครศรีธรรมราช</span><span class="chip warn">⚑ ลอยๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 4</span><span class="mem">ปั้น</span><span class="mem">กุ้ง</span><span class="mem">หมี</span><span class="mem">ศักดิ์</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader">เนียน</span><span class="start">8โมง</span></div>
+      <div class="sites"><div class="site"><span class="sname">วัดงาน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 1</span><span class="mem">โด้</span></div>
+    </div><div class="team">
+      <div class="thead"><span class="leader"><span class=nolead>ไม่ระบุหัวหน้า</span></span><span class="start">000</span></div>
+      <div class="sites"><div class="site"><span class="sname">ลากลับบ้าน</span><span class="chip muted">โรงงาน/อื่นๆ</span></div></div>
+      <div class="mems"><span class="mlabel">ลูกทีม 2</span><span class="mem">วิชัย</span><span class="mem">เฮ</span></div>
+    </div></div></section>
+</div>

@@ -1,0 +1,248 @@
+[
+ {
+  "full": "คุณธัญญาภรณ์",
+  "isNon": false,
+  "searchName": "ธัญญาภรณ์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณอ้อ",
+  "isNon": false,
+  "searchName": "อ้อ",
+  "areaHint": null
+ },
+ {
+  "full": "คุณสายทิพย์ (1วัน)",
+  "isNon": false,
+  "searchName": "สายทิพย์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณป้อ (1วัน)",
+  "isNon": false,
+  "searchName": "ป้อ",
+  "areaHint": null
+ },
+ {
+  "full": "คุณวันฑนา (3วัน)",
+  "isNon": false,
+  "searchName": "วันฑนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณแหม่ม  (ศรีพร ส่ง)",
+  "isNon": false,
+  "searchName": "แหม่ม",
+  "areaHint": null
+ },
+ {
+  "full": "คุณวันฑนา",
+  "isNon": false,
+  "searchName": "วันฑนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณชาญณรงค์ (1วัน)",
+  "isNon": false,
+  "searchName": "ชาญณรงค์",
+  "areaHint": null
+ },
+ {
+  "full": "โชว์รูม",
+  "isNon": true,
+  "searchName": null,
+  "areaHint": null
+ },
+ {
+  "full": "คุณศิริพร (3วัน)",
+  "isNon": false,
+  "searchName": "ศิริพร",
+  "areaHint": null
+ },
+ {
+  "full": "คุณน้ำหวาน (1วัน)",
+  "isNon": false,
+  "searchName": "น้ำหวาน",
+  "areaHint": null
+ },
+ {
+  "full": "คุณธีรศานต์ 1วัน",
+  "isNon": false,
+  "searchName": "ธีรศานต์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณปอม(เช็คขนาดอีกรอบ)ทูนไปคนเดียว",
+  "isNon": false,
+  "searchName": "ปอม",
+  "areaHint": null
+ },
+ {
+  "full": "คุณศิริพร",
+  "isNon": false,
+  "searchName": "ศิริพร",
+  "areaHint": null
+ },
+ {
+  "full": "คุณโสมนัสสา 1วัน",
+  "isNon": false,
+  "searchName": "โสมนัสสา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณเฟียตตือ 1วัน",
+  "isNon": false,
+  "searchName": "เฟียตตือ",
+  "areaHint": null
+ },
+ {
+  "full": "คุณแอนนิสต้า (1วัน)",
+  "isNon": false,
+  "searchName": "แอนนิสต้า",
+  "areaHint": null
+ },
+ {
+  "full": "คุณบอบ บางบอน (ไดร์เป่ากระจก)",
+  "isNon": false,
+  "searchName": "บอบ",
+  "areaHint": "บางบอน"
+ },
+ {
+  "full": "ช่างเปี๊ยกงานคุณจรูญ ปิ่นเกล้า",
+  "isNon": false,
+  "searchName": "จรูญ",
+  "areaHint": "ปิ่นเกล้า"
+ },
+ {
+  "full": "คุณวชิรวิชญ์ (บานไม่ลงร่อง)",
+  "isNon": false,
+  "searchName": "วชิรวิชญ์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณทีปกร (เก็บสมาร์ทบอร์ด) เป็นรอย",
+  "isNon": false,
+  "searchName": "ทีปกร",
+  "areaHint": null
+ },
+ {
+  "full": "คุณมาลิณี 3วัน",
+  "isNon": false,
+  "searchName": "มาลิณี",
+  "areaHint": null
+ },
+ {
+  "full": "คุณนวรัตน์ 1วัน",
+  "isNon": false,
+  "searchName": "นวรัตน์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณแหม่ม (ศรีพร ส่ง)",
+  "isNon": false,
+  "searchName": "แหม่ม",
+  "areaHint": null
+ },
+ {
+  "full": "ึคุณพรภัทร ซ่อมมุ้ง",
+  "isNon": false,
+  "searchName": "พรภัทร",
+  "areaHint": null
+ },
+ {
+  "full": "คุณยุทธนา (โพรเทคVIP)  4วัน",
+  "isNon": false,
+  "searchName": "ยุทธนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณมาลิณี",
+  "isNon": false,
+  "searchName": "มาลิณี",
+  "areaHint": null
+ },
+ {
+  "full": "คุณชาญณรงค์(เก็บงานเดิม) รองเท้าผ้าใบ",
+  "isNon": false,
+  "searchName": "ชาญณรงค์",
+  "areaHint": null
+ },
+ {
+  "full": "คุณชณันภัสร",
+  "isNon": false,
+  "searchName": "ชณันภัสร",
+  "areaHint": null
+ },
+ {
+  "full": "คุณยุทธนา",
+  "isNon": false,
+  "searchName": "ยุทธนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณชนิตา (1วัน)",
+  "isNon": false,
+  "searchName": "ชนิตา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณรัตนา (ต่องานเดิม) พ่นสีกรอบ",
+  "isNon": false,
+  "searchName": "รัตนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณเอญ่า 2-3 วัน",
+  "isNon": false,
+  "searchName": "เอญ่า",
+  "areaHint": null
+ },
+ {
+  "full": "คุณสุกัญญา 2วัน",
+  "isNon": false,
+  "searchName": "สุกัญญา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณรัตนา",
+  "isNon": false,
+  "searchName": "รัตนา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณณัฐญา (1วัน)",
+  "isNon": false,
+  "searchName": "ณัฐญา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณกฤติกา ภูเก็ต",
+  "isNon": false,
+  "searchName": "กฤติกา",
+  "areaHint": "ภูเก็ต"
+ },
+ {
+  "full": "คุณธัชมน นครศรีธรรมราช",
+  "isNon": false,
+  "searchName": "ธัชมน",
+  "areaHint": "นครศรีธรรมราช"
+ },
+ {
+  "full": "คุณเอญ่า",
+  "isNon": false,
+  "searchName": "เอญ่า",
+  "areaHint": null
+ },
+ {
+  "full": "คุณสุกัญญา",
+  "isNon": false,
+  "searchName": "สุกัญญา",
+  "areaHint": null
+ },
+ {
+  "full": "คุณนิธิมา (2วัน)",
+  "isNon": false,
+  "searchName": "นิธิมา",
+  "areaHint": null
+ }
+]

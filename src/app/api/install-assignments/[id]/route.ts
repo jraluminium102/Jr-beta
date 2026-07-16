@@ -7,6 +7,7 @@ import { syncSchedule } from "../route";
 const Schema = z.object({
   team_id: z.string().uuid().nullable().optional(),
   lead_name: z.string().optional(),   // หัวหน้าช่าง (0089)
+  custom_title: z.string().trim().max(120).optional(),  // แก้ชื่อคิวนอกระบบ (0100)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   crew: z.string().optional(),
   day_no: z.number().int().positive().nullable().optional(),
@@ -24,7 +25,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   const { data, error } = await sb.from("install_assignments").update(p.data).eq("id", params.id).select("*").single();
   if (error) return err(error.message, 500);
   if (!data) return notFound("ไม่พบรายการ");
-  await syncSchedule(sb, data.job_id);
+  if (data.job_id) await syncSchedule(sb, data.job_id);   // คิวนอกระบบ (job_id null) ไม่ต้อง sync
   await audit({ userId: ctx.user.id, action: "INSTALL_ASSIGN_EDIT", table: "install_assignments", recordId: params.id, newValue: p.data });
   return ok(data);
 });

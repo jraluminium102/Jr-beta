@@ -38,6 +38,8 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 function startOfWeek(d: Date) { const x = new Date(d); const dow = (x.getDay() + 6) % 7; return addDays(x, -dow); } // จันทร์
 const jobName = (j: { customer_name?: string; code?: string; job_code?: string } | undefined) => j?.customer_name || j?.code || j?.job_code || "—";
+// ชื่อการ์ดในปฏิทิน — งานในระบบใช้ชื่อลูกค้า · คิวนอกระบบใช้ custom_title (0100)
+const nameOf = (a: InstallAssignment) => (a.custom_title?.trim() || jobName(a.jobs));
 const jobCode = (j: { code?: string; job_code?: string } | undefined) => j?.code || j?.job_code || "";
 const jobArea = (j: { customer_area?: string; address?: string } | undefined) => j?.customer_area || j?.address || "";
 const leadOf = (a: InstallAssignment) => (a.lead_name || "").trim();
@@ -126,7 +128,7 @@ export default function InstallationPage() {
       const items = tmrAsg.filter((a) => leadOf(a) === ld);
       t += `\n▸ ${ld || "— ยังไม่จัดช่าง —"}\n`;
       for (const a of items) {
-        t += `  • ${jobName(a.jobs)}${a.day_no ? ` (วันที่ ${a.day_no}/${a.day_total || "?"})` : ""}${jobArea(a.jobs) ? ` · ${jobArea(a.jobs)}` : ""}`;
+        t += `  • ${nameOf(a)}${a.day_no ? ` (วันที่ ${a.day_no}/${a.day_total || "?"})` : ""}${jobArea(a.jobs) ? ` · ${jobArea(a.jobs)}` : ""}`;
         if (a.crew) t += `\n    ลูกน้อง: ${a.crew}`;
         if (a.note) t += `\n    ⚠ ${a.note}`;
         t += "\n";
@@ -207,7 +209,7 @@ export default function InstallationPage() {
                     const items = byDate.get(ds) || [];
                     const crewCount = crewCountsByDate.get(ds) ?? 0;
                     // ลูกค้าจากจัดทีมรายวัน ที่ยังไม่ได้โชว์อยู่ในแผนปฏิทิน (กันชื่อซ้ำ 2 บรรทัด)
-                    const planNames = new Set(items.map((a) => jobName(a.jobs).trim()));
+                    const planNames = new Set(items.map((a) => nameOf(a).trim()));
                     const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((n) => !planNames.has(n.trim()));
                     return (
                       <div key={ds}
@@ -236,7 +238,7 @@ export default function InstallationPage() {
                               <button key={a.id} onClick={() => setDetail(a)}
                                 className="w-full text-left rounded-md px-1 py-0.5 leading-tight"
                                 style={{ background: c.bg, border: `0.5px solid ${a.note ? "rgba(239,159,39,.6)" : c.border}` }}>
-                                <div className="text-[10.5px] font-medium truncate" style={{ color: "#fff" }}>{jobName(a.jobs)}{a.note ? " ⚠" : ""}</div>
+                                <div className="text-[10.5px] font-medium truncate" style={{ color: "#fff" }}>{a.custom_title ? "⚑ " : ""}{nameOf(a)}{a.note ? " ⚠" : ""}</div>
                                 <div className="text-[9.5px] truncate" style={{ color: c.text }}>
                                   {leadOf(a) || "— ยังไม่จัดช่าง"}{a.day_no && a.day_total ? ` · วัน ${a.day_no}/${a.day_total}` : ""}
                                 </div>
@@ -308,7 +310,7 @@ export default function InstallationPage() {
                   </div>
                   {items.map((a) => (
                     <div key={a.id} className="text-[13px] text-white/90 mt-1.5 border-t border-white/10 pt-1.5">
-                      <b>{jobName(a.jobs)}</b>{a.day_no ? ` (วันที่ ${a.day_no}/${a.day_total || "?"})` : ""}
+                      <b>{a.custom_title ? "⚑ " : ""}{nameOf(a)}</b>{a.day_no ? ` (วันที่ ${a.day_no}/${a.day_total || "?"})` : ""}
                       {jobArea(a.jobs) && <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{jobArea(a.jobs)}</div>}
                       {a.crew && <div className="text-[12px]" style={{ color: "var(--t-mid)" }}>ลูกน้อง: {a.crew}</div>}
                       {a.note && <div className="text-[12px] text-amber-300">⚠ {a.note}</div>}
@@ -354,17 +356,37 @@ function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
   const [lead, setLead] = useState("");
   const [crew, setCrew] = useState("");
   const [note, setNote] = useState("");
+  // คิวนอกระบบ (งานพิเศษ ไม่มีในระบบ) — พิมพ์ชื่องานเอง ไม่ผูก job (0100)
+  const [outSystem, setOutSystem] = useState(false);
+  const [customTitle, setCustomTitle] = useState("");
   const nDays = useMemo(() => {
     if (!dateTo || dateTo <= date) return 1;
     return Math.min(14, Math.round((new Date(dateTo + "T00:00:00").getTime() - new Date(date + "T00:00:00").getTime()) / 86400000) + 1);
   }, [date, dateTo]);
   return (
     <Modal title="ลงคิวติดตั้ง" onClose={onClose}>
-      <label className="lbl">งาน (พร้อมติดตั้ง)</label>
-      <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="inp">
-        {ready.map((r) => <option key={r.job_id} value={r.job_id}>{jobName(r.jobs)} {jobArea(r.jobs) ? `· ${jobArea(r.jobs)}` : ""}</option>)}
-        {ready.length === 0 && <option value="">— ไม่มีงานรอจัดคิว —</option>}
-      </select>
+      {/* สลับ งานในระบบ / คิวนอกระบบ (งานพิเศษ พิมพ์ชื่อเอง) — 0100 */}
+      <div className="flex gap-0.5 rounded-[10px] p-0.5 mb-1" style={{ background: "rgba(255,255,255,.08)" }}>
+        {([["sys", "งานในระบบ"], ["out", "＋คิวนอกระบบ"]] as const).map(([k, l]) => (
+          <button key={k} type="button" onClick={() => setOutSystem(k === "out")}
+            className="flex-1 py-1.5 rounded-lg text-[13px] font-semibold"
+            style={(outSystem ? k === "out" : k === "sys") ? { background: "#fff", color: "#1a1c22" } : { color: "rgba(255,255,255,.7)" }}>{l}</button>
+        ))}
+      </div>
+      {outSystem ? (
+        <>
+          <label className="lbl">ชื่องานพิเศษ (พิมพ์เอง — ไม่มีในระบบ)</label>
+          <input value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} placeholder="เช่น ซ่อมด่วนคุณเอ, งานโรงงาน XYZ" className="inp" autoFocus />
+        </>
+      ) : (
+        <>
+          <label className="lbl">งาน (พร้อมติดตั้ง)</label>
+          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="inp">
+            {ready.map((r) => <option key={r.job_id} value={r.job_id}>{jobName(r.jobs)} {jobArea(r.jobs) ? `· ${jobArea(r.jobs)}` : ""}</option>)}
+            {ready.length === 0 && <option value="">— ไม่มีงานรอจัดคิว —</option>}
+          </select>
+        </>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <div><label className="lbl">วันแรก</label><input type="date" value={date} onChange={(e) => { setDate(e.target.value); if (dateTo < e.target.value) setDateTo(e.target.value); }} className="inp" /></div>
         <div><label className="lbl">ถึงวัน (งานหลายวัน)</label><input type="date" value={dateTo} min={date} onChange={(e) => setDateTo(e.target.value)} className="inp" /></div>
@@ -377,10 +399,12 @@ function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
       <input value={crew} onChange={(e) => setCrew(e.target.value)} placeholder="เช่น สมพงษ์, ตูน" className="inp" />
       <label className="lbl">หมายเหตุ</label>
       <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น นัด 9 โมง ยกกระจกใหญ่" className="inp" />
-      <button disabled={busy || !jobId}
-        onClick={() => onSave({ job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), crew, note })}
+      <button disabled={busy || (outSystem ? !customTitle.trim() : !jobId)}
+        onClick={() => onSave(outSystem
+          ? { custom_title: customTitle.trim(), date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), crew, note }
+          : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), crew, note })}
         className="w-full mt-3 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">
-        ลงคิว{nDays > 1 ? ` ${nDays} วัน` : ""}
+        ลงคิว{outSystem ? "นอกระบบ" : ""}{nDays > 1 ? ` ${nDays} วัน` : ""}
       </button>
     </Modal>
   );
@@ -396,7 +420,7 @@ function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete }: {
   const [crew, setCrew] = useState(a.crew || "");
   const [note, setNote] = useState(a.note || "");
   return (
-    <Modal title={jobName(a.jobs)} onClose={onClose}>
+    <Modal title={nameOf(a)} onClose={onClose}>
       <div className="text-xs mb-2" style={{ color: "var(--t-low)" }}>
         {jobCode(a.jobs)} {jobArea(a.jobs) ? `· ${jobArea(a.jobs)}` : ""}
         {a.day_no && a.day_total ? ` · วันที่ ${a.day_no}/${a.day_total} ของงาน` : ""}

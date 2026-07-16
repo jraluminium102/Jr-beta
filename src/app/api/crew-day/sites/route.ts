@@ -11,6 +11,7 @@ const Schema = z.object({
   appointment_time: z.string().optional().default(""),
   address: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
+  off_board: z.boolean().optional(),   // ธงจุดงานนอกบอร์ดพร้อมติดตั้ง (import SetTeam/งานพิเศษ) — 0100
 });
 
 // POST /api/crew-day/sites → เพิ่มสถานที่ (จุดที่ 1-4) ให้ทีม

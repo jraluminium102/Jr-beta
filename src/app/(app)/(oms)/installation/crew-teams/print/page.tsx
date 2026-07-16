@@ -16,7 +16,7 @@ function thFullDate(iso: string) {
 }
 
 type Site = {
-  id: string; site_no: number; customer_name: string; appointment_time: string;
+  id: string; site_no: number; customer_name: string; appointment_time: string; off_board?: boolean;
   address: string | null; phone: string | null;
 };
 type Team = {
@@ -111,7 +111,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
                     {t.crew_team_sites.map((s) => (
                       <div key={s.id} style={{ fontSize: 11.5, marginBottom: 3, paddingLeft: 6, borderLeft: "2px solid #e5e7eb" }}>
                         <div style={{ fontWeight: 600, color: "#1f2937" }}>
-                          {s.site_no}. {s.customer_name || "—"}{s.appointment_time ? ` (นัด ${s.appointment_time})` : ""}
+                          {s.off_board ? "⚑ " : ""}{s.site_no}. {s.customer_name || "—"}{s.appointment_time ? ` (นัด ${s.appointment_time})` : ""}
                         </div>
                         {(s.address || s.phone) && (
                           <div style={{ color: "#6b7280" }}>{s.address}{s.address && s.phone ? " · " : ""}{s.phone ? `โทร ${s.phone}` : ""}</div>

@@ -66,7 +66,8 @@ export interface InstallTeam {
 }
 export interface InstallAssignment {
   id: string;
-  job_id: string;
+  job_id: string | null;    // null = คิวนอกระบบ (งานพิเศษ ใช้ custom_title แทน) — 0100
+  custom_title?: string | null;  // ชื่องานพิเศษที่พิมพ์เอง (คิวนอกระบบ)
   team_id: string | null;   // เลิกใช้ (0089) — คงไว้เพื่อข้อมูลเก่า
   lead_name?: string;       // หัวหน้าช่าง (พิมพ์อิสระ · 0089) — สีการ์ดปฏิทินอิงชื่อนี้
   date: string;        // ISO YYYY-MM-DD
@@ -98,6 +99,7 @@ export interface CrewTeamSite {
   appointment_time: string;    // เวลานัด (ข้อความสั้น พิมพ์อิสระ)
   address: string | null;      // snapshot ที่อยู่หน้างาน (ดึงจากงานตอนเลือก)
   phone: string | null;        // snapshot เบอร์ลูกค้า
+  off_board?: boolean;         // ธง ⚑ จุดงานนอกบอร์ดพร้อมติดตั้ง (import SetTeam/งานพิเศษ) — 0100
 }
 export interface CrewDayTeam {
   id: string;

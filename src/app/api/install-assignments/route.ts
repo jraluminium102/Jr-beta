@@ -11,7 +11,9 @@ export async function syncSchedule(sb: any, jobId: string) {
 }
 
 const Schema = z.object({
-  job_id: z.string().uuid(),
+  // งานในระบบ = job_id · คิวนอกระบบ (งานพิเศษ) = custom_title (ไม่มี job) — ต้องมีอย่างใดอย่างหนึ่ง (0100)
+  job_id: z.string().uuid().nullable().optional(),
+  custom_title: z.string().trim().max(120).optional(),
   team_id: z.string().uuid().nullable().optional(),   // เลิกใช้ (0089) — รับไว้เพื่อ backward compat
   lead_name: z.string().optional().default(""),       // หัวหน้าช่าง (พิมพ์อิสระ)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "วันที่ต้องเป็น YYYY-MM-DD"),
@@ -20,6 +22,8 @@ const Schema = z.object({
   day_no: z.number().int().positive().nullable().optional(),
   day_total: z.number().int().positive().nullable().optional(),
   note: z.string().optional().default(""),
+}).refine((d) => d.job_id || (d.custom_title && d.custom_title.length > 0), {
+  message: "ต้องระบุงานในระบบ หรือชื่องานพิเศษ (คิวนอกระบบ)",
 });
 
 // POST /api/install-assignments → เพิ่มการเข้าติดตั้ง (วันเดียว หรือช่วงวันด้วย date_to)
@@ -44,7 +48,8 @@ export const POST = withRoute(async (req: Request) => {
   }
 
   const rows = dates.map((dt, i) => ({
-    job_id: p.data.job_id, team_id: p.data.team_id ?? null, lead_name: p.data.lead_name ?? "",
+    job_id: p.data.job_id ?? null, custom_title: p.data.custom_title || null,
+    team_id: p.data.team_id ?? null, lead_name: p.data.lead_name ?? "",
     date: dt, crew: p.data.crew ?? "",
     day_no: dates.length > 1 ? i + 1 : (p.data.day_no ?? null),
     day_total: dates.length > 1 ? dates.length : (p.data.day_total ?? null),
@@ -52,8 +57,9 @@ export const POST = withRoute(async (req: Request) => {
   }));
   const { data, error } = await sb.from("install_assignments").insert(rows).select("*");
   if (error && /lead_name/i.test(error.message ?? "")) return err("ยังไม่ได้รัน migration 0089 — รันก่อนใช้งาน", 400);
+  if (error && /custom_title|job_id.*null|ia_job_or_title/i.test(error.message ?? "")) return err("ยังไม่ได้รัน migration 0100 (คิวนอกระบบ) — รันก่อนใช้งาน", 400);
   if (error) return err(error.message, 500);
-  await syncSchedule(sb, p.data.job_id);
+  if (p.data.job_id) await syncSchedule(sb, p.data.job_id);   // คิวนอกระบบไม่มี job → ไม่ต้อง sync
   await audit({ userId: ctx.user.id, action: "INSTALL_ASSIGN_ADD", table: "install_assignments", recordId: data?.[0]?.id, newValue: { rows: data?.length, ...rows[0] } });
   return ok(data?.length === 1 ? data[0] : data);
 });
