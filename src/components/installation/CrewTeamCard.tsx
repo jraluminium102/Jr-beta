@@ -17,7 +17,6 @@ export default function CrewTeamCard({
   onPatchSite: (id: string, patch: Record<string, unknown>) => void;
   onDeleteSite: (id: string) => void;
 }) {
-  const [startTime, setStartTime] = useState(team.start_time);
   const [note, setNote] = useState(team.note);
 
   // ใครถูกทีมอื่น (วันเดียวกัน) จองแล้ว — กันจัดซ้ำ (ต้นฉบับไม่มี ทำให้ดีกว่า)
@@ -66,17 +65,9 @@ export default function CrewTeamCard({
         )}
       </div>
 
-      {/* เวลาเริ่มงาน — ช่องพิมพ์อิสระ ห้ามเป็น time picker (ของจริงพิมพ์ "6.30","8โมง","ตี4","000") */}
-      <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลาเริ่มงาน</label>
-      <input
-        value={startTime} disabled={!canWrite}
-        onChange={(e) => setStartTime(e.target.value)}
-        onBlur={() => { if (startTime.trim() !== team.start_time) onPatchTeam(team.id, { start_time: startTime.trim() }); }}
-        placeholder="เช่น 06.00, ตี 5.30"
-        className="w-full bg-white/8 border border-white/12 rounded-lg px-2.5 py-2 text-white text-[13px] outline-none placeholder:text-white/30 mb-2.5"
-      />
-
-      {/* สถานที่ทำงาน 1-4 จุด */}
+      {/* สถานที่ทำงาน 1-4 จุด — ช่องแรกของการ์ด
+          (เอา "เวลาเริ่มงาน" ระดับทีมออกแล้ว 16 ก.ค.2569 ตามเจ้าของสั่ง — เวลานัดอยู่รายจุดใน CrewSiteRow พอ
+           คอลัมน์ crew_day_teams.start_time ยังอยู่ใน DB แต่ไม่ใช้แล้ว ไม่ต้องลบ) */}
       <div className="flex items-center justify-between mb-1">
         <label className="text-[11px]" style={{ color: "var(--t-low)" }}>สถานที่ทำงาน</label>
         <span className="text-[10.5px] tnum px-1.5 py-0.5 rounded bg-white/8" style={{ color: "var(--t-low)" }}>{sites.length}/4</span>

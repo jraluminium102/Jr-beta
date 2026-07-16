@@ -20,7 +20,7 @@ type Site = {
   address: string | null; phone: string | null;
 };
 type Team = {
-  id: string; start_time: string; note: string; member_ids: string[];
+  id: string; note: string; member_ids: string[];
   leader: { name: string } | null;
   crew_team_sites: Site[];
 };
@@ -44,7 +44,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
     const sb = supabase as any;
     const [teamsR, peopleR] = await Promise.all([
       sb.from("crew_day_teams")
-        .select("id, start_time, note, member_ids, leader:crew_people(name), crew_team_sites(*)")
+        .select("id, note, member_ids, leader:crew_people(name), crew_team_sites(*)")
         .eq("work_date", date)
         .order("sort_order", { ascending: true }),
       sb.from("crew_people").select("id, name"),
@@ -105,9 +105,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#1f2937", marginBottom: 4 }}>
                   ทีม {i + 1}{t.leader?.name ? ` · หัวหน้า ${t.leader.name}` : ""}
                 </div>
-                <div style={{ fontSize: 12, color: "#374151", marginBottom: 5 }}>
-                  เวลาเริ่มงาน <b>{t.start_time || "—"}</b>
-                </div>
+                {/* เอาบรรทัด "เวลาเริ่มงาน" ออกแล้ว (16 ก.ค.2569) — เวลานัดอยู่รายจุดข้างล่างพอ */}
                 {t.crew_team_sites.length > 0 && (
                   <div style={{ marginBottom: 5 }}>
                     {t.crew_team_sites.map((s) => (

@@ -4,13 +4,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X } from "@/components/ui/icons";
 
-// ค่ามาตรฐาน (ตาม Excel ทีมผลิต)
+// ค่ามาตรฐาน (ตาม Excel ทีมผลิต "แผนงานผลิตโรง1.xlsx" — ดึงจาก dataValidation ในไฟล์จริง)
 const GLASS_ORDER = ["", "รอวัด", "สั่งแล้ว รอของ", "มาแล้ว", "วัดแล้ว", "มายังไม่ครบ"];
 const SCREEN_TYPE = ["", "มุ้งจีบ", "มุ้ง JR", "มุ้งจีบ+มุ้ง JR", "มุ้งนิรภัย"];
 const INSTALLED = ["", "ใส่แล้ว", "ยังไม่ใส่"];
 const SCREEN_INST = ["", "มาแล้ว", "ใส่แล้ว", "ใส่ไม่ครบ"];
 const QC = ["", "ผ่าน", "ไม่ผ่าน"];
 const DESIGN_RECV = ["", "ได้รับแบบ", "ได้แบบไม่ครบ", "ยังไม่ได้รับแบบ"];
+// วัสดุ/โครง 4 ช่อง (โครง-โรงงาน / อุปกรณ์ / อลูปกติ / อลูอบสี)
+// Excel ใช้ dataValidation ชุดเดียวกันทั้ง 4 คอลัมน์ (K3:N90) → ที่นี่ใช้ชุดเดียวกันตาม
+const MATERIAL = ["", "เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "ขึ้นโครงโรงงาน3", "มือจับลูกค้า"];
 
 // timestamptz → "24/06/2026 14:30" (ค.ศ. เต็ม)
 function fmtWhen(iso?: string | null) {
@@ -22,13 +25,15 @@ function fmtWhen(iso?: string | null) {
 
 type SetRow = { id: number; job_id: string } & Record<string, any>;
 
+// ขนาดตัวหนังสือ: เจ้าของแจ้ง 16 ก.ค.2569 ว่า "ฟ้อนเล็ก อ่านยาก" → ช่อง 12→14px, ป้าย 10→11.5px
+// (คู่กับโมดัลที่ขยายเป็น max-w-3xl แล้ว — ที่กว้างพอให้ตัวใหญ่ขึ้นได้โดยตารางไม่แตก)
 const fieldCls =
-  "w-full bg-white/8 text-white text-[12px] px-2 py-1.5 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
+  "w-full bg-white/8 text-white text-[14px] px-2.5 py-2 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
 
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[10px] mb-0.5" style={{ color: "var(--t-low)" }}>{label}</span>
+      <span className="block text-[11.5px] mb-1" style={{ color: "var(--t-low)" }}>{label}</span>
       {children}
     </label>
   );
@@ -64,9 +69,15 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
+  // ค่าที่มีอยู่แต่ไม่อยู่ในลิสต์ (ของเก่า/พิมพ์มาจาก Excel) ต้องใส่เป็นตัวเลือกด้วยเสมอ
+  // ไม่งั้น <select defaultValue> ที่ไม่ match จะเด้งไปตัวแรก = จอโชว์ "—" ทั้งที่ DB มีค่าอยู่ (หลอกตา)
+  const withCurrent = (opts: string[], cur: unknown) => {
+    const v = String(cur ?? "");
+    return v && !opts.includes(v) ? [...opts, v] : opts;
+  };
   const sel = (s: SetRow, f: string, opts: string[]) => (
     <select defaultValue={s[f] ?? ""} disabled={!canWrite} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
-      {opts.map((o) => <option key={o} value={o}>{o || "—"}</option>)}
+      {withCurrent(opts, s[f]).map((o) => <option key={o} value={o}>{o || "—"}</option>)}
     </select>
   );
   // สเปคกระจก — พิมพ์เอง หรือเลือกจากประวัติ (datalist)
@@ -84,9 +95,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       return (
         <div className="flex items-center gap-1">
           <select defaultValue={s[f] ?? ""} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
-            {opts.map((o) => <option key={o} value={o}>{o || "—"}</option>)}
+            {withCurrent(opts, s[f]).map((o) => <option key={o} value={o}>{o || "—"}</option>)}
           </select>
-          <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: false }))} className="text-[10px] text-emerald-300 shrink-0 px-1">เสร็จ</button>
+          <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: false }))} className="text-[12px] text-emerald-300 shrink-0 px-1">เสร็จ</button>
         </div>
       );
     }
@@ -97,10 +108,10 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     return (
       <div className="w-full bg-white/5 rounded-lg border border-white/10 px-2 py-1.5">
         <div className="flex items-center justify-between gap-1">
-          <span className={`text-[12px] ${done ? "text-emerald-200 font-medium" : "text-white/55"}`}>{val || "— ยังไม่กด —"}</span>
-          {canWrite && <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: true }))} className="text-[10px] text-sky-300/80 underline shrink-0">แก้</button>}
+          <span className={`text-[14px] ${done ? "text-emerald-200 font-medium" : "text-white/55"}`}>{val || "— ยังไม่กด —"}</span>
+          {canWrite && <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: true }))} className="text-[12px] text-sky-300/80 underline shrink-0">แก้</button>}
         </div>
-        {by && <div className="text-[9px] mt-0.5" style={{ color: "var(--t-low)" }}>โดย {by}{at ? ` · ${fmtWhen(at)}` : ""}</div>}
+        {by && <div className="text-[11px] mt-0.5" style={{ color: "var(--t-low)" }}>โดย {by}{at ? ` · ${fmtWhen(at)}` : ""}</div>}
       </div>
     );
   };
@@ -108,9 +119,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   return (
     <div className="mt-3 glass-card rounded-2xl p-4 border border-white/10">
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-sm font-semibold text-white">รายละเอียดผลิต (ชุดงาน)</span>
+        <span className="text-base font-semibold text-white">รายละเอียดผลิต (ชุดงาน)</span>
         {canWrite && (
-          <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[12px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-2.5 py-1.5 min-h-[34px] disabled:opacity-50"><Plus size={13} /> เพิ่มชุด</button>
+          <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[13px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-2.5 py-1.5 min-h-[34px] disabled:opacity-50"><Plus size={13} /> เพิ่มชุด</button>
         )}
       </div>
 
@@ -120,9 +131,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       </datalist>
 
       {isLoading ? (
-        <div className="text-[12px] py-2" style={{ color: "var(--t-low)" }}>กำลังโหลด…</div>
+        <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>กำลังโหลด…</div>
       ) : sets.length === 0 ? (
-        <div className="text-[12px] py-2" style={{ color: "var(--t-low)" }}>ยังไม่มีชุดงาน — กด "เพิ่มชุด" เพื่อเริ่มกรอกแผนผลิต</div>
+        <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>ยังไม่มีชุดงาน — กด "เพิ่มชุด" เพื่อเริ่มกรอกแผนผลิต</div>
       ) : (
         <div className="space-y-3">
           {sets.map((s) => (
@@ -130,18 +141,18 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               <div className="flex items-center gap-2 mb-2.5">
                 <input defaultValue={s.set_label ?? ""} disabled={!canWrite} placeholder="ชื่อชุด เช่น ชุด 1,4,5"
                   onBlur={(e) => e.target.value !== String(s.set_label ?? "") && save(s.id, "set_label", e.target.value)}
-                  className="flex-1 bg-transparent text-white text-[13px] font-semibold border-b border-white/15 focus:border-sky-300/60 outline-none px-1 py-1" />
+                  className="flex-1 bg-transparent text-white text-[15px] font-semibold border-b border-white/15 focus:border-sky-300/60 outline-none px-1 py-1" />
                 {canWrite && <button onClick={() => del(s.id)} aria-label="ลบชุด" className="text-white/40 hover:text-rose-300 p-1"><X size={15} /></button>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <F label="แบบถึงผลิต 👷 (ช่างกด)">{markRO(s, "design_received", "design_received_by", "design_received_at", DESIGN_RECV)}</F>
                 <F label="วันวัดจริง">{date(s, "measure_actual")}</F>
                 <F label="คนวัด">{txt(s, "measurer_name")}</F>
-                <F label="โครง/โรงงาน">{txt(s, "frame_status")}</F>
+                <F label="โครง/โรงงาน">{sel(s, "frame_status", MATERIAL)}</F>
 
-                <F label="อุปกรณ์">{txt(s, "mat_equipment")}</F>
-                <F label="อลู ปกติ">{txt(s, "mat_alu_normal")}</F>
-                <F label="อลู อบสี">{txt(s, "mat_alu_painted")}</F>
+                <F label="อุปกรณ์">{sel(s, "mat_equipment", MATERIAL)}</F>
+                <F label="อลู ปกติ">{sel(s, "mat_alu_normal", MATERIAL)}</F>
+                <F label="อลู อบสี">{sel(s, "mat_alu_painted", MATERIAL)}</F>
                 <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)">{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", QC)}</F>
 
                 <div className="col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>

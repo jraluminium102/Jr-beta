@@ -479,7 +479,9 @@ export function ProductionStepModal({
     <div className="app-bg" style={{ background: "transparent", minHeight: 0 }}>
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={`อัปเดตงาน ${prod.job?.job_code}`}>
       <div className="absolute inset-0 scrim fade-in" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] overflow-y-auto">
+      {/* กว้าง 3xl (เดิม md=448px แคบไป) — ในนี้มีตารางแผนผลิต (ชุดงาน) 4 คอลัมน์ ตัวหนังสือเลยเล็กจนอ่านไม่ออก
+          เจ้าของแจ้ง 16 ก.ค.2569: "ฟ้อนเล็ก อ่านยาก บับเบิ้ลเอาใหญ่ขึ้นได้ไหม" */}
+      <div className="relative w-full sm:max-w-3xl glass rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 fade-in max-h-[92dvh] overflow-y-auto">
         {/* header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">

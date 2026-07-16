@@ -74,14 +74,20 @@ export default function InstallationPage() {
   const ready = plan?.ready ?? [];
   const canWrite = (data?.meta?.can_install as boolean) ?? true;
 
-  // จำนวนทีมช่างรายวันต่อวัน (เดือนที่กำลังดู) — ทำ badge บนปฏิทิน เชื่อมไปแท็บ "จัดทีมรายวัน"
+  // จำนวนทีม + ชื่อลูกค้าที่จัดทีมรายวันไว้ (เดือนที่กำลังดู) — ทำ badge + รายชื่อบนปฏิทิน
   const { data: crewCountsData } = useQuery({
     queryKey: ["crew-day-counts-month", from, to],
-    queryFn: () => api.get<{ work_date: string; team_count: number }[]>(`/crew-day/counts?from=${from}&to=${to}`),
+    queryFn: () => api.get<{ work_date: string; team_count: number; customers: string[] }[]>(`/crew-day/counts?from=${from}&to=${to}`),
   });
   const crewCountsByDate = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of crewCountsData?.data ?? []) m.set(r.work_date, r.team_count);
+    return m;
+  }, [crewCountsData]);
+  // ชื่อลูกค้าจาก "จัดทีมรายวัน" ต่อวัน — โชว์บนปฏิทินด้วย ไม่งั้นลูกค้าที่เพิ่มในรายวันจะไม่โผล่เลย
+  const crewCustsByDate = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const r of crewCountsData?.data ?? []) m.set(r.work_date, r.customers ?? []);
     return m;
   }, [crewCountsData]);
   function jumpToCrewDay(ds: string) { setCrewDate(ds); setTab("crew"); }
@@ -200,6 +206,9 @@ export default function InstallationPage() {
                     const isToday = ds === today;
                     const items = byDate.get(ds) || [];
                     const crewCount = crewCountsByDate.get(ds) ?? 0;
+                    // ลูกค้าจากจัดทีมรายวัน ที่ยังไม่ได้โชว์อยู่ในแผนปฏิทิน (กันชื่อซ้ำ 2 บรรทัด)
+                    const planNames = new Set(items.map((a) => jobName(a.jobs).trim()));
+                    const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((n) => !planNames.has(n.trim()));
                     return (
                       <div key={ds}
                         className="rounded-lg p-1 flex flex-col"
@@ -234,6 +243,17 @@ export default function InstallationPage() {
                               </button>
                             );
                           })}
+                          {/* ลูกค้าที่มีเฉพาะใน "จัดทีมรายวัน" — เส้นประ = ยังไม่มีในแผนปฏิทิน (คนละที่มา ต้องแยกให้เห็น)
+                              กดแล้วเด้งไปแท็บรายวันของวันนั้น */}
+                          {crewOnly.map((n) => (
+                            <button key={n} onClick={() => jumpToCrewDay(ds)}
+                              className="w-full text-left rounded-md px-1 py-0.5 leading-tight"
+                              style={{ background: "rgba(255,255,255,.05)", border: "0.5px dashed rgba(255,255,255,.28)" }}
+                              title={`${n} — จัดทีมช่างไว้ในแผนรายวัน (ยังไม่มีในแผนเดือน)`}>
+                              <div className="text-[10.5px] truncate" style={{ color: "rgba(255,255,255,.82)" }}>{n}</div>
+                              <div className="text-[9.5px] truncate" style={{ color: "var(--t-low)" }}>ทีมรายวัน</div>
+                            </button>
+                          ))}
                         </div>
                         {canWrite && inMonth && (
                           <button onClick={() => setAddAt({ date: ds })}
