@@ -89,7 +89,8 @@ function derivePhase(r: SchedRow): string {
 }
 
 // นับวันถึงเดดไลน์ (เทียบ ISO string ตรงๆ กัน bug DATE same-day)
-function deadlineInfo(must: string | null, done: boolean): { tone: string; text: string } {
+// ⚠ export ไว้ให้ลิงก์ช่าง (ChangPublicView) ใช้ตัวเดียวกัน — ห้ามก๊อปไปเขียนใหม่ (เคยหลุดกันมาแล้ว)
+export function deadlineInfo(must: string | null, done: boolean): { tone: string; text: string } {
   if (done) return { tone: "done", text: "เสร็จแล้ว" };
   if (!must) return { tone: "none", text: "ยังไม่กำหนดวันต้องเสร็จ" };
   const t = today();
@@ -101,7 +102,7 @@ function deadlineInfo(must: string | null, done: boolean): { tone: string; text:
   if (diff <= 2) return { tone: "soon", text: `เหลือ ${diff} วัน` };
   return { tone: "normal", text: `เหลือ ${diff} วัน` };
 }
-const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
+export const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
 export const IOS = {

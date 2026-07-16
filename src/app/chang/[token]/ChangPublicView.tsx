@@ -1,13 +1,16 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ChangChecklist, DAY_COLOR, dayColorOf, thHead, IOS, type ProdSet,
+  ChangChecklist, DAY_COLOR, dayColorOf, thHead, IOS, deadlineInfo, setIsDone, type ProdSet,
 } from "@/app/(app)/(oms)/production-schedule/page";
+import ChangJobCutlists from "./ChangJobCutlists";
 
+// ตรงกับ ScheduleRow ที่ /api/chang/<token> ส่งมา (ตัวเดียวกับเว็บหลัก — src/lib/production/schedule.ts)
 type Row = {
-  id: string; job_id: string | null; title: string; job_code: string | null;
+  kind: "job" | "adhoc";
+  id: string; job_id: string | null; title: string; subtitle: string | null; job_code: string | null;
   customer_area: string | null; produce_date: string | null; due_date: string | null; install_date: string | null;
-  status: string; sets: ProdSet[];
+  producer_note: string | null; status: string; sets: ProdSet[];
 };
 const today = () => new Date().toISOString().slice(0, 10);
 const thShort = (d: string | null) => {
@@ -121,14 +124,33 @@ export default function ChangPublicView({ token }: { token: string }) {
                             <div key={r.id} className="rounded-[18px] p-4 space-y-3" style={{ background: IOS.card, boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04)" }}>
                               <div>
                                 <div className="font-bold text-[16px]" style={{ color: IOS.ink, letterSpacing: "-.01em" }}>
-                                  {r.title}{r.job_code && <span className="ml-1.5 text-[10px] tnum rounded-md px-1.5 py-0.5 font-semibold align-middle" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                                  {r.title}
+                                  {r.job_code && <span className="ml-1.5 text-[10px] tnum rounded-md px-1.5 py-0.5 font-semibold align-middle" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                                  {/* งานจดเอง (adhoc) — เว็บหลักมีมานานแล้ว แต่ลิงก์ช่างเพิ่งดึงมาได้ */}
+                                  {r.kind === "adhoc" && <span className="ml-1.5 text-[10px] rounded-md px-1.5 py-0.5 font-semibold align-middle" style={{ background: "#f1f1f4", color: IOS.ink2 }}>จดเอง</span>}
                                 </div>
+                                {r.subtitle && r.subtitle !== r.customer_area && <div className="text-[12.5px] mt-0.5" style={{ color: IOS.ink2 }}>{r.subtitle}</div>}
                                 {r.customer_area && <div className="text-[12.5px] mt-0.5" style={{ color: IOS.ink2 }}>📍 {r.customer_area}</div>}
                                 {r.install_date && <div className="text-[12px] mt-0.5" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</div>}
+                                {/* ป้ายเดดไลน์ — ใช้ตัวคิดเดียวกับเว็บหลัก (deadlineInfo) */}
+                                {(() => {
+                                  const done = r.sets.length > 0 && r.sets.every(setIsDone);
+                                  const d = deadlineInfo(r.due_date, done);
+                                  const tone: Record<string, string> = { over: IOS.red, today: IOS.orange, soon: IOS.orange, done: IOS.green, normal: IOS.ink2, none: IOS.ink3 };
+                                  return <div className="text-[12px] mt-1 font-semibold" style={{ color: tone[d.tone] ?? IOS.ink2 }}>⏱ {d.text}</div>;
+                                })()}
+                                {/* โน้ตช่าง — เว็บหลักส่งมานานแล้ว ลิงก์ช่างเพิ่งได้ */}
+                                {r.producer_note && (
+                                  <div className="text-[12px] mt-1.5 rounded-xl px-3 py-2" style={{ background: "#fff4e0", color: "#b45309" }}>📝 {r.producer_note}</div>
+                                )}
                               </div>
                               {r.sets.length > 0
                                 ? <ChangChecklist sets={r.sets} savingSetIds={savingSetIds} mark={mark} canMark={true} />
-                                : <p className="text-[12px] rounded-xl px-3 py-2" style={{ background: "#fff4e0", color: "#b45309" }}>⚠️ ยังไม่มีชุดงาน — รอออฟฟิศลงรายละเอียด</p>}
+                                : r.kind === "job"
+                                  ? <p className="text-[12px] rounded-xl px-3 py-2" style={{ background: "#fff4e0", color: "#b45309" }}>⚠️ ยังไม่มีชุดงาน — รอออฟฟิศลงรายละเอียด</p>
+                                  : null}
+                              {/* ใบตัดอลูของงานนี้ — ช่างเปิด/สร้าง/แก้ได้ (ตัดสต็อกไม่ได้) */}
+                              {r.job_id && <ChangJobCutlists token={token} jobId={r.job_id} />}
                             </div>
                           ))}
                         </div>
