@@ -55,7 +55,12 @@ export async function cutlistActor(req: Request): Promise<CutActor | null> {
     };
   }
   if (await changOk(req)) {
-    const name = req.headers.get("x-chang-name") ?? "";
+    // ⚠ HTTP header ใส่ได้แต่ ISO-8859-1 — ชื่อช่างเป็นไทยทุกคน (เนียน/กุ้ง/เป)
+    //   ถ้าใส่ดิบ ๆ fetch ฝั่ง client จะ throw ทั้งคำขอเลย ("String contains non ISO-8859-1 code point")
+    //   → ฝั่งหน้าเว็บ encodeURIComponent มา ที่นี่ถอดกลับ (เจอตอนเทสจริงกับชื่อไทย 16 ก.ค.2569)
+    const raw = req.headers.get("x-chang-name") ?? "";
+    let name = "";
+    try { name = decodeURIComponent(raw); } catch { name = raw; }
     return {
       kind: "chang",
       canWrite: true,        // ช่างสร้าง/แก้ใบตัดได้ (เจ้าของเคาะ)

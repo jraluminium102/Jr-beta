@@ -17,7 +17,8 @@ export default function ChangJobCutlists({ token, jobId }: { token: string; jobI
   const headers = useCallback((extra?: Record<string, string>) => {
     let who = "";
     try { who = localStorage.getItem("chang_name") || ""; } catch { /* ignore */ }
-    return { ...(extra ?? {}), "x-chang-token": token, "x-chang-name": who };
+    // encode ก่อนใส่ header — ชื่อไทยดิบ ๆ ทำ fetch throw (header รับแค่ ISO-8859-1)
+    return { ...(extra ?? {}), "x-chang-token": token, "x-chang-name": encodeURIComponent(who) };
   }, [token]);
 
   const load = useCallback(async () => {
