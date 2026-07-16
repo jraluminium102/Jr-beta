@@ -53,6 +53,17 @@ const COLOR_LABEL: Record<string, string> = {
   woodSpecial: "ลายไม้อบพิเศษ", woodStock: "ลายไม้สต็อค",
 };
 
+// บรรทัดสีอลูฯ ในใบเสนอ — "อลูมิเนียม สี<ชื่อสีที่เลือก>" (เจ้าของสั่ง 18 ก.ค.2569 · เดิม "สีอลูมิเนียม: อบขาว")
+// รวมไว้จุดเดียวเพราะสร้างข้อความนี้ 2 ที่ (ห้องกระจก + รายการปกติ) ต้องตรงกันเสมอ
+const aluColorLine = (color: string): string =>
+  `- อลูมิเนียม สี${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`;
+
+// สเปก label-only ที่เป็น "ค่ามาตรฐาน" → ไม่ต้องพิมพ์ลงใบ [specOpt key, ค่าที่จะซ่อน]
+// เจ้าของสั่งซ่อนเพิ่มได้เรื่อย ๆ — เติมคู่ใหม่ที่นี่
+const SKIP_SPEC_DETAIL: [string, string][] = [
+  ["bottomrail", "รางกันน้ำ"], // รางกันน้ำ = ค่าปกติ · "รางเตี้ย (งานใน)" ยังพิมพ์
+];
+
 type QuoteItem = {
   key: number;
   name: string;
@@ -444,7 +455,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (rt.services > 0) lines.push(`- งานบริการเพิ่มเติม${showP ? ` (${baht(rt.services)}฿)` : ""}`);
       if (rt.svc > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(rt.svc)}฿)` : ""}`);
       lines.push("รายละเอียดงาน");
-      lines.push(`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`);
+      lines.push(aluColorLine(color));
       lines.push(`- กระจก: ${glassType || "—"}`);
       (rt.specLines ?? []).forEach((s) => lines.push(`- ${s}`)); // มุ้ง / หลังคา / รางน้ำ ฯลฯ
       pushQuoteItem({
@@ -482,7 +493,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ขึ้นใบ (เดิมคิด movePanes แต่ไม่พิมพ์)
     if ((fixedPanes || 0) > 0) {
       const isOpen = /เปิด|เฟี้ยม|กระทุ้ง|หมุน|ยก|ประตู|PC|Velora/i.test(prod.name || "");
-      workLines.push(`- บานติดตาย ${fixedPanes} บาน (ที่เหลือ ${movePanes} บาน${isOpen ? "เปิด" : "เลื่อน"})`);
+      // เคสพิเศษ ติดตาย 1 + เลื่อน 1 (เจ้าของสั่ง 18 ก.ค.2569): ลูกค้าเข้าใจง่ายกว่าคำว่า "บานติดตาย N บาน"
+      if (!isOpen && fixedPanes === 1 && movePanes === 1) {
+        workLines.push("- หน้าต่างบานเลื่อน พร้อมกระจกติดตายด้านข้าง");
+      } else {
+        workLines.push(`- บานติดตาย ${fixedPanes} บาน (ที่เหลือ ${movePanes} บาน${isOpen ? "เปิด" : "เลื่อน"})`);
+      }
     }
     // ดึงบรรทัดออปชั่นจาก engine (คิดเงินแล้ว) — normal: เฉพาะ addon · override: ทั้งหมด (ยกเว้น warn/ค่าแรง)
     const isOverride = !!(prod.sellCabinet || prod.sellZip || prod.sellR39 || prod.sellDirect);
@@ -502,11 +518,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (o.type === "number") return;
       const v = spec[o.key];
       if (v == null || v === "") return;
+      // ค่ามาตรฐานที่ "เป็นค่าปกติอยู่แล้ว" ไม่ต้องพิมพ์ลงใบ (เจ้าของสั่ง 18 ก.ค.2569)
+      //   ราง: รางกันน้ำ = ค่ามาตรฐาน ไม่ต้องขึ้น · แต่ "รางเตี้ย (งานใน)" ยังต้องขึ้น (งานในต้องระบุ)
+      //   เติมคู่ [key, value] ใหม่ที่นี่ได้เรื่อย ๆ ถ้าเจ้าของสั่งซ่อนค่าอื่น
+      if (SKIP_SPEC_DETAIL.some(([k, val]) => k === o.key && val === v)) return;
       if (o.priced) workLines.push(`- ${o.label}: ${v}`);
       else specDetailLines.push(`- ${o.label}: ${v}`);
     });
     // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
-    const jobLines = [`- สีอลูมิเนียม: ${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`];
+    const jobLines = [aluColorLine(color)];
     if (glassType) jobLines.push(`- กระจก: ${glassType}`);
     if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
