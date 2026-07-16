@@ -282,6 +282,9 @@ export default function ProductionSchedulePage() {
 
   return (
     <div className="p-4 sm:p-6 fade-in rounded-2xl" style={{ background: IOS.page, minHeight: "calc(100vh - 24px)", color: IOS.ink }}>
+     {/* ครอบเนื้อหาให้กว้างไม่เกิน 1160px จัดกลาง — จอคอมกว้าง ๆ การ์ดจะได้ไม่ "ยืด" เต็มจอ (เจ้าของแจ้ง 17 ก.ค.2569)
+         มือถือ w-full = เต็มจอเหมือนเดิม (max-w ไม่มีผลเพราะจอแคบกว่า 1160) */}
+     <div className="mx-auto w-full max-w-[1160px]">
       {/* ── หัว: title + filter ช่าง + ปุ่มเพิ่ม ── */}
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-2xl font-bold flex items-center gap-2 mr-auto" style={{ color: IOS.ink, letterSpacing: "-.01em" }}><CalendarDays size={22} /> ตารางผลิต</h1>
@@ -385,7 +388,9 @@ export default function ProductionSchedulePage() {
                   <span className="text-[12px] font-bold rounded-full px-2 py-0.5" style={{ background: pm.bg, color: pm.fg }}>{items.length}</span>
                   <span className="ml-auto text-[11px]" style={{ color: IOS.ink3 }}>เรียงตามเดดไลน์</span>
                 </div>
-                <div className="space-y-2.5">
+                {/* จอคอม (≥1024px) = 2 คอลัมน์ ใช้พื้นที่คุ้ม · มือถือ = คอลัมน์เดียวเรียงลง
+                    items-start = การ์ดที่กางเช็คลิสต์ (สูงกว่า) ไม่ดึงการ์ดข้าง ๆ ให้ยืดตาม */}
+                <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:items-start">
                   {items.map((r) => (
                     <div key={r.id} className="rounded-[18px] p-4 space-y-3"
                       style={{ background: IOS.card, boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04)" }}>
@@ -631,6 +636,7 @@ export default function ProductionSchedulePage() {
       )}
 
       {addOpen && <AddModal producerList={producerList} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
+     </div>
     </div>
   );
 }
