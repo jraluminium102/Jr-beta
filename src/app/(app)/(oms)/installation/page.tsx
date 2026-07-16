@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { INST_STATUS } from "@/lib/constants";
@@ -79,16 +80,16 @@ export default function InstallationPage() {
   // จำนวนทีม + ชื่อลูกค้าที่จัดทีมรายวันไว้ (เดือนที่กำลังดู) — ทำ badge + รายชื่อบนปฏิทิน
   const { data: crewCountsData } = useQuery({
     queryKey: ["crew-day-counts-month", from, to],
-    queryFn: () => api.get<{ work_date: string; team_count: number; customers: string[] }[]>(`/crew-day/counts?from=${from}&to=${to}`),
+    queryFn: () => api.get<{ work_date: string; team_count: number; customers: { name: string; leader: string }[] }[]>(`/crew-day/counts?from=${from}&to=${to}`),
   });
   const crewCountsByDate = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of crewCountsData?.data ?? []) m.set(r.work_date, r.team_count);
     return m;
   }, [crewCountsData]);
-  // ชื่อลูกค้าจาก "จัดทีมรายวัน" ต่อวัน — โชว์บนปฏิทินด้วย ไม่งั้นลูกค้าที่เพิ่มในรายวันจะไม่โผล่เลย
+  // ชื่อลูกค้า+หัวหน้า จาก "จัดทีม" ต่อวัน — โชว์บนปฏิทินด้วย ไม่งั้นลูกค้าที่เพิ่มในจัดทีมจะไม่โผล่เลย
   const crewCustsByDate = useMemo(() => {
-    const m = new Map<string, string[]>();
+    const m = new Map<string, { name: string; leader: string }[]>();
     for (const r of crewCountsData?.data ?? []) m.set(r.work_date, r.customers ?? []);
     return m;
   }, [crewCountsData]);
@@ -220,7 +221,7 @@ export default function InstallationPage() {
                     const crewCount = crewCountsByDate.get(ds) ?? 0;
                     // ลูกค้าจากจัดทีมรายวัน ที่ยังไม่ได้โชว์อยู่ในแผนปฏิทิน (กันชื่อซ้ำ 2 บรรทัด)
                     const planNames = new Set(items.map((a) => nameOf(a).trim()));
-                    const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((n) => !planNames.has(n.trim()));
+                    const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((c) => !planNames.has(c.name.trim()));
                     return (
                       <div key={ds}
                         className="rounded-lg p-1.5 flex flex-col"
@@ -257,13 +258,15 @@ export default function InstallationPage() {
                           })}
                           {/* ลูกค้าที่มีเฉพาะใน "จัดทีม" — เส้นประ = ยังไม่มีในแผนปฏิทิน (คนละที่มา ต้องแยกให้เห็น)
                               กดแล้วเด้งไปแท็บจัดทีมของวันนั้น */}
-                          {crewOnly.map((n) => (
-                            <button key={n} onClick={() => jumpToCrewDay(ds)}
+                          {crewOnly.map((c) => (
+                            <button key={c.name} onClick={() => jumpToCrewDay(ds)}
                               className="w-full text-left rounded-md px-1.5 py-1 leading-snug"
-                              style={{ background: "rgba(255,255,255,.05)", border: "0.5px dashed rgba(255,255,255,.28)" }}
-                              title={`${n} — จัดทีมช่างไว้ในหน้าจัดทีม (ยังไม่มีในแผนเดือน)`}>
-                              <div className="text-[13px]" style={{ color: "rgba(255,255,255,.85)" }}>{n}</div>
-                              <div className="text-[11.5px] truncate" style={{ color: "var(--t-low)" }}>ทีมจัดเอง</div>
+                              style={{ background: "rgba(29,158,117,.12)", border: `0.5px solid ${leadColor(c.leader).border}` }}
+                              title={`${c.name} — จัดทีมแล้ว${c.leader ? ` · หัวหน้า ${c.leader}` : ""}`}>
+                              <div className="text-[13px]" style={{ color: "#fff" }}>{c.name}</div>
+                              <div className="text-[11.5px] truncate" style={{ color: leadColor(c.leader).text }}>
+                                จัดทีมแล้ว{c.leader ? ` · ${c.leader}` : ""}
+                              </div>
                             </button>
                           ))}
                         </div>
@@ -464,18 +467,22 @@ function DetailDrawer({ a, busy, leaderOptions, onClose, onPatch, onDelete, onGo
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }} role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm rounded-2xl p-4" style={{ background: "#1a1c22", border: "0.5px solid rgba(255,255,255,.14)" }}>
+  // ⚠ ใช้ portal ไป body — หน้า installation มี ancestor transform (.fade-in) ทำให้ position:fixed
+  //   ยึดกับ ancestor ไม่ใช่ viewport → ป๊อปอัพเด้งกลางหน้า/ต้องเลื่อนหา (เจ้าของแจ้ง 17 ก.ค.69)
+  const body = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" style={{ background: "rgba(0,0,0,.6)" }} role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl p-4 my-auto" style={{ background: "#1a1c22", border: "0.5px solid rgba(255,255,255,.14)" }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-white font-semibold">{title}</h2>
           <button onClick={onClose} aria-label="ปิด" className="text-white/60 text-lg px-2">×</button>
         </div>
         {children}
       </div>
-      <style>{`.lbl{display:block;font-size:11px;color:var(--t-low);margin:8px 0 3px}.inp{width:100%;background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 10px;color:#fff;font-size:14px;outline:none}.inp::placeholder{color:rgba(255,255,255,.35)}`}</style>
+      {/* .inp option: บังคับสีตัวอักษรเข้มบนพื้นขาว — ไม่งั้น dropdown เป็นตัวขาวบนขาว มองไม่เห็น */}
+      <style>{`.lbl{display:block;font-size:11px;color:var(--t-low);margin:8px 0 3px}.inp{width:100%;background:rgba(255,255,255,.08);border:0.5px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 10px;color:#fff;font-size:14px;outline:none}.inp::placeholder{color:rgba(255,255,255,.35)}.inp option{color:#1c1c1e;background:#fff}`}</style>
     </div>
   );
+  return typeof document !== "undefined" ? createPortal(body, document.body) : body;
 }
 
 // ── แท็บสถานะงาน (บอร์ดเดิม) ──

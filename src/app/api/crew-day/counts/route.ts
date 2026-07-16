@@ -24,7 +24,7 @@ export const GET = withRoute(async (req: Request) => {
   const sb = ctx.supabase as any;
   const { data, error } = await sb
     .from("crew_day_teams")
-    .select("work_date, sort_order, crew_team_sites(site_no, customer_name)")
+    .select("work_date, sort_order, leader:crew_people(name), crew_team_sites(site_no, customer_name)")
     .gte("work_date", from)
     .lte("work_date", to)
     .order("sort_order");
@@ -33,16 +33,18 @@ export const GET = withRoute(async (req: Request) => {
   if (error && /crew_day_teams|does not exist|42P01/i.test(error.message ?? "")) return ok([]);
   if (error) return err(error.message, 500);
 
-  type Row = { work_date: string; sort_order: number; crew_team_sites: { site_no: number; customer_name: string }[] | null };
+  type Row = { work_date: string; sort_order: number; leader: { name: string } | null; crew_team_sites: { site_no: number; customer_name: string }[] | null };
+  type Cust = { name: string; leader: string };
   const counts = new Map<string, number>();
-  const custs = new Map<string, string[]>();
+  const custs = new Map<string, Cust[]>();
   for (const row of (data ?? []) as Row[]) {
     counts.set(row.work_date, (counts.get(row.work_date) ?? 0) + 1);
+    const leaderName = String(row.leader?.name ?? "").trim();
     const list = custs.get(row.work_date) ?? [];
     for (const s of (row.crew_team_sites ?? []).slice().sort((a, b) => a.site_no - b.site_no)) {
       const name = String(s.customer_name ?? "").trim();
-      // กันชื่อซ้ำ (2 ทีมไปบ้านเดียวกัน) — ปฏิทินมีที่น้อย โชว์ชื่อเดียวพอ
-      if (name && !list.includes(name)) list.push(name);
+      // กันชื่อซ้ำ (2 ทีมไปบ้านเดียวกัน) — ปฏิทินมีที่น้อย โชว์ชื่อเดียวพอ (เก็บหัวหน้าของทีมแรกที่เจอ)
+      if (name && !list.some((c) => c.name === name)) list.push({ name, leader: leaderName });
     }
     custs.set(row.work_date, list);
   }
