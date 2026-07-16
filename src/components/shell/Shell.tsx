@@ -11,7 +11,7 @@ const HREF: Record<string, string> = {
   dashboard: "/", jobs: "/jobs", production: "/production", prodqueue: "/production-schedule",
   installation: "/installation",
   issues: "/issues", finance: "/finance", users: "/settings/users", settings: "/settings",
-  designer: "/designer", boq: "/boq",
+  designer: "/designer",
 };
 
 function NavList({ menus, pathname, onNav }: { menus: string[]; pathname: string; onNav?: () => void }) {

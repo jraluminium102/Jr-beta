@@ -24,7 +24,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
-  { href: "/cutlist", icon: "box", label: "ใบตัด/BOQ" },
+  { href: "/cutlist", icon: "box", label: "BOQ อลูมิเนียม" },
   { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
 ];
 
@@ -38,7 +38,6 @@ const OMS_NAV: Record<string, NavItem> = {
   measure_schedule:{ href: "/measure-schedule", icon: "ruler", label: "นัดวัดจริง" },
   designer:        { href: "/designer", icon: "ruler", label: "งานเขียนแบบ" },
   installation:    { href: "/installation", icon: "wrench", label: "ติดตั้ง" },
-  boq:             { href: "/boq", icon: "clipboard", label: "BOQ ตัดอลู" },
   finance:         { href: "/finance", icon: "banknote", label: "การเงิน" },
   settings:        { href: "/settings", icon: "gear", label: "ตั้งค่า" },
 };

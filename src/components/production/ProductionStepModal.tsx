@@ -6,19 +6,13 @@ import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS, PROD_LANE, PROD_LANE_META, PROD_FLOW_STEPS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip } from "@/components/ui/primitives";
-import { X, Check, TriangleAlert, ChevronRight, Package, ExternalLink, PackageCheck } from "@/components/ui/icons";
+import { X, Check, TriangleAlert, ChevronRight } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import { ProductionSetsSection } from "@/components/production/ProductionSetsSection";
 import JobCutlists from "@/components/cutlist/JobCutlists";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import type { BlockerNote } from "@/components/production/BlockerNotesInline";
 import type { ProdStatus } from "@/lib/database.types";
-
-export type BoqSummary = {
-  id: number;
-  status: "draft" | "confirmed" | "ordered";
-  item_count: number;
-};
 
 export type ProdRow = {
   id: string; job_id: string; status: ProdStatus;
@@ -33,7 +27,6 @@ export type ProdRow = {
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker
     job_blocker_notes?: BlockerNote[];                                  // โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098)
   } | null;
-  boq_summary: BoqSummary | null;
 };
 
 type StepField = { field: string; label: string; type?: "date" | "note" | "time" | "text"; optional?: boolean };
@@ -191,12 +184,6 @@ const TONE_BTN: Record<Tone, string> = {
   wait: "glass-card border-white/15 text-white hover:border-sky-300/50",
 };
 
-const BOQ_STATUS_LABEL: Record<"draft" | "confirmed" | "ordered", string> = {
-  draft: "ร่าง",
-  confirmed: "ยืนยันแล้ว",
-  ordered: "สั่งของแล้ว",
-};
-
 // ── Summary chips (อ่านจาก row ทำให้เห็นค่าสดหลัง in-place save) ─────────
 function SummaryChips({ row }: { row: ProdRow }) {
   const chips: { label: string; value: string; cls: string }[] = [];
@@ -264,12 +251,6 @@ export function ProductionStepModal({
   const [savedField, setSavedField] = useState<string | null>(null); // feedback flash
   const [problemOpen, setProblemOpen] = useState(false);
   const [problem, setProblem] = useState("");
-  // BOQ
-  const [boqSaving, setBoqSaving] = useState(false);
-  const [boqErr, setBoqErr] = useState<string | null>(null);
-  const [boqStatus, setBoqStatus] = useState(prod.boq_summary?.status ?? null);
-  // confirm "เริ่มผลิต" เมื่อ BOQ ยังไม่ ordered
-  const [mfgConfirmPending, setMfgConfirmPending] = useState<Action | null>(null);
   // undo "พร้อมติดตั้ง" (กันกดผิด) — กางยืนยันก่อนถอยกลับกำลังผลิต
   const [undoReadyOpen, setUndoReadyOpen] = useState(false);
 
@@ -357,24 +338,6 @@ export function ProductionStepModal({
     }
   };
 
-  const markOrdered = async () => {
-    if (!prod.boq_summary) return;
-    setBoqErr(null); setBoqSaving(true);
-    try {
-      await api.patch(`/boq/${prod.boq_summary.id}`, { status: "ordered" });
-      setBoqStatus("ordered");
-      flashFeedback("boq");
-    } catch (e) {
-      setBoqErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
-    } finally {
-      setBoqSaving(false);
-    }
-  };
-
-  // ตรวจว่าจะเข้า MANUFACTURING ไหม — ถ้า BOQ ยังไม่ ordered → ขอ confirm ก่อน
-  const needsMfgConfirm = (a: Action): boolean =>
-    a.to === "MANUFACTURING" && boqStatus !== "ordered";
-
   // สร้าง prefill เริ่มต้นสำหรับ action (รวม default ของฟีเจอร์ "ใครวัด + กี่โมง")
   const buildInitVals = (a: Action): Record<string, string> => {
     const init: Record<string, string> = {};
@@ -406,11 +369,9 @@ export function ProductionStepModal({
     // gate "เริ่มผลิต" (ช่าง) จากรอลงผลิต — บังคับวันติดตั้ง + วันกำหนดผลิตเสร็จ
     if (a.to === "MANUFACTURING" && prod.status === "QUEUED") {
       if (!installDate || !dueDate) { setErr("กรอกวันติดตั้ง + วันกำหนดผลิตเสร็จ (การ์ดด้านล่าง) ก่อนเริ่มผลิต"); return; }
-      if (needsMfgConfirm(a)) { setMfgConfirmPending(a); return; }
       startProduction();
       return;
     }
-    if (needsMfgConfirm(a)) { setMfgConfirmPending(a); return; }
     if (!a.fields || a.fields.length === 0) {
       const body: Record<string, unknown> = { status: a.to };
       if (a.qc) body.qc_result = a.qc;
@@ -431,19 +392,6 @@ export function ProductionStepModal({
     patch(body, { close: true }); // เลื่อนขั้น → ปิดโมดอล
   };
 
-  // หลัง confirm dialog → ดำเนินต่อปกติ (กางฟอร์ม หรือ patch เลย)
-  const proceedMfgAction = (a: Action) => {
-    setMfgConfirmPending(null);
-    // เริ่มผลิตจากรอลงผลิต → ส่งวันไปด้วย
-    if (a.to === "MANUFACTURING" && prod.status === "QUEUED") { startProduction(); return; }
-    if (!a.fields || a.fields.length === 0) {
-      const body: Record<string, unknown> = { status: a.to };
-      if (a.qc) body.qc_result = a.qc;
-      patch(body, { close: true });
-      return;
-    }
-    setVals(buildInitVals(a)); setArmed(a.to); setErr(null);
-  };
 
   // บันทึกนัดวัด + วันติดตั้ง (dirty fields) แล้วดำเนิน action เลื่อนขั้น — ใน 1 patch
   const saveDirtyAndProceed = (a: Action) => {
@@ -665,38 +613,6 @@ export function ProductionStepModal({
               </div>
             )}
 
-            {/* confirm: เริ่มผลิตทั้งที่ยังไม่ได้สั่งของ */}
-            {mfgConfirmPending && (
-              <div className="mt-3 rounded-2xl border border-amber-300/35 bg-amber-500/15 p-4 space-y-3">
-                <div className="flex items-start gap-2">
-                  <TriangleAlert size={18} className="text-amber-300 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-100">วัสดุยังไม่พร้อม</p>
-                    <p className="text-[13px] mt-0.5" style={{ color: "var(--t-mid)" }}>
-                      {boqStatus === null
-                        ? "ยังไม่มี BOQ — ยังไม่ได้สั่งของเลย"
-                        : `BOQ สถานะ "${BOQ_STATUS_LABEL[boqStatus as "draft" | "confirmed" | "ordered"]}" — ยังไม่ได้สั่งของ`}
-                      {" "}ยืนยันเริ่มผลิตเลยไหม?
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setMfgConfirmPending(null)}
-                    className="focusable pressable flex-1 glass-card border border-white/15 text-white rounded-xl py-2.5 text-sm min-h-[44px]"
-                  >
-                    ยกเลิก
-                  </button>
-                  <button
-                    onClick={() => proceedMfgAction(mfgConfirmPending)}
-                    className="focusable pressable flex-1 bg-orange-500 hover:bg-orange-400 text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px]"
-                  >
-                    เริ่มผลิตเลย
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* แจ้งปัญหา */}
             {prod.status !== "ISSUE" && (!problemOpen ? (
               <button onClick={() => setProblemOpen(true)} className="focusable pressable w-full mt-3 min-h-[48px] rounded-2xl border border-amber-300/30 bg-amber-500/12 text-amber-100 font-medium flex items-center justify-center gap-2">
@@ -865,81 +781,6 @@ export function ProductionStepModal({
             {prod.job_id && <ProductionSetsSection jobId={prod.job_id} canWrite={canWrite} />}
             {/* ใบตัดอลูของงานนี้ — ออฟฟิศเปิด/สร้างจากในโมดัลได้เลย */}
             {prod.job_id && <JobCutlists jobId={prod.job_id} canWrite={canWrite} />}
-
-            {/* ── Panel วัสดุ (BOQ) ── */}
-            <div className="mt-3 glass-card rounded-2xl p-4 border border-white/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Package size={16} className="text-sky-300 shrink-0" />
-                <span className="text-sm font-semibold text-white">วัสดุ (BOQ)</span>
-              </div>
-
-              {prod.boq_summary ? (
-                <>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {boqStatus === "ordered" ? (
-                      <span className="inline-flex items-center gap-1 text-[12px] font-medium px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-300/30">
-                        <PackageCheck size={13} /> สั่งของแล้ว
-                      </span>
-                    ) : boqStatus === "confirmed" ? (
-                      <span className="inline-flex items-center gap-1 text-[12px] font-medium px-2 py-1 rounded-lg bg-sky-500/20 text-sky-200 border border-sky-300/30">
-                        <Package size={13} /> ยืนยันแล้ว
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[12px] font-medium px-2 py-1 rounded-lg bg-white/10 text-white/70 border border-white/15">
-                        <Package size={13} /> ร่าง
-                      </span>
-                    )}
-                    <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>
-                      {prod.boq_summary.item_count} รายการ
-                    </span>
-                    <a
-                      href={`/boq/${prod.boq_summary.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="focusable inline-flex items-center gap-1 text-[12px] text-sky-300 hover:text-sky-200 underline underline-offset-2"
-                    >
-                      ดู/แก้ BOQ <ExternalLink size={12} />
-                    </a>
-                  </div>
-
-                  {boqStatus !== "ordered" && canWrite && (
-                    <button
-                      onClick={markOrdered}
-                      disabled={boqSaving}
-                      className={`focusable pressable mt-2.5 w-full min-h-[44px] rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60 transition-colors ${
-                        savedField === "boq"
-                          ? "bg-emerald-400/30 border-emerald-300/40 text-emerald-100"
-                          : "bg-emerald-500/20 hover:bg-emerald-500/35 border-emerald-300/30 text-emerald-200"
-                      }`}
-                    >
-                      {boqSaving ? (
-                        <span className="w-4 h-4 rounded-full border-2 border-emerald-300/40 border-t-emerald-200 animate-spin" />
-                      ) : savedField === "boq" ? (
-                        <><Check size={16} /> บันทึกแล้ว</>
-                      ) : (
-                        <><PackageCheck size={16} /> ยืนยัน สั่งของแล้ว</>
-                      )}
-                    </button>
-                  )}
-                  {boqErr && <p className="mt-1.5 text-[12px] text-rose-200">{boqErr}</p>}
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--t-low)" }}>
-                    <TriangleAlert size={14} className="text-amber-400 shrink-0" />
-                    ยังไม่มี BOQ — สร้างที่เมนู BOQ ตัดอลู
-                  </div>
-                  <a
-                    href={`/boq?job_id=${prod.job_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="focusable pressable inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-300/25 text-sky-200 text-[13px] font-medium"
-                  >
-                    <ExternalLink size={13} /> ไปหน้า BOQ ตัดอลู
-                  </a>
-                </div>
-              )}
-            </div>
 
             {/* ── ข้อ 8: ประวัติการทำงาน — collapsible ล่างสุด ── */}
             {(row.measure_scheduled || row.measure_actual || row.measure_actual_time || row.measured_by_name || row.measurer_name || row.planned_install_date || row.production_queued || row.production_done || row.qc_result) && (

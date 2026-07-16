@@ -7,9 +7,9 @@ import { api } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
-import { TriangleAlert, Clock, ChevronRight, Package, PackageCheck, Search } from "@/components/ui/icons";
+import { TriangleAlert, Clock, ChevronRight, PackageCheck, Search } from "@/components/ui/icons";
 import Icon from "@/components/Icon";
-import { ProductionStepModal, type ProdRow, type BoqSummary } from "@/components/production/ProductionStepModal";
+import { ProductionStepModal, type ProdRow } from "@/components/production/ProductionStepModal";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
 
@@ -23,29 +23,6 @@ type Row = ProdRow & {
 function daysSinceDeposit(depositDate: string | null | undefined): number | null {
   if (!depositDate) return null;
   return Math.floor((Date.now() - new Date(depositDate).getTime()) / 86400000);
-}
-
-function BoqBadge({ boq }: { boq: BoqSummary | null }) {
-  if (!boq) return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-300/25 text-amber-200">
-      <TriangleAlert size={10} /> ไม่มี BOQ
-    </span>
-  );
-  if (boq.status === "ordered") return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-300/25 text-emerald-200">
-      <PackageCheck size={10} /> สั่งของแล้ว
-    </span>
-  );
-  if (boq.status === "confirmed") return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-300/25 text-sky-200">
-      <Package size={10} /> BOQ ยืนยันแล้ว
-    </span>
-  );
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-white/8 border border-white/12 text-white/55">
-      <Package size={10} /> BOQ ร่าง
-    </span>
-  );
 }
 
 /** แปลง "9.30"→"09:30", "10.00"→"10:00", "09:30"→"09:30" */
@@ -290,8 +267,7 @@ export default function ProductionPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <Chip>{phaseLabel(r)}</Chip>
-                    <BoqBadge boq={r.boq_summary} />
-                    {r.production_queued && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
+                    {r.production_queued &&<span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
                     {r.production_done && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>เสร็จ: {thDate(r.production_done)}</span>}
                     {r.job?.deposit_date && (() => {
                       const n = daysSinceDeposit(r.job?.deposit_date);
