@@ -273,6 +273,32 @@ export default function ProductionSchedulePage() {
     try { await api.del(`/production-schedule/${r.id}`); await refetch(); }
     finally { setSavingId((s) => (s === r.id ? null : s)); }
   };
+  // เปิด/สร้างใบตัด(BOQ)ของงานนั้น จากแถวลูกค้า — มีอยู่แล้วเปิดใบล่าสุด · ไม่มีสร้างจากใบเสนออัตโนมัติ
+  //   ลิงก์ช่าง → /chang/<token>/cutlist/<id> · เว็บหลัก → /cutlist/<id> (api แนบโทเคนช่างให้เองตาม URL)
+  const [cutBusy, setCutBusy] = useState<string | null>(null);
+  const openCutlist = async (r: SchedRow) => {
+    if (r.kind !== "job" || !r.job_id) return;
+    setCutBusy(r.id);
+    try {
+      const m = typeof window !== "undefined" ? window.location.pathname.match(/^\/chang\/([^/]+)/) : null;
+      const base = m ? `/chang/${m[1]}/cutlist` : "/cutlist";
+      const existing = await api.get<{ id: number }[]>(`/cutlists?job_id=${r.job_id}`);
+      if (existing.data?.length) { window.location.href = `${base}/${existing.data[0].id}`; return; }
+      const res = await api.post<{ id: number; item_count: number; skipped: string[] }>("/cutlists", { job_id: r.job_id, from_job: true });
+      const { id, item_count = 0, skipped = [] } = res.data ?? {};
+      if (item_count === 0) {
+        alert(skipped.length
+          ? `สร้างใบให้แล้ว แต่ดึงข้อจากใบเสนอไม่ได้ (ข้อพวกนี้ไม่มีสูตรตัด):\n• ${skipped.join("\n• ")}\n\nเปิดใบแล้วกด "เพิ่มข้อ (กรอกมือ)" ได้`
+          : "สร้างใบเปล่าให้แล้ว — งานนี้ยังไม่มีใบเสนอในระบบ กรอกข้อเองได้");
+      } else if (skipped.length) {
+        alert(`ดึงมา ${item_count} ข้อ · อีก ${skipped.length} ข้อยังไม่มีสูตรตัด ต้องกรอกเอง:\n• ${skipped.join("\n• ")}`);
+      }
+      window.location.href = `${base}/${id}`;
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "เปิดใบตัดไม่สำเร็จ");
+      setCutBusy((s) => (s === r.id ? null : s));
+    }
+  };
 
   const dateCls = "rounded-lg px-2 py-1.5 text-[13px] outline-none min-h-[40px] border border-[#e5e5ea] bg-white text-[#1c1c1e] disabled:opacity-50";
   const txtCls = "rounded-lg px-2.5 py-1.5 text-[13px] outline-none min-h-[40px] border border-[#e5e5ea] bg-white text-[#1c1c1e] placeholder-[#a1a1a8] disabled:opacity-50";
@@ -523,6 +549,13 @@ export default function ProductionSchedulePage() {
                       </div>
                       </>)}
                       </div>
+                      {expandedId === r.id && r.kind === "job" && r.job_id && (
+                        <button onClick={() => openCutlist(r)} disabled={cutBusy === r.id}
+                          className="focusable pressable inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-bold min-h-[44px] disabled:opacity-50"
+                          style={{ background: "#eaf3ff", color: IOS.blue }}>
+                          {cutBusy === r.id ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-current animate-spin" /> : "📐"} เปิด/สร้างใบตัด (BOQ)
+                        </button>
+                      )}
                       {expandedId === r.id && r.kind === "job" && r.sets && r.sets.length > 0 && (
                         <ChangChecklist sets={r.sets} savingSetIds={savingSetIds} mark={markSet} canMark={canWrite} />
                       )}
@@ -607,8 +640,15 @@ export default function ProductionSchedulePage() {
                                 onBlur={(e) => { if (e.target.value !== (r.producer_note ?? "")) save(r, { producer_note: e.target.value } as Partial<SchedRow>); }}
                                 className={`${txtCls} w-full`} aria-label={`ช่างผลิต ${r.title}`} />
                             </label>
-                            <div className="flex items-end gap-1.5">
+                            <div className="flex items-end gap-1.5 flex-wrap">
                               {r.kind === "job" && <a href={`/production/${r.id}/print`} target="_blank" rel="noopener noreferrer" className="focusable inline-flex items-center gap-1 text-[12px] rounded-lg px-2.5 py-2 min-h-[40px]" style={{ background: IOS.inset, color: IOS.ink2 }}><Printer size={13} /> ใบงาน</a>}
+                              {r.kind === "job" && r.job_id && (
+                                <button onClick={() => openCutlist(r)} disabled={cutBusy === r.id}
+                                  className="focusable pressable inline-flex items-center gap-1 text-[12px] rounded-lg px-2.5 py-2 min-h-[40px] font-semibold disabled:opacity-50"
+                                  style={{ background: "#eaf3ff", color: IOS.blue }}>
+                                  {cutBusy === r.id ? <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-current animate-spin" /> : "📐"} ใบตัด
+                                </button>
+                              )}
                               {r.kind === "job" && canWrite && JOB_NEXT[r.status] && (
                                 <button onClick={() => advanceJobStatus(r)} disabled={savingId === r.id}
                                   className="focusable pressable inline-flex items-center gap-1.5 text-white rounded-xl px-3 py-2 text-[13px] font-semibold min-h-[40px] disabled:opacity-50"
