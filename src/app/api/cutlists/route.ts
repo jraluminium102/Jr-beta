@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { dbMessage } from "@/lib/bff/db-error";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
@@ -20,7 +21,7 @@ export async function GET() {
     .select("id, code, name, status, job_id, created_at, stock_cut_at, jobs:job_id(job_code, customer_name)")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (error) return fail(error.message, 500);
+  if (error) return fail(dbMessage(error, "โหลดรายการใบตัดไม่สำเร็จ"), 500);
   return ok(data);
 }
 
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
     })
     .select("id")
     .single();
-  if (clErr || !cl) return fail("สร้างใบตัดไม่สำเร็จ: " + (clErr?.message ?? ""), 500);
+  if (clErr || !cl) return fail(dbMessage(clErr, "สร้างใบตัดไม่สำเร็จ"), 500);
 
   // code = CL-<id> (ใช้เป็น ref ตอนตัดสต็อก)
   await sb.from("cutlists").update({ code: `CL-${cl.id}` }).eq("id", cl.id);
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
     const { error: iErr } = await sb.from("cutlist_items").insert(rows);
     if (iErr) {
       await sb.from("cutlists").delete().eq("id", cl.id);
-      return fail("บันทึกข้อใบตัดไม่สำเร็จ: " + iErr.message, 500);
+      return fail(dbMessage(iErr, "บันทึกข้อใบตัดไม่สำเร็จ"), 500);
     }
   }
 

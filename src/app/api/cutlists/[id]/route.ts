@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { dbMessage } from "@/lib/bff/db-error";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 
@@ -44,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.note !== undefined) head.note = String(body.note);
   if (Object.keys(head).length) {
     const { error } = await sb.from("cutlists").update(head).eq("id", id);
-    if (error) return fail(error.message, 500);
+    if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"), 500);
   }
 
   if (Array.isArray(body.items)) {
@@ -64,10 +65,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (rpcErr) {
       // RPC ยังไม่มี (0094 เวอร์ชันเก่า) → fallback ทางเดิม
       if (!/replace_cutlist_items|function/i.test(rpcErr.message ?? "")) {
-        return fail("บันทึกข้อไม่สำเร็จ: " + rpcErr.message, 500);
+        return fail(dbMessage(rpcErr, "บันทึกข้อไม่สำเร็จ"), 500);
       }
       const { error: dErr } = await sb.from("cutlist_items").delete().eq("cutlist_id", id);
-      if (dErr) return fail("ลบข้อเดิมไม่สำเร็จ: " + dErr.message, 500);
+      if (dErr) return fail(dbMessage(dErr, "ลบข้อเดิมไม่สำเร็จ"), 500);
       if (rows.length) {
         const { error: iErr } = await sb.from("cutlist_items").insert(rows.map((r) => ({ ...r, cutlist_id: id })));
         if (iErr) return fail("บันทึกข้อไม่สำเร็จ: " + iErr.message, 500);
@@ -89,6 +90,6 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!cl) return fail("ไม่พบใบตัด", 404);
   if (cl.status === "stock_cut") return fail("ใบนี้ตัดสต็อกไปแล้ว ลบไม่ได้ (มีประวัติการหักผูกอยู่)", 409);
   const { error } = await sb.from("cutlists").delete().eq("id", id);
-  if (error) return fail(error.message, 500);
+  if (error) return fail(dbMessage(error, "ลบใบตัดไม่สำเร็จ"), 500);
   return ok({ ok: true });
 }
