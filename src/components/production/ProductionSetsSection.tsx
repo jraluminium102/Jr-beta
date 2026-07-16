@@ -3,17 +3,26 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X } from "@/components/ui/icons";
+import OptionsEditor from "./OptionsEditor";
+import type { SetOption } from "@/app/api/production-set-options/route";
 
-// ค่ามาตรฐาน (ตาม Excel ทีมผลิต "แผนงานผลิตโรง1.xlsx" — ดึงจาก dataValidation ในไฟล์จริง)
-const GLASS_ORDER = ["", "รอวัด", "สั่งแล้ว รอของ", "มาแล้ว", "วัดแล้ว", "มายังไม่ครบ"];
-const SCREEN_TYPE = ["", "มุ้งจีบ", "มุ้ง JR", "มุ้งจีบ+มุ้ง JR", "มุ้งนิรภัย"];
-const INSTALLED = ["", "ใส่แล้ว", "ยังไม่ใส่"];
-const SCREEN_INST = ["", "มาแล้ว", "ใส่แล้ว", "ใส่ไม่ครบ"];
-const QC = ["", "ผ่าน", "ไม่ผ่าน"];
-const DESIGN_RECV = ["", "ได้รับแบบ", "ได้แบบไม่ครบ", "ยังไม่ได้รับแบบ"];
-// วัสดุ/โครง 4 ช่อง (โครง-โรงงาน / อุปกรณ์ / อลูปกติ / อลูอบสี)
-// Excel ใช้ dataValidation ชุดเดียวกันทั้ง 4 คอลัมน์ (K3:N90) → ที่นี่ใช้ชุดเดียวกันตาม
-const MATERIAL = ["", "เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "ขึ้นโครงโรงงาน3", "มือจับลูกค้า"];
+// ── ตัวเลือกดรอปดาวน์ ──────────────────────────────────────────────────────
+// ของจริงมาจาก DB (ตาราง production_set_options — 0099) ออฟฟิศเพิ่ม/ลบเองได้จากปุ่ม ⚙ ข้างป้าย
+// ค่าข้างล่างเป็น "ตัวสำรอง" ใช้เฉพาะตอน 0099 ยังไม่รัน/โหลดไม่ได้ → หน้าไม่พังและยังกรอกงานได้
+// (ค่าตรงกับ seed ใน 0099 ซึ่งถอดมาจาก dataValidation ของ Excel จริง "แผนงานผลิตโรง1.xlsx")
+const FALLBACK: Record<string, string[]> = {
+  design_received: ["ได้รับแบบ", "ได้แบบไม่ครบ", "ยังไม่ได้รับแบบ"],
+  frame_status: ["เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "ขึ้นโครงโรงงาน1", "ขึ้นโครงโรงงาน2", "ขึ้นโครงโรงงาน3", "มือจับลูกค้า"],
+  mat_equipment: ["เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "มือจับลูกค้า"],
+  mat_alu_normal: ["เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "มือจับลูกค้า"],
+  mat_alu_painted: ["เบิกสต๊อกทั้งหมด", "สั่งแล้ว รอของ", "ของมาแล้ว", "มือจับลูกค้า"],
+  glass_order: ["รอวัด", "วัดแล้ว", "สั่งแล้ว รอของ", "มาแล้ว", "มายังไม่ครบ"],
+  glass_installed: ["ใส่แล้ว", "ยังไม่ใส่"],
+  screen_type: ["มุ้งจีบ", "มุ้ง JR", "มุ้งจีบ+มุ้ง JR", "มุ้งนิรภัย"],
+  screen_installed: ["มาแล้ว", "ใส่แล้ว", "ใส่ไม่ครบ"],
+  qc_before_glass: ["ผ่าน", "ไม่ผ่าน"],
+  qc_after_glass: ["ผ่าน", "ไม่ผ่าน"],
+};
 
 // timestamptz → "24/06/2026 14:30" (ค.ศ. เต็ม)
 function fmtWhen(iso?: string | null) {
@@ -30,10 +39,18 @@ type SetRow = { id: number; job_id: string } & Record<string, any>;
 const fieldCls =
   "w-full bg-white/8 text-white text-[14px] px-2.5 py-2 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
 
-function F({ label, children }: { label: string; children: React.ReactNode }) {
+// ป้าย + ช่อง · ถ้าส่ง onEditOpts มา = ช่องนี้เป็นดรอปดาวน์ที่แก้ตัวเลือกได้ → โชว์ปุ่ม ⚙ ข้างป้าย
+function F({ label, children, onEditOpts }: { label: string; children: React.ReactNode; onEditOpts?: () => void }) {
   return (
     <label className="block">
-      <span className="block text-[11.5px] mb-1" style={{ color: "var(--t-low)" }}>{label}</span>
+      <span className="flex items-center gap-1 text-[11.5px] mb-1" style={{ color: "var(--t-low)" }}>
+        <span className="truncate">{label}</span>
+        {onEditOpts && (
+          <button type="button" onClick={(e) => { e.preventDefault(); onEditOpts(); }}
+            title={`เพิ่ม/ลบตัวเลือกของ "${label}"`} aria-label={`เพิ่ม/ลบตัวเลือกของ ${label}`}
+            className="shrink-0 text-white/35 hover:text-sky-300 leading-none">⚙</button>
+        )}
+      </span>
       {children}
     </label>
   );
@@ -49,6 +66,23 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const glassSpecHistory = specRes?.data ?? [];
   const [busy, setBusy] = useState(false);
   const [editKeys, setEditKeys] = useState<Record<string, boolean>>({}); // ช่อง mark ที่กด "แก้" override อยู่
+  const [optField, setOptField] = useState<{ key: string; label: string } | null>(null); // แผงจัดการตัวเลือกที่เปิดอยู่
+
+  // ตัวเลือกดรอปดาวน์จาก DB (0099) — ยังไม่รัน migration → data ว่าง แล้วตกไปใช้ FALLBACK
+  const optKey = ["production-set-options"];
+  const { data: optRes } = useQuery({ queryKey: optKey, queryFn: () => api.get<SetOption[]>("/production-set-options"), staleTime: 60_000 });
+  const allOpts = optRes?.data ?? [];
+  // 0099 ยังไม่รัน → API คืน migrated:false · ดรอปดาวน์ยังใช้ FALLBACK ได้ แต่ "เพิ่ม/ลบ" ยังไม่ได้
+  const optsMigrated = optRes?.meta?.migrated !== false;
+  const optsOf = (field: string): SetOption[] => allOpts.filter((o) => o.field_key === field);
+  /** ตัวเลือกสำหรับ <select> — "" (ว่าง) นำหน้าเสมอ · ไม่มีใน DB → ใช้ค่าสำรอง */
+  const valuesOf = (field: string): string[] => {
+    const fromDb = optsOf(field).map((o) => o.value);
+    return ["", ...(fromDb.length ? fromDb : (FALLBACK[field] ?? []))];
+  };
+  const refetchOpts = () => qc.invalidateQueries({ queryKey: optKey });
+  /** ปุ่ม ⚙ ข้างป้าย — เฉพาะคนที่แก้ได้ (ช่าง/คนอ่านอย่างเดียวไม่ต้องเห็น) */
+  const openOpts = (key: string, label: string) => (canWrite ? () => setOptField({ key, label }) : undefined);
 
   async function save(id: number, field: string, value: any) {
     try {
@@ -130,6 +164,19 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
         {glassSpecHistory.map((g) => <option key={g} value={g} />)}
       </datalist>
 
+      {/* แผงจัดการตัวเลือกดรอปดาวน์ (กด ⚙ ข้างป้าย) */}
+      {optField && (
+        <OptionsEditor
+          label={optField.label}
+          fieldKey={optField.key}
+          options={optsOf(optField.key)}
+          migrated={optsMigrated}
+          fallback={FALLBACK[optField.key] ?? []}
+          onClose={() => setOptField(null)}
+          onChanged={refetchOpts}
+        />
+      )}
+
       {isLoading ? (
         <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>กำลังโหลด…</div>
       ) : sets.length === 0 ? (
@@ -145,23 +192,23 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 {canWrite && <button onClick={() => del(s.id)} aria-label="ลบชุด" className="text-white/40 hover:text-rose-300 p-1"><X size={15} /></button>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <F label="แบบถึงผลิต 👷 (ช่างกด)">{markRO(s, "design_received", "design_received_by", "design_received_at", DESIGN_RECV)}</F>
+                <F label="แบบถึงผลิต 👷 (ช่างกด)" onEditOpts={openOpts("design_received", "แบบถึงผลิต")}>{markRO(s, "design_received", "design_received_by", "design_received_at", valuesOf("design_received"))}</F>
                 <F label="วันวัดจริง">{date(s, "measure_actual")}</F>
                 <F label="คนวัด">{txt(s, "measurer_name")}</F>
-                <F label="โครง/โรงงาน">{sel(s, "frame_status", MATERIAL)}</F>
+                <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
 
-                <F label="อุปกรณ์">{sel(s, "mat_equipment", MATERIAL)}</F>
-                <F label="อลู ปกติ">{sel(s, "mat_alu_normal", MATERIAL)}</F>
-                <F label="อลู อบสี">{sel(s, "mat_alu_painted", MATERIAL)}</F>
-                <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)">{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", QC)}</F>
+                <F label="อุปกรณ์" onEditOpts={openOpts("mat_equipment", "อุปกรณ์")}>{sel(s, "mat_equipment", valuesOf("mat_equipment"))}</F>
+                <F label="อลู ปกติ" onEditOpts={openOpts("mat_alu_normal", "อลู ปกติ")}>{sel(s, "mat_alu_normal", valuesOf("mat_alu_normal"))}</F>
+                <F label="อลู อบสี" onEditOpts={openOpts("mat_alu_painted", "อลู อบสี")}>{sel(s, "mat_alu_painted", valuesOf("mat_alu_painted"))}</F>
+                <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_before_glass", "QC ก่อนใส่กระจก")}>{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", valuesOf("qc_before_glass"))}</F>
 
                 <div className="col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>
-                <F label="สั่งกระจก">{sel(s, "glass_order", GLASS_ORDER)}</F>
-                <F label="ใส่กระจก 👷 (ช่างกด)">{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", INSTALLED)}</F>
+                <F label="สั่งกระจก" onEditOpts={openOpts("glass_order", "สั่งกระจก")}>{sel(s, "glass_order", valuesOf("glass_order"))}</F>
+                <F label="ใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("glass_installed", "ใส่กระจก")}>{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", valuesOf("glass_installed"))}</F>
 
-                <F label="มุ้ง">{sel(s, "screen_type", SCREEN_TYPE)}</F>
-                <F label="ใส่มุ้ง">{sel(s, "screen_installed", SCREEN_INST)}</F>
-                <F label="QC หลังใส่กระจก 👷 (ช่างกด)">{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", QC)}</F>
+                <F label="มุ้ง" onEditOpts={openOpts("screen_type", "มุ้ง")}>{sel(s, "screen_type", valuesOf("screen_type"))}</F>
+                <F label="ใส่มุ้ง" onEditOpts={openOpts("screen_installed", "ใส่มุ้ง")}>{sel(s, "screen_installed", valuesOf("screen_installed"))}</F>
+                <F label="QC หลังใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_after_glass", "QC หลังใส่กระจก")}>{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", valuesOf("qc_after_glass"))}</F>
                 <F label="ต้องผลิตเสร็จ">{date(s, "must_finish_date")}</F>
 
                 <F label="ใส่กระจกเสร็จ">{date(s, "glass_done_date")}</F>
