@@ -129,14 +129,16 @@ export default function CrewTeamCard({
 function Chip({ active, warn, disabled, onClick, title, children }: {
   active: boolean; warn?: boolean; disabled?: boolean; onClick: () => void; title?: string; children: ReactNode;
 }) {
+  // เลือกแล้ว = เขียว emerald เต็ม + ✓ (เจ้าของแจ้ง 18 ก.ค.2569: เดิมขาวจาง 22% บน glass-card ดูไม่ออกว่าเลือกไปแล้ว)
   return (
     <button type="button" onClick={onClick} disabled={disabled} title={title}
-      className="pressable focusable px-2.5 py-1.5 rounded-full text-xs font-medium border disabled:opacity-50"
+      className="pressable focusable inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold border disabled:opacity-50"
       style={active
-        ? { background: "rgba(255,255,255,.22)", color: "#fff", borderColor: "rgba(255,255,255,.32)" }
+        ? { background: "#16a34a", color: "#fff", borderColor: "#22c55e", boxShadow: "0 1px 4px rgba(22,163,74,.45)" }
         : warn
           ? { background: "rgba(239,159,39,.12)", color: "#fcd38a", borderColor: "rgba(239,159,39,.35)" }
           : { background: "rgba(255,255,255,.06)", color: "rgba(255,255,255,.68)", borderColor: "rgba(255,255,255,.14)" }}>
+      {active && <span aria-hidden style={{ fontSize: 11, lineHeight: 1 }}>✓</span>}
       {children}
     </button>
   );
