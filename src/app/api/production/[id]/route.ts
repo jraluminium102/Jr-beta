@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
+import { requireChangOr } from "@/lib/bff/chang-ctx";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 
@@ -44,8 +45,9 @@ const schema = z.object({
   remark:     z.string().nullish(),
 });
 
+// ช่างกด "เริ่มผลิต"/"ส่งติดตั้ง" ผ่านลิงก์ได้ (เหมือนที่ทำได้ในเว็บหลัก) — guard ธุรกิจอยู่ในหน้าเว็บ+ล่างนี้
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requireChangOr(req, "production", "write");
   const body = schema.parse(clean(await req.json()));
 
   // undo "พร้อมติดตั้ง": READY → กลับไปกำลังผลิต (กันกดผิด) — อนุญาตเฉพาะเส้นนี้เส้นเดียว
@@ -142,9 +144,12 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   }
 
   if (body.status) {
+    // ช่างผ่านลิงก์ไม่มี user id → ส่ง null แล้วจดชื่อที่พิมพ์ไว้ใน new_value.by แทน
+    // (ถ้าส่ง "" เข้าไป insert จะพังเพราะไม่ใช่ uuid แล้ว audit หายเงียบ ๆ — audit() กลืน error)
     await audit({
-      jobId: data.job_id, userId: ctx.user.id, action: "PRODUCTION_STATUS",
-      table: "productions", recordId: params.id, newValue: { status: body.status },
+      jobId: data.job_id, userId: ctx.user.id || null, action: "PRODUCTION_STATUS",
+      table: "productions", recordId: params.id,
+      newValue: { status: body.status, by: ctx.actorName || undefined, via: ctx.isChang ? "ลิงก์ช่าง" : undefined },
     });
   }
   return ok(data);

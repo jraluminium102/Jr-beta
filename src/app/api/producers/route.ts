@@ -1,14 +1,15 @@
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { requirePermission } from "@/lib/bff/context";
+import { requireChangOr } from "@/lib/bff/chang-ctx";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/producers — distinct producer names from productions.producer_note
 // ใช้โดย ตารางผลิต / production สำหรับ datalist + filter "งานของฉัน"
 // ถ้า query error คืน [] เพื่อ graceful degrade (ไม่ block UI)
-export const GET = withRoute(async () => {
-  const ctx = await requirePermission("production", "read");
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requireChangOr(req, "production", "read");
 
   try {
     // adhoc_production_tasks ยังไม่อยู่ใน generated types → cast

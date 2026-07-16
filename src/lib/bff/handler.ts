@@ -22,7 +22,7 @@ export function withRoute<Args extends unknown[]>(
 // audit log helper (best-effort, ไม่ block response)
 export async function audit(entry: {
   jobId?: string | null;
-  userId: string;
+  userId: string | null;   // null = ช่างผ่านลิงก์ (ไม่มี user) → ดูว่าใครทำได้จาก new_value.by
   action: string;
   table: string;
   recordId?: string;
@@ -33,7 +33,7 @@ export async function audit(entry: {
     const svc = createServiceClient();
     await svc.from("audit_logs").insert({
       job_id: entry.jobId ?? null,
-      user_id: entry.userId,
+      user_id: entry.userId || null,   // "" → null (uuid ว่างจะ insert ไม่ผ่าน แล้ว audit หายเงียบ)
       action: entry.action,
       table_name: entry.table,
       record_id: entry.recordId ?? null,

@@ -4,12 +4,14 @@ import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
 import { buildScheduleRows } from "@/lib/production/schedule";
+import { requireChangOr } from "@/lib/bff/chang-ctx";
 
 // ── ตารางผลิตสำหรับช่าง (งานในระบบ + งานจดเอง) ──
 // ⚠ query อยู่ใน src/lib/production/schedule.ts — "ตัวเดียวกับลิงก์ช่าง /api/chang/<token>"
 //   ห้ามเขียน query ซ้ำที่นี่ ไม่งั้น 2 ทางจะหลุดกันเงียบ ๆ อีก (เคยเกิดมาแล้ว)
-export const GET = withRoute(async () => {
-  const ctx = await requirePermission("production", "read");
+// รับทั้งคนล็อกอิน และ "ช่างผ่านลิงก์" (โทเคน) — ตอบ role=CHANG ให้หน้าเดิมเข้าโหมดช่างเอง
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requireChangOr(req, "production", "read");
   const rows = await buildScheduleRows(ctx.supabase as unknown as { from: (t: string) => any });
   return ok(rows, { can_write: can(ctx.role, "production", "write"), role: ctx.role });
 });

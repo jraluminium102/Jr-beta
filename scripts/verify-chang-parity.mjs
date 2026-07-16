@@ -1,94 +1,96 @@
 /**
- * กันตารางผลิต "เว็บหลัก" กับ "ลิงก์ช่าง" หลุดกันอีก
+ * กัน "ลิงก์ช่าง" หลุดจาก "เว็บหลัก" อีก
  *
- * ที่มา (16 ก.ค.2569): 2 ทางนี้เคยต่างคนต่างเขียน query เอง แล้วค่อย ๆ หลุดกันเงียบ ๆ
- *   · งานจดเอง (adhoc) — เว็บหลักมี ลิงก์ช่างไม่ดึง → เจ้าของเพิ่มงานแล้วช่างไม่เห็น
- *   · producer_note — เว็บหลักส่ง ลิงก์ช่างไม่ส่ง
- *   · งาน READY — เว็บหลักซ่อน ลิงก์ช่างโชว์
- * ไม่มี error ไม่มีเทสจับ รู้ตัวอีกทีคือผู้ใช้มาบอก → เทสนี้คือตัวจับ
+ * ที่มา (16 ก.ค.2569 · เจ้าของแจ้ง 2 รอบ):
+ *   รอบ 1 "ลิงก์ช่างไม่อัพเดท" → API เขียนแยกกัน → งานจดเองหาย/โน้ตหาย/โชว์งาน READY ที่เว็บหลักซ่อน
+ *   รอบ 2 "เลย์เอาท์ยังไม่เหมือนหน้าตารางผลิตในเว็บเต็ม" → รวมแค่ data ไม่พอ **หน้าจอก็ต้องตัวเดียวกัน**
  *
- * เทสแบบ static (ไม่ต้องต่อ DB/เว็บ): อ่านโค้ดว่ายัง "ใช้ตัวสร้างแถวกลางร่วมกัน" อยู่ไหม
+ * กติกาตอนนี้: ลิงก์ช่าง = **เรนเดอร์หน้า production-schedule ตัวเดียวกับเว็บหลัก**
+ *   · api client แนบ x-chang-token อัตโนมัติเมื่อ path /chang/*  (src/lib/api.ts)
+ *   · API เดิมรับโทเคน → ตอบ role=CHANG                        (src/lib/bff/chang-ctx.ts)
+ *   · หน้าเดิมเห็น role=CHANG → เข้าโหมดช่างเอง (ซ่อนของออฟฟิศ)
+ * ห้ามกลับไปทำ "หน้าลอกแบบ" / "API ลอกแบบ" อีก
+ *
  *   node scripts/verify-chang-parity.mjs
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
-const F = {
+const P = {
+  changPage: "src/app/chang/[token]/page.tsx",
+  api: "src/lib/api.ts",
+  changCtx: "src/lib/bff/chang-ctx.ts",
   shared: "src/lib/production/schedule.ts",
   mainApi: "src/app/api/production-schedule/route.ts",
-  changApi: "src/app/api/chang/[token]/route.ts",
   mainPage: "src/app/(app)/(oms)/production-schedule/page.tsx",
-  changPage: "src/app/chang/[token]/ChangPublicView.tsx",
+  setsApi: "src/app/api/production-sets/[id]/route.ts",
+  prodApi: "src/app/api/production/[id]/route.ts",
 };
-const read = (k) => readFileSync(F[k], "utf8");
+const read = (k) => readFileSync(P[k], "utf8");
 
 const checks = [
   {
-    name: "API เว็บหลัก ใช้ buildScheduleRows (ไม่ query เอง)",
+    name: "ลิงก์ช่างเรนเดอร์หน้าตารางผลิต 'ตัวเดียวกับเว็บหลัก'",
+    pass: () => /import\s+ProductionSchedulePage\s+from\s+"@\/app\/\(app\)\/\(oms\)\/production-schedule\/page"/.test(read("changPage"))
+      && /<ProductionSchedulePage\s*\/>/.test(read("changPage")),
+    fix: "อย่าเขียนหน้าตารางผลิตของช่างขึ้นมาใหม่ — /chang/[token]/page.tsx ต้อง import + เรนเดอร์ ProductionSchedulePage",
+  },
+  {
+    name: "ไม่มีหน้าลอกแบบเก่า (ChangPublicView) หลงเหลือ",
+    pass: () => !existsSync("src/app/chang/[token]/ChangPublicView.tsx"),
+    fix: "ลบ ChangPublicView ทิ้ง — มันคือหน้าลอกแบบที่ทำให้เลย์เอาท์หลุดกัน",
+  },
+  {
+    name: "ไม่มี API ลอกแบบเก่า (/api/chang/[token]) หลงเหลือ",
+    pass: () => !existsSync("src/app/api/chang/[token]/route.ts"),
+    fix: "ลบ /api/chang/[token] ทิ้ง — ลิงก์ช่างต้องใช้ API เดียวกับเว็บหลัก",
+  },
+  {
+    name: "api client แนบโทเคนช่างอัตโนมัติเมื่ออยู่ใต้ /chang/",
+    pass: () => {
+      const s = read("api");
+      return s.includes("changHeaders") && /\/\^\\\/chang\\\/\(\[\^\/\]\+\)\//.test(s) && s.includes("x-chang-token");
+    },
+    fix: "src/lib/api.ts ต้องมี changHeaders() ที่ match ^/chang/<token> แล้วแนบ x-chang-token ทุกคำขอ",
+  },
+  {
+    name: "ชื่อช่าง (ไทย) ถูก encode ก่อนใส่ header",
+    pass: () => read("api").includes("encodeURIComponent(who)") && read("changCtx").includes("decodeURIComponent"),
+    fix: "HTTP header รับแค่ ISO-8859-1 — ชื่อไทยต้อง encodeURIComponent ฝั่ง client + decode ฝั่ง server ไม่งั้น fetch throw ทั้งคำขอ",
+  },
+  {
+    name: "API ที่ช่างใช้ รับโทเคนผ่าน requireChangOr (ไม่โคลน endpoint)",
+    pass: () => ["mainApi", "setsApi", "prodApi"].every((k) => read(k).includes("requireChangOr")),
+    fix: "endpoint ที่ช่างต้องใช้ (ตารางผลิต/มาร์คชุดงาน/เริ่มผลิต-ส่งติดตั้ง) ต้องใช้ requireChangOr จาก @/lib/bff/chang-ctx",
+  },
+  {
+    name: "endpoint ที่ช่างใช้ ไม่อ่าน ctx.profile ตรง ๆ (ช่างไม่มี profile → พัง)",
+    pass: () => ["setsApi", "prodApi"].every((k) => !/ctx\.profile\.[a-z_]/.test(read(k))),
+    fix: "ช่างผ่านลิงก์มี profile = null → ใช้ ctx.actorName / ctx.profile?.x แทน ctx.profile.x",
+  },
+  {
+    name: "query ตารางผลิตอยู่ที่ตัวกลางที่เดียว (buildScheduleRows)",
     pass: () => {
       const s = read("mainApi");
-      return s.includes("buildScheduleRows") && !s.includes('.from("productions")');
+      return s.includes("buildScheduleRows") && !s.includes('.from("productions")') && read("shared").includes("export const SET_COLS");
     },
-    fix: "อย่า query productions ตรง ๆ ใน /api/production-schedule — เรียก buildScheduleRows() จาก src/lib/production/schedule.ts",
+    fix: "อย่า query productions ในไฟล์ API — เรียก buildScheduleRows() จาก src/lib/production/schedule.ts",
   },
   {
-    name: "API ลิงก์ช่าง ใช้ buildScheduleRows (ไม่ query เอง)",
-    pass: () => {
-      const s = read("changApi");
-      return s.includes("buildScheduleRows") && !s.includes('.from("productions")');
-    },
-    fix: "อย่า query productions ตรง ๆ ใน /api/chang/[token] — เรียก buildScheduleRows() ตัวเดียวกับเว็บหลัก",
-  },
-  {
-    name: "ลิงก์ช่างกรองงานด้วยกติกากลาง isVisibleToChang",
-    // ⚠ ต้องเช็ค ".filter(isVisibleToChang)" ไม่ใช่แค่ชื่อ — บรรทัด import ก็มีชื่อนี้
-    //   (เทสรุ่นแรกเช็คแค่ชื่อ พอลองลบ .filter ออก เทสยังเขียว = จับไม่ได้เลย)
-    pass: () => /\.filter\(\s*isVisibleToChang\s*\)/.test(read("changApi")),
-    fix: "ลิงก์ช่างต้อง .filter(isVisibleToChang) — ไม่งั้นช่างเห็นงาน READY ที่เว็บหลักซ่อนไปแล้ว",
-  },
-  {
-    name: "ชุดคอลัมน์ชุดงาน (SET_COLS) มีที่เดียว",
-    pass: () => !read("changApi").includes("const SET_COLS") && read("shared").includes("export const SET_COLS"),
-    fix: "SET_COLS ต้องอยู่ใน src/lib/production/schedule.ts ที่เดียว — ประกาศซ้ำ = เพิ่มฟีลด์แล้วลืมอีกฝั่ง",
-  },
-  {
-    name: "ลิงก์ช่างใช้ตัวคิดเดดไลน์/สถานะชุด ตัวเดียวกับเว็บหลัก",
-    pass: () => {
-      const s = read("changPage");
-      return s.includes("deadlineInfo") && s.includes("setIsDone") &&
-        s.includes('from "@/app/(app)/(oms)/production-schedule/page"');
-    },
-    fix: "ChangPublicView ต้อง import deadlineInfo/setIsDone จาก production-schedule/page — ห้ามก๊อปสูตรไปเขียนใหม่",
-  },
-  {
-    name: "ฟีลด์ที่ช่างต้องเห็น ถูกส่งครบจากตัวกลาง",
-    pass: () => {
-      const s = read("shared");
-      return ["producer_note", "kind", "subtitle", "adhoc_production_tasks", "due_date"].every((k) => s.includes(k));
-    },
-    fix: "buildScheduleRows ต้องส่ง kind/subtitle/producer_note/due_date + รวมงานจดเอง (adhoc_production_tasks)",
-  },
-  {
-    name: "ลิงก์ช่างโชว์งานจดเอง + โน้ตช่าง",
-    pass: () => {
-      const s = read("changPage");
-      return s.includes("producer_note") && s.includes('kind === "adhoc"');
-    },
-    fix: "ChangPublicView ต้องเรนเดอร์ producer_note และป้ายงานจดเอง (kind === 'adhoc')",
-  },
-  {
-    name: "ค่ามาร์คของช่าง ยาวได้เท่าตัวเลือกดรอปดาวน์ที่ออฟฟิศเพิ่มเองได้ (60)",
-    pass: () => read("changApi").includes("z.string().max(60)"),
-    fix: "patchSchema.value ต้อง max(60) เท่าลิมิตของ /api/production-set-options — น้อยกว่านั้นช่างกดตัวเลือกยาว ๆ ไม่ได้",
+    name: "หน้าเว็บหลักยังมีโหมดช่าง (role CHANG) ให้ลิงก์ช่างอาศัย",
+    pass: () => /meta\?\.role as string\) === "CHANG"/.test(read("mainPage")),
+    fix: "หน้า production-schedule ต้องเช็ค meta.role === 'CHANG' เพื่อซ่อนของออฟฟิศ — ลิงก์ช่างพึ่งอันนี้",
   },
 ];
 
 let bad = 0;
 for (const c of checks) {
   let ok = false;
-  try { ok = c.pass(); } catch (e) { ok = false; }
+  try { ok = c.pass(); } catch { ok = false; }
   if (!ok) bad++;
   console.log(`${ok ? "✅" : "❌"} ${c.name}`);
   if (!ok) console.log(`   → ${c.fix}`);
 }
-console.log(bad ? `\n❌ ${bad}/${checks.length} ไม่ผ่าน — เว็บหลักกับลิงก์ช่างกำลังจะหลุดกัน` : `\n✅ ผ่านครบ ${checks.length} — เว็บหลักกับลิงก์ช่างยังใช้ของร่วมกันอยู่`);
+console.log(bad
+  ? `\n❌ ${bad}/${checks.length} ไม่ผ่าน — ลิงก์ช่างกำลังจะหลุดจากเว็บหลัก`
+  : `\n✅ ผ่านครบ ${checks.length} — ลิงก์ช่างใช้หน้า+API เดียวกับเว็บหลัก`);
 process.exit(bad ? 1 : 0);

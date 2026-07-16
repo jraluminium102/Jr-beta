@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
+import { requireChangOr } from "@/lib/bff/chang-ctx";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, notFound } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
@@ -22,8 +23,9 @@ const patchSchema = z.object({
 });
 
 // PATCH /api/production-sets/:id — แก้ช่องใน worksheet (ออฟฟิศ/ผลิต)
+// ช่างมาร์คเช็คลิสต์ผ่านลิงก์ได้ (ไม่ต้อง login) — endpoint เดียวกับเว็บหลัก ไม่โคลน
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requireChangOr(req, "production", "write");
   const body = patchSchema.parse(await req.json());
   // "" ในช่องวันที่ → null
   const clean: Record<string, unknown> = {};
@@ -36,7 +38,9 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     qc_before_glass: { by: "qc_before_by", at: "qc_before_at", done: "ผ่าน" },
     qc_after_glass: { by: "qc_after_by", at: "qc_after_at", done: "ผ่าน" },
   };
-  const actor = ctx.profile.full_name || ctx.user.email || "ไม่ทราบ";
+  // ⚠ ช่างผ่านลิงก์ profile เป็น null — ต้องใช้ ctx.actorName (requireChangOr เตรียมไว้) หรือ ctx.profile?.x
+  //   คนล็อกอิน = ชื่อจริง · ช่าง = ชื่อที่พิมพ์ในหน้า · ห้ามอ่านแบบ dot ตรงจาก profile
+  const actor = ctx.actorName || ctx.profile?.full_name || ctx.user.email || (ctx.isChang ? "ช่าง (ลิงก์)" : "ไม่ทราบ");
   const nowIso = new Date().toISOString();
   for (const [field, a] of Object.entries(MARK_AUDIT)) {
     if (body[field as keyof typeof body] === undefined) continue; // ไม่ได้ส่งช่องนี้มา
