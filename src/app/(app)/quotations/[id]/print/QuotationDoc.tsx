@@ -135,8 +135,9 @@ export function QuotationDoc({
                     <td colSpan={5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
                   </tr>
                 )}
-                {/* 1 รายการ = 1 ก้อน ห้ามตัดครึ่งข้ามหน้า (ชื่อค้างหน้านี้ รายละเอียดไปหน้าโน้น) */}
-                <tr style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
+                {/* รายการยาว ๆ ตัดขึ้นหน้าใหม่กลางข้อได้ (เจ้าของสั่ง 17 ก.ค.2569 — ข้อรายละเอียดเยอะ
+                    ไม่ต้องดันทั้งข้อไปหน้าใหม่ ไม่งั้นเกิดที่ว่างโบ๋ท้ายหน้า) · avoid เก็บไว้แค่กล่องยอดเงิน+ลายเซ็น */}
+                <tr>
                   <td className="p-2 border border-gray-200 text-center align-top tabular-nums">{i + 1}</td>
                   <td className="p-2 border border-gray-200 align-top">
                     <div className="font-medium">{it.name}</div>
@@ -240,9 +241,8 @@ export function QuotationDoc({
         <tbody>
           <tr>
             <td className="qdoc-tail">
-              <div style={{ paddingBottom: 10 }}>
-                <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} />
-              </div>
+              {/* หน้าเงื่อนไขสัญญา — ไม่ใส่บล็อกลูกค้า เอาแค่หัวบิลบริษัทมุมซ้าย (เจ้าของสั่ง 17 ก.ค.2569 "ดูเกะกะ")
+                  ชื่อลูกค้ายังอยู่ในช่องลงนามท้ายเงื่อนไข + หน้าแรกใบเสนออยู่แล้ว */}
               <h4 className="font-bold mb-2" style={{ color: "#b3151d", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
                 เงื่อนไขการเข้าทำงาน
               </h4>

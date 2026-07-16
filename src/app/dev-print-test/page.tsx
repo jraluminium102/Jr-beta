@@ -17,7 +17,7 @@ import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/p
  */
 export const dynamic = "force-dynamic";
 
-function makeItems(n: number, tall: boolean): QuotationItem[] {
+function makeItems(n: number, tall: boolean, giant: boolean): QuotationItem[] {
   return Array.from({ length: n }, (_, i) => ({
     id: i + 1,
     name: `ประตูบานเลื่อน SlimLux 2 บาน (ชุดที่ ${i + 1})`,
@@ -29,23 +29,26 @@ function makeItems(n: number, tall: boolean): QuotationItem[] {
     unit_price: 28500 + i * 137,
     line_total: 28500 + i * 137,
     sort_order: i,
-  })).map((it, i, arr) =>
+  })).map((it, i, arr) => {
     // รายการสุดท้ายยาวพิเศษ → ดันกล่องยอดรวมไปชนรอยต่อหน้าพอดี (เคสที่เคยพัง)
-    tall && i === arr.length - 1
-      ? { ...it, detail: Array.from({ length: 14 }, (_, k) => `รายละเอียดบรรทัดที่ ${k + 1} ของชุดสุดท้าย`).join("\n") }
-      : it
-  );
+    if (tall && i === arr.length - 1)
+      return { ...it, detail: Array.from({ length: 14 }, (_, k) => `รายละเอียดบรรทัดที่ ${k + 1} ของชุดสุดท้าย`).join("\n") };
+    // giant: รายการเดียวรายละเอียดยาว "เกิน 1 หน้า" → ทดสอบว่าตัดกลางข้อข้ามหน้าได้ (ไม่ดันทั้งข้อไปหน้าใหม่)
+    if (giant && i === 0)
+      return { ...it, name: `${it.name} — ข้อรายละเอียดยาวมาก`, detail: Array.from({ length: 80 }, (_, k) => `บรรทัดรายละเอียดที่ ${k + 1} — สเปกวัสดุ/การติดตั้ง/เงื่อนไขเฉพาะข้อนี้`).join("\n") };
+    return it;
+  });
 }
 
 export default function PrintTestPage({
   searchParams,
 }: {
-  searchParams: { items?: string; tall?: string };
+  searchParams: { items?: string; tall?: string; giant?: string };
 }) {
   if (process.env.NODE_ENV === "production") notFound();
 
   const n = Math.min(200, Math.max(1, Number(searchParams.items) || 30));
-  const items = makeItems(n, searchParams.tall === "1");
+  const items = makeItems(n, searchParams.tall === "1", searchParams.giant === "1");
   const subtotal = items.reduce((s, it) => s + it.line_total, 0);
   const vat_amt = Math.round(subtotal * 0.07 * 100) / 100;
 
