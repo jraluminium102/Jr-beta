@@ -9,7 +9,7 @@ import CrewDayTeamsPanel from "@/components/installation/CrewDayTeamsPanel";
 import Icon from "@/components/Icon";
 import type { InstStatus } from "@/lib/database.types";
 import type { InstRow } from "@/components/installation/InstallationStepModal";
-import type { InstallAssignment } from "@/lib/types";
+import type { InstallAssignment, CrewPerson } from "@/lib/types";
 
 // ── หน้าติดตั้ง v2 (0089): ปฏิทินทั้งเดือน · ไม่มีทีม A/B/C — การ์ด = ลูกค้า+หัวหน้าช่าง (พิมพ์อิสระ)
 //    สีการ์ดอัตโนมัติ: หัวหน้าคนเดียวกัน = สีเดียวกัน · กดการ์ดดู ลูกน้อง/หมายเหตุ/แก้ไข ──
@@ -99,7 +99,17 @@ export default function InstallationPage() {
     for (const a of asg) { const l = m.get(a.date) || []; l.push(a); m.set(a.date, l); }
     return m;
   }, [asg]);
-  // รายชื่อหัวหน้าช่างที่เคยพิมพ์ (autocomplete)
+  // หัวหน้าช่าง = dropdown จาก crew_people (ข้อมูลเดียวกับหน้าจัดทีม · เพิ่มหัวหน้าที่นั่น = โผล่ที่นี่ด้วย)
+  //   เจ้าของสั่ง 17 ก.ค.69: เลิกพิมพ์อิสระ/ใส่ลูกน้องในปฏิทิน (กันใส่ซ้ำสองที่แล้วบัค) → จัดลูกน้องในหน้าจัดทีมเท่านั้น
+  const { data: crewPeopleData } = useQuery({
+    queryKey: ["crew-people"],
+    queryFn: () => api.get<CrewPerson[]>("/crew-people"),
+  });
+  const leaderOptions = useMemo(
+    () => (crewPeopleData?.data ?? []).filter((p) => p.is_leader).map((p) => p.name),
+    [crewPeopleData],
+  );
+  // หัวหน้าที่ใช้จริงในเดือนนี้ (ทำ legend สีในปฏิทิน)
   const leadNames = useMemo(() => [...new Set(asg.map(leadOf).filter(Boolean))].sort(), [asg]);
   const tmrAsg = asg.filter((a) => a.date === tomorrow);
 
@@ -327,12 +337,12 @@ export default function InstallationPage() {
       {tab === "status" && <StatusBoard data={jobsData} onOpen={setOpenInst} refetch={refetchJobs} />}
 
       {addAt && (
-        <AddAssignModal ready={ready} initial={addAt} busy={busy} leadNames={leadNames}
+        <AddAssignModal ready={ready} initial={addAt} busy={busy} leaderOptions={leaderOptions}
           onClose={() => setAddAt(null)} onSave={saveAssign} />
       )}
 
       {detail && (
-        <DetailDrawer a={detail} busy={busy} leadNames={leadNames}
+        <DetailDrawer a={detail} busy={busy} leaderOptions={leaderOptions}
           onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign}
           onGoCrew={() => { const d = detail.date; setDetail(null); jumpToCrewDay(d); }} />
       )}
@@ -346,16 +356,15 @@ export default function InstallationPage() {
 }
 
 // ── modal ลงคิวติดตั้ง (เลือกช่วงวันได้ — งานหลายวันสร้างวันละแถวอัตโนมัติ) ──
-function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
+function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }: {
   ready: { job_id: string; jobs: Record<string, unknown> }[];
-  initial: { date: string; job_id?: string }; busy: boolean; leadNames: string[];
+  initial: { date: string; job_id?: string }; busy: boolean; leaderOptions: string[];
   onClose: () => void; onSave: (b: Record<string, unknown>) => void;
 }) {
   const [jobId, setJobId] = useState(initial.job_id || ready[0]?.job_id || "");
   const [date, setDate] = useState(initial.date);
   const [dateTo, setDateTo] = useState(initial.date);
   const [lead, setLead] = useState("");
-  const [crew, setCrew] = useState("");
   const [note, setNote] = useState("");
   // คิวนอกระบบ (งานพิเศษ ไม่มีในระบบ) — พิมพ์ชื่องานเอง ไม่ผูก job (0100)
   const [outSystem, setOutSystem] = useState(false);
@@ -393,17 +402,18 @@ function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
         <div><label className="lbl">ถึงวัน (งานหลายวัน)</label><input type="date" value={dateTo} min={date} onChange={(e) => setDateTo(e.target.value)} className="inp" /></div>
       </div>
       {nDays > 1 && <div className="text-[11px] mt-1 text-amber-300">งาน {nDays} วัน — ระบบลงการ์ด &quot;วัน 1/{nDays} … {nDays}/{nDays}&quot; ให้อัตโนมัติ</div>}
-      <label className="lbl">หัวหน้าช่าง (พิมพ์เอง · เลือกจากที่เคยพิมพ์ได้)</label>
-      <input value={lead} onChange={(e) => setLead(e.target.value)} placeholder="เช่น ช่างต้น" className="inp" list="lead-names" />
-      <datalist id="lead-names">{leadNames.map((n) => <option key={n} value={n} />)}</datalist>
-      <label className="lbl">ลูกน้อง (พิมพ์ชื่อ คั่นด้วย ,)</label>
-      <input value={crew} onChange={(e) => setCrew(e.target.value)} placeholder="เช่น สมพงษ์, ตูน" className="inp" />
+      <label className="lbl">หัวหน้าช่าง</label>
+      <select value={lead} onChange={(e) => setLead(e.target.value)} className="inp">
+        <option value="">— เลือกหัวหน้า —</option>
+        {leaderOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+      </select>
+      <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>👥 รายชื่อลูกน้อง จัดได้ในหน้า &quot;จัดทีม&quot; (ที่นี่เลือกหัวหน้าพอ กันใส่ซ้ำสองที่แล้วบัค)</p>
       <label className="lbl">หมายเหตุ</label>
       <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น นัด 9 โมง ยกกระจกใหญ่" className="inp" />
       <button disabled={busy || (outSystem ? !customTitle.trim() : !jobId)}
         onClick={() => onSave(outSystem
-          ? { custom_title: customTitle.trim(), date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), crew, note }
-          : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), crew, note })}
+          ? { custom_title: customTitle.trim(), date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note }
+          : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note })}
         className="w-full mt-3 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">
         ลงคิว{outSystem ? "นอกระบบ" : ""}{nDays > 1 ? ` ${nDays} วัน` : ""}
       </button>
@@ -412,14 +422,13 @@ function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
 }
 
 // ── drawer รายละเอียด/แก้ ──
-function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete, onGoCrew }: {
-  a: InstallAssignment; busy: boolean; leadNames: string[];
+function DetailDrawer({ a, busy, leaderOptions, onClose, onPatch, onDelete, onGoCrew }: {
+  a: InstallAssignment; busy: boolean; leaderOptions: string[];
   onClose: () => void; onPatch: (id: string, b: Record<string, unknown>) => void; onDelete: (id: string) => void;
   onGoCrew: () => void;
 }) {
   const [lead, setLead] = useState(a.lead_name || "");
   const [date, setDate] = useState(a.date);
-  const [crew, setCrew] = useState(a.crew || "");
   const [note, setNote] = useState(a.note || "");
   return (
     <Modal title={nameOf(a)} onClose={onClose}>
@@ -434,18 +443,20 @@ function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete, onGoCrew
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div><label className="lbl">หัวหน้าช่าง</label>
-          <input value={lead} onChange={(e) => setLead(e.target.value)} className="inp" placeholder="พิมพ์ชื่อ" list="lead-names-edit" />
-          <datalist id="lead-names-edit">{leadNames.map((n) => <option key={n} value={n} />)}</datalist>
+          <select value={lead} onChange={(e) => setLead(e.target.value)} className="inp">
+            <option value="">— เลือกหัวหน้า —</option>
+            {leaderOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+            {lead && !leaderOptions.includes(lead) && <option value={lead}>{lead} (เดิม)</option>}
+          </select>
         </div>
         <div><label className="lbl">วันที่</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="inp" /></div>
       </div>
-      <label className="lbl">ลูกน้อง</label>
-      <input value={crew} onChange={(e) => setCrew(e.target.value)} className="inp" placeholder="พิมพ์ชื่อ คั่นด้วย ," />
+      <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>👥 รายชื่อลูกน้อง จัดได้ในหน้า &quot;จัดทีม&quot;</p>
       <label className="lbl">หมายเหตุ (ถ้ามี → การ์ดขึ้นป้ายเตือน ⚠)</label>
       <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="inp" placeholder="เช่น กระจกแตก 1 บาน รอสั่งใหม่" />
       <div className="flex gap-2 mt-3">
         <button disabled={busy} onClick={() => onDelete(a.id)} className="px-3 py-2.5 rounded-xl bg-red-500/20 text-red-200 text-sm">เอาออกจากคิว</button>
-        <button disabled={busy} onClick={() => onPatch(a.id, { lead_name: lead.trim(), date, crew, note })}
+        <button disabled={busy} onClick={() => onPatch(a.id, { lead_name: lead.trim(), date, note })}
           className="flex-1 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">บันทึก</button>
       </div>
     </Modal>

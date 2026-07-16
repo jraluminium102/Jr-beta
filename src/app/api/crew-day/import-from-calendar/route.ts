@@ -20,11 +20,25 @@ export const POST = withRoute(async (req: Request) => {
   const sb = ctx.supabase as any;
   const date = p.data.work_date;
 
-  const { data: asg, error: asgErr } = await sb
-    .from("install_assignments")
-    .select("job_id, custom_title, lead_name, crew, jobs(customer_name, customer_tel, customer_area)")
-    .eq("date", date);
-  if (asgErr) return err(asgErr.message, 500);
+  // ธง crew_imported (0101) กัน "ลบทีมที่ดึงมาแล้ว → เปิดวันใหม่ → ดึงกลับ"
+  //   fallback: ถ้า column ยังไม่ถูกรัน migration (deploy มาก่อน) → ใช้กันซ้ำแบบเดิม (job_id/ชื่อ) ไปก่อน
+  const COLS = "id, job_id, custom_title, lead_name, crew, jobs(customer_name, customer_tel, customer_area)";
+  let hasFlag = true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let asg: any[] | null = null;
+  {
+    const r = await sb.from("install_assignments").select(`${COLS}, crew_imported`).eq("date", date);
+    if (r.error && /crew_imported/i.test(r.error.message ?? "")) {
+      hasFlag = false;
+      const r2 = await sb.from("install_assignments").select(COLS).eq("date", date);
+      if (r2.error) return err(r2.error.message, 500);
+      asg = r2.data;
+    } else if (r.error) {
+      return err(r.error.message, 500);
+    } else {
+      asg = r.data;
+    }
+  }
   if (!asg || asg.length === 0) return ok({ created: 0, message: "วันนี้ไม่มีแผนในปฏิทินรายเดือน" });
 
   // ทีมของวันนี้ (ถ้ามีอยู่แล้ว) — ใช้เช็คกันซ้ำ + ต่อ sort_order
@@ -58,6 +72,7 @@ export const POST = withRoute(async (req: Request) => {
   const groups = new Map<string, any[]>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of asg as any[]) {
+    if (hasFlag && a.crew_imported) continue; // ดึงเข้าจัดทีมไปแล้ว (ลบทีมทิ้งก็ไม่ดึงกลับ) — 0101
     const nm = (a.jobs?.customer_name ?? a.custom_title ?? "").trim();
     if (a.job_id) {
       if (alreadyImported.has(a.job_id)) continue; // งานในระบบ — กันซ้ำด้วย job_id
@@ -73,6 +88,7 @@ export const POST = withRoute(async (req: Request) => {
   if (groups.size === 0) return ok({ created: 0, message: "งานในวันนี้ถูกนำเข้าครบแล้ว" });
 
   let createdCount = 0;
+  const importedIds: string[] = [];   // assignment id ที่ลงเป็นจุดจริง → ตั้งธง crew_imported (กันดึงกลับ)
   for (const [key, items] of groups) {
     const leadName = key.startsWith("__solo_") ? "" : key;
     const leaderId = leadName ? leaderByName.get(leadName) ?? null : null;
@@ -108,7 +124,13 @@ export const POST = withRoute(async (req: Request) => {
     }));
     const { error: siteErr } = await sb.from("crew_team_sites").insert(siteRows);
     if (siteErr) return err(siteErr.message, 500);
+    // จุดที่เกิน 4 (dropped) ยังไม่ตั้งธง — ให้รอบหน้าดึงมาลงทีมใหม่ได้ (self-heal ตาม note)
+    for (const a of items.slice(0, 4)) if (a.id) importedIds.push(a.id);
     createdCount++;
+  }
+  // ตั้งธง crew_imported = true → ลบทีมทิ้งแล้วเปิดวันใหม่ ไม่ดึงกลับมา (0101)
+  if (hasFlag && importedIds.length) {
+    await sb.from("install_assignments").update({ crew_imported: true }).in("id", importedIds);
   }
 
   await audit({ userId: ctx.user.id, action: "CREW_DAY_IMPORT_FROM_CALENDAR", table: "crew_day_teams", newValue: { date, teams: createdCount } });
