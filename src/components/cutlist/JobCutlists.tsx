@@ -30,12 +30,24 @@ export default function JobCutlists({ jobId, canWrite }: { jobId: string; canWri
   async function create(fromJob: boolean) {
     setBusy(true); setErrMsg("");
     try {
-      const r = await api.post<{ id: number }>("/cutlists", { job_id: jobId, from_job: fromJob });
+      // ⚠ ok() ของ BFF ไม่มี meta — item_count/skipped อยู่ใน data (เคยอ่านจาก meta แล้วเงียบสนิท)
+      const r = await api.post<{ id: number; item_count: number; skipped: string[] }>(
+        "/cutlists", { job_id: jobId, from_job: fromJob },
+      );
       qc.invalidateQueries({ queryKey: key });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const meta = (r as any).meta;
-      const skipped: string[] = meta?.skipped ?? [];
-      if (skipped.length) alert(`สร้างแล้ว แต่มี ${skipped.length} ข้อที่ยังไม่มีสูตรตัด (ต้องกรอกมือ):\n• ${skipped.join("\n• ")}`);
+      const { item_count = 0, skipped = [] } = r.data ?? {};
+      if (fromJob) {
+        // ดึงมาไม่ได้สักข้อ = ต้องบอกว่าทำไม ไม่งั้นผู้ใช้เจอใบเปล่าแล้วนึกว่าระบบพัง
+        if (item_count === 0) {
+          alert(
+            skipped.length
+              ? `สร้างใบให้แล้ว แต่ดึงข้อจากใบเสนอไม่ได้เลย\n\nใบเสนอของงานนี้ไม่มีสูตรตัด (ทำนอกระบบ / ทำก่อนมีเครื่องคิดราคา 4.0):\n• ${skipped.join("\n• ")}\n\n→ กด "เพิ่มข้อ (กรอกมือ)" เลือกรุ่นแล้วใส่ขนาดเองได้`
+              : "สร้างใบให้แล้ว แต่งานนี้ยังไม่มีใบเสนอในระบบ → กรอกข้อเองได้เลย",
+          );
+        } else if (skipped.length) {
+          alert(`ดึงมาให้ ${item_count} ข้อ · อีก ${skipped.length} ข้อยังไม่มีสูตรตัด ต้องกรอกเอง:\n• ${skipped.join("\n• ")}`);
+        }
+      }
       window.location.href = `/cutlist/${r.data.id}`;
     } catch (e) {
       setErrMsg(e instanceof Error ? e.message : "สร้างใบตัดไม่สำเร็จ");

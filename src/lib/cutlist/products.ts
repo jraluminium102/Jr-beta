@@ -977,10 +977,43 @@ export const TOPRAIL_FRAME: CutSpec = {
   ],
 };
 
+
+/**
+ * ㉕ เฟี้ยมยก (JR_เฟี้ยมยก.xlsx sheet "JR คำนวณ" · ไฟล์เป็น ซม. อยู่แล้ว)
+ * = เฟี้ยมยูโรหมุน 90° (พับขึ้น) — โปรไฟล์/อุปกรณ์ชุดเดียวกับ EURO_BIFOLD เป๊ะ เปลี่ยนเฉพาะ "ระยะตัด"
+ * ⚠ N คงที่ 2 บาน (ไฟล์ล็อกไว้ C7=2 · สูตรกรอบ/คิ้ว ÷2 ตายตัว) — ไม่ใช่ตัวแปร
+ * ค่าหักทุกตัวมาจากแผง ⑦ ในไฟล์ (F32-F43) ห้ามเดา:
+ *   เฟรมข้าง 2 · เฟรมล่าง 11 · เฟรมบน 0 · คิ้วเฟรมบน 15 · ตบตั้ง 6.5 · ตบนอน 11
+ *   กรอบตั้ง 8.2 (แล้ว ÷2) · กรอบนอน 12.4 · คิ้วกระจกตั้ง 39.5 (แล้ว ÷2) · คิ้วกระจกนอน 24
+ *   กระจกหักจากกรอบ 13 (ไฟล์เขียน "ยืนยันพี่ JR") · เส้นสต็อก 640
+ * ⚠ ชื่อโปรไฟล์ในไฟล์วงเล็บ "(เดิมเฟรมบน)/(เดิมเฟรมข้าง)" ไว้เตือนว่าหมุน 90° แล้วบทบาทสลับ — คงชื่อตามไฟล์
+ */
+export const EURO_LIFT: CutSpec = {
+  id: "euro_lift",
+  name: "เฟี้ยมยก (พับขึ้น · 2 บาน)",
+  stockLen: 640,
+  rails: [],
+  opts: [{ key: "glass", label: "กระจก (มม.)", type: "number" }],
+  defaults: { W: 200, H: 120, N: 2, rail: "", honk: false, glass: 6 },
+  profiles: [
+    { name: "เฟรมข้าง (เดิมเฟรมบน)", code: "F7968", len: (o) => o.H - 2, qty: () => 2 },
+    { name: "เฟรมล่าง", code: "F7969", len: (o) => o.W - 11, qty: () => 1 },
+    { name: "เฟรมบน (เดิมเฟรมข้าง)", code: "F7970", len: (o) => o.W - 0, qty: () => 1 },
+    { name: "คิ้วเฟรมบน", code: "F7971", len: (o) => o.W - 15, qty: () => 1 },
+    { name: "ตบปิดเฟรม ตั้ง (ข้าง)", code: "F7973", len: (o) => o.H - 6.5, qty: () => 2 },
+    { name: "ตบปิดเฟรม นอน (ล่าง)", code: "F7973", len: (o) => o.W - 11, qty: () => 1 },
+    { name: "กรอบบาน ตั้ง", code: "F7972", len: (o) => (o.H - 8.2) / 2, qty: () => 4 },
+    { name: "กรอบบาน นอน", code: "F7972", len: (o) => o.W - 12.4, qty: () => 4 },
+    { name: "คิ้วกระจก ตั้ง", code: "F7935", len: (o) => (o.H - 39.5) / 2, qty: () => 4 },
+    { name: "คิ้วกระจก นอน", code: "F7935", len: (o) => o.W - 24, qty: () => 4 },
+  ],
+  hardware: [],
+};
+
 export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
-  VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER,
+  VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER, EURO_LIFT,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
   AWNING, AWNING_L, GABLE_STRAIGHT, GLASSHOUSE, LOUVER_PANEL, TOPRAIL_FRAME,
