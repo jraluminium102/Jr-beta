@@ -1,19 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
 import { dbMessage } from "@/lib/bff/db-error";
-import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { cutlistActor } from "@/lib/cutlist/actor";
 
 export const dynamic = "force-dynamic";
 
-const CUT_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Sb = { from: (t: string) => any };
+type Sb = { from: (t: string) => any; rpc: (n: string, a?: unknown) => any };
 
 // GET /api/cutlists/[id] → ใบตัด + ข้อ (เรียงตาม sort_order) + งาน
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  const sb = createClient() as unknown as Sb;
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const actor = await cutlistActor(req);
+  if (!actor) return UNAUTHORIZED();
+  const sb = actor.sb as unknown as Sb;
   const { data, error } = await sb
     .from("cutlists")
     .select("*, cutlist_items(*), jobs:job_id(job_code, customer_name)")
@@ -28,14 +26,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 // PATCH /api/cutlists/[id] → แก้ชื่อ/โน้ต และ/หรือ แทนที่ข้อทั้งชุด { name?, note?, items? }
 // ใบที่ตัดสต็อกแล้ว: แก้ข้อไม่ได้ (ยอดหักไปแล้ว จะไม่ตรง) — แก้ได้แค่ชื่อ/โน้ต
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!CUT_WRITE.includes(profile.role)) return FORBIDDEN();
+  const actor = await cutlistActor(req);
+  if (!actor) return UNAUTHORIZED();
+  if (!actor.canWrite) return FORBIDDEN();
 
   const body = await req.json().catch(() => null);
   if (!body) return fail("payload ไม่ถูกต้อง");
   const id = Number(params.id);
-  const sb = createClient() as unknown as Sb;
+  const sb = actor.sb as unknown as Sb;
 
   const { data: cl } = await sb.from("cutlists").select("id, status").eq("id", id).maybeSingle();
   if (!cl) return fail("ไม่พบใบตัด", 404);
@@ -80,12 +78,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 // DELETE /api/cutlists/[id] — ลบได้เฉพาะใบที่ยังไม่ตัดสต็อก
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!CUT_WRITE.includes(profile.role)) return FORBIDDEN();
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const actor = await cutlistActor(req);
+  if (!actor) return UNAUTHORIZED();
+  if (!actor.canWrite) return FORBIDDEN();
   const id = Number(params.id);
-  const sb = createClient() as unknown as Sb;
+  const sb = actor.sb as unknown as Sb;
   const { data: cl } = await sb.from("cutlists").select("id, status").eq("id", id).maybeSingle();
   if (!cl) return fail("ไม่พบใบตัด", 404);
   if (cl.status === "stock_cut") return fail("ใบนี้ตัดสต็อกไปแล้ว ลบไม่ได้ (มีประวัติการหักผูกอยู่)", 409);

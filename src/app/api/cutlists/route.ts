@@ -1,24 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
 import { dbMessage } from "@/lib/bff/db-error";
-import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
+import { cutlistActor } from "@/lib/cutlist/actor";
 
 export const dynamic = "force-dynamic";
 
-// สิทธิ์เขียนใบตัด = ชุดเดียวกับสโตร์ (ตรง RLS 0094)
-const CUT_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = { from: (t: string) => any };
 
-// GET /api/cutlists → รายการใบตัด (ล่าสุดก่อน) + งาน/ลูกค้า
-export async function GET() {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  const sb = createClient() as unknown as Sb;
-  const { data, error } = await sb
+// GET /api/cutlists[?job_id=] → รายการใบตัด (ล่าสุดก่อน) + งาน/ลูกค้า
+//   job_id: เฉพาะใบตัดของงานนั้น — ใช้โชว์ใบตัดในหน้างาน/ลูกค้า (ไม่ต้องไปหาในเมนูใบตัด)
+export async function GET(req: Request) {
+  const actor = await cutlistActor(req);
+  if (!actor) return UNAUTHORIZED();
+  const jobId = new URL(req.url).searchParams.get("job_id");
+  const sb = actor.sb as unknown as Sb;
+  let qy = sb
     .from("cutlists")
-    .select("id, code, name, status, job_id, created_at, stock_cut_at, jobs:job_id(job_code, customer_name)")
+    .select("id, code, name, status, job_id, created_at, stock_cut_at, jobs:job_id(job_code, customer_name)");
+  if (jobId) qy = qy.eq("job_id", jobId);
+  const { data, error } = await qy
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) return fail(dbMessage(error, "โหลดรายการใบตัดไม่สำเร็จ"), 500);
@@ -30,15 +31,15 @@ export async function GET() {
 //   from_job: ดึงข้อจากใบเสนอล่าสุดของงาน (calc_recipe 0093) → map เป็นข้อใบตัดอัตโนมัติ
 //   ข้อที่ map ไม่ได้ (รุ่นยังไม่มีสูตรตัด/พิมพ์มือ/G6) → ข้าม + ส่งชื่อกลับใน meta.skipped
 export async function POST(req: Request) {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
-  if (!CUT_WRITE.includes(profile.role)) return FORBIDDEN();
+  const actor = await cutlistActor(req);
+  if (!actor) return UNAUTHORIZED();
+  if (!actor.canWrite) return FORBIDDEN();
 
   const body = await req.json().catch(() => null);
   if (!body) return fail("payload ไม่ถูกต้อง");
   const jobId = body.job_id ? String(body.job_id) : null;
 
-  const sb = createClient() as unknown as Sb;
+  const sb = actor.sb as unknown as Sb;
 
   // ชื่อใบตัดตั้งต้น: ชื่อลูกค้าจากงาน (ถ้ามี)
   let jobName = "";
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
       job_id: jobId,
       name: String(body.name ?? "").trim() || (jobName ? `ใบตัด — ${jobName}` : "ใบตัดใหม่"),
       note: "",
-      created_by: profile.id,
+      created_by: actor.kind === "user" ? actor.userId : null,
     })
     .select("id")
     .single();

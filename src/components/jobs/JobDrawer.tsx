@@ -10,6 +10,7 @@ import { Chip, Tag, Spinner } from "@/components/ui/primitives";
 import { X, ShieldCheck, TriangleAlert, Banknote, Pencil } from "@/components/ui/icons";
 import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { MaterialsPanel } from "@/components/jobs/MaterialsPanel";
+import JobCutlists from "@/components/cutlist/JobCutlists";
 import { QcPanel } from "@/components/jobs/QcPanel";
 import { StageAdvanceButton } from "@/components/jobs/StageAdvanceButton";
 import { DocumentHubPanel } from "@/components/jobs/DocumentHubPanel";
@@ -203,7 +204,13 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                 </div>
               ) : <Empty title="ยังไม่เข้า Production" sub="เริ่มเมื่อมัดจำแล้ว" />)}
 
-              {tab === "materials" && <MaterialsPanel jobId={jobId} />}
+              {tab === "materials" && (
+                <>
+                  <MaterialsPanel jobId={jobId} />
+                  {/* ใบตัดของงานนี้ — เปิด/สร้างได้จากหน้างานเลย ไม่ต้องไปหาในเมนูใบตัด */}
+                  <JobCutlists jobId={jobId} canWrite={!readOnly} />
+                </>
+              )}
 
               {tab === "installation" && (inst ? (
                 <div>
