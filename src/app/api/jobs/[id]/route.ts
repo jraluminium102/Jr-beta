@@ -5,6 +5,7 @@ import { ok, notFound, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 import { toArray } from "@/lib/bff/normalize";
+import { businessDateIssue } from "@/lib/date-guard";
 
 const FINANCE_COLS = ["net_amount", "vat_amount", "total_amount", "deposit_amount", "discount_amount"];
 type Params = { params: { id: string } };
@@ -52,7 +53,13 @@ const statusSchema = z.discriminatedUnion("status", [
 const fieldsSchema = z.object({
   customer_tel:   z.string().optional(),
   customer_area:  z.string().optional(),
-  quote_sent_date: z.string().optional(),
+  // วันส่งใบเสนอ — ต้องเป็นวันจริง ไม่ใช่อนาคต ไม่ใช่ พ.ศ. (เดิมรับ string เปล่า)
+  // ดู src/lib/date-guard.ts — ประวัติ: เคยมี 2026-12-06 หลุดเข้า DB เพราะไม่มีใครตรวจ
+  quote_sent_date: z.string()
+    .refine((s) => !businessDateIssue(s, { label: "วันที่ส่งใบเสนอ" }), (s) => ({
+      message: businessDateIssue(s, { label: "วันที่ส่งใบเสนอ" }) ?? "วันที่ส่งใบเสนอไม่ถูกต้อง",
+    }))
+    .optional(),
   net_amount:     z.number().positive().optional(),
   discount_amount: z.number().min(0).optional(),
   designer_id:    z.string().uuid().nullish(),

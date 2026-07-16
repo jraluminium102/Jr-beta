@@ -5,6 +5,7 @@ import { ok, err } from "@/lib/bff/response";
 import { createClient } from "@/lib/supabase/server";
 import type { Customer } from "@/lib/types"; // ใช้สำหรับ cast ผล .single() ที่เป็น any
 import { CHECKLIST_MARKER } from "@/lib/checklist-marker";
+import { businessDateIssue } from "@/lib/date-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,12 @@ const schema = z.object({
   total:      z.number().min(0, "ยอดรวมต้องไม่ติดลบ"),  // รองรับทศนิยม (สตางค์) · 0 = mark ส่งแล้วโดยยังไม่ระบุยอด
   ext_ref:    z.string().optional(),
   ext_link:   z.string().optional(),
-  issue_date: z.string().optional(),
+  // วันส่งใบเสนอ — ต้องเป็นวันจริง ไม่ใช่อนาคต ไม่ใช่ พ.ศ. (เดิมรับ string เปล่า → 2026-12-06 หลุดเข้า DB)
+  issue_date: z.string()
+    .refine((s) => !businessDateIssue(s, { label: "วันที่ส่งใบเสนอ" }), (s) => ({
+      message: businessDateIssue(s, { label: "วันที่ส่งใบเสนอ" }) ?? "วันที่ส่งใบเสนอไม่ถูกต้อง",
+    }))
+    .optional(),
   step:       z.union([z.literal(1), z.literal(2)]),
   vat_rate:   z.union([z.literal(0), z.literal(7)]).optional().default(7),
 });
@@ -62,7 +68,7 @@ export const POST = withRoute(async (req: Request) => {
   // 1) โหลด job — ต้อง active
   const { data: job, error: jErr } = await sb
     .from("jobs")
-    .select("id, status, customer_id, customer_name, customer_area, design_revise_count")
+    .select("id, status, customer_id, customer_name, customer_area, design_revise_count, quote_sent_date")
     .eq("id", job_id)
     .maybeSingle();
   if (jErr || !job) return err("ไม่พบงาน", 404);
@@ -238,8 +244,18 @@ export const POST = withRoute(async (req: Request) => {
     // ต้องส่ง vat_rate ด้วยเสมอ เพราะ trigger ใหม่ยิงเมื่อ vat_rate เปลี่ยนด้วย
     // (ห้ามส่ง total/total_amount เพราะ total รวม VAT แล้ว → trigger จะบวก VAT ซ้ำ ทำให้ stats เพี้ยน)
     // total=0 (mark ส่งแล้วโดยยังไม่ระบุยอด) → ไม่เซ็ต net_amount/vat_rate (กันเขียนทับ/ใส่ 0) ใส่ทีหลังตอนแก้ยอด
+    // ⚠️ วันส่งใบเสนอ: ถ้างานนี้ "เคยส่งแล้ว" ห้ามทับด้วยวันที่กดปุ่ม เว้นแต่ผู้ใช้ตั้งใจส่งวันใหม่มา
+    //
+    // บั๊กจริง (พบ 16 ก.ค. 2569 — ตรวจ 185 งาน เจอ 29 งานวันส่งเพี้ยน 25 งานเป็นวันเดียวกันหมด):
+    //   modal ตั้งค่าเริ่มต้นเป็น "วันนี้" เสมอ → เจ้าของไล่กด "ส่งแล้ว" งานเก่า 25 งานรวดเดียว
+    //   เมื่อ 16 มิ.ย. → วันส่งจริงของทั้ง 25 งานถูกทับเป็น 2026-06-16 หมด (ไม่มีใครเตือน)
+    //   ยืนยัน: ทุกงานที่เพี้ยน วันใน DB "ใหม่กว่า" วันที่จดไว้ใน remark เสมอ ไม่มีเก่ากว่าเลยสักงาน
+    //
+    // กติกาใหม่: ส่ง issue_date มา = ตั้งใจ → ใช้ค่านั้น · ไม่ส่งมา = คงของเดิม (มีแล้วไม่แตะ)
+    // คู่กับหน้าเว็บที่ตั้งค่าเริ่มต้นเป็น "วันส่งเดิม" แทน "วันนี้" (QuotationChecklistClient)
+    const prevSent = (job as { quote_sent_date: string | null }).quote_sent_date;
     const jobUpdate: Record<string, unknown> = {
-      quote_sent_date: issue_date || today,
+      quote_sent_date: body.issue_date ?? prevSent ?? today,
       status: "QUOTE_SENT",
       // snapshot รอบแก้แบบ ณ ตอนส่งใบเสนอ — ใช้ตรวจ "แก้แบบหลังเสนอ" แบบแม่นยำ (0047)
       // ส่งใบใหม่หลังแก้ → ค่านี้ตามทัน design_revise_count → งานหลุดออกจากเช็คลิสต์เอง

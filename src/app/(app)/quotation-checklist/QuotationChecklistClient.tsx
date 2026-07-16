@@ -178,7 +178,11 @@ function Modal({
   const [noVat,      setNoVat]    = useState(q != null ? q.vat_rate === 0 : false);
   const [extRef,     setExtRef]   = useState(parsed.ext_ref);
   const [extLink,    setExtLink]  = useState(parsed.ext_link);
-  const [issueDate,  setIssueDate] = useState(new Date().toISOString().slice(0, 10));
+  // ค่าเริ่มต้น "วันที่ส่งใบเสนอ" = วันส่งเดิมของงาน (ถ้าเคยส่งแล้ว) ไม่ใช่วันนี้
+  //
+  // เดิมตั้งเป็น "วันนี้" เสมอ → กดยืนยันซ้ำงานที่ส่งไปแล้ว = ทับวันส่งจริงด้วยวันที่กดปุ่ม
+  // เคยทำข้อมูลเสียจริง 29 งาน (25 งานกลายเป็น 16 มิ.ย. 2569 หมด) — ห้ามเปลี่ยนกลับ
+  const [issueDate,  setIssueDate] = useState(job.quote_sent_date ?? new Date().toISOString().slice(0, 10));
   const [saving,     setSaving]   = useState(false);
   const [errMsg,     setErrMsg]   = useState("");
   const totalRef = useRef<HTMLInputElement>(null);
@@ -289,9 +293,16 @@ function Modal({
           {mode === "step2" && (
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-white/85">วันที่ส่งใบเสนอ</label>
+              {/* max = วันนี้ — วันส่งใบเสนอเป็นอนาคตไม่ได้ (กันพิมพ์วัน/เดือนสลับ เช่น 6/12 แทน 12/6) */}
               <DateField value={issueDate} onChange={(iso) => setIssueDate(iso)}
+                max={new Date().toISOString().slice(0, 10)}
                 className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white outline-none focus:border-white/50 focus:bg-white/15"
                 aria-label="วันที่ส่งใบเสนอ" />
+              {job.quote_sent_date && (
+                <p className="mt-1.5 text-xs text-amber-200/90">
+                  งานนี้บันทึกว่าส่งไปแล้วเมื่อ {thaiDate(job.quote_sent_date)} — แก้ช่องนี้เฉพาะตอนที่ส่งใบใหม่จริง ๆ
+                </p>
+              )}
             </div>
           )}
 

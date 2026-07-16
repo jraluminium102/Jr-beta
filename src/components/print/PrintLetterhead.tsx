@@ -60,6 +60,7 @@ export function PrintLetterhead({
   infoRows,
   contactRows,
   customer,
+  hideCustomer = false,
 }: {
   docTitle: string;
   docColor?: string;
@@ -68,6 +69,16 @@ export function PrintLetterhead({
   infoRows: InfoRow[];
   contactRows?: InfoRow[];
   customer: CustomerSnapshot;
+  /**
+   * ไม่ต้องใส่บล็อกลูกค้าในหัวบิล — ผู้เรียกจะวาง <PrintCustomerBlock> เองข้างล่าง
+   *
+   * ใช้กับเอกสารที่ยาวข้ามหน้าได้ (ใบเสนอราคา): หัวบิลต้องพิมพ์ซ้ำทุกหน้าผ่าน <thead>
+   * แต่ Chrome ยอมพิมพ์ thead ซ้ำ "เฉพาะหัวที่สูงไม่เกิน 25% ของหน้า (~74mm บน A4)"
+   * — วัดจริงแล้วหัวเต็ม (มีบล็อกลูกค้า) = 76mm → เกิน → หัวหายตั้งแต่หน้า 2
+   * ตัดบล็อกลูกค้าออกเหลือ ~40mm จึงซ้ำได้ · บล็อกลูกค้าไปอยู่หน้าแรกหน้าเดียวพอ
+   * (ดู scripts/verify-quote-print.mjs — วัดเพดานนี้ไว้แล้ว)
+   */
+  hideCustomer?: boolean;
 }) {
   const c = customer;
   // แถวผู้ติดต่อ — โชว์แพลตฟอร์มที่คุย (LINE) + ชื่อ · แล้วเบอร์โทร
@@ -106,7 +117,7 @@ export function PrintLetterhead({
             โทร. {COMPANY.phone}<br />
             {COMPANY.website}
           </div>
-          <PrintCustomerBlock c={c} color={docColor} />
+          {!hideCustomer && <PrintCustomerBlock c={c} color={docColor} />}
         </div>
 
         {/* ขวา: ชื่อเอกสาร + ต้นฉบับ + ข้อมูลเอกสาร + ผู้ติดต่อ */}

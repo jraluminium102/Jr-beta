@@ -53,3 +53,6 @@ scripts/_*
 test/_*
 docs/_*.json
 *.tmp
+
+# ผลลัพธ์ PDF จาก scripts/verify-quote-print.mjs (ของชั่วคราว)
+scratch-print/

@@ -1,16 +1,11 @@
 import Link from "next/link";
-import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht } from "@/lib/money";
-import { bahtText } from "@/lib/baht-text";
-import { STATUS_LABEL, type Quotation } from "@/lib/types";
+import type { Quotation } from "@/lib/types";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
-import { PrintSignature } from "@/components/print/PrintSignature";
-import { DetailLines } from "@/components/print/DetailLines";
-import { COMPANY, CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
+import { QuotationDoc } from "./QuotationDoc";
+import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "./quote-constants";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +24,11 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
   if (!data) notFound();
 
   const q = data as Quotation;
-  const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
-  const c = q.customer_snapshot;
   // เงื่อนไขท้ายใบ: ใช้ค่าที่แก้ต่อใบถ้ามี (0076) มิฉะนั้นค่ามาตรฐาน
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
   const condWork: string[] = Array.isArray(anyQ.conditions_work) && anyQ.conditions_work.length ? anyQ.conditions_work : CONDITIONS_WORK;
   const condQuote: string[] = Array.isArray(anyQ.conditions_quote) && anyQ.conditions_quote.length ? anyQ.conditions_quote : CONDITIONS_QUOTE;
-  const total = q.wht_amt > 0 ? q.net : q.total;
-  const totalLabel = q.wht_amt > 0 ? "ยอดรับสุทธิ" : "จำนวนเงินรวมทั้งสิ้น";
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -52,254 +43,12 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
         <PrintButton />
       </div>
 
-      {/* A4 paper */}
+      {/* A4 paper — qdoc-a4: ตอนพิมพ์ปิด padding บน-ล่าง (thead/tfoot ของ .qdoc จัดขอบทุกหน้าแทน) */}
       <div
-        className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0"
+        className="qdoc-a4 mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0"
         style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}
       >
-        {/* ===== หัวเอกสารกลาง — ตัวเดียวกับใบวางบิล/ใบเสร็จ (ฟอร์มเดียวกันทุกเอกสาร) ===== */}
-        <PrintLetterhead
-          docTitle="ใบเสนอราคา"
-          docColor={DOC_COLORS.quotation}
-          customer={c}
-          infoRows={[
-            {
-              label: "เลขที่",
-              value: (
-                <span className="font-mono font-semibold">
-                  {q.code}
-                  {/* ป้าย Rev (0093) — แก้ใบแล้วเลือกนับ Rev → พิมพ์ต่อท้ายเลขที่ */}
-                  {String(anyQ.revision_label ?? "").trim() ? ` · ${String(anyQ.revision_label).trim()}` : ""}
-                </span>
-              ),
-            },
-            { label: "วันที่", value: q.issue_date },
-          ]}
-        />
-
-        {/* ===== Item table — matches genQuote qt ===== */}
-        <table className="w-full border-collapse" style={{ fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
-              <th
-                className="p-2 text-center border border-gray-200"
-                style={{ width: "5%" }}
-              >
-                #
-              </th>
-              <th
-                className="p-2 text-left border border-gray-200"
-                style={{ width: "55%" }}
-              >
-                รายละเอียด
-              </th>
-              <th
-                className="p-2 text-right border border-gray-200"
-                style={{ width: "10%" }}
-              >
-                จำนวน
-              </th>
-              <th
-                className="p-2 text-right border border-gray-200"
-                style={{ width: "15%" }}
-              >
-                ราคาต่อหน่วย
-              </th>
-              <th
-                className="p-2 text-right border border-gray-200"
-                style={{ width: "15%" }}
-              >
-                ยอดรวม
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it, i) => {
-              // หัวข้อชุด (0076): แทรกแถวหัวข้อเมื่อ group_label เปลี่ยน (และไม่ว่าง)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const gl = String((it as any).group_label ?? "").trim();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const prevGl = i > 0 ? String((items[i - 1] as any).group_label ?? "").trim() : "";
-              const showHeading = gl && gl !== prevGl;
-              return (
-              <Fragment key={it.id}>
-                {showHeading && (
-                  <tr>
-                    <td colSpan={5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
-                  </tr>
-                )}
-              <tr>
-                <td className="p-2 border border-gray-200 text-center align-top tabular-nums">
-                  {i + 1}
-                </td>
-                <td className="p-2 border border-gray-200 align-top">
-                  <div className="font-medium">{it.name}</div>
-                  {/* บรรทัดว่าง = เว้นวรรค · #หัวข้อ = หนา+แดง (กติกากลาง DetailLines) */}
-                  {it.detail && <DetailLines text={it.detail} />}
-                </td>
-                <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
-                  {baht(it.qty)}
-                </td>
-                <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
-                  {baht(it.unit_price)}
-                </td>
-                <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
-                  {baht(it.line_total)}
-                </td>
-              </tr>
-              </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {/* ===== Total amount in words ===== */}
-        <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#b3151d" }}>
-          ({bahtText(total)})
-        </div>
-
-        {/* ===== Summary totals — matches genQuote qtot ===== */}
-        <div className="flex justify-end mt-2">
-          <table style={{ fontSize: 13 }}>
-            <tbody>
-              <tr>
-                <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                  รวมเป็นเงิน
-                </td>
-                <td className="text-right tabular-nums">{baht(q.subtotal)} บาท</td>
-              </tr>
-
-              {q.discount_amt > 0 && (
-                <tr>
-                  <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                    ส่วนลด {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
-                  </td>
-                  <td className="text-right tabular-nums">
-                    -{baht(q.discount_amt)} บาท
-                  </td>
-                </tr>
-              )}
-
-              {q.discount_amt > 0 && (
-                <tr>
-                  <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                    จำนวนเงินหลังหักส่วนลด
-                  </td>
-                  <td className="text-right tabular-nums">
-                    {baht(q.subtotal - q.discount_amt)} บาท
-                  </td>
-                </tr>
-              )}
-
-              <tr>
-                <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                  ภาษีมูลค่าเพิ่ม {q.vat_rate}%
-                </td>
-                <td className="text-right tabular-nums">{baht(q.vat_amt)} บาท</td>
-              </tr>
-
-              {q.wht_amt > 0 && (
-                <tr>
-                  <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                    หัก ณ ที่จ่าย {q.wht_rate}%
-                  </td>
-                  <td className="text-right tabular-nums">-{baht(q.wht_amt)} บาท</td>
-                </tr>
-              )}
-
-              <tr className="font-bold border-t" style={{ color: "#7d0f15" }}>
-                <td className="pr-10 py-1 text-right border-t">{totalLabel}</td>
-                <td className="text-right tabular-nums border-t">
-                  {baht(total)} บาท
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* ===== Note field (if any) ===== */}
-        {q.note && (
-          <div className="mt-4" style={{ fontSize: 12, color: "#4b5563", borderLeft: "3px solid #e5e7eb", paddingLeft: 10 }}>
-            หมายเหตุ: {q.note}
-          </div>
-        )}
-
-        {/* ===== Signature block — ฟอร์มกลาง (ในนามลูกค้า | ในนามบริษัท + บทบาท/วันที่) ===== */}
-        <PrintSignature customerName={c.name} customerRole="ผู้สั่งซื้อสินค้า" companyRole="ผู้อนุมัติ" />
-
-        {/* ===== Conditions — page-break-before so always starts new page when printing ===== */}
-        <div
-          className="mt-5"
-          style={{ fontSize: 11.5, lineHeight: 1.65, pageBreakBefore: "always" }}
-        >
-          {/* Work-entry conditions */}
-          <h4 className="font-bold mb-2" style={{ color: "#b3151d" }}>
-            เงื่อนไขการเข้าทำงาน
-          </h4>
-          <ol className="list-decimal ml-5 mb-3 space-y-1">
-            {condWork.map((cond, idx) => (
-              <li key={idx} style={{ color: "#1f2937" }}>
-                {cond.split("\n").map((line, li) => (
-                  <span key={li}>
-                    {li > 0 && <br />}
-                    {line}
-                  </span>
-                ))}
-              </li>
-            ))}
-          </ol>
-
-          {/* Design & quotation conditions */}
-          <h4 className="font-bold mt-2 mb-2" style={{ color: "#b3151d" }}>
-            เงื่อนไขแบบและใบเสนอราคา
-          </h4>
-          <ol className="list-none ml-0 mb-3 space-y-1">
-            {condQuote.map((cond, idx) => (
-              <li key={idx} style={{ color: "#1f2937" }}>
-                {cond.split("\n").map((line, li) => (
-                  <span key={li}>
-                    {li > 0 && (
-                      <>
-                        <br />
-                        <span className="ml-4">{line}</span>
-                      </>
-                    )}
-                    {li === 0 && line}
-                  </span>
-                ))}
-              </li>
-            ))}
-          </ol>
-
-          {/* Confirm + signature at bottom of conditions */}
-          <div
-            className="mt-4 text-center font-semibold"
-            style={{ color: "#b3151d" }}
-          >
-            ขอยืนยันการสั่งซื้อภายใต้เงื่อนไข&nbsp;&nbsp;ขอแสดงความนับถือ
-          </div>
-          <div
-            className="mt-3 flex justify-between"
-            style={{ color: "#b3151d", fontSize: 12 }}
-          >
-            <div>
-              ลงนาม ............................................... ผู้สั่งซื้อ
-              <br />
-              <span style={{ fontSize: 11 }}>
-                วันที่ ........../........../.......... (สำหรับลูกค้า)
-              </span>
-            </div>
-            <div className="text-right">{COMPANY.name}</div>
-          </div>
-        </div>
-
-        {/* ===== Running footer ===== */}
-        <div
-          className="mt-6 text-center"
-          style={{ fontSize: 10, color: "#6b7280", borderTop: "1px solid #e5e7eb", paddingTop: 4 }}
-        >
-          {COMPANY.name} ({COMPANY.branch}) · เลขประจำตัวผู้เสียภาษี {COMPANY.taxId} · โทร. {COMPANY.phone} · {q.code}
-        </div>
+        <QuotationDoc q={q} condWork={condWork} condQuote={condQuote} />
       </div>
     </div>
   );

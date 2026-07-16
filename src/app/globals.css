@@ -120,6 +120,33 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   table, th, td { border-color: #4b5563 !important; }
   /* บังคับพิมพ์สีพื้น/สีเส้นให้ครบ (กัน browser ตัดพื้นหัวตาราง/หัวบิลทิ้ง) */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  .qdoc-newpage { break-before: page; page-break-before: always; }
+}
+
+/* ── โครงเอกสารหลายหน้า (.qdoc) — ดูคำอธิบายเต็มใน QuotationDoc.tsx ──
+   หัวบิลอยู่ใน <thead> เพราะเบราว์เซอร์พิมพ์ thead/tfoot ซ้ำเองทุกหน้า
+
+   ⚠️ บล็อกนี้ต้องอยู่ "หลัง" @media print ด้านบน (specificity เท่ากัน อันหลังชนะ)
+      เคยพลาดมาแล้ว: เขียน padding ตอนพิมพ์ไว้ใน @media print ข้างบน แล้วโดน padding:0
+      ตรงนี้ทับ → ทุกหน้าไม่มีขอบบนเลย · ระยะขอบตอนพิมพ์จึงต้องคุมในบล็อกนี้ทั้งหมด */
+.qdoc { width: 100%; border-collapse: collapse; }
+.qdoc > thead { display: table-header-group; }
+.qdoc > tfoot { display: table-footer-group; }
+/* เฉพาะเซลล์โครง (หัวบิล/ท้ายบิล/แถวเนื้อหาเต็มความกว้าง) — ห้ามโดน td ของรายการที่มีเส้นตาราง */
+.qdoc > thead > tr > td.qdoc-head,
+.qdoc > tbody > tr > td.qdoc-tail,
+.qdoc > tfoot > tr > td.qdoc-foot { padding: 0; border: 0; vertical-align: top; }
+.qdoc > tfoot > tr > td.qdoc-foot { padding-top: 24px; }
+
+@media print {
+  /* @page margin = 0 (กัน browser แปะ URL/เลขหน้าเอง) → หน้าที่ 2+ ไม่มีขอบบน/ล่างเลย
+     เพราะ padding ของกล่อง A4 กินแค่หน้าแรก(บน)/หน้าสุดท้าย(ล่าง)
+     → ขอบบน-ล่าง "ทุกหน้า" จึงมาจาก padding ของ thead/tfoot ที่พิมพ์ซ้ำแทน
+     (ต้องปิด padding บน-ล่างของกล่อง A4 ด้วย ไม่งั้นหน้าแรกเว้น 2 เท่า) */
+  .qdoc-a4 { padding-top: 0 !important; padding-bottom: 0 !important; }
+  .qdoc > thead > tr > td.qdoc-head { padding-top: 12mm; }
+  .qdoc > tfoot > tr > td.qdoc-foot { padding-bottom: 12mm; }
 }
 
 /* เต็มหน้า A4 + เอาหัว-ท้ายที่ browser แปะเอง (URL jr-beta / วันที่-เวลา / ชื่อระบบ / เลขหน้า) ออก

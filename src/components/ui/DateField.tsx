@@ -66,6 +66,21 @@ function yearOf(text: string): number | null {
   return isNaN(y) ? null : y;
 }
 
+/** ISO → "DD/MM/YYYY" สำหรับข้อความเตือน */
+const say = (iso: string) => isoToDisplay(iso) || iso;
+
+/**
+ * เช็ค min/max กับค่าที่ "พิมพ์เอง"
+ *
+ * เดิม min/max ผูกไว้กับ <input type="date"> ที่ซ่อนอยู่เท่านั้น → คุมได้แค่ตอนกดปฏิทิน
+ * พิมพ์มือทะลุไปเลย (นี่คือทางที่วันที่เพี้ยนหลุดเข้าระบบจริง)
+ */
+function rangeIssue(iso: string, min?: string, max?: string): string | null {
+  if (min && iso < min) return `ต้องไม่ก่อน ${say(min)}`;
+  if (max && iso > max) return `ต้องไม่เกิน ${say(max)}`;
+  return null;
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 interface DateFieldProps {
@@ -128,6 +143,8 @@ export default function DateField({
       }
       const iso = parseDisplay(v);
       if (iso) {
+        const bad = rangeIssue(iso, min, max);
+        if (bad) { setBeWarn(bad); return; }   // นอกช่วง → ไม่ commit
         onChange(iso);
         // อย่า setText ตรง — ปล่อย blur จัดการ
       }
@@ -155,6 +172,14 @@ export default function DateField({
     setBeWarn(null);
     const iso = parseDisplay(text);
     if (iso) {
+      const bad = rangeIssue(iso, min, max);
+      if (bad) {
+        // นอกช่วงที่อนุญาต → เตือน + rollback (ห้าม commit)
+        setBeWarn(bad);
+        setText(isoToDisplay(value));
+        externalOnBlur?.();
+        return;
+      }
       onChange(iso);
       setText(isoToDisplay(iso)); // normalize
     } else {
