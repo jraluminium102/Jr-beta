@@ -7,6 +7,7 @@ import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
+import ImageZoom from "@/components/ImageZoom";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -239,7 +240,9 @@ function ItemDetail({
     <div>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <Thumb url={item.image_url} size={56} />
+          <ImageZoom src={item.image_url} alt={item.name} title="ดูรูปสินค้าใหญ่" className="shrink-0 inline-flex cursor-zoom-in">
+            <Thumb url={item.image_url} size={56} />
+          </ImageZoom>
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-brand-dark truncate">{item.name}</h3>
             <p className="text-sm text-ink-3 truncate">
@@ -256,9 +259,9 @@ function ItemDetail({
       </div>
 
       {item.image_url && (
-        <a href={item.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand font-semibold inline-flex items-center gap-1 mt-2">
+        <ImageZoom src={item.image_url} alt={item.name} title="ดูรูปสินค้าใหญ่" className="text-xs text-brand font-semibold inline-flex items-center gap-1 mt-2">
           <Icon name="search" size={12} /> ดูรูปเต็ม
-        </a>
+        </ImageZoom>
       )}
 
       {/* คงเหลือ + ต้นทุน (ต้นทุนโชว์เฉพาะคนที่เห็นราคาได้) */}
@@ -343,7 +346,7 @@ function ItemDetail({
                     </td>
                     <td className="px-3 py-2">
                       {m.image_url
-                        ? <a href={m.image_url} target="_blank" rel="noopener noreferrer" className="text-brand"><Icon name="search" size={14} /></a>
+                        ? <ImageZoom src={m.image_url} title="ดูรูปใหญ่" className="text-brand inline-flex cursor-zoom-in"><Icon name="search" size={14} /></ImageZoom>
                         : <span className="text-ink-3">—</span>}
                     </td>
                     {canWrite && (

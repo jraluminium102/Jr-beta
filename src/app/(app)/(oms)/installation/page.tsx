@@ -157,7 +157,7 @@ export default function InstallationPage() {
           <p className="text-sm" style={{ color: "var(--t-low)" }}>ปฏิทินทั้งเดือน · การ์ด = ลูกค้า + หัวหน้าช่าง · กดการ์ดดูลูกน้อง/หมายเหตุ</p>
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          {([["cal", "ปฏิทินเดือน"], ["crew", "จัดทีมรายวัน"], ["tmr", "พรุ่งนี้"], ["status", "สถานะงาน"]] as const).map(([k, l]) => (
+          {([["cal", "ปฏิทินเดือน"], ["crew", "จัดทีม"]] as const).map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)}
               className={`px-3 py-2 rounded-xl text-sm font-medium border ${tab === k ? "bg-white/16 text-white border-white/20" : "bg-white/6 text-white/70 border-white/10"}`}>{l}</button>
           ))}
@@ -195,10 +195,10 @@ export default function InstallationPage() {
 
           {isLoading ? <Spinner /> : (
             <div className="overflow-x-auto">
-              <div style={{ minWidth: 640 }}>
+              <div style={{ minWidth: 760 }}>
                 <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "repeat(7,1fr)" }}>
-                  {["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"].map((d, i) => (
-                    <div key={d} className="text-center text-[11px] py-0.5" style={{ color: i === 6 ? "#fca5a5" : "var(--t-low)" }}>{d}</div>
+                  {["จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์", "อาทิตย์"].map((d, i) => (
+                    <div key={d} className="text-center text-[12.5px] font-medium py-1" style={{ color: i === 6 ? "#fca5a5" : "var(--t-mid)" }}>{d}</div>
                   ))}
                 </div>
                 <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(7,1fr)" }}>
@@ -213,53 +213,53 @@ export default function InstallationPage() {
                     const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((n) => !planNames.has(n.trim()));
                     return (
                       <div key={ds}
-                        className="rounded-lg p-1 flex flex-col"
+                        className="rounded-lg p-1.5 flex flex-col"
                         style={{
-                          minHeight: 76,
+                          minHeight: 116,
                           background: isToday ? "rgba(55,138,221,.12)" : inMonth ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.02)",
                           border: isToday ? "1px solid rgba(55,138,221,.5)" : "1px solid rgba(255,255,255,.06)",
                           opacity: inMonth ? 1 : 0.45,
                         }}>
-                        <div className="flex items-center justify-between gap-1">
-                          <div className="text-[10px] pl-0.5" style={{ color: isToday ? "#93c5fd" : "var(--t-low)", fontWeight: isToday ? 600 : 400 }}>{d.getDate()}</div>
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <div className="text-[13px] pl-0.5" style={{ color: isToday ? "#93c5fd" : "var(--t-mid)", fontWeight: isToday ? 700 : 500 }}>{d.getDate()}</div>
                           {inMonth && (
                             <button onClick={() => jumpToCrewDay(ds)}
-                              className="inline-flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded leading-none focusable"
-                              style={crewCount ? { background: "rgba(255,255,255,.16)", color: "#fff" } : { color: "rgba(255,255,255,.25)" }}
+                              className="inline-flex items-center gap-0.5 text-[11px] px-1.5 py-0.5 rounded leading-none focusable"
+                              style={crewCount ? { background: "rgba(255,255,255,.16)", color: "#fff" } : { color: "rgba(255,255,255,.3)" }}
                               title={crewCount ? `จัดทีมช่างแล้ว ${crewCount} ทีม — ดู/แก้ไข` : "ยังไม่จัดทีมช่างวันนี้ — กดเพื่อจัด"}>
-                              <Icon name="users" size={8} />{crewCount || ""}
+                              <Icon name="users" size={11} />{crewCount || ""}
                             </button>
                           )}
                         </div>
-                        <div className="space-y-0.5 flex-1">
+                        <div className="space-y-1 flex-1">
                           {items.map((a) => {
                             const c = leadColor(leadOf(a));
                             return (
                               <button key={a.id} onClick={() => setDetail(a)}
-                                className="w-full text-left rounded-md px-1 py-0.5 leading-tight"
+                                className="w-full text-left rounded-md px-1.5 py-1 leading-snug"
                                 style={{ background: c.bg, border: `0.5px solid ${a.note ? "rgba(239,159,39,.6)" : c.border}` }}>
-                                <div className="text-[10.5px] font-medium truncate" style={{ color: "#fff" }}>{a.custom_title ? "⚑ " : ""}{nameOf(a)}{a.note ? " ⚠" : ""}</div>
-                                <div className="text-[9.5px] truncate" style={{ color: c.text }}>
+                                <div className="text-[13px] font-semibold" style={{ color: "#fff" }}>{a.custom_title ? "⚑ " : ""}{nameOf(a)}{a.note ? " ⚠" : ""}</div>
+                                <div className="text-[11.5px] truncate" style={{ color: c.text }}>
                                   {leadOf(a) || "— ยังไม่จัดช่าง"}{a.day_no && a.day_total ? ` · วัน ${a.day_no}/${a.day_total}` : ""}
                                 </div>
                               </button>
                             );
                           })}
-                          {/* ลูกค้าที่มีเฉพาะใน "จัดทีมรายวัน" — เส้นประ = ยังไม่มีในแผนปฏิทิน (คนละที่มา ต้องแยกให้เห็น)
-                              กดแล้วเด้งไปแท็บรายวันของวันนั้น */}
+                          {/* ลูกค้าที่มีเฉพาะใน "จัดทีม" — เส้นประ = ยังไม่มีในแผนปฏิทิน (คนละที่มา ต้องแยกให้เห็น)
+                              กดแล้วเด้งไปแท็บจัดทีมของวันนั้น */}
                           {crewOnly.map((n) => (
                             <button key={n} onClick={() => jumpToCrewDay(ds)}
-                              className="w-full text-left rounded-md px-1 py-0.5 leading-tight"
+                              className="w-full text-left rounded-md px-1.5 py-1 leading-snug"
                               style={{ background: "rgba(255,255,255,.05)", border: "0.5px dashed rgba(255,255,255,.28)" }}
-                              title={`${n} — จัดทีมช่างไว้ในแผนรายวัน (ยังไม่มีในแผนเดือน)`}>
-                              <div className="text-[10.5px] truncate" style={{ color: "rgba(255,255,255,.82)" }}>{n}</div>
-                              <div className="text-[9.5px] truncate" style={{ color: "var(--t-low)" }}>ทีมรายวัน</div>
+                              title={`${n} — จัดทีมช่างไว้ในหน้าจัดทีม (ยังไม่มีในแผนเดือน)`}>
+                              <div className="text-[13px]" style={{ color: "rgba(255,255,255,.85)" }}>{n}</div>
+                              <div className="text-[11.5px] truncate" style={{ color: "var(--t-low)" }}>ทีมจัดเอง</div>
                             </button>
                           ))}
                         </div>
                         {canWrite && inMonth && (
                           <button onClick={() => setAddAt({ date: ds })}
-                            className="w-full text-[11px] text-white/20 hover:text-white/60 rounded-md leading-4">+</button>
+                            className="w-full text-[15px] text-white/25 hover:text-white/70 rounded-md leading-5 mt-0.5">+</button>
                         )}
                       </div>
                     );
@@ -333,7 +333,8 @@ export default function InstallationPage() {
 
       {detail && (
         <DetailDrawer a={detail} busy={busy} leadNames={leadNames}
-          onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign} />
+          onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign}
+          onGoCrew={() => { const d = detail.date; setDetail(null); jumpToCrewDay(d); }} />
       )}
 
       {openInst && (
@@ -411,9 +412,10 @@ function AddAssignModal({ ready, initial, busy, leadNames, onClose, onSave }: {
 }
 
 // ── drawer รายละเอียด/แก้ ──
-function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete }: {
+function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete, onGoCrew }: {
   a: InstallAssignment; busy: boolean; leadNames: string[];
   onClose: () => void; onPatch: (id: string, b: Record<string, unknown>) => void; onDelete: (id: string) => void;
+  onGoCrew: () => void;
 }) {
   const [lead, setLead] = useState(a.lead_name || "");
   const [date, setDate] = useState(a.date);
@@ -421,6 +423,11 @@ function DetailDrawer({ a, busy, leadNames, onClose, onPatch, onDelete }: {
   const [note, setNote] = useState(a.note || "");
   return (
     <Modal title={nameOf(a)} onClose={onClose}>
+      {/* ไปจัดทีมของวันนี้ (จัดรายละเอียดช่าง/สถานที่ต่อ) */}
+      <button onClick={onGoCrew}
+        className="w-full mb-3 py-2.5 rounded-xl bg-sky-500/25 text-sky-100 border border-sky-400/30 text-sm font-medium inline-flex items-center justify-center gap-1.5">
+        <Icon name="users" size={15} /> ไปจัดทีมวันนี้
+      </button>
       <div className="text-xs mb-2" style={{ color: "var(--t-low)" }}>
         {jobCode(a.jobs)} {jobArea(a.jobs) ? `· ${jobArea(a.jobs)}` : ""}
         {a.day_no && a.day_total ? ` · วันที่ ${a.day_no}/${a.day_total} ของงาน` : ""}

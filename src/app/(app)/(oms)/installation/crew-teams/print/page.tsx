@@ -14,13 +14,18 @@ function thFullDate(iso: string) {
   const d = new Date(iso + "T00:00:00");
   return `วัน${DOW[d.getDay()]}ที่ ${d.getDate()} ${TH_MONTH[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
+// วันที่แบบสั้นบนหัวการ์ด (ตามฟอร์ม SetTeam) เช่น "ศุกร์ 17 กรกฎาคม 2569"
+function thCardDate(iso: string) {
+  const d = new Date(iso + "T00:00:00");
+  return `${DOW[d.getDay()]} ${d.getDate()} ${TH_MONTH[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
 
 type Site = {
   id: string; site_no: number; customer_name: string; appointment_time: string; off_board?: boolean;
   address: string | null; phone: string | null;
 };
 type Team = {
-  id: string; note: string; member_ids: string[];
+  id: string; note: string; member_ids: string[]; start_time: string;
   leader: { name: string } | null;
   crew_team_sites: Site[];
 };
@@ -44,7 +49,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
     const sb = supabase as any;
     const [teamsR, peopleR] = await Promise.all([
       sb.from("crew_day_teams")
-        .select("id, note, member_ids, leader:crew_people(name), crew_team_sites(*)")
+        .select("id, note, member_ids, start_time, leader:crew_people(name), crew_team_sites(*)")
         .eq("work_date", date)
         .order("sort_order", { ascending: true }),
       sb.from("crew_people").select("id, name"),
@@ -66,7 +71,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
     nameById = new Map(((peopleR.data ?? []) as any[]).map((p) => [p.id, p.name]));
   }
 
-  const memberNames = (t: Team) => t.member_ids.map((id) => nameById.get(id)).filter(Boolean).join(", ");
+  const memberNames = (t: Team) => t.member_ids.map((id) => nameById.get(id)).filter(Boolean).join("  ");
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -87,45 +92,33 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
           {!validDate ? "ไม่ได้ระบุวันที่ที่ถูกต้อง (?date=YYYY-MM-DD)" : `วันที่ ${thFullDate(date)} ยังไม่มีการจัดทีมช่าง`}
         </div>
       ) : (
-        /* กระดาษ A4 — เนื้อหายืดได้เกิน 297mm ได้ (ไม่ตั้ง overflow/height ตายตัว) browser จะแบ่งหน้าพิมพ์เองตาม @page A4 */
-        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "14mm" }}>
-          <div className="flex items-center justify-between mb-4" style={{ borderBottom: "2px solid #b3151d", paddingBottom: 10 }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#b3151d" }}>แผนจัดทีมช่างประจำวัน</div>
-              <div style={{ fontSize: 13, color: "#4b5563", marginTop: 2 }}>{thFullDate(date)}</div>
-            </div>
-            <div style={{ fontSize: 12, color: "#6b7280", textAlign: "right" }}>
-              JR ALUMINIUM<br />จำนวนทีม {teams.length} ทีม
-            </div>
-          </div>
-
-          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", columnGap: 8, rowGap: 8 }}>
-            {teams.map((t, i) => (
-              <div key={t.id} style={{ breakInside: "avoid", border: "1px solid #9ca3af", borderRadius: 8, padding: "10px 12px" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#1f2937", marginBottom: 4 }}>
-                  ทีม {i + 1}{t.leader?.name ? ` · หัวหน้า ${t.leader.name}` : ""}
+        /* ฟอร์มการ์ดต่อทีม (แบบ SetTeam) — ปริ้นแล้วตัดแยกแจกช่างได้ทีละใบ · แต่ละการ์ดมีวันที่+เวลาในตัว
+           A4 2 คอลัมน์ · เนื้อหายืดเกิน 297mm ได้ browser แบ่งหน้าเอง */
+        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "10mm" }}>
+          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", columnGap: 10, rowGap: 10 }}>
+            {teams.map((t) => (
+              <div key={t.id} style={{ breakInside: "avoid", border: "1.5px solid #4b5563", borderRadius: 6, padding: "10px 12px", minHeight: 120 }}>
+                {/* หัวการ์ด: วันที่ (ซ้าย) · เวลา (ขวา แดงหนา) */}
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, borderBottom: "1px solid #e5e7eb", paddingBottom: 5, marginBottom: 6 }}>
+                  <span style={{ fontSize: 12.5, color: "#374151" }}>{thCardDate(date)}</span>
+                  {t.start_time && <span style={{ fontSize: 16, fontWeight: 800, color: "#e11d1d", textDecoration: "underline", whiteSpace: "nowrap" }}>{t.start_time}</span>}
                 </div>
-                {/* เอาบรรทัด "เวลาเริ่มงาน" ออกแล้ว (16 ก.ค.2569) — เวลานัดอยู่รายจุดข้างล่างพอ */}
-                {t.crew_team_sites.length > 0 && (
-                  <div style={{ marginBottom: 5 }}>
-                    {t.crew_team_sites.map((s) => (
-                      <div key={s.id} style={{ fontSize: 11.5, marginBottom: 3, paddingLeft: 6, borderLeft: "2px solid #e5e7eb" }}>
-                        <div style={{ fontWeight: 600, color: "#1f2937" }}>
-                          {s.off_board ? "⚑ " : ""}{s.site_no}. {s.customer_name || "—"}{s.appointment_time ? ` (นัด ${s.appointment_time})` : ""}
-                        </div>
-                        {(s.address || s.phone) && (
-                          <div style={{ color: "#6b7280" }}>{s.address}{s.address && s.phone ? " · " : ""}{s.phone ? `โทร ${s.phone}` : ""}</div>
-                        )}
+                {/* รายการลูกค้า (เลขข้อ) — ไม่มีที่อยู่/เบอร์ ตามฟอร์ม */}
+                <div style={{ marginBottom: 6 }}>
+                  {t.crew_team_sites.length > 0
+                    ? t.crew_team_sites.map((s, i) => (
+                      <div key={s.id} style={{ fontSize: 14, fontWeight: 600, color: "#111827", lineHeight: 1.45 }}>
+                        {i + 1}. {s.customer_name || "—"}
                       </div>
-                    ))}
-                  </div>
-                )}
-                <div style={{ fontSize: 11.5, color: "#374151" }}>
-                  ลูกทีม: {memberNames(t) || "—"}
+                    ))
+                    : <div style={{ fontSize: 13, color: "#9ca3af" }}>— ยังไม่ระบุงาน —</div>}
                 </div>
+                {/* หัวหน้าทีม (ตัวหนา) แล้วตามด้วยลูกทีม */}
+                {t.leader?.name && <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", marginBottom: 2 }}>{t.leader.name}</div>}
+                <div style={{ fontSize: 13, color: "#1f2937", lineHeight: 1.5 }}>{memberNames(t) || "—"}</div>
                 {t.note && (
-                  <div style={{ fontSize: 11, color: "#92400e", marginTop: 4, background: "#fef3c7", borderRadius: 4, padding: "2px 6px" }}>
-                    หมายเหตุ: {t.note}
+                  <div style={{ fontSize: 11, color: "#92400e", marginTop: 5, background: "#fef3c7", borderRadius: 4, padding: "2px 6px" }}>
+                    {t.note}
                   </div>
                 )}
               </div>

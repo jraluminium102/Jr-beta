@@ -22,14 +22,14 @@ export const POST = withRoute(async (req: Request) => {
 
   const { data: asg, error: asgErr } = await sb
     .from("install_assignments")
-    .select("job_id, lead_name, crew, jobs(customer_name, customer_tel, customer_area)")
+    .select("job_id, custom_title, lead_name, crew, jobs(customer_name, customer_tel, customer_area)")
     .eq("date", date);
   if (asgErr) return err(asgErr.message, 500);
   if (!asg || asg.length === 0) return ok({ created: 0, message: "วันนี้ไม่มีแผนในปฏิทินรายเดือน" });
 
   // ทีมของวันนี้ (ถ้ามีอยู่แล้ว) — ใช้เช็คกันซ้ำ + ต่อ sort_order
   const { data: existingTeams, error: existErr } = await sb
-    .from("crew_day_teams").select("id, sort_order, crew_team_sites(job_id)")
+    .from("crew_day_teams").select("id, sort_order, crew_team_sites(job_id, customer_name)")
     .eq("work_date", date);
   // ⚠ fail-closed: select กันซ้ำล้มแล้วเดินต่อ = alreadyImported ว่าง → กดซ้ำได้ทีมซ้ำทั้งวัน (audit เจอ 16 ก.ค.69)
   if (existErr) {
@@ -39,6 +39,9 @@ export const POST = withRoute(async (req: Request) => {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const alreadyImported = new Set(((existingTeams ?? []) as any[]).flatMap((t) => (t.crew_team_sites ?? []).map((s: { job_id: string | null }) => s.job_id).filter(Boolean)));
+  // คิวนอกระบบ (job_id ว่าง) กันซ้ำด้วย "ชื่องาน" แทน — ไม่งั้น auto-import จะสร้างซ้ำทุกครั้งที่เปิดหน้า
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const importedNames = new Set(((existingTeams ?? []) as any[]).flatMap((t) => (t.crew_team_sites ?? []).filter((s: { job_id: string | null }) => !s.job_id).map((s: { customer_name: string | null }) => (s.customer_name ?? "").trim()).filter(Boolean)));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let nextSort = Math.max(0, ...((existingTeams ?? []) as any[]).map((t) => t.sort_order ?? 0)) + 1;
 
@@ -55,8 +58,14 @@ export const POST = withRoute(async (req: Request) => {
   const groups = new Map<string, any[]>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of asg as any[]) {
-    if (alreadyImported.has(a.job_id)) continue; // กันนำเข้าซ้ำ
-    const key = (a.lead_name || "").trim() || `__solo_${a.job_id}`;
+    const nm = (a.jobs?.customer_name ?? a.custom_title ?? "").trim();
+    if (a.job_id) {
+      if (alreadyImported.has(a.job_id)) continue; // งานในระบบ — กันซ้ำด้วย job_id
+    } else {
+      if (!nm || importedNames.has(nm)) continue;  // คิวนอกระบบ — กันซ้ำด้วยชื่อ
+      importedNames.add(nm);                        // กันซ้ำภายในรอบเดียวกันด้วย
+    }
+    const key = (a.lead_name || "").trim() || `__solo_${a.job_id ?? "c:" + nm}`;
     const g = groups.get(key) ?? [];
     g.push(a);
     groups.set(key, g);
@@ -78,7 +87,7 @@ export const POST = withRoute(async (req: Request) => {
     //   → จดชื่องานที่ไม่ได้ใส่ ลงหมายเหตุทีมให้เห็นชัด คนจัดจะได้แยกทีม/จัดมือเอง
     const dropped = items.slice(4);
     if (dropped.length) {
-      noteParts.push(`⚠ เกิน 4 จุด — ยังไม่ได้ใส่: ${dropped.map((a) => a.jobs?.customer_name || a.job_id).join(", ")}`);
+      noteParts.push(`⚠ เกิน 4 จุด — ยังไม่ได้ใส่: ${dropped.map((a) => a.jobs?.customer_name || a.custom_title || a.job_id).join(", ")}`);
     }
 
     const { data: newTeam, error: teamErr } = await sb
@@ -92,9 +101,10 @@ export const POST = withRoute(async (req: Request) => {
     if (teamErr) return err(teamErr.message, 500);
 
     const siteRows = items.slice(0, 4).map((a, i) => ({
-      team_id: newTeam.id, site_no: i + 1, job_id: a.job_id,
-      customer_name: a.jobs?.customer_name ?? "", appointment_time: "",
+      team_id: newTeam.id, site_no: i + 1, job_id: a.job_id ?? null,
+      customer_name: a.jobs?.customer_name ?? a.custom_title ?? "", appointment_time: "",
       address: a.jobs?.customer_area ?? null, phone: a.jobs?.customer_tel ?? null,
+      off_board: !a.job_id,   // คิวนอกระบบ (ไม่มีในบอร์ดพร้อมติดตั้ง) = ⚑
     }));
     const { error: siteErr } = await sb.from("crew_team_sites").insert(siteRows);
     if (siteErr) return err(siteErr.message, 500);

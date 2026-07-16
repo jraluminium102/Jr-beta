@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -83,15 +83,21 @@ export default function CrewDayTeamsPanel({
     catch (e) { alert(e instanceof Error ? e.message : "ทำซ้ำไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
-  async function importFromCalendar() {
-    setBusy(true);
-    try {
-      const r = await api.post<{ created: number; message?: string }>("/crew-day/import-from-calendar", { work_date: date });
-      await refetchDay(); refetchCounts();
-      if (!r.data.created) alert(r.data.message || "ไม่มีรายการนำเข้าใหม่ (นำเข้าครบแล้ว หรือปฏิทินไม่มีแผนวันนี้)");
-    } catch (e) { alert(e instanceof Error ? e.message : "ดึงจากปฏิทินไม่สำเร็จ"); }
-    finally { setBusy(false); }
-  }
+  // เด้งงานจากปฏิทินเข้า "จัดทีม" อัตโนมัติ — เปิดวันไหน ดึงแผนวันนั้นมาให้เลย (ครั้งเดียว/วัน, เงียบ)
+  //   endpoint กันซ้ำเอง (งานในระบบ=job_id, คิวนอกระบบ=ชื่อ) → เปิดซ้ำไม่สร้างซ้ำ
+  const autoPulled = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!canWrite) return;
+    if (autoPulled.current.has(date)) return;
+    autoPulled.current.add(date);
+    (async () => {
+      try {
+        const r = await api.post<{ created: number }>("/crew-day/import-from-calendar", { work_date: date });
+        if (r.data?.created) { refetchDay(); refetchCounts(); }
+      } catch { /* เงียบ — วันไม่มีแผน / ตารางยังไม่พร้อม ไม่ต้องรบกวน */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, canWrite]);
 
   return (
     <div>
@@ -116,7 +122,6 @@ export default function CrewDayTeamsPanel({
                 className="px-3 py-2 rounded-xl bg-white/8 text-white/80 text-sm inline-flex items-center gap-1.5"><Icon name="printer" size={14} />ปริ้น A4</a>
               {canWrite && (
                 <>
-                  <button disabled={busy} onClick={importFromCalendar} className="px-3 py-2 rounded-xl bg-white/8 text-white/80 text-sm disabled:opacity-50">ดึงจากแผนปฏิทิน</button>
                   <button disabled={busy} onClick={duplicateFromPrevious} className="px-3 py-2 rounded-xl bg-white/8 text-white/80 text-sm disabled:opacity-50">ทำซ้ำวันก่อนหน้า</button>
                   <button disabled={busy} onClick={addTeam} className="px-3.5 py-2 rounded-xl bg-white/16 text-white text-sm font-medium disabled:opacity-50">+ เพิ่มทีม</button>
                 </>
@@ -140,7 +145,7 @@ export default function CrewDayTeamsPanel({
               ))}
               {teams.length === 0 && (
                 <div className="col-span-full text-center py-10 text-sm" style={{ color: "var(--t-low)" }}>
-                  — ยังไม่มีการจัดทีมวันนี้ —{canWrite ? " กด \"+ เพิ่มทีม\" หรือ \"ดึงจากแผนปฏิทิน\" / \"ทำซ้ำวันก่อนหน้า\"" : ""}
+                  — ยังไม่มีการจัดทีมวันนี้ —{canWrite ? " (งานจากปฏิทินจะเด้งเข้าให้เอง) · กด \"+ เพิ่มทีม\" หรือ \"ทำซ้ำวันก่อนหน้า\" ได้" : ""}
                 </div>
               )}
             </div>
