@@ -655,6 +655,17 @@ export function computeAddon(id, sel, ctx) {
     const rate = t === 'comp' ? 3300 : 3500;
     return { label: 'แผ่นทึบล่าง ' + (t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก') + ' (R3.9)', qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
+  if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)
+    const s = sel || {};                 // sel = { fan8, fan10, cover, sw } (จำนวนตัว/จุด)
+    const rows = [
+      { q: s.fan8 | 0, label: 'พัดลมดูดอากาศ 8"', price: 3000, unit: 'ตัว' },
+      { q: s.fan10 | 0, label: 'พัดลมดูดอากาศ 10"', price: 3000, unit: 'ตัว' },
+      { q: s.cover | 0, label: 'ฝาครอบกันแมลง 8"/10"', price: 1000, unit: 'ตัว' },
+      { q: s.sw | 0, label: 'สวิตซ์ไฟ', price: 500, unit: 'จุด' },
+    ].filter((x) => x.q > 0);
+    if (!rows.length) return null;
+    return rows.map((x) => ({ label: x.label + ' (งานไฟ)', qty: x.q, unit: x.unit, unitPrice: x.price, amount: x.q * x.price }));
+  }
   if (id === 'u_track') {               // ฝังรางยู U-Track · ฟรี ≤2ม. + 500/ม.เกิน
     if (sel !== 'yes') return null;
     const amt = ADDON_FLAT.u_track + Math.max(0, W - 2) * 500;

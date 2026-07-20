@@ -42,7 +42,7 @@ const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
 const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "motor", "awn_tt", "awn_brace"];
 const HANDLE_ADDONS = ["cmech", "stainless", "digihandle"];
 const SCREEN_ADDONS = ["mosquito", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
-const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "shower_corner", "shower_hw"];
+const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "elec", "shower_corner", "shower_hw"];
 const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor"];
 const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
 
@@ -164,6 +164,29 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
             onChange={(v) => setObj("grid", { rate: +v, rateTouched: true })}
           />
         </div>
+      </Field>
+    );
+  }
+  if (ad === "elec") {
+    // งานไฟ (เจ้าของเคาะ 17ก.ค.69) — พัดลม/ฝาครอบ/สวิตซ์ · ราคาขายตรง ๆ · กดเพิ่มจำนวนตัว
+    const e = A.elec || {};
+    const n = (k: string) => Math.max(0, Math.round(Number(e[k]) || 0));
+    const total = n("fan8") * 3000 + n("fan10") * 3000 + n("cover") * 1000 + n("sw") * 500;
+    const row = (k: string, label: string) => (
+      <div>
+        <div className="text-[11px] text-ink-3 mb-0.5">{label}</div>
+        <NumberInput value={n(k)} onChange={(v) => setObj("elec", { [k]: Math.max(0, Math.round(v)) })} placeholder="0" />
+      </div>
+    );
+    return (
+      <Field label="⚡ งานไฟ (พัดลม / หน้ากาก / สวิตซ์)">
+        <div className="grid grid-cols-2 gap-2">
+          {row("fan8", 'พัดลมดูดอากาศ 8" (3,000/ตัว)')}
+          {row("fan10", 'พัดลมดูดอากาศ 10" (3,000/ตัว)')}
+          {row("cover", 'ฝาครอบกันแมลง 8"/10" (1,000/ตัว)')}
+          {row("sw", "สวิตซ์ไฟ (500/จุด)")}
+        </div>
+        {total > 0 && <p className="text-[11px] text-ink-3 mt-1.5">รวมงานไฟ = {fmt(total)} บาท</p>}
       </Field>
     );
   }

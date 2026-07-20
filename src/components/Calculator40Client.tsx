@@ -232,7 +232,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  const prod: any = (PRODUCTS as any)[prodId];
+  // เพิ่ม add-on "งานไฟ" (elec) ให้ทุกประเภทงาน (เจ้าของสั่ง 17ก.ค.69) — augment ที่ชั้น app
+  //   ไม่แตะ products.mjs/verify-r40 (raw PRODUCTS ไม่มี elec) · elec ไม่ถูกเลือก → computeAddon คืน null = ราคาไม่ขยับ
+  const prodRaw: any = (PRODUCTS as any)[prodId];
+  const prod: any = prodRaw ? { ...prodRaw, addons: (prodRaw.addons || []).includes("elec") ? prodRaw.addons : [...(prodRaw.addons || []), "elec"] } : prodRaw;
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
