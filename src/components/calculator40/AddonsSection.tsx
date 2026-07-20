@@ -146,7 +146,10 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     // ออโต้: เส้นคาดสีเดียวกับเฟรม จนกว่าจะเลือกเอง (rateTouched) — ตรง app.js renderAddonField 'grid'
     const rate = g.rateTouched ? (g.rate || 200) : gridRateFor(color);
     const wM = W || 0, hM = (area && wM) ? area / wM : 0;
-    const len = (g.nh || 0) * wM + (g.nv || 0) * hM;
+    // custom ความยาวเส้น (เจ้าของเคาะ 17ก.ค.69) — เว้น = อัตโนมัติตามกว้าง/สูงบาน
+    const hLen = +g.hLen > 0 ? +g.hLen : wM;
+    const vLen = +g.vLen > 0 ? +g.vLen : hM;
+    const len = (g.nh || 0) * hLen + (g.nv || 0) * vLen;
     return (
       <Field label="คาดตาราง (เส้น)">
         <div className="grid grid-cols-3 gap-2">
@@ -154,8 +157,19 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
           <NumberInput value={g.nv || 0} onChange={(v) => setObj("grid", { nv: Math.round(v) })} placeholder="แนวตั้ง" />
           <NumberInput value={g.nc || 0} onChange={(v) => setObj("grid", { nc: Math.round(v) })} placeholder="เส้นโค้ง (+3,000)" />
         </div>
+        {/* กำหนดขนาดเส้นเอง (ม.) — เว้นว่าง = อัตโนมัติตามบาน */}
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div>
+            <div className="text-[11px] text-ink-3 mb-0.5">ยาวเส้นนอน (ม. · เว้น=กว้าง {fmtNum(wM)})</div>
+            <NumberInput value={g.hLen || 0} onChange={(v) => setObj("grid", { hLen: v })} placeholder={fmtNum(wM)} />
+          </div>
+          <div>
+            <div className="text-[11px] text-ink-3 mb-0.5">ยาวเส้นตั้ง (ม. · เว้น=สูง {fmtNum(hM)})</div>
+            <NumberInput value={g.vLen || 0} onChange={(v) => setObj("grid", { vLen: v })} placeholder={fmtNum(hM)} />
+          </div>
+        </div>
         <p className="text-[11px] text-ink-3 mt-1.5">
-          สูตร: (นอน {g.nh || 0}×{fmtNum(wM)} + ตั้ง {g.nv || 0}×{fmtNum(hM)}) = {fmtNum(len)} ม. × {rate} = {fmt(len * rate)} บาท
+          สูตร: (นอน {g.nh || 0}×{fmtNum(hLen)} + ตั้ง {g.nv || 0}×{fmtNum(vLen)}) = {fmtNum(len)} ม. × {rate} = {fmt(len * rate)} บาท
         </p>
         <div className="mt-2">
           <ChipRow

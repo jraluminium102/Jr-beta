@@ -443,9 +443,13 @@ export function computeAddon(id, sel, ctx) {
   }
   if (id === 'grid') {                  // คาดตาราง (เส้นนอน/ตั้ง × ความยาว × เรตสี + เส้นโค้ง × 3,000)
     const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0), rate = sel.rate || 200;
-    const len = nh * W + nv * H, curveC = nc * 3000;
+    // custom ความยาวเส้น (ม.) — เจ้าของเคาะ 17ก.ค.69: ตั้งขนาดเองได้ · ไม่ตั้ง = อัตโนมัติตามกว้าง/สูงบาน (พฤติกรรมเดิม · parity)
+    const hLen = +sel.hLen > 0 ? +sel.hLen : W;
+    const vLen = +sel.vLen > 0 ? +sel.vLen : H;
+    const custom = (+sel.hLen > 0 || +sel.vLen > 0);
+    const len = nh * hLen + nv * vLen, curveC = nc * 3000;
     if (len <= 0 && curveC <= 0) return null;
-    return { label: 'คาดตาราง ' + nh + 'นอน+' + nv + 'ตั้ง' + (nc ? '+โค้ง ' + nc + 'เส้น' : '') + ' (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: rate, amount: round2(len * rate + curveC) };
+    return { label: 'คาดตาราง ' + nh + 'นอน+' + nv + 'ตั้ง' + (nc ? '+โค้ง ' + nc + 'เส้น' : '') + (custom ? ' (กำหนดขนาดเอง)' : '') + ' (R3.9)', qty: round2(len), unit: 'ม.', unitPrice: rate, amount: round2(len * rate + curveC) };
   }
   if (id === 'digihandle') {            // มือจับดิจิตอล (sel = ราคา จาก DIGI) · nc + บานเปิดยูโร → +โช้ค 5,000 (R3.9)
     const pr = +sel || 0;
