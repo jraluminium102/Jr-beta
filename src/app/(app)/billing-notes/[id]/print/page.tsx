@@ -140,8 +140,15 @@ export default async function BillingPrintPage({
                 if (isSingle) {
                   // งวดแยก = display-only (แก้ footer ต่องวดไม่แตะยอด booked · re-split ทั้งใบทีละงวดไม่ได้)
                   const ov = validFooter(selected!.footer_override);
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const sel = selected as any;
+                  // งวด booked (โมเดลค่าแรง 17 ก.ค.) → โชว์ base/vat/wht ของงวดตรง ๆ (WHT อยู่งวดค่าแรงเท่านั้น ไม่เฉลี่ย)
+                  if (sel.base_amt != null) {
+                    const def = footerSnapshot(Number(sel.base_amt) || 0, 0, Number(sel.vat_rate) || 0, Number(sel.wht_rate) || 0);
+                    return <PrintFooterEditor apiUrl={`/api/billing-installments/${selected!.id!}`} suffix=" (งวดนี้)" def={def} current={ov} />;
+                  }
                   if (Number(b.subtotal) <= 0 && !ov) return null;
-                  // ส่วนลดต่องวด = ส่วนลดทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = ส่วนลดเต็มใบ
+                  // งวดเก่า (ไม่ booked) — ส่วนลด/ภาษีต่องวด = ทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = เต็มใบ
                   const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr, dAmt != null ? Math.round((dAmt * ratio + Number.EPSILON) * 100) / 100 : undefined);
                   return <PrintFooterEditor apiUrl={`/api/billing-installments/${selected!.id!}`} suffix=" (งวดนี้)" def={def} current={ov} />;
                 }
@@ -159,10 +166,13 @@ export default async function BillingPrintPage({
           </table>
         </div>
 
-        {/* พิมพ์แยกงวด + มีหัก ณ ที่จ่าย → กันเข้าใจผิดว่าหักซ้ำทุกงวด (ยอดเฉลี่ยแล้ว รวมทุกงวด = ยอดหักจริงทั้งใบ) */}
+        {/* พิมพ์แยกงวด + มีหัก ณ ที่จ่าย → อธิบายวิธีคิดต่องวด (booked = อยู่งวดค่าแรง · legacy = เฉลี่ย) */}
         {isSingle && Number((bn as { wht_amt?: number }).wht_amt) > 0 && (
           <div className="mt-4 text-xs text-gray-600">
-            * หัก ณ ที่จ่ายด้านบนเป็นสัดส่วนเฉพาะงวดนี้ — รวมทุกงวดเท่ากับยอดหัก ณ ที่จ่ายทั้งใบ (ไม่หักซ้ำ)
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(selected as any).base_amt != null
+              ? "* หัก ณ ที่จ่ายคิดจากค่าแรง จะปรากฏเฉพาะ “งวดค่าแรง” งวดเดียว (งวดค่าของ/เงินประกันไม่มีหัก)"
+              : "* หัก ณ ที่จ่ายด้านบนเป็นสัดส่วนเฉพาะงวดนี้ — รวมทุกงวดเท่ากับยอดหัก ณ ที่จ่ายทั้งใบ (ไม่หักซ้ำ)"}
           </div>
         )}
 
