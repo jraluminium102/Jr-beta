@@ -67,13 +67,16 @@ export async function POST(req: Request) {
 
   // [idempotency/partial] ถ้าระบุงวด → ตรวจยอดคงเหลือก่อนสร้างใบเสร็จ
   // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)
+  // ภาษี booked ต่องวด (0102) — ถ้างวดมี base_amt = โมเดลค่าแรง (17 ก.ค.) → ใบเสร็จอ่านของงวดตรง ๆ ไม่ถอดใหม่
+  let bookedTax: { base: number; vat: number; wht: number; vat_rate: number; wht_rate: number } | null = null;
   if (body.installment_id) {
     const { data: inst, error: instErr } = await supabase
       .from("billing_installments")
-      .select("amount, paid_amount, status")
+      .select("amount, paid_amount, status, base_amt, vat_amt, wht_amt, vat_rate, wht_rate")
       .eq("id", Number(body.installment_id))
       .eq("billing_note_id", bn.id)
-      .single<{ amount: number; paid_amount: number | null; status: string }>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .single<any>();
     if (instErr || !inst) return fail("ไม่พบงวดในใบวางบิลนี้", 404);
     const paidAmt = round2(Number(inst.paid_amount) || 0);
     const remaining = round2((Number(inst.amount) || 0) - paidAmt);
@@ -94,18 +97,28 @@ export async function POST(req: Request) {
       .maybeSingle<{ amount: number }>();
     amount = fe ? round2(Number(fe.amount) || 0) : (paidAmt > 0 ? paidAmt : round2(Number(inst.amount) || 0));
     if (amount <= 0) return fail("ไม่พบยอดเงินที่รับจริงของงวดนี้ — ตรวจสอบการบันทึกชำระก่อน", 409);
+    // ภาษี booked ต่องวด (0102) — ใช้เมื่อ base_amt ตั้งไว้ + เงินรับตรงกับงวด (จ่ายเต็มงวด) → อ่านตรง ไม่ถอดใหม่
+    if (inst.base_amt != null) {
+      const bookedAmt = round2(Number(inst.base_amt) + Number(inst.vat_amt) - Number(inst.wht_amt));
+      if (Math.abs(bookedAmt - amount) <= 0.01) {
+        bookedTax = { base: round2(Number(inst.base_amt)), vat: round2(Number(inst.vat_amt)), wht: round2(Number(inst.wht_amt)), vat_rate: Number(inst.vat_rate) || 0, wht_rate: Number(inst.wht_rate) || 0 };
+      }
+    }
   }
 
-  // ── แยกเงินสดที่รับ → ฐาน / VAT / หัก ณ ที่จ่าย (splitCashReceived = แหล่งความจริงเดียว ใน money.ts) ──
-  // amount = เงินสดที่รับจริง (ไม่บวก VAT ซ้ำ · เดิมคิด amount*1.07 ผิด)
-  // ⚠ ใบที่มีหัก ณ ที่จ่าย: ยอดงวดเป็นยอด "หลังถูกหักแล้ว" → ถอด VAT ตรง ๆ จะได้ฐานต่ำกว่าจริง (VAT ขายขาด)
-  //    ต้อง gross-up: ฐาน = A/(1 + r/100 − w/100) · WHT ไม่ลดฐาน VAT (ม.50/69 ทวิ — เป็นการหักเงินที่จ่าย ไม่ใช่ส่วนลด)
-  //    ตัวอย่าง: บิล 100,000 VAT7 WHT3 → รับ 104,000 → ฐาน 100,000 VAT 7,000 (เดิมได้ 97,196.26/6,803.74 = ผิด)
-  const wht_rate = Number(bn.wht_rate) || 0;
-  const split = splitCashReceived(amount, vat_rate, wht_rate);
-  const vat_amt = split.vat;
-  const base_amt = split.base;   // snapshot ฐาน ณ วันออกใบ — หน้าพิมพ์ห้ามคำนวณเอง (เอกสารภาษีต้องนิ่ง)
-  const wht_amt = split.wht;
+  // ── แยกเงินสดที่รับ → ฐาน / VAT / หัก ณ ที่จ่าย ──
+  //   งวด booked (โมเดลค่าแรง 17 ก.ค.) → อ่าน base/vat/wht ของงวดตรง ๆ (WHT อยู่งวดค่าแรงงวดเดียว งวดค่าของ wht=0)
+  //   งวดเก่า/ทั้งใบ → splitCashReceived gross-up ระดับใบเหมือนเดิม (amount เป็นยอดหลัง WHT · ฐาน=A/(1+r−w))
+  //   ⚠ WHT ไม่ลดฐาน VAT (ม.50/69 ทวิ) · หน้าพิมพ์ห้ามคิดเอง (เอกสารภาษีต้องนิ่ง)
+  let vat_amt: number, base_amt: number, wht_amt: number, wht_rate: number, vatRateUsed: number;
+  if (bookedTax) {
+    base_amt = bookedTax.base; vat_amt = bookedTax.vat; wht_amt = bookedTax.wht;
+    wht_rate = bookedTax.wht_rate; vatRateUsed = bookedTax.vat_rate;
+  } else {
+    wht_rate = Number(bn.wht_rate) || 0;
+    const split = splitCashReceived(amount, vat_rate, wht_rate);
+    vat_amt = split.vat; base_amt = split.base; wht_amt = split.wht; vatRateUsed = vat_rate;
+  }
   const net = amount; // net = เงินสดที่รับจริงเสมอ (ต้องกระทบยอดกับ finance_entries/statement ได้)
 
   // 3) ออกรหัสอัตโนมัติผ่าน RPC
@@ -120,7 +133,7 @@ export async function POST(req: Request) {
     customer_snapshot: bn.customer_snapshot,
     issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
     amount,
-    vat_rate,
+    vat_rate: vatRateUsed,
     vat_amt,
     net,
     payment_method,

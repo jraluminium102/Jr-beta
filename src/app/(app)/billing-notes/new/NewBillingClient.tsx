@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht, suggestInstallments, computeTotals } from "@/lib/money";
+import { baht, suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
 import type { AvailableQuotation } from "./page";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,20 +40,38 @@ export default function NewBillingClient({
   const [disc, setDisc] = useState(0);
   const [vat, setVat] = useState(7);
   const [wht, setWht] = useState(0);
+  // ค่าแรง (17 ก.ค.69) — หัก ณ ที่จ่ายเฉพาะค่าแรง · กรอกบาทหรือ% · เงินประกันงวดสุดท้าย (แล้วแต่งาน)
+  const [laborMode, setLaborMode] = useState<"baht" | "pct">("baht");
+  const [laborBaht, setLaborBaht] = useState("");
+  const [laborPct, setLaborPct] = useState("");
+  const [hasRetention, setHasRetention] = useState(false);
   useEffect(() => {
     if (!selected) return;
     const hasSub = Number(selected.subtotal) > 0;
     setDisc(hasSub ? Number(selected.discount_pct) || 0 : 0);
     setVat(hasSub ? Number(selected.vat_rate) || 0 : 0);
     setWht(hasSub ? Number(selected.wht_rate) || 0 : 0);
+    setLaborBaht(""); setLaborPct(""); setHasRetention(false);
   }, [selected]);
 
+  // ใส่ค่าแรงเฉพาะเมื่อมี WHT (ค่าแรง = ฐาน WHT) · locked → ไม่คิดภาษี
+  const laborActive = !locked && wht > 0;
+  const laborInput = laborActive
+    ? (laborMode === "baht" && laborBaht !== "" ? { labor_amount: Number(laborBaht) }
+      : laborMode === "pct" && laborPct !== "" ? { labor_pct: Number(laborPct) } : {})
+    : {};
   // เมื่อ locked บังคับ vat/wht/disc = 0 ให้ตรงกับ API (net = ยอดล้วน)
   const t = useMemo(
-    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: locked ? 0 : vat, discount_pct: locked ? 0 : disc, wht_rate: locked ? 0 : wht }),
-    [base, vat, disc, wht, locked]
+    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: locked ? 0 : vat, discount_pct: locked ? 0 : disc, wht_rate: locked ? 0 : wht, ...laborInput }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [base, vat, disc, wht, locked, laborMode, laborBaht, laborPct]
   );
-  const plan = useMemo(() => (selected ? suggestInstallments(t.net) : []), [selected, t.net]);
+  const plan = useMemo(() => {
+    if (!selected) return [] as { seq: number; label: string; amount: number }[];
+    if (t.labor_amt > 0.005) return planInstallments({ material_amt: t.material_amt, labor_amt: t.labor_amt, vat_rate: locked ? 0 : vat, wht_rate: locked ? 0 : wht, hasRetention }).installments;
+    return suggestInstallments(t.net);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, t, vat, wht, hasRetention, locked]);
 
   async function submit() {
     // synchronous guard — กัน double-tap / กดรัว
@@ -76,7 +94,12 @@ export default function NewBillingClient({
       const res = await fetch("/api/billing-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht }),
+        body: JSON.stringify({
+          quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht,
+          ...(laborActive && laborMode === "baht" && laborBaht !== "" ? { labor_amount: Number(laborBaht) } : {}),
+          ...(laborActive && laborMode === "pct" && laborPct !== "" ? { labor_pct: Number(laborPct) } : {}),
+          has_retention: hasRetention,
+        }),
       });
       const json = await res.json();
       if (!res.ok) { setErr(json.error ?? "สร้างไม่สำเร็จ"); return; }
@@ -200,10 +223,55 @@ export default function NewBillingClient({
                   </span>
                   <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
                 </label>
-                <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
-              </div>
 
-              {/* หมายเหตุ: แยกค่าของ/ค่าแรง เลือกตอนพิมพ์แต่ละงวดที่หน้าใบพิมพ์ (ปุ่มรูปแบบท้ายใบ) */}
+                {/* ค่าแรง (ฐานหัก ณ ที่จ่าย) — โชว์เมื่อมี WHT · หัก 3% เฉพาะค่าแรง (17 ก.ค.69) */}
+                {laborActive && (
+                  <div className="rounded-lg bg-sky-50 border border-sky-200 px-2.5 py-2 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-ink-3 flex items-center gap-1.5">ค่าแรง (ฐานหัก ณ ที่จ่าย)
+                        <span className="inline-flex rounded-md overflow-hidden border border-sky-300 text-[11px]">
+                          {(["baht", "pct"] as const).map((m) => (
+                            <button key={m} type="button" onClick={() => setLaborMode(m)}
+                              className={`px-1.5 py-0.5 ${laborMode === m ? "bg-sky-500 text-white" : "bg-white text-ink-3"}`}>{m === "baht" ? "บาท" : "%"}</button>
+                          ))}
+                        </span>
+                      </span>
+                      {laborMode === "baht" ? (
+                        <span className="flex items-center gap-1 tabular-nums">฿
+                          <input type="number" min={0} step="any" value={laborBaht} onChange={(e) => setLaborBaht(e.target.value)}
+                            className="w-24 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ค่าแรง บาท" />
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 tabular-nums">
+                          <input type="number" min={0} max={100} step="any" value={laborPct} onChange={(e) => setLaborPct(e.target.value)}
+                            className="w-14 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ค่าแรง %" />%
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex justify-between text-[12px] text-ink-3">
+                      <span>ค่าของ ฿{baht(t.material_amt)} · ค่าแรง ฿{baht(t.labor_amt)}</span>
+                      <span>หัก 3% เฉพาะค่าแรง = -฿{baht(t.wht_amt)}</span>
+                    </div>
+                    <label className="flex items-center gap-1.5 text-[12px] text-ink-2 cursor-pointer">
+                      <input type="checkbox" checked={hasRetention} onChange={(e) => setHasRetention(e.target.checked)} />
+                      กันเงินประกัน 40,000 เป็นงวดสุดท้าย (แล้วแต่งาน)
+                    </label>
+                    {t.labor_amt <= 0.005 && (laborBaht !== "" || laborPct !== "") && (
+                      <p className="text-[11px] text-amber-700">ค่าแรงเป็น 0 — จะหักทั้งบิลแบบเดิม (กรอกค่าแรงเพื่อหักเฉพาะค่าแรง)</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
+                {/* พรีวิวงวด (ค่าของ → ค่าแรง → เงินประกัน) */}
+                {plan.length > 1 && (
+                  <div className="text-[11.5px] text-ink-3 space-y-0.5 pt-1">
+                    {plan.map((p) => (
+                      <div key={p.seq} className="flex justify-between gap-2"><span className="truncate">{p.label}</span><span className="tabular-nums shrink-0">฿{baht(p.amount)}</span></div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {err && (
                 <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">
