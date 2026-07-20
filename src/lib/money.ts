@@ -17,6 +17,12 @@ export interface MoneyInput {
   // ชนะ discount_pct เสมอ · clamp 0..subtotal · เลิกคิด amt กลับจาก % ทุกที่ (กัน round-trip drift · บัญชีสั่ง)
   discount_amt?: number;
   wht_rate: number; // 0 | 1 | 2 | 3 | 5
+  // ── ค่าแรง (17 ก.ค.69) — หัก ณ ที่จ่ายคิดจาก "ค่าแรงอย่างเดียว" ไม่ใช่ทั้งบิล ──
+  //   labor_amount = ค่าแรงเป็นบาท (authoritative · mirror discount_amt) ชนะ labor_pct · clamp 0..after_discount
+  //   labor_pct    = ค่าแรงเป็น % ของ after_discount (ใช้เมื่อไม่ส่ง labor_amount)
+  //   ⚠ legacy: ไม่ส่งทั้งคู่ = ฐาน WHT ยังเป็นทั้งบิล (after_discount) เหมือนเดิม — กันใบเก่า/golden เดิมพัง
+  labor_amount?: number;
+  labor_pct?: number;
 }
 
 export interface MoneyResult {
@@ -27,6 +33,8 @@ export interface MoneyResult {
   total: number;
   wht_amt: number;
   net: number;
+  labor_amt: number;    // ค่าแรงก่อน VAT ที่ใช้จริง (ฐาน WHT) · 0 ถ้าไม่ระบุ
+  material_amt: number; // ค่าของ = after_discount − labor
 }
 
 export function computeTotals(input: MoneyInput): MoneyResult {
@@ -39,13 +47,22 @@ export function computeTotals(input: MoneyInput): MoneyResult {
     : (subtotal * (Number(input.discount_pct) || 0)) / 100;
   const discount_amt = round2(Math.min(Math.max(0, rawDiscount), subtotal));
   const after_discount = round2(subtotal - discount_amt);
+  // ค่าแรง: โหมดบาทชนะ % · clamp 0..after_discount (WHT คิดจากฐานก่อน VAT หลังส่วนลด · ท.ป.4/2528)
+  const laborProvided = input.labor_amount != null || input.labor_pct != null;
+  const rawLabor = input.labor_amount != null
+    ? (Number(input.labor_amount) || 0)
+    : (after_discount * (Number(input.labor_pct) || 0)) / 100;
+  const labor_amt = round2(Math.min(Math.max(0, rawLabor), after_discount));
+  const material_amt = round2(after_discount - labor_amt);
   // ห้ามปัดเศษกลางทาง (เจ้าของสั่ง 13ก.ค.69): รายการมีทศนิยม → VAT/หัก ณ ที่จ่าย เก็บ 2 ตำแหน่ง (สตางค์)
   // ไม่ปัดบาทเต็ม เพราะทำให้ยอดไม่ตรง (subtotal+VAT≠total) · ปัดเฉพาะตอนโชว์ยอดสุดท้ายถ้าจำเป็น
   const vat_amt = round2((after_discount * (Number(input.vat_rate) || 0)) / 100);
   const total = round2(after_discount + vat_amt);
-  const wht_amt = round2((after_discount * (Number(input.wht_rate) || 0)) / 100);
+  // ⚠ ฐาน WHT: ระบุค่าแรง → หักเฉพาะค่าแรง (17 ก.ค.69) · ไม่ระบุ → ทั้งบิล (legacy · จ้างทำของ 15 ก.ค.)
+  const whtBase = laborProvided ? labor_amt : after_discount;
+  const wht_amt = round2((whtBase * (Number(input.wht_rate) || 0)) / 100);
   const net = round2(total - wht_amt);
-  return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net };
+  return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net, labor_amt, material_amt };
 }
 
 export const lineTotal = (qty: number, unit_price: number) =>
@@ -55,7 +72,9 @@ export const lineTotal = (qty: number, unit_price: number) =>
 // ใช้ computeTotals แหล่งเดียว (เหมือนใบเสนอ) → ยอด/สุทธิ ถูกต้องตามกฎไทย · เก็บ % ไว้โชว์ด้วย
 export function footerSnapshot(
   subtotal: number, discount_pct: number, vat_rate: number, wht_rate: number,
-  discount_amt?: number // โหมดบาท — ถ้าส่งมาใช้ตรง ๆ (authoritative) · ไม่ส่ง = คิดจาก % (เดิม)
+  discount_amt?: number, // โหมดบาท — ถ้าส่งมาใช้ตรง ๆ (authoritative) · ไม่ส่ง = คิดจาก % (เดิม)
+  labor_amount?: number, // ค่าแรงบาท (authoritative) → WHT คิดเฉพาะค่าแรง (17 ก.ค.69) · ไม่ส่ง = ทั้งบิล (legacy)
+  labor_pct?: number,    // ค่าแรง % ของ after_discount (ใช้เมื่อไม่ส่ง labor_amount)
 ): InstallmentFooter {
   const sub = Math.max(0, Number(subtotal) || 0);
   const dp = Math.max(0, Math.min(100, Number(discount_pct) || 0));
@@ -64,6 +83,8 @@ export function footerSnapshot(
   const t = computeTotals({
     items: [{ qty: 1, unit_price: sub }], vat_rate: vr, discount_pct: dp, wht_rate: wr,
     ...(discount_amt != null ? { discount_amt } : {}),
+    ...(labor_amount != null ? { labor_amount } : {}),
+    ...(labor_pct != null ? { labor_pct } : {}),
   });
   return {
     subtotal: t.subtotal, discount_pct: dp, discount_amt: t.discount_amt,

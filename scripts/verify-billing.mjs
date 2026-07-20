@@ -47,6 +47,48 @@ console.log("\n═══ ① computeTotals — ลำดับ (ยอด−ส�
   eq("ส่วนลดเกินยอด → clamp", [t.discount_amt, t.after_discount, t.net], [1000, 0, 0]);
 }
 
+console.log("\n═══ ①-b computeTotals — หัก ณ ที่จ่ายเฉพาะ 'ค่าแรง' (17 ก.ค.69) ═══");
+{
+  // ยอดก่อน VAT 100,000 · ค่าแรง 30,000 (บาท) · VAT7 WHT3 → WHT บน 30,000 = 900, net 106,100
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, wht_rate: 3, labor_amount: 30000 });
+  eq("ค่าแรงบาท → WHT เฉพาะค่าแรง", [t.labor_amt, t.material_amt, t.vat_amt, t.total, t.wht_amt, t.net], [30000, 70000, 7000, 107000, 900, 106100]);
+}
+{
+  // ค่าแรง 30% ของ after_discount → labor 30,000 → เลขเท่ากันเป๊ะ
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, wht_rate: 3, labor_pct: 30 });
+  eq("ค่าแรง % → เท่ากับกรอกบาท", [t.labor_amt, t.wht_amt, t.net], [30000, 900, 106100]);
+}
+{
+  // legacy: ไม่ส่งค่าแรง → WHT ยังเป็นทั้งบิล (เคส ③ เดิม กันพัง)
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, wht_rate: 3 });
+  eq("ไม่ส่งค่าแรง → WHT ทั้งบิล (legacy)", [t.labor_amt, t.wht_amt, t.net], [0, 3000, 104000]);
+}
+{
+  // ค่าแรง = 0 (ส่ง explicit) → ไม่หัก
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, wht_rate: 3, labor_amount: 0 });
+  eq("ค่าแรง 0 → WHT 0", [t.labor_amt, t.wht_amt, t.net], [0, 0, 107000]);
+}
+{
+  // ค่าแรง > after_discount → clamp = after_discount (= จ้างทำของโดยปริยาย)
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, wht_rate: 3, labor_amount: 999999 });
+  eq("ค่าแรงเกินยอด → clamp", [t.labor_amt, t.wht_amt, t.net], [100000, 3000, 104000]);
+}
+{
+  // No-VAT + ค่าแรง 30k → vat 0, wht 900, net 99,100
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 0, discount_pct: 0, wht_rate: 3, labor_amount: 30000 });
+  eq("No-VAT + ค่าแรง → wht เฉพาะค่าแรง", [t.vat_amt, t.total, t.wht_amt, t.net], [0, 100000, 900, 99100]);
+}
+{
+  // ส่วนลด 10k + ค่าแรง 30k → after 90k, material 60k, vat 6300, wht 900, net 95400
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, discount_amt: 10000, wht_rate: 3, labor_amount: 30000 });
+  eq("ส่วนลด + ค่าแรง", [t.after_discount, t.labor_amt, t.material_amt, t.vat_amt, t.total, t.wht_amt, t.net], [90000, 30000, 60000, 6300, 96300, 900, 95400]);
+}
+{
+  // footerSnapshot ส่งค่าแรง → wht เฉพาะค่าแรง
+  const f = footerSnapshot(100000, 0, 7, 3, undefined, 30000);
+  eq("footerSnapshot + ค่าแรง", [f.vat_amt, f.wht_amt, f.net], [7000, 900, 106100]);
+}
+
 console.log("\n═══ ② backoutVat — ถอด VAT จากยอดรวม VAT ═══");
 eq("backout 107,000 @7% → ฐาน 100,000", backoutVat(107000, 7), { base: 100000, vat: 7000 });
 eq("backout @0% = ไม่มี VAT", backoutVat(50000, 0), { base: 50000, vat: 0 });
