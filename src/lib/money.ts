@@ -261,3 +261,97 @@ export function suggestInstallments(net: number): InstallmentPlan[] {
   return mk([g, g, g, g4, RETENTION],
     ["งวด 1/5 (25%)", "งวด 2/5 (25%)", "งวด 3/5 (25%)", "งวด 4/5 (ส่วนที่เหลือ)", "งวด 5/5 (ประกัน 40,000)"]);
 }
+
+// ============================================================
+// planInstallments — แบ่งงวด + ภาษี "booked ต่องวด" (17 ก.ค.69 · accountant design)
+//   หัก ณ ที่จ่ายเฉพาะค่าแรง → WHT กองที่ "งวดค่าแรง" ก้อนเดียว (งวดค่าของ wht=0)
+//   เงินประกัน (retention) = เลื่อนรับเงินฝั่งค่าของ → งวดสุดท้ายจริง (kind=retention, wht=0)
+//   ⚠ ทำงานในโดเมน base (ไม่ใช่ amount): amount = base + vat − wht (นิยาม) →
+//      Σamount=net · Σbase=after_discount · Σvat=vat_total · Σwht=wht_total เป๊ะ (กัน double-round)
+//   accountant เดินเลข 4 เคส (รวมงานใหญ่ 5 งวด) ครบทั้ง 4 invariant · verify-billing section ⑨
+// ============================================================
+export interface InstallmentTaxPlan {
+  seq: number;
+  label: string;
+  amount: number;    // เงินรับจริงของงวด = base + vat − wht
+  base_amt: number;  // ฐานก่อน VAT ของงวด
+  vat_amt: number;
+  wht_amt: number;
+  vat_rate: number;
+  wht_rate: number;
+  kind: "material" | "labor" | "retention";
+}
+
+// จำนวนงวด + สัดส่วน "ฝั่งค่าของ" (ตัดด้วย net คงความคุ้นเดิม) — ปรับจุดเดียวนี้ (เจ้าของ/บัญชีเคาะได้)
+function bracketMaterial(net: number): [number, number[]] {
+  if (net <= 100000) return [1, [1.0]];
+  if (net <= 300000) return [2, [0.6, 0.4]];
+  if (net <= 700000) return [2, [0.5, 0.5]];
+  return [3, [0.4, 0.3, 0.3]];
+}
+
+export function planInstallments(opts: {
+  material_amt: number; labor_amt: number; vat_rate: number; wht_rate: number;
+  hasRetention?: boolean; retention?: number;
+}): { installments: InstallmentTaxPlan[]; retentionApplied: boolean; retentionRequested: boolean } {
+  const material_amt = round2(Math.max(0, Number(opts.material_amt) || 0));
+  const labor_amt = round2(Math.max(0, Number(opts.labor_amt) || 0));
+  const vrRate = Math.max(0, Number(opts.vat_rate) || 0);
+  const wrRate = Math.max(0, Number(opts.wht_rate) || 0);
+  const vr = vrRate / 100, wr = wrRate / 100;
+  const retention = round2(Number(opts.retention) || 40000);
+  const hasRetention = !!opts.hasRetention;
+
+  const after_discount = round2(material_amt + labor_amt);
+  const vat_total = round2(after_discount * vr);
+  const wht_total = round2(labor_amt * wr);   // ฐาน = ค่าแรงล้วน
+  const net = round2(after_discount + vat_total - wht_total);
+
+  // งวดค่าแรง — WHT ทั้งใบกองที่นี่ก้อนเดียว
+  const hasLabor = labor_amt > 0.005;
+  let L: InstallmentTaxPlan | null = null;
+  if (hasLabor) {
+    const base = round2(labor_amt);
+    const vat = round2(labor_amt * vr);
+    L = { seq: 0, label: "", base_amt: base, vat_amt: vat, wht_amt: wht_total, amount: round2(base + vat - wht_total), vat_rate: vrRate, wht_rate: wrRate, kind: "labor" };
+  }
+  const labNet = L ? L.amount : 0;
+  const matNet = round2(net - labNet);
+
+  // งวดเงินประกัน — งวดสุดท้ายจริง, กันจากฝั่งค่าของ, wht=0
+  const useRet = hasRetention && matNet > retention + 0.005;
+  let R: InstallmentTaxPlan | null = null;
+  if (useRet) {
+    const base = vr > 0 ? round2(retention / (1 + vr)) : retention;
+    R = { seq: 0, label: "", base_amt: base, vat_amt: round2(retention - base), wht_amt: 0, amount: retention, vat_rate: vrRate, wht_rate: 0, kind: "retention" };
+  }
+
+  // งวดค่าของย่อย — ปิดยอด base/vat ที่เหลือของฝั่งค่าของ (งวดสุดท้ายอุ้มเศษ)
+  const matBaseSplit = round2(material_amt - (useRet ? R!.base_amt : 0));
+  const matVatSplit = round2(vat_total - (hasLabor ? L!.vat_amt : 0) - (useRet ? R!.vat_amt : 0));
+  const M: InstallmentTaxPlan[] = [];
+  if (matBaseSplit > 0.005) {
+    const [nMat, ratios] = bracketMaterial(net);
+    let accB = 0, accV = 0;
+    for (let i = 0; i < nMat; i++) {
+      let b: number, v: number;
+      if (i < nMat - 1) { b = round2(matBaseSplit * ratios[i]); v = round2(b * vr); }
+      else { b = round2(matBaseSplit - accB); v = round2(matVatSplit - accV); }  // อุ้มเศษ
+      accB = round2(accB + b); accV = round2(accV + v);
+      M.push({ seq: 0, label: "", base_amt: b, vat_amt: v, wht_amt: 0, amount: round2(b + v), vat_rate: vrRate, wht_rate: 0, kind: "material" });
+    }
+  }
+
+  const out: InstallmentTaxPlan[] = [...M];
+  if (L) out.push(L);
+  if (R) out.push(R);
+  const n = out.length;
+  out.forEach((it, i) => {
+    it.seq = i + 1;
+    const p = `${i + 1}/${n}`;
+    it.label = it.kind === "labor" ? `งวด ${p} (ค่าแรง · หัก ณ ที่จ่าย)`
+      : it.kind === "retention" ? `งวด ${p} (เงินประกัน ${retention.toLocaleString("th-TH")})`
+        : `งวด ${p} (ค่าของ)`;
+  });
+  return { installments: out, retentionApplied: useRet, retentionRequested: hasRetention };
+}

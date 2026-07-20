@@ -8,7 +8,7 @@
  */
 import {
   computeTotals, backoutVat, splitCashReceived, footerSnapshot, suggestInstallments,
-  billVatDecision, effectiveBillVat, isNoVatBill,
+  billVatDecision, effectiveBillVat, isNoVatBill, planInstallments,
 } from "../src/lib/money.ts";
 
 let pass = 0, fail = 0;
@@ -221,6 +221,66 @@ console.log("\n═══ ⑧ footerSnapshot — footer ต้องตรง com
 {
   const f = footerSnapshot(100000, 0, 7, 3);
   eq("footer 100k VAT7 WHT3", [f.subtotal, f.vat_amt, f.wht_amt, f.net], [100000, 7000, 3000, 104000]);
+}
+
+console.log("\n═══ ⑨ planInstallments — ค่าแรงงวดสุดท้าย + ภาษี booked ต่องวด (17 ก.ค.69) ═══");
+const cell = (it) => [it.kind, it.amount, it.base_amt, it.vat_amt, it.wht_amt];
+{
+  // เคส A-1: material 70k labor 30k VAT7 WHT3 (ไม่มี retention)
+  const r = planInstallments({ material_amt: 70000, labor_amt: 30000, vat_rate: 7, wht_rate: 3, hasRetention: false });
+  eq("A-1 3 งวด (ของ/ของ/แรง)", r.installments.map(cell), [
+    ["material", 44940, 42000, 2940, 0],
+    ["material", 29960, 28000, 1960, 0],
+    ["labor", 31200, 30000, 2100, 900],
+  ]);
+}
+{
+  // เคส A-2: + retention 40k
+  const r = planInstallments({ material_amt: 70000, labor_amt: 30000, vat_rate: 7, wht_rate: 3, hasRetention: true });
+  eq("A-2 4 งวด (+เงินประกัน งวดสุดท้าย)", r.installments.map(cell), [
+    ["material", 20940, 19570.09, 1369.91, 0],
+    ["material", 13960, 13046.73, 913.27, 0],
+    ["labor", 31200, 30000, 2100, 900],
+    ["retention", 40000, 37383.18, 2616.82, 0],
+  ]);
+}
+{
+  // เคส C: No-VAT · material 50k labor 20k WHT3 → งวดแรง amount < base (หลังหัก WHT)
+  const r = planInstallments({ material_amt: 50000, labor_amt: 20000, vat_rate: 0, wht_rate: 3 });
+  eq("C No-VAT ค่าแรง", r.installments.map(cell), [
+    ["material", 50000, 50000, 0, 0],
+    ["labor", 19400, 20000, 0, 600],
+  ]);
+}
+{
+  // เคสขอบ: labor=0 → ทุกงวด material, wht=0
+  const r = planInstallments({ material_amt: 100000, labor_amt: 0, vat_rate: 7, wht_rate: 3 });
+  eq("labor=0 → ไม่มีงวดค่าแรง", [r.installments.every((i) => i.kind === "material" && i.wht_amt === 0), r.installments.reduce((a, i) => a + i.wht_amt, 0)], [true, 0]);
+}
+{
+  // เคสขอบ: material=0 (ค่าแรงล้วน) → 1 งวด labor · retention ขอแต่ทำไม่ได้
+  const r = planInstallments({ material_amt: 0, labor_amt: 40000, vat_rate: 7, wht_rate: 3, hasRetention: true });
+  eq("material=0 → 1 งวดแรง · retention auto-off", [r.installments.length, r.installments[0].kind, r.retentionApplied], [1, "labor", false]);
+}
+// invariant loop: ทุก combo → Σ ครบ 4 + amount=base+vat−wht ต่องวด
+console.log("   — invariant loop (material×labor×vat×wht×retention) —");
+{
+  let bad = 0, cases = 0;
+  for (const material of [0, 20000, 70000, 600000])
+    for (const labor of [0, 5000, 30000, 100000])
+      for (const vr of [0, 7])
+        for (const wr of [0, 3])
+          for (const ret of [false, true]) {
+            cases++;
+            const c = computeTotals({ items: [{ qty: 1, unit_price: material + labor }], vat_rate: vr, discount_pct: 0, wht_rate: wr, labor_amount: labor });
+            const r = planInstallments({ material_amt: c.material_amt, labor_amt: c.labor_amt, vat_rate: vr, wht_rate: wr, hasRetention: ret });
+            const s = r.installments.reduce((a, i) => ({ amt: a.amt + i.amount, base: a.base + i.base_amt, vat: a.vat + i.vat_amt, wht: a.wht + i.wht_amt }), { amt: 0, base: 0, vat: 0, wht: 0 });
+            const rr = (n) => Math.round(n * 100) / 100;
+            const perItem = r.installments.every((i) => Math.abs(i.amount - (i.base_amt + i.vat_amt - i.wht_amt)) <= 0.01);
+            if (Math.abs(rr(s.amt) - c.net) > 0.01 || Math.abs(rr(s.base) - c.after_discount) > 0.01 ||
+                Math.abs(rr(s.vat) - c.vat_amt) > 0.01 || Math.abs(rr(s.wht) - c.wht_amt) > 0.01 || !perItem) bad++;
+          }
+  eq(`invariant ครบทุก combo (${cases} เคส)`, bad, 0);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
