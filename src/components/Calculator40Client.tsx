@@ -58,6 +58,15 @@ const COLOR_LABEL: Record<string, string> = {
 const aluColorLine = (color: string): string =>
   `- อลูมิเนียม สี${ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color}`;
 
+// คำใบเสนอกระจก (เจ้าของสั่ง 17 ก.ค.69): "เขียว 6มม." → "- กระจกเขียว หนา 6 มม." (ทุกชนิดใช้ฟอร์มเดียวกัน)
+//   แทนความหนา "Nมม." เป็น "หนา N มม." แล้วนำหน้าด้วย "กระจก" · สร้าง 2 ที่ (ห้องกระจก + รายการปกติ) ต้องตรงกัน
+const glassLine = (glassType: string): string => {
+  const s = String(glassType ?? "").trim();
+  if (!s) return "- กระจก —";
+  const withThk = s.replace(/\s*(\d+(?:\.\d+)?)\s*มม\.?/g, " หนา $1 มม.").replace(/\s+/g, " ").trim();
+  return `- กระจก${withThk}`;
+};
+
 // สเปก label-only ที่เป็น "ค่ามาตรฐาน" → ไม่ต้องพิมพ์ลงใบ [specOpt key, ค่าที่จะซ่อน]
 // เจ้าของสั่งซ่อนเพิ่มได้เรื่อย ๆ — เติมคู่ใหม่ที่นี่
 const SKIP_SPEC_DETAIL: [string, string][] = [
@@ -456,7 +465,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (rt.svc > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(rt.svc)}฿)` : ""}`);
       lines.push("รายละเอียดงาน");
       lines.push(aluColorLine(color));
-      lines.push(`- กระจก: ${glassType || "—"}`);
+      lines.push(glassLine(glassType));
       (rt.specLines ?? []).forEach((s) => lines.push(`- ${s}`)); // มุ้ง / หลังคา / รางน้ำ ฯลฯ
       pushQuoteItem({
         name: prod.name,
@@ -527,7 +536,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     });
     // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
     const jobLines = [aluColorLine(color)];
-    if (glassType) jobLines.push(`- กระจก: ${glassType}`);
+    if (glassType) jobLines.push(glassLine(glassType));
     if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
