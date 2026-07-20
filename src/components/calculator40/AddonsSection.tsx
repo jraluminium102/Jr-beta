@@ -587,25 +587,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
       </Field>
     );
   }
-  if (ad === "solid_panel") {
-    const g = A.solid_panel || {};
-    const h = g.h ?? 0.8; // default 0.8 ม. (ตรงเครื่องเดิม) — กว้าง = กว้างบานอัตโนมัติ ไม่ต้องกรอก
-    return (
-      <Field label="แผ่นทึบล่าง" hint="(กว้าง = กว้างบานอัตโนมัติ · กรอกแค่ความสูง)">
-        <div className="space-y-2">
-          {/* เลือกชนิด → set สูง 0.8 ทันที เพื่อให้คิดราคาเลย (กว้างมาจากกว้างบานใน engine) */}
-          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "corr", label: "อลูลูกฟูก 3,500/ตร.ม." }, { val: "comp", label: "คอมโพสิต 3,300/ตร.ม." }]}
-            value={g.type || "none"}
-            onChange={(v) => setObj("solid_panel", v === "none" ? { type: "none" } : { type: v, h })} />
-          {g.type && g.type !== "none" && (
-            <Field label="ความสูงแผ่นล่าง (ม.)" hint="· เว้น = 0.8 ม.">
-              <NumberInput value={h} onChange={(v) => setObj("solid_panel", { h: v || 0.8 })} step={0.1} />
-            </Field>
-          )}
-        </div>
-      </Field>
-    );
-  }
+  // (ลบ branch solid_panel เก่าที่ซ้ำ/unreachable แล้ว — ใช้ตัวใหม่ด้านบน L207 ที่มีช่องกว้าง/สูงแผ่น · QA 17ก.ค.69)
   if (ad === "soft_close") {
     return (
       <Field label="Soft Close (หน่วงบาน)">

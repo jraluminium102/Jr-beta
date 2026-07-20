@@ -34,6 +34,8 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   const writable = canWrite(profile?.role);
   const canVoid = can((profile?.role ?? "VIEWER") as Role, "finance", "void");
   const isCancelled = bn.status === "cancelled";
+  // บิลค่าแรง (labor_amt ตั้งไว้ · ภาษี booked ต่องวด) — ซ่อนปุ่มแก้ยอด/VAT/งวด (re-split จะทำภาษีต่องวดเพี้ยน)
+  const laborBill = (bn as unknown as { labor_amt?: number | null }).labor_amt != null;
   // ป้ายสถานะที่แสดง: ใช้ override ถ้ามี (display_status) ไม่งั้นใช้สถานะจริง
   const effStatus: BillingStatus = (bn.display_status ?? bn.status) as BillingStatus;
   const statusOverridden = !!bn.display_status && bn.display_status !== bn.status;
@@ -103,14 +105,16 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           <Link href={`/billing-notes/${bn.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
-          {writable && !isCancelled && !hasAnyPayment && (
+          {/* บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — ซ่อนปุ่มแก้ยอด/VAT/งวด
+              (RPC re-split ยังไม่รักษาภาษีต่องวด · server บล็อกอีกชั้น · ต้องยกเลิกแล้วออกใหม่ถ้าจะแก้) */}
+          {writable && !isCancelled && !hasAnyPayment && !laborBill && (
             <EditBillingTotalButton
               billingNoteId={bn.id}
               currentTotal={bn.total}
             />
           )}
           {/* แก้ VAT/ส่วนลด (footer) — โผล่ถ้าใบเสนอต้นทางมียอดก่อนภาษีจริง และยังไม่จ่าย (ฐานมาจากใบเสนอ) */}
-          {writable && !isCancelled && !hasAnyPayment && quoteBase && editDefaults && (
+          {writable && !isCancelled && !hasAnyPayment && !laborBill && quoteBase && editDefaults && (
             <EditBillingBreakdownButton
               billingNoteId={bn.id}
               subtotal={quoteBase.subtotal}
@@ -119,13 +123,16 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
               wht_rate={editDefaults.wht_rate}
             />
           )}
-          {writable && !isCancelled && (
+          {writable && !isCancelled && !laborBill && (
             <InstallmentEditor
               billingNoteId={bn.id}
               total={bn.total}
               initialInstallments={installments}
               hasAnyPayment={hasAnyPayment}
             />
+          )}
+          {writable && !isCancelled && laborBill && (
+            <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">บิลค่าแรง — แก้งวด/VAT ไม่ได้ (ยกเลิกแล้วออกใหม่)</span>
           )}
           {writable && !isCancelled && (
             <EditDocHeaderModal endpoint={`/api/billing-notes/${bn.id}/header`} snapshot={c} />

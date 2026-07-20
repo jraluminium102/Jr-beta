@@ -30,19 +30,15 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
   // 1) ดึงใบวางบิล + งวดปัจจุบัน
   const { data: bn, error: bnErr } = await ctx.supabase
     .from("billing_notes")
-    .select("id, total, status, billing_installments(*)")
+    .select("id, total, status, labor_amt, billing_installments(*)")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .eq("id", bnId)
-    .single<{
-      id: number;
-      total: number;
-      status: string;
-      billing_installments: {
-        id: number; seq: number; status: string; paid_amount: number;
-        billing_installment_id?: number;
-      }[];
-    }>();
+    .single<any>();
   if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
   if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว", 409);
+  // 🔴 บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — RPC re-split ยังไม่รักษาภาษีต่องวด
+  //    แก้งวดจะล้าง base/vat/wht ต่องวด → ใบเสร็จหักผิด (หักงวดค่าของด้วย) · บล็อกไว้ก่อน (ต้องยกเลิกแล้วออกใหม่)
+  if (bn.labor_amt != null) return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) ปรับงวดไม่ได้ — ต้องยกเลิกใบวางบิลแล้วออกใหม่ (กันภาษีต่องวดเพี้ยน)", 409);
 
   const total = Number(bn.total) || 0;
 

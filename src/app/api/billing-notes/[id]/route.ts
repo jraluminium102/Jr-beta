@@ -77,11 +77,14 @@ export const PATCH = withRoute(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, vat_rate_set, labor_ratio, quotation_id, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, vat_rate_set, labor_ratio, labor_amt, quotation_id, status, billing_installments(id, status, paid_amount)")
       .eq("id", bnId)
       .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
     if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว แก้ยอดไม่ได้", 409);
+    // 🔴 บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — re-split (โหมด A/B) จะล้างภาษีต่องวด → ใบเสร็จหักผิด
+    //    บล็อกไว้ก่อน (RPC ยังไม่รองรับ labor-split re-split) · ต้องยกเลิกใบวางบิลแล้วออกใหม่
+    if (bn.labor_amt != null) return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) แก้ยอด/ส่วนลด/VAT/งวดไม่ได้ — ต้องยกเลิกใบวางบิลแล้วออกใหม่ (กันภาษีต่องวดเพี้ยน)", 409);
 
     // breakdown เดิม (สำหรับ rollback) — คืนให้ครบทุกคอลัมน์ ไม่ใช่แค่ total
     const oldBreakdown = {

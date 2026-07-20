@@ -24,11 +24,14 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
   // โหลดงวดเดิมไว้ audit (oldValue)
   const { data: bn, error: bnErr } = await ctx.supabase
     .from("billing_notes")
-    .select("id, status, billing_installments(*)")
+    .select("id, status, labor_amt, billing_installments(*)")
     .eq("id", params.id)
-    .single<{ id: number; status: string; billing_installments: unknown[] }>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .single<any>();
   if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
   if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว", 409);
+  // 🔴 บิลค่าแรง — RPC ยังไม่รักษาภาษี booked ต่องวด → บล็อกการปรับงวด (กันใบเสร็จหัก ณ ที่จ่ายผิด)
+  if (bn.labor_amt != null) return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) ปรับงวดไม่ได้ — ต้องยกเลิกใบวางบิลแล้วออกใหม่ (กันภาษีต่องวดเพี้ยน)", 409);
 
   const sb = ctx.supabase as unknown as {
     rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;

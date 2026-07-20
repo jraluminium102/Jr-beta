@@ -69,6 +69,8 @@ export async function POST(req: Request) {
   // กันออกใบเสร็จซ้ำงวดที่ปิดแล้ว และกันรับเกินยอดคงเหลือ (รองรับจ่ายบางส่วน)
   // ภาษี booked ต่องวด (0102) — ถ้างวดมี base_amt = โมเดลค่าแรง (17 ก.ค.) → ใบเสร็จอ่านของงวดตรง ๆ ไม่ถอดใหม่
   let bookedTax: { base: number; vat: number; wht: number; vat_rate: number; wht_rate: number } | null = null;
+  // อัตราภาษี booked ของงวด (0102) — ใช้ตอน fallback ด้วย: งวดค่าของ wht_rate=0 ต้องไม่หัก แม้ยอดรับไม่ตรงเป๊ะ (พนักงานพิมพ์ยอดกลม)
+  let instBookedRates: { vat_rate: number; wht_rate: number } | null = null;
   if (body.installment_id) {
     const { data: inst, error: instErr } = await supabase
       .from("billing_installments")
@@ -99,9 +101,10 @@ export async function POST(req: Request) {
     if (amount <= 0) return fail("ไม่พบยอดเงินที่รับจริงของงวดนี้ — ตรวจสอบการบันทึกชำระก่อน", 409);
     // ภาษี booked ต่องวด (0102) — ใช้เมื่อ base_amt ตั้งไว้ + เงินรับตรงกับงวด (จ่ายเต็มงวด) → อ่านตรง ไม่ถอดใหม่
     if (inst.base_amt != null) {
+      instBookedRates = { vat_rate: Number(inst.vat_rate) || 0, wht_rate: Number(inst.wht_rate) || 0 };
       const bookedAmt = round2(Number(inst.base_amt) + Number(inst.vat_amt) - Number(inst.wht_amt));
       if (Math.abs(bookedAmt - amount) <= 0.01) {
-        bookedTax = { base: round2(Number(inst.base_amt)), vat: round2(Number(inst.vat_amt)), wht: round2(Number(inst.wht_amt)), vat_rate: Number(inst.vat_rate) || 0, wht_rate: Number(inst.wht_rate) || 0 };
+        bookedTax = { base: round2(Number(inst.base_amt)), vat: round2(Number(inst.vat_amt)), wht: round2(Number(inst.wht_amt)), vat_rate: instBookedRates.vat_rate, wht_rate: instBookedRates.wht_rate };
       }
     }
   }
@@ -115,9 +118,11 @@ export async function POST(req: Request) {
     base_amt = bookedTax.base; vat_amt = bookedTax.vat; wht_amt = bookedTax.wht;
     wht_rate = bookedTax.wht_rate; vatRateUsed = bookedTax.vat_rate;
   } else {
-    wht_rate = Number(bn.wht_rate) || 0;
-    const split = splitCashReceived(amount, vat_rate, wht_rate);
-    vat_amt = split.vat; base_amt = split.base; wht_amt = split.wht; vatRateUsed = vat_rate;
+    // งวด booked ที่ยอดรับไม่ตรงเป๊ะ → ยังใช้ "อัตราของงวด" (งวดค่าของ wht=0 จะไม่หัก) · งวดเก่า → อัตราของใบ
+    wht_rate = instBookedRates ? instBookedRates.wht_rate : (Number(bn.wht_rate) || 0);
+    const effVat = instBookedRates ? instBookedRates.vat_rate : vat_rate;
+    const split = splitCashReceived(amount, effVat, wht_rate);
+    vat_amt = split.vat; base_amt = split.base; wht_amt = split.wht; vatRateUsed = effVat;
   }
   const net = amount; // net = เงินสดที่รับจริงเสมอ (ต้องกระทบยอดกับ finance_entries/statement ได้)
 
