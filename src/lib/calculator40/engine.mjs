@@ -114,12 +114,20 @@ export function computeCost(PB, prod, opt) {
   }
 
   // (2) กระจก = พื้นที่กระจก × ฿/ตร.ม.
-  let glassCost = 0, glassArea = 0;
+  //   #1 (เจ้าของ 17ก.ค.69): เลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" → ไม่คิดกระจก · คิดแผ่นแบบ sell-based (เท่า solid_panel 3300/3500)
+  let glassCost = 0, glassArea = 0, panelSell = 0;
+  const isPanelGlass = glassType === 'แผ่นคอมโพสิต' || glassType === 'แผ่นลูกฟูก';
   if (prod.glass) {
     glassArea = val(prod.glass);
-    const gp = PB.GLASS[glassType] ?? 0;
-    glassCost = glassArea * gp;
-    lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
+    if (isPanelGlass) {
+      const rate = glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500;
+      panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
+      // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
+    } else {
+      const gp = PB.GLASS[glassType] ?? 0;
+      glassCost = glassArea * gp;
+      lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
+    }
   }
 
   // (3) อุปกรณ์ + วัสดุสิ้นเปลือง (คงที่)
@@ -371,6 +379,8 @@ export function computeCost(PB, prod, opt) {
   // (6b) ค่าทาสีผนังเพิ่มเติม (R3.9 wallpaintprice · กรอกมือ · sell-based · default 0 = ไม่มีผล) — ผนัง G3
   const _wpp = +((opt.spec || {}).wallpaintprice) || 0;
   if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp }); addonTotal += _wpp; addonSellImplicit += _wpp; }
+  // #1 แผ่นคอมโพสิต/ลูกฟูก แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
+  if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
   if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
   // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
   const addonCost = round2(addonCostExplicit + addonSellImplicit / (1 + (profitPct || 100) / 100));

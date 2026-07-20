@@ -204,6 +204,39 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
       </Field>
     );
   }
+  if (ad === "solid_panel") {
+    // บานล่างทึบ คอมโพสิต/ลูกฟูก (เจ้าของเคาะ 17ก.ค.69 · ประตู custom ล่างทึบบนกระจก) — engine solid_panel
+    const g = A.solid_panel || {};
+    const t = g.type || "none";
+    const pw = +g.w > 0 ? +g.w : (W || 0);
+    const ph = +g.h || 0;
+    const rate = t === "comp" ? 3300 : 3500;
+    return (
+      <Field label="บานล่างทึบ (คอมโพสิต/ลูกฟูก แทนกระจกช่วงล่าง)">
+        <ChipRow
+          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: "อลูลูกฟูก (3,500/ตร.ม.)" }]}
+          value={t} onChange={(v) => setObj("solid_panel", { type: v })}
+        />
+        {t !== "none" && (
+          <>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <div className="text-[11px] text-ink-3 mb-0.5">กว้างแผ่น (ม. · เว้น=กว้างบาน {fmtNum(W || 0)})</div>
+                <NumberInput value={g.w || 0} onChange={(v) => setObj("solid_panel", { w: v })} placeholder={fmtNum(W || 0)} />
+              </div>
+              <div>
+                <div className="text-[11px] text-ink-3 mb-0.5">สูงแผ่นล่าง (ม.)</div>
+                <NumberInput value={g.h || 0} onChange={(v) => setObj("solid_panel", { h: v })} placeholder="0" />
+              </div>
+            </div>
+            {ph > 0
+              ? <p className="text-[11px] text-ink-3 mt-1.5">แผ่น {fmtNum(pw)}×{fmtNum(ph)} = {fmtNum(pw * ph)} ตร.ม. × {rate} = {fmt(pw * ph * rate)} บาท</p>
+              : <p className="text-[11px] text-amber-600 mt-1.5">กรอกสูงแผ่นล่าง (ม.) เพื่อคิดราคา</p>}
+          </>
+        )}
+      </Field>
+    );
+  }
   // ── หมวด 🤚 มือจับ — รวมกล่องเดียว ตรง app.js renderHandleSection: เลือกชนิด → โชว์รุ่นของชนิดนั้น (มือจับชนิดเดียวต่อบาน) ──
   if (ad === "cmech" || ad === "stainless" || ad === "digihandle") {
     // AddonsSection เรียก AddonField ต่อ id — ให้ id แรกที่เจอใน list (ตามลำดับ HANDLE_ADDONS) เป็นตัวเรนเดอร์กล่องรวม กันซ้ำ 3 กล่อง

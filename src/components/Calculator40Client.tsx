@@ -63,6 +63,9 @@ const aluColorLine = (color: string): string =>
 const glassLine = (glassType: string): string => {
   const s = String(glassType ?? "").trim();
   if (!s) return "- กระจก —";
+  // #1 (17ก.ค.69): แผ่นคอมโพสิต/ลูกฟูก แทนกระจก → ไม่ขึ้นคำว่า "กระจก" (ไม่คิดกระจกอยู่แล้ว)
+  if (s === "แผ่นคอมโพสิต") return "- แผ่นคอมโพสิต แทนกระจก";
+  if (s === "แผ่นลูกฟูก") return "- แผ่นอลูลูกฟูก แทนกระจก";
   const withThk = s.replace(/\s*(\d+(?:\.\d+)?)\s*มม\.?/g, " หนา $1 มม.").replace(/\s+/g, " ").trim();
   return `- กระจก${withThk}`;
 };
@@ -232,10 +235,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  // เพิ่ม add-on "งานไฟ" (elec) ให้ทุกประเภทงาน (เจ้าของสั่ง 17ก.ค.69) — augment ที่ชั้น app
-  //   ไม่แตะ products.mjs/verify-r40 (raw PRODUCTS ไม่มี elec) · elec ไม่ถูกเลือก → computeAddon คืน null = ราคาไม่ขยับ
+  // เพิ่ม add-on universal "งานไฟ"(elec) + "บานล่างทึบ"(solid_panel) ให้ทุกประเภทงาน (เจ้าของสั่ง 17ก.ค.69) — augment ที่ชั้น app
+  //   ไม่แตะ products.mjs/verify-r40 (raw PRODUCTS ไม่มี) · ไม่ถูกเลือก → computeAddon คืน null = ราคาไม่ขยับ
   const prodRaw: any = (PRODUCTS as any)[prodId];
-  const prod: any = prodRaw ? { ...prodRaw, addons: (prodRaw.addons || []).includes("elec") ? prodRaw.addons : [...(prodRaw.addons || []), "elec"] } : prodRaw;
+  const prod: any = prodRaw
+    ? { ...prodRaw, addons: [...(prodRaw.addons || []), ...["elec", "solid_panel"].filter((u) => !(prodRaw.addons || []).includes(u))] }
+    : prodRaw;
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
@@ -412,7 +417,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals]);
 
   const ok = result && !("error" in result);
-  const glassKeys = useMemo(() => Object.keys((pb.GLASS ?? {}) as Record<string, number>), [pb]);
+  // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
+  const glassKeys = useMemo(() => [...Object.keys((pb.GLASS ?? {}) as Record<string, number>), "แผ่นคอมโพสิต", "แผ่นลูกฟูก"], [pb]);
 
   // "สูตร" ของข้อปัจจุบัน (0093) — เก็บทุก input เพื่อโหลดกลับมาแก้ทีหลัง (คลิก ✏️ ในรายการ)
   function buildRecipe(): any {
