@@ -5,17 +5,23 @@ import { Card, StatusBadge } from "@/components/ui";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import { getDocCutoff } from "@/lib/doc-cutoff";
+import { TestDocsToggle } from "@/components/TestDocsToggle";
 import type { QuotationStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuotationsPage() {
+export default async function QuotationsPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
   const profile = await getProfile();
+  const includeTest = searchParams?.includeTest === "1";
+  const cutoff = includeTest ? "" : await getDocCutoff();
   const supabase = createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("quotations")
     .select("id, code, customer_snapshot, issue_date, status, net, job_id, jobs:job_id(job_code, floor_work, floor_note)")
     .order("created_at", { ascending: false });
+  if (cutoff) q = q.gte("issue_date", cutoff);
+  const { data } = await q;
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
@@ -33,11 +39,14 @@ export default async function QuotationsPage() {
           ใบเสนอราคา
           <span className="text-xs font-normal text-ink-3">(เริ่มจากการคิดราคาเสมอ)</span>
         </h1>
-        {canWrite(profile?.role) && (
-          <Link href="/calculator" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
-            <Icon name="calculator" size={16} /> คิดราคา + สร้างใบเสนอ
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <TestDocsToggle cutoff={cutoff} includeTest={includeTest} basePath="/quotations" />
+          {canWrite(profile?.role) && (
+            <Link href="/calculator" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+              <Icon name="calculator" size={16} /> คิดราคา + สร้างใบเสนอ
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card className="p-5">

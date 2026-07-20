@@ -2,18 +2,23 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { computeTotals, lineTotal } from "@/lib/money";
+import { getDocCutoff } from "@/lib/doc-cutoff";
 import type { Customer } from "@/lib/types";
 
-// GET /api/quotations  → รายการใบเสนอราคา
-export async function GET() {
+// GET /api/quotations  → รายการใบเสนอราคา (ซ่อนเอกสารทดสอบก่อนวันตัด · ?includeTest=1 โชว์ทั้งหมด)
+export async function GET(req: Request) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
 
+  const includeTest = new URL(req.url).searchParams.get("includeTest") === "1";
+  const cutoff = includeTest ? "" : await getDocCutoff();
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("quotations")
     .select("id, code, customer_snapshot, issue_date, status, net, created_at, job_id, jobs:job_id(job_code)")
     .order("created_at", { ascending: false });
+  if (cutoff) query = query.gte("issue_date", cutoff);
+  const { data, error } = await query;
   if (error) return fail(error.message, 500);
   return ok(data);
 }

@@ -4,20 +4,25 @@ import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { applyInstallmentPayment } from "@/lib/billing";
 import { effectiveBillVat, splitCashReceived } from "@/lib/money";
+import { getDocCutoff } from "@/lib/doc-cutoff";
 import type { BillingNote } from "@/lib/types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-// GET /api/receipts  → รายการใบเสร็จ/ใบกำกับภาษี
-export async function GET() {
+// GET /api/receipts  → รายการใบเสร็จ/ใบกำกับภาษี (ซ่อนเอกสารทดสอบก่อนวันตัด · ?includeTest=1 โชว์ทั้งหมด)
+export async function GET(req: Request) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
 
+  const includeTest = new URL(req.url).searchParams.get("includeTest") === "1";
+  const cutoff = includeTest ? "" : await getDocCutoff();
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("receipts")
     .select("id, code, customer_snapshot, issue_date, net, payment_method, created_at, is_voided")
     .order("created_at", { ascending: false });
+  if (cutoff) query = query.gte("issue_date", cutoff);
+  const { data, error } = await query;
   if (error) return fail(error.message, 500);
   return ok(data);
 }

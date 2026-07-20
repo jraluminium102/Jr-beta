@@ -4,6 +4,8 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import { getDocCutoff } from "@/lib/doc-cutoff";
+import { TestDocsToggle } from "@/components/TestDocsToggle";
 import { BILLING_STATUS_LABEL, type BillingStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +14,17 @@ const STATUS_TONE: Record<BillingStatus, "gray" | "amber" | "emerald" | "red"> =
   unpaid: "gray", partial: "amber", paid: "emerald", cancelled: "red",
 };
 
-export default async function BillingNotesPage() {
+export default async function BillingNotesPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
   const profile = await getProfile();
+  const includeTest = searchParams?.includeTest === "1";
+  const cutoff = includeTest ? "" : await getDocCutoff();
   const supabase = createClient();
-  const { data } = await supabase
+  let bq = supabase
     .from("billing_notes")
     .select("id, code, customer_snapshot, issue_date, total, status, created_at")
     .order("created_at", { ascending: false });
+  if (cutoff) bq = bq.gte("issue_date", cutoff);
+  const { data } = await bq;
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
@@ -34,11 +40,14 @@ export default async function BillingNotesPage() {
           </span>
           ใบวางบิล
         </h1>
-        {canWrite(profile?.role) && (
-          <Link href="/billing-notes/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
-            <Icon name="plus" size={16} /> สร้างใบวางบิล
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <TestDocsToggle cutoff={cutoff} includeTest={includeTest} basePath="/billing-notes" />
+          {canWrite(profile?.role) && (
+            <Link href="/billing-notes/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+              <Icon name="plus" size={16} /> สร้างใบวางบิล
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card className="p-5">

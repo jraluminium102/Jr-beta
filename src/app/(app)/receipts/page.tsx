@@ -4,6 +4,8 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import { getDocCutoff } from "@/lib/doc-cutoff";
+import { TestDocsToggle } from "@/components/TestDocsToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +13,17 @@ const PAYMENT_LABEL: Record<string, string> = {
   transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค", other: "อื่นๆ",
 };
 
-export default async function ReceiptsPage() {
+export default async function ReceiptsPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
   const profile = await getProfile();
+  const includeTest = searchParams?.includeTest === "1";
+  const cutoff = includeTest ? "" : await getDocCutoff();
   const supabase = createClient();
-  const { data } = await supabase
+  let rq = supabase
     .from("receipts")
     .select("id, code, customer_snapshot, issue_date, net, payment_method, is_voided")
     .order("created_at", { ascending: false });
+  if (cutoff) rq = rq.gte("issue_date", cutoff);
+  const { data } = await rq;
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
@@ -33,7 +39,8 @@ export default async function ReceiptsPage() {
           </span>
           ใบเสร็จ / ใบกำกับภาษี
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <TestDocsToggle cutoff={cutoff} includeTest={includeTest} basePath="/receipts" />
           <Link href="/receipts/summary" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สรุปรายเดือน
           </Link>
