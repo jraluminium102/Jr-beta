@@ -37,7 +37,9 @@ export default function NewBillingClient({
   // locked = ใบเสนอ import เก่าที่ไม่มี subtotal → net เป็นยอด "หลัง VAT" แล้ว · ถือเป็นยอดล้วน ปรับภาษีไม่ได้ (กันคิด VAT ซ้ำ)
   const locked = !(Number(selected?.subtotal) > 0);
   const base = locked ? (Number(selected?.net) || 0) : Number(selected?.subtotal) || 0;
-  const [disc, setDisc] = useState(0);
+  const [disc, setDisc] = useState(0);            // ส่วนลด %
+  const [discAmt, setDiscAmt] = useState("");     // ส่วนลดเป็นบาท (authoritative เมื่อ discMode='baht' · ไม่แปลงกลับเป็น % กัน drift)
+  const [discMode, setDiscMode] = useState<"pct" | "baht">("pct");
   const [vat, setVat] = useState(7);
   const [wht, setWht] = useState(0);
   // ค่าแรง (17 ก.ค.69) — หัก ณ ที่จ่ายเฉพาะค่าแรง · กรอกบาทหรือ% · เงินประกันงวดสุดท้าย (แล้วแต่งาน)
@@ -48,7 +50,11 @@ export default function NewBillingClient({
   useEffect(() => {
     if (!selected) return;
     const hasSub = Number(selected.subtotal) > 0;
+    // สืบส่วนลดจากใบเสนอ: ถ้ากรอกเป็น "บาท" (discount_amt>0) → ตั้งโหมดบาทให้ตรงเป๊ะ · ไม่งั้นโหมด %
+    const qAmt = hasSub ? (Number(selected.discount_amt) || 0) : 0;
     setDisc(hasSub ? Number(selected.discount_pct) || 0 : 0);
+    if (qAmt > 0) { setDiscMode("baht"); setDiscAmt(String(qAmt)); }
+    else { setDiscMode("pct"); setDiscAmt(""); }
     setVat(hasSub ? Number(selected.vat_rate) || 0 : 0);
     setWht(hasSub ? Number(selected.wht_rate) || 0 : 0);
     setLaborBaht(""); setLaborPct(""); setHasRetention(false);
@@ -61,10 +67,16 @@ export default function NewBillingClient({
       : laborMode === "pct" && laborPct !== "" ? { labor_pct: Number(laborPct) } : {})
     : {};
   // เมื่อ locked บังคับ vat/wht/disc = 0 ให้ตรงกับ API (net = ยอดล้วน)
+  // ส่วนลด: โหมดบาท → ส่ง discount_amt ตรง ๆ (authoritative · ไม่แปลงกลับ %) · โหมด % → discount_pct
+  const discInput = locked
+    ? { discount_pct: 0 }
+    : discMode === "baht"
+      ? { discount_pct: 0, discount_amt: Number(discAmt) || 0 }
+      : { discount_pct: disc };
   const t = useMemo(
-    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: locked ? 0 : vat, discount_pct: locked ? 0 : disc, wht_rate: locked ? 0 : wht, ...laborInput }),
+    () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: locked ? 0 : vat, wht_rate: locked ? 0 : wht, ...discInput, ...laborInput }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [base, vat, disc, wht, locked, laborMode, laborBaht, laborPct]
+    [base, vat, disc, discAmt, discMode, wht, locked, laborMode, laborBaht, laborPct]
   );
   const plan = useMemo(() => {
     if (!selected) return [] as { seq: number; label: string; amount: number }[];
@@ -95,7 +107,8 @@ export default function NewBillingClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          quotation_id: quotationId, discount_pct: disc, vat_rate: vat, wht_rate: wht,
+          quotation_id: quotationId, vat_rate: vat, wht_rate: wht,
+          ...(discMode === "baht" ? { discount_amt: Number(discAmt) || 0 } : { discount_pct: disc }),
           ...(laborActive && laborMode === "baht" && laborBaht !== "" ? { labor_amount: Number(laborBaht) } : {}),
           ...(laborActive && laborMode === "pct" && laborPct !== "" ? { labor_pct: Number(laborPct) } : {}),
           has_retention: hasRetention,
@@ -199,12 +212,16 @@ export default function NewBillingClient({
                 <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-ink-3 flex items-center gap-1">ส่วนลด
-                    <input type="number" min={0} step="any" disabled={locked} value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
-                      className="w-12 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด %" />%
+                    {/* กรอกได้ทั้ง % และบาท · พิมพ์ช่องไหน = ใช้ช่องนั้น (โหมดบาทเก็บยอดตรง ไม่แปลงกลับเป็น % กัน drift) */}
+                    <input type="number" min={0} step="any" disabled={locked}
+                      value={discMode === "pct" ? (disc || "") : (t.subtotal > 0 && t.discount_amt > 0 ? Math.round((t.discount_amt / t.subtotal) * 10000) / 100 : "")}
+                      onChange={(e) => { setDiscMode("pct"); setDisc(Math.max(0, Number(e.target.value) || 0)); }}
+                      className="w-14 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด %" />%
                   </span>
                   <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
-                    <input type="number" min={0} step="any" disabled={locked} value={t.discount_amt || ""}
-                      onChange={(e) => setDisc(base > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / base) * 10000) / 100) : 0)}
+                    <input type="number" min={0} step="any" disabled={locked}
+                      value={discMode === "baht" ? discAmt : (t.discount_amt || "")}
+                      onChange={(e) => { setDiscMode("baht"); setDiscAmt(e.target.value); }}
                       className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด บาท" />
                   </span>
                 </div>

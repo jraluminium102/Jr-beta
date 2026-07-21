@@ -13,6 +13,7 @@ export type AvailableQuotation = {
   net: number;
   subtotal: number;
   discount_pct: number;
+  discount_amt: number;   // ส่วนลดเป็นบาท (authoritative) — ให้ฟอร์มบิล init โหมดบาทได้ตรง (กัน round-trip drift)
   vat_rate: number;
   wht_rate: number;
   job_id: string | null;
@@ -32,7 +33,7 @@ export default async function NewBillingNotePage({
   // ดึงใบเสนอทุกสถานะที่ไม่ cancelled
   const { data: allQ } = await supabase
     .from("quotations")
-    .select("id, code, status, net, subtotal, discount_pct, vat_rate, wht_rate, job_id, customer_snapshot")
+    .select("id, code, status, net, subtotal, discount_pct, discount_amt, vat_rate, wht_rate, job_id, customer_snapshot")
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
