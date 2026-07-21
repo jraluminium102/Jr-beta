@@ -261,8 +261,14 @@ export function suggestInstallments(net: number, vatRate = 0): InstallmentPlan[]
     const g1 = round2(a * 0.4), g2 = round2(a * 0.5);
     return mk([g1, g2, round2(a - g1 - g2)], ["material", "material", "material"]);
   }
+  if (a <= 500000) {
+    // 3 งวด: 35% / ส่วนที่เหลือ / ประกัน 30,000 (เจ้าของเคาะ 21ก.ค.69)
+    const ret = 30000;
+    const g1 = round2(a * 0.35);
+    return mk([g1, round2(a - g1 - ret), ret], ["material", "material", "retention"]);
+  }
   if (a <= 700000) {
-    // 4 งวด: 35% / 30% / ส่วนที่เหลือ / RETENTION(40,000)
+    // 4 งวด: 35% / 30% / ส่วนที่เหลือ / ประกัน 40,000 (เหมือนเดิม)
     const g1 = round2(a * 0.35), g2 = round2(a * 0.3);
     const g3 = round2(a - g1 - g2 - RETENTION);
     return mk([g1, g2, g3, RETENTION], ["material", "material", "material", "retention"]);

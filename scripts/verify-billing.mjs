@@ -217,6 +217,18 @@ for (const net of [85000, 100000, 104000, 107000, 250000, 333333.33, 500000, 123
   near(`ผลรวม ${plan.length} งวด ของ ${net}`, sum, Math.round(net * 100) / 100);
 }
 
+console.log("\n═══ ⑦-b suggestInstallments เรนจ์ (21 ก.ค.69) — 300-500k=3งวด ประกัน30k · 500-700k=4งวด ประกัน40k ═══");
+{
+  const p3 = suggestInstallments(300000);
+  eq("≤300k คงเดิม 3 งวด 40/50/10", [p3.length, p3.map((x) => x.amount)], [3, [120000, 150000, 30000]]);
+  const p4 = suggestInstallments(400000);
+  eq("300-500k → 3 งวด 35%/เหลือ/ประกัน 30,000", [p4.length, p4.map((x) => x.amount), p4[2].label.includes("เงินประกัน")], [3, [140000, 230000, 30000], true]);
+  const p5 = suggestInstallments(500000);
+  eq("=500k → ยัง 3 งวด (ประกัน 30,000)", [p5.length, p5.map((x) => x.amount)], [3, [175000, 295000, 30000]]);
+  const p6 = suggestInstallments(600000);
+  eq("500-700k → 4 งวด 35%/30%/เหลือ/ประกัน 40,000", [p6.length, p6.map((x) => x.amount), p6[3].label.includes("เงินประกัน")], [4, [210000, 180000, 170000, 40000], true]);
+}
+
 console.log("\n═══ ⑧ footerSnapshot — footer ต้องตรง computeTotals เสมอ ═══");
 {
   const f = footerSnapshot(100000, 0, 7, 3);
