@@ -23,7 +23,7 @@ import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
-import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW } from "@/lib/calculator40/engine.mjs";
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn } from "@/lib/calculator40/engine.mjs";
 const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
 const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json (DIGI = ตารางมือจับดิจิตอล ราคา/ชื่อรุ่น)
@@ -210,11 +210,12 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     const t = g.type || "none";
     const pw = +g.w > 0 ? +g.w : (W || 0);
     const ph = +g.h || 0;
-    const rate = t === "comp" ? 3300 : 3500;
+    // เกล็ด Z (z1/z16) ราคาตามสีอลูหลัก · คอมโพสิต/ลูกฟูก คงที่ (แหล่งเดียวกับ engine solid_panel)
+    const rate = t === "z1" ? zRateFn("1", color) : t === "z16" ? zRateFn("1.6", color) : t === "comp" ? 3300 : 3500;
     return (
-      <Field label="บานล่างทึบ (คอมโพสิต/ลูกฟูก แทนกระจกช่วงล่าง)">
+      <Field label="บานล่างทึบ (คอมโพสิต/ลูกฟูก/เกล็ด Z แทนกระจกช่วงล่าง)">
         <ChipRow
-          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: "อลูลูกฟูก (3,500/ตร.ม.)" }]}
+          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: "อลูลูกฟูก (3,500/ตร.ม.)" }, { val: "z1", label: "เกล็ด Z 1\" (ตามสีอลู)" }, { val: "z16", label: "เกล็ด Z 1.6\" (ตามสีอลู)" }]}
           value={t} onChange={(v) => setObj("solid_panel", { type: v })}
         />
         {t !== "none" && (

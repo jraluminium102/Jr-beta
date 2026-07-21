@@ -116,11 +116,13 @@ export function computeCost(PB, prod, opt) {
   // (2) กระจก = พื้นที่กระจก × ฿/ตร.ม.
   //   #1 (เจ้าของ 17ก.ค.69): เลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" → ไม่คิดกระจก · คิดแผ่นแบบ sell-based (เท่า solid_panel 3300/3500)
   let glassCost = 0, glassArea = 0, panelSell = 0;
-  const isPanelGlass = glassType === 'แผ่นคอมโพสิต' || glassType === 'แผ่นลูกฟูก';
+  //   เกล็ด Z แทนกระจก (21ก.ค.69): ราคาตามขนาด+สีอลูหลัก (zRate) · sell-based เหมือนแผ่นคอมโพสิต · ไม่คิดกระจก
+  const zGlassSize = glassType === 'เกล็ด Z 1"' ? '1' : glassType === 'เกล็ด Z 1.6"' ? '1.6' : null;
+  const isPanelGlass = glassType === 'แผ่นคอมโพสิต' || glassType === 'แผ่นลูกฟูก' || !!zGlassSize;
   if (prod.glass) {
     glassArea = val(prod.glass);
     if (isPanelGlass) {
-      const rate = glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500;
+      const rate = zGlassSize ? zRate(zGlassSize, color) : (glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500);
       panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
@@ -419,6 +421,16 @@ export const STAINLESS_TIERS = { '30': { p: 1500, l: '30.5 ซม.' }, '45': { p
 export const ADDON_FLAT = { soft_close: 4000, sling: 2000, hide_beam: 4000, u_track: 4000, beam_support: 4000, hide_track: 4000, gate_curve: 4000, shower_black: 4000, shower_gold: 6000 };
 // เรตฝ้าใต้หลังคา/ฝ้าในห้อง ฿/ตร.ม. ตามชนิด (R3.9 · +ฉนวน 600) — แหล่งเดียว ใช้ทั้ง engine (ceil_under) + app (G3/G6) · global หลัง deModule
 export const CEIL_RATE = { 'ฉาบเรียบ': 480, 'อลูตัวซี': 2100, 'อลูไทยทิพย์': 2100, 'ไม้เทียม remood': 2600, 'ระแนงอลู 1×5': 3300, 'ระแนงอลู เว้นร่อง': 3700 };
+// เกล็ด Z (บานเกล็ด) — ใช้ "แทนกระจก" หรือ "แผ่นทึบล่าง" · ราคา "ขาย"/ตร.ม. ตามขนาด + สีตามอลูหลัก (เจ้าของเคาะ 21ก.ค.69)
+//   ฐาน = อบขาว/ดำ (white) · เปลี่ยนสี = +surcharge/ตร.ม. ตามหมวดค่าอบ (sell-based เหมือนแผ่นคอมโพสิต) · แหล่งเดียว ใช้ทั้งแทนกระจก+แผ่นทึบล่าง
+export const Z_LOUVRE = {
+  '1':   { base: 3600, label: 'เกล็ด Z 1"',   sur: { white: 0, sahara: 300, woodStock: 1000, special: 1500, woodSpecial: 2200 } },
+  '1.6': { base: 4900, label: 'เกล็ด Z 1.6"', sur: { white: 0, sahara: 500, woodStock: 1600, special: 2200, woodSpecial: 3100 } },
+};
+export function zRate(size, color) {
+  const z = Z_LOUVRE[size]; if (!z) return 0;
+  return z.base + (z.sur[color] ?? 0);
+}
 function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
 function round3(x) { return Math.round((x + Number.EPSILON) * 1000) / 1000; }
 function colorLabel(c) {
@@ -663,11 +675,13 @@ export function computeAddon(id, sel, ctx) {
     return { label: 'สีกรอบมุ้ง ' + sel + (rate ? '' : ' (รอราคา)'), qty: round2(ctx.area), unit: 'ตร.ม.', unitPrice: round2(rate), amount: round2(ctx.area * rate) };
   }
   // ── อุปกรณ์เสริมบาน (R3.9 COMMON_OPTS index.html:1357 + แผ่นทึบ rn89-92) ──
-  if (id === 'solid_panel') {           // แผ่นทึบล่าง ลูกฟูก 3,500 / คอมโพสิต 3,300 ฿/ตร.ม. × กว้าง×สูงแผ่น
+  if (id === 'solid_panel') {           // แผ่นทึบล่าง คอมโพสิต 3,300 / ลูกฟูก 3,500 / เกล็ด Z (ตามสีอลูหลัก) ฿/ตร.ม. × กว้าง×สูงแผ่น
     const g = sel || {}; const t = g.type; if (!t || t === 'none') return null;
     const sw = +g.w > 0 ? +g.w : W, sh = +g.h || 0; if (!(sh > 0)) return null;
-    const rate = t === 'comp' ? 3300 : 3500;
-    return { label: 'แผ่นทึบล่าง ' + (t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก') + ' (R3.9)', qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
+    const zsz = t === 'z1' ? '1' : t === 'z16' ? '1.6' : null;   // เกล็ด Z ล่างทึบ — ราคาตามสีอลูหลัก (21ก.ค.69)
+    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : (t === 'comp' ? 3300 : 3500);
+    const lbl = zsz ? Z_LOUVRE[zsz].label : ((t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก') + ' (R3.9)');
+    return { label: 'แผ่นทึบล่าง ' + lbl, qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
   if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)
     const s = sel || {};                 // sel = { fan8, fan10, cover, sw } (จำนวนตัว/จุด)

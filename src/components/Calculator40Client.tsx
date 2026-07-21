@@ -66,6 +66,7 @@ const glassLine = (glassType: string): string => {
   // #1 (17ก.ค.69): แผ่นคอมโพสิต/ลูกฟูก แทนกระจก → ไม่ขึ้นคำว่า "กระจก" (ไม่คิดกระจกอยู่แล้ว)
   if (s === "แผ่นคอมโพสิต") return "- แผ่นคอมโพสิต แทนกระจก";
   if (s === "แผ่นลูกฟูก") return "- แผ่นอลูลูกฟูก แทนกระจก";
+  if (s === 'เกล็ด Z 1"' || s === 'เกล็ด Z 1.6"') return "- " + s + " แทนกระจก";  // 21ก.ค.69: เกล็ด Z แทนกระจก (ราคาตามสีอลูหลัก)
   const withThk = s.replace(/\s*(\d+(?:\.\d+)?)\s*มม\.?/g, " หนา $1 มม.").replace(/\s+/g, " ").trim();
   return `- กระจก${withThk}`;
 };
@@ -418,7 +419,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   const ok = result && !("error" in result);
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
-  const glassKeys = useMemo(() => [...Object.keys((pb.GLASS ?? {}) as Record<string, number>), "แผ่นคอมโพสิต", "แผ่นลูกฟูก"], [pb]);
+  const glassKeys = useMemo(() => [...Object.keys((pb.GLASS ?? {}) as Record<string, number>), "แผ่นคอมโพสิต", "แผ่นลูกฟูก", "เกล็ด Z 1\"", "เกล็ด Z 1.6\""], [pb]);
 
   // "สูตร" ของข้อปัจจุบัน (0093) — เก็บทุก input เพื่อโหลดกลับมาแก้ทีหลัง (คลิก ✏️ ในรายการ)
   function buildRecipe(): any {
