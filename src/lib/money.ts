@@ -228,38 +228,49 @@ export interface InstallmentPlan {
 
 const RETENTION = 40000; // เงินประกันงวดท้าย (4-5 งวด) — คงเป็นจำนวนเต็ม (ตกลงกับลูกค้าไว้ชัดเจน)
 
-export function suggestInstallments(net: number): InstallmentPlan[] {
+// ── คำอธิบายงวด (เจ้าของเคาะ 22 ก.ค.69) — ใช้ทั้ง suggestInstallments + planInstallments ──
+//   หัวงวดตามตำแหน่ง: งวดแรก(เบิกมัดจำ) / กลาง(เข้าติดตั้ง 50%) / สุดท้าย(เก็บงานเรียบร้อย) · retention = เงินประกัน
+//   บรรทัดย่อยชนิดเงิน (เฉพาะมี VAT): ค่าวัสดุ/ค่าแรง/เงินประกัน (รวมVat)
+//   ⚠ label เป็น "ข้อความ" ล้วน — ไม่กระทบยอด/golden test (cell เช็คแค่ kind/amount/base/vat/wht) · แก้ต่อใบได้ (PrintLabelEditor)
+export function billInstallmentLabel(
+  i: number, n: number, kind: "material" | "labor" | "retention", vatRate: number,
+): string {
+  const head =
+    kind === "retention" ? "งวดสุดท้าย  เบิกเงินประกันผลงาน"
+      : i === 0 ? "งวดแรก  เบิกมัดจำลูกค้าตกลงว่าจ้างงาน"
+        : i === n - 1 ? "งวดสุดท้าย  เบิกส่วนที่เหลือ เมื่อเก็บงานเรียบร้อยแล้ว"
+          : `งวดที่ ${i + 1}  เบิกวันแรกเข้าติดตั้ง และงานเสร็จแล้ว 50%`;
+  if (!(Number(vatRate) > 0)) return head;   // ไม่มี VAT = ไม่มีบรรทัดย่อยชนิดเงิน
+  const sub = kind === "labor" ? "ค่าแรง" : kind === "retention" ? "เงินประกัน" : "ค่าวัสดุ";
+  return `${head}\n- ${sub} (รวมVat)`;
+}
+
+export function suggestInstallments(net: number, vatRate = 0): InstallmentPlan[] {
   // round2 (ไม่ใช่ Math.round) — คงสตางค์ไว้ ไม่ปัดเป็นบาทเต็ม
   const a = Math.max(0, round2(Number(net) || 0));
-  const mk = (parts: number[], labels: string[]): InstallmentPlan[] =>
-    parts.map((amt, i) => ({ seq: i + 1, label: labels[i], amount: amt }));
+  const mk = (parts: number[], kinds: ("material" | "retention")[]): InstallmentPlan[] =>
+    parts.map((amt, i) => ({ seq: i + 1, label: billInstallmentLabel(i, parts.length, kinds[i], vatRate), amount: amt }));
 
   if (a <= 100000) {
-    // 2 งวด: 70% / 30%
-    // งวด 2 = เหลือ → อุ้มเศษสตางค์ (ผลรวม = a เป๊ะ)
+    // 2 งวด: 70% / 30% (งวด 2 = เหลือ → อุ้มเศษ · ผลรวม = a เป๊ะ)
     const g1 = round2(a * 0.7);
-    return mk([g1, round2(a - g1)], ["งวด 1/2 (70%)", "งวด 2/2 (30%)"]);
+    return mk([g1, round2(a - g1)], ["material", "material"]);
   }
   if (a <= 300000) {
-    // 3 งวด: 40% / 50% / 10%
-    // งวด 3 = เหลือ → อุ้มเศษสตางค์
+    // 3 งวด: 40% / 50% / 10% (งวด 3 = เหลือ)
     const g1 = round2(a * 0.4), g2 = round2(a * 0.5);
-    return mk([g1, g2, round2(a - g1 - g2)], ["งวด 1/3 (40%)", "งวด 2/3 (50%)", "งวด 3/3 (10%)"]);
+    return mk([g1, g2, round2(a - g1 - g2)], ["material", "material", "material"]);
   }
   if (a <= 700000) {
     // 4 งวด: 35% / 30% / ส่วนที่เหลือ / RETENTION(40,000)
-    // งวด 3 = เหลือ → อุ้มเศษสตางค์ (RETENTION คงเป็นจำนวนเต็ม)
     const g1 = round2(a * 0.35), g2 = round2(a * 0.3);
     const g3 = round2(a - g1 - g2 - RETENTION);
-    return mk([g1, g2, g3, RETENTION],
-      ["งวด 1/4 (35%)", "งวด 2/4 (30%)", "งวด 3/4 (ส่วนที่เหลือ)", "งวด 4/4 (ประกัน 40,000)"]);
+    return mk([g1, g2, g3, RETENTION], ["material", "material", "material", "retention"]);
   }
   // 5 งวด: 25% × 3 / ส่วนที่เหลือ / RETENTION(40,000)
-  // งวด 4 = เหลือ → อุ้มเศษสตางค์ (RETENTION คงเป็นจำนวนเต็ม)
   const g = round2(a * 0.25);
   const g4 = round2(a - g * 3 - RETENTION);
-  return mk([g, g, g, g4, RETENTION],
-    ["งวด 1/5 (25%)", "งวด 2/5 (25%)", "งวด 3/5 (25%)", "งวด 4/5 (ส่วนที่เหลือ)", "งวด 5/5 (ประกัน 40,000)"]);
+  return mk([g, g, g, g4, RETENTION], ["material", "material", "material", "material", "retention"]);
 }
 
 // ============================================================
@@ -348,10 +359,7 @@ export function planInstallments(opts: {
   const n = out.length;
   out.forEach((it, i) => {
     it.seq = i + 1;
-    const p = `${i + 1}/${n}`;
-    it.label = it.kind === "labor" ? `งวด ${p} (ค่าแรง · หัก ณ ที่จ่าย)`
-      : it.kind === "retention" ? `งวด ${p} (เงินประกัน ${retention.toLocaleString("th-TH")})`
-        : `งวด ${p} (ค่าของ)`;
+    it.label = billInstallmentLabel(i, n, it.kind, vrRate);   // คำพูดชุดเดียวกับ suggestInstallments (22 ก.ค.69)
   });
   return { installments: out, retentionApplied: useRet, retentionRequested: hasRetention };
 }

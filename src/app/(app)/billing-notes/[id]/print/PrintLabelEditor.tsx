@@ -33,15 +33,16 @@ export default function PrintLabelEditor({
 
   if (editing) {
     return (
-      <span className="no-print inline-flex items-center gap-1.5">
-        <input
-          type="text"
+      <span className="no-print inline-flex items-start gap-1.5">
+        {/* textarea — รองรับหลายบรรทัด (หัวงวด + บรรทัดย่อยชนิดเงิน) · Enter=ขึ้นบรรทัด · Ctrl/⌘+Enter=บันทึก */}
+        <textarea
           value={val}
           autoFocus
           disabled={busy}
+          rows={2}
           onChange={(e) => setVal(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); save(); } if (e.key === "Escape") { setVal(label); setEditing(false); } }}
-          className="min-w-[10rem] border border-gray-300 rounded px-1.5 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); } if (e.key === "Escape") { setVal(label); setEditing(false); } }}
+          className="min-w-[16rem] border border-gray-300 rounded px-1.5 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand resize-y"
           aria-label="แก้รายละเอียดงวด"
         />
         <button type="button" disabled={busy} onClick={save}
@@ -53,8 +54,9 @@ export default function PrintLabelEditor({
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="font-medium">{label}</span>
+    <span className="inline-flex items-start gap-1.5">
+      {/* whitespace-pre-line — โชว์บรรทัดย่อย "- ค่าวัสดุ/ค่าแรง (รวมVat)" ที่ขึ้นบรรทัดใหม่ */}
+      <span className="font-medium whitespace-pre-line">{label}</span>
       <button type="button" onClick={() => setEditing(true)}
         className="no-print text-xs text-brand-dark/60 hover:text-brand-dark"
         aria-label="แก้รายละเอียดงวดนี้" title="แก้ข้อความรายละเอียด">✎</button>

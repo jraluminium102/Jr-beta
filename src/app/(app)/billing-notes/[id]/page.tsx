@@ -186,7 +186,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                 <tr key={it.id} className="border-b border-gray-100">
                   <td className="p-2">{it.seq}</td>
                   <td>
-                    <div className="font-medium">{it.label}</div>
+                    <div className="font-medium whitespace-pre-line">{it.label}</div>
                     {it.status === "paid" && (
                       <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {it.paid_date}</div>
                     )}

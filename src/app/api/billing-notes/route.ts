@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     : null;
   const plan = taxPlan
     ? taxPlan.map((i) => ({ seq: i.seq, label: i.label, amount: i.amount }))
-    : suggestInstallments(net);
+    : suggestInstallments(net, bVat);   // ส่ง VAT → label ขึ้นบรรทัด "ค่าวัสดุ (รวมVat)" (22 ก.ค.69)
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
   // 3) ออกรหัสอัตโนมัติผ่าน RPC

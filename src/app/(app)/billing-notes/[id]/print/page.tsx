@@ -7,6 +7,8 @@ import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import PrintFooterEditor from "./PrintFooterEditor";
 import PrintLabelEditor from "./PrintLabelEditor";
+import PrintPaymentEditor from "./PrintPaymentEditor";
+import { DEFAULT_PAYMENT_NOTE } from "@/lib/constants";
 import { PrintLetterhead, DOC_COLORS } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
 
@@ -177,6 +179,15 @@ export default async function BillingPrintPage({
         )}
 
         {bn.note && <div className="mt-6 text-xs text-gray-600"><b>หมายเหตุ:</b> {bn.note}</div>}
+
+        {/* ช่องทางชำระเงิน (ซ้ายล่าง) — default = เลขบัญชีบริษัท · แก้ต่อใบได้บน PDF (0104) */}
+        <div className="mt-6">
+          <PrintPaymentEditor
+            billId={bn.id}
+            value={(bn as { payment_note?: string | null }).payment_note ?? null}
+            fallback={DEFAULT_PAYMENT_NOTE}
+          />
+        </div>
 
         <PrintSignature customerName={c.name} customerRole="ผู้รับวางบิล" companyRole="ผู้วางบิล" />
       </div>

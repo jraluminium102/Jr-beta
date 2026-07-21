@@ -63,6 +63,19 @@ export const PATCH = withRoute(
       return ok({ ok: true, footer_override: value });
     }
 
+    // ช่องทางชำระ (payment_note) — ข้อความ display-only ท้ายใบ · แก้ได้เสมอ (ไม่กระทบยอด/งวด · ไม่ re-split)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (body && typeof body === "object" && "payment_note" in (body as any)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pn = String((body as any).payment_note ?? "").slice(0, 800);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: pErr } = await (ctx.supabase as any)
+        .from("billing_notes").update({ payment_note: pn }).eq("id", params.id);
+      if (pErr && /payment_note/i.test(pErr.message ?? "")) return err("ยังไม่ได้รัน migration 0104 (ช่องทางชำระ) — รันก่อนใช้งาน", 400);
+      if (pErr) return err(pErr.message, 500);
+      return ok({ ok: true, payment_note: pn });
+    }
+
     const parsed = PatchSchema.safeParse(body);
     if (!parsed.success) return err(parsed.error.errors[0].message, 400);
 
@@ -193,7 +206,7 @@ export const PATCH = withRoute(
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);
 
     // 4) re-split งวดผ่าน RPC replace_billing_installments (1 txn → constraint ผ่าน)
-    const plan = suggestInstallments(newTotal);
+    const plan = suggestInstallments(newTotal, Number(breakdown.vat_rate) || 0);  // ส่ง VAT → label บรรทัดย่อย "ค่าวัสดุ (รวมVat)"
     const items = plan.map((p) => ({
       seq: p.seq,
       label: p.label,
