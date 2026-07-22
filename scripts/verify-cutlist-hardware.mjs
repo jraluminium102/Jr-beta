@@ -96,5 +96,66 @@ function check(label, res, want) {
   else console.log("  ✓ sets×2 · ล้อ 27 qty=12");
 }
 
+// ── PC Door · default W300 H240 แบ่ง2 (pcN=2 · บานเลื่อน=1) · ซ้าย=กุญแจ+ล็อค ขวา=ล็อค+ดัมมี่ ──
+{
+  const spec = CUT_SPEC_BY_ID["pc_door"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("PC Door (แบ่ง2):");
+  check("PC", res, [
+    { nameHas: "ล้อรางบน Hafele", sku: "JR00544", qty: 1 },
+    { nameHas: "มือจับ กุญแจ", sku: "JR00368", qty: 1 },
+    { nameHas: "มือจับ ล็อค", sku: "JR00369", qty: 2 },
+    { nameHas: "มือจับ ดัมมี่", sku: "JR00370", qty: 1 },
+    { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },
+    { nameHas: "แกนมือจับ B", sku: "JR00479", qty: 2 },
+    { nameHas: "ก้ามปูรับล็อค", sku: "JR00477", qty: 4 },
+    { nameHas: "น็อตประกอบบาน", sku: "JR00864", qty: 4 },
+    { nameHas: "หัวต่อราง", qty: 1 },
+    { nameHas: "ฝาครอบราง", qty: 2 },
+    { nameHas: "บานพับไม่บาก", sku: "JR00473", qty: 4 },
+    { nameHas: "กลอน", sku: "JR00630", qty: 1 },
+    { nameHas: "ปลายกลอน", sku: "JR00598", qty: 1 },
+  ]);
+  // แบ่ง4 → บานเลื่อน 2 · ล้อ 2 · ฝาครอบราง 4
+  const r4 = computeCutList(spec, { ...spec.defaults, split: "แบ่ง 4" }, 1);
+  const roll = r4.hardware.find((h) => h.sku === "JR00544");
+  if (!roll || roll.qty !== 2) { fails++; console.log(`  ✗ PC แบ่ง4 ล้อ want 2 got ${roll?.qty}`); } else console.log("  ✓ PC แบ่ง4 · ล้อ Hafele qty=2");
+  // สีดำ → บานพับไม่บาก JR00474
+  const rBlack = computeCutList(spec, { ...spec.defaults, handleColor: "ดำ" }, 1);
+  const hinge = rBlack.hardware.find((h) => h.name.includes("บานพับไม่บาก"));
+  if (!hinge || hinge.sku !== "JR00474") { fails++; console.log(`  ✗ PC ดำ บานพับ want JR00474 got ${hinge?.sku}`); } else console.log("  ✓ PC ดำ · บานพับไม่บาก JR00474");
+}
+
+// ── บานโซลิด · default W120 H279 N2 แม่-ลูก motherW80 มีธรณี · ขาว ล็อคปกติ เปิดออก · แม่=คิงโบล็อค+กุญแจ ลูก=ไม่ใส่ ──
+{
+  const spec = CUT_SPEC_BY_ID["solid_door"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("บานโซลิด (แม่-ลูก):");
+  check("โซลิด", res, [
+    { nameHas: "บานพับ hyda", sku: "JR00489", qty: 8 },  // แม่4 + ลูก4×1
+    { nameHas: "สปิงก็อท", sku: "JR00482", qty: 8 },      // 4×2
+    { nameHas: "ฉากประคองมุม", sku: "JR00557", qty: 16 }, // 8×2
+    { nameHas: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: "JR00315", qty: 1 },
+    { nameHas: "ตลับกุญแจไฮด้า", sku: "JR00551", qty: 1 },
+    { nameHas: "ไส้กุญแจ", sku: "JR00499", qty: 1 },
+    { nameHas: "แผ่นรับล็อค", sku: "JR00562", qty: 1 },
+    { nameHas: "CDQ", sku: "JR00596", qty: 1 },
+    { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },
+    { nameHas: "ยางกรอบบาน", sku: "JR00771", qty: 13.6 },
+    { nameHas: "ยางวงกบ", sku: "JR00771", qty: 8 },
+  ]);
+  // ดัมมี่+ดัมมี่/Cmech ต้องไม่โผล่ที่ default
+  if (res.hardware.some((h) => h.name.includes("ดัมมี่+ดัมมี่") || h.name.includes("Cmech"))) { fails++; console.log("  ✗ โซลิด: ดัมมี่/Cmech ไม่ควรโผล่"); }
+  // สีดำ → บานพับ JR00488 · คิงโบ JR00314
+  const rB = computeCutList(spec, { ...spec.defaults, hwColor: "ดำ" }, 1);
+  const h1 = rB.hardware.find((h) => h.name.includes("บานพับ hyda"));
+  const h2 = rB.hardware.find((h) => h.name.includes("ล็อค+กุญแจ (คิงโบ)"));
+  if (!h1 || h1.sku !== "JR00488" || !h2 || h2.sku !== "JR00314") { fails++; console.log(`  ✗ โซลิด ดำ: บานพับ ${h1?.sku} คิงโบ ${h2?.sku}`); } else console.log("  ✓ โซลิด ดำ · บานพับ JR00488 · คิงโบ JR00314");
+  // มัลติพ้อยล็อค → ตลับ JR00553 · เปิดเข้า → ไส้ JR00498
+  const rM = computeCutList(spec, { ...spec.defaults, lockType: "มัลติพ้อยล็อค", openDir: "เปิดเข้า" }, 1);
+  const t = rM.hardware.find((h) => h.name.includes("ตลับกุญแจ")); const c = rM.hardware.find((h) => h.name.includes("ไส้กุญแจ"));
+  if (!t || t.sku !== "JR00553" || !c || c.sku !== "JR00498") { fails++; console.log(`  ✗ โซลิด มัลติ/เข้า: ตลับ ${t?.sku} ไส้ ${c?.sku}`); } else console.log("  ✓ โซลิด มัลติพ้อย JR00553 · เปิดเข้า JR00498");
+}
+
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
 process.exit(fails === 0 ? 0 : 1);

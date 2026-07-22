@@ -8,7 +8,7 @@
  */
 import type { CutSpec, CutInput } from "./engine";
 // นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
-import { smsSlideHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L } from "./hardware.ts";
+import { smsSlideHardware, handleHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L } from "./hardware.ts";
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
@@ -526,8 +526,9 @@ export const PC_DOOR: CutSpec = {
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×4", "2×4"] },
     { key: "split", label: "รูปแบบบาน", choices: ["แบ่ง 2", "แบ่ง 4"] },
     { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+    ...HANDLE_OPTS_LR,
   ],
-  defaults: { W: 300, H: 240, N: 2, rail: "", honk: false, beam: "1×4", split: "แบ่ง 2", sill: "มีธรณี" },
+  defaults: { W: 300, H: 240, N: 2, rail: "", honk: false, beam: "1×4", split: "แบ่ง 2", sill: "มีธรณี", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "คาน", code: (o) => boxCode(o.beam ?? "1×4"), len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
     { name: "ฝาครอบรางบน", code: "-", len: (o) => o.W - 3.3 - 2.5, qty: () => 1 },
@@ -541,14 +542,18 @@ export const PC_DOOR: CutSpec = {
     { name: "กรอบบานเลื่อน sms (สูง)", code: "-", len: (o) => o.H - pcBeamCut(o) - (pcNoSill(o) ? 5.8 : 10.3), qty: pcN },
     { name: "กรอบบานเลื่อน sms (กว้าง)", code: "-", len: (o) => o.W / pcN(o) - (o.split === "แบ่ง 4" ? 10 : 11.4), qty: pcN },
   ],
+  // ⑤ อุปกรณ์ PC Door (มี SKU · ใช้ตาราง lookup มือจับเดียวกับ SMS) · บานเลื่อน = pcN/2 · สีบานพับ/กลอน ตามสีมือจับ
   hardware: [
-    { name: "บานพับ hyda", qty: (o) => (o.split === "แบ่ง 2" ? 4 : 8), unit: "ตัว" },
-    { name: "ล้อ + ซอฟโค้ด", qty: (o) => (o.split === "แบ่ง 2" ? 1 : 2), unit: "ชุด" },
-    { name: "มือจับ Align SMS", qty: pcN, unit: "บาน" },
-    { name: "กลอนบานลอง", qty: () => 1, unit: "ชุด" },
-    { name: "น็อตเฟรม", qty: (o) => (pcNoSill(o) ? 6 : 8), unit: "ตัว" },
-    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * pcN(o)), unit: "ม." },
-    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+    { name: "ล้อรางบน Hafele 100kg", sku: "JR00544", qty: (o) => pcN(o) / 2, unit: "กล่อง", note: "1/บานเลื่อน" },
+    ...handleHardware("LR"),
+    { name: "น็อตประกอบบาน 1\"", sku: "JR00864", qty: (o) => 4 * (pcN(o) / 2), unit: "ตัว" },
+    { name: "สักหลาด 5×3", sku: "JR00794", unit: "เมตร", noStock: true, note: "กรอบบาน+เฟรมข้าง (สะสมม้วน)",
+      qty: (o, ctx) => Math.round((4 * (ctx.len("กรอบบานเลื่อน sms (สูง)") + ctx.len("กรอบบานเลื่อน sms (กว้าง)")) * (pcN(o) / 2) + 2 * o.H) / 100 * 10) / 10 },
+    { name: "หัวต่อราง", qty: (o) => pcN(o) / 2, unit: "อัน", note: "ซ้าย/ขวา · แบ่ง4=2" },
+    { name: "ฝาครอบราง", qty: (o) => pcN(o), unit: "เส้น", note: "แบ่ง4=4" },
+    { name: "บานพับไม่บาก", sku: (o) => (o.handleColor === "ดำ" ? "JR00474" : "JR00473"), qty: (o) => 4 * (pcN(o) / 2), unit: "ตัว", note: "4/บานเปิด" },
+    { name: "กลอน", sku: (o) => (o.handleColor === "ดำ" ? "JR00627" : "JR00630"), qty: (o) => pcN(o) / 2, unit: "อัน", note: "1/บานเปิด" },
+    { name: "ปลายกลอน", sku: "JR00598", qty: (o) => pcN(o) / 2, unit: "อัน", note: "1/บานเปิด" },
   ],
 };
 
@@ -627,8 +632,13 @@ export const SOLID_DOOR: CutSpec = {
     { key: "sill", label: "ธรณี", choices: ["มี", "ไม่มี"] },
     { key: "doorSplit", label: "แบ่งบาน", choices: ["แม่-ลูก", "เท่ากัน"] },
     { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
+    { key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] },
+    { key: "lockType", label: "ตลับกุญแจ", choices: ["ล็อคปกติ", "มัลติพ้อยล็อค"] },
+    { key: "openDir", label: "ทิศเปิด", choices: ["เปิดออก", "เปิดเข้า"] },
+    { key: "motherHandle", label: "มือจับใบแม่", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
+    { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
   ],
-  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80 },
+  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่" },
   profiles: [
     { name: "วงกบบน F7859", code: "F7859", len: (o) => o.W - 5, qty: () => 1 },
     { name: "วงกบข้าง F7859", code: "F7859", len: (o) => o.H, qty: () => 2 },
@@ -647,13 +657,28 @@ export const SOLID_DOOR: CutSpec = {
     { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
     { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
   ],
+  // ⑤ อุปกรณ์ บานโซลิด (มี SKU · เงื่อนไขสี ดำ↔ขาว + ตลับ/ทิศ/มือจับแม่-ลูก) — พอร์ตตรงไฟล์
   hardware: [
-    { name: "บานพับ hyda", qty: (o) => (o.H > 300 || sMother(o) > 120 ? 5 : 4) * o.N, unit: "ชิ้น" },
-    { name: "มือจับ+ล็อค ใบหลัก", qty: () => 1, unit: "ชิ้น" },
-    { name: "ชุดกลอน ใบลอง", qty: sChildN, unit: "ชิ้น" },
-    { name: "น็อตเฟรม", qty: (o) => (sHasSill(o) ? 8 : 6), unit: "ชิ้น" },
-    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * o.N), unit: "ม." },
-    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+    { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), unit: "ตัว",
+      qty: (o) => (o.H > 300 || sMother(o) > 120 ? 5 : 4) + (sChild(o) > 0 ? (o.H > 300 || sChild(o) > 120 ? 5 : 4) * sChildN(o) : 0) },
+    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * o.N, unit: "ตัว" },
+    { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), unit: "ชุด",
+      qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) },
+    { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), unit: "ชุด",
+      qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0) },
+    { name: "มือจับ Cmech", unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก",
+      qty: (o) => (o.motherHandle === "Cmech" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "Cmech" ? 1 : 0) },
+    { name: "ตลับกุญแจไฮด้า", sku: (o) => (o.lockType === "มัลติพ้อยล็อค" ? "JR00553" : "JR00551"), qty: () => 1, unit: "ตัว" },
+    { name: "ไส้กุญแจ", sku: (o) => (o.openDir === "เปิดเข้า" ? "JR00498" : "JR00499"), qty: () => 1, unit: "ตัว", note: "auto เข้า/ออก" },
+    { name: "แผ่นรับล็อค", sku: "JR00562", qty: () => 1, unit: "ชุด" },
+    { name: "CDQ บานเปิด (บานลอง)", sku: "JR00596", qty: sChildN, unit: "ตัว" },
+    { name: "ปลายกลอน (บานลอง)", sku: "JR00598", qty: sChildN, unit: "ตัว" },
+    { name: "น็อตเฟรม 1\"", sku: "JR00864", qty: (o) => (sHasSill(o) ? 8 : 6), unit: "ตัว" },
+    { name: "ยางกรอบบาน", sku: "JR00771", unit: "เมตร",
+      qty: (o) => Math.round((2 * (sMother(o) + o.H) + (sChild(o) > 0 ? 2 * (sChild(o) + o.H) * sChildN(o) : 0)) / 100 * 10) / 10 },
+    { name: "ยางวงกบ", sku: "JR00771", unit: "เมตร",
+      qty: (o) => Math.round((sHasSill(o) ? 2 * (o.W + o.H) : o.W + 2 * o.H) / 100 * 10) / 10 },
   ],
 };
 

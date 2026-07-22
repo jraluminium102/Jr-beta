@@ -26,18 +26,35 @@ const colorOf = (o: CutInput) => o.handleColor || "อบขาว";
 export const handleSku = (o: CutInput, part: "กุญแจ" | "ล็อค" | "ดัมมี่") => HANDLE_SKU[brandOf(o) + part + colorOf(o)] ?? "";
 
 // นับชนิดมือจับจากช่องซ้าย/ขวา (handles="L" = บานเดียว ใช้ซ้ายอย่างเดียว)
-const picks = (o: CutInput, handles: "LR" | "L") => (handles === "LR" ? [o.handleL, o.handleR] : [o.handleL]).filter(Boolean) as string[];
+export const handlePicks = (o: CutInput, handles: "LR" | "L") => (handles === "LR" ? [o.handleL, o.handleR] : [o.handleL]).filter(Boolean) as string[];
 const countEq = (arr: string[], v: string) => arr.filter((x) => x === v).length;
 /** จำนวน "มือจับกุญแจ" = นับ "กุญแจ+ล็อค" */
-const keyCount = (p: string[]) => countEq(p, "กุญแจ+ล็อค");
+export const keyCount = (p: string[]) => countEq(p, "กุญแจ+ล็อค");
 /** จำนวน "ตัวล็อค" (ตัวที่มีล็อค) = กุญแจ+ล็อค · ล็อค+ดัมมี่ · ล็อค */
-const lockCount = (p: string[]) => countEq(p, "กุญแจ+ล็อค") + countEq(p, "ล็อค+ดัมมี่") + countEq(p, "ล็อค");
+export const lockCount = (p: string[]) => countEq(p, "กุญแจ+ล็อค") + countEq(p, "ล็อค+ดัมมี่") + countEq(p, "ล็อค");
 /** จำนวน "ดัมมี่" = ล็อค+ดัมมี่ + 2×ดัมมี่คู่ + ดัมมี่ */
-const dummyCount = (p: string[]) => countEq(p, "ล็อค+ดัมมี่") + 2 * countEq(p, "ดัมมี่+ดัมมี่") + countEq(p, "ดัมมี่");
-const digitalCount = (p: string[]) => countEq(p, "Digital lock");
+export const dummyCount = (p: string[]) => countEq(p, "ล็อค+ดัมมี่") + 2 * countEq(p, "ดัมมี่+ดัมมี่") + countEq(p, "ดัมมี่");
+export const digitalCount = (p: string[]) => countEq(p, "Digital lock");
 
 // แกนมือจับ B: สูง>280→2 · >140→1 · ไม่งั้น 0 (ต่อ 1 ตัวล็อค)
-const stemB = (H: number) => (H > 280 ? 2 : H > 140 ? 1 : 0);
+export const stemB = (H: number) => (H > 280 ? 2 : H > 140 ? 1 : 0);
+
+/** ชุดมือจับ (กุญแจ/ล็อค/ดัมมี่/Digital + แกน/ปลาย/ตัวที/ก้ามปู) ที่ใช้ร่วมประตู/เลื่อนหลายรุ่น
+ *   lockScale = คูณจำนวนตัวล็อค (บางรุ่นแกน/ปลาย = 2×ล็อค) · handles="LR"|"L" */
+export function handleHardware(handles: "LR" | "L" = "LR"): HardwareDef[] {
+  const P = (o: CutInput) => handlePicks(o, handles);
+  return [
+    { name: (o) => `มือจับ กุญแจ (${brandOf(o)})`, sku: (o) => handleSku(o, "กุญแจ"), qty: (o) => keyCount(P(o)), unit: "ชุด" },
+    { name: (o) => `มือจับ ล็อค (${brandOf(o)})`, sku: (o) => handleSku(o, "ล็อค"), qty: (o) => lockCount(P(o)), unit: "ชุด" },
+    { name: (o) => `มือจับ ดัมมี่ (${brandOf(o)})`, sku: (o) => handleSku(o, "ดัมมี่"), qty: (o) => dummyCount(P(o)), unit: "ชุด" },
+    { name: "Digital lock (ซื้อแยก)", qty: (o) => digitalCount(P(o)), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
+    { name: "แกนมือจับ A", sku: "JR00478", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+    { name: "แกนมือจับ B", sku: "JR00479", qty: (o) => stemB(o.H) * lockCount(P(o)), unit: "อัน", note: "สูง>140→1 · >280→2" },
+    { name: "ปลายมือจับ ดำ", sku: "JR00476", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+    { name: "ตัวที เงิน", sku: "JR00475", qty: (o) => lockCount(P(o)), unit: "อัน" },
+    { name: "ก้ามปูรับล็อค", sku: "JR00477", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+  ];
+}
 
 export type HardwareDef = {
   name: string | ((o: CutInput) => string);
@@ -77,25 +94,15 @@ export function smsSlideHardware(
   handles: "LR" | "L" = "LR",
   postName = "เสากุญแจ ML",
 ): HardwareDef[] {
-  const P = (o: CutInput) => picks(o, handles);
-  const brand = (o: CutInput) => brandOf(o);
   return [
     { name: "ล้อ 27", sku: "JR00576", qty: (o) => 2 * panelsFn(o), unit: "ตัว" },
-    { name: (o) => `มือจับ กุญแจ (${brand(o)})`, sku: (o) => handleSku(o, "กุญแจ"), qty: (o) => keyCount(P(o)), unit: "ชุด" },
-    { name: (o) => `มือจับ ล็อค (${brand(o)})`, sku: (o) => handleSku(o, "ล็อค"), qty: (o) => lockCount(P(o)), unit: "ชุด" },
-    { name: (o) => `มือจับ ดัมมี่ (${brand(o)})`, sku: (o) => handleSku(o, "ดัมมี่"), qty: (o) => dummyCount(P(o)), unit: "ชุด" },
-    { name: "Digital lock (ซื้อแยก)", qty: (o) => digitalCount(P(o)), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก · ไม่มีมือจับ" },
-    { name: "แกนมือจับ A", sku: "JR00478", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
-    { name: "แกนมือจับ B", sku: "JR00479", qty: (o) => stemB(o.H) * lockCount(P(o)), unit: "อัน", note: "สูง>140→1 · >280→2" },
-    { name: "ปลายมือจับ ดำ", sku: "JR00476", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
-    { name: "ตัวที เงิน", sku: "JR00475", qty: (o) => lockCount(P(o)), unit: "อัน" },
+    ...handleHardware(handles),
     { name: "น็อต 1\" (ประกอบบาน)", sku: "JR00864", qty: (o) => 4 * panelsFn(o), unit: "ตัว" },
     { name: "น็อต 1\" (ประกอบเฟรม)", sku: "JR00864", qty: () => 8, unit: "ตัว" },
     { name: "น็อต 6 หุน (ยึดล้อ)", sku: "JR00863", qty: (o) => 4 * panelsFn(o), unit: "ตัว" },
     { name: "สักหลาด 5×3 (รวม)", sku: "JR00794", qty: (o, ctx) => smsFeltMeters(o, ctx, panelsFn(o), postName), unit: "ม.", noStock: true, note: "ม้วนละ 250ม. · สะสมครบม้วนค่อยตัด (ไม่หักอัตโนมัติ)" },
     { name: "ยางรูน้ำลง", sku: "JR00589", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
     { name: "วาวรูน้ำออก", sku: "JR00485", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
-    { name: "ก้ามปูรับล็อค", sku: "JR00477", qty: (o) => 2 * lockCount(P(o)), unit: "อัน", note: "เท่าปลายดำ" },
   ];
 }
 
