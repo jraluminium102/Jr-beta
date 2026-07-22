@@ -228,7 +228,7 @@ export interface InstallmentPlan {
 
 const RETENTION = 40000; // เงินประกันงวดท้าย (4-5 งวด) — คงเป็นจำนวนเต็ม (ตกลงกับลูกค้าไว้ชัดเจน)
 
-// ── คำอธิบายงวด (เจ้าของเคาะ 22 ก.ค.69) — ใช้ทั้ง suggestInstallments + planInstallments ──
+// ── คำอธิบายงวด (ใบค่าแรง planInstallments) — 22 ก.ค.69 ──
 //   หัวงวดตามตำแหน่ง: งวดแรก(เบิกมัดจำ) / กลาง(เข้าติดตั้ง 50%) / สุดท้าย(เก็บงานเรียบร้อย) · retention = เงินประกัน
 //   บรรทัดย่อยชนิดเงิน (เฉพาะมี VAT): ค่าวัสดุ/ค่าแรง/เงินประกัน (รวมVat)
 //   ⚠ label เป็น "ข้อความ" ล้วน — ไม่กระทบยอด/golden test (cell เช็คแค่ kind/amount/base/vat/wht) · แก้ต่อใบได้ (PrintLabelEditor)
@@ -245,11 +245,38 @@ export function billInstallmentLabel(
   return `${head}\n- ${sub} (รวมVat)`;
 }
 
+// ── คำอธิบายงวด "กดวางบิลอัตโนมัติ" (suggestInstallments) — เจ้าของเคาะ 22 ก.ค.69 ──
+//   งวดแรก = มัดจำ · งวดกลาง = ไมล์สโตน %ตามจำนวนงวด · งวดสุดท้าย = "ส่วนที่เหลือ เก็บงานเรียบร้อย"
+//   ⚠ งวดประกัน (retention) คงจำนวนเงินเท่าเดิม แต่ "เลิกใช้คำว่าเงินประกัน" → หัว = งวดสุดท้าย, บรรทัดย่อย VAT = ค่าแรง
+//   ไมล์สโตนงวดกลาง: 4งวด → 50/80% · 5งวด → 40/60/80% (i เริ่ม 0 · index 1..n-2 คืองวดกลาง)
+//   แยกจาก billInstallmentLabel เพราะใบค่าแรง (planInstallments) ยังใช้คำว่า "เงินประกัน" ตามบัญชี
+const SUGGEST_MID: Record<number, { p: number; first?: boolean }[]> = {
+  3: [{ p: 50, first: true }],
+  4: [{ p: 50, first: true }, { p: 80 }],
+  5: [{ p: 40, first: true }, { p: 60 }, { p: 80 }],
+};
+export function suggestLabel(
+  i: number, n: number, kind: "material" | "retention", vatRate: number,
+): string {
+  let head: string;
+  if (i === 0) head = "งวดแรก  เบิกมัดจำลูกค้าตกลงว่าจ้างงาน";
+  else if (i === n - 1) head = "งวดสุดท้าย  เบิกส่วนที่เหลือ เมื่อเก็บงานเรียบร้อยแล้ว";
+  else {
+    const m = (SUGGEST_MID[n] ?? [])[i - 1] ?? { p: 50, first: i === 1 };
+    head = m.first
+      ? `งวดที่ ${i + 1}  เบิกวันแรกเข้าติดตั้ง และงานเสร็จแล้ว ${m.p}%`
+      : `งวดที่ ${i + 1}  เบิกเมื่องานติดตั้งเสร็จแล้ว ${m.p}%`;
+  }
+  if (!(Number(vatRate) > 0)) return head;   // ไม่มี VAT = ไม่มีบรรทัดย่อยชนิดเงิน
+  const sub = kind === "retention" ? "ค่าแรง" : "ค่าวัสดุ";   // งวดสุดท้าย(ประกัน)=ค่าแรง · งวดอื่น=ค่าวัสดุ
+  return `${head}\n- ${sub} (รวมVat)`;
+}
+
 export function suggestInstallments(net: number, vatRate = 0): InstallmentPlan[] {
   // round2 (ไม่ใช่ Math.round) — คงสตางค์ไว้ ไม่ปัดเป็นบาทเต็ม
   const a = Math.max(0, round2(Number(net) || 0));
   const mk = (parts: number[], kinds: ("material" | "retention")[]): InstallmentPlan[] =>
-    parts.map((amt, i) => ({ seq: i + 1, label: billInstallmentLabel(i, parts.length, kinds[i], vatRate), amount: amt }));
+    parts.map((amt, i) => ({ seq: i + 1, label: suggestLabel(i, parts.length, kinds[i], vatRate), amount: amt }));
 
   if (a <= 100000) {
     // 2 งวด: 70% / 30% (งวด 2 = เหลือ → อุ้มเศษ · ผลรวม = a เป๊ะ)
