@@ -23,6 +23,7 @@ export type SubPane = {
   pid: string; // product id หรือ '_custom'
   label: string;
   w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
+  form?: string; // รูปแบบบานย่อย (เลือกให้ต่างจากบานหลักได้) — เว้น = defForm ของชนิดนั้น
   desc?: string; price?: number; // เฉพาะ _custom
   openCt?: number; fixCt?: number; // แบ่งบาน (เฉพาะ SUB_WORKING)
   mat?: "none" | "frame" | "pleat" | "solid"; // มุ้ง/วัสดุเสริม (legacy simplified)
@@ -50,7 +51,8 @@ export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: stri
   if (s.pid === "_custom") return +s.price! || 0;
   const sp = (PRODUCTS as any)[s.pid];
   if (!sp) return 0;
-  const sForm = sp.defForm;
+  // รูปแบบบานย่อย: ใช้ที่ผู้ใช้เลือก (ถ้ามีในลิสต์ของชนิดนั้น) ไม่งั้น defForm — คิดราคาผ่าน computeCost ตามรูปแบบจริง
+  const sForm = s.form && (sp.forms ?? []).includes(s.form) ? s.form : sp.defForm;
   let base = 0;
   if (s.fprice! > 0) base = +s.fprice!;
   else {
@@ -70,7 +72,9 @@ export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: stri
 
 export function subDesc(s: SubPane): string {
   if (s.pid === "_custom") return (s.desc || "บานอื่นๆ") + " (กรอกเอง)";
-  let d = `${s.label} ${s.w || 1}×${s.h || 1}ม.${(s.n || 1) > 1 ? ` ${s.n}บาน` : ""}`;
+  const sp = (PRODUCTS as any)[s.pid];
+  const formTxt = s.form && sp && (sp.forms ?? []).includes(s.form) && s.form !== sp.defForm ? ` แบบ${s.form}` : "";
+  let d = `${s.label}${formTxt} ${s.w || 1}×${s.h || 1}ม.${(s.n || 1) > 1 ? ` ${s.n}บาน` : ""}`;
   if ((s.openCt || 0) + (s.fixCt || 0) > 0) d += ` (เปิด ${s.openCt || 0}/ติดตาย ${s.fixCt || 0})`;
   if (s.mat === "frame") d += " +มุ้งเฟรม";
   else if (s.mat === "pleat") d += " +มุ้งจีบ";
@@ -186,9 +190,24 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
               <button type="button" onClick={() => remove(s.key)} className="press text-ink-3 hover:text-red-600 ml-auto">✕</button>
             </div>
 
-            {/* ชั้น 2: ปรับ (แบ่งบาน + หมายเหตุ) */}
+            {/* ชั้น 2: ปรับ (รูปแบบ + แบ่งบาน + หมายเหตุ) */}
             {s._open && !isCustom && (
               <div className="pl-2 border-l-2 border-brand/20 space-y-2">
+                {/* รูปแบบบานนี้ (ต่างจากบานหลักได้) — เฉพาะชนิดที่มีหลายรูปแบบ */}
+                {(() => {
+                  const sp = (PRODUCTS as any)[s.pid];
+                  const forms: string[] = sp?.forms ?? [];
+                  if (forms.length <= 1) return null;
+                  return (
+                    <label className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-ink-3 min-w-[52px]">รูปแบบ:</span>
+                      <select value={s.form || sp.defForm || forms[0]} onChange={(e) => patch(s.key, { form: e.target.value })}
+                        className="min-h-[40px] glass-soft rounded-lg px-2.5 py-1.5 outline-none text-sm flex-1">
+                        {forms.map((f) => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                    </label>
+                  );
+                })()}
                 {SUB_WORKING.includes(s.pid) && (
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-medium text-ink-3">แบ่งบาน:</span>
