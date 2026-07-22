@@ -157,5 +157,31 @@ function check(label, res, want) {
   if (!t || t.sku !== "JR00553" || !c || c.sku !== "JR00498") { fails++; console.log(`  ✗ โซลิด มัลติ/เข้า: ตลับ ${t?.sku} ไส้ ${c?.sku}`); } else console.log("  ✓ โซลิด มัลติพ้อย JR00553 · เปิดเข้า JR00498");
 }
 
+// ── toprail (รางบนเฟรม) · default N2 SMS อิสระ → บานเลื่อน 2 · ใช้ handle table ──
+{
+  const spec = CUT_SPEC_BY_ID["toprail_frame"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("toprail รางบนเฟรม (N2 อิสระ):");
+  check("toprail", res, [
+    { nameHas: "ล้อรางบน Hafele", sku: "JR00544", qty: 2 },
+    { nameHas: "มือจับ กุญแจ", sku: "JR00368", qty: 1 },
+    { nameHas: "มือจับ ล็อค", sku: "JR00369", qty: 2 },
+    { nameHas: "น็อตประกอบบาน", sku: "JR00864", qty: 8 },
+  ]);
+}
+
+// ── SlimLux · default N3 อิสระ ยัดในช่อง กล่องสั้นซ้าย → บานเลื่อน 3 ──
+{
+  const spec = CUT_SPEC_BY_ID["slimlux_slide"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("SlimLux (N3 อิสระ · กล่องสั้นซ้าย):");
+  check("SlimLux", res, [
+    { nameHas: "กล่องยาว", sku: "JR00573", qty: 2 },
+    { nameHas: "กล่องสั้น ซ้าย", sku: "JR00575", qty: 1 },
+    { nameHas: "ล้อล่าง", sku: "JR00572", qty: 6 },
+  ]);
+  if (res.hardware.some((h) => h.name.includes("กล่องสั้น ขวา"))) { fails++; console.log("  ✗ SlimLux: กล่องสั้นขวา ไม่ควรโผล่ (เลือกซ้าย)"); }
+}
+
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
 process.exit(fails === 0 ? 0 : 1);

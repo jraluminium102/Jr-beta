@@ -18,6 +18,7 @@ export type CutInput = {
   honk: boolean;  // มีโหนกไหม (SMS)
   // ตัวเลือกเฉพาะรุ่น (optional — รุ่นไหนใช้ประกาศผ่าน spec.opts ให้ UI render เอง)
   fit?: string;      // SlimLux: "ยัดในช่อง" | "แปะนอก"
+  boxSide?: string;  // SlimLux: กล่องสั้น (บานกลาง) ด้าน "ซ้าย" | "ขวา" — เลือก SKU กล่องสั้นซ้าย/ขวา
   sashMode?: string; // SlimLux: "อิสระ" | "ลากจูง" | "เปิดคู่กลาง"
   beam?: string;     // SlimLux: คาน "1×2".."4×4"
   handle?: string;   // SlimLux: "X-J" | "ไม่มี"

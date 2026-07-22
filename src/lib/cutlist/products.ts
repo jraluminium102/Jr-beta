@@ -116,8 +116,9 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { key: "sashMode", label: "รูปแบบบาน", choices: ["อิสระ", "ลากจูง", "เปิดคู่กลาง"] },
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×2", "2×2", "1×4", "2×4", "1×4+1×1.6", "2×4+4×4", "4×4"] },
     { key: "handle", label: "มือจับ", choices: ["X-J", "ไม่มี"] },
+    { key: "boxSide", label: "กล่องสั้น (บานกลาง) ด้าน", choices: ["ซ้าย", "ขวา"] },
   ],
-  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J" },
+  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", boxSide: "ซ้าย" },
   profiles: [
     // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
     // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
@@ -135,6 +136,13 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: 'ฉากปิดราง 2"', code: "-", len: (o) => o.W, qty: () => 2 },
     { name: "ตบปิดใต้รางริม", code: "WM-K20", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: () => 2, note: "ยาวเท่ารางบน" },
     { name: "ตบปิดใต้รางกลาง", code: "WM-K20", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => Math.max(o.N - slimDead(o.sashMode) - 1, 0), note: "บานเลื่อน − 1" },
+  ],
+  // ⑥ อุปกรณ์ SlimLux (มี SKU · กล่อง+ล้อ) — กล่องยาว หัว/ท้าย · กล่องสั้น บานกลางเลือกด้าน · ล้อล่าง 2/บานเลื่อน
+  hardware: [
+    { name: "กล่องยาว (หัว+ท้ายบาน)", sku: "JR00573", qty: (o) => (o.N <= 1 ? 1 : 2), unit: "กล่อง", note: "บานแรก+บานสุดท้าย" },
+    { name: "กล่องสั้น ซ้าย (บานกลาง)", sku: "JR00575", qty: (o) => (o.boxSide === "ซ้าย" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
+    { name: "กล่องสั้น ขวา (บานกลาง)", sku: "JR00574", qty: (o) => (o.boxSide === "ขวา" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
+    { name: "ล้อล่าง", sku: "JR00572", qty: (o) => 2 * (o.N - slimDead(o.sashMode)), unit: "ตัว", note: "บานเลื่อนละ 2 ตัว" },
   ],
 };
 
@@ -990,8 +998,9 @@ export const TOPRAIL_FRAME: CutSpec = {
     { key: "fit", label: "ช่องปูน", choices: ["ยัดในช่อง", "แปะนอกชนผนัง", "แปะนอกไปต่อ"] },
     { key: "handle", label: "มือจับ (SMS+ไปต่อ)", choices: ["ฝัง", "เมโทร"] },
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×1.6", "1.6×1.6", "1×3", "2×4", "4×4", "2×4+4×4"] },
+    ...HANDLE_OPTS_LR,
   ],
-  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4" },
+  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     // คานผสม "2×4+4×4" ห้ามเข้า boxCode ตรงๆ (ได้รหัสผี กล่อง 2"x4+4") → แตก 2 โปรไฟล์เหมือน SlimLux
     { name: "คานรับราง", code: (o) => beamBoxCodes(o.beam ?? "2×4")[0] ?? "-", len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
@@ -1007,11 +1016,17 @@ export const TOPRAIL_FRAME: CutSpec = {
     { name: "เสากุญแจยูโร (นอน 45°)", code: "-", len: (o) => (o.W - trCeuro(o) + trOv(o) * 8) / o.N, qty: (o) => (trSMS(o) ? 0 : 2 * o.N) },
     { name: "ตบเกี่ยวยูโร", code: "-", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trHook(o)) },
   ],
+  // ⑤ อุปกรณ์ toprail (มี SKU · ใช้ตาราง lookup มือจับเดียวกับ SMS) · ล้อ/น็อต = จำนวนบานเลื่อน (C16=trSlide)
   hardware: [
-    { name: "ล้อ Hafele (1 กล่อง/บาน)", qty: (o) => o.N, unit: "กล่อง" },
-    { name: "มือจับ Align (2/บาน)", qty: (o) => 2 * o.N, unit: "ตัว" },
-    { name: "ชุดล็อค (1/บาน)", qty: (o) => o.N, unit: "ชุด" },
-    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
+    { name: "ล้อรางบน Hafele 100kg", sku: "JR00544", qty: trSlide, unit: "กล่อง", note: "1/บานเลื่อน" },
+    ...handleHardware("LR"),
+    { name: "น็อตประกอบบาน 1\"", sku: "JR00864", qty: (o) => 4 * trSlide(o), unit: "ตัว", note: "ไม่มีน็อตเฟรม" },
+    { name: "สักหลาด 5×3", sku: "JR00794", unit: "เมตร", noStock: true, note: "กรอบบาน+เฟรมข้าง (สะสมม้วน)",
+      qty: (o, ctx) => {
+        const post = trSMS(o) ? ctx.len("เสากุญแจ B20051 (SMS·ตั้ง)") : ctx.len("เสากุญแจยูโร (ตั้ง)");
+        const cross = trSMS(o) ? ctx.len("ขวางบน/ล่าง B20054 (SMS·นอน)") : ctx.len("เสากุญแจยูโร (นอน 45°)");
+        return Math.round((4 * (post + cross) * trSlide(o) + 2 * o.H) / 100 * 10) / 10;
+      } },
   ],
 };
 
