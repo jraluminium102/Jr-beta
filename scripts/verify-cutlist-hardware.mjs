@@ -183,5 +183,30 @@ function check(label, res, want) {
   if (res.hardware.some((h) => h.name.includes("กล่องสั้น ขวา"))) { fails++; console.log("  ✗ SlimLux: กล่องสั้นขวา ไม่ควรโผล่ (เลือกซ้าย)"); }
 }
 
+// ── SMS240 เฟี้ยม · default 2L2R แบ่งบาน ขาว (LUT 2_2_1) ──
+{
+  const spec = CUT_SPEC_BY_ID["sms240_bifold"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("SMS240 เฟี้ยม (2L2R แบ่งบาน · ขาว):");
+  check("เฟี้ยม", res, [
+    { nameHas: "บานพับ (ระดับเดียว)", sku: "JR00610", qty: 2 },
+    { nameHas: "ล้อแขวนบานตาย ซ้าย", sku: "JR00612", qty: 1 },
+    { nameHas: "ล้อแขวนบานตาย ขวา", sku: "JR00613", qty: 1 },
+    { nameHas: "ล้อแขวนบานกลาง (Meeting)", sku: "JR00616", qty: 1 },
+    { nameHas: "สลักล็อค", sku: "JR00563", qty: 2 },
+    { nameHas: "ยางเฟรม", sku: "JR00804", qty: 12 },
+  ]);
+  // สีดำ → บานพับเดียว JR00602
+  const rB = computeCutList(spec, { ...spec.defaults, hwColor: "ดำ" }, 1);
+  const hp = rB.hardware.find((h) => h.name.includes("บานพับ (ระดับเดียว)"));
+  if (!hp || hp.sku !== "JR00602") { fails++; console.log(`  ✗ เฟี้ยม ดำ บานพับ want JR00602 got ${hp?.sku}`); } else console.log("  ✓ เฟี้ยม ดำ · บานพับ JR00602");
+  // 3L3R: แบ่งบาน → สลักล็อค 6 · เดี่ยว → 2 (พิสูจน์ fold2)
+  const rS = computeCutList(spec, { ...spec.defaults, rail: "3L3R", N: 6, fold2: "แบ่งบาน" }, 1);
+  const rD = computeCutList(spec, { ...spec.defaults, rail: "3L3R", N: 6, fold2: "เดี่ยว" }, 1);
+  const bS = rS.hardware.find((h) => h.name.includes("สลักล็อค"))?.qty;
+  const bD = rD.hardware.find((h) => h.name.includes("สลักล็อค"))?.qty;
+  if (bS !== 6 || bD !== 2) { fails++; console.log(`  ✗ เฟี้ยม 3L3R สลักล็อค แบ่งบาน=${bS}(ควร6) เดี่ยว=${bD}(ควร2)`); } else console.log("  ✓ เฟี้ยม 3L3R · แบ่งบาน สลักล็อค=6 · เดี่ยว=2");
+}
+
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
 process.exit(fails === 0 ? 0 : 1);
