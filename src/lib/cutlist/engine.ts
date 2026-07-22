@@ -66,7 +66,16 @@ export type CutInput = {
   hiH?: number;      // กลาสเฮ้าส์: สูงฝั่งสูง (ชนบ้าน) · loH = สูงฝั่งต่ำ (หน้า)
   loH?: number;
   sys?: string;      // รางบนเฟรมปกติ: ระบบ "SMS" | "ยูโร"
+  // ⑤ อุปกรณ์ — มือจับ (เลื่อน/ประตู): เลือกยี่ห้อ+สี+ชนิดซ้าย/ขวา → ได้ SKU + จำนวนถูก (ตาราง lookup ในไฟล์)
+  handleBrand?: string; // "เมโทร" | "Align"
+  handleColor?: string; // "อบขาว" | "ดำ"
+  handleL?: string;     // มือจับ ซ้าย: "กุญแจ+ล็อค" | "ล็อค+ดัมมี่" | "ล็อค" | "ดัมมี่+ดัมมี่" | "ดัมมี่" | "Digital lock" | "-"
+  handleR?: string;     // มือจับ ขวา (เลื่อนบานเดียว/ลากจูง = ใช้ handleL อย่างเดียว)
 };
+
+// ctx ให้สูตรฮาร์ดแวร์อ้าง "ความยาว/จำนวน" ของโปรไฟล์ตามชื่อได้ (ตรงกับที่ Excel อ้างเซลล์ในตาราง ④ ใบตัด)
+//   len(name) = ยาวตัดต่อชิ้น (ซม.) ของโปรไฟล์แรกที่ชื่อตรง · qty(name) = จำนวนชิ้น (ยังไม่คูณ sets)
+export type HardwareCtx = { len: (name: string) => number; qty: (name: string) => number };
 
 // ตัวเลือกต่อรุ่น — UI render อัตโนมัติ (นอกเหนือจาก W/H/N/ราง/โหนก) · type "number" = ช่องตัวเลข
 export type CutOpt = { key: string; label: string; choices?: string[]; type?: "number" };
@@ -89,17 +98,28 @@ export type CutSpec = {
   rails: string[];               // ตัวเลือกราง ([] = รุ่นนี้ไม่มีราง)
   opts?: CutOpt[];               // ตัวเลือกเฉพาะรุ่น (dropdown เพิ่มเติม)
   profiles: CutProfile[];
-  hardware?: { name: string; qty: (o: CutInput) => number; unit?: string }[];
+  // ⑤ อุปกรณ์/ฮาร์ดแวร์ — sku = รหัสสโตร์ JR##### (ผูกสต็อก · ตัดสต็อก+เทียบคงเหลือได้)
+  //   sku เป็นฟังก์ชันได้ (มือจับ: ยี่ห้อ+ชนิด+สี → SKU ต่างกัน) · "" = ยังไม่ผูกรหัส (โชว์อย่างเดียว)
+  //   noStock = true → ไม่ตัดสต็อก (เช่น Digital lock ซื้อแยก) · unit default "ชิ้น"
+  hardware?: {
+    name: string | ((o: CutInput) => string);
+    qty: (o: CutInput, ctx: HardwareCtx) => number;
+    sku?: string | ((o: CutInput) => string);
+    unit?: string;
+    note?: string;
+    noStock?: boolean;
+  }[];
 };
 
 export type CutRow = {
   name: string; code: string; len: number; qty: number; bars: number; stockLen: number; note?: string;
 };
+export type HardwareRow = { name: string; sku: string; qty: number; unit: string; note?: string; noStock?: boolean };
 export type CutResult = {
   rows: CutRow[];
   // สรุปเส้นต่อรหัส (รากของ BOQ + ตัดสต็อก) — stockLen = ความยาวเส้นที่เลือกใช้จริงต่อรหัส (คุ้มสุด)
   barsByCode: { code: string; bars: number; totalLenCm: number; stockLen: number }[];
-  hardware: { name: string; qty: number; unit: string }[];
+  hardware: HardwareRow[];
   totalBars: number;
 };
 
@@ -156,8 +176,22 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
       return { code, totalLenCm: round1(a.sumLen), bars: pick.bars, stockLen: pick.stockLen };
     })
     .sort((a, b) => a.code.localeCompare(b.code));
-  // ฮาร์ดแวร์: จำนวนทศนิยมได้ (เช่น เทปหนุนกระจกเป็นเมตร 7.0) — ปัด 1 ตำแหน่ง ไม่ใช่จำนวนเต็ม
-  const hardware = (spec.hardware ?? []).map((h) => ({ name: h.name, qty: round1(Math.max(0, h.qty(o)) * n), unit: h.unit ?? "ชิ้น" }));
+  // ctx: ให้สูตรฮาร์ดแวร์อ้างความยาว/จำนวนต่อชิ้นของโปรไฟล์ (per-unit ก่อนคูณ sets) ตามชื่อ — ตรง Excel ตาราง ④
+  const lenOf = (name: string) => meta.find((m) => m.row.name === name)?.row.len ?? 0;
+  const qtyOf = (name: string) => (meta.find((m) => m.row.name === name)?.row.qty ?? 0) / n; // row.qty คูณ sets แล้ว → หารกลับ
+  const hwCtx: HardwareCtx = { len: lenOf, qty: qtyOf };
+  // ฮาร์ดแวร์: จำนวนทศนิยมได้ (เช่น สักหลาด/เทปหนุนกระจกเป็นเมตร 7.0) — ปัด 1 ตำแหน่ง ไม่ใช่จำนวนเต็ม
+  //   sku/name เป็นฟังก์ชันได้ (มือจับขึ้นกับยี่ห้อ+สี) · รวมเฉพาะรายการที่ qty>0 (ตัวเลือกที่ไม่ใช้ = ซ่อน)
+  const hardware: HardwareRow[] = (spec.hardware ?? [])
+    .map((h) => ({
+      name: typeof h.name === "function" ? h.name(o) : h.name,
+      sku: (typeof h.sku === "function" ? h.sku(o) : h.sku) ?? "",
+      qty: round1(Math.max(0, h.qty(o, hwCtx)) * n),
+      unit: h.unit ?? "ชิ้น",
+      note: h.note,
+      noStock: h.noStock,
+    }))
+    .filter((h) => h.qty > 0);
   const totalBars = rows.reduce((s, r) => s + r.bars, 0);
   return { rows, barsByCode, hardware, totalBars };
 }

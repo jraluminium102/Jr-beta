@@ -7,15 +7,21 @@
  *   · ขวางบน สปส.4.2 + คงที่11.2 · ตบร่องใน 7
  */
 import type { CutSpec, CutInput } from "./engine";
+// นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
+import { smsSlideHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L } from "./hardware.ts";
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
+// มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
+const HANDLE_DEF_LR = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
+const HANDLE_DEF_L = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค" };
 
 export const SMS_SLIDE_FREE: CutSpec = {
   id: "sms_slide_free",
   name: "SMS บานเลื่อนอิสระ/สลับ",
   stockLen: 640, // 6.4 ม. (ซม.)
   rails: ["3รางเสียบ", "รางเตี้ย7มม"],
-  defaults: { W: 350, H: 159, N: 3, rail: "3รางเสียบ", honk: false },
+  opts: [...HANDLE_OPTS_LR],
+  defaults: { W: 350, H: 159, N: 3, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_LR },
   profiles: [
     { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
@@ -29,6 +35,7 @@ export const SMS_SLIDE_FREE: CutSpec = {
     { name: "ตบเฟรมบน/ล่าง ร่องใน", code: "-", len: (o) => o.W - 7, qty: (o) => Math.max(3 - o.N, 0) * 2 },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
   ],
+  hardware: smsSlideHardware((o) => o.N, "LR", "เสากุญแจ ML"),
 };
 
 /**
@@ -41,7 +48,8 @@ export const SMS_SLIDE_CENTER: CutSpec = {
   name: "SMS บานเลื่อนเปิดคู่กลาง (4 บาน)",
   stockLen: 640,
   rails: ["3รางเสียบ", "รางเตี้ย7มม"],
-  defaults: { W: 350, H: 159, N: 4, rail: "3รางเสียบ", honk: false },
+  opts: [...HANDLE_OPTS_LR],
+  defaults: { W: 350, H: 159, N: 4, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_LR },
   profiles: [
     { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
@@ -58,6 +66,8 @@ export const SMS_SLIDE_CENTER: CutSpec = {
     { name: "ตบเฟรมบน/ล่าง ร่องกลาง", code: "-", len: (o) => (o.W - 4.4) - 2 * ((o.W - 35.3) / 4 + 9.7), qty: () => 2, note: "เฟรมบน − 2×(ขวางล่าง+9.7)" },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
   ],
+  // เปิดคู่กลาง: ล้อ/น็อต/สักหลาด คิดสัมประสิทธิ์บาน = 2 (คู่กลาง) แม้ N=4 · เสากุญแจ = "มัลติพ้อย"
+  hardware: smsSlideHardware(() => 2, "LR", "เสากุญแจมัลติพ้อย"),
 };
 
 /** ③ SMS ลากจูง (sheet "ลากจูง" · กองข้างเดียว) — N=3 ลากจูง · N=2 เลื่อนเดี่ยว · รหัสเสากุญแจไฟล์พิมพ์ "20051" (ตกตัว B → ใช้ B20051) */
@@ -66,7 +76,8 @@ export const SMS_SLIDE_TOW: CutSpec = {
   name: "SMS บานเลื่อนลากจูง (กองข้างเดียว)",
   stockLen: 640,
   rails: ["3รางเสียบ", "รางเตี้ย7มม"],
-  defaults: { W: 200, H: 240, N: 3, rail: "3รางเสียบ", honk: false },
+  opts: [...HANDLE_OPTS_L],
+  defaults: { W: 200, H: 240, N: 3, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_L },
   profiles: [
     { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
@@ -81,6 +92,8 @@ export const SMS_SLIDE_TOW: CutSpec = {
     { name: "ตบร่องบานตาย", code: "-", len: (o) => (o.W - 4.4) - (o.W - 4.2 * o.N - 11.2) / o.N - 11, qty: () => 2, note: "เฟรมบน − ขวางบน − 11" },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
   ],
+  // ลากจูง: บานที่ขยับ = N−1 (กองข้างเดียว) · มือจับชุดเดียว
+  hardware: smsSlideHardware((o) => o.N - 1, "L", "เสากุญแจ ML"),
 };
 
 /**

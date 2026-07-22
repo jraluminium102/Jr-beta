@@ -81,6 +81,14 @@ export async function POST(req: Request) {
 
   if (error) return fail(error.message, 500);
 
+  // รหัสสินค้าอัตโนมัติ: เว้นว่าง → สร้าง "JR" + id 5 หลัก (เช่น JR00368) — แก้ไขได้ (ถ้ากรอกมาใช้ตามนั้น)
+  //   ต้องทำหลัง insert เพราะต้องรู้ id ก่อน · pattern เดียวกับ backfill 0103 (generic sku = JR#####)
+  if (!String(body.sku ?? "").trim()) {
+    const autoSku = "JR" + String(item.id).padStart(5, "0");
+    const { error: skuErr } = await supabase.from("stock_items").update({ sku: autoSku }).eq("id", item.id);
+    if (!skuErr) item.sku = autoSku;
+  }
+
   // บันทึกราคาเริ่มต้นเข้าประวัติ (ถ้ามี) — trigger sync unit_cost/price_per_kg ให้อยู่แล้ว
   if (unitCost > 0 || pricePerKg > 0) {
     await supabase.from("stock_prices").insert({

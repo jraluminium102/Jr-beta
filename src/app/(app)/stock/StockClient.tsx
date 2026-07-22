@@ -734,7 +734,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
             {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-        <Field label="SKU/รหัส" value={f.sku} onChange={(v) => setF({ ...f, sku: v })} />
+        <Field label="SKU/รหัส" value={f.sku} onChange={(v) => setF({ ...f, sku: v })} placeholder="เว้นว่าง = สร้างอัตโนมัติ JR#####" />
         <Field label="หน่วย" value={f.unit} onChange={(v) => setF({ ...f, unit: v })} />
         <Field label="ร้าน/ผู้ขาย" value={f.supplier} onChange={(v) => setF({ ...f, supplier: v })} />
         <Field label="จุดเตือนขั้นต่ำ" value={f.min_qty} onChange={(v) => setF({ ...f, min_qty: v })} type="number" />
