@@ -25,6 +25,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
   { href: "/cutlist", icon: "box", label: "BOQ อลูมิเนียม" },
+  { href: "/boq-daily", icon: "clipboard", label: "สรุป BOQ รายวัน" },
   { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
 ];
 
@@ -81,6 +82,7 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   const docItems = isChang ? [] : DOC_NAV.filter((n) => {
     if (n.href === "/queue")                  return can(role, "queue",      "read");
     if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
+    if (n.href === "/boq-daily")              return can(role, "production",  "read");
     if (n.href === "/stats")                  return can(role, "finance",    "read");
     if (n.href === "/warranties")             return can(role, "warranties", "read");
     return true;

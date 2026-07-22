@@ -35,6 +35,8 @@ export type ScheduleRow = {
   producer_note: string | null;
   status: string;
   sets: ScheduleSet[];
+  /** ใบตัดของงานนี้ (0094) — โชว์ชิปกดเปิดบนการ์ด (ช่าง + ออฟฟิศ) */
+  cutlists: { id: number; code: string | null; name: string; status: string }[];
 };
 
 /** สถานะที่ถือว่า "อยู่ในตารางผลิต" */
@@ -76,6 +78,17 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
     }, {});
   }
 
+  // ใบตัดต่องาน (0094) — query แยก ถ้าตารางยังไม่มี/พัง data=null → ว่าง ไม่กระทบตารางหลัก
+  type CutBrief = { id: number; code: string | null; name: string; status: string };
+  let cutsByJob: Record<string, CutBrief[]> = {};
+  if (jobIds.length) {
+    const { data: cuts } = await sb.from("cutlists").select("id, code, name, status, job_id").in("job_id", jobIds);
+    cutsByJob = (cuts ?? []).reduce((acc: Record<string, CutBrief[]>, c: Record<string, unknown>) => {
+      (acc[c.job_id as string] ??= []).push({ id: c.id as number, code: (c.code as string) ?? null, name: (c.name as string) ?? "", status: (c.status as string) ?? "draft" });
+      return acc;
+    }, {});
+  }
+
   // ตัดงานที่ job ถูกยกเลิก
   const jobRows: ScheduleRow[] = (prods ?? [])
     .filter((p: Record<string, unknown>) => (p.job as { status?: string } | null)?.status !== "CANCELLED")
@@ -95,6 +108,7 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
         producer_note: (p.producer_note as string | null) ?? null,
         status: p.status as string,
         sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
+        cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
       };
     });
 
@@ -113,6 +127,7 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
     producer_note: (a.producer_note as string | null) ?? null,
     status: (a.status as string) ?? "QUEUED",
     sets: [],
+    cutlists: [],
   }));
 
   // งานด่วนก่อน: วันกำหนดเสร็จใกล้สุดขึ้นก่อน · ไม่มีวันไปท้าย

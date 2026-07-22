@@ -9,6 +9,7 @@ import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { Plus, X, Check, Trash2, CalendarDays } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
+import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
 
 export type ProdSet = {
   id: number; set_label: string; seq: number;
@@ -308,9 +309,9 @@ export default function ProductionSchedulePage() {
 
   return (
     <div className="p-4 sm:p-6 fade-in rounded-2xl" style={{ background: IOS.page, minHeight: "calc(100vh - 24px)", color: IOS.ink }}>
-     {/* ครอบเนื้อหาให้กว้างไม่เกิน 1160px จัดกลาง — จอคอมกว้าง ๆ การ์ดจะได้ไม่ "ยืด" เต็มจอ (เจ้าของแจ้ง 17 ก.ค.2569)
-         มือถือ w-full = เต็มจอเหมือนเดิม (max-w ไม่มีผลเพราะจอแคบกว่า 1160) */}
-     <div className="mx-auto w-full max-w-[1160px]">
+     {/* ครอบเนื้อหาจัดกลาง · มือถือ w-full เต็มจอเหมือนเดิม
+         หน้าช่าง (isChang) จอคอมกว้างขึ้น (1500) เพื่อวางการ์ด 3 คอลัมน์อ่านง่าย · ออฟฟิศคง 1160 (เจ้าของแจ้ง 17 + 22 ก.ค.2569) */}
+     <div className={`mx-auto w-full ${isChang ? "max-w-[1500px]" : "max-w-[1160px]"}`}>
       {/* ── หัว: title + filter ช่าง + ปุ่มเพิ่ม ── */}
       <div className="flex flex-wrap items-center gap-3 mb-1">
         <h1 className="text-2xl font-bold flex items-center gap-2 mr-auto" style={{ color: IOS.ink, letterSpacing: "-.01em" }}><CalendarDays size={22} /> ตารางผลิต</h1>
@@ -414,9 +415,9 @@ export default function ProductionSchedulePage() {
                   <span className="text-[12px] font-bold rounded-full px-2 py-0.5" style={{ background: pm.bg, color: pm.fg }}>{items.length}</span>
                   <span className="ml-auto text-[11px]" style={{ color: IOS.ink3 }}>เรียงตามเดดไลน์</span>
                 </div>
-                {/* จอคอม (≥1024px) = 2 คอลัมน์ ใช้พื้นที่คุ้ม · มือถือ = คอลัมน์เดียวเรียงลง
-                    items-start = การ์ดที่กางเช็คลิสต์ (สูงกว่า) ไม่ดึงการ์ดข้าง ๆ ให้ยืดตาม */}
-                <div className="space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:items-start">
+                {/* หน้าช่าง: lg=2 คอลัมน์ · จอกว้าง xl(≥1280px)=3 คอลัมน์ อ่านง่ายไม่ยืด (เจ้าของแจ้ง 22 ก.ค.2569) · มือถือ=คอลัมน์เดียว
+                    ออฟฟิศคง 2 คอลัมน์ · items-start = การ์ดที่กางเช็คลิสต์ไม่ดึงการ์ดข้าง ๆ ยืดตาม */}
+                <div className={`space-y-2.5 lg:space-y-0 lg:grid lg:gap-2.5 lg:items-start ${isChang ? "lg:grid-cols-2 xl:grid-cols-3" : "lg:grid-cols-2"}`}>
                   {items.map((r) => (
                     <div key={r.id} className="rounded-[18px] p-4 space-y-3"
                       style={{ background: IOS.card, boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.04)" }}>
@@ -454,6 +455,13 @@ export default function ProductionSchedulePage() {
                           ) : null;
                         })()}
                       </button>
+
+                      {/* ใบตัดของงาน (0094) — กดเปิด/สร้างผูกลูกค้า · เชื่อมกับหน้าผลิตออฟฟิศ (เจ้าของสั่ง 22 ก.ค.69) */}
+                      {r.kind === "job" && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <CutlistChip jobId={r.job_id} customerName={r.title} cutlists={(r as { cutlists?: CutBrief[] }).cutlists} canWrite={canWrite} />
+                        </div>
+                      )}
 
                       {/* โหมดช่าง: เริ่มผลิต (QUEUED) / ส่งติดตั้ง (MANUFACTURING/QC เมื่อ QC ครบ) — กดเอง */}
                       {!officeMode && r.kind === "job" && canWrite && JOB_NEXT[r.status] && (() => {

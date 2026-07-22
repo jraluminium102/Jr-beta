@@ -58,18 +58,30 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       sets: Math.max(1, Math.round(Number(it.sets) || 1)),
       sort_order: i,
     })).filter((r) => r.spec_id);
-    // replace ทั้งชุดแบบ atomic ผ่าน RPC (0094 · delete+insert txn เดียว — QA MEDIUM: กันข้อหายถ้า insert ล้มหลัง delete)
-    const { error: rpcErr } = await sb.rpc("replace_cutlist_items", { p_cl_id: id, p_items: rows });
-    if (rpcErr) {
-      // RPC ยังไม่มี (0094 เวอร์ชันเก่า) → fallback ทางเดิม
-      if (!/replace_cutlist_items|function/i.test(rpcErr.message ?? "")) {
-        return fail(dbMessage(rpcErr, "บันทึกข้อไม่สำเร็จ"), 500);
-      }
+    // แทนที่ข้อทั้งชุด — delete+insert ตรง (service client ข้าม RLS อยู่แล้ว)
+    const directReplace = async () => {
       const { error: dErr } = await sb.from("cutlist_items").delete().eq("cutlist_id", id);
       if (dErr) return fail(dbMessage(dErr, "ลบข้อเดิมไม่สำเร็จ"), 500);
       if (rows.length) {
         const { error: iErr } = await sb.from("cutlist_items").insert(rows.map((r) => ({ ...r, cutlist_id: id })));
         if (iErr) return fail("บันทึกข้อไม่สำเร็จ: " + iErr.message, 500);
+      }
+      return null;
+    };
+    // ⚠ ช่างผ่านลิงก์ = service client (ไม่มี session) → RPC replace_cutlist_items มี has_role guard ข้างในที่ session-less ไม่ผ่าน
+    //   = เซฟข้อใบตัดไม่ได้ (บั๊กที่เจ้าของเจอ 22 ก.ค.69) → ช่างใช้ delete+insert ตรง · คนล็อกอินยังใช้ RPC atomic
+    if (actor.kind === "chang") {
+      const bad = await directReplace();
+      if (bad) return bad;
+    } else {
+      const { error: rpcErr } = await sb.rpc("replace_cutlist_items", { p_cl_id: id, p_items: rows });
+      if (rpcErr) {
+        // RPC ยังไม่มี (0094 เวอร์ชันเก่า) → fallback ทางเดิม
+        if (!/replace_cutlist_items|function/i.test(rpcErr.message ?? "")) {
+          return fail(dbMessage(rpcErr, "บันทึกข้อไม่สำเร็จ"), 500);
+        }
+        const bad = await directReplace();
+        if (bad) return bad;
       }
     }
   }

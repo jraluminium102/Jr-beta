@@ -25,6 +25,16 @@ export const GET = withRoute(async () => {
   }
   if (error) throw new Error(error.message);
 
+  // ใบตัดต่องาน (0094) — query แยก (พังไม่กระทบตารางหลัก) → ชิปกดเปิดบนการ์ด
+  const jobIds = (data ?? []).map((p: Record<string, unknown>) => p.job_id as string | null).filter((x): x is string => !!x);
+  const cutsByJob: Record<string, { id: number; code: string | null; name: string; status: string }[]> = {};
+  if (jobIds.length) {
+    const { data: cuts } = await ctx.supabase.from("cutlists").select("id, code, name, status, job_id").in("job_id", jobIds);
+    for (const c of (cuts ?? []) as Record<string, unknown>[]) {
+      (cutsByJob[c.job_id as string] ??= []).push({ id: c.id as number, code: (c.code as string) ?? null, name: (c.name as string) ?? "", status: (c.status as string) ?? "draft" });
+    }
+  }
+
   // ตัดงานที่ถูกยกเลิกออก + เรียง blocker_notes เก่า→ใหม่ (PostgREST ไม่การันตี order ของ embed)
   const rows = (data ?? [])
     .filter((p: Record<string, unknown>) => {
@@ -39,7 +49,7 @@ export const GET = withRoute(async () => {
         const sortedNotes = [...(job_blocker_notes ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at));
         jobRest = { ...rest, job_blocker_notes: sortedNotes };
       }
-      return { ...p, job: jobRest };
+      return { ...p, job: jobRest, cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [] };
     });
 
   return ok(rows, { can_write: can(ctx.role, "production", "write") });

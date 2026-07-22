@@ -12,6 +12,7 @@ import Icon from "@/components/Icon";
 import { ProductionStepModal, type ProdRow } from "@/components/production/ProductionStepModal";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
+import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -263,6 +264,8 @@ export default function ProductionPage() {
                     <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</span>
                     {/* โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098) — กดใส่/เอาออกเร็วจากรายการ */}
                     <BlockerNotesInline jobId={r.job_id} customerName={r.job?.customer_name ?? ""} notes={r.job?.job_blocker_notes ?? []} canWrite={canWrite} onChanged={invalidateAll} />
+                    {/* ใบตัดของงาน (0094) — กดเปิด/สร้างผูกลูกค้า · เชื่อมกับหน้าช่าง */}
+                    <CutlistChip jobId={r.job_id} customerName={r.job?.customer_name ?? ""} cutlists={(r as unknown as { cutlists?: CutBrief[] }).cutlists} canWrite={canWrite} />
                     {stale && <span className="text-[11px] text-rose-200 flex items-center gap-0.5"><Clock size={11} /> ค้าง {daysSince(r.status_updated_at, r.created_at)} วัน</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">

@@ -38,6 +38,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   if (!body) return fail("payload ไม่ถูกต้อง");
   const jobId = body.job_id ? String(body.job_id) : null;
+  // ใบตัดไม่ผูกงานลูกค้า (งานเบิกทั่วไป) → บังคับตั้งชื่อ (กันใบเปล่านิรนามในรายงาน · เจ้าของสั่ง 22 ก.ค.69)
+  if (!jobId && !String(body.name ?? "").trim()) return fail('ใบตัดที่ไม่ผูกงานลูกค้า ต้องตั้งชื่อก่อน (เช่น "เบิกเส้นซ่อมหน้างาน")');
 
   const sb = actor.sb as unknown as Sb;
 

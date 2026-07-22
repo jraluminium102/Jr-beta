@@ -18,11 +18,14 @@ export default function ChangCutlistList({ token }: { token: string }) {
   const rows = data?.data ?? [];
   const [busy, setBusy] = useState(false);
   const [errMsg, setErrMsg] = useState("");
+  const [newName, setNewName] = useState("");
 
   async function createBlank() {
+    const nm = newName.trim();
+    if (!nm) { setErrMsg('ตั้งชื่อใบตัดก่อน เช่น "เบิกเส้นซ่อมหน้างาน"'); return; }
     setBusy(true); setErrMsg("");
     try {
-      const r = await api.post<{ id: number }>("/cutlists", { name: "ใบตัดของช่าง" });
+      const r = await api.post<{ id: number }>("/cutlists", { name: nm });
       qc.invalidateQueries({ queryKey: ["chang-cutlists"] });
       window.location.href = `/chang/${token}/cutlist/${r.data.id}`;
     } catch (e) {
@@ -33,11 +36,16 @@ export default function ChangCutlistList({ token }: { token: string }) {
 
   return (
     <>
-      <button onClick={createBlank} disabled={busy}
-        className="w-full rounded-[12px] px-4 text-[15px] font-semibold text-white mb-4 min-h-[52px] disabled:opacity-50"
-        style={{ background: "#007aff" }}>
-        + สร้างใบตัดใหม่ (ไม่ต้องผูกงาน)
-      </button>
+      <div className="flex gap-2 mb-4">
+        <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="ชื่อใบตัด เช่น เบิกเส้นซ่อมหน้างาน"
+          onKeyDown={(e) => { if (e.key === "Enter") createBlank(); }}
+          className="flex-1 min-w-0 rounded-[12px] px-3 text-[15px] min-h-[52px] bg-white outline-none" style={{ border: "1px solid #d1d1d6", color: "#1c1c1e" }} />
+        <button onClick={createBlank} disabled={busy || !newName.trim()}
+          className="shrink-0 rounded-[12px] px-5 text-[15px] font-semibold text-white min-h-[52px] disabled:opacity-50"
+          style={{ background: "#007aff" }}>
+          + สร้าง
+        </button>
+      </div>
       {errMsg && (
         <div role="alert" className="text-[12.5px] rounded-xl px-3 py-2 mb-3" style={{ background: "#ffe5e5", color: "#c0392b" }}>{errMsg}</div>
       )}
