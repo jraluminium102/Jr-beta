@@ -180,6 +180,7 @@ export interface StockItem {
   // 0073 — ต้นทุน/น้ำหนัก/รูป/ร้าน
   image_url: string;
   supplier: string;
+  color?: string;             // 0106 — สีวัสดุ (แยกจากชื่อ)
   unit_cost: number;          // ต้นทุนต่อหน่วยฐาน (ต่อเส้น/ชิ้น) ล่าสุด
   is_weight_based: boolean;   // true = อลู คิดต่อโล
   weight_per_unit: number;    // กก. ต่อ 1 หน่วย

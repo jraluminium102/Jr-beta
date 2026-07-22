@@ -246,7 +246,7 @@ function ItemDetail({
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-brand-dark truncate">{item.name}</h3>
             <p className="text-sm text-ink-3 truncate">
-              {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
+              {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.color ? ` · สี${item.color}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
             </p>
             {calcLink(item).linked && (
               <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-dark bg-brand/10 rounded-full px-2 py-0.5">
@@ -566,7 +566,7 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
               ? <Field label="ราคาต่อโล (฿/กก.)" value={pricePerKg} onChange={setPricePerKg} type="number" autoFocus />
               : <Field label="ต้นทุนต่อหน่วย (฿)" value={unitCost} onChange={setUnitCost} type="number" autoFocus />}
             <Field label="มีผลวันที่" value={effDate} onChange={setEffDate} type="date" />
-            <Field label="ร้าน/ผู้ขาย" value={supplier} onChange={setSupplier} />
+            {/* ร้าน/ผู้ขาย ใช้ค่าจากข้อมูลวัสดุ (supplier) — ไม่ต้องกรอกซ้ำ · ปรับที่ฟอร์มแก้วัสดุ */}
             <Field label="หมายเหตุ" value={note} onChange={setNote} />
           </div>
           {item.is_weight_based && pricePerKg && (
@@ -693,7 +693,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
 }) {
   const [f, setF] = useState({
     name: "", sku: "", category_id: "", unit: "เส้น", min_qty: "", qty_on_hand: "",
-    supplier: "", image_url: "", is_weight_based: false, weight_per_unit: "", price_per_kg: "", unit_cost: "",
+    supplier: "", color: "", image_url: "", is_weight_based: false, weight_per_unit: "", price_per_kg: "", unit_cost: "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -707,7 +707,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
       body: JSON.stringify({
         name: f.name, sku: f.sku, category_id: f.category_id || null, unit: f.unit,
         min_qty: Number(f.min_qty) || 0, qty_on_hand: Number(f.qty_on_hand) || 0,
-        supplier: f.supplier, image_url: f.image_url,
+        supplier: f.supplier, color: f.color, image_url: f.image_url,
         is_weight_based: f.is_weight_based, weight_per_unit: Number(f.weight_per_unit) || 0,
         price_per_kg: Number(f.price_per_kg) || 0, unit_cost: Number(f.unit_cost) || 0,
       }),
@@ -735,6 +735,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
           </select>
         </label>
         <Field label="SKU/รหัส" value={f.sku} onChange={(v) => setF({ ...f, sku: v })} placeholder="เว้นว่าง = สร้างอัตโนมัติ JR#####" />
+        <Field label="สี" value={f.color} onChange={(v) => setF({ ...f, color: v })} placeholder="เช่น ดำ / อบขาว" />
         <Field label="หน่วย" value={f.unit} onChange={(v) => setF({ ...f, unit: v })} />
         <Field label="ร้าน/ผู้ขาย" value={f.supplier} onChange={(v) => setF({ ...f, supplier: v })} />
         <Field label="จุดเตือนขั้นต่ำ" value={f.min_qty} onChange={(v) => setF({ ...f, min_qty: v })} type="number" />
@@ -784,7 +785,7 @@ function EditItemForm({ item, cats, canViewCost, onManageCat, onSaved }: {
 }) {
   const [f, setF] = useState({
     name: item.name, sku: item.sku, category_id: item.category_id ? String(item.category_id) : "",
-    unit: item.unit, min_qty: String(item.min_qty), supplier: item.supplier, image_url: item.image_url,
+    unit: item.unit, min_qty: String(item.min_qty), supplier: item.supplier, color: item.color ?? "", image_url: item.image_url,
     is_weight_based: item.is_weight_based, weight_per_unit: String(item.weight_per_unit || ""),
   });
   const [busy, setBusy] = useState(false);
@@ -796,7 +797,7 @@ function EditItemForm({ item, cats, canViewCost, onManageCat, onSaved }: {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: f.name, sku: f.sku, category_id: f.category_id || null, unit: f.unit,
-        min_qty: Number(f.min_qty) || 0, supplier: f.supplier, image_url: f.image_url,
+        min_qty: Number(f.min_qty) || 0, supplier: f.supplier, color: f.color, image_url: f.image_url,
         is_weight_based: f.is_weight_based, weight_per_unit: Number(f.weight_per_unit) || 0,
       }),
     });
@@ -825,6 +826,7 @@ function EditItemForm({ item, cats, canViewCost, onManageCat, onSaved }: {
           </select>
         </label>
         <Field label="SKU/รหัส" value={f.sku} onChange={(v) => setF({ ...f, sku: v })} />
+        <Field label="สี" value={f.color} onChange={(v) => setF({ ...f, color: v })} placeholder="เช่น ดำ / อบขาว" />
         <Field label="หน่วย" value={f.unit} onChange={(v) => setF({ ...f, unit: v })} />
         <Field label="ร้าน/ผู้ขาย" value={f.supplier} onChange={(v) => setF({ ...f, supplier: v })} />
         <Field label="จุดเตือนขั้นต่ำ" value={f.min_qty} onChange={(v) => setF({ ...f, min_qty: v })} type="number" />

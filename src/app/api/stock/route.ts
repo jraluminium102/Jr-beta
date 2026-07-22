@@ -89,6 +89,12 @@ export async function POST(req: Request) {
     if (!skuErr) item.sku = autoSku;
   }
 
+  // สี (0106) — เขียนแยกแบบ non-fatal: ถ้ายังไม่ได้รัน migration column ไม่มี → เพิ่มวัสดุไม่พัง แค่ไม่บันทึกสี
+  if (String(body.color ?? "").trim()) {
+    const { error: colErr } = await supabase.from("stock_items").update({ color: body.color }).eq("id", item.id);
+    if (!colErr) item.color = body.color;
+  }
+
   // บันทึกราคาเริ่มต้นเข้าประวัติ (ถ้ามี) — trigger sync unit_cost/price_per_kg ให้อยู่แล้ว
   if (unitCost > 0 || pricePerKg > 0) {
     await supabase.from("stock_prices").insert({

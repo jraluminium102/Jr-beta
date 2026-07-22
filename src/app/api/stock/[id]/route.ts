@@ -59,6 +59,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const { data, error } = await supabase
     .from("stock_items").update(patch).eq("id", params.id).select("*").single();
   if (error) return fail(error.message, 500);
+
+  // สี (0106) — เขียนแยกแบบ non-fatal (column อาจยังไม่มีถ้ายังไม่รัน migration → แก้วัสดุอื่นไม่พัง)
+  if ("color" in body) {
+    const { error: colErr } = await supabase.from("stock_items").update({ color: body.color ?? "" }).eq("id", params.id);
+    if (!colErr && data) (data as Record<string, unknown>).color = body.color ?? "";
+  }
+
   return ok(data);
 }
 
