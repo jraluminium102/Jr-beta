@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { computeTotals, lineTotal } from "@/lib/money";
+import { computeTotals, lineTotal, sumDiscountLines } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import type { Customer } from "@/lib/types";
 
@@ -40,6 +40,12 @@ export async function POST(req: Request) {
   const discount_pct = Number(body.discount_pct) || 0;
   const discount_amt_in = body.discount_amt != null ? Number(body.discount_amt) || 0 : undefined; // โหมดบาท (ชนะ %)
   const discount_label = String(body.discount_label ?? "").slice(0, 120);
+  // ส่วนลดหลายรายการ (0105) — sanitize + รวมยอดฝั่ง server (authoritative)
+  const discountLines = Array.isArray(body.discounts)
+    ? (body.discounts as { label?: unknown; pct?: unknown; amt?: unknown }[])
+        .slice(0, 20)
+        .map((d) => ({ label: String(d?.label ?? "").slice(0, 120), pct: Math.max(0, Number(d?.pct) || 0), amt: Math.max(0, Number(d?.amt) || 0) }))
+    : [];
   const wht_rate = Number(body.wht_rate) || 0;
   if (discount_pct < 0 || discount_pct > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
 
@@ -128,10 +134,13 @@ export async function POST(req: Request) {
   }
 
   // 3) คำนวณยอด (แหล่งความจริงเดียว · ส่งบาทมา = ใช้ตรง ๆ ชนะ %)
-  const t = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt_in != null ? { discount_amt: discount_amt_in } : {}) });
-  const storedPct = discount_amt_in != null
+  const subtotalCalc = items.reduce((a: number, i: { qty: number; unit_price: number }) => a + (Number(i.qty) || 0) * (Number(i.unit_price) || 0), 0);
+  const discount_amt_use = discountLines.length ? sumDiscountLines(subtotalCalc, discountLines) : discount_amt_in;
+  const t = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt_use != null ? { discount_amt: discount_amt_use } : {}) });
+  const storedPct = discount_amt_use != null
     ? (t.subtotal > 0 ? Math.round((t.discount_amt / t.subtotal) * 10000) / 100 : 0)
     : discount_pct;
+  const headerLabel = discountLines.length ? (discountLines.length === 1 ? discountLines[0].label : "") : discount_label;
 
   // 3) ออกรหัสอัตโนมัติ (พ.ศ. · reset รายเดือน) ผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "QT" });
@@ -146,20 +155,20 @@ export async function POST(req: Request) {
     customer_snapshot: snapshot,
     issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
     status: "draft",
-    vat_rate, discount_pct: storedPct, discount_label, wht_rate,
+    vat_rate, discount_pct: storedPct, discount_label: headerLabel, wht_rate,
     subtotal: t.subtotal, discount_amt: t.discount_amt, vat_amt: t.vat_amt,
     total: t.total, wht_amt: t.wht_amt, net: t.net,
     note: body.note ?? "",
     created_by: profile.id,
   };
-  // เงื่อนไขท้ายใบแก้ได้ต่อใบ (ส่งมาเฉพาะที่แก้ · null = ใช้ค่ามาตรฐาน)
-  const qCond: Record<string, unknown> = {};
+  // เงื่อนไขท้ายใบ + ส่วนลดหลายรายการ (คอลัมน์ใหม่ · ส่งเฉพาะที่มี · fallback ถ้า migration ยังไม่รัน)
+  const qCond: Record<string, unknown> = { discounts: discountLines };  // 0105 breakdown
   if (Array.isArray(body.conditions_work)) qCond.conditions_work = body.conditions_work;
   if (Array.isArray(body.conditions_quote)) qCond.conditions_quote = body.conditions_quote;
   let { data: q, error: qErr } = await supabase
     .from("quotations").insert({ ...qBase, ...qCond }).select("id, code").single();
-  // กันพัง: ถ้า migration 0076 (conditions_*) ยังไม่รัน → insert ซ้ำแบบไม่มีเงื่อนไข
-  if (qErr && /conditions_/i.test(qErr.message)) {
+  // กันพัง: ถ้า migration 0076 (conditions_*) หรือ 0105 (discounts) ยังไม่รัน → insert ซ้ำแบบตัดคอลัมน์ใหม่ออก
+  if (qErr && /conditions_|discounts/i.test(qErr.message)) {
     ({ data: q, error: qErr } = await supabase
       .from("quotations").insert(qBase).select("id, code").single());
   }

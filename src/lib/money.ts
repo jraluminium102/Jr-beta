@@ -65,6 +65,28 @@ export function computeTotals(input: MoneyInput): MoneyResult {
   return { subtotal, discount_amt, after_discount, vat_amt, total, wht_amt, net, labor_amt, material_amt };
 }
 
+// ── ส่วนลดหลายรายการ (multi-discount · ใบเสนอ) — 22 ก.ค.69 ──
+//   แต่ละข้อ: amt (บาท) = ตัวตั้งจริง (authoritative · บัญชีสั่ง กัน round-trip drift) · pct = ตัวโชว์/ตัวช่วยกรอก
+//   ยอดรวมส่วนลด = Σ(amt>0 ? amt : subtotal×pct/100) clamp 0..subtotal → ป้อน computeTotals เป็น discount_amt เดียว
+//   ⚠ money core (computeTotals) รับ discount_amt เดียวเหมือนเดิม → billing/VAT/WHT/verify ไม่กระทบ
+export interface DiscountLine {
+  label?: string;
+  pct?: number;   // % (โชว์/ช่วยกรอก · ไม่ authoritative)
+  amt?: number;   // บาท (ตัวตั้งจริง)
+}
+
+export function sumDiscountLines(subtotal: number, lines?: DiscountLine[] | null): number {
+  if (!Array.isArray(lines) || lines.length === 0) return 0;
+  const sub = Math.max(0, Number(subtotal) || 0);
+  let total = 0;
+  for (const d of lines) {
+    const amt = Number(d?.amt) || 0;
+    const pct = Number(d?.pct) || 0;
+    total += amt > 0 ? amt : (sub * pct) / 100;
+  }
+  return round2(Math.min(Math.max(0, total), sub));
+}
+
 export const lineTotal = (qty: number, unit_price: number) =>
   round2((Number(qty) || 0) * (Number(unit_price) || 0));
 

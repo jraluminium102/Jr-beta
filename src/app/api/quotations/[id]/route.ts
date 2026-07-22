@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err, notFound } from "@/lib/bff/response";
-import { computeTotals } from "@/lib/money";
+import { computeTotals, sumDiscountLines } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
@@ -40,7 +40,8 @@ const PatchSchema = z.object({
   vat_rate: z.number().min(0).max(100).default(7),
   discount_pct: z.number().min(0).max(100).default(0),
   discount_amt: z.number().min(0).optional(),   // โหมดบาท — ส่งมา = ใช้ตรง ๆ (ชนะ %)
-  discount_label: z.string().max(120).optional(), // หัวข้อส่วนลด
+  discount_label: z.string().max(120).optional(), // หัวข้อส่วนลด (ข้อเดียว)
+  discounts: z.array(z.object({ label: z.string().max(120).optional(), pct: z.number().optional(), amt: z.number().optional() })).max(20).optional(), // ส่วนลดหลายรายการ (0105)
   wht_rate: z.number().min(0).max(100).default(0),
   note: z.string().optional(),
   // ระบบ Rev (0093): none=บันทึกทับเฉยๆ · rev=ขึ้น Rev ใหม่ (ทับ) · rev_keep=ขึ้น Rev ใหม่ + เก็บฉบับเดิมเป็นประวัติ
@@ -56,7 +57,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   const body = await req.json().catch(() => ({}));
   const parsed = PatchSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.errors[0].message, 400);
-  const { items, vat_rate, discount_pct, discount_amt, discount_label, wht_rate, note, revision_action, revision_label } = parsed.data;
+  const { items, vat_rate, discount_pct, discount_amt, discount_label, discounts, wht_rate, note, revision_action, revision_label } = parsed.data;
 
   const qId = params.id;
 
@@ -139,12 +140,20 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     revUpdate = { revision_label: revision_label.trim() };
   }
 
+  // ส่วนลดหลายรายการ (0105) — sanitize + รวมยอดฝั่ง server (authoritative · กันเชื่อเลขจาก client)
+  const discountLines = (discounts ?? []).map((d) => ({ label: String(d.label ?? "").slice(0, 120), pct: Math.max(0, Number(d.pct) || 0), amt: Math.max(0, Number(d.amt) || 0) }));
+  const subtotalCalc = items.reduce((a, i) => a + (Number(i.qty) || 0) * (Number(i.unit_price) || 0), 0);
+  // มีส่วนลดหลายข้อ → รวมเป็น discount_amt เดียวป้อน computeTotals · ไม่มี → โหมดเดิม (บาท/%)
+  const discount_amt_use = discountLines.length ? sumDiscountLines(subtotalCalc, discountLines) : discount_amt;
+
   // 3) คำนวณยอดใหม่ทั้งหมดด้วย computeTotals (ส่งบาทมา = ใช้ตรง ๆ · ไม่งั้นคิดจาก %)
-  const money = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt != null ? { discount_amt } : {}) });
+  const money = computeTotals({ items, vat_rate, discount_pct, wht_rate, ...(discount_amt_use != null ? { discount_amt: discount_amt_use } : {}) });
   // discount_pct ที่เก็บ = derived จากยอดจริง (โหมดบาท) เพื่อโชว์ให้ตรง · amt เป็นตัวตั้ง
-  const storedPct = discount_amt != null
+  const storedPct = discount_amt_use != null
     ? (money.subtotal > 0 ? Math.round((money.discount_amt / money.subtotal) * 10000) / 100 : 0)
     : discount_pct;
+  // หัวข้อส่วนลดบน header: มีข้อเดียว = ใช้หัวข้อข้อนั้น · หลายข้อ = เว้น (โชว์ breakdown แทน) · ไม่มี discounts = ใช้ค่าเดิม
+  const headerLabel = discountLines.length ? (discountLines.length === 1 ? discountLines[0].label : "") : discount_label;
 
   // 4) update quotations header
   const updateData: Record<string, unknown> = {
@@ -158,7 +167,8 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     wht_amt: money.wht_amt,
     net: money.net,
   };
-  if (discount_label !== undefined) updateData.discount_label = discount_label;
+  if (headerLabel !== undefined) updateData.discount_label = headerLabel;
+  if (discounts !== undefined) updateData.discounts = discountLines;  // breakdown (0105)
   if (note !== undefined) updateData.note = note;
   Object.assign(updateData, revUpdate);
 
@@ -166,10 +176,10 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     .from("quotations")
     .update(updateData)
     .eq("id", qId);
-  // กันพัง: 0093 (revision_*) ยังไม่รัน → update ซ้ำแบบตัด rev ออก (ยอดยังถูก)
-  if (uErr && /revision_/i.test(uErr.message ?? "")) {
-    const { revision_no: _rn, revision_label: _rl, ...noRev } = updateData as Record<string, unknown>;
-    ({ error: uErr } = await ctx.supabase.from("quotations").update(noRev).eq("id", qId));
+  // กันพัง: 0093 (revision_*) หรือ 0105 (discounts) ยังไม่รัน → update ซ้ำแบบตัดคอลัมน์ใหม่ออก (ยอดยังถูก)
+  if (uErr && /revision_|discounts/i.test(uErr.message ?? "")) {
+    const { revision_no: _rn, revision_label: _rl, discounts: _ds, ...noNew } = updateData as Record<string, unknown>;
+    ({ error: uErr } = await ctx.supabase.from("quotations").update(noNew).eq("id", qId));
   }
   if (uErr) throw new Error(uErr.message);
 

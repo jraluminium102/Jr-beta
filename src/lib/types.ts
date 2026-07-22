@@ -276,7 +276,9 @@ export interface Quotation {
   discount_pct: number;
   wht_rate: number;
   subtotal: number;
-  discount_amt: number;
+  discount_amt: number;            // ยอดรวมส่วนลดทั้งหมด (บาท) — ตัวตั้งจริง (billing ใช้ต่อ)
+  discount_label?: string;         // หัวข้อส่วนลด (0092) — โชว์เมื่อมีข้อเดียว
+  discounts?: { label?: string; pct?: number; amt?: number }[]; // ส่วนลดหลายรายการ (0105 · breakdown โชว์แยกข้อ)
   vat_amt: number;
   total: number;
   wht_amt: number;

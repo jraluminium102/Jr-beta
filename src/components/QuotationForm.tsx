@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Card } from "./ui";
 import Icon from "./Icon";
 import OptionAdder from "@/components/quotation/OptionAdder";
-import { computeTotals, baht } from "@/lib/money";
+import { computeTotals, baht, sumDiscountLines, type DiscountLine } from "@/lib/money";
+import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 import DateField from "@/components/ui/DateField";
 import type { Customer } from "@/lib/types";
 import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/print/quote-constants";
@@ -23,8 +24,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<Item[]>([blank()]);
   const [vat, setVat] = useState(7);
-  const [disc, setDisc] = useState(0);
-  const [discLabel, setDiscLabel] = useState(""); // หัวข้อส่วนลด
+  const [discounts, setDiscounts] = useState<DiscountLine[]>([]); // ส่วนลดหลายรายการ (0105)
   const [wht, setWht] = useState(0);
   const [note, setNote] = useState("");
   // เงื่อนไขท้ายใบ (แก้ได้ต่อใบ) — เริ่มจากค่ามาตรฐาน · ส่งเฉพาะเมื่อแก้ (null = ใช้มาตรฐาน)
@@ -68,8 +68,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     if (!raw) return;
     try {
-      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown }>; customer?: string; customer_id?: number | null; job_id?: string };
+      const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown }>; customer?: string; customer_id?: number | null; job_id?: string; discounts?: DiscountLine[] };
       if (payload.job_id) setBridgeJobId(String(payload.job_id));
+      if (Array.isArray(payload.discounts) && payload.discounts.length) setDiscounts(payload.discounts); // ส่วนลดจากเครื่องคิด (0105)
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -178,7 +179,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingProfileId, billingProfiles]);
 
-  const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: disc, wht_rate: wht }), [items, vat, disc, wht]);
+  const subtotalRaw = useMemo(() => items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0), [items]);
+  const discountTotal = useMemo(() => sumDiscountLines(subtotalRaw, discounts), [subtotalRaw, discounts]);
+  const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: 0, discount_amt: discountTotal, wht_rate: wht }), [items, vat, discountTotal, wht]);
 
   const setItem = (i: number, k: keyof Item, v: string | number) =>
     setItems(items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
@@ -199,7 +202,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       rows.push([String(idx + 1), it.name, it.detail.replace(/\n/g, " · "), String(it.qty), String(it.unit_price), String((Number(it.qty) || 0) * (Number(it.unit_price) || 0))]));
     rows.push([]);
     rows.push(["", "", "", "", "ยอดก่อนภาษี", String(t.subtotal)]);
-    if (t.discount_amt > 0) rows.push(["", "", "", "", `ส่วนลด ${disc}%`, String(-t.discount_amt)]);
+    if (t.discount_amt > 0) {
+      const withAmt = discounts.filter((d) => (Number(d.amt) || 0) > 0);
+      if (withAmt.length > 1) withAmt.forEach((d) => rows.push(["", "", "", "", `ส่วนลด${(d.label ?? "").trim() ? ` (${(d.label ?? "").trim()})` : ""}`, String(-(Number(d.amt) || 0))]));
+      else rows.push(["", "", "", "", `ส่วนลด${t.subtotal > 0 ? ` ${Math.round((t.discount_amt / t.subtotal) * 100)}%` : ""}`, String(-t.discount_amt)]);
+    }
     rows.push(["", "", "", "", `VAT ${vat}%`, String(t.vat_amt)]);
     rows.push(["", "", "", "", "ยอดรวมสุทธิ", String(t.total)]);
     if (t.wht_amt > 0) { rows.push(["", "", "", "", `หัก ณ ที่จ่าย ${wht}%`, String(-t.wht_amt)]); rows.push(["", "", "", "", "ยอดรับสุทธิ", String(t.net)]); }
@@ -220,7 +227,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       const res = await fetch("/api/ai/verify-quotation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: customerId, issue_date: issueDate, items: valid, vat_rate: vat, discount_pct: disc, wht_rate: wht, note }),
+        body: JSON.stringify({ customer_id: customerId, issue_date: issueDate, items: valid, vat_rate: vat, discount_pct: t.subtotal > 0 ? Math.round((t.discount_amt / t.subtotal) * 100) : 0, wht_rate: wht, note }),
       });
       const json = await res.json();
       if (!res.ok) { setAiErr(json.error ?? "ตรวจไม่สำเร็จ"); return; }
@@ -249,9 +256,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           issue_date: issueDate,
           items: valid,
           vat_rate: vat,
-          discount_pct: disc,
-          discount_amt: t.discount_amt,       // ส่งบาท (exact) เป็นตัวตั้ง
-          discount_label: discLabel.trim(),
+          discount_amt: t.discount_amt,       // ยอดรวมส่วนลด (บาท) เป็นตัวตั้ง
+          discounts,                          // breakdown หลายรายการ (0105)
+          discount_label: discounts.length === 1 ? (discounts[0].label ?? "").trim() : "",
           wht_rate: wht,
           note,
           ...(selectedJobId ? { job_id: selectedJobId } : {}),
@@ -511,24 +518,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             {/* footer แบบเดียวกับใบวางบิล/FlowAccount: ส่วนลด %+บาท · VAT ติ๊ก · หัก ณ ที่จ่าย ติ๊ก+% */}
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-ink-3 flex items-center gap-1">ส่วนลด
-                  <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-14 glass-soft rounded px-1.5 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
-                </span>
-                <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
-                  <input type="number" min={0} step="any" value={t.discount_amt || ""}
-                    onChange={(e) => setDisc(t.subtotal > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / t.subtotal) * 10000) / 100) : 0)}
-                    className="w-24 glass-soft rounded px-1.5 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
-                </span>
-              </div>
-              {disc > 10 && <p className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1">⚠ ส่วนลด {Number(disc.toFixed(2))}% สูงผิดปกติ — ตรวจว่ากรอกถูกก่อนบันทึก</p>}
-              {t.discount_amt > 0 && (
-                <input type="text" value={discLabel} onChange={(e) => setDiscLabel(e.target.value)}
-                  placeholder="หัวข้อส่วนลด (เช่น ส่วนลดโปรโมชัน) — โชว์บนใบ"
-                  className="w-full glass-soft rounded px-2 py-1 text-xs outline-none" aria-label="หัวข้อส่วนลด" />
-              )}
-              <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+              <DiscountLinesEditor subtotal={t.subtotal} lines={discounts} onChange={setDiscounts} />
+              {t.discount_amt > 0 && <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>}
               <label className="flex items-center justify-between gap-2 cursor-pointer">
                 <span className="text-ink-3 flex items-center gap-1.5">
                   <input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%

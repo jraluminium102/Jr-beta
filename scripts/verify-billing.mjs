@@ -8,7 +8,7 @@
  */
 import {
   computeTotals, backoutVat, splitCashReceived, footerSnapshot, suggestInstallments,
-  billVatDecision, effectiveBillVat, isNoVatBill, planInstallments,
+  billVatDecision, effectiveBillVat, isNoVatBill, planInstallments, sumDiscountLines,
 } from "../src/lib/money.ts";
 
 let pass = 0, fail = 0;
@@ -327,6 +327,20 @@ console.log("   — invariant loop (material×labor×vat×wht×retention) —");
                 Math.abs(rr(s.vat) - c.vat_amt) > 0.01 || Math.abs(rr(s.wht) - c.wht_amt) > 0.01 || !perItem) bad++;
           }
   eq(`invariant ครบทุก combo (${cases} เคส)`, bad, 0);
+}
+
+console.log("\n═══ ⑩ sumDiscountLines — ส่วนลดหลายรายการ (0105) รวมเป็น discount_amt เดียว ═══");
+eq("บาท 2 ข้อ รวมกัน", sumDiscountLines(100000, [{ amt: 2000 }, { amt: 3000 }]), 5000);
+eq("% + บาท ผสม (10% ของ 100k + 2000)", sumDiscountLines(100000, [{ pct: 10 }, { amt: 2000 }]), 12000);
+eq("amt ชนะ pct ในข้อเดียวกัน", sumDiscountLines(100000, [{ pct: 50, amt: 1000 }]), 1000);
+eq("clamp ไม่เกิน subtotal", sumDiscountLines(1000, [{ amt: 9999 }]), 1000);
+eq("ว่าง = 0", sumDiscountLines(100000, []), 0);
+eq("null = 0", sumDiscountLines(100000, null), 0);
+{
+  // ต่อ computeTotals: 2 ส่วนลด (2000+3000=5000) · VAT7 → after 95000 · vat 6650 · total 101650
+  const agg = sumDiscountLines(100000, [{ amt: 2000, label: "ค่าประเมิน" }, { amt: 3000, label: "โปรโมชัน" }]);
+  const t = computeTotals({ items: [{ qty: 1, unit_price: 100000 }], vat_rate: 7, discount_pct: 0, discount_amt: agg, wht_rate: 0 });
+  eq("computeTotals กับส่วนลดรวม 5000", [t.subtotal, t.discount_amt, t.after_discount, t.vat_amt, t.total], [100000, 5000, 95000, 6650, 101650]);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht } from "@/lib/money";
+import { baht, sumDiscountLines, type DiscountLine } from "@/lib/money";
 import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
 import { computeCost } from "@/lib/calculator40/engine.mjs";
@@ -19,6 +19,7 @@ import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 import OptionAdder from "@/components/quotation/OptionAdder";
+import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 // @ts-expect-error — bootstrap เป็น ESM JS ล้วน (ก๊อปตรงจาก mockup index.html script ฝัง — ห้ามแก้กติกา)
 import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json ที่ดึงจาก mockup (ราคาขาย R3.9 fallback)
@@ -206,8 +207,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         setEditingQ({ id: d.id, code: d.code, status: d.status, revision_no: revNo, revision_label: String(d.revision_label ?? "") });
         if (d.customer_id != null) setCustomerId(Number(d.customer_id));
         setQVat(Number(d.vat_rate) || 0);
-        setQDisc(Number(d.discount_pct) || 0);
-        setQDiscAmt(Number(d.discount_amt) || 0); // จำนวนเงินจริงจากใบ (ตัวตั้ง) — เซฟกลับไม่ drift
+        // ส่วนลด: จาก breakdown เดิม (0105) · ไม่มี = แปลงส่วนลดเดี่ยวเดิมเป็น 1 ข้อ
+        setQDiscounts(Array.isArray(d.discounts) && d.discounts.length
+          ? d.discounts
+          : (Number(d.discount_amt) > 0 ? [{ label: String(d.discount_label ?? ""), amt: Number(d.discount_amt) }] : []));
         setQWht(Number(d.wht_rate) || 0);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const its = ((d.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order);
@@ -231,9 +234,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [svcOpen, setSvcOpen] = useState(false);
   // footer ใบเสนอ (VAT/ส่วนลด/หัก ณ ที่จ่าย) — ให้พรีวิวฟอร์มจริงคิดยอดครบเหมือนใบพิมพ์
   const [qVat, setQVat] = useState(7);
-  const [qDisc, setQDisc] = useState(0);
-  // ส่วนลดเป็น "จำนวนเงิน" (ตัวตั้งจริง · บัญชีสั่ง: ห้าม derive บาทกลับจาก % กัน round-trip drift) — % เป็นตัวโชว์/ตัวช่วยกรอก
-  const [qDiscAmt, setQDiscAmt] = useState(0);
+  // ส่วนลดหลายรายการ (0105) — บาทเป็นตัวตั้งจริง (บัญชีสั่ง กัน round-trip drift)
+  const [qDiscounts, setQDiscounts] = useState<DiscountLine[]>([]);
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
@@ -643,9 +645,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items, vat_rate: qVat, discount_pct: qDisc, wht_rate: qWht,
-          // ส่งบาท (ตัวตั้งจริง) ด้วยเสมอเมื่อมี — server ใช้บาทชนะ % (กัน drift · บัญชีสั่ง)
-          ...(qDiscAmt > 0 ? { discount_amt: qDiscAmt } : {}),
+          items, vat_rate: qVat, wht_rate: qWht,
+          discounts: qDiscounts,   // ส่วนลดหลายรายการ (0105) — server รวมเป็น discount_amt เดียว
           ...(revAction !== "none" ? { revision_action: revAction, revision_label: revLabel.trim() } : {}),
         }),
       });
@@ -689,6 +690,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       items,
       customer: selectedCustomer?.name ?? "",
       customer_id: customerId,
+      ...(qDiscounts.length ? { discounts: qDiscounts } : {}), // ส่วนลดหลายรายการ (0105) — ยกไปใบใหม่ด้วย
       ...(bridgeJobId ? { job_id: bridgeJobId } : {}), // ผูกงานที่ส่งมาจากเช็คลิสต์ (ถ้ามี)
     };
     try {
@@ -712,10 +714,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       key: -(i + 1), name: l.name, detail: "", qty: 1, unitPrice: l.amount, locked: true,
     })),
   ];
-  // ยอดก่อนส่วนลด (ไว้ sync ส่วนลด % ↔ บาท ในฟอร์ม)
+  // ยอดก่อนส่วนลด (ฐานคิด % ของแต่ละข้อ)
   const previewSubtotal = previewItems.reduce((s, it) => s + (it.qty || 0) * (it.unitPrice || 0), 0);
-  // บาทเป็นตัวตั้ง (qDiscAmt) — ถ้ายังไม่เคยตั้ง (0) ค่อย derive จาก % (พฤติกรรมเดิมของใบที่มีแต่ %)
-  const discountBaht = qDiscAmt > 0 ? qDiscAmt : Math.round(previewSubtotal * (qDisc || 0)) / 100;
+  const discountBaht = sumDiscountLines(previewSubtotal, qDiscounts);   // ยอดรวมส่วนลดทุกข้อ
   function editPreviewItem(key: number, patch: Partial<PreviewItem>) {
     if (key < 0) return; // ค่าบริการ (แก้ที่แผงค่าบริการ)
     setQuote((q) => q.map((x) => x.key === key ? {
@@ -1432,34 +1433,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               <label className="block"><span className="text-xs font-medium text-ink-3">หัก ณ ที่จ่าย</span>
                 <select value={qWht} onChange={(e) => setQWht(Number(e.target.value))} className="w-full glass-soft rounded-lg px-2 py-2 mt-1 outline-none">
                   <option value={0}>ไม่หัก</option><option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option></select></label>
-              {/* ส่วนลด — ใส่ได้ทั้ง % และจำนวนเงิน (ผูกกัน แก้ช่องไหนอีกช่องขยับตาม) */}
+              {/* ส่วนลดหลายรายการ (0105) — กด "+ เพิ่มส่วนลด" ได้หลายข้อ · แต่ละข้อ % หรือ บาท */}
               <div className="col-span-2">
-                <span className="text-xs font-medium text-ink-3">ส่วนลด (ใส่ % หรือ จำนวนเงิน อย่างใดอย่างหนึ่ง)</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex items-center gap-1">
-                    <input type="number" min={0} step={0.5} value={qDisc ? Number(qDisc.toFixed(2)) : ""} placeholder="0"
-                      onChange={(e) => {
-                        const pct = Math.max(0, Number(e.target.value) || 0);
-                        setQDisc(pct);
-                        // ตั้งบาท (ตัวตั้ง) จาก % ที่กรอก ณ ยอดปัจจุบัน — จากนั้นบาทคงที่ ไม่ derive ซ้ำ (กัน drift)
-                        setQDiscAmt(Math.round(previewSubtotal * pct) / 100);
-                      }}
-                      className="w-20 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
-                    <span className="text-ink-3">%</span>
-                  </div>
-                  <span className="text-ink-3">=</span>
-                  <div className="flex items-center gap-1">
-                    <input type="number" min={0} step={100} value={discountBaht || ""} placeholder="0"
-                      onChange={(e) => {
-                        const b = Math.max(0, Number(e.target.value) || 0);
-                        setQDiscAmt(b); // บาทเป็นตัวตั้งจริง
-                        setQDisc(previewSubtotal > 0 ? Math.round((b / previewSubtotal) * 1000000) / 10000 : 0);
-                      }}
-                      className="w-28 glass-soft rounded-lg px-2 py-2 outline-none text-right tabular-nums" />
-                    <span className="text-ink-3">บาท</span>
-                  </div>
-                </div>
-                {qDisc > 0 && <p className="text-[11px] text-ink-3 mt-1">ส่วนลด {Number(qDisc.toFixed(2))}% = ฿{baht(discountBaht)}</p>}
+                <DiscountLinesEditor subtotal={previewSubtotal} lines={qDiscounts} onChange={setQDiscounts} />
               </div>
             </div>
             <div>
@@ -1501,8 +1477,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               customer={previewCustomer}
               issueDate={issueDate}
               vatRate={qVat}
-              discountPct={qDisc}
-              discountAmt={qDiscAmt > 0 ? qDiscAmt : undefined}
+              discountAmt={discountBaht}
+              discounts={qDiscounts}
               whtRate={qWht}
             />
           </div>

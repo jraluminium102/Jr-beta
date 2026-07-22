@@ -71,6 +71,7 @@ export default async function QuotationDetail({ params }: { params: { id: string
                 discountPct={q.discount_pct}
                 discountAmt={q.discount_amt}
                 discountLabel={(q as { discount_label?: string }).discount_label ?? ""}
+                discounts={(q as { discounts?: { label?: string; pct?: number; amt?: number }[] }).discounts ?? []}
                 whtRate={q.wht_rate}
                 note={q.note}
                 items={items}
@@ -149,7 +150,11 @@ export default async function QuotationDetail({ params }: { params: { id: string
           <table className="text-sm">
             <tbody>
               <tr><td className="pr-8 py-0.5 text-ink-3">ยอดรวมก่อนภาษี</td><td className="text-right tabular-nums">{baht(q.subtotal)}</td></tr>
-              {q.discount_amt > 0 && <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(q as { discount_label?: string }).discount_label ? ` (${(q as { discount_label?: string }).discount_label})` : (q.discount_pct > 0 ? ` ${q.discount_pct}%` : "")}</td><td className="text-right tabular-nums text-brand">-{baht(q.discount_amt)}</td></tr>}
+              {q.discount_amt > 0 && (((q as { discounts?: { label?: string; amt?: number }[] }).discounts?.filter((d) => (Number(d.amt) || 0) > 0).length ?? 0) > 1
+                ? (q as { discounts?: { label?: string; amt?: number }[] }).discounts!.filter((d) => (Number(d.amt) || 0) > 0).map((d, i) => (
+                    <tr key={i}><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(d.label ?? "").trim() ? ` (${(d.label ?? "").trim()})` : ` ${q.subtotal > 0 ? Number((((Number(d.amt) || 0) / q.subtotal) * 100).toFixed(2)) : 0}%`}</td><td className="text-right tabular-nums text-brand">-{baht(Number(d.amt) || 0)}</td></tr>
+                  ))
+                : <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(q as { discount_label?: string }).discount_label ? ` (${(q as { discount_label?: string }).discount_label})` : (q.discount_pct > 0 ? ` ${q.discount_pct}%` : "")}</td><td className="text-right tabular-nums text-brand">-{baht(q.discount_amt)}</td></tr>)}
               <tr><td className="pr-8 py-0.5 text-ink-3">VAT {q.vat_rate}%</td><td className="text-right tabular-nums">{baht(q.vat_amt)}</td></tr>
               <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(q.total)}</td></tr>
               {q.wht_amt > 0 && (<>

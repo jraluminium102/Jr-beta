@@ -173,12 +173,23 @@ export function QuotationDoc({
                       </tr>
 
                       {q.discount_amt > 0 && (
-                        <tr>
-                          <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                            ส่วนลด {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
-                          </td>
-                          <td className="text-right tabular-nums">-{baht(q.discount_amt)} บาท</td>
-                        </tr>
+                        Array.isArray(anyQ.discounts) && anyQ.discounts.filter((d: { amt?: number }) => (Number(d?.amt) || 0) > 0).length > 1
+                          ? anyQ.discounts.filter((d: { amt?: number }) => (Number(d?.amt) || 0) > 0).map((d: { label?: string; amt?: number }, i: number) => (
+                            <tr key={i}>
+                              <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
+                                ส่วนลด {(d.label ?? "").trim() ? `(${(d.label ?? "").trim()})` : (q.subtotal > 0 ? `${Number((((Number(d.amt) || 0) / q.subtotal) * 100).toFixed(2))}%` : "")}
+                              </td>
+                              <td className="text-right tabular-nums">-{baht(Number(d.amt) || 0)} บาท</td>
+                            </tr>
+                          ))
+                          : (
+                            <tr>
+                              <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
+                                ส่วนลด {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
+                              </td>
+                              <td className="text-right tabular-nums">-{baht(q.discount_amt)} บาท</td>
+                            </tr>
+                          )
                       )}
 
                       {q.discount_amt > 0 && (

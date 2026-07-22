@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { baht } from "@/lib/money";
+import { baht, sumDiscountLines, type DiscountLine } from "@/lib/money";
 import Icon from "@/components/Icon";
 import OptionAdder from "@/components/quotation/OptionAdder";
+import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 import type { QuotationItem } from "@/lib/types";
 
 // category/product_id/group_label/calc_recipe = passthrough (มองไม่เห็นใน dialog) — กันสูตร/หัวข้อชุดหายตอนแก้ข้อความ (0093/0076)
@@ -18,6 +19,7 @@ export default function QuotationEditButton({
   discountPct,
   discountAmt: discountAmtProp = 0,
   discountLabel = "",
+  discounts: discountsProp = [],
   whtRate,
   note,
   items,
@@ -29,6 +31,7 @@ export default function QuotationEditButton({
   discountPct: number;
   discountAmt?: number;
   discountLabel?: string;
+  discounts?: DiscountLine[];
   whtRate: number;
   note: string;
   items: QuotationItem[];
@@ -50,9 +53,12 @@ export default function QuotationEditButton({
   const [revAction, setRevAction] = useState<"none" | "rev" | "rev_keep">("none");
   const [revLabel, setRevLabel] = useState(`Rev${String((revisionNo || 0) + 1).padStart(2, "0")}`);
   const [vat, setVat] = useState(vatRate);
-  // ส่วนลดเก็บเป็น "จำนวนเงิน" (ตัวตั้งจริง) · % เป็น derived · + หัวข้อ
-  const [discAmt, setDiscAmt] = useState(discountAmtProp || 0);
-  const [discLabel, setDiscLabel] = useState(discountLabel);
+  // ส่วนลดหลายรายการ (0105) — init จาก breakdown เดิม · ไม่มี = แปลงส่วนลดเดี่ยวเดิมเป็น 1 ข้อ (backward compat)
+  const [discounts, setDiscounts] = useState<DiscountLine[]>(
+    Array.isArray(discountsProp) && discountsProp.length
+      ? discountsProp
+      : (discountAmtProp > 0 ? [{ label: discountLabel, amt: discountAmtProp }] : [])
+  );
   const [wht, setWht] = useState(whtRate);
   const [noteVal, setNoteVal] = useState(note);
   const [busy, setBusy] = useState(false);
@@ -60,7 +66,7 @@ export default function QuotationEditButton({
 
   // preview ยอดแบบ real-time — ส่วนลดใช้ discAmt ตรง ๆ (clamp 0..subtotal)
   const subtotal = round2(rows.reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unit_price) || 0), 0));
-  const discountAmt = round2(Math.min(Math.max(0, discAmt), subtotal));
+  const discountAmt = sumDiscountLines(subtotal, discounts);
   const discPct = subtotal > 0 ? Math.round((discountAmt / subtotal) * 10000) / 100 : 0;
   const afterDiscount = round2(subtotal - discountAmt);
   const vatAmt = Math.round((afterDiscount * vat) / 100 + Number.EPSILON);
@@ -89,7 +95,9 @@ export default function QuotationEditButton({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         items: rows.map((r, i) => ({ ...r, sort_order: i })),
-        vat_rate: vat, discount_amt: discountAmt, discount_pct: discPct, discount_label: discLabel.trim(),
+        vat_rate: vat, discount_amt: discountAmt, discount_pct: discPct,
+        discount_label: discounts.length === 1 ? (discounts[0].label ?? "").trim() : "",
+        discounts,
         wht_rate: wht, note: noteVal,
         // Rev (0093): none = แค่บันทึกทับ · rev/rev_keep = ขึ้น Rev ใหม่ (rev_keep เก็บฉบับเดิมเป็นประวัติ)
         ...(revAction !== "none" ? { revision_action: revAction, revision_label: revLabel.trim() } : {}),
@@ -174,28 +182,8 @@ export default function QuotationEditButton({
           </button>
         </div>
 
-        {/* ส่วนลด — ใส่เป็น % หรือ จำนวนเงิน (ผูกกัน) + หัวข้อ */}
-        <div className="rounded-xl border border-gray-200 p-3 space-y-2">
-          <div className="text-xs font-medium text-gray-500">ส่วนลด (ใส่ % หรือ จำนวนเงิน อย่างใดอย่างหนึ่ง)</div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1">
-              <input type="number" min={0} step="any" value={discPct ? Number(discPct.toFixed(2)) : ""} placeholder="0"
-                onChange={(e) => setDiscAmt(subtotal > 0 ? round2((subtotal * (Number(e.target.value) || 0)) / 100) : 0)}
-                className="w-20 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
-              <span className="text-gray-500 text-sm">%</span>
-            </div>
-            <span className="text-gray-400">=</span>
-            <div className="flex items-center gap-1">
-              <input type="number" min={0} step="any" value={discAmt || ""} placeholder="0"
-                onChange={(e) => setDiscAmt(Math.max(0, Number(e.target.value) || 0))}
-                className="w-28 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right tabular-nums outline-none focus-visible:ring-2" />
-              <span className="text-gray-500 text-sm">บาท</span>
-            </div>
-          </div>
-          <input type="text" value={discLabel} onChange={(e) => setDiscLabel(e.target.value)}
-            placeholder="หัวข้อส่วนลด (เช่น ส่วนลดโปรโมชัน / ลูกค้าเก่า) — โชว์บนใบ"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2" />
-        </div>
+        {/* ส่วนลดหลายรายการ (0105) */}
+        <DiscountLinesEditor subtotal={subtotal} lines={discounts} onChange={setDiscounts} />
 
         {/* อัตราภาษี */}
         <div className="grid sm:grid-cols-2 gap-4">
@@ -227,7 +215,7 @@ export default function QuotationEditButton({
         {/* สรุปยอด realtime */}
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
           <div className="flex justify-between"><span className="text-gray-500">ยอดรวมก่อนภาษี</span><span className="tabular-nums">{baht(subtotal)}</span></div>
-          {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด{discLabel.trim() ? ` (${discLabel.trim()})` : ` ${Number(discPct.toFixed(2))}%`}</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
+          {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด{discounts.length === 1 && (discounts[0].label ?? "").trim() ? ` (${(discounts[0].label ?? "").trim()})` : discounts.length > 1 ? ` (${discounts.length} รายการ)` : ` ${Number(discPct.toFixed(2))}%`}</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
           <div className="flex justify-between"><span className="text-gray-500">VAT {vat}%</span><span className="tabular-nums">{baht(vatAmt)}</span></div>
           <div className="flex justify-between font-bold text-brand-dark border-t pt-1"><span>ยอดรวมสุทธิ</span><span className="tabular-nums">฿{baht(total)}</span></div>
           {whtAmt > 0 && <>

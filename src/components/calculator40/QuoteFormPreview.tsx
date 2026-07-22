@@ -6,7 +6,7 @@
  * ใช้ layout เดียวกับ src/app/(app)/quotations/[id]/print/page.tsx (ฟอร์มเดียวกันทุกใบ)
  */
 import { Fragment } from "react";
-import { baht, computeTotals } from "@/lib/money";
+import { baht, computeTotals, type DiscountLine } from "@/lib/money";
 import { bahtText } from "@/lib/baht-text";
 import { PrintLetterhead, DOC_COLORS, type CustomerSnapshot } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
@@ -26,7 +26,7 @@ export type PreviewItem = {
 
 export default function QuoteFormPreview({
   items, onEdit, onRemove, customer, code, issueDate,
-  vatRate, discountPct, discountAmt, whtRate, editable = true,
+  vatRate, discountPct = 0, discountAmt, discounts, whtRate, editable = true,
 }: {
   items: PreviewItem[];
   onEdit: (key: number, patch: Partial<PreviewItem>) => void;
@@ -35,8 +35,9 @@ export default function QuoteFormPreview({
   code?: string;
   issueDate: string;
   vatRate: number;
-  discountPct: number;
-  discountAmt?: number; // ส่วนลดเป็นบาท (ตัวตั้งจริง) — ส่งมา = ชนะ % (กัน drift · บัญชีสั่ง)
+  discountPct?: number;
+  discountAmt?: number; // ยอดรวมส่วนลด (บาท · ตัวตั้งจริง) — ส่งมา = ชนะ % (กัน drift · บัญชีสั่ง)
+  discounts?: DiscountLine[]; // ส่วนลดหลายรายการ (0105) — โชว์แยกข้อ
   whtRate: number;
   editable?: boolean;
 }) {
@@ -147,10 +148,19 @@ export default function QuoteFormPreview({
             </tr>
             {t.discount_amt > 0 && (
               <>
-                <tr>
-                  <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>ส่วนลด {discountPct > 0 ? `${discountPct}%` : ""}</td>
-                  <td className="text-right tabular-nums">-{baht(t.discount_amt)} บาท</td>
-                </tr>
+                {Array.isArray(discounts) && discounts.filter((d) => (Number(d.amt) || 0) > 0).length > 1
+                  ? discounts.filter((d) => (Number(d.amt) || 0) > 0).map((d, i) => (
+                    <tr key={i}>
+                      <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>ส่วนลด {(d.label ?? "").trim() ? `(${(d.label ?? "").trim()})` : (t.subtotal > 0 ? `${Number((((Number(d.amt) || 0) / t.subtotal) * 100).toFixed(2))}%` : "")}</td>
+                      <td className="text-right tabular-nums">-{baht(Number(d.amt) || 0)} บาท</td>
+                    </tr>
+                  ))
+                  : (
+                    <tr>
+                      <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>ส่วนลด {discounts?.length === 1 && (discounts[0].label ?? "").trim() ? `(${(discounts[0].label ?? "").trim()})` : (discountPct > 0 ? `${discountPct}%` : "")}</td>
+                      <td className="text-right tabular-nums">-{baht(t.discount_amt)} บาท</td>
+                    </tr>
+                  )}
                 <tr>
                   <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>จำนวนเงินหลังหักส่วนลด</td>
                   <td className="text-right tabular-nums">{baht(t.subtotal - t.discount_amt)} บาท</td>
