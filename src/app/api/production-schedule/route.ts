@@ -24,11 +24,12 @@ const createSchema = z.object({
   producer_note: z.string().nullish(),
 });
 
-// POST — เพิ่มงานผลิตแบบจดเอง
+// POST — เพิ่มงานผลิตแบบจดเอง (รับทั้งคนล็อกอิน + ช่างผ่านลิงก์ · เจ้าของสั่ง 22 ก.ค.69 ให้ช่างลิงก์เพิ่มงานจดเองได้)
 export const POST = withRoute(async (req: Request) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requireChangOr(req, "production", "write");
   const b = createSchema.parse(await req.json());
   const sb = ctx.supabase as unknown as { from: (t: string) => any };
+  const uid = ctx.user.id || null;   // ช่างผ่านลิงก์ไม่มี session → created_by = null
 
   const { data, error } = await sb
     .from("adhoc_production_tasks")
@@ -37,17 +38,19 @@ export const POST = withRoute(async (req: Request) => {
       customer_name: b.customer_name,
       produce_date: b.produce_date || null,
       install_date: b.install_date || null,
-      producer_note: b.producer_note || null,
+      producer_note: b.producer_note || (ctx.isChang && ctx.actorName ? `เพิ่มโดย ${ctx.actorName}` : null),
       status: "QUEUED",
-      created_by: ctx.user.id,
+      created_by: uid,
     })
     .select()
     .single();
   if (error || !data) throw new Error(error?.message ?? "เพิ่มงานไม่สำเร็จ");
 
-  await audit({
-    jobId: null, userId: ctx.user.id, action: "ADHOC_PRODUCTION_CREATED",
-    table: "adhoc_production_tasks", recordId: data.id as string, newValue: { title: b.title },
-  });
+  if (uid) {
+    await audit({
+      jobId: null, userId: uid, action: "ADHOC_PRODUCTION_CREATED",
+      table: "adhoc_production_tasks", recordId: data.id as string, newValue: { title: b.title },
+    });
+  }
   return created(data);
 });

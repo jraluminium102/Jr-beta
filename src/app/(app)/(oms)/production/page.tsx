@@ -13,6 +13,7 @@ import { ProductionStepModal, type ProdRow } from "@/components/production/Produ
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
 import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
+import AddProductionJobModal from "@/components/production/AddProductionJobModal";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -106,20 +107,29 @@ function DeepLinkHandler({ rows, setOpen, setFilterKey }: {
   );
 }
 
+type AdhocJob = { id: string; title: string; customer_name: string | null; produce_date: string | null; install_date: string | null; producer_note: string | null; status: string };
+
 export default function ProductionPage() {
   const [filterKey, setFilterKey] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<Row | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["production"], queryFn: () => api.get<Row[]>("/production") });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
+  const adhocJobs = (data?.meta?.adhoc as AdhocJob[] | undefined) ?? [];
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["production"] });
     queryClient.invalidateQueries({ queryKey: ["measure-schedule"] });
     queryClient.invalidateQueries({ queryKey: ["overdue-count"] });
+  };
+
+  const markAdhocDone = async (id: string) => {
+    if (!confirm("ทำเครื่องหมายว่างานจดเองนี้เสร็จแล้ว?")) return;
+    try { await api.patch(`/production-schedule/${id}`, { kind: "adhoc", status: "DONE" }); invalidateAll(); } catch { /* ignore */ }
   };
 
   const counts = useMemo(() => {
@@ -162,6 +172,12 @@ export default function ProductionPage() {
             <Icon name="ruler" size={14} />
             นัดวัดจริง
           </Link>
+          {canWrite && (
+            <button onClick={() => setAddOpen(true)}
+              className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-[13px] font-semibold min-h-[40px]" style={{ background: "#378add" }}>
+              <Icon name="plus" size={15} /> เพิ่มงาน
+            </button>
+          )}
         </div>
       </div>
       <p className="text-sm mb-3" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
@@ -174,6 +190,34 @@ export default function ProductionPage() {
           <Link href="/production-schedule" className="underline underline-offset-2 text-white">ตารางผลิต (ช่าง)</Link>
         </span>
       </div>
+
+      {/* งานจดเอง (adhoc · 0023) — ลูกค้าที่เพิ่มเองในตารางผลิต โผล่ที่นี่ด้วยแล้ว (เจ้าของสั่ง 22 ก.ค.69) */}
+      {adhocJobs.length > 0 && (
+        <div className="mb-4">
+          <div className="text-sm font-semibold text-white mb-1.5 px-1">🖊️ งานจดเอง (เพิ่มเองในตารางผลิต) · {adhocJobs.length}</div>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {adhocJobs.map((a) => (
+              <div key={a.id} className="glass-card rounded-2xl p-3 flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-semibold text-sm truncate">{a.customer_name || a.title}</div>
+                  {a.title && a.title !== a.customer_name && <div className="text-[12px] text-white/70 truncate">{a.title}</div>}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[12px]" style={{ color: "var(--t-low)" }}>
+                    {a.produce_date && <span>🏭 ผลิต {thDate(a.produce_date)}</span>}
+                    {a.install_date && <span>🔧 ติดตั้ง {thDate(a.install_date)}</span>}
+                    {a.producer_note && <span>· {a.producer_note}</span>}
+                  </div>
+                </div>
+                {canWrite && (
+                  <button onClick={() => markAdhocDone(a.id)} title="เสร็จแล้ว"
+                    className="focusable pressable shrink-0 inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-emerald-100 bg-emerald-500/20 border border-emerald-300/30">✓ เสร็จ</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {addOpen && <AddProductionJobModal onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); invalidateAll(); }} />}
 
       {/* ── Dashboard 2 เลน: ก่อนผลิต (ออฟฟิศ) / กำลังผลิต (ช่าง) ── */}
       {(["office", "chang", "issue"] as const).map((lane) => {

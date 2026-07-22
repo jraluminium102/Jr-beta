@@ -45,13 +45,18 @@ const jobCode = (j: { code?: string; job_code?: string } | undefined) => j?.code
 const jobArea = (j: { customer_area?: string; address?: string } | undefined) => j?.customer_area || j?.address || "";
 const leadOf = (a: InstallAssignment) => (a.lead_name || "").trim();
 
-type Plan = { assignments: InstallAssignment[]; ready: { id: string; job_id: string; jobs: Record<string, unknown> }[] };
+type Booked = { kind: "job" | "adhoc"; id: string; job_id: string | null; date: string; customer_name: string; job_code: string | null; customer_area: string | null; prod_status: string };
+type Plan = {
+  assignments: InstallAssignment[];
+  ready: { id: string; job_id: string; jobs: Record<string, unknown>; install_scheduled?: string | null }[];
+  booked?: Booked[]; // "จองจากผลิต" — วันติดตั้งที่ตั้งตอนผลิต ยังไม่ลงคิวจริง (0021/adhoc)
+};
 
 export default function InstallationPage() {
   const [tab, setTab] = useState<"cal" | "crew" | "tmr" | "status">("cal");
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [detail, setDetail] = useState<InstallAssignment | null>(null);
-  const [addAt, setAddAt] = useState<{ date: string; job_id?: string } | null>(null);
+  const [addAt, setAddAt] = useState<{ date: string; job_id?: string; custom_title?: string } | null>(null);
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
   const [busy, setBusy] = useState(false);
   // จัดทีมช่างรายวัน (แท็บใหม่) — วันที่ที่กำลังดู/แก้ไข เชื่อมกับปฏิทินเดือนผ่าน badge ในช่องวัน
@@ -74,8 +79,26 @@ export default function InstallationPage() {
   });
   const plan = data?.data;
   const asg = useMemo(() => plan?.assignments ?? [], [plan]);
-  const ready = plan?.ready ?? [];
+  const readyAll = useMemo(() => plan?.ready ?? [], [plan]);
+  const booked = useMemo(() => plan?.booked ?? [], [plan]);
   const canWrite = (data?.meta?.can_install as boolean) ?? true;
+
+  // ชิป "รอจัดคิว" = งานพร้อมติดตั้งที่ยังไม่ตั้งวัน (ที่ตั้งวันแล้วโผล่เป็นการ์ด "จองจากผลิต" บนวันนั้น)
+  const ready = useMemo(() => readyAll.filter((r) => !r.install_scheduled), [readyAll]);
+  // "จองจากผลิต" ต่อวัน — โชว์การ์ดบนปฏิทิน (informational · กดลงคิวจริงได้)
+  const bookedByDate = useMemo(() => {
+    const m = new Map<string, Booked[]>();
+    for (const b of booked) { const l = m.get(b.date) || []; l.push(b); m.set(b.date, l); }
+    return m;
+  }, [booked]);
+  // งานที่เลือกลงคิวได้ในโมดัล = พร้อมติดตั้ง (ready) + งานจองจากผลิต (job) ที่ยังไม่อยู่ใน ready
+  const assignable = useMemo(() => {
+    const seen = new Set(readyAll.map((r) => r.job_id));
+    const extra = booked
+      .filter((b) => b.kind === "job" && b.job_id && !seen.has(b.job_id))
+      .map((b) => ({ id: b.id, job_id: b.job_id as string, jobs: { customer_name: b.customer_name, customer_area: b.customer_area, job_code: b.job_code } as Record<string, unknown>, install_scheduled: b.date }));
+    return [...readyAll, ...extra];
+  }, [readyAll, booked]);
 
   // จำนวนทีม + ชื่อลูกค้าที่จัดทีมรายวันไว้ (เดือนที่กำลังดู) — ทำ badge + รายชื่อบนปฏิทิน
   const { data: crewCountsData } = useQuery({
@@ -222,6 +245,8 @@ export default function InstallationPage() {
                     // ลูกค้าจากจัดทีมรายวัน ที่ยังไม่ได้โชว์อยู่ในแผนปฏิทิน (กันชื่อซ้ำ 2 บรรทัด)
                     const planNames = new Set(items.map((a) => nameOf(a).trim()));
                     const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((c) => !planNames.has(c.name.trim()));
+                    // "จองจากผลิต" ที่ยังไม่ได้ลงคิวจริง/ไม่ซ้ำกับที่โชว์แล้ว
+                    const bookedItems = (bookedByDate.get(ds) ?? []).filter((b) => !planNames.has((b.customer_name || "").trim()));
                     return (
                       <div key={ds}
                         className="rounded-lg p-1.5 flex flex-col"
@@ -267,6 +292,17 @@ export default function InstallationPage() {
                               <div className="text-[11.5px] truncate" style={{ color: leadColor(c.leader).text }}>
                                 จัดทีมแล้ว{c.leader ? ` · ${c.leader}` : ""}
                               </div>
+                            </button>
+                          ))}
+                          {/* "จองจากผลิต" — วันติดตั้งที่ตั้งตอนผลิต (ยังไม่ลงคิวจริง) · เส้นประส้ม · แตะเพื่อลงคิว (เจ้าของสั่ง 22 ก.ค.69) */}
+                          {bookedItems.map((b) => (
+                            <button key={`bk-${b.kind}-${b.id}`} disabled={!canWrite}
+                              onClick={() => setAddAt({ date: ds, ...(b.job_id ? { job_id: b.job_id } : { custom_title: b.customer_name }) })}
+                              className="w-full text-left rounded-md px-1.5 py-1 leading-snug disabled:opacity-60"
+                              style={{ background: "rgba(239,159,39,.12)", border: "0.5px dashed rgba(239,159,39,.65)" }}
+                              title="จองวันมาจากตอนผลิต — แตะเพื่อลงคิวติดตั้งจริง">
+                              <div className="text-[13px]" style={{ color: "#fff" }}>📅 {b.customer_name}</div>
+                              <div className="text-[11.5px] truncate" style={{ color: "#fcd34d" }}>จองจากผลิต · แตะลงคิว</div>
                             </button>
                           ))}
                         </div>
@@ -340,7 +376,7 @@ export default function InstallationPage() {
       {tab === "status" && <StatusBoard data={jobsData} onOpen={setOpenInst} refetch={refetchJobs} />}
 
       {addAt && (
-        <AddAssignModal ready={ready} initial={addAt} busy={busy} leaderOptions={leaderOptions}
+        <AddAssignModal ready={assignable} initial={addAt} busy={busy} leaderOptions={leaderOptions}
           onClose={() => setAddAt(null)} onSave={saveAssign} />
       )}
 
@@ -361,7 +397,7 @@ export default function InstallationPage() {
 // ── modal ลงคิวติดตั้ง (เลือกช่วงวันได้ — งานหลายวันสร้างวันละแถวอัตโนมัติ) ──
 function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }: {
   ready: { job_id: string; jobs: Record<string, unknown> }[];
-  initial: { date: string; job_id?: string }; busy: boolean; leaderOptions: string[];
+  initial: { date: string; job_id?: string; custom_title?: string }; busy: boolean; leaderOptions: string[];
   onClose: () => void; onSave: (b: Record<string, unknown>) => void;
 }) {
   const [jobId, setJobId] = useState(initial.job_id || ready[0]?.job_id || "");
@@ -369,9 +405,9 @@ function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }
   const [dateTo, setDateTo] = useState(initial.date);
   const [lead, setLead] = useState("");
   const [note, setNote] = useState("");
-  // คิวนอกระบบ (งานพิเศษ ไม่มีในระบบ) — พิมพ์ชื่องานเอง ไม่ผูก job (0100)
-  const [outSystem, setOutSystem] = useState(false);
-  const [customTitle, setCustomTitle] = useState("");
+  // คิวนอกระบบ (งานพิเศษ ไม่มีในระบบ) — พิมพ์ชื่องานเอง ไม่ผูก job (0100) · prefill จาก "จองจากผลิต" (adhoc)
+  const [outSystem, setOutSystem] = useState(!!initial.custom_title);
+  const [customTitle, setCustomTitle] = useState(initial.custom_title ?? "");
   const nDays = useMemo(() => {
     if (!dateTo || dateTo <= date) return 1;
     return Math.min(14, Math.round((new Date(dateTo + "T00:00:00").getTime() - new Date(date + "T00:00:00").getTime()) / 86400000) + 1);

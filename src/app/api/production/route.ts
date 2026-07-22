@@ -52,5 +52,12 @@ export const GET = withRoute(async () => {
       return { ...p, job: jobRest, cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [] };
     });
 
-  return ok(rows, { can_write: can(ctx.role, "production", "write") });
+  // งานจดเอง (adhoc · 0023) — โผล่หน้าผลิตออฟฟิศด้วย (เดิมโผล่แค่ตารางช่าง → ลูกค้าที่เพิ่มเองหายไป · เจ้าของสั่ง 22 ก.ค.69)
+  const { data: adhoc } = await ctx.supabase
+    .from("adhoc_production_tasks")
+    .select("id, title, customer_name, produce_date, install_date, producer_note, status, created_at")
+    .neq("status", "DONE")
+    .order("created_at", { ascending: false });
+
+  return ok(rows, { can_write: can(ctx.role, "production", "write"), adhoc: adhoc ?? [] });
 });

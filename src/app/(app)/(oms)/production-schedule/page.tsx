@@ -10,6 +10,7 @@ import { Plus, X, Check, Trash2, CalendarDays } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import type { ProdStatus } from "@/lib/database.types";
 import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
+import AddProductionJobModal from "@/components/production/AddProductionJobModal";
 
 export type ProdSet = {
   id: number; set_label: string; seq: number;
@@ -339,7 +340,7 @@ export default function ProductionSchedulePage() {
           {producerList.map((name) => (<option key={name} value={name}>{name}</option>))}
         </select>
 
-        {canWrite && !isChang && (
+        {canWrite && (
           <button onClick={() => setAddOpen(true)} className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] text-white" style={{ background: IOS.blue }}>
             <Plus size={16} /> เพิ่มงาน
           </button>
@@ -683,7 +684,7 @@ export default function ProductionSchedulePage() {
         })()
       )}
 
-      {addOpen && <AddModal producerList={producerList} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
+      {addOpen && <AddProductionJobModal producerList={producerList} isChang={isChang} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
      </div>
     </div>
   );

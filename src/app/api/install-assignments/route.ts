@@ -8,6 +8,9 @@ export async function syncSchedule(sb: any, jobId: string) {
   const { data } = await sb.from("install_assignments").select("date").eq("job_id", jobId).order("date", { ascending: true }).limit(1);
   const first = data?.[0]?.date ?? null;
   await sb.from("installations").update({ install_scheduled: first }).eq("job_id", jobId);
+  // sync สองทาง (เจ้าของสั่ง 22 ก.ค.69): แก้วันคิวหน้าติดตั้ง → เด้งไปแก้วันติดตั้งฝั่งผลิตด้วย
+  //   (เฉพาะเมื่อมีวันจริง · ลบคิวหมดไม่ล้างวันผลิตทิ้ง) · trigger 0024 ทำทิศผลิต→installations อยู่แล้ว ไม่ลูป
+  if (first) await sb.from("productions").update({ planned_install_date: first }).eq("job_id", jobId);
 }
 
 const Schema = z.object({
