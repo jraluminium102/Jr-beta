@@ -48,7 +48,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, queue_entry_id, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, quote_sent_date, queue_entry_id, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
     )
     .neq("status", "CANCELLED")
     // safety cap: เก็บงานล่าสุดสุด 3000 รายการ (กัน payload บานปลายเมื่อสะสมหลายปี)
@@ -136,6 +136,7 @@ export async function GET(req: Request) {
     current_stage: r.current_stage,
     assess_date: r.assess_date,
     onsite_deposit: r.onsite_deposit ?? false, // (0044)
+    quote_sent_date: r.quote_sent_date ?? null, // ส่งใบเสนอด่วนไปแล้ว (ตอนแบบยังไม่เสร็จ) — ปักธงให้ฝ่ายแบบเห็น
     on_hold: r.on_hold ?? false,
     on_hold_reason: r.on_hold_reason ?? null,
     overdue: r.design_state !== "DONE" && !r.on_hold && !!r.design_due_date && r.design_due_date < today,

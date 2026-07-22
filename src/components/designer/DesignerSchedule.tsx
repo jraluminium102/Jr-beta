@@ -36,6 +36,7 @@ type Job = {
   design_start: string | null;
   design_end: string | null;
   design_revise_count: number;
+  quote_sent_date: string | null; // ส่งใบเสนอด่วนไปแล้ว (แบบยังไม่เสร็จ)
   overdue: boolean;
 };
 
@@ -466,6 +467,9 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       <div className="flex items-center gap-1 px-2 h-full overflow-hidden pointer-events-none">
         {isOverdue && (
           <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-brand" />
+        )}
+        {job.quote_sent_date && job.design_state !== "DONE" && (
+          <span className="shrink-0 text-[10px]" title="ส่งใบเสนอแล้ว · รีบทำแบบ">📤</span>
         )}
         <span className={`text-[11px] font-semibold truncate ${c.text}`}>
           {job.customer_name}

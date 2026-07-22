@@ -450,7 +450,14 @@ function ActiveTableRow({
   // badge สถานะใบเสนอ
   let quoteBadge: React.ReactNode;
   if (item.stage === "in_design") {
-    quoteBadge = item.design_state === "REVISING"
+    // ส่งใบเสนอด่วนไปแล้ว (ตอนแบบยังไม่เสร็จ) → โชว์เขียว + เตือนว่าแบบยังทำอยู่
+    quoteBadge = item.quote_sent_date ? (
+      <div className="space-y-0.5">
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งด่วนแล้ว</span>
+        <div className="text-[10px] text-amber-700 font-medium">แบบยังทำอยู่</div>
+        {q && <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}</div>}
+      </div>
+    ) : item.design_state === "REVISING"
       ? <Badge tone="red">แก้แบบ</Badge>
       : <Badge tone="gray">รอแบบ</Badge>;
   } else if (item.stage === "pending") {
@@ -554,12 +561,35 @@ function ActiveTableRow({
         {canWrite && (
           <div className="flex gap-1.5 flex-wrap">
             {item.stage === "in_design" && (
-              <Link
-                href="/designer"
-                className="press inline-flex items-center gap-1 rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px]">
-                <Icon name="ruler" size={12} />
-                ดูบอร์ดแบบ
-              </Link>
+              <>
+                <Link
+                  href="/designer"
+                  className="press inline-flex items-center gap-1 rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px]">
+                  <Icon name="ruler" size={12} />
+                  ดูบอร์ดแบบ
+                </Link>
+                <Link
+                  href="/calculator40"
+                  onClick={() => makeQuoteBridge(item)}
+                  title="สร้างใบเสนอราคาจริงในระบบ (ผูกลูกค้า/งานให้)"
+                  className="press inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-white shadow-brand min-h-[36px]">
+                  <Icon name="file" size={12} /> สร้างในระบบ
+                </Link>
+                {!item.quote_sent_date ? (
+                  <button
+                    onClick={() => { if (confirm("แบบยังไม่เสร็จ — ยืนยันส่งใบเสนอด่วน?\n(ฝ่ายแบบยังต้องทำแบบต่อ · จะขึ้นป้ายในบอร์ดแบบว่าส่งใบเสนอไปแล้ว)")) onAction(item, "step2", null); }}
+                    title="ส่งใบเสนอด่วน — ไม่ต้องรอแบบเสร็จ"
+                    className="press inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white min-h-[36px] hover:bg-amber-600">
+                    <Icon name="external" size={12} /> ส่งด่วน
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onAction(item, "step2", q ?? null)} aria-label="แก้ยอดใบเสนอ"
+                    className="press inline-flex items-center justify-center rounded-lg border border-gray-300/80 px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-white/70 min-h-[36px] min-w-[36px]">
+                    <Icon name="pencil" size={12} />
+                  </button>
+                )}
+              </>
             )}
             {(item.stage === "pending" || item.stage === "drafted") && (
               <Link
@@ -670,9 +700,11 @@ function ActiveMobileCard({
           )}
         </div>
         {/* stage badge */}
-        {item.stage === "in_design" && (item.design_state === "REVISING"
-          ? <Badge tone="red">แก้แบบ</Badge>
-          : <Badge tone="gray">รอแบบ</Badge>)}
+        {item.stage === "in_design" && (item.quote_sent_date
+          ? <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งด่วนแล้ว · แบบยังทำอยู่</span>
+          : item.design_state === "REVISING"
+            ? <Badge tone="red">แก้แบบ</Badge>
+            : <Badge tone="gray">รอแบบ</Badge>)}
         {item.stage === "pending"   && <Badge tone="amber">ยังไม่ทำใบเสนอ</Badge>}
         {item.stage === "drafted"   && <Badge tone="sky">ร่างใบเสนอ</Badge>}
         {item.stage === "sent"      && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งแล้ว</span>}
@@ -727,11 +759,27 @@ function ActiveMobileCard({
       {canWrite && (
         <div className="flex gap-2 pt-0.5">
           {item.stage === "in_design" && (
-            <Link href="/designer"
-              className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px]">
-              <Icon name="ruler" size={15} />
-              ดูบอร์ดแบบ
-            </Link>
+            <>
+              <Link href="/designer" aria-label="ดูบอร์ดแบบ"
+                className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px] min-w-[44px]">
+                <Icon name="ruler" size={15} />
+              </Link>
+              <Link href="/calculator40" onClick={() => makeQuoteBridge(item)}
+                className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white shadow-brand min-h-[44px]">
+                <Icon name="file" size={15} /> สร้างในระบบ
+              </Link>
+              {!item.quote_sent_date ? (
+                <button onClick={() => { if (confirm("แบบยังไม่เสร็จ — ยืนยันส่งใบเสนอด่วน?\n(ฝ่ายแบบยังต้องทำแบบต่อ)")) onAction(item, "step2", null); }}
+                  className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2.5 text-sm font-semibold text-white min-h-[44px] hover:bg-amber-600">
+                  <Icon name="external" size={15} /> ส่งด่วน
+                </button>
+              ) : (
+                <button onClick={() => onAction(item, "step2", q ?? null)} aria-label="แก้ยอดใบเสนอ"
+                  className="press inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-300/70 px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-white/60 min-h-[44px] min-w-[44px]">
+                  <Icon name="pencil" size={15} />
+                </button>
+              )}
+            </>
           )}
           {item.stage === "pending" && (
             <button

@@ -43,6 +43,7 @@ type Job = {
   current_stage: number;
   assess_date: string | null;
   onsite_deposit: boolean; // (0044) ป้ายมัดจำหน้างาน
+  quote_sent_date: string | null; // ส่งใบเสนอด่วนไปแล้ว (แบบยังไม่เสร็จ)
   on_hold: boolean;
   on_hold_reason: string | null;
   overdue: boolean;
@@ -724,6 +725,13 @@ function JobRow({
             <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
               <Icon name="warn" size={11} />
               มัดจำหน้างาน · ด่วน
+            </div>
+          )}
+          {/* ส่งใบเสนอด่วนไปแล้ว (แบบยังไม่เสร็จ) — เตือนฝ่ายแบบว่าใบเสนอออกไปก่อนแล้ว รีบทำแบบ */}
+          {job.quote_sent_date && !isDone && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+              <Icon name="external" size={11} />
+              ส่งใบเสนอแล้ว · รีบทำแบบ
             </div>
           )}
         </div>
