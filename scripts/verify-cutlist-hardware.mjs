@@ -208,5 +208,44 @@ function check(label, res, want) {
   if (bS !== 6 || bD !== 2) { fails++; console.log(`  ✗ เฟี้ยม 3L3R สลักล็อค แบ่งบาน=${bS}(ควร6) เดี่ยว=${bD}(ควร2)`); } else console.log("  ✓ เฟี้ยม 3L3R · แบ่งบาน สลักล็อค=6 · เดี่ยว=2");
 }
 
+// ── FUJI เลื่อนสลับ · default W350 2ราง (p=2) · ซ้าย=กุญแจ+ล็อค ขวา=ล็อค+ดัมมี่ ──
+{
+  const spec = CUT_SPEC_BY_ID["fuji_slide"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  console.log("FUJI เลื่อนสลับ (2ราง):");
+  check("FUJI", res, [
+    { nameHas: "ล้อ 20", sku: "JR00577", qty: 4 },
+    { nameHas: "มือจับ กุญแจ", sku: "JR00368", qty: 1 },
+    { nameHas: "มือจับ ล็อค", sku: "JR00369", qty: 2 },
+    { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },
+    { nameHas: "ก้ามปูรับล็อค", sku: "JR00477", qty: 4 },
+    { nameHas: "สปิงก็อท", sku: "JR00592", qty: 8 },
+    { nameHas: "ฉากประกอบมุม", sku: "JR00480", qty: 32 },
+    { nameHas: "ยางรูน้ำ", sku: "JR00589", qty: 6 },
+    { nameHas: "วาวรูน้ำ", sku: "JR00485", qty: 6 },
+  ]);
+}
+
+// ── FUJI บานเปิด (casement · ไม่มีธรณี) + ประตูเดี่ยว (มีธรณี) = SKU ชุดเดียวกับโซลิด ──
+{
+  const sw = computeCutList(CUT_SPEC_BY_ID["fuji_swing"], { ...CUT_SPEC_BY_ID["fuji_swing"].defaults }, 1);
+  console.log("FUJI บานเปิด (casement):");
+  check("FUJIเปิด", sw, [
+    { nameHas: "บานพับ hyda", sku: "JR00489", qty: 4 },
+    { nameHas: "สปิงก็อท", sku: "JR00482", qty: 4 },
+    { nameHas: "ฉากประคองมุม", sku: "JR00557", qty: 8 },
+    { nameHas: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: "JR00315", qty: 1 },
+    { nameHas: "ตลับกุญแจไฮด้า", sku: "JR00551", qty: 1 },
+    { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 6 },
+  ]);
+  const dr = computeCutList(CUT_SPEC_BY_ID["fuji_door"], { ...CUT_SPEC_BY_ID["fuji_door"].defaults }, 1);
+  console.log("FUJI ประตูเดี่ยว (มีธรณี):");
+  check("FUJIประตู", dr, [
+    { nameHas: "บานพับ hyda", sku: "JR00489", qty: 4 },
+    { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },  // มีธรณี → 8
+    { nameHas: "แผ่นรับล็อค", sku: "JR00562", qty: 1 },
+  ]);
+}
+
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
 process.exit(fails === 0 ? 0 : 1);

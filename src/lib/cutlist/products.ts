@@ -8,7 +8,33 @@
  */
 import type { CutSpec, CutInput } from "./engine";
 // นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
-import { smsSlideHardware, handleHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L } from "./hardware.ts";
+import { smsSlideHardware, handleHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L, type HardwareDef } from "./hardware.ts";
+
+// ── อุปกรณ์บานเปิดเดี่ยว (casement/ประตูเดี่ยว) — SKU ชุดเดียวกับบานโซลิด (N=1 ไม่มีบานลอง) · ใช้ร่วม FUJI บานเปิด/ประตู ──
+const SWING_DOOR_OPTS = [
+  { key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] },
+  { key: "lockType", label: "ตลับกุญแจ", choices: ["ล็อคปกติ", "มัลติพ้อยล็อค"] },
+  { key: "openDir", label: "ทิศเปิด", choices: ["เปิดออก", "เปิดเข้า"] },
+  { key: "motherHandle", label: "มือจับ", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
+];
+const SWING_DOOR_DEF = { hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ" };
+// hasSill = มีธรณี (น็อตเฟรม 8 · ยางวงกบวนรอบ) · sashN = จำนวนบาน (บานพับ/สปิง/ฉาก คูณ)
+function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1): HardwareDef[] {
+  return [
+    { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), qty: (o) => (o.H > 300 || o.W / sashN(o) > 120 ? 5 : 4) * sashN(o), unit: "ตัว" },
+    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * sashN(o), unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * sashN(o), unit: "ตัว" },
+    { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0), unit: "ชุด" },
+    { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0), unit: "ชุด" },
+    { name: "มือจับ Cmech", qty: (o) => (o.motherHandle === "Cmech" ? 1 : 0), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
+    { name: "ตลับกุญแจไฮด้า", sku: (o) => (o.lockType === "มัลติพ้อยล็อค" ? "JR00553" : "JR00551"), qty: () => 1, unit: "ตัว" },
+    { name: "ไส้กุญแจ", sku: (o) => (o.openDir === "เปิดเข้า" ? "JR00498" : "JR00499"), qty: () => 1, unit: "ตัว", note: "auto เข้า/ออก" },
+    { name: "แผ่นรับล็อค", sku: "JR00562", qty: () => 1, unit: "ชุด" },
+    { name: "น็อตเฟรม 1\"", sku: "JR00864", qty: (o) => (hasSill(o) ? 8 : 6), unit: "ตัว" },
+    { name: "ยางกรอบบาน", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * 10) / 10, unit: "เมตร" },
+    { name: "ยางวงกบ", sku: "JR00771", qty: (o) => Math.round((hasSill(o) ? 2 * (o.W + o.H) : o.W + 2 * o.H) / 100 * 10) / 10, unit: "เมตร" },
+  ];
+}
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
@@ -462,7 +488,8 @@ const fSash = (o: CutInput) => (o.W - frc(o).sd) / frc(o).p + frc(o).sa; // ข�
 export const FUJI_SLIDE: CutSpec = {
   id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 ราง)", stockLen: 640,
   rails: ["2ราง", "3ราง"],
-  defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false },
+  opts: [...HANDLE_OPTS_LR],
+  defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false, handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "เฟรมข้าง", code: "F7978", len: (o) => o.H, qty: () => 2 },
     { name: "เฟรม บน-ล่าง", code: "F7976", len: (o) => o.W - 4.2, qty: () => 2 },
@@ -479,18 +506,25 @@ export const FUJI_SLIDE: CutSpec = {
     { name: "ตบกันสาด#2", code: "-", len: (o) => o.W, qty: () => 1, note: "Excel รวมสต็อกกับ F7988 — รอเจ้าของเคาะ" },
     { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
   ],
+  // ⑤ อุปกรณ์ FUJI เลื่อน (มี SKU ในไฟล์ คอลัมน์ AK-AY · ใช้ตาราง lookup มือจับเดียวกับ SMS)
+  //   สปส.บาน = frc(o).p (ไฟล์ตั้ง 2 สำหรับ 2ราง — สเกลตาม p ให้ 3ราง)
   hardware: [
-    { name: "ล้อ 27", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
-    { name: "มือจับ Align", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
-    { name: "ชุดล็อค", qty: () => 1, unit: "ชุด" },
-    { name: "น็อตประกอบ", qty: () => 4, unit: "ตัว" },
+    { name: "ล้อ 20", sku: "JR00577", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
+    ...handleHardware("LR"),
+    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * frc(o).p, unit: "ตัว" },
+    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 16 * frc(o).p, unit: "ตัว" },
+    { name: "ยางรูน้ำ", sku: "JR00589", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
+    { name: "วาวรูน้ำ", sku: "JR00485", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
+    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน",
+      qty: (o, ctx) => Math.round((2 * 2 * (ctx.len("ขวาง") + ctx.len("เสา")) * frc(o).p + ctx.len("ตบเกี่ยว") * frc(o).hook) / 100 * 10) / 10 },
   ],
 };
 
 // ⑩ FUJI บานเปิด/กระทุ้ง (casement · JR_FUJI_บานเปิด-บานกระทุ้ง.xlsx)
 export const FUJI_SWING: CutSpec = {
   id: "fuji_swing", name: "FUJI บานเปิด (เปิด/กระทุ้ง)", stockLen: 640, rails: [],
-  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false },
+  opts: [...SWING_DOOR_OPTS],
+  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, ...SWING_DOOR_DEF },
   profiles: [
     { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
     { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
@@ -500,19 +534,15 @@ export const FUJI_SWING: CutSpec = {
     { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 2 },
     { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - 12.0, qty: () => 2, note: "อลูเดียวกับคิ้วตั้ง" },
   ],
-  hardware: [
-    { name: "บานพับ hyda", qty: () => 4, unit: "ตัว" },
-    { name: "มือจับ+ล็อค", qty: () => 1, unit: "ชุด" },
-    { name: "กลอน", qty: () => 1, unit: "ตัว" },
-    { name: "น็อตเฟรม", qty: () => 6, unit: "ตัว" },
-  ],
+  // ⑤ อุปกรณ์ FUJI บานเปิด (SKU ชุดเดียวกับบานโซลิด · บานเดี่ยว ไม่มีธรณี)
+  hardware: casementDoorHardware(() => false),
 };
 
 // ⑪ FUJI ประตูเดี่ยว มีธรณี (dropdown เสา 10/8 ซม.)
 export const FUJI_DOOR: CutSpec = {
   id: "fuji_door", name: "FUJI ประตูเดี่ยว มีธรณี", stockLen: 640, rails: [],
-  opts: [{ key: "box", label: "เสา", choices: ["10 cm · 7864", "8 cm · 7943B"] }],
-  defaults: { W: 90, H: 210, N: 1, rail: "", honk: false, box: "10 cm · 7864" },
+  opts: [{ key: "box", label: "เสา", choices: ["10 cm · 7864", "8 cm · 7943B"] }, ...SWING_DOOR_OPTS],
+  defaults: { W: 90, H: 210, N: 1, rail: "", honk: false, box: "10 cm · 7864", ...SWING_DOOR_DEF },
   profiles: [
     { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
     { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1 },
@@ -523,10 +553,8 @@ export const FUJI_DOOR: CutSpec = {
     { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - (o.box === "8 cm · 7943B" ? 12.0 : 16.0), qty: () => 2 },
     { name: "ตบธรณี", code: "F7960", len: (o) => o.W - 5.0, qty: () => 1 },
   ],
-  hardware: [
-    { name: "บานพับ hyda", qty: () => 4, unit: "ตัว" }, { name: "มือจับ+ล็อค", qty: () => 1, unit: "ชุด" },
-    { name: "กลอน", qty: () => 1, unit: "ตัว" }, { name: "น็อตเฟรม", qty: () => 8, unit: "ตัว" },
-  ],
+  // ⑤ อุปกรณ์ FUJI ประตูเดี่ยว (SKU ชุดเดียวกับบานโซลิด · มีธรณี → น็อต 8)
+  hardware: casementDoorHardware(() => true),
 };
 
 // ⑫ FUJI บานติดตาย (Fix)
