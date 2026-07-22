@@ -161,7 +161,7 @@ function FloorWorkControl({ jobId, floorWork, floorNote, floorQuoteSent, canWrit
 
 // ---------- Modal ----------
 
-type ModalMode = "step1" | "step2";
+type ModalMode = "step1" | "step2" | "express"; // express = ส่งด่วน (เลือกเชื่อมเครื่องคิด 4.0 หรือกรอกยอดเอง)
 type ModalState = { job: ChecklistItem; mode: ModalMode; q: ChecklistQuotation | null };
 
 function Modal({
@@ -172,6 +172,7 @@ function Modal({
   onSaved: () => void;
 }) {
   const { job, mode, q } = state;
+  const [curMode, setCurMode] = useState<ModalMode>(mode); // express → กด "กรอกยอดเอง" แล้วสลับเป็น step2 ในโมดัลเดียว
   const parsed = q ? parseNoteExt(q.note) : { ext_ref: "", ext_link: "" };
 
   const [total,      setTotal]    = useState(q ? String(q.net) : "");
@@ -205,7 +206,7 @@ function Modal({
         job_id: job.job_id, total: t,
         ext_ref: extRef || undefined, ext_link: extLink || undefined,
         issue_date: issueDate || undefined,
-        step: mode === "step1" ? 1 : 2,
+        step: curMode === "step1" ? 1 : 2,
         vat_rate: noVat ? 0 : 7,
       };
       await api.post("/quotations/quick", body);
@@ -228,7 +229,7 @@ function Modal({
         </button>
 
         <h2 className="text-base font-bold mb-1">
-          {mode === "step1" ? "บันทึกใบเสนอราคา" : "ยืนยันส่งใบเสนอราคา"}
+          {curMode === "express" ? "ส่งใบเสนอด่วน — เลือกวิธี" : curMode === "step1" ? "บันทึกใบเสนอราคา" : "ยืนยันส่งใบเสนอราคา"}
         </h2>
         <p className="text-white/60 text-sm mb-5">
           {job.customer_name}
@@ -236,6 +237,26 @@ function Modal({
           {job.customer_area ? ` · ${job.customer_area}` : ""}
         </p>
 
+        {curMode === "express" && (
+          <div className="space-y-3">
+            <div className="rounded-xl bg-amber-500/15 border border-amber-400/30 px-3.5 py-2.5 text-sm text-amber-100">
+              ⚠ แบบยังไม่เสร็จ — ส่งใบเสนอด่วนไปก่อน · ฝ่ายแบบยังทำแบบต่อ (จะขึ้นป้ายในบอร์ดแบบ)
+            </div>
+            <a href="/calculator40" onClick={() => makeQuoteBridge(job)}
+              className="press w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-brand inline-flex items-center justify-center gap-2 min-h-[48px]">
+              <Icon name="calculator" size={16} /> เชื่อมเครื่องคิดราคา 4.0
+            </a>
+            <button type="button" onClick={() => setCurMode("step2")}
+              className="press w-full rounded-xl border border-white/20 px-4 py-3 text-sm font-semibold text-white/85 hover:bg-white/10 inline-flex items-center justify-center gap-2 min-h-[48px]">
+              <Icon name="pencil" size={16} /> กรอกยอดเอง (มาร์คส่งแล้ว)
+            </button>
+            <button type="button" onClick={onClose}
+              className="press w-full rounded-xl px-4 py-2 text-xs font-semibold text-white/50 hover:text-white/80">
+              ยกเลิก
+            </button>
+          </div>
+        )}
+        {curMode !== "express" && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-white/85">
@@ -290,7 +311,7 @@ function Modal({
               className="w-full rounded-xl px-3.5 py-2.5 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/35 outline-none focus:border-white/50 focus:bg-white/15" />
           </div>
 
-          {mode === "step2" && (
+          {curMode === "step2" && (
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-white/85">วันที่ส่งใบเสนอ</label>
               {/* max = วันนี้ — วันส่งใบเสนอเป็นอนาคตไม่ได้ (กันพิมพ์วัน/เดือนสลับ เช่น 6/12 แทน 12/6) */}
@@ -321,10 +342,11 @@ function Modal({
             <button type="submit" disabled={saving}
               className="press flex-1 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-brand disabled:opacity-60 min-h-[44px] inline-flex items-center justify-center gap-2">
               {saving && <Icon name="refresh" size={14} className="animate-spin" />}
-              {mode === "step1" ? "บันทึกใบเสนอ" : "ยืนยันส่งแล้ว"}
+              {curMode === "step1" ? "บันทึกใบเสนอ" : "ยืนยันส่งแล้ว"}
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
@@ -577,7 +599,7 @@ function ActiveTableRow({
                 </Link>
                 {!item.quote_sent_date ? (
                   <button
-                    onClick={() => { if (confirm("แบบยังไม่เสร็จ — ยืนยันส่งใบเสนอด่วน?\n(ฝ่ายแบบยังต้องทำแบบต่อ · จะขึ้นป้ายในบอร์ดแบบว่าส่งใบเสนอไปแล้ว)")) onAction(item, "step2", null); }}
+                    onClick={() => onAction(item, "express", null)}
                     title="ส่งใบเสนอด่วน — ไม่ต้องรอแบบเสร็จ"
                     className="press inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white min-h-[36px] hover:bg-amber-600">
                     <Icon name="external" size={12} /> ส่งด่วน
@@ -769,7 +791,7 @@ function ActiveMobileCard({
                 <Icon name="file" size={15} /> สร้างในระบบ
               </Link>
               {!item.quote_sent_date ? (
-                <button onClick={() => { if (confirm("แบบยังไม่เสร็จ — ยืนยันส่งใบเสนอด่วน?\n(ฝ่ายแบบยังต้องทำแบบต่อ)")) onAction(item, "step2", null); }}
+                <button onClick={() => onAction(item, "express", null)}
                   className="press flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2.5 text-sm font-semibold text-white min-h-[44px] hover:bg-amber-600">
                   <Icon name="external" size={15} /> ส่งด่วน
                 </button>
