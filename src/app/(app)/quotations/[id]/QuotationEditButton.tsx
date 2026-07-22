@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { baht } from "@/lib/money";
 import Icon from "@/components/Icon";
+import OptionAdder from "@/components/quotation/OptionAdder";
 import type { QuotationItem } from "@/lib/types";
 
 // category/product_id/group_label/calc_recipe = passthrough (มองไม่เห็นใน dialog) — กันสูตร/หัวข้อชุดหายตอนแก้ข้อความ (0093/0076)
@@ -153,6 +154,7 @@ export default function QuotationEditButton({
                 placeholder={"รายละเอียด (บรรทัด = บุลเล็ต · บรรทัดว่าง = เว้นวรรค · ขึ้นต้น # = หัวข้อหนาแดง เช่น #หมายเหตุ)\n- ด้าน A: บานเลื่อนเปิดคู่กลาง + มุ้ง\n\n#หมายเหตุ\n- ราคารวมติดตั้ง\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว"}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus-visible:ring-2 resize-y leading-relaxed"
                 style={{ minHeight: "9rem" }} />
+              <OptionAdder detail={row.detail} onChange={(v) => updateRow(idx, "detail", v)} />
               <div className="flex items-center gap-3 flex-wrap">
                 <label className="text-xs text-gray-500 flex items-center gap-1.5">จำนวน
                   <input type="number" inputMode="decimal" value={row.qty} min={0.01} step="any"

@@ -24,6 +24,17 @@ export function DetailLines({ text, fontSize = 12 }: { text: string; fontSize?: 
           const plain = s.slice(1);
           return <div key={i} style={{ color: "#4b5563", marginLeft: plain.startsWith("-") ? 8 : 0, whiteSpace: "pre-wrap" }}>{plain}</div>;
         }
+        // OPTION (ทางเลือก · ข้อความล้วน ไม่รวมยอด) — เน้น "OPTION (n) :" ตัวหนาสีเน้น ให้ต่างจากบุลเล็ตปกติ
+        if (/^OPTION\b/i.test(s)) {
+          const m = s.match(/^(OPTION\s*\([^)]*\)|OPTION)\s*[:：]?\s*([\s\S]*)$/i);
+          const head = m ? m[1] : "OPTION";
+          const rest = m ? m[2] : s.replace(/^OPTION\s*[:：]?/i, "").trim();
+          return (
+            <div key={i} style={{ color: "#4b5563", marginTop: 3, whiteSpace: "pre-wrap" }}>
+              <span style={{ fontWeight: 700, color: "#b26a00" }}>{head} : </span>{rest}
+            </div>
+          );
+        }
         // หัวข้อ: # นำหน้า (บังคับ) หรือคำที่รู้จักอัตโนมัติ
         const forced = s.startsWith("#");
         const label = forced ? s.slice(1).trim() : s;

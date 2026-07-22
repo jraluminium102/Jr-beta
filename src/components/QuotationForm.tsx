@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "./ui";
 import Icon from "./Icon";
+import OptionAdder from "@/components/quotation/OptionAdder";
 import { computeTotals, baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 import type { Customer } from "@/lib/types";
@@ -449,6 +450,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                   <textarea value={it.detail} onChange={(e) => setItem(i, "detail", e.target.value)} rows={Math.max(4, (it.detail.match(/\n/g)?.length ?? 0) + 1)}
                     placeholder={"รายละเอียด (บรรทัด = บุลเล็ต · บรรทัดว่าง = เว้นวรรค · ขึ้นต้น # = หัวข้อหนาแดง)\n- ชุดล็อค + กุญแจ\n\n#หมายเหตุ\n- ราคารวมติดตั้ง\nรายละเอียดงาน\n- สีอลูมิเนียม: อบขาว"}
                     className="w-full glass rounded-md px-3 py-2 text-sm mt-2 outline-none resize-y leading-relaxed" style={{ minHeight: "6rem" }} />
+                  <OptionAdder detail={it.detail} onChange={(v) => setItem(i, "detail", v)} />
                   <div className="flex items-center gap-3 text-sm flex-wrap mt-2.5">
                     <label className="text-xs text-ink-3">จำนวน
                       <input type="number" min={0} value={it.qty} onChange={(e) => setItem(i, "qty", Number(e.target.value))} className="w-16 ml-1.5 glass rounded-md px-2 py-1 text-right outline-none" />

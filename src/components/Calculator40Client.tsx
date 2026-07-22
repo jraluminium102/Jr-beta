@@ -18,6 +18,7 @@ import { computeCost } from "@/lib/calculator40/engine.mjs";
 import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
+import OptionAdder from "@/components/quotation/OptionAdder";
 // @ts-expect-error — bootstrap เป็น ESM JS ล้วน (ก๊อปตรงจาก mockup index.html script ฝัง — ห้ามแก้กติกา)
 import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json ที่ดึงจาก mockup (ราคาขาย R3.9 fallback)
@@ -1577,6 +1578,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                         className="w-full mt-1 glass-soft rounded-lg px-2 py-1.5 text-xs text-ink-2 leading-relaxed outline-none resize-y"
                         aria-label={`แก้รายละเอียด ${it.name}`}
                       />
+                      <OptionAdder detail={it.desc} onChange={(v) => setQuote((q) => q.map((x) => x.key === it.key ? { ...x, desc: v } : x))} />
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{it.qty}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{baht(it.perUnit)}</td>
