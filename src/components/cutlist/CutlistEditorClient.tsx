@@ -260,6 +260,28 @@ export default function CutlistEditorClient({
     } finally { setBusy(false); }
   }
 
+  // หักรายการที่ค้าง (failed) ของใบที่ตัดไปแล้ว — ใช้ตอนอลูยอดไม่พอตอนนั้น (ตอนนี้ติดลบได้แล้ว)
+  async function retryFailed() {
+    const who = window.prompt(`หักรายการที่ค้าง ${cutSummary?.failed?.length ?? 0} รหัส (${(cutSummary?.failed ?? []).map((f: { code: string }) => f.code).join(", ")})\nชื่อคนเบิก:`, cutRequester || "");
+    if (who === null) return;
+    if (!who.trim()) { setErr("ต้องระบุชื่อคนเบิก"); return; }
+    setBusy(true); setErr(""); setOkMsg("");
+    try {
+      const res = await fetch(`/api/cutlists/${cutlistId}/cut-stock-retry`, {
+        method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ requester: who.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { setErr(json?.error ?? "หักไม่สำเร็จ"); return; }
+      const d = json?.data ?? {};
+      setCutSummary((s: Record<string, unknown>) => ({ ...s, deducted: [...((s?.deducted as unknown[]) ?? []), ...(d.newDeducted ?? [])], failed: d.stillFailed ?? [] }));
+      const parts = [`หักที่ค้างแล้ว ✓ ${d.newDeducted?.length ?? 0} รหัส`];
+      if (d.stillFailed?.length) parts.push(`เหลือ ${d.stillFailed.length} รหัสที่ยังไม่มีในสต็อก (สร้างวัสดุก่อน)`);
+      setOkMsg(parts.join(" · "));
+      router.refresh();
+    } finally { setBusy(false); }
+  }
+
   // ลบใบร่างที่เทส — server กันเฉพาะ draft (ใบตัดแล้วลบไม่ได้ · มีประวัติหักผูกอยู่)
   async function deleteCutlist() {
     if (!window.confirm(`ลบใบตัด ${code} ทิ้งถาวร?\n(ลบได้เฉพาะใบที่ยังไม่ตัดสต็อก — ไว้เคลียร์ใบที่สร้างเทส)`)) return;
@@ -317,7 +339,13 @@ export default function CutlistEditorClient({
         <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900 no-print">
           ✓ ใบนี้ตัดสต็อกแล้ว{cutSummary?.at ? ` (${String(cutSummary.at).slice(0, 10)})` : ""} — แก้ข้อไม่ได้ · หัก {cutSummary?.deducted?.length ?? 0} รหัส
           {cutSummary?.skipped?.length ? ` · ข้าม ${cutSummary.skipped.length} รหัส: ${cutSummary.skipped.map((s: { code: string }) => s.code).join(", ")} (ไม่มีในสต็อก — หักมือได้ที่หน้าสต๊อก)` : ""}
-          {cutSummary?.failed?.length ? ` · ⚠ หักไม่สำเร็จ ${cutSummary.failed.length} รหัส: ${cutSummary.failed.map((s: { code: string }) => s.code).join(", ")} (เช่นสต็อกไม่พอ — เช็ค/หักมือที่หน้าสต๊อก)` : ""}
+          {cutSummary?.failed?.length ? ` · ⚠ หักไม่สำเร็จ ${cutSummary.failed.length} รหัส: ${cutSummary.failed.map((s: { code: string }) => s.code).join(", ")}` : ""}
+          {cutSummary?.failed?.length && canCutStock ? (
+            <button onClick={retryFailed} disabled={busy}
+              className="press ml-2 rounded-lg px-3 py-1 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
+              🔄 หักรายการที่ค้าง ({cutSummary.failed.length})
+            </button>
+          ) : null}
         </div>
       )}
       {err && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 no-print">{err}</p>}
