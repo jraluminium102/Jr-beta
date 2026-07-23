@@ -92,32 +92,28 @@ export function QuotationDoc({
     <>
       {/* ===== ตารางเอกสารหลัก — หัวบิล+หัวคอลัมน์ซ้ำทุกหน้า · รายการเป็นแถวตรง ๆ ===== */}
       <table className="qdoc" style={{ fontSize: 13 }}>
+        {/* หัวบิล + หัวคอลัมน์ อยู่ใน thead ทั้งคู่ → เบราว์เซอร์พิมพ์ซ้ำทุกหน้า (เจ้าของสั่ง 23 ก.ค.69 ให้หัวคอลัมน์ไปหน้าใหม่ด้วย)
+            thead ≈ หัวบิล 46.7mm + หัวคอลัมน์ ~9mm = ~56mm < เพดาน 74.25mm → ซ้ำได้ปลอดภัย (บล็อกลูกค้ายังอยู่ tbody จึงไม่บวมเกิน)
+            หัวข้อคอลัมน์จัด center ทุกช่อง (เจ้าของสั่ง) · ข้อมูลในแถวคงชิดเดิม (ชื่อซ้าย/ตัวเลขขวา) */}
         <thead>
           <tr>
             <td colSpan={5} className="qdoc-head">{letterhead}</td>
           </tr>
+          <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
+            <th className="p-2 text-center border border-gray-200" style={{ width: "5%" }}>#</th>
+            <th className="p-2 text-center border border-gray-200" style={{ width: "55%" }}>รายละเอียด</th>
+            <th className="p-2 text-center border border-gray-200" style={{ width: "10%" }}>จำนวน</th>
+            <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
+            <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ยอดรวม</th>
+          </tr>
         </thead>
 
         <tbody>
-          {/* บล็อกลูกค้า — หน้าแรกหน้าเดียว (อยู่ใน tbody ไม่ใช่ thead จึงไม่ซ้ำ)
-              ทำไมไม่ยัดไว้ในหัวบิลให้ซ้ำด้วย: วัดจริงแล้วหัวบิล+บล็อกลูกค้า = 79.9mm
-              เกินเพดาน 74.25mm ที่ Chrome ยอมพิมพ์ซ้ำ → หัวจะหายทั้งอันตั้งแต่หน้า 2 (เงียบ ๆ)
-              เอาออกแล้วหัวเหลือ 46.7mm → ซ้ำได้สบาย ๆ เหลือที่ว่างอีก ~15mm เผื่อที่อยู่ยาว */}
+          {/* บล็อกลูกค้า — หน้าแรกหน้าเดียว (อยู่ใน tbody ไม่ใช่ thead จึงไม่ซ้ำ · กันหัวบวมเกิน 74.25mm) */}
           <tr>
             <td colSpan={5} className="qdoc-tail" style={{ paddingBottom: 10 }}>
               <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} />
             </td>
-          </tr>
-
-          {/* หัวคอลัมน์ — อยู่ใน tbody (ไม่ใช่ thead) เพื่อให้พิมพ์ "ใต้บล็อกลูกค้า" บนหน้าแรก
-              ถ้าย้ายไป thead จะซ้ำทุกหน้าก็จริง แต่จะไปโผล่ "เหนือ" บล็อกลูกค้าหน้าแรก (ผิดลำดับ)
-              — thead พิมพ์ก่อน tbody เสมอ เลือกได้อย่างเดียว */}
-          <tr style={{ background: "#fdecec", color: "#7d0f15", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "5%" }}>#</th>
-            <th className="p-2 text-left border border-gray-200" style={{ width: "55%" }}>รายละเอียด</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "10%" }}>จำนวน</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "15%" }}>ยอดรวม</th>
           </tr>
 
           {items.map((it, i) => {

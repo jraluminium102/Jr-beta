@@ -137,7 +137,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .qdoc > thead > tr > td.qdoc-head,
 .qdoc > tbody > tr > td.qdoc-tail,
 .qdoc > tfoot > tr > td.qdoc-foot { padding: 0; border: 0; vertical-align: top; }
-.qdoc > tfoot > tr > td.qdoc-foot { padding-top: 24px; }
+/* เส้นปิดท้ายตาราง — tfoot ซ้ำทุกหน้า → ขีดเส้นปิดใต้รายการทุกหน้า แม้ข้อความล้นไปหน้าใหม่ (เจ้าของสั่ง 23 ก.ค.69) */
+.qdoc > tfoot > tr > td.qdoc-foot { padding-top: 24px; border-top: 1.5px solid #9ca3af; }
 
 @media print {
   /* @page margin = 0 (กัน browser แปะ URL/เลขหน้าเอง) → หน้าที่ 2+ ไม่มีขอบบน/ล่างเลย
