@@ -46,11 +46,15 @@ const jobArea = (j: { customer_area?: string; address?: string } | undefined) =>
 const leadOf = (a: InstallAssignment) => (a.lead_name || "").trim();
 
 type Booked = { kind: "job" | "adhoc"; id: string; job_id: string | null; date: string; customer_name: string; job_code: string | null; customer_area: string | null; prod_status: string };
+// งานกำลังผลิต/รอลงผลิต ที่ยังไม่ตั้งวัน → จองคิวติดตั้งล่วงหน้าได้ (id = production_id)
+type Producing = { id: string; job_id: string; prod_status: string; due_date: string | null; customer_name: string; job_code: string | null; customer_area: string | null };
 type Plan = {
   assignments: InstallAssignment[];
   ready: { id: string; job_id: string; jobs: Record<string, unknown>; install_scheduled?: string | null }[];
   booked?: Booked[]; // "จองจากผลิต" — วันติดตั้งที่ตั้งตอนผลิต ยังไม่ลงคิวจริง (0021/adhoc)
+  producing?: Producing[]; // "ยังผลิตไม่เสร็จ" — จองคิวติดตั้งล่วงหน้าได้
 };
+const prodStatusLabel = (s: string) => (s === "MANUFACTURING" ? "กำลังผลิต" : s === "QUEUED" ? "รอลงผลิต" : s);
 
 export default function InstallationPage() {
   const [tab, setTab] = useState<"cal" | "crew" | "tmr" | "status">("cal");
@@ -58,6 +62,7 @@ export default function InstallationPage() {
   const [detail, setDetail] = useState<InstallAssignment | null>(null);
   const [addAt, setAddAt] = useState<{ date: string; job_id?: string; custom_title?: string } | null>(null);
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
+  const [prebook, setPrebook] = useState<Producing | null>(null);   // งานยังผลิตไม่เสร็จ ที่กำลังจองวันล่วงหน้า
   const [busy, setBusy] = useState(false);
   // จัดทีมช่างรายวัน (แท็บใหม่) — วันที่ที่กำลังดู/แก้ไข เชื่อมกับปฏิทินเดือนผ่าน badge ในช่องวัน
   const [crewDate, setCrewDate] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
@@ -85,6 +90,7 @@ export default function InstallationPage() {
 
   // ชิป "รอจัดคิว" = งานพร้อมติดตั้งที่ยังไม่ตั้งวัน (ที่ตั้งวันแล้วโผล่เป็นการ์ด "จองจากผลิต" บนวันนั้น)
   const ready = useMemo(() => readyAll.filter((r) => !r.install_scheduled), [readyAll]);
+  const producing = useMemo(() => plan?.producing ?? [], [plan]);
   // "จองจากผลิต" ต่อวัน — โชว์การ์ดบนปฏิทิน (informational · กดลงคิวจริงได้)
   const bookedByDate = useMemo(() => {
     const m = new Map<string, Booked[]>();
@@ -140,6 +146,13 @@ export default function InstallationPage() {
   async function saveAssign(body: Record<string, unknown>) {
     setBusy(true);
     try { await api.post("/install-assignments", body); await refetch(); setAddAt(null); }
+    finally { setBusy(false); }
+  }
+  // จองคิวติดตั้งล่วงหน้า (งานยังผลิตไม่เสร็จ) — set productions.planned_install_date → โชว์เป็น "จองจากผลิต" + ลิงก์หน้าผลิต
+  async function savePrebook(date: string) {
+    if (!prebook || !date) return;
+    setBusy(true);
+    try { await api.post("/install-prebook", { production_id: prebook.id, date }); await refetch(); setPrebook(null); }
     finally { setBusy(false); }
   }
   async function patchAssign(id: string, body: Record<string, unknown>) {
@@ -227,6 +240,26 @@ export default function InstallationPage() {
             </div>
           </div>
 
+          {/* งานยังผลิตไม่เสร็จ (กำลังผลิต/รอลงผลิต) — จองคิวติดตั้งล่วงหน้าได้ · เจ้าของสั่ง 23 ก.ค.69 */}
+          <div className="rounded-2xl p-3 mb-3" style={{ background: "rgba(245,158,11,.12)", border: "1px solid rgba(245,158,11,.35)" }}>
+            <div className="text-xs mb-2 font-medium" style={{ color: "#fcd34d" }}>
+              🏭 ยังผลิตไม่เสร็จ (กำลังผลิต / รอลงผลิต) · {producing.length} งาน — แตะเพื่อ<b>จองคิวติดตั้งล่วงหน้า</b>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {producing.map((p) => (
+                <button key={p.id} disabled={!canWrite} onClick={() => setPrebook(p)}
+                  title={`${prodStatusLabel(p.prod_status)}${p.due_date ? ` · กำหนดผลิตเสร็จ ${thDate(p.due_date)}` : ""}`}
+                  className="text-xs px-2.5 py-1.5 rounded-lg text-white disabled:opacity-50 flex items-center gap-1.5"
+                  style={{ background: "rgba(245,158,11,.16)", border: "1px dashed rgba(245,158,11,.5)" }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.prod_status === "MANUFACTURING" ? "#f59e0b" : "#9ca3af" }} />
+                  {p.customer_name}{p.customer_area ? ` · ${p.customer_area}` : ""}
+                  <span style={{ color: "#fcd34d" }}>({prodStatusLabel(p.prod_status)})</span>
+                </button>
+              ))}
+              {producing.length === 0 && <span className="text-xs" style={{ color: "var(--t-low)" }}>— ไม่มีงานที่กำลังผลิต —</span>}
+            </div>
+          </div>
+
           {isLoading ? <Spinner /> : (
             <div className="overflow-x-auto">
               <div style={{ minWidth: 760 }}>
@@ -302,7 +335,9 @@ export default function InstallationPage() {
                               style={{ background: "rgba(239,159,39,.12)", border: "0.5px dashed rgba(239,159,39,.65)" }}
                               title="จองวันมาจากตอนผลิต — แตะเพื่อลงคิวติดตั้งจริง">
                               <div className="text-[13px]" style={{ color: "#fff" }}>📅 {b.customer_name}</div>
-                              <div className="text-[11.5px] truncate" style={{ color: "#fcd34d" }}>จองจากผลิต · แตะลงคิว</div>
+                              {(b.prod_status === "MANUFACTURING" || b.prod_status === "QUEUED")
+                                ? <div className="text-[11.5px] truncate font-medium" style={{ color: "#fca5a5" }}>🏭 ยังผลิตไม่เสร็จ ({prodStatusLabel(b.prod_status)}) · จองล่วงหน้า</div>
+                                : <div className="text-[11.5px] truncate" style={{ color: "#fcd34d" }}>จองจากผลิต · แตะลงคิว</div>}
                             </button>
                           ))}
                         </div>
@@ -380,6 +415,10 @@ export default function InstallationPage() {
           onClose={() => setAddAt(null)} onSave={saveAssign} />
       )}
 
+      {prebook && (
+        <PrebookModal job={prebook} busy={busy} onClose={() => setPrebook(null)} onSave={savePrebook} />
+      )}
+
       {detail && (
         <DetailDrawer a={detail} busy={busy} leaderOptions={leaderOptions}
           onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign}
@@ -455,6 +494,28 @@ function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }
           : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note })}
         className="w-full mt-3 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">
         ลงคิว{outSystem ? "นอกระบบ" : ""}{nDays > 1 ? ` ${nDays} วัน` : ""}
+      </button>
+    </Modal>
+  );
+}
+
+// ── modal จองคิวติดตั้งล่วงหน้า (งานยังผลิตไม่เสร็จ) — set planned_install_date → โชว์ทั้งหน้าติดตั้ง+ผลิต ลิงก์กัน ──
+function PrebookModal({ job, busy, onClose, onSave }: {
+  job: Producing; busy: boolean; onClose: () => void; onSave: (date: string) => void;
+}) {
+  const [date, setDate] = useState(job.due_date || iso(new Date()));
+  return (
+    <Modal title="จองคิวติดตั้งล่วงหน้า" onClose={onClose}>
+      <div className="rounded-xl px-3 py-2 mb-2 text-[12.5px]" style={{ background: "rgba(245,158,11,.12)", border: "1px solid rgba(245,158,11,.35)", color: "#fcd34d" }}>
+        🏭 <b>{job.customer_name}</b>{job.customer_area ? ` · ${job.customer_area}` : ""} — {prodStatusLabel(job.prod_status)} · <b style={{ color: "#fca5a5" }}>ยังผลิตไม่เสร็จ</b>
+        <div className="mt-1" style={{ color: "rgba(255,255,255,.6)" }}>จองวันติดตั้งล่วงหน้า — วันนี้จะขึ้นในหน้าผลิตด้วย (ลิงก์กัน แก้ที่ไหนก็ตรง)</div>
+      </div>
+      {job.due_date && <div className="text-[11px] mb-1" style={{ color: "var(--t-low)" }}>กำหนดผลิตเสร็จ: {thDate(job.due_date)}</div>}
+      <label className="lbl">วันติดตั้ง (จองล่วงหน้า)</label>
+      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="inp" />
+      <button disabled={busy || !date} onClick={() => onSave(date)}
+        className="w-full mt-3 py-2.5 rounded-xl font-medium disabled:opacity-50" style={{ background: "rgba(245,158,11,.25)", color: "#fde68a", border: "1px solid rgba(245,158,11,.4)" }}>
+        จองวันติดตั้ง
       </button>
     </Modal>
   );
