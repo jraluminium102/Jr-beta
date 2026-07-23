@@ -30,6 +30,10 @@ export default async function ChangCutlistPage({ params }: { params: { token: st
     id: Number(r.id), sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "", category: r.category ?? "", unit: r.unit ?? "",
   }));
 
+  // ชื่อคนเบิกเก่า (datalist ตอนตัดสต็อก) — service client (ช่างไม่มี session)
+  const { data: reqRows } = await sb.from("stock_moves").select("requester").neq("requester", "").order("created_at", { ascending: false }).limit(1000);
+  const requesters: string[] = [...new Set(((reqRows ?? []) as { requester: string }[]).map((r) => String(r.requester)).filter((s) => s.trim()))].slice(0, 80);
+
   return (
     <div className="min-h-dvh" style={{ background: "#0f1115" }}>
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-3 py-2.5" style={{ background: "#171a21", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
@@ -45,6 +49,7 @@ export default async function ChangCutlistPage({ params }: { params: { token: st
           canWrite
           canCutStock
           changToken={params.token}
+          requesters={requesters}
         />
       </div>
     </div>

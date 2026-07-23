@@ -23,6 +23,10 @@ export default async function CutlistEditorPage({ params }: { params: { id: stri
     .map((r) => ({ id: Number(r.id), sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "", category: r.category ?? "", unit: r.unit ?? "" }));
   const colorOptions = stockColorOptions(stockList);
 
+  // ชื่อคนเบิกเก่า (datalist ตอนตัดสต็อก)
+  const { data: reqRows } = await sb.from("stock_moves").select("requester").neq("requester", "").order("created_at", { ascending: false }).limit(1000);
+  const requesters: string[] = [...new Set(((reqRows ?? []) as { requester: string }[]).map((r) => String(r.requester)).filter((s) => s.trim()))].slice(0, 80);
+
   const canWrite = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"].includes(profile?.role ?? "");
-  return <CutlistEditorClient cutlistId={Number(params.id)} stock={stockList} colorOptions={colorOptions} canWrite={canWrite} />;
+  return <CutlistEditorClient cutlistId={Number(params.id)} stock={stockList} colorOptions={colorOptions} canWrite={canWrite} requesters={requesters} />;
 }
