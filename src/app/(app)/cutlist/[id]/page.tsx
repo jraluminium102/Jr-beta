@@ -16,11 +16,11 @@ export default async function CutlistEditorPage({ params }: { params: { id: stri
 
   // ⚠ ต้องดึงแบบแบ่งหน้า (fetchAllStockRows) — สต็อก ~1,800 แถว เกิน cap 1,000/ครั้งของ Supabase
   //   ดึงครั้งเดียว = รหัสหลังแถว 1,000 หายเงียบ โชว์ "ไม่มีในสต็อก" ทั้งที่มีจริง
-  const stock = await fetchAllStockRows<{ sku: string | null; name: string | null; qty_on_hand: number | null; image_url: string | null }>(
-    sb, "sku, name, qty_on_hand, image_url",
+  const stock = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; qty_on_hand: number | null; image_url: string | null; category: string | null; unit: string | null }>(
+    sb, "id, sku, name, qty_on_hand, image_url, category, unit",
   );
   const stockList: StockLite[] = stock
-    .map((r) => ({ sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "" }));
+    .map((r) => ({ id: Number(r.id), sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "", category: r.category ?? "", unit: r.unit ?? "" }));
   const colorOptions = stockColorOptions(stockList);
 
   const canWrite = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"].includes(profile?.role ?? "");

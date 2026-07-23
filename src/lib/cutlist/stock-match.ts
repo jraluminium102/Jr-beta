@@ -11,7 +11,7 @@
  *     → ไม่ hardcode mapping (จะผิด) · ให้ dropdown "อ่านสีจริงจากสต็อก" ตอน runtime แทน
  */
 
-export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number };
+export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number; category?: string; unit?: string };
 
 /**
  * ดึง stock_items "ทั้งหมด" แบบแบ่งหน้า — PostgREST/Supabase คืนสูงสุด ~1,000 แถว/ครั้ง

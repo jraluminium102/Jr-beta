@@ -46,6 +46,31 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (error) return fail(dbMessage(error, "บันทึกไม่สำเร็จ"), 500);
   }
 
+  // ปรับรายการตัดสต็อก (ต่างจาก BOQ · 0107) — update แยก + ทน column หาย (กันพังถ้ายังไม่รัน migration)
+  if (Array.isArray(body.adjustments)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adj = (body.adjustments as any[]).slice(0, 200).map((a) => ({
+      id: String(a?.id ?? ""),
+      sid: Number(a?.sid) || 0,
+      kind: a?.kind === "hw" ? "hw" : "alu",
+      name: String(a?.name ?? "").slice(0, 120),
+      unit: String(a?.unit ?? "").slice(0, 20),
+      sku: String(a?.sku ?? "").slice(0, 40),
+      img: String(a?.img ?? "").slice(0, 500),
+      qty: Math.round((Number(a?.qty) || 0) * 100) / 100,   // เลขติดลบ = ลด · บวก = เพิ่ม
+      note: String(a?.note ?? "").slice(0, 200),
+      fromBoq: !!a?.fromBoq,
+    })).filter((a) => a.sid > 0 && a.qty !== 0);
+    const { error: adjErr } = await sb.from("cutlists").update({ adjustments: adj }).eq("id", id);
+    if (adjErr) {
+      // column ยังไม่มี (ยังไม่รัน 0107) → ไม่ล้มทั้งคำขอ · แจ้งเตือน + ให้ผู้ใช้รู้ว่ายังเซฟส่วนปรับไม่ได้
+      if (/adjustments|column|schema cache/i.test(adjErr.message ?? "")) {
+        return fail("ยังบันทึก 'ปรับรายการ' ไม่ได้ — ผู้ดูแลต้องรัน migration 0107 ก่อน (ส่วนอื่นบันทึกแล้ว)", 409);
+      }
+      return fail(dbMessage(adjErr, "บันทึกการปรับไม่สำเร็จ"), 500);
+    }
+  }
+
   if (Array.isArray(body.items)) {
     if (cl.status === "stock_cut") {
       return fail("ใบนี้ตัดสต็อกไปแล้ว — แก้ข้อไม่ได้ (ยอดที่หักจะไม่ตรง) สร้างใบใหม่แทน", 409);
