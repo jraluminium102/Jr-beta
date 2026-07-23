@@ -17,11 +17,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const type = body?.type as StockMoveType;
   if (!TYPES.includes(type)) return fail("ประเภทไม่ถูกต้อง (in/out/adjust)");
   let qty = Number(body?.qty);
-  if (!Number.isFinite(qty) || qty === 0) return fail("ต้องระบุจำนวน");
+  if (!Number.isFinite(qty)) return fail("ต้องระบุจำนวน");
   // ไม่ไว้ใจเครื่องหมายจาก client — ทิศทางกำหนดโดย type (in=+, out=−, adjust=ตั้งค่า)
   // กันกด "รับเข้า" แล้วพิมพ์ค่าลบทำให้สต๊อกลดสวนทาง
   qty = Math.abs(qty);
-  if (qty === 0) return fail("จำนวนต้องมากกว่า 0");
+  // adjust ตั้งยอดเป็น 0 ได้ (นับสต๊อกแล้วของหมด) · in/out ต้อง > 0
+  if (qty === 0 && type !== "adjust") return fail("จำนวนต้องมากกว่า 0");
 
   const supabase = createClient() as unknown as Sb;
 

@@ -1,29 +1,28 @@
-import { getProfile } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
+import { requirePermission } from "@/lib/bff/context";
+import { withRoute } from "@/lib/bff/handler";
+import { ok } from "@/lib/bff/response";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/stock/ledger?from=YYYY-MM-DD&to=YYYY-MM-DD&type=in,out,adjust&q=&cat=&who=&job=&voided=0
-//   สมุดสโตร์รวม — ดึง stock_moves ในช่วงวัน (เวลาไทย) แล้วส่ง raw + ชื่อใบตัด · client คิด 4 มุมมองเอง
-//   ⚠ fetchAllPaged — เดือนคึกเกิน 1,000 แถว query ตรงจะหายเงียบ (เคสจริง 16 ก.ค.69)
-//   ⚠ default ตัด void ออก (is_voided=false) → ยอดรวมทุกมุมตรงกัน (บั๊กเดิม: หน้ารายเดือนนับ void รวม = เพี้ยน)
+// GET /api/stock/ledger?from=YYYY-MM-DD&to=YYYY-MM-DD&type=in,out,adjust&voided=0
+//   สมุดสโตร์รวม — ดึง stock_moves ในช่วงวัน (เวลาไทย) แล้วส่ง raw + ชื่อใบตัด · client คิด 4 มุมมอง + กรอง วัสดุ/หมวด/ผู้เบิก/งาน เอง
+//   ⚠ RBAC: requirePermission("production","read") — กันเข้าถึงต้นทุนตรงผ่าน API (ตรงกับ boq-daily เดิม · QA พบช่องโหว่ 24 ก.ค.)
+//   ⚠ fetchAllPaged — เดือนคึกเกิน 1,000 แถว query ตรงจะหายเงียบ · default ตัด void ออก (ยอดทุกมุมตรงกัน)
 
 type Row = {
   id: number; created_at: string; type: "in" | "out" | "adjust"; qty: number;
   requester: string | null; ref: string | null; note: string | null;
   unit_cost: number | null; total_price: number | null; job_id: string | null;
   is_voided: boolean | null; void_reason: string | null; edited_at: string | null;
-  stock_items: { name: string; sku: string | null; unit: string | null; category: string | null; is_weight_based: boolean | null; weight_per_unit: number | null } | null;
+  stock_items: { id: number; name: string; sku: string | null; unit: string | null; category: string | null; qty_on_hand: number | null; is_weight_based: boolean | null; weight_per_unit: number | null } | null;
   jobs: { job_code: string | null; customer_name: string | null } | null;
 };
 
 const isoDay = (s: string | null, fallback: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : fallback);
 
-export const GET = async (req: Request) => {
-  const profile = await getProfile();
-  if (!profile) return UNAUTHORIZED();
+export const GET = withRoute(async (req: Request) => {
+  const ctx = await requirePermission("production", "read");
 
   const url = new URL(req.url);
   const today = new Date().toISOString().slice(0, 10);
@@ -33,16 +32,12 @@ export const GET = async (req: Request) => {
   const end = `${to}T23:59:59.999+07:00`;
   const types = (url.searchParams.get("type") ?? "").split(",").map((s) => s.trim()).filter((s) => ["in", "out", "adjust"].includes(s));
   const includeVoided = url.searchParams.get("voided") === "1";
-  const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
-  const cat = (url.searchParams.get("cat") ?? "").trim();
-  const who = (url.searchParams.get("who") ?? "").trim().toLowerCase();
-  const jobq = (url.searchParams.get("job") ?? "").trim().toLowerCase();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = createClient() as unknown as { from: (t: string) => any };
+  const sb = ctx.supabase as any;
   const moves = await fetchAllPaged<Row>((f, t) => {
     let query = sb.from("stock_moves")
-      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, is_voided, void_reason, edited_at, stock_items(name, sku, unit, category, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
+      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, is_voided, void_reason, edited_at, stock_items(id, name, sku, unit, category, qty_on_hand, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
       .gte("created_at", start).lte("created_at", end)
       .order("id", { ascending: true }).range(f, t);
     if (!includeVoided) query = query.eq("is_voided", false);
@@ -58,52 +53,36 @@ export const GET = async (req: Request) => {
     for (const c of (cls ?? []) as { code: string; name: string }[]) cutlistName[c.code] = c.name;
   }
 
-  // filter ฝั่ง JS (วัสดุ/หมวด/ผู้เบิก/งาน) — ชุดข้อมูลไม่ใหญ่หลัง filter วัน
-  const rows = moves
-    .filter((m) => {
-      const si = m.stock_items;
-      if (cat && (si?.category ?? "") !== cat) return false;
-      if (who && !((m.requester ?? "").toLowerCase().includes(who))) return false;
-      if (q) {
-        const hay = `${si?.name ?? ""} ${si?.sku ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (jobq) {
-        const jh = `${m.jobs?.customer_name ?? ""} ${m.jobs?.job_code ?? ""} ${m.ref ?? ""}`.toLowerCase();
-        if (!jh.includes(jobq)) return false;
-      }
-      return true;
-    })
-    .map((m) => {
-      const si = m.stock_items;
-      const qty = Number(m.qty) || 0;
-      return {
-        id: m.id,
-        at: m.created_at,
-        type: m.type,
-        sku: si?.sku ?? null,
-        name: si?.name ?? "—",
-        category: si?.category ?? "",
-        unit: si?.unit ?? "",
-        qty,
-        kg: si?.is_weight_based && si?.weight_per_unit ? Math.round(qty * Number(si.weight_per_unit) * 100) / 100 : 0,
-        unitCost: Number(m.unit_cost) || 0,
-        price: Number(m.total_price) || 0,
-        who: (m.requester ?? "").trim(),
-        note: (m.note ?? "").trim(),
-        ref: m.ref ?? "",
-        jobId: m.job_id,
-        jobCode: m.jobs?.job_code ?? null,
-        customer: m.jobs?.customer_name ?? null,
-        cutlistName: m.ref && cutlistName[m.ref] ? cutlistName[m.ref] : "",
-        voided: !!m.is_voided,
-        voidReason: m.void_reason ?? "",
-        edited: !!m.edited_at,
-      };
-    });
+  const rows = moves.map((m) => {
+    const si = m.stock_items;
+    const qty = Number(m.qty) || 0;
+    return {
+      id: m.id,
+      at: m.created_at,
+      type: m.type,
+      sid: si?.id ?? null,
+      onHand: Number(si?.qty_on_hand) || 0,
+      sku: si?.sku ?? null,
+      name: si?.name ?? "—",
+      category: si?.category ?? "",
+      unit: si?.unit ?? "",
+      qty,
+      kg: si?.is_weight_based && si?.weight_per_unit ? Math.round(qty * Number(si.weight_per_unit) * 100) / 100 : 0,
+      unitCost: Number(m.unit_cost) || 0,
+      price: Number(m.total_price) || 0,
+      who: (m.requester ?? "").trim(),
+      note: (m.note ?? "").trim(),
+      ref: m.ref ?? "",
+      jobId: m.job_id,
+      jobCode: m.jobs?.job_code ?? null,
+      customer: m.jobs?.customer_name ?? null,
+      cutlistName: m.ref && cutlistName[m.ref] ? cutlistName[m.ref] : "",
+      voided: !!m.is_voided,
+      voidReason: m.void_reason ?? "",
+      edited: !!m.edited_at,
+    };
+  });
 
-  // หมวดที่มีในช่วงนี้ (ไว้ทำ dropdown filter)
   const cats = [...new Set(moves.map((m) => m.stock_items?.category ?? "").filter(Boolean))].sort();
-
   return ok({ from, to, rows, cats });
-};
+});
