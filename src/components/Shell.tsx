@@ -71,6 +71,14 @@ export default function Shell({ profile, children }: { profile: Profile; childre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChang, path]);
 
+  // สโตร์ — เห็นแค่เรื่องสโตร์ (เช็คสต๊อก/สมุดสโตร์/ใบตัด) เด้งกลับ /stock ถ้าหลงเข้า path อื่น (คิว/ใบเสนอ/ผลิต ฯลฯ)
+  const isStore = role === "STORE";
+  const inStorePaths = ["/stock", "/cutlist"].some((p) => path === p || path.startsWith(p + "/"));
+  useEffect(() => {
+    if (isStore && !inStorePaths) router.replace("/stock");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStore, path]);
+
   const omsKeys = menusFor(role);
   const omsItems = isChang
     ? [OMS_NAV.prodqueue]
@@ -79,11 +87,14 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   // ซ่อนเมนูบางอันตามสิทธิ์: /queue (ADMIN/SALES), /stats (ผู้มีสิทธิ์ดูบัญชี)
   // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
   // ช่างผลิต = ไม่เห็นเมนูเอกสาร/บัญชีเลย
+  // สโตร์ — เห็นเฉพาะเมนูสโตร์ 3 อัน (ไม่แตะ role อื่น)
+  const STORE_MENU = new Set(["/stock", "/stock/moves", "/cutlist"]);
   const docItems = isChang ? [] : DOC_NAV.filter((n) => {
+    if (isStore)                              return STORE_MENU.has(n.href);
     if (n.href === "/queue")                  return can(role, "queue",      "read");
     if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
-    if (n.href === "/cutlist")                return can(role, "production",  "read");
-    if (n.href === "/stock/moves")            return can(role, "production",  "read");
+    if (n.href === "/cutlist")                return can(role, "stock",      "read");
+    if (n.href === "/stock/moves")            return can(role, "stock",      "read");
     if (n.href === "/stats")                  return can(role, "finance",    "read");
     if (n.href === "/warranties")             return can(role, "warranties", "read");
     return true;

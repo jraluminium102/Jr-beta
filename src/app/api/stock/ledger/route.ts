@@ -23,7 +23,7 @@ type Row = {
 const isoDay = (s: string | null, fallback: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : fallback);
 
 export const GET = withRoute(async (req: Request) => {
-  const ctx = await requirePermission("production", "read");
+  const ctx = await requirePermission("stock", "read");
   const blind = !canSeeCost(ctx.role);   // role สโตร์ = ตาบอดราคา → ส่งต้นทุน/มูลค่าเป็น 0
 
   const url = new URL(req.url);

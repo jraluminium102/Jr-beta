@@ -13,10 +13,12 @@ export async function login(_prev: unknown, formData: FormData) {
   const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: "เข้าสู่ระบบไม่สำเร็จ — ตรวจชื่อผู้ใช้/รหัสผ่าน" };
 
-  // ช่างผลิต (CHANG) → เข้าหน้าตารางผลิตเลย (ไม่มีสิทธิ์หน้าอื่น)
+  // ช่างผลิต (CHANG) → ตารางผลิต · สโตร์ (STORE) → เช็คสต๊อก (ทั้งคู่ไม่มีสิทธิ์หน้า dashboard)
   if (auth.user) {
     const { data: prof } = await supabase.from("profiles").select("role").eq("id", auth.user.id).maybeSingle();
-    if (prof?.role === "CHANG") redirect("/production-schedule");
+    const r = (prof as { role?: string } | null)?.role;
+    if (r === "CHANG") redirect("/production-schedule");
+    if (r === "STORE") redirect("/stock");
   }
   redirect("/dashboard");
 }

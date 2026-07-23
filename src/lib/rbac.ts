@@ -3,7 +3,7 @@ import type { Role } from "@/lib/database.types";
 export type Resource =
   | "jobs" | "jobs:finance_fields" | "production" | "installation"
   | "issues" | "finance" | "dashboard" | "settings" | "users" | "queue"
-  | "designer" | "boq" | "sales_closure" | "warranties";
+  | "designer" | "boq" | "sales_closure" | "warranties" | "stock";
 export type Action = "read" | "write" | "void";
 
 // ตรงกับ PRD REQ-06 + RLS policies ใน 0003_rls.sql
@@ -17,6 +17,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     designer: ["read", "write"], boq: ["read", "write"],
     sales_closure: ["read", "write"],
     warranties: ["read", "write"],
+    stock: ["read", "write"],
   },
   SALES: {
     jobs: ["read", "write"], "jobs:finance_fields": ["read"],
@@ -25,6 +26,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     boq: ["read"],
     sales_closure: ["read", "write"],
     warranties: ["read", "write"],
+    stock: ["read", "write"],
   },
   DESIGNER: {
     jobs: ["read", "write"], production: ["read"],
@@ -32,16 +34,19 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     dashboard: ["read"],
     designer: ["read", "write"],
     warranties: ["read"],
+    stock: ["read"],
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
     designer: ["read"], boq: ["read", "write"],
     warranties: ["read", "write"],  // [0035] ช่างผลิตออกใบรับประกันได้
+    stock: ["read", "write"],
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
     issues: ["read", "write"], dashboard: ["read"],
     warranties: ["read", "write"],  // [0035] ช่างติดตั้งออกใบรับประกันหลังจบงานได้
+    stock: ["read"],
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
@@ -51,10 +56,10 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
   // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)
   CHANG: { production: ["read", "write"] },
-  // สโตร์ — เหมือนฝ่ายผลิตแต่ "ไม่เห็นราคา/ต้นทุน" (คุมด้วย canSeeCost + redact ที่ API สต็อก)
+  // สโตร์ — เห็น "แค่เรื่องสโตร์เท่านั้น" (เช็คสต๊อก/สมุดสโตร์/ใบตัด-BOQ) ไม่เห็นคิว/ใบเสนอ/ผลิต/แบบ
+  //   สิทธิ์เดียว = stock · ตาบอดราคา (canSeeCost + redact ที่ API) · Shell กันเข้า path นอกสโตร์ (เด้ง /stock)
   STORE: {
-    jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
-    designer: ["read"], boq: ["read", "write"], warranties: ["read", "write"],
+    stock: ["read", "write"],
   },
 };
 
