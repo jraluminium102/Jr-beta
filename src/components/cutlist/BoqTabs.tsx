@@ -5,6 +5,7 @@
  *   [ความเคลื่อนไหวรายวัน] ประวัติเบิก+รับเข้ารายวัน  ·  [ใบตัด/BOQ] จัดการ+สร้างใบตัด
  */
 import { useState } from "react";
+import { Providers } from "@/app/providers";
 import CutlistListClient from "@/components/cutlist/CutlistListClient";
 import DailyMovements from "@/components/cutlist/DailyMovements";
 
@@ -25,7 +26,9 @@ export default function BoqTabs({ rows, jobs, canWrite, initialTab }: {
     try { window.history.replaceState(null, "", `/cutlist?tab=${t}`); } catch { /* ignore */ }
   };
 
+  // /cutlist อยู่นอกโซน (oms) → ไม่มี QueryClientProvider ให้ · ห่อเองเพื่อให้ useQuery ใน DailyMovements ทำงาน
   return (
+    <Providers>
     <div className="space-y-5">
       <div className="flex items-center gap-1 border-b border-black/5">
         {([["daily", "📅 ความเคลื่อนไหวรายวัน"], ["cutlist", "✂️ ใบตัด / BOQ"]] as const).map(([k, label]) => (
@@ -40,5 +43,6 @@ export default function BoqTabs({ rows, jobs, canWrite, initialTab }: {
 
       {tab === "daily" ? <DailyMovements /> : <CutlistListClient rows={rows} jobs={jobs} canWrite={canWrite} />}
     </div>
+    </Providers>
   );
 }
