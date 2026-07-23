@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * ใบตัดสำหรับช่าง — ลิงก์ลับ ไม่ต้อง login (นอกกลุ่ม (app) จึงไม่มี auth layout)
  *
- * ช่าง: ดู + สร้าง/แก้ใบตัดได้ · **ตัดสต็อกไม่ได้** (canCutStock=false — ของหายจากสโตร์จริง)
+ * ช่าง: ดู + สร้าง/แก้ + **ตัดสต็อกได้** (canCutStock=true — เจ้าของเคาะ 23 ก.ค.69 ยืนยันใช้จริงหน้างาน)
  * ใช้ editor ตัวเดียวกับฝั่งออฟฟิศ แค่แนบโทเคนไปกับทุก request (ดู src/lib/cutlist/actor.ts)
  *
  * ⚠ ไม่มี session → ต้องใช้ service client อ่านสต็อก (RLS จะบล็อก)
@@ -34,14 +34,14 @@ export default async function ChangCutlistPage({ params }: { params: { token: st
     <div className="min-h-dvh" style={{ background: "#0f1115" }}>
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-3 py-2.5" style={{ background: "#171a21", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
         <Link href={`/chang/${params.token}`} className="text-[13px] text-sky-300">← ตารางผลิต</Link>
-        <span className="text-[12px] text-white/45">ใบตัดอลู · ช่างแก้ได้ (ตัดสต็อกไม่ได้)</span>
+        <span className="text-[12px] text-white/45">ใบตัดอลู · ช่างแก้ + ตัดออกสโตร์ได้</span>
       </div>
       <CutlistEditorClient
         cutlistId={Number(params.id)}
         stock={stockList}
         colorOptions={stockColorOptions(stockList)}
         canWrite
-        canCutStock={false}
+        canCutStock
         changToken={params.token}
       />
     </div>

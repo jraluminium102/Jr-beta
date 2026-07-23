@@ -7,7 +7,8 @@ import { createServiceClient } from "@/lib/supabase/admin";
  * ใครกำลังใช้ใบตัด — คนล็อกอิน หรือ "ช่างผ่านลิงก์โทเคน" (ไม่ต้องล็อกอิน)
  *
  * เจ้าของสั่ง 16 ก.ค.2569: ช่างเปิดใบตัดจากลิงก์เดิม (/chang/<token>) ได้
- * และ **ดูได้ + สร้าง/แก้ใบตัดได้เอง** (แต่ "ตัดสต็อก" ยังสงวนไว้ให้คนล็อกอินเท่านั้น)
+ * และ **ดูได้ + สร้าง/แก้ใบตัดได้เอง**
+ * เจ้าของสั่ง 23 ก.ค.2569: เปิดให้ช่าง "ตัดสต็อก" ได้ด้วย (ยืนยันใช้จริงหน้างาน) — จาก actorName "ช่าง <ชื่อ>" ยังรู้ว่าใครตัด
  *
  * ⚠ ทำไมต้องมีไฟล์นี้แทนที่จะ copy API ไปไว้ใต้ /api/chang:
  *   ใบตัดมี 5 endpoint (list/create/read/save/delete) — ถ้าโคลนไปอีกชุดจะกลายเป็น 2 ชุด
@@ -21,7 +22,7 @@ const CUT_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 export type CutActor = {
   kind: "user" | "chang";
   canWrite: boolean;
-  /** หักสต็อกจริงได้ไหม — ช่างผ่านลิงก์ = ไม่ได้ (ของหายจากสโตร์จริง ต้องมีตัวตน) */
+  /** หักสต็อกจริงได้ไหม — คนล็อกอิน = ตามสิทธิ์ write · ช่างผ่านลิงก์ = ได้ (เจ้าของเคาะ 23 ก.ค.69) */
   canCutStock: boolean;
   /** ชื่อไว้ใส่ audit — ช่างพิมพ์ชื่อตัวเองมาจากหน้า chang */
   actorName: string;
@@ -64,7 +65,7 @@ export async function cutlistActor(req: Request): Promise<CutActor | null> {
     return {
       kind: "chang",
       canWrite: true,        // ช่างสร้าง/แก้ใบตัดได้ (เจ้าของเคาะ)
-      canCutStock: false,    // แต่ห้ามหักสต็อกจริง
+      canCutStock: true,     // ช่างตัดสต็อกจริงได้ (เจ้าของเคาะ 23 ก.ค.69 — ยืนยันใช้จริงหน้างาน) · ยังจด actorName = "ช่าง <ชื่อ>" ไว้ audit
       actorName: name ? `ช่าง ${name}` : "ช่าง (ลิงก์)",
       userId: null,
       sb: createServiceClient() as unknown as CutActor["sb"],

@@ -30,6 +30,18 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
     return jobs.filter((j) => (j.customer_name ?? "").toLowerCase().includes(q) || (j.job_code ?? "").toLowerCase().includes(q)).slice(0, 100);
   }, [jobs, jobQuery]);
 
+  // ลบใบร่างที่เทสทิ้งถาวร — server กันเฉพาะ draft (ใบที่ตัดสต็อกแล้วลบไม่ได้)
+  async function del(id: number, code: string) {
+    if (!window.confirm(`ลบใบตัด ${code} ทิ้งถาวร?\n(ลบได้เฉพาะใบร่างที่ยังไม่ตัดสต็อก — ไว้เคลียร์ใบที่สร้างเทส)`)) return;
+    setBusy(true); setErr("");
+    try {
+      const res = await fetch(`/api/cutlists/${id}`, { method: "DELETE" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { setErr(json?.error ?? "ลบไม่สำเร็จ"); return; }
+      router.refresh();
+    } finally { setBusy(false); }
+  }
+
   async function create(fromJob: boolean) {
     setBusy(true); setErr("");
     try {
@@ -103,11 +115,12 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
                 <th className="px-3 py-2 font-medium">งาน / ลูกค้า</th>
                 <th className="px-3 py-2 font-medium">วันที่</th>
                 <th className="px-3 py-2 font-medium text-center">สถานะ</th>
+                {canWrite && <th className="px-3 py-2 font-medium text-center w-10"></th>}
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
-                <tr><td colSpan={5} className="px-3 py-8 text-center text-ink-3">ยังไม่มีใบตัด — สร้างใบแรกด้านบน</td></tr>
+                <tr><td colSpan={canWrite ? 6 : 5} className="px-3 py-8 text-center text-ink-3">ยังไม่มีใบตัด — สร้างใบแรกด้านบน</td></tr>
               )}
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-black/5 last:border-0 hover:bg-white/60">
@@ -126,6 +139,15 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
                       ? <Badge tone="emerald" dot>ตัดสต็อกแล้ว</Badge>
                       : <Badge tone="gray" dot>ร่าง</Badge>}
                   </td>
+                  {canWrite && (
+                    <td className="px-3 py-2 text-center">
+                      {r.status === "stock_cut"
+                        ? <span title="ตัดสต็อกแล้ว ลบไม่ได้" className="text-ink-3/40 text-xs">🔒</span>
+                        : <button onClick={() => del(r.id, r.code || `CL-${r.id}`)} disabled={busy}
+                            title="ลบใบร่างที่เทสทิ้ง (ลบได้เฉพาะใบยังไม่ตัดสต็อก)"
+                            className="press px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 text-xs disabled:opacity-50">🗑</button>}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
