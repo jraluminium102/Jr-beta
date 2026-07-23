@@ -155,14 +155,14 @@ export default function StockLedger({ canViewCost, canRelink }: { canViewCost: b
 // ── มุม: ความเคลื่อนไหว — เบิกออก (จัดกลุ่มตามงาน) + รับเข้า (ลิสต์) ──
 function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; canViewCost: boolean; canRelink: boolean; onRelinked: () => void }) {
   const groups = useMemo(() => {
-    const g = new Map<string, { title: string; ref: string; refText: string; isJob: boolean; who: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
+    const g = new Map<string, { title: string; ref: string; refText: string; isJob: boolean; count: number; who: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
     for (const r of rows.filter((x) => x.type === "out")) {
       const key = r.jobId ? `j:${r.jobId}` : r.ref ? `r:${r.ref}` : "other";
-      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, refText: r.jobId ? "" : r.ref, isJob: !!r.jobId, who: new Set(), price: 0, mats: new Map() };
+      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, refText: r.jobId ? "" : r.ref, isJob: !!r.jobId, count: 0, who: new Set(), price: 0, mats: new Map() };
       const mk = r.sku || r.name;
       const m = e.mats.get(mk) ?? { sku: r.sku, name: r.name, unit: r.unit, qty: 0, kg: 0 };
       m.qty += r.qty; m.kg += r.kg; e.mats.set(mk, m);
-      e.price += r.price; if (r.who) e.who.add(r.who);
+      e.price += r.price; e.count += 1; if (r.who) e.who.add(r.who);
       g.set(key, e);
     }
     return [...g.values()].sort((a, b) => (a.isJob === b.isJob ? a.title.localeCompare(b.title) : a.isJob ? -1 : 1));
@@ -183,7 +183,7 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
               {g.who.size > 0 && <span className="text-[12px] text-ink-3">ผู้เบิก: <b className="text-ink-2">{[...g.who].join(", ")}</b></span>}
               {canViewCost && <span className="ml-auto text-[13px] font-semibold text-ink-2 tabular-nums">฿{baht(g.price)}</span>}
             </div>
-            {!g.isJob && canRelink && g.refText.trim() && <RelinkRow refText={g.refText} onDone={onRelinked} />}
+            {!g.isJob && canRelink && g.refText.trim() && <RelinkRow refText={g.refText} count={g.count} onDone={onRelinked} />}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5"><th className="py-1.5 pr-2 font-medium">รหัส</th><th className="py-1.5 pr-2 font-medium">วัสดุ</th><th className="py-1.5 pr-2 font-medium text-right">จำนวน</th><th className="py-1.5 pr-2 font-medium text-right">กก.</th></tr></thead>
@@ -323,7 +323,7 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
 }
 
 // ── ผูกงานย้อนหลัง: กลุ่มที่ "พิมพ์ชื่อไว้เอง" (ยังไม่ผูกงาน) → เลือกงานจริง → ผูกทุก move ที่ ref เดียวกัน ──
-function RelinkRow({ refText, onDone }: { refText: string; onDone: () => void }) {
+function RelinkRow({ refText, count, onDone }: { refText: string; count: number; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [job, setJob] = useState<StockJob | null>(null);
   const [busy, setBusy] = useState(false);
@@ -348,7 +348,7 @@ function RelinkRow({ refText, onDone }: { refText: string; onDone: () => void })
   );
   return (
     <div className="no-print mb-3 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2">
-      <div className="text-[12px] text-ink-2">ผูก “<b>{refText}</b>” เข้ากับงานจริง — ทุกรายการที่พิมพ์ชื่อนี้จะผูกตามทันที (ค้นได้ทุกงาน แม้จบแล้ว)</div>
+      <div className="text-[12px] text-ink-2">ผูก “<b>{refText}</b>” (<b>{count} รายการ</b>) เข้ากับงานจริง — เลือกงานแล้วผูกทันที · ค้นได้ทุกงานแม้จบแล้ว</div>
       <JobPicker value={job} onPick={(j) => { if (j) link(j); }} compact all autoOpen initialQuery={refText.replace(/^คุณ\s*/, "")} />
       {msg && <div className={`text-[12px] ${msg.startsWith("✓") ? "text-emerald-700" : "text-red-600"}`}>{msg}</div>}
       {busy && !msg && <div className="text-[12px] text-ink-3">กำลังผูก…</div>}

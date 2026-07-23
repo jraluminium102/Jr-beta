@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 
-// สโตร์/ผลิต จัดการหมวดได้ด้วย (ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING)
-const WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+// สโตร์/ผลิต จัดการหมวดได้ด้วย (ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING) — ตรงกับ RLS 0109 + UI ที่โชว์ให้สโตร์
+const WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 type Sb = { from: (t: string) => any };
 
 // GET /api/stock/categories → หมวดวัสดุ (เรียงตาม sort_order → ชื่อ)

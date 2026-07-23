@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 
-const WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 type Sb = { from: (t: string) => any };
 type Params = { params: { id: string } };
 

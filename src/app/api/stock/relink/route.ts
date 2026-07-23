@@ -11,9 +11,10 @@ export const dynamic = "force-dynamic";
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("stock", "write");
   const b = await req.json().catch(() => null);
-  const ref = (b?.ref ?? "").trim();
+  // ⚠ ห้าม trim ref — ต้องแมตช์ค่าที่เก็บจริง (บาง move เก็บ ref ที่มีช่องว่างหน้า/หลัง) ไม่งั้นแมตช์ 0 แถวแต่ไม่รู้ตัว
+  const ref = String(b?.ref ?? "");
   const jobId = (b?.job_id ?? "").trim();
-  if (!ref) return err("ต้องระบุข้อความอ้างอิง (ref) ที่จะผูก", 400);
+  if (!ref.trim()) return err("ต้องระบุข้อความอ้างอิง (ref) ที่จะผูก", 400);
   if (!jobId) return err("ต้องเลือกงานที่จะผูก", 400);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,5 +30,7 @@ export const POST = withRoute(async (req: Request) => {
     .is("job_id", null)
     .select("id");
   if (error) throw new Error(error.message);
-  return ok({ linked: (data ?? []).length });
+  const linked = (data ?? []).length;
+  if (linked === 0) return err("ไม่พบรายการที่ตรงกับข้อความนี้ (อาจผูกไปแล้ว หรือข้อความไม่ตรงพอดี)", 409);
+  return ok({ linked });
 });

@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("stock", "read");
   const url = new URL(req.url);
-  const q = (url.searchParams.get("q") ?? "").trim();
+  // ตัดอักขระที่ทำ .or()/ilike ของ PostgREST พัง ( , ( ) * \ ) — กัน 400 จากช่องค้นหา
+  const q = (url.searchParams.get("q") ?? "").replace(/[,()*\\]/g, " ").trim();
   // all=1 → ค้นทุกงาน (ไว้ผูกย้อนหลัง งานเก่าที่อาจจบไปแล้ว) · ปกติ = เฉพาะงานกำลังผลิต–ติดตั้ง (stage 9–23)
   const all = url.searchParams.get("all") === "1";
 
