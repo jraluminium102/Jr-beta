@@ -68,6 +68,9 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand"><Icon name="box" size={18} /></span>
           ใบตัด / BOQ
         </h1>
+        <Link href="/stock/moves" className="press inline-flex items-center gap-1.5 rounded-xl glass-soft px-3 py-2 text-sm font-semibold text-brand-dark">
+          📒 สมุดสโตร์ (ประวัติเบิก-รับเข้า)
+        </Link>
       </div>
       <p className="text-sm text-ink-3 -mt-3">
         ใบตัดอลูต่องาน → สรุปเส้นต่อรหัส (BOQ) → กด &quot;ตัดสต็อก&quot; หักจริงตาม sku · ดึงข้อจากใบเสนอ (เครื่องคิดราคา 4.0) อัตโนมัติ
