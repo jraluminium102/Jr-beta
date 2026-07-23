@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { colorFromName } from "@/lib/cutlist/stock-match";
 
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
 type Sb = { from: (t: string) => any };
@@ -60,10 +61,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .from("stock_items").update(patch).eq("id", params.id).select("*").single();
   if (error) return fail(error.message, 500);
 
-  // สี (0106) — เขียนแยกแบบ non-fatal (column อาจยังไม่มีถ้ายังไม่รัน migration → แก้วัสดุอื่นไม่พัง)
-  if ("color" in body) {
-    const { error: colErr } = await supabase.from("stock_items").update({ color: body.color ?? "" }).eq("id", params.id);
-    if (!colErr && data) (data as Record<string, unknown>).color = body.color ?? "";
+  // สี (0106) — เขียนแยกแบบ non-fatal · ถ้าไม่กรอกสี แต่ชื่อมีสี → ดึงสีจากชื่อมาเติมอัตโนมัติ (กันช่องสีว่าง + ตรงกับชื่อ)
+  if ("color" in body || "name" in body) {
+    const nm = body.name ?? (data as Record<string, unknown>)?.name;
+    const sk = body.sku ?? (data as Record<string, unknown>)?.sku;
+    const colorVal = String(body.color ?? "").trim() || colorFromName(String(nm ?? ""), String(sk ?? ""));
+    if (colorVal || "color" in body) {
+      const { error: colErr } = await supabase.from("stock_items").update({ color: colorVal }).eq("id", params.id);
+      if (!colErr && data) (data as Record<string, unknown>).color = colorVal;
+    }
   }
 
   return ok(data);

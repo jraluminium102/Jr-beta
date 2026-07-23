@@ -67,6 +67,11 @@ export function stockColorOf(s: StockLite): string {
   }
   return "";
 }
+/** ดึงสีจากชื่อ/รหัส (สำหรับเติมช่องสีอัตโนมัติ) — คืน "" ถ้าชื่อไม่มีสีที่รู้จัก */
+export function colorFromName(name?: string, sku?: string): string {
+  return stockColorOf({ name: name ?? "", sku: sku ?? "", qty: 0 });
+}
+
 const stockHasColor = (s: StockLite, color: string) => !color || normColor(stockColorOf(s)) === normColor(color);
 const isColorAgnostic = (s: StockLite) => stockColorOf(s) === "";
 

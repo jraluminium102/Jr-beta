@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
+import { colorFromName } from "@/lib/cutlist/stock-match";
 
 // สโตร์/ผลิต บันทึกวัสดุได้ด้วย (0073) — ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
@@ -89,10 +90,11 @@ export async function POST(req: Request) {
     if (!skuErr) item.sku = autoSku;
   }
 
-  // สี (0106) — เขียนแยกแบบ non-fatal: ถ้ายังไม่ได้รัน migration column ไม่มี → เพิ่มวัสดุไม่พัง แค่ไม่บันทึกสี
-  if (String(body.color ?? "").trim()) {
-    const { error: colErr } = await supabase.from("stock_items").update({ color: body.color }).eq("id", item.id);
-    if (!colErr) item.color = body.color;
+  // สี (0106) — เขียนแยกแบบ non-fatal · ถ้าไม่กรอกสี แต่ชื่อมีสี (เช่น "...-อบขาว") → ดึงสีจากชื่อมาเติมอัตโนมัติ
+  const colorVal = String(body.color ?? "").trim() || colorFromName(body.name, item.sku);
+  if (colorVal) {
+    const { error: colErr } = await supabase.from("stock_items").update({ color: colorVal }).eq("id", item.id);
+    if (!colErr) item.color = colorVal;
   }
 
   // บันทึกราคาเริ่มต้นเข้าประวัติ (ถ้ามี) — trigger sync unit_cost/price_per_kg ให้อยู่แล้ว

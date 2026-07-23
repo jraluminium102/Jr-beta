@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
 import { isInCutlist } from "@/lib/cutlist/codes";
+import { colorFromName } from "@/lib/cutlist/stock-match";
 import ImageZoom from "@/components/ImageZoom";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
@@ -253,9 +254,12 @@ function ItemDetail({
             <Thumb url={item.image_url} size={56} />
           </ImageZoom>
           <div className="min-w-0">
-            <h3 className="text-lg font-bold text-brand-dark truncate">{item.name}</h3>
+            {/* ชื่อ + สี — โชว์สีครั้งเดียว: ถ้าชื่อมีสีอยู่แล้วใช้ชื่อตามเดิม · ถ้าไม่มีแต่ช่องสีตั้งไว้ ต่อสีท้ายชื่อ (กันซ้ำ) */}
+            <h3 className="text-lg font-bold text-brand-dark truncate">
+              {colorFromName(item.name, item.sku) || !item.color ? item.name : `${item.name} ${item.color}`}
+            </h3>
             <p className="text-sm text-ink-3 truncate">
-              {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.color ? ` · สี${item.color}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
+              {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {calcLink(item).linked && (
