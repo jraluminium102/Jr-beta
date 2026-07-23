@@ -2,9 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { colorFromName } from "@/lib/cutlist/stock-match";
+import { canSeeCost } from "@/lib/rbac";
 
 // สโตร์/ผลิต บันทึกวัสดุได้ด้วย (0073) — ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 
 // GET /api/stock?q=คำค้น  → รายการวัสดุ (is_active=true)
 export async function GET(req: Request) {
@@ -27,6 +28,11 @@ export async function GET(req: Request) {
 
   const { data, error } = await query;
   if (error) return fail(error.message, 500);
+  // role สโตร์ = ตาบอดราคา → ตัดฟิลด์ต้นทุนออกก่อนส่ง (กันหลุดผ่าน network)
+  if (!canSeeCost(profile.role)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return ok((data ?? []).map((r: any) => ({ ...r, unit_cost: null, price_per_kg: null })));
+  }
   return ok(data);
 }
 

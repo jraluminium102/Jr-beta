@@ -51,10 +51,21 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
   // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)
   CHANG: { production: ["read", "write"] },
+  // สโตร์ — เหมือนฝ่ายผลิตแต่ "ไม่เห็นราคา/ต้นทุน" (คุมด้วย canSeeCost + redact ที่ API สต็อก)
+  STORE: {
+    jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
+    designer: ["read"], boq: ["read", "write"], warranties: ["read", "write"],
+  },
 };
 
 export function can(role: Role, resource: Resource, action: Action): boolean {
   return MATRIX[role]?.[resource]?.includes(action) ?? false;
+}
+
+// role ที่ "ไม่เห็นราคา/ต้นทุน" — ซ่อนที่ UI + redact ฟิลด์ราคาที่ API สต็อก (ห้ามหลุดผ่าน network)
+export const COST_BLIND_ROLES: string[] = ["STORE"];
+export function canSeeCost(role: string | null | undefined): boolean {
+  return !!role && !COST_BLIND_ROLES.includes(role);
 }
 
 export function menusFor(role: Role): string[] {

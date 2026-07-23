@@ -5,7 +5,7 @@ import { ok } from "@/lib/bff/response";
 
 type Params = { params: { id: string } };
 const schema = z.object({
-  role: z.enum(["ADMIN","SALES","DESIGNER","PRODUCTION","INSTALLER","ACCOUNTING","VIEWER","CHANG"]).optional(),
+  role: z.enum(["ADMIN","SALES","DESIGNER","PRODUCTION","INSTALLER","ACCOUNTING","VIEWER","CHANG","STORE"]).optional(),
   is_active: z.boolean().optional(),
 });
 

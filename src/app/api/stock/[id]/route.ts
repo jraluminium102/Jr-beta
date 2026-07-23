@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { colorFromName } from "@/lib/cutlist/stock-match";
+import { canSeeCost } from "@/lib/rbac";
 
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 type Sb = { from: (t: string) => any };
 
 // GET /api/stock/[id]  → วัสดุ + ประวัติเคลื่อนไหว + ประวัติราคา
@@ -26,6 +27,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     .eq("stock_item_id", params.id)
     .order("effective_date", { ascending: false }).order("id", { ascending: false }).limit(30);
 
+  // role สโตร์ = ตาบอดราคา → ตัดต้นทุนวัสดุ + ต้นทุน/มูลค่าในแต่ละ move + ซ่อนประวัติราคาทั้งหมด
+  if (!canSeeCost(profile.role)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const it: any = { ...item, unit_cost: null, price_per_kg: null };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mv = (moves ?? []).map((m: any) => ({ ...m, unit_cost: null, total_price: null }));
+    return ok({ ...it, stock_moves: mv, stock_prices: [] });
+  }
   return ok({ ...item, stock_moves: moves ?? [], stock_prices: prices ?? [] });
 }
 

@@ -361,7 +361,7 @@ function ItemDetail({
                     </td>
                     <td className="px-3 py-2 text-ink-2 truncate max-w-[160px]">
                       {m.requester || m.ref || "—"}
-                      {m.total_price ? <span className="text-ink-3"> · ฿{baht(m.total_price)}</span> : ""}
+                      {canViewCost && m.total_price ? <span className="text-ink-3"> · ฿{baht(m.total_price)}</span> : ""}
                       {m.is_voided && m.void_reason && <div className="text-[10px] text-red-500">เหตุผล: {m.void_reason}</div>}
                     </td>
                     <td className="px-3 py-2">

@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { canSeeCost } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ const isoDay = (s: string | null, fallback: string) => (s && /^\d{4}-\d{2}-\d{2}
 
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("production", "read");
+  const blind = !canSeeCost(ctx.role);   // role สโตร์ = ตาบอดราคา → ส่งต้นทุน/มูลค่าเป็น 0
 
   const url = new URL(req.url);
   const today = new Date().toISOString().slice(0, 10);
@@ -68,8 +70,8 @@ export const GET = withRoute(async (req: Request) => {
       unit: si?.unit ?? "",
       qty,
       kg: si?.is_weight_based && si?.weight_per_unit ? Math.round(qty * Number(si.weight_per_unit) * 100) / 100 : 0,
-      unitCost: Number(m.unit_cost) || 0,
-      price: Number(m.total_price) || 0,
+      unitCost: blind ? 0 : (Number(m.unit_cost) || 0),
+      price: blind ? 0 : (Number(m.total_price) || 0),
       who: (m.requester ?? "").trim(),
       note: (m.note ?? "").trim(),
       ref: m.ref ?? "",

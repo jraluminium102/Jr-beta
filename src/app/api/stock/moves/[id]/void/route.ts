@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 // POST /api/stock/moves/[id]/void → ยกเลิกรายการเคลื่อนไหว (soft void) + ย้อน "จำนวน" แบบ delta (ไม่แตะต้นทุน)

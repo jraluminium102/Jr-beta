@@ -4,7 +4,7 @@ import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import type { StockMoveType } from "@/lib/types";
 
 const TYPES: StockMoveType[] = ["in", "out", "adjust"];
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 type Sb = { from: (t: string) => any };
 
 // POST /api/stock/[id]/move  → บันทึกความเคลื่อนไหว (trigger ปรับ qty_on_hand ให้)

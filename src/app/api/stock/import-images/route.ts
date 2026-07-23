@@ -7,7 +7,7 @@ import DATA from "@/app/(app)/stock/import/full-import.json";
 // idempotent: ข้ามตัวที่ชื่อซ้ำ (กดซ้ำไม่เพิ่มซ้ำ) · qty เซ็ตยอดยกมาตรงๆ · น็อต = ต่อโล ไม่ใส่ราคา
 type Item = { tab: string; cat: string; name: string; price: string; qty: string; fileId: string | null; weight: boolean };
 const ITEMS = DATA as Item[];
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 const norm = (s: string) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
 
 async function fetchDriveImage(fileId: string): Promise<{ buf: Buffer; ct: string } | null> {

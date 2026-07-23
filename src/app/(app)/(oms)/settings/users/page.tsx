@@ -7,7 +7,7 @@ import type { Role } from "@/lib/database.types";
 import { ROLE_LABEL } from "@/lib/types";
 
 type U = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; role: Role; is_active: boolean; created_at: string };
-const ROLES: Role[] = ["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER", "CHANG"];
+const ROLES: Role[] = ["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER", "CHANG", "STORE"];
 
 export default function UsersPage() {
   const qc = useQueryClient();

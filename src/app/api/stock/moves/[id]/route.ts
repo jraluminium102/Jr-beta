@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 
 // PATCH /api/stock/moves/[id] → แก้เฉพาะข้อความ: ผู้เบิก/อ้างอิง/หมายเหตุ (ไม่แตะจำนวน/ต้นทุน — ปลอดภัย)
 // แก้จำนวน/ประเภทผิด → ให้ "ยกเลิก" แล้วลงรายการใหม่ (กันยอด/ต้นทุนเพี้ยน)

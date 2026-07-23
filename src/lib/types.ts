@@ -1,6 +1,6 @@
 // แอพรวม: ใช้ role_t ชุดเดียว (ตรงกับ public.profiles + @/lib/database.types Role)
 export type UserRole =
-  | "ADMIN" | "SALES" | "DESIGNER" | "PRODUCTION" | "INSTALLER" | "ACCOUNTING" | "VIEWER" | "CHANG";
+  | "ADMIN" | "SALES" | "DESIGNER" | "PRODUCTION" | "INSTALLER" | "ACCOUNTING" | "VIEWER" | "CHANG" | "STORE";
 export type QuotationStatus = "draft" | "sent" | "approved" | "cancelled";
 export type BillingStatus = "unpaid" | "partial" | "paid" | "cancelled";
 export type InstallmentStatus = "pending" | "paid";
@@ -306,4 +306,5 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   ACCOUNTING: "บัญชี",
   VIEWER: "ดูอย่างเดียว",
   CHANG: "ช่างผลิต",
+  STORE: "สโตร์ (ไม่เห็นราคา)",
 };

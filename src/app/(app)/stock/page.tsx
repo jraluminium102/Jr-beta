@@ -3,19 +3,18 @@ import { createClient } from "@/lib/supabase/server";
 import StockClient from "./StockClient";
 import type { StockItem, StockCategory } from "@/lib/types";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { canSeeCost } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
 // สโตร์/ผลิต บันทึกได้ (0073) · อัปเดตราคา = บัญชี/แอดมิน
-const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
 const PRICE_WRITE = ["ADMIN", "ACCOUNTING"];
-// การซ่อนราคาจากฝ่ายสโตร์ = ยังไม่เปิด (ตอนนี้ทุกคนที่เข้าหน้านี้เห็นราคา)
-// ไว้สร้างแอคเคาท์สโตร์ (role เฉพาะ) แล้วค่อยตั้ง COST_VIEW ให้ไม่รวม role นั้น
-const COST_VIEW: string[] | null = null; // null = เห็นราคาได้ทุกคน
 
 export default async function StockPage() {
   const profile = await getProfile();
   const role = profile?.role ?? "";
+  const canViewCost = canSeeCost(role || null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as unknown as { from: (t: string) => any };
 
@@ -30,13 +29,16 @@ export default async function StockPage() {
       .order("sort_order", { ascending: true }).order("name", { ascending: true }),
   ]);
 
+  // role สโตร์ = ตาบอดราคา → ตัดต้นทุนออกจาก props ที่ส่งไป client (กันหลุดใน page payload)
+  const safeItems = canViewCost ? items : items.map((it) => ({ ...it, unit_cost: null, price_per_kg: null } as unknown as StockItem));
+
   return (
     <StockClient
-      initial={items}
+      initial={safeItems}
       categories={(cats ?? []) as StockCategory[]}
       canWrite={STORE_WRITE.includes(role)}
       canPrice={PRICE_WRITE.includes(role)}
-      canViewCost={COST_VIEW === null ? true : COST_VIEW.includes(role)}
+      canViewCost={canViewCost}
       isAdmin={role === "ADMIN"}
     />
   );

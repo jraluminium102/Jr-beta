@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { canSeeCost } from "@/lib/rbac";
+import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import AluRatesClient from "./AluRatesClient";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +14,7 @@ const PRICE_WRITE = ["ADMIN", "ACCOUNTING"];
 export default async function AluRatesPage() {
   const profile = await getProfile();
   const role = profile?.role ?? "";
+  if (!canSeeCost(role || null)) redirect("/stock");   // role สโตร์ = ตาบอดราคา ห้ามเข้าหน้าเรตอลู
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as unknown as { from: (t: string) => any };
 
