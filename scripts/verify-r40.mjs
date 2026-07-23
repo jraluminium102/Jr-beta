@@ -1,5 +1,5 @@
 // verify-r40.mjs — ด่านกันราคาเพี้ยน R4.0: เทียบผล engine กับค่าจริงในชีต xlsx (golden-snapshot)
-// รัน:  node scripts/verify-r40.mjs  (ต้องผ่าน 63/63 ก่อน deploy ทุกครั้งที่แตะ calculator40)
+// รัน:  node scripts/verify-r40.mjs  (ต้องผ่าน 71/71 ก่อน deploy ทุกครั้งที่แตะ calculator40)
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -93,6 +93,25 @@ console.log('▶ กำไร 100% = ceil100(ทุน×2):');
 {
   const r = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', profitPct: 100 });
   check('ขายก่อนค่าแรง', r.sell.beforeLabor, Math.ceil(r.cost.total * 2 / 100) * 100, 0);
+}
+
+// ── ระแนง/ประตูรั้ว: ระยะ@ (ช่องห่าง) + กล่อง + โครง (ตรงชีต Excel) ─────────────
+//   ล็อกว่า: UI-seeded default = golden เดิม · ห่างมาก→ใบน้อยลง→ถูกลง · ถี่ขึ้น→แพงขึ้น
+console.log('▶ ระแนงบังตา — ระยะ@/กล่อง/โครง (200×240 นอน):');
+{
+  const L = (spec) => computeCost(PB, PRODUCTS.louver, { w: 200, h: 240, p: 1, form: 'นอน', spec }).cost.total;
+  check('UI default spec = golden 10980', L({ rnBox: '1.6x4', rnFace: '4.06', rnGap: '5', rnFrame: 'ไม่รวมโครง' }), 10980, 1);
+  check('ระยะ@15 (ห่างขึ้น→ใบน้อยลง)', L({ rnGap: '15' }), 6100, 1);
+  check('ระยะ@2 (ถี่ขึ้น→ใบเยอะขึ้น)', L({ rnGap: '2' }), 17080, 1);
+  check('กล่อง 1×1 (ถูกกว่า 1.6×4)', L({ rnBox: '1x1' }), 2790, 1);
+  check('รวมโครง = +โครงดาม 485', L({ rnFrame: 'รวมโครง' }), 11465, 1);
+}
+console.log('▶ ประตูรั้ว — ระยะ@ ระแนง (350×180 นอน):');
+{
+  const G = (spec) => computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: 'นอน', spec }).cost.total;
+  check('UI default spec = golden 49448', G({ rnFace: '4.06', rnGap: '5', drive: 'มอเตอร์อัตโนมัติ', gaterail: 'รางใหม่' }), 49448, 1);
+  check('ระยะ@15 (ห่างขึ้น→ใบน้อยลง→ถูกลง)', G({ rnGap: '15' }), 37248, 1);
+  check('ระยะ@2 (ถี่ขึ้น→ใบเยอะ→แพงขึ้น)', G({ rnGap: '2' }), 61648, 1);
 }
 
 // ── ② ตาข่ายกันพังทุกรุ่น: ทุก product ต้องคิดออกราคาสมเหตุผล (ไม่ crash/NaN/ติดลบ/ขาย<ทุน) ──

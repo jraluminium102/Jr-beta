@@ -986,7 +986,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}
                 {prod.materials?.length > 0 && (
-                  <Select label="วัสดุ" value={material} onChange={setMaterial} opts={prod.materials} />
+                  <Select label={prod.materialLabel || "วัสดุ"} value={material} onChange={setMaterial} opts={prod.materials} labels={prod.materialLabels} />
                 )}
                 {(prod.specOpts ?? []).map((o: any) => {
                   // specOpts type:'number' → ช่องกรอกตัวเลข (มิติเพิ่ม เช่น บานเปิด/ช่องปูน Shower · ลึกตู้)
@@ -1004,7 +1004,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
                   const val = opts.includes(spec[o.key]) ? spec[o.key] : (o.def && opts.includes(o.def) ? o.def : opts[0]);
                   return (
-                    <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} />
+                    <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} labels={o.labels} />
                   );
                 })}
               </div>
