@@ -59,7 +59,9 @@ export function can(role: Role, resource: Resource, action: Action): boolean {
 
 export function menusFor(role: Role): string[] {
   // issues + sales_closure ยุบเข้า followup แล้ว — ไม่ปรากฏในเมนูแยก
-  const all = ["dashboard", "followup", "production", "prodqueue", "measure_schedule", "designer", "installation", "finance", "settings"];
+  // prodqueue (/production-schedule) เอาออกจากเมนูออฟฟิศแล้ว (เจ้าของสั่ง 23 ก.ค.69) — เข้าผ่านปุ่ม "เปิดตารางผลิตช่าง" ในหน้าผลิต (ลิงก์ช่าง)
+  //   route ยังอยู่ (ลิงก์ช่าง /chang เรนเดอร์ component ตัวเดียวกัน · CHANG role ยังเด้งเข้าได้) — แค่ไม่โชว์ในเมนู
+  const all = ["dashboard", "followup", "production", "measure_schedule", "designer", "installation", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", production: "production",
     prodqueue: "production",

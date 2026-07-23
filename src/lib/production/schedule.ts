@@ -141,3 +141,33 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
  * READY (พร้อมติดตั้ง) = จบงานผลิตแล้ว หลุดไปหน้าติดตั้ง → ไม่ต้องรกตารางช่าง
  */
 export const isVisibleToChang = (r: ScheduleRow) => !(r.kind === "job" && r.status === "READY");
+
+/**
+ * สร้าง "งานจดเอง" เป็นงานจริง (job + production เข้าคิวผลิต) — เจ้าของสั่ง 23 ก.ค.69
+ *   งานจดเองต้องกดดูรายละเอียด/สถานะ/กระจก/แบบ/QC/ใบตัด ได้ครบเหมือนลูกค้าทั่วไป → ต้องเป็น job จริง ไม่ใช่ adhoc_production_tasks
+ *   status งาน = DEPOSITED (งาน active · trigger on_deposit สร้าง production ให้) แต่ "ไม่ใส่ deposit_amount" → ไม่สร้าง finance (กันเงินปลอม)
+ *   ⚠ อยู่ในไฟล์กลางนี้ (ไม่ใช่ route) เพื่อคง parity: route API ห้ามมี .from("productions") ตรง ๆ
+ */
+export async function createAdhocJob(
+  sb: Sb,
+  opts: { customer_name: string; remark: string; install_date?: string | null; produce_date?: string | null },
+): Promise<{ id: string; job_code: string; customer_name: string }> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: job, error: jErr } = await sb
+    .from("jobs")
+    .insert({ customer_name: opts.customer_name, status: "DEPOSITED", assess_date: today, remark: opts.remark })
+    .select("id, job_code, customer_name")
+    .single();
+  if (jErr || !job) throw new Error(jErr?.message ?? "สร้างงานไม่สำเร็จ");
+  // ดันเข้าคิวผลิตเลย (ข้ามวัด/ประชุม) — upsert เผื่อ trigger สร้าง/ไม่สร้าง production
+  const { error: pErr } = await sb
+    .from("productions")
+    .upsert({
+      job_id: job.id, status: "QUEUED",
+      planned_install_date: opts.install_date || null,
+      production_due_date: opts.produce_date || null,
+      production_queued: today,
+    }, { onConflict: "job_id" });
+  if (pErr) throw new Error("สร้างคิวผลิตไม่สำเร็จ: " + pErr.message);
+  return job as { id: string; job_code: string; customer_name: string };
+}

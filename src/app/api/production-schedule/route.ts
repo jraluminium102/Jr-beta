@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
-import { buildScheduleRows } from "@/lib/production/schedule";
+import { buildScheduleRows, createAdhocJob } from "@/lib/production/schedule";
 import { requireChangOr } from "@/lib/bff/chang-ctx";
 
 // ── ตารางผลิตสำหรับช่าง (งานในระบบ + งานจดเอง) ──
@@ -33,28 +33,14 @@ export const POST = withRoute(async (req: Request) => {
   const b = createSchema.parse(await req.json());
   const sb = ctx.supabase as unknown as { from: (t: string) => any };
   const uid = ctx.user.id || null;   // ช่างผ่านลิงก์ไม่มี session → created_by = null
-  const today = new Date().toISOString().slice(0, 10);
   const detail = [b.title, b.producer_note].filter(Boolean).join(" · ");
   const remark = detail || (ctx.isChang && ctx.actorName ? `งานจดเอง โดย ${ctx.actorName}` : "งานจดเอง (เพิ่มในตารางผลิต)");
 
-  // 1) สร้างงานจริง — trigger assign_job_code ใส่ job_code/ปี/ลำดับ · on_deposit สร้าง production(PENDING_MEASURE) ให้
-  const { data: job, error: jErr } = await sb
-    .from("jobs")
-    .insert({ customer_name: b.customer_name, status: "DEPOSITED", assess_date: today, remark })
-    .select("id, job_code, customer_name")
-    .single();
-  if (jErr || !job) throw new Error(jErr?.message ?? "สร้างงานไม่สำเร็จ");
-
-  // 2) ดันเข้าคิวผลิตเลย (ข้ามวัด/ประชุม) — upsert เผื่อ trigger สร้าง/ไม่สร้าง production · วันติดตั้ง/กำหนดผลิต ตามที่กรอก
-  const { error: pErr } = await sb
-    .from("productions")
-    .upsert({
-      job_id: job.id, status: "QUEUED",
-      planned_install_date: b.install_date || null,
-      production_due_date: b.produce_date || null,
-      production_queued: today,
-    }, { onConflict: "job_id" });
-  if (pErr) throw new Error("สร้างคิวผลิตไม่สำเร็จ: " + pErr.message);
+  // สร้างงานจริง (job+production เข้าคิวผลิต) ผ่าน helper กลาง — ดู createAdhocJob ใน schedule.ts
+  //   (อยู่ในไฟล์กลางเพื่อคง parity: route นี้ห้าม query productions ตรง ๆ)
+  const job = await createAdhocJob(sb, {
+    customer_name: b.customer_name, remark, install_date: b.install_date, produce_date: b.produce_date,
+  });
 
   if (uid) {
     await audit({

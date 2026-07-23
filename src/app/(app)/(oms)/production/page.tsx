@@ -182,13 +182,16 @@ export default function ProductionPage() {
       </div>
       <p className="text-sm mb-3" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
 
-      {/* ป้ายบอกหน้า: นี่คือหน้าออฟฟิศ (งานตอนผลิตจริงช่างทำที่ "ตารางผลิต") */}
-      <div className="flex items-center gap-2 mb-4 rounded-xl px-3.5 py-2.5" style={{ background: "rgba(55,138,221,.12)", border: "1px solid rgba(55,138,221,.28)" }}>
+      {/* ป้ายบอกหน้า + ปุ่มเปิดตารางผลิตช่าง (ลิงก์แยก · เปิดแท็บใหม่) — ยุบหน้าตารางผลิตออฟฟิศแล้ว เจ้าของสั่ง 23 ก.ค.69 */}
+      <div className="flex flex-wrap items-center gap-2 mb-4 rounded-xl px-3.5 py-2.5" style={{ background: "rgba(55,138,221,.12)", border: "1px solid rgba(55,138,221,.28)" }}>
         <span className="text-base">🏢</span>
-        <span className="text-[13px]" style={{ color: "#bfdbff" }}>
-          หน้านี้สำหรับ<b>ออฟฟิศ</b> — ดูแลงานตั้งแต่วัดจนส่งเข้าคิวผลิต · งานที่ช่างกำลังผลิตดูรายวันที่{" "}
-          <Link href="/production-schedule" className="underline underline-offset-2 text-white">ตารางผลิต (ช่าง)</Link>
+        <span className="text-[13px] flex-1 min-w-[180px]" style={{ color: "#bfdbff" }}>
+          หน้านี้สำหรับ<b>ออฟฟิศ</b> — ดูแลงานตั้งแต่วัดจนส่งเข้าคิวผลิต · งานที่ช่างกำลังผลิตดูที่ตารางผลิตช่าง →
         </span>
+        <a href="/api/chang-open" target="_blank" rel="noopener noreferrer"
+          className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white bg-brand hover:bg-brand-dark shrink-0">
+          <Icon name="calendar" size={15} /> เปิดตารางผลิตช่าง (ลิงก์แยก)
+        </a>
       </div>
 
       {/* งานจดเอง (adhoc · 0023) — ลูกค้าที่เพิ่มเองในตารางผลิต โผล่ที่นี่ด้วยแล้ว (เจ้าของสั่ง 22 ก.ค.69) */}
