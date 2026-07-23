@@ -7,6 +7,7 @@ import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
+import { isInCutlist } from "@/lib/cutlist/codes";
 import ImageZoom from "@/components/ImageZoom";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
@@ -40,6 +41,7 @@ export default function StockClient({
   const [q, setQ] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
   const [calcOnly, setCalcOnly] = useState(false);
+  const [boqOnly, setBoqOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
@@ -47,9 +49,11 @@ export default function StockClient({
 
   const lowCount = list.filter(isLow).length;
   const calcCount = list.filter((c) => calcLink(c).linked).length;
+  const boqCount = list.filter((c) => isInCutlist(c.sku)).length;
   const filtered = list
     .filter((c) => (lowOnly ? isLow(c) : true))
     .filter((c) => (calcOnly ? calcLink(c).linked : true))
+    .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
     .filter((c) => [c.name, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
   // นับจำนวนต่อหมวด (โชว์บนปุ่มกรอง)
@@ -133,7 +137,11 @@ export default function StockClient({
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${calcOnly ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
               🧮 ใช้ในคิดราคา {calcCount > 0 ? `(${calcCount})` : ""}
             </button>
-            {(lowOnly || calcOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            <button onClick={() => setBoqOnly((v) => !v)} title="วัสดุที่ถูกใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)"
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${boqOnly ? "bg-emerald-600 text-white" : "glass-soft text-ink-2"}`}>
+              ✂️ ใช้ในใบตัด {boqCount > 0 ? `(${boqCount})` : ""}
+            </button>
+            {(lowOnly || calcOnly || boqOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {
@@ -146,6 +154,7 @@ export default function StockClient({
                     <div className="flex items-center justify-between gap-2">
                       <div className="font-semibold text-sm truncate flex items-center gap-1">
                         {calcLink(c).linked && <span title="ราคาลิงค์กับคิดราคา 4.0" className="shrink-0">🧮</span>}
+                        {isInCutlist(c.sku) && <span title="ใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)" className="shrink-0">✂️</span>}
                         <span className="truncate">{c.name}</span>
                       </div>
                       {low && (active
@@ -248,11 +257,18 @@ function ItemDetail({
             <p className="text-sm text-ink-3 truncate">
               {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.color ? ` · สี${item.color}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
             </p>
-            {calcLink(item).linked && (
-              <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-dark bg-brand/10 rounded-full px-2 py-0.5">
-                🧮 ใช้ในคิดราคา 4.0 · หมวด {calcLink(item).section}
-              </span>
-            )}
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {calcLink(item).linked && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-dark bg-brand/10 rounded-full px-2 py-0.5">
+                  🧮 ใช้ในคิดราคา 4.0 · หมวด {calcLink(item).section}
+                </span>
+              )}
+              {isInCutlist(item.sku) && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100 rounded-full px-2 py-0.5">
+                  ✂️ ใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {isLow(item) ? <Badge tone="red" dot>สั่งเพิ่ม</Badge> : <Badge tone="emerald" dot>ปกติ</Badge>}
