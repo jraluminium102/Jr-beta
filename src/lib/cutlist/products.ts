@@ -316,9 +316,10 @@ export const SMS240_BIFOLD: CutSpec = {
   opts: [
     { key: "glass", label: "กระจก (มม.)", type: "number" },
     { key: "fold2", label: "การพับ", choices: ["แบ่งบาน", "เดี่ยว"] },
-    { key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] },
+    // อุปกรณ์เฟี้ยมมีแค่ ดำ/เงิน (ไม่มีขาว) — ตรงชื่อในสต็อก "อุปกรณ์ชุดบานเฟี้ยม-สีดำ/สีเงิน"
+    { key: "hwColor", label: "สีอุปกรณ์", choices: ["เงิน", "ดำ"] },
   ],
-  defaults: { W: 350, H: 250, N: 4, rail: "2L2R", honk: false, glass: 6, fold2: "แบ่งบาน", hwColor: "ขาว" },
+  defaults: { W: 350, H: 250, N: 4, rail: "2L2R", honk: false, glass: 6, fold2: "แบ่งบาน", hwColor: "เงิน" },
   profiles: [
     { name: "เฟรมบน", code: "B24001", len: (o) => o.W - 6, qty: () => 1 },
     { name: "บังใบบน", code: "B24002", len: (o) => o.W - 8.6, qty: () => 1 },

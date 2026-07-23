@@ -187,7 +187,7 @@ function check(label, res, want) {
 {
   const spec = CUT_SPEC_BY_ID["sms240_bifold"];
   const res = computeCutList(spec, { ...spec.defaults }, 1);
-  console.log("SMS240 เฟี้ยม (2L2R แบ่งบาน · ขาว):");
+  console.log("SMS240 เฟี้ยม (2L2R แบ่งบาน · เงิน):");
   check("เฟี้ยม", res, [
     { nameHas: "บานพับ (ระดับเดียว)", sku: "JR00610", qty: 2 },
     { nameHas: "ล้อแขวนบานตาย ซ้าย", sku: "JR00612", qty: 1 },
