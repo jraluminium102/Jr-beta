@@ -508,7 +508,7 @@ export default function CutlistEditorClient({
                       ? <Badge tone="gray">ข้ามตอนหัก</Badge>
                       : b.stockQty >= b.bars
                         ? <Badge tone="emerald">พอ</Badge>
-                        : <Badge tone="red">ขาด {(b.bars - b.stockQty).toLocaleString("th-TH")}</Badge>}
+                        : <Badge tone="amber">ตัดได้ · ยอดจะติดลบ {(b.bars - b.stockQty).toLocaleString("th-TH")}</Badge>}
                   </td>
                 </tr>
               ))}
@@ -602,7 +602,7 @@ export default function CutlistEditorClient({
                     <tr key={b.code + " " + b.color} className="border-b border-gray-100 last:border-0">
                       <td className="px-3 py-1.5 font-mono">{b.code}{b.color ? ` · สี${b.color}` : ""}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums font-semibold">-{b.bars} เส้น</td>
-                      <td className="px-3 py-1.5 text-right text-xs">{b.stockQty == null ? <span className="text-amber-700">ไม่มีในสต็อก — ข้าม</span> : b.stockQty < b.bars ? <span className="text-red-600">สต็อกไม่พอ (ติดลบ)</span> : "✓"}</td>
+                      <td className="px-3 py-1.5 text-right text-xs">{b.stockQty == null ? <span className="text-amber-700">ไม่มีในสต็อก — ข้าม</span> : b.stockQty < b.bars ? <span className="text-amber-700">ตัดได้ (ยอดจะติดลบ)</span> : "✓"}</td>
                     </tr>
                   ))}
                   {hwBoq.filter((h) => !h.noStock && h.sku).map((h) => (
