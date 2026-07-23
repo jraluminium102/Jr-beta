@@ -300,7 +300,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       let changed = false;
       const next = { ...s };
       prod.specOpts.forEach((o: any) => {
+        if (o.type === 'number') return;   // ช่องตัวเลข (เช่น ระยะ@) ไม่มี opts — ค่าเป็นตัวเลขอิสระ ไม่ต้อง normalize
         const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
+        if (!opts) return;                  // กันพัง: specOpt ที่ไม่มี opts
         if (!opts.includes(next[o.key])) {
           next[o.key] = o.def && opts.includes(o.def) ? o.def : opts[0];
           changed = true;
