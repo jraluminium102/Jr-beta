@@ -10,6 +10,7 @@ import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
 import { isInCutlist } from "@/lib/cutlist/codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
 import ImageZoom from "@/components/ImageZoom";
+import JobPicker, { type StockJob } from "@/components/stock/JobPicker";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -27,7 +28,7 @@ async function uploadImage(file: File): Promise<string> {
   return supabase.storage.from("stock").getPublicUrl(path).data.publicUrl;
 }
 
-type JobHit = { id: string; job_code: string | null; customer_name: string; customer_area: string | null };
+type JobHit = StockJob;
 
 export default function StockClient({
   initial, categories: catsInit, canWrite, canPrice, canViewCost, isAdmin,
@@ -637,48 +638,6 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
   );
 }
 
-// ── ค้นหา + เลือกงาน ──
-function JobPicker({ value, onPick }: { value: JobHit | null; onPick: (j: JobHit | null) => void }) {
-  const [q, setQ] = useState("");
-  const [hits, setHits] = useState<JobHit[]>([]);
-  const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (timer.current) clearTimeout(timer.current);
-    if (!q.trim()) { setHits([]); return; }
-    timer.current = setTimeout(async () => {
-      const r = await fetch(`/api/jobs/search?q=${encodeURIComponent(q.trim())}`);
-      const j = await r.json().catch(() => null);
-      setHits((j?.data ?? []) as JobHit[]); setOpen(true);
-    }, 300);
-  }, [q]);
-
-  if (value) return (
-    <div className="flex items-center justify-between glass-soft rounded-lg px-3 py-2 text-sm">
-      <span className="truncate"><b className="text-brand-dark">{value.job_code || "—"}</b> · {value.customer_name}{value.customer_area ? ` (${value.customer_area})` : ""}</span>
-      <button onClick={() => onPick(null)} className="text-ink-3 hover:text-red-600 shrink-0 ml-2"><Icon name="trash" size={14} /></button>
-    </div>
-  );
-  return (
-    <div className="relative">
-      <label className="block text-xs font-medium text-ink-3 mb-1">ผูกงาน (ค้นชื่อลูกค้า/เบอร์ — ไม่บังคับ)</label>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="พิมพ์เพื่อค้นงาน…"
-        className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
-      {open && hits.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full max-h-52 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-lg">
-          {hits.map((h) => (
-            <button key={h.id} onClick={() => { onPick(h); setOpen(false); setQ(""); }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-brand/5 border-b border-black/5 last:border-0">
-              <b className="text-brand-dark">{h.job_code || "—"}</b> · {h.customer_name}
-              {h.customer_area ? <span className="text-ink-3"> ({h.customer_area})</span> : ""}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── อัปโหลดรูป ──
 function ImageField({ label, url, onChange }: { label: string; url: string; onChange: (u: string) => void }) {

@@ -11,6 +11,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
+import JobPicker, { type StockJob } from "@/components/stock/JobPicker";
 
 type Row = {
   id: number; at: string; type: "in" | "out" | "adjust";
@@ -38,7 +39,7 @@ const timeBK = (iso: string) => new Date(iso).toLocaleString("th-TH", { day: "2-
 
 type View = "moves" | "count";
 
-export default function StockLedger({ canViewCost }: { canViewCost: boolean }) {
+export default function StockLedger({ canViewCost, canRelink }: { canViewCost: boolean; canRelink?: boolean }) {
   const [from, setFrom] = useState(todayISO());
   const [to, setTo] = useState(todayISO());
   const [q, setQ] = useState("");
@@ -145,19 +146,19 @@ export default function StockLedger({ canViewCost }: { canViewCost: boolean }) {
             ? <CountView rows={rows} reload={() => setReload((x) => x + 1)} />
             : rows.length === 0
               ? <div className="text-center text-ink-3 py-16">— ไม่มีความเคลื่อนไหวในช่วง/ตัวกรองนี้ —</div>
-              : <MovesView rows={rows} canViewCost={canViewCost} />}
+              : <MovesView rows={rows} canViewCost={canViewCost} canRelink={!!canRelink} onRelinked={() => setReload((x) => x + 1)} />}
       </div>
     </div>
   );
 }
 
 // ── มุม: ความเคลื่อนไหว — เบิกออก (จัดกลุ่มตามงาน) + รับเข้า (ลิสต์) ──
-function MovesView({ rows, canViewCost }: { rows: Row[]; canViewCost: boolean }) {
+function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; canViewCost: boolean; canRelink: boolean; onRelinked: () => void }) {
   const groups = useMemo(() => {
-    const g = new Map<string, { title: string; ref: string; isJob: boolean; who: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
+    const g = new Map<string, { title: string; ref: string; refText: string; isJob: boolean; who: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
     for (const r of rows.filter((x) => x.type === "out")) {
       const key = r.jobId ? `j:${r.jobId}` : r.ref ? `r:${r.ref}` : "other";
-      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, isJob: !!r.jobId, who: new Set(), price: 0, mats: new Map() };
+      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, refText: r.jobId ? "" : r.ref, isJob: !!r.jobId, who: new Set(), price: 0, mats: new Map() };
       const mk = r.sku || r.name;
       const m = e.mats.get(mk) ?? { sku: r.sku, name: r.name, unit: r.unit, qty: 0, kg: 0 };
       m.qty += r.qty; m.kg += r.kg; e.mats.set(mk, m);
@@ -182,6 +183,7 @@ function MovesView({ rows, canViewCost }: { rows: Row[]; canViewCost: boolean })
               {g.who.size > 0 && <span className="text-[12px] text-ink-3">ผู้เบิก: <b className="text-ink-2">{[...g.who].join(", ")}</b></span>}
               {canViewCost && <span className="ml-auto text-[13px] font-semibold text-ink-2 tabular-nums">฿{baht(g.price)}</span>}
             </div>
+            {!g.isJob && canRelink && g.refText.trim() && <RelinkRow refText={g.refText} onDone={onRelinked} />}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5"><th className="py-1.5 pr-2 font-medium">รหัส</th><th className="py-1.5 pr-2 font-medium">วัสดุ</th><th className="py-1.5 pr-2 font-medium text-right">จำนวน</th><th className="py-1.5 pr-2 font-medium text-right">กก.</th></tr></thead>
@@ -232,15 +234,19 @@ function MovesView({ rows, canViewCost }: { rows: Row[]; canViewCost: boolean })
 // ── มุม: นับรายวัน (cycle count) — ตัวที่เคลื่อนไหว → กรอกนับจริง → ต่างกด "ปรับให้ตรง" ──
 function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
   const items = useMemo(() => {
-    const g = new Map<number, { sid: number; name: string; sku: string | null; unit: string; onHand: number; movedIn: number; movedOut: number }>();
+    const g = new Map<number, { sid: number; name: string; sku: string | null; unit: string; onHand: number; movedIn: number; movedOut: number; lastAt: string; who: Set<string>; jobs: Set<string> }>();
     for (const r of rows) {
       if (r.sid == null || r.type === "adjust") continue;
-      const e = g.get(r.sid) ?? { sid: r.sid, name: r.name, sku: r.sku, unit: r.unit, onHand: r.onHand, movedIn: 0, movedOut: 0 };
+      const e = g.get(r.sid) ?? { sid: r.sid, name: r.name, sku: r.sku, unit: r.unit, onHand: r.onHand, movedIn: 0, movedOut: 0, lastAt: "", who: new Set<string>(), jobs: new Set<string>() };
       if (r.type === "in") e.movedIn += r.qty; else e.movedOut += r.qty;
       e.onHand = r.onHand;
+      if (r.at > e.lastAt) e.lastAt = r.at;
+      if (r.who) e.who.add(r.who);
+      const jobLabel = r.customer || r.jobCode || r.cutlistName || r.ref;
+      if (jobLabel) e.jobs.add(jobLabel);
       g.set(r.sid, e);
     }
-    return [...g.values()].sort((a, b) => (a.name).localeCompare(b.name, "th"));
+    return [...g.values()].sort((a, b) => (b.lastAt).localeCompare(a.lastAt));
   }, [rows]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -267,7 +273,8 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
   return (
     <div className="space-y-3">
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 no-print">
-        🔢 นับเฉพาะตัวที่<b>เคลื่อนไหวในช่วงนี้</b> ({items.length} รายการ) — กรอกจำนวนที่นับจริง ถ้าไม่ตรงกับยอดระบบกด <b>“ปรับให้ตรง”</b> ระบบจะบันทึกปรับยอด + เหตุผล ให้เอง
+        🔢 นับเฉพาะตัวที่<b>เคลื่อนไหวในช่วงที่เลือก</b> ({items.length} รายการ) — กรอกจำนวนที่นับจริง ถ้าไม่ตรงกับยอดระบบกด <b>“ปรับให้ตรง”</b> ระบบบันทึกปรับยอด + เหตุผลให้เอง
+        <div className="text-[12px] text-amber-800 mt-1">💡 ไม่ได้นับทุกวัน? เลือกช่วง <b>7 วัน / เดือนนี้</b> ด้านบน แล้วนับรวดเดียว — จะเห็นทุกตัวที่เคลื่อนไหวสะสมในช่วงนั้น</div>
       </div>
       {items.length === 0 ? <Empty text="ช่วงนี้ยังไม่มีวัสดุที่เคลื่อนไหวให้นับ" /> : (
         <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
@@ -282,9 +289,16 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
                 const d = diffOf(it);
                 return (
                   <tr key={it.sid} className="border-b border-black/[0.04] last:border-0">
-                    <td className="px-3 py-2 font-mono text-ink-2">{it.sku || "—"}</td>
-                    <td className="px-3 py-2 text-ink-1">{it.name}</td>
-                    <td className="px-3 py-2 text-right tabular-nums font-semibold">{nqty(it.onHand)} {it.unit}</td>
+                    <td className="px-3 py-2 font-mono text-ink-2 align-top">{it.sku || "—"}</td>
+                    <td className="px-3 py-2 text-ink-1 align-top">
+                      {it.name}
+                      <div className="text-[11px] text-ink-3 mt-0.5">
+                        ล่าสุด {it.lastAt ? timeBK(it.lastAt) : "—"}
+                        {it.who.size > 0 && <> · เบิก: <span className="text-ink-2">{[...it.who].join(", ")}</span></>}
+                        {it.jobs.size > 0 && <> · งาน: <span className="text-ink-2">{[...it.jobs].join(", ")}</span></>}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
                     <td className="px-3 py-2 text-center text-[11px] text-ink-3 whitespace-nowrap">{it.movedIn ? <span className="text-emerald-700">+{nqty(it.movedIn)}</span> : ""}{it.movedIn && it.movedOut ? " · " : ""}{it.movedOut ? <span className="text-red-700">−{nqty(it.movedOut)}</span> : ""}</td>
                     <td className="px-3 py-2 text-center">
                       <input type="text" inputMode="decimal" value={counts[it.sid] ?? ""} onChange={(e) => setCount(it.sid, e.target.value)}
@@ -304,6 +318,41 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── ผูกงานย้อนหลัง: กลุ่มที่ "พิมพ์ชื่อไว้เอง" (ยังไม่ผูกงาน) → เลือกงานจริง → ผูกทุก move ที่ ref เดียวกัน ──
+function RelinkRow({ refText, onDone }: { refText: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [job, setJob] = useState<StockJob | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function link(j: StockJob) {
+    setJob(j); setBusy(true); setMsg("");
+    try {
+      const r = await fetch("/api/stock/relink", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: refText, job_id: j.id }) });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) { setMsg(d?.error ?? "ผูกไม่สำเร็จ"); setBusy(false); setJob(null); return; }
+      setMsg(`✓ ผูกกับ ${j.customer_name} แล้ว (${d?.data?.linked ?? 0} รายการ)`);
+      setTimeout(onDone, 800);
+    } catch { setMsg("ผูกไม่สำเร็จ"); setBusy(false); setJob(null); }
+  }
+
+  if (!open) return (
+    <button onClick={() => setOpen(true)}
+      className="no-print press mb-2 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-dark bg-brand/5 border border-brand/20 rounded-lg px-2.5 py-1">
+      🔗 ผูกงานย้อนหลัง
+    </button>
+  );
+  return (
+    <div className="no-print mb-3 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2">
+      <div className="text-[12px] text-ink-2">ผูก “<b>{refText}</b>” เข้ากับงานจริง — ทุกรายการที่พิมพ์ชื่อนี้จะผูกตามทันที</div>
+      <JobPicker value={job} onPick={(j) => { if (j) link(j); }} compact />
+      {msg && <div className={`text-[12px] ${msg.startsWith("✓") ? "text-emerald-700" : "text-red-600"}`}>{msg}</div>}
+      {busy && !msg && <div className="text-[12px] text-ink-3">กำลังผูก…</div>}
+      {!busy && <button onClick={() => { setOpen(false); setMsg(""); }} className="text-[11px] text-ink-3 hover:text-ink-1">ยกเลิก</button>}
     </div>
   );
 }
