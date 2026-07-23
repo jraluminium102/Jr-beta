@@ -14,14 +14,17 @@ export type StockJob = {
 
 // ตัวเลือกงาน (เฉพาะงานในขั้นตอนผลิต–ติดตั้ง มีมัดจำ ยังไม่จบ) + กันชื่อซ้ำด้วย บ้านเลขที่·เขต·เบอร์ท้าย
 //   ยังพิมพ์ชื่อเองได้ (ไม่ผูก) ผ่านช่อง "อ้างอิง" แยกต่างหาก — ตัวนี้ทำหน้าที่ผูกงานจริงอย่างเดียว
-export default function JobPicker({ value, onPick, compact }: {
+export default function JobPicker({ value, onPick, compact, all, initialQuery, autoOpen }: {
   value: StockJob | null;
   onPick: (j: StockJob | null) => void;
   compact?: boolean;
+  all?: boolean;            // ค้นทุกงาน (ผูกย้อนหลัง) แทนเฉพาะงานผลิต–ติดตั้ง
+  initialQuery?: string;    // ข้อความค้นเริ่มต้น (เช่น ชื่อที่พิมพ์ไว้)
+  autoOpen?: boolean;
 }) {
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQuery ?? "");
   const [hits, setHits] = useState<StockJob[]>([]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!autoOpen);
   const [loading, setLoading] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -32,13 +35,13 @@ export default function JobPicker({ value, onPick, compact }: {
     setLoading(true);
     timer.current = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/stock/jobs?q=${encodeURIComponent(q.trim())}`);
+        const r = await fetch(`/api/stock/jobs?q=${encodeURIComponent(q.trim())}${all ? "&all=1" : ""}`);
         const j = await r.json().catch(() => null);
         setHits((j?.data ?? []) as StockJob[]);
       } finally { setLoading(false); }
     }, q.trim() ? 250 : 0);
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [q, open]);
+  }, [q, open, all]);
 
   if (value) return (
     <div className="flex items-center justify-between glass-soft rounded-lg px-3 py-2 text-sm">

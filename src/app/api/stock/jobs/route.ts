@@ -13,16 +13,18 @@ export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("stock", "read");
   const url = new URL(req.url);
   const q = (url.searchParams.get("q") ?? "").trim();
+  // all=1 → ค้นทุกงาน (ไว้ผูกย้อนหลัง งานเก่าที่อาจจบไปแล้ว) · ปกติ = เฉพาะงานกำลังผลิต–ติดตั้ง (stage 9–23)
+  const all = url.searchParams.get("all") === "1";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = ctx.supabase as any;
   let query = sb.from("jobs")
     .select("id, job_code, customer_name, customer_tel, customer_area, current_stage")
-    .gte("current_stage", 9).lte("current_stage", 23)
     .neq("status", "CANCELLED")
     .order("current_stage", { ascending: false })
     .order("assess_date", { ascending: false })
     .limit(30);
+  if (!all) query = query.gte("current_stage", 9).lte("current_stage", 23);
 
   if (q) {
     const d = normalizePhone(q);

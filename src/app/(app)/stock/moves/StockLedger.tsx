@@ -348,8 +348,8 @@ function RelinkRow({ refText, onDone }: { refText: string; onDone: () => void })
   );
   return (
     <div className="no-print mb-3 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2">
-      <div className="text-[12px] text-ink-2">ผูก “<b>{refText}</b>” เข้ากับงานจริง — ทุกรายการที่พิมพ์ชื่อนี้จะผูกตามทันที</div>
-      <JobPicker value={job} onPick={(j) => { if (j) link(j); }} compact />
+      <div className="text-[12px] text-ink-2">ผูก “<b>{refText}</b>” เข้ากับงานจริง — ทุกรายการที่พิมพ์ชื่อนี้จะผูกตามทันที (ค้นได้ทุกงาน แม้จบแล้ว)</div>
+      <JobPicker value={job} onPick={(j) => { if (j) link(j); }} compact all autoOpen initialQuery={refText.replace(/^คุณ\s*/, "")} />
       {msg && <div className={`text-[12px] ${msg.startsWith("✓") ? "text-emerald-700" : "text-red-600"}`}>{msg}</div>}
       {busy && !msg && <div className="text-[12px] text-ink-3">กำลังผูก…</div>}
       {!busy && <button onClick={() => { setOpen(false); setMsg(""); }} className="text-[11px] text-ink-3 hover:text-ink-1">ยกเลิก</button>}
