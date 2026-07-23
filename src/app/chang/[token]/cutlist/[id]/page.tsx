@@ -36,14 +36,17 @@ export default async function ChangCutlistPage({ params }: { params: { token: st
         <Link href={`/chang/${params.token}`} className="text-[13px] text-sky-300">← ตารางผลิต</Link>
         <span className="text-[12px] text-white/45">ใบตัดอลู · ช่างแก้ + ตัดออกสโตร์ได้</span>
       </div>
-      <CutlistEditorClient
-        cutlistId={Number(params.id)}
-        stock={stockList}
-        colorOptions={stockColorOptions(stockList)}
-        canWrite
-        canCutStock
-        changToken={params.token}
-      />
+      {/* จำกัดความกว้าง + จัดกลาง — หน้าลิงก์ช่างไม่มี shell (app) เลยยืดเต็มจอบนคอม (ตาราง/ช่องกรอกโหว่กลาง) */}
+      <div className="max-w-[1040px] mx-auto px-3 sm:px-4 py-4">
+        <CutlistEditorClient
+          cutlistId={Number(params.id)}
+          stock={stockList}
+          colorOptions={stockColorOptions(stockList)}
+          canWrite
+          canCutStock
+          changToken={params.token}
+        />
+      </div>
     </div>
   );
 }
