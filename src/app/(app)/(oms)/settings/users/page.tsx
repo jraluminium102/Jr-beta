@@ -20,15 +20,15 @@ export default function UsersPage() {
   const rows = data ?? [];
 
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "STORE" as Role });
+  const [form, setForm] = useState({ full_name: "", username: "", password: "", role: "STORE" as Role });
   const [addErr, setAddErr] = useState("");
   const addMut = useMutation({
     mutationFn: () => api.post("/users", form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); setShowAdd(false); setForm({ full_name: "", email: "", password: "", role: "STORE" }); setAddErr(""); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); setShowAdd(false); setForm({ full_name: "", username: "", password: "", role: "STORE" }); setAddErr(""); },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (e: any) => setAddErr(e?.message ?? "สร้างไม่สำเร็จ"),
   });
-  const canSubmit = form.full_name.trim() && /.+@.+\..+/.test(form.email) && form.password.length >= 6;
+  const canSubmit = form.full_name.trim() && /^[a-zA-Z0-9._-]{2,}$/.test(form.username.trim()) && form.password.length >= 6;
 
   return (
     <div className="p-4 sm:p-6 fade-in">
@@ -53,8 +53,8 @@ export default function UsersPage() {
                 className="w-full glass-card rounded-lg px-3 py-2 mt-1 text-sm text-white outline-none [&>option]:text-gray-800">
                 {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r] ?? r}</option>)}
               </select></label>
-            <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>อีเมล (ใช้ล็อกอิน)</span>
-              <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" placeholder="store@jr-aluminium.com" autoComplete="off"
+            <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>ชื่อผู้ใช้ (ล็อกอิน · ภาษาอังกฤษ/ตัวเลข)</span>
+              <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.replace(/[^a-zA-Z0-9._-]/g, "") })} type="text" placeholder="เช่น store1, somchai" autoComplete="off"
                 className="w-full glass-soft rounded-lg px-3 py-2 mt-1 text-sm text-white outline-none" /></label>
             <label className="block"><span className="text-[11px]" style={{ color: "var(--t-low)" }}>รหัสผ่าน (อย่างน้อย 6 ตัว)</span>
               <input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} type="text" placeholder="ตั้งรหัสให้พนักงาน" autoComplete="off"
@@ -66,7 +66,7 @@ export default function UsersPage() {
               className="press rounded-xl px-4 py-2 text-sm font-semibold bg-emerald-500 text-white disabled:opacity-50">
               {addMut.isPending ? "กำลังสร้าง…" : "สร้างบัญชี"}
             </button>
-            <span className="text-[11px]" style={{ color: "var(--t-low)" }}>พนักงานล็อกอินที่หน้า /login ด้วยอีเมล+รหัสนี้</span>
+            <span className="text-[11px]" style={{ color: "var(--t-low)" }}>พนักงานล็อกอินที่ /login ด้วย <b>ชื่อผู้ใช้ + รหัส</b> นี้ (ไม่ต้องมีอีเมล)</span>
           </div>
         </div>
       )}
@@ -77,7 +77,7 @@ export default function UsersPage() {
               {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full" /> : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold">{(u.full_name ?? u.email ?? "U").charAt(0).toUpperCase()}</div>}
               <div className="flex-1 min-w-[140px]">
                 <div className="text-white text-sm font-medium">{u.full_name ?? "—"}</div>
-                <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{u.email} · เข้าร่วม {thDate(u.created_at)}</div>
+                <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{(u.email ?? "").replace(/@jr\.local$/, "") || "—"} · เข้าร่วม {thDate(u.created_at)}</div>
               </div>
               <select value={u.role} onChange={(e) => mut.mutate({ id: u.id, patch: { role: e.target.value as Role } })} aria-label="บทบาท"
                 className="focusable glass-card rounded-xl px-3 py-2 text-sm text-white outline-none min-h-[40px] [&>option]:text-gray-800">

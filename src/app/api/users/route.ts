@@ -5,6 +5,7 @@ import { ok, created, err } from "@/lib/bff/response";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { usernameToEmail } from "@/lib/login-id";
 
 // GET /api/users — admin: รายชื่อผู้ใช้ + role
 export const GET = withRoute(async () => {
@@ -20,7 +21,8 @@ export const GET = withRoute(async () => {
 // POST /api/users — admin: สร้างบัญชีใหม่ (auth user + role) ในเว็บเลย ไม่ต้องเข้า Supabase dashboard
 //   ใช้ service client (สร้าง auth user ได้) · trigger on_auth_user_created สร้าง profile ให้ → upsert role/ชื่อ ทับให้ชัวร์
 const createSchema = z.object({
-  email: z.string().email("อีเมลไม่ถูกต้อง"),
+  username: z.string().trim().optional(),   // ชื่อผู้ใช้ (ไม่ต้องมีอีเมลจริง) → อีเมลภายใน username@jr.local
+  email: z.string().trim().optional(),      // หรือ อีเมลจริง (ถ้ามี)
   password: z.string().min(6, "รหัสผ่านอย่างน้อย 6 ตัว"),
   full_name: z.string().trim().min(1, "ต้องระบุชื่อ"),
   role: z.enum(["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER", "CHANG", "STORE"]),
@@ -34,7 +36,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const p = createSchema.safeParse(body);
   if (!p.success) return err(p.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง", 400);
-  const { email, password, full_name, role } = p.data;
+  const { username, password, full_name, role } = p.data;
+  // อีเมลจริงถ้ากรอกมี @ · ไม่งั้นสร้างจากชื่อผู้ใช้ (username@jr.local)
+  const rawEmail = (p.data.email ?? "").trim();
+  const email = rawEmail.includes("@") ? rawEmail.toLowerCase() : usernameToEmail(username ?? "");
+  if (!email) return err("ต้องระบุชื่อผู้ใช้ (ภาษาอังกฤษ/ตัวเลข เช่น store1) หรืออีเมล", 400);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createServiceClient() as any;

@@ -31,11 +31,11 @@ export default function LoginPage() {
 
         <form action={formAction} className="space-y-3">
           <label className="block">
-            <span className="text-xs font-medium text-ink-3">อีเมล</span>
+            <span className="text-xs font-medium text-ink-3">ชื่อผู้ใช้ หรือ อีเมล</span>
             <input
-              name="email" type="email" required autoComplete="email"
+              name="email" type="text" required autoComplete="username"
               className="w-full glass-soft rounded-xl px-3 py-2.5 mt-1 text-sm outline-none"
-              placeholder="you@jr-aluminium.com"
+              placeholder="เช่น store1 หรือ you@jr-aluminium.com"
             />
           </label>
           <label className="block">
@@ -55,7 +55,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-[11px] text-ink-3 text-center mt-5">
-          สร้างผู้ใช้ผ่าน Supabase &gt; Authentication แล้วตั้ง role ในตาราง profiles
+          พนักงานเข้าด้วย <b>ชื่อผู้ใช้ + รหัส</b> ที่แอดมินตั้งให้ (ตั้งค่า → จัดการผู้ใช้)
         </p>
       </div>
     </main>

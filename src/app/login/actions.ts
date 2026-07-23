@@ -2,15 +2,16 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { loginIdToEmail } from "@/lib/login-id";
 
 export async function login(_prev: unknown, formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = loginIdToEmail(String(formData.get("email") ?? ""));   // ชื่อผู้ใช้ หรือ อีเมล → อีเมลภายใน
   const password = String(formData.get("password") ?? "");
-  if (!email || !password) return { error: "กรอกอีเมลและรหัสผ่าน" };
+  if (!email || !password) return { error: "กรอกชื่อผู้ใช้/อีเมล และรหัสผ่าน" };
 
   const supabase = createClient();
   const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "เข้าสู่ระบบไม่สำเร็จ — ตรวจอีเมล/รหัสผ่าน" };
+  if (error) return { error: "เข้าสู่ระบบไม่สำเร็จ — ตรวจชื่อผู้ใช้/รหัสผ่าน" };
 
   // ช่างผลิต (CHANG) → เข้าหน้าตารางผลิตเลย (ไม่มีสิทธิ์หน้าอื่น)
   if (auth.user) {
