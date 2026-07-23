@@ -162,14 +162,16 @@ export async function createAdhocJob(
     .select("id, job_code, customer_name")
     .single();
   if (jErr || !job) throw new Error(jErr?.message ?? "สร้างงานไม่สำเร็จ");
-  // ดันเข้าคิวผลิตเลย (ข้ามวัด/ประชุม) — upsert เผื่อ trigger สร้าง/ไม่สร้าง production
+  // เริ่มที่ "กำลังผลิต" เลย (เจ้าของสั่ง 23 ก.ค.69: งานจดเองมักเพิ่มตอนกำลังทำอยู่แล้ว ไม่ต้องกด "เริ่มผลิต" ซ้ำ)
+  //   ข้ามวัด/ประชุม/รอลงผลิต · upsert เผื่อ trigger สร้าง/ไม่สร้าง production
   const { error: pErr } = await sb
     .from("productions")
     .upsert({
-      job_id: job.id, status: "QUEUED",
+      job_id: job.id, status: "MANUFACTURING",
       planned_install_date: opts.install_date || null,
       production_due_date: opts.produce_date || null,
       production_queued: today,
+      status_updated_at: new Date().toISOString(),
     }, { onConflict: "job_id" });
   if (pErr) throw new Error("สร้างคิวผลิตไม่สำเร็จ: " + pErr.message);
   return job as { id: string; job_code: string; customer_name: string };
