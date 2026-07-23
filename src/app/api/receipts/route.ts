@@ -72,9 +72,12 @@ export async function POST(req: Request) {
   // อัตราภาษี booked ของงวด (0102) — ใช้ตอน fallback ด้วย: งวดค่าของ wht_rate=0 ต้องไม่หัก แม้ยอดรับไม่ตรงเป๊ะ (พนักงานพิมพ์ยอดกลม)
   let instBookedRates: { vat_rate: number; wht_rate: number } | null = null;
   if (body.installment_id) {
+    // ⚠ select("*") ไม่ล็อกคอลัมน์ — กันพังถ้า migration 0102 (base_amt/vat_amt/wht_amt/vat_rate/wht_rate) ยังไม่รัน
+    //   เดิม select ระบุคอลัมน์ 0102 ตรงๆ → คอลัมน์ไม่มี = SELECT error → เด้ง "ไม่พบงวด" (ข้อความหลอก · ออกใบเสร็จไม่ได้ทั้งใบ)
+    //   ไม่มี 0102 → inst.base_amt = undefined → ตกไป path ภาษี legacy อัตโนมัติ (โค้ดข้างล่างเช็ค base_amt != null อยู่แล้ว)
     const { data: inst, error: instErr } = await supabase
       .from("billing_installments")
-      .select("amount, paid_amount, status, base_amt, vat_amt, wht_amt, vat_rate, wht_rate")
+      .select("*")
       .eq("id", Number(body.installment_id))
       .eq("billing_note_id", bn.id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
