@@ -22,6 +22,7 @@ const createSchema = z.object({
   produce_date: z.string().nullish(),
   install_date: z.string().nullish(),
   producer_note: z.string().nullish(),
+  job_amount: z.number().nonnegative().nullish(),   // ยอดงาน (ไม่บังคับ · เผื่อสถิติ) — กรอก = ลง net_amount ให้งาน
 });
 
 // POST — เพิ่ม "งานจดเอง" (รับทั้งคนล็อกอิน + ช่างผ่านลิงก์ · เจ้าของสั่ง 22 ก.ค.69 ให้ช่างลิงก์เพิ่มได้)
@@ -40,6 +41,7 @@ export const POST = withRoute(async (req: Request) => {
   //   (อยู่ในไฟล์กลางเพื่อคง parity: route นี้ห้าม query productions ตรง ๆ)
   const job = await createAdhocJob(sb, {
     customer_name: b.customer_name, remark, install_date: b.install_date, produce_date: b.produce_date,
+    net_amount: b.job_amount ?? null,
   });
 
   if (uid) {

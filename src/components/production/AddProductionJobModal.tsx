@@ -32,6 +32,7 @@ export default function AddProductionJobModal({ producerList = [], isChang = fal
   const [pdate, setPdate] = useState(today());
   const [idate, setIdate] = useState("");
   const [producer, setProducer] = useState("");
+  const [amount, setAmount] = useState("");   // ยอดงาน (ไม่บังคับ · เผื่อสถิติ) — กรอก = บันทึกลงงาน · เว้น = ไม่ลงยอด
 
   // เลือกจากระบบ — ช่างลิงก์ดึงไม่ได้ (ไม่มี session) จึงข้าม
   const { data: prodData } = useQuery({ queryKey: ["production", "candidates"], queryFn: () => api.get<Candidate[]>("/production"), enabled: !isChang });
@@ -46,7 +47,7 @@ export default function AddProductionJobModal({ producerList = [], isChang = fal
     try {
       if (tab === "adhoc" || isChang) {
         if (!cust.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); setSaving(false); return; }
-        await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer });
+        await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer, job_amount: amount ? Number(amount) : null });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
         if (!pdate) { setErr("กรุณากรอกวันกำหนดเสร็จ"); setSaving(false); return; }
@@ -106,6 +107,10 @@ export default function AddProductionJobModal({ producerList = [], isChang = fal
               <div>
                 <label className="block text-[13px] mb-1 text-white">ช่างผลิต</label>
                 <input list={MODAL_DATALIST_ID} value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="ชื่อช่าง" className={inp} />
+              </div>
+              <div>
+                <label className="block text-[13px] mb-1 text-white">ยอดงาน (บาท · ไม่บังคับ)</label>
+                <input type="number" inputMode="decimal" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="เว้นว่าง = ไม่บันทึกยอด (เผื่อทำสถิติ)" className={inp} />
               </div>
             </div>
           ) : (

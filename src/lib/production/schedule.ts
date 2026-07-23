@@ -150,12 +150,15 @@ export const isVisibleToChang = (r: ScheduleRow) => !(r.kind === "job" && r.stat
  */
 export async function createAdhocJob(
   sb: Sb,
-  opts: { customer_name: string; remark: string; install_date?: string | null; produce_date?: string | null },
+  opts: { customer_name: string; remark: string; install_date?: string | null; produce_date?: string | null; net_amount?: number | null },
 ): Promise<{ id: string; job_code: string; customer_name: string }> {
   const today = new Date().toISOString().slice(0, 10);
+  // net_amount (ยอดงาน · ไม่บังคับ) — กรอก = trigger calc_financials คิด vat/total ให้ (เผื่อสถิติ) · เว้น = ไม่ลงยอด
+  const jobRow: Record<string, unknown> = { customer_name: opts.customer_name, status: "DEPOSITED", assess_date: today, remark: opts.remark };
+  if (opts.net_amount != null && opts.net_amount > 0) jobRow.net_amount = opts.net_amount;
   const { data: job, error: jErr } = await sb
     .from("jobs")
-    .insert({ customer_name: opts.customer_name, status: "DEPOSITED", assess_date: today, remark: opts.remark })
+    .insert(jobRow)
     .select("id, job_code, customer_name")
     .single();
   if (jErr || !job) throw new Error(jErr?.message ?? "สร้างงานไม่สำเร็จ");
