@@ -281,7 +281,8 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
           <table className="w-full text-sm">
             <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]">
               <th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th>
-              <th className="px-3 py-2 font-medium text-right">ยอดระบบ</th><th className="px-3 py-2 font-medium text-center">เคลื่อนไหวช่วงนี้</th>
+              <th className="px-3 py-2 font-medium text-right">ยอดระบบ<div className="text-[10px] font-normal text-ink-3/80">คงเหลือ ณ ตอนนี้ (ควรนับได้เท่านี้)</div></th>
+              <th className="px-3 py-2 font-medium text-center">เคลื่อนไหวช่วงนี้<div className="text-[10px] font-normal text-ink-3/80">(แค่ดูประกอบ · หักให้แล้ว)</div></th>
               <th className="px-3 py-2 font-medium text-center">นับจริง</th><th className="px-3 py-2 font-medium text-right">ส่วนต่าง</th><th className="px-3 py-2 font-medium no-print"></th>
             </tr></thead>
             <tbody>
