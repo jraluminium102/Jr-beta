@@ -234,7 +234,7 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
 // ── มุม: นับรายวัน — จัดกลุ่มตามลูกค้า (ป้ายคลิก → ดูรายการที่เบิก) · รวมเบิกเอง+เบิกใบตัดชื่อเดียวกัน + ป้ายไม่ระบุ/รับเข้า ──
 const isCL = (ref: string) => /^CL-/i.test((ref || "").trim());
 
-type CountItem = { sid: number; sku: string | null; name: string; unit: string; onHand: number; qty: number; sources: Set<string> };
+type CountItem = { sid: number; sku: string | null; name: string; unit: string; onHand: number; qty: number; sources: Set<string>; who: Set<string> };
 type CountGroup = { key: string; label: string; none: boolean; lastAt: string; items: Map<number, CountItem> };
 
 function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
@@ -247,8 +247,9 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
       const nm = (r.customer || "").trim() || (isCL(r.ref) ? (r.cutlistName || "").trim() : (r.ref || "").trim());
       const key = nm || "__none__";
       const grp = g.get(key) ?? { key, label: nm || "ไม่ระบุลูกค้า", none: !nm, lastAt: "", items: new Map<number, CountItem>() };
-      const it = grp.items.get(r.sid) ?? { sid: r.sid, sku: r.sku, name: r.name, unit: r.unit, onHand: r.onHand, qty: 0, sources: new Set<string>() };
+      const it = grp.items.get(r.sid) ?? { sid: r.sid, sku: r.sku, name: r.name, unit: r.unit, onHand: r.onHand, qty: 0, sources: new Set<string>(), who: new Set<string>() };
       it.qty += r.qty; it.onHand = r.onHand; it.sources.add(src);
+      if (r.who) it.who.add(r.who);
       grp.items.set(r.sid, it);
       if (r.at > grp.lastAt) grp.lastAt = r.at;
       g.set(key, grp);
@@ -326,6 +327,7 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
                                     <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded ${s === "ใบตัด" ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700"}`}>{s}</span>
                                   ))}
                                 </span>
+                                {it.who.size > 0 && <div className="text-[11px] text-ink-3 mt-0.5">เบิกโดย: <span className="text-ink-2">{[...it.who].join(", ")}</span></div>}
                               </td>
                               <td className="px-3 py-2 text-right tabular-nums text-red-700 align-top whitespace-nowrap">−{nqty(it.qty)} {it.unit}</td>
                               <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
