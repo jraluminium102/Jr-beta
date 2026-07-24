@@ -231,95 +231,169 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
   );
 }
 
-// ── มุม: นับรายวัน (cycle count) — ตัวที่เคลื่อนไหว → กรอกนับจริง → ต่างกด "ปรับให้ตรง" ──
+// ── มุม: นับรายวัน — จัดกลุ่มตามลูกค้า (ป้ายคลิก → ดูรายการที่เบิก) · รวมเบิกเอง+เบิกใบตัดชื่อเดียวกัน + ป้ายไม่ระบุ/รับเข้า ──
+const isCL = (ref: string) => /^CL-/i.test((ref || "").trim());
+
+type CountItem = { sid: number; sku: string | null; name: string; unit: string; onHand: number; qty: number; sources: Set<string> };
+type CountGroup = { key: string; label: string; none: boolean; lastAt: string; items: Map<number, CountItem> };
+
 function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
-  const items = useMemo(() => {
-    const g = new Map<number, { sid: number; name: string; sku: string | null; unit: string; onHand: number; movedIn: number; movedOut: number; lastAt: string; who: Set<string>; jobs: Set<string> }>();
+  // จัดกลุ่มเบิกออกตาม "ชื่อลูกค้า" (customer ถ้าผูกงาน · ไม่งั้นชื่อที่พิมพ์/ชื่อใบตัด) → รวมเบิกเอง+ใบตัดถ้าชื่อตรงกัน
+  const { groups, received } = useMemo(() => {
+    const g = new Map<string, CountGroup>();
     for (const r of rows) {
-      if (r.sid == null || r.type === "adjust") continue;
-      const e = g.get(r.sid) ?? { sid: r.sid, name: r.name, sku: r.sku, unit: r.unit, onHand: r.onHand, movedIn: 0, movedOut: 0, lastAt: "", who: new Set<string>(), jobs: new Set<string>() };
-      if (r.type === "in") e.movedIn += r.qty; else e.movedOut += r.qty;
-      e.onHand = r.onHand;
-      if (r.at > e.lastAt) e.lastAt = r.at;
-      if (r.who) e.who.add(r.who);
-      const jobLabel = r.customer || r.jobCode || r.cutlistName || r.ref;
-      if (jobLabel) e.jobs.add(jobLabel);
-      g.set(r.sid, e);
+      if (r.type !== "out" || r.sid == null) continue;
+      const src = isCL(r.ref) ? "ใบตัด" : "เบิกเอง";
+      const nm = (r.customer || "").trim() || (isCL(r.ref) ? (r.cutlistName || "").trim() : (r.ref || "").trim());
+      const key = nm || "__none__";
+      const grp = g.get(key) ?? { key, label: nm || "ไม่ระบุลูกค้า", none: !nm, lastAt: "", items: new Map<number, CountItem>() };
+      const it = grp.items.get(r.sid) ?? { sid: r.sid, sku: r.sku, name: r.name, unit: r.unit, onHand: r.onHand, qty: 0, sources: new Set<string>() };
+      it.qty += r.qty; it.onHand = r.onHand; it.sources.add(src);
+      grp.items.set(r.sid, it);
+      if (r.at > grp.lastAt) grp.lastAt = r.at;
+      g.set(key, grp);
     }
-    return [...g.values()].sort((a, b) => (b.lastAt).localeCompare(a.lastAt));
+    const groups = [...g.values()].sort((a, b) => (a.none === b.none ? b.lastAt.localeCompare(a.lastAt) : a.none ? 1 : -1));
+    const received = rows.filter((r) => r.type === "in").sort((a, b) => b.at.localeCompare(a.at));
+    return { groups, received };
   }, [rows]);
+
+  const [sel, setSel] = useState<string>("");
+  useEffect(() => {
+    const keys = [...groups.map((x) => x.key), received.length ? "__in__" : ""].filter(Boolean);
+    if (!keys.includes(sel)) setSel(keys[0] ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, received]);
+
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
-
   const setCount = (sid: number, v: string) => setCounts((s) => ({ ...s, [sid]: v.replace(/[^0-9.]/g, "") }));
-  const diffOf = (it: { sid: number; onHand: number }) => { const c = counts[it.sid]; if (c == null || c === "") return null; const n = parseFloat(c); return isNaN(n) ? null : Math.round((n - it.onHand) * 100) / 100; };
+  const diffOf = (sid: number, onHand: number) => { const c = counts[sid]; if (c == null || c === "") return null; const n = parseFloat(c); return isNaN(n) ? null : Math.round((n - onHand) * 100) / 100; };
 
-  async function fix(it: { sid: number; name: string; onHand: number }) {
-    const c = parseFloat(counts[it.sid]); if (isNaN(c)) return;
-    const reason = window.prompt(`ปรับ "${it.name}"\nยอดระบบ ${it.onHand} → นับจริง ${c}\nเหตุผล (ไม่บังคับ):`, "นับสต๊อกรายวัน");
+  async function fix(sid: number, name: string, onHand: number) {
+    const c = parseFloat(counts[sid]); if (isNaN(c)) return;
+    const reason = window.prompt(`ปรับ "${name}"\nยอดระบบ ${onHand} → นับจริง ${c}\nเหตุผล (ไม่บังคับ):`, "นับสต๊อกรายวัน");
     if (reason === null) return;
-    setBusy(it.sid);
+    setBusy(sid);
     try {
-      const res = await fetch(`/api/stock/${it.sid}/move`, {
+      const res = await fetch(`/api/stock/${sid}/move`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "adjust", qty: c, ref: "นับรายวัน", note: (reason || "นับสต๊อกรายวัน") }),
       });
       if (!res.ok) { const j = await res.json().catch(() => null); alert(j?.error ?? "ปรับไม่สำเร็จ"); return; }
-      setCounts((s) => { const n = { ...s }; delete n[it.sid]; return n; });
+      setCounts((s) => { const n = { ...s }; delete n[sid]; return n; });
       reload();
     } finally { setBusy(null); }
   }
 
+  const active = groups.find((x) => x.key === sel);
+  const showIn = sel === "__in__";
+  const activeItems = active ? [...active.items.values()].sort((a, b) => (a.sku || a.name).localeCompare(b.sku || b.name, "th")) : [];
+
   return (
     <div className="space-y-3">
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 no-print">
-        🔢 นับเฉพาะตัวที่<b>เคลื่อนไหวในช่วงที่เลือก</b> ({items.length} รายการ) — กรอกจำนวนที่นับจริง ถ้าไม่ตรงกับยอดระบบกด <b>“ปรับให้ตรง”</b> ระบบบันทึกปรับยอด + เหตุผลให้เอง
-        <div className="text-[12px] text-amber-800 mt-1">💡 ไม่ได้นับทุกวัน? เลือกช่วง <b>7 วัน / เดือนนี้</b> ด้านบน แล้วนับรวดเดียว — จะเห็นทุกตัวที่เคลื่อนไหวสะสมในช่วงนั้น</div>
+        🔢 นับรายวัน — <b>เลือกป้าย</b> (ลูกค้า / ไม่ระบุ / รับเข้า) เพื่อดูรายการที่เบิก · กรอก <b>นับจริง</b> เทียบ “ยอดระบบ” (คงเหลือปัจจุบัน) ต่างกด <b>“ปรับให้ตรง”</b>
+        <div className="text-[12px] text-amber-800 mt-1">💡 ไม่ได้นับทุกวัน? เลือกช่วง <b>7 วัน / เดือนนี้</b> ด้านบน แล้วนับรวดเดียว</div>
       </div>
-      {items.length === 0 ? <Empty text="ช่วงนี้ยังไม่มีวัสดุที่เคลื่อนไหวให้นับ" /> : (
-        <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]">
-              <th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th>
-              <th className="px-3 py-2 font-medium text-right">ยอดระบบ<div className="text-[10px] font-normal text-ink-3/80">คงเหลือ ณ ตอนนี้ (ควรนับได้เท่านี้)</div></th>
-              <th className="px-3 py-2 font-medium text-center">เคลื่อนไหวช่วงนี้<div className="text-[10px] font-normal text-ink-3/80">(แค่ดูประกอบ · หักให้แล้ว)</div></th>
-              <th className="px-3 py-2 font-medium text-center">นับจริง</th><th className="px-3 py-2 font-medium text-right">ส่วนต่าง</th><th className="px-3 py-2 font-medium no-print"></th>
-            </tr></thead>
-            <tbody>
-              {items.map((it) => {
-                const d = diffOf(it);
-                return (
-                  <tr key={it.sid} className="border-b border-black/[0.04] last:border-0">
-                    <td className="px-3 py-2 font-mono text-ink-2 align-top">{it.sku || "—"}</td>
-                    <td className="px-3 py-2 text-ink-1 align-top">
-                      {it.name}
-                      <div className="text-[11px] text-ink-3 mt-0.5">
-                        ล่าสุด {it.lastAt ? timeBK(it.lastAt) : "—"}
-                        {it.who.size > 0 && <> · เบิก: <span className="text-ink-2">{[...it.who].join(", ")}</span></>}
-                        {it.jobs.size > 0 && <> · งาน: <span className="text-ink-2">{[...it.jobs].join(", ")}</span></>}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
-                    <td className="px-3 py-2 text-center text-[11px] text-ink-3 whitespace-nowrap">{it.movedIn ? <span className="text-emerald-700">+{nqty(it.movedIn)}</span> : ""}{it.movedIn && it.movedOut ? " · " : ""}{it.movedOut ? <span className="text-red-700">−{nqty(it.movedOut)}</span> : ""}</td>
-                    <td className="px-3 py-2 text-center">
-                      <input type="text" inputMode="decimal" value={counts[it.sid] ?? ""} onChange={(e) => setCount(it.sid, e.target.value)}
-                        placeholder="นับ" className="w-20 text-center glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums font-semibold">{d == null ? "" : d === 0 ? <span className="text-emerald-700">✓ ตรง</span> : <span className="text-red-600">{d > 0 ? "+" : ""}{nqty(d)}</span>}</td>
-                    <td className="px-3 py-2 text-right no-print">
-                      {d != null && d !== 0 && (
-                        <button onClick={() => fix(it)} disabled={busy === it.sid}
-                          className="press rounded-lg bg-amber-500 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50">ปรับให้ตรง</button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+
+      {groups.length === 0 && received.length === 0 ? <Empty text="ช่วงนี้ยังไม่มีความเคลื่อนไหวให้นับ" /> : (
+        <>
+          {/* ── ป้าย (chips) ── */}
+          <div className="flex flex-wrap gap-2">
+            {groups.map((grp) => (
+              <Chip key={grp.key} active={sel === grp.key} tone={grp.none ? "amber" : "sky"} label={grp.label} badge={grp.items.size} onClick={() => setSel(grp.key)} />
+            ))}
+            {received.length > 0 && (
+              <Chip active={showIn} tone="emerald" label="📥 รับเข้า" badge={received.length} onClick={() => setSel("__in__")} />
+            )}
+          </div>
+
+          {/* ── รายการของป้ายที่เลือก ── */}
+          {showIn ? (
+            <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
+              <div className="px-4 py-2.5 border-b border-black/5 font-semibold text-emerald-700 text-sm">📥 รับเข้า / ซื้อเข้า <span className="text-xs font-normal text-ink-3">({received.length} รายการ)</span></div>
+              <table className="w-full text-sm">
+                <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]"><th className="px-3 py-2 font-medium">วันเวลา</th><th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th><th className="px-3 py-2 font-medium text-right">จำนวน</th><th className="px-3 py-2 font-medium">ผู้รับ</th></tr></thead>
+                <tbody>
+                  {received.map((r) => (
+                    <tr key={r.id} className="border-b border-black/[0.04] last:border-0">
+                      <td className="px-3 py-2 text-ink-3 tabular-nums whitespace-nowrap">{timeBK(r.at)}</td>
+                      <td className="px-3 py-2 font-mono text-ink-2">{r.sku || "—"}</td>
+                      <td className="px-3 py-2 text-ink-1">{r.name}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-emerald-700 font-semibold whitespace-nowrap">+{nqty(r.qty)} {r.unit}</td>
+                      <td className="px-3 py-2 text-ink-2">{r.who || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : active ? (
+            <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
+              <div className="px-4 py-2.5 border-b border-black/5 flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-ink-1">{active.label}</span>
+                {active.none && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">ไม่ผูกลูกค้า</span>}
+                <span className="text-xs text-ink-3">· เบิก {active.items.size} รายการ</span>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]">
+                  <th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th>
+                  <th className="px-3 py-2 font-medium text-right">เบิกไป</th>
+                  <th className="px-3 py-2 font-medium text-right">ยอดระบบ<div className="text-[10px] font-normal text-ink-3/80">คงเหลือตอนนี้</div></th>
+                  <th className="px-3 py-2 font-medium text-center">นับจริง</th><th className="px-3 py-2 font-medium text-right">ส่วนต่าง</th><th className="px-3 py-2 font-medium no-print"></th>
+                </tr></thead>
+                <tbody>
+                  {activeItems.map((it) => {
+                    const d = diffOf(it.sid, it.onHand);
+                    return (
+                      <tr key={it.sid} className="border-b border-black/[0.04] last:border-0">
+                        <td className="px-3 py-2 font-mono text-ink-2 align-top">{it.sku || "—"}</td>
+                        <td className="px-3 py-2 text-ink-1 align-top">
+                          {it.name}
+                          <span className="ml-1.5 inline-flex gap-1">
+                            {[...it.sources].map((s) => (
+                              <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded ${s === "ใบตัด" ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700"}`}>{s}</span>
+                            ))}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-red-700 align-top whitespace-nowrap">−{nqty(it.qty)} {it.unit}</td>
+                        <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
+                        <td className="px-3 py-2 text-center align-top">
+                          <input type="text" inputMode="decimal" value={counts[it.sid] ?? ""} onChange={(e) => setCount(it.sid, e.target.value)}
+                            placeholder="นับ" className="w-20 text-center glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{d == null ? "" : d === 0 ? <span className="text-emerald-700">✓ ตรง</span> : <span className="text-red-600">{d > 0 ? "+" : ""}{nqty(d)}</span>}</td>
+                        <td className="px-3 py-2 text-right no-print align-top">
+                          {d != null && d !== 0 && (
+                            <button onClick={() => fix(it.sid, it.name, it.onHand)} disabled={busy === it.sid}
+                              className="press rounded-lg bg-amber-500 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50">ปรับให้ตรง</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
+  );
+}
+
+// ป้ายคลิก (chip) สำหรับนับรายวัน
+function Chip({ active, tone, label, badge, onClick }: { active: boolean; tone: "sky" | "amber" | "emerald"; label: string; badge: number; onClick: () => void }) {
+  const tones: Record<string, string> = {
+    sky: active ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100",
+    amber: active ? "bg-amber-500 text-white border-amber-500" : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100",
+    emerald: active ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100",
+  };
+  return (
+    <button onClick={onClick} className={`press inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${tones[tone]}`}>
+      <span className="max-w-[200px] truncate">{label}</span>
+      <span className={`text-[11px] rounded-full px-1.5 ${active ? "bg-white/25" : "bg-black/10"}`}>{badge}</span>
+    </button>
   );
 }
 
