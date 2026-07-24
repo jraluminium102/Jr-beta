@@ -24,12 +24,41 @@ function changHeaders(): Record<string, string> {
   return { "x-chang-token": m[1], "x-chang-name": encodeURIComponent(who) };
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<{ data: T; meta?: Record<string, unknown> }> {
+// ── ต่ออายุ session อัตโนมัติเมื่อโทเคนหมดอายุ (กันหน้าเว็บว่างเพราะ 401) ──
+//   ⚠ single-flight: หลายคำขอที่ 401 พร้อมกัน (เช่นหน้าที่ยิงหลาย query) จะรีเฟรช "ครั้งเดียว"
+//   ไม่งั้นต่างคนต่างรีเฟรช = โทเคนหมุนชนกันเอง → refresh token พัง → 401 ค้างทั้งเว็บ (บั๊กที่เจอ 24 ก.ค.)
+let refreshInFlight: Promise<boolean> | null = null;
+async function refreshSessionOnce(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const { data, error } = await createClient().auth.refreshSession();
+        return !error && !!data.session;
+      } catch { return false; }
+      finally { refreshInFlight = null; }
+    })();
+  }
+  return refreshInFlight;
+}
+
+async function request<T>(path: string, init?: RequestInit, retried = false): Promise<{ data: T; meta?: Record<string, unknown> }> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json", ...changHeaders() },
     cache: "no-store", // ERP live data — กันเบราว์เซอร์ cache ทำให้คนละเครื่องเห็นข้อมูลไม่ตรง (เช่น ติ๊กงานพื้นแล้วอีกเครื่องไม่ขึ้น)
     ...init,
   });
+
+  // 401 = โทเคนหมดอายุ → ต่ออายุแล้วลองใหม่ 1 ครั้ง (ยกเว้นลิงก์ช่าง = ไม่มี session ล็อกอิน)
+  const isChang = typeof window !== "undefined" && window.location.pathname.startsWith("/chang");
+  if (res.status === 401 && !retried && typeof window !== "undefined" && !isChang) {
+    if (await refreshSessionOnce()) return request<T>(path, init, true);
+    // ต่ออายุไม่ได้จริง = ต้องล็อกอินใหม่ (refresh token ตาย) → เด้งไปหน้าล็อกอิน แทนหน้าว่าง ๆ งง ๆ
+    if (!window.location.pathname.startsWith("/login")) window.location.href = "/login";
+    throw new ApiError("หมดเวลาการเข้าสู่ระบบ — กรุณาเข้าสู่ระบบใหม่", 401);
+  }
+
   const json = (await res.json()) as ApiOk<T> | ApiErr;
   if (!res.ok || !json.success) {
     const e = json as ApiErr;
