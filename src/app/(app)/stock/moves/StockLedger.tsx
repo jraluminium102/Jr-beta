@@ -18,7 +18,7 @@ type Row = {
   sid: number | null; onHand: number;
   sku: string | null; name: string; category: string; unit: string;
   qty: number; kg: number; unitCost: number; price: number;
-  who: string; note: string; ref: string; jobId: string | null; jobCode: string | null; customer: string | null; cutlistName: string;
+  who: string; operator: string; note: string; ref: string; jobId: string | null; jobCode: string | null; customer: string | null; cutlistName: string;
   voided: boolean; voidReason: string; edited: boolean;
 };
 type Data = { from: string; to: string; rows: Row[]; cats: string[] };
@@ -155,14 +155,14 @@ export default function StockLedger({ canViewCost, canRelink }: { canViewCost: b
 // ── มุม: ความเคลื่อนไหว — เบิกออก (จัดกลุ่มตามงาน) + รับเข้า (ลิสต์) ──
 function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; canViewCost: boolean; canRelink: boolean; onRelinked: () => void }) {
   const groups = useMemo(() => {
-    const g = new Map<string, { title: string; ref: string; refText: string; isJob: boolean; count: number; who: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
+    const g = new Map<string, { title: string; ref: string; refText: string; isJob: boolean; count: number; who: Set<string>; op: Set<string>; price: number; mats: Map<string, { sku: string | null; name: string; unit: string; qty: number; kg: number }> }>();
     for (const r of rows.filter((x) => x.type === "out")) {
       const key = r.jobId ? `j:${r.jobId}` : r.ref ? `r:${r.ref}` : "other";
-      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, refText: r.jobId ? "" : r.ref, isJob: !!r.jobId, count: 0, who: new Set(), price: 0, mats: new Map() };
+      const e = g.get(key) ?? { title: r.jobId ? (r.customer ?? "—") : r.cutlistName || r.ref || "งานเบิกอื่น ๆ", ref: r.jobId ? (r.jobCode ?? "") : r.ref, refText: r.jobId ? "" : r.ref, isJob: !!r.jobId, count: 0, who: new Set(), op: new Set(), price: 0, mats: new Map() };
       const mk = r.sku || r.name;
       const m = e.mats.get(mk) ?? { sku: r.sku, name: r.name, unit: r.unit, qty: 0, kg: 0 };
       m.qty += r.qty; m.kg += r.kg; e.mats.set(mk, m);
-      e.price += r.price; e.count += 1; if (r.who) e.who.add(r.who);
+      e.price += r.price; e.count += 1; if (r.who) e.who.add(r.who); if (r.operator) e.op.add(r.operator);
       g.set(key, e);
     }
     return [...g.values()].sort((a, b) => (a.isJob === b.isJob ? a.title.localeCompare(b.title) : a.isJob ? -1 : 1));
@@ -180,7 +180,8 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
               <span className="font-bold text-ink-1 text-[15px]">{g.title}</span>
               {g.ref && <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800">{g.ref}</span>}
               {!g.isJob && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">งานเบิก (ไม่ผูกลูกค้า)</span>}
-              {g.who.size > 0 && <span className="text-[12px] text-ink-3">ผู้เบิก: <b className="text-ink-2">{[...g.who].join(", ")}</b></span>}
+              {g.who.size > 0 && <span className="text-[12px] text-ink-3">ผู้เบิก(ช่าง): <b className="text-ink-2">{[...g.who].join(", ")}</b></span>}
+              {g.op.size > 0 && <span className="text-[12px] text-ink-3">อนุมัติ(ระบบ): <b className="text-ink-2">{[...g.op].join(", ")}</b></span>}
               {canViewCost && <span className="ml-auto text-[13px] font-semibold text-ink-2 tabular-nums">฿{baht(g.price)}</span>}
             </div>
             {!g.isJob && canRelink && g.refText.trim() && <RelinkRow refText={g.refText} count={g.count} onDone={onRelinked} />}
@@ -234,7 +235,7 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
 // ── มุม: นับรายวัน — จัดกลุ่มตามลูกค้า (ป้ายคลิก → ดูรายการที่เบิก) · รวมเบิกเอง+เบิกใบตัดชื่อเดียวกัน + ป้ายไม่ระบุ/รับเข้า ──
 const isCL = (ref: string) => /^CL-/i.test((ref || "").trim());
 
-type CountItem = { sid: number; sku: string | null; name: string; unit: string; onHand: number; qty: number; sources: Set<string>; who: Set<string> };
+type CountItem = { sid: number; sku: string | null; name: string; unit: string; onHand: number; qty: number; sources: Set<string>; who: Set<string>; op: Set<string> };
 type CountGroup = { key: string; label: string; none: boolean; lastAt: string; items: Map<number, CountItem> };
 
 function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
@@ -247,9 +248,10 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
       const nm = (r.customer || "").trim() || (isCL(r.ref) ? (r.cutlistName || "").trim() : (r.ref || "").trim());
       const key = nm || "__none__";
       const grp = g.get(key) ?? { key, label: nm || "ไม่ระบุลูกค้า", none: !nm, lastAt: "", items: new Map<number, CountItem>() };
-      const it = grp.items.get(r.sid) ?? { sid: r.sid, sku: r.sku, name: r.name, unit: r.unit, onHand: r.onHand, qty: 0, sources: new Set<string>(), who: new Set<string>() };
+      const it = grp.items.get(r.sid) ?? { sid: r.sid, sku: r.sku, name: r.name, unit: r.unit, onHand: r.onHand, qty: 0, sources: new Set<string>(), who: new Set<string>(), op: new Set<string>() };
       it.qty += r.qty; it.onHand = r.onHand; it.sources.add(src);
       if (r.who) it.who.add(r.who);
+      if (r.operator) it.op.add(r.operator);
       grp.items.set(r.sid, it);
       if (r.at > grp.lastAt) grp.lastAt = r.at;
       g.set(key, grp);
@@ -327,7 +329,12 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
                                     <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded ${s === "ใบตัด" ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700"}`}>{s}</span>
                                   ))}
                                 </span>
-                                {it.who.size > 0 && <div className="text-[11px] text-ink-3 mt-0.5">เบิกโดย: <span className="text-ink-2">{[...it.who].join(", ")}</span></div>}
+                                {(it.who.size > 0 || it.op.size > 0) && (
+                                  <div className="text-[11px] text-ink-3 mt-0.5">
+                                    {it.who.size > 0 && <>เบิกโดย(ช่าง): <span className="text-ink-2">{[...it.who].join(", ")}</span></>}
+                                    {it.op.size > 0 && <>{it.who.size > 0 ? " · " : ""}อนุมัติ(ระบบ): <span className="text-ink-2">{[...it.op].join(", ")}</span></>}
+                                  </div>
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right tabular-nums text-red-700 align-top whitespace-nowrap">−{nqty(it.qty)} {it.unit}</td>
                               <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>

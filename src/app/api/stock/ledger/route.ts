@@ -3,6 +3,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import { canSeeCost } from "@/lib/rbac";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number; created_at: string; type: "in" | "out" | "adjust"; qty: number;
   requester: string | null; ref: string | null; note: string | null;
-  unit_cost: number | null; total_price: number | null; job_id: string | null;
+  unit_cost: number | null; total_price: number | null; job_id: string | null; created_by: string | null;
   is_voided: boolean | null; void_reason: string | null; edited_at: string | null;
   stock_items: { id: number; name: string; sku: string | null; unit: string | null; category: string | null; qty_on_hand: number | null; is_weight_based: boolean | null; weight_per_unit: number | null } | null;
   jobs: { job_code: string | null; customer_name: string | null } | null;
@@ -39,7 +40,7 @@ export const GET = withRoute(async (req: Request) => {
   const sb = ctx.supabase as any;
   const moves = await fetchAllPaged<Row>((f, t) => {
     let query = sb.from("stock_moves")
-      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, is_voided, void_reason, edited_at, stock_items(id, name, sku, unit, category, qty_on_hand, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
+      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, created_by, is_voided, void_reason, edited_at, stock_items(id, name, sku, unit, category, qty_on_hand, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
       .gte("created_at", start).lte("created_at", end)
       .order("id", { ascending: true }).range(f, t);
     if (!includeVoided) query = query.eq("is_voided", false);
@@ -53,6 +54,17 @@ export const GET = withRoute(async (req: Request) => {
   if (refs.length) {
     const { data: cls } = await sb.from("cutlists").select("code, name").in("code", refs);
     for (const c of (cls ?? []) as { code: string; name: string }[]) cutlistName[c.code] = c.name;
+  }
+
+  // ชื่อ user ที่กด (created_by = คนกรอก/อนุมัติในระบบ · เช่น สโตร์ที่กดถอน — คนละคนกับ "ผู้เบิก" ที่เป็นช่างมาขอ)
+  //   ⚠ created_by → auth.users · profiles RLS ให้ non-admin อ่านได้แต่ของตัวเอง → ใช้ service client ดึงชื่อล้วน (ไม่ sensitive)
+  const uids = [...new Set(moves.map((m) => m.created_by).filter(Boolean))] as string[];
+  const opName: Record<string, string> = {};
+  if (uids.length) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createServiceClient() as any;
+    const { data: profs } = await admin.from("profiles").select("id, full_name").in("id", uids);
+    for (const p of (profs ?? []) as { id: string; full_name: string | null }[]) opName[p.id] = (p.full_name ?? "").trim();
   }
 
   const rows = moves.map((m) => {
@@ -73,6 +85,7 @@ export const GET = withRoute(async (req: Request) => {
       unitCost: blind ? 0 : (Number(m.unit_cost) || 0),
       price: blind ? 0 : (Number(m.total_price) || 0),
       who: (m.requester ?? "").trim(),
+      operator: m.created_by ? (opName[m.created_by] ?? "") : "",
       note: (m.note ?? "").trim(),
       ref: m.ref ?? "",
       jobId: m.job_id,

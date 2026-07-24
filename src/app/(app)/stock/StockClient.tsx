@@ -498,7 +498,7 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Field label={type === "adjust" ? `คงเหลือใหม่ (${item.unit})` : `จำนวน (${item.unit})`} value={qty} onChange={setQty} type="number" autoFocus />
-            {type === "out" && <Field label="ผู้เบิก" value={requester} onChange={setRequester} placeholder="เลือกหรือพิมพ์ชื่อ" list="stk-requesters" />}
+            {type === "out" && <Field label="ผู้เบิก (ช่างที่มาเบิก)" value={requester} onChange={setRequester} placeholder="ชื่อช่างที่มาขอเบิก" list="stk-requesters" />}
             {type === "in" && canViewCost && <Field label="ราคาที่จ่ายจริง (บาท)" value={totalPrice} onChange={setTotalPrice} type="number" placeholder="รวมทั้งบิล ถ้ามี" />}
             {type === "in" && <Field label="ผู้รับเข้า" value={requester} onChange={setRequester} placeholder="เลือกหรือพิมพ์ชื่อ" list="stk-requesters" />}
           </div>
@@ -508,7 +508,8 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
           {type === "out" && <JobPicker value={job} onPick={setJob} />}
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <Field label={type === "in" ? "อ้างอิง (PO/ร้าน)" : "อ้างอิง (งาน/PO)"} value={ref} onChange={setRef} />
+            {/* เบิกออก: ผูกลูกค้าด้วย "ผูกงาน" ด้านบนแล้ว ไม่ต้องมีช่องอ้างอิงซ้ำ · รับเข้า: อ้างอิง = เลข PO/ร้านค้า */}
+            {type === "in" && <Field label="อ้างอิง (PO/ร้าน)" value={ref} onChange={setRef} />}
             <Field label="หมายเหตุ" value={note} onChange={setNote} />
           </div>
 
