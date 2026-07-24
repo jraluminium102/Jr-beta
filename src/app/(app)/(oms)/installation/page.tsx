@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { INST_STATUS } from "@/lib/constants";
+import { thDate } from "@/lib/format";
 import { Spinner } from "@/components/ui/primitives";
 import { InstallationStepModal } from "@/components/installation/InstallationStepModal";
 import CrewDayTeamsPanel from "@/components/installation/CrewDayTeamsPanel";
@@ -163,6 +164,14 @@ export default function InstallationPage() {
   async function delAssign(id: string) {
     setBusy(true);
     try { await api.del(`/install-assignments/${id}`); setDetail(null); await refetch(); }
+    finally { setBusy(false); }
+  }
+  // "✓ ติดตั้งเสร็จแล้ว" จากการ์ดปฏิทิน → ปิดงานเลย (installations COMPLETED → job จบงาน)
+  async function completeAssign(id: string) {
+    setBusy(true);
+    try { await api.post(`/install-assignments/${id}/complete`, {}); setDetail(null); await refetch(); }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (e: any) { alert(e?.message ?? "ปิดงานไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
 
@@ -421,7 +430,7 @@ export default function InstallationPage() {
 
       {detail && (
         <DetailDrawer a={detail} busy={busy} leaderOptions={leaderOptions}
-          onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign}
+          onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign} onComplete={completeAssign}
           onGoCrew={() => { const d = detail.date; setDetail(null); jumpToCrewDay(d); }} />
       )}
 
@@ -522,16 +531,24 @@ function PrebookModal({ job, busy, onClose, onSave }: {
 }
 
 // ── drawer รายละเอียด/แก้ ──
-function DetailDrawer({ a, busy, leaderOptions, onClose, onPatch, onDelete, onGoCrew }: {
+function DetailDrawer({ a, busy, leaderOptions, onClose, onPatch, onDelete, onComplete, onGoCrew }: {
   a: InstallAssignment; busy: boolean; leaderOptions: string[];
   onClose: () => void; onPatch: (id: string, b: Record<string, unknown>) => void; onDelete: (id: string) => void;
-  onGoCrew: () => void;
+  onComplete: (id: string) => void; onGoCrew: () => void;
 }) {
   const [lead, setLead] = useState(a.lead_name || "");
   const [date, setDate] = useState(a.date);
   const [note, setNote] = useState(a.note || "");
   return (
     <Modal title={nameOf(a)} onClose={onClose}>
+      {/* ✓ ติดตั้งเสร็จแล้ว → ปิดงานเลย (เฉพาะงานในระบบ · คิวนอกระบบไม่มีปุ่มนี้) */}
+      {a.job_id && (
+        <button disabled={busy}
+          onClick={() => { if (window.confirm(`ยืนยันว่าติดตั้ง "${nameOf(a)}" เสร็จแล้ว?\nงานนี้จะถูกปิดเป็น "จบงาน"`)) onComplete(a.id); }}
+          className="w-full mb-3 py-3 rounded-xl bg-emerald-500/90 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+          ✓ ติดตั้งเสร็จแล้ว (จบงาน)
+        </button>
+      )}
       {/* ไปจัดทีมของวันนี้ (จัดรายละเอียดช่าง/สถานที่ต่อ) */}
       <button onClick={onGoCrew}
         className="w-full mb-3 py-2.5 rounded-xl bg-sky-500/25 text-sky-100 border border-sky-400/30 text-sm font-medium inline-flex items-center justify-center gap-1.5">
