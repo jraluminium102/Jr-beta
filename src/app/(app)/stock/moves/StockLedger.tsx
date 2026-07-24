@@ -258,12 +258,9 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
     return { groups, received };
   }, [rows]);
 
-  const [sel, setSel] = useState<string>("");
-  useEffect(() => {
-    const keys = [...groups.map((x) => x.key), received.length ? "__in__" : ""].filter(Boolean);
-    if (!keys.includes(sel)) setSel(keys[0] ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, received]);
+  // accordion: หัวข้อเรียงเป็นแถว · กดหัวข้อ = กาง/พับ รายการที่ซ่อนอยู่ (เปิดได้หลายอันพร้อมกัน · เริ่มพับหมด)
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggle = (k: string) => setOpen((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -286,114 +283,105 @@ function CountView({ rows, reload }: { rows: Row[]; reload: () => void }) {
     } finally { setBusy(null); }
   }
 
-  const active = groups.find((x) => x.key === sel);
-  const showIn = sel === "__in__";
-  const activeItems = active ? [...active.items.values()].sort((a, b) => (a.sku || a.name).localeCompare(b.sku || b.name, "th")) : [];
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 no-print">
-        🔢 นับรายวัน — <b>เลือกป้าย</b> (ลูกค้า / ไม่ระบุ / รับเข้า) เพื่อดูรายการที่เบิก · กรอก <b>นับจริง</b> เทียบ “ยอดระบบ” (คงเหลือปัจจุบัน) ต่างกด <b>“ปรับให้ตรง”</b>
+        🔢 นับรายวัน — <b>กดหัวข้อ</b> (ลูกค้า / ไม่ระบุ / รับเข้า) เพื่อกางรายการที่เบิก · กรอก <b>นับจริง</b> เทียบ “ยอดระบบ” (คงเหลือปัจจุบัน) ต่างกด <b>“ปรับให้ตรง”</b>
         <div className="text-[12px] text-amber-800 mt-1">💡 ไม่ได้นับทุกวัน? เลือกช่วง <b>7 วัน / เดือนนี้</b> ด้านบน แล้วนับรวดเดียว</div>
       </div>
 
       {groups.length === 0 && received.length === 0 ? <Empty text="ช่วงนี้ยังไม่มีความเคลื่อนไหวให้นับ" /> : (
-        <>
-          {/* ── ป้าย (chips) ── */}
-          <div className="flex flex-wrap gap-2">
-            {groups.map((grp) => (
-              <Chip key={grp.key} active={sel === grp.key} tone={grp.none ? "amber" : "sky"} label={grp.label} badge={grp.items.size} onClick={() => setSel(grp.key)} />
-            ))}
-            {received.length > 0 && (
-              <Chip active={showIn} tone="emerald" label="📥 รับเข้า" badge={received.length} onClick={() => setSel("__in__")} />
-            )}
-          </div>
-
-          {/* ── รายการของป้ายที่เลือก ── */}
-          {showIn ? (
-            <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
-              <div className="px-4 py-2.5 border-b border-black/5 font-semibold text-emerald-700 text-sm">📥 รับเข้า / ซื้อเข้า <span className="text-xs font-normal text-ink-3">({received.length} รายการ)</span></div>
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]"><th className="px-3 py-2 font-medium">วันเวลา</th><th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th><th className="px-3 py-2 font-medium text-right">จำนวน</th><th className="px-3 py-2 font-medium">ผู้รับ</th></tr></thead>
-                <tbody>
-                  {received.map((r) => (
-                    <tr key={r.id} className="border-b border-black/[0.04] last:border-0">
-                      <td className="px-3 py-2 text-ink-3 tabular-nums whitespace-nowrap">{timeBK(r.at)}</td>
-                      <td className="px-3 py-2 font-mono text-ink-2">{r.sku || "—"}</td>
-                      <td className="px-3 py-2 text-ink-1">{r.name}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-emerald-700 font-semibold whitespace-nowrap">+{nqty(r.qty)} {r.unit}</td>
-                      <td className="px-3 py-2 text-ink-2">{r.who || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : active ? (
-            <div className="rounded-2xl bg-white border border-black/5 overflow-hidden shadow-sm overflow-x-auto">
-              <div className="px-4 py-2.5 border-b border-black/5 flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-ink-1">{active.label}</span>
-                {active.none && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">ไม่ผูกลูกค้า</span>}
-                <span className="text-xs text-ink-3">· เบิก {active.items.size} รายการ</span>
+        <div className="space-y-2">
+          {/* ── หัวข้อลูกค้า (accordion) ── */}
+          {groups.map((grp) => {
+            const isOpen = open.has(grp.key);
+            const its = [...grp.items.values()].sort((a, b) => (a.sku || a.name).localeCompare(b.sku || b.name, "th"));
+            return (
+              <div key={grp.key} className="rounded-xl border border-black/5 bg-white shadow-sm overflow-hidden">
+                <button onClick={() => toggle(grp.key)} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-black/[0.02]">
+                  <span className={`text-ink-3 transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
+                  <span className="font-bold text-ink-1">{grp.label}</span>
+                  {grp.none && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">ไม่ผูกลูกค้า</span>}
+                  <span className="ml-auto text-xs text-ink-3">เบิก {grp.items.size} รายการ</span>
+                </button>
+                {isOpen && (
+                  <div className="border-t border-black/5 overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]">
+                        <th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th>
+                        <th className="px-3 py-2 font-medium text-right">เบิกไป</th>
+                        <th className="px-3 py-2 font-medium text-right">ยอดระบบ<div className="text-[10px] font-normal text-ink-3/80">คงเหลือตอนนี้</div></th>
+                        <th className="px-3 py-2 font-medium text-center">นับจริง</th><th className="px-3 py-2 font-medium text-right">ส่วนต่าง</th><th className="px-3 py-2 font-medium no-print"></th>
+                      </tr></thead>
+                      <tbody>
+                        {its.map((it) => {
+                          const d = diffOf(it.sid, it.onHand);
+                          return (
+                            <tr key={it.sid} className="border-b border-black/[0.04] last:border-0">
+                              <td className="px-3 py-2 font-mono text-ink-2 align-top">{it.sku || "—"}</td>
+                              <td className="px-3 py-2 text-ink-1 align-top">
+                                {it.name}
+                                <span className="ml-1.5 inline-flex gap-1">
+                                  {[...it.sources].map((s) => (
+                                    <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded ${s === "ใบตัด" ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700"}`}>{s}</span>
+                                  ))}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-red-700 align-top whitespace-nowrap">−{nqty(it.qty)} {it.unit}</td>
+                              <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
+                              <td className="px-3 py-2 text-center align-top">
+                                <input type="text" inputMode="decimal" value={counts[it.sid] ?? ""} onChange={(e) => setCount(it.sid, e.target.value)}
+                                  placeholder="นับ" className="w-20 text-center glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{d == null ? "" : d === 0 ? <span className="text-emerald-700">✓ ตรง</span> : <span className="text-red-600">{d > 0 ? "+" : ""}{nqty(d)}</span>}</td>
+                              <td className="px-3 py-2 text-right no-print align-top">
+                                {d != null && d !== 0 && (
+                                  <button onClick={() => fix(it.sid, it.name, it.onHand)} disabled={busy === it.sid}
+                                    className="press rounded-lg bg-amber-500 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50">ปรับให้ตรง</button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]">
-                  <th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th>
-                  <th className="px-3 py-2 font-medium text-right">เบิกไป</th>
-                  <th className="px-3 py-2 font-medium text-right">ยอดระบบ<div className="text-[10px] font-normal text-ink-3/80">คงเหลือตอนนี้</div></th>
-                  <th className="px-3 py-2 font-medium text-center">นับจริง</th><th className="px-3 py-2 font-medium text-right">ส่วนต่าง</th><th className="px-3 py-2 font-medium no-print"></th>
-                </tr></thead>
-                <tbody>
-                  {activeItems.map((it) => {
-                    const d = diffOf(it.sid, it.onHand);
-                    return (
-                      <tr key={it.sid} className="border-b border-black/[0.04] last:border-0">
-                        <td className="px-3 py-2 font-mono text-ink-2 align-top">{it.sku || "—"}</td>
-                        <td className="px-3 py-2 text-ink-1 align-top">
-                          {it.name}
-                          <span className="ml-1.5 inline-flex gap-1">
-                            {[...it.sources].map((s) => (
-                              <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded ${s === "ใบตัด" ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-700"}`}>{s}</span>
-                            ))}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-red-700 align-top whitespace-nowrap">−{nqty(it.qty)} {it.unit}</td>
-                        <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{nqty(it.onHand)} {it.unit}</td>
-                        <td className="px-3 py-2 text-center align-top">
-                          <input type="text" inputMode="decimal" value={counts[it.sid] ?? ""} onChange={(e) => setCount(it.sid, e.target.value)}
-                            placeholder="นับ" className="w-20 text-center glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums font-semibold align-top">{d == null ? "" : d === 0 ? <span className="text-emerald-700">✓ ตรง</span> : <span className="text-red-600">{d > 0 ? "+" : ""}{nqty(d)}</span>}</td>
-                        <td className="px-3 py-2 text-right no-print align-top">
-                          {d != null && d !== 0 && (
-                            <button onClick={() => fix(it.sid, it.name, it.onHand)} disabled={busy === it.sid}
-                              className="press rounded-lg bg-amber-500 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50">ปรับให้ตรง</button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            );
+          })}
+
+          {/* ── หัวข้อ รับเข้า ── */}
+          {received.length > 0 && (
+            <div className="rounded-xl border border-emerald-100 bg-white shadow-sm overflow-hidden">
+              <button onClick={() => toggle("__in__")} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-emerald-50/50">
+                <span className={`text-emerald-500 transition-transform ${open.has("__in__") ? "rotate-90" : ""}`}>▸</span>
+                <span className="font-bold text-emerald-700">📥 รับเข้า / ซื้อเข้า</span>
+                <span className="ml-auto text-xs text-ink-3">{received.length} รายการ</span>
+              </button>
+              {open.has("__in__") && (
+                <div className="border-t border-black/5 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="text-left text-ink-3 text-xs border-b border-black/5 bg-black/[0.02]"><th className="px-3 py-2 font-medium">วันเวลา</th><th className="px-3 py-2 font-medium">รหัส</th><th className="px-3 py-2 font-medium w-full">วัสดุ</th><th className="px-3 py-2 font-medium text-right">จำนวน</th><th className="px-3 py-2 font-medium">ผู้รับ</th></tr></thead>
+                    <tbody>
+                      {received.map((r) => (
+                        <tr key={r.id} className="border-b border-black/[0.04] last:border-0">
+                          <td className="px-3 py-2 text-ink-3 tabular-nums whitespace-nowrap">{timeBK(r.at)}</td>
+                          <td className="px-3 py-2 font-mono text-ink-2">{r.sku || "—"}</td>
+                          <td className="px-3 py-2 text-ink-1">{r.name}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-emerald-700 font-semibold whitespace-nowrap">+{nqty(r.qty)} {r.unit}</td>
+                          <td className="px-3 py-2 text-ink-2">{r.who || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          ) : null}
-        </>
+          )}
+        </div>
       )}
     </div>
-  );
-}
-
-// ป้ายคลิก (chip) สำหรับนับรายวัน
-function Chip({ active, tone, label, badge, onClick }: { active: boolean; tone: "sky" | "amber" | "emerald"; label: string; badge: number; onClick: () => void }) {
-  const tones: Record<string, string> = {
-    sky: active ? "bg-sky-600 text-white border-sky-600" : "bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100",
-    amber: active ? "bg-amber-500 text-white border-amber-500" : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100",
-    emerald: active ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100",
-  };
-  return (
-    <button onClick={onClick} className={`press inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${tones[tone]}`}>
-      <span className="max-w-[200px] truncate">{label}</span>
-      <span className={`text-[11px] rounded-full px-1.5 ${active ? "bg-white/25" : "bg-black/10"}`}>{badge}</span>
-    </button>
   );
 }
 
