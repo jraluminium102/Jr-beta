@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
+import JobSummary from "./JobSummary";
 import { BillingProfiles } from "@/components/customers/BillingProfiles";
 import type { Customer } from "@/lib/types";
 
@@ -33,6 +34,7 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   // แก้ "ที่อยู่หน้างาน" ต่อหน้างาน (jobs.customer_area) — คนละก้อนกับ "ที่อยู่ออกบิล" ของลูกค้าด้านบน
   // ไม่ใช่ snapshot เอกสาร → แก้ที่นี่ไม่กระทบใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว
   const [editAreaJobId, setEditAreaJobId] = useState<string | null>(null);
+  const [openSummary, setOpenSummary] = useState<string | null>(null);
   const [areaDraft, setAreaDraft] = useState("");
   const [areaSaving, setAreaSaving] = useState(false);
   const [areaErr, setAreaErr] = useState("");
@@ -300,24 +302,34 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                           </div>
                         </div>
                       ) : (
-                        <div key={j.id} className="flex items-center justify-between gap-2 glass-soft rounded-lg px-3 py-2.5 text-sm hover:bg-white/60">
-                          <a href={`/jobs?open=${j.id}`} className="press min-w-0 flex-1">
-                            <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
-                            <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
-                          </a>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <Badge tone="sky">ขั้น {j.current_stage}</Badge>
-                            {canWrite && (
+                        <div key={j.id}>
+                          <div className="flex items-center justify-between gap-2 glass-soft rounded-lg px-3 py-2.5 text-sm hover:bg-white/60">
+                            <a href={`/jobs?open=${j.id}`} className="press min-w-0 flex-1">
+                              <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
+                              <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
+                            </a>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Badge tone="sky">ขั้น {j.current_stage}</Badge>
                               <button
-                                onClick={() => startEditArea(j)}
-                                aria-label="แก้ที่อยู่หน้างาน"
-                                title="แก้ที่อยู่หน้างาน"
-                                className="press inline-flex items-center justify-center w-9 h-9 rounded-lg text-ink-3 hover:bg-white/80 hover:text-brand-dark"
+                                onClick={() => setOpenSummary(openSummary === j.id ? null : j.id)}
+                                title="สรุปงาน (ใบเสนอ · มัดจำ · ติดตั้ง · ของที่ใช้)"
+                                className="press inline-flex items-center justify-center h-9 px-2.5 rounded-lg text-xs font-semibold text-brand-dark border border-brand/25 hover:bg-white/80"
                               >
-                                <Icon name="pencil" size={14} />
+                                {openSummary === j.id ? "▲ ปิด" : "📋 สรุปงาน"}
                               </button>
-                            )}
+                              {canWrite && (
+                                <button
+                                  onClick={() => startEditArea(j)}
+                                  aria-label="แก้ที่อยู่หน้างาน"
+                                  title="แก้ที่อยู่หน้างาน"
+                                  className="press inline-flex items-center justify-center w-9 h-9 rounded-lg text-ink-3 hover:bg-white/80 hover:text-brand-dark"
+                                >
+                                  <Icon name="pencil" size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
+                          {openSummary === j.id && <JobSummary jobId={j.id} />}
                         </div>
                       )
                     )}
