@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/primitives";
 import type { Role } from "@/lib/database.types";
 import { ROLE_LABEL } from "@/lib/types";
 
-type U = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; role: Role; is_active: boolean; created_at: string };
+type U = { id: string; email: string | null; full_name: string | null; avatar_url: string | null; role: Role; is_active: boolean; created_at: string; is_self?: boolean };
 const ROLES: Role[] = ["ADMIN", "SALES", "DESIGNER", "PRODUCTION", "INSTALLER", "ACCOUNTING", "VIEWER", "CHANG", "STORE"];
 
 export default function UsersPage() {
@@ -76,15 +76,16 @@ export default function UsersPage() {
             <div key={u.id} className="glass-card rounded-2xl p-4 flex items-center gap-3 flex-wrap">
               {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full" /> : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold">{(u.full_name ?? u.email ?? "U").charAt(0).toUpperCase()}</div>}
               <div className="flex-1 min-w-[140px]">
-                <div className="text-white text-sm font-medium">{u.full_name ?? "—"}</div>
+                <div className="text-white text-sm font-medium">{u.full_name ?? "—"}{u.is_self && <span className="ml-1.5 text-[11px] px-1.5 py-0.5 rounded bg-white/20 text-white/90">คุณ</span>}</div>
                 <div className="text-[12px]" style={{ color: "var(--t-low)" }}>{(u.email ?? "").replace(/@jr\.local$/, "") || "—"} · เข้าร่วม {thDate(u.created_at)}</div>
               </div>
-              <select value={u.role} onChange={(e) => mut.mutate({ id: u.id, patch: { role: e.target.value as Role } })} aria-label="บทบาท"
-                className="focusable glass-card rounded-xl px-3 py-2 text-sm text-white outline-none min-h-[40px] [&>option]:text-gray-800">
+              <select value={u.role} disabled={u.is_self} onChange={(e) => mut.mutate({ id: u.id, patch: { role: e.target.value as Role } })} aria-label="บทบาท"
+                className="focusable glass-card rounded-xl px-3 py-2 text-sm text-white outline-none min-h-[40px] disabled:opacity-50 [&>option]:text-gray-800">
                 {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r] ?? r}</option>)}
               </select>
-              <button onClick={() => mut.mutate({ id: u.id, patch: { is_active: !u.is_active } })}
-                className={`focusable pressable rounded-xl px-3 py-2 text-[12px] font-medium min-h-[40px] border ${u.is_active ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/30" : "bg-rose-500/20 text-rose-100 border-rose-300/30"}`}>
+              <button onClick={() => mut.mutate({ id: u.id, patch: { is_active: !u.is_active } })} disabled={u.is_self}
+                title={u.is_self ? "ปิดบัญชีตัวเองไม่ได้ (กันล็อกตัวเอง)" : ""}
+                className={`focusable pressable rounded-xl px-3 py-2 text-[12px] font-medium min-h-[40px] border disabled:opacity-50 ${u.is_active ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/30" : "bg-rose-500/20 text-rose-100 border-rose-300/30"}`}>
                 {u.is_active ? "ใช้งานอยู่" : "ปิดใช้งาน"}
               </button>
             </div>

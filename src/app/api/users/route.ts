@@ -15,7 +15,9 @@ export const GET = withRoute(async () => {
     .select("id, email, full_name, avatar_url, role, is_active, created_at")
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return ok(data ?? []);
+  // is_self = แถวของ user ที่กำลังดู → UI ปิดปุ่มเปลี่ยน role/ปิดใช้งานของตัวเอง (กันล็อกตัวเอง)
+  const rows = (data ?? []).map((u) => ({ ...u, is_self: u.id === ctx.user.id }));
+  return ok(rows);
 });
 
 // POST /api/users — admin: สร้างบัญชีใหม่ (auth user + role) ในเว็บเลย ไม่ต้องเข้า Supabase dashboard
