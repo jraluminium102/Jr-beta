@@ -23,7 +23,8 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   }
   // กันเหลือ "แอดมินที่ใช้งานได้" 0 คน (ปิด/ลดสิทธิ์แอดมินคนสุดท้าย)
   if (deactivating || demoting) {
-    const { data: tgt } = await ctx.supabase.from("profiles").select("role, is_active").eq("id", params.id).single();
+    const { data: tgtRaw } = await ctx.supabase.from("profiles").select("role, is_active").eq("id", params.id).single();
+    const tgt = tgtRaw as { role?: string; is_active?: boolean } | null;
     if (tgt?.role === "ADMIN" && tgt?.is_active) {
       const { count } = await ctx.supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "ADMIN").eq("is_active", true);
       if ((count ?? 0) <= 1) throw new HttpError(400, "ต้องมีแอดมินที่ใช้งานได้อย่างน้อย 1 คน — ปิด/ลดสิทธิ์คนนี้ไม่ได้");

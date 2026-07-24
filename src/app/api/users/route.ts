@@ -16,7 +16,8 @@ export const GET = withRoute(async () => {
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   // is_self = แถวของ user ที่กำลังดู → UI ปิดปุ่มเปลี่ยน role/ปิดใช้งานของตัวเอง (กันล็อกตัวเอง)
-  const rows = (data ?? []).map((u) => ({ ...u, is_self: u.id === ctx.user.id }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = ((data ?? []) as any[]).map((u) => ({ ...u, is_self: u.id === ctx.user.id }));
   return ok(rows);
 });
 
