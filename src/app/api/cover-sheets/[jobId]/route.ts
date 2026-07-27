@@ -16,17 +16,15 @@ const lineSchema = z.object({
   text: z.string().max(500),
   color: z.enum(["", "red", "blue", "green"]).optional().default(""),
   hl: z.boolean().optional().default(false),
+  kind: z.enum(["spec", "group"]).optional(),
+  n: z.number().optional(),
 });
-const groupSchema = z.object({
-  n: z.number(),
-  title: z.string().max(300),
-  lines: z.array(lineSchema).default([]),
-});
+// โมเดลแบน (flat): left/mid/right เป็น list บรรทัดตรง ๆ — สิ่งที่เห็น=สิ่งที่พิมพ์
 const contentSchema = z.object({
   floorNote: z.string().max(500).optional().default(""),
-  groups: z.array(groupSchema).default([]),
-  midLines: z.array(lineSchema).default([]),
-  rightLines: z.array(lineSchema).default([]),
+  left: z.array(lineSchema).default([]),
+  mid: z.array(lineSchema).default([]),
+  right: z.array(lineSchema).default([]),
 });
 
 const putSchema = z.object({

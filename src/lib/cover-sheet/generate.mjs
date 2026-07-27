@@ -96,6 +96,24 @@ export function toShort(groups) {
   });
 }
 
+// ── แปลง groups → "list แบน" ของคอลัมน์ซ้าย ตามโหมด (สิ่งที่เห็น=สิ่งที่พิมพ์) ──────
+//   short   : บุลเลทล้วน (ไม่มีหัวข้อชุด) · สเปคซ้ำหลายชุดรวม ต่อท้าย "(ชุด …)" ในตัวข้อความ
+//   grouped : หัวข้อชุด (kind:'group' + เลข n) คั่นแต่ละชุด แล้วตามด้วยบุลเลท
+export function toLeftLines(groups, mode) {
+  if (mode === "grouped") {
+    const out = [];
+    for (const g of groups) {
+      out.push({ text: g.title, color: "", hl: false, kind: "group", n: g.n });
+      for (const l of g.lines) out.push({ text: l.text, color: l.color || "", hl: !!l.hl, kind: "spec" });
+    }
+    return out;
+  }
+  return toShort(groups).map((s) => ({
+    text: s.ref ? `${s.text}  (${s.ref})` : s.text,
+    color: s.color || "", hl: !!s.hl, kind: "spec",
+  }));
+}
+
 // ── สร้างใบปะหน้าเต็ม (default = short) ────────────────────────────────────────
 export function generateCoverSheet(items, opts = {}) {
   const groups = buildGroups(items);
