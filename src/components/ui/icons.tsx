@@ -21,4 +21,5 @@ export {
   ChevronRight, Clock, Check, ShieldCheck, TriangleAlert,
   CalendarDays, Trash2, Package, ExternalLink, PackageCheck,
   ClipboardList, FileText, FileCheck, FilePlus, Banknote, Phone, Pencil,
+  Factory, Wrench,
 };

@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { can } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
 //   ไว้ดูในทะเบียนลูกค้า (โดยเฉพาะงานที่จบแล้ว) — ดึงสดจากงานจริง ไม่ต้องกรอกซ้ำ
 export const GET = withRoute(async (_req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("jobs", "read");
+  // ยอดเงิน (มัดจำ/ใบเสนอ) โชว์เฉพาะ role ที่เห็นฟิลด์การเงินได้ — role อื่น redact
+  const showNet = can(ctx.role, "jobs:finance_fields", "read");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = ctx.supabase as any;
   const id = params.id;
@@ -31,9 +34,18 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
   }
   const materials = [...mMap.values()].sort((a, b) => (a.sku || a.name).localeCompare(b.sku || b.name));
 
+  // redact ยอดเงินถ้าไม่มีสิทธิ์การเงิน
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const job = jobR.data as any;
+  if (job && !showNet) { job.deposit_amount = null; job.net_amount = null; }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const quotations = ((quoR.data ?? []) as any[]).map((q) =>
+    showNet ? q : { ...q, net: null, total: null }
+  );
+
   return ok({
-    job: jobR.data ?? null,
-    quotations: quoR.data ?? [],
+    job: job ?? null,
+    quotations,
     install: instR.data ?? null,
     materials,
     cutlists: cutR.data ?? [],

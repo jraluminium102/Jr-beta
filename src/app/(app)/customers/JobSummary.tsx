@@ -8,7 +8,7 @@ import { baht } from "@/lib/money";
 type Any = any;
 type Summary = {
   job: { deposit_amount?: number; deposit_date?: string | null; net_amount?: number; status?: string; current_stage?: number } | null;
-  quotations: { id: number; code: string; issue_date: string; net: number; total: number; status: string }[];
+  quotations: { id: number; code: string; issue_date: string; net: number | null; total: number | null; status: string }[];
   install: { status?: string; completed_date?: string | null; install_actual?: string | null; install_scheduled?: string | null } | null;
   materials: { name: string; sku: string | null; unit: string; qty: number }[];
   cutlists: { id: string; code: string | null; name: string | null; status: string; stock_cut_at: string | null }[];
@@ -54,19 +54,22 @@ export default function JobSummary({ jobId }: { jobId: string }) {
     <div className="mt-1 rounded-xl bg-white border border-black/[0.08] px-3.5 shadow-sm">
       <Row icon="💰" label="มัดจำ">
         {j?.deposit_date
-          ? <>{thDate(j.deposit_date)} · <b className="text-emerald-700">฿{baht(Number(j.deposit_amount) || 0)}</b></>
+          ? <>{thDate(j.deposit_date)}{j.deposit_amount != null && <> · <b className="text-emerald-700">฿{baht(Number(j.deposit_amount))}</b></>}</>
           : <span className="text-ink-3">ยังไม่มัดจำ</span>}
       </Row>
 
       <Row icon="🧾" label={`ใบเสนอราคา${d.quotations.length ? ` (${d.quotations.length})` : ""}`}>
         {d.quotations.length ? (
           <div className="space-y-1">
-            {d.quotations.map((q) => (
-              <a key={q.id} href={`/quotations?open=${q.id}`} className="press flex items-baseline justify-between gap-2 hover:text-brand-dark">
-                <span className="font-mono text-brand-dark">{q.code}</span>
-                <span className="text-ink-2 tabular-nums shrink-0">฿{baht(Number(q.net || q.total) || 0)} <span className="text-ink-3 text-[11px]">{thDate(q.issue_date)}</span></span>
-              </a>
-            ))}
+            {d.quotations.map((q) => {
+              const amt = q.net ?? q.total;
+              return (
+                <a key={q.id} href={`/quotations/${q.id}`} className="press flex items-baseline justify-between gap-2 hover:text-brand-dark">
+                  <span className="font-mono text-brand-dark">{q.code}</span>
+                  <span className="text-ink-2 tabular-nums shrink-0">{amt != null ? `฿${baht(Number(amt))} ` : ""}<span className="text-ink-3 text-[11px]">{thDate(q.issue_date)}</span></span>
+                </a>
+              );
+            })}
           </div>
         ) : <span className="text-ink-3">—</span>}
       </Row>
