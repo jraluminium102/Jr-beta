@@ -10,7 +10,7 @@ export const GET = withRoute(async () => {
   let { data, error } = await ctx.supabase
     .from("productions")
     .select(`${baseCols},
-      job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note,
+      job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note, current_stage,
         job_blocker_notes(id, tag, note, source, created_at)
       )`)
     .order("created_at", { ascending: false });
@@ -20,7 +20,7 @@ export const GET = withRoute(async () => {
     ({ data, error } = await ctx.supabase
       .from("productions")
       .select(`${baseCols},
-        job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note)`)
+        job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note, current_stage)`)
       .order("created_at", { ascending: false }));
   }
   if (error) throw new Error(error.message);
@@ -32,6 +32,17 @@ export const GET = withRoute(async () => {
     const { data: cuts } = await ctx.supabase.from("cutlists").select("id, code, name, status, job_id").in("job_id", jobIds);
     for (const c of (cuts ?? []) as Record<string, unknown>[]) {
       (cutsByJob[c.job_id as string] ??= []).push({ id: c.id as number, code: (c.code as string) ?? null, name: (c.name as string) ?? "", status: (c.status as string) ?? "draft" });
+    }
+  }
+
+  // ใบปะหน้าต่องาน (0111) — แยก query กัน migration ยังไม่รันไม่พังทั้งหน้า (เดินตามลาย cutlists ด้านบน)
+  //   ป้าย "มี/ทำใบปะหน้า" บนการ์ด (CoverSheetChip) ใช้แค่ "มีหรือยัง" ไม่ต้องข้อมูลเนื้อ
+  const coverByJob: Record<string, boolean> = {};
+  if (jobIds.length) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: covers } = await (ctx.supabase as any).from("cover_sheets").select("job_id").in("job_id", jobIds);
+    for (const c of (covers ?? []) as Record<string, unknown>[]) {
+      coverByJob[c.job_id as string] = true;
     }
   }
 
@@ -49,7 +60,12 @@ export const GET = withRoute(async () => {
         const sortedNotes = [...(job_blocker_notes ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at));
         jobRest = { ...rest, job_blocker_notes: sortedNotes };
       }
-      return { ...p, job: jobRest, cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [] };
+      return {
+        ...p,
+        job: jobRest,
+        cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
+        cover_sheet_exists: p.job_id ? !!coverByJob[p.job_id as string] : false,
+      };
     });
 
   // งานจดเอง (adhoc · 0023) — โผล่หน้าผลิตออฟฟิศด้วย (เดิมโผล่แค่ตารางช่าง → ลูกค้าที่เพิ่มเองหายไป · เจ้าของสั่ง 22 ก.ค.69)

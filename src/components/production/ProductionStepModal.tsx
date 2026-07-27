@@ -22,9 +22,11 @@ export type ProdRow = {
   production_queued: string | null; production_done: string | null; production_due_date: string | null;
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
+  cover_sheet_exists?: boolean;                                          // มีใบปะหน้าแล้วหรือยัง (0111) — ป้าย CoverSheetChip
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker
+    current_stage?: number | null;                                      // ขั้นงาน (24 stage) — ใช้ตัดสินว่าเตือนทำใบปะหน้าไหม
     job_blocker_notes?: BlockerNote[];                                  // โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098)
   } | null;
 };
