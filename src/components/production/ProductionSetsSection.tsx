@@ -37,13 +37,13 @@ type SetRow = { id: number; job_id: string } & Record<string, any>;
 // ขนาดตัวหนังสือ: เจ้าของแจ้ง 16 ก.ค.2569 ว่า "ฟ้อนเล็ก อ่านยาก" → ช่อง 12→14px, ป้าย 10→11.5px
 // (คู่กับโมดัลที่ขยายเป็น max-w-3xl แล้ว — ที่กว้างพอให้ตัวใหญ่ขึ้นได้โดยตารางไม่แตก)
 const fieldCls =
-  "w-full bg-white/8 text-white text-[14px] px-2.5 py-2 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
+  "w-full bg-white/8 text-white text-[16px] px-2.5 py-2.5 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
 
 // ป้าย + ช่อง · ถ้าส่ง onEditOpts มา = ช่องนี้เป็นดรอปดาวน์ที่แก้ตัวเลือกได้ → โชว์ปุ่ม ⚙ ข้างป้าย
 function F({ label, children, onEditOpts }: { label: string; children: React.ReactNode; onEditOpts?: () => void }) {
   return (
     <label className="block">
-      <span className="flex items-center gap-1 text-[11.5px] mb-1" style={{ color: "var(--t-low)" }}>
+      <span className="flex items-center gap-1 text-[13px] mb-1" style={{ color: "var(--t-low)" }}>
         <span className="truncate">{label}</span>
         {onEditOpts && (
           <button type="button" onClick={(e) => { e.preventDefault(); onEditOpts(); }}
@@ -65,6 +65,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const { data: specRes } = useQuery({ queryKey: ["glass-specs"], queryFn: () => api.get<string[]>("/production-sets/glass-specs"), staleTime: 60_000 });
   const glassSpecHistory = specRes?.data ?? [];
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false); // แฟลช "บันทึกแล้ว ✓" หลังเซฟสำเร็จ (auto-save เงียบ → ให้ feedback)
   const [editKeys, setEditKeys] = useState<Record<string, boolean>>({}); // ช่อง mark ที่กด "แก้" override อยู่
   const [optField, setOptField] = useState<{ key: string; label: string } | null>(null); // แผงจัดการตัวเลือกที่เปิดอยู่
 
@@ -88,6 +89,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     try {
       await api.patch(`/production-sets/${id}`, { [field]: value === "" ? null : value });
       qc.invalidateQueries({ queryKey: key }); // refetch → เห็นค่าล่าสุด/ใครกด (กัน stale ทับ)
+      setSaved(true); setTimeout(() => setSaved(false), 1600); // แฟลชป้าย "บันทึกแล้ว ✓"
     } catch { /* keep typed value */ }
   }
   async function add() {
@@ -142,7 +144,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     return (
       <div className="w-full bg-white/5 rounded-lg border border-white/10 px-2 py-1.5">
         <div className="flex items-center justify-between gap-1">
-          <span className={`text-[14px] ${done ? "text-emerald-200 font-medium" : "text-white/55"}`}>{val || "— ยังไม่กด —"}</span>
+          <span className={`text-[16px] ${done ? "text-emerald-200 font-medium" : "text-white/55"}`}>{val || "— ยังไม่กด —"}</span>
           {canWrite && <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: true }))} className="text-[12px] text-sky-300/80 underline shrink-0">แก้</button>}
         </div>
         {by && <div className="text-[11px] mt-0.5" style={{ color: "var(--t-low)" }}>โดย {by}{at ? ` · ${fmtWhen(at)}` : ""}</div>}
@@ -153,9 +155,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   return (
     <div className="mt-3 glass-card rounded-2xl p-4 border border-white/10">
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-base font-semibold text-white">รายละเอียดผลิต (ชุดงาน)</span>
+        <span className="text-lg font-semibold text-white flex items-center gap-2">
+          รายละเอียดผลิต (ชุดงาน)
+          <span className={`text-[12px] font-normal text-emerald-300 transition-opacity duration-300 ${saved ? "opacity-100" : "opacity-0"}`}>บันทึกแล้ว ✓</span>
+        </span>
         {canWrite && (
-          <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[13px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-2.5 py-1.5 min-h-[34px] disabled:opacity-50"><Plus size={13} /> เพิ่มชุด</button>
+          <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
         )}
       </div>
 
@@ -188,7 +193,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               <div className="flex items-center gap-2 mb-2.5">
                 <input defaultValue={s.set_label ?? ""} disabled={!canWrite} placeholder="ชื่อชุด เช่น ชุด 1,4,5"
                   onBlur={(e) => e.target.value !== String(s.set_label ?? "") && save(s.id, "set_label", e.target.value)}
-                  className="flex-1 bg-transparent text-white text-[15px] font-semibold border-b border-white/15 focus:border-sky-300/60 outline-none px-1 py-1" />
+                  className="flex-1 bg-transparent text-white text-[17px] font-semibold border-b border-white/15 focus:border-sky-300/60 outline-none px-1 py-1" />
                 {canWrite && <button onClick={() => del(s.id)} aria-label="ลบชุด" className="text-white/40 hover:text-rose-300 p-1"><X size={15} /></button>}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -218,6 +223,13 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               </div>
             </div>
           ))}
+          {/* ปุ่มเพิ่มชุดด้านล่าง — เพิ่มต่อจากชุดสุดท้ายได้เลย ไม่ต้อง scroll ขึ้นไปหัวตาราง */}
+          {canWrite && (
+            <button onClick={add} disabled={busy}
+              className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 text-[15px] border border-dashed border-sky-300/40 hover:border-sky-300/70 hover:bg-sky-500/10 text-sky-200 rounded-xl px-3 py-3 min-h-[46px] disabled:opacity-50">
+              <Plus size={16} /> เพิ่มชุด
+            </button>
+          )}
         </div>
       )}
     </div>
