@@ -40,6 +40,7 @@ export default async function StockPage() {
       canPrice={PRICE_WRITE.includes(role)}
       canViewCost={canViewCost}
       isAdmin={role === "ADMIN"}
+      canMerge={role === "ADMIN" || role === "STORE"}
     />
   );
 }

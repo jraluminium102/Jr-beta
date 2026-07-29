@@ -18,7 +18,7 @@ const Body = z.object({
 
 // map รหัส exception จาก RPC → ข้อความ/สถานะที่อ่านง่าย
 function mapRpcError(msg: string): { message: string; status: number } {
-  if (msg.includes("forbidden")) return { message: "เฉพาะแอดมินเท่านั้นที่รวมรายการซ้ำได้", status: 403 };
+  if (msg.includes("forbidden")) return { message: "ไม่มีสิทธิ์รวมรายการซ้ำ (เฉพาะแอดมิน/สโตร์)", status: 403 };
   if (msg.includes("no_remove")) return { message: "ต้องระบุรายการที่จะลบ (ต่างจากตัวที่เก็บ)", status: 400 };
   if (msg.includes("keep_not_found")) return { message: "ไม่พบรายการที่จะเก็บ", status: 404 };
   if (msg.includes("remove_not_found")) return { message: "ไม่พบบางรายการที่จะลบ (อาจถูกลบไปแล้ว)", status: 404 };
@@ -34,7 +34,7 @@ function mapRpcError(msg: string): { message: string; status: number } {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("stock", "write");
-  if (ctx.role !== "ADMIN") return err("เฉพาะแอดมินเท่านั้นที่รวมรายการซ้ำได้", 403);
+  if (ctx.role !== "ADMIN" && ctx.role !== "STORE") return err("ไม่มีสิทธิ์รวมรายการซ้ำ (เฉพาะแอดมิน/สโตร์)", 403);
 
   const b = Body.parse(await req.json().catch(() => ({})));
   const removeIds = [...new Set(b.removeIds)].filter((id) => id !== b.keepId);

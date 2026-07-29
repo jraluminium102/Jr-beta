@@ -30,8 +30,8 @@ declare
   v_priced     numeric := null;
   v_boq        int := 0;
 begin
-  -- สิทธิ์: แอดมินเท่านั้น (RPC security definer ต้องเช็คเอง)
-  if not public.has_role('ADMIN') then
+  -- สิทธิ์: แอดมิน + สโตร์ (RPC security definer ต้องเช็คเอง) · สโตร์รวมได้แต่ไม่เห็น/ไม่ตั้งราคา (fill-price เงียบได้ถ้าตัวลบมีราคา)
+  if not public.has_role('ADMIN', 'STORE') then
     raise exception 'forbidden';
   end if;
 
@@ -108,7 +108,8 @@ begin
     where id = p_keep;
 
   -- 5) เติมราคา เฉพาะเมื่อ keep ยังไม่มีราคา (fill-missing — ไม่ตีราคาคงคลังใหม่)
-  if p_adopt_price then
+  --    ตั้งราคาได้เฉพาะแอดมิน/บัญชี (สโตร์รวมได้แต่ไม่ตั้งราคา — กันตั้งราคาผ่านช่องนี้)
+  if p_adopt_price and public.has_role('ADMIN', 'ACCOUNTING') then
     if v_keep.is_weight_based then
       if coalesce(v_keep.price_per_kg, 0) = 0 and v_max_kg > 0 then
         insert into public.stock_prices (stock_item_id, price_per_kg, unit_cost, note, created_by)

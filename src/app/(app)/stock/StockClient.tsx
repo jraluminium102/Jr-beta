@@ -32,9 +32,9 @@ async function uploadImage(file: File): Promise<string> {
 type JobHit = StockJob;
 
 export default function StockClient({
-  initial, categories: catsInit, canWrite, canPrice, canViewCost, isAdmin,
+  initial, categories: catsInit, canWrite, canPrice, canViewCost, isAdmin, canMerge = false,
 }: {
-  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean;
+  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; canMerge?: boolean;
 }) {
   const [list, setList] = useState<StockItem[]>(initial);
   const [cats, setCats] = useState<StockCategory[]>(catsInit);
@@ -158,7 +158,7 @@ export default function StockClient({
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${boqOnly ? "bg-emerald-600 text-white" : "glass-soft text-ink-2"}`}>
               ✂️ ใช้ในใบตัด {boqCount > 0 ? `(${boqCount})` : ""}
             </button>
-            {isAdmin && (
+            {canMerge && (
               <button onClick={() => setDupOnly((v) => !v)} title="สต็อก 0 แต่ผูกใบตัด/คิดราคา — น่าจะเป็นตัวซ้ำที่ควรยุบรวม"
                 className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${dupOnly ? "bg-amber-500 text-white" : "glass-soft text-ink-2"}`}>
                 🔀 น่าจะซ้ำ {dupCount > 0 ? `(${dupCount})` : ""}
@@ -206,7 +206,7 @@ export default function StockClient({
           ) : sel ? (
             <ItemDetail
               key={sel.id} item={sel} moves={moves} prices={prices} cats={cats}
-              canWrite={canWrite} canPrice={canPrice} canViewCost={canViewCost} isAdmin={isAdmin}
+              canWrite={canWrite} canPrice={canPrice} canViewCost={canViewCost} isAdmin={isAdmin} canMerge={canMerge}
               onManageCat={() => setManageCat(true)}
               onOpenMerge={() => setMerging(true)}
               onChanged={() => selectItem(sel)}
@@ -242,10 +242,10 @@ function Thumb({ url, active, size = 40 }: { url: string; active?: boolean; size
 
 // ── รายละเอียดวัสดุ + เคลื่อนไหว + ต้นทุน/ราคา ──
 function ItemDetail({
-  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onOpenMerge, onChanged, onItemPatched, onDeleted,
+  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, canMerge, onManageCat, onOpenMerge, onChanged, onItemPatched, onDeleted,
 }: {
   item: StockItem; moves: StockMove[]; prices: StockPrice[]; cats: StockCategory[];
-  canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; onManageCat: () => void; onOpenMerge: () => void; onChanged: () => void;
+  canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; canMerge: boolean; onManageCat: () => void; onOpenMerge: () => void; onChanged: () => void;
   onItemPatched: (it: StockItem) => void; onDeleted: (id: number) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -344,7 +344,7 @@ function ItemDetail({
               <Icon name="pencil" size={14} /> {editOpen ? "ปิดการแก้ไข" : "แก้ข้อมูลวัสดุ (ชื่อ/หมวด/หน่วย/รูป/น้ำหนัก)"}
             </button>
             <div className="flex items-center gap-3">
-              {isAdmin && (
+              {canMerge && (
                 <button onClick={onOpenMerge}
                   className="press text-sm text-amber-600 hover:text-amber-700 font-semibold inline-flex items-center gap-1.5">
                   🔀 รวมรายการซ้ำเข้าตัวนี้
