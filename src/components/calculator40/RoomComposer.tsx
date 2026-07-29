@@ -22,7 +22,7 @@
  *   floor/fan/services = flat ตรงมติ 16มิ.ย. (สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. · SPC กรอกเรต · min 5 · ลด10%≥20)
  *   roomTotal = ceil100(Σ sideTotal + roofTotal + ceilTotal + floorTotal + fanTotal + servicesTotal + svcTotal + roomColorPremium)
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
@@ -97,6 +97,10 @@ const WALL_TYPES: { key: Side extends { kind: "wall" } ? Side["wallType"] : neve
   { key: "smartboard", label: "สมาร์ทบอร์ด 12มม. (R4.0)" },
   { key: "isowall", label: "ไอโซวอล 100มม. (R4.0)" },
 ];
+
+// ทรงหลังคาในห้อง (สลับ product จริงเหมือน G3) · มีผลราคา (คนละ BOM)
+const ROOF_SHAPES: [string, string][] = [["roof", "กันสาด"], ["roof_gable", "จั่ว"], ["roof_slide", "เลื่อน"]];
+const ROOF_SHAPE_LABEL: Record<string, string> = { roof: "กันสาด", roof_gable: "จั่ว", roof_slide: "เลื่อน" };
 
 const CEIL_TYPES: { key: string; label: string; r4id?: string }[] = [
   { key: "smooth", label: "ฉาบเรียบ", r4id: "ceil_gypsum" },
@@ -272,11 +276,24 @@ export default function RoomComposer({
 
   // หลังคา
   const [roofOn, setRoofOn] = useState(!!ini.roofOn);
+  // ทรงหลังคา (กันสาด/จั่ว/เลื่อน) — สลับ product จริงเหมือน G3 · มีผลราคา (คนละ BOM)
+  const [roofShapeId, setRoofShapeId] = useState<string>(ini.roofShapeId ?? "roof");
   const [roofW, setRoofW] = useState(ini.roofW ?? "4");
   const [roofL, setRoofL] = useState(ini.roofL ?? "3");
   const [roofMaterial, setRoofMaterial] = useState(ini.roofMaterial ?? "ไวนิล");
   const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>(() => (Array.isArray(ini.roofSegs) ? ini.roofSegs : []));
   const [roofAddons, setRoofAddons] = useState<Record<string, any>>(() => ini.roofAddons || {});
+  // product ของทรงที่เลือก (roof/roof_gable/roof_slide มีอยู่ครบใน products.mjs)
+  const roofProd = (PRODUCTS as any)[roofShapeId] || (PRODUCTS as any).roof;
+  const roofIsAwning = roofShapeId === "roof"; // มีเฉพาะกันสาดที่ทำ "หลายช่วง (ขยัก)"
+  const roofShapeLabel = ROOF_SHAPE_LABEL[roofShapeId] || "";
+  // สลับทรง → รีเซ็ตวัสดุถ้าทรงใหม่ไม่มีวัสดุนั้น (จั่ว/เลื่อน materials ≠ กันสาด)
+  useEffect(() => {
+    const mats: string[] = roofProd.materials || [];
+    if (mats.length && !mats.includes(roofMaterial)) setRoofMaterial(roofProd.defMaterial || mats[0]);
+    if (!roofIsAwning && roofSegs.length) setRoofSegs([]); // ขยักมีเฉพาะกันสาด
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roofShapeId]);
 
   // ฝ้า
   const [ceilOn, setCeilOn] = useState(!!ini.ceilOn);
@@ -333,22 +350,24 @@ export default function RoomComposer({
 
   const roofTotal = useMemo(() => {
     if (!roofOn) return 0;
-    const prod = (PRODUCTS as any).roof;
+    const prod = roofProd;
     if (!prod) return 0;
     const w = Number(roofW) || 4, l = Number(roofL) || 3;
+    // เลื่อน (roof_slide) จำนวนบานเริ่ม 2 · อื่น ๆ 1
+    const pnl = prod.defaults?.p ?? 1;
     const r: any = computeCost(pb, prod, {
-      w: w * 100, h: l * 100, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
+      w: w * 100, h: l * 100, p: pnl, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
     });
     let t = r.sell.withInstall;
-    // หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิดตามขนาดจริง วัสดุ/สีตามช่วงหลัก (ตรง Calculator40Client roofSegments)
-    roofSegs.forEach((sg) => {
+    // หลังคาหลายช่วง (ขยัก) — เฉพาะกันสาด · ช่วงเพิ่มคิดตามขนาดจริง วัสดุ/สีตามช่วงหลัก
+    if (roofIsAwning) roofSegs.forEach((sg) => {
       const sw = (Number(sg.w) || 0) * 100, sh = (Number(sg.l) || 0) * 100;
       if (!(sw > 0 && sh > 0)) return;
       const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {} });
       t += sr.sell.withInstall;
     });
     return t;
-  }, [roofOn, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct]);
+  }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct]);
 
   const ceilTotal = useMemo(() => {
     if (!ceilOn) return 0;
@@ -392,7 +411,7 @@ export default function RoomComposer({
   }), [sides, mainGlass, mainColor]);
 
   // รายละเอียดหลังคา/ฝ้า (ชนิด+ขนาด) → ขึ้นใบเสนอราคา (เดิมมีแค่ยอด ฿)
-  const roofDesc = roofOn ? `หลังคา ${roofMaterial} ${roofW}×${roofL} ม.` : "";
+  const roofDesc = roofOn ? `หลังคา${roofShapeLabel} ${roofMaterial} ${roofW}×${roofL} ม.` : "";
   const ceilDesc = ceilOn ? `ฝ้า ${CEIL_TYPES.find((t) => t.key === ceilType)?.label || ceilType} ${ceilW}×${ceilL} ม.` : "";
 
   // สเปคสรุป (หมวด "รายละเอียดงาน") — มุ้ง(ด้านไหน) / หลังคา(วัสดุ+รางน้ำ ฯลฯ) · สีอลู+กระจก เติมฝั่ง client
@@ -402,16 +421,16 @@ export default function RoomComposer({
     if (mosqSides.length) out.push(`มุ้ง: ด้าน ${mosqSides.join(", ")}`);
     if (roofOn) {
       const extras = addonSummary(roofAddons).replace(/^ \+ /, "");
-      out.push(`หลังคา: ${roofMaterial}${extras ? ` (${extras})` : ""}`);
+      out.push(`หลังคา${roofShapeLabel}: ${roofMaterial}${extras ? ` (${extras})` : ""}`);
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sides, roofOn, roofMaterial, roofAddons]);
+  }, [sides, roofOn, roofShapeId, roofMaterial, roofAddons]);
 
   // สแนป state ทั้งห้อง (0093) — parent เก็บเป็น "สูตร" ในใบเสนอ · โหลดกลับผ่าน prop initial
   const savedState = {
     sides, sideColorOvr,
-    roofOn, roofW, roofL, roofMaterial, roofSegs, roofAddons,
+    roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons,
     ceilOn, ceilType, ceilW, ceilL, ceilInsul, ceilPos, ceilDir,
     floorOn, floorMat, floorW, floorL, floorRate, floorDisc,
     fanOn, fanQty, fanPrice, services,
@@ -808,8 +827,20 @@ export default function RoomComposer({
             </div>
             {roofOn && (
               <div className="mt-2 space-y-2.5">
+                {/* ทรงหลังคา (กันสาด/จั่ว/เลื่อน) — สลับ product จริงเหมือน G3 · มีผลราคา */}
+                <div>
+                  <span className="text-xs font-medium text-ink-3">ทรงหลังคา</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {ROOF_SHAPES.filter(([pid]) => (PRODUCTS as any)[pid]).map(([pid, label]) => (
+                      <button key={pid} type="button" onClick={() => setRoofShapeId(pid)}
+                        className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[32px] ${roofShapeId === pid ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap text-sm">
-                  <span className="text-xs text-ink-3">กว้าง×ยาว</span>
+                  <span className="text-xs text-ink-3">{roofIsAwning ? "กว้าง×ยื่น" : "กว้าง×ลึก"}</span>
                   <input type="number" step={0.1} value={roofW} onChange={(e) => setRoofW(e.target.value)}
                     className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
                   <span className="text-ink-3">×</span>
@@ -822,11 +853,12 @@ export default function RoomComposer({
                   <span className="text-xs font-medium text-ink-3">วัสดุมุงหลังคา</span>
                   <select value={roofMaterial} onChange={(e) => setRoofMaterial(e.target.value)}
                     className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
-                    {((PRODUCTS as any).roof.materials || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
+                    {(roofProd.materials || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </label>
 
-                {/* หลังคาหลายช่วง (ขยัก) */}
+                {/* หลังคาหลายช่วง (ขยัก) — เฉพาะกันสาด */}
+                {roofIsAwning && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-ink-2">หลังคาหลายช่วง (ขยัก)</span>
@@ -848,17 +880,18 @@ export default function RoomComposer({
                   ))}
                   {roofSegs.length > 0 && <p className="text-[11px] text-ink-3">รวมพื้นที่หลังคา ≈ {fmtNum(roofArea)} ตร.ม. (ของเสริมด้านล่างคิดที่ช่วงหลัก)</p>}
                 </div>
+                )}
 
-                {/* ของเสริมหลังคาเต็ม (รางน้ำ/เสา/เลื่อน+มอเตอร์/ซ่อนสโลป/ครอบ/sealer/ฝ้าใต้หลังคา ฯลฯ) — reuse AddonsSection ตรง prod.roof.addons */}
+                {/* ของเสริมหลังคาเต็ม (รางน้ำ/เสา/เลื่อน+มอเตอร์/ซ่อนสโลป/ครอบ/sealer/ฝ้าใต้หลังคา ฯลฯ) — ตาม addons ของทรงที่เลือก */}
                 <AddonsSection
-                  prod={(PRODUCTS as any).roof}
+                  prod={roofProd}
                   addons={roofAddons}
                   setAddons={setRoofAddons}
                   area={roofArea}
                   W={Number(roofW) || 4}
-                  movePanes={1}
+                  movePanes={roofProd.defaults?.p ?? 1}
                   color={resolveAluColor(mainColor).bake}
-                  form="หลังคาเพิง"
+                  form={roofProd.defForm}
                 />
               </div>
             )}

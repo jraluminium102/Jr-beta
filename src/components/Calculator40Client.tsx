@@ -963,8 +963,18 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
               {!prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
-                  <Field label="สูง (ซม.)" value={h} onChange={setH} />
+                  {/* หลังคา: กรอกเป็นเมตร + ป้าย "ยื่น" (เจ้าของขอ) · อื่น ๆ กรอก ซม. ป้าย "สูง" */}
+                  {prod.roofShape ? (
+                    <>
+                      <MetersField label="ความกว้าง (ม.)" cm={w} onCm={setW} />
+                      <MetersField label="ยื่น (ม.)" cm={h} onCm={setH} />
+                    </>
+                  ) : (
+                    <>
+                      <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
+                      <Field label="สูง (ซม.)" value={h} onChange={setH} />
+                    </>
+                  )}
                   {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
                     <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                   ) : <div />}
@@ -1610,6 +1620,21 @@ function Field({ label, value, onChange, narrow, placeholder }: { label: string;
       <input type="number" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
         className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none tabular-nums" />
     </label>
+  );
+}
+
+// ช่องกรอกหน่วย "เมตร" ที่ผูกกับ state หน่วย ซม. (สำหรับหลังคา — เจ้าของขอกรอกเป็นเมตร)
+//   เก็บ buffer เมตรในตัวเอง (พิมพ์ทศนิยม "4." ได้) · แปลง ×100 → ซม. ก่อนยัดเข้า state (engine ไม่แตะ · parity ไม่พัง)
+function MetersField({ label, cm, onCm }: { label: string; cm: string; onCm: (cm: string) => void }) {
+  const toM = (c: string) => (c === "" ? "" : String(Number(c) / 100));
+  const [txt, setTxt] = useState(toM(cm));
+  useEffect(() => {
+    const m = toM(cm);
+    // อัปเดต buffer เมื่อ cm เปลี่ยนจากภายนอก (สลับรุ่น/โหลดสูตร) แต่คงไว้ถ้ากำลังพิมพ์ค่าเดียวกัน (เช่น "4.")
+    setTxt((prev) => (prev !== "" && Number(prev) === Number(m) ? prev : m));
+  }, [cm]);
+  return (
+    <Field label={label} value={txt} onChange={(v) => { setTxt(v); onCm(v === "" ? "" : String(Math.round((Number(v) || 0) * 100))); }} />
   );
 }
 
