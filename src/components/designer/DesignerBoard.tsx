@@ -287,6 +287,10 @@ export default function DesignerBoard({
     for (const j of filtered) {
       // งาน on_hold ไม่เข้าคอลัมน์
       if (j.on_hold) continue;
+      // drift guard: งานที่เลยมัดจำแล้ว (stage>=8) แต่ design_state ยังไม่ DONE = หลุดมาจาก flow อื่น
+      //   (จดเอง→ผลิต / มัดจำตรง / auto-promote) ไม่ผ่านบอร์ดแบบ → ไม่ใช่งานเขียนแบบ ไม่โชว์ในคอลัมน์ active
+      //   (คอลัมน์ "เสร็จแล้ว" ไม่กระทบ — งานแบบเสร็จ design_state=DONE โชว์ตามเดิม)
+      if (j.design_state !== "DONE" && j.current_stage >= 8) continue;
       if (j.design_state === "DONE") {
         // Board DONE column: show only recent completions (design_end within last 45 days)
         if (!j.design_end || j.design_end < cutoff) continue;
@@ -325,6 +329,12 @@ export default function DesignerBoard({
           (j.job_code ?? "").toLowerCase().includes(q)),
     );
   }, [jobs, cardSearch]);
+
+  // ตัดงานที่หลุดมาจาก flow อื่น (เลยมัดจำแล้ว stage>=8 แต่ design_state ยังไม่ DONE) ออกจากตารางเวลาด้วย
+  const scheduleJobs = useMemo(
+    () => jobs.filter((j) => j.design_state === "DONE" || j.current_stage < 8),
+    [jobs],
+  );
 
   // Total DONE count across all visible cards
   const doneCount = byColumn["DONE"].length;
@@ -451,7 +461,7 @@ export default function DesignerBoard({
         </>
       ) : (
         <DesignerSchedule
-          jobs={jobs}
+          jobs={scheduleJobs}
           designers={designers}
           canWrite={canWrite}
           designerFilter={designerFilter}

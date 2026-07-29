@@ -95,6 +95,11 @@ export async function GET(req: Request) {
     // งาน on_hold ไม่นับใน KPI (ไม่ใช่ active ไม่ใช่ done)
     if (r.on_hold) continue;
 
+    // drift guard: งานที่เลย "มัดจำ" ไปแล้ว (stage >= 8) แต่ design_state ยังไม่ DONE
+    //   = หลุดมาจาก flow อื่น (จดเอง→ผลิต / มัดจำตรง / auto-promote) โดยไม่ผ่านบอร์ดแบบ
+    //   → ไม่ใช่งานเขียนแบบที่ค้างอยู่จริง ไม่นับใน KPI active (กันตัวเลข "งานในมือ" เฟ้อ)
+    if (r.design_state !== "DONE" && r.current_stage >= 8) continue;
+
     if (r.design_state === "DONE") {
       perDesigner[key].done += 1;
     } else {
