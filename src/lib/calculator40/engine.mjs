@@ -499,6 +499,11 @@ export function computeAddon(id, sel, ctx) {
     const n = +sel || 0;
     return n > 0 ? { label: 'ก้านดึงมือ (สำรองไฟดับ) ' + n + ' ชุด', qty: n, unit: 'ชุด', unitPrice: 250, amount: n * 250 } : null;
   }
+  if (id === 'roof_zip') {              // ม่านซิปบนหลังคา (Skylight 100/120) — app คิดผ่าน computeCost(zipscreen) จริง ส่งเข้า opt.roofZipR4 (แบบ mosquito)
+    const r4 = ctx.opt && ctx.opt.roofZipR4;
+    if (!r4 || !(r4.amount > 0)) return null;
+    return { label: r4.label, qty: 1, unit: 'ชุด', unitPrice: r4.amount, amount: r4.amount, cost: r4.cost };
+  }
   // ── ออปชั่นเฟส 2 ② (ราคา R3.9 จาก audit · ติดป้าย R3.9) ──
   if (id === 'cmech') {                 // มือจับ Cmech (ตาราง CMECH_TIERS — แหล่งเดียวกับ UI)
     const t = CMECH_TIERS[sel]; if (!t) return null;

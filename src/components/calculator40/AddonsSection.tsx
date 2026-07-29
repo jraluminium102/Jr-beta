@@ -41,7 +41,7 @@ const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
 // ── กลุ่มออปชั่นเสริม → จัดเข้าหมวด (แค่จัดหน้า ไม่กระทบราคา/engine) — ตรง app.js OPENING/HANDLE/SCREEN/MAIN_EXTRA/AUTO_ADDONS ──
 const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "motor", "awn_tt", "awn_brace"];
 const HANDLE_ADDONS = ["cmech", "stainless", "digihandle"];
-const SCREEN_ADDONS = ["mosquito", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
+const SCREEN_ADDONS = ["mosquito", "roof_zip", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
 const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "elec", "shower_corner", "shower_hw"];
 const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor"];
 const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
@@ -389,6 +389,35 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     return (
       <Field label="ราวจับด้านบน">
         <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "u5", label: 'ยู 5 หุน (+500/ม.)' }, { val: "box", label: 'กล่อง 1"×2" (+600/ม.)' }]} value={A.handrail_grip || "none"} onChange={(v) => set("handrail_grip", v)} />
+      </Field>
+    );
+  }
+  if (ad === "roof_zip") {              // ม่านซิปบนหลังคา (Skylight) — ราคาจาก G7 ม่านซิป (คิดจริงใน Calculator40Client/RoomComposer)
+    const rz = A.roof_zip || "none";
+    return (
+      <Field label="ม่านซิปบนหลังคา" hint="(Skylight · ราคาจาก G7 ม่านซิป)">
+        <div className="space-y-2.5">
+          <ChipRow
+            items={[{ val: "none", label: "ไม่มี" }, { val: "sky100", label: "Skylight 100" }, { val: "sky120", label: "Skylight 120" }]}
+            value={rz}
+            onChange={(v) => set("roof_zip", v)}
+          />
+          {rz !== "none" && (
+            <>
+              <Field label="ผ้า (ความโปร่ง)">
+                <ChipRow
+                  items={[{ val: "5", label: "F05 5% (ขายดี)" }, { val: "10", label: "F10 10%" }, { val: "30", label: "F30 30%" }]}
+                  value={A.rzFab || "5"}
+                  onChange={(v) => set("rzFab", v)}
+                />
+              </Field>
+              <Field label="รีโมทในชุด">
+                <ChipRow items={[{ val: "none", label: "มีรีโมท 1 ตัว" }, { val: "yes", label: "ไม่เอารีโมท (−)" }]} value={A.rzNoRemote || "none"} onChange={(v) => set("rzNoRemote", v)} />
+              </Field>
+              <p className="text-[11px] text-ink-3">คิดราคาจากรุ่นม่านซิป Skylight (รวมมอเตอร์ Skylight ในชุด) · ขนาด = ขนาดหลังคา · ราคาโชว์ในสรุปยอด</p>
+            </>
+          )}
+        </div>
       </Field>
     );
   }

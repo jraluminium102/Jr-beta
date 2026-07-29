@@ -26,6 +26,7 @@ import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
+import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
 import { groupGlass } from "@/lib/calculator40/glass-cats";
@@ -239,12 +240,20 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  // เพิ่ม add-on universal "งานไฟ"(elec) + "บานล่างทึบ"(solid_panel) ให้ทุกประเภทงาน (เจ้าของสั่ง 17ก.ค.69) — augment ที่ชั้น app
-  //   ไม่แตะ products.mjs/verify-r40 (raw PRODUCTS ไม่มี) · ไม่ถูกเลือก → computeAddon คืน null = ราคาไม่ขยับ
+  // เพิ่ม add-on universal ที่ชั้น app (augment · ไม่แตะ products.mjs/verify-r40 · ไม่เลือก → computeAddon null = ราคาไม่ขยับ)
+  //   - "งานไฟ"(elec) + "บานล่างทึบ"(solid_panel) ให้ทุกงาน (เจ้าของสั่ง 17ก.ค.69)
+  //     ยกเว้นม่านซิป (sellZip) — ไม่เกี่ยวกับตัวม่าน (เจ้าของสั่ง 29ก.ค.69 · เอา "ออปชั่นใช้บ่อย" ออกจากม่านซิป)
+  //   - "ม่านซิปบนหลังคา"(roof_zip) เฉพาะรุ่นหลังคา (roof/roof_gable/roof_slide)
   const prodRaw: any = (PRODUCTS as any)[prodId];
-  const prod: any = prodRaw
-    ? { ...prodRaw, addons: [...(prodRaw.addons || []), ...["elec", "solid_panel"].filter((u) => !(prodRaw.addons || []).includes(u))] }
-    : prodRaw;
+  const prod: any = (() => {
+    if (!prodRaw) return prodRaw;
+    const base: string[] = prodRaw.addons || [];
+    const extra = [
+      ...(prodRaw.sellZip ? [] : ["elec", "solid_panel"]),
+      ...(isRoofZipProd(prodRaw) ? ["roof_zip"] : []),
+    ].filter((u) => !base.includes(u));
+    return { ...prodRaw, addons: [...base, ...extra] };
+  })();
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
@@ -381,6 +390,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         profitPct
       );
       if (mqR4) opt.mosquitoR4 = mqR4;
+      // ม่านซิปบนหลังคา (Skylight 100/120) — คิดจากรุ่นม่านซิปจริง (computeCost) แล้วส่งเข้า opt.roofZipR4 (แบบ mosquito)
+      const rzR4 = computeRoofZipR4(addons || {}, { wCm, hCm }, pb, profitPct);
+      if (rzR4) opt.roofZipR4 = rzR4;
       // สีวัสดุมุงหลังคา (label พิมพ์ลงใบ ไม่กระทบราคา) — ตรง app.js calc() บรรทัด 212
       if (prod.sheetColors) { opt.sheetColor = sheetColor || ""; opt.roofMat = true; }
       const r = computeCost(pb, prod, opt);

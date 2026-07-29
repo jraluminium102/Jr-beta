@@ -34,6 +34,8 @@ import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
+// @ts-expect-error — roof-zip helper เป็น ESM JS ล้วน
+import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -138,8 +140,11 @@ function addonSummary(addons: Record<string, any> | undefined): string {
   const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k, v]) => {
     // มุ้ง — โชว์ชนิด (จีบ/เฟรมเล็ก ฯลฯ) เหมือน G1 · แหล่งชื่อเดียวกัน (mosquitoTypeLabel) แก้ที่เดียวมีผลทั้งคู่
     if (k === "mosquito") { const t = mosquitoTypeLabel(v); return t ? `มุ้ง${t}` : "มุ้ง"; }
+    // ม่านซิปบนหลังคา — โชว์รุ่น Skylight · ข้าม "none" + คีย์ช่วย (rzFab/rzNoRemote ไม่ขึ้นชื่อเดี่ยว)
+    if (k === "roof_zip") return v === "none" ? "" : `ม่านซิปหลังคา Skylight ${v === "sky120" ? "120" : "100"}`;
+    if (k === "rzFab" || k === "rzNoRemote") return "";
     return ADDON_LABELS[k] || k;
-  });
+  }).filter(Boolean);
   return on.length ? ` + ${on.join(", ")}` : "";
 }
 
@@ -284,7 +289,15 @@ export default function RoomComposer({
   const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>(() => (Array.isArray(ini.roofSegs) ? ini.roofSegs : []));
   const [roofAddons, setRoofAddons] = useState<Record<string, any>>(() => ini.roofAddons || {});
   // product ของทรงที่เลือก (roof/roof_gable/roof_slide มีอยู่ครบใน products.mjs)
-  const roofProd = (PRODUCTS as any)[roofShapeId] || (PRODUCTS as any).roof;
+  //   + ม่านซิปบนหลังคา (roof_zip) — augment ที่ชั้น app เหมือน G3 (ไม่แตะ products.mjs/verify)
+  const roofProdBase = (PRODUCTS as any)[roofShapeId] || (PRODUCTS as any).roof;
+  const roofProd = useMemo(
+    () =>
+      roofProdBase && isRoofZipProd(roofProdBase) && !(roofProdBase.addons || []).includes("roof_zip")
+        ? { ...roofProdBase, addons: [...(roofProdBase.addons || []), "roof_zip"] }
+        : roofProdBase,
+    [roofProdBase]
+  );
   const roofIsAwning = roofShapeId === "roof"; // มีเฉพาะกันสาดที่ทำ "หลายช่วง (ขยัก)"
   const roofShapeLabel = ROOF_SHAPE_LABEL[roofShapeId] || "";
   // สลับทรง → รีเซ็ตวัสดุถ้าทรงใหม่ไม่มีวัสดุนั้น (จั่ว/เลื่อน materials ≠ กันสาด)
@@ -355,9 +368,13 @@ export default function RoomComposer({
     const w = Number(roofW) || 4, l = Number(roofL) || 3;
     // เลื่อน (roof_slide) จำนวนบานเริ่ม 2 · อื่น ๆ 1
     const pnl = prod.defaults?.p ?? 1;
-    const r: any = computeCost(pb, prod, {
+    const rOpt: any = {
       w: w * 100, h: l * 100, p: pnl, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
-    });
+    };
+    // ม่านซิปบนหลังคา (Skylight) — คิดจากรุ่นม่านซิปจริง ส่งเข้า opt.roofZipR4 (แบบ mosquito)
+    const rzR4 = computeRoofZipR4(roofAddons, { wCm: w * 100, hCm: l * 100 }, pb, profitPct);
+    if (rzR4) rOpt.roofZipR4 = rzR4;
+    const r: any = computeCost(pb, prod, rOpt);
     let t = r.sell.withInstall;
     // หลังคาหลายช่วง (ขยัก) — เฉพาะกันสาด · ช่วงเพิ่มคิดตามขนาดจริง วัสดุ/สีตามช่วงหลัก
     if (roofIsAwning) roofSegs.forEach((sg) => {
