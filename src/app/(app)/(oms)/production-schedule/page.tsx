@@ -21,6 +21,7 @@ export type ProdSet = {
   frame_status: string; measurer_name: string; measure_actual: string | null;
   must_finish_date: string | null; glass_done_date: string | null;
   actual_done_date: string | null; install_date: string | null; note: string;
+  factories?: string[];   // โรงงานผลิต (0114) — ใช้กรองตารางแยกโรง
 };
 type SchedRow = {
   kind: "job" | "adhoc";
@@ -37,6 +38,7 @@ type SchedRow = {
   producer_note: string | null;
   status: string;
   sets?: ProdSet[];
+  allSets?: ProdSet[];   // ชุดเต็มของงาน (ก่อนกรองโรง) — ใช้ตัดสิน "ส่งติดตั้ง" ให้ครบทั้งงานเสมอ
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -153,16 +155,38 @@ export default function ProductionSchedulePage() {
   // ── filter ช่าง ──
   const [producerFilter, setProducerFilter] = useState<string>("");
 
+  // ── filter โรงงาน (ตารางแยกโรง 1 / โรง 3 — ลิงก์เดียว สลับโรงได้) ──
+  const [factoryFilter, setFactoryFilter] = useState<string>("");
+  const factoriesPresent = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of rows) for (const st of (r.sets ?? [])) for (const f of (st.factories ?? [])) if (f) s.add(f);
+    return [...s].sort();
+  }, [rows]);
+  // เลือกโรง → โชว์เฉพาะงานที่มีชุดของโรงนั้น + ตัดชุดให้เหลือเฉพาะโรงนั้น (เฟส/เดดไลน์คิดจากชุดของโรงที่เลือก)
+  //   งานจดเอง (ไม่ผูกโรง) → ซ่อนตอนเลือกโรงเจาะจง · "ทั้งหมด" = ไม่กรอง (เห็นทุกงานเหมือนเดิม)
+  const viewRows = useMemo(() => {
+    if (!factoryFilter) return rows;
+    const out: SchedRow[] = [];
+    for (const r of rows) {
+      if (r.kind !== "job") continue;
+      const matched = (r.sets ?? []).filter((s) => Array.isArray(s.factories) && s.factories.includes(factoryFilter));
+      if (matched.length === 0) continue;
+      // sets = เฉพาะโรงที่เลือก (โชว์/เช็คลิสต์/เฟส) · allSets = ชุดเต็ม (ใช้ gate "ส่งติดตั้ง" กันส่งทั้งงานทั้งที่อีกโรงยังไม่เสร็จ)
+      out.push({ ...r, sets: matched, allSets: r.sets });
+    }
+    return out;
+  }, [rows, factoryFilter]);
+
   // งานพร้อมติดตั้ง (READY) = ผลิตเสร็จ ส่งเข้าหน้าติดตั้งแล้ว → ไม่ต้องรกตารางช่าง (โหมดออฟฟิศยังเห็นในเฟส "พร้อม")
   const readyDoneCount = useMemo(
-    () => rows.filter((r) => r.kind === "job" && r.status === "READY").length,
-    [rows]
+    () => viewRows.filter((r) => r.kind === "job" && r.status === "READY").length,
+    [viewRows]
   );
 
   // โหมดช่าง = บอร์ดคัมบังแนวตั้ง จัดกลุ่มตาม "สเตจ" (derivePhase) · ซ่อน READY · ในสเตจเรียงตามเดดไลน์ (ด่วนก่อน)
   const groups = useMemo(() => {
     const ft = producerFilter.trim();
-    const filtered = rows.filter((r) => {
+    const filtered = viewRows.filter((r) => {
       if (r.kind === "job" && r.status === "READY") return false;   // พร้อมติดตั้ง → หลุดไปหน้าติดตั้ง
       if (ft && (r.producer_note ?? "").trim() !== ft) return false;
       return true;
@@ -175,14 +199,14 @@ export default function ProductionSchedulePage() {
     }
     for (const arr of map.values()) arr.sort((a, b) => (a.due_date ?? "zzz").localeCompare(b.due_date ?? "zzz"));
     return CHANG_PHASES.filter((p) => map.has(p)).map((p) => [p, map.get(p)!] as [string, SchedRow[]]);
-  }, [rows, producerFilter]);
+  }, [viewRows, producerFilter]);
 
   // นับชุดที่ผลิตเสร็จแล้วแต่ยังรอ QC ตรวจก่อนใส่กระจก (แจ้งเตือนเด่นๆ บนสุด)
   const waitQcCount = useMemo(
-    () => rows.reduce((n, r) => n + (r.sets ?? []).filter(
+    () => viewRows.reduce((n, r) => n + (r.sets ?? []).filter(
       (s) => s.frame_done === "ผลิตเสร็จ" && s.qc_before_glass !== "ผ่าน" && s.glass_installed !== "ใส่แล้ว"
     ).length, 0),
-    [rows]
+    [viewRows]
   );
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
@@ -226,9 +250,13 @@ export default function ProductionSchedulePage() {
   };
 
   // ทุกชุดพร้อมส่งติดตั้ง = QC หลังใส่กระจก "ผ่าน" + ใส่มุ้งครบ (ชุดที่มีมุ้ง) ทุกชุด
-  const allSetsReady = (r: SchedRow) =>
-    !!r.sets && r.sets.length > 0 &&
-    r.sets.every((s) => s.qc_after_glass === "ผ่าน" && (!s.screen_type?.trim() || s.screen_installed === "ใส่แล้ว"));
+  // ⚠ ใช้ "ชุดเต็มของงาน" (allSets) เสมอ — ตอนกรองโรง r.sets เหลือเฉพาะโรคที่เลือก
+  //   ถ้าเช็คแค่ r.sets จะส่งทั้งงานเข้าติดตั้งได้ทั้งที่อีกโรงยังผลิตไม่เสร็จ (BUG-1)
+  const allSetsReady = (r: SchedRow) => {
+    const ss = r.allSets ?? r.sets;
+    return !!ss && ss.length > 0 &&
+      ss.every((s) => s.qc_after_glass === "ผ่าน" && (!s.screen_type?.trim() || s.screen_installed === "ใส่แล้ว"));
+  };
 
   // ปุ่มเลื่อนสถานะสำหรับงานในระบบ (kind==='job') — QC ทำในเช็คลิสต์การ์ด ไม่มีเฟส รอ QC แยก
   const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
@@ -325,6 +353,22 @@ export default function ProductionSchedulePage() {
                 className="focusable px-4 py-1.5 rounded-lg text-[13px] font-semibold min-h-[34px] transition"
                 style={mode === m ? { background: "#fff", color: IOS.ink, boxShadow: "0 1px 3px rgba(0,0,0,.12)" } : { color: IOS.ink2 }}>{l}</button>
             ))}
+          </div>
+        )}
+
+        {/* สลับโรงงาน — ลิงก์เดียว ดูคิวแยกโรง (โชว์เฉพาะเมื่อมีชุดติดโรงไว้) */}
+        {factoriesPresent.length > 0 && (
+          <div className="flex gap-0.5 rounded-[10px] p-0.5" style={{ background: "#e9e9ee" }}>
+            {["", ...factoriesPresent].map((f) => {
+              const on = factoryFilter === f;
+              return (
+                <button key={f || "all"} onClick={() => { setFactoryFilter(f); setExpandedId(null); }}
+                  className="focusable px-3.5 py-1.5 rounded-lg text-[13px] font-semibold min-h-[34px] transition"
+                  style={on ? { background: "#fff", color: IOS.ink, boxShadow: "0 1px 3px rgba(0,0,0,.12)" } : { color: IOS.ink2 }}>
+                  {f === "" ? "ทุกโรง" : (on ? "🏭 " : "") + f}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -587,7 +631,7 @@ export default function ProductionSchedulePage() {
         </div>
       ) : (
         (() => {
-          const base = producerFilter.trim() ? rows.filter((r) => (r.producer_note ?? "").trim() === producerFilter.trim()) : rows;
+          const base = producerFilter.trim() ? viewRows.filter((r) => (r.producer_note ?? "").trim() === producerFilter.trim()) : viewRows;
           const counts: Record<string, number> = {};
           base.forEach((r) => { const p = derivePhase(r); counts[p] = (counts[p] || 0) + 1; });
           const list = (phaseFilter ? base.filter((r) => derivePhase(r) === phaseFilter) : base)
