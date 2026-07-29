@@ -101,6 +101,20 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     if (!confirm("ลบชุดงานนี้?")) return;
     await api.del(`/production-sets/${id}`); qc.invalidateQueries({ queryKey: key });
   }
+  // ใส่วันที่/คนวัด ทีเดียว → เติมทุกชุดของงานนี้ (แก้รายชุดทีหลังได้)
+  async function fillAll(field: string, value: string) {
+    try {
+      await api.post("/production-sets/fill-all", { job_id: jobId, field, value });
+      qc.invalidateQueries({ queryKey: key });
+      setSaved(true); setTimeout(() => setSaved(false), 1600);
+    } catch { /* ignore */ }
+  }
+  // ค่าที่ทุกชุดตรงกัน → โชว์ในแถบรวม · ถ้าต่างกัน = "" (โชว์ placeholder "หลายค่า")
+  const commonVal = (field: string) => {
+    if (!sets.length) return "";
+    const first = String(sets[0][field] ?? "");
+    return sets.every((s) => String(s[field] ?? "") === first) ? first : "";
+  };
 
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
@@ -187,7 +201,35 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       ) : sets.length === 0 ? (
         <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>ยังไม่มีชุดงาน — กด "เพิ่มชุด" เพื่อเริ่มกรอกแผนผลิต</div>
       ) : (
-        <div className="space-y-3">
+        <>
+          {/* 📅 ใส่วันที่ทีเดียว → เติมทุกชุด (แก้รายชุดด้านล่างได้) */}
+          {canWrite && (
+            <div className="mb-3 rounded-xl border border-sky-300/25 bg-sky-500/10 p-3">
+              <div className="text-[13px] text-sky-100 mb-2 font-medium">📅 ใส่วันที่ทีเดียว — เติมให้ทุกชุด <span className="text-sky-200/60 font-normal">(แก้รายชุดด้านล่างได้)</span></div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {([
+                  ["measure_actual", "วัดจริง", "date"],
+                  ["measurer_name", "คนวัด", "text"],
+                  ["must_finish_date", "ต้องผลิตเสร็จ", "date"],
+                  ["glass_done_date", "ใส่กระจกเสร็จ", "date"],
+                  ["install_date", "ติดตั้ง", "date"],
+                ] as const).map(([f, label, type]) => {
+                  const cv = commonVal(f);
+                  const mixed = !cv && sets.some((s) => s[f]);
+                  return (
+                    <label key={f} className="block">
+                      <span className="block text-[13px] mb-1" style={{ color: "var(--t-low)" }}>{label}</span>
+                      <input key={f + cv} type={type} defaultValue={cv} placeholder={mixed ? "หลายค่า" : ""}
+                        onBlur={(e) => e.target.value !== cv && fillAll(f, e.target.value)}
+                        onChange={type === "date" ? (e) => e.target.value !== cv && fillAll(f, e.target.value) : undefined}
+                        className={fieldCls + " placeholder-amber-200/60"} />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          <div className="space-y-3">
           {sets.map((s) => (
             <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center gap-2 mb-2.5">
@@ -230,7 +272,8 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               <Plus size={16} /> เพิ่มชุด
             </button>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
