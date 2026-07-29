@@ -64,6 +64,7 @@ export default function InstallationPage() {
   const [addAt, setAddAt] = useState<{ date: string; job_id?: string; custom_title?: string } | null>(null);
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
   const [prebook, setPrebook] = useState<Producing | null>(null);   // งานยังผลิตไม่เสร็จ ที่กำลังจองวันล่วงหน้า
+  const [readyPick, setReadyPick] = useState<{ job_id: string; name: string } | null>(null); // เลือกทำอะไรกับชิปพร้อมติดตั้ง
   const [busy, setBusy] = useState(false);
   // จัดทีมช่างรายวัน (แท็บใหม่) — วันที่ที่กำลังดู/แก้ไข เชื่อมกับปฏิทินเดือนผ่าน badge ในช่องวัน
   const [crewDate, setCrewDate] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
@@ -174,6 +175,15 @@ export default function InstallationPage() {
     catch (e: any) { alert(e?.message ?? "ปิดงานไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
+  // "จบงานเลย" จากชิปพร้อมติดตั้ง — ปิดงานตรง ๆ ไม่ต้องลงคิว/หาในปฏิทิน (เจ้าของสั่ง 28 ก.ค.)
+  async function completeJob(job_id: string, name: string) {
+    if (!window.confirm(`ยืนยันว่าติดตั้ง "${name}" เสร็จแล้ว?\nงานนี้จะถูกปิดเป็น "จบงาน" (ปิดทันที ไม่ต้องลงคิว)`)) return;
+    setBusy(true);
+    try { await api.post(`/jobs/${job_id}/install-complete`, {}); setReadyPick(null); await refetch(); }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (e: any) { alert(e?.message ?? "ปิดงานไม่สำเร็จ"); }
+    finally { setBusy(false); }
+  }
 
   // ── ข้อความส่ง LINE (พรุ่งนี้ · จัดกลุ่มตามหัวหน้าช่าง) ──
   function lineText() {
@@ -236,11 +246,11 @@ export default function InstallationPage() {
 
           {/* งานพร้อมติดตั้ง รอจัดคิว */}
           <div className="glass-card rounded-2xl p-3 mb-3">
-            <div className="text-xs mb-2" style={{ color: "var(--t-low)" }}>พร้อมติดตั้ง (ผลิตเสร็จ รอจัดคิว) · {ready.length} งาน — แตะเพื่อลงคิว</div>
+            <div className="text-xs mb-2" style={{ color: "var(--t-low)" }}>พร้อมติดตั้ง (ผลิตเสร็จ รอจัดคิว) · {ready.length} งาน — แตะชื่อเพื่อ <b className="text-white/80">ลงคิว</b> หรือ <b className="text-emerald-300">จบงานเลย</b></div>
             <div className="flex gap-2 flex-wrap">
               {ready.map((r) => (
                 <button key={r.id} disabled={!canWrite}
-                  onClick={() => setAddAt({ date: today, job_id: r.job_id })}
+                  onClick={() => setReadyPick({ job_id: r.job_id, name: jobName(r.jobs) })}
                   className="text-xs px-2.5 py-1.5 rounded-lg bg-white/9 border border-white/12 text-white disabled:opacity-50">
                   {jobName(r.jobs)}{jobArea(r.jobs) ? ` · ${jobArea(r.jobs)}` : ""}
                 </button>
@@ -426,6 +436,18 @@ export default function InstallationPage() {
 
       {prebook && (
         <PrebookModal job={prebook} busy={busy} onClose={() => setPrebook(null)} onSave={savePrebook} />
+      )}
+
+      {/* เลือกทำอะไรกับงานพร้อมติดตั้ง — ลงคิว หรือ จบงานเลย (ปิดตรง ไม่ต้องหาในปฏิทิน) */}
+      {readyPick && (
+        <Modal title={readyPick.name} onClose={() => setReadyPick(null)}>
+          <p className="text-xs mb-3" style={{ color: "var(--t-low)" }}>งานพร้อมติดตั้ง — เลือกดำเนินการ</p>
+          <button onClick={() => { const j = readyPick.job_id; setReadyPick(null); setAddAt({ date: today, job_id: j }); }}
+            className="w-full mb-2 py-2.5 rounded-xl bg-white/16 text-white font-medium">📅 ลงคิวติดตั้ง (จัดวัน/ช่าง)</button>
+          <button disabled={busy} onClick={() => completeJob(readyPick.job_id, readyPick.name)}
+            className="w-full py-3 rounded-xl bg-emerald-500/90 text-white font-bold disabled:opacity-50">✓ จบงานเลย (ติดตั้งเสร็จแล้ว)</button>
+          <p className="text-[11px] mt-2" style={{ color: "var(--t-low)" }}>“จบงานเลย” = ปิดงานทันทีโดยไม่ต้องลงคิว (กรณีติดตั้งไปแล้ว/มาปิดย้อนหลัง)</p>
+        </Modal>
       )}
 
       {detail && (
