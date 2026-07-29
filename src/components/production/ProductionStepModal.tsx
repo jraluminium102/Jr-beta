@@ -230,9 +230,14 @@ function SummaryChips({ row }: { row: ProdRow }) {
   );
 }
 
+// ทุกสถานะผลิต (สำหรับ "แก้เฟส" แอดมิน) — เรียงตาม flow
+const ALL_PROD_STATUSES: ProdStatus[] = ["PENDING_MEASURE","MEASURED","PENDING_MEETING","REVISING","PENDING_CONFIRM","QUEUED","MANUFACTURING","QC","READY","ISSUE"];
+
 export function ProductionStepModal({
   prod,
   canWrite,
+  canAdmin = false,
+  canUndeposit = false,
   onClose,
   onSavedInPlace,
   onSavedAndClose,
@@ -241,6 +246,8 @@ export function ProductionStepModal({
 }: {
   prod: ProdRow;
   canWrite: boolean;
+  canAdmin?: boolean;      // ADMIN — แก้เฟสงาน (override)
+  canUndeposit?: boolean;  // ADMIN/ACCOUNTING (finance:void) — ถอยมัดจำ
   onClose: () => void;
   onSavedInPlace?: () => void;
   onSavedAndClose?: () => void;
@@ -273,6 +280,36 @@ export function ProductionStepModal({
 
   // collapsible ประวัติ
   const [histOpen, setHistOpen] = useState(false);
+
+  // ── เครื่องมือแอดมิน (แก้กรณีกดผิด) ──
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [ovStatus, setOvStatus] = useState<ProdStatus>(prod.status);
+  const [ovBusy, setOvBusy] = useState(false);
+  const [undepOpen, setUndepOpen] = useState(false);
+  const [undepReason, setUndepReason] = useState("");
+  const [undepBusy, setUndepBusy] = useState(false);
+  const [adminErr, setAdminErr] = useState<string | null>(null);
+
+  const doOverride = async () => {
+    if (ovStatus === prod.status) { setAdminErr("เลือกเฟสใหม่ที่ต่างจากปัจจุบันก่อน"); return; }
+    if (!confirm(`ย้ายเฟสงานเป็น "${PROD_STATUS[ovStatus]}"?\n(เครื่องมือแก้กรณีกดผิด — ข้ามลำดับปกติ)`)) return;
+    setAdminErr(null); setOvBusy(true);
+    try {
+      await api.post(`/production/${prod.id}/override-status`, { status: ovStatus });
+      if (onSavedAndClose) onSavedAndClose(); else onClose();
+    } catch (e) { setAdminErr(e instanceof ApiError ? e.message : "แก้เฟสไม่สำเร็จ"); }
+    finally { setOvBusy(false); }
+  };
+
+  const doUndeposit = async () => {
+    if (!undepReason.trim()) { setAdminErr("กรุณาระบุเหตุผลการถอยมัดจำ"); return; }
+    setAdminErr(null); setUndepBusy(true);
+    try {
+      await api.post(`/jobs/${prod.job_id}/undeposit`, { reason: undepReason.trim() });
+      if (onSavedAndClose) onSavedAndClose(); else onClose();
+    } catch (e) { setAdminErr(e instanceof ApiError ? e.message : "ถอยมัดจำไม่สำเร็จ"); }
+    finally { setUndepBusy(false); }
+  };
 
   // ── P0-1A: ดึง schedule เฉพาะตอน PENDING_MEASURE (React Query dedupe กับหน้า measure-schedule) ──
   const { data: scheduleRes } = useQuery({
@@ -829,6 +866,79 @@ export function ProductionStepModal({
             )}
 
             {err && <p role="alert" className="mt-3 text-[13px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{err}</p>}
+
+            {/* ── เครื่องมือแอดมิน: แก้เฟส / ถอยมัดจำ (กรณีใส่ผิด) ── */}
+            {(canAdmin || canUndeposit) && (
+              <div className="mt-4">
+                <button onClick={() => setAdminOpen((v) => !v)} aria-expanded={adminOpen}
+                  className="focusable pressable w-full flex items-center justify-between gap-2 text-[12px] px-3 py-2 rounded-xl glass-card border border-white/10 text-white/55 hover:text-white/80">
+                  <span>🔧 เครื่องมือแอดมิน (แก้กรณีใส่ผิด)</span>
+                  <ChevronRight size={14} className={`transition-transform ${adminOpen ? "rotate-90" : ""}`} />
+                </button>
+                {adminOpen && (
+                  <div className="mt-2 space-y-3">
+                    {/* แก้เฟส */}
+                    {canAdmin && (
+                      <div className="glass-card rounded-2xl p-4 border border-white/10">
+                        <div className="text-[13px] font-semibold text-white mb-2">ย้ายเฟสงาน (แก้กรณีกดผิด)</div>
+                        <p className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>ข้ามลำดับปกติได้ เช่น ย้ายจาก "รอติดตั้ง" กลับ "รอวัดจริง"</p>
+                        <div className="flex gap-2">
+                          <select value={ovStatus} onChange={(e) => setOvStatus(e.target.value as ProdStatus)}
+                            aria-label="เลือกเฟสใหม่"
+                            className="flex-1 min-w-0 rounded-xl bg-white text-gray-900 border border-white/15 px-3 py-2.5 text-sm min-h-[44px]">
+                            {ALL_PROD_STATUSES.map((s) => (
+                              <option key={s} value={s}>{PROD_STATUS[s]}{s === prod.status ? " (ปัจจุบัน)" : ""}</option>
+                            ))}
+                          </select>
+                          <button onClick={doOverride} disabled={ovBusy || ovStatus === prod.status}
+                            className="focusable pressable shrink-0 rounded-xl px-4 text-sm font-semibold text-white bg-sky-500 min-h-[44px] disabled:opacity-40">
+                            {ovBusy ? "…" : "ย้ายเฟส"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ถอยมัดจำ */}
+                    {canUndeposit && (
+                      <div className="glass-card rounded-2xl p-4 border border-rose-300/25">
+                        <div className="text-[13px] font-semibold text-rose-100 mb-1">ถอยมัดจำ · ลบออกจากงานผลิต</div>
+                        <p className="text-[11px] mb-2 text-rose-200/80">
+                          ดึงงานออกจากผลิต + ยกเลิกมัดจำ (void ไม่ลบทิ้ง) → กลับเป็น "ส่งใบเสนอแล้ว" ·
+                          บล็อกอัตโนมัติถ้ามีใบเสร็จ/ใบวางบิล/รับเงินงวดอื่น/ตัดสต๊อกแล้ว
+                        </p>
+                        {!undepOpen ? (
+                          <button onClick={() => { setUndepOpen(true); setAdminErr(null); }}
+                            className="focusable pressable w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-rose-100 bg-rose-500/20 border border-rose-300/30 min-h-[44px]">
+                            ถอยมัดจำงานนี้…
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            {prod.status !== "PENDING_MEASURE" && (
+                              <div className="text-[11px] text-amber-200 bg-amber-500/12 border border-amber-300/25 rounded-lg px-2.5 py-1.5 flex items-start gap-1.5">
+                                <TriangleAlert size={13} className="shrink-0 mt-0.5" /> งานนี้เข้าเฟสผลิตแล้ว ({PROD_STATUS[prod.status]}) — แน่ใจว่าจะถอย?
+                              </div>
+                            )}
+                            <textarea value={undepReason} onChange={(e) => setUndepReason(e.target.value)} rows={2}
+                              placeholder="เหตุผล (บังคับ) เช่น ลงงานผิด / ลูกค้ายกเลิกมัดจำ"
+                              className="w-full rounded-xl bg-white text-gray-900 border border-rose-200 px-3 py-2 text-sm outline-none" />
+                            <div className="flex gap-2">
+                              <button onClick={() => { setUndepOpen(false); setUndepReason(""); }} disabled={undepBusy}
+                                className="focusable pressable flex-1 rounded-xl glass-card border border-white/15 text-white/80 text-sm min-h-[44px]">ยกเลิก</button>
+                              <button onClick={doUndeposit} disabled={undepBusy || !undepReason.trim()}
+                                className="focusable pressable flex-1 rounded-xl bg-rose-600 text-white text-sm font-semibold min-h-[44px] disabled:opacity-40">
+                                {undepBusy ? "กำลังถอย…" : "ยืนยันถอยมัดจำ"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {adminErr && <p role="alert" className="text-[13px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{adminErr}</p>}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

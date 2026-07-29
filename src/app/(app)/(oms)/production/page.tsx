@@ -120,6 +120,8 @@ export default function ProductionPage() {
   const { data, isLoading } = useQuery({ queryKey: ["production"], queryFn: () => api.get<Row[]>("/production") });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
+  const isAdmin = (data?.meta?.is_admin as boolean) ?? false;
+  const canUndeposit = (data?.meta?.can_undeposit as boolean) ?? false;
   const adhocJobs = (data?.meta?.adhoc as AdhocJob[] | undefined) ?? [];
 
   const invalidateAll = () => {
@@ -366,6 +368,8 @@ export default function ProductionPage() {
         <ProductionStepModal
           prod={open}
           canWrite={canWrite}
+          canAdmin={isAdmin}
+          canUndeposit={canUndeposit}
           onClose={() => setOpen(null)}
           onSavedInPlace={() => invalidateAll()}
           onSavedAndClose={() => { setOpen(null); invalidateAll(); }}

@@ -75,5 +75,10 @@ export const GET = withRoute(async () => {
     .neq("status", "DONE")
     .order("created_at", { ascending: false });
 
-  return ok(rows, { can_write: can(ctx.role, "production", "write"), adhoc: adhoc ?? [] });
+  return ok(rows, {
+    can_write: can(ctx.role, "production", "write"),
+    is_admin: ctx.role === "ADMIN",                       // แก้เฟสงาน (override) = แอดมิน
+    can_undeposit: can(ctx.role, "finance", "void"),       // ถอยมัดจำ = ADMIN/ACCOUNTING (void เงิน)
+    adhoc: adhoc ?? [],
+  });
 });

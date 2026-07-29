@@ -51,6 +51,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
     finance: ["read", "write", "void"], dashboard: ["read"],
+    production: ["read"],   // เข้าหน้าผลิตดู/ถอยมัดจำได้ (finance:void) — ไม่ให้ write ผลิต
     boq: ["read", "write"],
   },
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
