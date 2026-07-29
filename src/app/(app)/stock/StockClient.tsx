@@ -11,6 +11,7 @@ import { isInCutlist } from "@/lib/cutlist/codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
 import ImageZoom from "@/components/ImageZoom";
 import JobPicker, { type StockJob } from "@/components/stock/JobPicker";
+import MergePanel from "@/components/stock/MergePanel";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -44,20 +45,34 @@ export default function StockClient({
   const [lowOnly, setLowOnly] = useState(false);
   const [calcOnly, setCalcOnly] = useState(false);
   const [boqOnly, setBoqOnly] = useState(false);
+  const [dupOnly, setDupOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
+  const [merging, setMerging] = useState(false);
   const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
 
+  // "น่าจะซ้ำ" = สต็อก 0 แต่ผูกใบตัด/คิดราคาอยู่ (มักเป็นตัวที่สร้างมาเพื่อคิดราคา/ใบตัด ทั้งที่มีของจริงอีกแถว)
+  const isDupHint = (c: StockItem) => Number(c.qty_on_hand) === 0 && (calcLink(c).linked || isInCutlist(c.sku));
   const lowCount = list.filter(isLow).length;
   const calcCount = list.filter((c) => calcLink(c).linked).length;
   const boqCount = list.filter((c) => isInCutlist(c.sku)).length;
+  const dupCount = list.filter(isDupHint).length;
   const filtered = list
     .filter((c) => (lowOnly ? isLow(c) : true))
     .filter((c) => (calcOnly ? calcLink(c).linked : true))
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
+    .filter((c) => (dupOnly ? isDupHint(c) : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
     .filter((c) => [c.name, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
+
+  // หลังรวมรายการซ้ำ: เอาตัวที่ลบออกจากลิสต์ + โหลดตัวหลักใหม่ (ชื่อ/รหัส/ราคาอาจเปลี่ยน)
+  function afterMerge(removedIds: number[], keepId: number) {
+    setMerging(false);
+    setList((l) => l.filter((x) => !removedIds.includes(x.id)));
+    const keepRow = list.find((x) => x.id === keepId);
+    if (keepRow) selectItem(keepRow);
+  }
   // นับจำนวนต่อหมวด (โชว์บนปุ่มกรอง)
   const catCount = (id: number) => list.filter((c) => c.category_id === id).length;
 
@@ -143,7 +158,13 @@ export default function StockClient({
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${boqOnly ? "bg-emerald-600 text-white" : "glass-soft text-ink-2"}`}>
               ✂️ ใช้ในใบตัด {boqCount > 0 ? `(${boqCount})` : ""}
             </button>
-            {(lowOnly || calcOnly || boqOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            {isAdmin && (
+              <button onClick={() => setDupOnly((v) => !v)} title="สต็อก 0 แต่ผูกใบตัด/คิดราคา — น่าจะเป็นตัวซ้ำที่ควรยุบรวม"
+                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${dupOnly ? "bg-amber-500 text-white" : "glass-soft text-ink-2"}`}>
+                🔀 น่าจะซ้ำ {dupCount > 0 ? `(${dupCount})` : ""}
+              </button>
+            )}
+            {(lowOnly || calcOnly || boqOnly || dupOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {
@@ -187,6 +208,7 @@ export default function StockClient({
               key={sel.id} item={sel} moves={moves} prices={prices} cats={cats}
               canWrite={canWrite} canPrice={canPrice} canViewCost={canViewCost} isAdmin={isAdmin}
               onManageCat={() => setManageCat(true)}
+              onOpenMerge={() => setMerging(true)}
               onChanged={() => selectItem(sel)}
               onItemPatched={(it) => { setSel(it); setList((l) => l.map((x) => x.id === it.id ? it : x)); }}
               onDeleted={(id) => { setList((l) => l.filter((x) => x.id !== id)); setSel(null); setMoves([]); setPrices([]); }}
@@ -199,6 +221,9 @@ export default function StockClient({
 
       {manageCat && (
         <CategoryManager cats={cats} onClose={() => setManageCat(false)} onChanged={refreshCats} />
+      )}
+      {merging && sel && (
+        <MergePanel keepItem={sel} canViewCost={canViewCost} onClose={() => setMerging(false)} onMerged={afterMerge} />
       )}
     </div>
   );
@@ -217,10 +242,10 @@ function Thumb({ url, active, size = 40 }: { url: string; active?: boolean; size
 
 // ── รายละเอียดวัสดุ + เคลื่อนไหว + ต้นทุน/ราคา ──
 function ItemDetail({
-  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onChanged, onItemPatched, onDeleted,
+  item, moves, prices, cats, canWrite, canPrice, canViewCost, isAdmin, onManageCat, onOpenMerge, onChanged, onItemPatched, onDeleted,
 }: {
   item: StockItem; moves: StockMove[]; prices: StockPrice[]; cats: StockCategory[];
-  canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; onManageCat: () => void; onChanged: () => void;
+  canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; onManageCat: () => void; onOpenMerge: () => void; onChanged: () => void;
   onItemPatched: (it: StockItem) => void; onDeleted: (id: number) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -318,10 +343,18 @@ function ItemDetail({
             <button onClick={() => setEditOpen((v) => !v)} className="press text-sm text-brand-dark font-semibold inline-flex items-center gap-1.5">
               <Icon name="pencil" size={14} /> {editOpen ? "ปิดการแก้ไข" : "แก้ข้อมูลวัสดุ (ชื่อ/หมวด/หน่วย/รูป/น้ำหนัก)"}
             </button>
-            <button onClick={delItem} disabled={deleting}
-              className="press text-sm text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5 disabled:opacity-60">
-              <Icon name="trash" size={14} /> {deleting ? "กำลังลบ…" : "ลบวัสดุนี้"}
-            </button>
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <button onClick={onOpenMerge}
+                  className="press text-sm text-amber-600 hover:text-amber-700 font-semibold inline-flex items-center gap-1.5">
+                  🔀 รวมรายการซ้ำเข้าตัวนี้
+                </button>
+              )}
+              <button onClick={delItem} disabled={deleting}
+                className="press text-sm text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5 disabled:opacity-60">
+                <Icon name="trash" size={14} /> {deleting ? "กำลังลบ…" : "ลบวัสดุนี้"}
+              </button>
+            </div>
           </div>
           {editOpen && (
             <EditItemForm item={item} cats={cats} canViewCost={canViewCost} onManageCat={onManageCat}
