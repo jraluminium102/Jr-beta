@@ -97,6 +97,19 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     try { await api.post("/production-sets", { job_id: jobId, set_label: `ชุด ${sets.length + 1}` }); qc.invalidateQueries({ queryKey: key }); }
     finally { setBusy(false); }
   }
+  // ดึงข้อจากใบเสนอราคาล่าสุด → สร้างชุด + เติมสเปคอัตโนมัติ (ไม่ทับชุดที่ชื่อซ้ำ)
+  async function pullFromQuote() {
+    if (!confirm("ดึงข้อจากใบเสนอราคาล่าสุด มาสร้างชุด + เติมสเปค (กระจก/มุ้ง/สี) อัตโนมัติ?\nชุดที่มีชื่อซ้ำจะไม่ทับ · แก้รายชุดได้ทีหลัง")) return;
+    setBusy(true);
+    try {
+      const r = await api.post<{ created: number; skipped: number; reason?: string }>("/production-sets/from-quotation", { job_id: jobId });
+      qc.invalidateQueries({ queryKey: key });
+      const d = r.data;
+      if (d?.reason === "no_quotation") alert("ยังไม่มีใบเสนอราคาในระบบสำหรับงานนี้");
+      else alert(`ดึงจากใบเสนอแล้ว — สร้าง ${d?.created ?? 0} ชุด${d?.skipped ? ` (ข้ามที่มีอยู่/ไม่ใช่งาน ${d.skipped})` : ""}`);
+    } catch { alert("ดึงจากใบเสนอไม่สำเร็จ"); }
+    finally { setBusy(false); }
+  }
   async function del(id: number) {
     if (!confirm("ลบชุดงานนี้?")) return;
     await api.del(`/production-sets/${id}`); qc.invalidateQueries({ queryKey: key });
@@ -174,7 +187,11 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
           <span className={`text-[12px] font-normal text-emerald-300 transition-opacity duration-300 ${saved ? "opacity-100" : "opacity-0"}`}>บันทึกแล้ว ✓</span>
         </span>
         {canWrite && (
-          <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
+          <div className="flex items-center gap-2">
+            <button onClick={pullFromQuote} disabled={busy} title="สร้างชุดจากข้อในใบเสนอราคา + เติมสเปคอัตโนมัติ"
+              className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-white/10 hover:bg-white/20 text-sky-100 border border-sky-300/30 rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50">📄 ดึงจากใบเสนอ</button>
+            <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
+          </div>
         )}
       </div>
 
