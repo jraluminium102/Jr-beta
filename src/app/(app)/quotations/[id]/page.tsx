@@ -8,6 +8,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import QuotationActions from "./QuotationActions";
 import QuotationEditButton from "./QuotationEditButton";
+import CustomerNameEditButton from "./CustomerNameEditButton";
 import type { Quotation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +98,16 @@ export default async function QuotationDetail({ params }: { params: { id: string
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <div className="text-xs font-medium text-ink-3 mb-1">ลูกค้า</div>
-            <div className="font-semibold">{c.name}</div>
+            <div className="font-semibold flex items-center gap-1">
+              <span>{c.name}</span>
+              {writable && (
+                <CustomerNameEditButton
+                  quotationId={q.id}
+                  currentName={c.name}
+                  hasCustomerLink={q.customer_id != null}
+                />
+              )}
+            </div>
             <div className="text-ink-2">{c.job}</div>
             <div className="text-xs text-ink-3 mt-1">{c.address}</div>
             {c.tax_id && <div className="text-xs text-ink-3">เลขผู้เสียภาษี: {c.tax_id}</div>}
