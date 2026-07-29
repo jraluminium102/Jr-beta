@@ -8,7 +8,8 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import QuotationActions from "./QuotationActions";
 import QuotationEditButton from "./QuotationEditButton";
-import CustomerNameEditButton from "./CustomerNameEditButton";
+import CustomerHeaderEditButton from "./CustomerHeaderEditButton";
+import IssueDateEditButton from "./IssueDateEditButton";
 import type { Quotation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -97,23 +98,27 @@ export default async function QuotationDetail({ params }: { params: { id: string
       <Card className="p-6">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-xs font-medium text-ink-3 mb-1">ลูกค้า</div>
-            <div className="font-semibold flex items-center gap-1">
-              <span>{c.name}</span>
+            <div className="text-xs font-medium text-ink-3 mb-1 flex items-center gap-1">
+              ลูกค้า
               {writable && (
-                <CustomerNameEditButton
+                <CustomerHeaderEditButton
                   quotationId={q.id}
                   currentName={c.name}
+                  currentAddress={c.address ?? ""}
                   hasCustomerLink={q.customer_id != null}
                 />
               )}
             </div>
+            <div className="font-semibold">{c.name}</div>
             <div className="text-ink-2">{c.job}</div>
             <div className="text-xs text-ink-3 mt-1">{c.address}</div>
             {c.tax_id && <div className="text-xs text-ink-3">เลขผู้เสียภาษี: {c.tax_id}</div>}
           </div>
           <div className="sm:text-right">
-            <div className="text-xs text-ink-3">วันที่ออก: <b className="text-ink">{q.issue_date}</b></div>
+            <div className="text-xs text-ink-3 flex items-center gap-1 sm:justify-end">
+              <span>วันที่ออก: <b className="text-ink">{q.issue_date}</b></span>
+              {writable && <IssueDateEditButton quotationId={q.id} currentIssueDate={q.issue_date} />}
+            </div>
             <div className="text-xs text-ink-3">ผู้ติดต่อ: {c.contact_person || "—"}</div>
             <div className="text-xs text-ink-3">โทร: {c.phone || "—"} · Line: {c.line_id || "—"}</div>
           </div>
