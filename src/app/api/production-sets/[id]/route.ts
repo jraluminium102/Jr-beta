@@ -20,6 +20,7 @@ const patchSchema = z.object({
   glass_spec: t, glass_order: t, frame_done: t, glass_installed: t, qc_before_glass: t,
   frame_status: t, screen_type: t, screen_installed: t, qc_after_glass: t,
   install_date: d, note: t,
+  factories: z.array(z.string()).optional(),   // โรงงานผลิต (หลายโรงต่อชุด · 0114)
 });
 
 // PATCH /api/production-sets/:id — แก้ช่องใน worksheet (ออฟฟิศ/ผลิต)

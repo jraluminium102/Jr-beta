@@ -34,6 +34,9 @@ function fmtWhen(iso?: string | null) {
 
 type SetRow = { id: number; job_id: string } & Record<string, any>;
 
+// โรงงานผลิต (เลือกได้หลายโรงต่อชุด · 0114) — หลัก ๆ 2 โรง แก้ลิสต์ที่นี่ได้
+const FACTORIES = ["โรงงาน 1", "โรงงาน 3"];
+
 // ขนาดตัวหนังสือ: เจ้าของแจ้ง 16 ก.ค.2569 ว่า "ฟ้อนเล็ก อ่านยาก" → ช่อง 12→14px, ป้าย 10→11.5px
 // (คู่กับโมดัลที่ขยายเป็น max-w-3xl แล้ว — ที่กว้างพอให้ตัวใหญ่ขึ้นได้โดยตารางไม่แตก)
 const fieldCls =
@@ -132,6 +135,24 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
+  // โรงงานผลิต — เลือกได้หลายโรง (toggle chips) · เก็บเป็น array
+  const factoryPick = (s: SetRow) => {
+    const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {FACTORIES.map((f) => {
+          const on = cur.includes(f);
+          return (
+            <button key={f} type="button" disabled={!canWrite}
+              onClick={() => save(s.id, "factories", on ? cur.filter((x) => x !== f) : [...cur, f])}
+              className={`text-[14px] px-2.5 py-2 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-white/8 border-white/12 text-white/60 hover:text-white"} disabled:opacity-60`}>
+              {on ? "✓ " : ""}{f}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
   // ค่าที่มีอยู่แต่ไม่อยู่ในลิสต์ (ของเก่า/พิมพ์มาจาก Excel) ต้องใส่เป็นตัวเลือกด้วยเสมอ
   // ไม่งั้น <select defaultValue> ที่ไม่ match จะเด้งไปตัวแรก = จอโชว์ "—" ทั้งที่ DB มีค่าอยู่ (หลอกตา)
   const withCurrent = (opts: string[], cur: unknown) => {
@@ -260,6 +281,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 <F label="วันวัดจริง">{date(s, "measure_actual")}</F>
                 <F label="คนวัด">{txt(s, "measurer_name")}</F>
                 <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
+                <div className="col-span-2"><F label="โรงงานผลิต (เลือกได้หลายโรง)">{factoryPick(s)}</F></div>
 
                 <F label="อุปกรณ์" onEditOpts={openOpts("mat_equipment", "อุปกรณ์")}>{sel(s, "mat_equipment", valuesOf("mat_equipment"))}</F>
                 <F label="อลู ปกติ" onEditOpts={openOpts("mat_alu_normal", "อลู ปกติ")}>{sel(s, "mat_alu_normal", valuesOf("mat_alu_normal"))}</F>
