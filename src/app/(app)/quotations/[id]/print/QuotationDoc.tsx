@@ -92,28 +92,32 @@ export function QuotationDoc({
     <>
       {/* ===== ตารางเอกสารหลัก — หัวบิล+หัวคอลัมน์ซ้ำทุกหน้า · รายการเป็นแถวตรง ๆ ===== */}
       <table className="qdoc" style={{ fontSize: 13 }}>
-        {/* หัวบิล + หัวคอลัมน์ อยู่ใน thead ทั้งคู่ → เบราว์เซอร์พิมพ์ซ้ำทุกหน้า (เจ้าของสั่ง 23 ก.ค.69 ให้หัวคอลัมน์ไปหน้าใหม่ด้วย)
-            thead ≈ หัวบิล 46.7mm + หัวคอลัมน์ ~9mm = ~56mm < เพดาน 74.25mm → ซ้ำได้ปลอดภัย (บล็อกลูกค้ายังอยู่ tbody จึงไม่บวมเกิน)
-            หัวข้อคอลัมน์จัด center ทุกช่อง (เจ้าของสั่ง) · ข้อมูลในแถวคงชิดเดิม (ชื่อซ้าย/ตัวเลขขวา) */}
+        {/* thead = หัวบิลบริษัทอย่างเดียว → เบราว์เซอร์พิมพ์ซ้ำทุกหน้า (~46.7mm < เพดาน 74.25mm)
+            บล็อกลูกค้า + แถบหัวคอลัมน์ ย้ายลง tbody เพื่อให้ "ชื่อลูกค้าอยู่เหนือหัวคอลัมน์" แบบใบเสนอปกติ
+            (เจ้าของสั่ง 28 ก.ค.69 — เดิมหัวคอลัมน์อยู่ thead เลยพิมพ์เหนือชื่อลูกค้า ดูผิดรูป)
+            แลก: แถบหัวคอลัมน์อยู่หน้าแรกหน้าเดียว (หน้า 2+ มีแต่หัวบิลบริษัท) — เอาทั้งสามอย่างซ้ำพร้อมกันไม่ได้
+            เพราะรวมกันสูง ~85mm เกินเพดานที่ Chrome ยอมพิมพ์ thead ซ้ำ */}
         <thead>
           <tr>
             <td colSpan={5} className="qdoc-head">{letterhead}</td>
           </tr>
+        </thead>
+
+        <tbody>
+          {/* บล็อกลูกค้า — เหนือหัวคอลัมน์ (แบบใบเสนอปกติ) · หน้าแรกหน้าเดียว */}
+          <tr>
+            <td colSpan={5} className="qdoc-tail" style={{ paddingBottom: 8 }}>
+              <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} />
+            </td>
+          </tr>
+
+          {/* แถบหัวคอลัมน์ — อยู่ใต้บล็อกลูกค้า · จัด center ทุกช่อง · ข้อมูลในแถวคงชิดเดิม (ชื่อซ้าย/ตัวเลขขวา) */}
           <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
             <th className="p-2 text-center border border-gray-200" style={{ width: "5%" }}>#</th>
             <th className="p-2 text-center border border-gray-200" style={{ width: "55%" }}>รายละเอียด</th>
             <th className="p-2 text-center border border-gray-200" style={{ width: "10%" }}>จำนวน</th>
             <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
             <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ยอดรวม</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {/* บล็อกลูกค้า — หน้าแรกหน้าเดียว (อยู่ใน tbody ไม่ใช่ thead จึงไม่ซ้ำ · กันหัวบวมเกิน 74.25mm) */}
-          <tr>
-            <td colSpan={5} className="qdoc-tail" style={{ paddingBottom: 10 }}>
-              <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} />
-            </td>
           </tr>
 
           {items.map((it, i) => {
